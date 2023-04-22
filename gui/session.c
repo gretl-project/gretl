@@ -76,6 +76,7 @@
 #include "../pixmaps/bundle.xpm"
 
 #define SESSION_DEBUG 0
+#define GRAPH_DEBUG 1
 #define SESSION_BUNDLE 1
 
 #define SHOWNAMELEN 15
@@ -4303,12 +4304,22 @@ static void real_open_session_graph (SESSION_GRAPH *graph)
 {
     GtkWidget *plotwin = get_window_for_plot(graph);
 
+#if GRAPH_DEBUG
+    fprintf(stderr, "real_open_session_graph: graph %p, plotwin %p\n",
+	    (void *) graph, (void *) plotwin);
+#endif
+
     if (plotwin != NULL) {
 	gtk_window_present(GTK_WINDOW(plotwin));
     } else {
 	char tmp[MAXLEN];
 
 	session_file_make_path(tmp, graph->fname, NULL);
+#if GRAPH_DEBUG
+	fprintf(stderr, " graph->fname = '%s'\n", graph->fname);
+	fprintf(stderr, " tmp = '%s'\n", tmp);
+	fprintf(stderr, " call display_session_graph\n");
+#endif
 	display_session_graph(tmp, graph->name, graph);
     }
 }
