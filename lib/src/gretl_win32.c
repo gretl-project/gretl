@@ -365,6 +365,44 @@ static int assess_exit_status (PROCESS_INFORMATION *pinfo,
     return err;
 }
 
+static HANDLE win32_create_log_file (const gchar *fname)
+{
+    gunichar2 *fn16 = NULL;
+    SECURITY_ATTRIBUTES sa;
+    HANDLE h;
+    int err;
+
+    err = ensure_utf16(fname, &fn16, NULL, NULL);
+    if (err) {
+	return INVALID_HANDLE_VALUE;
+    }
+
+    sa.nLength = sizeof(sa);
+    sa.lpSecurityDescriptor = NULL;
+    sa.bInheritHandle = TRUE;
+
+    h = CreateFileW(fn16,
+		    FILE_APPEND_DATA,
+		    FILE_SHARE_WRITE | FILE_SHARE_READ,
+		    &sa,
+		    OPEN_ALWAYS,
+		    FILE_ATTRIBUTE_NORMAL,
+		    NULL);
+    g_free(fn16);
+
+    return h;
+}
+
+static gchar *win32_read_log_file (HANDLE h, const gchar *fname)
+{
+    gchar *ret = NULL;
+
+    CloseHandle(h);
+    g_file_get_contents(fname, &ret, NULL, NULL);
+
+    return ret;
+}
+
 /* Run @cmdline synchronously. Note that there's no
    facility to retrieve stdout or stderr via this
    function.
@@ -376,15 +414,19 @@ static int real_win_run_sync (const char *cmdline,
 {
     STARTUPINFOW sinfo;
     PROCESS_INFORMATION pinfo;
+    handle h = INVALID_HANDLE_VALUE;
     DWORD exitcode;
     DWORD flags;
     gunichar2 *cl16 = NULL;
     gunichar2 *cd16 = NULL;
+    gchar *logname = NULL;
     int ok, err = 0;
 
 #if CPDEBUG
     fprintf(stderr, "\nreal_win_run_sync\n");
     fprintf(stderr, " cmdline = '%s'\n", cmdline);
+    logname = gretl_make_dotpath("winsync.txt");
+    h = win32_create_log_file(logname);
 #endif
 
     err = ensure_utf16(cmdline, &cl16, currdir, &cd16);
@@ -402,6 +444,13 @@ static int real_win_run_sync (const char *cmdline,
 	sinfo.dwFlags = STARTF_USESHOWWINDOW;
 	sinfo.wShowWindow = SW_SHOWMINIMIZED;
 	flags = HIGH_PRIORITY_CLASS;
+    }
+
+    if (h != INVALID_HANDLE_VALUE) {
+	sinfo.dwFlags |= STARTF_USESTDHANDLES;
+	si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+	si.hStdError = h;
+	si.hStdOutput = h;
     }
 
     ok = CreateProcessW(NULL,
@@ -427,10 +476,21 @@ static int real_win_run_sync (const char *cmdline,
     CloseHandle(pinfo.hProcess);
     CloseHandle(pinfo.hThread);
 
+    if (h != INVALID_HANDLE_VALUE) {
+	gchar *log = win32_read_log_file(h, logname);
+
+	if (log != NULL) {
+	    fputs(log, stderr);
+	    g_free(log);
+	}
+    }
+
     g_free(cl16);
     g_free(cd16);
+    g_free(logname);
 
 #if CPDEBUG
+    g_free(fn16);
     fprintf(stderr, "real_win_run_sync: return err = %d\n", err);
 #endif
 
