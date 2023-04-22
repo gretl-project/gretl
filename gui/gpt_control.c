@@ -50,6 +50,7 @@
 #include <errno.h>
 
 #define GPDEBUG 0
+#define WINDEBUG 1
 #define POINTS_DEBUG 0
 #define COLLDEBUG 0
 
@@ -498,170 +499,193 @@ static int is_png_term_line (const char *s)
     return !strncmp(s, "set term png", 12);
 }
 
-#ifdef G_OS_WIN32
-
-static void check_win32_png_spec (char *s)
+static void real_remove_png_term_line (FILE *ftarg, FILE *fsrc,
+				       GPT_SPEC *spec)
 {
-    if (!strncmp("set term png ", s, 13)) {
-	/* should now be pngcairo */
-	*s = '\0';
+    char line[MAXLEN];
+    int png_line_saved = 0;
+    int printit;
+
+    while (fgets(line, sizeof line, fsrc)) {
+	printit = 1;
+	if (is_png_term_line(line)) {
+	    if (!png_line_saved) {
+		/* comment it out, for future reference */
+		fprintf(ftarg, "# %s", line);
+		png_line_saved = 1;
+	    }
+	    printit = 0;
+	} else if (commented_term_line(line)) {
+	    if (png_line_saved) {
+		printit = 0;
+	    }
+	} else if (set_output_line(line)) {
+	    printit = 0;
+	} else if (spec != NULL && (spec->flags & GPT_FIT_HIDDEN)
+		   && is_auto_fit_string(line)) {
+	    printit = 0;
+	} else if (set_print_line(line)) {
+	    printit = 0;
+	}
+	if (printit) {
+	    fputs(line, ftarg);
+	}
     }
 }
 
-#endif
+static void add_new_term_line (FILE *fp, GPT_SPEC *spec,
+			       int ix, int iy, GptFlags flags)
+{
+    const char *term_line;
+
+    if (ix > 0 && iy > 0) {
+	set_special_plot_size(ix, iy);
+    }
+
+    if (spec != NULL) {
+	term_line = get_png_line_for_plotspec(spec);
+    } else {
+	term_line = gretl_gnuplot_term_line(GP_TERM_PNG,
+					    PLOT_REGULAR,
+					    flags, NULL);
+    }
+
+    fprintf(fp, "%s\n", term_line);
+    if (strstr(term_line, "encoding") == NULL) {
+	fputs("set encoding utf8\n", fp);
+    }
+}
+
+static void real_add_png_term_line (FILE *ftarg, FILE *fsrc,
+				    GPT_SPEC *spec)
+{
+    char line[MAXLEN];
+    gchar *restore = NULL;
+    GptFlags flags = 0;
+    int add_line_styles = 1;
+    int ix = 0, iy = 0;
+
+    /* First pass: see if we can find an existing PNG term
+       specification (possible commented out) to restore.
+       Also see if we need to add line styles.
+    */
+
+    while (fgets(line, sizeof line, fsrc)) {
+	if (restore == NULL && is_png_term_line(line)) {
+	    restore = g_strdup(line);
+	} else if (restore == NULL && commented_term_line(line)) {
+	    restore = g_strdup(line + 2);
+	} else if (strstr(line, "letterbox")) {
+	    flags = GPT_LETTERBOX;
+	} else if (strstr(line, "large")) {
+	    flags = GPT_XL;
+	} else if (strstr(line, "extra-large")) {
+	    flags = GPT_XXL;
+	} else if (strstr(line, "extra-wide")) {
+	    flags = GPT_XW;
+	} else if (sscanf(line, "# geoplot %d %d", &ix, &iy) == 2) {
+	    ; /* OK */
+	} else if (!strncmp(line, "set style line", 14) ||
+		   !strncmp(line, "set linetype", 12)) {
+	    /* line styles already present */
+	    add_line_styles = 0;
+	} else if (!strncmp(line, "plot", 4)) {
+	    break;
+	}
+    }
+
+    /* prepare for second pass */
+    rewind(fsrc);
+
+    if (restore != NULL) {
+	/* we got an existing term line: restore it */
+	fputs(restore, ftarg);
+	fputs("set encoding utf8\n", ftarg);
+	g_free(restore);
+    } else {
+	/* we didn't get a previous term line */
+	add_new_term_line(ftarg, spec, ix, iy, flags);
+    }
+
+    /* Note: write_plot_output_line() must come after "set encoding"
+       since the output filename may be UTF-8.
+    */
+    write_plot_output_line(NULL, ftarg);
+
+    if (spec != NULL && add_line_styles) {
+	write_plot_line_styles(spec->code, ftarg);
+    }
+
+    /* Now for the rest of the plot file: skip elements that are
+       already handled, otherwise transcribe from @fsrc.
+    */
+    while (fgets(line, sizeof line, fsrc)) {
+	if (set_print_line(line)) {
+	    ; /* skip it (portability) */
+	} else if (is_png_term_line(line)) {
+	    ; /* handled above */
+	} else if (commented_term_line(line)) {
+	    ; /* handled above */
+	} else if (set_encoding_line(line)) {
+	    ; /* handled above */
+	} else if (set_output_line(line)) {
+	    ; /* handled above */
+	} else {
+	    fputs(line, ftarg);
+	}
+    }
+
+    write_plot_bounding_box_request(ftarg);
+}
 
 static int
 add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 {
-    FILE *fsrc, *ftmp;
-    char temp[MAXLEN], fline[MAXLEN];
-    GptFlags flags = 0;
-    int ix = 0, iy = 0;
+    FILE *ftarg = NULL;
+    FILE *fsrc = NULL;
+    gchar *temp = NULL;
     int err = 0;
 
-    sprintf(temp, "%sgpttmp", gretl_dotdir());
-    ftmp = gretl_tempfile_open(temp);
-    if (ftmp == NULL) {
+    /* open stream to receive the revised content */
+    temp = gretl_make_dotpath("gpttmp.XXXXXX");
+    ftarg = gretl_tempfile_open(temp);
+    if (ftarg == NULL) {
+	g_free(temp);
 	return 1;
     }
 
+    /* open original file for reading */
     fsrc = open_gp_file(fname, "r");
     if (fsrc == NULL) {
-	fclose(ftmp);
+	fclose(ftarg);
+	g_free(temp);
 	return 1;
     }
 
-    if (action == ADD_PNG) {
-	/* see if there's already a png term setting, possibly commented
-	   out, that can be reused */
-	char restore[MAXLEN];
-	int add_line_styles = 1;
-
-	*restore = '\0';
-
-	while (fgets(fline, sizeof fline, fsrc)) {
-	    if (*restore == '\0' && is_png_term_line(fline)) {
-		strcat(restore, fline);
-	    } else if (*restore == '\0' && commented_term_line(fline)) {
-		strcat(restore, fline + 2);
-	    } else if (strstr(fline, "letterbox")) {
-		flags = GPT_LETTERBOX;
-	    } else if (strstr(fline, "large")) {
-		flags = GPT_XL;
-	    } else if (strstr(fline, "extra-large")) {
-		flags = GPT_XXL;
-	    } else if (strstr(fline, "extra-wide")) {
-		flags = GPT_XW;
-	    } else if (sscanf(fline, "# geoplot %d %d", &ix, &iy) == 2) {
-		; /* OK */
-	    } else if (!strncmp(fline, "set style line", 14) ||
-		       !strncmp(fline, "set linetype", 12)) {
-		add_line_styles = 0;
-	    } else if (!strncmp(fline, "plot", 4)) {
-		break;
-	    }
-	}
-
-	rewind(fsrc);
-
-#ifdef G_OS_WIN32
-	/* check for obsolete png term specification (as may be found
-	   in an old session file) */
-	check_win32_png_spec(restore);
+#if WINDEBUG
+    fprintf(stderr, "add_or_remove_png_term\n src='%s'\n temp='%s'\n",
+	    fname, temp);
 #endif
 
-	if (*restore != '\0') {
-	    fputs(restore, ftmp);
-	    fputs("set encoding utf8\n", ftmp);
-	} else {
-	    const char *tline;
-
-	    if (ix > 0 && iy > 0) {
-		set_special_plot_size(ix, iy);
-	    }
-	    if (spec != NULL) {
-		tline = get_png_line_for_plotspec(spec);
-	    } else {
-		tline = gretl_gnuplot_term_line(GP_TERM_PNG,
-						PLOT_REGULAR,
-						flags, NULL);
-	    }
-	    fprintf(ftmp, "%s\n", tline);
-	    if (strstr(tline, "encoding") == NULL) {
-		fputs("set encoding utf8\n", ftmp);
-	    }
-	}
-
-	/* Note: we want "set encoding" to be done before we
-	   write the line specifying the output destination
-	   since the filename may be UTF-8.
-	*/
-	write_plot_output_line(NULL, ftmp);
-
-	if (spec != NULL && add_line_styles) {
-	    write_plot_line_styles(spec->code, ftmp);
-	}
-
-	/* now for the body of the plot file */
-
-	while (fgets(fline, sizeof fline, fsrc)) {
-	    if (set_print_line(fline)) {
-		; /* skip it (portability) */
-	    } else if (is_png_term_line(fline)) {
-		; /* handled above */
-	    } else if (commented_term_line(fline)) {
-		; /* handled above */
-	    } else if (set_encoding_line(fline)) {
-		; /* handled above */
-	    } else if (set_output_line(fline)) {
-		; /* handled above */
-	    } else {
-		fputs(fline, ftmp);
-	    }
-	}
-	write_plot_bounding_box_request(ftmp);
+    if (action == ADD_PNG) {
+	real_add_png_term_line(ftarg, fsrc, spec);
     } else {
-	/* not ADD_PNG: we're removing the png term line */
-	int printit, png_line_saved = 0;
-
-	while (fgets(fline, sizeof fline, fsrc)) {
-	    printit = 1;
-	    if (is_png_term_line(fline)) {
-		if (!png_line_saved) {
-		    /* comment it out, for future reference */
-		    fprintf(ftmp, "# %s", fline);
-		    png_line_saved = 1;
-		}
-		printit = 0;
-	    } else if (commented_term_line(fline)) {
-		if (png_line_saved) {
-		    printit = 0;
-		}
-	    } else if (set_output_line(fline)) {
-		printit = 0;
-	    } else if (spec != NULL && (spec->flags & GPT_FIT_HIDDEN)
-		       && is_auto_fit_string(fline)) {
-		printit = 0;
-	    } else if (set_print_line(fline)) {
-		printit = 0;
-	    }
-	    if (printit) {
-		fputs(fline, ftmp);
-	    }
-	}
+	real_remove_png_term_line(ftarg, fsrc, spec);
     }
 
     fclose(fsrc);
-    fclose(ftmp);
+    fclose(ftarg);
 
-    /* delete the original */
+    /* delete the original file */
     gretl_remove(fname);
 
-    /* and rename the new to the original name */
+    /* rename the revised version to the original name */
     err = gretl_rename(temp, fname);
     if (err) {
 	fprintf(stderr, "warning: rename failed\n");
     }
+
+    g_free(temp);
 
     return err;
 }
@@ -5849,7 +5873,7 @@ static int gnuplot_show_png (const char *fname,
 
     gretl_error_clear();
 
-#if GPDEBUG
+#if GPDEBUG || WINDEBUG
     fprintf(stderr, "gnuplot_show_png:\n fname='%s', saved=%d\n",
 	    fname, (session_ptr != NULL));
 #endif
@@ -5887,7 +5911,7 @@ static int gnuplot_show_png (const char *fname,
 	return E_FOPEN;
     }
 
-#if GPDEBUG
+#if GPDEBUG || WINDEBUG
     fprintf(stderr, "gnuplot_show_png: read_plotspec_from_file returned %d\n",
 	    plot->err);
 #endif
@@ -6076,6 +6100,7 @@ void display_session_graph (const char *fname,
 			    const char *title,
 			    void *session_ptr)
 {
+    const char *gppath = gretl_gnuplot_path();
     char fullname[MAXLEN];
     gchar *plotcmd;
     int err = 0;
@@ -6086,15 +6111,27 @@ void display_session_graph (const char *fname,
 	sprintf(fullname, "%s%s", gretl_dotdir(), fname);
     }
 
+#if WINDEBUG
+    fprintf(stderr, "display_session_graph:\n fullname = '%s'\n",
+	    fullname);
+    fprintf(stderr, " gnuplot path = '%s'\n", gppath);
+    fprintf(stderr, " gretl_stat gives %d\n", gretl_stat(gppath, NULL));
+    fprintf(stderr, " call add_png_term_to_plot\n");
+#endif
+
     err = add_png_term_to_plot(fullname);
     if (err) {
 	return;
     }
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"",
-			      gretl_gnuplot_path(),
-			      fullname);
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", gppath, fullname);
     err = gretl_spawn(plotcmd);
+#if WINDEBUG
+    fprintf(stderr, " gretl_spawn returned %d\n", err);
+    if (err) {
+	fprintf(stderr, "failed: '%s'\n", plotcmd);
+    }
+#endif
     g_free(plotcmd);
 
     if (err) {
