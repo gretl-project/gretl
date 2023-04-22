@@ -1272,52 +1272,14 @@ void write_plot_line_styles (int ptype, FILE *fp)
 
 #ifdef WIN32
 
-/* Here we're looking at a path, @src, that we're going
-   to write into a gnuplot script, as (part of) the
-   plot output filename or the plot bounding-box
-   filename. Since we write "set encoding utf8" into the
-   preamble to our plot scripts we need to ensure that
-   the path is in fact in UTF-8 (even on MS Windows).
-   We also want to ensure use of forward slashes in this
-   context.
-*/
-
-static int adjust_filename (char *targ, const char *src,
-			    int ensure_utf8)
+static void win32_forwardize (gchar *fname)
 {
-    int err = 0;
+    gchar *p;
 
-    *targ = '\0';
-
-    if (ensure_utf8 && !g_utf8_validate(src, -1, NULL)) {
-	GError *gerr = NULL;
-	gchar *tmp;
-	gsize sz;
-
-	tmp = g_locale_to_utf8(src, -1, NULL, &sz, &gerr);
-	if (tmp != NULL) {
-	    strcpy(targ, tmp);
-	    g_free(tmp);
-	} else {
-	    err = 1;
-	    if (gerr != NULL) {
-		gretl_errmsg_set(gerr->message);
-		g_error_free(gerr);
-	    }
-	}
-    } else {
-	/* @src is assumed to be OK already */
-	strcpy(targ, src);
+    while ((p = strchr(fname, '\\')) != NULL) {
+	*p = '/';
+	p++;
     }
-
-    if (!err) {
-	while (*targ) {
-	    if (*targ == '\\') *targ = '/';
-	    targ++;
-	}
-    }
-
-    return err;
 }
 
 #endif
@@ -1328,19 +1290,14 @@ static int adjust_filename (char *targ, const char *src,
 
 int write_plot_bounding_box_request (FILE *fp)
 {
-#ifdef WIN32
-    char buf[FILENAME_MAX];
-    int err;
+    gchar *fname = gretl_make_dotpath("gretltmp.png.bounds");
 
-    err = adjust_filename(buf, gretl_dotdir(), 1);
-    if (!err) {
-	fprintf(fp, "set print \"%sgretltmp.png.bounds\"\n", buf);
-    } else {
-	return err;
-    }
-#else
-    fprintf(fp, "set print \"%sgretltmp.png.bounds\"\n", gretl_dotdir());
+#ifdef WIN32
+    win32_forwardize(fname);
 #endif
+
+    fprintf(fp, "set print \"%s\"\n", fname);
+    g_free(fname);
 
     fputs("print \"pixel_bounds: \", GPVAL_TERM_XMIN, GPVAL_TERM_XMAX, "
 	  "GPVAL_TERM_YMIN, GPVAL_TERM_YMAX\n", fp);
@@ -1881,38 +1838,36 @@ void reset_plot_count (void)
     gretl_plot_count = 0;
 }
 
-/* if @path is non-NULL we use it, otherwise we make a path
-   using @dotdir and "gretltmp.png"
+/* We're writing the 'set output...' line for a gnuplot script.
+   If @path is non-NULL we use it, otherwise we make a path
+   using dotdir and "gretltmp.png".
 */
 
 int write_plot_output_line (const char *path, FILE *fp)
 {
 #ifdef WIN32
-    char buf[FILENAME_MAX];
-    int err = 0;
+    gchar *fname;
 
     if (path == NULL) {
-	err = adjust_filename(buf, gretl_dotdir(), 1);
-	if (!err) {
-	    fprintf(fp, "set output \"%sgretltmp.png\"\n", buf);
-	}
+	fname = gretl_make_dotpath("gretltmp.png");
     } else {
-	err = adjust_filename(buf, path, 1);
-	if (!err) {
-	    fprintf(fp, "set output \"%s\"\n", buf);
-	}
+	fname = g_strdup(path);
     }
-
-    return err;
+    win32_forwardize(fname);
+    fprintf(fp, "set output \"%s\"\n", fname);
+    g_free(fname);
 #else
     if (path == NULL) {
-	fprintf(fp, "set output \"%sgretltmp.png\"\n", gretl_dotdir());
+	gchar *fname = gretl_make_dotpath("gretltmp.png");
+
+	fprintf(fp, "set output \"%s\"\n", fname);
+	g_free(fname);
     } else {
 	fprintf(fp, "set output \"%s\"\n", path);
     }
+#endif
 
     return 0;
-#endif
 }
 
 static FILE *gp_set_up_batch (char *fname,
