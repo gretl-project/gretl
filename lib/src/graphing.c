@@ -1845,27 +1845,27 @@ void reset_plot_count (void)
 
 int write_plot_output_line (const char *path, FILE *fp)
 {
-#ifdef WIN32
-    gchar *fname;
+    const char *fname;
+    gchar *tmp = NULL;
 
+#ifdef WIN32
     if (path == NULL) {
-	fname = gretl_make_dotpath("gretltmp.png");
+	tmp = gretl_make_dotpath("gretltmp.png");
     } else {
-	fname = g_strdup(path);
+	tmp = g_strdup(path);
     }
-    win32_forwardize(fname);
-    fprintf(fp, "set output \"%s\"\n", fname);
-    g_free(fname);
+    win32_forwardize(tmp);
+    fname = tmp;
 #else
     if (path == NULL) {
-	gchar *fname = gretl_make_dotpath("gretltmp.png");
-
-	fprintf(fp, "set output \"%s\"\n", fname);
-	g_free(fname);
+	fname = tmp = gretl_make_dotpath("gretltmp.png");
     } else {
-	fprintf(fp, "set output \"%s\"\n", path);
+	fname = path;
     }
 #endif
+
+    fprintf(fp, "set output \"%s\"\n", fname);
+    g_free(tmp);
 
     return 0;
 }

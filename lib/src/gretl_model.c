@@ -5639,7 +5639,7 @@ static gretl_matrix *data_list_to_matrix (const int *list)
     return y;
 }
 
-#define XDEBUG 1
+#define XDEBUG 0
 
 static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 				      MODEL *pmod, int fixopt)

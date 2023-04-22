@@ -168,6 +168,8 @@ int gretl_delete_var_by_name (const char *s, PRN *prn);
 
 int gretl_spawn (char *cmdline);
 
+int gnuplot_make_image (const char *input_fname);
+
 int gretl_pipe_output (gchar **argv, gchar **envp,
                        const char *currdir, PRN *prn,
                        gchar **errp);

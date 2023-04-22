@@ -878,17 +878,11 @@ void save_graph_to_file (gpointer data, const char *fname)
     err = revise_plot_file(spec, pltname, fname, NULL);
 
     if (!err) {
-	gchar *plotcmd;
-
-	plotcmd = g_strdup_printf("\"%s\" \"%s\"",
-				  gretl_gnuplot_path(),
-				  pltname);
-	err = gretl_spawn(plotcmd);
-	gretl_remove(pltname);
-	g_free(plotcmd);
+	err = gnuplot_make_image(pltname);
 	if (err) {
 	    gui_errmsg(err);
 	}
+	gretl_remove(pltname);
     }
 }
 
@@ -918,7 +912,6 @@ static void graph_display_pdf (png_plot *plot)
     GPT_SPEC *spec = plot->spec;
     char pdfname[FILENAME_MAX];
     char plttmp[FILENAME_MAX];
-    gchar *plotcmd;
     int err = 0;
 
     spec->termtype = GP_TERM_PDF;
@@ -937,12 +930,8 @@ static void graph_display_pdf (png_plot *plot)
 	return;
     }
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"",
-			      gretl_gnuplot_path(),
-			      plttmp);
-    err = gretl_spawn(plotcmd);
+    err = gnuplot_make_image(plttmp);
     gretl_remove(plttmp);
-    g_free(plotcmd);
 
     if (err) {
 	gui_errmsg(err);
@@ -962,7 +951,6 @@ void saver_preview_graph (GPT_SPEC *spec, char *termstr)
 {
     char grfname[FILENAME_MAX];
     char plttmp[FILENAME_MAX];
-    gchar *plotcmd;
     int err = 0;
 
     gretl_build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
@@ -978,11 +966,8 @@ void saver_preview_graph (GPT_SPEC *spec, char *termstr)
 	return;
     }
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", gretl_gnuplot_path(),
-			      plttmp);
-    err = gretl_spawn(plotcmd);
+    err = gnuplot_make_image(plttmp);
     gretl_remove(plttmp);
-    g_free(plotcmd);
 
     if (err) {
 	gui_errmsg(err);
@@ -1011,14 +996,8 @@ int saver_save_graph (GPT_SPEC *spec, char *termstr, const char *fname)
     err = revise_plot_file(spec, plttmp, fname, termstr);
 
     if (!err) {
-	gchar *plotcmd;
-
-	plotcmd = g_strdup_printf("\"%s\" \"%s\"", gretl_gnuplot_path(),
-			      plttmp);
-	err = gretl_spawn(plotcmd);
+	err = gnuplot_make_image(plttmp);
 	gretl_remove(plttmp);
-	g_free(plotcmd);
-
 	if (err) {
 	    gui_errmsg(err);
 	}
@@ -1268,7 +1247,6 @@ static void win32_process_graph (png_plot *plot, int dest)
     GPT_SPEC *spec = plot->spec;
     char emfname[FILENAME_MAX];
     char plttmp[FILENAME_MAX];
-    gchar *plotcmd;
     int err = 0;
 
     spec->termtype = GP_TERM_EMF;
@@ -1284,11 +1262,7 @@ static void win32_process_graph (png_plot *plot, int dest)
 	return;
     }
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"",
-			      gretl_gnuplot_path(),
-			      plttmp);
-    err = gretl_spawn(plotcmd);
-    g_free(plotcmd);
+    err = gnuplot_make_image(plttmp);
     gretl_remove(plttmp);
 
     if (err) {
@@ -1376,11 +1350,7 @@ int write_plot_for_copy (int target)
     spec->scale = savescale;
 
     if (!err) {
-	gchar *plotcmd = g_strdup_printf("\"%s\" \"%s\"",
-					 gretl_gnuplot_path(),
-					 inpname);
-	err = gretl_spawn(plotcmd);
-	g_free(plotcmd);
+	err = gnuplot_make_image(inpname);
 	gretl_remove(inpname);
     }
 
@@ -4266,15 +4236,9 @@ void activate_plot_font_choice (png_plot *plot, const char *grfont)
     if (err) {
 	gretl_remove(tmpname);
     } else {
-	gchar *plotcmd;
-
 	err = gretl_rename(tmpname, plot->spec->fname);
 	if (!err) {
-	    plotcmd = g_strdup_printf("\"%s\" \"%s\"",
-				      gretl_gnuplot_path(),
-				      plot->spec->fname);
-	    err = gretl_spawn(plotcmd);
-	    g_free(plotcmd);
+	    err = gnuplot_make_image(plot->spec->fname);
 	}
     }
 
@@ -4455,10 +4419,7 @@ static int real_plot_rescale (png_plot *plot, double scale)
 
 static int regenerate_pixbuf (png_plot *plot)
 {
-    gchar *cmd = g_strdup_printf("\"%s\" \"%s\"",
-				 gretl_gnuplot_path(),
-				 plot->spec->fname);
-    int err = gretl_spawn(cmd);
+    int err = gnuplot_make_image(plot->spec->fname);
 
     if (!err) {
 	plot_invalidate_pixbuf(plot);
@@ -4467,8 +4428,6 @@ static int regenerate_pixbuf (png_plot *plot)
 	    err = 1;
 	}
     }
-
-    g_free(cmd);
 
     return err;
 }
@@ -4888,7 +4847,6 @@ static void build_plot_menu (png_plot *plot)
 
 int redisplay_edited_plot (png_plot *plot)
 {
-    gchar *plotcmd;
     FILE *fp;
     int err = 0;
 
@@ -4911,12 +4869,7 @@ int redisplay_edited_plot (png_plot *plot)
     fclose(fp);
 
     /* get gnuplot to create a new PNG graph */
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"",
-			      gretl_gnuplot_path(),
-			      plot->spec->fname);
-    err = gretl_spawn(plotcmd);
-    g_free(plotcmd);
-
+    err = gnuplot_make_image(plot->spec->fname);
     if (err) {
 	gui_errmsg(err);
 	return err;
@@ -4961,7 +4914,6 @@ static gchar *recover_plot_header (char *line, FILE *fp)
 static int repaint_png (png_plot *plot, int view)
 {
     gchar *altname = NULL;
-    gchar *plotcmd = NULL;
     int do_zoom = view == PNG_ZOOM;
     int err = 0;
 
@@ -5014,17 +4966,10 @@ static int repaint_png (png_plot *plot, int view)
 	fclose(fpin);
 	fclose(fpout);
 
-	plotcmd = g_strdup_printf("\"%s\" \"%s\"",
-				  gretl_gnuplot_path(),
-				  altname);
+	err = gnuplot_make_image(altname);
     } else {
-	plotcmd = g_strdup_printf("\"%s\" \"%s\"",
-				  gretl_gnuplot_path(),
-				  plot->spec->fname);
+	err = gnuplot_make_image(plot->spec->fname);
     }
-
-    err = gretl_spawn(plotcmd);
-    g_free(plotcmd);
 
     if (altname != NULL) {
 	gretl_remove(altname);
@@ -6012,12 +5957,7 @@ int gnuplot_show_map (gretl_bundle *mb)
 	gretl_errmsg_sprintf(_("Couldn't read '%s'"), plot->spec->fname);
 	err = E_FOPEN;
     } else {
-	gchar *buf;
-
-	buf = g_strdup_printf("\"%s\" \"%s\"", gretl_gnuplot_path(),
-			      plot->spec->fname);
-	err = gretl_spawn(buf);
-	g_free(buf);
+	err = gnuplot_make_image(plot->spec->fname);
     }
 
     if (err) {
@@ -6101,38 +6041,32 @@ void display_session_graph (const char *fname,
 			    void *session_ptr)
 {
     const char *gppath = gretl_gnuplot_path();
-    char fullname[MAXLEN];
-    gchar *plotcmd;
+    gchar *fullname = NULL;
     int err = 0;
 
     if (g_path_is_absolute(fname)) {
-	strcpy(fullname, fname);
+	fullname = g_strdup(fname);
     } else {
-	sprintf(fullname, "%s%s", gretl_dotdir(), fname);
+	fullname = gretl_make_dotpath(fname);
     }
 
 #if WINDEBUG
     fprintf(stderr, "display_session_graph:\n fullname = '%s'\n",
 	    fullname);
     fprintf(stderr, " gnuplot path = '%s'\n", gppath);
-    fprintf(stderr, " gretl_stat gives %d\n", gretl_stat(gppath, NULL));
     fprintf(stderr, " call add_png_term_to_plot\n");
 #endif
 
     err = add_png_term_to_plot(fullname);
     if (err) {
+	g_free(fullname);
 	return;
     }
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", gppath, fullname);
-    err = gretl_spawn(plotcmd);
+    err = gnuplot_make_image(fullname);
 #if WINDEBUG
-    fprintf(stderr, " gretl_spawn returned %d\n", err);
-    if (err) {
-	fprintf(stderr, "failed: '%s'\n", plotcmd);
-    }
+    fprintf(stderr, " gnuplot_make_image returned %d\n", err);
 #endif
-    g_free(plotcmd);
 
     if (err) {
 	/* display the bad plot file */
@@ -6140,6 +6074,8 @@ void display_session_graph (const char *fname,
     } else {
 	err = gnuplot_show_png(fullname, title, session_ptr, NULL);
     }
+
+    g_free(fullname);
 
     if (err) {
 	gui_errmsg(err);

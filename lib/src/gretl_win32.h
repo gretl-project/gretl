@@ -56,6 +56,8 @@ int win_run_async (const char *cmdline, const char *currdir);
 
 int gretl_spawn (const char *cmdline);
 
+int gnuplot_make_image (const char *input_fname);
+
 int gretl_shell (const char *arg, gretlopt opt, PRN *prn);
 
 int gretl_win32_pipe_output (const char *cmdline,

@@ -28,7 +28,8 @@
 #include <shlobj.h>
 #include <aclapi.h>
 
-#define CPDEBUG 1
+#define CPDEBUG 0
+#define SYNC_DEBUG 0
 #define SHELL_USE_PIPE 1
 
 static int windebug;
@@ -365,6 +366,12 @@ static int assess_exit_status (PROCESS_INFORMATION *pinfo,
     return err;
 }
 
+#if SYNC_DEBUG
+
+/* As of 2023-04-22 we're getting nothing out of wgnuplot.exe
+   using this apparatus, so it's shelved for now.
+*/
+
 static HANDLE win32_create_log_file (const gchar *fname)
 {
     SECURITY_ATTRIBUTES sa = {sizeof(sa), 0, TRUE};
@@ -402,6 +409,8 @@ static gchar *win32_read_log_file (HANDLE h, const gchar *fname)
     return ret;
 }
 
+#endif
+
 /* Run @cmdline synchronously */
 
 static int real_win_run_sync (const char *cmdline,
@@ -410,16 +419,17 @@ static int real_win_run_sync (const char *cmdline,
 {
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
-    HANDLE h = INVALID_HANDLE_VALUE;
     DWORD exitcode;
     DWORD flags;
     gunichar2 *cl16 = NULL;
     gunichar2 *cd16 = NULL;
-    gchar *logname = NULL;
     int inherit = FALSE;
     int ok, err = 0;
 
-#if CPDEBUG
+#if SYNC_DEBUG
+    gchar *logname = NULL;
+    HANDLE h;
+
     fprintf(stderr, "\nreal_win_run_sync\n");
     fprintf(stderr, " cmdline = '%s'\n", cmdline);
     logname = gretl_make_dotpath("winsync.txt");
@@ -445,12 +455,14 @@ static int real_win_run_sync (const char *cmdline,
 	flags = HIGH_PRIORITY_CLASS;
     }
 
+#if SYNC_DEBUG
     if (h != INVALID_HANDLE_VALUE) {
 	si.dwFlags |= STARTF_USESTDHANDLES;
 	si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
 	si.hStdError = h;
 	si.hStdOutput = h;
     }
+#endif
 
     ok = CreateProcessW(NULL,
 			cl16,
@@ -475,6 +487,7 @@ static int real_win_run_sync (const char *cmdline,
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
 
+#if SYNC_DEBUG
     if (h != INVALID_HANDLE_VALUE) {
 	gchar *log = win32_read_log_file(h, logname);
 
@@ -484,10 +497,11 @@ static int real_win_run_sync (const char *cmdline,
 	}
         win32_remove(logname);
     }
+    g_free(logname);
+#endif
 
     g_free(cl16);
     g_free(cd16);
-    g_free(logname);
 
 #if CPDEBUG
     fprintf(stderr, "real_win_run_sync: return err = %d\n", err);
@@ -528,6 +542,83 @@ int win_run_sync (const char *cmdline, const char *currdir)
 int gretl_spawn (const char *cmdline)
 {
     return real_win_run_sync(cmdline, NULL, 0);
+}
+
+/* Given the name of a gnuplot input file, @fname, extract
+   the name of the output file specified via "set output".
+*/
+
+static gchar *get_gp_output_filename (const char *fname)
+{
+    FILE *fp = gretl_fopen(name, "r");
+    gchar *ret = NULL;
+
+    if (fp != NULL) {
+	char line[MAXLEN];
+
+	while (fgets(line, sizeof line, fp)) {
+	    if (!strncmp(line, "set output \"", 12)) {
+		char *s = line + 12;
+		char *p = strchr(s, '"');
+
+		if (p != NULL) {
+		    ret = g_strndup(s, p - s);
+		}
+		break;
+	    }
+	}
+	fclose(fp);
+    }
+
+    return ret;
+}
+
+static int validate_plot_output_file (const char *fname)
+{
+    int ret = 1; /* OK until proved otherwise */
+    struct stat buf = {0};
+    int sval;
+
+    sval = gretl_stat(gp_output_name, &buf);
+    if (sval != 0 || buf.st_size == 0) {
+	ret = 0;
+    }
+
+    return ret;
+}
+
+/**
+ * gnuplot_make_image:
+ * @input_fname: name of input (script) file.
+ *
+ * Variant of win_run_sync() specialized for production
+ * of image files via gnuplot. We check for a non-existent
+ * or 0-byte output file.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int gnuplot_make_image (const char *input_fname)
+{
+    gchar *outname;
+    gchar *cmdline;
+    int err;
+
+    outname = get_gp_output_filename(input_fname);
+    cmdline = g_strdup_printf("\"%s\" \"%s\"",
+			      gretl_gnuplot_path(),
+			      input_fname);
+
+    err = real_win_run_sync(cmdline, NULL, 0);
+    if (!err && outname != NULL &&
+	!validate_plot_output_file(outname)) {
+	err = E_EXTERNAL;
+    }
+
+    g_free(cmdline);
+    g_free(outname);
+
+    return err;
 }
 
 /* Retrieve various special paths from the bowels of MS

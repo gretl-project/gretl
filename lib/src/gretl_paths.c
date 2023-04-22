@@ -2097,6 +2097,27 @@ static int set_gretl_workdir (const char *path)
 
 const char *gretl_gnuplot_path (void)
 {
+#ifdef WIN32
+    static int checked;
+
+    if (!checked) {
+	if (gretl_stat(paths.gnuplot) != 0) {
+	    gchar *tmp = NULL;
+
+	    fprintf(stderr, "gretl_gnuplot_path: bad value '%s'\n",
+		    paths.gnuplot);
+# ifdef PKGBUILD
+	    tmp = g_build_filename(paths.gretldir, "wguplot.exe");
+	    if (strcmp(paths.gnuplot, tmp)) {
+		strcpy(paths.gnuplot, tmp);
+	    }
+	    g_free(tmp);
+# endif
+	}
+	checked = 1;
+    }
+#endif
+
     return paths.gnuplot;
 }
 

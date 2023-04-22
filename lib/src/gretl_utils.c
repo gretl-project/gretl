@@ -2011,6 +2011,20 @@ int gretl_spawn (char *cmdline)
     return ret;
 }
 
+int gnuplot_make_image (const char *input_fname)
+{
+    gchar *cmdline;
+    int err;
+
+    cmdline = g_strdup_printf("\"%s\" \"%s\"",
+			      gretl_gnuplot_path(),
+			      input_fname);
+    err = gretl_spawn(cmdline);
+    g_free(cmdline);
+
+    return err;
+}
+
 int gretl_pipe_output (gchar **argv, gchar **envp,
                        const char *currdir, PRN *prn,
                        gchar **errp)
