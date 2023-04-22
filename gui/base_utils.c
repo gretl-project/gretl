@@ -82,9 +82,11 @@ FILE *gretl_tempfile_open (char *fname)
 {
     FILE *fp;
 
-    strcat(fname, ".XXXXXX");
-    fp = gretl_mktemp(fname, "w+");
+    if (!has_suffix(fname, ".XXXXXX")) {
+	strcat(fname, ".XXXXXX");
+    }
 
+    fp = gretl_mktemp(fname, "w+");
     if (fp == NULL) {
 	errbox(_("Couldn't open temp file"));
     }
