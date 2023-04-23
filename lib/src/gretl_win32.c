@@ -545,6 +545,8 @@ int gretl_spawn (const char *cmdline)
 
 /* Given the name of a gnuplot input file, @fname, extract
    the name of the output file specified via "set output".
+   This shouldn't be too time consuming since the line in
+   question will appear near the top of the input file.
 */
 
 static gchar *get_gp_output_filename (const char *fname)
@@ -572,6 +574,11 @@ static gchar *get_gp_output_filename (const char *fname)
     return ret;
 }
 
+/* We're doing this with wgnuplot.exe because it seems we
+   don't always get any indication that production of an
+   image file has failed.
+*/
+
 static int validate_plot_output_file (const char *fname)
 {
     int ret = 1; /* OK until proved otherwise */
@@ -592,8 +599,8 @@ static int validate_plot_output_file (const char *fname)
  * @input_fname: name of input (script) file.
  *
  * Variant of win_run_sync() specialized for production
- * of image files via gnuplot. We check for a non-existent
- * or 0-byte output file.
+ * of image files via gnuplot. We run a check for a
+ * non-existent or 0-byte output file.
  *
  * Returns: 0 on success, non-zero on failure.
  */
