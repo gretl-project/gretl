@@ -2101,13 +2101,11 @@ const char *gretl_gnuplot_path (void)
     static int checked;
 
     if (!checked) {
-	if (gretl_stat(paths.gnuplot) != 0) {
-	    gchar *tmp = NULL;
-
+	if (gretl_stat(paths.gnuplot, NULL) != 0) {
 	    fprintf(stderr, "gretl_gnuplot_path: bad value '%s'\n",
 		    paths.gnuplot);
 # ifdef PKGBUILD
-	    tmp = g_build_filename(paths.gretldir, "wguplot.exe");
+	    gchar *tmp = g_build_filename(paths.gretldir, "wguplot.exe");
 	    if (strcmp(paths.gnuplot, tmp)) {
 		strcpy(paths.gnuplot, tmp);
 	    }
