@@ -381,7 +381,6 @@ static HANDLE win32_create_log_file (const gchar *fname)
 
     err = ensure_utf16(fname, &fn16, NULL, NULL);
     if (err) {
-        fprintf(stderr, "win32_create_log_file: ensure utf16 failed\n");
 	return INVALID_HANDLE_VALUE;
     }
 
@@ -550,7 +549,7 @@ int gretl_spawn (const char *cmdline)
 
 static gchar *get_gp_output_filename (const char *fname)
 {
-    FILE *fp = gretl_fopen(name, "r");
+    FILE *fp = gretl_fopen(fname, "r");
     gchar *ret = NULL;
 
     if (fp != NULL) {
@@ -579,8 +578,9 @@ static int validate_plot_output_file (const char *fname)
     struct stat buf = {0};
     int sval;
 
-    sval = gretl_stat(gp_output_name, &buf);
+    sval = gretl_stat(fname, &buf);
     if (sval != 0 || buf.st_size == 0) {
+	fprintf(stderr, "gnuplot_make_image: no valid output\n");
 	ret = 0;
     }
 
