@@ -915,6 +915,79 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
     return dset;
 }
 
+/**
+ * gretl_dataset_from_matrices:
+ * @m1: first source matrix.
+ * @m2: second source matrix.
+ * @err: location to receive error code.
+ *
+ * Creates a gretl dataset from the side-by-side concatenation
+ * of @m1 and @m2. Storage for the values is "borrowed" from the
+ * columns of the matrices. Column names are used to label the
+ * series, if present; otherwise the labels are "v1", "v2" and so on.
+ *
+ * The two matrices must have the same number of rows. Rownames on
+ * either matrix are disregarded.
+ *
+ * Returns: pointer to new dataset on success, or NULL on failure.
+ */
+
+DATASET *gretl_dataset_from_matrices (const gretl_matrix *m1,
+				      const gretl_matrix *m2,
+				      int *err)
+{
+    DATASET *dset = NULL;
+    const char **cnames1 = NULL;
+    const char **cnames2 = NULL;
+    const char **cnames = NULL;
+    const gretl_matrix *m;
+    int i, col, nv, T;
+
+    if (gretl_is_null_matrix(m1) ||
+	gretl_is_null_matrix(m2)) {
+	*err = E_DATA;
+	return NULL;
+    } else if (m1->rows != m2->rows) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    T = m1->rows;
+    nv = m1->cols + m2->cols;
+
+    dset = create_auxiliary_dataset(nv + 1, T, OPT_B);
+    if (dset == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    cnames1 = gretl_matrix_get_colnames(m1);
+    cnames2 = gretl_matrix_get_colnames(m2);
+    m = m1;
+    cnames = cnames1;
+    col = 0;
+
+    for (i=1; i<=nv; i++) {
+	dset->Z[i] = m->val + T * col;
+	if (cnames != NULL) {
+	    if (gretl_normalize_varname(dset->varname[i], cnames[col], 0, i)) {
+		series_record_display_name(dset, i, cnames[col]);
+	    }
+	} else {
+	    sprintf(dset->varname[i], "v%d", i);
+	}
+	if (m == m1 && i == m1->cols) {
+	    m = m2;
+	    cnames = cnames2;
+	    col = 0;
+	} else {
+	    col++;
+	}
+    }
+
+    return dset;
+}
+
 int write_matrix_as_dataset (const char *fname,
 			     gretlopt opt,
 			     PRN *prn)

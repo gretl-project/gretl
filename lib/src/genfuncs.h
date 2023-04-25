@@ -273,4 +273,9 @@ gretl_matrix *felogit_rec_loglik (int t, int T,
 int *maybe_get_values_map (const double *x, int n,
 			   int *pnv, int *err);
 
+DATASET *matrix_dset_plus_lists (const gretl_matrix *m1,
+				 const gretl_matrix *m2,
+				 int **plist1, int **plist2,
+				 int *err);
+
 #endif /* GENFUNCS_H */

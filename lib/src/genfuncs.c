@@ -8758,3 +8758,51 @@ int *maybe_get_values_map (const double *x, int n, int *pnv, int *err)
 
     return ret;
 }
+
+/* Here we allow that @m1 or @m2 can be NULL. Optionally,
+   the arguments @plist1 and/or @plist2 can be filled out
+   with lists corresponding to the positions of the
+   associated matrix columns in the returned dataset.
+*/
+
+DATASET *matrix_dset_plus_lists (const gretl_matrix *m1,
+				 const gretl_matrix *m2,
+				 int **plist1, int **plist2,
+				 int *err)
+{
+    DATASET *mdset = NULL;
+
+    if (m1 != NULL && m2 != NULL) {
+	mdset = gretl_dataset_from_matrices(m1, m2, err);
+    } else if (m1 == NULL && m2 != NULL) {
+	mdset = gretl_dataset_from_matrix(m2, NULL, OPT_B, err);
+    } else if (m1 != NULL && m2 == NULL) {
+	mdset = gretl_dataset_from_matrix(m1, NULL, OPT_B, err);
+    } else {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (mdset != NULL) {
+	int i, j = 1;
+
+	if (m1 != NULL && plist1 != NULL) {
+	    int *l1 = gretl_list_new(m1->cols);
+
+	    for (i=0; i<m1->cols; i++) {
+		l1[i+1] = j++;
+	    }
+	    *plist1 = l1;
+	}
+	if (m2 != NULL && plist2 != NULL) {
+	    int *l2 = gretl_list_new(m2->cols);
+
+	    for (i=0; i<m2->cols; i++) {
+		l2[i+1] = j++;
+	    }
+	    *plist2 = l2;
+	}
+    }
+
+    return mdset;
+}

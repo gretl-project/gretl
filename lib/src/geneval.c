@@ -13070,38 +13070,69 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             }
         }
     } else if (f == F_AGGRBY) {
-        if (l->t != SERIES && l->t != LIST && !null_node(l)) {
-            node_type_error(f, 1, SERIES, l, p);
-        } else if (m->t != SERIES && m->t != LIST) {
-            node_type_error(f, 2, SERIES, m, p);
-        } else if (!null_or_string(r)) {
-            node_type_error(f, 3, STR, r, p);
-        } else {
-            const char *fncall = NULL;
-            const double *x = NULL;
-            const double *y = NULL;
-            const int *xlist = NULL;
-            const int *ylist = NULL;
+	DATASET *dset = p->dset;
+	DATASET *mdset = NULL;
+	const char *fncall = NULL;
+	const double *x = NULL;
+	const double *y = NULL;
+	int *xlist = NULL;
+	int *ylist = NULL;
+	gretl_matrix *xm = NULL;
+	gretl_matrix *ym = NULL;
+	int data_args = 1;
+	int mat_args = 0;
 
-            if (r->t == STR) {
-                fncall = r->v.str;
-            }
+	if (!null_or_string(r)) {
+	    node_type_error(f, 3, STR, r, p);
+	} else if (!null_node(r)) {
+	    fncall = r->v.str;
+	}
+	if (!p->err && !null_node(l)) {
+	    data_args++;
             if (l->t == SERIES) {
                 x = l->v.xvec;
             } else if (l->t == LIST) {
                 xlist = l->v.ivec;
-            }
+            } else if (l->t == MAT) {
+		xm = l->v.m;
+		mat_args++;
+	    } else {
+		p->err = E_TYPES;
+	    }
+	}
+	if (!p->err) {
             if (m->t == SERIES) {
                 y = m->v.xvec;
-            } else {
+            } else if (m->t == LIST) {
                 ylist = m->v.ivec;
-                p->err = aggregate_discrete_check(ylist, p->dset);
-            }
-            if (!p->err) {
-                A = aggregate_by(x, y, xlist, ylist, fncall,
-                                 p->dset, &p->err);
-            }
-        }
+            } else if (m->t == MAT) {
+		ym = m->v.m;
+		mat_args++;
+	    } else {
+		p->err = E_TYPES;
+	    }
+	}
+	if (!p->err) {
+	    if (mat_args == 1 && data_args == 2) {
+		/* matrix arguments: can't be mixed with series/list */
+		p->err = E_TYPES;
+	    } else if (mat_args > 0) {
+		/* convert to dataset (with borrowed Z) */
+		dset = mdset = matrix_dset_plus_lists(xm, ym, &xlist,
+						      &ylist, &p->err);
+	    }
+	}
+	if (!p->err && ylist != NULL) {
+	    p->err = aggregate_discrete_check(ylist, dset);
+	}
+	if (!p->err) {
+	    A = aggregate_by(x, y, xlist, ylist, fncall, dset, &p->err);
+	}
+	if (mdset != NULL) {
+	    destroy_dataset(mdset);
+	    free(xlist);
+	    free(ylist);
+	}
     } else if (f == F_SUBSTR) {
         post_process = 0;
         if (l->t != STR) {

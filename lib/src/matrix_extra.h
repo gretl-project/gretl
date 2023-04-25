@@ -83,6 +83,10 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 				    gretlopt opt,
 				    int *err);
 
+DATASET *gretl_dataset_from_matrices (const gretl_matrix *m1,
+				      const gretl_matrix *m2,
+				      int *err);
+
 int write_matrix_as_dataset (const char *fname,
 			     gretlopt opt,
 			     PRN *prn);
