@@ -5488,6 +5488,11 @@ static int broken_package_error (fnpkg *pkg)
 
 #if USE_RLIB
 
+/* Try defining and calling a trivial R function to check that
+   this functionality is actually working. FIXME: if it fails,
+   can we diagnose why exactly that happens?
+*/
+
 static int verify_libR_functionality (PRN *prn)
 {
     const char *buf =
@@ -5510,6 +5515,7 @@ static int verify_libR_functionality (PRN *prn)
         err = read_ufunc_from_xml(node, doc, NULL);
     }
     if (!err) {
+        /* @ival should be 0 on success */
         int ival = generate_int("Rlib_check_()", NULL, &err);
 
         if (!err && ival) {
