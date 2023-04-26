@@ -5486,26 +5486,77 @@ static int broken_package_error (fnpkg *pkg)
     return E_DATA;
 }
 
+#if USE_RLIB
+
+static int verify_libR_functionality (PRN *prn)
+{
+    const char *buf =
+        "<gretl-function name=\"Rlib_check_\" type=\"scalar\">\n"
+        "<code>foreign language=R\n"
+        "plusone &lt;- function(x) {\n"
+        "x + 1\n"
+        "}\n"
+        "end foreign\n"
+        "catch scalar a = R.plusone(1)\n"
+        "return $error\n"
+        "</code>\n"
+        "</gretl-function>\n";
+    xmlDocPtr doc = NULL;
+    xmlNodePtr node = NULL;
+    int err;
+
+    err = gretl_xml_read_buffer(buf, "gretl-function", &doc, &node);
+    if (!err) {
+        err = read_ufunc_from_xml(node, doc, NULL);
+    }
+    if (!err) {
+        int ival = generate_int("Rlib_check_()", NULL, &err);
+
+        if (!err && ival) {
+            fprintf(stderr, "Rlib_check_ call: return value %d\n", ival);
+            err = ival;
+        }
+    }
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+    }
+
+    if (err) {
+        pputs(prn, _("Warning: R_functions could not be enabled\n"));
+    }
+
+    return err;
+}
+
 /* For an R-dependent package that wants to define one or more R
    functions: extract the relevant lines of code from its dedicated
    R-setup function (which must be private) and send them to the R
-   library for "compilation".
+   library for "compilation". If this fails then we can't use R_lib.
 */
 
-static int package_run_R_setup (ufunc *fun)
+static int package_run_R_setup (ufunc *fun, PRN *prn)
 {
     char *buf = NULL;
-    PRN *prn = NULL;
+    PRN *fprn = NULL;
     int i, err;
 
-    /* first screen for availability of libR */
+    /* first screen for nominal availability of libR */
     err = libset_set_bool(R_FUNCTIONS, 1);
 
     if (!err) {
-	prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+        /* then check that a simple example works */
+        err = verify_libR_functionality(prn);
+        if (err) {
+            libset_set_bool(R_FUNCTIONS, 0);
+            return 1;
+        }
     }
 
-    if (prn != NULL) {
+    if (!err) {
+	fprn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+    }
+
+    if (fprn != NULL) {
         const char *s;
 
 	for (i=0; i<fun->n_lines; i++) {
@@ -5517,12 +5568,12 @@ static int package_run_R_setup (ufunc *fun)
             } else if (fun->lines[i].flags & LINE_IGNORE) {
                 continue;
             } else {
-		pputs(prn, s);
-		pputc(prn, '\n');
+		pputs(fprn, s);
+		pputc(fprn, '\n');
 	    }
 	}
-	buf = gretl_print_steal_buffer(prn);
-	gretl_print_destroy(prn);
+	buf = gretl_print_steal_buffer(fprn);
+	gretl_print_destroy(fprn);
     }
 
     if (buf != NULL) {
@@ -5533,6 +5584,8 @@ static int package_run_R_setup (ufunc *fun)
     return err;
 }
 
+#endif /* USE_RLIB */
+
 #define fn_redef_msg(s) fprintf(stderr, "Redefining function '%s'\n", s)
 
 /* When loading a private function the only real conflict would be
@@ -5540,7 +5593,7 @@ static int package_run_R_setup (ufunc *fun)
    Obviously this shouldn't happen but we'll whack it if it does.
 */
 
-static int load_private_function (fnpkg *pkg, int i)
+static int load_private_function (fnpkg *pkg, int i, PRN *prn)
 {
     ufunc *fun = pkg->priv[i];
     int j, err = 0;
@@ -5555,7 +5608,7 @@ static int load_private_function (fnpkg *pkg, int i)
 
 #if USE_RLIB
     if (fun->pkg_role == UFUN_R_SETUP) {
-	err = package_run_R_setup(fun);
+	package_run_R_setup(fun, prn);
     }
 #endif
 
@@ -5689,7 +5742,7 @@ static int load_gfn_dependencies (fnpkg *pkg, GArray *pstack)
    packages.
 */
 
-static int real_load_package (fnpkg *pkg, GArray *pstack)
+static int real_load_package (fnpkg *pkg, GArray *pstack, PRN *prn)
 {
     int i, err = 0;
 
@@ -5711,7 +5764,7 @@ static int real_load_package (fnpkg *pkg, GArray *pstack)
 
     if (!err && pkg->priv != NULL) {
 	for (i=0; i<pkg->n_priv && !err; i++) {
-	    err = load_private_function(pkg, i);
+	    err = load_private_function(pkg, i, prn);
 	}
     }
 
@@ -6199,7 +6252,7 @@ int read_session_functions_file (const char *fname)
 	if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
 	    pkg = real_read_package(doc, cur, fname, 1, &err);
 	    if (!err) {
-		err = real_load_package(pkg, NULL);
+		err = real_load_package(pkg, NULL, NULL);
 	    }
 	}
 #ifdef HAVE_MPI
@@ -6420,7 +6473,7 @@ static int load_function_package (const char *fname,
 	if (oldpkg != NULL) {
 	    real_function_package_unload(oldpkg, 1);
 	}
-	err = real_load_package(pkg, pstack);
+	err = real_load_package(pkg, pstack, prn);
     }
 
     if (err) {

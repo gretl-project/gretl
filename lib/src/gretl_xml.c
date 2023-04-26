@@ -102,6 +102,58 @@ int gretl_xml_open_doc_root (const char *fname,
     return err;
 }
 
+int gretl_xml_read_buffer (const char *buf,
+                           const char *rootname,
+                           xmlDocPtr *pdoc,
+                           xmlNodePtr *pnode)
+{
+    xmlDocPtr doc;
+    xmlNodePtr node = NULL;
+    int err = 0;
+
+    LIBXML_TEST_VERSION;
+    xmlKeepBlanksDefault(0);
+
+    *pdoc = NULL;
+    if (pnode != NULL) {
+	*pnode = NULL;
+    }
+
+    doc = xmlReadMemory(buf, strlen(buf), "include.xml", NULL, XML_PARSE_HUGE);
+    if (doc == NULL) {
+	gretl_errmsg_set(_("xmlReadMemory failed"));
+	err = 1;
+    }
+
+    if (!err && pnode != NULL) {
+	node = xmlDocGetRootElement(doc);
+	if (node == NULL) {
+	    gretl_errmsg_set(_("xmlReadMemory: empty document"));
+	    xmlFreeDoc(doc);
+	    err = 1;
+	}
+    }
+
+    if (!err && node != NULL && rootname != NULL) {
+	if (xmlStrcmp(node->name, (XUC) rootname)) {
+	    gretl_errmsg_sprintf(_("File of the wrong type, root node not %s"),
+				 rootname);
+	    fprintf(stderr, "Unexpected root node '%s'\n", (char *) node->name);
+	    xmlFreeDoc(doc);
+	    err = 1;
+	}
+    }
+
+    if (!err) {
+	*pdoc = doc;
+	if (pnode != NULL) {
+	    *pnode = node;
+	}
+    }
+
+    return err;
+}
+
 static char *compact_method_to_string (int method)
 {
     if (method == COMPACT_SUM) return "COMPACT_SUM";
