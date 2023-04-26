@@ -5692,7 +5692,7 @@ static int ksmooth_univariate (kalman *K, int dist)
 				   &vt, K->n, 1,
                                    &at, K->r, 1,
 				   &Fk, K->n, 1,
-                                   &Kk, K->r, K->r,
+                                   &Kk, K->r, K->n, /* is this right? */
 				   &Pk, K->r, K->r,
                                    &Zti, 1, K->r,
 				   &Kti, K->r, 1,
