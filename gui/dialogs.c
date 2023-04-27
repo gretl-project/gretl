@@ -2008,26 +2008,37 @@ static void panel_sample_callback (GtkSpinButton *b,
             }
         }
         pset->u2 = k;
-    } else if (w == pset->spin[2]) {
-	/* first period */
-        if (k > pset->t2) {
-            if (pset->t2 < pset->Tmax) {
-		spinset(pset->spin[3], pset->t2 + 1);
-            } else {
-                gtk_spin_button_set_value(b, --k);
+    } else if (w == pset->spin[2] || w == pset->spin[3]) {
+        /* first period, last period */
+        int zero_based = pset->tset != NULL;
+        GtkSpinButton *sibling;
+        int sibval, sibmax, sibmin;
+
+        if (w == pset->spin[2]) {
+            sibling = GTK_SPIN_BUTTON(pset->spin[3]);
+            sibval = gtk_spin_button_get_value_as_int(sibling);
+            sibmax = zero_based ? pset->Tmax - 1 : pset->Tmax;
+            if (k > sibval) {
+                if (sibval < sibmax) {
+                    gtk_spin_button_set_value(sibling, k);
+                } else {
+                    gtk_spin_button_set_value(b, --k);
+                }
             }
-        }
-        pset->t1 = k;
-    } else if (w == pset->spin[3]) {
-	/* last period */
-        if (k < pset->t1) {
-            if (pset->t1 > 1) {
-		spinset(pset->spin[2], pset->t1 - 1);
-            } else {
-                gtk_spin_button_set_value(b, ++k);
+            pset->t1 = zero_based ? k+1 : k;
+        } else {
+            sibling = GTK_SPIN_BUTTON(pset->spin[2]);
+            sibval = gtk_spin_button_get_value_as_int(sibling);
+            sibmin = zero_based ? 0 : 1;
+            if (k < sibval) {
+                if (sibval > sibmin) {
+                    gtk_spin_button_set_value(sibling, k);
+                } else {
+                    gtk_spin_button_set_value(b, ++k);
+                }
             }
+            pset->t2 = zero_based ? k+1 : k;
         }
-        pset->t2 = k;
     }
 
     N = pset->u2 - pset->u1 + 1;
@@ -2038,16 +2049,37 @@ static void panel_sample_callback (GtkSpinButton *b,
     g_free(msg);
 }
 
+static GtkWidget *panel_time_spin_button (panel_setting *pset,
+                                          DATASET *tset,
+                                          ObsButtonRole role)
+{
+    GtkWidget *w;
+
+    if (tset != NULL) {
+        int t = role == OBS_BUTTON_T1 ? tset->t1 : tset->t2;
+        GtkAdjustment *adj;
+
+        adj = (GtkAdjustment *) gtk_adjustment_new(t, 0,
+                                                   pset->Tmax - 1,
+                                                   1, tset->pd, 0);
+        w = obs_button_new(adj, pset->tset, role);
+    } else {
+        int t = role == OBS_BUTTON_T1 ? pset->t1 : pset->t2;
+
+        w = gtk_spin_button_new_with_range(1, pset->Tmax, 1);
+        gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), t);
+    }
+
+    return w;
+}
+
 static void panel_new_spinbox (panel_setting *pset,
 			       DATASET *tset)
 {
-    GtkAdjustment *adj1 = NULL;
-    GtkAdjustment *adj2 = NULL;
     GtkWidget *lbl, *vbox;
-    GtkWidget *tbl, *spin;
-    GtkWidget *hbox;
+    GtkWidget *tbl, *hbox;
     gchar *msg;
-    int i, k, N, T;
+    int i, N, T;
 
     pset->u1 = 1 + dataset->t1 / dataset->pd;
     pset->u2 = (dataset->t2 + 1) / dataset->pd;
@@ -2066,40 +2098,31 @@ static void panel_new_spinbox (panel_setting *pset,
     gtk_box_pack_start(GTK_BOX(hbox), tbl, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    /* unit and period spinners */
-    for (i=0, k=0; i<2; i++) {
-        int spinmax = (i==0)? pset->Nmax : pset->Tmax;
-        int s1 = (i==0)? pset->u1 : pset->t1;
-        int s2 = (i==0)? pset->u2 : pset->t2;
+    /* panel unit spinners */
+    lbl = gtk_label_new(_("Units"));
+    gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 0, 1, 0, 1);
+    /* first unit */
+    pset->spin[0] = gtk_spin_button_new_with_range(1, pset->Nmax, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(pset->spin[0]), pset->u1);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), pset->spin[0], 1, 2, 0, 1);
+    lbl = gtk_label_new(_("to"));
+    gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 2, 3, 0, 1);
+     /* last unit */
+    pset->spin[1] = gtk_spin_button_new_with_range(1, pset->Nmax, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(pset->spin[1]), pset->u2);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), pset->spin[1], 3, 4, 0, 1);
 
-        lbl = gtk_label_new((i==0)? _("Units") : _("Periods"));
-        gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 0, 1, i, i+1);
-	if (tset != NULL && i == 1) {
-	    adj1 = (GtkAdjustment *) gtk_adjustment_new(tset->t1, 0, tset->t2,
-							1, tset->pd, 0);
-	    spin = obs_button_new(adj1, tset, OBS_BUTTON_T1);
-	} else {
-	    spin = gtk_spin_button_new_with_range(1, spinmax, 1);
-	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), s1);
-	}
-        pset->spin[k++] = spin;
-        gtk_table_attach_defaults(GTK_TABLE(tbl), spin,
-                                  1, 2, i, i+1);
-        lbl = gtk_label_new(_("to"));
-        gtk_table_attach_defaults(GTK_TABLE(tbl), lbl,
-                                  2, 3, i, i+1);
-	if (tset != NULL && i == 1) {
-	    adj2 = (GtkAdjustment *) gtk_adjustment_new(tset->t2, 0, tset->t2,
-							1, tset->pd, 0);
-	    spin = obs_button_new(adj2, tset, OBS_BUTTON_T2);
-	} else {
-	    spin = gtk_spin_button_new_with_range(1, spinmax, 1);
-	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), s2);
-	}
-        pset->spin[k++] = spin;
-        gtk_table_attach_defaults(GTK_TABLE(tbl), spin,
-                                  3, 4, i, i+1);
-    }
+    /* panel time spinners */
+    lbl = gtk_label_new(_("Periods"));
+    gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 0, 1, 1, 2);
+    /* first period */
+    pset->spin[2] = panel_time_spin_button(pset, tset, OBS_BUTTON_T1);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), pset->spin[2], 1, 2, 1, 2);
+    lbl = gtk_label_new(_("to"));
+    gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 2, 3, 1, 2);
+    /* last period */
+    pset->spin[3] = panel_time_spin_button(pset, tset, OBS_BUTTON_T2);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), pset->spin[3], 3, 4, 1, 2);
 
     for (i=0; i<4; i++) {
         gtk_entry_set_activates_default(GTK_ENTRY(pset->spin[i]), TRUE);
@@ -2128,6 +2151,10 @@ static void prepare_panel_ts_dset (DATASET *tset)
     tset->t2 = tset->n - 1;
     ntolabel(tset->stobs, tset->t1, tset);
     ntolabel(tset->endobs, tset->t2, tset);
+#if 0
+    fprintf(stderr, "Pansamp: sd0 %g, stobs '%s', endobs '%s'\n",
+            tset->sd0, tset->stobs, tset->endobs);
+#endif
 }
 
 static void panel_sample_dialog (void)
