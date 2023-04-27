@@ -2018,7 +2018,7 @@ static void make_session_dataname (char *datname)
     }
 }
 
-#define SAVE_DEBUG 1
+#define SAVE_DEBUG 0
 
 int save_session (char *fname)
 {
