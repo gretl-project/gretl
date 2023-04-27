@@ -2570,7 +2570,6 @@ static int smpl_get_int (const char *s, DATASET *dset, int *err)
 	} else {
 	    x = generate_scalar(s, dset, err);
 	}
-
 	if (!na(x) && x < INT_MAX) {
 	    k = (int) x;
 	}
@@ -2869,7 +2868,19 @@ static int panel_time_sample (const char *start, const char *stop,
 {
     int T = dset->pd;
     int pd = dset->panel_pd;
+    int skip_t1 = 0;
+    int skip_t2 = 0;
     int err = 0;
+
+    /* allow ';' to indicate that t1 or t2 should be unchanged */
+    if (!strcmp(start, ";")) {
+	t1 = 0;
+	skip_t1 = 1;
+    }
+    if (!strcmp(stop, ";")) {
+	t2 = T-1;
+	skip_t2 = 1;
+    }
 
     if (panel_range_ok(t1, t2, T)) {
 	; /* alright */
@@ -2879,8 +2890,12 @@ static int panel_time_sample (const char *start, const char *stop,
 
 	time_series_from_panel(&tset, dset);
 	t0 = t_from_verified_aqm(tset.stobs, tset.pd);
-	t1 = obs_index_from_aqm(start, tset.pd, t0, T);
-	t2 = obs_index_from_aqm(stop, tset.pd, t0, T);
+	if (!skip_t1) {
+	    t1 = obs_index_from_aqm(start, tset.pd, t0, T);
+	}
+	if (!skip_t2) {
+	    t2 = obs_index_from_aqm(stop, tset.pd, t0, T);
+	}
 	if (!panel_range_ok(t1, t2, T)) {
 	    err = E_DATA;
 	}
@@ -2889,8 +2904,12 @@ static int panel_time_sample (const char *start, const char *stop,
 	DATASET tset = {0};
 
 	time_series_from_panel(&tset, dset);
-	t1 = calendar_obs_number(start, &tset);
-	t2 = calendar_obs_number(stop, &tset);
+	if (!skip_t1) {
+	    t1 = calendar_obs_number(start, &tset);
+	}
+	if (!skip_t2) {
+	    t2 = calendar_obs_number(stop, &tset);
+	}
 	if (!panel_range_ok(t1, t2, T)) {
 	    err = E_DATA;
 	}
@@ -2940,11 +2959,20 @@ int set_panel_sample (const char *start,
 		      ExecState *s,
 		      PRN *prn)
 {
+    gretlopt testopt = opt;
     int s1 = -1, s2 = -1;
     int err = 0;
 
-    if (incompatible_options(opt, OPT_U | OPT_X)) {
+    testopt &= ~OPT_U;
+    testopt &= ~OPT_X;
+
+    if (testopt != OPT_NONE) {
 	return E_BADOPT;
+    } else if (incompatible_options(opt, OPT_U | OPT_X)) {
+	/* cannot supply both --unit and --time in a single command */
+	return E_BADOPT;
+    } else if (start == NULL || stop == NULL) {
+	return E_PARSE;
     } else if (!dataset_is_panel(dset)) {
 	gretl_errmsg_sprintf(_("%s: inapplicable option"), print_flags(opt, SMPL));
 	return E_BADOPT;
