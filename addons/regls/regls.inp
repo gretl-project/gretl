@@ -480,7 +480,7 @@ function bundle regls_fcast (bundle *b, int t1, int t2)
    series yhat = regls_yhat(b, b.xlist)
    if t1 > b.sample_t2
       string os = "Out-of-sample "
-   elif t1 == b.sample_t2 && t2 == b.sample_t2
+   elif t1 == b.sample_t1 && t2 == b.sample_t2
       string os = "Within-sample "
    else
       # mixed?
