@@ -2967,11 +2967,13 @@ int set_panel_sample (const char *start,
     testopt &= ~OPT_X;
 
     if (testopt != OPT_NONE) {
+	/* we accept only --unit or --time here */
 	return E_BADOPT;
     } else if (incompatible_options(opt, OPT_U | OPT_X)) {
 	/* cannot supply both --unit and --time in a single command */
 	return E_BADOPT;
     } else if (start == NULL || stop == NULL) {
+	/* we must have start and stop values */
 	return E_PARSE;
     } else if (!dataset_is_panel(dset)) {
 	gretl_errmsg_sprintf(_("%s: inapplicable option"), print_flags(opt, SMPL));
@@ -2992,6 +2994,10 @@ int set_panel_sample (const char *start,
 #endif
 
     if (opt & OPT_X) {
+	/* note that an error from smpl_get_int() above is not
+	   fatal in the --time case, since we might be looking
+	   at date strings
+	*/
 	return panel_time_sample(start, stop, s1-1, s2-1, opt,
 				 dset, s, prn);
     }
