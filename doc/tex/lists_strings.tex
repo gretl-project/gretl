@@ -158,7 +158,13 @@ the ordering of list members is path-dependent.
 
 \subsection{Lists and matrices}
 
-Another way of forming a list is by assignment from a matrix.  The
+There are two ways one can think of lists and matrices being
+interchangeable: either you think of a list as a collection of
+references to series, or you may consider the rectangle of data given
+by the series that the list contains.
+
+In the former case, a list may be translated into (or created from) a
+one-dimensional matrix, that is a vector. Therefore, the
 matrix in question must be interpretable as a vector containing ID
 numbers of data series.  It may be either a row or a column
 vector, and each of its elements must have an integer part that is
@@ -169,7 +175,51 @@ matrix m = {1,2,3,4}
 list L = m
 \end{code}
 %
-The above is OK provided the data set contains at least 4 variables.
+The above is OK provided the data set contains at least 4
+variables. Conversely, the command
+%
+\begin{code}
+matrix m = L
+\end{code}
+%
+will create a row vector with the ID numbers of the series referenced
+by \texttt{L}.
+
+The latter case occurs when the matrix is assumed to contain valid
+data. To create a matrix from the list, simply assing to a matrix the
+list name surrounded by curly brackets, as in
+%
+\begin{code}
+matrix m = { L }
+\end{code}
+%
+Note the difference with the above: without the curly brackets, matrix
+\texttt{m} would have been just a vector. Also note that any row
+corresponding to one or more missing entries will be dropped, unless
+the \cmd{skip\_missing} set variable is set to \texttt{on}.
+
+For the reverse operation, gretl provides the \cmd{mat2list} function,
+which takes a matrix (say, \texttt{X}) as argument and creates new
+series as well as a list containing them.  The row dimension of
+\texttt{X} must equal either the length of the current dataset or the
+number of observations in the current sample range.
+
+The naming of the series in the returned list proceeds as
+follows. First, if the optional prefix argument is supplied, the
+series created from column $i$ of \texttt{X} is named by appending
+\texttt{i} to the given string. Otherwise, if \texttt{X} has column
+names set these names are used. Finally, if neither of the above
+conditions is satisfied, the names are \texttt{column1},
+\texttt{column2} and so on.
+
+For example,
+\begin{code}
+matrix X = mnormal($nobs, 8)
+list L = mat2list(X, "xnorm")
+\end{code}
+% $
+will add to the dataset eight full-length series named
+\texttt{xnorm1}, \texttt{xnorm2} and so on.
 
 \subsection{Querying a list}
 
