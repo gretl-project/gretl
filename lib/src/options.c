@@ -818,7 +818,7 @@ const char **get_opts_for_command (int ci, int *nopt)
     if (ci != GNUPLOT) {
 	/* common plotting options attached to GNUPLOT */
 	n += plot_output_opt_ok(ci);
-	n += plot_buffer_opt_ok(ci);
+	n += plot_outbuf_opt_ok(ci);
     }
 
     if (ci != CORR) {
@@ -862,8 +862,8 @@ const char **get_opts_for_command (int ci, int *nopt)
 	if (plot_output_opt_ok(ci)) {
 	    ret[j++] = "output";
 	}
-	if (plot_buffer_opt_ok(ci)) {
-	    ret[j++] = "buffer";
+	if (plot_outbuf_opt_ok(ci)) {
+	    ret[j++] = "outbuf";
 	}
     } else if (ci != CORR) {
 	if (cmd_plot_opt_ok(ci)) {
@@ -939,7 +939,7 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
         return 1;
     } else if (opt == OPT_U && plot_output_opt_ok(ci)) {
 	return 1;
-    } else if (opt == OPT_b && plot_buffer_opt_ok(ci)) {
+    } else if (opt == OPT_b && plot_outbuf_opt_ok(ci)) {
 	return 1;
     } else if (opt == OPT_U && cmd_plot_opt_ok(ci)) {
 	return 1;
@@ -1141,7 +1141,7 @@ static int option_parm_status (int ci, gretlopt opt)
 	} else if (cmd_plot_opt_ok(ci)) {
 	    ci = CORR;
 	}
-    } else if (opt == OPT_b && plot_buffer_opt_ok(ci)) {
+    } else if (opt == OPT_b && plot_outbuf_opt_ok(ci)) {
         ci = GNUPLOT;
     }
 
@@ -1651,7 +1651,7 @@ gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
     if (plot_output_opt_ok(ci) && !strcmp(s, "output")) {
         ci = GNUPLOT;
     }
-    if (plot_buffer_opt_ok(ci) && !strcmp(s, "buffer")) {
+    if (plot_outbuf_opt_ok(ci) && !strcmp(s, "outbuf")) {
         ci = GNUPLOT;
     }
     if (cmd_plot_opt_ok(ci) && !strcmp(s, "plot")) {
@@ -1822,10 +1822,10 @@ const char *print_flags (gretlopt oflags, int ci)
         oflags &= ~OPT_W; /* handled */
     }
 
-    if (plot_buffer_opt_ok(ci)) {
+    if (plot_outbuf_opt_ok(ci)) {
 	if (oflags & OPT_b) {
 	    parm = get_optval_string(ci, OPT_b);
-	    pprintf(flagprn, " --buffer=%s\n", parm);
+	    pprintf(flagprn, " --outbuf=%s\n", parm);
 	    oflags &= ~OPT_b; /* handled */
 	} else if (oflags & OPT_U) {
 	    parm = get_optval_string(ci, OPT_U);

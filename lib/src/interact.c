@@ -3186,6 +3186,35 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
     return err;
 }
 
+static int execute_multiplot_call (CMD *cmd, DATASET *dset,
+                                   char *line, PRN *prn)
+{
+    gretlopt opt = cmd->opt;
+    int err = 0;
+
+    if (gretl_in_gui_mode() && *cmd->savename != '\0') {
+        /* saving plot "as icon": add internal option to
+           override production of a "gpttmp" file
+        */
+        opt |= OPT_G;
+    }
+
+    if (!gretl_in_gui_mode() && getenv("CLI_NO_PLOTS")
+        && cmd->ci != END) {
+        return 0;
+    }
+
+    fprintf(stderr, "HERE should actually do multiplot\n");
+
+    return err;
+}
+
+static int gretl_multiplot_start (const char *param)
+{
+    fprintf(stderr, "HERE should start multiplot mode\n");
+    return 0;
+}
+
 static int smpl_restrict (gretlopt opt)
 {
     opt &= ~OPT_Q;
@@ -3864,6 +3893,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         }
         break;
 
+    case MULTPLOT:
+        err = gretl_multiplot_start(cmd->param);
+        break;
+
     case ADD:
     case OMIT:
         if (get_last_model_type() == GRETL_OBJ_VAR) {
@@ -4035,6 +4068,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
             err = execute_plot_call(cmd, dset, line, prn);
         } else if (!strcmp(cmd->param, "outfile")) {
             err = do_outfile_command(OPT_C, NULL, NULL, prn);
+        } else if (!strcmp(cmd->param, "multplot")) {
+            err = execute_multiplot_call(cmd, dset, line, prn);
         } else {
             err = E_PARSE;
         }

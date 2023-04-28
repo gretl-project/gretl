@@ -152,6 +152,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { MODTEST,  "modtest",  CI_ORD1 },
     { MPI,      "mpi",      CI_BLOCK },
     { MPOLS,    "mpols",    CI_LIST },
+    { MULTPLOT, "multplot", 0 },
     { NEGBIN,   "negbin",   CI_LIST },
     { NLS,      "nls",      CI_EXPR | CI_BLOCK },
     { NORMTEST, "normtest", CI_LIST | CI_LLEN1 },
@@ -3267,6 +3268,9 @@ static int check_end_command (CMD *cmd)
 	cmd->ci = OUTFILE;
 	cmd->opt = OPT_C;
 	return 0;
+    } else if (endci == MULTPLOT) {
+        /* FIXME check on current MP status */
+        return 0;
     }
 
     if (endci != cmd->context) {

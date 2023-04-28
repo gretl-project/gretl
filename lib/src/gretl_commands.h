@@ -105,6 +105,7 @@ typedef enum {
     MODTEST,
     MPI,
     MPOLS,
+    MULTPLOT,
     NEGBIN,
     NLS,
     NORMTEST,
