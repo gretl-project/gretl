@@ -3887,7 +3887,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case MULTIPLT:
-        err = gretl_multiplot_start(cmd->param);
+        err = gretl_multiplot_start(cmd->opt);
         break;
 
     case ADD:

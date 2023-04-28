@@ -20,12 +20,11 @@
 #ifndef GRETL_MULTIPLOT_H_
 #define GRETL_MULTIPLOT_H_
 
-int gretl_multiplot_start (char *param);
+int gretl_multiplot_active (void);
+
+int gretl_multiplot_start (gretlopt opt);
 
 int gretl_multiplot_add_plot (int row, int col, gchar *buf);
-
-int gretl_multiplot_get_plot (int i, int *prow, int *pcol,
-                              gchar **pbuf);
 
 int gretl_multiplot_finalize (gretlopt opt);
 

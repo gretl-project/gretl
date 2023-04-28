@@ -30,6 +30,7 @@
 #include "gretl_panel.h"
 #include "missing_private.h"
 #include "gretl_string_table.h"
+#include "gretl_multiplot.h"
 #include "uservar.h"
 #include "gretl_midas.h"
 #include "boxplots.h"
@@ -70,6 +71,7 @@ static int xwide = 0;
 static char ad_hoc_font[64];
 static char plot_buffer_name[32];
 static char plot_buffer_idx[8];
+static int plot_placement[2];
 
 typedef struct gnuplot_info_ gnuplot_info;
 
@@ -538,14 +540,33 @@ static int set_plot_buffer_name (const char *bname)
     return err;
 }
 
+static void set_plot_placement (const char *s)
+{
+    plot_placement[0] = 0;
+    plot_placement[1] = 0;
+
+    if (s != NULL) {
+	int r, c;
+
+	if (sscanf(s, "%d,%d", &r, &c) == 2 &&
+	    r > 0 && c > 0) {
+	    plot_placement[0] = r;
+	    plot_placement[1] = c;
+	}
+
+    }
+}
+
 int plot_output_to_buffer (void)
 {
-    return *plot_buffer_name != '\0';
+    return *plot_buffer_name != '\0' ||
+	gretl_multiplot_active();
 }
 
 static int make_plot_commands_buffer (const char *fname)
 {
     gchar *contents = NULL;
+    int free_contents = 1;
     GError *gerr = NULL;
     gsize size = 0;
     int err = 0;
@@ -556,6 +577,11 @@ static int make_plot_commands_buffer (const char *fname)
 	gretl_errmsg_set(gerr->message);
 	g_error_free(gerr);
 	err = E_FOPEN;
+    } else if (gretl_multiplot_active()) {
+	gretl_multiplot_add_plot(plot_placement[0],
+				 plot_placement[1],
+				 contents);
+	free_contents = 0;
     } else if (*plot_buffer_idx != '\0') {
 	gretl_array *a = get_strings_array_by_name(plot_buffer_name);
         int i = generate_int(plot_buffer_idx, NULL, &err);
@@ -571,7 +597,9 @@ static int make_plot_commands_buffer (const char *fname)
 				      buf);
     }
 
-    g_free(contents);
+    if (free_contents) {
+	g_free(contents);
+    }
     gretl_remove(fname);
 
     return err;
@@ -1873,7 +1901,7 @@ int write_plot_output_line (const char *path, FILE *fp)
 static FILE *gp_set_up_batch (char *fname,
 			      PlotType ptype,
 			      GptFlags flags,
-			      const char *optname,
+			      const char *outspec,
 			      int *err)
 {
     int fmt = GP_TERM_NONE;
@@ -1883,19 +1911,19 @@ static FILE *gp_set_up_batch (char *fname,
 	this_term_type = GP_TERM_PLT;
 	sprintf(fname, "%sgpttmp.XXXXXX", gretl_dotdir());
 	fp = gretl_mktemp(fname, "w");
-    } else if (optname != NULL) {
+    } else if (outspec != NULL) {
 	/* user gave --output=<filename> */
-	fmt = set_term_type_from_fname(optname);
+	fmt = set_term_type_from_fname(outspec);
 	if (fmt) {
 	    /* input needs processing */
-	    strcpy(gnuplot_outname, optname);
+	    strcpy(gnuplot_outname, outspec);
 	    gretl_maybe_prepend_dir(gnuplot_outname);
 	    sprintf(fname, "%sgpttmp.XXXXXX", gretl_dotdir());
 	    fp = gretl_mktemp(fname, "w");
 	} else {
 	    /* just passing gnuplot commands through */
 	    this_term_type = GP_TERM_PLT;
-	    strcpy(fname, optname);
+	    strcpy(fname, outspec);
 	    gretl_maybe_prepend_dir(fname);
 	    fp = gretl_fopen(fname, "w");
 	}
@@ -2037,6 +2065,7 @@ static int got_none_option (const char *s)
 
 static const char *plot_output_option (PlotType p, int *pci, int *err)
 {
+    int mp_mode = gretl_multiplot_active();
     int ci = plot_ci;
     const char *s;
 
@@ -2081,8 +2110,8 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 
     if (s != NULL && *s == '\0') {
 	s = NULL;
-    } else if (s == NULL) {
-	/* try for --buffer=<strname> */
+    } else if (s == NULL && !mp_mode) {
+	/* try for --outbuf=<strname> */
 	s = get_optval_string(ci, OPT_b);
 	if (s != NULL && *s == '\0') {
 	    s = NULL;
@@ -2118,7 +2147,7 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
 {
     char fname[FILENAME_MAX] = {0};
-    const char *optname = NULL;
+    const char *outspec = NULL;
     int ci, interactive = 0;
     FILE *fp = NULL;
 
@@ -2139,15 +2168,18 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
     *gnuplot_outname = '\0';
 
     /* check for --output=whatever or --buffer=whatever */
-    optname = plot_output_option(ptype, &ci, err);
+    outspec = plot_output_option(ptype, &ci, err);
     if (*err) {
 	return NULL;
     }
 
-    if (got_display_option(optname)) {
+    if (gretl_multiplot_active()) {
+	set_plot_placement(outspec);
+	interactive = 0;
+    } else if (got_display_option(outspec)) {
 	/* --output=display specified */
 	interactive = 1;
-    } else if (optname != NULL) {
+    } else if (outspec != NULL) {
 	/* --output=filename or --buffer=starvar specified */
 	interactive = 0;
     } else if (flags & GPT_ICON) {
@@ -2158,14 +2190,14 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
     }
 
 #if GP_DEBUG
-    fprintf(stderr, "optname = '%s', interactive = %d\n",
-	    optname == NULL ? "null" : optname, interactive);
+    fprintf(stderr, "outspec = '%s', interactive = %d\n",
+	    outspec == NULL ? "null" : outspec, interactive);
 #endif
 
     if (interactive) {
 	fp = gp_set_up_interactive(fname, ptype, flags, err);
     } else {
-	fp = gp_set_up_batch(fname, ptype, flags, optname, err);
+	fp = gp_set_up_batch(fname, ptype, flags, outspec, err);
     }
 
 #if GP_DEBUG
