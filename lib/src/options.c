@@ -103,8 +103,8 @@
 			    c == QLRTEST ||	\
 			    c == XCORRGM)
 
-/* --buffer (OPT_b) as attached to GNUPLOT */
-#define plot_buffer_opt_ok(c) (plot_output_opt_ok(c) || \
+/* --outbuf (OPT_b) as attached to GNUPLOT */
+#define plot_outbuf_opt_ok(c) (plot_output_opt_ok(c) || \
 			       cmd_plot_opt_ok(c))
 
 struct gretl_option {
@@ -317,7 +317,8 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_Z, "dummy", 0 },
     { GNUPLOT,  OPT_C, "control", 0 },
     { GNUPLOT,  OPT_U, "output", 2 },
-    { GNUPLOT,  OPT_b, "buffer", 2 }, /* FIXME change to "outbuf"? */
+    { GNUPLOT,  OPT_b, "outbuf", 2 },
+    { GNUPLOT,  OPT_b, "buffer", 2 }, /* compatibility alias */
     { GNUPLOT,  OPT_i, "inbuf", 2 },
     { GNUPLOT,  OPT_Y, "single-yaxis", 0 },
     { GNUPLOT,  OPT_X, "matrix", 2 },
@@ -1944,7 +1945,7 @@ int incompatible_options (gretlopt opt, gretlopt test)
     int optcount = 0;
     gretlopt o;
 
-    for (o=OPT_A; o<=OPT_b; o=o<<1) {
+    for (o=OPT_A; o<=OPT_i; o=o<<1) {
         if ((opt & o) && (test & o)) {
             optcount++;
             if (optcount > 1) {
