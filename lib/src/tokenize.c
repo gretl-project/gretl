@@ -152,7 +152,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { MODTEST,  "modtest",  CI_ORD1 },
     { MPI,      "mpi",      CI_BLOCK },
     { MPOLS,    "mpols",    CI_LIST },
-    { MULTIPLT, "multiplt", 0 },
+    { MULTIPLT, "multiplt", CI_BLOCK },
     { NEGBIN,   "negbin",   CI_LIST },
     { NLS,      "nls",      CI_EXPR | CI_BLOCK },
     { NORMTEST, "normtest", CI_LIST | CI_LLEN1 },
@@ -161,7 +161,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { OMIT,     "omit",     CI_LIST },
     { OPEN,     "open",     CI_PARM1 | CI_FNAME | CI_INFL }, /* + ODBC specials */
     { ORTHDEV,  "orthdev",  CI_LIST | CI_NOOPT },
-    { OUTFILE,  "outfile",  CI_PARM1 | CI_FNAME | CI_INFL },
+    { OUTFILE,  "outfile",  CI_PARM1 | CI_FNAME | CI_INFL | CI_BLOCK },
     { PANEL,    "panel",    CI_LIST },
     { PANPLOT,  "panplot",  CI_LIST | CI_LLEN1 | CI_EXTRA },
     { PANSPEC,  "panspec",  0 },
@@ -3278,7 +3278,7 @@ static int check_end_command (CMD *cmd)
         return 0;
     }
 
-    if (endci != cmd->context) {
+    if (endci == 0 || endci != cmd->context) {
 	gretl_errmsg_sprintf(_("end: invalid parameter '%s'"), cmd->param);
 	cmd->err = E_DATA;
     }
