@@ -116,6 +116,7 @@ typedef enum {
     PLOT_BAND,
     PLOT_HEATMAP,
     PLOT_GEOMAP,
+    PLOT_USER_MULTI,
     PLOT_TYPE_MAX
 } PlotType;
 
@@ -200,6 +201,8 @@ int write_plot_bounding_box_request (FILE *fp);
 void set_effective_plot_ci (int ci);
 
 void set_special_plot_size (float width, float height);
+
+void set_special_font_size (int fsize);
 
 int set_plotstyle (const char *style);
 

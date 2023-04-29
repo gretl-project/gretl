@@ -18,7 +18,7 @@
  */
 
 #include "libgretl.h"
-// #include "gretl_multiplot.h"
+#include "gretl_multiplot.h"
 
 typedef struct {
     int row;
@@ -26,15 +26,28 @@ typedef struct {
     gchar *buf;
 } mplot_element;
 
+typedef struct {
+    gretlopt flag;
+    int *target;
+    int min;
+    int max;
+} mplot_option;
+
 static GArray *multiplot;
-static int mp_sizes[3] = {10, 800, 600};
+static int mp_fontsize = 10;
+static int mp_width = 800;
+static int mp_height = 600;
+static int mp_rows;
+static int mp_cols;
 static int mp_collecting;
 
 static void set_multiplot_defaults (void)
 {
-    mp_sizes[0] = 10;  /* font size */
-    mp_sizes[1] = 800; /* width */
-    mp_sizes[2] = 600; /* height */
+    mp_fontsize = 10;
+    mp_width = 800;
+    mp_height = 600;
+    mp_rows = 0;
+    mp_cols = 0;
 }
 
 static void mplot_element_clear (mplot_element *element)
@@ -55,38 +68,30 @@ void gretl_multiplot_destroy (void)
     }
 }
 
+static const mplot_option mp_options[] = {
+    { OPT_F, &mp_fontsize, 4, 24 },
+    { OPT_W, &mp_width,    300, 2048 },
+    { OPT_H, &mp_height,   300, 2048 },
+    { OPT_R, &mp_rows,     1, 10 },
+    { OPT_C, &mp_cols,     1, 10 }
+};
+
 static int set_multiplot_sizes (gretlopt opt)
 {
-    int k, err = 0;
+    const mplot_option *mpo;
+    int i, k, err = 0;
 
-    if (opt & OPT_F) {
-	k = get_optval_int(MULTIPLT, OPT_F, &err);
-	if (!err && (k < 6 || k > 20)) {
-	    gretl_errmsg_set("multiplt: bad fontsize value");
-	    err = E_INVARG;
-	}
-	if (!err) {
-	    mp_sizes[0] = k;
-	}
-    }
-    if (!err && (opt & OPT_W)) {
-	k = get_optval_int(MULTIPLT, OPT_W, &err);
-	if (!err && (k < 400 || k > 2048)) {
-	    gretl_errmsg_set("multiplt: bad width value");
-	    err = E_INVARG;
-	}
-	if (!err) {
-	    mp_sizes[1] = k;
-	}
-    }
-    if (!err && (opt & OPT_H)) {
-	k = get_optval_int(MULTIPLT, OPT_H, &err);
-	if (!err && (k < 300 || k > 2048)) {
-	    gretl_errmsg_set("multiplt: bad width value");
-	    err = E_INVARG;
-	}
-	if (!err) {
-	    mp_sizes[2] = k;
+    for (i=0; i<G_N_ELEMENTS(mp_options) && !err; i++) {
+	mpo = &mp_options[i];
+	if (opt & mpo->flag) {
+	    k = get_optval_int(MULTIPLT, mpo->flag, &err);
+	    if (!err && (k < mpo->min || k > mpo->max)) {
+		gretl_errmsg_set("multiplt: bad option value");
+		err = E_INVARG;
+	    }
+	    if (!err) {
+		*mpo->target = k;
+	    }
 	}
     }
 
@@ -126,36 +131,91 @@ int gretl_multiplot_add_plot (int row, int col, gchar *buf)
 	fprintf(stderr, "gretl_multiplot_add_plot: OK\n");
         return 0;
     } else {
-	fprintf(stderr, "gretl_multiplot_add_plot: failed\n");
+	gretl_errmsg_set("gretl_multiplot_add_plot: failed");
         return E_DATA;
     }
 }
 
+static int multiplot_set_grid (int n, int *pr, int *pc)
+{
+    int nr = *pr;
+    int nc = *pc;
+    int err = 0;
+
+    if (nr == 0 && nc == 0) {
+	/* fully automatic grid */
+	*pr = ceil(sqrt((double) n));
+	*pc = ceil((double) n / *pr);
+    } else if (nr == 0) {
+	/* automatic rows */
+	*pr = ceil((double) n / nc);
+    } else if (nc == 0) {
+	/* automatic cols */
+	*pc = ceil((double) n / nr);
+    } else if (nr * nc < n) {
+	gretl_errmsg_sprintf("Specified grid (%d by %d) is too small "
+			     "for %d sub-plots", nr, nc, n);
+	err = E_INVARG;
+    } else if (nr * nc > n) {
+	int ar = ceil(sqrt((double) n));
+	int ac = ceil((double) n / ar);
+
+	if (nr * nc > ar * ac) {
+	    gretl_errmsg_sprintf("Specified grid (%d by %d) is too big "
+				 "for %d sub-plots", nr, nc, n);
+	    err = E_INVARG;
+	}
+    }
+
+    fprintf(stderr, "multiplot grid: %d x %d, err = %d\n", *pr, *pc, err);
+
+    return err;
+}
+
 int gretl_multiplot_finalize (gretlopt opt)
 {
-    mp_collecting = 0;
+    int np, err = 0;
+    int rows = 0;
+    int cols = 0;
 
-    if (multiplot != NULL) {
-	const char *s = get_optval_string(MULTIPLT, OPT_U);
+    if (multiplot == NULL) {
+	gretl_errmsg_set("end multiplot: multiplot not started");
+	return E_DATA;
+    }
+
+    mp_collecting = 0;
+    np = multiplot->len;
+    if (np > 0) {
+	err = multiplot_set_grid(np, &rows, &cols);
+    }
+
+    if (np > 0 && !err) {
 	mplot_element *element;
+	FILE *fp = NULL;
 	int i;
 
-	if (s != NULL) {
-	    fprintf(stderr, "HERE gretl_multiplot_finalize, output='%s'\n", s);
-	}
+	set_special_plot_size(mp_width, mp_height);
+	set_special_font_size(mp_fontsize);
+	fp = open_plot_input_file(PLOT_USER_MULTI, 0, &err);
 
-	/* FIXME reference mp_sizes */
-
-        fprintf(stderr, "HERE gretl_multiplot_finalize, OK\n");
-	for (i=0; i<multiplot->len; i++) {
-	    element = &g_array_index(multiplot, mplot_element, i);
-	    fprintf(stderr, "plot %d: r %d, c %d, bufstart '%.32s'\n",
-		    i, element->row, element->col, element->buf);
+	if (!err) {
+	    fprintf(fp, "\nset multiplot layout %d,%d rowsfirst\n", rows, cols);
+	    gretl_push_c_numeric_locale();
+	    for (i=0; i<multiplot->len; i++) {
+		fprintf(fp, "\n# multiplot: subplot %d\n", i);
+		if (i > 0) {
+		    fputs("reset\n\n", fp);
+		}
+		element = &g_array_index(multiplot, mplot_element, i);
+		fputs(element->buf, fp);
+	    }
+	    gretl_pop_c_numeric_locale();
+	    fputs("unset multiplot\n", fp);
+	    err = finalize_plot_input_file(fp);
 	}
-        gretl_multiplot_destroy();
-        return 0;
-    } else {
-        fprintf(stderr, "HERE gretl_multiplot_finalize, no plots\n");
-        return E_DATA;
     }
+
+    gretl_multiplot_destroy();
+
+    return err;
 }

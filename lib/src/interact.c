@@ -3114,13 +3114,15 @@ int is_plotting_command (CMD *cmd)
 {
     if (GRAPHING_COMMAND(cmd->ci)) {
         return cmd->ci;
-    } else if (cmd->ci == END &&
-               cmd->param != NULL &&
-               !strcmp(cmd->param, "plot")) {
-        return PLOT;
-    } else {
-        return 0;
+    } else if (cmd->ci == END && cmd->param != NULL) {
+	int ci = gretl_command_number(cmd->param);
+
+	if (ci == PLOT || ci == MULTIPLT) {
+	    return ci;
+	}
     }
+
+    return 0;
 }
 
 static void maybe_schedule_graph_callback (ExecState *s)
@@ -3192,12 +3194,14 @@ static int execute_multiplot_call (CMD *cmd, PRN *prn)
     gretlopt opt = cmd->opt;
     int err = 0;
 
+#if 0 /* maybe try to enable this? */
     if (gretl_in_gui_mode() && *cmd->savename != '\0') {
         /* saving multiplot "as icon": add internal option to
            override production of a "gpttmp" file
         */
         opt |= OPT_G;
     }
+#endif
 
     if (!gretl_in_gui_mode() && getenv("CLI_NO_PLOTS")) {
         return 0;

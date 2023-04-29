@@ -1039,6 +1039,45 @@ static void maybe_set_small_font (int nplots)
     gp_small_font_size = (nplots > 4)? 6 : 0;
 }
 
+/* apparatus for plots at custom sizes (e.g. maps) */
+
+static float special_width;
+static float special_height;
+static int special_fontsize;
+
+void set_special_plot_size (float width, float height)
+{
+    special_width = width;
+    special_height = height;
+}
+
+void set_special_font_size (int fsize)
+{
+    special_fontsize = fsize;
+}
+
+static void clear_special_plot_size (void)
+{
+    special_width = special_height = 0;
+}
+
+static void clear_special_font_size (void)
+{
+    special_fontsize = 0;
+}
+
+static int special_plot_size_is_set (void)
+{
+    return special_width > 0 && special_height > 0;
+}
+
+static int special_font_size_is_set (void)
+{
+    return special_fontsize > 0;
+}
+
+/* end special size apparatus */
+
 static void write_png_font_string (char *fstr,
 				   char *ad_hoc_fontspec,
 				   PlotType ptype,
@@ -1068,13 +1107,18 @@ static void write_png_font_string (char *fstr,
 	int nf, fsize = 0;
 
 	nf = split_graph_fontspec(grfont, fname, &fsize);
-	if (nf == 2) {
+
+	if (special_font_size_is_set()) {
+	    fsize = special_fontsize;
+	} else if (nf == 2) {
 	    if (maybe_big_multiplot(ptype) && gp_small_font_size > 0) {
 		fsize = gp_small_font_size;
 	    }
 	    if (scale > 1.0) {
 		fsize = round(scale * fsize);
 	    }
+	}
+	if (fsize > 0 && fsize < 100) {
 	    sprintf(fstr, " font \"%s,%d\"", fname, fsize);
 	} else if (nf == 1) {
 	    sprintf(fstr, " font \"%s\"", fname);
@@ -1082,8 +1126,9 @@ static void write_png_font_string (char *fstr,
 	if (adhoc) {
 	    strcpy(ad_hoc_fontspec, grfont);
 	}
-	/* ensure this setting doesn't outstay its welcome */
+	/* ensure these settings don't outstay their welcome */
 	ad_hoc_font[0] = '\0';
+	clear_special_font_size();
     }
 }
 
@@ -1352,37 +1397,14 @@ static int do_plot_bounding_box (void)
     return err;
 }
 
-/* apparatus for plots at custom sizes (e.g. maps) */
-
-static float special_width;
-static float special_height;
-
-void set_special_plot_size (float width, float height)
-{
-    special_width = width;
-    special_height = height;
-}
-
-static void clear_special_size (void)
-{
-    special_width = special_height = 0;
-}
-
-static int special_size_is_set (void)
-{
-    return special_width > 0 && special_height > 0;
-}
-
-/* end special size apparatus */
-
 static void maybe_set_eps_pdf_dims (char *s, PlotType ptype, GptFlags flags)
 {
     double w = 0, h = 0;
 
-    if (special_size_is_set()) {
+    if (special_plot_size_is_set()) {
 	w = (5.0 * special_width) / GP_WIDTH;
 	h = (3.5 * special_height) / GP_HEIGHT;
-	clear_special_size();
+	clear_special_plot_size();
     } else if (flags & GPT_LETTERBOX) {
 	/* for time series */
 	w = (5.0 * GP_LB_WIDTH) / GP_WIDTH;
@@ -1475,10 +1497,10 @@ static void write_png_size_string (char *s, PlotType ptype,
 {
     int w = GP_WIDTH, h = GP_HEIGHT;
 
-    if (special_size_is_set()) {
+    if (special_plot_size_is_set()) {
 	w = (int) special_width;
 	h = (int) special_height;
-	clear_special_size();
+	clear_special_plot_size();
     } else if (flags & GPT_LETTERBOX) {
 	/* time series plots */
 	w = GP_LB_WIDTH;
@@ -1534,7 +1556,6 @@ static char *var_term_line (char *term_line, int ptype, GptFlags flags)
 
     sprintf(term_line, "set term %s%s%s noenhanced",
 	    varterm, font_string, size_string);
-
     append_gp_encoding(term_line);
 
     return term_line;
@@ -1558,7 +1579,6 @@ static char *real_png_term_line (char *term_line,
 
     sprintf(term_line, "set term pngcairo%s%s noenhanced",
 	    font_string, size_string);
-
     append_gp_encoding(term_line);
 
     if (*ad_hoc_fontspec != '\0') {
@@ -1701,11 +1721,11 @@ static char *gretl_emf_term_line (char *term_line,
     *font_string = '\0';
     write_emf_font_string(font_string);
 
-    if (special_size_is_set()) {
+    if (special_plot_size_is_set()) {
 	size_string = g_strdup_printf("size %d,%d ",
 				      (int) special_width,
 				      (int) special_height);
-	clear_special_size();
+	clear_special_plot_size();
     }
 
     if (flags & GPT_MONO) {
@@ -1816,7 +1836,8 @@ static void print_term_string (int ttype, PlotType ptype,
 	fprintf(fp, "%s\n", term_line);
 	if (flags & GPT_MONO) {
 	    fputs("set mono\n", fp);
-	} else {
+	} else if (!gretl_multiplot_active()) {
+	    /* HERE is this right? */
 	    write_plot_line_styles(ptype, fp);
 	}
     }
@@ -1943,7 +1964,7 @@ static FILE *gp_set_up_batch (char *fname,
 	    /* write terminal/style/output lines */
 	    print_term_string(fmt, ptype, flags, fp);
 	    write_plot_output_line(gnuplot_outname, fp);
-	} else {
+	} else if (1 /*!gretl_multiplot_active()*/) {
 	    /* just write style lines */
 	    write_plot_line_styles(ptype, fp);
 	}
@@ -2104,6 +2125,8 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 	ci = CORR;
     } else if (p == PLOT_CUSUM) {
 	ci = CUSUM;
+    } else if (p == PLOT_USER_MULTI) {
+	ci = MULTIPLT;
     }
 
     s = get_optval_string(ci, OPT_U);

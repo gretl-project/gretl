@@ -452,6 +452,8 @@ struct gretl_option gretl_opts[] = {
     { MULTIPLT, OPT_F, "fontsize", 2 },
     { MULTIPLT, OPT_W, "width", 2 },
     { MULTIPLT, OPT_H, "height", 2 },
+    { MULTIPLT, OPT_R, "rows", 2 },
+    { MULTIPLT, OPT_C, "cols", 2 },
     { MULTIPLT, OPT_U, "output", 2 },
     { NEGBIN,   OPT_G, "opg", 0 },
     { NEGBIN,   OPT_M, "model1", 0 },
