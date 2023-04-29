@@ -3192,7 +3192,6 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
 static int execute_multiplot_call (CMD *cmd, PRN *prn)
 {
     gretlopt opt = cmd->opt;
-    int err = 0;
 
 #if 0 /* maybe try to enable this? */
     if (gretl_in_gui_mode() && *cmd->savename != '\0') {
@@ -3207,9 +3206,7 @@ static int execute_multiplot_call (CMD *cmd, PRN *prn)
         return 0;
     }
 
-    err = gretl_multiplot_finalize(opt);
-
-    return err;
+    return gretl_multiplot_finalize(opt);
 }
 
 static int smpl_restrict (gretlopt opt)

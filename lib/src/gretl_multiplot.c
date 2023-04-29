@@ -111,7 +111,6 @@ int gretl_multiplot_start (gretlopt opt)
 	if (!err) {
 	    multiplot = g_array_new(FALSE, FALSE, sizeof(mplot_element));
 	    g_array_set_clear_func(multiplot, (GDestroyNotify) mplot_element_clear);
-	    fprintf(stderr, "gretl_multiplot_start: OK\n");
 	    mp_collecting = 1;
 	}
     } else {
@@ -128,7 +127,6 @@ int gretl_multiplot_add_plot (int row, int col, gchar *buf)
         mplot_element element = {row, col, buf};
 
         g_array_append_val(multiplot, element);
-	fprintf(stderr, "gretl_multiplot_add_plot: OK\n");
         return 0;
     } else {
 	gretl_errmsg_set("gretl_multiplot_add_plot: failed");
@@ -199,12 +197,12 @@ int gretl_multiplot_finalize (gretlopt opt)
 	fp = open_plot_input_file(PLOT_USER_MULTI, 0, &err);
 
 	if (!err) {
-	    fprintf(fp, "\nset multiplot layout %d,%d rowsfirst\n", rows, cols);
+	    fprintf(fp, "set multiplot layout %d,%d rowsfirst\n", rows, cols);
 	    gretl_push_c_numeric_locale();
 	    for (i=0; i<multiplot->len; i++) {
-		fprintf(fp, "\n# multiplot: subplot %d\n", i);
+		fprintf(fp, "# multiplot: subplot %d\n", i);
 		if (i > 0) {
-		    fputs("reset\n\n", fp);
+		    fputs("reset\n", fp);
 		}
 		element = &g_array_index(multiplot, mplot_element, i);
 		fputs(element->buf, fp);

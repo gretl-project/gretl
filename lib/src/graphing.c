@@ -154,6 +154,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_BAND,           "band plot" },
     { PLOT_HEATMAP,        "heatmap" },
     { PLOT_GEOMAP,         "geoplot" },
+    { PLOT_USER_MULTI,     "user-multi" },
     { PLOT_TYPE_MAX,       NULL }
 };
 
@@ -1836,8 +1837,7 @@ static void print_term_string (int ttype, PlotType ptype,
 	fprintf(fp, "%s\n", term_line);
 	if (flags & GPT_MONO) {
 	    fputs("set mono\n", fp);
-	} else if (!gretl_multiplot_active()) {
-	    /* HERE is this right? */
+	} else if (ptype != PLOT_USER_MULTI) {
 	    write_plot_line_styles(ptype, fp);
 	}
     }
@@ -1964,7 +1964,7 @@ static FILE *gp_set_up_batch (char *fname,
 	    /* write terminal/style/output lines */
 	    print_term_string(fmt, ptype, flags, fp);
 	    write_plot_output_line(gnuplot_outname, fp);
-	} else if (1 /*!gretl_multiplot_active()*/) {
+	} else if (ptype != PLOT_USER_MULTI) {
 	    /* just write style lines */
 	    write_plot_line_styles(ptype, fp);
 	}
@@ -2040,7 +2040,9 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 #endif
 	}
 	write_plot_type_string(ptype, flags, fp);
-	write_plot_line_styles(ptype, fp);
+	if (ptype != PLOT_USER_MULTI) {
+	    write_plot_line_styles(ptype, fp);
+	}
     }
 
     return fp;

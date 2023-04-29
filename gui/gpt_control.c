@@ -1424,7 +1424,8 @@ static int get_gpt_marker (const char *line, char *label,
 		      p == PLOT_ELLIPSE || \
 		      p == PLOT_3D || \
 		      p == PLOT_HEATMAP || \
-		      p == PLOT_GEOMAP)
+		      p == PLOT_GEOMAP || \
+		      p == PLOT_USER_MULTI)
 
 /* graphs where we don't attempt to find data coordinates */
 
@@ -1961,6 +1962,10 @@ static void fix_old_roots_plot (GPT_SPEC *spec)
 static int unhandled_gp_line_error (const char *s)
 {
     int n = strlen(s);
+
+    if (string_is_blank(s)) {
+	return 0;
+    }
 
     if (s[n-1] == '\n') {
 	char *tmp = gretl_strndup(s, n-1);
