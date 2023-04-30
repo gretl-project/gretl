@@ -89,7 +89,8 @@
 			       c == PANPLOT ||	\
 			       c == QQPLOT ||	\
 			       c == RMPLOT ||	\
-			       c == SCATTERS)
+			       c == SCATTERS || \
+			       c == MULTIPLT)
 
 /* --plot (OPT_U) as attached to CORR */
 #define cmd_plot_opt_ok(c) (c == CORR ||	\
@@ -1657,8 +1658,9 @@ gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
     if (plot_output_opt_ok(ci) && !strcmp(s, "output")) {
         ci = GNUPLOT;
     }
-    if (plot_outbuf_opt_ok(ci) && !strcmp(s, "outbuf")) {
-        ci = GNUPLOT;
+    if (plot_outbuf_opt_ok(ci) && (!strcmp(s, "outbuf") ||
+				   !strcmp(s, "buffer"))) {
+	ci = GNUPLOT;
     }
     if (cmd_plot_opt_ok(ci) && !strcmp(s, "plot")) {
         ci = CORR;
