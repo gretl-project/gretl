@@ -1150,6 +1150,8 @@ static gchar *write_other_font_string (int stdsize)
 	    fstr = g_strdup_printf("%s,%d", fname, stdsize);
 	}
 	ad_hoc_font[0] = '\0';
+    } else if (special_font_size_is_set()) {
+	fstr = g_strdup_printf("sans,%d", special_fontsize);
     } else {
 	fstr = g_strdup_printf("sans,%d", stdsize);
     }

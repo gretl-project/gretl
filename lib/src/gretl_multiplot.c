@@ -17,6 +17,10 @@
  *
  */
 
+/* Support for the built-in "plotgrid" command for producing
+   multiple plots.
+*/
+
 #include "libgretl.h"
 #include "gretl_multiplot.h"
 
