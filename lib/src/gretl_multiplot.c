@@ -165,8 +165,6 @@ static int multiplot_set_grid (int n, int *pr, int *pc)
 	}
     }
 
-    fprintf(stderr, "multiplot grid: %d x %d, err = %d\n", *pr, *pc, err);
-
     return err;
 }
 

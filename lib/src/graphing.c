@@ -2257,6 +2257,8 @@ int gnuplot_graph_wanted (PlotType ptype, gretlopt opt)
     } else if (optname != NULL) {
 	/* --plot=display or --plot=fname specified */
 	ret = 1;
+    } else if (gretl_multiplot_active()) {
+	ret = 1;
     } else {
 	/* defaults */
 	ret = !gretl_in_batch_mode();
