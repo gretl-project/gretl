@@ -116,7 +116,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { MODTEST,  "modtest" },
     { MPI,      "mpi" },
     { MPOLS,    "mpols" },
-    { MULTIPLT, "multiplt" },
+    { PLOTGRID, "plotgrid" },
     { NEGBIN,   "negbin" },
     { NLS,      "nls" },
     { NORMTEST, "normtest" },

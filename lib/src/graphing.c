@@ -2128,7 +2128,7 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
     } else if (p == PLOT_CUSUM) {
 	ci = CUSUM;
     } else if (p == PLOT_USER_MULTI) {
-	ci = MULTIPLT;
+	ci = PLOTGRID;
     }
 
     s = get_optval_string(ci, OPT_U);

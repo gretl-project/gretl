@@ -90,7 +90,7 @@
 			       c == QQPLOT ||	\
 			       c == RMPLOT ||	\
 			       c == SCATTERS || \
-			       c == MULTIPLT)
+			       c == PLOTGRID)
 
 /* --plot (OPT_U) as attached to CORR */
 #define cmd_plot_opt_ok(c) (c == CORR ||	\
@@ -450,12 +450,12 @@ struct gretl_option gretl_opts[] = {
     { MODELTAB, OPT_O, "output", 2 },
     { MODELTAB, OPT_C, "complete", 0 },
     { MPOLS,    OPT_S, "simple-print", 0 },
-    { MULTIPLT, OPT_F, "fontsize", 2 },
-    { MULTIPLT, OPT_W, "width", 2 },
-    { MULTIPLT, OPT_H, "height", 2 },
-    { MULTIPLT, OPT_R, "rows", 2 },
-    { MULTIPLT, OPT_C, "cols", 2 },
-    { MULTIPLT, OPT_U, "output", 2 },
+    { PLOTGRID, OPT_F, "fontsize", 2 },
+    { PLOTGRID, OPT_W, "width", 2 },
+    { PLOTGRID, OPT_H, "height", 2 },
+    { PLOTGRID, OPT_R, "rows", 2 },
+    { PLOTGRID, OPT_C, "cols", 2 },
+    { PLOTGRID, OPT_U, "output", 2 },
     { NEGBIN,   OPT_G, "opg", 0 },
     { NEGBIN,   OPT_M, "model1", 0 },
     { NEGBIN,   OPT_R, "robust", 0 },

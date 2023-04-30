@@ -84,9 +84,9 @@ static int set_multiplot_sizes (gretlopt opt)
     for (i=0; i<G_N_ELEMENTS(mp_options) && !err; i++) {
 	mpo = &mp_options[i];
 	if (opt & mpo->flag) {
-	    k = get_optval_int(MULTIPLT, mpo->flag, &err);
+	    k = get_optval_int(PLOTGRID, mpo->flag, &err);
 	    if (!err && (k < mpo->min || k > mpo->max)) {
-		gretl_errmsg_set("multiplt: bad option value");
+		gretl_errmsg_set("plotgrid: bad option value");
 		err = E_INVARG;
 	    }
 	    if (!err) {

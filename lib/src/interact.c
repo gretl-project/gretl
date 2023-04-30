@@ -3117,7 +3117,7 @@ int is_plotting_command (CMD *cmd)
     } else if (cmd->ci == END && cmd->param != NULL) {
 	int ci = gretl_command_number(cmd->param);
 
-	if (ci == PLOT || ci == MULTIPLT) {
+	if (ci == PLOT || ci == PLOTGRID) {
 	    return ci;
 	}
     }
@@ -3887,7 +3887,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         }
         break;
 
-    case MULTIPLT:
+    case PLOTGRID:
         err = gretl_multiplot_start(cmd->opt);
         break;
 
@@ -4062,7 +4062,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
             err = execute_plot_call(cmd, dset, line, prn);
         } else if (!strcmp(cmd->param, "outfile")) {
             err = do_outfile_command(OPT_C, NULL, NULL, prn);
-        } else if (!strcmp(cmd->param, "multiplt")) {
+        } else if (!strcmp(cmd->param, "plotgrid")) {
             err = execute_multiplot_call(cmd, prn);
         } else {
             err = E_PARSE;
