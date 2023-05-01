@@ -606,12 +606,17 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
 \item[\texttt{inlined}:] boolean, to have the polygon data written
   directly into the \textsf{gnuplot} file. Default: false, the data
   are read from a separate file.
-\item[\texttt{keypos}:] string, specifying the position of the key for discrete
-  plot colors (relevant only when plotting qualitative data; see
-  Section~\ref{sec:qualitative}).  Usage takes the form of two words:
-  \texttt{left}, \texttt{right} or \texttt{center} along with \texttt{top},
-  \texttt{bottom} or \texttt{center} (in either order). For example,
-  \verb|keypos="top left"|. The default position is bottom right.
+\item[\texttt{keypos}:] string, specifying the position of the key for
+  discrete plot colors (relevant only when plotting qualitative data;
+  see Section~\ref{sec:qualitative}).  This string is passed directly
+  as an argument to the gnuplot \cmd{set key} command; therefore, any
+  valid string should work. However, the most common usage takes the
+  form of two words: \texttt{left}, \texttt{right} or \texttt{center}
+  along with \texttt{top}, \texttt{bottom} or \texttt{center} (in
+  either order). These two words can be preceded by \texttt{outside}
+  for putting the key outside the plot area. For example,
+  \verb|keypos="bottom center"| or \verb|keypos="outside top left"|.
+  The default position is bottom right.
 \item[\texttt{linecolor}:] string, naming the color in which to draw
   the borders of the regions. By default this is white if a payload is
   plotted, black if only outlines are shown.
@@ -769,6 +774,8 @@ strings mycolors = defarray("#D22532", "#244999")
 strings zlabels = defarray("Republican", "Democratic")
 opts.palette = "mycolors,zlabels"
 \end{code}
+The position of the legend can be adjusted by using the \cmd{keypos}
+option (see Section \ref{sec:opts}).
 
 Examples of maps showing qualitative data are provided by the scripts
 \texttt{swiss-langs.inp} and \texttt{us-2020.inp}. You can find these
@@ -796,6 +803,7 @@ adjust the strings but use the default colors.
   and translated strings.}
 \label{fig:swiss}
 \end{figure}
+
 
 \section{Maps via the GUI}
 \label{sec:gui}
