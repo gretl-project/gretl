@@ -1815,10 +1815,11 @@ char *get_string_by_name (const char *name)
 {
     user_var *u = NULL;
 
-    if (name != NULL) {
-        u = get_user_var_of_type_by_name(name, GRETL_TYPE_STRING);
+    if (name == NULL) {
+        return NULL;
     }
 
+    u = get_user_var_of_type_by_name(name, GRETL_TYPE_STRING);
     if (u != NULL) {
         return (char *) u->ptr;
     } else {

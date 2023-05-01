@@ -120,6 +120,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { GMM,      "gmm",      CI_EXPR | CI_BLOCK },
     { GNUPLOT,  "gnuplot",  CI_LIST | CI_EXTRA | CI_INFL },
     { GRAPHPG,  "graphpg",  CI_PARM1 | CI_PARM2 }, /* params optional */
+    { GRIDPLOT, "gridplot", CI_BLOCK },
     { HECKIT,   "heckit",   CI_LIST },
     { HELP,     "help",     CI_PARM1 },
     { HFPLOT,   "hfplot",   CI_LIST | CI_EXTRA },
@@ -152,7 +153,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { MODTEST,  "modtest",  CI_ORD1 },
     { MPI,      "mpi",      CI_BLOCK },
     { MPOLS,    "mpols",    CI_LIST },
-    { GRIDPLOT, "gridplot", CI_BLOCK },
     { NEGBIN,   "negbin",   CI_LIST },
     { NLS,      "nls",      CI_EXPR | CI_BLOCK },
     { NORMTEST, "normtest", CI_LIST | CI_LLEN1 },

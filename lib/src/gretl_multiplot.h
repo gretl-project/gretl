@@ -28,4 +28,6 @@ int gretl_multiplot_add_plot (int row, int col, gchar *buf);
 
 int gretl_multiplot_finalize (gretlopt opt);
 
+int gretl_multiplot_revise (gretlopt opt);
+
 #endif /* GRETL_MULTIPLOT_H_ */
