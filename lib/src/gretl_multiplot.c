@@ -17,7 +17,7 @@
  *
  */
 
-/* Support for the built-in "plotgrid" command for producing
+/* Support for the built-in "gridplot" command for producing
    multiple plots.
 */
 
@@ -88,9 +88,9 @@ static int set_multiplot_sizes (gretlopt opt)
     for (i=0; i<G_N_ELEMENTS(mp_options) && !err; i++) {
 	mpo = &mp_options[i];
 	if (opt & mpo->flag) {
-	    k = get_optval_int(PLOTGRID, mpo->flag, &err);
+	    k = get_optval_int(GRIDPLOT, mpo->flag, &err);
 	    if (!err && (k < mpo->min || k > mpo->max)) {
-		gretl_errmsg_set("plotgrid: bad option value");
+		gretl_errmsg_set("gridplot: bad option value");
 		err = E_INVARG;
 	    }
 	    if (!err) {

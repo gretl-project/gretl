@@ -152,7 +152,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { MODTEST,  "modtest",  CI_ORD1 },
     { MPI,      "mpi",      CI_BLOCK },
     { MPOLS,    "mpols",    CI_LIST },
-    { PLOTGRID, "plotgrid", CI_BLOCK },
+    { GRIDPLOT, "gridplot", CI_BLOCK },
     { NEGBIN,   "negbin",   CI_LIST },
     { NLS,      "nls",      CI_EXPR | CI_BLOCK },
     { NORMTEST, "normtest", CI_LIST | CI_LLEN1 },
@@ -1331,9 +1331,9 @@ static int check_command_options (CMD *c)
     } else if (c->ci == PKG && (c->opt & OPT_B)) {
 	handle_legacy_install_options(c);
     } else if (c->ci == END && c->ntoks > 1) {
-        if (gretl_command_number(c->toks[1].s) == PLOTGRID) {
+        if (gretl_command_number(c->toks[1].s) == GRIDPLOT) {
             /* support the --output option */
-            c->ci = PLOTGRID;
+            c->ci = GRIDPLOT;
         }
     }
 
@@ -3273,7 +3273,7 @@ static int check_end_command (CMD *cmd)
 	cmd->ci = OUTFILE;
 	cmd->opt = OPT_C;
 	return 0;
-    } else if (endci == PLOTGRID) {
+    } else if (endci == GRIDPLOT) {
         /* special case: no "context" required */
         return 0;
     }

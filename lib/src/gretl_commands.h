@@ -105,7 +105,7 @@ typedef enum {
     MODTEST,
     MPI,
     MPOLS,
-    PLOTGRID,
+    GRIDPLOT,
     NEGBIN,
     NLS,
     NORMTEST,
@@ -242,7 +242,7 @@ typedef enum {
 			     c == CORR || \
 			     c == CUSUM || \
 			     c == PANPLOT || \
-			     c == PLOTGRID)
+			     c == GRIDPLOT)
 	
 int gretl_command_number (const char *s);
 
