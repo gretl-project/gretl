@@ -1,8 +1,8 @@
 author = Allin Cottrell and Riccardo "Jack" Lucchetti
 email = cottrell@wfu.edu
 tags = C81 C88
-version = 1.0
-date = 2023-01-19
+version = 1.1
+date = 2023-05-01
 description = geospatial plotting
 public = geoplot_describe_json geoplot_translate_feature \
  geoplot_set_properties geoplot_seek_feature geoplot_simplify

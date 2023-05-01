@@ -27,7 +27,7 @@
 {\noindent\hrulefill\\[-10pt]}
 {\medskip}
 
-\title{geoplot: cartography in gretl\\ version 1.0}
+\title{geoplot: cartography in gretl\\ version 1.1}
 \author{Allin Cottrell and Jack Lucchetti}
 
 \begin{document}
@@ -606,6 +606,12 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
 \item[\texttt{inlined}:] boolean, to have the polygon data written
   directly into the \textsf{gnuplot} file. Default: false, the data
   are read from a separate file.
+\item[\texttt{keypos}:] string, specifying the position of the key for discrete
+  plot colors (relevant only when plotting qualitative data; see
+  Section~\ref{sec:qualitative}).  Usage takes the form of two words:
+  \texttt{left}, \texttt{right} or \texttt{center} along with \texttt{top},
+  \texttt{bottom} or \texttt{center} (in either order). For example,
+  \verb|keypos="top left"|. The default position is bottom right.
 \item[\texttt{linecolor}:] string, naming the color in which to draw
   the borders of the regions. By default this is white if a payload is
   plotted, black if only outlines are shown.
@@ -1041,8 +1047,10 @@ axes.
 
 \section{Change log}
 
-Version 0.3 (2023-01-17): Update the documentation to explain how to
-handle qualitative payload data; fix bug whereby output to an image
+Version 1.1 (2023-05-01): Add \texttt{keypos} option for adjusting the key
+position when plotting qualitative data. \\[6pt]
+Version 1.0 (2023-01-17): Update the documentation to explain how to handle
+qualitative payload data; fix bug whereby output to an image
 file could fail. \\[6pt]
 Version 0.2 (2021-02-12): Fix some incorrect type specifiers in
 \verb|geoplot_utils.inp|, revealed by improved type-checking following
@@ -1321,8 +1329,7 @@ geoplot_seek_feature(map, "Florida")
 
 \begin{funcdoc}
 \begin{verbatim}
-void geoplot_simplify(bundle *b,
-                      scalar preserve[0.1:1:0.75])
+void geoplot_simplify(bundle *b, scalar preserve[0.1:1:0.75])
 \end{verbatim}
   Simplifies the polygons in the map bundle \texttt{b} using the
   Visvalingam--Whyatt algorithm.\footnote{See

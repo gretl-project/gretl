@@ -9790,12 +9790,18 @@ static void output_map_plot_lines (mapinfo *mi,
 	int i, nv = mi->n_codes;
 
         if (do_key) {
+            const char *kp = gretl_bundle_get_string(mi->opts, "keypos", NULL);
+
             /* ensure colorbox is omitted and key boxes are filled */
             fputs("unset colorbox\n", fp); /* should be handled already? */
             fputs("set style fill solid\n", fp);
-            /* this seems to work better than the default on average? */
-            fputs("set key bottom right\n", fp);
-         }
+            if (kp != NULL && *kp != '\0') {
+                fprintf(fp, "set key %s\n", kp);
+            } else {
+                /* this seems to work better than the default on average? */
+                fputs("set key bottom right\n", fp);
+            }
+        }
 
 	/* polygons */
 	fprintf(fp, "plot for [i=0:*] %s index i %s notitle%s", datasrc, with,

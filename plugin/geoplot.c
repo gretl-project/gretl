@@ -1531,7 +1531,7 @@ static void check_geoplot_opt_keys (gretl_bundle *opts)
 	"literal", "logscale", "missvals", "plotfile",
 	"projection", "palette", "show", "tics", "title",
 	"xrange", "yrange", "gui_auto", "dims", "cbrange",
-	"payload", "mask", NULL
+	"payload", "mask", "keypos", NULL
     };
     gretl_array *S = gretl_bundle_get_keys(opts, NULL);
 
