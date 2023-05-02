@@ -228,6 +228,8 @@ static int output_multiplot_script (const char **S, int np)
     return err;
 }
 
+/* respond to "end gridplot" */
+
 int gretl_multiplot_finalize (gretlopt opt)
 {
     int np, err = 0;
@@ -366,6 +368,8 @@ static int get_prior_plot_spec (gretlopt opt,
 
     return err;
 }
+
+/* revising an existing gridplot buffer or command file */
 
 int gretl_multiplot_revise (gretlopt opt)
 {
