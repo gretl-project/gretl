@@ -464,6 +464,8 @@ static int xlsx_handle_stringval (xlsx_info *xinfo, int i, int t,
 	; /* OK */
     } else if (*s == '\0') {
 	; /* well, OK */
+    } else if (!strncmp(s, "$$ER:", 5)) {
+	; /* failed accessing external data? */
     } else {
 	xit = NON_NUMERIC;
     }
