@@ -1517,11 +1517,16 @@
 
     <function name="aggregate" section="stats" output="matrix">
       <fnargs>
-	<fnarg type="series-or-list">x</fnarg>
-	<fnarg type="series-or-list">byvar</fnarg>
+	<fnarg type="series-list-or-mat">x</fnarg>
+	<fnarg type="series-list-or-mat">byvar</fnarg>
 	<fnarg type="string" optional="true">funcname</fnarg>
       </fnargs>
       <description>
+	<para>
+	  Most of the following assumes that the first two arguments
+	  to this function take the form of series or lists, but see
+	  <quote>Matrix input</quote> below for alternative usage.
+	</para>
 	<para>
 	  In the most minimal usage, <argname>x</argname> is set to
 	  <lit>null</lit>, <argname>byvar</argname> is a single series
@@ -1646,6 +1651,19 @@
 	  scalar c = nelem(BY)
 	  m = selifr(m, m[,c+1])
 	</code>
+	<subhead>Matrix input</subhead>
+	<para>
+	  Instead of series or lists, <argname>x</argname> and
+	  <argname>byvar</argname> may be given in matrix
+	  form. However, if both arguments are provided they must
+	  match in type (you cannot give a series or list for one
+	  argument and a matrix for the other) and two matrix
+	  arguments must have the same number of rows. Also note that
+	  in this context matrix columns are treated as if they were
+	  series, so the aggregation function must follow the pattern
+	  described above, taking a series arument and returning a
+	  scalar.
+	</para>
       </description>
     </function>
 
@@ -3472,8 +3490,11 @@
 	  series <math>y</math> each of whose elements is the sum of
 	  the values of <argname>x</argname> to date; the starting
 	  point of the summation is the first non-missing observation
-	  in the currently selected sample. When <argname>x</argname>
-	  is a matrix, its elements are cumulated by columns.
+	  in the currently selected sample.  If any missing values are
+	  encountered in <math>x</math>, subsequent values of
+	  <math>y</math> will be set to missing.  When
+	  <argname>x</argname> is a matrix, its elements are cumulated
+	  by columns.
 	</para>
 	<para context="tex">
 	  Cumulates <argname>x</argname>. When <math>x</math> is a series,
@@ -3484,6 +3505,18 @@
 	  will be set to missing. When <argname>x</argname> is a matrix, its
 	  elements are cumulated by columns.
 	</para>
+	<para>
+	  In the case of panel data cumulation is in the time
+	  dimension, starting anew for each panel unit.
+	</para>
+	<para>
+	  If you want cumulation to ignore missing values (that is, to
+	  treat them as if they were zeros), you can apply <fncref
+	  targ="misszero"/> to the argument, as in
+	</para>
+	<code>
+	  series cx = cum(misszero(x))
+	</code>
 	<para>
 	  <seelist>
             <fncref targ="diff"/>
@@ -8360,13 +8393,13 @@
 
     <function name="misszero" section="data-utils" output="asinput">
       <fnargs>
-	<fnarg type="scalar-or-series">x</fnarg>
+	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
       <description>
 	<para>
-	 Converts <lit>NA</lit>s to zeros. If <argname>x</argname> is a
-	 series, the conversion is done element by element. For example,
-	 the following code
+	 Converts <lit>NA</lit>s to zeros. If <argname>x</argname> is
+	 a series or matrix, the conversion is done element by
+	 element. For example, the following code
 	</para>
 	<code>
 		nulldata 3
@@ -14122,12 +14155,13 @@ d =  8.0000000
 
     <function name="zeromiss" section="transforms" output="asinput">
       <fnargs>
-	<fnarg type="scalar-or-series">x</fnarg>
+	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Converts zeros to <lit>NA</lit>s. If <argname>x</argname> is a
-	  series, the conversion is done element by element.
+	  Converts zeros to <lit>NA</lit>s. If <argname>x</argname> is
+	  a series or matrix, the conversion is done element by
+	  element.
 	  <seelist>
             <fncref targ="missing"/>
             <fncref targ="misszero"/>

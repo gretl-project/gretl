@@ -3,6 +3,8 @@ version 2023b, in progress
   lag orders, via new --lagselect option, and add GUI access
 - "corr" command: add 1 percent critical value of correlation
   coefficient to the output
+- aggregate() function: support matrix input
+- misszero() and zeromiss() functions: support matrix input
 - Fix bug: memory corruption on try to append an array to
   itself
 - Fix bug: single-equation LIML could fail when there's no

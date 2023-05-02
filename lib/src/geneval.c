@@ -17625,11 +17625,13 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_MISSZERO:
     case F_ZEROMISS:
-        /* one series or scalar argument needed */
-        if (l->t == SERIES || l->t == MAT) {
+        /* one series, scalar or matrix argument needed */
+        if (l->t == SERIES) {
             ret = apply_series_func(l, t, p);
         } else if (l->t == NUM) {
             ret = apply_scalar_func(l, t, p);
+	} else if (l->t == MAT) {
+	    ret = apply_matrix_func(l, t, p);
         } else {
             node_type_error(t->t, 0, SERIES, l, p);
         }
