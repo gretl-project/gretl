@@ -250,11 +250,14 @@ static void filter_multiplot_buffer (const char *buf,
 
     while (bufgets(line, sizeof line, buf)) {
 	if (!strncmp(line, "# grid_params: ", 15)) {
-	    /* substitute revised parameters */
-	    fputs("# literal lines = 1\n", fp);
+	    /* substitute revised parameters in comment */
 	    fprintf(fp, "# grid_params: fontsize=%d, width=%d, height=%d, "
 		    "rows=%d, cols=%d, plots=%d\n", mp_fontsize, mp_width,
 		    mp_height, mp_rows, mp_cols, np);
+	} else if (!strncmp(line, "set multiplot", 13)) {
+	    /* and revise multiplot layout spec */
+	    fprintf(fp, "set multiplot layout %d,%d rowsfirst\n",
+		    mp_rows, mp_cols);
 	} else {
 	    /* simply transcribe */
 	    fputs(line, fp);
@@ -311,10 +314,31 @@ static int retrieve_grid_params (const char *buf,
     return 0;
 }
 
+static void get_prior_plot_spec (gretlopt opt,
+				 const char **pbuf,
+				 gchar **pgbuf)
+{
+    const char *s;
+
+    if (opt & OPT_i) {
+	s = get_optval_string(GRIDPLOT, OPT_i);
+	*pbuf = get_string_by_name(s);
+    } else if (opt & OPT_I) {
+	gboolean ok;
+
+	s = get_optval_string(GRIDPLOT, OPT_I);
+	ok = g_file_get_contents(s, pgbuf, NULL, NULL);
+	if (ok) {
+	    *pbuf = *pgbuf;
+	}
+    }
+}
+
 int gretl_multiplot_revise (gretlopt opt)
 {
     const char *argname;
-    const char *buf;
+    const char *buf = NULL;
+    gchar *gbuf = NULL;
     gretlopt myopt = opt;
     int params[5] = {0};
     int filter = 0;
@@ -326,10 +350,12 @@ int gretl_multiplot_revise (gretlopt opt)
         return E_DATA;
     }
 
-    argname = get_optval_string(GRIDPLOT, OPT_i);
-    buf = get_string_by_name(argname);
+    err = incompatible_options(opt, OPT_i | OPT_I);
+    if (!err) {
+	get_prior_plot_spec(opt, &buf, &gbuf);
+    }
     if (buf == NULL) {
-        gretl_errmsg_set("Couldn't find an input buffer");
+        gretl_errmsg_set("Couldn't find an input specification");
         return E_DATA;
     }
 
@@ -366,7 +392,7 @@ int gretl_multiplot_revise (gretlopt opt)
     }
 
 #if 0
-    fprintf(stderr, "*** here's inbuf (filter = %d) ***\n", filter);
+    fprintf(stderr, "*** here's the prior input (filter = %d) ***\n", filter);
     fputs(buf, stderr);
 #endif
 
@@ -374,6 +400,10 @@ int gretl_multiplot_revise (gretlopt opt)
 	set_special_plot_size(mp_width, mp_height);
 	set_special_font_size(mp_fontsize);
 	revise_multiplot_script(buf, filter, np);
+    }
+
+    if (gbuf != NULL) {
+	g_free(gbuf);
     }
 
     return err;

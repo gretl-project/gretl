@@ -335,6 +335,7 @@ struct gretl_option gretl_opts[] = {
     { GRIDPLOT, OPT_R, "rows", 2 },
     { GRIDPLOT, OPT_C, "cols", 2 },
     { GRIDPLOT, OPT_U, "output", 2 },
+    { GRIDPLOT, OPT_I, "input", 2 },
     { GRIDPLOT, OPT_i, "inbuf", 2 },
     { HECKIT,   OPT_M, "ml", 0 },
     { HECKIT,   OPT_G, "opg", 0 },

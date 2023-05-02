@@ -3891,11 +3891,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	if (cmd->param != NULL) {
 	    /* the "start" case */
 	    err = gretl_multiplot_start(cmd->opt);
-	} else if (cmd->opt & OPT_i) {
-            /* the --inbuf case */
+	} else if (cmd->opt & (OPT_i | OPT_I)) {
+            /* the --inbuf or --input case */
             err = gretl_multiplot_revise(cmd->opt);
         } else {
-	    /* FIXME what should happen here? */
+	    /* FIXME shoudld this be an error? */
             err = gretl_multiplot_start(cmd->opt);
         }
         break;
