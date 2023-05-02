@@ -3888,10 +3888,14 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case GRIDPLOT:
-        if (cmd->opt & OPT_i) {
+	if (cmd->param != NULL) {
+	    /* the "start" case */
+	    err = gretl_multiplot_start(cmd->opt);
+	} else if (cmd->opt & OPT_i) {
             /* the --inbuf case */
             err = gretl_multiplot_revise(cmd->opt);
         } else {
+	    /* FIXME what should happen here? */
             err = gretl_multiplot_start(cmd->opt);
         }
         break;

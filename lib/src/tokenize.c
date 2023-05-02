@@ -120,7 +120,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { GMM,      "gmm",      CI_EXPR | CI_BLOCK },
     { GNUPLOT,  "gnuplot",  CI_LIST | CI_EXTRA | CI_INFL },
     { GRAPHPG,  "graphpg",  CI_PARM1 | CI_PARM2 }, /* params optional */
-    { GRIDPLOT, "gridplot", CI_BLOCK },
+    { GRIDPLOT, "gridplot", CI_PARM1 | CI_BLOCK }, /* parm1 optional */
     { HECKIT,   "heckit",   CI_LIST },
     { HELP,     "help",     CI_PARM1 },
     { HFPLOT,   "hfplot",   CI_LIST | CI_EXTRA },
@@ -223,7 +223,8 @@ static struct gretl_cmd gretl_cmds[] = {
 
 #define param_optional(c) (c == SET || c == HELP || c == RESTRICT || \
 			   c == SMPL || c == SYSTEM || c == FUNCERR || \
-			   c == GRAPHPG || c == PLOT || c == OUTFILE)
+			   c == GRAPHPG || c == PLOT || c == OUTFILE || \
+			   c == GRIDPLOT)
 
 #define parm2_optional(c) (c == SET || c == SETOPT || c == SETOBS || \
 			   c == ESTIMATE || c == HELP || c == GRAPHPG || \
@@ -1640,7 +1641,8 @@ static int get_param (CMD *c, const DATASET *dset)
     if (tok->type == TOK_CBSTR) {
 	/* if param was found in braces, it should
 	   probably be passed in braces, but FIXME
-	   check for exceptions? */
+	   check for exceptions?
+	*/
 	c->param = rebrace_string(tok->s, &c->err);
 	mark_token_done(c->toks[pos]);
     } else if (tok->type == TOK_EVAL) {

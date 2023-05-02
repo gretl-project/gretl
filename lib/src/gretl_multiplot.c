@@ -75,23 +75,25 @@ void gretl_multiplot_destroy (void)
 
 static const mplot_option mp_options[] = {
     { OPT_F, &mp_fontsize, 4, 24 },
-    { OPT_W, &mp_width,    300, 2048 },
-    { OPT_H, &mp_height,   300, 2048 },
-    { OPT_R, &mp_rows,     1, 10 },
-    { OPT_C, &mp_cols,     1, 10 }
+    { OPT_W, &mp_width,    200, 2048 },
+    { OPT_H, &mp_height,   200, 2048 },
+    { OPT_R, &mp_rows,     1, 12 },
+    { OPT_C, &mp_cols,     1, 12 }
 };
+
+static int n_mp_options = G_N_ELEMENTS(mp_options);
 
 static int set_multiplot_sizes (gretlopt opt)
 {
     const mplot_option *mpo;
     int i, k, err = 0;
 
-    for (i=0; i<G_N_ELEMENTS(mp_options) && !err; i++) {
+    for (i=0; i<n_mp_options && !err; i++) {
 	mpo = &mp_options[i];
 	if (opt & mpo->flag) {
 	    k = get_optval_int(GRIDPLOT, mpo->flag, &err);
 	    if (!err && (k < mpo->min || k > mpo->max)) {
-		gretl_errmsg_set("gridplot: bad option value");
+		gretl_errmsg_set("gridplot: out-of-bounds option value");
 		err = E_INVARG;
 	    }
 	    if (!err) {
@@ -239,24 +241,66 @@ int gretl_multiplot_finalize (gretlopt opt)
     return err;
 }
 
-static int retrieve_grid_params (const char *buf, int *np)
+static void filter_multiplot_buffer (const char *buf,
+				     int np, FILE *fp)
+{
+    char line[1024];
+
+    bufgets_init(buf);
+
+    while (bufgets(line, sizeof line, buf)) {
+	if (!strncmp(line, "# grid_params: ", 15)) {
+	    /* substitute revised parameters */
+	    fputs("# literal lines = 1\n", fp);
+	    fprintf(fp, "# grid_params: fontsize=%d, width=%d, height=%d, "
+		    "rows=%d, cols=%d, plots=%d\n", mp_fontsize, mp_width,
+		    mp_height, mp_rows, mp_cols, np);
+	} else {
+	    /* simply transcribe */
+	    fputs(line, fp);
+	}
+    }
+
+    bufgets_finalize(buf);
+}
+
+static int revise_multiplot_script (const char *buf,
+				    int filter,
+				    int np)
+{
+    int err = 0;
+    FILE *fp;
+
+    fp = open_plot_input_file(PLOT_USER_MULTI, 0, &err);
+    if (err) {
+        return err;
+    }
+
+    if (filter) {
+	filter_multiplot_buffer(buf, np, fp);
+    } else {
+	fputs(buf, fp);
+    }
+
+    err = finalize_plot_input_file(fp);
+
+    return err;
+}
+
+static int retrieve_grid_params (const char *buf,
+				 int *parms,
+				 int *np)
 {
     char line[256];
-    int parms[5];
-    int n, j, i = 0;
+    int i = 0;
 
     bufgets_init(buf);
 
     while (bufgets(line, sizeof line, buf) && 1 < 10) {
         if (!strncmp(line, "# grid_params: ", 15)) {
-            n = sscanf(line+15, "fontsize=%d, width=%d, height=%d, "
-                       "rows=%d, cols=%d, plots=%d", &parms[0], &parms[1],
-                       &parms[2], &parms[3], &parms[4], np);
-            if (n == 5) {
-                for (j=0; j<5; j++) {
-                    *(mp_options[j].target) = parms[j];
-                }
-            }
+            sscanf(line+15, "fontsize=%d, width=%d, height=%d, "
+		   "rows=%d, cols=%d, plots=%d", &parms[0], &parms[1],
+		   &parms[2], &parms[3], &parms[4], np);
             break;
         }
         i++;
@@ -272,18 +316,20 @@ int gretl_multiplot_revise (gretlopt opt)
     const char *argname;
     const char *buf;
     gretlopt myopt = opt;
-    int np = 0;
+    int params[5] = {0};
+    int filter = 0;
+    int i, np = 0;
     int err = 0;
 
     if (mp_collecting) {
-        gretl_errmsg_set("gridplot: block is in progress");
+        gretl_errmsg_set("gridplot: a block is in progress");
         return E_DATA;
     }
 
     argname = get_optval_string(GRIDPLOT, OPT_i);
     buf = get_string_by_name(argname);
     if (buf == NULL) {
-        gretl_errmsg_set("Couldn't find input buffer");
+        gretl_errmsg_set("Couldn't find an input buffer");
         return E_DATA;
     }
 
@@ -295,7 +341,7 @@ int gretl_multiplot_revise (gretlopt opt)
     }
 
     /* extract the dimensions recorded in @buf */
-    retrieve_grid_params(buf, &np);
+    retrieve_grid_params(buf, params, &np);
 
     /* let @opt override previous dimensions, if relevant */
     myopt &= ~OPT_i;
@@ -307,8 +353,28 @@ int gretl_multiplot_revise (gretlopt opt)
         }
     }
 
-    fputs("*** here's inbuf ***\n", stderr);
+    if (!err) {
+	/* Are any optional parameters changed? If, so, we'll
+	   need to filter @buf, not just transcribe it.
+	*/
+	for (i=0; i<n_mp_options; i++) {
+	    if (params[i] != *(mp_options[i].target)) {
+		filter = 1;
+		break;
+	    }
+	}
+    }
+
+#if 0
+    fprintf(stderr, "*** here's inbuf (filter = %d) ***\n", filter);
     fputs(buf, stderr);
+#endif
+
+    if (!err) {
+	set_special_plot_size(mp_width, mp_height);
+	set_special_font_size(mp_fontsize);
+	revise_multiplot_script(buf, filter, np);
+    }
 
     return err;
 }
