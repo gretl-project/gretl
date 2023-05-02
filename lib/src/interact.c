@@ -47,6 +47,7 @@
 #include "gretl_zip.h"
 #include "matrix_extra.h"
 #include "addons_utils.h"
+#include "gretl_multiplot.h"
 #ifdef USE_CURL
 # include "gretl_www.h"
 #endif
@@ -3113,13 +3114,15 @@ int is_plotting_command (CMD *cmd)
 {
     if (GRAPHING_COMMAND(cmd->ci)) {
         return cmd->ci;
-    } else if (cmd->ci == END &&
-               cmd->param != NULL &&
-               !strcmp(cmd->param, "plot")) {
-        return PLOT;
-    } else {
-        return 0;
+    } else if (cmd->ci == END && cmd->param != NULL) {
+	int ci = gretl_command_number(cmd->param);
+
+	if (ci == PLOT || ci == GRIDPLOT) {
+	    return ci;
+	}
     }
+
+    return 0;
 }
 
 static void maybe_schedule_graph_callback (ExecState *s)
@@ -3184,6 +3187,26 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
     }
 
     return err;
+}
+
+static int execute_multiplot_call (CMD *cmd, PRN *prn)
+{
+    gretlopt opt = cmd->opt;
+
+#if 0 /* maybe try to enable this? */
+    if (gretl_in_gui_mode() && *cmd->savename != '\0') {
+        /* saving multiplot "as icon": add internal option to
+           override production of a "gpttmp" file
+        */
+        opt |= OPT_G;
+    }
+#endif
+
+    if (!gretl_in_gui_mode() && getenv("CLI_NO_PLOTS")) {
+        return 0;
+    }
+
+    return gretl_multiplot_finalize(opt);
 }
 
 static int smpl_restrict (gretlopt opt)
@@ -3864,6 +3887,19 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         }
         break;
 
+    case GRIDPLOT:
+	if (cmd->param != NULL) {
+	    /* the "start" case */
+	    err = gretl_multiplot_start(cmd->opt);
+	} else if (cmd->opt & (OPT_i | OPT_I)) {
+            /* the --inbuf or --input case */
+            err = gretl_multiplot_revise(cmd->opt);
+        } else {
+	    /* FIXME shoudld this be an error? */
+            err = gretl_multiplot_start(cmd->opt);
+        }
+        break;
+
     case ADD:
     case OMIT:
         if (get_last_model_type() == GRETL_OBJ_VAR) {
@@ -4035,6 +4071,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
             err = execute_plot_call(cmd, dset, line, prn);
         } else if (!strcmp(cmd->param, "outfile")) {
             err = do_outfile_command(OPT_C, NULL, NULL, prn);
+        } else if (!strcmp(cmd->param, "gridplot")) {
+            err = execute_multiplot_call(cmd, prn);
         } else {
             err = E_PARSE;
         }

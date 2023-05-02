@@ -120,6 +120,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { GMM,      "gmm",      CI_EXPR | CI_BLOCK },
     { GNUPLOT,  "gnuplot",  CI_LIST | CI_EXTRA | CI_INFL },
     { GRAPHPG,  "graphpg",  CI_PARM1 | CI_PARM2 }, /* params optional */
+    { GRIDPLOT, "gridplot", CI_PARM1 | CI_BLOCK }, /* parm1 optional */
     { HECKIT,   "heckit",   CI_LIST },
     { HELP,     "help",     CI_PARM1 },
     { HFPLOT,   "hfplot",   CI_LIST | CI_EXTRA },
@@ -160,7 +161,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { OMIT,     "omit",     CI_LIST },
     { OPEN,     "open",     CI_PARM1 | CI_FNAME | CI_INFL }, /* + ODBC specials */
     { ORTHDEV,  "orthdev",  CI_LIST | CI_NOOPT },
-    { OUTFILE,  "outfile",  CI_PARM1 | CI_FNAME | CI_INFL },
+    { OUTFILE,  "outfile",  CI_PARM1 | CI_FNAME | CI_INFL | CI_BLOCK },
     { PANEL,    "panel",    CI_LIST },
     { PANPLOT,  "panplot",  CI_LIST | CI_LLEN1 | CI_EXTRA },
     { PANSPEC,  "panspec",  0 },
@@ -222,7 +223,8 @@ static struct gretl_cmd gretl_cmds[] = {
 
 #define param_optional(c) (c == SET || c == HELP || c == RESTRICT || \
 			   c == SMPL || c == SYSTEM || c == FUNCERR || \
-			   c == GRAPHPG || c == PLOT || c == OUTFILE)
+			   c == GRAPHPG || c == PLOT || c == OUTFILE || \
+			   c == GRIDPLOT)
 
 #define parm2_optional(c) (c == SET || c == SETOPT || c == SETOBS || \
 			   c == ESTIMATE || c == HELP || c == GRAPHPG || \
@@ -1329,6 +1331,11 @@ static int check_command_options (CMD *c)
 	handle_legacy_gnuplot_options(c);
     } else if (c->ci == PKG && (c->opt & OPT_B)) {
 	handle_legacy_install_options(c);
+    } else if (c->ci == END && c->ntoks > 1) {
+        if (gretl_command_number(c->toks[1].s) == GRIDPLOT) {
+            /* support the --output option */
+            c->ci = GRIDPLOT;
+        }
     }
 
     for (i=1; i<c->ntoks && !err; i++) {
@@ -1634,7 +1641,8 @@ static int get_param (CMD *c, const DATASET *dset)
     if (tok->type == TOK_CBSTR) {
 	/* if param was found in braces, it should
 	   probably be passed in braces, but FIXME
-	   check for exceptions? */
+	   check for exceptions?
+	*/
 	c->param = rebrace_string(tok->s, &c->err);
 	mark_token_done(c->toks[pos]);
     } else if (tok->type == TOK_EVAL) {
@@ -3267,9 +3275,12 @@ static int check_end_command (CMD *cmd)
 	cmd->ci = OUTFILE;
 	cmd->opt = OPT_C;
 	return 0;
+    } else if (endci == GRIDPLOT) {
+        /* special case: no "context" required */
+        return 0;
     }
 
-    if (endci != cmd->context) {
+    if (endci == 0 || endci != cmd->context) {
 	gretl_errmsg_sprintf(_("end: invalid parameter '%s'"), cmd->param);
 	cmd->err = E_DATA;
     }

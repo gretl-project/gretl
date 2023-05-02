@@ -73,6 +73,7 @@ typedef enum {
     GMM,
     GNUPLOT, 
     GRAPHPG,
+    GRIDPLOT,
     HECKIT,
     HELP,
     HFPLOT,
@@ -240,7 +241,8 @@ typedef enum {
 			     c == FCAST || \
 			     c == CORR || \
 			     c == CUSUM || \
-			     c == PANPLOT)
+			     c == PANPLOT || \
+			     c == GRIDPLOT)
 	
 int gretl_command_number (const char *s);
 

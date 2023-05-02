@@ -9714,9 +9714,8 @@ static int gui_exec_callback (ExecState *s, void *ptr,
         err = modeltab_exec(s->cmd->param, s->cmd->opt, s->prn);
     } else if (ci == GRAPHPG) {
         err = graph_page_exec(s->cmd->param, s->cmd->parm2, s->cmd->opt);
-    } else if (is_plotting_command(s->cmd)) {
+    } else if ((ci = is_plotting_command(s->cmd))) {
         if (*s->cmd->savename != '\0') {
-            ci = is_plotting_command(s->cmd);
             maybe_save_graph(s->cmd->savename, ci, s->cmd->opt, s->prn);
         } else {
             register_graph();

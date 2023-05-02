@@ -89,7 +89,8 @@
 			       c == PANPLOT ||	\
 			       c == QQPLOT ||	\
 			       c == RMPLOT ||	\
-			       c == SCATTERS)
+			       c == SCATTERS || \
+			       c == GRIDPLOT)
 
 /* --plot (OPT_U) as attached to CORR */
 #define cmd_plot_opt_ok(c) (c == CORR ||	\
@@ -328,6 +329,14 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_L, "ylogscale", 1 },
     { GRAPHPG,  OPT_M, "monochrome", 0 },
     { GRAPHPG,  OPT_O, "output", 2 },
+    { GRIDPLOT, OPT_F, "fontsize", 2 },
+    { GRIDPLOT, OPT_W, "width", 2 },
+    { GRIDPLOT, OPT_H, "height", 2 },
+    { GRIDPLOT, OPT_R, "rows", 2 },
+    { GRIDPLOT, OPT_C, "cols", 2 },
+    { GRIDPLOT, OPT_U, "output", 2 },
+    { GRIDPLOT, OPT_I, "input", 2 },
+    { GRIDPLOT, OPT_i, "inbuf", 2 },
     { HECKIT,   OPT_M, "ml", 0 },
     { HECKIT,   OPT_G, "opg", 0 },
     { HECKIT,   OPT_R, "robust", 0 },

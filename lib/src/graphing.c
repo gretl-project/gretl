@@ -30,6 +30,7 @@
 #include "gretl_panel.h"
 #include "missing_private.h"
 #include "gretl_string_table.h"
+#include "gretl_multiplot.h"
 #include "uservar.h"
 #include "gretl_midas.h"
 #include "boxplots.h"
@@ -70,6 +71,7 @@ static int xwide = 0;
 static char ad_hoc_font[64];
 static char plot_buffer_name[32];
 static char plot_buffer_idx[8];
+static int plot_placement[2];
 
 typedef struct gnuplot_info_ gnuplot_info;
 
@@ -152,6 +154,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_BAND,           "band plot" },
     { PLOT_HEATMAP,        "heatmap" },
     { PLOT_GEOMAP,         "geoplot" },
+    { PLOT_USER_MULTI,     "user-multi" },
     { PLOT_TYPE_MAX,       NULL }
 };
 
@@ -538,14 +541,33 @@ static int set_plot_buffer_name (const char *bname)
     return err;
 }
 
+static void set_plot_placement (const char *s)
+{
+    plot_placement[0] = 0;
+    plot_placement[1] = 0;
+
+    if (s != NULL) {
+	int r, c;
+
+	if (sscanf(s, "%d,%d", &r, &c) == 2 &&
+	    r > 0 && c > 0) {
+	    plot_placement[0] = r;
+	    plot_placement[1] = c;
+	}
+
+    }
+}
+
 int plot_output_to_buffer (void)
 {
-    return *plot_buffer_name != '\0';
+    return *plot_buffer_name != '\0' ||
+	gretl_multiplot_active();
 }
 
 static int make_plot_commands_buffer (const char *fname)
 {
     gchar *contents = NULL;
+    int free_contents = 1;
     GError *gerr = NULL;
     gsize size = 0;
     int err = 0;
@@ -556,6 +578,11 @@ static int make_plot_commands_buffer (const char *fname)
 	gretl_errmsg_set(gerr->message);
 	g_error_free(gerr);
 	err = E_FOPEN;
+    } else if (gretl_multiplot_active()) {
+	gretl_multiplot_add_plot(plot_placement[0],
+				 plot_placement[1],
+				 contents);
+	free_contents = 0;
     } else if (*plot_buffer_idx != '\0') {
 	gretl_array *a = get_strings_array_by_name(plot_buffer_name);
         int i = generate_int(plot_buffer_idx, NULL, &err);
@@ -571,7 +598,9 @@ static int make_plot_commands_buffer (const char *fname)
 				      buf);
     }
 
-    g_free(contents);
+    if (free_contents) {
+	g_free(contents);
+    }
     gretl_remove(fname);
 
     return err;
@@ -1011,6 +1040,45 @@ static void maybe_set_small_font (int nplots)
     gp_small_font_size = (nplots > 4)? 6 : 0;
 }
 
+/* apparatus for plots at custom sizes (e.g. maps) */
+
+static float special_width;
+static float special_height;
+static int special_fontsize;
+
+void set_special_plot_size (float width, float height)
+{
+    special_width = width;
+    special_height = height;
+}
+
+void set_special_font_size (int fsize)
+{
+    special_fontsize = fsize;
+}
+
+static void clear_special_plot_size (void)
+{
+    special_width = special_height = 0;
+}
+
+static void clear_special_font_size (void)
+{
+    special_fontsize = 0;
+}
+
+static int special_plot_size_is_set (void)
+{
+    return special_width > 0 && special_height > 0;
+}
+
+static int special_font_size_is_set (void)
+{
+    return special_fontsize > 0;
+}
+
+/* end special size apparatus */
+
 static void write_png_font_string (char *fstr,
 				   char *ad_hoc_fontspec,
 				   PlotType ptype,
@@ -1040,13 +1108,18 @@ static void write_png_font_string (char *fstr,
 	int nf, fsize = 0;
 
 	nf = split_graph_fontspec(grfont, fname, &fsize);
-	if (nf == 2) {
+
+	if (special_font_size_is_set()) {
+	    fsize = special_fontsize;
+	} else if (nf == 2) {
 	    if (maybe_big_multiplot(ptype) && gp_small_font_size > 0) {
 		fsize = gp_small_font_size;
 	    }
 	    if (scale > 1.0) {
 		fsize = round(scale * fsize);
 	    }
+	}
+	if (fsize > 0 && fsize < 100) {
 	    sprintf(fstr, " font \"%s,%d\"", fname, fsize);
 	} else if (nf == 1) {
 	    sprintf(fstr, " font \"%s\"", fname);
@@ -1054,8 +1127,9 @@ static void write_png_font_string (char *fstr,
 	if (adhoc) {
 	    strcpy(ad_hoc_fontspec, grfont);
 	}
-	/* ensure this setting doesn't outstay its welcome */
+	/* ensure these settings don't outstay their welcome */
 	ad_hoc_font[0] = '\0';
+	clear_special_font_size();
     }
 }
 
@@ -1076,6 +1150,8 @@ static gchar *write_other_font_string (int stdsize)
 	    fstr = g_strdup_printf("%s,%d", fname, stdsize);
 	}
 	ad_hoc_font[0] = '\0';
+    } else if (special_font_size_is_set()) {
+	fstr = g_strdup_printf("sans,%d", special_fontsize);
     } else {
 	fstr = g_strdup_printf("sans,%d", stdsize);
     }
@@ -1324,37 +1400,14 @@ static int do_plot_bounding_box (void)
     return err;
 }
 
-/* apparatus for plots at custom sizes (e.g. maps) */
-
-static float special_width;
-static float special_height;
-
-void set_special_plot_size (float width, float height)
-{
-    special_width = width;
-    special_height = height;
-}
-
-static void clear_special_size (void)
-{
-    special_width = special_height = 0;
-}
-
-static int special_size_is_set (void)
-{
-    return special_width > 0 && special_height > 0;
-}
-
-/* end special size apparatus */
-
 static void maybe_set_eps_pdf_dims (char *s, PlotType ptype, GptFlags flags)
 {
     double w = 0, h = 0;
 
-    if (special_size_is_set()) {
+    if (special_plot_size_is_set()) {
 	w = (5.0 * special_width) / GP_WIDTH;
 	h = (3.5 * special_height) / GP_HEIGHT;
-	clear_special_size();
+	clear_special_plot_size();
     } else if (flags & GPT_LETTERBOX) {
 	/* for time series */
 	w = (5.0 * GP_LB_WIDTH) / GP_WIDTH;
@@ -1447,10 +1500,10 @@ static void write_png_size_string (char *s, PlotType ptype,
 {
     int w = GP_WIDTH, h = GP_HEIGHT;
 
-    if (special_size_is_set()) {
+    if (special_plot_size_is_set()) {
 	w = (int) special_width;
 	h = (int) special_height;
-	clear_special_size();
+	clear_special_plot_size();
     } else if (flags & GPT_LETTERBOX) {
 	/* time series plots */
 	w = GP_LB_WIDTH;
@@ -1506,7 +1559,6 @@ static char *var_term_line (char *term_line, int ptype, GptFlags flags)
 
     sprintf(term_line, "set term %s%s%s noenhanced",
 	    varterm, font_string, size_string);
-
     append_gp_encoding(term_line);
 
     return term_line;
@@ -1530,7 +1582,6 @@ static char *real_png_term_line (char *term_line,
 
     sprintf(term_line, "set term pngcairo%s%s noenhanced",
 	    font_string, size_string);
-
     append_gp_encoding(term_line);
 
     if (*ad_hoc_fontspec != '\0') {
@@ -1673,11 +1724,11 @@ static char *gretl_emf_term_line (char *term_line,
     *font_string = '\0';
     write_emf_font_string(font_string);
 
-    if (special_size_is_set()) {
+    if (special_plot_size_is_set()) {
 	size_string = g_strdup_printf("size %d,%d ",
 				      (int) special_width,
 				      (int) special_height);
-	clear_special_size();
+	clear_special_plot_size();
     }
 
     if (flags & GPT_MONO) {
@@ -1788,7 +1839,7 @@ static void print_term_string (int ttype, PlotType ptype,
 	fprintf(fp, "%s\n", term_line);
 	if (flags & GPT_MONO) {
 	    fputs("set mono\n", fp);
-	} else {
+	} else if (ptype != PLOT_USER_MULTI) {
 	    write_plot_line_styles(ptype, fp);
 	}
     }
@@ -1873,7 +1924,7 @@ int write_plot_output_line (const char *path, FILE *fp)
 static FILE *gp_set_up_batch (char *fname,
 			      PlotType ptype,
 			      GptFlags flags,
-			      const char *optname,
+			      const char *outspec,
 			      int *err)
 {
     int fmt = GP_TERM_NONE;
@@ -1883,19 +1934,19 @@ static FILE *gp_set_up_batch (char *fname,
 	this_term_type = GP_TERM_PLT;
 	sprintf(fname, "%sgpttmp.XXXXXX", gretl_dotdir());
 	fp = gretl_mktemp(fname, "w");
-    } else if (optname != NULL) {
+    } else if (outspec != NULL) {
 	/* user gave --output=<filename> */
-	fmt = set_term_type_from_fname(optname);
+	fmt = set_term_type_from_fname(outspec);
 	if (fmt) {
 	    /* input needs processing */
-	    strcpy(gnuplot_outname, optname);
+	    strcpy(gnuplot_outname, outspec);
 	    gretl_maybe_prepend_dir(gnuplot_outname);
 	    sprintf(fname, "%sgpttmp.XXXXXX", gretl_dotdir());
 	    fp = gretl_mktemp(fname, "w");
 	} else {
 	    /* just passing gnuplot commands through */
 	    this_term_type = GP_TERM_PLT;
-	    strcpy(fname, optname);
+	    strcpy(fname, outspec);
 	    gretl_maybe_prepend_dir(fname);
 	    fp = gretl_fopen(fname, "w");
 	}
@@ -1915,7 +1966,7 @@ static FILE *gp_set_up_batch (char *fname,
 	    /* write terminal/style/output lines */
 	    print_term_string(fmt, ptype, flags, fp);
 	    write_plot_output_line(gnuplot_outname, fp);
-	} else {
+	} else if (ptype != PLOT_USER_MULTI) {
 	    /* just write style lines */
 	    write_plot_line_styles(ptype, fp);
 	}
@@ -1991,7 +2042,9 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 #endif
 	}
 	write_plot_type_string(ptype, flags, fp);
-	write_plot_line_styles(ptype, fp);
+	if (ptype != PLOT_USER_MULTI) {
+	    write_plot_line_styles(ptype, fp);
+	}
     }
 
     return fp;
@@ -2037,6 +2090,7 @@ static int got_none_option (const char *s)
 
 static const char *plot_output_option (PlotType p, int *pci, int *err)
 {
+    int mp_mode = gretl_multiplot_active();
     int ci = plot_ci;
     const char *s;
 
@@ -2075,14 +2129,16 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 	ci = CORR;
     } else if (p == PLOT_CUSUM) {
 	ci = CUSUM;
+    } else if (p == PLOT_USER_MULTI) {
+	ci = GRIDPLOT;
     }
 
     s = get_optval_string(ci, OPT_U);
 
     if (s != NULL && *s == '\0') {
 	s = NULL;
-    } else if (s == NULL) {
-	/* try for --buffer=<strname> */
+    } else if (s == NULL && !mp_mode) {
+	/* try for --outbuf=<strname> */
 	s = get_optval_string(ci, OPT_b);
 	if (s != NULL && *s == '\0') {
 	    s = NULL;
@@ -2118,7 +2174,7 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
 {
     char fname[FILENAME_MAX] = {0};
-    const char *optname = NULL;
+    const char *outspec = NULL;
     int ci, interactive = 0;
     FILE *fp = NULL;
 
@@ -2139,15 +2195,18 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
     *gnuplot_outname = '\0';
 
     /* check for --output=whatever or --buffer=whatever */
-    optname = plot_output_option(ptype, &ci, err);
+    outspec = plot_output_option(ptype, &ci, err);
     if (*err) {
 	return NULL;
     }
 
-    if (got_display_option(optname)) {
+    if (gretl_multiplot_active()) {
+	set_plot_placement(outspec);
+	interactive = 0;
+    } else if (got_display_option(outspec)) {
 	/* --output=display specified */
 	interactive = 1;
-    } else if (optname != NULL) {
+    } else if (outspec != NULL) {
 	/* --output=filename or --buffer=starvar specified */
 	interactive = 0;
     } else if (flags & GPT_ICON) {
@@ -2158,14 +2217,14 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
     }
 
 #if GP_DEBUG
-    fprintf(stderr, "optname = '%s', interactive = %d\n",
-	    optname == NULL ? "null" : optname, interactive);
+    fprintf(stderr, "outspec = '%s', interactive = %d\n",
+	    outspec == NULL ? "null" : outspec, interactive);
 #endif
 
     if (interactive) {
 	fp = gp_set_up_interactive(fname, ptype, flags, err);
     } else {
-	fp = gp_set_up_batch(fname, ptype, flags, optname, err);
+	fp = gp_set_up_batch(fname, ptype, flags, outspec, err);
     }
 
 #if GP_DEBUG
@@ -2199,6 +2258,8 @@ int gnuplot_graph_wanted (PlotType ptype, gretlopt opt)
 	ret = 0;
     } else if (optname != NULL) {
 	/* --plot=display or --plot=fname specified */
+	ret = 1;
+    } else if (gretl_multiplot_active()) {
 	ret = 1;
     } else {
 	/* defaults */
