@@ -3977,13 +3977,15 @@ static int fcast_get_t2max (const int *list, const int *dvlags,
 			    int ftype)
 {
     const double *ay = NULL;
-    int i, vi, t;
+    int i, vi, t, l0;
 
     if (pmod->ci == ARMA && ftype == FC_STATIC) {
 	int yno = gretl_model_get_depvar(pmod);
 
 	ay = dset->Z[yno];
     }
+
+    l0 = list == NULL ? 0 : list[0];
 
     for (t=pmod->t2; t<dset->n; t++) {
 	int p, vj, all_ok = 1;
@@ -3993,7 +3995,7 @@ static int fcast_get_t2max (const int *list, const int *dvlags,
 	    break;
 	}
 
-	for (i=1; i<=list[0]; i++) {
+	for (i=1; i<=l0; i++) {
 	    vi = list[i];
 	    if (vi == 0) {
 		continue;
@@ -4190,8 +4192,7 @@ void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
 	return;
     }
 
-    *dt2max = pmod->t2;
-    *st2max = pmod->t2;
+    *dt2max = *st2max = pmod->t2;
 
     if (pmod->ci == ARMA || pmod->ci == GARCH) {
 	*flags |= FC_DYNAMIC_OK;
@@ -4211,10 +4212,8 @@ void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
     }
 
     xlist = model_xlist(pmod);
-    if (xlist != NULL) {
-	*dt2max = fcast_get_t2max(xlist, dvlags, pmod, dset, FC_DYNAMIC);
-	*st2max = fcast_get_t2max(xlist, dvlags, pmod, dset, FC_STATIC);
-    }
+    *dt2max = fcast_get_t2max(xlist, dvlags, pmod, dset, FC_DYNAMIC);
+    *st2max = fcast_get_t2max(xlist, dvlags, pmod, dset, FC_STATIC);
 
     if (dvlags != NULL) {
 	free(dvlags);
