@@ -30,4 +30,6 @@ int gretl_multiplot_finalize (gretlopt opt);
 
 int gretl_multiplot_revise (gretlopt opt);
 
+int gretl_multiplot_from_array (gretlopt opt);
+
 #endif /* GRETL_MULTIPLOT_H_ */

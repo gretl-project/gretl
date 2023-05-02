@@ -3894,8 +3894,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (cmd->opt & (OPT_i | OPT_I)) {
             /* the --inbuf or --input case */
             err = gretl_multiplot_revise(cmd->opt);
+	} else if (cmd->opt & OPT_S) {
+	    /* the --strings (array) case */
+	    err = gretl_multiplot_from_array(cmd->opt);
         } else {
-	    /* FIXME shoudld this be an error? */
+	    /* FIXME should this be an error? */
             err = gretl_multiplot_start(cmd->opt);
         }
         break;

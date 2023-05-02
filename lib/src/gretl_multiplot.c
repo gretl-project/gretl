@@ -25,6 +25,8 @@
 #include "uservar.h"
 #include "gretl_multiplot.h"
 
+#define GRID_DEBUG 1
+
 typedef struct {
     int row;
     int col;
@@ -36,6 +38,7 @@ typedef struct {
     int *target;
     int min;
     int max;
+    int def;
 } mplot_option;
 
 static GArray *multiplot;
@@ -45,15 +48,6 @@ static int mp_height = 600;
 static int mp_rows;
 static int mp_cols;
 static int mp_collecting;
-
-static void set_multiplot_defaults (void)
-{
-    mp_fontsize = 10;
-    mp_width = 800;
-    mp_height = 600;
-    mp_rows = 0;
-    mp_cols = 0;
-}
 
 static void mplot_element_clear (mplot_element *element)
 {
@@ -65,20 +59,12 @@ int gretl_multiplot_active (void)
     return multiplot != NULL && mp_collecting;
 }
 
-void gretl_multiplot_destroy (void)
-{
-    if (multiplot != NULL) {
-        g_array_unref(multiplot);
-        multiplot = NULL;
-    }
-}
-
 static const mplot_option mp_options[] = {
-    { OPT_F, &mp_fontsize, 4, 24 },
-    { OPT_W, &mp_width,    200, 2048 },
-    { OPT_H, &mp_height,   200, 2048 },
-    { OPT_R, &mp_rows,     1, 12 },
-    { OPT_C, &mp_cols,     1, 12 }
+    { OPT_F, &mp_fontsize, 4, 24, 10 },
+    { OPT_W, &mp_width,    200, 2048, 800 },
+    { OPT_H, &mp_height,   200, 2048, 600 },
+    { OPT_R, &mp_rows,     1, 12, 0 },
+    { OPT_C, &mp_cols,     1, 12, 0 }
 };
 
 static int n_mp_options = G_N_ELEMENTS(mp_options);
@@ -103,6 +89,24 @@ static int set_multiplot_sizes (gretlopt opt)
     }
 
     return err;
+}
+
+static void set_multiplot_defaults (void)
+{
+    int i;
+
+    for (i=0; i<n_mp_options; i++) {
+	*(mp_options[i].target) = mp_options[i].def;
+    }
+}
+
+static void gretl_multiplot_destroy (void)
+{
+    if (multiplot != NULL) {
+        g_array_unref(multiplot);
+        multiplot = NULL;
+    }
+    set_multiplot_defaults();
 }
 
 int gretl_multiplot_start (gretlopt opt)
@@ -180,10 +184,15 @@ static int multiplot_set_grid (int n)
 	}
     }
 
+#if GRID_DEBUG
+    fprintf(stderr, "multiplot_set_grid: %d x %d for n=%d\n",
+	    mp_rows, mp_cols, n);
+#endif
+
     return err;
 }
 
-static int output_multiplot_script (void)
+static int output_multiplot_script (const char **S, int np)
 {
     mplot_element *element;
     int i, err = 0;
@@ -200,13 +209,17 @@ static int output_multiplot_script (void)
             mp_height, mp_rows, mp_cols, multiplot->len);
     fprintf(fp, "set multiplot layout %d,%d rowsfirst\n", mp_rows, mp_cols);
     gretl_push_c_numeric_locale();
-    for (i=0; i<multiplot->len; i++) {
+    for (i=0; i<np; i++) {
         fprintf(fp, "# gridplot: subplot %d\n", i);
         if (i > 0) {
             fputs("reset\n", fp);
         }
-        element = &g_array_index(multiplot, mplot_element, i);
-        fputs(element->buf, fp);
+	if (S != NULL) {
+	    fputs(S[i], fp);
+	} else {
+	    element = &g_array_index(multiplot, mplot_element, i);
+	    fputs(element->buf, fp);
+	}
     }
     gretl_pop_c_numeric_locale();
     fputs("unset multiplot\n", fp);
@@ -233,7 +246,7 @@ int gretl_multiplot_finalize (gretlopt opt)
     if (np > 0 && !err) {
 	set_special_plot_size(mp_width, mp_height);
 	set_special_font_size(mp_fontsize);
-        err = output_multiplot_script();
+        err = output_multiplot_script(NULL, multiplot->len);
     }
 
     gretl_multiplot_destroy();
@@ -311,6 +324,11 @@ static int retrieve_grid_params (const char *buf,
 
     bufgets_finalize(buf);
 
+#if GRID_DEBUG
+    fprintf(stderr, "retrieve params: got %d x %d for n=%d\n",
+	    parms[3], parms[4], *np);
+#endif
+
     return 0;
 }
 
@@ -373,10 +391,12 @@ int gretl_multiplot_revise (gretlopt opt)
 
     /* what sort of output is wanted? */
     argname = get_optval_string(GRIDPLOT, OPT_U);
+#if GRID_DEBUG
     if (argname != NULL) {
         fprintf(stderr, "gretl_multiplot_revise: output '%s'\n",
                 argname);
     }
+#endif
 
     /* extract the dimensions recorded in @buf */
     retrieve_grid_params(buf, params, &np);
@@ -384,11 +404,12 @@ int gretl_multiplot_revise (gretlopt opt)
     /* let @opt override previous dimensions, if relevant */
     myopt &= ~OPT_i;
     myopt &= ~OPT_U;
+    set_multiplot_defaults();
     if (myopt != OPT_NONE) {
-        err = set_multiplot_sizes(opt);
-        if (!err) {
-            err = multiplot_set_grid(np);
-        }
+        err = set_multiplot_sizes(myopt);
+    }
+    if (!err) {
+	err = multiplot_set_grid(np);
     }
 
     if (!err) {
@@ -403,7 +424,7 @@ int gretl_multiplot_revise (gretlopt opt)
 	}
     }
 
-#if 0
+#if GRID_DEBUG > 1
     fprintf(stderr, "*** here's the prior input (filter = %d) ***\n", filter);
     fputs(buf, stderr);
 #endif
@@ -416,6 +437,48 @@ int gretl_multiplot_revise (gretlopt opt)
 
     if (gbuf != NULL) {
 	g_free(gbuf);
+    }
+
+    return err;
+}
+
+int gretl_multiplot_from_array (gretlopt opt)
+{
+    const char *argname;
+    gretl_array *a = NULL;
+    const char **S = NULL;
+    int np = 0;
+    int err = 0;
+
+    argname = get_optval_string(GRIDPLOT, OPT_S);
+    a = get_array_by_name(argname);
+    if (a == NULL) {
+	err = E_DATA;
+    } else {
+	S = (const char **) gretl_array_get_strings(a, &np);
+	if (S == NULL) {
+	    err = E_DATA;
+	}
+    }
+
+    if (!err) {
+	/* pick up any options */
+	gretlopt myopt = opt;
+
+	set_multiplot_defaults();
+	myopt &= ~OPT_S;
+	if (myopt != OPT_NONE) {
+	    err = set_multiplot_sizes(myopt);
+	}
+	if (!err) {
+	    err = multiplot_set_grid(np);
+	}
+    }
+
+    if (!err) {
+	set_special_plot_size(mp_width, mp_height);
+	set_special_font_size(mp_fontsize);
+        err = output_multiplot_script(S, np);
     }
 
     return err;
