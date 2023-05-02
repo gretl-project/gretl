@@ -314,16 +314,24 @@ static int retrieve_grid_params (const char *buf,
     return 0;
 }
 
-static void get_prior_plot_spec (gretlopt opt,
-				 const char **pbuf,
-				 gchar **pgbuf)
+static int get_prior_plot_spec (gretlopt opt,
+				const char **pbuf,
+				gchar **pgbuf)
 {
     const char *s;
+    int err = 0;
+
+    err = incompatible_options(opt, OPT_i | OPT_I);
+    if (err) {
+	return err;
+    }
 
     if (opt & OPT_i) {
+	/* read a buffer */
 	s = get_optval_string(GRIDPLOT, OPT_i);
 	*pbuf = get_string_by_name(s);
     } else if (opt & OPT_I) {
+	/* read a file */
 	gboolean ok;
 
 	s = get_optval_string(GRIDPLOT, OPT_I);
@@ -332,6 +340,13 @@ static void get_prior_plot_spec (gretlopt opt,
 	    *pbuf = *pgbuf;
 	}
     }
+
+    if (pbuf == NULL) {
+        gretl_errmsg_set("Couldn't find an input specification");
+        err = E_DATA;
+    }
+
+    return err;
 }
 
 int gretl_multiplot_revise (gretlopt opt)
@@ -350,16 +365,13 @@ int gretl_multiplot_revise (gretlopt opt)
         return E_DATA;
     }
 
-    err = incompatible_options(opt, OPT_i | OPT_I);
-    if (!err) {
-	get_prior_plot_spec(opt, &buf, &gbuf);
-    }
-    if (buf == NULL) {
-        gretl_errmsg_set("Couldn't find an input specification");
-        return E_DATA;
+    /* we need an incoming plot specification */
+    err = get_prior_plot_spec(opt, &buf, &gbuf);
+    if (err) {
+        return err;
     }
 
-    /* what sort of output? */
+    /* what sort of output is wanted? */
     argname = get_optval_string(GRIDPLOT, OPT_U);
     if (argname != NULL) {
         fprintf(stderr, "gretl_multiplot_revise: output '%s'\n",
