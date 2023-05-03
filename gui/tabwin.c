@@ -602,6 +602,9 @@ static tabwin_t *make_tabbed_viewer (int role)
 		     G_CALLBACK(tabwin_destroy), tabwin);
     g_object_set_data(G_OBJECT(tabwin->main), "tabwin", tabwin);
 
+    /* try not to land fully on top of the main gretl window */
+    gtk_window_set_position(GTK_WINDOW(tabwin->main), GTK_WIN_POS_MOUSE);
+
     /* vertically oriented container */
     vbox = gtk_vbox_new(FALSE, 1);
     gtk_box_set_spacing(GTK_BOX(vbox), 0);

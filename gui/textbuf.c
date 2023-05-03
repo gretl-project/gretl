@@ -1096,12 +1096,11 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 
     if (hsize > 0) {
 	hsize *= cw;
-	hsize += 48; /* was 48 */
+	hsize += 48;
     }
 
     if (!(vwin->flags & VWIN_SWALLOW) && hsize > 0 && vsize > 0) {
 	GtkWidget *vmain = vwin_toplevel(vwin);
-        int sv = get_screen_height();
 
 	if (window_is_tab(vwin)) {
 	    vsize += 15;
@@ -1110,9 +1109,6 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	    /* approx golden ratio */
 	    vsize = 0.62 * hsize;
 	}
-        if (vsize < 0.55 * sv) {
-            vsize = 0.55 * sv;
-        }
 	gtk_window_set_default_size(GTK_WINDOW(vmain), hsize, vsize);
     }
 
