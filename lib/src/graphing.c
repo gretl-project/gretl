@@ -1290,15 +1290,25 @@ const char *get_plotstyle (void)
 
 /* Write the content of either the default, or an alternative,
    gnuplot style into @fp. The @offset argument allows for
-   skipping one or more leading linetype definitions.
+   skipping one or more leading linetype definitions. The
+   @linetypes argument allows for skipping the linetypes
+   altogether.
 */
 
-static void inject_gp_style (int offset, FILE *fp)
+static void inject_gp_style (int offset, int linetypes, FILE *fp)
 {
     const char *sty = alt_sty != NULL ? alt_sty : classic_sty;
     const char *sub = NULL;
 
-    if (offset > 0) {
+    if (linetypes == 0) {
+        /* just print what follows the linetypes, if anything */
+        sub = strstr(sty, "set bord");
+        if (sub != NULL) {
+            fputs(sub, fp);
+        }
+        return;
+    } else if (offset > 0) {
+        /* start at a specified linetype */
 	char targ[32];
 
 	sprintf(targ, "set linetype %d", offset + 1);
@@ -1327,6 +1337,7 @@ void write_plot_line_styles (int ptype, FILE *fp)
 	print_rgb_hash(cstr, get_boxcolor());
 	fprintf(fp, "set linetype 1 lc rgb \"%s\"\n", cstr);
 	fputs("set linetype 2 lc rgb \"#000000\"\n", fp);
+        inject_gp_style(0, 0, fp);
     } else if (ptype == PLOT_RQ_TAU) {
 	fputs("set linetype 1 lc rgb \"#000000\"\n", fp);
 	fputs("set linetype 2 lc rgb \"#000000\"\n", fp);
@@ -1336,11 +1347,12 @@ void write_plot_line_styles (int ptype, FILE *fp)
 	fputs("set linetype 6 lc rgb \"#FFA500\"\n", fp);
 	fputs("set linetype 7 lc rgb \"#E51E10\"\n", fp);
 	fputs("set linetype 8 lc rgb \"#000000\"\n", fp);
+        inject_gp_style(0, 0, fp);
     } else if (ptype == PLOT_HEATMAP || ptype == PLOT_GEOMAP) {
 	; /* these are handled specially */
     } else {
 	/* the primary default case */
-	inject_gp_style(0, fp);
+	inject_gp_style(0, 1, fp);
     }
 }
 
