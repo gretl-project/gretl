@@ -608,15 +608,15 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
   are read from a separate file.
 \item[\texttt{keypos}:] string, specifying the position of the key for
   discrete plot colors (relevant only when plotting qualitative data;
-  see Section~\ref{sec:qualitative}).  This string is passed directly
-  as an argument to the gnuplot \cmd{set key} command; therefore, any
-  valid string should work. However, the most common usage takes the
-  form of two words: \texttt{left}, \texttt{right} or \texttt{center}
-  along with \texttt{top}, \texttt{bottom} or \texttt{center} (in
-  either order). These two words can be preceded by \texttt{outside}
-  for putting the key outside the plot area. For example,
-  \verb|keypos="bottom center"| or \verb|keypos="outside top left"|.
-  The default position is bottom right.
+  see Section~\ref{sec:qualitative}).  This string must be a valid
+  argument to gnuplot's \cmd{set key} command.  The most common usage
+  takes the form of two words: \texttt{left}, \texttt{right} or
+  \texttt{center} along with \texttt{top}, \texttt{bottom} or
+  \texttt{center} (in either order). These words can be preceded by
+  \texttt{outside} to place the key outside of the plot area. For
+  example, \verb|keypos="bottom center"| or
+  \verb|keypos="outside top left"|.  The default position is bottom
+  right.
 \item[\texttt{linecolor}:] string, naming the color in which to draw
   the borders of the regions. By default this is white if a payload is
   plotted, black if only outlines are shown.
