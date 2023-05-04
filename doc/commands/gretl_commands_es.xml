@@ -7033,6 +7033,55 @@
     </description>
   </command>
 
+  <command name="kdplot" section="Graphs" label="Gráfico de la densidad del Kernel">
+    <usage>
+      <arguments>
+	<argument>y</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--alt</flag>
+	  <effect>Utiliza el kernel de Epanechnikov</effect>
+        </option>
+        <option>
+	  <flag>--scale</flag>
+	  <optparm>s</optparm>
+	  <effect>Factor de ajuste del ancho de banda</effect>
+        </option>
+        <option>
+	  <flag>--output</flag>
+	  <optparm>nombrearchivo</optparm>
+	  <effect>Envía el gráfico al archivo indicado</effect>
+        </option>
+      </options>
+    </usage>
+    <description>
+      <para>
+	Representa un gráfico con la estimación de la densidad del kernel para
+	la serie <argname>y</argname>. Por defecto, el kernel es Gaussiano pero
+	si indicas la opción <option>alt</option>, se utiliza el kernel de
+	Epanechnikov. Puedes ajustar el grado de suavizado mediante la opción
+	<option>scale</option>, que tiene un valor predeterminado de 1.0
+	(los valores más grandes de <repl>s</repl> producen un resultado
+	más suavizado).
+      </para>
+      <para context="cli">
+	La opción <opt>output</opt> tiene como efecto el envío del resultado al
+	archivo que se indique en ella; utiliza la palabra <quote>display</quote>
+	para forzar que el resultado aparezca en la pantalla. Consulta la instrucción
+	<cmdref targ="gnuplot"/> para obtener más detalles sobre esta opción.
+      </para>
+      <para>
+	Para obtener medios más flexibles para generar estimaciones de la
+	densidad del kernel, con la posibilidad de recuperar el resultado en
+	forma de matriz, consulta la función <fncref targ="kdensity"/>.
+      </para>
+    </description>
+    <gui-access>
+      <menu-path>/Variable/Gráfico de la densidad estimada</menu-path>
+    </gui-access>
+  </command>
+
   <command name="kpss" section="Tests" label="Contraste de estacionariedad KPSS">
 
     <usage>

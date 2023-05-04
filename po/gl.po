@@ -3186,8 +3186,8 @@ msgstr "constantes do modelo %d por unidade"
 #: lib/src/genfuncs.c:4336
 msgid "Invalid declaration: maybe you need the \"clear\" command?"
 msgstr ""
-"Expresión incorrecta: é posible que necesites utilizar a instrución \"clear"
-"\"?"
+"Expresión incorrecta: é posible que necesites utilizar a instrución "
+"\"clear\"?"
 
 #: lib/src/genfuncs.c:4339
 msgid "Invalid declaration"
@@ -21712,6 +21712,7 @@ msgstr "Decoración"
 #~ "a cadeas de caracteres, que se amosan abaixo.\n"
 #~ "\n"
 
+#, c-format
 #~ msgid ""
 #~ "String code table written to\n"
 #~ " %s\n"
@@ -21719,6 +21720,7 @@ msgstr "Decoración"
 #~ "Táboa de códigos de cadea escrito en\n"
 #~ " %s\n"
 
+#, no-c-format
 #~ msgid ""
 #~ "      VARIABLE         COEFFICIENT      %g%% CONFIDENCE INTERVAL\n"
 #~ "\n"
@@ -21746,12 +21748,15 @@ msgstr "Decoración"
 #~ msgid "progressive loop: model must be of constant size"
 #~ msgstr "Bucle progresivo: O modelo debe de ter un tamaño constante"
 
+#, c-format
 #~ msgid "%s estimates using the %d observations %s-%s\n"
 #~ msgstr "Estimacións de *%s* utilizando as %d observacións %s-%s\n"
 
+#, c-format
 #~ msgid "Statistics for %d repetitions\n"
 #~ msgstr "Estatísticas para %d repeticións\n"
 
+#, c-format
 #~ msgid ""
 #~ "Dependent variable: %s\n"
 #~ "\n"
@@ -21775,12 +21780,14 @@ msgstr "Decoración"
 #~ "      Variable    coeficientes   coeficientes   desv.pad.    desv.pad.\n"
 #~ "\n"
 
+#, c-format
 #~ msgid "store: using filename %s\n"
 #~ msgstr "store: Usando o nome de ficheiro *%s*.\n"
 
 #~ msgid "write of data file failed\n"
 #~ msgstr "fallou a escritura do ficheiro de datos\n"
 
+#, c-format
 #~ msgid "%s: not implemented in 'progressive' loops"
 #~ msgstr "*%s* : Non está integrado en bucles 'progresivos'"
 
@@ -21790,7 +21797,7 @@ msgstr "Decoración"
 #~ msgid "Sorry, this item not yet implemented!"
 #~ msgstr "Este tema aínda non está preparado!"
 
-#, fuzzy
+#, fuzzy, c-format
 #~ msgid "%s: not a recognized script file"
 #~ msgstr "'%s': Nome descoñecido"
 
@@ -21833,14 +21840,15 @@ msgstr "Decoración"
 #~ msgid "gretl: untitled"
 #~ msgstr "GRETL: Sen nome"
 
-#, fuzzy
+#, fuzzy, c-format
 #~ msgid "%s output"
 #~ msgstr "resultado GRETL"
 
-#, fuzzy
+#, fuzzy, c-format
 #~ msgid "gretl: %s output"
 #~ msgstr "resultado GRETL"
 
+#, c-format
 #~ msgid "gretl: script output %d"
 #~ msgstr "GRETL: Resultado de guión %d"
 
@@ -21859,6 +21867,7 @@ msgstr "Decoración"
 #~ msgid "gretl: command log"
 #~ msgstr "GRETL: Historial de instrucións"
 
+#, c-format
 #~ msgid "Can't open %s for reading"
 #~ msgstr "Non pode abrirse *%s* para lectura"
 

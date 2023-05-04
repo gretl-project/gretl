@@ -866,6 +866,11 @@
 	<para>
 	  Se pode calcularse, devolve un escalar co valor do coeficiente
 	  <math>R</math><sup>2</sup> non corrixido do último modelo estimado.
+	  En xeral, este será o <math>R</math><sup>2</sup> habitual (centrado),
+	  pero se a especificación do modelo non contén a constante (nin un
+	  conxunto de regresores cuxa <quote>suma</quote> resulte ser constante),
+	  entón será a versión non centrada. Nese caso, podes acadar a versión
+	  centrada por medio de <lit>$model.centered_R2</lit>.
 	</para>
       </description>
     </function>
@@ -1512,11 +1517,16 @@
 
     <function name="aggregate" section="stats" output="matrix">
       <fnargs>
-	<fnarg type="series-or-list">x</fnarg>
-	<fnarg type="series-or-list">segunvar</fnarg>
+	<fnarg type="series-list-or-mat">x</fnarg>
+	<fnarg type="series-list-or-mat">segunvar</fnarg>
 	<fnarg type="string" optional="true">nomefunc</fnarg>
       </fnargs>
       <description>
+	<para>
+	  A maior parte do que segue asume que os dous primeiros argumentos desta
+	  función toman a forma de series ou listas, pero consulta a sección
+	  <quote>Entrada matricial</quote> de abaixo para un uso alternativo.
+	</para>
 	<para>
 	  Na forma máis simple de uso desta función, <argname>x</argname>
 	  establécese igual a <lit>null</lit>, <argname>segunvar</argname> é
@@ -1641,6 +1651,19 @@
 	  scalar c = nelem(BY)
 	  m = selifr(m, m[,c+1])
 	</code>
+	<subhead>Entrada matricial</subhead>
+	<para>
+	  En troques de indicar <argname>x</argname> e <argname>segunvar</argname>
+	  como series ou listas, podes indicalas en formato matricial. Porén, se
+	  indicas os dous argumentos, deben coincidir no mesmo tipo (non podes
+	  indicar unha serie ou unha lista para un dos argumentos, e unha
+	  matriz para o outro); ademais, dous argumentos de tipo matricial
+	  deberán ter o mesmo número de filas. Cae na conta tamén, que neste
+	  contexto se trata ás columnas das matrices como se fosen series,
+	  por iso a función de agregación do terceiro argumento (opcional)
+	  deberá seguir o mesmo padrón descrito máis arriba, collendo un
+	  argumento de tipo serie e devolvendo un escalar.
+	</para>
       </description>
     </function>
 
@@ -3465,10 +3488,13 @@
 	  Acumula <argname>x</argname> (isto é, crea unha suma móbil). Cando
 	  <argname>x</argname> é unha serie, produce unha serie <math>y</math>
 	  na que cada un dos seus elementos é igual á suma dos valores de
-	  <argname>x</argname> ata a observación correspondente. O punto de
-	  partida para a acumulación é a primeira observación non ausente da
-	  mostra vixente seleccionada. Cando <argname>x</argname> é unha
-	  matriz, os seus elementos acumúlanse por columnas.
+	  <argname>x</argname> ata a observación correspondente. O punto
+	  de partida para a acumulación é a primeira observación non ausente
+	  da mostra vixente seleccionada. Cando se atopa algún valor ausente
+	  en <math>x</math>, vanse establecer como ausentes os valores
+	  conseguintes de <math>y</math>. Cando <argname>x</argname> é
+	  unha matriz, os seus elementos acumúlanse por
+	  columnas.
 	</para>
 	<para context="tex">
 	  Acumula <argname>x</argname>. Cando <math>x</math> é unha serie,
@@ -3479,6 +3505,18 @@
 	  defínense como valores ausentes. Cando <argname>x</argname> é unha
 	  matriz, os elementos acumúlanse por columnas.
 	</para>
+	<para>
+	  No caso de datos de panel, a acumulación prodúcese na dimensión
+	  temporal, comezando novamente para cada unidade do panel.
+	</para>
+	<para>
+	  Se queres que a acumulación ignore os valores ausentes (é dicir,
+	  para tratalos como se fosen ceros), podes aplicar a función
+	  <fncref targ="misszero"/> ao argumento, como en
+	</para>
+	<code>
+	  series cx = cum(misszero(x))
+	</code>
 	<para>
 	  <seelist>
             <fncref targ="diff"/>
@@ -5919,11 +5957,15 @@
     <function name="imaxc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector fila que indica, para cada columna da matriz
-	  <argname>X</argname>, cal é a fila que ten o valor máis grande.
+	  Devolve un vector fila que indica cal é a fila que ten o valor máis grande,
+	  por cada columna da matriz <argname>X</argname>. Para columnas que teñan
+	  valores <lit>NA</lit>s, o resultado tamén establécese como <lit>NA</lit>,
+	  agás cando non sexa cero o argumento opcional <argname>obviar_na</argname>,
+	  en cuxo caso devólvese o índice da maior entrada válida.
 	</para>
 	<para>
 	  <seelist>
@@ -5938,11 +5980,15 @@
     <function name="imaxr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector columna que indica, para cada fila da matriz
-	  <argname>X</argname>, cal é a columna que ten o valor máis grande.
+	  Devolve un vector columna que indica cal é a columna que ten o valor máis grande,
+	  por cada fila da matriz <argname>X</argname>. Para filas que teñan
+	  valores <lit>NA</lit>s, o resultado tamén establécese como <lit>NA</lit>,
+	  agás cando non sexa cero o argumento opcional <argname>obviar_na</argname>,
+	  en cuxo caso devólvese o índice da maior entrada válida.
 	</para>
 	<para>
 	  <seelist>
@@ -5987,11 +6033,15 @@
     <function name="iminc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector fila que indica, para cada columna da matriz
-	  <argname>X</argname>, cal é a fila que ten o valor máis pequeno.
+	  Devolve un vector fila que indica cal é a fila que ten o valor máis pequeno,
+	  por cada columna da matriz <argname>X</argname>. Para columnas que teñan
+	  valores <lit>NA</lit>s, o resultado tamén establécese como <lit>NA</lit>,
+	  agás cando non sexa cero o argumento opcional <argname>obviar_na</argname>,
+	  en cuxo caso devólvese o índice da menor entrada válida.
 	</para>
 	<para>
 	  <seelist>
@@ -6006,11 +6056,15 @@
     <function name="iminr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector columna que indica, para cada fila da matriz
-	  <argname>X</argname>, cal é a columna que ten o valor máis pequeno.
+	  Devolve un vector columna que indica cal é a columna que ten o valor máis pequeno,
+	  por cada fila da matriz <argname>X</argname>. Para filas que teñan
+	  valores <lit>NA</lit>s, o resultado tamén establécese como <lit>NA</lit>,
+	  agás cando non sexa cero o argumento opcional <argname>obviar_na</argname>,
+	  en cuxo caso devólvese o índice da menor entrada válida.
 	</para>
 	<para>
 	  <seelist>
@@ -7768,11 +7822,15 @@
     <function name="maxc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector fila que contén os valores máximos de cada columna
-	  da matriz <argname>X</argname>.
+	  Devolve un vector fila que contén o valor máis grande de cada columna
+	  da matriz <argname>X</argname>. Para columnas que teñan valores
+	  <lit>NA</lit>s, o resultado tamén establécese como <lit>NA</lit>, agás
+	  cando non sexa cero o argumento opcional <argname>obviar_na</argname>,
+	  en cuxo caso devólvese a maior entrada válida.
 	</para>
 	<para>
 	  <seelist>
@@ -7787,11 +7845,15 @@
     <function name="maxr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector columna que contén os valores máximos de cada fila
-	  da matriz <argname>X</argname>.
+	  Devolve un vector columna que contén o valor máis grande de cada fila
+	  da matriz <argname>X</argname>. Para filas que teñan valores
+	  <lit>NA</lit>s, o resultado tamén establécese como <lit>NA</lit>, agás
+	  cando non sexa cero o argumento opcional <argname>obviar_na</argname>,
+	  en cuxo caso devólvese a maior entrada válida.
 	</para>
 	<para>
 	  <seelist>
@@ -7823,16 +7885,16 @@
     <function name="mcov" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="int" optional="true">dfcorr</fnarg>
+	<fnarg type="int" optional="true">gl_corr</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Calcula unha matriz de varianzas-covarianzas, tratando cada columna da
-	  matriz argumento <argname>X</argname> como se fose unha variable.
-	  O divisor é <math>n</math> &minus; 1, no que <math>n</math> é o
-	  número de filas de <argname>X</argname>; agás que o argumento
-	  <argname>dfcorr</argname> (opcional) sexa 0, en cuxo caso se utiliza
-	  <math>n</math>.
+	  Calcula unha matriz de varianzas-covarianzas, tratando cada columna
+	  da matriz argumento <argname>X</argname> como se fose unha
+	  variable. O divisor é <math>n</math> &minus; 1, no que
+	  <math>n</math> é o número de filas de <argname>X</argname>;
+	  agás que indiques o segundo argumento (opcional), en cuxo caso
+	  se utiliza <math>n</math> &minus; <argname>gl_corr</argname>.
 	</para>
 	<para>
 	  <seelist>
@@ -7993,11 +8055,14 @@
     <function name="meanc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve as medias das columnas de <argname>X</argname>, sen omitir
-	  as observacións perdidas.
+	  Devolve un vector fila con cada unha das medias de cada columna de
+	  <argname>X</argname>. Se indicas un valor non nulo para o segundo
+	  argumento (opcional), ignóranse os valores ausentes; doutro xeito, o
+	  resultado é <lit>NA</lit> para cada columna que conteña valores ausentes.
 	</para>
 	<para>
 	  Por exemplo, o seguinte anaco de código...
@@ -8040,10 +8105,14 @@
     <function name="meanr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector columna coa media de cada fila de <argname>X</argname>.
+	  Devolve un vector columna con cada unha das medias de cada fila de
+	  <argname>X</argname>. Se indicas un valor non nulo para o segundo
+	  argumento (opcional), ignóranse os valores ausentes; doutro xeito, o
+	  resultado é <lit>NA</lit> para cada fila que conteña valores ausentes.
 	  <seelist>
             <fncref targ="meanc"/>
             <fncref targ="sumr"/>
@@ -8237,10 +8306,15 @@
     <function name="minc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector fila co valor mínimo de cada columna de <argname>X</argname>.
+	  Devolve un vector fila que contén o valor máis pequeno de cada columna
+	  da matriz <argname>X</argname>. Para columnas que teñan valores
+	  <lit>NA</lit>s, o resultado tamén establécese como <lit>NA</lit>, agás
+	  cando non sexa cero o argumento opcional <argname>obviar_na</argname>,
+	  en cuxo caso devólvese a menor entrada válida.
 	</para>
 	<para>
 	  <seelist>
@@ -8255,10 +8329,15 @@
     <function name="minr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector columna co valor mínimo de cada fila de <argname>X</argname>.
+	  Devolve un vector columna que contén o valor máis pequeno de cada fila
+	  da matriz <argname>X</argname>. Para filas que teñan valores
+	  <lit>NA</lit>s, o resultado tamén establécese como <lit>NA</lit>, agás
+	  cando non sexa cero o argumento opcional <argname>obviar_na</argname>,
+	  en cuxo caso devólvese a menor entrada válida.
 	</para>
 	<para>
 	  <seelist>
@@ -8314,13 +8393,13 @@
 
     <function name="misszero" section="data-utils" output="asinput">
       <fnargs>
-	<fnarg type="scalar-or-series">x</fnarg>
+	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devolve un resultado do tipo do argumento, mudando os <lit>NA</lit>s
-	  en ceros. Se <argname>x</argname> é unha serie, múdase elemento
-	  a elemento. Por exemplo, o seguinte código
+	  en ceros. Se <argname>x</argname> é unha serie ou unha matriz, múdase
+	  elemento a elemento. Por exemplo, o seguinte código
 	</para>
 	<code>
 		nulldata 3
@@ -10411,11 +10490,15 @@
     <function name="prodc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector fila co produto dos elementos das columnas de
-	  <argname>X</argname>.
+	  Devolve un vector fila cos produtos dos elementos de cada columna
+	  da matriz <argname>X</argname>. Se indicas un valor non nulo para
+	  o segundo argumento (opcional), ignóranse os valores ausentes;
+	  doutro xeito, o resultado é <lit>NA</lit> para cada columna que conteña
+	  valores ausentes.
 	  <seelist>
             <fncref targ="prodr"/>
             <fncref targ="meanc"/>
@@ -10429,11 +10512,14 @@
     <function name="prodr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector columna co produto dos elementos das filas de
-	  <argname>X</argname>.
+	  Devolve un vector columna cos produtos dos elementos de cada fila da
+	  matriz <argname>X</argname>. Se indicas un valor non nulo para o
+	  segundo argumento (opcional), ignóranse os valores ausentes; doutro
+	  xeito, o resultado é <lit>NA</lit> para cada fila que conteña valores ausentes.
 	  <seelist>
             <fncref targ="prodc"/>
             <fncref targ="meanr"/>
@@ -10729,7 +10815,7 @@
     <function name="qlrpval" section="probdist" output="scalar">
       <fnargs>
 	<fnarg type="scalar">X2</fnarg>
-	<fnarg type="int">df</fnarg>
+	<fnarg type="int">gl</fnarg>
 	<fnarg type="scalar">p1</fnarg>
 	<fnarg type="scalar">p2</fnarg>
       </fnargs>
@@ -10743,7 +10829,7 @@
 	<para>
 	  O primeiro argumento, <argname>X2</argname>, indica o valor do
 	  estatístico de proba de Wald máximo (en formato khi-cadrado), e o
-	  segundo, <argname>df</argname>, indica os seus graos de liberdade.
+	  segundo, <argname>gl</argname>, indica os seus graos de liberdade.
 	  O terceiro e o cuarto argumentos, representan os puntos de comezo e
 	  de remate do rango central de observacións sobre o que se van calcular
 	  os sucesivos estatísticos de Wald das probas, e debes expresalos como
@@ -11699,16 +11785,20 @@
     <function name="sdc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="scalar" optional="true">df</fnarg>
+	<fnarg type="scalar" optional="true">gl</fnarg>
+	<fnarg optional="true" type="bool">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devolve un vector fila cos desvíos padrón das columnas da
-	  matriz <argname>X</argname>. Se <argname>df</argname> é positivo,
+	  matriz <argname>X</argname>. Se <argname>gl</argname> é positivo,
 	  utilízase como divisor para as varianzas das columnas; noutro caso,
 	  o divisor é igual ao número de filas que ten <argname>X</argname>
 	  (é dicir, nese caso non se aplica a corrección polos graos de
-	  liberdade).
+	  liberdade). Se indicas un valor non nulo para o terceiro argumento
+	  (opcional), ignóranse os valores ausentes; doutro xeito, o resultado
+	  é <lit>NA</lit> para cada columna que conteña valores
+	  ausentes.
 	  <seelist>
             <fncref targ="meanc"/>
             <fncref targ="sumc"/>
@@ -12978,10 +13068,14 @@
     <function name="sumc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector fila coa suma das columnas de <argname>X</argname>.
+	  Devolve un vector fila coas sumas de cada columna da matriz
+	  <argname>X</argname>. Se indicas un valor non nulo para o segundo
+	  argumento (opcional), ignóranse os valores ausentes; doutro xeito, o
+	  resultado é <lit>NA</lit> para cada columna que conteña valores ausentes.
 	  <seelist>
             <fncref targ="meanc"/>
             <fncref targ="sumr"/>
@@ -12993,10 +13087,14 @@
     <function name="sumr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector columna coa suma das filas de <argname>X</argname>.
+	  Devolve un vector columna coas sumas de cada fila da matriz
+	  <argname>X</argname>. Se indicas un valor non nulo para o segundo
+	  argumento (opcional), ignóranse os valores ausentes; doutro xeito, o
+	  resultado é <lit>NA</lit> para cada fila que conteña valores ausentes.
 	  <seelist>
             <fncref targ="meanr"/>
             <fncref targ="sumc"/>
@@ -14057,12 +14155,13 @@ d =  8,0000000
 
     <function name="zeromiss" section="transforms" output="asinput">
       <fnargs>
-	<fnarg type="scalar-or-series">x</fnarg>
+	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devolve un resultado (do tipo do argumento) trocando os ceros en
-	  <lit>NA</lit>s. Se <argname>x</argname> é unha serie, troca cada elemento.
+	  <lit>NA</lit>s. Se <argname>x</argname> é unha serie ou unha matriz,
+	  a conversión faise elemento a elemento.
 	  <seelist>
             <fncref targ="missing"/>
             <fncref targ="misszero"/>
