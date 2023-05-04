@@ -3184,6 +3184,8 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
         err = cli_panel_plot(cmd->list, cmd->param, dset, opt);
     } else if (cmd->ci == QQPLOT) {
         err = qq_plot(cmd->list, dset, opt);
+    } else if (cmd->ci == KDPLOT) {
+	err = kd_plot(cmd->list, dset, opt);
     }
 
     return err;
@@ -4149,6 +4151,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case HFPLOT:
     case PANPLOT:
     case QQPLOT:
+    case KDPLOT:
         err = execute_plot_call(cmd, dset, NULL, prn);
         break;
 

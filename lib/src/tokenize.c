@@ -131,6 +131,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { INFO,     "info",     CI_NOOPT },
     { INTREG,   "intreg",   CI_LIST },
     { JOIN,     "join",     CI_PARM1 | CI_FNAME | CI_EXTRA },
+    { KDPLOT,   "kdplot",   CI_LIST | CI_LLEN1 },
     { KPSS,     "kpss",     CI_ORD1 | CI_LIST },
     { LABELS,   "labels",   CI_LIST | CI_DOALL },
     { LAD,      "lad",      CI_LIST },

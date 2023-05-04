@@ -7033,6 +7033,55 @@
     </description>
   </command>
 
+  <command name="kdplot" section="Graphs" label="Kernel density plot">
+    <usage>
+      <arguments>
+	<argument>y</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--alt</flag>
+	  <effect>use Epanechnikov kernel</effect>
+        </option>
+        <option>
+	  <flag>--scale</flag>
+	  <optparm>s</optparm>
+	  <effect>scale factor for bandwidth</effect>
+        </option>
+        <option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>send plot to specified file</effect>
+        </option>
+      </options>
+    </usage>
+    <description>
+      <para>
+	Plots a kernel density estimate for the series
+	<argname>y</argname>. By default the kernel is Gaussian but if
+	the <option>alt</option> flag is given the Epanechnikov kernel
+	is used. The degree of smoothing can be adjusted via the
+	<option>scale</option> option, which has a default value of
+	1.0 (higher values of <repl>s</repl> produce a smoother
+	result).
+      </para>
+      <para context="cli">
+	The option <opt>output</opt> has the effect of sending the
+	output to the specified file; use <quote>display</quote> to
+	force output to the screen. See the <cmdref targ="gnuplot"/>
+	command for more detail on this option.
+      </para>
+      <para>
+	For a more flexible means of generating kernel density
+	estimates, with the option of retrieving the result as
+	a matrix, see the <fncref targ="kdensity"/> function.
+      </para>
+    </description>
+    <gui-access>
+      <menu-path>/Variable/Estimated density plot</menu-path>
+    </gui-access>
+  </command>
+
   <command name="kpss" section="Tests" label="KPSS stationarity test">
 
     <usage>

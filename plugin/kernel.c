@@ -295,9 +295,10 @@ static double *get_sorted_x (const double *y, int *pn, int *err)
     return x;
 }
 
-int
-kernel_density (const double *y, int n, double bwscale,
-		const char *label, gretlopt opt)
+int kernel_density (const double *y, int n,
+		    double bwscale,
+		    const char *label,
+		    gretlopt opt)
 {
     kernel_info kinfo = {0};
     int err = 0;
@@ -319,9 +320,10 @@ kernel_density (const double *y, int n, double bwscale,
     return err;
 }
 
-gretl_matrix *
-multiple_kd_matrix (const gretl_matrix *X, double bwscale,
-		    gretlopt opt, int *err)
+gretl_matrix *multiple_kd_matrix (const gretl_matrix *X,
+				  double bwscale,
+				  gretlopt opt,
+				  int *err)
 {
     double Xmin = 0, Xmax = 0;
     double bw, *xi = NULL;

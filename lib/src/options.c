@@ -88,6 +88,7 @@
 			       c == HFPLOT ||	\
 			       c == PANPLOT ||	\
 			       c == QQPLOT ||	\
+			       c == KDPLOT ||   \
 			       c == RMPLOT ||	\
 			       c == SCATTERS || \
 			       c == GRIDPLOT)
@@ -375,6 +376,8 @@ struct gretl_option gretl_opts[] = {
     { JOIN,     OPT_V, "verbose", 0 },
     { JOIN,     OPT_P, "pd", 2 }, /* undocumented: is it wanted? */
     { JOIN,     OPT_R, "frompkg", 2 },
+    { KDPLOT,   OPT_O, "alt", 0 },
+    { KDPLOT,   OPT_S, "scale", 2},
     { KPSS,     OPT_T, "trend", 0 },
     { KPSS,     OPT_D, "seasonals", 0 },
     { KPSS,     OPT_V, "verbose", 0 },

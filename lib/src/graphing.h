@@ -249,6 +249,8 @@ int hurstplot (const int *list, DATASET *dset, gretlopt opt,
 
 int qq_plot (const int *list, const DATASET *dset, gretlopt opt);
 
+int kd_plot (const int *list, const DATASET *dset, gretlopt opt);
+
 int hf_plot (const int *list, const char *literal,
 	     const DATASET *dset, gretlopt opt);
 

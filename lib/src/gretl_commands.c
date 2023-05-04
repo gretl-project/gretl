@@ -95,6 +95,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { INFO,     "info" },
     { INTREG,   "intreg" },
     { JOIN,     "join" },
+    { KDPLOT,   "kdplot" },
     { KPSS,     "kpss" },
     { LABELS,   "labels" },
     { LAD,      "lad" },

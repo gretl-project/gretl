@@ -9346,6 +9346,35 @@ int qq_plot (const int *list, const DATASET *dset, gretlopt opt)
     return err;
 }
 
+int kd_plot (const int *list, const DATASET *dset, gretlopt opt)
+{
+    int (*kdfunc) (const double *y, int, double,
+		   const char *, gretlopt);
+    int err = 0;
+
+    kdfunc = get_plugin_function("kernel_density");
+
+    if (kdfunc == NULL) {
+	err = E_FOPEN;
+    } else {
+	int v = list[1];
+	const double *y = dset->Z[v] + dset->t1;
+	const char *label = dset->varname[v];
+	int n = sample_size(dset);
+	double bws = 1.0;
+
+	if (opt & OPT_S) {
+	    /* bandwidth scale */
+	    bws = get_optval_double(KDPLOT, OPT_S, &err);
+	}
+	if (!err) {
+	    err = (*kdfunc)(y, n, bws, label, opt);
+	}
+    }
+
+    return err;
+}
+
 static int pd_from_compfac (const DATASET *dset,
 			    int compfac,
 			    char *stobs)

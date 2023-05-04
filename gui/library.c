@@ -2906,23 +2906,16 @@ void do_kernel (void)
     if (kernel_density != NULL) {
         const double *y = dataset->Z[v] + dataset->t1;
 
-        err = (*kernel_density)(y, T, bw,
-                                dataset->varname[v],
+        err = (*kernel_density)(y, T, bw, dataset->varname[v],
                                 opt);
         gui_graph_handler(err);
 
         if (!err) {
             gretl_push_c_numeric_locale();
-            lib_command_sprintf("matrix kd__ = kdensity(%s, %g, %d)",
-                                dataset->varname[v], bw,
-                                (opt & OPT_O)? 1 : 0);
-            record_command_verbatim();
-            lib_command_strcpy("cnameset(kd__, \"value density\")");
-            record_command_verbatim();
-            lib_command_strcpy("gnuplot 2 1 --matrix=kd__ --with-lines "
-                               "--fit=none --output=display");
-            record_command_verbatim();
-            lib_command_strcpy("delete kd__");
+            lib_command_sprintf("kdplot %s%s --scale=%g",
+				dataset->varname[v],
+				(opt & OPT_O)? "--alt" : "",
+                                bw);
             record_command_verbatim();
             gretl_pop_c_numeric_locale();
         }

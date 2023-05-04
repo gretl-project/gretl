@@ -84,6 +84,7 @@ typedef enum {
     INFO,
     INTREG,
     JOIN,
+    KDPLOT,
     KPSS,
     LABELS, 
     LAD,
@@ -237,6 +238,7 @@ typedef enum {
 			     c == LEVERAGE || \
 			     c == QLRTEST ||  \
 			     c == QQPLOT || \
+			     c == KDPLOT || \
 			     c == FREQ || \
 			     c == FCAST || \
 			     c == CORR || \
