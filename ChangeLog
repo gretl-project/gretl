@@ -3,6 +3,8 @@ version 2023b, in progress
   lag orders, via new --lagselect option, and add GUI access
 - "corr" command: add 1 percent critical value of correlation
   coefficient to the output
+- New command "kdplot": simple access to a kernel density plot
+  for a single series
 - aggregate() function: support matrix input
 - misszero() and zeromiss() functions: support matrix input
 - geoplot addon: make the plot key position configurable
