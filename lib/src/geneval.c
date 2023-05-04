@@ -13216,9 +13216,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             } else {
                 p->err = regfunc(p->prn);
             }
-        } else if (l->t != MAT || m->t != MAT || r->t != BUNDLE) {
-            /* otherwise three args needed */
-            p->err = E_TYPES;
         } else {
             int (*regfunc) (const gretl_matrix *, const gretl_matrix *,
                             gretl_bundle *, PRN *);

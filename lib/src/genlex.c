@@ -617,6 +617,7 @@ struct str_table func_alias[] = {
     { F_CNAMEGET, "colname" },
     { F_RNAMEGET, "rowname" },
     { F_EXISTS,   "isnull" }, /* deprecated */
+    { HF_REGLS,   "rawregls" },
     { 0,          NULL }
 };
 
