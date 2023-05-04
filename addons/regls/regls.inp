@@ -22,18 +22,21 @@ end function
 function matrix m_standardize (const matrix X, matrix *mx, matrix *sx)
    mx = meanc(X)
    sx = sdc(X)
-   matrix S = zeros(rows(X), cols(X))
-   loop j=1..cols(X)
-      S[,j] = sx[j] == 0 ? 0 : (X[,j] .- mx[j]) ./ sx[j]
-   endloop
+   matrix S = (X .- mx) ./ sx
+   if sumr(sx .> 0) < cols(X)
+      S = missing(S) ? 0 : S
+   endif
    return S
 end function
 
 function matrix s_standardize (const matrix y, scalar *my, scalar *sy)
    my = meanc(y)
    sy = sdc(y)
-   matrix S = zeros(rows(y), 1)
-   S = sy == 0 ? 0 : (y - my) / sy
+   if sy == 0
+      S = {}
+   else
+      S = (y - my) / sy
+   endif
    return S
 end function
 
@@ -324,6 +327,11 @@ function bundle regls (series depvar, list indeps,
    else
       matrix Y = {depvar}
       matrix X = {indeps}
+   endif
+
+   # check for bad Y
+   if nelem(Y) == 0
+      funcerr "Invalid (constant) dependent variable"
    endif
 
    scalar ret.nobs = rows(X)
