@@ -261,9 +261,9 @@ static regls_info *regls_info_new (gretl_matrix *X,
 	    *err = get_xvalidation_details(ri);
 	} else if (!*err) {
 	    ri->nf = ri->randfolds = ri->use_1se;
-	    ri->crit = gretl_matrix_alloc(ri->nlam, 1);
-	    ri->R2 = gretl_matrix_alloc(ri->nlam, 1);
-	    ri->BIC = gretl_matrix_alloc(ri->nlam, 1);
+	    ri->crit = gretl_zero_matrix_new(ri->nlam, 1);
+	    ri->R2 = gretl_zero_matrix_new(ri->nlam, 1);
+	    ri->BIC = gretl_zero_matrix_new(ri->nlam, 1);
 	    if (ri->R2 == NULL || ri->crit == NULL || ri->BIC == NULL) {
 		*err = E_ALLOC;
 	    }
@@ -2202,6 +2202,9 @@ static int admm_lasso (regls_info *ri)
 		    idxmin = j;
 		}
 		ri->crit->val[j] = critj;
+		if (ri->nlam == 1) {
+		    ri->R2->val[0] = R2;
+		}
 	    }
 	}
     }
