@@ -3490,8 +3490,8 @@ int simple_forecast_dialog (int *t1, int *t2, GtkWidget *parent)
     /* forecast range selection */
     tmp = obs_spinbox(rset, _("Forecast range:"),
                       _("Start"), _("End"),
-                      *t1, dataset->n - 2, *t1,
-                      dataset->t2 + 2, *t2, *t2,
+                      *t1, dataset->n - 1, *t1,
+                      dataset->t2 + 1, *t2, *t2,
                       SPIN_LABEL_INLINE);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
 
