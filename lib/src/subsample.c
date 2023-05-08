@@ -853,9 +853,13 @@ int restore_full_sample (DATASET *dset, ExecState *state)
 	/* in this case restoring the "full" sample really means, relative
 	   to the original state
 	*/
-	if (state->submask != NULL) {
+        int fdepth = gretl_function_depth();
+        int masked = state->submask != NULL;
+
+	if (masked) {
 	    err = restrict_sample_from_mask(state->submask, dset, OPT_NONE);
-	} else {
+        }
+        if (!err && (!masked || fdepth > 0)) {
 	    int t1min, t2max;
 
 	    sample_range_get_extrema(dset, &t1min, &t2max);
