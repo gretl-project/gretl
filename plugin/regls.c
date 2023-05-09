@@ -1730,6 +1730,7 @@ static int ccd_regls (regls_info *ri)
     }
 
     if (!err) {
+	// gretl_matrix_print(ci.B, "ci.B");
 	gretl_bundle_donate_data(ri->b, "B", ci.B, GRETL_TYPE_MATRIX, 0);
 	ci.B = NULL;
 	if (ri->lamscale != LAMSCALE_NONE) {
@@ -3206,7 +3207,7 @@ static void ccd_revise_input (regls_info *ri, ccd_info *ci)
 
 static int ccd_glasso (regls_info *ri, gretl_matrix *coeff)
 {
-    static ccd_info ci = {0};
+    static ccd_info ci;
     static int *ia, *nnz;
     int maxit = CCD_MAX_ITER;
     int nlp = 0, lmu = 0;
@@ -3241,8 +3242,15 @@ static int ccd_glasso (regls_info *ri, gretl_matrix *coeff)
         }
         nnz = ia + k;
     } else {
+	memset(ia, 0, (k + nlam) * sizeof *ia);
         ccd_revise_input(ri, &ci);
+	gretl_matrix_zero(ci.B);
     }
+
+#if LAMBDA_DEBUG
+    fprintf(stderr, "ccd_glasso: ci.lmax = %g\n", ci.lmax);
+    gretl_matrix_print(ci.lam, "lam in ccd_glasso");
+#endif
 
     err = ccd_iteration(ri->alpha, ri->X, ci.Xty->val, nlam, ci.lam->val,
 			ccd_toler, maxit, ci.xv->val, &lmu, ci.B, ia,
@@ -3255,6 +3263,7 @@ static int ccd_glasso (regls_info *ri, gretl_matrix *coeff)
     regls_set_crit_data(ri);
 
     if (!err) {
+	//gretl_matrix_print(ci.B, "ci.B");
         gretl_matrix_copy_values(coeff, ci.B);
 	if (ri->lamscale != LAMSCALE_NONE) {
 	    gretl_bundle_set_scalar(ri->b, "lmax", ci.lmax * ri->n);
@@ -3374,8 +3383,6 @@ gretl_matrix *gretl_glasso (const gretl_matrix *S, double rho,
             regls_set_Xty(ri);
             *err = ccd_glasso(ri, b);
             if (!*err) {
-		fprintf(stderr, "lfrac = %.12g\n", rho / norm);
-		gretl_matrix_print(b, "b");
                 gretl_matrix_multiply(Wj, b, p1);
                 Wj_revise(W, j, p1);
                 gretl_matrix_free(dsqrt);
