@@ -1944,7 +1944,7 @@ static int G_from_expanded_R (Jwrap *J, const gretl_matrix *R)
     return err;
 }
 
-static void nullspace_normalize (gretl_matrix *A)
+static void jrestrict_normalize_nullspace (gretl_matrix *A)
 {
     int i, j, nz, nm1, pos;
     double aij;
@@ -2093,7 +2093,7 @@ static int set_up_G (Jwrap *J, const gretl_restriction *rset)
     }
 
     if (!err) {
-	nullspace_normalize(J->G);
+	jrestrict_normalize_nullspace(J->G);
     }
 
     if (!err) {
