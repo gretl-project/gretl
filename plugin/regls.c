@@ -99,6 +99,7 @@ typedef struct regls_info_ {
     gint8 lamscale;
     gint8 randfolds;
     gint8 use_1se;
+    gint8 free_lf;
     PRN *prn;
 } regls_info;
 
@@ -175,22 +176,24 @@ static int get_xvalidation_details (regls_info *ri)
     return err;
 }
 
-static gretl_matrix *get_bundled_lfrac (gretl_bundle *b, int *err)
+static int get_bundled_lfrac (regls_info *ri,
+                              gretl_bundle *b)
 {
     GretlType t = gretl_bundle_get_member_type(b, "lfrac", NULL);
-    gretl_matrix *lf = NULL;
+    int err = 0;
 
     if (t == GRETL_TYPE_MATRIX) {
-        lf = gretl_bundle_get_matrix(b, "lfrac", err);
+        ri->lfrac = gretl_bundle_get_matrix(b, "lfrac", &err);
     } else if (t == GRETL_TYPE_DOUBLE) {
-        double x = gretl_bundle_get_scalar(b, "lfrac", err);
+        double x = gretl_bundle_get_scalar(b, "lfrac", &err);
 
-        if (!*err) {
-            lf = gretl_matrix_from_scalar(x);
+        if (!err) {
+            ri->lfrac = gretl_matrix_from_scalar(x);
+            ri->free_lf = 1;
         }
     }
 
-    return lf;
+    return err;
 }
 
 static regls_info *regls_info_new (gretl_matrix *X,
@@ -203,7 +206,7 @@ static regls_info *regls_info_new (gretl_matrix *X,
     if (ri == NULL) {
 	*err = E_ALLOC;
     } else {
-        ri->lfrac = get_bundled_lfrac(b, err);
+        *err = get_bundled_lfrac(ri, b);
     }
 
     if (!*err) {
@@ -258,9 +261,9 @@ static regls_info *regls_info_new (gretl_matrix *X,
 	    *err = get_xvalidation_details(ri);
 	} else if (!*err) {
 	    ri->nf = ri->randfolds = ri->use_1se;
-	    ri->crit = gretl_matrix_alloc(ri->nlam, 1);
-	    ri->R2 = gretl_matrix_alloc(ri->nlam, 1);
-	    ri->BIC = gretl_matrix_alloc(ri->nlam, 1);
+	    ri->crit = gretl_zero_matrix_new(ri->nlam, 1);
+	    ri->R2 = gretl_zero_matrix_new(ri->nlam, 1);
+	    ri->BIC = gretl_zero_matrix_new(ri->nlam, 1);
 	    if (ri->R2 == NULL || ri->crit == NULL || ri->BIC == NULL) {
 		*err = E_ALLOC;
 	    }
@@ -277,6 +280,9 @@ static void regls_info_free (regls_info *ri)
 	gretl_matrix_free(ri->R2);
 	gretl_matrix_free(ri->crit);
 	gretl_matrix_free(ri->BIC);
+        if (ri->free_lf) {
+            gretl_matrix_free(ri->lfrac);
+        }
 	free(ri);
     }
 }
@@ -2196,6 +2202,9 @@ static int admm_lasso (regls_info *ri)
 		    idxmin = j;
 		}
 		ri->crit->val[j] = critj;
+		if (ri->nlam == 1) {
+		    ri->R2->val[0] = R2;
+		}
 	    }
 	}
     }

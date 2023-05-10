@@ -2823,7 +2823,8 @@ int gretl_matrix_copy_values_shaped (gretl_matrix *targ,
     int n = targ->rows * targ->cols;
 
     if (src->rows * src->cols != n) {
-        fprintf(stderr, "gretl_matrix_copy_values_shaped: targ is %d x %d but src is %d x %d\n",
+        fprintf(stderr, "gretl_matrix_copy_values_shaped: "
+                "targ is %d x %d but src is %d x %d\n",
                 targ->rows, targ->cols, src->rows, src->cols);
         return E_NONCONF;
     }
@@ -11025,6 +11026,9 @@ int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
     return err;
 }
 
+#define OLD_NULLSPACE 0
+#if OLD_NULLSPACE
+
 /* return the row-index of the element in column col of
    matrix X that has the greatest absolute magnitude
 */
@@ -11052,8 +11056,6 @@ static void normalize_nullspace (gretl_matrix *M)
     int i, j, k, idx;
     double x, y;
 
-    /* FIXME? */
-
     if (M->cols == 1) {
         j = 0;
         idx = max_abs_index(M, j);
@@ -11074,6 +11076,23 @@ static void normalize_nullspace (gretl_matrix *M)
         }
     }
 }
+
+#else /* !OLD_NULLSPACE */
+
+/* just remove ugliness for printing */
+
+static void normalize_nullspace (gretl_matrix *M)
+{
+    int i, k = M->rows * M->cols;
+
+    for (i=0; i<k; i++) {
+        if (M->val[i] == -0) {
+            M->val[i] = 0;
+        }
+    }
+}
+
+#endif /* OLD_NULLSPACE or not */
 
 /**
  * gretl_matrix_right_nullspace:

@@ -954,7 +954,7 @@ void print_smpl (const DATASET *dset, int fulln,
 	    print_sample_obs(dset, prn);
 	} else {
 	    pprintf(prn, _("Current sample: %d observations\n"),
-		    dset->n);
+		    sample_size(dset));
 	}
 	return;
     }

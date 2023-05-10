@@ -5318,7 +5318,15 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
     free(xmlname);
 
     if (pmod->depvar != NULL) {
-	pprintf(prn, "depvar=\"%s\" ", pmod->depvar);
+	/* In an nls model pmod->depvar may contain '<' or '>' */
+	if (gretl_xml_validate(pmod->depvar)) {
+	    pprintf(prn, "depvar=\"%s\" ", pmod->depvar);
+	} else {
+	    char *tmp = gretl_xml_encode(pmod->depvar);
+
+	    pprintf(prn, "depvar=\"%s\" ", tmp);
+	    free(tmp);
+	}
     }
 
     pprintf(prn, "t1=\"%d\" t2=\"%d\" nobs=\"%d\" ",
