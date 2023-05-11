@@ -2841,11 +2841,12 @@ static int process_command_list (CMD *c, DATASET *dset)
 	want_ints = 1;
     }
 
-#if CDEBUG
-    fprintf(stderr, "process command list, ntoks = %d\n", c->ntoks);
-#endif
-
     ns = cmd_get_sepcount(c);
+
+#if CDEBUG
+    fprintf(stderr, "process command list, ntoks = %d, sepcount %d\n",
+	    c->ntoks, ns);
+#endif
 
     *lstr = '\0';
     j = 0;
