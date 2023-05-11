@@ -169,6 +169,27 @@ static GretlType gretl_type_from_gen_type (int gen_t);
    whether the interpretation really works.
 */
 
+# if 1 /* revert to earlier version of this: [a9ec40] */
+
+static int ok_list_node (NODE *n, parser *p)
+{
+    if (n == NULL) {
+        return 0;
+    } else if (n->t == LIST) {
+        return 1;
+    } else if (n->t == SERIES && n->vnum >= 0) {
+        /* can interpret as singleton list */
+        return 1;
+    } else if (p->flags & P_LISTDEF) {
+	/* when defining a list we can be a bit more accommodating */
+	return null_or_scalar(n);
+    }
+
+    return 0;
+}
+
+#else /* [b6ed06] */
+
 static int ok_list_node (NODE *n, parser *p)
 {
     if (null_node(n)) {
@@ -185,6 +206,8 @@ static int ok_list_node (NODE *n, parser *p)
 
     return 0;
 }
+
+#endif
 
 /* more "lenient" version of the above, to accommodate
    list expressions such as (L - 0), indicating the list
