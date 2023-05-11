@@ -9157,7 +9157,9 @@ function_assign_returns (fncall *call, int rtype,
 		; /* pure "shell" object: no-op */
 	    }
 	} else if (arg->type == GRETL_TYPE_USERIES &&
-		   fp->type == GRETL_TYPE_SERIES && param_is_const(fp)) {
+		   (fp->type == GRETL_TYPE_SERIES ||
+		    fp->type == GRETL_TYPE_NUMERIC) &&
+		   param_is_const(fp)) {
 	    push_series_to_caller(u, arg, dset);
 	} else if ((fp->type == GRETL_TYPE_MATRIX ||
 		    fp->type == GRETL_TYPE_BUNDLE ||
