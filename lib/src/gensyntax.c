@@ -416,8 +416,12 @@ static NODE *u_addr_base (parser *p)
 	    }
 	    break;
 	case OSL:
-	    break;
 	case UNDEF:
+	    break;
+	case EMPTY:
+	    if (t->vname == NULL) {
+		p->err = E_TYPES;
+	    }
 	    break;
 	default:
 	    p->err = E_TYPES;

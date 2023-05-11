@@ -3559,6 +3559,8 @@ static NODE *ptr_node_get_referent_node (NODE *n, parser *p)
 
     if (ret == NULL) {
         p->err = E_DATA;
+    } else if (ret->t == EMPTY) {
+	return ret;
     } else if (ret->t == SERIES) {
         if (ret->v.xvec == NULL) {
             int id = current_series_index(p->dset, ret->vname);
@@ -17059,7 +17061,7 @@ static NODE *evaluate_multi_args (NODE *nn, parser *p)
     return ret;
 }
 
-#define ok_nullarg_sym(s) (s == FARGS || s > FP_MAX)
+#define ok_nullarg_sym(s) (s == FARGS || s > FP_MAX || s == U_ADDR)
 
 /* determine if an EMPTY node is acceptable in context */
 
