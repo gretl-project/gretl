@@ -169,7 +169,7 @@ static GretlType gretl_type_from_gen_type (int gen_t);
    whether the interpretation really works.
 */
 
-# if 1 /* revert to earlier version of this: [a9ec40] */
+# if 1 /* 2023-05-11: revert to earlier version of this: [a9ec40] */
 
 static int ok_list_node (NODE *n, parser *p)
 {
