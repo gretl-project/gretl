@@ -929,7 +929,7 @@ gretl_matrix *long_run_covariance (const gretl_matrix *X,
 	if (Xd == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    gretl_matrix_center(Xd);
+	    gretl_matrix_center(Xd, 0);
 	    V = HAC_XOX(Xd, NULL, NULL, 0, err);
 	    gretl_matrix_free(Xd);
 	}
