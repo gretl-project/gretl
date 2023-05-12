@@ -15,7 +15,7 @@ function bundle mregls (const matrix y, const matrix X,
    matrix bsel = {}
    matrix mx = {}
    matrix sx = {}
-   scalar my sy   
+   scalar my sy
    scalar elnet = 0
    scalar gui = 0
    string yname
@@ -39,14 +39,12 @@ function bundle mregls (const matrix y, const matrix X,
 
    # read optional parameters
    read_optional_params(parms, &ret, &gui, &elnet)
-   
+
    if ret.stdize
-      scalar my sy
-      matrix mx sx
       matrix ys = s_standardize(y, &my, &sy)
-      matrix Xs = m_standardize(X, &mx, &sx)      
+      matrix Xs = m_standardize(X, &mx, &sx)
    endif
-   
+
    scalar ret.nobs = rows(X)
    if nelem(lfrac) > 0
       matrix ret.lfrac = vec(lfrac)
@@ -72,7 +70,7 @@ function bundle mregls (const matrix y, const matrix X,
    if err
       funcerr "_regls failed"
    endif
-   if rank <= 0 timer
+   if rank <= 0 && timer
       string mode = ret.ccd ? "CCD" : ret.ridge ? "SVD" : "ADMM"
       printf "_regls (%s): %.3f seconds\n", mode, $stopwatch
    endif
@@ -80,7 +78,7 @@ function bundle mregls (const matrix y, const matrix X,
    if !ret.xvalidate && ret.verbosity > 0 && inbundle(ret, "BIC")
       BIC_print(ret, nlam)
    endif
-   
+
    if rank > 0
       # MPI, and not root
       return ret
@@ -94,12 +92,12 @@ function bundle mregls (const matrix y, const matrix X,
       xnames = defarray("const") + xnames
    endif
    finalize_coeff_matrices(&ret, xnames, mx, sx, my, sy, &bsel)
-   
+
    if !ret.ridge && nelem(bsel) > 0
       tmp = selifr(seq(1, cols(X))', bsel)
       matrix ret.nzX = tmp # check this
       rnameset(ret.nzb, varnames(ret.nzX))
-   endif   
+   endif
 
    if ret.verbosity > 1
       if inbundle(ret, "vcv")
@@ -116,15 +114,15 @@ function bundle mregls (const matrix y, const matrix X,
       elif nlam > 1 && ret.verbosity > 2
          nz_print(ret, nlam)
       endif
-      #if ret.xvalidate && ret.verbosity > 2
-      #   training_R2(&ret, depvar, indeps)
-      #endif
+      if ret.xvalidate && ret.verbosity > 2
+         mregls_training_R2(&ret, y, X)
+      endif
    endif
 
    if inbundle(ret, "verbosity")
       delete ret.verbosity
    endif
    regls_set_notes(&ret)
-   
+
    return ret
 end function

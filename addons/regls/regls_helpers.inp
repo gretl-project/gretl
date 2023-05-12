@@ -1,16 +1,26 @@
 # get MSE and R^2
 
-function matrix regls_get_stats (const series y, const series yhat)
-   scalar SSR = sum((y - yhat)^2)
-   scalar SST = sum((y - mean(y))^2)
+function matrix regls_get_stats (const numeric y, const numeric yhat)
+   if typeof(y) == 2 # series
+      scalar SSR = sum((y - yhat)^2)
+      scalar SST = sum((y - mean(y))^2)
+   else # must be matrix
+      scalar SSR = sumc((y - yhat).^2)
+      scalar SST = sumc((y - meanc(y)).^2)
+   endif
    matrix ret = {SSR/$nobs, 1 - SSR/SST}
    cnameset(ret, "MSE R^2")
    return ret
 end function
 
-function scalar regls_pc_correct (const series y, const series yhat)
-   series yr = round(yhat)
-   return 100 * sum(yr == y) / $nobs
+function scalar regls_pc_correct (const numeric y, const numeric yhat)
+   if typeof(y) == 2 # series
+      series yr = round(yhat)
+      return 100 * sum(yr == y) / $nobs
+   else # must be matrix
+      matrix yr = round(yhat)
+      return 100 * sum(yr .= y) / rows(y)
+   endif
 end function
 
 # get prediction from glmnet, plus non-zero coeff vector
@@ -94,10 +104,35 @@ function series regls_yhat (const bundle b, list X)
    return yhat
 end function
 
+function matrix mregls_yhat (const bundle b, const matrix X)
+   matrix yhat
+   if inbundle(b, "nzX")
+      if b.stdize
+         yhat = X[,b.nzX] * b.nzb[2:] + b.nzb[1]
+      else
+         yhat = X[,b.nzX] * b.nzb
+      endif
+   else
+      if b.stdize
+         yhat = X * b.b[2:] + b.b[1]
+      else
+         yhat = X * b.b
+      endif
+   endif
+   return yhat
+end function
+
 # report training-data R-squared after cross validation
 
 function void training_R2 (bundle *b, series y, list X)
    series yhat = regls_yhat(b, X)
+   matrix m = regls_get_stats(y, yhat)
+   printf "training data R-squared = %.3f\n\n", m[2]
+   b.training_R2 = m[2]
+end function
+
+function void mregls_training_R2 (bundle *b, series y, list X)
+   series yhat = mregls_yhat(b, X)
    matrix m = regls_get_stats(y, yhat)
    printf "training data R-squared = %.3f\n\n", m[2]
    b.training_R2 = m[2]

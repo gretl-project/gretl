@@ -368,7 +368,7 @@ function bundle regls (series depvar, list indeps,
    if nelem(indeps) == 0
       funcerr "no regressors were supplied"
    endif
-   
+
    if !exists(parms)
       # an empty bundle will do
       bundle parms = null
@@ -449,7 +449,7 @@ function bundle regls (series depvar, list indeps,
 
    strings xnames = varnames(X0)
    finalize_coeff_matrices(&ret, xnames, mx, sx, my, sy, &bsel)
-   
+
    if !ret.ridge && nelem(bsel) > 0
       matrix tmp = X0
       tmp = selifr(tmp', bsel)
