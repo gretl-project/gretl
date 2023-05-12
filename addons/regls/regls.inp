@@ -54,6 +54,7 @@ function scalar check_params (const bundle b, matrix *lfrac,
                               scalar *nlam, bundle *ret)
    matrix m = {}
    scalar scl = -1
+
    if inbundle(b, "lambda_scale") == 1
       scl = b.lambda_scale
       if scl < 0 || scl > 2 || floor(scl) != scl
@@ -224,51 +225,34 @@ function void nz_print (const bundle b, int nlam)
    endif
 end function
 
-function bundle regls (series depvar, list indeps,
-                       const bundle parms[null])
-   bundle ret
-   scalar nlam = 1
-   scalar timer = 0
-   matrix lfrac = {}
-   matrix mx = {}
-   matrix sx = {}
-   scalar my = 0
-   scalar sy = 1
-   scalar rank = $mpirank
-   matrix bsel = {}
+function void BIC_print (const bundle ret, int nlam)
+   string ss = ret.ridge && unscaled_lambda(ret) ? "lambda" : "s"
+   if nlam > 1
+      if inbundle(ret, "BIC") == 3
+         scalar cmin = ret.BIC[ret.idxmin]
+      else
+         scalar cmin = ret.BIC
+      endif
+      printf "\nBIC minimized at %#g with %s = %f\n", cmin, ss, ret.lfmin
+   else
+      printf "\nBIC = %#g for %s = %f\n", ret.BIC, ss, ret.lfrac
+   endif
+end function
+
+function void read_optional_params (const bundle parms,
+                                    bundle *ret,
+                                    scalar *gui,
+                                    scalar *elnet)
    scalar alpha_set = 0
-   scalar elnet = 0
-   scalar gui = 0
-   string yname
+   scalar do_stdize
 
-   if !exists(parms)
-      # an empty bundle will do
-      bundle parms = null
-   endif
-
-   if inlist(indeps, 0)
-      indeps -= const
-   endif
-   if nelem(indeps) == 0
-      funcerr "no regressors were supplied"
-   endif
-
-   err = check_params(parms, &lfrac, &nlam, &ret)
-   if err
-      funcerr "invalid or missing parameter(s)"
-   endif
-
-   ret.stdize = 1
-   ret.verbosity = 1
-   ret.ridge = 0
-   ret.ccd = 0
-   ret.xvalidate = 0
-   ret.sample_t1 = $t1
-   ret.sample_t2 = $t2
-
-   # read optional parameters
    if inbundle(parms, "stdize") == 1
-      ret.stdize = parms.stdize
+      do_stdize = parms.stdize
+      if ret.matrix_input && do_stdize
+         funcerr "Invalid option stdize"
+      else
+         ret.stdize = do_stdize
+      endif
    endif
    if inbundle(parms, "verbosity") == 1
       ret.verbosity = parms.verbosity
@@ -306,6 +290,69 @@ function bundle regls (series depvar, list indeps,
    if ret.ccd && inbundle(parms, "ccd_toler")
       ret.ccd_toler = parms.ccd_toler
    endif
+   if inbundle(parms, "admmctrl") == 3
+      matrix ret.admmctrl = parms.admmctrl
+   endif
+   if inbundle(parms, "xvalidate")
+      get_xvalidation_parms(&ret, parms)
+   endif
+   if inbundle(parms, "crit_plot") == 1
+      ret.crit_plot = parms.crit_plot
+   endif
+end function
+
+function bundle regls_ret_init (bool matrix_input)
+   bundle ret
+   ret.stdize = matrix_input ? 0 : 1
+   ret.verbosity = 1
+   ret.ridge = 0
+   ret.ccd = 0
+   ret.xvalidate = 0
+   ret.matrix_input = matrix_input
+   if !matrix_input
+      ret.sample_t1 = $t1
+      ret.sample_t2 = $t2
+   endif
+   return ret
+end function
+
+function bundle regls (series depvar, list indeps,
+                       const bundle parms[null])
+   scalar nlam = 1
+   scalar timer = 0
+   matrix lfrac = {}
+   matrix mx = {}
+   matrix sx = {}
+   scalar my = 0
+   scalar sy = 1
+   scalar rank = $mpirank
+   matrix bsel = {}
+   scalar elnet = 0
+   scalar gui = 0
+   string yname
+
+   if !exists(parms)
+      # an empty bundle will do
+      bundle parms = null
+   endif
+
+   if inlist(indeps, 0)
+      indeps -= const
+   endif
+   if nelem(indeps) == 0
+      funcerr "no regressors were supplied"
+   endif
+   
+   # initialize the return bundle
+   bundle ret = regls_ret_init(0)   
+
+   err = check_params(parms, &lfrac, &nlam, &ret)
+   if err
+      funcerr "invalid or missing parameter(s)"
+   endif
+
+   # read optional parameters
+   read_optional_params(parms, &ret, &gui, &elnet)
 
    # list of regressors with constant included, if wanted
    list X0 = ret.stdize ? 0 indeps : indeps
@@ -339,15 +386,6 @@ function bundle regls (series depvar, list indeps,
    if nelem(lfrac) > 0
       matrix ret.lfrac = vec(lfrac)
    endif
-   if inbundle(parms, "admmctrl") == 3
-      matrix ret.admmctrl = parms.admmctrl
-   endif
-   if inbundle(parms, "xvalidate")
-      get_xvalidation_parms(&ret, parms)
-   endif
-   if inbundle(parms, "crit_plot") == 1
-      ret.crit_plot = parms.crit_plot
-   endif
 
    string ret.estimator = elnet ? "Elastic net" : \
      ret.ridge ? "Ridge" : "LASSO"
@@ -371,23 +409,15 @@ function bundle regls (series depvar, list indeps,
    endif
 
    if !ret.xvalidate && ret.verbosity > 0 && inbundle(ret, "BIC")
-      string ss = ret.ridge && unscaled_lambda(ret) ? "lambda" : "s"
-      if nlam > 1
-         if inbundle(ret, "BIC") == 3
-            scalar cmin = ret.BIC[ret.idxmin]
-         else
-            scalar cmin = ret.BIC
-         endif
-         printf "\nBIC minimized at %#g with %s = %f\n", cmin, ss, ret.lfmin
-      else
-         printf "\nBIC = %#g for %s = %f\n", ret.BIC, ss, ret.lfrac
-      endif
+      BIC_print(ret, nlam)
    endif
 
    if rank > 0
       # case where the user has invoked MPI
       return ret
    endif
+   
+   strings xnames = varnames(X0)
 
    if cols(ret.B) > 1
       if ret.stdize
@@ -400,7 +430,7 @@ function bundle regls (series depvar, list indeps,
          matrix b = ret.B[,optcol]
          if ret.ridge
             ret.b = b
-            rnameset(ret.b, varnames(X0))
+            rnameset(ret.b, xnames)
          else
             matrix bsel = b .!= 0
             matrix ret.nzb = selifr(b, bsel)
@@ -419,7 +449,7 @@ function bundle regls (series depvar, list indeps,
       endif
    endif
 
-   rnameset(ret.B, varnames(X0))
+   rnameset(ret.B, xames)
    if !ret.ridge && nelem(bsel) > 0
       matrix tmp = X0
       tmp = selifr(tmp', bsel)
@@ -427,23 +457,26 @@ function bundle regls (series depvar, list indeps,
       rnameset(ret.nzb, varnames(ret.nzX))
    endif
 
-   if inbundle(ret, "vcv") && ret.verbosity > 1
-      if ret.stdize
-         matrix bse = ret.B ~ (NA | sqrt(diag(ret.vcv)))
-      else
-         matrix bse = ret.B ~ sqrt(diag(ret.vcv))
+   if ret.verbosity > 1
+      if inbundle(ret, "vcv")
+         if ret.stdize
+            matrix bse = ret.B ~ (NA | sqrt(diag(ret.vcv)))
+         else
+            matrix bse = ret.B ~ sqrt(diag(ret.vcv))
+         endif
+         matrix addstats = {ret.edf, ret.BIC, ret.R2}
+         strings pnames = varnames(X0) + defarray("edf", "BIC", "R^2")
+         modprint bse pnames addstats
+      elif nlam == 1
+         nz_print(ret, 1)
+      elif nlam > 1 && ret.verbosity > 2
+         nz_print(ret, nlam)
       endif
-      matrix addstats = {ret.edf, ret.BIC, ret.R2}
-      strings pnames = varnames(X0) + defarray("edf", "BIC", "R^2")
-      modprint bse pnames addstats
-   elif nlam == 1 && ret.verbosity > 1
-      nz_print(ret, 1)
-   elif nlam > 1 && ret.verbosity > 2
-      nz_print(ret, nlam)
+      if ret.xvalidate && ret.verbosity > 2
+         training_R2(&ret, depvar, indeps)
+      endif
    endif
-   if ret.xvalidate && ret.verbosity > 2
-      training_R2(&ret, depvar, indeps)
-   endif
+
    if inbundle(ret, "verbosity")
       delete ret.verbosity
    endif
@@ -521,3 +554,4 @@ end function
 
 include regls_helpers.inp
 include regls_plots.inp
+include mregls.inp

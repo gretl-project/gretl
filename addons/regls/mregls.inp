@@ -1,0 +1,124 @@
+function void finalize_coeff_matrices (bundle *ret, const strings xnames)
+   if cols(ret.B) > 1
+      if inbundle(ret, "idxmin")
+         optcol = (ret.xvalidate && ret.use_1se)? ret.idx1se : ret.idxmin
+         matrix b = ret.B[,optcol]
+         if ret.ridge
+            ret.b = b
+            rnameset(ret.b, xnames)
+         else
+            matrix bsel = b .!= 0
+            matrix ret.nzb = selifr(b, bsel)
+         endif
+      endif
+   elif !ret.ridge
+      matrix bsel = ret.B .!= 0
+      matrix ret.nzb = selifr(ret.B, bsel)
+   endif
+
+   rnameset(ret.B, xnames)
+   if !ret.ridge && nelem(bsel) > 0
+      matrix ret.nzX = selifr(X', bsel) # FIXME
+      rnameset(ret.nzb, xnames[bsel])
+   endif
+end function
+
+function strings make_xnames (int n)
+   strings S = array(n)
+   loop i=1..n
+      S[i] = sprintf("x%d", i)
+   endloop
+   return S
+end function
+
+function bundle mregls (const matrix y, const matrix X,
+                        const bundle parms[null])
+   scalar nlam = 1
+   scalar timer = 0
+   matrix lfrac = {}
+   matrix bsel = {}
+   scalar elnet = 0
+   scalar gui = 0
+   string yname
+
+   if (cols(y) != 1 || rows(y) == 0 || rows(X) != rows(y))
+      funcerr "Invalid y and/or X input"
+   endif
+
+   if !exists(parms)
+      # an empty bundle will do
+      bundle parms = null
+   endif
+
+   # initialize the return bundle
+   bundle ret = regls_ret_init(1)
+
+   err = check_params(parms, &lfrac, &nlam, &ret)
+   if err
+      funcerr "invalid or missing parameter(s)"
+   endif
+
+   # read optional parameters
+   read_optional_params(parms, &ret, &gui, &elnet)
+
+   scalar ret.nobs = rows(X)
+
+   if nelem(lfrac) > 0
+      matrix ret.lfrac = vec(lfrac)
+   endif
+
+   string ret.estimator = elnet ? "Elastic net" : \
+     ret.ridge ? "Ridge" : "LASSO"
+
+   if ret.verbosity > 0
+      yname = argname(y, "y")
+      print_regls_header(ret, nlam, elnet, yname)
+   endif
+
+   # call plugin C code
+   if timer
+      set stopwatch
+   endif
+   err = _regls(X, y, ret)
+   if err
+      funcerr "_regls failed"
+   endif
+   if timer
+      string mode = ret.ccd ? "CCD" : ret.ridge ? "SVD" : "ADMM"
+      printf "_regls (%s): %.3f seconds\n", mode, $stopwatch
+   endif
+
+   if !ret.xvalidate && ret.verbosity > 0 && inbundle(ret, "BIC")
+      BIC_print(ret, nlam)
+   endif
+
+   strings xnames = cnameget(X)
+   if nelem(xnames) == 0
+      xnames = make_xnames(cols(X))
+   endif
+
+   finalize_coeff_matrices(&ret, xnames)
+
+   if ret.verbosity > 1
+      if inbundle(ret, "vcv")
+         matrix bse = ret.B ~ sqrt(diag(ret.vcv))
+         matrix addstats = {ret.edf, ret.BIC, ret.R2}
+         strings pnames = xnames + defarray("edf", "BIC", "R^2")
+         modprint bse pnames addstats
+      elif nlam == 1
+         nz_print(ret, 1)
+      elif nlam > 1 && ret.verbosity > 2
+         nz_print(ret, nlam)
+      endif
+      if ret.xvalidate && ret.verbosity > 2
+         training_R2(&ret, depvar, indeps)
+      endif
+   endif
+
+   if inbundle(ret, "verbosity")
+      delete ret.verbosity
+   endif
+   regls_set_notes(&ret)
+
+   return ret
+end function
