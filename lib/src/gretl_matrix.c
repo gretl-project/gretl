@@ -7768,7 +7768,6 @@ int gretl_matrix_center (gretl_matrix *m, int skip_na)
 int gretl_matrix_standardize (gretl_matrix *m, int dfcorr, int skip_na)
 {
     double mij, x, xbar, sdc, den;
-    int center = (dfcorr < 0);
     int i, j, nrows;
 
     if (m->rows < 2) {
