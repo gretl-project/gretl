@@ -101,7 +101,7 @@
          matrix | bundle | scalarref | seriesref | matrixref |
          bundleref | string | stringref | strings | matrices |
 	 bundles | lists | arrays | stringsref | matricesref | 
-	 bundlesref) 'series'
+	 bundlesref | numeric) 'series'
 >
 
 <!ELEMENT return EMPTY>
