@@ -40,6 +40,44 @@ function matrix s_standardize (const matrix y, scalar *my, scalar *sy)
    return S
 end function
 
+function void finalize_coeff_matrices (bundle *ret,
+                                       const strings xnames,
+                                       const matrix mx[null],
+                                       const matrix sx[null],
+                                       scalar my, scalar sy,
+                                       matrix *bsel)
+   rnameset(ret.B, xnames)
+   if cols(ret.B) > 1
+      if ret.stdize
+         loop j=1..cols(ret.B)
+            ret.B[,j] = unstdize(ret.B[2:,j], my, sy, mx, sx)
+         endloop
+      endif
+      if inbundle(ret, "idxmin")
+         optcol = (ret.xvalidate && ret.use_1se)? ret.idx1se : ret.idxmin
+         matrix b = ret.B[,optcol]
+         if ret.ridge
+            ret.b = b
+            rnameset(ret.b, xnames)
+         else
+            bsel = b .!= 0
+            matrix ret.nzb = selifr(b, bsel)
+         endif
+      endif
+   else
+      if ret.stdize
+         ret.B = unstdize(ret.B[2:], my, sy, mx, sx)
+         if inbundle(ret, "vcv")
+            ret.vcv = unstdize_vcv(ret.vcv, sy, sx)
+         endif
+      endif
+      if !ret.ridge
+         bsel = ret.B .!= 0
+         matrix ret.nzb = selifr(ret.B, bsel)
+      endif
+   endif
+end function
+
 function matrix lambda_sequence (scalar lmax, int K, scalar eps[0.0001])
    scalar decr = log(eps) / (K-1)
    matrix Lam = log(lmax) + decr * seq(0, K-1)'
@@ -244,15 +282,9 @@ function void read_optional_params (const bundle parms,
                                     scalar *gui,
                                     scalar *elnet)
    scalar alpha_set = 0
-   scalar do_stdize
 
    if inbundle(parms, "stdize") == 1
-      do_stdize = parms.stdize
-      if ret.matrix_input && do_stdize
-         funcerr "Invalid option stdize"
-      else
-         ret.stdize = do_stdize
-      endif
+      ret.stdize = parms.stdize
    endif
    if inbundle(parms, "verbosity") == 1
       ret.verbosity = parms.verbosity
@@ -321,20 +353,14 @@ function bundle regls (series depvar, list indeps,
    scalar nlam = 1
    scalar timer = 0
    matrix lfrac = {}
-   matrix mx = {}
-   matrix sx = {}
-   scalar my = 0
-   scalar sy = 1
    scalar rank = $mpirank
    matrix bsel = {}
+   matrix mx = {}
+   matrix sx = {}
+   scalar my sy
    scalar elnet = 0
    scalar gui = 0
    string yname
-
-   if !exists(parms)
-      # an empty bundle will do
-      bundle parms = null
-   endif
 
    if inlist(indeps, 0)
       indeps -= const
@@ -343,8 +369,13 @@ function bundle regls (series depvar, list indeps,
       funcerr "no regressors were supplied"
    endif
    
+   if !exists(parms)
+      # an empty bundle will do
+      bundle parms = null
+   endif
+
    # initialize the return bundle
-   bundle ret = regls_ret_init(0)   
+   bundle ret = regls_ret_init(0)
 
    err = check_params(parms, &lfrac, &nlam, &ret)
    if err
@@ -382,7 +413,6 @@ function bundle regls (series depvar, list indeps,
    endif
 
    scalar ret.nobs = rows(X)
-
    if nelem(lfrac) > 0
       matrix ret.lfrac = vec(lfrac)
    endif
@@ -416,40 +446,10 @@ function bundle regls (series depvar, list indeps,
       # case where the user has invoked MPI
       return ret
    endif
-   
+
    strings xnames = varnames(X0)
-
-   if cols(ret.B) > 1
-      if ret.stdize
-         loop j=1..cols(ret.B)
-            ret.B[,j] = unstdize(ret.B[2:,j], my, sy, mx, sx)
-         endloop
-      endif
-      if inbundle(ret, "idxmin")
-         optcol = (ret.xvalidate && ret.use_1se)? ret.idx1se : ret.idxmin
-         matrix b = ret.B[,optcol]
-         if ret.ridge
-            ret.b = b
-            rnameset(ret.b, xnames)
-         else
-            matrix bsel = b .!= 0
-            matrix ret.nzb = selifr(b, bsel)
-         endif
-      endif
-   else
-      if ret.stdize
-         ret.B = unstdize(ret.B[2:], my, sy, mx, sx)
-         if inbundle(ret, "vcv")
-            ret.vcv = unstdize_vcv(ret.vcv, sy, sx)
-         endif
-      endif
-      if !ret.ridge
-         matrix bsel = ret.B .!= 0
-         matrix ret.nzb = selifr(ret.B, bsel)
-      endif
-   endif
-
-   rnameset(ret.B, xames)
+   finalize_coeff_matrices(&ret, xnames, mx, sx, my, sy, &bsel)
+   
    if !ret.ridge && nelem(bsel) > 0
       matrix tmp = X0
       tmp = selifr(tmp', bsel)
@@ -465,7 +465,7 @@ function bundle regls (series depvar, list indeps,
             matrix bse = ret.B ~ sqrt(diag(ret.vcv))
          endif
          matrix addstats = {ret.edf, ret.BIC, ret.R2}
-         strings pnames = varnames(X0) + defarray("edf", "BIC", "R^2")
+         strings pnames = xnames + defarray("edf", "BIC", "R^2")
          modprint bse pnames addstats
       elif nlam == 1
          nz_print(ret, 1)
@@ -480,6 +480,7 @@ function bundle regls (series depvar, list indeps,
    if inbundle(ret, "verbosity")
       delete ret.verbosity
    endif
+
    string ret.depvar = argname(depvar, "y")
    list ret.xlist = indeps
    string xname = argname(indeps, "X")

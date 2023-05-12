@@ -1,28 +1,3 @@
-function void finalize_coeff_matrices (bundle *ret, const strings xnames)
-   if cols(ret.B) > 1
-      if inbundle(ret, "idxmin")
-         optcol = (ret.xvalidate && ret.use_1se)? ret.idx1se : ret.idxmin
-         matrix b = ret.B[,optcol]
-         if ret.ridge
-            ret.b = b
-            rnameset(ret.b, xnames)
-         else
-            matrix bsel = b .!= 0
-            matrix ret.nzb = selifr(b, bsel)
-         endif
-      endif
-   elif !ret.ridge
-      matrix bsel = ret.B .!= 0
-      matrix ret.nzb = selifr(ret.B, bsel)
-   endif
-
-   rnameset(ret.B, xnames)
-   if !ret.ridge && nelem(bsel) > 0
-      matrix ret.nzX = selifr(X', bsel) # FIXME
-      rnameset(ret.nzb, xnames[bsel])
-   endif
-end function
-
 function strings make_xnames (int n)
    strings S = array(n)
    loop i=1..n
@@ -36,7 +11,11 @@ function bundle mregls (const matrix y, const matrix X,
    scalar nlam = 1
    scalar timer = 0
    matrix lfrac = {}
+   scalar rank = $mpirank
    matrix bsel = {}
+   matrix mx = {}
+   matrix sx = {}
+   scalar my sy   
    scalar elnet = 0
    scalar gui = 0
    string yname
@@ -60,9 +39,15 @@ function bundle mregls (const matrix y, const matrix X,
 
    # read optional parameters
    read_optional_params(parms, &ret, &gui, &elnet)
-
+   
+   if ret.stdize
+      scalar my sy
+      matrix mx sx
+      matrix ys = s_standardize(y, &my, &sy)
+      matrix Xs = m_standardize(X, &mx, &sx)      
+   endif
+   
    scalar ret.nobs = rows(X)
-
    if nelem(lfrac) > 0
       matrix ret.lfrac = vec(lfrac)
    endif
@@ -70,20 +55,24 @@ function bundle mregls (const matrix y, const matrix X,
    string ret.estimator = elnet ? "Elastic net" : \
      ret.ridge ? "Ridge" : "LASSO"
 
-   if ret.verbosity > 0
+   if ret.verbosity > 0 && rank <= 0
       yname = argname(y, "y")
       print_regls_header(ret, nlam, elnet, yname)
    endif
 
    # call plugin C code
-   if timer
+   if rank <= 0 && timer
       set stopwatch
    endif
-   err = _regls(X, y, ret)
+   if ret.stdize
+      err = _regls(Xs, ys, ret)
+   else
+      err = _regls(X, y, ret)
+   endif
    if err
       funcerr "_regls failed"
    endif
-   if timer
+   if rank <= 0 timer
       string mode = ret.ccd ? "CCD" : ret.ridge ? "SVD" : "ADMM"
       printf "_regls (%s): %.3f seconds\n", mode, $stopwatch
    endif
@@ -91,17 +80,34 @@ function bundle mregls (const matrix y, const matrix X,
    if !ret.xvalidate && ret.verbosity > 0 && inbundle(ret, "BIC")
       BIC_print(ret, nlam)
    endif
+   
+   if rank > 0
+      # MPI, and not root
+      return ret
+   endif
 
    strings xnames = cnameget(X)
    if nelem(xnames) == 0
       xnames = make_xnames(cols(X))
    endif
-
-   finalize_coeff_matrices(&ret, xnames)
+   if ret.stdize
+      xnames = defarray("const") + xnames
+   endif
+   finalize_coeff_matrices(&ret, xnames, mx, sx, my, sy, &bsel)
+   
+   if !ret.ridge && nelem(bsel) > 0
+      tmp = selifr(seq(1, cols(X))', bsel)
+      matrix ret.nzX = tmp # check this
+      rnameset(ret.nzb, varnames(ret.nzX))
+   endif   
 
    if ret.verbosity > 1
       if inbundle(ret, "vcv")
-         matrix bse = ret.B ~ sqrt(diag(ret.vcv))
+         if ret.stdize
+            matrix bse = ret.B ~ (NA | sqrt(diag(ret.vcv)))
+         else
+            matrix bse = ret.B ~ sqrt(diag(ret.vcv))
+         endif
          matrix addstats = {ret.edf, ret.BIC, ret.R2}
          strings pnames = xnames + defarray("edf", "BIC", "R^2")
          modprint bse pnames addstats
@@ -110,15 +116,15 @@ function bundle mregls (const matrix y, const matrix X,
       elif nlam > 1 && ret.verbosity > 2
          nz_print(ret, nlam)
       endif
-      if ret.xvalidate && ret.verbosity > 2
-         training_R2(&ret, depvar, indeps)
-      endif
+      #if ret.xvalidate && ret.verbosity > 2
+      #   training_R2(&ret, depvar, indeps)
+      #endif
    endif
 
    if inbundle(ret, "verbosity")
       delete ret.verbosity
    endif
    regls_set_notes(&ret)
-
+   
    return ret
 end function
