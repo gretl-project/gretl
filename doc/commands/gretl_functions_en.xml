@@ -2506,6 +2506,7 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="bool" optional="true">standardize</fnarg>
+	<fnarg type="bool" optional="true">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -2515,6 +2516,13 @@
 	  the column standard deviations (which are calculated using
 	  <math>n</math> &minus; 1 as divisor, where <math>n</math>
 	  is the number of rows of <argname>X</argname>).
+	</para>
+	<para>
+	  If a non-zero value is supplied for
+	  <argname>skip_na</argname> missing values are ignored,
+	  otherwise if a column of <argname>X</argname> contains any
+	  missing values the corresponding column in the output is all
+	  missing.
 	</para>
 	<para>
 	  Note that <fncref targ="stdize"/> provides more flexible
@@ -10498,7 +10506,10 @@
 	  by column. If a non-zero value is given for the optional
 	  second argument missing values are ignored, otherwise the
 	  result is <lit>NA</lit> for any columns that contain missing
-	  values.
+	  values. Note that specifying <argname>skip_na</argname> is
+	  equivalent to treating missing values as if they were 1s.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="prodr"/>
             <fncref targ="meanc"/>
@@ -10520,6 +10531,10 @@
 	  by row. If a non-zero value is given for the optional second
 	  argument missing values are ignored, otherwise the result is
 	  <lit>NA</lit> for any rows that contain missing values.
+	  Note that specifying <argname>skip_na</argname> is
+	  equivalent to treating missing values as if they were 1s.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="prodc"/>
             <fncref targ="meanr"/>
@@ -12508,6 +12523,7 @@
       <fnargs>
 	<fnarg type="series-list-or-mat">X</fnarg>
 	<fnarg type="int" optional="true">v</fnarg>
+	<fnarg type="bool" optional="true">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12525,6 +12541,12 @@
 	  likelihood estimator. As a special case, if
 	  <argname>v</argname> equals &minus;1 only centering
 	  is performed.
+	</para>
+	<para>
+	  By default missing values are automatically skipped in the
+	  case of series or list input but not for matrix input. To
+	  have missing values ignored in the matrix case, supply
+	  a non-zero value for <argname>skip_na</argname>.
 	</para>
       </description>
     </function>
