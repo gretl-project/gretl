@@ -94,9 +94,13 @@ function bundle mregls (const matrix y, const matrix X,
    finalize_coeff_matrices(&ret, xnames, mx, sx, my, sy, &bsel)
 
    if !ret.ridge && nelem(bsel) > 0
-      tmp = selifr(seq(1, cols(X))', bsel)
-      matrix ret.nzX = tmp # check this
-      rnameset(ret.nzb, xnames[bsel])
+      nx = cols(X) + ret.stdize
+      matrix ret.nzX = selifr(seq(1, nx)', bsel)
+      rnameset(ret.nzb, xnames[ret.nzX])
+      if ret.stdize
+         # revise nzX for the caller's convenience
+         ret.nzX = ret.nzX[2:] - 1
+      endif
    endif
 
    if ret.verbosity > 1

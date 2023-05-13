@@ -89,6 +89,45 @@ function void regls_multiprint (const matrix B, const matrix lambda,
    printf "\n"
 end function
 
+function void mregls_multiprint (const matrix B, const matrix lambda,
+                                 const matrix y, const matrix X,
+                                 const matrix crit[null])
+   if exists(crit)
+      printf "\n       lambda     R^2    sum(|b|)   df   criterion\n"
+   else
+      printf "\n       lambda     R^2    sum(|b|)   df\n"
+   endif
+   scalar haveconst = 0
+   if rows(B) == cols(X) + 1
+      haveconst = 1
+   elif rows(B) != cols(X)
+      funcerr "B and X are not conformable"
+   endif
+   loop i=1..cols(B) -q
+      if haveconst
+         matrix bi = B[2:,i]
+         matrix yhat = X * bi + B[1,i]
+      else
+         matrix bi = B[,i]
+         matrix yhat = X * bi
+      endif
+      scalar l1 = sumc(abs(bi))
+      scalar df = sumc(bi .!= 0)
+      m = regls_get_stats(y, yhat)
+      R2 = m[2]
+      if R2 < 0 && R2 > -1.0e16
+         # avoid printing -0.0000
+         R2 = 0
+      endif
+      if exists(crit)
+         printf "%#13g  %.4f  %#10g  %3d  %#10g\n", lambda[i], R2, l1, df, crit[i]
+      else
+         printf "%#13g  %.4f  %#10g  %3d\n", lambda[i], R2, l1, df
+      endif
+   endloop
+   printf "\n"
+end function
+
 # compute fitted values
 
 function series regls_yhat (const bundle b, list X)
@@ -127,13 +166,15 @@ end function
 function void training_R2 (bundle *b, series y, list X)
    series yhat = regls_yhat(b, X)
    matrix m = regls_get_stats(y, yhat)
-   printf "training data R-squared = %.3f\n\n", m[2]
+   printf "training data R-squared = %.4f\n\n", m[2]
    b.training_R2 = m[2]
 end function
 
-function void mregls_training_R2 (bundle *b, series y, list X)
-   series yhat = mregls_yhat(b, X)
+function void mregls_training_R2 (bundle *b,
+                                  const matrix y,
+                                  const matrix X)
+   matrix yhat = mregls_yhat(b, X)
    matrix m = regls_get_stats(y, yhat)
-   printf "training data R-squared = %.3f\n\n", m[2]
+   printf "training data R-squared = %.4f\n\n", m[2]
    b.training_R2 = m[2]
 end function
