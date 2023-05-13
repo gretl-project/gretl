@@ -71,7 +71,6 @@ static int xwide = 0;
 static char ad_hoc_font[64];
 static char plot_buffer_name[32];
 static char plot_buffer_idx[8];
-static int plot_placement[2];
 
 typedef struct gnuplot_info_ gnuplot_info;
 
@@ -541,23 +540,6 @@ static int set_plot_buffer_name (const char *bname)
     return err;
 }
 
-static void set_plot_placement (const char *s)
-{
-    plot_placement[0] = 0;
-    plot_placement[1] = 0;
-
-    if (s != NULL) {
-	int r, c;
-
-	if (sscanf(s, "%d,%d", &r, &c) == 2 &&
-	    r > 0 && c > 0) {
-	    plot_placement[0] = r;
-	    plot_placement[1] = c;
-	}
-
-    }
-}
-
 int plot_output_to_buffer (void)
 {
     return *plot_buffer_name != '\0' ||
@@ -579,9 +561,7 @@ static int make_plot_commands_buffer (const char *fname)
 	g_error_free(gerr);
 	err = E_FOPEN;
     } else if (gretl_multiplot_active()) {
-	gretl_multiplot_add_plot(plot_placement[0],
-				 plot_placement[1],
-				 contents);
+	gretl_multiplot_add_plot(contents);
 	free_contents = 0;
     } else if (*plot_buffer_idx != '\0') {
 	gretl_array *a = get_strings_array_by_name(plot_buffer_name);
@@ -2147,6 +2127,11 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 
     s = get_optval_string(ci, OPT_U);
 
+    if (mp_mode && s != NULL) {
+	*err = E_BADOPT;
+	return NULL;
+    }
+
     if (s != NULL && *s == '\0') {
 	s = NULL;
     } else if (s == NULL && !mp_mode) {
@@ -2206,14 +2191,13 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
     this_term_type = GP_TERM_NONE;
     *gnuplot_outname = '\0';
 
-    /* check for --output=whatever or --buffer=whatever */
+    /* check for --output=whatever or --outbuf=whatever */
     outspec = plot_output_option(ptype, &ci, err);
     if (*err) {
 	return NULL;
     }
 
     if (gretl_multiplot_active()) {
-	set_plot_placement(outspec);
 	interactive = 0;
     } else if (got_display_option(outspec)) {
 	/* --output=display specified */

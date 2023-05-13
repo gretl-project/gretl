@@ -120,7 +120,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { GMM,      "gmm",      CI_EXPR | CI_BLOCK },
     { GNUPLOT,  "gnuplot",  CI_LIST | CI_EXTRA | CI_INFL },
     { GRAPHPG,  "graphpg",  CI_PARM1 | CI_PARM2 }, /* params optional */
-    { GRIDPLOT, "gridplot", CI_PARM1 | CI_BLOCK }, /* parm1 optional */
+    { GRIDPLOT, "gridplot", CI_BLOCK },
     { HECKIT,   "heckit",   CI_LIST },
     { HELP,     "help",     CI_PARM1 },
     { HFPLOT,   "hfplot",   CI_LIST | CI_EXTRA },
@@ -224,8 +224,7 @@ static struct gretl_cmd gretl_cmds[] = {
 
 #define param_optional(c) (c == SET || c == HELP || c == RESTRICT || \
 			   c == SMPL || c == SYSTEM || c == FUNCERR || \
-			   c == GRAPHPG || c == PLOT || c == OUTFILE || \
-			   c == GRIDPLOT)
+			   c == GRAPHPG || c == PLOT || c == OUTFILE)
 
 #define parm2_optional(c) (c == SET || c == SETOPT || c == SETOBS || \
 			   c == ESTIMATE || c == HELP || c == GRAPHPG || \

@@ -25,13 +25,7 @@
 #include "uservar.h"
 #include "gretl_multiplot.h"
 
-#define GRID_DEBUG 1
-
-typedef struct {
-    int row;
-    int col;
-    gchar *buf;
-} mplot_element;
+#define GRID_DEBUG 0
 
 typedef struct {
     gretlopt flag;
@@ -41,18 +35,13 @@ typedef struct {
     int def;
 } mplot_option;
 
-static GArray *multiplot;
+static GPtrArray *multiplot;
 static int mp_fontsize = 10;
 static int mp_width = 800;
 static int mp_height = 600;
 static int mp_rows;
 static int mp_cols;
 static int mp_collecting;
-
-static void mplot_element_clear (mplot_element *element)
-{
-    g_free(element->buf);
-}
 
 int gretl_multiplot_active (void)
 {
@@ -165,7 +154,7 @@ static void set_multiplot_defaults (void)
 static void gretl_multiplot_destroy (void)
 {
     if (multiplot != NULL) {
-        g_array_unref(multiplot);
+        g_ptr_array_unref(multiplot);
         multiplot = NULL;
     }
     set_multiplot_defaults();
@@ -182,12 +171,11 @@ int gretl_multiplot_start (gretlopt opt)
 	    err = set_multiplot_sizes(opt);
 	}
 	if (!err) {
-	    multiplot = g_array_new(FALSE, FALSE, sizeof(mplot_element));
-	    g_array_set_clear_func(multiplot, (GDestroyNotify) mplot_element_clear);
+	    multiplot = g_ptr_array_new_with_free_func(g_free);
 	    mp_collecting = 1;
 	}
     } else {
-        gretl_errmsg_set("multplot: cannot be nested");
+        gretl_errmsg_set("gridplot: cannot be nested");
         err = E_DATA;
     }
 
@@ -196,12 +184,10 @@ int gretl_multiplot_start (gretlopt opt)
 
 /* Append a plot specification, in @buf, to the @multiplot array */
 
-int gretl_multiplot_add_plot (int row, int col, gchar *buf)
+int gretl_multiplot_add_plot (gchar *buf)
 {
     if (multiplot != NULL && buf != NULL) {
-        mplot_element element = {row, col, buf};
-
-        g_array_append_val(multiplot, element);
+        g_ptr_array_add(multiplot, buf);
         return 0;
     } else {
 	gretl_errmsg_set("gretl_multiplot_add_plot: failed");
@@ -263,7 +249,7 @@ static int multiplot_set_grid (int n)
 
 static int output_multiplot_script (const char **S, int np)
 {
-    mplot_element *element;
+    gchar *buf;
     int i, err = 0;
     FILE *fp;
 
@@ -292,8 +278,8 @@ static int output_multiplot_script (const char **S, int np)
 	if (S != NULL) {
 	    fputs(S[i], fp);
 	} else {
-	    element = &g_array_index(multiplot, mplot_element, i);
-	    fputs(element->buf, fp);
+	    buf = g_ptr_array_index(multiplot, i);
+	    fputs(buf, fp);
 	}
     }
     gretl_pop_c_numeric_locale();

@@ -24,7 +24,7 @@ int gretl_multiplot_active (void);
 
 int gretl_multiplot_start (gretlopt opt);
 
-int gretl_multiplot_add_plot (int row, int col, gchar *buf);
+int gretl_multiplot_add_plot (gchar *buf);
 
 int gretl_multiplot_finalize (gretlopt opt);
 
