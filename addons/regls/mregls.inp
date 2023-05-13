@@ -96,19 +96,12 @@ function bundle mregls (const matrix y, const matrix X,
    if !ret.ridge && nelem(bsel) > 0
       tmp = selifr(seq(1, cols(X))', bsel)
       matrix ret.nzX = tmp # check this
-      rnameset(ret.nzb, varnames(ret.nzX))
+      rnameset(ret.nzb, xnames[bsel])
    endif
 
    if ret.verbosity > 1
       if inbundle(ret, "vcv")
-         if ret.stdize
-            matrix bse = ret.B ~ (NA | sqrt(diag(ret.vcv)))
-         else
-            matrix bse = ret.B ~ sqrt(diag(ret.vcv))
-         endif
-         matrix addstats = {ret.edf, ret.BIC, ret.R2}
-         strings pnames = xnames + defarray("edf", "BIC", "R^2")
-         modprint bse pnames addstats
+         regls_modprint(ret, xnames)
       elif nlam == 1
          nz_print(ret, 1)
       elif nlam > 1 && ret.verbosity > 2
