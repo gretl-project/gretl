@@ -457,7 +457,6 @@ static int get_prior_plot_spec (gretlopt opt,
 
 int gretl_multiplot_revise (gretlopt opt)
 {
-    const char *argname;
     const char *buf = NULL;
     gchar *gbuf = NULL;
     gretlopt myopt = opt;
@@ -480,9 +479,9 @@ int gretl_multiplot_revise (gretlopt opt)
         return err;
     }
 
-    /* what sort of output is wanted? */
-    argname = get_optval_string(GRIDPLOT, OPT_U);
 #if GRID_DEBUG
+    /* what sort of output is wanted? */
+    const char *argname = get_optval_string(GRIDPLOT, OPT_U);
     if (argname != NULL) {
         fprintf(stderr, "gretl_multiplot_revise: output '%s'\n",
                 argname);
