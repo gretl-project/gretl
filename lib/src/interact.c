@@ -3890,16 +3890,19 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case GRIDPLOT:
-	if (cmd->opt & (OPT_i | OPT_I)) {
-            /* the --inbuf or --input case */
-            err = gretl_multiplot_revise(cmd->opt);
-	} else if (cmd->opt & OPT_S) {
-	    /* the --strings (array) case */
-	    err = gretl_multiplot_from_array(cmd->opt);
-        } else {
-	    /* the block-start case */
-            err = gretl_multiplot_start(cmd->opt);
-        }
+	err = check_multiplot_options(cmd->opt);
+	if (!err) {
+	    if (cmd->opt & OPT_B) {
+		/* the block-start case */
+		err = gretl_multiplot_start(cmd->opt);
+	    } else if (cmd->opt & (OPT_i | OPT_I)) {
+		/* the --inbuf or --input case */
+		err = gretl_multiplot_revise(cmd->opt);
+	    } else if (cmd->opt & OPT_S) {
+		/* the --strings (array) case */
+		err = gretl_multiplot_from_array(cmd->opt);
+	    }
+	}
         break;
 
     case ADD:

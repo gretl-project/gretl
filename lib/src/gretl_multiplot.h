@@ -20,7 +20,7 @@
 #ifndef GRETL_MULTIPLOT_H_
 #define GRETL_MULTIPLOT_H_
 
-int gretl_multiplot_active (void);
+int gretl_multiplot_collecting (void);
 
 int gretl_multiplot_start (gretlopt opt);
 
@@ -31,5 +31,7 @@ int gretl_multiplot_finalize (gretlopt opt);
 int gretl_multiplot_revise (gretlopt opt);
 
 int gretl_multiplot_from_array (gretlopt opt);
+
+int check_multiplot_options (gretlopt opt);
 
 #endif /* GRETL_MULTIPLOT_H_ */

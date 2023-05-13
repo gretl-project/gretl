@@ -543,7 +543,7 @@ static int set_plot_buffer_name (const char *bname)
 int plot_output_to_buffer (void)
 {
     return *plot_buffer_name != '\0' ||
-	gretl_multiplot_active();
+	gretl_multiplot_collecting();
 }
 
 static int make_plot_commands_buffer (const char *fname)
@@ -560,7 +560,7 @@ static int make_plot_commands_buffer (const char *fname)
 	gretl_errmsg_set(gerr->message);
 	g_error_free(gerr);
 	err = E_FOPEN;
-    } else if (gretl_multiplot_active()) {
+    } else if (gretl_multiplot_collecting()) {
 	gretl_multiplot_add_plot(contents);
 	free_contents = 0;
     } else if (*plot_buffer_idx != '\0') {
@@ -2082,7 +2082,7 @@ static int got_none_option (const char *s)
 
 static const char *plot_output_option (PlotType p, int *pci, int *err)
 {
-    int mp_mode = gretl_multiplot_active();
+    int mp_mode = gretl_multiplot_collecting();
     int ci = plot_ci;
     const char *s;
 
@@ -2197,7 +2197,7 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
 	return NULL;
     }
 
-    if (gretl_multiplot_active()) {
+    if (gretl_multiplot_collecting()) {
 	interactive = 0;
     } else if (got_display_option(outspec)) {
 	/* --output=display specified */
@@ -2255,7 +2255,7 @@ int gnuplot_graph_wanted (PlotType ptype, gretlopt opt)
     } else if (optname != NULL) {
 	/* --plot=display or --plot=fname specified */
 	ret = 1;
-    } else if (gretl_multiplot_active()) {
+    } else if (gretl_multiplot_collecting()) {
 	ret = 1;
     } else {
 	/* defaults */

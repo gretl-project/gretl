@@ -43,7 +43,7 @@ static int mp_rows;
 static int mp_cols;
 static int mp_collecting;
 
-int gretl_multiplot_active (void)
+int gretl_multiplot_collecting (void)
 {
     return multiplot != NULL && mp_collecting;
 }
@@ -199,6 +199,11 @@ static int multiplot_set_grid (int n)
 {
     int err = 0;
 
+#if GRID_DEBUG
+    fprintf(stderr, "multiplot_set_grid: n=%d, prior size %d x %d\n",
+	    n, mp_rows, mp_cols);
+#endif
+
     if (mp_rows == 0 && mp_cols == 0) {
 	/* fully automatic grid */
 	mp_rows = ceil(sqrt((double) n));
@@ -235,8 +240,7 @@ static int multiplot_set_grid (int n)
     }
 
 #if GRID_DEBUG
-    fprintf(stderr, "multiplot_set_grid: %d x %d for n=%d\n",
-	    mp_rows, mp_cols, n);
+    fprintf(stderr, "multiplot_set_grid: set %d x %d\n",  mp_rows, mp_cols);
 #endif
 
     return err;
@@ -558,6 +562,27 @@ int gretl_multiplot_from_array (gretlopt opt)
 	set_special_plot_size(mp_width, mp_height);
 	set_special_font_size(mp_fontsize);
         err = output_multiplot_script(S, np);
+    }
+
+    return err;
+}
+
+int check_multiplot_options (gretlopt opt)
+{
+    gretlopt io_opts = OPT_U | OPT_I | OPT_i | OPT_b | OPT_S;
+    int err = 0;
+
+    if (opt & OPT_B) {
+	/* block-start: no input-output options allowed */
+	err = options_incompatible_with(opt, OPT_B, io_opts);
+    }
+    if (!err) {
+	/* no more than one of --input, --inbuf, --strings */
+	err = incompatible_options(opt, OPT_I | OPT_i | OPT_S);
+    }
+    if (!err) {
+	/* can't have both --output and --outbuf */
+	err = incompatible_options(opt, OPT_U | OPT_b);
     }
 
     return err;
