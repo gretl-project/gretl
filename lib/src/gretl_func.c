@@ -2159,11 +2159,11 @@ static int buf_get_n_lines (const char *buf)
 {
     const char *p = buf;
     const char *prev = NULL;
-    int n = 0;
+    int n = 1;
 
     while ((p = strchr(p, '\n')) != NULL) {
         if (prev != NULL && p - prev > 1) {
-            n++;
+	    n++;
         }
         prev = p++;
     }
@@ -2192,8 +2192,8 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
 	return 1;
     }
 
-    bufgets_init(buf);
     n_lines = buf_get_n_lines(buf);
+    bufgets_init(buf);
     gretl_cmd_init(&cmd);
     state.cmd = &cmd;
 
@@ -10922,19 +10922,23 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
 {
     int this_indent = 0;
     int next_indent = 0;
-    char word[9], line[1024];
-    char prevline[1024];
+    char *line, *prevline;
+    char word[9];
     const char *ins;
+    size_t llen = 1024;
+    size_t prevlen = llen;
     int incomment = 0;
     int inforeign = 0;
     int lp_pos = 0;
     int lp_zero = 0;
     int nsp;
 
-    prevline[0] = '\0';
+    line = malloc(llen);
+    prevline = malloc(llen);
+    line[0] = prevline[0] = '\0';
     bufgets_init(buf);
 
-    while (bufgets(line, sizeof line, buf)) {
+    while (safe_bufgets(&line, &llen, buf)) {
 	int handled = 0;
 
 	strip_trailing_whitespace(line);
@@ -10943,6 +10947,11 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
 	    pputc(prn, '\n');
 	    continue;
 	}
+
+	if (llen > prevlen) {
+	    prevline = realloc(prevline, llen);
+	}
+
 	check_for_comment(line, &incomment);
 
 	ins = line + strspn(line, " \t");
@@ -10999,4 +11008,6 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
     }
 
     bufgets_finalize(buf);
+    free(line);
+    free(prevline);
 }

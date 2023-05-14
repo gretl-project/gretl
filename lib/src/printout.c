@@ -3640,6 +3640,12 @@ void bufgets_finalize (const char *buf)
     }
 }
 
+enum {
+    GOT_LF = 1,
+    GOT_CR,
+    GOT_CRLF
+};
+
 /**
  * bufgets:
  * @s: target string (must be pre-allocated).
@@ -3658,11 +3664,6 @@ void bufgets_finalize (const char *buf)
 
 char *bufgets (char *s, size_t size, const char *buf)
 {
-    enum {
-	GOT_LF = 1,
-	GOT_CR,
-	GOT_CRLF
-    };
     int i, status = 0;
     const char *p;
 
@@ -3703,7 +3704,7 @@ char *bufgets (char *s, size_t size, const char *buf)
 	    fprintf(stderr, "*** bufgets: line too long: max %d characters\n",
 		    (int) size);
 	    s[i] = '\0';
-	    fprintf(stderr, " '%.16s...'\n", s);
+	    fprintf(stderr, " '%.32s...'\n", s);
 	    break;
 	}
     }
@@ -3718,6 +3719,90 @@ char *bufgets (char *s, size_t size, const char *buf)
 
     /* replace newline */
     if (status && i < size - 1) {
+	strcat(s, "\n");
+    }
+
+    rbuf_set_point(buf, p);
+
+    return s;
+}
+
+char *safe_bufgets (char **pdest, size_t *psize, const char *buf)
+{
+    char *s = *pdest;
+    size_t sz = *psize;
+    int i, status = 0;
+    const char *p;
+
+    p = rbuf_get_point(buf);
+    if (p == NULL) {
+	return NULL;
+    }
+
+    if (*p == '\0') {
+	/* reached the end of the buffer */
+	return NULL;
+    }
+
+    *s = '\0';
+
+    /* advance to line-end, end of buffer, or maximum size,
+       whichever comes first */
+    for (i=0; ; i++) {
+	if (p[i] == '\0') {
+	    break;
+	}
+	if (p[i] == '\r') {
+	    if (p[i+1] == '\n') {
+		status = GOT_CRLF;
+	    } else {
+		status = GOT_CR;
+	    }
+	    break;
+	}
+	if (p[i] == '\n') {
+	    status = GOT_LF;
+	    break;
+	}
+    }
+
+    if (i < sz - 1) {
+	/* dest is big enough */
+	memcpy(s, p, i);
+	s[i] = '\0';
+    } else {
+	/* dest is too small */
+	size_t new_sz = 2*sz;
+	char *tmp;
+
+	if (i < new_sz - 1) {
+	    tmp = realloc(*pdest, new_sz);
+	} else {
+	    new_sz = i + 1;
+	    tmp = realloc(*pdest, new_sz);
+	}
+	if (tmp == NULL) {
+	    fputs("*** bufgets: line too long\n", stderr);
+	    fprintf(stderr, " '%.32s...'\n", s);
+	    return NULL;
+	} else {
+	    s = *pdest = tmp;
+	    *psize = new_sz;
+	    memcpy(s, p, i);
+	    s[i] = '\0';
+	}
+    }
+
+    /* advance the buffer pointer */
+    p += i;
+    if (status == GOT_CR || status == GOT_LF) {
+	p++;
+    } else if (status == GOT_CRLF) {
+	p += 2;
+    }
+
+    /* replace newline */
+    if (status) {
 	strcat(s, "\n");
     }
 

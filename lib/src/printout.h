@@ -117,6 +117,8 @@ int in_usa (void);
 
 char *bufgets (char *s, size_t size, const char *buf);
 
+char *safe_bufgets (char **pdest, size_t *psize, const char *buf);
+
 size_t bufgets_peek_line_length (const char *buf);
 
 int bufgets_init (const char *buf);
