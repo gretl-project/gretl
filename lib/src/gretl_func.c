@@ -8488,6 +8488,8 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		process_series_arg(call, fp, arg, dset);
 	    } else if (arg->type == GRETL_TYPE_MATRIX) {
 		err = process_object_arg(call, i, fp);
+	    } else if (arg->type == GRETL_TYPE_LIST) {
+		err = localize_list(call, arg, fp, dset);
 	    }
 	    continue;
 	}
