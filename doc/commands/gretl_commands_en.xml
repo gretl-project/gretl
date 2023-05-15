@@ -7059,9 +7059,9 @@
       <para>
 	Plots a kernel density estimate for the series
 	<argname>y</argname>. By default the kernel is Gaussian but if
-	the <option>alt</option> flag is given the Epanechnikov kernel
+	the <opt>alt</opt> flag is given the Epanechnikov kernel
 	is used. The degree of smoothing can be adjusted via the
-	<option>scale</option> option, which has a default value of
+	<opt>scale</opt> option, which has a default value of
 	1.0 (higher values of <repl>s</repl> produce a smoother
 	result).
       </para>
