@@ -1,0 +1,41 @@
+topsrc = @top_srcdir@
+
+CC = @CC@
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
+MAKE = @MAKE@
+INSTALL = @INSTALL@
+EXEEXT = @EXEEXT@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+tooldir = $(topsrc)/tools
+
+ifeq ($(CC),)
+  CC = gcc
+endif
+ifeq ($(INSTALL_PROGRAM),)
+  INSTALL_PROGRAM = $(INSTALL) -m 755
+endif
+
+vpath %.c $(topsrc)/utils/dbzip
+
+PROG = gretlzip$(EXEEXT)
+
+$(PROG): gretlzip.c
+	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) -lz
+
+.PHONY:
+
+install: $(PROG) installdirs
+	$(INSTALL_PROGRAM) $(PROG) $(DESTDIR)$(bindir)/$(PROG)
+
+installdirs: $(tooldir)/mkinstalldirs
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(bindir)
+
+clean:
+	rm -f $(PROG)
+
+distclean: clean
+	rm -f Makefile
