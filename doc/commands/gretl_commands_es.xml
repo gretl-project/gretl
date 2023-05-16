@@ -7059,9 +7059,9 @@
       <para>
 	Representa un gráfico con la estimación de la densidad del kernel para
 	la serie <argname>y</argname>. Por defecto, el kernel es Gaussiano pero
-	si indicas la opción <option>alt</option>, se utiliza el kernel de
+	si indicas la opción <opt>alt</opt>, se utiliza el kernel de
 	Epanechnikov. Puedes ajustar el grado de suavizado mediante la opción
-	<option>scale</option>, que tiene un valor predeterminado de 1.0
+	<opt>scale</opt>, que tiene un valor predeterminado de 1.0
 	(los valores más grandes de <repl>s</repl> producen un resultado
 	más suavizado).
       </para>

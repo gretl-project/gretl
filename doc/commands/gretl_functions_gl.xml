@@ -2506,6 +2506,7 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="bool" optional="true">tipificar</fnarg>
+	<fnarg type="bool" optional="true">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -2515,6 +2516,13 @@
 	  desvíos padrón de cada columna (que se caculan utilizando
 	  <math>n</math> &minus; 1 como divisor, no que <math>n</math>
 	  é o número de filas de <argname>X</argname>).
+	</para>
+	<para>
+	  Se indicas un valor non nulo para <argname>obviar_na</argname>
+	  vanse ignorar os valores ausentes; doutro xeito, se unha columna
+	  da matriz <argname>X</argname> contén algún valor ausente, a
+	  columna correspondente da saída vai ter todos
+	  ausentes.
 	</para>
 	<para>
 	  Cae na conta de que <fncref targ="stdize"/> proporciona unha
@@ -10494,11 +10502,14 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector fila cos produtos dos elementos de cada columna
-	  da matriz <argname>X</argname>. Se indicas un valor non nulo para
-	  o segundo argumento (opcional), ignóranse os valores ausentes;
-	  doutro xeito, o resultado é <lit>NA</lit> para cada columna que conteña
-	  valores ausentes.
+	  Devolve un vector fila cos produtos dos elementos de cada columna da
+	  matriz <argname>X</argname>. Se indicas un valor non nulo para o
+	  segundo argumento (opcional), ignóranse os valores ausentes; doutro
+	  xeito, o resultado é <lit>NA</lit> para cada columna que conteña valores
+	  ausentes. Cae na conta de que indicar <argname>obviar_na</argname>
+	  é equivalente a tratar os valores como se fosen 1s.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="prodr"/>
             <fncref targ="meanc"/>
@@ -10519,7 +10530,11 @@
 	  Devolve un vector columna cos produtos dos elementos de cada fila da
 	  matriz <argname>X</argname>. Se indicas un valor non nulo para o
 	  segundo argumento (opcional), ignóranse os valores ausentes; doutro
-	  xeito, o resultado é <lit>NA</lit> para cada fila que conteña valores ausentes.
+	  xeito, o resultado é <lit>NA</lit> para cada fila que conteña valores
+	  ausentes. Cae na conta de que indicar <argname>obviar_na</argname>
+	  é equivalente a tratar os valores como se fosen 1s.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="prodc"/>
             <fncref targ="meanr"/>
@@ -12508,6 +12523,7 @@
       <fnargs>
 	<fnarg type="series-list-or-mat">X</fnarg>
 	<fnarg type="int" optional="true">v</fnarg>
+	<fnarg type="bool" optional="true">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12525,6 +12541,12 @@
 	  máximo-verosímil. Como caso especial, se estableces que
 	  <argname>v</argname> sexa igual a &minus;1, unicamente
 	  se vai centrar o primeiro argumento.
+	</para>
+	<para>
+	  Por defecto, os valores ausentes se obvian no caso dunha entrada de
+	  tipo serie ou lista, pero non no caso dunha entrada de tipo matriz.
+	  Para que se ignoren os valores ausentes no caso matricial, indica
+	  un valor non nulo para <argname>obviar_na</argname>.
 	</para>
       </description>
     </function>
