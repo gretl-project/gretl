@@ -465,7 +465,7 @@ quarterly).
   \label{hflist}
 \begin{scode}
 function list high_freq_list (const matrix x, int compfac, string vname)
-  list ret = null
+  list ret = deflist()
   scalar T = $nobs
   if rows(x) != compfac*T || cols(x) != 1
      funcerr "Invalid x matrix"

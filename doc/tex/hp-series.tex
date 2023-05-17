@@ -142,9 +142,10 @@ list of series, given either by name or by ID number.  For example,
 list xlist = 1 2 3 4
 list reglist = income price 
 \end{code}
-An empty list is obtained by using the keyword \texttt{null}, as in
+An empty list is obtained by using the function \texttt{deflist}
+without any arguments, as in
 \begin{code}
-list W = null  
+list W = deflist()  
 \end{code}
 or simply by bare declaration. Some more special forms (for example,
 using wildcards) are described in \GUG.

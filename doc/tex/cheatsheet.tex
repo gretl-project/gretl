@@ -817,7 +817,7 @@ Here's how:
 \begin{code}
 list X = x1 x2 x3
 list Z = z1 z2
-list dZ = null
+list dZ = deflist()
 loop foreach i Z
   series d$i = d * $i
   list dZ = dZ d$i
