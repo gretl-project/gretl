@@ -22,6 +22,8 @@ version 2023b, in progress
 - Fix bug: spurious "no data avilable for forecasting" error
   in GUI forecasting from ARIMA model without constant term
 - Add new example data file: sunspots time series from 1740
+- User's Guide: updates, including description of data file
+  formats
 
 2023-03-02 version 2023a
 - "logit" command (binary case): add a matrix holding odds
