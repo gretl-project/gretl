@@ -34,9 +34,9 @@
 {\noindent\hrulefill\\[-12pt]}
 {\medbreak}
 
-\title{regls 0.4: regularized least squares for gretl}
+\title{regls 1.0: regularized least squares for gretl}
 \author{Allin Cottrell}
-\date{Last revised October 2, 2022}
+\date{Last revised May 17, 2023}
 
 \begin{document}
 \maketitle
@@ -64,10 +64,13 @@ algorithms used in the package see \cite{glmnet10}.\footnote{We should
   generalized linear models. At present \textsf{regls} only supports
   least squares.}
 
-This package supports LASSO, Ridge and elastic net via the
-\texttt{regls()} function. We begin by discussing LASSO, which is the
-default method.  Ridge is discussed in section~\ref{sec:ridge} and
-elastic net in section~\ref{sec:elnet}.
+This package supports LASSO, Ridge and elastic net via the functions
+\texttt{regls()} and \texttt{mregls()}. The first of these requires
+that a dataset is in place while the second accepts data in matrix
+form, otherwise they are essentially the same; see
+Section~\ref{sec:funcref} for details on \texttt{mregls()}.  We begin
+by discussing LASSO, which is the default method.  Ridge is discussed
+in Section~\ref{sec:ridge} and elastic net in Section~\ref{sec:elnet}.
 
 We use the LASSO parameterization employed by Boyd \textit{et al}: the
 objective is
@@ -160,7 +163,7 @@ Suppose we have 1200 observations on some series \texttt{y} and list
 200. And let's say the data are not pre-standardized. We might then
 do:
 \begin{code}
-bundle parms = defbundle("lfrac", 0.2)
+bundle parms = _(lfrac = 0.2)
 smpl 1 1000
 bundle lb = regls(y, X, parms)
 \end{code}
@@ -205,7 +208,7 @@ Suppose we wish to compare results from several values of $\lambda$,
 using all the training data. We might then revise the prior script as:
 \begin{code}
 matrix lamseq = lambda_sequence(1, 10)
-bundle parms = defbundle("lfrac", lamseq)
+bundle parms = _(lfrac = lamseq)
 smpl 1 1000
 bundle lb = regls(y, X, parms)
 \end{code}
@@ -352,13 +355,13 @@ Some additional cross validation options are supported.
 \section{Execution speed}
 \label{sec:speed}
 
-According to the discussion in section 3.2.2 of \cite{boyd2010}: the
+According to the discussion in Section 3.2.2 of \cite{boyd2010}: the
 ADMM algorithm is reliable but is known \textit{not} to be fast (or
 not if accurate results are wanted). However, we have been able to
 accelerate ADMM to the point where execution time is unlikely to be an
 issue, by two main means.
 \begin{itemize}
-\item We implemented the suggestion in section 3.4.1 of
+\item We implemented the suggestion in Section 3.4.1 of
   \cite{boyd2010}: letting the penalty factor $\rho$ vary across ADMM
   iterations to keep the magnitudes of the primary and dual residuals
   in rough balance. This turns out to be highly effective.
@@ -443,7 +446,7 @@ parms.ridge = 1
 \end{code}
 
 Most of the points made above with respect to LASSO carry over to
-Ridge. The same three modes of operation described in sections
+Ridge. The same three modes of operation described in Sections
 \ref{sec:single-lambda} to \ref{sec:xvalid} (from estimation using a
 single value of $\lambda$ to cross-validation with as many values as
 you like) are available.
@@ -566,12 +569,12 @@ this.
 In the \texttt{regls} function, elastic net is selected by specifying
 a fractional value under the key \texttt{alpha} in the parameters
 bundle. This automatically switches to the CCD algorithm
-(section~\ref{sec:ccd}), so the \texttt{ccd\_toler} option becomes
+(Section~\ref{sec:ccd}), so the \texttt{ccd\_toler} option becomes
 applicable.\footnote{In principle the ADMM algorithm could handle
   elastic net, but to date we have not implemented such support.}
 
 When elastic net is used on a sequence of $\lambda$s without cross
-validation (see section~\ref{sec:simple-search}) \texttt{regls}
+validation (see Section~\ref{sec:simple-search}) \texttt{regls}
 provides a BIC measure as a possible means of selecting the most
 promising penalty factor. This requires calculation of the effective
 number of parameters (degrees of freedom), for which we use the method
@@ -606,7 +609,7 @@ minimand (MSE if cross validation is selected, BIC otherwise) as
 $\lambda$ is varied. An example of the MSE case can be found in
 Figure~\ref{fig:mse-plot}. The triangle indicates the MSE minimizer
 and the circle indicates the point favored by the ``one standard
-error'' criterion ($s^{\dagger}$, see section~\ref{sec:xvalid}).
+error'' criterion ($s^{\dagger}$, see Section~\ref{sec:xvalid}).
 
 \begin{figure}[htbp]
   \begin{center}
@@ -637,23 +640,23 @@ bundle regls (series y, list X, bundle parms)
     \texttt{nlambda} & integer & number of automatic $\lambda$s \\
     \texttt{stdize} & 0/1, default 1 & standardize the data \\
     \texttt{ridge} & 0/1, default 0 & do Ridge regression \\
-    \texttt{lambda\_scale} & 0, 1 or 2, default 1 & see section~\ref{sec:ridge} \\
+    \texttt{lambda\_scale} & 0, 1 or 2, default 1 & see Section~\ref{sec:ridge} \\
     \texttt{verbosity} & 0, 1, 2 or 3, default 1 & printing of output\\
     \texttt{xvalidate} & 0/1, default 0 & do cross validation\\
     \texttt{nfolds} & optional integer $>1$, default 10 & number of
                                                           folds \\
     \texttt{randfolds} & 0/1, default 0 & use random folds\\
-    \texttt{use\_1se} & 0/1, default 0 & see section~\ref{sec:xvalid} \\
+    \texttt{use\_1se} & 0/1, default 0 & see Section~\ref{sec:xvalid} \\
     \texttt{seed} & optional integer & controls random folds\\
-    \texttt{single\_b} & 0/1, default 0 & see section~\ref{sec:xvalid}\\
-    \texttt{no\_mpi} & 0/1, default 0 & see section~\ref{sec:speed}\\
+    \texttt{single\_b} & 0/1, default 0 & see Section~\ref{sec:xvalid}\\
+    \texttt{no\_mpi} & 0/1, default 0 & see Section~\ref{sec:speed}\\
     \texttt{admmctrl} & optional control vector & see
-                                                  section~\ref{sec:add-controls} \\
+                                                  Section~\ref{sec:add-controls} \\
     \texttt{ccd} & 0/1, default 0 & see section~\ref{sec:ccd} \\
     \texttt{ccd\_toler} & positive scalar, default $10^{-7}$ & see
-                                                               section~\ref{sec:ccd}\\
+                                                               Section~\ref{sec:ccd}\\
     \texttt{alpha} & $0 \leq \alpha \leq 1$ (default 1) & see
-                                                               section~\ref{sec:elnet}
+                                                               Section~\ref{sec:elnet}
   \end{tabular}
   \caption{Summary of parameters for the \texttt{regls} function}
   \label{tab:regls-parms}
@@ -746,7 +749,7 @@ void regls_coeff_plot (const bundle b, const matrix sel[null])
   Produces a plot showing the paths of coefficient estimates as the
   LASSO or Ridge constraint is progressively relaxed. The bundle
   argument should be obtained via \texttt{regls} estimation with
-  several \texttt{lfrac} values, as in section~\ref{sec:simple-search}
+  several \texttt{lfrac} values, as in Section~\ref{sec:simple-search}
   or \ref{sec:xvalid} above. The optional second argument allows you
   to pass in a selection vector to limit the number of paths shown
   (the default being to show all). For example, a matrix constructed
@@ -759,9 +762,25 @@ void regls_coeff_plot (const bundle b, const matrix sel[null])
   the \texttt{X} list argument to \texttt{regls}.
 \end{funcdoc}
 
+\begin{funcdoc}
+\begin{verbatim}
+bundle mregls (const matrix y, const matrix X, bundle parms)
+\end{verbatim}
+  This function works like \texttt{regls()}, except that \texttt{y} is
+  a column vector of length $n$ and \texttt{X} is an $n \times k$
+  matrix. The options accepted in \texttt{parms} are as described in
+  Table~\ref{tab:regls-parms} above. Consistent with the different
+  input types, one element in the output bundle also differs in type:
+  in \texttt{regls} output \texttt{nzX} is a list of series while in
+  \texttt{mregls} output it is a selection vector, picking out the
+  columns of the \texttt{X} matrix that have non-zero coefficients.
+\end{funcdoc}
+
 \section{Change log}
 \label{sec:changes}
 
+Version 1.0, 2023-05-17: Add support for matrix input via the
+\texttt{mregls} function\\
 Version 0.4, 2022-10-02: Enhancements for regls plots; document GUI
 usage; update an internal function signature to comply with gretl's
 new ``const inheritance'' policy.\\
@@ -786,7 +805,7 @@ open murder.gdt --quiet --frompkg=regls
 # all available predictors w. no missing values
 list X = population..LemasPctOfficDrugUn
 smpl 1 800
-bundle parms = defbundle("nlambda", 8, "verbosity", 0)
+bundle parms = _(nlambda=8, verbosity=0)
 bundle lb = regls(murdPerPop, X, parms)
 regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
 \end{scode}
@@ -1006,7 +1025,7 @@ different conventions in some respects. This does not affect the
 comparison of reported coefficients or predicted values, but it can
 make comparison of $\lambda$ values a little awkward. The LASSO
 objective function and definition of $\lambda_{\max}$ used by
-\textsf{regls} were stated in section~\ref{sec:intro}, but to be fully
+\textsf{regls} were stated in Section~\ref{sec:intro}, but to be fully
 explicit we should say that the $X$ and $y$ in equation
 (\ref{eq:lmax}) for the maximum $\lambda$ are taken to be standardized
 values.
