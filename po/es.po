@@ -2,12 +2,13 @@
 # Copyright (C) 2001--2023 Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>,
 # This file is distributed under the same license as the gretl package.
 #
+# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>, 2023.
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl-2023a\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-04-24 12:53+0200\n"
-"PO-Revision-Date: 2023-05-10 08:57+0200\n"
+"PO-Revision-Date: 2023-05-18 12:42+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -12155,7 +12156,7 @@ msgstr "Mensual, anualizada"
 
 #: gui/dialogs.c:6579
 msgid "Calculate using logs"
-msgstr "Calcular utilizando bucles"
+msgstr "Calcular utilizando logaritmos "
 
 #: gui/dialogs.c:6616
 #, c-format
