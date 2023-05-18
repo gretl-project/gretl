@@ -677,19 +677,22 @@ matrix lambda_sequence (scalar lmax, int K, scalar eps[0.0001])
 
 \begin{funcdoc}
 \begin{verbatim}
-matrix regls_get_stats (const series y, const series yhat)
+matrix regls_get_stats (const numeric y, const numeric yhat)
 \end{verbatim}
-  Returns a 2-vector holding MSE = $\sum(y - \hat{y})^2/n$
-  and $R^2 = 1 - \sum(y - \hat{y})^2/\sum(y - \bar{y})^2$.
+  The arguments \texttt{y} and \texttt{yhat} must be either series or
+  vectors (and both of the same type).  Returns a 2-vector
+  holding MSE = $\sum(y - \hat{y})^2/n$ and
+  $R^2 = 1 - \sum(y - \hat{y})^2/\sum(y - \bar{y})^2$.
 \end{funcdoc}
 
 \begin{funcdoc}
 \begin{verbatim}
-scalar regls_pc_correct (const series y, const series yhat)
+scalar regls_pc_correct (const numeric y, const numeric yhat)
 \end{verbatim}
-  Returns the percentage of cases in which \texttt{yhat} rounded to
-  the nearest integer equals \texttt{y}. Useful only when \texttt{y}
-  is integer-valued.
+  The arguments \texttt{y} and \texttt{yhat} must be either series or
+  vectors (and both of the same type).  Returns the percentage
+  of cases in which \texttt{yhat} rounded to the nearest integer
+  equals \texttt{y}. Useful only when \texttt{y} is integer-valued.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -753,7 +756,7 @@ void regls_coeff_plot (const bundle b, const matrix sel[null])
   or \ref{sec:xvalid} above. The optional second argument allows you
   to pass in a selection vector to limit the number of paths shown
   (the default being to show all). For example, a matrix constructed
-  as folows
+  as follows
 \begin{code}
    matrix sel = {5,10,15,20,30}
 \end{code}
@@ -774,7 +777,27 @@ bundle mregls (const matrix y, const matrix X, bundle parms)
   in \texttt{regls} output \texttt{nzX} is a list of series while in
   \texttt{mregls} output it is a selection vector, picking out the
   columns of the \texttt{X} matrix that have non-zero coefficients.
+
+  One of the functions described above, \texttt{regls\_multiprint},
+  has a specific counterpart that can be used in association with
+  \texttt{mregls}, namely \texttt{mregls\_multiprint}, with
+  signature as follows:
+\begin{verbatim}
+void mregls_multiprint (const matrix B, const matrix lam,
+                        const matrix y, const matrix X,
+                        const matrix crit[null])
+\end{verbatim}
+  The arguments \texttt{y} and \texttt{X} must be $n \times 1$ and
+  $n \times k$, respectively. They take the place of a series and a
+  list in \texttt{regls\_multiprint}.
 \end{funcdoc}
+
+\section{Prediction following \texttt{mregls}}
+\label{sec:changes}
+
+When generating predictions based on \texttt{mregls} output the
+suggestions shown above, using the \texttt{lincomb} function, are not
+applicable. TO BE CONTINUED.
 
 \section{Change log}
 \label{sec:changes}
