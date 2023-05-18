@@ -78,6 +78,7 @@ struct str_table consts[] = {
 
 struct str_table dummies[] = {
     { DUM_NULL,    "null" },
+    { DUM_EMPTY,   "empty" },
     { DUM_DIAG,    "diag" },
     { DUM_UPPER,   "upper" },
     { DUM_LOWER,   "lower" },
@@ -1054,7 +1055,13 @@ static int dummy_lookup (const char *s, parser *p)
 	   be valid only if followed by ']'
 	*/
 	d = 0;
+    } else if (d == DUM_EMPTY && strcmp(p->rhs, "empty")) {
+        /* "empty" is accepted only if it's the only term
+           on the right-hand side
+        */
+        d = 0;
     }
+
 
     return d;
 }

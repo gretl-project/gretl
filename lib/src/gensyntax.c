@@ -328,7 +328,7 @@ static NODE *base (parser *p, NODE *up)
 	lex(p);
 	break;
     case DUM:
-	if (p->idnum == DUM_NULL) {
+	if (p->idnum == DUM_NULL || p->idnum == DUM_EMPTY) {
 	    t = newempty();
 	} else {
 	    t = newref(p, p->sym);

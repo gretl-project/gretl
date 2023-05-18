@@ -19325,13 +19325,11 @@ static void parser_try_print (parser *p, const char *s, int *done)
     }
 }
 
-/* Here we try to parse out the LHS of the statement
-   and also the operator. If we find a unitary LHS
-   (simply an identifier) we write it into p->lh.name,
-   but if we find a compound LHS (such as a sub-matrix
-   specification) we save it as p->lh.expr. The
-   content of @ps is advanced to the first position
-   beyond the operator.
+/* Here we try to parse out the LHS of the statement and also the
+   operator. If we find a unitary LHS (simply an identifier) we write it
+   into p->lh.name, but if we find a compound LHS (such as a sub-matrix
+   specification) we save it as p->lh.expr. The content of @ps is advanced
+   to the first position beyond the operator.
 */
 
 static int extract_lhs_and_op (const char **ps, parser *p,

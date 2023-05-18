@@ -536,6 +536,7 @@ enum {
 
 enum {
     DUM_NULL = 1,
+    DUM_EMPTY,
     DUM_DIAG,
     DUM_UPPER,
     DUM_LOWER,
