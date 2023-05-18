@@ -1059,9 +1059,10 @@ static int dummy_lookup (const char *s, parser *p)
         /* "empty" is accepted only if it's the only term
            on the right-hand side
         */
-        d = 0;
+	p->sym = DUM_EMPTY;
+	p->err = E_INVARG;
+	context_error(0, p, NULL);
     }
-
 
     return d;
 }
@@ -1712,7 +1713,7 @@ static void look_up_word (const char *s, parser *p)
 	       with a null value */
 	    p->sym = NULLARG;
 	    p->idstr = gretl_strdup(s);
-	} else {
+	} else if (p->sym != DUM_EMPTY) {
 	    undefined_symbol_error(s, p);
 	}
     }
@@ -2465,6 +2466,8 @@ const char *getsymb_full (int t, const parser *p)
 	return "DBMEMB";
     } else if (t == MMEMB) {
 	return "MMEMB";
+    } else if (t == DUM_EMPTY) {
+	return "empty";
     }
 
     if (p != NULL) {
