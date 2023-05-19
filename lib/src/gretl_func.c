@@ -10903,6 +10903,14 @@ void adjust_indent (const char *s, int *this_indent, int *next_indent)
 	matched = 1;
     }
 
+    if (!matched && wordmatch(s, "gridplot")) {
+	if (strstr(s, "--block")) {
+	    /* this defines a block */
+	    ni++;
+	}
+	matched = 1;
+    }
+
     if (!matched) {
 	if (wordmatch(s, "end") ||
 	    wordmatch(s, "endif") ||
@@ -10976,8 +10984,9 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
 		} else if (lp_pos > 0 && strchr(ins, ')') != NULL) {
 		    lp_zero = 1;
 		}
-		if (!strcmp(word, "outfile")) {
-		    /* handle legacy syntax */
+		if (!strcmp(word, "outfile") || !strcmp(word, "gridplot")) {
+		    /* handle possible block/nonblock, including legacy syntax for
+		       "outfile"*/
 		    adjust_indent(ins, &this_indent, &next_indent);
 		} else {
 		    adjust_indent(word, &this_indent, &next_indent);

@@ -2312,7 +2312,7 @@ static const char *have_translation (int code, const char *lang)
 }
 
 /* Determine if we should show a translation of the
-   doc resource indentified by @code. If so, return
+   doc resource identified by @code. If so, return
    the required filename; if not, return NULL.
 */
 
