@@ -35,6 +35,7 @@
 #include "gretl_midas.h"
 #include "boxplots.h"
 #include "mapinfo.h"
+#include "gretl_func.h"
 
 #ifdef WIN32
 # include "gretl_win32.h"
@@ -2128,8 +2129,15 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
     s = get_optval_string(ci, OPT_U);
 
     if (mp_mode && s != NULL) {
-	*err = E_BADOPT;
-	return NULL;
+	if (gretl_function_depth() > 0 && !strcmp(s, "display")) {
+	    /* let this pass: hansl functions that do plots
+	       generally seem to default to "display"
+	    */
+	    s = NULL;
+	} else {
+	    *err = E_BADOPT;
+	    return NULL;
+	}
     }
 
     if (s != NULL && *s == '\0') {

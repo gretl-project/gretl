@@ -34,4 +34,6 @@ int gretl_multiplot_from_array (gretlopt opt);
 
 int check_multiplot_options (gretlopt opt);
 
+void gretl_multiplot_destroy (void);
+
 #endif /* GRETL_MULTIPLOT_H_ */

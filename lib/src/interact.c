@@ -3890,7 +3890,12 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case GRIDPLOT:
-	err = check_multiplot_options(cmd->opt);
+	if (gretl_multiplot_collecting()) {
+	    gretl_errmsg_set(_("gridplot: cannot be nested"));
+	    err = E_DATA;
+	} else {
+	    err = check_multiplot_options(cmd->opt);
+	}
 	if (!err) {
 	    if (cmd->opt & OPT_B) {
 		/* the block-start case */
@@ -4437,9 +4442,14 @@ int process_command_error (ExecState *s, int err)
         }
     }
 
-    if (ret && print_redirection_level(s->prn) > 0) {
-        print_end_redirection(s->prn);
-        pputs(s->prn, _("An error occurred when 'outfile' was active\n"));
+    if (ret) {
+	if (gretl_multiplot_collecting()) {
+	    gretl_multiplot_destroy();
+	}
+	if (print_redirection_level(s->prn) > 0) {
+	    print_end_redirection(s->prn);
+	    pputs(s->prn, _("An error occurred when 'outfile' was active\n"));
+	}
     }
 
     return (err == E_STOP)? err : ret;

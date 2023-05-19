@@ -151,7 +151,7 @@ static void set_multiplot_defaults (void)
     }
 }
 
-static void gretl_multiplot_destroy (void)
+void gretl_multiplot_destroy (void)
 {
     if (multiplot != NULL) {
         g_ptr_array_unref(multiplot);
@@ -175,7 +175,7 @@ int gretl_multiplot_start (gretlopt opt)
 	    mp_collecting = 1;
 	}
     } else {
-        gretl_errmsg_set("gridplot: cannot be nested");
+        gretl_errmsg_set(_("gridplot: cannot be nested"));
         err = E_DATA;
     }
 
