@@ -709,42 +709,20 @@ matrix regls_foldvec (int nobs, int nf)
 
 \begin{funcdoc}
 \begin{verbatim}
-void regls_multiprint (const matrix B, const matrix lam,
-                       const series y, list X,
-                       const matrix crit[null])
+void regls_multiprint (const bundle b, const numeric y, const numeric X)
 \end{verbatim}
-  Given a $k \times m$ (or $k+1 \times m$) coefficient matrix
-  \texttt{B}, an $m$-vector of $\lambda$ values \texttt{lam}, a
-  dependent variable \texttt{y} and a list \texttt{X} of $k$
-  regressors, prints a summary table with $m$ rows showing $R^2$, the
-  sum of absolute values of the coefficients, and df (the number of
-  non-zero coefficients) associated with each $\lambda$. It is
-  presumed that \texttt{B[,j]} holds LASSO estimates produced using
-  \texttt{lam[j]}. If the optional \texttt{crit} matrix is provided it
-  should be an $m$-vector holding the criterion value associated with
-  each $\lambda$, which will be shown as a fifth column.
-
-  As in the \texttt{regls} function, the \texttt{X} list should not contain
-  a constant: if the \texttt{B} matrix has one more row than \texttt{X} has
-  members, the constant is handled automatically.
-
-  The example script \texttt{lambda\_sequence.inp}, reproduced in part as
-  Listing~\ref{script:lamseq}, illustrates how the information provided in
-  the \texttt{regls} return bundle can be used to supply the arguments
-  \texttt{B}, \texttt{lam} and \texttt{crit}.
-\end{funcdoc}
-
-\begin{funcdoc}
-\begin{verbatim}
-series glmnet_pred (matrix *Rb, list X)
-\end{verbatim}
-  Convenience function for handling results retrieved by gretl from
-  \textsf{glmnet}. On entry \texttt{Rb} should hold the full
-  coefficient vector (including any zeros) and \texttt{X} the full
-  list of candidate regressors, and the return value is the result of
-  \texttt{lincomb(X, Rb)}. On exit \texttt{Rb} holds only the non-zero
-  coefficients, with row-names added based on the \texttt{X}
-  list. This is then comparable with gretl's \texttt{nzb}.
+  The bundle argument \texttt{b} should be obtained via \texttt{regls}
+  or \texttt{mregls} estimation with several \texttt{lfrac} values, as
+  in Section~\ref{sec:simple-search} or \ref{sec:xvalid} above. The
+  arguments \texttt{y} and \texttt{X} should be the same as those
+  passed to \texttt{regls} (\texttt{y} a series, \texttt{X} a list) or
+  \texttt{mregls} (\texttt{y} an $n$-vector, \texttt{X} an
+  $n \times k$ matrix). This function prints a summary table showing
+  $R^2$, the sum of absolute values of the coefficients, and df (the
+  number of non-zero coefficients) associated with each value of
+  $\lambda$. Usage is illustrated in the example script
+  \texttt{lambda\_sequence.inp}, which is reproduced in part in
+  Listing~\ref{script:lamseq}.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -769,14 +747,18 @@ void regls_coeff_plot (const bundle b, const matrix sel[null])
 
 \begin{funcdoc}
 \begin{verbatim}
-series regls_pred (const bundle b, list X)
+numeric regls_pred (const bundle b, const numeric X)
 \end{verbatim}
-  Convenience function for producing a series of predicted values.  The
-  bundle argument should be obtained via \texttt{regls} estimation; the list
-  argument supplies values of the independent variables. This function
-  automatically handles the presence or absence of an estimated intercept,
-  as well as selection of a specific coefficient vector when estimation has
-  been performed for multiple values of the regularization parameter.
+  Convenience function for producing predicted values.  The bundle
+  argument should be obtained via \texttt{regls} or \texttt{mregls}
+  estimation. If estimation was by \texttt{regls} the numeric argument
+  \texttt{X} should be a list, and the function returns the
+  predictions as a series. In the case of \texttt{mregls}, \texttt{X}
+  must be a matrix and a column vector is returned.  This function
+  automatically handles the presence or absence of an estimated
+  intercept, as well as selection of a specific coefficient vector
+  when estimation has been performed for multiple values of the
+  regularization parameter.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -791,35 +773,42 @@ bundle mregls (const matrix y, const matrix X, bundle parms)
   in \texttt{regls} output \texttt{nzX} is a list of series while in
   \texttt{mregls} output it is a selection vector, picking out the
   columns of the \texttt{X} matrix that have non-zero coefficients.
-
-  See also \texttt{mregls\_multiprint} and \texttt{mregls\_pred} below.
 \end{funcdoc}
 
 \begin{funcdoc}
 \begin{verbatim}
-void mregls_multiprint (const matrix B, const matrix lam,
-                        const matrix y, const matrix X,
-                        const matrix crit[null])
+series glmnet_pred (matrix *Rb, list X)
 \end{verbatim}
-  Matrix-oriented counterpart of \texttt{regls\_multiprint} (see above).
-  The arguments \texttt{y} and \texttt{X} must be $n \times 1$ and
-  $n \times k$, respectively. They take the place of a series and a list in
-  \texttt{regls\_multiprint}.
+  Convenience function for handling results retrieved by gretl from
+  \textsf{glmnet}. On entry \texttt{Rb} should hold the full
+  coefficient vector (including any zeros) and \texttt{X} the full
+  list of candidate regressors, and the return value is the result of
+  \texttt{lincomb(X, Rb)}. On exit \texttt{Rb} holds only the non-zero
+  coefficients, with row-names added based on the \texttt{X}
+  list. This is then comparable with gretl's \texttt{nzb}.
 \end{funcdoc}
 
 \begin{funcdoc}
 \begin{verbatim}
-matrix mregls_pred (const bundle b, const matrix X)
+void glmnet_multiprint (const matrix RB, const matrix Rlam,
+                        const bundle b, const series y, list X)
 \end{verbatim}
-  Matrix-oriented counterpart of \texttt{regls\_pred} (see above). The
-  bundle argument should be obtained from \texttt{mregls}.
+  Convenience function for facilitating comparison of results when the
+  same regularization task has been performed in gretl using
+  \texttt{regls} and in \textsf{R} using \texttt{glmnet}. The output
+  is like that of \texttt{regls\_multiprint}.  The matrices
+  \texttt{RB} and \texttt{Rlam} should be obtained from the object
+  returned by \texttt{glmnet()}; \texttt{b} should be the bundle
+  returned by \texttt{regls}.  Usage is illustrated in
+  Listing~\ref{script:lamseq}.
 \end{funcdoc}
 
 \section{Change log}
 \label{sec:changes}
 
-Version 1.0, 2023-05-17: Add support for matrix input via the
-\texttt{mregls} function\\
+Version 0.9, 2023-05-20: Add support for matrix input via the
+\texttt{mregls} function; simplify the signature of
+\texttt{regls\_multiprint}; add function \texttt{glmnet\_multiprint}.\\
 Version 0.4, 2022-10-02: Enhancements for regls plots; document GUI
 usage; update an internal function signature to comply with gretl's
 new ``const inheritance'' policy.\\
@@ -850,29 +839,36 @@ printf "Sample range %d to %d\n", $t1, $t2
 
 bundle parms = _(nlambda = 8, verbosity = 0)
 
-set stopwatch
-bundle lb = regls(murdPerPop, X, parms)
-tm = $stopwatch
+bundle lb1 = regls(murdPerPop, X, parms)
 printf "\ngretl (ADMM):\n"
-regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
-printf "time %.4fs\n", tm
+regls_multiprint(lb1, murdPerPop, X)
 
 parms.ccd = 1
-parms.ccd_toler = 1.0e-14
-set stopwatch
-bundle lb = regls(murdPerPop, X, parms)
-tm = $stopwatch
-printf "\ngretl (CCD, tol %g):\n", parms.ccd_toler
-regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
-printf "time %.4fs\n", tm
+bundle lb2 = regls(murdPerPop, X, parms)
+printf "\ngretl (CCD):\n"
+regls_multiprint(lb2, murdPerPop, X)
 
-parms.ccd_toler = 1.0e-7
-set stopwatch
-bundle lb = regls(murdPerPop, X, parms)
-tm = $stopwatch
-printf "\ngretl (CCD, tol %g):\n", parms.ccd_toler
-regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
-printf "time %.4fs\n", tm
+# STOP here if R + glmnet is not available
+# quit
+
+# R::glmnet
+list LL = murdPerPop X
+foreign language=R --send-data=LL
+  library(glmnet)
+  x <- as.matrix(gretldata[,2:ncol(gretldata)])
+  y <- as.matrix(gretldata[,1])
+  m <- glmnet(x, y, family = "gaussian", alpha = 1, nlambda = 8,
+    standardize = T, intercept = T)
+  Rb <- as.matrix(coef(m))
+  gretl.export(Rb)
+  Rlam = as.matrix(m$lambda)
+  gretl.export(Rlam)
+end foreign
+
+matrix Rb = mread("Rb.mat", 1)
+matrix Rlam = mread("Rlam.mat", 1)
+printf "\nglmnet:\n"
+glmnet_multiprint(Rb, Rlam, lb2, murdPerPop, X)
 \end{scode}
 \end{script}
 

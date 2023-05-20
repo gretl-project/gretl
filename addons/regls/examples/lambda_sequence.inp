@@ -15,7 +15,7 @@ set stopwatch
 bundle lb = regls(murdPerPop, X, parms)
 tm = $stopwatch
 printf "\ngretl (ADMM):\n"
-regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
+regls_multiprint(lb, murdPerPop, X)
 printf "time %.4fs\n", tm
 
 parms.ccd = 1
@@ -24,7 +24,7 @@ set stopwatch
 bundle lb = regls(murdPerPop, X, parms)
 tm = $stopwatch
 printf "\ngretl (CCD, tol %g):\n", parms.ccd_toler
-regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
+regls_multiprint(lb, murdPerPop, X)
 printf "time %.4fs\n", tm
 
 parms.ccd_toler = 1.0e-7
@@ -32,7 +32,7 @@ set stopwatch
 bundle lb = regls(murdPerPop, X, parms)
 tm = $stopwatch
 printf "\ngretl (CCD, tol %g):\n", parms.ccd_toler
-regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
+regls_multiprint(lb, murdPerPop, X)
 printf "time %.4fs\n", tm
 
 # STOP here if R + glmnet is not available
@@ -60,8 +60,6 @@ end foreign
 scalar Rt = mread("Rt.mat", 1)
 Rb = mread("Rb.mat", 1)
 Rlam = mread("Rlam.mat", 1)
-sdy = sdc({murdPerPop})
-Rlam *= lb.nobs / (sdy * lb.lmax)
 printf "\nglmnet:\n"
-regls_multiprint(Rb, Rlam, murdPerPop, X)
+glmnet_multiprint(Rb, Rlam, lb, murdPerPop, X)
 printf "time %.4fs\n", Rt
