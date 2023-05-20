@@ -207,8 +207,7 @@ squared correlation between $y$ and $\hat{y}$.
 Suppose we wish to compare results from several values of $\lambda$,
 using all the training data. We might then revise the prior script as:
 \begin{code}
-matrix lamseq = lambda_sequence(1, 10)
-bundle parms = _(lfrac = lamseq)
+bundle parms = _(lfrac = lambda_sequence(1, 10))
 smpl 1 1000
 bundle lb = regls(y, X, parms)
 \end{code}
@@ -294,6 +293,7 @@ snippet of which is shown below:
    0.379269   0.759641   0.048581
    0.233572   0.694237   0.043515
 \end{code}
+%
 The \texttt{MSE} value is the mean across the folds, and \texttt{se}
 is its standard error, computed as per \textsf{glmnet}.
 
@@ -724,12 +724,14 @@ void regls_multiprint (const matrix B, const matrix lam,
   should be an $m$-vector holding the criterion value associated with
   each $\lambda$, which will be shown as a fifth column.
 
-  As in the \texttt{regls} function, the \texttt{X} list should not
-  contain a constant: if the \texttt{B} matrix has one more row than
-  \texttt{X} has members, the constant is handled
-  automatically. Listing~\ref{script:multiprint} shows how the
-  information provided in the \texttt{regls} return bundle can be used
-  to supply the arguments \texttt{B}, \texttt{lam} and \texttt{crit}.
+  As in the \texttt{regls} function, the \texttt{X} list should not contain
+  a constant: if the \texttt{B} matrix has one more row than \texttt{X} has
+  members, the constant is handled automatically.
+
+  The example script \texttt{lambda\_sequence.inp}, reproduced in part as
+  Listing~\ref{script:lamseq}, illustrates how the information provided in
+  the \texttt{regls} return bundle can be used to supply the arguments
+  \texttt{B}, \texttt{lam} and \texttt{crit}.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -767,6 +769,18 @@ void regls_coeff_plot (const bundle b, const matrix sel[null])
 
 \begin{funcdoc}
 \begin{verbatim}
+series regls_pred (const bundle b, list X)
+\end{verbatim}
+  Convenience function for producing a series of predicted values.  The
+  bundle argument should be obtained via \texttt{regls} estimation; the list
+  argument supplies values of the independent variables. This function
+  automatically handles the presence or absence of an estimated intercept,
+  as well as selection of a specific coefficient vector when estimation has
+  been performed for multiple values of the regularization parameter.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
 bundle mregls (const matrix y, const matrix X, bundle parms)
 \end{verbatim}
   This function works like \texttt{regls()}, except that \texttt{y} is
@@ -778,52 +792,28 @@ bundle mregls (const matrix y, const matrix X, bundle parms)
   \texttt{mregls} output it is a selection vector, picking out the
   columns of the \texttt{X} matrix that have non-zero coefficients.
 
-  One of the functions described above, \texttt{regls\_multiprint},
-  has a specific counterpart that can be used in association with
-  \texttt{mregls}, namely \texttt{mregls\_multiprint}, with
-  signature as follows:
+  See also \texttt{mregls\_multiprint} and \texttt{mregls\_pred} below.
+\end{funcdoc}
+
+\begin{funcdoc}
 \begin{verbatim}
 void mregls_multiprint (const matrix B, const matrix lam,
                         const matrix y, const matrix X,
                         const matrix crit[null])
 \end{verbatim}
+  Matrix-oriented counterpart of \texttt{regls\_multiprint} (see above).
   The arguments \texttt{y} and \texttt{X} must be $n \times 1$ and
-  $n \times k$, respectively. They take the place of a series and a
-  list in \texttt{regls\_multiprint}.
+  $n \times k$, respectively. They take the place of a series and a list in
+  \texttt{regls\_multiprint}.
 \end{funcdoc}
 
-\section{Prediction following \texttt{mregls}}
-\label{sec:matrix-pred}
-
-When generating predictions based on \texttt{mregls} output the
-methods shown above, using the \texttt{lincomb} function, are not
-applicable. Say \texttt{mb} is a bundle obtained from \texttt{mregls}
-and \texttt{Xp} is an $n \times k$ matrix of independent variables,
-where \texttt{k} equals the number of columns in the \texttt{X} matrix
-passed to mregls. One wants an $n$-vector of predictions.
-
-The recommended method depends on whether the \texttt{stdize} option
-was set to 0, implying that the data passed to \texttt{mregls} were
-pre-standardized. In that case the coefficient vector provided in
-\texttt{mb} will not include an intercept, and the predictions can be
-obtained as follows
-\begin{code}
-matrix yhat = Xp[mb.nzX] * mb.nzb
-\end{code}
-where the selection vector \texttt{mb.nzX} is used to subset the
-columns of \texttt{Xp} appropriately.  However, if \texttt{mregls}
-performed standardization (and so added an estimated intercept), the
-method is either
-\begin{code}
-matrix yhat = (ones(n,1) ~ Xp[mb.nzX]) * mb.nzb
-\end{code}
-or
-\begin{code}
-matrix yhat = Xp[mb.nzX] * mb.nzb[2:] + mb.nzb[1]
-\end{code}
-That is, one must either prepend a column of 1s to \textrm{Xp} or
-separate out the estimated intercept, \texttt{mb.nzb[1]}.
-
+\begin{funcdoc}
+\begin{verbatim}
+matrix mregls_pred (const bundle b, const matrix X)
+\end{verbatim}
+  Matrix-oriented counterpart of \texttt{regls\_pred} (see above). The
+  bundle argument should be obtained from \texttt{mregls}.
+\end{funcdoc}
 
 \section{Change log}
 \label{sec:changes}
@@ -844,21 +834,47 @@ improve printout for LASS0 coefficients, when applicable.\\
 Version 0.1, 2020-10-09: initial release.
 
 \begin{script}
-  \caption{Usage of \texttt{regls\_multiprint}}
-  \label{script:multiprint}
+  \caption{LASSO with lambda sequence}
+  \label{script:lamseq}
 \begin{scode}
 set verbose off
 include regls.gfn
+
 open murder.gdt --quiet --frompkg=regls
 
 # all available predictors w. no missing values
 list X = population..LemasPctOfficDrugUn
+
 smpl 1 800
-bundle parms = _(nlambda=8, verbosity=0)
+printf "Sample range %d to %d\n", $t1, $t2
+
+bundle parms = _(nlambda = 8, verbosity = 0)
+
+set stopwatch
 bundle lb = regls(murdPerPop, X, parms)
+tm = $stopwatch
+printf "\ngretl (ADMM):\n"
 regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
+printf "time %.4fs\n", tm
+
+parms.ccd = 1
+parms.ccd_toler = 1.0e-14
+set stopwatch
+bundle lb = regls(murdPerPop, X, parms)
+tm = $stopwatch
+printf "\ngretl (CCD, tol %g):\n", parms.ccd_toler
+regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
+printf "time %.4fs\n", tm
+
+parms.ccd_toler = 1.0e-7
+set stopwatch
+bundle lb = regls(murdPerPop, X, parms)
+tm = $stopwatch
+printf "\ngretl (CCD, tol %g):\n", parms.ccd_toler
+regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
+printf "time %.4fs\n", tm
 \end{scode}
-  \end{script}
+\end{script}
 
 \bibliographystyle{gretl}
 \bibliography{gretl}

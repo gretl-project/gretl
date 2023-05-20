@@ -3,12 +3,12 @@
 function matrix regls_get_stats (const numeric y, const numeric yhat)
    if typeof(y) == 2 # series
       scalar SSR = sum((y - yhat)^2)
-      scalar SST = sum((y - mean(y))^2)
+      scalar n = $nobs
    else # must be matrix
       scalar SSR = sumc((y - yhat).^2)
-      scalar SST = sumc((y - meanc(y)).^2)
+      scalar n = nelem(y)
    endif
-   matrix ret = {SSR/$nobs, 1 - SSR/SST}
+   matrix ret = {SSR/n, 1 - SSR/sst(y)}
    cnameset(ret, "MSE R^2")
    return ret
 end function

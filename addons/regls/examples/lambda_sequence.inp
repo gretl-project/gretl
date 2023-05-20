@@ -23,7 +23,7 @@ parms.ccd_toler = 1.0e-14
 set stopwatch
 bundle lb = regls(murdPerPop, X, parms)
 tm = $stopwatch
-printf "\ngretl (CCD, tol 1.0e-14):\n"
+printf "\ngretl (CCD, tol %g):\n", parms.ccd_toler
 regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
 printf "time %.4fs\n", tm
 
@@ -31,7 +31,7 @@ parms.ccd_toler = 1.0e-7
 set stopwatch
 bundle lb = regls(murdPerPop, X, parms)
 tm = $stopwatch
-printf "\ngretl (CCD, tol 1.0e-7):\n"
+printf "\ngretl (CCD, tol %g):\n", parms.ccd_toler
 regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
 printf "time %.4fs\n", tm
 
