@@ -13,4 +13,4 @@ bundle-plot = regls_bundle_plot
 help = regls.pdf
 sample-script = regls_sample.inp
 data-files = examples
-min-version = 2020e
+min-version = 2023b
