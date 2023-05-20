@@ -793,11 +793,37 @@ void mregls_multiprint (const matrix B, const matrix lam,
 \end{funcdoc}
 
 \section{Prediction following \texttt{mregls}}
-\label{sec:changes}
+\label{sec:matrix-pred}
 
 When generating predictions based on \texttt{mregls} output the
-suggestions shown above, using the \texttt{lincomb} function, are not
-applicable. TO BE CONTINUED.
+methods shown above, using the \texttt{lincomb} function, are not
+applicable. Say \texttt{mb} is a bundle obtained from \texttt{mregls}
+and \texttt{Xp} is an $n \times k$ matrix of independent variables,
+where \texttt{k} equals the number of columns in the \texttt{X} matrix
+passed to mregls. One wants an $n$-vector of predictions.
+
+The recommended method depends on whether the \texttt{stdize} option
+was set to 0, implying that the data passed to \texttt{mregls} were
+pre-standardized. In that case the coefficient vector provided in
+\texttt{mb} will not include an intercept, and the predictions can be
+obtained as follows
+\begin{code}
+matrix yhat = Xp[mb.nzX] * mb.nzb
+\end{code}
+where the selection vector \texttt{mb.nzX} is used to subset the
+columns of \texttt{Xp} appropriately.  However, if \texttt{mregls}
+performed standardization (and so added an estimated intercept), the
+method is either
+\begin{code}
+matrix yhat = (ones(n,1) ~ Xp[mb.nzX]) * mb.nzb
+\end{code}
+or
+\begin{code}
+matrix yhat = Xp[mb.nzX] * mb.nzb[2:] + mb.nzb[1]
+\end{code}
+That is, one must either prepend a column of 1s to \textrm{Xp} or
+separate out the estimated intercept, \texttt{mb.nzb[1]}.
+
 
 \section{Change log}
 \label{sec:changes}

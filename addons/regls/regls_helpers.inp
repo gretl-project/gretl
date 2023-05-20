@@ -130,32 +130,34 @@ end function
 
 # compute fitted values
 
-function series regls_yhat (const bundle b, list X)
+function series regls_pred (const bundle rb, list X)
    series yhat
-   if inbundle(b, "nzX")
-      yhat = lincomb(b.nzX, b.nzb)
+   if inbundle(rb, "nzX")
+      yhat = lincomb(rb.nzX, rb.nzb)
    else
-      if b.stdize
+      matrix b = inbundle(rb, "b") ? rb.b : rb.B
+      if rb.stdize
          X = const X
       endif
-      yhat = lincomb(X, b.b)
+      yhat = lincomb(X, b)
    endif
    return yhat
 end function
 
-function matrix mregls_yhat (const bundle b, const matrix X)
+function matrix mregls_pred (const bundle mb, const matrix X)
    matrix yhat
-   if inbundle(b, "nzX")
-      if b.stdize
-         yhat = X[,b.nzX] * b.nzb[2:] + b.nzb[1]
+   if inbundle(mb, "nzX")
+      if mb.stdize
+         yhat = X[,mb.nzX] * mb.nzb[2:] + mb.nzb[1]
       else
-         yhat = X[,b.nzX] * b.nzb
+         yhat = X[,mb.nzX] * mb.nzb
       endif
    else
-      if b.stdize
-         yhat = X * b.b[2:] + b.b[1]
+      matrix b = inbundle(mb, "b") ? mb.b : mb.B
+      if mb.stdize
+         yhat = X * b[2:] + b[1]
       else
-         yhat = X * b.b
+         yhat = X * b
       endif
    endif
    return yhat
@@ -164,7 +166,7 @@ end function
 # report training-data R-squared after cross validation
 
 function void training_R2 (bundle *b, series y, list X)
-   series yhat = regls_yhat(b, X)
+   series yhat = regls_pred(b, X)
    matrix m = regls_get_stats(y, yhat)
    printf "training data R-squared = %.4f\n\n", m[2]
    b.training_R2 = m[2]
@@ -173,7 +175,7 @@ end function
 function void mregls_training_R2 (bundle *b,
                                   const matrix y,
                                   const matrix X)
-   matrix yhat = mregls_yhat(b, X)
+   matrix yhat = mregls_pred(b, X)
    matrix m = regls_get_stats(y, yhat)
    printf "training data R-squared = %.4f\n\n", m[2]
    b.training_R2 = m[2]

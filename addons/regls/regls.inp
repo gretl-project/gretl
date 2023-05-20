@@ -523,7 +523,7 @@ function bundle regls_fcast (bundle *b, int t1, int t2)
    else
       series y = ylist[1]
    endif
-   series yhat = regls_yhat(b, b.xlist)
+   series yhat = regls_pred(b, b.xlist)
    if t1 > b.sample_t2
       string os = "Out-of-sample "
    elif t1 == b.sample_t1 && t2 == b.sample_t2
