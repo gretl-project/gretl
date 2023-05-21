@@ -3886,7 +3886,10 @@ int dataset_set_time_series (DATASET *dset, int pd,
 
 void dataset_clear_sample_record (DATASET *dset)
 {
+    fprintf(stderr, "HERE clear_sample_record: restr %p\n",
+	    (void *) dset->restriction);
     if (dset->restriction != NULL) {
+	fprintf(stderr, "HERE 2: restr '%s'\n", dset->restriction);
 	free(dset->restriction);
 	dset->restriction = NULL;
     }

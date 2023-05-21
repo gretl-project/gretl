@@ -3702,7 +3702,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         if (cmd->opt & OPT_F) {
             err = check_smpl_full(cmd->opt);
             if (!err) {
-                err = restore_full_sample(dset, s);
+                err = restore_full_sample_full(dset, s, cmd->param);
             }
         } else if (cmd->opt == OPT_T && cmd->param == NULL) {
             /* --permanent, by itself */

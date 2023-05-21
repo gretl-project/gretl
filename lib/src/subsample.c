@@ -751,12 +751,17 @@ static char *make_current_sample_mask (DATASET *dset, int *err)
    moving the sample-range endpoints
 */
 
-static int restore_full_easy (DATASET *dset, ExecState *state)
+static int restore_full_easy (DATASET *dset, int fdepth, int maximal)
 {
     int t1min, t2max;
 
-    if (state == NULL) {
-	/* not inside a function */
+#if 1
+    fprintf(stderr, "restore_full_easy: fdepth %d, maximal %d\n",
+	    fdepth, maximal);
+#endif    
+
+    if (fdepth == 0 || maximal) {
+	/* not inside a function, or authorized to extend sample */
 	t1min = 0;
 	t2max = dset->n - 1;
 	dataset_clear_sample_record(dset);
@@ -770,7 +775,7 @@ static int restore_full_easy (DATASET *dset, ExecState *state)
 	dset->t1 = t1min;
 	dset->t2 = t2max;
 #if PANDEBUG || SUBDEBUG
-	fprintf(stderr, "restore_full_sample: just set t1=%d and t2=%d\n",
+	fprintf(stderr, "restore_full_easy: just set t1=%d and t2=%d\n",
 		t1min, t2max);
 #endif
     }
@@ -778,10 +783,12 @@ static int restore_full_easy (DATASET *dset, ExecState *state)
     return 0;
 }
 
-/* restore_full_sample:
+/* restore_full_sample_full:
  * @dset: dataset struct.
  * @state: structure representing program execution state,
  * or %NULL.
+ * @param: may convey extra information regarding an invocation
+ * of "smpl full".
  *
  * Restore the full data range, undoing any sub-sampling that was
  * previously performed (either by shifting the endpoints of the
@@ -792,14 +799,26 @@ static int restore_full_easy (DATASET *dset, ExecState *state)
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int restore_full_sample (DATASET *dset, ExecState *state)
+int restore_full_sample_full (DATASET *dset, ExecState *state,
+			      const char *param)
 {
+    int fdepth = gretl_function_depth();
+    int maximal = 0;
     int err = 0;
+
+    if (param != NULL && !strcmp(param, "maximal")) {
+	maximal = 1;
+    }
+
+#if 1
+    fprintf(stderr, "\nrestore_full_sample: dset=%p, state=%p, fullset=%p\n",
+	    (void *) dset, (void *) state, (void *) fullset);
+#endif    
 
     if (dset == NULL) {
 	return E_NODATA;
     } else if (!complex_subsampled()) {
-	return restore_full_easy(dset, state);
+	return restore_full_easy(dset, fdepth, maximal);
     }
 
     if (dset != peerset) {
@@ -839,7 +858,7 @@ int restore_full_sample (DATASET *dset, ExecState *state)
     }
 
     /* destroy sub-sampled data array */
-#if PANDEBUG || SUBDEBUG
+#if 1 || PANDEBUG || SUBDEBUG
     fprintf(stderr, "restore_full_sample: freeing sub-sampled Z at %p (v = %d, n = %d)\n"
 	    " and clearing dset at %p\n", (void *) dset->Z, dset->v, dset->n,
 	    (void *) dset);
@@ -849,17 +868,18 @@ int restore_full_sample (DATASET *dset, ExecState *state)
 
     relink_to_full_dataset(dset);
 
-    if (state != NULL) {
+    if (state != NULL && fdepth > 0) {
 	/* in this case restoring the "full" sample really means, relative
 	   to the original state
 	*/
-        int fdepth = gretl_function_depth();
         int masked = state->submask != NULL;
+
+	fprintf(stderr, "HERE masked = %d\n", masked);
 
 	if (masked) {
 	    err = restrict_sample_from_mask(state->submask, dset, OPT_NONE);
         }
-        if (!err && (!masked || fdepth > 0)) {
+        if (!err) {
 	    int t1min, t2max;
 
 	    sample_range_get_extrema(dset, &t1min, &t2max);
@@ -873,6 +893,11 @@ int restore_full_sample (DATASET *dset, ExecState *state)
     }
 
     return err;
+}
+
+int restore_full_sample (DATASET *dset, ExecState *state)
+{
+    return restore_full_sample_full(dset, state, NULL);
 }
 
 static int overlay_masks (char *targ, const char *src, int n)

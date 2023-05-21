@@ -10274,24 +10274,20 @@ void allow_full_data_access (int s)
  *
  * Fills out @t1 and/or @t2, making allowance for the possibility
  * that we're currently executing a function, on entry to
- * which the sample range was restricted: within the function,
- * we are not allowed to overstep the bounds set on entry.
+ * which the sample range was restricted.
  */
 
 void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2)
 {
+    fncall *call = current_function_call();
     int tvals[2] = {0, dset->n - 1};
 
-    if (!allow_full_data) {
-	fncall *call = current_function_call();
-
-	if (call != NULL) {
-	    tvals[0] = call->obs.t1;
-	    tvals[1] = call->obs.t2 + call->obs.added;
-            /* FIXME this needs to be smarter */
-            if (tvals[1] > dset->n - 1) {
-                tvals[1] = dset->n - 1;
-            }
+    if (call != NULL) {
+	tvals[0] = call->obs.t1;
+	tvals[1] = call->obs.t2 + call->obs.added;
+	/* FIXME this needs to be smarter? */
+	if (tvals[1] > dset->n - 1) {
+	    tvals[1] = dset->n - 1;
 	}
     }
 
@@ -10302,6 +10298,18 @@ void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2)
 	*t2 = tvals[1];
     }
 }
+
+#if 0
+
+int sample_get_tmax (const DATASET *dset)
+{
+    int ret;
+
+    sample_range_get_extrema(dset, NULL, &ret);
+    return ret;
+}
+
+#endif
 
 void extend_function_sample_range (int addobs)
 {

@@ -85,6 +85,9 @@ int set_panel_sample (const char *start, const char *stop,
 
 int restore_full_sample (DATASET *dset, ExecState *state);
 
+int restore_full_sample_full (DATASET *dset, ExecState *state,
+			      const char *param);
+
 int backup_full_dataset (DATASET *dset);
 
 int count_missing_values (const DATASET *dset, gretlopt opt, 

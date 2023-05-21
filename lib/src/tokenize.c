@@ -1663,8 +1663,9 @@ static int get_param (CMD *c, const DATASET *dset)
 	handle_datamod_param(c);
     } else if (c->ci == SMPL) {
 	/* "smpl" command: drop the requirement for a second param
-	   if the first is "full" */
-	if (!strcmp(c->param, "full")) {
+	   if the first is "full" or "maximal"
+	*/
+	if (!strcmp(c->param, "full") || !strcmp(c->param, "maximal")) {
 	    c->opt |= OPT_F;
 	    c->ciflags ^= CI_PARM2;
 	}
