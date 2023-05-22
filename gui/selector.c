@@ -5986,7 +5986,7 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 {
     static int optim = BFGS_MAX;
     selector *sr;
-    int active, maxit, lmem = 0;
+    int ci, active, maxit, lmem = 0;
     double tol;
     int resp;
 
@@ -5999,13 +5999,15 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
     sr = g_object_get_data(G_OBJECT(combo), "selector");
     active = gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
 
-    if (sr->ci == ARMA && active == 1) {
+    ci = sr->ci == ALAGSEL ? ARMA : sr->ci;
+
+    if (ci == ARMA && active == 1) {
         maxit = libset_get_int(BHHH_MAXITER);
         tol = libset_get_double(BHHH_TOLER);
         optim = BHHH_MAX;
     } else {
         optim = BFGS_MAX;
-        BFGS_defaults(&maxit, &tol, sr->ci);
+        BFGS_defaults(&maxit, &tol, ci);
         lmem = libset_get_int(LBFGS_MEM);
     }
 
