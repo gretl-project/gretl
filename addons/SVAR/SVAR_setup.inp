@@ -167,11 +167,11 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
        meanings, depending on the model type:
        - For traditional types it takes the meaning of 'checkident'.
          (Default 1 = yes, do it.)
-       - For set-identified (sign restriction) models checking the 
-         identification separately makes no sense, so here this becomes 
-         'storeSRirf', serving to decide whether the full IRF data of all 
-         accepted draws should be stored in the model bundle. This can 
-         inflate the bundle quite a bit, but in general shouldn't be a 
+       - For set-identified (sign restriction) models checking the
+         identification separately makes no sense, so here this becomes
+         'storeSRirf', serving to decide whether the full IRF data of all
+         accepted draws should be stored in the model bundle. This can
+         inflate the bundle quite a bit, but in general shouldn't be a
          problem on modern computers.
          (Default 1 = yes, store all IRF data.)
 
@@ -274,7 +274,7 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
         endif
 
         ## Other settings for traditional SVARs
-        
+
         /* Copy the id check choice */
         ret.checkident = checkid_storeSRirfs
 
@@ -284,14 +284,23 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
         ret.biascorr = 0
         ret.boottype = 1  # standard resid resampl. (choice new 1.5)
 
-    else #  10 (SR) 
+    else #  10 (SR)
+
+	# mixed restrictions are for the moment limited to
+	# C-model-like zero restrictions. Possibly, we'll also
+	# add in the future long run (Blanchard-Quah-like) restrictions
+	# so we add to the bundle both kinds of matrices
+
+	matrix ret.Rd1 = {}
+        matrix ret.Rd1l = {}
+
         # matrix for holding sign restrictions
         matrix ret.SRest = {}
-          
-		/* Since for sign restrictions the traditional estimation step doesn't apply,
-           but we need the reduced-form coefficients, we already do it here auto-
-           matically. */
-        ret.storeSRirfs = checkid_storeSRirfs 
+
+	/* Since for sign restrictions the traditional estimation step doesn't apply,
+        but we need the reduced-form coefficients, we already do it here automatically. */
+
+        ret.storeSRirfs = checkid_storeSRirfs
         SVAR_estimate(&ret, 0)
     endif
 
@@ -314,7 +323,7 @@ function scalar SVAR_restrict(bundle *b, string code, int r, int c[0], scalar d[
         return 2
 
         # check for input mismatch
-    elif (code=="C" || code=="lrC") && !(type==1 || type==2 || type==4)
+    elif (code=="C" || code=="lrC") && !contains(type, {1, 2, 4, 10})
         print "C type restriction but not a C model."
         return 1
 
@@ -335,10 +344,9 @@ function scalar SVAR_restrict(bundle *b, string code, int r, int c[0], scalar d[
             # (p.29, section 7 of the doc)
             return 4
         endif
-
-    elif type == 10
-        print "Use specialized functions (SVAR_SRplain etc.) for sign restrictions."
-        return 5
+    # elif type == 10
+    #     print "Use specialized functions (SVAR_SRplain etc.) for sign restrictions."
+    #     return 5
     endif
 
     # if no input error, proceed with this:
@@ -437,7 +445,7 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
        "Perm_1", "Perm_2", "Trans_1", "Trans_2", etc.
     */
 
-    if SVARobj.type != 4 && verbose 
+    if SVARobj.type != 4 && verbose
         print "Putting cointegration information into a non-SVEC model --"
         print " are you sure you know what you're doing?"
     endif
@@ -525,18 +533,18 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
         if r == 1
             sn[2] = "Transitory"
         else
-            loop i = 2..n 
+            loop i = 2..n
                 sn[i] = sprintf("Transitory_%d", i-1)
             endloop
         endif
     else
-        loop i = 1..n 
+        loop i = 1..n
             sn[i] = sprintf("Permanent_%d", i)
         endloop
         if r == 1
             sn[n] = "Transitory"
         else
-            loop i = 1..r 
+            loop i = 1..r
                 sn[n-r+i] = sprintf("Transitory_%d", i)
             endloop
         endif
@@ -569,4 +577,3 @@ function scalar SVAR_cumulate(bundle *b, int nv)
     endif
     return err
 end function
-

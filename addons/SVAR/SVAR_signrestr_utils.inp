@@ -163,8 +163,12 @@ function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
         matrix b.Sigma = Mats[2]
     endif
 
-    matrix b.rot = rand_rotation(mod.n, rotate_only)
-
+    if nelem(b.zc) == 0
+        # no zero restrictions
+        matrix b.rot = rand_rotation(mod.n, rotate_only)
+    else
+        matrix b.rot = const_orth(b.zc, mod.C)
+    endif
 end function
 
 # -----------------------------------
@@ -206,7 +210,7 @@ end function
 ### functions for shock identification/normalization
 ###
 
-function matrix correspondence(const matrix A)
+function matrix sr_correspondence(const matrix A)
     # Tag: sign restriction apparatus
 
     # this function checks for a possible way to couple
@@ -234,7 +238,7 @@ function matrix correspondence(const matrix A)
     endloop
 
     if c>0
-        matrix rest = correspondence(A[-r, -c])
+        matrix rest = sr_correspondence(A[-r, -c])
         if rows(rest) > 0
             rest[,1] += rest[,1] .>= r
             rest[,2] += rest[,2] .>= c
@@ -251,7 +255,7 @@ function matrix normlizA(const matrix A)
     # this function is for normalizing the "candidate" matrix A
     # (was normalize, but could be confused with the user option) 
 
-    matrix U = correspondence(A) # not to confuse U with the residuals...
+    matrix U = sr_correspondence(A) # not to confuse U with the residuals...
     matrix ret = zeros(rows(A), cols(A))
     loop i = 1..rows(U)
         r = U[i,1]
@@ -407,3 +411,121 @@ function matrices drawnormwis(const matrix iXX, const matrix B,
 
     return defarray(B_draw, Sigma_draw)
 end function
+
+###
+### functions pertaining to mixed (sign- and 0-restriction) models
+###
+
+function matrices xtr_blockdg_const(const matrix Rd, scalar *err)
+
+    # this function translates a constraints matrix in the "traditional" format
+    # into an array of per-shock restrictions (needed for the mixed 
+    # identification routine)
+
+    scalar n = sqrt(cols(Rd)-1)
+    matrices ret = array(n)
+    if maxc(abs(Rd[,end]))
+        printf "nonhom constraint!\n"
+        err = 1
+    else
+        p = rows(Rd)
+        n2 = n*n
+        loop i = 1 .. p
+            Ri = mshape(Rd[i, 1:n2], n, n)
+            chk = sumc(abs(Ri))
+            # no cross-shock constraints allowed
+            candidate = imaxr(chk)
+            if maxr(chk[-candidate])>0
+                printf "cross-shock constraint!\n"
+                err = 2
+                break
+            else
+                ret[candidate] = ret[candidate] | Ri[, candidate]'
+            endif
+        endloop
+    endif
+    
+    return ret
+end function
+
+function matrix rank_restr(const matrices R)
+    # this produces a vector (used in const_orth()) which lists
+    # which columns of Q are constrained; elements are ranked so
+    # that the "most constrained" columns come first
+
+    matrix m = {}
+    loop i = 1 .. nelem(R)
+        p = rows(R[i])
+        if p
+            m |= {i, -p}
+        endif
+    endloop
+
+    m = msortby(m, 2)
+    return m[,1]
+end function
+
+function matrix const_orth(const matrices constraints, const matrix C)
+    # this function produces an orthonormal matrix Q such that
+    # K = QC
+    # satisfies the constraints embodied in the matrix array "constraints"
+
+    DBG = 0
+    n = rows(C)
+    Q = I(n)
+    done = {}
+
+    # we sort the constraints array to process the "most stringent"
+    # ones first
+
+    to_do = rank_restr(constraints)
+    k = rows(to_do)
+
+    loop j = 1 .. k
+        i = to_do[j]
+        R = constraints[i]
+        if DBG
+            print i R
+        endif
+        if nelem(done) == 0
+            S = nullspace(R*C)
+        else
+            # was:
+            # S = intersect(nullspace(R*C), nullspace(Q[,done]'))
+            S = nullspace((R*C) | Q[,done]')
+        endif
+        if DBG
+            printf "RC =\n%12.4f", (R*C)'
+            print done S
+        endif
+
+        if nelem(S) == 0
+            print done
+            printf "No intersection at step %d!!!\n", i
+            printf "Q[,done] =\n%12.4f", Q[,done]
+            return {}
+        endif
+
+        if cols(S) == 1
+            S = S ./ sqrt(S'S)
+        endif
+        qi = S * mnormal(cols(S), 1)
+        Q[,i] = qi ./ sqrt(qi'qi)
+        done ~= i
+    endloop
+
+    if DBG
+        print Q
+    endif
+
+    H = nullspace(Q[,done]')
+    if cols(H) == 1
+        H = H ./ sqrt(H'H)
+    endif
+    Qq = qrdecomp(mnormal(n-k,n-k))
+    # print Q H Qq
+
+    Q[,-done] = H*Qq
+    return Q
+end function
+
