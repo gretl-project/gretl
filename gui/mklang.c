@@ -53,6 +53,8 @@ const char *gretl_data_types[] = {
     "null",
     "void",
     "const",
+    "numeric",
+    "empty",
     NULL
 };
 
