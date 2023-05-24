@@ -10078,7 +10078,10 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
     }
 
     /* check the @r argument */
-    if (null_node(r)) {
+    if ((f == F_FRACDIFF || f == F_FRACLAG) && null_node(r)) {
+	/* fractional difference needed */
+	p->err = E_ARGS;
+    } else if (null_node(r)) {
         ; /* not present, OK */
     } else if (f == F_DESEAS) {
         if (r->t != STR && r->t != BUNDLE && r->t != U_ADDR) {

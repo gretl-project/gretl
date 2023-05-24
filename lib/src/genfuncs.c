@@ -571,6 +571,13 @@ int fracdiff_series (const double *x, double *y, double d,
     int tmiss = 0;
     double phi = (diff)? -d : d;
 
+    if (na(d)) {
+	return E_NAN;
+    } else if (!dataset_is_time_series(dset)) {
+	gretl_errmsg_set("This function requires time-series data");
+	return E_DATA;
+    }
+
 #if 0
     fprintf(stderr, "Doing fracdiff_series, with d = %g\n", d);
 #endif
