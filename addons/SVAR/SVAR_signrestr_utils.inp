@@ -172,30 +172,42 @@ function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
 end function
 
 # -----------------------------------
+# unneeded any more?
 
-function matrices prepAis(const bundle mod, const matrix shocks)
+# function matrices prepAis(const bundle mod, const matrix shocks)
 
-    nshocks = rows(shocks)
-    matrices Ais = array(nshocks)
-    loop i = 1..nshocks
-        matrix Ais[i] = selifr(mod.SRest, mod.SRest[,6] .= shocks[i])
-    endloop
-    return Ais
-end function
+#     nshocks = rows(shocks)
+#     matrices Ais = array(nshocks)
+#     loop i = 1..nshocks
+#         matrix Ais[i] = selifr(mod.SRest, mod.SRest[,6] .= shocks[i])
+#     endloop
+#     return Ais
+# end function
 
 # -----------------------------------
 
 function matrix get_id_mat (const bundle mod, const matrix shocks,
                             const matrices irfs, const matrices Ais,
                             bool DO_NORM)
-    # (removed redundant nshocks arg)
 
+    VERB = 0
     nshocks = rows(shocks)
     matrix id_matrix = zeros(nshocks, mod.n)
     loop i = 1..nshocks
-        id_matrix[i,] = check_irfs(irfs, Ais[i])
+	if VERB
+	    printf "=========================================\n"
+	    printf "IRF check for shock %d \n", i
+	    printf "=========================================\n"
+	endif
+        id_matrix[i,] = check_irfs(irfs, Ais[i], VERB)
     endloop
 
+    if VERB
+	printf "=========================================\n"
+	printf "id_matrix = \n%4d\n", id_matrix
+	printf "=========================================\n"
+    endif
+    
     if DO_NORM
         id_matrix = normlizA(id_matrix)
     endif
@@ -204,7 +216,6 @@ function matrix get_id_mat (const bundle mod, const matrix shocks,
 end function
 
 # --------------------------------------
-
 
 ###
 ### functions for shock identification/normalization
@@ -277,9 +288,9 @@ function matrix check_one_irf(matrices M, matrix spec,
     # -1 if column satifies the bounds after a sign change
     #  0 if the bounds condition isn't met
 
-    n = cols(M[1])
-    h = nelem(M)
-    vndx = spec[1] # always matrix?
+    scalar n = cols(M[1])
+    scalar h = nelem(M)
+    scalar vndx = spec[1] # always matrix?
 
     # reshape IRFs so as to have columns as candidates
     matrix tmp = mshape(flatten(M)[vndx,], n, h)'
@@ -298,7 +309,8 @@ function matrix check_one_irf(matrices M, matrix spec,
     ret = noflip - flip
 
     if verbose
-        print tmp
+        printf "irf for variable %d at lags (%d-%d)\n%8.3f\n",
+	vndx, spec[4]-1, spec[5]-1, tmp
         if verbose > 1
             print lo hi
             print Min Max
@@ -329,7 +341,12 @@ function matrix check_irfs(matrices M, matrix A, int verbose[0])
     # check consistency
 
     matrix chks = zeros(rA, n)
-    loop i = 1..rA
+    loop i = 1 .. rA
+	if verbose
+	    printf "-----------------------------------------\n"
+	    printf "Check for constraint no. %d \n", i
+	    printf "-----------------------------------------\n"
+	endif
         chks[i,] = check_one_irf(M, A[i,], verbose)
     endloop
 
@@ -344,7 +361,7 @@ function matrix check_irfs(matrices M, matrix A, int verbose[0])
 
 end function
 
-function scalar check_id(matrix id)
+function scalar check_id(matrix id, matrix noswap)
     # Tag: sign restriction apparatus
 
     # Here we check if the sign restrictions allow us to
@@ -361,6 +378,9 @@ function scalar check_id(matrix id)
     # matrix; for partially identified models, we need to make sure
     # that we have only one non-zero entry for each row, and that
     # the rank of id is r.
+    #
+    # Edit 24-05-2023: in the case of zero constraints, the columns
+    # corresponding to zero-constrained shocks should not be swapped
 
     r = rows(id)
     c = cols(id)
@@ -370,6 +390,12 @@ function scalar check_id(matrix id)
         ret = (rank(id) == r) && minc(sumr(abs(id)) .= 1) == 1
     else
         ret = maxc(abs((id'id) - I(r))) < 1.0e-15
+	us = nelem(noswap)
+	if us
+	    # print noswap
+	    # printf "abs(id):\n%7.3f\n", abs(id[noswap,noswap]) 
+	    ret = ret && abs(id[noswap,noswap]) == I(us)
+	endif
     endif
 
     return ret

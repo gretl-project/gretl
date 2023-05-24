@@ -300,8 +300,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     # basically, it's a per-shock split of the SRest bundle element
     # was:
     # matrices Ais = prepAis(mod, shocks)
-    matrices Ais = msplitby(mod.SRest, mod.SRest[,6])
-
+    matrices Ais = msplitby(mod.SRest, mod.SRest[,6])[shocks]
 
     # responses to be cumulated?
     matrix to_cum = mod.ncumul ? mod.cumul : {}
@@ -321,7 +320,16 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
         matrices zero_const = array(0)
     endif
 
-
+    # generate a vector of zero-constrained shocks so that they don't get
+    # rotated afterwards in check_id()
+    
+    matrix zc_shocks = {}
+    loop i = 1 .. nelem(zero_const)
+	if nelem(zero_const[i])
+	    zc_shocks ~= i
+	endif
+    endloop
+    
     bundle b = _(B=B, Sigma=mod.Sigma, exoterms=rows(mod.mu),
       df= mod.T - rows(B), T=mod.T, zc=zero_const)
     # df was: mod.T - nelem(B)
@@ -340,8 +348,14 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
         matrices irfs = gen_SRirfs(b, numh, to_cum)
         matrix id_matrix = get_id_mat(mod, shocks, irfs, Ais, DO_NORM)
 
+	if 0
+            printf "iter = %d (good = %d)\n", iter, good
+            printf "M[0] =\n%8.3f\n", irfs[1]
+            printf "id_matrix =\n%8.3f\n", id_matrix
+	endif
+	
         chk = DO_NORM ? (rows(id_matrix) == rows(shocks)) : 0 # this check 1st!
-        chk = chk && check_id(id_matrix)
+        chk = chk && check_id(id_matrix, zc_shocks)
 
         if chk
             if mod.n == nSetIdShocks
