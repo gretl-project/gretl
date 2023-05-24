@@ -361,7 +361,29 @@ static int output_multiplot_script (const char **S, int np)
     return err;
 }
 
-static int maybe_set_mp_layout (int np)
+/* Determine the number of distinct plots in a layout,
+   allowing for the possibility that not all of the
+   available plots may be used.
+*/
+
+static int layout_get_np (const gretl_matrix *m, int *err)
+{
+    gretl_matrix *v;
+    int n = m->rows * m->cols;
+
+    v = gretl_matrix_values(m->val, n, OPT_S, err);
+    if (v != NULL) {
+	n = v->rows;
+	if (v->val[0] == 0) {
+	    n--;
+	}
+	gretl_matrix_free(v);
+    }
+
+    return n;
+}
+
+static int maybe_set_mp_layout (int *np)
 {
     const char *s = get_optval_string(GRIDPLOT, OPT_L);
     const gretl_matrix *m = NULL;
@@ -377,11 +399,14 @@ static int maybe_set_mp_layout (int np)
 	for (i=0; i<n; i++) {
 	    mi = m->val[i];
 	    if (na(mi) || mi != floor(mi) ||
-		mi < 0 || mi > np) {
+		mi < 0 || mi > *np) {
 		gretl_errmsg_set(_("Invalid layout specification"));
 		err = E_INVARG;
 		break;
 	    }
+	}
+	if (!err) {
+	    *np = layout_get_np(m, &err);
 	}
 	if (!err) {
 #if GRID_DEBUG
@@ -410,7 +435,7 @@ int gretl_multiplot_finalize (gretlopt opt)
 
     if (np > 0) {
 	if (opt & OPT_L) {
-	    err = maybe_set_mp_layout(np);
+	    err = maybe_set_mp_layout(&np);
 	} else {
 	    err = multiplot_set_grid(np);
 	}
@@ -539,7 +564,7 @@ static int disassemble_multiplot (const char *buf, int np)
     const char *p = buf;
     int k, err = 0;
 
-    arr = g_ptr_array_new_with_free_func(g_free);
+    arr = g_ptr_array_new_full(np, g_free);
 
     while ((p = strstr(p, "# subplot ")) != NULL) {
 	k = atoi(p + 10);
@@ -558,7 +583,7 @@ static int disassemble_multiplot (const char *buf, int np)
 	    break;
 	}
 	subplot = g_strndup(p, q-p);
-	g_ptr_array_add(arr, subplot);
+	g_ptr_array_insert(arr, k-1, subplot);
 	p = q;
     }
 
@@ -625,7 +650,7 @@ int gretl_multiplot_revise (gretlopt opt)
         err = update_multiplot_sizes(myopt);
     }
     if (myopt & OPT_L) {
-        err = maybe_set_mp_layout(np);
+        err = maybe_set_mp_layout(&np);
     }
     if (!err && mp_layout == NULL) {
 	err = multiplot_set_grid(np);
