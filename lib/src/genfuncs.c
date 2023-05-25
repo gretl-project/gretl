@@ -572,7 +572,7 @@ int fracdiff_series (const double *x, double *y, double d,
     double phi = (diff)? -d : d;
 
     if (na(d)) {
-	return E_NAN;
+        return E_NAN;
     }
 
 #if 0
@@ -4182,7 +4182,7 @@ int get_observation_number (const char *s, const DATASET *dset)
     }
 
     if (calendar_data(dset)) {
-	/* never reached? */
+        /* never reached? */
         char datestr[OBSLEN];
 
         for (t=0; t<dset->n; t++) {
@@ -4192,7 +4192,7 @@ int get_observation_number (const char *s, const DATASET *dset)
                 return t + 1;
             }
         }
-	return 0;
+        return 0;
     }
 
     return 0;
@@ -8622,8 +8622,8 @@ gretl_matrix *R_from_omega (const gretl_matrix *omega, int cholesky,
  */
 
 gretl_matrix *felogit_rec_loglik (int t, int T,
-				  const gretl_matrix *U,
-				  const gretl_matrix *xi)
+                                  const gretl_matrix *U,
+                                  const gretl_matrix *xi)
 {
     gretl_matrix *ret;
     int k = xi->cols;
@@ -8631,51 +8631,51 @@ gretl_matrix *felogit_rec_loglik (int t, int T,
     ret = gretl_zero_matrix_new(1, k+1);
 
     if (t > T) {
-	; /* nothing to be done */
+        ; /* nothing to be done */
     } else if (t == 0) {
-	ret->val[0] = 1;
+        ret->val[0] = 1;
     } else if (t == T) {
-	double B, rj;
-	int i, j;
+        double B, rj;
+        int i, j;
 
-	/* scalar B = prodc(U[1:T]) */
-	B = 1.0;
-	for (i=0; i<T; i++) {
-	    B *= U->val[i];
-	}
-	/* ret = (1 ~ sumc(xi[1:T,])) .* B */
-	ret->val[0] = B;
-	for (j=0; j<k; j++) {
-	    rj = 0;
-	    for (i=0; i<T; i++) {
-		rj += gretl_matrix_get(xi, i, j);
-	    }
-	    ret->val[j+1] = B * rj;
-	}
+        /* scalar B = prodc(U[1:T]) */
+        B = 1.0;
+        for (i=0; i<T; i++) {
+            B *= U->val[i];
+        }
+        /* ret = (1 ~ sumc(xi[1:T,])) .* B */
+        ret->val[0] = B;
+        for (j=0; j<k; j++) {
+            rj = 0;
+            for (i=0; i<T; i++) {
+                rj += gretl_matrix_get(xi, i, j);
+            }
+            ret->val[j+1] = B * rj;
+        }
     } else {
-	gretl_matrix *tmp1 = felogit_rec_loglik(t, T-1, U, xi);
-	gretl_matrix *tmp2 = felogit_rec_loglik(t-1, T-1, U, xi);
-	double xij, UT = U->val[T-1];
-	double tmp20 = tmp2->val[0];
-	int j;
+        gretl_matrix *tmp1 = felogit_rec_loglik(t, T-1, U, xi);
+        gretl_matrix *tmp2 = felogit_rec_loglik(t-1, T-1, U, xi);
+        double xij, UT = U->val[T-1];
+        double tmp20 = tmp2->val[0];
+        int j;
 
-	/* B = tmp[1,1] + UT * tmp[2,1] */
-	ret->val[0] = tmp1->val[0] + UT * tmp20;
+        /* B = tmp[1,1] + UT * tmp[2,1] */
+        ret->val[0] = tmp1->val[0] + UT * tmp20;
 
-	for (j=1; j<=k; j++) {
-	    xij = gretl_matrix_get(xi, T-1, j-1);
-	    ret->val[j] = tmp1->val[j] + UT * (tmp2->val[j] + xij * tmp20);
-	}
+        for (j=1; j<=k; j++) {
+            xij = gretl_matrix_get(xi, T-1, j-1);
+            ret->val[j] = tmp1->val[j] + UT * (tmp2->val[j] + xij * tmp20);
+        }
 
-	gretl_matrix_free(tmp1);
-	gretl_matrix_free(tmp2);
+        gretl_matrix_free(tmp1);
+        gretl_matrix_free(tmp2);
     }
 
     return ret;
 }
 
 static int val_map_search (double needle, const double *haystack,
-			   int n, int offset)
+                           int n, int offset)
 {
     int m = n/2;
 
@@ -8712,55 +8712,55 @@ int *maybe_get_values_map (const double *x, int n, int *pnv, int *err)
        values and check for bogus ones as we go.
     */
     for (i=0; i<n; i++) {
-	if (na(x[i])) {
-	    n_ok--;
-	} else if (x[i] < -6.2e10 || x[i] > 2.5e11) {
-	    /* outside of plausible time_t range */
-	    *err = E_INVARG;
-	    break;
-	} else if (i > 0 && !na(x[i-1])) {
-	    if (j < 0) {
-		mono = (x[i] > x[i-1])? 1 : (x[i] < x[i-1])? 2 : 0;
-		j = i;
-	    } else if ((mono == 1 && x[i] <= x[i-1]) ||
-		       (mono == 2 && x[i] >= x[i-1])) {
-		mono = 0;
-	    }
-	}
+        if (na(x[i])) {
+            n_ok--;
+        } else if (x[i] < -6.2e10 || x[i] > 2.5e11) {
+            /* outside of plausible time_t range */
+            *err = E_INVARG;
+            break;
+        } else if (i > 0 && !na(x[i-1])) {
+            if (j < 0) {
+                mono = (x[i] > x[i-1])? 1 : (x[i] < x[i-1])? 2 : 0;
+                j = i;
+            } else if ((mono == 1 && x[i] <= x[i-1]) ||
+                       (mono == 2 && x[i] >= x[i-1])) {
+                mono = 0;
+            }
+        }
     }
 
     if (*err) {
-	return NULL;
+        return NULL;
     } else if (n_ok == 0) {
-	*err = E_MISSDATA;
-	return NULL;
+        *err = E_MISSDATA;
+        return NULL;
     } else if (mono) {
-	/* no repetition: no map needed */
-	*pnv = n_ok;
-	return NULL;
+        /* no repetition: no map needed */
+        *pnv = n_ok;
+        return NULL;
     }
 
     v = gretl_matrix_values(x, n, OPT_S, err);
 
     if (!*err) {
-	/* allocate the integer map */
-	ret = malloc(n_ok * sizeof *ret);
-	if (ret == NULL) {
-	    *err = E_ALLOC;
-	}
+        /* allocate the integer map */
+        ret = malloc(n_ok * sizeof *ret);
+        if (ret == NULL) {
+            *err = E_ALLOC;
+        }
     }
 
     if (!*err) {
-	int nv = gretl_vector_get_length(v);
+        int nv = gretl_vector_get_length(v);
 
-	for (i=0, j=0; i<n; i++) {
-	    if (na(x[i])) {
-		continue;
-	    }
-	    /* find the position of x[i] in @v */
-	    ret[j++] = val_map_search(x[i], v->val, nv, 0);
-	}
-	*pnv = nv;
+        for (i=0, j=0; i<n; i++) {
+            if (na(x[i])) {
+                continue;
+            }
+            /* find the position of x[i] in @v */
+            ret[j++] = val_map_search(x[i], v->val, nv, 0);
+        }
+        *pnv = nv;
     }
 
     gretl_matrix_free(v);
@@ -8775,42 +8775,42 @@ int *maybe_get_values_map (const double *x, int n, int *pnv, int *err)
 */
 
 DATASET *matrix_dset_plus_lists (const gretl_matrix *m1,
-				 const gretl_matrix *m2,
-				 int **plist1, int **plist2,
-				 int *err)
+                                 const gretl_matrix *m2,
+                                 int **plist1, int **plist2,
+                                 int *err)
 {
     DATASET *mdset = NULL;
 
     if (m1 != NULL && m2 != NULL) {
-	mdset = gretl_dataset_from_matrices(m1, m2, err);
+        mdset = gretl_dataset_from_matrices(m1, m2, err);
     } else if (m1 == NULL && m2 != NULL) {
-	mdset = gretl_dataset_from_matrix(m2, NULL, OPT_B, err);
+        mdset = gretl_dataset_from_matrix(m2, NULL, OPT_B, err);
     } else if (m1 != NULL && m2 == NULL) {
-	mdset = gretl_dataset_from_matrix(m1, NULL, OPT_B, err);
+        mdset = gretl_dataset_from_matrix(m1, NULL, OPT_B, err);
     } else {
-	*err = E_DATA;
-	return NULL;
+        *err = E_DATA;
+        return NULL;
     }
 
     if (mdset != NULL) {
-	int i, j = 1;
+        int i, j = 1;
 
-	if (m1 != NULL && plist1 != NULL) {
-	    int *l1 = gretl_list_new(m1->cols);
+        if (m1 != NULL && plist1 != NULL) {
+            int *l1 = gretl_list_new(m1->cols);
 
-	    for (i=0; i<m1->cols; i++) {
-		l1[i+1] = j++;
-	    }
-	    *plist1 = l1;
-	}
-	if (m2 != NULL && plist2 != NULL) {
-	    int *l2 = gretl_list_new(m2->cols);
+            for (i=0; i<m1->cols; i++) {
+                l1[i+1] = j++;
+            }
+            *plist1 = l1;
+        }
+        if (m2 != NULL && plist2 != NULL) {
+            int *l2 = gretl_list_new(m2->cols);
 
-	    for (i=0; i<m2->cols; i++) {
-		l2[i+1] = j++;
-	    }
-	    *plist2 = l2;
-	}
+            for (i=0; i<m2->cols; i++) {
+                l2[i+1] = j++;
+            }
+            *plist2 = l2;
+        }
     }
 
     return mdset;
