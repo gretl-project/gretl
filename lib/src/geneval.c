@@ -10075,6 +10075,12 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
         !dataset_is_seasonal(p->dset)) {
         p->err = E_PDWRONG;
         return NULL;
+    } else if ((f == F_FRACDIFF || f == F_FRACLAG ||
+                f == F_HPFILT || f == F_TRAMOLIN) &&
+               !dataset_is_time_series(p->dset)) {
+        gretl_errmsg_set(_("This function requires time-series data"));
+        p->err = E_DATA;
+        return NULL;
     }
 
     /* check the @r argument */
@@ -14205,6 +14211,8 @@ static int check_argc (int f, int k, parser *p)
     return p->err;
 }
 
+#define nargs_needs_ts(f) (f == F_BKFILT || f == F_FILTER)
+
 /* evaluate a built-in function that has more than three arguments */
 
 static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
@@ -14214,6 +14222,12 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
 
     check_argc(t->t, k, p);
     if (p->err) {
+        return NULL;
+    }
+
+    if (!dataset_is_time_series(p->dset) && nargs_needs_ts(t->t)) {
+        gretl_errmsg_set(_("This function requires time-series data"));
+        p->err = E_DATA;
         return NULL;
     }
 

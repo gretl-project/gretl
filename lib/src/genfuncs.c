@@ -573,9 +573,6 @@ int fracdiff_series (const double *x, double *y, double d,
 
     if (na(d)) {
 	return E_NAN;
-    } else if (!dataset_is_time_series(dset)) {
-	gretl_errmsg_set("This function requires time-series data");
-	return E_DATA;
     }
 
 #if 0
@@ -2759,6 +2756,11 @@ int butterworth_filter (const double *x, double *bw, const DATASET *dset,
     int T, t, m;
     int bad_lambda = 0;
     int err = 0;
+
+    if (!dataset_is_time_series(dset)) {
+        gretl_errmsg_set(_("This function requires time-series data"));
+        return E_DATA;
+    }
 
     err = series_adjust_sample(x, &t1, &t2);
     if (err) {
