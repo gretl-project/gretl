@@ -5897,7 +5897,7 @@
 	  by subtraction, as in
 	</para>
 	<code>
-	  series hptrend = y - hfilt(y)
+	  series hptrend = y - hpfilt(y)
 	</code>
 	<para>
 	  <seelist>

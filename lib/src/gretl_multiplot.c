@@ -23,6 +23,7 @@
 
 #include "libgretl.h"
 #include "uservar.h"
+#include "usermat.h"
 #include "gretl_multiplot.h"
 
 #define GRID_DEBUG 0
@@ -36,6 +37,7 @@ typedef struct {
 } mplot_option;
 
 static GPtrArray *multiplot;
+static gretl_matrix *mp_layout;
 static int mp_fontsize = 10;
 static int mp_width = 800;
 static int mp_height = 600;
@@ -80,7 +82,21 @@ static int set_multiplot_sizes (gretlopt opt)
     return err;
 }
 
-static int update_multiplot_sizes (gretlopt opt, int *changes)
+static void set_mp_layout (const gretl_matrix *m)
+{
+    if (mp_layout != NULL) {
+	gretl_matrix_free(mp_layout);
+    }
+    mp_layout = gretl_matrix_copy(m);
+    if (mp_layout != NULL) {
+	if (mp_rows != m->rows || mp_cols != m->cols) {
+	    mp_rows = m->rows;
+	    mp_cols = m->cols;
+	}
+    }
+}
+
+static int update_multiplot_sizes (gretlopt opt)
 {
     const mplot_option *mpo;
     int new_rows = 0;
@@ -98,7 +114,6 @@ static int update_multiplot_sizes (gretlopt opt, int *changes)
             if (!err) {
                 if (i < 3 && k != *mpo->target) {
                     *mpo->target = k;
-                    *changes += 1;
                 } else if (mpo->flag == OPT_R) {
                     new_rows = k;
                 } else if (mpo->flag == OPT_C) {
@@ -119,7 +134,6 @@ static int update_multiplot_sizes (gretlopt opt, int *changes)
             /* got a rows specification */
             if (new_rows != mp_rows) {
                 mp_rows = new_rows;
-                *changes += 1;
                 if (new_cols == 0) {
                     /* make cols automatic */
                     mp_cols = 0;
@@ -130,7 +144,6 @@ static int update_multiplot_sizes (gretlopt opt, int *changes)
             /* got a cols specification */
             if (new_cols != mp_cols) {
                 mp_cols = new_cols;
-                *changes += 1;
                 if (new_rows == 0) {
                     /* make rows automatic */
                     mp_rows = 0;
@@ -146,6 +159,10 @@ static void set_multiplot_defaults (void)
 {
     int i;
 
+    if (mp_layout != NULL) {
+	gretl_matrix_free(mp_layout);
+	mp_layout = NULL;
+    }
     for (i=0; i<n_mp_options; i++) {
 	*(mp_options[i].target) = mp_options[i].def;
     }
@@ -246,6 +263,43 @@ static int multiplot_set_grid (int n)
     return err;
 }
 
+static int get_subplot_index (int i, int j)
+{
+    return (int) gretl_matrix_get(mp_layout, i, j) - 1;
+}
+
+static void output_layout_matrix (gretl_matrix *m, FILE *fp)
+{
+    double mij;
+    int i, j;
+
+    fputs("layout={", fp);
+    for (i=0; i<m->rows; i++) {
+	for (j=0; j<m->cols; j++) {
+	    mij = gretl_matrix_get(m, i, j);
+	    fprintf(fp, "%d", (int) mij);
+	    if (j < m->cols-1) {
+		fputc(',', fp);
+	    }
+	}
+	if (i < m->rows-1) {
+	    fputc(';', fp);
+	}
+    }
+    fputs("}\n", fp);
+}
+
+static void write_mp_spec_comment (int np, FILE *fp)
+{
+    fprintf(fp, "# grid_params: plots=%d, fontsize=%d, width=%d, height=%d, ",
+	    np, mp_fontsize, mp_width, mp_height);
+    if (mp_layout != NULL) {
+	output_layout_matrix(mp_layout, fp);
+    } else {
+	fprintf(fp, "rows=%d, cols=%d\n", mp_rows, mp_cols);
+    }
+}
+
 /* Write a multiplot specification to file, either using
    the @multiplot struct or an array of individual plot
    specification strings, @S.
@@ -254,7 +308,8 @@ static int multiplot_set_grid (int n)
 static int output_multiplot_script (const char **S, int np)
 {
     gchar *buf;
-    int i, err = 0;
+    int i, j, k;
+    int err = 0;
     FILE *fp;
 
     /* insure against segfault */
@@ -269,26 +324,97 @@ static int output_multiplot_script (const char **S, int np)
     }
 
     fputs("# literal lines = 1\n", fp);
-    fprintf(fp, "# grid_params: fontsize=%d, width=%d, height=%d, "
-            "rows=%d, cols=%d, plots=%d\n", mp_fontsize, mp_width,
-            mp_height, mp_rows, mp_cols, np);
+    write_mp_spec_comment(np, fp);
+
     fprintf(fp, "set multiplot layout %d,%d rowsfirst\n", mp_rows, mp_cols);
     gretl_push_c_numeric_locale();
-    for (i=0; i<np; i++) {
-        fprintf(fp, "# gridplot: subplot %d\n", i);
-        if (i > 0) {
-            fputs("reset\n", fp);
-        }
-	if (S != NULL) {
-	    fputs(S[i], fp);
-	} else {
-	    buf = g_ptr_array_index(multiplot, i);
-	    fputs(buf, fp);
+
+    k = -1;
+    for (i=0; i<mp_rows; i++) {
+	for (j=0; j<mp_cols; j++) {
+	    if (mp_layout != NULL) {
+		k = get_subplot_index(i, j);
+	    } else {
+		k++;
+	    }
+	    if (k < 0) {
+		fputs("set multiplot next\n", fp);
+	    } else {
+		if (k > 0) {
+		    fputs("reset\n", fp);
+		}
+		fprintf(fp, "# subplot %d\n", k+1);
+		if (S != NULL) {
+		    fputs(S[k], fp);
+		} else {
+		    buf = g_ptr_array_index(multiplot, k);
+		    fputs(buf, fp);
+		}
+	    }
 	}
     }
+
     gretl_pop_c_numeric_locale();
     fputs("unset multiplot\n", fp);
     err = finalize_plot_input_file(fp);
+
+    return err;
+}
+
+/* Determine the number of distinct plots in a layout,
+   allowing for the possibility that not all of the
+   available plots may be used.
+*/
+
+static int layout_get_np (const gretl_matrix *m, int *err)
+{
+    gretl_matrix *v;
+    int n = m->rows * m->cols;
+
+    v = gretl_matrix_values(m->val, n, OPT_S, err);
+    if (v != NULL) {
+	n = v->rows;
+	if (v->val[0] == 0) {
+	    n--;
+	}
+	gretl_matrix_free(v);
+    }
+
+    return n;
+}
+
+static int maybe_set_mp_layout (int *np)
+{
+    const char *s = get_optval_string(GRIDPLOT, OPT_L);
+    const gretl_matrix *m = NULL;
+    int err = 0;
+
+    if (s != NULL) {
+	m = get_matrix_by_name(s);
+    }
+    if (m != NULL) {
+	int i, n = m->rows * m->cols;
+	double mi;
+
+	for (i=0; i<n; i++) {
+	    mi = m->val[i];
+	    if (na(mi) || mi != floor(mi) ||
+		mi < 0 || mi > *np) {
+		gretl_errmsg_set(_("Invalid layout specification"));
+		err = E_INVARG;
+		break;
+	    }
+	}
+	if (!err) {
+	    *np = layout_get_np(m, &err);
+	}
+	if (!err) {
+#if GRID_DEBUG
+	    gretl_matrix_print(m, "m, in maybe_set_mp_layout");
+#endif
+	    set_mp_layout(m);
+	}
+    }
 
     return err;
 }
@@ -306,8 +432,13 @@ int gretl_multiplot_finalize (gretlopt opt)
 
     mp_collecting = 0;
     np = multiplot->len;
+
     if (np > 0) {
-	err = multiplot_set_grid(np);
+	if (opt & OPT_L) {
+	    err = maybe_set_mp_layout(&np);
+	} else {
+	    err = multiplot_set_grid(np);
+	}
     }
 
     if (np > 0 && !err) {
@@ -321,51 +452,19 @@ int gretl_multiplot_finalize (gretlopt opt)
     return err;
 }
 
-static void filter_multiplot_buffer (const char *buf,
-				     int np, FILE *fp)
+static int read_layout_matrix (const char *s, int *pr, int *pc, int *pn)
 {
-    char line[1024];
-
-    bufgets_init(buf);
-
-    while (bufgets(line, sizeof line, buf)) {
-	if (!strncmp(line, "# grid_params: ", 15)) {
-	    /* substitute revised parameters in comment */
-	    fprintf(fp, "# grid_params: fontsize=%d, width=%d, height=%d, "
-		    "rows=%d, cols=%d, plots=%d\n", mp_fontsize, mp_width,
-		    mp_height, mp_rows, mp_cols, np);
-	} else if (!strncmp(line, "set multiplot", 13)) {
-	    /* and revise multiplot layout spec */
-	    fprintf(fp, "set multiplot layout %d,%d rowsfirst\n",
-		    mp_rows, mp_cols);
-	} else {
-	    /* simply transcribe */
-	    fputs(line, fp);
-	}
-    }
-
-    bufgets_finalize(buf);
-}
-
-static int revise_multiplot_script (const char *buf,
-				    int filter,
-				    int np)
-{
+    gretl_matrix *m = NULL;
     int err = 0;
-    FILE *fp;
 
-    fp = open_plot_input_file(PLOT_USER_MULTI, 0, &err);
-    if (err) {
-        return err;
+    s = strstr(s, "layout=") + 7;
+    m = generate_matrix(s, NULL, &err);
+    if (!err) {
+	mp_layout = m;
+	*pr = m->rows;
+	*pc = m->cols;
+	*pn += 2;
     }
-
-    if (filter) {
-	filter_multiplot_buffer(buf, np, fp);
-    } else {
-	fputs(buf, fp);
-    }
-
-    err = finalize_plot_input_file(fp);
 
     return err;
 }
@@ -384,10 +483,16 @@ static int retrieve_grid_params (const char *buf, int *np)
 
     while (bufgets(line, sizeof line, buf) && 1 < 10) {
         if (!strncmp(line, "# grid_params: ", 15)) {
-            n = sscanf(line+15, "fontsize=%d, width=%d, height=%d, "
-		       "rows=%d, cols=%d, plots=%d", &parms[0], &parms[1],
-		       &parms[2], &parms[3], &parms[4], np);
-            break;
+	    if (strstr(line, "layout=") != NULL) {
+		n = sscanf(line+15, "plots=%d, fontsize=%d, width=%d, height=%d",
+			   np, &parms[0], &parms[1], &parms[2]);
+		err = read_layout_matrix(line, &parms[3], &parms[4], &n);
+	    } else {
+		n = sscanf(line+15, "plots=%d, fontsize=%d, width=%d, height=%d, "
+			   "rows=%d, cols=%d", np, &parms[0], &parms[1],
+			   &parms[2], &parms[3], &parms[4]);
+		break;
+	    }
         }
         i++;
     }
@@ -447,6 +552,54 @@ static int get_prior_plot_spec (gretlopt opt,
     return err;
 }
 
+/* Given a gridplot buffer @buf, extract the individual
+   subplots into a GLib pointer-array.
+*/
+
+static int disassemble_multiplot (const char *buf, int np)
+{
+    const char *e1, *e2, *q;
+    GPtrArray *arr = NULL;
+    gchar *subplot;
+    const char *p = buf;
+    int k, err = 0;
+
+    arr = g_ptr_array_new_full(np, g_free);
+
+    while ((p = strstr(p, "# subplot ")) != NULL) {
+	k = atoi(p + 10);
+	fprintf(stderr, "found subplot %d\n", k);
+	e1 = strstr(p + 10, "set multiplot next");
+	e2 = strstr(p + 10, "reset");
+	if (e1 != NULL && e2 != NULL) {
+	    q = e1 - e2 > 0 ? e2 : e1;
+	} else if (e1 == NULL && e2 == NULL) {
+	    q = strstr(p + 10, "unset multiplot");
+	} else {
+	    q = e1 != NULL ? e1 : e2;
+	}
+	if (q == NULL) {
+	    err = 1;
+	    break;
+	}
+	subplot = g_strndup(p, q-p);
+	g_ptr_array_insert(arr, k-1, subplot);
+	p = q;
+    }
+
+    if (!err && arr->len != np) {
+	err = 1;
+    }
+    if (err) {
+	gretl_errmsg_set("Failed to recreate gridplot");
+	g_ptr_array_unref(arr);
+    } else {
+	multiplot = arr;
+    }
+
+    return err;
+}
+
 /* Revise an existing gridplot buffer or command file,
    presumably obtained via "end gridplot" with the --output
    or --outbuf option or perhaps via the "standalone"
@@ -460,7 +613,6 @@ int gretl_multiplot_revise (gretlopt opt)
     const char *buf = NULL;
     gchar *gbuf = NULL;
     gretlopt myopt = opt;
-    int filter = 0;
     int np = 0;
     int err = 0;
 
@@ -474,6 +626,10 @@ int gretl_multiplot_revise (gretlopt opt)
     if (!err) {
 	/* extract the dimensions recorded in @buf */
 	err = retrieve_grid_params(buf, &np);
+    }
+    if (!err) {
+	/* extract the subplot specs */
+	err = disassemble_multiplot(buf, np);
     }
     if (err) {
         return err;
@@ -491,9 +647,12 @@ int gretl_multiplot_revise (gretlopt opt)
     /* let the current @opt override previous choices */
     myopt &= ~(OPT_i | OPT_I | OPT_U);
     if (myopt) {
-        err = update_multiplot_sizes(myopt, &filter);
+        err = update_multiplot_sizes(myopt);
     }
-    if (!err) {
+    if (myopt & OPT_L) {
+        err = maybe_set_mp_layout(&np);
+    }
+    if (!err && mp_layout == NULL) {
 	err = multiplot_set_grid(np);
     }
 
@@ -505,12 +664,14 @@ int gretl_multiplot_revise (gretlopt opt)
     if (!err) {
 	set_special_plot_size(mp_width, mp_height);
 	set_special_font_size(mp_fontsize);
-	revise_multiplot_script(buf, filter, np);
+	output_multiplot_script(NULL, np);
     }
 
     if (gbuf != NULL) {
 	g_free(gbuf);
     }
+
+    gretl_multiplot_destroy();
 
     return err;
 }
