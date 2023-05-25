@@ -161,13 +161,16 @@ function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
         matrices Mats = drawnormwis(iXX, B, mod.Sigma, b.df) # changed df at source
         matrix b.B = Mats[1]
         matrix b.Sigma = Mats[2]
+	matrix C = cholesky(b.Sigma)
+    else
+	matrix C = mod.C
     endif
 
     if nelem(b.zc) == 0
         # no zero restrictions
         matrix b.rot = rand_rotation(mod.n, rotate_only)
     else
-        matrix b.rot = const_orth(b.zc, mod.C)
+        matrix b.rot = const_orth(b.zc, C)
     endif
 end function
 
