@@ -2494,20 +2494,16 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     if (gretl_xml_get_prop_as_bool(node, "private")) {
 	fun->flags |= UFUN_PRIVATE;
     }
-
     if (gretl_xml_get_prop_as_bool(node, "no-print")) {
 	fun->flags |= UFUN_NOPRINT;
     }
-
     if (gretl_xml_get_prop_as_bool(node, "menu-only")) {
 	fun->flags |= UFUN_MENU_ONLY;
     }
-
     if (gretl_xml_get_prop_as_string(node, "pkg-role", &tmp)) {
 	fun->pkg_role = pkg_key_get_role(tmp);
 	free(tmp);
     }
-
     if (!(fun->flags & UFUN_MENU_ONLY) && pkg != NULL) {
 	maybe_set_menu_only(fun, pkg);
     }
@@ -3410,11 +3406,9 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn)
 				    (const char **) pkg->depends,
 				    pkg->n_depends, prn);
     }
-
     if (pkg->provider != NULL) {
 	gretl_xml_put_tagged_string("provider", pkg->provider, prn);
     }
-
     if (pkg->Rdeps != NULL) {
 	gretl_xml_put_tagged_string("R-depends", pkg->Rdeps, prn);
     }
@@ -3424,7 +3418,6 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn)
 	    write_function_xml(pkg->pub[i], prn);
 	}
     }
-
     if (pkg->priv != NULL) {
 	for (i=0; i<pkg->n_priv; i++) {
 	    write_function_xml(pkg->priv[i], prn);
@@ -3636,180 +3629,165 @@ static int valid_list_maker (ufunc *u)
     }
 }
 
+#define PRIVATE_ONLY(r) (r == UFUN_GUI_PRECHECK || \
+                         r == UFUN_LIST_MAKER ||   \
+                         r == UFUN_R_SETUP ||      \
+                         r == UFUN_UI_MAKER)
+
+static ufunc *get_package_member_by_name (const char *name,
+                                          fnpkg *pkg,
+                                          int public_ok,
+                                          int private_ok)
+{
+    int i;
+
+    if (public_ok) {
+        for (i=0; i<pkg->n_pub; i++) {
+            if (!strcmp(name, pkg->pub[i]->name)) {
+                return pkg->pub[i];
+            }
+        }
+    }
+    if (private_ok) {
+        for (i=0; i<pkg->n_priv; i++) {
+            if (!strcmp(name, pkg->priv[i]->name)) {
+                return pkg->priv[i];
+            }
+        }
+    }
+
+    return NULL;
+}
+
 int function_set_package_role (const char *name, fnpkg *pkg,
 			       const char *attr, PRN *prn)
 {
     ufunc *u = NULL;
     int role = pkg_key_get_role(attr);
-    int i, j, err = 0;
+    int err = 0;
 
     if (name == NULL) {
-	/* removing a role */
+	/* removing a role altogether */
 	pkg_remove_role(pkg, role);
 	return 0;
+    } else if (role == UFUN_ROLE_NONE) {
+        /* canceling a function's role */
+        u = get_package_member_by_name(name, pkg, 1, 1);
+        if (u != NULL) {
+            u->pkg_role = role;
+            return 0;
+        } else {
+            return E_DATA;
+        }
     }
 
-    if (role == UFUN_ROLE_NONE) {
-	for (i=0; i<pkg->n_priv; i++) {
-	    if (!strcmp(name, pkg->priv[i]->name)) {
-		u = pkg->priv[i];
-		u->pkg_role = role;
-		return 0;
-	    }
-	}
-	for (i=0; i<pkg->n_pub; i++) {
-	    if (!strcmp(name, pkg->pub[i]->name)) {
-		u = pkg->pub[i];
-		u->pkg_role = role;
-		return 0;
-	    }
-	}
-	return E_DATA;
-    }
-
-    /* check that the function in question satisfies the
-       requirements for its role, and if so, hook it up
+    /* Check that the function identified by @name satisfies the
+       requirements for the role identified by @attr: if so, hook
+       the function up in this role.
     */
 
-    if (role == UFUN_GUI_PRECHECK) {
-	/* the pre-checker must be a private function */
-	for (i=0; i<pkg->n_priv; i++) {
-	    if (!strcmp(name, pkg->priv[i]->name)) {
-		u = pkg->priv[i];
-		if (u->rettype != GRETL_TYPE_DOUBLE) {
-		    pprintf(prn, "%s: must return a scalar\n", attr);
-		    err = E_TYPES;
-		} else if (u->n_params > 0) {
-		    pprintf(prn, "%s: no parameters are allowed\n", attr);
-		    err = E_TYPES;
-		}
-		if (!err) {
-		    u->pkg_role = role;
-		}
-		return err; /* found */
-	    }
-	}
-	/* not found */
-	pprintf(prn, "%s: %s: no such private function\n", attr, name);
-	return E_DATA;
-    } else if (role == UFUN_LIST_MAKER) {
-	/* this too must be a private function */
-	for (i=0; i<pkg->n_priv; i++) {
-	    if (!strcmp(name, pkg->priv[i]->name)) {
-		u = pkg->priv[i];
-		if (u->rettype != GRETL_TYPE_LIST) {
-		    pprintf(prn, "%s: must return a list\n", attr);
-		    err = E_TYPES;
-		} else if (!valid_list_maker(u)) {
-		    pprintf(prn, "%s: must have 0 parameters or a single "
-			    "list parameter\n", attr);
-		    err = E_TYPES;
-		}
-		if (!err) {
-		    u->pkg_role = role;
-		}
-		return err; /* found */
-	    }
-	}
-	/* not found */
-	pprintf(prn, "%s: %s: no such private function\n", attr, name);
-	return E_DATA;
-    } else if (role == UFUN_R_SETUP) {
-	/* another private one */
-	for (i=0; i<pkg->n_priv; i++) {
-	    if (!strcmp(name, pkg->priv[i]->name)) {
-		u = pkg->priv[i];
-		if (u->rettype != GRETL_TYPE_VOID) {
-		    pprintf(prn, "%s: should not return anything\n", attr);
-		    err = E_TYPES;
-		} else if (u->n_params > 0) {
-		    pprintf(prn, "%s: no parameters are allowed\n", attr);
-		    err = E_TYPES;
-		}
-		if (!err) {
-		    u->pkg_role = role;
-		}
-		return err; /* found */
-	    }
-	}
-	/* not found */
-	pprintf(prn, "%s: %s: no such private function\n", attr, name);
-    } else if (role == UFUN_UI_MAKER) {
-        /* also private */
-	for (i=0; i<pkg->n_priv; i++) {
-	    if (!strcmp(name, pkg->priv[i]->name)) {
-		u = pkg->priv[i];
-		if (u->rettype != GRETL_TYPE_BUNDLE) {
-		    pprintf(prn, "%s: should return a bundle\n", attr);
-		    err = E_TYPES;
-		} else if (u->n_params > 0) {
-		    pprintf(prn, "%s: no parameters are allowed\n", attr);
-		    err = E_TYPES;
-		}
-		if (!err) {
-		    u->pkg_role = role;
-		}
-		return err; /* found */
-	    }
-	}
-	/* not found */
-	pprintf(prn, "%s: %s: no such private function\n", attr, name);
+    if (PRIVATE_ONLY(role)) {
+        /* function roles that must be private */
+        u = get_package_member_by_name(name, pkg, 0, 1);
+        if (u == NULL) {
+            pprintf(prn, "%s: %s: no such private function\n", attr, name);
+            return E_DATA;
+        }
+        if (role == UFUN_GUI_PRECHECK) {
+            if (u->rettype != GRETL_TYPE_DOUBLE) {
+                pprintf(prn, "%s: must return a scalar\n", attr);
+                err = E_TYPES;
+            } else if (u->n_params > 0) {
+                pprintf(prn, "%s: no parameters are allowed\n", attr);
+                err = E_TYPES;
+            }
+        } else if (role == UFUN_LIST_MAKER) {
+            if (u->rettype != GRETL_TYPE_LIST) {
+                pprintf(prn, "%s: must return a list\n", attr);
+                err = E_TYPES;
+            } else if (!valid_list_maker(u)) {
+                pprintf(prn, "%s: must have 0 parameters or a single "
+                        "list parameter\n", attr);
+                err = E_TYPES;
+            }
+        } else if (role == UFUN_R_SETUP) {
+            if (u->rettype != GRETL_TYPE_VOID) {
+                pprintf(prn, "%s: should not return anything\n", attr);
+                err = E_TYPES;
+            } else if (u->n_params > 0) {
+                pprintf(prn, "%s: no parameters are allowed\n", attr);
+                err = E_TYPES;
+            }
+        } else if (role == UFUN_UI_MAKER) {
+            if (u->rettype != GRETL_TYPE_BUNDLE) {
+                pprintf(prn, "%s: should return a bundle\n", attr);
+                err = E_TYPES;
+            } else if (u->n_params > 0) {
+                pprintf(prn, "%s: no parameters are allowed\n", attr);
+                err = E_TYPES;
+            }
+        }
+        if (!err) {
+            u->pkg_role = role;
+        }
+        return err; /* private cases handled */
     }
 
-    for (i=0; i<pkg->n_pub; i++) {
-	/* all other special-role functions must be public */
-	if (!strcmp(name, pkg->pub[i]->name)) {
-	    u = pkg->pub[i];
-	    if (role == UFUN_GUI_MAIN) {
-		; /* OK, type does not matter */
-	    } else {
-		/* bundle-print, bundle-plot, etc. */
-		int fcast = (role == UFUN_BUNDLE_FCAST);
-		int pmin = fcast ? 2 : 1;
-		GretlType pjt;
-
-		if (u->n_params == 0) {
-		    pprintf(prn, "%s: must take a %s argument\n", attr,
-			    gretl_type_get_name(GRETL_TYPE_BUNDLE_REF));
-		    err = E_TYPES;
-		}
-		for (j=0; j<u->n_params && !err; j++) {
-		    pjt = u->params[j].type;
-		    if (j == 0 && pjt != GRETL_TYPE_BUNDLE_REF) {
-			pprintf(prn, "%s: first param type must be %s\n",
-				attr, gretl_type_get_name(GRETL_TYPE_BUNDLE_REF));
-			err = E_TYPES;
-		    } else if (j == 1 && pjt != GRETL_TYPE_INT) {
-			pprintf(prn, "%s: second param type must be %s\n",
-				attr, gretl_type_get_name(GRETL_TYPE_INT));
-			err = E_TYPES;
-		    } else if (j == 2 && fcast && pjt != GRETL_TYPE_INT) {
-			pprintf(prn, "%s: third param type must be %s\n",
-				attr, gretl_type_get_name(GRETL_TYPE_INT));
-			err = E_TYPES;
-		    } else if (j > pmin && !fn_param_optional(u, j) &&
-			       na(fn_param_default(u, j))) {
-			pprintf(prn, "%s: extra params must be optional\n",
-				attr);
-			err = E_TYPES;
-		    }
-		}
-	    }
-	    if (!err) {
-		u->pkg_role = role;
-	    }
-	    return err;
-	}
+    /* all other special-role functions may be public */
+    u = get_package_member_by_name(name, pkg, 1, 1);
+    if (u == NULL) {
+        pprintf(prn, "%s: %s: no such function\n", attr, name);
+        return E_DATA;
     }
 
-    pprintf(prn, "%s: %s: no such public function\n", attr, name);
+    if (role == UFUN_GUI_MAIN) {
+        ; /* OK, type doesn't matter */
+    } else {
+        /* bundle-print, bundle-plot, etc: these cases require
+           some further checks
+        */
+        int fcast = (role == UFUN_BUNDLE_FCAST);
+        int j, pmin = fcast ? 2 : 1;
+        GretlType pjt;
 
-    return E_DATA;
+        if (u->n_params == 0) {
+            pprintf(prn, "%s: must take a %s argument\n", attr,
+                    gretl_type_get_name(GRETL_TYPE_BUNDLE_REF));
+            err = E_TYPES;
+        }
+        for (j=0; j<u->n_params && !err; j++) {
+            pjt = u->params[j].type;
+            if (j == 0 && pjt != GRETL_TYPE_BUNDLE_REF) {
+                pprintf(prn, "%s: first param type must be %s\n",
+                        attr, gretl_type_get_name(GRETL_TYPE_BUNDLE_REF));
+                err = E_TYPES;
+            } else if (j == 1 && pjt != GRETL_TYPE_INT) {
+                pprintf(prn, "%s: second param type must be %s\n",
+                        attr, gretl_type_get_name(GRETL_TYPE_INT));
+                err = E_TYPES;
+            } else if (j == 2 && fcast && pjt != GRETL_TYPE_INT) {
+                pprintf(prn, "%s: third param type must be %s\n",
+                        attr, gretl_type_get_name(GRETL_TYPE_INT));
+                err = E_TYPES;
+            } else if (j > pmin && !fn_param_optional(u, j) &&
+                       na(fn_param_default(u, j))) {
+                pprintf(prn, "%s: extra params must be optional\n",
+                        attr);
+                err = E_TYPES;
+            }
+        }
+    }
+
+    if (!err) {
+        u->pkg_role = role;
+    }
+
+    return err;
 }
 
-/* called from the GUI package editor to check whether
+/* Called from the GUI package editor to check whether
    a given function of name @name can be shown as a
-   candidate for a specified GUI-special @role
+   candidate for a specified GUI-special @role.
 */
 
 int function_ok_for_package_role (const char *name,
