@@ -1838,14 +1838,12 @@ int hp_filter (const double *x, double *hp, const DATASET *dset,
         v11 = tmp0;
 
         det = v00 * v11 - v01 * v01;
-
         V[0][t] =  v11 / det;
         V[1][t] = -v01 / det;
         V[2][t] =  v00 / det;
 
         tmp0 = v00 + 1.0;
         tmp1 = v00;
-
         v00 -= v00 * v00 / tmp0;
         v11 -= v01 * v01 / tmp0;
         v01 -= (tmp1 / tmp0) * v01;
@@ -1864,7 +1862,6 @@ int hp_filter (const double *x, double *hp, const DATASET *dset,
         hp[t-1]   = V[1][t] * m[1] + V[2][t] * m[0];
 
         det = V[0][t] * V[2][t] - V[1][t] * V[1][t];
-
         v00 =  V[2][t] / det;
         v01 = -V[1][t] / det;
 
@@ -1896,7 +1893,6 @@ int hp_filter (const double *x, double *hp, const DATASET *dset,
             b11 = V[0][tb] + V[2][t1];
 
             det = b00 * b11 - b01 * b01;
-
             V[3][t] = (b00 * e1 - b01 * e0) / det;
         }
 
