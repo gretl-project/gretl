@@ -9934,6 +9934,17 @@ static void output_map_plot_lines (mapinfo *mi,
     g_free(bline);
 }
 
+static int map_do_inlining (mapinfo *mi)
+{
+    if (gretl_bundle_get_int(mi->opts, "inlined", NULL)) {
+        return 1;
+    } else if (mi->flags & MAP_MULTI) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 /* called from the geoplot plugin to finalize a map */
 
 int write_map_gp_file (void *ptr)
@@ -10073,7 +10084,7 @@ int write_map_gp_file (void *ptr)
 
     gnuplot_missval_string(fp);
 
-    if (gretl_bundle_get_int(opts, "inlined", NULL)) {
+    if (map_do_inlining(mi)) {
 	err = inline_map_data(mi->datfile, fp);
 	if (!err) {
 	    datasrc = g_strdup("$MapData");
