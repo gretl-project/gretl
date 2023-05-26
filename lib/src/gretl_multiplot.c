@@ -207,13 +207,28 @@ int gretl_multiplot_start (gretlopt opt)
 
 int gretl_multiplot_add_plot (gchar *buf)
 {
+    int err = 0;
+
     if (multiplot != NULL && buf != NULL) {
-	g_ptr_array_add(multiplot, buf);
-        return 0;
+        if (strstr(buf, "set multiplot")) {
+            gretl_errmsg_set("gridplot: cannot insert a multiplot specification");
+            err = E_INVARG;
+        } else {
+            g_ptr_array_add(multiplot, buf);
+        }
     } else {
 	gretl_errmsg_set("gretl_multiplot_add_plot: failed");
-        return E_DATA;
+        err = E_DATA;
     }
+#if GRID_DEBUG
+    fprintf(stderr, "gretl_multiplot_add_plot, err = %d\n", err);
+#endif
+
+    if (err) {
+        gretl_multiplot_destroy();
+    }
+
+    return err;
 }
 
 static int multiplot_set_grid (int n)
@@ -327,15 +342,19 @@ static void filter_subplot (const char *buf, FILE *fp)
     free(line);
 }
 
-/* Write a multiplot specification to file, either using
-   the @multiplot struct or an array of individual plot
+/* Write a multiplot specification to file, drawing on either
+   @multiplot (g_ptr_array) or an array of individual plot
    specification strings, @S.
+
+   @np indicates the number of included plots and @maxp the
+   total number of subplots available (the length of the
+   relevant array).
 */
 
-static int output_multiplot_script (const char **S, int np)
+static int output_multiplot_script (const char **S, int np, int maxp)
 {
     const char *buf;
-    int i, j, k;
+    int i, j, k, p;
     int err = 0;
     FILE *fp;
 
@@ -357,6 +376,7 @@ static int output_multiplot_script (const char **S, int np)
     gretl_push_c_numeric_locale();
 
     k = -1;
+    p = 0;
     for (i=0; i<mp_rows; i++) {
 	for (j=0; j<mp_cols; j++) {
 	    if (mp_layout != NULL) {
@@ -369,7 +389,7 @@ static int output_multiplot_script (const char **S, int np)
 	    } else {
 		buf = NULL;
 		if (S != NULL) {
-		    if (k < np) {
+		    if (k < maxp) {
 			buf = S[k];
 		    }
 		} else if (k < multiplot->len) {
@@ -379,7 +399,7 @@ static int output_multiplot_script (const char **S, int np)
 		    if (k > 0) {
 			fputs("reset\n", fp);
 		    }
-		    fprintf(fp, "# subplot %d\n", k+1);
+		    fprintf(fp, "# subplot %d\n", ++p);
 		    if (strstr(buf, "set term")) {
 			filter_subplot(buf, fp);
 		    } else {
@@ -397,28 +417,6 @@ static int output_multiplot_script (const char **S, int np)
     return err;
 }
 
-/* Determine the number of distinct plots in a layout,
-   allowing for the possibility that not all of the
-   available plots may be used.
-*/
-
-static int layout_get_np (const gretl_matrix *m, int *err)
-{
-    gretl_matrix *v;
-    int n = m->rows * m->cols;
-
-    v = gretl_matrix_values(m->val, n, OPT_S, err);
-    if (v != NULL) {
-	n = v->rows;
-	if (v->val[0] == 0) {
-	    n--;
-	}
-	gretl_matrix_free(v);
-    }
-
-    return n;
-}
-
 static int maybe_set_mp_layout (int *np)
 {
     const char *s = get_optval_string(GRIDPLOT, OPT_L);
@@ -430,6 +428,7 @@ static int maybe_set_mp_layout (int *np)
     }
     if (m != NULL) {
 	int i, n = m->rows * m->cols;
+        int nonzero = 0;
 	double mi;
 
 	for (i=0; i<n; i++) {
@@ -439,10 +438,12 @@ static int maybe_set_mp_layout (int *np)
 		gretl_errmsg_set(_("Invalid layout specification"));
 		err = E_INVARG;
 		break;
-	    }
+	    } else if (mi != 0) {
+                nonzero++;
+            }
 	}
 	if (!err) {
-	    *np = layout_get_np(m, &err);
+	    *np = nonzero;
 	}
 	if (!err) {
 #if GRID_DEBUG
@@ -459,7 +460,7 @@ static int maybe_set_mp_layout (int *np)
 
 int gretl_multiplot_finalize (gretlopt opt)
 {
-    int np, err = 0;
+    int np, maxp, err = 0;
 
     if (multiplot == NULL) {
 	gretl_errmsg_set("end multiplot: multiplot not started");
@@ -467,7 +468,7 @@ int gretl_multiplot_finalize (gretlopt opt)
     }
 
     mp_collecting = 0;
-    np = multiplot->len;
+    np = maxp = multiplot->len;
 
     if (np > 0) {
 	if (opt & OPT_L) {
@@ -480,7 +481,7 @@ int gretl_multiplot_finalize (gretlopt opt)
     if (np > 0 && !err) {
 	set_special_plot_size(mp_width, mp_height);
 	set_special_font_size(mp_fontsize);
-        err = output_multiplot_script(NULL, multiplot->len);
+        err = output_multiplot_script(NULL, np, maxp);
     }
 
     gretl_multiplot_destroy();
@@ -618,6 +619,8 @@ static int disassemble_multiplot (const char *buf, int np)
 	    err = 1;
 	    break;
 	}
+        /* skip "# subplot ..." */
+        p = strchr(p, '\n') + 1;
 	subplot = g_strndup(p, q-p);
 	g_ptr_array_insert(arr, k-1, subplot);
 	p = q;
@@ -649,7 +652,7 @@ int gretl_multiplot_revise (gretlopt opt)
     const char *buf = NULL;
     gchar *gbuf = NULL;
     gretlopt myopt = opt;
-    int np = 0;
+    int maxp, np = 0;
     int err = 0;
 
     if (mp_collecting) {
@@ -680,6 +683,8 @@ int gretl_multiplot_revise (gretlopt opt)
     }
 #endif
 
+    maxp = np;
+
     /* let the current @opt override previous choices */
     myopt &= ~(OPT_i | OPT_I | OPT_U);
     if (myopt) {
@@ -700,7 +705,7 @@ int gretl_multiplot_revise (gretlopt opt)
     if (!err) {
 	set_special_plot_size(mp_width, mp_height);
 	set_special_font_size(mp_fontsize);
-	output_multiplot_script(NULL, np);
+	output_multiplot_script(NULL, np, maxp);
     }
 
     if (gbuf != NULL) {
@@ -721,7 +726,7 @@ int gretl_multiplot_from_array (gretlopt opt)
     const char *argname;
     gretl_array *a = NULL;
     const char **S = NULL;
-    int np = 0;
+    int maxp, np = 0;
     int err = 0;
 
     if (mp_collecting) {
@@ -739,6 +744,8 @@ int gretl_multiplot_from_array (gretlopt opt)
 	    err = E_DATA;
 	}
     }
+
+    maxp = np;
 
     if (!err) {
 	/* pick up any options */
@@ -760,7 +767,7 @@ int gretl_multiplot_from_array (gretlopt opt)
     if (!err) {
 	set_special_plot_size(mp_width, mp_height);
 	set_special_font_size(mp_fontsize);
-        err = output_multiplot_script(S, np);
+        err = output_multiplot_script(S, np, maxp);
     }
 
     return err;
