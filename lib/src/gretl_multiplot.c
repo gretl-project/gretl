@@ -203,42 +203,12 @@ int gretl_multiplot_start (gretlopt opt)
     return err;
 }
 
-/* strip any "set term..." statements out of an incoming
-   gnuplot commands buffer
-*/
+/* Append a plot specification to the @multiplot array */
 
-static gchar *filter_plot_buffer (gchar *buf)
-{
-    gchar *tmp = g_malloc0(strlen(buf) + 1);
-    char line[4096];
-
-    bufgets_init(buf);
-    while (bufgets(line, sizeof line, buf)) {
-	if (strncmp(line, "set term", 8)) {
-	    strcat(tmp, line);
-	}
-    }
-    bufgets_finalize(buf);
-
-    return tmp;
-}
-
-/* Append a plot specification, in @buf, to the @multiplot array */
-
-int gretl_multiplot_add_plot (gchar *buf, int *free_buf)
+int gretl_multiplot_add_plot (gchar *buf)
 {
     if (multiplot != NULL && buf != NULL) {
-	if (strstr(buf, "set term")) {
-	    /* we can't have a terminal setting in a subplot */
-	    gchar *tmp = filter_plot_buffer(buf);
-
-	    g_ptr_array_add(multiplot, tmp);
-	    *free_buf = 1;
-	} else {
-	    /* the straightforward case */
-	    g_ptr_array_add(multiplot, buf);
-	    *free_buf = 0;
-	}
+	g_ptr_array_add(multiplot, buf);
         return 0;
     } else {
 	gretl_errmsg_set("gretl_multiplot_add_plot: failed");
@@ -338,6 +308,25 @@ static void write_mp_spec_comment (int np, FILE *fp)
     }
 }
 
+/* Write subplot buffer @buf to file, stripping out any
+   "set term..." statements.
+*/
+
+static void filter_subplot (const char *buf, FILE *fp)
+{
+    size_t sz = 2048;
+    char *line = calloc(sz, 1);
+
+    bufgets_init(buf);
+    while (safe_bufgets(&line, &sz, buf)) {
+	if (strncmp(line, "set term", 8)) {
+	    fputs(line, fp);
+	}
+    }
+    bufgets_finalize(buf);
+    free(line);
+}
+
 /* Write a multiplot specification to file, either using
    the @multiplot struct or an array of individual plot
    specification strings, @S.
@@ -380,7 +369,9 @@ static int output_multiplot_script (const char **S, int np)
 	    } else {
 		buf = NULL;
 		if (S != NULL) {
-		    buf = S[k];
+		    if (k < np) {
+			buf = S[k];
+		    }
 		} else if (k < multiplot->len) {
 		    buf = g_ptr_array_index(multiplot, k);
 		}
@@ -389,7 +380,11 @@ static int output_multiplot_script (const char **S, int np)
 			fputs("reset\n", fp);
 		    }
 		    fprintf(fp, "# subplot %d\n", k+1);
-		    fputs(buf, fp);
+		    if (strstr(buf, "set term")) {
+			filter_subplot(buf, fp);
+		    } else {
+			fputs(buf, fp);
+		    }
 		}
 	    }
 	}
@@ -754,7 +749,10 @@ int gretl_multiplot_from_array (gretlopt opt)
 	if (myopt) {
 	    err = set_multiplot_sizes(myopt);
 	}
-	if (!err) {
+	if (myopt & OPT_L) {
+	    err = maybe_set_mp_layout(&np);
+	}
+	if (!err && mp_layout == NULL) {
 	    err = multiplot_set_grid(np);
 	}
     }
