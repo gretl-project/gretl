@@ -13415,13 +13415,15 @@ static NODE *geoplot_node (NODE *l, NODE *m, NODE *r, parser *p)
         double *plx = NULL; /* payload data */
         gretl_bundle *opts = NULL;
 
-        if (l->t == STR || l->t == BUNDLE) {
-            /* map-fname-or-bundle [,series] [,options] */
-            if (l->t == STR) {
-                mapfile = l->v.str;
-            } else {
-                mapbun = l->v.b;
-            }
+        if (null_node(l) || l->t == STR || l->t == BUNDLE) {
+            /* [map-fname-or-bundle] [,series] [,options] */
+	    if (!null_node(l)) {
+		if (l->t == STR) {
+		    mapfile = l->v.str;
+		} else {
+		    mapbun = l->v.b;
+		}
+	    }
             if (!null_node(m)) {
                 if (m->t == SERIES) {
                     plv = m->vnum;
