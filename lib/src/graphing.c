@@ -562,8 +562,7 @@ static int make_plot_commands_buffer (const char *fname)
 	g_error_free(gerr);
 	err = E_FOPEN;
     } else if (gretl_multiplot_collecting()) {
-	gretl_multiplot_add_plot(contents);
-	free_contents = 0;
+	gretl_multiplot_add_plot(contents, &free_contents);
     } else if (*plot_buffer_idx != '\0') {
 	gretl_array *a = get_strings_array_by_name(plot_buffer_name);
         int i = generate_int(plot_buffer_idx, NULL, &err);
@@ -2133,6 +2132,8 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 	    /* let this pass: hansl functions that do plots
 	       generally seem to default to "display"
 	    */
+	    s = NULL;
+	} else if (p == PLOT_GEOMAP) {
 	    s = NULL;
 	} else {
 	    *err = E_BADOPT;

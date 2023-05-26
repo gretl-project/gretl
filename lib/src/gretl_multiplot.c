@@ -82,6 +82,8 @@ static int set_multiplot_sizes (gretlopt opt)
     return err;
 }
 
+/* respond to a validated case of the --layout=matrix option */
+
 static void set_mp_layout (const gretl_matrix *m)
 {
     if (mp_layout != NULL) {
@@ -177,6 +179,8 @@ void gretl_multiplot_destroy (void)
     set_multiplot_defaults();
 }
 
+/* This responds to the starting command for a gridplot block */
+
 int gretl_multiplot_start (gretlopt opt)
 {
     int err = 0;
@@ -199,12 +203,42 @@ int gretl_multiplot_start (gretlopt opt)
     return err;
 }
 
+/* strip any "set term..." statements out of an incoming
+   gnuplot commands buffer
+*/
+
+static gchar *filter_plot_buffer (gchar *buf)
+{
+    gchar *tmp = g_malloc0(strlen(buf) + 1);
+    char line[4096];
+
+    bufgets_init(buf);
+    while (bufgets(line, sizeof line, buf)) {
+	if (strncmp(line, "set term", 8)) {
+	    strcat(tmp, line);
+	}
+    }
+    bufgets_finalize(buf);
+
+    return tmp;
+}
+
 /* Append a plot specification, in @buf, to the @multiplot array */
 
-int gretl_multiplot_add_plot (gchar *buf)
+int gretl_multiplot_add_plot (gchar *buf, int *free_buf)
 {
     if (multiplot != NULL && buf != NULL) {
-        g_ptr_array_add(multiplot, buf);
+	if (strstr(buf, "set term")) {
+	    /* we can't have a terminal setting in a subplot */
+	    gchar *tmp = filter_plot_buffer(buf);
+
+	    g_ptr_array_add(multiplot, tmp);
+	    *free_buf = 1;
+	} else {
+	    /* the straightforward case */
+	    g_ptr_array_add(multiplot, buf);
+	    *free_buf = 0;
+	}
         return 0;
     } else {
 	gretl_errmsg_set("gretl_multiplot_add_plot: failed");
@@ -268,6 +302,10 @@ static int get_subplot_index (int i, int j)
     return (int) gretl_matrix_get(mp_layout, i, j) - 1;
 }
 
+/* write a layout matrix into a plot file, in a form that can
+   be easily reconstituted via generate_matrix()
+*/
+
 static void output_layout_matrix (gretl_matrix *m, FILE *fp)
 {
     double mij;
@@ -307,7 +345,7 @@ static void write_mp_spec_comment (int np, FILE *fp)
 
 static int output_multiplot_script (const char **S, int np)
 {
-    gchar *buf;
+    const char *buf;
     int i, j, k;
     int err = 0;
     FILE *fp;
@@ -340,14 +378,17 @@ static int output_multiplot_script (const char **S, int np)
 	    if (k < 0) {
 		fputs("set multiplot next\n", fp);
 	    } else {
-		if (k > 0) {
-		    fputs("reset\n", fp);
-		}
-		fprintf(fp, "# subplot %d\n", k+1);
+		buf = NULL;
 		if (S != NULL) {
-		    fputs(S[k], fp);
-		} else {
+		    buf = S[k];
+		} else if (k < multiplot->len) {
 		    buf = g_ptr_array_index(multiplot, k);
+		}
+		if (buf != NULL) {
+		    if (k > 0) {
+			fputs("reset\n", fp);
+		    }
+		    fprintf(fp, "# subplot %d\n", k+1);
 		    fputs(buf, fp);
 		}
 	    }
