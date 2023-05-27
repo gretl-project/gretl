@@ -91,6 +91,7 @@
 			       c == KDPLOT ||   \
 			       c == RMPLOT ||	\
 			       c == SCATTERS || \
+			       c == GPBUILD ||  \
 			       c == GRIDPLOT)
 
 /* --plot (OPT_U) as attached to CORR */
@@ -330,7 +331,13 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_L, "ylogscale", 1 },
     { GRAPHPG,  OPT_M, "monochrome", 0 },
     { GRAPHPG,  OPT_O, "output", 2 },
-    { GRIDPLOT, OPT_B, "block", 0 },
+    { GPBUILD, OPT_F, "fontsize", 2 },
+    { GPBUILD, OPT_W, "width", 2 },
+    { GPBUILD, OPT_H, "height", 2 },
+    { GPBUILD, OPT_R, "rows", 2 },
+    { GPBUILD, OPT_C, "cols", 2 },
+    { GPBUILD, OPT_L, "layout", 2 },
+    { GPBUILD, OPT_U, "output", 2 },
     { GRIDPLOT, OPT_F, "fontsize", 2 },
     { GRIDPLOT, OPT_W, "width", 2 },
     { GRIDPLOT, OPT_H, "height", 2 },

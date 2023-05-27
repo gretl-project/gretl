@@ -1425,7 +1425,7 @@ static int get_gpt_marker (const char *line, char *label,
 		      p == PLOT_3D || \
 		      p == PLOT_HEATMAP || \
 		      p == PLOT_GEOMAP || \
-		      p == PLOT_USER_MULTI)
+		      p == PLOT_GRIDPLOT)
 
 /* graphs where we don't attempt to find data coordinates */
 

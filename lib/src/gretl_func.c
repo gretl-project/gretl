@@ -10840,7 +10840,8 @@ void adjust_indent (const char *s, int *this_indent, int *next_indent)
 {
     const char *block_starts[] = {
 	"loop", "if", "nls", "mle", "gmm", "mpi", "plot",
-	"function", "restrict", "system", "foreign", NULL
+	"function", "restrict", "system", "foreign",
+	"gpbuild", NULL
     };
     int ti = *next_indent;
     int ni = *next_indent;
@@ -10876,14 +10877,6 @@ void adjust_indent (const char *s, int *this_indent, int *next_indent)
 	    ; /* no-op */
 	} else {
 	    /* note: --append is ambiguous wrt indenting! */
-	    ni++;
-	}
-	matched = 1;
-    }
-
-    if (!matched && wordmatch(s, "gridplot")) {
-	if (strstr(s, "--block")) {
-	    /* this defines a block */
 	    ni++;
 	}
 	matched = 1;

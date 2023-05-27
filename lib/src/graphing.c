@@ -154,9 +154,12 @@ struct plot_type_info ptinfo[] = {
     { PLOT_BAND,           "band plot" },
     { PLOT_HEATMAP,        "heatmap" },
     { PLOT_GEOMAP,         "geoplot" },
-    { PLOT_USER_MULTI,     "user-multi" },
+    { PLOT_GRIDPLOT,       "user-multi" },
+    { PLOT_GPBUILD,        "user-multi" },
     { PLOT_TYPE_MAX,       NULL }
 };
+
+#define gridplot_type(t) (t == PLOT_GPBUILD || t == PLOT_GRIDPLOT)
 
 enum {
     BP_REGULAR,
@@ -1834,7 +1837,7 @@ static void print_term_string (int ttype, PlotType ptype,
 	fprintf(fp, "%s\n", term_line);
 	if (flags & GPT_MONO) {
 	    fputs("set mono\n", fp);
-	} else if (ptype != PLOT_USER_MULTI) {
+	} else if (!gridplot_type(ptype)) {
 	    write_plot_line_styles(ptype, fp);
 	}
     }
@@ -1961,7 +1964,7 @@ static FILE *gp_set_up_batch (char *fname,
 	    /* write terminal/style/output lines */
 	    print_term_string(fmt, ptype, flags, fp);
 	    write_plot_output_line(gnuplot_outname, fp);
-	} else if (ptype != PLOT_USER_MULTI) {
+	} else if (!gridplot_type(ptype)) {
 	    /* just write style lines */
 	    write_plot_line_styles(ptype, fp);
 	}
@@ -2037,7 +2040,7 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 #endif
 	}
 	write_plot_type_string(ptype, flags, fp);
-	if (ptype != PLOT_USER_MULTI) {
+	if (!gridplot_type(ptype)) {
 	    write_plot_line_styles(ptype, fp);
 	}
     }
@@ -2124,7 +2127,9 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 	ci = CORR;
     } else if (p == PLOT_CUSUM) {
 	ci = CUSUM;
-    } else if (p == PLOT_USER_MULTI) {
+    } else if (p == PLOT_GPBUILD) {
+	ci = GPBUILD;
+    } else if (p == PLOT_GRIDPLOT) {
 	ci = GRIDPLOT;
     }
 

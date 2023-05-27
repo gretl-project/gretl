@@ -83,6 +83,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { GENR,     "genr" },
     { GMM,      "gmm" },
     { GNUPLOT,  "gnuplot" },
+    { GPBUILD,  "gpbuild" },
     { GRAPHPG,  "graphpg" },
     { GRIDPLOT, "gridplot" },
     { HECKIT,   "heckit" },
