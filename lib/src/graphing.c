@@ -1319,6 +1319,7 @@ void write_plot_line_styles (int ptype, FILE *fp)
 	    print_rgb_hash(cstr, user_color[i+1]);
 	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
 	}
+	inject_gp_style(0, 0, fp);
     } else if (frequency_plot_code(ptype)) {
 	print_rgb_hash(cstr, get_boxcolor());
 	fprintf(fp, "set linetype 1 lc rgb \"%s\"\n", cstr);
