@@ -203,6 +203,13 @@ int gretl_multiplot_start (gretlopt opt)
     return err;
 }
 
+static int invalid_mp_error (int ci)
+{
+    gretl_errmsg_sprintf(_("%s: invalid (multiplot) plot specification"),
+			 gretl_command_word(ci));
+    return E_INVARG;
+}
+
 /* Append a plot specification to the @multiplot array */
 
 int gretl_multiplot_add_plot (gchar *buf)
@@ -211,8 +218,7 @@ int gretl_multiplot_add_plot (gchar *buf)
 
     if (multiplot != NULL && buf != NULL) {
         if (strstr(buf, "set multiplot")) {
-            gretl_errmsg_set("gridplot: cannot insert a multiplot specification");
-            err = E_INVARG;
+            err = invalid_mp_error(GPBUILD);
         } else {
             g_ptr_array_add(multiplot, buf);
         }
@@ -223,10 +229,11 @@ int gretl_multiplot_add_plot (gchar *buf)
 #if GRID_DEBUG
     fprintf(stderr, "gretl_multiplot_add_plot, err = %d\n", err);
 #endif
-
+#if 0 /* let this be handled in interact.c ? */
     if (err) {
         gretl_multiplot_destroy();
     }
+#endif
 
     return err;
 }
@@ -722,14 +729,53 @@ int gretl_multiplot_revise (gretlopt opt)
     return err;
 }
 
+static int retrieve_plots_array (const char ***pS, int *pnp)
+{
+    const char *argname;
+    gretl_array *a = NULL;
+    int msg_set = 0;
+    int err = 0;
+
+    /* get the @name in --strings=name */
+    argname = get_optval_string(GRIDPLOT, OPT_S);
+    a = get_array_by_name(argname);
+    if (a == NULL) {
+	err = E_INVARG;
+    } else {
+	const char **S;
+	int i;
+
+	S = (const char **) gretl_array_get_strings(a, pnp);
+	if (S == NULL) {
+	    err = E_INVARG;
+	} else {
+	    /* check for embedded multiplots */
+	    for (i=0; i<*pnp; i++) {
+		if (strstr(S[i], "set multiplot")) {
+		    err = invalid_mp_error(GRIDPLOT);
+		    msg_set = 1;
+		    break;
+		}
+	    }
+	    if (!err) {
+		*pS = S;
+	    }
+	}
+    }
+
+    if (err && !msg_set) {
+	gretl_errmsg_set("Didn't get a valid array of plot strings");
+    }
+
+    return err;
+}
+
 /* This supports "standalone" usage of gridplot to process a
    "free form" array of individual plot-specification strings.
 */
 
 int gretl_multiplot_from_array (gretlopt opt)
 {
-    const char *argname;
-    gretl_array *a = NULL;
     const char **S = NULL;
     int maxp, np = 0;
     int err = 0;
@@ -739,17 +785,7 @@ int gretl_multiplot_from_array (gretlopt opt)
         return E_DATA;
     }
 
-    argname = get_optval_string(GRIDPLOT, OPT_S);
-    a = get_array_by_name(argname);
-    if (a == NULL) {
-	err = E_DATA;
-    } else {
-	S = (const char **) gretl_array_get_strings(a, &np);
-	if (S == NULL) {
-	    err = E_DATA;
-	}
-    }
-
+    err = retrieve_plots_array(&S, &np);
     maxp = np;
 
     if (!err) {
