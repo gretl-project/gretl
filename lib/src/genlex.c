@@ -393,6 +393,7 @@ struct str_table funcs[] = {
     { F_ISDISCR,  "isdiscrete" },
     { F_ISDUMMY,  "isdummy"},
     { F_TYPEOF,   "typeof" },
+    { F_TYPENAME, "typename" },
     { F_EXISTS,   "exists" },
     { F_NELEM,    "nelem" },
     { F_PDF,      "pdf" },

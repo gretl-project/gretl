@@ -7773,6 +7773,8 @@ static NODE *multi_str_node (NODE *l, int f, parser *p)
     return ret;
 }
 
+/* legacy support */
+
 static NODE *generic_typeof_node (NODE *n, NODE *func, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -7786,6 +7788,28 @@ static NODE *generic_typeof_node (NODE *n, NODE *func, parser *p)
         } else {
             ret->v.xval = gretl_type_get_order(t);
         }
+    }
+
+    return ret;
+}
+
+static NODE *type_name_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_string_node(p);
+
+    if (ret != NULL) {
+        const char *s = "null";
+        GretlType t;
+
+        if (n->t == ARRAY) {
+            t = gretl_array_get_type(n->v.a);
+            s = gretl_type_get_name(t);
+        } else {
+            t = gretl_type_from_gen_type(n->t);
+            s = gretl_type_get_name(t);
+        }
+
+        ret->v.str = gretl_strdup(s);
     }
 
     return ret;
@@ -18529,6 +18553,9 @@ static NODE *eval (NODE *t, parser *p)
     case F_TYPEOF:
         ret = generic_typeof_node(l, t, p);
         break;
+    case F_TYPENAME:
+        ret = type_name_node(l, p);
+        break;
     case F_NELEM:
         ret = n_elements_node(l, p);
         break;
@@ -20056,6 +20083,8 @@ static gretl_matrix *retrieve_matrix_result (parser *p)
         if (m == NULL) {
             p->err = E_ALLOC;
         }
+    } else if (null_node(r)) {
+        m = gretl_null_matrix_new();
     } else {
         fprintf(stderr, "Looking for matrix, but r->t = %s\n", getsymb(r->t));
         p->err = E_TYPES;

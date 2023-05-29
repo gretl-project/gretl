@@ -209,6 +209,7 @@ enum {
     F_ISDISCR,
     F_ISDUMMY,
     F_TYPEOF,
+    F_TYPENAME,
     F_EXISTS,
     F_NELEM,
     F_PDF,
