@@ -123,8 +123,8 @@ static void plot_collection_remove_plot (png_plot *plot, int kill)
     }
 
 #if COLLDEBUG
-    fprintf(stderr, "collection remove plot: %s, root=%d\n",
-	    kill ? "kill" : "extract", plot == col);
+    fprintf(stderr, "\ncollection remove plot: %s, root=%d\n",
+	    kill ? "kill" : "extract", plot == coll);
 #endif
 
     if (plot != coll) {

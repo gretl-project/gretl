@@ -707,13 +707,6 @@ int remove_png_term_from_plot_by_name (const char *fname)
     return add_or_remove_png_term(fname, REMOVE_PNG, NULL);
 }
 
-static void mark_plot_as_saved (GPT_SPEC *spec)
-{
-    png_plot *plot = (png_plot *) spec->ptr;
-
-    plot->status |= PLOT_SAVED;
-}
-
 static int gnuplot_png_init (png_plot *plot, FILE **fpp)
 {
     GPT_SPEC *spec = plot->spec;
@@ -4387,7 +4380,7 @@ static void add_to_session_callback (png_plot *plot)
 
     if (!err) {
 	remove_png_term_from_plot(fullname, plot->spec);
-	mark_plot_as_saved(plot->spec);
+	plot->status |= PLOT_SAVED;
 	plot->status |= PLOT_TERM_HIDDEN;
     }
 }
