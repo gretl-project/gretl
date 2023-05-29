@@ -1,7 +1,13 @@
+2023b, in progress
+
+The new function typename() is recommended in place of the old
+functions typeof() and typestr(), though the latter functions
+are still available for backward compatibility.
+
 2023-03-02 version 2023a
 
 instring() and strstr() functions: the policy of automatically
-escaping the string to be found has been discontinued.s
+escaping the string to be found has been discontinued.
 
 2022-11-01 version 2022c
 

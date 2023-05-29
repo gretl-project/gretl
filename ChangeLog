@@ -1,11 +1,12 @@
 version 2023b, in progress
-- New command "kdplot" to produce a kernel density plot
+- New command "kdplot": simple access to a kernel density plot
+  for a single series
+- New function typename(): return a string giving the type of
+  the argument (can replace typeof() and typestr())
 - "arima" command: implement built-in procedure for assessing
   lag orders, via new --lagselect option, and add GUI access
 - "corr" command: add 1 percent critical value of correlation
   coefficient to the output
-- New command "kdplot": simple access to a kernel density plot
-  for a single series
 - aggregate() function: support matrix input
 - misszero() and zeromiss() functions: support matrix input
 - geoplot addon: make the plot key position configurable
@@ -31,8 +32,6 @@ version 2023b, in progress
   constant in the specification
 - Fix bug: spurious "no data avilable for forecasting" error
   in GUI forecasting from ARIMA model without constant term
-- Fix bug: crash on trying to access the Preferences item in
-  the dialog box for ARIMA lag selection
 - Fix bug: function package code with very long lines could
   lead to a crash (e.g. on "View code" in the GUI)
 - Fix GUI bug: dynamic panel data model menu item not always

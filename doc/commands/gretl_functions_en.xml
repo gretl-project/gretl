@@ -13462,18 +13462,45 @@ d =  8.0000000
       </description>
     </function>
 
+    <function name="typename" section="data-utils" output="string">
+      <fnargs>
+	<fnarg type="string">name</fnarg>
+      </fnargs>
+      <description>
+	<para>
+          If <argname>name</argname> is the identifier of a currently
+          defined object, returns the type of the object in string
+          form: <lit>scalar</lit>, <lit>series</lit>,
+          <lit>matrix</lit>, <lit>string</lit>, <lit>bundle</lit>, or
+          one of the array types: <lit>matrices</lit>,
+          <lit>bundles</lit>, <lit>strings</lit> or <lit>arrays</lit>.
+          If the argument does not identify an object the string
+          <lit>null</lit> is returned.
+        </para>
+        <subhead>Compatibility note</subhead>
+        <para>
+          This function is intended as a superior replacement for the
+          old functions <fncref targ="typeof"/> and <fncref
+          targ="typestr"/>, but the latter will remain available for
+          the time being.
+        </para>
+      </description>
+    </function>
+
     <function name="typeof" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">name</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns a numeric type-code if <argname>name</argname> is
-	  the identifier of a currently defined object: 1 for scalar,
-	  2 for series, 3 for matrix, 4 for string, 5 for bundle, 6
-	  for array and 7 for list. Otherwise returns 0.  The function
-	  <fncref targ="typestr"/> may be used to get the string
-	  corresponding to the return value.
+          A legacy function: see <fncref targ="typename"/> for a
+          superior alternative.  Returns a numeric type-code if
+          <argname>name</argname> is the identifier of a currently
+          defined object: 1 for scalar, 2 for series, 3 for matrix, 4
+          for string, 5 for bundle, 6 for array and 7 for
+          list. Otherwise returns 0.  The function <fncref
+          targ="typestr"/> may be used to get the string corresponding
+          to the return value.
 	</para>
 	<para>
 	  This function can also be used to retrieve the type of
@@ -13497,14 +13524,16 @@ d =  8.0000000
       </fnargs>
       <description>
 	<para>
-	  Returns the name of the gretl data-type corresponding to
-	  <argname>typecode</argname>. This may be used in conjunction
-	  with the functions <fncref targ="typeof"/> and <fncref
-	  targ="inbundle"/>.  The value returned is one of
-	  <quote>scalar</quote>, <quote>series</quote>,
-	  <quote>matrix</quote>, <quote>string</quote>,
-	  <quote>bundle</quote>, <quote>array</quote>,
-	  <quote>list</quote>, or <quote>null</quote>.
+          A legacy function: see <fncref targ="typename"/> for a
+          superior alternative.  Returns the name of the gretl
+          data-type corresponding to <argname>typecode</argname>. This
+          may be used in conjunction with the functions <fncref
+          targ="typeof"/> and <fncref targ="inbundle"/>.  The value
+          returned is one of <quote>scalar</quote>,
+          <quote>series</quote>, <quote>matrix</quote>,
+          <quote>string</quote>, <quote>bundle</quote>,
+          <quote>array</quote>, <quote>list</quote>, or
+          <quote>null</quote>.
 	</para>
       </description>
     </function>
