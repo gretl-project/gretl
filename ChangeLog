@@ -1,4 +1,5 @@
 version 2023b, in progress
+- New command "kdplot" to produce a kernel density plot
 - "arima" command: implement built-in procedure for assessing
   lag orders, via new --lagselect option, and add GUI access
 - "corr" command: add 1 percent critical value of correlation
@@ -10,6 +11,15 @@ version 2023b, in progress
 - geoplot addon: make the plot key position configurable
 - Add optional boolean "skip_na" argument for several matrix
   functions that compute statistics
+- Functions bkfilt, bwfilt, fracdiff, filter: disallow panel
+  data since these functions assume regular time-series data
+- Boxplots: respect the chosen gnuplot theme, if applicable
+- Add "empty" as a dummy constant for initializing an empty
+  string, matrix, bundle or array
+- "numeric" meta-type: allow usage in function packages, and
+  hook it up for syntax highlighting
+- regls addon: add an mregls() function for working with data
+  in matrix form
 - Fix bug: failure in the Kalman function ksmooth() when in
   "univariate" mode and the observable has more elements than
   the state
@@ -21,9 +31,16 @@ version 2023b, in progress
   constant in the specification
 - Fix bug: spurious "no data avilable for forecasting" error
   in GUI forecasting from ARIMA model without constant term
+- Fix bug: crash on trying to access the Preferences item in
+  the dialog box for ARIMA lag selection
+- Fix bug: function package code with very long lines could
+  lead to a crash (e.g. on "View code" in the GUI)
+- Fix GUI bug: dynamic panel data model menu item not always
+  available when it should be
 - Add new example data file: sunspots time series from 1740
 - User's Guide: updates, including description of data file
   formats
+- Add more strings to gretl.pot and update translations
 
 2023-03-02 version 2023a
 - "logit" command (binary case): add a matrix holding odds
