@@ -32,7 +32,7 @@ int gretl_multiplot_revise (gretlopt opt);
 
 int gretl_multiplot_from_array (gretlopt opt);
 
-int check_multiplot_options (gretlopt opt);
+int check_multiplot_options (int ci, gretlopt opt);
 
 void gretl_multiplot_destroy (void);
 

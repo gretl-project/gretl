@@ -154,9 +154,12 @@ struct plot_type_info ptinfo[] = {
     { PLOT_BAND,           "band plot" },
     { PLOT_HEATMAP,        "heatmap" },
     { PLOT_GEOMAP,         "geoplot" },
-    { PLOT_USER_MULTI,     "user-multi" },
+    { PLOT_GRIDPLOT,       "user-multi" },
+    { PLOT_GPBUILD,        "user-multi" },
     { PLOT_TYPE_MAX,       NULL }
 };
+
+#define gridplot_type(t) (t == PLOT_GPBUILD || t == PLOT_GRIDPLOT)
 
 enum {
     BP_REGULAR,
@@ -562,8 +565,10 @@ static int make_plot_commands_buffer (const char *fname)
 	g_error_free(gerr);
 	err = E_FOPEN;
     } else if (gretl_multiplot_collecting()) {
-	gretl_multiplot_add_plot(contents);
-	free_contents = 0;
+	err = gretl_multiplot_add_plot(contents);
+        if (!err) {
+            free_contents = 0;
+        }
     } else if (*plot_buffer_idx != '\0') {
 	gretl_array *a = get_strings_array_by_name(plot_buffer_name);
         int i = generate_int(plot_buffer_idx, NULL, &err);
@@ -1314,6 +1319,7 @@ void write_plot_line_styles (int ptype, FILE *fp)
 	    print_rgb_hash(cstr, user_color[i+1]);
 	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
 	}
+	inject_gp_style(0, 0, fp);
     } else if (frequency_plot_code(ptype)) {
 	print_rgb_hash(cstr, get_boxcolor());
 	fprintf(fp, "set linetype 1 lc rgb \"%s\"\n", cstr);
@@ -1832,7 +1838,7 @@ static void print_term_string (int ttype, PlotType ptype,
 	fprintf(fp, "%s\n", term_line);
 	if (flags & GPT_MONO) {
 	    fputs("set mono\n", fp);
-	} else if (ptype != PLOT_USER_MULTI) {
+	} else if (!gridplot_type(ptype)) {
 	    write_plot_line_styles(ptype, fp);
 	}
     }
@@ -1959,7 +1965,7 @@ static FILE *gp_set_up_batch (char *fname,
 	    /* write terminal/style/output lines */
 	    print_term_string(fmt, ptype, flags, fp);
 	    write_plot_output_line(gnuplot_outname, fp);
-	} else if (ptype != PLOT_USER_MULTI) {
+	} else if (!gridplot_type(ptype)) {
 	    /* just write style lines */
 	    write_plot_line_styles(ptype, fp);
 	}
@@ -2035,7 +2041,7 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 #endif
 	}
 	write_plot_type_string(ptype, flags, fp);
-	if (ptype != PLOT_USER_MULTI) {
+	if (!gridplot_type(ptype)) {
 	    write_plot_line_styles(ptype, fp);
 	}
     }
@@ -2122,7 +2128,9 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 	ci = CORR;
     } else if (p == PLOT_CUSUM) {
 	ci = CUSUM;
-    } else if (p == PLOT_USER_MULTI) {
+    } else if (p == PLOT_GPBUILD) {
+	ci = GPBUILD;
+    } else if (p == PLOT_GRIDPLOT) {
 	ci = GRIDPLOT;
     }
 
@@ -2133,6 +2141,8 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 	    /* let this pass: hansl functions that do plots
 	       generally seem to default to "display"
 	    */
+	    s = NULL;
+	} else if (p == PLOT_GEOMAP) {
 	    s = NULL;
 	} else {
 	    *err = E_BADOPT;
@@ -9932,6 +9942,17 @@ static void output_map_plot_lines (mapinfo *mi,
     g_free(bline);
 }
 
+static int map_do_inlining (mapinfo *mi)
+{
+    if (gretl_bundle_get_int(mi->opts, "inlined", NULL)) {
+        return 1;
+    } else if (mi->flags & MAP_MULTI) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 /* called from the geoplot plugin to finalize a map */
 
 int write_map_gp_file (void *ptr)
@@ -10071,7 +10092,7 @@ int write_map_gp_file (void *ptr)
 
     gnuplot_missval_string(fp);
 
-    if (gretl_bundle_get_int(opts, "inlined", NULL)) {
+    if (map_do_inlining(mi)) {
 	err = inline_map_data(mi->datfile, fp);
 	if (!err) {
 	    datasrc = g_strdup("$MapData");

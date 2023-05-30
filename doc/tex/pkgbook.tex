@@ -2652,16 +2652,14 @@ editor these appear under the \textsf{Special functions} tab in the
 
 \begin{description}
 
-\item \texttt{bundle-print} (optional): Identifies a given function
-  (which must be a public interface) that can be used to print the
-  content of a bundle produced by the package.
+\item \texttt{bundle-print} (optional): Identifies a given function that can
+  be used to print the content of a bundle produced by the package.
 
   \vbusage{} \verb|bundle-print = oddsratios_print|
 
-\item \texttt{bundle-plot} (optional): Identifies a given function
-  (which must be a public interface) that can be used to produce some
-  sort of plot or graph using the content of a bundle produced by the
-  package.
+\item \texttt{bundle-plot} (optional): Identifies a given function that can
+  be used to produce some sort of plot or graph using the content of a
+  bundle produced by the package.
 
   \vbusage{} \verb|bundle-plot = Brown_print|
 
@@ -2672,7 +2670,9 @@ editor these appear under the \textsf{Special functions} tab in the
 
 \end{description}
 
-Functions selected for the special bundle-related roles must conform
+Functions selected for the special bundle-related roles may be public (if it
+makes sense to allow users to call them directly) or private (if they're
+designed to be called only via GUI hooks). In either case they must conform
 to certain rules, as follows.
 \begin{itemize}
 \item In all cases the first argument must be a bundle-pointer.

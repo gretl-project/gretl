@@ -13529,18 +13529,45 @@ d =  8.0000000
       </description>
     </function>
 
+    <function name="typename" section="data-utils" output="string">
+      <fnargs>
+	<fnarg type="string">nome</fnarg>
+      </fnargs>
+      <description>
+	<para>
+          Se <argname>nome</argname> è l'identificativo di un oggetto
+          definito, la funzione ritorna il tipo di oggetto come
+          stringa: <lit>scalar</lit>, <lit>series</lit>,
+          <lit>matrix</lit>, <lit>string</lit>, <lit>bundle</lit>, o
+          uno dei tipi di array: <lit>matrices</lit>,
+          <lit>bundles</lit>, <lit>strings</lit>, <lit>lists</lit> o
+          <lit>arrays</lit>.  Se non esiste un oggetto con quel nome,
+          vene ritornata la stringa <lit>null</lit>.
+        </para>
+        <subhead>Compatibilità</subhead>
+        <para>
+          Questa funzione rappresenta una miglioria rispetto alle
+          vecchie funzioni <fncref targ="typeof"/> e <fncref
+          targ="typestr"/>, che però per il momento sono ancora
+          valide.
+        </para>
+      </description>
+    </function>
+    
     <function name="typeof" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">nome</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce un codice di tipo per <argname>nome</argname>,
-	  che è l'identificativo di un qualche oggetto. I codici sono:
-	  1 = scalare, 2 = serie, 3 = matrice, 4 = stringa, 5 =
-	  bundle, 6 = array e 7 = lista. Se l'oggetto non è definito,
-	  ritorna 0.  Per avere la stringa corrispondente al codice,
-	  si può usare la funzione <fncref targ="typestr"/>.
+	  Funzione obsoleta: vedi <fncref targ="typename"/> per
+	  un'alternativa migliore.  Restituisce un codice di tipo per
+	  <argname>nome</argname>, che è l'identificativo di un
+	  qualche oggetto. I codici sono: 1 = scalare, 2 = serie, 3 =
+	  matrice, 4 = stringa, 5 = bundle, 6 = array e 7 = lista. Se
+	  l'oggetto non è definito, ritorna 0.  Per avere la stringa
+	  corrispondente al codice, si può usare la funzione <fncref
+	  targ="typestr"/>.
 	</para>
 	<para>
 	  Questa funzione si può anche usare per stabilire il tipo di
@@ -13565,8 +13592,10 @@ d =  8.0000000
       </fnargs>
       <description>
 	<para>
-	  Restituisce il nome del tipo di dati di gretl corrispondente
-	  a <argname>typecode</argname>. È utilizzata insieme alla
+	  Funzione obsoleta: vedi <fncref targ="typename"/> per
+	  un'alternativa migliore.  Restituisce il nome del tipo di
+	  dati di gretl corrispondente a
+	  <argname>typecode</argname>. È utilizzata insieme alla
 	  funzione <fncref targ="inbundle"/>. Il valore restituito è:
 	  <quote>scalar</quote>, <quote>series</quote>,
 	  <quote>matrix</quote>, <quote>string</quote>,

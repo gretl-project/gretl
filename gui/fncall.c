@@ -3122,7 +3122,7 @@ int exec_bundle_special_function (gretl_bundle *b,
 /* See if a bundle has the name of a "creator" function package
    recorded on it. If so, see whether that package is already loaded,
    or can be loaded.  And if that works, see if the package has a
-   default function for @task (e.g. BUNDLE_PRINT).
+   default function for @id (e.g. BUNDLE_PRINT).
 */
 
 gchar *get_bundle_special_function (gretl_bundle *b,

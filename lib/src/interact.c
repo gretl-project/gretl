@@ -3117,7 +3117,7 @@ int is_plotting_command (CMD *cmd)
     } else if (cmd->ci == END && cmd->param != NULL) {
 	int ci = gretl_command_number(cmd->param);
 
-	if (ci == PLOT || ci == GRIDPLOT) {
+	if (ci == PLOT || ci == GPBUILD) {
 	    return ci;
 	}
     }
@@ -3889,15 +3889,16 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         }
         break;
 
+    case GPBUILD:
     case GRIDPLOT:
 	if (gretl_multiplot_collecting()) {
-	    gretl_errmsg_set(_("gridplot: cannot be nested"));
+	    gretl_errmsg_set(_("gpbuild/gridplot: cannot be nested"));
 	    err = E_DATA;
 	} else {
-	    err = check_multiplot_options(cmd->opt);
+	    err = check_multiplot_options(cmd->ci, cmd->opt);
 	}
 	if (!err) {
-	    if (cmd->opt & OPT_B) {
+	    if (cmd->ci == GPBUILD) {
 		/* the block-start case */
 		err = gretl_multiplot_start(cmd->opt);
 	    } else if (cmd->opt & (OPT_i | OPT_I)) {
@@ -4081,7 +4082,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
             err = execute_plot_call(cmd, dset, line, prn);
         } else if (!strcmp(cmd->param, "outfile")) {
             err = do_outfile_command(OPT_C, NULL, NULL, prn);
-        } else if (!strcmp(cmd->param, "gridplot")) {
+        } else if (!strcmp(cmd->param, "gpbuild")) {
             err = execute_multiplot_call(cmd, prn);
         } else {
             err = E_PARSE;

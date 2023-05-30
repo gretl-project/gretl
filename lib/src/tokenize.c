@@ -28,7 +28,7 @@ typedef enum {
     CI_INFL  = 1 << 18, /* command arglist "inflected" by options */
     CI_FCMIN = 1 << 19, /* minimal (single word) flow control */
     CI_LGEN  = 1 << 20, /* command generates a named list */
-    CI_OBSOL = 1 << 21  /* command is obsolete and therefore deprecated */
+    CI_OBSOL = 1 << 21  /* command is deprecated */
 } CIFlags;
 
 struct gretl_cmd {
@@ -119,8 +119,9 @@ static struct gretl_cmd gretl_cmds[] = {
     { GENR,     "genr",     CI_EXPR },
     { GMM,      "gmm",      CI_EXPR | CI_BLOCK },
     { GNUPLOT,  "gnuplot",  CI_LIST | CI_EXTRA | CI_INFL },
+    { GPBUILD,  "gpbuild",  CI_BLOCK },
     { GRAPHPG,  "graphpg",  CI_PARM1 | CI_PARM2 }, /* params optional */
-    { GRIDPLOT, "gridplot", CI_BLOCK },
+    { GRIDPLOT, "gridplot", 0 },
     { HECKIT,   "heckit",   CI_LIST },
     { HELP,     "help",     CI_PARM1 },
     { HFPLOT,   "hfplot",   CI_LIST | CI_EXTRA },
@@ -1332,9 +1333,9 @@ static int check_command_options (CMD *c)
     } else if (c->ci == PKG && (c->opt & OPT_B)) {
 	handle_legacy_install_options(c);
     } else if (c->ci == END && c->ntoks > 1) {
-        if (gretl_command_number(c->toks[1].s) == GRIDPLOT) {
+        if (gretl_command_number(c->toks[1].s) == GPBUILD) {
             /* support the --output option */
-            c->ci = GRIDPLOT;
+            c->ci = GPBUILD;
         }
     }
 
@@ -3276,7 +3277,7 @@ static int check_end_command (CMD *cmd)
 	cmd->ci = OUTFILE;
 	cmd->opt = OPT_C;
 	return 0;
-    } else if (endci == GRIDPLOT) {
+    } else if (endci == GPBUILD) {
         /* special case: no "context" required */
         return 0;
     }
