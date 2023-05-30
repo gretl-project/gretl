@@ -161,17 +161,20 @@ function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
         matrices Mats = drawnormwis(iXX, B, mod.Sigma, b.df) # changed df at source
         matrix b.B = Mats[1]
         matrix b.Sigma = Mats[2]
-	matrix C = cholesky(b.Sigma)
-    else
-	matrix C = mod.C
     endif
 
     if nelem(b.zc) == 0
         # no zero restrictions
         matrix b.rot = rand_rotation(mod.n, rotate_only)
     else
-        matrix b.rot = const_orth(b.zc, C)
+        matrix b.rot = const_orth(b.zc, DO_BAYES ? cholesky(b.Sigma) : mod.C)
     endif
+
+    if 0
+	# for good measure: set main diagonal to positive numbers
+	b.rot = b.rot .* sgn(diag(b.rot))'
+    endif
+
 end function
 
 # -----------------------------------
@@ -210,7 +213,7 @@ function matrix get_id_mat (const bundle mod, const matrix shocks,
 	printf "id_matrix = \n%4d\n", id_matrix
 	printf "=========================================\n"
     endif
-    
+
     if DO_NORM
         id_matrix = normlizA(id_matrix)
     endif
@@ -267,7 +270,7 @@ end function
 function matrix normlizA(const matrix A)
     # Tag: sign restriction apparatus
     # this function is for normalizing the "candidate" matrix A
-    # (was normalize, but could be confused with the user option) 
+    # (was normalize, but could be confused with the user option)
 
     matrix U = sr_correspondence(A) # not to confuse U with the residuals...
     matrix ret = zeros(rows(A), cols(A))
@@ -396,7 +399,7 @@ function scalar check_id(matrix id, matrix noswap)
 	us = nelem(noswap)
 	if us
 	    # print noswap
-	    # printf "abs(id):\n%7.3f\n", abs(id[noswap,noswap]) 
+	    # printf "abs(id):\n%7.3f\n", abs(id[noswap,noswap])
 	    ret = ret && abs(id[noswap,noswap]) == I(us)
 	endif
     endif
@@ -448,13 +451,13 @@ end function
 function matrices xtr_blockdg_const(const matrix Rd, scalar *err)
 
     # this function translates a constraints matrix in the "traditional" format
-    # into an array of per-shock restrictions (needed for the mixed 
+    # into an array of per-shock restrictions (needed for the mixed
     # identification routine)
 
     scalar n = sqrt(cols(Rd)-1)
     matrices ret = array(n)
     if maxc(abs(Rd[,end]))
-        printf "nonhom constraint!\n"
+        printf "non-homogeneous constraints not allowed!\n"
         err = 1
     else
         p = rows(Rd)
@@ -465,7 +468,7 @@ function matrices xtr_blockdg_const(const matrix Rd, scalar *err)
             # no cross-shock constraints allowed
             candidate = imaxr(chk)
             if maxr(chk[-candidate])>0
-                printf "cross-shock constraint!\n"
+                printf "cross-shock constraints not allowed!\n"
                 err = 2
                 break
             else
@@ -473,7 +476,7 @@ function matrices xtr_blockdg_const(const matrix Rd, scalar *err)
             endif
         endloop
     endif
-    
+
     return ret
 end function
 
@@ -501,27 +504,26 @@ function matrix const_orth(const matrices constraints, const matrix C)
 
     DBG = 0
     n = rows(C)
-    Q = I(n)
-    done = {}
+    matrix Q = I(n)
+    matrix done = {}
 
     # we sort the constraints array to process the "most stringent"
     # ones first
-
-    to_do = rank_restr(constraints)
-    k = rows(to_do)
+    matrix to_do = rank_restr(constraints)
+    scalar k = rows(to_do)
 
     loop j = 1 .. k
         i = to_do[j]
-        R = constraints[i]
+        matrix R = constraints[i]
         if DBG
             print i R
         endif
         if nelem(done) == 0
-            S = nullspace(R*C)
+            matrix S = nullspace(R*C)
         else
             # was:
             # S = intersect(nullspace(R*C), nullspace(Q[,done]'))
-            S = nullspace((R*C) | Q[,done]')
+            matrix S = nullspace((R*C) | Q[,done]')
         endif
         if DBG
             printf "RC =\n%12.4f", (R*C)'
@@ -538,7 +540,7 @@ function matrix const_orth(const matrices constraints, const matrix C)
         if cols(S) == 1
             S = S ./ sqrt(S'S)
         endif
-        qi = S * mnormal(cols(S), 1)
+        matrix qi = S * mnormal(cols(S), 1)
         Q[,i] = qi ./ sqrt(qi'qi)
         done ~= i
     endloop
@@ -547,14 +549,13 @@ function matrix const_orth(const matrices constraints, const matrix C)
         print Q
     endif
 
-    H = nullspace(Q[,done]')
+    matrix H = nullspace(Q[,done]')
     if cols(H) == 1
         H = H ./ sqrt(H'H)
     endif
-    Qq = qrdecomp(mnormal(n-k,n-k))
+    matrix Qq = qrdecomp(mnormal(n-k,n-k))
     # print Q H Qq
 
     Q[,-done] = H*Qq
     return Q
 end function
-

@@ -3,14 +3,15 @@
 */
 
 function string modelstring(int type)
-/*
-   The idea about the number 10 for sign restrictions is:
-   - First it's very different from the other types (haha)
-   - Secondly if later on we really support mixed models,
-   like some sign restrictions and some zero restrictions,
-   perhaps this could be expressed as the sum of the types.
-   (E.g. 12 == 2 + 10 would be zero restrictions on the C matrix
-   coupled with sign stuff.)
+    /*
+    The original idea about the number 10 for sign restrictions was,
+    apart fromit being very different from the other types (haha),
+    that we could combine the types by summing them.
+    (E.g. 12 == 2 + 10 would be zero restrictions on the C matrix
+     coupled with sign stuff.)
+
+    But in fact it turns out that this is not really needed, so 10 is
+    probably going to stay that way.
     */
     string ret = ""
     if type == 1
