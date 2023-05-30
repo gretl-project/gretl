@@ -13473,9 +13473,9 @@ d =  8.0000000
           form: <lit>scalar</lit>, <lit>series</lit>,
           <lit>matrix</lit>, <lit>string</lit>, <lit>bundle</lit>, or
           one of the array types: <lit>matrices</lit>,
-          <lit>bundles</lit>, <lit>strings</lit> or <lit>arrays</lit>.
-          If the argument does not identify an object the string
-          <lit>null</lit> is returned.
+          <lit>bundles</lit>, <lit>strings</lit>, <lit>lists</lit> or
+          <lit>arrays</lit>.  If the argument does not identify an
+          object the string <lit>null</lit> is returned.
         </para>
         <subhead>Compatibility note</subhead>
         <para>
