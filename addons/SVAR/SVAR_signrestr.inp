@@ -285,7 +285,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     # which shocks are to be identified via sign restrictions?
     matrix shocks = values(mod.SRest[,6])
     matrix allshocks = shocks
-
+    
     # do we have exotic restrictions?
     n_exotic = get_n_exotic(mod)
     # add the ones from exotic restrictions
@@ -294,7 +294,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
 
     # Now extract the corresponding shock names
     strings temp = mod.snames[allshocks] # was getstrings_byindex pre 2020b
-    strings mod.SRid_snames = temp 	# workaround gretl bug to ensure strings type even if 1 elem
+    strings mod.SRid_snames = temp 	 # workaround gretl bug to ensure strings type even if 1 elem
 
     # this array contains as many elements as set-identified shocks
     # basically, it's a per-shock split of the SRest bundle element
@@ -305,35 +305,16 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     # responses to be cumulated?
     matrix to_cum = mod.ncumul ? mod.cumul : {}
 
-    #
-    # the main loop
-    #
+    ###
+    ### the main loop
+    ###
 
     # this bundle contains the necessary information for generating the rotations
-
-    # create the matrix array for zero restrictions if necessary
-    if rows(mod.Rd1)
-        err = 0
-        matrices zero_const = xtr_blockdg_const(mod.Rd1, &err)
-        errorif(err > 0, "zero constraints malformed!")
-    else
-        matrices zero_const = array(0)
-    endif
-
-    # generate a vector of zero-constrained shocks so that they don't get
-    # rotated afterwards in check_id()
-    
-    matrix zc_shocks = {}
-    loop i = 1 .. nelem(zero_const)
-	if nelem(zero_const[i])
-	    zc_shocks ~= i
-	endif
-    endloop
-    
     bundle b = _(B=B, Sigma=mod.Sigma, exoterms=rows(mod.mu),
       df= mod.T - rows(B), T=mod.T, zc=zero_const)
-    # df was: mod.T - nelem(B)
 
+    matrix zc_shocks = add_zero_constr(mod, &b)
+    
     # for the future: set a matrix for keeping some shocks from being rotated
     # eventually, this could probably be inferred from the model bundle
     rot_only = {}
@@ -347,7 +328,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
 
         matrices irfs = gen_SRirfs(b, numh, to_cum)
         matrix id_matrix = get_id_mat(mod, shocks, irfs, Ais, DO_NORM)
-
+	
 	if 0
             printf "iter = %d (good = %d)\n", iter, good
             printf "M[0] =\n%8.3f\n", irfs[1]

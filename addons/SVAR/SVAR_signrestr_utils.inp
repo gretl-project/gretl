@@ -448,6 +448,33 @@ end function
 ### functions pertaining to mixed (sign- and 0-restriction) models
 ###
 
+function matrix add_zero_constr(bundle mod, bundle *rotinfo)
+
+    # Create the matrix array for zero restrictions if necessary and
+    # stick it into the model bundle. The return matrix holds the indices
+    # of shocks with at least one zero restriction so that they don't get
+    # rotated afterwards in check_id()
+
+    matrix zc_shocks = {}
+    
+    if rows(mod.Rd1)
+        err = 0
+        matrices zc = xtr_blockdg_const(mod.Rd1, &err)
+        errorif(err > 0, "zero constraints malformed!")
+
+	loop i = 1 .. nelem(zc)
+	    if nelem(zc[i])
+		zc_shocks ~= i
+	    endif
+	endloop
+    else
+        matrices zc = array(0)
+    endif
+
+    mod.zc = zc
+    return zc_shocks
+end function
+
 function matrices xtr_blockdg_const(const matrix Rd, scalar *err)
 
     # this function translates a constraints matrix in the "traditional" format
