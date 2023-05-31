@@ -2250,8 +2250,9 @@ As another example:
 SVAR_SRplain(&mod, "bar", "foo", "-", 3)
 \end{code}
 means that the shock named \texttt{foo} has a negative impact on the
-observable variable \texttt{bar} over the horizon from 0 to
-3. Finally, one can indicate a starting lag for the constraint, as in
+observable variable \texttt{bar} over the horizon from 0 for 3 periods
+(so, lag 0 to lag 2). Finally, one can indicate a starting lag for the
+constraint, as in
 \begin{code}
 SVAR_SRplain(&mod, "y", "shock", "+", len, start)
 \end{code}
