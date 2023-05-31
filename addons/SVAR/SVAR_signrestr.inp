@@ -311,8 +311,9 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
 
     # this bundle contains the necessary information for generating the rotations
     bundle b = _(B=B, Sigma=mod.Sigma, exoterms=rows(mod.mu),
-      df= mod.T - rows(B), T=mod.T, zc=zero_const)
+		 df= mod.T - rows(B), T=mod.T)
 
+    # handle the zero constraints, if any (note: this modifies b)
     matrix zc_shocks = add_zero_constr(mod, &b)
     
     # for the future: set a matrix for keeping some shocks from being rotated

@@ -471,7 +471,7 @@ function matrix add_zero_constr(bundle mod, bundle *rotinfo)
         matrices zc = array(0)
     endif
 
-    mod.zc = zc
+    rotinfo.zc = zc
     return zc_shocks
 end function
 
