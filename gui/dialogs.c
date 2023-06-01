@@ -545,7 +545,7 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
     if (ci == COPY_CSV) {
 	csvp->delim = '\t';
     } else if (ci == OPEN_DATA || ci == APPEND_DATA) {
-	csvp->delim = 'a';
+	csvp->delim = 'a'; /* automatic */
 	imin = 0;
     } else {
 	csvp->delim = ',';
@@ -566,7 +566,7 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
     pack_in_hbox(tmp, vbox, 5);
 
     /* choice of separator */
-    for (i=imin; delims[i]; i++) {
+    for (i=imin; delims[i] != '\0'; i++) {
 	button = gtk_radio_button_new_with_label(group, _(labels[i]));
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 	pack_in_hbox(button, vbox, 0);
@@ -577,10 +577,13 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
 			 G_CALLBACK(set_delim), csvp);
 	g_object_set_data(G_OBJECT(button), "action",
 			  GINT_TO_POINTER(delims[i]));
+        if (delims[i] == ';') {
+            csvp->semic_button = button;
+        }
     }
 
     if (',' == get_local_decpoint()) {
-        GSList *dgroup;
+        GSList *dgroup = NULL;
 
         vbox_add_hsep(vbox);
         tmp = gtk_label_new(_("decimal point character:"));
@@ -590,19 +593,20 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
         button = gtk_radio_button_new_with_label(NULL, _("period (.)"));
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
         pack_in_hbox(button, vbox, 0);
-        g_signal_connect(G_OBJECT(button), "clicked",
-                         G_CALLBACK(set_dec), csvp);
         g_object_set_data(G_OBJECT(button), "action",
                           GINT_TO_POINTER('.'));
+        g_signal_connect(G_OBJECT(button), "clicked",
+                         G_CALLBACK(set_dec), csvp);
 
         /* comma decpoint */
         dgroup = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
         button = gtk_radio_button_new_with_label(dgroup, _("comma (,)"));
+        csvp->comma_sep = button;
         pack_in_hbox(button, vbox, 0);
-        g_signal_connect(G_OBJECT(button), "clicked",
-                         G_CALLBACK(set_dec), csvp);
         g_object_set_data(G_OBJECT(button), "action",
                           GINT_TO_POINTER(','));
+        g_signal_connect(G_OBJECT(button), "clicked",
+                         G_CALLBACK(set_dec), csvp);
     }
 
     if (otype == GRETL_OBJ_DSET && (ci == EXPORT_CSV || ci == COPY_CSV)) {
