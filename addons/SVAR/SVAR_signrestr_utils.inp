@@ -172,10 +172,10 @@ function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
     endif
 
     if strlen(getenv("NO_AUTONORM")) == 0
-	# identification: set main diagonal of instantaneous IRF
-	# to positive numbers
-	C = C * b.rot
-	b.rot = b.rot .* sgn(diag(C))'
+        # identification: set main diagonal of instantaneous IRF
+        # to positive numbers
+        C = C * b.rot
+        b.rot = b.rot .* sgn(diag(C))'
     endif
 
 end function
@@ -203,18 +203,18 @@ function matrix get_id_mat (const bundle mod, const matrix shocks,
     nshocks = rows(shocks)
     matrix id_matrix = zeros(nshocks, mod.n)
     loop i = 1..nshocks
-	if VERB
-	    printf "=========================================\n"
-	    printf "IRF check for shock %d \n", i
-	    printf "=========================================\n"
-	endif
+        if VERB
+            printf "=========================================\n"
+            printf "IRF check for shock %d \n", i
+            printf "=========================================\n"
+        endif
         id_matrix[i,] = check_irfs(irfs, Ais[i], VERB)
     endloop
 
     if VERB
-	printf "=========================================\n"
-	printf "id_matrix = \n%4d\n", id_matrix
-	printf "=========================================\n"
+        printf "=========================================\n"
+        printf "id_matrix = \n%4d\n", id_matrix
+        printf "=========================================\n"
     endif
 
     if DO_NORM
@@ -319,7 +319,7 @@ function matrix check_one_irf(matrices M, matrix spec,
 
     if verbose
         printf "irf for variable %d at lags (%d-%d)\n%8.3f\n",
-	vndx, spec[4]-1, spec[5]-1, tmp
+          vndx, spec[4]-1, spec[5]-1, tmp
         if verbose > 1
             print lo hi
             print Min Max
@@ -351,11 +351,11 @@ function matrix check_irfs(matrices M, matrix A, int verbose[0])
 
     matrix chks = zeros(rA, n)
     loop i = 1 .. rA
-	if verbose
-	    printf "-----------------------------------------\n"
-	    printf "Check for constraint no. %d \n", i
-	    printf "-----------------------------------------\n"
-	endif
+        if verbose
+            printf "-----------------------------------------\n"
+            printf "Check for constraint no. %d \n", i
+            printf "-----------------------------------------\n"
+        endif
         chks[i,] = check_one_irf(M, A[i,], verbose)
     endloop
 
@@ -399,14 +399,14 @@ function scalar check_id(matrix id, matrix noswap)
         ret = (rank(id) == r) && minc(sumr(abs(id)) .= 1) == 1
     else
         ret = maxc(abs((id'id) - I(r))) < 1.0e-15
-	us = nelem(noswap)
-	if us
-	    # print noswap
-	    # printf "abs(id):\n%7.3f\n", abs(id[noswap,noswap])
-	    ret = ret && abs(id[noswap,noswap]) == I(us)
-	endif
     endif
 
+    us = nelem(noswap)
+    if us
+        # print noswap
+        # printf "abs(id):\n%7.3f\n", abs(id[noswap,noswap])
+        ret = ret && abs(id[noswap,noswap]) == I(us)
+    endif
     return ret
 end function
 
@@ -459,17 +459,17 @@ function matrix add_zero_constr(bundle mod, bundle *rotinfo)
     # rotated afterwards in check_id()
 
     matrix zc_shocks = {}
-    
+
     if rows(mod.Rd1)
         err = 0
         matrices zc = xtr_blockdg_const(mod.Rd1, &err)
         errorif(err > 0, "zero constraints malformed!")
 
-	loop i = 1 .. nelem(zc)
-	    if nelem(zc[i])
-		zc_shocks ~= i
-	    endif
-	endloop
+        loop i = 1 .. nelem(zc)
+            if nelem(zc[i])
+                zc_shocks ~= i
+            endif
+        endloop
     else
         matrices zc = array(0)
     endif
