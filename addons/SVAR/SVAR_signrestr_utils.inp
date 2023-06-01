@@ -163,16 +163,19 @@ function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
         matrix b.Sigma = Mats[2]
     endif
 
+    matrix C = DO_BAYES ? cholesky(b.Sigma) : mod.C
     if nelem(b.zc) == 0
         # no zero restrictions
         matrix b.rot = rand_rotation(mod.n, rotate_only)
     else
-        matrix b.rot = const_orth(b.zc, DO_BAYES ? cholesky(b.Sigma) : mod.C)
+        matrix b.rot = const_orth(b.zc, C)
     endif
 
-    if 0
-	# for good measure: set main diagonal to positive numbers
-	b.rot = b.rot .* sgn(diag(b.rot))'
+    if strlen(getenv("NO_AUTONORM")) == 0
+	# identification: set main diagonal of instantaneous IRF
+	# to positive numbers
+	C = C * b.rot
+	b.rot = b.rot .* sgn(diag(C))'
     endif
 
 end function
