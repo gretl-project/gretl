@@ -314,7 +314,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
 		 df= mod.T - rows(B), T=mod.T)
 
     # handle the zero constraints, if any (note: this modifies b)
-    matrix zc_shocks = add_zero_constr(mod, &b)
+    matrix zc_shocks = add_zero_constr(mod, shocks, &b)
     
     # for the future: set a matrix for keeping some shocks from being rotated
     # eventually, this could probably be inferred from the model bundle
@@ -330,11 +330,11 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
         matrices irfs = gen_SRirfs(b, numh, to_cum)
         matrix id_matrix = get_id_mat(mod, shocks, irfs, Ais, DO_NORM)
 	
-	if 0
+        if 0
             printf "iter = %d (good = %d)\n", iter, good
             printf "M[0] =\n%8.3f\n", irfs[1]
             printf "id_matrix =\n%8.3f\n", id_matrix
-	endif
+        endif
 	
         chk = DO_NORM ? (rows(id_matrix) == rows(shocks)) : 0 # this check 1st!
         chk = chk && check_id(id_matrix, zc_shocks)
@@ -370,9 +370,9 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
             endif
         endif
 
-        factor = (DO_BAYES ? 10 : 50) * xmax(1,floor(sqrt(maxiter/1000)))
+        factor = (DO_BAYES ? 100 : 500) * xmax(1,floor(sqrt(maxiter/1000)))
 
-        if iter % factor == 0
+        if (iter % factor == 0) || (iter % 1000 == 0)
             printf "draw %5d done (good so far = %5d)\n", iter, good
             flush
         endif

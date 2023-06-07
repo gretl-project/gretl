@@ -451,7 +451,7 @@ end function
 ### functions pertaining to mixed (sign- and 0-restriction) models
 ###
 
-function matrix add_zero_constr(bundle mod, bundle *rotinfo)
+function matrix add_zero_constr(bundle mod, const matrix shocks, bundle *rotinfo)
 
     # Create the matrix array for zero restrictions if necessary and
     # stick it into the model bundle. The return matrix holds the indices
@@ -466,7 +466,7 @@ function matrix add_zero_constr(bundle mod, bundle *rotinfo)
         errorif(err > 0, "zero constraints malformed!")
 
         loop i = 1 .. nelem(zc)
-            if nelem(zc[i])
+            if nelem(zc[i]) && contains(i, shocks)
                 zc_shocks ~= i
             endif
         endloop
