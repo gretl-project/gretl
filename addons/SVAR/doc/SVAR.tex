@@ -2130,26 +2130,27 @@ longrun (3 x 3)
 
 \section{Set-identified SVARs}\label{sec:SR}
 
-Starting with version 1.9 the SVAR addon also makes it possible to 
-estimate set-identified structural VAR models. 
-What is currently still missing is a graphical interface and some other final
-bits of integration. With this new functionality there is surely also an extended
-potential for 
-wrong and unsupported user input which may not always be caught properly. 
-For example, calling some of the traditional functions when working with a set
-identified model may lead to breakage. This will be fixed and improved as time
-goes by.
+Starting with version 1.9 the SVAR addon also makes it possible to
+estimate set-identified structural VAR models.  What is currently
+still missing is a graphical interface and some other final bits of
+integration. With this new functionality there is surely also an
+extended potential for wrong and unsupported user input which may not
+always be caught properly.  For example, calling some of the
+traditional functions when working with a set identified model may
+lead to breakage. This will be fixed and improved as time goes by.
 
-Some artificial as well as real-life example scripts are included with SVAR to demonstrate
-the usage of sign restrictions and set identification in general. These are: 
-\texttt{ChoMoreno.inp}, \texttt{exotic1.inp, exotic2.inp}, \texttt{KilianMurphy\_relaxed.inp}, 
-\texttt{spaghetti\_plot.inp}, \\
-\texttt{supply\_demand.inp}, \texttt{Uhlig\_example.inp}
+Some artificial as well as real-life example scripts are included with
+SVAR to demonstrate the usage of sign restrictions and set
+identification in general. These are: \texttt{ChoMoreno.inp},
+\texttt{exotic1.inp}, \texttt{exotic2.inp},
+\texttt{spaghetti\_plot.inp},
+\texttt{mixed\_example.inp}, \texttt{supply\_demand.inp}, \texttt{KilianMurphy\_relaxed.inp},  and
+\texttt{Uhlig\_example.inp}
 
 \subsection{Notation}
 
 At the risk of repeating some parts of earlier sections, here is some notation first:
-The reduced-form VAR is assumed to be
+the reduced-form VAR is assumed to be
 \[
   y_t  =  \mu_t + \sum_{i=1}^p \Phi_i y_{t-1} + \PrE{t}, 
 \]
@@ -2305,6 +2306,29 @@ with suitable strings as arguments.
 % and a $p \times 2$ matrix called \texttt{spans} with the initial and
 % final period the restriction applies to (NB: \texttt{spans} is
 % 1-based, rather than 0-based).
+
+\subsection{Mixed restrictions}
+
+In some cases, set restrictions may be supplemented by exact restrictions on the $C$
+matrix. These are typically used to set to 0 some instantanous response; the syntax
+for specifying constraints of this kind is strightforward, and is absolutely similar
+to the one used for C-models (see section \ref{sec:baseest}). So, for example, to
+set $C_{4,2}$ you would insert in your script a line like
+\begin{code}
+  SVAR_restrict(&Mod, "C", 4, 2, 0)
+\end{code}
+and more general constraints can be specified by suitably constructing the
+\texttt{Rd1} member of the model bundle.
+
+Given the peculiar
+nature of set-based inference, however, there are some limitations. At present, two
+types of restrictions are not allowed:
+\begin{enumerate}
+\item cross-shocks constraints
+\item non-homogenous constraints
+\end{enumerate}
+
+\ldots TBC \ldots
 
 \subsection{The workflow for set identification}
 
