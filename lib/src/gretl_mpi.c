@@ -823,7 +823,7 @@ static void maybe_date_matrix (gretl_matrix *m, int *minfo)
 static int gretl_matrix_bcast (gretl_matrix **pm, int id, int root)
 {
     gretl_matrix *m = NULL;
-    int minfo[MI_LEN];
+    int minfo[MI_LEN] = {0};
     int err = 0;
 
     if (id == root) {
@@ -857,10 +857,10 @@ static int gretl_matrix_bcast (gretl_matrix **pm, int id, int root)
         int n = minfo[0] * minfo[1];
         int cmplx = minfo[2];
 
-        if (cmplx) {
+        if (n > 0 && cmplx) {
             err = mpi_bcast(m->z, n, mpi_complex, root,
                             mpi_comm_world);
-        } else {
+        } else if (n > 0) {
             err = mpi_bcast(m->val, n, mpi_double, root,
                             mpi_comm_world);
         }

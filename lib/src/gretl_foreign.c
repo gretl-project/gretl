@@ -49,7 +49,6 @@
 #endif
 
 #define FDEBUG 0
-#define MPI_VGRIND 0 /* define for debugging MPI via valgrind */
 
 static char **foreign_lines;
 static int foreign_started;
@@ -514,6 +513,7 @@ static void print_mpi_command (char **argv, PRN *prn)
 static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
 {
     const char *hostfile = get_mpi_hostfile();
+    int use_valgrind = 0;
     char np = 0;
     int err = 0;
 
@@ -521,11 +521,15 @@ static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
         np = get_user_mpi_procs(&err);
     }
 
+    if (getenv("MPI_VGRIND") != NULL) {
+        use_valgrind = 1;
+    }
+
     if (!err) {
         const char *mpiexec = gretl_mpiexec();
         gchar *mpiprog = gretl_mpi_binary();
         const char *hostsopt = NULL;
-        char *argv[12] = {0};
+        char *argv[13] = {0};
         char npnum[8] = {0};
         int nproc, i = 0;
 
@@ -564,9 +568,10 @@ static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
                 argv[i++] = "--oversubscribe";
             }
         }
-#if MPI_VGRIND
-        argv[i++] = "valgrind";
-#endif
+        if (use_valgrind) {
+            argv[i++] = "valgrind";
+            argv[i++] = "--leak-check=full";
+        }
         argv[i++] = mpiprog;
         if (opt & OPT_S) {
             argv[i++] = "--single-rng";
