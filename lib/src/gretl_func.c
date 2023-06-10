@@ -2566,21 +2566,6 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     return err;
 }
 
-/* ensure use of canonical forms "endif", "endloop" */
-
-static void maybe_correct_line (char *line)
-{
-    char *p = strstr(line, "end if");
-
-    if (p == NULL) {
-	p = strstr(line, "end loop");
-    }
-
-    if (p != NULL && (p == line || *(p-1) == ' ')) {
-	shift_string_left(p + 3, 1);
-    }
-}
-
 static void print_param_limit (fn_param *param, int i, PRN *prn)
 {
     if (param->type == GRETL_TYPE_INT) {
@@ -2607,7 +2592,7 @@ static void print_param_limit (fn_param *param, int i, PRN *prn)
 /* write out a single user-defined function as XML, according to
    gretlfunc.dtd */
 
-static int write_function_xml (ufunc *fun, PRN *prn)
+static int write_function_xml (ufunc *fun, PRN *prn, int mpi)
 {
 
     int rtype = fun->rettype;
@@ -2620,7 +2605,7 @@ static int write_function_xml (ufunc *fun, PRN *prn)
     }
 
     pprintf(prn, "<gretl-function name=\"%s\" type=\"%s\"",
-		      fun->name, gretl_type_get_name(rtype));
+            fun->name, gretl_type_get_name(rtype));
 
     if (function_is_private(fun)) {
 	pputs(prn, " private=\"1\"");
@@ -2696,17 +2681,25 @@ static int write_function_xml (ufunc *fun, PRN *prn)
 
     pputs(prn, "<code>");
 
-    for (i=0; i<fun->n_lines; i++) {
-	if (i > 0 && fun->lines[i].idx - fun->lines[i-1].idx > 1) {
-	    /* reinstate single blank lines */
-	    pputc(prn, '\n');
-	}
-	/* minimal indentation adjustment */
-	adjust_indent(fun->lines[i].s, &this_indent, &next_indent);
-	bufspace(2 * this_indent, prn);
-	maybe_correct_line(fun->lines[i].s);
-	gretl_xml_put_string(fun->lines[i].s, prn);
-	pputc(prn, '\n');
+    if (mpi) {
+        /* minimal output of function code */
+        for (i=0; i<fun->n_lines; i++) {
+            gretl_xml_put_string(fun->lines[i].s, prn);
+            pputc(prn, '\n');
+        }
+    } else {
+        /* pay some attention to readability */
+        for (i=0; i<fun->n_lines; i++) {
+            if (i > 0 && fun->lines[i].idx - fun->lines[i-1].idx > 1) {
+                /* reinstate single blank lines */
+                pputc(prn, '\n');
+            }
+            /* basic indentation adjustment */
+            adjust_indent(fun->lines[i].s, &this_indent, &next_indent);
+            bufspace(2 * this_indent, prn);
+            gretl_xml_put_string(fun->lines[i].s, prn);
+            pputc(prn, '\n');
+        }
     }
 
     pputs(prn, "</code>\n");
@@ -3297,7 +3290,7 @@ static int package_write_index (fnpkg *pkg, PRN *inprn)
    which already has an associated open stream.
 */
 
-static int real_write_function_package (fnpkg *pkg, PRN *prn)
+static int real_write_function_package (fnpkg *pkg, PRN *prn, int mpi)
 {
     int standalone = (prn == NULL);
     int i, err = 0;
@@ -3374,7 +3367,7 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn)
 	gretl_xml_put_tagged_string("menu-attachment", pkg->mpath, prn);
     }
 
-    if (pkg->help != NULL) {
+    if (pkg->help != NULL && !mpi) {
 	if (pkg->help_fname != NULL) {
 	    pprintf(prn, "<help filename=\"%s\">\n", pkg->help_fname);
 	} else {
@@ -3384,7 +3377,7 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn)
 	pputs(prn, "\n</help>\n");
     }
 
-    if (pkg->gui_help != NULL) {
+    if (pkg->gui_help != NULL && !mpi) {
 	if (pkg->gui_help_fname != NULL) {
 	    pprintf(prn, "<gui-help filename=\"%s\">\n",
 			      pkg->gui_help_fname);
@@ -3415,16 +3408,16 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn)
 
     if (pkg->pub != NULL) {
 	for (i=0; i<pkg->n_pub; i++) {
-	    write_function_xml(pkg->pub[i], prn);
+	    write_function_xml(pkg->pub[i], prn, mpi);
 	}
     }
     if (pkg->priv != NULL) {
 	for (i=0; i<pkg->n_priv; i++) {
-	    write_function_xml(pkg->priv[i], prn);
+	    write_function_xml(pkg->priv[i], prn, mpi);
 	}
     }
 
-    if (pkg->sample != NULL) {
+    if (pkg->sample != NULL && !mpi) {
 	if (pkg->sample_fname != NULL) {
 	    pprintf(prn, "<sample-script filename=\"%s\">\n",
 			      pkg->sample_fname);
@@ -3457,7 +3450,7 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn)
 
 int function_package_write_file (fnpkg *pkg)
 {
-    return real_write_function_package(pkg, NULL);
+    return real_write_function_package(pkg, NULL, 0);
 }
 
 /* below: apparatus for constructing and saving a gfn function
@@ -5243,18 +5236,16 @@ int write_loaded_functions_file (const char *fname, int mpicall)
 #endif
 
     /* write any loaded function packages */
-
     for (i=0; i<n_pkgs; i++) {
 	if (validate_function_package(pkgs[i])) {
-	    real_write_function_package(pkgs[i], prn);
+	    real_write_function_package(pkgs[i], prn, mpicall);
 	}
     }
 
     /* then any unpackaged functions */
-
     for (i=0; i<n_ufuns; i++) {
 	if (ufuns[i]->pkg == NULL) {
-	    write_function_xml(ufuns[i], prn);
+	    write_function_xml(ufuns[i], prn, mpicall);
 	}
     }
 
