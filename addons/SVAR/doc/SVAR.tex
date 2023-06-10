@@ -2247,25 +2247,30 @@ $[M_0]_{ij} > 0$, where $i$ is the ordinal number of the variable
 string \texttt{monetary} in the \texttt{snames} array inside the model
 bundle.
 
-As another example:
+One could constrain non-instantaneous IRFs by using the full syntax
+\begin{code}
+SVAR_SRplain(&mod, "y", "shock", "+", len, start)
+\end{code}
+where \texttt{len} and \texttt{start} are nonegative integers. They
+both default to 0, so for example:
 \begin{code}
 SVAR_SRplain(&mod, "bar", "foo", "-", 3)
 \end{code}
 means that the shock named \texttt{foo} has a negative impact on the
-observable variable \texttt{bar} over the horizon from 0 for 3 periods
-(so, lag 0 to lag 2). Finally, one can indicate a starting lag for the
-constraint, as in
-\begin{code}
-SVAR_SRplain(&mod, "y", "shock", "+", len, start)
-\end{code}
-and the sign restrictions would be applied to the responses from
-\texttt{start} to \texttt{start+len}-1. For example, the code
+observable variable \texttt{bar} over the horizon from 0 to 3 (hence,
+four elements of the IRF are constrained). In practice, the number of
+constraints is \texttt{len}+1. 
+
+Finally, by indicating a starting lag for the constraint, the sign
+restrictions would be applied to the responses from \texttt{start} to
+\texttt{start}+\texttt{len}. Therefore, the code
 \begin{code}
 SVAR_SRplain(&mod, "quantity", "supply", "+", 4, 2)
 \end{code}
 means that the shock named \texttt{supply} has a positive impact on the
-observable variable \texttt{quantity} over the horizon from 2 to 5;
-note that the number of restricted IRFs is $4 = (5-2+1)$.
+observable variable \texttt{quantity} over the horizon from 2 to 6;
+again, note that the number of restricted IRFs is \texttt{len}
+$+1 = 5 = (6-2+1)$.
 
 \subsubsection{Interval restrictions}
 
@@ -2328,7 +2333,7 @@ insert in your script a line like
 and more general constraints can be specified by suitably constructing the
 \texttt{Rd1} member of the model bundle.
 
-Since $M_0 = C$ (see equation \eqref{eq:structVMA}) these are typically used to
+Since $M_0 = C$ (see equation \ref{eq:structVMA}) these are typically used to
 set to 0 some instantaneous response; more sophisticated alternatives, though
 possible, are very seldom used in the literature.
 
@@ -2336,8 +2341,15 @@ Given the peculiar nature of set-based inference there are some limitations on
 the type of point constraints that can be specified in this context. At present,
 two types of restrictions are not allowed:
 \begin{description}
-\item[cross-shocks constraints]: for example, something like $C_{2,3} = C_{3,3}$
-  is not allowed, altouugh it is perfectly possible to set both elements to 0.
+\item[cross-shocks constraints]: for example, something like
+  $C_{2,3} = C_{4,1}$ is not allowed, altough it is perfectly
+  possible to set both elements to 0. Note that this does \emph{not}
+  rule out constraints pertaining to the same shock on several
+  variables. For instance, something like $C_{1,3} = C_{2,3}$: this
+  would mean that the instantaneous impact of shock number 3 is the
+  same for variables 1 and 2. This possibility, however, requires
+  setting up an appropriate row of the bundle element \texttt{Rd1} by
+  hand: see Section \ref{sec:OtherConstraints}.
 \item[non-homogenous constraints]: that is, something like $C_{i,j} = 1$; this
   limitation may be relaxed in the future, but we're not aware of
   non-homogeneous restriction having ever been used in the literature (if
@@ -2358,17 +2370,27 @@ to modify some of these names with meaningful shock labels. For example:
 Mod.snames[1] = "monetary"
 \end{code}
 
-\item Next the restrictions have to be formulated and imposed on the model, namely
-through any number of calls to the functions \texttt{SVAR\_SRplain}, 
-\texttt{SVAR\_SRfull}, or \texttt{SVAR\_SRexotic}. If necessary, add point
-restrictions using \texttt{SVAR\_restrict}.
+\item Next the restrictions have to be formulated and imposed on the model,
+  namely through any number of calls to the functions \texttt{SVAR\_SRplain},
+  \texttt{SVAR\_SRfull}, or \texttt{SVAR\_SRexotic}. If necessary, add point
+  restrictions using \texttt{SVAR\_restrict}.
 
-\item Then the randomized drawing is performed by the function
-  \texttt{SVAR\_SRdraw}. This is the heavy number-crunching part. (But with the
-  computing power these days even that will typically not give you enough time
-  to get coffee!) At this stage one also chooses the desired coverage level of
-  the error bands (confidence intervals, credible sets, whatever) presumably to
-  be plotted later.
+\item The core of set-identified SVAR estimation happens now: a large number of
+  random orthogonal matrices $Q$ are generated, and the IRFs are computed
+  according to equation \eqref{eq:rotation}. If $Q$ is such that all the
+  constraints are satisfied, those IRFs are kept as ``good''.  The process goes
+  on until the number of ``good'' draws reaches a prescribed number (typically,
+  a few hundred).
+
+  The randomized drawing is performed by the function
+  \texttt{SVAR\_SRdraw}. This is the heavy number-crunching part.\footnote{With
+    the computing power these days even that will typically not give you enough
+    time to get coffee, unless you need a monster number of draws.} At this
+  stage one also chooses the desired coverage level of the error bands
+  (confidence intervals, credible sets, whatever) presumably to be plotted
+  later. A more detailed description of what this function does is provided in
+  section \ref{sec:SRdraw_details}, although for the precise details there's no
+  substitute to studying the code.
 
 \item Plotting; after having collected all the draws which fulfilled the imposed
   identification restrictions, SVAR offers two variants for the graphical
@@ -2660,9 +2682,12 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \label{fig:GUI-output}
 \end{figure}
 
-\appendix
+%\appendix
+
+\clearpage
 
 \section{Some details of the numerical algorithm in \texttt{SVAR\_SRdraw}}
+\label{sec:SRdraw_details}
 
 We explore the space of possible rotations via $H$ random draws from the space
 of rotation matrices.  Once the VAR parameters ($\hat{\Phi}_i$ and
