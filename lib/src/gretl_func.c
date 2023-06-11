@@ -5515,6 +5515,8 @@ static int package_run_R_setup (ufunc *fun, PRN *prn)
     PRN *fprn = NULL;
     int i, err;
 
+    fprintf(stderr, "start package_run_R_setup\n");
+
     /* first screen for nominal availability of libR */
     err = libset_set_bool(R_FUNCTIONS, 1);
 
@@ -5555,6 +5557,8 @@ static int package_run_R_setup (ufunc *fun, PRN *prn)
 	err = execute_R_buffer(buf, NULL, OPT_NONE, NULL);
 	free(buf);
     }
+
+    fprintf(stderr, "package_run_R_setup: err = %d\n", err);
 
     return err;
 }
