@@ -5583,7 +5583,7 @@ static int load_private_function (fnpkg *pkg, int i, PRN *prn)
 
 #if USE_RLIB
     if (fun->pkg_role == UFUN_R_SETUP) {
-	package_run_R_setup(fun, prn);
+	err = package_run_R_setup(fun, prn);
     }
 #endif
 
