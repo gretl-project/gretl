@@ -1822,14 +1822,20 @@ read_plotspec_range (const char *obj, const char *s, GPT_SPEC *spec)
 	err = 1;
     }
 
-    if (!strcmp(s, "[*:*]")) {
-	r0 = r1 = NADBL;
-    } else {
-	gretl_push_c_numeric_locale();
-	if (!err && sscanf(s, "[%lf:%lf]", &r0, &r1) != 2) {
-	    err = 1;
-	}
-	gretl_pop_c_numeric_locale();
+    if (!err) {
+        gretl_push_c_numeric_locale();
+        if (!strcmp(s, "[*:*]")) {
+            r0 = r1 = NADBL;
+        } else if (strstr(s, "[*:")) {
+            r0 = NADBL;
+            r1 = atof(s + 3);
+        } else if (strstr(s, ":*]")) {
+            r0 = atof(s + 1);
+            r1 = NADBL;
+        } else if (sscanf(s, "[%lf:%lf]", &r0, &r1) != 2) {
+            err = 1;
+        }
+        gretl_pop_c_numeric_locale();
     }
 
     if (!err) {
