@@ -5524,6 +5524,8 @@ static int package_run_R_setup (ufunc *fun, PRN *prn)
     PRN *fprn = NULL;
     int i, err;
 
+    fprintf(stderr, "start package_run_R_setup\n");
+
     /* first screen for nominal availability of libR */
     err = libset_set_bool(R_FUNCTIONS, 1);
 
@@ -5565,6 +5567,8 @@ static int package_run_R_setup (ufunc *fun, PRN *prn)
 	free(buf);
     }
 
+    fprintf(stderr, "package_run_R_setup: err = %d\n", err);
+
     return err;
 }
 
@@ -5592,7 +5596,7 @@ static int load_private_function (fnpkg *pkg, int i, PRN *prn)
 
 #if USE_RLIB
     if (fun->pkg_role == UFUN_R_SETUP) {
-	package_run_R_setup(fun, prn);
+	err = package_run_R_setup(fun, prn);
     }
 #endif
 
