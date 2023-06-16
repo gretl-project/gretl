@@ -406,7 +406,7 @@ static int output_multiplot_script (int ci, const char **S,
 		    buf = g_ptr_array_index(multiplot, k);
 		}
 		if (buf != NULL) {
-		    if (k > 0) {
+		    if (i+j > 0) {
 			fputs("reset\n", fp);
 		    }
 		    fprintf(fp, "# subplot %d\n", ++p);
