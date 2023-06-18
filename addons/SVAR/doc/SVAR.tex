@@ -2321,6 +2321,7 @@ with suitable strings as arguments.
 % 1-based, rather than 0-based).
 
 \subsection{Mixed restrictions}
+\label{sec:mixed}
 
 In some cases, set restrictions may be supplemented by exact restrictions on the
 $C$ matrix. The syntax for specifying constraints of this kind is
@@ -2525,12 +2526,16 @@ Structural VAR}
 menu entry of the the graphical \app{gretl} client.  While we recommend
 using the script interface to access the full capabilities of the SVAR
 package, the GUI interface may be less intimidating for less
-experienced users. The GUI component covers everything but the SVEC case 
-(see section \ref{sec:SVECs}) where the cointegration properties of the 
-system are exploited for special long-run restrictions. For the GUI in
-the SVEC case there is a preliminary additional function package 
-\emph{SVEC\_GUI} available on the gretl package server which uses this
-SVAR addon as its backend. 
+experienced users. The GUI component covers everything but
+\begin{enumerate}
+\item the SVEC case (see section \ref{sec:SVECs}) where the
+  cointegration properties of the system are exploited for special
+  long-run restrictions.
+\item Set-restricted models, described in section \ref{sec:SR}.
+\end{enumerate}
+For the GUI in the SVEC case there is a preliminary additional
+function package \emph{SVEC\_GUI} available on the gretl package
+server which uses this SVAR addon as its backend.
 
 \begin{figure}[htbp]
   \centering
@@ -3061,8 +3066,8 @@ list of endogenous variables must be given in \texttt{nv}.
 \end{funcdoc}
 
 \begin{funcdoc}{SVAR\_restrict (bundle *Smod, string code, int r, int c[0], scalar d[0])}
-\noindent Sets up constraints for an existing model. The function takes at
-most five arguments:
+  \noindent Sets up point constraints for an existing model. The function
+  takes at most five arguments:
 \begin{enumerate}
 \item A pointer to the model for which we want to set up the
   restriction(s).
@@ -3124,6 +3129,9 @@ A few examples:
 If the restrictions are found to conflict with other ones already
 implied by the pre-existing constraints, they will just be ignored and
 a warning will be printed.
+
+Note that this function can be used (albeit in a limited way) in the
+context of set-identified models. See section \ref{sec:mixed} for more details.
 \end{funcdoc}
 
 \begin{funcdoc}{SVAR\_setup (string type, list Y, list X, int varorder, 
