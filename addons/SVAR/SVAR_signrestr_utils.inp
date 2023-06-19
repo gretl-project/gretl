@@ -91,7 +91,7 @@ function void errchkSRhisto(bundle *Smod, int drawix)
     if !inbundle(Smod, "bestdraw")
         funcerr "Model not properly initialized for SR type"
     elif !Smod.bestdraw && !drawix
-        funcerr "Need to pick one particular draw (run SRgetbest?)"
+        funcerr "Need to pick one particular draw (run SVAR_SRgetbest?)"
 
     elif !Smod.storeSRirfs
         funcerr "Need accepted draws content (acc_draws) in set-id case"

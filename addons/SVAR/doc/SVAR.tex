@@ -2021,7 +2021,7 @@ economy, we will use the so-called AWM dataset, which is supplied among
 a quarterly dataset of the Euro area, which spans the 1970-1998
 period. It was originally developed by \cite{AWM} but has been used in
 countless other benchmark studies. The script is supplied in the
-examples directory as \texttt{awm.inp}, but we reproduce it here as
+examples directory as \texttt{Traditional/awm.inp}, but we reproduce it here as
 table \ref{tab:awmscript} for your convenience.
 
 The model comprises three variables, all in logs: real GDP ($y_t$),
@@ -2351,9 +2351,9 @@ two types of restrictions are not allowed:
   same for variables 1 and 2. This possibility, however, requires
   setting up an appropriate row of the bundle element \texttt{Rd1} by
   hand: see Section \ref{sec:OtherConstraints}.
-\item[non-homogenous constraints]: that is, something like $C_{i,j} = 1$; this
+\item[non-zero constraints]: that is, something like $C_{i,j} = 1$; this
   limitation may be relaxed in the future, but we're not aware of
-  non-homogeneous restriction having ever been used in the literature (if
+  non-zero restriction having ever been used in the literature (if
   anybody has evidence to the contrary, please let us know).
 \end{description}
 
@@ -2463,7 +2463,7 @@ more flexibility as a kind of override option.
 
 While it is beyond the scope of this user guide to provide a discussion of the possible conceptual 
 approaches to find a suitable unique model among the many accepted draws, the \texttt{SVAR}
-addon provides the \texttt{SRgetbest} convenience function to help with this task.
+addon provides the \texttt{SVAR\_SRgetbest} convenience function to help with this task.
 
 For example, continuing with \texttt{ChoMoreno.inp}, say you are most interested in the 
 impulse response of inflation (\texttt{INFL}, 2nd variable) to the shock \texttt{Demand} 
@@ -2474,7 +2474,7 @@ possible to the median response across all accepted draws.
 The relevant call to find this model's index number would be:
 
  \begin{code}
- SRgetbest(&mod, "INFL", "Demand", 1, , 1) 
+ SVAR_SRgetbest(&mod, "INFL", "Demand", 1, , 1) 
  \end{code}
 
 The function is documented in the appendix, but note that the first scalar argument with value 1 
@@ -2489,7 +2489,7 @@ be found inside the bundle with $nv=2$ and $ns=1$ (and of course $n=3$) as
 
 We find that the representative model in this particular sense is the one with index 58; 
 by construction the associated impulse response value is very close to the median, namely $0.171297$.
-The \texttt{SRgetbest} function stores this index number 58 in the model bundle under the key
+The \texttt{SVAR\_SRgetbest} function stores this index number 58 in the model bundle under the key
 \texttt{bestdraw}. The functions that require a unique model parametrization such as 
 \texttt{SVAR\_hd}, \texttt{FEVD}, \texttt{GetShock}, and \texttt{IRFplot}  
 will automatically use the associated draw (unless the user overrides it with her own choice as
@@ -2922,29 +2922,6 @@ int keypos[0:2:1], int drawix[0])}
    The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-\begin{funcdoc}{SRgetbest (bundle *Smod, string vname, string sname,
-    int ini[0::0], \\ int length[0::0],  int disttarg[0:1:0],  string loss[null]) }
-  \noindent Relating to a set identified (sign restricted) model, this function returns
-   the (scalar) index number among all accepted draws of that particular draw which has 
-   a certain impulse response (as specified by the user in this call) closest to the central 
-   tendency of all draws. Also stores this number in the model bundle under ``bestdraw''. 
-   
-  \noindent Arguments:
-  \begin{enumerate}
-  \item A bundle holding the model (pointer form).
-  \item The name of the target variable in the interesting IRF.
-  \item The name of the shock in the interesting IRF.
-  \item The first period/horizon at which the IRF should be compared. (Default 0, on impact)
-  \item The length of the horizon over which the IRF should be compared. (Default 0, only
-  for the single period given before)
-  \item A switch choosing whether to target the mean (0) or the median (1) of the IRF 
-  distribution. (Default 0)
-  \item The loss function name to evaluate deviations from the target. Possible values are
-  ``quad'' (default) and ``abs''.
-   \end{enumerate}  
-\end{funcdoc}
-
-
 \begin{funcdoc}{SVAR\_boot (bundle *Smod, int rep[0::2000], scalar alpha[0:1:0.9], bool
     quiet[1],\\
     string btypestr[null], int biascorr[-1:2:-1])}
@@ -3022,7 +2999,7 @@ int keypos[0:2:1], int drawix[0])}
   The \texttt{drawix} argument is only meaningful in the set identification 
   (sign restriction) case and overrides from which of the accepted model draws 
   the coefficients should be taken. Normally this draw index should instead be determined 
-  with the help of the \texttt{SRgetbest} function and can be omitted here. 
+  with the help of the \texttt{SVAR\_SRgetbest} function and can be omitted here. 
   This index can range from 1 to the number
   of accepted draws. In order to work the SR type model must have been set up such that all
   accepted draws are stored in the model bundle. (See \texttt{SVAR\_setup},
@@ -3299,6 +3276,28 @@ context of set-identified models. See section \ref{sec:mixed} for more details.
  It is not possible to exclude single variable-shock pairs, simply delete any unwanted plots afterwards. 
 \end{funcdoc}
 
+\begin{funcdoc}{SVAR\_SRgetbest (bundle *Smod, string vname, string sname,
+    int ini[0::0], \\ int length[0::0],  int disttarg[0:1:0],  string loss[null]) }
+  \noindent Relating to a set identified (sign restricted) model, this function returns
+   the (scalar) index number among all accepted draws of that particular draw which has 
+   a certain impulse response (as specified by the user in this call) closest to the central 
+   tendency of all draws. Also stores this number in the model bundle under ``bestdraw''. 
+   
+  \noindent Arguments:
+  \begin{enumerate}
+  \item A bundle holding the model (pointer form).
+  \item The name of the target variable in the interesting IRF.
+  \item The name of the shock in the interesting IRF.
+  \item The first period/horizon at which the IRF should be compared. (Default 0, on impact)
+  \item The length of the horizon over which the IRF should be compared. (Default 0, only
+  for the single period given before)
+  \item A switch choosing whether to target the mean (0) or the median (1) of the IRF 
+  distribution. (Default 0)
+  \item The loss function name to evaluate deviations from the target. Possible values are
+  ``quad'' (default) and ``abs''.
+   \end{enumerate}  
+\end{funcdoc}
+
 \begin{funcdoc}{SVAR\_SRplain (bundle *Smod, string yname, string sname, string what, \\
 int length[0], int ini[0])}
 \noindent Relating to a set identified model, this function serves to impose standard 
@@ -3466,7 +3465,7 @@ typically be called before \texttt{SVAR\_SRirf}.
    stored representation of the draws is still experimental and subject to change.\\
    
    \texttt{bestdraw} & positive integer to index the best of all accepted draws in \texttt{acc\_draws} 
-   according to criteria specified in call to \texttt{SRgetbest}. Zero if undefined. 
+   according to criteria specified in call to \texttt{SVAR\_SRgetbest}. Zero if undefined. 
   \end{tabular}
   
 \section{Changelog (after v1.2)}
@@ -3474,7 +3473,8 @@ typically be called before \texttt{SVAR\_SRirf}.
 
 \subsection*{Version 2.0, June 2023}
 \begin{itemize}
-\item Implement mixed (sign- and zero-) restrictions.
+\item Implement mixed (sign- and zero-) restrictions. Deprecate
+  \cmd{SRgetbest} in favour of \cmd{SVAR\_SRgetbest}.  
 \end{itemize}
 
 \subsection*{Version 1.98, May 2023}

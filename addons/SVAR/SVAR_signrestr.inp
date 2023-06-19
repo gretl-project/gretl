@@ -580,12 +580,12 @@ end function
 
 ##############################
 
-function scalar SRgetbest(bundle *mod,
-                          string vname, string sname,
-                          int ini[0::0], int length[0::0],
-                          int disttarg[0:1:0] "measure to target" \
-                          {"mean", "median"},
-                          string loss[null])
+function scalar SVAR_SRgetbest(bundle *mod,
+                               string vname, string sname,
+                               int ini[0::0], int length[0::0],
+                               int disttarg[0:1:0] "measure to target" \
+                               {"mean", "median"},
+                               string loss[null])
     # Function to find the set-id accepted draw which best fits a
     # a certain IRF center
     # vname: e.g. "Y"
@@ -648,3 +648,93 @@ function scalar SRgetbest(bundle *mod,
     mod.bestdraw = bestdraw
     return bestdraw
 end function
+
+##############################
+
+function scalar SVAR_SRgetbest(bundle *mod,
+                               string vname, string sname,
+                               int ini[0::0], int length[0::0],
+                               int disttarg[0:1:0] "measure to target" \
+                               {"mean", "median"},
+                               string loss[null])
+    # Function to find the set-id accepted draw which best fits a
+    # a certain IRF center
+    # vname: e.g. "Y"
+    # sname: e.g. "supply" (naming must exist in the bundle)
+    # ini: horizon range start (0 = impact)
+    # length: horizon end is ini + length
+    # disttarg: which part of the per-horizon distribution should be
+    # targeted;
+    # loss: how to evaluate deviations from the target;
+    #      possible values: "abs", "quad" (default), ...
+
+    ## implement defaults and error checks:
+    if !exists(loss)
+        string loss = "quad"
+    elif tolower(loss) != "abs" && tolower(loss) != "quad"
+        print "Warning, unrecognized loss, using 'quad'"
+        loss = "quad"
+    else
+        loss = tolower(loss)
+    endif
+
+    errorif( ini + length > mod.horizon, "ini + length too large (increase horizon)")
+    errorif( !inbundle(mod, "SRacc"), "No info on accepted draws found")
+    errorif( !inbundle(mod, "acc_draws"), "Model must be set up to store accepted draws in its bundle")
+
+    startix = ini + 1	# offset for 1-based
+    finix = startix + length
+    matrix center = !disttarg ? mod.SRirfmeans : mod.SRirfmeds
+
+    # pick the right position in the matrix:
+    # (taking into account partial identification, i.e.
+    #  less id'ed shocks than variables)
+    # was: scalar v_ix = names2indices(mod.Ynames, defarray(vname))
+    scalar v_ix = instrings(mod.Ynames, vname)
+    # was: scalar s_ix = names2indices(mod.SRid_snames, defarray(sname))
+    scalar s_ix = instrings(mod.SRid_snames, sname)
+    k = (s_ix - 1) * nelem(mod.Ynames) + v_ix
+
+    center = center[,k]
+
+    best = $huge
+    bestdraw = 0
+    loop i = 1..mod.SRacc
+        matrix IRFvec = drill(mod.acc_draws[i].irfs, v_ix, s_ix)
+        matrix distance = (IRFvec - center)[startix : finix]
+        if loss == "abs"
+            scalar objective = sum(abs(distance))
+        elif loss == "quad"
+            scalar objective = sum(distance.^2)
+        endif
+        if objective < best
+            best = objective
+            bestdraw = i
+        endif
+    endloop
+
+    errorif( !bestdraw, "shouldn't happen")
+
+    # store for further use
+    mod.bestdraw = bestdraw
+    return bestdraw
+end function
+
+##############################
+
+function scalar SRgetbest(bundle *mod,
+                          string vname, string sname,
+                          int ini[0::0], int length[0::0],
+                          int disttarg[0:1:0],
+                          string loss[null])
+
+    printf "==========================================================\n"
+    printf "WARNING: the SRgetbest() function has been deprecated since\n"
+    printf "SVAR version 2.0 and will stop working at some point.\n\n"
+    printf "You may want to replace the call to SRgetbest() with the new\n"
+    printf "name SVAR_SRgetbest().\n\n"
+    
+    ret = SVAR_SRgetbest(&mod, vname, sname, ini, length, disttarg, loss)
+    return ret
+end function
+
