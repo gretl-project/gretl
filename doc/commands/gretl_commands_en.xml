@@ -15282,19 +15282,24 @@
       </para>
       <subhead>Storing to a database</subhead>
       <para>
-	The option of saving in gretl database format is intended to
-	help with the construction of large sets of series with mixed
-	frequencies and ranges of observations.  At present this
-	option is available only for annual, quarterly or monthly
-	time-series data. If you save to a file that already exists,
-	the default action is to append the newly saved series to the
-	existing content of the database.  In this context it is an
-	error if one or more of the variables to be saved has the same
-	name as a variable that is already present in the
-	database. The <opt>overwrite</opt> flag has the effect that,
-	if there are variable names in common, the newly saved
-	variable replaces the variable of the same name in the
-	original dataset.
+	The option of saving in gretl database format is intended for
+	construction of large sets of series with mixed frequencies
+	and ranges of observations.  At present this option is
+	available only for annual, quarterly or monthly time-series
+	data, or undated (cross-sectional) data. A gretl database
+	takes the form of two files: one with suffix <lit>.bin</lit>
+	to hold the data in binary form and a plain text file with
+	suffix <lit>.idx</lit> for the metadata.  In naming the output
+	file on the command line you should either give the
+	<lit>.bin</lit> suffix or no suffix.
+      </para>
+      <para>
+	When saving to a database that already exists, the default
+	action is to append series to the prior content.  In this
+	context it is an error if any series to be saved has the
+	same name as one already present. The <opt>overwrite</opt>
+	flag has the effect that, if there are variable names in
+	common, the newly saved data replace the prior values.
       </para>
       <para>
 	The <opt>comment</opt> option is available when saving data as
