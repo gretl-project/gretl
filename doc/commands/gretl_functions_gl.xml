@@ -5897,7 +5897,7 @@
 	  mediante subtracción, como no exemplo seguinte:
 	</para>
 	<code>
-	  series hptrend = y - hfilt(y)
+	  series hptrend = y - hpfilt(y)
 	</code>
 	<para>
 	  <seelist>
@@ -12472,12 +12472,13 @@
 
     <function name="sst" section="stats" output="scalar">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-vec">y</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devolve un escalar coa suma dos cadrados dos desvíos respecto á
-	  media (SCT), das observacións non ausentes da serie <argname>y</argname>.
+	  media (SCT), das observacións non ausentes da serie ou vector
+	  <argname>y</argname>.
 	  <seelist>
             <fncref targ="var"/>
 	  </seelist>
@@ -13461,18 +13462,45 @@ d =  8,0000000
       </description>
     </function>
 
+    <function name="typename" section="data-utils" output="string">
+      <fnargs>
+	<fnarg type="string">nome</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Se <argname>nome</argname> é o identificador dun obxecto definido
+	  vixente, devolve en formato de cadea de texto, o tipo de obxecto:
+	  <lit>scalar (escalar)</lit>, <lit>series (serie)</lit>,
+	  <lit>matrix (matriz)</lit>, <lit>string (cadea de texto)</lit>,
+	  <lit>bundle (feixe)</lit>, ou un dos tipos de arranxos:
+	  <lit>matrices</lit>, <lit>bundles</lit>, <lit>strings</lit>,
+	  <lit>lists</lit> ou <lit>arrays</lit>. Cando o argumento non
+	  identifica un obxecto, devólvese a cadea <lit>null</lit>.
+	</para>
+	<subhead>Nota de compatibilidade</subhead>
+	<para>
+	  Esta función está pensada como unha substituta superior das
+	  antigas funcións <fncref targ="typeof"/> e <fncref targ="typestr"/>,
+	  mais polo de agora estas últimas van seguir estando
+	  dispoñibles.
+	</para>
+      </description>
+    </function>
+
     <function name="typeof" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">nome</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un código de tipo numérico cando <argname>nome</argname>
-	  é unha cadea de texto que identifica un obxecto que xa está definido:
-	  1 para un escalar, 2 para unha serie, 3 para unha matriz, 4 para unha
-	  cadea de texto, 5 para un feixe, 6 para un arranxo e 7 para unha
-	  lista; noutro caso devolve 0. Para obter a cadea de texto que concorda
-	  co valor que se devolve, podes usar a función <fncref targ="typestr"/>.
+	  Unha función herdada: consulta a función <fncref targ="typename"/>
+	  como alternativa superior. Devolve un código de tipo numérico cando
+	  <argname>nome</argname> é unha cadea de texto que identifica un
+	  obxecto que xa está definido: 1 para un escalar, 2 para unha serie,
+	  3 para unha matriz, 4 para unha cadea de texto, 5 para un feixe,
+	  6 para un arranxo e 7 para unha lista; noutro caso devolve 0. Para
+	  obter a cadea de texto que concorda co valor que se devolve,
+	  podes usar a función <fncref targ="typestr"/>.
 	</para>
 	<para>
 	  Tamén podes utilizar esta función para obter que tipo de elemento é
@@ -13496,14 +13524,16 @@ d =  8,0000000
       </fnargs>
       <description>
 	<para>
-	  Devolve unha cadea de texto co nome do tipo de dato de GRETL que
-	  se corresponde co argumento <argname>codigotipo</argname>. Podes
-	  utilizalo xuntamente coas funcións <fncref targ="typeof"/> e
-	  <fncref targ="inbundle"/>. A cadea de texto que se devolve pode ser
-	  unha das seguintes: <quote>scalar</quote>, <quote>series</quote>,
-	  <quote>matrix</quote>, <quote>string</quote>,
-	  <quote>bundle</quote>, <quote>array</quote>,
-	  <quote>list</quote>, ou <quote>null</quote>.
+	  Unha función herdada: consulta a función <fncref targ="typename"/>
+	  como alternativa superior. Devolve unha cadea de texto co
+	  nome do tipo de dato de GRETL que se corresponde co argumento
+	  <argname>codigotipo</argname>. Podes utilizalo xuntamente coas
+	  funcións <fncref targ="typeof"/> e <fncref targ="inbundle"/>.
+	  A cadea de texto que se devolve pode ser unha das seguintes:
+	  <quote>scalar</quote> (escalar), <quote>series</quote> (serie),
+	  <quote>matrix</quote> (matriz), <quote>string</quote> (cadea de texto),
+	  <quote>bundle</quote> (feixe), <quote>array</quote> (arranxo),
+	  <quote>list</quote> (lista), ou <quote>null</quote>.
 	</para>
       </description>
     </function>

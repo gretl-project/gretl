@@ -15283,18 +15283,23 @@
       <subhead>Guardar en una base de datos</subhead>
       <para>
 	La posibilidad de guardar en el formato de base de datos de GRETL
-	está pensada para ayudar a construir conjuntos largos de series, con
-	mezclas de frecuencias y rangos de observaciones. En este momento,
-	esta opción solo está disponible para datos de series temporales de
-	tipo anual, trimestral o mensual. Si haces el guardado en un archivo
-	que ya existe, el efecto por defecto consiste en añadir las series
-	recientemente guardadas al contenido existente en la base de datos.
-	En este contexto, es un fallo que una (o más) de las variables que se
-	van a guardar tenga el mismo nombre que una variable que ya está
-	presente en la base de datos. La opción <opt>overwrite</opt> tiene
-	como consecuencia que, si hay nombres de variables en común, la
-	variable recientemente guardada substituye a la variable del mismo
-	nombre en el conjunto de datos original.
+	está pensada construir conjuntos largos de series, con mezclas de
+	frecuencias y rangos de observaciones. En este momento, esta opción
+	solo está disponible para datos de series temporales de tipo anual,
+	trimestral o mensual, o para datos sin fecha (de sección cruzada).
+	Una base de datos de GRETL toma la forma de dos archivos: uno con
+	sufijo <lit>.bin</lit> para guardar los datos en formato binario, y un
+	archivo de texto plano con el sufijo <lit>.idx</lit> para los metadatos.
+	Para indicar el nombre del archivo de salida en la linea de instrucciones,
+	debes indicar el sufijo <lit>.bin</lit> o no indicar ninguno.
+      </para>
+      <para>
+	Si se guarda en una base de datos que ya existe, el efecto por defecto
+	consiste en añadir series al contenido existente en la base de datos. En
+	este contexto, es un fallo que alguna de las series que se van a guardar
+	tenga el mismo nombre que alguna que ya está presente en la base de datos.
+	La opción <opt>overwrite</opt> tiene como efecto que, si hay nombres de
+	variables en común, los datos recientemente guardados sustituyen a los valores previos.
       </para>
       <para>
 	La opción <opt>comment</opt> está disponible cuando se guardan datos como

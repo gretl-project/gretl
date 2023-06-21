@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-04-24 12:53+0200\n"
-"PO-Revision-Date: 2023-05-16 19:19+0200\n"
+"PO-Revision-Date: 2023-06-21 12:47+0200\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -1749,7 +1749,7 @@ msgid ""
 msgstr ""
 "O conxunto de datos contén %d series con valores en cadeas de texto. Esas "
 "series\n"
-"non se poden compactar máis que mediante o 'primeiro' o 'último' métodos."
+"non se poden compactar máis que mediante o 'primeiro' ou o 'último' métodos."
 
 #: lib/src/dataset.c:3510
 #, c-format
@@ -6052,7 +6052,7 @@ msgstr "Kalman: Falta a matriz *%s* requirida."
 #: lib/src/kalman.c:617
 #, c-format
 msgid "kalman: %s is %d x %d, should be %d x %d\n"
-msgstr "kalman: %s é %d x %d, e debería ser %d x %d\n"
+msgstr "Kalman: %s é %d x %d, e debería ser %d x %d\n"
 
 #: lib/src/kalman.c:621
 #, c-format
@@ -13022,7 +13022,7 @@ msgid ""
 " * other information\n"
 "\n"
 msgstr ""
-"Isto podería indicar (se é as aplicable):\n"
+"Isto podería indicar (se é aplicable):\n"
 " * tópicos que abarca o conxunto de datos\n"
 " * países incluídos\n"
 " * unidades de medida\n"

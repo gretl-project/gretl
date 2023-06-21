@@ -15283,18 +15283,23 @@
       <subhead>Gardar nun banco de datos</subhead>
       <para>
 	A posibilidade de gardar no formato de banco de datos de GRETL
-	está pensada para axudar a construír longos conxuntos de series,
-	con mesturas de frecuencias e rangos de observacións. Neste momento,
-	esta opción só está dispoñible para datos de series temporais de
-	tipo anual, trimestral ou mensual. Se fas o gardado nun ficheiro
-	que xa existe, o efecto por defecto consiste en engadir as series
-	recentemente gardadas ao contido existente no banco de datos.
-	Neste contexto, é un fallo que unha (ou máis) das variables que se
-	van gardar teña o mesmo nome ca unha variable que xa está presente
-	no banco de datos. A opción <opt>overwrite</opt> ten como consecuencia
-	que, se hai nomes de variables en común, a variable recentemente
-	gardada substitúe á variable do mesmo nome no conxunto de datos
-	orixinal.
+	está pensada para construír longos conxuntos de series, con mesturas
+	de frecuencias e rangos de observacións. Neste momento, esta opción
+	só está dispoñible para datos de series temporais de tipo anual,
+	trimestral ou mensual, ou para datos sen data (de sección cruzada).
+	Un banco de datos de GRETL toma a forma de dous ficheiros: un co
+	sufixo <lit>.bin</lit> para gardar os datos en formato binario, e un
+	ficheiro de texto plano co sufixo <lit>.idx</lit> para os metadatos.
+	Para indicar o nome do ficheiro de saída na liña de instrucións,
+	debes indicar o sufixo <lit>.bin</lit> ou non indicar ningún.
+      </para>
+      <para>
+	Cando se garda nun banco de datos que xa existe, o efecto por defecto
+	consiste en engadir series ao contido existente no banco de datos. Neste
+	contexto, é un fallo que algunha das series que se van gardar teña o
+	mesmo nome ca algunha que xa está presente no banco de datos. A opción
+	<opt>overwrite</opt> ten como consecuencia que, se hai nomes de variables
+	en común, os datos recentemente gardados substitúen aos valores previos.
       </para>
       <para>
 	A opción <opt>comment</opt> está dispoñible cando se gardan datos como

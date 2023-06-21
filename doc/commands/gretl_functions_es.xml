@@ -5897,7 +5897,7 @@
 	  mediante substracción, como en el ejemplo siguiente:
 	</para>
 	<code>
-	  series hptrend = y - hfilt(y)
+	  series hptrend = y - hpfilt(y)
 	</code>
 	<para>
 	  <seelist>
@@ -12472,12 +12472,13 @@
 
     <function name="sst" section="stats" output="scalar">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-vec">y</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devuelve un escalar con la suma de los cuadrados de las desviaciones respecto a la
-	  media (SCT), de las observaciones no ausentes de la serie <argname>y</argname>.
+	  Devuelve un escalar con la suma de los cuadrados de las desviaciones
+	  respecto a la media (SCT), de las observaciones no ausentes de la
+	  serie o vector <argname>y</argname>.
 	  <seelist>
             <fncref targ="var"/>
 	  </seelist>
@@ -13461,18 +13462,45 @@ d =  8,0000000
       </description>
     </function>
 
+    <function name="typename" section="data-utils" output="string">
+      <fnargs>
+	<fnarg type="string">nombre</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Si <argname>nombre</argname> es el identificador de un objeto definido
+	  vigente, devuelve en formato de cadena de texto, el tipo de objeto:
+	  <lit>scalar (escalar)</lit>, <lit>series (serie)</lit>,
+	  <lit>matrix (matriz)</lit>, <lit>string (cadena de texto)</lit>,
+	  <lit>bundle (paquete)</lit>, o uno de los tipos de arrays:
+	  <lit>matrices</lit>, <lit>bundles</lit>, <lit>strings</lit>,
+	  <lit>lists</lit> o <lit>arrays</lit>. Cuando el argumento no
+	  identifica un objeto, se devuelve la cadena <lit>null</lit>.
+	</para>
+	<subhead>Nota de compatibilidad</subhead>
+	<para>
+	  Esta función está pensada como una sustituta superior de las
+	  antiguas funciones <fncref targ="typeof"/> y <fncref targ="typestr"/>,
+	  pero por el momento estas últimas van a seguir estando
+	  disponibles.
+	</para>
+      </description>
+    </function>
+
     <function name="typeof" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">nombre</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devuelve un código de tipo numérico cuando <argname>nombre</argname>
-	  es una cadena de texto que identifica un objeto que ya está definido:
-	  1 para un escalar, 2 para una serie, 3 para una matriz, 4 para una
-	  cadena de texto, 5 para un 'bundle', 6 para un 'array' y 7 para una
-	  lista; en otro caso devuelve 0. Para obtener la cadena de texto que concuerda
-	  con el valor que se devuelve, puedes usar la función <fncref targ="typestr"/>.
+	  Una función heredada: consulta la función <fncref targ="typename"/>
+	  como alternativa superior. Devuelve un código de tipo numérico cuando
+	  <argname>nombre</argname> es una cadena de texto que identifica un
+	  objeto que ya está definido: 1 para un escalar, 2 para una serie,
+	  3 para una matriz, 4 para una cadena de texto, 5 para un 'bundle',
+	  6 para un 'array' y 7 para una lista; en otro caso devuelve 0. Para
+	  obtener la cadena de texto que concuerda con el valor que se
+	  devuelve, puedes usar la función <fncref targ="typestr"/>.
 	</para>
 	<para>
 	  También puedes utilizar esta función para obtener qué tipo de elemento es
@@ -13496,14 +13524,16 @@ d =  8,0000000
       </fnargs>
       <description>
 	<para>
-	  Devuelve una cadena de texto con el nombre del tipo de dato de GRETL que
-	  se corresponde con el argumento <argname>codigotipo</argname>. Puedes
-	  utilizarlo junto con las funciones <fncref targ="typeof"/> e
-	  <fncref targ="inbundle"/>. La cadena de texto que se devuelve puede ser
-	  una de las siguientes: <quote>scalar</quote>, <quote>series</quote>,
-	  <quote>matrix</quote>, <quote>string</quote>,
-	  <quote>bundle</quote>, <quote>array</quote>,
-	  <quote>list</quote>, o <quote>null</quote>.
+	  Una función heredada: consulta la función <fncref targ="typename"/>
+	  como alternativa superior. Devuelve una cadena de texto con el
+	  nombre del tipo de dato de GRETL que se corresponde con el argumento
+	  <argname>codigotipo</argname>. Puedes utilizarlo junto con las
+	  funciones <fncref targ="typeof"/> e <fncref targ="inbundle"/>.
+	  La cadena de texto que se devuelve puede ser una de las siguientes:
+	  <quote>scalar</quote> (escalar), <quote>series</quote> (serie),
+	  <quote>matrix</quote> (matriz), <quote>string</quote> (cadena de texto),
+	  <quote>bundle</quote> (paquete), <quote>array</quote> (ordenación),
+	  <quote>list</quote> (lista), o <quote>null</quote>.
 	</para>
       </description>
     </function>
