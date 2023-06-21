@@ -17,8 +17,9 @@
  *
  */
 
-/* Support for the built-in "gridplot" command for producing
-   multiple plots.
+/* Support for the commands "gpbuild" and "gridplot", which produce
+   plots using gnuplot's "multiplot" apparatus. This facility was
+   added in May/June 2023.
 */
 
 #include "libgretl.h"
@@ -179,7 +180,7 @@ void gretl_multiplot_destroy (void)
     set_multiplot_defaults();
 }
 
-/* This responds to the starting command for a gpbuild block */
+/* This responds to the starting command for a "gpbuild" block */
 
 int gretl_multiplot_start (gretlopt opt)
 {
@@ -652,7 +653,7 @@ static int disassemble_multiplot (const char *buf, int np)
 }
 
 /* Revise an existing gridplot buffer or command file,
-   presumably obtained via "end gridplot" with the --output
+   presumably obtained via "end gpbuild" with the --output
    or --outbuf option or perhaps via the "standalone"
    usage of gridplot. This may just be a matter of selecting
    an output format, or it may involve changes to options
