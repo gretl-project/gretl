@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-04-24 12:53+0200\n"
-"PO-Revision-Date: 2023-05-31 00:18+0200\n"
+"PO-Revision-Date: 2023-06-22 14:46+0200\n"
 "Last-Translator: Sven Schreiber <svetosch (at) gmx (dot) net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -1813,7 +1813,6 @@ msgid "no mapfile is present"
 msgstr "Keine Kartendatei liegt vor"
 
 #: lib/src/dataset.c:5898
-#, fuzzy
 msgid "dataset is resampled!"
 msgstr "Datensatz ist neu unterteilt!"
 
@@ -5813,9 +5812,8 @@ msgid "Invalid package name (31 bytes max)"
 msgstr "Ungültiger Paketname (max. 31 Bytes)"
 
 #: lib/src/gretl_zip.c:646
-#, fuzzy
 msgid "Getting in place... "
-msgstr "Ersetzen..."
+msgstr "Gehe zum Ort... "
 
 #: lib/src/gretl_zip.c:654
 msgid "Making temporary directory... "
@@ -10618,11 +10616,12 @@ msgid "Results of DB.NOMICS search on '%s'\n"
 msgstr "Ergebnisse von DB.NOMICS-Suche nach '%s'\n"
 
 #: gui/database.c:1994
-#, fuzzy
 msgid ""
 "Provider/Dataset : description\n"
 "\n"
-msgstr "gretl: Datenbankbeschreibung"
+msgstr ""
+"Anbieter/Datensatz : Beschreibung\n"
+"\n"
 
 #: gui/database.c:2008
 msgid "gretl: DB.NOMICS search"
@@ -10634,9 +10633,9 @@ msgid "DB.NOMICS search on '%s' in dataset %s/%s\n"
 msgstr "DB.NOMICS-Suche nach '%s' im Datensatz %s/%s\n"
 
 #: gui/database.c:2047
-#, fuzzy, c-format
+#, c-format
 msgid "Matching series %d to %d of %d"
-msgstr "zeige Reihen %d-%d von %d"
+msgstr "Zuordnen von Reihen %d bis %d von %d"
 
 #: gui/database.c:2185
 msgid "No matches were found"
@@ -16325,9 +16324,8 @@ msgstr ""
 "die Stichprobe zum Schätzen verkürzen (Stichprobenmenü)."
 
 #: gui/library.c:2165
-#, fuzzy
 msgid "The group-means dataset is not available"
-msgstr "Die gewünschte Statistik ist nicht verfügbar"
+msgstr "Datensatz der Gruppenmittel nicht verfügbar."
 
 #: gui/library.c:2254 gui/selector.c:8704
 msgid "No variables are selected"
@@ -20388,9 +20386,9 @@ msgid "tobit: the dependent variable cannot be included as a regressor"
 msgstr "tobit: abhängige Variable kann nicht Regressor sein"
 
 #: plugin/iso3166.c:405
-#, fuzzy, c-format
+#, c-format
 msgid "isocountry: '%s' was not matched\n"
-msgstr "%s: Spalte '%s' nicht gefunden"
+msgstr "isocountry: '%s' nicht zugeordnet\n"
 
 #: plugin/johansen.c:349
 msgid "renormalized beta"
@@ -20668,23 +20666,22 @@ msgstr ""
 "'%s' bei Zeile %d, Spalte %d\n"
 
 #: plugin/odbc_import.c:700
-#, fuzzy, c-format
+#, c-format
 msgid "Number of columns = %d\n"
-msgstr "   Spaltenzahl = %d\n"
+msgstr "Spaltenzahl = %d\n"
 
 #: plugin/odbc_import.c:702
-#, fuzzy, c-format
+#, c-format
 msgid "ODBC: expected %d columns but got %d"
-msgstr "Erwartete %s, aber fand %s"
+msgstr "ODBC: erwartete %d Spalten, aber fand %d"
 
 #: plugin/odbc_import.c:707
 msgid "Didn't get any data"
 msgstr "Keine Daten erhalten"
 
 #: plugin/ods_import.c:228
-#, fuzzy
 msgid "File contains no data"
-msgstr "Datei enthält keine Daten\n"
+msgstr "Datei enthält keine Daten"
 
 #: plugin/ods_import.c:423
 #, c-format
@@ -20705,9 +20702,8 @@ msgid "didn't get office:document-content\n"
 msgstr "keinen office:document-Inhalt erhalten\n"
 
 #: plugin/ods_import.c:1054
-#, fuzzy
 msgid "Couldn't find mimetype\n"
-msgstr "Konnte %s nicht finden"
+msgstr "Konnte MIME-Typ nicht finden\n"
 
 #: plugin/ods_import.c:1059
 #, c-format
@@ -20801,14 +20797,14 @@ msgid "Scanning %d fonts"
 msgstr "Scanne %d Schriftarten"
 
 #: plugin/purebin.c:461
-#, fuzzy, c-format
+#, c-format
 msgid "failed reading variable %d\n"
-msgstr "Zeittrendvariable"
+msgstr "Lesen von Variable %d schlug fehl\n"
 
 #: plugin/purebin.c:576 plugin/purebin.c:580
-#, fuzzy, c-format
+#, c-format
 msgid "failed reading variable %d"
-msgstr "Zeittrendvariable"
+msgstr "Lesen von Variable %d schlug fehl"
 
 #: plugin/quantreg.c:380
 msgid "Couldn't calculate confidence intervals for this model"
@@ -20901,9 +20897,9 @@ msgstr ""
 "als 'missing' ausgewiesen.\n"
 
 #: plugin/spss_import.c:1818
-#, fuzzy, c-format
+#, c-format
 msgid "Value -> label mappings for variable %d (%s)\n"
-msgstr "P-Wert war am höchsten für Variable %d (%s)"
+msgstr "Wert -> Bezeichner - Zuweisung für Variable %d (%s)\n"
 
 #: plugin/spss_import.c:1822
 #, c-format
@@ -20919,11 +20915,13 @@ msgid "unknown data type"
 msgstr "Unbekannter Datentyp"
 
 #: plugin/stata_import.c:948
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Value -> label mappings for variable %d (%s)\n"
-msgstr "P-Wert war am höchsten für Variable %d (%s)"
+msgstr ""
+"\n"
+"Wert -> Bezeichner - Zuweisung für Variable %d (%s)\n"
 
 #: plugin/stata_import.c:951
 #, c-format
@@ -20947,14 +20945,13 @@ msgstr ""
 "(Type 0 characteristic of nonzero length)"
 
 #: plugin/stata_import.c:1979
-#, fuzzy
 msgid "This dta version not yet supported\n"
-msgstr "Libsvm nicht unterstützt"
+msgstr "Diese dta-Version wird noch nicht unterstützt\n"
 
 #: plugin/stata_import.c:2109
-#, fuzzy, c-format
+#, c-format
 msgid "Stata file version %d\n"
-msgstr "gretl-Version %s\n"
+msgstr "Stata-Dateiversion %d\n"
 
 #: plugin/stata_import.c:2155
 msgid "cannot read Stata .dta on this platform"
@@ -20973,42 +20970,40 @@ msgid "upper tail"
 msgstr "rechtsseitig"
 
 #: plugin/svm.c:322
-#, fuzzy, c-format
+#, c-format
 msgid "%s: unrecognized SVM type\n"
-msgstr "'%s': unbekannter Name"
+msgstr "%s: unbekannter SVM-Typ\n"
 
 #: plugin/svm.c:331
-#, fuzzy, c-format
+#, c-format
 msgid "%s: unrecognized kernel type\n"
-msgstr "'%s': unbekannter Name"
+msgstr "%s: unbekannter Kerntyp\n"
 
 #: plugin/svm.c:401
 msgid "Sorry, svm weighting not handled yet\n"
 msgstr "Sorry, SVM-Gewichtung noch nicht verfügbar\n"
 
 #: plugin/svm.c:706
-#, fuzzy, c-format
+#, c-format
 msgid "svm model: required matrix %s was not found"
-msgstr "%s: Spalte '%s' nicht gefunden"
+msgstr "svm-Modell: notwendige Matrix %s nicht gefunden"
 
 #: plugin/svm.c:736
-#, fuzzy, c-format
+#, c-format
 msgid "svm model: required list %s was not found"
-msgstr "%s: Spalte '%s' nicht gefunden"
+msgstr "svm-Modell: notwendige Liste %s nicht gefunden"
 
 #: plugin/svm.c:1444
 msgid "Calling prediction function (this may take a while)\n"
 msgstr "Rufe die Vorhersagefunktion auf (kann etwas dauern)\n"
 
 #: plugin/svm.c:1496
-#, fuzzy
 msgid "Training data"
-msgstr "Originaldaten"
+msgstr "Trainingsdaten"
 
 #: plugin/svm.c:1496
-#, fuzzy
 msgid "Test data"
-msgstr "Datentyp"
+msgstr "Testdaten"
 
 #: plugin/svm.c:1501
 #, c-format
@@ -21016,37 +21011,32 @@ msgid "%s: miss ratio = %g (MSE = %g, R^2 = %g)\n"
 msgstr "%s: Falschanteil = %g (MSE = %g, R^2 = %g)\n"
 
 #: plugin/svm.c:1512
-#, fuzzy
 msgid "correct predictions"
-msgstr "Prognose"
+msgstr "korrekte Vorhersagen"
 
 #: plugin/svm.c:1529
-#, fuzzy
 msgid "Cross validation"
-msgstr "Kreuz_tabelle"
+msgstr "Kreuzvalidierung"
 
 #: plugin/svm.c:1805
 msgid "parameter search grid (start, stop, step):\n"
 msgstr "Parameter-Suchgitter (Start, Stopp, Schritt):\n"
 
 #: plugin/svm.c:1813
-#, fuzzy
 msgid "values"
-msgstr "Wert"
+msgstr "Werte"
 
 #: plugin/svm.c:1814
-#, fuzzy
 msgid "linear"
-msgstr "Linie"
+msgstr "linear"
 
 #: plugin/svm.c:1814
-#, fuzzy
 msgid "log2-based"
-msgstr "datenbasiert"
+msgstr "log2-basiert"
 
 #: plugin/svm.c:1993
 msgid "Non-RBF kernel, don't know how to tune parameters\n"
-msgstr "Nicht-RBF-Kern, unklar wie die Parameter angepasst werden\n"
+msgstr "Nicht-RBF-Kern, Parameteranpassung unklar\n"
 
 #: plugin/svm.c:2050
 #, c-format
@@ -21059,60 +21049,57 @@ msgid "MPI: dividing %d parameter specifications between %d processes\n"
 msgstr "MPI: teile %d Parameter-Spezifikationen zwischen %d Prozessen auf\n"
 
 #: plugin/svm.c:2401
-#, fuzzy
 msgid "Cross-validation"
-msgstr "Kreuzvalidierungs-Kriterium"
+msgstr "Kreuzvalidierung"
 
 #: plugin/svm.c:2403
-#, fuzzy, c-format
+#, c-format
 msgid "using %d consecutive blocks"
-msgstr "mit %d Beobachtungen"
+msgstr "mit %d zusammenhängenden Blöcken"
 
 #: plugin/svm.c:2405
-#, fuzzy, c-format
+#, c-format
 msgid "using %d values of %s"
-msgstr ""
-"bei %d Teilstichproben der Größe %d\n"
-"\n"
+msgstr "mit %d Werten von %s"
 
 #: plugin/svm.c:2407
-#, fuzzy, c-format
+#, c-format
 msgid "using %d random folds"
-msgstr "Saat für Zufallsteilbereiche setzen"
+msgstr "mit %d Zufallsteilbereichen"
 
 #: plugin/svm.c:2409
 msgid "(may take a while)"
 msgstr "(kann etwas dauern)"
 
 #: plugin/svm.c:2537
-#, fuzzy, c-format
+#, c-format
 msgid "%s: found %d folds\n"
-msgstr "%s: Operand %d sollte %s sein"
+msgstr "%s: %d Teilbereiche gefunden\n"
 
 #: plugin/svm.c:2539
-#, fuzzy, c-format
+#, c-format
 msgid "invalid number of folds %d\n"
-msgstr "Ungültige Anzahl an Ziehungen %d"
+msgstr "ungültige Teilbereichsanzahl %d\n"
 
 #: plugin/svm.c:2649
-#, fuzzy, c-format
+#, c-format
 msgid "svm: unrecognized parameter '%s'"
-msgstr "Unerkannter Datentyp '%s'"
+msgstr "svm: unerkannter Parameter '%s'"
 
 #: plugin/svm.c:2691
-#, fuzzy, c-format
+#, c-format
 msgid "svm: invalid 'loadmod' value %d\n"
-msgstr "%s: ungültiger Wert '%s'"
+msgstr "svm: ungültiger 'loadmod'-Wert %d'\n"
 
 #: plugin/svm.c:2701
-#, fuzzy, c-format
+#, c-format
 msgid "svm: invalid 'scaling' value %d\n"
-msgstr "%s: ungültiger Wert '%s'"
+msgstr "svm: ungültiger 'scaling'-Wert %d\n"
 
 #: plugin/svm.c:2710
-#, fuzzy, c-format
+#, c-format
 msgid "svm: invalid 'predict' value %d\n"
-msgstr "%s: ungültiger Wert '%s'"
+msgstr "svm: ungültiger 'predict'-Wert %d\n"
 
 #: plugin/svm.c:2729
 msgid "no training will be done"
@@ -21124,9 +21111,10 @@ msgid "svm: n_train must be at least %d"
 msgstr "svm: n_train muss mindestens %d sein"
 
 #: plugin/svm.c:2737
-#, fuzzy, c-format
+#, c-format
 msgid "svm: n_train cannot exceed the number of complete observations, %d"
-msgstr "Zahl der Instrumente (%d) übersteigt die Zahl der Beobachtungen (%d)"
+msgstr ""
+"svm: n_train darf die Zahl der kompletten Beobachtungen nicht übersteigen, %d"
 
 #: plugin/svm.c:2747
 #, c-format
@@ -21134,14 +21122,14 @@ msgid "n_train = %d; use observations %s to %s for training\n"
 msgstr "n_train = %d; verwende Beobachtungen %s bis %s zum trainieren\n"
 
 #: plugin/svm.c:2756
-#, fuzzy, c-format
+#, c-format
 msgid "svm: invalid 'folds' value %d\n"
-msgstr "%s: ungültiger Wert '%s'"
+msgstr "svm: ungültiger 'folds'-Wert %d\n"
 
 #: plugin/svm.c:2801
-#, fuzzy, c-format
+#, c-format
 msgid "svm: invalid regcrit value %d"
-msgstr "%s: ungültiger Wert '%s'"
+msgstr "svm: ungültiger regcrit-Wert %d"
 
 #: plugin/svm.c:2867
 msgid "The foldvar and consecutive options are incompatible"
@@ -21154,12 +21142,12 @@ msgstr "svm: Option 'use_mpi' wird ohne Suche ignoriert"
 #: plugin/svm.c:3008
 #, c-format
 msgid "Getting data ranges from %s... "
-msgstr ""
+msgstr "Abrufen von Datenbereichen von %s... "
 
 #: plugin/svm.c:3014
 #, c-format
 msgid "Getting data ranges (sample = %d to %d)... "
-msgstr ""
+msgstr "Datenbereiche abrufen (Stichprobe = %d bis %d)… "
 
 #: plugin/svm.c:3039
 msgid "Loading svm model from bundle... "
@@ -21184,14 +21172,15 @@ msgid "Checking parameter values... "
 msgstr "Überprüfe Parameterwerte... "
 
 #: plugin/svm.c:3096
-#, fuzzy
 msgid "svm: probability estimates not supported for this specification"
-msgstr "%s: Sprachumgebung auf diesem System nicht unterstützt"
+msgstr ""
+"svm: Wahrscheinlichkeits-Schätzungen für diese Spezifikation nicht "
+"unterstützt"
 
 #: plugin/svm.c:3101 plugin/svm.c:3106
-#, fuzzy, c-format
+#, c-format
 msgid "svm: cross validation criterion %d not applicable"
-msgstr "Kreuzvalidierungs-Kriterium"
+msgstr "svm: Kreuzvalidierungs-Kriterium %d nicht anwendbar"
 
 #: plugin/svm.c:3114
 #, c-format
@@ -21208,37 +21197,36 @@ msgid "Training done, err = %d\n"
 msgstr "Training abgeschlossen, err = %d\n"
 
 #: plugin/svm.c:3254
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d testing observations\n"
-msgstr "Fand %d Variablen und %d Beobachtungen\n"
+msgstr "Fand %d Test-Beobachtungen\n"
 
 #: plugin/svm.c:3311
-#, fuzzy, c-format
+#, c-format
 msgid "Dependent variable is NA at obs %d"
-msgstr "Abhängige Variable 2"
+msgstr "Abhängige Variable hat NA bei Beob. %d"
 
 #: plugin/svm.c:3464
-#, fuzzy
 msgid "svm: invalid list argument"
-msgstr "%s: ungültiges Optionsargument"
+msgstr "svm: ungültiges Listenargument"
 
 #: plugin/svm.c:3517
 msgid "Allocating problem space... "
-msgstr ""
+msgstr "Problemraum-Allokation... "
 
 #: plugin/svm.c:3525
 msgid "Scaling and transcribing data... "
-msgstr ""
+msgstr "Daten skalieren und transkribieren... "
 
 #: plugin/sysest.c:747
-#, fuzzy, c-format
+#, c-format
 msgid "Iteration %3d, ll = %#.8g\n"
-msgstr "iteration %2d: SSR = %.8g\n"
+msgstr "Iteration %3d, ll = %#.8g\n"
 
 #: plugin/sysest.c:758
-#, fuzzy, c-format
+#, c-format
 msgid "Iteration %3d, criterion = %g\n"
-msgstr "Iteration %d: log likelihood = %#.12g"
+msgstr "Iteration %3d: Kriterium = %g\n"
 
 #: plugin/sysest.c:766
 #, c-format
@@ -21632,9 +21620,9 @@ msgstr ""
 "Fand %d gültige(s) Tabellenblatt/blätter\n"
 
 #: plugin/xlsx_import.c:1611
-#, fuzzy, c-format
+#, c-format
 msgid "Name missing for variable %d\n"
-msgstr "Fehlwert bei Variable '%s'"
+msgstr "Name fehlt für Variable %d\n"
 
 #: plugin/xlsx_import.c:1720
 msgid "Error reading xlsx data\n"
