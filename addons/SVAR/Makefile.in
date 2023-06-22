@@ -70,21 +70,22 @@ check: $(PKG).gfn
 install: $(PKG).gfn installdirs	$(INSTDOC)
 	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
 
-# a few things have been renamed from 1.98 to 2.0, so
-# for good measure zap the examples directory first
-
-	rm -rf $(DESTDIR)$(GFNDIR)/$(PKG)/examples/*
 	for f in examples/*.gdt ; do \
-	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples/ ; done
 	for f in examples/Traditional/*.inp ; do \
-	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples/Traditional ; done
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples/Traditional/ ; done
 	for f in examples/SetRestrictions/*.inp ; do \
-	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples/SetRestrictions ; done
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples/SetRestrictions/ ; done
 
 install-doc: doc/$(PKG).pdf
 	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
 
 installdirs:
+	# a few things have been renamed from 1.98 to 2.0, so
+	# for good measure zap the examples directory first
+	# and rebuild structure from scratch
+	rm -rf $(DESTDIR)$(GFNDIR)/$(PKG)/examples/*
+
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples/Traditional
