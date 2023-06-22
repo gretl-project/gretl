@@ -69,12 +69,17 @@ check: $(PKG).gfn
 
 install: $(PKG).gfn installdirs	$(INSTDOC)
 	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
-	for f in examples/*.inp ; do \
-	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
+
+# a few things have been renamed from 1.98 to 2.0, so
+# for good measure zap the examples directory first
+
+	rm -rf $(DESTDIR)$(GFNDIR)/$(PKG)/examples/*
 	for f in examples/*.gdt ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
-	for f in examples/SignRestrictions/* ; do \
-	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples/SignRestrictions ; done
+	for f in examples/Traditional/*.inp ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples/Traditional ; done
+	for f in examples/SetRestrictions/*.inp ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples/SetRestrictions ; done
 
 install-doc: doc/$(PKG).pdf
 	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
@@ -82,7 +87,8 @@ install-doc: doc/$(PKG).pdf
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples/SignRestrictions
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples/Traditional
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples/SetRestrictions
 
 clean: 
 	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip
