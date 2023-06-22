@@ -839,7 +839,7 @@
 	  <effect>mostra i dettagli delle iterazioni</effect>
         </option>
         <option>
-	  <flag>--quite</flag>
+	  <flag>--quiet</flag>
 	  <effect>non mostra i risultati</effect>
         </option>
         <option>
@@ -876,7 +876,7 @@
 	</option>
 	<option>
           <flag>--lagselect</flag>
-          <effect>see below</effect>
+          <effect>vedi sotto</effect>
 	</option>
       </options>
       <examples>
@@ -1085,6 +1085,26 @@
     <description>
       <para>
 	Vedi <cmdref targ="arima"/>; <lit>arma</lit> è un alias.
+      </para>
+    </description>
+  </command>
+
+  <command name="ARMA-lagselect" section="Tests" context="gui"
+    label="AR(I)MA lag-length selection">
+
+    <description>
+      <para>
+	In questa finestra di dialogo è possibile specificare un
+	modello ARMA o ARIMA come di consueto, ma gli ordini di
+	ritardo specificati sono intesi come massimi.
+      </para>
+      <para>
+	L'output è una tabella che mostra i valori dei criteri di
+	informazione di Akaike (AIC), Schwarz (BIC) e
+	Hannan&ndash;Quinn (HQC), e anche la log-verosimiglianza,
+	calcolata per specifiche che vanno dal minimo al massimo
+	scelto. Questo ha lo scopo dare indicazioni per la selezione
+	degli ordini ottimali dei ritardi.
       </para>
     </description>
   </command>
@@ -1661,19 +1681,23 @@
 	di uno script nel caso in cui si verifichi un errore
 	nell'esecuzione di un comando. Un eventuale errore viene
 	registrato in un codice d'errore interno cui è possibile
-	accedere con <fncref targ="$error"/> (un valore nullo indica che
-	l'esecuzione ha avuto successo). Il valore di
-	<fncref targ="$error"/> dovrebbe sempre essere controllato subito
-	dopo aver usato <lit>catch</lit>, in modo da adottare le
-	misure più opportune nel caso in cui il comando non dovesse
-	aver avuto successo.
+	accedere con <fncref targ="$error"/> (un valore nullo indica
+	che l'esecuzione ha avuto successo). Il valore di <fncref
+	targ="$error"/> dovrebbe sempre essere controllato subito dopo
+	aver usato <lit>catch</lit>, in modo da adottare le misure più
+	opportune nel caso in cui il comando non dovesse aver avuto
+	successo.
       </para>
       <para>
-	<lit>catch</lit> non può essere usato prima di <lit>if</lit>,
-	<lit>elif</lit> o <lit>endif</lit>. Inoltre, non può essere
-	neanche usato per chiamate a funzioni definite dall'utente; il
-	suo uso è limitato ai comandi di gretl e alle chiamate a
-	funzioni od operatori <quote>nativi</quote>.
+	Il comando <lit>catch</lit> non può essere usato prima di
+	<lit>if</lit>, <lit>elif</lit> o <lit>endif</lit>. Inoltre,
+	non può essere neanche usato per chiamate a funzioni definite
+	dall'utente; il suo uso è limitato ai comandi di gretl e alle
+	chiamate a funzioni od operatori
+	<quote>nativi</quote>. Inoltre, <lit>catch</lit> non si può
+	usare con l'operatore <quote>freccia</quote> per
+	l'assegnazione di modelli o grafici alla sessione (vedi
+	<guideref targ="chap:modes"/>).
       </para>
     </description>
   </command>
@@ -7125,6 +7149,57 @@ possono essere nidificati.
     </para>
   </description>
 </command>
+
+  <command name="kdplot" section="Graphs" label="Kernel density plot">
+    <usage>
+      <arguments>
+	<argument>y</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--alt</flag>
+	  <effect>usa il kernel di Epanechnikov</effect>
+        </option>
+        <option>
+	  <flag>--scale</flag>
+	  <optparm>s</optparm>
+	  <effect>fattore di scala per l'ampiezza di banda</effect>
+        </option>
+        <option>
+	  <flag>--output</flag>
+	  <optparm>nome file</optparm>
+	  <effect>salva il grafico nel file specificato</effect>
+        </option>
+      </options>
+    </usage>
+    <description>
+      <para>
+	Produce una stima della densità del kernel per la serie
+	<argname>y</argname>. Di default, il kernel è gaussiano, ma se
+	con l'opzione <opt>alt</opt> viene usato il kernel di
+	Epanechnikov. L'opzione <opt>scale</opt>, il cui valore predefinito è
+	1.0, serve a controllare quanto sia liscio il risultato
+	(valori più alti producono un risultato più liscio). 
+      </para>
+      <para context="cli">
+	L'opzione <opt>output</opt> ha l'effetto di salvare il output
+	nel file specificato; usando <quote>display</quote> l'output
+	andrà sullo schermo. Vedi il comando <cmdref targ="gnuplot"/>
+	per maggiori dettagli su questa opzione.  command for more
+	detail on this option.
+      </para>
+      <para>
+	Vedi anche, per un'opzione più flessibile che consente di
+	salvare il risultato in una matrice, la funzione <fncref
+	targ="kdensity"/>.
+      </para>
+    </description>
+    <gui-access>
+      <menu-path>/Variabile/Grafico densità stimata</menu-path>
+    </gui-access>
+  </command>
+
+
 
 <command name="kpss" section="Tests" label="Test KPSS di stazionarietà">
   <usage>
@@ -16285,25 +16360,30 @@ qual caso viene usato QML.
 	ritardi.
       </para>
 
+      <subhead context="cli">Lag selection</subhead>
       <para context="cli">
-	Se si usa l'opzione <opt>lagselect</opt>, il primo parametro
-	del comando <lit>var</lit> viene interpretato come il massimo
-	ordine di ritardo.  In questo caso, il comando produce una
-	tabella che mostra i valori dei criteri di informazione di
-	Akaike (AIC), Schwartz (BIC) e Hannan&ndash;Quinn (HQC)
-	calcolati per VAR dall'ordine 1 fino all'ordine massimo
-	indicato. Questa opzione viene usata per scegliere l'ordine
-	del VAR più appropriato, e l'output consueto del VAR non viene
-	mostrato. La tavola coi criteri di informazione è recuperabile
-	sotto forma di matrice tramite l'accessore <fncref
-	targ="$test"/>. In questo contesto, l'opzione
-	<opt>minlag</opt> serve a stabilire l'ordine minimo. Usando il
-	valore 0 si ammette la possibilità che il ritardo ottimale sia
-	nullo, e che in realtà il modello non sia affatto un VAR. Al
-	contrario, se si dà per scontato che l'ordine minimo sia 4,
-	con <opt>minlag=4</opt> si risparmia qualche millisecondo.
+	Se si usa l'opzione <opt>lagselect</opt>, non viene presentato
+	in normale output del comando. Il primo parametro del comando
+	<lit>var</lit> viene interpretato come il
+	<emphasis>massimo</emphasis> ordine di ritardo e viene
+	prodotta una tabella che mostra valori comarativi dal VAR di
+	ordine 1 fino al massimo specificato. La tavola include la
+	log-verosimiglianza e un <math>P</math>-value + per un test
+	Likelihood Ratio (LR), seguiti dai criteri di informazione di
+	Akaike (AIC), Schwartz (BIC) e Hannan&ndash;Quinn (HQC). Il
+	test LR confronta la specificazione di ogni riga con qualla
+	precedente, sotto l'ipotesi che i parametri dell'ultimo
+	ritardo siano tutti 0. La tabella coi risultati è disponibile
+	tramite l'accessore <fncref targ="$test"/>.
       </para>
-
+      <para>
+	In questo contesto, l'opzione <opt>minlag</opt> serve a
+	stabilire l'ordine minimo. Usando il valore 0 si ammette la
+	possibilità che il ritardo ottimale sia nullo, e che in realtà
+	il modello non sia affatto un VAR. Al contrario, se si dà per
+	scontato che l'ordine minimo sia 4, con <opt>minlag=4</opt> si
+	risparmia qualche millisecondo.
+      </para>
     </description>
 
     <gui-access>
@@ -16317,15 +16397,22 @@ qual caso viene usato QML.
 
     <description>
       <para>
-	In questa finestra di dialogo è possibile testare la stima di
-	un VAR per diversi ordini di ritardi; oltre a indicare la
-	specificazione del VAR è possibile selezionare il massimo
-	ordine di ritardi da testare.
+	In questa finestra di dialogo si specifica un VAR come al
+	solito, ma con l'apposito controllo si setta il numero massimo
+	di ritardi da testare.
       </para>
       <para>
-	Il risultato consiste in una tabella che mostra i valori dei criteri
-	di informazione di Akaike (AIC), Schwartz (BIC) e Hannan&ndash;Quinn (HQC)
-	calcolati per VAR dall'ordine 1 fino all'ordine massimo indicato.
+	Il risultato consiste in una tabella che mostra la
+	log-verosimiglianza e un <math>P</math>-value + per un test
+	Likelihood Ratio (LR), seguiti dai criteri di informazione di
+	Akaike (AIC), Schwartz (BIC) e Hannan&ndash;Quinn (HQC). Il
+	test LR confronta la specificazione di ogni riga con qualla
+	precedente, sotto l'ipotesi che i parametri dell'ultimo
+	ritardo siano tutti 0.
+      </para>
+      <para>
+	L'idea è che questa tabella possa aiutare nella scelta
+	ottimale del numero di ritardi.
       </para>
     </description>
 
@@ -16336,8 +16423,8 @@ qual caso viene usato QML.
 
     <description>
       <para>
-	In questa finestra di dialogo è possibile testare l'omissione da un VAR
-	di un gruppo di variabili esogene.
+	In questa finestra di dialogo è possibile testare l'omissione
+	da un VAR di un gruppo di variabili esogene.
       </para>
       <para>
 	Viene calcolato un test del rapporto di verosimiglianza sotto
