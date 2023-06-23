@@ -1316,6 +1316,8 @@ static GtkWidget *int_arg_selector (call_info *cinfo,
 	S = fn_param_value_labels(cinfo->func, i, &nvals);
 	if (S != NULL) {
 	    return enum_arg_selector(cinfo, i, S, nvals, minv, initv);
+	} else {
+	    ; /* FIXME: try for value-labels from @ui */
 	}
     }
 
@@ -1719,11 +1721,11 @@ static int function_call_dialog (call_info *cinfo)
     row = 0; /* initialize writing row */
 
     for (i=0; i<cinfo->n_params; i++) {
-	const char *desc = fn_param_descrip(cinfo->func, i);
 	const char *parname = fn_param_name(cinfo->func, i);
+	const char *desc = fn_param_descrip(cinfo->func, i);
+	int ptype = fn_param_type(cinfo->func, i);
 	const char *prior_val = NULL;
 	gretl_bundle *ui = NULL;
-	int ptype = fn_param_type(cinfo->func, i);
 	int spinnable = 0;
 	gchar *argtxt;
 
@@ -1743,6 +1745,9 @@ static int function_call_dialog (call_info *cinfo)
 	    ui = gretl_bundle_get_bundle(cinfo->ui, parname, NULL);
 	    if (ui != NULL) {
 		fprintf(stderr, "arg %d (%s), got ui bundle\n", i, parname);
+		if (desc == NULL) {
+		    desc = gretl_bundle_get_string(ui, "label", NULL);
+		}
 	    }
 	}
 
