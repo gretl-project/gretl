@@ -110,6 +110,10 @@ const char *gretl_bundle_get_string (gretl_bundle *bundle,
 				     const char *key,
 				     int *err);
 
+const char **gretl_bundle_get_strings (gretl_bundle *bundle,
+				       const char *key,
+				       int *ns);
+
 gretl_array *gretl_bundle_get_array (gretl_bundle *bundle,
 				     const char *key,
 				     int *err);
