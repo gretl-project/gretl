@@ -1310,14 +1310,16 @@ static GtkWidget *int_arg_selector (call_info *cinfo,
     }
 
     if (type == GRETL_TYPE_INT && !na(dminv) && !na(dmaxv)) {
+	int nvals, ns = 0;
 	const char **S;
-	int nvals;
 
 	S = fn_param_value_labels(cinfo->func, i, &nvals);
+	if (S == NULL) {
+	    /* FIXME check ns against # of values */
+	    S = gretl_bundle_get_strings(ui, "value_labels", &ns);
+	}
 	if (S != NULL) {
 	    return enum_arg_selector(cinfo, i, S, nvals, minv, initv);
-	} else {
-	    ; /* FIXME: try for value-labels from @ui */
 	}
     }
 
