@@ -15448,20 +15448,28 @@ qual caso viene usato QML.
 	indicata se occorre costruire dei grandi dataset di serie,
 	magari con frequenze diverse e diversi intervalli di
 	osservazioni. Al momento questa opzione è disponibile solo per
-	dati annuali, trimestrali o mensili. Salvando su un file che
-	esiste già, il comportamento predefinito è quello di accodare
-	le nuove serie al contenuto del database preesistente. In
-	questo contesto, se una o più delle variabili da salvare hanno
-	lo stesso nome di una delle variabili già presenti nel
-	database si otterrà un messaggio di errore. L'opzione
-	<opt>overwrite</opt> permette invece di sovrascrivere
-	eventuali variabili del dataset che hanno lo stesso nome delle
-	nuove variabili, in modo che queste ultime rimpiazzino le
-	variabili preesistenti.
+	dati in serie storiche annuali, trimestrali o mensili, oppure
+	per dati cross-sezionali. Un database gretl 
+	consiste di due file: uno con estensione <lit>.bin</lit>
+	che contiene i dati in formato binario e un file di testo
+	con estensione <lit>.idx</lit> per i metadati.  Quando si
+	salva il file dalla linea di comando l'estensione deve essere
+	<lit>.bin</lit> oppure omessa.
+      </para>
+      <para>
+	Salvando su un file che esiste già, il comportamento
+	predefinito è quello di accodare le nuove serie al contenuto
+	del database preesistente. In questo contesto, se una o più
+	delle variabili da salvare hanno lo stesso nome di una delle
+	variabili già presenti nel database si avrà un messaggio di
+	errore. L'opzione <opt>overwrite</opt> permette invece di
+	sovrascrivere eventuali variabili del dataset che hanno lo
+	stesso nome delle nuove variabili, in modo che queste ultime
+	rimpiazzino le variabili preesistenti.
       </para>
       <para>
 	L'opzione <opt>comment</opt> è disponibile quando si salva
-	come database o come CSV. Il parametro richiesto consta du una
+	come database o come CSV. Il parametro richiesto consta di una
 	linea, racchiusa da virgolette doppie, passata all'opzone dopo
 	un segno di uguale. Tale stringa verrà inserita come commento
 	nel file indice del database o all'inizio del file CSV.
