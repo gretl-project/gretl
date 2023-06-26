@@ -155,11 +155,8 @@ struct plot_type_info ptinfo[] = {
     { PLOT_HEATMAP,        "heatmap" },
     { PLOT_GEOMAP,         "geoplot" },
     { PLOT_GRIDPLOT,       "user-multi" },
-    { PLOT_GPBUILD,        "user-multi" },
     { PLOT_TYPE_MAX,       NULL }
 };
-
-#define gridplot_type(t) (t == PLOT_GPBUILD || t == PLOT_GRIDPLOT)
 
 enum {
     BP_REGULAR,
@@ -553,7 +550,6 @@ int plot_output_to_buffer (void)
 static int make_plot_commands_buffer (const char *fname)
 {
     gchar *contents = NULL;
-    int free_contents = 1;
     GError *gerr = NULL;
     gsize size = 0;
     int err = 0;
@@ -566,9 +562,6 @@ static int make_plot_commands_buffer (const char *fname)
 	err = E_FOPEN;
     } else if (gretl_multiplot_collecting()) {
 	err = gretl_multiplot_add_plot(contents);
-        if (!err) {
-            free_contents = 0;
-        }
     } else if (*plot_buffer_idx != '\0') {
 	gretl_array *a = get_strings_array_by_name(plot_buffer_name);
         int i = generate_int(plot_buffer_idx, NULL, &err);
@@ -584,9 +577,7 @@ static int make_plot_commands_buffer (const char *fname)
 				      buf);
     }
 
-    if (free_contents) {
-	g_free(contents);
-    }
+    g_free(contents);
     gretl_remove(fname);
 
     return err;
@@ -1838,7 +1829,7 @@ static void print_term_string (int ttype, PlotType ptype,
 	fprintf(fp, "%s\n", term_line);
 	if (flags & GPT_MONO) {
 	    fputs("set mono\n", fp);
-	} else if (!gridplot_type(ptype)) {
+	} else if (ptype != PLOT_GRIDPLOT) {
 	    write_plot_line_styles(ptype, fp);
 	}
     }
@@ -1965,7 +1956,7 @@ static FILE *gp_set_up_batch (char *fname,
 	    /* write terminal/style/output lines */
 	    print_term_string(fmt, ptype, flags, fp);
 	    write_plot_output_line(gnuplot_outname, fp);
-	} else if (!gridplot_type(ptype)) {
+	} else if (ptype != PLOT_GRIDPLOT) {
 	    /* just write style lines */
 	    write_plot_line_styles(ptype, fp);
 	}
@@ -2041,7 +2032,7 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 #endif
 	}
 	write_plot_type_string(ptype, flags, fp);
-	if (!gridplot_type(ptype)) {
+	if (ptype != PLOT_GRIDPLOT) {
 	    write_plot_line_styles(ptype, fp);
 	}
     }
@@ -2128,8 +2119,6 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 	ci = CORR;
     } else if (p == PLOT_CUSUM) {
 	ci = CUSUM;
-    } else if (p == PLOT_GPBUILD) {
-	ci = GPBUILD;
     } else if (p == PLOT_GRIDPLOT) {
 	ci = GRIDPLOT;
     }
