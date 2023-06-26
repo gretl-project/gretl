@@ -116,7 +116,6 @@ typedef enum {
     PLOT_BAND,
     PLOT_HEATMAP,
     PLOT_GEOMAP,
-    PLOT_GPBUILD,
     PLOT_GRIDPLOT,
     PLOT_TYPE_MAX
 } PlotType;

@@ -119,9 +119,9 @@ static struct gretl_cmd gretl_cmds[] = {
     { GENR,     "genr",     CI_EXPR },
     { GMM,      "gmm",      CI_EXPR | CI_BLOCK },
     { GNUPLOT,  "gnuplot",  CI_LIST | CI_EXTRA | CI_INFL },
-    { GPBUILD,  "gpbuild",  CI_BLOCK },
+    { GPBUILD,  "gpbuild",  CI_PARM1 | CI_BLOCK },
     { GRAPHPG,  "graphpg",  CI_PARM1 | CI_PARM2 }, /* params optional */
-    { GRIDPLOT, "gridplot", 0 },
+    { GRIDPLOT, "gridplot", CI_PARM1 },
     { HECKIT,   "heckit",   CI_LIST },
     { HELP,     "help",     CI_PARM1 },
     { HFPLOT,   "hfplot",   CI_LIST | CI_EXTRA },

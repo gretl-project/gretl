@@ -22,15 +22,14 @@
 
 int gretl_multiplot_collecting (void);
 
-int gretl_multiplot_start (gretlopt opt);
+int gretl_multiplot_start (const char *param, gretlopt opt,
+			   DATASET *dset);
 
 int gretl_multiplot_add_plot (gchar *buf);
 
 int gretl_multiplot_finalize (gretlopt opt);
 
-int gretl_multiplot_revise (gretlopt opt);
-
-int gretl_multiplot_from_array (gretlopt opt);
+int gretl_multiplot_from_array (const char *param, gretlopt opt);
 
 int check_multiplot_options (int ci, gretlopt opt);
 

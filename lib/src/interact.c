@@ -3118,6 +3118,7 @@ int is_plotting_command (CMD *cmd)
 	int ci = gretl_command_number(cmd->param);
 
 	if (ci == PLOT || ci == GPBUILD) {
+	    /* FIXME should gpbuild be included here? */
 	    return ci;
 	}
     }
@@ -3900,13 +3901,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	if (!err) {
 	    if (cmd->ci == GPBUILD) {
 		/* the block-start case */
-		err = gretl_multiplot_start(cmd->opt);
-	    } else if (cmd->opt & (OPT_i | OPT_I)) {
-		/* the --inbuf or --input case */
-		err = gretl_multiplot_revise(cmd->opt);
-	    } else if (cmd->opt & OPT_S) {
-		/* the --strings (array) case */
-		err = gretl_multiplot_from_array(cmd->opt);
+		err = gretl_multiplot_start(cmd->param, cmd->opt, dset);
+	    } else {
+		/* the gridplot case */
+		err = gretl_multiplot_from_array(cmd->param, cmd->opt);
 	    }
 	}
         break;
