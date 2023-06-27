@@ -38,7 +38,6 @@ typedef struct {
 } mplot_option;
 
 static gretl_array *mp_array;
-static gretl_matrix *mp_layout;
 static const char *array_name;
 static int prior_array;
 static int mp_fontsize = 10;
@@ -111,30 +110,10 @@ static int initialize_mp_array (const char *param, DATASET *dset)
     return err;
 }
 
-/* respond to a validated case of the --layout=matrix option */
-
-static void set_mp_layout (const gretl_matrix *m)
-{
-    if (mp_layout != NULL) {
-	gretl_matrix_free(mp_layout);
-    }
-    mp_layout = gretl_matrix_copy(m);
-    if (mp_layout != NULL) {
-	if (mp_rows != m->rows || mp_cols != m->cols) {
-	    mp_rows = m->rows;
-	    mp_cols = m->cols;
-	}
-    }
-}
-
 static void set_multiplot_defaults (void)
 {
     int i;
 
-    if (mp_layout != NULL) {
-	gretl_matrix_free(mp_layout);
-	mp_layout = NULL;
-    }
     for (i=0; i<n_mp_options; i++) {
 	*(mp_options[i].target) = mp_options[i].def;
     }
@@ -216,96 +195,37 @@ int gretl_multiplot_add_plot (gchar *buf)
     return err;
 }
 
-static int multiplot_set_grid (int n)
+static int set_mp_grid (int n_plots)
 {
     int err = 0;
 
-#if GRID_DEBUG
-    fprintf(stderr, "multiplot_set_grid: n=%d, prior size %d x %d\n",
-	    n, mp_rows, mp_cols);
-#endif
-
-    if (mp_rows == 0 && mp_cols == 0) {
-	/* fully automatic grid */
-	mp_rows = ceil(sqrt((double) n));
-	mp_cols = ceil((double) n / mp_rows);
-    } else if (mp_rows == 0) {
-	/* automatic rows */
-        if (mp_cols > n) {
-            mp_cols = n;
-            mp_rows = 1;
-        } else {
-            mp_rows = ceil((double) n / mp_cols);
-        }
-    } else if (mp_cols == 0) {
-	/* automatic cols */
-        if (mp_rows > n) {
-            mp_rows = n;
-            mp_cols = 1;
-        } else {
-            mp_cols = ceil((double) n / mp_rows);
-        }
-    } else if (mp_rows * mp_cols < n) {
-	gretl_errmsg_sprintf("Specified grid (%d by %d) is too small "
-			     "for %d sub-plots", mp_rows, mp_cols, n);
+    if (mp_rows > n_plots) {
+	gretl_errmsg_sprintf("invalid --rows specification for %d plots", n_plots);
 	err = E_INVARG;
-    } else if (mp_rows * mp_cols > n) {
-	int ar = ceil(sqrt((double) n));
-	int ac = ceil((double) n / ar);
+    } else if (mp_cols > n_plots) {
+	gretl_errmsg_sprintf("invalid --cols specification for %d plots", n_plots);
+	err = E_INVARG;
+    }
 
-	if (mp_rows * mp_cols > ar * ac) {
-	    gretl_errmsg_sprintf("Specified grid (%d by %d) is too big "
-				 "for %d sub-plots", mp_rows, mp_cols, n);
-	    err = E_INVARG;
+    if (!err) {
+	if (mp_rows > 0) {
+	    /* automatic cols value */
+	    mp_cols = ceil(n_plots / (double) mp_rows);
+	} else if (mp_cols > 0) {
+	    /* automatic rows value */
+	    mp_rows = ceil(n_plots / (double) mp_cols);
+	} else {
+	    /* fully automatic */
+	    mp_rows = ceil(sqrt((double) n_plots));
+	    mp_cols = ceil(n_plots / (double) mp_rows);
 	}
     }
 
 #if GRID_DEBUG
-    fprintf(stderr, "multiplot_set_grid: set %d x %d\n",  mp_rows, mp_cols);
+    fprintf(stderr, "set_mp_grid: %d x %d\n",  mp_rows, mp_cols);
 #endif
 
     return err;
-}
-
-static int get_subplot_index (int i, int j)
-{
-    return (int) gretl_matrix_get(mp_layout, i, j) - 1;
-}
-
-/* write a layout matrix into a plot file, in a form that can
-   be easily reconstituted via generate_matrix()
-*/
-
-static void output_layout_matrix (gretl_matrix *m, FILE *fp)
-{
-    double mij;
-    int i, j;
-
-    fputs("layout={", fp);
-    for (i=0; i<m->rows; i++) {
-	for (j=0; j<m->cols; j++) {
-	    mij = gretl_matrix_get(m, i, j);
-	    fprintf(fp, "%d", (int) mij);
-	    if (j < m->cols-1) {
-		fputc(',', fp);
-	    }
-	}
-	if (i < m->rows-1) {
-	    fputc(';', fp);
-	}
-    }
-    fputs("}\n", fp);
-}
-
-static void write_mp_spec_comment (int np, FILE *fp)
-{
-    fprintf(fp, "# grid_params: plots=%d, fontsize=%d, width=%d, height=%d, ",
-	    np, mp_fontsize, mp_width, mp_height);
-    if (mp_layout != NULL) {
-	output_layout_matrix(mp_layout, fp);
-    } else {
-	fprintf(fp, "rows=%d, cols=%d\n", mp_rows, mp_cols);
-    }
 }
 
 /* Write subplot buffer @buf to file, stripping out any
@@ -327,6 +247,11 @@ static void filter_subplot (const char *buf, FILE *fp)
     free(line);
 }
 
+static int get_subplot_index (gretl_matrix *m, int i, int j)
+{
+    return (int) gretl_matrix_get(m, i, j) - 1;
+}
+
 /* Write a multiplot specification to file, drawing on the
    strings array @a.
 
@@ -336,6 +261,7 @@ static void filter_subplot (const char *buf, FILE *fp)
 */
 
 static int output_multiplot_script (gretl_array *a,
+				    gretl_matrix *m,
 				    int np, int maxp)
 {
     const char *buf;
@@ -343,20 +269,15 @@ static int output_multiplot_script (gretl_array *a,
     int err = 0;
     FILE *fp;
 
-    /* insure against segfault */
-    if (a == NULL) {
-        fprintf(stderr, "output_multiplot_script: internal error!\n");
-        return E_DATA;
-    }
-
     fp = open_plot_input_file(PLOT_GRIDPLOT, 0, &err);
     if (err) {
         return err;
     }
 
     fputs("# literal lines = 1\n", fp);
-    write_mp_spec_comment(np, fp);
-
+    fprintf(fp, "# grid_params: plots=%d, fontsize=%d, width=%d, height=%d, ",
+	    np, mp_fontsize, mp_width, mp_height);
+    fprintf(fp, "rows=%d, cols=%d\n", mp_rows, mp_cols);
     fprintf(fp, "set multiplot layout %d,%d rowsfirst\n", mp_rows, mp_cols);
     gretl_push_c_numeric_locale();
 
@@ -364,8 +285,8 @@ static int output_multiplot_script (gretl_array *a,
     p = 0;
     for (i=0; i<mp_rows; i++) {
 	for (j=0; j<mp_cols; j++) {
-	    if (mp_layout != NULL) {
-		k = get_subplot_index(i, j);
+	    if (m != NULL) {
+		k = get_subplot_index(m, i, j);
 	    } else {
 		k++;
 	    }
@@ -398,16 +319,20 @@ static int output_multiplot_script (gretl_array *a,
     return err;
 }
 
-static int maybe_set_mp_layout (int *np)
+/* set multiplot layout using a matrix argument */
+
+static int set_mp_layout (gretl_matrix **pm, int *np)
 {
     const char *s = get_optval_string(GRIDPLOT, OPT_L);
-    const gretl_matrix *m = NULL;
+    gretl_matrix *m = NULL;
     int err = 0;
 
     if (s != NULL) {
 	m = get_matrix_by_name(s);
     }
-    if (m != NULL) {
+    if (gretl_is_null_matrix(m)) {
+	err = E_INVARG;
+    } else {
 	int i, n = m->rows * m->cols;
         int nonzero = 0;
 	double mi;
@@ -424,13 +349,10 @@ static int maybe_set_mp_layout (int *np)
             }
 	}
 	if (!err) {
+	    *pm = m;
 	    *np = nonzero;
-	}
-	if (!err) {
-#if GRID_DEBUG
-	    gretl_matrix_print(m, "m, in maybe_set_mp_layout");
-#endif
-	    set_mp_layout(m);
+	    mp_rows = m->rows;
+	    mp_cols = m->cols;
 	}
     }
 
@@ -499,6 +421,8 @@ static int retrieve_plots_array (const char *argname,
 int gretl_multiplot_from_array (const char *param, gretlopt opt)
 {
     gretl_array *a = NULL;
+    gretl_matrix *m = NULL;
+    gretlopt myopt = opt;
     int maxp, np = 0;
     int err = 0;
 
@@ -513,43 +437,38 @@ int gretl_multiplot_from_array (const char *param, gretlopt opt)
     }
 
     maxp = np;
+    set_multiplot_defaults();
 
-    if (!err) {
-	/* pick up any options */
-	gretlopt myopt = opt;
-
-	set_multiplot_defaults();
-	myopt &= ~OPT_S;
-	if (myopt) {
-	    err = set_multiplot_sizes(myopt);
-	}
-	if (myopt & OPT_L) {
-	    err = maybe_set_mp_layout(&np);
-	}
-	if (!err && mp_layout == NULL) {
-	    err = multiplot_set_grid(np);
+    myopt &= ~OPT_S;
+    if (myopt) {
+	err = set_multiplot_sizes(myopt);
+	if (!err) {
+	    if (myopt & OPT_L) {
+		err = set_mp_layout(&m, &np);
+	    } else {
+		err = set_mp_grid(np);
+	    }
 	}
     }
 
     if (!err) {
 	set_special_plot_size(mp_width, mp_height);
 	set_special_font_size(mp_fontsize);
-        err = output_multiplot_script(a, np, maxp);
+        err = output_multiplot_script(a, m, np, maxp);
     }
 
     return err;
 }
 
-int check_multiplot_options (int ci, gretlopt opt)
+int check_gridplot_options (gretlopt opt)
 {
-    int err = 0;
+    int err;
 
-    if (ci == GPBUILD) {
-	/* no options accepted */
-	err = opt == OPT_NONE ? 0 : E_BADOPT;
-    } else {
-	/* gridplot: can't have both --output and --outbuf */
-	err = incompatible_options(opt, OPT_U | OPT_b);
+    /* can't have both --output and --outbuf */
+    err = incompatible_options(opt, OPT_U | OPT_b);
+    if (!err) {
+	/* can't have more than one of --rows, --cols, --layout */
+	err = incompatible_options(opt, OPT_R | OPT_C | OPT_L);
     }
 
     return err;

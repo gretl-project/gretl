@@ -31,7 +31,7 @@ int gretl_multiplot_finalize (gretlopt opt);
 
 int gretl_multiplot_from_array (const char *param, gretlopt opt);
 
-int check_multiplot_options (int ci, gretlopt opt);
+int check_gridplot_options (gretlopt opt);
 
 void gretl_multiplot_destroy (void);
 

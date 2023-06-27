@@ -1515,7 +1515,7 @@ static void write_png_size_string (char *s, PlotType ptype,
 	w = h = GP_SQ_SIZE;
     }
 
-    if (scale != 1.0) {
+    if (scale != 1.0 && ptype != PLOT_GRIDPLOT) {
 	plot_get_scaled_dimensions(&w, &h, scale);
     }
 

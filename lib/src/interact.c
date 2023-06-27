@@ -3895,8 +3895,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	if (gretl_multiplot_collecting()) {
 	    gretl_errmsg_set(_("gpbuild/gridplot: cannot be nested"));
 	    err = E_DATA;
-	} else {
-	    err = check_multiplot_options(cmd->ci, cmd->opt);
+	} else if (cmd->ci == GRIDPLOT) {
+	    err = check_gridplot_options(cmd->opt);
 	}
 	if (!err) {
 	    if (cmd->ci == GPBUILD) {
