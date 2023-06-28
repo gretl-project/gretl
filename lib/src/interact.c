@@ -3117,8 +3117,7 @@ int is_plotting_command (CMD *cmd)
     } else if (cmd->ci == END && cmd->param != NULL) {
 	int ci = gretl_command_number(cmd->param);
 
-	if (ci == PLOT || ci == GPBUILD) {
-	    /* FIXME should gpbuild be included here? */
+	if (ci == PLOT) {
 	    return ci;
 	}
     }

@@ -84,11 +84,18 @@ static int set_multiplot_sizes (gretlopt opt)
     return err;
 }
 
+/* Set up the strings array in which gpbuild will cumulate
+   sub-plots. If @param identifies an existing array we clear
+   out its content, otherwise we create a new, empty array as
+   a user-visible object ("uservar").
+*/
+
 static int initialize_mp_array (const char *param, DATASET *dset)
 {
     int err = 0;
 
     mp_array = get_strings_array_by_name(param);
+
     if (mp_array != NULL) {
 	prior_array = 1;
 	gretl_array_void_content(mp_array);
@@ -103,6 +110,9 @@ static int initialize_mp_array (const char *param, DATASET *dset)
     }
 
     if (mp_array != NULL) {
+#if GRID_DEBUG
+	fprintf(stderr, "gpbuild: started array %s\n", param);
+#endif
 	array_name = param;
 	mp_collecting = 1;
     }
@@ -122,12 +132,16 @@ static void set_multiplot_defaults (void)
 void gretl_multiplot_clear (int err)
 {
     if (mp_array != NULL) {
+#if GRID_DEBUG
+	fprintf(stderr, "gretl_multiplot_clear: err=%d, array length %d\n",
+		err, gretl_array_get_length(mp_array));
+#endif
 	if (err) {
 	    if (prior_array) {
-		/* got a pre-existing uservar array */
+		/* empty a pre-existing uservar array */
 		gretl_array_void_content(mp_array);
 	    } else {
-		/* scrub temporary uservar */
+		/* or destroy a newly created uservar */
 		user_var_delete_by_name(array_name, NULL);
 	    }
 	}
@@ -137,7 +151,6 @@ void gretl_multiplot_clear (int err)
     array_name = NULL;
     prior_array = 0;
     mp_collecting = 0;
-    set_multiplot_defaults();
 }
 
 /* called from interact.c: process_command_error() */
@@ -157,7 +170,7 @@ int gretl_multiplot_start (const char *param, gretlopt opt,
     if (mp_array == NULL) {
 	err = initialize_mp_array(param, dset);
     } else {
-        gretl_errmsg_set(_("gridplot: cannot be nested"));
+        gretl_errmsg_set(_("gpbuild: cannot be nested"));
         err = E_DATA;
     }
 
@@ -290,6 +303,9 @@ static int output_multiplot_script (gretl_array *a,
 	    } else {
 		k++;
 	    }
+#if GRID_DEBUG
+	    fprintf(stderr, "i=%d, j=%d, k=%d, maxp=%d\n", i, j, k, maxp);
+#endif
 	    if (k < 0) {
 		fputs("set multiplot next\n", fp);
 	    } else {
@@ -365,6 +381,10 @@ int gretl_multiplot_finalize (gretlopt opt)
 {
     int err = 0;
 
+#if GRID_DEBUG
+    fprintf(stderr, "gretl_multiplot_finalize\n");
+#endif
+
     if (mp_array == NULL) {
 	gretl_errmsg_set("end gpbuild: building not started");
 	err = E_DATA;
@@ -374,6 +394,8 @@ int gretl_multiplot_finalize (gretlopt opt)
 
     return err;
 }
+
+/* Find and check the strings array identified by @argname */
 
 static int retrieve_plots_array (const char *argname,
 				 gretl_array **pa,
@@ -415,7 +437,7 @@ static int retrieve_plots_array (const char *argname,
 /* This supports production of a multiplot from the array of
    plot-specification strings identified by @param. Such an
    array may be produced by "gpbuild", or may be assembled
-   manually.
+   manually by the user.
 */
 
 int gretl_multiplot_from_array (const char *param, gretlopt opt)
