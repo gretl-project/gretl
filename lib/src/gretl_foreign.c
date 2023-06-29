@@ -2324,11 +2324,13 @@ SEXP *PR_GlobalEnv;
 SEXP *PR_NilValue;
 SEXP *PR_UnboundValue;
 SEXP *PR_NamesSymbol;
+SEXP *PR_DimNamesSymbol;
 
 SEXP VR_GlobalEnv;
 SEXP VR_NilValue;
 SEXP VR_UnboundValue;
 SEXP VR_NamesSymbol;
+SEXP VR_DimNamesSymbol;
 
 /* renamed, pointerized versions of the R functions we need */
 
@@ -2355,7 +2357,6 @@ static SEXP (*R_mkNamed) (SEXPTYPE, const char **);
 static SEXP (*R_GetRowNames) (SEXP);
 static SEXP (*R_GetColNames) (SEXP);
 static SEXP (*R_getAttrib) (SEXP, SEXP);
-static SEXP (*R_GetMatrixDimnames) (SEXP, SEXP*, SEXP*, const char **, const char **);
 
 static Rboolean (*R_isMatrix) (SEXP);
 static Rboolean (*R_isVector) (SEXP);
@@ -2449,7 +2450,6 @@ static int load_R_symbols (void)
     R_length        = dlget(Rhandle, "Rf_length", &err);
     R_GetRowNames   = dlget(Rhandle, "Rf_GetRowNames", &err);
     R_GetColNames   = dlget(Rhandle, "Rf_GetColNames", &err);
-    R_GetMatrixDimnames = dlget(Rhandle, "Rf_GetMatrixDimnames", &err);
     R_getAttrib     = dlget(Rhandle, "Rf_getAttrib", &err);
     R_PrintValue    = dlget(Rhandle, "Rf_PrintValue", &err);
     R_protect       = dlget(Rhandle, "Rf_protect", &err);
@@ -2474,6 +2474,7 @@ static int load_R_symbols (void)
         PR_NilValue     = (SEXP *) dlget(Rhandle, "R_NilValue", &err);
         PR_UnboundValue = (SEXP *) dlget(Rhandle, "R_UnboundValue", &err);
         PR_NamesSymbol  = (SEXP *) dlget(Rhandle, "R_NamesSymbol", &err);
+        PR_DimNamesSymbol = (SEXP *) dlget(Rhandle, "R_DimNamesSymbol", &err);
     }
 
     if (err) {
@@ -2694,6 +2695,7 @@ static int gretl_Rlib_init (void)
             VR_NilValue = *PR_NilValue;
             VR_UnboundValue = *PR_UnboundValue;
             VR_NamesSymbol = *PR_NamesSymbol;
+            VR_DimNamesSymbol = *PR_DimNamesSymbol;
             Rinit = 1;
         } else {
             close_plugin(Rhandle);
@@ -3126,17 +3128,23 @@ static void maybe_add_matrix_dimnames (SEXP s, gretl_matrix *m)
 {
     gretl_array *a;
     char **S = NULL;
-    const char *rn = NULL;
-    const char *cn = NULL;
+    SEXP dimnames;
     SEXP d[2];
     GretlType t;
     int i, ns;
     int err = 0;
 
-    R_GetMatrixDimnames(s, &d[0], &d[1], &rn, &cn);
+    dimnames = R_getAttrib(s, VR_DimNamesSymbol);
+
+    if (R_NULL(dimnames)) {
+        return;
+    }
+
+    d[0] = R_VECTOR_ELT(dimnames, 0);
+    d[1] = R_VECTOR_ELT(dimnames, 1);
 
     for (i=0; i<2; i++) {
-	if (d[i] == NULL) {
+	if (R_NULL(d[i])) {
 	    continue;
 	}
 	t = R_type_to_gretl_type(d[i], "dimnames", &err);
@@ -3150,8 +3158,6 @@ static void maybe_add_matrix_dimnames (SEXP s, gretl_matrix *m)
 		} else {
 		    gretl_matrix_set_colnames(m, S);
 		}
-		fprintf(stderr, " d[%d]: got %d %s names\n", i, ns,
-			i == 0 ? "row" : "col");
 		gretl_array_destroy(a);
 	    }
 	}
