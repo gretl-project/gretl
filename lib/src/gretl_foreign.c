@@ -2475,6 +2475,7 @@ static int load_R_symbols (void)
     }
 
     if (err) {
+        fprintf(stderr, "ERROR loading R symbols\n");
         close_plugin(Rhandle);
         Rhandle = NULL;
         err = E_EXTERNAL;
@@ -2937,18 +2938,16 @@ static SEXP make_R_array (gretl_array *a, int *err)
 
 static SEXP make_R_matrix (const gretl_matrix *m, int *err)
 {
-    int nr = gretl_matrix_rows(m);
-    int nc = gretl_matrix_cols(m);
     SEXP ms;
     int i, j;
 
-    ms = R_allocMatrix(REALSXP, nr, nc);
+    ms = R_allocMatrix(REALSXP, m->rows, m->cols);
     if (ms == NULL) {
         *err = E_ALLOC;
     } else {
-        for (i=0; i<nr; i++) {
-            for (j=0; j<nc; j++) {
-                R_REAL(ms)[i + j * nr] = gretl_matrix_get(m, i, j);
+        for (j=0; j<m->cols; j++) {
+            for (i=0; i<m->rows; i++) {
+                R_REAL(ms)[i + j * m->rows] = gretl_matrix_get(m, i, j);
             }
         }
     }
@@ -3128,12 +3127,16 @@ static gretl_matrix *matrix_from_R (SEXP s, const char *name,
     int nr = R_nrows(s);
     int nc = R_ncols(s);
 
-#if 0 /* experimental, not working yet */
+#if 0 /* FIXME: experimental, not working yet */
+    SEXP dn = R_getAttrib(s, VR_NamesSymbol);
     SEXP rn = R_GetRowNames(s);
     SEXP cn = R_GetColNames(s);
     GretlType t;
 
     fprintf(stderr, "matrix_from_R: name='%s', %d x %d\n", name, nr, nc);
+
+    t = R_type_to_gretl_type(dn, "dn", err);
+    fprintf(stderr, " R_getAttrib(s, @dimnames): type %d, err %d\n", t, *err);
 
     t = R_type_to_gretl_type(rn, "rn", err);
     if (!*err) {
@@ -3381,11 +3384,9 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
     R_PrintValue(res);
 #endif
 
-    if (err) {
-        return err;
+    if (!err) {
+        data = object_from_R(res, name, *rtype, &err);
     }
-
-    data = object_from_R(res, name, *rtype, &err);
 
     if (!err) {
         if (gretl_scalar_type(*rtype)) {
