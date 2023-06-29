@@ -2354,8 +2354,6 @@ static SEXP (*R_install) (const char *);
 static SEXP (*R_mkString) (const char *);
 static SEXP (*R_mkChar) (const char *);
 static SEXP (*R_mkNamed) (SEXPTYPE, const char **);
-static SEXP (*R_GetRowNames) (SEXP);
-static SEXP (*R_GetColNames) (SEXP);
 static SEXP (*R_getAttrib) (SEXP, SEXP);
 
 static Rboolean (*R_isMatrix) (SEXP);
@@ -2448,8 +2446,6 @@ static int load_R_symbols (void)
     R_ncols         = dlget(Rhandle, "Rf_ncols", &err);
     R_nrows         = dlget(Rhandle, "Rf_nrows", &err);
     R_length        = dlget(Rhandle, "Rf_length", &err);
-    R_GetRowNames   = dlget(Rhandle, "Rf_GetRowNames", &err);
-    R_GetColNames   = dlget(Rhandle, "Rf_GetColNames", &err);
     R_getAttrib     = dlget(Rhandle, "Rf_getAttrib", &err);
     R_PrintValue    = dlget(Rhandle, "Rf_PrintValue", &err);
     R_protect       = dlget(Rhandle, "Rf_protect", &err);
