@@ -2355,6 +2355,7 @@ static SEXP (*R_mkNamed) (SEXPTYPE, const char **);
 static SEXP (*R_GetRowNames) (SEXP);
 static SEXP (*R_GetColNames) (SEXP);
 static SEXP (*R_getAttrib) (SEXP, SEXP);
+static SEXP (*R_GetMatrixDimnames) (SEXP, SEXP*, SEXP*, const char **, const char **);
 
 static Rboolean (*R_isMatrix) (SEXP);
 static Rboolean (*R_isVector) (SEXP);
@@ -2448,6 +2449,7 @@ static int load_R_symbols (void)
     R_length        = dlget(Rhandle, "Rf_length", &err);
     R_GetRowNames   = dlget(Rhandle, "Rf_GetRowNames", &err);
     R_GetColNames   = dlget(Rhandle, "Rf_GetColNames", &err);
+    R_GetMatrixDimnames = dlget(Rhandle, "Rf_GetMatrixDimnames", &err);
     R_getAttrib     = dlget(Rhandle, "Rf_getAttrib", &err);
     R_PrintValue    = dlget(Rhandle, "Rf_PrintValue", &err);
     R_protect       = dlget(Rhandle, "Rf_protect", &err);
@@ -3120,6 +3122,42 @@ static GretlType R_type_to_gretl_type (SEXP s, const char *name, int *err);
 static void *object_from_R (SEXP res, const char *name, GretlType type,
                             int *err);
 
+static void maybe_add_matrix_dimnames (SEXP s, gretl_matrix *m)
+{
+    gretl_array *a;
+    char **S = NULL;
+    const char *rn = NULL;
+    const char *cn = NULL;
+    SEXP d[2];
+    GretlType t;
+    int i, ns;
+    int err = 0;
+
+    R_GetMatrixDimnames(s, &d[0], &d[1], &rn, &cn);
+
+    for (i=0; i<2; i++) {
+	if (d[i] == NULL) {
+	    continue;
+	}
+	t = R_type_to_gretl_type(d[i], "dimnames", &err);
+	if (t == GRETL_TYPE_ARRAY) {
+	    a = object_from_R(d[i], "dimnames", t, &err);
+	    ns = i == 0 ? m->rows : m->cols;
+	    if (a != NULL && gretl_array_get_length(a) == ns) {
+		S = gretl_array_steal_strings(a, &ns);
+		if (i == 0) {
+		    gretl_matrix_set_rownames(m, S);
+		} else {
+		    gretl_matrix_set_colnames(m, S);
+		}
+		fprintf(stderr, " d[%d]: got %d %s names\n", i, ns,
+			i == 0 ? "row" : "col");
+		gretl_array_destroy(a);
+	    }
+	}
+    }
+}
+
 static gretl_matrix *matrix_from_R (SEXP s, const char *name,
                                     int *err)
 {
@@ -3127,25 +3165,8 @@ static gretl_matrix *matrix_from_R (SEXP s, const char *name,
     int nr = R_nrows(s);
     int nc = R_ncols(s);
 
-#if 0 /* FIXME: experimental, not working yet */
-    SEXP dn = R_getAttrib(s, VR_NamesSymbol);
-    SEXP rn = R_GetRowNames(s);
-    SEXP cn = R_GetColNames(s);
-    GretlType t;
-
+#if FDEBUG
     fprintf(stderr, "matrix_from_R: name='%s', %d x %d\n", name, nr, nc);
-
-    t = R_type_to_gretl_type(dn, "dn", err);
-    fprintf(stderr, " R_getAttrib(s, @dimnames): type %d, err %d\n", t, *err);
-
-    t = R_type_to_gretl_type(rn, "rn", err);
-    if (!*err) {
-        fprintf(stderr, " R_GetRowNames: type %d\n", t);
-    }
-    t = R_type_to_gretl_type(cn, "cn", err);
-    if (!*err) {
-        fprintf(stderr, " R_GetColNames: type %d\n", t);
-    }
 #endif
 
     if (nr >= 0 && nc >= 0) {
@@ -3159,11 +3180,11 @@ static gretl_matrix *matrix_from_R (SEXP s, const char *name,
         *err = E_DATA;
     }
 
-    if (m != NULL && nr > 0 && nc > 0) {
+    if (!*err) {
         int i, j;
 
-        for (i=0; i<nr; i++) {
-            for (j=0; j<nc; j++) {
+        for (j=0; j<nc; j++) {
+            for (i=0; i<nr; i++) {
                 if (R_isReal(s)) {
                     gretl_matrix_set(m, i, j, R_REAL(s)[i + j * nr]);
                 } else {
@@ -3171,6 +3192,10 @@ static gretl_matrix *matrix_from_R (SEXP s, const char *name,
                 }
             }
         }
+    }
+
+    if (!*err) {
+	maybe_add_matrix_dimnames(s, m);
     }
 
     return m;
