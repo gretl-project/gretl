@@ -415,7 +415,7 @@ static int retrieve_plots_array (const char *argname,
 	/* check for embedded multiplots */
 	for (i=0; i<n; i++) {
 	    buf = gretl_array_get_data(a, i);
-	    if (strstr(buf, "set multiplot")) {
+	    if (buf == NULL || strstr(buf, "set multiplot")) {
 		err = invalid_mp_error(GRIDPLOT);
 		msg_set = 1;
 		break;
