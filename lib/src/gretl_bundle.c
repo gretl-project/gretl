@@ -3091,8 +3091,8 @@ gretl_array *gretl_bundle_get_keys (gretl_bundle *b, int *err)
     return A;
 }
 
-/* get the key strings from @b in the form of a "raw" array
-   of C type char *
+/* Get the key strings from @b in the form of a "raw" array
+   of C type char *, terminated by a NULL pointer.
 */
 
 char **gretl_bundle_get_keys_raw (gretl_bundle *b, int *ns)
