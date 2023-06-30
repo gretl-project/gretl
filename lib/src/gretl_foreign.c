@@ -2355,6 +2355,7 @@ static SEXP (*R_mkString) (const char *);
 static SEXP (*R_mkChar) (const char *);
 static SEXP (*R_mkNamed) (SEXPTYPE, const char **);
 static SEXP (*R_getAttrib) (SEXP, SEXP);
+static SEXP (*R_setAttrib) (SEXP, SEXP, SEXP);
 
 static Rboolean (*R_isMatrix) (SEXP);
 static Rboolean (*R_isVector) (SEXP);
@@ -2447,6 +2448,7 @@ static int load_R_symbols (void)
     R_nrows         = dlget(Rhandle, "Rf_nrows", &err);
     R_length        = dlget(Rhandle, "Rf_length", &err);
     R_getAttrib     = dlget(Rhandle, "Rf_getAttrib", &err);
+    R_setAttrib     = dlget(Rhandle, "Rf_setAttrib", &err);
     R_PrintValue    = dlget(Rhandle, "Rf_PrintValue", &err);
     R_protect       = dlget(Rhandle, "Rf_protect", &err);
     R_ScalarReal    = dlget(Rhandle, "Rf_ScalarReal", &err);
@@ -2936,20 +2938,59 @@ static SEXP make_R_array (gretl_array *a, int *err)
     return as;
 }
 
+static SEXP make_R_strings (const char **S, int ns)
+{
+    SEXP as = R_allocVector(STRSXP, ns);
+    int i;
+
+    if (as != NULL) {
+        for (i=0; i<ns; i++) {
+            R_STRING_PTR(as)[i] = R_mkChar(S[i]);
+        }
+    }
+
+    return as;
+}
+
+static void maybe_add_export_dimnames (SEXP ms, const gretl_matrix *m)
+{
+    const char **S;
+    SEXP rn = NULL;
+    SEXP cn = NULL;
+
+    S = gretl_matrix_get_rownames(m);
+    if (S != NULL) {
+	rn = make_R_strings(S, m->rows);
+    }
+    S = gretl_matrix_get_colnames(m);
+    if (S != NULL) {
+	cn = make_R_strings(S, m->cols);
+    }
+    if (rn != NULL || cn != NULL) {
+	/* FIXME PROTECT? */
+	SEXP dimnames = R_allocVector(VECSXP, 2);
+
+	if (rn != NULL) {
+	    R_SET_VECTOR_ELT(dimnames, 0, rn);
+	}
+	if (cn != NULL) {
+	    R_SET_VECTOR_ELT(dimnames, 1, cn);
+	}
+	R_setAttrib(ms, VR_DimNamesSymbol, dimnames);
+    }
+}
+
 static SEXP make_R_matrix (const gretl_matrix *m, int *err)
 {
-    SEXP ms;
-    int i, j;
+    SEXP ms = R_allocMatrix(REALSXP, m->rows, m->cols);
 
-    ms = R_allocMatrix(REALSXP, m->rows, m->cols);
     if (ms == NULL) {
         *err = E_ALLOC;
     } else {
-        for (j=0; j<m->cols; j++) {
-            for (i=0; i<m->rows; i++) {
-                R_REAL(ms)[i + j * m->rows] = gretl_matrix_get(m, i, j);
-            }
-        }
+	size_t sz = m->rows * m->cols * sizeof *m->val;
+
+	memcpy(R_REAL(ms), m->val, sz);
+	maybe_add_export_dimnames(ms, m);
     }
 
     return ms;
@@ -3120,7 +3161,7 @@ static GretlType R_type_to_gretl_type (SEXP s, const char *name, int *err);
 static void *object_from_R (SEXP res, const char *name, GretlType type,
                             int *err);
 
-static void maybe_add_matrix_dimnames (SEXP s, gretl_matrix *m)
+static void maybe_add_import_dimnames (SEXP s, gretl_matrix *m)
 {
     gretl_array *a;
     char **S = NULL;
@@ -3182,22 +3223,22 @@ static gretl_matrix *matrix_from_R (SEXP s, const char *name,
         *err = E_DATA;
     }
 
-    if (!*err) {
+    if (!*err && R_isReal(s)) {
+	size_t sz = nr * nc * sizeof *m->val;
+
+	memcpy(m->val, R_REAL(s), sz);
+    } else if (!*err) {
         int i, j;
 
         for (j=0; j<nc; j++) {
             for (i=0; i<nr; i++) {
-                if (R_isReal(s)) {
-                    gretl_matrix_set(m, i, j, R_REAL(s)[i + j * nr]);
-                } else {
-                    gretl_matrix_set(m, i, j, R_INT(s)[i + j * nr]);
-                }
+		gretl_matrix_set(m, i, j, R_INT(s)[i + j * nr]);
             }
         }
     }
 
     if (!*err) {
-	maybe_add_matrix_dimnames(s, m);
+	maybe_add_import_dimnames(s, m);
     }
 
     return m;
@@ -3385,9 +3426,10 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 
 #if FDEBUG
     printf("gretl_R_function_exec...\n");
+    R_PrintValue(current_call);
 #endif
 
-    if (gretl_messages_on()) {
+    if (0 /* gretl_messages_on() */) {
         R_PrintValue(current_call);
     }
 
