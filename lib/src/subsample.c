@@ -2969,9 +2969,10 @@ int set_panel_sample (const char *start,
 
     testopt &= ~OPT_U;
     testopt &= ~OPT_X;
+    testopt &= ~OPT_Q;
 
     if (testopt != OPT_NONE) {
-	/* we accept only --unit or --time here */
+	/* we accept only --unit or --time here, plus --quiet */
 	return E_BADOPT;
     } else if (incompatible_options(opt, OPT_U | OPT_X)) {
 	/* cannot supply both --unit and --time in a single command */
