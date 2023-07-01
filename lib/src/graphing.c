@@ -2252,7 +2252,7 @@ int gnuplot_graph_wanted (PlotType ptype, gretlopt opt)
     int err = 0;
 
     if (opt & (OPT_U | OPT_b)) {
-	/* check for --plot=whatever option */
+	/* check for --plot or --outbuf option */
 	optname = plot_output_option(ptype, NULL, &err);
     }
 

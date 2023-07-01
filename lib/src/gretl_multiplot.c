@@ -47,6 +47,8 @@ static int mp_rows;
 static int mp_cols;
 static int mp_collecting;
 
+/* called in graphing.c */
+
 int gretl_multiplot_collecting (void)
 {
     return mp_array != NULL && mp_collecting;
@@ -84,6 +86,15 @@ static int set_multiplot_sizes (gretlopt opt)
     return err;
 }
 
+static void set_multiplot_defaults (void)
+{
+    int i;
+
+    for (i=0; i<n_mp_options; i++) {
+	*(mp_options[i].target) = mp_options[i].def;
+    }
+}
+
 /* Set up the strings array in which gpbuild will cumulate
    sub-plots. If @param identifies an existing array we clear
    out its content, otherwise we create a new, empty array as
@@ -118,15 +129,6 @@ static int initialize_mp_array (const char *param, DATASET *dset)
     }
 
     return err;
-}
-
-static void set_multiplot_defaults (void)
-{
-    int i;
-
-    for (i=0; i<n_mp_options; i++) {
-	*(mp_options[i].target) = mp_options[i].def;
-    }
 }
 
 void gretl_multiplot_clear (int err)
@@ -184,7 +186,9 @@ static int invalid_mp_error (int ci)
     return E_INVARG;
 }
 
-/* Append a plot specification to the @multiplot array */
+/* Append a plot specification to the @multiplot array. This is
+   called in graphing.c, but only inside a gpbuild block.
+*/
 
 int gretl_multiplot_add_plot (gchar *buf)
 {
@@ -395,7 +399,58 @@ int gretl_multiplot_finalize (gretlopt opt)
     return err;
 }
 
-/* Find and check the strings array identified by @argname */
+static int is_graphic_filename (const char *s)
+{
+    const char *exts[] = {
+        ".png", ".pdf", ".svg", ".eps", ".fig", ".emf", ".html"
+    };
+    int i;
+
+    for (i=0; i < G_N_ELEMENTS(exts); i++) {
+        if (has_suffix(s, exts[i])) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+/* If we find that @s is not really a gnuplot commands
+   buffer, try treating it as the name of file that
+   may contain gnuplot commands. This requires ruling out
+   the possibility that it's a graphic file (e.g. a PNG).
+   If it looks plausible, return the contents of the file.
+*/
+
+static char *try_for_plot_filename (const char *s)
+{
+    char *ret = NULL;
+
+    if (!is_graphic_filename(s)) {
+        char fname[FILENAME_MAX];
+        GretlFileType ft;
+
+        strcpy(fname, s);
+        ft = detect_filetype(fname, OPT_P);
+        if (ft == GRETL_CSV) {
+            /* generic text data: might be gnuplot commands */
+            gchar *tmp = NULL;
+            gsize sz = 0;
+
+            g_file_get_contents(fname, &tmp, &sz, NULL);
+            if (tmp != NULL) {
+                ret = gretl_strdup(tmp);
+                g_free(tmp);
+            }
+        }
+    }
+
+    return ret;
+}
+
+/* Find and check the strings array identified by @argname.
+   Called when gridplot is used independently of gpbuild.
+*/
 
 static int retrieve_plots_array (const char *argname,
 				 gretl_array **pa,
@@ -410,12 +465,22 @@ static int retrieve_plots_array (const char *argname,
 	err = E_INVARG;
     } else {
 	int i, n = gretl_array_get_length(a);
-	const char *buf;
+        char *content = NULL;
+	char *buf;
 
-	/* check for embedded multiplots */
 	for (i=0; i<n; i++) {
 	    buf = gretl_array_get_data(a, i);
-	    if (buf == NULL || strstr(buf, "set multiplot")) {
+            if (buf != NULL && strchr(buf, '\n') == NULL) {
+                /* @buf can't be an actual plot buffer */
+                content = try_for_plot_filename(buf);
+                if (content != NULL) {
+                    free(buf);
+                    gretl_array_set_data(a, i, content);
+                }
+                buf = content;
+            }
+            /* check for embedded multiplots */
+            if (buf == NULL || strstr(buf, "set multiplot")) {
 		err = invalid_mp_error(GRIDPLOT);
 		msg_set = 1;
 		break;
