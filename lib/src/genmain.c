@@ -243,6 +243,7 @@ static const char *reswords[] = {
     "const",
     "NA",
     "null",
+    "empty",
     "obs", /* not exactly a constant, but hey */
     /* types */
     "scalar",
