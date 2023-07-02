@@ -4,6 +4,12 @@
 initializing an empty matrix, bundle, array or string. Scripts
 which use "empty" as an identifier will have to be modified.
 
+The $test accessor after the "var" command with --lagselect
+option now includes all six columns as shown in the printed
+output. Previously it included only 3 columns, holding the
+information criteria; this portion can be obtained via the
+expression $test[,4:].
+
 The new function typename() is recommended in place of the old
 functions typeof() and typestr(), though the latter functions
 are still available for backward compatibility.
