@@ -2663,10 +2663,10 @@ function bundle GUI_exogtest (int xvar[$mylist] "regressor to test")
 
   \ttusage{list-maker = exogtest\_listmaker}
 
-\item \texttt{ui-maker} (optional): This element allows a degree of
-  fine-tuning of the dialog box shown when a package is called via
-  gretl's graphical interface. At present the following points can be
-  configured (more options may be added in future):
+\item \texttt{ui-maker} (optional): This element allows fine-tuning of
+  the dialog box shown when a package is called via gretl's graphical
+  interface. At present the following points can be configured (more
+  options may be added in future):
   \begin{itemize}
   \item A given parameter (of any type) can be marked as dependent on
     a specified boolean parameter.
@@ -2677,17 +2677,14 @@ function bundle GUI_exogtest (int xvar[$mylist] "regressor to test")
   \end{itemize}
   This is achieved by including a private function which returns a
   bundle, holding a sub-bundle for each parameter to be inflected.
-  This is most easily explained by example. Here's the signature of
-  the \texttt{gui-main} function for a package currently in
-  development:
+  This is most easily explained by example. Here's the (slightly
+  simplified) signature of the \texttt{gui-main} function for a
+  package currently in development:
 \begin{code}
 function bundle GUI_rf (\
    series y "dependent variable",
    list X "indpendent variables",
    int n_train[50::] "training observations",
-   int mode[0:2:0] {"automatic", "regression", "classification"},
-   bool tune[1] "tune 'mtry'",
-   int verbosity [1:2:2],
    bool use_seed[0] "set random seed",
    int seed[0:2147483647:1234567])
 \end{code}
@@ -2705,7 +2702,7 @@ function bundle rf_ui_maker (void)
 end function
 \end{code}
   In this example the parameters \texttt{seed}, \texttt{n\_train} and
-  \texttt{X} are inflected. With \texttt{seed}, the \texttt{depends}
+  \texttt{X} are inflected. For \texttt{seed}, the \texttt{depends}
   keyword indicates that its sensitivity should depend on the boolean
   parameter \texttt{use\_seed}: it will be ``grayed out'' unless the
   \texttt{use\_seed} check-box is checked. For \texttt{n\_train}, its
@@ -2720,9 +2717,11 @@ end function
   \texttt{X}; and \texttt{no\_const=1} says that the automatic
   \texttt{const} series should not be a candidate either.
 
-  The function designated as \texttt{ui-maker} is called internally
-  when the relevant dialog box is to be shown, and on successful
-  execution the directives in the returned bundle are followed.
+  The \texttt{ui-maker} is called internally when the relevant dialog
+  box is to be shown, and on successful execution the directives in
+  the returned bundle are followed.
+
+\ttusage{ui-maker = rf\_ui\_maker}
 
 \item \texttt{no-print} (optional): A list of public interfaces that
   are not designed to print anything.  Consider, for example, a
