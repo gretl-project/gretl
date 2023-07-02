@@ -1,5 +1,9 @@
 2023b, in progress
 
+"empty" is now a reserved word, providing a uniform means of 
+initializing an empty matrix, bundle, array or string. Scripts
+which use "empty" as an identifier will have to be modified.
+
 The new function typename() is recommended in place of the old
 functions typeof() and typestr(), though the latter functions
 are still available for backward compatibility.
