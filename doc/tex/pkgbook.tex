@@ -111,7 +111,7 @@ functionality in non-trivial ways.\footnote{For an extended discussion
 are now able to hook into the gretl GUI; on the responsibilities side,
 contributed packages are now subject to (minimal) vetting before they
 can appear in the public download area on the gretl server.}
-  
+
 \section{The form of function packages}
 \label{sec:pkgform}
 
@@ -128,7 +128,7 @@ Such files contain
 \item help text for the function(s), or a pointer to help in
   PDF format; and
 \item a sample script that illustrates a call to the packaged
-  function(s). 
+  function(s).
 \end{itemize}
 
 While it is possible in principle to create and edit a \textsf{gfn}
@@ -139,7 +139,7 @@ mess with raw XML.
 
 We will refer to packages that consist of a gfn file alone as ``simple
 packages'' (the included hansl code may not be simple, but the
-structure is). 
+structure is).
 
 The alternative to a simple package we will call a ``zip package''.
 Such packages take the form of a \textsf{PKZIP} archive containing a
@@ -182,7 +182,7 @@ with some tips on usage.
 
 Since we'll be referring to the ``browsers'' for function packages
 quite a lot in the following, let us be clear up front about the two
-package browser windows in gretl and how they are accessed. 
+package browser windows in gretl and how they are accessed.
 
 One of these windows shows the packages installed on your own
 computer. To open it, either select the menu item ``File, Function
@@ -444,11 +444,11 @@ sample script for \textsf{GHegy} contains the following commands:
 include GHegy.gfn
 open data9-3.gdt
 
-# Tests with constant + dums + trend and fixed AR order 4, 
+# Tests with constant + dums + trend and fixed AR order 4,
 # without printing the regression
 bundle H1 = GHegy_test(reskwh, 0, 4, 3, 0)
 
-# Tests with constant + dums, AR order determined by BIC with 
+# Tests with constant + dums, AR order determined by BIC with
 # a maximum of 10, printing the regression
 bundle H2 = GHegy_test(reskwh, 2, 10, 2, 1)
 \end{code}
@@ -473,7 +473,7 @@ example, we could use the latter to enhance Ignacio's sample script,
 appending the line
 %
 \begin{code}
-GHegy_test_plot(&H2)  
+GHegy_test_plot(&H2)
 \end{code}
 %
 Running it will then produce a graphic similar to the one displayed in
@@ -508,7 +508,7 @@ package browser is the place to go to invoke it by GUI means.
 You can launch a package by double-clicking on it. What exactly
 happens here depends on whether the package's data requirement is
 met. Most packages require that a dataset is open, and some have more
-specific requirements (time series data, or panel data). 
+specific requirements (time series data, or panel data).
 
 If you have a suitable dataset in place you will get a dialog box to
 specify arguments to the function, much as you would with a built-in
@@ -755,12 +755,12 @@ that as the default selection on using the directory button.
 \chapter{For package authors}
 \label{chap:authors}
 
-Recall from section~\ref{sec:pkgform} that the core elements 
+Recall from section~\ref{sec:pkgform} that the core elements
 of a gretl function package are as follows:
 \begin{enumerate}
 \item One or more hansl functions;
 \item the package metadata (author, version and so on);
-\item some documentation (at least a few lines of text); and
+\item documentation; and
 \item an example script.
 \end{enumerate}
 These elements are all contained in a \texttt{gfn} XML file.
@@ -809,7 +809,7 @@ delete files(s) & \texttt{rm} & \texttt{del} \\
 make a directory & \texttt{mkdir} & \texttt{mkdir} \\
 change directory & \texttt{cd} & \texttt{cd} \\
 list files & \texttt{ls} & \texttt{dir} \\
-emit a string & \texttt{echo} & \texttt{echo} 
+emit a string & \texttt{echo} & \texttt{echo}
 \end{tabular}
 \caption{Basic shell commands by platform}
 \label{tab:basics}
@@ -843,8 +843,10 @@ files:
   package should be assembled; call this \texttt{mypkg.spec}.
 \item A sample script (\textsf{inp} file) which exercises your
   package; call this \texttt{mypkg\_sample.inp}.
-\item A plain text file containing help on the packaged function(s);
-  call this \texttt{mypkg\_help.txt}.
+\item A text file containing help on the packaged function(s); call
+  this either \texttt{mypkg\_help.md}, if you're using gretl's
+  markdown option (recommended: see Section~\ref{sec:md} below), or
+  \texttt{mypkg\_help.txt} if it's just plain text.
 \end{enumerate}
 
 The four files listed above are all UTF-8 text files that you can view
@@ -881,7 +883,7 @@ date = 2018-07-12
 description = Suitable description goes here
 tags = C13
 public = myfunc
-help = mypkg_help.txt
+help = mypkg_help.md
 sample-script = mypkg_sample.inp
 min-version = 2017a
 \end{code}
@@ -921,7 +923,7 @@ include mypkg.inp
 makepkg mypkg.gfn
 \end{code}
 You can further abbreviate the above by using the ``short'' syntax for
-options, as in 
+options, as in
 \begin{code}
 gretlcli -m mypkg.inp
 \end{code}
@@ -939,6 +941,36 @@ mark them as private.\footnote{To be quite explicit, the
   functions if they are not identified as public in the \textsf{spec}
   file. When using \texttt{makepkg} you should always start with a
   clean workspace and load only the relevant functions.}
+
+\subsection{The markdown option}
+\label{sec:md}
+
+As mentioned above, a simple function package includes documentation
+in the form of a text file. Since gretl 2023b you can employ a simple
+variant of markdown, and we encourage package authors to do so. If you
+are unfamiliar with markdown you might want to take a look at
+\url{https://en.wikipedia.org/wiki/Markdown}.
+
+Gretl's markdown variant currently supports the following featues.
+
+\begin{itemize}
+\item First and second-level headings: start a (single) line with
+  \verb|#| or \verb|##|, respectively
+\item Boldface: \verb|**text**|
+\item Italic: \verb|*text*| or \verb|_text_|
+\item Monospace: \verb|`text`| (enclosed in ASCII left quotes)
+\item Itemized list: each item starts with ``\verb|- |'' on a new line
+\item Enumerated list: each item starts with (e.g.) ``\verb|1. |''
+  on a new line
+\item Code block: starts and ends with \verb|```| (three ASCII left
+  quotes) on its own line
+\end{itemize}
+
+Note that itemized and enumerated lists cannot be nested.
+
+URLs starting with \texttt{http[s]} automatically turn into
+hyperlinks.  Paired ASCII straight double quotes are replaced by left-
+and right-hand quotes.
 
 \subsection{Adding extra material}
 
@@ -1030,7 +1062,7 @@ $(PKG).gfn: $(PKG).inp $(PKG).spec $(PKG)_help.txt $(PKG)_sample.inp
 install: $(PKG).gfn
 	echo pkg install $(PKG).gfn --local | gretlcli -b -
 
-clean: 
+clean:
 	rm -f $(PKG).gfn
 \end{code}
 \end{script}
@@ -1077,7 +1109,7 @@ function series pc(series y "Series to process")
     series ret = 100 * diff(y)/y(-1)
     string dsc = sprintf("Percentage change of %s", argname(y))
     setinfo ret --description="@dsc"
-    return ret  
+    return ret
 end function
 \end{code}
 
@@ -1091,7 +1123,7 @@ this case, \texttt{series}).
   \begin{scode}
               x         dpcx
 
- 1    0.4428625             
+ 1    0.4428625
  2    0.3737993     -15.5947
  3    0.1570864     -57.9757
  4    0.6896227     339.0086
@@ -1415,7 +1447,7 @@ scripts:
   This is obviously not portable, and is never necessary when opening
   a supplied data file, given gretl's path-searching capability.
 
-\vspace{1ex}  
+\vspace{1ex}
 \textit{Execution time}: Some packages carry out Monte Carlo
   analyses and/or bootstrapping and we all know that such procedures
   are inherently time consuming. Nonetheless, a sample script should
@@ -1428,13 +1460,13 @@ scripts:
   ``realistic'' invocation of the function(s), commented out, with a
   statement such as ``Uncomment this for a real test''.
 
-\vspace{1ex}  
+\vspace{1ex}
 \textit{Commenting out}: In some cases an author may wish to
   indicate alternative ways of calling his or her package. That's
   fine, but if an alternative call requires a dataset other than
   the one opened by the script it must be commented out; we don't
   want any lines in the sample script that will generate errors
-  when the script is called ``as is''. 
+  when the script is called ``as is''.
 
 \vspace{1ex}
 The intent of the sample script in a gfn package is not just ``a rough
@@ -1459,7 +1491,7 @@ ecosystem.
 Two main points are considered here (they often, but do not have to,
 go together), namely offering a gretl bundle as the return value from
 a packaged function, and offering placement of a function package on
-one or other of the gretl menus. 
+one or other of the gretl menus.
 
 \subsection{Working with bundles}
 
@@ -1554,7 +1586,7 @@ doesn't print anything. Functions don't \textit{have} to print
 anything, and gretl's built-functions generally do not, they just
 return something useful. However, if a function is intended for GUI
 use it probably should give some visible output, or in other words it
-should be ``command-like.'' 
+should be ``command-like.''
 
 So let's revisit the package code. We could add suitable printing
 commands within the \texttt{bunret} function itself, but for reasons
@@ -1785,7 +1817,7 @@ selected regressor in the context of a multiple regression.  In GUI
 use, this package latches onto windows displaying models estimated via
 OLS, attaching itself to the \textsf{Graphs} menu.
 
-Here's the relevant part of \texttt{bandplot.spec}: 
+Here's the relevant part of \texttt{bandplot.spec}:
 
 \begin{code}
 description = Confidence band plot
@@ -1794,9 +1826,9 @@ gui-main = GUI_bandplot
 label = Confidence band plot
 menu-attachment = MODELWIN/Graphs
 model-requirement = ols
-public = GUI_bandplot bandplot 
-no-print = GUI_bandplot bandplot 
-menu-only = GUI_bandplot 
+public = GUI_bandplot bandplot
+no-print = GUI_bandplot bandplot
+menu-only = GUI_bandplot
 help = bandplot.help
 gui-help = bpgui.help
 \end{code}
@@ -1826,7 +1858,7 @@ signature of \texttt{GUI\_bandplot}, designed to be called from a
 menu:
 %
 \begin{code}
-function void GUI_bandplot (int xvar[$xlist] "x-axis variable", 
+function void GUI_bandplot (int xvar[$xlist] "x-axis variable",
      scalar conf[0.5:0.99:0.95:.01] "confidence level")
 \end{code}
 %$
@@ -1897,7 +1929,7 @@ OLS. That's a safe assumption when coming off a model-window menu
 We've already come across the \texttt{no-print} attribute of packaged
 functions, but it's worth revisiting this in the context of functions
 whose sole job is to produce a graph or plot of some kind (whether or
-not they are model-related). 
+not they are model-related).
 
 By default, when a packaged function is invoked via the GUI a window
 is opened showing the command along with any printed output, but for
@@ -2015,7 +2047,7 @@ server'') and via the web interface.
 Once you've uploaded a function package to the gretl server, hopefully
 that won't be the end of the story: unless your package was totally
 perfect on its first release (Ha!) you'll want to revisit it from time
-to time with fixes or enhancements in mind. 
+to time with fixes or enhancements in mind.
 
 The question arises: if your initial work was via the GUI, or via the
 CLI, are you thereby committed to that mode of operation forever?
@@ -2068,8 +2100,8 @@ This supports all the commands shown in section~\ref{sec:cli-build}
 except that the \app{make} utility is not present. But \app{make} for
 Windows can be downloaded from the \textsf{GnuWin32} project on
 sourceforge: see \url{http://gnuwin32.sf.net/packages/make.htm},
-which provides a nice easy self-installer. You may also want 
-command-line \textsf{zip} and \textsf{unzip} from \textsf{GnuWin32}: 
+which provides a nice easy self-installer. You may also want
+command-line \textsf{zip} and \textsf{unzip} from \textsf{GnuWin32}:
 \url{http://gnuwin32.sf.net/packages/zip.htm}. (In both cases you
 should select the option ``Complete package, except sources''.)
 
@@ -2242,7 +2274,7 @@ at
   c:\mingw\msys\1.0\msys.bat
 \end{code}
 %
-In this case you can customize the window that appears as described 
+In this case you can customize the window that appears as described
 in section~\ref{sec:cmd.exe}.
 
 As a final note, even if you decide not to go ``all the way'' with
@@ -2303,7 +2335,7 @@ $(PKG).zip: $(PKG).gfn $(PKG).pdf
 install: $(PKG).zip
 	echo pkg install $(PKG).zip --local | gretlcli -b -
 
-clean: 
+clean:
 	rm -f $(PKG).gfn $(PKG).pdf $(PKG).zip
 \end{scode}
 \end{script}
@@ -2490,12 +2522,12 @@ in various ways, as described below.
    button.
 
  \item \texttt{help} (required): The name of the file in which
-  Help for this package can be found. This should either be a 
+  Help for this package can be found. This should either be a
   plain text (UTF-8) file, in which case the filename suffix
   doesn't really matter---although we suggest \texttt{.txt}---or a
   PDF file, in which case the suffix must be \texttt{.pdf} and
   the basename of the file must be the same as that of the package
-  (as in \texttt{mypkg.gfn} and \texttt{mypkg.pdf}). 
+  (as in \texttt{mypkg.gfn} and \texttt{mypkg.pdf}).
 
   \vbusage{} \verb|help = lp-mfx_help.txt|
 
@@ -2630,6 +2662,67 @@ function bundle GUI_exogtest (int xvar[$mylist] "regressor to test")
   available). It should be a function private to the package.
 
   \ttusage{list-maker = exogtest\_listmaker}
+
+\item \texttt{ui-maker} (optional): This element allows a degree of
+  fine-tuning of the dialog box shown when a package is called via
+  gretl's graphical interface. At present the following points can be
+  configured (more options may be added in future):
+  \begin{itemize}
+  \item A given parameter (of any type) can be marked as dependent on
+    a specified boolean parameter.
+  \item A parameter of type \texttt{int} can be given a data-dependent
+    default, minimum and/or maximum value, to be fixed at run time.
+  \item A parameter of type \texttt{list} can be inflected in up to
+    three ways (illustrated below).
+  \end{itemize}
+  This is achieved by including a private function which returns a
+  bundle, holding a sub-bundle for each parameter to be inflected.
+  This is most easily explained by example. Here's the signature of
+  the \texttt{gui-main} function for a package currently in
+  development:
+\begin{code}
+function bundle GUI_rf (\
+   series y "dependent variable",
+   list X "indpendent variables",
+   int n_train[50::] "training observations",
+   int mode[0:2:0] {"automatic", "regression", "classification"},
+   bool tune[1] "tune 'mtry'",
+   int verbosity [1:2:2],
+   bool use_seed[0] "set random seed",
+   int seed[0:2147483647:1234567])
+\end{code}
+  Now consider the following private function, which is designed to
+  inflect the GUI representation of the above:
+\begin{code}
+function bundle rf_ui_maker (void)
+   maxstr = "ceil(0.9*$nobs)"
+   defstr = "ceil(0.65*$nobs)"
+   bundle b
+   b["seed"] = _(depends="use_seed")
+   b["n_train"] = _(maximum=maxstr, default=defstr)
+   b["X"] = _(singleton=0, exclude="y", no_const=1)
+   return b
+end function
+\end{code}
+  In this example the parameters \texttt{seed}, \texttt{n\_train} and
+  \texttt{X} are inflected. With \texttt{seed}, the \texttt{depends}
+  keyword indicates that its sensitivity should depend on the boolean
+  parameter \texttt{use\_seed}: it will be ``grayed out'' unless the
+  \texttt{use\_seed} check-box is checked. For \texttt{n\_train}, its
+  maximum and default values are configured via the strings
+  \texttt{maxstr} and \texttt{defstr}: these are treated as
+  expressions to be evaluated at run time, factoring in the size of
+  the current dataset.  Finally, the list parameter \texttt{X} has
+  three inflections: \texttt{singleton=0} means that a list with a
+  single series member is not acceptable; \texttt{exclude="y"} means
+  that if a given series is selected for the role of \texttt{y} (the
+  first parameter) it should not be shown as a candidate member of
+  \texttt{X}; and \texttt{no\_const=1} says that the automatic
+  \texttt{const} series should not be a candidate either.
+
+  The function designated as \texttt{ui-maker} is called internally
+  when the relevant dialog box is to be shown, and on successful
+  execution the directives in the returned bundle are followed.
 
 \item \texttt{no-print} (optional): A list of public interfaces that
   are not designed to print anything.  Consider, for example, a
