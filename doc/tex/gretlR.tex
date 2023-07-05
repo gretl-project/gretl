@@ -276,7 +276,7 @@ similar to Figure~\ref{fig:R-output1} will appear.
   \label{fig:R-output1}
 \end{figure}
 
-\section{Taking stuff back and forth}
+\section{Sending data back and forth}
 \label{sec:R-passing-data}
 
 As regards the passing of data between the two programs, so far we
@@ -628,13 +628,15 @@ supported (see chapter~\ref{chap:datatypes} for details on the
 definition of types on the gretl side):
 \begin{itemize}
 \item The most basic types---real scalars, real matrices and (single)
-  strings---can be pushed in either direction no problem.
+  strings---can be pushed in either direction no problem. Since gretl
+  2023b, row and column names will be preserved when transferring
+  matrices.
 \item A \texttt{series} in gretl can be pushed to \app{R} as a
   vector. If the gretl series is string-valued (see
   chapter~\ref{chap:strval-series}), \app{R} will receive the string
   values.
 \item Gretl's arrays of strings can be pushed to \app{R} as vectors of
-  strings, and \textit{vice versa}.
+  strings, and vice versa.
 \item Gretl's bundles can be pushed to \app{R} as ``lists'', with tags
   naming the elements, and \app{R}'s lists can be retrieved as gretl
   bundles provided that their elements have a corresponding gretl type
