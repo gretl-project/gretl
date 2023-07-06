@@ -33,7 +33,7 @@ gretl scripts or work with the gretl console. In this
 chapter, the focus will be on the methods available to execute \app{R}
 commands without leaving gretl.
 
-\section{Starting an interactive \app{R} session}
+\section{Starting an interactive R session}
 \label{sec:R-interactive}
 
 The easiest way to use \app{R} from gretl is in interactive
@@ -219,7 +219,7 @@ sigma^2 estimated as 0.001348:  log likelihood = 244.7,  aic = -483.4
 
 Happily, the estimates again coincide.
 
-\section{Running an \app{R} script}
+\section{Running an R script}
 \label{sec:R-scripts}
 
 Opening an \app{R} window and keying in commands is a convenient
@@ -286,7 +286,7 @@ needed.  In the following sub-sections we see how matrices can be
 exchanged, and how data can be passed from \app{R} back to
 gretl.
 
-\subsection{Passing matrices from gretl to \app{R}}
+\subsection{Passing matrices from gretl to R}
 
 For passing matrices from gretl to \app{R}, you can use the
 \texttt{mwrite} matrix function described in section
@@ -338,7 +338,7 @@ Gretl side:
   A <- as.matrix(read.table("/path/to/mymatfile.mat", skip=1))
 \end{code}
 
-\subsection{Passing data from \app{R} to gretl}
+\subsection{Passing data from R to gretl}
 \label{sec:Rpassing-data}
 
 For passing data in the opposite direction, gretl defines a special
@@ -461,7 +461,7 @@ Notice that, since $\hat{\sigma}^2_{\zeta} = 0$, the estimate for
 $\beta_t$ is constant and the level component is simply a random walk
 with a drift.
 
-\section{Interacting with \app{R} from the command line}
+\section{Interacting with R from the command line}
 \label{sec:foreign-command}
 
 Up to this point we have spoken only of interaction with \app{R} via
@@ -549,7 +549,7 @@ list X = RStructTS(lg)
 \end{scode}
 \end{script}
 
-\section{Performance issues with \app{R}}
+\section{Performance issues with R}
 \label{sec:R-performance}
 
 \app{R} is a large and complex program, which takes an appreciable
@@ -579,7 +579,7 @@ gretl to call the \app{R} executable instead, you can do
 set R_lib off
 \end{code}
 
-\section{Further use of the \app{R} library}
+\section{Further use of the R library}
 \label{sec:R-functions}
 
 Besides improving performance, as noted above, use of the \app{R}
