@@ -5292,9 +5292,19 @@
 	  <effect>send output to specified file</effect>
         </option>
         <option>
+	  <flag>--outbuf</flag>
+	  <optparm>stringname</optparm>
+	  <effect>send output to specified string</effect>
+        </option>
+        <option>
 	  <flag>--input</flag>
 	  <optparm>filename</optparm>
 	  <effect>take input from specified file</effect>
+        </option>
+        <option>
+	  <flag>--inbuf</flag>
+	  <optparm>stringname</optparm>
+	  <effect>take input from specified string</effect>
         </option>
       </options>
       <examples>
@@ -5529,6 +5539,13 @@
 	shown on screen as in interactive mode. If a filename with any
 	extension other than those just mentioned is given, a gnuplot
 	command file is written.
+      </para>
+      <para>
+	An alternative means of directing output is the
+	<opt>outbuf=</opt><repl>stringname</repl> option. This writes
+	gnuplot commands to the named string or <quote>buffer</quote>.
+	Note that <opt>output</opt> and <opt>outbuf</opt> are mutually
+	incompatible.
       </para>
       <subhead>Specifying a font</subhead>
       <para>
