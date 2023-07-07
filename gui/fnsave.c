@@ -1932,10 +1932,21 @@ static void select_pdf_callback (GtkButton *b, function_info *finfo)
 			      finfo, finfo->dlg);
 }
 
+static char *text_help_label (function_info *finfo)
+{
+    if (finfo->help_fname != NULL &&
+	has_suffix(finfo->help_fname, ".md")) {
+	return _("Markdown");
+    } else {
+	return _("Plain text");
+    }
+}
+
 static void add_help_radios (GtkWidget *tbl, int i,
 			     function_info *finfo)
 {
     GtkWidget *w, *rb, *htab;
+    char *label;
     GSList *group = NULL;
 
     w = gtk_label_new(_("Help text"));
@@ -1947,7 +1958,8 @@ static void add_help_radios (GtkWidget *tbl, int i,
     gtk_table_set_row_spacings(GTK_TABLE(htab), 4);
     gtk_table_set_col_spacings(GTK_TABLE(htab), 2);
 
-    rb = gtk_radio_button_new_with_label(group, _("Plain text"));
+    label = text_help_label(finfo);
+    rb = gtk_radio_button_new_with_label(group, label);
     gtk_table_attach_defaults(GTK_TABLE(htab), rb, 0, 1, 0, 1);
     w = gtk_button_new_from_stock(GTK_STOCK_EDIT);
     g_signal_connect(G_OBJECT(w), "clicked",
@@ -5266,6 +5278,7 @@ void edit_function_package (const char *fname)
 					  "description", &finfo->pkgdesc,
 					  "tags", &finfo->tags,
 					  "help", &finfo->help,
+					  "help-fname", &finfo->help_fname,
 					  "sample-script", &finfo->sample,
 					  "data-requirement", &finfo->dreq,
 					  "min-version", &finfo->minver,
