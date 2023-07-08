@@ -85,7 +85,7 @@ How to compile libgretl itself
         </listitem>
       </itemizedlist>
       <para>
-        Libgretl depends on a number of other libraries.
+        Libgretl depends on a number of other libraries, including the following.
       </para>
       <itemizedlist>
        <listitem>
