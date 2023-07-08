@@ -13690,8 +13690,8 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
  * %GRETL_MOD_DECREMENT to subtract from the existing value of
  * @C.
  *
- * Computes either A * <d> * A' (if amod = %GRETL_MOD_NONE) or A' *
- * <d> * A (if amod = %GRETL_MOD_TRANSPOSE), where <d> is a diagonal
+ * Computes either A * md * A' (if amod = %GRETL_MOD_NONE) or A' *
+ * md * A (if amod = %GRETL_MOD_TRANSPOSE), where md is a diagonal
  * matrix holding the vector @d. The result is written into @C.
  *
  * Returns: 0 on success; non-zero error code on failure.
