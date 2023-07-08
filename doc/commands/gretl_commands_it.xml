@@ -5414,9 +5414,19 @@
 	  <effect>ridirige l'output su file</effect>
 	</option>
 	<option>
+	  <flag>--outbuf</flag>
+	  <optparm>nomestringa</optparm>
+	  <effect>ridirige l'output in una stringa</effect>
+	</option>
+	<option>
 	  <flag>--input</flag>
 	  <optparm>filename</optparm>
 	  <effect>prende l'input da file</effect>
+	</option>
+	<option>
+	  <flag>--inbuf</flag>
+	  <optparm>nomestringa</optparm>
+	  <effect>prende l'input da una stringa</effect>
 	</option>
       </options>
       <examples>
@@ -5656,6 +5666,13 @@
 	interattiva.  Se si indica un nome del file con un'estensione
 	diversa da quelle appena citate viene prodotto un file di
 	comandi gnuplot.
+      </para>
+      <para>
+	Un modo alternativo di ridirigere l'output è dato dall'opzione
+	<opt>outbuf=</opt><repl>nomestringa</repl>, che salva i
+	comandi gnuplot nella stringa specificata, che fa da <quote>buffer</quote>.
+	Si noti che le opzioni <opt>output</opt> e <opt>outbuf</opt>
+	sono incompatibili.
       </para>
       <subhead>Specificare un font</subhead>
       <para>
