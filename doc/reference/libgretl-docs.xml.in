@@ -11,7 +11,7 @@
   <bookinfo>
     <title>Libgretl Reference Manual</title>
     <releaseinfo>
-      API reference for libgretl-1.0 version 44.0.0 (gretl 2023a)
+      API reference for libgretl-1.0 version LIB_VERSION.0.0 (gretl GRETL_VERSION)
     </releaseinfo>
   </bookinfo>
   

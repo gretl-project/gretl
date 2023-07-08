@@ -56,23 +56,26 @@ SCAN_OPTIONS = --ignore-headers="$(IGNORE_SRCS)"
 MKDB_OPTIONS = --output-format xml --xml-mode --ignore-files="$(IGNORE_SRCS)"
 
 # Used for dependencies. The docs will be rebuilt if any of these change.
-HFILE_GLOB=$(DOC_SOURCE_DIR)/*.h
-CFILE_GLOB=$(DOC_SOURCE_DIR)/*.c
+HFILE_GLOB = $(DOC_SOURCE_DIR)/*.h
+CFILE_GLOB = $(DOC_SOURCE_DIR)/*.c
 
 GTKDOC_CC = $(LIBTOOL) --mode=compile $(CC)
 GTKDOC_LD = $(LIBTOOL) --mode=link $(CC)
 
-all: links.stamp
+all: links.stamp libgretl-docs.xml
 	gtkdoc-scan --module $(DOC_MODULE) $(SCAN_OPTIONS) --source-dir $(SRC_DIR)
 	gtkdoc-mkdb --module $(DOC_MODULE) $(MKDB_OPTIONS) --source-dir $(SRC_DIR)
 	mkdir -p html
 	cd html && gtkdoc-mkhtml $(DOC_MODULE) ../$(DOC_MODULE)-docs.xml
 	gtkdoc-fixxref --module $(DOC_MODULE) --module-dir html
 
+libgretl-docs.xml: getver.sh
+	./getver.sh $(topsrc)
+
 links.stamp: Makefile
-	for f in $(DOC_SRC_DIR)/*.xml ; do \
+	for f in $(DOC_SRC_DIR)/*.xml $(DOC_SRC_DIR)/getver.sh ; do \
 	if [ ! -f `basename $$f` ] ; then ln -sf $$f . ; fi ; done
 	touch $@
 
 clean:
-	rm -f html/*.html xml/*.xml
+	rm -f html/*.html xml/*.xml *.stamp *.txt
