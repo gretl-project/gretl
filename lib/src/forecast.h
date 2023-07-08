@@ -32,7 +32,7 @@ typedef enum {
     FC_MEAN_OK      = 1 << 4
 } FcastFlags;
 
-struct _FITRESID {
+struct FITRESID_ {
     int model_ID;   /* ID of model on which forecast is based */
     int asymp;      /* 0/1 flag for asymptotic estimator */
     int std;        /* 0/1 flag for standardized residuals */

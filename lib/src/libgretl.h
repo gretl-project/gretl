@@ -283,7 +283,7 @@ typedef struct _cmplx {
 #endif
 
 typedef struct GRETL_VAR_ GRETL_VAR;
-typedef struct _FITRESID FITRESID;
+typedef struct FITRESID_ FITRESID;
 
 typedef struct model_data_item_ model_data_item;
 typedef struct ModelTest_ ModelTest;
