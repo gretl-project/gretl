@@ -35,9 +35,10 @@
 \title{The extra package\\
 (a collection of various convenience functions for hansl programming) }
 
-\date{January 2023, release 1.6}
+\date{July 2023, release 1.7}
 
-\author{The \noun{gretl} team\thanks{Currently co-ordinated by Sven Schreiber.}}
+\author{The \noun{gretl} team\thanks{Currently co-ordinated by Sven
+Schreiber.}}
 
 \maketitle
 \tableofcontents{}
@@ -102,8 +103,9 @@ Sets elements of \texttt{m} to zero if they are really close. The
 return value 0 or 1 indicates whether \texttt{m} was altered or not.
 
 The default value for the threshold has been \texttt{1e-12} since extra
-version 0.7. In some applications smaller (in absolute value) but mathematically
-truly non-zero results may occur, in which case a smaller threshold can be chosen.
+version 0.7. In some applications smaller (in absolute value) but
+mathematically truly non-zero results may occur, in which case a smaller
+threshold can be chosen.
 
 \subsection{drill}
 
@@ -150,6 +152,43 @@ side of the equalities becomes feasible, which should be
 numerically more efficient than the direct application
 of the left-hand side.
 
+\subsection{drawbootres}
+
+\ArgRet{\texttt{const matrix U}, \texttt{int boottype} (optional),
+ \texttt{bundle bparams} (optional)}{matrix}
+Construct a new draw of innovations (residuals) for bootstrapping, based on the
+input matrix \texttt{U}, interpreted to be T-by-K (observations in rows). The
+return value has the same shape. \texttt{U} can be original residuals or some
+pre-processed input -- the pre-processing is not done here to avoid doing it
+repeatedly during the bootstrap.
+
+The \texttt{boottype} argument is optional with default 1, where the code has
+the following meaning (see also the SVAR addon's documentation):
+\begin{enumerate}
+  \item plain resampling -- A standard draw with replacement based on
+    libgretl's resample function; so if this is all that's needed, you might
+    be better off using resample directly. 
+
+  \item wild, Normal -- A draw for the wild bootstrapping scheme, where each
+    row of the input matrix is scaled randomly according to Gaussian noise.
+  \item wild, Rademacher -- Here the signs of all rows are flipped randomly. 
+  \item wild, Mammen -- Here the multiplicative factors for the rows are the
+    ones proposed by Mammen (see the SVAR documenation).
+  \item moving blocks -- Provides a draw of moving blocks of the input, see 
+    for example Brüggemann, Jentsch \& Trenkler (2016; Journal of Econometrics,
+    vol. 191, issue 1, 69-85). By default a block length of 10\% of the input 
+    length \texttt{T} is used (rounded, at least 2). The block length can be
+    overridden by supplying the 'moveblocklen' scalar member inside the
+    \texttt{bparams} bundle argument. 
+
+\end{enumerate}
+
+The bundle argument \texttt{bparams} is also optional and is currently only
+used for the specification of the length of the moving blocks. 
+
+Note that this function is included in extra's version 1.7 and made public for
+convenience of potential users, but it may be moved to another separate addon
+in the future. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -516,7 +555,7 @@ single-equation (\texttt{\$model}) and generic simultaneous-equation
 \section{Authors}
 \begin{itemize}
 \item gap\_filler, eliminate, duplicate, truncnorm, powerset,
-  drill, correspondence, combinations, qformvech: Jack Lucchetti
+  drill, correspondence, combinations, qformvech, mat2latex: Jack Lucchetti
 
 \item nearPSD, zeroifclose, scores2x2, WSRcritical, WSRpvalue, onemode,
 splitfname, multi\_instrings, fracorder, put\_outofsmpl:
@@ -524,11 +563,14 @@ Sven Schreiber
 
 \item winsor: Sven Schreiber, original code JoshuaHe
 
+\item drawbootres: Jack Lucchetti and Sven Schreiber
 
 \end{itemize}
 
 \section{Changelog }
 \begin{itemize}
+\item July 2023: 1.7, adopt the drawbootres function from the SVAR addon 
+  to make it publicly available  
 \item January 2023: 1.6, introduce the put\_outofsmpl function; internal
   refactoring of the mat2latex() function
 \item July 2022: 1.5, introduce the mat2latex function
@@ -536,16 +578,17 @@ Sven Schreiber
 \item January 2022: 1.3, retire the mat2list function (now in
   libgretl), update gap\_filler
 \item October 2021: 1.2, add qformvech
-\item June 2021: 1.1, add combinations, and increase gretl version requirement to 2020c
+\item June 2021: 1.1, add combinations, and increase gretl version requirement
+  to 2020c
 \item November 2020: 1.0, add mat2list
 \item September 2020: 0.8, add fracorder, remove bwritejson
-\item July 2020: 0.7, add multi\_instrings and correspondence, add deprecation warning to
-bwritejson, efficiency improvement for zeroifclose
+\item July 2020: 0.7, add multi\_instrings and correspondence, add deprecation
+  warning to bwritejson, efficiency improvement for zeroifclose
 \item January 2020: 0.6, add drill, bwritejson, onemode, splitfname;
   finally remove the retired sepstr2arr (use native strsplit instead);
   slightly revise gap\_filler; rearrange the documentation a little
-\item October 2018: 0.5, fix small commute bug; retire sepstr2arr; add powerset,
-  eliminate, duplicate
+\item October 2018: 0.5, fix small commute bug; retire sepstr2arr; add 
+  powerset, eliminate, duplicate
 \item February 2018: 0.41, allow non-integer input in WSRpvalue
 \item January 2018: 0.4, add WSRcritical, WSRpvalue
 \item December 2017: 0.3, add scores2x2; switch to pdf help document
