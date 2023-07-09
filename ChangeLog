@@ -9,6 +9,7 @@ version 2023b, in progress
   coefficient to the output
 - aggregate() function: support matrix input
 - misszero() and zeromiss() functions: support matrix input
+- SVAR addon: implement mixed (set-based and zero) restrictions
 - geoplot addon: make the plot key position configurable
 - Add optional boolean "skip_na" argument for several matrix
   functions that compute statistics

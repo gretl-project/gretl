@@ -6924,11 +6924,12 @@ double gretl_matrix_dot_product (const gretl_matrix *a,
  * @r: pointer to rows of result.
  * @c: pointer to columns of result.
  *
- * Used to establish the dimensions of the result of a "dot"
- * operation such as A .* B or A .+ B.
+ * Used to establish the validity of a "dot operation" such as A .* B
+ * or A .+ B and, if the operation is valid, the dimensions of the
+ * result.
  *
- * Returns: a numeric code identifying the convention to be used;
- * %CONF_NONE indicates non-conformability.
+ * Returns: a numeric code identifying the convention to be used,
+ * where %CONF_NONE indicates non-conformability.
  */
 
 ConfType dot_operator_conf (const gretl_matrix *A,
@@ -7236,8 +7237,23 @@ static double x_op_y (double x, double y, int op)
  * @op: operator.
  * @err: location to receive error code.
  *
+ * @op should be one of the standard ASCII representations of
+ * arithmetical operators:
+ *
+ * '*' : multiply, '/' divide
+ * '+' : add, '-' subtract
+ * '^': exponentiate
+ *
+ * or one of these test symbols:
+ *
+ * '=' : is equal to
+ * '>' : is greater than, '<' is less than
+ * ']' : is greater than or equal to
+ * '[' : is less than or equal to
+ * '!' : is not equal to
+ *
  * Returns: a new matrix, each of whose elements is the result
- * of (x op y), where x and y are the  corresponding elements of
+ * of (x @op y), where x and y are the  corresponding elements of
  * the matrices @a and @b (or NULL on failure).
  */
 
@@ -13690,8 +13706,8 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
  * %GRETL_MOD_DECREMENT to subtract from the existing value of
  * @C.
  *
- * Computes either A * <d> * A' (if amod = %GRETL_MOD_NONE) or A' *
- * <d> * A (if amod = %GRETL_MOD_TRANSPOSE), where <d> is a diagonal
+ * Computes either A * md * A' (if amod = %GRETL_MOD_NONE) or A' *
+ * md * A (if amod = %GRETL_MOD_TRANSPOSE), where md is a diagonal
  * matrix holding the vector @d. The result is written into @C.
  *
  * Returns: 0 on success; non-zero error code on failure.
