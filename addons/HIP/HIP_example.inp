@@ -1,5 +1,4 @@
-set echo off 
-set messages off
+set verbose off
 include HIP.gfn
 
 open mroz87.gdt -q

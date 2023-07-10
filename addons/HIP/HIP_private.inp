@@ -1,45 +1,45 @@
 /*********************************************************
 
- Shapes the vector containing all initial values into 
- the needed vectors and matrices for the log-likelihood
+   Shapes the vector containing all initial values into
+   the needed vectors and matrices for the log-likelihood
 
 *********************************************************/
 
-function scalar HIP_params_shape(matrix *theta, matrix *beta, 
- 				 matrix *alpha,  matrix *Pi,
-				 matrix *psi, matrix *C, 
-				 scalar k1, scalar k2, 
-				 scalar p, scalar q) 
+function scalar HIP_params_shape(matrix *theta, matrix *beta,
+                                 matrix *alpha,  matrix *Pi,
+                                 matrix *psi, matrix *C,
+                                 scalar k1, scalar k2,
+                                 scalar p, scalar q)
 
     scalar h = k1 + p + q
     matrix beta = theta[1: k1+p]
 
     if q > 0
-	matrix alpha = theta[k1+p+1:h]
+        matrix alpha = theta[k1+p+1:h]
     endif
-	
+
     if (p!=0)
-	scalar k = k1+k2
-	Pi = mshape(theta[h+1 : h+p*k],k,p)
-	matrix psi = theta[h+p*k+1:h + p*(k+1),]
-	matrix C = lower(unvech(theta[h+p*(k+1)+1:,]))
+        scalar k = k1+k2
+        Pi = mshape(theta[h+1 : h+p*k],k,p)
+        matrix psi = theta[h+p*k+1:h + p*(k+1),]
+        matrix C = lower(unvech(theta[h+p*(k+1)+1:,]))
     else
-	Pi = {}
-	psi = {}
-	C = {}
+        Pi = {}
+        psi = {}
+        C = {}
     endif
 
     return 0
 end function
 
-function matrix EndoVarNormalize(matrix E)
+function matrix EndoVarNormalize(const matrix E)
     matrix s = diag(mcov(E))
     scalar h = 0.5
     s = s .^ h
     return s
 end function
 
-function matrix ExoVarNormalize(matrix X)
+function matrix ExoVarNormalize(const matrix X)
 
     # we exclude from the treatment the constant
     # and the dummy variables
@@ -51,10 +51,12 @@ function matrix ExoVarNormalize(matrix X)
     return s'
 end function
 
-function scalar CraggDonald(matrix Sigma, matrix Y, matrix X, 
-			    matrix Z)
+function scalar CraggDonald(const matrix Sigma,
+                            const matrix Y,
+                            const matrix X,
+                            const matrix Z)
 
-    p = cols(Y)
+    # p = cols(Y)
     matrix U = {}
     mols(Z, X, &U)
     B = mols(Y, U)
@@ -68,8 +70,8 @@ function matrix InitProbit(series y, list W, scalar *err)
     catch probit y W --quiet	# here we can run into the perfect-prediction problem
     err = $error
     if err == 0
-	list DROPPED = W - $xlist
-	# handle some failures
+        list DROPPED = W - $xlist
+        # handle some failures
         if nelem(DROPPED) >0
             printf "The variable(s) %s were dropped\n", varname(DROPPED)
             printf "Initializing to zeros and hoping for the best.\n"
@@ -77,11 +79,11 @@ function matrix InitProbit(series y, list W, scalar *err)
         else
             matrix beta = $coeff
         endif
-	ret = $lnl | beta
+        ret = $lnl | beta
     else
-	printf "Warning: probit returned error %d (%s)\n", err, errmsg(err)
-	printf "This is weird and disturbing.\n"
-	ret = {NA} | zeros(k,1)
+        printf "Warning: probit returned error %d (%s)\n", err, errmsg(err)
+        printf "This is weird and disturbing.\n"
+        ret = {NA} | zeros(k,1)
     endif
 
     return ret
@@ -90,9 +92,9 @@ end function
 
 /*********************************************************
 
- Two-step estimation to compute initial
- values. Parameters estimated covariance matrix is not
- computed.
+   Two-step estimation to compute initial
+   values. Parameters estimated covariance matrix is not
+   computed.
 
 *********************************************************/
 
@@ -108,63 +110,67 @@ function matrix InitParm(bundle *b)
     scalar p = b["mp"]
     scalar q = b["mq"]
     scalar h = b["mh"]
-    
+
     scalar het = b["het"]
     scalar iv = b["iv"]
-    list W
-    loop i=1..h -q
-        series z$i = Z[,$i]
-        W += z$i
-    endloop
+    if $version < 20220
+        list W
+        loop i=1..h -q
+            series z$i = Z[,$i]
+            W += z$i
+        endloop
+    else
+        list W = mat2list(Z, "z")
+    endif
 
     RESCALEX = 0 # Experimental; not for now
 
     if RESCALEX
-	matrix rescale = ExoVarNormalize(X[,1:k1])	
-	b["rescaleX"] = rescale
-	X[,1:k1] = X[,1:k1] ./ rescale'
-	b["mX"] = X
-	b["mEXOG"] = b["mEXOG"] ./ rescale'
+        matrix rescale = ExoVarNormalize(X[,1:k1])
+        b["rescaleX"] = rescale
+        X[,1:k1] = X[,1:k1] ./ rescale'
+        b["mX"] = X
+        b["mEXOG"] = b["mEXOG"] ./ rescale'
     else
-	matrix rescale = ones(k1,1)
-	b["rescaleX"] = rescale
+        matrix rescale = ones(k1,1)
+        b["rescaleX"] = rescale
     endif
 
     matrix E = { }
     matrix V_Pi = { }
     if iv
-	matrix Pi = mols(ENDOG, X, &E, &V_Pi)
-	matrix Sigma = mcov(E)
+        matrix Pi = mols(ENDOG, X, &E, &V_Pi)
+        matrix Sigma = mcov(E)
 
-	lambda = CraggDonald(Sigma, ENDOG, b["mEXOG"], b["mADDIN"])
-	b["CraggDonald"] = lambda
-	if lambda < 1.0e-2
-	    printf "Weak instruments (lambda = %g); expect trouble.\n", lambda
-	endif
+        lambda = CraggDonald(Sigma, ENDOG, b["mEXOG"], b["mADDIN"])
+        b["CraggDonald"] = lambda
+        if lambda < 1.0e-2
+            printf "Weak instruments (lambda = %g); expect trouble.\n", lambda
+        endif
 
-	matrix rescale = EndoVarNormalize(E)
-	b["rescaleY"] = rescale
+        matrix rescale = EndoVarNormalize(E)
+        b["rescaleY"] = rescale
 
-	if rows(rescale) > 0
-	    ENDOG = ENDOG ./ rescale'
-	    b["mENDOG"] = ENDOG
-	    Pi = Pi ./ rescale'
-	    E  = E ./ rescale'
-	    Sigma = Sigma ./ (rescale .* rescale')
-	endif
+        if rows(rescale) > 0
+            ENDOG = ENDOG ./ rescale'
+            b["mENDOG"] = ENDOG
+            Pi = Pi ./ rescale'
+            E  = E ./ rescale'
+            Sigma = Sigma ./ (rescale .* rescale')
+        endif
 
-	b["uhat"] = E
-	loop i=1..p -q
-	    series e$i = E[,$i]
-	    W += e$i
-	endloop
+        b["uhat"] = E
+        loop i=1..p -q
+            series e$i = E[,$i]
+            W += e$i
+        endloop
 
-	matrix C = cholesky(invpd(Sigma))
+        matrix C = cholesky(invpd(Sigma))
     else
-	matrix Pi = {}
-	matrix psi = {}
-    	matrix C = {}
-    endif	    
+        matrix Pi = {}
+        matrix psi = {}
+        matrix C = {}
+    endif
 
     scalar err = 0
     ##BUG: cambiato il nome da beta a inipar
@@ -173,31 +179,31 @@ function matrix InitParm(bundle *b)
 
     if err > 0
         print "Initial probit failed (%s). Aborting.", errmsg(error)
-	beta = {}
-	scalar b["lnl0"] = NA
-	return beta
+        beta = {}
+        scalar b["lnl0"] = NA
+        return beta
     else
-	scalar b["lnl0"] = inipar[1]
-	matrix beta = inipar[2:h+1]
+        scalar b["lnl0"] = inipar[1]
+        matrix beta = inipar[2:h+1]
     endif
 
     if het
-	series ndx = Z * beta
-	series mills = y ? invmills(-ndx) : -invmills(ndx)
-	series s2 = -ndx*mills
-	alpha = mols(s2 , 1 ~ HETVAR)
-	alpha = alpha[2:]
+        series ndx = Z * beta
+        series mills = y ? invmills(-ndx) : -invmills(ndx)
+        series s2 = -ndx*mills
+        alpha = mols(s2 , 1 ~ HETVAR)
+        alpha = alpha[2:]
     else
-	alpha = {}
+        alpha = {}
     endif
 
     if iv
         ##BUG
-	#gamma = $coeff[h+1: ]
-	matrix gamma = inipar[h+2:]
- 	scalar scale = sqrt(1 + qform(gamma', Sigma))
-	matrix beta = beta ./ scale
-	matrix psi = inv(C')*gamma ./ scale
+        #gamma = $coeff[h+1: ]
+        matrix gamma = inipar[h+2:]
+        scalar scale = sqrt(1 + qform(gamma', Sigma))
+        matrix beta = beta ./ scale
+        matrix psi = inv(C')*gamma ./ scale
     endif
 
     theta = beta | alpha | vec(Pi) | psi | vech(C)
@@ -206,7 +212,7 @@ function matrix InitParm(bundle *b)
 end function
 
 function scalar rescale_results(bundle *mod, matrix *theta, matrix *vcv,
-				matrix *G)
+                                matrix *G)
 
     # used to undo the scaling of the endogenous variables once estimation
     # is done; while we're at it, we also compute the Jacobian term to correct
@@ -221,39 +227,39 @@ function scalar rescale_results(bundle *mod, matrix *theta, matrix *vcv,
     scalar k2 = mod["mk2"]
 
     if mod["het"]
-	s_a = ones(mod["mq"],1)
+        s_a = ones(mod["mq"],1)
     else
-	s_a = {}
+        s_a = {}
     endif
 
     if mod["iv"]
-	a_Pi = vec( (isX .* sY') | mshape(sY, p, k2)' )
-	a_end = ones(p,1) | vech(mshape(isY,p,p)') 
+        a_Pi = vec( (isX .* sY') | mshape(sY, p, k2)' )
+        a_end = ones(p,1) | vech(mshape(isY,p,p)')
     else
-	a_Pi = {}
-	a_end = {}
-    endif    
+        a_Pi = {}
+        a_end = {}
+    endif
 
     matrix a = isX | isY | s_a | a_Pi | a_end
 
     theta = theta .* a
     vcv   = vcv .* (a .* a')
     G     = G ./ a'
-#   mod["mENDOG"] = mod["mENDOG"] .* sY'
+    #   mod["mENDOG"] = mod["mENDOG"] .* sY'
 
     return sumc(ln(sY))
 
 end function
 
-  /******************************
-       Log-likelihood
+/******************************
+   Log-likelihood
 
-   ****************************/
+****************************/
 
 function series loglik_m(matrix *Y, matrix *X, matrix *Pi, matrix *C,
-			 matrix *ScaledRes)
-    # computes the marginal loglikelihood: the argument ScaledRes will 
-    # hold in output the re-scaled residuals (used in the conditional 
+                         matrix *ScaledRes)
+    # computes the marginal loglikelihood: the argument ScaledRes will
+    # hold in output the re-scaled residuals (used in the conditional
     # loglik)
 
     matrix ScaledRes = (Y - X*Pi) * C
@@ -262,14 +268,14 @@ function series loglik_m(matrix *Y, matrix *X, matrix *Pi, matrix *C,
 end function
 
 function scalar HIP_loglik(series y, matrix *EXOG, matrix *ENDOG[null],
-			   matrix *ADDIN[null], matrix *HETVAR[null],
-			   matrix *beta, matrix *alpha[null], 
-			   matrix *Pi[null], matrix *psi[null], 
-			   matrix *C[null], series *ll, matrix *omega, 
-			   series *sigma)
+                           matrix *ADDIN[null], matrix *HETVAR[null],
+                           matrix *beta, matrix *alpha[null],
+                           matrix *Pi[null], matrix *psi[null],
+                           matrix *C[null], series *ll, matrix *omega,
+                           series *sigma)
 
-    # computes the total loglikelihood: the arguments omega and sigma will 
-    # hold in output the re-scaled residual and the conditional variance 
+    # computes the total loglikelihood: the arguments omega and sigma will
+    # hold in output the re-scaled residual and the conditional variance
     # to avoid re-computing them later (eg for the score matrix); note that
     # sigma holds the conditional standard error (NOT the variance)
 
@@ -277,120 +283,120 @@ function scalar HIP_loglik(series y, matrix *EXOG, matrix *ENDOG[null],
     scalar iv = (rows(Pi) > 0)
     series ll = NA
     scalar err = 0
- 
+
     # do checks first
     if iv
-	scalar cVar = 1-psi'psi
-	scalar pdCheck = (minc(diag(C)) > 1.0e-8) && \
-	    (cVar > 1.0e-20)
-	err = pdCheck ? 0 : 1
+        scalar cVar = 1-psi'psi
+        scalar pdCheck = (minc(diag(C)) > 1.0e-8) && \
+          (cVar > 1.0e-20)
+        err = pdCheck ? 0 : 1
     endif
 
     if het && !err
-	series ndxv = HETVAR * alpha
-	scalar cvCheck = (max(ndxv) < 100)
-	err = cvCheck ? 0 : 2
+        series ndxv = HETVAR * alpha
+        scalar cvCheck = (max(ndxv) < 100)
+        err = cvCheck ? 0 : 2
     endif
 
     if err
-	return err
+        return err
     endif
 
     # ok, we should be within 'nice' bounds by now
 
     if iv # compute marginal loglikelihood
-	matrix X = EXOG ~ ADDIN
-	matrix omega = {}
-	series llm = loglik_m(&ENDOG, &X, &Pi, &C, &omega)
-	if sum(missing(llm)) > 0
-	    err = 3
-	    printf "Problems with marginal loglik!\n"
-	    return err
-	endif
+        matrix X = EXOG ~ ADDIN
+        matrix omega = {}
+        series llm = loglik_m(&ENDOG, &X, &Pi, &C, &omega)
+        if sum(missing(llm)) > 0
+            err = 3
+            printf "Problems with marginal loglik!\n"
+            return err
+        endif
     endif
 
-    # now compute conditional loglikelihood    
+    # now compute conditional loglikelihood
     # compute 'plain' nu first
     series nu = (EXOG ~ ENDOG) * beta
 
-    # next, adjust as needed 
+    # next, adjust as needed
     if het
-	series sigma = exp(ndxv)
-	series nu = nu / sigma
+        series sigma = exp(ndxv)
+        series nu = nu / sigma
     else
-	series sigma = 1
+        series sigma = 1
     endif
 
     if iv
-	series nu = (nu + (omega * psi)) / sqrt(cVar)
-    endif    
+        series nu = (nu + (omega * psi)) / sqrt(cVar)
+    endif
 
     # form loglikelihood and add marginal if needed
-    series ndx = y ? nu : -nu 
+    series ndx = y ? nu : -nu
 
     check = min(ndx)
     if check < -35.0
-	err = 4
-#	printf "Problems with conditional loglik! min(ndx = %g)\n", check
-	series ll = NA
+        err = 4
+        #	printf "Problems with conditional loglik! min(ndx = %g)\n", check
+        series ll = NA
     else
-	series ll = ln(cnorm(ndx))
+        series ll = ln(cnorm(ndx))
     endif
 
     if !err && iv
-	ll += llm
+        ll += llm
     endif
 
     #done
     return err
-     
+
 end function
 
-function matrix wkron(matrix *X, matrix *Z)
+# function matrix wkron(matrix *X, matrix *Z)
+# 
+#     k = cols(X)
+#     ret = {}
+# 
+#     if ($version < 10908)
+#         loop i=1..k --quiet
+#             matrix ret ~= X[,i] .* Z
+#         endloop
+#     else
+#         ret = hdprod(X,Z)
+#     endif
+# 
+#     return ret
+# end function
+# 
 
-    k = cols(X)
-    ret = {}
-  
-    if ($version < 10908)
-	loop i=1..k --quiet	
-            matrix ret ~= X[,i] .* Z
-	endloop
-    else
-	ret = hdprod(X,Z)
-    endif
-	    	 
-    return ret
-end function
-
-
-  /******************************
-    Score matrix by observation
-   ****************************/
+/******************************
+   Score matrix by observation
+****************************/
 
 function matrix HIP_Score(series y, matrix *EXOG, matrix *ENDOG[null],
-			  matrix *ADDIN[null], matrix *HETVAR[null],
-			  matrix *beta, matrix *alpha[null], 
-			  matrix *Pi[null], matrix *psi[null], 
-			  matrix *C[null], matrix *omega, series *sigma)
+                          matrix *ADDIN[null], matrix *HETVAR[null],
+                          matrix *beta, matrix *alpha[null],
+                          matrix *Pi[null], matrix *psi[null],
+                          matrix *C[null], matrix *omega, series *sigma)
 
     scalar het = (rows(alpha) > 0)
     scalar p = cols(ENDOG)
     scalar iv = (p > 0)
     matrix Z = EXOG ~ ENDOG
 
-    # build nu first 
+    # build nu first
     series ndxm = Z * beta
 
     if het
-	series ndxm = ndxm/sigma
+        series ndxm = ndxm/sigma
     endif
 
     if iv
-	scalar sigmacond = sqrt(1 - psi'psi)
-	series nu = (ndxm + (omega * psi)) / sigmacond 
+        scalar sigmacond = sqrt(1 - psi'psi)
+        series nu = (ndxm + (omega * psi)) / sigmacond
     else
-	scalar sigmacond = 1
-	series nu = ndxm
+        scalar sigmacond = 1
+        series nu = ndxm
     endif
 
     # the mills ratio
@@ -401,33 +407,35 @@ function matrix HIP_Score(series y, matrix *EXOG, matrix *ENDOG[null],
     matrix S_beta = s_beta .* Z
 
     if het
-	series s_alpha = -(ndxm*mills)/sigmacond
-	matrix S_alpha =  {s_alpha} .* HETVAR
+        series s_alpha = -(ndxm*mills)/sigmacond
+        matrix S_alpha =  {s_alpha} .* HETVAR
     else
-	matrix S_alpha = { }
+        matrix S_alpha = { }
     endif
 
     if iv
-	matrix scaledpsi = psi ./ sigmacond
-	matrix s_Pi = omega - (mills .* scaledpsi')
-	matrix tmp = s_Pi * C'
-	matrix X = EXOG ~ ADDIN
-	matrix S_Pi = wkron(&tmp,&X)
+        matrix scaledpsi = psi ./ sigmacond
+        matrix s_Pi = omega - (mills .* scaledpsi')
+        matrix tmp = s_Pi * C'
+        matrix X = EXOG ~ ADDIN
+        # matrix S_Pi = wkron(&tmp,&X)
+        matrix S_Pi = hdprod(tmp, X)
 
-	matrix S_psi = omega + nu .* scaledpsi'
-	matrix S_psi = (mills/sigmacond) .* S_psi
+        matrix S_psi = omega + nu .* scaledpsi'
+        matrix S_psi = (mills/sigmacond) .* S_psi
 
-	matrix tmp = zeros(p,p)
-	tmp[diag] = 1 ./ diag(C)
-	tmp = vech(tmp)'
-	sel = vech(mshape(seq(1,p*p),p,p)')
-	matrix omiC = omega*inv(C)
-	matrix S_dc = wkron(&s_Pi,&omiC)
-	matrix S_dc = tmp .- S_dc[,sel]
+        matrix tmp = zeros(p,p)
+        tmp[diag] = 1 ./ diag(C)
+        tmp = vech(tmp)'
+        sel = vech(mshape(seq(1,p*p),p,p)')
+        matrix omiC = omega*inv(C)
+        # matrix S_dc = wkron(&s_Pi,&omiC)
+        matrix S_dc = hdprod(s_Pi, omiC)
+        matrix S_dc = tmp .- S_dc[,sel]
     else
-	matrix S_psi = { }
-	matrix S_dc = { }
-	matrix S_Pi = { }
+        matrix S_psi = { }
+        matrix S_dc = { }
+        matrix S_Pi = { }
     endif
 
     ret = (S_beta ~ S_alpha ~ S_Pi ~ S_psi ~ S_dc)
@@ -462,11 +470,11 @@ function matrix LM_test(bundle *b)
     scalar het = (q>0)
 
     scalar g = k1 + p + q
-    
+
     alpha = theta[1:k1]
     delta = theta[k1+1:k1+p]
     if het
-	gamma = theta[k1+p+1:g]
+        gamma = theta[k1+p+1:g]
     endif
 
     Pi = mshape(theta[g+1 : g+p*k],k,p)
@@ -476,36 +484,36 @@ function matrix LM_test(bundle *b)
 
     X = b["mX"]
     W = b["mHETVAR"]
-    V = b["uhat"]    
+    V = b["uhat"]
     y = b["depvar"]
-    
+
     if het
-	series ex  = exp(-W*gamma)
-	series ndx = {ex} .* ((X ~ V) * psi) 
+        series ex  = exp(-W*gamma)
+        series ndx = {ex} .* ((X ~ V) * psi)
     else
-	series ndx = (X ~ V) * psi
+        series ndx = (X ~ V) * psi
     endif
 
     series mills = y ? invmills(-ndx) : -invmills(ndx)
 
-    if het		  
-	matrix S_psi = (mills * ex) .* (X ~ V)		  
-	matrix S_gamma = - mills*ndx .* W
-    else 
-	matrix S_psi = mills .* (X ~ V)		  
-	matrix S_gamma = { }
+    if het
+        matrix S_psi = (mills * ex) .* (X ~ V)
+        matrix S_gamma = - mills*ndx .* W
+    else
+        matrix S_psi = mills .* (X ~ V)
+        matrix S_gamma = { }
     endif
 
     matrix G = S_psi ~ S_gamma
-		  
+
     scalar LM = qform(sumc(G),invpd(G'G))
     df = k2 - p
     return (LM ~ df ~ pvalue(X,df,LM))
-		  
+
 end function
 
 function matrix LR_test(bundle *b, scalar df)
-    
+
     LR = 2*(b["lnl1"] - b["lnl0"])
     return (LR ~ df ~ pvalue(X,df,LR))
 
@@ -522,16 +530,16 @@ function matrix CI_test(bundle *b)
 
     beta = theta[1:h]
     series ndxm = Z * beta
-    if het 
-	alpha = theta[h+1:h+q]
-	series ndxv = W * alpha
+    if het
+        alpha = theta[h+1:h+q]
+        series ndxv = W * alpha
     else
-	series ndxv = 0
+        series ndxv = 0
     endif
 
     y = b["depvar"]
     series mills = y ? invmills(-ndxm) : -invmills(ndxm)
-    
+
     matrix e3 = exp(3*ndxv)*mills*(2 + ndxm*ndxm)
     matrix e4 = -exp(4*ndxv)*mills*ndxm*(3 + ndxm*ndxm)
 
@@ -559,32 +567,32 @@ function void HIP_diagnostics(bundle *b)
     b["WaldAll"] = WT
 
     if iv
-	# Endogeneity test (Wald)
-	scalar df  = p
-	scalar ini = h + q + k*p + 1
-	WT = Wald_test(&b, ini, df)
-	b["WaldEnd"] = WT
+        # Endogeneity test (Wald)
+        scalar df  = p
+        scalar ini = h + q + k*p + 1
+        WT = Wald_test(&b, ini, df)
+        b["WaldEnd"] = WT
 
-	if (k>h) # Test of overidentifying restrictions (LM)
-	    LM = LM_test(&b)
-	    b["LMOverid"] = LM
-	endif
+        if (k>h) # Test of overidentifying restrictions (LM)
+            LM = LM_test(&b)
+            b["LMOverid"] = LM
+        endif
     else
-	# Chesher&Irish CM test for normality (unsuitable
-	# for IV but ok if HET)
-	CI = CI_test(&b)
-	b["normtest"] = CI
+        # Chesher&Irish CM test for normality (unsuitable
+        # for IV but ok if HET)
+        CI = CI_test(&b)
+        b["normtest"] = CI
     endif
 
-    # Heteroskedasticity test: Wald if iv, else LR 
+    # Heteroskedasticity test: Wald if iv, else LR
     if het
-	if iv
-	     scalar ini = h + 1
-	     T = Wald_test(&b, ini, q)
-	 else
-	     T = LR_test(&b, q)	     
-	 endif
-	 b["HETtest"] = T
-     endif
+        if iv
+            scalar ini = h + 1
+            T = Wald_test(&b, ini, q)
+        else
+            T = LR_test(&b, q)
+        endif
+        b["HETtest"] = T
+    endif
 
 end function
