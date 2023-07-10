@@ -118,7 +118,7 @@ function matrices avg_VARpar_boot(const bundle b, const bundle stuff)
     endif
                               
     loop i = 1..b.BCiter 
-        matrix U = Uinit | drawbootres(stuff.innov, b.boottype, bparams) 
+        matrix U = Uinit | drawbootres(stuff.innov, bparams, b.boottype) 
         if cols(b.bmu) > 0	# was mu
             U += b.bmu 
         endif
@@ -372,7 +372,7 @@ function matrices SVAR_boot_innerloop(bundle *bobj, const bundle obj, const bund
         bobj.step = 0	
         
         # generate bootstrap disturbances (bmu may be zero)
-        matrix U = obj.bmu[obj.p + 1:, ] + drawbootres(innov, obj.boottype, bparams)
+        matrix U = obj.bmu[obj.p + 1:, ] + drawbootres(innov, bparams, obj.boottype)
 
         # generate bootstrap data and store it in bootstrap object
         matrix bobj.Y = varsimul(bobj.ABCorA, U, obj.Y[1: obj.p, ] )

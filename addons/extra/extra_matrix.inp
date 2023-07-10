@@ -251,10 +251,10 @@ end function
 #############
 
 function matrix drawbootres(const matrix U,
+                            bundle bparams[null] "options",
                             int boottype[1:5:1] "bootstrap type" \
                             {"resampling", "wildN", "wildR", "wildM", \
-							 "moving blocks"},
-                            const bundle bparams[null] "further inputs" )
+							 "moving blocks"})
 
     /*
        Construct a new draw of residuals for bootstrapping, where U
@@ -274,6 +274,10 @@ function matrix drawbootres(const matrix U,
        (The U input could be empty then, e.g. for a purely parametric-
        distribution bootstrap. The bundle bparams is intended to be
        used then to specify parameters, in a way that is to be determined.)
+       
+       TODO: The boottype should also be settable as part of the bparams
+       options, rendering the trailing integer argument redundant. But it's
+       not yet implemented.
     */
 
 	# process extra input
