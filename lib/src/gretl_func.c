@@ -409,7 +409,7 @@ static void adjust_array_arg_type (fn_arg *arg)
 
 static void nullify_upname (fn_arg *arg)
 {
-    if (arg->upname != NULL) {
+    if (arg != NULL && arg->upname != NULL) {
 	free(arg->upname);
 	arg->upname = NULL;
     }
@@ -655,7 +655,9 @@ static int call_is_in_use (fncall *fc)
 
 static void clear_fncall_data (fncall *fc)
 {
-    fncall_clear_args_array(fc);
+    if (fc->args != NULL) {
+	fncall_clear_args_array(fc);
+    }
     if (fc->ptrvars != NULL) {
         free(fc->ptrvars);
         fc->ptrvars = NULL;
