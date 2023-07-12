@@ -3810,10 +3810,12 @@ static int get_remote_addon_info (xmlNodePtr node, xmlDocPtr doc,
     xmlNodePtr cur = node->xmlChildrenNode;
     int err = 0;
 
+    /* note: could get the date of the addon on the server via
+       the "date" cur->name, but we're not doing that at present
+    */
+
     while (cur != NULL) {
 	if (!xmlStrcmp(cur->name, (XUC) "version")) {
-	    gretl_xml_node_get_trimmed_string(cur, doc, &S[1]);
-	} else if (!xmlStrcmp(cur->name, (XUC) "date")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &S[2]);
 	} else if (!xmlStrcmp(cur->name, (XUC) "description")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &S[4]);
@@ -3821,22 +3823,22 @@ static int get_remote_addon_info (xmlNodePtr node, xmlDocPtr doc,
 	cur = cur->next;
     }
 
-    if (S[1] == NULL || S[2] == NULL || S[4] == NULL) {
+    if (S[2] == NULL || S[4] == NULL) {
 	err = E_DATA;
     } else {
 	char *path = gretl_addon_get_path(S[0]);
 	int minver = gretl_version_number(minvstr);
 
+	get_installed_addon_status(path, S[2], minver, &S[1], &S[3]);
 	if (path != NULL) {
-	    S[3] = installed_addon_status_string(path, S[1], minver);
 	    free(path);
-	} else {
-	    S[3] = gretl_strdup(_("Not installed"));
 	}
     }
 
     return err;
 }
+
+/* Columns: name, installed version, version on server, comment */
 
 gint populate_remote_addons_list (windata_t *vwin)
 {

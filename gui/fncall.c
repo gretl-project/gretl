@@ -4662,51 +4662,44 @@ int gui_function_pkg_query_register (const char *fname,
     return notified;
 }
 
-char *installed_addon_status_string (const char *path,
-				     const char *svstr,
-				     int minver)
+/* Called from database.c, when populating the list box showing
+   addons, on the local machine and on the server.
+*/
+
+void get_installed_addon_status (const char *path,
+				 const char *server_ver,
+				 int gretl_minver,
+				 char **local_ver,
+				 char **status)
 {
-    char *ivstr = NULL;
-    char *ret = NULL;
+    if (path != NULL) {
+	*local_ver = get_addon_version(path, NULL);
+    }
 
-    /* @ivstr = installed package version string
-       @svstr = package version string from server
-       @minver = gretl version required for pkg on server
-    */
+    if (*local_ver == NULL) {
+	*local_ver = gretl_strdup(_("not found"));
+    } else {
+	double svnum = dot_atof(server_ver);
+	double ivnum = dot_atof(*local_ver);
 
-    ivstr = get_addon_version(path, NULL);
-
-    if (ivstr != NULL) {
-	double svnum = dot_atof(svstr);
-	double ivnum = dot_atof(ivstr);
-	int current = 0;
-	int update_ok = 0;
-	char reqstr[8] = {0};
-
-	current = ivnum >= svnum;
-
-	if (!current) {
-	    /* Not current, but can the addon be updated?  It may
-	       be that the running instance of gretl is too old.
+	if (ivnum < svnum) {
+	    /* Not current. Can the addon be updated?  It may be
+	       that the running instance of gretl is too old.
 	    */
-	    update_ok = package_version_ok(minver, reqstr);
+	    char reqstr[8] = {0};
+	    int update_ok = package_version_ok(gretl_minver, reqstr);
+
+	    if (update_ok) {
+		*status = gretl_strdup(_("Can be updated"));
+	    } else if (*reqstr != '\0') {
+		*status = gretl_strdup_printf(_("Requires gretl %s"), reqstr);
+	    }
+	} else if (ivnum == svnum) {
+	    *status = gretl_strdup(_("Up to date"));
+	} else {
+	    *status = gretl_strdup(_("Local is newer"));
 	}
-
-	if (current) {
-	    ret = gretl_strdup(_("Up to date"));
-	} else if (update_ok) {
-	    ret = gretl_strdup(_("Not up to date"));
-	} else if (*reqstr != '\0') {
-	    ret = gretl_strdup_printf(_("Requires gretl %s"), reqstr);
-	}
-	free(ivstr);
     }
-
-    if (ret == NULL) {
-	ret = gretl_strdup(_("Error reading package"));
-    }
-
-    return ret;
 }
 
 /* We invoke this function on the two GUI "entry-points" to

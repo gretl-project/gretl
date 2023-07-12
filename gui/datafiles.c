@@ -1223,7 +1223,7 @@ static void show_addon_info (GtkWidget *w, gpointer data)
 
 	    if (path != NULL && !strcmp(status, _("Not up to date"))) {
 		ver = get_addon_version(path, &date);
-		if (ver != NULL && data != NULL) {
+		if (ver != NULL && date != NULL) {
 		    localver = g_strdup_printf("Installed version is %s (%s)",
 					       ver, date);
 		}
@@ -2935,9 +2935,9 @@ static GtkWidget *files_vbox (windata_t *vwin)
     };
     const char *addons_titles[] = {
 	N_("Package"),
-	N_("Version"),
-	N_("Date"),
-	N_("Local status")
+	N_("Installed"),
+	N_("On server"),
+	N_("Comment")
     };
     const char *registry_titles[] = {
 	N_("Package"),
@@ -3047,7 +3047,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	types = addons_types;
 	cols = G_N_ELEMENTS(addons_types);
 	hidden_cols = 1;
-	full_width = 400;
+	full_width = 480;
 	break;
     case PKG_REGISTRY:
 	titles = registry_titles;
