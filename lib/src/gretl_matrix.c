@@ -14567,6 +14567,9 @@ double gretl_matrix_global_sum (const gretl_matrix *A,
     if (gretl_is_null_matrix(A)) {
         *err = E_DATA;
         return NADBL;
+    } else if (A->is_complex) {
+        *err = E_CMPLX;
+        return NADBL;
     }
 
     n = A->rows * A->cols;

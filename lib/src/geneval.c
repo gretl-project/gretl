@@ -9474,7 +9474,9 @@ static NODE *series_scalar_func (NODE *n, int f,
         int t2 = p->dset->t2;
         const double *x;
 
-        if (n->t == MAT) {
+	if (n->t == MAT && gretl_is_complex(n->v.m)) {
+	    p->err = E_CMPLX;
+	} else if (n->t == MAT) {
             if (f == F_SUM || f == F_MAX || f == F_MIN) {
                 /* we'll sum, max, or min all elements of a matrix */
                 if (f == F_SUM) {
