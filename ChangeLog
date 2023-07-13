@@ -13,6 +13,8 @@ version 2023b, in progress
 - misszero() and zeromiss() functions: support matrix input
 - SVAR addon: implement mixed (set-based and zero) restrictions
 - geoplot addon: make the plot key position configurable
+- regls addon: add an mregls() function for working with data
+  in matrix form
 - Add optional boolean "skip_na" argument for several matrix
   functions that compute statistics
 - Functions bkfilt, bwfilt, fracdiff, filter: disallow panel
@@ -22,8 +24,6 @@ version 2023b, in progress
   string, matrix, bundle or array
 - "numeric" meta-type: allow usage in function packages, and
   hook it up for syntax highlighting
-- regls addon: add an mregls() function for working with data
-  in matrix form
 - Function packages: support use of Markdown for help text
 - Function packages: add a new special function role named
   "ui-maker" to support customization of the user interface
@@ -42,11 +42,11 @@ version 2023b, in progress
   in GUI forecasting from ARIMA model without constant term
 - Fix bug: function package code with very long lines could
   lead to a crash (e.g. on "View code" in the GUI)
-- Fix bug: the sumc() function producing incorrect result for
+- Fix bug: the sumc() function produced incorrect result for
   complex matrices (too large by 1)
 - Fix bug: potential crash on calling a hansl function with
   no arguments when it has only optional parameters
-- Fix MPI bug: crash on broadcasting an empty matrix, with
+- Fix bug: MPI crash on broadcasting an empty matrix, with
   some MPI variants
 - Fix GUI bug: dynamic panel data model menu item not always
   available when it should be
