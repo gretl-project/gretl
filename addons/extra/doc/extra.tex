@@ -152,44 +152,6 @@ side of the equalities becomes feasible, which should be
 numerically more efficient than the direct application
 of the left-hand side.
 
-\subsection{drawbootres}
-
-\ArgRet{\texttt{const matrix U}, \texttt{bundle bparams} (optional),
-\texttt{int boottype} (optional)}{matrix}
-Construct a new draw of innovations (residuals) for bootstrapping, based on the
-input matrix \texttt{U}, interpreted to be T-by-K (observations in rows). The
-return value has the same shape. \texttt{U} can be original residuals or some
-pre-processed input -- the pre-processing is not done here to avoid doing it
-repeatedly during the bootstrap.
-
-The \texttt{boottype} argument is optional with default 1, where the code has
-the following meaning (see also the SVAR addon's documentation):
-\begin{enumerate}
-  \item plain resampling -- A standard draw with replacement based on
-    libgretl's resample function; so if this is all that's needed, you might
-    be better off using resample directly. 
-
-  \item wild, Normal -- A draw for the wild bootstrapping scheme, where each
-    row of the input matrix is scaled randomly according to Gaussian noise.
-  \item wild, Rademacher -- Here the signs of all rows are flipped randomly. 
-  \item wild, Mammen -- Here the multiplicative factors for the rows are the
-    ones proposed by Mammen (see the SVAR documenation).
-  \item moving blocks -- Provides a draw of moving blocks of the input, see 
-    for example Brüggemann, Jentsch \& Trenkler (2016; Journal of Econometrics,
-    vol. 191, issue 1, 69-85). By default a block length of 10\% of the input 
-    length \texttt{T} is used (rounded, at least 2). The block length can be
-    overridden by supplying the 'moveblocklen' scalar member inside the
-    \texttt{bparams} bundle argument. 
-
-\end{enumerate}
-
-The bundle argument \texttt{bparams} is also optional and is currently only
-used for the specification of the length of the moving blocks. 
-
-Note that this function is included in extra's version 1.7 and made public for
-convenience of potential users, but it may be moved to another separate addon
-in the future. 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Other functions working without a dataset in place}
@@ -304,7 +266,7 @@ See also the sister function \cmd{WSRcritical}.
 
 \subsection{powerset}
 
-\ArgRet{\texttt{strings S}}{}
+\ArgRet{\texttt{strings S}}{strings (array)}
 
 Computes the powerset of the input S, i.e. all possible combinations
 of the string elements in S. (Including the empty set /
@@ -314,7 +276,7 @@ array. Being a set, the ordering is not defined and arbitrary.
 
 \subsection{onemode}
 
-\ArgRet{\texttt{matrix v}}{}
+\ArgRet{\texttt{matrix v}}{matrix}
 
 Finds the mode of the empirical distribution of the input data.
 If that is multi-modal, details of internal computer arithmetic can
@@ -412,6 +374,52 @@ TOTAL & 95	 & 5	 & 100 \\
 \hline
 \end{tabular}
 \end{center}
+
+
+\subsection{drawbootres}
+
+\ArgRet{\texttt{const matrix U}, \texttt{bundle bparams} (optional),
+\texttt{int bootcode} (optional)}{matrix}
+Construct a new draw of innovations (residuals) for bootstrapping, based on the
+input matrix \texttt{U}, interpreted to be T-by-K (observations in rows). The
+return value has the same shape. \texttt{U} can be original residuals or some
+pre-processed input -- the pre-processing is not done here to avoid doing it
+repeatedly during the bootstrap.
+
+Two ways of choosing the bootstrap type are supported: Either by adding a
+string element to the \texttt{bparams} bundle under the key 'btypestr', or by
+using the associated number code in the \texttt{bootcode} argument, where the
+bundle-based choice takes precedence. Both ways are optional, the general
+default is plain resampling. Here is a brief description of the meanings of the
+codes (see also the SVAR addon's documentation):
+
+\begin{enumerate}
+  \item plain resampling -- A standard draw with replacement based on
+    libgretl's \texttt{resample} function; so if this is all that's needed, you
+    might be better off using \texttt{resample} directly. (Allowed string code:
+    any word starting with "re", e.g. "resampling".)
+
+  \item wild, Normal -- A draw for the wild bootstrapping scheme, where each
+    row of the input matrix is scaled randomly according to Gaussian noise.
+    (string code "wildN" or simply "wild")
+  \item wild, Rademacher -- Here the signs of all rows are flipped randomly. 
+    (string code "wildR") 
+  \item wild, Mammen -- Here the multiplicative factors for the rows are the
+    ones proposed by Mammen (see the SVAR documenation; string code "wildM").
+  \item moving blocks -- Provides a draw of moving blocks of the input, see 
+    for example Brüggemann, Jentsch \& Trenkler (2016; Journal of Econometrics,
+    vol. 191, issue 1, 69-85). By default a block length of 10\% of the input 
+    length \texttt{T} is used (rounded, at least 2). The block length can be
+    overridden by supplying the 'moveblocklen' scalar element inside the
+    \texttt{bparams} bundle argument. (Allowed string codes: any word starting
+    with "mov", or "MBB".)
+
+\end{enumerate}
+
+Note that this function is included in extra's version 1.7 and made public for
+convenience of potential users, but it may be moved to another separate addon
+in the future. 
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

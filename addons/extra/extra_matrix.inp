@@ -200,7 +200,8 @@ function matrix combinations (matrix from "Set of all choices",
     scalar n = nelem(from)
     if h > n
         string s = argname(from)
-        printf "\nError: number of elements of %s less than argument 2\n", strlen(s) ? s : "argument 1"
+        printf "\nError: number of elements of %s less than argument 2\n", \
+            strlen(s) ? s : "argument 1"
 
         return {NA}
     endif
@@ -250,98 +251,4 @@ end function
 
 #############
 
-function matrix drawbootres(const matrix U,
-                            bundle bparams[null] "options",
-                            int boottype[1:5:1] "bootstrap type" \
-                            {"resampling", "wildN", "wildR", "wildM", \
-							 "moving blocks"})
-
-    /*
-       Construct a new draw of residuals for bootstrapping, where U
-       is a Txn matrix.
-       U can be original residuals or can be some pre-processed input.
-       (See for example the prepres() function in SVAR - the pre-processing is
-       not done here to avoid doing it repeatedly.)
-
-       Currently boottype can go from 1 to 5:
-       1: traditional residual resampling (using gretl's resample())
-       2-4: wild bootstrap with the help of a standard normal,
-       Rademacher, Mammen distributions respectively
-	   5: RBMBB Brüggemann/Jentsch/Trenkler 2016. A block length 
-		must be chosen.
-
-       Other bootstrap types may be added in the future.
-       (The U input could be empty then, e.g. for a purely parametric-
-       distribution bootstrap. The bundle bparams is intended to be
-       used then to specify parameters, in a way that is to be determined.)
-       
-       TODO: The boottype should also be settable as part of the bparams
-       options, rendering the trailing integer argument redundant. But it's
-       not yet implemented.
-    */
-
-	# process extra input
-	bl = 0 	# signals default data-based choice
-    if exists(bparams.moveblocklen) && boottype == 5
-        bl = round(bparams.moveblocklen)
-        errorif(bl < 1, "moving block length must be 1 or larger")     
-	endif
-
-	## standard
-    if boottype == 1	
-        return resample(U)
-	endif 
-
-	T = rows(U)
-
-	## wild 
-    if boottype <= 4	
-        
-        if boottype == 2
-            # Normal
-            matrix w = mnormal(T)
-        elif boottype == 3
-            # Rademacher
-            matrix w = muniform(T) .< 0.5 ? 1 : -1
-        elif boottype == 4
-            # Mammen
-            scalar s5 = sqrt(5)
-            scalar p = (0.5/s5) * (s5 + 1)
-            matrix w = 0.5 + (muniform(T) .< p ? -s5/2 : s5/2)
-        endif
-
-        return U .* w
-
-	## residual-based moving blocks
-	elif boottype == 5
-		if bl > T
-        	print "Warning: block length too large, falling back to auto"
-			bl = 0
-		endif
-    	if bl == 0	# use default
-        	bl = xmax(2, floor(T/10)) 
-		endif       
-    
-		# necessary number of blocks
-    	s = ceil(T/bl)	 
-		# blocks starting points
-    	matrix c = mrandgen(i, 1, T-bl+1, 1, s)
-		# convert to indices of all needed obs	
-    	matrix ndx = vec(c .+ seq(0, bl-1)') 
-
-    	## recentring
-    	matrix m = mshape(NA, bl, cols(U))
-		# calculate respective averages (bl different ones)
-    	loop i = 1..bl 
-        	m[i,] = meanc(U[i: T-bl+i,])
-    	endloop
-
-    	ndx = ndx[1:T]	# cut off "overhanging tail"
-    	return U[ndx,] - (ones(s) ** m)[1:T, ]
-
-    else
-        funcerr "Shouldn't happen"
-    endif
-
-end function
 
