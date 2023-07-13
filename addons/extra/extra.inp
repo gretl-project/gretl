@@ -361,7 +361,8 @@ function matrix drawbootres(const matrix U,
 
 	## residual-based moving blocks
 	elif bootcode == 5
-		if bl > T
+	    errorif(T < 3, "drawbootres: moving blocks needs at least 3 obs")
+		if bl >= T
         	print "Warning: block length too large, falling back to auto"
 			bl = 0
 		endif
