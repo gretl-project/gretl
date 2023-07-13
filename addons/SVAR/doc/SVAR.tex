@@ -1876,7 +1876,7 @@ This is an important point: \texttt{SVAR} is not meant for doing
 inference on the cointegration part of your model. For determining the
 cointegration rank of your system and estimating the cointegration
 $\beta$, you're on your own. Of course, you can use \app{gretl}'s
-in-built commands, such as \cmd{coint2} and \cmd{vecm}, or pre-set
+in-built commands, such as \cmd{johansen} and \cmd{vecm}, or pre-set
 them to some theory-derived value: \texttt{SVAR} won't care, and will
 blindly accept the matrix $\beta$ you supply it; the cointegration
 rank is implicitly assumed as the number of columns of the $\beta$
@@ -1978,7 +1978,7 @@ provide an extended and annotated example.
     16	p = 3
     17	
     18	# check for the "balanced growth path" hypothesis
-    19	coint2 p X 
+    19	johansen p X 
     20	vecm p 2 X
     21	restrict
     22	    b[1,1] = -1

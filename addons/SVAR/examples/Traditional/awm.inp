@@ -16,7 +16,7 @@ var 8 X --lagselect
 p = 3
 
 # check for the "balanced growth path" hypothesis
-coint2 p X 
+johansen p X 
 vecm p 2 X
 restrict
     b[1,1] = -1
