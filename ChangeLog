@@ -7,6 +7,8 @@ version 2023b, in progress
   lag orders, via new --lagselect option, and add GUI access
 - "corr" command: add 1 percent critical value of correlation
   coefficient to the output
+- "join" command: import descriptions of newly-added series,
+  if present
 - aggregate() function: support matrix input
 - misszero() and zeromiss() functions: support matrix input
 - SVAR addon: implement mixed (set-based and zero) restrictions
@@ -22,6 +24,11 @@ version 2023b, in progress
   hook it up for syntax highlighting
 - regls addon: add an mregls() function for working with data
   in matrix form
+- Function packages: support use of Markdown for help text
+- Function packages: add a new special function role named
+  "ui-maker" to support customization of the user interface
+- "R_functions" facility: handle row and column names when
+  passing matrices to and from R
 - Fix bug: failure in the Kalman function ksmooth() when in
   "univariate" mode and the observable has more elements than
   the state
@@ -35,8 +42,21 @@ version 2023b, in progress
   in GUI forecasting from ARIMA model without constant term
 - Fix bug: function package code with very long lines could
   lead to a crash (e.g. on "View code" in the GUI)
+- Fix bug: the sumc() function producing incorrect result for
+  complex matrices (too large by 1)
+- Fix bug: potential crash on calling a hansl function with
+  no arguments when it has only optional parameters
+- Fix MPI bug: crash on broadcasting an empty matrix, with
+  some MPI variants
 - Fix GUI bug: dynamic panel data model menu item not always
   available when it should be
+- Fix GUI bug: breakage on trying to select the decimal comma
+  when exporting data as CSV
+- GUI "Check for addons" facility: redesign to present the
+  information more clearly
+- GUI sample selection for panel data: clarify and fix
+- GUI "stop" button to abort script execution: make this more
+  responsive
 - Add new example data file: sunspots time series from 1740
 - User's Guide: updates, including description of data file
   formats
