@@ -42,7 +42,6 @@ void gretl_exec_state_init (ExecState *s,
     if (s->line != NULL) {
         *s->line = '\0';
     }
-    s->more = NULL;
 
     s->cmd = cmd;
     if (s->cmd != NULL) {
