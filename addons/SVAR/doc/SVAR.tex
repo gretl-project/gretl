@@ -113,10 +113,12 @@ and is looking for a step-by-step guide on how to get her work done
 quickly via point-and click methods, can consult section \ref{sec:GUI}
 in the Appendix.
 
-In order to establish notation\footnote{Attention: As part of the preparations for an upcoming version
-2.0, starting in v1.95 we have changed the notation in an important way, by swapping the
-symbols for the structural shocks and the reduced-form residuals (forecast errors). The reason is that most of the recent literature uses $u$ for the reduced-form errors, and
-now we do so, too, which hopefully makes everything a bit easier for users.}
+In order to establish notation\footnote{Attention: As part of the preparations
+for version 2.0, starting in v1.95 we have changed the notation in an important
+way, by swapping the symbols for the structural shocks and the reduced-form
+residuals (forecast errors). The reason is that most of the recent literature
+uses $u$ for the reduced-form errors, and now we do so, too, which hopefully
+makes everything a bit easier for users.}
  and define a few concepts, allow us to
 inflict on you a 2-page crash course on SVARs.  In this
 context,\footnote{The adjective ``structural'' is possibly one of the
@@ -1874,7 +1876,7 @@ This is an important point: \texttt{SVAR} is not meant for doing
 inference on the cointegration part of your model. For determining the
 cointegration rank of your system and estimating the cointegration
 $\beta$, you're on your own. Of course, you can use \app{gretl}'s
-in-built commands, such as \cmd{coint2} and \cmd{vecm}, or pre-set
+in-built commands, such as \cmd{johansen} and \cmd{vecm}, or pre-set
 them to some theory-derived value: \texttt{SVAR} won't care, and will
 blindly accept the matrix $\beta$ you supply it; the cointegration
 rank is implicitly assumed as the number of columns of the $\beta$
@@ -1976,7 +1978,7 @@ provide an extended and annotated example.
     16	p = 3
     17	
     18	# check for the "balanced growth path" hypothesis
-    19	coint2 p X 
+    19	johansen p X 
     20	vecm p 2 X
     21	restrict
     22	    b[1,1] = -1
@@ -3572,10 +3574,13 @@ typically be called before \texttt{SVAR\_SRirf}.
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
 
-\subsection*{Version 2.0, June 2023}
+\subsection*{Version 2.0, June/July 2023}
 \begin{itemize}
-\item Implement mixed (sign- and zero-) restrictions. Deprecate
-  \cmd{SRgetbest} in favour of \cmd{SVAR\_SRgetbest}.  
+\item Implement mixed (sign- and zero-) restrictions. Deprecate \cmd{SRgetbest}
+ in favour of \cmd{SVAR\_SRgetbest}. 
+\item Move the internal function drawbootres to the extra addon, and along the
+ way fix a bug with the moving blocks bootstrap, the explicit choice of the
+ block length was not honored (probably introduced in 2021).    
 \end{itemize}
 
 \subsection*{Version 1.98, May 2023}
@@ -3620,23 +3625,24 @@ this means that the residual matrix \texttt{E} in the bundle is now called \text
 \subsection*{Version 1.92, August/September 2020}
 \begin{itemize}
 \item Clarify documentation for Bayesian draws in set-id models.
-\item Replace deprecated funcerr() with errorif(), therefore need gretl 2020b for the sign restriction part. 
+\item Replace deprecated funcerr() with errorif(), therefore need gretl 2020b
+  for the sign restriction part. 
 \end{itemize}
 
 \subsection*{Version 1.91, April 2020}
 \begin{itemize}
-\item Minor plot legend fix for GUI usage; a fix of DoF calculation for Bayesian redrawing;
-catch the case of no accepted draws more gracefully.
-\item Introduce new convenience function SRgetbest to find the best draw according to 
-user-specified IRF criterion.
-\item New functions with alternative interface: SVAR\_HD (wrapper for SVAR\_hd) and 
-SVAR\_getshock (wrapper for GetShock).
+\item Minor plot legend fix for GUI usage; a fix of DoF calculation for
+Bayesian redrawing; catch the case of no accepted draws more gracefully.
+\item Introduce new convenience function SRgetbest to find the best draw
+according to user-specified IRF criterion.
+\item New functions with alternative interface: SVAR\_HD (wrapper for SVAR\_hd)
+and SVAR\_getshock (wrapper for GetShock).
 \end{itemize}
 
 \subsection*{Version 1.90, March 2020}
 \begin{itemize}
-\item Major new feature: set-identified model estimation (a.k.a. sign restrictions; scripting
-interface only). 
+\item Major new feature: set-identified model estimation (a.k.a. sign restrictions;
+scripting interface only). 
  
 \end{itemize}
 

@@ -117,6 +117,9 @@ eval mat2latex(X)
 X[2,4] = NA
 eval mat2latex(X, _(nacode="NA", decimals=1))
 
+print "---- drawbootres ------" ##
+eval drawbootres(mnormal(10,3), _(moveblocklen=3), 5)
+
 ######## Examples that require a dataset ############
 
 open denmark	# get some data
