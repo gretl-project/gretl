@@ -42,7 +42,7 @@
    the user wants to create.
 */
 
-#define DWDEBUG 0
+#define DWDEBUG 1
 
 #define PD_SPECIAL -1
 
@@ -1191,11 +1191,12 @@ static int diagnose_panel_problem (DATASET *dset, int uv, int tv,
 static int process_panel_vars (DATASET *dwinfo, dw_opts *opts)
 {
     int n = dataset->n;
-    double *uid = NULL;
-    double *tid = NULL;
+    double *tmp = NULL;
+    double *uid, *tid;
     int uv, tv;
     int nunits = 0;
     int nperiods = 0;
+    size_t sz;
     int err = 0;
 
 #if DWDEBUG
@@ -1215,12 +1216,16 @@ static int process_panel_vars (DATASET *dwinfo, dw_opts *opts)
         return E_DATA;
     }
 
-    uid = copyvec(dataset->Z[uv], n);
-    tid = copyvec(dataset->Z[tv], n);
-
-    if (uid == NULL || tid == NULL) {
+    sz = n * sizeof *tmp;
+    tmp = malloc(2 * sz);
+    if (tmp == NULL) {
         nomem();
         err = E_ALLOC;
+    } else {
+        uid = tmp;
+        tid = tmp + n;
+        memcpy(uid, dataset->Z[uv], sz);
+        memcpy(tid, dataset->Z[tv], sz);
     }
 
     if (!err) {
@@ -1274,8 +1279,11 @@ static int process_panel_vars (DATASET *dwinfo, dw_opts *opts)
         }
     }
 
-    free(uid);
-    free(tid);
+    free(tmp);
+
+#if DWDEBUG
+    fprintf(stderr, "done process_panel_vars\n");
+#endif
 
     return err;
 }
