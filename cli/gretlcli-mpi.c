@@ -272,13 +272,7 @@ static int cli_clear_data (ExecState *s, DATASET *dset)
 
 static int cli_get_input_line (ExecState *s)
 {
-    if (s->more != NULL) {
-        /* pick up next concatented statement */
-        memmove(s->line, s->more, strlen(s->more) + 1);
-        return 0;
-    } else {
-        return file_get_line(s);
-    }
+    return file_get_line(s);
 }
 
 /* allow for continuation of lines */
