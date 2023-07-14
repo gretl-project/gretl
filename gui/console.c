@@ -373,6 +373,10 @@ static int real_console_exec (ExecState *state,
     fprintf(stderr, "*** real_console_exec: '%s'\n", state->line);
 #endif
 
+    if (string_is_blank(state->line)) {
+	return 0;
+    }
+
     if (swallow && detect_quit(state->line)) {
 	maybe_exit_on_quit();
 	return 0;
