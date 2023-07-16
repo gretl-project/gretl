@@ -9,6 +9,9 @@ version 2023b, in progress
   coefficient to the output
 - "join" command: import descriptions of newly-added series,
   if present
+- "gnuplot" command: add new options --inbuf and --outbuf to
+  accept, respectively, input from a named string and output
+  to a named string
 - aggregate() function: support matrix input
 - misszero() and zeromiss() functions: support matrix input
 - SVAR addon: implement mixed (set-based and zero) restrictions
