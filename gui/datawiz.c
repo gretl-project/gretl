@@ -1143,33 +1143,70 @@ static int translate_panel_vars (dw_opts *opts, int *uv, int *tv)
     return err;
 }
 
-static int diagnose_panel_problem (DATASET *dset, int uv, int tv,
-                                   int known_problem)
+static int compare_two_vals (const void *a, const void *b)
 {
-    gchar *msg = NULL;
-    double ui, ti;
-    double uj, tj;
-    int i, j;
-    int found = 0;
+    const double *da = (const double *) a;
+    const double *db = (const double *) b;
+    double ia = da[0];
+    double ta = da[1];
+    double ib = db[0];
+    double tb = db[1];
 
-    for (i=1; i<dset->n && !found; i++) {
-        ui = dset->Z[uv][i];
-        ti = dset->Z[tv][i];
-        for (j=0; j<i; j++) {
-            uj = dset->Z[uv][j];
-            tj = dset->Z[tv][j];
-            if (uj == ui && tj == ti) {
-                msg = g_strdup_printf("%s = %g and %s = %g duplicated on "
-                                      "rows %d and %d", dset->varname[uv],
-                                      ui, dset->varname[tv], ti, i+1, j+1);
-                found = 1;
-                break;
-            }
-        }
+    if (ia == ib) {
+	return (ta > tb) - (ta < tb);
+    } else {
+	return (ia > ib) - (ia < ib);
+    }
+}
+
+gchar *dup_message (DATASET *dset, int uv, int tv,
+		    double uval, double tval)
+{
+    int r[2] = {0};
+    int i;
+
+    for (i=0; i<dset->n; i++) {
+	if (dset->Z[uv][i] == uval && dset->Z[tv][i] == tval) {
+	    if (r[0] == 0) {
+		r[0] = i+1;
+	    } else {
+		r[1] = i+1;
+		break;
+	    }
+	}
     }
 
-    if (!known_problem && !found) {
-        return 0; /* nothing amiss */
+    return g_strdup_printf("%s = %g and %s = %g duplicated "
+			   "on rows %d and %d",
+			   dset->varname[uv], uval,
+			   dset->varname[tv], tval,
+			   r[0], r[1]);
+}
+
+static int diagnose_panel_problem (DATASET *dset, int uv, int tv,
+				   double *tmp)
+{
+    gchar *msg = NULL;
+    int i, j, k = 0;
+
+    for (i=0; i<dset->n; i++) {
+	tmp[k++] = dset->Z[uv][i];
+	tmp[k++] = dset->Z[tv][i];
+    }
+
+    /* sort by unit then by time */
+    qsort(tmp, dset->n, 2 * sizeof *tmp, compare_two_vals);
+
+    /* duplicates will now show up as consecutive pairs */
+    k = 0;
+    j = 1;
+    for (i=0; i<dset->n-1; i++) {
+	if (tmp[k] == tmp[k+2] && tmp[j] == tmp[j+2]) {
+	    msg = dup_message(dset, uv, tv, tmp[k], tmp[j]);
+	    break;
+	}
+	k += 2;
+	j += 2;
     }
 
     if (msg != NULL) {
@@ -1191,11 +1228,12 @@ static int diagnose_panel_problem (DATASET *dset, int uv, int tv,
 static int process_panel_vars (DATASET *dwinfo, dw_opts *opts)
 {
     int n = dataset->n;
-    double *uid = NULL;
-    double *tid = NULL;
+    double *tmp = NULL;
+    double *uid, *tid;
     int uv, tv;
     int nunits = 0;
     int nperiods = 0;
+    size_t sz;
     int err = 0;
 
 #if DWDEBUG
@@ -1215,12 +1253,16 @@ static int process_panel_vars (DATASET *dwinfo, dw_opts *opts)
         return E_DATA;
     }
 
-    uid = copyvec(dataset->Z[uv], n);
-    tid = copyvec(dataset->Z[tv], n);
-
-    if (uid == NULL || tid == NULL) {
+    sz = n * sizeof *tmp;
+    tmp = malloc(2 * sz);
+    if (tmp == NULL) {
         nomem();
         err = E_ALLOC;
+    } else {
+        uid = tmp;
+        tid = tmp + n;
+        memcpy(uid, dataset->Z[uv], sz);
+        memcpy(tid, dataset->Z[tv], sz);
     }
 
     if (!err) {
@@ -1255,7 +1297,9 @@ static int process_panel_vars (DATASET *dwinfo, dw_opts *opts)
         } else {
             int known_problem = nunits * nperiods < n;
 
-            err = diagnose_panel_problem(dataset, uv, tv, known_problem);
+	    if (known_problem) {
+		err = diagnose_panel_problem(dataset, uv, tv, tmp);
+	    }
             if (!err && !dataset_is_panel(dataset)) {
                 if (!g_ascii_strcasecmp(dataset->varname[tv], "year")) {
                     int y0 = start_year_from_time_var(tv, dataset, nperiods);
@@ -1274,8 +1318,11 @@ static int process_panel_vars (DATASET *dwinfo, dw_opts *opts)
         }
     }
 
-    free(uid);
-    free(tid);
+    free(tmp);
+
+#if DWDEBUG
+    fprintf(stderr, "done process_panel_vars\n");
+#endif
 
     return err;
 }

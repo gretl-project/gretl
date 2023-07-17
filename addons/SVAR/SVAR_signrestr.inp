@@ -464,7 +464,7 @@ function void SVAR_spagplot(const bundle mod,
         literal set xlabel 'lags'
         literal set nokey
         printf "set title '%s -> %s'\n", sname, vname
-    end plot --output=@out
+    end plot --output="@out"
 end function
 
 

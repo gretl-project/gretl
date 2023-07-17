@@ -1747,6 +1747,10 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
 
  text_search_wrap:
 
+    while (gtk_events_pending()) {
+	gtk_main_iteration();
+    }
+
     if (from_cursor) {
 	GtkTextIter sel_bound;
 

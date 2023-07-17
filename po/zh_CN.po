@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: gretl 2020a\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-04-24 12:53+0200\n"
-"PO-Revision-Date: 2020-02-27 00:16+0800\n"
+"PO-Revision-Date: 2023-07-15 01:37+0800\n"
 "Last-Translator: Yi-Nung Yang <yinung.yang@gmail.com>\n"
 "Language-Team: Chinese\n"
 "Language: zh_CN\n"
@@ -15,7 +15,7 @@ msgstr ""
 "X-Poedit-Basepath: ../../../gretl-git/po\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 "X-Loco-Parser: loco_parse_po\n"
-"X-Generator: Poedit 2.0.6\n"
+"X-Generator: Poedit 2.3\n"
 "X-Poedit-SearchPath-0: zh_CN.po\n"
 
 #: lib/src/addons_utils.c:179
@@ -14134,9 +14134,8 @@ msgid "print version information"
 msgstr "打印版本资讯"
 
 #: gui/gretl.c:156
-#, fuzzy
 msgid "start a new gretl instance unconditionally"
-msgstr "开启另一个新的 gretl 主程序"
+msgstr "无条件开启另一个新的 gretl 主程序"
 
 #: gui/gretl.c:158
 msgid "reuse an existing gretl instance unconditionally"
@@ -14144,7 +14143,7 @@ msgstr ""
 
 #: gui/gretl.c:647
 msgid "Start a new gretl instance?"
-msgstr "开启另一个新的 gretl 主程序"
+msgstr "开启另一个新的 gretl 主程序?"
 
 #: gui/gretl.c:1428
 msgid "No lists are currently defined"
@@ -14207,7 +14206,6 @@ msgid "C_lear data set"
 msgstr "清除所有资料(_C)"
 
 #: gui/gretl.c:1785
-#, fuzzy
 msgid "New gretl instance"
 msgstr "开启另一个新的 gretl 主程序"
 
@@ -14330,9 +14328,8 @@ msgid "Edit spec file..."
 msgstr "撰写套件格式 (spec ) 档"
 
 #: gui/gretl.c:1825
-#, fuzzy
 msgid "_Resource from addon"
-msgstr "恢复为全样本(_R)"
+msgstr "附加套件的附档(_R)"
 
 #: gui/gretl.c:1830
 msgid "_Tools"
@@ -14488,9 +14485,8 @@ msgid "_Sort data..."
 msgstr "资料重新排序 (_S)..."
 
 #: gui/gretl.c:1874
-#, fuzzy
 msgid "Paste from clipboard..."
-msgstr "从剪贴簿贴上资料"
+msgstr "从剪贴簿贴上资料..."
 
 #: gui/gretl.c:1875 gui/gretl.c:1985
 msgid "Set missing _value code..."
@@ -14877,9 +14873,8 @@ msgid "H_eteroskedasticity corrected"
 msgstr "异质变异校正模型 WLS (_e)"
 
 #: gui/gretl.c:1998
-#, fuzzy
 msgid "_Regularized least squares"
-msgstr "加权最小平方法 (_WLS)"
+msgstr "正则化最小平方法 (_R)"
 
 #: gui/gretl.c:1999
 msgid "High _precision OLS"
@@ -15131,9 +15126,8 @@ msgid "_X-12-ARIMA analysis"
 msgstr "_X-12-ARIMA analysis"
 
 #: gui/gretl.c:2213
-#, fuzzy
 msgid "_New gretl instance"
-msgstr "开启另一个新的 gretl 主程序"
+msgstr "开启另一个新的 gretl 主程序(_N)"
 
 #: gui/gretl.c:2376
 msgid "International data access"
