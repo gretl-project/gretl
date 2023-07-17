@@ -25,25 +25,30 @@ list X = y p cp r nbr res
 list Z = const
 scalar order = 12
 
-bundle mod = SVAR_setup("SR", X, Z, order) 
-mod.horizon = 60
-mod.snames[4] = "Monetary"
-
-# replicate page 395 (sort of)
 if 0
-    bfail = SVAR_boot(&mod, 1024, 0.63)
+    ### replicate page 395 (sort of)
+
+    # set up a "classically-identified" Cholesky model
+    bundle mod0 = SVAR_setup("plain", X, Z, order)
+    mod0.horizon = 60
+    mod0.snames[4] = "Monetary"
+
+    SVAR_estimate(&mod0)
+    bfail = SVAR_boot(&mod0, 1024, 0.63)
     loop i = 1..6
-        IRFplot(&mod, 4, i)
+        IRFplot(&mod0, 4, i)
     endloop
 endif
 
-# Switch to a sign restriction model, but re-using the 
-# reduced-form results from above
-# (and also the first three Cholesky-based shocks ?!
+# Switch to a sign restriction model
+
+bundle mod = SVAR_setup("SR", X, Z, order)
+mod.horizon = 60
+mod.snames[4] = "Monetary"
 
 /*
-Above the shock #4 is labeled Monetary, and below some sign 
-restrictions are given for it, and no other shock. 
+   Above the shock #4 is labeled Monetary, and below some sign
+   restrictions are given for it, and no other shock.
 */
 
 # set up the sign restictions
