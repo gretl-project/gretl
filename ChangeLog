@@ -12,6 +12,10 @@ version 2023b, in progress
 - "gnuplot" command: add new options --inbuf and --outbuf to
   accept, respectively, input from a named string and output
   to a named string
+- "smpl" command with the panel-data --time option: support
+  the --replace modifier
+- "outfile" command: insist on correct syntax for usage with
+  the --tempfile option
 - aggregate() function: support matrix input
 - misszero() and zeromiss() functions: support matrix input
 - SVAR addon: implement mixed (set-based and zero) restrictions
@@ -51,6 +55,11 @@ version 2023b, in progress
   no arguments when it has only optional parameters
 - Fix bug: MPI crash on broadcasting an empty matrix, with
   some MPI variants
+- Fix bug: potential crash in estimating a restricted VECM
+  when there are no regressors outside of the cointegration
+  space
+- Fix bug: potential crash in "arima" with the --x-12-arima
+  option with data starting in the year 1
 - Fix GUI bug: dynamic panel data model menu item not always
   available when it should be
 - Fix GUI bug: breakage on trying to select the decimal comma
@@ -60,10 +69,14 @@ version 2023b, in progress
 - GUI sample selection for panel data: clarify and fix
 - GUI "stop" button to abort script execution: make this more
   responsive
+- GUI "dataset structure wizard": improve the efficiency of
+  checking candidate unit and time variables for panel data
 - Add new example data file: sunspots time series from 1740
 - User's Guide: updates, including description of data file
   formats
 - Add more strings to gretl.pot and update translations
+- 64-but Windows build: update to OpenBLAS 0.3.23 and MS-MPI
+  version 10.1.3
 
 2023-03-02 version 2023a
 - "logit" command (binary case): add a matrix holding odds
