@@ -46,31 +46,6 @@ enum {
     TOK_ENDIF
 };
 
-#if 0 /* not yet */
-
-static int inline_if (const char *s)
-{
-    int ret = 0;
-
-    if (strchr(s, ';') != NULL) {
-	int quoted = 0;
-
-	while (*s) {
-	    if (*s == '"') {
-		quoted = !quoted;
-	    } else if (!quoted && *s == ';') {
-		ret = 1;
-		break;
-	    }
-	    s++;
-	}
-    }
-
-    return ret;
-}
-
-#endif
-
 /* if_eval: evaluate an "if" condition by generating a scalar
    (integer) representing the truth or falsity of the condition.
    The condition is expressed in the string @s. If a loop is

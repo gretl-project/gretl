@@ -1212,7 +1212,11 @@ double evaluate_if_cond (parser *p, DATASET *dset, PRN *prn, int *err)
 {
     double x = evaluate_scalar_genr(p, dset, prn, err);
 
-    return *err ? x : (double) (x != 0.0);
+    if (!*err && na(x)) {
+	return NADBL;
+    } else {
+	return *err ? x : (double) (x != 0.0);
+    }
 }
 
 /* destroy a previously compiled generator */

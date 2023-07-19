@@ -18920,9 +18920,12 @@ static NODE *eval (NODE *t, parser *p)
     fprintf(stderr, "eval (t->t = %03d, %s): returning NODE %s at %p, err %d\n",
             t->t, getsymb(t->t), ret == NULL ? "nil" : getsymb(ret->t),
             (void *) ret, p->err);
-    if (t->t == SERIES)
+    if (t->t == SERIES) {
         fprintf(stderr, " (SERIES node, xvec at %p, vnum = %d)\n",
                 (void *) t->v.xvec, t->vnum);
+    } else if (ret->t == NUM) {
+        fprintf(stderr, " (NUM node, return value %g)\n", ret->v.xval);
+    }
 #endif
 
     return ret;
