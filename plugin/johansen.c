@@ -1093,7 +1093,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
             if (!err) {
                 form_Pi(v, Pi);
             }
-        } else if (xc < v->ncoeff) {
+        } else if (xc < v->ncoeff && v->B != NULL) {
             /* transcribe EC terms to v->B */
             var_B_insert_alpha(v);
         }
