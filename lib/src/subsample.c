@@ -2872,6 +2872,7 @@ static int panel_time_sample (const char *start, const char *stop,
 {
     int T = dset->pd;
     int pd = dset->panel_pd;
+    int replace = (opt & OPT_P);
     int skip_t1 = 0;
     int skip_t2 = 0;
     int err = 0;
@@ -2884,6 +2885,23 @@ static int panel_time_sample (const char *start, const char *stop,
     if (!strcmp(stop, ";")) {
 	t2 = T-1;
 	skip_t2 = 1;
+    }
+
+#if PANDEBUG
+    fprintf(stderr, "HERE start=%s, stop=%s, t1=%d, t2=%d, T=%d, pd=%d\n",
+	    start, stop, t1, t2, T, pd);
+#endif
+
+    if (replace && dset == peerset && fullset != NULL) {
+	if (dataset_is_panel(fullset)) {
+	    restore_full_sample(dset, s);
+	    T = dset->pd;
+	    pd = dset->panel_pd;
+	    opt &= ~OPT_P;
+	} else {
+	    gretl_errmsg_set("The full dataset is not a panel");
+	    return E_DATA;
+	}
     }
 
     if (panel_range_ok(t1, t2, T)) {
@@ -2970,9 +2988,10 @@ int set_panel_sample (const char *start,
     testopt &= ~OPT_U;
     testopt &= ~OPT_X;
     testopt &= ~OPT_Q;
+    testopt &= ~OPT_P;
 
     if (testopt != OPT_NONE) {
-	/* we accept only --unit or --time here, plus --quiet */
+	/* we accept only --unit or --time here, plus --quiet or --replace */
 	return E_BADOPT;
     } else if (incompatible_options(opt, OPT_U | OPT_X)) {
 	/* cannot supply both --unit and --time in a single command */
