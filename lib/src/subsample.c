@@ -2380,7 +2380,7 @@ static int real_restrict_sample (const char *param,
 	/* we come here only if cumulating restrictions */
 	mask = precompute_mask(param, panmask, oldmask, dset, prn, &err);
     } else if (panmask != NULL) {
-	/* got a panl time-sample mask */
+	/* got a panel time-sample mask */
 	mask = copy_subsample_mask(panmask, &err);
     }
 
