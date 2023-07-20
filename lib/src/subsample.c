@@ -2170,7 +2170,8 @@ static int handle_ts_restrict (char *mask, DATASET *dset,
     return err;
 }
 
-static int check_restrict_options (gretlopt opt, const char *param)
+static int check_restrict_options (gretlopt opt, const char *param,
+				   int *replace)
 {
     /* We'll accept the redundant combination of the options --dummy
        (OPT_O) and --restrict (OPT_R), but other than that the options
@@ -2199,6 +2200,10 @@ static int check_restrict_options (gretlopt opt, const char *param)
 	if (param == NULL || *param == '\0') {
 	    return E_ARGS;
 	}
+    }
+
+    if (opt & OPT_P) {
+	*replace = 1;
     }
 
     return 0;
@@ -2273,6 +2278,7 @@ static int real_restrict_sample (const char *param,
     int permanent = 0;
     int n_models = 0;
     int n_orig = 0;
+    int replace = 0;
     int mode, err = 0;
 
     if (dset == NULL || dset->Z == NULL) {
@@ -2282,7 +2288,7 @@ static int real_restrict_sample (const char *param,
     n_orig = dset->n;
 
     /* general check on incoming options */
-    err = check_restrict_options(opt, param);
+    err = check_restrict_options(opt, param, &replace);
 
     /* take a closer look at the --permanent option */
     if (!err && (opt & OPT_T)) {
@@ -2319,7 +2325,7 @@ static int real_restrict_sample (const char *param,
 	return 1;
     }
 
-    if (!(opt & OPT_P)) {
+    if (!replace) {
 	/* not replacing but cumulating any existing restrictions */
 	oldmask = make_current_sample_mask(dset, &err);
 	if (!err) {
@@ -2347,7 +2353,7 @@ static int real_restrict_sample (const char *param,
 	return err;
     }
 
-    if (!(opt & OPT_P) && do_precompute(mode, inmask, oldmask, dset)) {
+    if (!replace && do_precompute(mode, inmask, oldmask, dset)) {
 	/* we come here only if cumulating restrictions */
 	mask = precompute_mask(param, inmask, oldmask, dset, prn, &err);
     } else if (inmask != NULL) {
