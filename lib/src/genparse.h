@@ -693,6 +693,7 @@ struct lhinfo {
     int t;                 /* type of pre-existing LHS variable, if any */
     char name[VNAMELEN];   /* name of LHS variable */
     char *label;           /* descriptive string for series */
+    series_table *stab;    /* holds string values for series */
     int vnum;              /* ID number of pre-existing LHS series */
     user_var *uv;          /* address of pre-existing LHS variable */
     char *expr;            /* expression on left */

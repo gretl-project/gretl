@@ -168,8 +168,13 @@ int gretl_function_append_line (ExecState *s);
 
 int gretl_is_public_user_function (const char *name);
 
+int gretl_function_exec_full (fncall *call, int rtype,
+			      DATASET *dset, void *ret,
+			      char **descrip, series_table **stab,
+			      PRN *prn);
+
 int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
-			 void *ret, char **descrip, PRN *prn);
+			 void *ret, PRN *prn);
 
 int set_function_should_return (const char *line);
 

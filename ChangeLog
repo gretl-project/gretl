@@ -1,3 +1,6 @@
+version 2023c, in progress
+- Support returning a string-valued series from a user function
+
 2023-07-21 version 2023b
 - New command "kdplot": simple access to a kernel density plot
   for a single series

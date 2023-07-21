@@ -8667,7 +8667,7 @@ static int handle_scalar_return (fncall *call, void *ptr, int rtype)
 
 static int handle_series_return (const char *vname, void *ptr,
 				 DATASET *dset, int copy,
-				 char **label)
+				 char **label, series_table **stab)
 {
     int v = series_index(dset, vname);
     double *x = NULL;
@@ -8693,13 +8693,20 @@ static int handle_series_return (const char *vname, void *ptr,
 
     *(double **) ptr = x;
 
-    if (!err && label != NULL) {
-	const char *vstr = series_get_label(dset, v);
+    if (!err) {
+	if (label != NULL) {
+	    const char *vstr = series_get_label(dset, v);
 
-	if (vstr != NULL) {
-	    *label = gretl_strdup(vstr);
-	} else {
-	    *label = gretl_strdup("");
+	    if (vstr != NULL) {
+		*label = gretl_strdup(vstr);
+	    } else {
+		*label = gretl_strdup("");
+	    }
+	}
+	if (stab != NULL && is_string_valued(dset, v)) {
+	    series_table *st = series_get_string_table(dset, v);
+
+	    *stab = series_table_copy(st);
 	}
     }
 
@@ -9053,8 +9060,8 @@ static void push_object_to_caller (fn_arg *arg)
 static int
 function_assign_returns (fncall *call, int rtype,
 			 DATASET *dset, void *ret,
-			 char **label, PRN *prn,
-			 int *perr)
+			 char **label, series_table **stab,
+			 PRN *prn, int *perr)
 {
     ufunc *u = call->fun;
     int i, err = 0;
@@ -9087,7 +9094,7 @@ function_assign_returns (fncall *call, int rtype,
 	if (rtype == GRETL_TYPE_DOUBLE) {
 	    err = handle_scalar_return(call, ret, rtype);
 	} else if (rtype == GRETL_TYPE_SERIES) {
-	    err = handle_series_return(call->retname, ret, dset, copy, label);
+	    err = handle_series_return(call->retname, ret, dset, copy, label, stab);
 	} else if (rtype == GRETL_TYPE_MATRIX) {
 	    err = handle_matrix_return(call->retname, ret, copy);
 	} else if (rtype == GRETL_TYPE_LIST) {
@@ -9868,8 +9875,9 @@ static int prepare_func_exec_state (ExecState *s,
 #define do_if_check(c) (c == IF || c == ELIF || c == ELSE || c == ENDIF)
 #define may_have_genr(c) (c == IF || c == ELIF || c == GENR)
 
-int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
-			 void *ret, char **descrip, PRN *prn)
+int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
+			      void *ret, char **descrip,
+			      series_table **stab, PRN *prn)
 {
     ufunc *u = call->fun;
     ExecState state = {0};
@@ -10087,7 +10095,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	err = gretl_if_state_check(indent0);
     }
 
-    function_assign_returns(call, rtype, dset, ret, descrip, prn, &err);
+    function_assign_returns(call, rtype, dset, ret, descrip, stab, prn, &err);
 
     if (gencomp || n_saved > 0) {
 	reset_saved_uservars(call->fun, 0);
@@ -10116,6 +10124,13 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 #endif
 
     return err;
+}
+
+int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
+			 void *ret, PRN *prn)
+{
+    return gretl_function_exec_full(call, rtype, dset, ret,
+				    NULL, NULL, prn);
 }
 
 /* look up name of supplied argument based on name of variable

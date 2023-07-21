@@ -10746,6 +10746,7 @@ static NODE *eval_ufunc (NODE *l, NODE *r, parser *p)
 
     if (!p->err) {
         char **pdescrip = NULL;
+	series_table **ptab = NULL;
         void *altp = NULL;
         void *retp = &altp;
 
@@ -10773,10 +10774,12 @@ static NODE *eval_ufunc (NODE *l, NODE *r, parser *p)
         if ((p->flags & P_UFRET) && rtype == GRETL_TYPE_SERIES) {
             /* arrange to pick up description of generated series, if any */
             pdescrip = &p->lh.label;
+	    /* and perhaps string values attached to series */
+	    ptab = &p->lh.stab;
         }
 
-        p->err = gretl_function_exec(fc, rtype, p->dset, retp,
-                                     pdescrip, p->prn);
+        p->err = gretl_function_exec_full(fc, rtype, p->dset, retp,
+					  pdescrip, ptab, p->prn);
 
         if (rtype == GRETL_TYPE_NUMERIC) {
             /* determine which numeric type we actually got */
@@ -21497,6 +21500,7 @@ static void parser_init (parser *p, const char *str,
     p->lh.t = 0;
     p->lh.name[0] = '\0';
     p->lh.label = NULL;
+    p->lh.stab = NULL;
     p->lh.vnum = 0;
     p->lh.uv = NULL;
     p->lh.expr = NULL;
@@ -21595,6 +21599,11 @@ void gen_cleanup (parser *p)
     if (p->lh.label != NULL) {
         free(p->lh.label);
         p->lh.label = NULL;
+    }
+
+    if (p->lh.stab != NULL) {
+        series_table_destroy(p->lh.stab);
+        p->lh.stab = NULL;
     }
 
     if (p->flags & P_ALTINP) {

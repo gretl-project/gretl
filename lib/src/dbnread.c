@@ -19,7 +19,7 @@ static gretl_bundle *get_dbn_series_bundle (const char *datacode,
 				      (void *) datacode);
 	if (!*err) {
 	    *err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, NULL,
-				       &b, NULL, NULL);
+				       &b, NULL);
 	}
 	if (b != NULL) {
 	    int dberr = gretl_bundle_get_int(b, "error", NULL);

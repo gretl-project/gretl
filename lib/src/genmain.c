@@ -191,7 +191,7 @@ static int maybe_record_lag_info (parser *p)
     return 0;
 }
 
-static void gen_write_label (parser *p, int oldv)
+static void gen_write_metadata (parser *p, int oldv)
 {
     const char *src = NULL;
 
@@ -201,7 +201,7 @@ static void gen_write_label (parser *p, int oldv)
     }
 
     if (p->lh.expr != NULL) {
-	/* don't touch the label if we generated a single
+	/* don't touch the metadata if we generated a single
 	   observation in a series
 	*/
 	return;
@@ -235,6 +235,11 @@ static void gen_write_label (parser *p, int oldv)
 	    /* in case the label is a formula */
 	    series_set_flag(p->dset, p->lh.vnum, VAR_GENERATED);
 	}
+    }
+
+    if (p->lh.stab != NULL) {
+	series_attach_string_table(p->dset, p->lh.vnum, p->lh.stab);
+	p->lh.stab = NULL;
     }
 }
 
@@ -807,7 +812,7 @@ int generate (const char *line, DATASET *dset,
     if (!p.err && targtype != EMPTY) {
 	gen_save_or_print(&p, prn);
 	if (!p.err && !gen_silent(p.flags)) {
-	    gen_write_label(&p, oldv);
+	    gen_write_metadata(&p, oldv);
 	    if (gretl_messages_on() && prn != NULL && !(opt & OPT_Q)) {
 		gen_write_message(&p, oldv, prn);
 	    }

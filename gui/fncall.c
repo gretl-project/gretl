@@ -219,7 +219,7 @@ static int lmaker_run (ufunc *func, call_info *cinfo)
 	set_genr_model_from_vwin(cinfo->vwin);
     }
     err = gretl_function_exec(fcall, GRETL_TYPE_LIST, dataset,
-			      &list, NULL, prn);
+			      &list, prn);
     if (cinfo->flags & MODEL_CALL) {
 	unset_genr_model();
     }
@@ -257,7 +257,7 @@ static gretl_bundle *get_ui_from_maker (fnpkg *pkg,
     }
     if (fc != NULL) {
         gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
-			    &b, NULL, NULL);
+			    &b, NULL);
     }
 
     return b;
@@ -2953,7 +2953,7 @@ static int real_exec_bundle_function (gretl_bundle *b,
 	   don't expect any printed output.
 	*/
 	err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
-				  NULL, NULL, prn);
+				  NULL, prn);
     } else if (!err) {
 	/* For other bundle-specials we expect printed output */
 	GretlType rtype = user_func_get_return_type(func);
@@ -2962,11 +2962,11 @@ static int real_exec_bundle_function (gretl_bundle *b,
 	if (rtype == GRETL_TYPE_BUNDLE) {
 	    /* if a bundle is offered, let's grab it */
 	    err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
-				      &retb, NULL, prn);
+				      &retb, prn);
 	} else {
 	    /* otherwise ignore any return value */
 	    err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
-				      NULL, NULL, prn);
+				      NULL, prn);
 	}
 	if (err) {
 	    gui_errmsg(err);
@@ -3021,7 +3021,7 @@ static int regls_plot_from_selector (selector *sr)
 	push_anon_function_arg(fc, GRETL_TYPE_INT, &zero);
 	push_anon_function_arg(fc, GRETL_TYPE_MATRIX, sel);
 	err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
-				  NULL, NULL, NULL);
+				  NULL, NULL);
     }
 
     if (err) {
@@ -4160,7 +4160,7 @@ static int precheck_error (ufunc *func, windata_t *vwin)
     prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
     set_genr_model_from_vwin(vwin);
     err = gretl_function_exec(fncall_new(func, 0), GRETL_TYPE_DOUBLE,
-			      dataset, &ptr, NULL, prn);
+			      dataset, &ptr, prn);
     if (ptr != NULL) {
 	check_err = *(double *) ptr;
     }
@@ -4802,7 +4802,7 @@ int dbnomics_get_series_call (const char *datacode)
     err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) datacode);
     if (!err) {
 	err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
-				  &b, NULL, prn);
+				  &b, prn);
 	if (err) {
 	    gui_errmsg(err);
 	}
@@ -4827,7 +4827,7 @@ int dbnomics_get_series_call (const char *datacode)
 		err = push_anon_function_arg(fc, GRETL_TYPE_BUNDLE, (void *) b);
 		if (!err) {
 		    err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
-					      NULL, NULL, prn);
+					      NULL, prn);
 		    if (err) {
 			gui_errmsg(err);
 		    } else {
@@ -4888,7 +4888,7 @@ int dbnomics_get_dimensions_call (const char *provider,
 
 	set_wait_cursor(&cwin);
 	err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
-				  NULL, NULL, prn);
+				  NULL, prn);
 	unset_wait_cursor(cwin);
     }
 
@@ -4920,7 +4920,7 @@ void *dbnomics_get_providers_call (int *err)
 
     set_wait_cursor(&cwin);
     *err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, dataset,
-			       &A, NULL, NULL);
+			       &A, NULL);
     unset_wait_cursor(cwin);
     if (*err) {
 	gui_errmsg(*err);
@@ -4967,7 +4967,7 @@ void *dbnomics_search_call (const char *key,
 
 	set_wait_cursor(&cwin);
 	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, dataset,
-				   &A, NULL, NULL);
+				   &A, NULL);
 	unset_wait_cursor(cwin);
     }
 
@@ -4996,7 +4996,7 @@ void *dbnomics_dataset_list (const char *provider, int *err)
 
 	set_wait_cursor(&cwin);
 	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
-				   &b, NULL, NULL);
+				   &b, NULL);
 	unset_wait_cursor(cwin);
     }
     if (*err) {
@@ -5030,7 +5030,7 @@ void *dbnomics_probe_series (const char *prov,
 
 	set_wait_cursor(&cwin);
 	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, dataset,
-				   &A, NULL, NULL);
+				   &A, NULL);
 	unset_wait_cursor(cwin);
     }
 
@@ -5083,7 +5083,7 @@ int real_do_regls (const char *buf)
 
 	set_wait_cursor(&cwin);
 	err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
-				  &rb, NULL, prn);
+				  &rb, prn);
 	unset_wait_cursor(cwin);
 	if (!err) {
 	    view_buffer(prn, 78, 350, "gretl: regls", VIEW_BUNDLE, rb);
