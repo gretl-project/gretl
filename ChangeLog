@@ -1,4 +1,4 @@
-version 2023b, in progress
+2023-07-21 version 2023b
 - New command "kdplot": simple access to a kernel density plot
   for a single series
 - New function typename(): return a string giving the type of

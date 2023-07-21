@@ -1,4 +1,4 @@
-2023b, in progress
+2023-07-21 version 2023b
 
 The "outfile" command with --tempfile option: the name of
 the string variable to receive the tempfile name must now be
