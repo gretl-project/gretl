@@ -1,5 +1,11 @@
 2023b, in progress
 
+The "outfile" command with --tempfile option: the name of
+the string variable to receive the tempfile name must now be
+given as a parameter to the option flag (as documented).
+Passing this name as a regular command argument is no longer
+accepted.
+
 "empty" is now a reserved word, providing a uniform means of 
 initializing an empty matrix, bundle, array or string. Scripts
 which use "empty" as an identifier will have to be modified.
