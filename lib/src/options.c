@@ -170,7 +170,8 @@ struct gretl_option gretl_opts[] = {
     { ARMA,     OPT_L, "lbfgs", 0 },
     { ARMA,     OPT_N, "nc", 0 },
     { ARMA,     OPT_V, "verbose", 0 },
-    { ARMA,     OPT_X, "x-12-arima", 0 },
+    { ARMA,     OPT_X, "x-13arima", 0 },
+    { ARMA,     OPT_X, "x-12-arima", 0 }, /* compatibility alias */
     { ARMA,     OPT_Y, "y-diff-only", 0 },
     { ARMA,     OPT_R, "robust", 0 },
     { ARMA,     OPT_S, "stdx", 0 },
