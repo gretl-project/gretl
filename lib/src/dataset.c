@@ -4988,6 +4988,92 @@ int series_recode_strings (DATASET *dset, int v, gretlopt opt,
     return err;
 }
 
+#if 1 /* experimental, 2023-07-23 */
+
+typedef struct strval_sorter_ {
+    const char *s;
+    int code;
+} strval_sorter;
+
+static int compare_strvals (const void *a, const void *b)
+{
+    const strval_sorter *ssa = a;
+    const strval_sorter *ssb = b;
+
+    return g_strcmp0(ssa->s, ssb->s);
+}
+
+static int ssr_lookup (strval_sorter *ssr, int ns, int k)
+{
+    int j;
+
+    for (j=0; j<ns; j++) {
+	if (k == ssr[j].code) {
+	    return j + 1;
+	}
+    }
+
+    return 0;
+}
+
+int series_alphabetize_strings (DATASET *dset, int v)
+{
+    strval_sorter *ssr;
+    series_table *st0, *st1;
+    char **S;
+    double xi;
+    int i, ns;
+    int err = 0;
+
+    st0 = series_get_string_table(dset, v);
+    if (st0 == NULL) {
+	return E_DATA;
+    }
+
+    S = series_table_get_strings(st0, &ns);
+    if (S == NULL) {
+	return E_DATA;
+    }
+
+    ssr = malloc(ns * sizeof *ssr);
+    if (ssr == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<ns; i++) {
+	ssr[i].s = S[i];
+	ssr[i].code = i+1;
+    }
+
+    qsort(ssr, ns, sizeof *ssr, compare_strvals);
+
+    for (i=0; i<dset->n; i++) {
+	xi = dset->Z[v][i];
+	if (!na(xi)) {
+	    dset->Z[v][i] = ssr_lookup(ssr, ns, (int) xi);
+	}
+    }
+
+    /* put S into sort order */
+    for (i=0; i<ns; i++) {
+	S[i] = (char *) ssr[i].s;
+    }
+
+    st1 = series_table_new(S, ns, &err);
+    if (st1 == NULL) {
+	err = E_ALLOC;
+    } else {
+	series_table_free_shallow(st0);
+	dset->varinfo[v]->st = st1;
+    }
+
+    free(ssr);
+
+    return err;
+}
+
+#endif
+
 int set_panel_groups_name (DATASET *dset, const char *vname)
 {
     if (dset->pangrps != NULL) {

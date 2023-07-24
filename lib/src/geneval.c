@@ -15858,7 +15858,12 @@ static NODE *stringify_series (NODE *l, NODE *r, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL) {
-        ret->v.xval = series_set_string_vals(p->dset, l->vnum, r->v.a);
+	if (null_node(r)) {
+	    series_destroy_string_table(p->dset, l->vnum);
+	    ret->v.xval = 0;
+	} else {
+	    ret->v.xval = series_set_string_vals(p->dset, l->vnum, r->v.a);
+	}
         if (ret->v.xval != 0.0) {
             p->err = E_DATA;
         }
@@ -18853,14 +18858,10 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_STRINGIFY:
-        if (!useries_node(l) || r->t != ARRAY) {
-            int l_ok = useries_node(l);
-
-            node_type_error(t->t, l_ok ? 2 : 1,
-                            l_ok ? ARRAY : USERIES,
-                            l_ok ? r : l, p);
-        } else {
-            ret = stringify_series(l, r, p);
+	if (useries_node(l) && (r->t == ARRAY || null_node(r))) {
+	    ret = stringify_series(l, r, p);
+	} else {
+	    p->err = E_TYPES;
         }
         break;
     case F_DEC2BIN:

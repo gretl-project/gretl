@@ -572,6 +572,8 @@ int series_set_string_vals_direct (DATASET *dset, int i,
 int series_recode_strings (DATASET *dset, int v, gretlopt opt,
 			   int *changed);
 
+int series_alphabetize_strings (DATASET *dset, int v);
+
 double series_decode_string (const DATASET *dset, int i, const char *s);
 
 char **series_get_string_vals (const DATASET *dset, int i,

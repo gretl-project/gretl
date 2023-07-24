@@ -55,6 +55,8 @@ series_table *series_table_copy (series_table *st);
 
 void series_table_destroy (series_table *st);
 
+void series_table_free_shallow (series_table *st);
+
 double series_table_get_value (series_table *st, const char *s);
 
 const char *series_table_get_string (series_table *st, double val);

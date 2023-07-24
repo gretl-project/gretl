@@ -568,6 +568,24 @@ void series_table_destroy (series_table *st)
 }
 
 /**
+ * series_table_free_shallow:
+ * @st: series string table.
+ *
+ * Does a "shallow"free on @st, without freeing the
+ * array of strings to which the table has a reference.
+ */
+
+void series_table_free_shallow (series_table *st)
+{
+    if (st != NULL) {
+	if (st->ht != NULL) {
+	    g_hash_table_destroy(st->ht);
+	}
+	free(st);
+    }
+}
+
+/**
  * gretl_string_table_destroy:
  * @gst: gretl string table.
  *
