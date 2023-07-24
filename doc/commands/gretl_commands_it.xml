@@ -883,6 +883,11 @@
         <example>arima 1 0 2 ; y</example>
 	<example>arima 2 0 2 ; y 0 x1 x2 --verbose</example>
 	<example>arima 0 1 1 ; 0 1 1 ; y --nc</example>
+	<demos>
+	<demo>armaloop.inp</demo>
+	<demo>auto_arima.inp</demo>
+	<demo>bjg.inp</demo>
+	</demos>
       </examples>
     </usage>
 

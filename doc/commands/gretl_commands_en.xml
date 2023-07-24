@@ -856,6 +856,7 @@
 	<example>arima 0 1 1 ; 0 1 1 ; y --nc</example>
 	<demos>
 	<demo>armaloop.inp</demo>
+	<demo>auto_arima.inp</demo>
 	<demo>bjg.inp</demo>
 	</demos>
       </examples>
