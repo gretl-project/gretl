@@ -21474,7 +21474,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     */
     int saveflags[] = {
         P_NATEST, P_AUTOREG, P_DISCARD, P_NODECL,
-        P_LISTDEF, P_PRIV, 0
+        P_LISTDEF, P_PRIV, P_UFRET, 0
     };
     int i, prevflags = p->flags;
     GretlType lhtype = 0;

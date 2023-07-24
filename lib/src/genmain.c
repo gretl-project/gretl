@@ -1178,6 +1178,8 @@ parser *genr_compile (const char *s, DATASET *dset,
 
 int execute_genr (parser *p, DATASET *dset, PRN *prn)
 {
+    int oldv = (dset != NULL)? dset->v : 0;
+
 #if GDEBUG
     fprintf(stderr, "\n*** execute_genr: p=%p, LHS='%s', Z=%p, prn=%p\n",
 	    (void *) p, p->lh.expr ? p->lh.expr : p->lh.name,
@@ -1188,6 +1190,9 @@ int execute_genr (parser *p, DATASET *dset, PRN *prn)
 
     if (!p->err && p->targ != EMPTY) {
 	gen_save_or_print(p, prn);
+	if (dset != NULL && !(p->flags & P_PRIV)) {
+	    series_write_metadata(p, oldv);
+	}
     }
 
     if (p->err) {
