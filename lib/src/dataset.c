@@ -4992,7 +4992,8 @@ int series_recode_strings (DATASET *dset, int v, gretlopt opt,
 
 typedef struct strval_sorter_ {
     const char *s;
-    int code;
+    int oldcode;
+    int newcode;
 } strval_sorter;
 
 static int compare_strvals (const void *a, const void *b)
@@ -5003,12 +5004,18 @@ static int compare_strvals (const void *a, const void *b)
     return g_strcmp0(ssa->s, ssb->s);
 }
 
-static int ssr_lookup (strval_sorter *ssr, int ns, int k)
+static int ssr_lookup (strval_sorter *ssr, int ns, int oldcode)
 {
-    int j;
+    /* note: @oldcode is 1-based */
+    int j, k = oldcode - 1;
+
+    if (ssr[k].newcode) {
+        return ssr[k].newcode;
+    }
 
     for (j=0; j<ns; j++) {
-	if (k == ssr[j].code) {
+	if (oldcode == ssr[j].oldcode) {
+            ssr[k].newcode = j + 1;
 	    return j + 1;
 	}
     }
@@ -5057,7 +5064,8 @@ int series_alphabetize_strings (DATASET *dset, int v)
     /* fill sorter array */
     for (i=0; i<ns; i++) {
 	ssr[i].s = S[i];
-	ssr[i].code = i+1;
+	ssr[i].oldcode = i+1;
+        ssr[i].newcode = 0;
     }
 
     /* do the actual sorting */
