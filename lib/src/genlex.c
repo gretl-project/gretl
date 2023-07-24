@@ -528,6 +528,7 @@ struct str_table funcs[] = {
     { F_ARRAY,     "array" },
     { F_STRVALS,   "strvals" },
     { F_STRINGIFY, "stringify" },
+    { F_STRVSORT,  "strvsort" },
     { F_BOOTCI,    "bootci" },
     { F_BOOTPVAL,  "bootpval" },
     { F_SEASONALS, "seasonals" },

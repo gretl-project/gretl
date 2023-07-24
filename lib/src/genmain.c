@@ -191,11 +191,27 @@ static int maybe_record_lag_info (parser *p)
     return 0;
 }
 
-static void gen_write_metadata (parser *p, int oldv)
+static int get_genseries_target (parser *p)
+{
+    if (p->tree->t == F_GENSERIES && (p->flags & P_UFRET)) {
+	return p->ret->v.xval;
+    } else {
+	return 0;
+    }
+}
+
+static void series_write_metadata (parser *p, int oldv)
 {
     const char *src = NULL;
+    int vnum = 0;
 
-    if (p->targ != SERIES) {
+    if (p->targ == SERIES) {
+	vnum = p->lh.vnum;
+    } else {
+	vnum = get_genseries_target(p);
+    }
+
+    if (vnum == 0) {
 	/* this is relevant only for series */
 	return;
     }
@@ -207,10 +223,12 @@ static void gen_write_metadata (parser *p, int oldv)
 	return;
     }
 
-    maybe_record_lag_info(p);
+    if (p->targ == SERIES) {
+	maybe_record_lag_info(p);
+    }
 
-    if (p->lh.vnum < oldv && p->targ == SERIES) {
-	series_set_mtime(p->dset, p->lh.vnum);
+    if (vnum < oldv && p->targ == SERIES) {
+	series_set_mtime(p->dset, vnum);
     }
 
     if (p->lh.label != NULL && (p->flags & P_UFRET)) {
@@ -227,18 +245,18 @@ static void gen_write_metadata (parser *p, int oldv)
 	    *tmp = '\0';
 	    strncat(tmp, src, MAXLABEL - 4);
 	    strcat(tmp, "...");
-	    series_set_label(p->dset, p->lh.vnum, tmp);
+	    series_set_label(p->dset, vnum, tmp);
 	} else {
-	    series_set_label(p->dset, p->lh.vnum, src);
+	    series_set_label(p->dset, vnum, src);
 	}
 	if (src == p->rhs) {
 	    /* in case the label is a formula */
-	    series_set_flag(p->dset, p->lh.vnum, VAR_GENERATED);
+	    series_set_flag(p->dset, vnum, VAR_GENERATED);
 	}
     }
 
     if (p->lh.stab != NULL) {
-	series_attach_string_table(p->dset, p->lh.vnum, p->lh.stab);
+	series_attach_string_table(p->dset, vnum, p->lh.stab);
 	p->lh.stab = NULL;
     }
 }
@@ -785,6 +803,9 @@ int generate (const char *line, DATASET *dset,
     if (opt & OPT_C) {
 	flags |= P_CATCH;
     }
+    if (opt & OPT_U) {
+	flags |= P_UFRET;
+    }
     if (opt & OPT_O) {
 	/* special for function call, no assignment */
 	if (maybe_unassigned_fncall(line)) {
@@ -812,7 +833,7 @@ int generate (const char *line, DATASET *dset,
     if (!p.err && targtype != EMPTY) {
 	gen_save_or_print(&p, prn);
 	if (!p.err && !gen_silent(p.flags)) {
-	    gen_write_metadata(&p, oldv);
+	    series_write_metadata(&p, oldv);
 	    if (gretl_messages_on() && prn != NULL && !(opt & OPT_Q)) {
 		gen_write_message(&p, oldv, prn);
 	    }

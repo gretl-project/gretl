@@ -15694,7 +15694,7 @@ static NODE *gen_series_from_string (NODE *l, NODE *r, parser *p)
 
     line = g_strdup_printf("%s=%s", l->v.str, r->v.str);
     err = generate(line, p->dset, GRETL_TYPE_SERIES,
-                   OPT_NONE, p->prn);
+                   OPT_U, p->prn);
 
     if (!err) {
         vnum = current_series_index(p->dset, l->v.str);
@@ -15853,14 +15853,15 @@ static NODE *get_series_stringvals (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *stringify_series (NODE *l, NODE *r, parser *p)
+static NODE *stringify_series (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL) {
-	if (null_node(r)) {
-	    series_destroy_string_table(p->dset, l->vnum);
-	    ret->v.xval = 0;
+	if (f == F_STRVSORT) {
+	    ret->v.xval = series_alphabetize_strings(p->dset, l->vnum);
+	} else if (null_node(r)) {
+	    ret->v.xval = series_destroy_string_table(p->dset, l->vnum);
 	} else {
 	    ret->v.xval = series_set_string_vals(p->dset, l->vnum, r->v.a);
 	}
@@ -17252,7 +17253,7 @@ static NODE *eval (NODE *t, parser *p)
 
     if (!p->err && t->R != NULL && !rdone) {
         t->R->parent = t;
-        if (r_return(t->t)) {
+	if (r_return(t->t)) {
             r = t->R;
         } else {
             if (t->t == B_AND || t->t == B_OR) {
@@ -17269,7 +17270,9 @@ static NODE *eval (NODE *t, parser *p)
                         goto finish;
                     }
                 }
-            }
+            } else if (t->t == F_GENSERIES && t->R->t == UFUN) {
+		p->flags |= P_UFRET;
+	    }
             if (r == NULL && !p->err) {
                 r = eval(t->R, p);
                 if (r == NULL && !p->err) {
@@ -18859,9 +18862,16 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_STRINGIFY:
 	if (useries_node(l) && (r->t == ARRAY || null_node(r))) {
-	    ret = stringify_series(l, r, p);
+	    ret = stringify_series(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
+        }
+        break;
+    case F_STRVSORT:
+	if (useries_node(l)) {
+	    ret = stringify_series(l, NULL, t->t, p);
+	} else {
+	    node_type_error(t->t, 0, USERIES, l, p);
         }
         break;
     case F_DEC2BIN:
@@ -20980,6 +20990,43 @@ static void series_from_matrix (double *y, const gretl_matrix *m,
     }
 }
 
+/* Determine if it seems OK to overwrite a string-valued series.
+   This action was banned altogether up to gretl 2023b, but
+   we're now allowing it subject to a number of conditions.
+   These conditions could in principle be somewhat relaxed,
+   but the object is still to avoid breaking string-valued
+   series and any relaxation would have to be well thought out.
+*/
+
+static int strv_overwrite_ok (parser *p)
+{
+    int ok = 1;
+
+    if (p->op != B_ASN) {
+	/* must be a case of straight assignment */
+	ok = 0;
+    } else if (dataset_is_subsampled(p->dset)) {
+	/* we must have access to the entire data range */
+	ok = 0;
+    } else if (p->ret->t != SERIES || p->ret->vnum <= 0) {
+	/* the replacement must be a dataset series... */
+	ok = 0;
+    } else if (!is_string_valued(p->dset, p->ret->vnum)) {
+	/* ... which must be string-valued */
+	ok = 0;
+    } else if (p->lh.vnum == p->ret->vnum) {
+	/* and not identical to the LHS! */
+	ok = 0;
+    }
+
+    if (!ok) {
+	gretl_errmsg_set("Cannot overwrite string-valued series in this context");
+	p->err = E_TYPES;
+    }
+
+    return ok;
+}
+
 static inline int savegen_retval (int err)
 {
 #if EDEBUG
@@ -20995,6 +21042,7 @@ static int save_generated_var (parser *p, PRN *prn)
     double **Z = NULL;
     double x;
     int no_decl = 0;
+    int strv_ovwrite = 0;
     int t, v = 0;
 
 #if EDEBUG
@@ -21014,9 +21062,10 @@ static int save_generated_var (parser *p, PRN *prn)
         return savegen_retval(0);
     } else if (p->lh.t == SERIES && is_string_valued(p->dset, p->lh.vnum) &&
                p->lhtree == NULL) {
-        gretl_errmsg_set("Cannot overwrite entire string-valued series");
-        p->err = E_TYPES;
-        return savegen_retval(p->err);
+	strv_ovwrite = strv_overwrite_ok(p);
+	if (!strv_ovwrite) {
+	    return savegen_retval(p->err);
+	}
     }
 
     if (p->lhtree != NULL) {
@@ -21196,7 +21245,9 @@ static int save_generated_var (parser *p, PRN *prn)
         }
     } else if (p->targ == SERIES) {
         /* writing a series */
-        if (r->t == SERIES) {
+	if (strv_ovwrite) {
+	    p->err = copy_string_valued_series(p->dset, v, r->vnum);
+	} else if (r->t == SERIES) {
             const double *x = r->v.xvec;
 
             if (p->op == B_ASN) {
