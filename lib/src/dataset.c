@@ -80,9 +80,9 @@ static void dataset_set_nobs (DATASET *dset, int n)
 
 /**
  * free_Z:
- * @dset: dataset information.
+ * @dset: dataset.
  *
- * Does a deep free on the data matrix.
+ * Does a deep free on the data array.
  */
 
 void free_Z (DATASET *dset)
@@ -4332,12 +4332,14 @@ void series_attach_string_table (DATASET *dset, int i,
     }
 }
 
-void series_destroy_string_table (DATASET *dset, int i)
+int series_destroy_string_table (DATASET *dset, int i)
 {
     if (dset != NULL && i > 0 && i < dset->v) {
 	series_table_destroy(dset->varinfo[i]->st);
 	dset->varinfo[i]->st = NULL;
     }
+
+    return 0;
 }
 
 /**
@@ -4988,8 +4990,6 @@ int series_recode_strings (DATASET *dset, int v, gretlopt opt,
     return err;
 }
 
-#if 1 /* experimental, 2023-07-23 */
-
 typedef struct strval_sorter_ {
     const char *s;
     int code;
@@ -5016,6 +5016,19 @@ static int ssr_lookup (strval_sorter *ssr, int ns, int k)
     return 0;
 }
 
+/**
+ * series_alphabetize_strings:
+ * @dset: dataset.
+ * @v: index number of string-valued series to process.
+ *
+ * Sorts the string values attached to series @v in
+ * alphabetical order then resets its numerical values
+ * (codes) to reflect the new ordering.
+ *
+ * Returns: 0 on successful completion, or error code
+ * on error.
+ */
+
 int series_alphabetize_strings (DATASET *dset, int v)
 {
     strval_sorter *ssr;
@@ -5035,18 +5048,22 @@ int series_alphabetize_strings (DATASET *dset, int v)
 	return E_DATA;
     }
 
+    /* allocate sorter array */
     ssr = malloc(ns * sizeof *ssr);
     if (ssr == NULL) {
 	return E_ALLOC;
     }
 
+    /* fill sorter array */
     for (i=0; i<ns; i++) {
 	ssr[i].s = S[i];
 	ssr[i].code = i+1;
     }
 
+    /* do the actual sorting */
     qsort(ssr, ns, sizeof *ssr, compare_strvals);
 
+    /* look up the new numerical codings */
     for (i=0; i<dset->n; i++) {
 	xi = dset->Z[v][i];
 	if (!na(xi)) {
@@ -5059,6 +5076,7 @@ int series_alphabetize_strings (DATASET *dset, int v)
 	S[i] = (char *) ssr[i].s;
     }
 
+    /* replace the original series table */
     st1 = series_table_new(S, ns, &err);
     if (st1 == NULL) {
 	err = E_ALLOC;
@@ -5072,7 +5090,43 @@ int series_alphabetize_strings (DATASET *dset, int v)
     return err;
 }
 
-#endif
+/**
+ * copy_string_valued_series:
+ * @dset: dataset.
+ * @targ: index number of target series.
+ * @src: index number of string-valued source series.
+ *
+ * Copies the array of string values from @src to @targ, and
+ * also the numerical values (codes) per observation.
+ * If the target series is string-valued its original
+ * string table is destroyed.
+ *
+ * Returns: 0 on successful completion, or error code
+ * on error.
+ */
+
+int copy_string_valued_series (DATASET *dset, int targ, int src)
+{
+    series_table *st0, *st1;
+
+    st0 = series_get_string_table(dset, src);
+    if (st0 == NULL) {
+	return E_TYPES;
+    }
+
+    st1 = series_table_copy(st0);
+    if (st1 == NULL) {
+	return E_ALLOC;
+    }
+
+    /* copy across numerical codes */
+    memcpy(dset->Z[targ], dset->Z[src], dset->n * sizeof(double));
+
+    /* and attach the series table copy */
+    series_attach_string_table(dset, targ, st1);
+
+    return 0;
+}
 
 int set_panel_groups_name (DATASET *dset, const char *vname)
 {

@@ -547,7 +547,7 @@ void series_ensure_level_zero (DATASET *dset);
 void series_attach_string_table (DATASET *dset, int i,
 				 series_table *st);
 
-void series_destroy_string_table (DATASET *dset, int i);
+int series_destroy_string_table (DATASET *dset, int i);
 
 int is_string_valued (const DATASET *dset, int i);
 
@@ -573,6 +573,8 @@ int series_recode_strings (DATASET *dset, int v, gretlopt opt,
 			   int *changed);
 
 int series_alphabetize_strings (DATASET *dset, int v);
+
+int copy_string_valued_series (DATASET *dset, int targ, int src);
 
 double series_decode_string (const DATASET *dset, int i, const char *s);
 
