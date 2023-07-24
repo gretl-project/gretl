@@ -4991,9 +4991,9 @@ int series_recode_strings (DATASET *dset, int v, gretlopt opt,
 }
 
 typedef struct strval_sorter_ {
-    const char *s;
-    int oldcode;
-    int newcode;
+    const char *s; /* string value */
+    int oldcode;   /* the original integer code for @s */
+    int newcode;   /* the revised integer code for @s */
 } strval_sorter;
 
 static int compare_strvals (const void *a, const void *b)
@@ -5015,6 +5015,7 @@ static int ssr_lookup (strval_sorter *ssr, int ns, int oldcode)
 
     for (j=0; j<ns; j++) {
 	if (oldcode == ssr[j].oldcode) {
+            /* return value is also 1-based */
             ssr[k].newcode = j + 1;
 	    return j + 1;
 	}
