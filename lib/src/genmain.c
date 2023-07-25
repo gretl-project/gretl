@@ -207,7 +207,7 @@ static void series_write_metadata (parser *p, int oldv)
 
     if (p->targ == SERIES) {
 	vnum = p->lh.vnum;
-    } else {
+    } else if (p->tree != NULL) {
 	vnum = get_genseries_target(p);
     }
 
