@@ -21029,12 +21029,7 @@ static int strv_overwrite_ok (parser *p)
 	/* and not identical to LHS */
 	ok = 0;
     } else if (is_string_valued(p->dset, rv)) {
-	if (0 && dataset_is_subsampled(p->dset)) {
-	    /* we need access to the full data range */
-	    ok = 0;
-	} else {
-	    ret = OVW_STRINGS;
-	}
+	ret = OVW_STRINGS;
     } else {
 	ret = OVW_NUMERIC;
     }
