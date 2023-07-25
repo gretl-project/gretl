@@ -1,5 +1,7 @@
 version 2023c, in progress
 - Support returning a string-valued series from a user function
+- Support assignment to string-valued series, from another such
+  series or a numeric series
 
 2023-07-21 version 2023b
 - New command "kdplot": simple access to a kernel density plot
