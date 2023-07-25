@@ -579,6 +579,8 @@ int copy_string_valued_series (DATASET *dset, int targ, int src);
 int assign_numeric_to_strvar (DATASET *dset, int targ,
 			      const double *src);
 
+int assign_strings_to_strvar (DATASET *dset, int targ, int src);
+
 double series_decode_string (const DATASET *dset, int i, const char *s);
 
 char **series_get_string_vals (const DATASET *dset, int i,

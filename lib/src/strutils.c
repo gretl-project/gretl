@@ -2051,11 +2051,12 @@ char **strings_array_new_with_length (int nstrs, int len)
  * @pS: existing array to reallocate.
  * @oldn: original number of strings in the array.
  * @newn: new number of strings in array.
- * @len: number of bytes per string.
+ * @len: number of bytes per string (or 0).
  *
  * Adjusts the storage in @pS to a size of @newn
- * strings, each of them @len bytes long.  The first
- * byte of any additional strings is initialized to 0.
+ * strings, each of them @len bytes long.  If @len
+ * is greater than zero the first byte of any
+ * additional strings is initialized to 0.
  * This function may be used either to expand or to
  * shrink an existing array of strings.
  *
@@ -2068,19 +2069,13 @@ char **strings_array_realloc_with_length (char ***pS,
 					  int len)
 {
     char **S;
-    int i, j;
+    int i;
 
     if (pS == NULL) {
-	/* huh? */
 	return NULL;
-    }
-
-    if (newn == oldn) {
-	/* no-op */
+    } else if (newn == oldn) {
 	return *pS;
-    }
-
-    if (newn <= 0) {
+    } else if (newn <= 0) {
 	strings_array_free(*pS, oldn);
 	*pS = NULL;
 	return NULL;
@@ -2102,17 +2097,26 @@ char **strings_array_realloc_with_length (char ***pS,
     *pS = S;
 
     /* in case we're expanding the array */
-    for (i=oldn; i<newn; i++) {
-	S[i] = malloc(len);
-	if (S[i] == NULL) {
-	    for (j=0; j<i; j++) {
-		free(S[j]);
-	    }
-	    free(*pS);
-	    *pS = NULL;
-	    return NULL;
+    if (len == 0) {
+	for (i=oldn; i<newn; i++) {
+	    S[i] = NULL;
 	}
-	S[i][0] = '\0';
+    } else {
+	int j;
+
+	for (i=oldn; i<newn; i++) {
+	    S[i] = malloc(len);
+	    if (S[i] == NULL) {
+		for (j=0; j<i; j++) {
+		    free(S[j]);
+		}
+		free(*pS);
+		*pS = NULL;
+		break;
+	    } else {
+		S[i][0] = '\0';
+	    }
+	}
     }
 
     return *pS;

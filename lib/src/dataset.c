@@ -5195,6 +5195,131 @@ int assign_numeric_to_strvar (DATASET *dset, int targ,
     return err;
 }
 
+/* Given a mapping produced by series_table_map(), determine
+   how many (if any) string values need to be added to the
+   table for the target series, and whether numeric codes
+   in the source series need to be re-mapped or can simply
+   be blitted over.
+*/
+
+static void analyse_st_map (int *map, int nsa,
+			    int *remap, int *n_add)
+{
+    int i;
+
+    for (i=1; i<=map[0]; i++) {
+	if (map[i] == -1) {
+	    /* string @i not present */
+	    *n_add += 1;
+	    *remap = 1;
+	} else if (*remap == 0 && i > 1 && map[i] != map[i-1] + 1) {
+	    /* the order of strings differs */
+	    *remap = 1;
+	}
+    }
+
+    if (*n_add > 0) {
+	/* fill in successive codes for strings to be added */
+	int pos = nsa + 1;
+
+	for (i=1; i<=map[0]; i++) {
+	    if (map[i] == -1) {
+		map[i] = pos++;
+	    }
+	}
+    }
+}
+
+/* Append to @sta the strings in @stb that are not already present */
+
+static int do_strv_adds (const int *map,
+			 int n_add, int nsa,
+			 series_table *sta,
+			 series_table *stb)
+{
+    char **S = series_table_get_strings(stb, NULL);
+    char **Tmp = malloc(n_add * sizeof *Tmp);
+    int i, j, err;
+
+    for (i=1, j=0; i<=map[0]; i++) {
+	if (map[i] > nsa) {
+	    Tmp[j++] = S[i-1];
+	}
+    }
+
+    err = series_table_add_strings(sta, (const char **) Tmp, n_add);
+    free(Tmp);
+
+    return err;
+}
+
+/* Handle assignment from one string-valued series to another,
+   in the case when the dataset is subsampled.
+*/
+
+static int assign_strings_to_strvar_sub (DATASET *dset,
+					 int targ, int src)
+{
+    series_table *sta, *stb;
+    int *map = NULL;
+    int use_map = 0;
+    int n_add = 0;
+    int nsa;
+    int err = 0;
+
+    sta = series_get_string_table(dset, targ);
+    stb = series_get_string_table(dset, src);
+    if (sta == NULL || stb == NULL) {
+	return E_TYPES;
+    }
+
+    map = series_table_map(stb, sta);
+    nsa = series_table_get_n_strings(sta);
+    analyse_st_map(map, nsa, &use_map, &n_add);
+
+    if (n_add > 0) {
+	/* add the extra strings to the end of @sta */
+	do_strv_adds(map, n_add, nsa, sta, stb);
+    }
+
+    if (use_map) {
+	/* numeric codes from @src need mapping */
+	double xt;
+	int t, it;
+
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    xt = dset->Z[src][t];
+	    if (na(xt)) {
+		dset->Z[targ][t] = xt;
+	    } else {
+		it = (int) xt;
+		dset->Z[targ][t] = map[it];
+	    }
+	}
+    } else {
+	/* no re-mapping of codes needed */
+	double *y = dset->Z[targ] + dset->t1;
+	const double *x = dset->Z[src] + dset->t1;
+	size_t sz = sample_size(dset) * sizeof *y;
+
+	memcpy(y, x, sz);
+    }
+
+    free(map);
+
+    return err;
+}
+
+int assign_strings_to_strvar (DATASET *dset, int targ, int src)
+{
+    if (dataset_is_subsampled(dset)) {
+	return assign_strings_to_strvar_sub(dset, targ, src);
+    } else {
+	/* ? do we want this */
+	return copy_string_valued_series(dset, targ, src);
+    }
+}
+
 int set_panel_groups_name (DATASET *dset, const char *vname)
 {
     if (dset->pangrps != NULL) {

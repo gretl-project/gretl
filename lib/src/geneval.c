@@ -20997,25 +20997,19 @@ enum {
 
 /* Determine if it seems OK to overwrite a string-valued series.
    This action was banned altogether up to gretl 2023b, but
-   we're now allowing it subject to certain conditions.
+   we're now allowing it subject to two conditions:
 
-   In general we insist that this be a case of simple (not
-   inflected) assignment, and that the RHS is a series.
+   * It must be a case of simple (not inflected) assignment
+   * The RHS must be a series
 
-   If the RHS is a string-valued series we further require
-   that the assignment must be to the full data range.
-   Otherwise we'd have to get into complex juggling with two
-   string tables, which is feasible in principle but not
-   implemented at this point.
-
-   If the RHS is not string-valued we'll treat that as OK
-   here: the suitability of the RHS values will be checked
-   later, when we call assign_numeric_to_strvar().
+   If the RHS series is not string-valued we'll treat that as
+   OK provisionally. The suitability of the RHS values will be
+   checked later, when we call assign_numeric_to_strvar():
+   they must be compatible with the encoding on the LHS.
 
    If the case is not rejected as unsuitable, we return either
-   OVW_STRINGS to indicate a full overwite from a string-
-   valued RHS, or OVW_NUMERIC to indicate an overwrite using
-   numerical values.
+   OVW_STRINGS to indicate a string-valued RHS or OVW_NUMERIC
+   to indicate an overwrite using plain numerical input.
 */
 
 static int strv_overwrite_ok (parser *p)
@@ -21035,7 +21029,7 @@ static int strv_overwrite_ok (parser *p)
 	/* and not identical to LHS */
 	ok = 0;
     } else if (is_string_valued(p->dset, rv)) {
-	if (dataset_is_subsampled(p->dset)) {
+	if (0 && dataset_is_subsampled(p->dset)) {
 	    /* we need access to the full data range */
 	    ok = 0;
 	} else {
@@ -21272,7 +21266,7 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == SERIES) {
         /* writing a series */
 	if (strv_ovwrite == OVW_STRINGS) {
-	    p->err = copy_string_valued_series(p->dset, v, r->vnum);
+	    p->err = assign_strings_to_strvar(p->dset, v, r->vnum);
 	} else if (strv_ovwrite == OVW_NUMERIC) {
 	    p->err = assign_numeric_to_strvar(p->dset, v, r->v.xvec);
 	} else if (r->t == SERIES) {

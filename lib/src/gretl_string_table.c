@@ -245,7 +245,7 @@ int *series_table_map (series_table *st_from, series_table *st_to)
 /**
  * series_table_get_strings:
  * @st: a gretl series table.
- * @n_strs: location to receive the number of strings.
+ * @n_strs: location to receive the number of strings, or NULL.
  *
  * Returns: the array of strings associated with @st. These
  * should not be modified in any way.
@@ -254,7 +254,9 @@ int *series_table_map (series_table *st_from, series_table *st_to)
 char **series_table_get_strings (series_table *st, int *n_strs)
 {
     if (st != NULL) {
-	*n_strs = st->n_strs;
+	if (n_strs != NULL) {
+	    *n_strs = st->n_strs;
+	}
 	return st->strs;
     } else {
 	return NULL;
@@ -321,6 +323,47 @@ int series_table_add_string (series_table *st, const char *s)
     }
 
     return n;
+}
+
+/**
+ * series_table_add_strings:
+ * @st: a gretl series table.
+ * @S: array of new strings to add.
+ * @ns: number of elements of @S.
+ *
+ * Appends the strings in @S to @st.
+
+ * Returns: 0 on successful completion, or error code on error.
+ */
+
+int series_table_add_strings (series_table *st,
+			      const char **S,
+			      int ns)
+{
+    int oldn, newn;
+    int i, j, err;
+
+    if (S == NULL || ns <= 0) {
+	return 0;
+    }
+
+    oldn = st->n_strs;
+    newn = oldn + ns;
+    st->strs = strings_array_realloc_with_length(&st->strs,
+						 oldn, newn,
+						 0);
+    if (st->strs == NULL) {
+	err = E_ALLOC;
+    } else {
+	st->n_strs = newn;
+	for (i=0, j=oldn; i<ns; i++, j++) {
+	    st->strs[j] = gretl_strdup(S[i]);
+	    g_hash_table_insert(st->ht, (gpointer) st->strs[j],
+				GINT_TO_POINTER(j+1));
+	}
+    }
+
+    return err;
 }
 
 series_table *series_table_new (char **strs, int n_strs, int *err)
