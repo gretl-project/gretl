@@ -20990,33 +20990,59 @@ static void series_from_matrix (double *y, const gretl_matrix *m,
     }
 }
 
+enum {
+    OVW_STRINGS = 1,
+    OVW_NUMERIC
+};
+
 /* Determine if it seems OK to overwrite a string-valued series.
    This action was banned altogether up to gretl 2023b, but
-   we're now allowing it subject to a number of conditions.
-   These conditions could in principle be somewhat relaxed,
-   but the object is still to avoid breaking string-valued
-   series and any relaxation would have to be well thought out.
+   we're now allowing it subject to certain conditions.
+
+   In general we insist that this be a case of simple (not
+   inflected) assignment, and that the RHS is a series.
+
+   If the RHS is a string-valued series we further require
+   that the assignment must be to the full data range.
+   Otherwise we'd have to get into complex juggling with two
+   string tables, which is feasible in principle but not
+   implemented at this point.
+
+   If the RHS is not string-valued we'll treat that as OK
+   here: the suitability of the RHS values will be checked
+   later, when we call assign_numeric_to_strvar().
+
+   If the case is not rejected as unsuitable, we return either
+   OVW_STRINGS to indicate a full overwite from a string-
+   valued RHS, or OVW_NUMERIC to indicate an overwrite using
+   numerical values.
 */
 
 static int strv_overwrite_ok (parser *p)
 {
+    int lv = p->lh.vnum;   /* LHS series ID */
+    int rv = p->ret->vnum; /* RHS series ID */
     int ok = 1;
+    int ret = 0;
 
     if (p->op != B_ASN) {
 	/* must be a case of straight assignment */
 	ok = 0;
-    } else if (dataset_is_subsampled(p->dset)) {
-	/* we must have access to the entire data range */
+    } else if (p->ret->t != SERIES) {
+	/* RHS must be a series */
 	ok = 0;
-    } else if (p->ret->t != SERIES || p->ret->vnum <= 0) {
-	/* the replacement must be a dataset series... */
+    } else if (lv == rv) {
+	/* and not identical to LHS */
 	ok = 0;
-    } else if (!is_string_valued(p->dset, p->ret->vnum)) {
-	/* ... which must be string-valued */
-	ok = 0;
-    } else if (p->lh.vnum == p->ret->vnum) {
-	/* and not identical to the LHS! */
-	ok = 0;
+    } else if (is_string_valued(p->dset, rv)) {
+	if (dataset_is_subsampled(p->dset)) {
+	    /* we need access to the full data range */
+	    ok = 0;
+	} else {
+	    ret = OVW_STRINGS;
+	}
+    } else {
+	ret = OVW_NUMERIC;
     }
 
     if (!ok) {
@@ -21024,7 +21050,7 @@ static int strv_overwrite_ok (parser *p)
 	p->err = E_TYPES;
     }
 
-    return ok;
+    return ret;
 }
 
 static inline int savegen_retval (int err)
@@ -21245,8 +21271,10 @@ static int save_generated_var (parser *p, PRN *prn)
         }
     } else if (p->targ == SERIES) {
         /* writing a series */
-	if (strv_ovwrite) {
+	if (strv_ovwrite == OVW_STRINGS) {
 	    p->err = copy_string_valued_series(p->dset, v, r->vnum);
+	} else if (strv_ovwrite == OVW_NUMERIC) {
+	    p->err = assign_numeric_to_strvar(p->dset, v, r->v.xvec);
 	} else if (r->t == SERIES) {
             const double *x = r->v.xvec;
 

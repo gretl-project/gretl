@@ -5137,6 +5137,64 @@ int copy_string_valued_series (DATASET *dset, int targ, int src)
     return 0;
 }
 
+/**
+ * assign_numeric_to_strvar:
+ * @dset: dataset.
+ * @targ: index number of target string-valued series.
+ * @src: array of numeric replacement values, of length
+ * equal to the length of @dset.
+ *
+ * Checks that each element in @src in the current sample
+ * range is acceptable as a replacement value for @targ,
+ * and if so, overwrites the relevant portion of @targ.
+ * Acceptable values are integers between 1 and the number
+ * of strings associated with @targ, or NA.
+ *
+ * Returns: 0 on successful completion, or error code
+ * on error.
+ */
+
+int assign_numeric_to_strvar (DATASET *dset, int targ,
+			      const double *src)
+{
+    series_table *st;
+    double xt;
+    int t, maxval;
+    int err = 0;
+
+    st = series_get_string_table(dset, targ);
+    if (st == NULL) {
+	return E_TYPES;
+    }
+
+    maxval = series_table_get_n_strings(st);
+
+    for (t=dset->t1; t<=dset->t2 && !err; t++) {
+	xt = src[t];
+	if (na(xt)) {
+	    continue;
+	} else if (xt != floor(xt)) {
+	    /* not an integer */
+	    gretl_errmsg_set("Replacement values are not all integers");
+	    err = E_TYPES;
+	} else if (xt < 1 || xt > maxval) {
+	    /* out of bounds */
+	    gretl_errmsg_sprintf("Replacement value %g is out of bounds", xt);
+	    err = E_DATA;
+	}
+    }
+
+    if (!err) {
+	double *y = dset->Z[targ] + dset->t1;
+	const double *x = src + dset->t1;
+	size_t sz = sample_size(dset) * sizeof *y;
+
+	memcpy(y, x, sz);
+    }
+
+    return err;
+}
+
 int set_panel_groups_name (DATASET *dset, const char *vname)
 {
     if (dset->pangrps != NULL) {
