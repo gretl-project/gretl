@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: gretl 2020a\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-04-24 12:53+0200\n"
-"PO-Revision-Date: 2023-07-15 01:16+0800\n"
+"PO-Revision-Date: 2023-07-27 00:23+0800\n"
 "Last-Translator: Yi-Nung Yang <yinung.yang@gmail.com>\n"
 "Language-Team: Chinese\n"
 "Language: zh_TW\n"
@@ -10425,9 +10425,8 @@ msgid "gretl: VAR lag selection"
 msgstr "gretl: VAR 落後期選擇"
 
 #: gui/callbacks.c:483 gui/library.c:4090
-#, fuzzy
 msgid "gretl: ARIMA lag selection"
-msgstr "gretl: VAR 落後期選擇"
+msgstr "gretl: ARIMA 落後期選擇"
 
 #: gui/callbacks.c:512 gui/callbacks.c:526 gui/callbacks.c:529
 #: gui/callbacks.c:531 gui/callbacks.c:533 gui/callbacks.c:678
