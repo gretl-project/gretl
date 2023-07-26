@@ -21077,8 +21077,7 @@ static int strv_overwrite_ok (parser *p)
 static inline int savegen_retval (int err)
 {
 #if EDEBUG
-    fprintf(stderr, "save_generated_var: returning %d\n",
-            err);
+    fprintf(stderr, "save_generated_var: returning %d\n", err);
 #endif
     return err;
 }
