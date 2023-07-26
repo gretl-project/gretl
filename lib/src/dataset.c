@@ -4467,6 +4467,23 @@ int series_set_string_val (DATASET *dset, int i, int t, const char *s)
     return err;
 }
 
+static int strvar_check_numeric (double x, int maxval)
+{
+    if (na(x)) {
+	return 0; /* OK */
+    } else if (x != floor(x)) {
+	/* not an integer */
+	gretl_errmsg_sprintf("Replacement value %g is not an integer", x);
+	return E_TYPES;
+    } else if (x < 1 || x > maxval) {
+	/* out of bounds */
+	gretl_errmsg_sprintf("Replacement value %g is out of bounds", x);
+	return E_DATA;
+    }
+
+    return 0;
+}
+
 /**
  * string_series_assign_value:
  * @dset: pointer to dataset.
@@ -4484,21 +4501,19 @@ int series_set_string_val (DATASET *dset, int i, int t, const char *s)
 int string_series_assign_value (DATASET *dset, int i,
 				int t, double x)
 {
-    series_table *st = NULL;
+    series_table *st;
+    int maxval;
     int err = 0;
 
-    if (i <= 0 || i >= dset->v) {
-	err = E_DATA;
-    } else if (na(x)) {
-	dset->Z[i][t] = x;
-    } else if (x != floor(x)) {
+    st = series_get_string_table(dset, i);
+    if (st == NULL) {
 	err = E_TYPES;
-    } else if ((st = dset->varinfo[i]->st) == NULL) {
-	err = E_TYPES;
-    } else if (series_table_get_string(st, x) == NULL) {
-	err = E_DATA;
     } else {
-	dset->Z[i][t] = x;
+	maxval = series_table_get_n_strings(st);
+	err = strvar_check_numeric(x, maxval);
+	if (!err) {
+	    dset->Z[i][t] = x;
+	}
     }
 
     return err;
@@ -5158,7 +5173,6 @@ int assign_numeric_to_strvar (DATASET *dset, int targ,
 			      const double *src)
 {
     series_table *st;
-    double xt;
     int t, maxval;
     int err = 0;
 
@@ -5170,18 +5184,7 @@ int assign_numeric_to_strvar (DATASET *dset, int targ,
     maxval = series_table_get_n_strings(st);
 
     for (t=dset->t1; t<=dset->t2 && !err; t++) {
-	xt = src[t];
-	if (na(xt)) {
-	    continue;
-	} else if (xt != floor(xt)) {
-	    /* not an integer */
-	    gretl_errmsg_set("Replacement values are not all integers");
-	    err = E_TYPES;
-	} else if (xt < 1 || xt > maxval) {
-	    /* out of bounds */
-	    gretl_errmsg_sprintf("Replacement value %g is out of bounds", xt);
-	    err = E_DATA;
-	}
+	err = strvar_check_numeric(src[t], maxval);
     }
 
     if (!err) {
@@ -5315,7 +5318,6 @@ int assign_strings_to_strvar (DATASET *dset, int targ, int src)
     if (dataset_is_subsampled(dset)) {
 	return assign_strings_to_strvar_sub(dset, targ, src);
     } else {
-	/* ? do we want this */
 	return copy_string_valued_series(dset, targ, src);
     }
 }
