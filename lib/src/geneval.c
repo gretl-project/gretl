@@ -5462,9 +5462,11 @@ static NODE *real_list_series_node (int *list, int i, parser *p)
     return ret;
 }
 
-/* coming from a context where we have @list and @i */
+/* coming from a context where we have @list and position
+   in list, @i
+*/
 
-static NODE *list_member_node (int *list, int i, parser *p)
+static NODE *list_member_by_pos (int *list, int i, parser *p)
 {
     NODE *ret = NULL;
 
@@ -5675,7 +5677,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 
             if (!p->err && vlist[0] == 1 && l->t == LIST) {
                 /* singleton list selection */
-                ret = list_member_node(l->v.ivec, vlist[1], p);
+                ret = list_member_by_pos(l->v.ivec, vlist[1], p);
             } else if (!p->err && gretl_list_is_consecutive(vlist)) {
                 /* selected elements are consecutive */
                 int r1 = vlist[1];
@@ -10962,6 +10964,33 @@ static NODE *eval_Rfunc (NODE *t, NODE *r, parser *p)
 }
 
 #endif /* USE_RLIB or not */
+
+static NODE *list_member_by_name (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+    int *list = l->v.ivec;
+    int i, v;
+
+#if EDEBUG
+    fprintf(stderr, "list_member_by_name: %s.%s\n",
+	    l->vname, r->v.str);
+#endif
+
+    for (i=1; i<=list[0]; i++) {
+	v = list[i];
+	if (!strcmp(r->v.str, p->dset->varname[v])) {
+	    /* found the series */
+	    ret = real_list_series_node(list, v, p);
+	    break;
+	}
+    }
+
+    if (ret == NULL) {
+	p->err = E_UNKVAR;
+    }
+
+    return ret;
+}
 
 /* Extracting series data @x of length @n from a bundle: whether
    we can get it as a series depends on the current state of the
@@ -17803,6 +17832,9 @@ static NODE *eval (NODE *t, parser *p)
         /* unevaluated object slice spec */
         ret = mspec_node(l, r, p);
         break;
+    case LISTVAR:
+	ret = list_member_by_name(l, r, p);
+	break;
     case BMEMB:
     case F_INBUNDLE:
         /* name of bundle plus string */
@@ -18937,7 +18969,7 @@ static NODE *eval (NODE *t, parser *p)
     if (t->t == SERIES) {
         fprintf(stderr, " (SERIES node, xvec at %p, vnum = %d)\n",
                 (void *) t->v.xvec, t->vnum);
-    } else if (ret->t == NUM) {
+    } else if (ret != NULL && ret->t == NUM) {
         fprintf(stderr, " (NUM node, return value %g)\n", ret->v.xval);
     }
 #endif
