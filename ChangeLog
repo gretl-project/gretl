@@ -1,7 +1,10 @@
 version 2023c, in progress
-- Support returning a string-valued series from a user function
-- Support assignment to string-valued series, from another such
-  series or a numeric series
+- String-valued series: support returning such series from a
+  user function, and loosen the restriction on assignment to
+  such series
+- Fix bug dating from 2022c: broken handling of the syntax
+  listname.series when used in a function that is called from
+  within a loop.
 
 2023-07-21 version 2023b
 - New command "kdplot": simple access to a kernel density plot
