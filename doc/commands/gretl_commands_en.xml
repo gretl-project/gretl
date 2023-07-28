@@ -2696,13 +2696,15 @@
       </para>
       <para>
 	<lit>compact</lit>: Must be followed by a positive integer
-	representing a new data frequency, which should be lower than
-	the current frequency (for example, a value of 4 when the
-	current frequency is 12 indicates compaction from monthly to
-	quarterly).  This command is available for time series data
-	only; it compacts all the series in the data set to the new
-	frequency.  A second parameter may be given, namely one of
-	<lit>sum</lit>, <lit>first</lit>, <lit>last</lit> or
+	representing a new data frequency. In general this should be
+	lower than the current frequency (for example, a value of 4
+	when the current frequency is 12 indicates compaction from
+	monthly to quarterly). The one valid exception is a new
+	frequency of 52 (weekly) when the current data are daily
+	(frequency 5, 6 or 7).  This command is available for time
+	series data only; it compacts all the series in the data set
+	to the new frequency.  A second parameter may be given, namely
+	one of <lit>sum</lit>, <lit>first</lit>, <lit>last</lit> or
 	<lit>spread</lit>, to specify, respectively, compaction using
 	the sum of the higher-frequency values, start-of-period
 	values, end-of-period values, or spreading of the
@@ -2717,7 +2719,8 @@
 	repeating the existing values. If the original dataset is
 	annual the default expansion is to quarterly but
 	<lit>expand</lit> can be followed by <lit>12</lit> to request
-	monthly.
+	monthly. See the <fncref targ="tdisagg"/> function for more
+	sophisticated means of converting data to higher frequency.
       </para>
       <para>
 	<lit>transpose</lit>: No additional parameter required.
