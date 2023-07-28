@@ -3960,7 +3960,7 @@ daily_series_to_monthly (DATASET *dset, int i,
     */
 
     /* The "one day's slack" business below, with start-of-period and
-       end-of-period compaction is designed to allow for the
+       end-of-period compaction, is designed to allow for the
        possibility that the first (or last) day of the month may not
        have been a trading day.
     */
@@ -4105,11 +4105,27 @@ get_startskip_etc (int compfac, int startmin, int endmin,
     *newn = n;
 }
 
+/* Note: min_startskip is the minimum, across the series to
+   be compacted in case we're doing multiple series, of the
+   initial number of observations that cannot be used in the
+   compacted series. The per-series startskip will depend on
+   the compaction method (which may differ across series).
+
+   For example, consider quarterly to annual compaction where
+   the quarterly data start in a third quarter. When doing
+   COMPACT_AVG or COMPACT_SUM the initial quarters III and IV
+   would be unusable (startskip 2), but with COMPACT_EOP only
+   the initial quarter III would be unusable (startskip 1).
+
+   The minimum startskip in effect tells us where the result
+   dataset will start in relation to the source dataset.
+*/
+
 typedef struct compact_params_ {
-    int min_startskip;  /* ?? */
+    int min_startskip;  /* see Note above */
     int newn;           /* number of observations in compacted dataset */
-    int any_eop;        /* boolean: 1 iff any series want COMPACT_EOP */
-    int any_sop;        /* boolean: 1 iff any series want COMPACT_SOP */
+    int any_eop;        /* boolean: 1 iff any series wants COMPACT_EOP */
+    int any_sop;        /* boolean: 1 iff any series wants COMPACT_SOP */
     int all_same;       /* boolean: 1 iff all series want the same method */
 } compact_params;
 
@@ -4122,7 +4138,7 @@ static void compact_params_init (compact_params *cp, int oldpd)
     cp->all_same = 1;
 }
 
-/* specific to compaction of daily time series */
+/* used only when compacting daily data to monthly */
 
 static void
 get_daily_compact_params (CompactMethod default_method,
@@ -4161,7 +4177,7 @@ get_daily_compact_params (CompactMethod default_method,
     }
 }
 
-/* specific to non-daily time series (monthly or quarterly) */
+/* used in cases other than daily to monthly */
 
 static void
 get_global_compact_params (int compfac, int startmin, int endmin,
@@ -4215,8 +4231,8 @@ static int get_obs_maj_min (const char *obs, int *maj, int *min)
     return (np == 2);
 }
 
-/* for daily data, figure the number of observations to
-   be skipped at the start of each series
+/* for daily to monthly compaction, figure the number of
+   observations to be skipped at the start of each series
 */
 
 static int get_daily_offset (const DATASET *dset,
@@ -4243,8 +4259,8 @@ static int get_daily_offset (const DATASET *dset,
     return ret;
 }
 
-/* for daily data, figure the number of valid monthly
-   observations that can be constructed by compaction
+/* for daily to monthly compaction, figure the number of
+   monthly observations that can be constructed
 */
 
 static int get_n_ok_months (const DATASET *dset,
@@ -4520,11 +4536,14 @@ static int shorten_the_constant (double **Z, int n)
     }
 }
 
-/* conversion to weekly using a "representative day", e.g. use
-   each Wednesday value: @repday is 0-based on Sunday.
+/* compaction of daily to weekly data in the special case of
+   COMPACT_WDAY -- that is, via use of a "representative day",
+   for example the weekly value is Wednesday's value. Note
+   that @repday is 0-based on Sunday.
 */
 
-static int daily_dataset_to_weekly (DATASET *dset, int repday)
+static int daily_dataset_to_weekly_special (DATASET *dset,
+					    int repday)
 {
     int y1, m1, d1;
     char obs[OBSLEN];
@@ -4798,7 +4817,7 @@ static int do_compact_spread (DATASET *dset, int newpd)
 #define is_daily(p) (p==5 || p==6 || p==7)
 
 /**
- * compact_data_set:
+ * compact_dataset:
  * @dset: dataset struct.
  * @newpd: target data frequency.
  * @default_method: code for the default compaction method.
@@ -4813,9 +4832,9 @@ static int do_compact_spread (DATASET *dset, int newpd)
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int compact_data_set (DATASET *dset, int newpd,
-		      CompactMethod default_method,
-		      int monstart, int repday)
+int compact_dataset (DATASET *dset, int newpd,
+		     CompactMethod default_method,
+		     int monstart, int repday)
 {
     compact_params cp;
     int oldn = dset->n;
@@ -4856,12 +4875,12 @@ int compact_data_set (DATASET *dset, int newpd,
 
     if (newpd == 52 && is_daily(oldpd) && default_method == COMPACT_WDAY) {
 	/* daily to weekly, using "representative day" */
-	return daily_dataset_to_weekly(dset, repday);
+	return daily_dataset_to_weekly_special(dset, repday);
     } else if (newpd == 12 && is_daily(oldpd)) {
 	/* daily to monthly: special */
 	return daily_dataset_to_monthly(dset, default_method);
     } else if (is_daily(oldpd)) {
-	/* daily to weekly */
+	/* daily to weekly, not COMPACT_WDAY */
 	compfac = oldpd;
 	if (from_dated_daily) {
 	    startmin = weekday_from_date(dset->stobs);
@@ -4981,7 +5000,7 @@ int compact_data_set (DATASET *dset, int newpd,
 }
 
 /**
- * expand_data_set:
+ * expand_dataset:
  * @dset: dataset struct.
  * @newpd: target data frequency.
  *
@@ -4992,7 +5011,7 @@ int compact_data_set (DATASET *dset, int newpd,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int expand_data_set (DATASET *dset, int newpd)
+int expand_dataset (DATASET *dset, int newpd)
 {
     char stobs[OBSLEN];
     int oldn = dset->n;
