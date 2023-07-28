@@ -160,7 +160,7 @@ static char *compact_method_to_string (int method)
     else if (method == COMPACT_AVG) return "COMPACT_AVG";
     else if (method == COMPACT_SOP) return "COMPACT_SOP";
     else if (method == COMPACT_EOP) return "COMPACT_EOP";
-    else return "COMPACT_NONE";
+    else return "COMPACT_UNSET";
 }
 
 static int compact_string_to_int (const char *str)
@@ -169,7 +169,7 @@ static int compact_string_to_int (const char *str)
     else if (!strcmp(str, "COMPACT_AVG")) return COMPACT_AVG;
     else if (!strcmp(str, "COMPACT_SOP")) return COMPACT_SOP;
     else if (!strcmp(str, "COMPACT_EOP")) return COMPACT_EOP;
-    else return COMPACT_NONE;
+    else return COMPACT_UNSET;
 }
 
 /* given a full filename in @src, write to @dest a "simple"
@@ -2323,7 +2323,7 @@ static int gdt_write_series_info (const DATASET *dset,
 	    pprintf(prn, "\n lag=\"%d\"", vprop);
 	}
 	vprop = series_get_compact_method(dset, v);
-	if (vprop != COMPACT_NONE) {
+	if (vprop != COMPACT_UNSET) {
 	    const char *meth = compact_method_to_string(vprop);
 
 	    pprintf(prn, "\n compact-method=\"%s\"", meth);

@@ -3719,7 +3719,7 @@ static void abort_compact (GtkWidget *w, gpointer data)
 {
     gint *method = (gint *) data;
 
-    *method = COMPACT_NONE;
+    *method = COMPACT_UNSET;
 }
 
 static void set_compact_type (GtkWidget *w, gpointer data)
@@ -3876,7 +3876,7 @@ enum {
 
 static int method_selected (int code, CompactMethod method)
 {
-    if (code == COMPACT_AVG && method == COMPACT_NONE) {
+    if (code == COMPACT_AVG && method == COMPACT_UNSET) {
         return 1;
     } else {
         return code == method;
@@ -3994,7 +3994,7 @@ static int compact_methods_set (CompactMethod *method)
 
     if (dataset->v == 2) {
         m = series_get_compact_method(dataset, 1);
-        if (m != COMPACT_NONE) {
+        if (m != COMPACT_UNSET) {
             *method = m;
         }
         return SINGLE_SERIES;
@@ -4002,7 +4002,7 @@ static int compact_methods_set (CompactMethod *method)
 
     for (i=1; i<dataset->v; i++) {
         m = series_get_compact_method(dataset, i);
-        if (m != COMPACT_NONE) {
+        if (m != COMPACT_UNSET) {
             nset++;
         }
         if (all_same && mbak >= 0 && m != mbak) {

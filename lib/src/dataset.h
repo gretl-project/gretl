@@ -65,7 +65,7 @@ typedef enum {
 
 /**
  * CompactMethod:
- * @COMPACT_NONE:    no data compaction
+ * @COMPACT_UNSET:   no data compaction method is set
  * @COMPACT_SUM:     take sum of higher frequency data
  * @COMPACT_AVG:     take mean of higher frequency data
  * @COMPACT_SOP:     use start-of-period value
@@ -81,7 +81,7 @@ typedef enum {
  */
 
 typedef enum {
-    COMPACT_NONE,
+    COMPACT_UNSET,
     COMPACT_SUM,
     COMPACT_AVG,
     COMPACT_SOP,

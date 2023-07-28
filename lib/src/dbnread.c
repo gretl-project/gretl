@@ -136,7 +136,7 @@ static int get_one_dbnomics_series (const char *datacode,
 
     if (strchr(datacode, '/') == NULL) {
 	err = E_INVARG;
-    } else if (dset->v > 0 && cmethod != COMPACT_NONE) {
+    } else if (dset->v > 0 && cmethod != COMPACT_UNSET) {
 	aggr = dbn_get_aggr(cmethod, &seqval, &err);
     }
     if (!err) {

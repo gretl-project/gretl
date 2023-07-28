@@ -547,7 +547,7 @@ static void maybe_retrieve_compact_method (int v, CompactMethod *pm)
 {
     int m = series_get_compact_method(dataset, v);
 
-    if (m != COMPACT_NONE) {
+    if (m != COMPACT_UNSET) {
 	*pm = m;
     }
 }
@@ -607,7 +607,7 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 	/* the incoming series needs to be compacted */
 	data_compact_dialog(dbset->pd, &dataset->pd, NULL,
 			    &cmethod, NULL, vwin->main);
-	if (cmethod == COMPACT_NONE) {
+	if (cmethod == COMPACT_UNSET) {
 	    return 0; /* canceled */
 	} else if (cmethod == COMPACT_SPREAD) {
 	    return handle_compact_spread(NULL, NULL, dataset, dbset);
@@ -716,7 +716,7 @@ add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
 	    if (!chosen) {
 		data_compact_dialog(sinfo->pd, &dataset->pd, NULL,
 				    &cmethod, NULL, vwin->main);
-		if (cmethod == COMPACT_NONE) {
+		if (cmethod == COMPACT_UNSET) {
 		    /* canceled */
 		    return 0;
 		}
@@ -4452,7 +4452,7 @@ static void set_compact_info_from_default (int method)
     int i;
 
     for (i=1; i<dataset->v; i++) {
-	if (series_get_compact_method(dataset, i) == COMPACT_NONE) {
+	if (series_get_compact_method(dataset, i) == COMPACT_UNSET) {
 	    series_set_compact_method(dataset, i, method);
 	}
     }
@@ -4476,7 +4476,7 @@ void do_compact_data_set (void)
     data_compact_dialog(dataset->pd, &newpd, pmonstart,
 			&method, &repday, mdata->main);
 
-    if (method == COMPACT_NONE) {
+    if (method == COMPACT_UNSET) {
 	/* the user cancelled */
 	fprintf(stderr, "canceled!\n");
 	return;
