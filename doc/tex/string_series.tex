@@ -109,7 +109,7 @@ The numeric codes for string-valued series are always assigned thus:
 reading the data file row by row, the first string value is assigned
 1, the next \textit{distinct} string value is assigned 2, and so on.
 
-\subsection{Assigning string values to an existing series}
+\subsection{Assigning string values to a numeric series}
 \label{sec:stringify}
 
 This is done via the \cmd{stringify()} function, which takes two
@@ -261,20 +261,26 @@ value ``\texttt{A}'' and \texttt{sv2} has value ``\texttt{X}'', then
 attached to the resulting series will include all such string
 combinations even if they are not all represented in the given sample.
 
-\subsection{Assignment to an entire series}
+\subsection{Assignment to a string-valued series}
 
-Other than the ``assignment from array of strings'' and ``logical
-product'' cases described above, this is disallowed at present: you
-can't execute an assignment with the name of a string-valued series
-\textit{per se} on the left-hand side. Put differently, you cannot
-overwrite an entire string-valued series at once. While this is
-debatable, it's the easiest way of ensuring that we never end up with
-a broken mapping. It's possible this restriction may be relaxed in
-future.
+In an assignment statement where the left-hand side (LHS) term is an
+existing string-valued series two general conditions must be
+met. First, the right-hand side (RHS) term must be a series (either
+numeric or string-valued) and second, the assignment operator must be
+plain ``\texttt{=}''; inflected operators such as \texttt{+=} and
+\texttt{*=} are not supported.
 
-Besides assigning an out-of-bounds numerical value to a particular
-observation, this sort of assignment is in fact the only operation
-that is banned for string-valued series.
+When the RHS series is numeric, all its values must be either integers
+between 1 and the number of strings attached to the LHS series, or
+\texttt{NA}. This is required to preserve the integrity of the LHS.
+When the RHS series is itself string-valued there are two cases to
+consider: there's no sample restriction in place, or there is such a
+restriction. In the unrestricted case the LHS series is in effect
+destroyed and replaced by a clone of the RHS. Otherwise string values
+on the RHS are written into the LHS only within the current sample
+range. If an RHS string is already present on the left its numerical
+code is adjusted if necessary to match the LHS string table; if it is
+not present on the left it is appended to the LHS string table.
 
 \subsection{Missing values}
 
