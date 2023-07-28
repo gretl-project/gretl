@@ -3759,7 +3759,9 @@ static void set_target_pd (GtkWidget *w, gpointer data)
     }
 }
 
-static void set_mon_start (GtkWidget *w, gpointer data)
+/* Set whether the week starts on Monday or Sunday */
+
+static void set_week_start (GtkWidget *w, gpointer data)
 {
     gint *ms = (gint *) data;
 
@@ -3817,8 +3819,8 @@ static void pd_buttons (GtkWidget *dlg, int spd, struct compaction_info *cinfo)
     }
 }
 
-static void monday_buttons (GtkWidget *dlg, int *mon_start,
-                            struct compaction_info *cinfo)
+static void week_start_buttons (GtkWidget *dlg, int *week_start,
+				struct compaction_info *cinfo)
 {
     GtkWidget *button;
     GtkWidget *vbox;
@@ -3832,7 +3834,7 @@ static void monday_buttons (GtkWidget *dlg, int *mon_start,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
 
     g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(set_mon_start), mon_start);
+                     G_CALLBACK(set_week_start), week_start);
     g_object_set_data(G_OBJECT(button), "action",
                       GINT_TO_POINTER(1));
 
@@ -3842,7 +3844,7 @@ static void monday_buttons (GtkWidget *dlg, int *mon_start,
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
 
     g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(set_mon_start), mon_start);
+                     G_CALLBACK(set_week_start), week_start);
     g_object_set_data(G_OBJECT(button), "action",
                       GINT_TO_POINTER(0));
 }
@@ -3857,11 +3859,17 @@ static const char *weekdays[] = {
     N_("Saturday")
 };
 
-gboolean select_repday (GtkComboBox *menu, int *repday)
+static gboolean select_repday (GtkComboBox *menu, int *repday)
 {
     int i = gtk_combo_box_get_active(menu);
 
-    *repday = (dataset->pd == 7)? i : i + 1;
+    if (dataset->pd == 7) {
+	/* all days shown */
+	*repday = i;
+    } else {
+	/* Sunday not shown: i = 0 means Monday (1), etc. */
+	*repday = i + 1;
+    }
 
     return FALSE;
 }
@@ -3950,6 +3958,7 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
     }
 
     if (dated_daily_data(dataset) && cinfo->repday != NULL) {
+	int repval = *cinfo->repday - (dataset->pd != 7);
         GtkWidget *hbox, *daymenu;
 
         hbox = gtk_hbox_new(FALSE, 5);
@@ -3970,7 +3979,7 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
             }
             combo_box_append_text(daymenu, _(weekdays[i]));
         }
-        gtk_combo_box_set_active(GTK_COMBO_BOX(daymenu), 0);
+        gtk_combo_box_set_active(GTK_COMBO_BOX(daymenu), repval);
         gtk_box_pack_start(GTK_BOX(hbox), daymenu, FALSE, FALSE, 5);
         g_signal_connect(G_OBJECT(daymenu), "changed",
                          G_CALLBACK(select_repday), cinfo->repday);
@@ -4025,13 +4034,13 @@ static int compact_methods_set (CompactMethod *method)
     return ret;
 }
 
-void data_compact_dialog (int spd, int *target_pd, int *mon_start,
+void data_compact_dialog (int spd, int *target_pd, int *week_start,
                           CompactMethod *method, int *repday,
                           GtkWidget *parent)
 {
     GtkWidget *dlg, *tmp, *vbox, *hbox;
     int show_pd_buttons = 0;
-    int show_monday_buttons = 0;
+    int show_week_start_option = 0;
     int show_method_buttons = 0;
     int methods_set = NO_METHODS_SET;
     struct compaction_info cinfo;
@@ -4041,13 +4050,13 @@ void data_compact_dialog (int spd, int *target_pd, int *mon_start,
                            GRETL_DLG_BLOCK);
 
     cinfo.target_pd = target_pd;
-    cinfo.repday = repday;
+    cinfo.repday = repday; /* pointer to int, or NULL */
     cinfo.monday_button = NULL;
     cinfo.sunday_button = NULL;
     cinfo.wkday_opt = NULL;
 
-    if (mon_start != NULL) {
-        *mon_start = 1;
+    if (week_start != NULL) {
+        *week_start = 1;
     }
 
     if (*target_pd != 0) {
@@ -4074,8 +4083,8 @@ void data_compact_dialog (int spd, int *target_pd, int *mon_start,
                 labelstr = g_strdup(_("Compact daily data to weekly"));
             }
             *target_pd = 52;
-            if (mon_start != NULL) {
-                show_monday_buttons = 1;
+            if (week_start != NULL) {
+                show_week_start_option = 1;
             }
         } else if (dated_weekly_data(dataset)) {
             labelstr = g_strdup(_("Compact weekly data to monthly"));
@@ -4102,14 +4111,14 @@ void data_compact_dialog (int spd, int *target_pd, int *mon_start,
     */
     if (show_pd_buttons) {
         pd_buttons(dlg, spd, &cinfo);
-        if (show_monday_buttons || show_method_buttons) {
+        if (show_week_start_option || show_method_buttons) {
             vbox_add_hsep(vbox);
         }
     }
 
     /* 7-day daily data: give choice of when the week starts */
-    if (show_monday_buttons) {
-        monday_buttons(dlg, mon_start, &cinfo);
+    if (show_week_start_option) {
+        week_start_buttons(dlg, week_start, &cinfo);
         if (show_method_buttons) {
             vbox_add_hsep(vbox);
         }

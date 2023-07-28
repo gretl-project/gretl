@@ -3211,18 +3211,12 @@ int dataset_op_from_string (const char *s)
 	op = DS_EXPAND;
     } else if (!strcmp(s, "transpose")) {
 	op = DS_TRANSPOSE;
-    } else if (!strcmp(s, "delete")) {
-	op = DS_DELETE;
-    } else if (!strcmp(s, "keep")) {
-	op = DS_KEEP;
     } else if (!strcmp(s, "sortby")) {
 	op = DS_SORTBY;
     } else if (!strcmp(s, "dsortby")) {
 	op = DS_DSORTBY;
     } else if (!strcmp(s, "resample")) {
 	op = DS_RESAMPLE;
-    } else if (!strcmp(s, "restore")) {
-	op = DS_RESTORE;
     } else if (!strcmp(s, "clear")) {
 	op = DS_CLEAR;
     } else if (!strcmp(s, "renumber")) {
@@ -3307,14 +3301,36 @@ static int dataset_int_param (const char **ps, int op,
     return k;
 }
 
+static int compact_strvals_check (DATASET *dset)
+{
+    int i, nsv = 0;
+
+    for (i=1; i<dset->v; i++) {
+	if (is_string_valued(dset, i)) {
+	    nsv++;
+	}
+    }
+
+    if (nsv > 0) {
+	gretl_errmsg_sprintf(_("The dataset contains %d string-valued series. Such series cannot "
+			       "be compacted\nother than via the 'first' or 'last' method."), nsv);
+	return E_DATA;
+    } else {
+	return 0;
+    }
+}
+
 /* run some checks before handing off to compact_dataset()
    int dbread.c
 */
 
 static int compact_dataset_wrapper (const char *s, DATASET *dset,
-				    int k)
+				    int k, gretlopt opt)
 {
     CompactMethod method = COMPACT_AVG;
+    int wkstart = -1;
+    int repday = -1;
+    int err = 0;
 
     if (s != NULL) {
 	s += strspn(s, " ");
@@ -3333,22 +3349,31 @@ static int compact_dataset_wrapper (const char *s, DATASET *dset,
 	}
     }
 
-    if (method != COMPACT_SOP && method != COMPACT_EOP) {
-	int i, nsv = 0;
-
-	for (i=1; i<dset->v; i++) {
-	    if (is_string_valued(dset, i)) {
-		nsv++;
-	    }
+    if (dated_daily_data(dset) && k == 52) {
+	/* dated daily to weekly */
+	wkstart = 1;
+	if (dset->pd == 7 && (opt & OPT_W)) {
+	    wkstart = get_optval_int(DATAMOD, OPT_W, &err);
 	}
-	if (nsv > 0) {
-	    gretl_errmsg_sprintf(_("The dataset contains %d string-valued series. Such series cannot "
-				 "be compacted\nother than via the 'first' or 'last' method."), nsv);
-	    return E_DATA;
+	if (!err && (opt & OPT_R)) {
+	    repday = get_optval_int(DATAMOD, OPT_R, &err);
+	    if (!err) {
+		method = COMPACT_WDAY;
+	    }
 	}
     }
 
-    return compact_dataset(dset, k, method, 0, 0);
+    if (!err && method != COMPACT_SOP &&
+	method != COMPACT_EOP &&
+	method != COMPACT_WDAY) {
+	err = compact_strvals_check(dset);
+    }
+
+    if (!err) {
+	err = compact_dataset(dset, k, method, wkstart, repday);
+    }
+
+    return err;
 }
 
 static unsigned int resample_seed;
@@ -3580,8 +3605,7 @@ int modify_dataset (DATASET *dset, int op, const int *list,
 	}
     }
 
-    if (gretl_looping() && op != DS_RESAMPLE &&
-	op != DS_RESTORE && op != DS_SORTBY) {
+    if (gretl_looping() && op != DS_RESAMPLE && op != DS_SORTBY) {
 	pputs(prn, _("Sorry, this command is not available in loop mode\n"));
 	return 1;
     }
@@ -3596,7 +3620,7 @@ int modify_dataset (DATASET *dset, int op, const int *list,
 	}
     }
 
-    if (op != DS_RESTORE && complex_subsampled()) {
+    if (complex_subsampled()) {
 	gretl_errmsg_set(_("The data set is currently sub-sampled"));
 	return 1;
     }
@@ -3634,7 +3658,7 @@ int modify_dataset (DATASET *dset, int op, const int *list,
     } else if (op == DS_INSOBS) {
 	err = insert_obs(k, dset, prn);
     } else if (op == DS_COMPACT) {
-	err = compact_dataset_wrapper(param, dset, k);
+	err = compact_dataset_wrapper(param, dset, k, opt);
     } else if (op == DS_EXPAND) {
 	err = expand_dataset(dset, k);
     } else if (op == DS_PAD_DAILY) {
@@ -3652,18 +3676,6 @@ int modify_dataset (DATASET *dset, int op, const int *list,
 	if (!err) {
 	    resampled = 1;
 	}
-    } else if (op == DS_RESTORE) {
-	if (resampled) {
-	    err = restore_full_sample(dset, NULL);
-	    resampled = 0;
-	} else {
-	    pprintf(prn, _("dataset restore: dataset is not resampled\n"));
-	    err = E_DATA;
-	}
-    } else if (op == DS_DELETE) {
-	pprintf(prn, _("dataset delete: not ready yet\n"));
-    } else if (op == DS_KEEP) {
-	pprintf(prn, _("dataset keep: not ready yet\n"));
     } else {
 	err = E_PARSE;
     }

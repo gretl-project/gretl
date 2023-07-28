@@ -4461,38 +4461,60 @@ static void set_compact_info_from_default (int method)
 void do_compact_dataset (void)
 {
     CompactMethod method = COMPACT_AVG;
-    int err, newpd = 0, monstart = 1;
-    int repday = 0;
-    int *pmonstart = NULL;
+    int err, newpd = 0;
+    int wkstart = -1;
+    int repday = -1;
+    int *p_wkstart = NULL;
+    int *p_repday = NULL;
 
     if (maybe_restore_full_data(COMPACT)) {
 	return;
     }
 
-    if (dated_seven_day_data(dataset)) {
-	pmonstart = &monstart;
+    if (dated_daily_data(dataset)) {
+	repday = 1;
+	p_repday = &repday;
+	if (dataset->pd == 7) {
+	    wkstart = 1;
+	    p_wkstart = &wkstart;
+	}
     }
 
-    data_compact_dialog(dataset->pd, &newpd, pmonstart,
-			&method, &repday, mdata->main);
+    data_compact_dialog(dataset->pd, &newpd, p_wkstart,
+			&method, p_repday, mdata->main);
 
     if (method == COMPACT_UNSET) {
 	/* the user cancelled */
-	fprintf(stderr, "canceled!\n");
 	return;
     }
 
-    err = compact_dataset(dataset, newpd, method, monstart, repday);
+    if (method != COMPACT_WDAY) {
+	/* revert @repday to "not used" value */
+	repday = -1;
+    }
+
+    err = compact_dataset(dataset, newpd, method, wkstart, repday);
 
     if (err) {
 	gui_errmsg(err);
     } else {
 	const char *mstr = compact_method_string(method);
+	gchar *tmp;
 
 	if (mstr != NULL) {
 	    lib_command_sprintf("dataset compact %d %s", newpd, mstr);
 	} else {
 	    lib_command_sprintf("dataset compact %d", newpd);
+	}
+	if (wkstart >= 0) {
+	    tmp = g_strdup_printf(" --weekstart=%d", wkstart);
+	    lib_command_strcat(tmp);
+	    g_free(tmp);
+	}
+	if (repday >= 0) {
+	    tmp = g_strdup_printf(" --repday=%d", repday);
+	    lib_command_strcat(tmp);
+	    g_free(tmp);
 	}
 	record_command_verbatim();
 

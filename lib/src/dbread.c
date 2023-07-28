@@ -4821,11 +4821,11 @@ static int do_compact_spread (DATASET *dset, int newpd)
  * @dset: dataset struct.
  * @newpd: target data frequency.
  * @default_method: code for the default compaction method.
- * @monstart: if non-zero, take Monday rather than Sunday as
- * the "start of the week" (only relevant for 7-day daily
- * data).
+ * @wkstart: the day on which a week is deemed to start:
+ * 0 for Sunday or 1 for Monday.
  * @repday: "representative day" for conversion from daily
- * to weekly data (with method %COMPACT_WDAY only).
+ * to weekly data (with method %COMPACT_WDAY only). Value
+ * 0 to 6 with 0 = Sunday.
  *
  * Compact the data set from higher to lower frequency.
  *
@@ -4834,7 +4834,7 @@ static int do_compact_spread (DATASET *dset, int newpd)
 
 int compact_dataset (DATASET *dset, int newpd,
 		     CompactMethod default_method,
-		     int monstart, int repday)
+		     int wkstart, int repday)
 {
     compact_params cp;
     int oldn = dset->n;
@@ -4849,6 +4849,14 @@ int compact_dataset (DATASET *dset, int newpd,
 
     gretl_error_clear();
     compact_params_init(&cp, oldpd);
+
+    /* check validity of extra daily parameters (with "ignore"
+       values of -1)
+    */
+    if (repday < -1 || repday > 6 || wkstart < -1 || wkstart > 1) {
+	fprintf(stderr, "Invalid wstart or repday value\n");
+	return E_INVARG;
+    }
 
     /* catch a couple of special cases */
     if (default_method == COMPACT_SPREAD) {
@@ -4885,7 +4893,7 @@ int compact_dataset (DATASET *dset, int newpd,
 	if (from_dated_daily) {
 	    startmin = weekday_from_date(dset->stobs);
 	    if (oldpd == 7) {
-		if (monstart) {
+		if (wkstart == 1) {
 		    if (startmin == 0) startmin = 7;
 		} else {
 		    startmin++;
@@ -4985,7 +4993,6 @@ int compact_dataset (DATASET *dset, int newpd,
 		}
 	    }
 	}
-
 	x = compact_series(dset, i, oldn, startskip, cp.min_startskip,
 			   compfac, this_method);
 	if (x == NULL) {

@@ -144,7 +144,7 @@ int lib_spread_dbnomics_data (DATASET *dset, DATASET *dbset,
 
 int compact_dataset (DATASET *dset, int newpd,
 		     CompactMethod default_method,
-		     int monstart, int repday);
+		     int wkstart, int repday);
 
 int expand_dataset (DATASET *dset, int newpd);
 

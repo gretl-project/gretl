@@ -229,6 +229,8 @@ struct gretl_option gretl_opts[] = {
     { DATA,     OPT_F, "no-align", 0 },
     { DATAMOD,  OPT_P, "preserve", 0 },
     { DATAMOD,  OPT_T, "panel-time", 0 },
+    { DATAMOD,  OPT_W, "weekstart", 2 },
+    { DATAMOD,  OPT_R, "repday", 2 },
     { DELEET,   OPT_D, "db", 0 },
     { DELEET,   OPT_F, "force", 0 },
     { DELEET,   OPT_L, "list", 0 },
@@ -1365,7 +1367,7 @@ double get_optval_double (int ci, gretlopt opt, int *err)
  *
  * Returns: the integer ancillary value currently
  * associated with option @opt for command @ci, if any,
- * otherwise 0. A non-zero value written to @err if
+ * otherwise 0. A non-zero value is written to @err if
  * such a value is required for the option in question
  * but is not present.
  */
