@@ -4458,7 +4458,7 @@ static void set_compact_info_from_default (int method)
     }
 }
 
-void do_compact_data_set (void)
+void do_compact_dataset (void)
 {
     CompactMethod method = COMPACT_AVG;
     int err, newpd = 0, monstart = 1;
@@ -4482,7 +4482,7 @@ void do_compact_data_set (void)
 	return;
     }
 
-    err = compact_data_set(dataset, newpd, method, monstart, repday);
+    err = compact_dataset(dataset, newpd, method, monstart, repday);
 
     if (err) {
 	gui_errmsg(err);
@@ -4504,7 +4504,7 @@ void do_compact_data_set (void)
     }
 }
 
-void do_expand_data_set (void)
+void do_expand_dataset (void)
 {
     int newpd = -1;
     int err = 0;
@@ -4529,7 +4529,7 @@ void do_expand_data_set (void)
     }
 
     gretl_error_clear();
-    err = expand_data_set(dataset, newpd);
+    err = expand_dataset(dataset, newpd);
 
     if (err) {
 	gui_errmsg(err);

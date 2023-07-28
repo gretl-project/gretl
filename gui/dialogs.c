@@ -4155,7 +4155,7 @@ static void set_expansion (GtkComboBox *cb, gpointer data)
     *newpd = sel == 0 ? 4 : 12;
 }
 
-/* called from do_expand_data_set() in database.c */
+/* called from do_expand_dataset() in database.c */
 
 void data_expand_dialog (int *newpd, GtkWidget *parent)
 {

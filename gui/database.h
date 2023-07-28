@@ -54,9 +54,9 @@ void display_db_series (windata_t *vwin);
 
 void drag_import_db_series (void);
 
-void do_compact_data_set (void);
+void do_compact_dataset (void);
 
-void do_expand_data_set (void);
+void do_expand_dataset (void);
 
 gchar *get_db_description (const char *binname);
 

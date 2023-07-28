@@ -3307,8 +3307,12 @@ static int dataset_int_param (const char **ps, int op,
     return k;
 }
 
-static int compact_data_set_wrapper (const char *s, DATASET *dset,
-				     int k)
+/* run some checks before handing off to compact_dataset()
+   int dbread.c
+*/
+
+static int compact_dataset_wrapper (const char *s, DATASET *dset,
+				    int k)
 {
     CompactMethod method = COMPACT_AVG;
 
@@ -3344,7 +3348,7 @@ static int compact_data_set_wrapper (const char *s, DATASET *dset,
 	}
     }
 
-    return compact_data_set(dset, k, method, 0, 0);
+    return compact_dataset(dset, k, method, 0, 0);
 }
 
 static unsigned int resample_seed;
@@ -3630,9 +3634,9 @@ int modify_dataset (DATASET *dset, int op, const int *list,
     } else if (op == DS_INSOBS) {
 	err = insert_obs(k, dset, prn);
     } else if (op == DS_COMPACT) {
-	err = compact_data_set_wrapper(param, dset, k);
+	err = compact_dataset_wrapper(param, dset, k);
     } else if (op == DS_EXPAND) {
-	err = expand_data_set(dset, k);
+	err = expand_dataset(dset, k);
     } else if (op == DS_PAD_DAILY) {
 	err = pad_daily_data(dset, k, prn);
     } else if (op == DS_UNPAD_DAILY) {
