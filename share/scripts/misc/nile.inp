@@ -1,3 +1,16 @@
+###
+### simple example of estimation of a Structural Time Series Model
+### via the state space apparatus. Note that:
+###
+### (a) this example supersedes the code discussed in Lucchetti (2011), 
+### State Space Methods in gretl, Journal of Statistical Software, 041, 
+### issue i11, that uses the same data, but an obsolete syntax, which 
+### is no longer supported
+###
+### (b) this script only has instructional purposes: the StrucTiSM 
+### package provides the model below and several others.
+###
+
 # open the dataset
 
 open nile.gdt
@@ -5,7 +18,7 @@ open nile.gdt
 # set up the local linear trend model with the Nile data
 
 Nile = ksetup({nile}, {1}, {1}, {1})
-Nile.diffuse = 1
+Nile.diffuse = 2
 Nile.obsvar = {1}
 
 # initialize the parameters via the reduced form
@@ -27,22 +40,18 @@ mle loglik = err ? NA : Nile.llt
     params s_eta s_eps
 end mle
 
-# extract the smoothed trend
+# extract the smoothed trend anb its estimated variance
 
 ksmooth(&Nile)
 series nile_trend = Nile.state
+series nile_trend_se = sqrt(Nile.statevar)
 
 # plot series with trend and associated 95% confidence band
 
-series nile_trend_se = sqrt(Nile.statevar)
-series hi = nile_trend + 1.96 * nile_trend_se
-series lo = nile_trend - 1.96 * nile_trend_se
-list X = nile nile_trend hi lo
-
+list X = nile nile_trend
 plot X
     options with-lines time-series
-    literal set linetype 3 lc rgb "#00c0c0"
-    literal set linetype 4 lc rgb "#00c0c0"
+    options band=nile_trend,nile_trend_se,1.96 band-style=fill,0xdddddd
     literal set key right top
     printf "set title \"%s\"", "Nile data and trend with 95\% confidence band"
 end plot --output=display
