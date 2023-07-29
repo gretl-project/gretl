@@ -906,7 +906,7 @@ static int make_weekday_mask (const DATASET *dset, char *mask)
 
 	for (t=0; t<dset->n; t++) {
 	    ntolabel(datestr, t, dset);
-	    wd = weekday_from_date(datestr);
+	    wd = weekday_from_date(datestr, 1);
 	    mask[t] = (wd >= 1 && wd <= 5);
 	}
 
@@ -1610,8 +1610,8 @@ static int try_for_daily_subset (char *selected,
 	for (t=0; t<dset->n; t++) {
 	    if (selected[t]) {
 		ntolabel(datestr, t, dset);
-		wd = weekday_from_date(datestr);
-		if (wd == 0) {
+		wd = weekday_from_date(datestr, 1);
+		if (wd == 7) {
 		    /* got a Sunday: result must be 7-day */
 		    newpd = 7;
 		    break;
@@ -1638,7 +1638,7 @@ static int try_for_daily_subset (char *selected,
     for (t=0; t<dset->n; t++) {
 	if (selected[t]) {
 	    ntolabel(datestr, t, dset);
-	    wd = weekday_from_date(datestr);
+	    wd = weekday_from_date(datestr, 0);
 	    ed = get_epoch_day(datestr);
 	    if (started) {
 		delta = ed - edbak;

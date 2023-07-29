@@ -605,17 +605,17 @@ static int check_daily_dates (DATASET *dset, int *pd,
     for (t=0; t<dset->n && !err; t++) {
         int wd, s = (*reversed)? (dset->n - 1 - t) : t;
 
-        wd = weekday_from_date(dset->S[s]);
+        wd = weekday_from_date(dset->S[s], 1);
 
-        if (dset->pd == 5 && (wd == 6 || wd == 0)) {
+        if (dset->pd == 5 && (wd == 6 || wd == 7)) {
             /* Got Sat or Sun, can't be 5-day daily? */
-            alt_pd = (wd == 6)? 6 : 7;
+            alt_pd = wd;
             pprintf(prn, _("Found a Saturday (%s): re-trying with pd = %d\n"),
                     dset->S[s], alt_pd);
             break;
-        } else if (dset->pd == 6 && wd == 0) {
+        } else if (dset->pd == 6 && wd == 7) {
             /* Got Sun, can't be 6-day daily? */
-            alt_pd = 7;
+            alt_pd = wd;
             pprintf(prn, _("Found a Sunday (%s): re-trying with pd = %d\n"),
                     dset->S[s], alt_pd);
             break;

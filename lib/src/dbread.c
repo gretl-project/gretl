@@ -4564,7 +4564,7 @@ static int daily_dataset_to_weekly_special (DATASET *dset,
 
     for (t=0; t<dset->n; t++) {
 	ntolabel(obs, t, dset);
-	wday = weekday_from_date(obs);
+	wday = weekday_from_date(obs, 0);
 	if (wday == repday) {
 	    ok = 0;
 	    for (i=1; i<dset->v; i++) {
@@ -4603,7 +4603,7 @@ static int daily_dataset_to_weekly_special (DATASET *dset,
 
 	for (t=0; t<dset->n; t++) {
 	    ntolabel(obs, t, dset);
-	    wday = weekday_from_date(obs);
+	    wday = weekday_from_date(obs, 0);
 	    if (wday == repday) {
 		x[s++] = dset->Z[i][t];
 	    }
@@ -4898,7 +4898,7 @@ int compact_dataset (DATASET *dset, int newpd,
 	/* daily to weekly, not COMPACT_WDAY */
 	compfac = oldpd;
 	if (from_dated_daily) {
-	    startmin = weekday_from_date(dset->stobs);
+	    startmin = weekday_from_date(dset->stobs, 0);
 	    if (oldpd == 7) {
 		if (wkstart == 1) {
 		    if (startmin == 0) startmin = 7;

@@ -54,9 +54,9 @@ guint32 get_epoch_day (const char *datestr);
 
 guint32 epoch_day_from_t (int t, const DATASET *dset);
 
-int weekday_from_date (const char *datestr);
+int weekday_from_date (const char *datestr, int alt);
 
-int weekday_from_epoch_day (guint32 ed);
+int weekday_from_epoch_day (guint32 ed, int alt);
 
 int day_starts_month (int d, int m, int y, int wkdays, int *pad);
 

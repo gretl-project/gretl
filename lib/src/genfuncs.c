@@ -3316,8 +3316,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 
         for (t=0; t<dset->n; t++) {
             ntolabel(datestr, t, dset);
-            wkday = weekday_from_date(datestr);
-            wkday = (wkday == 0)? 7 : wkday;
+            wkday = weekday_from_date(datestr, 1);
             for (k=1, i=1; i<=list[0]; i++) {
                 vi = list[i];
                 if (k+1 == ref) k++;
@@ -3732,7 +3731,7 @@ int gen_wkday (DATASET *dset, int *vnum)
 
     for (t=0; t<dset->n; t++) {
         ntolabel(datestr, t, dset);
-        dset->Z[i][t] = weekday_from_date(datestr);
+        dset->Z[i][t] = weekday_from_date(datestr, 0);
     }
 
     if (vnum != NULL) {
@@ -7861,22 +7860,15 @@ int sample_span (const char *stobs, const char *endobs,
 
         if (ed1 > 0 && ed2 > 0 && (pd == 5 || pd == 6)) {
             /* validate days-of-week */
-            int wd1 = weekday_from_epoch_day(ed1);
-            int wd2 = weekday_from_epoch_day(ed2);
+            int wd1 = weekday_from_epoch_day(ed1, 1);
+            int wd2 = weekday_from_epoch_day(ed2, 1);
 
-            if (pd == 5 && (wd1 < 1 || wd1 > 5)) {
-                ed1 = 0;
-            } else if (pd == 5 && (wd2 < 1 || wd2 > 5)) {
-                ed2 = 0;
-            } else if (pd == 6) {
-                if (wd1 < 1) {
-                    ed1 = 0;
-                } else if (wd2 < 1) {
-                    ed2 = 0;
-                }
-            }
+	    if (wd1 > pd) {
+		ed1 = 0;
+	    } else if (wd2 > pd) {
+		ed2 = 0;
+	    }
         }
-
         if (ed1 == 0) {
             gretl_errmsg_sprintf(_("Invalid observation %s"), stobs);
             *err = E_INVARG;
