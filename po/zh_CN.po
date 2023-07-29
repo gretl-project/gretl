@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: gretl 2020a\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-04-24 12:53+0200\n"
-"PO-Revision-Date: 2023-07-15 01:37+0800\n"
+"PO-Revision-Date: 2023-07-29 21:42+0800\n"
 "Last-Translator: Yi-Nung Yang <yinung.yang@gmail.com>\n"
 "Language-Team: Chinese\n"
 "Language: zh_CN\n"
@@ -6832,11 +6832,11 @@ msgstr ""
 
 #: lib/src/modelprint.c:1171
 msgid "bias"
-msgstr "偏误"
+msgstr "bias"
 
 #: lib/src/modelprint.c:1171 gui/gpt_dialog.c:2881
 msgid "size"
-msgstr "样本大小"
+msgstr "size"
 
 #: lib/src/modelprint.c:1175 gui/calculator.c:2078 plugin/xlsx_import.c:778
 #: plugin/xlsx_import.c:786 plugin/xlsx_import.c:789
@@ -6864,14 +6864,12 @@ msgid "Maximal size may exceed %g%%"
 msgstr ""
 
 #: lib/src/modelprint.c:1211
-#, fuzzy
 msgid "Weak instrument test"
-msgstr "基本假设检定(_T)"
+msgstr "弱工具变数检测(Weak instrument test)"
 
 #: lib/src/modelprint.c:1236 lib/src/modelprint.c:1244
-#, fuzzy
 msgid "First-stage F-statistic"
-msgstr "基本假设检定(_T)"
+msgstr "First-stage F-statistic"
 
 #: lib/src/modelprint.c:1250 lib/src/modelprint.c:1259
 msgid "Cragg-Donald minimum eigenvalue"
@@ -6891,7 +6889,6 @@ msgstr ""
 
 #: lib/src/modelprint.c:1331 gui/selector.c:5169 gui/selector.c:9237
 #: plugin/addons-i18n.c:104
-#, fuzzy
 msgid "Instruments"
 msgstr "工具变数 (instruments)"
 
