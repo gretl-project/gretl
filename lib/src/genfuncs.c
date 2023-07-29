@@ -7860,22 +7860,15 @@ int sample_span (const char *stobs, const char *endobs,
 
         if (ed1 > 0 && ed2 > 0 && (pd == 5 || pd == 6)) {
             /* validate days-of-week */
-            int wd1 = weekday_from_epoch_day(ed1);
-            int wd2 = weekday_from_epoch_day(ed2);
+            int wd1 = weekday_from_epoch_day(ed1, 1);
+            int wd2 = weekday_from_epoch_day(ed2, 1);
 
-            if (pd == 5 && (wd1 < 1 || wd1 > 5)) {
-                ed1 = 0;
-            } else if (pd == 5 && (wd2 < 1 || wd2 > 5)) {
-                ed2 = 0;
-            } else if (pd == 6) {
-                if (wd1 < 1) {
-                    ed1 = 0;
-                } else if (wd2 < 1) {
-                    ed2 = 0;
-                }
-            }
+	    if (wd1 > pd) {
+		ed1 = 0;
+	    } else if (wd2 > pd) {
+		ed2 = 0;
+	    }
         }
-
         if (ed1 == 0) {
             gretl_errmsg_sprintf(_("Invalid observation %s"), stobs);
             *err = E_INVARG;
