@@ -1,9 +1,9 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 2020a\n"
+"Project-Id-Version: gretl 2023c\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-04-24 12:53+0200\n"
-"PO-Revision-Date: 2023-07-27 00:23+0800\n"
+"PO-Revision-Date: 2023-07-29 21:07+0800\n"
 "Last-Translator: Yi-Nung Yang <yinung.yang@gmail.com>\n"
 "Language-Team: Chinese\n"
 "Language: zh_TW\n"
@@ -6798,16 +6798,16 @@ msgstr ""
 
 #: lib/src/modelprint.c:1171
 msgid "bias"
-msgstr "偏誤"
+msgstr "bias"
 
 #: lib/src/modelprint.c:1171 gui/gpt_dialog.c:2881
 msgid "size"
-msgstr "樣本大小"
+msgstr "size"
 
 #: lib/src/modelprint.c:1175 gui/calculator.c:2078 plugin/xlsx_import.c:778
 #: plugin/xlsx_import.c:786 plugin/xlsx_import.c:789
 msgid "value"
-msgstr "臨界值"
+msgstr "_  臨界值"
 
 #: lib/src/modelprint.c:1188
 #, c-format
@@ -6830,14 +6830,12 @@ msgid "Maximal size may exceed %g%%"
 msgstr ""
 
 #: lib/src/modelprint.c:1211
-#, fuzzy
 msgid "Weak instrument test"
-msgstr "基本假設檢定(_T)"
+msgstr "弱工具變數檢定(Weak instrument test)"
 
 #: lib/src/modelprint.c:1236 lib/src/modelprint.c:1244
-#, fuzzy
 msgid "First-stage F-statistic"
-msgstr "基本假設檢定(_T)"
+msgstr "First-stage F-statistic"
 
 #: lib/src/modelprint.c:1250 lib/src/modelprint.c:1259
 msgid "Cragg-Donald minimum eigenvalue"
@@ -7082,12 +7080,8 @@ msgstr ""
 #. TRANSLATORS: 'n' denotes sample size
 #: lib/src/modelprint.c:1918 gui/model_table.c:783 gui/model_table.c:785
 #: gui/model_table.c:787 plugin/anova.c:194 plugin/anova.c:203
-#, fuzzy
 msgid "n"
-msgstr ""
-"\n"
-"\n"
-"*** 使用者自行定義之啟始值:\n"
+msgstr "n"
 
 #. TRANSLATORS: 'T' denotes time-series sample size
 #: lib/src/modelprint.c:1920
@@ -8841,7 +8835,7 @@ msgstr "時間序列"
 
 #: lib/src/subsample.c:3378
 msgid "panel"
-msgstr "縱橫資料 (panel data)"
+msgstr "追蹤資料 (panel data)"
 
 #: lib/src/subsample.c:3380
 msgid "undated"
@@ -11163,14 +11157,12 @@ msgid "Starting observation"
 msgstr "第一筆樣本始於"
 
 #: gui/datawiz.c:120
-#, fuzzy
 msgid "Panel data organization"
-msgstr "另存新檔(_a)"
+msgstr "追蹤資料組織(Panel data organization)"
 
 #: gui/datawiz.c:121
-#, fuzzy
 msgid "Panel structure"
-msgstr "縱橫資料 (panel data)"
+msgstr "追蹤資料結構 (panel structure)"
 
 #: gui/datawiz.c:122
 #, fuzzy
@@ -14903,7 +14895,7 @@ msgstr "共整合檢定 (_Engle-Granger)"
 
 #: gui/gretl.c:2015
 msgid "_Panel"
-msgstr "縱橫資料 (_Panel)"
+msgstr "追蹤資料 (_Panel)"
 
 #: gui/gretl.c:2016
 msgid "_Fixed or random effects"
@@ -15532,9 +15524,8 @@ msgid "A_RCH"
 msgstr "A_RCH 異質變異檢定"
 
 #: gui/gui_utils.c:246
-#, fuzzy
 msgid "Non-linearity (_BDS)"
-msgstr "非線性 LM 檢定 (加入取自然對數項)(_l)"
+msgstr "非線性 (_BDS)"
 
 #: gui/gui_utils.c:247
 msgid "_QLR test"
@@ -15557,9 +15548,8 @@ msgid "_Cross-sectional dependence"
 msgstr "橫斷面相依性(_C) "
 
 #: gui/gui_utils.c:252
-#, fuzzy
 msgid "_Panel specification"
-msgstr "修改模型 (_R)..."
+msgstr "(_P)追蹤資料模型設定"
 
 #: gui/gui_utils.c:256 gui/gui_utils.c:263
 msgid "White's test"
