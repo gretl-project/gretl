@@ -1,10 +1,12 @@
 version 2023c, in progress
 - String-valued series: support returning such series from a
-  user function, and loosen the restriction on assignment to
+  user function, and loosen the restrictions on assignment to
   such series
 - Fix bug dating from 2022c: broken handling of the syntax
   listname.series when used in a function that is called from
-  within a loop.
+  within a loop
+- Fix bug: possibly incomplete results when compacting daily
+  data to weekly
 
 2023-07-21 version 2023b
 - New command "kdplot": simple access to a kernel density plot

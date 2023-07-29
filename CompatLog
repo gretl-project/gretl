@@ -1,3 +1,8 @@
+2023c, in progress
+
+Compaction of undated daily data is now disabled, since it is
+not a meaningful operation.
+
 2023-07-21 version 2023b
 
 The "outfile" command with --tempfile option: the name of
