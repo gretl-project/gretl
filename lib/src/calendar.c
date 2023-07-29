@@ -71,7 +71,13 @@ static int valid_ymd (int y, int m, int d, int julian)
     return ok;
 }
 
-static int day_of_week_from_ymd (int y, int m, int d, int julian)
+/* Uses [Sunday=0 to Saturday=6] by default, but switches
+   to [Monday=1 to Sunday=7] if @alt is non-zero. The latter
+   is actually the GLib default.
+*/
+
+static int day_of_week_from_ymd (int y, int m, int d,
+				 int julian, int alt)
 {
     GDate date;
     int wd;
@@ -92,8 +98,11 @@ static int day_of_week_from_ymd (int y, int m, int d, int julian)
 
     wd = g_date_get_weekday(&date);
 
-    /* switch to Sunday == 0 */
-    return wd == G_DATE_SUNDAY ? 0 : wd;
+    if (alt) {
+	return wd;
+    } else {
+	return wd == G_DATE_SUNDAY ? 0 : wd;
+    }
 }
 
 /**
@@ -794,11 +803,14 @@ double day_of_week (int y, int m, int d, int julian, int *err)
 /**
  * weekday_from_date:
  * @datestr: calendar representation of date, [YY]YY/MM/DD
+ * @alt: if non-zero, determine the weekday number on the basis
+ * of Monday=1 to Sunday=7; otherwise use the traditional
+ * basis of Sunday=0 to Saturday=6.
  *
- * Returns: day of week as integer, Sunday = 0.
+ * Returns: day of week as integer.
  */
 
-int weekday_from_date (const char *datestr)
+int weekday_from_date (const char *datestr, int alt)
 {
     int y, m, d;
     int ydigits;
@@ -816,7 +828,7 @@ int weekday_from_date (const char *datestr)
 	y = FOUR_DIGIT_YEAR(y);
     }
 
-    return day_of_week_from_ymd(y, m, d, 0);
+    return day_of_week_from_ymd(y, m, d, 0, alt);
 }
 
 /**
@@ -1249,44 +1261,20 @@ int n_hidden_missing_obs (const DATASET *dset, int t1, int t2)
 int guess_daily_pd (const DATASET *dset)
 {
     int t, wd, pd = 5;
-    int wdbak = -1;
-    int havesat = 0;
-    int gotsat = 0, gotsun = 0;
-    int contig = 0;
+    int gotsat = 0;
 
-    wd = weekday_from_date(dset->S[0]);
-    if (6 - wd < dset->n) {
-	havesat = 1;
-    }
-
-    for (t=0; t<dset->n && t<28; t++) {
-	wd = weekday_from_date(dset->S[t]);
-	if (wd == 0) {
-	    gotsun = 1;
+    for (t=0; t<dset->n && t<40; t++) {
+	wd = weekday_from_date(dset->S[t], 1);
+	if (wd == 7) {
+	    pd = 7;
+	    break;
 	} else if (wd == 6) {
 	    gotsat = 1;
 	}
-	if ((wdbak + 1) % 7 == wd) {
-	    contig++;
-	}
-	wdbak = wd;
     }
 
-    if (gotsat && gotsun) {
-	pd = 7;
-    } else if (contig > 10) {
-	if (gotsun) pd = 7;
-	else if (gotsat) pd = 6;
-    } else if (dset->n > 7) {
-	if (!gotsun && !gotsat) {
-	    pd = 5;
-	} else if (!gotsun) {
-	    pd = 6;
-	}
-    } else if (havesat && !gotsat) {
-	pd = 5;
-    } else {
-	pd = 7;
+    if (pd == 5 && gotsat) {
+	pd = 6;
     }
 
     return pd;

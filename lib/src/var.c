@@ -322,7 +322,7 @@ static int VAR_add_regular_seasonals (GRETL_VAR *v,
 	int dow;
 
 	for (t=0; t<v->T; t++) {
-	    dow = weekday_from_date(dset->S[t + v->t1]);
+	    dow = weekday_from_date(dset->S[t + v->t1], 0);
 	    for (i=0; i<pd1; i++) {
 		gretl_matrix_set(v->X, t, k+i, (dow == i+1)? s1 : s0);
 	    }
@@ -335,7 +335,7 @@ static int VAR_add_regular_seasonals (GRETL_VAR *v,
 	    char obs[OBSLEN];
 
 	    ntolabel(obs, v->t1, dset);
-	    per = weekday_from_date(obs);
+	    per = weekday_from_date(obs, 0);
 	} else {
 	    per = get_subperiod(v->t1, dset, NULL);
 	}

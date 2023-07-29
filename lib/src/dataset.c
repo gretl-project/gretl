@@ -1016,7 +1016,7 @@ static int extend_date_markers (DATASET *dset, int t1, int T)
     if (ed == 0) {
 	err = 1;
     } else {
-	int t, wday = weekday_from_epoch_day(ed);
+	int t, wday = weekday_from_epoch_day(ed, 0);
 	int y, m, d;
 
 	for (t=t1; t<T; t++) {
@@ -5506,7 +5506,7 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
 	if (t == 0) {
 	    ed0 = edbak = get_epoch_day(datestr);
 	} else {
-	    wd = weekday_from_date(datestr);
+	    wd = weekday_from_date(datestr, 0);
 	    ed = get_epoch_day(datestr);
 	    skip = effective_daily_skip(ed - edbak, wd, pd);
 	    totskip += skip;
@@ -5534,7 +5534,7 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
 	for (t=0; t<dset->n; t++) {
 	    if (t > 0) {
 		ntolabel(datestr, t, dset);
-		wd = weekday_from_date(datestr);
+		wd = weekday_from_date(datestr, 0);
 		ed = get_epoch_day(datestr);
 		s += 1 + effective_daily_skip(ed - edbak, wd, pd);
 		edbak = ed;

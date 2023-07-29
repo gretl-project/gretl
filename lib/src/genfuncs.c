@@ -3316,8 +3316,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 
         for (t=0; t<dset->n; t++) {
             ntolabel(datestr, t, dset);
-            wkday = weekday_from_date(datestr);
-            wkday = (wkday == 0)? 7 : wkday;
+            wkday = weekday_from_date(datestr, 1);
             for (k=1, i=1; i<=list[0]; i++) {
                 vi = list[i];
                 if (k+1 == ref) k++;
@@ -3732,7 +3731,7 @@ int gen_wkday (DATASET *dset, int *vnum)
 
     for (t=0; t<dset->n; t++) {
         ntolabel(datestr, t, dset);
-        dset->Z[i][t] = weekday_from_date(datestr);
+        dset->Z[i][t] = weekday_from_date(datestr, 0);
     }
 
     if (vnum != NULL) {
