@@ -590,12 +590,12 @@ guint32 epoch_day_from_t (int t, const DATASET *dset)
 
 int calendar_date_string (char *targ, int t, const DATASET *dset)
 {
-    guint32 d0, dt = 0;
+    guint32 d0 = (guint32) dset->sd0;
+    guint32 dt = 0;
     int y, m, d;
     int err = 0;
 
     *targ = '\0';
-    d0 = (guint32) dset->sd0;
 
     if (dset->pd == 52) {
 	dt = d0 + 7 * t;
