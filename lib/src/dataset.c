@@ -3332,6 +3332,11 @@ static int compact_dataset_wrapper (const char *s, DATASET *dset,
     int repday = -1;
     int err = 0;
 
+    if (undated_daily_data(dset)) {
+        gretl_errmsg_set(_("Undated daily data: can't do compaction"));
+        return E_DATA;
+    }
+
     if (s != NULL) {
 	s += strspn(s, " ");
 	if (!strcmp(s, "sum")) {
