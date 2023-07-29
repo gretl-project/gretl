@@ -296,34 +296,34 @@ typedef struct gretl_string_table_ gretl_string_table;
 /**
  * VARINFO:
  *
- * Holds extended private information on an individual data series.
+ * Holds extended metadata on an individual data series.
  */
 
 typedef struct VARINFO_ VARINFO;
 
-/* information on data set */
+/* gretl data set */
 typedef struct DATASET_ { 
-    int v;              /* number of variables */
+    int v;              /* number of data series, including const */
     int n;              /* number of observations */
     int pd;             /* periodicity or frequency of data */
     int structure;      /* time series, cross section or whatever */
-    double sd0;         /* float representation of stobs */
+    double sd0;         /* floating-point representation of stobs */
     int t1, t2;         /* start and end of current sample */
-    char stobs[OBSLEN];  /* string representation of starting obs (date) */
+    char stobs[OBSLEN];  /* string representation of starting obs */
     char endobs[OBSLEN]; /* string representation of ending obs */
-    double **Z;         /* data array */
-    char **varname;     /* array of names of variables */
-    VARINFO **varinfo;  /* array of specific info on vars */
+    double **Z;         /* two-dimensional data array */
+    char **varname;     /* array of names of series */
+    VARINFO **varinfo;  /* array of metadata per series */
     char markers;       /* NO_MARKERS (0), REGULAR MARKERS or DAILY_DATE_STRINGS */
     char modflag;       /* binary flag for dataset modified or not */
     char **S;           /* to hold observation markers */
-    char *descrip;      /* to hold info on data sources etc. */
+    char *descrip;      /* to hold info on data sources, etc. */
     char *submask;      /* subsampling mask */
     char *restriction;  /* record of sub-sampling restriction */
     char *padmask;      /* record of padding to re-balance panel data */
     char *mapfile;      /* name of associated map (polygons) file, if any */
     unsigned int rseed; /* resampling seed */
-    int auxiliary;      /* = 0 for regular dataset, 1 for aux dataset */
+    int auxiliary;      /* 0 for regular dataset, 1 for auxiliary dataset */
     char *pangrps;      /* panel-only: name of series holding group names */
     int panel_pd;       /* panel-only: panel time-series frequency */
     double panel_sd0;   /* panel-only: time-series start */
@@ -348,7 +348,7 @@ typedef struct SAMPLE_ {
 } SAMPLE;
 
 typedef struct ARINFO_ {
-    int *arlist;          /* list of autoreg lags */
+    int *arlist;          /* list of autoregressive lags */
     double *rho;          /* array of autoreg. coeffs. */
     double *sderr;        /* and their standard errors */
 } ARINFO;
