@@ -192,15 +192,15 @@ typedef struct series_table_ series_table;
                              && p->sd0 > 100000)
 
 /**
- * dated_seven_day_data:
+ * undated_daily_data:
  * @p: pointer to data information struct.
  *
- * Attempt to determine whether a dataset contains dated daily 
- * (seven-day) time series data (1) or not (0).
+ * Attempt to determine whether a dataset is daily but does not contain
+ * any date information data (1) or not (0).
  */
-#define dated_seven_day_data(p) (p != NULL && p->structure == TIME_SERIES \
-                                 && p->pd == 7 && \
-                                 p->sd0 > 100000)
+#define undated_daily_data(p) (p != NULL && p->structure == TIME_SERIES \
+                               && (p->pd == 5 || p->pd == 6 || p->pd == 7) \
+                               && p->sd0 == 1)
 
 /**
  * dated_weekly_data:
