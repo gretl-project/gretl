@@ -887,15 +887,15 @@ when configuring the build.
 \subsection{MS Windows}
 
 Microsoft has its own MPI implementation for Windows, \textsf{MS-MPI},
-which is available as a free download via
+which is available as a free download; see
 
-\url{https://www.microsoft.com/download/details.aspx?id=100593}
+\url{https://learn.microsoft.com/en-us/message-passing-interface/microsoft-mpi}
 
 and gretl builds for Windows have supported this since
 2017.\footnote{In principle you could install \textsf{Open MPI} or
   \textsf{MPICH} on Windows---though you'd have to build them
   yourself---but at present gretl on Windows only supports
-  \textsf{MS-MPI}.}
+  \textsf{MS-MPI} (which is based on \textsf{MPICH}.}
 
 When you run the \textsf{MS-MPI} installer this automatically adds the
 relevant directory to your path, and you should be good to go. Note,
