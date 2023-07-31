@@ -378,14 +378,19 @@ char *comma_separate_numbers (char *s)
 	 return 0;
      }
 
-     /* compound suffix, such as ".csv.gz" ? */
+     /* Have we got a compound suffix (e.g. ".csv.gz")? */
      comp = (strchr(sfx + 1, '.') != NULL);
 
+     /* find the rightmost '.' in @str */
      p = strrchr(str, *sfx);
+
+     /* if @sfx is compound, try backing up */
      if (comp && p - str > 4) {
 	 p -= 4;
      }
+
      if (p != NULL && strlen(p) == strlen(sfx)) {
+	 /* check for case-insensitive match */
 	 ret = 1;
 	 while (*p) {
 	     if (*p != *sfx && *p != toupper(*sfx)) {
