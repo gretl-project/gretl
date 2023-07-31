@@ -2777,12 +2777,18 @@ static int handle_tgz (const char *fname,
                        ExecState *s,
                        PRN *prn)
 {
-    const char *path_id = NULL;
+    const char *sf = "https://sourceforge.net/projects/gretl/files";
+    const char *sfdir, *path_id = NULL;
     gchar *uri, *fullname;
     int err;
 
     fullname = gretl_make_dotpath(fname);
-    uri = g_strdup_printf("https://sourceforge.net/projects/gretl/files/x13as/%s", fname);
+    if (strstr(fname, "tramo") != NULL) {
+	sfdir = "tramo";
+    } else {
+	sfdir = "x13as";
+    }
+    uri = g_strdup_printf("%s/%s/%s", sf, sfdir, fname);
     err = retrieve_public_file(uri, fullname);
 
     if (!err) {
