@@ -925,8 +925,8 @@ install the appropriate package, as follows:
 
 \begin{center}
 \begin{tabular}{ll}
-  intel & \texttt{openmpi-1.6.5-mac-intel.tar.xz} \\
-  arm64 & \texttt{openmpi-4.1.5-mac-arm64.tar.xz}
+  intel & \texttt{openmpi-1.6.5-mac-intel.zip} \\
+  arm64 & \texttt{openmpi-4.1.5-mac-arm64.zip}
 \end{tabular}
 \end{center}
 
@@ -940,9 +940,9 @@ To unpack the package you execute the following commands in a
 # change to root directory
 cd /
 # for Intel
-sudo tar xvf /where/you/put/openmpi-1.6.5-mac-intel.tar.xz
+sudo unzip /where/you/put/openmpi-1.6.5-mac-intel.zip
 # OR for arm64
-sudo tar xvf /where/you/put/openmpi-4.1.5-mac-arm64.tar.xz
+sudo unzip /where/you/put/openmpi-4.1.5-mac-arm64.zip
 \end{code}
 %
 This will install the files under \texttt{/opt/openmpi}, which is
