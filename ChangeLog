@@ -7,6 +7,7 @@ version 2023c, in progress
   within a loop
 - Fix bug: possibly incomplete results when compacting daily
   data to weekly
+- Fix bug: wrong alignment when appending dated weekly data
 
 2023-07-21 version 2023b
 - New command "kdplot": simple access to a kernel density plot
