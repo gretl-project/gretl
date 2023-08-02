@@ -23,6 +23,8 @@
 # include "gretl_win32.h" /* for strptime() */
 #endif
 
+#define CAL_DEBUG 0
+
 /**
  * SECTION:calendar
  * @short_description: functions for working with dates
@@ -474,23 +476,26 @@ guint32 get_epoch_day (const char *datestr)
  * @datestr: string representation of calendar date, in form
  * YY[YY]/MM/DD.
  * @dset: pointer to dataset information.
+ * @nolimit: allow @datestr to be outside of the range of
+ * @dset.
  *
  * Returns: The zero-based observation number for the given
  * date within the current data set.
  */
 
-int calendar_obs_number (const char *datestr, const DATASET *dset)
+int calendar_obs_number (const char *datestr, const DATASET *dset,
+			 int nolimit)
 {
     guint32 ed0 = (guint32) dset->sd0;
-    guint32 t = get_epoch_day(datestr);
-    guint32 t0 = t;
+    guint32 ut = get_epoch_day(datestr);
+    int t = (int) ut;
 
-#ifdef CAL_DEBUG
-    fprintf(stderr, "calendar_obs_number: '%s' gave epoch day = %u\n",
-	    datestr, t);
+#if CAL_DEBUG
+    fprintf(stderr, "calendar_obs_number: '%s' gave epoch day = %d\n",
+	    datestr, (int) t);
 #endif
 
-    if (t <= 0 || t < ed0) {
+    if (t <= 0 || (!nolimit && t < ed0)) {
 	return -1;
     } else if (t == ed0) {
 	return 0;
@@ -499,7 +504,7 @@ int calendar_obs_number (const char *datestr, const DATASET *dset)
     /* subtract starting day for dataset */
     t -= ed0;
 
-    if (t <= 0) {
+    if (!nolimit && t <= 0) {
 	return -1;
     }
 
@@ -508,7 +513,7 @@ int calendar_obs_number (const char *datestr, const DATASET *dset)
 	t /= 7;
     } else if (dset->pd == 5 || dset->pd == 6) {
 	/* daily, 5- or 6-day week */
-	int wd = weekday_from_epoch_day(t0, 1);
+	int wd = weekday_from_epoch_day(ut, 1);
 	int startday, wkends;
 
 	/* check for out-of-calendar days */
@@ -522,7 +527,7 @@ int calendar_obs_number (const char *datestr, const DATASET *dset)
 	startday = (ed0 - 1 + DAY1) % 7;
 	wkends = (t + startday - 1) / 7;
 
-#ifdef CAL_DEBUG
+#if CAL_DEBUG
 	fprintf(stderr, "calendar_obs_number: ed0=%d, date=%s, t=%d, startday=%d, wkends=%d\n",
 		(int) ed0, datestr, (int) t, startday, wkends);
 #endif
@@ -534,7 +539,7 @@ int calendar_obs_number (const char *datestr, const DATASET *dset)
 	}
     }
 
-    return (int) t;
+    return t;
 }
 
 /* convert from $t in dataset to epoch day */
@@ -1243,8 +1248,8 @@ int n_hidden_missing_obs (const DATASET *dset, int t1, int t2)
 	return 0;
     }
 
-    t1 = calendar_obs_number(dset->S[t1], dset);
-    t2 = calendar_obs_number(dset->S[t2], dset);
+    t1 = calendar_obs_number(dset->S[t1], dset, 0);
+    t2 = calendar_obs_number(dset->S[t2], dset, 0);
 
     cal_n = t2 - t1 + 1;
 

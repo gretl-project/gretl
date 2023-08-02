@@ -231,7 +231,7 @@ static int output_db_var (int v, const DATASET *dset,
     for (t=t1; t<=t2; t++) {
 	if (dskip > 0) {
 	    val = DBNA;
-	    s = calendar_obs_number(dset->S[t], dset);
+	    s = calendar_obs_number(dset->S[t], dset, 0);
 	    while (s > t + npad) {
 		fwrite(&val, sizeof val, 1, fbin);
 		s--;

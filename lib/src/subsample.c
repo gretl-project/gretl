@@ -2940,8 +2940,8 @@ static int panel_time_sample (const char *start, const char *stop,
 	DATASET tset = {0};
 
 	time_series_from_panel(&tset, dset);
-	t1 = calendar_obs_number(start, &tset);
-	t2 = calendar_obs_number(stop, &tset);
+	t1 = calendar_obs_number(start, &tset, 0);
+	t2 = calendar_obs_number(stop, &tset, 0);
 	if (!panel_range_ok(t1, t2, T)) {
 	    err = E_DATA;
 	}

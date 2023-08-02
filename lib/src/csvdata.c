@@ -447,7 +447,7 @@ static int pad_weekly_data (DATASET *dset, int add)
 
     if (!err) {
         for (t=0; t<oldn; t++) {
-            tc = calendar_obs_number(dset->S[t], dset) - offset;
+            tc = calendar_obs_number(dset->S[t], dset, 0) - offset;
             if (tc != t) {
                 skip = tc - t;
                 fprintf(stderr, "Gap of size %d at original t = %d\n", skip, t);
@@ -485,7 +485,7 @@ static int csv_weekly_data (DATASET *dset)
     int t, tc;
 
     for (t=0; t<dset->n; t++) {
-        tc = calendar_obs_number(dset->S[t], dset) - misscount;
+        tc = calendar_obs_number(dset->S[t], dset, 0) - misscount;
         if (tc != t) {
             misscount += tc - t;
         }
@@ -499,7 +499,7 @@ static int csv_weekly_data (DATASET *dset)
         if (missfrac > 0.05) {
             ret = 0;
         } else {
-            int Tc = calendar_obs_number(lbl2, dset) + 1;
+            int Tc = calendar_obs_number(lbl2, dset, 0) + 1;
             int altmiss = Tc - dset->n;
 
             fprintf(stderr, "check: Tc = %d, missing = %d\n", Tc, altmiss);
@@ -621,7 +621,7 @@ static int check_daily_dates (DATASET *dset, int *pd,
             break;
         }
 
-        n = calendar_obs_number(dset->S[s], dset);
+        n = calendar_obs_number(dset->S[s], dset, 0);
         if (n < t) {
             pprintf(prn, _("Daily dates error at t = %d:\n"
                     "  calendar_obs_number() for '%s' = %d but t = %d\n"),

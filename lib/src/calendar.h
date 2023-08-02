@@ -75,7 +75,8 @@ int date_to_daily_index (const char *datestr, int wkdays);
 int daily_index_to_date (char *targ, int y, int m, int idx,
 			 int wkdays);
 
-int calendar_obs_number (const char *datestr, const DATASET *dset);
+int calendar_obs_number (const char *datestr, const DATASET *dset,
+			 int nolimit);
 
 int calendar_date_string (char *targ, int t, const DATASET *dset);
 

@@ -37,6 +37,7 @@
 #include <glib.h>
 
 #define MERGE_DEBUG 0
+#define DATES_DEBUG 0
 
 /**
  * SECTION:dataio
@@ -238,8 +239,6 @@ static int get_dot_pos (const char *s)
     return pos;
 }
 
-#define DATES_DEBUG 0
-
 static int match_obs_marker (const char *s, const DATASET *dset)
 {
     char test[OBSLEN];
@@ -352,7 +351,7 @@ real_dateton (const char *date, const DATASET *dset, int nolimit)
 	    return -1;
 	} else {
 	    /* automatic calendar dates */
-	    n = calendar_obs_number(date, dset);
+	    n = calendar_obs_number(date, dset, nolimit);
 	    handled = 1;
 	}
     } else if (dataset_is_daily(dset) ||
@@ -473,7 +472,7 @@ int dateton (const char *date, const DATASET *dset)
  * Works just as dateton(), except that for this function it
  * is not an error if @date represents an observation that
  * lies beyond the data range specified in @dset. This is
- * inended for use when merging data, or when creating a new
+ * intended for use when merging data, or when creating a new
  * dataset.
  *
  * Returns: zero-based observation number, or -1 on error.
@@ -1725,11 +1724,11 @@ static int compare_ranges (const DATASET *targ,
 
 #if DATES_DEBUG
     fprintf(stderr, "compare_ranges:\n"
-	    " targ->n = %d, src->n = %d\n"
-	    " targ->stobs = '%s', src->stobs = '%s'\n"
-	    " sd1 = %d, ed1 = %d\n",
+	    " targ->n = %d, src->n = %d, targ->stobs = '%s'\n"
+	    " src->stobs =  '%s' -> sd1 %d\n"
+	    " src->endobs = '%s' -> ed1 = %d\n",
 	    targ->n, src->n, targ->stobs, src->stobs,
-	    sd1, ed1);
+	    sd1, src->endobs, ed1);
 #endif
 
     if (sd1 < 0) {
@@ -2193,7 +2192,8 @@ static int merge_data (DATASET *dset, DATASET *addset,
 	    addobs = compare_ranges(dset, addset, addvars, &offset,
 				    &yrspecial, &err);
 #if MERGE_DEBUG
-	    fprintf(stderr, " added obs, from compare_ranges: %d\n", addobs);
+	    fprintf(stderr, " added obs, from compare_ranges: %d (offset %d)\n",
+		    addobs, offset);
 #endif
 	}
 	if (!err && addobs <= 0 && addvars == 0) {

@@ -4686,8 +4686,8 @@ static int daily_dataset_to_monthly (DATASET *dset,
 
 static int get_daily_skip (const DATASET *dset, int t)
 {
-    int dd = calendar_obs_number(dset->S[t], dset) -
-	calendar_obs_number(dset->S[t-1], dset);
+    int dd = calendar_obs_number(dset->S[t], dset, 0) -
+	calendar_obs_number(dset->S[t-1], dset, 0);
 
     if (dd == 0) {
 	fprintf(stderr, "get_daily_skip: S[%d] = '%s', S[%d] = '%s'\n",
