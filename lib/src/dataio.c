@@ -2100,6 +2100,25 @@ int basic_data_merge_check (const DATASET *dset,
 
 #endif
 
+/* When we're merging dated weekly data, the day-of-week on which
+   weeks are supposed to start should be consistent across the
+   two datasets.
+*/
+
+static int check_week_start_dates (const DATASET *ds0,
+				   const DATASET *ds1)
+{
+    int wd0 = weekday_from_epoch_day((guint32) ds0->sd0, 1);
+    int wd1 = weekday_from_epoch_day((guint32) ds1->sd0, 1);
+
+    if (wd1 != wd0) {
+	gretl_errmsg_set("Error appending data: inconsistent dating of weeks");
+	return E_DATA;
+    } else {
+	return 0;
+    }
+}
+
 #define simple_structure(p) (p->structure == TIME_SERIES ||		\
 			     p->structure == SPECIAL_TIME_SERIES ||	\
 			     (p->structure == CROSS_SECTION &&		\
@@ -2154,6 +2173,11 @@ static int merge_data (DATASET *dset, DATASET *addset,
 	fprintf(stderr, " special: merging daily data\n");
 #endif
 	dayspecial = 1;
+    } else if (dated_weekly_data(dset) && dated_weekly_data(addset)) {
+	err = check_week_start_dates(dset, addset);
+	if (err) {
+	    return err;
+	}
     }
 
     if (opt & OPT_X) {
