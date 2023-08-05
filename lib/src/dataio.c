@@ -3958,10 +3958,10 @@ int analyse_daily_import (const DATASET *dset, PRN *prn)
 	/* start by finding first Sat and/or Sun */
 	for (t=0; t<dset->n; t++) {
 	    ntolabel(datestr, t, dset);
-	    wkday = weekday_from_date(datestr, 0);
+	    wkday = weekday_from_date(datestr, 1);
 	    if (wkday == 6 && sat0 < 0) {
 		sat0 = t;
-	    } else if (wkday == 0 && sun0 < 0) {
+	    } else if (wkday == 7 && sun0 < 0) {
 		sun0 = t;
 	    }
 	    if (sat0 >= 0 && sun0 >= 0) {

@@ -965,6 +965,9 @@ static void maybe_extend_lags (DATASET *dset, int t1, int t2)
 /* Determine the increment in days from a given day of the week to the
    "next" day, according to a weekly calendar or a daily one, allowing
    that a daily calendar may skip Sundays or weekends.
+
+   On exit, the content of @pwday is changed to the day-of-week
+   number of the next day, unless @dset is weekly or 7-day daily.
 */
 
 static int ed_increment (DATASET *dset, int *pwday)
@@ -980,7 +983,7 @@ static int ed_increment (DATASET *dset, int *pwday)
 	delta = 1;
     } else if (dset->pd == 6) {
 	/* daily, Sunday omitted */
-	if (wday == 6) {
+	if (wday == G_DATE_SATURDAY) {
 	    delta = 2;
 	    *pwday = 1;
 	} else {
@@ -988,7 +991,7 @@ static int ed_increment (DATASET *dset, int *pwday)
 	}
     } else if (dset->pd == 5) {
 	/* daily, weekends omitted */
-	if (wday == 5) {
+	if (wday == G_DATE_FRIDAY) {
 	    delta = 3;
 	    *pwday = 1;
 	} else {
@@ -1016,7 +1019,7 @@ static int extend_date_markers (DATASET *dset, int t1, int T)
     if (ed == 0) {
 	err = 1;
     } else {
-	int t, wday = weekday_from_epoch_day(ed, 0);
+	int t, wday = weekday_from_epoch_day(ed, 1);
 	int y, m, d;
 
 	for (t=t1; t<T; t++) {
@@ -3328,8 +3331,8 @@ static int compact_dataset_wrapper (const char *s, DATASET *dset,
 				    int k, gretlopt opt)
 {
     CompactMethod method = COMPACT_AVG;
-    int wkstart = -1;
-    int repday = -1;
+    int wkstart = 0;
+    int repday = 0;
     int err = 0;
 
     if (undated_daily_data(dset)) {
@@ -3359,10 +3362,14 @@ static int compact_dataset_wrapper (const char *s, DATASET *dset,
 	wkstart = 1;
 	if (dset->pd == 7 && (opt & OPT_W)) {
 	    wkstart = get_optval_int(DATAMOD, OPT_W, &err);
+	    /* convert to GLib */
+	    wkstart = wkstart == 0 ? G_DATE_SUNDAY : wkstart;
 	}
 	if (!err && (opt & OPT_R)) {
 	    repday = get_optval_int(DATAMOD, OPT_R, &err);
 	    if (!err) {
+		/* convert to GLib */
+		repday = repday == 0 ? G_DATE_SUNDAY : repday;
 		method = COMPACT_WDAY;
 	    }
 	}
@@ -5474,6 +5481,11 @@ int is_dataset_series (const DATASET *dset, const double *x)
     return 0;
 }
 
+/* Given a @delta in epoch days, a day-of-week in @wd, and
+   days-per-week in @pd, determine the number of days
+   skipped relative to a "full calendar".
+*/
+
 static int effective_daily_skip (int delta, int wd, int pd)
 {
     int k, skip = delta - 1;
@@ -5481,11 +5493,13 @@ static int effective_daily_skip (int delta, int wd, int pd)
     if (pd < 7) {
 	skip = 0;
 	for (k=1; k<delta; k++) {
-	    wd = (wd == 0)? 6 : wd - 1;
+	    wd = (wd == G_DATE_MONDAY)? G_DATE_SUNDAY : wd - 1;
 	    if (pd == 6) {
-		skip += (wd != 0);
+		/* don't count Sundays as skipped */
+		skip += (wd != G_DATE_SUNDAY);
 	    } else {
-		skip += (wd != 0 && wd != 6);
+		/* don't count weekends as skipped */
+		skip += wd < G_DATE_SATURDAY;
 	    }
 	}
     }
@@ -5511,7 +5525,7 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
 	if (t == 0) {
 	    ed0 = edbak = get_epoch_day(datestr);
 	} else {
-	    wd = weekday_from_date(datestr, 0);
+	    wd = weekday_from_date(datestr, 1);
 	    ed = get_epoch_day(datestr);
 	    skip = effective_daily_skip(ed - edbak, wd, pd);
 	    totskip += skip;
@@ -5539,7 +5553,7 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
 	for (t=0; t<dset->n; t++) {
 	    if (t > 0) {
 		ntolabel(datestr, t, dset);
-		wd = weekday_from_date(datestr, 0);
+		wd = weekday_from_date(datestr, 1);
 		ed = get_epoch_day(datestr);
 		s += 1 + effective_daily_skip(ed - edbak, wd, pd);
 		edbak = ed;

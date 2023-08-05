@@ -3832,44 +3832,37 @@ static void week_start_buttons (GtkWidget *dlg, int *week_start,
     cinfo->monday_button = button;
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
-
     g_signal_connect(G_OBJECT(button), "clicked",
                      G_CALLBACK(set_week_start), week_start);
     g_object_set_data(G_OBJECT(button), "action",
-                      GINT_TO_POINTER(1));
+                      GINT_TO_POINTER(G_DATE_MONDAY));
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON (button));
     button = gtk_radio_button_new_with_label(group, _("Week starts on Sunday"));
     cinfo->sunday_button = button;
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
-
     g_signal_connect(G_OBJECT(button), "clicked",
                      G_CALLBACK(set_week_start), week_start);
     g_object_set_data(G_OBJECT(button), "action",
-                      GINT_TO_POINTER(0));
+                      GINT_TO_POINTER(G_DATE_SUNDAY));
 }
 
 static const char *weekdays[] = {
-    N_("Sunday"),
     N_("Monday"),
     N_("Tuesday"),
     N_("Wednesday"),
     N_("Thursday"),
     N_("Friday"),
-    N_("Saturday")
+    N_("Saturday"),
+    N_("Sunday"),
 };
 
 static gboolean select_repday (GtkComboBox *menu, int *repday)
 {
     int i = gtk_combo_box_get_active(menu);
 
-    if (dataset->pd == 7) {
-	/* all days shown */
-	*repday = i;
-    } else {
-	/* Sunday not shown: i = 0 means Monday (1), etc. */
-	*repday = i + 1;
-    }
+    /* convert to 1-based */
+    *repday = i + 1;
 
     return FALSE;
 }
@@ -3958,7 +3951,7 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
     }
 
     if (dated_daily_data(dataset) && cinfo->repday != NULL) {
-	int repval = *cinfo->repday - (dataset->pd != 7);
+	int repval = *cinfo->repday;
         GtkWidget *hbox, *daymenu;
 
         hbox = gtk_hbox_new(FALSE, 5);
@@ -3972,11 +3965,7 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
         cinfo->wkday_opt = button;
 
         daymenu = gtk_combo_box_text_new();
-        for (i=0; i<7; i++) {
-            if ((i == 0 && dataset->pd != 7) ||
-                (i == 6 && dataset->pd == 5)) {
-                continue;
-            }
+        for (i=0; i<dataset->pd; i++) {
             combo_box_append_text(daymenu, _(weekdays[i]));
         }
         gtk_combo_box_set_active(GTK_COMBO_BOX(daymenu), repval);
@@ -4056,7 +4045,7 @@ void data_compact_dialog (int spd, int *target_pd, int *week_start,
     cinfo.wkday_opt = NULL;
 
     if (week_start != NULL) {
-        *week_start = 1;
+        *week_start = G_DATE_MONDAY;
     }
 
     if (*target_pd != 0) {

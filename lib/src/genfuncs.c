@@ -3721,7 +3721,6 @@ int gen_wkday (DATASET *dset, int *vnum)
     }
 
     i = series_index(dset, "weekday");
-
     if (i == dset->v && dataset_add_series(dset, 1)) {
         return E_ALLOC;
     }
