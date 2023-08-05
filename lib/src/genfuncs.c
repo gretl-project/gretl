@@ -3714,7 +3714,7 @@ int gen_time (DATASET *dset, int tm, int *vnum)
 int gen_wkday (DATASET *dset, int *vnum)
 {
     char datestr[OBSLEN];
-    int i, t;
+    int i, t, wd;
 
     if (!dated_daily_data(dset)) {
         return E_PDWRONG;
@@ -3730,7 +3730,10 @@ int gen_wkday (DATASET *dset, int *vnum)
 
     for (t=0; t<dset->n; t++) {
         ntolabel(datestr, t, dset);
-        dset->Z[i][t] = weekday_from_date(datestr, 0);
+	wd = weekday_from_date(datestr, 1);
+	/* traditional userspace weekdays */
+	wd = (wd == G_DATE_SUNDAY) ? 0 : wd;
+        dset->Z[i][t] = (double) wd;
     }
 
     if (vnum != NULL) {
