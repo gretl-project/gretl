@@ -634,12 +634,15 @@ int get_subperiod (int t, const DATASET *dset, int *err)
     if (dataset_is_weekly(dset)) {
 	/* bodge -- what else to do? */
 	ret = t % dset->pd;
-    } else if (calendar_data(dset)) {
-	/* dated daily data */
-	char datestr[12];
+    } else if (dated_daily_data(dset)) {
+	char obs[OBSLEN];
 
-	calendar_date_string(datestr, t, dset);
-	ret = weekday_from_date(datestr, 0);
+	ntolabel(obs, t, dset);
+	ret = weekday_from_date(obs);
+        /* 2023-08-06: for now, ensure backward compatibility,
+           though I'm not sure that's actually right.
+        */
+        ret = ret == 7 ? 0 : ret;
     } else if (dataset_is_daily(dset)) {
 	/* bodge, again */
 	ret = t % dset->pd;
@@ -2108,8 +2111,8 @@ int basic_data_merge_check (const DATASET *dset,
 static int check_week_start_dates (const DATASET *ds0,
 				   const DATASET *ds1)
 {
-    int wd0 = weekday_from_epoch_day((guint32) ds0->sd0, 1);
-    int wd1 = weekday_from_epoch_day((guint32) ds1->sd0, 1);
+    int wd0 = weekday_from_epoch_day((guint32) ds0->sd0);
+    int wd1 = weekday_from_epoch_day((guint32) ds1->sd0);
 
     if (wd1 != wd0) {
 	gretl_errmsg_set("Error appending data: inconsistent dating of weeks");
@@ -3958,10 +3961,10 @@ int analyse_daily_import (const DATASET *dset, PRN *prn)
 	/* start by finding first Sat and/or Sun */
 	for (t=0; t<dset->n; t++) {
 	    ntolabel(datestr, t, dset);
-	    wkday = weekday_from_date(datestr, 0);
+	    wkday = weekday_from_date(datestr);
 	    if (wkday == 6 && sat0 < 0) {
 		sat0 = t;
-	    } else if (wkday == 0 && sun0 < 0) {
+	    } else if (wkday == 7 && sun0 < 0) {
 		sun0 = t;
 	    }
 	    if (sat0 >= 0 && sun0 >= 0) {

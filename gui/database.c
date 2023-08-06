@@ -4462,8 +4462,8 @@ void do_compact_dataset (void)
 {
     CompactMethod method = COMPACT_AVG;
     int err, newpd = 0;
-    int wkstart = -1;
-    int repday = -1;
+    int wkstart = 0;
+    int repday = 0;
     int *p_wkstart = NULL;
     int *p_repday = NULL;
 
@@ -4472,10 +4472,10 @@ void do_compact_dataset (void)
     }
 
     if (dated_daily_data(dataset)) {
-	repday = 1;
+	repday = G_DATE_MONDAY;
 	p_repday = &repday;
 	if (dataset->pd == 7) {
-	    wkstart = 1;
+	    wkstart = G_DATE_MONDAY;
 	    p_wkstart = &wkstart;
 	}
     }
@@ -4490,7 +4490,7 @@ void do_compact_dataset (void)
 
     if (method != COMPACT_WDAY) {
 	/* revert @repday to "not used" value */
-	repday = -1;
+	repday = 0;
     }
 
     err = compact_dataset(dataset, newpd, method, wkstart, repday);
@@ -4506,12 +4506,17 @@ void do_compact_dataset (void)
 	} else {
 	    lib_command_sprintf("dataset compact %d", newpd);
 	}
-	if (wkstart >= 0) {
+	/* In the following clauses we need (for now) to conform
+	   to the userspace numbering of Sunday as weekday 0.
+	*/
+	if (wkstart > 0) {
+	    wkstart = wkstart == G_DATE_SUNDAY ? 0 : wkstart;
 	    tmp = g_strdup_printf(" --weekstart=%d", wkstart);
 	    lib_command_strcat(tmp);
 	    g_free(tmp);
 	}
-	if (repday >= 0) {
+	if (repday > 0) {
+	    repday = repday == G_DATE_SUNDAY ? 0 : repday;
 	    tmp = g_strdup_printf(" --repday=%d", repday);
 	    lib_command_strcat(tmp);
 	    g_free(tmp);

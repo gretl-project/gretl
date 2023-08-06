@@ -3120,8 +3120,9 @@ static int n_new_dummies (const DATASET *dset,
 static const char *dayname (int i)
 {
     const char *days[] = {
-        "Monday", "Tuesday", "Wednesday",
-        "Thursday", "Friday", "Saturday", "Sunday"
+        N_("Monday"), N_("Tuesday"), N_("Wednesday"),
+        N_("Thursday"), N_("Friday"), N_("Saturday"),
+        N_("Sunday")
     };
 
     if (i >= 1 && i <= 7) {
@@ -3156,7 +3157,7 @@ static gchar *seas_name_and_label (int i, const DATASET *dset,
 #else
         sprintf(vname, "dummy_%d", i);
 #endif
-        ret = g_strdup_printf(_("= 1 if day = %s, 0 otherwise"), dayname(i));
+        ret = g_strdup_printf(_("= 1 if day = %s, 0 otherwise"), _(dayname(i)));
     } else {
         char dumstr[8] = "dummy_";
         char numstr[12];
@@ -3316,10 +3317,10 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 
         for (t=0; t<dset->n; t++) {
             ntolabel(datestr, t, dset);
-            wkday = weekday_from_date(datestr, 1);
+            wkday = weekday_from_date(datestr);
             for (k=1, i=1; i<=list[0]; i++) {
                 vi = list[i];
-                if (k+1 == ref) k++;
+                if (k == ref) k++;
                 dset->Z[vi][t] = (wkday == k)? 1 : 0;
                 k++;
             }
@@ -3714,14 +3715,13 @@ int gen_time (DATASET *dset, int tm, int *vnum)
 int gen_wkday (DATASET *dset, int *vnum)
 {
     char datestr[OBSLEN];
-    int i, t;
+    int i, t, wd;
 
     if (!dated_daily_data(dset)) {
         return E_PDWRONG;
     }
 
     i = series_index(dset, "weekday");
-
     if (i == dset->v && dataset_add_series(dset, 1)) {
         return E_ALLOC;
     }
@@ -3731,7 +3731,10 @@ int gen_wkday (DATASET *dset, int *vnum)
 
     for (t=0; t<dset->n; t++) {
         ntolabel(datestr, t, dset);
-        dset->Z[i][t] = weekday_from_date(datestr, 0);
+	wd = weekday_from_date(datestr);
+	/* traditional userspace weekdays */
+	wd = (wd == G_DATE_SUNDAY) ? 0 : wd;
+        dset->Z[i][t] = (double) wd;
     }
 
     if (vnum != NULL) {
@@ -7860,8 +7863,8 @@ int sample_span (const char *stobs, const char *endobs,
 
         if (ed1 > 0 && ed2 > 0 && (pd == 5 || pd == 6)) {
             /* validate days-of-week */
-            int wd1 = weekday_from_epoch_day(ed1, 1);
-            int wd2 = weekday_from_epoch_day(ed2, 1);
+            int wd1 = weekday_from_epoch_day(ed1);
+            int wd2 = weekday_from_epoch_day(ed2);
 
 	    if (wd1 > pd) {
 		ed1 = 0;

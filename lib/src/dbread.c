@@ -4071,9 +4071,10 @@ daily_series_to_monthly (DATASET *dset, int i,
 
 static void
 get_startskip_etc (int compfac, int startmin, int endmin,
-		   int oldn, CompactMethod method,
+		   DATASET *dset, CompactMethod method,
 		   int *startskip, int *newn)
 {
+    int oldn = dset->n;
     int ss = 0, n = 0;
 
     if (method == COMPACT_EOP) {
@@ -4094,12 +4095,23 @@ get_startskip_etc (int compfac, int startmin, int endmin,
 	if (unused >= compfac) {
 	    n++;
 	}
+    } else if (dated_daily_data(dset)) {
+        int es = endmin % compfac;
+
+        /* in this case @startmin is actually startskip */
+        ss = startmin;
+        n = (oldn - ss - es) / compfac;
     } else {
 	int es = endmin % compfac;
 
 	ss = (compfac - (startmin % compfac) + 1) % compfac;
 	n = (oldn - ss - es) / compfac;
     }
+
+#if DB_DEBUG
+    fprintf(stderr, "get_startskip_etc: startskip %d, startmin %d, newn %d\n",
+            ss, startmin, n);
+#endif
 
     *startskip = ss;
     *newn = n;
@@ -4189,7 +4201,7 @@ get_global_compact_params (int compfac, int startmin, int endmin,
     int i, startskip, n = 0;
     int n_not_eop = 0;
 
-    get_startskip_etc(compfac, startmin, endmin, dset->n,
+    get_startskip_etc(compfac, startmin, endmin, dset,
 		      method, &startskip, &n);
     if (method == COMPACT_EOP) {
 	cp->any_eop = 1;
@@ -4198,7 +4210,7 @@ get_global_compact_params (int compfac, int startmin, int endmin,
     for (i=1; i<=nvars; i++) {
 	method = series_get_compact_method(dset, i);
 	if (method != default_method && method != COMPACT_UNSET) {
-	    get_startskip_etc(compfac, startmin, endmin, dset->n,
+	    get_startskip_etc(compfac, startmin, endmin, dset,
 			      method, &startskip, &n);
 	    cp->all_same = 0;
 	    if (method == COMPACT_EOP) {
@@ -4539,7 +4551,7 @@ static int shorten_the_constant (double **Z, int n)
 /* compaction of daily to weekly data in the special case of
    COMPACT_WDAY -- that is, via use of a "representative day",
    for example the weekly value is Wednesday's value. Note
-   that @repday is 0-based on Sunday.
+   that on input @repday is 0-based on Sunday.
 */
 
 static int daily_dataset_to_weekly_special (DATASET *dset,
@@ -4553,18 +4565,18 @@ static int daily_dataset_to_weekly_special (DATASET *dset,
     int wday, ok;
     int i, t, err = 0;
 
-    int repmin = dset->pd == 7 ? 0 : 1;
-    int repmax = dset->pd == 5 ? 5 : 6;
+    int repmin = G_DATE_MONDAY;
+    int repmax = dset->pd == 5 ? G_DATE_FRIDAY :
+	dset->pd == 6 ? G_DATE_SATURDAY : G_DATE_SUNDAY;
+
     if (repday < repmin || repday > repmax) {
 	gretl_errmsg_set("Invalid repday value");
 	return E_INVARG;
     }
 
-    fprintf(stderr, "daily_dataset_to_weekly: repday = %d\n", repday);
-
     for (t=0; t<dset->n; t++) {
 	ntolabel(obs, t, dset);
-	wday = weekday_from_date(obs, 0);
+	wday = weekday_from_date(obs);
 	if (wday == repday) {
 	    ok = 0;
 	    for (i=1; i<dset->v; i++) {
@@ -4603,7 +4615,7 @@ static int daily_dataset_to_weekly_special (DATASET *dset,
 
 	for (t=0; t<dset->n; t++) {
 	    ntolabel(obs, t, dset);
-	    wday = weekday_from_date(obs, 0);
+	    wday = weekday_from_date(obs);
 	    if (wday == repday) {
 		x[s++] = dset->Z[i][t];
 	    }
@@ -4821,6 +4833,22 @@ static int do_compact_spread (DATASET *dset, int newpd)
     return err;
 }
 
+static int dated_daily_startmin (DATASET *dset, int wkstart)
+{
+    char obs[OBSLEN];
+    int t, smin = 0;
+
+    for (t=0; t<dset->pd; t++) {
+        ntolabel(obs, t, dset);
+        if (weekday_from_date(obs) == wkstart) {
+            smin = t;
+            break;
+        }
+    }
+
+    return smin;
+}
+
 #define is_daily(p) (p==5 || p==6 || p==7)
 
 /**
@@ -4829,11 +4857,11 @@ static int do_compact_spread (DATASET *dset, int newpd)
  * @newpd: target data frequency.
  * @default_method: code for the default compaction method.
  * @wkstart: the day on which a week is deemed to start:
- * 0 for Sunday or 1 for Monday; relevant only for daily
+ * 1 for Monday or 7 for Sunday; relevant only for daily
  * to weekly compaction.
  * @repday: "representative day" for conversion from daily
  * to weekly data (with method %COMPACT_WDAY only). Value
- * 0 to 6 with 0 = Sunday, or -1 to ignore it.
+ * 1 to 7 with 1 = Monday, or 0 to ignore it.
  *
  * Compact the data set from higher to lower frequency.
  *
@@ -4848,9 +4876,10 @@ int compact_dataset (DATASET *dset, int newpd,
     int oldn = dset->n;
     int oldpd = dset->pd;
     int compfac = 0;
-    int startmaj, startmin;
-    int endmaj = 0;
-    int endmin = 0;
+    int start_major;
+    int start_minor;
+    int end_major = 0;
+    int end_minor = 0;
     int from_dated_daily;
     char stobs[OBSLEN];
     int i, err = 0;
@@ -4858,12 +4887,14 @@ int compact_dataset (DATASET *dset, int newpd,
     gretl_error_clear();
     compact_params_init(&cp, oldpd);
 
-    if (wkstart == -1) {
+    if (wkstart == 0) {
 	; /* OK, "ignore me" */
-    } else if (wkstart != 0 && wkstart != 1) {
+    } else if (wkstart != G_DATE_MONDAY && wkstart != G_DATE_SUNDAY) {
 	gretl_errmsg_set("Invalid weekstart value");
 	return E_INVARG;
     }
+
+    fprintf(stderr, "HERE 1 wkstart=%d, repday=%d\n", wkstart, repday);
 
     /* catch a couple of special cases */
     if (default_method == COMPACT_SPREAD) {
@@ -4898,37 +4929,33 @@ int compact_dataset (DATASET *dset, int newpd,
 	/* daily to weekly, not COMPACT_WDAY */
 	compfac = oldpd;
 	if (from_dated_daily) {
-	    startmin = weekday_from_date(dset->stobs, 0);
-	    if (oldpd == 7) {
-		if (wkstart == 1) {
-		    if (startmin == 0) startmin = 7;
-		} else {
-		    startmin++;
-		}
-	    }
+            /* here we're borrowing @start_minor for a daily-
+               specific purpose
+            */
+	    start_minor = dated_daily_startmin(dset, wkstart);
 	} else {
-	    startmin = 1;
+	    start_minor = 1;
 	}
     } else if (oldpd == 24 && is_daily(newpd)) {
 	/* hourly to daily */
 	compfac = 24;
-	if (!get_obs_maj_min(dset->stobs, &startmaj, &startmin)) {
+	if (!get_obs_maj_min(dset->stobs, &start_major, &start_minor)) {
 	    return 1;
 	}
     } else {
 	compfac = oldpd / newpd;
 	/* get starting obs major and minor components */
-	if (!get_obs_maj_min(dset->stobs, &startmaj, &startmin)) {
+	if (!get_obs_maj_min(dset->stobs, &start_major, &start_minor)) {
 	    return 1;
 	}
 	/* get ending obs major and minor components */
-	if (!get_obs_maj_min(dset->endobs, &endmaj, &endmin)) {
+	if (!get_obs_maj_min(dset->endobs, &end_major, &end_minor)) {
 	    return 1;
 	}
     }
 
-    get_global_compact_params(compfac, startmin, endmin, default_method,
-			      &cp, dset);
+    get_global_compact_params(compfac, start_minor, end_minor,
+                              default_method, &cp, dset);
 
     if (cp.newn == 0 && default_method != COMPACT_SPREAD) {
 	gretl_errmsg_set(_("Compacted dataset would be empty"));
@@ -4937,9 +4964,9 @@ int compact_dataset (DATASET *dset, int newpd,
 
     if (newpd == 1) {
 	if (cp.min_startskip > 0 && !cp.any_eop) {
-	    startmaj++;
+	    start_major++;
 	}
-	sprintf(stobs, "%d", startmaj);
+	sprintf(stobs, "%d", start_major);
     } else if (newpd == 52) {
 	if (dated_daily_data(dset)) {
 	    ntolabel(stobs, cp.min_startskip, dset);
@@ -4947,14 +4974,14 @@ int compact_dataset (DATASET *dset, int newpd,
 	    strcpy(stobs, "1");
 	}
     } else {
-	int m0 = startmin + cp.min_startskip;
+	int m0 = start_minor + cp.min_startskip;
 	int minor = m0 / compfac + (m0 % compfac > 0);
 
 	if (minor > newpd) {
-	    startmaj++;
+	    start_major++;
 	    minor -= newpd;
 	}
-	format_obs(stobs, startmaj, minor, newpd);
+	format_obs(stobs, start_major, minor, newpd);
     }
 
     /* revise datainfo members */
@@ -4990,7 +5017,7 @@ int compact_dataset (DATASET *dset, int newpd,
 		this_method = m_i;
 	    }
 
-	    startskip = compfac - (startmin % compfac) + 1;
+	    startskip = compfac - (start_minor % compfac) + 1;
 	    startskip = startskip % compfac;
 	    if (this_method == COMPACT_EOP) {
 		if (startskip > 0) {
