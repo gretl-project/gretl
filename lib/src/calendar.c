@@ -542,7 +542,9 @@ int calendar_obs_number (const char *datestr, const DATASET *dset,
     return t;
 }
 
-/* convert from $t in dataset to epoch day */
+/* Convert from 0-based @t in dataset to epoch day, assuming a
+   complete calendar (relative to @wkdays).
+*/
 
 static int t_to_epoch_day (int t, guint32 start, int wkdays)
 {
@@ -588,7 +590,8 @@ guint32 epoch_day_from_t (int t, const DATASET *dset)
  * @dset: pointer to dataset.
  *
  * Writes to @targ the calendar representation of the date of
- * observation @t, in the form YY[YY]-MM-DD.
+ * observation @t, in the form YY[YY]-MM-DD, on the assumption
+ * that @dset contains calendrical information.
  *
  * Returns: 0 on success, non-zero on error.
  */
@@ -599,6 +602,16 @@ int calendar_date_string (char *targ, int t, const DATASET *dset)
     guint32 dt = 0;
     int y, m, d;
     int err = 0;
+
+    if (d0 == 1) {
+        strcpy(targ, "BAD DATE");
+        gretl_errmsg_set("The dataset lacks calendrical information");
+        return E_DATA;
+    } else if (dataset_has_markers(dset)) {
+        /* the calendar is presumably incomplete */
+        strcpy(targ, dset->S[t]);
+        return 0;
+    }
 
     *targ = '\0';
 
