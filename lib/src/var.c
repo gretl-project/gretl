@@ -317,25 +317,28 @@ static int VAR_add_regular_seasonals (GRETL_VAR *v,
 
     if (dataset_is_incomplete_daily(dset)) {
 	/* we have to read the date of each observation,
-	   since there will be holes in the time series
+	   since there are holes in the time series
 	*/
 	int dow;
 
 	for (t=0; t<v->T; t++) {
-	    dow = weekday_from_date(dset->S[t + v->t1], 0);
+	    dow = weekday_from_date(dset->S[t + v->t1]);
+            dow = dow == 7 ? 0 : dow; /* compatibility */
 	    for (i=0; i<pd1; i++) {
 		gretl_matrix_set(v->X, t, k+i, (dow == i+1)? s1 : s0);
 	    }
 	}
     } else {
 	/* we can proceed mostly algorithmically */
-	int per, offset = dated_daily_data(dset) ? 1 : 0;
+	int per, offset = 0;
 
 	if (dated_daily_data(dset)) {
 	    char obs[OBSLEN];
 
 	    ntolabel(obs, v->t1, dset);
-	    per = weekday_from_date(obs, 0);
+	    per = weekday_from_date(obs);
+            per = per == 7 ? 0 : per; /* compatibility */
+            offset = 1;
 	} else {
 	    per = get_subperiod(v->t1, dset, NULL);
 	}

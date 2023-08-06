@@ -402,30 +402,23 @@ guint32 epoch_day_from_ymd_checked (double ymd, int *err)
 /**
  * weekday_from_epoch_day:
  * @ed: epoch day (ed >= 1).
- * @alt: if non-zero, work on basis of [Monday=1 to Sunday=7],
- * othewise use [Sunday=0 to Saturday=6].
  *
- * Returns: the weekday corrsponding to @ed, or -1 on error.
+ * Returns: the weekday corrsponding to @ed, on the basis
+ * of Monday = 1 to Sunday = 7, or 0 on error.
  */
 
-int weekday_from_epoch_day (guint32 ed, int alt)
+int weekday_from_epoch_day (guint32 ed)
 {
-    GDateWeekday gwd;
     GDate date;
 
     if (!g_date_valid_julian(ed)) {
-	return -1;
+	return 0;
     }
 
     g_date_clear(&date, 1);
     g_date_set_julian(&date, ed);
-    gwd = g_date_get_weekday(&date);
 
-    if (alt) {
-	return gwd;
-    } else {
-	return gwd == G_DATE_SUNDAY ? 0 : (int) gwd;
-    }
+    return g_date_get_weekday(&date);
 }
 
 /**
@@ -513,7 +506,7 @@ int calendar_obs_number (const char *datestr, const DATASET *dset,
 	t /= 7;
     } else if (dset->pd == 5 || dset->pd == 6) {
 	/* daily, 5- or 6-day week */
-	int wd = weekday_from_epoch_day(ut, 1);
+	int wd = weekday_from_epoch_day(ut);
 	int startday, wkends;
 
 	/* check for out-of-calendar days */
@@ -621,9 +614,9 @@ int calendar_date_string (char *targ, int t, const DATASET *dset)
 	dt = d0 + t;
     } else {
 	if (t == 0 && (dset->pd == 5 || dset->pd == 6)) {
-	    int wd = weekday_from_epoch_day(d0, 1);
+	    int wd = weekday_from_epoch_day(d0);
 
-	    if (wd > dset->pd) {
+	    if (wd == 0 || wd > dset->pd) {
 		strcpy(targ, "BAD DATE");
 		gretl_errmsg_sprintf(_("Invalid starting date for %d-day data"), dset->pd);
 		return E_DATA;
@@ -826,14 +819,11 @@ double day_of_week (int y, int m, int d, int julian, int *err)
 /**
  * weekday_from_date:
  * @datestr: calendar representation of date, [YY]YY/MM/DD
- * @alt: if non-zero, determine the weekday number on the basis
- * of Monday=1 to Sunday=7; otherwise use the traditional
- * basis of Sunday=0 to Saturday=6.
  *
- * Returns: day of week as integer.
+ * Returns: day of week as integer (Monday = 1 to Sunday = 7).
  */
 
-int weekday_from_date (const char *datestr, int alt)
+int weekday_from_date (const char *datestr)
 {
     int y, m, d;
     int ydigits;
@@ -851,7 +841,7 @@ int weekday_from_date (const char *datestr, int alt)
 	y = FOUR_DIGIT_YEAR(y);
     }
 
-    return day_of_week_from_ymd(y, m, d, 0, alt);
+    return day_of_week_from_ymd(y, m, d, 0, 0);
 }
 
 /**
@@ -1287,7 +1277,7 @@ int guess_daily_pd (const DATASET *dset)
     int gotsat = 0;
 
     for (t=0; t<dset->n && t<40; t++) {
-	wd = weekday_from_date(dset->S[t], 1);
+	wd = weekday_from_date(dset->S[t]);
 	if (wd == 7) {
 	    pd = 7;
 	    break;

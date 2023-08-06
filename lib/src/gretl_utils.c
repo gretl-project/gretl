@@ -982,13 +982,13 @@ static int invalid_stobs (const char *s)
 
 static void maybe_fix_daily_start (guint32 *ed, int pd)
 {
-    int wday = weekday_from_epoch_day(*ed, 1);
+    int wday = weekday_from_epoch_day(*ed);
     int fix = 0;
 
-    if (wday == 7) {
+    if (wday == G_DATE_SUNDAY) {
         /* 5- or 6-day data: sunday not valid */
         fix = 1;
-    } else if (pd == 5 && wday == 6) {
+    } else if (pd == 5 && wday == G_DATE_SATURDAY) {
         /* 5-day data: saturday not valid */
         fix = 2;
     }

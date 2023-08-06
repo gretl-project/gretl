@@ -3317,7 +3317,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 
         for (t=0; t<dset->n; t++) {
             ntolabel(datestr, t, dset);
-            wkday = weekday_from_date(datestr, 1);
+            wkday = weekday_from_date(datestr);
             for (k=1, i=1; i<=list[0]; i++) {
                 vi = list[i];
                 if (k == ref) k++;
@@ -3731,7 +3731,7 @@ int gen_wkday (DATASET *dset, int *vnum)
 
     for (t=0; t<dset->n; t++) {
         ntolabel(datestr, t, dset);
-	wd = weekday_from_date(datestr, 1);
+	wd = weekday_from_date(datestr);
 	/* traditional userspace weekdays */
 	wd = (wd == G_DATE_SUNDAY) ? 0 : wd;
         dset->Z[i][t] = (double) wd;
@@ -7863,8 +7863,8 @@ int sample_span (const char *stobs, const char *endobs,
 
         if (ed1 > 0 && ed2 > 0 && (pd == 5 || pd == 6)) {
             /* validate days-of-week */
-            int wd1 = weekday_from_epoch_day(ed1, 1);
-            int wd2 = weekday_from_epoch_day(ed2, 1);
+            int wd1 = weekday_from_epoch_day(ed1);
+            int wd2 = weekday_from_epoch_day(ed2);
 
 	    if (wd1 > pd) {
 		ed1 = 0;
