@@ -3320,7 +3320,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
             wkday = weekday_from_date(datestr, 1);
             for (k=1, i=1; i<=list[0]; i++) {
                 vi = list[i];
-                if (k+1 == ref) k++;
+                if (k == ref) k++;
                 dset->Z[vi][t] = (wkday == k)? 1 : 0;
                 k++;
             }
