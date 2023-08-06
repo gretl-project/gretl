@@ -3120,8 +3120,9 @@ static int n_new_dummies (const DATASET *dset,
 static const char *dayname (int i)
 {
     const char *days[] = {
-        "Monday", "Tuesday", "Wednesday",
-        "Thursday", "Friday", "Saturday", "Sunday"
+        N_("Monday"), N_("Tuesday"), N_("Wednesday"),
+        N_("Thursday"), N_("Friday"), N_("Saturday"),
+        N_("Sunday")
     };
 
     if (i >= 1 && i <= 7) {
@@ -3156,7 +3157,7 @@ static gchar *seas_name_and_label (int i, const DATASET *dset,
 #else
         sprintf(vname, "dummy_%d", i);
 #endif
-        ret = g_strdup_printf(_("= 1 if day = %s, 0 otherwise"), dayname(i));
+        ret = g_strdup_printf(_("= 1 if day = %s, 0 otherwise"), _(dayname(i)));
     } else {
         char dumstr[8] = "dummy_";
         char numstr[12];

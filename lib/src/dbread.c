@@ -4108,7 +4108,7 @@ get_startskip_etc (int compfac, int startmin, int endmin,
 	n = (oldn - ss - es) / compfac;
     }
 
-if DB_DEBUG
+#if DB_DEBUG
     fprintf(stderr, "get_startskip_etc: startskip %d, startmin %d, newn %d\n",
             ss, startmin, n);
 #endif
