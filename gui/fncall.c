@@ -101,7 +101,6 @@ struct call_info_ {
 #define SELNAME "selected series"
 
 static GtkWidget *open_fncall_dlg;
-static gboolean close_on_OK = TRUE;
 static gboolean allow_full_data = TRUE;
 
 static void fncall_exec_callback (GtkWidget *w, call_info *cinfo);
@@ -1641,11 +1640,6 @@ static int spinnable_scalar_arg (call_info *cinfo, int i)
     return !na(mi) && !na(ma) && !na(s);
 }
 
-static void set_close_on_OK (GtkWidget *b, gpointer p)
-{
-    close_on_OK = button_is_active(b);
-}
-
 static void set_allow_full_data (GtkWidget *b, gpointer p)
 {
     allow_full_data = button_is_active(b);
@@ -1928,15 +1922,10 @@ static int function_call_dialog (call_info *cinfo)
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     }
 
-    /* "close on exec" option button */
-    hbox = gtk_hbox_new(FALSE, 5);
-    button = gtk_check_button_new_with_label(_("close this dialog on \"OK\""));
-    g_signal_connect(G_OBJECT(button), "toggled",
-		     G_CALLBACK(set_close_on_OK), NULL);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button),
-				 close_on_OK);
-    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    /* Apply button */
+    button = apply_button(bbox);
+    g_signal_connect(G_OBJECT (button), "clicked",
+		     G_CALLBACK(fncall_exec_callback), cinfo);
 
     /* Close button */
     button = close_button(bbox);
@@ -1945,6 +1934,7 @@ static int function_call_dialog (call_info *cinfo)
 
     /* "OK" button */
     button = ok_button(bbox);
+    widget_set_int(button, "close", 1);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(fncall_exec_callback), cinfo);
     gtk_widget_grab_default(button);
@@ -2253,7 +2243,9 @@ static void compose_fncall_line (char *line,
     strcat(line, ")");
 }
 
-static int real_GUI_function_call (call_info *cinfo, PRN *prn)
+static int real_GUI_function_call (call_info *cinfo,
+				   int close_on_exec,
+				   PRN *prn)
 {
     windata_t *outwin = NULL;
     ExecState state;
@@ -2303,7 +2295,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 
     if (show) {
 	/* allow the "flush" mechanism to operate */
-	if (close_on_OK && cinfo->dlg != NULL) {
+	if (close_on_exec && cinfo->dlg != NULL) {
 	    gtk_widget_hide(cinfo->dlg);
 	}
 	err = exec_line_with_output_handler(&state, dataset,
@@ -2333,7 +2325,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	    if (modal) {
 		gtk_window_set_modal(GTK_WINDOW(ctop), FALSE);
 	    }
-	    if (close_on_OK) {
+	    if (close_on_exec) {
 		gtk_widget_hide(cinfo->dlg);
 	    }
 	}
@@ -2539,6 +2531,7 @@ static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
     } else {
 	PRN *prn = NULL;
 	int autopos = -1;
+	int close_on_exec;
 	int err;
 
 	err = bufopen(&prn);
@@ -2550,8 +2543,10 @@ static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
 	    }
 	}
 
+	close_on_exec = widget_get_int(w, "close");
+
 	if (!err) {
-	    err = real_GUI_function_call(cinfo, prn);
+	    err = real_GUI_function_call(cinfo, close_on_exec, prn);
 	} else {
 	    gretl_print_destroy(prn);
 	}
@@ -2562,7 +2557,7 @@ static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
 	    cinfo->args[autopos] = g_strdup(SELNAME);
 	}
 
-	if (cinfo->dlg != NULL && close_on_OK) {
+	if (cinfo->dlg != NULL && close_on_exec) {
 	    gtk_widget_destroy(cinfo->dlg);
 	} else if (cinfo != NULL && cinfo->dlg == NULL) {
 	    cinfo_free(cinfo);
