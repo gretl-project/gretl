@@ -283,7 +283,7 @@ static void check_panel_time (dw_opts *opts, int *delta)
     }
 }
 
-/* respond to the "Apply" button in the wizard */
+/* respond to the "OK button in the wizard */
 
 static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
                               GtkWidget *dlg)
@@ -2204,7 +2204,7 @@ static void dwiz_button_visibility (GtkWidget *dlg, int step)
     GtkWidget *cancel  = g_object_get_data(G_OBJECT(dlg), "cancel");
     GtkWidget *back    = g_object_get_data(G_OBJECT(dlg), "back");
     GtkWidget *forward = g_object_get_data(G_OBJECT(dlg), "forward");
-    GtkWidget *apply   = g_object_get_data(G_OBJECT(dlg), "apply");
+    GtkWidget *ok      = g_object_get_data(G_OBJECT(dlg), "ok");
     GtkWidget *help    = g_object_get_data(G_OBJECT(dlg), "help");
 
     if (step == DW_SET_TYPE) {
@@ -2212,19 +2212,19 @@ static void dwiz_button_visibility (GtkWidget *dlg, int step)
         gtk_widget_hide(back);
         gtk_widget_show(forward);
         gtk_widget_grab_default(forward);
-        gtk_widget_hide(apply);
+        gtk_widget_hide(ok);
     } else if (step == DW_CONFIRM) {
         gtk_widget_show(cancel);
         gtk_widget_show(back);
         gtk_widget_hide(forward);
-        gtk_widget_show(apply);
-        gtk_widget_grab_default(apply);
+        gtk_widget_show(ok);
+        gtk_widget_grab_default(ok);
     } else {
         gtk_widget_show(cancel);
         gtk_widget_show(back);
         gtk_widget_show(forward);
         gtk_widget_grab_default(forward);
-        gtk_widget_hide(apply);
+        gtk_widget_hide(ok);
     }
 
     if (step == DW_PANEL_MODE) {
@@ -2336,9 +2336,9 @@ static void dwiz_cancel (GtkWidget *b, DATASET *dwinfo)
     dwiz_finalize(dlg, dwinfo, 1);
 }
 
-/* callback for the Apply button */
+/* callback for the OK button */
 
-static void dwiz_apply (GtkWidget *b, DATASET *dwinfo)
+static void dwiz_ok (GtkWidget *b, DATASET *dwinfo)
 {
     GtkWidget *dlg = g_object_get_data(G_OBJECT(b), "dlg");
 
@@ -2455,15 +2455,15 @@ static void build_dwiz_buttons (GtkWidget *dlg, DATASET *dwinfo)
     gtk_container_add(GTK_CONTAINER(hbox), b);
     g_object_set_data(G_OBJECT(dlg), "forward", b);
 
-    /* "Apply" button */
-    b = gtk_button_new_from_stock(GTK_STOCK_APPLY);
+    /* "OK" button */
+    b = gtk_button_new_from_stock(GTK_STOCK_OK);
     gtk_widget_set_can_default(b, TRUE);
     g_object_set_data(G_OBJECT(b), "dlg", dlg);
     g_signal_connect(G_OBJECT(b), "clicked",
-                     G_CALLBACK(dwiz_apply),
+                     G_CALLBACK(dwiz_ok),
                      dwinfo);
     gtk_container_add(GTK_CONTAINER(hbox), b);
-    g_object_set_data(G_OBJECT(dlg), "apply", b);
+    g_object_set_data(G_OBJECT(dlg), "ok", b);
 
     /* Help button for panel mode selection */
     b = context_help_button(hbox, PANEL_MODE);
