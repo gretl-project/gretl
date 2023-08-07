@@ -3743,18 +3743,18 @@ GtkWidget *plot_add_editor (png_plot *plot)
 		     G_CALLBACK(apply_gpt_changes), editor);
     gtk_widget_grab_default(button);
 
-    /* "OK" button (apply and close) */
-    button = ok_button(hbox);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(apply_gpt_changes), editor);
-    g_signal_connect_swapped(G_OBJECT(button), "clicked",
-			     G_CALLBACK(gtk_widget_destroy),
-			     dialog);
-
     /* Close button (do not apply changes) */
     button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
     gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
+
+    /* "OK" button (apply and close) */
+    button = ok_button(hbox);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(apply_gpt_changes), editor);
     g_signal_connect_swapped(G_OBJECT(button), "clicked",
 			     G_CALLBACK(gtk_widget_destroy),
 			     dialog);

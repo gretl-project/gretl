@@ -3419,7 +3419,8 @@ static int process_R_dependency (function_info *finfo,
 }
 
 static int process_extra_properties (function_info *finfo,
-				     gboolean make_changes)
+				     gboolean make_changes,
+				     gboolean close_on_apply)
 {
     int focus_label = 0;
     int changed = 0;
@@ -3443,17 +3444,23 @@ static int process_extra_properties (function_info *finfo,
 	finfo_set_modified(finfo, TRUE);
     }
 
+    if (make_changes && close_on_apply) {
+	gtk_widget_destroy(finfo->extra);
+    }
+
     return changed;
 }
 
 static void extra_properties_apply (GtkWidget *w, function_info *finfo)
 {
-    process_extra_properties(finfo, TRUE);
+    gboolean close_on_apply = widget_get_int(w, "close");
+
+    process_extra_properties(finfo, TRUE, close_on_apply);
 }
 
 static void extra_properties_close (GtkWidget *w, function_info *finfo)
 {
-    int changed = process_extra_properties(finfo, FALSE);
+    int changed = process_extra_properties(finfo, FALSE, FALSE);
 
     if (changed) {
 	int resp = yes_no_cancel_dialog(NULL, _("Apply changes?"),
@@ -3462,7 +3469,7 @@ static void extra_properties_close (GtkWidget *w, function_info *finfo)
 	if (resp == GRETL_CANCEL) {
 	    return;
 	} else if (resp == GRETL_YES) {
-	    process_extra_properties(finfo, TRUE);
+	    process_extra_properties(finfo, TRUE, FALSE);
 	}
     }
 
@@ -3472,7 +3479,7 @@ static void extra_properties_close (GtkWidget *w, function_info *finfo)
 static gint query_save_extra_props (GtkWidget *w, GdkEvent *event,
 				    function_info *finfo)
 {
-    int changed = process_extra_properties(finfo, FALSE);
+    int changed = process_extra_properties(finfo, FALSE, FALSE);
 
     if (changed) {
 	int resp = yes_no_cancel_dialog(NULL, _("Apply changes?"),
@@ -3481,7 +3488,7 @@ static gint query_save_extra_props (GtkWidget *w, GdkEvent *event,
 	if (resp == GRETL_CANCEL) {
 	    return TRUE;
 	} else if (resp == GRETL_YES) {
-	    process_extra_properties(finfo, TRUE);
+	    process_extra_properties(finfo, TRUE, FALSE);
 	}
     }
 
@@ -3751,6 +3758,13 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     tmp = close_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(extra_properties_close), finfo);
+
+    /* OK button */
+    tmp = ok_button(hbox);
+    widget_set_int(tmp, "close", 1);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(extra_properties_apply), finfo);
+    gtk_widget_grab_default(tmp);
 
     /* Help button */
     tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
