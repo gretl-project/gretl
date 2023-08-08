@@ -14,7 +14,7 @@ such (year, month and day) but we add some discussion of time-of-day
 where relevant. A final section addresses the somewhat arcane issue
 of handling historical dates on the Julian calendar.
 
-First of all, however, it may be useful to distinguish two contexts:
+First of all it may be useful to distinguish two contexts:
 \begin{itemize}
 \item You have a time-series dataset in place, or a panel dataset with
   a well-defined time dimension.
@@ -40,8 +40,8 @@ assume it does not carry such a requirement.
 \label{sec:cal-representations}
 
 In gretl there is more than one way to encode a date such as ``May
-26th, 1993''. Some are more intuitive, some less obvious from the
-viewpoint of a human but easier to handle for an algorithm. The basic
+26th, 1993''. Some are more intuitive, some less obvious from a human
+viewpoint but easier to handle for an algorithm. The basic
 representations we discuss here are:
 \begin{enumerate}
 \item the three-numbers approach
@@ -128,7 +128,7 @@ perfectly straightforward.
 \subsection{Epoch days}
 \label{sec:cal-epochday}
 
-In gretl an ``epoch day'' is an unsigned 64-bit integer which
+In gretl an ``epoch day'' is an unsigned 32-bit integer which
 represents a date as the number of days since January 1, 1 AD (that
 is, the first day of the Common Era), on the proleptic Gregorian
 calendar.\footnote{The term ``proleptic,'' as applied to a calendar,
@@ -333,14 +333,12 @@ following:\footnote{See
 
 Suppose we want to convert the \texttt{Date} column to epoch
 days. Note that the date format follows the American convention
-month/day/year, a point which can be ascertained only by visual
-inspection of the file's content. The simplest way to accomplish the
-task is shown in Listing~\ref{ex:earthquakes}, where we assume that
-the data file is named \texttt{earthquakes.csv}. Note that the
-\option{all-cols} option is wanted here, so that gretl treats
-\texttt{Dates} as a string-valued series rather than just a source of
-time-series information. For good measure we show how to add an ISO
-8601 date series.
+month/day/year. The simplest way to accomplish the task is shown in
+Listing~\ref{ex:earthquakes}, where we assume that the data file is
+named \texttt{earthquakes.csv}. Note that the \option{all-cols} option
+is wanted here, so that gretl treats \texttt{Dates} as a string-valued
+series rather than just a source of time-series information. For good
+measure we show how to add an ISO 8601 date series.
 
 \begin{script}[htbp]
   \fragcaption{Converting a string-valued date series to epoch day}
@@ -384,11 +382,11 @@ endloop
 At 8:46 in the morning of September 11, 2001 an airliner crashed into
 the North Tower of the World Trade Center in New York. Relative to
 what time zone is that statement correct? Eastern Daylight Time (EDT),
-of course. Unless we have special reason to do otherwise we always
-report the time of an event relative to the time zone in which the
-event occurred; and if we do otherwise we need to state the metric
-we're using (for example, one might say that this event occurred at
-2001-09-11 12:46 UTC).
+of course. Unless we have special reason to do otherwise we report the
+time of an event relative to the time zone in which it occurred; and
+if we do otherwise we need to state the metric we're using (for
+example, one might say that this event occurred at 2001-09-11 12:46
+UTC).
 
 Now consider the following script:
 %
