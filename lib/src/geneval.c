@@ -5433,47 +5433,81 @@ static NODE *string_range_node (const char *s, int r1, int r2, parser *p)
     return ret;
 }
 
-static NODE *real_list_series_node (int *list, int i, parser *p)
-{
-    NODE *ret = NULL;
-    int v = 0;
+/* Return a node holding a shallow copy of series @vnum in p->dset */
 
-    if (i < 1 || i > list[0]) {
-        gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i);
-        p->err = E_INVARG;
-    } else {
-        v = list[i];
-        if (v < 0 || v >= p->dset->v) {
-            gretl_errmsg_sprintf(_("Variable number %d is out of bounds"), v);
-            p->err = E_DATA;
-        }
-    }
+static NODE *real_list_series_node (int vnum, parser *p)
+{
+    NODE *ret = aux_empty_series_node(p);
 
     if (!p->err) {
-        ret = aux_empty_series_node(p);
-        if (!p->err) {
-            /* scrub TMP_NODE, because using dset->Z member! */
-            ret->flags = AUX_NODE;
-            ret->vnum = v;
-            ret->v.xvec = p->dset->Z[v];
-        }
+	/* overwrite the TMP_NODE flag on @ret, since we're
+	   borrowing a dset->Z member!
+	*/
+	ret->flags = AUX_NODE;
+	ret->vnum = vnum;
+	ret->v.xvec = p->dset->Z[vnum];
     }
 
     return ret;
 }
 
-/* coming from a context where we have @list and position
-   in list, @i
+/* Handling a context where we have a list under node @l,
+   and position within the list in @pos.
 */
 
-static NODE *list_member_by_pos (int *list, int i, parser *p)
+static NODE *list_member_by_pos (NODE *l, int pos, parser *p)
 {
     NODE *ret = NULL;
+    int *list = l->v.ivec;
 
-    if (starting(p)) {
-        ret = real_list_series_node(list, i, p);
+#if EDEBUG
+    fprintf(stderr, "list_member_by_pos: pos = %d\n", pos);
+    printlist(list, "list");
+#endif
+
+    if (pos < 1 || pos > list[0]) {
+        gretl_errmsg_sprintf(_("Index value %d is out of bounds"), pos);
+        p->err = E_INVARG;
     } else {
-        ret = aux_any_node(p);
+	int v = list[pos];
+
+	if (v < 0 || v >= p->dset->v) {
+	    gretl_errmsg_sprintf(_("Variable number %d is out of bounds"), v);
+	    p->err = E_INVARG;
+	} else {
+	    ret = real_list_series_node(v, p);
+	}
+    }
+
+    return ret;
+}
+
+/* Handling a context where we have a list under node @l,
+   and the name of a (putative) list member under node @r.
+*/
+
+static NODE *list_member_by_name (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+    int *list = l->v.ivec;
+    const char *s = r->v.str;
+    int i, v;
+
+#if EDEBUG
+    fprintf(stderr, "list_member_by_name: %s.%s\n", l->vname, s);
+#endif
+
+    for (i=1; i<=list[0]; i++) {
+	v = list[i];
+	if (!strcmp(s, p->dset->varname[v])) {
+	    /* found the named member series */
+	    ret = real_list_series_node(v, p);
+	    break;
+	}
+    }
+
+    if (ret == NULL) {
+	p->err = E_UNKVAR;
     }
 
     return ret;
@@ -5677,7 +5711,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 
             if (!p->err && vlist[0] == 1 && l->t == LIST) {
                 /* singleton list selection */
-                ret = list_member_by_pos(l->v.ivec, vlist[1], p);
+                ret = list_member_by_pos(l, vlist[1], p);
             } else if (!p->err && gretl_list_is_consecutive(vlist)) {
                 /* selected elements are consecutive */
                 int r1 = vlist[1];
@@ -10964,33 +10998,6 @@ static NODE *eval_Rfunc (NODE *t, NODE *r, parser *p)
 }
 
 #endif /* USE_RLIB or not */
-
-static NODE *list_member_by_name (NODE *l, NODE *r, parser *p)
-{
-    NODE *ret = NULL;
-    int *list = l->v.ivec;
-    int i, v;
-
-#if EDEBUG
-    fprintf(stderr, "list_member_by_name: %s.%s\n",
-	    l->vname, r->v.str);
-#endif
-
-    for (i=1; i<=list[0]; i++) {
-	v = list[i];
-	if (!strcmp(r->v.str, p->dset->varname[v])) {
-	    /* found the series */
-	    ret = real_list_series_node(list, v, p);
-	    break;
-	}
-    }
-
-    if (ret == NULL) {
-	p->err = E_UNKVAR;
-    }
-
-    return ret;
-}
 
 /* Extracting series data @x of length @n from a bundle: whether
    we can get it as a series depends on the current state of the
