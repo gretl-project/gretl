@@ -2559,6 +2559,12 @@ static void show_dirs_list (char **S, int n, const char *msg)
 
 #endif
 
+/* When two gfns with the same name, @s, have been found, determine
+   if one or other should be deleted, or perhaps just ignored.
+   Our handles to the two packages are given by the GtkTreeIters
+   @ia and @ib.
+*/
+
 static void maybe_delete_gfn_duplicate (GtkTreeModel *model,
 					GtkTreeIter *ia,
 					GtkTreeIter *ib,
@@ -2570,14 +2576,17 @@ static void maybe_delete_gfn_duplicate (GtkTreeModel *model,
     double vdiff;
     int del = 0;
 
+    /* get version and date info for the two */
     gtk_tree_model_get(model, ia, 1, &va, 2, &da, -1);
     gtk_tree_model_get(model, ib, 1, &vb, 2, &db, -1);
 
     vdiff = dot_atof(va) - dot_atof(vb);
 
     if (vdiff > 0) {
+	/* the second is older by version, delete it */
 	del = 2;
     } else if (vdiff < 0) {
+	/* the first is older by version, delete it */
 	del = 1;
     } else {
 	guint32 ed1 = get_epoch_day(da);
@@ -2585,12 +2594,14 @@ static void maybe_delete_gfn_duplicate (GtkTreeModel *model,
 	int ddiff = (int) ed1 - (int) ed2;
 
 	if (ddiff > 0) {
+	    /* the second is older by date, delete it */
 	    del = 2;
 	} else if (ddiff < 0) {
+	    /* the first is older by date, delete it */
 	    del = 1;
 	} else {
-	    /* same version and date: let's ignore but not
-	       actually delete the per-user version
+	    /* same version and date: let's ignore, but not
+	       actually delete, the second (per-user) version
 	    */
 	    del = -2;
 	}
