@@ -3565,10 +3565,8 @@ static int dir_is_writable (const char *dirname)
     if (gretl_mkdir(dirname) == 0) {
         gchar *test = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
 
-        if (test != NULL) {
-            ok = (gretl_test_fopen(test, "w") == 0);
-            g_free(test);
-        }
+	ok = (gretl_test_fopen(test, "w") == 0);
+	g_free(test);
     }
 
     return ok;
