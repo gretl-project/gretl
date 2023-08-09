@@ -10,7 +10,7 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 			GType *types, const char **titles,
 			int tree);
 
-void presort_treelist (windata_t *vwin);
+void presort_treelist (windata_t *vwin, int *dups);
 
 void tree_view_get_bool (GtkTreeView *view, int row, int col, gboolean *val);
 

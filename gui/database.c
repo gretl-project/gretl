@@ -4417,7 +4417,7 @@ gint populate_dbfilelist (windata_t *vwin, int *pndb)
 	err = 1;
     } else {
 	maybe_prune_db_list(GTK_TREE_VIEW(vwin->listbox), &ndb);
-	presort_treelist(vwin);
+	presort_treelist(vwin, NULL);
     }
 
     if (pndb != NULL) {

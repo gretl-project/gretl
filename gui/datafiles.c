@@ -1038,7 +1038,6 @@ void set_alternate_gfn_dir (windata_t *vwin, char *path)
 	GtkTreeSelection *sel;
 	GtkTreeIter iter;
 	gulong sigid;
-	int nfn0 = nfn;
 
 	store = GTK_LIST_STORE(gtk_tree_view_get_model
 			       (GTK_TREE_VIEW(vwin->listbox)));
@@ -1055,19 +1054,11 @@ void set_alternate_gfn_dir (windata_t *vwin, char *path)
 	if (nfn > 0) {
 	    gtk_tree_selection_selected_foreach(sel, fix_selected_row, vwin);
 	    widget_set_int(vwin->listbox, "altdir", 1);
-	    presort_treelist(vwin);
+	    presort_treelist(vwin, NULL);
 	    listbox_select_first(vwin);
 	} else {
 	    /* can't happen? */
 	    warnbox(_("No function files were found"));
-	}
-
-	if (nfn > 0 && nfn < nfn0) {
-	    gchar *msg;
-
-	    msg = g_strdup_printf("Ignored %d duplicated file(s)", nfn0 - nfn);
-	    msgbox(msg, GTK_MESSAGE_WARNING, vwin->main);
-	    g_free(msg);
 	}
     }
 
@@ -2325,69 +2316,6 @@ static int get_func_info (const char *path, char **pdesc,
     return err;
 }
 
-static int real_duplicate (const char *fname,
-			   const char *version,
-			   const char *dirname,
-			   GtkTreeModel *model,
-			   GtkTreeIter *iter)
-{
-    gchar *dupdir = NULL;
-
-    gtk_tree_model_get(model, iter, GFN_DIRNAME_COL, &dupdir, -1);
-
-    if (!strcmp(dirname, dupdir)) {
-	/* it's actually the same file */
-	return 0;
-    }
-
-    fprintf(stderr, "duplicated function package: %s %s\n",
-	    fname, version);
-    fprintf(stderr, " %s [first instance found]\n %s [duplicate]\n\n",
-	    dupdir, dirname);
-    g_free(dupdir);
-
-    return 1;
-}
-
-static int fn_file_is_duplicate (const char *fname,
-				 const char *version,
-				 const char *dirname,
-				 GtkListStore *store,
-				 int imax)
-{
-    GtkTreeModel *model = GTK_TREE_MODEL(store);
-    GtkTreeIter iter;
-    int ret = 0;
-
-    /* search from the top of @model to position @imax for
-       a row that matches on package name and version
-    */
-    if (imax > 0 && gtk_tree_model_get_iter_first(model, &iter)) {
-	gchar *fname_i;
-	gchar *version_i;
-	int i;
-
-	for (i=0; i<imax; i++) {
-	    gtk_tree_model_get(model, &iter,
-			       0, &fname_i,
-			       1, &version_i,
-			       -1);
-	    if (*fname == *fname_i && strcmp(fname, fname_i) == 0 &&
-		strcmp(version, version_i) == 0 &&
-		real_duplicate(fname, version, dirname, model, &iter)) {
-		ret = 1;
-	    }
-	    g_free(fname_i);
-	    g_free(version_i);
-	    if (ret || !gtk_tree_model_iter_next(model, &iter)) {
-		break;
-	    }
-	}
-    }
-
-    return ret;
-}
-
 static int is_functions_dir (const char *path)
 {
     int n = strlen(path) - 9;
@@ -2500,7 +2428,6 @@ static int ok_gfn_path (const char *fullname,
 			const char *dirname,
 			GtkListStore *store,
 			GtkTreeIter *iter,
-			int imax,
 			int subdir)
 {
     char *descrip = NULL;
@@ -2508,7 +2435,6 @@ static int ok_gfn_path (const char *fullname,
     char *date = NULL;
     char *author = NULL;
     int pdfdoc = 0;
-    int is_dup = 0;
     int err, ok = 0;
 
     /* Note that even if this is a dry run with @store = NULL,
@@ -2518,16 +2444,11 @@ static int ok_gfn_path (const char *fullname,
     err = get_func_info(fullname, &descrip, &version, &date,
 			&author, &pdfdoc);
 
-    if (!err && store != NULL) {
-	is_dup = fn_file_is_duplicate(shortname, version,
-				      dirname, store, imax);
-    }
-
 #if GFN_DEBUG > 1
-    fprintf(stderr, "%s: %s: err=%d, is_dup=%d\n", dirname, shortname, err, is_dup);
+    fprintf(stderr, "%s: %s: err=%d\n", dirname, shortname, err);
 #endif
 
-    if (!err && !is_dup) {
+    if (!err) {
 	if (store != NULL && iter != NULL) {
 	    /* actually enter the file into the browser */
 	    gchar *pkgname = g_strndup(shortname, strlen(shortname) - 4);
@@ -2535,7 +2456,6 @@ static int ok_gfn_path (const char *fullname,
 	    if (gfn_is_loaded(shortname)) {
 		check_loaded_gfn(pkgname, fullname);
 	    }
-
 	    gtk_list_store_append(store, iter);
 	    browser_insert_gfn_info(pkgname,
 				    version,
@@ -2547,7 +2467,6 @@ static int ok_gfn_path (const char *fullname,
 				    pdfdoc,
 				    store,
 				    iter);
-
 	    g_free(pkgname);
 	}
 	ok = 1;
@@ -2574,7 +2493,6 @@ read_fn_files_in_dir (GDir *dir, const char *path,
 {
     const gchar *basename;
     char fullname[MAXLEN];
-    int imax = *nfn;
 
     /* Look first for a gfn file in its own subdir, as
        in functions/foo/foo.gfn. That way if a package
@@ -2601,7 +2519,7 @@ read_fn_files_in_dir (GDir *dir, const char *path,
 		    realbase = g_strdup_printf("%s.gfn", basename);
 		    realpath = g_strdup_printf("%s%c%s", path, SLASH, basename);
 		    *nfn += ok_gfn_path(fullname, realbase, realpath,
-					store, iter, imax, 1);
+					store, iter, 1);
 		    g_free(realbase);
 		    g_free(realpath);
 		} else {
@@ -2609,8 +2527,6 @@ read_fn_files_in_dir (GDir *dir, const char *path,
 		}
 	    }
 	}
-
-	imax = *nfn;
 	g_dir_rewind(dir);
     }
 
@@ -2624,7 +2540,7 @@ read_fn_files_in_dir (GDir *dir, const char *path,
 	if (has_suffix(basename, ".gfn")) {
 	    gretl_build_path(fullname, path, basename, NULL);
 	    *nfn += ok_gfn_path(fullname, basename, path,
-				store, iter, imax, 0);
+				store, iter, 0);
 	}
     }
 }
@@ -2642,6 +2558,87 @@ static void show_dirs_list (char **S, int n, const char *msg)
 }
 
 #endif
+
+static void maybe_delete_gfn_duplicate (GtkTreeModel *model,
+					GtkTreeIter *ia,
+					GtkTreeIter *ib,
+					const char *s)
+
+{
+    gchar *va, *vb;
+    gchar *da, *db;
+    double vdiff;
+    int del = 0;
+
+    gtk_tree_model_get(model, ia, 1, &va, 2, &da, -1);
+    gtk_tree_model_get(model, ib, 1, &vb, 2, &db, -1);
+
+    vdiff = dot_atof(va) - dot_atof(vb);
+
+    if (vdiff > 0) {
+	del = 2;
+    } else if (vdiff < 0) {
+	del = 1;
+    } else {
+	guint32 ed1 = get_epoch_day(da);
+	guint32 ed2 = get_epoch_day(db);
+	int ddiff = (int) ed1 - (int) ed2;
+
+	if (ddiff > 0) {
+	    del = 2;
+	} else if (ddiff < 0) {
+	    del = 1;
+	} else {
+	    /* same version and date: let's ignore but not
+	       actually delete the per-user version
+	    */
+	    del = -2;
+	}
+    }
+
+    if (del != 0) {
+	GtkListStore *store = GTK_LIST_STORE(model);
+	GtkTreeIter *iter = del == 1 ? ia : ib;
+	gchar *dirname = NULL;
+	gchar *delpath = NULL;
+
+	gtk_tree_model_get(model, iter, GFN_DIRNAME_COL, &dirname, -1);
+	if (del > 0) {
+	    delpath = g_strdup_printf("%s%c%s.gfn", dirname, SLASH, s);
+	    gretl_remove(delpath);
+	}
+	gtk_list_store_remove(store, iter);
+	g_free(dirname);
+	g_free(delpath);
+    }
+
+    g_free(va);
+    g_free(vb);
+    g_free(da);
+    g_free(db);
+}
+
+static void prune_gfn_duplicates (windata_t *vwin)
+{
+    GtkTreeModel *model;
+    GtkTreeIter ia, ib;
+    gchar *sa, *sb;
+
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox));
+    gtk_tree_model_get_iter_first(model, &ia);
+    ib = ia;
+
+    while (gtk_tree_model_iter_next(model, &ib)) {
+	gtk_tree_model_get(model, &ia, 0, &sa, -1);
+	gtk_tree_model_get(model, &ib, 0, &sb, -1);
+	if (!strcmp(sa, sb)) {
+	    maybe_delete_gfn_duplicate(model, &ia, &ib, sa);
+	}
+	g_free(sa);
+	g_free(sb);
+	ia = ib;
+    }
+}
 
 /* Populate browser displaying gfn files installed on local machine:
    this is always called with a "clean slate": either we're showing a
@@ -2689,7 +2686,15 @@ static gint populate_gfn_list (windata_t *vwin)
 		  "Please try /File/Functions packages/On server"));
 	err = 1;
     } else {
-	presort_treelist(vwin);
+	int dups = 0;
+
+	presort_treelist(vwin, &dups);
+	if (dups) {
+	    /* we get here if a given package is found in both
+	       the "system" and the "per-user" location
+	    */
+	    prune_gfn_duplicates(vwin);
+	}
     }
 
     return err;
@@ -2802,7 +2807,7 @@ static void update_gfn_browser (const char *pkgname,
 	browser_insert_gfn_info(pkgname, version, date, author, summary,
 				dirname, uses_subdir, pdfdoc,
 				GTK_LIST_STORE(model), &iter);
-	presort_treelist(vwin);
+	presort_treelist(vwin, NULL);
     }
 
     g_free(dirname);
