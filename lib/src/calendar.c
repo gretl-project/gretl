@@ -426,7 +426,7 @@ int weekday_from_epoch_day (guint32 ed)
  * @datestr: string representation of calendar date, in form
  * YY[YY]-MM-DD.
  *
- * Returns: the epoch day number, or -1 on failure.
+ * Returns: the epoch day number, or 0 on failure.
  */
 
 guint32 get_epoch_day (const char *datestr)
