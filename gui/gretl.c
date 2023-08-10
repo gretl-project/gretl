@@ -2589,10 +2589,17 @@ mdata_handle_drag  (GtkWidget *widget,
 	strcat(tmp, dfname + skip);
     }
 
-    /* handle spaces and such then transcribe */
+    /* handle spaces and such */
     unescape_url(tmp);
-    set_tryfile(tmp);
 
+    /* check for zip magic bytes */
+    if (gretl_is_pkzip_file(tmp)) {
+	gdk_drag_status(context, 0, time);
+	return;
+    }
+
+    /* transcribe and try opening */
+    set_tryfile(tmp);
     open_tryfile(FALSE, TRUE);
 }
 
@@ -2654,7 +2661,7 @@ gboolean open_tryfile (gboolean startup, gboolean dnd)
 	ret = verify_open_session();
     } else if (has_suffix(tryfile, ".gfn") &&
 	       gretl_is_xml_file(tryfile)) {
-	ret = edit_specified_package(tryfile);
+	ret = gfn_open_dialog(tryfile);
     } else {
 	ret = verify_open_data(NULL, 0, dnd);
     }

@@ -234,4 +234,6 @@ gint script_start_dialog (const char *msg);
 
 int csv_open_dialog (const char *fname);
 
+int gfn_open_dialog (const char *fname);
+
 #endif /* DIALOGS_H */

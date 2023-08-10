@@ -27,6 +27,7 @@
 #include "base_utils.h"
 
 #ifndef GRETL_EDIT
+#include "library.h"
 #include "gui_utils.h"
 #include "treeutils.h"
 #include "cmdstack.h"
@@ -45,6 +46,8 @@
 #include "uservar.h"
 #include "gretl_bfgs.h"
 #include "libglue.h"
+#include "datafiles.h"
+#include "fnsave.h"
 #endif
 
 #include <errno.h>
@@ -4387,6 +4390,35 @@ int csv_open_dialog (const char *fname)
 
     return ret;
 }
+
+#ifndef GRETL_EDIT
+
+int gfn_open_dialog (const char *fname)
+{
+    const char *opts[] = {
+	N_("view code in this package"),
+	N_("install this package"),
+	N_("edit this package")
+    };
+    int resp;
+
+    resp = radio_dialog("gretl", fname, opts, 3, 0, 0, mdata->main);
+
+    if (resp == 0) {
+	char *bname = gretl_basename(NULL, fname, 0);
+
+	display_function_package_data(bname, fname, VIEW_PKG_CODE);
+	free(bname);
+    } else if (resp == 1) {
+	do_local_pkg_install(fname);
+    } else if (resp == 2) {
+	edit_specified_package(fname);
+    }
+
+    return 0;
+}
+
+#endif
 
 int radio_dialog (const char *title, const char *label, const char **opts,
                   int nopts, int deflt, int hcode, GtkWidget *parent)
