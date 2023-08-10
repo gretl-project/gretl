@@ -8,6 +8,9 @@ version 2023c, in progress
 - Fix bug: possibly incomplete results when compacting daily
   data to weekly
 - Fix bug: wrong alignment when appending dated weekly data
+- Fix bug: possible duplicate entries in GUI function package
+  listing
+- GUI: use "Apply" and "OK" buttons more consistently
 
 2023-07-21 version 2023b
 - New command "kdplot": simple access to a kernel density plot
