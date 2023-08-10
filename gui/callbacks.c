@@ -838,6 +838,11 @@ void edit_gfn_callback (void)
     g_free(dotpath);
 }
 
+void install_pkg_callback (void)
+{
+    file_selector(INSTALL_PKG, FSEL_DATA_NONE, NULL);
+}
+
 void xcorrgm_callback (void)
 {
     if (mdata_selection_count() == 2) {

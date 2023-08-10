@@ -327,11 +327,11 @@ void dataset_info (void);
 
 int do_store (char *filename, int action, gpointer data);
 
+int do_local_pkg_install (const char *filename);
+
 void set_csv_exclude_obs (gboolean s);
 
 gboolean get_csv_exclude_obs (void);
-
-void do_save_text (char *fname, MODEL *pmod);
 
 int gui_exec_line (ExecState *s, DATASET *dset,
 		   GtkWidget *parent);

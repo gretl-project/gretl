@@ -32,4 +32,6 @@ int console_is_busy (void);
 
 void clear_console (GtkWidget *w, windata_t *vwin);
 
+int emulate_console_command (const char *cmdline);
+
 #endif /* CONSOLE_H */

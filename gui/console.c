@@ -781,3 +781,22 @@ void clear_console (GtkWidget *w, windata_t *vwin)
     gtk_text_buffer_get_start_iter(buf, &start);
     console_insert_prompt(buf, &start, "? ");
 }
+
+int emulate_console_command (const char *cmdline)
+{
+    ExecState *s = calloc(1, sizeof *s);
+    char buf[MAXLINE];
+    int err;
+
+    if (s == NULL) {
+	err = E_ALLOC;
+    } else {
+	gretl_exec_state_init(s, CONSOLE_EXEC, buf,
+			      get_lib_cmd(), NULL, NULL);
+	strcpy(buf, cmdline);
+	err = gui_exec_line(s, NULL, mdata->main);
+	gretl_exec_state_destroy(s);
+    }
+
+    return err;
+}

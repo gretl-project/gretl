@@ -9223,6 +9223,18 @@ int do_store (char *filename, int action, gpointer data)
     return err;
 }
 
+int do_local_pkg_install (const char *filename)
+{
+    gchar *s;
+    int err;
+
+    s = g_strdup_printf("pkg install %s --local", filename);
+    err = emulate_console_command(s);
+    g_free(s);
+
+    return err;
+}
+
 static void clean_up_varlabels (DATASET *dset)
 {
     const char *vlabel;
