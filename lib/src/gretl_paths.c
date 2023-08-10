@@ -1009,8 +1009,8 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
 {
     char **dirs = NULL;
     const char *subdir;
+    const char *wd;
     char dirname[MAXLEN];
-    int err = 0;
 
     *n_dirs = 0;
 
@@ -1019,7 +1019,7 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
 	char *forcepath = getenv("FORCE_GFN_PATH");
 
 	if (forcepath != NULL) {
-	    err = strings_array_add(&dirs, n_dirs, forcepath);
+	    strings_array_add(&dirs, n_dirs, forcepath);
 	}
     }
 
@@ -1036,23 +1036,19 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
         return NULL;
     }
 
-    /* system dir first */
-    gretl_build_path(dirname, gretl_home(), subdir, NULL);
-    err = strings_array_add(&dirs, n_dirs, dirname);
-
 #ifdef OS_OSX
-    if (!err) {
-        /* the user's ~/Library */
-        gretl_build_path(dirname, gretl_app_support_dir(), subdir, NULL);
-        err = strings_array_add(&dirs, n_dirs, dirname);
-    }
+    /* the user's ~/Library */
+    gretl_build_path(dirname, gretl_app_support_dir(), subdir, NULL);
+    strings_array_add(&dirs, n_dirs, dirname);
 #else
-    if (!err) {
-        /* the user's dotdir */
-        gretl_build_path(dirname, gretl_dotdir(), subdir, NULL);
-        err = strings_array_add(&dirs, n_dirs, dirname);
-    }
+    /* the user's dotdir */
+    gretl_build_path(dirname, gretl_dotdir(), subdir, NULL);
+    strings_array_add(&dirs, n_dirs, dirname);
 #endif
+
+    /* add system dir */
+    gretl_build_path(dirname, gretl_home(), subdir, NULL);
+    strings_array_add(&dirs, n_dirs, dirname);
 
 #if 0 /* this clause added 2021-02-04, reverted 2023-02-23 for the
          sake of backward compatibility */
@@ -1062,32 +1058,27 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
     }
 #endif
 
-    if (!err) {
-        /* the user's working dir */
-        gretl_build_path(dirname, gretl_workdir(), subdir, NULL);
-        err = strings_array_add(&dirs, n_dirs, dirname);
-    }
+    /* the user's working dir */
+    gretl_build_path(dirname, gretl_workdir(), subdir, NULL);
+    strings_array_add(&dirs, n_dirs, dirname);
 
-    if (!err && stype != FUNCS_SEARCH) {
+    if (stype != FUNCS_SEARCH) {
         /* working dir, no subdir */
         strcpy(dirname, gretl_workdir());
-        err = strings_array_add(&dirs, n_dirs, dirname);
+        strings_array_add(&dirs, n_dirs, dirname);
     }
 
-    if (!err) {
-        /* a legacy thing: some files may have been written to
-           the "default workdir" in the past
-        */
-        const char *wd = maybe_get_default_workdir();
-
-        if (wd != NULL) {
-            gretl_build_path(dirname, wd, subdir, NULL);
-            err = strings_array_add(&dirs, n_dirs, dirname);
-            if (!err && stype != FUNCS_SEARCH) {
-                strcpy(dirname, wd);
-                err = strings_array_add(&dirs, n_dirs, dirname);
-            }
-        }
+    /* a legacy thing: some files may have been written to
+       the "default workdir" in the past
+    */
+    wd = maybe_get_default_workdir();
+    if (wd != NULL) {
+	gretl_build_path(dirname, wd, subdir, NULL);
+	strings_array_add(&dirs, n_dirs, dirname);
+	if (stype != FUNCS_SEARCH) {
+	    strcpy(dirname, wd);
+	    strings_array_add(&dirs, n_dirs, dirname);
+	}
     }
 
     return dirs;
@@ -1141,7 +1132,6 @@ char *gretl_function_package_get_path (const char *name,
         if ((dir = gretl_opendir(fndir)) == NULL) {
             continue;
         }
-
         if (type != PKG_TOPLEV) {
             /* look preferentially for .gfn files in their own
                subdirectories */
@@ -1158,7 +1148,6 @@ char *gretl_function_package_get_path (const char *name,
                 }
             }
         }
-
         if (!found && type != PKG_SUBDIR) {
             /* look for .gfn files in the top-level functions
                directory */
@@ -1175,7 +1164,6 @@ char *gretl_function_package_get_path (const char *name,
                 }
             }
         }
-
         g_dir_close(dir);
     }
 
@@ -3618,6 +3606,7 @@ const char *gretl_function_package_path (void)
         /* we prefer writing to ~/Library/Application Support */
         sys_first = 0;
 #elif defined(WIN32)
+	/* determining permissions may be awkward, use dotdir */
         sys_first = 0;
 #endif
         if (sys_first) {
