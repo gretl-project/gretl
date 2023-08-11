@@ -12652,15 +12652,8 @@
 	  elements where <math>n</math> is the largest value in
 	  <argname>y</argname>.  In addition each element of
 	  <argname>S</argname> must be valid UTF-8. If any of these
-	  conditions is not met, an error is flagged.
-	</para>
-	<para>
-	  The nominal return value is 0 on successful completion.
-	</para>
-	<para>
-	  <seelist>
-            <fncref targ="strvals"/>
-	  </seelist>
+	  conditions is not met, an error is flagged.  The nominal
+	  return value is 0 on successful completion.
 	</para>
 	<para>
 	  An alternative to <lit>stringify</lit> that may be useful in
@@ -12670,6 +12663,12 @@
 	  array must equal either the full length of the dataset or
 	  the length of the current sample range, and values may be
 	  repeated as required.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="strvals"/>
+	    <fncref targ="strvsort"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -12989,6 +12988,31 @@
 	  to an array of strings: this provides not just the distinct
 	  values, but all values of the series in the current sample
 	  range.
+	</para>
+      </description>
+    </function>
+
+    <function name="strvsort" section="strings" output="int">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  The argument <argname>y</argname> must be string-valued.
+	  The effect of this function is to sort such a series in this
+	  particular sense: the distinct string values are
+	  alphabetized and then the series is re-coded such that 1 is
+	  assigned for the first of the ordered strings, 2 for the
+	  second, and so on. This can be useful, among other reasons,
+	  for ensuring a uniform encoding for multiple series that
+	  share the same set of string values. The nominal return
+	  value is 0 on successful completion.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="stringify"/>
+	    <fncref targ="strvals"/>
+	  </seelist>
 	</para>
       </description>
     </function>

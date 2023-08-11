@@ -2,6 +2,9 @@ version 2023c, in progress
 - String-valued series: support returning such series from a
   user function, and loosen the restrictions on assignment to
   such series
+- New function strvsort(): recodes a string-valued series such
+  that the numeric codes correspond to the alphabetical order
+  of the string values
 - Fix bug dating from 2022c: broken handling of the syntax
   listname.series when used in a function that is called from
   within a loop
@@ -11,6 +14,8 @@ version 2023c, in progress
 - Fix bug: possible duplicate entries in GUI function package
   listing
 - GUI: use "Apply" and "OK" buttons more consistently
+- GUI: add a menu item to install a local function package,
+  under the "/File/Function packages" menu
 
 2023-07-21 version 2023b
 - New command "kdplot": simple access to a kernel density plot
