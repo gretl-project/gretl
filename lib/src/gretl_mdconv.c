@@ -212,6 +212,19 @@ static void finish_chunk (char ***lines, int mode, PRN *prn)
     }
 }
 
+/**
+ * md_to_gretl:
+ * @buf: input buffer containing gretl markdown.
+ * @prn: printing struct to which output should be written.
+ *
+ * The input must conform to gretl's markdown 'flavor', for
+ * the details of which see the Gretl Function Package Guide.
+ * On success, output is in the form of the internal mark-up
+ * used by gretl for display via GtkTextView.
+ *
+ * Returns: 0 on success or error code on error.
+ **/
+
 int md_to_gretl (const char *buf, PRN *prn)
 {
     char line[4096];
