@@ -32,6 +32,10 @@ typedef enum {
     BAND_STEP
 } BandStyle;
 
+static const char *style_specs[] = {
+    "line", "fill", "dash", "bars", "step"
+};
+
 typedef struct {
     int center;      /* ID of center-of-band series */
     int width;       /* ID of width-of-band series */
@@ -56,6 +60,62 @@ static band_info *band_info_new (void)
 
     return bi;
 }
+
+static BandStyle style_from_string (const char *s, int *err)
+{
+    int i, n = G_N_ELEMENTS(style_specs);
+
+    for (i=0; i<n; i++) {
+	if (!strcmp(s, style_specs[i])) {
+	    return (BandStyle) i;
+	}
+    }
+
+    *err = invalid_field_error(s);
+    return (BandStyle) 0;
+}
+
+#if 0 /* not yet */
+
+static band_info_from_bundle (gretl_bundle *b)
+{
+    band_info *bi = band_info_new();
+    const char *s;
+    int err = 0;
+
+    bi->center = gretl_bundle_get_int(b, "center", &err);
+    if (!err) {
+	bi->width = gretl_bundle_get_int(b, "width", &err);
+    }
+    if (!err && gretl_bundle_has_key(b, "factor")) {
+	b->factor = gretl_bundle_get_scalar(b, "factor", &err);
+    }
+    if (!err && gretl_bundle_has_key(b, "dummy")) {
+	/* ??? */
+	b->bdummy = gretl_bundle_get_int(b, "dummy", &err);
+    }
+    if (!err && gretl_bundle_has_key(b, "style")) {
+	s = gretl_bundle_get_string(b, "style", &err);
+	if (!err) {
+	    bi->style = style_from_string(s, &err);
+	}
+    }
+    if (!err && gretl_bundle_has_key(b, "color")) {
+	s = gretl_bundle_get_string(b, "color", &err);
+	if (!err) {
+	    err = parse_gnuplot_color(s, bi->rgb);
+	}
+    }
+
+    if (err) {
+	free(bi);
+	bi = NULL;
+    }
+
+    return bi;
+}
+
+#endif
 
 static void print_pm_filledcurve_line (band_info *bi,
                                        const char *title,
@@ -273,10 +333,10 @@ static int parse_band_pm_option (const int *list,
     g_strfreev(S);
 
 #if 0
-    fprintf(stderr, "pm err = %d\n", err);
-    fprintf(stderr, "pm center = %d (pos %d)\n", bi->center, cpos);
-    fprintf(stderr, "pm width = %d (pos %d)\n", bi->width, wpos);
-    fprintf(stderr, "pm factor = %g\n", bi->factor);
+    fprintf(stderr, "parse_band_pm_option: err = %d\n", err);
+    fprintf(stderr, "center = %d (pos %d)\n", bi->center, cpos);
+    fprintf(stderr, "width = %d (pos %d)\n", bi->width, wpos);
+    fprintf(stderr, "factor = %g\n", bi->factor);
 #endif
 
     if (!err) {
@@ -330,33 +390,14 @@ static int parse_band_style_option (band_info *bi)
             err = parse_gnuplot_color(s + 1, bi->rgb);
         } else if (p == NULL) {
             /* just got field 1, style spec */
-            if (!strcmp(s, "fill")) {
-                bi->style = BAND_FILL;
-            } else if (!strcmp(s, "dash")) {
-                bi->style = BAND_DASH;
-            } else if (!strcmp(s, "line")) {
-                bi->style = BAND_LINE;
-            } else if (!strcmp(s, "bars")) {
-                bi->style = BAND_BARS;
-            } else if (!strcmp(s, "step")) {
-                bi->style = BAND_STEP;
-            } else {
-                err = invalid_field_error(s);
-            }
+	    bi->style = style_from_string(s, &err);
         } else {
             /* embedded comma: style + color */
-            if (strlen(s) < 8) {
-                err = invalid_field_error(s);
-            } else if (!strncmp(s, "fill,", 5)) {
-                bi->style = BAND_FILL;
-            } else if (!strncmp(s, "dash,", 5)) {
-                bi->style = BAND_DASH;
-            } else if (!strncmp(s, "line,", 5)) {
-                bi->style = BAND_LINE;
-            } else if (!strncmp(s, "bars,", 5)) {
-                bi->style = BAND_BARS;
-            } else if (!strncmp(s, "step,", 5)) {
-                bi->style = BAND_STEP;
+            if (strlen(s) >= 8 && s[4] == ',') {
+		gchar *tmp = g_strndup(s, 4);
+
+		bi->style = style_from_string(tmp, &err);
+		g_free(tmp);
             } else {
                 err = invalid_field_error(s);
             }
