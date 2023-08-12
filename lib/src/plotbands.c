@@ -37,8 +37,8 @@ static const char *style_specs[] = {
 };
 
 typedef struct {
-    int center;      /* ID of center-of-band series */
-    int width;       /* ID of width-of-band series */
+    int center;      /* series ID of center-of-band data */
+    int width;       /* series ID of width-of-band data */
     double factor;   /* factor by which to multiply width */
     int bdummy;      /* flag for drawing rectangles */
     BandStyle style; /* see enumeration above */
@@ -50,12 +50,12 @@ static band_info *band_info_new (void)
     band_info *bi = malloc(sizeof *bi);
 
     if (bi != NULL) {
-	bi->center = -1;
-	bi->width = -1;
-	bi->factor = 1.0;
-	bi->bdummy = 0;
-	bi->style = BAND_LINE;
-	bi->rgb[0] = '\0';
+        bi->center = -1;
+        bi->width = -1;
+        bi->factor = 1.0;
+        bi->bdummy = 0;
+        bi->style = BAND_LINE;
+        bi->rgb[0] = '\0';
     }
 
     return bi;
@@ -66,9 +66,9 @@ static BandStyle style_from_string (const char *s, int *err)
     int i, n = G_N_ELEMENTS(style_specs);
 
     for (i=0; i<n; i++) {
-	if (!strcmp(s, style_specs[i])) {
-	    return (BandStyle) i;
-	}
+        if (!strcmp(s, style_specs[i])) {
+            return (BandStyle) i;
+        }
     }
 
     *err = invalid_field_error(s);
@@ -77,45 +77,117 @@ static BandStyle style_from_string (const char *s, int *err)
 
 #if 0 /* not yet */
 
-static band_info_from_bundle (gretl_bundle *b)
+static band_info *band_info_from_bundle (gretl_bundle *b,
+                                         const DATASET *dset,
+                                         int *err)
 {
     band_info *bi = band_info_new();
-    const char *s;
-    int err = 0;
+    const char *S[5] = {NULL};
+    const char *strkeys[] = {
+        "center", "width", "dummy", "style", "color"
+    };
+    int i, *vtarg[3];
 
-    bi->center = gretl_bundle_get_int(b, "center", &err);
-    if (!err) {
-	bi->width = gretl_bundle_get_int(b, "width", &err);
+    vtarg[0] = &bi->center;
+    vtarg[1] = &bi->width;
+    vtarg[2] = &bi->bdummy;
+
+    for (i=0; i<5 && !*err; i++) {
+        if (gretl_bundle_has_key(b, strkeys[i])) {
+            S[i] = gretl_bundle_get_string(b, strkeys[i], err);
+        }
     }
-    if (!err && gretl_bundle_has_key(b, "factor")) {
-	b->factor = gretl_bundle_get_scalar(b, "factor", &err);
-    }
-    if (!err && gretl_bundle_has_key(b, "dummy")) {
-	/* ??? */
-	b->bdummy = gretl_bundle_get_int(b, "dummy", &err);
-    }
-    if (!err && gretl_bundle_has_key(b, "style")) {
-	s = gretl_bundle_get_string(b, "style", &err);
-	if (!err) {
-	    bi->style = style_from_string(s, &err);
-	}
-    }
-    if (!err && gretl_bundle_has_key(b, "color")) {
-	s = gretl_bundle_get_string(b, "color", &err);
-	if (!err) {
-	    err = parse_gnuplot_color(s, bi->rgb);
-	}
+    if (!*err && gretl_bundle_has_key(b, "factor")) {
+        bi->factor = gretl_bundle_get_scalar(b, "factor", err);
     }
 
-    if (err) {
-	free(bi);
-	bi = NULL;
+    /* try cashing out the string members */
+    for (i=0; i<5 && !*err; i++) {
+        if (S[i] == NULL) {
+            continue;
+        }
+        if (i < 3) {
+            (*vtarg)[i] = current_series_index(dset, S[i]);
+            if ((*vtarg)[i] < 0) {
+                *err = E_INVARG;
+            }
+        } else if (i == 3) {
+            bi->style = style_from_string(S[i], err);
+        } else {
+            *err = parse_gnuplot_color(S[i], bi->rgb);
+        }
+    }
+
+    if (!*err) {
+        /* further checks on validity of input */
+        if (bi->bdummy > 0) {
+            /* not compatible with width + center */
+            if (bi->center > 0 || bi->width > 0) {
+                *err = E_BADOPT;
+            }
+        } else if (bi->center <= 0) {
+            /* without bdummy, center is required */
+            *err = E_ARGS;
+        }
+        if (!*err && (bi->factor <= 0 || na(bi->factor))) {
+            *err = E_INVARG;
+        }
+    }
+
+    if (*err) {
+        free(bi);
+        bi = NULL;
     }
 
     return bi;
 }
 
-#endif
+/* Here we're supposing we got --bands=@aname. We try to
+   retrieve an array of bundles, and if that succeeds we
+   build and return an array of band_info structs.
+*/
+
+static band_info **get_band_info_array (const char *aname,
+                                        int *n_bands,
+                                        const DATASET *dset,
+                                        int *err)
+{
+    gretl_array *a = get_array_by_name(aname);
+    band_info **pbi = NULL;
+    gretl_bundle *b;
+    int i, j, n = 0;
+
+    if ((n = gretl_array_get_length(a)) < 1) {
+        *err = E_DATA;
+        return NULL;
+    } else if (gretl_array_get_type(a) != GRETL_TYPE_BUNDLES) {
+        *err = E_TYPES;
+        return NULL;
+    }
+
+    pbi = calloc(n, sizeof *pbi);
+    if (pbi == NULL) {
+        *err = E_ALLOC;
+    } else {
+        for (i=0; i<n && !*err; i++) {
+            b = gretl_array_get_data(a, i);
+            pbi[i] = band_info_from_bundle(b, dset, err);
+        }
+        if (*err) {
+            for (j=0; j<=i; j++) {
+                free(pbi[j]);
+            }
+            free(pbi);
+            pbi = NULL;
+        } else {
+            *n_bands = n;
+        }
+    }
+
+    return pbi;
+}
+
+#endif /* not yet */
 
 static void print_pm_filledcurve_line (band_info *bi,
                                        const char *title,
@@ -190,14 +262,12 @@ static int process_band_matrix (const int *list,
     while (S != NULL && S[i] != NULL && !err) {
         if (i == 0) {
             m = get_matrix_by_name(S[i]);
-            if (m == NULL || m->cols != 2 || m->rows != dset->n) {
-                /* missing or non-conformable */
-                err = invalid_field_error(S[i]);
+            if (m != NULL && m->cols == 2 && m->rows == dset->n) {
+                ; /* OK, will be handled below */
             } else {
-                /* the last two series in expanded dataset */
-                bi->center = dset->v;
-                bi->width = dset->v + 1;
-            }
+                /* matrix missing or non-conformable */
+                err = invalid_field_error(S[i]);
+             }
         } else if (i == 1) {
             /* spec for width multiplier: optional */
             if (numeric_string(S[i])) {
@@ -216,12 +286,14 @@ static int process_band_matrix (const int *list,
 
     g_strfreev(S);
 
-    if (!err && (bi->factor < 0 || na(bi->factor))) {
+    if (!err && (bi->factor <= 0 || na(bi->factor))) {
         err = E_INVARG;
     }
 
     if (!err) {
-        /* enlarge the dset->Z array */
+        /* enlarge the dset->Z array and stick bi->center and
+           ni->width onto the end of it
+        */
         int newv = dset->v + 2;
         double **tmp = realloc(dset->Z, newv * sizeof *tmp);
 
@@ -230,8 +302,10 @@ static int process_band_matrix (const int *list,
         } else {
             /* note: we don't need varnames here */
             dset->Z = tmp;
-            dset->Z[dset->v] = m->val;
-            dset->Z[dset->v+1] = m->val + m->rows;
+            bi->center = dset->v;
+            bi->width = dset->v + 1;
+            dset->Z[bi->center] = m->val;
+            dset->Z[bi->width] = m->val + m->rows;
             dset->v += 2;
         }
     }
@@ -390,14 +464,14 @@ static int parse_band_style_option (band_info *bi)
             err = parse_gnuplot_color(s + 1, bi->rgb);
         } else if (p == NULL) {
             /* just got field 1, style spec */
-	    bi->style = style_from_string(s, &err);
+            bi->style = style_from_string(s, &err);
         } else {
             /* embedded comma: style + color */
             if (strlen(s) >= 8 && s[4] == ',') {
-		gchar *tmp = g_strndup(s, 4);
+                gchar *tmp = g_strndup(s, 4);
 
-		bi->style = style_from_string(tmp, &err);
-		g_free(tmp);
+                bi->style = style_from_string(tmp, &err);
+                g_free(tmp);
             } else {
                 err = invalid_field_error(s);
             }
@@ -514,7 +588,7 @@ int plot_with_band (BPMode mode, gnuplot_info *gi,
 
     bi = band_info_new();
     if (bi == NULL) {
-	return E_ALLOC;
+        return E_ALLOC;
     }
 
     if (mode == BP_BLOCKMAT) {
@@ -546,7 +620,7 @@ int plot_with_band (BPMode mode, gnuplot_info *gi,
     free(biglist);
 
     if (err) {
-	free(bi);
+        free(bi);
         return err;
     }
 
@@ -567,7 +641,7 @@ int plot_with_band (BPMode mode, gnuplot_info *gi,
 
     fp = open_plot_input_file(PLOT_BAND, gi->flags, &err);
     if (err) {
-	free(bi);
+        free(bi);
         return err;
     }
 
