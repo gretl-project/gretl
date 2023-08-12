@@ -24,31 +24,48 @@
 #include "uservar.h"
 #include "plot_priv.h"
 
-enum {
+typedef enum {
     BAND_LINE,
     BAND_FILL,
     BAND_DASH,
     BAND_BARS,
     BAND_STEP
-};
+} BandStyle;
 
-struct band_pm {
-    int center;
-    int width;
-    double factor;
-    int bdummy;
-};
+typedef struct {
+    int center;      /* ID of center-of-band series */
+    int width;       /* ID of width-of-band series */
+    double factor;   /* factor by which to multiply width */
+    int bdummy;      /* flag for drawing rectangles */
+    BandStyle style; /* see enumeration above */
+    char rgb[10];    /* specific color, if wanted */
+} band_info;
 
-static void print_pm_filledcurve_line (double factor,
+static band_info *band_info_new (void)
+{
+    band_info *bi = malloc(sizeof *bi);
+
+    if (bi != NULL) {
+	bi->center = -1;
+	bi->width = -1;
+	bi->factor = 1.0;
+	bi->bdummy = 0;
+	bi->style = BAND_LINE;
+	bi->rgb[0] = '\0';
+    }
+
+    return bi;
+}
+
+static void print_pm_filledcurve_line (band_info *bi,
                                        const char *title,
-                                       const char *rgb,
                                        FILE *fp)
 {
     char cstr[10];
 
-    if (rgb != NULL && *rgb != '\0') {
+    if (bi->rgb[0] != '\0') {
         *cstr = '\0';
-        strncat(cstr, rgb, 9);
+        strncat(cstr, bi->rgb, 9);
     } else {
         print_rgb_hash(cstr, get_shadecolor());
     }
@@ -56,11 +73,11 @@ static void print_pm_filledcurve_line (double factor,
     if (title == NULL) {
         fprintf(fp, "'-' using 1:($2-%g*$3):($2+%g*$3) "
                 "notitle lc rgb \"%s\" w filledcurve, \\\n",
-                factor, factor, cstr);
+                bi->factor, bi->factor, cstr);
     } else {
         fprintf(fp, "'-' using 1:($2-%g*$3):($2+%g*$3) "
                 "title '%s' lc rgb \"%s\" w filledcurve, \\\n",
-                factor, factor, title, cstr);
+                bi->factor, bi->factor, title, cstr);
     }
 }
 
@@ -95,7 +112,7 @@ static void print_user_pm_data (const double *x,
 
 static int process_band_matrix (const int *list,
                                 DATASET *dset,
-                                struct band_pm *pm,
+                                band_info *bi,
                                 int **plist)
 {
     const char *s = get_optval_string(PLOT, OPT_N);
@@ -118,15 +135,15 @@ static int process_band_matrix (const int *list,
                 err = invalid_field_error(S[i]);
             } else {
                 /* the last two series in expanded dataset */
-                pm->center = dset->v;
-                pm->width = dset->v + 1;
+                bi->center = dset->v;
+                bi->width = dset->v + 1;
             }
         } else if (i == 1) {
             /* spec for width multiplier: optional */
             if (numeric_string(S[i])) {
-                pm->factor = dot_atof(S[i]);
+                bi->factor = dot_atof(S[i]);
             } else if (gretl_is_scalar(S[i])) {
-                pm->factor = gretl_scalar_get_value(S[i], &err);
+                bi->factor = gretl_scalar_get_value(S[i], &err);
             } else {
                 err = invalid_field_error(S[i]);
             }
@@ -139,7 +156,7 @@ static int process_band_matrix (const int *list,
 
     g_strfreev(S);
 
-    if (!err && (pm->factor < 0 || na(pm->factor))) {
+    if (!err && (bi->factor < 0 || na(bi->factor))) {
         err = E_INVARG;
     }
 
@@ -161,8 +178,8 @@ static int process_band_matrix (const int *list,
 
     if (!err) {
         *plist = gretl_list_copy(list);
-        gretl_list_append_term(plist, pm->center);
-        gretl_list_append_term(plist, pm->width);
+        gretl_list_append_term(plist, bi->center);
+        gretl_list_append_term(plist, bi->width);
     }
 
     return err;
@@ -177,7 +194,7 @@ static int process_band_matrix (const int *list,
 static int parse_band_pm_option (const int *list,
                                  const DATASET *dset,
                                  gretlopt opt,
-                                 struct band_pm *pm,
+                                 band_info *bi,
                                  int **plist)
 {
     int pci = get_effective_plot_ci();
@@ -196,7 +213,7 @@ static int parse_band_pm_option (const int *list,
         v = current_series_index(dset, s);
         if (v >= 0 && v < dset->v) {
             if (gretl_isdummy(dset->t1, dset->t2, dset->Z[v])) {
-                pm->bdummy = v;
+                bi->bdummy = v;
             } else {
                 err = E_INVARG;
                 fprintf(stderr, "%s: not a dummy variable\n",
@@ -227,10 +244,10 @@ static int parse_band_pm_option (const int *list,
             if (v >= 0 && v < dset->v) {
                 pos = in_gretl_list(list, v);
                 if (i == 0) {
-                    pm->center = v;
+                    bi->center = v;
                     cpos = pos;
                 } else {
-                    pm->width = v;
+                    bi->width = v;
                     wpos = pos;
                 }
             } else {
@@ -239,11 +256,11 @@ static int parse_band_pm_option (const int *list,
         } else if (i == 2) {
             /* spec for width multiplier: optional */
             if (numeric_string(S[i])) {
-                pm->factor = dot_atof(S[i]);
+                bi->factor = dot_atof(S[i]);
             } else if (gretl_is_scalar(S[i])) {
-                pm->factor = gretl_scalar_get_value(S[i], &err);
+                bi->factor = gretl_scalar_get_value(S[i], &err);
             } else {
-                /* FIXME support named vector */
+                /* FIXME support a named vector? */
                 err = invalid_field_error(S[i]);
             }
         } else {
@@ -257,14 +274,14 @@ static int parse_band_pm_option (const int *list,
 
 #if 0
     fprintf(stderr, "pm err = %d\n", err);
-    fprintf(stderr, "pm center = %d (pos %d)\n", pm->center, cpos);
-    fprintf(stderr, "pm width = %d (pos %d)\n", pm->width, wpos);
-    fprintf(stderr, "pm factor = %g\n", pm->factor);
+    fprintf(stderr, "pm center = %d (pos %d)\n", bi->center, cpos);
+    fprintf(stderr, "pm width = %d (pos %d)\n", bi->width, wpos);
+    fprintf(stderr, "pm factor = %g\n", bi->factor);
 #endif
 
     if (!err) {
-        if (pm->center < 0 || pm->width < 0 ||
-            pm->factor < 0 || na(pm->factor)) {
+        if (bi->center < 0 || bi->width < 0 ||
+            bi->factor < 0 || na(bi->factor)) {
             err = E_INVARG;
         }
     }
@@ -275,10 +292,10 @@ static int parse_band_pm_option (const int *list,
         */
         *plist = gretl_list_copy(list);
         if (cpos == 0) {
-            gretl_list_append_term(plist, pm->center);
+            gretl_list_append_term(plist, bi->center);
         }
         if (wpos == 0) {
-            gretl_list_append_term(plist, pm->width);
+            gretl_list_append_term(plist, bi->width);
         }
     }
 
@@ -296,8 +313,7 @@ static int parse_band_pm_option (const int *list,
    "#00ff00" or "0x00ff00".
 */
 
-static int parse_band_style_option (struct band_pm *pm,
-                                    int *style, char *rgb)
+static int parse_band_style_option (band_info *bi)
 {
     int pci = get_effective_plot_ci();
     const char *s = get_optval_string(pci, OPT_J);
@@ -306,24 +322,24 @@ static int parse_band_style_option (struct band_pm *pm,
     if (s != NULL) {
         const char *p = strchr(s, ',');
 
-        if (pm->bdummy && *s != ',') {
+        if (bi->bdummy && *s != ',') {
             /* must be just a color */
-            err = parse_gnuplot_color(s, rgb);
+            err = parse_gnuplot_color(s, bi->rgb);
         } else if (*s == ',') {
             /* skipping field 1, going straight to color */
-            err = parse_gnuplot_color(s + 1, rgb);
+            err = parse_gnuplot_color(s + 1, bi->rgb);
         } else if (p == NULL) {
             /* just got field 1, style spec */
             if (!strcmp(s, "fill")) {
-                *style = BAND_FILL;
+                bi->style = BAND_FILL;
             } else if (!strcmp(s, "dash")) {
-                *style = BAND_DASH;
+                bi->style = BAND_DASH;
             } else if (!strcmp(s, "line")) {
-                *style = BAND_LINE;
+                bi->style = BAND_LINE;
             } else if (!strcmp(s, "bars")) {
-                *style = BAND_BARS;
+                bi->style = BAND_BARS;
             } else if (!strcmp(s, "step")) {
-                *style = BAND_STEP;
+                bi->style = BAND_STEP;
             } else {
                 err = invalid_field_error(s);
             }
@@ -332,20 +348,20 @@ static int parse_band_style_option (struct band_pm *pm,
             if (strlen(s) < 8) {
                 err = invalid_field_error(s);
             } else if (!strncmp(s, "fill,", 5)) {
-                *style = BAND_FILL;
+                bi->style = BAND_FILL;
             } else if (!strncmp(s, "dash,", 5)) {
-                *style = BAND_DASH;
+                bi->style = BAND_DASH;
             } else if (!strncmp(s, "line,", 5)) {
-                *style = BAND_LINE;
+                bi->style = BAND_LINE;
             } else if (!strncmp(s, "bars,", 5)) {
-                *style = BAND_BARS;
+                bi->style = BAND_BARS;
             } else if (!strncmp(s, "step,", 5)) {
-                *style = BAND_STEP;
+                bi->style = BAND_STEP;
             } else {
                 err = invalid_field_error(s);
             }
             if (!err) {
-                err = parse_gnuplot_color(s + 5, rgb);
+                err = parse_gnuplot_color(s + 5, bi->rgb);
             }
         }
     }
@@ -438,7 +454,7 @@ int plot_with_band (BPMode mode, gnuplot_info *gi,
                     DATASET *dset,
                     gretlopt opt)
 {
-    struct band_pm pm = {-1, -1, 1.0, 0};
+    band_info *bi = NULL;
     FILE *fp = NULL;
     const double *x = NULL;
     const double *y = NULL;
@@ -447,28 +463,31 @@ int plot_with_band (BPMode mode, gnuplot_info *gi,
     const double *d = NULL;
     char yname[MAXDISP];
     char xname[MAXDISP];
-    char rgb[10] = {0};
     char wspec[16] = {0};
     int *biglist = NULL;
-    int style = BAND_LINE;
     int show_zero = 0;
     int t1 = dset->t1;
     int t2 = dset->t2;
     int i, n_yvars = 0;
     int err = 0;
 
+    bi = band_info_new();
+    if (bi == NULL) {
+	return E_ALLOC;
+    }
+
     if (mode == BP_BLOCKMAT) {
         /* Coming from a "plot" block in matrix mode: in this case the
            band should be given in the form of a named matrix with
            two columns holding center and width, respectively.
         */
-        err = process_band_matrix(gi->list, dset, &pm, &biglist);
+        err = process_band_matrix(gi->list, dset, bi, &biglist);
     } else {
-        err = parse_band_pm_option(gi->list, dset, opt, &pm, &biglist);
+        err = parse_band_pm_option(gi->list, dset, opt, bi, &biglist);
     }
 
     if (!err && (opt & OPT_J)) {
-        err = parse_band_style_option(&pm, &style, rgb);
+        err = parse_band_style_option(bi);
     }
 
     if (!err) {
@@ -486,6 +505,7 @@ int plot_with_band (BPMode mode, gnuplot_info *gi,
     free(biglist);
 
     if (err) {
+	free(bi);
         return err;
     }
 
@@ -506,16 +526,17 @@ int plot_with_band (BPMode mode, gnuplot_info *gi,
 
     fp = open_plot_input_file(PLOT_BAND, gi->flags, &err);
     if (err) {
+	free(bi);
         return err;
     }
 
     /* assemble the data we'll need */
-    if (pm.bdummy) {
-        d = dset->Z[pm.bdummy];
+    if (bi->bdummy) {
+        d = dset->Z[bi->bdummy];
     } else {
-        c = dset->Z[pm.center];
-        w = dset->Z[pm.width];
-        show_zero = band_straddles_zero(c, w, pm.factor, t1, t2);
+        c = dset->Z[bi->center];
+        w = dset->Z[bi->width];
+        show_zero = band_straddles_zero(c, w, bi->factor, t1, t2);
     }
 
     if (gi->flags & GPT_TS) {
@@ -534,7 +555,7 @@ int plot_with_band (BPMode mode, gnuplot_info *gi,
     if (*xname != '\0') {
         fprintf(fp, "set xlabel \"%s\"\n", xname);
     }
-    if (show_zero && style != BAND_FILL) {
+    if (show_zero && bi->style != BAND_FILL) {
         fputs("set xzeroaxis\n", fp);
     }
 
@@ -547,12 +568,12 @@ int plot_with_band (BPMode mode, gnuplot_info *gi,
 
     print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
 
-    if (pm.bdummy) {
+    if (bi->bdummy) {
         /* write out the rectangles */
-        write_rectangles(gi, rgb, d, t1, t2, dset, fp);
+        write_rectangles(gi, bi->rgb, d, t1, t2, dset, fp);
     }
 
-    if (pm.bdummy) {
+    if (bi->bdummy) {
         int oddman = 0;
 
         if (!(opt & OPT_Y)) {
@@ -594,10 +615,10 @@ int plot_with_band (BPMode mode, gnuplot_info *gi,
 
     fputs("plot \\\n", fp);
 
-    if (style == BAND_FILL) {
+    if (bi->style == BAND_FILL) {
         /* plot the confidence band first, so the other lines
            come out on top */
-        print_pm_filledcurve_line(pm.factor, NULL, rgb, fp);
+        print_pm_filledcurve_line(bi, NULL, fp);
         if (show_zero) {
             fputs("0 notitle w lines lt 0, \\\n", fp);
         }
@@ -625,25 +646,25 @@ int plot_with_band (BPMode mode, gnuplot_info *gi,
             set_plot_withstr(gi, i, wspec);
             fprintf(fp, "'-' using 1:2 title '%s' %s lt %d, \\\n", iname, wspec, i);
         }
-        if (*rgb != '\0') {
-            sprintf(lspec, "lc rgb \"%s\"", rgb);
+        if (bi->rgb[0] != '\0') {
+            sprintf(lspec, "lc rgb \"%s\"", bi->rgb);
         } else {
             sprintf(lspec, "lt %d", n_yvars + 1);
         }
-        if (style == BAND_DASH) {
+        if (bi->style == BAND_DASH) {
             strcpy(dspec, " dt 2");
         }
         /* then the band */
-        if (style == BAND_BARS) {
+        if (bi->style == BAND_BARS) {
             fprintf(fp, "'-' using 1:2:(%g*$3) notitle w errorbars %s%s\n",
-                    pm.factor, lspec, dspec);
+                    bi->factor, lspec, dspec);
         } else {
-            char *wstr = style == BAND_STEP ? "steps" : "lines";
+            char *wstr = bi->style == BAND_STEP ? "steps" : "lines";
 
             fprintf(fp, "'-' using 1:($2-%g*$3) notitle w %s %s%s, \\\n",
-                    pm.factor, wstr, lspec, dspec);
+                    bi->factor, wstr, lspec, dspec);
             fprintf(fp, "'-' using 1:($2+%g*$3) notitle w %s %s%s\n",
-                    pm.factor, wstr, lspec, dspec);
+                    bi->factor, wstr, lspec, dspec);
         }
     }
 
@@ -651,7 +672,7 @@ int plot_with_band (BPMode mode, gnuplot_info *gi,
        or not we're using fill style for the band
     */
 
-    if (style == BAND_FILL) {
+    if (bi->style == BAND_FILL) {
         print_user_pm_data(x, c, w, t1, t2, fp);
         for (i=0; i<n_yvars; i++) {
             y = dset->Z[gi->list[i+1]];
@@ -663,7 +684,7 @@ int plot_with_band (BPMode mode, gnuplot_info *gi,
             print_user_y_data(x, y, t1, t2, fp);
         }
         print_user_pm_data(x, c, w, t1, t2, fp);
-        if (style != BAND_BARS) {
+        if (bi->style != BAND_BARS) {
             print_user_pm_data(x, c, w, t1, t2, fp);
         }
     }
@@ -674,6 +695,7 @@ int plot_with_band (BPMode mode, gnuplot_info *gi,
 
     err = finalize_plot_input_file(fp);
     clear_gpinfo(gi);
+    free(bi);
 
     if (mode == BP_BLOCKMAT) {
         /* hide the two extra dataset columns
