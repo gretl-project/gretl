@@ -3965,6 +3965,7 @@ int matrix_plot (gretl_matrix *m, const int *list, const char *literal,
     }
 
     if (list != NULL && list[0] == 0) {
+	/* let an empty list be equivalent to NULL */
 	dset = gretl_dataset_from_matrix(m, NULL, OPT_B, &err);
     } else {
 	dset = gretl_dataset_from_matrix(m, list, OPT_B, &err);
@@ -4142,15 +4143,12 @@ int gnuplot (const int *plotlist, const char *literal,
 	goto bailout;
     }
 
+    /* hive off some special cases */
     if (gi.fit == PLOT_FIT_LOESS) {
 	return loess_plot(&gi, literal, dset);
-    }
-
-    if (time_fit) {
+    } else if (time_fit) {
 	return time_fit_plot(&gi, literal, dset);
-    }
-
-    if (gi.band) {
+    } else if (gi.band) {
 	return plot_with_band(BP_REGULAR, &gi, literal,
 			      (DATASET *) dset, opt);
     }
