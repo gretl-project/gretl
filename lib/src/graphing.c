@@ -557,8 +557,8 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 
     gi->flags = 0;
 
-    if (opt & OPT_N) {
-	/* --band */
+    if (opt & (OPT_N | OPT_a)) {
+	/* --band or --bands */
 	if (opt & OPT_T) {
 	    /* --time-series */
 	    gi->flags |= (GPT_TS | GPT_IDX);
@@ -8976,12 +8976,12 @@ int is_auto_fit_string (const char *s)
 
 /**
  * gnuplot_process_input:
- * @opt: should be OPT_I (file) or OPT_b (buffer)
+ * @opt: should be OPT_I (input file) or OPT_i (input buffer)
  * @prn: gretl printing struct.
  *
  * Respond to the "gnuplot" command with %OPT_I, to specify
  * that input should be taken from a user-created gnuplot
- * command file, or %OPT_b, to take input from a named
+ * command file, or %OPT_i, to take input from a named
  * string variable.
  *
  * Returns: 0 on success, error code on error.

@@ -247,8 +247,9 @@ typedef enum {
     OPT_X = 1 << 23,
     OPT_Y = 1 << 24,
     OPT_Z = 1 << 25,
-    OPT_b = 1 << 26,
-    OPT_i = 1 << 27,
+    OPT_a = 1 << 26,
+    OPT_b = 1 << 27,
+    OPT_i = 1 << 28,
     OPT_UNSET = 1 << 30
 } gretlopt;
 
