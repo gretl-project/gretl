@@ -85,7 +85,7 @@ enum {
 
 #define MAX_LETTERBOX_LINES 8
 
-#define ts_plot(g)      ((g)->flags & GPT_TS)
+#define ts_plot(g) ((g)->flags & GPT_TS)
 
 #if GP_DEBUG
 static void print_gnuplot_flags (int flags, int revised);
@@ -3605,8 +3605,9 @@ static int maybe_add_plotx (gnuplot_info *gi, int time_fit,
 	return E_ALLOC;
     }
 
-    /* a bit ugly, but add a dummy list entry for
-       the 'virtual' plot variable */
+    /* a bit nasty, but add a dummy list entry for
+       the 'virtual' plot variable
+    */
     if (add0) {
 	gretl_list_append_term(&gi->list, 0);
 	if (gi->list == NULL) {
