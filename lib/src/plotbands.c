@@ -87,9 +87,69 @@ static BandStyle style_from_string (const char *s, int *err)
     return (BandStyle) 0;
 }
 
-static band_info *band_info_from_bundle (gretl_bundle *b,
+/* handle the BP_BLOCKMAT band-matrix case */
+
+static int process_band_matrix (const char *mname,
+				band_info *bi,
+				gnuplot_info *gi,
+				DATASET *dset)
+{
+    gretl_matrix *m = get_matrix_by_name(mname);
+    int err = 0;
+
+    if (m == NULL || m->cols != 2 || m->rows != dset->n) {
+	/* matrix missing or non-conformable */
+	err = invalid_field_error(mname);
+    } else {
+        /* enlarge the dset->Z array and stick bi->center and
+           bi->width onto the end of it
+        */
+        int newv = dset->v + 2;
+        double **tmp = realloc(dset->Z, newv * sizeof *tmp);
+
+        if (tmp == NULL) {
+            err = E_ALLOC;
+        } else {
+            /* note: we don't need varnames here */
+            dset->Z = tmp;
+            bi->center = dset->v;
+            bi->width = dset->v + 1;
+            dset->Z[bi->center] = m->val;
+            dset->Z[bi->width] = m->val + m->rows;
+            dset->v += 2;
+        }
+    }
+
+    if (!err) {
+        gretl_list_append_term(&gi->list, bi->center);
+	bi->center = gi->list[0] + 1;
+        gretl_list_append_term(&gi->list, bi->width);
+	bi->width = gi->list[0] + 1;
+    }
+
+    return err;
+}
+
+static int check_assign_bdummy (band_info *bi, int vnum,
+				const DATASET *dset)
+{
+    int err = 0;
+
+    if (gretl_isdummy(dset->t1, dset->t2, dset->Z[vnum])) {
+	bi->bdummy = vnum;
+    } else {
+	err = E_INVARG;
+	fprintf(stderr, "%s: not a dummy variable\n",
+		dset->varname[vnum]);
+    }
+
+    return err;
+}
+
+static band_info *band_info_from_bundle (BPMode mode,
+					 gretl_bundle *b,
 					 gnuplot_info *gi,
-                                         const DATASET *dset,
+                                         DATASET *dset,
                                          int *err)
 {
     band_info *bi = band_info_new();
@@ -97,14 +157,27 @@ static band_info *band_info_from_bundle (gretl_bundle *b,
     const char *strkeys[] = {
         "center", "width", "dummy", "style", "color"
     };
-    int *vtarg[3];
-    int i, v, pos;
+    int i, imin = 0;
+    int v, pos;
 
-    vtarg[0] = &bi->center;
-    vtarg[1] = &bi->width;
-    vtarg[2] = &bi->bdummy;
+    /* Allow for the case where the band (center, width) is
+       represented by a two-column matrix -- i.e, we're
+       coming from a "plot" block with matrix data.
+    */
+    if (mode == BP_BLOCKMAT) {
+	const char *s = gretl_bundle_get_string(b, "bandmat", err);
 
-    for (i=0; i<5 && !*err; i++) {
+	if (!*err) {
+	    *err = process_band_matrix(s, bi, gi, dset);
+	}
+	if (!*err) {
+	    imin = 3;
+	} else {
+	    return NULL;
+	}
+    }
+
+    for (i=imin; i<5 && !*err; i++) {
         if (gretl_bundle_has_key(b, strkeys[i])) {
             S[i] = gretl_bundle_get_string(b, strkeys[i], err);
         }
@@ -114,7 +187,7 @@ static band_info *band_info_from_bundle (gretl_bundle *b,
     }
 
     /* try cashing out the string members */
-    for (i=0; i<5 && !*err; i++) {
+    for (i=imin; i<5 && !*err; i++) {
         if (S[i] == NULL) {
             continue;
         }
@@ -122,7 +195,8 @@ static band_info *band_info_from_bundle (gretl_bundle *b,
             v = current_series_index(dset, S[i]);
             if (v < 0) {
                 *err = E_INVARG;
-            } else {
+            } else if (i < 2) {
+		/* center, width */
 		fprintf(stderr, "%s -> %d\n", S[i], v);
 		pos = in_gretl_list(gi->list, v);
 		fprintf(stderr, "pos in gi->list %d\n", pos);
@@ -131,7 +205,15 @@ static band_info *band_info_from_bundle (gretl_bundle *b,
 		    gretl_list_append_term(&gi->list, v);
 		    pos = gi->list[0];
 		}
-		(*vtarg)[i] = pos + 1; /* allow for x */
+		if (i == 0) {
+		    bi->center = pos + 1;
+		} else {
+		    bi->width = pos + 1;
+		}
+	    } else {
+		/* dummy? */
+		fprintf(stderr, "%s -> %d\n", S[i], v);
+		*err = check_assign_bdummy(bi, v, dset);
 	    }
         } else if (i == 3) {
             bi->style = style_from_string(S[i], err);
@@ -143,7 +225,7 @@ static band_info *band_info_from_bundle (gretl_bundle *b,
     if (!*err) {
         /* further checks on validity of input */
         if (bi->bdummy > 0) {
-            /* not compatible with width + center */
+            /* not compatible with width and center */
             if (bi->center > 0 || bi->width > 0) {
                 *err = E_BADOPT;
             }
@@ -169,9 +251,10 @@ static band_info *band_info_from_bundle (gretl_bundle *b,
    build and return an array of band_info structs.
 */
 
-static band_info **get_band_info_array (int *n_bands,
+static band_info **get_band_info_array (BPMode mode,
+					int *n_bands,
 					gnuplot_info *gi,
-                                        const DATASET *dset,
+                                        DATASET *dset,
                                         int *err)
 {
     int pci = get_effective_plot_ci();
@@ -198,7 +281,7 @@ static band_info **get_band_info_array (int *n_bands,
 
         for (i=0; i<n && !*err; i++) {
             b = gretl_array_get_data(a, i);
-            pbi[i] = band_info_from_bundle(b, gi, dset, err);
+            pbi[i] = band_info_from_bundle(mode, b, gi, dset, err);
         }
         if (*err) {
             for (j=0; j<=i; j++) {
@@ -345,12 +428,12 @@ static void print_data_block (gnuplot_info *gi,
    the matrix content).
 */
 
-static int process_band_matrix (gnuplot_info *gi,
-                                DATASET *dset,
-                                band_info *bi)
+static int parse_band_matrix_option (band_info *bi,
+				     gnuplot_info *gi,
+				     DATASET *dset)
 {
     const char *s = get_optval_string(PLOT, OPT_N);
-    gretl_matrix *m = NULL;
+    const char *mname = NULL;
     gchar **S;
     int i = 0;
     int err = 0;
@@ -363,13 +446,7 @@ static int process_band_matrix (gnuplot_info *gi,
 
     while (S != NULL && S[i] != NULL && !err) {
         if (i == 0) {
-            m = get_matrix_by_name(S[i]);
-            if (m != NULL && m->cols == 2 && m->rows == dset->n) {
-                ; /* OK, will be handled below */
-            } else {
-                /* matrix missing or non-conformable */
-                err = invalid_field_error(S[i]);
-             }
+	    mname = S[i];
         } else if (i == 1) {
             /* spec for width multiplier: optional */
             if (numeric_string(S[i])) {
@@ -386,38 +463,14 @@ static int process_band_matrix (gnuplot_info *gi,
         i++;
     }
 
-    g_strfreev(S);
-
     if (!err && (bi->factor <= 0 || na(bi->factor))) {
         err = E_INVARG;
     }
-
     if (!err) {
-        /* enlarge the dset->Z array and stick bi->center and
-           bi->width onto the end of it
-        */
-        int newv = dset->v + 2;
-        double **tmp = realloc(dset->Z, newv * sizeof *tmp);
-
-        if (tmp == NULL) {
-            err = E_ALLOC;
-        } else {
-            /* note: we don't need varnames here */
-            dset->Z = tmp;
-            bi->center = dset->v;
-            bi->width = dset->v + 1;
-            dset->Z[bi->center] = m->val;
-            dset->Z[bi->width] = m->val + m->rows;
-            dset->v += 2;
-        }
+	err = process_band_matrix(mname, bi, gi, dset);
     }
 
-    if (!err) {
-        gretl_list_append_term(&gi->list, bi->center);
-	bi->center = gi->list[0] + 1;
-        gretl_list_append_term(&gi->list, bi->width);
-	bi->width = gi->list[0] + 1;
-    }
+    g_strfreev(S);
 
     return err;
 }
@@ -428,10 +481,10 @@ static int process_band_matrix (gnuplot_info *gi,
    width.
 */
 
-static int parse_band_pm_option (gnuplot_info *gi,
+static int parse_band_pm_option (band_info *bi,
+				 gnuplot_info *gi,
                                  const DATASET *dset,
-                                 gretlopt opt,
-                                 band_info *bi)
+                                 gretlopt opt)
 {
     int pci = get_effective_plot_ci();
     const char *s = get_optval_string(pci, OPT_N);
@@ -448,13 +501,7 @@ static int parse_band_pm_option (gnuplot_info *gi,
         /* a single field: try for "recession bars" */
         v = current_series_index(dset, s);
         if (v >= 0 && v < dset->v) {
-            if (gretl_isdummy(dset->t1, dset->t2, dset->Z[v])) {
-                bi->bdummy = v;
-            } else {
-                err = E_INVARG;
-                fprintf(stderr, "%s: not a dummy variable\n",
-                        dset->varname[v]);
-            }
+	    err = check_assign_bdummy(bi, v, dset);
         } else {
             err = E_INVARG;
         }
@@ -604,9 +651,9 @@ static band_info **get_single_band_info (BPMode mode,
 	   band should be given in the form of a named matrix with
 	   two columns holding center and width, respectively.
 	*/
-	*err = process_band_matrix(gi, dset, bi[0]);
+	*err = parse_band_matrix_option(bi[0], gi, dset);
     } else {
-	*err = parse_band_pm_option(gi, dset, opt, bi[0]);
+	*err = parse_band_pm_option(bi[0], gi, dset, opt);
     }
     if (!*err && (opt & OPT_J)) {
 	*err = parse_band_style_option(bi[0]);
@@ -620,12 +667,12 @@ static band_info **get_single_band_info (BPMode mode,
     return bi;
 }
 
-/* write full-height bars as gnuplot rectangle objects, using
-   the dummy variable @d for on/off information
+/* Write full-height bars as gnuplot rectangle objects, using
+   the dummy variable bi->bdummy for on/off information.
 */
 
-static int write_rectangles (gnuplot_info *gi,
-                             band_info *bi,
+static int write_rectangles (band_info *bi,
+			     gnuplot_info *gi,
 			     const double *x,
                              DATASET *dset,
                              FILE *fp)
@@ -634,10 +681,6 @@ static int write_rectangles (gnuplot_info *gi,
     char stobs[16], endobs[16];
     int bar_on = 0, obj = 1;
     int t, err = 0;
-
-    if (gi->x == NULL) {
-        return E_DATA;
-    }
 
     if (bi->rgb[0] == '\0') {
         strcpy(bi->rgb, "#dddddd");
@@ -652,21 +695,21 @@ static int write_rectangles (gnuplot_info *gi,
         }
         if (bar_on && d[t] == 0) {
             /* finalize a bar */
-            sprintf(endobs, "%g", gi->x[t]);
+            sprintf(endobs, "%g", x[t]);
             fprintf(fp, "set object %d rectangle from %s, graph 0 to %s, graph 1 back "
                     "fillstyle solid 0.5 noborder fc rgb \"%s\"\n",
                     obj++, stobs, endobs, bi->rgb);
             bar_on = 0;
         } else if (!bar_on && d[t] != 0) {
             /* start a bar */
-            sprintf(stobs, "%g", gi->x[t]);
+            sprintf(stobs, "%g", x[t]);
             bar_on = 1;
         }
     }
 
     if (bar_on) {
         /* terminate an unfinished bar */
-        sprintf(endobs, "%g", gi->x[gi->t2]);
+        sprintf(endobs, "%g", x[gi->t2]);
         fprintf(fp, "set object rectangle from %s, graph 0 to %s, graph 1 back "
                 "fillstyle solid 0.5 noborder fc rgb \"%s\"\n",
                 stobs, endobs, bi->rgb);
@@ -678,10 +721,12 @@ static int write_rectangles (gnuplot_info *gi,
 /* Below: the bars in question don't have to indicate recessions,
    but they're the same sort of thing: full-height bars indicating
    the presence of absence of some binary time-varying attribute.
+   This function handles the case where the only "band" instance
+   is a case of such bars.
 */
 
-static void recession_bars_plot (gnuplot_info *gi,
-				 band_info *bi,
+static void recession_bars_plot (band_info *bi,
+				 gnuplot_info *gi,
 				 int n_yvars,
 				 const double *x,
 				 DATASET *dset,
@@ -694,7 +739,7 @@ static void recession_bars_plot (gnuplot_info *gi,
     int i;
 
     /* write out the rectangles as objects */
-    write_rectangles(gi, bi, x, dset, fp);
+    write_rectangles(bi, gi, x, dset, fp);
 
     if (!(opt & OPT_Y)) {
 	check_for_yscale(gi, (const double **) dset->Z, &oddman);
@@ -731,7 +776,8 @@ static void recession_bars_plot (gnuplot_info *gi,
 
 /* The last entry in gi->list pertains to the x-axis variable:
    either the index of a "genuine" x-var or a dummy placeholder
-   of 0. Either way we want to drop this term.
+   of 0. Either way we want to drop this term from the list,
+   and return a pointer to the x-axis data.
 */
 
 static const double *gi_get_xdata (gnuplot_info *gi,
@@ -791,7 +837,7 @@ int plot_with_band (BPMode mode,
 	/* --bands=@array : just experimental for now,
 	   we ignore all but the first bundle in the array
 	*/
-	bbi = get_band_info_array(&n_bands, gi, dset, &err);
+	bbi = get_band_info_array(mode, &n_bands, gi, dset, &err);
     } else {
 	bbi = get_single_band_info(mode, gi, dset, opt, &err);
     }
@@ -842,10 +888,15 @@ int plot_with_band (BPMode mode,
         fputs("set xzeroaxis\n", fp);
     }
 
-    if (n_bands == 1 && bbi[0]->bdummy) {
+    if (bbi[0]->bdummy) {
 	/* special case */
-	recession_bars_plot(gi, bbi[0], n_yvars, x, dset, opt, fp);
-        goto finish;
+	if (n_bands == 1) {
+	    recession_bars_plot(bbi[0], gi, n_yvars,
+				x, dset, opt, fp);
+	    goto finish;
+	} else {
+	    err = write_rectangles(bbi[0], gi, x, dset, fp);
+	}
     }
 
     /* is this the right place to put the data heredoc? */
@@ -856,7 +907,9 @@ int plot_with_band (BPMode mode,
     /* bands first */
     for (j=0; j<n_bands; j++) {
 	bi = bbi[j];
-	if (bi->style == BAND_FILL) {
+	if (bi->bdummy) {
+	    continue;
+	} else if (bi->style == BAND_FILL) {
 	    print_pm_filledcurve(bi, NULL, 1, fp);
 	    if (show_zero) {
 		fputs("0 notitle w lines lt 0, \\\n", fp);
