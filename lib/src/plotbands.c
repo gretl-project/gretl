@@ -625,12 +625,12 @@ static band_info **get_single_band_info (BPMode mode,
 */
 
 static int write_rectangles (gnuplot_info *gi,
-                             char *rgb,
-                             const double *d,
-                             int t1, int t2,
+                             band_info *bi,
+			     const double *x,
                              DATASET *dset,
                              FILE *fp)
 {
+    double *d = dset->Z[bi->bdummy];
     char stobs[16], endobs[16];
     int bar_on = 0, obj = 1;
     int t, err = 0;
@@ -639,13 +639,13 @@ static int write_rectangles (gnuplot_info *gi,
         return E_DATA;
     }
 
-    if (*rgb == '\0') {
-        strcpy(rgb, "#dddddd");
+    if (bi->rgb[0] == '\0') {
+        strcpy(bi->rgb, "#dddddd");
     }
 
     *stobs = *endobs = '\0';
 
-    for (t=t1; t<=t2; t++) {
+    for (t=gi->t1; t<=gi->t2; t++) {
         if (na(d[t])) {
             err = E_MISSDATA;
             break;
@@ -655,7 +655,7 @@ static int write_rectangles (gnuplot_info *gi,
             sprintf(endobs, "%g", gi->x[t]);
             fprintf(fp, "set object %d rectangle from %s, graph 0 to %s, graph 1 back "
                     "fillstyle solid 0.5 noborder fc rgb \"%s\"\n",
-                    obj++, stobs, endobs, rgb);
+                    obj++, stobs, endobs, bi->rgb);
             bar_on = 0;
         } else if (!bar_on && d[t] != 0) {
             /* start a bar */
@@ -666,13 +666,67 @@ static int write_rectangles (gnuplot_info *gi,
 
     if (bar_on) {
         /* terminate an unfinished bar */
-        sprintf(endobs, "%g", gi->x[t2]);
+        sprintf(endobs, "%g", gi->x[gi->t2]);
         fprintf(fp, "set object rectangle from %s, graph 0 to %s, graph 1 back "
                 "fillstyle solid 0.5 noborder fc rgb \"%s\"\n",
-                stobs, endobs, rgb);
+                stobs, endobs, bi->rgb);
     }
 
     return err;
+}
+
+/* Below: the bars in question don't have to indicate recessions,
+   but they're the same sort of thing: full-height bars indicating
+   the presence of absence of some binary time-varying attribute.
+*/
+
+static void recession_bars_plot (gnuplot_info *gi,
+				 band_info *bi,
+				 int n_yvars,
+				 const double *x,
+				 DATASET *dset,
+				 gretlopt opt,
+				 FILE *fp)
+{
+    const double *y;
+    char wspec[16] = {0};
+    int oddman = 0;
+    int i;
+
+    /* write out the rectangles as objects */
+    write_rectangles(gi, bi, x, dset, fp);
+
+    if (!(opt & OPT_Y)) {
+	check_for_yscale(gi, (const double **) dset->Z, &oddman);
+	if (gi->flags & GPT_Y2AXIS) {
+	    fputs("set ytics nomirror\n", fp);
+	    fputs("set y2tics\n", fp);
+	}
+    }
+
+    fputs("plot \\\n", fp);
+
+    /* plot the actual data */
+    for (i=1; i<=n_yvars; i++) {
+	const char *iname = series_get_graph_name(dset, gi->list[i]);
+
+	set_plot_withstr(gi, i, wspec);
+	if (gi->flags & GPT_Y2AXIS) {
+	    fprintf(fp, "'-' using 1:2 axes %s title \"%s (%s)\" %s lt %d",
+		    (i == oddman)? "x1y2" : "x1y1", iname,
+		    (i == oddman)? _("right") : _("left"),
+		    wspec, i);
+	} else {
+	    fprintf(fp, "'-' using 1:2 title \"%s\" %s lt %d", iname, wspec, i);
+	}
+	gp_newline(i < n_yvars, fp);
+    }
+
+    /* and write the data block */
+    for (i=0; i<n_yvars; i++) {
+	y = dset->Z[gi->list[i+1]];
+	print_user_y_data(x, y, gi->t1, gi->t2, fp);
+    }
 }
 
 /* The last entry in gi->list pertains to the x-axis variable:
@@ -720,8 +774,6 @@ int plot_with_band (BPMode mode,
     char xname[MAXDISP];
     char wspec[16] = {0};
     int show_zero = 0;
-    int t1 = dset->t1;
-    int t2 = dset->t2;
     int i, j, n_yvars = 0;
     int n_bands = 1;
     int err = 0;
@@ -749,33 +801,10 @@ int plot_with_band (BPMode mode,
 
     printlist(gi->list, "gi->list, rev 2");
 
-    /* temporary hack */
-    bi = bbi[0];
-
     err = graph_list_adjust_sample(gi->list, gi, dset, 1);
-    if (!err) {
-	t1 = gi->t1;
-	t2 = gi->t2;
-    }
-
     if (err) {
         free_bbi(bbi, n_bands);
         return err;
-    }
-
-    if (gi->x != NULL) {
-        x = gi->x;
-        *xname = '\0';
-        if (gi->flags & GPT_TS) {
-            gi->flags |= GPT_LETTERBOX;
-        }
-    } else {
-	int xpos = n_yvars + 1;
-        int xno = gi->list[xpos];
-
-        x = dset->Z[xno];
-        strcpy(xname, series_get_graph_name(dset, xno));
-	gretl_list_delete_at_pos(gi->list, xpos);
     }
 
     fp = open_plot_input_file(PLOT_BAND, gi->flags, &err);
@@ -809,54 +838,18 @@ int plot_with_band (BPMode mode,
 
     print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
 
-    /* is this the right place to put the data heredoc? */
-    print_data_block(gi, x, dset, &show_zero, fp);
-
     if (show_zero && bi->style != BAND_FILL) {
         fputs("set xzeroaxis\n", fp);
     }
 
-    if (bi->bdummy) {
-	/* FIXME */
-	const double *d = dset->Z[bi->bdummy];
-	const double *y;
-        int oddman = 0;
-
-        /* write out the rectangles as objects */
-        write_rectangles(gi, bi->rgb, d, t1, t2, dset, fp);
-
-        if (!(opt & OPT_Y)) {
-            check_for_yscale(gi, (const double **) dset->Z, &oddman);
-            if (gi->flags & GPT_Y2AXIS) {
-                fputs("set ytics nomirror\n", fp);
-                fputs("set y2tics\n", fp);
-            }
-        }
-
-        fputs("plot \\\n", fp);
-
-        /* plot the actual data */
-        for (i=1; i<=n_yvars; i++) {
-            const char *iname = series_get_graph_name(dset, gi->list[i]);
-
-            set_plot_withstr(gi, i, wspec);
-            if (gi->flags & GPT_Y2AXIS) {
-                fprintf(fp, "'-' using 1:2 axes %s title \"%s (%s)\" %s lt %d",
-                        (i == oddman)? "x1y2" : "x1y1", iname,
-                        (i == oddman)? _("right") : _("left"),
-                        wspec, i);
-            } else {
-                fprintf(fp, "'-' using 1:2 title \"%s\" %s lt %d", iname, wspec, i);
-            }
-	    gp_newline(i < n_yvars, fp);
-        }
-        /* and write the data block */
-        for (i=0; i<n_yvars; i++) {
-            y = dset->Z[gi->list[i+1]];
-            print_user_y_data(x, y, t1, t2, fp);
-        }
+    if (n_bands == 1 && bbi[0]->bdummy) {
+	/* special case */
+	recession_bars_plot(gi, bbi[0], n_yvars, x, dset, opt, fp);
         goto finish;
     }
+
+    /* is this the right place to put the data heredoc? */
+    print_data_block(gi, x, dset, &show_zero, fp);
 
     fputs("plot \\\n", fp);
 
