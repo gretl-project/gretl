@@ -3962,22 +3962,18 @@ int matrix_plot (gretl_matrix *m, const int *list, const char *literal,
     int pmax, err = 0;
 
     if (gretl_is_null_matrix(m)) {
-	return E_DATA;
-    }
-
-    if (list != NULL && list[0] == 0) {
+	err = E_DATA;
+    } else if (list != NULL && list[0] == 0) {
 	/* let an empty list be equivalent to NULL */
 	dset = gretl_dataset_from_matrix(m, NULL, OPT_B, &err);
     } else {
 	dset = gretl_dataset_from_matrix(m, list, OPT_B, &err);
     }
-
     if (err) {
 	return err;
     }
 
     pmax = dset->v - 1;
-
     if (pmax <= 0) {
 	err = E_DATA;
     } else {
