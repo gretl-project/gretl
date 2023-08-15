@@ -24,7 +24,7 @@
 #include "uservar.h"
 #include "plot_priv.h"
 
-#define PB_DEBUG 1
+#define PB_DEBUG 0
 
 typedef enum {
     BAND_LINE,
@@ -89,7 +89,7 @@ static BandStyle style_from_string (const char *s, int *err)
     return (BandStyle) 0;
 }
 
-/* handle the BP_BLOCKMAT band-matrix case */
+/* handle the band-as-matrix case */
 
 static int process_band_matrix (const char *mname,
 				band_info *bi,
@@ -167,7 +167,7 @@ static void do_center_or_width (band_info *bi,
     }
 }
 
-static band_info *band_info_from_bundle (BPMode mode,
+static band_info *band_info_from_bundle (int matrix_mode,
 					 gretl_bundle *b,
 					 gnuplot_info *gi,
                                          DATASET *dset,
@@ -180,11 +180,12 @@ static band_info *band_info_from_bundle (BPMode mode,
     };
     int v, i, imin = 0;
 
-    /* Allow for the case where the band (center, width) is
-       represented by a two-column matrix -- i.e, we're
-       coming from a "plot" block with matrix data.
+    /* Allow for the "matrix_mode" case where the band
+       (center, width) is represented by a two-column
+       matrix. This arises when gnuplot or plot is fed
+       data in matrix form.
     */
-    if (mode == BP_BLOCKMAT) {
+    if (matrix_mode) {
 	const char *s = gretl_bundle_get_string(b, "bandmat", err);
 
 	if (!*err) {
@@ -257,7 +258,7 @@ static band_info *band_info_from_bundle (BPMode mode,
    build and return an array of band_info structs.
 */
 
-static band_info **get_band_info_array (BPMode mode,
+static band_info **get_band_info_array (int matrix_mode,
 					int *n_bands,
 					gnuplot_info *gi,
                                         DATASET *dset,
@@ -287,7 +288,7 @@ static band_info **get_band_info_array (BPMode mode,
 
         for (i=0; i<n && !*err; i++) {
             b = gretl_array_get_data(a, i);
-            pbi[i] = band_info_from_bundle(mode, b, gi, dset, err);
+            pbi[i] = band_info_from_bundle(matrix_mode, b, gi, dset, err);
         }
         if (*err) {
             for (j=0; j<=i; j++) {
@@ -438,7 +439,8 @@ static int parse_band_matrix_option (band_info *bi,
 				     gnuplot_info *gi,
 				     DATASET *dset)
 {
-    const char *s = get_optval_string(PLOT, OPT_N);
+    int pci = get_effective_plot_ci();
+    const char *s = get_optval_string(pci, OPT_N);
     const char *mname = NULL;
     gchar **S;
     int i = 0;
@@ -525,10 +527,7 @@ static int parse_band_pm_option (band_info *bi,
     while (S != NULL && S[i] != NULL && !err) {
         if (i < 2) {
             /* specs for the "center" and "width" series: required */
-            if (opt & OPT_X) {
-                /* special for matrix-derived dataset: FIXME */
-                v = (i == 0)? dset->v - 2 : dset->v - 1;
-            } else if (integer_string(S[i])) {
+            if (integer_string(S[i])) {
                 /* var ID number? */
                 v = atoi(S[i]);
             } else {
@@ -547,7 +546,6 @@ static int parse_band_pm_option (band_info *bi,
             } else if (gretl_is_scalar(S[i])) {
                 bi->factor = gretl_scalar_get_value(S[i], &err);
             } else {
-                /* FIXME support a named vector? */
                 err = invalid_field_error(S[i]);
             }
         } else {
@@ -624,7 +622,7 @@ static int parse_band_style_option (band_info *bi)
     return err;
 }
 
-static band_info **get_single_band_info (BPMode mode,
+static band_info **get_single_band_info (int matrix_mode,
 					 gnuplot_info *gi,
 					 DATASET *dset,
 					 gretlopt opt,
@@ -638,7 +636,7 @@ static band_info **get_single_band_info (BPMode mode,
 	return NULL;
     }
 
-    if (mode == BP_BLOCKMAT) {
+    if (matrix_mode) {
 	/* Coming from a "plot" block in matrix mode: in this case the
 	   band should be given in the form of a named matrix with
 	   two columns holding center and width, respectively.
@@ -813,11 +811,15 @@ int plot_with_band (BPMode mode,
     char wspec[16] = {0};
     int show_zero = 0;
     int i, j, n_yvars = 0;
+    int matrix_mode;
     int n_bands = 1;
     int err = 0;
 
+    matrix_mode = (opt & OPT_X) || mode == BP_BLOCKMAT;
+
 #if PB_DEBUG
-    printlist(gi->list, "original gi->list");
+    fprintf(stderr, "\nplot_with_band: matrix_mode = %d\n", matrix_mode);
+    printlist(gi->list, "gi->list");
 #endif
 
     /* subtract 1 for x */
@@ -830,12 +832,11 @@ int plot_with_band (BPMode mode,
 #endif
 
     if (opt & OPT_a) {
-	/* --bands=@array : just experimental for now,
-	   we ignore all but the first bundle in the array
-	*/
-	bbi = get_band_info_array(mode, &n_bands, gi, dset, &err);
+	/* --bands=@array */
+	bbi = get_band_info_array(matrix_mode, &n_bands, gi, dset, &err);
     } else {
-	bbi = get_single_band_info(mode, gi, dset, opt, &err);
+	/* --band=<whatever> */
+	bbi = get_single_band_info(matrix_mode, gi, dset, opt, &err);
     }
     if (err) {
 	return err;
@@ -936,7 +937,7 @@ int plot_with_band (BPMode mode,
     clear_gpinfo(gi);
     free_bbi(bbi, n_bands);
 
-    if (mode == BP_BLOCKMAT) {
+    if (matrix_mode) {
         /* hide the two extra dataset columns
            representing the band */
         dset->v -= 2;
