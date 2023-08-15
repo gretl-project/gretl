@@ -126,7 +126,7 @@ void mdconv_cleanup (void)
 
 static GRegex *get_rx (const char *re)
 {
-    GRegex *rx = g_regex_new(re, 0, 0, &conv_err);
+    GRegex *rx = g_regex_new(re, G_REGEX_UNGREEDY, 0, &conv_err);
 
     if (conv_err != NULL) {
 	return NULL;
@@ -260,7 +260,7 @@ int md_to_gretl (const char *buf, PRN *prn)
             } else if (para_lines != NULL) {
                 finish_chunk(&para_lines, PARA, prn);
             }
-            pputc(prn, '\n');
+            gretl_print_ensure_vspace(prn);
             continue;
         }
 
