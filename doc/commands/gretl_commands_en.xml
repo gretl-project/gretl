@@ -11476,7 +11476,7 @@
         <option>
 	  <flag>--with-steps</flag>
 	  <optparm optional="true">varspec</optparm>
-	  <effect>use horizontal and vertical line segments</effect>
+	  <effect>use perpendicular line segments</effect>
         </option>
         <option>
 	  <flag>--time-series</flag>
@@ -11548,8 +11548,6 @@
 	variable and the other(s) the <math>y</math>-axis variable(s),
 	unless the <opt>time-series</opt> option is given in which
 	case all the specified data go on the <math>y</math> axis.
-      </para>
-      <para>
 	The option of supplying a single series name is restricted to
 	time-series data, in which case it is assumed that a
 	time-series plot is wanted; otherwise an error is flagged.
