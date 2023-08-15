@@ -24,7 +24,7 @@
 #include "uservar.h"
 #include "plot_priv.h"
 
-#define PB_DEBUG 0
+#define PB_DEBUG 1
 
 typedef enum {
     BAND_LINE,
