@@ -167,6 +167,37 @@ static void do_center_or_width (band_info *bi,
     }
 }
 
+static int has_bogus_key (gretl_bundle *b)
+{
+    const char *known_keys[] = {
+	"center", "width", "dummy", "style", "color",
+	"factor", "bandmat", NULL
+    };
+    char **S = NULL;
+    int i, j, ns = 0;
+    int ok = 0;
+
+    S = gretl_bundle_get_keys_raw(b, &ns);
+
+    for (i=0; i<ns; i++) {
+	ok = 0;
+	for (j=0; known_keys[j] != NULL; j++) {
+	    if (!strcmp(S[i], known_keys[j])) {
+		ok = 1;
+		break;
+	    }
+	}
+	if (!ok) {
+	    gretl_errmsg_sprintf("Unknown key '%s'", S[i]);
+	    break;
+	}
+    }
+
+    strings_array_free(S, ns);
+
+    return !ok;
+}
+
 static band_info *band_info_from_bundle (int matrix_mode,
 					 gretl_bundle *b,
 					 gnuplot_info *gi,
@@ -179,6 +210,11 @@ static band_info *band_info_from_bundle (int matrix_mode,
         "center", "width", "dummy", "style", "color"
     };
     int v, i, imin = 0;
+
+    if (has_bogus_key(b)) {
+	*err = E_DATA;
+	return NULL;
+    }
 
     /* Allow for the "matrix_mode" case where the band
        (center, width) is represented by a two-column
