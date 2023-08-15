@@ -24,6 +24,8 @@
 #include "uservar.h"
 #include "plot_priv.h"
 
+#define PB_DEBUG 1
+
 typedef enum {
     BAND_LINE,
     BAND_FILL,
@@ -146,6 +148,25 @@ static int check_assign_bdummy (band_info *bi, int vnum,
     return err;
 }
 
+static void do_center_or_width (band_info *bi,
+				gnuplot_info *gi,
+				int i, int v)
+{
+    int pos = in_gretl_list(gi->list, v);
+
+    if (pos == 0) {
+	/* not already in list */
+	gretl_list_append_term(&gi->list, v);
+	pos = gi->list[0];
+    }
+
+    if (i == 0) {
+	bi->center = pos + 1;
+    } else {
+	bi->width = pos + 1;
+    }
+}
+
 static band_info *band_info_from_bundle (BPMode mode,
 					 gretl_bundle *b,
 					 gnuplot_info *gi,
@@ -157,8 +178,7 @@ static band_info *band_info_from_bundle (BPMode mode,
     const char *strkeys[] = {
         "center", "width", "dummy", "style", "color"
     };
-    int i, imin = 0;
-    int v, pos;
+    int v, i, imin = 0;
 
     /* Allow for the case where the band (center, width) is
        represented by a two-column matrix -- i.e, we're
@@ -194,25 +214,11 @@ static band_info *band_info_from_bundle (BPMode mode,
         if (i < 3) {
             v = current_series_index(dset, S[i]);
             if (v < 0) {
-                *err = E_INVARG;
+                *err = invalid_field_error(S[i]);
             } else if (i < 2) {
-		/* center, width */
-		fprintf(stderr, "%s -> %d\n", S[i], v);
-		pos = in_gretl_list(gi->list, v);
-		fprintf(stderr, "pos in gi->list %d\n", pos);
-		if (pos == 0) {
-		    fprintf(stderr, "appended series %d\n", v);
-		    gretl_list_append_term(&gi->list, v);
-		    pos = gi->list[0];
-		}
-		if (i == 0) {
-		    bi->center = pos + 1;
-		} else {
-		    bi->width = pos + 1;
-		}
+		do_center_or_width(bi, gi, i, v);
 	    } else {
 		/* dummy? */
-		fprintf(stderr, "%s -> %d\n", S[i], v);
 		*err = check_assign_bdummy(bi, v, dset);
 	    }
         } else if (i == 3) {
@@ -475,6 +481,22 @@ static int parse_band_matrix_option (band_info *bi,
     return err;
 }
 
+static int handle_recession_bars (band_info *bi,
+				  const char *s,
+				  const DATASET *dset)
+{
+    int v = current_series_index(dset, s);
+    int err = 0;
+
+    if (v >= 0 && v < dset->v) {
+	err = check_assign_bdummy(bi, v, dset);
+    } else {
+	err = E_INVARG;
+    }
+
+    return err;
+}
+
 /* Handle the band plus-minus option for all cases apart
    from the special one handled just above. Here we require
    two comma-separated series identifiers for center and
@@ -489,33 +511,22 @@ static int parse_band_pm_option (band_info *bi,
     int pci = get_effective_plot_ci();
     const char *s = get_optval_string(pci, OPT_N);
     gchar **S;
-    int cpos = 0, wpos = 0;
-    int v, pos, i = 0;
+    int v, i = 0;
     int err = 0;
 
     if (s == NULL) {
         return E_INVARG;
+    } else if (strchr(s, ',') == NULL) {
+	return handle_recession_bars(bi, s, dset);
     }
 
-    if (strchr(s, ',') == NULL) {
-        /* a single field: try for "recession bars" */
-        v = current_series_index(dset, s);
-        if (v >= 0 && v < dset->v) {
-	    err = check_assign_bdummy(bi, v, dset);
-        } else {
-            err = E_INVARG;
-        }
-        return err;
-    }
-
-    /* at this point, can't be a recession-style band */
     S = g_strsplit(s, ",", -1);
 
     while (S != NULL && S[i] != NULL && !err) {
         if (i < 2) {
             /* specs for the "center" and "width" series: required */
             if (opt & OPT_X) {
-                /* special for matrix-derived dataset */
+                /* special for matrix-derived dataset: FIXME */
                 v = (i == 0)? dset->v - 2 : dset->v - 1;
             } else if (integer_string(S[i])) {
                 /* var ID number? */
@@ -525,14 +536,7 @@ static int parse_band_pm_option (band_info *bi,
                 v = current_series_index(dset, S[i]);
             }
             if (v >= 0 && v < dset->v) {
-                pos = in_gretl_list(gi->list, v);
-                if (i == 0) {
-                    bi->center = v;
-                    cpos = pos;
-                } else {
-                    bi->width = v;
-                    wpos = pos;
-                }
+		do_center_or_width(bi, gi, i, v);
             } else {
                 err = invalid_field_error(S[i]);
             }
@@ -555,10 +559,10 @@ static int parse_band_pm_option (band_info *bi,
 
     g_strfreev(S);
 
-#if 0
+#if PB_DEBUG
     fprintf(stderr, "parse_band_pm_option: err = %d\n", err);
-    fprintf(stderr, "center = %d (pos %d)\n", bi->center, cpos);
-    fprintf(stderr, "width = %d (pos %d)\n", bi->width, wpos);
+    fprintf(stderr, "center = %d\n", bi->center);
+    fprintf(stderr, "width = %d\n", bi->width);
     fprintf(stderr, "factor = %g\n", bi->factor);
 #endif
 
@@ -566,18 +570,6 @@ static int parse_band_pm_option (band_info *bi,
         if (bi->center < 0 || bi->width < 0 ||
             bi->factor < 0 || na(bi->factor)) {
             err = E_INVARG;
-        }
-    }
-
-    if (!err && (cpos == 0 || wpos == 0)) {
-        /* stick the "extra" series into gi->list */
-        if (cpos == 0) {
-            gretl_list_append_term(&gi->list, bi->center);
-	    bi->center = gi->list[0] + 1;
-        }
-        if (wpos == 0) {
-            gretl_list_append_term(&gi->list, bi->width);
-	    bi->width = gi->list[0] + 1;
         }
     }
 
@@ -824,14 +816,18 @@ int plot_with_band (BPMode mode,
     int n_bands = 1;
     int err = 0;
 
+#if PB_DEBUG
     printlist(gi->list, "original gi->list");
+#endif
 
     /* subtract 1 for x */
     n_yvars = gi->list[0] - 1;
 
     x = gi_get_xdata(gi, xname, dset);
 
+#if PB_DEBUG
     printlist(gi->list, "gi->list, rev 1");
+#endif
 
     if (opt & OPT_a) {
 	/* --bands=@array : just experimental for now,
@@ -845,7 +841,9 @@ int plot_with_band (BPMode mode,
 	return err;
     }
 
+#if PB_DEBUG
     printlist(gi->list, "gi->list, rev 2");
+#endif
 
     err = graph_list_adjust_sample(gi->list, gi, dset, 1);
     if (err) {
@@ -925,7 +923,7 @@ int plot_with_band (BPMode mode,
 	const char *iname = series_get_graph_name(dset, gi->list[i]);
 
 	set_plot_withstr(gi, i, wspec);
-	fprintf(fp, "'$data' using 1:%d title '%s' %s lt %d", gi->list[i],
+	fprintf(fp, "'$data' using 1:%d title '%s' %s lt %d", i+1,
 		iname, wspec, i);
 	gp_newline(i < n_yvars, fp);
     }
