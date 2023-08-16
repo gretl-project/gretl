@@ -17,9 +17,9 @@
  *
  */
 
-/* conversion from simple markdown to gretl's custom help-file
-   markup. The regular expressions used below are converted
-   from Uwe Jugel's md2pango (https://github.com/ubunatic/md2pango)
+/* Conversion from simple markdown to gretl's custom help-file
+   markup. The regular expressions used below are adapted from
+   Uwe Jugel's md2pango (https://github.com/ubunatic/md2pango),
    which is under the MIT license.
 */
 
@@ -29,44 +29,47 @@
 struct m2g_data_ {
     const char *re;
     const char *sub;
+    GRegexCompileFlags cf;
     GRegex *rx;
 };
 
 typedef struct m2g_data_ m2g_data;
 
-static m2g_data lr_quotes = {"(\")([^\"]*)(\")", "“\\2”", NULL};
+static m2g_data lr_quotes = {"(\")([^\"]*)(\")", "“\\2”", G_REGEX_UNGREEDY, NULL};
 
 /* m2g_sections define how to detect special markdown sections.
    These expressions scan the full line to detect headings, lists,
    and code.
 */
 static m2g_data m2g_sections[] = {
-    { "^(#\\s+)(.*)(\\s*)$",  "<@bld=\"\\2\">\n", NULL },
-    { "^(##\\s+)(.*)(\\s*)$", "<@itl=\"\\2\">\n", NULL },
-    { "^(\\s*[\\*\\-]\\s)(.*)(\\s*)$",  "• \\2", NULL },
-    { "^(\\s*[0-9]+\\.\\s)(.*)(\\s*)$", "\\1\\2\n", NULL },
-    { "^```[a-z_]*$", NULL, NULL }
+    { "^(#\\s+)(.*)(\\s*)$",  "<@bld=\"\\2\">\n", 0, NULL },
+    { "^(##\\s+)(.*)(\\s*)$", "<@itl=\"\\2\">\n", 0, NULL },
+    { "^(\\s*[\\*\\-]\\s)(.*)(\\s*)$",  "• \\2", 0, NULL },
+    { "^(\\s*[0-9]+\\.\\s)(.*)(\\s*)$", "\\1\\2\n", 0, NULL },
+    { "^```[a-z_]*$", NULL, 0, NULL }
 };
 
-/* symbols for the types above, plus paragraph */
+/* symbols for m2g_sections, plus paragraph */
 enum {HD1, HD2, UL, OL, CODE, PARA};
 
 static int n_m2g_sections = G_N_ELEMENTS(m2g_sections);
 
 /* m2g_styles handle replacement of inline styles, URIs */
 static m2g_data m2g_styles[] = {
-    { "(^|[^\\*])(\\*\\*)(.*)(\\*\\*)", "\\1<@bld=\"\\3\">", NULL },
-    { "(\\*\\*)(.*)(\\*\\*)([^\\*]|$)", "<@bld=\"\\3\">\\4", NULL },
-    { "(^|[^\\*])(\\*)(.*)(\\*)", "\\1<@itl=\"\\3\">", NULL },
-    { "(\\*)(.*)(\\*)([^\\*]|$)", "<@itl=\"\\3\">\\4", NULL },
-    { "(`)([^`]*)(`)", "<@lit=\"\\2\">", NULL },
-    { "(!)?(\\[)(.*)(\\]\\()(.+)(\\))", "<@url=\"\\5\">", NULL },
-    { "(!)?(\\[)(.*)(\\]\\(\\))", "<@url=\"\\3\">", NULL },
-    { "(http[s]?:\\/\\/[^\\s',]*)", "<@url=\"\\1\">", NULL },
+    { "(^|[^\\*])(\\*\\*)(.*)(\\*\\*)", "\\1<@bld=\"\\3\">", G_REGEX_UNGREEDY, NULL },
+    { "(\\*\\*)(.*)(\\*\\*)([^\\*]|$)", "<@bld=\"\\3\">\\4", G_REGEX_UNGREEDY, NULL },
+    { "(^|[^\\*])(\\*)(.*)(\\*)", "\\1<@itl=\"\\3\">", G_REGEX_UNGREEDY, NULL },
+    { "(\\*)(.*)(\\*)([^\\*]|$)", "<@itl=\"\\3\">\\4", G_REGEX_UNGREEDY, NULL },
+    { "(`)([^`]*)(`)", "<@lit=\"\\2\">", G_REGEX_UNGREEDY, NULL },
+#if 0 /* not currently applicable */
+    { "(!)?(\\[)(.*)(\\]\\()(.+)(\\))", "<@url=\"\\5\">", 0, NULL },
+    { "(!)?(\\[)(.*)(\\]\\(\\))", "<@url=\"\\3\">", 0, NULL },
+#endif
+    { "(http[s]?:\\/\\/[^\\s',]*)", "<@url=\"\\1\">", 0, NULL },
 #if 0 /* messes up '_' in URIs */
     { "(^|[^_])(_)(.*)(_)", "\\1<@itl=\"\\3\">", NULL },
 #endif
-    { "(^|\\s)(_)(.*)(_)([^_]|$)", "\\1<@itl=\"\\3\">\\5", NULL }
+    { "(^|\\s)(_)(.*)(_)([^_]|$)", "\\1<@itl=\"\\3\">\\5", G_REGEX_UNGREEDY, NULL }
 };
 
 static int n_m2g_styles = G_N_ELEMENTS(m2g_styles);
@@ -124,21 +127,10 @@ void mdconv_cleanup (void)
     }
 }
 
-static GRegex *get_rx (const char *re)
-{
-    GRegex *rx = g_regex_new(re, G_REGEX_UNGREEDY, 0, &conv_err);
-
-    if (conv_err != NULL) {
-	return NULL;
-    } else {
-	return rx;
-    }
-}
-
 static gboolean rx_match (const char *s, m2g_data *d)
 {
     if (d->rx == NULL) {
-	d->rx = get_rx(d->re);
+	d->rx = g_regex_new(d->re, d->cf, 0, &conv_err);
 	if (d->rx == NULL) {
 	    return 0;
 	}
@@ -149,7 +141,7 @@ static gboolean rx_match (const char *s, m2g_data *d)
 static gchar *rx_replace (const char *s, m2g_data *d)
 {
     if (d->rx == NULL) {
-	d->rx = get_rx(d->re);
+	d->rx = g_regex_new(d->re, d->cf, 0, &conv_err);
 	if (d->rx == NULL) {
 	    return NULL;
 	}
