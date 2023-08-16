@@ -241,7 +241,7 @@ function_info *finfo_new (void)
     finfo->provider = NULL;
 
     finfo->dreq = 0;
-    finfo->minver = 10900;
+    finfo->minver = 20180;
     finfo->uses_subdir = 0;
     finfo->data_access = 0;
     finfo->pdfdoc = 0;
