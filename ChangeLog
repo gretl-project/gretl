@@ -13,6 +13,7 @@ version 2023c, in progress
 - Fix bug: wrong alignment when appending dated weekly data
 - Fix bug: possible duplicate entries in GUI function package
   listing
+- Fix bug: markdown conversion not always working properly
 - GUI: use "Apply" and "OK" buttons more consistently
 - GUI: add a menu item to install a local function package,
   under the "/File/Function packages" menu
