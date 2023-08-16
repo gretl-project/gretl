@@ -49,7 +49,7 @@ static m2g_data m2g_sections[] = {
     { "^```[a-z_]*$", NULL, 0, NULL }
 };
 
-/* symbols for m2g_sections, plus paragraph */
+/* symbols for the m2g_sections above, plus paragraph */
 enum {HD1, HD2, UL, OL, CODE, PARA};
 
 static int n_m2g_sections = G_N_ELEMENTS(m2g_sections);
