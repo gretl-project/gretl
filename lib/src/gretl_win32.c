@@ -28,7 +28,7 @@
 #include <shlobj.h>
 #include <aclapi.h>
 
-#define CPDEBUG 0
+#define CPDEBUG 1
 #define SYNC_DEBUG 0
 #define SHELL_USE_PIPE 1
 
