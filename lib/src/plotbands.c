@@ -461,8 +461,8 @@ static void print_data_block (gnuplot_info *gi,
     }
 }
 
-/* Handle the special case where we get to the band-plot code
-   from a "plot" block in which the data to be plotted (and
+/* Handle the case where we get to the band-plot code
+   from a command in which the data to be plotted (and
    hence also the band specification) are given in matrix
    form. By this point the plot-data have been converted to
    (temporary) DATASET form; here we retrieve the band-spec
@@ -536,8 +536,8 @@ static int handle_recession_bars (band_info *bi,
 }
 
 /* Handle the band plus-minus option for all cases apart
-   from the special one handled just above. Here we require
-   two comma-separated series identifiers for center and
+   from the one handled just above. Here we require two
+   comma-separated series identifiers for center and
    width.
 */
 
@@ -803,7 +803,7 @@ static void recession_bars_plot (band_info *bi,
 /* The last entry in gi->list pertains to the x-axis variable:
    either the index of a "genuine" x-var or a dummy placeholder
    of 0. Either way we want to drop this term from the list,
-   and return a pointer to the x-axis data.
+   and return a pointer to the actual x-axis data.
 */
 
 static const double *gi_get_xdata (gnuplot_info *gi,
