@@ -1977,7 +1977,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 
 /* Silverman's rule-of-thumb bandwidth formula for kernel
    density estimation. See his Density Estimation for
-   Statistics and Data Aanlysis (Chapman and Hall, 1986),
+   Statistics and Data Analysis (Chapman and Hall, 1986),
    pp. 45-48, and also Davidson and MacKinnon, Economic
    Theory and Methods (OUP, 2004), pp. 680-681.
 */
