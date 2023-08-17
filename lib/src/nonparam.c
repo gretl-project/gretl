@@ -1975,10 +1975,10 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
     return yh;
 }
 
-/* Silverman's (1986) rule-of-thumb bandwidth formula for
-   kernel density estimation. See his Density Estimation
-   for Statistics and Data Aanlysis (Chapman and Hall, 1986),
-   pp. 45-48 and also Davidson and MacKinnon, Economic
+/* Silverman's rule-of-thumb bandwidth formula for kernel
+   density estimation. See his Density Estimation for
+   Statistics and Data Aanlysis (Chapman and Hall, 1986),
+   pp. 45-48, and also Davidson and MacKinnon, Economic
    Theory and Methods (OUP, 2004), pp. 680-681.
 */
 
@@ -1994,7 +1994,7 @@ double kernel_bandwidth (const double *x, int n)
     A = (r > 0 && r < s)? r : s;
 
 #if 0
-    fprintf(stderr, "kernal_bandwidth: s=%g, q1=%g, q3=%g, IQR=%g, w=%g\n",
+    fprintf(stderr, "kernel_bandwidth: s=%g, q1=%g, q3=%g, IQR=%g, w=%g\n",
 	    s, q1, q3, q3 - q1, w);
 #endif
 
