@@ -1986,6 +1986,7 @@ double kernel_bandwidth (const double *x, int n)
 {
     double n5 = pow((double) n, -0.20);
     double s, A, q1, q3, r;
+    int err = 0;
 
     s = gretl_stddev(0, n-1, x);
     q1 = gretl_quantile(0, n-1, x, 0.25, OPT_Q, &err);
