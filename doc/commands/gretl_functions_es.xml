@@ -7052,13 +7052,33 @@
 	  el resto de las columnas incluyen la densidad (o densidades) estimada
 	  correspondiente a cada una de ellas.
 	</para>
+  <para>
+    La fórmula utilizada para calcular la densidad estimada en
+    cada punto de referencia (<math>x</math>) es
+    <equation status="display"
+	           tex="\[f(x)=(1/nh) \sum_{t-1}^{n} k\left((x-x_t)/h\right)\]"
+	           ascii="f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)"
+	           graphic="kernel1"/>
+	  donde <math>n</math> denota el número de puntos con datos,
+	  <math>h</math> es un parámetro de <quote>ancho de banda</quote>,
+	  y <math>k</math>() es la función Kernel. Cuanto mayor sea el valor
+	  del parámetro de ancho de banda, más suave va a ser la densidad
+	  estimada.
+  </para>
 	<para>
-	  El parámetro <argname>escala</argname> (opcional) puedes usarlo para
-	  ajustar el grado de suavizado en relación al valor por defecto que es
-	  1.0 (valores mayores producen un resultado más suave). El parámetro
-	  <argname>control</argname> (opcional) actúa como un booleano: 0
-	  (valor por defecto) significa que se utiliza el kernel gaussiano;
-	  un valor no nulo cambia al kernel de Epanechnikov.
+	  El parámetro <argname>escala</argname> (opcional) puedes usarlo
+	  para ajustar el grado de suavizado en relación al valor por defecto
+	  que es 1.0; este se corresponde con la regla general propuesta por
+	  <cite key="silverman86">Silverman (1986)</cite>, concretamente
+	  <equation status="display"
+	     tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{-1/5}\]"
+	     ascii="h = 0.9 min(s, IQR/1.349) n^{-1/5}"
+	     graphic="kernel2"/>
+	  donde <math>s</math> indica la desviación típica de los datos e
+	  IQR es el rango intercuartil. El parámetro <argname>control</argname>
+	  (opcional) actúa como un booleano: 0 (valor por defecto) significa
+	  que se utiliza el kernel gaussiano; un valor no nulo cambia al
+	  kernel de Epanechnikov.
 	</para>
 	<para>
 	  Puedes obtener un gráfico de los resultados utilizando la instrucción
@@ -12649,18 +12669,11 @@
 	  cumplirse dos condiciones: la serie objetivo no debe tener otra
 	  cosa que no sean valores enteros positivos (ninguno de ellos menor
 	  que 1); y el 'array' <argname>S</argname> debe tener por lo menos
-	   <math>n</math> elementos, siendo <math>n</math> el mayor valor de
-	   <argname>y</argname>. Además, cada elemento de <argname>S</argname>
-	   debe tener un formato UTF-8 válido. Si no se cumple alguna de estas
-	   condiciones, se presenta un fallo.
-	</para>
-	<para>
-	  El valor nominal que devuelve esta función es cero, al completarse con éxito.
-	</para>
-	<para>
-	  <seelist>
-            <fncref targ="strvals"/>
-	  </seelist>
+    <math>n</math> elementos, siendo <math>n</math> el mayor valor de
+	  <argname>y</argname>. Además, cada elemento de <argname>S</argname>
+	  debe tener un formato UTF-8 válido. Si no se cumple alguna de estas
+	  condiciones, se presenta un fallo. El valor nominal que devuelve
+	  esta función es cero, al completarse con éxito.
 	</para>
 	<para>
 	  Una alternativa a <lit>stringify</lit> que puede ser de utilidad en
@@ -12670,6 +12683,12 @@
 	  debe ser igual a la longitud total del conjunto de datos o a la
 	  longitud del rango de la muestra vigente, y los valores se pueden
 	  repetir como sea necesario.
+	</para>
+	<para>
+	  <seelist>
+      <fncref targ="strvals"/>
+	    <fncref targ="strvsort"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -12989,6 +13008,31 @@
 	  de cadenas de texto a un 'array' de cadenas de texto: esto no solo
 	  proporciona los valores que sean diferentes, sino todos los valores
 	  de la serie en el rango de la muestra vigente.
+	</para>
+      </description>
+    </function>
+
+    <function name="strvsort" section="strings" output="int">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  El argumento <argname>y</argname> debe tener valores en cadenas de
+	  texto. El efecto de esta función consiste en ordenar una serie del
+	  siguiente modo especial: los diferentes valores de cadena se alfabetizan
+	  y a continuación la serie se recodifica de forma que el 1 se asigna a
+	  la primera de las cadenas ya ordenadas, el 2 se asigna a la segunda,
+	  etcétera. Esto puede ser útil, entre otras razones, para asegurar una
+	  codificación uniforme de múltiples series que comparten el mismo
+	  conjunto de valores en cadenas de texto. El valor nominal que devuelve
+	  esta función es cero, cuando se completa con éxito.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="stringify"/>
+	    <fncref targ="strvals"/>
+	  </seelist>
 	</para>
       </description>
     </function>

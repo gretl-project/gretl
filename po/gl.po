@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-08-16 07:38-0400\n"
-"PO-Revision-Date: 2023-06-21 12:47+0200\n"
+"PO-Revision-Date: 2023-08-17 20:01+0200\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.1\n"
+"X-Generator: Poedit 3.3.2\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
 #: lib/src/addons_utils.c:179
@@ -26,7 +26,7 @@ msgstr "Comprobar *%s*\n"
 
 #: lib/src/addons_utils.c:191 lib/src/addons_utils.c:204
 msgid "try"
-msgstr "intentar"
+msgstr "Intentar"
 
 #: lib/src/addons_utils.c:193 lib/src/addons_utils.c:206
 msgid "found version"
@@ -1756,7 +1756,7 @@ msgstr ""
 
 #: lib/src/dataset.c:3339
 msgid "Undated daily data: can't do compaction"
-msgstr ""
+msgstr "Datos diarios sen data: non se poden compactar"
 
 #: lib/src/dataset.c:3551
 #, c-format
@@ -2863,7 +2863,6 @@ msgid "The constant cannot be lagged"
 msgstr "A constante non pode retardarse"
 
 #: lib/src/geneval.c:10143 lib/src/geneval.c:14296 lib/src/genfuncs.c:2757
-#, fuzzy
 msgid "This function requires time-series data"
 msgstr "Esta función require datos de series temporais"
 
@@ -4390,9 +4389,8 @@ msgid "'%s': package contains duplicated function names"
 msgstr "'%s': O paquete contén nomes de funcións duplicados"
 
 #: lib/src/gretl_func.c:5502
-#, fuzzy
 msgid "Warning: R_functions could not be enabled\n"
-msgstr "Aviso: Probablemente a solución non é única"
+msgstr "Aviso: As funcións R non poden habilitarse\n"
 
 #: lib/src/gretl_func.c:5599 lib/src/gretl_func.c:7108
 #, c-format
@@ -4802,34 +4800,34 @@ msgid "%s: locale is not supported on this system"
 msgstr "%s: Este idioma local non se permite neste sistema"
 
 #: lib/src/gretl_join.c:195 lib/src/gretl_join.c:220
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a valid date"
-msgstr "'%s' non é unha variable ficticia"
+msgstr "'%s' non é unha data correcta"
 
 #: lib/src/gretl_join.c:413
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' does not match the format '%s'"
-msgstr "O tamaño da serie non cadra co do conxunto de datos"
+msgstr "'%s' non cadra co formato '%s'"
 
 #: lib/src/gretl_join.c:446
-#, fuzzy, c-format
+#, c-format
 msgid "'%.8g' is not a valid date"
-msgstr "'%s' non é unha variable ficticia"
+msgstr "'%.8g' non é unha data correcta"
 
 #: lib/src/gretl_join.c:501
 #, c-format
 msgid "join filter: indeterminate value on row %d"
-msgstr ""
+msgstr "Filtro join: Valor indeterminado na fila %d"
 
 #: lib/src/gretl_join.c:530
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid secondary outer key value on row %d"
-msgstr "SVM: Valor %d incorrecto de 'regcrit'"
+msgstr "%s: Valor incorrecto da chave externa secundaria na fila %d"
 
 #: lib/src/gretl_join.c:533
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid (primary) outer key value on row %d"
-msgstr "%s: Largo %d incorrecto de arranxo"
+msgstr "%s: Valor incorrecto da chave externa (primaria) na fila %d"
 
 #: lib/src/gretl_join.c:613
 msgid "No matching data after filtering"
@@ -4842,33 +4840,32 @@ msgstr ""
 "'join' de 1 a n"
 
 #: lib/src/gretl_join.c:1582
-#, fuzzy, c-format
+#, c-format
 msgid "join: '%s' not matched"
-msgstr "isocountry: '%s' non se cadrou\n"
+msgstr "join: '%s' non coincidente"
 
 #: lib/src/gretl_join.c:1629
 msgid "join: the observation ranges don't match"
-msgstr ""
+msgstr "join: Os rangos das observacións non cadran"
 
 #: lib/src/gretl_join.c:1632
-#, fuzzy
 msgid "join: series missing on the right"
-msgstr "Aviso: A serie ten observacións ausentes"
+msgstr "join: Series ausentes á dereita"
 
 #: lib/src/gretl_join.c:1881
 #, c-format
 msgid "The '%c' format is not applicable for data with frequency %d"
-msgstr ""
+msgstr "O formato '%c' non pode aplicarse a datos con frecuencia %d"
 
 #: lib/src/gretl_join.c:2170
 #, c-format
 msgid "'%s' is a string variable: aggregation type is not applicable"
-msgstr ""
+msgstr "'%s' é unha variable de cadea: o tipo de agregación non pode aplicarse"
 
 #: lib/src/gretl_join.c:2200
-#, fuzzy, c-format
+#, c-format
 msgid "%s: column '%s' was not found"
-msgstr "join: Non se atopou a columna '%s'"
+msgstr "%s: Non se atopou a columna '%s'"
 
 #: lib/src/gretl_join.c:2221
 #, c-format
@@ -4881,32 +4878,27 @@ msgid "%s: string key on right but numeric on left"
 msgstr "%s: Clave alfabética á dereita pero numérica á esquerda"
 
 #: lib/src/gretl_join.c:2332
-#, fuzzy, c-format
+#, c-format
 msgid "checking for '%s'\n"
-msgstr "Comprobar *%s*\n"
+msgstr "Comprobando '%s'\n"
 
 #: lib/src/gretl_join.c:2358
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': not found"
-msgstr ""
-"%s: Non se atopou\n"
-"\n"
+msgstr "'%s': Non se atopou"
 
 #: lib/src/gretl_join.c:2362
-#, fuzzy, c-format
+#, c-format
 msgid " found %d match(es)\n"
-msgstr ""
-"\n"
-"Atopada(s) %d folla(s) correcta(s)\n"
+msgstr "Atopada(s) %d coincidencia(s)\n"
 
 #: lib/src/gretl_join.c:2367
-#, fuzzy
 msgid "No matching data were found"
-msgstr "Non se atoparon datos numéricos"
+msgstr "Non se atoparon datos coincidentes"
 
 #: lib/src/gretl_join.c:2569
 msgid "join_import_csv: failed in matching varnames\n"
-msgstr ""
+msgstr "join_import_csv: Fallo ao cadrar os nomes de variables\n"
 
 #: lib/src/gretl_join.c:2616 lib/src/gretl_join.c:2621 gui/library.c:4583
 msgid "Series length does not match the dataset"
@@ -4920,7 +4912,7 @@ msgstr "Especificación incorrecta de unión"
 #: lib/src/gretl_join.c:2863
 #, c-format
 msgid "frequency %d in import data: \"spread\" will not work"
-msgstr ""
+msgstr "Frequency %d nos datos a importar: espallar (spread) non vai funcionar"
 
 #: lib/src/gretl_join.c:3254
 #, c-format
@@ -4928,9 +4920,9 @@ msgid "Outer dataset: read %d columns and %d rows\n"
 msgstr "Conxunto de datos externo: ler %d columnas e %d filas\n"
 
 #: lib/src/gretl_join.c:3297
-#, fuzzy, c-format
+#, c-format
 msgid "Filter: %d rows were selected\n"
-msgstr "Seleccionáronse demasiadas cosas"
+msgstr "Filtro: Seleccionáronse %d filas\n"
 
 #: lib/src/gretl_join.c:3400
 msgid "Data modified OK\n"
@@ -5252,19 +5244,17 @@ msgid "set_omp_n_threads: OpenMP is not enabled"
 msgstr "set_omp_n_threads: OpenMP non está dispoñible"
 
 #: lib/src/gretl_multiplot.c:175
-#, fuzzy
 msgid "gpbuild: cannot be nested"
-msgstr "%s: Non pode eliminarse"
+msgstr "gpbuild: Non pode aniñarse"
 
 #: lib/src/gretl_multiplot.c:184
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid (multiplot) plot specification"
-msgstr "'%s': Especificación %s incorrecta"
+msgstr "%s: Especificación de gráfica (multiplot) incorrecta"
 
 #: lib/src/gretl_multiplot.c:364
-#, fuzzy
 msgid "Invalid layout specification"
-msgstr "Especificación incorrecta de columna"
+msgstr "Especificación incorrecta de formato"
 
 #: lib/src/gretl_panel.c:1560
 msgid "Variance estimators:"
@@ -5878,9 +5868,8 @@ msgid "File of the wrong type, root node not %s"
 msgstr "Ficheiro de tipo equivocado, o nodo raíz non é %s"
 
 #: lib/src/gretl_xml.c:131
-#, fuzzy
 msgid "xmlReadMemory: empty document"
-msgstr "%s: Documento baldeiro"
+msgstr "xmlReadMemory: Documento baldeiro"
 
 #: lib/src/gretl_xml.c:2721
 msgid "Failed to parse count of variables"
@@ -6213,7 +6202,7 @@ msgstr "store: Non se proporcionou nome de ficheiro.\n"
 
 #: lib/src/interact.c:3901
 msgid "gpbuild/gridplot: cannot be nested"
-msgstr ""
+msgstr "gpbuild/gridplot: Non pode aniñarse"
 
 #: lib/src/interact.c:4006
 msgid "Couldn't format model\n"
@@ -11332,19 +11321,16 @@ msgid "Author"
 msgstr "Autor"
 
 #: gui/datafiles.c:2954
-#, fuzzy
 msgid "Installed"
-msgstr "Instalar"
+msgstr "Instalado"
 
 #: gui/datafiles.c:2955
-#, fuzzy
 msgid "On server"
-msgstr "No _servidor..."
+msgstr "No servidor"
 
 #: gui/datafiles.c:2956
-#, fuzzy
 msgid "Comment"
-msgstr "Marcar como liña de comentarios"
+msgstr "Comentario"
 
 #: gui/datafiles.c:2960 gui/fnsave.c:2907 gui/textutil.c:392
 msgid "Window"
@@ -12128,19 +12114,16 @@ msgstr ""
 "de datos, a pesar do encabezamento da columna."
 
 #: gui/dialogs.c:4399
-#, fuzzy
 msgid "view code in this package"
-msgstr "Reverter a paquetes instalados"
+msgstr "Ver o código deste paquete"
 
 #: gui/dialogs.c:4400
-#, fuzzy
 msgid "install this package"
-msgstr "Reverter a paquetes instalados"
+msgstr "Instalar este paquete"
 
 #: gui/dialogs.c:4401
-#, fuzzy
 msgid "edit this package"
-msgstr "Esta páxina"
+msgstr "Editar este paquete"
 
 #: gui/dialogs.c:4472
 msgid "density estimation options"
@@ -12816,14 +12799,12 @@ msgid "select file"
 msgstr "Escoller un ficheiro"
 
 #: gui/fileselect.c:1362
-#, fuzzy
 msgid "Select package"
-msgstr "Todos os paquetes"
+msgstr "Escoller paquete"
 
 #: gui/fileselect.c:1363
-#, fuzzy
 msgid "install function package"
-msgstr "GRETL: Paquetes de funcións"
+msgstr "Instalar paquete de funcións"
 
 #: gui/fileselect.c:1367
 msgid "open file"
@@ -13266,9 +13247,8 @@ msgstr ""
 "deberá estar nun subcartafol denominado *%s*."
 
 #: gui/fncall.c:4688
-#, fuzzy
 msgid "Can be updated"
-msgstr "Separado por comas"
+msgstr "Pódese actualizar"
 
 #: gui/fncall.c:4690
 #, c-format
@@ -13276,9 +13256,8 @@ msgid "Requires gretl %s"
 msgstr "Require GRETL %s"
 
 #: gui/fncall.c:4695
-#, fuzzy
 msgid "Local is newer"
-msgstr "Máquina local"
+msgstr "O local é máis novo"
 
 #: gui/fncall.c:4865
 #, c-format
@@ -13482,7 +13461,7 @@ msgstr "Cambiar agora á axuda PDF?"
 
 #: gui/fnsave.c:1939
 msgid "Markdown"
-msgstr ""
+msgstr "Recorte"
 
 #: gui/fnsave.c:1941
 msgid "Plain text"
@@ -14443,9 +14422,8 @@ msgid "On _server..."
 msgstr "No _servidor..."
 
 #: gui/gretl.c:1821
-#, fuzzy
 msgid "Install local package..."
-msgstr "S_ubir paquete..."
+msgstr "Instalar paquete local..."
 
 #: gui/gretl.c:1822
 msgid "Edit package..."
@@ -20036,14 +20014,14 @@ msgid "gretl: untitled"
 msgstr "GRETL: Sen nome"
 
 #: gui/viewers.c:889
-#, fuzzy, c-format
+#, c-format
 msgid "%s output"
-msgstr "resultado GRETL"
+msgstr "Resultado %s"
 
 #: gui/viewers.c:894
-#, fuzzy, c-format
+#, c-format
 msgid "gretl_edit: %s output"
-msgstr "resultado GRETL"
+msgstr "GRETL_edit: Resultado %s"
 
 #: gui/viewers.c:903
 #, c-format
@@ -20980,9 +20958,8 @@ msgid "Based on Jacobian, df = %d\n"
 msgstr "Baseado no Jacobiano, df = %d\n"
 
 #: plugin/kalman_arma.c:537
-#, fuzzy
 msgid "MA estimate(s) out of bounds\n"
-msgstr "Fallo: Data *%s* fóra dos límites\n"
+msgstr "Estimación(s) MA fóra dos límites\n"
 
 #: plugin/kernel.c:118
 #, c-format
@@ -21023,29 +21000,26 @@ msgid "Cross-validation criterion"
 msgstr "Criterio de validación cruzada"
 
 #: plugin/lpsolve.c:360
-#, fuzzy, c-format
+#, c-format
 msgid "Reading input from '%s'\n"
-msgstr ""
-"\n"
-"Lendo o ficheiro de sesión %s\n"
+msgstr "Lendo entrada desde '%s'\n"
 
 #: plugin/lpsolve.c:652
-#, fuzzy, c-format
+#, c-format
 msgid "lpsolve: failed to load %s"
-msgstr "Fallo ao cargar engadido (plugin): %s"
+msgstr "lpsolve: Fallo ao cargar %s"
 
 #: plugin/lpsolve.c:666
-#, fuzzy
 msgid "lpsolve: didn't find a model specification"
-msgstr "GRETL: Especificación do modelo de panel"
+msgstr "lpsolve: Non se atopou unha especificación do modelo"
 
 #: plugin/lpsolve.c:673
 msgid "lpsolve: failed to build model"
-msgstr ""
+msgstr "lpsolve: Fallo ao xerar o modelo"
 
 #: plugin/lpsolve.c:691
 msgid "lpsolve: solution failed"
-msgstr ""
+msgstr "lpsolve: Fallou a solución"
 
 #: plugin/mailer.c:660
 msgid "Really store password?"

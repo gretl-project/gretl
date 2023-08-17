@@ -856,6 +856,7 @@
 	<example>arima 0 1 1 ; 0 1 1 ; y --nc</example>
 	<demos>
 	<demo>armaloop.inp</demo>
+	<demo>auto_arima.inp</demo>
 	<demo>bjg.inp</demo>
 	</demos>
       </examples>
@@ -2694,37 +2695,56 @@
 	vixentes, devolvendo o GRETL a o seu estado <quote>baleiro</quote> inicial.
       </para>
       <para>
-	<lit>compact</lit>: Debe de estar seguido dun enteiro positivo que
-	represente a nova frecuencia dos datos, e que debe de ser menor
+	<lit>compact</lit>: Esta acción só está dispoñible para datos de
+	series temporais, e compacta todas as series do conxunto de datos a
+	unha frecuencia menor. Require un parámetro, un enteiro positivo que
+	represente a nova frecuencia dos datos. En xeral, debe de ser menor
 	que a frecuencia vixente (por exemplo, indicar un valor de 4 cando
 	a frecuencia vixente é 12, indica que se van compactar os datos de
-	mensuais a trimestrais). Esta instrución só está dispoñible para
-	datos de series temporais e compacta todas as series do conxunto
-	de datos a unha nova frecuencia. Tamén podes indicar un segundo
-	parámetro, en concreto un de entre <lit>sum</lit>, <lit>first</lit>,
-	<lit>last</lit> ou <lit>spread</lit>. Estes permiten especificar que
-	se vai compactar utilizando, respectivamente: a suma dos valores de
-	frecuencia maior, o valor de inicio-de-período, o valor de fin-de-período,
-	ou espallando os valores de frecuencia maior entre varias series
-	(unha por cada subperíodo), pois por defecto faise usando a media.
+	mensuais a trimestrais). A única excepción é unha nova frecuencia de
+	52 (semanal) cando os datos vixentes sexan diarios (frecuencia 5, 6 ou 7).
+	Tamén podes indicar un segundo parámetro, en concreto un de entre
+	<lit>sum</lit>, <lit>first</lit>, <lit>last</lit> ou <lit>spread</lit>.
+	Estes permiten especificar que se vai compactar utilizando, respectivamente:
+	a suma dos valores de frecuencia maior, o valor de inicio-de-período,
+	o valor de fin-de-período, ou espallando os valores de frecuencia maior
+	entre varias series (unha por cada subperíodo), pois por defecto faise
+	usando a media.
       </para>
       <para>
-	<lit>expand</lit>: Esta instrución só está dispoñible para datos
-	de series temporais anuais ou trimestrais, pois os datos anuais
-	pódense estender a trimestrais ou mensuais, e os datos trimestrais
-	a mensuais. Todas as series do conxunto de datos énchense coa nova
-	frecuencia repetindo os valores existentes. Se o banco de datos
-	orixinal é anual, a extensión por defecto é a trimestral, pero a función
-	<lit>expand</lit> pode estar seguida de <lit>12</lit> para solicitar
-	que sexa a mensual.
+	No caso de querer compactar (unicamente) de frecuencia diaria a
+	semanal, tes dispoñibles as dúas opcións especiais <opt>repday</opt>
+	e <opt>weekstart</opt>. A primeira delas te permite seleccionar un
+	<quote>día representativo</quote> da semana que sirva como valor
+	semanal. O parámetro desta opción deberá consistir nun número enteiro
+	entre 0 (Domingo) e 6 (Sábado), incluídos. Por exemplo, indicando
+	<opt>--repday=3</opt> estarás elixindo o valor dos Mércores como
+	representativo do valor semanal. Se non indicas a opción <opt>repday</opt>,
+	necesítase saber en que día da semana pretendes comezar, para aliñar
+	os datos correctamente. Con datos con frecuencia de 5 ou de 6 días,
+	sempre se toma o Luns, pero con datos de 7 días tes a posibilidade
+	de elixir entre as opcións <opt>weekstart=0</opt> (Domingo) e
+	<opt>weekstart=1</opt> (Luns), na que se toma o Luns como a
+	predeterminada.
+      </para>
+      <para>
+	<lit>expand</lit>: Esta acción só está dispoñible para datos de
+	series temporais anuais ou trimestrais, pois os datos anuais pódense
+	estender a trimestrais ou mensuais, e os datos trimestrais a mensuais.
+	Todas as series do conxunto de datos énchense coa nova frecuencia
+	repetindo os valores existentes. Se o banco de datos orixinal é anual,
+	a extensión por defecto é a trimestral, pero a función <lit>expand</lit>
+	pode estar seguida de <lit>12</lit> para solicitar que sexa a mensual.
+	Consulta a función <fncref targ="tdisagg"/> para obter medios máis
+	sofisticados de converter os datos a unha frecuencia maior.
       </para>
       <para>
 	<lit>transpose</lit>: Non necesita ningún parámetro adicional.
 	Traspón o conxunto vixente de datos, é dicir, cada observación
 	(fila) do conxunto vixente de datos vaise tratar como unha variable
-	(columna), e cada variable como unha observación. Esta instrución
-	pode serte útil se os datos se leron dalgunha orixe externa na que
-	as filas da táboa de datos representan variables.
+	(columna), e cada variable como unha observación. Esta acción pode
+	serte útil se os datos se leron dalgunha orixe externa na que as filas
+	da táboa de datos representan variables.
       </para>
       <para>
 	<lit>sortby</lit>: Requírese o nome dunha única serie ou lista.
@@ -2734,8 +2754,8 @@
 	xerarquicamente: se hai observacións empatadas ao reordenarse
 	segundo a primeira variable chave, entón a segunda chave utilízase
 	para rachar o empate, e así sucesivamente ata que se rache o empate
-	ou se esgoten as chaves. Cae na conta de que esta instrución está
-	dispoñible só para datos sen data.
+	ou se esgoten as chaves. Cae na conta de que esta acción está dispoñible
+	só para datos sen data.
       </para>
       <para>
 	<lit>dsortby</lit>: Funciona como <lit>sortby</lit> agás que a
@@ -2919,47 +2939,27 @@
     label="Estimación da densidade Kernel">
 
     <description>
-
       <para>A estimación da densidade Kernel realízase definindo
 	un conxunto de puntos de referencia separados de xeito uniforme
 	sobre un rango apropiado relacionado co rango dos datos, e atribuíndo
 	unha densidade a cada punto de referencia baseada nas observacións
 	presentes na súa contorna.
       </para>
-      <para>A fórmula utilizada para calcular a densidade estimada en
-	cada punto de referencia (<math>x</math>) é
-	      <equation status="display"
-	tex="\[f(x)=(1/nh) \sum_{t-1}^{n} k\left((x-x_t)/h\right)\]"
-	ascii="f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)"
-	graphic="kernel1"/>
-	onde <math>n</math> denota o número de puntos con datos,
-	<math>h</math> é un parámetro de <quote>largo de banda</quote>,
-	e <math>k</math>() é a función Kernel. Canto maior sexa o valor
-	do parámetro de largo de banda, máis suave vai ser a densidade
-	estimada.
-      </para>
       <para>
 	Se te ofrece a posibilidade de utilizar un Kernel Gaussiano
 	(a densidade Normal estándar) ou o Kernel de Epanechnikov.
 	Por defecto, o largo de banda é o suxerido como norma xeral por
-	<cite key="silverman96">Silverman (1986)</cite>, concretamente
-	<equation status="display"
-	  tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{-1/5}\]"
-	  ascii="h = 0.9 min(s, IQR/1.349) n^{-1/5}"
-	  graphic="kernel2"/>
-	onde <math>s</math> representa o desvío padrón dos datos e IQR
-	denota o rango intercuartil. Podes ampliar ou reducir o largo de
-	banda mediante o <quote>Factor de axuste do ancho de banda</quote>,
-	posto que entón o largo real de banda que se vai utilizar, obtense
-	multiplicando o valor de Silverman polo factor de
-	axuste.
+	<cite key="silverman86">Silverman (1986)</cite>.
+	Podes ampliar ou reducir o largo de banda mediante o
+	<quote>Factor de axuste do ancho de banda</quote>, posto que
+	o largo real de banda que se vai utilizar entón, obtense
+	multiplicando o valor de Silverman polo factor de axuste.
       </para>
       <para>
 	Para ver unha boa discusión introdutoria da estimación da densidade
 	do kernel, consulta o capítulo 15 do libro de Davidson e MacKinnon
 	<book>Econometric Theory and Methods</book>.
       </para>
-
     </description>
 
   </command>
@@ -5292,9 +5292,19 @@
 	  <effect>Envía o resultado ao ficheiro especificado</effect>
         </option>
         <option>
+	  <flag>--outbuf</flag>
+	  <optparm>nomecadea</optparm>
+	  <effect>Envía o resultado á cadea de texto especificada</effect>
+        </option>
+        <option>
 	  <flag>--input</flag>
 	  <optparm>nomeficheiro</optparm>
 	  <effect>Colle a entrada de datos desde un ficheiro especificado</effect>
+        </option>
+        <option>
+	  <flag>--inbuf</flag>
+	  <optparm>nomecadea</optparm>
+	  <effect>Colle a entrada de datos desde a cadea de texto especificada</effect>
         </option>
       </options>
       <examples>
@@ -5529,6 +5539,13 @@
 	na pantalla, como no modo interactivo. E cando indicas un nome de
 	ficheiro con calquera extensión diferente ás que acaban de mencionarse,
 	escríbese un ficheiro de instrucións Gnuplot.
+      </para>
+      <para>
+	Un medio alternativo para dirixir a saída de resultados é coa opción
+	<opt>outbuf=</opt><repl>nomecadea</repl>. Isto escribe as instrucións
+	de Gnuplot na cadea de texto indicada ou no <quote>buffer</quote>.
+	Cae na conta de que as opcións <opt>output</opt> e <opt>outbuf</opt>
+	son mutuamente incompatibles.
       </para>
       <subhead>Especificando unha fonte</subhead>
       <para>
@@ -11439,7 +11456,7 @@
         <option>
 	  <flag>--with-steps</flag>
 	  <optparm optional="true">varspec</optparm>
-	  <effect>Utiliza segmentos de liña horizontais e verticais</effect>
+	  <effect>Utiliza segmentos de liña perpendiculares</effect>
         </option>
         <option>
 	  <flag>--time-series</flag>
@@ -11510,12 +11527,10 @@
 	(ou a última columna da matriz) é a variable do eixe <math>x</math>
 	e que os(as) outros(as) son as variables do eixe <math>y</math>, agás
 	cando indicas a opción <opt>time-series</opt>, en cuxo caso todos os
-	datos especificados van no eixe <math>y</math>.
-      </para>
-      <para>
-	A opción de proporcionar o nome dunha soa serie restrínxese aos
-	datos de series temporais, en cuxo caso asúmese que queres
-	unha gráfica de series temporais; se non, amósase un fallo.
+	datos especificados van no eixe <math>y</math>. A opción de proporcionar
+	o nome dunha soa serie restrínxese aos datos de series temporais, en
+	cuxo caso asúmese que queres unha gráfica de series temporais;
+	se non, amósase un fallo.
       </para>
       <para>
 	A liña de comezo pódese preceder da expresión
