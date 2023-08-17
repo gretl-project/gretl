@@ -1975,42 +1975,28 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
     return yh;
 }
 
-static double quartiles (const double *x, int n,
-			 double *q1, double *q3)
-{
-    int n2 = n / 2;
-    double xx;
-
-    xx = (n % 2)? x[n2] : 0.5 * (x[n2 - 1] + x[n2]);
-
-    if (q1 != NULL && q3 != NULL) {
-        if (n % 2) {
-            *q1 = quartiles(x, n2 + 1, NULL, NULL);
-            *q3 = quartiles(x + n2, n2 + 1, NULL, NULL);
-        } else {
-            *q1 = quartiles(x, n2, NULL, NULL);
-            *q3 = quartiles(x + n2, n2, NULL, NULL);
-        }
-    }
-
-    return xx;
-}
+/* Silverman's (1986) rule-of-thumb bandwidth formula for
+   kernel density estimation. See his Density Estimation
+   for Statistics and Data Aanlysis (Chapman and Hall, 1986),
+   pp. 45-48 and also Davidson and MacKinnon, Economic
+   Theory and Methods (OUP, 2004), pp. 680-681.
+*/
 
 double kernel_bandwidth (const double *x, int n)
 {
-    double s, w, q1, q3, r;
     double n5 = pow((double) n, -0.20);
+    double s, A, q1, q3, r;
 
-    s = gretl_stddev(0, n - 1, x);
-    quartiles(x, n, &q1, &q3);
+    s = gretl_stddev(0, n-1, x);
+    q1 = gretl_quantile(0, n-1, x, 0.25, OPT_Q, &err);
+    q3 = gretl_quantile(0, n-1, x, 0.75, OPT_Q, &err);
     r = (q3 - q1) / 1.349;
-    w = (r > 0 && r < s)? r : s;
+    A = (r > 0 && r < s)? r : s;
 
 #if 0
-    fprintf(stderr, "Silverman bandwidth: s=%g, q1=%g, q3=%g, IQR=%g, w=%g\n",
+    fprintf(stderr, "kernal_bandwidth: s=%g, q1=%g, q3=%g, IQR=%g, w=%g\n",
 	    s, q1, q3, q3 - q1, w);
 #endif
 
-    /* Silverman bandwidth times scale factor */
-    return 0.9 * w * n5;
+    return 0.9 * A * n5;
 }
