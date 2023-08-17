@@ -7053,12 +7053,32 @@
 	  estimated density or densities at each of these points.
 	</para>
 	<para>
-	  The optional <argname>scale</argname> parameter can be used to
-	  adjust the degree of smoothing relative to the default of 1.0
-	  (higher values produce a smoother result). The
-	  <argname>control</argname> parameter acts as a boolean: 0 (the
-	  default) means that the Gaussian kernel is used; a non-zero
-	  value switches to the Epanechnikov kernel.
+	  The formula used to compute the estimated density at each
+	  reference point, <math>x</math>, is
+	  <equation status="display"
+             tex="\[f(x)=(1/nh) \sum_{t-1}^{n} k\left((x-x_t)/h\right)\]"
+             ascii="f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)"
+             graphic="kernel1"/>
+	  where <math>n</math> denotes the number of data
+	  points, <math>h</math> is a <quote>bandwidth</quote>
+	  parameter, and <math>k</math>() is the kernel function.
+	  The larger the value of the bandwidth parameter, the smoother
+	  the estimated density.
+	</para>
+	<para>
+	  The optional <argname>scale</argname> parameter can be used
+	  to adjust the bandwidth relative to the default of 1.0,
+	  which corresponds to the rule of thumb proposed by <cite
+	  key="silverman86">Silverman (1986)</cite>, namely
+	  <equation status="display"
+	     tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{-1/5}\]"
+	     ascii="h = 0.9 min(s, IQR/1.349) n^{-1/5}"
+	     graphic="kernel2"/>
+	  where <math>s</math> denotes the standard deviation of the
+	  data and IQR is the inter-quartile range.  The
+	  <argname>control</argname> parameter acts as a boolean: 0
+	  (the default) means that the Gaussian kernel is used; a
+	  non-zero value switches to the Epanechnikov kernel.
 	</para>
 	<para>
 	  A plot of the results may be obtained using the <cmdref

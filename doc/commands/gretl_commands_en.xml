@@ -2939,38 +2939,19 @@
     label="Kernel density estimation">
 
     <description>
-
       <para>Kernel density estimation proceeds by defining a set of
 	evenly spaced reference points, over a suitable range in
 	relation to the range of the data, and attributing a density
 	to each reference point based on the actual observations in
 	the vicinity.
       </para>
-      <para>The formula used to compute the estimated density at each
-	reference point, <math>x</math>, is
-      <equation status="display"
-	tex="\[f(x)=(1/nh) \sum_{t-1}^{n} k\left((x-x_t)/h\right)\]"
-	ascii="f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)"
-	graphic="kernel1"/>
-	where <math>n</math> denotes the number of data
-	points, <math>h</math> is a <quote>bandwidth</quote>
-	parameter, and <math>k</math>() is the kernel function.
-	The larger the value of the bandwidth parameter, the smoother
-	the estimated density.
-      </para>
       <para>
 	You are given the choice of using a Gaussian kernel (the
 	standard normal density) or the Epanechnikov kernel.  By
 	default, the bandwidth is that suggested as a rule of thumb by
-	<cite key="silverman96">Silverman (1986)</cite>, namely
-	<equation status="display"
-	  tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{-1/5}\]"
-	  ascii="h = 0.9 min(s, IQR/1.349) n^{-1/5}"
-	  graphic="kernel2"/>
-	where <math>s</math> denotes the standard deviation
-	of the data and IQR denotes the inter-quartile range.  You can
+	<cite key="silverman86">Silverman (1986)</cite>.  You can
 	widen or shrink the bandwidth via the <quote>bandwidth
-	  adjustment factor</quote>: the actual bandwidth used is
+	adjustment factor</quote>: the actual bandwidth used is
 	obtained by multiplying the Silverman value by the adjustment
 	factor.
       </para>
@@ -2979,7 +2960,6 @@
 	estimation see Chapter 15 of Davidson and MacKinnon's
 	<book>Econometric Theory and Methods</book>.
       </para>
-
     </description>
 
   </command>
