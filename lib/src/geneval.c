@@ -8622,32 +8622,79 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
     return ret;
 }
 
-static NODE *one_string_func (NODE *n, int f, parser *p)
+/* A function that can be applied to a single string, an array
+   of strings, or a string-valued series.
+*/
+
+static NODE *variant_string_func (NODE *n, int f, parser *p)
 {
-    NODE *ret = aux_string_node(p);
+    NODE *ret = NULL;
+    gchar *tmp;
 
-    if (ret != NULL && starting(p)) {
-        char *s;
+    if (n->t == STR) {
+	ret = aux_string_node(p);
+    } else if (n->t == ARRAY) {
+	if (gretl_array_get_type(n->v.a) != GRETL_TYPE_STRINGS) {
+	    p->err = E_TYPES;
+	} else {
+	    ret = aux_array_node(p);
+	}
+    } else {
+	/* disallow sub-sampled? */
+	if (!is_string_valued(p->dset, n->vnum)) {
+	    p->err = E_TYPES;
+	} else {
+	    ret = aux_scalar_node(p); /* FIXME should return a series */
+	}
+    }
 
-        if (f == F_TOLOWER) {
-            s = ret->v.str = gretl_strdup(n->v.str);
-            while (s && *s) {
-                *s = tolower(*s);
-                s++;
-            }
-        } else if (f == F_TOUPPER) {
-            s = ret->v.str = gretl_strdup(n->v.str);
-            while (s && *s) {
-                *s = toupper(*s);
-                s++;
-            }
-        } else {
-            p->err = E_DATA;
-        }
+    if (ret != NULL) {
+	if (n->t == STR) {
+	    /* a single string */
+	    if (f == F_TOLOWER) {
+		tmp = g_utf8_strdown(n->v.str, -1);
+		ret->v.str = gretl_strdup(tmp);
+		g_free(tmp);
+	    } else if (f == F_TOUPPER) {
+		tmp = g_utf8_strup(n->v.str, -1);
+		ret->v.str = gretl_strdup(tmp);
+		g_free(tmp);
+	    } else {
+		p->err = E_DATA;
+	    }
+	} else {
+	    /* array or series */
+	    char **S0, **S1 = NULL;
+	    int i, ns = 0;
 
-        if (!p->err && ret->v.str == NULL) {
-            p->err = E_ALLOC;
-        }
+	    if (n->t == ARRAY) {
+		S0 = gretl_array_get_strings(n->v.a, &ns);
+	    } else {
+		S0 = series_get_all_strings(p->dset, n->vnum);
+		ns = p->dset->n;
+	    }
+	    if (S0 == NULL) {
+		p->err = E_DATA;
+	    } else if ((S1 = strings_array_new(ns)) == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		for (i=0; i<ns; i++) {
+		    if (f == F_TOLOWER) {
+			tmp = g_utf8_strdown(S0[i], -1);
+		    } else {
+			tmp = g_utf8_strup(S0[i], -1);
+		    }
+		    S1[i] = gretl_strdup(tmp);
+		    g_free(tmp);
+		}
+		if (n->t == ARRAY) {
+		    ret->v.a = gretl_array_from_strings(S1, ns, 0, &p->err);
+		} else {
+		    /* FIXME not ready!! */
+		    p->err = series_from_strings(p->dset, n->vnum, S1, ns);
+		}
+	    }
+	}
     }
 
     return ret;
@@ -18766,18 +18813,20 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_VARNUM:
+	if (l->t == STR) {
+	    ret = varnum_node(l, p);
+	} else {
+	    node_type_error(t->t, 0, STR, l, p);
+	}
+	break;
     case F_TOLOWER:
     case F_TOUPPER:
-        if (l->t == STR) {
-            if (t->t == F_TOLOWER || t->t == F_TOUPPER) {
-                ret = one_string_func(l, t->t, p);
-            } else {
-                ret = varnum_node(l, p);
-            }
-        } else {
-            node_type_error(t->t, 0, STR, l, p);
-        }
-        break;
+        if (l->t == STR || l->t == ARRAY || useries_node(l)) {
+	    ret = variant_string_func(l, t->t, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;
     case F_JSONGET:
     case F_XMLGET:
         if (l->t == STR && m->t == STR) {
@@ -20937,56 +20986,18 @@ static int set_nested_matrix_value (NODE *lhs,
    dataset or the size of the current sample.
 */
 
-static int series_from_strings (DATASET *dset, int v, gretl_array *a)
+static int series_from_strings_array (DATASET *dset, int v,
+				      gretl_array *a)
 {
-    int ns = 0;
-    char **S = gretl_array_get_strings(a, &ns);
-    char **uS = NULL;
-    int T = sample_size(dset);
-    int *idx = calloc(T, sizeof *idx);
-    double *y = dset->Z[v];
-    int i, j, t, skip, m;
-    int err = 0;
+    char **S;
+    int ns;
+    int err;
 
-    i = (ns == T)? 0 : dset->t1;
-    m = 0;
-
-    /* put the indices of the unique strings into @idx,
-       and assign values to the series @y as we go
-    */
-    for (t=dset->t1; t<=dset->t2; t++,i++) {
-        skip = 0;
-        for (j=0; j<m; j++) {
-            if (strcmp(S[i], S[idx[j]]) == 0) {
-                y[t] = idx[j] + 1;
-                skip = 1;
-                break;
-            }
-        }
-        if (!skip) {
-            idx[m++] = i;
-            y[t] = m;
-        }
-    }
-
-    /* create an array of the unique strings */
-    uS = strings_array_new(m);
-    if (uS == NULL) {
-        err = E_ALLOC;
+    S = gretl_array_get_strings(a, &ns);
+    if (S == NULL) {
+	err = E_DATA;
     } else {
-        for (i=0; i<m && !err; i++) {
-            uS[i] = gretl_strdup(S[idx[i]]);
-            if (uS[i] == NULL) {
-                err = E_ALLOC;
-            }
-        }
-    }
-    free(idx);
-
-    if (err) {
-        strings_array_free(uS, m);
-    } else {
-        err = series_set_string_vals_direct(dset, v, uS, m);
+	err = series_from_strings(dset, v, S, ns);
     }
 
     return err;
@@ -21088,6 +21099,42 @@ static inline int savegen_retval (int err)
 #endif
     return err;
 }
+
+#if ONE_BY_ONE_CAST
+
+static void handle_one_by_one_cast (parser *p, NODE *r,
+				    int *no_decl)
+{
+    if (p->targ == UNK) {
+        if (scalar_matrix_node(r)) {
+            /* "cast" 1 x 1 matrix to scalar */
+            *no_decl = 1;
+            p->targ = NUM;
+            p->flags |= P_NODECL;
+        } else {
+            p->targ = r->t;
+        }
+    } else if (p->targ == NUM && r->t == MAT && (p->flags & P_NODECL)) {
+        /* We're looking at a @targ that was previously
+           set to NUM by the "auto-cast" mechanism: allow
+           it to morph to matrix if need be.
+        */
+        if (scalar_matrix_node(r)) {
+            ; /* not a problem */
+        } else if (p->lh.t == 0) {
+            /* no pre-existing scalar var */
+            p->targ = MAT;
+        } else if (p->lh.t == NUM) {
+            /* type-convert existing scalar */
+            p->err = gretl_scalar_convert_to_matrix(p->lh.uv);
+            if (!p->err) {
+                p->targ = MAT;
+            }
+        }
+    }
+}
+
+#endif
 
 static int save_generated_var (parser *p, PRN *prn)
 {
@@ -21195,33 +21242,7 @@ static int save_generated_var (parser *p, PRN *prn)
     }
 
 #if ONE_BY_ONE_CAST
-    if (p->targ == UNK) {
-        if (scalar_matrix_node(r)) {
-            /* "cast" 1 x 1 matrix to scalar */
-            no_decl = 1;
-            p->targ = NUM;
-            p->flags |= P_NODECL;
-        } else {
-            p->targ = r->t;
-        }
-    } else if (p->targ == NUM && r->t == MAT && (p->flags & P_NODECL)) {
-        /* We're looking at a @targ that was previously
-           set to NUM by the "auto-cast" mechanism: allow
-           it to morph to matrix if need be.
-        */
-        if (scalar_matrix_node(r)) {
-            ; /* not a problem */
-        } else if (p->lh.t == 0) {
-            /* no pre-existing scalar var */
-            p->targ = MAT;
-        } else if (p->lh.t == NUM) {
-            /* type-convert existing scalar */
-            p->err = gretl_scalar_convert_to_matrix(p->lh.uv);
-            if (!p->err) {
-                p->targ = MAT;
-            }
-        }
-    }
+    handle_one_by_one_cast(p, r, &no_decl);
 #else
     if (p->targ == UNK) {
         p->targ = r->t;
@@ -21327,7 +21348,7 @@ static int save_generated_var (parser *p, PRN *prn)
             if (p->lh.vnum >= 0 && dataset_is_subsampled(p->dset)) {
                 p->err = E_TYPES;
             } else {
-                p->err = series_from_strings(p->dset, v, r->v.a);
+                p->err = series_from_strings_array(p->dset, v, r->v.a);
             }
             if (p->err) {
                 return savegen_retval(p->err);

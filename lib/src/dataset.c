@@ -4627,6 +4627,87 @@ char **series_get_string_vals (const DATASET *dset, int i,
     return strs;
 }
 
+int series_from_strings (DATASET *dset, int v,
+			 char **S, int ns)
+{
+    char **uS = NULL;
+    char *si, *sj;
+    int T = sample_size(dset);
+    int *idx = calloc(T, sizeof *idx);
+    double *y = dset->Z[v];
+    int i, j, t, skip, m;
+    int err = 0;
+
+    i = (ns == T)? 0 : dset->t1;
+    m = 0;
+
+    /* Put the indices of the unique strings into @idx,
+       and assign values to the series @y as we go.
+    */
+    for (t=dset->t1; t<=dset->t2; t++,i++) {
+	si = S[i];
+	if (si == NULL) {
+	    y[t] = NADBL;
+	    continue;
+	}
+        skip = 0;
+        for (j=0; j<m; j++) {
+	    sj = S[idx[j]];
+	    if (sj != NULL && strcmp(si, sj) == 0) {
+                y[t] = (double) j + 1;
+                skip = 1;
+                break;
+            }
+        }
+        if (!skip) {
+            idx[m++] = i;
+            y[t] = (double) m;
+        }
+    }
+
+    /* create an array of the unique strings */
+    uS = strings_array_new(m);
+    if (uS == NULL) {
+        err = E_ALLOC;
+    } else {
+        for (i=0; i<m && !err; i++) {
+            uS[i] = gretl_strdup(S[idx[i]]);
+            if (uS[i] == NULL) {
+                err = E_ALLOC;
+            }
+        }
+    }
+    free(idx);
+
+    if (err) {
+        strings_array_free(uS, m);
+    } else {
+        err = series_set_string_vals_direct(dset, v, uS, m);
+    }
+
+    return err;
+}
+
+char **series_get_all_strings (const DATASET *dset, int v)
+{
+    char **S = NULL;
+    int i;
+
+    if (v > 0 && v < dset->v && dset->varinfo[v]->st != NULL) {
+	S = calloc(dset->n, sizeof *S);
+	for (i=0; i<dset->n; i++) {
+	    if (na(dset->Z[v][i])) {
+		S[i] = NULL;
+	    } else {
+		S[i] = (char *) series_table_get_string(dset->varinfo[v]->st,
+							dset->Z[v][i]);
+	    }
+	}
+    }
+
+    return S;
+}
+
 /**
  * series_get_string_width:
  * @dset: pointer to dataset.
@@ -4923,8 +5004,10 @@ int series_set_string_vals (DATASET *dset, int i, gretl_array *a)
 int series_set_string_vals_direct (DATASET *dset, int i,
 				   char **S, int ns)
 {
-    int err = 0;
-    series_table *st = series_table_new(S, ns, &err);
+    series_table *st;
+    int err;
+
+    st = series_table_new(S, ns, &err);
 
     if (!err) {
 	if (dset->varinfo[i]->st != NULL) {

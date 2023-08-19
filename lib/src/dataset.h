@@ -566,6 +566,10 @@ int series_set_string_vals (DATASET *dset, int i, gretl_array *a);
 int series_set_string_vals_direct (DATASET *dset, int i,
 				   char **S, int ns);
 
+int series_from_strings (DATASET *dset, int v, char **S, int ns);
+
+char **series_get_all_strings (const DATASET *dset, int v);
+
 int series_recode_strings (DATASET *dset, int v, gretlopt opt,
 			   int *changed);
 
