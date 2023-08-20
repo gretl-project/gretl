@@ -8640,11 +8640,19 @@ static NODE *variant_string_func (NODE *n, int f, parser *p)
 	    ret = aux_array_node(p);
 	}
     } else {
-	/* disallow sub-sampled? */
-	if (!is_string_valued(p->dset, n->vnum)) {
+	if (dataset_is_subsampled(p->dset)) {
+	    gretl_errmsg_set(_("Sorry, can't do this with a sub-sampled dataset"));
+	    p->err = E_DATA;
+	} else if (!is_string_valued(p->dset, n->vnum)) {
+	    gretl_errmsg_sprintf(_("%s: the input series must be string-valued"),
+				 getsymb(f));
 	    p->err = E_TYPES;
+	} else if (n->parent != p->tree || p->targ == EMPTY) {
+	    gretl_errmsg_sprintf(_("%s: series usage is valid only in direct assignment"),
+				 getsymb(f));
+	    p->err = E_DATA;
 	} else {
-	    ret = aux_scalar_node(p); /* FIXME should return a series */
+	    ret = aux_series_node(p);
 	}
     }
 
@@ -8690,8 +8698,10 @@ static NODE *variant_string_func (NODE *n, int f, parser *p)
 		if (n->t == ARRAY) {
 		    ret->v.a = gretl_array_from_strings(S1, ns, 0, &p->err);
 		} else {
-		    /* FIXME not ready!! */
-		    p->err = series_from_strings(p->dset, n->vnum, S1, ns);
+		    p->err = series_from_strings_raw(ret->v.xvec, p->dset->n,
+						     S1, &p->lh.stab);
+		    strings_array_free(S1, ns);
+		    free(S0);
 		}
 	    }
 	}

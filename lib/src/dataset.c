@@ -4688,6 +4688,62 @@ int series_from_strings (DATASET *dset, int v,
     return err;
 }
 
+int series_from_strings_raw (double *y, int n, char **S,
+			     series_table **pst)
+{
+    char **uS = NULL;
+    char *si, *sj;
+    int *idx = calloc(n, sizeof *idx);
+    int i, j, t, skip, m;
+    int err = 0;
+
+    /* Put the indices of the unique strings into @idx,
+       and assign values to the series @y as we go.
+    */
+    for (t=0, m=0; t<n; t++) {
+	si = S[t];
+	if (si == NULL) {
+	    y[t] = NADBL;
+	    continue;
+	}
+        skip = 0;
+        for (j=0; j<m; j++) {
+	    sj = S[idx[j]];
+	    if (sj != NULL && strcmp(si, sj) == 0) {
+                y[t] = (double) j + 1;
+                skip = 1;
+                break;
+            }
+        }
+        if (!skip) {
+            idx[m++] = t;
+            y[t] = (double) m;
+        }
+    }
+
+    /* create an array of the unique strings */
+    uS = strings_array_new(m);
+    if (uS == NULL) {
+        err = E_ALLOC;
+    } else {
+        for (i=0; i<m && !err; i++) {
+            uS[i] = gretl_strdup(S[idx[i]]);
+            if (uS[i] == NULL) {
+                err = E_ALLOC;
+            }
+        }
+    }
+    free(idx);
+
+    if (err) {
+        strings_array_free(uS, m);
+    } else {
+	*pst = series_table_new(uS, m, &err);
+    }
+
+    return err;
+}
+
 char **series_get_all_strings (const DATASET *dset, int v)
 {
     char **S = NULL;
