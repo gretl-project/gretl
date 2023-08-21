@@ -22,6 +22,18 @@
 
 #define GEODEBUG 0
 
+typedef struct HSV_ {
+    double h; /* hue, as degrees in [0,359] */
+    double s; /* saturation, as fraction in [0,1] */
+    double v; /* value, as fraction in [0,1] */
+} HSV;
+
+typedef struct RGB_ {
+    guint8 r; /* red channel, in [0,255] */
+    guint8 g; /* green channel, in [0,255] */
+    guint8 b; /* blue channel, in [0,255] */
+} RGB;
+
 static void mapinfo_init (mapinfo *mi,
                           const char *fname,
                           gretl_bundle *map,
@@ -231,60 +243,92 @@ static void print_labeled_colorbox (mapinfo *mi,
     fputs(") scale 0\n", fp);
 }
 
-/* print a palette containing @n > 2 automatically selected
-   colors suitable for representing discrete data
-*/
-
-static void hsv_to_rgb256 (double H, double S, double V, int *RGB)
+static RGB hsv_to_rgb256 (HSV *in)
 {
-    double C = V * S;
-    double X = C * (1 - fabs(fmod(H, 2) - 1));
+    double hh, p, q, t, ff;
     double r, g, b;
+    gint32 i;
+    RGB out;
 
-    r = g = b = V - C;
+    if (in->s <= 0.0) {
+	out.r = out.g = out.b = in->v * 255.0;
+        return out;
+    }
+    hh = in->h;
+    if (hh >= 360.0) {
+	hh = 0.0;
+    }
+    hh /= 60.0;
+    i = (gint32) hh;
+    ff = hh - i;
+    p = in->v * (1.0 - in->s);
+    q = in->v * (1.0 - (in->s * ff));
+    t = in->v * (1.0 - (in->s * (1.0 - ff)));
 
-    if (H >= 0 && H < 1) {
-        r += C; g += X;
-    } else if (H >= 1 && H < 2) {
-        r += X; g += C;
-    } else if (H >= 2 && H < 3) {
-        g += C; b += X;
-    } else if (H >= 3 && H < 4) {
-        g += X; b += C;
-    } else if (H >= 4 && H < 5) {
-        r += X; b += C;
-    } else if (H >= 5 && H < 6) {
-        r += C; b += X;
+    switch(i) {
+    case 0:
+        r = in->v;
+        g = t;
+        b = p;
+        break;
+    case 1:
+        r = q;
+        g = in->v;
+        b = p;
+        break;
+    case 2:
+        r = p;
+        g = in->v;
+        b = t;
+        break;
+    case 3:
+        r = p;
+        g = q;
+        b = in->v;
+        break;
+    case 4:
+        r = t;
+        g = p;
+        b = in->v;
+        break;
+    case 5:
+    default:
+        r = in->v;
+        g = p;
+        b = q;
+        break;
     }
 
-    RGB[0] = 256 * r;
-    RGB[1] = 256 * g;
-    RGB[2] = 256 * b;
+    out.r = r * 255.0;
+    out.g = g * 255.0;
+    out.b = b * 255.0;
+
+    return out;
 }
 
 /* This variant picks RGB colors that vary by Hue but have common
    Saturation and Value attributes.
 */
 
-static int print_discrete_colors_hsv (mapinfo *mi, FILE *fp)
+static int print_discrete_colors_hsv (int n, FILE *fp)
 {
     char color[9];
-    double H, S, V, incr;
-    int RGB[3] = {0};
-    int i, n = mi->n_codes;
+    RGB rgb = {0};
+    HSV hsv = {0, 0.5, 0.8};
+    double delta;
+    int i;
 
-    incr = 360.0 / n;
-    H = 0.5 * incr;
-    S = 0.6; V = 0.7;
+    delta = 360.0 / n;
+    hsv.h = 0.5 * delta;
 
     fprintf(fp, "set palette maxcolors %d\n", n);
     fputs("set palette defined (", fp);
     for (i=0; i<n; i++) {
-        hsv_to_rgb256(H / 60, S, V, RGB);
-        sprintf(color, "0x%02x%02x%02x", RGB[0], RGB[1], RGB[2]);
+        rgb = hsv_to_rgb256(&hsv);
+        sprintf(color, "0x%02x%02x%02x", rgb.r, rgb.g, rgb.b);
         fprintf(fp, "%d '%s'", i, color);
         fputs((i < n-1)? ", " : ")\n", fp);
-        H += incr;
+        hsv.h += delta;
     }
 
     fprintf(fp, "set cbrange [1:%d]\n", n);
@@ -296,13 +340,12 @@ static int print_discrete_colors_hsv (mapinfo *mi, FILE *fp)
    HSV dimensions.
 */
 
-static int print_discrete_colors_rgb (mapinfo *mi, FILE *fp)
+static int print_discrete_colors_rgb (int n, FILE *fp)
 {
     gretl_matrix *H = NULL;
     char color[9];
-    int n = mi->n_codes;
-    int i, r, g, b;
-    int err = 0;
+    guint8 r, g, b;
+    int i, err = 0;
 
     H = halton_matrix(3, n, 20, &err);
     if (H == NULL) {
@@ -310,22 +353,21 @@ static int print_discrete_colors_rgb (mapinfo *mi, FILE *fp)
     }
 
     for (i=0; i<3*n; i++) {
-        H->val[i] = floor(256 * H->val[i]);
+        H->val[i] = floor(255 * H->val[i]);
     }
 
     fprintf(fp, "set palette maxcolors %d\n", n);
     fputs("set palette defined (", fp);
     for (i=0; i<n; i++) {
-        r = (int) gretl_matrix_get(H, 0, i);
-        g = (int) gretl_matrix_get(H, 1, i);
-        b = (int) gretl_matrix_get(H, 2, i);
+        r = (guint8) gretl_matrix_get(H, 0, i);
+        g = (guint8) gretl_matrix_get(H, 1, i);
+        b = (guint8) gretl_matrix_get(H, 2, i);
         sprintf(color, "0x%02x%02x%02x", r, g, b);
         fprintf(fp, "%d '%s'", i, color);
         fputs((i < n-1)? ", " : ")\n", fp);
     }
 
     fprintf(fp, "set cbrange [1:%d]\n", n);
-
     gretl_matrix_free(H);
 
     return 0;
@@ -333,10 +375,10 @@ static int print_discrete_colors_rgb (mapinfo *mi, FILE *fp)
 
 static int print_discrete_multicolors (mapinfo *mi, FILE *fp)
 {
-    if (mi->n_codes < 25) {
-	return print_discrete_colors_hsv(mi, fp);
+    if (mi->n_codes < 13) {
+	return print_discrete_colors_hsv(mi->n_codes, fp);
     } else {
-	return print_discrete_colors_rgb(mi, fp);
+	return print_discrete_colors_rgb(mi->n_codes, fp);
     }
 }
 
