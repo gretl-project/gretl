@@ -412,6 +412,8 @@ static void print_pm_bars (band_info *bi, int n_yvars,
 {
     char lspec[24];
 
+    /* note: "pt 7" is a solid circle */
+
     if (bi->rgb[0] != '\0') {
 	sprintf(lspec, "lc rgb \"%s\" pt 7", bi->rgb);
     } else {
