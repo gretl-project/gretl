@@ -29,6 +29,7 @@
 #include "gretl_cmatrix.h"
 
 #define NUMLEN 32
+#define HEXLEN 11
 #define MAXQUOTE 64
 
 #if GENDEBUG
@@ -2011,23 +2012,48 @@ static int ok_dbl_char (parser *p, char *s, int i)
     return ret;
 }
 
+static int ok_hex_char (parser *p, char *s, int i)
+{
+    if (i < 1) {
+	return 1;
+    } else if (p->ch >= '0' && p->ch <= '9') {
+	return 1;
+    } else if (p->ch >= 'a' && p->ch <= 'f') {
+	return 1;
+    } else if (p->ch >= 'A' && p->ch <= 'F') {
+	return 1;
+    }
+
+    return 0;
+}
+
 static void parse_number (parser *p)
 {
     char xstr[NUMLEN] = {0};
     int gotcol = 0;
+    int gothex = 0;
     int i = 0;
 
-    while (ok_dbl_char(p, xstr, i - 1) && i < NUMLEN - 1) {
-	xstr[i++] = p->ch;
-	if (p->ch == ':') {
-	    gotcol = 1;
+    if (p->ch == '0' && (p->point[0] == 'x' || p->point[0] == 'X')) {
+	/* hexadecimal input */
+	gothex = 1;
+	while (ok_hex_char(p, xstr, i - 1) && i < HEXLEN - 1) {
+	    xstr[i++] = p->ch;
+	    parser_getc(p);
 	}
-	parser_getc(p);
-    }
-
-    while (p->ch >= '0' && p->ch <= '9') {
-	/* flush excess numeric characters */
-	parser_getc(p);
+    } else {
+	/* decimal input */
+	while (ok_dbl_char(p, xstr, i - 1) && i < NUMLEN - 1) {
+	    xstr[i++] = p->ch;
+	    if (p->ch == ':') {
+		gotcol = 1;
+	    }
+	    parser_getc(p);
+	}
+	while (p->ch >= '0' && p->ch <= '9') {
+	    /* flush excess numeric characters */
+	    parser_getc(p);
+	}
     }
 
 #if LDEBUG
@@ -2048,6 +2074,11 @@ static void parse_number (parser *p)
 	    p->idstr = gretl_strdup(xstr);
 	    p->sym = CSTR;
 	}
+    } else if (gothex) {
+	guint32 u = strtoul(xstr, NULL, 16);
+
+	p->xval = (double) u;
+	p->sym = CNUM;
     } else {
 	p->xval = dot_atof(xstr);
 	p->sym = CNUM;
