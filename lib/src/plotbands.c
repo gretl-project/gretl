@@ -413,9 +413,9 @@ static void print_pm_bars (band_info *bi, int n_yvars,
     char lspec[24];
 
     if (bi->rgb[0] != '\0') {
-	sprintf(lspec, "lc rgb \"%s\"", bi->rgb);
+	sprintf(lspec, "lc rgb \"%s\" pt 7", bi->rgb);
     } else {
-	sprintf(lspec, "lt %d", n_yvars + 1);
+	sprintf(lspec, "lt %d pt 7", n_yvars + 1);
     }
     fprintf(fp, "'$data' using 1:%d:(%g*$%d) notitle w errorbars %s",
 	    bi->center, bi->factor, bi->width, lspec);
