@@ -4646,7 +4646,7 @@ int series_from_strings (DATASET *dset, int v,
     */
     for (t=dset->t1; t<=dset->t2; t++,i++) {
 	si = S[i];
-	if (si == NULL) {
+	if (si == NULL || *si == '\0') {
 	    y[t] = NADBL;
 	    continue;
 	}
@@ -4702,7 +4702,7 @@ int series_from_strings_raw (double *y, int n, char **S,
     */
     for (t=0, m=0; t<n; t++) {
 	si = S[t];
-	if (si == NULL) {
+	if (si == NULL || *si == '\0') {
 	    y[t] = NADBL;
 	    continue;
 	}
