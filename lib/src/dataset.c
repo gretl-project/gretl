@@ -5061,7 +5061,7 @@ int series_set_string_vals_direct (DATASET *dset, int i,
 				   char **S, int ns)
 {
     series_table *st;
-    int err;
+    int err = 0;
 
     st = series_table_new(S, ns, &err);
 
