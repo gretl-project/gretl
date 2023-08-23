@@ -5976,69 +5976,70 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     return finalize_plot_input_file(fp);
 }
 
-int parse_gnuplot_color (const char *s, char *targ)
+gretlRGB parse_gnuplot_color (const char *s, int *err)
 {
-    int hexcheck = 0;
-    int err = 0;
+    gretlRGB ret = 0;
+    char *test = NULL;
+    int len = strlen(s);
+    int offset = 0;
 
-    if (*s == '0') {
-	/* should be 0xRRGGBB */
-	if (strlen(s) != 8) {
-	    err = invalid_field_error(s);
+    if (s[0] == '#') {
+	offset = 1;
+    } else if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+	offset = 2;
+    }
+
+    if (offset > 0) {
+	/* should be numeric [AA]RRGGBB */
+	const char *p = s + offset;
+
+	len -= offset;
+	if (len != 6 && len != 8) {
+	     *err = invalid_field_error(s);
 	} else {
-	    sprintf(targ, "#%s", s + 2);
-	    hexcheck = 1;
+	    ret = (gretlRGB) strtoul(p, &test, 16);
+	    if (*test != '\0') {
+		*err = invalid_field_error(s);
+	    }
 	}
-    } else if (*s == '#') {
-	/* should be #RRGGBB */
-	if (strlen(s) != 7) {
-	    err = invalid_field_error(s);
-	} else {
-	    strcpy(targ, s);
-	    hexcheck = 1;
-	}
+	return ret;
+    }
+
+    /* otherwise we should have a gnuplot color name */
+    if (len < 3 || len > 17) {
+	*err = invalid_field_error(s);
     } else {
-	/* should be gnuplot colorname: look it up */
-	if (strlen(s) < 3 || strlen(s) > 17) {
-	    err = invalid_field_error(s);
+	char fname[FILENAME_MAX];
+	FILE *fp;
+
+	sprintf(fname, "%sdata%cgnuplot%cgpcolors.txt",
+		gretl_home(), SLASH, SLASH);
+	fp = gretl_fopen(fname, "r");
+
+	if (fp == NULL) {
+	    *err = E_FOPEN;
 	} else {
-	    char fname[FILENAME_MAX];
-	    FILE *fp;
+	    char line[32], cname[18];
+	    int found = 0;
+	    guint32 u;
 
-	    sprintf(fname, "%sdata%cgnuplot%cgpcolors.txt",
-		    gretl_home(), SLASH, SLASH);
-	    fp = gretl_fopen(fname, "r");
-
-	    if (fp == NULL) {
-		err = E_FOPEN;
-	    } else {
-		char line[32], cname[18], rgb[8];
-
-		while (fgets(line, sizeof line, fp)) {
-		    if (sscanf(line, "%s %s", cname, rgb) == 2 &&
-			strcmp(s, cname) == 0) {
-			sprintf(targ, "#%s", rgb);
-			break;
-		    }
+	    while (fgets(line, sizeof line, fp)) {
+		if (sscanf(line, "%s %x", cname, &u) == 2 &&
+		    strcmp(s, cname) == 0) {
+		    ret = u;
+		    found = 1;
+		    break;
 		}
-		fclose(fp);
-		if (*targ != '#') {
-		    err = invalid_field_error(s);
-		}
+	    }
+	    fclose(fp);
+	    if (!found) {
+		*err = invalid_field_error(s);
+		ret = 0;
 	    }
 	}
     }
 
-    if (hexcheck) {
-	char *test = NULL;
-
-	strtoul(targ + 1, &test, 16);
-	if (*test != '\0') {
-	    err = invalid_field_error(s);
-	}
-    }
-
-    return err;
+    return ret;
 }
 
 static int *get_x_sorted_order (const FITRESID *fr,

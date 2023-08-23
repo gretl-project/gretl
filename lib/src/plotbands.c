@@ -199,27 +199,26 @@ static int has_bogus_key (gretl_bundle *b)
     return !ok;
 }
 
-static int get_input_color_string (gretl_bundle *b,
-				   char *colspec,
-				   int len)
+static int get_input_color (gretl_bundle *b, char *rgb)
 {
     GretlType t = gretl_bundle_get_member_type(b, "color", NULL);
+    guint32 u;
     int err = 0;
 
     if (t == GRETL_TYPE_STRING) {
 	const char *s = gretl_bundle_get_string(b, "color", &err);
 
 	if (!err) {
-	    strncat(colspec, s, len-1);
+	    u = parse_gnuplot_color(s, &err);
 	}
     } else if (gretl_is_scalar_type(t)) {
-	guint32 u = gretl_bundle_get_unsigned(b, "color", &err);
-
-	if (!err) {
-	    sprintf(colspec, "#%x", u);
-	}
+	u = gretl_bundle_get_unsigned(b, "color", &err);
     } else {
 	err = E_TYPES;
+    }
+
+    if (!err) {
+	sprintf(rgb, "#%x", u);
     }
 
     return err;
@@ -270,7 +269,7 @@ static band_info *band_info_from_bundle (int matrix_mode,
         }
     }
     if (!*err && gretl_bundle_has_key(b, "color")) {
-	*err = get_input_color_string(b, colspec, sizeof colspec);
+	*err = get_input_color(b, bi->rgb);
     }
     if (!*err && gretl_bundle_has_key(b, "factor")) {
         bi->factor = gretl_bundle_get_scalar(b, "factor", err);
@@ -294,10 +293,6 @@ static band_info *band_info_from_bundle (int matrix_mode,
         } else if (i == 3) {
             bi->style = style_from_string(S[i], err);
         }
-    }
-
-    if (!*err && *colspec != '\0') {
-	*err = parse_gnuplot_color(colspec, bi->rgb);
     }
 
     if (!*err) {
@@ -666,16 +661,19 @@ static int parse_band_style_option (band_info *bi)
 
     if (s != NULL) {
         const char *p = strchr(s, ',');
+	int do_color = 1;
+	guint32 u = 0;
 
         if (bi->bdummy && *s != ',') {
             /* must be just a color */
-            err = parse_gnuplot_color(s, bi->rgb);
+            u = parse_gnuplot_color(s, &err);
         } else if (*s == ',') {
             /* skipping field 1, going straight to color */
-            err = parse_gnuplot_color(s + 1, bi->rgb);
+            u = parse_gnuplot_color(s + 1, &err);
         } else if (p == NULL) {
             /* just got field 1, style spec */
             bi->style = style_from_string(s, &err);
+	    do_color = 0;
         } else {
             /* embedded comma: style + color */
             if (strlen(s) >= 8 && s[4] == ',') {
@@ -687,8 +685,11 @@ static int parse_band_style_option (band_info *bi)
                 err = invalid_field_error(s);
             }
             if (!err) {
-                err = parse_gnuplot_color(s + 5, bi->rgb);
+                u = parse_gnuplot_color(s + 5, &err);
             }
+	    if (!err && do_color) {
+		sprintf(bi->rgb, "#%x", u);
+	    }
         }
     }
 

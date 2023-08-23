@@ -2072,12 +2072,13 @@ static int verify_rgb (char *rgb)
 	s++;
 	p = strchr(s, delim);
 	if (p != NULL) {
-	    char test[16] = {0};
+	    char test[18];
 	    int len = p - s;
 
-	    if (len > 0 && len < 16) {
+	    if (len >= 3 && len <= 17) {
+		test[0] = '\0';
 		strncat(test, s, len);
-		err = parse_gnuplot_color(test, rgb);
+		parse_gnuplot_color(test, &err);
 	    } else {
 		err = E_DATA;
 	    }
