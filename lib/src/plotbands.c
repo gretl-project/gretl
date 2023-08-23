@@ -22,9 +22,10 @@
 #include "libgretl.h"
 #include "usermat.h"
 #include "uservar.h"
+#include "gretl_typemap.h"
 #include "plot_priv.h"
 
-#define PB_DEBUG 1
+#define PB_DEBUG 0
 
 typedef enum {
     BAND_LINE,
@@ -198,6 +199,32 @@ static int has_bogus_key (gretl_bundle *b)
     return !ok;
 }
 
+static int get_input_color_string (gretl_bundle *b,
+				   char *colspec,
+				   int len)
+{
+    GretlType t = gretl_bundle_get_member_type(b, "color", NULL);
+    int err = 0;
+
+    if (t == GRETL_TYPE_STRING) {
+	const char *s = gretl_bundle_get_string(b, "color", &err);
+
+	if (!err) {
+	    strncat(colspec, s, len-1);
+	}
+    } else if (gretl_is_scalar_type(t)) {
+	guint32 u = gretl_bundle_get_unsigned(b, "color", &err);
+
+	if (!err) {
+	    sprintf(colspec, "#%x", u);
+	}
+    } else {
+	err = E_TYPES;
+    }
+
+    return err;
+}
+
 static band_info *band_info_from_bundle (int matrix_mode,
 					 gretl_bundle *b,
 					 gnuplot_info *gi,
@@ -205,10 +232,11 @@ static band_info *band_info_from_bundle (int matrix_mode,
                                          int *err)
 {
     band_info *bi = band_info_new();
-    const char *S[5] = {NULL};
+    const char *S[4] = {NULL};
     const char *strkeys[] = {
-        "center", "width", "dummy", "style", "color"
+        "center", "width", "dummy", "style"
     };
+    char colspec[32];
     int v, i, imin = 0;
 
     if (has_bogus_key(b)) {
@@ -234,17 +262,22 @@ static band_info *band_info_from_bundle (int matrix_mode,
 	}
     }
 
-    for (i=imin; i<5 && !*err; i++) {
+    *colspec = '\0';
+
+    for (i=imin; i<4 && !*err; i++) {
         if (gretl_bundle_has_key(b, strkeys[i])) {
             S[i] = gretl_bundle_get_string(b, strkeys[i], err);
         }
+    }
+    if (!*err && gretl_bundle_has_key(b, "color")) {
+	*err = get_input_color_string(b, colspec, sizeof colspec);
     }
     if (!*err && gretl_bundle_has_key(b, "factor")) {
         bi->factor = gretl_bundle_get_scalar(b, "factor", err);
     }
 
     /* try cashing out the string members */
-    for (i=imin; i<5 && !*err; i++) {
+    for (i=imin; i<4 && !*err; i++) {
         if (S[i] == NULL) {
             continue;
         }
@@ -260,9 +293,11 @@ static band_info *band_info_from_bundle (int matrix_mode,
 	    }
         } else if (i == 3) {
             bi->style = style_from_string(S[i], err);
-        } else {
-            *err = parse_gnuplot_color(S[i], bi->rgb);
         }
+    }
+
+    if (!*err && *colspec != '\0') {
+	*err = parse_gnuplot_color(colspec, bi->rgb);
     }
 
     if (!*err) {
