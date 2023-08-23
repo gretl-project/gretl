@@ -3038,29 +3038,39 @@ char *gretl_utf8_truncate_b (char *s, size_t bmax)
 
 char *gretl_utf8_select (const char *s, const int *list)
 {
-    const char *p = s;
     char *ret = NULL;
-    GString *gs = g_string_new(NULL);
-    gchar *si;
-    int n = 0;
-    int i = 0;
+    int i, k;
 
-    while (p && *p) {
-        if (in_gretl_list(list, i+1)) {
-            si = g_utf8_substring(p, 0, 1);
-            g_string_append(gs, si);
-            g_free(si);
-            if (++n == list[0]) {
-                break;
-            }
-        }
-        p = g_utf8_next_char(p);
-        i++;
+    if (gretl_is_ascii(s)) {
+	int j = 0;
+
+	ret = calloc(list[0]+1, 1);
+	for (i=1; i<=list[0]; i++) {
+	    k = list[i] - 1; /* 0-based */
+	    ret[j++] = s[k];
+	}
+    } else {
+	GString *gs = g_string_new(NULL);
+	int len = g_utf8_strlen(s, -1);
+	gchar const **bits;
+	gchar *si;
+
+	bits = calloc(len + 1, sizeof *bits);
+	bits[0] = s;
+	for (i=1; i<len; i++) {
+	    s = bits[i] = g_utf8_find_next_char(s, NULL);
+	}
+	for (i=1; i<=list[0]; i++) {
+	    k = list[i] - 1; /* 0-based */
+	    si = g_utf8_substring(bits[k], 0, 1);
+	    g_string_append(gs, si);
+	    g_free(si);
+	}
+
+	ret = gretl_strdup(gs->str);
+	g_string_free(gs, TRUE);
+	free(bits);
     }
-
-    si = g_string_free(gs, FALSE);
-    ret = gretl_strdup(si);
-    g_free(si);
 
     return ret;
 }
