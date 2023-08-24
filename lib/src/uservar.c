@@ -296,7 +296,8 @@ static int bname_is_temp (const char *name)
 static int real_user_var_add (const char *name,
                               GretlType type,
                               void *value,
-                              gretlopt opt)
+                              gretlopt opt,
+			      user_var **pu)
 {
     user_var *u;
     int err = 0;
@@ -304,8 +305,11 @@ static int real_user_var_add (const char *name,
     u = user_var_new(name, type, value, &err);
 
     if (u == NULL) {
-        fprintf(stderr, "real_user_var_add: name='%s', value=%p, u=%p\n",
-                name, value, (void *) u);
+        fprintf(stderr, "real_user_var_add: name='%s', value=%p, u=NULL\n",
+                name, value);
+	if (pu != NULL) {
+	    *pu = NULL;
+	}
         return err ? err : E_DATA;
     }
 
@@ -348,6 +352,10 @@ static int real_user_var_add (const char *name,
         return (*user_var_callback)(name, type, UVAR_ADD);
     }
 
+    if (pu != NULL) {
+	*pu = u;
+    }
+
     return err;
 }
 
@@ -366,12 +374,34 @@ static int real_user_var_add (const char *name,
 
 int user_var_add (const char *name, GretlType type, void *value)
 {
-    return real_user_var_add(name, type, value, OPT_NONE);
+    return real_user_var_add(name, type, value, OPT_NONE, NULL);
+}
+
+/**
+ * alt_user_var_add:
+ * @name: name to give the variable.
+ * @type: the type of the variable.
+ * @value: pointer to value for variable.
+ *
+ * Adds a new user_var with the given characteristics.
+ * Note that the user_var takes ownership of the supplied
+ * @value; this should be copied first if need be.
+ *
+ * Returns: pointer to the new user_var, or NULL on failure.
+ */
+
+user_var *alt_user_var_add (const char *name, GretlType type, void *value)
+{
+    user_var *uv = NULL;
+
+    real_user_var_add(name, type, value, OPT_NONE, &uv);
+    return uv;
 }
 
 int private_matrix_add (gretl_matrix *M, const char *name)
 {
-    return real_user_var_add(name, GRETL_TYPE_MATRIX, M, OPT_P);
+    return real_user_var_add(name, GRETL_TYPE_MATRIX,
+			     M, OPT_P, NULL);
 }
 
 int private_scalar_add (double val, const char *name)
@@ -384,7 +414,7 @@ int private_scalar_add (double val, const char *name)
     } else {
         *px = val;
         err = real_user_var_add(name, GRETL_TYPE_DOUBLE,
-                                px, OPT_P);
+                                px, OPT_P, NULL);
     }
 
     return err;
@@ -1044,7 +1074,7 @@ int user_var_add_or_replace (const char *name,
             err = user_var_replace_value(u, value, type);
         }
     } else {
-        err = real_user_var_add(name, type, value, OPT_NONE);
+        err = real_user_var_add(name, type, value, OPT_NONE, NULL);
     }
 
     return err;
@@ -1166,7 +1196,7 @@ void set_scalar_edit_callback (void (*callback))
 int arg_add_as_shell (const char *name, GretlType type,
                       void *value)
 {
-    return real_user_var_add(name, type, value, OPT_S | OPT_A);
+    return real_user_var_add(name, type, value, OPT_S | OPT_A, NULL);
 }
 
 /**
@@ -1196,7 +1226,8 @@ int copy_matrix_as (const gretl_matrix *m, const char *newname,
     } else {
         gretlopt opt = fnarg ? OPT_A : OPT_NONE;
 
-        err = real_user_var_add(newname, GRETL_TYPE_MATRIX, m2, opt);
+        err = real_user_var_add(newname, GRETL_TYPE_MATRIX,
+				m2, opt, NULL);
     }
 
     return err;
@@ -1257,7 +1288,8 @@ int copy_as_arg (const char *param_name, GretlType type, void *value)
     }
 
     if (!err) {
-        err = real_user_var_add(param_name, cpytype, copyval, OPT_A);
+        err = real_user_var_add(param_name, cpytype,
+				copyval, OPT_A, NULL);
     }
 
     return err;
@@ -1618,7 +1650,7 @@ static int real_scalar_add (const char *name, double val,
         } else {
             *px = val;
             err = real_user_var_add(name, GRETL_TYPE_DOUBLE,
-                                    px, opt);
+                                    px, opt, NULL);
         }
 
         if (!err && level == 0 && scalar_edit_callback != NULL) {
@@ -1687,7 +1719,7 @@ int add_auxiliary_scalar (const char *name, double val)
     } else {
         *px = val;
         err = real_user_var_add(name, GRETL_TYPE_DOUBLE,
-                                px, OPT_NONE);
+                                px, OPT_NONE, NULL);
     }
 
     return err;

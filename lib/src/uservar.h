@@ -39,6 +39,9 @@ typedef struct user_var_ user_var;
 
 int user_var_add (const char *name, GretlType type, void *value);
 
+user_var *alt_user_var_add (const char *name, GretlType type,
+			    void *value);
+
 int user_var_add_or_replace (const char *name,
 			     GretlType type,
 			     void *value);
