@@ -1030,7 +1030,7 @@ int check_stringvar_name (const char *name, int allow_new,
             /* create the variable if possible */
             err = check_identifier(name);
             if (!err) {
-                err = create_user_var(name, GRETL_TYPE_STRING);
+                err = user_var_add(name, GRETL_TYPE_STRING, NULL);
             }
         } else {
             /* otherwise require that the variable already exists */

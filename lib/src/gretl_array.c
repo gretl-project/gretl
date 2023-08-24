@@ -604,6 +604,15 @@ int gretl_array_set_data (gretl_array *A, int i, void *ptr)
     }
 }
 
+void *gretl_array_get_all_data (gretl_array *A)
+{
+    if (A == NULL) {
+	return NULL;
+    } else {
+	return A->data;
+    }
+}
+
 static int check_list_bounds (int *list, int arrdim)
 {
     int i;

@@ -76,7 +76,7 @@ static double *na_ptr (void)
     return px;
 }
 
-static user_var *user_var_new (const char *name, int type,
+static user_var *user_var_new (const char *name, GretlType type,
                                void *value, int *err)
 {
     user_var *u;
@@ -940,6 +940,30 @@ int user_var_replace_value (user_var *uvar, void *value,
     return err;
 }
 
+/**
+ * user_var_set_pointer:
+ * @uvar: user variable.
+ * @ptr: the new pointer to set on @uvar.
+ *
+ * Unlike @user_var_replace_value, this function does not free
+ * the existing data pointer on @uvar. It should therefore be
+ * used only when another pointer to the prior data exists,
+ * otherwise a memory leak would result. Plus there's no type
+ * checking so use with care.
+ *
+ * Returns: 0 on success, error code if @uvar is NULL.
+ */
+
+int user_var_set_pointer (user_var *uvar, void *ptr)
+{
+    if (uvar != NULL) {
+	uvar->ptr = ptr;
+	return 0;
+    } else {
+	return E_DATA;
+    }
+}
+
 char *user_string_resize (const char *name, size_t len, int *err)
 {
     user_var *u;
@@ -1119,14 +1143,6 @@ void set_user_var_callback (USER_VAR_FUNC callback)
 void set_scalar_edit_callback (void (*callback))
 {
     scalar_edit_callback = callback;
-}
-
-/* used in response to bare declaration of a user variable
-   in geneval.c */
-
-int create_user_var (const char *name, GretlType type)
-{
-    return real_user_var_add(name, type, NULL, OPT_NONE);
 }
 
 /**

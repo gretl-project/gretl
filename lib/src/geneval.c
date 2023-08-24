@@ -19464,7 +19464,7 @@ static void do_declaration (parser *p)
                     p->err = E_DATA;
                 }
                 if (!p->err) {
-                    p->err = create_user_var(S[i], type);
+                    p->err = user_var_add(S[i], type, NULL);
                 }
             }
         }
