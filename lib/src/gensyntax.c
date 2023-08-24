@@ -1588,6 +1588,13 @@ static NODE *powterm (parser *p, NODE *l)
     return t;
 }
 
+static int got_hex_val (parser *p)
+{
+    int c = *p->point;
+
+    return p->ch == '0' && (c == 'x' || c == 'X');
+}
+
 /* Test for whether the ' symbol must represent the unary
    transposition operator rather than binary transpose-multiply,
    based on the following symbol, @t.
@@ -1611,6 +1618,10 @@ static NODE *factor (parser *p)
     fprintf(stderr, "factor: starting...\n");
 #endif
 
+    if (sym == U_NEG && got_hex_val(p)) {
+	gretl_errmsg_set("hexadecimal values must be unsigned");
+	p->err = E_TYPES;
+    }
     if (p->err) {
 	return NULL;
     }
