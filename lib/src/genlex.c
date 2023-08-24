@@ -2030,13 +2030,13 @@ static int ok_hex_char (parser *p, char *s, int i)
 static void parse_number (parser *p)
 {
     char xstr[NUMLEN] = {0};
-    int gotcol = 0;
-    int gothex = 0;
+    int got_colon = 0;
+    int got_hex = 0;
     int i = 0;
 
     if (p->ch == '0' && (p->point[0] == 'x' || p->point[0] == 'X')) {
 	/* hexadecimal input */
-	gothex = 1;
+	got_hex = 1;
 	while (ok_hex_char(p, xstr, i - 1) && i < HEXLEN - 1) {
 	    xstr[i++] = p->ch;
 	    parser_getc(p);
@@ -2046,7 +2046,7 @@ static void parse_number (parser *p)
 	while (ok_dbl_char(p, xstr, i - 1) && i < NUMLEN - 1) {
 	    xstr[i++] = p->ch;
 	    if (p->ch == ':') {
-		gotcol = 1;
+		got_colon = 1;
 	    }
 	    parser_getc(p);
 	}
@@ -2060,7 +2060,7 @@ static void parse_number (parser *p)
     fprintf(stderr, "parse_number: xstr = '%s'\n", xstr);
 #endif
 
-    if (gotcol) {
+    if (got_colon) {
 #if LDEBUG
 	fprintf(stderr, " got colon: obs identifier?\n");
 #endif
@@ -2074,7 +2074,7 @@ static void parse_number (parser *p)
 	    p->idstr = gretl_strdup(xstr);
 	    p->sym = CSTR;
 	}
-    } else if (gothex) {
+    } else if (got_hex) {
 	guint32 u = strtoul(xstr, NULL, 16);
 
 	p->xval = (double) u;
