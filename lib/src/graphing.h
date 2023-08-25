@@ -349,7 +349,10 @@ void set_boxcolor (gretlRGB color);
 
 void set_shadecolor (gretlRGB color);
 
-gretlRGB parse_gnuplot_color (const char *s, int *err);
+int parse_gnuplot_color (const char *s, char *targ);
+
+gretlRGB numeric_color_from_string (const char *s,
+				    int *err);
 
 int gnuplot_test_command (const char *cmd);
 

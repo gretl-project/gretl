@@ -209,7 +209,7 @@ static int get_input_color (gretl_bundle *b, char *rgb)
 	const char *s = gretl_bundle_get_string(b, "color", &err);
 
 	if (!err) {
-	    u = parse_gnuplot_color(s, &err);
+	    u = numeric_color_from_string(s, &err);
 	}
     } else if (gretl_is_scalar_type(t)) {
 	u = gretl_bundle_get_unsigned(b, "color", &err);
@@ -666,10 +666,10 @@ static int parse_band_style_option (band_info *bi)
 
         if (bi->bdummy && *s != ',') {
             /* must be just a color */
-            u = parse_gnuplot_color(s, &err);
+            u = numeric_color_from_string(s, &err);
         } else if (*s == ',') {
             /* skipping field 1, going straight to color */
-            u = parse_gnuplot_color(s + 1, &err);
+            u = numeric_color_from_string(s + 1, &err);
         } else if (p == NULL) {
             /* just got field 1, style spec */
             bi->style = style_from_string(s, &err);
@@ -685,7 +685,7 @@ static int parse_band_style_option (band_info *bi)
                 err = invalid_field_error(s);
             }
             if (!err) {
-                u = parse_gnuplot_color(s + 5, &err);
+                u = numeric_color_from_string(s + 5, &err);
             }
 	    if (!err && do_color) {
 		sprintf(bi->rgb, "#%x", u);

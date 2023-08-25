@@ -237,10 +237,10 @@ struct png_bounds_t {
 typedef struct linestyle_ linestyle;
 
 struct linestyle_ {
-    char lc[8]; /* color */
-    float lw;   /* line width */
-    int dt;     /* dash type */
-    int pt;     /* point type */
+    char lc[20]; /* color */
+    float lw;    /* line width */
+    int dt;      /* dash type */
+    int pt;      /* point type */
 };
 
 static int get_png_bounds_info (png_bounds *bounds);
@@ -2072,13 +2072,12 @@ static int verify_rgb (char *rgb)
 	s++;
 	p = strchr(s, delim);
 	if (p != NULL) {
-	    char test[18];
+	    char test[18] = {0};
 	    int len = p - s;
 
 	    if (len >= 3 && len <= 17) {
-		test[0] = '\0';
 		strncat(test, s, len);
-		parse_gnuplot_color(test, &err);
+		err = parse_gnuplot_color(test, rgb);
 	    } else {
 		err = E_DATA;
 	    }
