@@ -49,6 +49,7 @@
 #include "guiprint.h"
 #include "tabwin.h"
 #include "gpt_control.h"
+#include "gpt_dialog.h"
 #include "gretl_ipc.h"
 
 #ifndef G_OS_WIN32
@@ -1849,6 +1850,7 @@ GtkActionEntry main_entries[] = {
     { "ShowConsole", NULL, N_("_Gretl console"), NULL, NULL, G_CALLBACK(gretl_show_console) },
     { "Gnuplot", NULL, N_("_Gnuplot"), NULL, NULL, G_CALLBACK(launch_gnuplot_interactive) },
     { "StartR", NULL, N_("Start GNU _R"), NULL, NULL, G_CALLBACK(start_R_callback) },
+    { "ColorTool", NULL, N_("Color tool"), NULL, NULL, G_CALLBACK(show_color_tool) },
     { "NistTest", NULL, N_("_NIST test suite"), NULL, NULL, NULL },
     { "NistBasic", NULL, N_("_Basic"), NULL, NULL, G_CALLBACK(do_nistcheck) },
     { "NistVerbose", NULL, N_("_Verbose"), NULL, NULL, G_CALLBACK(do_nistcheck) },

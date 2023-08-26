@@ -92,6 +92,8 @@
       <menuitem action="Gnuplot"/>
       <menuitem action="StartR"/>
       <separator/>
+      <menuitem action="ColorTool"/>
+      <separator/>
       <menu action="NistTest">
 	<menuitem action="NistBasic"/>
 	<menuitem action="NistVerbose"/>
