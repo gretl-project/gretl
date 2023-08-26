@@ -44,7 +44,7 @@ void gretl_win32_init (int debug);
 
 int prn_to_clipboard (PRN *prn, int fmt);
 
-int old_send_attachment (const char *filename);
+int buf_to_clipboard (const char *buf);
 
 int emf_to_clipboard (char *emfname);
 
