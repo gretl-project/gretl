@@ -313,7 +313,7 @@ void gretl_win32_init (int debug)
     set_gretl_startdir();
 }
 
-static int real_buf_to_clipboard (const char *buf, int fmt)
+static int real_buf_to_clipboard (char *buf, int fmt)
 {
     char *modbuf = NULL;
     int rtf_format = 0;
@@ -389,8 +389,6 @@ static int real_buf_to_clipboard (const char *buf, int fmt)
     }
 
     CloseClipboard();
-
-    free(buf);
     free(modbuf);
 
     return err;
@@ -398,7 +396,7 @@ static int real_buf_to_clipboard (const char *buf, int fmt)
 
 int buf_to_clipboard (const char *buf)
 {
-    return real_buf_to_clipboard(buf, GRETL_FORMAT_TXT);
+    return real_buf_to_clipboard((char *) buf, GRETL_FORMAT_TXT);
 }
 
 int prn_to_clipboard (PRN *prn, int fmt)
