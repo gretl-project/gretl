@@ -2057,7 +2057,10 @@ static void read_xtics_setting (GPT_SPEC *spec,
 
 /* Try to accept variant RGB specifications besides the
    one that's standard in gretl plot files, namely
-   "#RRGGBB" in hex.
+   "#RRGGBB" in hex. The candidate string -- which might
+   be a color name of up to 17 characters -- is in @rgb,
+   and on success it's ovewritten by a standard gnuplot
+   hex string.
 */
 
 static int verify_rgb (char *rgb)
@@ -2067,6 +2070,7 @@ static int verify_rgb (char *rgb)
     int err = 0;
 
     if (delim == '"' || delim == '\'') {
+	/* valid input will be quoted */
 	const char *p;
 
 	s++;
@@ -2077,6 +2081,9 @@ static int verify_rgb (char *rgb)
 
 	    if (len >= 3 && len <= 17) {
 		strncat(test, s, len);
+		/* Note: parse_gnuplot_color() writes to its
+		   second argument if there's no error.
+		*/
 		err = parse_gnuplot_color(test, rgb);
 	    } else {
 		err = E_DATA;
@@ -2106,6 +2113,7 @@ static int parse_linetype (const char *s, linestyle *styles)
     }
 
     if (!err && (p = strstr(s, " lc ")) != NULL) {
+	/* 20 bytes allows for quote characters */
 	char lc[20];
 
 	p += 4;
