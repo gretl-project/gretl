@@ -4627,23 +4627,52 @@ char **series_get_string_vals (const DATASET *dset, int i,
     return strs;
 }
 
+#define USE_HASH 0 /* more testing wanted first */
+
 int series_from_strings (DATASET *dset, int v,
 			 char **S, int ns)
 {
-    char **uS = NULL;
+#if USE_HASH
+    GHashTable *ht = NULL;
+    gpointer p;
+#else
     char *si, *sj;
+    int j, skip;
+#endif
+    char **uS = NULL;
     int T = sample_size(dset);
     int *idx = calloc(T, sizeof *idx);
     double *y = dset->Z[v];
-    int i, j, t, skip, m;
+    int i, t, m;
     int err = 0;
 
     i = (ns == T)? 0 : dset->t1;
     m = 0;
 
+#if USE_HASH
+    ht = g_hash_table_new(g_str_hash, g_str_equal);
+#endif
+
     /* Put the indices of the unique strings into @idx,
        and assign values to the series @y as we go.
     */
+#if USE_HASH
+    for (t=dset->t1; t<=dset->t2; t++,i++) {
+	if (S[i] == NULL || S[i][0] == '\0') {
+	    y[t] = NADBL;
+	    continue;
+	}
+	p = g_hash_table_lookup(ht, S[i]);
+	if (p == NULL) {
+	    idx[m++] = i;
+	    g_hash_table_insert(ht, S[i], GINT_TO_POINTER(m));
+	    y[t] = (double) m;
+	} else {
+	    y[t] = (double) GPOINTER_TO_INT(p);
+	}
+    }
+    g_hash_table_destroy(ht);
+#else
     for (t=dset->t1; t<=dset->t2; t++,i++) {
 	si = S[i];
 	if (si == NULL || *si == '\0') {
@@ -4664,6 +4693,7 @@ int series_from_strings (DATASET *dset, int v,
             y[t] = (double) m;
         }
     }
+#endif
 
     /* create an array of the unique strings */
     uS = strings_array_new(m);
@@ -4677,6 +4707,7 @@ int series_from_strings (DATASET *dset, int v,
             }
         }
     }
+
     free(idx);
 
     if (err) {
