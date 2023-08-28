@@ -4627,7 +4627,8 @@ char **series_get_string_vals (const DATASET *dset, int i,
     return strs;
 }
 
-#define USE_HASH 0 /* more testing wanted first */
+/* this tests OK so far, and more efficient than the alternative */
+#define USE_HASH 1
 
 int series_from_strings (DATASET *dset, int v,
 			 char **S, int ns)
