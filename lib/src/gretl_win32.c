@@ -28,9 +28,8 @@
 #include <shlobj.h>
 #include <aclapi.h>
 
-#define CPDEBUG 1
+#define CPDEBUG 0
 #define SYNC_DEBUG 0
-#define SHELL_USE_PIPE 0
 
 static int windebug;
 static FILE *fdb;
@@ -114,7 +113,6 @@ int read_reg_val (HKEY tree, const char *base,
 	gunichar2 *wkeyname;
 
 	wkeyname = g_utf8_to_utf16(keyname, -1, NULL, NULL, NULL);
-
 	if (wkeyname == NULL) {
 	    enc_err = 1;
 	} else {
@@ -249,17 +247,14 @@ void win32_cli_read_rc (void)
     /* for a short list of items, if they're (still) missing, maybe we
        can get them from the registry
     */
-
     if (cpaths.gretldir[0] == '\0') {
 	read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir",
 		     cpaths.gretldir);
     }
-
     if (cpaths.x12a[0] == '\0') {
 	read_reg_val(HKEY_LOCAL_MACHINE, "x12arima", "x12a",
 		     cpaths.x12a);
     }
-
     if (cpaths.tramo[0] == '\0') {
 	read_reg_val(HKEY_LOCAL_MACHINE, "tramo", "tramo",
 		     cpaths.tramo);
@@ -716,8 +711,13 @@ static gchar *compose_command_line (const char *arg)
 static int read_from_pipe (HANDLE hwrite, HANDLE hread,
 			   char **sout, PRN *inprn)
 {
-    PRN *prn;
+    PRN *prn = NULL;
     int err = 0;
+
+#if CPDEBUG
+    fprintf(stderr, "read_from_pipe: sout=%p, inprn=%p\n",
+            (void *) sout, (void *) inprn);
+#endif
 
     if (sout != NULL) {
 	prn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
@@ -752,7 +752,7 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
 		break;
 	    }
 #if CPDEBUG
-	    fprintf(stderr, "Read from pipe: got %d bytes\n", (int) dwread);
+	    fprintf(stderr, "read_from_pipe: got %d bytes\n", (int) dwread);
 #endif
 	    pputs(prn, buf);
 	}
@@ -799,17 +799,20 @@ static int run_child_with_pipe (const char *cmdline,
     gunichar2 *cd16 = NULL;
     int ok, err = 0;
 
-#if CPDEBUG
-    fprintf(stderr, "\nrun_child_with_pipe\n");
-    fprintf(stderr, " cmdline = '%s'\n", cmdline);
-#endif
-
     if (opt & OPT_S) {
 	/* shell mode */
 	fullcmd = compose_command_line(cmdline);
     } else {
 	fullcmd = g_strdup(cmdline);
     }
+
+#if CPDEBUG
+    fprintf(stderr, "\nrun_child_with_pipe\n");
+    fprintf(stderr, " cmdline = '%s'\n", cmdline);
+    if (fullcmd != NULL) {
+        fprintf(stderr, " fullcmd = '%s'\n", fullcmd);
+    }
+#endif
 
     if (currdir != NULL) {
 	targdir = trimmed_path(currdir);
@@ -914,8 +917,6 @@ static int run_cmd_with_pipes (const char *cmdline,
     return err;
 }
 
-#if !SHELL_USE_PIPE
-
 /* used only by gretl_shell() below, if not using pipes */
 
 static int run_shell_cmd_wait (const char *cmd, PRN *prn)
@@ -981,8 +982,6 @@ static int run_shell_cmd_wait (const char *cmd, PRN *prn)
 
     return err;
 }
-
-#endif /* !SHELL_USE_PIPE */
 
 int win_run_async (const char *cmdline, const char *currdir)
 {
@@ -1069,34 +1068,40 @@ int gretl_win32_grab_stdout (const char *cmdline,
 int gretl_shell_grab (const char *arg, char **sout)
 {
 #if CPDEBUG
-    fprintf(stderr, "\ngretl_shell_grab\n");
+    fprintf(stderr, "\ngretl_shell_grab: arg='%s'\n", arg);
 #endif
     return run_cmd_with_pipes(arg, NULL, sout, NULL, OPT_S);
 }
 
 int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
 {
+    int pipes = 1;
     int err = 0;
 
     if (arg == NULL || *arg == '\0') {
 	return 0;
-    }
-
-    if (!libset_get_bool(SHELL_OK)) {
+    } else if (!libset_get_bool(SHELL_OK)) {
 	gretl_errmsg_set(_("The shell command is not activated."));
 	return 1;
     }
+
+    if (getenv("SHELL_NO_PIPES") != NULL) {
+        pipes = 0;
+    }
+
+#if CPDEBUG
+    fprintf(stderr, "\ngretl_shell: arg='%s' async=%d, pipes=%d, prn=%p\n",
+            arg, (opt & OPT_A)? 1 : 0, pipes, (void *) prn);
+#endif
 
     arg += strspn(arg, " \t");
 
     if (opt & OPT_A) {
 	err = win_run_async(arg, gretl_workdir());
-    } else {
-#if SHELL_USE_PIPE
+    } else if (pipes) {
 	err = run_cmd_with_pipes(arg, NULL, NULL, prn, OPT_S);
-#else
+    } else {
 	err = run_shell_cmd_wait(arg, prn);
-#endif
     }
 
     return err;
