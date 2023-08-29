@@ -166,9 +166,13 @@ string-valued).
 \subsection{Assigning from an array of strings}
 \label{sec:array-assign}
 
-Given an array of strings whose length matches either the full length
-of the current dataset or the length of the current sample range, you
-can assign directly to a series result. Here's a trivial example:
+Given an array of strings whose length matches the full length of the
+current dataset you can assign directly to a series result, provided
+these conditions are satisfied: the dataset is not sub-sampled, and if
+the assignment is to a pre-existing series it is not already
+string-valued.
+
+Here's a trivial example:
 \begin{code}
 nulldata 6
 strings S = defarray("a", "b", "c", "b", "a", "d")
