@@ -4627,154 +4627,125 @@ char **series_get_string_vals (const DATASET *dset, int i,
     return strs;
 }
 
-/* this tests OK so far, and more efficient than the alternative */
-#define USE_HASH 1
-
-int series_from_strings (DATASET *dset, int v,
-			 char **S, int ns)
+static char **unique_series_strings (char **S, int *pn,
+				     double *y, int *err)
 {
-#if USE_HASH
-    GHashTable *ht = NULL;
-    gpointer p;
-#else
-    char *si, *sj;
-    int j, skip;
-#endif
     char **uS = NULL;
-    int T = sample_size(dset);
-    int *idx = calloc(T, sizeof *idx);
-    double *y = dset->Z[v];
-    int i, t, m;
-    int err = 0;
+    int *list = NULL;
+    GHashTable *ht;
+    gpointer p;
+    int pos = 1;
+    int ns = *pn;
+    int nu = 0;
+    int i;
 
-    i = (ns == T)? 0 : dset->t1;
-    m = 0;
-
-#if USE_HASH
+    list = gretl_list_new(ns);
     ht = g_hash_table_new(g_str_hash, g_str_equal);
-#endif
 
-    /* Put the indices of the unique strings into @idx,
-       and assign values to the series @y as we go.
+    if (list == NULL || ht == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    list[0] = 0;
+
+    /* Put the indices of the unique strings into @list,
+       and assign successive values to @y as we go.
     */
-#if USE_HASH
-    for (t=dset->t1; t<=dset->t2; t++,i++) {
+    for (i=0; i<ns; i++) {
 	if (S[i] == NULL || S[i][0] == '\0') {
-	    y[t] = NADBL;
+	    y[i] = NADBL;
 	    continue;
 	}
 	p = g_hash_table_lookup(ht, S[i]);
 	if (p == NULL) {
-	    idx[m++] = i;
-	    g_hash_table_insert(ht, S[i], GINT_TO_POINTER(m));
-	    y[t] = (double) m;
+	    /* string not already present: add index to list */
+	    list[pos] = i;
+	    g_hash_table_insert(ht, S[i], GINT_TO_POINTER(pos));
+	    y[i] = (double) pos;
+	    list[0] += 1;
+	    pos++;
 	} else {
-	    y[t] = (double) GPOINTER_TO_INT(p);
+	    y[i] = (double) GPOINTER_TO_INT(p);
 	}
     }
-    g_hash_table_destroy(ht);
-#else
-    for (t=dset->t1; t<=dset->t2; t++,i++) {
-	si = S[i];
-	if (si == NULL || *si == '\0') {
-	    y[t] = NADBL;
-	    continue;
-	}
-        skip = 0;
-        for (j=0; j<m; j++) {
-	    sj = S[idx[j]];
-	    if (sj != NULL && strcmp(si, sj) == 0) {
-                y[t] = (double) j + 1;
-                skip = 1;
-                break;
-            }
-        }
-        if (!skip) {
-            idx[m++] = i;
-            y[t] = (double) m;
-        }
-    }
-#endif
 
-    /* create an array of the unique strings */
-    uS = strings_array_new(m);
+    /* the number of unique strings */
+    *pn = nu = list[0];
+
+    if (nu == ns) {
+	/* all the incoming strings are unique */
+	uS = strings_array_dup(S, ns);
+    } else {
+	/* copy only the unique strings */
+	uS = strings_array_dup_selected(S, ns, list);
+    }
+
     if (uS == NULL) {
-        err = E_ALLOC;
-    } else {
-        for (i=0; i<m && !err; i++) {
-            uS[i] = gretl_strdup(S[idx[i]]);
-            if (uS[i] == NULL) {
-                err = E_ALLOC;
-            }
-        }
+	*err = E_ALLOC;
     }
 
-    free(idx);
+    g_hash_table_destroy(ht);
+    free(list);
 
-    if (err) {
-        strings_array_free(uS, m);
-    } else {
-        err = series_set_string_vals_direct(dset, v, uS, m);
+    return uS;
+}
+
+/* Constructs a string-valued series in member series @v of @dset,
+   using the strings in @S.
+*/
+
+int series_from_strings (DATASET *dset, int v,
+			 char **S, int ns)
+{
+    char **uS = NULL;
+    int nuniq = ns;
+    int err = 0;
+
+    if (S == NULL || ns != dset->n || dataset_is_subsampled(dset)) {
+	return E_DATA;
+    }
+
+    uS = unique_series_strings(S, &nuniq, dset->Z[v], &err);
+    if (!err) {
+        err = series_set_string_vals_direct(dset, v, uS, nuniq);
     }
 
     return err;
 }
+
+/* Unlike series_from_strings (above), this "raw" variant (which is
+   called from geneval.c) does not require that the target series is
+   already a member of a dataset.
+*/
 
 int series_from_strings_raw (double *y, int n, char **S,
 			     series_table **pst)
 {
     char **uS = NULL;
-    char *si, *sj;
-    int *idx = calloc(n, sizeof *idx);
-    int i, j, t, skip, m;
+    int nuniq = n;
     int err = 0;
 
-    /* Put the indices of the unique strings into @idx,
-       and assign values to the series @y as we go.
-    */
-    for (t=0, m=0; t<n; t++) {
-	si = S[t];
-	if (si == NULL || *si == '\0') {
-	    y[t] = NADBL;
-	    continue;
-	}
-        skip = 0;
-        for (j=0; j<m; j++) {
-	    sj = S[idx[j]];
-	    if (sj != NULL && strcmp(si, sj) == 0) {
-                y[t] = (double) j + 1;
-                skip = 1;
-                break;
-            }
-        }
-        if (!skip) {
-            idx[m++] = t;
-            y[t] = (double) m;
-        }
+    if (S == NULL) {
+	return E_DATA;
     }
 
-    /* create an array of the unique strings */
-    uS = strings_array_new(m);
-    if (uS == NULL) {
-        err = E_ALLOC;
-    } else {
-        for (i=0; i<m && !err; i++) {
-            uS[i] = gretl_strdup(S[idx[i]]);
-            if (uS[i] == NULL) {
-                err = E_ALLOC;
-            }
-        }
-    }
-    free(idx);
-
-    if (err) {
-        strings_array_free(uS, m);
-    } else {
-	*pst = series_table_new(uS, m, &err);
+    uS = unique_series_strings(S, &nuniq, y, &err);
+    if (!err) {
+	*pst = series_table_new(uS, nuniq, &err);
     }
 
     return err;
 }
+
+/* Returns an array of length dset->n holding the string values for
+   all observations of series @v (so it will likely contain repeated
+   strings). The returned array is newly allocated and can be
+   shallow-freed by the caller but the individual strings belong to
+   the string table for series @v, and must not be modified or
+   freed. Note that for missing observations the associated array
+   member will be NULL.
+*/
 
 char **series_get_all_strings (const DATASET *dset, int v)
 {
@@ -4782,7 +4753,7 @@ char **series_get_all_strings (const DATASET *dset, int v)
     int i;
 
     if (v > 0 && v < dset->v && dset->varinfo[v]->st != NULL) {
-	S = calloc(dset->n, sizeof *S);
+	S = strings_array_new(dset->n);
 	for (i=0; i<dset->n; i++) {
 	    if (na(dset->Z[v][i])) {
 		S[i] = NULL;
