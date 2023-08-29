@@ -195,9 +195,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { SHELL,    "shell",    CI_EXPR },
     { SMPL,     "smpl",     CI_PARM1 | CI_PARM2 | CI_INFL }, /* alternate forms */
     { SPEARMAN, "spearman", CI_LIST | CI_LLEN2 },
-    { SPRINTF,  "sprintf",  CI_PARM1 | CI_PARM2 | CI_VARGS },
     { SQUARE,   "square",   CI_LIST },
-    { SSCANF,   "sscanf",   CI_EXPR },
     { STDIZE,   "stdize",   CI_LIST },
     { STORE,    "store",    CI_PARM1 | CI_FNAME | CI_LIST | CI_DOALL },
     { SUMMARY,  "summary",  CI_LIST | CI_DOALL },
@@ -231,7 +229,7 @@ static struct gretl_cmd gretl_cmds[] = {
 			   c == ESTIMATE || c == HELP || c == GRAPHPG || \
 			   c == EQUATION || c == MODPRINT)
 
-#define vargs_optional(c) (c == PRINTF || c == SPRINTF)
+#define vargs_optional(c) (c == PRINTF)
 
 #define expr_keep_cmdword(c) (c == GMM || c == MLE || c == NLS)
 
@@ -448,6 +446,21 @@ CMD *gretl_cmd_new (void)
     return cmd;
 }
 
+/* Tells whether the second token (typically the first
+   following a command-word) of a command was quoted
+   on input. This is something we may want to know when
+   executing the printf command.
+*/
+
+int cmd_arg1_quoted (CMD *cmd)
+{
+    if (cmd->toks != NULL && cmd->ntoks > 1) {
+	return (cmd->toks[1].flag & TOK_QUOTED)? 1 : 0;
+    } else {
+	return 0;
+    }
+}
+
 static void cmd_set_vstart (CMD *c, const char *s)
 {
     c->vstart = s;
@@ -574,7 +587,8 @@ static int real_add_token (CMD *c, const char *tok,
     int err = 0;
 
 #if TDEBUG
-    fprintf(stderr, "real_add_token: '%s'\n", tok);
+    fprintf(stderr, "real_add_token: '%s' (%s)\n", tok,
+	    flag & TOK_QUOTED ? "quoted" : "not quoted");
 #endif
 
     if (n == c->nt_alloced - 1) {
@@ -740,7 +754,7 @@ static int push_quoted_token (CMD *c, const char *s,
 	if (c->ci == PRINT) {
 	    *tok = '\0';
 	    strncat(tok, p, len);
-	} else if (c->ci == PRINTF || c->ci == SPRINTF) {
+	} else if (c->ci == PRINTF) {
 	    /* format strings: don't mess! */
 	    while (*p) {
 		if (*p == '"' && *(p-1) != '\\') {
@@ -3252,7 +3266,7 @@ static int got_param_tokens (CMD *cmd)
 	}
     }
 
-    if (cmd->ci == PRINTF || cmd->ci == SPRINTF) {
+    if (cmd->ci == PRINTF) {
 	i = cmd->cstart + 2;
 	if (i < cmd->ntoks && cmd->toks[i].type == TOK_COMMA) {
 	    if (cmd->ci == PRINTF) {
@@ -3754,32 +3768,6 @@ static int post_process_rename_param (CMD *cmd,
     return err;
 }
 
-static int post_process_sprintf_command (CMD *cmd,
-					 char *line)
-{
-    int err = 0;
-
-    set_deprecation("sprintf", "sprintf()", 1);
-
-    *line = '\0';
-
-    if (cmd->vstart != NULL) {
-	gchar *tmp = g_strdup_printf("%s=sprintf(\"%s\",%s)", cmd->param,
-				     cmd->parm2, cmd->vstart);
-
-	strcpy(line, tmp);
-	g_free(tmp);
-    } else {
-	sprintf(line, "%s=sprintf(\"%s\")", cmd->param, cmd->parm2);
-    }
-
-    cmd->ci = GENR;
-    cmd->gtype = GRETL_TYPE_STRING;
-    cmd_set_vstart(cmd, line);
-
-    return err;
-}
-
 /* check the commands that have the CI_INFL flag:
    the precise line-up of required arguments may
    depend on the option(s) specified
@@ -4026,8 +4014,6 @@ static int assemble_command (CMD *cmd, DATASET *dset,
 	    cmd->err = post_process_spreadsheet_options(cmd);
 	} else if (cmd->ci == RENAME) {
 	    cmd->err = post_process_rename_param(cmd, dset);
-	} else if (cmd->ci == SPRINTF && line != NULL) {
-	    cmd->err = post_process_sprintf_command(cmd, line);
 	}
     }
 

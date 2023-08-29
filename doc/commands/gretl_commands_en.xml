@@ -15025,15 +15025,6 @@
 
   </command>
 
-  <command name="sprintf" section="Printing" context="cli">
-    <description>
-      <para>
-	Obsolete command: please use the <fncref targ="sprintf"/>
-	function instead.
-      </para>
-    </description>
-  </command>
-
   <command name="square" section="Transformations"
     label="Create squares of variables" context="cli">
 

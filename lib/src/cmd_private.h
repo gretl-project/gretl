@@ -126,4 +126,6 @@ int statements_get_structure (stmt *lines,
 			      int context,
 			      const char *name);
 
+int cmd_arg1_quoted (CMD *cmd);
+
 #endif /* CMD_PRIVATE_H */
