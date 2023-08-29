@@ -20727,32 +20727,28 @@ static int gen_check_return_type (parser *p)
     return err;
 }
 
-/* Allocate storage if saving a series to the dataset:
-   lh.vnum <= 0 means that the LHS series does not already
-   exist. If this is a new series we also check for
-   collision with the name of a function and issue
-   a warning if need be.
+/* Allocate storage if saving a new series to the dataset. We also
+   check for collision with the name of a function and issue a warning
+   if need be.
 */
 
 static int gen_allocate_storage (parser *p)
 {
-    if (p->lh.vnum <= 0) {
-        if (p->dset == NULL || p->dset->Z == NULL) {
-            p->err = E_DATA;
-        } else {
-            p->err = dataset_add_NA_series(p->dset, 1);
-            if (!p->err) {
-                p->lh.vnum = p->dset->v - 1;
-            }
-        }
-        if (!p->err && gretl_function_depth() == 0 &&
-            get_user_function_by_name(p->lh.name) != NULL) {
-            gretl_warnmsg_sprintf(_("'%s' shadows a function of the same name"),
-                                  p->lh.name);
-        } else if (!p->err && function_lookup(p->lh.name)) {
-            gretl_warnmsg_sprintf(_("'%s' shadows a function of the same name"),
-                                  p->lh.name);
-        }
+    if (p->dset == NULL || p->dset->Z == NULL) {
+	p->err = E_DATA;
+    } else {
+	p->err = dataset_add_NA_series(p->dset, 1);
+	if (!p->err) {
+	    p->lh.vnum = p->dset->v - 1;
+	}
+    }
+    if (!p->err && gretl_function_depth() == 0 &&
+	get_user_function_by_name(p->lh.name) != NULL) {
+	gretl_warnmsg_sprintf(_("'%s' shadows a function of the same name"),
+			      p->lh.name);
+    } else if (!p->err && function_lookup(p->lh.name)) {
+	gretl_warnmsg_sprintf(_("'%s' shadows a function of the same name"),
+			      p->lh.name);
     }
 
     return p->err;
@@ -21277,7 +21273,7 @@ static int save_generated_var (parser *p, PRN *prn)
     }
 
     /* allocate dataset storage, if needed */
-    if (p->targ == SERIES) {
+    if (p->targ == SERIES && p->lh.vnum <= 0) {
         gen_allocate_storage(p);
         if (p->err) {
             return savegen_retval(p->err);
