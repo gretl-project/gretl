@@ -94,9 +94,10 @@ The third gretl conference took place in Oklahoma City.
   series is string-valued.
 \end{itemize}
 
-Suppose you want to access the numeric code for a particular
-string-valued observation: you can get that by ``casting'' the series
-to a vector. Thus
+If you want to access the numeric code for a particular string-valued
+observation you can get it by ``casting'' the series in question to a
+vector (by wrapping the identifier in curly brackets). So, for
+example,
 \begin{code}
 printf "The code for '%s' is %d.\n", city[3], {city}[3]
 \end{code}
