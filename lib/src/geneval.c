@@ -8640,6 +8640,7 @@ static NODE *variant_string_func (NODE *n, int f, parser *p)
 	    ret = aux_array_node(p);
 	}
     } else {
+	/* @n must hold a string-valued series */
 	if (dataset_is_subsampled(p->dset)) {
 	    gretl_errmsg_set(_("Sorry, can't do this with a sub-sampled dataset"));
 	    p->err = E_DATA;
@@ -8687,13 +8688,17 @@ static NODE *variant_string_func (NODE *n, int f, parser *p)
 		p->err = E_ALLOC;
 	    } else {
 		for (i=0; i<ns; i++) {
-		    if (f == F_TOLOWER) {
-			tmp = g_utf8_strdown(S0[i], -1);
+		    if (S0[i] == NULL) {
+			S1[i] = NULL;
 		    } else {
-			tmp = g_utf8_strup(S0[i], -1);
+			if (f == F_TOLOWER) {
+			    tmp = g_utf8_strdown(S0[i], -1);
+			} else {
+			    tmp = g_utf8_strup(S0[i], -1);
+			}
+			S1[i] = gretl_strdup(tmp);
+			g_free(tmp);
 		    }
-		    S1[i] = gretl_strdup(tmp);
-		    g_free(tmp);
 		}
 		if (n->t == ARRAY) {
 		    ret->v.a = gretl_array_from_strings(S1, ns, 0, &p->err);
