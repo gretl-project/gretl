@@ -20076,21 +20076,27 @@ static int series_compatible_matrix (const gretl_matrix *m, parser *p)
     return ok;
 }
 
-static int series_compatible_array (const gretl_array *a, parser *p)
+/* Check for assignment of an array of strings to a series,
+   which thereby becomes string-valued. The size of the array
+   must equal the full length of the dataset, which must not
+   be sub-sampled, and if there's a pre-existing series it
+   must not be string-valued already.
+*/
+
+static int series_compatible_array (gretl_array *a, parser *p)
 {
-    int ok = 0;
-
-    if (gretl_array_get_type((gretl_array *) a) == GRETL_TYPE_STRINGS) {
-        int n = gretl_array_get_length((gretl_array *) a);
-        int T = sample_size(p->dset);
-
-        if (n == T || n == p->dset->n) {
-            /* length matches current sample or full series length */
-            ok = 1;
-        }
+    if (gretl_array_get_type(a) != GRETL_TYPE_STRINGS) {
+	return 0;
+    } else if (gretl_array_get_length(a) != p->dset->n) {
+	return 0;
+    } else if (dataset_is_subsampled(p->dset)) {
+	return 0;
+    } else if (is_string_valued(p->dset, p->lh.vnum)) {
+	return 0;
+    } else {
+	/* all tests passed */
+	return 1;
     }
-
-    return ok;
 }
 
 /* This function converts a series to a column vector,
@@ -20987,9 +20993,8 @@ static int set_nested_matrix_value (NODE *lhs,
 }
 
 /* Support direct assignment from an array of strings to a series
-   (which will be string-valued, of course). The source array must
-   hold a number of strings equal to either the length of the
-   dataset or the size of the current sample.
+   (which will become string-valued). The source array must hold
+   a number of strings equal to the length of the dataset.
 */
 
 static int series_from_strings_array (DATASET *dset, int v,
@@ -20997,16 +21002,9 @@ static int series_from_strings_array (DATASET *dset, int v,
 {
     char **S;
     int ns;
-    int err;
 
     S = gretl_array_get_strings(a, &ns);
-    if (S == NULL) {
-	err = E_DATA;
-    } else {
-	err = series_from_strings(dset, v, S, ns);
-    }
-
-    return err;
+    return series_from_strings(dset, v, S, ns);
 }
 
 static void series_from_matrix (double *y, const gretl_matrix *m,
@@ -21351,11 +21349,7 @@ static int save_generated_var (parser *p, PRN *prn)
         } else if (r->t == MAT) {
             series_from_matrix(Z[v], r->v.m, p);
         } else if (r->t == ARRAY) {
-            if (p->lh.vnum >= 0 && dataset_is_subsampled(p->dset)) {
-                p->err = E_TYPES;
-            } else {
-                p->err = series_from_strings_array(p->dset, v, r->v.a);
-            }
+	    p->err = series_from_strings_array(p->dset, v, r->v.a);
             if (p->err) {
                 return savegen_retval(p->err);
             }
