@@ -130,6 +130,12 @@ int gretl_dotpos (const char *str)
     return p;
 }
 
+#ifdef WIN32
+# define is_slash(c) (c == '\\' || c == '/')
+#else
+# define is_slash(c) (c == SLASH)
+#endif
+
 /**
  * gretl_slashpos:
  * @str: the string to examine.
@@ -145,11 +151,7 @@ int gretl_slashpos (const char *str)
     if (str != NULL && *str != '\0') {
 	p = strlen(str);
 	for (i=p-1; i>0; i--) {
-#ifdef WIN32
-	    if (str[i] == '\\' || str[i] == '/') {
-#else
-	    if (str[i] == SLASH) {
-#endif
+	    if (is_slash(str[i])) {
 		p = i;
 		break;
 	    }
@@ -2137,14 +2139,14 @@ char **strings_array_realloc_with_length (char ***pS,
 
 char **strings_array_dup (char **strs, int n)
 {
-    char **S;
-    int i, j;
+    char **S = NULL;
+    int i, err = 0;
 
     if (n <= 0 || strs == NULL) {
 	return NULL;
     }
 
-    S = malloc(n * sizeof *S);
+    S = strings_array_new(n);
     if (S == NULL) return NULL;
 
     for (i=0; i<n; i++) {
@@ -2153,13 +2155,68 @@ char **strings_array_dup (char **strs, int n)
 	} else {
 	    S[i] = gretl_strdup(strs[i]);
 	    if (S[i] == NULL) {
-		for (j=0; j<i; j++) {
-		    free(S[j]);
-		}
-		free(S);
-		return NULL;
+		err = E_ALLOC;
+		break;
 	    }
 	}
+    }
+
+    if (err) {
+	strings_array_free(S, n);
+	S = NULL;
+    }
+
+    return S;
+}
+
+/**
+ * strings_array_dup_selected:
+ * @strs: array of strings from which to copy.
+ * @n: number of strings in array.
+ * @list: list of indices of strings to copy.
+ *
+ * Returns: an allocated array holding the strings selected
+ * from @strs, or NULL on failure.
+ */
+
+char **strings_array_dup_selected (char **strs, int n,
+				   const int *list)
+{
+    char **S = NULL;
+    int m, i, j, k;
+    int err = 0;
+
+    if (n <= 0 || strs == NULL) {
+	return NULL;
+    } else if (list == NULL || list[0] == 0) {
+	return NULL;
+    }
+
+    m = list[0];
+    S = strings_array_new(m);
+    if (S == NULL) return NULL;
+
+    for (i=1, k=0; i<=m; i++) {
+	j = list[i];
+	if (j < 0 || j >= n) {
+	    err = E_DATA;
+	    break;
+	}
+	if (strs[j] == NULL) {
+	    S[k] = NULL;
+	} else {
+	    S[k] = gretl_strdup(strs[j]);
+	    if (S[k] == NULL) {
+		err = E_ALLOC;
+		break;
+	    }
+	}
+	k++;
+    }
+
+    if (err) {
+	strings_array_free(S, m);
+	S = NULL;
     }
 
     return S;
