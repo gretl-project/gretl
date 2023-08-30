@@ -2669,13 +2669,14 @@ static int complex_strcalc_ok (NODE *n, parser *p)
 }
 
 /* Get node @ret ready to return a string-valued series,
-   which must be a member of the current dataset.
+   which must always be a member of the current dataset.
 */
 
 static void prepare_strvals_return (NODE *ret, parser *p,
 				    char **S, int ns,
 				    int write_vec)
 {
+    /* add a flag to be read in save_generated_var() */
     p->flags |= P_STRVEC;
 
     if (p->lh.t == SERIES) {
