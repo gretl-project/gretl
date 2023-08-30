@@ -133,7 +133,7 @@ enum {
 #define complex_node(n) (n->t == MAT && n->v.m->is_complex)
 #define cscalar_node(n) (n->t == MAT && gretl_matrix_is_cscalar(n->v.m))
 
-#define strvals_node(n,p) (n->vnum > 0 && is_string_valued(p->dset, n->vnum)
+#define strvals_node(n,p) (n->vnum > 0 && is_string_valued(p->dset, n->vnum))
 #define mutable_node(n) (n->flags & MUT_NODE)
 
 #define null_node(n) (n == NULL || n->t == EMPTY)
@@ -21152,7 +21152,7 @@ static int strv_overwrite_ok (parser *p)
     } else if (lv == rv) {
 	/* and not identical to LHS */
 	ok = 0;
-    } else if (strvals_node(rv, p)) {
+    } else if (is_string_valued(p->dset, rv)) {
 	ret = OVW_STRINGS;
     } else {
 	ret = OVW_NUMERIC;
