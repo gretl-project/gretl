@@ -2681,19 +2681,20 @@ static int strvals_return_ok (NODE *f, parser *p)
 */
 
 static void prepare_strvals_return (NODE *ret, parser *p,
-				    char **S, int ns,
-				    int write_vec)
+				    char **S, int ns)
 {
     /* add a flag to be read in save_generated_var() */
     p->flags |= P_STRVEC;
 
     if (p->lh.t == SERIES) {
-        /* overwrite existing LHS series */
-        if (write_vec) {
-            double *targ = p->dset->Z[p->lh.vnum];
-            size_t nb = p->dset->n * sizeof *targ;
+        /* overwrite existing LHS series? */
+	double *dest = p->dset->Z[p->lh.vnum];
+	double *src = ret->v.xvec;
 
-            memcpy(targ, ret->v.xvec, nb);
+	if (dest != src) {
+	    size_t sz = p->dset->n * sizeof *dest;
+
+            memcpy(dest, src, sz);
         }
         series_set_string_vals_direct(p->dset, p->lh.vnum, S, ns);
     } else {
@@ -2784,7 +2785,7 @@ static NODE *strvals_calc (NODE *l, NODE *r, NODE *n, parser *p)
     }
 
     if (f == B_POW && Sx != NULL) {
-        prepare_strvals_return(ret, p, Sx, nx, 1);
+        prepare_strvals_return(ret, p, Sx, nx);
     }
 
     return ret;
@@ -9210,7 +9211,7 @@ static NODE *strftime_node (NODE *l, NODE *r, NODE *o, int f,
 	if (p->err && S != NULL) {
 	    strings_array_free(S, nv);
 	} else if (!p->err) {
-	    prepare_strvals_return(ret, p, S, nv, 1);
+	    prepare_strvals_return(ret, p, S, nv);
 	}
 	free(vmap);
     }
