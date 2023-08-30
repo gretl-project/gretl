@@ -636,11 +636,10 @@ union val {
 enum node_flags {
     AUX_NODE = 1 << 0, /* auxiliary: free on exit */
     TMP_NODE = 1 << 1, /* temporary: free content on exit */
-    SVL_NODE = 1 << 2, /* holds string-valued series */
-    PRX_NODE = 1 << 3, /* aux node is proxy (don't reuse!) */
-    LHT_NODE = 1 << 4, /* node holds terminal of LHS */
-    MUT_NODE = 1 << 5, /* node is inherently mutable in type */
-    ALS_NODE = 1 << 6  /* function subject to "reversing" alias */
+    PRX_NODE = 1 << 2, /* aux node is proxy (don't reuse!) */
+    LHT_NODE = 1 << 3, /* node holds terminal of LHS */
+    MUT_NODE = 1 << 4, /* node is inherently mutable in type */
+    ALS_NODE = 1 << 5  /* function subject to "reversing" alias */
 };
 
 struct node {

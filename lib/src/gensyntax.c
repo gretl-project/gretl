@@ -86,9 +86,6 @@ static NODE *newref (parser *p, int t)
 	    n->vnum = p->idnum;
 	    n->v.xvec = p->dset->Z[n->vnum];
 	    n->vname = p->idstr;
-	    if (is_string_valued(p->dset, n->vnum)) {
-		n->flags |= SVL_NODE;
-	    }
 	} else if (t == NUM || t == NUM_P || t == NUM_M) {
 	    user_var *u = p->data;
 
