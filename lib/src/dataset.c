@@ -4630,13 +4630,13 @@ char **series_get_string_vals (const DATASET *dset, int i,
 static char **unique_series_strings (char **S, int *pn,
 				     double *y, int *err)
 {
-    char **uS = NULL;
+    char **Su = NULL;
     int *list = NULL;
     GHashTable *ht;
     gpointer p;
     int pos = 1;
     int ns = *pn;
-    int nu = 0;
+    int nsu = 0;
     int i;
 
     list = gretl_list_new(ns);
@@ -4671,24 +4671,24 @@ static char **unique_series_strings (char **S, int *pn,
     }
 
     /* the number of unique strings */
-    *pn = nu = list[0];
+    *pn = nsu = list[0];
 
-    if (nu == ns) {
+    if (nsu == ns) {
 	/* all the incoming strings are unique */
-	uS = strings_array_dup(S, ns);
+	Su = strings_array_dup(S, ns);
     } else {
 	/* copy only the unique strings */
-	uS = strings_array_dup_selected(S, ns, list);
+	Su = strings_array_dup_selected(S, ns, list);
     }
 
-    if (uS == NULL) {
+    if (Su == NULL) {
 	*err = E_ALLOC;
     }
 
     g_hash_table_destroy(ht);
     free(list);
 
-    return uS;
+    return Su;
 }
 
 /* Constructs a string-valued series in member series @v of @dset,
@@ -4698,42 +4698,151 @@ static char **unique_series_strings (char **S, int *pn,
 int series_from_strings (DATASET *dset, int v,
 			 char **S, int ns)
 {
-    char **uS = NULL;
-    int nuniq = ns;
+    char **Su = NULL;
+    int nsu = ns;
     int err = 0;
 
     if (S == NULL || ns != dset->n || dataset_is_subsampled(dset)) {
 	return E_DATA;
     }
 
-    uS = unique_series_strings(S, &nuniq, dset->Z[v], &err);
+    Su = unique_series_strings(S, &nsu, dset->Z[v], &err);
     if (!err) {
-        err = series_set_string_vals_direct(dset, v, uS, nuniq);
+        err = series_set_string_vals_direct(dset, v, Su, nsu);
     }
 
     return err;
 }
 
+#if 1
+
 /* Unlike series_from_strings (above), this "raw" variant (which is
    called from geneval.c) does not require that the target series is
    already a member of a dataset.
+
+   This function is unused as of 2023-08-30, being superceded by
+   series_from_string_transform() below. It should be removed
+   unless problems with the latter force us to reconsider the
+   substitution.
 */
 
 int series_from_strings_raw (double *y, int n, char **S,
 			     series_table **pst)
 {
-    char **uS = NULL;
-    int nuniq = n;
+    char **Su = NULL;
+    int nsu = n;
     int err = 0;
 
     if (S == NULL) {
 	return E_DATA;
     }
 
-    uS = unique_series_strings(S, &nuniq, y, &err);
+    Su = unique_series_strings(S, &nsu, y, &err);
     if (!err) {
-	*pst = series_table_new(uS, nuniq, &err);
+	*pst = series_table_new(Su, nsu, &err);
     }
+
+    return err;
+}
+
+#endif
+
+/**
+ * series_from_string_transform:
+ * @y: target series.
+ * @x: original series.
+ * @n: the common length of @y and @x.
+ * @S: array of strings.
+ * @ns: the length of @S.
+ * @pst: location to receive a series_table.
+ *
+ * Constructs a series_table from the unique strings in @S
+ * and writes the associated string indices into @y. Takes
+ * ownership of @S and frees it if appropriate.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int series_from_string_transform (double *y, const double *x,
+				  int n, char **S, int ns,
+				  series_table **pst)
+{
+    char **Su = NULL;
+    GHashTable *ht;
+    gpointer p;
+    int *map;
+    int nsu;
+    int i, k;
+    int err = 0;
+
+    map = calloc(ns, sizeof *map);
+    nsu = ns;
+
+    /* Note: it's possible that sorting rather than using
+       a hash table could speed things up here, at the cost
+       of extra complexity.
+    */
+
+    ht = g_hash_table_new(g_str_hash, g_str_equal);
+
+    for (i=0, k=0; i<ns; i++) {
+	p = g_hash_table_lookup(ht, S[i]);
+	if (p == NULL) {
+	    /* S[i] is not yet in the table */
+	    g_hash_table_insert(ht, S[i], GINT_TO_POINTER(i+1));
+	    map[i] = ++k;
+	} else {
+	    map[i] = map[GPOINTER_TO_INT(p)-1];
+	    nsu--;
+	}
+    }
+
+    g_hash_table_destroy(ht);
+
+    if (nsu < ns) {
+	/* duplicated strings were found */
+	int mapmax = 0;
+	int j = 0;
+
+	Su = strings_array_new(nsu);
+	for (i=0; i<ns; i++) {
+	    if (map[i] > mapmax) {
+		Su[j++] = S[i];
+		mapmax = map[i];
+	    } else {
+		free(S[i]);
+	    }
+	}
+    } else {
+	/* no duplicates */
+	Su = S;
+    }
+
+    if (nsu < ns) {
+	/* assign new code values */
+	for (i=0; i<n && !err; i++) {
+	    if (na(x[i])) {
+		y[i] = x[i];
+	    } else {
+		k = (int) x[i] - 1; /* 0-based */
+		y[i] = (double) map[k];
+	    }
+	}
+    } else {
+	/* just copy the original values */
+	size_t sz = n * sizeof(double);
+
+	memcpy(y, x, sz);
+    }
+
+    if (!err) {
+	*pst = series_table_new(Su, nsu, &err);
+    }
+
+    if (Su != S) {
+	free(S);
+    }
+    free(map);
 
     return err;
 }
@@ -4745,6 +4854,8 @@ int series_from_strings_raw (double *y, int n, char **S,
    the string table for series @v, and must not be modified or
    freed. Note that for missing observations the associated array
    member will be NULL.
+
+   2023-08-30: This isn't used any more?
 */
 
 char **series_get_all_strings (const DATASET *dset, int v)

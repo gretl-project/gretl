@@ -568,6 +568,10 @@ int series_set_string_vals_direct (DATASET *dset, int i,
 
 int series_from_strings (DATASET *dset, int v, char **S, int ns);
 
+int series_from_string_transform (double *y, const double *x,
+				  int n, char **S, int ns,
+				  series_table **pst);
+
 int series_from_strings_raw (double *x, int n, char **S,
 			     series_table **pst);
 
