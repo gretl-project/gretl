@@ -4714,7 +4714,7 @@ int series_from_strings (DATASET *dset, int v,
     return err;
 }
 
-#if 1
+#if 0
 
 /* Unlike series_from_strings (above), this "raw" variant (which is
    called from geneval.c) does not require that the target series is
@@ -4745,7 +4745,38 @@ int series_from_strings_raw (double *y, int n, char **S,
     return err;
 }
 
-#endif
+/* Returns an array of length dset->n holding the string values for
+   all observations of series @v (so it will likely contain repeated
+   strings). The returned array is newly allocated and can be
+   shallow-freed by the caller but the individual strings belong to
+   the string table for series @v, and must not be modified or
+   freed. Note that for missing observations the associated array
+   member will be NULL.
+
+   As of 2023-08-30 this isn't used any more.
+*/
+
+char **series_get_all_strings (const DATASET *dset, int v)
+{
+    char **S = NULL;
+    int i;
+
+    if (v > 0 && v < dset->v && dset->varinfo[v]->st != NULL) {
+	S = strings_array_new(dset->n);
+	for (i=0; i<dset->n; i++) {
+	    if (na(dset->Z[v][i])) {
+		S[i] = NULL;
+	    } else {
+		S[i] = (char *) series_table_get_string(dset->varinfo[v]->st,
+							dset->Z[v][i]);
+	    }
+	}
+    }
+
+    return S;
+}
+
+#endif /* 0 : unused */
 
 /**
  * series_from_string_transform:
@@ -4845,37 +4876,6 @@ int series_from_string_transform (double *y, const double *x,
     free(map);
 
     return err;
-}
-
-/* Returns an array of length dset->n holding the string values for
-   all observations of series @v (so it will likely contain repeated
-   strings). The returned array is newly allocated and can be
-   shallow-freed by the caller but the individual strings belong to
-   the string table for series @v, and must not be modified or
-   freed. Note that for missing observations the associated array
-   member will be NULL.
-
-   2023-08-30: This isn't used any more?
-*/
-
-char **series_get_all_strings (const DATASET *dset, int v)
-{
-    char **S = NULL;
-    int i;
-
-    if (v > 0 && v < dset->v && dset->varinfo[v]->st != NULL) {
-	S = strings_array_new(dset->n);
-	for (i=0; i<dset->n; i++) {
-	    if (na(dset->Z[v][i])) {
-		S[i] = NULL;
-	    } else {
-		S[i] = (char *) series_table_get_string(dset->varinfo[v]->st,
-							dset->Z[v][i]);
-	    }
-	}
-    }
-
-    return S;
 }
 
 /**

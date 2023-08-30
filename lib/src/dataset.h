@@ -572,11 +572,6 @@ int series_from_string_transform (double *y, const double *x,
 				  int n, char **S, int ns,
 				  series_table **pst);
 
-int series_from_strings_raw (double *x, int n, char **S,
-			     series_table **pst);
-
-char **series_get_all_strings (const DATASET *dset, int v);
-
 int series_recode_strings (DATASET *dset, int v, gretlopt opt,
 			   int *changed);
 

@@ -2651,16 +2651,23 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-static int complex_strcalc_ok (NODE *n, parser *p)
+/* Try to determine if it's OK for a function to return a string-valued
+   series, given that such a series must be a member of a dataset. The node
+   @f should hold the function in question. In case the node that's to
+   hand is actually a top-level argument of the function, one can pass its
+   "parent" pointer.
+*/
+
+static int strvals_return_ok (NODE *f, parser *p)
 {
-    if (n != p->tree) {
+    if (f != p->tree) {
         /* we must be at the top of the tree */
         return 0;
     } else if (p->targ != SERIES && p->targ != UNK) {
-        /* target must be series or undetermined */
+        /* target must be series or undetermined as yet */
         return 0;
     } else if (p->lh.t == SERIES && dataset_is_subsampled(p->dset)) {
-        /* can't do when subsampled */
+        /* can't do this when subsampled */
         return 0;
     } else {
         /* OK, we'll try it */
@@ -2668,8 +2675,9 @@ static int complex_strcalc_ok (NODE *n, parser *p)
     }
 }
 
-/* Get node @ret ready to return a string-valued series,
-   which must be a member of the current dataset.
+/* Get node @ret ready to return a string-valued series, which must be a
+   member of the current dataset. We need to add a series here if the LHS is
+   not a pre-existing series.
 */
 
 static void prepare_strvals_return (NODE *ret, parser *p,
@@ -2716,7 +2724,7 @@ static NODE *strvals_calc (NODE *l, NODE *r, NODE *n, parser *p)
     int vl, vr, f = n->t;
     int i, t, eq;
 
-    if (f == B_POW && complex_strcalc_ok(n, p)) {
+    if (f == B_POW && strvals_return_ok(n, p)) {
         ; /* should be alright */
     } else if (f != B_EQ && f != B_NEQ) {
         p->err = E_TYPES;
@@ -8619,18 +8627,20 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
     return ret;
 }
 
+#define is_matcher(f) (f == F_STRSUB || f == F_REGSUB)
+
 /* helper function for variant_string_func(): multi-string case */
 
-static char **get_transformed_strings (NODE *n, int f, parser *p,
-				       int *ns)
+static char **get_transformed_strings (NODE *l, NODE *m, NODE *r,
+                                       int f, parser *p, int *ns)
 {
     char **S1 = NULL;
     char **S0;
 
-    if (n->t == ARRAY) {
-	S0 = gretl_array_get_strings(n->v.a, ns);
+    if (l->t == ARRAY) {
+	S0 = gretl_array_get_strings(l->v.a, ns);
     } else {
-	S0 = series_get_string_vals(p->dset, n->vnum, ns, 0);
+	S0 = series_get_string_vals(p->dset, l->vnum, ns, 0);
     }
 
     if (S0 == NULL) {
@@ -8642,18 +8652,28 @@ static char **get_transformed_strings (NODE *n, int f, parser *p,
 	}
     }
 
+    /* FIXME compile and re-use the regexps */
+
     if (!p->err) {
-	gchar *tmp;
+        char *match = is_matcher(f) ? m->v.str : NULL;
+        char *repl =  is_matcher(f) ? r->v.str : NULL;
+	gchar *tmp = NULL;
 	int i;
 
-	for (i=0; i<*ns; i++) {
-	    if (f == F_TOLOWER) {
+	for (i=0; i<*ns && !p->err; i++) {
+            if (f == F_STRSUB) {
+                S1[i] = gretl_literal_replace(S0[i], match, repl, &p->err);
+            } else if (f == F_REGSUB) {
+                tmp = gretl_regexp_replace(S0[i], match, repl, &p->err);
+            } else if (f == F_TOLOWER) {
 		tmp = g_utf8_strdown(S0[i], -1);
 	    } else {
 		tmp = g_utf8_strup(S0[i], -1);
 	    }
-	    S1[i] = gretl_strdup(tmp);
-	    g_free(tmp);
+            if (tmp != NULL) {
+                S1[i] = gretl_strdup(tmp);
+                g_free(tmp);
+            }
 	}
     }
 
@@ -8662,57 +8682,79 @@ static char **get_transformed_strings (NODE *n, int f, parser *p,
 
 /* helper function for variant_string_func(): single string case */
 
-static char *get_transformed_string (const char *s, int f,
-				     parser *p)
+static char *get_transformed_string (const char *s,
+                                     NODE *m, NODE *r,
+                                     int f, parser *p)
 {
+    char *match = is_matcher(f) ? m->v.str : NULL;
+    char *repl =  is_matcher(f) ? r->v.str : NULL;
     char *ret = NULL;
     gchar *tmp = NULL;
 
-    if (f == F_TOLOWER) {
+    if (f == F_STRSUB) {
+        ret = gretl_literal_replace(s, match, repl, &p->err);
+    } else if (f == F_REGSUB) {
+        tmp = gretl_regexp_replace(s, match, repl, &p->err);
+    } else if (f == F_TOLOWER) {
 	tmp = g_utf8_strdown(s, -1);
-	ret = gretl_strdup(tmp);
-	g_free(tmp);
     } else if (f == F_TOUPPER) {
 	tmp = g_utf8_strup(s, -1);
-	ret = gretl_strdup(tmp);
-	g_free(tmp);
-    } else {
-	p->err = E_DATA;
+    }
+    if (tmp != NULL) {
+        ret = gretl_strdup(tmp);
+        g_free(tmp);
     }
 
     return ret;
 }
 
-/* A function that can be applied to a single string, an array
-   of strings, or a string-valued series.
+/* FIXME this checking function is very similar to strvals_return_ok(),
+   employed elsewhere in geneval.c, and the two should probably be
+   consolidated.
 */
 
-static NODE *variant_string_func (NODE *n, int f, parser *p)
+static int verify_strvals_transformation (NODE *n, int f, parser *p)
+{
+    if (dataset_is_subsampled(p->dset)) {
+        /* note: strvals_return_ok() allows sub-sampling, provided
+           that the target is not a pre-existing series
+        */
+        gretl_errmsg_set(_("Sorry, can't do this with a sub-sampled dataset"));
+        return E_DATA;
+    } else if (n->parent != p->tree) {
+        gretl_errmsg_sprintf(_("%s: series usage is valid only in direct assignment"),
+                             getsymb(f));
+        return E_DATA;
+    } else if (p->targ != SERIES && p->targ != UNK) {
+        gretl_errmsg_sprintf(_("%s: series usage is valid only in direct assignment"),
+                             getsymb(f));
+        return E_DATA;
+    } else {
+        return 0;
+    }
+}
+
+/* A function that can be applied to a single string, an array of strings,
+   or a string-valued series. If @m and @r are non-NULL they have already
+   been verified as of type STR.
+*/
+
+static NODE *variant_string_func (NODE *l, NODE *m, NODE *r,
+                                  int f, parser *p)
 {
     NODE *ret = NULL;
 
-    if (n->t == STR) {
+    if (l->t == STR) {
 	ret = aux_string_node(p);
-    } else if (n->t == ARRAY) {
-	if (gretl_array_get_type(n->v.a) != GRETL_TYPE_STRINGS) {
+    } else if (l->t == ARRAY) {
+	if (gretl_array_get_type(l->v.a) != GRETL_TYPE_STRINGS) {
 	    p->err = E_TYPES;
 	} else {
 	    ret = aux_array_node(p);
 	}
-    } else if (n->t == SERIES) {
-	/* @n must hold a string-valued series */
-	if (dataset_is_subsampled(p->dset)) {
-	    gretl_errmsg_set(_("Sorry, can't do this with a sub-sampled dataset"));
-	    p->err = E_DATA;
-	} else if (!strvals_node(n, p)) {
-	    gretl_errmsg_sprintf(_("%s: the input series must be string-valued"),
-				 getsymb(f));
-	    p->err = E_TYPES;
-	} else if (n->parent != p->tree || p->targ == EMPTY) {
-	    gretl_errmsg_sprintf(_("%s: series usage is valid only in direct assignment"),
-				 getsymb(f));
-	    p->err = E_DATA;
-	} else {
+    } else if (l->t == SERIES) {
+        p->err = verify_strvals_transformation(l, f, p);
+        if (!p->err) {
 	    ret = aux_series_node(p);
 	}
     } else {
@@ -8723,62 +8765,23 @@ static NODE *variant_string_func (NODE *n, int f, parser *p)
 	return NULL;
     }
 
-    if (n->t == STR) {
+    if (l->t == STR) {
 	/* a single string target */
-	ret->v.str = get_transformed_string(n->v.str, f, p);
-    } else if (1) {
+	ret->v.str = get_transformed_string(l->v.str, m, r, f, p);
+    } else {
 	/* array or series target */
 	char **S = NULL;
 	int ns = 0;
 
-	S = get_transformed_strings(n, f, p, &ns);
-	if (n->t == ARRAY) {
+	S = get_transformed_strings(l, m, r, f, p, &ns);
+	if (l->t == ARRAY) {
 	    ret->v.a = gretl_array_from_strings(S, ns, 0, &p->err);
 	} else {
 	    p->err = series_from_string_transform(ret->v.xvec,
-						  n->v.xvec,
+						  l->v.xvec,
 						  p->dset->n,
 						  S, ns,
 						  &p->lh.stab);
-	}
-    } else {
-	/* array or series */
-	char **S0, **S1 = NULL;
-	gchar *tmp;
-	int i, ns = 0;
-
-	if (n->t == ARRAY) {
-	    S0 = gretl_array_get_strings(n->v.a, &ns);
-	} else {
-	    S0 = series_get_all_strings(p->dset, n->vnum);
-	    ns = p->dset->n;
-	}
-	if (S0 == NULL) {
-	    p->err = E_DATA;
-	} else if ((S1 = strings_array_new(ns)) == NULL) {
-	    p->err = E_ALLOC;
-	} else {
-	    for (i=0; i<ns; i++) {
-		if (S0[i] == NULL) {
-		    S1[i] = NULL;
-		} else {
-		    if (f == F_TOLOWER) {
-			tmp = g_utf8_strdown(S0[i], -1);
-		    } else {
-			tmp = g_utf8_strup(S0[i], -1);
-		    }
-		    S1[i] = gretl_strdup(tmp);
-		    g_free(tmp);
-		}
-	    }
-	    if (n->t == ARRAY) {
-		ret->v.a = gretl_array_from_strings(S1, ns, 0, &p->err);
-	    } else {
-		p->err = series_from_strings_raw(ret->v.xvec, p->dset->n,
-						 S1, &p->lh.stab);
-		strings_array_free(S1, ns);
-		free(S0);
-	    }
 	}
     }
 
@@ -13969,105 +13972,6 @@ static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
-/* String search and replace: return a node containing a copy
-   of the string(s) on node @src in which all occurrences of
-   the string on @n0 are replaced by the string on @n1.
-   This is literal string replacement if @f is F_STRSUB,
-   regular expression replacement if @f is F_REGSUB.
-*/
-
-static NODE *string_replace (NODE *src, NODE *n0, NODE *n1,
-                             NODE *call, parser *p)
-{
-    int f = call->t;
-
-    if (!starting(p)) {
-        return aux_any_node(p);
-    } else {
-        NODE *ret = NULL;
-        NODE *n[2] = {n0, n1};
-        char const *S[3] = {NULL};
-        char **Ssrc = NULL;
-        char **Snew = NULL;
-        char **targ = NULL;
-        int i, ns = 1;
-
-        for (i=0; i<2; i++) {
-            /* @n0 and @n1 must be of string type */
-            if (n[i]->t != STR) {
-                node_type_error(f, i+1, STR, n[i], p);
-                return NULL;
-            } else {
-                S[i+1] = n[i]->v.str;
-            }
-        }
-
-        if (src->t == STR) {
-            /* single string variable */
-            S[0] = src->v.str;
-            ret = aux_string_node(p);
-        } else if (useries_node(src)) {
-            /* string-valued series? */
-            if (strvals_node(src, p) &&
-                complex_strcalc_ok(call, p)) {
-                Ssrc = series_get_string_vals(p->dset, src->vnum,
-                                              &ns, 1);
-                ret = aux_series_node(p);
-            } else {
-                p->err = E_TYPES;
-            }
-        } else if (src->t == ARRAY) {
-            /* array of strings? */
-            if (gretl_array_get_type(src->v.a) == GRETL_TYPE_STRINGS) {
-                Ssrc = gretl_array_get_strings(src->v.a, &ns);
-                ret = aux_array_node(p);
-            } else {
-                p->err = e_types(src);
-            }
-        } else {
-            p->err = e_types(src);
-        }
-
-        if (ret == NULL) {
-            return NULL;
-        }
-
-        if (src->t == STR) {
-            targ = &ret->v.str;
-        } else {
-            Snew = strings_array_new(ns);
-            if (Snew == NULL) {
-                p->err = E_ALLOC;
-            }
-        }
-
-        for (i=0; i<ns && !p->err; i++) {
-            if (src->t != STR) {
-                S[0] = Ssrc[i];
-                targ = &Snew[i];
-            }
-            if (f == F_REGSUB) {
-                *targ = gretl_regexp_replace(S[0], S[1], S[2], &p->err);
-            } else {
-                *targ = gretl_literal_replace(S[0], S[1], S[2], &p->err);
-            }
-        }
-
-        if (!p->err && src->t == ARRAY) {
-            ret->v.a = gretl_array_from_strings(Snew, ns, 0, &p->err);
-        } else if (!p->err && src->t == SERIES) {
-            if (p->lh.vnum != src->vnum) {
-                for (i=p->dset->t1; i<=p->dset->t2; i++) {
-                    ret->v.xvec[i] = src->v.xvec[i];
-                }
-            }
-            prepare_strvals_return(ret, p, Snew, ns, 0);
-        }
-
-        return ret;
-    }
-}
-
 /* replace_value: non-interactive search-and-replace for series and
    matrices.  @src holds the series or matrix of which we want a
    modified copy; @n0 holds the value (or vector of values) to be
@@ -18566,8 +18470,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_SETNOTE:
     case F_BWFILT:
     case F_VARSIMUL:
-    case F_STRSUB:
-    case F_REGSUB:
     case F_MLAG:
     case F_EIGSOLVE:
     case F_PRINCOMP:
@@ -18590,8 +18492,6 @@ static NODE *eval (NODE *t, parser *p)
         /* built-in functions taking three args */
         if (t->t == F_REPLACE) {
             ret = replace_value(l, m, r, p);
-        } else if (t->t == F_STRSUB || t->t == F_REGSUB) {
-            ret = string_replace(l, m, r, t, p);
         } else if (t->t == F_EPOCHDAY) {
             ret = eval_epochday(l, m, r, p);
         } else {
@@ -18907,7 +18807,16 @@ static NODE *eval (NODE *t, parser *p)
     case F_TOLOWER:
     case F_TOUPPER:
         if (l->t == STR || l->t == ARRAY || useries_node(l)) {
-	    ret = variant_string_func(l, t->t, p);
+	    ret = variant_string_func(l, NULL, NULL, t->t, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;
+    case F_STRSUB:
+    case F_REGSUB:
+        if ((l->t == STR || l->t == ARRAY || strvals_node(l, p)) &&
+            m->t == STR && r->t == STR) {
+	    ret = variant_string_func(l, m, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	}
