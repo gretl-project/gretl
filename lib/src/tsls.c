@@ -756,7 +756,6 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
             df = hatlist[0];
         }
         if (!na(HTest)) {
-            fprintf(stderr, "robust wald test: %g\n", HTest);
             add_hausman_to_model(tmod, HTest, df);
         }
         goto bailout;
