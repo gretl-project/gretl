@@ -2675,41 +2675,18 @@ static int strvals_return_ok (NODE *f, parser *p)
     }
 }
 
-/* Get node @ret ready to return a string-valued series, which must be a
-   member of the current dataset. We need to add a series here if the LHS is
-   not a pre-existing series.
+/* Create and store a series table to be attached to a string-valued
+   series return.
 */
 
-static void prepare_strvals_return (NODE *ret, parser *p,
-				    char **S, int ns)
+static void prep_strvals_return (char **S, int ns, parser *p)
 {
-    /* add a flag to be read in save_generated_var() */
-    p->flags |= P_STRVEC;
+    series_table *st = series_table_new(S, ns, &p->err);
 
-    if (p->lh.t == SERIES) {
-        /* overwrite existing LHS series? */
-	double *dest = p->dset->Z[p->lh.vnum];
-	double *src = ret->v.xvec;
-
-	if (dest != src) {
-	    size_t sz = p->dset->n * sizeof *dest;
-
-            memcpy(dest, src, sz);
-        }
-        series_set_string_vals_direct(p->dset, p->lh.vnum, S, ns);
+    if (!p->err) {
+	p->lh.stab = st;
     } else {
-        /* or add as new series */
-        p->err = dataset_add_allocated_series(p->dset, ret->v.xvec);
-        if (!p->err) {
-            int vnew = p->dset->v - 1;
-
-            series_set_string_vals_direct(p->dset, vnew, S, ns);
-            strcpy(p->dset->varname[vnew], p->lh.name);
-            ret->v.xvec = NULL; /* donated to dset */
-            ret->vnum = vnew;
-        } else {
-            strings_array_free(S, ns);
-        }
+	strings_array_free(S, ns);
     }
 }
 
@@ -2785,7 +2762,7 @@ static NODE *strvals_calc (NODE *l, NODE *r, NODE *n, parser *p)
     }
 
     if (f == B_POW && Sx != NULL) {
-        prepare_strvals_return(ret, p, Sx, nx);
+        prep_strvals_return(Sx, nx, p);
     }
 
     return ret;
@@ -9211,7 +9188,7 @@ static NODE *strftime_node (NODE *l, NODE *r, NODE *o, int f,
 	if (p->err && S != NULL) {
 	    strings_array_free(S, nv);
 	} else if (!p->err) {
-	    prepare_strvals_return(ret, p, S, nv);
+	    prep_strvals_return(S, nv, p);
 	}
 	free(vmap);
     }
@@ -21203,14 +21180,8 @@ static int save_generated_var (parser *p, PRN *prn)
             (r == NULL)? "none" : getsymb(r->t), (void *) r);
 #endif
 
-    if (p->flags & P_STRVEC) {
-        /* special case: calculation with string-valued series,
-           return value handled upstream
-        */
-        set_dataset_is_changed(p->dset, 1);
-        return savegen_retval(0);
-    } else if (p->lh.t == SERIES && is_string_valued(p->dset, p->lh.vnum) &&
-               p->lhtree == NULL) {
+    if (p->lh.t == SERIES && is_string_valued(p->dset, p->lh.vnum) &&
+	p->lhtree == NULL) {
 	strv_ovwrite = strv_overwrite_ok(p);
 	if (!strv_ovwrite) {
 	    return savegen_retval(p->err);
