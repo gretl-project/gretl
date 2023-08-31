@@ -622,9 +622,9 @@ ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist,
 }
 
 static int hausman_drop_check (MODEL *hmod,
-			       int *hatlist,
-			       int *endolist,
-			       DATASET *dset)
+                               int *hatlist,
+                               int *endolist,
+                               DATASET *dset)
 {
     int *dlist = gretl_model_get_list(hmod, "droplist");
     int n_drop = 0;
@@ -635,7 +635,7 @@ static int hausman_drop_check (MODEL *hmod,
         for (i=1; i<=dlist[0]; i++) {
             pos = in_gretl_list(hatlist, dlist[i]);
             if (pos > 0 && pos <= endolist[0]) {
-		n_drop++;
+                n_drop++;
                 gretl_warnmsg_sprintf("%s does not seem to be endogenous",
                                       dset->varname[endolist[pos]]);
             }
@@ -646,23 +646,23 @@ static int hausman_drop_check (MODEL *hmod,
 }
 
 static double tsls_robust_hausman_fixup (const int *hatlist,
-					 MODEL *pmod,
-					 int *df)
+                                         MODEL *pmod,
+                                         int *df)
 {
     int *wlist = gretl_list_copy(hatlist);
     double H = NADBL;
 
     if (wlist != NULL) {
-	int i;
+        int i;
 
-	for (i=wlist[0]; i>0; i--) {
-	    if (!in_gretl_list(pmod->list, wlist[i])) {
-		gretl_list_delete_at_pos(wlist, i);
-	    }
-	}
-	H = wald_omit_chisq(wlist, pmod);
-	*df = wlist[0];
-	free(wlist);
+        for (i=wlist[0]; i>0; i--) {
+            if (!in_gretl_list(pmod->list, wlist[i])) {
+                gretl_list_delete_at_pos(wlist, i);
+            }
+        }
+        H = wald_omit_chisq(wlist, pmod);
+        *df = wlist[0];
+        free(wlist);
     }
 
     return H;
@@ -673,11 +673,11 @@ static void add_hausman_to_model (MODEL *pmod, double HTest, int df)
     ModelTest *test = model_test_new(GRETL_TEST_IV_HAUSMAN);
 
     if (test != NULL) {
-	model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
-	model_test_set_dfn(test, df);
-	model_test_set_value(test, HTest);
-	model_test_set_pvalue(test, chisq_cdf_comp(df, HTest));
-	maybe_add_test_to_model(pmod, test);
+        model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
+        model_test_set_dfn(test, df);
+        model_test_set_value(test, HTest);
+        model_test_set_pvalue(test, chisq_cdf_comp(df, HTest));
+        maybe_add_test_to_model(pmod, test);
     }
 }
 
@@ -743,23 +743,23 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     }
 
     if (opt & OPT_R) {
-	/* 2023-08-31: if the --robust option was in force for
-	   tsls estimation, compute the Hausman test as a Wald
-	   test on the robust variance matrix for the U model.
-	*/
-	double HTest = NADBL;
+        /* 2023-08-31: if the --robust option was in force for
+           tsls estimation, compute the Hausman test as a Wald
+           test on the robust variance matrix for the U model.
+        */
+        double HTest = NADBL;
 
-	if (n_drop > 0) {
-	    HTest = tsls_robust_hausman_fixup(hatlist, &hmod, &df);
-	} else {
-	    HTest = wald_omit_chisq(hatlist, &hmod);
-	    df = hatlist[0];
-	}
-	if (!na(HTest)) {
-	    fprintf(stderr, "robust wald test: %g\n", HTest);
-	    add_hausman_to_model(tmod, HTest, df);
-	}
-	goto bailout;
+        if (n_drop > 0) {
+            HTest = tsls_robust_hausman_fixup(hatlist, &hmod, &df);
+        } else {
+            HTest = wald_omit_chisq(hatlist, &hmod);
+            df = hatlist[0];
+        }
+        if (!na(HTest)) {
+            fprintf(stderr, "robust wald test: %g\n", HTest);
+            add_hausman_to_model(tmod, HTest, df);
+        }
+        goto bailout;
     }
 
     /* record U-model info */
@@ -820,7 +820,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
         pprintf(dbgprn, "DRSS = (RRSS - URSS) = %g, URSS = %g\n", DRSS, URSS);
         pprintf(dbgprn, "Htest = %g [%.4f]\n", HTest, chisq_cdf_comp(df, HTest));
 #endif
-	add_hausman_to_model(tmod, HTest, df);
+        add_hausman_to_model(tmod, HTest, df);
     }
 
  bailout:
