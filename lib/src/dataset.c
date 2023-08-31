@@ -4714,6 +4714,48 @@ int series_from_strings (DATASET *dset, int v,
     return err;
 }
 
+static int *map_unique_strings (char **S, int *ns, int *err)
+{
+    GHashTable *ht;
+    gpointer p;
+    int *map;
+    int nsu;
+    int i, k;
+
+    map = calloc(*ns, sizeof *map);
+    if (map == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    nsu = *ns;
+    ht = g_hash_table_new(g_str_hash, g_str_equal);
+
+    for (i=0, k=0; i<*ns; i++) {
+	p = g_hash_table_lookup(ht, S[i]);
+	if (p == NULL) {
+	    /* S[i] is not yet in the table */
+	    g_hash_table_insert(ht, S[i], GINT_TO_POINTER(i+1));
+	    map[i] = ++k;
+	} else {
+	    map[i] = map[GPOINTER_TO_INT(p)-1];
+	    nsu--;
+	}
+    }
+
+#if 0
+    fprintf(stderr, "hash: ns=%d, nsu = %d\n", *ns, nsu);
+    for (i=0; i<*ns; i++) {
+	fprintf(stderr, "map[%d] = %d\n", i, map[i]);
+    }
+#endif
+
+    g_hash_table_destroy(ht);
+    *ns = nsu;
+
+    return map;
+}
+
 /**
  * series_from_string_transform:
  * @y: target series.
@@ -4735,36 +4777,12 @@ int series_from_string_transform (double *y, const double *x,
 				  series_table **pst)
 {
     char **Su = NULL;
-    GHashTable *ht;
-    gpointer p;
     int *map;
-    int nsu;
+    int nsu = ns;
     int i, k;
     int err = 0;
 
-    map = calloc(ns, sizeof *map);
-    nsu = ns;
-
-    /* Note: it's possible that sorting rather than using
-       a hash table could speed things up here, at the cost
-       of extra complexity.
-    */
-
-    ht = g_hash_table_new(g_str_hash, g_str_equal);
-
-    for (i=0, k=0; i<ns; i++) {
-	p = g_hash_table_lookup(ht, S[i]);
-	if (p == NULL) {
-	    /* S[i] is not yet in the table */
-	    g_hash_table_insert(ht, S[i], GINT_TO_POINTER(i+1));
-	    map[i] = ++k;
-	} else {
-	    map[i] = map[GPOINTER_TO_INT(p)-1];
-	    nsu--;
-	}
-    }
-
-    g_hash_table_destroy(ht);
+    map = map_unique_strings(S, &nsu, &err);
 
     if (nsu < ns) {
 	/* duplicated strings were found */
