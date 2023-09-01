@@ -2654,16 +2654,17 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
 /* Try to determine if it's OK for a function to return a
    string-valued series, given that such a series must be a member of
    a dataset. The node @f should hold the function in question. In
-   case the node that's to hand is actually a top-level argument of
-   the function, one can pass its "parent" pointer. Returns an error
-   code if this operation is not OK, otherwise 0;
+   case the node that's to hand in the caller is actually a top-level
+   argument of the function, one can pass its "parent" pointer as @f.
+   Returns an error code if this operation is not OK.
 */
 
 static int strvals_return_check (NODE *f, parser *p)
 {
     if (f != p->tree || (p->targ != SERIES && p->targ != UNK)) {
-        /* we must be at the top of the tree, with target either
-	   known to be a series or undetermined as yet
+        /* we must be at the top of the tree, with the target of
+	   assignment either known to be a series or undetermined
+	   as yet
 	*/
         gretl_errmsg_sprintf(_("%s: series usage is valid only in direct assignment"),
                              getsymb(f->t));
