@@ -1196,6 +1196,9 @@ int win32_write_access (const char *path)
 
     wpath = g_utf8_to_utf16(path, -1, NULL, NULL, &gerr);
     if (gerr != NULL) {
+#if ACCESS_DEBUG
+	fprintf(stderr, "win32_write_access: g_utf8_to_utf16 failed\n");
+#endif
         gretl_errmsg_set(gerr->message);
         g_error_free(gerr);
 	return -1;
