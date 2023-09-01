@@ -2651,27 +2651,31 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-/* Try to determine if it's OK for a function to return a string-valued
-   series, given that such a series must be a member of a dataset. The node
-   @f should hold the function in question. In case the node that's to
-   hand is actually a top-level argument of the function, one can pass its
-   "parent" pointer.
+/* Try to determine if it's OK for a function to return a
+   string-valued series, given that such a series must be a member of
+   a dataset. The node @f should hold the function in question. In
+   case the node that's to hand is actually a top-level argument of
+   the function, one can pass its "parent" pointer. Returns an error
+   code if this operation is not OK, otherwise 0;
 */
 
-static int strvals_return_ok (NODE *f, parser *p)
+static int strvals_return_check (NODE *f, parser *p)
 {
-    if (f != p->tree) {
-        /* we must be at the top of the tree */
-        return 0;
-    } else if (p->targ != SERIES && p->targ != UNK) {
-        /* target must be series or undetermined as yet */
-        return 0;
-    } else if (p->lh.t == SERIES && dataset_is_subsampled(p->dset)) {
-        /* can't do this when subsampled */
-        return 0;
+    if (f != p->tree || (p->targ != SERIES && p->targ != UNK)) {
+        /* we must be at the top of the tree, with target either
+	   known to be a series or undetermined as yet
+	*/
+        gretl_errmsg_sprintf(_("%s: series usage is valid only in direct assignment"),
+                             getsymb(f->t));
+        return E_DATA;
+    } else if (dataset_is_subsampled(p->dset) && p->lh.t == SERIES &&
+	       !is_string_valued(p->dset, p->lh.vnum)) {
+	/* can't assign string values to just part of a numeric series */
+	gretl_errmsg_set(_("Sorry, can't do this with a sub-sampled dataset"));
+	return E_DATA;
     } else {
         /* OK, we'll try it */
-        return 1;
+        return 0;
     }
 }
 
@@ -2703,8 +2707,8 @@ static NODE *strvals_calc (NODE *l, NODE *r, NODE *n, parser *p)
     int vl, vr, f = n->t;
     int i, t, eq;
 
-    if (f == B_POW && strvals_return_ok(n, p)) {
-        ; /* should be alright */
+    if (f == B_POW) {
+	p->err = strvals_return_check(n, p);
     } else if (f != B_EQ && f != B_NEQ) {
         p->err = E_TYPES;
     }
@@ -8615,6 +8619,10 @@ static char **get_transformed_strings (NODE *l, NODE *m, NODE *r,
 {
     char **S1 = NULL;
     char **S0;
+    char *match = NULL;
+    char *repl = NULL;
+    int ini = 0;
+    int fin = 0;
 
     if (l->t == ARRAY) {
 	S0 = gretl_array_get_strings(l->v.a, ns);
@@ -8631,16 +8639,24 @@ static char **get_transformed_strings (NODE *l, NODE *m, NODE *r,
 	}
     }
 
-    /* FIXME compile and re-use the regexps */
+    if (f == F_SUBSTR) {
+	ini = node_get_int(m, p);
+	fin = node_get_int(r, p);
+    } else if (is_matcher(f)) {
+	match = m->v.str;
+	repl = r->v.str;
+    }
 
     if (!p->err) {
-        char *match = is_matcher(f) ? m->v.str : NULL;
-        char *repl =  is_matcher(f) ? r->v.str : NULL;
 	gchar *tmp = NULL;
 	int i;
 
+	/* FIXME compile and re-use regexps? */
+
 	for (i=0; i<*ns && !p->err; i++) {
-            if (f == F_STRSUB) {
+	    if (f == F_SUBSTR) {
+		S1[i] = gretl_substring(S0[i], ini, fin, &p->err);
+            } else if (f == F_STRSUB) {
                 S1[i] = gretl_literal_replace(S0[i], match, repl, &p->err);
             } else if (f == F_REGSUB) {
                 tmp = gretl_regexp_replace(S0[i], match, repl, &p->err);
@@ -8670,7 +8686,14 @@ static char *get_transformed_string (const char *s,
     char *ret = NULL;
     gchar *tmp = NULL;
 
-    if (f == F_STRSUB) {
+    if (f == F_SUBSTR) {
+	int ini = node_get_int(m, p);
+	int fin = node_get_int(r, p);
+
+	if (!p->err) {
+	    ret = gretl_substring(s, ini, fin, &p->err);
+	}
+    } else if (f == F_STRSUB) {
         ret = gretl_literal_replace(s, match, repl, &p->err);
     } else if (f == F_REGSUB) {
         tmp = gretl_regexp_replace(s, match, repl, &p->err);
@@ -8685,32 +8708,6 @@ static char *get_transformed_string (const char *s,
     }
 
     return ret;
-}
-
-/* FIXME this checking function is very similar to strvals_return_ok(),
-   employed elsewhere in geneval.c, and the two should probably be
-   consolidated.
-*/
-
-static int verify_strvals_transformation (NODE *n, int f, parser *p)
-{
-    if (dataset_is_subsampled(p->dset)) {
-        /* note: strvals_return_ok() allows sub-sampling, provided
-           that the target is not a pre-existing series
-        */
-        gretl_errmsg_set(_("Sorry, can't do this with a sub-sampled dataset"));
-        return E_DATA;
-    } else if (n->parent != p->tree) {
-        gretl_errmsg_sprintf(_("%s: series usage is valid only in direct assignment"),
-                             getsymb(f));
-        return E_DATA;
-    } else if (p->targ != SERIES && p->targ != UNK) {
-        gretl_errmsg_sprintf(_("%s: series usage is valid only in direct assignment"),
-                             getsymb(f));
-        return E_DATA;
-    } else {
-        return 0;
-    }
 }
 
 /* A function that can be applied to a single string, an array of strings,
@@ -8732,7 +8729,7 @@ static NODE *variant_string_func (NODE *l, NODE *m, NODE *r,
 	    ret = aux_array_node(p);
 	}
     } else if (l->t == SERIES) {
-        p->err = verify_strvals_transformation(l, f, p);
+        p->err = strvals_return_check(l->parent, p);
         if (!p->err) {
 	    ret = aux_series_node(p);
 	}
@@ -8756,10 +8753,11 @@ static NODE *variant_string_func (NODE *l, NODE *m, NODE *r,
 	if (l->t == ARRAY) {
 	    ret->v.a = gretl_array_from_strings(S, ns, 0, &p->err);
 	} else {
-	    p->err = series_from_string_transform(ret->v.xvec,
-						  l->v.xvec,
-						  p->dset->n,
-						  S, ns,
+	    double *y = ret->v.xvec + p->dset->t1;
+	    double *x = l->v.xvec + p->dset->t1;
+	    int n = sample_size(p->dset);
+
+	    p->err = series_from_string_transform(y, x, n, S, ns,
 						  &p->lh.stab);
 	}
     }
@@ -9069,7 +9067,10 @@ static NODE *strftime_node (NODE *l, NODE *r, NODE *o, int f,
     int nv = 0;
 
     if (l->t == SERIES) {
-	ret = aux_series_node(p);
+	p->err = strvals_return_check(l->parent, p);
+	if (!p->err) {
+	    ret = aux_series_node(p);
+	}
     } else if (l->t == MAT) {
 	nv = gretl_vector_get_length(l->v.m);
 	if (nv == 0) {
@@ -13328,26 +13329,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    free(xlist);
 	    free(ylist);
 	}
-    } else if (f == F_SUBSTR) {
-        post_process = 0;
-        if (l->t != STR) {
-            node_type_error(f, 1, STR, l, p);
-        } else if (!scalar_node(m)) {
-            node_type_error(f, 2, NUM, m, p);
-        } else if (!scalar_node(r)) {
-            node_type_error(f, 3, NUM, r, p);
-        } else {
-            reset_p_aux(p, save_aux);
-            ret = aux_string_node(p);
-            if (ret != NULL) {
-                int ini = node_get_int(m, p);
-                int fin = node_get_int(r, p);
-
-                if (!p->err) {
-                    ret->v.str = gretl_substring(l->v.str, ini, fin, &p->err);
-                }
-            }
-        }
     } else if (f == F_MWEIGHTS) {
         if (!scalar_node(l)) {
             node_type_error(f, 1, NUM, l, p);
@@ -18455,7 +18436,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_HALTON:
     case F_AGGRBY:
     case F_IWISHART:
-    case F_SUBSTR:
     case F_MWEIGHTS:
     case F_MGRADIENT:
     case F_LRCOVAR:
@@ -18800,6 +18780,14 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	}
 	break;
+    case F_SUBSTR:
+        if ((l->t == STR || l->t == ARRAY || strvals_node(l, p)) &&
+            m->t == NUM && r->t == NUM) {
+	    ret = variant_string_func(l, m, r, t->t, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;
     case F_JSONGET:
     case F_XMLGET:
         if (l->t == STR && m->t == STR) {
@@ -18857,15 +18845,13 @@ static NODE *eval (NODE *t, parser *p)
         ret = ymd_node(l, r, p);
         break;
     case F_STRFTIME:
-        if (l->t == NUM || l->t == SERIES || l->t == MAT) {
-            ret = strftime_node(l, m, r, t->t, 0, p);
-        } else {
-            node_type_error(t->t, 0, NUM, l, p);
-        }
-        break;
     case F_STRFDAY:
         if (l->t == NUM || l->t == SERIES || l->t == MAT) {
-            ret = strftime_node(l, r, NULL, t->t, 0, p);
+	    if (t->t == F_STRFTIME) {
+		ret = strftime_node(l, m, r, t->t, 0, p);
+	    } else {
+		ret = strftime_node(l, r, NULL, t->t, 0, p);
+	    }
         } else {
             node_type_error(t->t, 0, NUM, l, p);
         }
