@@ -2666,7 +2666,8 @@ static int compare_lexvals (const void *a, const void *b)
     const lexval *lva = (const lexval *) a;
     const lexval *lvb = (const lexval *) b;
 
-    return g_utf8_collate(lva->s, lvb->s);
+    // return g_utf8_collate(lva->s, lvb->s);
+    return g_strcmp0(lva->s, lvb->s);
 }
 
 static int series_to_lexvals (DATASET *dset, int v, int *targ)
@@ -4714,24 +4715,105 @@ int series_from_strings (DATASET *dset, int v,
     return err;
 }
 
-static int *map_unique_strings (char **S, int *ns, int *err)
+#define UNIQ_TRY_SORT 1
+
+#if UNIQ_TRY_SORT
+
+/*** start sorting experiment ***/
+
+typedef struct str_sorter_ {
+    const char *s;
+    int pos;
+} str_sorter;
+
+static int compare_ss (const void *a, const void *b)
+{
+    const str_sorter *ssa = a;
+    const str_sorter *ssb = b;
+
+    return g_strcmp0(ssa->s, ssb->s);
+}
+
+static int *map_unique_strings2 (char **S, int *nsp, int *err)
+{
+    str_sorter *ssr;
+    guint8 *u = NULL;
+    int *idx = NULL;
+    int *map = NULL;
+    int ns, nsu;
+    int i, k;
+
+    ns = *nsp;
+    ssr = malloc(ns * sizeof *ssr);
+
+    for (i=0; i<ns; i++) {
+	ssr[i].s = S[i];
+	ssr[i].pos = i;
+    }
+
+    qsort(ssr, ns, sizeof *ssr, compare_ss);
+
+    u = calloc(ns, sizeof *u);
+    idx = malloc(ns * sizeof *idx);
+    nsu = ns;
+
+    /* identify the unique strings */
+    for (i=0; i<ns; i++) {
+	k = ssr[i].pos;
+	if (i == 0 || strcmp(ssr[i].s, ssr[i-1].s)) {
+	    idx[k] = ssr[i].pos;
+	    u[k] = 1;
+	} else {
+	    idx[k] = ssr[i-1].pos;
+	    nsu--;
+	}
+    }
+
+    map = calloc(ns, sizeof *map);
+
+    for (i=0, k=0; i<ns; i++) {
+	map[i] = u[i] ? ++k : map[idx[i]];
+    }
+
+#if 0
+    fprintf(stderr, "sort: ns=%d, nsu = %d\n", ns, nsu);
+    for (i=0; i<ns; i++) {
+	fprintf(stderr, "map[%d] = %d\n", i, map[i]);
+    }
+#endif
+
+    free(ssr);
+    free(u);
+    free(idx);
+
+    *nsp = nsu;
+
+    return map;
+}
+
+/*** end sorting experiment ***/
+
+#endif
+
+static int *map_unique_strings (char **S, int *nsp, int *err)
 {
     GHashTable *ht;
     gpointer p;
     int *map;
+    int ns = *nsp;
     int nsu;
     int i, k;
 
-    map = calloc(*ns, sizeof *map);
+    map = calloc(ns, sizeof *map);
     if (map == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    nsu = *ns;
+    nsu = ns;
     ht = g_hash_table_new(g_str_hash, g_str_equal);
 
-    for (i=0, k=0; i<*ns; i++) {
+    for (i=0, k=0; i<ns; i++) {
 	p = g_hash_table_lookup(ht, S[i]);
 	if (p == NULL) {
 	    /* S[i] is not yet in the table */
@@ -4744,14 +4826,14 @@ static int *map_unique_strings (char **S, int *ns, int *err)
     }
 
 #if 0
-    fprintf(stderr, "hash: ns=%d, nsu = %d\n", *ns, nsu);
-    for (i=0; i<*ns; i++) {
+    fprintf(stderr, "hash: ns=%d, nsu = %d\n", ns, nsu);
+    for (i=0; i<ns; i++) {
 	fprintf(stderr, "map[%d] = %d\n", i, map[i]);
     }
 #endif
 
     g_hash_table_destroy(ht);
-    *ns = nsu;
+    *nsp = nsu;
 
     return map;
 }
@@ -4782,7 +4864,16 @@ int series_from_string_transform (double *y, const double *x,
     int i, k;
     int err = 0;
 
+#if UNIQ_TRY_SORT
+    if (getenv("USE_SORT") != NULL) {
+	fprintf(stderr, "got USE_SORT\n");
+	map = map_unique_strings2(S, &nsu, &err);
+    } else {
+	map = map_unique_strings(S, &nsu, &err);
+    }
+#else
     map = map_unique_strings(S, &nsu, &err);
+#endif
 
     if (nsu < ns) {
 	/* duplicated strings were found */
