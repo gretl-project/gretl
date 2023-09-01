@@ -2666,7 +2666,7 @@ static int compare_lexvals (const void *a, const void *b)
     const lexval *lva = (const lexval *) a;
     const lexval *lvb = (const lexval *) b;
 
-    // return g_utf8_collate(lva->s, lvb->s);
+    /* return g_utf8_collate(lva->s, lvb->s); */
     return g_strcmp0(lva->s, lvb->s);
 }
 
@@ -2741,6 +2741,12 @@ int dataset_sort_by (DATASET *dset, const int *list, gretlopt opt)
 	}
     }
 
+    /* Next block: we're assuming that if the dataset is to be
+       sorted by a string-valued series, it's the alphabetical
+       order of the string values that should be used, not the
+       numeric codes (though in some cases this may come to
+       the same thing).
+    */
     for (i=0; i<ns; i++) {
 	if (is_string_valued(dset, list[i+1])) {
 	    nsvals++;
@@ -5444,10 +5450,13 @@ int series_alphabetize_strings (DATASET *dset, int v)
  * copy_string_valued_series:
  * @dset: dataset.
  * @targ: index number of target series.
- * @src: index number of string-valued source series.
+ * @x: numerical values of source series.
+ * @stx: strings info for source series.
+ * @copy_stx: if non-zero, @stx is owned elsewhere and
+ * must be copied.
  *
- * Copies the array of string values from @src to @targ, and
- * also the numerical values (codes) per observation.
+ * Writes the array of string values from @src into @targ,
+ * and also the numerical values (codes) per observation.
  * If the target series is string-valued its original
  * string table is destroyed.
  *
@@ -5455,25 +5464,26 @@ int series_alphabetize_strings (DATASET *dset, int v)
  * on error.
  */
 
-int copy_string_valued_series (DATASET *dset, int targ, int src)
+static int copy_string_valued_series (DATASET *dset,
+				      int targ,
+				      const double *x,
+				      series_table *stx,
+				      int copy_stx)
 {
-    series_table *st0, *st1;
+    series_table *st = stx;
 
-    st0 = series_get_string_table(dset, src);
-    if (st0 == NULL) {
-	return E_TYPES;
-    }
-
-    st1 = series_table_copy(st0);
-    if (st1 == NULL) {
-	return E_ALLOC;
+    if (copy_stx) {
+	st = series_table_copy(stx);
+	if (st == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     /* copy across numerical codes */
-    memcpy(dset->Z[targ], dset->Z[src], dset->n * sizeof(double));
+    memcpy(dset->Z[targ], x, dset->n * sizeof(double));
 
     /* and attach the series table copy */
-    series_attach_string_table(dset, targ, st1);
+    series_attach_string_table(dset, targ, st);
 
     return 0;
 }
@@ -5583,13 +5593,16 @@ static int do_strv_adds (const int *map,
 }
 
 /* Handle assignment from one string-valued series to another,
-   in the case when the dataset is subsampled.
+   in the case when the dataset is subsampled. The source
+   series may or may not be a member of the dataset.
 */
 
 static int assign_strings_to_strvar_sub (DATASET *dset,
-					 int targ, int src)
+					 int targ,
+					 const double *x,
+					 series_table *stb)
 {
-    series_table *sta, *stb;
+    series_table *sta;
     int *map = NULL;
     int use_map = 0;
     int n_add = 0;
@@ -5597,8 +5610,7 @@ static int assign_strings_to_strvar_sub (DATASET *dset,
     int err = 0;
 
     sta = series_get_string_table(dset, targ);
-    stb = series_get_string_table(dset, src);
-    if (sta == NULL || stb == NULL) {
+    if (sta == NULL) {
 	return E_TYPES;
     }
 
@@ -5613,22 +5625,19 @@ static int assign_strings_to_strvar_sub (DATASET *dset,
 
     if (use_map) {
 	/* numeric codes from @src need mapping */
-	double xt;
 	int t, it;
 
 	for (t=dset->t1; t<=dset->t2; t++) {
-	    xt = dset->Z[src][t];
-	    if (na(xt)) {
-		dset->Z[targ][t] = xt;
+	    if (na(x[t])) {
+		dset->Z[targ][t] = x[t];
 	    } else {
-		it = (int) xt;
+		it = (int) x[t];
 		dset->Z[targ][t] = map[it];
 	    }
 	}
     } else {
 	/* no re-mapping of codes needed */
 	double *y = dset->Z[targ] + dset->t1;
-	const double *x = dset->Z[src] + dset->t1;
 	size_t sz = sample_size(dset) * sizeof *y;
 
 	memcpy(y, x, sz);
@@ -5639,12 +5648,18 @@ static int assign_strings_to_strvar_sub (DATASET *dset,
     return err;
 }
 
-int assign_strings_to_strvar (DATASET *dset, int targ, int src)
+/* note: @copy non-zero means that @stx must be copied into
+   place; otherwise it will be "donated" to @targ if the
+   dataset is not subsampled.
+*/
+
+int assign_strings_to_strvar (DATASET *dset, int targ, double *x,
+			      series_table *stx, int copy)
 {
     if (dataset_is_subsampled(dset)) {
-	return assign_strings_to_strvar_sub(dset, targ, src);
+	return assign_strings_to_strvar_sub(dset, targ, x, stx);
     } else {
-	return copy_string_valued_series(dset, targ, src);
+	return copy_string_valued_series(dset, targ, x, stx, copy);
     }
 }
 

@@ -4465,18 +4465,17 @@ static NODE *bkw_node (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
-/* Here we handle the case where the relevant libgretl
-   function overwrites its matrix argument. If @m is
-   just an on-the-fly matrix it can be passed as arg,
-   but if it's a named user-matrix we'll have to make
-   a copy to pass.
+/* Here we handle the case where the relevant libgretl C function
+   overwrites its matrix argument. If @m is just an on-the-fly matrix
+   it can be passed on as argument to the function in question, but if
+   it's a named user-matrix we'll have to make a copy to pass.
 */
 
-static gretl_matrix *apply_ovwrite_func (gretl_matrix *m,
-                                         int f, int parm,
-                                         double xparm,
-                                         int tmpmat,
-                                         int *err)
+static gretl_matrix *do_matrix_ovwrite (gretl_matrix *m,
+					int f, int parm,
+					double xparm,
+					int tmpmat,
+					int *err)
 {
     gretl_matrix *R = m;
 
@@ -4651,27 +4650,27 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
             if (m->is_complex) {
                 ret->v.m = gretl_cmatrix_inverse(m, &p->err);
             } else {
-                ret->v.m = apply_ovwrite_func(m, f, parm, xparm, tmpmat, &p->err);
+                ret->v.m = do_matrix_ovwrite(m, f, parm, xparm, tmpmat, &p->err);
             }
             break;
         case F_GINV:
             if (m->is_complex) {
                 ret->v.m = gretl_cmatrix_ginv(m, &p->err);
             } else {
-                ret->v.m = apply_ovwrite_func(m, f, parm, xparm, tmpmat, &p->err);
+                ret->v.m = do_matrix_ovwrite(m, f, parm, xparm, tmpmat, &p->err);
             }
             break;
         case F_CHOL:
             if (m->is_complex) {
                 ret->v.m = gretl_cmatrix_cholesky(m, &p->err);
             } else {
-                ret->v.m = apply_ovwrite_func(m, f, parm, xparm, tmpmat, &p->err);
+                ret->v.m = do_matrix_ovwrite(m, f, parm, xparm, tmpmat, &p->err);
             }
             break;
         case F_PSDROOT:
         case F_UPPER:
         case F_LOWER:
-            ret->v.m = apply_ovwrite_func(m, f, parm, xparm, tmpmat, &p->err);
+            ret->v.m = do_matrix_ovwrite(m, f, parm, xparm, tmpmat, &p->err);
             break;
         case F_DIAG:
             ret->v.m = gretl_matrix_get_diagonal(m, &p->err);
@@ -21029,6 +21028,8 @@ static int strv_overwrite_ok (parser *p)
 	ok = 0;
     } else if (is_string_valued(p->dset, rv)) {
 	ret = OVW_STRINGS;
+    } else if (p->lh.stab != NULL) {
+	ret = OVW_STRINGS;
     } else {
 	ret = OVW_NUMERIC;
     }
@@ -21147,6 +21148,42 @@ static int handle_compound_target (parser *p)
     }
 
     return savegen_retval(p->err);
+}
+
+static int handle_overwrite_strvals (parser *p, int targ, NODE *r)
+{
+    series_table *st;
+    int copy = 0;
+    int err;
+
+    if (r->vnum == NO_VNUM) {
+	/* we're assigning from an on-the-fly series, whose
+	   temporary series_table is attached to @p->lh
+	*/
+	st = p->lh.stab;
+    } else {
+	/* assigning from a string-valued member of the dataset,
+	   whose series_table must be preserved as is
+	*/
+	st = series_get_string_table(p->dset, r->vnum);
+	copy = 1;
+    }
+
+    err = assign_strings_to_strvar(p->dset, targ, r->v.xvec, st, copy);
+
+    if (st == p->lh.stab) {
+	/* @st has done its work, and must now be set to NULL */
+	if (dataset_is_subsampled(p->dset)) {
+	    /* in the subsampled case @st is not "donated"
+	       to the LHS series, so we have to free it here
+	       to avoid leaking memory
+	    */
+	    series_table_destroy(p->lh.stab);
+	}
+	p->lh.stab = NULL;
+    }
+
+    return err;
 }
 
 static int save_generated_var (parser *p, PRN *prn)
@@ -21269,7 +21306,7 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == SERIES) {
         /* writing a series */
 	if (strv_ovwrite == OVW_STRINGS) {
-	    p->err = assign_strings_to_strvar(p->dset, v, r->vnum);
+	    p->err = handle_overwrite_strvals(p, v, r);
 	} else if (strv_ovwrite == OVW_NUMERIC) {
 	    p->err = assign_numeric_to_strvar(p->dset, v, r->v.xvec);
 	} else if (r->t == SERIES) {

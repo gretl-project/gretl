@@ -577,12 +577,11 @@ int series_recode_strings (DATASET *dset, int v, gretlopt opt,
 
 int series_alphabetize_strings (DATASET *dset, int v);
 
-int copy_string_valued_series (DATASET *dset, int targ, int src);
-
 int assign_numeric_to_strvar (DATASET *dset, int targ,
 			      const double *src);
 
-int assign_strings_to_strvar (DATASET *dset, int targ, int src);
+int assign_strings_to_strvar (DATASET *dset, int targ, double *x,
+			      series_table *stx, int copy);
 
 double series_decode_string (const DATASET *dset, int i, const char *s);
 
