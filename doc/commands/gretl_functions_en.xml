@@ -11504,19 +11504,23 @@
       </description>
     </function>
 
-    <function name="regsub" section="strings" output="string">
+    <function name="regsub" section="strings" output="asinput">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="string">match</fnarg>
 	<fnarg type="string">repl</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns a copy of <argname>s</argname> in which all
-	  occurrences of the pattern <argname>match</argname> are
-	  replaced using <argname>repl</argname>. The arguments
-	  <argname>match</argname> and <argname>repl</argname>
-	  are interpreted as Perl-style regular expressions.
+	  If <argname>s</argname> is a single string, returns a copy
+	  of <argname>s</argname> in which all occurrences of the
+	  pattern <argname>match</argname> are replaced using
+	  <argname>repl</argname>. The arguments
+	  <argname>match</argname> and <argname>repl</argname> are
+	  interpreted as Perl-style regular expressions. If
+	  <argname>s</argname> is an array of strings or string-valued
+	  series this operation is performed on each string in the
+	  array or series.
 	</para>
 	<para>
 	  See also <fncref targ="strsub"/> for simple substitution of
@@ -12955,18 +12959,22 @@
       </description>
     </function>
 
-    <function name="strsub" section="strings" output="string">
+    <function name="strsub" section="strings" output="asinput">
       <fnargs>
-	<fnarg type="string-or-strings">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="string">find</fnarg>
 	<fnarg type="string">subst</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns a copy of <argname>s</argname> in which all
-	  occurrences of <argname>find</argname> are replaced by
-	  <argname>subst</argname>. See also <fncref targ="regsub"/>
-	  for more complex string replacement via regular expressions.
+	  If <argname>s</argname> is a single string, returns a copy
+	  of <argname>s</argname> in which all occurrences of
+	  <argname>find</argname> are replaced by
+	  <argname>subst</argname>. If <argname>s</argname> is an
+	  array of strings or string-valued series this operation is
+	  performed on each string in the array or series.  See also
+	  <fncref targ="regsub"/> for more complex string replacement
+	  via regular expressions.
 	</para>
 	<para>
           Example:
@@ -13037,19 +13045,22 @@
       </description>
     </function>
 
-    <function name="substr" section="strings" output="string">
+    <function name="substr" section="strings" output="asinput">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="int">start</fnarg>
 	<fnarg type="int">end</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the substring of <argname>s</argname> from the
-	  character with (1-based) index <argname>start</argname> to
-	  that with index <argname>end</argname>, inclusive, or from
+	  If <argname>s</argname> is a single string, returns the
+	  substring of <argname>s</argname> from the character with
+	  (1-based) index <argname>start</argname> to that with index
+	  <argname>end</argname>, inclusive, or from
 	  <argname>start</argname> to the end of <argname>s</argname>
-	  if <argname>end</argname> is &minus;1.
+	  if <argname>end</argname> is &minus;1. If the argument is an
+	  array of strings or string-valued series, this operation
+	  is performed on each string in the array or series.
 	</para>
 	<para>
           For example, the code below
@@ -13388,49 +13399,49 @@ d =  8.0000000
       </description>
     </function>
 
-    <function name="tolower" section="strings" output="string">
+    <function name="tolower" section="strings" output="asinput">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns a copy of <argname>s</argname> in which any upper-case
-	  characters are converted to lower case.
+	  If <argname>s</argname> is a single string, returns a copy
+	  of <argname>s</argname> in which any upper-case characters
+	  are converted to lower case. If <argname>s</argname> is an
+	  array of strings or string-valued series this operation is
+	  performed on each string in the array or series.
 	</para>
-    <para>
-        Examples:
-    </para>
-    <code>
-        string s1 = "Hello, Gretl!"
-        string s2 = tolower(s1)
-        print s2
-
-        string s3 = tolower("Hello, Gretl!")
-        print s3
-    </code>
+	<para>
+          Example:
+	</para>
+	<code>
+          string s1 = "Hello, Gretl!"
+          string s2 = tolower(s1)
+          print s2
+	</code>
       </description>
     </function>
 
-    <function name="toupper" section="strings" output="string">
+    <function name="toupper" section="strings" output="asinput">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns a copy of <argname>s</argname> in which any lower-case
-	  characters are converted to upper case.
+	  If <argname>s</argname> is a single string, returns a copy
+	  of <argname>s</argname> in which any lower-case characters
+	  are converted to upper case. If <argname>s</argname> is an
+	  array of strings or string-valued series this operation is
+	  performed on each string in the array or series.
 	</para>
-    <para>
-        Examples:
-    </para>
-    <code>
-        string s1 = "Hello, Gretl!"
-        string s2 = toupper(s1)
-        print s2
-
-        string s3 = toupper("Hello, Gretl!")
-        print s3
-    </code>
+	<para>
+          Examples:
+	</para>
+	<code>
+          string s1 = "Hello, Gretl!"
+          string s2 = toupper(s1)
+          print s2
+	</code>
       </description>
     </function>
 
