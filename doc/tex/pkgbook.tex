@@ -1019,6 +1019,7 @@ into \app{gretlcli} directly from the command line, as in
 \begin{code}
 echo makepkg mypkg.zip | gretlcli -b -
 \end{code}
+%
 where the \texttt{-b} flag makes \textsf{gretlcli} operate
 non-interactively and the following dash tells the program to read
 commands from ``stdin'' instead of an \textsf{inp} file.
@@ -1065,7 +1066,6 @@ clean:
 	rm -f $(PKG).gfn
 \end{code}
 \end{script}
-%$
 
 Running ``\texttt{make}'' in your project directory will rebuild
 \texttt{mypkg.gfn} if and only any of the source files have changed
@@ -1079,7 +1079,6 @@ file, chances are it will not work. \app{Make} is quite fussy about
 the structure of the Makefile, particularly about the use of tabs
 versus spaces. Some details, and a more extended example, are provided
 in Appendix B to this chapter.
-
 
 \section{Building a package via the GUI}
 \label{sec:gui-build}
@@ -1231,13 +1230,13 @@ and Statistical Methods: General'' is probably the only one that's
 applicable.
 
 Clicking the \textsf{Save} button in the package editor window brings
-up a little menu. For the present, it's just the first item,
-\textsf{Save gfn}, that's relevant. If there's something missing from
-your package specification at this point (e.g.\ no help text), you'll
-get a nag box when you select this item. Otherwise you'll see a dialog
-where you get to choose whether to save the \textsf{gfn} file to an
-``installed'' location (see section~\ref{sec:installed}) or in some
-other place (Figure~\ref{fig:gfnsave}).
+up a little menu. At this stage it's just the first item, \textsf{Save
+  gfn}, that's relevant. If there's something missing from your
+package specification (e.g.\ no help text), you'll get a nag box when
+you select this item. Otherwise you'll see a dialog where you get to
+choose whether to save the \textsf{gfn} file to an ``installed''
+location (see section~\ref{sec:installed}) or in some other place
+(Figure~\ref{fig:gfnsave}).
 
 \begin{figure}[htbp]
   \centering
@@ -1255,6 +1254,11 @@ second you'll get a regular File Save dialog box. The advantage of the
 first choice is that the package will be found automatically by gretl.
 However, if you're just experimenting and don't want to ``install''
 the package yet, by all means choose a different location.
+
+Note that the dialog box shown in Figure~\ref{fig:gfnsave} only
+appears when you are first saving a newly created package. Thereafter,
+\textsf{Save gfn} simply saves the package using the existing path to
+the \textsf{gfn} file.
 
 \subsection{Adding PDF documentation}
 \label{sec:gui-pdf}
