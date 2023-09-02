@@ -1,7 +1,12 @@
 version 2023c, in progress
+- "tsls" command: if the --robust option is given, compute a
+  robust variant of the Hausman test
 - String-valued series: support returning such series from a
   user function, and loosen the restrictions on assignment to
   such series
+- String functions strsub(), regsub(), substr(), tolower() and
+  toupper(): generalize to support strings arrays and string-
+  valued series as arguments, as well as individual strings
 - New function strvsort(): recodes a string-valued series such
   that the numeric codes correspond to the alphabetical order
   of the string values
