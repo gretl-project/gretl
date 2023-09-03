@@ -209,7 +209,12 @@ static int get_input_color (gretl_bundle *b, char *rgb)
 	const char *s = gretl_bundle_get_string(b, "color", &err);
 
 	if (!err) {
-	    u = numeric_color_from_string(s, &err);
+	    if (!strcmp(s, "default")) {
+		/* leave @rgb blank */
+		return 0;
+	    } else {
+		u = numeric_color_from_string(s, &err);
+	    }
 	}
     } else if (gretl_is_scalar_type(t)) {
 	u = gretl_bundle_get_unsigned(b, "color", &err);
@@ -493,32 +498,26 @@ static void print_data_block (gnuplot_info *gi,
     }
 }
 
-/* Handle the case where we get to the band-plot code
-   from a command in which the data to be plotted (and
-   hence also the band specification) are given in matrix
-   form. By this point the plot-data have been converted to
-   (temporary) DATASET form; here we retrieve the band-spec
-   matrix, check it for conformability, and stick the two
-   extra columns onto the dataset (borrowing pointers into
-   the matrix content).
+/* Legacy syntax: handle the case where we get to the band-plot code
+   from a command in which the data to be plotted (and hence also the
+   band specification) are given in matrix form. By this point the
+   plot-data have been converted to (temporary) DATASET form; here we
+   retrieve the band-spec matrix, check it for conformability, and
+   stick the two extra columns onto the dataset (borrowing pointers
+   into the matrix content).
 */
 
 static int parse_band_matrix_option (band_info *bi,
+				     const char *spec,
 				     gnuplot_info *gi,
 				     DATASET *dset)
 {
-    int pci = get_effective_plot_ci();
-    const char *s = get_optval_string(pci, OPT_N);
     const char *mname = NULL;
     gchar **S;
     int i = 0;
     int err = 0;
 
-    if (s == NULL) {
-        return E_INVARG;
-    }
-
-    S = g_strsplit(s, ",", -1);
+    S = g_strsplit(spec, ",", -1);
 
     while (S != NULL && S[i] != NULL && !err) {
         if (i == 0) {
@@ -567,30 +566,26 @@ static int handle_recession_bars (band_info *bi,
     return err;
 }
 
-/* Handle the band plus-minus option for all cases apart
-   from the one handled just above. Here we require two
-   comma-separated series identifiers for center and
-   width.
+/* Legacy syntax: handle the band plus-minus option for all cases
+   apart from the one handled just above. Here we require two
+   comma-separated series identifiers for center and width.
 */
 
 static int parse_band_pm_option (band_info *bi,
+				 const char *spec,
 				 gnuplot_info *gi,
                                  const DATASET *dset,
                                  gretlopt opt)
 {
-    int pci = get_effective_plot_ci();
-    const char *s = get_optval_string(pci, OPT_N);
     gchar **S;
     int v, i = 0;
     int err = 0;
 
-    if (s == NULL) {
-        return E_INVARG;
-    } else if (strchr(s, ',') == NULL) {
-	return handle_recession_bars(bi, s, dset);
+    if (strchr(spec, ',') == NULL) {
+	return handle_recession_bars(bi, spec, dset);
     }
 
-    S = g_strsplit(s, ",", -1);
+    S = g_strsplit(spec, ",", -1);
 
     while (S != NULL && S[i] != NULL && !err) {
         if (i < 2) {
@@ -642,15 +637,14 @@ static int parse_band_pm_option (band_info *bi,
     return err;
 }
 
-/* We're looking here for any one of three patterns:
+/* Legacy syntax: We're looking here for any one of three patterns:
 
    <style>
    <style>,<color>
    <color>
 
-   where <style> should be "fill", "dash" or "line" (the
-   default) and <color> should be a hex string such as
-   "#00ff00" or "0x00ff00".
+   where <style> should be "fill", "dash" or "line" (the default) and
+   <color> should be a hex string such as "#00ff00" or "0x00ff00".
 */
 
 static int parse_band_style_option (band_info *bi)
@@ -702,8 +696,30 @@ static band_info **get_single_band_info (int matrix_mode,
 					 gretlopt opt,
 					 int *err)
 {
-    band_info **bi = malloc(sizeof *bi);
+    int pci = get_effective_plot_ci();
+    const char *spec = get_optval_string(pci, OPT_N);
+    gretl_bundle *b = NULL;
+    band_info **bi = NULL;
 
+    if (spec == NULL || *spec == '\0') {
+        *err = E_INVARG;
+	return NULL;
+    }
+
+    /* allocate return array */
+    bi = malloc(sizeof *bi);
+
+    /* See if we got a new-style single band specification
+       in the form of a named bundle.
+    */
+    b = get_bundle_by_name(spec);
+    if (b != NULL) {
+	/* OK, we should have the new syntax */
+	bi[0] = band_info_from_bundle(matrix_mode, b, gi, dset, err);
+	return bi;
+    }
+
+    /* Proceed in legacy mode */
     bi[0] = band_info_new();
     if (bi[0] == NULL) {
 	*err = E_ALLOC;
@@ -711,13 +727,13 @@ static band_info **get_single_band_info (int matrix_mode,
     }
 
     if (matrix_mode) {
-	/* Coming from a "plot" block in matrix mode: in this case the
-	   band should be given in the form of a named matrix with
-	   two columns holding center and width, respectively.
+	/* In this case the band should be given in the form of a
+	   named matrix with two columns holding center and width,
+	   respectively.
 	*/
-	*err = parse_band_matrix_option(bi[0], gi, dset);
+	*err = parse_band_matrix_option(bi[0], spec, gi, dset);
     } else {
-	*err = parse_band_pm_option(bi[0], gi, dset, opt);
+	*err = parse_band_pm_option(bi[0], spec, gi, dset, opt);
     }
     if (!*err && (opt & OPT_J)) {
 	*err = parse_band_style_option(bi[0]);
