@@ -17,7 +17,7 @@
  *
  */
 
-/* plotbands.c for gretl */
+/* plotbands.c for gretl : support multiple "bands" in a given plot */
 
 #include "libgretl.h"
 #include "usermat.h"
@@ -133,6 +133,10 @@ static int process_band_matrix (const char *mname,
     return err;
 }
 
+/* check the validity of a series that's supposed to be a dummy
+   variable (to produce something resembling recession bars)
+*/
+
 static int check_assign_bdummy (band_info *bi, int vnum,
 				const DATASET *dset)
 {
@@ -210,7 +214,8 @@ static int get_input_color (gretl_bundle *b, char *rgb)
 
 	if (!err) {
 	    if (!strcmp(s, "default")) {
-		/* leave @rgb blank */
+		/* ensure @rgb is blank */
+		rgb[0] = '\0';
 		return 0;
 	    } else {
 		u = numeric_color_from_string(s, &err);
@@ -248,10 +253,9 @@ static band_info *band_info_from_bundle (int matrix_mode,
 	return NULL;
     }
 
-    /* Allow for the "matrix_mode" case where the band
-       (center, width) is represented by a two-column
-       matrix. This arises when gnuplot or plot is fed
-       data in matrix form.
+    /* Allow for the "matrix_mode" case where the band (center, width)
+       is represented by a two-column matrix. This arises when
+       "gnuplot" or "plot" is fed data in matrix form.
     */
     if (matrix_mode) {
 	const char *s = gretl_bundle_get_string(b, "bandmat", err);
@@ -324,9 +328,9 @@ static band_info *band_info_from_bundle (int matrix_mode,
     return bi;
 }
 
-/* Here we're supposing we got --bands=@aname. We try to
-   retrieve an array of bundles, and if that succeeds we
-   build and return an array of band_info structs.
+/* Here we're supposing we got --bands=@aname. We try to retrieve an
+   array of bundles, and if that succeeds we build and return an array
+   of band_info structs.
 */
 
 static band_info **get_band_info_array (int matrix_mode,
@@ -458,6 +462,11 @@ static void print_pm_bars (band_info *bi, int n_yvars,
 	    bi->center, bi->factor, bi->width, lspec);
     gp_newline(contd, fp);
 }
+
+/* Print the data in the form of a gnuplot "heredoc": this should be
+   relatively efficient, avoiding duplication of the x-axis variable
+   and the band center.
+*/
 
 static void print_data_block (gnuplot_info *gi,
 			      const double *x,
@@ -716,7 +725,11 @@ static band_info **get_single_band_info (int matrix_mode,
     if (b != NULL) {
 	/* OK, we should have the new syntax */
 	bi[0] = band_info_from_bundle(matrix_mode, b, gi, dset, err);
-	return bi;
+	if (*err) {
+	    free(bi);
+	    bi = NULL;
+	}
+	return bi; /* done */
     }
 
     /* Proceed in legacy mode */
