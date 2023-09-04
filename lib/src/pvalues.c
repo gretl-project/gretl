@@ -907,8 +907,15 @@ double chisq_cdf_comp (double df, double x)
 
 static double chisq_critval (int df, double a)
 {
-    double x = chdtri(df, a);
+    double x = NADBL;
 
+    if (a == 1.0) {
+	return 0.0;
+    } else if (a == 0.0) {
+	return 1.0/0.0;
+    }
+
+    x = chdtri(df, a);
     if (get_cephes_errno() == CEPHES_DOMAIN) {
 	x = NADBL;
     }
@@ -919,6 +926,12 @@ static double chisq_critval (int df, double a)
 static double chisq_cdf_inverse (int df, double a)
 {
     double x = NADBL;
+
+    if (a == 1.0) {
+	return 1.0/0.0;
+    } else if (a == 0.0) {
+	return 0.0;
+    }
 
     if (df >= 1 && a >= 0.0) {
 	x = chdtri(df, 1 - a);
