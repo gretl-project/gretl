@@ -72,7 +72,8 @@ typedef struct stmt_ fn_line;
 
 enum {
     FP_CONST    = 1 << 0, /* explicitly marked as "const" */
-    FP_OPTIONAL = 1 << 1  /* marked as optional (null is OK) */
+    FP_OPTIONAL = 1 << 1, /* marked as optional (null is OK) */
+    FP_AUTO     = 1 << 2  /* marked as automatic (has a default value) */
 };
 
 /* structure representing a parameter of a user-defined function */
@@ -92,8 +93,10 @@ struct fn_param_ {
 
 #define param_is_const(p) (p->flags & FP_CONST)
 #define param_is_optional(p) (p->flags & FP_OPTIONAL)
+#define param_is_auto(p) (p->flags & FP_AUTO)
 
 #define set_param_optional(p) (p->flags |= FP_OPTIONAL)
+#define set_param_auto(p) (p->flags |= (FP_OPTIONAL | FP_AUTO))
 
 typedef enum {
     LINE_IGNORE = 1 << 0,
@@ -1218,6 +1221,26 @@ static int arg_may_be_optional (GretlType t)
 }
 
 /**
+ * fn_param_automatic:
+ * @fun: pointer to user-function.
+ * @i: 0-based parameter index.
+ *
+ * Returns: 1 if parameter @i of function @fun is marked "auto",
+ * meaning that it is optional and has a default value,
+ * otherwise 0.
+ */
+
+int fn_param_automatic (const ufunc *fun, int i)
+{
+    if (i < 0 || i >= fun->n_params) {
+	return 0;
+    }
+
+    return arg_may_be_optional(fun->params[i].type) &&
+	(fun->params[i].flags & FP_AUTO);
+}
+
+/**
  * fn_param_optional:
  * @fun: pointer to user-function.
  * @i: 0-based parameter index.
@@ -2060,7 +2083,9 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
 			gretl_xml_get_prop_as_double(cur, "step", &param->step);
 		    }
 		}
-		if (gretl_xml_get_prop_as_bool(cur, "optional")) {
+		if (gretl_xml_get_prop_as_bool(cur, "auto")) {
+		    set_param_auto(param);
+		} else if (gretl_xml_get_prop_as_bool(cur, "optional")) {
 		    set_param_optional(param);
 		}
 		if (gretl_xml_get_prop_as_bool(cur, "const")) {
@@ -2249,7 +2274,9 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
 
 static void print_opt_flags (fn_param *param, PRN *prn)
 {
-    if (param_is_optional(param)) {
+    if (param_is_auto(param)) {
+	pputs(prn, "[auto]");
+    } else if (param_is_optional(param)) {
 	pputs(prn, "[null]");
     }
 }
@@ -2654,7 +2681,9 @@ static int write_function_xml (ufunc *fun, PRN *prn, int mpi)
 	    if (!na(param->step)) {
 		pprintf(prn, " step=\"%g\"", param->step);
 	    }
-	    if (param_is_optional(param)) {
+	    if (param_is_auto(param)) {
+		pputs(prn, " auto=\"true\"");
+	    } else if (param_is_optional(param)) {
 		pputs(prn, " optional=\"true\"");
 	    }
 	    if (param_is_const(param)) {
@@ -7257,6 +7286,9 @@ static int read_min_max_deflt (char **ps, fn_param *param,
     if (!strcmp(p, "[null]")) {
 	gretl_errmsg_set(_("'null' is not a valid default for scalars"));
 	err = E_TYPES;
+    } else if (!strcmp(p, "[auto]")) {
+	/* FIXME */
+	err = E_TYPES;
     } else if (param->type == GRETL_TYPE_BOOL) {
 	if (!strncmp(p, "[TRUE]", 6)) {
 	    param->deflt = 1;
@@ -7338,7 +7370,10 @@ static int read_param_option (char **ps, fn_param *param)
     fprintf(stderr, "read_param_option: got '%s'\n", *ps);
 #endif
 
-    if (!strncmp(*ps, "[null]", 6)) {
+    if (!strncmp(*ps, "[auto]", 6)) {
+        set_param_auto(param);
+	*ps += 6;
+    } else if (!strncmp(*ps, "[null]", 6)) {
         set_param_optional(param);
 	*ps += 6;
     } else {
@@ -7518,7 +7553,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
 
     /* now scan for various optional extras: first we may have
        a [min:max:default] specification (scalars only), or a
-       [null] spec to allow no argument for "pointer"-type
+       [null|auto] spec to allow no argument for "pointer"-type
        parameters (broadly interpreted)
     */
 

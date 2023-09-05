@@ -119,6 +119,8 @@ double fn_param_maxval (const ufunc *fun, int i);
 
 double fn_param_step (const ufunc *fun, int i);
 
+int fn_param_automatic (const ufunc *fun, int i);
+
 int fn_param_optional (const ufunc *fun, int i);
 
 int fn_param_uses_xlist (const ufunc *fun, int i);
