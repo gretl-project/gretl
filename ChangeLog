@@ -20,6 +20,8 @@ version 2023c, in progress
 - Fix bug: possibly incomplete results when compacting daily
   data to weekly
 - Fix bug: wrong alignment when appending dated weekly data
+- Fix bug: invcdf() and critical() misbehaving for the chi-
+  square distribution with a CDF argument of 1.0
 - Fix bug: possible duplicate entries in GUI function package
   listing
 - Fix bug: markdown conversion not always working properly
