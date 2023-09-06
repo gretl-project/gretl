@@ -13029,7 +13029,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
                         yr = -yr;
                         julian = 1;
                     }
-                    ret->v.xval = day_of_week(yr, mo, day, julian, &p->err);
+                    ret->v.xval = legacy_day_of_week(yr, mo, day, julian, &p->err);
                 } else if (!p->err) {
                     ret->v.xval = iso_week_number(yr, mo, day, &p->err);
                 }

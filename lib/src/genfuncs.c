@@ -7622,7 +7622,7 @@ int fill_day_of_week_array (double *dow,
             yt = -yt;
             julian = 1;
         }
-        dow[t] = day_of_week(yt, mt, dt, julian, &err);
+        dow[t] = legacy_day_of_week(yt, mt, dt, julian, &err);
     }
 
     return err;
