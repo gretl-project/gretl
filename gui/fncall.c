@@ -376,17 +376,40 @@ static void cinfo_free (call_info *cinfo)
     free(cinfo);
 }
 
+static int is_nullarg_label (const char *s)
+{
+    if (s == NULL) {
+	return 0;
+    } else {
+	return strcmp(s, "[auto]") == 0 ||
+	    strcmp(s, "[null]") == 0;
+    }
+}
+
+static const char *nullarg_label (int null_OK)
+{
+    if (null_OK == 2) {
+	return "[auto]";
+    } else if (null_OK == 1) {
+	return "[null]";
+    } else {
+	return NULL;
+    }
+}
+
 static int check_args (call_info *cinfo)
 {
-    int i;
+    const char *argstr;
+    int i, null_OK;
 
     if (cinfo->args != NULL) {
 	for (i=0; i<cinfo->n_params; i++) {
 	    if (cinfo->args[i] == NULL) {
-		if (fn_param_automatic(cinfo->func, i)) {
-		    cinfo->args[i] = g_strdup("auto");
-		} else if (fn_param_optional(cinfo->func, i)) {
-		    cinfo->args[i] = g_strdup("null");
+		null_OK = fn_param_automatic(cinfo->func, i) ? 2 :
+		    fn_param_optional(cinfo->func, i) ? 1 : 0;
+		argstr = nullarg_label(null_OK);
+		if (argstr != NULL) {
+		    cinfo->args[i] = g_strdup(argstr);
 		} else {
 		    errbox_printf(_("Argument %d (%s) is missing"), i + 1,
 				  fn_param_name(cinfo->func, i));
@@ -800,10 +823,8 @@ static void update_combo_selectors (call_info *cinfo,
 	depopulate_combo_box(sel);
 	set_combo_box_strings_from_list(GTK_WIDGET(sel), newlist);
 	null_OK = widget_get_int(sel, "null_OK");
-	if (null_OK == 2) {
-	    combo_box_append_text(sel, "auto");
-	}else if (null_OK) {
-	    combo_box_append_text(sel, "null");
+	if (null_OK) {
+	    combo_box_append_text(sel, nullarg_label(null_OK));
 	}
 
 	if (target) {
@@ -825,8 +846,7 @@ static void update_combo_selectors (call_info *cinfo,
 		if (*saved == '\0') {
 		    combo_box_prepend_text(sel, "");
 		    selpos = 0;
-		} else if (!strcmp(saved, "null") ||
-			   !strcmp(saved, "auto")) {
+		} else if (is_nullarg_label(saved)) {
 		    selpos = llen;
 		}
 	    }
@@ -1548,11 +1568,7 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype,
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
 
     if (fn_param_optional(cinfo->func, i)) {
-	if (fn_param_automatic(cinfo->func, i)) {
-	    null_OK = 2;
-	} else {
-	    null_OK = 1;
-	}
+	null_OK = fn_param_automatic(cinfo->func, i) ? 2 : 1;
 	widget_set_int(combo, "null_OK", null_OK);
     }
 
@@ -1566,11 +1582,7 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype,
     }
 
     if (null_OK) {
-	if (null_OK == 2) {
-	    combo_box_append_text(combo, "auto");
-	} else {
-	    combo_box_append_text(combo, "null");
-	}
+	combo_box_append_text(combo, nullarg_label(null_OK));
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), k);
     }
 
@@ -2080,7 +2092,7 @@ static int maybe_add_amp (call_info *cinfo, int i, PRN *prn, int *add)
 	return 0;
     }
 
-    if (*name == '&' || !strcmp(name, "null") || !strcmp(name, "auto")) {
+    if (*name == '&' || is_nullarg_label(name)) {
 	return 0;
     }
 
@@ -2126,8 +2138,7 @@ static int needs_quoting (call_info *cinfo, int i)
     gchar *s = cinfo->args[i];
 
     return (t == GRETL_TYPE_STRING &&
-	    strcmp(s, "null") &&
-	    strcmp(s, "auto") &&
+	    !is_nullarg_label(s) &&
 	    get_string_by_name(s) == NULL &&
 	    *s != '"');
 }
@@ -2159,6 +2170,8 @@ static int pre_process_args (call_info *cinfo, int *autolist,
 	    strncat(auxname, cinfo->args[i], VNAMELEN);
 	    g_free(cinfo->args[i]);
 	    cinfo->args[i] = g_strdup(auxname);
+	} else if (is_nullarg_label(cinfo->args[i])) {
+	    ; /* leave it alone */
 	} else if (needs_quoting(cinfo, i)) {
 	    sprintf(auxname, "\"%s\"", cinfo->args[i]);
 	    g_free(cinfo->args[i]);
@@ -2246,7 +2259,11 @@ static void compose_fncall_line (char *line,
 	int i;
 
 	for (i=0; i<cinfo->n_params; i++) {
-	    strcat(line, cinfo->args[i]);
+	    if (is_nullarg_label(cinfo->args[i])) {
+		strcat(line, "null");
+	    } else {
+		strcat(line, cinfo->args[i]);
+	    }
 	    if (alist != NULL) {
 		arglist_record_arg(alist, i, cinfo->args[i]);
 	    }
