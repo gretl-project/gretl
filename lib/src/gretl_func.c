@@ -2313,6 +2313,10 @@ static void print_min_max_deflt (fn_param *param, PRN *prn)
 	if (!default_unset(param)) {
 	    if (na(param->deflt)) {
 		pputs(prn, "[NA]");
+	    } else if (param->deflt == INT_USE_XLIST) {
+		pputs(prn, "[$xlist]");
+	    } else if (param->deflt == INT_USE_MYLIST) {
+		pputs(prn, "[$mylist]");
 	    } else {
 		pprintf(prn, "[%g]", param->deflt);
 	    }
@@ -6715,7 +6719,8 @@ static int real_print_gfn_data (const char *fname,
 	    }
 	} else if (task == FUNCS_SAMPLE) {
 	    pputs(prn, pkg->sample);
-	} else {
+	} else if (task == FUNCS_CODE) {
+	    /* called by print_function_package_code() */
 	    print_package_code(pkg, tabwidth, prn);
 	}
 	if (free_pkg) {
@@ -6748,7 +6753,7 @@ int bundle_function_package_info (const char *fname, gretl_bundle *b)
     return real_print_gfn_data(fname, NULL, NULL, 0, FUNCS_QUERY, b);
 }
 
-/* callback used in the GUI function package browser */
+/* callback used in the GUI function package browser (gui/datafiles.c) */
 
 int print_function_package_code (const char *fname, int tabwidth,
 				 PRN *prn)
