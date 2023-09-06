@@ -1385,7 +1385,7 @@ static GtkWidget *double_arg_selector (call_info *cinfo, int i,
 	deflt = atof(prior_val);
     }
 
-    if (deflt > maxv) {
+    if (na(deflt)) {
 	/* note that default may be NADBL */
 	deflt = minv;
     }
