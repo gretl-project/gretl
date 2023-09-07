@@ -41,6 +41,11 @@ static int days_in_month[2][13] = {
     {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
 };
 
+/* note: @w is the number of days in a week, and @d is the
+   day-of-week number for a given day.
+*/
+#define day_in_calendar(w, d) ((d) <= (w))
+
 /* Jan 1, 0001, was a Monday on the proleptic Gregorian calendar */
 #define DAY1 1
 
@@ -455,6 +460,68 @@ guint32 get_epoch_day (const char *datestr)
     return g_date_get_julian(&date);
 }
 
+#if 0 /* these two functions should be reliable, but are kinda laborious */
+
+static int obsnum_via_dow (guint32 ed0, guint32 ut, int wkdays)
+{
+    int dow = weekday_from_epoch_day(ed0);
+    guint32 t;
+    int n = 0;
+
+    for (t=ed0; t<=ut; t++) {
+	if (dow <= wkdays) {
+	    n++;
+	}
+	dow = dow == 7 ? 1 : dow+1;
+    }
+
+    return n - 1;
+}
+
+static guint32 t_to_epoch_day2 (int obs, guint32 ed0,
+				const DATASET *dset)
+{
+    if (obs == 0) {
+	return ed0;
+    } else {
+	int dow = weekday_from_epoch_day(ed0);
+	int t, n = 0;
+
+	for (t=1; t<dset->n; t++) {
+	    if (dow <= dset->pd) {
+		n++;
+		if (n == obs) {
+		    break;
+		}
+	    }
+	    dow = dow == 7 ? 1 : dow+1;
+	}
+
+	return ed0 + t;
+    }
+}
+
+#endif /* 0 */
+
+/* Note that ed0 cannot be a Sunday, since we're working with a 5- or
+   6-day calendar here. So the mod-7 operation will give us the
+   correct day-of-week.
+*/
+
+static int subtract_irrelevant_days (guint32 ed0, int wkdays, int t)
+{
+    int dow0 = (ed0 - 1 + DAY1) % 7;
+    int wkends = (t + dow0 - 1) / 7;
+
+    if (wkdays == 5) {
+	t -= 2 * wkends;
+    } else {
+	t -= wkends;
+    }
+
+    return t;
+}
+
 /**
  * calendar_obs_number:
  * @datestr: string representation of calendar date, in form
@@ -464,7 +531,7 @@ guint32 get_epoch_day (const char *datestr)
  * @dset.
  *
  * Returns: The zero-based observation number for the given
- * date within the current data set.
+ * date within the current dataset.
  */
 
 int calendar_obs_number (const char *datestr, const DATASET *dset,
@@ -475,8 +542,8 @@ int calendar_obs_number (const char *datestr, const DATASET *dset,
     int t = (int) ut;
 
 #if CAL_DEBUG
-    fprintf(stderr, "calendar_obs_number: '%s' gave epoch day = %d\n",
-	    datestr, (int) t);
+    fprintf(stderr, "calendar_obs_number: '%s' -> epoch day %u, dow %d\n",
+	    datestr, ut, weekday_from_epoch_day(ut));
 #endif
 
     if (t <= 0 || (!nolimit && t < ed0)) {
@@ -496,27 +563,13 @@ int calendar_obs_number (const char *datestr, const DATASET *dset,
 	/* weekly data */
 	t /= 7;
     } else if (dset->pd == 5 || dset->pd == 6) {
-	/* daily, 5- or 6-day week */
-	int startday, wkends;
-
-	/* check for out-of-calendar days */
+	/* check for out-of-calendar input day */
 	if (weekday_from_epoch_day(ut) > dset->pd) {
+	    fprintf(stderr, "Invalid date %s for %d-day data\n",
+		    datestr, dset->pd);
 	    return -1;
-	}
-
-	/* subtract the number of irrelevant days */
-	startday = (ed0 - 1 + DAY1) % 7; /* FIXME? */
-	wkends = (t + startday - 1) / 7;
-
-#if CAL_DEBUG
-	fprintf(stderr, "calendar_obs_number: ed0=%d, date=%s, t=%d, startday=%d, wkends=%d\n",
-		(int) ed0, datestr, (int) t, startday, wkends);
-#endif
-
-	if (dset->pd == 5) {
-	    t -= (2 * wkends);
 	} else {
-	    t -= wkends;
+	    t = subtract_irrelevant_days(ed0, dset->pd, t);
 	}
     }
 
@@ -524,19 +577,19 @@ int calendar_obs_number (const char *datestr, const DATASET *dset,
 }
 
 /* Convert from 0-based @t in dataset to epoch day, assuming a
-   complete calendar (relative to @wkdays).
+   complete 5- or 6-day calendar (specified by @wkdays).
 */
 
-static int t_to_epoch_day (int t, guint32 start, int wkdays)
+static guint32 t_to_epoch_day (int t, guint32 ed0, int wkdays)
 {
-    int startday = (start - 1 + DAY1) % 7; /* FIXME */
-    int wkends = (t + startday - 1) / wkdays;
+    int startdow = (ed0 - 1 + DAY1) % 7;
+    int wkends = (t + startdow - 1) / wkdays;
 
     if (wkdays == 5) {
 	wkends *= 2;
     }
 
-    return start + t + wkends;
+    return ed0 + t + wkends;
 }
 
 /**
@@ -550,15 +603,18 @@ static int t_to_epoch_day (int t, guint32 start, int wkdays)
 
 guint32 epoch_day_from_t (int t, const DATASET *dset)
 {
-    guint32 d0 = (guint32) dset->sd0;
+    guint32 ed0 = (guint32) dset->sd0;
     guint32 dt = 0;
 
-    if (dset->pd == 52) {
-	dt = d0 + 7 * t;
+    if (t == 0) {
+	return ed0;
+    } else if (dset->pd == 52) {
+	dt = ed0 + 7 * t;
     } else if (dset->pd == 7) {
-	dt = d0 + t;
+	dt = ed0 + t;
     } else {
-	dt = t_to_epoch_day(t, d0, dset->pd);
+	/* 5- or 6-day daily data */
+	dt = t_to_epoch_day(t, ed0, dset->pd);
     }
 
     return dt;
@@ -805,11 +861,6 @@ double legacy_day_of_week (int y, int m, int d, int julian, int *err)
     }
 }
 
-/* note: @w is the number of days in a week, and @d is the
-   day-of-week number for a given day.
-*/
-#define day_in_calendar(w, d) ((d) <= (w))
-
 /**
  * weekday_from_date:
  * @datestr: calendar representation of date, [YY]YY/MM/DD
@@ -1042,7 +1093,7 @@ int month_day_index (int y, int m, int d, int wkdays)
 	    if (day_in_calendar(wkdays, dow)) {
 		ret++;
 	    }
-	    dow = (dow == 7)? 1 : dow + 1;
+	    dow = dow == 7 ? 1 : dow+1;
 	}
     }
 
@@ -1365,7 +1416,7 @@ double easterdate (int year)
     int h = (19 * a + b - d - g + 15) % 30;
     int i = c / 4;
     int k = c % 4;
-    int L = (32 + 2 * e + 2 * i - h - k) % 7; /* FIXME? */
+    int L = (32 + 2 * e + 2 * i - h - k) % 7;
     int m = (a + 11 * h + 22 * L) / 451 ;
 
     int month = (h + L - 7 * m + 114) / 31;
