@@ -2642,11 +2642,11 @@ function bundle GUI_exogtest (int xvar[$mylist] "regressor to test")
   \item A parameter of type \texttt{list} can be inflected in up to
     three ways (illustrated below).
   \end{itemize}
-  This is achieved by including a private function which returns a
-  bundle, holding a sub-bundle for each parameter to be inflected.
-  This is most easily explained by example. Here's the (slightly
-  simplified) signature of the \texttt{gui-main} function for a
-  package currently in development:
+  These things are achieved by including in the package a private
+  function which returns a bundle, holding a sub-bundle for each
+  parameter to be inflected.  This is most easily explained by
+  example. Here's the (slightly simplified) signature of the
+  \texttt{gui-main} function for a package currently in development:
 \begin{code}
 function bundle GUI_rf (\
    series y "dependent variable",
@@ -2773,28 +2773,27 @@ displaying a \textsf{gig} bundle.
 At present there are five spec file entries in this category; in the
 GUI package editor they appear in the \textsf{Extra properties} window
 under the tabs \textsf{Data files}, \textsf{Dependencies}, and
-\textsf{Menu entry}.
+\textsf{Menu attachment}.
 
 \begin{description}
 
-\item \texttt{data-files} (optional): Specifies an extra file or
-  subdirectory that should be included in the package. Use of this
-  option implies that the package should take the form of a
-  zipfile. If just one extra file is to be included you may give its
-  name as the parameter to \texttt{data-files} (as in the example
-  below); if several extra files are to be packaged, put them into a
-  subdirectory and give its name as parameter. See
-  chapter~\ref{chap:zipfile} for examples, and in particular
-  section~\ref{sec:HIP} for the special meaning of including a
-  subdirectory named \texttt{examples}.
+\item \texttt{data-files}: Specifies an extra file or subdirectory
+  that should be included in the package. Use of this option is valid
+  only if the package takes the form of a zipfile. If just one extra
+  file is to be included you may give its name as the parameter to
+  \texttt{data-files} (as in the example below); if several extra
+  files are to be packaged, put them into a subdirectory and give its
+  name as parameter. See chapter~\ref{chap:zipfile} for examples, and
+  in particular section~\ref{sec:HIP} for the special meaning of
+  including a subdirectory named \texttt{examples}.
 
   \ttusage{data-files = special.gdt}
 
-\item \texttt{depends} (optional): Specifies one or more packages upon
-  which the given package depends. This information should be added if
-  the package calls functions that reside in other packages.  Use of
-  this option ensures that when your package is loaded, any
-  dependencies are also loaded.  For example, there's a package named
+\item \texttt{depends}: Specifies one or more packages upon which the
+  given package depends. This information should be added if the
+  package calls functions that reside in other packages.  Use of this
+  option ensures that when your package is loaded, any dependencies
+  are also loaded.  For example, there's a package named
   \texttt{extra} which provides various utility functions that are not
   available as gretl built-ins.  If your package uses functions from
   \texttt{extra} you should include the following line in its spec
@@ -2802,44 +2801,81 @@ under the tabs \textsf{Data files}, \textsf{Dependencies}, and
 
   \ttusage{depends = extra}
 
-\item \texttt{provider} (optional): This should be used if your
-  package requires access to the \textit{private} functions of another
-  package, a particularly close form of dependency. Only one package
-  can be specified in this way.  In the GUI this feature is
-  represented by a check box against the first entry under the
-  \textsf{Dependencies} tab. In the spec file, specifying a package as
-  provider automatically includes it as a dependency.
+\item \texttt{provider}: This should be used if your package requires
+  access to the \textit{private} functions of another package, a
+  particularly close form of dependency. Only one package can be
+  specified in this way.  In the GUI this feature is represented by a
+  check box against the first entry under the \textsf{Dependencies}
+  tab. In the spec file, specifying a package as provider
+  automatically includes it as a dependency.
 
   \ttusage{provider = extra}
 
-\item \texttt{R-depends} (optional): This should be used if your
-  package depends on \textsf{R} for its functionality. You should give
-  an \textsf{R} version with which the package is known to work, along
-  with the names and known-good version numbers of any \textsf{R}
-  packages it requires. The example below might be suitable for a
-  package that requires \textsf{R} and its \textsf{glmnet} package.
-
-  \ttusage{R-depends = R 3.5.3 glmnet 2.0-18}
-
-\item \texttt{wants-data-access} (optional): In some cases your
-  package may need to read data outside of the active sample
-  range. This could be past initial values in a dynamic model, or it
-  could be future values of exogenous regressors used for
-  out-of-sample (conditional) forecasting.  But since a user-written
-  hansl function is normally restricted to the incoming sample
-  specified by the caller of the function, this would not be
-  possible. In such situations, your package should specify this
-  switch, and if upon execution the gretl user agrees, your relevant
-  packaged function may use the \texttt{smpl} command to reset the
-  active sample inside the function even beyond the incoming
-  limits. (The original sample will be restored when exiting the
-  function, as always.)
+\item \texttt{wants-data-access}: In some cases your package may need
+  to read data outside of the active sample range. This could be
+  pre-sample initial values in a dynamic model, or it could be
+  post-sample values of exogenous regressors used for out-of-sample
+  (conditional) forecasting.  But since a user-written hansl function
+  is normally restricted to the incoming sample specified by the
+  caller of the function, this would not be possible. In such
+  situations, your package should specify this switch, and if upon
+  execution the gretl user agrees, your relevant packaged function may
+  use the \texttt{smpl} command to reset the active sample inside the
+  function even beyond the incoming limits. (The original sample will
+  be restored when exiting the function, as always.) In the GUI
+  package editor this item appears under \textsf{Menu attachment}.
 
   \ttusage{wants-data-access = true}
 
+\item \texttt{R-depends}: This should be used if your package depends
+  on \textsf{R} for its functionality. You should give an \textsf{R}
+  version with which the package is known to work, along with the
+  names and known-good version numbers of any \textsf{R} packages it
+  requires. The example below might be suitable for a package that
+  requires \textsf{R} and its \textsf{glmnet} package. Multiple
+  elements should be separated by spaces
+
+  \ttusage{R-depends = R 3.5.3 glmnet 2.0-18}
+
+\item \texttt{R-setup}: This is specific to packages that call upon
+  \textsf{R}. The required parameter is the name of a private hansl
+  function, whose role is to define an \textsf{R} function. The hansl
+  function should take no arguments and should not return anything
+  (that is, be of type \texttt{void}). It should just be a thin
+  wrapper over a gretl \texttt{foreign} block, as illustrated in
+  Listing~\ref{ex:rsetup}.
+
+  This mechanism depends on access to the \textsf{R} shared library,
+  which will usually be available when \textsf{R} is installed. The
+  idea is that the \textsf{R} function in question is ``registered''
+  with the \textsf{R} library when your package is loaded, and can
+  thereafter be called---with the prefix ``\texttt{R:}''---as if were
+  a native gretl function, avoiding the need for further use of a
+  \texttt{foreign} block. In relation to Listing~\ref{ex:rsetup}, once
+  \texttt{foo} is registered with \textsf{R}, hansl code in your
+  package can call \texttt{R:foo} (with suitable arguments, of course)
+  and retrieve whetever it returns, without need for further use of
+  gretl's \texttt{foreign} apparatus. FIXME: MORE TO BE ADDED HERE.
+
+  \ttusage{R-setup = foo\_setup}
+
+\begin{script}[htbp]
+  \caption{Example of an \texttt{R-setup} function}
+  \label{ex:rsetup}
+\begin{code}
+   function void foo_setup (void)
+      foreign language=R --quiet
+      foo <- function(<args>) {
+         # R code goes here
+      }
+      end foreign
+   end function
+\end{code}
+\end{script}
+
 \end{description}
 
-In each case multiple elements should be separated by spaces.
+%% FIXME add an account of R-setup around here
 
 \section{A note on gretl versioning}
 \label{sec:versioning}
