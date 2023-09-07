@@ -381,7 +381,6 @@ enum {
     F_UNVECH,
     F_DESEAS,
     F_MAT2LIST,
-    F_YMD,
     F_CMULT,
     F_CDIV,
     F_PEXPAND,

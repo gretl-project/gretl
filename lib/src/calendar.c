@@ -41,8 +41,9 @@ static int days_in_month[2][13] = {
     {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
 };
 
-/* note: @w is the number of days in a week, and @d is the
-   day-of-week number for a given day.
+/* Note: @w is the number of days in a week, and @d is the
+   day-of-week number for a given day. This macro assumes
+   that day-of-week runs from Monday = 1 to Sunday = 7.
 */
 #define day_in_calendar(w, d) ((d) <= (w))
 
@@ -360,39 +361,6 @@ guint32 epoch_day_from_ymd_basic (double ymd)
     d = ymd - m * 100;
 
     return epoch_day_from_ymd(y, m, d);
-}
-
-/**
- * epoch_day_from_ymd_checked:
- * @ymd: number that is supposed to represent YYYYMMDD.
- * @err: location to receive error code.
- *
- * Returns: the epoch day number corresponding to @ymd, interpreted
- * as YYYYMMDD (ISO 8601 "basic") if possible.
- */
-
-guint32 epoch_day_from_ymd_checked (double ymd, int *err)
-{
-    guint32 u;
-
-    u = gretl_unsigned_from_double(ymd, err);
-    if (u > 99991231) {
-	u = 0;
-    } else {
-	int y, m, d;
-
-	y = u / 10000;
-	u -= y * 10000;
-	m = u / 100;
-	d = u - m * 100;
-	u = epoch_day_from_ymd(y, m, d);
-    }
-
-    if (u == 0) {
-	*err = E_INVARG;
-    }
-
-    return u;
 }
 
 /**

@@ -8971,71 +8971,6 @@ static NODE *errmsg_node (NODE *l, parser *p)
     return ret;
 }
 
-static NODE *ymd_node (NODE *l, NODE *r, parser *p)
-{
-    NODE *ret = aux_matrix_node(p);
-    gretl_matrix *ymd = NULL;
-    guint32 ed;
-    int y, m, d, iso;
-
-    iso = node_get_bool(r, p, 0);
-    if (p->err) {
-        return ret;
-    }
-
-    if (scalar_node(l)) {
-        /* the scalar case */
-        if (iso) {
-            ed = epoch_day_from_ymd_checked(l->v.xval, &p->err);
-        } else {
-            ed = node_get_guint32(l, p);
-        }
-        if (!p->err) {
-            p->err = ymd_bits_from_epoch_day(ed, &y, &m, &d);
-        }
-        if (!p->err) {
-            ymd = gretl_vector_alloc(3);
-            ymd->val[0] = y; ymd->val[1] = m; ymd->val[2] = d;
-        }
-    } else if (!null_node(l) && l->t == SERIES) {
-        /* the series case */
-        int t, T = sample_size(p->dset);
-
-        ymd = gretl_matrix_alloc(T, 3);
-        if (ymd == NULL) {
-            p->err = E_ALLOC;
-        }
-        for (t=p->dset->t1; t<=p->dset->t2 && !p->err; t++) {
-            if (iso) {
-                ed = epoch_day_from_ymd_checked(l->v.xvec[t], &p->err);
-            } else {
-                ed = gretl_unsigned_from_double(l->v.xvec[t], &p->err);
-            }
-            if (!p->err) {
-                p->err = ymd_bits_from_epoch_day(ed, &y, &m, &d);
-            }
-            if (!p->err) {
-                gretl_matrix_set(ymd, t, 0, y);
-                gretl_matrix_set(ymd, t, 1, m);
-                gretl_matrix_set(ymd, t, 2, d);
-            }
-        }
-    } else {
-        node_type_error(F_YMD, 1, NUM, l, p);
-    }
-
-    if (!p->err) {
-        char *S[] = {"year", "month", "day"};
-
-        gretl_matrix_set_colnames(ymd, strings_array_dup(S, 3));
-        ret->v.m = ymd;
-    } else {
-        gretl_matrix_free(ymd);
-    }
-
-    return ret;
-}
-
 static NODE *aux_sized_array_node (GretlType type, int n, parser *p)
 {
     NODE *ret = aux_array_node(p);
@@ -18840,9 +18775,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_ISODATE:
     case F_JULDATE:
         ret = isodate_node(l, r, t->t, p);
-        break;
-    case F_YMD:
-        ret = ymd_node(l, r, p);
         break;
     case F_STRFTIME:
     case F_STRFDAY:
