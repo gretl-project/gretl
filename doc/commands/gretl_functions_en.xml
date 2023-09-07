@@ -4334,15 +4334,17 @@
 
     <function name="easterday" section="calendar" output="asinput">
       <fnargs>
-	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="anyfloat">y</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Given the year in argument <argname>x</argname>, returns the
-	  date of Easter in the Gregorian calendar as <math> month +
-	  day/100</math>. Note that April the 10th, is, under this
-	  convention, 4.1; hence, 4.2 is April the 20th, not April the
-	  2nd (which would be 4.02).
+	  Given the year in argument <argname>y</argname>, returns the
+	  date of Easter on the Gregorian calendar as <math>month +
+	  day/100</math>. For example, in 2014 the date of Easter
+	  was April 20, which is represented under this convention
+	  as 4.2. (Note that April 2 would be returned as 4.02.)
+	  The following code shows how month and day can be extracted
+	  from the return value.
 	</para>
 	<code>
 	  scalar e = easterday(2014)
