@@ -458,7 +458,7 @@ guint32 get_epoch_day (const char *datestr)
 /**
  * calendar_obs_number:
  * @datestr: string representation of calendar date, in form
- * YY[YY]/MM/DD.
+ * YY[YY]-MM-DD.
  * @dset: pointer to dataset.
  * @nolimit: allow @datestr to be outside of the range of
  * @dset.
@@ -497,11 +497,10 @@ int calendar_obs_number (const char *datestr, const DATASET *dset,
 	t /= 7;
     } else if (dset->pd == 5 || dset->pd == 6) {
 	/* daily, 5- or 6-day week */
-	int wd = weekday_from_epoch_day(ut);
 	int startday, wkends;
 
 	/* check for out-of-calendar days */
-	if (wd > dset->pd) {
+	if (weekday_from_epoch_day(ut) > dset->pd) {
 	    return -1;
 	}
 
