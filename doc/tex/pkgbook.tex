@@ -2855,7 +2855,15 @@ under the tabs \textsf{Data files}, \textsf{Dependencies}, and
   \texttt{foo} is registered with \textsf{R}, hansl code in your
   package can call \texttt{R:foo} (with suitable arguments, of course)
   and retrieve whetever it returns, without need for further use of
-  gretl's \texttt{foreign} apparatus. FIXME: MORE TO BE ADDED HERE.
+  gretl's \texttt{foreign} apparatus.
+
+  To gain a fuller understanding of this facility, please refer to
+  Chapter 44 of the \GUG, in particular section 44.7, ``Further use of
+  the R library''. Here we'll just note that when a package includes
+  an \texttt{R-setup} function it is tested for applicability when the
+  package is first loaded. If the \textsf{R} library cannot be found
+  or the \textsf{R} code that defines a function is not successfully
+  executed, the problem should be quickly apparent.
 
   \ttusage{R-setup = foo\_setup}
 
