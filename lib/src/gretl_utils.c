@@ -1667,7 +1667,7 @@ guint32 gretl_unsigned_from_double (double x, int *err)
 {
     guint32 u = 0;
 
-    if (na(x) || x < 0 || fabs(x) > UINT_MAX) {
+    if (na(x) || x < 0 || fabs(x) > G_MAXUINT32) {
         *err = E_INVARG;
     } else {
         double f = floor(x);
