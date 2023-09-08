@@ -428,49 +428,6 @@ guint32 get_epoch_day (const char *datestr)
     return g_date_get_julian(&date);
 }
 
-#if 0 /* these two functions should be reliable, but are kinda laborious */
-
-static int obsnum_via_dow (guint32 ed0, guint32 ut, int wkdays)
-{
-    int dow = weekday_from_epoch_day(ed0);
-    guint32 t;
-    int n = 0;
-
-    for (t=ed0; t<=ut; t++) {
-	if (dow <= wkdays) {
-	    n++;
-	}
-	dow = dow == 7 ? 1 : dow+1;
-    }
-
-    return n - 1;
-}
-
-static guint32 t_to_epoch_day2 (int obs, guint32 ed0,
-				const DATASET *dset)
-{
-    if (obs == 0) {
-	return ed0;
-    } else {
-	int dow = weekday_from_epoch_day(ed0);
-	int t, n = 0;
-
-	for (t=1; t<dset->n; t++) {
-	    if (dow <= dset->pd) {
-		n++;
-		if (n == obs) {
-		    break;
-		}
-	    }
-	    dow = dow == 7 ? 1 : dow+1;
-	}
-
-	return ed0 + t;
-    }
-}
-
-#endif /* 0 */
-
 /* Note that ed0 cannot be a Sunday, since we're working with a 5- or
    6-day calendar here. So the mod-7 operation will give us the
    correct day-of-week.
