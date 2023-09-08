@@ -50,6 +50,11 @@ static int days_in_month[2][13] = {
 /* Jan 1, 0001, was a Monday on the proleptic Gregorian calendar */
 #define DAY1 1
 
+/* The number that must be added to an "epoch day" (see below)
+   to obtain the astronomers' Julian Day Number
+*/
+#define JDN_ADJ 1721425
+
 /* Note on the GLib API used below: where "julian" occurs in the names
    of GLib calendrical functions it refers to the "Julian day"; that is,
    the number of days since some fixed starting point, as used by
@@ -174,6 +179,9 @@ guint32 nearby_epoch_day (int y, int m, int d, int wkdays)
  * @m: location to receive month.
  * @m: location to receive day.
  *
+ * Fills @y, @m and @d with year, month and day on the (possibly
+ * proleptic) Gregorian calendar.
+ *
  * Returns: 0 on success, non-zero on error.
  */
 
@@ -202,6 +210,9 @@ int ymd_bits_from_epoch_day (guint32 ed, int *y, int *m, int *d)
  * @m: location to receive month.
  * @m: location to receive day.
  *
+ * Given an epoch day, fills @y, @m and @d with year, month and day on
+ * the (possibly proleptic) Julian calendar.
+ *
  * Follows the algorithm of E.G. Richards (2013), "Calendars," In S.E.
  * Urban & P.K. Seidelmann, eds. Explanatory Supplement to the Astronomical
  * Almanac, 3rd ed. (pp. 585-624), Mill Valley, CA: University Science Books
@@ -214,24 +225,24 @@ int ymd_bits_from_epoch_day (guint32 ed, int *y, int *m, int *d)
  * Returns: 0 on success, non-zero on error.
  */
 
-int julian_ymd_bits_from_epoch_day (guint32 ed, int *py,
-				    int *pm, int *pd)
+int julian_ymd_bits_from_epoch_day (guint32 ed, int *y,
+				    int *m, int *d)
 {
-    int y = 4716;
+    int x = 4716;
     int p = 1461;
-    int f = ed + 1721425 + 1401;
+    int f = ed + JDN_ADJ + 1401;
     int e = 4 * f + 3;
     int g = (e % p)/4;
     int h = 5 * g + 2;
 
-    /* The addition of 1721425 above translates from our
+    /* The addition of JDN_ADJ above translates from our
        "epoch day" to Julian Day Number; the addition of 1401
        to the JDN is specified by Richards' algorithm.
     */
 
-    *pd = (h % 153)/5 + 1;
-    *pm = (h/153 + 2) % 12 + 1;
-    *py = e/p - y + (14 - *pm)/12;
+    *d = (h % 153)/5 + 1;
+    *m = (h/153 + 2) % 12 + 1;
+    *y = e/p - x + (14 - *m)/12;
 
     return 0;
 }
@@ -266,7 +277,7 @@ guint32 epoch_day_from_julian_ymd (int y, int m, int d)
 	/* prior to AD 1 */
 	return 0;
     } else {
-	return (guint32) jd - 1721425;
+	return (guint32) jd - JDN_ADJ;
     }
 }
 
@@ -347,18 +358,30 @@ double ymd_basic_from_epoch_day (guint32 ed, int julian, int *err)
 
 guint32 epoch_day_from_ymd_basic (double ymd)
 {
-    gchar tmp[9];
+    char bit[4] = {0};
+    char tmp[9];
     int y, m, d, n;
 
-    n = g_snprintf(tmp, 9, "%.0f", ymd);
-    if (n != 8) {
+    if (ymd != floor(ymd) || ymd < 10101 || ymd > 99991231) {
 	return 0;
     }
 
-    y = floor(ymd / 10000);
-    ymd -= y * 10000;
-    m = floor(ymd / 100);
-    d = ymd - m * 100;
+    sprintf(tmp, "%.0f", ymd);
+    n = strlen(tmp);
+
+    /* get day from the last two digits */
+    bit[0] = tmp[n-2];
+    bit[1] = tmp[n-1];
+    d = atoi(bit);
+
+    /* get month from the preceding two digits */
+    bit[0] = tmp[n-4];
+    bit[1] = tmp[n-3];
+    m = atoi(bit);
+
+    /* get year from the leading digit(s) */
+    tmp[n-4] = '\0';
+    y = atoi(tmp);
 
     return epoch_day_from_ymd(y, m, d);
 }
