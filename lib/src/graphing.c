@@ -5976,14 +5976,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     return finalize_plot_input_file(fp);
 }
 
-/* This function handles the case where the caller wants
-   a gretlRGB numeric value as well as the case where an
-   RGB string should be written into @targ.
-*/
-
-static gretlRGB process_color_string (const char *s,
-				      char *targ,
-				      int *err)
+gretlRGB numeric_color_from_string (const char *s, int *err)
 {
     gretlRGB ret = 0;
     char *test = NULL;
@@ -6008,9 +6001,6 @@ static gretlRGB process_color_string (const char *s,
 	    if (*test != '\0') {
 		*err = invalid_field_error(s);
 	    }
-	}
-	if (targ != NULL) {
-	    sprintf(targ, "#%x", ret);
 	}
 	return ret;
     }
@@ -6049,27 +6039,7 @@ static gretlRGB process_color_string (const char *s,
 	}
     }
 
-    if (targ != NULL) {
-	sprintf(targ, "#%x", ret);
-    }
-
     return ret;
-}
-
-/* backward compat: used only in gui/gpt_control.c */
-
-int parse_gnuplot_color (const char *s, char *targ)
-{
-    int err = 0;
-
-    process_color_string(s, targ, &err);
-    return err;
-}
-
-gretlRGB numeric_color_from_string (const char *s,
-				    int *err)
-{
-    return process_color_string(s, NULL, err);
 }
 
 static int *get_x_sorted_order (const FITRESID *fr,

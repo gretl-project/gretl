@@ -2076,15 +2076,16 @@ static int verify_rgb (char *rgb)
 	s++;
 	p = strchr(s, delim);
 	if (p != NULL) {
+	    gretlRGB color;
 	    char test[18] = {0};
 	    int len = p - s;
 
 	    if (len >= 3 && len <= 17) {
 		strncat(test, s, len);
-		/* Note: parse_gnuplot_color() writes to its
-		   second argument if there's no error.
-		*/
-		err = parse_gnuplot_color(test, rgb);
+		color = numeric_color_from_string(test, &err);
+		if (!err) {
+		    sprintf(rgb, "#%x", color);
+		}
 	    } else {
 		err = E_DATA;
 	    }
