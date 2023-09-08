@@ -273,7 +273,7 @@ guint32 epoch_day_from_julian_ymd (int y, int m, int d)
 
     jd = d + (153*m + 2)/5 + 365*y + y/4 - 32083;
 
-    if (jd <= 1721425) {
+    if (jd <= JDN_ADJ) {
 	/* prior to AD 1 */
 	return 0;
     } else {
