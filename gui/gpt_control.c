@@ -585,8 +585,7 @@ static void real_add_png_term_line (FILE *ftarg, FILE *fsrc,
 	    flags = GPT_XW;
 	} else if (sscanf(line, "# geoplot %d %d", &ix, &iy) == 2) {
 	    ; /* OK */
-	} else if (!strncmp(line, "set style line", 14) ||
-		   !strncmp(line, "set linetype", 12)) {
+	} else if (!strncmp(line, "set linetype", 12)) {
 	    /* line styles already present */
 	    add_line_styles = 0;
 	} else if (!strncmp(line, "plot", 4)) {
@@ -790,8 +789,7 @@ void filter_gnuplot_file (int mono, const char *inpname,
 	}
 
 	if (mono) {
-	    if ((strstr(pline, "set style line") || strstr(pline, "set linetype"))
-		&& strstr(pline, "rgb")) {
+	    if (strstr(pline, "set linetype") && strstr(pline, "rgb")) {
 		continue;
 	    } else if (strstr(pline, "set style fill solid")) {
 		fputs("set style fill solid 0.3\n", fpout);
@@ -2097,24 +2095,31 @@ static int verify_rgb (char *rgb)
     return err;
 }
 
+/* e.g. set linetype 1 pt 6  lc rgb "#1B9E77" # dark teal
+        set linetype 2 pt 7  lc rgb "#D95F02" # dark orange
+*/
+
 static int parse_linetype (const char *s, linestyle *styles)
 {
     const char *p;
-    int n, i = 0;
+    int n, idx = 0;
     int err = 0;
 
-    n = sscanf(s, " %d", &i);
+    /* read the 1-based index of the linetype */
+    n = sscanf(s, " %d", &idx);
 
-    if (n != 1 || i <= 0 || i > N_GP_LINETYPES) {
+    if (n != 1 || idx <= 0 || idx > N_GP_LINETYPES) {
 	/* get out on error */
 	return 1;
     } else {
 	/* convert index to zero-based */
-	i -= 1;
+	idx -= 1;
     }
 
     if (!err && (p = strstr(s, " lc ")) != NULL) {
-	/* 20 bytes allows for quote characters */
+	/* check for a color specification (20 bytes
+	   allows for quoted named colors)
+	*/
 	char lc[20];
 
 	p += 4;
@@ -2123,37 +2128,41 @@ static int parse_linetype (const char *s, linestyle *styles)
 	}
 	p += strspn(p, " ");
 	if (sscanf(p, "%19s", lc)) {
+	    /* validate and convert to hex if needed */
 	    err = verify_rgb(lc);
 	    if (!err) {
-		strcpy(styles[i].lc, lc);
+		strcpy(styles[idx].lc, lc);
 	    }
 	} else {
 	    err = 1;
 	}
     }
     if (!err && (p = strstr(s, " lw ")) != NULL) {
+	/* check line-width specification */
 	float lw = 0.0;
 
 	if (sscanf(p + 4, "%f", &lw)) {
-	    styles[i].lw = lw;
+	    styles[idx].lw = lw;
 	} else {
 	    err = 1;
 	}
     }
     if (!err && (p = strstr(s, " dt ")) != NULL) {
+	/* check dash-type specification */
 	int dt = 0;
 
 	if (sscanf(p + 4, "%d", &dt)) {
-	    styles[i].dt = dt;
+	    styles[idx].dt = dt;
 	} else {
 	    err = 1;
 	}
     }
     if (!err && (p = strstr(s, " pt ")) != NULL) {
+	/* check point-type specification */
 	int pt = 0;
 
 	if (sscanf(p + 4, "%d", &pt)) {
-	    styles[i].pt = pt;
+	    styles[idx].pt = pt;
 	} else {
 	    err = 1;
 	}
@@ -2174,11 +2183,7 @@ static int parse_gp_set_line (GPT_SPEC *spec,
     int err = 0;
 
     if (!strncmp(s, "set linetype", 12)) {
-	/* e.g. set linetype 1 lc rgb "#ff0000" */
 	lt_pos = 12;
-    } else if (!strncmp(s, "set style line", 14)) {
-	/* legacy: e.g. set style line 1 lc rgb "#ff0000" */
-	lt_pos = 14;
     } else if (!strncmp(s, "set style fill solid", 20)) {
 	/* special with multi-word key */
 	strncat(val, s + 20, 8);
@@ -2378,6 +2383,46 @@ static void plotspec_destroy_markers (GPT_SPEC *spec)
     spec->n_markers = 0;
 }
 
+static int get_boxplot_auxdata (GPT_SPEC *spec, char *line,
+				const char *buf)
+{
+    double x, y;
+    int i, n, r = 0, c = 0;
+    int err = 0;
+
+    n = sscanf(line + 9, "%d %d", &r, &c);
+
+    if (n == 2 && r > 0 && c == 2) {
+	spec->auxdata = gretl_matrix_alloc(r, c);
+	if (spec->auxdata != NULL) {
+	    gretl_push_c_numeric_locale();
+	    if (spec->heredata) {
+		/* skip a line: "$aux << EOA" */
+		if (bufgets(line, MAXLEN - 1, buf) == NULL) {
+		    err = E_DATA;
+		}
+	    }
+	    for (i=0; i<r && !err; i++) {
+		if (bufgets(line, MAXLEN - 1, buf) == NULL) {
+		    err = E_DATA;
+		} else if (sscanf(line, "%lf %lf", &x, &y) != 2) {
+		    err = E_DATA;
+		} else {
+		    gretl_matrix_set(spec->auxdata, i, 0, x);
+		    gretl_matrix_set(spec->auxdata, i, 1, y);
+		}
+	    }
+	    gretl_pop_c_numeric_locale();
+	    if (err) {
+		gretl_matrix_free(spec->auxdata);
+		spec->auxdata = NULL;
+	    }
+	}
+    }
+
+    return err;
+}
+
 /* Determine the number of data points in a plot. While we're at it,
    determine the type of plot, check whether there are any
    data-point markers along with the data, and see if there are
@@ -2391,7 +2436,7 @@ static void get_plot_nobs (png_plot *plot,
 			   long *datapos)
 {
     GPT_SPEC *spec = plot->spec;
-    int n = 0, started = -1;
+    int nobs = 0, started = -1;
     int startmin = 1;
     long auxpos = 0;
     char line[MAXLEN], test[12];
@@ -2402,7 +2447,6 @@ static void get_plot_nobs (png_plot *plot,
     *do_markers = 0;
 
     while (bufgets(line, MAXLEN - 1, buf)) {
-
 	if (*line == '#' && spec->code == PLOT_REGULAR) {
 	    tailstrip(line);
 	    spec->code = plot_type_from_string(line);
@@ -2416,36 +2460,25 @@ static void get_plot_nobs (png_plot *plot,
 		break;
 	    }
 	}
-
 	if (sscanf(line, "# n_bars = %d", &spec->nbars) == 1) {
 	    /* for old-style data representation */
 	    startmin += spec->nbars;
 	    continue;
 	}
-
 	if (spec->nbars > 0 && !strncmp(line, "$bars <", 7)) {
 	    *barpos = buftell(buf);
 	}
-
 	if (!strncmp(line, "# auxdata", 9)) {
 	    auxpos = buftell(buf);
 	}
-
 	if (started < 0 && line_starts_heredata(line, &eod)) {
-	    /* newer method of handling plot data */
+	    /* "heredoc" method of handling plot data */
 	    spec->heredata = 1;
 	    *datapos = buftell(buf);
-#if GPDEBUG
-	    fprintf(stderr, "*** got heredata, datapos %d\n", (int) *datapos);
-#endif
 	    continue;
 	}
-
 	if (eod != NULL) {
 	    if (!strncmp(line, eod, strlen(eod))) {
-#if GPDEBUG
-		fprintf(stderr, "*** reached end of heredata (%s)\n", eod);
-#endif
 		free(eod);
 		eod = NULL;
 		break;
@@ -2454,24 +2487,21 @@ static void get_plot_nobs (png_plot *plot,
 		    *do_markers = 1;
 		}
 	    }
-	    n++;
+	    nobs++;
 	} else {
 	    if (!strncmp(line, "plot", 4) || !strncmp(line, "splot", 5)) {
 		started = 0;
 	    }
-
 	    if (started == 0 && strchr(line, '\\') == NULL) {
 		started = 1;
 		continue;
 	    }
-
 	    if (started > 0 && started < startmin) {
 		if (*line == 'e') {
 		    started++;
 		    continue;
 		}
 	    }
-
 	    if (started == startmin) {
 		if (*line == 'e' || !strncmp(line, "set ", 4)) {
 		    /* end of data, or onto "set print" for bounds */
@@ -2481,12 +2511,12 @@ static void get_plot_nobs (png_plot *plot,
 			*do_markers = 1;
 		    }
 		}
-		n++;
+		nobs++;
 	    }
 	}
     }
 
-    spec->nobs = n;
+    spec->nobs = nobs;
 
     if (spec->code == PLOT_BOXPLOTS) {
 	/* In the case of boxplots the gnuplot file may contain extra
@@ -2507,40 +2537,8 @@ static void get_plot_nobs (png_plot *plot,
 		}
 	    }
 	}
-
 	if (auxpos > 0) {
-	    double x, y;
-	    int i, n, r = 0, c = 0;
-	    int err = 0;
-
-	    n = sscanf(line + 9, "%d %d", &r, &c);
-	    if (n == 2 && r > 0 && c == 2) {
-		spec->auxdata = gretl_matrix_alloc(r, c);
-		if (spec->auxdata != NULL) {
-		    gretl_push_c_numeric_locale();
-		    if (spec->heredata) {
-			/* skip a line: "$aux << EOA" */
-			if (bufgets(line, MAXLEN - 1, buf) == NULL) {
-			    err = E_DATA;
-			}
-		    }
-		    for (i=0; i<r && !err; i++) {
-			if (bufgets(line, MAXLEN - 1, buf) == NULL) {
-			    err = E_DATA;
-			} else if (sscanf(line, "%lf %lf", &x, &y) != 2) {
-			    err = E_DATA;
-			} else {
-			    gretl_matrix_set(spec->auxdata, i, 0, x);
-			    gretl_matrix_set(spec->auxdata, i, 1, y);
-			}
-		    }
-		    gretl_pop_c_numeric_locale();
-		    if (err) {
-			gretl_matrix_free(spec->auxdata);
-			spec->auxdata = NULL;
-		    }
-		}
-	    }
+	    get_boxplot_auxdata(spec, line, buf);
 	}
     }
 }
