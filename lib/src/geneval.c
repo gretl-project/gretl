@@ -15018,6 +15018,62 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
     return ret;
 }
 
+#if 0 /* not yet */
+
+static NODE *color_mix_node (NODE *n, parser *p)
+{
+    NODE *e, *ret = NULL;
+    int i, k = n->v.bn.n_nodes;
+    guint32 c[2] = {0};
+    double f = NADBL;
+    gretl_matrix *fmat = NULL;
+    int show_plot = 0;
+    int mret = 0;
+
+    if (k < 3) {
+	p->err = E_ARGS;
+	return NULL;
+    }
+
+    for (i=0; i<k && !p->err; i++) {
+	e = n->v.bn.n[i];
+	if (i < 2) {
+	    if (e->t == NUM) {
+		c[i] = node_get_guint32(e, p);
+	    } else if (e->t == STR) {
+		c[i] = numeric_color_from_string(e->v.str, &p->err);
+	    } else {
+		p->err = E_TYPES;
+	    }
+	} else if (i == 3) {
+	    if (e->t == NUM) {
+		f = node_get_scalar(e, p);
+	    } else if (e->t == MAT) {
+		fmat = e->v.m;
+	    } else {
+		p->err = E_TYPES;
+	    }
+	} else {
+	    show_plot = node_get_bool(e, p, 0);
+	}
+    }
+
+    if (!p->err) {
+	ret = mret ? aux_matrix_node(p) : aux_scalar_node(p);
+    }
+    if (!p->err) {
+	if (mret) {
+	    ret->v.m = colormix_vector(c[0], c[1], fmat, &p->err);
+	} else {
+	    ret->v.xval = colormix_scalar(c[0], c[1], f, &p->err);
+	}
+    }
+
+    return ret;
+}
+
+#endif
+
 /* evaluate an object definition function (bundle, array, list) */
 
 static NODE *object_def_node (NODE *t, NODE *n, parser *p)
