@@ -1625,11 +1625,16 @@ const char *get_png_line_for_plotspec (const GPT_SPEC *spec)
     return term_line;
 }
 
-void gnuplot_png_set_default_scale (double s)
+void set_default_png_scale (double s)
 {
     if (s >= 0.5 && s <= 2.0) {
 	default_png_scale = s;
     }
+}
+
+double get_default_png_scale (void)
+{
+    return default_png_scale;
 }
 
 static void write_emf_font_string (char *fstr)
@@ -3459,7 +3464,7 @@ static void print_gnuplot_flags (int flags, int revised)
 
 #endif
 
-static void set_lwstr (const DATASET *dset, int v, char *s)
+static void set_lwstr (char *s)
 {
     if (default_png_scale > 1.0) {
 	strcpy(s, " lw 2");
@@ -4337,7 +4342,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    lmax++;
 	}
 	for (i=1; i<lmax; i++) {
-	    set_lwstr(dset, list[i], lwstr);
+	    set_lwstr(lwstr);
 	    set_plot_withstr(&gi, i, withstr);
 	    fprintf(fp, " '-' using 1:2 axes %s title \"%s (%s)\" %s%s%s",
 		    (i == oddman)? "x1y2" : "x1y1",
@@ -4393,7 +4398,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	int lmax = list[0] - 1;
 
 	for (i=1; i<=lmax; i++)  {
-	    set_lwstr(dset, list[i], lwstr);
+	    set_lwstr(lwstr);
 	    if (list[0] == 2 && !(gi.flags & GPT_TIMEFMT)) {
 		*s1 = '\0';
 	    } else {
@@ -7671,7 +7676,7 @@ int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset)
 	fprintf(fp, "set title '%s'\n", _("System residuals"));
     }
 
-    set_lwstr(NULL, 0, lwstr);
+    set_lwstr(lwstr);
 
     if (single) {
 	fputs("plot ", fp);

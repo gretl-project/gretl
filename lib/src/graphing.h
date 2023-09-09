@@ -353,7 +353,9 @@ gretlRGB numeric_color_from_string (const char *s, int *err);
 
 int gnuplot_test_command (const char *cmd);
 
-void gnuplot_png_set_default_scale (double s);
+void set_default_png_scale (double s);
+
+double get_default_png_scale (void);
 
 int gnuplot_has_wxt (void);
 

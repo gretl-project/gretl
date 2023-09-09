@@ -2019,7 +2019,7 @@ static void set_gp_colors (void)
 
 static void set_gp_scale (void)
 {
-    gnuplot_png_set_default_scale(graph_scale);
+    set_default_png_scale(graph_scale);
 }
 
 static void set_gp_theme (void)
@@ -2225,7 +2225,7 @@ static void apply_prefs_changes (GtkWidget *widget, GtkWidget *parent)
     }
 
     /* update graphing info */
-    gnuplot_png_set_default_scale(graph_scale);
+    set_default_png_scale(graph_scale);
     set_plotstyle(graph_theme);
 
     write_rc(OPT_NONE); /* note: calls gretl_update_paths */
