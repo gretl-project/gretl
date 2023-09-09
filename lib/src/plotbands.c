@@ -379,6 +379,15 @@ static band_info **get_band_info_array (int matrix_mode,
     return pbi;
 }
 
+static const char *get_lw_string (void)
+{
+    if (get_default_png_scale() > 1.0) {
+	return " lw 2";
+    } else {
+	return "";
+    }
+}
+
 static void gp_newline (int contd, FILE *fp)
 {
     if (contd) {
@@ -421,7 +430,8 @@ static void print_pm_filledcurve (band_info *bi,
 /* for plain lines, dashed lines, or steps */
 
 static void print_pm_lines (band_info *bi, int n_yvars,
-			    int contd, FILE *fp)
+			    const char *lw, int contd,
+			    FILE *fp)
 {
     char *wstr = bi->style == BAND_STEP ? "steps" : "lines";
     char lspec[24], dspec[8] = {0};
@@ -432,15 +442,16 @@ static void print_pm_lines (band_info *bi, int n_yvars,
     if (bi->rgb[0] != '\0') {
 	sprintf(lspec, "lc rgb \"%s\"", bi->rgb);
     } else {
+	/* set a linetype beyond the primary data lines */
 	sprintf(lspec, "lt %d", n_yvars + 1);
     }
     if (bi->style == BAND_DASH) {
 	strcpy(dspec, " dt 2");
     }
-    fprintf(fp, "'$data' using 1:($%d-%g*$%d) notitle w %s %s%s, \\\n",
-	    c, f, w, wstr, lspec, dspec);
-    fprintf(fp, "'$data' using 1:($%d+%g*$%d) notitle w %s %s%s",
-	    c, f, w, wstr, lspec, dspec);
+    fprintf(fp, "'$data' using 1:($%d-%g*$%d) notitle w %s %s%s%s, \\\n",
+	    c, f, w, wstr, lspec, dspec, lw);
+    fprintf(fp, "'$data' using 1:($%d+%g*$%d) notitle w %s %s%s%s",
+	    c, f, w, wstr, lspec, dspec, lw);
     gp_newline(contd, fp);
 }
 
@@ -909,6 +920,7 @@ int plot_with_band (BPMode mode,
     band_info *bi = NULL;
     FILE *fp = NULL;
     const double *x = NULL;
+    const char *lwstr;
     char yname[MAXDISP];
     char xname[MAXDISP];
     char wspec[16] = {0};
@@ -978,6 +990,9 @@ int plot_with_band (BPMode mode,
         fprintf(fp, "set xlabel \"%s\"\n", xname);
     }
 
+    /* for adjusting line width if wanted */
+    lwstr = get_lw_string();
+
     gretl_push_c_numeric_locale();
 
     if (gi->x != NULL) {
@@ -1001,7 +1016,6 @@ int plot_with_band (BPMode mode,
 	}
     }
 
-    /* is this the right place to put the data heredoc? */
     print_data_block(gi, x, dset, &show_zero, fp);
 
     fputs("plot \\\n", fp);
@@ -1019,7 +1033,7 @@ int plot_with_band (BPMode mode,
 	} else if (bi->style == BAND_BARS) {
 	    print_pm_bars(bi, n_yvars, 1, fp);
 	} else {
-	    print_pm_lines(bi, n_yvars, 1, fp);
+	    print_pm_lines(bi, n_yvars, lwstr, 1, fp);
 	}
     }
     /* then the non-band data */
@@ -1027,8 +1041,8 @@ int plot_with_band (BPMode mode,
 	const char *iname = series_get_graph_name(dset, gi->list[i]);
 
 	set_plot_withstr(gi, i, wspec);
-	fprintf(fp, "'$data' using 1:%d title '%s' %s lt %d", i+1,
-		iname, wspec, i);
+	fprintf(fp, "'$data' using 1:%d title '%s' %s lt %d%s", i+1,
+		iname, wspec, i, lwstr);
 	gp_newline(i < n_yvars, fp);
     }
 
