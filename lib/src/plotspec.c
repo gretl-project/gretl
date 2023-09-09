@@ -1076,7 +1076,7 @@ static void print_linestyle (const GPT_SPEC *spec,
     if (!done) {
 	/* hmm, should we be doing this? */
 	gretlRGB color = get_graph_color(targ);
-	char cstr[8];
+	char cstr[10];
 
 	print_rgb_hash(cstr, color);
 	fprintf(fp, "lc rgb \"%s\"\n", cstr);
@@ -1456,10 +1456,11 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	fprintf(fp, "set bmargin %d\n", spec->bmargin);
     }
 
-    /* in case of plots that are editable (see gui client), it is
+    /* In case of plots that are editable (see gui client), it is
        important to write out the comment string that identifies the
        sort of graph, so that it will be recognized by type when
-       it is redisplayed */
+       it is redisplayed.
+    */
 
     write_plot_type_string(spec->code, spec->flags, fp);
 
@@ -1630,7 +1631,8 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    fprintf(fp, "w %s", gp_line_style_name(line->style));
 	}
 
-	if (line->type != LT_AUTO) {
+	/* FIXME handling of linetype for PLOT_BAND? */
+	if (spec->code != PLOT_BAND && line->type != LT_AUTO) {
 	    fprintf(fp, " lt %d", line->type);
 	} else if (spec->nbars > 0 && line->style != GP_STYLE_FILLEDCURVE) {
 	    fprintf(fp, " lt %d", i + 1);
