@@ -442,8 +442,8 @@ static void print_pm_lines (band_info *bi, int n_yvars,
     if (bi->rgb[0] != '\0') {
 	sprintf(lspec, "lc rgb \"%s\"", bi->rgb);
     } else {
-	/* set a linetype beyond the primary data lines */
-	sprintf(lspec, "lt %d", n_yvars + 1);
+	/* default to gray */
+	strcpy(lspec, "lc rgb \"#bbbbbb\"");
     }
     if (bi->style == BAND_DASH) {
 	strcpy(dspec, " dt 2");
