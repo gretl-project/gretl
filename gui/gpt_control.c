@@ -53,6 +53,7 @@
 #define WINDEBUG 1
 #define POINTS_DEBUG 0
 #define COLLDEBUG 0
+#define LT_DEBUG 0
 
 /* the following needs more testing */
 #define HANDLE_HEREDATA 1
@@ -2102,7 +2103,7 @@ static int verify_rgb (char *rgb)
 static int parse_linetype (const char *s, linestyle *styles)
 {
     const char *p;
-    int n, idx = 0;
+    int n, i, idx = 0;
     int err = 0;
 
     /* read the 1-based index of the linetype */
@@ -2113,7 +2114,7 @@ static int parse_linetype (const char *s, linestyle *styles)
 	return 1;
     } else {
 	/* convert index to zero-based */
-	idx -= 1;
+	i = idx - 1;
     }
 
     if (!err && (p = strstr(s, " lc ")) != NULL) {
@@ -2131,7 +2132,7 @@ static int parse_linetype (const char *s, linestyle *styles)
 	    /* validate and convert to hex if needed */
 	    err = verify_rgb(lc);
 	    if (!err) {
-		strcpy(styles[idx].lc, lc);
+		strcpy(styles[i].lc, lc);
 	    }
 	} else {
 	    err = 1;
@@ -2142,7 +2143,7 @@ static int parse_linetype (const char *s, linestyle *styles)
 	float lw = 0.0;
 
 	if (sscanf(p + 4, "%f", &lw)) {
-	    styles[idx].lw = lw;
+	    styles[i].lw = lw;
 	} else {
 	    err = 1;
 	}
@@ -2152,7 +2153,7 @@ static int parse_linetype (const char *s, linestyle *styles)
 	int dt = 0;
 
 	if (sscanf(p + 4, "%d", &dt)) {
-	    styles[idx].dt = dt;
+	    styles[i].dt = dt;
 	} else {
 	    err = 1;
 	}
@@ -2162,11 +2163,17 @@ static int parse_linetype (const char *s, linestyle *styles)
 	int pt = 0;
 
 	if (sscanf(p + 4, "%d", &pt)) {
-	    styles[idx].pt = pt;
+	    styles[i].pt = pt;
 	} else {
 	    err = 1;
 	}
     }
+
+#if LT_DEBUG
+    fprintf(stderr, "styles[%d]: idx %d lc '%s' pt %d lw %g dt %d\n",
+	    i, idx, styles[i].lc, styles[i].pt, (double) styles[i].lw,
+	    styles[i].dt);
+#endif
 
     return err;
 }
@@ -3500,6 +3507,10 @@ static int read_plotspec_from_file (png_plot *plot)
 		line->ptype = styles[j].pt;
 	    }
 	}
+#if LT_DEBUG
+	fprintf(stderr, "spec->lines[%d]: type %d idx %d rgb '%s' pt %d lw %g\n",
+		i, line->type, idx, line->rgb, line->ptype, (double) line->width);
+#endif
 	if (spec->auxdata != NULL && i == spec->n_lines - 1) {
 	    /* the last "line" doesn't use the regular
 	       data mechanism */
