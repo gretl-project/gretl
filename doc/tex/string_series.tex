@@ -382,10 +382,38 @@ current sample range, not just the distinct values as with
 
 \section{String-valued series and functions}
 
-User-defined hansl functions can deal with string-valued series.  If
-you supply such a series as an argument to a hansl function its string
-values will be accessible within the function. One can test whether a
-given series \texttt{arg} is string-valued as follows:
+We first offer a few words on built-in functions that can be applied
+to string-valued series. The five functions \texttt{substr},
+\texttt{strsub}, \texttt{regsub}, \texttt{tolower} and
+\texttt{toupper} all perform transformations on
+strings---respectively, extraction of a substring, replacement of a
+substring, replacement via regular expression, conversion to all
+lower-case and to all upper-case (see the \GCR\ for details). These
+functions work on single strings, arrays of strings and also
+string-valued series. Note that when applied to a string-valued series
+these functions may reduce the number of distinct strings attached to
+the series. For example, some string values that are originally
+distinct may ``collapse'' into identity when converted to all
+lower-case. This possibility is handled by adjustment of the integer
+codes as needed.
+
+A special case is presented by the built-in \texttt{strvsort}
+function: this does not return a modified string-valued series but
+rather modifies such a series in place. It puts the string values into
+alphabetical order and recalculates the integer codes so as to
+preserve the original association between observation number and
+string. If, for example, the first observation had a string value of
+``\texttt{X}'', coded as 1, it will still have value ``\texttt{X}''
+but its code will reflect the position of ``\texttt{X}'' in the
+alphabetized ordering. This can be particularly useful if a dataset
+comprises several series having the same string values, but occurring
+in different order. The effect of running \texttt{strvsort} on such
+series will be to impose a common numerical encoding.
+
+User-defined hansl functions can also deal with string-valued series.
+If you supply such a series as an argument to a hansl function its
+string values will be accessible within the function. One can test
+whether a given series \texttt{arg} is string-valued as follows:
 \begin{code}
 if nelem(strvals(arg)) > 0
   # yes
