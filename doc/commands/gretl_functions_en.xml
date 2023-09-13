@@ -2162,6 +2162,40 @@
       </description>
     </function>
 
+    <function name="bin2dec" section="matrix" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">B</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Given a matrix <argname>B</argname> containing only zeros
+	  and ones, this function interprets each row as a binary
+	  representation of an integer, and returns a column vector
+	  with the decimal representation of those integers. The
+	  argument cannot have more than 32 columns; otherwise, an
+	  error is flagged.
+	</para>
+	<para>
+	  Note that the least significant bit comes in the first
+	  column. Therefore, the column 1 corresponds to
+	  <math>2</math><sup>0</sup>, column 2 to
+	  <math>2</math><sup>1</sup>, and so on. For example, the
+	  expression
+	</para>
+	<code>
+	  scalar x = bin2dec({1,0,1})
+	</code>
+	<para>
+	  stores the value 5 into <math>x</math>.
+	</para>
+	<para>
+	  The <fncref targ="dec2bin"/> function performs the inverse
+	  transformation.  
+	</para>
+      </description>
+    </function>
+
+    
     <function name="bincoeff" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">n</fnarg>
@@ -3646,7 +3680,42 @@
       </description>
     </function>
 
-    <function name="defarray" section="data-utils" output="seebelow">
+    <function name="dec2bin" section="matrix" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  This function returns the binary representation of the
+	  numbers contained in the column vector <argname>x</argname>,
+	  by storing each binary digit into a column of the returned
+	  matrix, which always has 32 columns. Each element of
+	  <argname>x</argname> must be an integer between 0 and
+	  <math>2</math><sup>32</sup><math>-1</math>. Otherwise, an
+	  error is flagged.
+	</para>
+	<para>
+	  Note that the least significant bit comes in the first
+	  column. Therefore, the column 1 corresponds to
+	  <math>2</math><sup>0</sup>, column 2 to
+	  <math>2</math><sup>1</sup>, and so on. For example, the
+	  expression
+	</para>
+	<code>
+	  matrix B = dec2bin(5)
+	</code>
+	<para>
+	  produces a row vector full of zeros, except for positions 1
+	  and 3.
+	</para>
+	<para>
+	  The <fncref targ="bin2dec"/> function performs the inverse
+	  transformation.  
+	</para>
+      </description>
+    </function>
+
+   <function name="defarray" section="data-utils" output="seebelow">
       <fnargs>
 	<fnarg type="varargs"/>
       </fnargs>

@@ -2177,6 +2177,37 @@
       </description>
     </function>
 
+    <function name="bin2dec" section="matrix" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">B</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Data una matrice binaria <argname>B</argname>, questa funzione
+	  interpreta ogni riga come la rappresentazione binaria di un
+	  intero, e restituisce un vettore colonna con la
+	  rappresentazione decimale di tali interi. La matrice non può
+	  avere più di 32 colonne, altrimenti viene generato un errore.
+	</para>
+	<para>
+	  Si noti che il bit meno significativo è nella prima colonna:
+	  di conseguenza, la colonna 1 corrisponde a 
+	  <math>2</math><sup>0</sup>, la colonna 2 a
+	  <math>2</math><sup>1</sup> e così via. Ad esempio, l'espressione
+	</para>
+	<code>
+	  scalar x = bin2dec({1,0,1})
+	</code>
+	<para>
+	  rende <math>x</math> uguale a 5.
+	</para>
+	<para>
+	  La funzione <fncref targ="dec2bin"/> produce la
+	  trasformazione inversa.
+	</para>
+      </description>
+    </function>
+    
     <function name="bincoeff" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">n</fnarg>
@@ -3646,7 +3677,41 @@
       </description>
     </function>
 
-    <function name="defarray" section="data-utils" output="seebelow">
+
+    <function name="dec2bin" section="matrix" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Restituisce la rappresentazione binaria dei numeri contenuti
+	  nel vettore colonna <argname>x</argname>, sotto forma di una
+	  matrice di 32 colonne contenente cifre binarie. Gli elementi
+	  di <argname>x</argname> devono essere tutti interi fra 0 e
+	  <math>2</math><sup>32</sup><math>-1</math>, o si verificherà
+	  un errore.
+	</para>
+	<para>
+	  Si noti che il bit meno significativo è nella colonna 1: di
+	  conseguenza, la colonna 1 corrisponde a 
+	  <math>2</math><sup>0</sup>, la colonna 2 a
+	  <math>2</math><sup>1</sup> e così via. Ad esempio, l'espressione
+	</para>
+	<code>
+	  matrix B = dec2bin(5)
+	</code>
+	<para>
+	  produce un vettore riga con tutti elementi pari a 0, eccetto
+	  per gli elementi 1 e 3.
+	</para>
+	<para>
+	  La funzione <fncref targ="bin2dec"/> effettua la
+	  trasformazione inversa.
+	</para>
+      </description>
+    </function>
+
+<function name="defarray" section="data-utils" output="seebelow">
       <fnargs>
 	<fnarg type="varargs"/>
       </fnargs>
