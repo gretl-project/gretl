@@ -2169,15 +2169,15 @@
       <description>
 	<para>
 	  Given a matrix <argname>B</argname> containing only zeros
-	  and ones, this function interprets each row as a binary
-	  representation of an integer, and returns a column vector
-	  with the decimal representation of those integers. The
-	  argument cannot have more than 32 columns; otherwise, an
-	  error is flagged.
+	  and ones, this function interprets each row as the binary
+	  representation of a 32-bit unsigned integer, and returns a
+	  column vector with the decimal representation of those
+	  integers. The argument cannot have more than 32 columns
+	  otherwise an error is flagged.
 	</para>
 	<para>
 	  Note that the least significant bit comes in the first
-	  column. Therefore, the column 1 corresponds to
+	  column. So column 1 corresponds to
 	  <math>2</math><sup>0</sup>, column 2 to
 	  <math>2</math><sup>1</sup>, and so on. For example, the
 	  expression
@@ -3696,7 +3696,7 @@
 	</para>
 	<para>
 	  Note that the least significant bit comes in the first
-	  column. Therefore, the column 1 corresponds to
+	  column. So column 1 corresponds to
 	  <math>2</math><sup>0</sup>, column 2 to
 	  <math>2</math><sup>1</sup>, and so on. For example, the
 	  expression
@@ -3705,7 +3705,7 @@
 	  matrix B = dec2bin(5)
 	</code>
 	<para>
-	  produces a row vector full of zeros, except for positions 1
+	  produces a row vector full of zeros except for positions 1
 	  and 3.
 	</para>
 	<para>
