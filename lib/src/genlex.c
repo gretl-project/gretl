@@ -1348,14 +1348,18 @@ static char *get_quoted_string (parser *p, int prevsym)
 	}
     }
 
+#if 0
     if (s != NULL && !strcmp(s, "\\\"")) {
 	gchar *gs;
 
+	//fprintf(stderr, "HERE 1: '%s'\n", s);
 	free(s);
 	gs = g_strdup_printf("\"");
 	s = gretl_strdup(gs);
+	//fprintf(stderr, "HERE 2: '%s'\n", s);
 	free(gs);
     }
+#endif
 
     return s;
 }
