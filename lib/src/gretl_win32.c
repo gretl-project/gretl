@@ -1181,7 +1181,7 @@ static int win32_access_init (TRUSTEE_W *pt, SID **psid)
 int win32_write_access (const char *path)
 {
     static SID *sid = NULL;
-    static TRUSTEE_W t;
+    static TRUSTEE_W trustee;
     ACL *dacl = NULL;
     SECURITY_DESCRIPTOR *sd = NULL;
     ACCESS_MASK amask;
@@ -1219,7 +1219,7 @@ int win32_write_access (const char *path)
 
     if (sid == NULL) {
 	/* get user info and cache it in static variables */
-	err = win32_access_init(&t, &sid);
+	err = win32_access_init(&trustee, &sid);
     }
 
 #if ACCESS_DEBUG
@@ -1239,12 +1239,15 @@ int win32_write_access (const char *path)
     }
 
     if (!err) {
-	/* get the access mask for this trustee */
-	ret = GetEffectiveRightsFromAclW(dacl, &t, &amask);
+	/* try to get the access mask for this trustee */
+	ret = GetEffectiveRightsFromAclW(dacl, &trustee, &amask);
         if (ret != ERROR_SUCCESS) {
             fprintf(stderr, "GetEffectiveRights...: ret=%d\n", ret);
-            if (ret != RPC_S_SERVER_UNAVAILABLE && ret != ERROR_NO_SUCH_DOMAIN) {
-                err = 1;
+	    if (ret == RPC_S_SERVER_UNAVAILABLE || ret == ERROR_NO_SUCH_DOMAIN) {
+		/* WTF? let's try it anyway */
+		ok = 1;
+	    } else {
+		err = 1;
             }
         } else if (amask & STANDARD_RIGHTS_WRITE) {
 	    ok = 1;
