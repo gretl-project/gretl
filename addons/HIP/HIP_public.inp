@@ -34,16 +34,15 @@ function bundle HIP_setup(series y, list EXOG, list ENDOG[null], \
     endif
 
     # check that there is no constant in HETVAR
-    done = 0
     list dropped = deflist()
-    loop while !done --quiet
+    loop while nelem(HETVAR) > 0 --quiet
         ols const HETVAR --quiet
         if $ess < 1.0e-12
             scalar i = imaxc(abs($coeff))
             dropped += HETVAR[i]
             HETVAR = HETVAR[-i]
         else
-            done = 1
+            break
         endif
     endloop
     if nelem(dropped)
