@@ -1256,8 +1256,7 @@ void context_error (int c, parser *p, const char *func)
 	    pprintf(p->prn, _("The symbol '%s' is not valid in this context\n"),
 		    getsymb_full(p->sym, p));
 	} else {
-	    pprintf(p->prn, "The symbol %d is not valid in this context\n",
-		    p->sym);
+	    parser_print_input(p);
 	}
     }
 
@@ -1266,22 +1265,20 @@ void context_error (int c, parser *p, const char *func)
     }
 }
 
-/* @parsing_query: we want to keep track of the case
-   where we're lexing/parsing the branches of a
-   ternary "query" expression. When such an expression
-   is evaluated, it's OK if the branch _not_ taken
-   contains an undefined symbol; indeed, this can
-   occur by design, as in
+/* @parsing_query: we want to keep track of the case where we're
+   lexing/parsing the branches of a ternary "query" expression. When
+   such an expression is evaluated, it's OK if the branch _not_ taken
+   contains an undefined symbol; indeed, this can occur by design, as
+   in
 
-     scalar y = isnull(x) ? 0 : x
+     scalar y = exists(x) ? x : 0
 
    when "x" is in fact undefined.
 
-   We therefore use the "UNDEF" node type to defuse the
-   error that would otherwise arise on parsing. An error
-   is triggered only if the branch that references the
-   UNDEF node is selected (attempting to evaluate an UNDEF
-   node automatically throws an error.)
+   We therefore use the "UNDEF" node type to defuse the error that
+   would otherwise arise on parsing. An error is triggered only if the
+   branch that references the UNDEF node is selected (attempting to
+   evaluate an UNDEF node automatically throws an error.)
 */
 
 static int parsing_query;
@@ -1296,16 +1293,29 @@ static char *get_quoted_string (parser *p, int prevsym)
     char *s = NULL;
     int n;
 
-#if 0
+#if LDEBUG
     fprintf(stderr, "get_quoted_string: sym = '%s', prevsym '%s'\n",
 	    getsymb(p->sym), getsymb(prevsym));
+    fprintf(stderr, " p->ch = '%c', p->point = '%s'\n", p->ch, p->point);
 #endif
 
+
+#if 1 /* 2023-09-14 */
+    /* Backslash should be taken as escape character here
+       if and only if we're in the context of sprintf().
+    */
+    if (prevsym == F_SPRINTF) {
+	/* look for a matching non-escaped double-quote */
+	n = double_quote_position(p->point);
+    } else {
+	/* look for a "plain" matching double-quote */
+	n = gretl_charpos('"', p->point);
+    }
+#else
     /* Should backslash be taken as literal or as
        escape character? Depends on the context,
        but in exactly what way?
     */
-
     if (prevsym != F_SPRINTF && parsing_query) {
 	/* this branch revised 2020-02-06 */
 	n = gretl_charpos('"', p->point);
@@ -1317,6 +1327,7 @@ static char *get_quoted_string (parser *p, int prevsym)
 	    n = gretl_charpos('"', p->point);
 	}
     }
+#endif
 
     if (n >= 0) {
 	s = gretl_strndup(p->point, n);
