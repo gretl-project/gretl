@@ -1241,27 +1241,29 @@ int gretl_namechar_spn (const char *s)
 
 int double_quote_position (const char *s)
 {
-    int i, j, ns, n = -1;
+    int nbs; /* number of preceding backslashes */
+    int i, j;
+    int ret = -1;
 
     for (i=0; s[i]; i++) {
 	if (s[i] == '"') {
-	    ns = 0;
+	    nbs = 0;
 	    for (j=i-1; j>=0; j--) {
 		if (s[j] == '\\') {
-		    ns++;
+		    nbs++;
 		} else {
 		    break;
 		}
 	    }
-	    if (ns % 2 == 0) {
+	    if (nbs % 2 == 0) {
 		/* got an unescaped double-quote */
-		n = i;
+		ret = i;
 		break;
 	    }
 	}
     }
 
-    return n;
+    return ret;
 }
 
 /**
