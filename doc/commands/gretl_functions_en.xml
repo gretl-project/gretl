@@ -3077,10 +3077,11 @@
       <description>
 	<para>
 	  Returns the matrix <argname>A</argname> premultiplied by the
-	  commutation matrix <math>K</math><sub>m,n</sub> (more
-	  efficient than explicit multiplication).  Each column of
-	  <argname>A</argname> is assumed to come from a vec operation
-	  on a <math>m x n</math> matrix. In particular,
+	  commutation matrix <math>K</math><sub>m,n</sub> (using an
+	  algorithm that is more efficient than explicit
+	  multiplication).  Each column of <argname>A</argname> is
+	  assumed to come from a vec operation on a <math>m x n</math>
+	  matrix. In particular,
 	</para>
 	<code>
 	  commute(vec(B), rows(B), cols(B))
