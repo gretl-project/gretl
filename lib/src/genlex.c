@@ -1304,7 +1304,7 @@ static char *get_quoted_string (parser *p, int prevsym)
     /* Backslash should be taken as escape character here
        if and only if we're in the context of sprintf().
     */
-    if (prevsym == F_SPRINTF) {
+    if (prevsym == F_SPRINTF || prevsym == F_PRINTF) {
 	/* look for a matching non-escaped double-quote */
 	n = double_quote_position(p->point);
     } else {
