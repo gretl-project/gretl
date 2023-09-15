@@ -18773,7 +18773,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_SUBSTR:
         if ((l->t == STR || l->t == ARRAY || strvals_node(l, p)) &&
-            m->t == NUM && r->t == NUM) {
+	    scalar_node(m) && scalar_node(r)) {
 	    ret = variant_string_func(l, m, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
