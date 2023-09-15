@@ -1289,7 +1289,7 @@ void set_parsing_query (int s)
 }
 
 /* 2023-09-15: apparatus for allowing \" as an embedded quote
-   in string literals. Do we want this?
+   in string literals.
 */
 
 static int alt_double_quote_pos (const char *s, int *esc)
@@ -1335,36 +1335,18 @@ static char *get_quoted_string (parser *p, int prevsym)
     fprintf(stderr, " p->ch = '%c', p->point = '%s'\n", p->ch, p->point);
 #endif
 
-
-#if 1 /* 2023-09-14 */
-    /* Backslash should be taken as escape character here
-       if and only if we're in the context of sprintf().
-    */
     if (prevsym == F_SPRINTF || prevsym == F_PRINTF) {
-	/* look for a matching non-escaped double-quote */
+	/* look for a matching non-escaped double-quote,
+	   allowance made for "\\" as itself an escape
+	*/
 	n = double_quote_position(p->point);
     } else {
-	/* look for a "plain" matching double-quote */
+	/* look for a matching non-escaped double-quote when
+	   backslash is special only when preceding a double
+	   quote
+	*/
 	n = alt_double_quote_pos(p->point, &esc);
-	// n = gretl_charpos('"', p->point);
     }
-#else
-    /* Should backslash be taken as literal or as
-       escape character? Depends on the context,
-       but in exactly what way?
-    */
-    if (prevsym != F_SPRINTF && parsing_query) {
-	/* this branch revised 2020-02-06 */
-	n = gretl_charpos('"', p->point);
-    } else {
-	/* look for a matching (non-escaped) double-quote */
-	n = double_quote_position(p->point);
-	if (n < 0) {
-	    /* backward compatibility */
-	    n = gretl_charpos('"', p->point);
-	}
-    }
-#endif
 
     if (n >= 0) {
 	s = gretl_strndup(p->point, n);
@@ -1388,19 +1370,6 @@ static char *get_quoted_string (parser *p, int prevsym)
 	    p->sym = CSTR;
 	}
     }
-
-#if 0
-    if (s != NULL && !strcmp(s, "\\\"")) {
-	gchar *gs;
-
-	//fprintf(stderr, "HERE 1: '%s'\n", s);
-	free(s);
-	gs = g_strdup_printf("\"");
-	s = gretl_strdup(gs);
-	//fprintf(stderr, "HERE 2: '%s'\n", s);
-	free(gs);
-    }
-#endif
 
     return s;
 }

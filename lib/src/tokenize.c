@@ -753,6 +753,7 @@ static int push_quoted_token (CMD *c, const char *s,
 	int i = 0;
 
 	if (c->ci == PRINT && !esc) {
+	    /* "print" with no occurrences of backslash-quote */
 	    *tok = '\0';
 	    strncat(tok, p, len);
 	} else if (c->ci == PRINTF) {
@@ -846,7 +847,10 @@ static int wild_spn (const char *s)
     return strspn(s, ok);
 }
 
-#define PRINT_ALLOW_EMBEDDED 1
+/* We allow here for special behavior with PRINT, whereby
+   the occurrence of \" will require (limited) escaping of
+   a string literal.
+*/
 
 static int closing_quote_pos (const char *s, int ci, int *esc)
 {
@@ -854,15 +858,9 @@ static int closing_quote_pos (const char *s, int ci, int *esc)
 
     s++;
     while (*s) {
-#if PRINT_ALLOW_EMBEDDED
 	if (ci == PRINT && *s == '"' && *(s-1) == '\\') {
 	    *esc = 1;
 	}
-#else
-	if (ci == PRINT && *s == '"') {
-	    return n;
-	}
-#endif
 	if (*s == '"' && *(s-1) != '\\') {
 	    return n;
 	}
