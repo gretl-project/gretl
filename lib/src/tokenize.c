@@ -740,7 +740,8 @@ static int push_delimited_token (CMD *c, const char *tok,
 }
 
 static int push_quoted_token (CMD *c, const char *s,
-			      int len, int pos)
+			      int len, int pos,
+			      int esc)
 {
     char *tok = malloc(len + 1);
     int err = 0;
@@ -751,7 +752,7 @@ static int push_quoted_token (CMD *c, const char *s,
 	const char *p = s + 1;
 	int i = 0;
 
-	if (c->ci == PRINT) {
+	if (c->ci == PRINT && !esc) {
 	    *tok = '\0';
 	    strncat(tok, p, len);
 	} else if (c->ci == PRINTF) {
@@ -845,15 +846,23 @@ static int wild_spn (const char *s)
     return strspn(s, ok);
 }
 
-static int closing_quote_pos (const char *s, int ci)
+#define PRINT_ALLOW_EMBEDDED 1
+
+static int closing_quote_pos (const char *s, int ci, int *esc)
 {
     int n = 0;
 
     s++;
     while (*s) {
+#if PRINT_ALLOW_EMBEDDED
+	if (ci == PRINT && *s == '"' && *(s-1) == '\\') {
+	    *esc = 1;
+	}
+#else
 	if (ci == PRINT && *s == '"') {
 	    return n;
 	}
+#endif
 	if (*s == '"' && *(s-1) != '\\') {
 	    return n;
 	}
@@ -3520,12 +3529,14 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 	    }
 	    n += 2;
 	} else if (*s == '"') {
-	    n = closing_quote_pos(s, cmd->ci);
+	    int esc = 0;
+
+	    n = closing_quote_pos(s, cmd->ci, &esc);
 	    if (n < 0) {
 		gretl_errmsg_sprintf(_("Unmatched '%c'\n"), '"');
 		err = E_PARSE;
 	    } else {
-		err = push_quoted_token(cmd, s, n, pos);
+		err = push_quoted_token(cmd, s, n, pos, esc);
 	    }
 	    n += 2;
 	} else if ((n = symbol_spn(s)) > 0) {
