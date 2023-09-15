@@ -10,8 +10,10 @@ version 2023c, in progress
 - New function strvsort(): recodes a string-valued series such
   that the numeric codes correspond to the alphabetical order
   of the string values
-- Input of numeric constants: support hexadecimal notation
+- Add documentation for the functions dec2bin() and bin2dec(),
+  which were added in version 2022b
 - kdensity() function: clarify its documentation
+- Input of numeric constants: support hexadecimal notation
 - Fix bug dating from 2022c: broken handling of the syntax
   listname.series when used in a function that is called from
   within a loop
@@ -241,6 +243,8 @@ version 2023c, in progress
   extra addon)
 - new function sphericorr(): spherical coordinates
   representation for correlation matrices
+- new functions dec2bin() and bin2dec() for conversion
+  between decimal integers and their binary representation
 - "garch" command: add the model order scalars (p and q) to
   the $model bundle
 - "leverage" command: add $result accessor to obtain
