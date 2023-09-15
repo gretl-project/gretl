@@ -1288,9 +1288,45 @@ void set_parsing_query (int s)
     parsing_query = s;
 }
 
+/* 2023-09-15: apparatus for allowing \" as an embedded quote
+   in string literals. Do we want this?
+*/
+
+static int alt_double_quote_pos (const char *s, int *esc)
+{
+    int i, ret = -1;
+
+    for (i=0; s[i]; i++) {
+	if (s[i] == '"') {
+	    if (i == 0 || s[i-1] != '\\') {
+		ret = i;
+		break;
+	    } else {
+		*esc = 1;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+static char *escape_quotes (char *s)
+{
+    int i;
+
+    for (i=1; s[i]; i++) {
+	if (s[i] == '"' && s[i-1] == '\\') {
+	    shift_string_left(s + i - 1, 1);
+	}
+    }
+
+    return s;
+}
+
 static char *get_quoted_string (parser *p, int prevsym)
 {
     char *s = NULL;
+    int esc = 0;
     int n;
 
 #if LDEBUG
@@ -1309,7 +1345,8 @@ static char *get_quoted_string (parser *p, int prevsym)
 	n = double_quote_position(p->point);
     } else {
 	/* look for a "plain" matching double-quote */
-	n = gretl_charpos('"', p->point);
+	n = alt_double_quote_pos(p->point, &esc);
+	// n = gretl_charpos('"', p->point);
     }
 #else
     /* Should backslash be taken as literal or as
@@ -1331,6 +1368,10 @@ static char *get_quoted_string (parser *p, int prevsym)
 
     if (n >= 0) {
 	s = gretl_strndup(p->point, n);
+	if (esc == 1) {
+	    /* "\"" is accepted as an escape, but that's all */
+	    escape_quotes(s);
+	}
 	parser_advance(p, n + 1);
     } else {
 	parser_print_input(p);
