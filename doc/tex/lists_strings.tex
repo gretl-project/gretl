@@ -502,24 +502,15 @@ string s1 = "sweet"
 string s2 = "Home, " ~ s1 ~ " home."
 \end{code}
 
-Note that when you define a string variable using a string literal, no
-characters are treated as ``special'' (other than the double quotes
-that delimit the string).  Specifically, the backslash is not used as
-an escape character.  So, for example,
-%
-\begin{code}
-string s = "\"
-\end{code}
-%
-is a valid assignment, producing a string that contains a single
-backslash character.
-
-If you wish to use backslash-escapes to denote newlines, tabs,
-embedded double-quotes and so on, use the \texttt{sprintf} function
-instead (see the \texttt{printf} command for an account of the
-escape-characters). This function can also be used to produce
-a string variable whose definition involves the values of other
-variables, as in
+Note that when you define a string variable using a string literal,
+only a single ``escape'' sequence is recognized: if a backslash is
+immediately followed by a double-quote character this is interpreted
+as an embedded quote. Otherwise all characters are treated literally.
+If you wish to use backslash-escapes to denote newlines, tabs and so
+on, use the \texttt{sprintf} function instead (see the \texttt{printf}
+command for an account of the escape-characters). This function can
+also be used to produce a string variable whose definition involves
+the values of other variables, as in
 %
 \begin{code}
 scalar x = 8
