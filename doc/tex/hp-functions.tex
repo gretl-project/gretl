@@ -50,7 +50,6 @@ Function parameters can be of any of the types shown below.
   \texttt{matrix} & matrix or vector \\
   \texttt{string} & string variable or string literal \\
   \texttt{bundle} & all-purpose container \\
-  \texttt{array}  & single-type container \\
   \texttt{matrices} & array of matrices \\
   \texttt{bundles}  & array of bundles \\
   \texttt{strings}  & array of strings \\
@@ -311,23 +310,20 @@ produces
 
 \subsection{Embedding arguments in bundles}
 
-Some complex functions may require a large number of arguments. There
-is no limit to the number of arguments a function can have, but a
-complicated function signature makes it somewhat unpleasant to
-use. Some programming languages (\app{R}, for one) obviate this
-problem by using \emph{named arguments}, so that you may call a
-function by supplying only the few arguments you actually need, leaving
-the other ones to their default values.
+Some complex functions may require a large number of arguments. There is no
+limit to the number of arguments a function can have, but an overly
+complicated function signature is not pleasant to use. Some programming
+languages (\app{R}, for one) obviate this problem by using \emph{named
+  arguments}, so that you may call a function by supplying only the few
+arguments you actually need, leaving the other ones to their default values.
 
-In hansl, we don't have named arguments, but a commonly employed
-technique achieves the same result in a similar way: the idea is to
-package arguments into a bundle and use the bundle syntax to handle
-its contents.\footnote{``Bundle'' is the term used in hansl to
-  indicate associative arrays; see Section \ref{sec:bundles}.}
+In hansl we don't have named arguments, but a commonly employed technique
+achieves the same result in a similar way: the idea is to package arguments
+into a bundle (see Section~\ref{sec:bundles}) and use the bundle syntax to
+handle its contents.
 
-For example, say that you want to write a function to extract
-a substring from a string and optionally capitalize it. You could
-start from something like
+For example, say you want to write a function to extract a substring from a
+string and optionally capitalize it. You could start from something like
 \begin{code}
 function string Sub(string s, scalar ini, scalar fin, bool capital)
     string ret = s[ini:fin]
@@ -335,10 +331,9 @@ function string Sub(string s, scalar ini, scalar fin, bool capital)
 end function
 \end{code}
 so the call \texttt{Sub("nowhere", 4, 7, 1)} would produce the string
-\texttt{HERE}. A more sophisticated version of the function may have
-default values, so that you could call the function in a simplified
-form. By using the syntax shown in the previous subsection, one could
-set the defaults as
+\texttt{HERE}. A more sophisticated version of the function may have default
+values, so that you could call the function in a simplified form. Using the
+syntax shown in the previous subsection, one could set the defaults as
 \begin{code}
 function string Sub(string s, scalar ini[1], scalar fin[3], bool capital[FALSE])
     string ret = s[ini:fin]
@@ -346,36 +341,34 @@ function string Sub(string s, scalar ini[1], scalar fin[3], bool capital[FALSE])
 end function
 \end{code}
 and the call \texttt{Sub("nowhere")} would return the string
-\texttt{now}. However, if we wanted the string to be capitalized, we
-would have to set the fourth parameter to 1, so in order to get
-\texttt{NOW} the function would have to be called as
-\texttt{Sub("nowhere", , ,1)}. With more than 5 or 6 parameters in the
-function signature, this quickly becomes awkward.
+\texttt{now}. However, if we wanted the string to be capitalized, we would
+have to set the fourth parameter to 1: to get \texttt{NOW} the function
+would have to be called as \texttt{Sub("nowhere", , ,1)}. With more than 5
+or 6 parameters in the function signature, this becomes quite awkward.
 
-This issue can be resolved by wrapping arguments 2 to 4 inside a
-bundle, as in
+This issue can be resolved by putting arguments 2 to 4 into a bundle, as in
 \begin{code}
 function string Sub(string s, bundle opts)
     string ret = s[opts.ini:opts.fin]
     return opts.capital ? toupper(ret) : ret
 end function
 \end{code}
-where the computation of the return string happens using the bundle
-contents,so you may call the function as
+where the returned string is computed using the bundle contents, and you may
+call the function as
 \begin{code}
   bundle myopts = _(ini=1, fin=3, capital=TRUE)
   string out = Sub("nowhere", myopts)
 \end{code}
-Note that the two lines could be combined as
+Note that these two lines could be combined as
 \begin{code}
   string out = Sub("nowhere", _(ini=1, fin=3, capital=TRUE))
 \end{code}
-but in some cases it may be convenient to keep the options bundle as a
-persistent object so that successive calls to the function may take
+but in some cases it may be convenient to have the options bundle as a
+persistent object, so that successive calls to the function may take
 place with incremental changes.
 
-Using this mechanism is useful because it lends itself quite naturally
-to handling default values in an elegant way. Consider the code below:
+This sort of mechanism lends itself naturally to handling default values in
+an elegant way. Consider the code below:
 \begin{code}
 function string Sub(string s, bundle opts_in[null])
     bundle opts = _(ini=1, fin=3, capital=0)
@@ -386,14 +379,13 @@ function string Sub(string s, bundle opts_in[null])
     return opts.capital ? toupper(ret) : ret
 end function
 \end{code}
-Let's analyse the body of the function one line at a time:
+Let's analyse the body of the function line by line:
 \begin{enumerate}
 \item the function signature contains only two arguments: the string
-  to process and a bundle, that has a default value of \texttt{null}
-  and can therefore be omitted.
-\item A bundle \texttt{opts} is defined with the defaults for the
-  scalars \texttt{ini} and \texttt{fin} and for the boolean flag
-  \texttt{capital}.
+  to process and a bundle, which has a default value of \texttt{null}
+  and so can be omitted.
+\item A bundle \texttt{opts} is defined with default values for the scalars
+  \texttt{ini} and \texttt{fin} and for the boolean flag \texttt{capital}.
 \item If a bundle was passed as the second argument, then the line
   \begin{code}
      opts = opts_in + opts
@@ -405,27 +397,26 @@ Let's analyse the body of the function one line at a time:
 \item From here on, everything proceeds as above.
 \end{enumerate}
 
-This means that a call to \texttt{Sub("nowhere")} would yield
-\texttt{now}, but if we wanted the output to be capitalized, we could
-have called the function as
+This means that the call \texttt{Sub("nowhere")} would yield \texttt{now},
+but if we want capitalized output we can call the function as
 \begin{code}
   string out = Sub("nowhere", _(capital=TRUE))
 \end{code}
-and the string \texttt{out} now contains \texttt{NOW}.  The
-``incremental variations'' idea for the options bundle we mentioned
-above can be now exploited as in, for example, the following code:
+
+The ``incremental variations'' idea for the options bundle (mentioned
+above) can be now exploited as in the following code:
 \begin{code}
   bundle myopts = _(capital=TRUE)
   string out1 = Sub("nowhere", myopts)
   myopts.fin = 2
   string out2 = Sub("nowhere", myopts)
 \end{code}
-and execution will result in the string \texttt{out1} containing
-\texttt{NOW} and \texttt{out2} containing \texttt{NO}.
+Execution this code gives strings \texttt{out1} containing \texttt{NOW} and
+\texttt{out2} containing \texttt{NO}.
 
-By now we're getting something virtually equivalent to named
-arguments. And note that the keys in \verb|_()|, unlike individual
-function arguments, can be given in any order.
+At this point we have something virtually equivalent to named arguments.
+Note that the keys in \verb|_()|, unlike individual function arguments, can
+be given in any order.
 
 \section{Recursion}
 

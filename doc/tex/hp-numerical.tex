@@ -193,23 +193,22 @@ The optimization methods hansl puts at your disposal are:
   \[
     x_{i+1} = -\lambda_i C(x_i)^{-1} g(x_i)
   \]
-  where $g(x)$ is the gradient and $C(x_i)$ is some measure of
-  curvature of the function to optimize; if $C(x)$ is the Hessian
-  matrix, you get Newton--Raphson proper. Again, you can code your own
-  functions for $g(\cdot)$ and $C(\cdot)$, but if you don't then
-  numerical approximations to the gradient and the Hessian will be
-  used, respectively. Other popular optimization methods (such as BHHH
-  and the scoring algorithm) can be implemented by supplying to
-  \cmd{NRmax()} the appropriate curvature matrix $C(\cdot)$. This
-  method is very efficient when it works, but is rather fragile: for
-  example, if $C(x_i)$ happens to be non-negative definite at some
-  iteration convergence may become problematic.
+  where $g(x)$ is the gradient and $C(x_i)$ is some measure of curvature of
+  the function to optimize; if $C(x)$ is the Hessian matrix, you get
+  Newton--Raphson proper. Again, you can code your own functions for
+  $g(\cdot)$ and $C(\cdot)$, but if you don't then numerical approximations
+  to the gradient and the Hessian will be used, respectively. Other popular
+  optimization methods (such as BHHH and the scoring algorithm) can be
+  implemented by supplying to \cmd{NRmax()} the appropriate curvature matrix
+  $C(\cdot)$. This method is very efficient when it works, but is less
+  robust than BFGS; for example, if $C(x_i)$ happens to be non-negative
+  definite at some iteration convergence may become problematic.
 \item Derivative-free methods: hansl offers simulated annealing, via
-  the \cmd{simann()} function, and the Nelder--Mead simplex algorithm
+  the \cmd{simann} function, and the Nelder--Mead simplex algorithm
   (also known as the ``amoeba'' method) via the \cmd{NMmax} function.
   These methods work even when the function to be maximized has some
   form of disconinuity or is not everywhere differentiable; however,
-  they may be very slow and CPU-intensive.
+  they may be slow and CPU-intensive.
 \end{itemize}
 
 \section{Numerical differentiation}
