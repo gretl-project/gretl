@@ -58,7 +58,7 @@ That is, you break the string into pieces and intersperse the names of
 the variables to be printed. The requirement to provide conversion
 specifiers is replaced by a default automatic formatting of the
 variables based on their type. By the same token, the command line
-becomes peppered with mutiple commas and quotation marks. If this looks
+becomes peppered with multiple commas and quotation marks. If this looks
 preferable to you, you are welcome to join one of the gretl mailing
 lists and argue for its provision!
 
@@ -226,12 +226,10 @@ This command also supports a \option{quiet} option: its effect is to
 turn off the echoing of commands and the printing of auxiliary
 messages while output is redirected. It is equivalent to doing
 \begin{code}
-  set echo off 
-  set messages off
+  set verbose off 
 \end{code}
 before invoking \cmd{outfile}, except that when redirection is ended
-the prior values of the \texttt{echo} and \texttt{messages} state
-variables are restored.
+the prior value of the \texttt{verbose} state variable is restored.
 
 \section{Graphics}
 

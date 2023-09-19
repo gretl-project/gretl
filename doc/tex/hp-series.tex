@@ -88,9 +88,8 @@ between the series and matrix types.
   \begin{code}
     series y = my_matrix[,4]
   \end{code}
-  But note that this will work only if the number of rows in
-  \texttt{my\_matrix} matches the length of the dataset (or the
-  currently selected sample range).
+  but only if the number of rows in \texttt{my\_matrix} matches the
+  length of the dataset, or the currently selected sample range.
 \end{itemize}
 
 Also note that the \cmd{lincomb} and \cmd{filter} functions are quite
@@ -133,7 +132,8 @@ series.  For this reason, the most common operations you perform on
 lists are set operations such as addition or deletion of members,
 union, intersection and so on. Unlike sets, however, hansl lists are
 ordered, so individual list members can be accessed via the
-\texttt{[]} syntax, as in \texttt{X[3]}.
+\texttt{[]} syntax, as in \texttt{X[3]} to access the third series in
+list \texttt{X}.
 
 There are several ways to assign values to a list.  The most basic
 sort of expression that works in this context is a space-separated

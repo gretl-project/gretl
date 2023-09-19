@@ -39,25 +39,15 @@ y=sqrt(x)
 # set 2
 c = cov(y1, y2)
 c=cov(y1,y2)
-c  = cov(y1 , y2)
+c  = cov( y1 , y2 )
 \end{code}
 
-However, please note these exceptions:
-\begin{enumerate}
-\item When an assignment starts with a type keyword such as
-  \texttt{series} or \texttt{matrix}, this must be separated from what
-  follows by at least one space, as in
+But when an assignment starts with a type keyword such as
+\texttt{series} or \texttt{matrix}, this must be separated from what
+follows by at least one space, as in
 \begin{code}
 series y = normal() # or: series y=normal()
 \end{code}
-\item In a function call, the opening parenthesis that marks the start
-  of the argument list must be attached to the name of the function
-  without intervening space:
-\begin{code}
-c = cov(y1, y2)  # correct
-c = cov (y1, y2) # broken!
-\end{code}
-\end{enumerate}
 
 \label{LastPage}
 

@@ -15,12 +15,13 @@ objects become available for your hansl script in a transparent and
 convenient way. Of course, the data themselves: the columns of the
 dataset matrix are called \emph{series}, which will be described in
 section \ref{sec:series}; sometimes, you will want to organize one or
-more series in a \emph{list} (section \ref{sec:lists}). Additionally,
-you have the possibility of using, as read-only global variables, some
-scalars or matrices, such as the number of observations, the number of
-variables, the nature of your dataset (cross-sectional, time series or
-panel), and so on. These are called \emph{accessors}, and will be
-discussed in section \ref{sec:accessors}.
+more series into a \emph{list} (Section
+\ref{sec:lists}). Additionally, you have the possibility of using, as
+read-only global variables, some scalars or matrices, such as the
+number of observations, the number of variables, the nature of your
+dataset (cross-sectional, time series or panel), and so on. These are
+called \emph{accessors}, and will be discussed in section
+\ref{sec:accessors}.
 
 You can open a dataset by reading data from a disk file, via the
 \cmd{open} command, or by creating one from scratch.
@@ -30,12 +31,11 @@ You can open a dataset by reading data from a disk file, via the
 The primary commands in this context are \cmd{nulldata} and
 \cmd{setobs}.  For example:
 \begin{code}
-set echo off
-set messages off
+set verbose off
 
-set seed 443322           # initialize the random number generator
-nulldata 240              # stipulate how long your series will be
-setobs 12 1995:1          # define as monthly dataset, starting Jan 1995   
+set seed 443322    # initialize the random number generator
+nulldata 240       # stipulate how long your series will be
+setobs 12 1995:1   # define as monthly data, starting Jan 1995
 \end{code}
 
 For more details see \GUG, and the \GCR\ for the \cmd{nulldata} and
@@ -56,14 +56,14 @@ The \cmd{open} command is what you'll want to use in most cases. It
 handles transparently a wide variety of formats (native, CSV,
 spreadsheet, data files produced by other packages such as
 \textsf{Stata}, \textsf{Eviews}, \textsf{SPSS} and \textsf{SAS}) and
-also takes care of setting up the dataset for you automatically.
+takes care of setting up the dataset for you automatically.
 \begin{code}
-  open mydata.gdt    # native format
-  open yourdata.dta  # Stata format
-  open theirdata.xls # Excel format
+  open mydata.gdt      # native format
+  open yourdata.dta    # Stata format
+  open theirdata.xlsx  # Excel format
 \end{code}
 
-The \cmd{open} command can also be used to read stuff off the
+The \cmd{open} command can also be used to read data directly from the
 Internet, by using a URL instead of a filename, as in
 \begin{code}
   open http://someserver.com/somedata.csv
@@ -111,7 +111,7 @@ There are basically three variants to the \cmd{smpl} command:
   \begin{code}
     smpl 4 122            # select observations for 4 to 122
     smpl 1984:1 2008:4    # the so-called "Great Moderation" period
-    smpl 2008-01-01 ;     # form January 1st, 2008 onwards
+    smpl 2008-01-01 ;     # observations from January 1st, 2008 onwards
   \end{code}
 \item Selecting observations on the basis of some criterion: this is
   typically what you want with cross-sectional datasets. Example:
@@ -121,9 +121,9 @@ There are basically three variants to the \cmd{smpl} command:
     smpl employed --dummy                    # via a dummy variable
   \end{code}
   Note that, in this context, restrictions go ``on top of'' previous
-  ones. In order to start from scratch, you either reset the full
-  sample via \texttt{smpl full} or use the \option{replace} option
-  along with \option{restrict}.
+  ones, or in other words are cumulated. In order to start from
+  scratch, you either reset the full sample via \texttt{smpl full} or
+  use the \option{replace} option along with \option{restrict}.
 \item Restricting the active dataset to some observations so that a
   certain effect is achieved automatically: for example, drawing a
   random subsample, or ensuring that all rows that have missing
@@ -147,10 +147,10 @@ Table~\ref{tab:dataset-accessors}.
   \centering
   \begin{tabular}{lp{0.7\textwidth}}
     \textbf{Accessor} & \textbf{Value returned} \\ \hline
-    \verb|$datatype| & Coding for the type of dataset: 
+    \verb|$datatype| & Coding for the type of dataset:
     0 = no data; 1 = cross-sectional (undated); 2 = time-series;
     3 = panel \\
-    \verb|$nobs| & The number of observations in the current 
+    \verb|$nobs| & The number of observations in the current
     sample range \\
     \verb|$nvars| & The number of series (including the constant)\\
     \verb|$pd| & The data frequency (1 for cross-sectional, 4 for
@@ -169,11 +169,11 @@ In addition there are a few more specialized accessors:
 \dollar{obsdate}, \dollar{obsmajor}, \dollar{obsminor},
 \dollar{obsmicro} and \dollar{unit}. These are specific to time-series
 and/or panel data, and they all return series. See the \GCR{} for
-details. 
+details.
 
 
 
-%%% Local Variables: 
+%%% Local Variables:
 %%% mode: latex
 %%% TeX-master: "hansl-primer"
-%%% End: 
+%%% End:

@@ -29,6 +29,7 @@ the following points:
 \item The next line contains a \emph{command} (\cmd{print}) followed
   by an \emph{argument}; this is fairly typical of hansl: many jobs
   are carried out by calling commands.
+\item The quotation character is a straight double-quote.
 \item Hansl does not have an explicit command terminator such as the
   ``\texttt{;}'' character in the C language family (C++, Java, C\#,
   \ldots) or GAUSS; instead it uses the newline character as an
@@ -41,9 +42,11 @@ the following points:
 
 Note also that the \cmd{print} command automatically appends a line
 break, and does not recognize ``escape'' sequences such as
-``\verb|\n|''; such sequences are just printed literally. The
-\cmd{printf} command can be used for greater control over output; see
-chapter \ref{chap:formatting}.
+``\verb|\n|''. Such sequences are just printed literally---with a
+single exception, namely that a backslash immediately followed by
+double-quote produces an embedded double-quote. The \cmd{printf}
+command can be used for greater control over output; see chapter
+\ref{chap:formatting}.
 
 Let's now examine a simple variant of the above:
 \begin{code}
@@ -117,8 +120,7 @@ type:
 \end{code}
 A \texttt{scalar} is a double-precision floating point number, so
 \texttt{42} is the same as \texttt{42.0} or \texttt{4.20000E+01}. Note
-that hansl doesn't have a separate variable type for integers or
-complex numbers.
+that hansl doesn't have a separate variable type for integers.
 
 An important detail to note is that, contrary to most other
 matrix-oriented languages in use in the econometrics community, hansl
@@ -143,8 +145,7 @@ conversions are possible (more on this later).
 
 Many commands can take more than one argument, as in
 \begin{code}
-  set echo off
-  set messages off
+  set verbose off
 
   scalar x = 42
   string foo = "not bad"
@@ -153,12 +154,12 @@ Many commands can take more than one argument, as in
 In this example, one \texttt{print} is used to print the values of two
 variables; more generally, \texttt{print} can be followed by as many
 arguments as desired. The other difference with respect to the
-previous code examples is in the use of the two \texttt{set}
-commands. Describing the \texttt{set} command in detail would lead us
-to an overly long diversion; suffice it to say that this command is
-used to set the values of various ``state variables'' that influence
-the behavior of the program; here it is used as a way to silence
-unwanted output. See the \GCR{} for more on \texttt{set}.
+previous code examples is in the use of the \texttt{set}
+command. Describing this command in detail would lead us to an overly
+long diversion; suffice it to say that it is used to set the values of
+various ``state variables'' that influence the behavior of the
+program; here it is used as a way to silence unwanted output. See the
+\GCR{} for more on \texttt{set}.
 
 % There was a reference here to a {chap:settings}, but it has not
 % been written at this point
@@ -181,7 +182,7 @@ for checking purposes, as in the following (rather silly) example:
 \section{Manipulation of scalars}
 
 Algebraic operations work in the obvious way, with the classic
-algebraic operators having their traditional precedence rules: the
+algebraic operators having their traditional precedence rules. The
 caret (\verb|^|) is used for exponentiation. For example,
 \begin{code}
   scalar phi = exp(-0.5 * (x-m)^2 / s2) / sqrt(2 * $pi * s2)

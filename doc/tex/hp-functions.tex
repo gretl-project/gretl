@@ -40,7 +40,7 @@ Function parameters can be of any of the types shown below.
 
 \begin{center}
 \begin{tabular}{ll}
-  \multicolumn{1}{c}{Type} & 
+  \multicolumn{1}{c}{Type} &
   \multicolumn{1}{c}{Description} \\ [4pt]
   \texttt{bool}   & scalar variable acting as a Boolean switch \\
   \texttt{int}    & scalar variable acting as an integer  \\
@@ -50,9 +50,11 @@ Function parameters can be of any of the types shown below.
   \texttt{matrix} & matrix or vector \\
   \texttt{string} & string variable or string literal \\
   \texttt{bundle} & all-purpose container \\
+  \texttt{array}  & single-type container \\
   \texttt{matrices} & array of matrices \\
   \texttt{bundles}  & array of bundles \\
-  \texttt{strings}  & array of strings
+  \texttt{strings}  & array of strings \\
+  \texttt{arrays}   & array of arrays \\
 \end{tabular}
 \end{center}
 
@@ -82,11 +84,11 @@ simple example:
 \begin{code}
 function scalar quasi_log (scalar x)
    /* popular approximation to the natural logarithm
-     via Padé polynomials 
+      via Padé polynomials
    */
    if x < 0
       scalar ret = NA
-   else 
+   else
       scalar ret = 2*(x-1)/(x+1)
    endif
    return ret
@@ -114,9 +116,9 @@ neighborhood of 1. Some comments on the code:
 \item The function ends by returning the computed value, \texttt{ret}.
 \item The lines below the function definition give a simple example of
   usage. Note that in the \cmd{printf} command, the two functions
-  \cmd{ln()} and \cmd{quasi\_log()} are indistinguishable from a
-  purely syntactic viewpoint, although the former is native and the
-  latter is user-defined.
+  \cmd{ln()} and \cmd{quasi\_log()} behave in exactly the same way
+  from a purely syntactic viewpoint, although the former is native and
+  the latter is user-defined.
 \end{enumerate}
 
 In ambitious uses of hansl you may end up writing several functions,
@@ -166,20 +168,22 @@ original \texttt{x}: this is demonstrated by the second \cmd{print}
 statement.  If you want a function to modify its arguments, you must
 use pointers.
 
-It must be said that copying the contents of the incoming parameter to
-a local version may have a sizeable impact on computational speed when
-the object is large (such as a 1000 $\times$ 1000 matrix). In order to
-avoid this, you may prepend the \texttt{const} modifier to the
-parameter type to alert \app{gretl} that that object is not going
-be modified inside the function, so the computational cost of storing
-an extra copy may be skipped. Consult the \GUG{} for further details.
+Copying the content of the incoming parameter to a local version may
+have a sizeable impact on compute speed and memory usage when the
+object is large (say, a 1000 $\times$ 1000 matrix). To avoid this cost
+you can prepend the \texttt{const} modifier to the parameter type,
+thereby promising that the object in question will not be modified
+inside the function. In that case gretl will grant read-only access to
+the object at caller level instead of copying it (and will flag an
+error at any attempt to modify the object). Consult the \GUG{} for
+further details.
 
 \subsection{Pointers}
 
 Each of the type-specifiers, with the exception of \texttt{list}, may
 be modified by prepending an asterisk to the associated parameter
 name, as in
-%    
+%
 \begin{code}
 function scalar myfunc (matrix *y)
 \end{code}
@@ -248,14 +252,12 @@ is given as arguments \verb|&a| and \verb|&b|, which hansl identifies
 as ``the address of'' the two scalars \texttt{a} and \texttt{b},
 respectively.
 
-Writing a function with pointer arguments has two main consequences:
-first, as we just saw, it makes it possible to modify the function
-arguments. Second, it avoids the computational cost of having to
-allocate memory for a copy of the arguments and performing the copy
-operation; such cost is proportional to the size of the argument.
-Hence, for matrix arguments, this is a nice way to write faster
-functions, as producing a copy of a large matrix can be quite
-time-consuming.
+Besides making it possible to modify function arguments in such a way
+that they stay modified at caller level, use of pointer arguments
+avoids the computational cost of copying arguments. However, it is not
+idiomatic in hansl to use the pointer-argument mechanism for
+cost-saving alone since the same effect can be achieved via the
+\texttt{const} modifier described above.
 
 \subsection{Advanced parameter passing and optional arguments}
 
@@ -283,11 +285,11 @@ function void smileys(int times[0::1], bool frown[0])
     else
         string s = ":-)"
     endif
-    
+
     loop times
         printf "%s ", s
     endloop
-    
+
     printf "\n"
 end function
 \end{code}
@@ -302,30 +304,29 @@ smileys(4)
 produces
 
 \begin{code}
-:-) 
-:-( :-( 
-:-) :-) :-) :-) 
+:-)
+:-( :-(
+:-) :-) :-) :-)
 \end{code}
 
 \subsection{Embedding arguments in bundles}
 
-In certain cases, a function may be so complex that a large number of
-arguments is required. Although there is no limit to the number of
-arguments a function can have, a complicated function signature makes
-it somewhat unpleasant to use. Some programming languages (\app{R}, for one)
-obviate this problem by using \emph{named arguments}, so that you may
-call a function by supplying only the few arguments you actually need,
-and leave the other ones to their default value.
+Some complex functions may require a large number of arguments. There
+is no limit to the number of arguments a function can have, but a
+complicated function signature makes it somewhat unpleasant to
+use. Some programming languages (\app{R}, for one) obviate this
+problem by using \emph{named arguments}, so that you may call a
+function by supplying only the few arguments you actually need, leaving
+the other ones to their default values.
 
-In Hansl, we don't have named arguments, but a commonly employed
+In hansl, we don't have named arguments, but a commonly employed
 technique achieves the same result in a similar way: the idea is to
-embed arguments inside a bundle and use the bundle syntax to handle
-its contents.\footnote{``Bundle'' is the term used in Hansl to
-  indicate associative arrays. For more details, see
-  Section \ref{sec:bundles}.}
+package arguments into a bundle and use the bundle syntax to handle
+its contents.\footnote{``Bundle'' is the term used in hansl to
+  indicate associative arrays; see Section \ref{sec:bundles}.}
 
-For example, suppose that you want to write a function for extracting
-a substring from a string, and optionally capitalizing it: you could
+For example, say that you want to write a function to extract
+a substring from a string and optionally capitalize it. You could
 start from something like
 \begin{code}
 function string Sub(string s, scalar ini, scalar fin, bool capital)
@@ -348,8 +349,8 @@ and the call \texttt{Sub("nowhere")} would return the string
 \texttt{now}. However, if we wanted the string to be capitalized, we
 would have to set the fourth parameter to 1, so in order to get
 \texttt{NOW} the function would have to be called as
-\texttt{Sub("nowhere", , ,1)}. If you have more than 5 or 6 parameters
-in the function signature, this quickly becomes awkward.
+\texttt{Sub("nowhere", , ,1)}. With more than 5 or 6 parameters in the
+function signature, this quickly becomes awkward.
 
 This issue can be resolved by wrapping arguments 2 to 4 inside a
 bundle, as in
@@ -362,13 +363,12 @@ end function
 where the computation of the return string happens using the bundle
 contents,so you may call the function as
 \begin{code}
-  bundle myopts = defbundle("ini", 1, "fin", 3, "capital", TRUE)
+  bundle myopts = _(ini=1, fin=3, capital=TRUE)
   string out = Sub("nowhere", myopts)
 \end{code}
-Note that the two lines could be coealesced as
+Note that the two lines could be combined as
 \begin{code}
-  string out = Sub("nowhere", defbundle("ini", 1, "fin", 3,
-                                        "capital", TRUE))
+  string out = Sub("nowhere", _(ini=1, fin=3, capital=TRUE))
 \end{code}
 but in some cases it may be convenient to keep the options bundle as a
 persistent object so that successive calls to the function may take
@@ -378,7 +378,7 @@ Using this mechanism is useful because it lends itself quite naturally
 to handling default values in an elegant way. Consider the code below:
 \begin{code}
 function string Sub(string s, bundle opts_in[null])
-    bundle opts = defbundle("ini", 1, "fin", 3, "capital", 0)
+    bundle opts = _(ini=1, fin=3, capital=0)
     if exists(opts_in)
         opts = opts_in + opts
     endif
@@ -386,13 +386,13 @@ function string Sub(string s, bundle opts_in[null])
     return opts.capital ? toupper(ret) : ret
 end function
 \end{code}
-Let's analyze the body of the function one line at a time:
+Let's analyse the body of the function one line at a time:
 \begin{enumerate}
 \item the function signature contains only two arguments: the string
   to process and a bundle, that has a default value of \texttt{null}
   and can therefore be omitted.
 \item A bundle \texttt{opts} is defined with the defaults for the
-  scalars \texttt{ini} and \texttt{fin} and for the Boolean flag
+  scalars \texttt{ini} and \texttt{fin} and for the boolean flag
   \texttt{capital}.
 \item If a bundle was passed as the second argument, then the line
   \begin{code}
@@ -409,13 +409,13 @@ This means that a call to \texttt{Sub("nowhere")} would yield
 \texttt{now}, but if we wanted the output to be capitalized, we could
 have called the function as
 \begin{code}
-  string out = Sub("nowhere", defbundle("capital", TRUE))
+  string out = Sub("nowhere", _(capital=TRUE))
 \end{code}
 and the string \texttt{out} now contains \texttt{NOW}.  The
 ``incremental variations'' idea for the options bundle we mentioned
 above can be now exploited as in, for example, the following code:
 \begin{code}
-  bundle myopts = defbundle("capital", TRUE)
+  bundle myopts = _(capital=TRUE)
   string out1 = Sub("nowhere", myopts)
   myopts.fin = 2
   string out2 = Sub("nowhere", myopts)
@@ -423,15 +423,9 @@ above can be now exploited as in, for example, the following code:
 and execution will result in the string \texttt{out1} containing
 \texttt{NOW} and \texttt{out2} containing \texttt{NO}.
 
-Moreover, from gretl version 2021a, the function \texttt{defbundle}
-accepts a ``shorthand'' syntax as \verb|_()| (see the documentation of
-\texttt{defbundle} in the \GCR{} for more details). This makes it
-possible to call a function written with this technique nearly as if
-it had named arguments, as in
-\begin{code}
-  string out = Sub("nowhere", _(capital=1, fin=2))
-\end{code}
-Note that the arguments in \verb|_()| can appear in any order.
+By now we're getting something virtually equivalent to named
+arguments. And note that the keys in \verb|_()|, unlike individual
+function arguments, can be given in any order.
 
 \section{Recursion}
 
@@ -440,7 +434,7 @@ factorial example:
 \begin{code}
 function scalar factorial(scalar n)
     if (n<0) || (n>floor(n))
-        # filter out everything that isn't a 
+        # filter out everything that isn't a
         # non-negative integer
         return NA
     elif n==0
@@ -455,10 +449,10 @@ loop i = 0 .. 6
 endloop
 \end{code}
 
-Note: this is fun, but in practice, you'll be much better off using
-the pre-cooked gamma function (or, better still, its logarithm).
+This is fun, but in practice you'll be much better off using the
+pre-cooked gamma function (or better still, its logarithm).
 
-%%% Local Variables: 
+%%% Local Variables:
 %%% mode: latex
 %%% TeX-master: "hansl-primer"
-%%% End: 
+%%% End:

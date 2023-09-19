@@ -31,12 +31,16 @@ without any arguments:
 bundle foo = defbundle()
 \end{code}
 %
-These two formulations are basically equivalent, in that they both
-create an empty bundle. The difference is that the second variant may
-be reused---if a bundle named \texttt{foo} already exists the effect
-is to empty it---while the first may only be used once in a given
-gretl session; it is an error to declare a variable that already
-exists.
+However, since defining a bundle is a common trope in hansl an handy
+abbreviation is supported: \cmd{\_()} is short for
+\texttt{defbundle()}.
+
+The formulations above are basically equivalent, in that they both
+create an empty bundle. The difference is that the second variant,
+with explicit assignment, may be reused---if a bundle named
+\texttt{foo} already exists the effect is to empty it---while the
+first may only be used once in a given gretl session; it is an error
+to declare a variable that already exists.
 
 To add an object to a bundle you assign to a compound left-hand value:
 the name of the bundle followed by the key. The most common way to do
@@ -70,17 +74,22 @@ matrix m = foo["matrix1"]
 Note that the key identifying an object within a given bundle is
 necessarily unique. If you reuse an existing key in a new assignment,
 the effect is to replace the object which was previously stored under
-the given key. It is not required that the type of the replacement
-object is the same as that of the original.
+the given key. In this context it is not required that the type of the
+replacement object is the same as that of the original.
 
-A quicker way, introduced in gretl 2017b, is to use the
-\cmd{defbundle} function, as in
+A quicker way is to use \cmd{defbundle} or \cmd{\_()}, as in
 \begin{code}
-  bundle b = defbundle("s", "Sample string", "m", I(3))
+  bundle b = _(s="Sample string", m=I(3))
 \end{code}
-in which every odd-numbered argument must evaluate to a string (key)
-and every even-numbered argument must evaluate to an object of a type
-that can be included in a bundle.
+Note that in this style the key-strings are not quoted; this works only
+if they do not contain spaces. An alternative syntax can handle
+arbitrary keys:
+\begin{code}
+  bundle b = _("s", "Sample string", "m", I(3))
+\end{code}
+Here every odd-numbered argument must evaluate to a key, and every
+even-numbered argument to an object of a type that can be included in
+a bundle.
 
 Note that when you add an object to a bundle, what in fact happens is
 that the bundle acquires a copy of the object. The external object
@@ -97,7 +106,7 @@ foo.mykey = x
 
 After the above commands are completed bundle \texttt{foo} does not
 contain a matrix under \texttt{mykey}, but the original matrix
-\texttt{m} is still in good health.
+\texttt{m} is still in good standing.
 
 To delete an object from a bundle use the \texttt{delete} command,
 with the bundle/key combination, as in
@@ -148,13 +157,13 @@ estimates an OLS regression and stores all the results in a bundle.
 \begin{code}
 /* assume y and X are given T x 1 and T x k matrices */
 
-bundle my_model = defbundle()        # initialization
-my_model.T = rows(X)                 # sample size
-my_model.k = cols(X)                 # number of regressors
-matrix e                             # will hold the residuals
-b = mols(y, X, &e)                   # perform OLS via native function
-s2 = meanc(e.^2)                     # compute variance estimator
-matrix V = s2 .* invpd(X'X)          # compute covariance matrix
+bundle my_model = _()           # initialization
+my_model.T = rows(X)            # sample size
+my_model.k = cols(X)            # number of regressors
+matrix e                        # will hold the residuals
+b = mols(y, X, &e)              # perform OLS via native function
+s2 = meanc(e.^2)                # compute variance estimator
+matrix V = s2 .* invpd(X'X)     # compute covariance matrix
 
 /* now store estimated quantities into the bundle */
 
@@ -196,8 +205,8 @@ A gretl array is a container which can hold zero or more objects of a
 certain type, indexed by consecutive integers starting at 1. It is
 one-dimensional. This type is implemented by a quite ``generic''
 back-end. The types of object that can be put into arrays are strings,
-matrices, bundles and lists; a given array can hold only one of these
-types.
+matrices, bundles, lists and arrays (that is, arrays can be nested). A
+given array can hold only one of these types.
 
 \subsection{Array operations}
 
@@ -241,6 +250,23 @@ Array of strings, length 5
 
 In order to find the number of elements in an array, you can use the
 \texttt{nelem()} function.
+
+\subsection{High-dimensional objects}
+
+Since one can construct an array of matrices, and arrays can be
+nested, it is possible to build numerical objects of higher
+dimensionality than matrices. For example a 3-tensor can be
+represented as an array of matrices, and a 4-tensor as an array of
+arrays of matrices.
+
+But since such objects are compound you have be careful to get
+indexation right. For example, if you have an array \texttt{M} holding
+at least three matrices and you want to access element 2,2 of matrix 3
+you'll need two sets of square brackets, as in
+%
+\begin{code}
+M[3][2,2]
+\end{code}
 
 %%% Local Variables: 
 %%% mode: latex

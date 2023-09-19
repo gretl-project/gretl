@@ -97,7 +97,7 @@ which has four different minima; $f(x, y) = (x^2+y-11)^2 +
   of $\theta_1$ until the maximum is reached. On successful
   completion, the vector \texttt{theta1} will contain the final
   point. (Note: there's \emph{much} more to this. For details, be sure
-  to read \GUG and the \GCR.)
+  to read \GUG\ and the \GCR.)
 \item Then we tackle the same problem but with a different starting
   point and a different optimization technique. We start from
   $\theta_2 = [0, -1]$ and use Newton--Raphson instead of BFGS,
@@ -188,14 +188,14 @@ The optimization methods hansl puts at your disposal are:
   analytically-computed gradient for speed and accuracy, but if you
   don't, the first derivatives will be computed numerically.
 \item Newton--Raphson, via the \cmd{NRmax()} function. Actually, the
-  name is misleading. It should be called something like
-  ``curvature-based'', since it relies on the iterations
+  function is less specific than the name implies. This is a
+  ``curvature-based'' method, relying on the iterations
   \[
     x_{i+1} = -\lambda_i C(x_i)^{-1} g(x_i)
   \]
   where $g(x)$ is the gradient and $C(x_i)$ is some measure of
   curvature of the function to optimize; if $C(x)$ is the Hessian
-  matrix, you get Newton--Raphson. Again, you can code your own
+  matrix, you get Newton--Raphson proper. Again, you can code your own
   functions for $g(\cdot)$ and $C(\cdot)$, but if you don't then
   numerical approximations to the gradient and the Hessian will be
   used, respectively. Other popular optimization methods (such as BHHH
@@ -204,13 +204,12 @@ The optimization methods hansl puts at your disposal are:
   method is very efficient when it works, but is rather fragile: for
   example, if $C(x_i)$ happens to be non-negative definite at some
   iteration convergence may become problematic.
-\item Derivative-free methods: the only method that hansl offers
-  presently is simulated annealing, via the \cmd{simann()} function,
-  but an implementiation of the Nelder--Mead algorithm (also known as
-  the ``amoeba'' method) should be just a matter of time. These
-  methods work even when the function to maximize has some form of
-  disconinuity or is not everywhere differentiable; however, they may
-  be very slow and CPU-intensive.
+\item Derivative-free methods: hansl offers simulated annealing, via
+  the \cmd{simann()} function, and the Nelder--Mead simplex algorithm
+  (also known as the ``amoeba'' method) via the \cmd{NMmax} function.
+  These methods work even when the function to be maximized has some
+  form of disconinuity or is not everywhere differentiable; however,
+  they may be very slow and CPU-intensive.
 \end{itemize}
 
 \section{Numerical differentiation}
@@ -270,8 +269,8 @@ say here that you have a \texttt{fdjac\_quality} setting that goes
 from 0 to 2. The default value is to 0, which gives you
 forward-difference approximation: this is the fastest algorithm, but
 sometimes may not be precise enough. The value of 1 gives you
-bilateral difference, while 2 uses Richardson extrapolation. As you go
-up, you gain in accuracy, but the method becomes considerably more
+bilateral difference, while 2 uses Richardson extrapolation. Higher
+values give greater accuracy but the method becomes considerably more
 CPU-intensive.
 
 % \section{Random number generation}

@@ -30,7 +30,7 @@ Points to note:
   keyword as found in, e.g., Pascal or Basic.
 \item The \cmd{elif} and \cmd{else} clauses are optional: the minimal
   form is just \texttt{if} \dots{} \texttt{endif}.
-\item Conditional blocks of this sort can be nested up to a maximum of
+\item Conditional blocks of this sort can be nested up to a maximum
   depth of 1024.
 \end{itemize}
 
@@ -82,15 +82,15 @@ Besides use of \texttt{if}, the ternary query operator, \texttt{?:},
 can be used to perform conditional assignment on a more ``micro''
 level. This has the form
 \begin{code}
-result = <condition> ? <true-value> : <false-value>
+result = <condition> ? <value-if-true> : <value-if-false>
 \end{code}
 
-If \texttt{<condition>} evaluates as true (non-zero) then
-\texttt{<true-value>} is assigned to \texttt{result}, otherwise
-\texttt{result} will contain \texttt{<false-value>}.\footnote{Some
-  readers may find it helpful to note that the conditional assignment
-  operator works in exactly the same way as the \texttt{=IF()} function
-  in spreadsheets.}  This is obviously more compact than \texttt{if}
+If \texttt{<condition>} evaluates as ``true'' (non-zero) then the
+first following value is assigned to \texttt{result}, otherwise the
+value after the colon is so assigned.\footnote{Some readers may find
+  it helpful to note that the conditional assignment operator works in
+  exactly the same way as the \texttt{=IF()} function in
+  spreadsheets.}  This is obviously more compact than \texttt{if}
 \dots{} \texttt{else} \dots{} \texttt{endif}. The following example
 replicates the \cmd{abs} function by hand:
 \begin{code}
@@ -118,7 +118,7 @@ to the scalar \texttt{days} comes from the following pathway.
 \item The \cmd{maxr} function gives the maximum of this vector, so
   we're checking whether \texttt{m} is any one of the four values
   corresponding to 30-day months.
-\item Since the above evaluates to a scalar, we put the right value
+\item Since the above evaluates to a scalar, we put the correct value
   into \texttt{days}.
 \end{enumerate}
 
@@ -128,9 +128,8 @@ must always come down to a scalar, but the query operator just
 requires that the condition is of ``suitable'' type in light of the
 types of the operands.  So, for example, suppose you have a square
 matrix \texttt{A} and you want to switch the sign of the negative
-elements of \texttt{A} on and above its diagonal. You could use a
-loop,\footnote{The \texttt{loop} keyword is explained in detail in the
-  next section.} and write a piece of code such as
+elements of \texttt{A} on and above its diagonal. You could use a loop
+(see below) and write a piece of code such as
 \begin{code}
 matrix A = mnormal(4,4)
 matrix B = A
@@ -386,10 +385,16 @@ However, if you replace the condition \texttt{x!=0.01} with
  
 \subsection{Loop options}
 
-Two options can be given to the \cmd{loop} statement. One is
+Three options can be given to the \cmd{loop} statement. One is
 \option{verbose}. This has simply the effect of printing extra output
 to trace progress of the loop; it has no other effect and the
 semantics of the loop contents remain unchanged.
+
+The \option{decr} option can be applied to an index loop to indicate
+that the counter should be decremented by 1, not incremented, on each
+iteration. Note that the default behavior with an index loop is that
+the code is skipped altogether if the starting index value exceeds the
+ending value.
 
 The \option{progressive} option is mostly used as a quick and
 efficient way to set up simulation studies. When this option is given,
@@ -397,17 +402,16 @@ a few commands (notably \cmd{print} and \cmd{store}) are given a
 special, \emph{ad hoc} meaning. Please refer to \GUG\ for more
 information.
  
-\subsection{Breaking out of loops}
+\subsection{Breaking and continuing}
 \label{sec:loop-break}
 
 The \cmd{break} command makes it possible to break out of a loop if
-necessary.\footnote{Hansl does not provide any equivalent to the C
-  \texttt{continue} statement.} Note that if you nest loops,
-\cmd{break} in the innermost loop will interrupt that loop only and
-not the outer ones.  Here is an example in which we use the
-\texttt{while} variant of the \cmd{loop} statement to perform
-calculation of the square root in a manner similar to the example
-above, using \cmd{break} to jump out of the loop when the job is done.
+necessary. Note that if you nest loops, \cmd{break} in the innermost
+loop will interrupt that loop only and not the outer ones.  Here is an
+example in which we use the \texttt{while} variant of the \cmd{loop}
+statement to perform calculation of the square root in a manner
+similar to the example above, using \cmd{break} to jump out of the
+loop when the job is done.
 \begin{code}
 scalar x = 256
 scalar y = 1
@@ -424,17 +428,24 @@ endloop
 printf "sqrt(%g) = %g\n", x, y
 \end{code}
 
+The \cmd{continue} command can be used to short-circuit an iteration:
+execution jumps from the line on which \cmd{continue} occurs to the
+top of the loop. Iteration will then proceed if the continuation
+condition is met. This can promote efficiency if a condition is met at
+a certain point in an iteration such that the subsequent code becomes
+irrelevant.
+
 \section{The \cmd{catch} modifier}
 
-Hansl offers a rudimentary form of exception handling via the
-\cmd{catch} keyword. This is not a command in its own right but can be
-used as a prefix to most regular commands: the effect is to prevent
-termination of a script if an error occurs in executing the
-command. If an error does occur, this is registered in an internal
-error code which can be accessed as \dollar{error} (a zero value
-indicating success). The value of \dollar{error} should always be
-checked immediately after using \texttt{catch}, and appropriate action
-taken if the command failed. Here is a simple example:
+Hansl offers a simple form of exception handling via the \cmd{catch}
+keyword. This is not a command in its own right but can be used as a
+prefix to most regular commands: the effect is to prevent termination
+of a script if an error occurs in executing the command. If an error
+does occur, this is registered in an internal error code which can be
+accessed as \dollar{error} (a zero value indicating success). The
+value of \dollar{error} should always be checked immediately after
+using \texttt{catch}, and appropriate action taken if the command
+failed. Here is a simple example:
 
 \begin{code}
 matrix a = floor(2*muniform(2,2))
