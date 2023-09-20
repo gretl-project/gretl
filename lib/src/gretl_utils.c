@@ -2888,8 +2888,8 @@ static void blas_init (void)
     }
 }
 
-void blas_cleanup (void) {
-
+void blas_cleanup (void)
+{
     if (blas_variant == BLAS_BLIS && BLIS_finalize != NULL) {
         BLIS_finalize();
     } else if (blas_variant == BLAS_MKL && MKL_finalize != NULL) {
@@ -2902,6 +2902,84 @@ void blas_cleanup (void) {
         }
     }
 }
+
+/* CPUID detection and analysis (for $sysinfo bundle) */
+
+#if defined(OS_OSX)
+int sysctlbyname (const char *, void *, size_t *, void *, size_t);
+# define CPU_IDENT
+#elif (defined(__x86_64__) || defined(__i386__))
+# include <cpuid.h>
+# if defined(__CPUID_H) || defined(_CPUID_H_INCLUDED)
+#  define CPU_IDENT
+# endif
+#endif
+
+#ifdef CPU_IDENT
+
+char *get_cpu_details (void)
+{
+    char *ret = NULL;
+    char buf1[128] = {0};
+    char buf2[128] = {0};
+    int err = 0;
+
+#if defined(OS_OSX)
+    size_t bsize = sizeof buf1;
+
+    err = sysctlbyname("machdep.cpu.vendor", &buf1, &bsize, NULL, 0);
+    if (err == 0) {
+	bsize = sizeof buf2;
+	err = sysctlbyname("machdep.cpu.brand_string", &buf2, &bsize, NULL, 0);
+    }
+#else
+    guint32 i, j, data[4];
+    int n_bytes = 4;
+
+    __cpuid(0, data[0], data[1], data[2], data[3]);
+    sprintf(buf1, "%.*s%.*s%.*s",
+	    n_bytes, (char *) &data[1],
+            n_bytes, (char *) &data[3],
+	    n_bytes, (char *) &data[2]);
+    __cpuid(0x80000000, data[0], data[1], data[2], data[3]);
+    if (data[0] & 0x80000000) {
+        if (data[0] >= 0x80000004) {
+            for (i=0x80000002; i<=0x80000004; i++) {
+                __cpuid(i, data[0], data[1], data[2], data[3]);
+		for (j=0; j<4; j++) {
+		    strncat(buf2, (char *) &data[j], n_bytes);
+		}
+            }
+        }
+    }
+#endif
+
+    if (!err && (*buf1 || *buf2)) {
+	g_strstrip(buf1);
+	g_strstrip(buf2);
+	if (*buf1 && *buf2) {
+	    ret = calloc(strlen(buf1) + strlen(buf2) + 2, 1);
+	    sprintf(ret, "%s %s", buf1, buf2);
+	} else if (*buf1) {
+	    ret = gretl_strdup(buf1);
+	} else {
+	    ret = gretl_strdup(buf2);
+	}
+    } else {
+	ret = gretl_strdup("unknown");
+    }
+
+    return ret;
+}
+
+#else
+
+char *get_cpu_details (void)
+{
+    return gretl_strdup("unknown");
+}
+
+#endif /* CPU_IDENT defined or not */
 
 /* library init and cleanup functions */
 

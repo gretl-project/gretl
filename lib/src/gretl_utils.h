@@ -231,6 +231,8 @@ const char *blas_variant_string (void);
 
 int get_blas_details (char **s1, char **s2, char **s3);
 
+char *get_cpu_details (void);
+
 gint64 gretl_monotonic_time (void);
 
 /* gzip, gunzip */
