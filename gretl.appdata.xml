@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti -->
-<component type="desktop">
-  <id>gretl.desktop</id>
+<component type="desktop-application">
+  <id>net.sourceforge.gretl</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0+</project_license>
+  <name>gretl</name>
+  <summary>Econometrics package</summary>
+  <launchable type="desktop-id">gretl.desktop</launchable>
   <description>
     <p>
     Gretl is an econometrics package, including a shared library, a 
@@ -16,10 +19,10 @@
     approaches.
     </p>
   </description>
-  <url type="homepage">http://gretl.sourceforge.net/</url>
+  <url type="homepage">https://gretl.sourceforge.net/</url>
   <screenshots>
     <screenshot type="default">
-      <image>http://gretl.sourceforge.net/images/gretl_screen.png</image>
+      <image>https://gretl.sourceforge.net/images/gretl_screen.png</image>
       <caption>Estimates for a time-series model</caption>
     </screenshot>
   </screenshots>
@@ -35,7 +38,7 @@
     <keyword>analysis</keyword>
   </keywords>
   <developer_name>gretl</developer_name>
-  <url type="bugtracker">http://sourceforge.net/p/gretl/bugs/</url>
-  <url type="donation">http://sourceforge.net/projects/gretl/</url>
-  <url type="help">http://sourceforge.net/projects/gretl/files/manual/</url>
+  <url type="bugtracker">https://sourceforge.net/p/gretl/bugs/</url>
+  <url type="donation">https://sourceforge.net/projects/gretl/</url>
+  <url type="help">https://sourceforge.net/projects/gretl/files/manual/</url>
 </component>
