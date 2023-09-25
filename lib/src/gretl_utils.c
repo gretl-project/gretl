@@ -2906,7 +2906,9 @@ void blas_cleanup (void)
 /* CPUID detection and analysis (for $sysinfo bundle) */
 
 #if defined(OS_OSX)
-int sysctlbyname (const char *, void *, size_t *, void *, size_t);
+# include <sys/types.h>
+# include <sys/sysctl.h>
+// int sysctlbyname (const char *, void *, size_t *, void *, size_t);
 # define CPU_IDENT
 #elif (defined(__x86_64__) || defined(__i386__))
 # include <cpuid.h>
@@ -2920,16 +2922,11 @@ char *get_cpu_details (void)
     char *ret = NULL;
     char buf1[16] = {0};
     char buf2[64] = {0};
-    int err = 0;
 
 #if defined(OS_OSX)
-    size_t bsize = sizeof buf1;
+	size_t sz2 = sizeof buf2;
 
-    err = sysctlbyname("machdep.cpu.vendor", &buf1, &bsize, NULL, 0);
-    if (err == 0) {
-	bsize = sizeof buf2;
-	err = sysctlbyname("machdep.cpu.brand_string", &buf2, &bsize, NULL, 0);
-    }
+	sysctlbyname("machdep.cpu.brand_string", &buf2, &sz2, NULL, 0);
 #else
     guint32 i, j, data[4];
     int n_bytes = 4;
@@ -2952,7 +2949,7 @@ char *get_cpu_details (void)
     }
 #endif
 
-    if (!err && (*buf2 || *buf1)) {
+    if (*buf2 || *buf1) {
 	if (*buf2) {
             ret = gretl_strdup(g_strstrip(buf2));
 	} else if (*buf1) {
