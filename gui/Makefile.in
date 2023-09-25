@@ -140,7 +140,7 @@ ifeq ($(win32pkg),yes)
 else
   gretldir = $(datarootdir)/gretl
   uidir = $(gretldir)/ui
-  appdatadir = $(datarootdir)/appdata
+  appdatadir = $(datarootdir)/metainfo
 endif
 
 tooldir = $(topsrc)/tools

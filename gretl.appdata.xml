@@ -2,21 +2,19 @@
 <!-- Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti -->
 <component type="desktop">
   <id>gretl.desktop</id>
-
-  <!--of the appdata-->
   <metadata_license>CC0-1.0</metadata_license>
-
   <project_license>GPL-3.0+</project_license>
   <description>
     <p>
     Gretl is an econometrics package, including a shared library, a 
     command-line client program and a graphical user interface.
-  </p>
+    </p>
     <p>
     Gretl is user-friendly but also technically sophisticated. Users can
-    choose their preferred point on the spectrum from interactive point-and-click to
-    complex scripting, and can easily combine these approaches.
-  </p>
+    choose their preferred point on the spectrum from interactive
+    point-and-click to complex scripting, and can easily combine these
+    approaches.
+    </p>
   </description>
   <url type="homepage">http://gretl.sourceforge.net/</url>
   <screenshots>
@@ -36,12 +34,8 @@
     <keyword>data</keyword>
     <keyword>analysis</keyword>
   </keywords>
-
   <developer_name>gretl</developer_name>
-
   <url type="bugtracker">http://sourceforge.net/p/gretl/bugs/</url>
-
   <url type="donation">http://sourceforge.net/projects/gretl/</url>
-
   <url type="help">http://sourceforge.net/projects/gretl/files/manual/</url>
 </component>
