@@ -429,7 +429,7 @@ static int few_vals (int t1, int t2, const double *x, double *ratio)
     return nv;
 }
 
- /**
+/**
  * gretl_isdiscrete:
  * @x: data series to examine.
  * @t1: starting observation.
@@ -517,7 +517,7 @@ int accept_as_discrete (const DATASET *dset, int v, int strict)
     }
 }
 
- /**
+/**
  * gretl_ispositive:
  * @x: data series to examine.
  * @t1: starting observation.
@@ -550,7 +550,7 @@ int gretl_ispositive (int t1, int t2, const double *x, int strict)
     return 1;
 }
 
- /**
+/**
  * gretl_is_oprobit_ok:
  * @x: data series to examine.
  * @t1: starting observation.
@@ -2017,8 +2017,8 @@ int gnuplot_make_image (const char *input_fname)
     int err;
 
     cmdline = g_strdup_printf("\"%s\" \"%s\"",
-			      gretl_gnuplot_path(),
-			      input_fname);
+                              gretl_gnuplot_path(),
+                              input_fname);
     err = gretl_spawn(cmdline);
     g_free(cmdline);
 
@@ -2428,7 +2428,7 @@ static int parse_ldd_output (const char *s)
     }
 
     if (found[4]) {
-       ret = BLAS_BLIS;
+        ret = BLAS_BLIS;
     } else if (found[3]) {
         ret = BLAS_VECLIB;
     } else if (found[2]) {
@@ -2561,10 +2561,10 @@ static void register_openblas_details (void *handle)
 static void register_blis_details (void *handle)
 {
     /* The last element on arch_t enum in libblis =>
-    => must be updated whenever new architecture/cpu model appears*/
+       => must be updated whenever new architecture/cpu model appears*/
     /* Shouldn't this come from a header? (Allin) */
-        /* -> Well, this enum is defined in blis.h which we do not include.
-            And we can't retrive it via dlopen(), can we? (Marcin) */
+    /* -> Well, this enum is defined in blis.h which we do not include.
+       And we can't retrive it via dlopen(), can we? (Marcin) */
     const int BLIS_NUM_ARCHS = 26;
     char *buf = NULL;
     int id;
@@ -2703,44 +2703,44 @@ static void register_mkl_details (void *handle)
     if (MKL_cbwr_get_auto_branch != NULL) {
         id = MKL_cbwr_get_auto_branch();
         switch (id) {
-            case 3: /* MKL_CBWR_COMPATIBLE */
-                buf = "SSE2 without rcpps/rsqrtps instructions";
-                break;
-            case 4: /* MKL_CBWR_SSE2 */
-                buf = "SSE2";
-                break;
-            case 5: /* MKL_CBWR_SSE3 */
-                buf = "SSE2 (deprecated SSE3)";
-                break;
-            case 6: /* MKL_CBWR_SSSE3 */
-                buf = "SSSE3";
-                break;
-            case 7: /* MKL_CBWR_SSE4_1 */
-                buf = "SSE4-1";
-                break;
-            case 8: /* MKL_CBWR_SSE4_2 */
-                buf = "SSE4-2";
-                break;
-            case 9: /* MKL_CBWR_AVX */
-                buf = "AVX";
-                break;
-            case 10: /* MKL_CBWR_AVX2 */
-                buf = "AVX2";
-                break;
-            case 11: /* MKL_CBWR_AVX512_MIC */
-                buf = "AVX2 (deprecated AVX-512MIC)";
-                break;
-            case 12: /* MKL_CBWR_AVX512 */
-                buf = "AVX-512";
-                break;
-            case 13: /* MKL_CBWR_AVX512_MIC_E1 */
-                buf = "AVX2 (deprecated AVX-512MICE1)";
-                break;
-            case 14: /* MKL_CBWR_AVX512_E1 */
-                buf = "AVX-512 with support of Vector Neural Network Instructions";
-                break;
-            default:
-                buf = "unknown";
+        case 3: /* MKL_CBWR_COMPATIBLE */
+            buf = "SSE2 without rcpps/rsqrtps instructions";
+            break;
+        case 4: /* MKL_CBWR_SSE2 */
+            buf = "SSE2";
+            break;
+        case 5: /* MKL_CBWR_SSE3 */
+            buf = "SSE2 (deprecated SSE3)";
+            break;
+        case 6: /* MKL_CBWR_SSSE3 */
+            buf = "SSSE3";
+            break;
+        case 7: /* MKL_CBWR_SSE4_1 */
+            buf = "SSE4-1";
+            break;
+        case 8: /* MKL_CBWR_SSE4_2 */
+            buf = "SSE4-2";
+            break;
+        case 9: /* MKL_CBWR_AVX */
+            buf = "AVX";
+            break;
+        case 10: /* MKL_CBWR_AVX2 */
+            buf = "AVX2";
+            break;
+        case 11: /* MKL_CBWR_AVX512_MIC */
+            buf = "AVX2 (deprecated AVX-512MIC)";
+            break;
+        case 12: /* MKL_CBWR_AVX512 */
+            buf = "AVX-512";
+            break;
+        case 13: /* MKL_CBWR_AVX512_MIC_E1 */
+            buf = "AVX2 (deprecated AVX-512MICE1)";
+            break;
+        case 14: /* MKL_CBWR_AVX512_E1 */
+            buf = "AVX-512 with support of Vector Neural Network Instructions";
+            break;
+        default:
+            buf = "unknown";
         }
         strncat(blas_core, buf, 63);
         buf = NULL;
@@ -2785,7 +2785,7 @@ const char *blas_variant_string (void)
     } else if (blas_variant == BLAS_VECLIB) {
         return "veclib";
     } else if (blas_variant == BLAS_BLIS) {
-       return "blis";
+        return "blis";
     } else {
         return "unknown";
     }
@@ -2908,7 +2908,6 @@ void blas_cleanup (void)
 #if defined(OS_OSX)
 # include <sys/types.h>
 # include <sys/sysctl.h>
-// int sysctlbyname (const char *, void *, size_t *, void *, size_t);
 # define CPU_IDENT
 #elif (defined(__x86_64__) || defined(__i386__))
 # include <cpuid.h>
@@ -2920,43 +2919,42 @@ void blas_cleanup (void)
 char *get_cpu_details (void)
 {
     char *ret = NULL;
-    char buf1[16] = {0};
-    char buf2[64] = {0};
+    char vendor_buf[16] = {0};
+    char brand_buf[64] = {0};
 
 #if defined(OS_OSX)
-	size_t sz2 = sizeof buf2;
+    size_t bsz = sizeof brand_buf;
 
-	sysctlbyname("machdep.cpu.brand_string", &buf2, &sz2, NULL, 0);
+    sysctlbyname("machdep.cpu.brand_string", &brand_buf, &bsz, NULL, 0);
 #else
     guint32 i, j, data[4];
     int n_bytes = 4;
 
     __cpuid(0, data[0], data[1], data[2], data[3]);
-    sprintf(buf1, "%.*s%.*s%.*s",
-	    n_bytes, (char *) &data[1],
+    sprintf(vendor_buf, "%.*s%.*s%.*s",
+            n_bytes, (char *) &data[1],
             n_bytes, (char *) &data[3],
-	    n_bytes, (char *) &data[2]);
+            n_bytes, (char *) &data[2]);
+
     __cpuid(0x80000000, data[0], data[1], data[2], data[3]);
     if (data[0] & 0x80000000) {
         if (data[0] >= 0x80000004) {
             for (i=0x80000002; i<=0x80000004; i++) {
                 __cpuid(i, data[0], data[1], data[2], data[3]);
-		for (j=0; j<4; j++) {
-		    strncat(buf2, (char *) &data[j], n_bytes);
-		}
+                for (j=0; j<4; j++) {
+                    strncat(brand_buf, (char *) &data[j], n_bytes);
+                }
             }
         }
     }
 #endif
 
-    if (*buf2 || *buf1) {
-	if (*buf2) {
-            ret = gretl_strdup(g_strstrip(buf2));
-	} else if (*buf1) {
-	    ret = gretl_strdup(g_strstrip(buf1));
-	}
+    if (*brand_buf) {
+        ret = gretl_strdup(g_strstrip(brand_buf));
+    } else if (*vendor_buf) {
+        ret = gretl_strdup(g_strstrip(vendor_buf));
     } else {
-	ret = gretl_strdup("unknown");
+        ret = gretl_strdup("unknown");
     }
 
     return ret;
@@ -3113,9 +3111,9 @@ static void dotdir_cleanup (void)
                             /* failed auto-dot directory? */
                             gretl_deltree(fname);
                         }
-		    } else if (!strncmp(fname, "prntmp.", 7) &&
-			       !gretl_in_gui_mode()) {
-			; /* don't let gretlcli delete a GUI file */
+                    } else if (!strncmp(fname, "prntmp.", 7) &&
+                               !gretl_in_gui_mode()) {
+                        ; /* don't let gretlcli delete a GUI file */
                     } else if (strcmp(fname, "..") &&
                                strcmp(fname, ".") &&
                                strcmp(fname, ".gretl2rc") &&
@@ -3390,9 +3388,9 @@ gretl_matrix *get_last_pvals_matrix (int *err)
 #define NOT_POWER_OF_TWO(n) (((n) & ((n) - 1)))
 #define UI(p) ((uintptr_t) (p))
 
-#define PTR_ALIGN(p0, align)                                    \
-            ((void *) (((UI(p0) + (align + sizeof(void*)))      \
-                        & (~UI(align - 1)))))
+#define PTR_ALIGN(p0, align)                            \
+    ((void *) (((UI(p0) + (align + sizeof(void*)))      \
+                & (~UI(align - 1)))))
 
 /* pointer must sometimes be aligned; assume sizeof(void*) is a power of two */
 #define ORIG_PTR(p) (*(((void **) (UI(p) & (~UI(sizeof(void*) - 1)))) - 1))

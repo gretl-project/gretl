@@ -165,8 +165,8 @@ int type_can_be_bundled (GretlType type)
             type == GRETL_TYPE_LIST);
 }
 
-#define bundled_scalar(t) (t == GRETL_TYPE_DOUBLE ||	\
-                           t == GRETL_TYPE_INT ||	\
+#define bundled_scalar(t) (t == GRETL_TYPE_DOUBLE ||    \
+                           t == GRETL_TYPE_INT ||       \
                            t == GRETL_TYPE_UNSIGNED)
 
 static int bundled_item_copy_in_data (bundled_item *item,
@@ -1811,7 +1811,7 @@ gretl_bundle *gretl_bundle_union (const gretl_bundle *bundle1,
 
     if (bundle2->type == BUNDLE_KALMAN) {
         gretl_errmsg_set(_("bundle union: the right-hand operand cannot "
-			   "be a kalman bundle"));
+                           "be a kalman bundle"));
         *err = E_DATA;
     } else {
         b = gretl_bundle_copy(bundle1, err);
@@ -2173,7 +2173,7 @@ int gretl_bundle_append (gretl_bundle *bundle1,
 {
     if (bundle2->type == BUNDLE_KALMAN) {
         gretl_errmsg_set(_("bundle union: the right-hand operand cannot "
-			   "be a kalman bundle"));
+                           "be a kalman bundle"));
         return E_DATA;
     } else {
         g_hash_table_foreach(bundle2->ht, copy_new_bundled_item, bundle1);
@@ -3176,10 +3176,9 @@ gretl_bundle *get_sysinfo_bundle (int *err)
                 gretl_bundle_set_string(b, "blas_parallel", s2);
                 if (s3 != NULL) {
                     gretl_bundle_set_string(b, "blas_version", s3);
-		}
+                }
             }
-	    s1 = get_cpu_details();
-	    gretl_bundle_set_string(b, "cpuid", s1);
+            gretl_bundle_set_string(b, "cpuid", get_cpu_details());
 #if defined(COMPILER_IDENT)
             gretl_bundle_set_string(b, "compiler", COMPILER_IDENT);
 #endif
