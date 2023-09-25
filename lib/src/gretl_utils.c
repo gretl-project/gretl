@@ -2910,9 +2910,7 @@ int sysctlbyname (const char *, void *, size_t *, void *, size_t);
 # define CPU_IDENT
 #elif (defined(__x86_64__) || defined(__i386__))
 # include <cpuid.h>
-# if defined(__CPUID_H) || defined(_CPUID_H_INCLUDED)
-#  define CPU_IDENT
-# endif
+# define CPU_IDENT
 #endif
 
 #ifdef CPU_IDENT
@@ -2920,8 +2918,8 @@ int sysctlbyname (const char *, void *, size_t *, void *, size_t);
 char *get_cpu_details (void)
 {
     char *ret = NULL;
-    char buf1[128] = {0};
-    char buf2[128] = {0};
+    char buf1[16] = {0};
+    char buf2[64] = {0};
     int err = 0;
 
 #if defined(OS_OSX)
@@ -2954,16 +2952,11 @@ char *get_cpu_details (void)
     }
 #endif
 
-    if (!err && (*buf1 || *buf2)) {
-	g_strstrip(buf1);
-	g_strstrip(buf2);
-	if (*buf1 && *buf2) {
-	    ret = calloc(strlen(buf1) + strlen(buf2) + 2, 1);
-	    sprintf(ret, "%s %s", buf1, buf2);
+    if (!err && (*buf2 || *buf1)) {
+	if (*buf2) {
+            ret = gretl_strdup(g_strstrip(buf2));
 	} else if (*buf1) {
-	    ret = gretl_strdup(buf1);
-	} else {
-	    ret = gretl_strdup(buf2);
+	    ret = gretl_strdup(g_strstrip(buf1));
 	}
     } else {
 	ret = gretl_strdup("unknown");
