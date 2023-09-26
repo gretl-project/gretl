@@ -445,7 +445,12 @@ double panel_cluster_df_adj (MODEL *pmod,
 {
     int K, n = pmod->nobs;
 
-    K = estimator == PAN_TCLUSTER ? pan->T : pan->effn;
+    if (estimator == PAN_TCLUSTER) {
+	K = pan->Tmax;
+    } else {
+	K = pan->effn;
+    }
+
     return (K / (K - 1.0)) * (n - 1.0) / (n - pmod->ncoeff);
 }
 
@@ -553,7 +558,7 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 	gretl_matrix_multiply_by_scalar(V, adj);
     }
 
-    gretl_model_set_vcv_info(pmod, VCV_PANEL, PANEL_HAC); /* FIXME */
+    gretl_model_set_vcv_info(pmod, VCV_PANEL, PANEL_TIME);
 
  bailout:
 

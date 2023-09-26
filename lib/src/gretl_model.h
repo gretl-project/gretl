@@ -72,8 +72,9 @@ typedef enum {
 } HACKernel;
 
 typedef enum {
-    PANEL_HAC,
-    PANEL_BK   /* Beck-Katz */
+    PANEL_HAC,  /* clustered by individual */
+    PANEL_BK,   /* Beck-Katz */
+    PANEL_TIME  /* clustered by period */
 } PanelVCVType;
 
 typedef enum {

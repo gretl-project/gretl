@@ -1427,6 +1427,13 @@ static void panel_vcv_line (const VCVInfo *vi, PRN *prn)
 	    pputs(prn, _("Beck-Katz standard errors"));
 	}
 	pputc(prn, '\n');
+    } else if (vi->vmin == PANEL_TIME) {
+	if (csv_format(prn)) {
+	    pprintf(prn, "\"%s\"", _("Standard errors clustered by period"));
+	} else {
+	    pputs(prn, _("Standard errors clustered by period"));
+	}
+	pputc(prn, '\n');
     }
 }
 
