@@ -456,22 +456,18 @@ double panel_cluster_df_adj (MODEL *pmod,
 
 /* helper function for panel VCV clustered by period */
 
-static int *get_panel_tobs (panelmod_t *pan, int *err)
+static int *get_panel_tobs (panelmod_t *pan)
 {
-    int i, t, bigt;
-    int *tobs;
+    int *tobs = calloc(pan->T, sizeof *tobs);
 
-    tobs = calloc(pan->T, sizeof *tobs);
-    if (tobs == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
+    if (tobs != NULL) {
+	int i, t;
 
-    for (i=0; i<pan->nunits; i++) {
-	for (t=0; t<pan->T; t++) {
-	    bigt = panel_index(i, t);
-	    if (!panel_missing(pan, bigt)) {
-		tobs[t] += 1;
+	for (i=0; i<pan->nunits; i++) {
+	    for (t=0; t<pan->T; t++) {
+		if (!panel_missing(pan, panel_index(i, t))) {
+		    tobs[t] += 1;
+		}
 	    }
 	}
     }
@@ -492,9 +488,9 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     int i, j, v, s, t;
     int err = 0;
 
-    tobs = get_panel_tobs(pan, &err);
-    if (err) {
-	goto bailout;
+    tobs = get_panel_tobs(pan);
+    if (tobs == NULL) {
+	return E_ALLOC;
     }
 
     e   = gretl_column_vector_alloc(N);
