@@ -432,6 +432,127 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     return err;
 }
 
+#define TIME_CLUSTER 0 /* not yet */
+
+#if TIME_CLUSTER
+
+static int *get_panel_tobs (panelmod_t *pan, int *err)
+{
+    int i, t, bigt;
+    int *tobs;
+
+    tobs = calloc(pan->T, sizeof *tobs);
+    if (tobs == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<pan->nunits; i++) {
+	for (t=0; t<pan->T; t++) {
+	    bigt = panel_index(i, t);
+	    if (!panel_missing(pan, bigt)) {
+		tobs[t] += 1;
+	    }
+	}
+    }
+
+    return tobs;
+}
+
+static int
+time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
+		  gretl_matrix *XX, gretl_matrix *W, gretl_matrix *V)
+{
+    gretl_vector *e = NULL;
+    gretl_matrix *Xt = NULL;
+    gretl_vector *eXt = NULL;
+    int *tobs = NULL;
+    int N = pan->effn;
+    int k = pmod->ncoeff;
+    double Tfac = 1.0;
+    int i, j, v, s, t;
+    int err = 0;
+
+    tobs = get_panel_tobs(pan, &err);
+    if (err) {
+	goto bailout;
+    }
+
+    e   = gretl_column_vector_alloc(N);
+    Xt  = gretl_matrix_alloc(N, k);
+    eXt = gretl_vector_alloc(k);
+
+    if (e == NULL || Xt == NULL || eXt == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    if (pmod->ci != IVREG) {
+	/* FIXME IVREG? */
+	Tfac = pan->T / (pan->T - 1.0);
+	Tfac *= (pmod->nobs - 1.0) / (pmod->nobs - k);
+	Tfac = sqrt(Tfac);
+    }
+
+    for (t=0; t<pan->T; t++) {
+	int Nt = tobs[t]; /* number of units represented in period @t */
+	int p = 0;
+
+	if (Nt == 0) {
+	    continue;
+	}
+
+	e = gretl_matrix_reuse(e, Nt, 1);
+	Xt = gretl_matrix_reuse(Xt, Nt, k);
+
+	for (i=0; i<pan->nunits; i++) {
+	    s = panel_index(i, t);
+	    if (na(pmod->uhat[s])) {
+		continue;
+	    }
+	    gretl_vector_set(e, p, Tfac * pmod->uhat[s]);
+	    s = small_index(pan, s); /* ?? */
+	    for (j=0; j<k; j++) {
+		v = pmod->list[j+2];
+		if (s < 0) {
+		    gretl_matrix_set(Xt, p, j, 0);
+		} else {
+		    gretl_matrix_set(Xt, p, j, dset->Z[v][s]);
+		}
+	    }
+	    p++;
+	    if (p == Nt) {
+		/* we've filled these matrices */
+		break;
+	    }
+	}
+
+	gretl_matrix_multiply_mod(e, GRETL_MOD_TRANSPOSE,
+				  Xt, GRETL_MOD_NONE,
+				  eXt, GRETL_MOD_NONE);
+	gretl_matrix_multiply_mod(eXt, GRETL_MOD_TRANSPOSE,
+				  eXt, GRETL_MOD_NONE,
+				  W, GRETL_MOD_CUMULATE);
+    }
+
+    /* form V(b) = (X'X)^{-1} W (X'X)^{-1} */
+    gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
+		       V, GRETL_MOD_NONE);
+
+    gretl_model_set_vcv_info(pmod, VCV_PANEL, PANEL_HAC);
+
+ bailout:
+
+    gretl_matrix_free(e);
+    gretl_matrix_free(Xt);
+    gretl_matrix_free(eXt);
+    free(tobs);
+
+    return err;
+}
+
+#endif /* TIME_CLUSTER */
+
 /* HAC covariance matrix for pooled, fixed- or random-effects models,
    given "fixed T and large N".  In the case of "large T" a different
    form is needed for robustness in respect of autocorrelation.  See
@@ -578,6 +699,10 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset)
     /* call the appropriate function */
     if (libset_get_bool(USE_PCSE)) {
 	err = beck_katz_vcv(pmod, pan, dset, XX, W, V);
+#if TIME_CLUSTER /* just testing */
+    } else if (1) {
+	err = time_cluster_vcv(pmod, pan, dset, XX, W, V);
+#endif
     } else {
 	err = arellano_vcv(pmod, pan, dset, XX, W, V);
     }

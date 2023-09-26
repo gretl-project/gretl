@@ -2196,7 +2196,6 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
 {
     gretl_matrix *V = NULL;
     gretl_matrix *W = NULL;
-    gretl_matrix *XXW = NULL;
     gretl_vector *ei = NULL;
     gretl_matrix *Xi = NULL;
     gretl_vector *eXi = NULL;
@@ -2214,13 +2213,12 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
 
     V   = gretl_matrix_alloc(k, k);
     W   = gretl_zero_matrix_new(k, k);
-    XXW = gretl_zero_matrix_new(k, k);
     ei  = gretl_column_vector_alloc(N);
     Xi  = gretl_matrix_alloc(N, k);
     eXi = gretl_vector_alloc(k);
 
-    if (V == NULL || W == NULL || XXW == NULL ||
-	ei == NULL || Xi == NULL || eXi == NULL) {
+    if (V == NULL || W == NULL || ei == NULL ||
+	Xi == NULL || eXi == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }
@@ -2261,7 +2259,7 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
 		s++;
 	    }
 	    if (s == Ni) {
-		/* we've filled this matrix */
+		/* we've filled these matrices */
 		break;
 	    }
 	}
@@ -2291,9 +2289,8 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
     }
 
     /* form V(W) = (X'X)^{-1} W (X'X)^{-1} */
-    gretl_matrix_multiply(XX, W, XXW);
-    gretl_matrix_multiply(XXW, XX, V);
-    gretl_matrix_xtr_symmetric(V);
+    gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
+		       V, GRETL_MOD_NONE);
 
 #if CDEBUG
     gretl_matrix_print(XX, "X'X^{-1}");
@@ -2318,7 +2315,6 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
  bailout:
 
     gretl_matrix_free(W);
-    gretl_matrix_free(XXW);
     gretl_matrix_free(ei);
     gretl_matrix_free(Xi);
     gretl_matrix_free(eXi);
