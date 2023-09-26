@@ -432,9 +432,24 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     return err;
 }
 
-#define TIME_CLUSTER 0 /* not yet */
+/* In the cluster-by-unit case this is the "small N adjustment factor"
+   designed to "reduce downward bias in case of finite N" per Cameron
+   and Miller, "A Practitioner's Guide to Cluster-Robust Inference",
+   Journal of Human Resources, Spring 2015. The cluster-by-time case
+   is strictly analogous.
+*/
 
-#if TIME_CLUSTER
+double panel_cluster_df_adj (MODEL *pmod,
+			     panelmod_t *pan,
+			     int estimator)
+{
+    int K, n = pmod->nobs;
+
+    K = estimator == PAN_TCLUSTER ? pan->T : pan->effn;
+    return (K / (K - 1.0)) * (n - 1.0) / (n - pmod->ncoeff);
+}
+
+/* helper function for panel VCV clustered by period */
 
 static int *get_panel_tobs (panelmod_t *pan, int *err)
 {
@@ -469,7 +484,6 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     int *tobs = NULL;
     int N = pan->effn;
     int k = pmod->ncoeff;
-    double Tfac = 1.0;
     int i, j, v, s, t;
     int err = 0;
 
@@ -487,15 +501,8 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 	goto bailout;
     }
 
-    if (pmod->ci != IVREG) {
-	/* FIXME IVREG? */
-	Tfac = pan->T / (pan->T - 1.0);
-	Tfac *= (pmod->nobs - 1.0) / (pmod->nobs - k);
-	Tfac = sqrt(Tfac);
-    }
-
     for (t=0; t<pan->T; t++) {
-	int Nt = tobs[t]; /* number of units represented in period @t */
+	int Nt = tobs[t]; /* # of units represented in period @t */
 	int p = 0;
 
 	if (Nt == 0) {
@@ -510,8 +517,8 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 	    if (na(pmod->uhat[s])) {
 		continue;
 	    }
-	    gretl_vector_set(e, p, Tfac * pmod->uhat[s]);
-	    s = small_index(pan, s); /* ?? */
+	    gretl_vector_set(e, p, pmod->uhat[s]);
+	    s = small_index(pan, s);
 	    for (j=0; j<k; j++) {
 		v = pmod->list[j+2];
 		if (s < 0) {
@@ -522,7 +529,7 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 	    }
 	    p++;
 	    if (p == Nt) {
-		/* we've filled these matrices */
+		/* we're done with this period */
 		break;
 	    }
 	}
@@ -539,7 +546,14 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
 		       V, GRETL_MOD_NONE);
 
-    gretl_model_set_vcv_info(pmod, VCV_PANEL, PANEL_HAC);
+    if (pmod->ci != IVREG) {
+	/* FIXME IVREG? */
+	double adj = panel_cluster_df_adj(pmod, pan, PAN_TCLUSTER);
+
+	gretl_matrix_multiply_by_scalar(V, adj);
+    }
+
+    gretl_model_set_vcv_info(pmod, VCV_PANEL, PANEL_HAC); /* FIXME */
 
  bailout:
 
@@ -550,8 +564,6 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 
     return err;
 }
-
-#endif /* TIME_CLUSTER */
 
 /* HAC covariance matrix for pooled, fixed- or random-effects models,
    given "fixed T and large N".  In the case of "large T" a different
@@ -573,7 +585,6 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     gretl_vector *eXi = NULL;
     int T = pan->Tmax;
     int k = pmod->ncoeff;
-    double Nfac = 1.0;
     int i, j, v, s, t;
     int err = 0;
 
@@ -584,30 +595,6 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     if (e == NULL || Xi == NULL || eXi == NULL) {
 	err = E_ALLOC;
 	goto bailout;
-    }
-
-    if (getenv("ARELLANO_ASY") != NULL) {
-	/* don't do the @Nfac thing */
-	fprintf(stderr, "skipping Cameron-Miller adjustment\n");
-    } else {
-	/* Small N adjustment factor: "reduce downward bias in
-	   case of finite N" (Cameron and Miller, "A Practitioner's
-	   Guide to Cluster-Robust Inference", Journal of Human
-	   Resources, Spring 2015).
-	*/
-	if (pmod->ci != IVREG) {
-	    /* FIXME IVREG? */
-	    Nfac = pan->effn / (pan->effn - 1.0);
-	    Nfac *= (pmod->nobs - 1.0) / (pmod->nobs - k);
-	    Nfac = sqrt(Nfac);
-	}
-#if 0
-	fprintf(stderr, "Nfac1 = %d/%d = %g\n", pan->effn, pan->effn-1,
-		pan->effn / (pan->effn - 1.0));
-	fprintf(stderr, "Nfac2 = %d/%d = %g\n", pmod->nobs-1, pmod->nobs-k,
-		(pmod->nobs - 1.0) / (pmod->nobs - k));
-	fprintf(stderr, "Nfac final = %g\n", Nfac);
-#endif
     }
 
     for (i=0; i<pan->nunits; i++) {
@@ -626,7 +613,7 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 	    if (na(pmod->uhat[s])) {
 		continue;
 	    }
-	    gretl_vector_set(e, p, Nfac * pmod->uhat[s]);
+	    gretl_vector_set(e, p, pmod->uhat[s]);
 	    s = small_index(pan, s);
 	    for (j=0; j<k; j++) {
 		v = pmod->list[j+2];
@@ -637,6 +624,10 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 		}
 	    }
 	    p++;
+	    if (p == Ti) {
+		/* we're done with this unit */
+		break;
+	    }
 	}
 
 	gretl_matrix_multiply_mod(e, GRETL_MOD_TRANSPOSE,
@@ -651,11 +642,12 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
 		       V, GRETL_MOD_NONE);
 
-#if 0
-    gretl_matrix_print(XX, "X'X^{-1}");
-    gretl_matrix_print(W, "W");
-    gretl_matrix_print(V, "V");
-#endif
+    if (pmod->ci != IVREG) {
+	/* FIXME IVREG? */
+	double adj = panel_cluster_df_adj(pmod, pan, PAN_ARELLANO);
+
+	gretl_matrix_multiply_by_scalar(V, adj);
+    }
 
     gretl_model_set_vcv_info(pmod, VCV_PANEL, PANEL_HAC);
 
@@ -668,9 +660,9 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     return err;
 }
 
-/* common setup for Arellano and Beck-Katz VCV estimators
-   (note that pooled OLS with the --cluster option is
-   handled separately)
+/* common setup for Arellano, Beck-Katz and time-cluster
+   VCV estimators (note that pooled OLS with the --cluster
+   option is handled separately)
 */
 
 static int
@@ -680,7 +672,7 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset)
     gretl_matrix *V = NULL;
     gretl_matrix *XX = NULL;
     int k = pmod->ncoeff;
-    int err = 0;
+    int est, err = 0;
 
     W = gretl_zero_matrix_new(k, k);
     V = gretl_matrix_alloc(k, k);
@@ -696,13 +688,13 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset)
 	goto bailout;
     }
 
+    est = libset_get_int(PANEL_ROBUST);
+
     /* call the appropriate function */
-    if (libset_get_bool(USE_PCSE)) {
+    if (est == PAN_PCSE) {
 	err = beck_katz_vcv(pmod, pan, dset, XX, W, V);
-#if TIME_CLUSTER /* just testing */
-    } else if (1) {
+    } else if (est == PAN_TCLUSTER) {
 	err = time_cluster_vcv(pmod, pan, dset, XX, W, V);
-#endif
     } else {
 	err = arellano_vcv(pmod, pan, dset, XX, W, V);
     }
@@ -5008,11 +5000,11 @@ static int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 int panel_autocorr_test (MODEL *pmod, DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
-    int save_pcse = libset_get_bool(USE_PCSE);
+    int save_robust = libset_get_int(PANEL_ROBUST);
     int orig_v = dset->v;
     int err;
 
-    libset_set_bool(USE_PCSE, 0);
+    libset_set_int(PANEL_ROBUST, PAN_ARELLANO); /* ? */
 
     if (pmod->ci == OLS || (pmod->opt & OPT_P)) {
 	err = pooled_autocorr_test(pmod, dset, opt, prn);
@@ -5020,7 +5012,7 @@ int panel_autocorr_test (MODEL *pmod, DATASET *dset,
 	err = wooldridge_autocorr_test(pmod, dset, opt, prn);
     }
 
-    libset_set_bool(USE_PCSE, save_pcse);
+    libset_set_int(PANEL_ROBUST, save_robust);
     dataset_drop_last_variables(dset, dset->v - orig_v);
 
     return err;
