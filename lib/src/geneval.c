@@ -8920,8 +8920,8 @@ static NODE *array_func_node (NODE *l, NODE *r, int f, parser *p)
                 ret->v.m = gretl_strings_array_pos(l->v.a, r->v.str, &p->err);
             }
         }
-    } else if (f == F_BSORT) {
-        if (t != GRETL_TYPE_BUNDLES || r->t != STR) {
+    } else if (f == F_ASORT) {
+        if (r->t != STR) {
             p->err = E_TYPES;
         } else {
             ret = aux_scalar_node(p);
@@ -18020,7 +18020,7 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_FLATTEN:
     case F_INSTRINGS:
-    case F_BSORT:
+    case F_ASORT:
         if (l->t == ARRAY) {
             ret = array_func_node(l, r, t->t, p);
         } else {
