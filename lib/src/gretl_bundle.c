@@ -3493,7 +3493,6 @@ static void bsort_cleanup (void)
 {
     fncall_destroy(bsortcall);
     bsortcall = NULL;
-    gretl_print_destroy(bsprn);
     bsprn = NULL;
     qsort_err = 0;
 }
@@ -3568,7 +3567,7 @@ int user_bsort (gretl_array *a, const char *fname, PRN *prn)
 	return 0;
     }
 
-    err = bsort_setup(fname);
+    err = bsort_setup(fname, prn);
     if (err) {
 	return err;
     }
