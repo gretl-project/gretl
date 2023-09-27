@@ -11,7 +11,7 @@ version 2023c, in progress
   that the numeric codes correspond to the alphabetical order
   of the string values
 - Add documentation for the functions dec2bin() and bin2dec(),
-  which were added in version 2022b
+  which were first defined in version 2022b
 - kdensity() function: clarify its documentation
 - Input of numeric constants: support hexadecimal notation
 - Fix bug dating from 2022c: broken handling of the syntax
@@ -35,7 +35,7 @@ version 2023c, in progress
 - New command "kdplot": simple access to a kernel density plot
   for a single series
 - New function typename(): return a string giving the type of
-  the argument (can replace typeof() and typestr())
+  the argument (can replace typeof() plus typestr())
 - "arima" command: implement built-in procedure for assessing
   lag orders, via new --lagselect option, and add GUI access
 - "corr" command: add 1 percent critical value of correlation
