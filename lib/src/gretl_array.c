@@ -2421,6 +2421,7 @@ static int compare_array_elements (const void *a, const void *b)
     double *pd = &d;
 
     if (asort.err) {
+	/* get out asap */
 	return 0;
     }
 
