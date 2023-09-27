@@ -2351,3 +2351,126 @@ int is_strings_array_element (const char *str,
 
     return ret;
 }
+
+/* start apparatus for sorting a gretl array via qsort */
+
+#define AS_DEBUG 0
+
+struct asorter {
+    fncall *call;
+    GretlType type;
+    PRN *prn;
+    int err;
+};
+
+static struct asorter asort;
+
+static void asort_cleanup (void)
+{
+    fncall_destroy(asort.call);
+    asort.call = NULL;
+    asort.type = 0;
+    asort.prn = NULL;
+    asort.err = 0;
+}
+
+static int asort_setup (const char *fname, GretlType type, PRN *prn)
+{
+    fncall *call = NULL;
+    GretlType rtype;
+    ufunc *func;
+    int i, err = 0;
+
+    func = get_user_function_by_name(fname);
+    if (func == NULL) {
+	return E_DATA;
+    }
+
+    call = fncall_new(func, 1);
+    if (call == NULL) {
+	return E_ALLOC;
+    }
+
+    rtype = fncall_get_return_type(call);
+    if (rtype != GRETL_TYPE_DOUBLE) {
+	fncall_destroy(call);
+	return E_TYPES;
+    }
+
+    for (i=0; i<2 && !err; i++) {
+	err = push_anon_function_arg(call, type, NULL);
+    }
+
+    if (err) {
+	fncall_destroy(call);
+    } else {
+	asort.call = call;
+	asort.type = type;
+	asort.prn = prn;
+	asort.err = 0;
+    }
+
+    return err;
+}
+
+static int compare_array_elements (const void *a, const void *b)
+{
+    void *va = *(void **) a;
+    void *vb = *(void **) b;
+    double d = 0;
+    double *pd = &d;
+
+    if (asort.err) {
+	return 0;
+    }
+
+#if AS_DEBUG
+    fprintf(stderr, "compare: va = %p, vb = %p\n", va, vb);
+#endif
+    set_anon_function_arg(asort.call, 0, asort.type, va);
+    set_anon_function_arg(asort.call, 1, asort.type, vb);
+    asort.err = gretl_function_exec(asort.call, GRETL_TYPE_DOUBLE, NULL,
+				    &pd, asort.prn);
+    if (asort.err) {
+	fprintf(stderr, " compare_bundles: err=%d, d=%g\n", asort.err, *pd);
+    }
+
+    return (int) *pd;
+}
+
+int gretl_array_qsort (gretl_array *a, const char *fname, PRN *prn)
+{
+    int n = gretl_array_get_length(a);
+    GretlType atype;
+    void *aptr;
+    int err;
+
+    if (n < 2) {
+	/* nothing to be done */
+	return 0;
+    }
+
+    atype = gretl_array_get_content_type(a);
+    if (atype == GRETL_TYPE_LIST || atype == GRETL_TYPE_STRING) {
+	gretl_errmsg_set("Sorting of an array of this type not yet supported");
+	return E_TYPES;
+    }
+
+    err = asort_setup(fname, atype, prn);
+    if (err) {
+	return err;
+    }
+
+    aptr = gretl_array_get_all_data(a);
+
+    set_user_qsorting(1);
+    qsort(aptr, n, sizeof(void *), compare_array_elements);
+    set_user_qsorting(0);
+
+    err = asort.err;
+    asort_cleanup();
+
+    return err;
+}
+
+/* end apparatus for sorting a gretl array via qsort */

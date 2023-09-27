@@ -8927,7 +8927,7 @@ static NODE *array_func_node (NODE *l, NODE *r, int f, parser *p)
             ret = aux_scalar_node(p);
 	}
 	if (!p->err) {
-	    ret->v.xval = p->err = user_bsort(l->v.a, r->v.str, p->prn);
+	    ret->v.xval = p->err = gretl_array_qsort(l->v.a, r->v.str, p->prn);
         }
     } else if (t == GRETL_TYPE_MATRICES) {
         int vcat = node_get_bool(r, p, 0);

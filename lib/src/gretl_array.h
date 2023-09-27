@@ -193,4 +193,7 @@ int is_strings_array_element (const char *str,
 			      char *aname,
 			      char *pidx);
 
+int gretl_array_qsort (gretl_array *a, const char *fname,
+		       PRN *prn);
+
 #endif /* GRETL_ARRAY_H_ */

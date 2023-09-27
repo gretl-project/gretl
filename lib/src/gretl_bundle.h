@@ -260,6 +260,4 @@ GList *gretl_bundle_get_sorted_items (gretl_bundle *b);
 
 void gretl_bundle_cleanup (void);
 
-int user_bsort (gretl_array *a, const char *fname, PRN *prn);
-
 #endif /* GRETL_BUNDLE_H_ */
