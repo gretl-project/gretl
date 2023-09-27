@@ -2452,11 +2452,6 @@ int gretl_array_qsort (gretl_array *a, const char *fname, PRN *prn)
     }
 
     atype = gretl_array_get_content_type(a);
-    if (atype == GRETL_TYPE_LIST || atype == GRETL_TYPE_STRING) {
-	gretl_errmsg_set("Sorting of an array of this type not yet supported");
-	return E_TYPES;
-    }
-
     err = asort_setup(fname, atype, prn);
     if (err) {
 	return err;
