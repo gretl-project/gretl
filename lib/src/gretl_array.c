@@ -2359,6 +2359,7 @@ int is_strings_array_element (const char *str,
 struct asorter {
     fncall *call;
     GretlType type;
+    DATASET *dset;
     PRN *prn;
     int err;
 };
@@ -2370,11 +2371,13 @@ static void asort_cleanup (void)
     fncall_destroy(asort.call);
     asort.call = NULL;
     asort.type = 0;
+    asort.dset = NULL;
     asort.prn = NULL;
     asort.err = 0;
 }
 
-static int asort_setup (const char *fname, GretlType type, PRN *prn)
+static int asort_setup (const char *fname, GretlType type,
+			DATASET *dset, PRN *prn)
 {
     fncall *call = NULL;
     GretlType rtype;
@@ -2406,6 +2409,7 @@ static int asort_setup (const char *fname, GretlType type, PRN *prn)
     } else {
 	asort.call = call;
 	asort.type = type;
+	asort.dset = dset;
 	asort.prn = prn;
 	asort.err = 0;
     }
@@ -2430,8 +2434,8 @@ static int compare_array_elements (const void *a, const void *b)
 #endif
     set_anon_function_arg(asort.call, 0, asort.type, va);
     set_anon_function_arg(asort.call, 1, asort.type, vb);
-    asort.err = gretl_function_exec(asort.call, GRETL_TYPE_DOUBLE, NULL,
-				    &pd, asort.prn);
+    asort.err = gretl_function_exec(asort.call, GRETL_TYPE_DOUBLE,
+				    asort.dset, &pd, asort.prn);
     if (asort.err) {
 	fprintf(stderr, " compare_bundles: err=%d, d=%g\n", asort.err, *pd);
     }
@@ -2439,7 +2443,8 @@ static int compare_array_elements (const void *a, const void *b)
     return (int) *pd;
 }
 
-int gretl_array_qsort (gretl_array *a, const char *fname, PRN *prn)
+int gretl_array_qsort (gretl_array *a, const char *fname,
+		       DATASET *dset, PRN *prn)
 {
     int n = gretl_array_get_length(a);
     GretlType atype;
@@ -2452,7 +2457,7 @@ int gretl_array_qsort (gretl_array *a, const char *fname, PRN *prn)
     }
 
     atype = gretl_array_get_content_type(a);
-    err = asort_setup(fname, atype, prn);
+    err = asort_setup(fname, atype, dset, prn);
     if (err) {
 	return err;
     }
