@@ -332,7 +332,7 @@ struct str_table funcs[] = {
     { F_PRODR,    "prodr" },
     { F_MEANC,    "meanc" },
     { F_MEANR,    "meanr" },
-    { F_BSORT,    "bsort" },
+    { F_ASORT,    "asort" },
     { F_SDC,      "sdc" },
     { F_MINC,     "minc" },
     { F_MAXC,     "maxc" },
@@ -1299,7 +1299,7 @@ static int alt_double_quote_pos (const char *s, int *esc)
 
     for (i=0; s[i]; i++) {
 	if (s[i] == '"') {
-	    if (i == 0 || s[i-1] != '\\') {
+	    if (i == 0 || s[i-1] != '\\' || s[i+1] == '\0') {
 		ret = i;
 		break;
 	    } else {
