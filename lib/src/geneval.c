@@ -8907,6 +8907,18 @@ static NODE *array_func_node (NODE *l, NODE *r, int f, parser *p)
                 ret->v.m = gretl_strings_array_pos(l->v.a, r->v.str, &p->err);
             }
         }
+    } else if (f == F_BSORT) {
+        if (t != GRETL_TYPE_BUNDLES || r->t != STR) {
+            p->err = E_TYPES;
+        } else {
+            ret = aux_array_node(p);
+            if (!p->err) {
+                ret->v.a = gretl_array_copy(l->v.a, &p->err);
+		if (!p->err) {
+		    p->err = user_bsort(ret->v.a, r->v.str);
+		}
+            }
+        }
     } else if (t == GRETL_TYPE_MATRICES) {
         int vcat = node_get_bool(r, p, 0);
 
@@ -17998,6 +18010,7 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_FLATTEN:
     case F_INSTRINGS:
+    case F_BSORT:
         if (l->t == ARRAY) {
             ret = array_func_node(l, r, t->t, p);
         } else {

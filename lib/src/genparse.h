@@ -399,6 +399,7 @@ enum {
     F_PRODR,
     F_MEANC,
     F_MEANR,
+    F_BSORT,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,
     F_WVAR,
@@ -581,7 +582,7 @@ enum {
 			     s == F_PRINTF || s == F_SPRINTF || \
 			     s == F_ALLREDUCE || s == F_NORMTEST || \
 			     s == F_SSCANF || s == F_NPCORR || \
-			     s == F_INBUNDLE)
+			     s == F_INBUNDLE || s == F_BSORT)
 
 /* functions taking string arg in middle position */
 #define string_mid_func(s) (s == F_REDUCE || s == F_SCATTER)

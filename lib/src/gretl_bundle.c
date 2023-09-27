@@ -3480,3 +3480,118 @@ void gretl_bundle_cleanup (void)
         sysinfo_bundle = NULL;
     }
 }
+
+/* start apparatus for sorting an array of bundles */
+
+static user_var *uv[3];
+static GENERATOR *bsortgen;
+static const char *unames[] = {
+    "u0_____", "u1_____", "u2_____"
+};
+
+#define BS_DEBUG 0
+
+static void bsort_cleanup (void)
+{
+    int i;
+
+    for (i=0; i<3; i++) {
+	if (uv[i] != NULL) {
+	    if (i > 0) {
+		user_var_set_pointer(uv[i], NULL);
+	    }
+	    user_var_delete(uv[i]);
+	    uv[i] = NULL;
+	}
+    }
+    if (bsortgen != NULL) {
+	destroy_genr(bsortgen);
+	bsortgen = NULL;
+    }
+}
+
+static int bsort_setup (void)
+{
+    double *px = malloc(sizeof *px);
+    int err = 0;
+
+    *px = 0;
+    uv[0] = alt_user_var_add(unames[0], GRETL_TYPE_DOUBLE, px);
+    uv[1] = alt_user_var_add(unames[1], GRETL_TYPE_BUNDLE, NULL);
+    uv[2] = alt_user_var_add(unames[2], GRETL_TYPE_BUNDLE, NULL);
+
+#if BS_DEBUG
+    fprintf(stderr, "u0 = %p, u1=%p, u2=%p\n", (void *) uv[0],
+	    (void *) uv[1], (void *) uv[2]);
+#endif
+
+    if (uv[0] == NULL || uv[1] == NULL || uv[2] == NULL) {
+	err = E_DATA;
+    }
+
+    return err;
+}
+
+static int compare_bundles (const void *a, const void *b)
+{
+    gretl_bundle *ba = *(gretl_bundle **) a;
+    gretl_bundle *bb = *(gretl_bundle **) b;
+    double d = 0;
+    int err;
+
+#if BS_DEBUG
+    printf("compare: ba = %p, bb = %p\n", (void *) ba, (void *) bb);
+#endif
+    user_var_set_pointer(uv[1], ba);
+    user_var_set_pointer(uv[2], bb);
+    err = execute_genr(bsortgen, NULL, NULL);
+    if (err) {
+	fprintf(stderr, "compare_bundles: genr error = %d\n", err);
+    } else {
+	d = user_var_get_scalar_value(uv[0]);
+    }
+
+    return (int) d;
+}
+
+int user_bsort (gretl_array *a, const char *fname)
+{
+    int n = gretl_array_get_length(a);
+    gretl_bundle **pb = NULL;
+    gchar *formula = NULL;
+    int err;
+
+    if (n <= 1) {
+	/* nothing to be done */
+	return 0;
+    }
+
+    err = bsort_setup();
+    if (err) {
+	return err;
+    }
+
+    pb = (gretl_bundle **) gretl_array_get_all_data(a);
+    user_var_set_pointer(uv[1], pb[0]);
+    user_var_set_pointer(uv[2], pb[1]);
+
+    formula = g_strdup_printf("%s=%s(%s,%s)", unames[0],
+			      fname, unames[1], unames[2]);
+#if BS_DEBUG
+    fprintf(stderr, "user_bsort: formula = '%s'\n", formula);
+#endif
+    bsortgen = genr_compile(formula, NULL, GRETL_TYPE_DOUBLE,
+			    OPT_P, NULL, &err);
+    if (err) {
+	fprintf(stderr, "user_bsort: failed to compile genr, err %d\n", err);
+    } else {
+	qsort(pb, n, sizeof *pb, compare_bundles);
+    }
+
+    bsort_cleanup();
+    g_free(formula);
+
+    return err;
+}
+
+/* end apparatus for sorting an array of bundles */
