@@ -334,6 +334,9 @@ int push_function_arg (fncall *fc, const char *name,
 int push_anon_function_arg (fncall *fc, GretlType type,
 			    void *value);
 
+int set_anon_function_arg (fncall *fc, int i, GretlType type,
+			   void *value);
+
 int push_function_args (fncall *fc, ...);
 
 void adjust_indent (const char *line, int *this_indent,

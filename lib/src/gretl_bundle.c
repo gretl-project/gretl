@@ -3483,50 +3483,54 @@ void gretl_bundle_cleanup (void)
 
 /* start apparatus for sorting an array of bundles */
 
-static user_var *uv[3];
-static GENERATOR *bsortgen;
-static const char *unames[] = {
-    "u0_____", "u1_____", "u2_____"
-};
-
 #define BS_DEBUG 0
+
+static fncall *bsortcall;
+static PRN *bsprn;
+static int qsort_err;
 
 static void bsort_cleanup (void)
 {
-    int i;
-
-    for (i=0; i<3; i++) {
-	if (uv[i] != NULL) {
-	    if (i > 0) {
-		user_var_set_pointer(uv[i], NULL);
-	    }
-	    user_var_delete(uv[i]);
-	    uv[i] = NULL;
-	}
-    }
-    if (bsortgen != NULL) {
-	destroy_genr(bsortgen);
-	bsortgen = NULL;
-    }
+    fncall_destroy(bsortcall);
+    bsortcall = NULL;
+    gretl_print_destroy(bsprn);
+    bsprn = NULL;
+    qsort_err = 0;
 }
 
-static int bsort_setup (void)
+static int bsort_setup (const char *fname, PRN *prn)
 {
-    double *px = malloc(sizeof *px);
-    int err = 0;
+    fncall *call = NULL;
+    GretlType rtype;
+    ufunc *func;
+    int i, err = 0;
 
-    *px = 0;
-    uv[0] = alt_user_var_add(unames[0], GRETL_TYPE_DOUBLE, px);
-    uv[1] = alt_user_var_add(unames[1], GRETL_TYPE_BUNDLE, NULL);
-    uv[2] = alt_user_var_add(unames[2], GRETL_TYPE_BUNDLE, NULL);
+    func = get_user_function_by_name(fname);
+    if (func == NULL) {
+	return E_DATA;
+    }
 
-#if BS_DEBUG
-    fprintf(stderr, "u0 = %p, u1=%p, u2=%p\n", (void *) uv[0],
-	    (void *) uv[1], (void *) uv[2]);
-#endif
+    call = fncall_new(func, 1);
+    if (call == NULL) {
+	return E_ALLOC;
+    }
 
-    if (uv[0] == NULL || uv[1] == NULL || uv[2] == NULL) {
-	err = E_DATA;
+    rtype = fncall_get_return_type(call);
+    if (rtype != GRETL_TYPE_DOUBLE) {
+	fncall_destroy(call);
+	return E_TYPES;
+    }
+
+    for (i=0; i<2 && !err; i++) {
+	err = push_anon_function_arg(call, GRETL_TYPE_BUNDLE, NULL);
+    }
+
+    if (err) {
+	fncall_destroy(call);
+    } else {
+	bsortcall = call;
+	bsprn = prn;
+	qsort_err = 0;
     }
 
     return err;
@@ -3537,59 +3541,46 @@ static int compare_bundles (const void *a, const void *b)
     gretl_bundle *ba = *(gretl_bundle **) a;
     gretl_bundle *bb = *(gretl_bundle **) b;
     double d = 0;
-    int err;
+    double *pd = &d;
 
 #if BS_DEBUG
-    printf("compare: ba = %p, bb = %p\n", (void *) ba, (void *) bb);
+    fprintf(stderr, "compare: ba = %p, bb = %p\n", (void *) ba, (void *) bb);
 #endif
-    user_var_set_pointer(uv[1], ba);
-    user_var_set_pointer(uv[2], bb);
-    err = execute_genr(bsortgen, NULL, NULL);
-    if (err) {
-	fprintf(stderr, "compare_bundles: genr error = %d\n", err);
-    } else {
-	d = user_var_get_scalar_value(uv[0]);
+    set_anon_function_arg(bsortcall, 0, GRETL_TYPE_BUNDLE, ba);
+    set_anon_function_arg(bsortcall, 1, GRETL_TYPE_BUNDLE, bb);
+    qsort_err = gretl_function_exec(bsortcall, GRETL_TYPE_DOUBLE, NULL,
+				    &pd, bsprn);
+    if (qsort_err) {
+	fprintf(stderr, " compare_bundles: err=%d, d=%g\n", qsort_err, *pd);
     }
 
-    return (int) d;
+    return (int) *pd;
 }
 
-int user_bsort (gretl_array *a, const char *fname)
+int user_bsort (gretl_array *a, const char *fname, PRN *prn)
 {
     int n = gretl_array_get_length(a);
     gretl_bundle **pb = NULL;
-    gchar *formula = NULL;
     int err;
 
-    if (n <= 1) {
+    if (n < 2) {
 	/* nothing to be done */
 	return 0;
     }
 
-    err = bsort_setup();
+    err = bsort_setup(fname);
     if (err) {
 	return err;
     }
 
     pb = (gretl_bundle **) gretl_array_get_all_data(a);
-    user_var_set_pointer(uv[1], pb[0]);
-    user_var_set_pointer(uv[2], pb[1]);
 
-    formula = g_strdup_printf("%s=%s(%s,%s)", unames[0],
-			      fname, unames[1], unames[2]);
-#if BS_DEBUG
-    fprintf(stderr, "user_bsort: formula = '%s'\n", formula);
-#endif
-    bsortgen = genr_compile(formula, NULL, GRETL_TYPE_DOUBLE,
-			    OPT_P, NULL, &err);
-    if (err) {
-	fprintf(stderr, "user_bsort: failed to compile genr, err %d\n", err);
-    } else {
-	qsort(pb, n, sizeof *pb, compare_bundles);
-    }
+    set_user_qsorting(1);
+    qsort(pb, n, sizeof *pb, compare_bundles);
+    set_user_qsorting(0);
 
+    err = qsort_err;
     bsort_cleanup();
-    g_free(formula);
 
     return err;
 }

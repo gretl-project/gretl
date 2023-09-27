@@ -244,5 +244,7 @@ void gretl_function_hash_cleanup (void);
 
 void set_mpi_rank_and_size (int rank, int size);
 
+void set_user_qsorting (int s);
+
 #endif /* GENMAIN_H */
 

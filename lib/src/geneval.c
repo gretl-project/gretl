@@ -163,6 +163,19 @@ static gretl_bundle *node_get_bundle (NODE *n, parser *p);
 static int gen_type_is_arrayable (int gen_t);
 static GretlType gretl_type_from_gen_type (int gen_t);
 
+static int user_qsorting;
+
+void set_user_qsorting (int s)
+{
+    if (s != 0) {
+	user_qsorting = 1;
+	gretl_iteration_push();
+    } else {
+	user_qsorting = 0;
+	gretl_iteration_pop();
+    }
+}
+
 /* ok_list_node: This is a first-pass assessment of whether
    a given node _may_ be interpretable as holding a LIST.
    The follow-up is node_get_list(), and that will determine
@@ -8911,13 +8924,10 @@ static NODE *array_func_node (NODE *l, NODE *r, int f, parser *p)
         if (t != GRETL_TYPE_BUNDLES || r->t != STR) {
             p->err = E_TYPES;
         } else {
-            ret = aux_array_node(p);
-            if (!p->err) {
-                ret->v.a = gretl_array_copy(l->v.a, &p->err);
-		if (!p->err) {
-		    p->err = user_bsort(ret->v.a, r->v.str);
-		}
-            }
+            ret = aux_scalar_node(p);
+	}
+	if (!p->err) {
+	    ret->v.xval = p->err = user_bsort(l->v.a, r->v.str, p->prn);
         }
     } else if (t == GRETL_TYPE_MATRICES) {
         int vcat = node_get_bool(r, p, 0);
@@ -17020,12 +17030,12 @@ static void node_reattach_data (NODE *n, parser *p)
         if (n->uv == NULL || gretl_iterating() || gretl_function_recursing()) {
             n->uv = get_user_var_by_name(n->vname);
             if (p0 != NULL && n->uv != p0) {
-                fprintf(stderr, "node_reattach_data ('%s'): MOVED %p -> %p\n",
-                        n->vname, p0, (void *) n->uv);
+                fprintf(stderr, "node_reattach_data ('%s'): MOVED %p -> %p (ptr %p)\n",
+                        n->vname, p0, (void *) n->uv, (void *) n->uv->ptr);
             }
         }
 #else
-        if (n->uv == NULL || (n->t == LIST && gretl_iterating())) {
+        if (n->uv == NULL || user_qsorting || (n->t == LIST && gretl_iterating())) {
             n->uv = get_user_var_by_name(n->vname);
         }
 #endif

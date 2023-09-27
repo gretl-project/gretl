@@ -580,6 +580,29 @@ int push_anon_function_arg (fncall *fc, GretlType type, void *value)
 }
 
 /**
+ * set_anon_function_arg:
+ * @fc: pointer to function call.
+ * @i: index of argument.
+ * @type: type of argument.
+ * @value: pointer to value to set.
+ *
+ * Sets type and value of (anonymous) argument @i in @fc. The index @i
+ * must be >= 0 and less than the argc member of @fc.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int set_anon_function_arg (fncall *fc, int i, GretlType type, void *value)
+{
+    if (i >= 0 && i < fc->argc) {
+	fn_arg_set_data(&fc->args[i], NULL, NULL, type, value);
+	return 0;
+    } else {
+	return E_DATA;
+    }
+}
+
+/**
  * push_function_args:
  * @fc: pointer to function call.
  *
