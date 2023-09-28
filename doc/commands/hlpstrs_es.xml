@@ -33,6 +33,7 @@
  <gentext key="matrix-or-bundle" text="matriz o bundle"/>
  <gentext key="asinput"       text="mismo tipo que introducido"/>
  <gentext key="bundle"        text="bundle"/>
+ <gentext key="array "        text="array"/>
  <gentext key="scalar"        text="escalar"/>
  <gentext key="pscalar"       text="escalar entre 0 y 1"/>
  <gentext key="int"           text="entero"/>

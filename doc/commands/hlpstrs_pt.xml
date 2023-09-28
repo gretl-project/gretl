@@ -34,6 +34,7 @@
  <gentext key="asinput"       text="o mesmo tipo que o argumento"/>
  <gentext key="scalar"        text="escalar"/>
  <gentext key="bundle"        text="lote"/>
+ <gentext key="array"         text="array"/>
  <gentext key="pscalar"       text="escalar entre 0 e 1"/>
  <gentext key="int"           text="número inteiro"/>
  <gentext key="bool"          text="booleano"/>
