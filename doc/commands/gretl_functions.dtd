@@ -70,7 +70,7 @@
 	  strings-or-list | bundle | series-list-or-mat | cmatrix |
 	  string-or-strings | series-vec-or-strings | scalarref |
 	  matrices-or-strings | varargs | int-or-string | object |
-	  objectref | stringref) "series"
+	  objectref | stringref | all-strings | array) "series"
     optional  (true | false) "false"
     conditional (true | false) "false"
 >
