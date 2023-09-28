@@ -522,6 +522,7 @@ struct gretl_option gretl_opts[] = {
     { OUTFILE,  OPT_B, "buffer", 1 }, /* note: 1 is for backward compat */
     { OUTFILE,  OPT_T, "tempfile", 2 },
     { PANEL,    OPT_B, "between", 0 },
+    { PANEL,    OPT_C, "cluster", 2 },
     { PANEL,    OPT_D, "time-dummies", 1 },
     { PANEL,    OPT_F, "fixed-effects", 0 },
     { PANEL,    OPT_I, "iterate", 0 },
