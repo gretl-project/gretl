@@ -1736,6 +1736,53 @@
       </description>
     </function>
 
+    <function name="asort" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="array">a</fnarg>
+	<fnarg type="string">fname</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Performs an in-place sort of the elements of
+	  <argname>a</argname>, using a comparator function specified
+	  by the caller under the control of the quicksort routine.
+	</para>
+	<para>
+	  The argument <argname>a</argname> can be of any of the types
+	  supported for a gretl array, namely <lit>strings</lit>,
+	  <lit>matrices</lit>, <lit>bundles</lit>, <lit>lists</lit> or
+	  <lit>arrays</lit>. The <argname>fname</argname> argument
+	  must be the name of a function which takes two
+	  <lit>const</lit> arguments, whose type matches that of the
+	  elements of <argname>a</argname>. This function must return
+	  an integer value on the following pattern: 0 if the two
+	  arguments have the same sort order, negative if the first
+	  argument sorts before the second, or positive if the second
+	  sorts before the first. (The exact values do not matter.)
+	</para>
+	<para>
+	  For example, suppose one wants to sort an array of bundles,
+	  each of which contains a scalar named <lit>crit</lit>, by
+	  increasing value of <lit>crit</lit>. Then the following
+	  function would be suitable for passing to <lit>asort</lit>:
+	</para>
+	<code>
+	  function scalar my_bsort (const bundle b1, const bundle b2)
+	     return b1.crit - b2.crit
+	  end function
+	</code>
+	<para>
+	  If you want to preserve the unsorted array, make a copy of
+	  it before passing it to <lit>asort</lit>. The return value
+	  from this function is a nominal 0 on success.
+	</para>
+	<para>
+	  See also <fncref targ="sort"/> for simple sorting of an
+	  array of strings.
+	</para>
+      </description>
+    </function>
+
     <function name="assert" section="programming" output="scalar">
       <fnargs>
 	<fnarg type="scalar">expr</fnarg>
