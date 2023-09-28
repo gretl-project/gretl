@@ -5819,6 +5819,77 @@
     </description>
   </command>
 
+  <command name="gridplot" section="Graphs" context="cli">
+    <usage>
+      <arguments>
+        <argument>plotspecs</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--fontsize</flag>
+	  <optparm>fs</optparm>
+	  <effect>font size in points</effect>
+	</option>
+	<option>
+	  <flag>--width</flag>
+	  <optparm>w</optparm>
+	  <effect>width of plot in pixels</effect>
+	</option>
+	<option>
+	  <flag>--height</flag>
+	  <optparm>h</optparm>
+	  <effect>width of plot in pixels</effect>
+	</option>
+	<option>
+	  <flag>--rows</flag>
+	  <optparm>r</optparm>
+	  <effect>see below</effect>
+	</option>
+	<option>
+	  <flag>--cols</flag>
+	  <optparm>c</optparm>
+	  <effect>see below</effect>
+	</option>
+	<option>
+	  <flag>--layout</flag>
+	  <optparm>lmat</optparm>
+	  <effect>see below</effect>
+	</option>
+	<option>
+	  <flag>--output</flag>
+	  <optparm>destination</optparm>
+	  <effect>see below</effect>
+	</option>
+      </options>
+      <examples>
+        <example>gridplot myspecs --rows=3 --output=display</example>
+        <example>gridplot myspecs --layout=lmat --output=composite.pdf</example>
+      </examples>
+    </usage>
+    <description>
+      <para>
+	This command takes two or more individual plot specifications
+	and arranges them in a grid to produce a composite plot. The
+	single required argument, <repl>plotspecs</repl>, takes the
+	form of an array of strings, each specifying a plot. The
+	companion command <cmdref targ="gpbuild"/> offers an easy way
+	of creating such an array, but one can also do so manually
+	(see below for details).
+      </para>
+      <para>
+	MORE TO COME.
+      </para>
+    </description>
+  </command>
+
+  <command name="gpbuild" section="Graphs" context="cli">
+    <description>
+      <para>
+	TO BE WRITTEN
+      </para>
+    </description>
+  </command>
+
   <command name="3-D" section="Graphs" context="gui"
     label="3-dimensional plots">
 

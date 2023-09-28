@@ -4,6 +4,7 @@ version 2023c, in progress
 - String-valued series: support returning such series from a
   user function, and loosen the restrictions on assignment to
   such series
+- New function asort() for sorting arrays of all types
 - String functions strsub(), regsub(), substr(), tolower() and
   toupper(): generalize to support strings arrays and string-
   valued series as arguments, as well as individual strings
