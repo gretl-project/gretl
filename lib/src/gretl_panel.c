@@ -487,6 +487,7 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     int N = pan->effn;
     int k = pmod->ncoeff;
     int i, j, v, s, t;
+    int n_c = 0;
     int err = 0;
 
     tobs = get_panel_tobs(pan);
@@ -511,6 +512,7 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 	    continue;
 	}
 
+	n_c++;
 	e = gretl_matrix_reuse(e, Nt, 1);
 	Xt = gretl_matrix_reuse(Xt, Nt, k);
 
@@ -556,6 +558,7 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     }
 
     gretl_model_set_vcv_info(pmod, VCV_PANEL, PANEL_TIME);
+    gretl_model_set_int(pmod, "n_clusters", n_c);
 
  bailout:
 
@@ -674,7 +677,7 @@ static int check_cluster_var (DATASET *pset,
 
     if (cname == NULL || *cname == '\0') {
 	err = E_DATA;
-    } else if (!strcmp(cname, "time")) {
+    } else if (!strcmp(cname, "period")) {
 	*est = PAN_TCLUSTER;
     } else {
 	int pid = current_series_index(pset, cname);
@@ -773,14 +776,7 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
 #endif
 
     if (!err) {
-	int i, j, s = 0;
-
-	for (i=0; i<k; i++) {
-	    for (j=i; j<k; j++) {
-		pmod->vcv[s++] = gretl_matrix_get(V, i, j);
-	    }
-	    pmod->sderr[i] = sqrt(gretl_matrix_get(V, i, i));
-	}
+	gretl_model_write_vcv(pmod, V);
     }
 
  bailout:
@@ -2048,7 +2044,11 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
 	ModelTest *test = model_test_new(GRETL_TEST_WITHIN_F);
 	int wdfd = fmod->dfd;
 
-	if (pan->opt & OPT_R) {
+	if (pan->opt & OPT_C) {
+	    int nc = gretl_model_get_int(fmod, "n_clusters");
+
+	    fmod->dfd = wdfd = nc - 1;
+	} else if (pan->opt & OPT_R) {
 	    fmod->dfd = wdfd = pan->effn - 1;
 	}
 
@@ -4059,8 +4059,7 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
  * version of the Hausman test (random effects only); %OPT_B for
  * the "between" model; %OPT_P for pooled OLS; and %OPT_D to
  * include time dummies.
- * If and only if %OPT_P is given, %OPT_C (clustered standard
- * errors) is accepted. FIXME UPDATE this.
+ * %OPT_C for clustered standard errors is accepted.
  * If %OPT_U is given, either of the mutually incompatible options
  * %OPT_N and %OPT_X may be given to inflect the calculation of the
  * variance of the individual effects: %OPT_N means use Nerlove's
