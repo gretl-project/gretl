@@ -27,6 +27,7 @@
 #include "libset.h"
 #include "uservar.h"
 #include "gretl_string_table.h"
+#include "qr_estimate.h"
 #include "matrix_extra.h" /* for testing */
 
 /**
@@ -661,6 +662,13 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     return err;
 }
 
+static int catch_time_clustering (void)
+{
+    const char *cname = get_optval_string(PANEL, OPT_C);
+
+    return cname != NULL && !strcmp(cname, "time");
+}
+
 /* common setup for Arellano, Beck-Katz and time-cluster
    VCV estimators (note that pooled OLS with the --cluster
    option is handled separately)
@@ -691,14 +699,29 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset)
 
     est = libset_get_int(PANEL_ROBUST);
 
-    /* call the appropriate function */
-    if (est == PAN_PCSE) {
+    if (pan->opt & OPT_C) {
+	/* clustering */
+	if (catch_time_clustering()) {
+	    err = time_cluster_vcv(pmod, pan, dset, XX, W, V);
+	} else {
+	    //err = make_cluster_vcv(pmod, PANEL, dset, XX, OPT_NONE);
+	    err = E_NOTIMP; /* not ready */
+	    goto bailout;
+	}
+    } else if (est == PAN_PCSE) {
 	err = beck_katz_vcv(pmod, pan, dset, XX, W, V);
     } else if (est == PAN_TCLUSTER) {
 	err = time_cluster_vcv(pmod, pan, dset, XX, W, V);
     } else {
 	err = arellano_vcv(pmod, pan, dset, XX, W, V);
     }
+
+#if 0
+    fprintf(stderr, "\npanel_robust_vcv (est %d):\n", est);
+    gretl_matrix_print(XX, "X'X^{-1}");
+    gretl_matrix_print(W, "W");
+    gretl_matrix_print(V, "V");
+#endif
 
     if (!err) {
 	int i, j, s = 0;
@@ -2639,7 +2662,7 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
 		robust_fixed_effects_F(pan);
 	    }
 	    fix_panel_hatvars(&femod, pan, (const double **) dset->Z);
-	    if (pan->opt & OPT_R) {
+	    if (pan->opt & (OPT_R | OPT_C)) {
 		panel_robust_vcv(&femod, pan, wset);
 	    } else {
 		femod_regular_vcv(&femod);
@@ -3988,7 +4011,7 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
  * the "between" model; %OPT_P for pooled OLS; and %OPT_D to
  * include time dummies.
  * If and only if %OPT_P is given, %OPT_C (clustered standard
- * errors) is accepted.
+ * errors) is accepted. FIXME UPDATE this.
  * If %OPT_U is given, either of the mutually incompatible options
  * %OPT_N and %OPT_X may be given to inflect the calculation of the
  * variance of the individual effects: %OPT_N means use Nerlove's

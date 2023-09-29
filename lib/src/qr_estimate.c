@@ -2288,6 +2288,7 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
                        V, GRETL_MOD_NONE);
 
 #if CDEBUG
+    fprintf(stderr, "\ncluster_vcv_calc:\n");
     gretl_matrix_print(XX, "X'X^{-1}");
     gretl_matrix_print(W, "W");
     gretl_matrix_print(V, "V");
@@ -2402,7 +2403,8 @@ int make_cluster_vcv (MODEL *pmod, int ci,
     int cvar, n_c = 0;
     int err = 0;
 
-    if (pmod->ci != OLS && pmod->ci != IVREG && pmod->ci != WLS) {
+    if (pmod->ci != OLS && pmod->ci != IVREG &&
+	pmod->ci != WLS && pmod->ci != PANEL) {
         /* relax this? */
         return E_NOTIMP;
     }
