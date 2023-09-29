@@ -9,8 +9,7 @@
 # fracorder
 # mat2list
 # put_outofsmpl (needs helpers from extra_oos_helpers.inp)
-
-include extra_oos_helpers.inp
+# combine
 
 function series gap_filler (series x "Series to fill",
                             int method[0:2:2] "Fill method" {"Don't", "Repetition", "Linear interpolation"})
@@ -20,17 +19,17 @@ function series gap_filler (series x "Series to fill",
     if method == 0 # do nothing
         series ret = x
     elif method == 1 # get previous value
-	series tt = time
-	series OK = ok(x)
+        series tt = time
+        series OK = ok(x)
 
-	if $datatype == 2
+        if $datatype == 2
             outside = tt > max(OK ? tt : -1)
-	elif $datatype == 3
+        elif $datatype == 3
             outside = tt > pmax(OK ? tt : -1)
-	endif
+        endif
 
-	series ret = x
-	series ret = OK ? x : outside ? NA : ret(-1)
+        series ret = x
+        series ret = OK ? x : outside ? NA : ret(-1)
         string lbl = sprintf("gap-filled version of %s (with repetition)", argname(x))
         setinfo ret --description="@lbl"
 
@@ -146,7 +145,9 @@ function matrix fracorder (const series x, int order[0::0], bool verbosity[0])
     return ret
 end function
 
-####
+######################
+
+include extra_oos_helpers.inp
 
 function bundle put_outofsmpl (const bundle modorsys)
     # Input must be a $model or $system -like bundle (pointerized).
@@ -158,24 +159,117 @@ function bundle put_outofsmpl (const bundle modorsys)
     #   exist, else empty 0x0
     # futureX: future (post-sample) values of the exogenous if they exist,
     #   else empty 0x0
-    # 
+    #
     # Note that capital Y and X terminology is used for sake of
-    # generality, even if Y and X just hold a single series. 
-   
+    # generality, even if Y and X just hold a single series.
+
     if  modorsys.t2 < $tmax
         funcerr "not implemented: case of sample_t2 < t2"
         # (but sample_t2 does not exist after 'system' (gretl 2022c))
-    elif modorsys.t2 > $tmax 
+    elif modorsys.t2 > $tmax
         funcerr "shouldn't happen"
     endif
-    
+
     if !inbundle(modorsys, "neqns")
         # this means we must be coming from $model
         matrices M = get_past_future_from_model(modorsys)
     else
         matrices M = get_past_future_from_system(modorsys)
     endif
-    return modorsys + _(initY = M[1], futureY = M[2], futureX = M[3]) 
+    return modorsys + _(initY = M[1], futureY = M[2], futureX = M[3])
 end function
 
+######################
 
+function series combine(const series a, const series b)
+
+    USE_AGG = 0 # experimentation seems to indicate 0 is faster
+    ainfo = getinfo(a)
+    binfo = getinfo(b)
+
+    namea = ainfo.name
+    if !ainfo.discrete
+        msg = sprintf("Series %s is not discrete", namea)
+        funcerr msg
+    endif
+
+    nameb = binfo.name
+    if !binfo.discrete
+        msg = sprintf("Series %s is not discrete", nameb)
+        funcerr msg
+    endif
+
+    have_labels = ainfo.has_string_table && ainfo.has_string_table
+
+    if USE_AGG
+        list X = a b
+        matrix C = aggregate(const, X)
+
+        C = selifr(C, C[,3])
+        tot = rows(C)
+        C[,3] = seq(1, tot)'
+        matrix va = values(C[,1])
+        matrix vb = values(C[,2])
+        scalar na = rows(va)
+        scalar nb = rows(vb)
+    else
+        M = mxtab(a, b)
+        matrix va = values(a)
+        matrix vb = values(b)
+        scalar na = rows(va)
+        scalar nb = rows(vb)
+        present = vec(M.>0)
+        C = vec(mshape(va, na, nb)) ~ vec(mshape(vb, nb, na)')
+
+        C = selifr(C, present)
+        tot = rows(C)
+        C = C ~ seq(1, tot)'
+    endif
+
+    series ret = NA
+    if na < nb
+        loop i = 1 .. na
+            vi = va[i]
+            r = selifr(C, C[,1] .= vi)
+            if rows(r)
+                smpl a == vi --restrict --replace
+                # printf "vi = %d, n = %d\n", vi, $nobs
+                ret = replace(b, r[,2], r[,3])
+            endif
+        endloop
+    else
+        loop i = 1 .. nb
+            vi = vb[i]
+            r = selifr(C, C[,2] .= vi)
+            if rows(r)
+                smpl b == vi --restrict --replace
+                ret = replace(a, r[,1], r[,3])
+            endif
+        endloop
+    endif
+
+    if have_labels
+        strings lab = array(tot)
+        strings vla = strvals(a)
+        strings vlb = strvals(b)
+        loop l = 1 .. tot
+            i = C[l,1]
+            j = C[l,2]
+            s = vla[i] ~ "/" ~ vlb[j]
+            len = strlen(s) > 33 ? 33 : strlen(s)
+            lab[l] = s[1:len]
+        endloop
+
+        catch stringify(ret, lab)
+        if $error
+            printf "Warning: non-unique auto value labels. None generated.\n"
+        endif
+
+    endif
+
+    smpl full
+    string des = sprintf("Combination of %s and %s", namea, nameb)
+    setinfo ret --description="@des"
+
+    return ret
+end function

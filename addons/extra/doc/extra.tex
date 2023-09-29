@@ -35,7 +35,7 @@
 \title{The extra package\\
 (a collection of various convenience functions for hansl programming) }
 
-\date{July 2023, release 1.7}
+\date{September 2023, release 1.8}
 
 \author{The \noun{gretl} team\thanks{Currently co-ordinated by Sven
 Schreiber.}}
@@ -518,52 +518,28 @@ For the Hurst method a minimum of 128 observations is required, and test
 results are never available. Also note that by construction this estimator can
 only take values between $-0.5$ and $0.5$.
 
-\subsection{put\_outofsmpl}
+\subsection{combine}
 
-\ArgRet{\texttt{bundle modorsys}}{bundle}
+\ArgRet{\texttt{series a, series b}}{series}
 
-This is a function intended for experts who need to grab out-of-sample data
-inside their function (package), where that data is not usually available
-because it is beyond a user function's scope. One use case is to access
-pre-sample time-series data (initial values) that may be needed for
-bootstrapping. Another application could be post-sample (future) data in the
-context of a forecasting exercise. 
-% related to earlier ticket https://sourceforge.net/p/gretl/todo/76/
-% " Provide expert hansl function to grab out-of-sample data"
+This function takes as arguments two discrete series computes all the
+combinations of their values that occur in the selected sample of the
+currently open dataset. These are stored in the resulting series.
 
-The function accepts a bundle behaving like gretl's \texttt{\$model} or 
-\texttt{\$system} accessors, and returns a copy of that bundle with the 
-following additional members (all of matrix type):
+For example, suppose you have a dataset of trade flows, with two
+series \texttt{ic} and \texttt{ec} for the importing and exporting
+countries, respectively. Then \cmd{combine(ic,ec)} will generate a
+series in which each pair has a distinct encoding.
 
-\begin{itemize}
-\item \texttt{initY} -- initial values of the endogenous variables
-  (empty 0x0 if no endogenous lags in model or system)
-\item \texttt{futureY} -- future (post-sample) values of the endogenous
-  variables if they exist, else empty 0x0
-\item \texttt{futureX} -- future (post-sample) values of the exogenous
-  variables if they exist, else empty 0x0
-\end{itemize}
-
-For the right-hand side terms there are different conventions between
-single-equation (\texttt{\$model}) and generic simultaneous-equation
-(\cmd{system} block) setups on the one hand, and specialized  \cmd{var} /
-\cmd{vecm} commands on the other hand:
- 
-\begin{itemize}
-\item Generic single-equation and generic \cmd{system}: 
-  \texttt{futureX} will contain also deterministics and lagged terms 
-  (internally taken directly from \texttt{\$xlist}).
- 
-\item \cmd{var} and \cmd{vecm}: 
-  \texttt{futureX} will contain only the truly exogenous and 
-   non-deterministic terms, for example not the lags of the 
-   endogenous variables.
-\end{itemize}
+If the two input series are both string-valued, then the output series
+will also be string-valued, as long as it's possible to assign unique
+labels to each value.
 
 \section{Authors}
 \begin{itemize}
-\item gap\_filler, eliminate, duplicate, truncnorm, powerset,
-  drill, correspondence, combinations, qformvech, mat2latex: Jack Lucchetti
+\item gap\_filler, eliminate, duplicate, truncnorm, powerset, drill,
+  correspondence, combinations, qformvech, mat2latex, combine: Jack
+  Lucchetti
 
 \item nearPSD, zeroifclose, scores2x2, WSRcritical, WSRpvalue, onemode,
 splitfname, multi\_instrings, fracorder, put\_outofsmpl:
@@ -577,6 +553,7 @@ Sven Schreiber
 
 \section{Changelog }
 \begin{itemize}
+\item September 2023: 1.8, add combine
 \item July 2023: 1.7, adopt the drawbootres function from the SVAR addon 
   to make it publicly available  
 \item January 2023: 1.6, introduce the put\_outofsmpl function; internal

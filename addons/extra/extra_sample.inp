@@ -196,3 +196,11 @@ eval b.futureY
 eval b.futureX
 
 ### end put_outofsmpl example ###
+
+print "---- combine -----"
+open wtp.gdt --quiet
+
+series ia = combine(income, age)
+smpl 1 20
+print income age ia --byobs
+
