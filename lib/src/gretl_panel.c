@@ -662,26 +662,85 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     return err;
 }
 
-static int catch_time_clustering (void)
+#define CDEBUG 0
+
+static int check_cluster_var (DATASET *pset,
+			      const DATASET *dset,
+			      int *est, int *cvar)
 {
     const char *cname = get_optval_string(PANEL, OPT_C);
+    int err = 0;
 
-    return cname != NULL && !strcmp(cname, "time");
+    if (cname == NULL || *cname == '\0') {
+	err = E_DATA;
+    } else if (!strcmp(cname, "time")) {
+	*est = PAN_TCLUSTER;
+    } else {
+	int pid = current_series_index(pset, cname);
+	int did = current_series_index(dset, cname);
+
+#if CDEBUG
+	fprintf(stderr, "panel, cluster by '%s'\n", cname);
+	fprintf(stderr, " pset index %d, dset index %d\n", pid, did);
+#endif
+	if (pid < 0 && did > 0 && pset->n == dset->n) {
+	    err = dataset_add_series(pset, 1);
+	    if (!err) {
+		*cvar = did;
+		pid = pset->v - 1;
+		strcpy(pset->varname[pid], cname);
+		memcpy(pset->Z[pid], dset->Z[did], pset->n * sizeof **pset->Z);
+	    }
+	} else {
+	    fprintf(stderr, " pset n=%d, t=%d, t2=%d; dset n=%d, t=%d, t2=%d\n",
+		    pset->n, pset->t1, pset->t2,
+		    dset->n, dset->t1, dset->t2);
+	    err = E_NOTIMP;
+	}
+    }
+
+    return err;
 }
 
-/* common setup for Arellano, Beck-Katz and time-cluster
+/* Common setup for Arellano, Beck-Katz and time-cluster
    VCV estimators (note that pooled OLS with the --cluster
-   option is handled separately)
+   option is handled separately). @pset is the special
+   panel dataset and @dset is the original dataset.
 */
 
 static int
-panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset)
+panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
+		  DATASET *pset, const DATASET *dset)
 {
     gretl_matrix *W = NULL;
     gretl_matrix *V = NULL;
     gretl_matrix *XX = NULL;
     int k = pmod->ncoeff;
-    int est, err = 0;
+    int cvar = 0;
+    int est = -1;
+    int err = 0;
+
+    XX = panel_model_xpxinv(pmod, &err);
+    if (err) {
+	fprintf(stderr, "panel_robust_vcv: failed at panel_model_xpxinv\n");
+	goto bailout;
+    }
+
+    if (pan->opt & OPT_C) {
+	err = check_cluster_var(pset, dset, &est, &cvar);
+	if (err) {
+	    goto bailout;
+	} else if (est == PAN_TCLUSTER) {
+	    ; /* cluster by time, OK */
+	} else {
+	    err = make_cluster_vcv(pmod, PANEL, pset, XX, OPT_NONE);
+	    if (!err) {
+		/* correct the clustering series ID, @cvar */
+		gretl_model_set_vcv_info(pmod, VCV_CLUSTER, cvar);
+	    }
+	    goto bailout;
+	}
+    }
 
     W = gretl_zero_matrix_new(k, k);
     V = gretl_matrix_alloc(k, k);
@@ -691,32 +750,19 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset)
 	goto bailout;
     }
 
-    XX = panel_model_xpxinv(pmod, &err);
-    if (err) {
-	fprintf(stderr, "panel_robust_vcv: failed at panel_model_xpxinv\n");
-	goto bailout;
+    if (est < 0) {
+	est = libset_get_int(PANEL_ROBUST);
     }
 
-    est = libset_get_int(PANEL_ROBUST);
-
-    if (pan->opt & OPT_C) {
-	/* clustering */
-	if (catch_time_clustering()) {
-	    err = time_cluster_vcv(pmod, pan, dset, XX, W, V);
-	} else {
-	    //err = make_cluster_vcv(pmod, PANEL, dset, XX, OPT_NONE);
-	    err = E_NOTIMP; /* not ready */
-	    goto bailout;
-	}
-    } else if (est == PAN_PCSE) {
-	err = beck_katz_vcv(pmod, pan, dset, XX, W, V);
+    if (est == PAN_PCSE) {
+	err = beck_katz_vcv(pmod, pan, pset, XX, W, V);
     } else if (est == PAN_TCLUSTER) {
-	err = time_cluster_vcv(pmod, pan, dset, XX, W, V);
+	err = time_cluster_vcv(pmod, pan, pset, XX, W, V);
     } else {
-	err = arellano_vcv(pmod, pan, dset, XX, W, V);
+	err = arellano_vcv(pmod, pan, pset, XX, W, V);
     }
 
-#if 0
+#if CDEBUG
     fprintf(stderr, "\npanel_robust_vcv (est %d):\n", est);
     gretl_matrix_print(XX, "X'X^{-1}");
     gretl_matrix_print(W, "W");
@@ -2663,7 +2709,7 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
 	    }
 	    fix_panel_hatvars(&femod, pan, (const double **) dset->Z);
 	    if (pan->opt & (OPT_R | OPT_C)) {
-		panel_robust_vcv(&femod, pan, wset);
+		panel_robust_vcv(&femod, pan, wset, dset);
 	    } else {
 		femod_regular_vcv(&femod);
 	    }
@@ -3115,7 +3161,7 @@ static double hausman_regression_result (panelmod_t *pan,
 		    if (hmod.full_n < pan->pooled->full_n) {
 			hausman_move_uhat(&hmod, pan);
 		    }
-		    panel_robust_vcv(&hmod, pan, rset); /* FIXME? */
+		    panel_robust_vcv(&hmod, pan, rset, NULL); /* FIXME? */
 		    if (hmod.vcv != NULL) {
 			if (pan->dfH < hlist[0]) {
 			    ret = robust_hausman_fixup(hlist, &hmod);
@@ -3342,7 +3388,7 @@ static int random_effects (panelmod_t *pan,
 	fix_panel_hatvars(&remod, pan, (const double **) dset->Z);
 
 	if (pan->opt & OPT_R) {
-	    panel_robust_vcv(&remod, pan, rset);
+	    panel_robust_vcv(&remod, pan, rset, NULL);
 	} else {
 	    double sigma = remod.sigma; /* or... ? */
 #if PDEBUG
@@ -3977,7 +4023,7 @@ static int get_ntdum (const int *orig, const int *new)
 }
 
 static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
-			       const DATASET *dset)
+			       DATASET *dset)
 {
     gretl_model_set_int(pmod, "pooled", 1);
     add_panel_obs_info(pmod, pan);
@@ -3987,7 +4033,7 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
     }
 
     if (pan->opt & OPT_R) {
-	panel_robust_vcv(pmod, pan, dset);
+	panel_robust_vcv(pmod, pan, dset, NULL);
 	pmod->opt |= OPT_R;
 	pmod->fstt = panel_overall_test(pmod, pan, 0, OPT_NONE);
 	pmod->dfd = pan->effn - 1;
@@ -4245,7 +4291,7 @@ int panel_tsls_robust_vcv (MODEL *pmod, const DATASET *dset)
 
     err = panelmod_setup(&pan, pmod, dset, 0, OPT_NONE);
     if (!err) {
-	err = panel_robust_vcv(pmod, &pan, dset);
+	err = panel_robust_vcv(pmod, &pan, (DATASET *) dset, NULL);
     }
 
     panelmod_free(&pan);

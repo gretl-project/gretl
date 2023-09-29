@@ -2234,7 +2234,7 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
             continue;
         }
 
-#if CDEBUG
+#if CDEBUG > 1
         fprintf(stderr, "i=%d, cvi=%g, Ni=%d\n", i, cvi, Ni);
 #endif
         ei = gretl_matrix_reuse(ei, Ni, -1);
@@ -2438,7 +2438,9 @@ int make_cluster_vcv (MODEL *pmod, int ci,
 #if CDEBUG
     fprintf(stderr, "make_cluster_vcv: err = %d\n", err);
     fprintf(stderr, "cluster var = %s (%d)\n", cname, cvar);
+# if CDEBUG > 1
     gretl_matrix_print(cvals, "cvals");
+# endif
 #endif
 
     if (!err) {
