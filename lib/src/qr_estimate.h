@@ -62,6 +62,7 @@ gretl_matrix *long_run_covariance (const gretl_matrix *X,
 int make_cluster_vcv (MODEL *pmod, int ci,
 		      const DATASET *dset,
 		      gretl_matrix *XX,
+		      int cvar,
 		      gretlopt opt);
 
 int set_cluster_vcv_ci (int ci);

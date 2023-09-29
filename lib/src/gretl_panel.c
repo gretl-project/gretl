@@ -666,7 +666,8 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 
 static int check_cluster_var (DATASET *pset,
 			      const DATASET *dset,
-			      int *est, int *cvar)
+			      int *est, int *pcvar,
+			      int *dcvar)
 {
     const char *cname = get_optval_string(PANEL, OPT_C);
     int err = 0;
@@ -686,10 +687,11 @@ static int check_cluster_var (DATASET *pset,
 	if (pid < 0 && did > 0 && pset->n == dset->n) {
 	    err = dataset_add_series(pset, 1);
 	    if (!err) {
-		*cvar = did;
 		pid = pset->v - 1;
 		strcpy(pset->varname[pid], cname);
 		memcpy(pset->Z[pid], dset->Z[did], pset->n * sizeof **pset->Z);
+		*pcvar = pid;
+		*dcvar = did;
 	    }
 	} else {
 	    fprintf(stderr, " pset n=%d, t=%d, t2=%d; dset n=%d, t=%d, t2=%d\n",
@@ -716,7 +718,8 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
     gretl_matrix *V = NULL;
     gretl_matrix *XX = NULL;
     int k = pmod->ncoeff;
-    int cvar = 0;
+    int pcvar = 0;
+    int dcvar = 0;
     int est = -1;
     int err = 0;
 
@@ -727,16 +730,16 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
     }
 
     if (pan->opt & OPT_C) {
-	err = check_cluster_var(pset, dset, &est, &cvar);
+	err = check_cluster_var(pset, dset, &est, &pcvar, &dcvar);
 	if (err) {
 	    goto bailout;
 	} else if (est == PAN_TCLUSTER) {
 	    ; /* cluster by time, OK */
 	} else {
-	    err = make_cluster_vcv(pmod, PANEL, pset, XX, OPT_NONE);
+	    err = make_cluster_vcv(pmod, PANEL, pset, XX, pcvar, OPT_NONE);
 	    if (!err) {
-		/* correct the clustering series ID, @cvar */
-		gretl_model_set_vcv_info(pmod, VCV_CLUSTER, cvar);
+		/* correct the clustering series ID */
+		gretl_model_set_vcv_info(pmod, VCV_CLUSTER, dcvar);
 	    }
 	    goto bailout;
 	}
@@ -4147,6 +4150,11 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	fprintf(stderr, "\n*** Doing random effects\n");
     }
 #endif
+
+    if (pan_opt & OPT_C) {
+	/* cluster implies robust */
+	pan_opt |= OPT_R;
+    }
 
     if ((opt & OPT_D) && !(opt & OPT_B)) {
 	ntdum = get_ntdum(list, mod.list);
