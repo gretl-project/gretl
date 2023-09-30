@@ -1336,12 +1336,11 @@ static const char *hc_strs[] = {
     "HC0", "HC1", "HC2", "HC3", "HC3a", "HAC"
 };
 
-static const char *hc_panel_strs[] = {
-    "Arellano", "PCSE", "Time-cluster"
-};
-
 static const char **get_list_setting_strings (void *var, int *n)
 {
+    static const char *hc_panel_strs[] = {
+	"Arellano", "PCSE"
+    };
     static const char *garch_strs[] = {
 	"QML", "BW"
     };
@@ -1477,7 +1476,7 @@ const char *get_default_hc_string (int ci)
 	    return "HAC";
 	} else {
 	    /* panel */
-	    return hc_panel_strs[libset_get_int(PANEL_ROBUST)];
+	    return libset_get_bool(USE_PCSE) ? "PCSE" : "Arellano";
 	}
     }
 }

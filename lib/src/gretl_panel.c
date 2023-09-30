@@ -442,15 +442,10 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 
 double panel_cluster_df_adj (MODEL *pmod,
 			     panelmod_t *pan,
-			     int estimator)
+			     int by_period)
 {
-    int K, n = pmod->nobs;
-
-    if (estimator == PAN_TCLUSTER) {
-	K = pan->Tmax;
-    } else {
-	K = pan->effn;
-    }
+    int K = by_period ? pan->Tmax : pan->effn;
+    int n = pmod->nobs;
 
     return (K / (K - 1.0)) * (n - 1.0) / (n - pmod->ncoeff);
 }
@@ -552,7 +547,7 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 
     if (pmod->ci != IVREG) {
 	/* FIXME IVREG? */
-	double adj = panel_cluster_df_adj(pmod, pan, PAN_TCLUSTER);
+	double adj = panel_cluster_df_adj(pmod, pan, 1);
 
 	gretl_matrix_multiply_by_scalar(V, adj);
     }
@@ -649,7 +644,7 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 
     if (pmod->ci != IVREG) {
 	/* FIXME IVREG? */
-	double adj = panel_cluster_df_adj(pmod, pan, PAN_ARELLANO);
+	double adj = panel_cluster_df_adj(pmod, pan, 0);
 
 	gretl_matrix_multiply_by_scalar(V, adj);
     }
@@ -669,7 +664,8 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 
 static int check_cluster_var (DATASET *pset,
 			      const DATASET *dset,
-			      int *est, int *pcvar,
+			      int *by_period,
+                              int *pcvar,
 			      int *dcvar)
 {
     const char *cname = get_optval_string(PANEL, OPT_C);
@@ -678,16 +674,15 @@ static int check_cluster_var (DATASET *pset,
     if (cname == NULL || *cname == '\0') {
 	err = E_DATA;
     } else if (!strcmp(cname, "period")) {
-	*est = PAN_TCLUSTER;
+	*by_period = 1;
     } else {
-	int pid = current_series_index(pset, cname);
-	int did = current_series_index(dset, cname);
+	int pid, did = current_series_index(dset, cname);
 
 #if CDEBUG
 	fprintf(stderr, "panel, cluster by '%s'\n", cname);
-	fprintf(stderr, " pset index %d, dset index %d\n", pid, did);
+	fprintf(stderr, " dset index %d\n", did);
 #endif
-	if (pid < 0 && did > 0 && pset->n == dset->n) {
+	if (did > 0 && pset->n == dset->n) {
 	    err = dataset_add_series(pset, 1);
 	    if (!err) {
 		pid = pset->v - 1;
@@ -721,9 +716,9 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
     gretl_matrix *V = NULL;
     gretl_matrix *XX = NULL;
     int k = pmod->ncoeff;
+    int by_period = 0;
     int pcvar = 0;
     int dcvar = 0;
-    int est = -1;
     int err = 0;
 
     XX = panel_model_xpxinv(pmod, &err);
@@ -733,11 +728,11 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
     }
 
     if (pan->opt & OPT_C) {
-	err = check_cluster_var(pset, dset, &est, &pcvar, &dcvar);
+	err = check_cluster_var(pset, dset, &by_period, &pcvar, &dcvar);
 	if (err) {
 	    goto bailout;
-	} else if (est == PAN_TCLUSTER) {
-	    ; /* cluster by time, OK */
+	} else if (by_period) {
+	    ; /* cluster by time period, OK */
 	} else {
 	    err = make_cluster_vcv(pmod, PANEL, pset, XX, pcvar, OPT_NONE);
 	    if (!err) {
@@ -756,14 +751,10 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
 	goto bailout;
     }
 
-    if (est < 0) {
-	est = libset_get_int(PANEL_ROBUST);
-    }
-
-    if (est == PAN_PCSE) {
+    if (by_period) {
+        err = time_cluster_vcv(pmod, pan, pset, XX, W, V);
+    } else if (libset_get_bool(USE_PCSE)) {
 	err = beck_katz_vcv(pmod, pan, pset, XX, W, V);
-    } else if (est == PAN_TCLUSTER) {
-	err = time_cluster_vcv(pmod, pan, pset, XX, W, V);
     } else {
 	err = arellano_vcv(pmod, pan, pset, XX, W, V);
     }
@@ -5077,11 +5068,11 @@ static int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 int panel_autocorr_test (MODEL *pmod, DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
-    int save_robust = libset_get_int(PANEL_ROBUST);
+    int save_pcse = libset_get_bool(USE_PCSE);
     int orig_v = dset->v;
     int err;
 
-    libset_set_int(PANEL_ROBUST, PAN_ARELLANO); /* ? */
+    libset_set_bool(USE_PCSE, 0);
 
     if (pmod->ci == OLS || (pmod->opt & OPT_P)) {
 	err = pooled_autocorr_test(pmod, dset, opt, prn);
@@ -5089,7 +5080,7 @@ int panel_autocorr_test (MODEL *pmod, DATASET *dset,
 	err = wooldridge_autocorr_test(pmod, dset, opt, prn);
     }
 
-    libset_set_int(PANEL_ROBUST, save_robust);
+    libset_set_bool(USE_PCSE, save_pcse);
     dataset_drop_last_variables(dset, dset->v - orig_v);
 
     return err;
