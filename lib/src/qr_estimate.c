@@ -39,6 +39,11 @@ enum {
     VCV_XPX
 };
 
+static int qr_make_cluster_vcv (MODEL *pmod, int ci,
+                                const DATASET *dset,
+                                gretl_matrix *XX,
+                                gretlopt opt);
+
 #define gls_rho(p) gretl_model_get_double_default(p, "rho_gls", 0.0)
 
 /* General note: in fortran arrays, column entries are contiguous.
@@ -1769,7 +1774,7 @@ gretl_qr_pivot_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
     if (opt & OPT_R) {
         pmod->opt |= OPT_R;
         if (opt & OPT_C) {
-            err = make_cluster_vcv(pmod, pmod->ci, dset, V, -1, opt);
+            err = qr_make_cluster_vcv(pmod, pmod->ci, dset, V, opt);
         } else if ((opt & OPT_T) && !libset_get_bool(FORCE_HC)) {
             err = qr_make_hac(pmod, dset, V);
         } else {
@@ -1915,7 +1920,7 @@ gretl_qr_plain_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
     if (opt & OPT_R) {
         pmod->opt |= OPT_R;
         if (opt & OPT_C) {
-            err = make_cluster_vcv(pmod, pmod->ci, dset, V, -1, opt);
+            err = qr_make_cluster_vcv(pmod, pmod->ci, dset, V, opt);
         } else if ((opt & OPT_T) && !libset_get_bool(FORCE_HC)) {
             err = qr_make_hac(pmod, dset, V);
         } else {
@@ -2048,7 +2053,7 @@ int lapack_cholesky_regress (MODEL *pmod, const DATASET *dset,
     if (opt & OPT_R) {
         pmod->opt |= OPT_R;
         if (opt & OPT_C) {
-            err = make_cluster_vcv(pmod, OLS, dset, XTX, -1, opt);
+            err = qr_make_cluster_vcv(pmod, OLS, dset, XTX, opt);
         } else if ((opt & OPT_T) && !libset_get_bool(FORCE_HC)) {
             err = qr_make_hac(pmod, dset, XTX);
         } else {
@@ -2120,7 +2125,7 @@ int qr_tsls_vcv (MODEL *pmod, const DATASET *dset, gretlopt opt)
     if (opt & OPT_R) {
         if (opt & OPT_C) {
             pmod->opt |= OPT_R;
-            err = make_cluster_vcv(pmod, IVREG, dset, V, -1, opt);
+            err = qr_make_cluster_vcv(pmod, IVREG, dset, V, opt);
         } else if (dataset_is_panel(dset)) {
             err = qr_make_regular_vcv(pmod, V, OPT_X);
             if (!err) {
@@ -2234,7 +2239,7 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
             continue;
         }
 
-#if CDEBUG > 1
+#if CDEBUG
         fprintf(stderr, "i=%d, cvi=%g, Ni=%d\n", i, cvi, Ni);
 #endif
         ei = gretl_matrix_reuse(ei, Ni, -1);
@@ -2254,7 +2259,7 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
                 s++;
             }
             if (s == Ni) {
-                /* we've filled these matrices */
+                /* we've filled this matrix */
                 break;
             }
         }
@@ -2286,9 +2291,7 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
     /* form V(W) = (X'X)^{-1} W (X'X)^{-1} */
     gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
                        V, GRETL_MOD_NONE);
-
 #if CDEBUG
-    fprintf(stderr, "\ncluster_vcv_calc:\n");
     gretl_matrix_print(XX, "X'X^{-1}");
     gretl_matrix_print(W, "W");
     gretl_matrix_print(V, "V");
@@ -2379,7 +2382,7 @@ static gretl_matrix *cluster_var_values (const double *cvar,
 static int cluster_vcv_ci;
 
 /**
- * make_cluster_vcv:
+ * qr_make_cluster_vcv:
  * @pmod: pointer to model.
  * @ci: command index (right now, OLS or IVREG).
  * @dset: pointer to dataset.
@@ -2392,20 +2395,18 @@ static int cluster_vcv_ci;
  * Returns: 0 on success, non-zero code on error.
  */
 
-int make_cluster_vcv (MODEL *pmod, int ci,
-                      const DATASET *dset,
-                      gretl_matrix *XX,
-		      int cvar,
-                      gretlopt opt)
+static int qr_make_cluster_vcv (MODEL *pmod, int ci,
+                                const DATASET *dset,
+                                gretl_matrix *XX,
+                                gretlopt opt)
 {
     gretl_matrix *cvals = NULL;
     gretl_matrix *V = NULL;
-    const char *cname = NULL;
-    int n_c = 0;
+    const char *cname;
+    int cvar, n_c = 0;
     int err = 0;
 
-    if (pmod->ci != OLS && pmod->ci != IVREG &&
-	pmod->ci != WLS && pmod->ci != PANEL) {
+    if (pmod->ci != OLS && pmod->ci != IVREG && pmod->ci != WLS) {
         /* relax this? */
         return E_NOTIMP;
     }
@@ -2415,19 +2416,15 @@ int make_cluster_vcv (MODEL *pmod, int ci,
         cluster_vcv_ci = 0;
     }
 
-    if (cvar < 0) {
-	/* the cluster variable's series ID is not already known */
-	cname = get_optval_string(ci, OPT_C);
-	if (cname == NULL) {
-	    gretl_errmsg_set("Got --cluster option but couldn't find varname");
-	    return E_PARSE;
-	}
-	cvar = current_series_index(dset, cname);
-	if (cvar < 1 || cvar >= dset->v) {
-	    err = E_UNKVAR;
-	}
-    } else {
-	cname = dset->varname[cvar];
+    cname = get_optval_string(ci, OPT_C);
+    if (cname == NULL) {
+        gretl_errmsg_set("Got --cluster option but couldn't find varname");
+        return E_PARSE;
+    }
+
+    cvar = current_series_index(dset, cname);
+    if (cvar < 1 || cvar >= dset->v) {
+        err = E_UNKVAR;
     }
 
     if (!err) {
@@ -2441,11 +2438,9 @@ int make_cluster_vcv (MODEL *pmod, int ci,
     }
 
 #if CDEBUG
-    fprintf(stderr, "make_cluster_vcv: err = %d\n", err);
-    fprintf(stderr, "cluster series ID %d (%s)\n", cvar, cname);
-# if CDEBUG > 1
+    fprintf(stderr, "qr_make_cluster_vcv: err = %d\n", err);
+    fprintf(stderr, "cluster var = %s (%d)\n", cname, cvar);
     gretl_matrix_print(cvals, "cvals");
-# endif
 #endif
 
     if (!err) {

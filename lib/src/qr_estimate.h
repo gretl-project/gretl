@@ -59,12 +59,6 @@ gretl_matrix *newey_west_OPG (const gretl_matrix *G,
 gretl_matrix *long_run_covariance (const gretl_matrix *X,
 				   int demean, int *err);
 
-int make_cluster_vcv (MODEL *pmod, int ci,
-		      const DATASET *dset,
-		      gretl_matrix *XX,
-		      int cvar,
-		      gretlopt opt);
-
 int set_cluster_vcv_ci (int ci);
 
 #endif  /* QR_ESTIMATE_H */
