@@ -187,19 +187,19 @@ function series combine(const series a, const series b)
     ainfo = getinfo(a)
     binfo = getinfo(b)
 
-    namea = ainfo.name
+    namea = argname(a)
     if !ainfo.discrete
         msg = sprintf("Series %s is not discrete", namea)
         funcerr msg
     endif
 
-    nameb = binfo.name
+    nameb = argname(b)
     if !binfo.discrete
         msg = sprintf("Series %s is not discrete", nameb)
         funcerr msg
     endif
 
-    have_labels = ainfo.has_string_table && ainfo.has_string_table
+    have_labels = ainfo.has_string_table && binfo.has_string_table
 
     if USE_AGG
         list X = a b
