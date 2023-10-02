@@ -842,10 +842,11 @@ static int check_cluster_var (MODEL *pmod,
     return err;
 }
 
-/* Common setup for Arellano, Beck-Katz and time-cluster
-   VCV estimators (note that pooled OLS with the --cluster
-   option is handled separately). @pset is the special
-   panel dataset and @dset is the original dataset.
+/* Common setup for Arellano, Beck-Katz, time-cluster and "generic"
+   cluster VCV estimators (note that pooled OLS with the --cluster
+   option is handled separately). @pset is the special panel dataset
+   comprising only usable observations, and @dset is the original
+   dataset.
 */
 
 static int
@@ -2838,7 +2839,7 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
 		robust_fixed_effects_F(pan);
 	    }
 	    fix_panel_hatvars(&femod, pan, (const double **) dset->Z);
-	    if (pan->opt & (OPT_R | OPT_C)) {
+	    if (pan->opt & OPT_R) {
 		femod.errcode = panel_robust_vcv(&femod, pan, wset, dset);
 	    } else {
 		femod_regular_vcv(&femod);
@@ -3261,6 +3262,7 @@ static double hausman_regression_result (panelmod_t *pan,
 					 const int *relist,
 					 const int *hlist,
 					 DATASET *rset,
+					 DATASET *dset,
 					 PRN *prn)
 {
     double ret = NADBL;
@@ -3291,7 +3293,7 @@ static double hausman_regression_result (panelmod_t *pan,
 		    if (hmod.full_n < pan->pooled->full_n) {
 			hausman_move_uhat(&hmod, pan);
 		    }
-		    panel_robust_vcv(&hmod, pan, rset, NULL); /* FIXME? */
+		    panel_robust_vcv(&hmod, pan, rset, dset);
 		    if (hmod.vcv != NULL) {
 			if (pan->dfH < hlist[0]) {
 			    ret = robust_hausman_fixup(hlist, &hmod);
@@ -3482,7 +3484,8 @@ static int random_effects (panelmod_t *pan,
     }
 
     if (hlist != NULL) {
-	hres = hausman_regression_result(pan, relist, hlist, rset, prn);
+	hres = hausman_regression_result(pan, relist, hlist,
+					 rset, dset, prn);
     }
 
     /* regular random-effects model */
@@ -3518,7 +3521,7 @@ static int random_effects (panelmod_t *pan,
 	fix_panel_hatvars(&remod, pan, (const double **) dset->Z);
 
 	if (pan->opt & OPT_R) {
-	    err = panel_robust_vcv(&remod, pan, rset, NULL);
+	    err = panel_robust_vcv(&remod, pan, rset, dset);
 	    if (err) {
 		goto bailout;
 	    }
@@ -4186,12 +4189,11 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
  * @list: list containing model specification.
  * @dset: dataset struct.
  * @opt: may include %OPT_U for the random effects model;
- * %OPT_R for robust standard errors (fixed effects model
- * and pooled OLS only); %OPT_M to use the matrix-difference
- * version of the Hausman test (random effects only); %OPT_B for
- * the "between" model; %OPT_P for pooled OLS; and %OPT_D to
- * include time dummies.
- * %OPT_C for clustered standard errors is accepted.
+ * %OPT_R for robust standard errors; %OPT_M to use the
+ * matrix-difference variant of the Hausman test (random
+ * effects only); %OPT_B for the "between" model; %OPT_P for
+ * pooled OLS; and %OPT_D to include time dummies.
+ * %OPT_C for clustered standard errors is also accepted.
  * If %OPT_U is given, either of the mutually incompatible options
  * %OPT_N and %OPT_X may be given to inflect the calculation of the
  * variance of the individual effects: %OPT_N means use Nerlove's
@@ -4200,7 +4202,8 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
  * to use the "generic" Swamy-Arora method.
  * @prn: printing struct.
  *
- * Estimates a panel model, by default the fixed effects model.
+ * Estimates a panel model, by default using the fixed effects
+ * estimator.
  *
  * Returns: a #MODEL struct, containing the estimates.
  */
