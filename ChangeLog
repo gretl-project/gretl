@@ -25,9 +25,11 @@ version 2023c, in progress
 - Fix bug: wrong alignment when appending dated weekly data
 - Fix bug: invcdf() and critical() misbehaving for the chi-
   square distribution with a CDF argument of 1.0
+- Fix bug: pdf() giving NA for Chi-square with argument 0
 - Fix bug: possible duplicate entries in GUI function package
   listing
 - Fix bug: markdown conversion not always working properly
+- Fix bug: "kdplot" not respecting the --output option
 - GUI: use "Apply" and "OK" buttons more consistently
 - GUI: add a menu item to install a local function package,
   under the "/File/Function packages" menu
