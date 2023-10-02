@@ -27,7 +27,6 @@
 #include "libset.h"
 #include "uservar.h"
 #include "gretl_string_table.h"
-#include "qr_estimate.h"
 #include "matrix_extra.h" /* for testing */
 
 /**
@@ -41,6 +40,7 @@
  */
 
 #define PDEBUG 0
+#define CDEBUG 0
 
 enum vcv_ops {
     VCV_INIT,
@@ -442,12 +442,11 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 
 double panel_cluster_df_adj (MODEL *pmod,
 			     panelmod_t *pan,
-			     int by_period)
+			     int nc)
 {
-    int K = by_period ? pan->Tmax : pan->effn;
     int n = pmod->nobs;
 
-    return (K / (K - 1.0)) * (n - 1.0) / (n - pmod->ncoeff);
+    return (nc / (nc - 1.0)) * (n - 1.0) / (n - pmod->ncoeff);
 }
 
 /* helper function for panel VCV clustered by period */
@@ -475,7 +474,7 @@ static int
 time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 		  gretl_matrix *XX, gretl_matrix *W, gretl_matrix *V)
 {
-    gretl_vector *e = NULL;
+    gretl_vector *et = NULL;
     gretl_matrix *Xt = NULL;
     gretl_vector *eXt = NULL;
     int *tobs = NULL;
@@ -490,11 +489,11 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 	return E_ALLOC;
     }
 
-    e   = gretl_column_vector_alloc(N);
+    et  = gretl_column_vector_alloc(N);
     Xt  = gretl_matrix_alloc(N, k);
     eXt = gretl_vector_alloc(k);
 
-    if (e == NULL || Xt == NULL || eXt == NULL) {
+    if (et == NULL || Xt == NULL || eXt == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -508,7 +507,7 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 	}
 
 	n_c++;
-	e = gretl_matrix_reuse(e, Nt, 1);
+	et = gretl_matrix_reuse(et, Nt, 1);
 	Xt = gretl_matrix_reuse(Xt, Nt, k);
 
 	for (i=0; i<pan->nunits; i++) {
@@ -516,7 +515,7 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 	    if (na(pmod->uhat[s])) {
 		continue;
 	    }
-	    gretl_vector_set(e, p, pmod->uhat[s]);
+	    gretl_vector_set(et, p, pmod->uhat[s]);
 	    s = small_index(pan, s);
 	    for (j=0; j<k; j++) {
 		v = pmod->list[j+2];
@@ -533,7 +532,7 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 	    }
 	}
 
-	gretl_matrix_multiply_mod(e, GRETL_MOD_TRANSPOSE,
+	gretl_matrix_multiply_mod(et, GRETL_MOD_TRANSPOSE,
 				  Xt, GRETL_MOD_NONE,
 				  eXt, GRETL_MOD_NONE);
 	gretl_matrix_multiply_mod(eXt, GRETL_MOD_TRANSPOSE,
@@ -547,7 +546,7 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 
     if (pmod->ci != IVREG) {
 	/* FIXME IVREG? */
-	double adj = panel_cluster_df_adj(pmod, pan, 1);
+	double adj = panel_cluster_df_adj(pmod, pan, pan->Tmax);
 
 	gretl_matrix_multiply_by_scalar(V, adj);
     }
@@ -557,10 +556,129 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 
  bailout:
 
-    gretl_matrix_free(e);
+    gretl_matrix_free(et);
     gretl_matrix_free(Xt);
     gretl_matrix_free(eXt);
     free(tobs);
+
+    return err;
+}
+
+static int panel_cval_count (MODEL *pmod, panelmod_t *pan,
+			     double cvi, const double *cz)
+{
+    int s, t, cc = 0;
+
+    for (s=0; s<pmod->nobs; s++) {
+	t = big_index(pan, s);
+        if (!na(pmod->uhat[t]) && cz[s] == cvi) {
+            cc++;
+        }
+    }
+
+    return cc;
+}
+
+static int panel_cval_count_max (MODEL *pmod,
+				 panelmod_t *pan,
+				 const gretl_matrix *cvals,
+				 const double *cz)
+{
+    int n = gretl_vector_get_length(cvals);
+    int i, cc, cmax = 0;
+
+    for (i=0; i<n; i++) {
+        cc = panel_cval_count(pmod, pan, cvals->val[i], cz);
+        if (cc > cmax) {
+            cmax = cc;
+        }
+    }
+
+    return cmax;
+}
+
+static int
+generic_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
+		     gretl_matrix *XX, gretl_matrix *W, gretl_matrix *V,
+		     gretl_matrix *cvals, int pcvar, int dcvar)
+{
+    gretl_vector *ei = NULL;
+    gretl_matrix *Xi = NULL;
+    gretl_vector *eXi = NULL;
+    double *cz = dset->Z[pcvar];
+    int R, M = cvals->rows;
+    int k = pmod->ncoeff;
+    int i, j, v, t;
+    int n_c = 0;
+    int err = 0;
+
+    R = panel_cval_count_max(pmod, pan, cvals, cz);
+    ei  = gretl_column_vector_alloc(R);
+    Xi  = gretl_matrix_alloc(R, k);
+    eXi = gretl_vector_alloc(k);
+
+    if (ei == NULL || Xi == NULL || eXi == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    for (i=0; i<M; i++) {
+        double cvi = cvals->val[i];
+        int Ni = panel_cval_count(pmod, pan, cvi, cz);
+        int s, p = 0;
+
+        if (Ni == 0) {
+            continue;
+        }
+
+#if CDEBUG
+        fprintf(stderr, "cvals[%d]=%g, count=%d\n", i, cvi, Ni);
+#endif
+        ei = gretl_matrix_reuse(ei, Ni, -1);
+        Xi = gretl_matrix_reuse(Xi, Ni, -1);
+
+        for (s=0; s<pmod->nobs; s++) {
+	    t = big_index(pan, s);
+            if (!na(pmod->uhat[t]) && cz[s] == cvi) {
+                gretl_vector_set(ei, p, pmod->uhat[t]);
+                for (j=0; j<k; j++) {
+		    v = pmod->list[j+2];
+		    gretl_matrix_set(Xi, p, j, dset->Z[v][s]);
+                }
+		p++;
+            }
+	    if (p == Ni) {
+		break;
+	    }
+        }
+
+        gretl_matrix_multiply_mod(ei, GRETL_MOD_TRANSPOSE,
+                                  Xi, GRETL_MOD_NONE,
+                                  eXi, GRETL_MOD_NONE);
+        gretl_matrix_multiply_mod(eXi, GRETL_MOD_TRANSPOSE,
+                                  eXi, GRETL_MOD_NONE,
+                                  W, GRETL_MOD_CUMULATE);
+	n_c++;
+    }
+
+    /* form V(b) = (X'X)^{-1} W (X'X)^{-1} */
+    gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
+		       V, GRETL_MOD_NONE);
+
+    if (pmod->ci != IVREG) {
+	double adj = panel_cluster_df_adj(pmod, pan, n_c);
+
+	gretl_matrix_multiply_by_scalar(V, adj);
+    }
+
+    gretl_model_set_vcv_info(pmod, VCV_CLUSTER, dcvar);
+    gretl_model_set_int(pmod, "n_clusters", n_c);
+
+ bailout:
+
+    gretl_matrix_free(ei);
+    gretl_matrix_free(Xi);
+    gretl_matrix_free(eXi);
 
     return err;
 }
@@ -580,7 +698,7 @@ static int
 arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 	      gretl_matrix *XX, gretl_matrix *W, gretl_matrix *V)
 {
-    gretl_vector *e = NULL;
+    gretl_vector *ei = NULL;
     gretl_matrix *Xi = NULL;
     gretl_vector *eXi = NULL;
     int T = pan->Tmax;
@@ -588,11 +706,11 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     int i, j, v, s, t;
     int err = 0;
 
-    e   = gretl_column_vector_alloc(T);
+    ei  = gretl_column_vector_alloc(T);
     Xi  = gretl_matrix_alloc(T, k);
     eXi = gretl_vector_alloc(k);
 
-    if (e == NULL || Xi == NULL || eXi == NULL) {
+    if (ei == NULL || Xi == NULL || eXi == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -605,7 +723,7 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 	    continue;
 	}
 
-	e = gretl_matrix_reuse(e, Ti, 1);
+	ei = gretl_matrix_reuse(ei, Ti, 1);
 	Xi = gretl_matrix_reuse(Xi, Ti, k);
 
 	for (t=0; t<pan->T; t++) {
@@ -613,7 +731,7 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 	    if (na(pmod->uhat[s])) {
 		continue;
 	    }
-	    gretl_vector_set(e, p, pmod->uhat[s]);
+	    gretl_vector_set(ei, p, pmod->uhat[s]);
 	    s = small_index(pan, s);
 	    for (j=0; j<k; j++) {
 		v = pmod->list[j+2];
@@ -630,7 +748,7 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 	    }
 	}
 
-	gretl_matrix_multiply_mod(e, GRETL_MOD_TRANSPOSE,
+	gretl_matrix_multiply_mod(ei, GRETL_MOD_TRANSPOSE,
 				  Xi, GRETL_MOD_NONE,
 				  eXi, GRETL_MOD_NONE);
 	gretl_matrix_multiply_mod(eXi, GRETL_MOD_TRANSPOSE,
@@ -644,7 +762,7 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 
     if (pmod->ci != IVREG) {
 	/* FIXME IVREG? */
-	double adj = panel_cluster_df_adj(pmod, pan, 0);
+	double adj = panel_cluster_df_adj(pmod, pan, pan->effn);
 
 	gretl_matrix_multiply_by_scalar(V, adj);
     }
@@ -653,20 +771,21 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 
  bailout:
 
-    gretl_matrix_free(e);
+    gretl_matrix_free(ei);
     gretl_matrix_free(Xi);
     gretl_matrix_free(eXi);
 
     return err;
 }
 
-#define CDEBUG 0
-
-static int check_cluster_var (DATASET *pset,
+static int check_cluster_var (MODEL *pmod,
+			      panelmod_t *pan,
+			      DATASET *pset,
 			      const DATASET *dset,
 			      int *by_period,
                               int *pcvar,
-			      int *dcvar)
+			      int *dcvar,
+			      gretl_matrix **cvals)
 {
     const char *cname = get_optval_string(PANEL, OPT_C);
     int err = 0;
@@ -682,21 +801,42 @@ static int check_cluster_var (DATASET *pset,
 	fprintf(stderr, "panel, cluster by '%s'\n", cname);
 	fprintf(stderr, " dset index %d\n", did);
 #endif
-	if (did > 0 && pset->n == dset->n) {
-	    err = dataset_add_series(pset, 1);
-	    if (!err) {
-		pid = pset->v - 1;
-		strcpy(pset->varname[pid], cname);
-		memcpy(pset->Z[pid], dset->Z[did], pset->n * sizeof **pset->Z);
-		*pcvar = pid;
-		*dcvar = did;
-	    }
+	if (did < 0) {
+	    err = E_UNKVAR;
 	} else {
-	    fprintf(stderr, " pset n=%d, t=%d, t2=%d; dset n=%d, t=%d, t2=%d\n",
-		    pset->n, pset->t1, pset->t2,
-		    dset->n, dset->t1, dset->t2);
-	    err = E_NOTIMP;
+	    err = dataset_add_series(pset, 1);
 	}
+	if (err) {
+	    return err;
+	}
+	pid = pset->v - 1;
+	strcpy(pset->varname[pid], cname);
+	if (pset->n == dset->n) {
+	    memcpy(pset->Z[pid], dset->Z[did], pset->n * sizeof **pset->Z);
+	} else {
+	    int s, t;
+
+	    for (s=0; s<pmod->nobs; s++) {
+		t = big_index(pan, s);
+		if (!na(pmod->uhat[t])) {
+		    if (na(dset->Z[did][t])) {
+			/* cluster var value missing */
+			err = E_MISSDATA;
+		    } else {
+			pset->Z[pid][s] = dset->Z[did][t];
+		    }
+		}
+	    }
+	    if (!err) {
+		*cvals = gretl_matrix_values(pset->Z[pid], pmod->nobs,
+					     OPT_S, &err);
+#if CDEBUG > 1
+		gretl_matrix_print(*cvals, "cluster var values");
+#endif
+	    }
+	}
+	*pcvar = pid;
+	*dcvar = did;
     }
 
     return err;
@@ -715,6 +855,7 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
     gretl_matrix *W = NULL;
     gretl_matrix *V = NULL;
     gretl_matrix *XX = NULL;
+    gretl_matrix *cvals = NULL;
     int k = pmod->ncoeff;
     int by_period = 0;
     int pcvar = 0;
@@ -728,17 +869,9 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
     }
 
     if (pan->opt & OPT_C) {
-	err = check_cluster_var(pset, dset, &by_period, &pcvar, &dcvar);
+	err = check_cluster_var(pmod, pan, pset, dset, &by_period,
+				&pcvar, &dcvar, &cvals);
 	if (err) {
-	    goto bailout;
-	} else if (by_period) {
-	    ; /* cluster by time period, OK */
-	} else {
-	    err = make_cluster_vcv(pmod, PANEL, pset, XX, pcvar, OPT_NONE);
-	    if (!err) {
-		/* correct the clustering series ID */
-		gretl_model_set_vcv_info(pmod, VCV_CLUSTER, dcvar);
-	    }
 	    goto bailout;
 	}
     }
@@ -753,6 +886,9 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
 
     if (by_period) {
         err = time_cluster_vcv(pmod, pan, pset, XX, W, V);
+    } else if (cvals != NULL) {
+	err = generic_cluster_vcv(pmod, pan, pset, XX, W, V,
+				  cvals, pcvar, dcvar);
     } else if (libset_get_bool(USE_PCSE)) {
 	err = beck_katz_vcv(pmod, pan, pset, XX, W, V);
     } else {
@@ -760,7 +896,7 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
     }
 
 #if CDEBUG
-    fprintf(stderr, "\npanel_robust_vcv (est %d):\n", est);
+    fprintf(stderr, "\npanel_robust_vcv:\n");
     gretl_matrix_print(XX, "X'X^{-1}");
     gretl_matrix_print(W, "W");
     gretl_matrix_print(V, "V");
@@ -2703,7 +2839,7 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
 	    }
 	    fix_panel_hatvars(&femod, pan, (const double **) dset->Z);
 	    if (pan->opt & (OPT_R | OPT_C)) {
-		panel_robust_vcv(&femod, pan, wset, dset);
+		femod.errcode = panel_robust_vcv(&femod, pan, wset, dset);
 	    } else {
 		femod_regular_vcv(&femod);
 	    }
@@ -3382,7 +3518,10 @@ static int random_effects (panelmod_t *pan,
 	fix_panel_hatvars(&remod, pan, (const double **) dset->Z);
 
 	if (pan->opt & OPT_R) {
-	    panel_robust_vcv(&remod, pan, rset, NULL);
+	    err = panel_robust_vcv(&remod, pan, rset, NULL);
+	    if (err) {
+		goto bailout;
+	    }
 	} else {
 	    double sigma = remod.sigma; /* or... ? */
 #if PDEBUG
@@ -3414,6 +3553,8 @@ static int random_effects (panelmod_t *pan,
 	printmodel(&remod, rset, OPT_NONE, prn);
     }
 #endif
+
+ bailout:
 
     if (!err && (pan->opt & OPT_U)) {
 	save_panel_model(&remod, pan, (const double **) dset->Z, rset);
