@@ -799,6 +799,7 @@ static int transcribe_cluster_var (MODEL *pmod,
     int err = 0;
 
     if (pset->n == dset->n) {
+	/* balanced */
 	memcpy(pset->Z[pid], dset->Z[did], pset->n * sizeof **pset->Z);
     } else {
 	int s, t;
