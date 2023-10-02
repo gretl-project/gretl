@@ -2088,6 +2088,8 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 	ci = CORR;
     } else if (p == PLOT_CUSUM) {
 	ci = CUSUM;
+    } else if (p == PLOT_KERNEL) {
+	ci = KDPLOT;
     } else if (p == PLOT_GRIDPLOT) {
 	ci = GRIDPLOT;
     }
