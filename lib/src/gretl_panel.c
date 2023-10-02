@@ -786,7 +786,9 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
    special fixed- or random-effects dataset. This is quite simple with
    a balanced panel, more complex otherwise. Plus, if successful,
    write to @cvals a matrix containing the sorted unique values of the
-   clustering variable.
+   clustering variable. We check for the possibility that the clustering
+   variable has missing values at observations used in estimation and
+   flag an error if so.
 */
 
 static int transcribe_cluster_var (MODEL *pmod,
@@ -796,30 +798,38 @@ static int transcribe_cluster_var (MODEL *pmod,
                                    int pid, int did,
                                    gretl_matrix **cvals)
 {
-    int err = 0;
+    const double *src = dset->Z[did];
+    double *dest = pset->Z[pid];
+    int t, err = 0;
 
     if (pset->n == dset->n) {
         /* balanced */
-        memcpy(pset->Z[pid], dset->Z[did], pset->n * sizeof **pset->Z);
+	for (t=0; t<dset->n; t++) {
+	    if (na(src[t])) {
+		err = E_MISSDATA;
+		break;
+	    }
+	}
+	if (!err) {
+	    memcpy(dest, src, pset->n * sizeof **pset->Z);
+	}
     } else {
-        int s, t;
+        int s;
 
-        for (s=0; s<pmod->nobs; s++) {
+        for (s=0; s<pmod->nobs && !err; s++) {
             t = big_index(pan, s);
             if (!na(pmod->uhat[t])) {
-                if (na(dset->Z[did][t])) {
-                    /* cluster var value missing */
+                if (na(src[t])) {
                     err = E_MISSDATA;
                 } else {
-                    pset->Z[pid][s] = dset->Z[did][t];
+                    dest[s] = src[t];
                 }
             }
         }
     }
 
     if (!err) {
-        *cvals = gretl_matrix_values(pset->Z[pid], pmod->nobs,
-                                     OPT_S, &err);
+        *cvals = gretl_matrix_values(dest, pmod->nobs, OPT_S, &err);
 #if CDEBUG > 1
         gretl_matrix_print(*cvals, "cluster var values");
 #endif
@@ -940,6 +950,7 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
     gretl_matrix_free(W);
     gretl_matrix_free(V);
     gretl_matrix_free(XX);
+    gretl_matrix_free(cvals);
 
     if (err && pmod->vcv != NULL) {
         free(pmod->vcv);
