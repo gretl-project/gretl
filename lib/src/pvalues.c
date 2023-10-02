@@ -1107,7 +1107,7 @@ static double snedecor_pdf (double m, double n, double x)
     return x;
 }
 
-static int chisq_pdf_array (int m, double *x, int n)
+static int chisq_pdf_array (double m, double *x, int n)
 {
     int i, err = 0;
 
@@ -1151,7 +1151,7 @@ static int chisq_pdf_array (int m, double *x, int n)
     return err;
 }
 
-static double chisq_pdf (int m, double x)
+static double chisq_pdf (double m, double x)
 {
     chisq_pdf_array(m, &x, 1);
 
@@ -3376,7 +3376,7 @@ double gretl_get_pdf (int dist, const double *parm, double x)
     } else if (dist == D_STUDENT) {
 	y = student_pdf(parm[0], x);
     } else if (dist == D_CHISQ) {
-	y = chisq_pdf((int) parm[0], x);
+	y = chisq_pdf(parm[0], x);
     } else if (dist == D_SNEDECOR) {
 	y = snedecor_pdf((int) parm[0], (int) parm[1], x);
     } else if (dist == D_GAMMA) {
