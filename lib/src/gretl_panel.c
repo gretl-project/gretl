@@ -446,6 +446,10 @@ double panel_cluster_df_adj (MODEL *pmod,
 {
     int n = pmod->nobs;
 
+#if CDEBUG
+    fprintf(stderr, "panel_cluster_df_adj: nc = %d\n", nc);
+#endif
+
     return (nc / (nc - 1.0)) * (n - 1.0) / (n - pmod->ncoeff);
 }
 
@@ -778,6 +782,51 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     return err;
 }
 
+/* Transcribe an ad hoc clustering series from the main dataset to the
+   special fixed- or random-effects dataset. This is quite simple with
+   a balanced panel, more complex otherwise. Plus, if successful,
+   write to @cvals a matrix containing the sorted unique values of the
+   clustering variable.
+*/
+
+static int transcribe_cluster_var (MODEL *pmod,
+				   panelmod_t *pan,
+				   DATASET *pset,
+				   const DATASET *dset,
+				   int pid, int did,
+				   gretl_matrix **cvals)
+{
+    int err = 0;
+
+    if (pset->n == dset->n) {
+	memcpy(pset->Z[pid], dset->Z[did], pset->n * sizeof **pset->Z);
+    } else {
+	int s, t;
+
+	for (s=0; s<pmod->nobs; s++) {
+	    t = big_index(pan, s);
+	    if (!na(pmod->uhat[t])) {
+		if (na(dset->Z[did][t])) {
+		    /* cluster var value missing */
+		    err = E_MISSDATA;
+		} else {
+		    pset->Z[pid][s] = dset->Z[did][t];
+		}
+	    }
+	}
+    }
+
+    if (!err) {
+	*cvals = gretl_matrix_values(pset->Z[pid], pmod->nobs,
+				     OPT_S, &err);
+#if CDEBUG > 1
+	gretl_matrix_print(*cvals, "cluster var values");
+#endif
+    }
+
+    return err;
+}
+
 static int check_cluster_var (MODEL *pmod,
 			      panelmod_t *pan,
 			      DATASET *pset,
@@ -811,30 +860,8 @@ static int check_cluster_var (MODEL *pmod,
 	}
 	pid = pset->v - 1;
 	strcpy(pset->varname[pid], cname);
-	if (pset->n == dset->n) {
-	    memcpy(pset->Z[pid], dset->Z[did], pset->n * sizeof **pset->Z);
-	} else {
-	    int s, t;
-
-	    for (s=0; s<pmod->nobs; s++) {
-		t = big_index(pan, s);
-		if (!na(pmod->uhat[t])) {
-		    if (na(dset->Z[did][t])) {
-			/* cluster var value missing */
-			err = E_MISSDATA;
-		    } else {
-			pset->Z[pid][s] = dset->Z[did][t];
-		    }
-		}
-	    }
-	    if (!err) {
-		*cvals = gretl_matrix_values(pset->Z[pid], pmod->nobs,
-					     OPT_S, &err);
-#if CDEBUG > 1
-		gretl_matrix_print(*cvals, "cluster var values");
-#endif
-	    }
-	}
+	err = transcribe_cluster_var(pmod, pan, pset, dset,
+				     pid, did, cvals);
 	*pcvar = pid;
 	*dcvar = did;
     }
