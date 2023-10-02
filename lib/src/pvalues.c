@@ -1123,7 +1123,7 @@ static int chisq_pdf_array (int m, double *x, int n)
 	    err = E_NAN;
 	} else {
 	    for (i=0; i<n; i++) {
-		if (!na(x[i]) && x[i] > 0) {
+		if (!na(x[i]) && x[i] >= 0) {
 		    errno = 0;
 		    x3 = pow(x[i], m2 - 1.0);
 		    x4 = exp(-x[i] / 2.0);
