@@ -5828,17 +5828,17 @@
 	<option>
 	  <flag>--fontsize</flag>
 	  <optparm>fs</optparm>
-	  <effect>font size in points</effect>
+	  <effect>font size in points [10]</effect>
 	</option>
 	<option>
 	  <flag>--width</flag>
 	  <optparm>w</optparm>
-	  <effect>width of plot in pixels</effect>
+	  <effect>width of plot in pixels [800]</effect>
 	</option>
 	<option>
 	  <flag>--height</flag>
 	  <optparm>h</optparm>
-	  <effect>width of plot in pixels</effect>
+	  <effect>width of plot in pixels [600]</effect>
 	</option>
 	<option>
 	  <flag>--rows</flag>
@@ -5860,6 +5860,11 @@
 	  <optparm>destination</optparm>
 	  <effect>see below</effect>
 	</option>
+	<option>
+	  <flag>--outbuf</flag>
+	  <optparm>alternative destination</optparm>
+	  <effect>see below</effect>
+	</option>
       </options>
       <examples>
         <example>gridplot myspecs --rows=3 --output=display</example>
@@ -5873,20 +5878,110 @@
 	single required argument, <repl>plotspecs</repl>, takes the
 	form of an array of strings, each specifying a plot. The
 	companion command <cmdref targ="gpbuild"/> offers an easy way
-	of creating such an array, but one can also do so manually
-	(see below for details).
+	of creating such an array.
+      </para>
+      <subhead>Specifying the grid</subhead>
+      <para>
+	The shape of the grid can be set by any one of the three
+	mutually incompatible options <opt>rows</opt>, <opt>cols</opt>
+	and <opt>layout</opt>.  If no such option is given the number
+	of rows is set to the square root of the number of plots (the
+	size of the input array), rounded up to the nearest integer if
+	necessary. Then the number of columns is set to the number of
+	plots divided by the number of rows, again rounded up if
+	necessary. The plots are placed in the grid by row, in their
+	array order.  If the <opt>rows</opt> option is given this
+	takes the place of the automatic setting, but the number of
+	columns is set automatically as described above. If the
+	<opt>cols</opt> option is given instead, the number of rows is
+	set automatically.
       </para>
       <para>
-	MORE TO COME.
+	The <opt>layout</opt> option, which requires a matrix
+	parameter, offers a more flexible alternative. The matrix
+	specifies the grid layout thus: 0 elements call for
+	empty cells in the grid, and integer elements 1 to
+	<math>n</math> refer to the subplots in their array order. So
+	for example,
+      </para>
+      <code>
+	matrix m = {1,0,0; 2,3,0; 4,5,6}
+	gridplot ... --layout=m ...
+      </code>
+      <para>
+	calls for a lower-triangular layout of six plots in a <by
+	r="3" c="3"/> grid. Using this option one can omit some
+	subplots, or even repeat some.
+      </para>
+      <subhead>Output options</subhead>
+      <para>
+	The <opt>output</opt> option can be used to specify
+	<lit>display</lit> (show the plot immediately) or the name of
+	an output file. Alternatively <opt>outbuf</opt> can be used to
+	direct output, in the form of a gnuplot commands buffer, to a
+	named string. In the absence of these options the output is an
+	automatically named gnuplot command file. See <cmdref
+	targ="gnuplot"/> for details.
       </para>
     </description>
   </command>
 
   <command name="gpbuild" section="Graphs" context="cli">
+    <usage>
+      <arguments>
+	<argument>plotspecs</argument>
+      </arguments>
+      <examples>
+        <example>gpbuild MyPlots</example>
+      </examples>
+    </usage>
     <description>
       <para>
-	TO BE WRITTEN
+	This command starts a block in which any commands or function
+	calls which produce plots are treated specially, in order to
+	produce an array of plot-specification strings for use with
+	<cmdref targ="gridplot"/>: the <repl>plotspecs</repl> argument
+	supplies the name for this array. Such a block is terminated by
+	the command <quote><lit>end gpbuild</lit></quote>.
       </para>
+      <subhead>Two restrictions</subhead>
+      <para>
+	Within a <lit>gpbuild</lit> block only plotting commands get
+	special treatment; all other commands are executed
+	normally. There are just two restrictions to note.  First,
+	plotting commands should <emphasis>not</emphasis> include an
+	output specification in this context since that would conflict
+	with the automatic redirection of output to the
+	<repl>plotspecs</repl> array.  Second, plots that invoke
+	gnuplot's <quote><lit>multiplot</lit></quote> directive are
+	not suitable for inclusion in a <lit>gpbuild</lit> block. That
+	is because <lit>gridplot</lit> employs <lit>multiplot</lit>
+	internally, and these constructs cannot be nested.
+      </para>
+      <subhead>Manual alternative</subhead>
+      <para>
+	It is possible to prepare an array of plot specifications for
+	use with <lit>gridplot</lit> without using a
+	<lit>gpbuild</lit> block, as in the following example:
+      </para>
+      <code>
+	open data4-10
+	strings MyPlots = array(3)
+	gnuplot ENROLL CATHOL --outbuf=MyPlots[1]
+	gnuplot ENROLL INCOME --outbuf=MyPlots[2]
+	gnuplot ENROLL COLLEGE --outbuf=MyPlots[3]
+      </code>
+      <para>
+	The above is essentially equivalent to
+      </para>
+      <code>
+	open data4-10
+	gpbuild MyPlots
+	   gnuplot ENROLL CATHOL
+	   gnuplot ENROLL INCOME
+	   gnuplot ENROLL COLLEGE
+	end gpbuild
+      </code>
     </description>
   </command>
 
