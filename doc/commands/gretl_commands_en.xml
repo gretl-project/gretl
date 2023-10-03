@@ -5838,7 +5838,7 @@
 	<option>
 	  <flag>--height</flag>
 	  <optparm>h</optparm>
-	  <effect>width of plot in pixels [600]</effect>
+	  <effect>height of plot in pixels [600]</effect>
 	</option>
 	<option>
 	  <flag>--rows</flag>
