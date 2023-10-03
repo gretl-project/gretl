@@ -10949,6 +10949,11 @@
 	  <effect>robust standard errors; see below</effect>
         </option>
         <option>
+	  <flag>--cluster</flag>
+	  <optparm>cvar</optparm>
+	  <effect>clustered standard errors; see below</effect>
+        </option>
+        <option>
 	  <flag>--time-dummies</flag>
 	  <effect>include time dummy variables</effect>
         </option>
@@ -11019,11 +11024,14 @@
       </para>
       <para context="cli">
 	The default means of calculating robust standard errors in
-	panel-data models is the Arellano HAC estimator, but
-	Beck&ndash;Katz <quote>Panel Corrected Standard Errors</quote>
-	can be selected via the command <lit>set pcse on</lit>. When
-	the robust option is specified the joint <math>F</math> test
-	on the fixed effects is performed using the robust method of
+	panel-data models is the Arellano HAC estimator (clustered by
+	panel unit), but Beck&ndash;Katz <quote>Panel Corrected
+	Standard Errors</quote> can be selected via the command
+	<lit>set pcse on</lit>. Alternatives to these two options are
+	available via the <opt>cluster</opt> option; please see
+	<guideref targ="chap:robust_vcv"/> for details.  When robust
+	standard errors are specified the joint <math>F</math> test on
+	the fixed effects is performed using the robust method of
 	<cite key="welch51">Welch (1951)</cite>.
       </para>
       <para context="gui">
