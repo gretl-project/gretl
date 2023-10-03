@@ -5819,6 +5819,172 @@
     </description>
   </command>
 
+  <command name="gridplot" section="Graphs" context="cli">
+    <usage>
+      <arguments>
+        <argument>plotspecs</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--fontsize</flag>
+	  <optparm>fs</optparm>
+	  <effect>Tamaño da fonte en puntos [10]</effect>
+	</option>
+	<option>
+	  <flag>--width</flag>
+	  <optparm>w</optparm>
+	  <effect>Ancho da gráfica en pixels [800]</effect>
+	</option>
+	<option>
+	  <flag>--height</flag>
+	  <optparm>h</optparm>
+	  <effect>Alto da gráfica en pixels [600]</effect>
+	</option>
+	<option>
+	  <flag>--rows</flag>
+	  <optparm>r</optparm>
+	  <effect>Mira abaixo</effect>
+	</option>
+	<option>
+	  <flag>--cols</flag>
+	  <optparm>c</optparm>
+	  <effect>Mira abaixo</effect>
+	</option>
+	<option>
+	  <flag>--layout</flag>
+	  <optparm>lmat</optparm>
+	  <effect>Mira abaixo</effect>
+	</option>
+	<option>
+	  <flag>--output</flag>
+	  <optparm>destino</optparm>
+	  <effect>Mira abaixo</effect>
+	</option>
+	<option>
+	  <flag>--outbuf</flag>
+	  <optparm>destino alternativo</optparm>
+	  <effect>Mira abaixo</effect>
+	</option>
+      </options>
+      <examples>
+        <example>gridplot myspecs --rows=3 --output=display</example>
+        <example>gridplot myspecs --layout=lmat --output=composto.pdf</example>
+      </examples>
+    </usage>
+    <description>
+      <para>
+	Esta instrución colle dúas ou máis especificacións individuais para
+	gráficas e as ordena nunha grella para xerar unha gráfica combinada.
+	O único argumento requirido, <repl>plotspecs</repl>, ten o formato dun
+	arranxo de cadeas de texto, cada unha especificando unha gráfica.
+	A súa instrución asociada, <cmdref targ="gpbuild"/>, ofrece un xeito
+	doado de crear ese tipo de arranxo.
+      </para>
+      <subhead>Especificando a grella</subhead>
+      <para>
+	A forma da grella pódese establecer mediante calquera das tres opcións
+	(que son incompatibles entre elas) <opt>rows</opt>, <opt>cols</opt> e
+	<opt>layout</opt>. Cando non se indica ningunha desas opcións, o número
+	de filas establécese como a raíz cadrada do número de gráficas (o tamaño
+	do arranxo de entrada), arredondado cara ao enteiro superior máis próximo,
+	de ser necesario. Entón, o número de columnas establécese como o número
+	de gráficas dividido polo número de filas, novamente arredondado cara
+	arriba, de ser necesario. As gráficas colócanse na grella por filas, na mesma
+	orde que no arranxo. Cando se indica a opción <opt>rows</opt>, ese valor
+	ocupa a posición de selección automática, pero o número de columnas
+	establécese automaticamente como se describiu antes. En troques, cando
+	se indica a opción <opt>cols</opt>, o número de filas establécese de xeito
+	automático.
+      </para>
+      <para>
+	A opción <opt>layout</opt>, que necesita unha matriz como parámetro,
+	ofrece unha alternativa máis flexible. Esa matriz especifica a
+	configuración da grella deste xeito: os elementos 0 piden celas
+	baleiras na grella, e os elementos enteiros de 1 a <math>n</math>
+	refírense ás subgráficas na orde que teñan no arranxo. Así
+	por exemplo,
+      </para>
+      <code>
+	matrix m = {1,0,0; 2,3,0; 4,5,6}
+	gridplot ... --layout=m ...
+      </code>
+      <para>
+	refírese a unha configuración triangular inferior de seis gráficas
+	nunha grella <by r="3" c="3"/>. Utilizando esta opción pódense omitir
+	algunhas subgráficas, ou mesmo repetir algunha.
+      </para>
+      <subhead>Opcións de saída</subhead>
+      <para>
+	A opción <opt>output</opt> pode utilizarse para indicar <lit>display</lit>
+	(amosar a gráfica inmediatamente) ou o nome dun ficheiro de saída.
+	Como alternativa, pódese usar a opción <opt>outbuf</opt> para facer
+	unha saída directa (co formato dun buffer de instrucións de GNUPLOT)
+	á cadea de texto mencionada. Na ausencia destas opcións, a saída é un
+	ficheiro de instrucións de GNUPLOT nomeado de xeito automático.
+	Consulta <cmdref targ="gnuplot"/> para obter máis detalles.
+      </para>
+    </description>
+  </command>
+
+  <command name="gpbuild" section="Graphs" context="cli">
+    <usage>
+      <arguments>
+	<argument>plotspecs</argument>
+      </arguments>
+      <examples>
+        <example>gpbuild MyPlots</example>
+      </examples>
+    </usage>
+    <description>
+      <para>
+	Esta instrución empeza un bloque no que calquera instrución ou chamada
+	a unha función que produce gráficas se trata de xeito especial, co
+	obxecto de producir un arranxo de cadeas de texto de especificación de
+	gráficas, para utilizalas coa instrución 	<cmdref targ="gridplot"/>: o
+	argumento <repl>plotspecs</repl> proporciona o nome para ese arranxo.
+	O bloque remátase coa instrución <quote><lit>end gpbuild</lit></quote>.
+      </para>
+      <subhead>Dúas restricións</subhead>
+      <para>
+	Dentro dun bloque <lit>gpbuild</lit> só teñen un tratamento especial as
+	instrucións para representación gráfica; tódalas outras instrucións se
+	executan normalmente. Unicamente hai dúas restricións que advertir.
+	Primeiro: as instrucións de representación <emphasis>non</emphasis> deben
+	incluír unha especificación de saída neste contexto, posto que iso estaría
+	en conflito co cambio de dirección automático da saída, cara ao arranxo
+	de <repl>plotspecs</repl>. Segundo: as gráficas que invoquen a directiva
+	<quote><lit>multiplot</lit></quote> de GNUPLOT non son axeitadas para
+	incluírse nun bloque <lit>gpbuild</lit>. Isto é porque <lit>gridplot</lit>
+	utiliza internamente <lit>multiplot</lit>, e esas construcións non se
+	poden aniñar.
+      </para>
+      <subhead>Alternativa manual</subhead>
+      <para>
+	Pódese preparar un arranxo de especificacións de gráficas para utilizar
+	con <lit>gridplot</lit> sen usar un bloque <lit>gpbuild</lit>, como no
+	seguinte exemplo:
+      </para>
+      <code>
+	open data4-10
+	strings MyPlots = array(3)
+	gnuplot ENROLL CATHOL --outbuf=MyPlots[1]
+	gnuplot ENROLL INCOME --outbuf=MyPlots[2]
+	gnuplot ENROLL COLLEGE --outbuf=MyPlots[3]
+      </code>
+      <para>
+	En esencia, o anterior é equivalente a
+      </para>
+      <code>
+	open data4-10
+	gpbuild MyPlots
+	   gnuplot ENROLL CATHOL
+	   gnuplot ENROLL INCOME
+	   gnuplot ENROLL COLLEGE
+	end gpbuild
+      </code>
+    </description>
+  </command>
+
   <command name="3-D" section="Graphs" context="gui"
     label="Gráficas en 3 dimensións">
 
@@ -15023,15 +15189,6 @@
       <menu-path>/Ferramentas/Probas non paramétricas/Correlación</menu-path>
     </gui-access>
 
-  </command>
-
-  <command name="sprintf" section="Printing" context="cli">
-    <description>
-      <para>
-	Instrución obsoleta: utiliza no seu lugar a función co mesmo nome,
-	<cmdref targ="sprintf"/>.
-      </para>
-    </description>
   </command>
 
   <command name="square" section="Transformations"

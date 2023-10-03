@@ -1736,6 +1736,53 @@
       </description>
     </function>
 
+    <function name="asort" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="array">a</fnarg>
+	<fnarg type="string">nomefun</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Realiza unha reordenación inmediata dos elementos do argumento
+	  <argname>a</argname>, usando unha función de comparación especificada
+	  polo solicitante baixo o control da rutina de ordenación rápida.
+	</para>
+	<para>
+	  O argumento <argname>a</argname> pode ser de calquera dos tipos que se
+	  admiten para un arranxo de GRETL; en concreto <lit>strings</lit>
+	  (cadeas), <lit>matrices</lit>, <lit>bundles</lit> (paquetes),
+	  <lit>lists</lit> (listas) ou <lit>arrays</lit> (arranxos). O argumento
+	  <argname>nomefun</argname> debe ser o nome dunha función que tome
+	  dous argumentos <lit>const</lit>, cuxo tipo coincida co tipo dos
+	  elementos de <argname>a</argname>. Esta función debe devolver un
+	  valor enteiro co seguinte padrón de comportamento: 0 cando os dous
+	  argumentos teñan a mesma orde de clasificación, negativo cando o primeiro
+	  argumento clasifique antes que o segundo, ou positivo cando o segundo
+	  clasifique antes que o primeiro. (Os valores exactos non importan.)
+	</para>
+	<para>
+	  Por exemplo, supón que queres ordenar un arranxo de paquetes, nos que
+	  cada un deles contén un escalar denominado <lit>crit</lit>, en función
+	  do valor crecente de <lit>crit</lit>. Entón, a seguinte función sería
+	  axeitada para usala con <lit>asort</lit>:
+	</para>
+	<code>
+	  function scalar my_bsort (const bundle b1, const bundle b2)
+	     return b1.crit - b2.crit
+	  end function
+	</code>
+	<para>
+	  Se desexas preservar o arranxo sen ordenar, fai unha copia del antes
+	  de usalo con <lit>asort</lit>. O valor que devolve esta función cando
+	  ten éxito, é un 0.
+	</para>
+	<para>
+	  Consulta tamén a función <fncref targ="sort"/> para unha ordenación
+	  sinxela dun arranxo de cadeas de texto.
+	</para>
+      </description>
+    </function>
+
     <function name="assert" section="programming" output="scalar">
       <fnargs>
 	<fnarg type="scalar">expr</fnarg>
@@ -2161,6 +2208,40 @@
 	</para>
       </description>
     </function>
+
+    <function name="bin2dec" section="matrix" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">B</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Dada unha matriz <argname>B</argname> que conteña unicamente ceros
+	  e uns, esta función interpreta cada fila da matriz como se fose unha
+	  representación binaria dun enteiro de 32 bits sen signo; e devolve
+	  un vector columna coas representacións decimais deses enteiros. A
+	  matriz do argumento non pode ter máis de 32 columnas; doutro xeito,
+	  vaise amosar un fallo.
+	</para>
+	<para>
+	  Cae na conta de que se considera que o derradeiro bit significativo
+	  está na primeira columna. Así, a columna 1 vaise corresponder con
+	  <math>2</math><sup>0</sup>, a columna 2 con <math>2</math><sup>1</sup>,
+	  e así no sucesivo. Por exemplo, a
+	  expresión
+	</para>
+	<code>
+	  scalar x = bin2dec({1,0,1})
+	</code>
+	<para>
+	  garda o valor 5 en <math>x</math>.
+	</para>
+	<para>
+	  A función <fncref targ="dec2bin"/> realiza a transformación
+	  inversa.
+	</para>
+      </description>
+    </function>
+
 
     <function name="bincoeff" section="math" output="asinput">
       <fnargs>
@@ -3043,10 +3124,11 @@
       <description>
 	<para>
 	  Devolve o resultado de premultiplicar a matriz <argname>A</argname>
-	  pola matriz <math>K</math><sub>m,n</sub> de conmutación (isto é máis
-	  eficiente que a propia multiplicación explícita). Asúmese que cada
-	  columna de <argname>A</argname> procede dunha operación de
-	  vectorización sobre unha matriz <math>m x n</math>. En particular,
+	  pola matriz <math>K</math><sub>m,n</sub> de conmutación (utilizando
+	  un algoritmo que é máis eficiente que a propia multiplicación
+	  explícita). Asúmese que cada columna de <argname>A</argname>
+	  procede dunha operación de vectorización sobre unha matriz
+	  <math>m x n</math>. En particular,
 	</para>
 	<code>
 	  commute(vec(B), rows(B), cols(B))
@@ -3642,6 +3724,41 @@
 	  Para obter os días de época no formato máis familiar das datas,
 	  consulta <fncref targ="epochday"/>. Relacionado con isto, consulta
 	  <fncref targ="smplspan"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="dec2bin" section="matrix" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta función devolve a representación binaria dos números contidos
+	  no vector columna <argname>x</argname>, gardando cada díxito
+	  binario nunha columna da matriz que se devolve, e que sempre
+	  ten 32 columnas. Cada elemento de <argname>x</argname> debe ser
+	  un enteiro entre 0 e <math>2</math><sup>32</sup><math>-1</math>.
+	  Noutro caso, vaise amosar un
+	  fallo.
+	</para>
+	<para>
+	  Cae na conta de que se considera que o derradeiro bit significativo
+	  está na primeira columna. Así, a columna 1 vaise corresponder con
+	  <math>2</math><sup>0</sup>, a columna 2 con <math>2</math><sup>1</sup>,
+	  e así no sucesivo. Por exemplo, a
+	  expresión
+	</para>
+	<code>
+	  matrix B = dec2bin(5)
+	</code>
+	<para>
+	  produce un vector fila cheo de ceros, agás nas posicións 1
+	  e 3.
+	</para>
+	<para>
+	  A función <fncref targ="bin2dec"/> realiza a transformación
+	  inversa.
 	</para>
       </description>
     </function>
@@ -4334,15 +4451,17 @@
 
     <function name="easterday" section="calendar" output="asinput">
       <fnargs>
-	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="anyfloat">y</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Poñendo un ano como argumento <argname>x</argname>, devolve un
+	  Poñendo un ano como argumento <argname>y</argname>, devolve un
 	  resultado do mesmo tipo ca este, coa data do domingo de Pascua dese
 	  ano no calendario gregoriano, co formato <math>mes + día/100</math>.
-	  Con esta convención, observa que o 10 de abril é 4,1; de aí que 4,2
-	  represente o día 20 de abril e non o día 2 de abril (que é 4,02). Exemplo:
+	  Por exemplo, en 2014 a data do domingo de Pascua foi o 20 de abril,
+	  o que se representa con esta convención como 4,2. (Cae na conta de que
+	  o día 2 de abril devólvese como 4,02.) O seguinte código amosa como
+	  poden extraerse o día e o mes do valor que devolve esta función:
 	</para>
 	<code>
 	  scalar e = easterday(2014)
@@ -11504,19 +11623,23 @@
       </description>
     </function>
 
-    <function name="regsub" section="strings" output="string">
+    <function name="regsub" section="strings" output="asinput">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="string">atopada</fnarg>
 	<fnarg type="string">substit</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve unha cadea de texto cunha copia de <argname>s</argname> na
-	  que todos os casos nos que ocorre o padrón <argname>atopada</argname>,
-	  substitúense por <argname>substit</argname>. Os dous argumentos
-	  <argname>atopada</argname> e <argname>substit</argname> interprétanse
-	  como expresións regulares de estilo Perl.
+	  Se <argname>s</argname> é unha cadea única, devolve unha cadea de
+	  texto cunha copia de <argname>s</argname> na que todos os casos nos
+	  que ocorre o padrón <argname>atopada</argname>, substitúense por
+	  <argname>substit</argname>. Os dous argumentos <argname>atopada</argname>
+	  e <argname>substit</argname> interprétanse como expresións regulares
+	  de estilo Perl. Se <argname>s</argname> é un arranxo de cadeas
+	  de texto ou unha serie que contén cadeas de valores, esta operación
+	  realízase con cada unha das cadeas do arranxo ou da
+	  serie.
 	</para>
 	<para>
 	  Consulta tamén a función <fncref targ="strsub"/> para a substitución
@@ -12955,18 +13078,22 @@
       </description>
     </function>
 
-    <function name="strsub" section="strings" output="string">
+    <function name="strsub" section="strings" output="asinput">
       <fnargs>
-	<fnarg type="string-or-strings">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="string">atopada</fnarg>
 	<fnarg type="string">substit</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve unha cadea de texto cunha copia de <argname>s</argname> na que
-	  se substituíu toda a cadea <argname>atopada</argname> por
-	  <argname>substit</argname>. Consulta tamén <fncref targ="regsub"/> para
-	  outras substitucións máis complexas mediante expresións regulares.
+	  Se <argname>s</argname> é unha cadea única, devolve unha cadea
+	  de texto cunha copia de <argname>s</argname> na que se substituíu
+	  toda a cadea <argname>atopada</argname> por <argname>substit</argname>.
+	  Se <argname>s</argname> é un arranxo de cadeas de texto ou unha
+	  serie que contén cadeas de valores, esta operación realízase con
+	  cada unha das cadeas do arranxo ou da serie. Consulta tamén
+	  <fncref targ="regsub"/> para outras substitucións máis complexas
+	  mediante expresións regulares.
 	</para>
   <para>
           Exemplo:
@@ -13037,19 +13164,22 @@
       </description>
     </function>
 
-    <function name="substr" section="strings" output="string">
+    <function name="substr" section="strings" output="asinput">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="int">inicio</fnarg>
 	<fnarg type="int">fin</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve a subcadea do argumento <argname>s</argname>, comezando no
-	  carácter indicado polo enteiro positivo de <argname>inicio</argname>,
-	  e rematando no indicado polo de <argname>fin</argname>, ambos
-	  incluídos; ou desde <argname>inicio</argname> ata o remate de
-	  <argname>s</argname> se <argname>fin</argname> é igual a &minus;1.
+	  Se <argname>s</argname> é unha cadea única, devolve a subcadea do
+	  argumento <argname>s</argname>, comezando no carácter indicado polo
+	  enteiro positivo de <argname>inicio</argname>, e rematando no indicado
+	  polo de <argname>fin</argname>, ambos incluídos; ou desde
+	  <argname>inicio</argname> ata o remate de <argname>s</argname> se
+	  <argname>fin</argname> é igual a &minus;1. Se o argumento é un arranxo
+	  de cadeas de texto ou unha serie que contén cadeas de valores, esta
+	  operación realízase con cada unha das cadeas do arranxo ou da serie.
 	</para>
   <para>
           Por exemplo, o código de abaixo
@@ -13388,49 +13518,49 @@ d =  8,0000000
       </description>
     </function>
 
-    <function name="tolower" section="strings" output="string">
+    <function name="tolower" section="strings" output="asinput">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve unha cadea de texto que é unha copia de <argname>s</argname>,
-	  na que todas as letras en maiúsculas convertéronse en minúsculas.
+	  Se <argname>s</argname> é unha cadea única, devolve unha copia de
+	  <argname>s</argname>, na que todas as letras en maiúsculas convertéronse
+	  en minúsculas. Se <argname>s</argname> é un arranxo de cadeas de
+	  texto ou unha serie que contén cadeas de valores, esta operación
+	  realízase con cada unha das cadeas do arranxo ou da serie.
 	</para>
-    <para>
-        Exemplos:
-    </para>
-    <code>
-        string s1 = "Hola, GRETL!"
-        string s2 = tolower(s1)
-        print s2
-
-        string s3 = tolower("Hola, GRETL!")
-        print s3
-    </code>
+	<para>
+          Exemplo:
+	</para>
+	<code>
+          string s1 = "Hola, GRETL!"
+          string s2 = tolower(s1)
+          print s2
+	</code>
       </description>
     </function>
 
-    <function name="toupper" section="strings" output="string">
+    <function name="toupper" section="strings" output="asinput">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve unha cadea de texto que é unha copia de <argname>s</argname>,
-	  na que todas as letras en minúsculas convertéronse en maiúsculas.
+	  Se <argname>s</argname> é unha cadea única, devolve unha copia de
+	  <argname>s</argname>, na que todas as letras en minúsculas convertéronse
+	  en maiúsculas. Se <argname>s</argname> é un arranxo de cadeas de
+	  texto ou unha serie que contén cadeas de valores, esta operación
+	  realízase con cada unha das cadeas do arranxo ou da serie.
 	</para>
-    <para>
-        Exemplos:
-    </para>
-    <code>
-        string s1 = "Hola, GRETL!"
-        string s2 = toupper(s1)
-        print s2
-
-        string s3 = toupper("Hola, GRETL!")
-        print s3
-    </code>
+	<para>
+          Exemplo:
+	</para>
+	<code>
+          string s1 = "Hola, GRETL!"
+          string s2 = toupper(s1)
+          print s2
+	</code>
       </description>
     </function>
 

@@ -33,7 +33,7 @@
  <gentext key="matrix-or-bundle" text="matriz ou feixe"/>
  <gentext key="asinput"       text="mesmo tipo que o introducido"/>
  <gentext key="bundle"        text="feixe"/>
- <gentext key="array"         text="array"/>
+ <gentext key="array"         text="arranxo"/>
  <gentext key="scalar"        text="escalar"/>
  <gentext key="pscalar"       text="escalar entre 0 e 1"/>
  <gentext key="int"           text="enteiro"/>
