@@ -645,13 +645,14 @@ panel data require attention.
   units.  This is relevant when estimation is by pooled OLS.
 \end{itemize}
 
-Gretl currently offers two robust covariance matrix estimators
-specifically for panel data.  These are available for models estimated
-via fixed effects, random effects, pooled OLS, and pooled two-stage
-least squares.  The default robust estimator is that suggested by
-\cite{arellano03}, which is HAC provided the panel is of the ``large
-$n$, small $T$'' variety (that is, many units are observed in
-relatively few periods).  The Arellano estimator is
+Gretl currently offers two panel-specific covariance matrix estimators
+in response to the \option{robust} option. These are available for
+models estimated via fixed effects, random effects, pooled OLS, and
+pooled two-stage least squares.  The default robust estimator is that
+suggested by \cite{arellano03}, which is HAC provided the panel is of
+the ``large $n$, small $T$'' variety (that is, many units are observed
+in relatively few periods).  The Arellano estimator involves
+clustering by the cross-sectional unit:
 \[
 \hat{\Sigma}_{\rm A} = 
 \left(X^{\prime}X\right)^{-1}
@@ -662,15 +663,13 @@ relatively few periods).  The Arellano estimator is
 where $X$ is the matrix of regressors (with the group means subtracted
 in the case of fixed effects, or quasi-demeaned in the case of random
 effects) $\hat{u}_i$ denotes the vector of residuals for unit $i$, and
-$n$ is the number of cross-sectional units.\footnote{This variance
-  estimator is also known as the ``clustered (over entities)''
-  estimator.}  \cite{cameron-trivedi05} make a strong case for using
-this estimator; they note that the ordinary White HCCME can produce
-misleadingly small standard errors in the panel context because it
-fails to take autocorrelation into account.\footnote{See also
-  \cite{cameron-miller15} for a discussion of the Arellano-type
-  estimator in the context of the random effects model.}
-In addition \cite{stock-watson08} show that the White HCCME
+$n$ is the number of such units.  \cite{cameron-trivedi05} make a
+strong case for using this estimator; they note that the ordinary
+White HCCME can produce misleadingly small standard errors in the
+panel context because it fails to take autocorrelation into
+account.\footnote{See also \cite{cameron-miller15} for a discussion of
+  the Arellano-type estimator in the context of the random effects
+  model.}  In addition \cite{stock-watson08} show that the White HCCME
 is inconsistent in the fixed-effects panel context for fixed $T > 2$.
 
 In cases where autocorrelation is not an issue the estimator
@@ -703,10 +702,10 @@ The Arellano default can be re-established via
 set pcse off
 \end{code}
 %
-(Note that regardless of the \texttt{pcse} setting, the robust
+Note that regardless of the \texttt{pcse} setting, the robust
 estimator is not used unless the \option{robust} flag is given, or the
-``Robust'' box is checked in the GUI program.)
-
+``Robust'' box is checked in the GUI program. For some further remarks
+on the panel case, see the final paragraph of this chapter.
 
 \section{The cluster-robust estimator}
 \label{sec:vcv-cluster}
@@ -779,7 +778,29 @@ defined as sets of observations having a common value for the
 clustering variable. It is generally expected that the number of
 clusters is substantially less than the total number of observations.
 
-
+In the case of panel data, the \option{cluster} option can be used to
+impose clustering by time period, or by a selected cross-sectional
+characteristic. Recall from the discussion above that the default
+action of the \option{robust} option is to cluster by panel unit, so
+if that is what you want the \option{cluster} option is not required.
+To invoke clustering by period the recommended form is
+\verb|--cluster=period|, where \texttt{period} is taken as a keyword
+rather than the name of a series.\footnote{Letting gretl identify the
+  periods is more efficient that specifying a series to that effect.}
+Another plausible case for explicit use of clustering arises if the
+dataset contains a series that identifies a set of groups into which
+the panel units fall---for example, the panel units are individuals
+but you know which individuals are members of which household, or the
+panel units are counties but you know in which state each county is
+located. Then you may wish to cluster at the group level, as in
+\begin{code}
+panel ... --cluster=household
+# OR
+panel ... --cluster=state
+\end{code}
+In these cases, of course, the parameter to \option{cluster} must be
+the name of a series that does the job, providing a unique identifier
+for each of the groups.
 
 %%% Local Variables: 
 %%% mode: latex
