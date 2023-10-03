@@ -1,4 +1,8 @@
 version 2023c, in progress
+- New commands "gridplot" and "gpbuild" for constructing
+  composite plots
+- "panel" command: support the --cluster option to produce
+  a greater variety of robust standard errors
 - "tsls" command: if the --robust option is given, compute a
   robust variant of the Hausman test
 - String-valued series: support returning such series from a
@@ -30,6 +34,7 @@ version 2023c, in progress
   listing
 - Fix bug: markdown conversion not always working properly
 - Fix bug: "kdplot" not respecting the --output option
+- GUI: Add a color selection dialog under the Tools menu
 - GUI: use "Apply" and "OK" buttons more consistently
 - GUI: add a menu item to install a local function package,
   under the "/File/Function packages" menu
