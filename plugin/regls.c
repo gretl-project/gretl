@@ -3365,11 +3365,12 @@ gretl_matrix *gretl_glasso (const gretl_matrix *S,
         return NULL;
     }
 
+    /* FIXME defaults and error checking */
     rho = gretl_bundle_get_scalar(b, "rho", NULL);
     tol = gretl_bundle_get_scalar(b, "toler", NULL);
     maxit = gretl_bundle_get_int(b, "maxit", NULL);
 
-    /* this will be the return value */
+    /* this will become the return value */
     W = gretl_matrix_copy(S);
     if (W == NULL) {
         *err = E_ALLOC;
