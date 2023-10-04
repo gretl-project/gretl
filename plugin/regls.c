@@ -260,7 +260,7 @@ static regls_info *regls_info_new (gretl_matrix *X,
 	if (!*err && ri->xvalid) {
 	    *err = get_xvalidation_details(ri);
 	} else if (!*err) {
-	    ri->nf = ri->randfolds = ri->use_1se;
+	    ri->nf = ri->randfolds = ri->use_1se = 0;
 	    ri->crit = gretl_zero_matrix_new(ri->nlam, 1);
 	    ri->R2 = gretl_zero_matrix_new(ri->nlam, 1);
 	    ri->BIC = gretl_zero_matrix_new(ri->nlam, 1);
@@ -339,10 +339,13 @@ static int regls_set_Xty (regls_info *ri)
 {
     int err = 0;
 
-    ri->Xty = gretl_matrix_alloc(ri->X->cols, 1);
     if (ri->Xty == NULL) {
-	err = E_ALLOC;
-    } else {
+	ri->Xty = gretl_matrix_alloc(ri->X->cols, 1);
+	if (ri->Xty == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+    if (!err) {
 	gretl_matrix_multiply_mod(ri->X, GRETL_MOD_TRANSPOSE,
 				  ri->y, GRETL_MOD_NONE,
 				  ri->Xty, GRETL_MOD_NONE);
