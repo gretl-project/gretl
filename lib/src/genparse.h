@@ -400,6 +400,7 @@ enum {
     F_PRODR,
     F_MEANC,
     F_MEANR,
+    F_GLASSO,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,
     F_WVAR,

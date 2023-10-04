@@ -3103,7 +3103,7 @@ static int mpi_parent_action (regls_info *ri)
 
 #endif /* HAVE_MPI */
 
-/* apparatus to support glasso */
+/* apparatus to support glasso ("graphical lasso") */
 
 static int any_missing (const gretl_matrix *X)
 {
@@ -3342,13 +3342,15 @@ static int glasso_converged (const gretl_matrix *W0,
     return 1;
 }
 
-gretl_matrix *gretl_glasso (const gretl_matrix *S, double rho,
-                            int algo, double tol, int maxit,
+gretl_matrix *gretl_glasso (const gretl_matrix *S,
+                            gretl_bundle *b,
                             PRN *prn, int *err)
 {
     glasso_info *gi = NULL;
     gretl_matrix *W = NULL;
     gretl_matrix *dsqrt;
+    double rho, tol;
+    int maxit;
     double wij;
     int p = S->rows;
     int n = p-1;
@@ -3362,6 +3364,10 @@ gretl_matrix *gretl_glasso (const gretl_matrix *S, double rho,
     if (*err) {
         return NULL;
     }
+
+    rho = gretl_bundle_get_scalar(b, "rho", NULL);
+    tol = gretl_bundle_get_scalar(b, "toler", NULL);
+    maxit = gretl_bundle_get_int(b, "maxit", NULL);
 
     /* this will be the return value */
     W = gretl_matrix_copy(S);
