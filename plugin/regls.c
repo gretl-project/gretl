@@ -3290,13 +3290,13 @@ static void glasso_info_free (glasso_info *gi)
     }
 }
 
-static int ccd_glasso (glasso_info *gi)
+static int ccd_glasso (glasso_info *gi, double tol)
 {
     int maxit = CCD_MAX_ITER;
     int nlp = 0, lmu = 0;
     int err;
 
-    ccd_toler = CCD_TOLER_DEFAULT; /* FIXME */
+    ccd_toler = tol;
     ccd_scale(gi->X, gi->y->val, gi->Xty->val, gi->xv->val);
     gretl_matrix_zero(gi->b);
 
@@ -3308,13 +3308,6 @@ static int ccd_glasso (glasso_info *gi)
 			ccd_toler, maxit, gi->xv->val, &lmu, gi->b, gi->ia,
 			gi->nnz, NULL, &nlp);
 
-#if 0 /* FIXME? */
-    if (!err) {
-	ccd_get_crit(ci.B, ci.lam, ri);
-	regls_set_crit_data(ri);
-    }
-#endif
-
     return err;
 }
 
@@ -3324,7 +3317,7 @@ static int glasso_converged (const gretl_matrix *W0,
 {
     const double *x = W0->val;
     const double *y = W1->val;
-    double csum;
+    double csum = 0;
     int i, j;
 
     for (j=0; j<W0->cols; j++) {
@@ -3339,7 +3332,58 @@ static int glasso_converged (const gretl_matrix *W0,
 	y += W0->rows;
     }
 
+#if 0
+    fprintf(stderr, "glasso_converged: tol %g, csum %g\n", tol, csum);
+#endif
+
     return 1;
+}
+
+/* The following function may be redundant if we're in fact
+   getting options values that have been vetted in advance
+   in greaphlasso.gfn. The @tol and @maxit defaults below
+   are as in the glasso R package.
+*/
+
+static int handle_glasso_options (gretl_bundle *b,
+				  double *prho,
+				  double *ptol,
+				  int *pmaxit)
+{
+    double rho, tol = 1.0e-4;
+    int maxit = 1.0e4;
+    int err = 0;
+
+    if (gretl_bundle_has_key(b, "rho")) {
+	rho = gretl_bundle_get_scalar(b, "rho", &err);
+	if (!err && rho < 0) {
+	    err = E_INVARG;
+	}
+    } else {
+	err = E_ARGS;
+    }
+
+    if (!err && gretl_bundle_has_key(b, "tol")) {
+	tol = gretl_bundle_get_scalar(b, "tol", &err);
+	if (!err && tol <= 0) {
+	    err = E_INVARG;
+	}
+    }
+
+    if (!err && gretl_bundle_has_key(b, "maxit")) {
+	maxit = gretl_bundle_get_int(b, "maxit", &err);
+	if (!err && maxit <= 0) {
+	    err = E_INVARG;
+	}
+    }
+
+    if (!err) {
+	*prho = rho;
+	*ptol = tol;
+	*pmaxit = maxit;
+    }
+
+    return err;
 }
 
 gretl_matrix *gretl_glasso (const gretl_matrix *S,
@@ -3360,15 +3404,12 @@ gretl_matrix *gretl_glasso (const gretl_matrix *S,
         *err = E_NONCONF;
     } else if (any_missing(S)) {
         *err = E_MISSDATA;
+    } else {
+	*err = handle_glasso_options(b, &rho, &tol, &maxit);
     }
     if (*err) {
         return NULL;
     }
-
-    /* FIXME defaults and error checking */
-    rho = gretl_bundle_get_scalar(b, "rho", NULL);
-    tol = gretl_bundle_get_scalar(b, "toler", NULL);
-    maxit = gretl_bundle_get_int(b, "maxit", NULL);
 
     /* this will become the return value */
     W = gretl_matrix_copy(S);
@@ -3400,7 +3441,7 @@ gretl_matrix *gretl_glasso (const gretl_matrix *S,
             gretl_square_matrix_transpose(gi->Ev);
             ev_dotmul1(gi->X, dsqrt, gi->Ev, gi->Tmp1);
             ev_dotmul2(gi->y, dsqrt, gi->Ev, gi->Sj, gi->Tmp1, gi->Tmp2);
-            *err = ccd_glasso(gi);
+            *err = ccd_glasso(gi, tol);
             if (!*err) {
                 gretl_matrix_multiply(gi->Wj, gi->b, gi->n1);
                 Wj_revise(W, j, gi->n1);
@@ -3420,6 +3461,8 @@ gretl_matrix *gretl_glasso (const gretl_matrix *S,
     if (*err) {
         gretl_matrix_free(W);
         W = NULL;
+    } else {
+	pprintf(prn, "glasso iterations: %d\n", i + 1);
     }
 
     return W;

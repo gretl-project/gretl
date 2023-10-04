@@ -18261,7 +18261,7 @@ static NODE *eval (NODE *t, parser *p)
             node_type_error(t->t, 1, MAT, l, p);
         }
         break;
-    case F_GLASSO:
+    case HF_GLASSO:
 	if (l->t == MAT && r->t == BUNDLE) {
 	    ret = glasso_node(l, r, p);
 	} else {

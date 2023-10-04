@@ -332,7 +332,6 @@ struct str_table funcs[] = {
     { F_PRODR,    "prodr" },
     { F_MEANC,    "meanc" },
     { F_MEANR,    "meanr" },
-    { F_GLASSO,   "glasso" },
     { F_SDC,      "sdc" },
     { F_MINC,     "minc" },
     { F_MAXC,     "maxc" },
@@ -631,6 +630,7 @@ struct str_table hidden_funcs[] = {
     { HF_REGLS,    "_regls" },
     { HF_FELOGITR, "_felogit_rec" },
     { HF_FDEPTH,   "_fdepth" },
+    { HF_GLASSO,   "_glasso" },
     { 0,           NULL }
 };
 
