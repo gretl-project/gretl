@@ -19,6 +19,7 @@ version 2023c, in progress
   which were first defined in version 2022b
 - kdensity() function: clarify its documentation
 - Input of numeric constants: support hexadecimal notation
+- $sysinfo bundle: add CPU information
 - Fix bug dating from 2022c: broken handling of the syntax
   listname.series when used in a function that is called from
   within a loop
