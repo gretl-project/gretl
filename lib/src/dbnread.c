@@ -19,7 +19,7 @@ static gretl_bundle *get_dbn_series_bundle (const char *datacode,
 				      (void *) datacode);
 	if (!*err) {
 	    *err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, NULL,
-				       &b, NULL, NULL);
+				       &b, NULL);
 	}
 	if (b != NULL) {
 	    int dberr = gretl_bundle_get_int(b, "error", NULL);
@@ -136,7 +136,7 @@ static int get_one_dbnomics_series (const char *datacode,
 
     if (strchr(datacode, '/') == NULL) {
 	err = E_INVARG;
-    } else if (dset->v > 0 && cmethod != COMPACT_NONE) {
+    } else if (dset->v > 0 && cmethod != COMPACT_UNSET) {
 	aggr = dbn_get_aggr(cmethod, &seqval, &err);
     }
     if (!err) {

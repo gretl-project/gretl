@@ -130,6 +130,12 @@ int gretl_dotpos (const char *str)
     return p;
 }
 
+#ifdef WIN32
+# define is_slash(c) (c == '\\' || c == '/')
+#else
+# define is_slash(c) (c == SLASH)
+#endif
+
 /**
  * gretl_slashpos:
  * @str: the string to examine.
@@ -145,11 +151,7 @@ int gretl_slashpos (const char *str)
     if (str != NULL && *str != '\0') {
 	p = strlen(str);
 	for (i=p-1; i>0; i--) {
-#ifdef WIN32
-	    if (str[i] == '\\' || str[i] == '/') {
-#else
-	    if (str[i] == SLASH) {
-#endif
+	    if (is_slash(str[i])) {
 		p = i;
 		break;
 	    }
@@ -369,34 +371,41 @@ char *comma_separate_numbers (char *s)
  * comparison), 0 otherwise.
  */
 
-int has_suffix (const char *str, const char *sfx)
-{
-    const char *p;
-    int comp, ret = 0;
+ int has_suffix (const char *str, const char *sfx)
+ {
+     const char *p;
+     int comp, ret = 0;
 
-    /* compound suffix, such as ".csv.gz" ? */
-    comp = (strchr(sfx + 1, '.') != NULL);
+     if (str == NULL || sfx == NULL) {
+	 return 0;
+     }
 
-    if (str != NULL && sfx != NULL) {
-	p = strrchr(str, *sfx);
-	if (comp && p - str > 4) {
-	    p -= 4;
-	}
-	if (p != NULL && strlen(p) == strlen(sfx)) {
-	    ret = 1;
-	    while (*p) {
-		if (*p != *sfx && *p != toupper(*sfx)) {
-		    ret = 0;
-		    break;
-		}
-		p++;
-		sfx++;
-	    }
-	}
-    }
+     /* Have we got a compound suffix (e.g. ".csv.gz")? */
+     comp = (strchr(sfx + 1, '.') != NULL);
 
-    return ret;
-}
+     /* find the rightmost '.' in @str */
+     p = strrchr(str, *sfx);
+
+     /* if @sfx is compound, try backing up */
+     if (comp && p - str > 4) {
+	 p -= 4;
+     }
+
+     if (p != NULL && strlen(p) == strlen(sfx)) {
+	 /* check for case-insensitive match */
+	 ret = 1;
+	 while (*p) {
+	     if (*p != *sfx && *p != toupper(*sfx)) {
+		 ret = 0;
+		 break;
+	     }
+	     p++;
+	     sfx++;
+	 }
+     }
+
+     return ret;
+ }
 
 /**
  * has_native_data_suffix:
@@ -2049,11 +2058,12 @@ char **strings_array_new_with_length (int nstrs, int len)
  * @pS: existing array to reallocate.
  * @oldn: original number of strings in the array.
  * @newn: new number of strings in array.
- * @len: number of bytes per string.
+ * @len: number of bytes per string (or 0).
  *
  * Adjusts the storage in @pS to a size of @newn
- * strings, each of them @len bytes long.  The first
- * byte of any additional strings is initialized to 0.
+ * strings, each of them @len bytes long.  If @len
+ * is greater than zero the first byte of any
+ * additional strings is initialized to 0.
  * This function may be used either to expand or to
  * shrink an existing array of strings.
  *
@@ -2066,19 +2076,13 @@ char **strings_array_realloc_with_length (char ***pS,
 					  int len)
 {
     char **S;
-    int i, j;
+    int i;
 
     if (pS == NULL) {
-	/* huh? */
 	return NULL;
-    }
-
-    if (newn == oldn) {
-	/* no-op */
+    } else if (newn == oldn) {
 	return *pS;
-    }
-
-    if (newn <= 0) {
+    } else if (newn <= 0) {
 	strings_array_free(*pS, oldn);
 	*pS = NULL;
 	return NULL;
@@ -2100,17 +2104,26 @@ char **strings_array_realloc_with_length (char ***pS,
     *pS = S;
 
     /* in case we're expanding the array */
-    for (i=oldn; i<newn; i++) {
-	S[i] = malloc(len);
-	if (S[i] == NULL) {
-	    for (j=0; j<i; j++) {
-		free(S[j]);
-	    }
-	    free(*pS);
-	    *pS = NULL;
-	    return NULL;
+    if (len == 0) {
+	for (i=oldn; i<newn; i++) {
+	    S[i] = NULL;
 	}
-	S[i][0] = '\0';
+    } else {
+	int j;
+
+	for (i=oldn; i<newn; i++) {
+	    S[i] = malloc(len);
+	    if (S[i] == NULL) {
+		for (j=0; j<i; j++) {
+		    free(S[j]);
+		}
+		free(*pS);
+		*pS = NULL;
+		break;
+	    } else {
+		S[i][0] = '\0';
+	    }
+	}
     }
 
     return *pS;
@@ -2126,14 +2139,14 @@ char **strings_array_realloc_with_length (char ***pS,
 
 char **strings_array_dup (char **strs, int n)
 {
-    char **S;
-    int i, j;
+    char **S = NULL;
+    int i, err = 0;
 
     if (n <= 0 || strs == NULL) {
 	return NULL;
     }
 
-    S = malloc(n * sizeof *S);
+    S = strings_array_new(n);
     if (S == NULL) return NULL;
 
     for (i=0; i<n; i++) {
@@ -2142,13 +2155,68 @@ char **strings_array_dup (char **strs, int n)
 	} else {
 	    S[i] = gretl_strdup(strs[i]);
 	    if (S[i] == NULL) {
-		for (j=0; j<i; j++) {
-		    free(S[j]);
-		}
-		free(S);
-		return NULL;
+		err = E_ALLOC;
+		break;
 	    }
 	}
+    }
+
+    if (err) {
+	strings_array_free(S, n);
+	S = NULL;
+    }
+
+    return S;
+}
+
+/**
+ * strings_array_dup_selected:
+ * @strs: array of strings from which to copy.
+ * @n: number of strings in array.
+ * @list: list of indices of strings to copy.
+ *
+ * Returns: an allocated array holding the strings selected
+ * from @strs, or NULL on failure.
+ */
+
+char **strings_array_dup_selected (char **strs, int n,
+				   const int *list)
+{
+    char **S = NULL;
+    int m, i, j, k;
+    int err = 0;
+
+    if (n <= 0 || strs == NULL) {
+	return NULL;
+    } else if (list == NULL || list[0] == 0) {
+	return NULL;
+    }
+
+    m = list[0];
+    S = strings_array_new(m);
+    if (S == NULL) return NULL;
+
+    for (i=1, k=0; i<=m; i++) {
+	j = list[i];
+	if (j < 0 || j >= n) {
+	    err = E_DATA;
+	    break;
+	}
+	if (strs[j] == NULL) {
+	    S[k] = NULL;
+	} else {
+	    S[k] = gretl_strdup(strs[j]);
+	    if (S[k] == NULL) {
+		err = E_ALLOC;
+		break;
+	    }
+	}
+	k++;
+    }
+
+    if (err) {
+	strings_array_free(S, m);
+	S = NULL;
     }
 
     return S;
@@ -3027,29 +3095,39 @@ char *gretl_utf8_truncate_b (char *s, size_t bmax)
 
 char *gretl_utf8_select (const char *s, const int *list)
 {
-    const char *p = s;
     char *ret = NULL;
-    GString *gs = g_string_new(NULL);
-    gchar *si;
-    int n = 0;
-    int i = 0;
+    int i, k;
 
-    while (p && *p) {
-        if (in_gretl_list(list, i+1)) {
-            si = g_utf8_substring(p, 0, 1);
-            g_string_append(gs, si);
-            g_free(si);
-            if (++n == list[0]) {
-                break;
-            }
-        }
-        p = g_utf8_next_char(p);
-        i++;
+    if (gretl_is_ascii(s)) {
+	int j = 0;
+
+	ret = calloc(list[0]+1, 1);
+	for (i=1; i<=list[0]; i++) {
+	    k = list[i] - 1; /* 0-based */
+	    ret[j++] = s[k];
+	}
+    } else {
+	GString *gs = g_string_new(NULL);
+	int len = g_utf8_strlen(s, -1);
+	gchar const **bits;
+	gchar *si;
+
+	bits = calloc(len + 1, sizeof *bits);
+	bits[0] = s;
+	for (i=1; i<len; i++) {
+	    s = bits[i] = g_utf8_find_next_char(s, NULL);
+	}
+	for (i=1; i<=list[0]; i++) {
+	    k = list[i] - 1; /* 0-based */
+	    si = g_utf8_substring(bits[k], 0, 1);
+	    g_string_append(gs, si);
+	    g_free(si);
+	}
+
+	ret = gretl_strdup(gs->str);
+	g_string_free(gs, TRUE);
+	free(bits);
     }
-
-    si = g_string_free(gs, FALSE);
-    ret = gretl_strdup(si);
-    g_free(si);
 
     return ret;
 }

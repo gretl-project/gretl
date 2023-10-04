@@ -45,12 +45,9 @@ typedef enum {
     DS_COMPACT,
     DS_EXPAND,
     DS_TRANSPOSE,
-    DS_DELETE,
-    DS_KEEP,
     DS_SORTBY,
     DS_DSORTBY,
     DS_RESAMPLE,
-    DS_RESTORE,
     DS_CLEAR,
     DS_RENUMBER,
     DS_INSOBS,
@@ -65,7 +62,7 @@ typedef enum {
 
 /**
  * CompactMethod:
- * @COMPACT_NONE:    no data compaction
+ * @COMPACT_UNSET:   no data compaction method is set
  * @COMPACT_SUM:     take sum of higher frequency data
  * @COMPACT_AVG:     take mean of higher frequency data
  * @COMPACT_SOP:     use start-of-period value
@@ -81,7 +78,7 @@ typedef enum {
  */
 
 typedef enum {
-    COMPACT_NONE,
+    COMPACT_UNSET,
     COMPACT_SUM,
     COMPACT_AVG,
     COMPACT_SOP,
@@ -95,7 +92,7 @@ typedef struct series_table_ series_table;
 
 /**
  * dataset_is_cross_section:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Attempt to determine whether a dataset contains cross-sectional
  * data (1) or not (0).
@@ -104,7 +101,7 @@ typedef struct series_table_ series_table;
 
 /**
  * dataset_is_time_series:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Attempt to determine whether a dataset contains time series
  * data (1) or not (0).
@@ -114,7 +111,7 @@ typedef struct series_table_ series_table;
 
 /**
  * dataset_is_seasonal:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Attempt to determine whether a dataset contains seasonal time series
  * data (1) or not (0).
@@ -125,7 +122,7 @@ typedef struct series_table_ series_table;
 
 /**
  * custom_time_series:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Attempt to determine whether a dataset contains time series
  * data with custom (non-standard) frequency (1) or not (0).
@@ -134,7 +131,7 @@ typedef struct series_table_ series_table;
 
 /**
  * dataset_is_daily:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Attempt to determine whether a dataset contains daily time series
  * data (1) or not (0).
@@ -144,7 +141,7 @@ typedef struct series_table_ series_table;
 
 /**
  * dataset_is_incomplete_daily:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Attempt to determine whether a dataset contains daily on an
  * incomplete calendar (1) or not (0).
@@ -155,7 +152,7 @@ typedef struct series_table_ series_table;
 
 /**
  * dataset_is_weekly:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Attempt to determine whether a dataset contains weekly time series
  * data (1) or not (0).
@@ -165,7 +162,7 @@ typedef struct series_table_ series_table;
 
 /**
  * dataset_is_hourly:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Attempt to determine whether a dataset contains hourly time series
  * data (1) or not (0).
@@ -175,7 +172,7 @@ typedef struct series_table_ series_table;
 
 /**
  * dataset_is_decennial:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Attempt to determine whether a dataset contains decennial time series
  * data (1) or not (0).
@@ -185,7 +182,7 @@ typedef struct series_table_ series_table;
 
 /**
  * dated_daily_data:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Attempt to determine whether a dataset contains dated daily time series
  * data (1) or not (0).
@@ -195,19 +192,19 @@ typedef struct series_table_ series_table;
                              && p->sd0 > 100000)
 
 /**
- * dated_seven_day_data:
- * @p: pointer to data information struct.
+ * undated_daily_data:
+ * @p: pointer to dataset.
  *
- * Attempt to determine whether a dataset contains dated daily 
- * (seven-day) time series data (1) or not (0).
+ * Attempt to determine whether a dataset is daily but does not contain
+ * any date information data (1) or not (0).
  */
-#define dated_seven_day_data(p) (p != NULL && p->structure == TIME_SERIES \
-                                 && p->pd == 7 && \
-                                 p->sd0 > 100000)
+#define undated_daily_data(p) (p != NULL && p->structure == TIME_SERIES \
+                               && (p->pd == 5 || p->pd == 6 || p->pd == 7) \
+                               && p->sd0 == 1)
 
 /**
  * dated_weekly_data:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Attempt to determine whether a dataset contains dated weekly 
  * time series data (1) or not (0).
@@ -218,7 +215,7 @@ typedef struct series_table_ series_table;
 
 /**
  * calendar_data:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Attempt to determine whether a dataset uses calendar
  * dates for observation strings (1) or not (0).
@@ -229,7 +226,7 @@ typedef struct series_table_ series_table;
 
 /**
  * quarterly_or_monthly:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Attempt to determine whether a dataset is a quarterly
  * or monthly time series (1), or something else (0).
@@ -239,7 +236,7 @@ typedef struct series_table_ series_table;
 
 /**
  * annual_data:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Attempt to determine whether a dataset is an annual
  * time series (1), or something else (0).
@@ -249,7 +246,7 @@ typedef struct series_table_ series_table;
 
 /**
  * decennial_data:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Attempt to determine whether a dataset is a decemmial
  * time series (1), or something else (0).
@@ -259,7 +256,7 @@ typedef struct series_table_ series_table;
 
 /**
  * dataset_is_panel:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Attempt to determine whether a dataset contains panel
  * data (1) or not (0).
@@ -268,7 +265,7 @@ typedef struct series_table_ series_table;
 
 /**
  * dataset_is_seasonal_panel:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Attempt to determine whether a dataset contains panel
  * data with a seasonal time-series dimension (1) or not (0).
@@ -279,7 +276,7 @@ typedef struct series_table_ series_table;
 
 /**
  * dataset_has_markers:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Determine whether a dataset has observation marker strings (1)
  * or not (0).
@@ -288,7 +285,7 @@ typedef struct series_table_ series_table;
 
 /**
  * dataset_has_panel_time:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Determine whether a panel dataset has information on its time
  * dimension recorded (1) or not (0).
@@ -299,7 +296,7 @@ typedef struct series_table_ series_table;
 
 /**
  * sample_size:
- * @p: pointer to data information struct.
+ * @p: pointer to dataset.
  *
  * Retrieves the length of the current sample range.
  */
@@ -547,7 +544,7 @@ void series_ensure_level_zero (DATASET *dset);
 void series_attach_string_table (DATASET *dset, int i,
 				 series_table *st);
 
-void series_destroy_string_table (DATASET *dset, int i);
+int series_destroy_string_table (DATASET *dset, int i);
 
 int is_string_valued (const DATASET *dset, int i);
 
@@ -569,8 +566,22 @@ int series_set_string_vals (DATASET *dset, int i, gretl_array *a);
 int series_set_string_vals_direct (DATASET *dset, int i,
 				   char **S, int ns);
 
+int series_from_strings (DATASET *dset, int v, char **S, int ns);
+
+int series_from_string_transform (double *y, const double *x,
+				  int n, char **S, int ns,
+				  series_table **pst);
+
 int series_recode_strings (DATASET *dset, int v, gretlopt opt,
 			   int *changed);
+
+int series_alphabetize_strings (DATASET *dset, int v);
+
+int assign_numeric_to_strvar (DATASET *dset, int targ,
+			      const double *src);
+
+int assign_strings_to_strvar (DATASET *dset, int targ, double *x,
+			      series_table *stx, int copy);
 
 double series_decode_string (const DATASET *dset, int i, const char *s);
 

@@ -2506,6 +2506,7 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="bool" optional="true">standardize</fnarg>
+	<fnarg type="bool" optional="true">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -2515,6 +2516,13 @@
 	  the column standard deviations (which are calculated using
 	  <math>n</math> &minus; 1 as divisor, where <math>n</math>
 	  is the number of rows of <argname>X</argname>).
+	</para>
+	<para>
+	  If a non-zero value is supplied for
+	  <argname>skip_na</argname> missing values are ignored,
+	  otherwise if a column of <argname>X</argname> contains any
+	  missing values the corresponding column in the output is all
+	  missing.
 	</para>
 	<para>
 	  Note that <fncref targ="stdize"/> provides more flexible
@@ -5889,7 +5897,7 @@
 	  by subtraction, as in
 	</para>
 	<code>
-	  series hptrend = y - hfilt(y)
+	  series hptrend = y - hpfilt(y)
 	</code>
 	<para>
 	  <seelist>
@@ -7045,12 +7053,32 @@
 	  estimated density or densities at each of these points.
 	</para>
 	<para>
-	  The optional <argname>scale</argname> parameter can be used to
-	  adjust the degree of smoothing relative to the default of 1.0
-	  (higher values produce a smoother result). The
-	  <argname>control</argname> parameter acts as a boolean: 0 (the
-	  default) means that the Gaussian kernel is used; a non-zero
-	  value switches to the Epanechnikov kernel.
+	  The formula used to compute the estimated density at each
+	  reference point, <math>x</math>, is
+	  <equation status="display"
+             tex="\[f(x)=(1/nh) \sum_{t-1}^{n} k\left((x-x_t)/h\right)\]"
+             ascii="f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)"
+             graphic="kernel1"/>
+	  where <math>n</math> denotes the number of data
+	  points, <math>h</math> is a <quote>bandwidth</quote>
+	  parameter, and <math>k</math>() is the kernel function.
+	  The larger the value of the bandwidth parameter, the smoother
+	  the estimated density.
+	</para>
+	<para>
+	  The optional <argname>scale</argname> parameter can be used
+	  to adjust the bandwidth relative to the default of 1.0,
+	  which corresponds to the rule of thumb proposed by <cite
+	  key="silverman86">Silverman (1986)</cite>, namely
+	  <equation status="display"
+	     tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{-1/5}\]"
+	     ascii="h = 0.9 min(s, IQR/1.349) n^{-1/5}"
+	     graphic="kernel2"/>
+	  where <math>s</math> denotes the standard deviation of the
+	  data and IQR is the inter-quartile range.  The
+	  <argname>control</argname> parameter acts as a boolean: 0
+	  (the default) means that the Gaussian kernel is used; a
+	  non-zero value switches to the Epanechnikov kernel.
 	</para>
 	<para>
 	  A plot of the results may be obtained using the <cmdref
@@ -10498,7 +10526,10 @@
 	  by column. If a non-zero value is given for the optional
 	  second argument missing values are ignored, otherwise the
 	  result is <lit>NA</lit> for any columns that contain missing
-	  values.
+	  values. Note that specifying <argname>skip_na</argname> is
+	  equivalent to treating missing values as if they were 1s.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="prodr"/>
             <fncref targ="meanc"/>
@@ -10520,6 +10551,10 @@
 	  by row. If a non-zero value is given for the optional second
 	  argument missing values are ignored, otherwise the result is
 	  <lit>NA</lit> for any rows that contain missing values.
+	  Note that specifying <argname>skip_na</argname> is
+	  equivalent to treating missing values as if they were 1s.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="prodc"/>
             <fncref targ="meanr"/>
@@ -11469,19 +11504,23 @@
       </description>
     </function>
 
-    <function name="regsub" section="strings" output="string">
+    <function name="regsub" section="strings" output="asinput">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="string">match</fnarg>
 	<fnarg type="string">repl</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns a copy of <argname>s</argname> in which all
-	  occurrences of the pattern <argname>match</argname> are
-	  replaced using <argname>repl</argname>. The arguments
-	  <argname>match</argname> and <argname>repl</argname>
-	  are interpreted as Perl-style regular expressions.
+	  If <argname>s</argname> is a single string, returns a copy
+	  of <argname>s</argname> in which all occurrences of the
+	  pattern <argname>match</argname> are replaced using
+	  <argname>repl</argname>. The arguments
+	  <argname>match</argname> and <argname>repl</argname> are
+	  interpreted as Perl-style regular expressions. If
+	  <argname>s</argname> is an array of strings or string-valued
+	  series this operation is performed on each string in the
+	  array or series.
 	</para>
 	<para>
 	  See also <fncref targ="strsub"/> for simple substitution of
@@ -12457,12 +12496,13 @@
 
     <function name="sst" section="stats" output="scalar">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-vec">y</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns the sum of squared deviations from the mean for the
-	  non-missing observations in series <argname>y</argname>.
+	  non-missing observations in the series or vector
+	  <argname>y</argname>.
 	  <seelist>
             <fncref targ="var"/>
 	  </seelist>
@@ -12508,6 +12548,7 @@
       <fnargs>
 	<fnarg type="series-list-or-mat">X</fnarg>
 	<fnarg type="int" optional="true">v</fnarg>
+	<fnarg type="bool" optional="true">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12525,6 +12566,12 @@
 	  likelihood estimator. As a special case, if
 	  <argname>v</argname> equals &minus;1 only centering
 	  is performed.
+	</para>
+	<para>
+	  By default missing values are automatically skipped in the
+	  case of series or list input but not for matrix input. To
+	  have missing values ignored in the matrix case, supply
+	  a non-zero value for <argname>skip_na</argname>.
 	</para>
       </description>
     </function>
@@ -12629,15 +12676,8 @@
 	  elements where <math>n</math> is the largest value in
 	  <argname>y</argname>.  In addition each element of
 	  <argname>S</argname> must be valid UTF-8. If any of these
-	  conditions is not met, an error is flagged.
-	</para>
-	<para>
-	  The nominal return value is 0 on successful completion.
-	</para>
-	<para>
-	  <seelist>
-            <fncref targ="strvals"/>
-	  </seelist>
+	  conditions is not met, an error is flagged.  The nominal
+	  return value is 0 on successful completion.
 	</para>
 	<para>
 	  An alternative to <lit>stringify</lit> that may be useful in
@@ -12647,6 +12687,12 @@
 	  array must equal either the full length of the dataset or
 	  the length of the current sample range, and values may be
 	  repeated as required.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="strvals"/>
+	    <fncref targ="strvsort"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -12913,18 +12959,22 @@
       </description>
     </function>
 
-    <function name="strsub" section="strings" output="string">
+    <function name="strsub" section="strings" output="asinput">
       <fnargs>
-	<fnarg type="string-or-strings">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="string">find</fnarg>
 	<fnarg type="string">subst</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns a copy of <argname>s</argname> in which all
-	  occurrences of <argname>find</argname> are replaced by
-	  <argname>subst</argname>. See also <fncref targ="regsub"/>
-	  for more complex string replacement via regular expressions.
+	  If <argname>s</argname> is a single string, returns a copy
+	  of <argname>s</argname> in which all occurrences of
+	  <argname>find</argname> are replaced by
+	  <argname>subst</argname>. If <argname>s</argname> is an
+	  array of strings or string-valued series this operation is
+	  performed on each string in the array or series.  See also
+	  <fncref targ="regsub"/> for more complex string replacement
+	  via regular expressions.
 	</para>
 	<para>
           Example:
@@ -12970,19 +13020,47 @@
       </description>
     </function>
 
-    <function name="substr" section="strings" output="string">
+    <function name="strvsort" section="strings" output="int">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="series">y</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  The argument <argname>y</argname> must be string-valued.
+	  The effect of this function is to sort such a series in this
+	  particular sense: the distinct string values are
+	  alphabetized and then the series is re-coded such that 1 is
+	  assigned for the first of the ordered strings, 2 for the
+	  second, and so on. This can be useful, among other reasons,
+	  for ensuring a uniform encoding for multiple series that
+	  share the same set of string values. The nominal return
+	  value is 0 on successful completion.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="stringify"/>
+	    <fncref targ="strvals"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="substr" section="strings" output="asinput">
+      <fnargs>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="int">start</fnarg>
 	<fnarg type="int">end</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the substring of <argname>s</argname> from the
-	  character with (1-based) index <argname>start</argname> to
-	  that with index <argname>end</argname>, inclusive, or from
+	  If <argname>s</argname> is a single string, returns the
+	  substring of <argname>s</argname> from the character with
+	  (1-based) index <argname>start</argname> to that with index
+	  <argname>end</argname>, inclusive, or from
 	  <argname>start</argname> to the end of <argname>s</argname>
-	  if <argname>end</argname> is &minus;1.
+	  if <argname>end</argname> is &minus;1. If the argument is an
+	  array of strings or string-valued series, this operation
+	  is performed on each string in the array or series.
 	</para>
 	<para>
           For example, the code below
@@ -13321,49 +13399,49 @@ d =  8.0000000
       </description>
     </function>
 
-    <function name="tolower" section="strings" output="string">
+    <function name="tolower" section="strings" output="asinput">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns a copy of <argname>s</argname> in which any upper-case
-	  characters are converted to lower case.
+	  If <argname>s</argname> is a single string, returns a copy
+	  of <argname>s</argname> in which any upper-case characters
+	  are converted to lower case. If <argname>s</argname> is an
+	  array of strings or string-valued series this operation is
+	  performed on each string in the array or series.
 	</para>
-    <para>
-        Examples:
-    </para>
-    <code>
-        string s1 = "Hello, Gretl!"
-        string s2 = tolower(s1)
-        print s2
-
-        string s3 = tolower("Hello, Gretl!")
-        print s3
-    </code>
+	<para>
+          Example:
+	</para>
+	<code>
+          string s1 = "Hello, Gretl!"
+          string s2 = tolower(s1)
+          print s2
+	</code>
       </description>
     </function>
 
-    <function name="toupper" section="strings" output="string">
+    <function name="toupper" section="strings" output="asinput">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns a copy of <argname>s</argname> in which any lower-case
-	  characters are converted to upper case.
+	  If <argname>s</argname> is a single string, returns a copy
+	  of <argname>s</argname> in which any lower-case characters
+	  are converted to upper case. If <argname>s</argname> is an
+	  array of strings or string-valued series this operation is
+	  performed on each string in the array or series.
 	</para>
-    <para>
-        Examples:
-    </para>
-    <code>
-        string s1 = "Hello, Gretl!"
-        string s2 = toupper(s1)
-        print s2
-
-        string s3 = toupper("Hello, Gretl!")
-        print s3
-    </code>
+	<para>
+          Examples:
+	</para>
+	<code>
+          string s1 = "Hello, Gretl!"
+          string s2 = toupper(s1)
+          print s2
+	</code>
       </description>
     </function>
 
@@ -13439,18 +13517,45 @@ d =  8.0000000
       </description>
     </function>
 
+    <function name="typename" section="data-utils" output="string">
+      <fnargs>
+	<fnarg type="string">name</fnarg>
+      </fnargs>
+      <description>
+	<para>
+          If <argname>name</argname> is the identifier of a currently
+          defined object, returns the type of the object in string
+          form: <lit>scalar</lit>, <lit>series</lit>,
+          <lit>matrix</lit>, <lit>string</lit>, <lit>bundle</lit>, or
+          one of the array types: <lit>matrices</lit>,
+          <lit>bundles</lit>, <lit>strings</lit>, <lit>lists</lit> or
+          <lit>arrays</lit>.  If the argument does not identify an
+          object the string <lit>null</lit> is returned.
+        </para>
+        <subhead>Compatibility note</subhead>
+        <para>
+          This function is intended as a superior replacement for the
+          old functions <fncref targ="typeof"/> and <fncref
+          targ="typestr"/>, but the latter will remain available for
+          the time being.
+        </para>
+      </description>
+    </function>
+
     <function name="typeof" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">name</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns a numeric type-code if <argname>name</argname> is
-	  the identifier of a currently defined object: 1 for scalar,
-	  2 for series, 3 for matrix, 4 for string, 5 for bundle, 6
-	  for array and 7 for list. Otherwise returns 0.  The function
-	  <fncref targ="typestr"/> may be used to get the string
-	  corresponding to the return value.
+          A legacy function: see <fncref targ="typename"/> for a
+          superior alternative.  Returns a numeric type-code if
+          <argname>name</argname> is the identifier of a currently
+          defined object: 1 for scalar, 2 for series, 3 for matrix, 4
+          for string, 5 for bundle, 6 for array and 7 for
+          list. Otherwise returns 0.  The function <fncref
+          targ="typestr"/> may be used to get the string corresponding
+          to the return value.
 	</para>
 	<para>
 	  This function can also be used to retrieve the type of
@@ -13474,14 +13579,16 @@ d =  8.0000000
       </fnargs>
       <description>
 	<para>
-	  Returns the name of the gretl data-type corresponding to
-	  <argname>typecode</argname>. This may be used in conjunction
-	  with the functions <fncref targ="typeof"/> and <fncref
-	  targ="inbundle"/>.  The value returned is one of
-	  <quote>scalar</quote>, <quote>series</quote>,
-	  <quote>matrix</quote>, <quote>string</quote>,
-	  <quote>bundle</quote>, <quote>array</quote>,
-	  <quote>list</quote>, or <quote>null</quote>.
+          A legacy function: see <fncref targ="typename"/> for a
+          superior alternative.  Returns the name of the gretl
+          data-type corresponding to <argname>typecode</argname>. This
+          may be used in conjunction with the functions <fncref
+          targ="typeof"/> and <fncref targ="inbundle"/>.  The value
+          returned is one of <quote>scalar</quote>,
+          <quote>series</quote>, <quote>matrix</quote>,
+          <quote>string</quote>, <quote>bundle</quote>,
+          <quote>array</quote>, <quote>list</quote>, or
+          <quote>null</quote>.
 	</para>
       </description>
     </function>

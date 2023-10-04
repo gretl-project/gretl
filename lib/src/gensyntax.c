@@ -86,9 +86,6 @@ static NODE *newref (parser *p, int t)
 	    n->vnum = p->idnum;
 	    n->v.xvec = p->dset->Z[n->vnum];
 	    n->vname = p->idstr;
-	    if (is_string_valued(p->dset, n->vnum)) {
-		n->flags |= SVL_NODE;
-	    }
 	} else if (t == NUM || t == NUM_P || t == NUM_M) {
 	    user_var *u = p->data;
 
@@ -328,7 +325,7 @@ static NODE *base (parser *p, NODE *up)
 	lex(p);
 	break;
     case DUM:
-	if (p->idnum == DUM_NULL) {
+	if (p->idnum == DUM_NULL || p->idnum == DUM_EMPTY) {
 	    t = newempty();
 	} else {
 	    t = newref(p, p->sym);
@@ -416,8 +413,12 @@ static NODE *u_addr_base (parser *p)
 	    }
 	    break;
 	case OSL:
-	    break;
 	case UNDEF:
+	    break;
+	case EMPTY:
+	    if (t->vname == NULL) {
+		p->err = E_TYPES;
+	    }
 	    break;
 	default:
 	    p->err = E_TYPES;
@@ -430,65 +431,6 @@ static NODE *u_addr_base (parser *p)
     }
 
     return t;
-}
-
-/* construct a node that contains a reference to a data series, based
-   on the name of a list (already captured in p->idstr) and the name
-   of a variable that is supposed to be in the list, which is separated
-   from the listname by '.'.
-*/
-
-static NODE *listvar_node (parser *p)
-{
-    int *list = get_list_by_name(p->idstr);
-    NODE *ret = NULL;
-    char vname[VNAMELEN] = {0};
-    int i, n, v, ok = 0;
-
-    if (list == NULL) {
-	p->err = E_UNKVAR;
-	return NULL;
-    }
-
-    n = gretl_namechar_spn(p->point);
-    if (n >= VNAMELEN) {
-	/* too long -- can't be a valid varname */
-	p->err = E_UNKVAR;
-	return NULL;
-    }
-
-    for (i=0; i<n; i++) {
-	parser_getc(p);
-	vname[i] = p->ch;
-    }
-
-    for (i=1; i<=list[0]; i++) {
-	v = list[i];
-	if (!strcmp(vname, p->dset->varname[v])) {
-	    /* found the variable */
-	    free(p->idstr);
-	    p->idstr = NULL;
-	    p->idnum = v;
-	    ret = newref(p, SERIES);
-	    if (ret == NULL) {
-		p->err = E_ALLOC;
-	    } else {
-		ok = 1;
-	    }
-	    break;
-	}
-    }
-
-    if (!ok && !p->err) {
-	p->err = E_UNKVAR;
-    }
-
-    if (!p->err) {
-	parser_getc(p);
-	lex(p);
-    }
-
-    return ret;
 }
 
 static void unwrap_string_arg (parser *p)
@@ -886,6 +828,36 @@ static NODE *get_bundle_member_name (parser *p, int dollarize)
     } else {
 	fprintf(stderr, "HERE, get_bundle_member_name, p->ch = '%c'\n", p->ch);
 	p->err = E_PARSE;
+    }
+
+    return ret;
+}
+
+/* Find the name of the (putative) series to the right of '.'
+   in an expression of the form <listname>.<series-name>,
+   and return it in a string node.
+*/
+
+static NODE *series_name_node (parser *p)
+{
+    int n = gretl_namechar_spn(p->point);
+    NODE *ret = NULL;
+
+    if (n == 0 || n >= VNAMELEN) {
+	p->err = E_PARSE;
+    } else {
+	p->idstr = gretl_strndup(p->point, n);
+	if (p->idstr == NULL) {
+	    p->err = E_ALLOC;
+	} else {
+	    int i;
+
+	    for (i=0; i<=n; i++) {
+		parser_getc(p);
+	    }
+	    lex(p);
+	    ret = newstr(p->idstr);
+	}
     }
 
     return ret;
@@ -1382,8 +1354,8 @@ static NODE *powterm (parser *p, NODE *l)
 		}
 	    }
 	} else if (sym == G_LPR) {
-	    /* bundle member plus lag spec? */
-	    if (l->t == BMEMB) {
+	    /* bundle member or listvar plus lag spec? */
+	    if (l->t == BMEMB || l->t == LISTVAR) {
 		t = newb2(LAG, l, NULL);
 		if (t != NULL) {
 		    t->R = expr(p);
@@ -1523,27 +1495,10 @@ static NODE *powterm (parser *p, NODE *l)
 	    t->R = get_bundle_member_name(p, 1);
 	}
     } else if (sym == LISTVAR) {
-	t = listvar_node(p);
-	if (t != NULL && (p->sym == G_LPR || p->sym == G_LBR)) {
-	    /* list.series node may be "inflected" as lag or obs */
-	    int lag = 0;
-
-	    if (p->sym == G_LPR) {
-		p->sym = LAG;
-		set_lag_parse_on(p);
-		lag = 1;
-	    } else {
-		p->sym = OBS;
-	    }
-	    t = newb2(p->sym, t, NULL);
-	    if (t != NULL) {
-		parser_ungetc(p);
-		lex(p);
-		t->R = base(p, t);
-	    }
-	    if (lag) {
-		set_lag_parse_off(p);
-	    }
+	t = new_node(LISTVAR);
+	if (t != NULL) {
+	    t->L = newref(p, LIST);
+	    t->R = series_name_node(p);
 	}
     } else if (sym == G_LPR) {
 	/* parenthesized expression */
@@ -1603,20 +1558,23 @@ static NODE *powterm (parser *p, NODE *l)
 
  maybe_recurse:
 
-    if (t != NULL && next == '[') {
-	/* support func(args)[slice], etc. */
-	t = newb2(OSL, t, NULL);
-	if (t != NULL) {
-	    t->R = new_node(SLRAW);
-	    if (t->R != NULL) {
-		get_slice_parts(t->R, p);
+    if (!p->err) {
+	if (t != NULL && next == '[') {
+	    /* support func(args)[slice], etc. */
+	    t = newb2(OSL, t, NULL);
+	    if (t != NULL) {
+		t->R = new_node(SLRAW);
+		if (t->R != NULL) {
+		    get_slice_parts(t->R, p);
+		}
 	    }
-	}
-    } else if (t != NULL) {
-	if (p->sym == BMEMB || p->sym == DBMEMB) {
-	    t = powterm(p, t);
-	} else if (p->sym == G_LBR || p->sym == G_LPR) {
-	    t = powterm(p, t);
+	} else if (t != NULL) {
+	    if (p->sym == BMEMB || p->sym == DBMEMB) {
+		/* these types can recurse */
+		t = powterm(p, t);
+	    } else if (p->sym == G_LBR || p->sym == G_LPR) {
+		t = powterm(p, t);
+	    }
 	}
     }
 
@@ -1625,6 +1583,13 @@ static NODE *powterm (parser *p, NODE *l)
 #endif
 
     return t;
+}
+
+static int got_hex_val (parser *p)
+{
+    int c = *p->point;
+
+    return p->ch == '0' && (c == 'x' || c == 'X');
 }
 
 /* Test for whether the ' symbol must represent the unary
@@ -1650,6 +1615,10 @@ static NODE *factor (parser *p)
     fprintf(stderr, "factor: starting...\n");
 #endif
 
+    if (sym == U_NEG && got_hex_val(p)) {
+	gretl_errmsg_set("hexadecimal values must be unsigned");
+	p->err = E_TYPES;
+    }
     if (p->err) {
 	return NULL;
     }

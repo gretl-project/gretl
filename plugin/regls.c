@@ -2157,11 +2157,16 @@ static int admm_lasso (regls_info *ri)
     gretl_matrix *L;
 
     ldim = n >= k ? k : n;
-    MB = gretl_matrix_block_new(&v, k, 1, &u, k, 1,
-				&b, k, 1, &r, k, 1,
-				&bprev, k, 1, &bdiff, k, 1,
-				&q, k, 1, &n1, n, 1,
-				&L, ldim, ldim, NULL);
+    MB = gretl_matrix_block_new(&v, k, 1,
+				&u, k, 1,
+				&b, k, 1,
+				&r, k, 1,
+				&bprev, k, 1,
+				&bdiff, k, 1,
+				&q, k, 1,
+				&n1, n, 1,
+				&L, ldim, ldim,
+				NULL);
     if (MB == NULL) {
 	return E_ALLOC;
     }
@@ -2228,9 +2233,7 @@ static int admm_lasso (regls_info *ri)
 		    idxmin = j;
 		}
 		ri->crit->val[j] = critj;
-		if (ri->nlam == 1) {
-		    ri->R2->val[0] = R2;
-		}
+		ri->R2->val[j] = R2;
 	    }
 	}
     }

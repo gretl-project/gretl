@@ -80,9 +80,9 @@ static void dataset_set_nobs (DATASET *dset, int n)
 
 /**
  * free_Z:
- * @dset: dataset information.
+ * @dset: dataset.
  *
- * Does a deep free on the data matrix.
+ * Does a deep free on the data array.
  */
 
 void free_Z (DATASET *dset)
@@ -965,6 +965,9 @@ static void maybe_extend_lags (DATASET *dset, int t1, int t2)
 /* Determine the increment in days from a given day of the week to the
    "next" day, according to a weekly calendar or a daily one, allowing
    that a daily calendar may skip Sundays or weekends.
+
+   On exit, the content of @pwday is changed to the day-of-week
+   number of the next day, unless @dset is weekly or 7-day daily.
 */
 
 static int ed_increment (DATASET *dset, int *pwday)
@@ -980,7 +983,7 @@ static int ed_increment (DATASET *dset, int *pwday)
 	delta = 1;
     } else if (dset->pd == 6) {
 	/* daily, Sunday omitted */
-	if (wday == 6) {
+	if (wday == G_DATE_SATURDAY) {
 	    delta = 2;
 	    *pwday = 1;
 	} else {
@@ -988,7 +991,7 @@ static int ed_increment (DATASET *dset, int *pwday)
 	}
     } else if (dset->pd == 5) {
 	/* daily, weekends omitted */
-	if (wday == 5) {
+	if (wday == G_DATE_FRIDAY) {
 	    delta = 3;
 	    *pwday = 1;
 	} else {
@@ -2663,7 +2666,8 @@ static int compare_lexvals (const void *a, const void *b)
     const lexval *lva = (const lexval *) a;
     const lexval *lvb = (const lexval *) b;
 
-    return g_utf8_collate(lva->s, lvb->s);
+    /* return g_utf8_collate(lva->s, lvb->s); */
+    return g_strcmp0(lva->s, lvb->s);
 }
 
 static int series_to_lexvals (DATASET *dset, int v, int *targ)
@@ -2737,6 +2741,12 @@ int dataset_sort_by (DATASET *dset, const int *list, gretlopt opt)
 	}
     }
 
+    /* Next block: we're assuming that if the dataset is to be
+       sorted by a string-valued series, it's the alphabetical
+       order of the string values that should be used, not the
+       numeric codes (though in some cases this may come to
+       the same thing).
+    */
     for (i=0; i<ns; i++) {
 	if (is_string_valued(dset, list[i+1])) {
 	    nsvals++;
@@ -3211,18 +3221,12 @@ int dataset_op_from_string (const char *s)
 	op = DS_EXPAND;
     } else if (!strcmp(s, "transpose")) {
 	op = DS_TRANSPOSE;
-    } else if (!strcmp(s, "delete")) {
-	op = DS_DELETE;
-    } else if (!strcmp(s, "keep")) {
-	op = DS_KEEP;
     } else if (!strcmp(s, "sortby")) {
 	op = DS_SORTBY;
     } else if (!strcmp(s, "dsortby")) {
 	op = DS_DSORTBY;
     } else if (!strcmp(s, "resample")) {
 	op = DS_RESAMPLE;
-    } else if (!strcmp(s, "restore")) {
-	op = DS_RESTORE;
     } else if (!strcmp(s, "clear")) {
 	op = DS_CLEAR;
     } else if (!strcmp(s, "renumber")) {
@@ -3307,10 +3311,41 @@ static int dataset_int_param (const char **ps, int op,
     return k;
 }
 
-static int compact_data_set_wrapper (const char *s, DATASET *dset,
-				     int k)
+static int compact_strvals_check (DATASET *dset)
+{
+    int i, nsv = 0;
+
+    for (i=1; i<dset->v; i++) {
+	if (is_string_valued(dset, i)) {
+	    nsv++;
+	}
+    }
+
+    if (nsv > 0) {
+	gretl_errmsg_sprintf(_("The dataset contains %d string-valued series. Such series cannot "
+			       "be compacted\nother than via the 'first' or 'last' method."), nsv);
+	return E_DATA;
+    } else {
+	return 0;
+    }
+}
+
+/* run some checks before handing off to compact_dataset()
+   int dbread.c
+*/
+
+static int compact_dataset_wrapper (const char *s, DATASET *dset,
+				    int k, gretlopt opt)
 {
     CompactMethod method = COMPACT_AVG;
+    int wkstart = 0;
+    int repday = 0;
+    int err = 0;
+
+    if (undated_daily_data(dset)) {
+        gretl_errmsg_set(_("Undated daily data: can't do compaction"));
+        return E_DATA;
+    }
 
     if (s != NULL) {
 	s += strspn(s, " ");
@@ -3329,22 +3364,35 @@ static int compact_data_set_wrapper (const char *s, DATASET *dset,
 	}
     }
 
-    if (method != COMPACT_SOP && method != COMPACT_EOP) {
-	int i, nsv = 0;
-
-	for (i=1; i<dset->v; i++) {
-	    if (is_string_valued(dset, i)) {
-		nsv++;
-	    }
+    if (dated_daily_data(dset) && k == 52) {
+	/* dated daily to weekly */
+	wkstart = 1;
+	if (dset->pd == 7 && (opt & OPT_W)) {
+	    wkstart = get_optval_int(DATAMOD, OPT_W, &err);
+	    /* convert to GLib */
+	    wkstart = wkstart == 0 ? G_DATE_SUNDAY : wkstart;
 	}
-	if (nsv > 0) {
-	    gretl_errmsg_sprintf(_("The dataset contains %d string-valued series. Such series cannot "
-				 "be compacted\nother than via the 'first' or 'last' method."), nsv);
-	    return E_DATA;
+	if (!err && (opt & OPT_R)) {
+	    repday = get_optval_int(DATAMOD, OPT_R, &err);
+	    if (!err) {
+		/* convert to GLib */
+		repday = repday == 0 ? G_DATE_SUNDAY : repday;
+		method = COMPACT_WDAY;
+	    }
 	}
     }
 
-    return compact_data_set(dset, k, method, 0, 0);
+    if (!err && method != COMPACT_SOP &&
+	method != COMPACT_EOP &&
+	method != COMPACT_WDAY) {
+	err = compact_strvals_check(dset);
+    }
+
+    if (!err) {
+	err = compact_dataset(dset, k, method, wkstart, repday);
+    }
+
+    return err;
 }
 
 static unsigned int resample_seed;
@@ -3576,8 +3624,7 @@ int modify_dataset (DATASET *dset, int op, const int *list,
 	}
     }
 
-    if (gretl_looping() && op != DS_RESAMPLE &&
-	op != DS_RESTORE && op != DS_SORTBY) {
+    if (gretl_looping() && op != DS_RESAMPLE && op != DS_SORTBY) {
 	pputs(prn, _("Sorry, this command is not available in loop mode\n"));
 	return 1;
     }
@@ -3592,7 +3639,7 @@ int modify_dataset (DATASET *dset, int op, const int *list,
 	}
     }
 
-    if (op != DS_RESTORE && complex_subsampled()) {
+    if (complex_subsampled()) {
 	gretl_errmsg_set(_("The data set is currently sub-sampled"));
 	return 1;
     }
@@ -3630,9 +3677,9 @@ int modify_dataset (DATASET *dset, int op, const int *list,
     } else if (op == DS_INSOBS) {
 	err = insert_obs(k, dset, prn);
     } else if (op == DS_COMPACT) {
-	err = compact_data_set_wrapper(param, dset, k);
+	err = compact_dataset_wrapper(param, dset, k, opt);
     } else if (op == DS_EXPAND) {
-	err = expand_data_set(dset, k);
+	err = expand_dataset(dset, k);
     } else if (op == DS_PAD_DAILY) {
 	err = pad_daily_data(dset, k, prn);
     } else if (op == DS_UNPAD_DAILY) {
@@ -3648,18 +3695,6 @@ int modify_dataset (DATASET *dset, int op, const int *list,
 	if (!err) {
 	    resampled = 1;
 	}
-    } else if (op == DS_RESTORE) {
-	if (resampled) {
-	    err = restore_full_sample(dset, NULL);
-	    resampled = 0;
-	} else {
-	    pprintf(prn, _("dataset restore: dataset is not resampled\n"));
-	    err = E_DATA;
-	}
-    } else if (op == DS_DELETE) {
-	pprintf(prn, _("dataset delete: not ready yet\n"));
-    } else if (op == DS_KEEP) {
-	pprintf(prn, _("dataset keep: not ready yet\n"));
     } else {
 	err = E_PARSE;
     }
@@ -4332,12 +4367,14 @@ void series_attach_string_table (DATASET *dset, int i,
     }
 }
 
-void series_destroy_string_table (DATASET *dset, int i)
+int series_destroy_string_table (DATASET *dset, int i)
 {
     if (dset != NULL && i > 0 && i < dset->v) {
 	series_table_destroy(dset->varinfo[i]->st);
 	dset->varinfo[i]->st = NULL;
     }
+
+    return 0;
 }
 
 /**
@@ -4465,6 +4502,23 @@ int series_set_string_val (DATASET *dset, int i, int t, const char *s)
     return err;
 }
 
+static int strvar_check_numeric (double x, int maxval)
+{
+    if (na(x)) {
+	return 0; /* OK */
+    } else if (x != floor(x)) {
+	/* not an integer */
+	gretl_errmsg_sprintf("Replacement value %g is not an integer", x);
+	return E_TYPES;
+    } else if (x < 1 || x > maxval) {
+	/* out of bounds */
+	gretl_errmsg_sprintf("Replacement value %g is out of bounds", x);
+	return E_DATA;
+    }
+
+    return 0;
+}
+
 /**
  * string_series_assign_value:
  * @dset: pointer to dataset.
@@ -4482,21 +4536,19 @@ int series_set_string_val (DATASET *dset, int i, int t, const char *s)
 int string_series_assign_value (DATASET *dset, int i,
 				int t, double x)
 {
-    series_table *st = NULL;
+    series_table *st;
+    int maxval;
     int err = 0;
 
-    if (i <= 0 || i >= dset->v) {
-	err = E_DATA;
-    } else if (na(x)) {
-	dset->Z[i][t] = x;
-    } else if (x != floor(x)) {
+    st = series_get_string_table(dset, i);
+    if (st == NULL) {
 	err = E_TYPES;
-    } else if ((st = dset->varinfo[i]->st) == NULL) {
-	err = E_TYPES;
-    } else if (series_table_get_string(st, x) == NULL) {
-	err = E_DATA;
     } else {
-	dset->Z[i][t] = x;
+	maxval = series_table_get_n_strings(st);
+	err = strvar_check_numeric(x, maxval);
+	if (!err) {
+	    dset->Z[i][t] = x;
+	}
     }
 
     return err;
@@ -4580,6 +4632,212 @@ char **series_get_string_vals (const DATASET *dset, int i,
     }
 
     return strs;
+}
+
+static char **unique_series_strings (char **S, int *pn,
+				     double *y, int *err)
+{
+    char **Su = NULL;
+    int *list = NULL;
+    GHashTable *ht;
+    gpointer p;
+    int pos = 1;
+    int ns = *pn;
+    int nsu = 0;
+    int i;
+
+    list = gretl_list_new(ns);
+    ht = g_hash_table_new(g_str_hash, g_str_equal);
+
+    if (list == NULL || ht == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    list[0] = 0;
+
+    /* Put the indices of the unique strings into @list,
+       and assign successive values to @y as we go.
+    */
+    for (i=0; i<ns; i++) {
+	if (S[i] == NULL || S[i][0] == '\0') {
+	    y[i] = NADBL;
+	    continue;
+	}
+	p = g_hash_table_lookup(ht, S[i]);
+	if (p == NULL) {
+	    /* string not already present: add index to list */
+	    list[pos] = i;
+	    g_hash_table_insert(ht, S[i], GINT_TO_POINTER(pos));
+	    y[i] = (double) pos;
+	    list[0] += 1;
+	    pos++;
+	} else {
+	    y[i] = (double) GPOINTER_TO_INT(p);
+	}
+    }
+
+    /* the number of unique strings */
+    *pn = nsu = list[0];
+
+    if (nsu == ns) {
+	/* all the incoming strings are unique */
+	Su = strings_array_dup(S, ns);
+    } else {
+	/* copy only the unique strings */
+	Su = strings_array_dup_selected(S, ns, list);
+    }
+
+    if (Su == NULL) {
+	*err = E_ALLOC;
+    }
+
+    g_hash_table_destroy(ht);
+    free(list);
+
+    return Su;
+}
+
+/* Constructs a string-valued series in member series @v of @dset,
+   using the strings in @S.
+*/
+
+int series_from_strings (DATASET *dset, int v,
+			 char **S, int ns)
+{
+    char **Su = NULL;
+    int nsu = ns;
+    int err = 0;
+
+    if (S == NULL || ns != dset->n || dataset_is_subsampled(dset)) {
+	return E_DATA;
+    }
+
+    Su = unique_series_strings(S, &nsu, dset->Z[v], &err);
+    if (!err) {
+        err = series_set_string_vals_direct(dset, v, Su, nsu);
+    }
+
+    return err;
+}
+
+static int *map_unique_strings (char **S, int *nsp, int *err)
+{
+    GHashTable *ht;
+    gpointer p;
+    int *map;
+    int ns = *nsp;
+    int nsu;
+    int i, k;
+
+    map = calloc(ns, sizeof *map);
+    if (map == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    nsu = ns;
+    ht = g_hash_table_new(g_str_hash, g_str_equal);
+
+    for (i=0, k=0; i<ns; i++) {
+	p = g_hash_table_lookup(ht, S[i]);
+	if (p == NULL) {
+	    /* S[i] is not yet in the table */
+	    g_hash_table_insert(ht, S[i], GINT_TO_POINTER(i+1));
+	    map[i] = ++k;
+	} else {
+	    map[i] = map[GPOINTER_TO_INT(p)-1];
+	    nsu--;
+	}
+    }
+
+#if 0
+    fprintf(stderr, "hash: ns=%d, nsu = %d\n", ns, nsu);
+    for (i=0; i<ns; i++) {
+	fprintf(stderr, "map[%d] = %d\n", i, map[i]);
+    }
+#endif
+
+    g_hash_table_destroy(ht);
+    *nsp = nsu;
+
+    return map;
+}
+
+/**
+ * series_from_string_transform:
+ * @y: target series.
+ * @x: original series.
+ * @n: the common length of @y and @x.
+ * @S: array of strings.
+ * @ns: the length of @S.
+ * @pst: location to receive a series_table.
+ *
+ * Constructs a series_table from the unique strings in @S
+ * and writes the associated string indices into @y. Takes
+ * ownership of @S and frees it if appropriate.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int series_from_string_transform (double *y, const double *x,
+				  int n, char **S, int ns,
+				  series_table **pst)
+{
+    char **Su = NULL;
+    int *map;
+    int nsu = ns;
+    int i, k;
+    int err = 0;
+
+    map = map_unique_strings(S, &nsu, &err);
+
+    if (nsu < ns) {
+	/* duplicated strings were found */
+	int mapmax = 0;
+	int j = 0;
+
+	Su = strings_array_new(nsu);
+	for (i=0; i<ns; i++) {
+	    if (map[i] > mapmax) {
+		Su[j++] = S[i];
+		mapmax = map[i];
+	    } else {
+		free(S[i]);
+	    }
+	}
+    } else {
+	/* no duplicates */
+	Su = S;
+    }
+
+    if (nsu < ns) {
+	/* assign new code values */
+	for (i=0; i<n && !err; i++) {
+	    if (na(x[i])) {
+		y[i] = x[i];
+	    } else {
+		k = (int) x[i] - 1; /* 0-based */
+		y[i] = (double) map[k];
+	    }
+	}
+    } else {
+	/* just copy the original values */
+	size_t sz = n * sizeof(double);
+
+	memcpy(y, x, sz);
+    }
+
+    if (!err) {
+	*pst = series_table_new(Su, nsu, &err);
+    }
+
+    if (Su != S) {
+	free(S);
+    }
+    free(map);
+
+    return err;
 }
 
 /**
@@ -4878,8 +5136,10 @@ int series_set_string_vals (DATASET *dset, int i, gretl_array *a)
 int series_set_string_vals_direct (DATASET *dset, int i,
 				   char **S, int ns)
 {
+    series_table *st;
     int err = 0;
-    series_table *st = series_table_new(S, ns, &err);
+
+    st = series_table_new(S, ns, &err);
 
     if (!err) {
 	if (dset->varinfo[i]->st != NULL) {
@@ -4986,6 +5246,332 @@ int series_recode_strings (DATASET *dset, int v, gretlopt opt,
     gretl_matrix_free(repl);
 
     return err;
+}
+
+typedef struct strval_sorter_ {
+    const char *s; /* string value */
+    int oldcode;   /* the original integer code for @s */
+    int newcode;   /* the revised integer code for @s */
+} strval_sorter;
+
+static int compare_strvals (const void *a, const void *b)
+{
+    const strval_sorter *ssa = a;
+    const strval_sorter *ssb = b;
+
+    return g_strcmp0(ssa->s, ssb->s);
+}
+
+static int ssr_lookup (strval_sorter *ssr, int ns, int oldcode)
+{
+    /* note: @oldcode is 1-based */
+    int j, k = oldcode - 1;
+
+    if (ssr[k].newcode) {
+        return ssr[k].newcode;
+    }
+
+    for (j=0; j<ns; j++) {
+	if (oldcode == ssr[j].oldcode) {
+            /* return value is also 1-based */
+            ssr[k].newcode = j + 1;
+	    return j + 1;
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * series_alphabetize_strings:
+ * @dset: dataset.
+ * @v: index number of string-valued series to process.
+ *
+ * Sorts the string values attached to series @v in
+ * alphabetical order then resets its numerical values
+ * (codes) to reflect the new ordering.
+ *
+ * Returns: 0 on successful completion, or error code
+ * on error.
+ */
+
+int series_alphabetize_strings (DATASET *dset, int v)
+{
+    strval_sorter *ssr;
+    series_table *st0, *st1;
+    char **S;
+    double xi;
+    int i, ns;
+    int err = 0;
+
+    st0 = series_get_string_table(dset, v);
+    if (st0 == NULL) {
+	return E_DATA;
+    }
+
+    S = series_table_get_strings(st0, &ns);
+    if (S == NULL) {
+	return E_DATA;
+    }
+
+    /* allocate sorter array */
+    ssr = malloc(ns * sizeof *ssr);
+    if (ssr == NULL) {
+	return E_ALLOC;
+    }
+
+    /* fill sorter array */
+    for (i=0; i<ns; i++) {
+	ssr[i].s = S[i];
+	ssr[i].oldcode = i+1;
+        ssr[i].newcode = 0;
+    }
+
+    /* do the actual sorting */
+    qsort(ssr, ns, sizeof *ssr, compare_strvals);
+
+    /* look up the new numerical codings */
+    for (i=0; i<dset->n; i++) {
+	xi = dset->Z[v][i];
+	if (!na(xi)) {
+	    dset->Z[v][i] = ssr_lookup(ssr, ns, (int) xi);
+	}
+    }
+
+    /* put S into sort order */
+    for (i=0; i<ns; i++) {
+	S[i] = (char *) ssr[i].s;
+    }
+
+    /* replace the original series table */
+    st1 = series_table_new(S, ns, &err);
+    if (st1 == NULL) {
+	err = E_ALLOC;
+    } else {
+	series_table_free_shallow(st0);
+	dset->varinfo[v]->st = st1;
+    }
+
+    free(ssr);
+
+    return err;
+}
+
+/**
+ * copy_string_valued_series:
+ * @dset: dataset.
+ * @targ: index number of target series.
+ * @x: numerical values of source series.
+ * @stx: strings info for source series.
+ * @copy_stx: if non-zero, @stx is owned elsewhere and
+ * must be copied.
+ *
+ * Writes the array of string values from @src into @targ,
+ * and also the numerical values (codes) per observation.
+ * If the target series is string-valued its original
+ * string table is destroyed.
+ *
+ * Returns: 0 on successful completion, or error code
+ * on error.
+ */
+
+static int copy_string_valued_series (DATASET *dset,
+				      int targ,
+				      const double *x,
+				      series_table *stx,
+				      int copy_stx)
+{
+    series_table *st = stx;
+
+    if (copy_stx) {
+	st = series_table_copy(stx);
+	if (st == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    /* copy across numerical codes */
+    memcpy(dset->Z[targ], x, dset->n * sizeof(double));
+
+    /* and attach the series table copy */
+    series_attach_string_table(dset, targ, st);
+
+    return 0;
+}
+
+/**
+ * assign_numeric_to_strvar:
+ * @dset: dataset.
+ * @targ: index number of target string-valued series.
+ * @src: array of numeric replacement values, of length
+ * equal to the length of @dset.
+ *
+ * Checks that each element in @src in the current sample
+ * range is acceptable as a replacement value for @targ,
+ * and if so, overwrites the relevant portion of @targ.
+ * Acceptable values are integers between 1 and the number
+ * of strings associated with @targ, or NA.
+ *
+ * Returns: 0 on successful completion, or error code
+ * on error.
+ */
+
+int assign_numeric_to_strvar (DATASET *dset, int targ,
+			      const double *src)
+{
+    series_table *st;
+    int t, maxval;
+    int err = 0;
+
+    st = series_get_string_table(dset, targ);
+    if (st == NULL) {
+	return E_TYPES;
+    }
+
+    maxval = series_table_get_n_strings(st);
+
+    for (t=dset->t1; t<=dset->t2 && !err; t++) {
+	err = strvar_check_numeric(src[t], maxval);
+    }
+
+    if (!err) {
+	double *y = dset->Z[targ] + dset->t1;
+	const double *x = src + dset->t1;
+	size_t sz = sample_size(dset) * sizeof *y;
+
+	memcpy(y, x, sz);
+    }
+
+    return err;
+}
+
+/* Given a mapping produced by series_table_map(), determine
+   how many (if any) string values need to be added to the
+   table for the target series, and whether numeric codes
+   in the source series need to be re-mapped or can simply
+   be blitted over.
+*/
+
+static void analyse_st_map (int *map, int nsa,
+			    int *remap, int *n_add)
+{
+    int i;
+
+    for (i=1; i<=map[0]; i++) {
+	if (map[i] == -1) {
+	    /* string @i not present */
+	    *n_add += 1;
+	    *remap = 1;
+	} else if (*remap == 0 && i > 1 && map[i] != map[i-1] + 1) {
+	    /* the order of strings differs */
+	    *remap = 1;
+	}
+    }
+
+    if (*n_add > 0) {
+	/* fill in successive codes for strings to be added */
+	int pos = nsa + 1;
+
+	for (i=1; i<=map[0]; i++) {
+	    if (map[i] == -1) {
+		map[i] = pos++;
+	    }
+	}
+    }
+}
+
+/* Append to @sta the strings in @stb that are not already present */
+
+static int do_strv_adds (const int *map,
+			 int n_add, int nsa,
+			 series_table *sta,
+			 series_table *stb)
+{
+    char **S = series_table_get_strings(stb, NULL);
+    char **Tmp = malloc(n_add * sizeof *Tmp);
+    int i, j, err;
+
+    for (i=1, j=0; i<=map[0]; i++) {
+	if (map[i] > nsa) {
+	    Tmp[j++] = S[i-1];
+	}
+    }
+
+    err = series_table_add_strings(sta, (const char **) Tmp, n_add);
+    free(Tmp);
+
+    return err;
+}
+
+/* Handle assignment from one string-valued series to another,
+   in the case when the dataset is subsampled. The source
+   series may or may not be a member of the dataset.
+*/
+
+static int assign_strings_to_strvar_sub (DATASET *dset,
+					 int targ,
+					 const double *x,
+					 series_table *stb)
+{
+    series_table *sta;
+    int *map = NULL;
+    int use_map = 0;
+    int n_add = 0;
+    int nsa;
+    int err = 0;
+
+    sta = series_get_string_table(dset, targ);
+    if (sta == NULL) {
+	return E_TYPES;
+    }
+
+    map = series_table_map(stb, sta);
+    nsa = series_table_get_n_strings(sta);
+    analyse_st_map(map, nsa, &use_map, &n_add);
+
+    if (n_add > 0) {
+	/* add the extra strings to the end of @sta */
+	do_strv_adds(map, n_add, nsa, sta, stb);
+    }
+
+    if (use_map) {
+	/* numeric codes from @src need mapping */
+	int t, it;
+
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    if (na(x[t])) {
+		dset->Z[targ][t] = x[t];
+	    } else {
+		it = (int) x[t];
+		dset->Z[targ][t] = map[it];
+	    }
+	}
+    } else {
+	/* no re-mapping of codes needed */
+	double *y = dset->Z[targ] + dset->t1;
+	size_t sz = sample_size(dset) * sizeof *y;
+
+	memcpy(y, x, sz);
+    }
+
+    free(map);
+
+    return err;
+}
+
+/* note: @copy non-zero means that @stx must be copied into
+   place; otherwise it will be "donated" to @targ if the
+   dataset is not subsampled.
+*/
+
+int assign_strings_to_strvar (DATASET *dset, int targ, double *x,
+			      series_table *stx, int copy)
+{
+    if (dataset_is_subsampled(dset)) {
+	return assign_strings_to_strvar_sub(dset, targ, x, stx);
+    } else {
+	return copy_string_valued_series(dset, targ, x, stx, copy);
+    }
 }
 
 int set_panel_groups_name (DATASET *dset, const char *vname)
@@ -5119,6 +5705,11 @@ int is_dataset_series (const DATASET *dset, const double *x)
     return 0;
 }
 
+/* Given a @delta in epoch days, a day-of-week in @wd, and
+   days-per-week in @pd, determine the number of days
+   skipped relative to a "full calendar".
+*/
+
 static int effective_daily_skip (int delta, int wd, int pd)
 {
     int k, skip = delta - 1;
@@ -5126,11 +5717,13 @@ static int effective_daily_skip (int delta, int wd, int pd)
     if (pd < 7) {
 	skip = 0;
 	for (k=1; k<delta; k++) {
-	    wd = (wd == 0)? 6 : wd - 1;
+	    wd = (wd == G_DATE_MONDAY)? G_DATE_SUNDAY : wd - 1;
 	    if (pd == 6) {
-		skip += (wd != 0);
+		/* don't count Sundays as skipped */
+		skip += (wd != G_DATE_SUNDAY);
 	    } else {
-		skip += (wd != 0 && wd != 6);
+		/* don't count weekends as skipped */
+		skip += wd < G_DATE_SATURDAY;
 	    }
 	}
     }

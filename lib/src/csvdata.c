@@ -447,7 +447,7 @@ static int pad_weekly_data (DATASET *dset, int add)
 
     if (!err) {
         for (t=0; t<oldn; t++) {
-            tc = calendar_obs_number(dset->S[t], dset) - offset;
+            tc = calendar_obs_number(dset->S[t], dset, 0) - offset;
             if (tc != t) {
                 skip = tc - t;
                 fprintf(stderr, "Gap of size %d at original t = %d\n", skip, t);
@@ -485,7 +485,7 @@ static int csv_weekly_data (DATASET *dset)
     int t, tc;
 
     for (t=0; t<dset->n; t++) {
-        tc = calendar_obs_number(dset->S[t], dset) - misscount;
+        tc = calendar_obs_number(dset->S[t], dset, 0) - misscount;
         if (tc != t) {
             misscount += tc - t;
         }
@@ -499,7 +499,7 @@ static int csv_weekly_data (DATASET *dset)
         if (missfrac > 0.05) {
             ret = 0;
         } else {
-            int Tc = calendar_obs_number(lbl2, dset) + 1;
+            int Tc = calendar_obs_number(lbl2, dset, 0) + 1;
             int altmiss = Tc - dset->n;
 
             fprintf(stderr, "check: Tc = %d, missing = %d\n", Tc, altmiss);
@@ -607,21 +607,21 @@ static int check_daily_dates (DATASET *dset, int *pd,
 
         wd = weekday_from_date(dset->S[s]);
 
-        if (dset->pd == 5 && (wd == 6 || wd == 0)) {
+        if (dset->pd == 5 && (wd == 6 || wd == 7)) {
             /* Got Sat or Sun, can't be 5-day daily? */
-            alt_pd = (wd == 6)? 6 : 7;
+            alt_pd = wd;
             pprintf(prn, _("Found a Saturday (%s): re-trying with pd = %d\n"),
                     dset->S[s], alt_pd);
             break;
-        } else if (dset->pd == 6 && wd == 0) {
+        } else if (dset->pd == 6 && wd == 7) {
             /* Got Sun, can't be 6-day daily? */
-            alt_pd = 7;
+            alt_pd = wd;
             pprintf(prn, _("Found a Sunday (%s): re-trying with pd = %d\n"),
                     dset->S[s], alt_pd);
             break;
         }
 
-        n = calendar_obs_number(dset->S[s], dset);
+        n = calendar_obs_number(dset->S[s], dset, 0);
         if (n < t) {
             pprintf(prn, _("Daily dates error at t = %d:\n"
                     "  calendar_obs_number() for '%s' = %d but t = %d\n"),

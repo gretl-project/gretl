@@ -1,8 +1,8 @@
 author = Riccardo "Jack" Lucchetti and Sven Schreiber
 email = r.lucchetti@univpm.it
 tags = C32
-version = 1.97
-date = 2022-07-30
+version = 2.0
+date = 2023-07-16
 description = Structural VARs
 public = SVAR_setup SVAR_restrict SVAR_ident SVAR_estimate \
     SVAR_cumulate SVAR_boot SVAR_hd SVAR_coint \
@@ -11,7 +11,7 @@ public = SVAR_setup SVAR_restrict SVAR_ident SVAR_estimate \
     SVAR_bundle_print \
     SVAR_SRplain \
     SVAR_SRexotic SVAR_spagplot SVAR_SRfull \
-    SVAR_SRirf SVAR_SRdraw SRgetbest \
+    SVAR_SRirf SVAR_SRdraw SVAR_SRgetbest SRgetbest \
     SVAR_getshock SVAR_HD \
     SVAR_SRresetalpha
    # SVAR_setidIRF IRF_plotdata 
@@ -23,10 +23,10 @@ label = Structural VARs
 
 help = SVAR.pdf
 
-sample-script = examples/simple_C.inp
+sample-script = examples/Traditional/simple_C.inp
 data-files = examples
 
-min-version = 2021a
+min-version = 2021c
 depends = extra
 data-requirement = needs-time-series-data
 

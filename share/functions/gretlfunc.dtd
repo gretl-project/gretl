@@ -47,7 +47,7 @@
 <!ATTLIST gretl-function
    name CDATA #REQUIRED
    type (void | scalar | series | matrix | list | string | bundle |
-   strings | matrices | bundles | lists | arrays) 'void'
+   strings | matrices | bundles | lists | arrays | numeric) 'void'
    private (0|1) '0'
    plugin-wrapper (0|1) '0'
    no-print (0|1) '0'
@@ -95,13 +95,14 @@
    min     CDATA #IMPLIED
    max     CDATA #IMPLIED
    step    CDATA #IMPLIED
+   auto (true|false) 'false'
    optional (true|false) 'false'
-   const    (true|false) 'false'
+   const (true|false) 'false'
    type (bool | boolean | int | obs | scalar | series | list |
          matrix | bundle | scalarref | seriesref | matrixref |
          bundleref | string | stringref | strings | matrices |
 	 bundles | lists | arrays | stringsref | matricesref | 
-	 bundlesref) 'series'
+	 bundlesref | numeric) 'series'
 >
 
 <!ELEMENT return EMPTY>

@@ -27,7 +27,7 @@ saved in a gretl-native data file.
 \label{sec:reading}
 
 The primary ``suitable source'' for string-valued series is a
-delimited text data file (but see section\ref{sec:other-imports}
+delimited text data file (but see section~\ref{sec:other-imports}
 below). Here's a little example. The following is the content of a
 file named \texttt{gc.csv}:
 %
@@ -94,9 +94,10 @@ The third gretl conference took place in Oklahoma City.
   series is string-valued.
 \end{itemize}
 
-Suppose you want to access the numeric code for a particular
-string-valued observation: you can get that by ``casting'' the series
-to a vector. Thus
+If you want to access the numeric code for a particular string-valued
+observation you can get it by ``casting'' the series in question to a
+vector (by wrapping the identifier in curly brackets). So, for
+example,
 \begin{code}
 printf "The code for '%s' is %d.\n", city[3], {city}[3]
 \end{code}
@@ -109,7 +110,7 @@ The numeric codes for string-valued series are always assigned thus:
 reading the data file row by row, the first string value is assigned
 1, the next \textit{distinct} string value is assigned 2, and so on.
 
-\subsection{Assigning string values to an existing series}
+\subsection{Assigning string values to a numeric series}
 \label{sec:stringify}
 
 This is done via the \cmd{stringify()} function, which takes two
@@ -154,10 +155,10 @@ convenient when the array contains a moderate number of elements with
 no embedded spaces. An alternative way to get the same result is to
 define the array of strings via the \cmd{defarray()} function, as in
 \begin{code}
-stringify(grade,defarray("F","D","C","B","A"))
+stringify(grade, defarray("F","D","C","B","A"))
 \end{code}
 
-The inverse operation of \cmd{stringify()} can be performed by the
+The inverse operation of \cmd{stringify()} is performed by the
 \cmd{strvals()} function: this retrieves the array of distinct string
 values from a series (or returns an empty array if the series is not
 string-valued).
@@ -165,9 +166,13 @@ string-valued).
 \subsection{Assigning from an array of strings}
 \label{sec:array-assign}
 
-Given an array of strings whose length matches either the full length
-of the current dataset or the length of the current sample range, you
-can assign directly to a series result. Here's a trivial example:
+Given an array of strings whose length matches the full length of the
+current dataset you can assign directly to a series result, provided
+these conditions are satisfied: the dataset is not sub-sampled, and if
+the assignment is to a pre-existing series it is not already
+string-valued.
+
+Here's a trivial example:
 \begin{code}
 nulldata 6
 strings S = defarray("a", "b", "c", "b", "a", "d")
@@ -201,9 +206,9 @@ use of the optional second argument to \texttt{strsplit}.
 
 \section{Permitted operations}
 
-One question that arises with string-valued series is, what are you
-allowed to do with them and what is banned? The optimal policy may be
-debatable, but here we set out the current state of things.
+One question that arises with string-valued series is, what exactly
+are you allowed to do with them? The optimal policy may be debatable,
+but here we set out the current state of things.
 
 \subsection{Setting values per observation}
 
@@ -236,15 +241,15 @@ section~\ref{sec:reading} suppose we try
 %
 \begin{code}
 dataset addobs 1
-year[7] = 2021
-city[7] = "London?"
+year[7] = 2023
+city[7] = "Gdańsk"
 \end{code}
 %
 This will work: we're implicitly adding another member to the string
 table for \texttt{city}; the associated numeric code will be the next
-available integer.\footnote{Admittedly there is a downside to this
-  feature: one may inadvertently add a new string value by mistyping a
-  string that's already present.}
+available integer.\footnote{So please be careful: one may
+  inadvertently add a new string value by mistyping a string that's
+  already present.}
 
 \subsection{Logical product of two string-valued series}
 
@@ -261,20 +266,26 @@ value ``\texttt{A}'' and \texttt{sv2} has value ``\texttt{X}'', then
 attached to the resulting series will include all such string
 combinations even if they are not all represented in the given sample.
 
-\subsection{Assignment to an entire series}
+\subsection{Assignment to a string-valued series}
 
-Other than the ``assignment from array of strings'' and ``logical
-product'' cases described above, this is disallowed at present: you
-can't execute an assignment with the name of a string-valued series
-\textit{per se} on the left-hand side. Put differently, you cannot
-overwrite an entire string-valued series at once. While this is
-debatable, it's the easiest way of ensuring that we never end up with
-a broken mapping. It's possible this restriction may be relaxed in
-future.
+In an assignment statement where the left-hand side (LHS) term is an
+existing string-valued series two general conditions must be
+met. First, the right-hand side (RHS) term must be a series (either
+numeric or string-valued) and second, the assignment operator must be
+plain ``\texttt{=}''; inflected operators such as \texttt{+=} and
+\texttt{*=} are not supported.
 
-Besides assigning an out-of-bounds numerical value to a particular
-observation, this sort of assignment is in fact the only operation
-that is banned for string-valued series.
+When the RHS series is numeric, all its values must be either integers
+between 1 and the number of strings attached to the LHS series, or
+\texttt{NA}. This is required to preserve the integrity of the LHS.
+When the RHS series is itself string-valued there are two cases to
+consider: there's no sample restriction in place, or there is such a
+restriction. In the unrestricted case the LHS series is in effect
+destroyed and replaced by a clone of the RHS. Otherwise string values
+on the RHS are written into the LHS only within the current sample
+range. If an RHS string is already present on the left its numerical
+code is adjusted if necessary to match the LHS string table; if it is
+not present on the left it is appended to the LHS string table.
 
 \subsection{Missing values}
 
@@ -341,8 +352,8 @@ Drace_2: dummy for race = 'Black'
 Drace_3: dummy for race = 'Other'
 \end{code}
 
-Given such a series you can use string values in a sample restriction,
-as in
+Given a series such as \texttt{race} you can use its string values in a
+sample restriction, as in
 \begin{code}
 smpl race == "Black" --restrict
 \end{code}
@@ -371,12 +382,10 @@ current sample range, not just the distinct values as with
 
 \section{String-valued series and functions}
 
-User-defined hansl functions can deal with string-valued series,
-although there are a few points to note.
-
-If you supply such a series as an argument to a hansl function its
-string values will be accessible within the function. One can test
-whether a given series \texttt{arg} is string-valued as follows:
+User-defined hansl functions can deal with string-valued series.  If
+you supply such a series as an argument to a hansl function its string
+values will be accessible within the function. One can test whether a
+given series \texttt{arg} is string-valued as follows:
 \begin{code}
 if nelem(strvals(arg)) > 0
   # yes
@@ -385,10 +394,11 @@ else
 endif
 \end{code}
 
-Now suppose one wanted to put something like the code that generated
-the \texttt{grade} series in section~\ref{sec:stringify} into a
-function. That can be done, but \textit{not} in the form of a function
-that directly returns the desired series---that is, something like
+It's also possible, since gretl version 2023c, to put something like
+the code that generated the \texttt{grade} series in
+section~\ref{sec:stringify} into a function, and return the
+stringified series, as in the following (where we assume that
+\texttt{x} contains percentage scores):
 \begin{code}
 function series letter_grade (series x)
   series grade
@@ -397,38 +407,14 @@ function series letter_grade (series x)
 end function
 \end{code}
 %
-Unfortunately the above will \emph{not} work: the caller will get the
-\texttt{grade} series OK but it won't be string-valued. At first sight
-this may seem to be a bug but it's defensible as a consequence of the
-way series work in gretl.
-
-The point is that series have, so to speak, two grades of
-existence. They can exist as fully-fledged members of a dataset, or
-they can have a fleeting existence as simply anonymous arrays of
-numbers that are of the same length as dataset series. Consider the
-statement
-\begin{code}
-series rootx1 = sqrt(x+1)
-\end{code}
-On the right-hand side we have the ``series'' \texttt{x+1}, which is
-called into existence as part of a calculation but has no name and
-cannot have string values. Similarly, consider
-\begin{code}
-series grade = letter_grade(x)
-\end{code}
-The return value from \verb|letter_grade()| is likewise an anonymous
-array,\footnote{A proper named series, with string values, existed
-  while the function was executing but it ceased to exist as soon as
-  the function was finished.} incapable of holding string values
-\textit{until} it gets assigned to the named series
-\texttt{grade}. The solution is to define \texttt{grade} as a series,
-at the level of the caller, before calling \verb|letter_grade()|, as
-in
+An alternative means of achieving the same effect---and the only means
+available prior to gretl 2023c---is to to define \texttt{grade} as a
+series at the level of the caller and pass it in ``pointer'' form to
+\verb|letter_grade()|, as in
 %
 \begin{code}
 function void letter_grade (series x, series *grade)
   # define grade based on x and stringify it
-  # this version will work!
 end function
 
 # caller
@@ -443,10 +429,7 @@ sources and we'll create them natively via \cmd{stringify}---and
 we'll try to ensure that they retain their integrity---but we don't,
 for example, take the specification of a string-valued series as a
 regressor as an implicit request to include the dummification of its
-distinct values. Besides laziness, this reflects the fact that in
-gretl a string-valued series \textit{may} be usable ``as is'',
-depending on how it's defined; you can use \cmd{dummify} if you
-need it.
+distinct values.
 
 \section{Other import formats}
 \label{sec:other-imports}

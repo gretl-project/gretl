@@ -1244,66 +1244,64 @@ static void record_filter_command (filter_info *finfo)
 {
     int trend = finfo->save_opt & FILTER_SAVE_TREND;
     int cycle = finfo->save_opt & FILTER_SAVE_CYCLE;
-    char *s, fcmd[1024];
+    GString *s = g_string_new(NULL);
 
     if (finfo->ftype == FILTER_BK) {
-	sprintf(fcmd, "series %s = ", finfo->save_c);
+	g_string_append_printf(s, "series %s = ", finfo->save_c);
     } else if (finfo->ftype == FILTER_HP) {
 	if (trend) {
-	    sprintf(fcmd, "series %s = %s - ", finfo->save_t, finfo->vname);
+	    g_string_append_printf(s, "series %s = %s - ", finfo->save_t, finfo->vname);
 	} else if (cycle) {
-	    sprintf(fcmd, "series %s = ", finfo->save_c);
+	    g_string_append_printf(s, "series %s = ", finfo->save_c);
 	}
     } else if (trend) {
-	sprintf(fcmd, "series %s = ", finfo->save_t);
+	g_string_append_printf(s, "series %s = ", finfo->save_t);
     } else if (cycle) {
-	sprintf(fcmd, "series %s = %s - ", finfo->save_c, finfo->vname);
+	g_string_append_printf(s, "series %s = %s - ", finfo->save_c, finfo->vname);
     }
-
-    s = fcmd + strlen(fcmd);
 
     gretl_push_c_numeric_locale();
 
     if (finfo->ftype == FILTER_SMA) {
-	sprintf(s, "movavg(%s, %d, %d)\n", finfo->vname,
-		finfo->k, finfo->center);
+	g_string_append_printf(s, "movavg(%s, %d, %d)\n", finfo->vname,
+                               finfo->k, finfo->center);
     } else if (finfo->ftype == FILTER_EMA) {
-	sprintf(s, "movavg(%s, %g, %d)\n", finfo->vname,
-		finfo->lambda, finfo->k);
+	g_string_append_printf(s, "movavg(%s, %g, %d)\n", finfo->vname,
+                               finfo->lambda, finfo->k);
     } else if (finfo->ftype == FILTER_HP) {
-	sprintf(s, "hpfilt(%s, %g, %d)\n", finfo->vname,
-		finfo->lambda, finfo->oneside);
+	g_string_append_printf(s, "hpfilt(%s, %g, %d)\n", finfo->vname,
+                               finfo->lambda, finfo->oneside);
     } else if (finfo->ftype == FILTER_BK) {
-	sprintf(s, "bkfilt(%s, %d, %d, %d)\n", finfo->vname,
-		finfo->bkl, finfo->bku, finfo->bkk);
+	g_string_append_printf(s, "bkfilt(%s, %d, %d, %d)\n", finfo->vname,
+                               finfo->bkl, finfo->bku, finfo->bkk);
     } else if (finfo->ftype == FILTER_BW) {
-	sprintf(s, "bwfilt(%s, %d, %d)\n", finfo->vname,
-		finfo->order, finfo->cutoff);
+	g_string_append_printf(s, "bwfilt(%s, %d, %d)\n", finfo->vname,
+                               finfo->order, finfo->cutoff);
     } else if (finfo->ftype == FILTER_POLY) {
-	sprintf(s, "polyfit(%s, %d)\n", finfo->vname, finfo->order);
+	g_string_append_printf(s, "polyfit(%s, %d)\n", finfo->vname, finfo->order);
     } else if (finfo->ftype == FILTER_FD) {
-	sprintf(s, "fracdiff(%s, %g)\n", finfo->vname, finfo->lambda);
+	g_string_append_printf(s, "fracdiff(%s, %g)\n", finfo->vname, finfo->lambda);
     }
 
     gretl_pop_c_numeric_locale();
 
     if (trend) {
-	s = fcmd + strlen(fcmd);
-	sprintf(s, "setinfo %s --description=\"%s\"\n", finfo->save_t, finfo->label_t);
+	g_string_append_printf(s, "setinfo %s --description=\"%s\"\n",
+                               finfo->save_t, finfo->label_t);
     } else if (cycle) {
-	s = fcmd + strlen(fcmd);
-	sprintf(s, "setinfo %s --description=\"%s\"\n", finfo->save_c, finfo->label_c);
+	g_string_append_printf(s, "setinfo %s --description=\"%s\"\n",
+                               finfo->save_c, finfo->label_c);
     }
 
     if (trend && cycle) {
-	s = fcmd + strlen(fcmd);
-	sprintf(s, "series %s = %s - %s\n", finfo->save_c, finfo->vname,
-		finfo->save_t);
-	s = fcmd + strlen(fcmd);
-	sprintf(s, "setinfo %s --description=\"%s\"\n", finfo->save_c, finfo->label_c);
+	g_string_append_printf(s, "series %s = %s - %s\n",
+                               finfo->save_c, finfo->vname, finfo->save_t);
+	g_string_append_printf(s, "setinfo %s --description=\"%s\"\n",
+                               finfo->save_c, finfo->label_c);
     }
 
-    add_command_to_stack(fcmd, 0);
+    add_command_to_stack(s->str, 0);
+    g_string_free(s, TRUE);
 }
 
 static int calculate_filter (filter_info *finfo)

@@ -262,6 +262,7 @@ SRCS = adf_kpss.c \
 	nonparam.c \
 	objstack.c \
 	options.c \
+	plotbands.c \
 	plotspec.c \
 	plugins.c \
 	printout.c \

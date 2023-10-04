@@ -23,6 +23,8 @@
 # include "gretl_win32.h" /* for strptime() */
 #endif
 
+#define CAL_DEBUG 0
+
 /**
  * SECTION:calendar
  * @short_description: functions for working with dates
@@ -71,13 +73,16 @@ static int valid_ymd (int y, int m, int d, int julian)
     return ok;
 }
 
+/* Returns day of week on the GLib numbering, Monday=1 to Sunday=7,
+   or 0 in case an invalid date was given.
+*/
+
 static int day_of_week_from_ymd (int y, int m, int d, int julian)
 {
     GDate date;
-    int wd;
 
     if (!valid_ymd(y, m, d, julian)) {
-	return -1;
+	return 0;
     }
 
     g_date_clear(&date, 1);
@@ -90,10 +95,7 @@ static int day_of_week_from_ymd (int y, int m, int d, int julian)
 	g_date_set_dmy(&date, d, m, y);
     }
 
-    wd = g_date_get_weekday(&date);
-
-    /* switch to Sunday == 0 */
-    return wd == G_DATE_SUNDAY ? 0 : wd;
+    return g_date_get_weekday(&date);
 }
 
 /**
@@ -138,7 +140,7 @@ guint32 epoch_day_from_ymd (int y, int m, int d)
 guint32 nearby_epoch_day (int y, int m, int d, int wkdays)
 {
     GDate date;
-    int wd;
+    int dow;
     guint32 j;
 
     if (!g_date_valid_dmy(d, m, y)) {
@@ -148,11 +150,11 @@ guint32 nearby_epoch_day (int y, int m, int d, int wkdays)
     g_date_clear(&date, 1);
     g_date_set_dmy(&date, d, m, y);
     j = g_date_get_julian(&date);
-    wd = g_date_get_weekday(&date);
+    dow = g_date_get_weekday(&date);
 
-    if (wkdays != 7 && wd == G_DATE_SUNDAY) {
+    if (wkdays != 7 && dow == G_DATE_SUNDAY) {
 	j++;
-    } else if (wkdays == 5 && wd == G_DATE_SATURDAY) {
+    } else if (wkdays == 5 && dow == G_DATE_SATURDAY) {
 	j += 2;
     }
 
@@ -392,24 +394,22 @@ guint32 epoch_day_from_ymd_checked (double ymd, int *err)
  * weekday_from_epoch_day:
  * @ed: epoch day (ed >= 1).
  *
- * Returns: the weekday (Sunday = 0) corrsponding to @ed,
- * or -1 on error.
+ * Returns: the weekday corrsponding to @ed, on the basis
+ * of Monday = 1 to Sunday = 7, or 0 on error.
  */
 
 int weekday_from_epoch_day (guint32 ed)
 {
-    GDateWeekday gwd;
     GDate date;
 
     if (!g_date_valid_julian(ed)) {
-	return -1;
+	return 0;
     }
 
     g_date_clear(&date, 1);
     g_date_set_julian(&date, ed);
-    gwd = g_date_get_weekday(&date);
 
-    return gwd == G_DATE_SUNDAY ? 0 : (int) gwd;
+    return g_date_get_weekday(&date);
 }
 
 /**
@@ -417,7 +417,7 @@ int weekday_from_epoch_day (guint32 ed)
  * @datestr: string representation of calendar date, in form
  * YY[YY]-MM-DD.
  *
- * Returns: the epoch day number, or -1 on failure.
+ * Returns: the epoch day number, or 0 on failure.
  */
 
 guint32 get_epoch_day (const char *datestr)
@@ -458,25 +458,28 @@ guint32 get_epoch_day (const char *datestr)
 /**
  * calendar_obs_number:
  * @datestr: string representation of calendar date, in form
- * YY[YY]/MM/DD.
- * @dset: pointer to dataset information.
+ * YY[YY]-MM-DD.
+ * @dset: pointer to dataset.
+ * @nolimit: allow @datestr to be outside of the range of
+ * @dset.
  *
  * Returns: The zero-based observation number for the given
  * date within the current data set.
  */
 
-int calendar_obs_number (const char *datestr, const DATASET *dset)
+int calendar_obs_number (const char *datestr, const DATASET *dset,
+			 int nolimit)
 {
     guint32 ed0 = (guint32) dset->sd0;
-    guint32 t = get_epoch_day(datestr);
-    guint32 t0 = t;
+    guint32 ut = get_epoch_day(datestr);
+    int t = (int) ut;
 
-#ifdef CAL_DEBUG
-    fprintf(stderr, "calendar_obs_number: '%s' gave epoch day = %u\n",
-	    datestr, t);
+#if CAL_DEBUG
+    fprintf(stderr, "calendar_obs_number: '%s' gave epoch day = %d\n",
+	    datestr, (int) t);
 #endif
 
-    if (t <= 0 || t < ed0) {
+    if (t <= 0 || (!nolimit && t < ed0)) {
 	return -1;
     } else if (t == ed0) {
 	return 0;
@@ -485,7 +488,7 @@ int calendar_obs_number (const char *datestr, const DATASET *dset)
     /* subtract starting day for dataset */
     t -= ed0;
 
-    if (t <= 0) {
+    if (!nolimit && t <= 0) {
 	return -1;
     }
 
@@ -494,21 +497,18 @@ int calendar_obs_number (const char *datestr, const DATASET *dset)
 	t /= 7;
     } else if (dset->pd == 5 || dset->pd == 6) {
 	/* daily, 5- or 6-day week */
-	int wd = weekday_from_epoch_day(t0);
 	int startday, wkends;
 
 	/* check for out-of-calendar days */
-	if (dset->pd == 5 && (wd == 6 || wd == 0)) {
-	    return -1;
-	} else if (dset->pd == 6 && wd == 0) {
+	if (weekday_from_epoch_day(ut) > dset->pd) {
 	    return -1;
 	}
 
-	/* subtract number of irrelevant days */
-	startday = (ed0 - 1 + DAY1) % 7;
+	/* subtract the number of irrelevant days */
+	startday = (ed0 - 1 + DAY1) % 7; /* FIXME? */
 	wkends = (t + startday - 1) / 7;
 
-#ifdef CAL_DEBUG
+#if CAL_DEBUG
 	fprintf(stderr, "calendar_obs_number: ed0=%d, date=%s, t=%d, startday=%d, wkends=%d\n",
 		(int) ed0, datestr, (int) t, startday, wkends);
 #endif
@@ -520,14 +520,16 @@ int calendar_obs_number (const char *datestr, const DATASET *dset)
 	}
     }
 
-    return (int) t;
+    return t;
 }
 
-/* convert from $t in dataset to epoch day */
+/* Convert from 0-based @t in dataset to epoch day, assuming a
+   complete calendar (relative to @wkdays).
+*/
 
 static int t_to_epoch_day (int t, guint32 start, int wkdays)
 {
-    int startday = (start - 1 + DAY1) % 7;
+    int startday = (start - 1 + DAY1) % 7; /* FIXME */
     int wkends = (t + startday - 1) / wkdays;
 
     if (wkdays == 5) {
@@ -569,30 +571,41 @@ guint32 epoch_day_from_t (int t, const DATASET *dset)
  * @dset: pointer to dataset.
  *
  * Writes to @targ the calendar representation of the date of
- * observation @t, in the form YY[YY]-MM-DD.
+ * observation @t, in the form YY[YY]-MM-DD, on the assumption
+ * that @dset contains calendrical information.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
 int calendar_date_string (char *targ, int t, const DATASET *dset)
 {
-    guint32 d0, dt = 0;
+    guint32 d0 = (guint32) dset->sd0;
+    guint32 dt = 0;
     int y, m, d;
     int err = 0;
 
+    if (d0 == 1) {
+        strcpy(targ, "BAD DATE");
+        gretl_errmsg_set("The dataset lacks calendrical information");
+        return E_DATA;
+    } else if (dataset_has_markers(dset)) {
+        /* the calendar is presumably incomplete */
+        strcpy(targ, dset->S[t]);
+        return 0;
+    }
+
     *targ = '\0';
-    d0 = (guint32) dset->sd0;
 
     if (dset->pd == 52) {
 	dt = d0 + 7 * t;
     } else if (dset->pd == 7) {
 	dt = d0 + t;
     } else {
-	/* 5- or 6-day data */
-	if (t == 0 && dset->pd == 5) {
+	if (t == 0 && (dset->pd == 5 || dset->pd == 6)) {
 	    int wd = weekday_from_epoch_day(d0);
 
-	    if (wd == 0 || wd == 6) {
+	    if (wd == 0 || wd > dset->pd) {
+		strcpy(targ, "BAD DATE");
 		gretl_errmsg_sprintf(_("Invalid starting date for %d-day data"), dset->pd);
 		return E_DATA;
 	    }
@@ -769,33 +782,39 @@ double get_dec_date (const char *datestr)
 }
 
 /**
- * day_of_week:
+ * legacy_day_of_week:
  * @y: year.
  * @m: month, 1 to 12.
  * @d: day in month, 1 to 31.
  * @julian: non-zero to use Julian calendar, otherwise Gregorian.
  * @err: location to receive error code.
  *
- * Returns: the day of the week for the supplied date
- * (Sunday = 0, Monday = 1, ...) or %NADBL on failure
- * (the date is invalid).
+ * Returns: the day of the week for the supplied date on the
+ * "lagacy" numbering of Sunday = 0 to Saturday = 6) or %NADBL
+ * on failure (that is, the supplied date is invalid).
  */
 
-double day_of_week (int y, int m, int d, int julian, int *err)
+double legacy_day_of_week (int y, int m, int d, int julian, int *err)
 {
     int wd = day_of_week_from_ymd(y, m, d, julian);
 
-    return wd < 0 ? NADBL : wd;
+    if (wd == 0) {
+	return NADBL;
+    } else {
+	return wd == G_DATE_SUNDAY ? 0 : wd;
+    }
 }
 
-#define day_in_calendar(w, d) (((w) == 6 && d != 0) || \
-			       ((w) == 5 && d != 0 && d != 6))
+/* note: @w is the number of days in a week, and @d is the
+   day-of-week number for a given day.
+*/
+#define day_in_calendar(w, d) ((d) <= (w))
 
 /**
  * weekday_from_date:
  * @datestr: calendar representation of date, [YY]YY/MM/DD
  *
- * Returns: day of week as integer, Sunday = 0.
+ * Returns: day of week as integer (Monday = 1 to Sunday = 7).
  */
 
 int weekday_from_date (const char *datestr)
@@ -850,10 +869,10 @@ int day_starts_month (int d, int m, int y, int wkdays, int *pad)
 	int i, idx = day_of_week_from_ymd(y, m, 1, 0);
 
 	for (i=1; i<6; i++) {
-	   if (day_in_calendar(wkdays, idx % 7)) {
+	   if (day_in_calendar(wkdays, idx)) {
 	       break;
 	   }
-	   idx++;
+	   idx = idx == 7 ? 1 : idx+1;
 	}
 	if (d == i) {
 	    ret = 1;
@@ -891,10 +910,10 @@ int day_ends_month (int d, int m, int y, int wkdays)
 	int i, idx = day_of_week_from_ymd(y, m, dm, 0);
 
 	for (i=dm; i>0; i--) {
-	    if (day_in_calendar(wkdays, idx % 7)) {
+	    if (day_in_calendar(wkdays, idx)) {
 		break;
 	    }
-	    idx--;
+	    idx = idx == 1 ? 7 : idx-1;
 	}
 	ret = (d == i);
     }
@@ -929,10 +948,10 @@ int get_days_in_month (int m, int y, int wkdays, int julian)
 	int i, idx = day_of_week_from_ymd(y, m, 1, julian);
 
 	for (i=0; i<dm; i++) {
-	    if (day_in_calendar(wkdays, idx % 7)) {
+	    if (day_in_calendar(wkdays, idx)) {
 		ret++;
 	    }
-	    idx++;
+	    idx = idx == 7 ? 1 : idx+1;
 	}
     }
 
@@ -1017,13 +1036,13 @@ int month_day_index (int y, int m, int d, int wkdays)
     if (wkdays == 7) {
 	ret = d;
     } else {
-	int i, idx = day_of_week_from_ymd(y, m, 1, 0);
+	int i, dow = day_of_week_from_ymd(y, m, 1, 0);
 
 	for (i=1; i<=d; i++) {
-	    if (day_in_calendar(wkdays, idx)) {
+	    if (day_in_calendar(wkdays, dow)) {
 		ret++;
 	    }
-	    idx = (idx == 6)? 0 : idx + 1;
+	    dow = (dow == 7)? 1 : dow + 1;
 	}
     }
 
@@ -1049,13 +1068,13 @@ int days_in_month_before (int y, int m, int d, int wkdays)
     if (wkdays == 7) {
 	ret = d - 1;
     } else {
-	int i, idx = day_of_week_from_ymd(y, m, 1, 0);
+	int i, dow = day_of_week_from_ymd(y, m, 1, 0);
 
 	for (i=1; i<d; i++) {
-	    if (day_in_calendar(wkdays, idx % 7)) {
+	    if (day_in_calendar(wkdays, dow)) {
 		ret++;
 	    }
-	    idx++;
+	    dow = dow == 7 ? 1 : dow+1;
 	}
     }
 
@@ -1083,17 +1102,13 @@ int days_in_month_after (int y, int m, int d, int wkdays)
     if (wkdays == 7) {
 	ret = dm - d;
     } else {
-	int i, wd = day_of_week_from_ymd(y, m, dm, 0);
+	int i, dow = day_of_week_from_ymd(y, m, dm, 0);
 
 	for (i=dm; i>d; i--) {
-	    if (day_in_calendar(wkdays, wd)) {
+	    if (day_in_calendar(wkdays, dow)) {
 		ret++;
 	    }
-	    if (wd > 0) {
-		wd--;
-	    } else {
-		wd = 6;
-	    }
+	    dow = dow == 7 ? 1 : dow-1;
 	}
     }
 
@@ -1125,16 +1140,16 @@ int date_to_daily_index (const char *datestr, int wkdays)
     } else {
 	int leap = leap_year(y);
 	int n = days_in_month[leap][m];
-	int i, idx = day_of_week_from_ymd(y, m, 1, 0);
+	int i, dow = day_of_week_from_ymd(y, m, 1, 0);
 
 	for (i=1; i<=n; i++) {
 	    if (d == i) {
 		break;
 	    }
-	    if (day_in_calendar(wkdays, idx % 7)) {
+	    if (day_in_calendar(wkdays, dow)) {
 		seq++;
 	    }
-	    idx++;
+	    dow = dow == 7 ? 1 : dow+1;
 	}
     }
 
@@ -1176,18 +1191,18 @@ int daily_index_to_date (char *targ, int y, int m, int idx,
     } else {
 	int leap = leap_year(y);
 	int n = days_in_month[leap][m];
-	int wd = day_of_week_from_ymd(y, m, 1, 0);
+	int dow = day_of_week_from_ymd(y, m, 1, 0);
 	int i, seq = 0;
 
 	for (i=1; i<=n; i++) {
-	    if (day_in_calendar(wkdays, wd % 7)) {
+	    if (day_in_calendar(wkdays, dow)) {
 		if (seq == idx) {
 		    day = i;
 		    break;
 		}
 		seq++;
 	    }
-	    wd++;
+	    dow = dow == 7 ? 1 : dow+1;
 	}
     }
 
@@ -1226,8 +1241,8 @@ int n_hidden_missing_obs (const DATASET *dset, int t1, int t2)
 	return 0;
     }
 
-    t1 = calendar_obs_number(dset->S[t1], dset);
-    t2 = calendar_obs_number(dset->S[t2], dset);
+    t1 = calendar_obs_number(dset->S[t1], dset, 0);
+    t2 = calendar_obs_number(dset->S[t2], dset, 0);
 
     cal_n = t2 - t1 + 1;
 
@@ -1249,44 +1264,20 @@ int n_hidden_missing_obs (const DATASET *dset, int t1, int t2)
 int guess_daily_pd (const DATASET *dset)
 {
     int t, wd, pd = 5;
-    int wdbak = -1;
-    int havesat = 0;
-    int gotsat = 0, gotsun = 0;
-    int contig = 0;
+    int gotsat = 0;
 
-    wd = weekday_from_date(dset->S[0]);
-    if (6 - wd < dset->n) {
-	havesat = 1;
-    }
-
-    for (t=0; t<dset->n && t<28; t++) {
+    for (t=0; t<dset->n && t<40; t++) {
 	wd = weekday_from_date(dset->S[t]);
-	if (wd == 0) {
-	    gotsun = 1;
+	if (wd == 7) {
+	    pd = 7;
+	    break;
 	} else if (wd == 6) {
 	    gotsat = 1;
 	}
-	if ((wdbak + 1) % 7 == wd) {
-	    contig++;
-	}
-	wdbak = wd;
     }
 
-    if (gotsat && gotsun) {
-	pd = 7;
-    } else if (contig > 10) {
-	if (gotsun) pd = 7;
-	else if (gotsat) pd = 6;
-    } else if (dset->n > 7) {
-	if (!gotsun && !gotsat) {
-	    pd = 5;
-	} else if (!gotsun) {
-	    pd = 6;
-	}
-    } else if (havesat && !gotsat) {
-	pd = 5;
-    } else {
-	pd = 7;
+    if (pd == 5 && gotsat) {
+	pd = 6;
     }
 
     return pd;
@@ -1374,7 +1365,7 @@ double easterdate (int year)
     int h = (19 * a + b - d - g + 15) % 30;
     int i = c / 4;
     int k = c % 4;
-    int L = (32 + 2 * e + 2 * i - h - k) % 7;
+    int L = (32 + 2 * e + 2 * i - h - k) % 7; /* FIXME? */
     int m = (a + 11 * h + 22 * L) / 451 ;
 
     int month = (h + L - 7 * m + 114) / 31;
@@ -1417,13 +1408,12 @@ int day_span (guint32 ed1, guint32 ed2, int wkdays, int *err)
 	g_date_clear(&date, 1);
 	g_date_set_julian(&date, ed1);
 	wd = g_date_get_weekday(&date);
-	wd = (wd == G_DATE_SUNDAY)? 0 : wd;
 
 	for (i=ed1; i<=ed2; i++) {
-	    if (day_in_calendar(wkdays, wd % 7)) {
+	    if (day_in_calendar(wkdays, wd)) {
 		n++;
 	    }
-	    wd++;
+	    wd = wd == 7 ? 1 : wd+1;
 	}
     }
 

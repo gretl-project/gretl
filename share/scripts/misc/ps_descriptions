@@ -1,6 +1,7 @@
 # Gretl: various sample scripts
 "arbond91","Dynamic panel model (GMM-DIF)","UK employment data"
 "armaloop","ARMA using command loop","artificial data"
+"auto_arima","Automatic ARIMA model selection","artificial data"
 "bbond98","Dynamic panel model (GMM-SYS)","UK employment data"
 "biprobit","Bivariate probit (William Greene)","credit rating"
 "biprobit_via_ghk","Bivariate probit using simulated ML","credit rating"

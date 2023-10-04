@@ -49,6 +49,7 @@
 #include "guiprint.h"
 #include "tabwin.h"
 #include "gpt_control.h"
+#include "gpt_dialog.h"
 #include "gretl_ipc.h"
 
 #ifndef G_OS_WIN32
@@ -1818,6 +1819,7 @@ GtkActionEntry main_entries[] = {
     { "Packages", NULL, N_("_Function packages"), NULL, NULL, NULL },
     { "LocalGfn", GTK_STOCK_OPEN, N_("On _local machine..."), "", NULL, G_CALLBACK(show_files) },
     { "RemoteGfn", GTK_STOCK_NETWORK, N_("On _server..."), NULL, NULL, G_CALLBACK(show_files) },
+    { "InstallPkg", NULL, N_("Install local package..."), NULL, NULL, G_CALLBACK(install_pkg_callback) },
     { "EditGfn", GTK_STOCK_EDIT, N_("Edit package..."), NULL, NULL, G_CALLBACK(edit_gfn_callback) },
     { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_gfn_callback) },
     { "UploadGfn", GTK_STOCK_NETWORK, N_("_Upload package..."), "", NULL, G_CALLBACK(upload_package_callback) },
@@ -1848,6 +1850,7 @@ GtkActionEntry main_entries[] = {
     { "ShowConsole", NULL, N_("_Gretl console"), NULL, NULL, G_CALLBACK(gretl_show_console) },
     { "Gnuplot", NULL, N_("_Gnuplot"), NULL, NULL, G_CALLBACK(launch_gnuplot_interactive) },
     { "StartR", NULL, N_("Start GNU _R"), NULL, NULL, G_CALLBACK(start_R_callback) },
+    { "ColorTool", NULL, N_("Color tool"), NULL, NULL, G_CALLBACK(show_color_tool) },
     { "NistTest", NULL, N_("_NIST test suite"), NULL, NULL, NULL },
     { "NistBasic", NULL, N_("_Basic"), NULL, NULL, G_CALLBACK(do_nistcheck) },
     { "NistVerbose", NULL, N_("_Verbose"), NULL, NULL, G_CALLBACK(do_nistcheck) },
@@ -1867,8 +1870,8 @@ GtkActionEntry main_entries[] = {
     { "DataMarkers", NULL, N_("_Observation markers..."), NULL, NULL, G_CALLBACK(markers_callback) },
     { "VarLabels", NULL, N_("_Variable labels..."), NULL, NULL, G_CALLBACK(labels_callback) },
     { "DataStructure", NULL, N_("Dataset _structure..."), NULL, NULL, G_CALLBACK(data_structure_dialog) },
-    { "DataCompact", NULL, N_("_Compact data..."), NULL, NULL, G_CALLBACK(do_compact_data_set) },
-    { "DataExpand", NULL, N_("_Expand data..."), NULL, NULL, G_CALLBACK(do_expand_data_set) },
+    { "DataCompact", NULL, N_("_Compact data..."), NULL, NULL, G_CALLBACK(do_compact_dataset) },
+    { "DataExpand", NULL, N_("_Expand data..."), NULL, NULL, G_CALLBACK(do_expand_dataset) },
     { "DataTranspose", NULL, N_("_Transpose data..."), NULL, NULL, G_CALLBACK(gui_transpose_data) },
     { "DataSort", NULL, N_("_Sort data..."), NULL, NULL, G_CALLBACK(gui_sort_data) },
     { "DataPaste", NULL, N_("Paste from clipboard..."), NULL, NULL, G_CALLBACK(mdata_handle_paste) },
@@ -2588,10 +2591,17 @@ mdata_handle_drag  (GtkWidget *widget,
 	strcat(tmp, dfname + skip);
     }
 
-    /* handle spaces and such then transcribe */
+    /* handle spaces and such */
     unescape_url(tmp);
-    set_tryfile(tmp);
 
+    /* check for zip magic bytes */
+    if (gretl_is_pkzip_file(tmp)) {
+	gdk_drag_status(context, 0, time);
+	return;
+    }
+
+    /* transcribe and try opening */
+    set_tryfile(tmp);
     open_tryfile(FALSE, TRUE);
 }
 
@@ -2653,7 +2663,7 @@ gboolean open_tryfile (gboolean startup, gboolean dnd)
 	ret = verify_open_session();
     } else if (has_suffix(tryfile, ".gfn") &&
 	       gretl_is_xml_file(tryfile)) {
-	ret = edit_specified_package(tryfile);
+	ret = gfn_open_dialog(tryfile);
     } else {
 	ret = verify_open_data(NULL, 0, dnd);
     }

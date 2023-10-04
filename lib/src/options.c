@@ -170,7 +170,8 @@ struct gretl_option gretl_opts[] = {
     { ARMA,     OPT_L, "lbfgs", 0 },
     { ARMA,     OPT_N, "nc", 0 },
     { ARMA,     OPT_V, "verbose", 0 },
-    { ARMA,     OPT_X, "x-12-arima", 0 },
+    { ARMA,     OPT_X, "x-13arima", 0 },
+    { ARMA,     OPT_X, "x-12-arima", 0 }, /* compatibility alias */
     { ARMA,     OPT_Y, "y-diff-only", 0 },
     { ARMA,     OPT_R, "robust", 0 },
     { ARMA,     OPT_S, "stdx", 0 },
@@ -228,6 +229,8 @@ struct gretl_option gretl_opts[] = {
     { DATA,     OPT_F, "no-align", 0 },
     { DATAMOD,  OPT_P, "preserve", 0 },
     { DATAMOD,  OPT_T, "panel-time", 0 },
+    { DATAMOD,  OPT_W, "weekstart", 2 },
+    { DATAMOD,  OPT_R, "repday", 2 },
     { DELEET,   OPT_D, "db", 0 },
     { DELEET,   OPT_F, "force", 0 },
     { DELEET,   OPT_L, "list", 0 },
@@ -326,6 +329,7 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_X, "matrix", 2 },
     { GNUPLOT,  OPT_N, "band", 2 },
     { GNUPLOT,  OPT_J, "band-style", 2 },
+    { GNUPLOT,  OPT_a, "bands", 2 },
     { GNUPLOT,  OPT_W, "font", 2 },
     { GNUPLOT,  OPT_L, "ylogscale", 1 },
     { GRAPHPG,  OPT_M, "monochrome", 0 },
@@ -335,10 +339,8 @@ struct gretl_option gretl_opts[] = {
     { GRIDPLOT, OPT_H, "height", 2 },
     { GRIDPLOT, OPT_R, "rows", 2 },
     { GRIDPLOT, OPT_C, "cols", 2 },
+    { GRIDPLOT, OPT_L, "layout", 2 },
     { GRIDPLOT, OPT_U, "output", 2 },
-    { GRIDPLOT, OPT_I, "input", 2 },
-    { GRIDPLOT, OPT_i, "inbuf", 2 },
-    { GRIDPLOT, OPT_S, "strings", 2 },
     { HECKIT,   OPT_M, "ml", 0 },
     { HECKIT,   OPT_G, "opg", 0 },
     { HECKIT,   OPT_R, "robust", 0 },
@@ -518,7 +520,7 @@ struct gretl_option gretl_opts[] = {
     { OUTFILE,  OPT_W, "write", 0 },
     { OUTFILE,  OPT_Q, "quiet", 0 },
     { OUTFILE,  OPT_B, "buffer", 1 }, /* note: 1 is for backward compat */
-    { OUTFILE,  OPT_T, "tempfile", 1 },
+    { OUTFILE,  OPT_T, "tempfile", 2 },
     { PANEL,    OPT_B, "between", 0 },
     { PANEL,    OPT_D, "time-dummies", 1 },
     { PANEL,    OPT_F, "fixed-effects", 0 },
@@ -1366,7 +1368,7 @@ double get_optval_double (int ci, gretlopt opt, int *err)
  *
  * Returns: the integer ancillary value currently
  * associated with option @opt for command @ci, if any,
- * otherwise 0. A non-zero value written to @err if
+ * otherwise 0. A non-zero value is written to @err if
  * such a value is required for the option in question
  * but is not present.
  */

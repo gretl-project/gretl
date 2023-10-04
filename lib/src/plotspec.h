@@ -88,7 +88,7 @@ typedef struct {
     char *ustr;          /* custom 'using' string */
     int *mcols;          /* data-matrix columns used */
     float pscale;        /* scale factor for points */
-    char rgb[8];         /* rgb color specification */
+    char rgb[10];        /* rgb color specification */
     char yaxis;          /* 1 for left, 2 for right */
     int type;            /* 1, 2, ... (style reference) */
     int ptype;           /* point type */
@@ -154,7 +154,7 @@ struct GPT_SPEC_ {
     int n_lines;               /* number of lines */
     int samples;               /* number of samples for parametric plots */
     int border;                /* gnuplot border code */
-    char border_lc[8];         /* border line color */
+    char border_lc[10];        /* border line color */
     int bmargin;               /* bottom margin */
     float boxwidth;            /* when using box style for frequency plots */
     float fillfrac;            /* fraction for "set style fill solid" */

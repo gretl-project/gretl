@@ -20,16 +20,19 @@
 #ifndef GRETL_MULTIPLOT_H_
 #define GRETL_MULTIPLOT_H_
 
-int gretl_multiplot_active (void);
+int gretl_multiplot_collecting (void);
 
-int gretl_multiplot_start (gretlopt opt);
+int gretl_multiplot_start (const char *param, gretlopt opt,
+			   DATASET *dset);
 
-int gretl_multiplot_add_plot (int row, int col, gchar *buf);
+int gretl_multiplot_add_plot (gchar *buf);
 
 int gretl_multiplot_finalize (gretlopt opt);
 
-int gretl_multiplot_revise (gretlopt opt);
+int gretl_multiplot_from_array (const char *param, gretlopt opt);
 
-int gretl_multiplot_from_array (gretlopt opt);
+int check_gridplot_options (gretlopt opt);
+
+void gretl_multiplot_destroy (void);
 
 #endif /* GRETL_MULTIPLOT_H_ */

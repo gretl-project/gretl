@@ -303,7 +303,7 @@ supports. Otherwise you need to compose \texttt{L} yourself.
 open train.gdt
 list L = dataset
 bundle b = defbundle("ranges_outfile", "train.ranges")
-bundle savemod = null
+bundle savemod = defbundle()
 svm(L, b, &savemod)
 
 open test.gdt --preserve
@@ -425,7 +425,7 @@ character of the dependent variable. However, this can be overridden
 by including an appropriate integer code under the key
 \texttt{svm\_type}---see panel (a) of the table---as in
 \begin{code}
-bundle parms = null
+bundle parms = defbundle()
 parms.svm_type = 4 # select nu-SVR
 \end{code}
 We also mentioned that gretl defaults to the RBF kernel; this can be
@@ -675,7 +675,7 @@ list L = dataset
 matrix gmat = {-3,7,1; 1,-13,-2}
 smpl 1 1000
 bundle b = defbundle("grid", gmat, "search_only", 1)
-bundle bestparms = null
+bundle bestparms = defbundle()
 svm(L, b, &bestparms)
 print bestparms
 
@@ -950,7 +950,7 @@ list L = lny X
 bundle b = defbundle("n_train", 3000, "shrinking", 0, "search_only", 1)
 b.grid = {-1, 5, 2; 3, -12, -2}
 b.seed = 1611771
-bundle res = null
+bundle res = defbundle()
 svm(L, b, &res)
 if $mpirank < 1 # just print once
   matrix R = res.xvalid_results
@@ -1170,7 +1170,7 @@ as in
 \begin{code}
 ...
 params.probability = 1
-bundle bprob = null
+bundle bprob = defbundle()
 series yhat = svm(L, params, null, &bprob)
 \end{code}
 (where the \texttt{null} argument indicates that we're skipping the
@@ -1220,7 +1220,7 @@ probability estimates. First, after the line ``\texttt{parms.quiet =
 %
 \begin{code}
 parms.probability = 1
-bundle bprob = null
+bundle bprob = defbundle()
 yhat_svm = svm(All, parms, null, &bprob)
 \end{code}
 Then, to inspect the probabilities for the testing data, one could

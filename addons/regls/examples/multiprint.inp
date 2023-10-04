@@ -7,11 +7,11 @@ list X = population..LemasPctOfficDrugUn
 smpl 1 800
 bundle parms = _(nlambda=8, verbosity=0)
 bundle lb = regls(murdPerPop, X, parms)
-regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
+regls_multiprint(lb, murdPerPop, X)
 
 series ys = stdize(murdPerPop, 0)
 list Xs = stdize(X, 0)
 parms.stdize = 0
 parms.nlambda = 8
 bundle lb = regls(ys, Xs, parms)
-regls_multiprint(lb.B, lb.lfrac, ys, Xs, lb.crit)
+regls_multiprint(lb, ys, Xs)

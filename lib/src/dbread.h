@@ -142,11 +142,11 @@ int lib_spread_db_data (double **dbZ, SERIESINFO *sinfo,
 int lib_spread_dbnomics_data (DATASET *dset, DATASET *dbset,
 			      PRN *prn);
 
-int compact_data_set (DATASET *dset, int newpd,
-		      CompactMethod default_method,
-		      int monstart, int repday);
+int compact_dataset (DATASET *dset, int newpd,
+		     CompactMethod default_method,
+		     int wkstart, int repday);
 
-int expand_data_set (DATASET *dset, int newpd);
+int expand_dataset (DATASET *dset, int newpd);
 
 int midas_days_per_period (int days_per_week, int pd);
 

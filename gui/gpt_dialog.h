@@ -28,4 +28,6 @@ void pdf_font_selector (GtkButton *button, gpointer p);
 
 void set_plotbars_filename (const char *fname, gpointer data);
 
+void show_color_tool (void);
+
 #endif /* GPT_DIALOG_H */

@@ -27,6 +27,7 @@
 #include "base_utils.h"
 
 #ifndef GRETL_EDIT
+#include "library.h"
 #include "gui_utils.h"
 #include "treeutils.h"
 #include "cmdstack.h"
@@ -45,6 +46,8 @@
 #include "uservar.h"
 #include "gretl_bfgs.h"
 #include "libglue.h"
+#include "datafiles.h"
+#include "fnsave.h"
 #endif
 
 #include <errno.h>
@@ -545,7 +548,7 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
     if (ci == COPY_CSV) {
 	csvp->delim = '\t';
     } else if (ci == OPEN_DATA || ci == APPEND_DATA) {
-	csvp->delim = 'a';
+	csvp->delim = 'a'; /* automatic */
 	imin = 0;
     } else {
 	csvp->delim = ',';
@@ -566,7 +569,7 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
     pack_in_hbox(tmp, vbox, 5);
 
     /* choice of separator */
-    for (i=imin; delims[i]; i++) {
+    for (i=imin; delims[i] != '\0'; i++) {
 	button = gtk_radio_button_new_with_label(group, _(labels[i]));
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 	pack_in_hbox(button, vbox, 0);
@@ -577,10 +580,13 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
 			 G_CALLBACK(set_delim), csvp);
 	g_object_set_data(G_OBJECT(button), "action",
 			  GINT_TO_POINTER(delims[i]));
+        if (delims[i] == ';') {
+            csvp->semic_button = button;
+        }
     }
 
     if (',' == get_local_decpoint()) {
-        GSList *dgroup;
+        GSList *dgroup = NULL;
 
         vbox_add_hsep(vbox);
         tmp = gtk_label_new(_("decimal point character:"));
@@ -590,19 +596,20 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
         button = gtk_radio_button_new_with_label(NULL, _("period (.)"));
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
         pack_in_hbox(button, vbox, 0);
-        g_signal_connect(G_OBJECT(button), "clicked",
-                         G_CALLBACK(set_dec), csvp);
         g_object_set_data(G_OBJECT(button), "action",
                           GINT_TO_POINTER('.'));
+        g_signal_connect(G_OBJECT(button), "clicked",
+                         G_CALLBACK(set_dec), csvp);
 
         /* comma decpoint */
         dgroup = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
         button = gtk_radio_button_new_with_label(dgroup, _("comma (,)"));
+        csvp->comma_sep = button;
         pack_in_hbox(button, vbox, 0);
-        g_signal_connect(G_OBJECT(button), "clicked",
-                         G_CALLBACK(set_dec), csvp);
         g_object_set_data(G_OBJECT(button), "action",
                           GINT_TO_POINTER(','));
+        g_signal_connect(G_OBJECT(button), "clicked",
+                         G_CALLBACK(set_dec), csvp);
     }
 
     if (otype == GRETL_OBJ_DSET && (ci == EXPORT_CSV || ci == COPY_CSV)) {
@@ -3715,7 +3722,7 @@ static void abort_compact (GtkWidget *w, gpointer data)
 {
     gint *method = (gint *) data;
 
-    *method = COMPACT_NONE;
+    *method = COMPACT_UNSET;
 }
 
 static void set_compact_type (GtkWidget *w, gpointer data)
@@ -3755,7 +3762,9 @@ static void set_target_pd (GtkWidget *w, gpointer data)
     }
 }
 
-static void set_mon_start (GtkWidget *w, gpointer data)
+/* Set whether the week starts on Monday or Sunday */
+
+static void set_week_start (GtkWidget *w, gpointer data)
 {
     gint *ms = (gint *) data;
 
@@ -3813,8 +3822,8 @@ static void pd_buttons (GtkWidget *dlg, int spd, struct compaction_info *cinfo)
     }
 }
 
-static void monday_buttons (GtkWidget *dlg, int *mon_start,
-                            struct compaction_info *cinfo)
+static void week_start_buttons (GtkWidget *dlg, int *week_start,
+				struct compaction_info *cinfo)
 {
     GtkWidget *button;
     GtkWidget *vbox;
@@ -3826,38 +3835,37 @@ static void monday_buttons (GtkWidget *dlg, int *mon_start,
     cinfo->monday_button = button;
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
-
     g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(set_mon_start), mon_start);
+                     G_CALLBACK(set_week_start), week_start);
     g_object_set_data(G_OBJECT(button), "action",
-                      GINT_TO_POINTER(1));
+                      GINT_TO_POINTER(G_DATE_MONDAY));
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON (button));
     button = gtk_radio_button_new_with_label(group, _("Week starts on Sunday"));
     cinfo->sunday_button = button;
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
-
     g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(set_mon_start), mon_start);
+                     G_CALLBACK(set_week_start), week_start);
     g_object_set_data(G_OBJECT(button), "action",
-                      GINT_TO_POINTER(0));
+                      GINT_TO_POINTER(G_DATE_SUNDAY));
 }
 
 static const char *weekdays[] = {
-    N_("Sunday"),
     N_("Monday"),
     N_("Tuesday"),
     N_("Wednesday"),
     N_("Thursday"),
     N_("Friday"),
-    N_("Saturday")
+    N_("Saturday"),
+    N_("Sunday"),
 };
 
-gboolean select_repday (GtkComboBox *menu, int *repday)
+static gboolean select_repday (GtkComboBox *menu, int *repday)
 {
     int i = gtk_combo_box_get_active(menu);
 
-    *repday = (dataset->pd == 7)? i : i + 1;
+    /* convert to 1-based */
+    *repday = i + 1;
 
     return FALSE;
 }
@@ -3872,7 +3880,7 @@ enum {
 
 static int method_selected (int code, CompactMethod method)
 {
-    if (code == COMPACT_AVG && method == COMPACT_NONE) {
+    if (code == COMPACT_AVG && method == COMPACT_UNSET) {
         return 1;
     } else {
         return code == method;
@@ -3946,6 +3954,7 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
     }
 
     if (dated_daily_data(dataset) && cinfo->repday != NULL) {
+	int repval = *cinfo->repday;
         GtkWidget *hbox, *daymenu;
 
         hbox = gtk_hbox_new(FALSE, 5);
@@ -3959,14 +3968,10 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
         cinfo->wkday_opt = button;
 
         daymenu = gtk_combo_box_text_new();
-        for (i=0; i<7; i++) {
-            if ((i == 0 && dataset->pd != 7) ||
-                (i == 6 && dataset->pd == 5)) {
-                continue;
-            }
+        for (i=0; i<dataset->pd; i++) {
             combo_box_append_text(daymenu, _(weekdays[i]));
         }
-        gtk_combo_box_set_active(GTK_COMBO_BOX(daymenu), 0);
+        gtk_combo_box_set_active(GTK_COMBO_BOX(daymenu), repval);
         gtk_box_pack_start(GTK_BOX(hbox), daymenu, FALSE, FALSE, 5);
         g_signal_connect(G_OBJECT(daymenu), "changed",
                          G_CALLBACK(select_repday), cinfo->repday);
@@ -3990,7 +3995,7 @@ static int compact_methods_set (CompactMethod *method)
 
     if (dataset->v == 2) {
         m = series_get_compact_method(dataset, 1);
-        if (m != COMPACT_NONE) {
+        if (m != COMPACT_UNSET) {
             *method = m;
         }
         return SINGLE_SERIES;
@@ -3998,7 +4003,7 @@ static int compact_methods_set (CompactMethod *method)
 
     for (i=1; i<dataset->v; i++) {
         m = series_get_compact_method(dataset, i);
-        if (m != COMPACT_NONE) {
+        if (m != COMPACT_UNSET) {
             nset++;
         }
         if (all_same && mbak >= 0 && m != mbak) {
@@ -4021,13 +4026,13 @@ static int compact_methods_set (CompactMethod *method)
     return ret;
 }
 
-void data_compact_dialog (int spd, int *target_pd, int *mon_start,
+void data_compact_dialog (int spd, int *target_pd, int *week_start,
                           CompactMethod *method, int *repday,
                           GtkWidget *parent)
 {
     GtkWidget *dlg, *tmp, *vbox, *hbox;
     int show_pd_buttons = 0;
-    int show_monday_buttons = 0;
+    int show_week_start_option = 0;
     int show_method_buttons = 0;
     int methods_set = NO_METHODS_SET;
     struct compaction_info cinfo;
@@ -4037,13 +4042,13 @@ void data_compact_dialog (int spd, int *target_pd, int *mon_start,
                            GRETL_DLG_BLOCK);
 
     cinfo.target_pd = target_pd;
-    cinfo.repday = repday;
+    cinfo.repday = repday; /* pointer to int, or NULL */
     cinfo.monday_button = NULL;
     cinfo.sunday_button = NULL;
     cinfo.wkday_opt = NULL;
 
-    if (mon_start != NULL) {
-        *mon_start = 1;
+    if (week_start != NULL) {
+        *week_start = G_DATE_MONDAY;
     }
 
     if (*target_pd != 0) {
@@ -4070,8 +4075,8 @@ void data_compact_dialog (int spd, int *target_pd, int *mon_start,
                 labelstr = g_strdup(_("Compact daily data to weekly"));
             }
             *target_pd = 52;
-            if (mon_start != NULL) {
-                show_monday_buttons = 1;
+            if (week_start != NULL) {
+                show_week_start_option = 1;
             }
         } else if (dated_weekly_data(dataset)) {
             labelstr = g_strdup(_("Compact weekly data to monthly"));
@@ -4098,14 +4103,14 @@ void data_compact_dialog (int spd, int *target_pd, int *mon_start,
     */
     if (show_pd_buttons) {
         pd_buttons(dlg, spd, &cinfo);
-        if (show_monday_buttons || show_method_buttons) {
+        if (show_week_start_option || show_method_buttons) {
             vbox_add_hsep(vbox);
         }
     }
 
     /* 7-day daily data: give choice of when the week starts */
-    if (show_monday_buttons) {
-        monday_buttons(dlg, mon_start, &cinfo);
+    if (show_week_start_option) {
+        week_start_buttons(dlg, week_start, &cinfo);
         if (show_method_buttons) {
             vbox_add_hsep(vbox);
         }
@@ -4151,7 +4156,7 @@ static void set_expansion (GtkComboBox *cb, gpointer data)
     *newpd = sel == 0 ? 4 : 12;
 }
 
-/* called from do_expand_data_set() in database.c */
+/* called from do_expand_dataset() in database.c */
 
 void data_expand_dialog (int *newpd, GtkWidget *parent)
 {
@@ -4385,6 +4390,35 @@ int csv_open_dialog (const char *fname)
 
     return ret;
 }
+
+#ifndef GRETL_EDIT
+
+int gfn_open_dialog (const char *fname)
+{
+    const char *opts[] = {
+	N_("view code in this package"),
+	N_("install this package"),
+	N_("edit this package")
+    };
+    int resp;
+
+    resp = radio_dialog("gretl", fname, opts, 3, 0, 0, mdata->main);
+
+    if (resp == 0) {
+	char *bname = gretl_basename(NULL, fname, 0);
+
+	display_function_package_data(bname, fname, VIEW_PKG_CODE);
+	free(bname);
+    } else if (resp == 1) {
+	do_local_pkg_install(fname);
+    } else if (resp == 2) {
+	edit_specified_package(fname);
+    }
+
+    return 0;
+}
+
+#endif
 
 int radio_dialog (const char *title, const char *label, const char **opts,
                   int nopts, int deflt, int hcode, GtkWidget *parent)

@@ -51,7 +51,6 @@ struct ExecState_ {
     CMD *cmd;
     PRN *prn;
     char *line;
-    char *more;
     char runfile[MAXLEN];
     MODEL *model;          /* "workspace" model */
     MODEL *pmod;           /* set if new model is estimated */
@@ -126,5 +125,7 @@ int statements_get_structure (stmt *lines,
 			      int n_lines,
 			      int context,
 			      const char *name);
+
+int cmd_arg1_quoted (CMD *cmd);
 
 #endif /* CMD_PRIVATE_H */

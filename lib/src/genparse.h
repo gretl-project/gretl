@@ -209,6 +209,7 @@ enum {
     F_ISDISCR,
     F_ISDUMMY,
     F_TYPEOF,
+    F_TYPENAME,
     F_EXISTS,
     F_NELEM,
     F_PDF,
@@ -268,6 +269,7 @@ enum {
     F_BIN2DEC,
     F_ACCESS,
     F_POLROOTS,
+    F_STRVSORT,
     HF_JBTERMS,
     HF_FDEPTH,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
@@ -282,7 +284,6 @@ enum {
     F_T1,
     F_T2,
     F_COV,
-    F_CDEMEAN,
     F_MCOV,
     F_DUMIFY,
     F_SORTBY,
@@ -368,7 +369,6 @@ enum {
     F_IMAT,
     F_COMPLEX,
     F_RANDPERM,
-    F_STDIZE,
     F_CSWITCH,
     F_PSDROOT,
     F_INSTRINGS,
@@ -476,6 +476,8 @@ enum {
     F_STRFTIME,
     F_LDIFF,
     F_SDC,
+    F_CDEMEAN,
+    F_STDIZE,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
@@ -536,6 +538,7 @@ enum {
 
 enum {
     DUM_NULL = 1,
+    DUM_EMPTY,
     DUM_DIAG,
     DUM_UPPER,
     DUM_LOWER,
@@ -633,11 +636,10 @@ union val {
 enum node_flags {
     AUX_NODE = 1 << 0, /* auxiliary: free on exit */
     TMP_NODE = 1 << 1, /* temporary: free content on exit */
-    SVL_NODE = 1 << 2, /* holds string-valued series */
-    PRX_NODE = 1 << 3, /* aux node is proxy (don't reuse!) */
-    LHT_NODE = 1 << 4, /* node holds terminal of LHS */
-    MUT_NODE = 1 << 5, /* node is inherently mutable in type */
-    ALS_NODE = 1 << 6  /* function subject to "reversing" alias */
+    PRX_NODE = 1 << 2, /* aux node is proxy (don't reuse!) */
+    LHT_NODE = 1 << 3, /* node holds terminal of LHS */
+    MUT_NODE = 1 << 4, /* node is inherently mutable in type */
+    ALS_NODE = 1 << 5  /* function subject to "reversing" alias */
 };
 
 struct node {
@@ -683,14 +685,14 @@ typedef enum {
     P_STACK   = 1 << 26, /* executing stack() */
     P_ALTINP  = 1 << 27, /* the input string has been substituted */
     P_OBJQRY  = 1 << 28, /* querying the existence of an object */
-    P_STRVEC  = 1 << 29, /* "complex" calc with string-valued series */
-    P_PRNLIST = 1 << 30  /* defining a list for "print" */
+    P_PRNLIST = 1 << 29  /* defining a list for "print" */
 } genflags;
 
 struct lhinfo {
     int t;                 /* type of pre-existing LHS variable, if any */
     char name[VNAMELEN];   /* name of LHS variable */
     char *label;           /* descriptive string for series */
+    series_table *stab;    /* holds string values for series */
     int vnum;              /* ID number of pre-existing LHS series */
     user_var *uv;          /* address of pre-existing LHS variable */
     char *expr;            /* expression on left */

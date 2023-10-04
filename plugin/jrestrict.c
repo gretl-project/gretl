@@ -1944,10 +1944,25 @@ static int G_from_expanded_R (Jwrap *J, const gretl_matrix *R)
     return err;
 }
 
-static void nullspace_normalize (gretl_matrix *A)
+#define NSMIN 1.0e-16
+
+static void jrestrict_normalize_nullspace (gretl_matrix *A)
 {
     int i, j, nz, nm1, pos;
-    double aij;
+    double x, aij;
+
+    if (A->cols == 1) {
+	x = 0;
+	for (i=0; i<A->rows; i++) {
+	    if (fabs(A->val[i]) > x) {
+		x = A->val[i];
+	    }
+	}
+        for (i=0; i<A->rows; i++) {
+            aij = A->val[i] / x;
+            A->val[i] = fabs(aij) < NSMIN ? 0 : aij;
+        }
+    }
 
     for (i=0; i<A->rows; i++) {
 	nz = nm1 = pos = 0;
@@ -2093,7 +2108,7 @@ static int set_up_G (Jwrap *J, const gretl_restriction *rset)
     }
 
     if (!err) {
-	nullspace_normalize(J->G);
+	jrestrict_normalize_nullspace(J->G);
     }
 
     if (!err) {

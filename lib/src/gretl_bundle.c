@@ -1226,6 +1226,34 @@ const char *gretl_bundle_get_string (gretl_bundle *bundle,
 }
 
 /**
+ * gretl_bundle_get_strings:
+ * @bundle: bundle to access.
+ * @key: name of key to access.
+ * @ns: location to receive the number of strings, if any.
+ *
+ * Returns: the array of strings associated with @key in the
+ * specified @bundle, if any; otherwise NULL.
+ */
+
+const char **gretl_bundle_get_strings (gretl_bundle *bundle,
+				       const char *key,
+				       int *ns)
+{
+    const char **ret = NULL;
+    GretlType type = 0;
+    void *ptr;
+
+    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, NULL);
+    if (ptr != NULL && type == GRETL_TYPE_ARRAY) {
+	gretl_array *a = ptr;
+
+	ret = (const char **) gretl_array_get_strings(a, ns);
+    }
+
+    return ret;
+}
+
+/**
  * gretl_bundle_get_note:
  * @bundle: bundle to access.
  * @key: name of key to access.
@@ -3063,8 +3091,8 @@ gretl_array *gretl_bundle_get_keys (gretl_bundle *b, int *err)
     return A;
 }
 
-/* get the key strings from @b in the form of a "raw" array
-   of C type char *
+/* Get the key strings from @b in the form of a "raw" array
+   of C type char *, terminated by a NULL pointer.
 */
 
 char **gretl_bundle_get_keys_raw (gretl_bundle *b, int *ns)

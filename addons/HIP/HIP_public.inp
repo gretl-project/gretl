@@ -1,47 +1,65 @@
 /***********************************************************
- Bundle structure. 
- IVPROBIT: initial values for mle are computed by
- a simple Rivers&Vuong - two-step by the RiversVuong 
- function. Cholesky decomposition of the south-east 
- block of the covariance matrix is used.   
- HETPROBIT: heteroskedasticity of known form. 
+   Bundle structure.
+   IVPROBIT: initial values for mle are computed by
+   a simple Rivers&Vuong - two-step by the RiversVuong
+   function. Cholesky decomposition of the south-east
+   block of the covariance matrix is used.
+   HETPROBIT: heteroskedasticity of known form.
 
- y_i = Z_i'\beta + \epsilon_i
- Z_i = ENDOG_i EXOG_i (Y_i X_1i)
- Y_i = \Pi'X_i + U_i
- X_i = EXOG ADDIN
+   y_i = Z_i'\beta + \epsilon_i
+   Z_i = ENDOG_i EXOG_i (Y_i X_1i)
+   Y_i = \Pi'X_i + U_i
+   X_i = EXOG ADDIN
 ***********************************************************/
 
 function bundle HIP_setup(series y, list EXOG, list ENDOG[null], \
-			  list ADDIN[null], list HETVAR[null])
+                          list ADDIN[null], list HETVAR[null])
 
     bundle ret = null
 
     # first, perform a few sanity checks
-    
+
     scalar id = nelem(ENDOG) - nelem(ADDIN)
 
-    if (nelem(ADDIN)!=0 && nelem(ENDOG)==0)	
-	printf "No endogenous variables specified. Are you sure this is what you want?\n"
-	return ret
-    elif (nelem(ADDIN)==0 && nelem(ENDOG)!=0)	 
-	scalar w = nelem(ENDOG)
-	printf "At least %g additional instruments need to be specified.\n", w
-	return ret
-    elif (id>0) 
-	printf "At least %g more instruments are needed. \n", id
-	return ret
+    if (nelem(ADDIN)!=0 && nelem(ENDOG)==0)
+        printf "No endogenous variables specified. Are you sure this is what you want?\n"
+        return ret
+    elif (nelem(ADDIN)==0 && nelem(ENDOG)!=0)
+        scalar w = nelem(ENDOG)
+        printf "At least %g additional instruments need to be specified.\n", w
+        return ret
+    elif (id>0)
+        printf "At least %g more instruments are needed. \n", id
+        return ret
+    endif
+
+    # check that there is no constant in HETVAR
+    done = 0
+    list dropped = deflist()
+    loop while !done --quiet
+        ols const HETVAR --quiet
+        if $ess < 1.0e-12
+            scalar i = imaxc(abs($coeff))
+            dropped += HETVAR[i]
+            HETVAR = HETVAR[-i]
+        else
+            done = 1
+        endif
+    endloop
+    if nelem(dropped)
+        printf "%s dropped from HETVAR\n", flatten(varnames(dropped), ", ")
     endif
     
+
     # then, check that y is a dummy variable
     check = isdummy(y) > 0
 
     if check == 0
-	printf "%s is not a dummy variable; aborting\n", argname(y)
-	ret["err"] = 48
-	return ret
+        printf "%s is not a dummy variable; aborting\n", argname(y)
+        ret["err"] = 48
+        return ret
     else
-	ret["err"] = 0
+        ret["err"] = 0
     endif
 
     # next, check if HIP is really needed at all
@@ -59,34 +77,34 @@ function bundle HIP_setup(series y, list EXOG, list ENDOG[null], \
 
     # Exogenous variables: X_1i
     ret["mk1"] = nelem(EXOG)
-    ret["mEXOG"] = { EXOG } 
+    ret["mEXOG"] = { EXOG }
     ret["mEXOGnames"] = varname(EXOG)
 
     # Endogenous variables: Y_i
     ret["mp"] = nelem(ENDOG)
-    ret["mENDOG"] = { ENDOG } 
+    ret["mENDOG"] = { ENDOG }
     ret["mENDOGnames"] = varname(ENDOG)
-     
+
     # Additional instruments: X_2i
-    ret["mk2"] = nelem(ADDIN) 
-    ret["mADDIN"] = { ADDIN } 
+    ret["mk2"] = nelem(ADDIN)
+    ret["mADDIN"] = { ADDIN }
     ret["mADDINnames"] = varname(ADDIN)
 
     # Heteros. variables: W_i
-    ret["mq"] = nelem(HETVAR)  
-    ret["mHETVAR"] = { HETVAR } 
+    ret["mq"] = nelem(HETVAR)
+    ret["mHETVAR"] = { HETVAR }
     ret["mHETVARnames"] = varname(HETVAR)
 
     # Total regressors in main equation
-    list Z = EXOG ENDOG 
-    ret["mh"] = ret["mk1"] + ret["mp"] 
-    ret["mZ"] = { Z } 
+    list Z = EXOG ENDOG
+    ret["mh"] = ret["mk1"] + ret["mp"]
+    ret["mZ"] = { Z }
     ret["mZnames"] = varname(Z)
 
     # Total instruments
-    list X = EXOG || ADDIN    
+    list X = EXOG || ADDIN
     ret["mk"] = ret["mk1"] + ret["mk2"]
-    ret["mX"] = { X } 
+    ret["mX"] = { X }
     ret["mXnames"] = varname(X)
 
     matrix Q = InitParm(&ret)
@@ -98,7 +116,7 @@ end function
 function scalar HIP_setoption(bundle *b, string opt, scalar value)
 
     err = 0
-   
+
     if opt=="verbose"
         if (value < 0) || (value > 3)
             err = 1
@@ -114,14 +132,14 @@ function scalar HIP_setoption(bundle *b, string opt, scalar value)
     else
         err = 3
     endif
-    
+
     if err>0
-        printf "Warning in DPB_setoption\n"
-	if err < 3
-	    printf "Illegal value %s = %d\n", opt, value
-	else
-	    printf "%s unrecognised option\n", opt
-	endif
+        printf "Warning in HIP_setoption\n"
+        if err < 3
+            printf "Illegal value %s = %d\n", opt, value
+        else
+            printf "%s unrecognised option\n", opt
+        endif
     endif
 
     return err
@@ -130,49 +148,49 @@ end function
 
 /********************************************************
 
- After mle estimation, replaces the estimated parameters
- and covariance matrix in the
- bundle structure in order to be used for print-out.     
+   After mle estimation, replaces the estimated parameters
+   and covariance matrix in the
+   bundle structure in order to be used for print-out.
 
- Options v and s:
- - verbose option v: 
- 0 = quiet, 1 = standard output(default), 
- 2 = first stages, 3 = verbose mle.
+   Options v and s:
+   - verbose option v:
+   0 = quiet, 1 = standard output(default),
+   2 = first stages, 3 = verbose mle.
 
- - standard error estimation s:
- 0 = OPG estimator(default), 1 = empirical Hessian, 2 = sandwich. 
+   - standard error estimation s:
+   0 = OPG estimator(default), 1 = empirical Hessian, 2 = sandwich.
 
 *********************************************************/
 
-function scalar HIP_estimate(bundle *b) 
-    
+function scalar HIP_estimate(bundle *b)
+
     series y = b["depvar"]
     matrix EXOG   = b["mEXOG"]
     matrix ENDOG  = b["mENDOG"]
     matrix ADDIN  = b["mADDIN"]
     matrix HETVAR = b["mHETVAR"]
     scalar iv = b["iv"]
-    	
+
     scalar k1 = b["mk1"]
     scalar k2 = b["mk2"]
     scalar p =  b["mp"]
     scalar q =  b["mq"]
-    
+
     scalar s = b["vcvmeth"]
-    scalar verbose = b["verbose"] 
+    scalar verbose = b["verbose"]
 
     # handle options for MLE
 
     if (verbose==3)
-	setopt mle --verbose
+        setopt mle --verbose
     else
-	setopt mle --quiet
+        setopt mle --quiet
     endif
-	    
+
     if (s==1)
-	setopt mle --hessian
-    elif(s==2)
-	setopt mle --robust
+        setopt mle --hessian
+        elif(s==2)
+        setopt mle --robust
     endif
 
     matrix theta = b["theta"]
@@ -194,87 +212,87 @@ function scalar HIP_estimate(bundle *b)
     start_ok = 0
     iters = 0
     loop while (start_ok == 0) && (iters<10) --quiet
-	iters++
-	scalar err = HIP_params_shape(&theta, &beta, &alpha, &Pi, 
-				      &psi, &C, k1, k2, p, q) 
+        iters++
+        scalar err = HIP_params_shape(&theta, &beta, &alpha, &Pi,
+          &psi, &C, k1, k2, p, q)
 
-	scalar err = HIP_loglik(y, &EXOG, &ENDOG, &ADDIN, &HETVAR, 
-				&beta, &alpha, &Pi, &psi, &C,
-				&llik, &omega, &sigma) 
-	
-	if err == 4
-	    theta[1:(k1+k2)] = theta[1:(k1+k2)] ./ 2
-	    printf "Brrr! Halving params\n"
-	else
-	    start_ok = 1
-	endif
+        scalar err = HIP_loglik(y, &EXOG, &ENDOG, &ADDIN, &HETVAR,
+          &beta, &alpha, &Pi, &psi, &C,
+          &llik, &omega, &sigma)
+
+        if err == 4
+            theta[1:(k1+k2)] = theta[1:(k1+k2)] ./ 2
+            printf "Brrr! Halving params\n"
+        else
+            start_ok = 1
+        endif
     endloop
 
     if iters==10
-	printf "Man, these data are weird! Giving up.\n"
-	return 101
+        printf "Man, these data are weird! Giving up.\n"
+        return 101
     endif
 
     SCORE = {}
 
     catch mle ll = llik
-	scalar err = HIP_params_shape(&theta, &beta, &alpha, &Pi, 
-				      &psi, &C, k1, k2, p, q) 
-	scalar err = HIP_loglik(y, &EXOG, &ENDOG, &ADDIN, &HETVAR, 
-				&beta, &alpha, &Pi, &psi, &C,
-				&llik, &omega, &sigma) 
-	SCORE = err ? zeros(1,rows(theta)) : \
-	    HIP_Score(y, &EXOG, &ENDOG, &ADDIN, &HETVAR,
-		      &beta, &alpha, &Pi, &psi, &C,
-		      &omega, &sigma)	    
-	
-	deriv theta = SCORE
-    end mle 
+        scalar err = HIP_params_shape(&theta, &beta, &alpha, &Pi,
+          &psi, &C, k1, k2, p, q)
+        scalar err = HIP_loglik(y, &EXOG, &ENDOG, &ADDIN, &HETVAR,
+          &beta, &alpha, &Pi, &psi, &C,
+          &llik, &omega, &sigma)
+        SCORE = err ? zeros(1,rows(theta)) : \
+          HIP_Score(y, &EXOG, &ENDOG, &ADDIN, &HETVAR,
+          &beta, &alpha, &Pi, &psi, &C,
+          &omega, &sigma)
+
+        deriv theta = SCORE
+    end mle
 
     errcode = $error
     b["errcode"] = $error
 
     if errcode == 0
-	matrix V = $vcv
-	b["theta"] = theta
-	b["VCVtheta"] = V	    
-	
-	if s==1
-	    b["vcvmeth"] = "Hessian"
-	elif s==2
-	    b["vcvmeth"] = "Sandwich"
-	else
-	    b["vcvmeth"] = "OPG"
-	endif
+        matrix V = $vcv
+        b["theta"] = theta
+        b["VCVtheta"] = V
 
-	if iv
-	    matrix X = EXOG ~ ADDIN
-	    scalar J = rescale_results(&b, &theta, &V, &SCORE)
-	    scalar ll_m  = sum(loglik_m(&ENDOG, &X, &Pi, &C, &omega))
-	    b["lnl1m"] = ll_m  - J
-	    b["theta"] = theta
-	    b["VCVtheta"] = V	    
-        else 
-	    scalar J = 0
-	    ll_m = 0
-        endif 	    
+        if s==1
+            b["vcvmeth"] = "Hessian"
+        elif s==2
+            b["vcvmeth"] = "Sandwich"
+        else
+            b["vcvmeth"] = "OPG"
+        endif
 
-	b["T"] = $T
-	b["t1"] = $t1
-	b["t2"] = $t2
+        if iv
+            matrix X = EXOG ~ ADDIN
+            scalar J = rescale_results(&b, &theta, &V, &SCORE)
+            scalar ll_m  = sum(loglik_m(&ENDOG, &X, &Pi, &C, &omega))
+            b["lnl1m"] = ll_m  - J
+            b["theta"] = theta
+            b["VCVtheta"] = V
+        else
+            scalar J = 0
+            ll_m = 0
+        endif
 
-	b["llt"] = llik - J
-	J = J*b["T"]
-	b["lnl1"] = $lnl - J
-	
-	b["lnl1c"] = $lnl - ll_m
-	b["infocrit"] = ($aic ~ $bic ~ $hqc) + 2*J
+        b["T"] = $T
+        b["t1"] = $t1
+        b["t2"] = $t2
 
-	b["SCORE"] = SCORE
+        b["llt"] = llik - J
+        J = J*b["T"]
+        b["lnl1"] = $lnl - J
 
-	HIP_diagnostics(&b)
+        b["lnl1c"] = $lnl - ll_m
+        b["infocrit"] = ($aic ~ $bic ~ $hqc) + 2*J
+
+        b["SCORE"] = SCORE
+
+        HIP_diagnostics(&b)
     else
-	printf "errcode = %d\n", errcode
+        printf "errcode = %d\n", errcode
     endif
 
     return errcode
@@ -297,7 +315,7 @@ function void HIP_printout(bundle *b)
     matrix psi = {}
     matrix C = {}
     err = HIP_params_shape(&theta, &beta, &alpha, &Pi, &psi,
-			   &C, k1, k2, p, q)
+      &C, k1, k2, p, q)
 
     stderr = sqrt(diag(b["VCVtheta"]))
 
@@ -306,9 +324,9 @@ function void HIP_printout(bundle *b)
     matrix sd_Pi = {}
     matrix sd_psi = {}
     matrix sd_C = {}
-    err = HIP_params_shape(&stderr, &sd_beta, &sd_alpha, 
-			   &sd_Pi, &sd_psi, 
-			   &sd_C, k1, k2, p, q)
+    err = HIP_params_shape(&stderr, &sd_beta, &sd_alpha,
+      &sd_Pi, &sd_psi,
+      &sd_C, k1, k2, p, q)
 
     scalar iv = b["iv"]
     scalar het = b["het"]
@@ -317,24 +335,24 @@ function void HIP_printout(bundle *b)
     matrix V = alpha ~ sd_alpha
 
     if (het==1 && iv==1)
-	printf "Heteroskedastic probit model with endogenous regressors\n"
-    elif (het==0 && iv==1) 
-	printf "Probit model with endogenous regressors\n"
+        printf "Heteroskedastic probit model with endogenous regressors\n"
+    elif (het==0 && iv==1)
+        printf "Probit model with endogenous regressors\n"
     elif (het==1 && iv==0)
-	printf "Heteroskedastic probit model \n"
+        printf "Heteroskedastic probit model \n"
     else
-	printf "Probit model \n"
+        printf "Probit model \n"
     endif
 
     printf "ML, using observations %d-%d\n", b["t1"], b["t2"]
 
     string depvar = b["depvarname"]
     printf "Dependent Variable: @depvar \n"
-    if iv 
-	string endog = b["mENDOGnames"]
-	string inst_names = b["mXnames"]
-	printf "Instrumented: %s\n", strsub(endog, ",", ", ")
-	printf "Instruments: %s \n", strsub(inst_names, ",", ", ")
+    if iv
+        string endog = b["mENDOGnames"]
+        string inst_names = b["mXnames"]
+        printf "Instrumented: %s\n", strsub(endog, ",", ", ")
+        printf "Instruments: %s \n", strsub(inst_names, ",", ", ")
     endif
 
     printf "Parameter covariance matrix: %s\n", b["vcvmeth"]
@@ -342,11 +360,11 @@ function void HIP_printout(bundle *b)
     mnames = b["mZnames"]
     matrix M = beta ~ sd_beta
     modprint M mnames
-     
+
     if het
-	printf "Variance \n"
-	mnames = b["mHETVARnames"]
-     	modprint V mnames
+        printf "Variance \n"
+        mnames = b["mHETVARnames"]
+        modprint V mnames
     endif
 
     if v>1 &&  iv
@@ -359,63 +377,63 @@ function void HIP_printout(bundle *b)
     endif
     infocrit = b["infocrit"]
     printf "Log-likelihood   %14.4f  Akaike criterion %12.4f\n", \
-    b["lnl1"], infocrit[1]
+      b["lnl1"], infocrit[1]
     printf "Schwarz criterion  %12.4f  Hannan-Quinn   %14.4f\n", \
-    infocrit[2], infocrit[3]
+      infocrit[2], infocrit[3]
     if iv
-	printf "Conditional ll     %12.6f  Cragg-Donald stat. %10.3f\n\n", \
-    b["lnl1c"], b["CraggDonald"] 
+        printf "Conditional ll     %12.6f  Cragg-Donald stat. %10.3f\n\n", \
+          b["lnl1c"], b["CraggDonald"]
     else
         printf "\n"
     endif
 
     WT = b["WaldAll"]
     printf "Overall test (Wald) = %g (%d df, p-value = %6.4f)\n", \
-    WT[1], WT[2], WT[3] 
+      WT[1], WT[2], WT[3]
 
     if !(iv || het) # ordinary probit
-	CI = b["normtest"]
-	printf "Chesher and Irish normality test = %g (%d df, p-value = %6.4f)\n", \
-	CI[1], CI[2], CI[3]
+        CI = b["normtest"]
+        printf "Chesher and Irish normality test = %g (%d df, p-value = %6.4f)\n", \
+          CI[1], CI[2], CI[3]
     endif
-    
+
     if iv
-	WT = b["WaldEnd"]
-	printf "Endogeneity test (Wald) = %g (%d df, p-value = %6.4f)\n", \
-	WT[1], WT[2], WT[3] 
+        WT = b["WaldEnd"]
+        printf "Endogeneity test (Wald) = %g (%d df, p-value = %6.4f)\n", \
+          WT[1], WT[2], WT[3]
         if (k2>p)
-	    LM = b["LMOverid"]
-	    printf "Test for overidentifying restrictions (LM) = %g (%d df, p-value = %6.4f)\n", \
-	    LM[1], LM[2], LM[3] 
-	endif
+            LM = b["LMOverid"]
+            printf "Test for overidentifying restrictions (LM) = %g (%d df, p-value = %6.4f)\n", \
+              LM[1], LM[2], LM[3]
+        endif
     endif
 
     if het
-	T = b["HETtest"]
-	if iv
-	     printf "Heteroskedasticity test (Wald) = %g (%d df, p-value = %6.4f)\n", \
-	     T[1], T[2], T[3] 
-	 else
-	     printf "Heteroskedasticity test (LR) = %g (%d df, p-value = %6.4f)\n", \
-	     T[1], T[2], T[3] 
+        T = b["HETtest"]
+        if iv
+            printf "Heteroskedasticity test (Wald) = %g (%d df, p-value = %6.4f)\n", \
+              T[1], T[2], T[3]
+        else
+            printf "Heteroskedasticity test (LR) = %g (%d df, p-value = %6.4f)\n", \
+              T[1], T[2], T[3]
 
-	     CI = b["normtest"]
-	     printf "Chesher and Irish normality test = %g (%d df, p-value = %6.4f)\n", \
-	     CI[1], CI[2], CI[3]
-	 endif
+            CI = b["normtest"]
+            printf "Chesher and Irish normality test = %g (%d df, p-value = %6.4f)\n", \
+              CI[1], CI[2], CI[3]
+        endif
 
-     endif
+    endif
 
- end function
+end function
 
-function bundle HIP(series y "Dependent variable", 
-		    list EXOG "Exogenous variables", 
-		    list ENDOG[null] "Endogenous variables",\ 
-		    list ADDIN[null] "Instruments", 
-		    list HETVAR[null] "Variance regressors", \
-		    int v[0:3:1] "Verbosity level", 
-		    int s[0:2:0] "Covariance matrix estimation" \
-		    {"OPG", "Hessian", "Sandwich"})
+function bundle HIP(series y "Dependent variable",
+                    list EXOG "Exogenous variables",
+                    list ENDOG[null] "Endogenous variables",\
+                    list ADDIN[null] "Instruments",
+                    list HETVAR[null] "Variance regressors", \
+                    int v[0:3:1] "Verbosity level",
+                    int s[0:2:0] "Covariance matrix estimation" \
+                    {"OPG", "Hessian", "Sandwich"})
 
     # first thing, drop all obs with missing values anywhere
     list EVERYTHING = y || EXOG || ENDOG || ADDIN || HETVAR
@@ -432,31 +450,31 @@ function bundle HIP(series y "Dependent variable",
     bundle b = HIP_setup(y, EXOG, ENDOG, ADDIN, HETVAR)
 
     if exists(b)
-	if v != 1
-	    HIP_setoption(&b, "verbose", v)
-	endif
+        if v != 1
+            HIP_setoption(&b, "verbose", v)
+        endif
 
-	if s != 0
-	    HIP_setoption(&b, "vcvmeth", s)
-	endif
+        if s != 0
+            HIP_setoption(&b, "vcvmeth", s)
+        endif
 
-	b["depvarname"] = argname(y)
-	err = b["err"]
-	if ! err
-	    err = HIP_estimate(&b)
-	endif
+        b["depvarname"] = argname(y)
+        err = b["err"]
+        if ! err
+            err = HIP_estimate(&b)
+        endif
 
-	if !err 
-	    if v > 0
-		HIP_printout(&b)
-	    else
-		printf "Done.\n"
-	    endif
-	else
-	    printf "Error = %s\n", errmsg(err)
-	endif
+        if !err
+            if v > 0
+                HIP_printout(&b)
+            else
+                printf "Done.\n"
+            endif
+        else
+            printf "Error = %s\n", errmsg(err)
+        endif
     endif
-   
-   return b
- end function   
+
+    return b
+end function
 

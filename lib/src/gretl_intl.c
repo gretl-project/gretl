@@ -136,7 +136,7 @@ int reset_local_decpoint (void)
 
     set_atof_point(decpoint);
 
-#ifdef OS_OSX
+#if 0 // was ifdef OS_OSX
     fprintf(stderr, "via localeconv, decimal = '%c'\n", decpoint);
 #endif
 

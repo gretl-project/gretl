@@ -823,7 +823,7 @@ static void maybe_date_matrix (gretl_matrix *m, int *minfo)
 static int gretl_matrix_bcast (gretl_matrix **pm, int id, int root)
 {
     gretl_matrix *m = NULL;
-    int minfo[MI_LEN];
+    int minfo[MI_LEN] = {0};
     int err = 0;
 
     if (id == root) {
@@ -857,10 +857,10 @@ static int gretl_matrix_bcast (gretl_matrix **pm, int id, int root)
         int n = minfo[0] * minfo[1];
         int cmplx = minfo[2];
 
-        if (cmplx) {
+        if (n > 0 && cmplx) {
             err = mpi_bcast(m->z, n, mpi_complex, root,
                             mpi_comm_world);
-        } else {
+        } else if (n > 0) {
             err = mpi_bcast(m->val, n, mpi_double, root,
                             mpi_comm_world);
         }
@@ -1352,10 +1352,10 @@ int gretl_matrix_mpi_send (const gretl_matrix *m, int dest)
     if (!err) {
         int n = m->rows * m->cols;
 
-        if (m->is_complex) {
+        if (n > 0 && m->is_complex) {
             err = mpi_send(m->z, n, mpi_complex, dest, TAG_CMATRIX_VAL,
                            mpi_comm_world);
-        } else {
+        } else if (n > 0) {
             err = mpi_send(m->val, n, mpi_double, dest, TAG_MATRIX_VAL,
                            mpi_comm_world);
         }
@@ -1536,11 +1536,11 @@ gretl_matrix *gretl_matrix_mpi_receive (int source,
 
         if (m == NULL) {
             *err = E_ALLOC;
-        } else if (cmplx) {
+        } else if (n > 0 && cmplx) {
             *err = mpi_recv(m->z, n, mpi_complex, source,
                             TAG_CMATRIX_VAL, mpi_comm_world,
                             MPI_STATUS_IGNORE);
-        } else {
+        } else if (n > 0) {
             *err = mpi_recv(m->val, n, mpi_double, source,
                             TAG_MATRIX_VAL, mpi_comm_world,
                             MPI_STATUS_IGNORE);
@@ -1591,15 +1591,16 @@ int gretl_matrix_mpi_fill (gretl_matrix **pm, int source)
                    m->is_complex != cmplx) {
             err = E_NONCONF;
         }
-
-        if (!err && cmplx) {
-            err = mpi_recv(m->z, n, mpi_complex, source,
-                           TAG_CMATRIX_VAL, mpi_comm_world,
-                           MPI_STATUS_IGNORE);
-        } else if (!err) {
-            err = mpi_recv(m->val, n, mpi_double, source,
-                           TAG_MATRIX_VAL, mpi_comm_world,
-                           MPI_STATUS_IGNORE);
+        if (!err && n > 0) {
+            if (cmplx) {
+                err = mpi_recv(m->z, n, mpi_complex, source,
+                               TAG_CMATRIX_VAL, mpi_comm_world,
+                               MPI_STATUS_IGNORE);
+            } else {
+                err = mpi_recv(m->val, n, mpi_double, source,
+                               TAG_MATRIX_VAL, mpi_comm_world,
+                               MPI_STATUS_IGNORE);
+            }
         }
         if (!err) {
             maybe_date_matrix(m, minfo);
@@ -2035,7 +2036,7 @@ static int scatter_to_self (int *minfo, double *dval,
     int r = minfo[0];
     int c = minfo[1];
     int cmplx = minfo[2];
-    size_t n;
+    size_t n = r * c;
     int err = 0;
 
     if (cmplx) {
@@ -2046,11 +2047,11 @@ static int scatter_to_self (int *minfo, double *dval,
 
     if (*pm == NULL) {
         err = E_ALLOC;
-    } else if (cmplx) {
-        n = r * c * sizeof *zval;
+    } else if (cmplx && n > 0) {
+        n *= sizeof *zval;
         memcpy((*pm)->z, zval, n);
-    } else {
-        n = r * c * sizeof *dval;
+    } else if (n > 0) {
+        n *= sizeof *dval;
         memcpy((*pm)->val, dval, n);
     }
 
@@ -2100,14 +2101,16 @@ static int scatter_by_rows (const gretl_matrix *m,
     minfo[1] = m->cols;
     minfo[2] = cmplx;
 
-    /* we'll need a working buffer */
-    if (cmplx) {
-        ztmp = malloc(n * sizeof *ztmp);
-    } else {
-        dtmp = malloc(n * sizeof *dtmp);
-    }
-    if (ztmp == NULL && dtmp == NULL) {
-        err = E_ALLOC;
+    if (n > 0) {
+        /* we'll need a working buffer */
+        if (cmplx) {
+            ztmp = malloc(n * sizeof *ztmp);
+        } else {
+            dtmp = malloc(n * sizeof *dtmp);
+        }
+        if (ztmp == NULL && dtmp == NULL) {
+            err = E_ALLOC;
+        }
     }
 
     for (i=0; i<np && !err; i++) {
@@ -2123,10 +2126,10 @@ static int scatter_by_rows (const gretl_matrix *m,
         } else {
             err = mpi_send(minfo, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
                            mpi_comm_world);
-            if (!err && cmplx) {
+            if (!err && cmplx && n > 0) {
                 err = mpi_send(ztmp, n, mpi_complex, i, TAG_CMATRIX_VAL,
                                mpi_comm_world);
-            } else if (!err) {
+            } else if (!err && n > 0) {
                 err = mpi_send(dtmp, n, mpi_double, i, TAG_MATRIX_VAL,
                                mpi_comm_world);
             }

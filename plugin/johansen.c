@@ -1093,7 +1093,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
             if (!err) {
                 form_Pi(v, Pi);
             }
-        } else if (xc < v->ncoeff) {
+        } else if (xc < v->ncoeff && v->B != NULL) {
             /* transcribe EC terms to v->B */
             var_B_insert_alpha(v);
         }
@@ -1914,6 +1914,34 @@ johansen_LR_calc (const GRETL_VAR *jvar, const gretl_matrix *evals,
     return err;
 }
 
+#define NSMIN 1.0e-16
+
+static gretl_matrix *johansen_nullspace (const gretl_matrix *R,
+					 int *err)
+{
+    gretl_matrix *H = gretl_matrix_right_nullspace(R, err);
+
+    if (!*err && H->cols == 1) {
+	/* this normalization used to be applied in
+	   gretl_matrix.c, prior to 2023-05-08
+	*/
+	double hij, x = 0;
+	int i;
+
+	for (i=0; i<H->rows; i++) {
+	    if (fabs(H->val[i]) > x) {
+		x = H->val[i];
+	    }
+	}
+        for (i=0; i<H->rows; i++) {
+            hij = H->val[i] / x;
+            H->val[i] = fabs(hij) < NSMIN ? 0 : hij;
+        }
+    }
+
+    return H;
+}
+
 /* see Johansen (1995), section 7.2: compute the p x s
    direct restriction matrix H = R_\perp and form the
    following two intermediate matrices:
@@ -1936,7 +1964,7 @@ static int prep_beta_restriction (const GRETL_VAR *jvar,
         return E_DATA;
     }
 
-    H = gretl_matrix_right_nullspace(R, &err);
+    H = johansen_nullspace(R, &err);
     if (err) {
         return err;
     }
@@ -2643,7 +2671,7 @@ static int vecm_beta_test (GRETL_VAR *jvar,
     int err = 0;
 
     R = rset_get_R_matrix(rset);
-    H = gretl_matrix_right_nullspace(R, &err);
+    H = johansen_nullspace(R, &err);
 
     if (err) {
         return err;

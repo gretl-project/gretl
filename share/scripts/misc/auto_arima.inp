@@ -1,0 +1,41 @@
+###
+### create an artificial quarterly dataset with 256 observations
+###
+
+nulldata 256
+setobs 4 1960:1
+set seed 24072023
+
+###
+### generate an arma(2,2) process
+###
+
+y = filter(normal(), {1,0.5, -0.3}, {1.4, -0.8})
+
+###
+### compute information criteria for all models up to 4,4
+###
+
+# optionally, one can append the "--quiet" option
+arima 4 4 ; y --lagselect 
+
+
+###
+### pick up the best model
+###
+
+# choose one of "AIC, "BIC", "HQC"
+crit = "HQC" 
+
+# select the appropriate column of the $test matrix
+colsel = 2 + instrings(strsplit("AIC BIC HQC"), crit)
+
+# select the appropriate row of the $test matrix
+best = iminc($test[,colsel])
+
+# set p and q
+p = $test[best, 1]
+q = $test[best, 2]
+
+# estimate the "best" model
+arima p q ; y

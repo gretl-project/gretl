@@ -6924,11 +6924,12 @@ double gretl_matrix_dot_product (const gretl_matrix *a,
  * @r: pointer to rows of result.
  * @c: pointer to columns of result.
  *
- * Used to establish the dimensions of the result of a "dot"
- * operation such as A .* B or A .+ B.
+ * Used to establish the validity of a "dot operation" such as A .* B
+ * or A .+ B and, if the operation is valid, the dimensions of the
+ * result.
  *
- * Returns: a numeric code identifying the convention to be used;
- * %CONF_NONE indicates non-conformability.
+ * Returns: a numeric code identifying the convention to be used,
+ * where %CONF_NONE indicates non-conformability.
  */
 
 ConfType dot_operator_conf (const gretl_matrix *A,
@@ -7236,8 +7237,23 @@ static double x_op_y (double x, double y, int op)
  * @op: operator.
  * @err: location to receive error code.
  *
+ * @op should be one of the standard ASCII representations of
+ * arithmetical operators:
+ *
+ * '*' : multiply, '/' divide
+ * '+' : add, '-' subtract
+ * '^': exponentiate
+ *
+ * or one of these test symbols:
+ *
+ * '=' : is equal to
+ * '>' : is greater than, '<' is less than
+ * ']' : is greater than or equal to
+ * '[' : is less than or equal to
+ * '!' : is not equal to
+ *
  * Returns: a new matrix, each of whose elements is the result
- * of (x op y), where x and y are the  corresponding elements of
+ * of (x @op y), where x and y are the  corresponding elements of
  * the matrices @a and @b (or NULL on failure).
  */
 
@@ -7722,43 +7738,35 @@ void gretl_matrix_demean_by_row (gretl_matrix *m)
  * Subtracts the column mean from each column of @m.
  */
 
-int gretl_matrix_center (gretl_matrix *m)
+int gretl_matrix_center (gretl_matrix *m, int skip_na)
 {
-    double x, xbar;
-    int i, j;
-
-#if defined(_OPENMP)
-    if (m->cols == 1 || m->rows * m->cols < 4096) {
-        goto st_mode;
-    }
-#pragma omp parallel for private(i, j, x, xbar)
-    for (j=0; j<m->cols; j++) {
-        xbar = 0;
-        for (i=0; i<m->rows; i++) {
-            xbar += gretl_matrix_get(m, i, j);
-        }
-        xbar /= m->rows;
-        for (i=0; i<m->rows; i++) {
-            x = gretl_matrix_get(m, i, j) - xbar;
-            gretl_matrix_set(m, i, j, x);
-        }
-    }
-    return 0;
-
- st_mode:
-#endif
+    double mij, xbar;
+    int i, j, nrows;
 
     for (j=0; j<m->cols; j++) {
+	nrows = m->rows;
         xbar = 0;
         for (i=0; i<m->rows; i++) {
-            xbar += gretl_matrix_get(m, i, j);
+	    mij = gretl_matrix_get(m, i, j);
+	    if (na(mij) && skip_na) {
+		nrows--;
+	    } else {
+		xbar += mij;
+	    }
         }
-        xbar /= m->rows;
-        for (i=0; i<m->rows; i++) {
-            x = gretl_matrix_get(m, i, j) - xbar;
-            gretl_matrix_set(m, i, j, x);
+	if (nrows > 0) {
+	    xbar /= nrows;
+	    for (i=0; i<m->rows; i++) {
+		mij = gretl_matrix_get(m, i, j);
+		if (na(mij) && skip_na) {
+		    ; /* skip */
+		} else {
+		    gretl_matrix_set(m, i, j, mij - xbar);
+		}
+	    }
         }
     }
+
     return 0;
 }
 
@@ -7766,65 +7774,66 @@ int gretl_matrix_center (gretl_matrix *m)
  * gretl_matrix_standardize:
  * @m: matrix on which to operate.
  * @dfcorr: degrees of freedom correction.
+ * @skip_na: ignore missing values.
  *
  * Subtracts the column mean from each column of @m and
  * divides by the column standard deviation, using @dfcorr
  * as degrees of freedom correction (0 for MLE).
  */
 
-int gretl_matrix_standardize (gretl_matrix *m, int dfcorr)
+int gretl_matrix_standardize (gretl_matrix *m, int dfcorr, int skip_na)
 {
-    double x, xbar, sdc;
-    int i, j;
+    double mij, x, xbar, sdc, den;
+    int i, j, nrows;
 
     if (m->rows < 2) {
         return E_TOOFEW;
     }
 
-#if defined(_OPENMP)
-    if (m->cols == 1 || m->rows * m->cols < 4096) {
-        goto st_mode;
-    }
-#pragma omp parallel for private(i, j, x, xbar, sdc)
     for (j=0; j<m->cols; j++) {
+	nrows = m->rows;
         xbar = sdc = 0;
         for (i=0; i<m->rows; i++) {
-            xbar += gretl_matrix_get(m, i, j);
+	    mij = gretl_matrix_get(m, i, j);
+	    if (na(mij) && skip_na) {
+		nrows--;
+	    } else {
+		xbar += mij;
+	    }
         }
-        xbar /= m->rows;
-        for (i=0; i<m->rows; i++) {
-            x = gretl_matrix_get(m, i, j) - xbar;
-            gretl_matrix_set(m, i, j, x);
-            sdc += x * x;
+	if (nrows == 0) {
+	    xbar = NADBL;
+	} else {
+	    xbar /= nrows;
+	    for (i=0; i<m->rows; i++) {
+		mij = gretl_matrix_get(m, i, j);
+		if (na(mij) && skip_na) {
+		    ; /* skip */
+		} else {
+		    x = mij - xbar;
+		    gretl_matrix_set(m, i, j, x);
+		    sdc += x * x;
+		}
+	    }
         }
-        sdc = sqrt(sdc / (m->rows - dfcorr));
-        for (i=0; i<m->rows; i++) {
-            x = gretl_matrix_get(m, i, j) / sdc;
-            gretl_matrix_set(m, i, j, x);
+	den = nrows - dfcorr;
+	if (nrows < 2 || den <= 0 || na(xbar)) {
+	    for (i=0; i<m->rows; i++) {
+		gretl_matrix_set(m, i, j, NADBL);
+	    }
+	} else {
+	    sdc = sqrt(sdc / den);
+	    for (i=0; i<m->rows; i++) {
+		mij = gretl_matrix_get(m, i, j);
+		if (na(mij) && skip_na) {
+		    ; /* skip */
+		} else {
+		    gretl_matrix_set(m, i, j, mij / sdc);
+		}
+	    }
         }
     }
-    return 0;
 
- st_mode:
-#endif
-
-    for (j=0; j<m->cols; j++) {
-        xbar = sdc = 0;
-        for (i=0; i<m->rows; i++) {
-            xbar += gretl_matrix_get(m, i, j);
-        }
-        xbar /= m->rows;
-        for (i=0; i<m->rows; i++) {
-            x = gretl_matrix_get(m, i, j) - xbar;
-            gretl_matrix_set(m, i, j, x);
-            sdc += x * x;
-        }
-        sdc = sqrt(sdc / (m->rows - dfcorr));
-        for (i=0; i<m->rows; i++) {
-            x = gretl_matrix_get(m, i, j) / sdc;
-            gretl_matrix_set(m, i, j, x);
-        }
-    }
     return 0;
 }
 
@@ -11026,6 +11035,9 @@ int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
     return err;
 }
 
+#define OLD_NULLSPACE 0
+#if OLD_NULLSPACE
+
 /* return the row-index of the element in column col of
    matrix X that has the greatest absolute magnitude
 */
@@ -11053,8 +11065,6 @@ static void normalize_nullspace (gretl_matrix *M)
     int i, j, k, idx;
     double x, y;
 
-    /* FIXME? */
-
     if (M->cols == 1) {
         j = 0;
         idx = max_abs_index(M, j);
@@ -11075,6 +11085,23 @@ static void normalize_nullspace (gretl_matrix *M)
         }
     }
 }
+
+#else /* !OLD_NULLSPACE */
+
+/* just remove ugliness for printing */
+
+static void normalize_nullspace (gretl_matrix *M)
+{
+    int i, k = M->rows * M->cols;
+
+    for (i=0; i<k; i++) {
+        if (M->val[i] == -0) {
+            M->val[i] = 0;
+        }
+    }
+}
+
+#endif /* OLD_NULLSPACE or not */
 
 /**
  * gretl_matrix_right_nullspace:
@@ -13679,8 +13706,8 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
  * %GRETL_MOD_DECREMENT to subtract from the existing value of
  * @C.
  *
- * Computes either A * <d> * A' (if amod = %GRETL_MOD_NONE) or A' *
- * <d> * A (if amod = %GRETL_MOD_TRANSPOSE), where <d> is a diagonal
+ * Computes either A * md * A' (if amod = %GRETL_MOD_NONE) or A' *
+ * md * A (if amod = %GRETL_MOD_TRANSPOSE), where md is a diagonal
  * matrix holding the vector @d. The result is written into @C.
  *
  * Returns: 0 on success; non-zero error code on failure.
@@ -14057,9 +14084,9 @@ gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m,
     }
 
     if (corr) {
-        gretl_matrix_standardize(D, dfc);
+        gretl_matrix_standardize(D, dfc, 0);
     } else {
-        gretl_matrix_center(D);
+        gretl_matrix_center(D, 0);
     }
 
     V = gretl_matrix_XTX_new(D);
@@ -14540,6 +14567,9 @@ double gretl_matrix_global_sum (const gretl_matrix *A,
     if (gretl_is_null_matrix(A)) {
         *err = E_DATA;
         return NADBL;
+    } else if (A->is_complex) {
+        *err = E_CMPLX;
+        return NADBL;
     }
 
     n = A->rows * A->cols;
@@ -14602,10 +14632,10 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
 
     if (opt & OPT_V) {
         /* use covariance matrix */
-        gretl_matrix_center(D);
+        gretl_matrix_center(D, 0);
     } else {
         /* use correlation matrix */
-        gretl_matrix_standardize(D, 1);
+        gretl_matrix_standardize(D, 1, 0);
     }
 
     V = gretl_matrix_XTX_new(D);

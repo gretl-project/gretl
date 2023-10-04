@@ -39,6 +39,8 @@ void newdata_callback (void);
 
 void edit_gfn_callback (void);
 
+void install_pkg_callback (void);
+
 void xcorrgm_callback (void);
 
 void cond_number_callback (void);

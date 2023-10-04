@@ -1,16 +1,26 @@
 # get MSE and R^2
 
-function matrix regls_get_stats (const series y, const series yhat)
-   scalar SSR = sum((y - yhat)^2)
-   scalar SST = sum((y - mean(y))^2)
-   matrix ret = {SSR/$nobs, 1 - SSR/SST}
+function matrix regls_get_stats (const numeric y, const numeric yhat)
+   if typeof(y) == 2 # series
+      scalar SSR = sum((y - yhat)^2)
+      scalar n = $nobs
+   else # must be matrix
+      scalar SSR = sumc((y - yhat).^2)
+      scalar n = nelem(y)
+   endif
+   matrix ret = {SSR/n, 1 - SSR/sst(y)}
    cnameset(ret, "MSE R^2")
    return ret
 end function
 
-function scalar regls_pc_correct (const series y, const series yhat)
-   series yr = round(yhat)
-   return 100 * sum(yr == y) / $nobs
+function scalar regls_pc_correct (const numeric y, const numeric yhat)
+   if typeof(y) == 2 # series
+      series yr = round(yhat)
+      return 100 * sum(yr == y) / $nobs
+   else # must be matrix
+      matrix yr = round(yhat)
+      return 100 * sum(yr .= y) / rows(y)
+   endif
 end function
 
 # get prediction from glmnet, plus non-zero coeff vector
@@ -39,57 +49,118 @@ end function
 
 # print summary statistics when multiple lambda values are used
 
-function void regls_multiprint (const matrix B, const matrix lambda,
-                                const series y, list X,
-                                const matrix crit[null])
-
-   if exists(crit)
-      printf "\n       lambda     R^2    sum(|b|)   df   criterion\n"
+function void regls_multiprint (const bundle rb,
+                                const numeric y,
+                                const numeric X)
+   scalar matdata = 0
+   if typeof(y) == 3 && typeof(X) == 3
+      matdata = 1
+   elif typeof(y) != 2 || typeof(X) != 7
+      funcerr "Invalid y or X argument"
+   endif
+   scalar havecrit = inbundle(rb, "crit")
+   scalar ridge = rb.estimator == "Ridge"
+   string pstr = ridge ? "sum(b^2)" : "sum(|b|)"
+   if havecrit
+      printf "\n        lfrac      R^2    %s     df   criterion\n", pstr
    else
-      printf "\n       lambda     R^2    sum(|b|)   df\n"
+      printf "\n        lfrac      R^2    %s     df\n", pstr
    endif
    scalar haveconst = 0
-   if rows(B) == nelem(X) + 1
+   scalar nx = matdata ? cols(X) : nelem(X)
+   if rows(rb.B) == nx + 1
       haveconst = 1
-   elif rows(B) != nelem(X)
+   elif rows(rb.B) != nx
       funcerr "B and X are not conformable"
    endif
-   loop i=1..cols(B) -q
+   if inbundle(rb, "lambda")
+      matrix lambda = rb.lambda
+   else
+      matrix lambda = rb.lfrac
+   endif
+   scalar have_edf = inbundle(rb, "edf")
+   loop i=1..cols(rb.B) -q
       if haveconst
-         matrix bi = B[2:,i]
-         series yhat = lincomb(X, bi) + B[1,i]
+         matrix bi = rb.B[2:,i]
+         if matdata
+            matrix yhat = X * bi + rb.B[1,i]
+         else
+            series yhat = lincomb(X, bi) + rb.B[1,i]
+         endif
       else
-         matrix bi = B[,i]
-         series yhat = lincomb(X, bi)
+         matrix bi = rb.B[,i]
+         if matdata
+            matrix yhat = X * bi
+         else
+            series yhat = lincomb(X, bi)
+         endif
       endif
-      scalar l1 = sumc(abs(bi))
-      scalar df = sumc(bi .!= 0)
+      scalar penalty = ridge ? sumc(bi.^2) : sumc(abs(bi))
       m = regls_get_stats(y, yhat)
       R2 = m[2]
       if R2 < 0 && R2 > -1.0e16
          # avoid printing -0.0000
          R2 = 0
       endif
-      if exists(crit)
-         printf "%#13g  %.4f  %#10g  %3d  %#10g\n", lambda[i], R2, l1, df, crit[i]
+      printf "%#13g   %.4f", lambda[i], R2
+      if penalty > 0 && penalty < 1.0e-6
+         printf "  %#10.4g", penalty
       else
-         printf "%#13g  %.4f  %#10g  %3d\n", lambda[i], R2, l1, df
+         printf "  %#10g", penalty
+      endif
+      if have_edf
+         printf "  %5.2f", rb.edf[i]
+      else
+         printf "    %3d", sumc(bi .!= 0)
+      endif
+      if havecrit
+         printf "  %#10g\n", rb.crit[i]
+      else
+         printf "\n"
       endif
    endloop
    printf "\n"
 end function
 
+function void glmnet_multiprint (const matrix RB, const matrix Rlam,
+                                 const bundle b, const series y, list X)
+   matrix ym = {y}
+   scalar n = rows(ym)
+   scalar den = sdc(ym) * b.lmax
+   bundle tmp = _(B=RB, lambda=Rlam * n / den)
+   tmp.estimator = b.estimator
+   regls_multiprint(tmp, y, X)
+end function
+
 # compute fitted values
 
-function series regls_yhat (const bundle b, list X)
-   series yhat
-   if inbundle(b, "nzX")
-      yhat = lincomb(b.nzX, b.nzb)
-   else
-      if b.stdize
-         X = const X
+function numeric regls_pred (const bundle rb, const numeric X)
+   scalar matdata = 0
+   if typeof(X) == 3
+      matdata = 1
+   elif typeof(X) != 7
+      funcerr "X must be a list or matrix"
+   endif
+   if inbundle(rb, "nzX")
+      if matdata && rb.stdize
+         matrix yhat = X[,rb.nzX] * rb.nzb[2:] + rb.nzb[1]
+      elif matdata
+         matrix yhat = X[,rb.nzX] * rb.nzb
+      else
+         series yhat = lincomb(rb.nzX, rb.nzb)
       endif
-      yhat = lincomb(X, b.b)
+   else
+      matrix b = inbundle(rb, "b") ? rb.b : rb.B
+      if matdata && rb.stdize
+         matrix yhat = X * b[2:] + b[1]
+      elif matdata
+         matrix yhat = X * b
+      elif rb.stdize
+         list Z = const X
+         series yhat = lincomb(Z, b)
+      else
+         series yhat = lincomb(X, b)
+      endif
    endif
    return yhat
 end function
@@ -97,8 +168,17 @@ end function
 # report training-data R-squared after cross validation
 
 function void training_R2 (bundle *b, series y, list X)
-   series yhat = regls_yhat(b, X)
+   series yhat = regls_pred(b, X)
    matrix m = regls_get_stats(y, yhat)
-   printf "training data R-squared = %.3f\n\n", m[2]
+   printf "training data R-squared = %.4f\n\n", m[2]
+   b.training_R2 = m[2]
+end function
+
+function void mregls_training_R2 (bundle *b,
+                                  const matrix y,
+                                  const matrix X)
+   matrix yhat = regls_pred(b, X)
+   matrix m = regls_get_stats(y, yhat)
+   printf "training data R-squared = %.4f\n\n", m[2]
    b.training_R2 = m[2]
 end function

@@ -1937,7 +1937,7 @@ get_compact_method_and_advance (const char *s, CompactMethod *method)
 {
     const char *p;
 
-    *method = COMPACT_NONE;
+    *method = COMPACT_UNSET;
 
     if ((p = strstr(s, "(compact")) != NULL) {
 	char comp[8];
@@ -1978,7 +1978,7 @@ get_compact_method_and_advance (const char *s, CompactMethod *method)
 static CompactMethod compact_method_from_option (int *err)
 {
     const char *s = get_optval_string(DATA, OPT_C);
-    CompactMethod method = COMPACT_NONE;
+    CompactMethod method = COMPACT_UNSET;
 
     if (s == NULL || *s == '\0') {
 	*err = E_PARSE;
@@ -2561,7 +2561,7 @@ static int get_one_db_series (const char *sername,
 
     /* see if the series is already in the dataset */
     v = series_index(dset, impname);
-    if (v < dset->v && cmethod == COMPACT_NONE) {
+    if (v < dset->v && cmethod == COMPACT_UNSET) {
 	this_method = series_get_compact_method(dset, v);
     }
 
@@ -3338,7 +3338,7 @@ static int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	return E_DATA;
     }
 
-    if (cmethod == COMPACT_NONE) {
+    if (cmethod == COMPACT_UNSET) {
 	/* impose default if need be */
 	cmethod = COMPACT_AVG;
     }
@@ -3396,9 +3396,9 @@ static int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
     return err;
 }
 
-/* compact an individual series, in the context of converting an
+/* Compact an individual series, in the context of converting an
    entire working dataset to a lower frequency: used in all cases
-   except conversion from daily to monthly
+   except conversion from daily to monthly.
 */
 
 static double *compact_series (const DATASET *dset, int i, int oldn,
@@ -3628,7 +3628,9 @@ static DATASET *compact_daily_spread (const DATASET *dset,
     int endyr, endper = 0;
     int startday;
 
+#if SPREAD_DEBUG
     fprintf(stderr, "*** compact_daily_spread (newpd=%d) ***\n", newpd);
+#endif
 
     daily_yp(dset, 0, newpd, &startyr, &startper);
     daily_yp(dset, dset->n - 1, newpd, &endyr, &endper);
@@ -3958,7 +3960,7 @@ daily_series_to_monthly (DATASET *dset, int i,
     */
 
     /* The "one day's slack" business below, with start-of-period and
-       end-of-period compaction is designed to allow for the
+       end-of-period compaction, is designed to allow for the
        possibility that the first (or last) day of the month may not
        have been a trading day.
     */
@@ -4069,9 +4071,10 @@ daily_series_to_monthly (DATASET *dset, int i,
 
 static void
 get_startskip_etc (int compfac, int startmin, int endmin,
-		   int oldn, CompactMethod method,
+		   DATASET *dset, CompactMethod method,
 		   int *startskip, int *newn)
 {
+    int oldn = dset->n;
     int ss = 0, n = 0;
 
     if (method == COMPACT_EOP) {
@@ -4092,6 +4095,12 @@ get_startskip_etc (int compfac, int startmin, int endmin,
 	if (unused >= compfac) {
 	    n++;
 	}
+    } else if (dated_daily_data(dset)) {
+        int es = endmin % compfac;
+
+        /* in this case @startmin is actually startskip */
+        ss = startmin;
+        n = (oldn - ss - es) / compfac;
     } else {
 	int es = endmin % compfac;
 
@@ -4099,36 +4108,73 @@ get_startskip_etc (int compfac, int startmin, int endmin,
 	n = (oldn - ss - es) / compfac;
     }
 
+#if DB_DEBUG
+    fprintf(stderr, "get_startskip_etc: startskip %d, startmin %d, newn %d\n",
+            ss, startmin, n);
+#endif
+
     *startskip = ss;
     *newn = n;
 }
 
-/* specific to compaction of daily time series */
+/* Note: min_startskip is the minimum, across the series to
+   be compacted in case we're doing multiple series, of the
+   initial number of observations that cannot be used in the
+   compacted series. The per-series startskip will depend on
+   the compaction method (which may differ across series).
+
+   For example, consider quarterly to annual compaction where
+   the quarterly data start in a third quarter. When doing
+   COMPACT_AVG or COMPACT_SUM the initial quarters III and IV
+   would be unusable (startskip 2), but with COMPACT_EOP only
+   the initial quarter III would be unusable (startskip 1).
+
+   The minimum startskip in effect tells us where the result
+   dataset will start in relation to the source dataset.
+*/
+
+typedef struct compact_params_ {
+    int min_startskip;  /* see Note above */
+    int newn;           /* number of observations in compacted dataset */
+    int any_eop;        /* boolean: 1 iff any series wants COMPACT_EOP */
+    int any_sop;        /* boolean: 1 iff any series wants COMPACT_SOP */
+    int all_same;       /* boolean: 1 iff all series want the same method */
+} compact_params;
+
+static void compact_params_init (compact_params *cp, int oldpd)
+{
+    cp->min_startskip = oldpd;
+    cp->newn = 0;
+    cp->any_sop = 0;
+    cp->any_eop = 0;
+    cp->all_same = 1;
+}
+
+/* used only when compacting daily data to monthly */
 
 static void
 get_daily_compact_params (CompactMethod default_method,
-			  int *any_eop, int *any_sop,
-			  int *all_same,
+			  compact_params *cp,
 			  const DATASET *dset)
 {
     int i, n_not_eop = 0, n_not_sop = 0;
 
-    *all_same = 1;
-    *any_eop = (default_method == COMPACT_EOP)? 1 : 0;
-    *any_sop = (default_method == COMPACT_SOP)? 1 : 0;
+    cp->all_same = 1;
+    cp->any_eop = (default_method == COMPACT_EOP)? 1 : 0;
+    cp->any_sop = (default_method == COMPACT_SOP)? 1 : 0;
 
     for (i=1; i<dset->v; i++) {
 	CompactMethod method = series_get_compact_method(dset, i);
 
-	if (method != default_method && method != COMPACT_NONE) {
-	    *all_same = 0;
+	if (method != default_method && method != COMPACT_UNSET) {
+	    cp->all_same = 0;
 	    if (method == COMPACT_EOP) {
-		*any_eop = 1;
+		cp->any_eop = 1;
 	    } else {
 		n_not_eop++;
 	    }
 	    if (method == COMPACT_SOP) {
-		*any_sop = 1;
+		cp->any_sop = 1;
 	    } else {
 		n_not_sop++;
 	    }
@@ -4136,57 +4182,53 @@ get_daily_compact_params (CompactMethod default_method,
     }
 
     if (n_not_eop == dset->v - 1) {
-	*any_eop = 0;
+	cp->any_eop = 0;
     }
-
     if (n_not_sop == dset->v - 1) {
-	*any_sop = 0;
+	cp->any_sop = 0;
     }
 }
 
-/* specific to non-daily time series (monthly or quarterly) */
+/* used in cases other than daily to monthly */
 
 static void
 get_global_compact_params (int compfac, int startmin, int endmin,
 			   CompactMethod default_method,
-			   int *min_startskip, int *max_n,
-			   int *any_eop, int *all_same,
-			   DATASET *dset)
+			   compact_params *cp, DATASET *dset)
 {
-    CompactMethod method;
-    int i, startskip, n;
+    CompactMethod method = default_method;
+    int nvars = dset->v - 1;
+    int i, startskip, n = 0;
     int n_not_eop = 0;
 
-    for (i=0; i<dset->v; i++) {
-	if (i == 0) {
-	    get_startskip_etc(compfac, startmin, endmin, dset->n,
-			      default_method, &startskip, &n);
-	    if (default_method == COMPACT_EOP) {
-		*any_eop = 1;
-	    }
-	} else {
-	    method = series_get_compact_method(dset, i);
-	    if (method != default_method && method != COMPACT_NONE) {
-		get_startskip_etc(compfac, startmin, endmin, dset->n,
-				  method, &startskip, &n);
-		*all_same = 0;
-		if (method == COMPACT_EOP) {
-		    *any_eop = 1;
-		} else {
-		    n_not_eop++;
-		}
+    get_startskip_etc(compfac, startmin, endmin, dset,
+		      method, &startskip, &n);
+    if (method == COMPACT_EOP) {
+	cp->any_eop = 1;
+    }
+
+    for (i=1; i<=nvars; i++) {
+	method = series_get_compact_method(dset, i);
+	if (method != default_method && method != COMPACT_UNSET) {
+	    get_startskip_etc(compfac, startmin, endmin, dset,
+			      method, &startskip, &n);
+	    cp->all_same = 0;
+	    if (method == COMPACT_EOP) {
+		cp->any_eop = 1;
+	    } else {
+		n_not_eop++;
 	    }
 	}
-	if (startskip < *min_startskip) {
-	    *min_startskip = startskip;
+	if (startskip < cp->min_startskip) {
+	    cp->min_startskip = startskip;
 	}
-	if (n > *max_n) {
-	    *max_n = n;
+	if (n > cp->newn) {
+	    cp->newn = n;
 	}
     }
 
-    if (n_not_eop == dset->v - 1) {
-	*any_eop = 0;
+    if (n_not_eop == nvars) {
+	cp->any_eop = 0;
     }
 }
 
@@ -4201,8 +4243,8 @@ static int get_obs_maj_min (const char *obs, int *maj, int *min)
     return (np == 2);
 }
 
-/* for daily data, figure the number of observations to
-   be skipped at the start of each series
+/* for daily to monthly compaction, figure the number of
+   observations to be skipped at the start of each series
 */
 
 static int get_daily_offset (const DATASET *dset,
@@ -4229,18 +4271,18 @@ static int get_daily_offset (const DATASET *dset,
     return ret;
 }
 
-/* for daily data, figure the number of valid monthly
-   observations that can be constructed by compaction
+/* for daily to monthly compaction, figure the number of
+   monthly observations that can be constructed
 */
 
 static int get_n_ok_months (const DATASET *dset,
 			    CompactMethod default_method,
 			    int *startyr, int *startmon,
 			    int *endyr, int *endmon,
-			    int *offset, int *p_any_eop)
+			    int *offset, int *any_eop)
 {
+    compact_params cp;
     int y1, m1, d1, y2, m2, d2;
-    int any_eop, any_sop, all_same;
     int skip = 0, pad = 0, nm = -1;
 
     if (sscanf(dset->stobs, YMD_READ_FMT, &y1, &m1, &d1) != 3) {
@@ -4259,8 +4301,8 @@ static int get_n_ok_months (const DATASET *dset,
 
     nm = 12 * (y2 - y1) + m2 - m1 + 1;
 
-    get_daily_compact_params(default_method, &any_eop, &any_sop,
-			     &all_same, dset);
+    compact_params_init(&cp, 0);
+    get_daily_compact_params(default_method, &cp, dset);
 
     *startyr = y1;
     *startmon = m1;
@@ -4269,12 +4311,12 @@ static int get_n_ok_months (const DATASET *dset,
 
 #if DMDEBUG
     fprintf(stderr, "get_n_ok_months: any_sop=%d, any_eop=%d, "
-	    "all_same=%d\n", any_sop, any_eop, all_same);
+	    "all_same=%d\n", cp->any_sop,  cp->any_eop,  cp->all_same);
     fprintf(stderr, "y1=%d m1=%d d1=%d; y2=%d m2=%d d2=%d\n",
 	    y1, m1, d1, y2, m2, d2);
 #endif
 
-    if (!day_starts_month(d1, m1, y1, dset->pd, &pad) && !any_eop) {
+    if (!day_starts_month(d1, m1, y1, dset->pd, &pad) && ! cp.any_eop) {
 	if (*startmon == 12) {
 	    *startmon = 1;
 	    *startyr += 1;
@@ -4285,7 +4327,7 @@ static int get_n_ok_months (const DATASET *dset,
 	nm--;
     }
 
-    if (!day_ends_month(d2, m2, y2, dset->pd) && !any_sop) {
+    if (!day_ends_month(d2, m2, y2, dset->pd) && ! cp.any_sop) {
 	if (*endmon == 1) {
 	    *endmon = 12;
 	    *endyr -= 1;
@@ -4304,10 +4346,10 @@ static int get_n_ok_months (const DATASET *dset,
     if (pad) {
 	*offset = -1;
     } else {
-	*offset = get_daily_offset(dset, y1, m1, d1, skip, any_eop);
+	*offset = get_daily_offset(dset, y1, m1, d1, skip, cp.any_eop);
     }
 
-    *p_any_eop = any_eop;
+    *any_eop = cp.any_eop;
 
     return nm;
 }
@@ -4506,11 +4548,14 @@ static int shorten_the_constant (double **Z, int n)
     }
 }
 
-/* conversion to weekly using a "representative day", e.g. use
-   each Wednesday value: @repday is 0-based on Sunday.
+/* compaction of daily to weekly data in the special case of
+   COMPACT_WDAY -- that is, via use of a "representative day",
+   for example the weekly value is Wednesday's value. Note
+   that on input @repday is 0-based on Sunday.
 */
 
-static int daily_dataset_to_weekly (DATASET *dset, int repday)
+static int daily_dataset_to_weekly_special (DATASET *dset,
+					    int repday)
 {
     int y1, m1, d1;
     char obs[OBSLEN];
@@ -4520,7 +4565,14 @@ static int daily_dataset_to_weekly (DATASET *dset, int repday)
     int wday, ok;
     int i, t, err = 0;
 
-    fprintf(stderr, "daily_dataset_to_weekly: repday = %d\n", repday);
+    int repmin = G_DATE_MONDAY;
+    int repmax = dset->pd == 5 ? G_DATE_FRIDAY :
+	dset->pd == 6 ? G_DATE_SATURDAY : G_DATE_SUNDAY;
+
+    if (repday < repmin || repday > repmax) {
+	gretl_errmsg_set("Invalid repday value");
+	return E_INVARG;
+    }
 
     for (t=0; t<dset->n; t++) {
 	ntolabel(obs, t, dset);
@@ -4584,13 +4636,11 @@ static int daily_dataset_to_weekly (DATASET *dset, int repday)
     if (!err) {
 	dset->n = n;
 	dset->pd = 52;
-
 	sprintf(dset->stobs, YMD_WRITE_Y4_FMT, y1, m1, d1);
 	dset->sd0 = get_date_x(dset->pd, dset->stobs);
 	dset->t1 = 0;
 	dset->t2 = dset->n - 1;
 	ntolabel(dset->endobs, dset->t2, dset);
-
 	dataset_destroy_obs_markers(dset);
     }
 
@@ -4618,10 +4668,9 @@ static int daily_dataset_to_monthly (DATASET *dset,
 
     for (i=1; i<dset->v && !err; i++) {
 	method = series_get_compact_method(dset, i);
-	if (method == COMPACT_NONE) {
+	if (method == COMPACT_UNSET) {
 	    method = default_method;
 	}
-
 	x = daily_series_to_monthly(dset, i, nm,
 				    startyr, startmon,
 				    offset, any_eop, method);
@@ -4641,7 +4690,6 @@ static int daily_dataset_to_monthly (DATASET *dset,
 	dset->sd0 = get_date_x(dset->pd, dset->stobs);
 	dset->t1 = 0;
 	dset->t2 = dset->n - 1;
-
 	dataset_destroy_obs_markers(dset);
     }
 
@@ -4650,8 +4698,8 @@ static int daily_dataset_to_monthly (DATASET *dset,
 
 static int get_daily_skip (const DATASET *dset, int t)
 {
-    int dd = calendar_obs_number(dset->S[t], dset) -
-	calendar_obs_number(dset->S[t-1], dset);
+    int dd = calendar_obs_number(dset->S[t], dset, 0) -
+	calendar_obs_number(dset->S[t-1], dset, 0);
 
     if (dd == 0) {
 	fprintf(stderr, "get_daily_skip: S[%d] = '%s', S[%d] = '%s'\n",
@@ -4761,7 +4809,6 @@ static int do_compact_spread (DATASET *dset, int newpd)
 	int startmaj, startmin;
 	int endmaj, endmin;
 
-
 	/* get starting obs major and minor components */
 	if (!get_obs_maj_min(dset->stobs, &startmaj, &startmin)) {
 	    return E_DATA;
@@ -4786,46 +4833,79 @@ static int do_compact_spread (DATASET *dset, int newpd)
     return err;
 }
 
+static int dated_daily_startmin (DATASET *dset, int wkstart)
+{
+    char obs[OBSLEN];
+    int t, smin = 0;
+
+    for (t=0; t<dset->pd; t++) {
+        ntolabel(obs, t, dset);
+        if (weekday_from_date(obs) == wkstart) {
+            smin = t;
+            break;
+        }
+    }
+
+    return smin;
+}
+
+#define is_daily(p) (p==5 || p==6 || p==7)
+
 /**
- * compact_data_set:
+ * compact_dataset:
  * @dset: dataset struct.
  * @newpd: target data frequency.
  * @default_method: code for the default compaction method.
- * @monstart: if non-zero, take Monday rather than Sunday as
- * the "start of the week" (only relevant for 7-day daily
- * data).
+ * @wkstart: the day on which a week is deemed to start:
+ * 1 for Monday or 7 for Sunday; relevant only for daily
+ * to weekly compaction.
  * @repday: "representative day" for conversion from daily
- * to weekly data (with method %COMPACT_WDAY only).
+ * to weekly data (with method %COMPACT_WDAY only). Value
+ * 1 to 7 with 1 = Monday, or 0 to ignore it.
  *
  * Compact the data set from higher to lower frequency.
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int compact_data_set (DATASET *dset, int newpd,
-		      CompactMethod default_method,
-		      int monstart, int repday)
+int compact_dataset (DATASET *dset, int newpd,
+		     CompactMethod default_method,
+		     int wkstart, int repday)
 {
-    int newn, oldn = dset->n, oldpd = dset->pd;
-    int compfac;
-    int startmaj, startmin;
-    int endmaj, endmin;
-    int any_eop, all_same;
-    int min_startskip = 0;
+    compact_params cp;
+    int oldn = dset->n;
+    int oldpd = dset->pd;
+    int compfac = 0;
+    int start_major;
+    int start_minor;
+    int end_major = 0;
+    int end_minor = 0;
+    int from_dated_daily;
     char stobs[OBSLEN];
     int i, err = 0;
 
     gretl_error_clear();
+    compact_params_init(&cp, oldpd);
 
-    if (default_method == COMPACT_SPREAD) {
-	return do_compact_spread(dset, newpd);
+    if (wkstart == 0) {
+	; /* OK, "ignore me" */
+    } else if (wkstart != G_DATE_MONDAY && wkstart != G_DATE_SUNDAY) {
+	gretl_errmsg_set("Invalid weekstart value");
+	return E_INVARG;
     }
 
-    if (oldpd == 52) {
+    fprintf(stderr, "HERE 1 wkstart=%d, repday=%d\n", wkstart, repday);
+
+    /* catch a couple of special cases */
+    if (default_method == COMPACT_SPREAD) {
+	return do_compact_spread(dset, newpd);
+    } else if (oldpd == 52) {
 	return weekly_dataset_to_monthly(dset, default_method);
     }
 
-    if (dated_daily_data(dset)) {
+    from_dated_daily = dated_daily_data(dset);
+
+    if (from_dated_daily) {
 	/* allow for the possibility that the daily dataset
 	   contains "hidden" or suppressed missing observations
 	   (holidays are just skipped, not marked as NA)
@@ -4839,93 +4919,86 @@ int compact_data_set (DATASET *dset, int newpd,
 	}
     }
 
-    if (newpd == 52 && oldpd >= 5 && oldpd <= 7 &&
-	default_method == COMPACT_WDAY) {
+    if (newpd == 52 && is_daily(oldpd) && default_method == COMPACT_WDAY) {
 	/* daily to weekly, using "representative day" */
-	return daily_dataset_to_weekly(dset, repday);
-    } else if (newpd == 12 && oldpd >= 5 && oldpd <= 7) {
+	return daily_dataset_to_weekly_special(dset, repday);
+    } else if (newpd == 12 && is_daily(oldpd)) {
 	/* daily to monthly: special */
 	return daily_dataset_to_monthly(dset, default_method);
-    } else if (oldpd >= 5 && oldpd <= 7) {
-	/* daily to weekly */
+    } else if (is_daily(oldpd)) {
+	/* daily to weekly, not COMPACT_WDAY */
 	compfac = oldpd;
-	if (dated_daily_data(dset)) {
-	    startmin = weekday_from_date(dset->stobs);
-	    if (oldpd == 7) {
-		if (monstart) {
-		    if (startmin == 0) startmin = 7;
-		} else {
-		    startmin++;
-		}
-	    }
+	if (from_dated_daily) {
+            /* here we're borrowing @start_minor for a daily-
+               specific purpose
+            */
+	    start_minor = dated_daily_startmin(dset, wkstart);
 	} else {
-	    startmin = 1;
+	    start_minor = 1;
 	}
-    } else if (oldpd == 24 && newpd >= 5 && newpd <= 7) {
+    } else if (oldpd == 24 && is_daily(newpd)) {
 	/* hourly to daily */
 	compfac = 24;
-	if (!get_obs_maj_min(dset->stobs, &startmaj, &startmin)) {
+	if (!get_obs_maj_min(dset->stobs, &start_major, &start_minor)) {
 	    return 1;
 	}
     } else {
 	compfac = oldpd / newpd;
 	/* get starting obs major and minor components */
-	if (!get_obs_maj_min(dset->stobs, &startmaj, &startmin)) {
+	if (!get_obs_maj_min(dset->stobs, &start_major, &start_minor)) {
 	    return 1;
 	}
 	/* get ending obs major and minor components */
-	if (!get_obs_maj_min(dset->endobs, &endmaj, &endmin)) {
+	if (!get_obs_maj_min(dset->endobs, &end_major, &end_minor)) {
 	    return 1;
 	}
     }
 
-    min_startskip = oldpd;
-    newn = 0;
-    any_eop = 0;
-    all_same = 1;
-    get_global_compact_params(compfac, startmin, endmin, default_method,
-			      &min_startskip, &newn, &any_eop, &all_same,
-			      dset);
+    get_global_compact_params(compfac, start_minor, end_minor,
+                              default_method, &cp, dset);
 
-    if (newn == 0 && default_method != COMPACT_SPREAD) {
+    if (cp.newn == 0 && default_method != COMPACT_SPREAD) {
 	gretl_errmsg_set(_("Compacted dataset would be empty"));
 	return 1;
     }
 
     if (newpd == 1) {
-	if (min_startskip > 0 && !any_eop) {
-	    startmaj++;
+	if (cp.min_startskip > 0 && !cp.any_eop) {
+	    start_major++;
 	}
-	sprintf(stobs, "%d", startmaj);
+	sprintf(stobs, "%d", start_major);
     } else if (newpd == 52) {
-	if (oldpd >= 5 && oldpd <= 7 && dset->S != NULL) {
-	    strcpy(stobs, dset->S[min_startskip]);
+	if (dated_daily_data(dset)) {
+	    ntolabel(stobs, cp.min_startskip, dset);
 	} else {
 	    strcpy(stobs, "1");
 	}
     } else {
-	int m0 = startmin + min_startskip;
+	int m0 = start_minor + cp.min_startskip;
 	int minor = m0 / compfac + (m0 % compfac > 0);
 
 	if (minor > newpd) {
-	    startmaj++;
+	    start_major++;
 	    minor -= newpd;
 	}
-	format_obs(stobs, startmaj, minor, newpd);
+	format_obs(stobs, start_major, minor, newpd);
     }
 
     /* revise datainfo members */
     strcpy(dset->stobs, stobs);
     dset->pd = newpd;
-    dset->n = newn;
+    dset->n = cp.newn;
     dset->sd0 = get_date_x(dset->pd, dset->stobs);
     dset->t1 = 0;
     dset->t2 = dset->n - 1;
     ntolabel(dset->endobs, dset->t2, dset);
 
-    if (oldpd >= 5 && oldpd <= 7 && dset->markers) {
-	/* remove any daily date strings; revise endobs */
-	dataset_destroy_obs_markers(dset);
+    if (from_dated_daily) {
+	/* delete any daily date strings */
+	if (dset->S != NULL) {
+	    dataset_destroy_obs_markers(dset);
+	}
+	/* revise endobs */
 	ntolabel(dset->endobs, dset->t2, dset);
     }
 
@@ -4934,17 +5007,17 @@ int compact_data_set (DATASET *dset, int newpd,
     /* compact the individual data series */
     for (i=1; i<dset->v && !err; i++) {
 	CompactMethod this_method = default_method;
-	int startskip = min_startskip;
+	int startskip = cp.min_startskip;
 	double *x;
 
-	if (!all_same) {
+	if (!cp.all_same) {
 	    CompactMethod m_i = series_get_compact_method(dset, i);
 
-	    if (m_i != COMPACT_NONE) {
+	    if (m_i != COMPACT_UNSET) {
 		this_method = m_i;
 	    }
 
-	    startskip = compfac - (startmin % compfac) + 1;
+	    startskip = compfac - (start_minor % compfac) + 1;
 	    startskip = startskip % compfac;
 	    if (this_method == COMPACT_EOP) {
 		if (startskip > 0) {
@@ -4954,8 +5027,7 @@ int compact_data_set (DATASET *dset, int newpd,
 		}
 	    }
 	}
-
-	x = compact_series(dset, i, oldn, startskip, min_startskip,
+	x = compact_series(dset, i, oldn, startskip, cp.min_startskip,
 			   compfac, this_method);
 	if (x == NULL) {
 	    err = E_ALLOC;
@@ -4969,7 +5041,7 @@ int compact_data_set (DATASET *dset, int newpd,
 }
 
 /**
- * expand_data_set:
+ * expand_dataset:
  * @dset: dataset struct.
  * @newpd: target data frequency.
  *
@@ -4980,7 +5052,7 @@ int compact_data_set (DATASET *dset, int newpd,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int expand_data_set (DATASET *dset, int newpd)
+int expand_dataset (DATASET *dset, int newpd)
 {
     char stobs[OBSLEN];
     int oldn = dset->n;

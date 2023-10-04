@@ -175,6 +175,7 @@ enum file_ops {
     OPEN_ANY,
     OPEN_MAP,
     UPLOAD_PKG,
+    INSTALL_PKG,
     END_OPEN,        /* marker for end of file open section */
     AUTO_SAVE_DATA,
     SAVE_DATA,

@@ -148,17 +148,25 @@ compare_treenames (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b,
 
     ret = strcmp(gretl_lower(s1), gretl_lower(s2));
 
+    if (ret == 0 && p != NULL) {
+	int *dups = (int *) p;
+
+	*dups = 1;
+    }
+
     g_free(s1);
     g_free(s2);
 
     return ret;
 }
 
-/* sort in ascending order by the strings in the first column
-   of the treeview in @vwin
+/* Sort in ascending order by the strings in the first column
+   of the treeview in @vwin. If @dups is non-NULL, write 1 to
+   its content if the treeview contains one or more duplicate
+   first-column entries.
 */
 
-void presort_treelist (windata_t *vwin)
+void presort_treelist (windata_t *vwin, int *dups)
 {
     GtkTreeModel *model;
 
@@ -167,7 +175,7 @@ void presort_treelist (windata_t *vwin)
     gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(model),
 					 0, GTK_SORT_ASCENDING);
     gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(model), 0,
-				    compare_treenames, NULL, NULL);
+				    compare_treenames, dups, NULL);
 }
 
 

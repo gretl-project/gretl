@@ -418,10 +418,7 @@ static int cli_get_input_line (ExecState *s)
 {
     int err = 0;
 
-    if (s->more != NULL) {
-        /* pick up next concatented statement */
-        memmove(s->line, s->more, strlen(s->more) + 1);
-    } else if (runit || batch) {
+    if (runit || batch) {
         /* reading from script file */
         err = file_get_line(s);
     } else {

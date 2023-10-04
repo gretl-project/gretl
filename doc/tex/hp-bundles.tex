@@ -24,10 +24,11 @@ To use a bundle you first either ``declare'' it, as in
 bundle foo
 \end{code}
 %
-or define an empty bundle using the \texttt{null} keyword:
+or define an empty bundle using the \texttt{defbundle} function
+without any arguments:
 %
 \begin{code}
-bundle foo = null
+bundle foo = defbundle()
 \end{code}
 %
 These two formulations are basically equivalent, in that they both
@@ -147,7 +148,7 @@ estimates an OLS regression and stores all the results in a bundle.
 \begin{code}
 /* assume y and X are given T x 1 and T x k matrices */
 
-bundle my_model = null               # initialization
+bundle my_model = defbundle()        # initialization
 my_model.T = rows(X)                 # sample size
 my_model.k = cols(X)                 # number of regressors
 matrix e                             # will hold the residuals

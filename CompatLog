@@ -1,7 +1,37 @@
+2023c, in progress
+
+Compaction of undated daily data is now disabled, since it is
+not a meaningful operation.
+
+The long-deprecated "sscanf" and "sprintf" commands are now
+removed: use the functions of the same names.
+
+2023-07-21 version 2023b
+
+The "outfile" command with --tempfile option: the name of
+the string variable to receive the tempfile name must now be
+given as a parameter to the option flag (as documented).
+Passing this name as a regular command argument is no longer
+accepted.
+
+"empty" is now a reserved word, providing a uniform means of 
+initializing an empty matrix, bundle, array or string. Scripts
+which use "empty" as an identifier will have to be modified.
+
+The $test accessor after the "var" command with --lagselect
+option now includes all six columns as shown in the printed
+output. Previously it included only 3 columns, holding the
+information criteria; this portion can be obtained via the
+expression $test[,4:].
+
+The new function typename() is recommended in place of the old
+functions typeof() and typestr(), though the latter functions
+are still available for backward compatibility.
+
 2023-03-02 version 2023a
 
 instring() and strstr() functions: the policy of automatically
-escaping the string to be found has been discontinued.s
+escaping the string to be found has been discontinued.
 
 2022-11-01 version 2022c
 

@@ -2046,6 +2046,7 @@ gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
     double complex z;
     double complex mij;
     gretl_matrix *ret;
+    int product;
     int r, c, i, j;
 
     if (!cmatrix_validate(m, 0)) {
@@ -2062,9 +2063,11 @@ gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 	return NULL;
     }
 
+    product = (vs == V_PROD);
+
     if (rowwise) {
 	/* by rows */
-	double complex z0 = V_PROD ? 1 : 0;
+	double complex z0 = product ? 1 : 0;
 	int ncols;
 
 	for (i=0; i<m->rows; i++) {
@@ -2075,7 +2078,7 @@ gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 		if (cna(mij) && skip_na) {
 		    ncols--;
 		    continue;
-		} else if (vs == V_PROD) {
+		} else if (product) {
 		    z *= mij;
 		} else {
 		    z += mij;
@@ -2090,7 +2093,7 @@ gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 	}
     } else {
 	/* by columns */
-	double complex z0 = V_PROD ? 1 : 0;
+	double complex z0 = product ? 1 : 0;
 	int nrows;
 
 	for (j=0; j<m->cols; j++) {
@@ -2101,7 +2104,7 @@ gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 		if (cna(mij) && skip_na) {
 		    nrows--;
 		    continue;
-		} else if (vs == V_PROD) {
+		} else if (product) {
 		    z *= mij;
 		} else {
 		    z += mij;

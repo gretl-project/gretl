@@ -444,11 +444,11 @@ static void free_name_setter (GtkWidget *w, name_setter *nset)
 
 static const char *comp_int_to_string (int i)
 {
-    if (i == COMPACT_NONE) return N_("not set");
-    if (i == COMPACT_SUM)  return N_("sum of observations");
-    if (i == COMPACT_AVG)  return N_("average of observations");
-    if (i == COMPACT_SOP)  return N_("first observation");
-    if (i == COMPACT_EOP)  return N_("last observation");
+    if (i == COMPACT_UNSET) return N_("not set");
+    if (i == COMPACT_SUM)   return N_("sum of observations");
+    if (i == COMPACT_AVG)   return N_("average of observations");
+    if (i == COMPACT_SOP)   return N_("first observation");
+    if (i == COMPACT_EOP)   return N_("last observation");
     if (i == COMPACT_WDAY)   return N_("specific day in week");
     if (i == COMPACT_SPREAD) return N_("spread (MIDAS)");
     return N_("not set");
@@ -943,7 +943,7 @@ void varinfo_dialog (int varnum)
 
 	vset->compaction_menu = gtk_combo_box_text_new();
 
-	for (i=COMPACT_NONE; i<=COMPACT_SPREAD; i++) {
+	for (i=COMPACT_UNSET; i<=COMPACT_SPREAD; i++) {
 	    combo_box_append_text(vset->compaction_menu,
 				  _(comp_int_to_string(i)));
 	}

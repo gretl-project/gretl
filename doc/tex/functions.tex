@@ -652,7 +652,7 @@ the newly created variables governed by the string argument.
 %
 \begin{code}
 function list mavg (series y, string vname)
-   list retlist = null
+   list retlist = deflist()
    string newname = sprintf("%s_2", vname)
    retlist += genseries(newname, (y+y(-1)) / 2)
    newname = sprintf("%s_4", vname)
@@ -734,7 +734,7 @@ descriptive labels for variables generated in a function.
 %    
 \begin{code}
 function list make_cubes (list xlist)
-   list cubes = null
+   list cubes = deflist()
    loop foreach i xlist
       series $i3 = (xlist.$i)^3
       setinfo $i3 -d "cube of $i"

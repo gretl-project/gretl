@@ -49,7 +49,6 @@
 #endif
 
 #define FDEBUG 0
-#define MPI_VGRIND 0 /* define for debugging MPI via valgrind */
 
 static char **foreign_lines;
 static int foreign_started;
@@ -514,6 +513,7 @@ static void print_mpi_command (char **argv, PRN *prn)
 static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
 {
     const char *hostfile = get_mpi_hostfile();
+    int use_valgrind = 0;
     char np = 0;
     int err = 0;
 
@@ -521,11 +521,15 @@ static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
         np = get_user_mpi_procs(&err);
     }
 
+    if (getenv("MPI_VGRIND") != NULL) {
+        use_valgrind = 1;
+    }
+
     if (!err) {
         const char *mpiexec = gretl_mpiexec();
         gchar *mpiprog = gretl_mpi_binary();
         const char *hostsopt = NULL;
-        char *argv[12] = {0};
+        char *argv[13] = {0};
         char npnum[8] = {0};
         int nproc, i = 0;
 
@@ -564,9 +568,10 @@ static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
                 argv[i++] = "--oversubscribe";
             }
         }
-#if MPI_VGRIND
-        argv[i++] = "valgrind";
-#endif
+        if (use_valgrind) {
+            argv[i++] = "valgrind";
+            argv[i++] = "--leak-check=full";
+        }
         argv[i++] = mpiprog;
         if (opt & OPT_S) {
             argv[i++] = "--single-rng";
@@ -2319,11 +2324,13 @@ SEXP *PR_GlobalEnv;
 SEXP *PR_NilValue;
 SEXP *PR_UnboundValue;
 SEXP *PR_NamesSymbol;
+SEXP *PR_DimNamesSymbol;
 
 SEXP VR_GlobalEnv;
 SEXP VR_NilValue;
 SEXP VR_UnboundValue;
 SEXP VR_NamesSymbol;
+SEXP VR_DimNamesSymbol;
 
 /* renamed, pointerized versions of the R functions we need */
 
@@ -2347,9 +2354,8 @@ static SEXP (*R_install) (const char *);
 static SEXP (*R_mkString) (const char *);
 static SEXP (*R_mkChar) (const char *);
 static SEXP (*R_mkNamed) (SEXPTYPE, const char **);
-static SEXP (*R_GetRowNames) (SEXP);
-static SEXP (*R_GetColNames) (SEXP);
 static SEXP (*R_getAttrib) (SEXP, SEXP);
+static SEXP (*R_setAttrib) (SEXP, SEXP, SEXP);
 
 static Rboolean (*R_isMatrix) (SEXP);
 static Rboolean (*R_isVector) (SEXP);
@@ -2441,9 +2447,8 @@ static int load_R_symbols (void)
     R_ncols         = dlget(Rhandle, "Rf_ncols", &err);
     R_nrows         = dlget(Rhandle, "Rf_nrows", &err);
     R_length        = dlget(Rhandle, "Rf_length", &err);
-    R_GetRowNames   = dlget(Rhandle, "Rf_GetRowNames", &err);
-    R_GetColNames   = dlget(Rhandle, "Rf_GetColNames", &err);
     R_getAttrib     = dlget(Rhandle, "Rf_getAttrib", &err);
+    R_setAttrib     = dlget(Rhandle, "Rf_setAttrib", &err);
     R_PrintValue    = dlget(Rhandle, "Rf_PrintValue", &err);
     R_protect       = dlget(Rhandle, "Rf_protect", &err);
     R_ScalarReal    = dlget(Rhandle, "Rf_ScalarReal", &err);
@@ -2467,9 +2472,11 @@ static int load_R_symbols (void)
         PR_NilValue     = (SEXP *) dlget(Rhandle, "R_NilValue", &err);
         PR_UnboundValue = (SEXP *) dlget(Rhandle, "R_UnboundValue", &err);
         PR_NamesSymbol  = (SEXP *) dlget(Rhandle, "R_NamesSymbol", &err);
+        PR_DimNamesSymbol = (SEXP *) dlget(Rhandle, "R_DimNamesSymbol", &err);
     }
 
     if (err) {
+        fprintf(stderr, "ERROR loading R symbols\n");
         close_plugin(Rhandle);
         Rhandle = NULL;
         err = E_EXTERNAL;
@@ -2686,6 +2693,7 @@ static int gretl_Rlib_init (void)
             VR_NilValue = *PR_NilValue;
             VR_UnboundValue = *PR_UnboundValue;
             VR_NamesSymbol = *PR_NamesSymbol;
+            VR_DimNamesSymbol = *PR_DimNamesSymbol;
             Rinit = 1;
         } else {
             close_plugin(Rhandle);
@@ -2930,22 +2938,59 @@ static SEXP make_R_array (gretl_array *a, int *err)
     return as;
 }
 
+static SEXP make_R_strings (const char **S, int ns)
+{
+    SEXP as = R_allocVector(STRSXP, ns);
+    int i;
+
+    if (as != NULL) {
+        for (i=0; i<ns; i++) {
+            R_STRING_PTR(as)[i] = R_mkChar(S[i]);
+        }
+    }
+
+    return as;
+}
+
+static void maybe_add_export_dimnames (SEXP ms, const gretl_matrix *m)
+{
+    const char **S;
+    SEXP rn = NULL;
+    SEXP cn = NULL;
+
+    S = gretl_matrix_get_rownames(m);
+    if (S != NULL) {
+	rn = make_R_strings(S, m->rows);
+    }
+    S = gretl_matrix_get_colnames(m);
+    if (S != NULL) {
+	cn = make_R_strings(S, m->cols);
+    }
+    if (rn != NULL || cn != NULL) {
+	/* FIXME PROTECT? */
+	SEXP dimnames = R_allocVector(VECSXP, 2);
+
+	if (rn != NULL) {
+	    R_SET_VECTOR_ELT(dimnames, 0, rn);
+	}
+	if (cn != NULL) {
+	    R_SET_VECTOR_ELT(dimnames, 1, cn);
+	}
+	R_setAttrib(ms, VR_DimNamesSymbol, dimnames);
+    }
+}
+
 static SEXP make_R_matrix (const gretl_matrix *m, int *err)
 {
-    int nr = gretl_matrix_rows(m);
-    int nc = gretl_matrix_cols(m);
-    SEXP ms;
-    int i, j;
+    SEXP ms = R_allocMatrix(REALSXP, m->rows, m->cols);
 
-    ms = R_allocMatrix(REALSXP, nr, nc);
     if (ms == NULL) {
         *err = E_ALLOC;
     } else {
-        for (i=0; i<nr; i++) {
-            for (j=0; j<nc; j++) {
-                R_REAL(ms)[i + j * nr] = gretl_matrix_get(m, i, j);
-            }
-        }
+	size_t sz = m->rows * m->cols * sizeof *m->val;
+
+	memcpy(R_REAL(ms), m->val, sz);
+	maybe_add_export_dimnames(ms, m);
     }
 
     return ms;
@@ -3116,6 +3161,46 @@ static GretlType R_type_to_gretl_type (SEXP s, const char *name, int *err);
 static void *object_from_R (SEXP res, const char *name, GretlType type,
                             int *err);
 
+static void maybe_add_import_dimnames (SEXP s, gretl_matrix *m)
+{
+    gretl_array *a;
+    char **S = NULL;
+    SEXP dimnames;
+    SEXP d[2];
+    GretlType t;
+    int i, ns;
+    int err = 0;
+
+    dimnames = R_getAttrib(s, VR_DimNamesSymbol);
+
+    if (R_NULL(dimnames)) {
+        return;
+    }
+
+    d[0] = R_VECTOR_ELT(dimnames, 0);
+    d[1] = R_VECTOR_ELT(dimnames, 1);
+
+    for (i=0; i<2; i++) {
+	if (R_NULL(d[i])) {
+	    continue;
+	}
+	t = R_type_to_gretl_type(d[i], "dimnames", &err);
+	if (t == GRETL_TYPE_ARRAY) {
+	    a = object_from_R(d[i], "dimnames", t, &err);
+	    ns = i == 0 ? m->rows : m->cols;
+	    if (a != NULL && gretl_array_get_length(a) == ns) {
+		S = gretl_array_steal_strings(a, &ns);
+		if (i == 0) {
+		    gretl_matrix_set_rownames(m, S);
+		} else {
+		    gretl_matrix_set_colnames(m, S);
+		}
+		gretl_array_destroy(a);
+	    }
+	}
+    }
+}
+
 static gretl_matrix *matrix_from_R (SEXP s, const char *name,
                                     int *err)
 {
@@ -3123,21 +3208,8 @@ static gretl_matrix *matrix_from_R (SEXP s, const char *name,
     int nr = R_nrows(s);
     int nc = R_ncols(s);
 
-#if 0 /* experimental, not working yet */
-    SEXP rn = R_GetRowNames(s);
-    SEXP cn = R_GetColNames(s);
-    GretlType t;
-
+#if FDEBUG
     fprintf(stderr, "matrix_from_R: name='%s', %d x %d\n", name, nr, nc);
-
-    t = R_type_to_gretl_type(rn, "rn", err);
-    if (!*err) {
-        fprintf(stderr, " R_GetRowNames: type %d\n", t);
-    }
-    t = R_type_to_gretl_type(cn, "cn", err);
-    if (!*err) {
-        fprintf(stderr, " R_GetColNames: type %d\n", t);
-    }
 #endif
 
     if (nr >= 0 && nc >= 0) {
@@ -3151,18 +3223,22 @@ static gretl_matrix *matrix_from_R (SEXP s, const char *name,
         *err = E_DATA;
     }
 
-    if (m != NULL && nr > 0 && nc > 0) {
+    if (!*err && R_isReal(s)) {
+	size_t sz = nr * nc * sizeof *m->val;
+
+	memcpy(m->val, R_REAL(s), sz);
+    } else if (!*err) {
         int i, j;
 
-        for (i=0; i<nr; i++) {
-            for (j=0; j<nc; j++) {
-                if (R_isReal(s)) {
-                    gretl_matrix_set(m, i, j, R_REAL(s)[i + j * nr]);
-                } else {
-                    gretl_matrix_set(m, i, j, R_INT(s)[i + j * nr]);
-                }
+        for (j=0; j<nc; j++) {
+            for (i=0; i<nr; i++) {
+		gretl_matrix_set(m, i, j, R_INT(s)[i + j * nr]);
             }
         }
+    }
+
+    if (!*err) {
+	maybe_add_import_dimnames(s, m);
     }
 
     return m;
@@ -3350,9 +3426,10 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 
 #if FDEBUG
     printf("gretl_R_function_exec...\n");
+    R_PrintValue(current_call);
 #endif
 
-    if (gretl_messages_on()) {
+    if (0 /* gretl_messages_on() */) {
         R_PrintValue(current_call);
     }
 
@@ -3376,11 +3453,9 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
     R_PrintValue(res);
 #endif
 
-    if (err) {
-        return err;
+    if (!err) {
+        data = object_from_R(res, name, *rtype, &err);
     }
-
-    data = object_from_R(res, name, *rtype, &err);
 
     if (!err) {
         if (gretl_scalar_type(*rtype)) {

@@ -148,7 +148,7 @@ want to create 10 random normal series named \texttt{norm1} to
 \texttt{norm10}. This can be accomplished as follows.
 %
 \begin{code}
-string sname = null
+string sname
 loop i=1..10
   sname = sprintf("norm%d", i)
   series @sname = normal()

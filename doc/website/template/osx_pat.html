@@ -24,7 +24,7 @@
  see our
  <a href="mac-legacy.html">gretl for legacy Macs</a> page.</p>
 
-<p>Alterative download: if you
+<p>Alternative download: if you
  use <a href="https://www.macports.org/">MacPorts</a> (or want to try
  it), builds of gretl are available for all Mac architectures
  at <a href="https://ports.macports.org/port/gretl/">macports.org</a>.
@@ -85,95 +85,58 @@ below.</p>
 
 <h2>Installing gretl</h2>
 
-<p>Here's the drill:</p>
-
 <ol>
 <li><p>
 Click to download either the latest release or the snapshot (above).  The
 selected gretl package file should appear in your Downloads after a short
-while, or it may be opened by the Mac Installer program right away.
+while, or it may be opened by the Installer program right away.
 If the package is not opened automatically, minimize your browser window so
 you can see what's happening on your desktop, then double-click on the gretl
 file in Downloads to open the installer. Either way, you should then be
-walked through the installation process.
+walked through the installation process. If Apple's security system <b>stops
+you from opening a gretl package</b>, please
+look <a href="./mac_security.html">here</a> for guidance on what to do.
 </p></li>
 
-<li><p> Navigate to Applications in the Finder and you should now see
-a gretl icon there. Double-clicking should start gretl. Assuming gretl
-starts OK, you can drag its icon from Applications onto the dock to
-get a quick-launcher.
+<li><p>After installing gretl, navigate to Applications in the Finder and
+you should see a gretl icon there. Double-clicking should start
+gretl. Assuming gretl starts OK, you can drag its icon from Applications
+onto the dock to get a quick-launcher.
 </p></li>
 
-<li><p> Clean up: the installer (<kbd>pkg</kbd>) file can be moved to
-the Trash once installation is completed.</p></li>
+<li><p>Clean up: the installer (<kbd>pkg</kbd>) file can be moved to the
+Trash once installation is completed.
+</p></li>
+
+<li><p>
+Access to files: on recent macOS you might see messages about gretl not
+having permission to access files in your home folder. If so, the fix is
+explained at
+<a href="https://support.apple.com/guide/mac-help/control-access-files-folders-mac-mchld5a35146/mac">Apple's
+  access control page</a>.
+</p></li>
 </ol>
-
-<h2>Apple security issues</h2>
-
-<p>If you're downloading gretl from this site you can be confident that the
-installer contains no malware. However, Apple's security measures may block
-installing and/or running gretl. In that case what you have to do depends on
-whether you're running macOS 10.15 ("Catalina") or higher, or an earlier version.
-</p>
-
-<ul>
-<li>
-<p>If your macOS is <i>earlier than Catalina</i>, the discussion (with screenshots)
-at the
-<a href="http://rampagedev.wordpress.com/os-x-tweaks/app-cant-be-opened-because-it-was-not-downloaded-from-the-mac-app-store-fix-2/">rampagedev</a>
-blog should tell you what you need to know.</p>
-</li>
-
-<li><p>If you're running <i>Catalina or higher</i>, here's a step-by-step HOWTO.</p>
-
-<ol type="1">
-  <li><p>Open System Preferences and navigate to &quot;Security &amp;
-  privacy&quot;. Select the General tab. We'll come back to this window shortly.</p></li>
-  
-  <li><p>Double-click the gretl .pkg file. You'll get a message "gretl-quartz.pkg can't be opened because Apple
-    cannot check it ...". Click <b>OK</b> to close the window.</p></li>
-
-  <img src="../images/osx-install-1.png">
-
-  <li><p>In the tab mentioned in item 1 you will see a message with a button <b>Open Anyway</b>:
-    click that button.</p></li>
-  
-  <img src="../images/osx-install-2.png">
-
-  <li><p>Double-click the gretl pkg file again. Now you'll get the same window as in item 2,
-    but with two buttons: Open and Cancel. Click <b>Open</b> and gretl will be installed.</p></li>
-
-  <img src="../images/osx-install-3.png">
-</ol>
-</li>
-
-<li><p>There's a further security issue with Catalina and higher:
-  after installation of gretl, how do you allow the program to access
-  files on your Desktop and other locations? Again, you do this via
-  the &quot;Security &amp; privacy&quot; item under System
-  Preferences;
-  see <a href="https://support.apple.com/guide/mac-help/control-access-files-folders-mac-mchld5a35146/mac">Apple's
-    Catalina guide</a>.</p>
-</li>
-</ul>
 
 <h2><a name="optextra">Optional extras</a></h2>
 
-<p>You may wish to install X-13-ARIMA-SEATS and/or TRAMO/SEATS. These are specialized programs for
-analysis of seasonal time series data, in 64-bit macOS versions compatible with gretl. They
-can be installed via the "gretl console" in the GUI program; just type the
-following commands, respectively:</p>
+<p>You may wish to install X-13-ARIMA-SEATS and/or TRAMO/SEATS. These
+are specialized programs for analysis of seasonal time series data, in
+64-bit macOS versions compatible with gretl. They can be installed by
+typing the appropriate command in the "gretl console" in the GUI
+program, as follows.</p>
+
 <pre>
-  pkg install x13as-mac64.tar.gz
-  pkg install tramo-seats-mac64.tar.gz
+  # X-13-ARIMA-SEATS (Intel Mac)
+  pkg install x13as-mac-intel.tar.gz
+  # X-13-ARIMA-SEATS (Apple Silicon Mac)
+  pkg install x13as-mac-arm64.tar.gz
 </pre>
-<p>At present these addons are Intel-only. On Macs with M1 (Apple
-  Silicon) processor you will need Apple's "Rosetta 2" translator to
-  run them. This can be installed via the command line in a Terminal
-  window:
-</p>
+
 <pre>
-  /usr/sbin/softwareupdate --install-rosetta --agree-to-license
+  # TRAMO/SEATS (Intel Mac)
+  pkg install tramo-seats-mac-intel.tar.gz
+  # TRAMO/SEATS (Apple Silicon Mac)
+  pkg install tramo-seats-mac-arm64.tar.gz  
 </pre>
 
 <p>

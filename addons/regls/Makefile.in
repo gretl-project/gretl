@@ -31,7 +31,7 @@ PKGSRC = $(topsrc)/addons/$(PKG)
 vpath %.inp $(PKGSRC)
 vpath %.spec $(PKGSRC)
 
-INP = regls.inp
+INP = regls.inp regls_helpers.inp regls_plots.inp mregls.inp
 SPEC = regls.spec
 SMPL = regls_sample.inp
 

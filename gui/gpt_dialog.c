@@ -29,6 +29,12 @@
 #include "calculator.h"
 #include "gpt_dialog.h"
 
+#ifdef G_OS_WIN32
+# include "gretlwin32.h"
+#else
+# include "clipboard.h"
+#endif
+
 #if GTK_MAJOR_VERSION > 2
 # define USE_GTK_FONT_CHOOSER 1
 #else
@@ -308,6 +314,49 @@ static void graph_color_selector (GtkWidget *w, gpointer p)
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(color_select_callback), cdlg);
     g_object_get(G_OBJECT(cdlg), "cancel-button", &button, NULL);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(color_cancel), cdlg);
+
+    gtk_widget_show(cdlg);
+    gtk_window_set_modal(GTK_WINDOW(cdlg), TRUE);
+}
+
+static void color_tool_copy (GtkWidget *button, GtkWidget *w)
+{
+    GtkWidget *csel;
+    char buf[10];
+    GdkColor gcolor;
+    guint8 r, g, b;
+    gretlRGB rgb;
+
+    csel = gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(w));
+    gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &gcolor);
+    r = (guint8) (scale_round(gcolor.red));
+    g = (guint8) (scale_round(gcolor.green));
+    b = (guint8) (scale_round(gcolor.blue));
+    rgb = (r << 16) | (g << 8) | b;
+
+    print_rgb_hash(buf, rgb);
+    buf_to_clipboard(buf);
+}
+
+void show_color_tool (void)
+{
+    GtkWidget *cdlg, *csel;
+    GtkWidget *button;
+    GdkColor gcolor;
+
+    gdk_color_parse("#ffffff", &gcolor);
+    cdlg = gtk_color_selection_dialog_new(_("gretl: graph color selection"));
+    csel = gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(cdlg));
+    gtk_color_selection_set_current_color(GTK_COLOR_SELECTION(csel), &gcolor);
+
+    g_object_get(G_OBJECT(cdlg), "ok-button", &button, NULL);
+    gtk_button_set_label(GTK_BUTTON(button), _("Copy color string"));
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(color_tool_copy), cdlg);
+    g_object_get(G_OBJECT(cdlg), "cancel-button", &button, NULL);
+    gtk_button_set_label(GTK_BUTTON(button), _("Close"));
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(color_cancel), cdlg);
 
@@ -3743,18 +3792,18 @@ GtkWidget *plot_add_editor (png_plot *plot)
 		     G_CALLBACK(apply_gpt_changes), editor);
     gtk_widget_grab_default(button);
 
-    /* "OK" button (apply and close) */
-    button = ok_button(hbox);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(apply_gpt_changes), editor);
-    g_signal_connect_swapped(G_OBJECT(button), "clicked",
-			     G_CALLBACK(gtk_widget_destroy),
-			     dialog);
-
     /* Close button (do not apply changes) */
     button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
     gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
+
+    /* "OK" button (apply and close) */
+    button = ok_button(hbox);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(apply_gpt_changes), editor);
     g_signal_connect_swapped(G_OBJECT(button), "clicked",
 			     G_CALLBACK(gtk_widget_destroy),
 			     dialog);

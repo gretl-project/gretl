@@ -1,15 +1,72 @@
-version 2023b, in progress
+version 2023c, in progress
+- "tsls" command: if the --robust option is given, compute a
+  robust variant of the Hausman test
+- String-valued series: support returning such series from a
+  user function, and loosen the restrictions on assignment to
+  such series
+- String functions strsub(), regsub(), substr(), tolower() and
+  toupper(): generalize to support strings arrays and string-
+  valued series as arguments, as well as individual strings
+- New function strvsort(): recodes a string-valued series such
+  that the numeric codes correspond to the alphabetical order
+  of the string values
+- Input of numeric constants: support hexadecimal notation
+- kdensity() function: clarify its documentation
+- Fix bug dating from 2022c: broken handling of the syntax
+  listname.series when used in a function that is called from
+  within a loop
+- Fix bug: possibly incorrect results when applying a vector
+  selection to a string variable
+- Fix bug: possibly incomplete results when compacting daily
+  data to weekly
+- Fix bug: wrong alignment when appending dated weekly data
+- Fix bug: invcdf() and critical() misbehaving for the chi-
+  square distribution with a CDF argument of 1.0
+- Fix bug: possible duplicate entries in GUI function package
+  listing
+- Fix bug: markdown conversion not always working properly
+- GUI: use "Apply" and "OK" buttons more consistently
+- GUI: add a menu item to install a local function package,
+  under the "/File/Function packages" menu
+
+2023-07-21 version 2023b
+- New command "kdplot": simple access to a kernel density plot
+  for a single series
+- New function typename(): return a string giving the type of
+  the argument (can replace typeof() and typestr())
 - "arima" command: implement built-in procedure for assessing
   lag orders, via new --lagselect option, and add GUI access
 - "corr" command: add 1 percent critical value of correlation
   coefficient to the output
-- New command "kdplot": simple access to a kernel density plot
-  for a single series
+- "join" command: import descriptions of newly-added series,
+  if present
+- "gnuplot" command: add new options --inbuf and --outbuf to
+  accept, respectively, input from a named string and output
+  to a named string
+- "smpl" command with the panel-data --time option: support
+  the --replace modifier
+- "outfile" command: insist on correct syntax for usage with
+  the --tempfile option
 - aggregate() function: support matrix input
 - misszero() and zeromiss() functions: support matrix input
+- SVAR addon: implement mixed (set-based and zero) restrictions
 - geoplot addon: make the plot key position configurable
+- regls addon: add an mregls() function for working with data
+  in matrix form
 - Add optional boolean "skip_na" argument for several matrix
   functions that compute statistics
+- Functions bkfilt, bwfilt, fracdiff, filter: disallow panel
+  data since these functions assume regular time-series data
+- Boxplots: respect the chosen gnuplot theme, if applicable
+- Add "empty" as a dummy constant for initializing an empty
+  string, matrix, bundle or array
+- "numeric" meta-type: allow usage in function packages, and
+  hook it up for syntax highlighting
+- Function packages: support use of Markdown for help text
+- Function packages: add a new special function role named
+  "ui-maker" to support customization of the user interface
+- "R_functions" facility: handle row and column names when
+  passing matrices to and from R
 - Fix bug: failure in the Kalman function ksmooth() when in
   "univariate" mode and the observable has more elements than
   the state
@@ -21,7 +78,36 @@ version 2023b, in progress
   constant in the specification
 - Fix bug: spurious "no data avilable for forecasting" error
   in GUI forecasting from ARIMA model without constant term
+- Fix bug: function package code with very long lines could
+  lead to a crash (e.g. on "View code" in the GUI)
+- Fix bug: the sumc() function produced incorrect result for
+  complex matrices (too large by 1)
+- Fix bug: potential crash on calling a hansl function with
+  no arguments when it has only optional parameters
+- Fix bug: MPI crash on broadcasting an empty matrix, with
+  some MPI variants
+- Fix bug: potential crash in estimating a restricted VECM
+  when there are no regressors outside of the cointegration
+  space
+- Fix bug: potential crash in "arima" with the --x-12-arima
+  option with data starting in the year 1
+- Fix GUI bug: dynamic panel data model menu item not always
+  available when it should be
+- Fix GUI bug: breakage on trying to select the decimal comma
+  when exporting data as CSV
+- GUI "Check for addons" facility: redesign to present the
+  information more clearly
+- GUI sample selection for panel data: clarify and fix
+- GUI "stop" button to abort script execution: make this more
+  responsive
+- GUI "dataset structure wizard": improve the efficiency of
+  checking candidate unit and time variables for panel data
 - Add new example data file: sunspots time series from 1740
+- User's Guide: updates, including description of data file
+  formats
+- Add more strings to gretl.pot and update translations
+- 64-bit Windows build: update to OpenBLAS 0.3.23 and MS-MPI
+  version 10.1.3
 
 2023-03-02 version 2023a
 - "logit" command (binary case): add a matrix holding odds

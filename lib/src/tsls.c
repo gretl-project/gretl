@@ -621,12 +621,13 @@ ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist,
     return err;
 }
 
-static void hausman_drop_check (MODEL *hmod,
-                                int *hatlist,
-                                int *endolist,
-                                DATASET *dset)
+static int hausman_drop_check (MODEL *hmod,
+                               int *hatlist,
+                               int *endolist,
+                               DATASET *dset)
 {
     int *dlist = gretl_model_get_list(hmod, "droplist");
+    int n_drop = 0;
 
     if (dlist != NULL) {
         int i, pos;
@@ -634,10 +635,49 @@ static void hausman_drop_check (MODEL *hmod,
         for (i=1; i<=dlist[0]; i++) {
             pos = in_gretl_list(hatlist, dlist[i]);
             if (pos > 0 && pos <= endolist[0]) {
+                n_drop++;
                 gretl_warnmsg_sprintf("%s does not seem to be endogenous",
                                       dset->varname[endolist[pos]]);
             }
         }
+    }
+
+    return n_drop;
+}
+
+static double tsls_robust_hausman_fixup (const int *hatlist,
+                                         MODEL *pmod,
+                                         int *df)
+{
+    int *wlist = gretl_list_copy(hatlist);
+    double H = NADBL;
+
+    if (wlist != NULL) {
+        int i;
+
+        for (i=wlist[0]; i>0; i--) {
+            if (!in_gretl_list(pmod->list, wlist[i])) {
+                gretl_list_delete_at_pos(wlist, i);
+            }
+        }
+        H = wald_omit_chisq(wlist, pmod);
+        *df = wlist[0];
+        free(wlist);
+    }
+
+    return H;
+}
+
+static void add_hausman_to_model (MODEL *pmod, double HTest, int df)
+{
+    ModelTest *test = model_test_new(GRETL_TEST_IV_HAUSMAN);
+
+    if (test != NULL) {
+        model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
+        model_test_set_dfn(test, df);
+        model_test_set_value(test, HTest);
+        model_test_set_pvalue(test, chisq_cdf_comp(df, HTest));
+        maybe_add_test_to_model(pmod, test);
     }
 }
 
@@ -645,13 +685,15 @@ static void hausman_drop_check (MODEL *hmod,
 
 static int
 tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
-                   int *endolist, DATASET *dset)
+                   int *endolist, gretlopt opt, DATASET *dset)
 {
     MODEL hmod;
     double URSS;
+    gretlopt uopt;
     int *HT_list = NULL;
     int t, df;
     int nv = dset->v;
+    int n_drop = 0;
     int ku = 0;
     int err = 0;
 
@@ -676,15 +718,18 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     printlist(HT_list, "Hausman list");
 #endif
 
+    /* option for unrestricted regression */
+    uopt = (opt & OPT_R)? (OPT_A | OPT_R) : OPT_A;
+
     /* estimate the unrestricted model */
-    hmod = lsq(HT_list, dset, OLS, OPT_A);
+    hmod = lsq(HT_list, dset, OLS, uopt);
     if (hmod.errcode) {
         fprintf(stderr, "tsls_hausman_test: hmod.errcode (U) = %d\n", hmod.errcode);
         err = hmod.errcode;
         goto bailout;
     }
 
-    hausman_drop_check(&hmod, hatlist, endolist, dset);
+    n_drop = hausman_drop_check(&hmod, hatlist, endolist, dset);
 
 #if HTDEBUG
     pprintf(dbgprn, "Hausman: unrestricted model (df = %d)\n", hmod.dfd);
@@ -694,6 +739,25 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 
     if (hmod.dfd == 0) {
         /* perfect fit, can't do test */
+        goto bailout;
+    }
+
+    if (opt & OPT_R) {
+        /* 2023-08-31: if the --robust option was in force for
+           tsls estimation, compute the Hausman test as a Wald
+           test on the robust variance matrix for the U model.
+        */
+        double HTest = NADBL;
+
+        if (n_drop > 0) {
+            HTest = tsls_robust_hausman_fixup(hatlist, &hmod, &df);
+        } else {
+            HTest = wald_omit_chisq(hatlist, &hmod);
+            df = hatlist[0];
+        }
+        if (!na(HTest)) {
+            add_hausman_to_model(tmod, HTest, df);
+        }
         goto bailout;
     }
 
@@ -749,21 +813,13 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
         */
         double DRSS = hmod.ess;
         double HTest = (DRSS/URSS) * hmod.nobs;
-        ModelTest *test = model_test_new(GRETL_TEST_IV_HAUSMAN);
 
 #if HTDEBUG
         pprintf(dbgprn, "df = %d - %d = %d\n", ku, hmod.ncoeff, df);
         pprintf(dbgprn, "DRSS = (RRSS - URSS) = %g, URSS = %g\n", DRSS, URSS);
         pprintf(dbgprn, "Htest = %g [%.4f]\n", HTest, chisq_cdf_comp(df, HTest));
 #endif
-
-        if (test != NULL) {
-            model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
-            model_test_set_dfn(test, df);
-            model_test_set_value(test, HTest);
-            model_test_set_pvalue(test, chisq_cdf_comp(df, HTest));
-            maybe_add_test_to_model(tmod, test);
-        }
+        add_hausman_to_model(tmod, HTest, df);
     }
 
  bailout:
@@ -1814,7 +1870,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 
     if (!sysest && !no_tests) {
         if (nendo > 0 && hatlist != NULL) {
-            tsls_hausman_test(&tsls, reglist, hatlist, endolist, dset);
+            tsls_hausman_test(&tsls, reglist, hatlist, endolist, opt, dset);
         }
         if (OverIdRank > 0) {
             ivreg_sargan_test(&tsls, OverIdRank, instlist, dset);

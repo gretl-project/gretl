@@ -181,9 +181,9 @@ void iconview_menubar_state (gboolean s)
 #define OK_MIDAS_PD(p) (p == 1 || p == 4 || p == 12)
 
 #define COMPACTABLE(d) (d->structure == TIME_SERIES && \
-                        (d->pd == 4 || d->pd == 12 || \
-                         d->pd == 5 || d->pd == 6 || \
-                         d->pd == 7 || d->pd == 24))
+                        ((d->pd == 4 || d->pd == 12 || d->pd == 24) || \
+                         ((d->pd == 5 || d->pd == 6 || d->pd == 7) &&  \
+                          d->sd0 > 100000)))
 
 #define EXPANSIBLE(d) (d->structure == TIME_SERIES && (d->pd == 1 || d->pd == 4))
 
@@ -265,9 +265,8 @@ void panel_menu_state (gboolean s)
         flip(mdata->ui, "/menubar/Add/RangeDum", !s);
         flip(mdata->ui, "/menubar/Model/PanelModels", s);
         flip(mdata->ui, "/menubar/Model/LimdepModels/probit/reprobit", s);
-        if (s && dataset->pd <= 2) {
-            flip(mdata->ui, "/menubar/Model/PanelModels/dpanel", 0);
-        }
+        flip(mdata->ui, "/menubar/Model/PanelModels/dpanel",
+             s && dataset->pd > 2);
         gfn_menuitems_state();
     }
 }

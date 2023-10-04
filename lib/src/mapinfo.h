@@ -40,7 +40,8 @@ typedef enum {
     MAP_NON_STD  = 1 << 0,
     MAP_IS_IMAGE = 1 << 1,
     MAP_DISPLAY  = 1 << 2,
-    MAP_DUMMY    = 1 << 3
+    MAP_DUMMY    = 1 << 3,
+    MAP_MULTI    = 1 << 4
 } MapFlags;
 
 typedef enum {

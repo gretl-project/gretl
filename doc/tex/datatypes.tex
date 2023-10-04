@@ -169,9 +169,10 @@ There are several ways of creating a bundle. Here are the first two:
 \begin{code}
 bundle foo
 \end{code}
-\item or define an empty bundle using the \texttt{null} keyword:
+\item or define an empty bundle using the \texttt{defbundle} function
+without any arguments:
 \begin{code}
-bundle foo = null
+bundle foo = defbundle()
 \end{code}
 \end{itemize}
 These formulations are basically equivalent, in that they both
@@ -182,8 +183,8 @@ gretl session; it is an error to attempt to declare a variable that
 already exists.
 
 To create a bundle and populate it with some members in one go, you
-can use the \texttt{defbundle} function, introduced in gretl 2017b.
-For example:
+can use the \texttt{defbundle} function with some arguments. For
+example:
 \begin{code}
 bundle foo = defbundle("x", 13, "mat", I(3), "str", "some string")
 \end{code}
@@ -534,31 +535,31 @@ functions as a sort of array for subsets of the series in a dataset.
 
 \subsection{Creating an array}
 
-An array can be brought into existence in any of four ways: bare
-declaration, assignment from \texttt{null}, or using one of the
-functions \texttt{array()} or \texttt{defarray()}.  In each case one
-of the specific type-words \texttt{strings}, \texttt{matrices},
-\texttt{lists}, \texttt{bundles} or \texttt{arrays} must be used. Here
-are some examples:
+An array can be brought into existence in any of three ways: bare
+declaration or using one of the functions \texttt{array()} or
+\texttt{defarray()}. In each case one of the specific type-words
+\texttt{strings}, \texttt{matrices}, \texttt{lists}, \texttt{bundles}
+or \texttt{arrays} must be used. Here are some examples:
 
 \begin{code}
 # declare an empty array of strings
 strings S
 # make an empty array of matrices
-matrices M = null
+matrices M = array(0)
 # make an array with space for four bundles
 bundles B = array(4)
 # make an array with three specified strings
 strings P = defarray("foo", "bar", "baz")
 \end{code}
 
-The ``bare declaration'' form and the ``\texttt{= null}'' form have
+The ``bare declaration'' form and the function form with
+\texttt{array(0)} have
 the same effect of creating an empty array, but the second can be used
 in contexts where bare declaration is not allowed (and it can also be
 used to destroy the content of an existing array and reduce it to size
-zero). The \texttt{array()} function expects a positive integer
+zero). The \texttt{array()} function expects a non-negative integer
 argument and can be used to create an array of pre-given size; in this
-case the elements are initialized appropriately as empty strings, null
+case the elements are initialized appropriately as empty strings, empty
 matrices, empty lists, empty bundles or empty arrays. The
 \texttt{defarray()} function takes a variable number of arguments (one
 or more), each of which may be the name of a variable of the
@@ -575,7 +576,7 @@ using the \texttt{+=} operator:
 strings S = array(3)
 S[2] = "string the second"
 # alternative
-matrices M = null
+matrices M = array(0)
 M += mnormal(T,k)
 \end{code}
 
@@ -744,7 +745,7 @@ matrix A
 and so forth. In that case the object in question is given a default
 initialization, as follows: a new scalar has value \texttt{NA}
 (missing); a new series is filled with \texttt{NA}s; a new matrix is
-null (zero rows and columns); a new string is empty; a new list has no
+empty (zero rows and columns); a new string is empty; a new list has no
 members, new bundles and new arrays are empty.
 
 Declaration can be supplemented by a definite initialization, as in

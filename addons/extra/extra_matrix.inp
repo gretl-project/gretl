@@ -200,7 +200,8 @@ function matrix combinations (matrix from "Set of all choices",
     scalar n = nelem(from)
     if h > n
         string s = argname(from)
-        printf "\nError: number of elements of %s less than argument 2\n", strlen(s) ? s : "argument 1"
+        printf "\nError: number of elements of %s less than argument 2\n", \
+            strlen(s) ? s : "argument 1"
 
         return {NA}
     endif
@@ -247,4 +248,7 @@ function matrix qformvech(const matrix Xt)
     matrix ret = P'(Xt ** Xt) * Q
     return ret
 end function
+
+#############
+
 

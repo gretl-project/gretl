@@ -1747,6 +1747,10 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
 
  text_search_wrap:
 
+    while (gtk_events_pending()) {
+	gtk_main_iteration();
+    }
+
     if (from_cursor) {
 	GtkTextIter sel_bound;
 
@@ -2312,7 +2316,7 @@ static const char *have_translation (int code, const char *lang)
 }
 
 /* Determine if we should show a translation of the
-   doc resource indentified by @code. If so, return
+   doc resource identified by @code. If so, return
    the required filename; if not, return NULL.
 */
 

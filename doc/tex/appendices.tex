@@ -4,15 +4,15 @@
 \section{Basic native format}
 \label{native}
 
-In gretl's basic native data format--for which we use the suffix
-\texttt{gdt}---a data set is stored in XML (extensible mark-up
+In gretl's basic native data format---for which we use the suffix
+\texttt{gdt}---a dataset is stored in XML (extensible mark-up
 language). Data files correspond to the simple DTD (document type
-definition) given in \verb+gretldata.dtd+, which is supplied with the
-gretl distribution and is installed in the system data directory
-(e.g.\ \url{/usr/share/gretl/data} on Linux.)  Such files may be plain
-text (uncompressed) or gzipped.  They contain the actual data values
-plus additional information such as the names and descriptions of
-variables, the frequency of the data, and so on.
+definition) given in \verb+gretldata.dtd+, which is supplied with the gretl
+distribution and is installed in the system data directory (e.g.\
+\texttt{/usr/share/gretl/data} on Linux.)  Such files may be plain text
+(uncompressed) or gzipped.  They contain the actual data values plus
+additional information such as the names and descriptions of variables, the
+frequency of the data, and so on.
 
 In a \texttt{gdt} file the actual data values are written to 17
 significant figures (for generated data such as logs or pseudo-random
@@ -30,75 +30,33 @@ observation labels are included.
 \section{Binary data file format}
 \label{bindata}
 
-As of gretl 1.9.15, an alternative, binary format is available for
-data storage. Files of this sort have suffix \texttt{gdtb}, and they
-take the form of a \app{PKZIP} archive containing two files,
-\texttt{data.xml} and \texttt{data.bin}, with the following
-characteristics.
-\begin{itemize}
-\item \texttt{data.xml} is an XML file conforming to the gretldata DTD
-  mentioned above, holding all the metadata.
-\item \texttt{data.bin} starts with a header composed of one of the
-  strings
+A native binary format is also available for dataset storage. This
+format---with suffix \texttt{gdtb}---offers \textit{much} faster writing and
+reading for very large datasets. For small to moderately sized datasets
+(say, up to a few megabytes) there is little advantage in the binary format
+and we recommend use of plain \texttt{gdt}.  Note that \texttt{gdtb} files
+are saved in the endianness of the machine on which they're written and are
+not portable across platforms of differing endianness, but since almost all
+machines on which gretl is likely to be run are little-endian this is
+unlikely to be a serious limitation. The implementation of \texttt{gdtb}
+format can be found in \texttt{purebin.c}, in the \texttt{plugin}
+subdirectory of the gretl source tree.
 
-  \texttt{gretl-bin:little-endian} \,\,or \\
-  \texttt{gretl-bin:big-endian}
-
-  padded to 24 bytes with nul characters.  This is followed by a
-  binary dump of the data series, by variable, as double-precision
-  floating-point values.
-\end{itemize}
-
-Binary values are saved in the endianness of the machine on which
-they're written; the header information enables gretl to convert to
-the endianness of the host on which the data are read if need be.
-
-The rationale for introducing the binary \texttt{gdtb} format is that
-for very large datasets it is a lot faster to write and read data in
-this form rather than as text. For small to moderately sized datasets
-(say, up to 10 megabytes or so) there is no appreciable advantage in the
-binary format and we recommend use of plain \texttt{gdt}. 
-
-Some illustrative timings are shown in Table~\ref{tab:dataspeed};
-these were obtained on a Lenovo ThinkPad X1 Carbon running gretl
-1.9.15.  The datasets contained a mixture of random normal series and
-random binary (dummy) series. The largest comprised 50000 observations
-on 1000 series and the smallest 5000 observations on 250 series.  As
-can be seen, there is a big time saving from the binary format when
-writing (and to a lesser extent, when reading) a dataset in the
-hundreds of megabytes range. At a size of around 10 megabytes,
-however, \texttt{gdt} files can be both written and read in under a
-second, surely fast enough for most purposes.
-
-\begin{table}[htbp]
-  \centering
-  \begin{tabular}{lrr@{\hskip 2em}rr@{\hskip 2em}rr@{\hskip 2em}rr}
-    & \multicolumn{2}{c}{381\,MB}
-    & \multicolumn{2}{c}{38\,MB}
-    & \multicolumn{2}{c}{19\,MB}
-    & \multicolumn{2}{c}{10\,MB} \\
-    format & write & read & write & read & write & read & write & read\\
-    \texttt{gdt} & 
-    21.76 & 4.91 & 2.20 & 0.48 & 1.19 & 0.32 & 0.59 & 0.16\\
-    \texttt{gdtb} & 
-    3.82 & 1.10 & 0.39 & 0.11 & 0.25 & 0.06 & 0.13 & 0.03
-  \end{tabular}
-  \caption{Data write and read timings in seconds for datasets
-    of various sizes in megabytes. The MB numbers represent the 
-    size of the datasets in memory; files of both formats are
-    substantially smaller when compression is applied.}
-  \label{tab:dataspeed}
-\end{table}
-
+Prior to version 2021b of gretl, \texttt{gdtb} files had a different
+structure, namely a \textsf{PKZIP} file containing an XML component for the
+metadata plus a binary component for the actual data values. It turned out
+that this hybrid format did not scale well for datasets with a great deal of
+metadata. For backward compatibility gretl can still read such old-style
+files but it doesn't write them any more.
 
 \section{Native database format}
 \label{dbdetails}
 
-A gretl database consists of two parts: an ASCII index file (with
-filename suffix \texttt{.idx}) containing information on the series,
-and a binary file (suffix \texttt{.bin}) containing the actual data.
-Two examples of the format for an entry in the \texttt{idx} file are
-shown below:
+A gretl database has two primary parts: a plain text index file (with
+filename suffix \texttt{.idx}) containing information on the included
+series, and a binary file (suffix \texttt{.bin}) containing the actual data.
+Two examples of the format for an entry in the \texttt{idx} file are shown
+below:
 
 \begin{code}
 G0M910  Composite index of 11 leading indicators (1987=100) 
@@ -112,15 +70,15 @@ the series (maximum 128 characters).  On the second line the first
 field is a frequency code: \texttt{M} for monthly, \texttt{Q} for
 quarterly, \texttt{A} for annual, \texttt{B} for business-daily (daily
 with five days per week), \texttt{D} for 7-day daily, \texttt{S} for
-6-day daily, \texttt{U} for undated.
+6-day daily, \texttt{U} for undated. No other frequencies are accepted at
+present.
 
-No other frequencies are accepted at present.  Then comes the starting
-date (N.B. with two digits following the point for monthly data, one
-for quarterly data, none for annual), a space, a hyphen, another
-space, the ending date, the string ``\verb+n = +'' and the integer
-number of observations. In the case of daily data the starting and
-ending dates should be given in the form \verb+YYYY-MM-DD+. This
-format must be respected exactly.
+Then comes the starting date (with two digits following the point for
+monthly data, one for quarterly data, none for annual), a space, a hyphen,
+another space, the ending date, the string ``\verb+n = +'' and the integer
+number of observations. In the case of daily data the starting and ending
+dates should be given in the ISO 8601 form, \verb+YYYY-MM-DD+. This format
+must be respected exactly.
 
 Optionally, the first line of the index file may contain a short
 comment (up to 64 characters) on the source and nature of the data,
@@ -130,12 +88,21 @@ following a hash mark.  For example:
 # Federal Reserve Board (interest rates)
 \end{code}
 
-The corresponding binary database file holds the data values,
-represented as ``floats'', that is, single-precision floating-point
-numbers, typically taking four bytes apiece.  The numbers are packed
-``by variable'', so that the first \emph{n} numbers are the
-observations of variable 1, the next \emph{m} the observations on
-variable 2, and so on.
+The corresponding binary database file holds the data values, represented as
+``floats'', that is, single-precision floating-point numbers taking four
+bytes apiece.  The values are packed ``by variable'', so that the first
+\emph{n} numbers are the observations of variable 1, the next \emph{m} the
+observations on variable 2, and so on.
+
+A third file may accompany the \texttt{idx} and \texttt{bin} files, namely a
+``codebook'' containing a description of the data. If present, this must
+be plain text, with filename suffix \texttt{.cb}, or PDF with suffix
+\texttt{.pdf}.
+
+The components of a gretl database are generally combined in a single file,
+with \textsf{zlib} compression and \texttt{.gz} suffix, for distribution. A
+small program named \texttt{gretlzip} can be used to create or unpack such
+files. See the \texttt{utils/dbzip} subdirectory of the gretl source tree.
 
 \chapter{Building gretl}
 \label{app-build}

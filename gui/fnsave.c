@@ -241,7 +241,7 @@ function_info *finfo_new (void)
     finfo->provider = NULL;
 
     finfo->dreq = 0;
-    finfo->minver = 10900;
+    finfo->minver = 20180;
     finfo->uses_subdir = 0;
     finfo->data_access = 0;
     finfo->pdfdoc = 0;
@@ -1932,10 +1932,21 @@ static void select_pdf_callback (GtkButton *b, function_info *finfo)
 			      finfo, finfo->dlg);
 }
 
+static char *text_help_label (function_info *finfo)
+{
+    if (finfo->help_fname != NULL &&
+	has_suffix(finfo->help_fname, ".md")) {
+	return _("Markdown");
+    } else {
+	return _("Plain text");
+    }
+}
+
 static void add_help_radios (GtkWidget *tbl, int i,
 			     function_info *finfo)
 {
     GtkWidget *w, *rb, *htab;
+    char *label;
     GSList *group = NULL;
 
     w = gtk_label_new(_("Help text"));
@@ -1947,7 +1958,8 @@ static void add_help_radios (GtkWidget *tbl, int i,
     gtk_table_set_row_spacings(GTK_TABLE(htab), 4);
     gtk_table_set_col_spacings(GTK_TABLE(htab), 2);
 
-    rb = gtk_radio_button_new_with_label(group, _("Plain text"));
+    label = text_help_label(finfo);
+    rb = gtk_radio_button_new_with_label(group, label);
     gtk_table_attach_defaults(GTK_TABLE(htab), rb, 0, 1, 0, 1);
     w = gtk_button_new_from_stock(GTK_STOCK_EDIT);
     g_signal_connect(G_OBJECT(w), "clicked",
@@ -3055,7 +3067,8 @@ static int want_no_print_toggle (int role)
 {
     return role != UFUN_GUI_PRECHECK &&
 	role != UFUN_BUNDLE_PRINT &&
-	role != UFUN_R_SETUP;
+	role != UFUN_R_SETUP &&
+        role != UFUN_UI_MAKER;
 }
 
 /* pertaining to the "extra properties" dialog: check for
@@ -3147,7 +3160,9 @@ static int process_special_functions (function_info *finfo,
     return n_changed;
 }
 
-#define must_be_private(r) (r == UFUN_GUI_PRECHECK || r == UFUN_R_SETUP)
+#define must_be_private(r) (r == UFUN_GUI_PRECHECK || \
+                            r == UFUN_R_SETUP || \
+                            r == UFUN_UI_MAKER)
 #define must_be_public(r) (!must_be_private(r) && r != UFUN_LIST_MAKER)
 
 /* After adding or deleting functions, check that any
@@ -3404,7 +3419,8 @@ static int process_R_dependency (function_info *finfo,
 }
 
 static int process_extra_properties (function_info *finfo,
-				     gboolean make_changes)
+				     gboolean make_changes,
+				     gboolean close_on_apply)
 {
     int focus_label = 0;
     int changed = 0;
@@ -3428,17 +3444,23 @@ static int process_extra_properties (function_info *finfo,
 	finfo_set_modified(finfo, TRUE);
     }
 
+    if (make_changes && close_on_apply) {
+	gtk_widget_destroy(finfo->extra);
+    }
+
     return changed;
 }
 
 static void extra_properties_apply (GtkWidget *w, function_info *finfo)
 {
-    process_extra_properties(finfo, TRUE);
+    gboolean close_on_apply = widget_get_int(w, "close");
+
+    process_extra_properties(finfo, TRUE, close_on_apply);
 }
 
 static void extra_properties_close (GtkWidget *w, function_info *finfo)
 {
-    int changed = process_extra_properties(finfo, FALSE);
+    int changed = process_extra_properties(finfo, FALSE, FALSE);
 
     if (changed) {
 	int resp = yes_no_cancel_dialog(NULL, _("Apply changes?"),
@@ -3447,7 +3469,7 @@ static void extra_properties_close (GtkWidget *w, function_info *finfo)
 	if (resp == GRETL_CANCEL) {
 	    return;
 	} else if (resp == GRETL_YES) {
-	    process_extra_properties(finfo, TRUE);
+	    process_extra_properties(finfo, TRUE, FALSE);
 	}
     }
 
@@ -3457,7 +3479,7 @@ static void extra_properties_close (GtkWidget *w, function_info *finfo)
 static gint query_save_extra_props (GtkWidget *w, GdkEvent *event,
 				    function_info *finfo)
 {
-    int changed = process_extra_properties(finfo, FALSE);
+    int changed = process_extra_properties(finfo, FALSE, FALSE);
 
     if (changed) {
 	int resp = yes_no_cancel_dialog(NULL, _("Apply changes?"),
@@ -3466,7 +3488,7 @@ static gint query_save_extra_props (GtkWidget *w, GdkEvent *event,
 	if (resp == GRETL_CANCEL) {
 	    return TRUE;
 	} else if (resp == GRETL_YES) {
-	    process_extra_properties(finfo, TRUE);
+	    process_extra_properties(finfo, TRUE, FALSE);
 	}
     }
 
@@ -3736,6 +3758,13 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     tmp = close_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(extra_properties_close), finfo);
+
+    /* OK button */
+    tmp = ok_button(hbox);
+    widget_set_int(tmp, "close", 1);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(extra_properties_apply), finfo);
+    gtk_widget_grab_default(tmp);
 
     /* Help button */
     tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
@@ -4837,6 +4866,7 @@ int save_function_package_spec (const char *fname, gpointer p)
 	GUI_PRECHECK,
 	LIST_MAKER,
 	R_SETUP,
+        UI_MAKER,
 	NULL
     };
     const char *reqstr = NULL;
@@ -5262,6 +5292,7 @@ void edit_function_package (const char *fname)
 					  "description", &finfo->pkgdesc,
 					  "tags", &finfo->tags,
 					  "help", &finfo->help,
+					  "help-fname", &finfo->help_fname,
 					  "sample-script", &finfo->sample,
 					  "data-requirement", &finfo->dreq,
 					  "min-version", &finfo->minver,

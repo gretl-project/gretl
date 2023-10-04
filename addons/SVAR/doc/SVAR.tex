@@ -87,7 +87,7 @@
 
 \title{The SVAR addon for \app{gretl}}
 \author{Jack Lucchetti and Sven Schreiber}
-\date{Version 1.97}
+\date{Version 2.0}
 
 \begin{document}
 
@@ -113,10 +113,12 @@ and is looking for a step-by-step guide on how to get her work done
 quickly via point-and click methods, can consult section \ref{sec:GUI}
 in the Appendix.
 
-In order to establish notation\footnote{Attention: As part of the preparations for an upcoming version
-2.0, starting in v1.95 we have changed the notation in an important way, by swapping the
-symbols for the structural shocks and the reduced-form residuals (forecast errors). The reason is that most of the recent literature uses $u$ for the reduced-form errors, and
-now we do so, too, which hopefully makes everything a bit easier for users.}
+In order to establish notation\footnote{Attention: As part of the preparations
+for version 2.0, starting in v1.95 we have changed the notation in an important
+way, by swapping the symbols for the structural shocks and the reduced-form
+residuals (forecast errors). The reason is that most of the recent literature
+uses $u$ for the reduced-form errors, and now we do so, too, which hopefully
+makes everything a bit easier for users.}
  and define a few concepts, allow us to
 inflict on you a 2-page crash course on SVARs.  In this
 context,\footnote{The adjective ``structural'' is possibly one of the
@@ -1874,7 +1876,7 @@ This is an important point: \texttt{SVAR} is not meant for doing
 inference on the cointegration part of your model. For determining the
 cointegration rank of your system and estimating the cointegration
 $\beta$, you're on your own. Of course, you can use \app{gretl}'s
-in-built commands, such as \cmd{coint2} and \cmd{vecm}, or pre-set
+in-built commands, such as \cmd{johansen} and \cmd{vecm}, or pre-set
 them to some theory-derived value: \texttt{SVAR} won't care, and will
 blindly accept the matrix $\beta$ you supply it; the cointegration
 rank is implicitly assumed as the number of columns of the $\beta$
@@ -1976,7 +1978,7 @@ provide an extended and annotated example.
     16	p = 3
     17	
     18	# check for the "balanced growth path" hypothesis
-    19	coint2 p X 
+    19	johansen p X 
     20	vecm p 2 X
     21	restrict
     22	    b[1,1] = -1
@@ -2021,7 +2023,7 @@ economy, we will use the so-called AWM dataset, which is supplied among
 a quarterly dataset of the Euro area, which spans the 1970-1998
 period. It was originally developed by \cite{AWM} but has been used in
 countless other benchmark studies. The script is supplied in the
-examples directory as \texttt{awm.inp}, but we reproduce it here as
+examples directory as \texttt{Traditional/awm.inp}, but we reproduce it here as
 table \ref{tab:awmscript} for your convenience.
 
 The model comprises three variables, all in logs: real GDP ($y_t$),
@@ -2130,26 +2132,27 @@ longrun (3 x 3)
 
 \section{Set-identified SVARs}\label{sec:SR}
 
-Starting with version 1.9 the SVAR addon also makes it possible to 
-estimate set-identified structural VAR models. 
-What is currently still missing is a graphical interface and some other final
-bits of integration. With this new functionality there is surely also an extended
-potential for 
-wrong and unsupported user input which may not always be caught properly. 
-For example, calling some of the traditional functions when working with a set
-identified model may lead to breakage. This will be fixed and improved as time
-goes by.
+Starting with version 1.9 the SVAR addon also makes it possible to
+estimate set-identified structural VAR models.  What is currently
+still missing is a graphical interface and some other final bits of
+integration. With this new functionality there is surely also an
+extended potential for wrong and unsupported user input which may not
+always be caught properly.  For example, calling some of the
+traditional functions when working with a set identified model may
+lead to breakage. This will be fixed and improved as time goes by.
 
-Some artificial as well as real-life example scripts are included with SVAR to demonstrate
-the usage of sign restrictions and set identification in general. These are: 
-\texttt{ChoMoreno.inp}, \texttt{exotic1.inp, exotic2.inp}, \texttt{KilianMurphy\_relaxed.inp}, 
-\texttt{spaghetti\_plot.inp}, \\
-\texttt{supply\_demand.inp}, \texttt{Uhlig\_example.inp}
+Some artificial as well as real-life example scripts are included with
+SVAR to demonstrate the usage of sign restrictions and set
+identification in general. These are: \texttt{ChoMoreno.inp},
+\texttt{exotic1.inp}, \texttt{exotic2.inp},
+\texttt{spaghetti\_plot.inp},
+\texttt{mixed\_example.inp}, \texttt{supply\_demand.inp}, \texttt{KilianMurphy\_relaxed.inp},  and
+\texttt{Uhlig\_example.inp}
 
 \subsection{Notation}
 
 At the risk of repeating some parts of earlier sections, here is some notation first:
-The reduced-form VAR is assumed to be
+the reduced-form VAR is assumed to be
 \[
   y_t  =  \mu_t + \sum_{i=1}^p \Phi_i y_{t-1} + \PrE{t}, 
 \]
@@ -2171,9 +2174,10 @@ $\Phi(L)$ polynomial is invertible, so $y_t$ can be written as
 $ y_t = m_t + \Theta(L) \PrE{t}$, where $\Theta(L) =
 \Phi(L)^{-1}$. Therefore, the structural VMA representation of the
 process is
-\[
-y_t = m_t + M_0 \StS{t} + M_1 \StS{t-1} + \cdots
-\]
+\begin{equation}
+  \label{eq:structVMA}
+  y_t = m_t + M_0 \StS{t} + M_1 \StS{t-1} + \cdots
+\end{equation}
 where $M_i = \Theta_i C$; since $\Theta_0 = I$, $M_0$ is simply equal
 to $C$. As for $C$, it is assumed that it can be written as
 \begin{equation}
@@ -2245,18 +2249,30 @@ $[M_0]_{ij} > 0$, where $i$ is the ordinal number of the variable
 string \texttt{monetary} in the \texttt{snames} array inside the model
 bundle.
 
-As another example:
+One could constrain non-instantaneous IRFs by using the full syntax
+\begin{code}
+SVAR_SRplain(&mod, "y", "shock", "+", len, start)
+\end{code}
+where \texttt{len} and \texttt{start} are nonegative integers. They
+both default to 0, so for example:
 \begin{code}
 SVAR_SRplain(&mod, "bar", "foo", "-", 3)
 \end{code}
 means that the shock named \texttt{foo} has a negative impact on the
-observable variable \texttt{bar} over the horizon from 0 to
-3. Finally,
+observable variable \texttt{bar} over the horizon from 0 to 3 (hence,
+four elements of the IRF are constrained). In practice, the number of
+constraints is \texttt{len}+1. 
+
+Finally, by indicating a starting lag for the constraint, the sign
+restrictions would be applied to the responses from \texttt{start} to
+\texttt{start}+\texttt{len}. Therefore, the code
 \begin{code}
-SVAR_SRplain(&mod, "quantity", "supply", "+", 6, 4)
+SVAR_SRplain(&mod, "quantity", "supply", "+", 4, 2)
 \end{code}
 means that the shock named \texttt{supply} has a positive impact on the
-observable variable \texttt{quantity} over the horizon from 6 to 10.
+observable variable \texttt{quantity} over the horizon from 2 to 6;
+again, note that the number of restricted IRFs is \texttt{len}
+$+1 = 5 = (6-2+1)$.
 
 \subsubsection{Interval restrictions}
 
@@ -2306,6 +2322,43 @@ with suitable strings as arguments.
 % final period the restriction applies to (NB: \texttt{spans} is
 % 1-based, rather than 0-based).
 
+\subsection{Mixed restrictions}
+\label{sec:mixed}
+
+In some cases, set restrictions may be supplemented by exact restrictions on the
+$C$ matrix. The syntax for specifying constraints of this kind is
+strightforward, and is absolutely similar to the one used for C-models (see
+section \ref{sec:baseest}). So, for example, to set $C_{4,2} = 0$ you would
+insert in your script a line like
+\begin{code}
+  SVAR_restrict(&Mod, "C", 4, 2, 0)
+\end{code}
+and more general constraints can be specified by suitably constructing the
+\texttt{Rd1} member of the model bundle.
+
+Since $M_0 = C$ (see equation \ref{eq:structVMA}) these are typically used to
+set to 0 some instantaneous response; more sophisticated alternatives, though
+possible, are very seldom used in the literature.
+
+Given the peculiar nature of set-based inference there are some limitations on
+the type of point constraints that can be specified in this context. At present,
+two types of restrictions are not allowed:
+\begin{description}
+\item[cross-shocks constraints]: for example, something like
+  $C_{2,3} = C_{4,1}$ is not allowed, altough it is perfectly
+  possible to set both elements to 0. Note that this does \emph{not}
+  rule out constraints pertaining to the same shock on several
+  variables. For instance, something like $C_{1,3} = C_{2,3}$: this
+  would mean that the instantaneous impact of shock number 3 is the
+  same for variables 1 and 2. This possibility, however, requires
+  setting up an appropriate row of the bundle element \texttt{Rd1} by
+  hand: see Section \ref{sec:OtherConstraints}.
+\item[non-zero constraints]: that is, something like $C_{i,j} = 1$; this
+  limitation may be relaxed in the future, but we're not aware of
+  non-zero restriction having ever been used in the literature (if
+  anybody has evidence to the contrary, please let us know).
+\end{description}
+
 \subsection{The workflow for set identification}
 
 \begin{enumerate}
@@ -2320,21 +2373,32 @@ to modify some of these names with meaningful shock labels. For example:
 Mod.snames[1] = "monetary"
 \end{code}
 
-\item Next the restrictions have to be formulated and imposed on the model, namely
-through any number of calls to the functions \texttt{SVAR\_SRplain}, 
-\texttt{SVAR\_SRfull}, or \texttt{SVAR\_SRexotic}. 
+\item Next the restrictions have to be formulated and imposed on the model,
+  namely through any number of calls to the functions \texttt{SVAR\_SRplain},
+  \texttt{SVAR\_SRfull}, or \texttt{SVAR\_SRexotic}. If necessary, add point
+  restrictions using \texttt{SVAR\_restrict}.
 
+\item The core of set-identified SVAR estimation happens now: a large number of
+  random orthogonal matrices $Q$ are generated, and the IRFs are computed
+  according to equation \eqref{eq:rotation}. If $Q$ is such that all the
+  constraints are satisfied, those IRFs are kept as ``good''.  The process goes
+  on until the number of ``good'' draws reaches a prescribed number (typically,
+  a few hundred).
 
-\item Then the randomized drawing is performed by the function 
-\texttt{SVAR\_SRdraw}. This is the heavy number-crunching part. (But with the 
-computing power these days even that will typically not give you enough time to 
-get coffee!) At this stage one also chooses the desired coverage level of the error bands 
-(confidence intervals, credible sets, whatever) presumably to be plotted later.
+  The randomized drawing is performed by the function
+  \texttt{SVAR\_SRdraw}. This is the heavy number-crunching part.\footnote{With
+    the computing power these days even that will typically not give you enough
+    time to get coffee, unless you need a monster number of draws.} At this
+  stage one also chooses the desired coverage level of the error bands
+  (confidence intervals, credible sets, whatever) presumably to be plotted
+  later. A more detailed description of what this function does is provided in
+  section \ref{sec:SRdraw_details}, although for the precise details there's no
+  substitute to studying the code.
 
-\item Plotting; after having collected all the draws which fulfilled the imposed identification 
- restrictions, SVAR offers two variants for the graphical representation of the results, 
- functions again documented in the appendix:
- \begin{itemize}
+\item Plotting; after having collected all the draws which fulfilled the imposed
+  identification restrictions, SVAR offers two variants for the graphical
+  representation of the results, functions again documented in the appendix:
+  \begin{itemize}
   \item Standard -- these plots resemble the traditional IRF graphs and are produced 
     by the function \texttt{SVAR\_SRirf}. The centers of the
     IRF distributions as well as their lower and upper error bounds are calculated 
@@ -2347,107 +2411,7 @@ get coffee!) At this stage one also chooses the desired coverage level of the er
   set restrictions; each accepted draw's IRF is drawn, and one can hopefully judge 
   whether they have the same tendency or are constantly crossing each other.
  \end{itemize}
- 
- 
-\end{enumerate}
 
-
-\subsection{Some details of the numerical algorithm (in \texttt{SVAR\_SRdraw})}
-
-We explore the space of possible
-rotations via $H$ random draws from the space of rotation matrices.
-Once the VAR parameters ($\hat{\Phi}_i$ and $\hat{\Sigma}$)
-are computed, this can be done by either
-\begin{enumerate}
-\item applying the random rotation (\ref{eq:rotation}) to the Cholesky
-  factor of $\hat{\Sigma}$, and computing the $M_i$ matrices from the
-  $\hat{\Phi}_i$ matrices, or  
-\item sampling from the posterior distribution\footnote{The standard
-    Normal-inverse Wishart distribution is used.} of the parameter and
-  get new matrices $\tilde{\Sigma}$ and $\tilde{\Phi}_i$, and then
-  compute the $M_i$ matrices from those.
-\end{enumerate}
-Let's call option 1 the ``frequentist'' option and option 2 the
-``Bayesian'' option. However, let us be clear that option 1 
-uses the fixed point estimates of the reduced-form coefficients and 
-therefore does not take parameter uncertainty into account. This current
-state of affairs could be generalized even within the frequentist paradigm, 
-e.g. by adding another bootstrap layer. Furthermore, option 2 effectively applies
-some perturbation to the reduced-form coefficients centered around the 
-likelihood point estimates, which essentially corresponds to a flat or 
-uninformative Bayesian prior. Some might argue that this kind of prior is 
-relatively close in spirit to a frequentist approach.
-
-In any case, this choice corresponds to a Boolean flag which
-is the third argument to the \texttt{SVAR\_SRdraw} function: the
-default, 0, is to skip the sampling from the posterior and just use
-the frequentist point estimates.
-
-What happens inside this function? First, the relevant items from the
-model bundle are copied: this of course includes the VAR parameters
-and $\hat{\Sigma}$, but we'll also need $(X'X)^{-1}$ for the Bayesian
-option.
-Then, for each iteration:
-
-\begin{enumerate}
-\item For the Bayesian option, first we draw from the posterior of the
-  VAR parameters (this is where we need $(X'X)^{-1}$); in the
-  frequentist case, we just use $\hat{\Phi}_i$ and $\hat{\Sigma}$.
-\item We then create a bundle containing the draw above, a generated
-  rotation matrix $Q$ and the number of deterministic terms in the
-  VAR; this bundle is used by the \verb|gen_irfs| internal function
-  that computes the IRFs for the simulated parameters. Note that:
-  \begin{itemize}
-    \item We generate $Q$ via the QR decomposition algorithm, but we
-      \emph{don't} perform any kind of sign checks on its elements;
-    \item we generate one $Q$ per iterations, so the number that
-      \citet{KilianLuetkepohl2017book} call $N$ on page\footnote{This is the page
-        of the official CUP version. In the ``unofficial'' pdf file
-        that has been circulating for a while it's on page 432.} 441
-      (Step 2) is fixed at 1 (this wouldn't be difficult to change if
-      needed);
-    \item we compute all the IRFs up to the desired horizon even if we
-      do not need all of them for checking the sign restrictions. 
-      (Perhaps we could optimise this, but the computational
-      gain would likely be marginal.)
-    \end{itemize}
-  \item Now we check if the generated $M_i$ matrices satisfy the
-    restrictions; this entails three steps:
-    \begin{enumerate}
-    \item For each set of sign restrictions, we generate a row vector
-      with $n$ elements telling us if that particular restriction
-      is met by each of the rotated shocks. The convention is that 1
-      means ``yes'', 0 means ``no'' and -1 means ``yes, but the sign
-      of the shock must be flipped''.
-    \item All these row vectors are coalesced into a matrix and passed
-      to the \verb|check_id| function, that checks if there is a
-      sensible way to map the rotated shocks to the desired structural
-      shocks. Note that this function returns a matrix in which there
-      could be more than one candidate for each shock. The internal
-      function \texttt{normalize} takes care of establishing a
-      one-to-one correspondence; if the sign restrictions are met,
-      then we reshuffle the IRFs taking care of the structural shocks
-      desired ordering and possible sign flips. 
-    \item At this point --if the draw is still considered good to go-- the 
-      $M_i$ matrices should contain the IRFs in
-      the appropriate positions: $[M_k]_{i,j}$ contains the impact at
-      $k$ steps of the $j$-th shock to the $i$-th observable, where
-      the ordering of the observables is the one implicit in the input
-      list and the order of the shocks is the one given by the
-      \texttt{snames} bundle element. Therefore, we can proceed with
-      checking the exotic restrictions (if any).
-    \item Checking the \emph{exotic} restrictions is done in a conceptually
-      simple way: Provided that the current draw has not failed any of the 
-      imposed restrictions up to this point, the derived impulse responses are 
-      internally relabeled as ``M" and each of the supplied exotic restriction 
-      expression is applied
-      verbatim to the IRF matrix $M$, separately for each of the specified horizons.
-    \item{} [tba: explain check of super-exotic restrictions]  
-      
-    \end{enumerate}
-  \item If all the restrictions are met, we accept the draw and store the
-    results away as an element of the bundle array that we eventually
-    return. Otherwise the draw is discarded.
 \end{enumerate}
 
 \subsection{Historical and forecast error variance decompositions}
@@ -2501,7 +2465,7 @@ more flexibility as a kind of override option.
 
 While it is beyond the scope of this user guide to provide a discussion of the possible conceptual 
 approaches to find a suitable unique model among the many accepted draws, the \texttt{SVAR}
-addon provides the \texttt{SRgetbest} convenience function to help with this task.
+addon provides the \texttt{SVAR\_SRgetbest} convenience function to help with this task.
 
 For example, continuing with \texttt{ChoMoreno.inp}, say you are most interested in the 
 impulse response of inflation (\texttt{INFL}, 2nd variable) to the shock \texttt{Demand} 
@@ -2512,7 +2476,7 @@ possible to the median response across all accepted draws.
 The relevant call to find this model's index number would be:
 
  \begin{code}
- SRgetbest(&mod, "INFL", "Demand", 1, , 1) 
+ SVAR_SRgetbest(&mod, "INFL", "Demand", 1, , 1) 
  \end{code}
 
 The function is documented in the appendix, but note that the first scalar argument with value 1 
@@ -2527,7 +2491,7 @@ be found inside the bundle with $nv=2$ and $ns=1$ (and of course $n=3$) as
 
 We find that the representative model in this particular sense is the one with index 58; 
 by construction the associated impulse response value is very close to the median, namely $0.171297$.
-The \texttt{SRgetbest} function stores this index number 58 in the model bundle under the key
+The \texttt{SVAR\_SRgetbest} function stores this index number 58 in the model bundle under the key
 \texttt{bestdraw}. The functions that require a unique model parametrization such as 
 \texttt{SVAR\_hd}, \texttt{FEVD}, \texttt{GetShock}, and \texttt{IRFplot}  
 will automatically use the associated draw (unless the user overrides it with her own choice as
@@ -2544,13 +2508,6 @@ Since a single accepted draw by itself does not contain any information about th
 this kind of IRF plot only shows a single line without any intervals. For specially designed plots for the 
 set-identified situation please refer to the functions \texttt{SVAR\_SRirf} and \texttt{SVAR\_spagplot} 
 as explained above.
-
-\subsection{Still to do later (for set identification)}
-
-\begin{itemize}
-\item mixed identification (signs + zero restrictions on $C$)
-\end{itemize}
-
 
 % end sign restrictions part
 %%%%%%%%%%%%%%%%%%%
@@ -2571,12 +2528,16 @@ Structural VAR}
 menu entry of the the graphical \app{gretl} client.  While we recommend
 using the script interface to access the full capabilities of the SVAR
 package, the GUI interface may be less intimidating for less
-experienced users. The GUI component covers everything but the SVEC case 
-(see section \ref{sec:SVECs}) where the cointegration properties of the 
-system are exploited for special long-run restrictions. For the GUI in
-the SVEC case there is a preliminary additional function package 
-\emph{SVEC\_GUI} available on the gretl package server which uses this
-SVAR addon as its backend. 
+experienced users. The GUI component covers everything but
+\begin{enumerate}
+\item the SVEC case (see section \ref{sec:SVECs}) where the
+  cointegration properties of the system are exploited for special
+  long-run restrictions.
+\item Set-restricted models, described in section \ref{sec:SR}.
+\end{enumerate}
+For the GUI in the SVEC case there is a preliminary additional
+function package \emph{SVEC\_GUI} available on the gretl package
+server which uses this SVAR addon as its backend.
 
 \begin{figure}[htbp]
   \centering
@@ -2728,6 +2689,104 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \label{fig:GUI-output}
 \end{figure}
 
+%\appendix
+
+\clearpage
+
+\section{Some details of the numerical algorithm in \texttt{SVAR\_SRdraw}}
+\label{sec:SRdraw_details}
+
+We explore the space of possible rotations via $H$ random draws from the space
+of rotation matrices.  Once the VAR parameters ($\hat{\Phi}_i$ and
+$\hat{\Sigma}$) are computed, this can be done by either
+\begin{enumerate}
+\item applying the random rotation (\ref{eq:rotation}) to the Cholesky factor of
+  $\hat{\Sigma}$, and computing the $M_i$ matrices from the $\hat{\Phi}_i$
+  matrices, or
+\item sampling from the posterior distribution\footnote{The standard
+    Normal-inverse Wishart distribution is used.} of the parameter and get new
+  matrices $\tilde{\Sigma}$ and $\tilde{\Phi}_i$, and then compute the $M_i$
+  matrices from those.
+\end{enumerate}
+Let's call option 1 the ``frequentist'' option and option 2 the ``Bayesian''
+option. However, let us be clear that option 1 uses the fixed point estimates of
+the reduced-form coefficients and therefore does not take parameter uncertainty
+into account. This current state of affairs could be generalized even within the
+frequentist paradigm, e.g. by adding another bootstrap layer. Furthermore,
+option 2 effectively applies some perturbation to the reduced-form coefficients
+centered around the likelihood point estimates, which essentially corresponds to
+a flat or uninformative Bayesian prior. Some might argue that this kind of prior
+is relatively close in spirit to a frequentist approach.
+
+In any case, this choice corresponds to a Boolean flag which is the third
+argument to the \texttt{SVAR\_SRdraw} function: the default, 0, is to skip the
+sampling from the posterior and just use the frequentist point estimates.
+
+What happens inside this function? First, the relevant items from the model
+bundle are copied: this of course includes the VAR parameters and
+$\hat{\Sigma}$, but we'll also need $(X'X)^{-1}$ for the Bayesian option.  Then,
+for each iteration:
+
+\begin{enumerate}
+\item For the Bayesian option, first we draw from the posterior of the
+  VAR parameters (this is where we need $(X'X)^{-1}$); in the
+  frequentist case, we just use $\hat{\Phi}_i$ and $\hat{\Sigma}$.
+\item We then create a bundle containing the draw above, a generated rotation
+  matrix $Q$ and the number of deterministic terms in the VAR; this bundle is
+  used by the \verb|gen_irfs| internal function that computes the IRFs for the
+  simulated parameters. Note that:
+  \begin{itemize}
+  \item We generate the rotation matrix $Q$, but we \emph{don't} perform any
+    kind of sign checks on its elements. If no point restriction are present, we
+    just use the QR decomposition algorithm; otherwise, we generate the columns
+    of $Q$ sequentially in such a way that the matrix $C$ in equation
+    \eqref{eq:rotation} satisfies them by construction. Our algorithm is
+    comparable to the one described in \cite{AriasEtAl2018}.
+  \item we generate one $Q$ per iterations, so the number that
+    \citet{KilianLuetkepohl2017book} call $N$ on page\footnote{This is the page
+      of the official CUP version. In the ``unofficial'' pdf file that has been
+      circulating for a while it's on page 432.} 441 (Step 2) is fixed at 1
+    (this wouldn't be difficult to change if needed);
+  \item we compute all the IRFs up to the desired horizon even if we do not need
+    all of them for checking the sign restrictions.  (Perhaps we could optimise
+    this, but the computational gain would likely be marginal.)
+    \end{itemize}
+  \item Now we check if the generated $M_i$ matrices satisfy the restrictions;
+    this entails three steps:
+    \begin{enumerate}
+    \item For each set of sign restrictions, we generate a row vector with $n$
+      elements telling us if that particular restriction is met by each of the
+      rotated shocks. The convention is that 1 means ``yes'', 0 means ``no'' and
+      -1 means ``yes, but the sign of the shock must be flipped''.
+    \item All these row vectors are coalesced into a matrix and passed to the
+      \verb|check_id| function, that checks if there is a sensible way to map
+      the rotated shocks to the desired structural shocks. Note that this
+      function returns a matrix in which there could be more than one candidate
+      for each shock. The internal function \texttt{normalize} takes care of
+      establishing a one-to-one correspondence; if the sign restrictions are
+      met, then we reshuffle the IRFs taking care of the structural shocks
+      desired ordering and possible sign flips.
+    \item At this point --if the draw is still considered good to go-- the $M_i$
+      matrices should contain the IRFs in the appropriate positions:
+      $[M_k]_{i,j}$ contains the impact at $k$ steps of the $j$-th shock to the
+      $i$-th observable, where the ordering of the observables is the one
+      implicit in the input list and the order of the shocks is the one given by
+      the \texttt{snames} bundle element. Therefore, we can proceed with
+      checking the exotic restrictions (if any).
+    \item Checking the \emph{exotic} restrictions is done in a conceptually
+      simple way: Provided that the current draw has not failed any of the
+      imposed restrictions up to this point, the derived impulse responses are
+      internally relabeled as ``M" and each of the supplied exotic restriction
+      expression is applied verbatim to the IRF matrix $M$, separately for each
+      of the specified horizons.
+    \item{} [tba: explain check of super-exotic restrictions]  
+      
+    \end{enumerate}
+  \item If all the restrictions are met, we accept the draw and store the
+    results away as an element of the bundle array that we eventually
+    return. Otherwise the draw is discarded.
+\end{enumerate}
+
 \clearpage
 
 \section{Alphabetical list of (public) functions}
@@ -2865,29 +2924,6 @@ int keypos[0:2:1], int drawix[0])}
    The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-\begin{funcdoc}{SRgetbest (bundle *Smod, string vname, string sname,
-    int ini[0::0], \\ int length[0::0],  int disttarg[0:1:0],  string loss[null]) }
-  \noindent Relating to a set identified (sign restricted) model, this function returns
-   the (scalar) index number among all accepted draws of that particular draw which has 
-   a certain impulse response (as specified by the user in this call) closest to the central 
-   tendency of all draws. Also stores this number in the model bundle under ``bestdraw''. 
-   
-  \noindent Arguments:
-  \begin{enumerate}
-  \item A bundle holding the model (pointer form).
-  \item The name of the target variable in the interesting IRF.
-  \item The name of the shock in the interesting IRF.
-  \item The first period/horizon at which the IRF should be compared. (Default 0, on impact)
-  \item The length of the horizon over which the IRF should be compared. (Default 0, only
-  for the single period given before)
-  \item A switch choosing whether to target the mean (0) or the median (1) of the IRF 
-  distribution. (Default 0)
-  \item The loss function name to evaluate deviations from the target. Possible values are
-  ``quad'' (default) and ``abs''.
-   \end{enumerate}  
-\end{funcdoc}
-
-
 \begin{funcdoc}{SVAR\_boot (bundle *Smod, int rep[0::2000], scalar alpha[0:1:0.9], bool
     quiet[1],\\
     string btypestr[null], int biascorr[-1:2:-1])}
@@ -2965,7 +3001,7 @@ int keypos[0:2:1], int drawix[0])}
   The \texttt{drawix} argument is only meaningful in the set identification 
   (sign restriction) case and overrides from which of the accepted model draws 
   the coefficients should be taken. Normally this draw index should instead be determined 
-  with the help of the \texttt{SRgetbest} function and can be omitted here. 
+  with the help of the \texttt{SVAR\_SRgetbest} function and can be omitted here. 
   This index can range from 1 to the number
   of accepted draws. In order to work the SR type model must have been set up such that all
   accepted draws are stored in the model bundle. (See \texttt{SVAR\_setup},
@@ -3009,8 +3045,8 @@ list of endogenous variables must be given in \texttt{nv}.
 \end{funcdoc}
 
 \begin{funcdoc}{SVAR\_restrict (bundle *Smod, string code, int r, int c[0], scalar d[0])}
-\noindent Sets up constraints for an existing model. The function takes at
-most five arguments:
+  \noindent Sets up point constraints for an existing model. The function
+  takes at most five arguments:
 \begin{enumerate}
 \item A pointer to the model for which we want to set up the
   restriction(s).
@@ -3072,6 +3108,9 @@ A few examples:
 If the restrictions are found to conflict with other ones already
 implied by the pre-existing constraints, they will just be ignored and
 a warning will be printed.
+
+Note that this function can be used (albeit in a limited way) in the
+context of set-identified models. See section \ref{sec:mixed} for more details.
 \end{funcdoc}
 
 \begin{funcdoc}{SVAR\_setup (string type, list Y, list X, int varorder, 
@@ -3237,6 +3276,28 @@ a warning will be printed.
   \item switch to choose medians as the center line of the plots (default: 0/mean)
  \end{enumerate}
  It is not possible to exclude single variable-shock pairs, simply delete any unwanted plots afterwards. 
+\end{funcdoc}
+
+\begin{funcdoc}{SVAR\_SRgetbest (bundle *Smod, string vname, string sname,
+    int ini[0::0], \\ int length[0::0],  int disttarg[0:1:0],  string loss[null]) }
+  \noindent Relating to a set identified (sign restricted) model, this function returns
+   the (scalar) index number among all accepted draws of that particular draw which has 
+   a certain impulse response (as specified by the user in this call) closest to the central 
+   tendency of all draws. Also stores this number in the model bundle under ``bestdraw''. 
+   
+  \noindent Arguments:
+  \begin{enumerate}
+  \item A bundle holding the model (pointer form).
+  \item The name of the target variable in the interesting IRF.
+  \item The name of the shock in the interesting IRF.
+  \item The first period/horizon at which the IRF should be compared. (Default 0, on impact)
+  \item The length of the horizon over which the IRF should be compared. (Default 0, only
+  for the single period given before)
+  \item A switch choosing whether to target the mean (0) or the median (1) of the IRF 
+  distribution. (Default 0)
+  \item The loss function name to evaluate deviations from the target. Possible values are
+  ``quad'' (default) and ``abs''.
+   \end{enumerate}  
 \end{funcdoc}
 
 \begin{funcdoc}{SVAR\_SRplain (bundle *Smod, string yname, string sname, string what, \\
@@ -3406,11 +3467,26 @@ typically be called before \texttt{SVAR\_SRirf}.
    stored representation of the draws is still experimental and subject to change.\\
    
    \texttt{bestdraw} & positive integer to index the best of all accepted draws in \texttt{acc\_draws} 
-   according to criteria specified in call to \texttt{SRgetbest}. Zero if undefined. 
+   according to criteria specified in call to \texttt{SVAR\_SRgetbest}. Zero if undefined. 
   \end{tabular}
   
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
+
+\subsection*{Version 2.0, June/July 2023}
+\begin{itemize}
+\item Implement mixed (sign- and zero-) restrictions. Deprecate \cmd{SRgetbest}
+ in favour of \cmd{SVAR\_SRgetbest}. 
+\item Move the internal function drawbootres to the extra addon, and along the
+ way fix a bug with the moving blocks bootstrap, the explicit choice of the
+ block length was not honored (probably introduced in 2021).  
+\item Fix for "spaghetti" plots with output paths that include spaces.   
+\end{itemize}
+
+\subsection*{Version 1.98, May 2023}
+\begin{itemize}
+\item Fix documentation on sign restrictions.
+\end{itemize}
 
 \subsection*{Version 1.97, July 2022}
 \begin{itemize}
@@ -3449,23 +3525,24 @@ this means that the residual matrix \texttt{E} in the bundle is now called \text
 \subsection*{Version 1.92, August/September 2020}
 \begin{itemize}
 \item Clarify documentation for Bayesian draws in set-id models.
-\item Replace deprecated funcerr() with errorif(), therefore need gretl 2020b for the sign restriction part. 
+\item Replace deprecated funcerr() with errorif(), therefore need gretl 2020b
+  for the sign restriction part. 
 \end{itemize}
 
 \subsection*{Version 1.91, April 2020}
 \begin{itemize}
-\item Minor plot legend fix for GUI usage; a fix of DoF calculation for Bayesian redrawing;
-catch the case of no accepted draws more gracefully.
-\item Introduce new convenience function SRgetbest to find the best draw according to 
-user-specified IRF criterion.
-\item New functions with alternative interface: SVAR\_HD (wrapper for SVAR\_hd) and 
-SVAR\_getshock (wrapper for GetShock).
+\item Minor plot legend fix for GUI usage; a fix of DoF calculation for
+Bayesian redrawing; catch the case of no accepted draws more gracefully.
+\item Introduce new convenience function SRgetbest to find the best draw
+according to user-specified IRF criterion.
+\item New functions with alternative interface: SVAR\_HD (wrapper for SVAR\_hd)
+and SVAR\_getshock (wrapper for GetShock).
 \end{itemize}
 
 \subsection*{Version 1.90, March 2020}
 \begin{itemize}
-\item Major new feature: set-identified model estimation (a.k.a. sign restrictions; scripting
-interface only). 
+\item Major new feature: set-identified model estimation (a.k.a. sign restrictions;
+scripting interface only). 
  
 \end{itemize}
 

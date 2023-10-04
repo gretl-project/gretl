@@ -1,0 +1,67 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> 
+<head>
+<title>gretl on macOS</title>
+<LINK REL=STYLESHEET TYPE="text/css" HREF="css-gretl.html">
+<link rel="shortcut icon" href="http://gretl.sf.net/favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+
+<p>[<a href="http://gretl.sourceforge.net/index.html">gretl main page</a>]</p>
+
+<center>
+<h1>gretl on macOS: Apple security isses</h1>
+</center>
+
+<p>
+If you're downloading gretl from this site you can be confident that the
+installer contains no malware. However, Apple's security measures may block
+installing and/or running gretl. You shouldn't have a security problem with
+installing a gretl <i>release</i> package, since these are both code-signed
+and "notarized", but gretl snapshots are not notarized.
+</p>
+
+<p>
+In any case, what you have to do depends on the version of macOS
+you're running. If it's <b>older than Catalina</b> (10.15) then the
+discussion (with screenshots) at the
+<a href="http://rampagedev.wordpress.com/os-x-tweaks/app-cant-be-opened-because-it-was-not-downloaded-from-the-mac-app-store-fix-2/">rampagedev</a>
+blog should tell you what you need to know. If it's <b>Catalina or
+higher</b> then please read the following step-by-step guide.  The
+name of the gretl package and the appearance of the dialogs on your
+system may differ from what's shown below, but the general idea should
+be the same.</p>
+
+<ol type="1">
+  <li><p>Open System Preferences and navigate to &quot;Security &amp;
+  privacy&quot;. Select the General tab. We'll come back to this window shortly.</p></li>
+  
+  <li><p>Double-click the gretl .pkg file. You'll get a message saying
+    that the file "can't be opened because Apple cannot check it
+    ...". Click <b>OK</b> to close the window.</p></li>
+
+  <img src="../images/cant_open.png">
+
+  <li><p>In the tab mentioned in item 1 you'll see a message with a button <b>Open Anyway</b>:
+    click that button.</p></li>
+  
+  <img src="../images/open_anyway.png">
+
+  <li><p>Double-click the gretl pkg file again. Now you'll get the same window as in item 2,
+    but with two buttons: Open and Cancel. Click <b>Open</b> and gretl will be installed.</p></li>
+
+  <img src="../images/can_open.png">
+</ol>
+
+<p>
+There's a further security issue with Catalina and higher: after
+  installation of gretl, how do you allow the program to access files
+  on your Desktop and other locations? Again, you do this via the
+  &quot;Security &amp; privacy&quot; item under System Preferences;
+  see <a href="https://support.apple.com/guide/mac-help/control-access-files-folders-mac-mchld5a35146/mac">Apple's
+  access control page</a>.
+</p>
+
+</body>
+</html>

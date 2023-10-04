@@ -856,6 +856,7 @@
 	<example>arima 0 1 1 ; 0 1 1 ; y --nc</example>
 	<demos>
 	<demo>armaloop.inp</demo>
+	<demo>auto_arima.inp</demo>
 	<demo>bjg.inp</demo>
 	</demos>
       </examples>
@@ -2694,37 +2695,56 @@
 	data, returning gretl to its initial <quote>empty</quote> state.
       </para>
       <para>
-	<lit>compact</lit>: Must be followed by a positive integer
-	representing a new data frequency, which should be lower than
-	the current frequency (for example, a value of 4 when the
-	current frequency is 12 indicates compaction from monthly to
-	quarterly).  This command is available for time series data
-	only; it compacts all the series in the data set to the new
-	frequency.  A second parameter may be given, namely one of
+	<lit>compact</lit>: This action is available for time series
+	data only; it compacts all the series in the data set to a
+	lower frequency. It requires one parameter, a positive integer
+	representing the new frequency. In general this should be
+	lower than the current frequency (for example, a value of 4
+	when the current frequency is 12 indicates compaction from
+	monthly to quarterly). The one exception is a new frequency of
+	52 (weekly) when the current data are daily (frequency 5, 6 or
+	7).  A second parameter may be given, namely one of
 	<lit>sum</lit>, <lit>first</lit>, <lit>last</lit> or
 	<lit>spread</lit>, to specify, respectively, compaction using
 	the sum of the higher-frequency values, start-of-period
 	values, end-of-period values, or spreading of the
 	higher-frequency values across multiple series (one per
-	sub-period).  The default is to compact by averaging.
+	sub-period). The default is to compact by averaging.
       </para>
       <para>
-	<lit>expand</lit>: This command is only available for annual
+	In the case of compaction from daily to weekly frequency
+	(only), the two special options <opt>repday</opt> and
+	<opt>weekstart</opt> are available. The first of these allows
+	you to select a <quote>representative day</quote> of the week
+	to serve as the weekly value. The parameter to this option
+	must be an integer from 0 (Sunday) to 6 (Saturday). For
+	example, giving <opt>--repday=3</opt> selects Wednesday's
+	value as the weekly value. If the <opt>repday</opt> option is
+	not given, we need to know on which day the week is deemed to
+	start in order to align the data correctly. For 5- or 6-day
+	data this is always taken to be Monday, but with 7-day data
+	you have a choice between <opt>weekstart=0</opt> (Sunday) and
+	<opt>weekstart=1</opt> (Monday), with Monday being the
+	default.
+      </para>
+      <para>
+	<lit>expand</lit>: This action is only available for annual
 	or quarterly time series data: annual data can be expanded to
 	quarterly or monthly, and quarterly data to monthly.  All
 	series in the data set are padded out to the new frequency by
 	repeating the existing values. If the original dataset is
 	annual the default expansion is to quarterly but
 	<lit>expand</lit> can be followed by <lit>12</lit> to request
-	monthly.
+	monthly. See the <fncref targ="tdisagg"/> function for more
+	sophisticated means of converting data to higher frequency.
       </para>
       <para>
 	<lit>transpose</lit>: No additional parameter required.
-	Transposes the current data set.  That is, each observation (row)
-	in the current data set will be treated as a variable (column),
-	and each variable as an observation.  This command may be useful
-	if data have been read from some external source in which the rows
-	of the data table represent variables.
+	Transposes the current data set.  That is, each observation
+	(row) in the current data set will be treated as a variable
+	(column), and each variable as an observation.  This action
+	may be useful if data have been read from some external source
+	in which the rows of the data table represent variables.
       </para>
       <para>
 	<lit>sortby</lit>: The name of a single series or list is
@@ -2734,7 +2754,7 @@
 	hierarchically: if the observations are tied in sort order
 	with respect to the first key variable then the second key is
 	used to break the tie, and so on until the tie is broken or
-	the keys are exhausted. Note that this command is available
+	the keys are exhausted. Note that this action is available
 	only for undated data.
       </para>
       <para>
@@ -2919,38 +2939,19 @@
     label="Kernel density estimation">
 
     <description>
-
       <para>Kernel density estimation proceeds by defining a set of
 	evenly spaced reference points, over a suitable range in
 	relation to the range of the data, and attributing a density
 	to each reference point based on the actual observations in
 	the vicinity.
       </para>
-      <para>The formula used to compute the estimated density at each
-	reference point, <math>x</math>, is
-      <equation status="display"
-	tex="\[f(x)=(1/nh) \sum_{t-1}^{n} k\left((x-x_t)/h\right)\]"
-	ascii="f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)"
-	graphic="kernel1"/>
-	where <math>n</math> denotes the number of data
-	points, <math>h</math> is a <quote>bandwidth</quote>
-	parameter, and <math>k</math>() is the kernel function.
-	The larger the value of the bandwidth parameter, the smoother
-	the estimated density.
-      </para>
       <para>
 	You are given the choice of using a Gaussian kernel (the
 	standard normal density) or the Epanechnikov kernel.  By
 	default, the bandwidth is that suggested as a rule of thumb by
-	<cite key="silverman96">Silverman (1986)</cite>, namely
-	<equation status="display"
-	  tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{-1/5}\]"
-	  ascii="h = 0.9 min(s, IQR/1.349) n^{-1/5}"
-	  graphic="kernel2"/>
-	where <math>s</math> denotes the standard deviation
-	of the data and IQR denotes the inter-quartile range.  You can
+	<cite key="silverman86">Silverman (1986)</cite>.  You can
 	widen or shrink the bandwidth via the <quote>bandwidth
-	  adjustment factor</quote>: the actual bandwidth used is
+	adjustment factor</quote>: the actual bandwidth used is
 	obtained by multiplying the Silverman value by the adjustment
 	factor.
       </para>
@@ -2959,7 +2960,6 @@
 	estimation see Chapter 15 of Davidson and MacKinnon's
 	<book>Econometric Theory and Methods</book>.
       </para>
-
     </description>
 
   </command>
@@ -5292,9 +5292,19 @@
 	  <effect>send output to specified file</effect>
         </option>
         <option>
+	  <flag>--outbuf</flag>
+	  <optparm>stringname</optparm>
+	  <effect>send output to specified string</effect>
+        </option>
+        <option>
 	  <flag>--input</flag>
 	  <optparm>filename</optparm>
 	  <effect>take input from specified file</effect>
+        </option>
+        <option>
+	  <flag>--inbuf</flag>
+	  <optparm>stringname</optparm>
+	  <effect>take input from specified string</effect>
         </option>
       </options>
       <examples>
@@ -5529,6 +5539,13 @@
 	shown on screen as in interactive mode. If a filename with any
 	extension other than those just mentioned is given, a gnuplot
 	command file is written.
+      </para>
+      <para>
+	An alternative means of directing output is the
+	<opt>outbuf=</opt><repl>stringname</repl> option. This writes
+	gnuplot commands to the named string or <quote>buffer</quote>.
+	Note that <opt>output</opt> and <opt>outbuf</opt> are mutually
+	incompatible.
       </para>
       <subhead>Specifying a font</subhead>
       <para>
@@ -7059,9 +7076,9 @@
       <para>
 	Plots a kernel density estimate for the series
 	<argname>y</argname>. By default the kernel is Gaussian but if
-	the <option>alt</option> flag is given the Epanechnikov kernel
+	the <opt>alt</opt> flag is given the Epanechnikov kernel
 	is used. The degree of smoothing can be adjusted via the
-	<option>scale</option> option, which has a default value of
+	<opt>scale</opt> option, which has a default value of
 	1.0 (higher values of <repl>s</repl> produce a smoother
 	result).
       </para>
@@ -11439,7 +11456,7 @@
         <option>
 	  <flag>--with-steps</flag>
 	  <optparm optional="true">varspec</optparm>
-	  <effect>use horizontal and vertical line segments</effect>
+	  <effect>use perpendicular line segments</effect>
         </option>
         <option>
 	  <flag>--time-series</flag>
@@ -11511,8 +11528,6 @@
 	variable and the other(s) the <math>y</math>-axis variable(s),
 	unless the <opt>time-series</opt> option is given in which
 	case all the specified data go on the <math>y</math> axis.
-      </para>
-      <para>
 	The option of supplying a single series name is restricted to
 	time-series data, in which case it is assumed that a
 	time-series plot is wanted; otherwise an error is flagged.
@@ -15010,15 +15025,6 @@
 
   </command>
 
-  <command name="sprintf" section="Printing" context="cli">
-    <description>
-      <para>
-	Obsolete command: please use the <fncref targ="sprintf"/>
-	function instead.
-      </para>
-    </description>
-  </command>
-
   <command name="square" section="Transformations"
     label="Create squares of variables" context="cli">
 
@@ -15282,19 +15288,24 @@
       </para>
       <subhead>Storing to a database</subhead>
       <para>
-	The option of saving in gretl database format is intended to
-	help with the construction of large sets of series with mixed
-	frequencies and ranges of observations.  At present this
-	option is available only for annual, quarterly or monthly
-	time-series data. If you save to a file that already exists,
-	the default action is to append the newly saved series to the
-	existing content of the database.  In this context it is an
-	error if one or more of the variables to be saved has the same
-	name as a variable that is already present in the
-	database. The <opt>overwrite</opt> flag has the effect that,
-	if there are variable names in common, the newly saved
-	variable replaces the variable of the same name in the
-	original dataset.
+	The option of saving in gretl database format is intended for
+	construction of large sets of series with mixed frequencies
+	and ranges of observations.  At present this option is
+	available only for annual, quarterly or monthly time-series
+	data, or undated (cross-sectional) data. A gretl database
+	takes the form of two files: one with suffix <lit>.bin</lit>
+	to hold the data in binary form and a plain text file with
+	suffix <lit>.idx</lit> for the metadata.  In naming the output
+	file on the command line you should either give the
+	<lit>.bin</lit> suffix or no suffix.
+      </para>
+      <para>
+	When saving to a database that already exists, the default
+	action is to append series to the prior content.  In this
+	context it is an error if any series to be saved has the
+	same name as one already present. The <opt>overwrite</opt>
+	flag has the effect that, if there are variable names in
+	common, the newly saved data replace the prior values.
       </para>
       <para>
 	The <opt>comment</opt> option is available when saving data as

@@ -1383,49 +1383,27 @@ int do_sscanf (const char *src, const char *format, const char *args,
     return err;
 }
 
-static int sscanf_driver (const char *args, DATASET *dset, PRN *prn)
+/* Apparatus to support the command form of printf: the @quoted
+   argument indicates whether @parm1 was in quotes on input.
+*/
+
+int do_printf_command (const char *parm, const char *args,
+		       DATASET *dset, PRN *prn, int quoted)
 {
-    static int warned;
-    int err;
+    const char *format;
 
-    if (!warned) {
-	pputs(prn, "*** \"sscanf\": obsolete command, please use the "
-	      "function of the same name\n");
-	warned = 1;
-    }
-
-    if (args == NULL) {
-	err = E_DATA;
+    if (quoted) {
+	format = parm;
     } else {
-	char *tmp = malloc(strlen(args) + 9);
-
-	if (tmp == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    sprintf(tmp, "sscanf(%s)", args);
-	    err = generate(tmp, dset, GRETL_TYPE_NONE, OPT_O, prn);
-	    free(tmp);
-	}
+	/* @parm should be a string variable */
+	format = get_string_by_name(parm);
     }
 
-    return err;
-}
-
-/* apparatus to support the command-forms of printf, sprintf
-   and sscanf */
-
-int do_printscan_command (int ci, const char *parm1, const char *parm2,
-			  const char *vargs, DATASET *dset, PRN *prn)
-{
-    int err;
-
-    if (ci == PRINTF) {
-	err = do_printf(parm1, vargs, dset, prn, NULL);
+    if (format == NULL) {
+	return E_INVARG;
     } else {
-	err = sscanf_driver(vargs, dset, prn);
+	return do_printf(format, args, dset, prn, NULL);
     }
-
-    return err;
 }
 
 /* The originating command is of form:

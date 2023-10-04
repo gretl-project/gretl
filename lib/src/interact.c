@@ -1030,7 +1030,7 @@ int check_stringvar_name (const char *name, int allow_new,
             /* create the variable if possible */
             err = check_identifier(name);
             if (!err) {
-                err = create_user_var(name, GRETL_TYPE_STRING);
+                err = user_var_add(name, GRETL_TYPE_STRING, NULL);
             }
         } else {
             /* otherwise require that the variable already exists */
@@ -2777,12 +2777,18 @@ static int handle_tgz (const char *fname,
                        ExecState *s,
                        PRN *prn)
 {
-    const char *path_id = NULL;
+    const char *sf = "https://sourceforge.net/projects/gretl/files";
+    const char *sfdir, *path_id = NULL;
     gchar *uri, *fullname;
     int err;
 
     fullname = gretl_make_dotpath(fname);
-    uri = g_strdup_printf("https://sourceforge.net/projects/gretl/files/x13as/%s", fname);
+    if (strstr(fname, "tramo") != NULL) {
+	sfdir = "tramo";
+    } else {
+	sfdir = "x13as";
+    }
+    uri = g_strdup_printf("%s/%s/%s", sf, sfdir, fname);
     err = retrieve_public_file(uri, fullname);
 
     if (!err) {
@@ -3117,7 +3123,7 @@ int is_plotting_command (CMD *cmd)
     } else if (cmd->ci == END && cmd->param != NULL) {
 	int ci = gretl_command_number(cmd->param);
 
-	if (ci == PLOT || ci == GRIDPLOT) {
+	if (ci == PLOT) {
 	    return ci;
 	}
     }
@@ -3617,9 +3623,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case PRINTF:
-    case SSCANF:
-        err = do_printscan_command(cmd->ci, cmd->param, cmd->parm2,
-                                   cmd->vstart, dset, prn);
+        err = do_printf_command(cmd->param, cmd->vstart, dset,
+				prn, cmd_arg1_quoted(cmd));
         break;
 
     case PVAL:
@@ -3889,20 +3894,23 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         }
         break;
 
+    case GPBUILD:
     case GRIDPLOT:
-	if (cmd->param != NULL) {
-	    /* the "start" case */
-	    err = gretl_multiplot_start(cmd->opt);
-	} else if (cmd->opt & (OPT_i | OPT_I)) {
-            /* the --inbuf or --input case */
-            err = gretl_multiplot_revise(cmd->opt);
-	} else if (cmd->opt & OPT_S) {
-	    /* the --strings (array) case */
-	    err = gretl_multiplot_from_array(cmd->opt);
-        } else {
-	    /* FIXME should this be an error? */
-            err = gretl_multiplot_start(cmd->opt);
-        }
+	if (gretl_multiplot_collecting()) {
+	    gretl_errmsg_set(_("gpbuild/gridplot: cannot be nested"));
+	    err = E_DATA;
+	} else if (cmd->ci == GRIDPLOT) {
+	    err = check_gridplot_options(cmd->opt);
+	}
+	if (!err) {
+	    if (cmd->ci == GPBUILD) {
+		/* the block-start case */
+		err = gretl_multiplot_start(cmd->param, cmd->opt, dset);
+	    } else {
+		/* the gridplot case */
+		err = gretl_multiplot_from_array(cmd->param, cmd->opt);
+	    }
+	}
         break;
 
     case ADD:
@@ -4076,7 +4084,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
             err = execute_plot_call(cmd, dset, line, prn);
         } else if (!strcmp(cmd->param, "outfile")) {
             err = do_outfile_command(OPT_C, NULL, NULL, prn);
-        } else if (!strcmp(cmd->param, "gridplot")) {
+        } else if (!strcmp(cmd->param, "gpbuild")) {
             err = execute_multiplot_call(cmd, prn);
         } else {
             err = E_PARSE;
@@ -4437,9 +4445,14 @@ int process_command_error (ExecState *s, int err)
         }
     }
 
-    if (ret && print_redirection_level(s->prn) > 0) {
-        print_end_redirection(s->prn);
-        pputs(s->prn, _("An error occurred when 'outfile' was active\n"));
+    if (ret) {
+	if (gretl_multiplot_collecting()) {
+	    gretl_multiplot_destroy();
+	}
+	if (print_redirection_level(s->prn) > 0) {
+	    print_end_redirection(s->prn);
+	    pputs(s->prn, _("An error occurred when 'outfile' was active\n"));
+	}
     }
 
     return (err == E_STOP)? err : ret;

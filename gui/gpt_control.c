@@ -237,10 +237,10 @@ struct png_bounds_t {
 typedef struct linestyle_ linestyle;
 
 struct linestyle_ {
-    char lc[8]; /* color */
-    float lw;   /* line width */
-    int dt;     /* dash type */
-    int pt;     /* point type */
+    char lc[20]; /* color */
+    float lw;    /* line width */
+    int dt;      /* dash type */
+    int pt;      /* point type */
 };
 
 static int get_png_bounds_info (png_bounds *bounds);
@@ -705,13 +705,6 @@ static int remove_png_term_from_plot (const char *fname, GPT_SPEC *spec)
 int remove_png_term_from_plot_by_name (const char *fname)
 {
     return add_or_remove_png_term(fname, REMOVE_PNG, NULL);
-}
-
-static void mark_plot_as_saved (GPT_SPEC *spec)
-{
-    png_plot *plot = (png_plot *) spec->ptr;
-
-    plot->status |= PLOT_SAVED;
 }
 
 static int gnuplot_png_init (png_plot *plot, FILE **fpp)
@@ -1425,7 +1418,7 @@ static int get_gpt_marker (const char *line, char *label,
 		      p == PLOT_3D || \
 		      p == PLOT_HEATMAP || \
 		      p == PLOT_GEOMAP || \
-		      p == PLOT_USER_MULTI)
+		      p == PLOT_GRIDPLOT)
 
 /* graphs where we don't attempt to find data coordinates */
 
@@ -1829,14 +1822,20 @@ read_plotspec_range (const char *obj, const char *s, GPT_SPEC *spec)
 	err = 1;
     }
 
-    if (!strcmp(s, "[*:*]")) {
-	r0 = r1 = NADBL;
-    } else {
-	gretl_push_c_numeric_locale();
-	if (!err && sscanf(s, "[%lf:%lf]", &r0, &r1) != 2) {
-	    err = 1;
-	}
-	gretl_pop_c_numeric_locale();
+    if (!err) {
+        gretl_push_c_numeric_locale();
+        if (!strcmp(s, "[*:*]")) {
+            r0 = r1 = NADBL;
+        } else if (strstr(s, "[*:")) {
+            r0 = NADBL;
+            r1 = atof(s + 3);
+        } else if (strstr(s, ":*]")) {
+            r0 = atof(s + 1);
+            r1 = NADBL;
+        } else if (sscanf(s, "[%lf:%lf]", &r0, &r1) != 2) {
+            err = 1;
+        }
+        gretl_pop_c_numeric_locale();
     }
 
     if (!err) {
@@ -2058,7 +2057,10 @@ static void read_xtics_setting (GPT_SPEC *spec,
 
 /* Try to accept variant RGB specifications besides the
    one that's standard in gretl plot files, namely
-   "#RRGGBB" in hex.
+   "#RRGGBB" in hex. The candidate string -- which might
+   be a color name of up to 17 characters -- is in @rgb,
+   and on success it's ovewritten by a standard gnuplot
+   hex string.
 */
 
 static int verify_rgb (char *rgb)
@@ -2068,16 +2070,20 @@ static int verify_rgb (char *rgb)
     int err = 0;
 
     if (delim == '"' || delim == '\'') {
+	/* valid input will be quoted */
 	const char *p;
 
 	s++;
 	p = strchr(s, delim);
 	if (p != NULL) {
-	    char test[16] = {0};
+	    char test[18] = {0};
 	    int len = p - s;
 
-	    if (len > 0 && len < 16) {
+	    if (len >= 3 && len <= 17) {
 		strncat(test, s, len);
+		/* Note: parse_gnuplot_color() writes to its
+		   second argument if there's no error.
+		*/
 		err = parse_gnuplot_color(test, rgb);
 	    } else {
 		err = E_DATA;
@@ -2107,6 +2113,7 @@ static int parse_linetype (const char *s, linestyle *styles)
     }
 
     if (!err && (p = strstr(s, " lc ")) != NULL) {
+	/* 20 bytes allows for quote characters */
 	char lc[20];
 
 	p += 4;
@@ -4387,7 +4394,7 @@ static void add_to_session_callback (png_plot *plot)
 
     if (!err) {
 	remove_png_term_from_plot(fullname, plot->spec);
-	mark_plot_as_saved(plot->spec);
+	plot->status |= PLOT_SAVED;
 	plot->status |= PLOT_TERM_HIDDEN;
     }
 }

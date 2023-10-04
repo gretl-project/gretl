@@ -23,6 +23,7 @@
 #include "gretl_typemap.h"
 #include "libset.h"
 #include "version.h"
+#include "gretl_multiplot.h"
 #include "shapefile.h"
 #include "mapinfo.h"
 
@@ -1567,6 +1568,26 @@ static void check_geoplot_opt_keys (gretl_bundle *opts)
     }
 }
 
+static int should_display_map (mapinfo *mi)
+{
+    int ret = 1;
+
+    if (gretl_multiplot_collecting()) {
+        mi->flags |= MAP_MULTI;
+        ret = 0;
+    } else if (mi->opts != NULL &&
+               gretl_bundle_has_key(mi->opts, "show")) {
+        int show, err = 0;
+
+        show = gretl_bundle_get_int(mi->opts, "show", &err);
+        if (!err && show == 0) {
+            ret = 0;
+        }
+    }
+
+    return ret;
+}
+
 int geoplot (mapinfo *mi)
 {
     const gretl_matrix *mask = NULL;
@@ -1580,16 +1601,13 @@ int geoplot (mapinfo *mi)
     n_missing = 0;
     zna = 0;
 
+    if (should_display_map(mi) == 0) {
+        /* turn off screen display */
+        mi->flags &= ~MAP_DISPLAY;
+    }
+
     if (mi->opts != NULL) {
 	check_geoplot_opt_keys(mi->opts);
-	if (gretl_bundle_has_key(mi->opts, "show")) {
-	    int show = gretl_bundle_get_int(mi->opts, "show", &err);
-
-            if (show == 0) {
-		/* turn off screen display */
-                mi->flags &= ~MAP_DISPLAY;
-            }
-	}
 	if (gretl_bundle_has_key(mi->opts, "plotfile")) {
 	    sval = gretl_bundle_get_string(mi->opts, "plotfile", &err);
 	    if (sval != NULL) {
@@ -1621,7 +1639,9 @@ int geoplot (mapinfo *mi)
     }
 
     /* catch the case of no output */
-    if (mi->plotfile == NULL && !(mi->flags & MAP_DISPLAY)) {
+    if (mi->plotfile == NULL &&
+        !(mi->flags & MAP_DISPLAY) &&
+        !(mi->flags & MAP_MULTI)) {
         gretl_errmsg_set("geoplot: no output was specified");
 	err = E_ARGS;
 	goto bailout;

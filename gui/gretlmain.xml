@@ -57,6 +57,8 @@
 	<menuitem action="LocalGfn"/>
 	<menuitem action="RemoteGfn"/>
 	<separator/>
+	<menuitem action="InstallPkg"/>
+	<separator/>
 	<menuitem action="EditGfn"/>
 	<menuitem action="NewGfn"/>
 	<menuitem action="UploadGfn"/>
@@ -89,6 +91,8 @@
       <menuitem action="ShowConsole"/>
       <menuitem action="Gnuplot"/>
       <menuitem action="StartR"/>
+      <separator/>
+      <menuitem action="ColorTool"/>
       <separator/>
       <menu action="NistTest">
 	<menuitem action="NistBasic"/>

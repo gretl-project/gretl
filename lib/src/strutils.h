@@ -149,6 +149,9 @@ char **strings_array_new_with_length (int nstrs, int len);
 
 char **strings_array_dup (char **strs, int n);
 
+char **strings_array_dup_selected (char **strs, int n,
+				   const int *list);
+
 int strings_array_sort (char ***pS, int *n, gretlopt opt);
 
 int strings_array_cmp (char **strs1, char **strs2, int n);

@@ -547,7 +547,7 @@ static void maybe_retrieve_compact_method (int v, CompactMethod *pm)
 {
     int m = series_get_compact_method(dataset, v);
 
-    if (m != COMPACT_NONE) {
+    if (m != COMPACT_UNSET) {
 	*pm = m;
     }
 }
@@ -607,7 +607,7 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 	/* the incoming series needs to be compacted */
 	data_compact_dialog(dbset->pd, &dataset->pd, NULL,
 			    &cmethod, NULL, vwin->main);
-	if (cmethod == COMPACT_NONE) {
+	if (cmethod == COMPACT_UNSET) {
 	    return 0; /* canceled */
 	} else if (cmethod == COMPACT_SPREAD) {
 	    return handle_compact_spread(NULL, NULL, dataset, dbset);
@@ -716,7 +716,7 @@ add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
 	    if (!chosen) {
 		data_compact_dialog(sinfo->pd, &dataset->pd, NULL,
 				    &cmethod, NULL, vwin->main);
-		if (cmethod == COMPACT_NONE) {
+		if (cmethod == COMPACT_UNSET) {
 		    /* canceled */
 		    return 0;
 		}
@@ -3810,10 +3810,12 @@ static int get_remote_addon_info (xmlNodePtr node, xmlDocPtr doc,
     xmlNodePtr cur = node->xmlChildrenNode;
     int err = 0;
 
+    /* note: could get the date of the addon on the server via
+       the "date" cur->name, but we're not doing that at present
+    */
+
     while (cur != NULL) {
 	if (!xmlStrcmp(cur->name, (XUC) "version")) {
-	    gretl_xml_node_get_trimmed_string(cur, doc, &S[1]);
-	} else if (!xmlStrcmp(cur->name, (XUC) "date")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &S[2]);
 	} else if (!xmlStrcmp(cur->name, (XUC) "description")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &S[4]);
@@ -3821,22 +3823,22 @@ static int get_remote_addon_info (xmlNodePtr node, xmlDocPtr doc,
 	cur = cur->next;
     }
 
-    if (S[1] == NULL || S[2] == NULL || S[4] == NULL) {
+    if (S[2] == NULL || S[4] == NULL) {
 	err = E_DATA;
     } else {
 	char *path = gretl_addon_get_path(S[0]);
 	int minver = gretl_version_number(minvstr);
 
+	get_installed_addon_status(path, S[2], minver, &S[1], &S[3]);
 	if (path != NULL) {
-	    S[3] = installed_addon_status_string(path, S[1], minver);
 	    free(path);
-	} else {
-	    S[3] = gretl_strdup(_("Not installed"));
 	}
     }
 
     return err;
 }
+
+/* Columns: name, installed version, version on server, comment */
 
 gint populate_remote_addons_list (windata_t *vwin)
 {
@@ -4415,7 +4417,7 @@ gint populate_dbfilelist (windata_t *vwin, int *pndb)
 	err = 1;
     } else {
 	maybe_prune_db_list(GTK_TREE_VIEW(vwin->listbox), &ndb);
-	presort_treelist(vwin);
+	presort_treelist(vwin, NULL);
     }
 
     if (pndb != NULL) {
@@ -4450,47 +4452,74 @@ static void set_compact_info_from_default (int method)
     int i;
 
     for (i=1; i<dataset->v; i++) {
-	if (series_get_compact_method(dataset, i) == COMPACT_NONE) {
+	if (series_get_compact_method(dataset, i) == COMPACT_UNSET) {
 	    series_set_compact_method(dataset, i, method);
 	}
     }
 }
 
-void do_compact_data_set (void)
+void do_compact_dataset (void)
 {
     CompactMethod method = COMPACT_AVG;
-    int err, newpd = 0, monstart = 1;
+    int err, newpd = 0;
+    int wkstart = 0;
     int repday = 0;
-    int *pmonstart = NULL;
+    int *p_wkstart = NULL;
+    int *p_repday = NULL;
 
     if (maybe_restore_full_data(COMPACT)) {
 	return;
     }
 
-    if (dated_seven_day_data(dataset)) {
-	pmonstart = &monstart;
+    if (dated_daily_data(dataset)) {
+	repday = G_DATE_MONDAY;
+	p_repday = &repday;
+	if (dataset->pd == 7) {
+	    wkstart = G_DATE_MONDAY;
+	    p_wkstart = &wkstart;
+	}
     }
 
-    data_compact_dialog(dataset->pd, &newpd, pmonstart,
-			&method, &repday, mdata->main);
+    data_compact_dialog(dataset->pd, &newpd, p_wkstart,
+			&method, p_repday, mdata->main);
 
-    if (method == COMPACT_NONE) {
+    if (method == COMPACT_UNSET) {
 	/* the user cancelled */
-	fprintf(stderr, "canceled!\n");
 	return;
     }
 
-    err = compact_data_set(dataset, newpd, method, monstart, repday);
+    if (method != COMPACT_WDAY) {
+	/* revert @repday to "not used" value */
+	repday = 0;
+    }
+
+    err = compact_dataset(dataset, newpd, method, wkstart, repday);
 
     if (err) {
 	gui_errmsg(err);
     } else {
 	const char *mstr = compact_method_string(method);
+	gchar *tmp;
 
 	if (mstr != NULL) {
 	    lib_command_sprintf("dataset compact %d %s", newpd, mstr);
 	} else {
 	    lib_command_sprintf("dataset compact %d", newpd);
+	}
+	/* In the following clauses we need (for now) to conform
+	   to the userspace numbering of Sunday as weekday 0.
+	*/
+	if (wkstart > 0) {
+	    wkstart = wkstart == G_DATE_SUNDAY ? 0 : wkstart;
+	    tmp = g_strdup_printf(" --weekstart=%d", wkstart);
+	    lib_command_strcat(tmp);
+	    g_free(tmp);
+	}
+	if (repday > 0) {
+	    repday = repday == G_DATE_SUNDAY ? 0 : repday;
+	    tmp = g_strdup_printf(" --repday=%d", repday);
+	    lib_command_strcat(tmp);
+	    g_free(tmp);
 	}
 	record_command_verbatim();
 
@@ -4502,7 +4531,7 @@ void do_compact_data_set (void)
     }
 }
 
-void do_expand_data_set (void)
+void do_expand_dataset (void)
 {
     int newpd = -1;
     int err = 0;
@@ -4527,7 +4556,7 @@ void do_expand_data_set (void)
     }
 
     gretl_error_clear();
-    err = expand_data_set(dataset, newpd);
+    err = expand_dataset(dataset, newpd);
 
     if (err) {
 	gui_errmsg(err);

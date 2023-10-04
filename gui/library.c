@@ -9223,6 +9223,18 @@ int do_store (char *filename, int action, gpointer data)
     return err;
 }
 
+int do_local_pkg_install (const char *filename)
+{
+    gchar *s;
+    int err;
+
+    s = g_strdup_printf("pkg install %s --local", filename);
+    err = emulate_console_command(s);
+    g_free(s);
+
+    return err;
+}
+
 static void clean_up_varlabels (DATASET *dset)
 {
     const char *vlabel;
@@ -10146,8 +10158,6 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
     fprintf(stderr, "gui_exec_line: flags = %d\n", s->flags);
 #endif
 
- next_line:
-
     if (gretl_compiling_function()) {
         err = gretl_function_append_line(s);
         if (err) {
@@ -10155,7 +10165,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
         } else if (s->flags & CONSOLE_EXEC) {
             add_command_to_stack(line, 0);
         }
-        goto more_check; /* was return err; */
+        return err;
     }
 
     if (string_is_blank(line)) {
@@ -10231,7 +10241,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
             lib_command_strcpy(line);
             record_command_verbatim();
         }
-        goto more_check; /* was return err; */
+        return err;
     }
 
     /* Set up to save output to a specific buffer, if wanted */
@@ -10439,14 +10449,6 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
     /* save specific output buffer? */
     if (!err && *cmd->savename != '\0' && TEXTSAVE_OK(cmd->ci)) {
         save_text_buffer(cmd->savename, prn, ppos);
-    }
-
- more_check:
-
-    /* check for more input */
-    if (!err && s->more != NULL) {
-        memmove(s->line, s->more, strlen(s->more) + 1);
-        goto next_line;
     }
 
     return err;

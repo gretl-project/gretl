@@ -50,7 +50,7 @@ Copyright 1984, 1987, 1995, 2000 by Stephen L. Moshier
 
 #include "mconf.h"
 
-double igami( double a, double y0 )
+double igami (double a, double y0)
 {
     double x0, x1, x, yl, yh, y, d, lgm, dithresh;
     int i, dir;
@@ -66,6 +66,11 @@ double igami( double a, double y0 )
     d = 1.0/(9.0*a);
     y = (1.0 - d - ndtri(y0) * sqrt(d));
     x = a * y * y * y;
+
+    if (!isfinite(x)) {
+	/* this is not going to work */
+	return MAXNUM;
+    }
 
     lgm = lgam(a);
 
@@ -101,7 +106,7 @@ double igami( double a, double y0 )
     if (x0 == MAXNUM) {
 	if (x <= 0.0)
 	    x = 1.0;
-	while (x0 == MAXNUM) {
+	while (x0 == MAXNUM && isfinite(d) && isfinite(x)) {
 	    x = (1.0 + d) * x;
 	    y = igamc(a, x);
 	    if (y < y0) {

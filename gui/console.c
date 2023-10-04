@@ -328,11 +328,11 @@ static int detect_quit (const char *s)
 {
     s += strspn(s, " \t");
     if (!strncmp(s, "quit", 4)) {
-	int n = strlen(s);
+        int n = strlen(s);
 
-	if (n == 4 || (n > 4 && isspace(s[4]))) {
-	    return 1;
-	}
+        if (n == 4 || (n > 4 && isspace(s[4]))) {
+            return 1;
+        }
     }
 
     return 0;
@@ -341,11 +341,11 @@ static int detect_quit (const char *s)
 static int detect_run (const char *s, char *fname)
 {
     s += strspn(s, " \t");
-    if (sscanf(s, "run %511s", fname)) {
-	return 1;
-    } else {
-	return 0;
+    if (sscanf(s, "run %511s", fname) > 0) {
+        return 1;
     }
+
+    return 0;
 }
 
 static void maybe_exit_on_quit (void)
@@ -366,33 +366,38 @@ static int real_console_exec (ExecState *state,
 			      GtkTextBuffer *tbuf,
 			      windata_t *vwin)
 {
-    char fname[512];
     int err = 0;
 
 #if CDEBUG
     fprintf(stderr, "*** real_console_exec: '%s'\n", state->line);
 #endif
 
-    if (swallow && detect_quit(state->line)) {
-	maybe_exit_on_quit();
-	return 0;
-    }
-
-    push_history_line(state->line);
-
-    if (detect_run(state->line, fname)) {
-	/* added 2023-04-01: testing wanted */
-	GtkTextIter iter;
-
-	gtk_text_buffer_get_end_iter(tbuf, &iter);
-	gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
-	run_native_script(vwin, NULL, fname, 0);
-    } else {
+    if (string_is_blank(state->line)) {
+        /* do we want to do this? */
 	state->flags = CONSOLE_EXEC;
 	err = gui_exec_line(state, dataset, console_main);
-	while (!err && gretl_execute_loop()) {
-	    err = gretl_loop_exec(state, dataset);
-	}
+    } else if (swallow && detect_quit(state->line)) {
+        maybe_exit_on_quit();
+    } else {
+        char fname[512];
+
+        push_history_line(state->line);
+        fname[0] = '\0';
+
+        if (detect_run(state->line, fname)) {
+            /* added 2023-04-01 */
+            GtkTextIter iter;
+
+            gtk_text_buffer_get_end_iter(tbuf, &iter);
+            gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
+            run_native_script(vwin, NULL, fname, 0);
+        } else {
+            state->flags = CONSOLE_EXEC;
+            err = gui_exec_line(state, dataset, console_main);
+            while (!err && gretl_execute_loop()) {
+                err = gretl_loop_exec(state, dataset);
+            }
+        }
     }
 
 #if CDEBUG
@@ -775,4 +780,23 @@ void clear_console (GtkWidget *w, windata_t *vwin)
     gtk_text_buffer_delete(buf, &start, &end);
     gtk_text_buffer_get_start_iter(buf, &start);
     console_insert_prompt(buf, &start, "? ");
+}
+
+int emulate_console_command (const char *cmdline)
+{
+    ExecState *s = calloc(1, sizeof *s);
+    char buf[MAXLINE];
+    int err;
+
+    if (s == NULL) {
+	err = E_ALLOC;
+    } else {
+	gretl_exec_state_init(s, CONSOLE_EXEC, buf,
+			      get_lib_cmd(), NULL, NULL);
+	strcpy(buf, cmdline);
+	err = gui_exec_line(s, NULL, mdata->main);
+	gretl_exec_state_destroy(s);
+    }
+
+    return err;
 }

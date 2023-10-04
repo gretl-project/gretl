@@ -29,6 +29,7 @@
 #include "gretl_cmatrix.h"
 
 #define NUMLEN 32
+#define HEXLEN 11
 #define MAXQUOTE 64
 
 #if GENDEBUG
@@ -78,6 +79,7 @@ struct str_table consts[] = {
 
 struct str_table dummies[] = {
     { DUM_NULL,    "null" },
+    { DUM_EMPTY,   "empty" },
     { DUM_DIAG,    "diag" },
     { DUM_UPPER,   "upper" },
     { DUM_LOWER,   "lower" },
@@ -392,6 +394,7 @@ struct str_table funcs[] = {
     { F_ISDISCR,  "isdiscrete" },
     { F_ISDUMMY,  "isdummy"},
     { F_TYPEOF,   "typeof" },
+    { F_TYPENAME, "typename" },
     { F_EXISTS,   "exists" },
     { F_NELEM,    "nelem" },
     { F_PDF,      "pdf" },
@@ -526,6 +529,7 @@ struct str_table funcs[] = {
     { F_ARRAY,     "array" },
     { F_STRVALS,   "strvals" },
     { F_STRINGIFY, "stringify" },
+    { F_STRVSORT,  "strvsort" },
     { F_BOOTCI,    "bootci" },
     { F_BOOTPVAL,  "bootpval" },
     { F_SEASONALS, "seasonals" },
@@ -617,7 +621,6 @@ struct str_table func_alias[] = {
     { F_CNAMEGET, "colname" },
     { F_RNAMEGET, "rowname" },
     { F_EXISTS,   "isnull" }, /* deprecated */
-    { HF_REGLS,   "rawregls" },
     { 0,          NULL }
 };
 
@@ -1055,6 +1058,13 @@ static int dummy_lookup (const char *s, parser *p)
 	   be valid only if followed by ']'
 	*/
 	d = 0;
+    } else if (d == DUM_EMPTY && strcmp(p->rhs, "empty")) {
+        /* "empty" is accepted only if it's the only term
+           on the right-hand side
+        */
+	p->sym = DUM_EMPTY;
+	p->err = E_INVARG;
+	context_error(0, p, NULL);
     }
 
     return d;
@@ -1706,7 +1716,7 @@ static void look_up_word (const char *s, parser *p)
 	       with a null value */
 	    p->sym = NULLARG;
 	    p->idstr = gretl_strdup(s);
-	} else {
+	} else if (p->sym != DUM_EMPTY) {
 	    undefined_symbol_error(s, p);
 	}
     }
@@ -2002,30 +2012,55 @@ static int ok_dbl_char (parser *p, char *s, int i)
     return ret;
 }
 
+static int ok_hex_char (parser *p, char *s, int i)
+{
+    if (i < 1) {
+	return 1;
+    } else if (p->ch >= '0' && p->ch <= '9') {
+	return 1;
+    } else if (p->ch >= 'a' && p->ch <= 'f') {
+	return 1;
+    } else if (p->ch >= 'A' && p->ch <= 'F') {
+	return 1;
+    }
+
+    return 0;
+}
+
 static void parse_number (parser *p)
 {
     char xstr[NUMLEN] = {0};
-    int gotcol = 0;
+    int got_colon = 0;
+    int got_hex = 0;
     int i = 0;
 
-    while (ok_dbl_char(p, xstr, i - 1) && i < NUMLEN - 1) {
-	xstr[i++] = p->ch;
-	if (p->ch == ':') {
-	    gotcol = 1;
+    if (p->ch == '0' && (p->point[0] == 'x' || p->point[0] == 'X')) {
+	/* hexadecimal input */
+	got_hex = 1;
+	while (ok_hex_char(p, xstr, i - 1) && i < HEXLEN - 1) {
+	    xstr[i++] = p->ch;
+	    parser_getc(p);
 	}
-	parser_getc(p);
-    }
-
-    while (p->ch >= '0' && p->ch <= '9') {
-	/* flush excess numeric characters */
-	parser_getc(p);
+    } else {
+	/* decimal input */
+	while (ok_dbl_char(p, xstr, i - 1) && i < NUMLEN - 1) {
+	    xstr[i++] = p->ch;
+	    if (p->ch == ':') {
+		got_colon = 1;
+	    }
+	    parser_getc(p);
+	}
+	while (p->ch >= '0' && p->ch <= '9') {
+	    /* flush excess numeric characters */
+	    parser_getc(p);
+	}
     }
 
 #if LDEBUG
     fprintf(stderr, "parse_number: xstr = '%s'\n", xstr);
 #endif
 
-    if (gotcol) {
+    if (got_colon) {
 #if LDEBUG
 	fprintf(stderr, " got colon: obs identifier?\n");
 #endif
@@ -2039,6 +2074,11 @@ static void parse_number (parser *p)
 	    p->idstr = gretl_strdup(xstr);
 	    p->sym = CSTR;
 	}
+    } else if (got_hex) {
+	guint32 u = strtoul(xstr, NULL, 16);
+
+	p->xval = (double) u;
+	p->sym = CNUM;
     } else {
 	p->xval = dot_atof(xstr);
 	p->sym = CNUM;
@@ -2459,6 +2499,8 @@ const char *getsymb_full (int t, const parser *p)
 	return "DBMEMB";
     } else if (t == MMEMB) {
 	return "MMEMB";
+    } else if (t == DUM_EMPTY) {
+	return "empty";
     }
 
     if (p != NULL) {

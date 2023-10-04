@@ -707,7 +707,7 @@ static char *make_current_sample_mask (DATASET *dset, int *err)
     range_set = (dset->t1 > 0 || dset->t2 < dset->n - 1);
 
 #if PANDEBUG
-    fprintf(stderr, "  dset->submask = %p, range_set=%d\n",
+    fprintf(stderr, "make_current_sample_mask: dset->submask = %p, range_set=%d\n",
 	    (void *) dset->submask, range_set);
 #endif
 
@@ -743,6 +743,10 @@ static char *make_current_sample_mask (DATASET *dset, int *err)
 	    }
 	}
     }
+
+#if PANDEBUG
+    fprintf(stderr, " returning currmask = %p\n\n", (void *) currmask);
+#endif
 
     return currmask;
 }
@@ -853,9 +857,13 @@ int restore_full_sample (DATASET *dset, ExecState *state)
 	/* in this case restoring the "full" sample really means, relative
 	   to the original state
 	*/
-	if (state->submask != NULL) {
+        int fdepth = gretl_function_depth();
+        int masked = state->submask != NULL;
+
+	if (masked) {
 	    err = restrict_sample_from_mask(state->submask, dset, OPT_NONE);
-	} else {
+        }
+        if (!err && (!masked || fdepth > 0)) {
 	    int t1min, t2max;
 
 	    sample_range_get_extrema(dset, &t1min, &t2max);
@@ -899,7 +907,7 @@ static int make_weekday_mask (const DATASET *dset, char *mask)
 	for (t=0; t<dset->n; t++) {
 	    ntolabel(datestr, t, dset);
 	    wd = weekday_from_date(datestr);
-	    mask[t] = (wd >= 1 && wd <= 5);
+	    mask[t] = (wd >= G_DATE_MONDAY && wd <= G_DATE_FRIDAY);
 	}
 
 	return 0;
@@ -1411,11 +1419,11 @@ copy_data_to_subsample (DATASET *subset, const DATASET *dset,
     }
 }
 
-int get_restriction_mode (gretlopt opt, const char *inmask)
+int get_restriction_mode (gretlopt opt, const char *panmask)
 {
     int mode = SUBSAMPLE_UNKNOWN;
 
-    if (inmask != NULL) {
+    if (panmask != NULL) {
 	mode = SUBSAMPLE_BOOLEAN;
     } else if (opt & (OPT_M | OPT_C)) {
 	mode = SUBSAMPLE_DROP_MISSING;
@@ -1430,6 +1438,10 @@ int get_restriction_mode (gretlopt opt, const char *inmask)
     } else if (opt & OPT_W) {
 	mode = SUBSAMPLE_DROP_WKENDS;
     }
+
+#if PANDEBUG
+    fprintf(stderr, "get_restriction_mode: %d\n", mode);
+#endif
 
     return mode;
 }
@@ -1599,11 +1611,11 @@ static int try_for_daily_subset (char *selected,
 	    if (selected[t]) {
 		ntolabel(datestr, t, dset);
 		wd = weekday_from_date(datestr);
-		if (wd == 0) {
-		    /* got a Sunday: result must be 7-day */
+		if (wd == G_DATE_SUNDAY) {
+		    /* result must be 7-day */
 		    newpd = 7;
 		    break;
-		} else if (wd == 6) {
+		} else if (wd == G_DATE_SATURDAY) {
 		    any_sat = 1;
 		}
 	    }
@@ -1630,7 +1642,7 @@ static int try_for_daily_subset (char *selected,
 	    ed = get_epoch_day(datestr);
 	    if (started) {
 		delta = ed - edbak;
-		ngaps += (wd == 1)? (delta > mon_delta) : (delta > 1);
+		ngaps += (wd == G_DATE_MONDAY)? (delta > mon_delta) : (delta > 1);
 		if (delta > delta_max) {
 		    delta_max = delta;
 		}
@@ -1979,7 +1991,7 @@ static char *expand_mask (const char *tmpmask,
 */
 
 static char *precompute_mask (const char *s,
-			      const char *inmask,
+			      const char *panmask,
 			      const char *oldmask,
 			      DATASET *dset,
 			      PRN *prn,
@@ -1992,7 +2004,7 @@ static char *precompute_mask (const char *s,
     fprintf(stderr, "restrict_sample: precomputing new mask\n");
 #endif
 
-    if (inmask == NULL) {
+    if (panmask == NULL) {
 	tmpmask = make_submask(dset->n);
 	if (tmpmask == NULL) {
 	    *err = E_ALLOC;
@@ -2013,9 +2025,9 @@ static char *precompute_mask (const char *s,
 	    }
 	}
     } else if (fullset != NULL) {
-	newmask = expand_mask(inmask, oldmask, err);
+	newmask = expand_mask(panmask, oldmask, err);
     } else {
-	newmask = copy_subsample_mask(inmask, err);
+	newmask = copy_subsample_mask(panmask, err);
     }
 
     free(tmpmask);
@@ -2166,7 +2178,8 @@ static int handle_ts_restrict (char *mask, DATASET *dset,
     return err;
 }
 
-static int check_restrict_options (gretlopt opt, const char *param)
+static int check_restrict_options (gretlopt opt, const char *param,
+				   int *replace)
 {
     /* We'll accept the redundant combination of the options --dummy
        (OPT_O) and --restrict (OPT_R), but other than that the options
@@ -2195,6 +2208,10 @@ static int check_restrict_options (gretlopt opt, const char *param)
 	if (param == NULL || *param == '\0') {
 	    return E_ARGS;
 	}
+    }
+
+    if (opt & OPT_P) {
+	*replace = 1;
     }
 
     return 0;
@@ -2228,34 +2245,48 @@ static int check_permanent_option (gretlopt opt,
 /* "Precomputing" a mask means computing a mask based on a currently
    subsampled dataset (before restoring the full dataset, which is a
    part of the subsampling process). We do this if we're cumulating a
-   boolean restriction on top of an existing restriction, but not
-   (because serious complications can arise) if the current dataset is
-   a panel.
+   boolean restriction on top of an existing restriction.
+
+   2023-07-20: the comment used to continue: "but not (because serious
+   complications can arise) if the current dataset is a panel".
+   It now seems that was over-cautious? Old behavior can be restored
+   by defining PAN_DONT_PRECOMP to 1.
 */
 
+#define PAN_DONT_PRECOMP 0
+
 static int do_precompute (int mode,
-			  const char *inmask,
+			  const char *panmask,
 			  const char *oldmask,
 			  DATASET *dset)
 {
     if (oldmask == NULL || mode != SUBSAMPLE_BOOLEAN) {
-	/* not required */
+	/* "precomputing" is not required */
 	return 0;
     }
-    if (inmask != NULL) {
-	/* @inmask will need expanding */
+    if (panmask != NULL && fullset != NULL) {
+	/* @panmask will need expanding to the length of the
+	   full dataset, which is handled by "precomputing"
+	*/
 	return 1;
     }
+
+#if PAN_DONT_PRECOMP /* as prior to 2023-07-20 */
     return dataset_is_panel(dset) ? 0 : 1;
+#else
+    return 1;
+#endif
 }
 
 /* Internal version of restrict_sample(), with the extra
-   argument @inmask.
+   argument @panmask, to represent a time-based sample
+   specification for panel data. The latter comes from
+   the "upstream" function panel_time_sample().
 */
 
 static int real_restrict_sample (const char *param,
 				 const int *list,
-				 const char *inmask,
+				 const char *panmask,
 				 DATASET *dset,
 				 ExecState *state,
 				 gretlopt opt,
@@ -2269,6 +2300,7 @@ static int real_restrict_sample (const char *param,
     int permanent = 0;
     int n_models = 0;
     int n_orig = 0;
+    int replace = 0;
     int mode, err = 0;
 
     if (dset == NULL || dset->Z == NULL) {
@@ -2278,7 +2310,7 @@ static int real_restrict_sample (const char *param,
     n_orig = dset->n;
 
     /* general check on incoming options */
-    err = check_restrict_options(opt, param);
+    err = check_restrict_options(opt, param, &replace);
 
     /* take a closer look at the --permanent option */
     if (!err && (opt & OPT_T)) {
@@ -2294,14 +2326,15 @@ static int real_restrict_sample (const char *param,
 
     gretl_error_clear();
 
-#if FULLDEBUG || SUBDEBUG
-    fprintf(stderr, "\nrestrict_sample: param='%s'\n", param);
+#if FULLDEBUG || SUBDEBUG || PANDEBUG
+    fprintf(stderr, "\nreal_restrict_sample: param='%s'\n", param);
     fprintf(stderr, " dset=%p, state=%p, fullset=%p\n", (void *) dset,
 	    (void *) state, (void *) fullset);
     if (list != NULL && list[0] > 0) {
 	printlist(list, "list param");
     }
     fprintf(stderr, "options:%s\n", print_flags(opt, SMPL));
+    fprintf(stderr, "panmask = %p\n\n", panmask);
 #endif
 
     if (opt & OPT_C) {
@@ -2309,13 +2342,13 @@ static int real_restrict_sample (const char *param,
 	return set_contiguous_sample(list, dset, opt);
     }
 
-    mode = get_restriction_mode(opt, inmask);
+    mode = get_restriction_mode(opt, panmask);
     if (mode == SUBSAMPLE_UNKNOWN) {
 	gretl_errmsg_set("Unrecognized sample command");
 	return 1;
     }
 
-    if (!(opt & OPT_P)) {
+    if (!replace) {
 	/* not replacing but cumulating any existing restrictions */
 	oldmask = make_current_sample_mask(dset, &err);
 	if (!err) {
@@ -2343,11 +2376,12 @@ static int real_restrict_sample (const char *param,
 	return err;
     }
 
-    if (!(opt & OPT_P) && do_precompute(mode, inmask, oldmask, dset)) {
+    if (!replace && do_precompute(mode, panmask, oldmask, dset)) {
 	/* we come here only if cumulating restrictions */
-	mask = precompute_mask(param, inmask, oldmask, dset, prn, &err);
-    } else if (inmask != NULL) {
-	mask = copy_subsample_mask(inmask, &err);
+	mask = precompute_mask(param, panmask, oldmask, dset, prn, &err);
+    } else if (panmask != NULL) {
+	/* got a panel time-sample mask */
+	mask = copy_subsample_mask(panmask, &err);
     }
 
     if (!err && !full_sample(dset)) {
@@ -2365,7 +2399,7 @@ static int real_restrict_sample (const char *param,
     }
 
     if (mask == NULL) {
-	/* no @inmask, and not already handled by "precompute" above */
+	/* no @panmask, and not already handled by "precompute" above */
 	err = make_restriction_mask(mode, param, list, dset,
 				    oldmask, &mask, prn);
     }
@@ -2868,18 +2902,24 @@ static int panel_time_sample (const char *start, const char *stop,
 {
     int T = dset->pd;
     int pd = dset->panel_pd;
-    int skip_t1 = 0;
-    int skip_t2 = 0;
+    int replace = (opt & OPT_P);
     int err = 0;
 
-    /* allow ';' to indicate that t1 or t2 should be unchanged */
-    if (!strcmp(start, ";")) {
-	t1 = 0;
-	skip_t1 = 1;
-    }
-    if (!strcmp(stop, ";")) {
-	t2 = T-1;
-	skip_t2 = 1;
+#if PANDEBUG
+    fprintf(stderr, "panel_time_sample: start=%s, stop=%s, t1=%d, t2=%d, T=%d, pd=%d\n",
+	    start, stop, t1, t2, T, pd);
+#endif
+
+    if (replace && dset == peerset && fullset != NULL) {
+	if (dataset_is_panel(fullset)) {
+	    restore_full_sample(dset, s);
+	    T = dset->pd;
+	    pd = dset->panel_pd;
+	    opt &= ~OPT_P;
+	} else {
+	    gretl_errmsg_set("The full dataset is not a panel");
+	    return E_DATA;
+	}
     }
 
     if (panel_range_ok(t1, t2, T)) {
@@ -2890,12 +2930,8 @@ static int panel_time_sample (const char *start, const char *stop,
 
 	time_series_from_panel(&tset, dset);
 	t0 = t_from_verified_aqm(tset.stobs, tset.pd);
-	if (!skip_t1) {
-	    t1 = obs_index_from_aqm(start, tset.pd, t0, T);
-	}
-	if (!skip_t2) {
-	    t2 = obs_index_from_aqm(stop, tset.pd, t0, T);
-	}
+	t1 = obs_index_from_aqm(start, tset.pd, t0, T);
+	t2 = obs_index_from_aqm(stop, tset.pd, t0, T);
 	if (!panel_range_ok(t1, t2, T)) {
 	    err = E_DATA;
 	}
@@ -2904,12 +2940,8 @@ static int panel_time_sample (const char *start, const char *stop,
 	DATASET tset = {0};
 
 	time_series_from_panel(&tset, dset);
-	if (!skip_t1) {
-	    t1 = calendar_obs_number(start, &tset);
-	}
-	if (!skip_t2) {
-	    t2 = calendar_obs_number(stop, &tset);
-	}
+	t1 = calendar_obs_number(start, &tset, 0);
+	t2 = calendar_obs_number(stop, &tset, 0);
 	if (!panel_range_ok(t1, t2, T)) {
 	    err = E_DATA;
 	}
@@ -2922,6 +2954,9 @@ static int panel_time_sample (const char *start, const char *stop,
 			     start, stop);
 	err = E_DATA;
     } else {
+	/* construct a mask with 1s indicating observations
+	   to include, 0s for those to be skipped
+	*/
 	char *mask = make_submask(dset->n);
 
 	if (mask == NULL) {
@@ -2965,9 +3000,11 @@ int set_panel_sample (const char *start,
 
     testopt &= ~OPT_U;
     testopt &= ~OPT_X;
+    testopt &= ~OPT_Q;
+    testopt &= ~OPT_P;
 
     if (testopt != OPT_NONE) {
-	/* we accept only --unit or --time here */
+	/* we accept only --unit or --time here, plus --quiet or --replace */
 	return E_BADOPT;
     } else if (incompatible_options(opt, OPT_U | OPT_X)) {
 	/* cannot supply both --unit and --time in a single command */
@@ -2990,7 +3027,7 @@ int set_panel_sample (const char *start,
 
 #if PANDEBUG
     fprintf(stderr, "\nset_panel_sample:%s\n", print_flags(opt, SMPL));
-    fprintf(stderr, "first pass: s1=%d, s2=%d\n", s1, s2);
+    fprintf(stderr, " first pass: s1=%d, s2=%d\n", s1, s2);
 #endif
 
     if (opt & OPT_X) {

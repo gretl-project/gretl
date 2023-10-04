@@ -1032,6 +1032,7 @@ tests/Makefile
 apidemo/Makefile
 redhat/gretl.spec
 utils/emacs/Makefile
+utils/dbzip/Makefile
 doc/gretl.sty
 doc/gretl-lite.sty
 ])

@@ -39,11 +39,12 @@ typedef struct user_var_ user_var;
 
 int user_var_add (const char *name, GretlType type, void *value);
 
+user_var *alt_user_var_add (const char *name, GretlType type,
+			    void *value);
+
 int user_var_add_or_replace (const char *name,
 			     GretlType type,
 			     void *value);
-
-int create_user_var (const char *name, GretlType type);
 
 int user_var_delete (user_var *uvar);
 
@@ -122,6 +123,8 @@ int *copy_list_as_arg (const char *param_name, int *list,
 
 int user_var_replace_value (user_var *uvar, void *value,
 			    GretlType type);
+
+int user_var_set_pointer (user_var *uvar, void *ptr);
 
 int user_matrix_replace_matrix_by_name (const char *name, 
 					gretl_matrix *m);

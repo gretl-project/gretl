@@ -803,7 +803,8 @@ static void check_matrix_varnames (DATASET *dset)
 /**
  * gretl_dataset_from_matrix:
  * @m: source matrix.
- * @list: list of columns (1-based) to include, or NULL.
+ * @list: list of columns (1-based) to include, or NULL to
+ * include all columns.
  * @opt: may include OPT_B to attempt "borrowing" of data;
  * OPT_N to use plain numbers as variable names; OPT_R to
  * use row-names as observation markers, if present; OPT_S

@@ -571,6 +571,10 @@ int fracdiff_series (const double *x, double *y, double d,
     int tmiss = 0;
     double phi = (diff)? -d : d;
 
+    if (na(d)) {
+        return E_NAN;
+    }
+
 #if 0
     fprintf(stderr, "Doing fracdiff_series, with d = %g\n", d);
 #endif
@@ -1834,14 +1838,12 @@ int hp_filter (const double *x, double *hp, const DATASET *dset,
         v11 = tmp0;
 
         det = v00 * v11 - v01 * v01;
-
         V[0][t] =  v11 / det;
         V[1][t] = -v01 / det;
         V[2][t] =  v00 / det;
 
         tmp0 = v00 + 1.0;
         tmp1 = v00;
-
         v00 -= v00 * v00 / tmp0;
         v11 -= v01 * v01 / tmp0;
         v01 -= (tmp1 / tmp0) * v01;
@@ -1860,7 +1862,6 @@ int hp_filter (const double *x, double *hp, const DATASET *dset,
         hp[t-1]   = V[1][t] * m[1] + V[2][t] * m[0];
 
         det = V[0][t] * V[2][t] - V[1][t] * V[1][t];
-
         v00 =  V[2][t] / det;
         v01 = -V[1][t] / det;
 
@@ -1892,7 +1893,6 @@ int hp_filter (const double *x, double *hp, const DATASET *dset,
             b11 = V[0][tb] + V[2][t1];
 
             det = b00 * b11 - b01 * b01;
-
             V[3][t] = (b00 * e1 - b01 * e0) / det;
         }
 
@@ -2753,6 +2753,11 @@ int butterworth_filter (const double *x, double *bw, const DATASET *dset,
     int bad_lambda = 0;
     int err = 0;
 
+    if (!dataset_is_time_series(dset)) {
+        gretl_errmsg_set(_("This function requires time-series data"));
+        return E_DATA;
+    }
+
     err = series_adjust_sample(x, &t1, &t2);
     if (err) {
         return err;
@@ -3115,8 +3120,9 @@ static int n_new_dummies (const DATASET *dset,
 static const char *dayname (int i)
 {
     const char *days[] = {
-        "Monday", "Tuesday", "Wednesday",
-        "Thursday", "Friday", "Saturday", "Sunday"
+        N_("Monday"), N_("Tuesday"), N_("Wednesday"),
+        N_("Thursday"), N_("Friday"), N_("Saturday"),
+        N_("Sunday")
     };
 
     if (i >= 1 && i <= 7) {
@@ -3151,7 +3157,7 @@ static gchar *seas_name_and_label (int i, const DATASET *dset,
 #else
         sprintf(vname, "dummy_%d", i);
 #endif
-        ret = g_strdup_printf(_("= 1 if day = %s, 0 otherwise"), dayname(i));
+        ret = g_strdup_printf(_("= 1 if day = %s, 0 otherwise"), _(dayname(i)));
     } else {
         char dumstr[8] = "dummy_";
         char numstr[12];
@@ -3312,10 +3318,9 @@ static int real_seasonals (DATASET *dset, int ref, int center,
         for (t=0; t<dset->n; t++) {
             ntolabel(datestr, t, dset);
             wkday = weekday_from_date(datestr);
-            wkday = (wkday == 0)? 7 : wkday;
             for (k=1, i=1; i<=list[0]; i++) {
                 vi = list[i];
-                if (k+1 == ref) k++;
+                if (k == ref) k++;
                 dset->Z[vi][t] = (wkday == k)? 1 : 0;
                 k++;
             }
@@ -3710,14 +3715,13 @@ int gen_time (DATASET *dset, int tm, int *vnum)
 int gen_wkday (DATASET *dset, int *vnum)
 {
     char datestr[OBSLEN];
-    int i, t;
+    int i, t, wd;
 
     if (!dated_daily_data(dset)) {
         return E_PDWRONG;
     }
 
     i = series_index(dset, "weekday");
-
     if (i == dset->v && dataset_add_series(dset, 1)) {
         return E_ALLOC;
     }
@@ -3727,7 +3731,10 @@ int gen_wkday (DATASET *dset, int *vnum)
 
     for (t=0; t<dset->n; t++) {
         ntolabel(datestr, t, dset);
-        dset->Z[i][t] = weekday_from_date(datestr);
+	wd = weekday_from_date(datestr);
+	/* traditional userspace weekdays */
+	wd = (wd == G_DATE_SUNDAY) ? 0 : wd;
+        dset->Z[i][t] = (double) wd;
     }
 
     if (vnum != NULL) {
@@ -4173,7 +4180,7 @@ int get_observation_number (const char *s, const DATASET *dset)
     }
 
     if (calendar_data(dset)) {
-	/* never reached? */
+        /* never reached? */
         char datestr[OBSLEN];
 
         for (t=0; t<dset->n; t++) {
@@ -4183,7 +4190,7 @@ int get_observation_number (const char *s, const DATASET *dset)
                 return t + 1;
             }
         }
-	return 0;
+        return 0;
     }
 
     return 0;
@@ -7615,7 +7622,7 @@ int fill_day_of_week_array (double *dow,
             yt = -yt;
             julian = 1;
         }
-        dow[t] = day_of_week(yt, mt, dt, julian, &err);
+        dow[t] = legacy_day_of_week(yt, mt, dt, julian, &err);
     }
 
     return err;
@@ -7859,19 +7866,12 @@ int sample_span (const char *stobs, const char *endobs,
             int wd1 = weekday_from_epoch_day(ed1);
             int wd2 = weekday_from_epoch_day(ed2);
 
-            if (pd == 5 && (wd1 < 1 || wd1 > 5)) {
-                ed1 = 0;
-            } else if (pd == 5 && (wd2 < 1 || wd2 > 5)) {
-                ed2 = 0;
-            } else if (pd == 6) {
-                if (wd1 < 1) {
-                    ed1 = 0;
-                } else if (wd2 < 1) {
-                    ed2 = 0;
-                }
-            }
+	    if (wd1 > pd) {
+		ed1 = 0;
+	    } else if (wd2 > pd) {
+		ed2 = 0;
+	    }
         }
-
         if (ed1 == 0) {
             gretl_errmsg_sprintf(_("Invalid observation %s"), stobs);
             *err = E_INVARG;
@@ -8613,8 +8613,8 @@ gretl_matrix *R_from_omega (const gretl_matrix *omega, int cholesky,
  */
 
 gretl_matrix *felogit_rec_loglik (int t, int T,
-				  const gretl_matrix *U,
-				  const gretl_matrix *xi)
+                                  const gretl_matrix *U,
+                                  const gretl_matrix *xi)
 {
     gretl_matrix *ret;
     int k = xi->cols;
@@ -8622,51 +8622,51 @@ gretl_matrix *felogit_rec_loglik (int t, int T,
     ret = gretl_zero_matrix_new(1, k+1);
 
     if (t > T) {
-	; /* nothing to be done */
+        ; /* nothing to be done */
     } else if (t == 0) {
-	ret->val[0] = 1;
+        ret->val[0] = 1;
     } else if (t == T) {
-	double B, rj;
-	int i, j;
+        double B, rj;
+        int i, j;
 
-	/* scalar B = prodc(U[1:T]) */
-	B = 1.0;
-	for (i=0; i<T; i++) {
-	    B *= U->val[i];
-	}
-	/* ret = (1 ~ sumc(xi[1:T,])) .* B */
-	ret->val[0] = B;
-	for (j=0; j<k; j++) {
-	    rj = 0;
-	    for (i=0; i<T; i++) {
-		rj += gretl_matrix_get(xi, i, j);
-	    }
-	    ret->val[j+1] = B * rj;
-	}
+        /* scalar B = prodc(U[1:T]) */
+        B = 1.0;
+        for (i=0; i<T; i++) {
+            B *= U->val[i];
+        }
+        /* ret = (1 ~ sumc(xi[1:T,])) .* B */
+        ret->val[0] = B;
+        for (j=0; j<k; j++) {
+            rj = 0;
+            for (i=0; i<T; i++) {
+                rj += gretl_matrix_get(xi, i, j);
+            }
+            ret->val[j+1] = B * rj;
+        }
     } else {
-	gretl_matrix *tmp1 = felogit_rec_loglik(t, T-1, U, xi);
-	gretl_matrix *tmp2 = felogit_rec_loglik(t-1, T-1, U, xi);
-	double xij, UT = U->val[T-1];
-	double tmp20 = tmp2->val[0];
-	int j;
+        gretl_matrix *tmp1 = felogit_rec_loglik(t, T-1, U, xi);
+        gretl_matrix *tmp2 = felogit_rec_loglik(t-1, T-1, U, xi);
+        double xij, UT = U->val[T-1];
+        double tmp20 = tmp2->val[0];
+        int j;
 
-	/* B = tmp[1,1] + UT * tmp[2,1] */
-	ret->val[0] = tmp1->val[0] + UT * tmp20;
+        /* B = tmp[1,1] + UT * tmp[2,1] */
+        ret->val[0] = tmp1->val[0] + UT * tmp20;
 
-	for (j=1; j<=k; j++) {
-	    xij = gretl_matrix_get(xi, T-1, j-1);
-	    ret->val[j] = tmp1->val[j] + UT * (tmp2->val[j] + xij * tmp20);
-	}
+        for (j=1; j<=k; j++) {
+            xij = gretl_matrix_get(xi, T-1, j-1);
+            ret->val[j] = tmp1->val[j] + UT * (tmp2->val[j] + xij * tmp20);
+        }
 
-	gretl_matrix_free(tmp1);
-	gretl_matrix_free(tmp2);
+        gretl_matrix_free(tmp1);
+        gretl_matrix_free(tmp2);
     }
 
     return ret;
 }
 
 static int val_map_search (double needle, const double *haystack,
-			   int n, int offset)
+                           int n, int offset)
 {
     int m = n/2;
 
@@ -8703,55 +8703,55 @@ int *maybe_get_values_map (const double *x, int n, int *pnv, int *err)
        values and check for bogus ones as we go.
     */
     for (i=0; i<n; i++) {
-	if (na(x[i])) {
-	    n_ok--;
-	} else if (x[i] < -6.2e10 || x[i] > 2.5e11) {
-	    /* outside of plausible time_t range */
-	    *err = E_INVARG;
-	    break;
-	} else if (i > 0 && !na(x[i-1])) {
-	    if (j < 0) {
-		mono = (x[i] > x[i-1])? 1 : (x[i] < x[i-1])? 2 : 0;
-		j = i;
-	    } else if ((mono == 1 && x[i] <= x[i-1]) ||
-		       (mono == 2 && x[i] >= x[i-1])) {
-		mono = 0;
-	    }
-	}
+        if (na(x[i])) {
+            n_ok--;
+        } else if (x[i] < -6.2e10 || x[i] > 2.5e11) {
+            /* outside of plausible time_t range */
+            *err = E_INVARG;
+            break;
+        } else if (i > 0 && !na(x[i-1])) {
+            if (j < 0) {
+                mono = (x[i] > x[i-1])? 1 : (x[i] < x[i-1])? 2 : 0;
+                j = i;
+            } else if ((mono == 1 && x[i] <= x[i-1]) ||
+                       (mono == 2 && x[i] >= x[i-1])) {
+                mono = 0;
+            }
+        }
     }
 
     if (*err) {
-	return NULL;
+        return NULL;
     } else if (n_ok == 0) {
-	*err = E_MISSDATA;
-	return NULL;
+        *err = E_MISSDATA;
+        return NULL;
     } else if (mono) {
-	/* no repetition: no map needed */
-	*pnv = n_ok;
-	return NULL;
+        /* no repetition: no map needed */
+        *pnv = n_ok;
+        return NULL;
     }
 
     v = gretl_matrix_values(x, n, OPT_S, err);
 
     if (!*err) {
-	/* allocate the integer map */
-	ret = malloc(n_ok * sizeof *ret);
-	if (ret == NULL) {
-	    *err = E_ALLOC;
-	}
+        /* allocate the integer map */
+        ret = malloc(n_ok * sizeof *ret);
+        if (ret == NULL) {
+            *err = E_ALLOC;
+        }
     }
 
     if (!*err) {
-	int nv = gretl_vector_get_length(v);
+        int nv = gretl_vector_get_length(v);
 
-	for (i=0, j=0; i<n; i++) {
-	    if (na(x[i])) {
-		continue;
-	    }
-	    /* find the position of x[i] in @v */
-	    ret[j++] = val_map_search(x[i], v->val, nv, 0);
-	}
-	*pnv = nv;
+        for (i=0, j=0; i<n; i++) {
+            if (na(x[i])) {
+                continue;
+            }
+            /* find the position of x[i] in @v */
+            ret[j++] = val_map_search(x[i], v->val, nv, 0);
+        }
+        *pnv = nv;
     }
 
     gretl_matrix_free(v);
@@ -8766,42 +8766,42 @@ int *maybe_get_values_map (const double *x, int n, int *pnv, int *err)
 */
 
 DATASET *matrix_dset_plus_lists (const gretl_matrix *m1,
-				 const gretl_matrix *m2,
-				 int **plist1, int **plist2,
-				 int *err)
+                                 const gretl_matrix *m2,
+                                 int **plist1, int **plist2,
+                                 int *err)
 {
     DATASET *mdset = NULL;
 
     if (m1 != NULL && m2 != NULL) {
-	mdset = gretl_dataset_from_matrices(m1, m2, err);
+        mdset = gretl_dataset_from_matrices(m1, m2, err);
     } else if (m1 == NULL && m2 != NULL) {
-	mdset = gretl_dataset_from_matrix(m2, NULL, OPT_B, err);
+        mdset = gretl_dataset_from_matrix(m2, NULL, OPT_B, err);
     } else if (m1 != NULL && m2 == NULL) {
-	mdset = gretl_dataset_from_matrix(m1, NULL, OPT_B, err);
+        mdset = gretl_dataset_from_matrix(m1, NULL, OPT_B, err);
     } else {
-	*err = E_DATA;
-	return NULL;
+        *err = E_DATA;
+        return NULL;
     }
 
     if (mdset != NULL) {
-	int i, j = 1;
+        int i, j = 1;
 
-	if (m1 != NULL && plist1 != NULL) {
-	    int *l1 = gretl_list_new(m1->cols);
+        if (m1 != NULL && plist1 != NULL) {
+            int *l1 = gretl_list_new(m1->cols);
 
-	    for (i=0; i<m1->cols; i++) {
-		l1[i+1] = j++;
-	    }
-	    *plist1 = l1;
-	}
-	if (m2 != NULL && plist2 != NULL) {
-	    int *l2 = gretl_list_new(m2->cols);
+            for (i=0; i<m1->cols; i++) {
+                l1[i+1] = j++;
+            }
+            *plist1 = l1;
+        }
+        if (m2 != NULL && plist2 != NULL) {
+            int *l2 = gretl_list_new(m2->cols);
 
-	    for (i=0; i<m2->cols; i++) {
-		l2[i+1] = j++;
-	    }
-	    *plist2 = l2;
-	}
+            for (i=0; i<m2->cols; i++) {
+                l2[i+1] = j++;
+            }
+            *plist2 = l2;
+        }
     }
 
     return mdset;

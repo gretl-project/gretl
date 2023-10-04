@@ -737,6 +737,8 @@ file_selector_process_result (const char *in_fname, int action,
 	open_bn7_window(fname);
     } else if (action == UPLOAD_PKG) {
 	upload_specified_package(fname);
+    } else if (action == INSTALL_PKG) {
+	do_local_pkg_install(fname);
     }
 #endif /* not GRETL_EDIT */
 
@@ -1210,7 +1212,7 @@ static int filesel_set_filters (GtkWidget *filesel, int action,
 	filesel_add_data_filter(filesel, GRETL_XML_DATA);
 	filesel_add_data_filter(filesel, GRETL_SHP);
 	filesel_add_data_filter(filesel, GRETL_GEOJSON);
-    } else if (action == UPLOAD_PKG) {
+    } else if (action == UPLOAD_PKG || action == INSTALL_PKG) {
 	/* could add OPEN_GFN here?? */
 	filesel_set_filter_patterns(filesel, "*.gfn", "*.zip");
     } else {
@@ -1355,6 +1357,10 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	    title = g_strdup_printf("gretl: %s", _("select file"));
 	}
 	remember = 0;
+    } else if (action == INSTALL_PKG) {
+	fsel_action = GTK_FILE_CHOOSER_ACTION_OPEN;
+	okstr = _("Select package"); /* ?? */
+	title = g_strdup_printf("gretl: %s", _("install function package"));
     } else if (action < END_OPEN) {
 	fsel_action = GTK_FILE_CHOOSER_ACTION_OPEN;
 	okstr = GTK_STOCK_OPEN;

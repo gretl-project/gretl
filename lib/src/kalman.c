@@ -1806,8 +1806,7 @@ static int kalman_update_matrices (kalman *K, PRN *prn)
     err = push_anon_function_arg(fc, GRETL_TYPE_BUNDLE_REF, K->b);
 
     if (!err) {
-        err = gretl_function_exec(fc, GRETL_TYPE_NONE, NULL, NULL,
-                                  NULL, prn);
+        err = gretl_function_exec(fc, GRETL_TYPE_NONE, NULL, NULL, prn);
     }
     if (err) {
         fprintf(stderr, "kalman_update_matrices: call='%s', err=%d\n",

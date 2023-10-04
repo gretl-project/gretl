@@ -24,6 +24,7 @@
 			 t == GRETL_TYPE_DOUBLE || \
 			 t == GRETL_TYPE_SERIES || \
 			 t == GRETL_TYPE_USERIES || \
+			 t == GRETL_TYPE_LIST || \
 			 t == GRETL_TYPE_MATRIX)
 
 GretlType gretl_type_get_plural (GretlType type);

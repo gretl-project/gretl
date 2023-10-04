@@ -887,15 +887,15 @@ when configuring the build.
 \subsection{MS Windows}
 
 Microsoft has its own MPI implementation for Windows, \textsf{MS-MPI},
-which is available as a free download via
+which is available as a free download; see
 
-\url{https://www.microsoft.com/download/details.aspx?id=100593}
+\url{https://learn.microsoft.com/en-us/message-passing-interface/microsoft-mpi}
 
 and gretl builds for Windows have supported this since
 2017.\footnote{In principle you could install \textsf{Open MPI} or
   \textsf{MPICH} on Windows---though you'd have to build them
   yourself---but at present gretl on Windows only supports
-  \textsf{MS-MPI}.}
+  \textsf{MS-MPI} (which is based on \textsf{MPICH}.}
 
 When you run the \textsf{MS-MPI} installer this automatically adds the
 relevant directory to your path, and you should be good to go. Note,
@@ -919,29 +919,30 @@ include the \texttt{gretlmpi} executable linked against \textsf{Open
 
 The details differ by processor type. For Macs with Intel processors,
 \texttt{gretlmpi} is linked against \textsf{Open MPI} version 1.6.5,
-while for Macs with M1 processors (``Apple Silicon'') the linkage is
-to \textsf{Open MPI} 4.1. To activate MPI support it's necessary to
+while for Macs with arm64 processors (``Apple Silicon'') the linkage is
+to \textsf{Open MPI} 4.1.5. To activate MPI support it's necessary to
 install the appropriate package, as follows:
 
 \begin{center}
 \begin{tabular}{ll}
-  Intel & \texttt{openmpi-1.6.5-mac64.tar.xz} \\
-  M1 & \texttt{openmpi-4.1-arm64.tar.xz}
+  intel & \texttt{openmpi-1.6.5-mac-intel.zip} \\
+  arm64 & \texttt{openmpi-4.1.5-mac-arm64.zip}
 \end{tabular}
 \end{center}
 
 These can be found at
 
-\url{http://sourceforge.net/projects/gretl/files/osx-testing/}
+\url{http://sourceforge.net/projects/gretl/files/mpi/}
 
-To unpack the package you execute one of the following commands in a
+To unpack the package you execute the following commands in a
 \textsf{Terminal} window:
 \begin{code}
+# change to root directory
 cd /
 # for Intel
-sudo tar xvf /where/you/put/openmpi-1.6.5-mac64.tar.xz
-# for M1
-sudo tar xvf /where/you/put/openmpi-4.1-arm64.tar.xz
+sudo unzip /where/you/put/openmpi-1.6.5-mac-intel.zip
+# OR for arm64
+sudo unzip /where/you/put/openmpi-4.1.5-mac-arm64.zip
 \end{code}
 %
 This will install the files under \texttt{/opt/openmpi}, which is

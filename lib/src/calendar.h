@@ -75,7 +75,8 @@ int date_to_daily_index (const char *datestr, int wkdays);
 int daily_index_to_date (char *targ, int y, int m, int idx,
 			 int wkdays);
 
-int calendar_obs_number (const char *datestr, const DATASET *dset);
+int calendar_obs_number (const char *datestr, const DATASET *dset,
+			 int nolimit);
 
 int calendar_date_string (char *targ, int t, const DATASET *dset);
 
@@ -83,7 +84,7 @@ int MS_excel_date_string (char *targ, int mst, int pd, int d1904);
 
 double get_dec_date (const char *datestr);
 
-double day_of_week (int y, int m, int d, int julian, int *err);
+double legacy_day_of_week (int y, int m, int d, int julian, int *err);
 
 int n_hidden_missing_obs (const DATASET *dset, int t1, int t2);
 

@@ -2506,6 +2506,7 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="bool" optional="true">tipificar</fnarg>
+	<fnarg type="bool" optional="true">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -2515,6 +2516,13 @@
 	  desvíos padrón de cada columna (que se caculan utilizando
 	  <math>n</math> &minus; 1 como divisor, no que <math>n</math>
 	  é o número de filas de <argname>X</argname>).
+	</para>
+	<para>
+	  Se indicas un valor non nulo para <argname>obviar_na</argname>
+	  vanse ignorar os valores ausentes; doutro xeito, se unha columna
+	  da matriz <argname>X</argname> contén algún valor ausente, a
+	  columna correspondente da saída vai ter todos
+	  ausentes.
 	</para>
 	<para>
 	  Cae na conta de que <fncref targ="stdize"/> proporciona unha
@@ -5889,7 +5897,7 @@
 	  mediante subtracción, como no exemplo seguinte:
 	</para>
 	<code>
-	  series hptrend = y - hfilt(y)
+	  series hptrend = y - hpfilt(y)
 	</code>
 	<para>
 	  <seelist>
@@ -7044,13 +7052,33 @@
 	  o resto das columnas inclúen a densidade (ou densidades) estimada
 	  correspondente a cada unha delas.
 	</para>
-	<para>
-	  O parámetro <argname>escala</argname> (opcional) podes usalo para
-	  axustar o grao de suavizado en relación ao valor por defecto que é
-	  1.0 (valores maiores producen un resultado máis suave). O parámetro
-	  <argname>control</argname> (opcional) actúa como un booleano: 0
-	  (valor por defecto) significa que se utiliza o kernel gaussiano;
-	  un valor non nulo troca ao kernel de Epanechnikov.
+  <para>
+    A fórmula utilizada para calcular a densidade estimada en
+	  cada punto de referencia (<math>x</math>) é
+	  <equation status="display"
+	           tex="\[f(x)=(1/nh) \sum_{t-1}^{n} k\left((x-x_t)/h\right)\]"
+	           ascii="f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)"
+	           graphic="kernel1"/>
+	  onde <math>n</math> denota o número de puntos con datos,
+	  <math>h</math> é un parámetro de <quote>largo de banda</quote>,
+	  e <math>k</math>() é a función Kernel. Canto maior sexa o valor
+	  do parámetro de largo de banda, máis suave vai ser a densidade
+	  estimada.
+  </para>
+  <para>
+	  O parámetro <argname>escala</argname> (opcional) podes usalo
+	  para axustar o grao de suavizado en relación ao valor por defecto
+	  que é 1.0; este se corresponde coa regra xeral proposta por
+	  <cite key="silverman86">Silverman (1986)</cite>, concretamente
+	  <equation status="display"
+	     tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{-1/5}\]"
+	     ascii="h = 0.9 min(s, IQR/1.349) n^{-1/5}"
+	     graphic="kernel2"/>
+	  onde <math>s</math> indica o desvío padrón dos datos e IQR é o
+	  rango intercuartil. O parámetro <argname>control</argname>
+	  (opcional) actúa como un booleano: 0 (valor por defecto) significa
+	  que se utiliza o kernel gaussiano; un valor non nulo troca ao
+	  kernel de Epanechnikov.
 	</para>
 	<para>
 	  Podes obter un gráfico dos resultados utilizando a instrución
@@ -10494,11 +10522,14 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector fila cos produtos dos elementos de cada columna
-	  da matriz <argname>X</argname>. Se indicas un valor non nulo para
-	  o segundo argumento (opcional), ignóranse os valores ausentes;
-	  doutro xeito, o resultado é <lit>NA</lit> para cada columna que conteña
-	  valores ausentes.
+	  Devolve un vector fila cos produtos dos elementos de cada columna da
+	  matriz <argname>X</argname>. Se indicas un valor non nulo para o
+	  segundo argumento (opcional), ignóranse os valores ausentes; doutro
+	  xeito, o resultado é <lit>NA</lit> para cada columna que conteña valores
+	  ausentes. Cae na conta de que indicar <argname>obviar_na</argname>
+	  é equivalente a tratar os valores como se fosen 1s.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="prodr"/>
             <fncref targ="meanc"/>
@@ -10519,7 +10550,11 @@
 	  Devolve un vector columna cos produtos dos elementos de cada fila da
 	  matriz <argname>X</argname>. Se indicas un valor non nulo para o
 	  segundo argumento (opcional), ignóranse os valores ausentes; doutro
-	  xeito, o resultado é <lit>NA</lit> para cada fila que conteña valores ausentes.
+	  xeito, o resultado é <lit>NA</lit> para cada fila que conteña valores
+	  ausentes. Cae na conta de que indicar <argname>obviar_na</argname>
+	  é equivalente a tratar os valores como se fosen 1s.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="prodc"/>
             <fncref targ="meanr"/>
@@ -12457,12 +12492,13 @@
 
     <function name="sst" section="stats" output="scalar">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-vec">y</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devolve un escalar coa suma dos cadrados dos desvíos respecto á
-	  media (SCT), das observacións non ausentes da serie <argname>y</argname>.
+	  media (SCT), das observacións non ausentes da serie ou vector
+	  <argname>y</argname>.
 	  <seelist>
             <fncref targ="var"/>
 	  </seelist>
@@ -12508,6 +12544,7 @@
       <fnargs>
 	<fnarg type="series-list-or-mat">X</fnarg>
 	<fnarg type="int" optional="true">v</fnarg>
+	<fnarg type="bool" optional="true">obviar_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12525,6 +12562,12 @@
 	  máximo-verosímil. Como caso especial, se estableces que
 	  <argname>v</argname> sexa igual a &minus;1, unicamente
 	  se vai centrar o primeiro argumento.
+	</para>
+	<para>
+	  Por defecto, os valores ausentes se obvian no caso dunha entrada de
+	  tipo serie ou lista, pero non no caso dunha entrada de tipo matriz.
+	  Para que se ignoren os valores ausentes no caso matricial, indica
+	  un valor non nulo para <argname>obviar_na</argname>.
 	</para>
       </description>
     </function>
@@ -12626,18 +12669,11 @@
 	  cumprirse dúas condicións: a serie obxectivo non debe de ter outra
 	  cousa que non sexan valores enteiros positivos (ningún deles menor
 	  ca 1); e o arranxo <argname>S</argname> debe de ter polo menos
-	   <math>n</math> elementos, sendo <math>n</math> o maior valor de
-	   <argname>y</argname>. Amais, cada elemento de <argname>S</argname>
-	   debe de ter un formato UTF-8 válido. Se non se cumpre algunha destas
-	   condicións, amósase un fallo.
-	</para>
-	<para>
-	  O valor nominal que devolve esta función é cero, cando se completa con éxito.
-	</para>
-	<para>
-	  <seelist>
-            <fncref targ="strvals"/>
-	  </seelist>
+    <math>n</math> elementos, sendo <math>n</math> o maior valor de
+    <argname>y</argname>. Amais, cada elemento de <argname>S</argname>
+	  debe de ter un formato UTF-8 válido. Se non se cumpre algunha destas
+	  condicións, amósase un fallo. O valor nominal que devolve esta
+	  función é cero, cando se completa con éxito.
 	</para>
 	<para>
 	  Unha alternativa a <lit>stringify</lit> que te pode ser de utilidade
@@ -12647,6 +12683,12 @@
 	  ser igual, ben á longura total do conxunto de datos ou ben á longura
 	  do rango da mostra vixente, e os valores pódense repetir como sexa
 	  necesario.
+	</para>
+	<para>
+	  <seelist>
+      <fncref targ="strvals"/>
+	    <fncref targ="strvsort"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -12966,6 +13008,31 @@
 	  de cadeas de texto a un arranxo de cadeas de texto: isto non só
 	  proporciona os valores que sexan diferentes, senón tódolos valores
 	  da serie no rango da mostra vixente.
+	</para>
+      </description>
+    </function>
+
+    <function name="strvsort" section="strings" output="int">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  O argumento <argname>y</argname> debe ter valores en cadeas de
+	  texto. O efecto desta función consiste en ordenar unha serie do
+	  seguinte xeito especial: os diferentes valores de cadea se alfabetizan
+	  e logo a serie se volve codificar de forma que o 1 asígnase á primeira
+	  das cadeas xa ordenadas, o 2 asígnase á segunda, etcétera. Isto
+	  pode ser útil, entre outras razóns, para asegurar unha codificación
+	  uniforme de múltiples series que comparten o mesmo conxunto de
+	  valores en cadeas de texto. O valor nominal que devolve esta
+	  función é cero, cando se completa con éxito.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="stringify"/>
+	    <fncref targ="strvals"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -13439,18 +13506,45 @@ d =  8,0000000
       </description>
     </function>
 
+    <function name="typename" section="data-utils" output="string">
+      <fnargs>
+	<fnarg type="string">nome</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Se <argname>nome</argname> é o identificador dun obxecto definido
+	  vixente, devolve en formato de cadea de texto, o tipo de obxecto:
+	  <lit>scalar (escalar)</lit>, <lit>series (serie)</lit>,
+	  <lit>matrix (matriz)</lit>, <lit>string (cadea de texto)</lit>,
+	  <lit>bundle (feixe)</lit>, ou un dos tipos de arranxos:
+	  <lit>matrices</lit>, <lit>bundles</lit>, <lit>strings</lit>,
+	  <lit>lists</lit> ou <lit>arrays</lit>. Cando o argumento non
+	  identifica un obxecto, devólvese a cadea <lit>null</lit>.
+	</para>
+	<subhead>Nota de compatibilidade</subhead>
+	<para>
+	  Esta función está pensada como unha substituta superior das
+	  antigas funcións <fncref targ="typeof"/> e <fncref targ="typestr"/>,
+	  mais polo de agora estas últimas van seguir estando
+	  dispoñibles.
+	</para>
+      </description>
+    </function>
+
     <function name="typeof" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">nome</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un código de tipo numérico cando <argname>nome</argname>
-	  é unha cadea de texto que identifica un obxecto que xa está definido:
-	  1 para un escalar, 2 para unha serie, 3 para unha matriz, 4 para unha
-	  cadea de texto, 5 para un feixe, 6 para un arranxo e 7 para unha
-	  lista; noutro caso devolve 0. Para obter a cadea de texto que concorda
-	  co valor que se devolve, podes usar a función <fncref targ="typestr"/>.
+	  Unha función herdada: consulta a función <fncref targ="typename"/>
+	  como alternativa superior. Devolve un código de tipo numérico cando
+	  <argname>nome</argname> é unha cadea de texto que identifica un
+	  obxecto que xa está definido: 1 para un escalar, 2 para unha serie,
+	  3 para unha matriz, 4 para unha cadea de texto, 5 para un feixe,
+	  6 para un arranxo e 7 para unha lista; noutro caso devolve 0. Para
+	  obter a cadea de texto que concorda co valor que se devolve,
+	  podes usar a función <fncref targ="typestr"/>.
 	</para>
 	<para>
 	  Tamén podes utilizar esta función para obter que tipo de elemento é
@@ -13474,14 +13568,16 @@ d =  8,0000000
       </fnargs>
       <description>
 	<para>
-	  Devolve unha cadea de texto co nome do tipo de dato de GRETL que
-	  se corresponde co argumento <argname>codigotipo</argname>. Podes
-	  utilizalo xuntamente coas funcións <fncref targ="typeof"/> e
-	  <fncref targ="inbundle"/>. A cadea de texto que se devolve pode ser
-	  unha das seguintes: <quote>scalar</quote>, <quote>series</quote>,
-	  <quote>matrix</quote>, <quote>string</quote>,
-	  <quote>bundle</quote>, <quote>array</quote>,
-	  <quote>list</quote>, ou <quote>null</quote>.
+	  Unha función herdada: consulta a función <fncref targ="typename"/>
+	  como alternativa superior. Devolve unha cadea de texto co
+	  nome do tipo de dato de GRETL que se corresponde co argumento
+	  <argname>codigotipo</argname>. Podes utilizalo xuntamente coas
+	  funcións <fncref targ="typeof"/> e <fncref targ="inbundle"/>.
+	  A cadea de texto que se devolve pode ser unha das seguintes:
+	  <quote>scalar</quote> (escalar), <quote>series</quote> (serie),
+	  <quote>matrix</quote> (matriz), <quote>string</quote> (cadea de texto),
+	  <quote>bundle</quote> (feixe), <quote>array</quote> (arranxo),
+	  <quote>list</quote> (lista), ou <quote>null</quote>.
 	</para>
       </description>
     </function>
