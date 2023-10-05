@@ -164,6 +164,8 @@ int gretl_copy_file (const char *src, const char *dest);
 
 int gretl_delete_var_by_name (const char *s, PRN *prn);
 
+int combine_categories (DATASET *dset, int v0, int v1, int v2);
+
 #ifndef WIN32
 
 int gretl_spawn (char *cmdline);

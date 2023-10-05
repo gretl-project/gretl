@@ -3755,3 +3755,68 @@ gretl_matrix *bin2dec (const gretl_matrix *m, int *err)
 
     return ret;
 }
+
+/* apparatus for combining categorical indices */
+
+typedef struct {
+    int a;
+    int b;
+    int pos;
+} tri_sorter;
+
+static int compare_ts (const void *a, const void *b)
+{
+    const tri_sorter *ts1 = a;
+    const tri_sorter *ts2 = b;
+    int ret = ts1->a - ts2->a;
+
+    if (ret == 0) {
+	ret = ts1->b - ts2->b;
+    }
+
+    return ret;
+}
+
+/* Given discrete series @v0 and @v1, fill series @v2 with
+   indices of the combination of values of the first two
+   series.
+*/
+
+int combine_categories (DATASET *dset, int v0, int v1, int v2)
+{
+    tri_sorter *tsr;
+    int i, k;
+
+    tsr = malloc(dset->n * sizeof *tsr);
+    if (tsr == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<dset->n; i++) {
+	tsr[i].a = dset->Z[v0][i];
+	tsr[i].b = dset->Z[v1][i];
+	tsr[i].pos = i;
+    }
+
+    qsort(tsr, dset->n, sizeof *tsr, compare_ts);
+
+    dset->Z[v2][tsr[0].pos] = k = 1;
+
+    for (i=1; i<dset->n; i++) {
+	if (tsr[i].b != tsr[i-1].b || tsr[i].a != tsr[i-1].a) {
+	    k++;
+	}
+	dset->Z[v2][tsr[i].pos] = k;
+    }
+
+#if 0 /* debugging */
+    int list[4] = {3, v0, v1, v2};
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+    printdata(list, NULL, dset, OPT_O, prn);
+    gretl_print_destroy(prn);
+#endif
+
+    free(tsr);
+
+    return 0;
+}
