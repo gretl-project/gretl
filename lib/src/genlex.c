@@ -630,6 +630,7 @@ struct str_table hidden_funcs[] = {
     { HF_REGLS,    "_regls" },
     { HF_FELOGITR, "_felogit_rec" },
     { HF_FDEPTH,   "_fdepth" },
+    { HF_GLASSO,   "_glasso" },
     { 0,           NULL }
 };
 

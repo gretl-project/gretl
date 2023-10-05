@@ -344,6 +344,10 @@ static int regls_set_Xty (regls_info *ri)
 	if (ri->Xty == NULL) {
 	    err = E_ALLOC;
 	}
+        ri->Xty = gretl_matrix_alloc(ri->X->cols, 1);
+        if (ri->Xty == NULL) {
+            err = E_ALLOC;
+        }
     }
     if (!err) {
 	gretl_matrix_multiply_mod(ri->X, GRETL_MOD_TRANSPOSE,
@@ -858,11 +862,29 @@ static int ccd_iteration (double alpha, const gretl_matrix *X, double *g,
     int bad_R2 = 0;
     int err = 0;
 
+#if 0
+    fputs("ccd_iteration args:\n", stderr);
+    fprintf(stderr, "alpha = %g\n", alpha);
+    gretl_matrix_print(X, "X");
+    fprintf(stderr, "g = %g\n", g[0]);
+    fprintf(stderr, "nlam = %d\n", nlam);
+    fprintf(stderr, "ulam = %g\n", ulam[0]);
+    fprintf(stderr, "thr = %g\n", thr);
+    fprintf(stderr, "maxit = %d\n", maxit);
+    fprintf(stderr, "xv = %g\n", xv[0]);
+    fprintf(stderr, "lmu = %d\n", lmu[0]);
+    gretl_matrix_print(B, "b");
+    fprintf(stderr, "ia = %d\n", ia[0]);
+    fprintf(stderr, "kin = %d\n", kin[0]);
+    fprintf(stderr, "nlp = %d\n", *pnlp);
+#endif
+
     C = gretl_matrix_alloc(nx, nx);
     a = malloc(nx * sizeof *a);
     da = malloc(nx * sizeof *da);
     mm = malloc(nx * sizeof *mm);
     if (C == NULL || a == NULL || da == NULL || mm == NULL) {
+	fprintf(stderr, "ccd: allocation failure (nx = %d)\n", nx);
 	return E_ALLOC;
     }
     /* "zero" @a and @mm */
@@ -918,7 +940,7 @@ static int ccd_iteration (double alpha, const gretl_matrix *X, double *g,
 	    if (dlx < thr || nin > nx) {
 		goto m_finish;
 	    } else if (nlp > maxit) {
-		fprintf(stderr, "ccd: max iters reached\n");
+		fputs("ccd: max iters reached\n", stderr);
 		err = E_NOCONV;
 		goto getout;
             }
@@ -959,6 +981,7 @@ static int ccd_iteration (double alpha, const gretl_matrix *X, double *g,
 	} else {
 	    /* reached max iterations */
 	    err = E_NOCONV;
+	    fprintf(stderr, "ccd: nlp = %d, maxit %d\n", nlp, maxit);
 	    goto getout;
 	}
     m_finish:
@@ -1519,6 +1542,7 @@ static void ccd_make_lambda (regls_info *ri,
 
 #if LAMBDA_DEBUG
     fprintf(stderr, "ccd_make_lambda: lmax = %g\n", *lmax);
+    fprintf(stderr, "ri->lamscale = %d, ri->n = %d\n", ri->lamscale, ri->n);
 #endif
 
     gretl_matrix_copy_values(lam, ri->lfrac);
@@ -1605,11 +1629,14 @@ static int ccd_prep (regls_info *ri, ccd_info *ci)
     int nlam = ri->nlam;
     int k = ri->k;
 
+    fprintf(stderr, "*** ccd_prep ***\n");
+
     ci->MB = gretl_matrix_block_new(&ci->xv, k, 1,
 				    &ci->Xty, k, 1,
 				    &ci->lam, nlam, 1,
 				    NULL);
     ci->B = gretl_zero_matrix_new(k + ri->stdize, nlam);
+
     if (ci->MB == NULL || ci->B == NULL) {
 	return E_ALLOC;
     }
@@ -1646,7 +1673,7 @@ static int ccd_regls (regls_info *ri)
     }
 
     /* integer workspace */
-    ia = malloc((k + nlam) * sizeof *ia);
+    ia = calloc(k + nlam, sizeof *ia);
     if (ia == NULL) {
 	err = E_ALLOC;
 	goto bailout;
@@ -1670,7 +1697,6 @@ static int ccd_regls (regls_info *ri)
     fprintf(stderr, "ccd_regls: ci.lmax = %g\n", ci.lmax);
     gretl_matrix_print(ci.lam, "lam in ccd_regls");
 #endif
-
     err = ccd_iteration(ri->alpha, ri->X, ci.Xty->val, nlam, ci.lam->val,
 			ccd_toler, maxit, ci.xv->val, &lmu, ci.B, ia,
 			nnz, Rsq, &nlp);
@@ -1729,6 +1755,7 @@ static int ccd_regls (regls_info *ri)
     }
 
     if (!err) {
+	// gretl_matrix_print(ci.B, "ci.B");
 	gretl_bundle_donate_data(ri->b, "B", ci.B, GRETL_TYPE_MATRIX, 0);
 	ci.B = NULL;
 	if (ri->lamscale != LAMSCALE_NONE) {
@@ -2343,7 +2370,7 @@ static int ccd_do_fold (gretl_matrix *X,
 	MB = gretl_matrix_block_new(&xv, k, 1, &Xty, k, 1,
 				    &B, k, nlam, &u, nout, 1,
 				    &b, k, 1, NULL);
-	ia = malloc((k + nlam) * sizeof *ia);
+	ia = calloc(k + nlam, sizeof *ia);
 	if (MB == NULL || ia == NULL) {
 	    return E_ALLOC;
 	}
@@ -3079,3 +3106,368 @@ static int mpi_parent_action (regls_info *ri)
 }
 
 #endif /* HAVE_MPI */
+
+/* apparatus to support glasso ("graphical lasso") */
+
+static int any_missing (const gretl_matrix *X)
+{
+    int i, n = X->rows * X->cols;
+
+    for (i=0; i<n; i++) {
+        if (na(X->val[i])) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static void Mj_matrix (gretl_matrix *M_,
+                       const gretl_matrix *M,
+                       int cut)
+{
+    int i, j, k = 0;
+
+    for (j=0; j<M->cols; j++) {
+        for (i=0; i<M->rows; i++) {
+            if (i != cut && j != cut) {
+                M_->val[k++] = gretl_matrix_get(M, i, j);
+            }
+        }
+    }
+}
+
+static void Mj_vector (gretl_matrix *v,
+                       const gretl_matrix *M,
+                       int j)
+{
+    int i, k = 0;
+
+    for (i=0; i<M->rows; i++) {
+        if (i != j) {
+            v->val[k++] = gretl_matrix_get(M, i, j);
+        }
+    }
+}
+
+static void Wj_revise (gretl_matrix *W, int j,
+                       const gretl_matrix *Wb)
+{
+    double wbij;
+    int i, k = 0;
+
+    for (i=0; i<W->rows; i++) {
+        if (i != j) {
+            wbij = Wb->val[k++];
+            gretl_matrix_set(W, i, j, wbij);
+            gretl_matrix_set(W, j, i, wbij);
+        }
+    }
+}
+
+static void vsqrt (gretl_matrix *v)
+{
+    int i;
+
+    for (i=0; i<v->rows; i++) {
+        v->val[i] = sqrt(v->val[i]);
+    }
+}
+
+/* compute X = E * (v .* E') */
+
+static void ev_dotmul1 (gretl_matrix *X,
+                        const gretl_matrix *v,
+                        const gretl_matrix *E,
+                        gretl_matrix *Tmp)
+{
+    double xij;
+    int i, j;
+
+    gretl_matrix_copy_values(Tmp, E);
+    for (j=0; j<Tmp->cols; j++) {
+        for (i=0; i<Tmp->rows; i++) {
+            xij = gretl_matrix_get(Tmp, i, j);
+            gretl_matrix_set(Tmp, i, j, xij * v->val[i]);
+        }
+    }
+
+    gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
+                              Tmp, GRETL_MOD_NONE,
+                              X, GRETL_MOD_NONE);
+}
+
+/* compute Y = [E * (1 ./ v) * E'] * R */
+
+static void ev_dotmul2 (gretl_matrix *Y,
+                        const gretl_matrix *v,
+                        const gretl_matrix *E,
+                        const gretl_matrix *R,
+                        gretl_matrix *Tmp1,
+                        gretl_matrix *Tmp2)
+{
+    double xij;
+    int i, j;
+
+    gretl_matrix_copy_values(Tmp1, E);
+    for (j=0; j<Tmp1->cols; j++) {
+        for (i=0; i<Tmp1->rows; i++) {
+            xij = gretl_matrix_get(Tmp1, i, j);
+            gretl_matrix_set(Tmp1, i, j, xij / v->val[i]);
+        }
+    }
+
+    gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
+                              Tmp1, GRETL_MOD_NONE,
+                              Tmp2, GRETL_MOD_NONE);
+    gretl_matrix_multiply(Tmp2, R, Y);
+}
+
+struct glasso_info_ {
+    gretl_matrix_block *B;
+    gretl_matrix *W;
+    gretl_matrix *W0;
+    gretl_matrix *Wd;
+    gretl_matrix *Sj;
+    gretl_matrix *Wj;
+    gretl_matrix *Ev;
+    gretl_matrix *X;
+    gretl_matrix *y;
+    gretl_matrix *Xty;
+    gretl_matrix *xv;
+    gretl_matrix *b;
+    gretl_matrix *n1;
+    gretl_matrix *Tmp1;
+    gretl_matrix *Tmp2;
+    double *lam;
+    int *ia;
+    int *nnz;
+};
+
+typedef struct glasso_info_ glasso_info;
+
+static glasso_info *glasso_info_new (int p, int n, double rho)
+{
+    glasso_info *gi = malloc(sizeof *gi);
+
+    if (gi == NULL) {
+	return NULL;
+    }
+
+    gi->B = gretl_matrix_block_new(&gi->W0, p, p,
+				   &gi->Wd, p, p,
+				   &gi->Sj, n, 1,
+				   &gi->Wj, n, n,
+				   &gi->Ev, n, n,
+				   &gi->X, n, n,
+				   &gi->y, n, 1,
+				   &gi->Xty, n, 1,
+				   &gi->xv, n, 1,
+				   &gi->b, n, 1,
+				   &gi->n1, n, 1,
+				   &gi->Tmp1, n, n,
+				   &gi->Tmp2, n, n,
+				   NULL);
+    if (gi->B == NULL) {
+	free(gi);
+	return NULL;
+    }
+
+    gi->lam = malloc(sizeof *gi->lam);
+    gi->lam[0] = rho;
+
+    gi->ia = calloc(n + 1, sizeof *gi->ia);
+    if (gi->ia != NULL) {
+        gi->nnz = gi->ia + n;
+    }
+
+    return gi;
+}
+
+static void glasso_info_free (glasso_info *gi)
+{
+    if (gi != NULL) {
+	gretl_matrix_block_destroy(gi->B);
+	free(gi->lam);
+	free(gi->ia);
+	free(gi);
+    }
+}
+
+static int ccd_glasso (glasso_info *gi, double tol)
+{
+    int maxit = CCD_MAX_ITER;
+    int nlp = 0, lmu = 0;
+    int err;
+
+    ccd_toler = tol;
+    ccd_scale(gi->X, gi->y->val, gi->Xty->val, gi->xv->val);
+    gretl_matrix_zero(gi->b);
+
+#if LAMBDA_DEBUG
+    fprintf(stderr, "ccd_glasso: lambda = %g\n", gi->lam[0]);
+#endif
+
+    err = ccd_iteration(1.0, gi->X, gi->Xty->val, 1, gi->lam,
+			ccd_toler, maxit, gi->xv->val, &lmu, gi->b, gi->ia,
+			gi->nnz, NULL, &nlp);
+
+    return err;
+}
+
+static int glasso_converged (const gretl_matrix *W0,
+			     const gretl_matrix *W1,
+			     double tol)
+{
+    const double *x = W0->val;
+    const double *y = W1->val;
+    double csum = 0;
+    int i, j;
+
+    for (j=0; j<W0->cols; j++) {
+        csum = 0.0;
+        for (i=0; i<W0->rows; i++) {
+	    csum = fabs(x[i] - y[i]);
+        }
+        if (csum > tol) {
+	    return 0;
+        }
+	x += W0->rows;
+	y += W0->rows;
+    }
+
+#if 0
+    fprintf(stderr, "glasso_converged: tol %g, csum %g\n", tol, csum);
+#endif
+
+    return 1;
+}
+
+/* The following function may be redundant if we're in fact
+   getting options values that have been vetted in advance
+   in greaphlasso.gfn. The @tol and @maxit defaults below
+   are as in the glasso R package.
+*/
+
+static int handle_glasso_options (gretl_bundle *b,
+				  double *prho,
+				  double *ptol,
+				  int *pmaxit)
+{
+    double rho, tol = 1.0e-4;
+    int maxit = 1.0e4;
+    int err = 0;
+
+    if (gretl_bundle_has_key(b, "rho")) {
+	rho = gretl_bundle_get_scalar(b, "rho", &err);
+	if (!err && rho < 0) {
+	    err = E_INVARG;
+	}
+    } else {
+	err = E_ARGS;
+    }
+
+    if (!err && gretl_bundle_has_key(b, "tol")) {
+	tol = gretl_bundle_get_scalar(b, "tol", &err);
+	if (!err && tol <= 0) {
+	    err = E_INVARG;
+	}
+    }
+
+    if (!err && gretl_bundle_has_key(b, "maxit")) {
+	maxit = gretl_bundle_get_int(b, "maxit", &err);
+	if (!err && maxit <= 0) {
+	    err = E_INVARG;
+	}
+    }
+
+    if (!err) {
+	*prho = rho;
+	*ptol = tol;
+	*pmaxit = maxit;
+    }
+
+    return err;
+}
+
+gretl_matrix *gretl_glasso (const gretl_matrix *S,
+                            gretl_bundle *b,
+                            PRN *prn, int *err)
+{
+    glasso_info *gi = NULL;
+    gretl_matrix *W = NULL;
+    gretl_matrix *dsqrt;
+    double rho, tol;
+    int maxit;
+    double wij;
+    int p = S->rows;
+    int n = p-1;
+    int i, j;
+
+    if (p < 2 || S->cols != p) {
+        *err = E_NONCONF;
+    } else if (any_missing(S)) {
+        *err = E_MISSDATA;
+    } else {
+	*err = handle_glasso_options(b, &rho, &tol, &maxit);
+    }
+    if (*err) {
+        return NULL;
+    }
+
+    /* this will become the return value */
+    W = gretl_matrix_copy(S);
+    if (W == NULL) {
+        *err = E_ALLOC;
+        return NULL;
+    }
+
+    gi = glasso_info_new(p, n, rho/n);
+    if (gi == NULL) {
+	*err = E_ALLOC;
+	gretl_matrix_free(W);
+	return NULL;
+    }
+
+    for (i=0; i<p; i++) {
+        wij = gretl_matrix_get(W, i, i);
+        gretl_matrix_set(W, i, i, wij + rho);
+    }
+    gretl_matrix_copy_values(gi->W0, W);
+
+    for (i=0; i<maxit; i++) {
+        for (j=p-1; j>=0 && !*err; j--) {
+            Mj_matrix(gi->Wj, W, j);
+            Mj_vector(gi->Sj, S, j);
+            gretl_matrix_copy_values(gi->Ev, gi->Wj);
+            dsqrt = gretl_symmetric_matrix_eigenvals(gi->Ev, 1, err);
+            vsqrt(dsqrt);
+            gretl_square_matrix_transpose(gi->Ev);
+            ev_dotmul1(gi->X, dsqrt, gi->Ev, gi->Tmp1);
+            ev_dotmul2(gi->y, dsqrt, gi->Ev, gi->Sj, gi->Tmp1, gi->Tmp2);
+            *err = ccd_glasso(gi, tol);
+            if (!*err) {
+                gretl_matrix_multiply(gi->Wj, gi->b, gi->n1);
+                Wj_revise(W, j, gi->n1);
+            } else {
+		fprintf(stderr, "gretl_glasso: err = %d from ccd_glasso\n", *err);
+	    }
+	    gretl_matrix_free(dsqrt);
+        }
+	if (*err || glasso_converged(W, gi->W0, tol)) {
+            break;
+        }
+        gretl_matrix_copy_values(gi->W0, W);
+    }
+
+    glasso_info_free(gi);
+
+    if (*err) {
+        gretl_matrix_free(W);
+        W = NULL;
+    } else {
+	pprintf(prn, "glasso iterations: %d\n", i + 1);
+    }
+
+    return W;
+}

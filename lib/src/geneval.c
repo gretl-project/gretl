@@ -4773,6 +4773,26 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
     return ret;
 }
 
+static NODE *glasso_node (NODE *l, NODE *r, parser *p)
+{
+    gretl_matrix *(*glasso) (const gretl_matrix *,
+			     gretl_bundle *,
+			     PRN *, int *);
+    NODE *ret = NULL;
+
+    glasso = get_plugin_function("gretl_glasso");
+    if (glasso == NULL) {
+	p->err = E_FOPEN;
+    } else {
+	ret = aux_matrix_node(p);
+    }
+    if (ret != NULL) {
+	ret->v.m = (*glasso)(l->v.m, r->v.b, p->prn, &p->err);
+    }
+
+    return ret;
+}
+
 static NODE *list_reverse_node (NODE *n, parser *p)
 {
     NODE *ret = aux_list_node(p);
@@ -18248,7 +18268,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_POLROOTS:
     case F_CTRANS:
         /* matrix -> matrix functions */
-        if (l->t == MAT || l->t == NUM) {
+	if (l->t == MAT || l->t == NUM) {
             ret = matrix_to_matrix_func(l, r, t->t, p);
         } else if (t->t == F_MREV && l->t == LIST) {
             ret = list_reverse_node(l, p);
@@ -18256,6 +18276,13 @@ static NODE *eval (NODE *t, parser *p)
             node_type_error(t->t, 1, MAT, l, p);
         }
         break;
+    case HF_GLASSO:
+	if (l->t == MAT && r->t == BUNDLE) {
+	    ret = glasso_node(l, r, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;
     case F_INVPD:
         /* matrix -> matrix with optional scalar pointer */
         if (l->t == MAT || l->t == NUM) {

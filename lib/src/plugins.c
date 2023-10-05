@@ -317,6 +317,7 @@ struct plugin_function_info plugin_functions[] = {
     /* regularized least squares */
     { "gretl_regls",  P_REGLS},
     { "regls_xv_mpi", P_REGLS},
+    { "gretl_glasso", P_REGLS},
 
     /* shapefile handling */
     { "map_get_data",    P_GEOPLOT},
