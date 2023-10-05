@@ -2132,7 +2132,7 @@ static void print_model_heading (const MODEL *pmod,
 
 	if (pmod->opt & OPT_U) {
 	    /* random effects */
-	    if (pmod->opt & OPT_N) {
+	    if (pmod->opt & OPT_E) {
 		gretl_prn_newline(prn);
 		if (pmod->opt & OPT_X) {
 		    pputs(prn, _("Using weighted Nerlove transformation"));

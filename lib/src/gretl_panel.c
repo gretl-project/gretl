@@ -444,13 +444,19 @@ double panel_cluster_df_adj (MODEL *pmod,
                              panelmod_t *pan,
                              int nc)
 {
-    int n = pmod->nobs;
+    double adj = nc / (nc - 1.0);
+    /* check for --no-df-corr */
+    int asy = pmod->opt & OPT_N ? 1 : 0;
 
 #if CDEBUG
-    fprintf(stderr, "panel_cluster_df_adj: nc = %d\n", nc);
+    fprintf(stderr, "panel_cluster_df_adj: nc = %d, asy = %d\n", nc, asy);
 #endif
 
-    return (nc / (nc - 1.0)) * (n - 1.0) / (n - pmod->ncoeff);
+    if (!asy) {
+	adj *= (pmod->nobs - 1.0) / (pmod->nobs - pmod->ncoeff);
+    }
+
+    return adj;
 }
 
 /* helper function for panel VCV clustered by period */
@@ -1762,7 +1768,7 @@ static int between_variance (panelmod_t *pan, DATASET *gset)
         err = save_between_model(&bmod, blist, gset, pan);
     } else {
         if (!err && !pan->balanced && (pan->opt & OPT_U) &&
-            (pan->opt & OPT_X) && !(pan->opt & OPT_N)) {
+            (pan->opt & OPT_X) && !(pan->opt & OPT_E)) {
             /* Prepare for the Baltagi-Chang take on Swamy-Arora
                in the case of an unbalanced panel
             */
@@ -2883,7 +2889,7 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
             } else {
                 femod_regular_vcv(&femod);
             }
-        } else if (pan->opt & OPT_N) {
+        } else if (pan->opt & OPT_E) {
             if (IGLS) {
                 read_true_variances(pan);
             } else {
@@ -3113,14 +3119,14 @@ static int save_panel_model (MODEL *pmod, panelmod_t *pan,
         }
         fix_gls_stats(pmod, pan);
         panel_model_add_ahat(pmod, dset, pan);
-        if (pan->opt & OPT_N) {
+        if (pan->opt & OPT_E) {
             /* record use of Nerlove transformation */
-            pmod->opt |= OPT_N;
+            pmod->opt |= OPT_E;
         }
         if ((pan->opt & OPT_X) && !IGLS) {
             /* record use of special unbalanced ANOVA */
             pmod->opt |= OPT_X;
-            if (!(pan->opt & OPT_N)) {
+            if (!(pan->opt & OPT_E)) {
                 const char *meth = stata_sa ? "stata" : "bc";
 
                 gretl_model_set_string_as_data(pmod, "anova_method",
@@ -3171,7 +3177,7 @@ static int within_variance (panelmod_t *pan,
     } else {
         int den;
 
-        if (pan->opt & OPT_N) {
+        if (pan->opt & OPT_E) {
             /* Nerlove */
             den = femod.nobs;
         } else {
@@ -3480,7 +3486,7 @@ static int random_effects (panelmod_t *pan,
         }
     }
 
-    /* If OPT_N (--nerlove) was given, we've already calculated
+    /* If OPT_E (--nerlove) was given, we've already calculated
        pan->s2v as the variance of the fixed effects. Otherwise
        we're using the Swamy and Arora method, and pan->s2v still
        needs to be computed.
@@ -3488,7 +3494,7 @@ static int random_effects (panelmod_t *pan,
        Note: for unbalanced panels, theta will vary across the
        units in the final calculation.
     */
-    if (!(pan->opt & OPT_N)) {
+    if (!(pan->opt & OPT_E)) {
         if (IGLS) {
             /* get user-specified values */
             err = read_true_variances(pan);
@@ -3953,7 +3959,7 @@ int panel_diagnostics (MODEL *pmod, DATASET *dset,
     }
 #endif
 
-    if (opt & OPT_N) {
+    if (opt & OPT_E) {
         nerlove = 1;
     }
 
@@ -4234,8 +4240,8 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
  * pooled OLS; and %OPT_D to include time dummies.
  * %OPT_C for clustered standard errors is also accepted.
  * If %OPT_U is given, either of the mutually incompatible options
- * %OPT_N and %OPT_X may be given to inflect the calculation of the
- * variance of the individual effects: %OPT_N means use Nerlove's
+ * %OPT_E and %OPT_X may be given to inflect the calculation of the
+ * variance of the individual effects: %OPT_E means use Nerlove's
  * method, %OPT_X means use the special "exact" method of Swamy
  * and Arora in the case of an unbalanced panel. The default is
  * to use the "generic" Swamy-Arora method.
@@ -4362,7 +4368,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     }
 
     if (opt & OPT_U) {
-        nerlove = (opt & OPT_N)? 1 : 0;
+        nerlove = (opt & OPT_E)? 1 : 0;
     }
 
     calculate_Tbar(&pan);
