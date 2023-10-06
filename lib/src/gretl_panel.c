@@ -942,7 +942,7 @@ static int panel_two_way_cluster (MODEL *pmod,
     int v1 = pset->v - 2;
     int v2 = pset->v - 1;
     int k = V->rows;
-    int n_c = 0;
+    int n_c[2] = {0};
     int err;
 
     Vb = gretl_matrix_alloc(k, k);
@@ -954,12 +954,13 @@ static int panel_two_way_cluster (MODEL *pmod,
 
     /* Step 1: calculate @V for the first cluster var */
     err = generic_cluster_vcv(pmod, pan, pset, XX, W, V, ci);
-    n_c = gretl_vector_get_length(ci->cvals); /* FIXME! */
+    n_c[0] = gretl_vector_get_length(ci->cvals);
     if (!err) {
 	/* Step 2a: transcribe the second cluster var */
 	ci->pcvar = v1;
 	ci->dcvar = ci->dcvar2;
 	err = transcribe_cluster_var(pmod, pan, pset, dset, ci);
+	n_c[1] = gretl_vector_get_length(ci->cvals);
     }
     if (!err) {
 	/* Step 2b: calculate @Vb for the second cluster var */
@@ -982,14 +983,18 @@ static int panel_two_way_cluster (MODEL *pmod,
 	err = generic_cluster_vcv(pmod, pan, pset, XX, W, Vc, ci);
     }
     if (!err) {
-	/* V = Va + Vb - Vc */
+	/* Step 4: V = Va + Vb - Vc */
 	gretl_matrix_add_to(V, Vb);
 	gretl_matrix_subtract_from(V, Vc);
     }
 
-    gretl_model_set_full_vcv_info(pmod, VCV_CLUSTER, did,
-				  ci->dcvar2, 0, 0);
-    gretl_model_set_int(pmod, "n_clusters", n_c); /* FIXME! */
+    if (!err) {
+	int nc = n_c[0] < n_c[1] ? n_c[0] : n_c[1];
+
+	gretl_model_set_full_vcv_info(pmod, VCV_CLUSTER, did,
+				      ci->dcvar2, 0, 0);
+	gretl_model_set_int(pmod, "n_clusters", nc); /* FIXME? */
+    }
 
  bailout:
 
