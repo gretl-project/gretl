@@ -3040,6 +3040,54 @@ int build_stacked_series (double **pstack, int *list,
     return err;
 }
 
+/* Create a panel dataset containing a single series,
+   constructed by stacking all the individual time
+   series in the original dataset.
+*/
+
+int panelize_side_by_side_series (DATASET **pdset,
+				  const char *vname)
+{
+    DATASET *dset = *pdset;
+    DATASET *newset = NULL;
+    double *panstack = NULL;
+    int *list = NULL;
+    int T = dset->n;
+    int N = dset->v - 1;
+    int err;
+
+    list = gretl_consecutive_list_new(1, dset->v-1);
+    err = build_stacked_series(&panstack, list, T, 0, dset);
+    if (err) {
+	free(list);
+	return err;
+    }
+
+    newset = create_new_dataset(2, N*T, 0);
+    if (newset == NULL) {
+	err = E_ALLOC;
+    } else {
+	size_t sz = N * T * sizeof(double);
+
+	memcpy(newset->Z[1], panstack, sz);
+	strcpy(newset->varname[1], vname);
+	free(panstack);
+	newset->structure = STACKED_TIME_SERIES;
+	newset->pd = T;
+	newset->panel_pd = dset->pd;
+	newset->panel_sd0 = dset->sd0;
+	ntolabel(newset->stobs, 0, newset);
+	ntolabel(newset->endobs, newset->n - 1, newset);
+
+	destroy_dataset(dset);
+	*pdset = newset;
+    }
+
+    free(list);
+
+    return err;
+}
+
 static int found_log_parent (const char *s, char *targ)
 {
     int len = gretl_namechar_spn(s);
