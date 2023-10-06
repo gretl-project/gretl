@@ -480,10 +480,16 @@ static int finalize_clustered_vcv (MODEL *pmod,
     gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
                        V, GRETL_MOD_NONE);
 
-    /* check for asy (IVREG or --no-df-corr) */
+    /* check for IVREG or --no-df-corr */
     if (pmod->ci == IVREG || pmod->opt & OPT_N) {
-	; /* no further adjustment */
+	/* Just apply the @adj calculated above? This is said to
+	   be the "asymtotic-like" approach in Stata; see
+	   https://www.stata.com/meeting/13uk/nichols_crse.pdf,
+	   under "Finite-Sample Adjustment"
+	*/
+	;
     } else {
+	/* Apply the full Cameron-Miller adjustment */
 	adj *= (pmod->nobs - 1.0) / (pmod->nobs - pmod->ncoeff);
     }
 
