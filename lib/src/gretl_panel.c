@@ -3219,11 +3219,6 @@ static int save_panel_model (MODEL *pmod, panelmod_t *pan,
 
     pmod->ci = PANEL;
 
-    if (pan->opt & OPT_N) {
-	/* FIXME random effects? */
-	pmod->opt |= OPT_N;
-    }
-
     if (pan->opt & OPT_F) {
         /* fixed effects */
         int *ulist;
