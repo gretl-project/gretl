@@ -6499,7 +6499,7 @@ int model_use_zscore (const MODEL *pmod)
 	return 1;
     } else if (ASYMPTOTIC_MODEL(pmod->ci)) {
 	return 1;
-    } else if (pmod->ci == PANEL && (pmod->opt & OPT_U)) {
+    } else if (pmod->ci == PANEL && (pmod->opt & (OPT_U | OPT_N))) {
 	return 1;
     } else if ((pmod->opt & OPT_R) && libset_get_bool(ROBUST_Z)) {
 	return 1;

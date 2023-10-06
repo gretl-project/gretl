@@ -2981,6 +2981,10 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
         /* suppress auto-removal of collinear terms */
         lsqopt |= OPT_Z;
     }
+    if (pan->opt & OPT_N) {
+        /* suppress df correction */
+        lsqopt |= OPT_N;
+    }
 
     save_qr = libset_get_int(USE_QR);
     libset_set_int(USE_QR, 1);
@@ -2994,9 +2998,11 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
     } else if ((pan->opt & OPT_F) && femod.list[0] < felist[0]) {
         femod.errcode = E_SINGULAR;
     } else {
-        /* we estimated a bunch of group means, and have to
-           subtract degrees of freedom */
-        fixed_effects_df_correction(&femod, pan->effn - 1);
+	if (!(pan->opt & OPT_N)) {
+	    /* we estimated a bunch of group means, and have to
+	       subtract degrees of freedom */
+	    fixed_effects_df_correction(&femod, pan->effn - 1);
+	}
 #if PDEBUG > 1
         verbose_femod_print(&femod, wset, prn);
 #endif
@@ -3213,6 +3219,11 @@ static int save_panel_model (MODEL *pmod, panelmod_t *pan,
 
     pmod->ci = PANEL;
 
+    if (pan->opt & OPT_N) {
+	/* FIXME random effects? */
+	pmod->opt |= OPT_N;
+    }
+
     if (pan->opt & OPT_F) {
         /* fixed effects */
         int *ulist;
@@ -3328,11 +3339,9 @@ static int within_variance (panelmod_t *pan,
         if (!(pan->opt & OPT_R)) {
             regular_fixed_effects_F(pan, &femod);
         }
-
         if (pan->opt & OPT_V) {
             print_fe_results(pan, &femod, dset, prn);
         }
-
         if (pan->bdiff != NULL && pan->Sigma != NULL) {
             for (i=1; i<femod.ncoeff; i++) {
                 pan->bdiff->val[i-1] = femod.coeff[i];
@@ -3340,7 +3349,6 @@ static int within_variance (panelmod_t *pan,
             femod_regular_vcv(&femod);
             vcv_slopes(pan, &femod, VCV_INIT);
         }
-
         if (pan->opt & OPT_F) {
             err = save_panel_model(&femod, pan, (const double **) dset->Z,
                                    dset);
@@ -4405,6 +4413,10 @@ MODEL real_panel_model (const int *list, DATASET *dset,
             /* clustered */
             ols_opt |= (OPT_C | OPT_R);
         }
+        if (opt & OPT_N) {
+            /* no-df-corr */
+            ols_opt |= OPT_N;
+        }
     } else {
         /* not just pooled OLS */
         mod.errcode = panel_check_for_const(list);
@@ -4458,6 +4470,10 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     if (pan_opt & OPT_C) {
         /* cluster implies robust */
         pan_opt |= OPT_R;
+    }
+    if (pan_opt & OPT_N) {
+        /* no-df-corr (not working!)  */
+        pan_opt |= OPT_N;
     }
 
     if ((opt & OPT_D) && !(opt & OPT_B)) {

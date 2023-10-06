@@ -4367,7 +4367,7 @@ static int check_panel_options (gretlopt opt)
     } else if ((opt & OPT_T) && !(opt & OPT_H)) {
 	/* iterate option requires weighted least squares option */
 	return E_BADOPT;
-    } else if ((opt & OPT_N) && !(opt & OPT_U)) {
+    } else if ((opt & OPT_E) && !(opt & OPT_U)) {
 	/* the Nerlove option requires random effects */
 	return E_BADOPT;
     } else if (incompatible_options(opt, OPT_B | OPT_U | OPT_P)) {
