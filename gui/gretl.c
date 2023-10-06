@@ -912,8 +912,9 @@ int main (int argc, char **argv)
     make_main_window();
     add_files_to_menus();
     session_menu_state(FALSE);
-    restore_sample_state(FALSE);
+    sample_menubar_state(FALSE);
     dataset_menubar_state(FALSE);
+
 
 #if GUI_DEBUG
     fprintf(stderr, "done setting GUI state\n");
@@ -2468,7 +2469,7 @@ int gui_restore_sample (DATASET *dset)
 	if (err) {
 	    gui_errmsg(err);
 	} else {
-	    restore_sample_state(FALSE);
+	    sample_related_menu_state();
 	    mark_session_changed();
 	}
     }

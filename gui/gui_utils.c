@@ -3885,7 +3885,6 @@ static int set_sample_from_model (void *ptr, int role)
 	if (range_set) {
 	    char comment[64];
 
-	    restore_sample_state(TRUE);
 	    if (pmod != NULL) {
 		sprintf(comment, "# restored sample from model %d\n", pmod->ID);
 	    } else {
@@ -3893,11 +3892,11 @@ static int set_sample_from_model (void *ptr, int role)
 	    }
 	    add_command_to_stack(comment, 0);
 	} else {
-	    restore_sample_state(FALSE);
 	    lib_command_strcpy("smpl --full");
 	    record_command_verbatim();
 	}
 
+	sample_related_menu_state();
 	mark_session_changed();
 	set_sample_label(dataset);
     }

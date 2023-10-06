@@ -8935,7 +8935,7 @@ static int shrink_dataset_to_sample (void)
         gui_errmsg(err);
     }
 
-    restore_sample_state(FALSE);
+    sample_related_menu_state();
 
     return err;
 }

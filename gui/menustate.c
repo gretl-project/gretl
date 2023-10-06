@@ -250,7 +250,7 @@ void time_series_menu_state (gboolean s)
     flip(mdata->ui, "/menubar/Model/TSModels/midasreg",
          s && OK_MIDAS_PD(dataset->pd));
 
-    /* Sample menu */
+    /* Data menu */
     flip(mdata->ui, "/menubar/Data/DataCompact",
          s && (COMPACTABLE(dataset) || dated_weekly_data(dataset)));
     flip(mdata->ui, "/menubar/Data/DataExpand", s && EXPANSIBLE(dataset));
@@ -313,10 +313,31 @@ void session_menu_state (gboolean s)
     }
 }
 
-void restore_sample_state (gboolean s)
+void sample_related_menu_state (void)
 {
     if (mdata->ui != NULL) {
-        flip(mdata->ui, "/menubar/Sample/FullRange", s);
+	gboolean s = dataset_is_subsampled(dataset);
+
+	flip(mdata->ui, "/menubar/Sample/FullRange", s);
+	flip(mdata->ui, "/menubar/Sample/PermaSample", s);
+	flip(mdata->ui, "/menubar/Data/DataStructure", !s);
+	flip(mdata->ui, "/menubar/Data/DataCompact", !s);
+	flip(mdata->ui, "/menubar/Data/DataExpand", !s);
+	flip(mdata->ui, "/menubar/Data/DataTranspose", !s);
+
+	if (s && dataset->submask != NULL && dataset->submask == RESAMPLED) {
+	    flip(mdata->ui, "/menubar/Sample/PermaSample", FALSE);
+	}
+	if (!s && dataset_is_panel(dataset)) {
+	    flip(mdata->ui, "/menubar/Data/DataTranspose", FALSE);
+	}
+    }
+}
+
+void sample_menubar_state (gboolean s)
+{
+    if (mdata->ui != NULL) {
+        flip(mdata->ui, "/menubar/Sample", s);
     }
 }
 
@@ -1077,9 +1098,6 @@ void set_sample_label (DATASET *dset)
     panel_menu_state(dataset_is_panel(dset));
     ts_or_panel_menu_state(dataset_is_time_series(dset) ||
                            dataset_is_panel(dset));
-    flip(mdata->ui, "/menubar/Data/DataTranspose", !dataset_is_panel(dset));
-    flip(mdata->ui, "/menubar/Sample/PermaSample",
-         dataset->submask != NULL && dataset->submask != RESAMPLED);
 
     tsubset = dset->t1 > 0 || dset->t2 < dset->n - 1;
 
@@ -1179,12 +1197,7 @@ void set_sample_label (DATASET *dset)
 	}
     }
 
-    if (complex_subsampled() || dset->t1 > 0 || dset->t2 < dset->n - 1) {
-        restore_sample_state(TRUE);
-    } else {
-        restore_sample_state(FALSE);
-    }
-
+    sample_related_menu_state();
     console_record_sample(dataset);
 }
 

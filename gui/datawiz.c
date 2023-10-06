@@ -273,7 +273,7 @@ static void maybe_unrestrict_dataset (void)
         maybe_free_full_dataset(dataset);
         if (dataset->t1 == 0 &&
             dataset->t2 == dataset->n - 1) {
-            restore_sample_state(FALSE);
+	    sample_related_menu_state();
         }
     }
 }
