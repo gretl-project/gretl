@@ -64,6 +64,8 @@ static gint list_alpha_compare (GtkTreeModel *model,
     return ret;
 }
 
+#define ID_SORT_ALWAYS_ASCENDS 1 /* experiment 2023-10-07 */
+
 /* special comparator which preserves 0 in first position when sorting
    variables by ID number */
 
@@ -84,6 +86,9 @@ static gint list_id_compare (GtkTreeModel *model,
     ia = atoi(id_a);
     ib = atoi(id_b);
 
+#if ID_SORT_ALWAYS_ASCENDS
+    ret = (order == GTK_SORT_DESCENDING)? ib - ia : ia - ib;
+#else
     if (ia == 0) {
 	ret = (order == GTK_SORT_DESCENDING)? 1 : 0;
     } else if (ib == 0) {
@@ -91,6 +96,7 @@ static gint list_id_compare (GtkTreeModel *model,
     } else {
 	ret = ia - ib;
     }
+#endif
 
     g_free(id_a);
     g_free(id_b);
@@ -510,8 +516,9 @@ static void check_db_series_selection (GtkTreeSelection *sel,
     }
 }
 
-#if 0 /* 2023-10-07: was invoked for mdata click on series ID
-	 column heading */
+/* Alternates new as of 2023-10-07 */
+
+#if ID_SORT_ALWAYS_ASCENDS
 
 static void id_col_clicked (GtkTreeViewColumn *column, GtkWidget *view)
 {
@@ -522,9 +529,14 @@ static void id_col_clicked (GtkTreeViewColumn *column, GtkWidget *view)
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(view));
     gtk_tree_sortable_get_sort_column_id(GTK_TREE_SORTABLE(model),
 					 &scol, &order);
-    if (order == GTK_SORT_ASCENDING) {
-	gtk_tree_view_column_set_sort_indicator(column, FALSE);
-    }
+    gtk_tree_view_column_set_sort_indicator(column, FALSE);
+}
+
+#else
+
+static void id_col_clicked (GtkTreeViewColumn *column, GtkWidget *view)
+{
+    return;
 }
 
 #endif
@@ -634,10 +646,17 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 	    }
 	    if (vwin != mdata) {
 		g_object_set(G_OBJECT(column), "resizable", TRUE, NULL);
+	    } else if (i == 1 || i == 2) {
+		/* try to signal sortability to the user */
+		gtk_tree_view_column_set_sort_order(column, GTK_SORT_DESCENDING);
+		gtk_tree_view_column_set_sort_indicator(column, TRUE);
 	    }
-
-	    /* special action on first column */
-	    if (i == 0 && db_view) {
+	    /* first column specials */
+	    if (i == 0 && vwin == mdata) {
+		g_signal_connect(G_OBJECT(column), "clicked",
+				 G_CALLBACK(id_col_clicked), view);
+	    } else if (i == 0 && db_view) {
+		/* database view special */
 		gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(lstore), 0,
 						(GtkTreeIterCompareFunc)
 						db_series_compare,
