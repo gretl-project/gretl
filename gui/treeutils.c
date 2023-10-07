@@ -510,6 +510,9 @@ static void check_db_series_selection (GtkTreeSelection *sel,
     }
 }
 
+#if 0 /* 2023-10-07: was invoked for mdata click on series ID
+	 column heading */
+
 static void id_col_clicked (GtkTreeViewColumn *column, GtkWidget *view)
 {
     GtkTreeModel *model;
@@ -523,6 +526,8 @@ static void id_col_clicked (GtkTreeViewColumn *column, GtkWidget *view)
 	gtk_tree_view_column_set_sort_indicator(column, FALSE);
     }
 }
+
+#endif
 
 #define db_series_window(v) (v->role == NATIVE_SERIES || \
                              v->role == RATS_SERIES || \
@@ -631,17 +636,12 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 		g_object_set(G_OBJECT(column), "resizable", TRUE, NULL);
 	    }
 
-	    /* special actions on first column */
-	    if (i == 0) {
-		if (vwin == mdata) {
-		    g_signal_connect(G_OBJECT(column), "clicked",
-				     G_CALLBACK(id_col_clicked), view);
-		} else if (db_view) {
-		    gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(lstore), 0,
-						    (GtkTreeIterCompareFunc)
-						    db_series_compare,
-						    column, NULL);
-		}
+	    /* special action on first column */
+	    if (i == 0 && db_view) {
+		gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(lstore), 0,
+						(GtkTreeIterCompareFunc)
+						db_series_compare,
+						column, NULL);
 	    }
 	}
     }

@@ -1276,11 +1276,9 @@ void populate_varlist (void)
 	}
 
 	vlabel = series_get_label(dataset, i);
-
 	if (i > 0) {
 	    pv = get_lag_or_dummy_parent(i);
 	}
-
 	if (pv > 0) {
 	    GtkTreeIter child_iter, parent_iter;
 
@@ -1297,7 +1295,6 @@ void populate_varlist (void)
 		pv = 0;
 	    }
 	}
-
 	if (pv == 0) {
 	    gtk_tree_store_append(store, &iter, NULL);
 	    sprintf(id, "%d", i);
@@ -1347,7 +1344,6 @@ void populate_varlist (void)
 	gtk_tree_view_set_cursor(view, path, NULL, FALSE);
 	gtk_tree_path_free(path);
     }
-
     if (!check_connected) {
 	g_signal_connect(G_OBJECT(select), "changed",
 			 G_CALLBACK(check_varmenu_state),
@@ -1357,7 +1353,6 @@ void populate_varlist (void)
 			 NULL);
 	check_connected = 1;
     }
-
     if (!click_connected) {
 	g_signal_connect(G_OBJECT(mdata->listbox), "button-press-event",
 			 G_CALLBACK(main_popup_handler),
