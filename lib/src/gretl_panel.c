@@ -480,12 +480,21 @@ static int finalize_clustered_vcv (MODEL *pmod,
     gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
                        V, GRETL_MOD_NONE);
 
-    /* check for IVREG or --no-df-corr */
+    if (pmod->ci == IVREG) {
+	return 0; /* compatible with gretl 2023b: do we want this? */
+    }
+
+    if (pmod->opt & OPT_N) {
+	/* --no-df-corr */
+	return 0;
+    }
+
     if (pmod->ci == IVREG || pmod->opt & OPT_N) {
 	/* Just apply the @adj calculated above? This is said to
 	   be the "asymtotic-like" approach in Stata; see
 	   https://www.stata.com/meeting/13uk/nichols_crse.pdf,
-	   under "Finite-Sample Adjustment"
+	   under "Finite-Sample Adjustment". Right now this
+	   is never reached!
 	*/
 	;
     } else {
@@ -495,7 +504,7 @@ static int finalize_clustered_vcv (MODEL *pmod,
 
     gretl_matrix_multiply_by_scalar(V, adj);
 
-    return 0; /* error checking? */
+    return 0;
 }
 
 static int
@@ -861,8 +870,10 @@ static int get_two_way_info (const char *s,
     *did1 = current_series_index(dset, s1);
     *did2 = current_series_index(dset, s2);
 
+#if 0
     fprintf(stderr, "get_two_way_info: cnames '%s', '%s'; IDs %d, %d\n",
 	    s1, s2, *did1, *did2);
+#endif
 
     if (*did1 < 0 || *did2 < 0) {
 	err = E_UNKVAR;
