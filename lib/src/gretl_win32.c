@@ -634,12 +634,19 @@ static char *win_special_path (int folder)
 
     if (SHGetFolderPathW(NULL, folder | CSIDL_FLAG_CREATE,
 			 NULL, 0, wpath) == S_OK) {
+	GError *gerr = NULL;
 	gchar *upath;
 
-	upath = g_utf16_to_utf8(wpath, -1, NULL, NULL, NULL);
+	upath = g_utf16_to_utf8(wpath, -1, NULL, NULL, &gerr);
 	if (upath != NULL) {
 	    ret = gretl_strdup(upath);
 	    g_free(upath);
+	} else {
+	    fprintf(stderr, "win_special_path: failed to convert UTF-16 to UTF-8\n");
+	    if (gerr != NULL) {
+		fprintf(stderr, " %s\n", gerr->message);
+		g_error_free(gerr);
+	    }
 	}
     }
 

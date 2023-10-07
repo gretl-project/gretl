@@ -2575,7 +2575,7 @@ static int initialize_dotdir (void)
         sprintf(paths.dotdir, "%s\\gretl\\", dirname);
         free(dirname);
     } else {
-        sprintf(paths.dotdir, "%s\\user\\", paths.gretldir);
+	sprintf(paths.dotdir, "%s\\gretl\\", g_get_home_dir());
     }
 #else
     dirname = getenv("HOME");
