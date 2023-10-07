@@ -562,7 +562,6 @@ static void set_min_col_width (GtkTreeViewColumn *column,
 	w = get_string_width("   Industrial Production: Equipment: "
 			     "Business Equipment, 2017=100    ");
     }
-
     if (w > 0) {
 	gtk_tree_view_column_set_min_width(column, w);
     }
