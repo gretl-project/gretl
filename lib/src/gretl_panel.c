@@ -467,27 +467,35 @@ static void augment_clustered_W (const gretl_matrix *e,
 			      W, GRETL_MOD_CUMULATE);
 }
 
-static int finalize_clustered_vcv (MODEL *pmod,
-				   panelmod_t *pan,
-				   const gretl_matrix *XX,
-				   const gretl_matrix *W,
-				   gretl_matrix *V,
-				   int nc)
+static void finalize_clustered_vcv (MODEL *pmod,
+				    panelmod_t *pan,
+				    const gretl_matrix *XX,
+				    const gretl_matrix *W,
+				    gretl_matrix *V,
+				    int nc)
 {
-    double adj = nc / (nc - 1.0);
+    double adj;
 
     /* form V(b) = (X'X)^{-1} W (X'X)^{-1} */
     gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
                        V, GRETL_MOD_NONE);
 
+    /* Now, what (if anything) are we going to do in terms of
+       degrees-of-freedom adjustment?
+    */
+
     if (pmod->ci == IVREG) {
-	return 0; /* compatible with gretl 2023b: do we want this? */
+	/* compatible with gretl 2023b: do we want this? */
+	return;
     }
 
     if (pmod->opt & OPT_N) {
 	/* --no-df-corr */
-	return 0;
+	return;
     }
+
+    /* initial adjustment using the number of clusters */
+    adj = nc / (nc - 1.0);
 
     if (pmod->ci == IVREG || pmod->opt & OPT_N) {
 	/* Just apply the @adj calculated above? This is said to
@@ -503,8 +511,6 @@ static int finalize_clustered_vcv (MODEL *pmod,
     }
 
     gretl_matrix_multiply_by_scalar(V, adj);
-
-    return 0;
 }
 
 static int
