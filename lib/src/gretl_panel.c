@@ -950,6 +950,68 @@ static int check_cluster_var (MODEL *pmod,
     return err;
 }
 
+/* Fix-up à la Cameron, Gelbach and Miller, for non-positive
+   semi-definite covariance matrix in case of non-nested
+   two-way clustering: set any negative eigenvalues to zero and
+   reconstitute @V.
+*/
+
+static int maybe_eigenfix (gretl_matrix *V)
+{
+    gretl_matrix *U = gretl_matrix_copy(V);
+    gretl_matrix *lam = NULL;
+    int n = V->rows;
+    int i, fixit = 0;
+    int err = 0;
+
+    if (U == NULL) {
+	err = E_ALLOC;
+    } else {
+	lam = gretl_symmetric_matrix_eigenvals(U, 1, &err);
+    }
+
+    for (i=0; i<n && !err; i++) {
+	if (lam->val[i] < 0) {
+	    fixit = 1;
+	    break;
+	}
+    }
+
+    if (fixit) {
+	gretl_matrix *Tmp = gretl_matrix_copy(U);
+	double uij, lvj;
+	int j;
+
+	if (Tmp == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+
+	for (j=0; j<n; j++) {
+	    lvj = lam->val[j];
+	    for (i=0; i<n; i++) {
+		if (lvj > 0) {
+		    uij = gretl_matrix_get(Tmp, i, j);
+		    gretl_matrix_set(Tmp, i, j, uij * lvj);
+		} else {
+		    gretl_matrix_set(Tmp, i, j, 0);
+		}
+	    }
+	}
+	gretl_matrix_multiply_mod(Tmp, GRETL_MOD_NONE,
+				  U, GRETL_MOD_TRANSPOSE,
+				  V, GRETL_MOD_NONE);
+	gretl_matrix_free(Tmp);
+    }
+
+ bailout:
+
+    gretl_matrix_free(lam);
+    gretl_matrix_free(U);
+
+    return err;
+}
+
 static int panel_two_way_cluster (MODEL *pmod,
 				  panelmod_t *pan,
 				  DATASET *pset,
@@ -1009,6 +1071,10 @@ static int panel_two_way_cluster (MODEL *pmod,
 	/* Step 4: V = Va + Vb - Vc */
 	gretl_matrix_add_to(V, Vb);
 	gretl_matrix_subtract_from(V, Vc);
+    }
+
+    if (!err) {
+	err = maybe_eigenfix(V);
     }
 
     if (!err) {
