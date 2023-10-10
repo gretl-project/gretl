@@ -1380,20 +1380,19 @@ static int process_panel_vars (DATASET *dwinfo, dw_opts *opts)
 static int process_panel_vname (DATASET *dwinfo, dw_opts *opts)
 {
     const gchar *s = gtk_entry_get_text(GTK_ENTRY(opts->entry));
-    int err = 0;
 
     if (s == NULL || *s == '\0') {
-	err = 1;
+	gtk_widget_grab_focus(opts->entry);
+	return 1;
     } else {
-	err = gui_validate_varname_strict(s, GRETL_TYPE_SERIES,
-					  gtk_widget_get_toplevel(opts->entry));
+	int err =
+	    gui_validate_varname_strict(s, GRETL_TYPE_SERIES,
+					gtk_widget_get_toplevel(opts->entry));
+	if (!err) {
+	    strcpy(opts->vname, s);
+	}
+	return err;
     }
-
-    if (!err) {
-	strcpy(opts->vname, s);
-    }
-
-    return err;
 }
 
 /* Try to assemble a list of at least two potential panel index
@@ -2055,7 +2054,7 @@ static void dwiz_new_dataset_combo (DATASET *dwinfo,
     set_initial_obs_sensitivities(dwinfo, opts);
 }
 
-static int no_time_series (DATASET *dset)
+static int no_multi_time_series (DATASET *dset)
 {
     return dset == NULL || dset->n == 0 ||
 	dset->v < 3 || dset->structure != TIME_SERIES;
@@ -2118,10 +2117,11 @@ static void dwiz_build_radios (int step, DATASET *dwinfo,
                 gtk_widget_set_sensitive(button, FALSE);
                 gretl_tooltips_add(button,
                                    _("The data set contains no suitable index variables"));
-            } else if (i == opts->n_radios - 1 && no_time_series(dataset)) {
+            } else if (i == opts->n_radios - 1 && no_multi_time_series(dataset)) {
+		/* disable the "side by side" option */
 		gtk_widget_set_sensitive(button, FALSE);
                 gretl_tooltips_add(button,
-                                   _("The data set contains no time series"));
+                                   _("The data set contains no suitable time series"));
 	    }
         }
 
@@ -2141,13 +2141,16 @@ static void dwiz_panelvars_selector (dw_opts *opts,
     gtk_widget_show_all(hbox);
 }
 
-static void dwiz_varname_entry(dw_opts *opts,
-			       DATASET *dwinfo,
-			       GtkWidget *vbox)
+static void dwiz_varname_entry (dw_opts *opts,
+				DATASET *dwinfo,
+				GtkWidget *vbox)
 {
     GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
     GtkWidget *label = gtk_label_new(NULL);
     GtkWidget *entry = gtk_entry_new();
+    gchar *msg;
+
+    opts->entry = entry;
 
     gtk_label_set_text(GTK_LABEL(label),
 		       _("Give a name for the combined series"));
@@ -2163,7 +2166,14 @@ static void dwiz_varname_entry(dw_opts *opts,
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_widget_show_all(hbox);
 
-    opts->entry = entry;
+    /* add warning text */
+    label = gtk_label_new(NULL);
+    msg = g_strdup_printf(_("Please note: this action will stack all "
+			    "%d time series\nin the current dataset into "
+			    "a single panel series."), dataset->v - 1);
+    gtk_label_set_text(GTK_LABEL(label), msg);
+    gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 10);
+    g_free(msg);
 }
 
 /* Where should we be going, when the Forward or Back button
