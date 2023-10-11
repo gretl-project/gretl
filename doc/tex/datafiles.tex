@@ -554,6 +554,22 @@ variants of lines 3 and 4 of the script if the original file contained
 additional side-by-side per-country series for investment, consumption
 or whatever.
 
+The simplest case of this transformation---where the time-series
+dataset contains a single set of side-by-side series---can be handled
+via gretl's graphical interface. Under the \textsf{Data} menu in the
+main window you can find the item \textsf{Dataset structure}. On
+selecting this item one of the options is \textsf{Panel}; choose this
+option and the next step offers ``Convert from side-by-side time
+series'' as one way of proceeding.\footnote{This is enabled only if
+  the dataset contains at least two time series (leaving aside the
+  constant).} This leads to a step where you supply a name for the
+stacked series, followed by a final step where you see a description
+of the proposed dataset structure. If this looks right, clicking OK
+will perform the transformation. The effect is the same as executing a
+series of commands on the pattern shown above, using the
+\texttt{stack} function, then executing the additional command
+\texttt{open panel.gdt}.
+
 \subsection{Panel data marker strings}
 
 It can be helpful with panel data to have the observations identified
