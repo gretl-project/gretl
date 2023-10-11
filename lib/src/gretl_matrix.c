@@ -14181,25 +14181,16 @@ void gretl_matrix_array_free (gretl_matrix **A, int n)
     }
 }
 
-/**
- * gretl_matrix_values:
- * @x: array to process.
- * @n: length of array.
- * @opt: if OPT_S the array of values will be sorted, otherwise
- * given in order of occurrence.
- * @err: location to receive error code.
- *
- * Returns: an allocated matrix containing the distinct
- * values in array @x, or NULL on failure.
- */
-
-gretl_matrix *gretl_matrix_values (const double *x, int n,
-                                   gretlopt opt, int *err)
+static gretl_matrix *
+real_gretl_matrix_values (const double *x, int n,
+			  gretlopt opt, int *n_vals,
+			  int *err)
 {
     gretl_matrix *v = NULL;
     double *sorted = NULL;
     double last;
-    int i, k, m;
+    int m = 0;
+    int i, k;
 
     sorted = malloc(n * sizeof *sorted);
     if (sorted == NULL) {
@@ -14215,15 +14206,19 @@ gretl_matrix *gretl_matrix_values (const double *x, int n,
     }
 
     if (k == 0) {
-        v = gretl_null_matrix_new();
-        if (v == NULL) {
-            *err = E_ALLOC;
-        }
-        goto bailout;
+	if (n_vals == NULL) {
+	    v = gretl_null_matrix_new();
+	}
+	goto bailout;
     }
 
     qsort(sorted, k, sizeof *sorted, gretl_compare_doubles);
     m = count_distinct_values(sorted, k);
+
+    if (n_vals != NULL) {
+	*n_vals = m;
+	goto bailout;
+    }
 
     v = gretl_column_vector_alloc(m);
     if (v == NULL) {
@@ -14267,6 +14262,43 @@ gretl_matrix *gretl_matrix_values (const double *x, int n,
     free(sorted);
 
     return v;
+}
+
+/**
+ * gretl_matrix_values:
+ * @x: array to process.
+ * @n: length of array.
+ * @opt: if OPT_S the array of values will be sorted, otherwise
+ * given in order of occurrence.
+ * @err: location to receive error code.
+ *
+ * Returns: an allocated matrix containing the distinct
+ * values in array @x, or NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_values (const double *x, int n,
+                                   gretlopt opt, int *err)
+{
+    return real_gretl_matrix_values(x, n, opt, NULL, err);
+}
+
+/**
+ * gretl_matrix_n_values:
+ * @x: array to process.
+ * @n: length of array.
+ * @err: location to receive error code.
+ *
+ * Returns: the number of distinct non-missing values in array @x,
+ * or 0 on failure.
+ */
+
+int gretl_matrix_n_values (const double *x, int n, int *err)
+{
+    int n_vals = 0;
+
+    real_gretl_matrix_values(x, n, OPT_NONE, &n_vals, err);
+
+    return n_vals;
 }
 
 /**

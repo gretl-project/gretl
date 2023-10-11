@@ -860,6 +860,8 @@ void gretl_matrix_array_free (gretl_matrix **A, int n);
 gretl_matrix *gretl_matrix_values (const double *x, int n,
 				   gretlopt opt, int *err);
 
+int gretl_matrix_n_values (const double *x, int n, int *err);
+
 gretl_matrix *gretl_matrix_shape (const gretl_matrix *A,
 				  int r, int c, int *err);
 
