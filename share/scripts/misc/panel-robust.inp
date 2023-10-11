@@ -1,0 +1,40 @@
+###
+### Illustrative script of the use of the --robust and 
+### --clusters option with panel estimators
+###
+
+set verbose off
+ 
+open grunfeld.gdt
+list X = const value kstock
+
+### pooled estimate, clustered by id
+ols invest X --cluster=ticker 
+
+### fixed-effects estimate, iid observations 
+panel invest X
+
+### fixed-effects estimate, Arellano-robust standard errors 
+panel invest X --robust
+
+### fixed-effects estimate, Beck & Katz-robust standard errors 
+set pcse on
+panel invest X --robust
+
+### fixed-effects estimate, clustered by id (correlation is
+### allowed between observations that pertain to the same firm) 
+### Note: these are by construction identical to the 
+### Arellano-robust estimates
+panel invest X --cluster=ticker
+# the following gives compatibility with Stata's xtivreg2 command
+panel invest X --cluster=ticker --no-df-corr
+
+### fixed-effects estimate, clustered by year (correlation is
+### allowed between observations that pertain to the same year) 
+panel invest X --cluster=year
+
+### fixed-effects estimate, with two-way clustering (correlation 
+### is allowed between observations that pertain to the same firm
+### OR the same year)
+panel invest X --cluster=ticker,year
+

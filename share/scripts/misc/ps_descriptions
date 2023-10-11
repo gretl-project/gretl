@@ -33,6 +33,7 @@
 "nile","State Space Model","Local Linear Trend example on the Nile data"
 "ooballot","Ordered probit","corruption and ISO voting"
 "oprobit","Ordered probit and logit","happiness and age"
+"panel-robust","Robust inference for panel data models","Panel of US firms"
 "penngrow","Nerlove dynamic panel model","cross-country"
 "pensions","Wooldridge ordered probit","asset allocations"
 "perron97","Unit-root testing with breaks","Nelson-Plosser data"
