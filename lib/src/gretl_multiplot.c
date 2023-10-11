@@ -509,7 +509,6 @@ int gretl_multiplot_from_array (const char *param, gretlopt opt)
 {
     gretl_array *a = NULL;
     gretl_matrix *m = NULL;
-    gretlopt myopt = opt;
     int maxp, np = 0;
     int err = 0;
 
@@ -526,16 +525,23 @@ int gretl_multiplot_from_array (const char *param, gretlopt opt)
     maxp = np;
     set_multiplot_defaults();
 
-    myopt &= ~OPT_S;
-    if (myopt) {
-	err = set_multiplot_sizes(myopt);
+#if GRID_DEBUG
+    fprintf(stderr, "gretl_multiplot_from_array: np = %d, opt = %d\n",
+	    np, opt);
+#endif
+
+    if (opt) {
+	err = set_multiplot_sizes(opt);
 	if (!err) {
-	    if (myopt & OPT_L) {
+	    if (opt & OPT_L) {
 		err = set_mp_layout(&m, &np);
 	    } else {
 		err = set_mp_grid(np);
 	    }
 	}
+    } else {
+	/* no options supplied, figure the default grid */
+	err = set_mp_grid(np);
     }
 
     if (!err) {
