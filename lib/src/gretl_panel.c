@@ -484,13 +484,13 @@ static void finalize_clustered_vcv (MODEL *pmod,
        degrees-of-freedom adjustment?
     */
 
-    if (pmod->ci == IVREG) {
-	/* compatible with gretl 2023b: do we want this? */
+    if (pmod->opt & OPT_N) {
+	/* --no-df-corr */
 	return;
     }
 
-    if (pmod->opt & OPT_N) {
-	/* --no-df-corr */
+    if (pmod->ci == IVREG) {
+	/* compatible with gretl 2023b: do we want this? */
 	return;
     }
 
@@ -506,7 +506,7 @@ static void finalize_clustered_vcv (MODEL *pmod,
 	*/
 	;
     } else {
-	/* Apply the full Cameron-Miller adjustment */
+	/* Apply the full Cameron-Gelbach-Miller adjustment */
 	adj *= (pmod->nobs - 1.0) / (pmod->nobs - pmod->ncoeff);
     }
 
@@ -863,6 +863,11 @@ static int transcribe_cluster_var (MODEL *pmod,
     return err;
 }
 
+/* Parse two comma-separated series names out of @s, write their
+   (putative) dataset ID numbers into @did1 and @did2 and check them
+   for validity.
+*/
+
 static int get_two_way_info (const char *s,
 			     const DATASET *dset,
 			     int *did1,
@@ -890,6 +895,17 @@ static int get_two_way_info (const char *s,
 
     return err;
 }
+
+/* This function handles the case of a single clustering series and
+   also the two-way case. If the parameter to the --cluster option is
+   "period" this is treated as a reference to the time dimension of
+   the panel, a case which gets special treatment. Otherwise we're
+   looking for one or two series names.  If this succeeds, we
+   transcribe the first (or only) clustering series from the main
+   dataset into the temporary panel dataset.  If there's a second
+   series we record its ID as dcvar2 under the cluster_info struct;
+   it will get transcribed later.
+*/
 
 static int check_cluster_var (MODEL *pmod,
                               panelmod_t *pan,
@@ -950,7 +966,9 @@ static int check_cluster_var (MODEL *pmod,
     return err;
 }
 
-/* Fix-up à la Cameron, Gelbach and Miller, for non-positive
+#define EDEBUG 0
+
+/* Fix-up, à la Cameron, Gelbach and Miller, for non-positive
    semi-definite covariance matrix in case of non-nested
    two-way clustering: set any negative eigenvalues to zero and
    reconstitute @V.
@@ -971,6 +989,9 @@ static int maybe_eigenfix (gretl_matrix *V)
     }
 
     for (i=0; i<n && !err; i++) {
+#if EDEBUG
+	fprintf(stderr, "lambda[%d] = %g\n", i, lam->val[i]);
+#endif
 	if (lam->val[i] < 0) {
 	    fixit = 1;
 	    break;
@@ -987,6 +1008,9 @@ static int maybe_eigenfix (gretl_matrix *V)
 	    goto bailout;
 	}
 
+#if EDEBUG
+	gretl_matrix_print(V, "V, before eigenfix");
+#endif
 	for (j=0; j<n; j++) {
 	    lvj = lam->val[j];
 	    for (i=0; i<n; i++) {
@@ -1002,6 +1026,9 @@ static int maybe_eigenfix (gretl_matrix *V)
 				  U, GRETL_MOD_TRANSPOSE,
 				  V, GRETL_MOD_NONE);
 	gretl_matrix_free(Tmp);
+#if EDEBUG
+	gretl_matrix_print(V, "V, after eigenfix");
+#endif
     }
 
  bailout:
