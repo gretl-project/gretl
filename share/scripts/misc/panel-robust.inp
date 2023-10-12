@@ -1,17 +1,16 @@
 ###
-### Illustrative script of the use of the --robust and 
-### --clusters option with panel estimators
+### Script to illustrate use of the --robust and
+### --cluster options with panel estimators
 ###
 
 set verbose off
- 
 open grunfeld.gdt
 list X = const value kstock
 
 ### pooled estimate, clustered by id
 ols invest X --cluster=ticker 
 
-### fixed-effects estimate, iid observations 
+### fixed-effects estimate, assuming iid observations
 panel invest X
 
 ### fixed-effects estimate, Arellano-robust standard errors 
