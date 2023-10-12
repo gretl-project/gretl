@@ -705,7 +705,7 @@ set pcse off
 Note that regardless of the \texttt{pcse} setting, the robust
 estimator is not used unless the \option{robust} flag is given, or the
 ``Robust'' box is checked in the GUI program. For some further remarks
-on the panel case, see the final paragraph of this chapter.
+on the panel case, see below.
 
 \section{The cluster-robust estimator}
 \label{sec:vcv-cluster}
@@ -780,9 +780,9 @@ clusters is substantially less than the total number of observations.
 
 In the case of panel data, the \option{cluster} option can be used to
 impose clustering by time period, or by a selected cross-sectional
-characteristic. Recall from the discussion above that the default
+characteristic. (Recall from the discussion above that the default
 action of the \option{robust} option is to cluster by panel unit, so
-if that is what you want the \option{cluster} option is not required.
+if that is what you want the \option{cluster} option is not required.)
 To invoke clustering by period the recommended form is
 \verb|--cluster=period|, where \texttt{period} is taken as a keyword
 rather than the name of a series.\footnote{Letting gretl identify the
@@ -801,6 +801,41 @@ panel ... --cluster=state
 In these cases, of course, the parameter to \option{cluster} must be
 the name of a series that does the job, providing a unique identifier
 for each of the groups.
+
+In the case of panel data only, two-way clustering is also supported.
+For example, one might cluster by cross-sectional unit and
+time-period, hence allowing for correlation of the disturbance term
+both within unit and within period. But note that if a categorical
+variable \texttt{C1} is nested within a more highly aggregated one,
+\texttt{C2}, then two-way clustering is not called for since it is
+equivalent to clustering on \texttt{C2} alone. The syntax for the
+two-way case is on the following pattern
+\begin{code}
+panel ... --cluster=cvar1,cvar2
+\end{code}
+where two comma-separated series names are given (with no intervening
+spaces).
+
+The precise magnitude of standard errors produced in case of
+cluster-robust estimation depends on whether a degrees of freedom
+adjustment is applied, and if so on how exactly the adjustment is
+calculated---a matter which is somewhat debatable. The default
+procedure in gretl is that of \cite{CGM2011}. That is, we apply an
+adjustment factor equal to
+\[
+  \frac{c}{c-1} \times \frac{n}{n-k}
+\]
+where $c$ is the number of clusters, $n$ is the total number of
+observations, and $k$ is the number of parameters estimated. Results
+then agree with \textsf{Stata}'s \texttt{xtreg} command and also the
+\texttt{cgmreg} command made available by Colin Cameron.\footnote{As
+  of 2023-10-12 this is available via
+  \url{https://cameron.econ.ucdavis.edu/research/cgmreg.ado}.}  To
+produce clustered standard errors in agreement with the popular
+contributed \textsf{Stata} command \texttt{xtivreg2} it is necessary
+to suppress this adjustment: append the \option{no-df-corr} option to
+the \texttt{panel} command.
+
 
 %%% Local Variables: 
 %%% mode: latex
