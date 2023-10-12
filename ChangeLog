@@ -1,9 +1,12 @@
 version 2023c, in progress
 - New commands "gridplot" and "gpbuild" for constructing
   composite plots
+- "gnuplot" command: implement new option syntax to support
+  multiple "bands" in a single plot (but continue to support
+  the old band syntax until further notice)
 - "panel" command: support the --cluster option to produce
-  a greater variety of robust standard errors; in addition,
-  support the --no-df-corr option
+  a greater variety of robust standard errors, including two-
+  way clustering; also support the --no-df-corr option
 - "tsls" command: if the --robust option is given, compute a
   robust variant of the Hausman test
 - String-valued series: support returning such series from a
