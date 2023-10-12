@@ -5277,11 +5277,6 @@
 	  <effect>see below</effect>
         </option>
         <option>
-	  <flag>--band-style</flag>
-	  <optparm>style</optparm>
-	  <effect>see below</effect>
-        </option>
-        <option>
 	  <flag>--matrix</flag>
 	  <optparm>name</optparm>
 	  <effect>plot columns of named matrix</effect>
@@ -5318,7 +5313,7 @@
 
     <description>
       <para>
-	The variables in the list <repl>yvars</repl> are graphed
+	The series in the list <repl>yvars</repl> are graphed
 	against <repl>xvar</repl>.  For a time series plot you may
 	either give <lit>time</lit> as <repl>xvar</repl> or use the
 	option flag <opt>time-series</opt>. See also the <cmdref
@@ -5327,17 +5322,17 @@
       <para>
 	By default, data-points are shown as points; this can be
 	overridden by giving one of the options <opt>with-lines</opt>,
-	<opt>with-lp</opt>, <opt>with-impulses</opt> or
-	<opt>with-steps</opt>. If more than one variable is to be
-	plotted on the <math>y</math> axis, the effect of these
-	options may be confined to a subset of the variables by using
-	the <repl>varspec</repl> parameter. This should take the form
-	of a comma-separated listing of the names or numbers of the
-	variables to be plotted with lines or impulses
-	respectively. For instance, the final example above shows how
-	to plot <lit>y1</lit> and <lit>y2</lit> against <lit>x</lit>,
-	such that <lit>y2</lit> is represented by a line but
-	<lit>y1</lit> by points.
+	<opt>with-lp</opt> (lines and points),
+	<opt>with-impulses</opt> or <opt>with-steps</opt>. If more
+	than one variable is to be plotted on the <math>y</math> axis,
+	the effect of these options may be confined to a subset of the
+	variables by using the <repl>varspec</repl> parameter. This
+	should take the form of a comma-separated listing of the names
+	or numbers of the variables to be plotted with lines or
+	impulses respectively. For instance, the final example above
+	shows how to plot <lit>y1</lit> and <lit>y2</lit> against
+	<lit>x</lit>, such that <lit>y2</lit> is represented by a line
+	but <lit>y1</lit> by points.
       </para>
       <para>
 	If the <opt>dummy</opt> option is selected, exactly three
@@ -5362,9 +5357,9 @@
 	<math>z</math>.
       </para>
       <para>
-	You can choose the scale for the y axis to be logarithmic
-	rather than linear by using the <opt>ylogscale</opt> option,
-	together with a base parameter. For example,
+	You can specify the scale for the y axis as logarithmic rather
+	than linear by using the <opt>ylogscale</opt> option, together
+	with a base parameter. For example,
       </para>
       <code>
 	gnuplot y x --ylogscale=2
@@ -5375,21 +5370,20 @@
       </para>
       <subhead>Taking data from a matrix</subhead>
       <para>
-	Generally, the arguments <repl>yvars</repl> and
+	In the primary case the arguments <repl>yvars</repl> and
 	<repl>xvar</repl> are required, and refer to series in the
 	current dataset (given either by name or ID number).  But if a
 	named matrix is supplied via the <opt>matrix</opt> option
 	these arguments become optional: if the specified matrix has
 	<math>k</math> columns, by default the first <math>k</math>
 	&minus; 1 columns are treated as the <repl>yvars</repl> and
-	the last column as <repl>xvar</repl>.  If the
-	<opt>time-series</opt> option is given, however, all
-	<math>k</math> columns are plotted against time. If you wish
-	to plot selected columns of the matrix, you should specify
-	<repl>yvars</repl> and <repl>xvar</repl> in the form of
-	1-based column numbers.  For example if you want a scatterplot
-	of column 2 of matrix <lit>M</lit> against column 1, you can
-	do:
+	the last column as <repl>xvar</repl>.  But if the
+	<opt>time-series</opt> option is given all <math>k</math>
+	columns are plotted against time. If you wish to plot selected
+	columns of the matrix, you should specify <repl>yvars</repl>
+	and <repl>xvar</repl> in the form of 1-based column numbers.
+	For example if you want a scatterplot of column 2 of matrix
+	<lit>M</lit> against column 1, you can do:
       </para>
       <code>
 	gnuplot 2 1 --matrix=M
@@ -5440,33 +5434,100 @@
       </ilist>
       <subhead>Plotting a band</subhead>
       <para>
-	The <opt>band</opt> option can be used for plotting zero or
-	more series along with a <quote>band</quote> of some sort
-	(typically representing a confidence interval). This option
-	requires two comma-separated parameters: the name or ID number
-	of a series representing the center of the band, and the name
-	or ID of a series giving the width of the band: the effect is
-	to draw a band with <math>y</math> coordinates equal to center
-	minus width and center plus width. An optional third parameter
-	(again, comma-separated) can be used to give a multiplier for
-	the width dimension, in the form of a numerical constant or
-	the name of a scalar variable. So for example, the following
-	example plots <lit>y</lit> along with a band of plus or minus
-	1.96 times <lit>se_y</lit>:
+	The <opt>band</opt> option can be used for plotting a
+	<quote>band</quote> of some sort (typically representing a
+	confidence interval) along with other data. The recommended
+	way of specifying such a band is via a bundle, whose name is
+	given as a parameter to the option.  A <lit>band</lit> bundle
+	has two required elements: under the key <lit>center</lit>,
+	the name of a series for the center of the band, and under the
+	key <lit>width</lit> the name of a series representing the
+	width of the band&mdash;both being given as quoted strings. In
+	addition three optional elements are supported, as follows.
+      </para>
+      <ilist>
+	<li>
+	  <para>Under the key <lit>factor</lit>, a scalar giving a
+	  factor by which width should be multplied (the default value
+	  being 1).
+	  </para>
+	</li>
+	<li>
+	  <para>Under the key <lit>style</lit>, a string to specify
+	  how the band is represented, which must be one of
+	  <lit>line</lit> (the default) <lit>fill</lit>,
+	  <lit>dash</lit>, <lit>bars</lit> or <lit>step</lit>.
+	  </para>
+	</li>
+	<li>
+	  <para>Under the key <lit>color</lit>, a color for the band,
+	  either as a string holding a gnuplot color name or as a
+	  hexadecimal RGB representation (given as a string or a
+	  scalar). By default the color is selected automatically.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Note that you can access the list of color names recognized by
+	gnuplot by issuing the command <quote><lit>show
+	colornames</lit></quote> in gnuplot itself, or in the gretl
+	console by doing
       </para>
       <code>
-	gnuplot y --time-series --band=y,se_y,1.96 --with-lines
+	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
       </code>
       <para>
-	When the <opt>band</opt> option is given, the companion option
-	<opt>band-style</opt> can be used to control the band's
-	representation. By default the upper and lower limits are
-	shown as solid lines, but the parameters <lit>fill</lit>,
-	<lit>dash</lit>, <lit>bars</lit> or <lit>step</lit> cause the
-	band to be drawn as a shaded area, using dashed lines, using
-	error bars or using steps, respectively.  In addition a color
-	specification can be appended (following a comma) or
-	substituted. Here are some style examples:
+	Here are two examples of usage, employing the shorthand syntax
+	<lit>_()</lit> for defining a bundle. The first just satisfies
+	the minimum requirement while the second exercises all three
+	options. We assume that <lit>y</lit>, <lit>x</lit> and
+	<lit>w</lit> are all series in the current dataset.
+      </para>
+      <code>
+	bundle b1 = _(center="x", width="w")
+	gnuplot y --time-series --with-lines --band=b1
+	bundle b2 = _(center="x", width="w", factor=1.96, style="fill")
+	b2.color=0xcccccc
+	gnuplot y --time-series --with-lines --band=b2
+      </code>
+      <para>
+	If the plot is to contain two or more such bands, the option
+	flag should be given in the plural and its parameter must be
+	the name of an <emphasis>array</emphasis> of bundles, as in
+	(following on from the example above):
+      </para>
+      <code>
+	bundles bb = array(b1, b2)
+	gnuplot y --time-series --with-lines --bands=bb
+      </code>
+      <para>
+	When plotting matrix rather than series data, the only
+	difference is that the <lit>center</lit> and <lit>width</lit>
+	elements of the band bundle are replaced by a single element
+	under the key <lit>bandmat</lit>; this should be the quoted
+	name of a two-column matrix with the center in column 1 and
+	the width in column 2.
+      </para>
+      <subhead>Legacy band syntax</subhead>
+      <para>
+	The syntax described above was introduced in gretl
+	2023d. Prior to that release only one band could be specified
+	per plot and the syntax was somewhat different. The old
+	approach, which is still accepted until further notice, split
+	the band details over two options. First, the <opt>band</opt>
+	option required as parameter the names of two series,
+	separated by a comma, giving center and width. The
+	multiplicative <lit>factor</lit> for the width could be added
+	as a third comma-separated term. Examples:
+      </para>
+      <code>
+	gnuplot ... --band=x,w
+	gnuplot ... --band=x,w,1.96
+      </code>
+      <para>
+	A second option, <opt>band-style</opt>, accepted one or both
+	of the style and color specifiers, in that order and again
+	separated by a comma, as in these examples.
       </para>
       <code>
 	gnuplot ... --band-style=fill
@@ -5474,47 +5535,35 @@
 	gnuplot ... --band-style=,black
 	gnuplot ... --band-style=bars,blue
       </code>
-      <para>
-	The first example produces a shaded area in the default color;
-	the second switches to dashed lines with a specified blue-gray
-	color; the third uses solid black lines; and the last shows
-	blue bars. Note that colors can be given as either
-	hexadecimal RGB values or by name; you can access the list of
-	color-names recognized by gnuplot by issuing the command
-	<quote><lit>show colornames</lit></quote> in gnuplot itself,
-	or in the gretl console by doing
-      </para>
-      <code>
-	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
-      </code>
       <subhead>Recession bars</subhead>
       <para>
-	The <quote>band</quote> options described above can also be
-	used to add <quote>recession bars</quote> to a plot. By this
-	we mean vertical bars occupying the full
-	<math>y</math>-dimension of the plot and indicating the
-	presence (bar) or absence (no bar) of some qualitative feature
-	in a time-series plot. Such bars are commonly used to flag
-	periods of recession; they could also be used to indicate
-	periods of war, or anything that can be coded in a 0/1 dummy
-	variable.
+	The <quote>band</quote> option can also be used to add
+	<quote>recession bars</quote> to a plot. By this we mean
+	vertical bars occupying the full <math>y</math>-dimension of
+	the plot and indicating the presence (bar) or absence (no bar)
+	of some qualitative feature in a time-series plot. Such bars
+	are commonly used to flag periods of recession; they could
+	also be used to indicate periods of war, or anything that can
+	be coded in a 0/1 dummy variable.
       </para>
       <para>
-	In this context the <opt>band</opt> option requires a single
-	parameter: the identifier of a series with values 0 and 1,
-	where 1 indicates <quote>on</quote> and 0
-	<quote>off</quote>. The <opt>band-style</opt> option may be
-	used to specify a color for the bars, given in hexadecimal
-	form or as the name of a color known to gnuplot (see the
-	previous section). An example showing a single bar is given
-	below:
+	In this context the band bundle has a single required element:
+	under the key <lit>dummy</lit>, the quoted name of a 0/1
+	series (or in the case of matrix data, the quoted name of a
+	suitable column vector).  The vertical bars will be
+	<quote>on</quote> for observations where this series or vector
+	has value 1 and <quote>off</quote> when it's 0. The
+	<lit>center</lit>, <lit>width</lit>, <lit>factor</lit> and
+	<lit>style</lit> keys are not relevant, but <lit>color</lit>
+	can be used. Note that only one such specification can be used
+	per plot. Here's an example:
       </para>
       <code>
 	open AWM17 --quiet
 	series dum = obs &gt;= 1990:1 &amp;&amp; obs &lt;= 1994:2
+	bundle b = _(dummy="dum", color=0xcccccc)
 	gnuplot YER URX --with-lines --time-series \
-	  --band=dum --band-style=0xcccccc --output=display \
-	  {set key top left;}
+	  --band=b --output=display {set key top left;}
       </code>
       <subhead>Controlling the output</subhead>
       <para>
