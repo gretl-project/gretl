@@ -396,9 +396,9 @@ double hac_weight (int kern, int h, int i)
 
 #define NW_DEBUG 0
 
-/* Newey and West's parameter 'n' for truncation when
-   calculating s^(0) and s^(1) in the course of doing
-   the data-determined bandwidth thing.
+/* Newey and West's parameter 'n' for truncation when calculating
+   s^(0) and s^(1) in the course of doing the data-determined
+   bandwidth thing.
 */
 
 static int lag_trunc_param (int kern, int prewhitened, int T)
@@ -419,10 +419,10 @@ static int lag_trunc_param (int kern, int prewhitened, int T)
     }
 }
 
-/* Newey and West's data-based bandwidth selection, based on
-   the exposition in their 1994 paper in Review of Economic
-   Studies, pp. 634-5. See also A. Hall, "Generalized Method
-   of Moments" (Oxford, 2005), p. 82.
+/* Newey and West's data-based bandwidth selection, based on the
+   exposition in their 1994 paper in Review of Economic Studies,
+   pp. 634-5. See also A. Hall, "Generalized Method of Moments"
+   (Oxford, 2005), p. 82.
 
    Public because it's called from gmm.c (with @w NULL).
 */
@@ -693,12 +693,11 @@ static int nw_prewhiten (gretl_matrix *H, gretl_matrix **pA)
     return err;
 }
 
-/* Form the matrix H, such that H_t = X_t * u_t. In
-   addition, if @pw is non-NULL and the first column
-   of @X is constant, then write into @pw a vector of
-   1s with the first element set to zero. Or if @u is
-   NULL, just copy X to H, but again fill @pw if
-   required.
+/* Form the matrix H, such that H_t = X_t * u_t, or if @u is NULL just
+   copy @X to H. In addition (for both cases), if @pw is non-NULL and
+   the first column of @X is constant, then write into @pw a vector of
+   1s with the first element set to zero. This is wanted only if the
+   estimator is to use pre-whitening or a data-based bandwidth.
 */
 
 static gretl_matrix *newey_west_H (const gretl_matrix *X,
@@ -764,7 +763,11 @@ static gretl_matrix *newey_west_H (const gretl_matrix *X,
     return H;
 }
 
-/* HAC_XOX: compute the "sandwich filling" for the HAC estimator */
+/* HAC_XOX: compute the "sandwich filling" for the HAC estimator.
+   Note that @use_prior is non-zero only when this function is called
+   in the context of bootstrap iteration: in that case certain details
+   (kernel, pre-whitening) are already settled.
+*/
 
 gretl_matrix *HAC_XOX (const gretl_matrix *X,
                        const gretl_matrix *uhat,
@@ -777,8 +780,8 @@ gretl_matrix *HAC_XOX (const gretl_matrix *X,
     gretl_matrix *H = NULL;
     gretl_matrix *A = NULL;
     gretl_matrix *w = NULL;
-    int prewhiten;
-    int data_based;
+    int data_based = 0;
+    int prewhiten = 0;
     int kern;
     int T = X->rows;
     int k = X->cols;
@@ -786,6 +789,7 @@ gretl_matrix *HAC_XOX (const gretl_matrix *X,
     double bt = 0;
 
     if (use_prior) {
+	/* bootstrapping */
         kern = vi->vmin;
         prewhiten = vi->flags & HAC_PREWHITEN;
         if (kern == KERNEL_QS) {
@@ -794,8 +798,8 @@ gretl_matrix *HAC_XOX (const gretl_matrix *X,
         } else {
             p = vi->order;
         }
-        data_based = 0;
     } else {
+	/* all other uses */
         kern = libset_get_int(HAC_KERNEL);
         data_based = data_based_hac_bandwidth();
         prewhiten = libset_get_bool(PREWHITEN);
@@ -833,9 +837,8 @@ gretl_matrix *HAC_XOX (const gretl_matrix *X,
         goto bailout;
     }
 
-    /* determine the bandwidth setting */
-
     if (!use_prior) {
+	/* determine the bandwidth setting */
         if (data_based) {
             *err = newey_west_bandwidth(H, w, kern, prewhiten, &p, &bt);
             if (*err) {
@@ -882,7 +885,6 @@ gretl_matrix *HAC_XOX (const gretl_matrix *X,
         vi->vmaj = VCV_HAC;
         vi->vmin = kern;
         vi->flags = prewhiten ? HAC_PREWHITEN : 0;
-
         if (kern == KERNEL_QS) {
             vi->order = 0;
             vi->bw = bt;
@@ -908,14 +910,16 @@ gretl_matrix *HAC_XOX (const gretl_matrix *X,
     return XOX;
 }
 
+/* called from gretl_model_add_QML_vcv() in gretl_model.c */
+
 gretl_matrix *newey_west_OPG (const gretl_matrix *G, int *err)
 {
     return HAC_XOX(G, NULL, NULL, 0, err);
 }
 
-/* To support the hansl function lrcovar(): note that
-   setting @demean to non-zero value means that @X should
-   be demeaned before proceeding.
+/* To support the hansl function lrcovar(): note that setting @demean
+   to non-zero value means that @X should be demeaned before
+   proceeding.
 */
 
 gretl_matrix *long_run_covariance (const gretl_matrix *X,
@@ -966,8 +970,8 @@ static int vcv_is_broken (const gretl_matrix *V)
 }
 
 /* Calculate HAC covariance matrix.  Algorithm and (basically)
-   notation taken from Davidson and MacKinnon (DM), Econometric
-   Theory and Methods, chapter 9.
+   notation taken from Davidson and MacKinnon (DM), Econometric Theory
+   and Methods, chapter 9.
 */
 
 static int qr_make_hac (MODEL *pmod, const DATASET *dset,
@@ -1070,9 +1074,9 @@ static int qr_make_hac (MODEL *pmod, const DATASET *dset,
     return err;
 }
 
-/* Multiply X transpose into D, treating D as if it were
-   a diagonal matrix -- although in fact it is just a vector,
-   for economy of storage.  Result into R.
+/* Multiply @X-transpose into @D, treating @D as if it were a diagonal
+   matrix -- although in fact it's just a vector, for economy of
+   storage.  The result goes into R.
 */
 
 static void do_X_prime_diag (const gretl_matrix *X,
@@ -1090,11 +1094,11 @@ static void do_X_prime_diag (const gretl_matrix *X,
     }
 }
 
-/* Heteroskedasticity-Consistent Covariance Matrices: See Davidson
-   and MacKinnon, Econometric Theory and Methods, chapter 5, esp.
-   page 200. Implements HC0, HC1, HC2 and HC3. Also added: the
-   jackknife as described in MacKinnon and White (Journal of
-   Econometrics, 1985), or "HC3a" in gretl parlance.
+/* Heteroskedasticity-Consistent Covariance Matrices: See Davidson and
+   MacKinnon, Econometric Theory and Methods, chapter 5, esp. page
+   200. Implements HC0, HC1, HC2 and HC3. Also added: the jackknife as
+   described in MacKinnon and White (Journal of Econometrics, 1985),
+   or "HC3a" in gretl parlance.
 */
 
 static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
@@ -1206,13 +1210,11 @@ static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
     return err;
 }
 
-/* Variant of qr_make_hccme for use when a model has
-   been estimated via matrix methods. On input the
-   vector @d should hold the squared residuals, and
-   @h the diagonal elements of the "hat" matrix.
-   On return @d will be overwritten (used as work-
-   space), and if successful @V will contain the
-   requested HCCME variant.
+/* Variant of qr_make_hccme() for use when a model has been estimated
+   via matrix methods. On input the vector @d should hold the squared
+   residuals, and @h the diagonal elements of the "hat" matrix.  On
+   return @d will be overwritten (used as workspace), and if
+   successful @V will contain the requested HCCME variant.
 */
 
 int qr_matrix_hccme (const gretl_matrix *X,
@@ -1382,27 +1384,23 @@ static void get_model_data (MODEL *pmod, const DATASET *dset,
     }
 }
 
-static int
-allocate_model_arrays (MODEL *pmod, int k, int T)
+static int allocate_model_arrays (MODEL *pmod, int k, int T)
 {
     if (pmod->sderr == NULL) {
         pmod->sderr = malloc(k * sizeof *pmod->sderr);
     }
-
     if (pmod->yhat == NULL) {
         pmod->yhat = malloc(T * sizeof *pmod->yhat);
     }
-
     if (pmod->uhat == NULL) {
         pmod->uhat = malloc(T * sizeof *pmod->uhat);
     }
-
     if (pmod->sderr == NULL || pmod->yhat == NULL ||
         pmod->uhat == NULL) {
         return E_ALLOC;
+    } else {
+	return 0;
     }
-
-    return 0;
 }
 
 /* perform QR decomposition plus some additional tasks */
@@ -2326,11 +2324,11 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
     return V;
 }
 
-/* Get the sorted values of the clustering series, @cvar, checking
-   for missing values as we go. This is a little more complicated
-   if there are interior missing values for the regressand or
-   regressors: in that case we need to construct a temporary
-   array to hold the relevant values of the clustering series.
+/* Get the sorted values of the clustering series, @cvar, checking for
+   missing values as we go. This is a little more complicated if there
+   are interior missing values for the regressand or regressors: in
+   that case we need to construct a temporary array to hold the
+   relevant values of the clustering series.
 */
 
 static gretl_matrix *cluster_var_values (const double *cvar,
