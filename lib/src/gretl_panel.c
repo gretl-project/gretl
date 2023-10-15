@@ -1134,7 +1134,6 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
                     const gretl_matrix *XX, gretl_matrix *W,
                     gretl_matrix *V)
 {
-    gretl_matrix_block *B;
     gretl_matrix *H = NULL;
     gretl_matrix *ht = NULL;
     gretl_matrix *htj = NULL;
@@ -1151,20 +1150,16 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
         return E_ALLOC;
     }
 
-    /* workspace */
-    B = gretl_matrix_block_new(&H, pan->T, k,
-			       &S, k, k,
-			       &ht, k, 1,
-			       &htj, k, 1,
-			       &Wj, k, k,
-			       NULL);
-    if (B == NULL) {
-	free(tobs);
-	return E_ALLOC;
-    }
+    H   = gretl_zero_matrix_new(pan->T, k);
+    S   = gretl_zero_matrix_new(k, k);
+    ht  = gretl_matrix_alloc(k, 1);
+    htj = gretl_matrix_alloc(k, 1);
+    Wj  = gretl_matrix_alloc(k, k);
 
-    gretl_matrix_zero(H);
-    gretl_matrix_zero(S);
+    if (H == NULL || S == NULL || ht == NULL || htj == NULL || Wj == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
 
     /* Maximum lag for Newey-West. Note: do "set hac_lag nw2"
        for agreement with Stata's xtscc */
@@ -1250,7 +1245,13 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     finalize_clustered_vcv(pmod, pan, XX, S, V, pan->Tmax);
     gretl_model_set_full_vcv_info(pmod, VCV_PANEL, PANEL_DK, m, 0, 0);
 
-    gretl_matrix_block_destroy(B);
+ bailout:
+
+    gretl_matrix_free(H);
+    gretl_matrix_free(S);
+    gretl_matrix_free(ht);
+    gretl_matrix_free(htj);
+    gretl_matrix_free(Wj);
     free(tobs);
 
     return err;
