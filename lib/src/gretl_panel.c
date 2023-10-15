@@ -1120,16 +1120,21 @@ static int panel_two_way_cluster (MODEL *pmod,
     return err;
 }
 
-static int newey_west_max_lag (int T)
-{
-    return floor(4 * (pow(T/100.0, 2.0/9)));
-}
+#define DK_DEBUG 0
+
+/* The method of Driscoll and Kraay in "Consistent Covariance Matrix
+   Estimation with Spatially Dependent Panel Data", REStat 80:4, 1998,
+   pp. 549-560. See also Daniel Hoechle, "Robust Standard Errors for
+   Panel Regressions with Cross-Sectional Dependence", Stata Journal
+   7:3, 2007, for discussion of his implementation called xtscc.
+*/
 
 static int
 driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
                     const gretl_matrix *XX, gretl_matrix *W,
                     gretl_matrix *V)
 {
+    gretl_matrix_block *B;
     gretl_matrix *H = NULL;
     gretl_matrix *ht = NULL;
     gretl_matrix *htj = NULL;
@@ -1138,8 +1143,7 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     double bw; /* Bartlett weight */
     int *tobs = NULL;
     int k = pmod->ncoeff;
-    int i, j, vj, s, t;
-    int m, n_c = 0;
+    int i, j, m, vj, s, t;
     int err = 0;
 
     tobs = get_panel_tobs(pan);
@@ -1147,20 +1151,27 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
         return E_ALLOC;
     }
 
-    H   = gretl_zero_matrix_new(pan->T, k);
-    S   = gretl_zero_matrix_new(k, k);
-    ht  = gretl_matrix_alloc(k, 1);
-    htj = gretl_matrix_alloc(k, 1);
-    Wj  = gretl_matrix_alloc(k, k);
-
-    if (H == NULL || S == NULL || ht == NULL || htj == NULL || Wj == NULL) {
-        err = E_ALLOC;
-        goto bailout;
+    /* workspace */
+    B = gretl_matrix_block_new(&H, pan->T, k,
+			       &S, k, k,
+			       &ht, k, 1,
+			       &htj, k, 1,
+			       &Wj, k, k,
+			       NULL);
+    if (B == NULL) {
+	free(tobs);
+	return E_ALLOC;
     }
 
-    /* FIXME allow for user-specified max lag */
-    m = newey_west_max_lag(pan->Tmax);
-    // fprintf(stderr, "DK: max lag = %d\n", m);
+    gretl_matrix_zero(H);
+    gretl_matrix_zero(S);
+
+    /* Maximum lag for Newey-West. Note: do "set hac_lag nw2"
+       for agreement with Stata's xtscc */
+    m = get_hac_lag(pan->Tmax);
+#if DK_DEBUG
+    fprintf(stderr, "Driscoll-Kraay: max lag %d\n", m);
+#endif
 
     /* build the H matrix */
     for (t=0; t<pan->T; t++) {
@@ -1171,8 +1182,6 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
         if (Nt == 0) {
             continue;
         }
-
-        n_c++;
         for (i=0; i<pan->nunits; i++) {
             s = panel_index(i, t);
             eit = pmod->uhat[s];
@@ -1197,7 +1206,9 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
         }
     }
 
-    // gretl_matrix_print(H, "H for Driscoll-Kraay");
+#if DK_DEBUG
+    gretl_matrix_print(H, "H for D-K");
+#endif
 
     /* compute initial S = Omega_0 */
     for (t=0; t<pan->T; t++) {
@@ -1208,11 +1219,13 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
                                   ht, GRETL_MOD_TRANSPOSE,
                                   S, GRETL_MOD_CUMULATE);
     }
-    // gretl_matrix_print(S, "initial S = Omega(0)");
 
-    /* add in the weighted cross-lag terms */
+#if DK_DEBUG
+    gretl_matrix_print(S, "initial S = Omega(0)");
+#endif
+
+    /* cumulate the weighted cross-lag terms */
     for (j=1; j<=m; j++) {
-        // fprintf(stderr, "j = %d\n", j);
         gretl_matrix_zero(Wj);
         for (t=j; t<pan->T; t++) {
             for (i=0; i<k; i++) {
@@ -1227,22 +1240,17 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
         bw = 1.0 - j / (m + 1.0);
         gretl_matrix_add_self_transpose(Wj);
         gretl_matrix_multiply_by_scalar(Wj, bw);
-        // gretl_matrix_print(Wj, "Omega-hat(j)");
         gretl_matrix_add_to(S, Wj);
     }
 
-    // gretl_matrix_print(S, "Newey-West S");
+#if DK_DEBUG
+    gretl_matrix_print(S, "Newey-West S");
+#endif
 
     finalize_clustered_vcv(pmod, pan, XX, S, V, pan->Tmax);
-    gretl_model_set_vcv_info(pmod, VCV_PANEL, PANEL_DK);
+    gretl_model_set_full_vcv_info(pmod, VCV_PANEL, PANEL_DK, m, 0, 0);
 
- bailout:
-
-    gretl_matrix_free(H);
-    gretl_matrix_free(ht);
-    gretl_matrix_free(htj);
-    gretl_matrix_free(Wj);
-    gretl_matrix_free(S);
+    gretl_matrix_block_destroy(B);
     free(tobs);
 
     return err;

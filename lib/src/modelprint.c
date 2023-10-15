@@ -1436,11 +1436,16 @@ static void panel_vcv_line (const VCVInfo *vi, PRN *prn)
 	pputc(prn, '\n');
     } else if (vi->vmin == PANEL_DK) {
 	if (csv_format(prn)) {
-	    pprintf(prn, "\"%s\"", _("Driscoll-Kraay standard errors"));
+	    pputc(prn, '"');
+	    pprintf(prn, _("Driscoll-Kraay standard errors, "
+			   "bandwidth %d"), vi->order);
+	    pputc(prn, '"');
 	} else if (tex_format(prn)) {
-	    pputs(prn, _("Driscoll--Kraay standard errors"));
+	    pprintf(prn, _("Driscoll--Kraay standard errors, "
+			   "bandwidth %d"), vi->order);
 	} else {
-	    pputs(prn, _("Driscoll-Kraay standard errors"));
+	    pprintf(prn, _("Driscoll-Kraay standard errors, "
+			   "bandwidth %d"), vi->order);
 	}
 	pputc(prn, '\n');
     }

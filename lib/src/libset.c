@@ -794,10 +794,10 @@ int get_hac_lag (int T)
 	/* FIXME upper limit? */
 	h = state->user_hac_lag;
     } else if (state->auto_hac_lag == AUTO_LAG_WOOLDRIDGE) {
-	h = 4.0 * pow(T / 100.0, 2.0 / 9.0);
+	h = (int) floor(4 * pow(T/100.0, 2.0/9));
     } else {
 	/* Stock-Watson default */
-	h = 0.75 * pow(T, 1.0 / 3.0);
+	h = (int) floor(0.75 * pow(T, 1.0/3));
     }
 
     return h;
