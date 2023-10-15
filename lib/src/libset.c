@@ -81,6 +81,7 @@ struct set_state_ {
     gint8 use_qr;               /* off, on or pivot */
     gint8 max_verbose;          /* optimizer verbosity level */
     gint8 hc_version;           /* HCCME version */
+    gint8 panel_robust;         /* panel robust vcv estimator */
     gint8 hac_kernel;           /* HAC kernel type */
     gint8 auto_hac_lag;         /* HAC automatic lag-length formula */
     gint8 user_hac_lag;         /* fixed user-set HAC lag length */
@@ -151,7 +152,6 @@ setvar setvars[] = {
     { ECHO_ON,      "echo",      CAT_BEHAVE },
     { MSGS_ON,      "messages",  CAT_BEHAVE },
     { FORCE_DECPOINT, "force_decpoint", CAT_BEHAVE },
-    { USE_PCSE,     "pcse",      CAT_ROBUST },
     { USE_SVD,      "svd",       CAT_NUMERIC },
     { PREWHITEN,    "hac_prewhiten", CAT_ROBUST },
     { FORCE_HC,     "force_hc",      CAT_ROBUST },
@@ -175,6 +175,7 @@ setvar setvars[] = {
     { USE_QR,        "force_qr", CAT_NUMERIC, offsetof(set_state,use_qr) },
     { MAX_VERBOSE,   "max_verbose", CAT_BEHAVE, offsetof(set_state,max_verbose) },
     { HC_VERSION,    "hc_version",  CAT_ROBUST, offsetof(set_state,hc_version) },
+    { PANEL_ROBUST,  "panel_robust", CAT_ROBUST, offsetof(set_state,panel_robust) },
     { HAC_KERNEL,    "hac_kernel",  CAT_ROBUST, offsetof(set_state,hac_kernel) },
     { HAC_LAG,       "hac_lag",     CAT_ROBUST },
     { USER_HAC_LAG,  NULL },
@@ -256,6 +257,7 @@ setvar setvars[] = {
 			 k == HAC_LAG || \
 			 k == HAC_KERNEL || \
                          k == HC_VERSION || \
+			 k == PANEL_ROBUST || \
 			 k == USE_QR || \
 			 k == VECM_NORM || \
 			 k == GRETL_OPTIM || \
@@ -402,6 +404,7 @@ static const char *ahl_strs[] = {"nw1", "nw2", "nw3", NULL};
 static const char *llv_strs[] = {"debug", "info", "warn", "error", "critical", NULL};
 static const char *qrp_strs[] = {"off", "on", "pivot", NULL};
 static const char *hmv_strs[] = {"off", "es", "am", NULL};
+static const char *pnr_strs[] = {"arellano", "beck_katz", "driscoll_kraay", NULL};
 
 struct codevar_info {
     SetKey key;
@@ -416,6 +419,7 @@ struct codevar_info coded[] = {
     { ARMA_VCV,      avc_strs },
     { HAC_KERNEL,    hkn_strs },
     { HC_VERSION,    hcv_strs },
+    { PANEL_ROBUST,  pnr_strs },
     { VECM_NORM,     vnm_strs },
     { GRETL_OPTIM,   opt_strs },
     { MAX_VERBOSE,   mxv_strs },
@@ -565,6 +569,7 @@ static set_state default_state = {
     0,              /* .use_qr */
     0,              /* .max_verbose */
     0,              /* .hc_version */
+    0,              /* .panel_robust */
     KERNEL_BARTLETT,       /* .hac_kernel */
     AUTO_LAG_STOCK_WATSON, /* .auto_hac_lag */
     UNSET_INT,             /* .user_hac_lag */
@@ -1133,11 +1138,7 @@ void set_panel_hccme (const char *s)
 {
     if (check_for_state()) return;
 
-    if (!strcmp(s, "Arellano")) {
-	state->flags &= ~USE_PCSE;
-    } else if (!strcmp(s, "PCSE")) {
-	state->flags |= USE_PCSE;
-    }
+    parse_libset_int_code(PANEL_ROBUST, s);
 }
 
 void set_garch_alt_vcv (const char *s)
@@ -1603,6 +1604,24 @@ static int check_set_bool (SetKey key, const char *name,
     }
 }
 
+static int legacy_set_pcse (const char *arg)
+{
+    int err = 0;
+
+    if (arg == NULL || *arg == '\0') {
+	err = E_PARSE;
+    } else if (boolean_on(arg)) {
+	libset_set_int(PANEL_ROBUST, BECK_KATZ);
+    } else if (boolean_off(arg)) {
+	libset_set_int(PANEL_ROBUST, ARELLANO);
+    } else {
+	gretl_errmsg_sprintf(_("%s: invalid value '%s'"), "pcse", arg);
+	err = E_PARSE;
+    }
+
+    return err;
+}
+
 static int set_display_digits (const char *arg)
 {
     if (gretl_function_depth() > 0) {
@@ -1654,7 +1673,12 @@ int execute_set (const char *setobj, const char *setarg,
 	return print_settings(prn, OPT_D);
     }
 
-    sv = get_setvar_by_name(setobj);
+    if (!strcmp(setobj, "pcse")) {
+	return legacy_set_pcse(setarg);
+    } else {
+	sv = get_setvar_by_name(setobj);
+    }
+
     if (sv == NULL) {
 	gretl_errmsg_sprintf(_("set: unknown variable '%s'"), setobj);
 	return E_DATA;
@@ -1871,6 +1895,7 @@ static int get_int_limits (SetKey key, int *min, int *max)
 {
     static struct int_limits ilims[] = {
 	{ HC_VERSION, 0, 4 },
+	{ PANEL_ROBUST, 0, 2 },
 	{ FDJAC_QUAL, 0, 2 },
 	{ USE_QR, 0, 2 },
 	{ LBFGS_MEM,  3, 20 },

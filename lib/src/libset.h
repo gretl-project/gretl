@@ -42,23 +42,28 @@ typedef enum {
 } HACopts;
 
 typedef enum {
+    ARELLANO,
+    BECK_KATZ,
+    DRISCOLL_KRAAY
+} PanelRobust;
+
+typedef enum {
     USE_CWD         = 1 << 0,  /* store: use current dir as default */
     ECHO_ON         = 1 << 1,  /* echoing commands or not */
     MSGS_ON         = 1 << 2,  /* emitting non-error messages or not */
     FORCE_DECPOINT  = 1 << 3,  /* override locale decimal character */
-    USE_PCSE        = 1 << 4,  /* Beck-Katz panel-corrected std errs */
-    USE_SVD         = 1 << 5,  /* SVD decomposition is matrix OLS default */
-    PREWHITEN       = 1 << 6,  /* HAC pre-whitening? */
-    FORCE_HC        = 1 << 7,  /* don't use HAC for time series */
-    USE_LBFGS       = 1 << 8,  /* prefer LBFGS to BFGS? */
-    SHELL_OK        = 1 << 9, /* "shell" facility is approved? */
-    WARNINGS        = 1 << 10, /* print numerical warning messages */
-    SKIP_MISSING    = 1 << 11, /* skip NAs when building matrix from series */
-    BFGS_RSTEP      = 1 << 12, /* use Richardson in BFGS numerical gradient */
-    ROBUST_Z        = 1 << 13, /* use z- not t-score with HCCM/HAC */
-    MWRITE_G        = 1 << 14, /* use %g format with mwrite() */
-    MPI_USE_SMT     = 1 << 15, /* MPI: use hyperthreads by default */
-    STATE_FLAG_MAX  = 1 << 16, /* separator */
+    USE_SVD         = 1 << 4,  /* SVD decomposition is matrix OLS default */
+    PREWHITEN       = 1 << 5,  /* HAC pre-whitening? */
+    FORCE_HC        = 1 << 6,  /* don't use HAC for time series */
+    USE_LBFGS       = 1 << 7,  /* prefer LBFGS to BFGS? */
+    SHELL_OK        = 1 << 8,  /* "shell" facility is approved? */
+    WARNINGS        = 1 << 9,  /* print numerical warning messages */
+    SKIP_MISSING    = 1 << 10, /* skip NAs when building matrix from series */
+    BFGS_RSTEP      = 1 << 11, /* use Richardson in BFGS numerical gradient */
+    ROBUST_Z        = 1 << 12, /* use z- not t-score with HCCM/HAC */
+    MWRITE_G        = 1 << 13, /* use %g format with mwrite() */
+    MPI_USE_SMT     = 1 << 14, /* MPI: use hyperthreads by default */
+    STATE_FLAG_MAX  = 1 << 15, /* separator */
     /* state small int (but non-boolean) vars */
     GRETL_OPTIM,
     VECM_NORM,
@@ -70,6 +75,7 @@ typedef enum {
     USE_QR,
     MAX_VERBOSE,
     HC_VERSION,
+    PANEL_ROBUST,
     HAC_KERNEL,
     HAC_LAG,
     USER_HAC_LAG,

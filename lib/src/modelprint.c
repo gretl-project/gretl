@@ -1434,6 +1434,15 @@ static void panel_vcv_line (const VCVInfo *vi, PRN *prn)
 	    pputs(prn, _("Standard errors clustered by period"));
 	}
 	pputc(prn, '\n');
+    } else if (vi->vmin == PANEL_DK) {
+	if (csv_format(prn)) {
+	    pprintf(prn, "\"%s\"", _("Driscoll-Kraay standard errors"));
+	} else if (tex_format(prn)) {
+	    pputs(prn, _("Driscoll--Kraay standard errors"));
+	} else {
+	    pputs(prn, _("Driscoll-Kraay standard errors"));
+	}
+	pputc(prn, '\n');
     }
 }
 

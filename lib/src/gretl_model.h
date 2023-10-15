@@ -74,7 +74,8 @@ typedef enum {
 typedef enum {
     PANEL_HAC,  /* clustered by individual */
     PANEL_BK,   /* Beck-Katz */
-    PANEL_TIME  /* clustered by period */
+    PANEL_TIME, /* clustered by period */
+    PANEL_DK    /* Driscoll-Kraay */
 } PanelVCVType;
 
 typedef enum {
