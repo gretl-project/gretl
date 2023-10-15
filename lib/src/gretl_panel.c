@@ -61,8 +61,8 @@ struct panelmod_t_ {
     int nunits;           /* total cross-sectional units in sample range */
     int effn;             /* effective (included) cross-section units */
     int T;                /* times-series length of panel */
-    int Tmax;             /* effective times-series length (max usable obs per unit) */
-    int Tmin;             /* shortest usable times-series */
+    int Tmax;             /* maximum number of usable obs per unit */
+    int Tmin;             /* minimum number of usable obs per unit > 0 */
     double Tbar;          /* harmonic mean of per-unit time-series lengths */
     int NT;               /* total observations used (based on pooled model) */
     int ntdum;            /* number of time dummies added */
