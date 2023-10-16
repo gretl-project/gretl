@@ -2988,6 +2988,13 @@ gretl_bundle *gretl_bundle_read_from_file (const char *fname,
     xmlNodePtr cur = NULL;
     gretl_bundle *b = NULL;
 
+    if (2 * strlen(fname) >= sizeof fullname) {
+	gretl_errmsg_sprintf("Filename too long, %d bytes",
+			     (int) strlen(fname));
+	*err = E_DATA;
+	return NULL;
+    }
+
     if (from_dotdir) {
         gretl_build_path(fullname, gretl_dotdir(), fname, NULL);
     } else {
