@@ -710,7 +710,7 @@ generic_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     gretl_matrix_print(V, "clustered V");
 #endif
     if (ci->dcvar2 == 0) {
-        /* not doing two-way clustering */
+        /* not doing two-way clustering, so finish the job */
         gretl_model_set_vcv_info(pmod, VCV_CLUSTER, ci->dcvar);
         gretl_model_set_int(pmod, "n_clusters", n_c);
     }
@@ -1143,6 +1143,7 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     int *tobs = NULL;
     int k = pmod->ncoeff;
     int i, j, m, vj, s, t;
+    int n_c = 0;
     int err = 0;
 
     tobs = get_panel_tobs(pan);
@@ -1177,6 +1178,7 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
         if (Nt == 0) {
             continue;
         }
+	n_c++;
         for (i=0; i<pan->nunits; i++) {
             s = panel_index(i, t);
             eit = pmod->uhat[s];
@@ -1244,6 +1246,7 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 
     finalize_clustered_vcv(pmod, pan, XX, S, V, pan->Tmax);
     gretl_model_set_full_vcv_info(pmod, VCV_PANEL, PANEL_DK, m, 0, 0);
+    gretl_model_set_int(pmod, "DKT", n_c);
 
  bailout:
 
@@ -2594,14 +2597,19 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
 
     if (!na(wfstt) && wfstt >= 0.0) {
         ModelTest *test = model_test_new(GRETL_TEST_WITHIN_F);
-        int wdfd = fmod->dfd;
+        int nc, wdfd = fmod->dfd;
 
         if (pan->opt & OPT_C) {
-            int nc = gretl_model_get_int(fmod, "n_clusters");
-
+            nc = gretl_model_get_int(fmod, "n_clusters");
             fmod->dfd = wdfd = nc - 1;
         } else if (pan->opt & OPT_R) {
-            fmod->dfd = wdfd = pan->effn - 1;
+	    nc = gretl_model_get_int(fmod, "DKT");
+	    if (nc > 0) {
+		/* Driscoll-Kraay */
+		fmod->dfd = wdfd = nc - 1;
+	    } else {
+		fmod->dfd = wdfd = pan->effn - 1;
+	    }
         }
 
         if (test != NULL) {
