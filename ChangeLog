@@ -9,6 +9,8 @@ version 2023c, in progress
   way clustering; also support the --no-df-corr option
 - "tsls" command: if the --robust option is given, compute a
   robust variant of the Hausman test
+- "scatters" command: expose its time-series functionality
+  under the name command-name "tsplots"
 - String-valued series: support returning such series from a
   user function, and loosen the restrictions on assignment to
   such series
