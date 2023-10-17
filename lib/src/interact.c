@@ -47,7 +47,7 @@
 #include "gretl_zip.h"
 #include "matrix_extra.h"
 #include "addons_utils.h"
-#include "gretl_multiplot.h"
+#include "gretl_gridplot.h"
 #ifdef USE_CURL
 # include "gretl_www.h"
 #endif

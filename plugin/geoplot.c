@@ -23,7 +23,7 @@
 #include "gretl_typemap.h"
 #include "libset.h"
 #include "version.h"
-#include "gretl_multiplot.h"
+#include "gretl_gridplot.h"
 #include "shapefile.h"
 #include "mapinfo.h"
 

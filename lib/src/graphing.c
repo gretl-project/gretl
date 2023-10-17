@@ -30,7 +30,7 @@
 #include "gretl_panel.h"
 #include "missing_private.h"
 #include "gretl_string_table.h"
-#include "gretl_multiplot.h"
+#include "gretl_gridplot.h"
 #include "uservar.h"
 #include "gretl_midas.h"
 #include "boxplots.h"
