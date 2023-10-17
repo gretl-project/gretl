@@ -110,7 +110,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_IRFBOOT,        "impulse response plot with quantiles" },
     { PLOT_KERNEL,         "kernel density plot" },
     { PLOT_LEVERAGE,       "leverage/influence plot" },
-    { PLOT_MULTI_SCATTER,  "multiple scatterplots" },
+    { PLOT_MULTI_BASIC,    "multiple small plots" },
     { PLOT_PERIODOGRAM,    "periodogram" },
     { PLOT_RANGE_MEAN,     "range-mean plot" },
     { PLOT_H_TEST,         "sampling distribution" },
@@ -1410,7 +1410,7 @@ static char *eps_pdf_term_line (char *term_line,
     const char *tname;
     int ptsize;
 
-    ptsize = (ptype == PLOT_MULTI_SCATTER)? 6 : 12;
+    ptsize = (ptype == PLOT_MULTI_BASIC)? 6 : 12;
     tname = (ttype == GP_TERM_EPS)? "epscairo" : "pdfcairo";
 
     font_string = write_other_font_string(ptsize);
@@ -2059,7 +2059,7 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
     /* set a more specific command index based on
        the plot type, if applicable */
 
-    if (p == PLOT_MULTI_SCATTER) {
+    if (p == PLOT_MULTI_BASIC) {
 	ci = SCATTERS;
     } else if (p == PLOT_BOXPLOTS) {
 	ci = BXPLOT;
@@ -4502,9 +4502,9 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
     return err;
 }
 
-static void scatters_time_tics (const double *obs,
-				const DATASET *dset,
-				FILE *fp)
+static void multi_time_tics (const double *obs,
+			     const DATASET *dset,
+			     FILE *fp)
 {
     double startdate = obs[dset->t1];
     double enddate = obs[dset->t2];
@@ -4534,9 +4534,9 @@ static void scatters_time_tics (const double *obs,
     }
 }
 
-static void scatters_set_timefmt (const DATASET *dset,
-				  const double *obs,
-				  FILE *fp)
+static void multi_set_timefmt (const DATASET *dset,
+			       const double *obs,
+			       FILE *fp)
 {
     double T = obs[dset->t2] - obs[dset->t1];
     int ntics = 6;
@@ -4553,11 +4553,12 @@ static void scatters_set_timefmt (const DATASET *dset,
 }
 
 /**
- * multi_scatters:
+ * multi_plots:
  * @list: list of variables to plot, by ID number.
  * @dset: dataset struct.
- * @opt: can include %OPT_O to use lines, %OPT_U to
- * direct output to a named file.
+ * @opt: can include %OPT_O to use lines, %PT_T to
+ * produce time-series plots, %OPT_U to direct output
+ * to a named file.
  *
  * Writes a gnuplot plot file to display up to 16 small graphs
  * based on the variables in @list, and calls gnuplot to make
@@ -4566,8 +4567,8 @@ static void scatters_set_timefmt (const DATASET *dset,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int multi_scatters (const int *list, const DATASET *dset,
-		    gretlopt opt)
+int multi_plots (const int *list, const DATASET *dset,
+		 gretlopt opt)
 {
     GptFlags flags = 0;
     int xvar = 0, yvar = 0;
@@ -4576,22 +4577,36 @@ int multi_scatters (const int *list, const DATASET *dset,
     const double *obs = NULL;
     int rows, cols, tseries = 0;
     int use_timefmt = 0;
+    int tsdata = 0;
     int *plotlist = NULL;
     int pos, nplots = 0;
     FILE *fp = NULL;
     int i, t, err = 0;
 
+    pos = gretl_list_separator_position(list);
+    tsdata = dataset_is_time_series(dset);
+
     if (opt & OPT_O) {
 	flags |= GPT_LINES;
     }
 
-    pos = gretl_list_separator_position(list);
+    if (opt & OPT_T) {
+	/* the "tsplots" command */
+	if (pos > 0) {
+	    /* separator not accepted */
+	    err = E_INVARG;
+	} else if (!tsdata) {
+	    err = E_PDWRONG;
+	} else {
+	    flags |= GPT_LINES;
+	}
+    }
 
     if (pos == 0) {
 	/* plot against time or index */
 	plotlist = gretl_list_copy(list);
 	flags |= GPT_LINES;
-	if (dataset_is_time_series(dset)) {
+	if (tsdata) {
 	    tseries = 1;
 	    if (calendar_data(dset)) {
 		use_timefmt = 1;
@@ -4648,7 +4663,7 @@ int multi_scatters (const int *list, const DATASET *dset,
 	}
     }
 
-    fp = open_plot_input_file(PLOT_MULTI_SCATTER, flags, &err);
+    fp = open_plot_input_file(PLOT_MULTI_BASIC, flags, &err);
     if (err) {
 	return err;
     }
@@ -4667,9 +4682,9 @@ int multi_scatters (const int *list, const DATASET *dset,
 
     if (use_timefmt) {
 	fprintf(fp, "set xrange [%.0f:%.0f]\n", obs[dset->t1], obs[dset->t2]);
-	scatters_set_timefmt(dset, obs, fp);
+	multi_set_timefmt(dset, obs, fp);
     } else if (obs != NULL) {
-	scatters_time_tics(obs, dset, fp);
+	multi_time_tics(obs, dset, fp);
     } else {
 	/* avoid having points sticking to the axes */
 	fputs("set offsets graph 0.02, graph 0.02, graph 0.02, graph 0.02\n", fp);
@@ -4772,7 +4787,7 @@ static double get_obsx (const double *obs, int t, int s)
 }
 
 /**
- * matrix_scatters:
+ * matrix_multi_plots:
  * @m: matrix containing data to plot.
  * @list: list of columns to plot, or NULL.
  * @dset: dataset pointer, or NULL.
@@ -4786,8 +4801,8 @@ static double get_obsx (const double *obs, int t, int s)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int matrix_scatters (const gretl_matrix *m, const int *list,
-		     const DATASET *dset, gretlopt opt)
+int matrix_multi_plots (const gretl_matrix *m, const int *list,
+			const DATASET *dset, gretlopt opt)
 {
     GptFlags flags = 0;
     const double *x = NULL;
@@ -4891,7 +4906,7 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
 	flags |= GPT_XL;
     }
 
-    fp = open_plot_input_file(PLOT_MULTI_SCATTER, flags, &err);
+    fp = open_plot_input_file(PLOT_MULTI_BASIC, flags, &err);
     if (err) {
 	return err;
     }
@@ -7830,7 +7845,7 @@ int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset)
     nobs = gretl_matrix_rows(E);
     t1 = gretl_matrix_get_t1(E);
 
-    fp = open_plot_input_file(PLOT_MULTI_SCATTER, 0, &err);
+    fp = open_plot_input_file(PLOT_MULTI_BASIC, 0, &err);
     if (err) {
 	return err;
     }

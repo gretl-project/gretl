@@ -2468,6 +2468,9 @@ static int try_for_command_alias (const char *s, CMD *cmd)
 	cmd->opt = OPT_X;
     } else if (!strcmp(s, "ls")) {
 	ci = VARLIST;
+    } else if (!strcmp(s, "tsplots")) {
+	ci = SCATTERS;
+	cmd->opt |= OPT_T;
     } else if (!strcmp(s, "pooled")) {
 	set_deprecation("pooled", "ols", 1);
 	ci = OLS;

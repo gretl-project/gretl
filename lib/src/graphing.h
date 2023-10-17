@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* graphing.h for gretl */
@@ -90,7 +90,7 @@ typedef enum {
     PLOT_PERIODOGRAM,
     PLOT_CORRELOGRAM,
     PLOT_CUSUM,
-    PLOT_MULTI_SCATTER,
+    PLOT_MULTI_BASIC,
     PLOT_TRI_GRAPH,
     PLOT_RANGE_MEAN,
     PLOT_HURST,
@@ -147,7 +147,7 @@ typedef enum {
 } TermType;
 
 #define maybe_big_multiplot(c) (c == PLOT_MULTI_IRF || \
-				c == PLOT_MULTI_SCATTER || \
+				c == PLOT_MULTI_BASIC || \
 				c == PLOT_PANEL)
 
 #define frequency_plot_code(c) (c == PLOT_FREQ_SIMPLE || \
@@ -220,17 +220,17 @@ int graph_displayed (void);
 
 void reset_plot_count (void);
 
-int matrix_plot (gretl_matrix *m, const int *list, const char *literal, 
+int matrix_plot (gretl_matrix *m, const int *list, const char *literal,
 		 gretlopt opt);
 
 int gnuplot (const int *plotlist, const char *literal,
 	     const DATASET *dset, gretlopt opt);
 
-int multi_scatters (const int *list, const DATASET *dset, 
-		    gretlopt opt);
+int multi_plots (const int *list, const DATASET *dset,
+		 gretlopt opt);
 
-int matrix_scatters (const gretl_matrix *m, const int *list, 
-		     const DATASET *dset, gretlopt opt);
+int matrix_multi_plots (const gretl_matrix *m, const int *list,
+			const DATASET *dset, gretlopt opt);
 
 int gnuplot_3d (int *list, const char *literal,
 		DATASET *dset, gretlopt *opt);
@@ -239,9 +239,9 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt);
 
 int plot_corrmat (VMatrix *corr, gretlopt opt);
 
-int garch_resid_plot (const MODEL *pmod, const DATASET *dset); 
+int garch_resid_plot (const MODEL *pmod, const DATASET *dset);
 
-int rmplot (const int *list, DATASET *dset, 
+int rmplot (const int *list, DATASET *dset,
 	    gretlopt opt, PRN *prn);
 
 int hurstplot (const int *list, DATASET *dset, gretlopt opt,
@@ -255,7 +255,7 @@ int hf_plot (const int *list, const char *literal,
 	     const DATASET *dset, gretlopt opt);
 
 int correlogram_plot (const char *vname,
-		      const double *acf, 
+		      const double *acf,
 		      const double *pacf,
 		      const gretl_matrix *PM,
 		      int m, double pm,
@@ -268,7 +268,7 @@ int periodogram_plot (const char *vname,
 int arma_spectrum_plot (MODEL *pmod, const DATASET *dset,
 			gretlopt opt);
 
-int theil_forecast_plot (const int *plotlist, const DATASET *dset, 
+int theil_forecast_plot (const int *plotlist, const DATASET *dset,
 			 gretlopt opt);
 
 int gretl_panel_ts_plot (int vnum, DATASET *dset, gretlopt opt);
@@ -282,40 +282,40 @@ int cli_panel_plot (const int *list, const char *literal,
 int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 		     const DATASET *dset, gretlopt opt);
 
-int plot_simple_fcast_bands (const MODEL *pmod, 
-			     const FITRESID *fr, 
-			     const DATASET *dset, 
+int plot_simple_fcast_bands (const MODEL *pmod,
+			     const FITRESID *fr,
+			     const DATASET *dset,
 			     gretlopt opt);
 
 int plot_tau_sequence (const MODEL *pmod, const DATASET *dset,
 		       int k);
 
-int 
+int
 gretl_VAR_plot_impulse_response (GRETL_VAR *var,
-				 int targ, int shock, 
+				 int targ, int shock,
 				 int periods, double alpha,
 				 const DATASET *dset,
 				 gretlopt opt);
 
-int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods, 
+int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
 			 const DATASET *dset, gretlopt opt);
 
-int 
-gretl_VAR_plot_multiple_irf (GRETL_VAR *var, 
+int
+gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 			     int periods, double alpha,
 			     const DATASET *dset,
 			     gretlopt opt);
 
-int gretl_VECM_combined_EC_plot (GRETL_VAR *var, 
+int gretl_VECM_combined_EC_plot (GRETL_VAR *var,
 				 const DATASET *dset);
 
 int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset);
 
-int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset); 
+int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset);
 
 int gretl_VAR_roots_plot (GRETL_VAR *var);
 
-int confidence_ellipse_plot (gretl_matrix *V, double *b, 
+int confidence_ellipse_plot (gretl_matrix *V, double *b,
 			     double tcrit, double Fcrit, double alpha,
 			     const char *iname, const char *jname);
 
@@ -369,4 +369,3 @@ int write_tdisagg_plot (const gretl_matrix *YY, int mult,
 			const char *title, DATASET *dset);
 
 #endif /* GRAPHING_H */
-

@@ -3181,7 +3181,7 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
             err = gnuplot(cmd->list, cmd->param, dset, opt);
         }
     } else if (cmd->ci == SCATTERS) {
-        err = multi_scatters(cmd->list, dset, opt);
+        err = multi_plots(cmd->list, dset, opt);
     } else if (cmd->ci == BXPLOT) {
         err = boxplots(cmd->list, cmd->param, dset, opt);
     } else if (cmd->ci == HFPLOT) {

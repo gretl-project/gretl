@@ -25,7 +25,7 @@
 #include "libgretl.h"
 #include "uservar.h"
 #include "usermat.h"
-#include "gretl_multiplot.h"
+#include "gretl_gridplot.h"
 
 #define GRID_DEBUG 0
 

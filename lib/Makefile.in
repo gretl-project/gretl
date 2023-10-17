@@ -235,7 +235,7 @@ SRCS = adf_kpss.c \
 	gretl_midas.c \
 	gretl_model.c \
 	gretl_mt.c \
-	gretl_multiplot.c \
+	gretl_gridplot.c \
 	gretl_normal.c \
 	gretl_panel.c \
 	gretl_paths.c \

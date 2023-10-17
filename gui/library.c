@@ -7683,7 +7683,7 @@ int do_scatters (selector *sr)
     err = parse_lib_command();
 
     if (!err) {
-        err = multi_scatters(libcmd.list, dataset, opt);
+        err = multi_plots(libcmd.list, dataset, opt);
         gui_graph_handler(err);
         if (!err) {
             record_lib_command();
@@ -8059,7 +8059,7 @@ void plot_from_selection (int code)
 
         if (!err) {
             if (multiplot) {
-                err = multi_scatters(libcmd.list, dataset, opt);
+                err = multi_plots(libcmd.list, dataset, opt);
             } else if (pan_between) {
                 err = panel_means_XY_scatter(libcmd.list, NULL, dataset, opt);
             } else {

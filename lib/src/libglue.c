@@ -840,7 +840,7 @@ int matrix_command_driver (int ci,
 
     if (ci == SCATTERS) {
 	/* note: this is a special case, for now */
-	return matrix_scatters(m, list, dset, opt);
+	return matrix_multi_plots(m, list, dset, opt);
     } else if (list != NULL && list[0] == 0) {
 	/* use all columns of the matrix */
 	mdset = gretl_dataset_from_matrix(m, NULL, OPT_B, &err);
