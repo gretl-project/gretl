@@ -552,13 +552,12 @@ see \cite{rho-vogelsang18} for further elaboration.
 
 In gretl you can select a preferred method via one or other of these
 commands:
-%
 \begin{code}
 set hac_missvals es # ES, Datta and Du
 set hac_missvals am # AM, Parzen
 set hac_missvals off
 \end{code}
-%
+
 The ES method is the default. The \texttt{off} option means that gretl
 will refuse to produce HAC standard errors when the sample includes
 incomplete observations: use this if you have qualms about the
@@ -645,14 +644,14 @@ panel data require attention.
   units.  This is relevant when estimation is by pooled OLS.
 \end{itemize}
 
-Gretl currently offers two panel-specific covariance matrix estimators
-in response to the \option{robust} option. These are available for
-models estimated via fixed effects, random effects, pooled OLS, and
-pooled two-stage least squares.  The default robust estimator is that
-suggested by \cite{arellano03}, which is HAC provided the panel is of
-the ``large $n$, small $T$'' variety (that is, many units are observed
-in relatively few periods).  The Arellano estimator involves
-clustering by the cross-sectional unit:
+Gretl currently offers three panel-specific covariance matrix
+estimators in response to the \option{robust} option. These are
+available for models estimated via fixed effects, random effects,
+pooled OLS, and pooled two-stage least squares.  The default robust
+estimator is that suggested by \cite{arellano03}, which is HAC
+provided the panel is of the ``large $n$, small $T$'' variety (that
+is, many units are observed in relatively few periods).  The Arellano
+estimator involves clustering by the cross-sectional unit:
 \[
 \hat{\Sigma}_{\rm A} = 
 \left(X^{\prime}X\right)^{-1}
@@ -672,11 +671,11 @@ account.\footnote{See also \cite{cameron-miller15} for a discussion of
   model.}  In addition \cite{stock-watson08} show that the White HCCME
 is inconsistent in the fixed-effects panel context for fixed $T > 2$.
 
-In cases where autocorrelation is not an issue the estimator
-proposed by \cite{beck-katz95} and discussed by Greene
-(\citeyear{greene03}, chapter 13) may be appropriate.  This estimator,
-which takes into account contemporaneous correlation across the units
-and heteroskedasticity by unit, is
+In cases where autocorrelation is not an issue the estimator proposed
+by \cite{beck-katz95} and discussed by Greene (\citeyear{greene03},
+chapter 13) may be appropriate.  This estimator, which takes into
+account contemporaneous correlation across the units and
+heteroskedasticity by unit, is
 \[
 \hat{\Sigma}_{\rm BK} = 
 \left(X^{\prime}X\right)^{-1}
@@ -685,27 +684,49 @@ and heteroskedasticity by unit, is
 \]
 The covariances $\hat{\sigma}_{ij}$ are estimated via
 \[
-\hat{\sigma}_{ij} = \frac{\hat{u}^{\prime}_i \hat{u}_j}{T}
+\hat{\sigma}_{ij} = \frac{\hat{u}^{\prime}_i \hat{u}_j}{T_i}
 \]
-where $T$ is the length of the time series for each unit.  Beck and
+where $T_i$ is the length of the time series for unit $i$.  Beck and
 Katz call the associated standard errors ``Panel-Corrected Standard
 Errors'' (PCSE).  This estimator can be invoked in gretl via the
-command 
+command
 %
 \begin{code}
-set pcse on
+set panel_robust beck_katz
 \end{code}
 %
 The Arellano default can be re-established via 
 %
 \begin{code}
-set pcse off
+set panel_robust arellano
 \end{code}
-%
-Note that regardless of the \texttt{pcse} setting, the robust
-estimator is not used unless the \option{robust} flag is given, or the
-``Robust'' box is checked in the GUI program. For some further remarks
-on the panel case, see below.
+
+The third panel-specific option is the spatial correlation consistent
+(SCC) estimator developed by \cite{driscoll_kraay98}. This addresses
+cross-sectional dependence of the disturbances as well as
+heteroskedasticity and autocorrelation. Serial correlation is handled
+in the manner of Newey--West and, unlike the Arellano estimator,
+consistency is not limited to the ``small $T$'' case. The command to
+select SCC is
+\begin{code}
+set panel_robust driscoll_kraay
+\end{code}
+An additional ``\texttt{set}'' variable is relevant when using this
+estimator, namely \texttt{hac\_lag}, which governs the bandwidth of
+the kernel employed in the Newey--West component as described in
+section~\ref{sec:hac-bw} above. But note that in the SCC context only
+the Bartlett kernel is supported, and neither prewhitening nor
+data-based bandwidth selection are available.  So the applicable
+\texttt{hac\_lag} variants are just \texttt{nw1}, \texttt{nw2} or a
+user-specified maximum (integer) lag. To replicate results from the
+\texttt{xtscc} command for \textsf{Stata} \citep{hoechle07} the
+\texttt{nw2} variant should be selected.
+
+Note that regardless of the \verb|panel_robust| setting, the robust
+estimator is not used unless the \option{robust} flag is given with
+the estimation command (or the ``Robust'' box is checked in the
+graphical interface). For some further remarks on the panel case, the
+following section.
 
 \section{The cluster-robust estimator}
 \label{sec:vcv-cluster}
@@ -804,12 +825,12 @@ for each of the groups.
 
 In the case of panel data only, two-way clustering is also supported.
 For example, one might cluster by cross-sectional unit and
-time-period, hence allowing for correlation of the disturbance term
+time-period, hence allowing for dependence of the disturbance term
 both within unit and within period. But note that if a categorical
 variable \texttt{C1} is nested within a more highly aggregated one,
-\texttt{C2}, then two-way clustering is not called for since it is
-equivalent to clustering on \texttt{C2} alone. The syntax for the
-two-way case is on the following pattern
+\texttt{C2}, then two-way clustering is not called for since it
+amounts to clustering on \texttt{C2} alone. The syntax for the two-way
+case is on the following pattern
 \begin{code}
 panel ... --cluster=cvar1,cvar2
 \end{code}
