@@ -16292,16 +16292,23 @@
     </usage>
 
     <description>
-      <para>
+      <para context="cli">
 	Provides an easy way of plotting multiple time series (up to a
 	maximum of 16) on a single canvas. The <repl>varlist</repl>
 	argument can be given as a list of ID numbers or names of
 	series, or as column numbers in the case of matrix input.
       </para>
-      <para>
+      <para context="cli">
 	See also <cmdref targ="scatters"/> for means of producing
 	multiple scatterplots, and <cmdref targ="gridplot"/> for a
 	more flexible way of combining plots in a grid.
+      </para>
+      <para context="gui">
+	Provides an easy way of plotting multiple time series (up to a
+	maximum of 16) on a single canvas. See also <cmdref
+	targ="scatters"/> for means of producing multiple
+	scatterplots, and <cmdref targ="gridplot"/> for a more
+	flexible way of combining plots in a grid.
       </para>
     </description>
 
