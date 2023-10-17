@@ -6,7 +6,8 @@ version 2023c, in progress
   the old band syntax until further notice)
 - "panel" command: support the --cluster option to produce
   a greater variety of robust standard errors, including two-
-  way clustering; also support the --no-df-corr option
+  way clustering; add an option to use the Driscoll-Kraay
+  covariance estimator; and support the --no-df-corr option
 - "tsls" command: if the --robust option is given, compute a
   robust variant of the Hausman test
 - "scatters" command: expose its time-series functionality
@@ -46,6 +47,8 @@ version 2023c, in progress
   wizard
 - GUI: Add a color selection dialog under the Tools menu
 - GUI: use "Apply" and "OK" buttons more consistently
+- GUI: make more apparent the facility to sort series in the
+  main window by clicking the headers
 - GUI: add a menu item to install a local function package,
   under the "/File/Function packages" menu
 
