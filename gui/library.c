@@ -7666,7 +7666,7 @@ void do_boxplot_var (int varnum, gretlopt opt)
     }
 }
 
-int do_scatters (selector *sr)
+int do_multi_plots (selector *sr)
 {
     const char *buf = selector_list(sr);
     gretlopt opt = selector_get_opts(sr);
@@ -7674,7 +7674,11 @@ int do_scatters (selector *sr)
 
     if (buf == NULL) return 1;
 
-    if (opt & OPT_O) {
+    buf += strspn(buf, " ");
+
+    if (opt & OPT_T) {
+	lib_command_sprintf("tsplots %s", buf);
+    } else if (opt & OPT_O) {
         lib_command_sprintf("scatters %s --with-lines", buf);
     } else {
         lib_command_sprintf("scatters %s", buf);

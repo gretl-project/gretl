@@ -501,7 +501,7 @@ void selector_callback (GtkAction *action, gpointer data)
 	    selfunc = do_xyz_graph;
 	    break;
 	case SCATTERS:
-	    selfunc = do_scatters;
+	    selfunc = do_multi_plots;
 	    break;
 	case GR_FBOX:
 	    selfunc = do_factorized_boxplot;
@@ -526,7 +526,7 @@ void selector_callback (GtkAction *action, gpointer data)
 	simple_selection(ci, _("gretl: define graph"), do_graph_from_selector,
 			 NULL);
     } else if (ci == TSPLOTS) {
-	simple_selection(ci, _("gretl: define graph"), do_scatters, NULL);
+	simple_selection(ci, _("gretl: define graph"), do_multi_plots, NULL);
     } else if (ci == GR_BOX) {
 	simple_selection(ci, _("gretl: define graph"), do_regular_boxplot, NULL);
     } else if (ci == QQPLOT) {

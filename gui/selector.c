@@ -5459,7 +5459,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
 
     sr->ci = ci;
     sr->flags = 0;
-    sr->opts = OPT_NONE;
+    sr->opts = ci == TSPLOTS ? OPT_T : OPT_NONE;
     sr->parent = parent;
     sr->data = data;
     sr->extra_data = NULL;
