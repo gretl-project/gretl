@@ -13672,7 +13672,7 @@
 	ignored.
       </para>
       <para context="cli">
-	By default the graphs are scatterplots, but if you give the
+	By default the are shown as points, but if you give the
 	<opt>with-lines</opt> flag they will be line graphs.
       </para>
       <para context="cli">
@@ -13695,15 +13695,20 @@
 	maximum number of plots is 16; any extra variables will be
 	ignored.
       </para>
+      <para context="cli">
+	By default the data are shown as points, but if you check the
+	<quote>Use lines</quote> button they will be line graphs.
+      </para>
       <para>
-	If the dataset is time-series, then the second sub-list can be
-	omitted, in which case it will implicitly be taken as "time",
-	so you can plot multiple time series in separated sub-graphs.
+	See also <cmdref targ="tsplots"/> for a simple means of
+	producing multiple time-series plots, and <cmdref
+	targ="gridplot"/> for a more flexible way of combining plots
+	in a grid.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/View/Multiple graphs</menu-path>
+      <menu-path>/View/Multiple graphs/X-Y scatters</menu-path>
     </gui-access>
 
   </command>
@@ -16260,6 +16265,49 @@
       <menu-path>/Model/Instrumental variables</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="tsplots" section="Graphs"
+	   label="Multiple time-series plots">
+    <usage>
+      <arguments>
+        <argument>varlist</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--matrix</flag>
+	  <optparm>name</optparm>
+	  <effect>plot columns of named matrix</effect>
+        </option>
+        <option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>send output to specified file</effect>
+        </option>
+      </options>
+      <examples>
+        <example>tsplots 1 2 3 4</example>
+        <example>tsplots 1 2 3 4 --matrix=X</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Provides an easy way of plotting multiple time series (up to a
+	maximum of 16) on a single canvas. The <repl>varlist</repl>
+	argument can be given as a list of ID numbers or names of
+	series, or as column numbers in the case of matrix input.
+      </para>
+      <para>
+	See also <cmdref targ="scatters"/> for means of producing
+	multiple scatterplots, and <cmdref targ="gridplot"/> for a
+	more flexible way of combining plots in a grid.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/View/Multiple graphs/Time series</menu-path>
+    </gui-access>
   </command>
 
   <command name="var" section="Estimation"

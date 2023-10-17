@@ -33,6 +33,7 @@ const char *special_keyword[] = {
     "endog",
     "instr",
     "equations",
+    "tsplots",
     NULL
 };
 

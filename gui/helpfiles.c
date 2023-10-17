@@ -448,7 +448,7 @@ static GtkTreeStore *make_help_topics_tree (int role)
 		} else if (role == GUI_HELP || role == GUI_HELP_EN) {
 		    idx = gui_help_topic_index(word);
 		} else {
-		    idx = gretl_command_number(word);
+		    idx = gretl_help_index(word);
 		}
 #if HDEBUG
 		fprintf(stderr, " %s: pos %d, idx, %d\n", word, pos+1, idx);

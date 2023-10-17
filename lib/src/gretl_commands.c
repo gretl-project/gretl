@@ -258,6 +258,18 @@ int gretl_command_number (const char *s)
     return ret;
 }
 
+int gretl_help_index (const char *s)
+{
+    int ret = gretl_command_number(s);
+
+    if (ret == 0 && !strcmp(s, "tsplots")) {
+	/* an alias masquerading as a command */
+	ret = NC;
+    }
+
+    return ret;
+}
+
 void gretl_command_hash_cleanup (void)
 {
     if (ht != NULL) {

@@ -247,6 +247,8 @@ typedef enum {
 	
 int gretl_command_number (const char *s);
 
+int gretl_help_index (const char *s);
+
 const char *gretl_command_word (int i);
 
 int word_is_genr_alias (const char *s);

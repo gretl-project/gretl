@@ -432,7 +432,7 @@ int cli_help (const char *hlpword, const char *param,
     }
 
     if (!funhelp) {
-	int ci = gretl_command_number(hlpword);
+	int ci = gretl_help_index(hlpword);
 
 	if (ci == SET && param != NULL) {
 	    ok = is_libset_var(param);
