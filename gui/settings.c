@@ -367,10 +367,10 @@ RCVAR rc_vars[] = {
       LISTSET, 5, TAB_VCV, NULL },
     { "HC_tseri", N_("For time-series data"), NULL, hc_tseri,
       LISTSET, 5, TAB_VCV, NULL },
-    { "HC_panel", N_("For panel data"), NULL, hc_panel,
-      LISTSET, 9, TAB_VCV, NULL },
     { "HC_garch", N_("For GARCH estimation"), NULL, hc_garch,
       LISTSET, 5, TAB_VCV, NULL },
+    { "HC_panel", N_("For panel data"), NULL, hc_panel,
+      LISTSET, 9, TAB_VCV, NULL },
     { "manpref", N_("PDF manual preference"), NULL, &manpref,
       LISTSET | INTSET, 0, TAB_MAIN, NULL },
     { "modtab_colheads", "Model table column heads", NULL, &modtab_colheads,
@@ -1337,7 +1337,7 @@ static const char *hc_strs[] = {
 };
 
 static const char *hc_panel_strs[] = {
-    "Arellano", "Beck-Katz", "Driscoll-Kraay"
+    "Arellano", "PCSE", "SCC"
 };
 
 static const char **get_list_setting_strings (void *var, int *n)
@@ -2240,8 +2240,8 @@ static void apply_prefs_changes (GtkWidget *widget, GtkWidget *parent)
 #ifndef GRETL_EDIT
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
-    set_panel_hccme(hc_panel);
     set_garch_alt_vcv(hc_garch);
+    set_panel_hccme(hc_panel);
     selector_register_hc_choice();
 #endif
 

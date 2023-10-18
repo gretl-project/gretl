@@ -17,7 +17,7 @@ panel invest X
 panel invest X --robust
 
 ### fixed-effects estimate, Beck & Katz-robust standard errors 
-set pcse on
+set panel_robust pcse
 panel invest X --robust
 
 ### fixed-effects estimate, clustered by id (correlation is

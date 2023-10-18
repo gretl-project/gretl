@@ -692,7 +692,7 @@ Errors'' (PCSE).  This estimator can be invoked in gretl via the
 command
 %
 \begin{code}
-set panel_robust beck_katz
+set panel_robust pcse
 \end{code}
 %
 The Arellano default can be re-established via 
@@ -709,7 +709,7 @@ in the manner of Newey--West and, unlike the Arellano estimator,
 consistency is not limited to the ``small $T$'' case. The command to
 select SCC is
 \begin{code}
-set panel_robust driscoll_kraay
+set panel_robust scc
 \end{code}
 An additional ``\texttt{set}'' variable is relevant when using this
 estimator, namely \texttt{hac\_lag}, which governs the bandwidth of
