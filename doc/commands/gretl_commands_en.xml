@@ -6318,16 +6318,19 @@
 	help file for details.
       </para>
       <para>
-	When estimating a model via OLS using panel data, the default
-	robust estimator of the covariance matrix is that given by
-	Arellano.  The alternative is Beck and Katz's Panel Corrected
-	Standard Errors (PCSE).  The latter take into account
-	heteroskedasticity but not autocorrelation.
-      </para>
-      <para>
 	Two robust estimators of the covariance matrix are
 	offered for GARCH models: QML is the Quasi-Maximum Likelihood
 	Estimator, and BW is the Bollerslev-Wooldridge estimator.
+      </para>
+      <para>
+	When estimating panel-data models the default robust estimator
+	of the covariance matrix is that given by <cite
+	key="arellano03">Arellano</cite>.  The alternatives are the
+	Panel Corrected Standard Errors (PCSE) of <cite
+	key="beck-katz95">Beck and Katz</cite> and the Spatial
+	Correlation Consistent (SCC) estimator of <cite
+	key="driscoll_kraay98">Driscoll and Kraay</cite>. See
+	<guideref targ="chap:robust_vcv"/> for details.
       </para>
       <para>
 	By default gretl uses the Student <math>t</math> distribution
