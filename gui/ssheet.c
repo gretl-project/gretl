@@ -4048,6 +4048,70 @@ static void display_complex_matrix (gretl_matrix *m,
     g_free(title);
 }
 
+static void display_real_submatrix (gretl_matrix *m,
+				    const char *name)
+{
+    gretl_matrix *tmp;
+    gchar *title = NULL;
+    PRN *prn = NULL;
+    double mij;
+    int hsize, vsize;
+    int n, r, c;
+    int i, j;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    /* We come here only if the matrix is too big to put
+       into an editable window (r * c > 36000).
+    */
+
+    n = m->rows * m->cols;
+    if (m->rows > 50 && m->cols > 50) {
+	r = 50;
+	c = 50;
+    } else if (m->rows > 50) {
+	r = 50;
+	c = n / 50;
+    } else {
+	c = 50;
+	r = n / 50;
+    }
+
+
+    hsize = m->cols * 10;
+    if (hsize < 70) {
+	hsize = 70;
+    } else if (hsize > 120) {
+	hsize = 120;
+    }
+
+    vsize = 24 * (m->rows + 2);
+    if (vsize < 200) {
+	vsize = 200;
+    } else if (vsize > 500) {
+	vsize = 500;
+    }
+
+    pprintf(prn, "%s is %d x %d; showing north-west %d x %d submatrix\n\n",
+	    name, m->rows, m->cols, r, c);
+    tmp = gretl_matrix_alloc(r, c);
+    for (j=0; j<c; j++) {
+	for (i=0; i<r; i++) {
+	    mij = gretl_matrix_get(m, i, j);
+	    gretl_matrix_set(tmp, i, j, mij);
+	}
+    }
+
+    gretl_matrix_print_to_prn(tmp, NULL, prn);
+    title = g_strdup_printf("gretl: %s %s", _("matrix"), name);
+    preset_viewer_flag(VWIN_NO_SAVE);
+    view_buffer(prn, hsize, vsize, title, PRINT, NULL);
+    g_free(title);
+    gretl_matrix_free(tmp);
+}
+
 void edit_user_matrix_by_name (const char *name, GtkWidget *parent)
 {
     user_var *u = get_user_var_by_name(name);
@@ -4082,7 +4146,13 @@ void edit_user_matrix_by_name (const char *name, GtkWidget *parent)
     } else if (gretl_is_null_matrix(m)) {
 	real_gui_new_matrix(m, name, parent, 0);
     } else {
-	gui_edit_matrix(m, name);
+	int n = m->rows * m->cols;
+
+	if (n > 36000) {
+	    display_real_submatrix(m, name);
+	} else {
+	    gui_edit_matrix(m, name);
+	}
     }
 }
 
