@@ -2592,8 +2592,12 @@ mdata_handle_drag  (GtkWidget *widget,
 
     /* check for zip magic bytes */
     if (gretl_is_pkzip_file(tmp)) {
-	gdk_drag_status(context, 0, time);
-	return;
+	if (has_suffix(tmp, ".xlsx") || has_suffix(tmp, ".gdtb")) {
+	    ; /* should be OK? */
+	} else {
+	    gdk_drag_status(context, 0, time);
+	    return;
+	}
     }
 
     /* transcribe and try opening */
