@@ -1,5 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
-     "http://www.w3.org/TR/1998/REC-html40-19980424/loose.dtd"> 
+     "http://www.w3.org/TR/1998/REC-html40-19980424/loose.dtd">
 
 <head>
 <title>gretl git basics</title>
@@ -24,10 +24,11 @@
 <a href="#commit">Committing a change</a><br>
 <a href="#revert">Reverting local changes</a><br>
 <a href="#diffs">Looking at diffs</a><br>
+<a href="#history">Examining history</a><br>
 <a href="#branch">Branching</a><br>
 <a href="#branch-clean">Cleaning up old branches</a><br>
 <a href="#windows">Using git on MS Windows</a>
-</p>  
+</p>
 
 <h2><a name="finding">Finding the repository on sourceforge</a></h2>
 
@@ -108,7 +109,7 @@ for getting a <i>read-write</i> copy, on the pattern</p>
 <pre>
   git push
 </pre>
-  
+
 <h2><a name="revert">Reverting local changes</a></h2>
 
 <p>This information is relevant only for gretl developers, who are in the
@@ -143,7 +144,7 @@ reverts your local files (or in other words, <q>nukes</q> your changes altogethe
 <p>For a lot more on reverting changes, see
   <a href="https://github.com/blog/2019-how-to-undo-almost-anything-with-git">this
   GitHub blog entry</a>.</p>
-  
+
 <h2><a name="diffs">Looking at diffs</a></h2>
 
 <p>To see any updates in your working copy relative to the
@@ -176,6 +177,22 @@ modify the files in your working copy, it just grabs information about
 
 <pre>
 git diff origin/master
+</pre>
+
+<h2><a name="history">Examining history</a></h2>
+
+<p>To see a simple record of the commits to an individual file you can
+do:</p>
+
+<pre>
+  git log -- filename
+</pre>
+
+<p>Or if you want to see what exactly was changed at each commit, in
+  the form of a patch, do:</p>
+
+<pre>
+  git log -p -- filename
 </pre>
 
 <h2><a name="branch">Branching</a></h2>
@@ -237,14 +254,14 @@ git remote prune origin
 <p>The following from beanstalk looks like a good guide:
   <a href="http://guides.beanstalkapp.com/version-control/git-on-windows.html">Working
   with Git on Windows</a>.</p>
-  
+
 <h2>Bonus</h2>
 
-<p>John Anderson's 
-<a href="https://opensource.com/article/18/4/git-tips">13 Git tips for 
+<p>John Anderson's
+<a href="https://opensource.com/article/18/4/git-tips">13 Git tips for
 Git's 13th birthday</a> (April 2018):
 some nice refinements here!</p>
-  
+
 <hr>
 
 <p>Allin Cottrell, last revised 2021-04-25</p>
