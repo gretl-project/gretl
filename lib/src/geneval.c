@@ -13246,7 +13246,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
     } else if (f == F_AGGRBY) {
 	DATASET *dset = p->dset;
 	DATASET *mdset = NULL;
-	const char *fncall = NULL;
+	const char *fnname = NULL;
 	const double *x = NULL;
 	const double *y = NULL;
 	int *xlist = NULL;
@@ -13259,7 +13259,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	if (!null_or_string(r)) {
 	    node_type_error(f, 3, STR, r, p);
 	} else if (!null_node(r)) {
-	    fncall = r->v.str;
+	    fnname = r->v.str;
 	}
 	if (!p->err && !null_node(l)) {
 	    data_args++;
@@ -13300,7 +13300,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    p->err = aggregate_discrete_check(ylist, dset);
 	}
 	if (!p->err) {
-	    A = aggregate_by(x, y, xlist, ylist, fncall, dset, &p->err);
+	    A = aggregate_by(x, y, xlist, ylist, fnname, dset, &p->err);
 	}
 	if (mdset != NULL) {
 	    destroy_dataset(mdset);

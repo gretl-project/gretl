@@ -224,8 +224,8 @@ gretl_matrix *aggregate_by (const double *x,
 			    const double *y,
 			    const int *xlist,
 			    const int *ylist,
-			    const char *fncall,
-			    const DATASET *dset,
+			    const char *fname,
+			    DATASET *dset,
 			    int *err);
 
 int fill_dataset_dates_series (const DATASET *dset, double *x);

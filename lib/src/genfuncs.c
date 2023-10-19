@@ -29,6 +29,7 @@
 #include "estim_private.h"
 #include "matrix_extra.h"
 #include "gretl_btree.h"
+#include "gretl_func.h"
 #include "kalman.h"
 #include "../../cephes/cephes.h"
 
@@ -7056,12 +7057,11 @@ static gretl_matrix *real_aggregate_by (const double *x,
                                         const double *y,
                                         const int *xlist,
                                         const int *ylist,
-                                        const DATASET *dset,
+                                        DATASET *dset,
                                         double *tmp,
                                         double (*builtin)
                                         (int, int, const double *),
-                                        gchar *usercall,
-                                        DATASET *tmpset,
+					fncall *fc,
                                         int just_count,
                                         int *err)
 {
@@ -7100,7 +7100,7 @@ static gretl_matrix *real_aggregate_by (const double *x,
 
     /* For @y (or each member of @ylist), create a vector holding
        its distinct values. As we go, count the combinations of
-       y-values and initialize the valvec and idx arrays.
+       y-values and initialize the @valvec and @idx arrays.
     */
 
     maxcases = 1;
@@ -7129,24 +7129,18 @@ static gretl_matrix *real_aggregate_by (const double *x,
     mcols = ny + nx + countcol;
 
     /* Allocate a matrix with enough rows to hold all the y-value
-       combinations (maxcases) and enough columns to hold a
-       record of the y values, a count of matching cases, and the
-       value(s) of f(x).
+       combinations (maxcases) and enough columns to hold a record of
+       the @y values, a count of matching cases, and the value(s) of
+       f(x).
     */
 
-    if (!*err) {
-        m = gretl_zero_matrix_new(maxcases, mcols);
-        if (m == NULL) {
-            *err = E_ALLOC;
-        }
-    }
-
-    if (*err) {
-        goto bailout;
+    m = gretl_zero_matrix_new(maxcases, mcols);
+    if (m == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
     }
 
     ii = 0;
-
     for (i=0; i<maxcases; i++) {
         ni = 0;
         for (k=0; k<nx && !*err; k++) {
@@ -7183,11 +7177,17 @@ static gretl_matrix *real_aggregate_by (const double *x,
                 /* aggregate x at current y values */
                 if (builtin != NULL) {
                     fx = (*builtin)(0, ni-1, tmp);
-                } else {
-                    tmpset->t2 = ni-1;
-                    fx = generate_scalar(usercall, tmpset, err);
-                }
-                gretl_matrix_set(m, ii, ny+k+countcol, fx);
+		} else {
+		    int save_t2 = dset->t2;
+		    double *pfx = &fx;
+
+		    dset->t2 = ni-1;
+		    *err = gretl_function_exec(fc, GRETL_TYPE_DOUBLE,
+					       dset, &pfx, NULL);
+		    dset->t2 = save_t2;
+		    fx = *pfx;
+		}
+		gretl_matrix_set(m, ii, ny+k+countcol, fx);
             }
         }
 
@@ -7301,6 +7301,38 @@ static void aggr_add_colnames (gretl_matrix *m,
     }
 }
 
+static fncall *get_user_aggrby_call (const char *s,
+				     double *tmp,
+				     int *err)
+{
+    ufunc *uf = get_user_function_by_name(s);
+    fncall *fc = NULL;
+
+    if (uf == NULL) {
+	*err = E_INVARG;
+    } else {
+	GretlType rt = user_func_get_return_type(uf);
+	int np = fn_n_params(uf);
+
+	if (rt != GRETL_TYPE_DOUBLE || np != 1) {
+	    *err = E_INVARG;
+	}
+    }
+
+    if (!*err) {
+	fc = user_func_get_fncall(uf);
+	if (fc == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    *err = push_function_arg(fc, NULL, NULL,
+				     GRETL_TYPE_SERIES,
+				     tmp);
+	}
+    }
+
+    return fc;
+}
+
 /**
  * aggregate_by:
  * @x: data array.
@@ -7326,19 +7358,18 @@ gretl_matrix *aggregate_by (const double *x,
                             const double *y,
                             const int *xlist,
                             const int *ylist,
-                            const char *fncall,
-                            const DATASET *dset,
+                            const char *fname,
+                            DATASET *dset,
                             int *err)
 {
-    DATASET *tmpset = NULL;
     gretl_matrix *m = NULL;
     double *tmp = NULL;
     double (*builtin) (int, int, const double *) = NULL;
-    gchar *usercall = NULL;
+    fncall *fc = NULL;
     int just_count = 0;
     int n;
 
-    if (fncall == NULL || !strcmp(fncall, "null")) {
+    if (fname == NULL || !strcmp(fname, "null")) {
         just_count = 1;
     }
 
@@ -7349,7 +7380,7 @@ gretl_matrix *aggregate_by (const double *x,
     }
 
     if (!just_count) {
-        int f = function_lookup(fncall);
+        int f = function_lookup(fname);
 
         switch (f) {
         case F_SUM:
@@ -7400,30 +7431,20 @@ gretl_matrix *aggregate_by (const double *x,
 
     if (just_count) {
         ; /* nothing to do here */
-    } else if (builtin != NULL) {
-        /* nice and simple */
+    } else {
         tmp = malloc(n * sizeof *tmp);
         if (tmp == NULL) {
             *err = E_ALLOC;
-        }
-    } else {
-        /* try treating as user-defined call */
-        tmpset = create_auxiliary_dataset(2, n, OPT_NONE);
-        if (tmpset == NULL) {
-            *err = E_ALLOC;
-        } else {
-            strcpy(tmpset->varname[1], "x");
-            tmp = tmpset->Z[1];
-            usercall = g_strdup_printf("%s(x)", fncall);
-        }
+        } else if (builtin == NULL) {
+	    fc = get_user_aggrby_call(fname, tmp, err);
+	}
     }
 
     if (!*err) {
         x = (x == NULL)? NULL : x + dset->t1;
         y = (y == NULL)? NULL : y + dset->t1;
         m = real_aggregate_by(x, y, xlist, ylist, dset, tmp,
-                              builtin, usercall, tmpset,
-                              just_count, err);
+                              builtin, fc, just_count, err);
     }
 
     if (m != NULL && *err) {
@@ -7435,12 +7456,7 @@ gretl_matrix *aggregate_by (const double *x,
         aggr_add_colnames(m, ylist, xlist, dset, just_count);
     }
 
-    if (tmpset != NULL) {
-        g_free(usercall);
-        destroy_dataset(tmpset);
-    } else {
-        free(tmp);
-    }
+    free(tmp);
 
     return m;
 }
