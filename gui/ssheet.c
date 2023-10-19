@@ -4079,15 +4079,14 @@ static void display_real_submatrix (gretl_matrix *m,
 	r = n / 50;
     }
 
-
-    hsize = m->cols * 10;
+    hsize = c * 10;
     if (hsize < 70) {
 	hsize = 70;
     } else if (hsize > 120) {
 	hsize = 120;
     }
 
-    vsize = 24 * (m->rows + 2);
+    vsize = 24 * (r + 2);
     if (vsize < 200) {
 	vsize = 200;
     } else if (vsize > 500) {
