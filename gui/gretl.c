@@ -2597,12 +2597,12 @@ mdata_handle_drag  (GtkWidget *widget,
 	    has_suffix(tmp, ".gretl")) {
 	    ; /* should be OK? */
 	} else {
-	    gdk_drag_status(context, 0, time);
+	    gdk_drop_reply(context, FALSE, time);
 	    return;
 	}
     }
 
-    /* transcribe and try opening */
+    /* transcribe filename and try opening */
     set_tryfile(tmp);
     open_tryfile(FALSE, TRUE);
 }
