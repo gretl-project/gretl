@@ -2592,7 +2592,9 @@ mdata_handle_drag  (GtkWidget *widget,
 
     /* check for zip magic bytes */
     if (gretl_is_pkzip_file(tmp)) {
-	if (has_suffix(tmp, ".xlsx") || has_suffix(tmp, ".gdtb")) {
+	if (has_suffix(tmp, ".xlsx") ||
+	    has_suffix(tmp, ".gdtb") ||
+	    has_suffix(tmp, ".gretl")) {
 	    ; /* should be OK? */
 	} else {
 	    gdk_drag_status(context, 0, time);
