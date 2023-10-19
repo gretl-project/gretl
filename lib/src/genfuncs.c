@@ -7178,13 +7178,11 @@ static gretl_matrix *real_aggregate_by (const double *x,
                 if (builtin != NULL) {
                     fx = (*builtin)(0, ni-1, tmp);
 		} else {
-		    int save_t2 = dset->t2;
 		    double *pfx = &fx;
 
 		    dset->t2 = ni-1;
 		    *err = gretl_function_exec(fc, GRETL_TYPE_DOUBLE,
 					       dset, &pfx, NULL);
-		    dset->t2 = save_t2;
 		    fx = *pfx;
 		}
 		gretl_matrix_set(m, ii, ny+k+countcol, fx);
@@ -7243,6 +7241,10 @@ static gretl_matrix *real_aggregate_by (const double *x,
     return m;
 }
 
+/* Add suitable column names to the matrix to be returned
+   by aggregate()
+*/
+
 static void aggr_add_colnames (gretl_matrix *m,
                                const int *ylist,
                                const int *xlist,
@@ -7300,6 +7302,12 @@ static void aggr_add_colnames (gretl_matrix *m,
         strings_array_free(S, n);
     }
 }
+
+/* Set up a call structure so we can call a user-defined
+   function in the context of aggregate() directly, without
+   having to go via "genr". Note that in this context the
+   function is likely to be called repeatedly.
+*/
 
 static fncall *get_user_aggrby_call (const char *s,
 				     double *tmp,
@@ -7441,10 +7449,13 @@ gretl_matrix *aggregate_by (const double *x,
     }
 
     if (!*err) {
+	int save_t2 = dset->t2;
+
         x = (x == NULL)? NULL : x + dset->t1;
         y = (y == NULL)? NULL : y + dset->t1;
         m = real_aggregate_by(x, y, xlist, ylist, dset, tmp,
                               builtin, fc, just_count, err);
+	dset->t2 = save_t2;
     }
 
     if (m != NULL && *err) {
