@@ -2590,16 +2590,14 @@ mdata_handle_drag  (GtkWidget *widget,
     /* handle spaces and such */
     unescape_url(tmp);
 
-    /* check for zip magic bytes */
-    if (gretl_is_pkzip_file(tmp)) {
-	if (has_suffix(tmp, ".xlsx") ||
-	    has_suffix(tmp, ".gdtb") ||
-	    has_suffix(tmp, ".gretl")) {
-	    ; /* should be OK? */
-	} else {
-	    gdk_drop_reply(context, FALSE, time);
-	    return;
-	}
+    /* check for zip files */
+    if (has_suffix(tmp, ".xlsx") ||
+	has_suffix(tmp, ".gdtb") ||
+	has_suffix(tmp, ".gretl")) {
+	    ; /* "authorized" zip files: OK? */
+    } else if (gretl_is_pkzip_file(tmp)) {
+	gdk_drop_reply(context, FALSE, time);
+	return;
     }
 
     /* transcribe filename and try opening */
