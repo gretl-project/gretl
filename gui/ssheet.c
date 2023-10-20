@@ -4056,7 +4056,8 @@ static void display_real_submatrix (gretl_matrix *m,
     PRN *prn = NULL;
     double mij;
     int hsize, vsize;
-    int n, r, c;
+    int show = 50;
+    int r, c;
     int i, j;
 
     if (bufopen(&prn)) {
@@ -4067,16 +4068,21 @@ static void display_real_submatrix (gretl_matrix *m,
        into an editable window (r * c > 36000).
     */
 
-    n = m->rows * m->cols;
     if (m->rows > 50 && m->cols > 50) {
-	r = 50;
-	c = 50;
-    } else if (m->rows > 50) {
-	r = 50;
-	c = n / 50;
+	r = show;
+	c = show;
+    } else if (m->rows == 1) {
+	r = 1;
+	c = show;
+    } else if (m->cols == 1) {
+	c = 1;
+	r = show;
+    } else if (m->rows > show) {
+	r = show;
+	c = MIN(show, m->cols);
     } else {
-	c = 50;
-	r = n / 50;
+	c = show;
+	r = MIN(show, m->rows);
     }
 
     hsize = c * 10;
@@ -4093,8 +4099,13 @@ static void display_real_submatrix (gretl_matrix *m,
 	vsize = 500;
     }
 
-    pprintf(prn, "%s is %d x %d; showing north-west %d x %d submatrix\n\n",
-	    name, m->rows, m->cols, r, c);
+    if (r == 1 || c == 1) {
+	pprintf(prn, "%s is %d x %d; showing the first %d elements\n\n",
+		name, m->rows, m->cols, r == 1 ? c : r);
+    } else {
+	pprintf(prn, "%s is %d x %d; showing north-west %d x %d submatrix\n\n",
+		name, m->rows, m->cols, r, c);
+    }
     tmp = gretl_matrix_alloc(r, c);
     for (j=0; j<c; j++) {
 	for (i=0; i<r; i++) {
@@ -4111,7 +4122,7 @@ static void display_real_submatrix (gretl_matrix *m,
     gretl_matrix_free(tmp);
 }
 
-void edit_user_matrix_by_name (const char *name, GtkWidget *parent)
+void edit_or_view_matrix (const char *name, GtkWidget *parent)
 {
     user_var *u = get_user_var_by_name(name);
     gretl_matrix *m = user_var_get_value(u);

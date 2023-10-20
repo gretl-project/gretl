@@ -2364,7 +2364,7 @@ static void open_matrix (gui_obj *obj)
     user_var *u = (user_var *) obj->data;
     const char *name = user_var_get_name(u);
 
-    edit_user_matrix_by_name(name, iconview);
+    edit_or_view_matrix(name, iconview);
 }
 
 static int is_dbnomics_bundle (const gretl_bundle *b)
@@ -3516,7 +3516,7 @@ static void matrix_popup_callback (GtkWidget *widget, gpointer data)
 	    view_buffer(prn, 78, 400, name, PRINT, NULL);
 	}
     } else if (!strcmp(item, _("Edit"))) {
-	edit_user_matrix_by_name(name, iconview);
+	edit_or_view_matrix(name, iconview);
     } else if (!strcmp(item, _("Properties"))) {
 	m = user_var_get_value(u);
 	view_matrix_properties(m, name);
