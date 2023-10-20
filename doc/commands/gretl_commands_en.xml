@@ -6299,23 +6299,20 @@
 	(and, in the case of the HAC estimator, autocorrelation).
       </para>
       <para>
-	HC0 produces the original <quote>White's standard errors</quote>;
-	HC1, HC2, HC3 and HC3a are subsequent variations that are
-	generally reckoned to produce superior (more reliable) results.
-	For details of the estimators, see <cite
-	key="mackinnon-white85">MacKinnon and White (Journal of
-	Econometrics, 1985)</cite> or <cite
-	key="davidson-mackinnon04">Davidson and MacKinnon, Econometric
-	Theory and Methods (Oxford, 2004)</cite>.  The labels given here
-	are those used by Davidson and MacKinnon.  Variant
-	<quote>HC3a</quote> is the jackknife, as described in MacKinnon
-	and White; HC3 is a close approximation to the jackknife.
+	HC0 produces the original <quote>White's standard
+	errors</quote>; HC1, HC2, HC3 and HC3a are subsequent
+	variations that are generally reckoned to produce superior
+	(more reliable) results. Variant HC3a is the so-called
+	<quote>jackknife</quote>, to which HC3 is a close
+	approximation.  For details of the estimators, see
+	 <guideref targ="chap:robust_vcv"/>
+	or <cite key="davidson-mackinnon04">Davidson and MacKinnon
+	(2004)</cite>.
       </para>
       <para>
 	If you use the HAC estimator for OLS on time-series data, you
-	are able to fine-tune the lag-length using the <cmd>set</cmd>
-	command.  Please see the gretl manual or the script commands
-	help file for details.
+	are able to fine-tune the lag-length and other details using
+	the <cmdref targ="set"/> command.
       </para>
       <para>
 	Two robust estimators of the covariance matrix are
@@ -6325,12 +6322,12 @@
       <para>
 	When estimating panel-data models the default robust estimator
 	of the covariance matrix is that given by <cite
-	key="arellano03">Arellano</cite>.  The alternatives are the
-	Panel Corrected Standard Errors (PCSE) of <cite
-	key="beck-katz95">Beck and Katz</cite> and the Spatial
+	key="arellano03">Arellano (2003)</cite>.  The alternatives are
+	the Panel Corrected Standard Errors (PCSE) of <cite
+	key="beck-katz95">Beck and Katz (1995)</cite> and the Spatial
 	Correlation Consistent (SCC) estimator of <cite
-	key="driscoll_kraay98">Driscoll and Kraay</cite>. See
-	<guideref targ="chap:robust_vcv"/> for details.
+	key="driscoll_kraay98">Driscoll and Kraay (1998)</cite>. Again
+	see <guideref targ="chap:robust_vcv"/> for details.
       </para>
       <para>
 	By default gretl uses the Student <math>t</math> distribution
@@ -11038,6 +11035,7 @@
 	<examples>
 	<demos>
 	  <demo>penngrow.inp</demo>
+	  <demo>panel-robust.inp</demo>
 	</demos>
     </examples>
     </usage>
@@ -11076,27 +11074,31 @@
       </para>
       <para context="cli">
 	The default means of calculating robust standard errors in
-	panel-data models is the Arellano HAC estimator (clustered by
-	panel unit), but Beck&ndash;Katz <quote>Panel Corrected
-	Standard Errors</quote> can be selected via the command
-	<lit>set pcse on</lit>. Alternatives to these two options are
-	available via the <opt>cluster</opt> option; please see
-	<guideref targ="chap:robust_vcv"/> for details.  When robust
-	standard errors are specified the joint <math>F</math> test on
-	the fixed effects is performed using the robust method of
-	<cite key="welch51">Welch (1951)</cite>.
+	panel-data models is the HAC estimator of <cite
+	key="arellano03">Arellano (2003)</cite> (clustered by panel
+	unit). Alternatives are <quote>Panel Corrected Standard
+	Errors</quote> (<cite key="beck-katz95">Beck and Katz,
+	1995</cite>) and <quote>Spatial Correlation Consistent</quote>
+	standard errors (<cite key="driscoll_kraay98">Driscoll and
+	Kraay, 1998</cite>). These can be selected via the command
+	<lit>set panel_robust</lit> with arguments <lit>pcse</lit> and
+	<lit>scc</lit>, respectively.  Other alternatives to these
+	three options are available via the <opt>cluster</opt> option;
+	please see <guideref targ="chap:robust_vcv"/> for details.
+	When robust standard errors are specified the joint
+	<math>F</math> test on the fixed effects is performed using
+	the robust method of <cite key="welch51">Welch (1951)</cite>.
       </para>
       <para context="gui">
-	If the "Random effects" button is checked, random effects
-	(GLS) estimates are computed. By default the method of Swamy
-	and Arora is used for the GLS transformation, but the Nerlove
-	method is available as an option (via the drop-down
+	If the <quote>Random effects</quote> button is checked, random
+	effects (GLS) estimates are computed. By default the method of
+	Swamy and Arora is used for the GLS transformation, but the
+	Nerlove method is available as an option (via the drop-down
 	selector). A further option is <quote>Swamy-Arora /
-	Baltagi-Chang</quote>: in the case of an unbalanced panel
-	this invokes a modification of the Swamy-Arora method
-	devised by <cite key="baltagi-chang94">Baltagi and Chang
-	(1994)</cite>, otherwise it's just equivalent to regular
-	Swamy-Arora.
+	Baltagi-Chang</quote>: in the case of an unbalanced panel this
+	invokes a modification of the Swamy-Arora method devised by
+	<cite key="baltagi-chang94">Baltagi and Chang (1994)</cite>,
+	otherwise it's just equivalent to regular Swamy-Arora.
       </para>
       <para context="cli">
 	The <opt>unbalanced</opt> option is available only for random
@@ -14395,20 +14397,20 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>pcse</lit>: <lit>off</lit> (the default) or
-	    <lit>on</lit>.  By default, when estimating a model using
-	    pooled OLS on panel data with the <opt>robust</opt> option,
-	    the Arellano estimator is used for the covariance matrix.  If
-	    you set <lit>pcse</lit> to <quote>on</quote>, this forces use
-	    of the Beck and Katz Panel Corrected Standard Errors (which do
-	    not take autocorrelation into account).
+	  <para>
+	    <lit>panel_robust</lit>: <lit>arellano</lit> (the
+	    default), <lit>pcse</lit> or <lit>scc</lit>. This selects
+	    the robust covariance matrix estimator for use with
+	    panel-data models. See the <cmdref targ="panel"/> command
+	    and <guideref targ="chap:robust_vcv"/> for details.
 	  </para>
 	</li>
 	<li>
-	  <para><lit>qs_bandwidth</lit>: Bandwidth for HAC estimation in
+	  <para>
+	    <lit>qs_bandwidth</lit>: Bandwidth for HAC estimation in
 	    the case where the Quadratic Spectral kernel is selected.
-	    (Unlike the Bartlett and Parzen kernels, the QS bandwidth need
-	    not be an integer.)
+	    (Unlike the Bartlett and Parzen kernels, the QS bandwidth
+	    need not be an integer.)
 	  </para>
 	</li>
       </ilist>
