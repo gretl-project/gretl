@@ -5511,7 +5511,7 @@
       <subhead>Legacy band syntax</subhead>
       <para>
 	The syntax described above was introduced in gretl
-	2023d. Prior to that release only one band could be specified
+	2023c. Prior to that release only one band could be specified
 	per plot and the syntax was somewhat different. The old
 	approach, which is still accepted until further notice, split
 	the band details over two options. First, the <opt>band</opt>
