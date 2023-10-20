@@ -6,6 +6,14 @@ not a meaningful operation.
 The long-deprecated "sscanf" and "sprintf" commands are now
 removed: use the functions of the same names.
 
+There is now new, preferred syntax for the --band option to
+the "gnuplot" command, but the old syntax will continue to
+work until further notice.
+
+A new "set" variable, panel_robust, is the preferred replacement
+for "set pcse on/off", but the latter will continue to work
+until further notice.
+
 2023-07-21 version 2023b
 
 The "outfile" command with --tempfile option: the name of
