@@ -14273,7 +14273,8 @@ real_gretl_matrix_values (const double *x, int n,
  * @err: location to receive error code.
  *
  * Returns: an allocated matrix containing the distinct
- * values in array @x, or NULL on failure.
+ * values in array @x, skipping any missing values, or
+ * NULL on failure.
  */
 
 gretl_matrix *gretl_matrix_values (const double *x, int n,
@@ -14720,23 +14721,23 @@ static void make_matrix_xtab (double **X, int n,
     /* compute frequencies by going through sorted X */
 
     counter = rndx = cndx = 0;
-    xr = (int) gretl_vector_get(vx, 0);
-    xc = (int) gretl_vector_get(vy, 0);
+    xr = (int) vx->val[0];
+    xc = (int) vy->val[0];
 
     for (i=0; i<n; i++) {
         while (X[i][0] > xr) {
             /* skip row */
             gretl_matrix_set(tab, rndx, cndx, counter);
             counter = 0;
-            xr = gretl_vector_get(vx, ++rndx);
+            xr = vx->val[++rndx];
             cndx = 0;
-            xc = gretl_vector_get(vy, 0);
+            xc = vy->val[0];
         }
         while (X[i][1] > xc) {
             /* skip column */
             gretl_matrix_set(tab, rndx, cndx, counter);
             counter = 0;
-            xc = gretl_vector_get(vy, ++cndx);
+            xc = vy->val[++cndx];
         }
         counter++;
     }
@@ -14876,8 +14877,7 @@ gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
         goto bailout;
     }
 
-    tab = gretl_zero_matrix_new(gretl_matrix_rows(vx),
-                                gretl_matrix_rows(vy));
+    tab = gretl_zero_matrix_new(vx->rows, vy->rows);
     if (tab == NULL) {
         *err = E_ALLOC;
         goto bailout;
