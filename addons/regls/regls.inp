@@ -32,6 +32,9 @@ end function
 function matrix s_standardize (const matrix y, scalar *my, scalar *sy)
    my = meanc(y)
    sy = sdc(y)
+   if missing(sy)
+      funcerr "Insufficient valid observations"
+   endif
    if sy == 0
       S = {}
    else
