@@ -182,6 +182,9 @@ gretl_matrix *xtab_to_matrix (const Xtab *tab);
 
 void free_xtab (Xtab *tab);
 
+int correspondence (const double *x, const double *y,
+		    int n, int *err);
+
 int model_error_dist (const MODEL *pmod, DATASET *dset, 
 		      gretlopt opt, PRN *prn);
 

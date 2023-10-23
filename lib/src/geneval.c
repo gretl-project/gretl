@@ -7563,7 +7563,7 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 
         if (!p->err) {
             if (null_node(r)) {
-                ; /* OK for duration funcs */
+		; /* OK for duration funcs only */
             } else if (r->t == SERIES) {
                 /* series on right */
                 n2 = sample_size(p->dset);
@@ -7603,21 +7603,21 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
             return NULL;
         }
 
-        /* n is taken as inclusive below */
-        n--;
-
         switch (f) {
         case F_COR:
-            ret->v.xval = gretl_corr(0, n, x, y, NULL);
+            ret->v.xval = gretl_corr(0, n-1, x, y, NULL);
             break;
         case F_COV:
-            ret->v.xval = gretl_covar(0, n, x, y, NULL);
+            ret->v.xval = gretl_covar(0, n-1, x, y, NULL);
             break;
         case F_NAALEN:
-            ret->v.m = duration_func(x, y, 0, n, OPT_NONE, &p->err);
+            ret->v.m = duration_func(x, y, 0, n-1, OPT_NONE, &p->err);
             break;
         case F_KMEIER:
-            ret->v.m = duration_func(x, y, 0, n, OPT_K, &p->err);
+            ret->v.m = duration_func(x, y, 0, n-1, OPT_K, &p->err);
+            break;
+	case F_CORRESP:
+	    ret->v.xval = correspondence(x, y, n, &p->err);
             break;
         default:
             break;
@@ -7702,24 +7702,36 @@ static NODE *npcorr_node (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
-/* takes two series or two matrices as arguments */
+/* takes two series or two vectors as arguments */
 
 static NODE *mxtab_func (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
-        if (l->t == MAT && r->t == MAT) {
-            ret->v.m = matrix_matrix_xtab(l->v.m, r->v.m, &p->err);
-        } else if (l->t == SERIES && r->t == SERIES) {
-            const double *x = l->v.xvec;
-            const double *y = r->v.xvec;
+	const double *x = NULL;
+	const double *y = NULL;
+	int nx = 0;
+	int ny = 0;
 
-            ret->v.m = gretl_matrix_xtab(p->dset->t1, p->dset->t2,
-                                         x, y, &p->err);
-        } else {
-            p->err = E_TYPES;
-        }
+        if (l->t == MAT && r->t == MAT) {
+	    nx = gretl_vector_get_length(l->v.m);
+	    ny = gretl_vector_get_length(r->v.m);
+	    x = l->v.m->val;
+	    y = r->v.m->val;
+        } else if (l->t == SERIES && r->t == SERIES) {
+	    nx = ny = sample_size(p->dset);
+            x = l->v.xvec + p->dset->t1;
+            y = r->v.xvec + p->dset->t1;
+	} else {
+	    p->err = E_TYPES;
+	}
+	if (!p->err && (nx == 0 || ny != nx)) {
+	    p->err = E_NONCONF;
+	}
+	if (!p->err) {
+            ret->v.m = gretl_matrix_xtab(x, y, nx, &p->err);
+	}
     }
 
     return ret;
@@ -18167,6 +18179,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_COR:
     case F_NAALEN:
     case F_KMEIER:
+    case F_CORRESP:
         /* functions taking two series/vectors as args, mostly */
         if ((l->t == SERIES || l->t == MAT || l->t == NUM) &&
             (r->t == SERIES || r->t == MAT || r->t == NUM)) {
