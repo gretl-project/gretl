@@ -49,7 +49,7 @@
    output  (scalar | series | matrix | smatrix | vector | string | seebelow |
             rvec | cvec | list | asinput | scalar-or-series | int | object |
             scalar-or-matrix | matrix-or-bundle | bundle | cmatrix | none |
-            strings | matrices | string-or-strings | list-or-mat) "series"
+            strings | matrices | string-or-strings | list-or-mat | depends) "series"
    altout  (none | scalar | series | rvec | matrix | list) "none"
 >
 
