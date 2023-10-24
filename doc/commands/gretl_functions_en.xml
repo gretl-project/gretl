@@ -2237,12 +2237,12 @@
 	</para>
 	<para>
 	  The <fncref targ="dec2bin"/> function performs the inverse
-	  transformation.  
+	  transformation.
 	</para>
       </description>
     </function>
 
-    
+
     <function name="bincoeff" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">n</fnarg>
@@ -3327,6 +3327,75 @@
       </description>
     </function>
 
+    <function name="corresp" section="stats" output="scalar">
+      <fnargs>
+	<fnarg type="series-or-vec">a</fnarg>
+	<fnarg type="series-or-vec">b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  On the basis of a cross-tabulation of <argname>x</argname>
+	  and <argname>y</argname>, returns an integer code
+	  indicating the sort of correspondence between the two
+	  variables, as follows.
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      Code = 2: there’s a 1-to-1 relationship.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Code = 1: there’s a 1-to-n relationship
+	      (<argname>a</argname> <quote>nests</quote>
+	      <argname>b</argname>, <argname>a</argname> is a
+	      function of <argname>b</argname> in the mathematical
+	      sense).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Code = &minus;1: there’s an n-to-1 relationship
+	      (<argname>b</argname> <quote>nests</quote>
+	      <argname>a</argname>, <argname>b</argname> is a
+	      function of <argname>a</argname>).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	    Code = 0: there’s no relationship.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
+	  Note that these codes are based solely on the sample values
+	  of the two arguments. In case <argname>b</argname> is the
+	  square of <argname>a</argname>, for example, the result will
+	  differ depending on whether <argname>a</argname> contains
+	  some pairs of values that differ only by sign (code =
+	  &minus;1), or not (code = 2).
+	</para>
+	<para>
+	  One possible use case is to check whether two discrete
+	  series encode the same information. For example, the
+	  following:
+	</para>
+	<code>
+	  open grunfeld.gdt
+	  c = correspondence($unit, firm)
+	</code>
+	<para>
+	  gives <lit>c</lit> = 2, indicating that the series
+	  <lit>firm</lit> is in fact a unique identifier for the
+	  cross-sectional units in this panel dataset.
+	</para>
+	<para>
+	  See also <fncref targ="mxtab"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="corrgm" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="smlist">x</fnarg>
@@ -3758,7 +3827,7 @@
 	</para>
 	<para>
 	  The <fncref targ="bin2dec"/> function performs the inverse
-	  transformation.  
+	  transformation.
 	</para>
       </description>
     </function>
@@ -6092,7 +6161,7 @@
 	  <argname>X</argname>. For columns containing <lit>NA</lit>s
 	  the result is also set to <lit>NA</lit>, unless the optional
 	  argument <argname>skip_na</argname> is nonzero, in which
-	  case the index for the maximum valid entry will be returned. 
+	  case the index for the maximum valid entry will be returned.
 	</para>
 	<para>
 	  <seelist>
@@ -9599,14 +9668,17 @@
 	<para>
 	  Returns a matrix holding the cross tabulation of the values
 	  contained in <argname>x</argname> (by row) and
-	  <argname>y</argname> (by column). The two arguments should be of
-	  the same type (both series or both column vectors), and because
-	  of the typical usage of this function, are assumed to contain
-	  integer values only.
+	  <argname>y</argname> (by column). The two arguments should
+	  be of the same type (both series or both column vectors). It
+	  is generally expected (though not required) that the
+	  arguments will be discrete-valued, with fewer distinct
+	  values than observations. Otherwise the cross-tabulation may
+	  be very large and not very informative.
 	</para>
 	<para>
 	  <seelist>
             <fncref targ="values"/>
+	    <fncref targ="corresp"/>
 	  </seelist>
 	</para>
       </description>
