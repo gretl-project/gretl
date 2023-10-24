@@ -3334,8 +3334,8 @@
       </fnargs>
       <description>
 	<para>
-	  On the basis of a cross-tabulation of <argname>x</argname>
-	  and <argname>y</argname>, returns an integer code
+	  On the basis of a cross-tabulation of <argname>a</argname>
+	  and <argname>b</argname>, returns an integer code
 	  indicating the sort of correspondence between the two
 	  variables, as follows.
 	</para>
