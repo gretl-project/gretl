@@ -3349,17 +3349,16 @@
 	    <para>
 	      Code = 1: there’s a 1-to-n relationship
 	      (<argname>a</argname> <quote>nests</quote>
-	      <argname>b</argname>, <argname>a</argname> is a
-	      function of <argname>b</argname> in the mathematical
-	      sense).
+	      <argname>b</argname>, can be interpreted as a function
+	      of <argname>b</argname> in the mathematical sense).
 	    </para>
 	  </li>
 	  <li>
 	    <para>
 	      Code = &minus;1: there’s an n-to-1 relationship
 	      (<argname>b</argname> <quote>nests</quote>
-	      <argname>a</argname>, <argname>b</argname> is a
-	      function of <argname>a</argname>).
+	      <argname>a</argname>, can be interpreted as a function
+	      of <argname>a</argname>).
 	    </para>
 	  </li>
 	  <li>
