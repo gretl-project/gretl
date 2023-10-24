@@ -14184,7 +14184,7 @@ void gretl_matrix_array_free (gretl_matrix **A, int n)
 static gretl_matrix *
 real_gretl_matrix_values (const double *x, int n,
 			  gretlopt opt, int *n_vals,
-			  int *err)
+			  int *missvals, int *err)
 {
     gretl_matrix *v = NULL;
     double *sorted = NULL;
@@ -14210,12 +14210,15 @@ real_gretl_matrix_values (const double *x, int n,
 	    v = gretl_null_matrix_new();
 	}
 	goto bailout;
+    } else if (missvals != NULL) {
+	*missvals = n - k;
     }
 
     qsort(sorted, k, sizeof *sorted, gretl_compare_doubles);
     m = count_distinct_values(sorted, k);
 
     if (n_vals != NULL) {
+	/* the caller just wants the count */
 	*n_vals = m;
 	goto bailout;
     }
@@ -14229,8 +14232,7 @@ real_gretl_matrix_values (const double *x, int n,
     if (opt & OPT_S) {
         /* sorted */
         v->val[0] = last = sorted[0];
-        m = 1;
-        for (i=1; i<k; i++) {
+        for (i=1, m=1; i<k; i++) {
             if (sorted[i] != last) {
                 last = sorted[i];
                 v->val[m++] = sorted[i];
@@ -14240,8 +14242,7 @@ real_gretl_matrix_values (const double *x, int n,
         /* unsorted */
         int j, add;
 
-        m = 0;
-        for (i=0; i<n; i++) {
+        for (i=0, m=0; i<n; i++) {
             if (!na(x[i])) {
                 add = 1;
                 for (j=0; j<m; j++) {
@@ -14280,7 +14281,28 @@ real_gretl_matrix_values (const double *x, int n,
 gretl_matrix *gretl_matrix_values (const double *x, int n,
                                    gretlopt opt, int *err)
 {
-    return real_gretl_matrix_values(x, n, opt, NULL, err);
+    return real_gretl_matrix_values(x, n, opt, NULL, NULL, err);
+}
+
+/**
+ * gretl_matrix_values_full:
+ * @x: array to process.
+ * @n: length of array.
+ * @opt: if OPT_S the array of values will be sorted, otherwise
+ * given in order of occurrence.
+ * @missvals: location to receive count of missing values.
+ * @err: location to receive error code.
+ *
+ * Returns: an allocated matrix containing the distinct
+ * values in array @x, skipping any missing values, or
+ * NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_values_full (const double *x, int n,
+					gretlopt opt, int *missvals,
+					int *err)
+{
+    return real_gretl_matrix_values(x, n, opt, NULL, missvals, err);
 }
 
 /**
@@ -14297,7 +14319,7 @@ int gretl_matrix_n_values (const double *x, int n, int *err)
 {
     int n_vals = 0;
 
-    real_gretl_matrix_values(x, n, OPT_NONE, &n_vals, err);
+    real_gretl_matrix_values(x, n, OPT_NONE, &n_vals, NULL, err);
 
     return n_vals;
 }
@@ -14693,19 +14715,31 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
     return P;
 }
 
-#define complete_obs(x,y,t) (!na(x[t]) && !na(y[t]))
+#define complete_obs(x,y,i) (!na(x[i]) && !na(y[i]))
 
-static int ok_xy_count (int t1, int t2, const double *x, const double *y)
+static int ok_xy_count (const double *x,
+			const double *y,
+			int n, int *err)
 {
-    int t, n = 0;
+    int i, n_ok = 0;
 
-    for (t=t1; t<=t2; t++) {
-        if (complete_obs(x, y, t)) {
-            n++;
+    for (i=0; i<n; i++) {
+        if (complete_obs(x, y, i)) {
+	    n_ok++;
+#if 0 /* do we want this restriction? */
+	    if (x[i] != floor(x[i]) || y[i] != floor(y[i])) {
+		*err = E_INVARG;
+		break;
+	    }
+#endif
         }
     }
 
-    return n;
+    if (!*err && n_ok < 2) {
+	*err = E_TOOFEW;
+    }
+
+    return n_ok;
 }
 
 static void make_matrix_xtab (double **X, int n,
@@ -14713,7 +14747,8 @@ static void make_matrix_xtab (double **X, int n,
                               const gretl_matrix *vy,
                               gretl_matrix *tab)
 {
-    int xr, xc, rndx, cndx;
+    double xr, xc;
+    int rndx, cndx;
     int counter, i;
 
     qsort(X, n, sizeof *X, compare_xtab_rows);
@@ -14721,13 +14756,13 @@ static void make_matrix_xtab (double **X, int n,
     /* compute frequencies by going through sorted X */
 
     counter = rndx = cndx = 0;
-    xr = (int) vx->val[0];
-    xc = (int) vy->val[0];
+    xr = vx->val[0];
+    xc = vy->val[0];
 
     for (i=0; i<n; i++) {
         while (X[i][0] > xr) {
             /* skip row */
-            gretl_matrix_set(tab, rndx, cndx, counter);
+            gretl_matrix_set(tab, rndx, cndx, (double) counter);
             counter = 0;
             xr = vx->val[++rndx];
             cndx = 0;
@@ -14735,177 +14770,107 @@ static void make_matrix_xtab (double **X, int n,
         }
         while (X[i][1] > xc) {
             /* skip column */
-            gretl_matrix_set(tab, rndx, cndx, counter);
+            gretl_matrix_set(tab, rndx, cndx, (double) counter);
             counter = 0;
             xc = vy->val[++cndx];
         }
         counter++;
     }
-    gretl_matrix_set(tab, rndx, cndx, counter);
-}
 
-/**
- * matrix_matrix_xtab:
- * @x: data vector
- * @y: data vector
- * @err: error code
- *
- * Computes the cross tabulation of the values contained in the
- * vectors x (by row) and y (by column). These must be integer values.
- *
- * Returns: the generated matrix, or NULL on failure.
- */
-
-gretl_matrix *matrix_matrix_xtab (const gretl_matrix *x,
-                                  const gretl_matrix *y,
-                                  int *err)
-{
-    gretl_matrix *tab = NULL;
-    gretl_matrix *vx = NULL;
-    gretl_matrix *vy = NULL;
-    double **X = NULL;
-    int i, nx, ny;
-
-    *err = 0;
-
-    nx = gretl_vector_get_length(x);
-    ny = gretl_vector_get_length(y);
-
-    if (nx < 2 || ny != nx) {
-        *err = E_NONCONF;
-        return NULL;
-    }
-
-    vx = gretl_matrix_values(x->val, nx, OPT_S, err);
-    if (*err) {
-        return NULL;
-    }
-
-    vy = gretl_matrix_values(y->val, ny, OPT_S, err);
-    if (*err) {
-        goto bailout;
-    }
-
-    tab = gretl_zero_matrix_new(vx->rows, vy->rows);
-    if (tab == NULL) {
-        *err = E_ALLOC;
-        goto bailout;
-    }
-
-    X = doubles_array_new(nx, 2);
-    if (X == NULL) {
-        *err = E_ALLOC;
-        goto bailout;
-    }
-
-    for (i=0; i<nx; i++) {
-        X[i][0] = (int) x->val[i];
-        X[i][1] = (int) y->val[i];
-    }
-
-    make_matrix_xtab(X, nx, vx, vy, tab);
-
- bailout:
-
-    gretl_matrix_free(vx);
-    gretl_matrix_free(vy);
-    doubles_array_free(X, nx);
-
-    return tab;
+    gretl_matrix_set(tab, rndx, cndx, (double) counter);
 }
 
 /**
  * gretl_matrix_xtab:
- * @x: data vector
- * @y: data vector
- * @t1: start
- * @t2: end
- * @err: error code
+ * @x: data array.
+ * @y: data array.
+ * @n: length of the two arrays.
+ * @err: location to receive error code.
  *
  * Computes the cross tabulation of the values contained in the
- * vectors x (by row) and y (by column). These must be integer values.
+ * arrays @x (by row) and @y (by column). These should generally
+ * be discrete values otherwise the cross-tabulation may be
+ * very large and uninformative.
  *
  * Returns: the generated matrix, or NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
-                                 const double *y, int *err)
+gretl_matrix *gretl_matrix_xtab (const double *x,
+                                 const double *y,
+				 int n, int *err)
 {
     gretl_matrix *tab = NULL;
     gretl_matrix *vx = NULL;
     gretl_matrix *vy = NULL;
-    double *tmp = NULL;
-    double **X = NULL;
-    int i, t, nmax = t2 - t1 + 1;
+    int complete;
+    int i, j, n_ok;
 
     *err = 0;
 
-    nmax = ok_xy_count(t1, t2, x, y);
-    if (nmax < 2) {
-        *err = E_MISSDATA;
-        return NULL;
-    }
-
-    tmp = malloc(nmax * sizeof *tmp);
-    if (tmp == NULL) {
-        *err = E_ALLOC;
-        return NULL;
-    }
-
-    i = 0;
-    for (t=t1; t<=t2; t++) {
-        if (complete_obs(x, y, t)) {
-            tmp[i++] = x[t];
-        }
-    }
-
-    vx = gretl_matrix_values(tmp, nmax, OPT_S, err);
+    n_ok = ok_xy_count(x, y, n, err);
     if (*err) {
-        free(tmp);
         return NULL;
     }
 
-    i = 0;
-    for (t=t1; t<=t2; t++) {
-        if (complete_obs(x, y, t)) {
-            tmp[i++] = y[t];
+    complete = (n_ok == n);
+
+    if (complete) {
+	/* no need to dodge missing values */
+	vx = gretl_matrix_values(x, n, OPT_S, err);
+	if (!*err) {
+	    vy = gretl_matrix_values(y, n, OPT_S, err);
+	}
+    } else {
+	double *tmp = malloc(2 * n_ok * sizeof *tmp);
+	double *okx, *oky;
+
+	if (tmp == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    okx = tmp;
+	    oky = tmp + n_ok;
+	    for (i=0, j=0; i<n; i++) {
+		if (complete_obs(x, y, i)) {
+		    okx[j] = x[i];
+		    oky[j] = y[i];
+		    j++;
+		}
+	    }
+	    vx = gretl_matrix_values(okx, n_ok, OPT_S, err);
+	    if (!*err) {
+		vy = gretl_matrix_values(oky, n_ok, OPT_S, err);
+	    }
+	    free(tmp);
+	}
+    }
+
+    if (!*err) {
+	tab = gretl_zero_matrix_new(vx->rows, vy->rows);
+	if (tab == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	double **X = doubles_array_new(n_ok, 2);
+
+	if (X == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    for (i=0, j=0; i<n; i++) {
+		if (complete || complete_obs(x, y, i)) {
+		    X[j][0] = x[i];
+		    X[j][1] = y[i];
+		    j++;
+		}
+	    }
         }
+	make_matrix_xtab(X, n_ok, vx, vy, tab);
+	doubles_array_free(X, n_ok);
     }
 
-    vy = gretl_matrix_values(tmp, nmax, OPT_S, err);
-    if (*err) {
-        goto bailout;
-    }
-
-    tab = gretl_zero_matrix_new(vx->rows, vy->rows);
-    if (tab == NULL) {
-        *err = E_ALLOC;
-        goto bailout;
-    }
-
-    X = doubles_array_new(nmax, 2);
-    if (X == NULL) {
-        *err = E_ALLOC;
-        goto bailout;
-    }
-
-    i = 0;
-    for (t=t1; t<=t2; t++) {
-        if (complete_obs(x, y, t)) {
-            X[i][0] = (int) x[t];
-            X[i][1] = (int) y[t];
-            i++;
-        }
-    }
-
-    make_matrix_xtab(X, nmax, vx, vy, tab);
-
- bailout:
-
-    free(tmp);
     gretl_matrix_free(vx);
     gretl_matrix_free(vy);
-    doubles_array_free(X, nmax);
 
     return tab;
 }

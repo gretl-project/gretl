@@ -860,6 +860,10 @@ void gretl_matrix_array_free (gretl_matrix **A, int n);
 gretl_matrix *gretl_matrix_values (const double *x, int n,
 				   gretlopt opt, int *err);
 
+gretl_matrix *gretl_matrix_values_full (const double *x, int n,
+					gretlopt opt, int *missvals,
+					int *err);
+
 int gretl_matrix_n_values (const double *x, int n, int *err);
 
 gretl_matrix *gretl_matrix_shape (const gretl_matrix *A,
@@ -882,12 +886,9 @@ double gretl_matrix_global_sum (const gretl_matrix *A,
 gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
 				gretlopt opt, int *err);
 
-gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
-				 const double *y, int *err);
-
-gretl_matrix *matrix_matrix_xtab (const gretl_matrix *x,
-				  const gretl_matrix *y,
-				  int *err);
+gretl_matrix *gretl_matrix_xtab (const double *x,
+				 const double *y,
+				 int n, int *err);
 
 gretl_matrix *gretl_matrix_bool_sel(const gretl_matrix *A,
 				    const gretl_matrix *sel,

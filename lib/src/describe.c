@@ -2356,6 +2356,77 @@ gretl_matrix *freqdist_matrix (const double *x, int t1, int t2, int *err)
     return m;
 }
 
+static inline double alt_mget (const gretl_matrix *m,
+			       int i, int j, int tr)
+{
+    return tr ? m->val[i*m->rows+j] : m->val[j*m->rows+i];
+}
+
+static int corresp_status (const gretl_matrix *H, int tr)
+{
+    int dim1 = tr ? H->rows : H->cols;
+    int dim2 = tr ? H->cols : H->rows;
+    int sum1, max1 = 0;
+    int sum2, max2 = 0;
+    int i, j;
+    int ret = 0;
+
+    /* find the max sum in dimension 1 */
+    for (j=0; j<dim1 && max1 < 2; j++) {
+	sum1 = 0;
+	for (i=0; i<dim2 && sum1 < 2; i++) {
+	    sum1 += alt_mget(H, i, j, tr) > 0;
+	}
+	if (sum1 > max1) {
+	    max1 = sum1;
+	}
+    }
+    if (max1 == 1) {
+	ret = tr ? -1 : 1;
+	/* find the max sum in dimension 2 */
+	for (i=0; i<dim2 && max2 < 2; i++) {
+	    sum2 = 0;
+	    for (j=0; j<dim1 && sum2 < 2; j++) {
+		sum2 += alt_mget(H, i, j, tr) > 0;
+	    }
+	    if (sum2 > max2) {
+		max2 = sum2;
+	    }
+	}
+	if (max2 == 1) {
+	    ret = 2;
+	}
+    }
+
+    return ret;
+}
+
+int correspondence (const double *x, const double *y,
+		    int n, int *err)
+{
+    gretl_matrix *H = NULL;
+    int status = 0;
+
+    /* status: 2 means 1-to-1 x:y relationship
+               1 means 1-to-n x:y relationship
+	      -1 means n-to-1 x:y relationship
+	       0 means no relationship
+    */
+
+    H = gretl_matrix_xtab(x, y, n, err);
+
+    if (!*err) {
+	status = corresp_status(H, 0);
+	if (status == 0) {
+	    status = corresp_status(H, 1);
+	}
+    }
+
+    gretl_matrix_free(H);
+
+    return status;
+}
+
 gretl_matrix *xtab_to_matrix (const Xtab *tab)
 {
     gretl_matrix *m;
@@ -2564,15 +2635,13 @@ int compare_xtab_rows (const void *a, const void *b)
 {
     const double **da = (const double **) a;
     const double **db = (const double **) b;
-    int ret;
-
-    ret = da[0][0] - db[0][0];
+    double ret = da[0][0] - db[0][0];
 
     if (ret == 0) {
 	ret = da[0][1] - db[0][1];
     }
 
-    return ret;
+    return ret < 0 ? -1 : ret > 0 ? 1: 0;
 }
 
 static int xtab_get_data (Xtab *tab, int v, int j,

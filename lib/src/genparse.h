@@ -400,6 +400,7 @@ enum {
     F_MEANC,
     F_MEANR,
     F_ASORT,
+    F_CORRESP,
     HF_GLASSO,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,
