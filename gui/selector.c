@@ -6579,7 +6579,7 @@ static int regls_int_default (const char *key)
         return 25;
     } else if (!strcmp(key, "nfolds")) {
         return 10;
-    } else if (!strcmp(key, "randfolds")) {
+    } else if (!strcmp(key, "contiguous")) {
         return 1;
     } else if (!strcmp(key, "crit_plot")) {
         return 1;
@@ -6625,9 +6625,9 @@ static GtkWidget *cross_validation_options (selector *sr,
     w = gtk_label_new(_("type:"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     sr->extra[ids[1]] = w = gtk_combo_box_text_new();
-    combo_box_append_text(w, _("random"));
     combo_box_append_text(w, _("contiguous"));
-    gtk_combo_box_set_active(GTK_COMBO_BOX(w), randfolds? 0 : 1);
+    combo_box_append_text(w, _("random"));
+    gtk_combo_box_set_active(GTK_COMBO_BOX(w), randfolds? 1 : 0);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 
     return hbox;
