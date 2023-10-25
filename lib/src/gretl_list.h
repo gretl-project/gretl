@@ -68,6 +68,10 @@ char *gretl_list_to_string (const int *list,
 			    const DATASET *dset,
 			    int *err);
 
+char *gretl_list_to_compact_string (const int *list,
+				    const DATASET *dset,
+				    int *err);
+
 gretl_matrix *gretl_list_to_vector (const int *list, int *err);
 
 char *gretl_list_to_lags_string (const int *list, int *err);

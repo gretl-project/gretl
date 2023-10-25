@@ -801,6 +801,152 @@ char *gretl_list_to_string (const int *list,
     return buf;
 }
 
+static int get_excluded_id (const int *list, int n)
+{
+    int i;
+
+    for (i=1; i<n; i++) {
+	if (!in_gretl_list(list, i)) {
+	    return i;
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * gretl_list_to_compact_string:
+ * @list: array of integers.
+ * @dset: pointer to dataset.
+ * @err: location to receive error code.
+ *
+ * Designed to produce a reasonably compact string representation
+ * of the @list argument. If the list is short enough the task is
+ * handed off to gretl_list_to_string(). Otherwise we try to use
+ * either the "dataset" macro, or the ".." notation for a list of
+ * contiguous series IDs. The fallback for a large list, if these
+ * tactics do not seem applicable, is to compose a string holding
+ * the series ID numbers.
+ *
+ * Returns: allocated string representation of @list, or NULL
+ * on error.
+ */
+
+char *gretl_list_to_compact_string (const int *list,
+				    const DATASET *dset,
+				    int *err)
+{
+    char *buf = NULL;
+    int *mylist = NULL;
+    int buflen;
+    int nv = 0;      /* number of 'real' series */
+    int v0 = -1;     /* first non-zero series ID */
+    int vn = -1;     /* last non-zero series ID */
+    int contig = 1;  /* contiguity flag */
+    int vprev = -1;  /* ID of previous series */
+    int idmax = 0;   /* greatest series ID */
+    int cpos = 0;    /* position of constant */
+    int i, vi;
+
+    if (list == NULL) {
+	*err = E_DATA;
+	return NULL;
+    } else if (list[0] == 0) {
+	/* empty list */
+	return gretl_strdup("");
+    } else if (list[0] <= 6) {
+	/* short list: don't bother with the fancy stuff */
+	return gretl_list_to_string(list, dset, err);
+    }
+
+    /* analyse the incoming list */
+    for (i=1; i<=list[0]; i++) {
+	vi = list[i];
+	if (vi == LISTSEP) {
+	    gretl_errmsg_set("Invalid list element");
+	    *err = E_INVARG;
+	    return NULL;
+	} else if (vi == 0) {
+	    /* record the const position, if present */
+	    cpos = i;
+	} else {
+	    if (v0 < 0) {
+		/* record the first "real" series */
+		v0 = vi;
+	    }
+	    if (vi > idmax) {
+		/* highest-numbered series in list */
+		idmax = vi;
+	    }
+	    if (contig && vprev > 0 && vi != vprev + 1) {
+		/* list is not contiguous */
+		contig = 0;
+	    }
+	    vprev = vi;
+	}
+    }
+
+    if (cpos > 0) {
+	/* delete the constant */
+	mylist = gretl_list_copy(list);
+	gretl_list_delete_at_pos(mylist, cpos);
+    } else {
+	mylist = (int *) list;
+    }
+
+    nv = mylist[0];
+    vn = mylist[nv];
+
+    if (nv >= dset->v - 2) {
+	/* an almost-complete list: use the "dataset" macro,
+	   maybe with const prepended and/or one exclusion
+	*/
+	if (nv == dset->v - 1) {
+	    /* no "real" series excluded */
+	    buflen = 6 * (cpos > 0) + 9;
+	    buf = calloc(buflen, 1);
+	    sprintf(buf, " %sdataset", cpos > 0 ? "const " : "");
+	} else {
+	    /* one "real" series excluded */
+	    int vx = get_excluded_id(mylist, dset->v);
+	    const char *sx = dset->varname[vx];
+
+	    buflen = 12 + 6 * (cpos > 0) + strlen(sx);
+	    buf = calloc(buflen, 1);
+	    sprintf(buf, " %sdataset - %s", cpos > 0 ? "const " : "", sx);
+	}
+    } else if (contig) {
+	/* use ".." notation for contiguous series IDs from
+	   @v0 to @vn, possibly with const prepended
+	*/
+	const char *s0 = dset->varname[v0];
+	const char *sn = dset->varname[vn];
+
+	buflen = 4 + 6 * (cpos > 0) + strlen(s0) + strlen(sn);
+	buf = calloc(buflen, 1);
+	sprintf(buf, " %s%s..%s", cpos > 0 ? "const " : "", s0, sn);
+    } else {
+	/* use straight numeric IDs */
+	int numlen = (int) floor(log10((double) idmax));
+	char tmp[16];
+
+	buflen = 2 + 2 * (cpos > 0) + nv * (2 + numlen);
+	buf = calloc(buflen, 1);
+	sprintf(buf, " %s", cpos > 0 ? "0 " : "");
+	for (i=1; i<=mylist[0]; i++) {
+	    sprintf(tmp, "%d ", mylist[i]);
+	    strcat(buf, tmp);
+	}
+	g_strchomp(buf);
+    }
+
+    if (mylist != list) {
+	free(mylist);
+    }
+
+    return buf;
+}
+
 /**
  * gretl_list_to_vector:
  * @list: array of integers.
