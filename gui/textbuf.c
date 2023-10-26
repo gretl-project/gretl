@@ -2490,7 +2490,7 @@ static void cmdref_index_page (windata_t *hwin, GtkTextBuffer *tbuf)
     while (*s) {
 	if (*s == '\n' && *(s+1) == '#' && *(s+2) != '\0') {
 	    if (sscanf(s + 2, "%8s", word)) {
-		idx = gretl_command_number(word);
+		idx = gretl_help_index(word);
 		insert_link(tbuf, &iter, word, idx, NULL);
 		if (++llen == llen_max) {
 		    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
@@ -4422,7 +4422,7 @@ static int get_code_skip (const char *s)
 
 static int command_word_index (char *s)
 {
-    int i = gretl_command_number(s);
+    int i = gretl_help_index(s);
 
     if (i == 0) {
 	i = extra_command_number(s);
