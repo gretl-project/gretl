@@ -451,7 +451,7 @@ static GtkTreeStore *make_help_topics_tree (int role)
 		    idx = gretl_help_index(word);
 		}
 #if HDEBUG
-		fprintf(stderr, " %s: pos %d, idx, %d\n", word, pos+1, idx);
+		fprintf(stderr, " %s: pos %d, idx %d\n", word, pos+1, idx);
 #endif
 		gtk_tree_store_set(store, &iter,
 				   STRING_COL, word,
@@ -1399,8 +1399,7 @@ static windata_t *real_do_help (int idx, int pos, int role)
 
 #if HDEBUG
     fprintf(stderr, "real_do_help: doing set_help_topic_buffer:\n"
-	    " hwin=%p, hcode=%d, pos=%d, role=%d\n",
-	    (void *) hwin, hcode, pos, role);
+	    " hwin=%p, pos=%d, role=%d\n", (void *) hwin, pos, role);
 #endif
 
     if (hwin != NULL) {
