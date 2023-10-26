@@ -3666,10 +3666,10 @@ static void try_for_mpi_errmsg (PRN *prn)
 int foreign_execute (const DATASET *dset,
                      gretlopt opt, PRN *prn)
 {
-#ifdef MPI_REALTIME
+#if defined(MPI_REALTIME)
     static struct iodata io;
     void *ptr = &io;
-#else
+#elif defined(HAVE_MPI) && !defined(G_OS_WIN32)
     void *ptr = NULL;
 #endif
     int i, err = 0;
