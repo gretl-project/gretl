@@ -258,6 +258,12 @@ int gretl_command_number (const char *s)
     return ret;
 }
 
+/* Note on gretl_help_index() as of 2023-10-26: the special treatment
+   of "tsplots" here is kind of a nasty hack (to allow this alias for
+   "scatters" to have its own help text). It will need rethinking if
+   we ever add another such alias for any command.
+*/
+
 int gretl_help_index (const char *s)
 {
     int ret = gretl_command_number(s);
