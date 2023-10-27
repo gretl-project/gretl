@@ -1037,6 +1037,8 @@ static double simple_slen (int n, int *pndelta, double *b, double *X, double *t,
     return steplen;
 }
 
+#define GRADCHECK 0
+
 static int BFGS_orig (double *b, int n, int maxit, double reltol,
                       int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc,
                       int crittype, BFGS_GRAD_FUNC gradfunc, void *data,
@@ -1050,6 +1052,9 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     int fcount, gcount, ndelta = 0;
     int show_activity = 0;
     double sumgrad, gradmax, gradnorm = 0.0;
+#if GRADCHECK
+    double L1;
+#endif
     double fmax, f, f0, s, steplen = 0.0;
     double fdiff, D1, D2;
     int i, j, ilast, iter, done = 0;
@@ -1145,6 +1150,9 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
         }
 
         gradnorm = sumgrad = 0.0;
+#if GRADCHECK
+	L1 = 0.0;
+#endif
 
         for (i=0; i<n; i++) {
             s = 0.0;
@@ -1157,6 +1165,9 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
             t[i] = s;
             sumgrad += s * g[i];
             gradnorm += fabs(b[i] * g[i]);
+#if GRADCHECK
+	    L1 += fabs(g[i]);
+#endif
         }
 
         gradnorm = sqrt(gradnorm / n);
@@ -1164,9 +1175,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 #if BFGS_DEBUG
         fprintf(stderr, "\niter %d: sumgrad=%g, gradnorm=%g\n",
                 iter, sumgrad, gradnorm);
-#endif
-
-#if BFGS_DEBUG > 1
+# if BFGS_DEBUG > 1
         fprintf(stderr, "H = \n");
         for (i=0; i<n; i++) {
             for (j=0; j<=i; j++) {
@@ -1174,6 +1183,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
             }
             fputc('\n', stderr);
         }
+# endif
 #endif
         if (sumgrad > 0.0) {
             /* heading in the right direction (uphill) */
@@ -1216,9 +1226,6 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
                     c[i] -= g[i];
                     D1 += t[i] * c[i];
                 }
-#if BFGS_DEBUG
-                fprintf(stderr, "D1 = %g\n", D1);
-#endif
                 if (D1 > 0.0) {
                     D2 = 0.0;
                     for (i=0; i<n; i++) {
@@ -1238,9 +1245,6 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
                             H[i][j] += (D2 * t[i]*t[j] - X[i]*t[j] - t[i]*X[j]) / D1;
                         }
                     }
-#if BFGS_DEBUG
-                    fprintf(stderr, "D2 = %g\n", D2);
-#endif
                 } else {
                     /* D1 <= 0.0 */
                     ilast = gcount;
@@ -1250,9 +1254,6 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
                 ilast = gcount;
             }
         } else if (sumgrad == 0.0) {
-#if 0
-            fprintf(stderr, "gradient is exactly zero!\n");
-#endif
             break;
         } else {
             /* heading in the wrong direction */
@@ -1290,6 +1291,9 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     fprintf(stderr, "terminated: fmax=%g, ndelta=%d, ilast=%d, gcount=%d\n",
             fmax, ndelta, ilast, gcount);
     fprintf(stderr, "gradnorm = %g, vs gradmax = %g\n", gradnorm, gradmax);
+#endif
+#if GRADCHECK
+    fprintf(stderr, "gradnorm = %g, L1 = %g, L1/n = %g\n", gradnorm, L1, L1/n);
 #endif
 
     if (iter >= maxit) {
