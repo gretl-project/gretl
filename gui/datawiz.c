@@ -144,13 +144,13 @@ static const char *wizcode_string (int code)
 static int translate_panel_vars (dw_opts *opts, int *uv, int *tv);
 static int usable_panel_start_year (const DATASET *dset);
 
-void set_panel_dims (DATASET *dwinfo, int d1, int d2)
+static void set_panel_dims (DATASET *dwinfo, int d1, int d2)
 {
     dwinfo->t1 = d1;
     dwinfo->t2 = d2;
 }
 
-void get_panel_dims (DATASET *dwinfo, int *d1, int *d2)
+static void get_panel_dims (DATASET *dwinfo, int *d1, int *d2)
 {
     if (d1 != NULL) {
 	*d1 = dwinfo->t1;
@@ -161,7 +161,7 @@ void get_panel_dims (DATASET *dwinfo, int *d1, int *d2)
 }
 
 /* Initialize the "dummy" DATASET structure @dwinfo, based
-   on the current data info. This will just be a cross-section
+   on the current dataset. This will just be a cross-section
    unless the user has decided to modify an already-structured
    dataset under /Data/Dataset structure.
 */
@@ -170,8 +170,9 @@ static void dwinfo_init (DATASET *dwinfo)
 {
     dwinfo->pd = dataset->pd;
     dwinfo->structure = dataset->structure;
-
     dwinfo->n = dataset->n;
+    dwinfo->t1 = dwinfo->t2 = 0;
+
     strcpy(dwinfo->stobs, dataset->stobs);
     strcpy(dwinfo->endobs, dataset->endobs);
     dwinfo->sd0 = dataset->sd0;
@@ -1840,7 +1841,12 @@ static void add_panel_stack_comment (GtkWidget *vbox, int i)
     GtkWidget *lbl = gtk_label_new(NULL);
 
     if (i == 2) {
-	gtk_label_set_text(GTK_LABEL(lbl), _("Please see Help for guidance."));
+	gchar *buf;
+
+	buf = g_markup_printf_escaped("<span weight=\"bold\">%s</span>",
+				      _("Click on Help for guidance."));
+	gtk_label_set_markup(GTK_LABEL(lbl), buf);
+	g_free(buf);
     } else {
 	gchar *s = g_strdup_printf(_("Found %d time series."), dataset->v - 1);
 
@@ -1998,7 +2004,6 @@ static void set_up_dw_opts (dw_opts *opts, int step,
     opts->tsspin = NULL;
     opts->entry = NULL;
     opts->n_radios = 0;
-    opts->vname[0] = '\0';
 
     opts->deflt = dwiz_radio_default(dwinfo, step);
 
@@ -2008,6 +2013,7 @@ static void set_up_dw_opts (dw_opts *opts, int step,
         } else {
             opts->n_radios = 3;
         }
+	opts->vname[0] = '\0';
         opts->setvar = &dwinfo->structure;
     } else if (step == DW_TS_FREQUENCY) {
         opts->n_radios = TS_INFO_MAX;
@@ -2249,7 +2255,7 @@ static void dwiz_varname_entry (dw_opts *opts,
     GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
     GtkWidget *label = gtk_label_new(NULL);
     GtkWidget *entry = gtk_entry_new();
-    int nblocks = dwinfo->t1;
+    int nblocks = 1;
     gchar *msg;
 
     opts->entry = entry;
@@ -2261,12 +2267,17 @@ static void dwiz_varname_entry (dw_opts *opts,
     gtk_widget_show_all(hbox);
 
     hbox = gtk_hbox_new(FALSE, 5);
-    gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN-1);
+    gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN-4);
     gtk_entry_set_width_chars(GTK_ENTRY(entry), 24);
+    if (opts->vname[0]) {
+	gtk_entry_set_text(GTK_ENTRY(entry), opts->vname);
+    }
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_widget_show_all(hbox);
+
+    get_panel_dims(dwinfo, &nblocks, NULL);
 
     if (nblocks > 1) {
 	label = gtk_label_new(NULL);
@@ -2403,6 +2414,10 @@ static int dwiz_compute_step (int prevstep, int direction, DATASET *dwinfo,
                 step = DW_SET_TYPE;
             }
         }
+    }
+
+    if (direction == DW_BACK && step == DW_SET_TYPE) {
+	dwinfo_init(dwinfo); /* reinitialize */
     }
 
 #if DWDEBUG
@@ -2740,18 +2755,25 @@ static void dwiz_page_add_title (GtkWidget *vbox, int i, int smax)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 }
 
+static void dw_opts_init (dw_opts *opts)
+{
+    opts->vlist = NULL;
+    opts->uid = opts->tid = 0;
+    opts->unames_id = 0;
+    opts->ptinfo = NULL;
+    opts->vname[0] = '\0';
+}
+
 static dw_opts *dw_opts_new (int create)
 {
     dw_opts *opts = mymalloc(sizeof *opts);
-    int i;
 
     if (opts != NULL) {
         opts->flags = (create)? DW_CREATE : 0;
-        opts->vlist = NULL;
-        opts->uid = opts->tid = 0;
-        opts->unames_id = 0;
-        opts->ptinfo = NULL;
-        if (create) {
+	dw_opts_init(opts);
+	if (create) {
+	    int i;
+
             for (i=0; i<4; i++) {
                 opts->dvals[i] = 0;
             }

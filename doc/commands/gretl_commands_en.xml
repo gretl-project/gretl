@@ -11145,27 +11145,27 @@
 
     <description>
       <para>
-	This dialog offers up to four options for defining a data set
+	This dialog offers up to four options for defining a dataset
 	as a panel.  The first two options require that the data set
 	is already organized in a panel format (although this may not
 	yet be recognized by gretl).  The third option requires that
-	the data set contains variables that represent the panel
+	the dataset contains variables that represent the panel
 	structure, and the fourth requires that the dataset has a
 	time series structure.
       </para>
       <para>
 	<emphasis>Stacked time series</emphasis>: Let there be
-	<repl>N</repl> cross-sectional units in the data set, and let
+	<repl>N</repl> cross-sectional units in the dataset, and let
 	<repl>T</repl> = the number of time-series observations per
 	unit.  By selecting this option you are telling gretl that the
-	data set is currently composed of <repl>N</repl> consecutive
+	dataset is currently composed of <repl>N</repl> consecutive
 	blocks of <repl>T</repl> time-series observations, one for
 	each cross-sectional unit.  The next step will be to specify
 	the value of <repl>N</repl>.
       </para>
       <para>
 	<emphasis>Stacked cross sections</emphasis>: You are telling
-	gretl that the data set is currently composed of
+	gretl that the dataset is currently composed of
 	<repl>T</repl> consecutive blocks of <repl>N</repl>
 	cross-sectional observations, one for each time period. The
 	next step, again, will be to specify the value of
@@ -11173,13 +11173,13 @@
       </para>
       <para>
 	If the total number of observations in the current dataset is
-	prime, the above options are not available.
+	prime, the two options mentioned above are not available.
       </para>
       <para>
-	<emphasis>Use index variables</emphasis>: You are saying that
-	the data set is currently organized any old way (it doesn't
-	matter how), but that it contains two variables that index the
-	cross-sectional units and the time periods respectively.  The
+	<emphasis>Use index variables</emphasis>: Applicable if the
+	dataset is currently organized any old way (it doesn't matter
+	how), but it contains two variables that index the
+	cross-sectional units and the time periods, respectively.  The
 	next step will be to select those two variables.  Panel index
 	variables must have nothing but non-negative integer values,
 	with no missing values.  If there are no such variables in the
@@ -11187,13 +11187,10 @@
       </para>
       <para>
 	<emphasis>Convert from side-by-side time series</emphasis>:
-	This option makes sense only if the current dataset holds
-	<math>N</math> time series containing values for a
-	<emphasis>common variable</emphasis> for each of
-	<math>N</math> cross-sectional units&mdash;for example, a GDP
-	series for each of seven countries.  In that case you can get
-	gretl to stack the individual time series into a single panel
-	series; you will be asked to supply a name for this series.
+	This option is available only if the current dataset has a
+	time-series structure and contains several variables. If this
+	option is selected, details are provided via the Help button
+	at the next step.
       </para>
     </description>
 
@@ -11229,7 +11226,8 @@
 	There can be as many blocks of series (and hence as many panel
 	series) as you like, provided that each block contains data
 	for the same set of cross-sectional units, given in the same
-	order.
+	order. Otherwise the resulting <quote>panel</quote> dataset
+	will be nonsensical.
       </para>
       <para>
 	As a sanity check, the total number of time series must be
