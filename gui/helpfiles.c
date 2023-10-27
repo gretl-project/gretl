@@ -136,6 +136,7 @@ static struct gui_help_item gui_help_items[] = {
     { VLAGSEL,        "VAR-lagselect" },
     { VAROMIT,        "VAR-omit" },
     { PANEL_MODE,     "panel-mode" },
+    { TS_TO_PANEL,    "ts-to-panel" },
     { PANEL_WLS,      "panel-wls" },
     { PANEL_B,        "panel-between" },
     { BOOTSTRAP,      "bootstrap" },

@@ -422,6 +422,7 @@ int build_stacked_series (double **pstack, int *list,
 			  DATASET *dset);
 
 int panelize_side_by_side_series (DATASET **pdset,
+				  int nseries,
 				  const char *vname);
 
 int dataset_sort_by (DATASET *dset, const int *list, gretlopt opt);

@@ -66,6 +66,7 @@ enum {
     DW_STARTING_OBS,
     DW_PANEL_MODE,
     DW_PANEL_SIZE,
+    DW_PANEL_SIZE_2,
     DW_PANEL_VARS,
     DW_PANEL_VARNAME,
     DW_PANEL_PD,
@@ -82,15 +83,16 @@ enum {
 enum {
     DW_CREATE     = 1 << 0,
     DW_DROPMISS   = 1 << 1,
-    DW_N_PRIME    = 1 << 2,
+    DW_NOBS_PRIME = 1 << 2,
     DW_VLIST_DONE = 1 << 3,
-    DW_NP_DONE    = 1 << 4,
-    DW_NO_PANEL   = 1 << 5,
-    DW_SSHEET     = 1 << 6
+    DW_NOBS_DONE  = 1 << 4,
+    DW_NSER_DONE  = 1 << 5,
+    DW_NO_PANEL   = 1 << 6,
+    DW_SSHEET     = 1 << 7
 };
 
-#define dw_n_is_prime(o) (o->flags & DW_N_PRIME)
-#define dw_vlist_done(o) (o->flags & DW_VLIST_DONE)
+#define dw_nobs_is_prime(o) (o->flags & DW_NOBS_PRIME)
+#define dw_vlist_done(o)    (o->flags & DW_VLIST_DONE)
 
 typedef struct dw_opts_ dw_opts;
 
@@ -99,6 +101,7 @@ struct dw_opts_ {
     int n_radios;        /* number of radio-button options */
     int deflt;           /* default setting for current radio variable */
     int plf;             /* panel: least factor > 1 of # of observations */
+    int plf2;            /* panel: least factor > 1 of # of series */
     int uid;             /* panel: ID number of "unit" variable */
     int tid;             /* panel: ID number of "period" variable */
     int *setvar;         /* pointer to variable currently being set */
@@ -123,6 +126,7 @@ static const char *wizcode_string (int code)
         N_("Starting observation"),
         N_("Panel data organization"),
         N_("Panel structure"),
+	N_("Side-by-side structure"),
         N_("Panel index variables"),
 	N_("Panel series name"),
         N_("Panel time dimension"),
@@ -139,6 +143,22 @@ static const char *wizcode_string (int code)
 
 static int translate_panel_vars (dw_opts *opts, int *uv, int *tv);
 static int usable_panel_start_year (const DATASET *dset);
+
+void set_panel_dims (DATASET *dwinfo, int d1, int d2)
+{
+    dwinfo->t1 = d1;
+    dwinfo->t2 = d2;
+}
+
+void get_panel_dims (DATASET *dwinfo, int *d1, int *d2)
+{
+    if (d1 != NULL) {
+	*d1 = dwinfo->t1;
+    }
+    if (d2 != NULL) {
+	*d2 = dwinfo->t2;
+    }
+}
 
 /* Initialize the "dummy" DATASET structure @dwinfo, based
    on the current data info. This will just be a cross-section
@@ -244,27 +264,40 @@ static int least_factor (int n)
             prime, factor);
 #endif
 
-    return (prime)? 1 : factor;
+    return prime ? 1 : factor;
 }
 
-/* figure out if the dataset contains a prime number of
-   observations */
+/* Figure out if the dataset contains a prime number of observations:
+   if so, this rules one panel-interpretation option.
+*/
 
-static void eval_n_is_prime (dw_opts *opts)
+static void eval_nobs_is_prime (dw_opts *opts)
 {
-    if (opts->flags & DW_NP_DONE) {
+    if (opts->flags & DW_NOBS_DONE) {
         return;
     }
 
     opts->plf = least_factor(dataset->n);
 
     if (opts->plf == 1) {
-        opts->flags |= DW_N_PRIME;
+        opts->flags |= DW_NOBS_PRIME;
     } else {
-        opts->flags &= ~DW_N_PRIME;
+        opts->flags &= ~DW_NOBS_PRIME;
     }
 
-    opts->flags |= DW_NP_DONE;
+    opts->flags |= DW_NOBS_DONE;
+}
+
+/* figure out if the dataset contains a prime number of
+   "real" series
+*/
+
+static void panel_least_factor_2 (dw_opts *opts)
+{
+    if (!(opts->flags & DW_NSER_DONE)) {
+	opts->plf2 = least_factor(dataset->v - 1);
+	opts->flags |= DW_NSER_DONE;
+    }
 }
 
 static void maybe_unrestrict_dataset (void)
@@ -317,7 +350,10 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 
     if (dwinfo->structure == PANEL_SIDE_BY_SIDE) {
 	/* special: turning side-by-side time series into a panel */
-	err = panelize_side_by_side_series(&dataset, opts->vname);
+	int nseries;
+
+	get_panel_dims(dwinfo, &nseries, NULL);
+	err = panelize_side_by_side_series(&dataset, nseries, opts->vname);
 	if (err) {
 	    gui_errmsg(err);
 	} else {
@@ -375,9 +411,9 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 
     /* handle panel structure */
     if (known_panel(dwinfo)) {
-        int N = dwinfo->t1;
-        int T = dataset->n / N;
+	int N, T;
 
+	get_panel_dims(dwinfo, &N, &T);
         /* we don't offer a choice of "starting obs" in the
            cross-sectional dimension */
         dwinfo->pd = (dwinfo->structure == STACKED_TIME_SERIES)? T : N;
@@ -766,10 +802,10 @@ static int dw_nobs (DATASET *dwinfo, dw_opts *opts)
 static void panel_structure_text (GString *gs, DATASET *dwinfo,
                                   dw_opts *opts, int nobs)
 {
-    int N, T;
+    int N, T, panv = 0;
 
     if (dwinfo->structure == PANEL_SIDE_BY_SIDE) {
-	N = dataset->v - 1;
+	get_panel_dims(dwinfo, &panv, &N);
 	T = dataset->n;
     } else if (dwinfo->structure == PANEL_UNKNOWN) {
         N = dwinfo->n;
@@ -790,9 +826,14 @@ static void panel_structure_text (GString *gs, DATASET *dwinfo,
 				     "%d cross-sectional units observed over %d periods"),
 			       _("stacked time series"), N, T);
 	g_string_append(gs, "\n\n");
-	g_string_append_printf(gs, _("Comprises a single series %s, constructed\n"
-				     "by stacking %d individual time series."),
-			       opts->vname, N);
+	if (panv == 1) {
+	    g_string_append_printf(gs, _("Comprises a single series '%s', constructed\n"
+					 "by stacking %d individual time series."),
+				   opts->vname, N);
+	} else {
+	    g_string_append_printf(gs, _("Comprises %d series, each constructed by stacking\n"
+					 "%d individual time series."), panv, N);
+	}
     } else {
 	g_string_append_printf(gs, _("Panel data (%s)\n"
 				     "%d cross-sectional units observed over %d periods"),
@@ -1151,8 +1192,7 @@ static int default_panel_size (dw_opts *opts, DATASET *dwinfo)
         }
     }
 
-    dwinfo->t1 = sz;
-    dwinfo->t2 = dwinfo->n / sz;
+    set_panel_dims(dwinfo, sz, dwinfo->n / sz);
 
     return sz;
 }
@@ -1462,9 +1502,9 @@ static int panel_possible (dw_opts *opts)
         return 0;
     }
 
-    eval_n_is_prime(opts);
+    eval_nobs_is_prime(opts);
 
-    if (opts->flags & DW_N_PRIME) {
+    if (opts->flags & DW_NOBS_PRIME) {
         /* are there feasible index vars? */
         ok = panelvars_list_ok(opts);
     }
@@ -1702,101 +1742,148 @@ static GtkWidget *frequency_spinner (GtkWidget *hbox, DATASET *dwinfo)
     return spin;
 }
 
-/* Panel: callback for setting the number of cross-sectional units, n,
-   and the number of time periods, T, via spin buttons.  We allow the
-   user to vary either n or T, subject to the constraint that n * T
-   equals the total number of observations.
+/* Panel: callback for setting two dimensions, d1 and d2, via spin
+   buttons, subject to the requirement that their product equals a
+   given quantity.
+
+   In the case where the user is just setting a panel interpretation,
+   d1 is the number of cross-sectional units, d2 is the time series
+   length, and the given quantity is the total number of observations.
+
+   In the case of stacking side-by-side time series into a panel, d1
+   is the number of side-by-side blocks (= number of panel series), d2
+   is the size of such blocks (= the number of cross-sectional units),
+   and the given quantity the number of series in the current dataset.
 */
 
 static void dw_set_panel_dims (GtkSpinButton *w, DATASET *dwinfo)
 {
-    int idx = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "idx"));
-    int plf = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "plf"));
-    GtkSpinButton *nspin = NULL, *Tspin = NULL;
-    int oldn = dwinfo->t1;
-    int oldT = dwinfo->t2;
-    int n = 0, T = 0;
+    GtkSpinButton *spin1 = NULL, *spin2 = NULL;
+    int idx = widget_get_int(w, "idx");
+    int plf = widget_get_int(w, "plf");
+    int step = widget_get_int(w, "step");
+    int old_d1, old_d2;
+    int d1 = 0, d2 = 0;
+    int given;
+
+    get_panel_dims(dwinfo, &old_d1, &old_d2);
+
+    if (step == DW_PANEL_SIZE_2) {
+	given = dataset->v - 1;
+    } else {
+	given = dataset->n;
+    }
 
     if (idx == 0) {
-        nspin = w;
-        Tspin = g_object_get_data(G_OBJECT(w), "Tspin");
+        spin1 = w;
+        spin2 = g_object_get_data(G_OBJECT(w), "spin2");
     } else {
-        Tspin = w;
-        nspin = g_object_get_data(G_OBJECT(w), "nspin");
+        spin2 = w;
+        spin1 = g_object_get_data(G_OBJECT(w), "spin1");
     }
 
-    if (nspin != NULL) {
-        n = gtk_spin_button_get_value_as_int(nspin);
+    if (spin1 != NULL) {
+        d1 = gtk_spin_button_get_value_as_int(spin1);
+    }
+    if (spin2 != NULL) {
+        d2 = gtk_spin_button_get_value_as_int(spin2);
     }
 
-    if (Tspin != NULL) {
-        T = gtk_spin_button_get_value_as_int(Tspin);
-    }
+    if (spin1 != NULL && spin2 != NULL) {
+        int dmax = given / plf;
 
-    if (nspin != NULL && Tspin != NULL) {
-        int nTmax = dataset->n / plf;
-
-        if (n != oldn) {
-            if (n > oldn) {
-                while (dataset->n % n && n <= nTmax) {
-                    n++;
+        if (d1 != old_d1) {
+            if (d1 > old_d1) {
+                while (given % d1 && d1 <= dmax) {
+                    d1++;
                 }
-            } else if (n < oldn) {
-                while (dataset->n % n && n >= plf) {
-                    n--;
+            } else if (d1 < old_d1) {
+                while (given % d1 && d1 >= plf) {
+                    d1--;
                 }
             }
-            if (dataset->n % n) {
-                n = oldn;
+            if (given % d1) {
+                d1 = old_d1;
             }
-            T = dataset->n / n;
-        } else if (T != oldT) {
-            if (T > oldT) {
-                while (dataset->n % T && T <= nTmax) {
-                    T++;
+            d2 = given / d1;
+        } else if (d2 != old_d2) {
+            if (d2 > old_d2) {
+                while (given % d2 && d2 <= dmax) {
+                    d2++;
                 }
-            } else if (T < oldT) {
-                while (dataset->n % T && T >= plf) {
-                    T--;
+            } else if (d2 < old_d2) {
+                while (given % d2 && d2 >= plf) {
+                    d2--;
                 }
             }
-            if (dataset->n % T) {
-                T = oldT;
+            if (given % d2) {
+                d2 = old_d2;
             }
-            n = dataset->n / T;
+            d1 = given / d2;
         }
 
-        gtk_spin_button_set_value(nspin, (double) n);
-        gtk_spin_button_set_value(Tspin, (double) T);
+        gtk_spin_button_set_value(spin1, (double) d1);
+        gtk_spin_button_set_value(spin2, (double) d2);
     }
 
-    dwinfo->t1 = n;
-    dwinfo->t2 = T;
+    set_panel_dims(dwinfo, d1, d2);
 
 #if DWDEBUG
-    fprintf(stderr, "dw_set_panel_dims: n: %d -> %d, T: %d -> %d\n",
-            oldn, n, oldT, T);
+    fprintf(stderr, "dw_set_panel_dims: d1: %d -> %d, d2: %d -> %d\n",
+            old_d1, d1, old_d2, d2);
 #endif
+}
+
+static void add_panel_stack_comment (GtkWidget *vbox, int i)
+{
+    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+    GtkWidget *lbl = gtk_label_new(NULL);
+
+    if (i == 2) {
+	gtk_label_set_text(GTK_LABEL(lbl), _("Please see Help for guidance."));
+    } else {
+	gchar *s = g_strdup_printf(_("Found %d time series."), dataset->v - 1);
+
+	gtk_label_set_text(GTK_LABEL(lbl), s);
+	g_free(s);
+    }
+    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 }
 
 static void dwiz_make_panel_spinners (dw_opts *opts,
                                       DATASET *dwinfo,
                                       GtkWidget *vbox)
 {
-    const char *labels[] = {
-        N_("Number of cross-sectional units"),
-        N_("Number of time periods")
-    };
+    const char *labels[2];
     GtkWidget *label;
     GtkWidget *table;
     GtkAdjustment *adj;
     GtkWidget *pspin[2];
     int spinmin, spinmax, spinstart;
+    int step, given;
     int i;
 
-    spinmin = opts->plf;
-    spinmax = dataset->n / opts->plf;
-    spinstart = default_panel_size(opts, dwinfo);
+    step = widget_get_int(vbox, "step");
+
+    if (step == DW_PANEL_SIZE_2) {
+	add_panel_stack_comment(vbox, 1);
+	labels[0] = N_("Number of side-by-side blocks");
+	labels[1] = N_("Number of cross-sectional units");
+	given = dataset->v - 1;
+	spinmin = spinstart = 1;
+	spinmax = given;
+	if (dwinfo->t1 == 0) {
+	    set_panel_dims(dwinfo, 1, given);
+	}
+    } else {
+	labels[0] = N_("Number of cross-sectional units");
+	labels[1] = N_("Number of time periods");
+	given = dataset->n;
+	spinmin = opts->plf;
+	spinstart = default_panel_size(opts, dwinfo);
+	spinmax = given / opts->plf;
+    }
 
     table = gtk_table_new(2, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(table), 5);
@@ -1806,27 +1893,39 @@ static void dwiz_make_panel_spinners (dw_opts *opts,
         label = gtk_label_new(_(labels[i]));
         gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
         gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, i, i+1);
-
         if (i == 1) {
-            spinstart = dataset->n / spinstart;
+	    /* second spinner: conditionalize on first */
+            spinstart = given / spinstart;
+	    if (step == DW_PANEL_SIZE_2) {
+		/* must have at least 2 cross-sectional units */
+		spinmin = 2;
+	    }
         }
-
         adj = (GtkAdjustment *) gtk_adjustment_new(spinstart, spinmin, spinmax,
                                                    1, 10, 0);
         pspin[i] = gtk_spin_button_new(adj, 1, 0);
-        g_object_set_data(G_OBJECT(pspin[i]), "idx", GINT_TO_POINTER(i));
-        g_object_set_data(G_OBJECT(pspin[i]), "plf", GINT_TO_POINTER(opts->plf));
+	widget_set_int(pspin[i], "idx", i);
+	if (step == DW_PANEL_SIZE_2) {
+	    widget_set_int(pspin[i], "plf", opts->plf2);
+	} else {
+	    widget_set_int(pspin[i], "plf", opts->plf);
+	}
+	widget_set_int(pspin[i], "step", step);
         g_signal_connect(G_OBJECT(pspin[i]), "value-changed",
                          G_CALLBACK(dw_set_panel_dims), dwinfo);
         gtk_entry_set_activates_default(GTK_ENTRY(pspin[i]), TRUE);
         gtk_table_attach_defaults(GTK_TABLE(table), pspin[i], 1, 2, i, i+1);
     }
 
-    g_object_set_data(G_OBJECT(pspin[0]), "Tspin", pspin[1]);
-    g_object_set_data(G_OBJECT(pspin[1]), "nspin", pspin[0]);
+    g_object_set_data(G_OBJECT(pspin[0]), "spin2", pspin[1]);
+    g_object_set_data(G_OBJECT(pspin[1]), "spin1", pspin[0]);
 
     gtk_widget_show_all(table);
     gtk_box_pack_start(GTK_BOX(vbox), table, FALSE, FALSE, 5);
+
+    if (step == DW_PANEL_SIZE_2) {
+	add_panel_stack_comment(vbox, 2);
+    }
 }
 
 static void maybe_add_missobs_purger (GtkWidget *vbox, gretlopt *flags)
@@ -1920,9 +2019,11 @@ static void set_up_dw_opts (dw_opts *opts, int step,
     } else if (step == DW_PANEL_MODE) {
         opts->n_radios = PANEL_INFO_MAX;
         opts->setvar = &dwinfo->structure;
-        eval_n_is_prime(opts);
+        eval_nobs_is_prime(opts);
     } else if (step == DW_PANEL_SIZE) {
         opts->setvar = &dwinfo->pd;
+    } else if (step == DW_PANEL_SIZE_2) {
+	panel_least_factor_2(opts);
     } else if (step == DW_PANEL_PD) {
         opts->n_radios = PANEL_TS_MAX;
         opts->setvar = &dwinfo->panel_pd;
@@ -2098,7 +2199,7 @@ static void dwiz_build_radios (int step, DATASET *dwinfo,
                          G_CALLBACK(dwiz_set_radio_opt), opts);
         g_object_set_data(G_OBJECT(button), "setval", GINT_TO_POINTER(setval));
 
-        if (step == DW_PANEL_MODE && dw_n_is_prime(opts)) {
+        if (step == DW_PANEL_MODE && dw_nobs_is_prime(opts)) {
             /* only the "index variables" option should be active */
             gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button),
                                          setval == PANEL_UNKNOWN);
@@ -2148,12 +2249,13 @@ static void dwiz_varname_entry (dw_opts *opts,
     GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
     GtkWidget *label = gtk_label_new(NULL);
     GtkWidget *entry = gtk_entry_new();
+    int nblocks = dwinfo->t1;
     gchar *msg;
 
     opts->entry = entry;
 
     gtk_label_set_text(GTK_LABEL(label),
-		       _("Give a name for the combined series"));
+		       _("Give a name for the panel series"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_widget_show_all(hbox);
@@ -2166,14 +2268,13 @@ static void dwiz_varname_entry (dw_opts *opts,
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_widget_show_all(hbox);
 
-    /* add warning text */
-    label = gtk_label_new(NULL);
-    msg = g_strdup_printf(_("Please note: this action will stack all "
-			    "%d time series\nin the current dataset into "
-			    "a single panel series."), dataset->v - 1);
-    gtk_label_set_text(GTK_LABEL(label), msg);
-    gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 10);
-    g_free(msg);
+    if (nblocks > 1) {
+	label = gtk_label_new(NULL);
+	msg = _("The individual series will be named by appending \"1\", \"2\", ...\n"
+		"You can modify these names once this operation is completed.");
+	gtk_label_set_text(GTK_LABEL(label), msg);
+	gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 10);
+    }
 }
 
 /* Where should we be going, when the Forward or Back button
@@ -2223,7 +2324,7 @@ static int dwiz_compute_step (int prevstep, int direction, DATASET *dwinfo,
             if (dwinfo->structure == PANEL_UNKNOWN) {
                 step = DW_PANEL_VARS;
 	    } else if (dwinfo->structure == PANEL_SIDE_BY_SIDE) {
-		step = DW_PANEL_VARNAME;
+		step = DW_PANEL_SIZE_2;
             } else {
                 step = DW_PANEL_SIZE;
             }
@@ -2249,6 +2350,8 @@ static int dwiz_compute_step (int prevstep, int direction, DATASET *dwinfo,
                 dwinfo->pd = dwinfo->t2;
             }
             step = DW_PANEL_PD;
+	} else if (prevstep == DW_PANEL_SIZE_2) {
+	    step = DW_PANEL_VARNAME;
         } else if (prevstep == DW_PANEL_PD) {
             if (dwinfo->panel_pd > 0) {
                 step = DW_PANEL_STOBS;
@@ -2281,8 +2384,11 @@ static int dwiz_compute_step (int prevstep, int direction, DATASET *dwinfo,
             step = DW_TS_FREQUENCY;
         } else if (prevstep == DW_PANEL_SIZE) {
             step = (create)? DW_SET_TYPE : DW_PANEL_MODE;
-        } else if (prevstep == DW_PANEL_VARS ||
-		   prevstep == DW_PANEL_VARNAME) {
+	} else if (prevstep == DW_PANEL_SIZE_2) {
+	    step = DW_PANEL_MODE;
+	} else if (prevstep == DW_PANEL_VARNAME) {
+	    step = DW_PANEL_SIZE_2;
+        } else if (prevstep == DW_PANEL_VARS) {
             step = DW_PANEL_MODE;
         } else if (prevstep == DW_CONFIRM) {
             if (dwinfo->structure == TIME_SERIES ||
@@ -2335,6 +2441,7 @@ static void dwiz_button_visibility (GtkWidget *dlg, int step)
     GtkWidget *forward = g_object_get_data(G_OBJECT(dlg), "forward");
     GtkWidget *ok      = g_object_get_data(G_OBJECT(dlg), "ok");
     GtkWidget *help    = g_object_get_data(G_OBJECT(dlg), "help");
+    GtkWidget *help2   = g_object_get_data(G_OBJECT(dlg), "help2");
 
     if (step == DW_SET_TYPE) {
         gtk_widget_show(cancel);
@@ -2357,9 +2464,14 @@ static void dwiz_button_visibility (GtkWidget *dlg, int step)
     }
 
     if (step == DW_PANEL_MODE) {
-        gtk_widget_show(help);
+	gtk_widget_hide(help2);
+	gtk_widget_show(help);
+    } else if (step == DW_PANEL_SIZE_2) {
+	gtk_widget_hide(help);
+        gtk_widget_show(help2);
     } else {
         gtk_widget_hide(help);
+	gtk_widget_hide(help2);
     }
 }
 
@@ -2391,6 +2503,8 @@ static void dwiz_prepare_page (GtkNotebook *nb,
 #if DWDEBUG
     fprintf(stderr, "Got Prepare, step = %d\n", step);
 #endif
+
+    widget_set_int(page, "step", step);
 
     if (step == DW_CONFIRM) {
         /* the final page */
@@ -2426,7 +2540,7 @@ static void dwiz_prepare_page (GtkNotebook *nb,
                 dataset_is_daily(dwinfo)) {
                 maybe_add_missobs_purger(page, &opts->flags);
             }
-        } else if (step == DW_PANEL_SIZE) {
+        } else if (step == DW_PANEL_SIZE || step == DW_PANEL_SIZE_2) {
             dwiz_make_panel_spinners(opts, dwinfo, page);
         } else if (step == DW_PANEL_VARS) {
             dwiz_panelvars_selector(opts, dwinfo, page);
@@ -2599,6 +2713,10 @@ static void build_dwiz_buttons (GtkWidget *dlg, DATASET *dwinfo)
     /* Help button for panel mode selection */
     b = context_help_button(hbox, PANEL_MODE);
     g_object_set_data(G_OBJECT(dlg), "help", b);
+
+    /* Help button for side-by-side to panel conversion */
+    b = context_help_button(hbox, TS_TO_PANEL);
+    g_object_set_data(G_OBJECT(dlg), "help2", b);
 }
 
 /* the title for the top of a given notebook page */

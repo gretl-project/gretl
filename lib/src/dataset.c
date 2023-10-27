@@ -3040,38 +3040,59 @@ int build_stacked_series (double **pstack, int *list,
     return err;
 }
 
-/* Create a panel dataset containing a single series,
-   constructed by stacking all the individual time
-   series in the original dataset.
+/* Create a panel dataset containing @nseries series, each constructed
+   by stacking individual time series from the original dataset.
 */
 
 int panelize_side_by_side_series (DATASET **pdset,
+				  int nseries,
 				  const char *vname)
 {
     DATASET *dset = *pdset;
     DATASET *newset = NULL;
-    double *panstack = NULL;
-    int *list = NULL;
-    int T = dset->n;
-    int N = dset->v - 1;
-    int err;
+    double *targ = NULL;
+    int vmax, N, T, NT;
+    int err = 0;
 
-    list = gretl_consecutive_list_new(1, dset->v-1);
-    err = build_stacked_series(&panstack, list, T, 0, dset);
-    if (err) {
-	free(list);
-	return err;
+    /* the number of "real" series in the original dataset */
+     vmax = dset->v - 1;
+
+    if (nseries <= 0 || vmax % nseries != 0) {
+	return E_DATA;
     }
 
-    newset = create_new_dataset(2, N*T, 0);
+    /* length of panel time = the original # of obs */
+    T = dset->n;
+    /* the number of panel units */
+    N = vmax / nseries;
+    /* total length of panel dataset */
+    NT = N * T;
+
+    /* this will become the panel dataset */
+    newset = create_new_dataset(1 + nseries, NT, 0);
+
     if (newset == NULL) {
 	err = E_ALLOC;
     } else {
-	size_t sz = N * T * sizeof(double);
+	size_t sz = dset->n * sizeof *targ;
+	int v1 = 1, v2 = v1 + N - 1;
+	int i, j;
 
-	memcpy(newset->Z[1], panstack, sz);
-	strcpy(newset->varname[1], vname);
-	free(panstack);
+	for (j=1; j<=nseries; j++) {
+	    targ = newset->Z[j];
+	    for (i=v1; i<=v2; i++) {
+		memcpy(targ, dset->Z[i], sz);
+		targ += dset->n;
+	    }
+	    if (nseries > 1) {
+		sprintf(newset->varname[j], "%s%d", vname, j);
+	    } else {
+		strcpy(newset->varname[j], vname);
+	    }
+	    v1 += N;
+	    v2 += N;
+	}
+
 	newset->structure = STACKED_TIME_SERIES;
 	newset->pd = T;
 	newset->panel_pd = dset->pd;
@@ -3082,8 +3103,6 @@ int panelize_side_by_side_series (DATASET **pdset,
 	destroy_dataset(dset);
 	*pdset = newset;
     }
-
-    free(list);
 
     return err;
 }

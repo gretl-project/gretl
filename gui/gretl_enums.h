@@ -102,6 +102,7 @@ enum extra_cmds {
     PANEL_WLS,
     FE_LOGISTIC,
     PANEL_MODE,
+    TS_TO_PANEL,
     TSPLOTS,
     ITERATIONS,
     CUSUMSQ,

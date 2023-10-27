@@ -11199,6 +11199,50 @@
 
   </command>
 
+  <command name="ts-to-panel" section="Dataset" context="gui"
+    label="Side-by-side time series to panel">
+
+    <description>
+      <para>
+	We will explain what this option is good for by means of two
+	examples.
+      </para>
+      <para>
+	<emphasis>Example 1</emphasis>: A time-series dataset contains
+	four series (aside from <lit>const</lit>), holding GDP for
+	France, Germany, Italy and Spain. You select 1 (the default)
+	for the <quote>Number of side-by-side blocks</quote> and see 4
+	for the <quote>Number of cross-sectional units</quote>. You
+	can then turn the four series into a single panel series for
+	GDP; the per-country data are stacked in dataset order.
+      </para>
+      <para>
+	<emphasis>Example 2</emphasis>: The dataset is as described in
+	Example 1, except that the per-country GDP series are followed
+	by four more series, holding unemployment data <emphasis>for
+	the same four countries, in the same order as the GDP
+	series</emphasis>.  You select 2 side-by-side blocks and see 4
+	for the number of cross-sectional units. Proceeding will give
+	you two panel series, one for GDP and one for unemployment.
+      </para>
+      <para>
+	There can be as many blocks of series (and hence as many panel
+	series) as you like, provided that each block contains data
+	for the same set of cross-sectional units, given in the same
+	order.
+      </para>
+      <para>
+	As a sanity check, the total number of time series must be
+	exactly divisible by the number of side-by-side blocks. It
+	follows that if the original dataset contains a prime number
+	of series, the only option offered is to turn them into a
+	single panel series. If the dataset contains any additional,
+	extraneous series you should delete them before attempting
+	this operation.
+      </para>
+    </description>
+  </command>
+
   <command name="panel-wls" section="Estimation" context="gui"
     label="Groupwise weighted least squares">
 
