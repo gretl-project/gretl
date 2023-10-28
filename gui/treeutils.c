@@ -64,7 +64,7 @@ static gint list_alpha_compare (GtkTreeModel *model,
     return ret;
 }
 
-#define ID_SORT_ALWAYS_ASCENDS 1 /* experiment 2023-10-07 */
+#define ID_SORT_ALWAYS_ASCENDS 0 /* experiment 2023-10-07 */
 
 /* special comparator which preserves 0 in first position when sorting
    variables by ID number */
