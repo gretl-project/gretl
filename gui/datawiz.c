@@ -112,7 +112,7 @@ struct dw_opts_ {
     GList *vlist;        /* panel: list of candidates for uid, tid */
     GtkWidget *dspin[4]; /* dataset dimension setters (new dataset) */
     int dvals[4];        /* dataset dimension values (new dataset) */
-    char vname[VNAMELEN]; /* varname for single-series panel */
+    char vname[VNAMELEN]; /* varname for side-by-side to panel */
     DATASET *ptinfo;     /* for handling panel time dimension */
     int unames_id;       /* panel: candidate series ID for unit names */
 };
@@ -143,6 +143,7 @@ static const char *wizcode_string (int code)
 
 static int translate_panel_vars (dw_opts *opts, int *uv, int *tv);
 static int usable_panel_start_year (const DATASET *dset);
+static void dw_opts_init (dw_opts *opts, int reinit);
 
 static void set_panel_dims (DATASET *dwinfo, int d1, int d2)
 {
@@ -2417,7 +2418,9 @@ static int dwiz_compute_step (int prevstep, int direction, DATASET *dwinfo,
     }
 
     if (direction == DW_BACK && step == DW_SET_TYPE) {
-	dwinfo_init(dwinfo); /* reinitialize */
+	/* re-initialize */
+	dwinfo_init(dwinfo);
+	dw_opts_init(opts, 1);
     }
 
 #if DWDEBUG
@@ -2755,13 +2758,30 @@ static void dwiz_page_add_title (GtkWidget *vbox, int i, int smax)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 }
 
-static void dw_opts_init (dw_opts *opts)
+static void dw_opts_init (dw_opts *opts, int reinit)
 {
-    opts->vlist = NULL;
+    int i;
+
+    if (reinit) {
+	/* preserve the DW_CREATE flag */
+	opts->flags = (opts->flags & DW_CREATE)? DW_CREATE : 0;
+	if (opts->vlist != NULL) {
+	    g_list_free(opts->vlist);
+	}
+	if (opts->ptinfo != NULL) {
+	    free(opts->ptinfo);
+	}
+    }
+
     opts->uid = opts->tid = 0;
     opts->unames_id = 0;
+    opts->vlist = NULL;
     opts->ptinfo = NULL;
     opts->vname[0] = '\0';
+
+    for (i=0; i<4; i++) {
+	opts->dvals[i] = 0;
+    }
 }
 
 static dw_opts *dw_opts_new (int create)
@@ -2769,15 +2789,8 @@ static dw_opts *dw_opts_new (int create)
     dw_opts *opts = mymalloc(sizeof *opts);
 
     if (opts != NULL) {
-        opts->flags = (create)? DW_CREATE : 0;
-	dw_opts_init(opts);
-	if (create) {
-	    int i;
-
-            for (i=0; i<4; i++) {
-                opts->dvals[i] = 0;
-            }
-        }
+        opts->flags = create ? DW_CREATE : 0;
+	dw_opts_init(opts, 0);
     }
 
     return opts;
