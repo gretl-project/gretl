@@ -554,20 +554,24 @@ variants of lines 3 and 4 of the script if the original file contained
 additional side-by-side per-country series for investment, consumption
 or whatever.
 
-The simplest case of this transformation---where the time-series
-dataset contains a single set of side-by-side series---can be handled
-via gretl's graphical interface. Under the \textsf{Data} menu in the
-main window you can find the item \textsf{Dataset structure}. On
-selecting this item one of the options is \textsf{Panel}; choose this
-option and the next step offers ``Convert from side-by-side time
-series'' as one way of proceeding.\footnote{This is enabled only if
-  the dataset contains at least two time series (leaving aside the
-  constant).} This leads to a step where you supply a name for the
-stacked series, followed by a final step where you see a description
-of the proposed dataset structure. If this looks right, clicking OK
-will perform the transformation. The effect is the same as executing a
-series of commands on the pattern shown above, using the
-\texttt{stack} function, then executing the additional command
+Relatively simple cases of this transformation can be handled
+via gretl's graphical interface. The ``simplicity'' requirements are:
+\begin{itemize}
+\item The dataset contains exactly $M \cdot N$ time series, arranged
+  in $M \geq 1$ blocks each having $N \geq 2$ contiguous members.
+\item In each block, the $N$ series represent measures of a single
+  variable (e.g.\ GDP) for a set of $N$ cross-sectional units, and in
+  each block these units appear in the same order.
+\end{itemize}
+The relevant GUI apparatus can be accessed via the item
+\textsf{Dataset structure} under the \textsf{Data} menu in the main
+window.  On selecting this item one of the options is \textsf{Panel};
+choose this option and the next step offers ``Convert from
+side-by-side time series''. This leads to steps where you specify $M$
+or $N$; give a name for the panel series; then confirm that the
+specified transformation is what you want. The end result is the same
+as executing a series of commands on the pattern shown above, using
+the \texttt{stack} function, then executing the additional command
 \texttt{open panel.gdt}.
 
 \subsection{Panel data marker strings}
