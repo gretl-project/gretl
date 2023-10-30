@@ -20478,6 +20478,18 @@ static int create_or_edit_string (parser *p)
             p->err = E_TYPES;
             return p->err;
         }
+    } else if (p->ret->t == LIST) {
+	/* string representation of list: simple assign only */
+	if (p->op != B_ASN) {
+	    p->err = E_TYPES;
+	} else {
+	    newstr = gretl_list_to_compact_string(p->ret->v.ivec,
+						  p->dset, &p->err);
+	}
+	if (p->err) {
+	    return p->err;
+	}
+	src = g_strchug(newstr);
     } else if (null_node(p->ret) || p->ret->v.str == NULL) {
         src = "";
     } else {
@@ -20524,14 +20536,19 @@ static int create_or_edit_string (parser *p)
         ; /* no-op -- e.g. argname() didn't get anything */
     } else if (p->op == B_ASN) {
         /* simple assignment */
-        newstr = gretl_strdup(src);
-        if (newstr == NULL) {
-            p->err = E_ALLOC;
-        } else if (uvar == NULL) {
-            gen_add_uvar(p, GRETL_TYPE_STRING, newstr);
-        } else {
-            gen_replace_lhs(p, GRETL_TYPE_STRING, newstr);
-        }
+	if (newstr == NULL) {
+	    newstr = gretl_strdup(src);
+	    if (newstr == NULL) {
+		p->err = E_ALLOC;
+	    }
+	}
+	if (!p->err) {
+	    if (uvar == NULL) {
+		gen_add_uvar(p, GRETL_TYPE_STRING, newstr);
+	    } else {
+		gen_replace_lhs(p, GRETL_TYPE_STRING, newstr);
+	    }
+	}
     } else if (p->op == B_HCAT || p->op == B_ADD) {
         /* string concatenation */
         if (*src == '\0') {
@@ -20678,7 +20695,7 @@ static int gen_check_return_type (parser *p)
             err = E_TYPES;
         }
     } else if (p->targ == STR) {
-        if (r->t != EMPTY && r->t != STR && r->t != NUM) {
+        if (r->t != EMPTY && r->t != STR && r->t != NUM && r->t != LIST) {
             err = E_TYPES;
         }
     } else if (p->targ == BUNDLE) {
