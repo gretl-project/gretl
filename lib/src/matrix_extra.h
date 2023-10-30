@@ -121,6 +121,8 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
 				     int wid, int prec,
 				     PRN *prn);
 
+gchar *gretl_matrix_write_constructor (const gretl_matrix *m);
+
 void debug_print_matrix (const gretl_matrix *m, const char *msg);
 
 int gretl_matrix_cut_cols (gretl_matrix *m, const char *mask);

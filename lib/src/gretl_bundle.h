@@ -178,6 +178,8 @@ int gretl_bundle_print (gretl_bundle *bundle, PRN *prn);
 
 int gretl_bundle_print_tree (gretl_bundle *bundle, PRN *prn);
 
+gchar *gretl_bundle_write_constructor (gretl_bundle *bundle);
+
 void gretl_bundle_debug_print (gretl_bundle *bundle, const char *msg);
 
 int gretl_bundle_is_stacked (gretl_bundle *b);

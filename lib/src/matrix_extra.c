@@ -2108,6 +2108,59 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
     }
 }
 
+/* gretl_matrix_write_constructor() is intended for internal use in
+   gretl_bundle.c, for creating a string representation of a matrix
+   contained in a bundle when the bundle is passed as argument to
+   gretl_bundle_write_constructor(). In that context it will not be
+   appropriate to show the constructor for a large matrix in extenso,
+   hence the size limitation here. However it's not clear what exactly
+   we should do with an oversize matrix.
+*/
+
+gchar *gretl_matrix_write_constructor (const gretl_matrix *m)
+{
+    gchar *ret = NULL;
+    int n;
+
+    if (gretl_is_null_matrix(m)) {
+	return g_strdup("{}");
+    }
+
+    n = m->rows * m->cols;
+
+    if (n > 16) {
+	/* should we do something else here? */
+	return g_strdup("{}");
+    } else {
+	GString *gs;
+	gsize sz = 4 * n;
+	double mij;
+	int i, j;
+
+	gs = g_string_sized_new(sz);
+	g_string_append_c(gs, '{');
+	for (i=0; i<m->rows; i++) {
+	    for (j=0; j<m->cols; j++) {
+		mij = gretl_matrix_get(m, i, j);
+		if (na(mij)) {
+		    g_string_append(gs, "NA");
+		} else {
+		    g_string_append_printf(gs, "%g", mij);
+		}
+		if (j < m->cols - 1) {
+		    g_string_append_c(gs, ',');
+		} else if (i < m->rows - 1) {
+		    g_string_append_c(gs, ';');
+		}
+	    }
+	}
+	g_string_append_c(gs, '}');
+	ret = g_string_free(gs, FALSE);
+    }
+
+    return ret;
+}
+
 /**
  * debug_print_matrix:
  * @m: matrix to print.

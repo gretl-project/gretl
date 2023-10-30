@@ -2509,6 +2509,92 @@ int gretl_bundle_print (gretl_bundle *bundle, PRN *prn)
     return err;
 }
 
+/* helper function for gretl_bundle_write_constructor() */
+
+static void write_item_constructor (gpointer value, gpointer p)
+{
+    bundled_item *item = value;
+    const gchar *kstr = item->name;
+    GretlType t = item->type;
+    GString *gs = p;
+
+    if (t == GRETL_TYPE_DOUBLE) {
+        double x = *(double *) item->data;
+
+        if (na(x)) {
+            g_string_append_printf(gs, "%s=NA,", kstr);
+        } else {
+            g_string_append_printf(gs, "%s=%g,", kstr, x);
+        }
+    } else if (t == GRETL_TYPE_INT) {
+        int i = *(int *) item->data;
+
+        g_string_append_printf(gs, "%s=%d,", kstr, i);
+    } else if (t == GRETL_TYPE_UNSIGNED) {
+        guint32 u = *(guint32 *) item->data;
+
+        g_string_append_printf(gs, "%s=%u,", kstr, u);
+    } else if (t == GRETL_TYPE_STRING) {
+        char *s = (char *) item->data;
+
+	g_string_append_printf(gs, "%s=\"%s\",", kstr, s);
+    } else if (t == GRETL_TYPE_MATRIX) {
+	gretl_matrix *m = (gretl_matrix *) item->data;
+	gchar *ms = gretl_matrix_write_constructor(m);
+
+	g_string_append_printf(gs, "%s=%s,", kstr, ms);
+	g_free(ms);
+    } else {
+	fprintf(stderr, "write bundle constructor: skipping "
+		"unhandled member '%s'\n", kstr);
+    }
+}
+
+/**
+ * gretl_bundle_write_constructor:
+ * @bundle: gretl bundle.
+ *
+ * For internal use. This function is designed to create a
+ * string that can be used in a hansl command or function
+ * call to create a copy of the @bundle argument. In that
+ * context, only rather simple bundle elements are supported:
+ * scalars, strings and small matrices. Large matrices, as well
+ * as members of type bundle, array, series or list, are
+ * ignored.
+ *
+ * Returns: a GLib-allocated string; use g_free() to destroy it.
+ */
+
+gchar *gretl_bundle_write_constructor (gretl_bundle *bundle)
+{
+    int n_items = g_hash_table_size(bundle->ht);
+    gchar *ret = NULL;
+
+    if (n_items == 0) {
+	return g_strdup("_()");
+    } else {
+	GList *L = g_hash_table_get_values(bundle->ht);
+	gsize sz = 4 + 8 * n_items;
+	GString *gs;
+
+	gs = g_string_sized_new(sz);
+	g_string_append(gs, "_(");
+	gretl_push_c_numeric_locale();
+	g_list_foreach(L, write_item_constructor, gs);
+	gretl_pop_c_numeric_locale();
+	sz = strlen(gs->str);
+	if (gs->str[sz-1] == ',') {
+	    gs->str[sz-1] = ')';
+	} else {
+	    g_string_append_c(gs, ')');
+	}
+	g_list_free(L);
+	ret = g_string_free(gs, FALSE);
+    }
+
+    return ret;
+}
+
 /**
  * gretl_bundle_debug_print:
  * @bundle: gretl bundle.
