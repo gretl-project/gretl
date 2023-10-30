@@ -5069,12 +5069,61 @@ void *dbnomics_probe_series (const char *prov,
     return A;
 }
 
+static void call_string_append (const char *funcname,
+				const char *argstr,
+				GretlType argtype,
+				gpointer argdata,
+				int i, GString *gs)
+{
+    gchar *altstr = NULL;
+    gboolean gstr = 0;
+
+    if (argstr == NULL) {
+	int err = 0;
+
+	if (argtype == GRETL_TYPE_DOUBLE) {
+	    altstr = g_strdup_printf("%.15g", *(double *) argdata);
+	} else if (argtype == GRETL_TYPE_LIST) {
+	    char *tmp = gretl_list_to_compact_string(argdata, dataset,
+						     1, &err);
+
+	    altstr = g_strdup_printf("deflist(%s)", g_strchug(tmp));
+	    free(tmp);
+	    gstr = 1;
+	} else if (argtype == GRETL_TYPE_BUNDLE) {
+	    altstr = gretl_bundle_write_constructor(argdata);
+	    gstr = 1;
+	} else {
+	    altstr = gretl_strdup("unknown");
+	}
+	argstr = altstr;
+    }
+
+    if (i == 0) {
+	/* the first arg */
+	g_string_append_printf(gs, "%s(%s", funcname, argstr);
+    } else if (i < 0) {
+	/* code for the last arg */
+	g_string_append_printf(gs, ", %s)", argstr);
+    } else {
+	/* an intermediate argument */
+	g_string_append_printf(gs, ", %s", argstr);
+    }
+
+    if (gstr) {
+	g_free(altstr);
+    } else {
+	free(altstr);
+    }
+}
+
 int real_do_regls (const char *buf)
 {
     gretl_bundle *parms = selector_get_regls_bundle();
     gretl_bundle *rb = NULL;
     fncall *fc = NULL;
     int orig_v;
+    int yno = 0;
     int *X = NULL;
     PRN *prn = NULL;
     int err = 0;
@@ -5094,9 +5143,9 @@ int real_do_regls (const char *buf)
     orig_v = dataset->v;
 
     X = generate_list(buf, dataset, 0, &err);
-    if (!err) {
-	int yno = X[1];
 
+    if (!err) {
+	yno = X[1];
 	gretl_list_delete_at_pos(X, 1);
 	err = push_function_arg(fc, dataset->varname[yno], NULL,
 				GRETL_TYPE_USERIES, &yno);
@@ -5104,6 +5153,21 @@ int real_do_regls (const char *buf)
 	    err = push_function_args(fc, GRETL_TYPE_LIST, (void *) X,
 				     GRETL_TYPE_BUNDLE, (void *) parms, -1);
 	}
+    }
+
+    if (!err) {
+	/* command recording apparatus */
+	GString *gs =  g_string_sized_new(64);
+	gchar *cstr = NULL;
+
+	call_string_append("regls", dataset->varname[yno],
+			   GRETL_TYPE_USERIES, NULL, 0, gs);
+	call_string_append(NULL, NULL, GRETL_TYPE_LIST, X, 1, gs);
+	call_string_append(NULL, NULL, GRETL_TYPE_BUNDLE, parms, -1, gs);
+	cstr = g_string_free(gs, FALSE);
+	lib_command_strcpy(cstr);
+	record_command_verbatim();
+	g_free(cstr);
     }
 
     if (!err) {
