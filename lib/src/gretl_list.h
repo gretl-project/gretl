@@ -70,6 +70,7 @@ char *gretl_list_to_string (const int *list,
 
 char *gretl_list_to_compact_string (const int *list,
 				    const DATASET *dset,
+				    int argstyle,
 				    int *err);
 
 gretl_matrix *gretl_list_to_vector (const int *list, int *err);

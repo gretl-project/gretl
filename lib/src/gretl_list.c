@@ -818,6 +818,7 @@ static int get_excluded_id (const int *list, int n)
  * gretl_list_to_compact_string:
  * @list: array of integers.
  * @dset: pointer to dataset.
+ * @argstyle: boolean for function-argument variant.
  * @err: location to receive error code.
  *
  * Designed to produce a reasonably compact string representation
@@ -828,16 +829,22 @@ static int get_excluded_id (const int *list, int n)
  * tactics do not seem applicable, is to compose a string holding
  * the series ID numbers.
  *
+ * If @argstyle is non-zero the returned string will suitable for
+ * giving as an argument to the userspace deflist function.
+ *
  * Returns: allocated string representation of @list, or NULL
  * on error.
  */
 
 char *gretl_list_to_compact_string (const int *list,
 				    const DATASET *dset,
+				    int argstyle,
 				    int *err)
 {
     char *buf = NULL;
     int *mylist = NULL;
+    char cstr[8];
+    char sep;
     int buflen;
     int nv = 0;      /* number of 'real' series */
     int v0 = -1;     /* first non-zero series ID */
@@ -848,6 +855,14 @@ char *gretl_list_to_compact_string (const int *list,
     int cpos = 0;    /* position of constant */
     int i, vi;
 
+    if (argstyle) {
+	strcpy(cstr, "const,");
+	sep = ',';
+    } else {
+	strcpy(cstr, "const ");
+	sep = ' ';
+    }
+
     if (list == NULL) {
 	*err = E_DATA;
 	return NULL;
@@ -856,7 +871,14 @@ char *gretl_list_to_compact_string (const int *list,
 	return gretl_strdup("");
     } else if (list[0] <= 6) {
 	/* short list: don't bother with the fancy stuff */
-	return gretl_list_to_string(list, dset, err);
+	buf = gretl_list_to_string(list, dset, err);
+	if (*err) {
+	    return buf;
+	} else if (argstyle) {
+	    return gretl_charsub(g_strchug(buf), ' ', ',');
+	} else {
+	    return g_strchug(buf);
+	}
     }
 
     /* analyse the incoming list */
@@ -905,7 +927,7 @@ char *gretl_list_to_compact_string (const int *list,
 	    /* no "real" series excluded */
 	    buflen = 6 * (cpos > 0) + 9;
 	    buf = calloc(buflen, 1);
-	    sprintf(buf, " %sdataset", cpos > 0 ? "const " : "");
+	    sprintf(buf, "%sdataset", cpos > 0 ? cstr : "");
 	} else {
 	    /* one "real" series excluded */
 	    int vx = get_excluded_id(mylist, dset->v);
@@ -913,7 +935,7 @@ char *gretl_list_to_compact_string (const int *list,
 
 	    buflen = 12 + 6 * (cpos > 0) + strlen(sx);
 	    buf = calloc(buflen, 1);
-	    sprintf(buf, " %sdataset - %s", cpos > 0 ? "const " : "", sx);
+	    sprintf(buf, "%sdataset-%s", cpos > 0 ? cstr : "", sx);
 	}
     } else if (contig) {
 	/* use ".." notation for contiguous series IDs from
@@ -924,7 +946,7 @@ char *gretl_list_to_compact_string (const int *list,
 
 	buflen = 4 + 6 * (cpos > 0) + strlen(s0) + strlen(sn);
 	buf = calloc(buflen, 1);
-	sprintf(buf, " %s%s..%s", cpos > 0 ? "const " : "", s0, sn);
+	sprintf(buf, "%s%s..%s", cpos > 0 ? cstr : "", s0, sn);
     } else {
 	/* use straight numeric IDs */
 	int numlen = (int) floor(log10((double) idmax));
@@ -932,9 +954,9 @@ char *gretl_list_to_compact_string (const int *list,
 
 	buflen = 2 + 2 * (cpos > 0) + nv * (2 + numlen);
 	buf = calloc(buflen, 1);
-	sprintf(buf, " %s", cpos > 0 ? "0 " : "");
+	sprintf(buf, "%s%c", cpos > 0 ? "0" : "", cpos > 0 ? sep : '\0');
 	for (i=1; i<=mylist[0]; i++) {
-	    sprintf(tmp, "%d ", mylist[i]);
+	    sprintf(tmp, "%d%c", mylist[i], sep);
 	    strcat(buf, tmp);
 	}
 	g_strchomp(buf);

@@ -20484,7 +20484,7 @@ static int create_or_edit_string (parser *p)
 	    p->err = E_TYPES;
 	} else {
 	    newstr = gretl_list_to_compact_string(p->ret->v.ivec,
-						  p->dset, &p->err);
+						  p->dset, 0, &p->err);
 	}
 	if (p->err) {
 	    return p->err;
