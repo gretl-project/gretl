@@ -1037,7 +1037,7 @@ static double simple_slen (int n, int *pndelta, double *b, double *X, double *t,
     return steplen;
 }
 
-#define GRADCHECK 0
+#define GRADCHECK 0 /* 2023-10-30: for testing */
 
 static int BFGS_orig (double *b, int n, int maxit, double reltol,
                       int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc,
@@ -1053,7 +1053,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     int show_activity = 0;
     double sumgrad, gradmax, gradnorm = 0.0;
 #if GRADCHECK
-    double L1;
+    double L2;
 #endif
     double fmax, f, f0, s, steplen = 0.0;
     double fdiff, D1, D2;
@@ -1151,7 +1151,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 
         gradnorm = sumgrad = 0.0;
 #if GRADCHECK
-	L1 = 0.0;
+	L2 = 0.0;
 #endif
 
         for (i=0; i<n; i++) {
@@ -1166,7 +1166,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
             sumgrad += s * g[i];
             gradnorm += fabs(b[i] * g[i]);
 #if GRADCHECK
-	    L1 += fabs(g[i]);
+	    L2 += g[i] * g[i];
 #endif
         }
 
@@ -1293,7 +1293,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     fprintf(stderr, "gradnorm = %g, vs gradmax = %g\n", gradnorm, gradmax);
 #endif
 #if GRADCHECK
-    fprintf(stderr, "gradnorm = %g, L1 = %g, L1/n = %g\n", gradnorm, L1, L1/n);
+    fprintf(stderr, "gradnorm = %g, L2 = %g\n", gradnorm, sqrt(L2));
 #endif
 
     if (iter >= maxit) {
