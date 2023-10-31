@@ -1550,7 +1550,7 @@ static double halton (int i, int base)
 
 gretl_matrix *halton_matrix (int m, int r, int offset, int *err)
 {
-    const int P100 = {
+    const int bases[100] = {
 	/* the first 100 primes */
 	2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47,
 	53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107,
