@@ -1541,14 +1541,15 @@ static double halton (int i, int base)
    therefore odd. Starting at the next odd number q and skipping
    evens, we check for odd factors (since odd numbers cannot have even
    factors) from 3 to a maximum of q/3. If none are found then q is
-   prime; we break from the outer loop and return it.
+   prime and we return it. There's a guard against running out of
+   positive 32-bit integers; in that case we return 0.
 */
 
 static int next_prime (int p)
 {
     int f, fmax, pr, q;
 
-    for (q=p+2; ; q+=2) {
+    for (q=p+2; q<INT_MAX-1; q+=2) {
 	fmax = q/3;
 	pr = 1;
 	for (f=3; f<=fmax; f+=2) {
@@ -1558,11 +1559,11 @@ static int next_prime (int p)
 	    }
 	}
 	if (pr) {
-	    break;
+	    return q;
 	}
     }
 
-    return q;
+    return 0;
 }
 
 /**
@@ -1610,6 +1611,10 @@ gretl_matrix *halton_matrix (int m, int r, int offset, int *err)
 	    p = bases[i];
 	} else {
 	    p = next_prime(p);
+	    if (p == 0) {
+		*err = E_INVARG;
+		break;
+	    }
 	}
 	j = 0;
 	for (k=1; k<n; k++) {
@@ -1618,6 +1623,11 @@ gretl_matrix *halton_matrix (int m, int r, int offset, int *err)
 		gretl_matrix_set(H, i, j++, hij);
 	    }
 	}
+    }
+
+    if (*err) {
+	gretl_matrix_free(H);
+	H = NULL;
     }
 
     return H;

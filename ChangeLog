@@ -16,6 +16,8 @@ version 2023c, in progress
   user function, and loosen the restrictions on assignment to
   such series
 - New function asort() for sorting arrays of all types
+- New function corresp() to determine the correspondence (if
+  any) between two series or vectors
 - String functions strsub(), regsub(), substr(), tolower() and
   toupper(): generalize to support strings arrays and string-
   valued series as arguments, as well as individual strings
@@ -25,6 +27,8 @@ version 2023c, in progress
 - Add documentation for the functions dec2bin() and bin2dec(),
   which were first defined in version 2022b
 - kdensity() function: clarify its documentation
+- halton() function: remove the limit of 40 on the number of
+  sequences this function can generate
 - Input of numeric constants: support hexadecimal notation
 - $sysinfo bundle: add CPU information
 - Fix bug dating from 2022c: broken handling of the syntax
@@ -42,9 +46,8 @@ version 2023c, in progress
   listing
 - Fix bug: markdown conversion not always working properly
 - Fix bug: "kdplot" command not respecting the --output option
-- GUI: Add means of stacking a single set of side-by-side time
-  series into a single panel series via the "Dataset structure"
-  wizard
+- GUI: Add means of stacking side-by-side time series into
+  panel series via the "Dataset structure" wizard
 - GUI: Add a color selection dialog under the Tools menu
 - GUI: use "Apply" and "OK" buttons more consistently
 - GUI: make more apparent the facility to sort series in the
