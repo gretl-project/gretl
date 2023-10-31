@@ -1567,7 +1567,7 @@ gretl_matrix *halton_matrix (int m, int r, int offset, int *err)
     int i, j, k, n;
 
     if (m > 100 || offset < 0 || m <= 0 || r <= 0) {
-	*err = E_DATA;
+	*err = E_INVARG;
 	return NULL;
     }
 
