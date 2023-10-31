@@ -1535,9 +1535,39 @@ static double halton (int i, int base)
     return h;
 }
 
+/* This is simple, and no doubt could be more efficient, but it's fast
+   up to the number of primes that might reasonably be expected in the
+   context of Halton sequences. The incoming @p is prime, and
+   therefore odd. Starting at the next odd number q and skipping
+   evens, we check for odd factors (since odd numbers cannot have even
+   factors) from 3 to a maximum of q/3. If none are found then q is
+   prime; we break from the outer loop and return it.
+*/
+
+static int next_prime (int p)
+{
+    int f, fmax, pr, q;
+
+    for (q=p+2; ; q+=2) {
+	fmax = q/3;
+	pr = 1;
+	for (f=3; f<=fmax; f+=2) {
+	    if (q % f == 0) {
+		pr = 0;
+		break;
+	    }
+	}
+	if (pr) {
+	    break;
+	}
+    }
+
+    return q;
+}
+
 /**
  * halton_matrix:
- * @m: number of rows (sequences); the maximum is 40.
+ * @m: number of rows (sequences).
  * @r: number of columns (elements in each sequence).
  * @offset: the number of initial values to discard.
  * @err: location to receive error code.
@@ -1550,23 +1580,18 @@ static double halton (int i, int base)
 
 gretl_matrix *halton_matrix (int m, int r, int offset, int *err)
 {
-    const int bases[100] = {
-	/* the first 100 primes */
+    const int bases[50] = {
+	/* the first 50 primes */
 	2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47,
 	53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107,
 	109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167,
-	173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229,
-	233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283,
-	293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359,
-	367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431,
-	433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491,
-	499, 503, 509, 521, 523, 541
+	173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229
     };
     gretl_matrix *H;
     double hij;
-    int i, j, k, n;
+    int i, j, k, n, p;
 
-    if (m > 100 || offset < 0 || m <= 0 || r <= 0) {
+    if (offset < 0 || m <= 0 || r <= 0) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -1581,9 +1606,14 @@ gretl_matrix *halton_matrix (int m, int r, int offset, int *err)
     n = r + offset;
 
     for (i=0; i<m; i++) {
+	if (i < 50) {
+	    p = bases[i];
+	} else {
+	    p = next_prime(p);
+	}
 	j = 0;
 	for (k=1; k<n; k++) {
-	    hij = halton(k, bases[i]);
+	    hij = halton(k, p);
 	    if (k >= offset) {
 		gretl_matrix_set(H, i, j++, hij);
 	    }

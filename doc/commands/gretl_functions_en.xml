@@ -5869,13 +5869,12 @@
       <description>
 	<para>
 	  Returns an <by r="m" c="r"/> matrix containing
-	  <math>m</math> Halton sequences of length <math>r</math>;
-	  <math>m</math> is limited to a maximum of 100. The sequences
-	  are constructed using the first <math>m</math> primes. By
-	  default the first 10 elements of each sequence are
-	  discarded, but this figure can be adjusted via the optional
-	  <argname>offset</argname> argument, which should be a
-	  non-negative integer. See <cite key="halton64">Halton and
+	  <math>m</math> Halton sequences of length <math>r</math>.
+	  The sequences are constructed using the first <math>m</math>
+	  primes. By default the first 10 elements of each sequence
+	  are discarded, but this figure can be adjusted via the
+	  optional <argname>offset</argname> argument, which should be
+	  a non-negative integer. See <cite key="halton64">Halton and
 	  Smith (1964)</cite>.
 	</para>
       </description>
