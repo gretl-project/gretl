@@ -351,7 +351,9 @@ gboolean exit_check (void)
         }
     }
 
-    write_rc(OPT_NONE);
+    if (!should_ignore_rc()) {
+	write_rc(OPT_NONE);
+    }
 
     return FALSE;
 }

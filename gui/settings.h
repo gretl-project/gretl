@@ -21,9 +21,9 @@
 #define SETTINGS_H
 
 #ifdef G_OS_WIN32
-int read_win32_config (int debug);
+int read_win32_config (int debug, int ignore_rc);
 #else
-int gretl_config_init (void);
+int gretl_config_init (int ignore_rc);
 #endif
 
 #ifdef HAVE_TRAMO

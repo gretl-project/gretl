@@ -87,6 +87,7 @@ static ConfigPaths paths;
 
 static void make_prefs_tab (GtkWidget *notebook, int tab, int console);
 static void apply_prefs_changes (GtkWidget *widget, GtkWidget *parent);
+static int common_read_rc_setup (int updated);
 
 #ifndef G_OS_WIN32
 static int read_gretlrc (void);
@@ -988,12 +989,16 @@ static void root_check (void)
     }
 }
 
-int gretl_config_init (void)
+int gretl_config_init (int ignore_rc)
 {
     int err = 0;
 
     get_gretl_rc_path(rcfile);
-    err = read_gretlrc();
+    if (ignore_rc) {
+	err = common_read_rc_setup(0);
+    } else {
+	err = read_gretlrc();
+    }
     set_gretl_startdir();
     root_check();
 
@@ -2648,7 +2653,7 @@ static void win32_read_gretlrc (int *updated)
    gretl_win32_init() in gretlwin32.c
 */
 
-int read_win32_config (int debug)
+int read_win32_config (int debug, int ignore_rc)
 {
     RCVAR *rcvar;
     char value[MAXSTR];
@@ -2692,8 +2697,10 @@ int read_win32_config (int debug)
        read config from it */
     maybe_get_network_settings();
 
-    /* read from user config file */
-    win32_read_gretlrc(&updated);
+    if (!ignore_rc) {
+	/* read from user config file */
+	win32_read_gretlrc(&updated);
+    }
 
     /* now read from registry for a few items, if they're
        not already set */

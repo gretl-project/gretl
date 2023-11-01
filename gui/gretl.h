@@ -144,6 +144,7 @@ void set_tryfile (const char *fname);
 char *get_tryfile (void);
 void clear_tryfile (void);
 int tryfile_is_set (void);
+int should_ignore_rc (void);
 void about_dialog (GtkWidget *w);
 
 #ifdef GRETL_EDIT

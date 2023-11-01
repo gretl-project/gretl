@@ -486,7 +486,7 @@ int main (int argc, char **argv)
 #ifdef G_OS_WIN32
     gretl_win32_init(optdebug);
 #else
-    gretl_config_init();
+    gretl_config_init(0);
 #endif
 
     if (optver) {

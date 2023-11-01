@@ -298,7 +298,7 @@ void gretl_win32_debug_init (int debug)
    call read_rc to get the per-user configuration info.
 */
 
-void gretl_win32_init (int debug)
+void gretl_win32_init (int debug, int ignore_rc)
 {
     char tmp[4] = {0};
 
@@ -309,7 +309,7 @@ void gretl_win32_init (int debug)
     set_wimp_preferred(strcmp(tmp, "1") == 0);
 #endif
 
-    read_win32_config(debug);
+    read_win32_config(debug, ignore_rc);
     set_gretl_startdir();
 }
 

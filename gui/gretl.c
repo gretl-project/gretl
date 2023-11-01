@@ -119,7 +119,7 @@ mdata_handle_drag  (GtkWidget          *widget,
 		    gpointer            p);
 
 static char *optdb, *optwebdb, *optpkg;
-static int optrun, opteng, optbasque, optdump, optver;
+static int optrun, opteng, optbasque, optdump, optver, ignore_rc;
 #ifdef G_OS_WIN32
 static int optdebug;
 #endif
@@ -146,6 +146,8 @@ static GOptionEntry options[] = {
       N_("force use of Basque"), NULL },
     { "dump", 'c', 0, G_OPTION_ARG_NONE, &optdump,
       N_("dump gretl configuration to file"), NULL },
+    { "ignore", 'i', 0, G_OPTION_ARG_NONE, &ignore_rc,
+      N_("ignore gretl configuration file"), NULL },
 #ifdef G_OS_WIN32
     { "debug", 'b', 0, G_OPTION_ARG_NONE, &optdebug,
       N_("send debugging info to console"), NULL },
@@ -216,6 +218,11 @@ void clear_tryfile (void)
 int tryfile_is_set (void)
 {
     return tryfile[0] != '\0';
+}
+
+int should_ignore_rc (void)
+{
+    return ignore_rc;
 }
 
 static void spreadsheet_edit (void)
@@ -807,9 +814,9 @@ int main (int argc, char **argv)
     gretl_set_gui_mode();
 
 #ifdef G_OS_WIN32
-    gretl_win32_init(optdebug);
+    gretl_win32_init(optdebug, ignore_rc);
 #else
-    gretl_config_init();
+    gretl_config_init(ignore_rc);
 #endif
 
     if (optver) {

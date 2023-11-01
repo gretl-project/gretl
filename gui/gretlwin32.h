@@ -34,7 +34,7 @@ int win32_run_async (const char *prog, const char *arg);
 
 void win32_start_R_async (void);
 
-void gretl_win32_debug_init (int debug);
+void gretl_win32_debug_init (int debug, int ignore_rc);
 
 void record_win32_locale (char *s);
 
