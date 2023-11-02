@@ -794,6 +794,7 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 
     finalize_clustered_vcv(pmod, pan, XX, W, V, pan->effn);
     gretl_model_set_vcv_info(pmod, VCV_PANEL, PANEL_HAC);
+    gretl_model_set_int(pmod, "n_clusters", pan->effn);
 
  bailout:
 
@@ -863,35 +864,62 @@ static int transcribe_cluster_var (MODEL *pmod,
     return err;
 }
 
-/* Parse two comma-separated series names out of @s, write their
-   (putative) dataset ID numbers into @did1 and @did2 and check them
-   for validity.
+/* For a clustering variable named by @s, find out if it's a named
+   series, or a keyword ("period", "unit"), or neither (an error). To
+   signal the presence of one of the keywords we use a bitflag in
+   @popt.
 */
 
-static int get_two_way_info (const char *s,
-                             const DATASET *dset,
-                             int *did1,
-                             int *did2)
+static int get_id_or_special (const char *s,
+			      const DATASET *dset,
+			      int *pid,
+			      gretlopt *popt)
 {
-    const char *p = strchr(s, ',');
-    gchar *s1 = g_strndup(s, p - s);
-    gchar *s2 = g_strdup(p + 1);
+    int id = current_series_index(dset, s);
     int err = 0;
 
-    *did1 = current_series_index(dset, s1);
-    *did2 = current_series_index(dset, s2);
-
-#if 0
-    fprintf(stderr, "get_two_way_info: cnames '%s', '%s'; IDs %d, %d\n",
-            s1, s2, *did1, *did2);
-#endif
-
-    if (*did1 < 0 || *did2 < 0) {
-        err = E_UNKVAR;
+    if (id > 0) {
+	*pid = id;
+    } else if (id == 0) {
+	/* "const" will not do! */
+	err = E_DATA;
+    } else if (!strcmp(s, "period")) {
+	*popt |= OPT_P;
+    } else if (!strcmp(s, "unit")) {
+	*popt |= OPT_U;
+    } else {
+	err = E_UNKVAR;
     }
 
-    g_free(s1);
-    g_free(s2);
+    return err;
+}
+
+static int process_cluster_string (const char *s,
+				   const DATASET *dset,
+				   int *pid1,
+				   int *pid2,
+				   gretlopt *popt)
+{
+    const char *p = strchr(s, ',');
+    int err = 0;
+
+    if (p == NULL) {
+	/* should have a single name */
+	err = get_id_or_special(s, dset, pid1, popt);
+    } else {
+	/* should have two names */
+	gchar *s1 = NULL;
+	gchar *s2 = NULL;
+
+	s1 = g_strndup(s, p - s);
+	err = get_id_or_special(s1, dset, pid1, popt);
+	if (!err) {
+	    s2 = g_strdup(p + 1);
+	    err = get_id_or_special(s2, dset, pid2, popt);
+	}
+	g_free(s1);
+	g_free(s2);
+    }
 
     return err;
 }
@@ -912,48 +940,50 @@ static int check_cluster_var (MODEL *pmod,
                               DATASET *pset,
                               const DATASET *dset,
                               int *by_period,
+			      int *by_unit,
                               cluster_info **pci)
 {
     const char *s = get_optval_string(PANEL, OPT_C);
+    gretlopt copt = OPT_NONE;
+    int id1 = 0;
+    int id2 = 0;
     int err = 0;
 
     if (s == NULL || *s == '\0') {
         err = E_DATA;
-    } else if (!strcmp(s, "period")) {
-        *by_period = 1;
     } else {
-        int pid, did1, did2 = 0;
-        int n_add = 1;
-        cluster_info *ci;
+	err = process_cluster_string(s, dset, &id1, &id2, &copt);
+    }
 
-        if (strchr(s, ',') != NULL) {
-            err = get_two_way_info(s, dset, &did1, &did2);
-            if (!err) {
-                s = dset->varname[did1];
-                n_add = 3;
-            }
-        } else {
-            did1 = current_series_index(dset, s);
-            if (did1 < 0) {
-                fprintf(stderr, "check_cluster_var: bad varname '%s'\n", s);
-                err = E_UNKVAR;
-            }
-        }
-        if (!err) {
-            err = dataset_add_series(pset, n_add);
-        }
+    if (err) {
+	return err;
+    } else if (copt == OPT_P) {
+	*by_period = 1; /* FIXME */
+    } else if (copt == OPT_U) {
+	*by_unit = 1;   /* FIXME */
+    } else {
+	cluster_info *ci;
+        int n_add = 1; /* number of series to be added */
+	int v0;        /* position of (first) added series */
+
+	if (id2 > 0) {
+	    /* we'll need two series plus their combination */
+	    n_add = 3;
+	}
+	err = dataset_add_series(pset, n_add);
         if (err) {
             return err;
         }
-        ci = cluster_info_new();
-        pid = pset->v - n_add;
-        strcpy(pset->varname[pid], s);
-        ci->pcvar = pid;
-        ci->dcvar = did1;
-        ci->dcvar2 = did2;
-        if (did2 > 0) {
-            strcpy(pset->varname[pid+1], dset->varname[did2]);
-            strcpy(pset->varname[pid+2], "combo");
+	ci = cluster_info_new();
+        ci->pcvar = v0 = pset->v - n_add;
+	/* note: full-dataset IDs */
+        ci->dcvar = id1;
+        ci->dcvar2 = id2;
+	strcpy(pset->varname[v0], dset->varname[id1]);
+        if (id2 > 0) {
+	    /* name the extra two series */
+            strcpy(pset->varname[v0+1], dset->varname[id2]);
+            strcpy(pset->varname[v0+2], "combo");
         }
         err = transcribe_cluster_var(pmod, pan, pset, dset, ci);
         if (err) {
@@ -1278,6 +1308,7 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
     int k = pmod->ncoeff;
     int pan_robust = 0;
     int by_period = 0;
+    int by_unit = 0;
     int err = 0;
 
     XX = panel_model_xpxinv(pmod, &err);
@@ -1288,7 +1319,7 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
 
     if (pan->opt & OPT_C) {
         err = check_cluster_var(pmod, pan, pset, dset,
-                                &by_period, &ci);
+                                &by_period, &by_unit, &ci);
         if (err) {
             goto bailout;
         }
@@ -1308,6 +1339,9 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
 
     if (by_period) {
         err = time_cluster_vcv(pmod, pan, pset, XX, W, V);
+    } else if (by_unit) {
+	pan->opt &= ~OPT_C; /* don't confuse printmodel() */
+	err = arellano_vcv(pmod, pan, pset, XX, W, V);
     } else if (ci != NULL && ci->dcvar2) {
         err = panel_two_way_cluster(pmod, pan, pset, dset, XX, W, V, ci);
     } else if (ci != NULL) {

@@ -1413,9 +1413,9 @@ static void panel_vcv_line (const VCVInfo *vi, PRN *prn)
 {
     if (vi->vmin == PANEL_HAC) {
 	if (csv_format(prn)) {
-	    pprintf(prn, "\"%s\"", _("Robust (HAC) standard errors"));
+	    pprintf(prn, "\"%s\"", _("Standard errors clustered by unit"));
 	} else {
-	    pputs(prn, _("Robust (HAC) standard errors"));
+	    pputs(prn, _("Standard errors clustered by unit"));
 	}
 	pputc(prn, '\n');
     } else if (vi->vmin == PANEL_BK) {
