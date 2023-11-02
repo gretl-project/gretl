@@ -484,7 +484,7 @@ int main (int argc, char **argv)
     gretl_set_gui_mode();
 
 #ifdef G_OS_WIN32
-    gretl_win32_init(optdebug);
+    gretl_win32_init(optdebug, 0);
 #else
     gretl_config_init(0);
 #endif

@@ -34,13 +34,13 @@ int win32_run_async (const char *prog, const char *arg);
 
 void win32_start_R_async (void);
 
-void gretl_win32_debug_init (int debug, int ignore_rc);
+void gretl_win32_debug_init (int debug);
 
 void record_win32_locale (char *s);
 
 int win32_lang_id_from_locale (void);
 
-void gretl_win32_init (int debug);
+void gretl_win32_init (int debug, int ignore_rc);
 
 int prn_to_clipboard (PRN *prn, int fmt);
 
