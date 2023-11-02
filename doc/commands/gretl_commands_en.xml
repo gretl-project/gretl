@@ -5497,7 +5497,7 @@
 	(following on from the example above):
       </para>
       <code>
-	bundles bb = array(b1, b2)
+	bundles bb = defarray(b1, b2)
 	gnuplot y --time-series --with-lines --bands=bb
       </code>
       <para>
