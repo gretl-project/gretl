@@ -996,8 +996,6 @@ static int check_cluster_var (MODEL *pmod,
     return err;
 }
 
-#define EDEBUG 0
-
 /* Fix-up, à la Cameron, Gelbach and Miller, for non-positive
    semi-definite covariance matrix in case of non-nested
    two-way clustering: set any negative eigenvalues to zero and
@@ -1019,9 +1017,6 @@ static int maybe_eigenfix (gretl_matrix *V)
     }
 
     for (i=0; i<n && !err; i++) {
-#if EDEBUG
-        fprintf(stderr, "lambda[%d] = %g\n", i, lam->val[i]);
-#endif
         if (lam->val[i] < 0) {
             fixit = 1;
             break;
@@ -1037,10 +1032,6 @@ static int maybe_eigenfix (gretl_matrix *V)
             err = E_ALLOC;
             goto bailout;
         }
-
-#if EDEBUG
-        gretl_matrix_print(V, "V, before eigenfix");
-#endif
         for (j=0; j<n; j++) {
             lvj = lam->val[j];
             for (i=0; i<n; i++) {
@@ -1056,9 +1047,6 @@ static int maybe_eigenfix (gretl_matrix *V)
                                   U, GRETL_MOD_TRANSPOSE,
                                   V, GRETL_MOD_NONE);
         gretl_matrix_free(Tmp);
-#if EDEBUG
-        gretl_matrix_print(V, "V, after eigenfix");
-#endif
     }
 
  bailout:
@@ -1718,6 +1706,7 @@ static DATASET *within_groups_dataset (const DATASET *dset,
     }
 
     if (pan->NT < dset->n) {
+	/* allow for panel obs book-keeping */
         err = allocate_data_finders(pan, dset->n);
         if (err) {
             return NULL;
@@ -1958,7 +1947,7 @@ random_effects_dataset (const DATASET *dset,
 
 #define BETWEEN_DEBUG 0
 
-/* Construct a mini-dataset containing the group means, in
+/* Construct a "mini-dataset" containing the group means, in
    order to run the group-means or "between" regression.
 */
 
@@ -4201,10 +4190,10 @@ static int panel_obs_accounts (panelmod_t *pan)
         return E_ALLOC;
     }
 
-    pan->NT = 0;
-    pan->effn = 0;
-    pan->Tmax = 0;
-    pan->Tmin = pan->T;
+    pan->NT = 0;        /* to hold total complete observations */
+    pan->effn = 0;      /* to hold number of included units */
+    pan->Tmax = 0;      /* to hold max time-series length */
+    pan->Tmin = pan->T; /* to hold min time-series length > 0 */
 
     for (i=0; i<pan->nunits; i++) {
         uobs[i] = 0;

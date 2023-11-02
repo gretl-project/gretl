@@ -3801,7 +3801,6 @@ int combine_categories (DATASET *dset, int v0, int v1, int v2)
     qsort(tsr, dset->n, sizeof *tsr, compare_ts);
 
     dset->Z[v2][tsr[0].pos] = k = 1;
-
     for (i=1; i<dset->n; i++) {
 	if (tsr[i].b != tsr[i-1].b || tsr[i].a != tsr[i-1].a) {
 	    k++;
