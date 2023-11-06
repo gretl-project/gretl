@@ -46,6 +46,7 @@ version 2023c, in progress
   listing
 - Fix bug: markdown conversion not always working properly
 - Fix bug: "kdplot" command not respecting the --output option
+- Fix bug: pexpand() function not working as advertised
 - GUI: Add means of stacking side-by-side time series into
   panel series via the "Dataset structure" wizard
 - GUI: Add a color selection dialog under the Tools menu

@@ -1720,14 +1720,16 @@ gretl_matrix *panel_shrink (const double *x, int noskip,
  * panel_expand:
  * @x: source vector.
  * @y target array.
- * @dset: pointer to dataset.
+ * @dset: pointer to panel dataset.
  * @opt: OPT_X to repeat across individuals instead
  * of across time.
  *
- * Constructs a series by repeating the values in @x,
- * by default across time (in which case the source
- * vector must have as many values as there are
- * individuals in the current sample range).
+ * Constructs a panel series by repeating the values in @x.
+ * By default expansion is across time, and the source vector
+ * must have as many elements as there are individuals in the
+ * current sample range. But if OPT_X is given, expansion is
+ * across individuals and the length of @x must equal the
+ * time-series length of the dataset.
  *
  * Returns: zero on success, non-zero code on error.
  */
@@ -1735,34 +1737,33 @@ gretl_matrix *panel_shrink (const double *x, int noskip,
 int panel_expand (const gretl_matrix *x, double *y,
                   gretlopt opt, const DATASET *dset)
 {
-    int n, T = sample_size(dset);
+    int xlen, N, T;
+    int xsect = 0;
+    int i, t, s;
 
     if (x == NULL || !dataset_is_panel(dset)) {
         return E_DATA;
     }
 
-    n = (int) ceil((double) T / dset->pd);
+    T = dset->pd;
+    N = sample_size(dset) / T;
+    xlen = gretl_vector_get_length(x);
 
-    if (gretl_vector_get_length(x) != n) {
-        return E_NONCONF;
-    } else {
-        int ubak = -1;
-        int t, u, i = 0;
-        double xi = 0;
+    if (opt & OPT_X) {
+	if (xlen != T) {
+	    return E_INVARG;
+	} else {
+	    xsect = 1;
+	}
+    } else if (xlen != N) {
+	return E_INVARG;
+    }
 
-        for (t=dset->t1; t<=dset->t2; t++) {
-            u = t / dset->pd;
-            if (u != ubak) {
-                xi = x->val[i++];
-                ubak = u;
-            }
-            if (na(xi)) {
-                y[t] = NADBL;
-            } else {
-                y[t] = xi;
-            }
-
-        }
+    s = dset->t1;
+    for (i=0; i<N; i++) {
+	for (t=0; t<T; t++) {
+	    y[s++] = xsect? x->val[t] : x->val[i];
+	}
     }
 
     return 0;
