@@ -1448,6 +1448,13 @@ static void panel_vcv_line (const VCVInfo *vi, PRN *prn)
 			   "bandwidth %d"), vi->order);
 	}
 	pputc(prn, '\n');
+    } else if (vi->vmin == PANEL_BOTH) {
+	if (csv_format(prn)) {
+	    pprintf(prn, "\"%s\"", _("Standard errors clustered by unit and period"));
+	} else {
+	    pputs(prn, _("Standard errors clustered by unit and period"));
+	}
+	pputc(prn, '\n');
     }
 }
 
