@@ -1750,20 +1750,20 @@ int panel_expand (const gretl_matrix *x, double *y,
     xlen = gretl_vector_get_length(x);
 
     if (opt & OPT_X) {
-	if (xlen != T) {
-	    return E_INVARG;
-	} else {
-	    xsect = 1;
-	}
+        if (xlen != T) {
+            return E_INVARG;
+        } else {
+            xsect = 1;
+        }
     } else if (xlen != N) {
-	return E_INVARG;
+        return E_INVARG;
     }
 
     s = dset->t1;
     for (i=0; i<N; i++) {
-	for (t=0; t<T; t++) {
-	    y[s++] = xsect? x->val[t] : x->val[i];
-	}
+        for (t=0; t<T; t++) {
+            y[s++] = xsect? x->val[t] : x->val[i];
+        }
     }
 
     return 0;
@@ -3733,9 +3733,9 @@ int gen_wkday (DATASET *dset, int *vnum)
 
     for (t=0; t<dset->n; t++) {
         ntolabel(datestr, t, dset);
-	wd = weekday_from_date(datestr);
-	/* traditional userspace weekdays */
-	wd = (wd == G_DATE_SUNDAY) ? 0 : wd;
+        wd = weekday_from_date(datestr);
+        /* traditional userspace weekdays */
+        wd = (wd == G_DATE_SUNDAY) ? 0 : wd;
         dset->Z[i][t] = (double) wd;
     }
 
@@ -7062,7 +7062,7 @@ static gretl_matrix *real_aggregate_by (const double *x,
                                         double *tmp,
                                         double (*builtin)
                                         (int, int, const double *),
-					fncall *fc,
+                                        fncall *fc,
                                         int just_count,
                                         int *err)
 {
@@ -7137,8 +7137,8 @@ static gretl_matrix *real_aggregate_by (const double *x,
 
     m = gretl_zero_matrix_new(maxcases, mcols);
     if (m == NULL) {
-	*err = E_ALLOC;
-	goto bailout;
+        *err = E_ALLOC;
+        goto bailout;
     }
 
     ii = 0;
@@ -7178,15 +7178,15 @@ static gretl_matrix *real_aggregate_by (const double *x,
                 /* aggregate x at current y values */
                 if (builtin != NULL) {
                     fx = (*builtin)(0, ni-1, tmp);
-		} else {
-		    double *pfx = &fx;
+                } else {
+                    double *pfx = &fx;
 
-		    dset->t2 = ni-1;
-		    *err = gretl_function_exec(fc, GRETL_TYPE_DOUBLE,
-					       dset, &pfx, NULL);
-		    fx = *pfx;
-		}
-		gretl_matrix_set(m, ii, ny+k+countcol, fx);
+                    dset->t2 = ni-1;
+                    *err = gretl_function_exec(fc, GRETL_TYPE_DOUBLE,
+                                               dset, &pfx, NULL);
+                    fx = *pfx;
+                }
+                gretl_matrix_set(m, ii, ny+k+countcol, fx);
             }
         }
 
@@ -7311,32 +7311,32 @@ static void aggr_add_colnames (gretl_matrix *m,
 */
 
 static fncall *get_user_aggrby_call (const char *s,
-				     double *tmp,
-				     int *err)
+                                     double *tmp,
+                                     int *err)
 {
     ufunc *uf = get_user_function_by_name(s);
     fncall *fc = NULL;
 
     if (uf == NULL) {
-	*err = E_INVARG;
+        *err = E_INVARG;
     } else {
-	GretlType rt = user_func_get_return_type(uf);
-	int np = fn_n_params(uf);
+        GretlType rt = user_func_get_return_type(uf);
+        int np = fn_n_params(uf);
 
-	if (rt != GRETL_TYPE_DOUBLE || np != 1) {
-	    *err = E_INVARG;
-	}
+        if (rt != GRETL_TYPE_DOUBLE || np != 1) {
+            *err = E_INVARG;
+        }
     }
 
     if (!*err) {
-	fc = user_func_get_fncall(uf);
-	if (fc == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    *err = push_function_arg(fc, NULL, NULL,
-				     GRETL_TYPE_SERIES,
-				     tmp);
-	}
+        fc = user_func_get_fncall(uf);
+        if (fc == NULL) {
+            *err = E_ALLOC;
+        } else {
+            *err = push_function_arg(fc, NULL, NULL,
+                                     GRETL_TYPE_SERIES,
+                                     tmp);
+        }
     }
 
     return fc;
@@ -7445,18 +7445,18 @@ gretl_matrix *aggregate_by (const double *x,
         if (tmp == NULL) {
             *err = E_ALLOC;
         } else if (builtin == NULL) {
-	    fc = get_user_aggrby_call(fname, tmp, err);
-	}
+            fc = get_user_aggrby_call(fname, tmp, err);
+        }
     }
 
     if (!*err) {
-	int save_t2 = dset->t2;
+        int save_t2 = dset->t2;
 
         x = (x == NULL)? NULL : x + dset->t1;
         y = (y == NULL)? NULL : y + dset->t1;
         m = real_aggregate_by(x, y, xlist, ylist, dset, tmp,
                               builtin, fc, just_count, err);
-	dset->t2 = save_t2;
+        dset->t2 = save_t2;
     }
 
     if (m != NULL && *err) {
@@ -7894,11 +7894,11 @@ int sample_span (const char *stobs, const char *endobs,
             int wd1 = weekday_from_epoch_day(ed1);
             int wd2 = weekday_from_epoch_day(ed2);
 
-	    if (wd1 > pd) {
-		ed1 = 0;
-	    } else if (wd2 > pd) {
-		ed2 = 0;
-	    }
+            if (wd1 > pd) {
+                ed1 = 0;
+            } else if (wd2 > pd) {
+                ed2 = 0;
+            }
         }
         if (ed1 == 0) {
             gretl_errmsg_sprintf(_("Invalid observation %s"), stobs);
