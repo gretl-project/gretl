@@ -781,12 +781,9 @@ panel_white_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     }
 
     finalize_clustered_vcv(pmod, pan, XX, W, V, n_c);
-#if CDEBUG
-    gretl_matrix_print(V, "white V");
-#endif
     if (!two_way(ci)) {
+	/* should we offer "plain White" (HC0) as an option? */
 	gretl_model_set_vcv_info(pmod, VCV_HC, 0);
-	// gretl_model_set_int(pmod, "n_clusters", n_c);
     }
 
  bailout:
@@ -1200,7 +1197,7 @@ static int panel_two_way_cluster (MODEL *pmod,
 /* Handler for the case where the caller has specified clustering by
    both "period" and "unit", and these strings do not identify already
    existing series, but are being treated as automatic keywords (which
-   is in fact more efficient).
+   should be more efficient).
 */
 
 static int unit_and_period_cluster (MODEL *pmod,
