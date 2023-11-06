@@ -940,8 +940,8 @@ static int transcribe_cluster_var (MODEL *pmod,
 
 /* For a clustering variable named by @s, find out if it's a named
    series, or a keyword ("period", "unit"), or neither (an error). To
-   signal the presence of one of the keywords we use a bitflag in
-   @popt.
+   signal the presence of one of the keywords we assign one of CI_TIME
+   or CI_UNIT in place of a regular series ID number.
 */
 
 static int get_id_or_special (const char *s,
@@ -1197,6 +1197,12 @@ static int panel_two_way_cluster (MODEL *pmod,
     return err;
 }
 
+/* Handler for the case where the caller has specified clustering by
+   both "period" and "unit", and these strings do not identify already
+   existing series, but are being treated as automatic keywords (which
+   is in fact more efficient).
+*/
+
 static int unit_and_period_cluster (MODEL *pmod,
 				    panelmod_t *pan,
 				    DATASET *pset,
@@ -1224,19 +1230,23 @@ static int unit_and_period_cluster (MODEL *pmod,
 	/* calculate @V for period */
 	gretl_matrix_zero(W);
 	ci->target = 1;
-	err = time_cluster_vcv(pmod, pan, pset, XX, W, V, ci);
+	err = time_cluster_vcv(pmod, pan, pset, XX, W, Vb, ci);
     }
 
     if (!err) {
-	/* calculate @V for combination (= White) */
+	/* calculate @V for combination (= plain White) */
 	gretl_matrix_zero(W);
-	err = panel_white_vcv(pmod, pan, pset, XX, W, Vb, ci);
+	err = panel_white_vcv(pmod, pan, pset, XX, W, Vc, ci);
     }
 
     if (!err) {
 	/* V = Va + Vb - Vc */
 	gretl_matrix_add_to(V, Vb);
 	gretl_matrix_subtract_from(V, Vc);
+    }
+
+    if (!err) {
+        err = maybe_eigenfix(V);
     }
 
     if (!err) {
@@ -1253,8 +1263,6 @@ static int unit_and_period_cluster (MODEL *pmod,
 
     return err;
 }
-
-#define DK_DEBUG 0
 
 /* The method of Driscoll and Kraay in "Consistent Covariance Matrix
    Estimation with Spatially Dependent Panel Data", REStat 80:4, 1998,
@@ -1299,9 +1307,6 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     /* Maximum lag for Newey-West. Note: do "set hac_lag nw2"
        for agreement with Stata's xtscc */
     m = get_hac_lag(pan->Tmax);
-#if DK_DEBUG
-    fprintf(stderr, "Driscoll-Kraay: max lag %d\n", m);
-#endif
 
     /* build the H matrix */
     for (t=0; t<pan->T; t++) {
@@ -1337,10 +1342,6 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
         }
     }
 
-#if DK_DEBUG
-    gretl_matrix_print(H, "H for D-K");
-#endif
-
     /* compute initial S = Omega_0 */
     for (t=0; t<pan->T; t++) {
         for (i=0; i<k; i++) {
@@ -1350,10 +1351,6 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
                                   ht, GRETL_MOD_TRANSPOSE,
                                   S, GRETL_MOD_CUMULATE);
     }
-
-#if DK_DEBUG
-    gretl_matrix_print(S, "initial S = Omega(0)");
-#endif
 
     /* cumulate the weighted cross-lag terms */
     for (j=1; j<=m; j++) {
@@ -1373,10 +1370,6 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
         gretl_matrix_multiply_by_scalar(Wj, bw);
         gretl_matrix_add_to(S, Wj);
     }
-
-#if DK_DEBUG
-    gretl_matrix_print(S, "Newey-West S");
-#endif
 
     finalize_clustered_vcv(pmod, pan, XX, S, V, pan->Tmax);
     gretl_model_set_full_vcv_info(pmod, VCV_PANEL, PANEL_DK, m, 0, 0);
@@ -1455,7 +1448,7 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
     } else if (pan_robust == DRISCOLL_KRAAY) {
         driscoll_kraay_vcv(pmod, pan, pset, XX, W, V);
     } else {
-	/* default: pan_robust = ARELLANO */
+	/* default: pan_robust == ARELLANO */
         err = unit_cluster_vcv(pmod, pan, pset, XX, W, V, ci);
     }
 
