@@ -1196,7 +1196,7 @@ static int panel_two_way_cluster (MODEL *pmod,
 
 /* Handler for the case where the caller has specified clustering by
    both "period" and "unit", and these strings do not identify already
-   existing series, but are being treated as automatic keywords (which
+   existing series but are being treated as automatic keywords (which
    should be more efficient).
 */
 
