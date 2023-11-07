@@ -510,9 +510,22 @@ static VCVInfo *vcv_info_new (void)
 	vi->vmaj = vi->vmin = 0;
 	vi->order = vi->flags = 0;
 	vi->bw = NADBL;
+	vi->cv1 = NULL;
+	vi->cv2 = NULL;
     }
 
     return vi;
+}
+
+static void vcv_info_free (void *data)
+{
+    VCVInfo *vi = data;
+
+    if (vi != NULL) {
+	free(vi->cv1);
+	free(vi->cv2);
+	free(vi);
+    }
 }
 
 /**
@@ -522,7 +535,8 @@ static VCVInfo *vcv_info_new (void)
  */
 
 int gretl_model_set_full_vcv_info (MODEL *pmod, int vmaj, int vmin,
-				   int order, int flags, double bw)
+				   int order, int flags, double bw,
+				   const char *cv1, const char *cv2)
 {
     VCVInfo *vi;
     int prev = 0;
@@ -537,6 +551,9 @@ int gretl_model_set_full_vcv_info (MODEL *pmod, int vmaj, int vmin,
 	}
     } else {
 	prev = 1;
+	free(vi->cv1);
+	free(vi->cv2);
+	vi->cv1 = vi->cv2 = NULL;
     }
 
     vi->vmaj = vmaj;
@@ -545,10 +562,18 @@ int gretl_model_set_full_vcv_info (MODEL *pmod, int vmaj, int vmin,
     vi->flags = flags;
     vi->bw = bw;
 
+    if (cv1 != NULL) {
+	vi->cv1 = gretl_strdup(cv1);
+    }
+    if (cv2 != NULL) {
+	vi->cv2 = gretl_strdup(cv2);
+    }
+
     if (!prev) {
-	err = gretl_model_set_data(pmod, "vcv_info", vi,
-				   GRETL_TYPE_STRUCT,
-				   sizeof *vi);
+	err = gretl_model_set_data_with_destructor(pmod, "vcv_info", vi,
+						   GRETL_TYPE_STRUCT,
+						   sizeof *vi,
+						   vcv_info_free);
     }
 
     return err;
@@ -564,7 +589,7 @@ int gretl_model_set_full_vcv_info (MODEL *pmod, int vmaj, int vmin,
 int gretl_model_set_vcv_info (MODEL *pmod, int vmaj, int vmin)
 {
     return gretl_model_set_full_vcv_info(pmod, vmaj, vmin,
-					 0, 0, 0);
+					 0, 0, 0, NULL, NULL);
 }
 
 /**
@@ -605,22 +630,42 @@ int gretl_model_get_hc_version (const MODEL *pmod)
 }
 
 /**
- * gretl_model_get_cluster_var:
+ * gretl_model_get_cluster_vname:
  * @pmod: pointer to model.
  *
- * Returns: the dataset index of the clustering variable used for
- * the variance-covariance matrix in @pmod, or 0 if there
- * is no such variable.
+ * Returns: the name of the (first) clustering variable used for
+ * the variance-covariance matrix in @pmod, or NULL if there is no
+ * such variable.
  */
 
-int gretl_model_get_cluster_var (const MODEL *pmod)
+const char *gretl_model_get_cluster_vname (const MODEL *pmod)
 {
     VCVInfo *vi = gretl_model_get_data(pmod, "vcv_info");
 
     if (vi != NULL && vi->vmaj == VCV_CLUSTER) {
-	return vi->vmin;
+	return vi->cv1;
     } else {
-	return 0;
+	return NULL;
+    }
+}
+
+/**
+ * gretl_model_get_cluster_vname2:
+ * @pmod: pointer to model.
+ *
+ * Returns: the name of the second clustering variable used for
+ * the variance-covariance matrix in @pmod, or NULL if there is no
+ * such variable.
+ */
+
+const char *gretl_model_get_cluster_vname2 (const MODEL *pmod)
+{
+    VCVInfo *vi = gretl_model_get_data(pmod, "vcv_info");
+
+    if (vi != NULL && vi->vmaj == VCV_CLUSTER) {
+	return vi->cv2;
+    } else {
+	return NULL;
     }
 }
 
@@ -4822,6 +4867,12 @@ static void serialize_vcv_info (model_data_item *item, PRN *prn)
     if (vi->bw > 0 && !na(vi->bw)) {
 	pprintf(prn, " bw=\"%.12g\"", vi->bw);
     }
+    if (vi->cv1 != NULL) {
+	pprintf(prn, " cv1=\"%s\"", vi->cv1);
+    }
+    if (vi->cv2 != NULL) {
+	pprintf(prn, " cv2=\"%s\"", vi->cv2);
+    }
     pputs(prn, "/>\n");
 }
 
@@ -5481,6 +5532,7 @@ retrieve_model_vcv_info (xmlNodePtr cur, MODEL *pmod)
     int err = 0;
 
     if (vi != NULL) {
+	char *s = NULL;
 	int ival;
 	double x;
 
@@ -5495,9 +5547,16 @@ retrieve_model_vcv_info (xmlNodePtr cur, MODEL *pmod)
 	if (gretl_xml_get_prop_as_double(cur, "bw", &x)) {
 	    vi->bw = x;
 	}
-	err = gretl_model_set_data(pmod, "vcv_info", vi,
-				   GRETL_TYPE_STRUCT,
-				   sizeof *vi);
+	if (gretl_xml_get_prop_as_string(cur, "cv1", &s)) {
+	    vi->cv1 = s;
+	}
+	if (gretl_xml_get_prop_as_string(cur, "cv2", &s)) {
+	    vi->cv2 = s;
+	}
+	err = gretl_model_set_data_with_destructor(pmod, "vcv_info", vi,
+						   GRETL_TYPE_STRUCT,
+						   sizeof *vi,
+						   vcv_info_free);
     }
 
     return err;
@@ -5570,7 +5629,7 @@ static int gretl_model_set_int_compat (MODEL *pmod,
 
 static void compat_compose_vcv_info (MODEL *pmod)
 {
-    VCVInfo vi = { 0, 0, 0, 0, NADBL };
+    VCVInfo vi = { 0, 0, 0, 0, NADBL, NULL, NULL };
     int ival;
 
     if (gretl_model_get_int(pmod, "hc")) {
@@ -5611,9 +5670,10 @@ static void compat_compose_vcv_info (MODEL *pmod)
 
 	if (pvi != NULL) {
 	    *pvi = vi;
-	    gretl_model_set_data(pmod, "vcv_info", pvi,
-				 GRETL_TYPE_STRUCT,
-				 sizeof *pvi);
+	    gretl_model_set_data_with_destructor(pmod, "vcv_info", pvi,
+						 GRETL_TYPE_STRUCT,
+						 sizeof *pvi,
+						 vcv_info_free);
 	}
     }
 }
@@ -6408,6 +6468,7 @@ void model_list_to_string (int *list, char *buf)
 int highest_numbered_var_in_model (const MODEL *pmod,
 				   const DATASET *dset)
 {
+    const char *vname;
     int i, v, vmax = 0;
     int gotsep = 0;
 
@@ -6442,8 +6503,16 @@ int highest_numbered_var_in_model (const MODEL *pmod,
     }
 
     /* clustered standard errors? */
-    v = gretl_model_get_cluster_var(pmod);
-    if (v > vmax) vmax = v;
+    vname = gretl_model_get_cluster_vname(pmod);
+    if (vname != NULL) {
+	v = current_series_index(dset, vname);
+	if (v > vmax) vmax = v;
+    }
+    vname = gretl_model_get_cluster_vname2(pmod);
+    if (vname != NULL) {
+	v = current_series_index(dset, vname);
+	if (v > vmax) vmax = v;
+    }
 
     /* auxiliary variables for some model types */
 

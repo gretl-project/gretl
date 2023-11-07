@@ -1431,11 +1431,11 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 	if (s->oc->hinfo.kern == KERNEL_QS) {
 	    gretl_model_set_full_vcv_info(pmod, VCV_HAC, s->oc->hinfo.kern,
 					  0, s->oc->hinfo.whiten, 
-					  s->oc->hinfo.bt);
+					  s->oc->hinfo.bt, NULL, NULL);
 	} else {
 	    gretl_model_set_full_vcv_info(pmod, VCV_HAC, s->oc->hinfo.kern,
 					  s->oc->hinfo.h, s->oc->hinfo.whiten, 
-					  NADBL);
+					  NADBL, NULL, NULL);
 	}
     }
 

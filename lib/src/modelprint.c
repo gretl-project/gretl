@@ -1463,17 +1463,14 @@ static void cluster_vcv_line (const MODEL *pmod, const VCVInfo *vi,
 {
     gchar *cstr;
 
-    if (vi->vmin > 0 && vi->vmin < dset->v &&
-	vi->order > 0 && vi->order < dset->v) {
-	/* note: "order" is borrowed here */
+    if (vi->cv1 != NULL && vi->cv2 != NULL) {
 	cstr = g_strdup_printf(_("Standard errors clustered by %s and %s"),
-			       dset->varname[vi->vmin],
-			       dset->varname[vi->order]);
-    } else if (vi->vmin > 0 && vi->vmin < dset->v) {
+			       vi->cv1, vi->cv2);
+    } else if (vi->cv1 != NULL) {
 	int n_c = gretl_model_get_int(pmod, "n_clusters");
 
 	cstr = g_strdup_printf(_("Standard errors clustered by %d values of %s"),
-			       n_c, dset->varname[vi->vmin]);
+			       n_c, vi->cv1);
     } else {
 	cstr = g_strdup(_("Clustered standard errors"));
     }

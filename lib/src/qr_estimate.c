@@ -1053,7 +1053,7 @@ static int qr_make_hac (MODEL *pmod, const DATASET *dset,
     if (!err) {
         gretl_model_set_full_vcv_info(pmod, vi.vmaj, vi.vmin,
                                       vi.order, vi.flags,
-                                      vi.bw);
+                                      vi.bw, NULL, NULL);
         if (!na(vi.bw)) {
             gretl_model_set_double(pmod, "hac_bw", vi.bw);
         } else {

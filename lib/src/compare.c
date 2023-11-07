@@ -698,11 +698,12 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
     MODEL rep;
     const char *param = NULL;
     const int *laglist = NULL;
+    const char *cname = NULL;
     int *full_list = NULL;
     char altparm[32] = {0};
     int mc = get_model_count();
-    int cv, repci = orig->ci;
-    int order = 0;
+    int repci = orig->ci;
+    int cv, order = 0;
     int first = 1;
 
     gretl_model_init(&rep, dset);
@@ -711,10 +712,14 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 
     transcribe_option_flags(&myopt, orig->opt, OPT_D | OPT_J | OPT_R);
 
-    cv = gretl_model_get_cluster_var(orig);
-    if (cv > 0 && cv < dset->v) {
-	myopt |= OPT_C;
-	set_optval_string(orig->ci, OPT_C, dset->varname[cv]);
+    cname = gretl_model_get_cluster_vname(orig);
+    if (cname != NULL) {
+	/* FIXME second cname? */
+	cv = current_series_index(dset, cname);
+	if (cv > 0) {
+	    myopt |= OPT_C;
+	    set_optval_string(orig->ci, OPT_C, cname);
+	}
     }
 
     if (orig->ci == AR1) {

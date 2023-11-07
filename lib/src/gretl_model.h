@@ -72,15 +72,15 @@ typedef enum {
 } HACKernel;
 
 typedef enum {
-    PANEL_HAC,  /* clustered by individual */
-    PANEL_BK,   /* Beck-Katz */
+    PANEL_HAC,  /* clustered by individual (Arellano) */
+    PANEL_BK,   /* Beck-Katz PCSE */
     PANEL_TIME, /* clustered by period */
-    PANEL_DK,   /* Driscoll-Kraay */
-    PANEL_BOTH  /* clustered by unit and period */
+    PANEL_DK,   /* Driscoll-Kraay SCC */
+    PANEL_BOTH  /* clustered by both unit and period */
 } PanelVCVType;
 
 typedef enum {
-    RQ_ASY,
+    RQ_ASY,   /* asymptotic */
     RQ_NID    /* sandwich */
 } RQVCVType;
 
@@ -91,11 +91,13 @@ typedef enum {
 typedef struct VCVInfo_ VCVInfo;
 
 struct VCVInfo_ {
-    int vmaj;       /* general type of VCV */
-    int vmin;       /* HC variant, etc. */
-    int order;      /* for use with HAC */
-    VCVFlags flags; /* includes prewhitening */
-    double bw;      /* for use with QS HAC kernel */ 
+    int vmaj;        /* general type of VCV (see VCVMajorType) */
+    int vmin;        /* variant of general type */
+    int order;       /* for use with HAC */
+    VCVFlags flags;  /* includes prewhitening */
+    double bw;       /* for use with QS HAC kernel */
+    char *cv1;       /* name of (first) cluster variable */
+    char *cv2;       /* name of second cluster var */
 };
 
 /* single-equation model commands */
@@ -291,7 +293,8 @@ int gretl_model_set_int (MODEL *pmod, const char *key, int val);
 int gretl_model_set_double (MODEL *pmod, const char *key, double val);
 
 int gretl_model_set_full_vcv_info (MODEL *pmod, int vmaj, int vmin,
-				   int order, int flags, double bw);
+				   int order, int flags, double bw,
+				   const char *cv1, const char *cv2);
 
 int gretl_model_set_vcv_info (MODEL *pmod, int vmaj, int vmin);
 
@@ -299,7 +302,9 @@ int gretl_model_get_vcv_type (const MODEL *pmod);
 
 int gretl_model_get_hc_version (const MODEL *pmod);
 
-int gretl_model_get_cluster_var (const MODEL *pmod);
+const char *gretl_model_get_cluster_vname (const MODEL *pmod);
+
+const char *gretl_model_get_cluster_vname2 (const MODEL *pmod);
 
 void *gretl_model_get_data (const MODEL *pmod, const char *key);
 

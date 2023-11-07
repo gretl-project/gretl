@@ -784,8 +784,9 @@ void selector_from_model (windata_t *vwin)
     if (ci == VIEW_MODEL) {
         /* single-equation model (mostly) */
         MODEL *pmod = (MODEL *) ptr;
+	const char *cname = NULL;
         int sel_ci = pmod->ci;
-        int cv, dv = -1, gotinst = 0;
+        int dv = -1, gotinst = 0;
 
         if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM) {
             revise_nl_model(pmod, vwin_toplevel(vwin));
@@ -923,10 +924,10 @@ void selector_from_model (windata_t *vwin)
         }
 
         *cluster_var = '\0';
-        cv = gretl_model_get_cluster_var(pmod);
-        if (cv > 0 && cv < dataset->v) {
+        cname = gretl_model_get_cluster_vname(pmod);
+        if (cname != NULL) {
+	    strcpy(cluster_var, cname);
             model_opt |= OPT_C;
-            strcpy(cluster_var, dataset->varname[cv]);
         }
 
         y_x_lags_enabled = y_w_lags_enabled = 0;

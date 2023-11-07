@@ -527,10 +527,12 @@ typedef struct cluster_info_ {
 } cluster_info;
 
 #define by_time_and_unit(ci) (ci->dcvar < -1 && ci->dcvar2 < -1)
+#define by_time_or_unit(ci) (ci->dcvar < -1 || ci->dcvar2 < -1)
 #define by_time(ci) (ci->dcvar == CI_TIME)
 #define by_unit(ci) (ci->dcvar == CI_UNIT)
 #define generic(ci) (ci->dcvar > 0)
 #define two_way(ci) (ci->dcvar != -1 && ci->dcvar2 != -1)
+#define is_present(v) (v != -1)
 
 static cluster_info *cluster_info_new (void)
 {
@@ -547,6 +549,17 @@ static void cluster_info_free (cluster_info *ci)
     if (ci != NULL) {
         gretl_matrix_free(ci->cvals);
         free(ci);
+    }
+}
+
+static const char *cluster_name (int v, const DATASET *dset)
+{
+    if (v > 0) {
+	return dset->varname[v];
+    } else if (v == CI_TIME) {
+	return "period";
+    } else {
+	return "unit";
     }
 }
 
@@ -730,7 +743,8 @@ generic_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 #endif
     if (!two_way(ci)) {
         /* not doing two-way clustering, so finish the job */
-        gretl_model_set_vcv_info(pmod, VCV_CLUSTER, ci->dcvar);
+        gretl_model_set_full_vcv_info(pmod, VCV_CLUSTER, 0, 0, 0, 0,
+				      dset->varname[ci->pcvar], NULL);
         gretl_model_set_int(pmod, "n_clusters", n_c);
     } else if (ci->target >= 0) {
 	ci->nc[ci->target] = n_c;
@@ -876,6 +890,36 @@ unit_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     return err;
 }
 
+/* In response to "period" or "unit" appearing in the context of the
+   --cluster option for a basic panel-data estimator: if there is no
+   current series answering to the name, we'll construct an on-the-fly
+   series that represents the time period -- or if @do_unit is
+   non-zero, the cross-sectional unit.
+*/
+
+static void make_unit_or_period (MODEL *pmod,
+				 panelmod_t *pan,
+				 double *y,
+				 cluster_info *ci)
+{
+    int do_unit = (ci->dcvar == CI_UNIT);
+    int i, t, s;
+
+    for (i=0; i<pan->nunits; i++) {
+        if (pan->unit_obs[i] == 0) {
+	    continue;
+	}
+	for (t=0; t<pan->T; t++) {
+	    s = panel_index(i, t);
+	    if (na(pmod->uhat[s])) {
+		continue;
+	    }
+	    s = small_index(pan, s);
+	    y[s] = do_unit ? i+1 : t+1;
+	}
+    }
+}
+
 /* Transcribe an ad hoc clustering series from the main dataset to the
    special fixed- or random-effects dataset. This is quite simple with
    a balanced panel, more complex otherwise. Plus, if successful,
@@ -891,9 +935,16 @@ static int transcribe_cluster_var (MODEL *pmod,
                                    const DATASET *dset,
                                    cluster_info *ci)
 {
-    const double *src = dset->Z[ci->dcvar];
     double *dest = pset->Z[ci->pcvar];
+    const double *src = NULL;
     int t, err = 0;
+
+    if (ci->dcvar == CI_TIME || ci->dcvar == CI_UNIT) {
+	make_unit_or_period(pmod, pan, dest, ci);
+	return 0;
+    }
+
+    src = dset->Z[ci->dcvar];
 
     if (pset->n == dset->n) {
         /* balanced */
@@ -1022,31 +1073,35 @@ static int check_cluster_var (MODEL *pmod,
 	err = process_cluster_string(s, dset, ci);
     }
 
+    fprintf(stderr, "HERE dcvar %d, dcvar2 %d\n", ci->dcvar, ci->dcvar2);
+
     if (err) {
 	return err;
-    } else if (by_time(ci) || by_unit(ci)) {
-	; /* FIXME? */
+    } else if (by_time_and_unit(ci)) {
+	; /* nothing more to be done */
+    } else if (by_time_or_unit(ci) && !two_way(ci)) {
+	; /* nothing more to be done */
     } else {
-        int n_add = 1; /* number of series to be added */
+        int n_add = 1; /* default number of series to be added */
 	int v0;        /* position of (first) added series */
 
-	if (ci->dcvar2 > 0) {
+	if (is_present(ci->dcvar2)) {
 	    /* we'll need two series plus their combination */
 	    n_add = 3;
 	}
 	err = dataset_add_series(pset, n_add);
-        if (err) {
-            return err;
-        }
-        ci->pcvar = v0 = pset->v - n_add;
-	/* note: full-dataset IDs */
-	strcpy(pset->varname[v0], dset->varname[ci->dcvar]);
-        if (ci->dcvar2 > 0) {
+	if (err) {
+	    return err;
+	}
+	ci->pcvar = v0 = pset->v - n_add;
+	/* note: full-dataset IDs where applicable */
+	strcpy(pset->varname[v0], cluster_name(ci->dcvar, dset));
+	if (is_present(ci->dcvar2)) {
 	    /* name the extra two series */
-            strcpy(pset->varname[v0+1], dset->varname[ci->dcvar2]);
-            strcpy(pset->varname[v0+2], "combo");
-        }
-        err = transcribe_cluster_var(pmod, pan, pset, dset, ci);
+	    strcpy(pset->varname[v0+1], cluster_name(ci->dcvar2, dset));
+	    strcpy(pset->varname[v0+2], "combo");
+	}
+	err = transcribe_cluster_var(pmod, pan, pset, dset, ci);
     }
 
     return err;
@@ -1113,150 +1168,118 @@ static int maybe_eigenfix (gretl_matrix *V)
     return err;
 }
 
-static int panel_two_way_cluster (MODEL *pmod,
-                                  panelmod_t *pan,
-                                  DATASET *pset,
-                                  const DATASET *dset,
-                                  const gretl_matrix *XX,
-                                  gretl_matrix *W,
-                                  gretl_matrix *V,
-                                  cluster_info *ci)
+static int two_way_cluster_vcv (MODEL *pmod,
+				panelmod_t *pan,
+				DATASET *pset,
+				const DATASET *dset,
+				const gretl_matrix *XX,
+				gretl_matrix *W,
+				gretl_matrix *V,
+				cluster_info *ci)
 {
-    gretl_matrix *Vb, *Vc;
+    gretl_matrix *Vb;
     int did = ci->dcvar;
-    int v0 = pset->v - 3;
-    int v1 = pset->v - 2;
-    int v2 = pset->v - 1;
+    int v[3] = {0};
     int k = V->rows;
     int err;
 
     Vb = gretl_matrix_alloc(k, k);
-    Vc = gretl_matrix_alloc(k, k);
-    if (Vb == NULL || Vc == NULL) {
-        err = E_ALLOC;
-        goto bailout;
+    if (Vb == NULL) {
+        return E_ALLOC;
+    }
+
+    if (!by_time_and_unit(ci)) {
+	v[0] = pset->v - 3;
+	v[1] = pset->v - 2;
+	v[2] = pset->v - 1;
     }
 
     /* Step 1: calculate @V for the first cluster var */
     ci->target = 0;
-    err = generic_cluster_vcv(pmod, pan, pset, XX, W, V, ci);
-    if (!err) {
-        /* Step 2a: transcribe the second cluster var */
-        ci->pcvar = v1;
+    if (ci->dcvar == CI_TIME) {
+	fprintf(stderr, " two_way(1): using TIME\n");
+	err = time_cluster_vcv(pmod, pan, pset, XX, W, V, ci);
+    } else if (ci->dcvar == CI_UNIT) {
+	fprintf(stderr, " two_way(1): using UNIT\n");
+	err = unit_cluster_vcv(pmod, pan, pset, XX, W, V, ci);
+    } else {
+	fprintf(stderr, " two_way(1): using using pset %d (%s)\n",
+		v[0], pset->varname[v[0]]);
+	err = generic_cluster_vcv(pmod, pan, pset, XX, W, V, ci);
+    }
+
+    if (!err && ci->dcvar2 > 0) {
+        /* Step 2a: transcribe the second cluster var if needed */
+        ci->pcvar = v[1];
         ci->dcvar = ci->dcvar2;
         err = transcribe_cluster_var(pmod, pan, pset, dset, ci);
+	fprintf(stderr, " two_way(2): using pset %d (%s)\n",
+		v[1], pset->varname[v[1]]);
     }
+
     if (!err) {
         /* Step 2b: calculate @Vb for the second cluster var */
         gretl_matrix_zero(W);
 	ci->target = 1;
-        err = generic_cluster_vcv(pmod, pan, pset, XX, W, Vb, ci);
+	if (ci->dcvar2 == CI_TIME) {
+	    err = time_cluster_vcv(pmod, pan, pset, XX, W, Vb, ci);
+	    fprintf(stderr, " two_way(2): using TIME\n");
+	} else if (ci->dcvar == CI_UNIT) {
+	    err = unit_cluster_vcv(pmod, pan, pset, XX, W, Vb, ci);
+	    fprintf(stderr, " two_way(2): using UNIT\n");
+	} else {
+	    err = generic_cluster_vcv(pmod, pan, pset, XX, W, Vb, ci);
+	}
+	gretl_matrix_add_to(V, Vb);
     }
+
+    if (!err && by_time_and_unit(ci)) {
+	/* Step 3: calculate @Vb for combination (= plain White) */
+	gretl_matrix_zero(W);
+	err = panel_white_vcv(pmod, pan, pset, XX, W, Vb, ci);
+	goto step4;
+    }
+
     if (!err) {
         /* Step 3a: combine the two cluster vars */
-        err = combine_categories(pset, v0, v1, v2);
+        err = combine_categories(pset, v[0], v[1], v[2]);
     }
+
     if (!err) {
         /* Step 3b: update ci->cz and ci->cvals, then calculate
-           @Vc for the combination
+           @Vb for the combination
         */
-        ci->pcvar = v2;
+        ci->pcvar = v[2];
         gretl_matrix_free(ci->cvals);
-        ci->cz = pset->Z[v2];
+        ci->cz = pset->Z[v[2]];
         ci->cvals = gretl_matrix_values(ci->cz, pmod->nobs, OPT_S, &err);
         gretl_matrix_zero(W);
 	ci->target = -1;
-        err = generic_cluster_vcv(pmod, pan, pset, XX, W, Vc, ci);
-    }
-    if (!err) {
-        /* Step 4: V = Va + Vb - Vc */
-        gretl_matrix_add_to(V, Vb);
-        gretl_matrix_subtract_from(V, Vc);
+        err = generic_cluster_vcv(pmod, pan, pset, XX, W, Vb, ci);
     }
 
+ step4:
+
     if (!err) {
-        err = maybe_eigenfix(V);
+        gretl_matrix_subtract_from(V, Vb);
+	err = maybe_eigenfix(V);
     }
 
     if (!err) {
         int nc = MIN(ci->nc[0], ci->nc[1]);
 
-        gretl_model_set_full_vcv_info(pmod, VCV_CLUSTER, did,
-                                      ci->dcvar2, 0, 0);
-        gretl_model_set_int(pmod, "n_clusters", nc);
+	if (by_time_and_unit(ci)) {
+	    gretl_model_set_vcv_info(pmod, VCV_PANEL, PANEL_BOTH);
+	    gretl_model_set_int(pmod, "n_clusters", nc);
+	} else {
+	    gretl_model_set_full_vcv_info(pmod, VCV_CLUSTER, 0, 0, 0, 0,
+					  pset->varname[v[0]],
+					  pset->varname[v[1]]);
+	    gretl_model_set_int(pmod, "n_clusters", nc);
+	}
     }
-
- bailout:
 
     gretl_matrix_free(Vb);
-    gretl_matrix_free(Vc);
-
-    return err;
-}
-
-/* Handler for the case where the caller has specified clustering by
-   both "period" and "unit", and these strings do not identify already
-   existing series but are being treated as automatic keywords (which
-   should be more efficient).
-*/
-
-static int unit_and_period_cluster (MODEL *pmod,
-				    panelmod_t *pan,
-				    DATASET *pset,
-				    const gretl_matrix *XX,
-				    gretl_matrix *W,
-				    gretl_matrix *V,
-				    cluster_info *ci)
-{
-    gretl_matrix *Vb, *Vc;
-    int k = V->rows;
-    int err;
-
-    Vb = gretl_matrix_alloc(k, k);
-    Vc = gretl_matrix_alloc(k, k);
-    if (Vb == NULL || Vc == NULL) {
-        err = E_ALLOC;
-        goto bailout;
-    }
-
-    /* calculate @V for unit */
-    ci->target = 0;
-    err = unit_cluster_vcv(pmod, pan, pset, XX, W, V, ci);
-
-    if (!err) {
-	/* calculate @V for period */
-	gretl_matrix_zero(W);
-	ci->target = 1;
-	err = time_cluster_vcv(pmod, pan, pset, XX, W, Vb, ci);
-    }
-
-    if (!err) {
-	/* calculate @V for combination (= plain White) */
-	gretl_matrix_zero(W);
-	err = panel_white_vcv(pmod, pan, pset, XX, W, Vc, ci);
-    }
-
-    if (!err) {
-	/* V = Va + Vb - Vc */
-	gretl_matrix_add_to(V, Vb);
-	gretl_matrix_subtract_from(V, Vc);
-    }
-
-    if (!err) {
-        err = maybe_eigenfix(V);
-    }
-
-    if (!err) {
-        int nc = MIN(ci->nc[0], ci->nc[1]);
-
-        gretl_model_set_vcv_info(pmod, VCV_PANEL, PANEL_BOTH);
-        gretl_model_set_int(pmod, "n_clusters", nc);
-    }
-
- bailout:
-
-    gretl_matrix_free(Vb);
-    gretl_matrix_free(Vc);
 
     return err;
 }
@@ -1369,7 +1392,8 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     }
 
     finalize_clustered_vcv(pmod, pan, XX, S, V, pan->Tmax);
-    gretl_model_set_full_vcv_info(pmod, VCV_PANEL, PANEL_DK, m, 0, 0);
+    gretl_model_set_full_vcv_info(pmod, VCV_PANEL, PANEL_DK, m,
+				  0, 0, NULL, NULL);
     gretl_model_set_int(pmod, "DKT", n_c);
 
  bailout:
@@ -1430,14 +1454,12 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
 
     libset_get_int(PANEL_ROBUST);
 
-    if (by_time_and_unit(ci)) {
-	err = unit_and_period_cluster(pmod, pan, pset, XX, W, V, ci);
+    if (two_way(ci)) {
+	err = two_way_cluster_vcv(pmod, pan, pset, dset, XX, W, V, ci);
     } else if (by_time(ci)) {
         err = time_cluster_vcv(pmod, pan, pset, XX, W, V, ci);
     } else if (by_unit(ci)) {
 	err = unit_cluster_vcv(pmod, pan, pset, XX, W, V, ci);
-    } else if (two_way(ci)) {
-        err = panel_two_way_cluster(pmod, pan, pset, dset, XX, W, V, ci);
     } else if (generic(ci)) {
         err = generic_cluster_vcv(pmod, pan, pset, XX, W, V, ci);
     } else if (pan_robust == BECK_KATZ) {
