@@ -520,26 +520,27 @@ typedef struct cluster_info_ {
     const double *cz;    /* series of all cluster-var values */
     gretl_matrix *cvals; /* sorted vector of unique cluster-var values */
     int pcvar;           /* index of cluster var in panel-special dataset */
-    int dcvar;           /* index of cluster var in full dataset */
+    int dcvar1;          /* index of (first) cluster var in full dataset */
     int dcvar2;          /* index of second cluster in full dataset, or 0 */
     int nc[2];           /* number(s) of clusters */
-    gint8 target;       /* 0 or 1 for first or second var */
+    gint8 target;        /* 0 or 1 for first or second var */
 } cluster_info;
 
-#define by_time_and_unit(ci) (ci->dcvar < -1 && ci->dcvar2 < -1)
-#define by_time_or_unit(ci) (ci->dcvar < -1 || ci->dcvar2 < -1)
-#define by_time(ci) (ci->dcvar == CI_TIME)
-#define by_unit(ci) (ci->dcvar == CI_UNIT)
-#define generic(ci) (ci->dcvar > 0)
-#define two_way(ci) (ci->dcvar != -1 && ci->dcvar2 != -1)
+#define by_time_and_unit(ci) (ci->dcvar1 < -1 && ci->dcvar2 < -1)
+#define by_time_or_unit(ci) (ci->dcvar1 < -1 || ci->dcvar2 < -1)
+#define by_time(ci) (ci->dcvar1 == CI_TIME)
+#define by_unit(ci) (ci->dcvar1 == CI_UNIT)
+#define generic(ci) (ci->dcvar1 > 0)
+#define two_way(ci) (ci->dcvar1 != -1 && ci->dcvar2 != -1)
 #define is_present(v) (v != -1)
 
 static cluster_info *cluster_info_new (void)
 {
     cluster_info *ci = calloc(1, sizeof *ci);
 
-    ci->dcvar = -1;
+    ci->dcvar1 = -1;
     ci->dcvar2 = -1;
+    ci->target = 0;
 
     return ci;
 }
@@ -893,16 +894,16 @@ unit_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 /* In response to "period" or "unit" appearing in the context of the
    --cluster option for a basic panel-data estimator: if there is no
    current series answering to the name, we'll construct an on-the-fly
-   series that represents the time period -- or if @do_unit is
-   non-zero, the cross-sectional unit.
+   series that represents the time period -- or if @srcv equals
+   CI_UNIT, the cross-sectional unit.
 */
 
 static void make_unit_or_period (MODEL *pmod,
 				 panelmod_t *pan,
 				 double *y,
-				 cluster_info *ci)
+				 int srcv)
 {
-    int do_unit = (ci->dcvar == CI_UNIT);
+    int do_unit = (srcv == CI_UNIT);
     int i, t, s;
 
     for (i=0; i<pan->nunits; i++) {
@@ -937,14 +938,24 @@ static int transcribe_cluster_var (MODEL *pmod,
 {
     double *dest = pset->Z[ci->pcvar];
     const double *src = NULL;
-    int t, err = 0;
+    int srcv, t;
+    int err = 0;
 
-    if (ci->dcvar == CI_TIME || ci->dcvar == CI_UNIT) {
-	make_unit_or_period(pmod, pan, dest, ci);
+    /* source of transcription */
+    srcv = ci->target == 1 ? ci->dcvar2 : ci->dcvar1;
+
+#if CDEBUG
+    fprintf(stderr, "  transcribe: target %d, pcvar %d, srcv %d %s\n",
+	    ci->target, ci->pcvar, srcv, srcv > 0 ? dset->varname[srcv] :
+	    srcv == CI_TIME ? "TIME" : "UNIT");
+#endif
+
+    if (srcv == CI_TIME || srcv == CI_UNIT) {
+	make_unit_or_period(pmod, pan, dest, srcv);
 	return 0;
     }
 
-    src = dset->Z[ci->dcvar];
+    src = dset->Z[srcv];
 
     if (pset->n == dset->n) {
         /* balanced */
@@ -996,7 +1007,7 @@ static int get_id_or_special (const char *s,
 			      const DATASET *dset,
 			      cluster_info *ci)
 {
-    int *pid = ci->target == 0 ? &ci->dcvar : &ci->dcvar2;
+    int *pid = ci->target == 0 ? &ci->dcvar1 : &ci->dcvar2;
     int id = current_series_index(dset, s);
     int err = 0;
 
@@ -1039,6 +1050,7 @@ static int process_cluster_string (const char *s,
 	    s2 = g_strdup(p + 1);
 	    ci->target = 1;
 	    err = get_id_or_special(s2, dset, ci);
+	    ci->target = 0;
 	}
 	g_free(s1);
 	g_free(s2);
@@ -1049,13 +1061,14 @@ static int process_cluster_string (const char *s,
 
 /* This function handles the case of a single clustering series and
    also the two-way case. If the parameter to the --cluster option is
-   "period" this is treated as a reference to the time dimension of
-   the panel, a case which gets special treatment. Otherwise we're
-   looking for one or two series names.  If this succeeds, we
-   transcribe the first (or only) clustering series from the main
-   dataset into the temporary panel dataset.  If there's a second
-   series we record its ID as dcvar2 under the cluster_info struct;
-   it will get transcribed later.
+   "period" or "unit" this is treated as a reference to the time or
+   cross-sectional dimension of the panel, a case which gets special
+   treatment.  Otherwise we're looking for one or two series names.
+
+   If this succeeds, we transcribe the first (or only) clustering
+   series from the main dataset into the temporary panel dataset.  If
+   there's a second series we record its ID as dcvar2 under the
+   cluster_info struct; it will get transcribed later.
 */
 
 static int check_cluster_var (MODEL *pmod,
@@ -1073,7 +1086,10 @@ static int check_cluster_var (MODEL *pmod,
 	err = process_cluster_string(s, dset, ci);
     }
 
-    fprintf(stderr, "HERE dcvar %d, dcvar2 %d\n", ci->dcvar, ci->dcvar2);
+#if CDEBUG
+    fprintf(stderr, "check_cluster_var: dcvar1 %d, dcvar2 %d\n",
+	    ci->dcvar1, ci->dcvar2);
+#endif
 
     if (err) {
 	return err;
@@ -1095,7 +1111,7 @@ static int check_cluster_var (MODEL *pmod,
 	}
 	ci->pcvar = v0 = pset->v - n_add;
 	/* note: full-dataset IDs where applicable */
-	strcpy(pset->varname[v0], cluster_name(ci->dcvar, dset));
+	strcpy(pset->varname[v0], cluster_name(ci->dcvar1, dset));
 	if (is_present(ci->dcvar2)) {
 	    /* name the extra two series */
 	    strcpy(pset->varname[v0+1], cluster_name(ci->dcvar2, dset));
@@ -1178,10 +1194,9 @@ static int two_way_cluster_vcv (MODEL *pmod,
 				cluster_info *ci)
 {
     gretl_matrix *Vb;
-    int did = ci->dcvar;
-    int v[3] = {0};
     int k = V->rows;
-    int err;
+    int v[3] = {0};
+    int err = 0;
 
     Vb = gretl_matrix_alloc(k, k);
     if (Vb == NULL) {
@@ -1189,44 +1204,39 @@ static int two_way_cluster_vcv (MODEL *pmod,
     }
 
     if (!by_time_and_unit(ci)) {
-	v[0] = pset->v - 3;
-	v[1] = pset->v - 2;
-	v[2] = pset->v - 1;
+	v[0] = pset->v - 3; /* first cluster var */
+	v[1] = pset->v - 2; /* second cluster var */
+	v[2] = pset->v - 1; /* combination */
     }
 
+    /* prepare for first step */
+     ci->target = 0;
+
     /* Step 1: calculate @V for the first cluster var */
-    ci->target = 0;
-    if (ci->dcvar == CI_TIME) {
-	fprintf(stderr, " two_way(1): using TIME\n");
+    if (ci->dcvar1 == CI_TIME) {
 	err = time_cluster_vcv(pmod, pan, pset, XX, W, V, ci);
-    } else if (ci->dcvar == CI_UNIT) {
-	fprintf(stderr, " two_way(1): using UNIT\n");
+    } else if (ci->dcvar1 == CI_UNIT) {
 	err = unit_cluster_vcv(pmod, pan, pset, XX, W, V, ci);
     } else {
-	fprintf(stderr, " two_way(1): using using pset %d (%s)\n",
-		v[0], pset->varname[v[0]]);
 	err = generic_cluster_vcv(pmod, pan, pset, XX, W, V, ci);
     }
 
-    if (!err && ci->dcvar2 > 0) {
+    /* prepare for second step */
+    ci->target = 1;
+
+    if (!err && !by_time_and_unit(ci)) {
         /* Step 2a: transcribe the second cluster var if needed */
         ci->pcvar = v[1];
-        ci->dcvar = ci->dcvar2;
         err = transcribe_cluster_var(pmod, pan, pset, dset, ci);
-	fprintf(stderr, " two_way(2): using pset %d (%s)\n",
-		v[1], pset->varname[v[1]]);
     }
 
     if (!err) {
         /* Step 2b: calculate @Vb for the second cluster var */
         gretl_matrix_zero(W);
-	ci->target = 1;
 	if (ci->dcvar2 == CI_TIME) {
 	    err = time_cluster_vcv(pmod, pan, pset, XX, W, Vb, ci);
-	    fprintf(stderr, " two_way(2): using TIME\n");
-	} else if (ci->dcvar == CI_UNIT) {
+	} else if (ci->dcvar2 == CI_UNIT) {
 	    err = unit_cluster_vcv(pmod, pan, pset, XX, W, Vb, ci);
-	    fprintf(stderr, " two_way(2): using UNIT\n");
 	} else {
 	    err = generic_cluster_vcv(pmod, pan, pset, XX, W, Vb, ci);
 	}
@@ -1251,7 +1261,7 @@ static int two_way_cluster_vcv (MODEL *pmod,
         */
         ci->pcvar = v[2];
         gretl_matrix_free(ci->cvals);
-        ci->cz = pset->Z[v[2]];
+        ci->cz = pset->Z[ci->pcvar];
         ci->cvals = gretl_matrix_values(ci->cz, pmod->nobs, OPT_S, &err);
         gretl_matrix_zero(W);
 	ci->target = -1;
