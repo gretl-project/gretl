@@ -1051,9 +1051,8 @@ static int qr_make_hac (MODEL *pmod, const DATASET *dset,
     }
 
     if (!err) {
-        gretl_model_set_full_vcv_info(pmod, vi.vmaj, vi.vmin,
-                                      vi.order, vi.flags,
-                                      vi.bw, NULL, NULL);
+        gretl_model_set_hac_vcv_info(pmod, vi.vmin, vi.order,
+				     vi.flags, vi.bw);
         if (!na(vi.bw)) {
             gretl_model_set_double(pmod, "hac_bw", vi.bw);
         } else {
@@ -2450,7 +2449,7 @@ static int qr_make_cluster_vcv (MODEL *pmod, int ci,
     }
 
     if (!err) {
-        gretl_model_set_vcv_info(pmod, VCV_CLUSTER, cvar);
+        gretl_model_set_cluster_vcv_info(pmod, cname, NULL);
         gretl_model_set_int(pmod, "n_clusters", n_c);
     }
 

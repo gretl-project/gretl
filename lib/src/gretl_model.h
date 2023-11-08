@@ -292,11 +292,17 @@ int gretl_model_set_int (MODEL *pmod, const char *key, int val);
 
 int gretl_model_set_double (MODEL *pmod, const char *key, double val);
 
-int gretl_model_set_full_vcv_info (MODEL *pmod, int vmaj, int vmin,
-				   int order, int flags, double bw,
-				   const char *cv1, const char *cv2);
-
 int gretl_model_set_vcv_info (MODEL *pmod, int vmaj, int vmin);
+
+int gretl_model_set_hac_vcv_info (MODEL *pmod, int kern,
+				  int order, int flags,
+				  double bw);
+
+int gretl_model_set_hac_order (MODEL *pmod, int order);
+
+int gretl_model_set_cluster_vcv_info (MODEL *pmod,
+				      const char *cv1,
+				      const char *cv2);
 
 int gretl_model_get_vcv_type (const MODEL *pmod);
 

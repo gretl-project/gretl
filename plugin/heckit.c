@@ -46,6 +46,7 @@ struct h_container_ {
     int nclusters;           /* number of clusters (if any) */
     int *Xlist;		     /* regressor list for the main eq. */
     int *Zlist;		     /* regressor list for the selection eq. */
+    const char *cname;       /* name of clustering variable */
 
     gretl_matrix *y;	     /* dependent var */
     gretl_matrix *reg;	     /* main eq. regressors */
@@ -132,6 +133,7 @@ static h_container *h_container_new (const int *list)
     HC->ll = NADBL;
     HC->clustervar = 0;
     HC->nclusters = 0;
+    HC->cname = NULL;
 
     HC->Xlist = NULL;
     HC->Zlist = NULL;
@@ -1553,7 +1555,7 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
 	    if (opt & OPT_C) {
 		hm->opt |= OPT_C;
 		gretl_model_set_int(hm, "n_clusters", HC->nclusters);
-		gretl_model_set_vcv_info(hm, VCV_CLUSTER, HC->clustervar);
+		gretl_model_set_cluster_vcv_info(hm, HC->cname, NULL);
 	    } else if (opt & OPT_R) {
 		hm->opt |= OPT_R;
 		gretl_model_set_vcv_info(hm, VCV_ML, ML_QML);
@@ -1599,6 +1601,7 @@ static int heckit_cluster_init (h_container *HC,
 	    err = E_UNKVAR;
 	} else {
 	    HC->clustervar = cvar;
+	    HC->cname = dset->varname[cvar];
 	}
     }
 

@@ -1000,9 +1000,9 @@ static int VAR_robust_vcv (GRETL_VAR *var, gretl_matrix *V,
 			   V, GRETL_MOD_NONE);
 
 	if (var->robust == VAR_HAC) {
-	    gretl_model_set_full_vcv_info(pmod, VCV_HAC, vi.vmin,
-					  vi.order, vi.flags,
-					  vi.bw, NULL, NULL);
+	    gretl_model_set_hac_vcv_info(pmod, vi.vmin,
+					 vi.order, vi.flags,
+					 vi.bw);
 	} else {
 	    gretl_model_set_vcv_info(pmod, VCV_HC, hcv);
 	}

@@ -520,26 +520,26 @@ typedef struct cluster_info_ {
     const double *cz;    /* series of all cluster-var values */
     gretl_matrix *cvals; /* sorted vector of unique cluster-var values */
     int pcvar;           /* index of cluster var in panel-special dataset */
-    int dcvar1;          /* index of (first) cluster var in full dataset */
-    int dcvar2;          /* index of second cluster in full dataset, or 0 */
+    int dcvar0;          /* index of (first) cluster var in full dataset */
+    int dcvar1;          /* index of second cluster in full dataset, or 0 */
     int nc[2];           /* number(s) of clusters */
     gint8 target;        /* 0 or 1 for first or second var */
 } cluster_info;
 
-#define by_time_and_unit(ci) (ci->dcvar1 < -1 && ci->dcvar2 < -1)
-#define by_time_or_unit(ci) (ci->dcvar1 < -1 || ci->dcvar2 < -1)
-#define by_time(ci) (ci->dcvar1 == CI_TIME)
-#define by_unit(ci) (ci->dcvar1 == CI_UNIT)
-#define generic(ci) (ci->dcvar1 > 0)
-#define two_way(ci) (ci->dcvar1 != -1 && ci->dcvar2 != -1)
+#define by_time_and_unit(ci) (ci->dcvar0 < -1 && ci->dcvar1 < -1)
+#define by_time_or_unit(ci) (ci->dcvar0 < -1 || ci->dcvar1 < -1)
+#define by_time(ci) (ci->dcvar0 == CI_TIME)
+#define by_unit(ci) (ci->dcvar0 == CI_UNIT)
+#define generic(ci) (ci->dcvar0 > 0)
+#define two_way(ci) (ci->dcvar0 != -1 && ci->dcvar1 != -1)
 #define is_present(v) (v != -1)
 
 static cluster_info *cluster_info_new (void)
 {
     cluster_info *ci = calloc(1, sizeof *ci);
 
+    ci->dcvar0 = -1;
     ci->dcvar1 = -1;
-    ci->dcvar2 = -1;
     ci->target = 0;
 
     return ci;
@@ -744,8 +744,9 @@ generic_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 #endif
     if (!two_way(ci)) {
         /* not doing two-way clustering, so finish the job */
-        gretl_model_set_full_vcv_info(pmod, VCV_CLUSTER, 0, 0, 0, 0,
-				      dset->varname[ci->pcvar], NULL);
+	const char *cname = dset->varname[ci->pcvar];
+
+        gretl_model_set_cluster_vcv_info(pmod, cname, NULL);
         gretl_model_set_int(pmod, "n_clusters", n_c);
     } else if (ci->target >= 0) {
 	ci->nc[ci->target] = n_c;
@@ -921,13 +922,24 @@ static void make_unit_or_period (MODEL *pmod,
     }
 }
 
-/* Transcribe an ad hoc clustering series from the main dataset to the
-   special fixed- or random-effects dataset. This is quite simple with
-   a balanced panel, more complex otherwise. Plus, if successful,
-   write to @cvals a matrix containing the sorted unique values of the
-   clustering variable. We check for the possibility that the clustering
-   variable has missing values at observations used in estimation and
-   flag an error if so.
+/* The role of this function is to transcribe a clustering variable
+   into the panel-estimation dataset, @pset, the destination series ID
+   being given by ci->pcvar. As for the source of the data, there are
+   two cases:
+
+   (1) a named series present in the main dataset, @dset; or
+
+   (2) an automatically generated series, responding to the keyword
+   "period" or "unit".
+
+   The second case arises only in the case of "mixed" two-way
+   clustering (where one of the variables comes from @dset and the
+   other is automatic). If the cluster specification contains only
+   automatic variables there's no need for transcription.
+
+   On entry to this function ci->target should be set to either 0,
+   indicating that we're working on the first (or only) cluster
+   variable, or 1 to indicate that we're working on the second.
 */
 
 static int transcribe_cluster_var (MODEL *pmod,
@@ -942,7 +954,7 @@ static int transcribe_cluster_var (MODEL *pmod,
     int err = 0;
 
     /* source of transcription */
-    srcv = ci->target == 1 ? ci->dcvar2 : ci->dcvar1;
+    srcv = ci->target == 1 ? ci->dcvar1 : ci->dcvar0;
 
 #if CDEBUG
     fprintf(stderr, "  transcribe: target %d, pcvar %d, srcv %d %s\n",
@@ -951,6 +963,7 @@ static int transcribe_cluster_var (MODEL *pmod,
 #endif
 
     if (srcv == CI_TIME || srcv == CI_UNIT) {
+	/* the "automatic" case */
 	make_unit_or_period(pmod, pan, dest, srcv);
 	return 0;
     }
@@ -1007,7 +1020,7 @@ static int get_id_or_special (const char *s,
 			      const DATASET *dset,
 			      cluster_info *ci)
 {
-    int *pid = ci->target == 0 ? &ci->dcvar1 : &ci->dcvar2;
+    int *pid = ci->target == 0 ? &ci->dcvar0 : &ci->dcvar1;
     int id = current_series_index(dset, s);
     int err = 0;
 
@@ -1067,7 +1080,7 @@ static int process_cluster_string (const char *s,
 
    If this succeeds, we transcribe the first (or only) clustering
    series from the main dataset into the temporary panel dataset.  If
-   there's a second series we record its ID as dcvar2 under the
+   there's a second series we record its ID as dcvar1 under the
    cluster_info struct; it will get transcribed later.
 */
 
@@ -1087,8 +1100,8 @@ static int check_cluster_var (MODEL *pmod,
     }
 
 #if CDEBUG
-    fprintf(stderr, "check_cluster_var: dcvar1 %d, dcvar2 %d\n",
-	    ci->dcvar1, ci->dcvar2);
+    fprintf(stderr, "check_cluster_var: dcvar0 %d, dcvar1 %d\n",
+	    ci->dcvar0, ci->dcvar1);
 #endif
 
     if (err) {
@@ -1101,7 +1114,7 @@ static int check_cluster_var (MODEL *pmod,
         int n_add = 1; /* default number of series to be added */
 	int v0;        /* position of (first) added series */
 
-	if (is_present(ci->dcvar2)) {
+	if (is_present(ci->dcvar1)) {
 	    /* we'll need two series plus their combination */
 	    n_add = 3;
 	}
@@ -1111,10 +1124,10 @@ static int check_cluster_var (MODEL *pmod,
 	}
 	ci->pcvar = v0 = pset->v - n_add;
 	/* note: full-dataset IDs where applicable */
-	strcpy(pset->varname[v0], cluster_name(ci->dcvar1, dset));
-	if (is_present(ci->dcvar2)) {
+	strcpy(pset->varname[v0], cluster_name(ci->dcvar0, dset));
+	if (is_present(ci->dcvar1)) {
 	    /* name the extra two series */
-	    strcpy(pset->varname[v0+1], cluster_name(ci->dcvar2, dset));
+	    strcpy(pset->varname[v0+1], cluster_name(ci->dcvar1, dset));
 	    strcpy(pset->varname[v0+2], "combo");
 	}
 	err = transcribe_cluster_var(pmod, pan, pset, dset, ci);
@@ -1213,9 +1226,9 @@ static int two_way_cluster_vcv (MODEL *pmod,
      ci->target = 0;
 
     /* Step 1: calculate @V for the first cluster var */
-    if (ci->dcvar1 == CI_TIME) {
+    if (ci->dcvar0 == CI_TIME) {
 	err = time_cluster_vcv(pmod, pan, pset, XX, W, V, ci);
-    } else if (ci->dcvar1 == CI_UNIT) {
+    } else if (ci->dcvar0 == CI_UNIT) {
 	err = unit_cluster_vcv(pmod, pan, pset, XX, W, V, ci);
     } else {
 	err = generic_cluster_vcv(pmod, pan, pset, XX, W, V, ci);
@@ -1233,9 +1246,9 @@ static int two_way_cluster_vcv (MODEL *pmod,
     if (!err) {
         /* Step 2b: calculate @Vb for the second cluster var */
         gretl_matrix_zero(W);
-	if (ci->dcvar2 == CI_TIME) {
+	if (ci->dcvar1 == CI_TIME) {
 	    err = time_cluster_vcv(pmod, pan, pset, XX, W, Vb, ci);
-	} else if (ci->dcvar2 == CI_UNIT) {
+	} else if (ci->dcvar1 == CI_UNIT) {
 	    err = unit_cluster_vcv(pmod, pan, pset, XX, W, Vb, ci);
 	} else {
 	    err = generic_cluster_vcv(pmod, pan, pset, XX, W, Vb, ci);
@@ -1282,9 +1295,9 @@ static int two_way_cluster_vcv (MODEL *pmod,
 	    gretl_model_set_vcv_info(pmod, VCV_PANEL, PANEL_BOTH);
 	    gretl_model_set_int(pmod, "n_clusters", nc);
 	} else {
-	    gretl_model_set_full_vcv_info(pmod, VCV_CLUSTER, 0, 0, 0, 0,
-					  pset->varname[v[0]],
-					  pset->varname[v[1]]);
+	    gretl_model_set_cluster_vcv_info(pmod,
+					     pset->varname[v[0]],
+					     pset->varname[v[1]]);
 	    gretl_model_set_int(pmod, "n_clusters", nc);
 	}
     }
@@ -1402,8 +1415,8 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     }
 
     finalize_clustered_vcv(pmod, pan, XX, S, V, pan->Tmax);
-    gretl_model_set_full_vcv_info(pmod, VCV_PANEL, PANEL_DK, m,
-				  0, 0, NULL, NULL);
+    gretl_model_set_vcv_info(pmod, VCV_PANEL, PANEL_DK);
+    gretl_model_set_hac_order(pmod, m);
     gretl_model_set_int(pmod, "DKT", n_c);
 
  bailout:

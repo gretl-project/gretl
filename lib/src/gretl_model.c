@@ -534,9 +534,10 @@ static void vcv_info_free (void *data)
  * Returns: 0 on success, 1 on failure.
  */
 
-int gretl_model_set_full_vcv_info (MODEL *pmod, int vmaj, int vmin,
-				   int order, int flags, double bw,
-				   const char *cv1, const char *cv2)
+static int
+gretl_model_set_full_vcv_info (MODEL *pmod, int vmaj, int vmin,
+			       int order, int flags, double bw,
+			       const char *cv1, const char *cv2)
 {
     VCVInfo *vi;
     int prev = 0;
@@ -582,6 +583,8 @@ int gretl_model_set_full_vcv_info (MODEL *pmod, int vmaj, int vmin,
 /**
  * gretl_model_set_vcv_info:
  * @pmod: pointer to model.
+ * @vmaj: top-level VCV type.
+ * @vmin: variant under @vmaj, if applicable.
  *
  * Returns: 0 on success, 1 on failure.
  */
@@ -590,6 +593,64 @@ int gretl_model_set_vcv_info (MODEL *pmod, int vmaj, int vmin)
 {
     return gretl_model_set_full_vcv_info(pmod, vmaj, vmin,
 					 0, 0, 0, NULL, NULL);
+}
+
+/**
+ * gretl_model_set_cluster_vcv_info:
+ * @pmod: pointer to model.
+ * @cv1: name of (first) cluster variable.
+ * @cv2: name of second cluster variable or NULL.
+ *
+ * Returns: 0 on success, 1 on failure.
+ */
+
+int gretl_model_set_cluster_vcv_info (MODEL *pmod,
+				      const char *cv1,
+				      const char *cv2)
+{
+    return gretl_model_set_full_vcv_info(pmod, VCV_CLUSTER,
+					 0, 0, 0, 0,
+					 cv1, cv2);
+}
+
+/**
+ * gretl_model_set_hac_vcv_info:
+ * @pmod: pointer to model.
+ * @kern: kernel type.
+ * @order: lag order.
+ * @flags: bitflags.
+ * @bw: QS bandwidth, or #NADBL if not applicable.
+ *
+ * Returns: 0 on success, 1 on failure.
+ */
+
+int gretl_model_set_hac_vcv_info (MODEL *pmod, int kern,
+				  int order, int flags,
+				  double bw)
+{
+    return gretl_model_set_full_vcv_info(pmod, VCV_HAC, kern,
+					 order, flags, bw,
+					 NULL, NULL);
+}
+
+/**
+ * gretl_model_set_hac_order:
+ * @pmod: pointer to model.
+ * @order: lag order.
+ *
+ * Returns: 0 on success, 1 on failure.
+ */
+
+int gretl_model_set_hac_order (MODEL *pmod, int order)
+{
+    VCVInfo *vi = gretl_model_get_data(pmod, "vcv_info");
+
+    if (vi != NULL) {
+	vi->order = order;
+	return 0;
+    } else {
+	return E_DATA;
+    }
 }
 
 /**
@@ -2916,8 +2977,10 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 
     if (!err) {
 	if (opt & OPT_C) {
+	    const char *cname = dset->varname[cvar];
+
 	    gretl_model_set_int(pmod, "n_clusters", n_c);
-	    gretl_model_set_vcv_info(pmod, VCV_CLUSTER, cvar);
+	    gretl_model_set_cluster_vcv_info(pmod, cname, NULL);
 	    pmod->opt |= OPT_C;
 	} else {
 	    MLVCVType vt = (opt & OPT_N)? ML_HAC : ML_QML;
