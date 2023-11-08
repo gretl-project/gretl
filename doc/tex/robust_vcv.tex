@@ -444,11 +444,11 @@ As shown in Table~\ref{tab:haclag} the choice between \texttt{nw1} and
 
 You also have the option of specifying a fixed numerical value for
 $p$, as in
-%
+
 \begin{code}
 set hac_lag 6
 \end{code}
-%
+
 In addition you can set a distinct bandwidth for use with the
 Quadratic Spectral kernel (since this need not be an integer).  For
 example,
@@ -834,8 +834,14 @@ case is on the following pattern
 \begin{code}
 panel ... --cluster=cvar1,cvar2
 \end{code}
-where two comma-separated series names are given (with no intervening
-spaces).
+where two comma-separated terms are given (with no intervening
+spaces). These terms can be the names of existing series, or the
+keywords \texttt{period} and \texttt{unit} may be used to indicate
+unique identifiers for the time periods and cross-sectional units,
+respectively. Note that these keywords are not \textit{reserved};
+there may be series of these names in the dataset, and if so they take
+priority. As mentioned above, however, use of the keywords is more
+efficient than using named series for period and unit.
 
 The precise magnitude of standard errors produced in case of
 cluster-robust estimation depends on whether a degrees of freedom
@@ -856,7 +862,6 @@ produce clustered standard errors in agreement with the popular
 contributed \textsf{Stata} command \texttt{xtivreg2} it is necessary
 to suppress this adjustment: append the \option{no-df-corr} option to
 the \texttt{panel} command.
-
 
 %%% Local Variables: 
 %%% mode: latex
