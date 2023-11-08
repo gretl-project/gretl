@@ -459,13 +459,17 @@ static int real_win_run_sync (const char *cmdline,
     }
 #endif
 
-    if (strstr(cmdline, "x13as") || strstr(cmdline, "tramo")) {
-        /* help x13as or tramo to find DLLs in the gretl directory */
+#if 0 /* is this somehow broken? */
+    if (strstr(cmdline, "x13as") ||
+        strstr(cmdline, "tramo") ||
+        strstr(cmdline, "seats")) {
+        /* help x13as or tramo/seats to find needed DLLs */
         const char *s = gretl_bindir();
 
         env = g_malloc0(strlen(s) + 14);
         sprintf(env, "PATH=%s;%PATH%", s);
     }
+#endif
 
     ok = CreateProcessW(NULL,    /* application name */
 			cl16,    /* command line */
