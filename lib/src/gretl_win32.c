@@ -417,6 +417,7 @@ static int real_win_run_sync (const char *cmdline,
     DWORD flags;
     gunichar2 *cl16 = NULL;
     gunichar2 *cd16 = NULL;
+    gchar *env = NULL;
     int inherit = FALSE;
     int ok, err = 0;
 
@@ -458,16 +459,24 @@ static int real_win_run_sync (const char *cmdline,
     }
 #endif
 
-    ok = CreateProcessW(NULL,
-			cl16,
-			NULL,
-			NULL,
-			inherit,
-			flags,
-			NULL,
-			cd16,
-			&si,
-			&pi);
+    if (strstr(cmdline, "x13as") || strstr(cmdline, "tramo")) {
+        /* help x13as or tramo to find DLLs in the gretl directory */
+        const char *s = gretl_bindir();
+
+        env = g_malloc0(strlen(s) + 14);
+        sprintf(env, "PATH=%s;%PATH%", s);
+    }
+
+    ok = CreateProcessW(NULL,    /* application name */
+			cl16,    /* command line */
+			NULL,    /* process attributes */
+			NULL,    /* thread attributes */
+			inherit, /* inherit handles */
+			flags,   /* creation flags */
+			env,     /* environment */
+			cd16,    /* current directory */
+			&si,     /* startup info */
+			&pi);    /* process info */
 
     if (!ok) {
 	fprintf(stderr, "win_run_sync: failed command:\n%s\n", cmdline);
@@ -496,6 +505,7 @@ static int real_win_run_sync (const char *cmdline,
 
     g_free(cl16);
     g_free(cd16);
+    g_free(env);
 
 #if CPDEBUG
     fprintf(stderr, "real_win_run_sync: return err = %d\n", err);
