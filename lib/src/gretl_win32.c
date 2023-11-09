@@ -428,7 +428,7 @@ int win32_ensure_path (void)
 
 	if (path != NULL) {
 	    printf("old path:\n%s\n", path);
-	    setpath = g_strdup_printf("%s;%s", path);
+	    setpath = g_strdup_printf("%s;%s", path, bindir);
 	} else {
 	    setpath = g_strdup(bindir);
 	}
