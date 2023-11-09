@@ -35,7 +35,7 @@ const char *lang_names[] = {
 struct lang_strings_t {
     char lang[16];
     char longdate[48];
-    char shortdate[16];
+    char shortdate[32];
 };
 
 typedef struct _gretl_version gretl_version;
@@ -396,6 +396,7 @@ char *get_src_version (void)
 
     while (fgets(line, sizeof line, fp)) {
 	if (sscanf(line, "#define GRETL_VERSION \"%15[^\"]", verstr)) {
+	    fprintf(stderr, "got version '%s'\n", verstr);
 	    err = 0;
 	    break;
 	}
