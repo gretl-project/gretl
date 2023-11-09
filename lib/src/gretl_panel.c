@@ -558,7 +558,7 @@ static const char *cluster_name (int v, const DATASET *dset)
     if (v > 0) {
 	return dset->varname[v];
     } else if (v == CI_TIME) {
-	return "period";
+	return "time";
     } else {
 	return "unit";
     }
@@ -892,11 +892,10 @@ unit_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     return err;
 }
 
-/* In response to "period" or "unit" appearing in the context of the
-   --cluster option for a basic panel-data estimator: if there is no
-   current series answering to the name, we'll construct an on-the-fly
-   series that represents the time period -- or if @srcv equals
-   CI_UNIT, the cross-sectional unit.
+/* In response to "$time" or "$unit" appearing in the context of the
+   --cluster option for a basic panel-data estimator, we construct an
+   on-the-fly series that represents the time period -- or if @srcv
+   equals CI_UNIT, the cross-sectional unit.
 */
 
 static void make_unit_or_period (MODEL *pmod,
@@ -930,7 +929,7 @@ static void make_unit_or_period (MODEL *pmod,
    (1) a named series present in the main dataset, @dset; or
 
    (2) an automatically generated series, responding to the keyword
-   "period" or "unit".
+   "$time" or "$unit".
 
    The second case arises only in the case of "mixed" two-way
    clustering (where one of the variables comes from @dset and the
@@ -1011,7 +1010,7 @@ static int transcribe_cluster_var (MODEL *pmod,
 }
 
 /* For a clustering variable named by @s, find out if it's a named
-   series, or a keyword ("period", "unit"), or neither (an error). To
+   series, or a keyword ("$time", "$unit"), or neither (an error). To
    signal the presence of one of the keywords we assign one of CI_TIME
    or CI_UNIT in place of a regular series ID number.
 */
@@ -1029,9 +1028,9 @@ static int get_id_or_special (const char *s,
     } else if (id == 0) {
 	/* "const" will not do! */
 	err = E_DATA;
-    } else if (!strcmp(s, "period")) {
+    } else if (!strcmp(s, "$time")) {
 	*pid = CI_TIME;
-    } else if (!strcmp(s, "unit")) {
+    } else if (!strcmp(s, "$unit")) {
 	*pid = CI_UNIT;
     } else {
 	err = E_UNKVAR;
@@ -1074,7 +1073,7 @@ static int process_cluster_string (const char *s,
 
 /* This function handles the case of a single clustering series and
    also the two-way case. If the parameter to the --cluster option is
-   "period" or "unit" this is treated as a reference to the time or
+   "$time" or "$unit" this is treated as a reference to the time or
    cross-sectional dimension of the panel, a case which gets special
    treatment.  Otherwise we're looking for one or two series names.
 
@@ -7123,6 +7122,7 @@ static int find_time_var (const DATASET *dset)
         "Year",
         "period",
         "Period",
+	"time",
         NULL
     };
     int i, v;
@@ -7181,16 +7181,17 @@ static int may_be_time_name (const char *vname)
     gretl_lower(test);
 
     return strcmp(test, "year") == 0 ||
-        strcmp(test, "period") == 0;
+        strcmp(test, "time") == 0 ||
+	strcmp(test, "period") == 0;
 }
 
-/* See if the panel dataset contains a variable that plausibly represents
-   the year of the observations. We look for series labeled "year" or
-   "period" (in a case insensitive comparison) and, if found, check
-   that the series has the same sequence of values for each individual,
-   and the same increment between successive time-series observations.
-   (The increment does not have to be 1, to accommodate, e.g.,
-   quinquennial or decennial observations.)
+/* See if the panel dataset contains a variable that plausibly
+   represents the year of the observations. We look for series labeled
+   "year", "time" or "period" (in a case insensitive comparison) and,
+   if found, check that the series has the same sequence of values for
+   each individual, and the same increment between successive
+   time-series observations.  (The increment does not have to be 1, to
+   accommodate, e.g., quinquennial or decennial observations.)
 
    Return the ID number of a suitable variable, or 0 if there's nothing
    suitable.

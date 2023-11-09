@@ -1429,9 +1429,9 @@ static void panel_vcv_line (const VCVInfo *vi, PRN *prn)
 	pputc(prn, '\n');
     } else if (vi->vmin == PANEL_TIME) {
 	if (csv_format(prn)) {
-	    pprintf(prn, "\"%s\"", _("Standard errors clustered by period"));
+	    pprintf(prn, "\"%s\"", _("Standard errors clustered by time"));
 	} else {
-	    pputs(prn, _("Standard errors clustered by period"));
+	    pputs(prn, _("Standard errors clustered by time"));
 	}
 	pputc(prn, '\n');
     } else if (vi->vmin == PANEL_DK) {
@@ -1450,9 +1450,9 @@ static void panel_vcv_line (const VCVInfo *vi, PRN *prn)
 	pputc(prn, '\n');
     } else if (vi->vmin == PANEL_BOTH) {
 	if (csv_format(prn)) {
-	    pprintf(prn, "\"%s\"", _("Standard errors clustered by unit and period"));
+	    pprintf(prn, "\"%s\"", _("Standard errors clustered by unit and time"));
 	} else {
-	    pputs(prn, _("Standard errors clustered by unit and period"));
+	    pputs(prn, _("Standard errors clustered by unit and time"));
 	}
 	pputc(prn, '\n');
     }
