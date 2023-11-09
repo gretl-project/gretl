@@ -5346,6 +5346,7 @@ MODEL panel_wls_by_unit (const int *list, DATASET *dset,
     }
 
     if (opt & OPT_I) {
+	/* the --iterate option */
         if (singleton_check(pan.unit_obs, pan.nunits)) {
             pprintf(prn, _("Can't produce ML estimates: "
                            "some units have only one observation"));
@@ -5375,13 +5376,11 @@ MODEL panel_wls_by_unit (const int *list, DATASET *dset,
     }
 
     /* allocate and construct WLS regression list */
-
     wlist = gretl_list_new(mdl.list[0] + 1);
     if (wlist == NULL) {
         mdl.errcode = E_ALLOC;
         goto bailout;
     }
-
     wlist[1] = dset->v - 1; /* weight variable: the last var added */
     for (i=2; i<=wlist[0]; i++) {
         wlist[i] = mdl.list[i-1];
@@ -5390,12 +5389,10 @@ MODEL panel_wls_by_unit (const int *list, DATASET *dset,
     /* If wanted (and possible) iterate to ML solution; otherwise just do
        one-step FGLS estimation.
     */
-
     while (diff > SMALLDIFF) {
         int df = 0;
 
         iter++;
-
         unit_error_variances(uvar, &mdl, &pan, &df);
 
         if (opt & OPT_V) {
@@ -5421,9 +5418,7 @@ MODEL panel_wls_by_unit (const int *list, DATASET *dset,
         mdl = lsq(wlist, dset, WLS, wlsopt);
         if (mdl.errcode) {
             break;
-        }
-
-        if (iter > WLS_MAX) {
+        } else if (iter > WLS_MAX) {
             mdl.errcode = E_NOCONV;
             break;
         }
