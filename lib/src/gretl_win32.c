@@ -405,6 +405,47 @@ static gchar *win32_read_log_file (HANDLE h, const gchar *fname)
 
 #endif
 
+/* Try to ensure that the gretl installation directory is in
+   the PATH, so that DLLs need by x13as and/or tramo/seats
+   can be found at runtime.
+*/
+
+int win32_ensure_path (void)
+{
+    const char *bindir = gretl_bindir();
+    gchar **envp = g_get_environ();
+    const gchar *path = NULL;
+    int in_path = 0;
+
+    path = g_environ_getenv(envp, "PATH");
+    if (path != NULL && strstr(path, "gretl")) {
+	in_path = 1;
+    }
+
+    if (!in_path) {
+	gchar *setpath = NULL;
+	gchar **newenv = NULL;
+
+	if (path != NULL) {
+	    printf("old path:\n%s\n", path);
+	    setpath = g_strdup_printf("%s;%s", path);
+	} else {
+	    setpath = g_strdup(bindir);
+	}
+	newenv = g_environ_setenv(envp, "PATH", setpath, TRUE);
+	path = g_environ_getenv(newenv, "PATH");
+	printf("new path:\n%s\n", path);
+	if (newenv != envp) {
+	    g_strfreev(newenv);
+	}
+	g_free(setpath);
+    }
+
+    g_strfreev(envp);
+
+    return 0;
+}
+
 /* Run @cmdline synchronously */
 
 static int real_win_run_sync (const char *cmdline,
@@ -417,7 +458,6 @@ static int real_win_run_sync (const char *cmdline,
     DWORD flags;
     gunichar2 *cl16 = NULL;
     gunichar2 *cd16 = NULL;
-    gchar *env = NULL;
     int inherit = FALSE;
     int ok, err = 0;
 
@@ -459,25 +499,13 @@ static int real_win_run_sync (const char *cmdline,
     }
 #endif
 
-#if 0 /* is this somehow broken? */
-    if (strstr(cmdline, "x13as") ||
-        strstr(cmdline, "tramo") ||
-        strstr(cmdline, "seats")) {
-        /* help x13as or tramo/seats to find needed DLLs */
-        const char *s = gretl_bindir();
-
-        env = g_malloc0(strlen(s) + 14);
-        sprintf(env, "PATH=%s;%PATH%", s);
-    }
-#endif
-
     ok = CreateProcessW(NULL,    /* application name */
 			cl16,    /* command line */
 			NULL,    /* process attributes */
 			NULL,    /* thread attributes */
 			inherit, /* inherit handles */
 			flags,   /* creation flags */
-			env,     /* environment */
+			NULL,    /* environment */
 			cd16,    /* current directory */
 			&si,     /* startup info */
 			&pi);    /* process info */
@@ -509,7 +537,6 @@ static int real_win_run_sync (const char *cmdline,
 
     g_free(cl16);
     g_free(cd16);
-    g_free(env);
 
 #if CPDEBUG
     fprintf(stderr, "real_win_run_sync: return err = %d\n", err);

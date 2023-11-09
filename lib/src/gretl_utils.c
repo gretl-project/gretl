@@ -2992,6 +2992,9 @@ void libgretl_init (void)
 #if HAVE_GMP
     mpf_set_default_prec(get_mp_bits());
 #endif
+#ifdef WIN32
+    win32_ensure_path();
+#endif
 }
 
 #ifdef HAVE_MPI
