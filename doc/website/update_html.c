@@ -171,42 +171,27 @@ int print_subst (const char *fname, const char *verstr)
     return 0;
 }
 
-/* convert an input date of the form YYYY.MM.DD to an appropriately
+/* convert an input date of the form YYYY-MM-DD to an appropriately
    internationalized string like "Mar 14, 2005" */
 
-int get_intl_progdate (const char *s, int i)
+int get_intl_progdate (struct tm *tm, int i)
 {
-    int yr, mon, day;
-    int nf, err = 0;
+    char locale[32];
+    char pdate[32];
 
-    nf = sscanf(s, "%d.%d.%d", &yr, &mon, &day);
-    if (nf != 3) {
-	nf = sscanf(s, "%d-%d-%d", &yr, &mon, &day);
-    }
+    sprintf(locale, "%s.UTF-8", lang_strings[i].lang);
+    setlocale(LC_TIME, locale);
 
-    if (nf != 3) {
-	err = 1;
+    if (!strncmp(lang_strings[i].lang, "ru", 2)) {
+	strftime(pdate, sizeof pdate, "%b %e, %Y г.", tm);
     } else {
-	char langspec[32];
-	char pdate[32];
-	struct tm tm = {0};
-
-	tm.tm_year = yr - 1900;
-	tm.tm_mon = mon - 1;
-	tm.tm_mday = day;
-
-	sprintf(langspec, "%s.UTF-8", lang_strings[i].lang);
-	setlocale(LC_TIME, langspec);
-	if (!strncmp(lang_strings[i].lang, "ru", 2)) {
-	    strftime(pdate, sizeof pdate, "%b %e, %Y г.", &tm);
-	} else {
-	    strftime(pdate, sizeof pdate, "%b %e, %Y", &tm);
-	}
-	setlocale(LC_TIME, "C");
-	strcpy(lang_strings[i].shortdate, pdate);
+	strftime(pdate, sizeof pdate, "%b %e, %Y", tm);
     }
 
-    return err;
+    strcpy(lang_strings[i].shortdate, pdate);
+    setlocale(LC_TIME, "C");
+
+    return 0;
 }
 
 int syscmd_to_string (const char *syscmd, char *targ, const char *tmpfile)
@@ -245,37 +230,63 @@ int syscmd_to_string (const char *syscmd, char *targ, const char *tmpfile)
     return err;
 }
 
+/* variant of make_subst_file (below) used when a release date,
+   @progdate, has been supplied on the command line
+*/
+
+int alt_make_subst_file (const char *fname, const char *verstr,
+			 const char *progdate)
+{
+    struct tm tm = {0};
+    int y, m, d;
+    int i, err = 0;
+
+    if (sscanf(progdate, "%d-%d-%d", &y, &m, &d) != 3) {
+	return -1;
+    }
+
+    tm.tm_year = y - 1900;
+    tm.tm_mon  = m - 1;
+    tm.tm_mday = d;
+
+    for (i=0; i<NLANGS; i++) {
+	strcpy(lang_strings[i].longdate, progdate);
+	err = get_intl_progdate(&tm, i);
+	fprintf(stderr, "lang %d: '%s', '%s'\n", i, lang_strings[i].longdate,
+		lang_strings[i].shortdate);
+    }
+
+    if (!err) {
+	err = print_subst(fname, verstr);
+    }
+
+    return err;
+}
+
 /* get version and data info organized, and call for this info
    to be written to file */
 
-int make_subst_file (const char *fname, const char *verstr,
-		     const char *progdate)
+int make_subst_file (const char *fname, const char *verstr)
 {
     const char *tmpfile = "tmp.txt";
     char syscmd[64];
+    char langbit[32];
     int i, err = 0;
 
-    for (i=0; i<NLANGS; i++) {
+    for (i=0; i<NLANGS && !err; i++) {
 	sprintf(syscmd, "date +\"%%Y-%%m-%%d\" > %s", tmpfile);
 	err = syscmd_to_string(syscmd, lang_strings[i].longdate, tmpfile);
-
-	if (progdate != NULL) {
-	    err = get_intl_progdate(progdate, i);
+	if (!strcmp(lang_strings[i].lang, "en_US")) {
+	    langbit[0] = '\0';
 	} else {
-	    char langbit[32];
-
-	    if (!strcmp(lang_strings[i].lang, "en_US")) {
-		*langbit = '\0';
-	    } else {
-		sprintf(langbit, "LANG=%s.UTF-8 ", lang_strings[i].lang);
-	    }
-	    if (!strncmp(lang_strings[i].lang, "ru", 2)) {
-		sprintf(syscmd, "%sdate +\"%%b %%e, %%Y г.\" > %s", langbit, tmpfile);
-	    } else {
-		sprintf(syscmd, "%sdate +\"%%b %%e, %%Y\" > %s", langbit, tmpfile);
-	    }
-	    err = syscmd_to_string(syscmd, lang_strings[i].shortdate, tmpfile);
+	    sprintf(langbit, "LANG=%s.UTF-8 ", lang_strings[i].lang);
 	}
+	if (!strncmp(lang_strings[i].lang, "ru", 2)) {
+	    sprintf(syscmd, "%sdate +\"%%b %%e, %%Y г.\" > %s", langbit, tmpfile);
+	} else {
+	    sprintf(syscmd, "%sdate +\"%%b %%e, %%Y\" > %s", langbit, tmpfile);
+	}
+	err = syscmd_to_string(syscmd, lang_strings[i].shortdate, tmpfile);
 	fprintf(stderr, "lang %d: '%s', '%s'\n", i, lang_strings[i].longdate,
 		lang_strings[i].shortdate);
     }
@@ -870,7 +881,7 @@ int main (int argc, char **argv)
 	fprintf(stderr, "%s: You can give a gretl version number, or say \"auto\"\n"
 		" to read version info from the source tree.\n",
 		argv[0]);
-	fputs("* You can specify a program date, YYYY.MM.DD, as a second arg.\n", stderr);
+	fputs("* You can specify a release date, YYYY-MM-DD, as a second arg.\n", stderr);
 	fputs("* With no args, we use the existing subst file, if present.\n", stderr);
 	exit(EXIT_SUCCESS);
     }
@@ -937,8 +948,10 @@ int main (int argc, char **argv)
 
     if (up_to_date) {
 	err = read_subst_file_full(substfile);
+    } else if (progdate != NULL) {
+	err = alt_make_subst_file(substfile, src_version, progdate);
     } else {
-	err = make_subst_file(substfile, src_version, progdate);
+	err = make_subst_file(substfile, src_version);
     }
 
     if (err) {
