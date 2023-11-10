@@ -43,7 +43,8 @@ typedef enum {
     R_LOGLEVEL,   /* current loglevel for errors/warnings/etc */
     R_LOGSTAMP,   /* logger shows timestamp? (0/1) */
     R_SCALAR_MAX, /* separator: scalars vs series */
-    R_INDEX,      /* consecutive observations index */
+    R_INDEX,      /* 1-based observations index */
+    R_TIME,       /* 1-based time index */
     R_PUNIT,      /* 1-based panel unit index */
     R_OBSMAJ,     /* major component of observation (e.g. year) */
     R_OBSMIN,     /* minor component of observation (e.g. quarter, month) */

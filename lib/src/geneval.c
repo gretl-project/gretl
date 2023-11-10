@@ -16377,8 +16377,10 @@ static int date_series_ok (const DATASET *dset)
 
 static int dvar_get_series (double *x, int i, const DATASET *dset)
 {
-    int t, YMD = calendar_data(dset);
-    int err = 0;
+    int tseries = dataset_is_time_series(dset);
+    int panel = dataset_is_panel(dset);
+    int YMD = calendar_data(dset);
+    int t, err = 0;
 
     if (dset == NULL || dset->n == 0) {
         return E_NODATA;
@@ -16392,7 +16394,11 @@ static int dvar_get_series (double *x, int i, const DATASET *dset)
         return E_PDWRONG;
     }
 
-    if (i == R_PUNIT && !dataset_is_panel(dset)) {
+    if (i == R_PUNIT && !panel) {
+        return E_PDWRONG;
+    }
+
+    if (i == R_TIME && !panel && !tseries) {
         return E_PDWRONG;
     }
 
@@ -16401,9 +16407,9 @@ static int dvar_get_series (double *x, int i, const DATASET *dset)
     }
 
     if (i == R_OBSMAJ) {
-        if (dset->pd == 1 && !dataset_is_time_series(dset)) {
+        if (dset->pd == 1 && !tseries) {
             i = R_INDEX;
-        } else if (dataset_is_panel(dset)) {
+        } else if (panel) {
             i = R_PUNIT;
         }
     }
@@ -16432,6 +16438,14 @@ static int dvar_get_series (double *x, int i, const DATASET *dset)
                 x[t] = d;
             }
         }
+    } else if (i == R_TIME) {
+	if (panel) {
+	    make_panel_time_var(x, dset);
+	} else {
+	    for (t=0; t<dset->n; t++) {
+		x[t] = (double) (t + 1);
+	    }
+	}
     } else if (i == R_PUNIT) {
         for (t=0; t<dset->n; t++) {
             x[t] = t / dset->pd + 1;

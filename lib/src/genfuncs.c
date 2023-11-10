@@ -3636,7 +3636,7 @@ int panel_unit_first_obs (int t, const DATASET *dset)
 
 /* make special time variable for panel data */
 
-static void make_panel_time_var (double *x, const DATASET *dset)
+void make_panel_time_var (double *x, const DATASET *dset)
 {
     int t, xt = 0;
 

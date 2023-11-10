@@ -127,6 +127,8 @@ int gen_unit (DATASET *dset, int *vnum);
 
 int panel_unit_first_obs (int t, const DATASET *dset);
 
+void make_panel_time_var (double *x, const DATASET *dset);
+
 int gen_time (DATASET *dset, int tm, int *vnum);
 
 int gen_wkday (DATASET *dset, int *vnum);

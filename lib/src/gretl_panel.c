@@ -521,7 +521,7 @@ typedef struct cluster_info_ {
     gretl_matrix *cvals; /* sorted vector of unique cluster-var values */
     int pcvar;           /* index of cluster var in panel-special dataset */
     int dcvar0;          /* index of (first) cluster var in full dataset */
-    int dcvar1;          /* index of second cluster in full dataset, or 0 */
+    int dcvar1;          /* index of second cluster in full dataset, or -1 */
     int nc[2];           /* number(s) of clusters */
     gint8 target;        /* 0 or 1 for first or second var */
 } cluster_info;
@@ -865,8 +865,7 @@ unit_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
                     gretl_matrix_set(Xi, p, j, dset->Z[v][s]);
                 }
             }
-            p++;
-            if (p == Ti) {
+            if (++p == Ti) {
                 /* we're done with this unit */
                 break;
             }
@@ -895,7 +894,9 @@ unit_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 /* In response to "$time" or "$unit" appearing in the context of the
    --cluster option for a basic panel-data estimator, we construct an
    on-the-fly series that represents the time period -- or if @srcv
-   equals CI_UNIT, the cross-sectional unit.
+   equals CI_UNIT, the cross-sectional unit. We need this only in
+   case of two-way clustering with one of $time or $unit combined
+   with a named series.
 */
 
 static void make_unit_or_period (MODEL *pmod,
@@ -981,6 +982,7 @@ static int transcribe_cluster_var (MODEL *pmod,
             memcpy(dest, src, pset->n * sizeof **pset->Z);
         }
     } else {
+	/* unbalanced */
         int s;
 
         for (s=0; s<pmod->nobs && !err; s++) {
@@ -1047,7 +1049,7 @@ static int process_cluster_string (const char *s,
     int err = 0;
 
     if (p == NULL) {
-	/* should have a single name */
+	/* no comma: should have a single name */
 	ci->target = 0;
 	err = get_id_or_special(s, dset, ci);
     } else {
@@ -1071,16 +1073,16 @@ static int process_cluster_string (const char *s,
     return err;
 }
 
-/* This function handles the case of a single clustering series and
-   also the two-way case. If the parameter to the --cluster option is
-   "$time" or "$unit" this is treated as a reference to the time or
-   cross-sectional dimension of the panel, a case which gets special
-   treatment.  Otherwise we're looking for one or two series names.
+/* In this function we're looking for one or two identifiers supplied
+   via the string parameter to the --cluster option.  We accept
+   "$unit" and "$time" as automatic references to the cross-sectional
+   or time dimension of the panel; otherwise names of series in @dset
+   are needed.
 
    If this succeeds, we transcribe the first (or only) clustering
-   series from the main dataset into the temporary panel dataset.  If
-   there's a second series we record its ID as dcvar1 under the
-   cluster_info struct; it will get transcribed later.
+   series into the panel dataset, @pset.  If there's a second argument
+   we record its ID as dcvar1 under the @ci struct; it will get
+   transcribed later, in two_way_cluster_vcv().
 */
 
 static int check_cluster_var (MODEL *pmod,
@@ -1122,7 +1124,6 @@ static int check_cluster_var (MODEL *pmod,
 	    return err;
 	}
 	ci->pcvar = v0 = pset->v - n_add;
-	/* note: full-dataset IDs where applicable */
 	strcpy(pset->varname[v0], cluster_name(ci->dcvar0, dset));
 	if (is_present(ci->dcvar1)) {
 	    /* name the extra two series */
@@ -1205,13 +1206,13 @@ static int two_way_cluster_vcv (MODEL *pmod,
 				gretl_matrix *V,
 				cluster_info *ci)
 {
-    gretl_matrix *Vb;
+    gretl_matrix *Tmp;
     int k = V->rows;
     int v[3] = {0};
     int err = 0;
 
-    Vb = gretl_matrix_alloc(k, k);
-    if (Vb == NULL) {
+    Tmp = gretl_matrix_alloc(k, k);
+    if (Tmp == NULL) {
         return E_ALLOC;
     }
 
@@ -1243,33 +1244,34 @@ static int two_way_cluster_vcv (MODEL *pmod,
     }
 
     if (!err) {
-        /* Step 2b: calculate @Vb for the second cluster var */
+        /* Step 2b: calculate variance for the second cluster var */
         gretl_matrix_zero(W);
 	if (ci->dcvar1 == CI_TIME) {
-	    err = time_cluster_vcv(pmod, pan, pset, XX, W, Vb, ci);
+	    err = time_cluster_vcv(pmod, pan, pset, XX, W, Tmp, ci);
 	} else if (ci->dcvar1 == CI_UNIT) {
-	    err = unit_cluster_vcv(pmod, pan, pset, XX, W, Vb, ci);
+	    err = unit_cluster_vcv(pmod, pan, pset, XX, W, Tmp, ci);
 	} else {
-	    err = generic_cluster_vcv(pmod, pan, pset, XX, W, Vb, ci);
+	    err = generic_cluster_vcv(pmod, pan, pset, XX, W, Tmp, ci);
 	}
-	gretl_matrix_add_to(V, Vb);
+	/* add second variance to first */
+	gretl_matrix_add_to(V, Tmp);
     }
 
     if (!err && by_time_and_unit(ci)) {
-	/* Step 3: calculate @Vb for combination (= plain White) */
+	/* Step 3a: calculate variance for combination (= plain White) */
 	gretl_matrix_zero(W);
-	err = panel_white_vcv(pmod, pan, pset, XX, W, Vb, ci);
+	err = panel_white_vcv(pmod, pan, pset, XX, W, Tmp, ci);
 	goto step4;
     }
 
     if (!err) {
-        /* Step 3a: combine the two cluster vars */
+        /* Step 3b: combine the two cluster vars */
         err = combine_categories(pset, v[0], v[1], v[2]);
     }
 
     if (!err) {
-        /* Step 3b: update ci->cz and ci->cvals, then calculate
-           @Vb for the combination
+        /* Step 3c: update ci->cz and ci->cvals, then calculate
+           variance for the combination
         */
         ci->pcvar = v[2];
         gretl_matrix_free(ci->cvals);
@@ -1277,13 +1279,14 @@ static int two_way_cluster_vcv (MODEL *pmod,
         ci->cvals = gretl_matrix_values(ci->cz, pmod->nobs, OPT_S, &err);
         gretl_matrix_zero(W);
 	ci->target = -1;
-        err = generic_cluster_vcv(pmod, pan, pset, XX, W, Vb, ci);
+        err = generic_cluster_vcv(pmod, pan, pset, XX, W, Tmp, ci);
+	ci->target = 0;
     }
 
  step4:
 
     if (!err) {
-        gretl_matrix_subtract_from(V, Vb);
+        gretl_matrix_subtract_from(V, Tmp);
 	err = maybe_eigenfix(V);
     }
 
@@ -1301,7 +1304,7 @@ static int two_way_cluster_vcv (MODEL *pmod,
 	}
     }
 
-    gretl_matrix_free(Vb);
+    gretl_matrix_free(Tmp);
 
     return err;
 }
@@ -1318,6 +1321,7 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
                     const gretl_matrix *XX, gretl_matrix *W,
                     gretl_matrix *V)
 {
+    gretl_matrix_block *B;
     gretl_matrix *H = NULL;
     gretl_matrix *ht = NULL;
     gretl_matrix *htj = NULL;
@@ -1335,16 +1339,19 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
         return E_ALLOC;
     }
 
-    H   = gretl_zero_matrix_new(pan->T, k);
-    S   = gretl_zero_matrix_new(k, k);
-    ht  = gretl_matrix_alloc(k, 1);
-    htj = gretl_matrix_alloc(k, 1);
-    Wj  = gretl_matrix_alloc(k, k);
-
-    if (H == NULL || S == NULL || ht == NULL || htj == NULL || Wj == NULL) {
-	err = E_ALLOC;
-	goto bailout;
+    B = gretl_matrix_block_new(&H, pan->T, k,
+			       &S, k, k,
+			       &ht, k, 1,
+			       &htj, k, 1,
+			       &Wj, k, k,
+			       NULL);
+    if (B == NULL) {
+	free(tobs);
+	return E_ALLOC;
     }
+
+    gretl_matrix_zero(H);
+    gretl_matrix_zero(S);
 
     /* Maximum lag for Newey-West. Note: do "set hac_lag nw2"
        for agreement with Stata's xtscc */
@@ -1369,22 +1376,21 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
             s = small_index(pan, s);
             if (s >= 0) {
                 for (j=0; j<k; j++) {
-                    /* cumulate xit*eit into row t of H */
+                    /* cumulate xit*eit into row @t of @H */
                     vj = pmod->list[j+2];
                     hplus = dset->Z[vj][s] * eit;
                     htj = gretl_matrix_get(H, t, j);
                     gretl_matrix_set(H, t, j, htj + hplus);
                 }
             }
-            p++;
-            if (p == Nt) {
+            if (++p == Nt) {
                 /* we're done with this period */
                 break;
             }
         }
     }
 
-    /* compute initial S = Omega_0 */
+    /* compute initial @S = Omega_0 */
     for (t=0; t<pan->T; t++) {
         for (i=0; i<k; i++) {
             ht->val[i] = gretl_matrix_get(H, t, i);
@@ -1406,7 +1412,7 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
                                       htj, GRETL_MOD_TRANSPOSE,
                                       Wj, GRETL_MOD_CUMULATE);
         }
-        /* add Barlett weight * (Wj + Wj') to S */
+        /* add Barlett weight * (Wj + Wj') to @S */
         bw = 1.0 - j / (m + 1.0);
         gretl_matrix_add_self_transpose(Wj);
         gretl_matrix_multiply_by_scalar(Wj, bw);
@@ -1418,20 +1424,14 @@ driscoll_kraay_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     gretl_model_set_hac_order(pmod, m);
     gretl_model_set_int(pmod, "DKT", n_c);
 
- bailout:
-
-    gretl_matrix_free(H);
-    gretl_matrix_free(S);
-    gretl_matrix_free(ht);
-    gretl_matrix_free(htj);
-    gretl_matrix_free(Wj);
+    gretl_matrix_block_destroy(B);
     free(tobs);
 
     return err;
 }
 
-/* Common setup for Arellano, Beck-Katz, time-cluster and "generic"
-   cluster VCV estimators (note that pooled OLS with the --cluster
+/* Common setup for Arellano, Beck-Katz, Driscoll-Kraay and other
+   clustered VCV estimators (note that pooled OLS with the --cluster
    option is handled separately). @pset is the special panel dataset
    comprising only usable observations, and @dset is the original
    dataset.

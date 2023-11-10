@@ -111,6 +111,7 @@ struct str_table dvars[] = {
     { R_TEST_BRK,  "$qlrbreak" },
     { R_TEST_LNL,  "$rlnl" },
     { R_STOPWATCH, "$stopwatch" },
+    { R_TIME,      "$time" },
     { R_PUNIT,     "$unit" },
     { R_OBSMAJ,    "$obsmajor" },
     { R_OBSMIN,    "$obsminor" },
