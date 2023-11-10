@@ -1201,6 +1201,29 @@
       </description>
     </function>
 
+    <function name="$time" section="access" output="series">
+      <description>
+	<para>
+	  For time-series or panel data, creates a 1-based index of
+	  the time period. In the panel case the sequence of values
+	  repeats for each cross-sectional unit.
+	</para>
+	<para>
+	  The command <quote><lit>genr time</lit></quote> is an
+	  alternative, with the difference that the <lit>genr</lit>
+	  variant automatically creates a series called
+	  <lit>time</lit> while the naming of the series is up to the
+	  caller when using <lit>$time</lit>, as in
+	</para>
+	<code>
+	  series trend = $time
+	</code>
+	<para>
+	  This accessor is not available for cross-sectional data.
+	</para>
+      </description>
+    </function>
+
     <function name="$tmax" section="access" output="int">
       <description>
 	<para>
