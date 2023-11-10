@@ -782,11 +782,11 @@ ordered logit and probit, multinomial logit, Tobit, interval
 regression, biprobit, count models and duration models. Additionally,
 the same option is available for generic maximum likelihood estimation
 as provided by the \cmd{mle} command (see chapter \ref{chap:mle} for
-extra details).
+more details).
 
-In all cases the syntax is the same: you give the option flag
-\option{cluster=} followed by the name of the series to be used to
-define the clusters, as in
+The standard syntax is that you give the option flag \option{cluster=}
+followed by the name of the series to be used to define the clusters,
+as in
 %
 \begin{code}
 ols y 0 x1 x2 --cluster=cvar
@@ -804,8 +804,9 @@ impose clustering by time period, or by a selected cross-sectional
 characteristic. (Recall from the discussion above that the default
 action of the \option{robust} option is to cluster by panel unit, so
 if that is what you want the \option{cluster} option is not required.)
+
 To invoke clustering by period the recommended form is
-\verb|--cluster=period|, where \texttt{period} is taken as a keyword
+\verb|--cluster=$time|, where \verb|$time| is taken as a keyword
 rather than the name of a series.\footnote{Letting gretl identify the
   periods is more efficient that specifying a series to that effect.}
 Another plausible case for explicit use of clustering arises if the
@@ -836,12 +837,9 @@ panel ... --cluster=cvar1,cvar2
 \end{code}
 where two comma-separated terms are given (with no intervening
 spaces). These terms can be the names of existing series, or the
-keywords \texttt{period} and \texttt{unit} may be used to indicate
-unique identifiers for the time periods and cross-sectional units,
-respectively. Note that these keywords are not \textit{reserved};
-there may be series of these names in the dataset, and if so they take
-priority. As mentioned above, however, use of the keywords is more
-efficient than using named series for period and unit.
+accessors \verb|$time| and \verb|$unit| may be used to indicate
+unique identifiers for time periods and cross-sectional units,
+respectively.
 
 The precise magnitude of standard errors produced in case of
 cluster-robust estimation depends on whether a degrees of freedom
