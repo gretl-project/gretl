@@ -46,6 +46,7 @@ typedef struct {
     int bdummy;      /* flag for drawing rectangles */
     BandStyle style; /* see enumeration above */
     char rgb[10];    /* specific color, if wanted */
+    const char *title;
 } band_info;
 
 static band_info *band_info_new (void)
@@ -59,6 +60,7 @@ static band_info *band_info_new (void)
         bi->bdummy = 0;
         bi->style = BAND_LINE;
         bi->rgb[0] = '\0';
+	bi->title = NULL;
     }
 
     return bi;
@@ -176,7 +178,7 @@ static int has_bogus_key (gretl_bundle *b)
 {
     const char *known_keys[] = {
 	"center", "width", "dummy", "style", "color",
-	"factor", "bandmat", NULL
+	"factor", "bandmat", "title", NULL
     };
     char **S = NULL;
     int i, j, ns = 0;
@@ -241,9 +243,9 @@ static band_info *band_info_from_bundle (int matrix_mode,
                                          int *err)
 {
     band_info *bi = band_info_new();
-    const char *S[4] = {NULL};
+    const char *S[5] = {NULL};
     const char *strkeys[] = {
-        "center", "width", "dummy", "style"
+        "center", "width", "dummy", "style", "title"
     };
     char colspec[32];
     int v, i, imin = 0;
@@ -272,7 +274,7 @@ static band_info *band_info_from_bundle (int matrix_mode,
 
     *colspec = '\0';
 
-    for (i=imin; i<4 && !*err; i++) {
+    for (i=imin; i<5 && !*err; i++) {
         if (gretl_bundle_has_key(b, strkeys[i])) {
             S[i] = gretl_bundle_get_string(b, strkeys[i], err);
         }
@@ -285,7 +287,7 @@ static band_info *band_info_from_bundle (int matrix_mode,
     }
 
     /* try cashing out the string members */
-    for (i=imin; i<4 && !*err; i++) {
+    for (i=imin; i<5 && !*err; i++) {
         if (S[i] == NULL) {
             continue;
         }
@@ -301,7 +303,9 @@ static band_info *band_info_from_bundle (int matrix_mode,
 	    }
         } else if (i == 3) {
             bi->style = style_from_string(S[i], err);
-        }
+        } else if (i == 4) {
+	    bi->title = S[i];
+	}
     }
 
     if (!*err) {
@@ -397,9 +401,17 @@ static void gp_newline (int contd, FILE *fp)
     }
 }
 
-static void print_pm_filledcurve (band_info *bi,
-				  const char *title,
-				  int contd, FILE *fp)
+static void band_title (band_info *bi, FILE *fp)
+{
+    if (bi->title != NULL) {
+	fprintf(fp, "title '%s' ", bi->title);
+    } else {
+	fputs("notitle ", fp);
+    }
+}
+
+static void print_pm_filledcurve (band_info *bi, int contd,
+				  FILE *fp)
 {
     double f = bi->factor;
     int c = bi->center;
@@ -418,11 +430,7 @@ static void print_pm_filledcurve (band_info *bi,
 	fprintf(fp, "'$data' using 1:($%d-%g*$%d):($%d+%g*$%d) ",
 		c, f, w, c, f, w);
     }
-    if (title == NULL) {
-	fputs("notitle ", fp);
-    } else {
-	fprintf(fp, "title '%s' ", title);
-    }
+    band_title(bi, fp);
     fprintf(fp, "lc rgb \"%s\" w filledcurve", cstr);
     gp_newline(contd, fp);
 }
@@ -448,8 +456,11 @@ static void print_pm_lines (band_info *bi, int n_yvars,
     if (bi->style == BAND_DASH) {
 	strcpy(dspec, " dt 2");
     }
-    fprintf(fp, "'$data' using 1:($%d-%g*$%d) notitle w %s %s%s%s, \\\n",
-	    c, f, w, wstr, lspec, dspec, lw);
+    /* lower line */
+    fprintf(fp, "'$data' using 1:($%d-%g*$%d) ", c, f, w);
+    band_title(bi, fp);
+    fprintf(fp, "w %s %s%s%s, \\\n", wstr, lspec, dspec, lw);
+    /* upper line */
     fprintf(fp, "'$data' using 1:($%d+%g*$%d) notitle w %s %s%s%s",
 	    c, f, w, wstr, lspec, dspec, lw);
     gp_newline(contd, fp);
@@ -469,8 +480,9 @@ static void print_pm_bars (band_info *bi, int n_yvars,
     } else {
 	sprintf(lspec, "lt %d pt 7", n_yvars + 1);
     }
-    fprintf(fp, "'$data' using 1:%d:(%g*$%d) notitle w errorbars %s",
-	    bi->center, bi->factor, bi->width, lspec);
+    fprintf(fp, "'$data' using 1:%d:(%g*$%d) ", bi->center, bi->factor, bi->width);
+    band_title(bi, fp);
+    fprintf(fp, "w errorbars %s", lspec);
     gp_newline(contd, fp);
 }
 
@@ -910,6 +922,30 @@ static const double *gi_get_xdata (gnuplot_info *gi,
     return x;
 }
 
+/* If we have a single data series to plot and no band is
+   titled, omit the key and put the name of the series on
+   the y axis.
+*/
+
+static void maybe_suppress_key (band_info **bb, int n_bands,
+				char *yname, const char *src,
+				FILE *fp)
+{
+    int i, have_titles = 0;
+
+    for (i=0; i<n_bands; i++) {
+	if (bb[i]->title != NULL) {
+	    have_titles = 1;
+	    break;
+	}
+    }
+    if (!have_titles) {
+	fputs("set nokey\n", fp);
+	strcpy(yname, src);
+	fprintf(fp, "set ylabel \"%s\"\n", yname);
+    }
+}
+
 int plot_with_band (BPMode mode,
 		    gnuplot_info *gi,
                     const char *literal,
@@ -982,9 +1018,9 @@ int plot_with_band (BPMode mode,
     }
 
     if (n_yvars == 1) {
-        fputs("set nokey\n", fp);
-        strcpy(yname, series_get_graph_name(dset, gi->list[1]));
-        fprintf(fp, "set ylabel \"%s\"\n", yname);
+	const char *s = series_get_graph_name(dset, gi->list[1]);
+
+	maybe_suppress_key(bbi, n_bands, yname, s, fp);
     }
     if (*xname != '\0') {
         fprintf(fp, "set xlabel \"%s\"\n", xname);
@@ -1026,7 +1062,7 @@ int plot_with_band (BPMode mode,
 	if (bi->bdummy) {
 	    continue;
 	} else if (bi->style == BAND_FILL) {
-	    print_pm_filledcurve(bi, NULL, 1, fp);
+	    print_pm_filledcurve(bi, 1, fp);
 	    if (show_zero) {
 		fputs("0 notitle w lines lt 0, \\\n", fp);
 	    }
