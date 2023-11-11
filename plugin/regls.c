@@ -3343,10 +3343,9 @@ static int glasso_converged (const gretl_matrix *W0,
     return 1;
 }
 
-/* The following function may be redundant if we're in fact
-   getting options values that have been vetted in advance
-   in greaphlasso.gfn. The @tol and @maxit defaults below
-   are as in the glasso R package.
+/* The following function may be redundant if we're getting option
+   values that have already been vetted by graphlasso.gfn. The @tol
+   and @maxit defaults below are as in the glasso R package.
 */
 
 static int handle_glasso_options (gretl_bundle *b,
