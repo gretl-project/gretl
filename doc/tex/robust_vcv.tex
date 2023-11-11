@@ -731,15 +731,16 @@ following section.
 \section{The cluster-robust estimator}
 \label{sec:vcv-cluster}
 
-One further variance estimator is available in gretl, namely the
-``cluster-robust'' estimator. This may be appropriate (for
-cross-sectional data, mostly) when the observations naturally fall
-into groups or clusters, and one suspects that the error term may
-exhibit dependency within the clusters and/or have a variance that
-differs across clusters. Such clusters may be binary (e.g.\ employed
-versus unemployed workers), categorical with several values (e.g.\
-products grouped by manufacturer) or ordinal (e.g.\ individuals with
-low, middle or high education levels). 
+We begin by describing the cluster-robust variance estimator in
+general terms. Specific points pertaining to panel data follow in the
+final subsection.
+
+This estimator is appropriate when the observations naturally fall
+into groups or clusters, and the error term exhibits dependency within
+the clusters and/or heteroskedasticity across clusters. Such clusters
+may be binary (e.g.\ employed versus unemployed workers), categorical
+with several values (e.g.\ products grouped by manufacturer) or
+ordinal (e.g.\ individuals with low, middle or high education levels).
 
 For linear regression models estimated via least squares the cluster
 estimator is defined as
@@ -767,7 +768,7 @@ observations falling within cluster $j$.
 
 It is common to apply a degrees of freedom adjustment to these
 estimators (otherwise the variance may appear misleadingly small in
-comparison with other estimators, if the number of clusters is small).
+comparison with other estimators if the number of clusters is small).
 In the least squares case the factor is $(m/(m-1)) \times
 (n-1)/(n-k)$, where $n$ is the total number of observations and $k$ is
 the number of parameters estimated; in the case of ML estimation the
@@ -775,46 +776,58 @@ factor is just $m/(m-1)$.
 
 \subsection{Availability and syntax}
 
-The cluster-robust estimator is currently available for models
-estimated via OLS and TSLS, and also for most ML estimators other than
-those specialized for time-series data: binary logit and probit,
-ordered logit and probit, multinomial logit, Tobit, interval
-regression, biprobit, count models and duration models. Additionally,
-the same option is available for generic maximum likelihood estimation
-as provided by the \cmd{mle} command (see chapter \ref{chap:mle} for
-more details).
+Cluster-robust estimation is invoked via the \option{cluster} option,
+which is available for models estimated via OLS and TSLS, and also for
+most ML estimators other than those specialized for time-series data;
+so binary logit and probit, ordered logit and probit, multinomial
+logit, Tobit, interval regression, biprobit, count models and duration
+models are all supported. In addition this option is available for
+generic maximum likelihood estimation as provided by the \cmd{mle}
+command (see chapter \ref{chap:mle} for more details).
 
-The standard syntax is that you give the option flag \option{cluster=}
-followed by the name of the series to be used to define the clusters,
-as in
+The \option{cluster} option has a required parameter, the name of a
+series that defines the clusters, as in
 %
 \begin{code}
 ols y 0 x1 x2 --cluster=cvar
 \end{code}
 %
-The specified clustering variable must (a) be defined (not missing) at
-all observations used in estimating the model and (b) take on at least
-two distinct values over the estimation range. The clusters are
-defined as sets of observations having a common value for the
-clustering variable. It is generally expected that the number of
-clusters is substantially less than the total number of observations.
+The specified series must (a) be defined (not missing) at all
+observations used in estimating the model and (b) take on at least two
+distinct values over the estimation range. The clusters are defined as
+sets of observations having a common value for the series in question.
+It is generally expected that the number of clusters is substantially
+less than the total number of observations.
 
-In the case of panel data, the \option{cluster} option can be used to
-impose clustering by time period, or by a selected cross-sectional
-characteristic. (Recall from the discussion above that the default
-action of the \option{robust} option is to cluster by panel unit, so
-if that is what you want the \option{cluster} option is not required.)
+\subsection{Panel data specifics}
 
-To invoke clustering by period the recommended form is
-\verb|--cluster=$time|, where \verb|$time| is taken as a keyword
-rather than the name of a series.\footnote{Letting gretl identify the
-  periods is more efficient that specifying a series to that effect.}
-Another plausible case for explicit use of clustering arises if the
+In the case of panel data, two additional features are
+supported. First, two comma-separated cluster variables can be given
+with the \option{cluster} option, for two-way clustering.  Second, the
+special terms \verb|$unit| and \verb|$time| can be used in place of
+names of existing series to specify, respectively, clustering by
+cross-sectional unit and by time period. So for example, the command
+\begin{code}
+panel ... --cluster=$unit,$time
+\end{code}
+invokes two-way clustering that allows for dependence of the error
+term both within unit and within period.  The special terms can be
+used individually, in combination as shown above, or in combination
+with other suitable series.
+
+\tip{You can use named series that identify unit and time rather than
+  the \$-terms, but the latter are a good deal more efficient since
+  they key directly into the panel structure of the dataset. Given a
+  arbitrary named series more work is needed to determine which
+  observations fall within which clusters.}
+
+A plausible case for clustering by a named series arises if the
 dataset contains a series that identifies a set of groups into which
 the panel units fall---for example, the panel units are individuals
 but you know which individuals are members of which household, or the
 panel units are counties but you know in which state each county is
-located. Then you may wish to cluster at the group level, as in
+located. Then you may wish to cluster at the more aggregated level, as
+in
 \begin{code}
 panel ... --cluster=household
 # OR
@@ -824,22 +837,29 @@ In these cases, of course, the parameter to \option{cluster} must be
 the name of a series that does the job, providing a unique identifier
 for each of the groups.
 
-In the case of panel data only, two-way clustering is also supported.
-For example, one might cluster by cross-sectional unit and
-time-period, hence allowing for dependence of the disturbance term
-both within unit and within period. But note that if a categorical
-variable \texttt{C1} is nested within a more highly aggregated one,
-\texttt{C2}, then two-way clustering is not called for since it
-amounts to clustering on \texttt{C2} alone. The syntax for the two-way
-case is on the following pattern
+The method for two-way clustering is that described by
+\cite{CGM2011}; that is, the variance estimator is
+\[
+\hat{\Sigma}_{\rm C2} = \Sigma_1 + \Sigma_2 - \Sigma_{1,2}
+\]
+where $\Sigma_1$ and
+$\Sigma_2$ are the variance estimators produced using the two cluster
+variables taken individually and
+$\Sigma_{1,2}$ is the estimator obtained from their combination.  In
+case $\hat{\Sigma}_{\rm
+  C2}$ is not positive semi-definite we calculate its eigen
+decomposition, set any negative eigenvalues to zero, and recreate the
+matrix.
+
+Note that if a cluster variable \texttt{C1} is nested within a more
+highly aggregated one, \texttt{C2}, then two-way clustering is not
+called for since it amounts to clustering on \texttt{C2} alone. To
+continue the example from above, if the panel units are counties and
+the assignment of counties to states is time-invariant, the command
 \begin{code}
-panel ... --cluster=cvar1,cvar2
+panel ... --cluster=$unit,state # not recommended!
 \end{code}
-where two comma-separated terms are given (with no intervening
-spaces). These terms can be the names of existing series, or the
-accessors \verb|$time| and \verb|$unit| may be used to indicate
-unique identifiers for time periods and cross-sectional units,
-respectively.
+is just a round-about way of asking for clustering by state.
 
 The precise magnitude of standard errors produced in case of
 cluster-robust estimation depends on whether a degrees of freedom
@@ -848,9 +868,9 @@ calculated---a matter which is somewhat debatable. The default
 procedure in gretl is that of \cite{CGM2011}. That is, we apply an
 adjustment factor equal to
 \[
-  \frac{c}{c-1} \times \frac{n}{n-k}
+  \frac{m}{m-1} \times \frac{n-1}{n-k}
 \]
-where $c$ is the number of clusters, $n$ is the total number of
+where $m$ is the number of clusters, $n$ is the total number of
 observations, and $k$ is the number of parameters estimated. Results
 then agree with \textsf{Stata}'s \texttt{xtreg} command and also the
 \texttt{cgmreg} command made available by Colin Cameron.\footnote{As
