@@ -5443,7 +5443,7 @@
 	the name of a series for the center of the band, and under the
 	key <lit>width</lit> the name of a series representing the
 	width of the band&mdash;both being given as quoted strings. In
-	addition three optional elements are supported, as follows.
+	addition four optional elements are supported, as follows.
       </para>
       <ilist>
 	<li>
@@ -5464,6 +5464,12 @@
 	  either as a string holding a gnuplot color name or as a
 	  hexadecimal RGB representation (given as a string or a
 	  scalar). By default the color is selected automatically.
+	  </para>
+	</li>
+	<li>
+	  <para>Under the key <lit>title</lit>, a title for the band,
+	  to appear in the key or legend of the plot. By default bands
+	  are untitled.
 	  </para>
 	</li>
       </ilist>
@@ -5488,6 +5494,7 @@
 	gnuplot y --time-series --with-lines --band=b1
 	bundle b2 = _(center="x", width="w", factor=1.96, style="fill")
 	b2.color=0xcccccc
+	b2.title = "95% interval"
 	gnuplot y --time-series --with-lines --band=b2
       </code>
       <para>
