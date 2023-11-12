@@ -1345,7 +1345,7 @@ static int real_write_data (const char *fname, int *list,
 
  write_exit:
 
-    if (!err && prn != NULL) {
+    if (!err && prn != NULL && gretl_messages_on()) {
 	if (add_ext) {
 	    pprintf(prn, _("wrote %s.gdt\n"), fname);
 	} else {
