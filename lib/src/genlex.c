@@ -335,6 +335,7 @@ struct str_table funcs[] = {
     { F_MEANR,    "meanr" },
     { F_ASORT,    "asort" },
     { F_CORRESP,  "corresp" },
+    { F_HEXPRINT, "hexprint" },
     { F_SDC,      "sdc" },
     { F_MINC,     "minc" },
     { F_MAXC,     "maxc" },

@@ -158,4 +158,6 @@ gretl_matrix *vector_from_strings (char **S, int ns,
 				   int *nvals,
 				   int *err);
 
+int hex_print (const gretl_matrix *m, int hash, PRN *prn);
+
 #endif /* MATRIX_EXTRA_H */
