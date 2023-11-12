@@ -518,6 +518,7 @@ enum {
     F_MIDASMULT,
     F_COMMUTE,
     F_TOEPSOLV,
+    F_RGBMIX,
     HF_FELOGITR,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };

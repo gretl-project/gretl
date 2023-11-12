@@ -2392,7 +2392,8 @@ int finalize_plot_input_file (FILE *fp)
 	err = gnuplot_make_graph();
 	if (!err) {
 	    /* for the benefit of gretl_cmd_exec() in interact.c,
-	       indicate that we actually produced a plot */
+	       indicate that we actually produced a plot
+	    */
 	    set_plot_produced();
 	}
     } else {
