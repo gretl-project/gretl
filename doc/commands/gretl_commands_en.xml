@@ -13726,7 +13726,7 @@
 	ignored.
       </para>
       <para context="cli">
-	By default the are shown as points, but if you give the
+	By default the data are shown as points, but if you give the
 	<opt>with-lines</opt> flag they will be line graphs.
       </para>
       <para context="cli">
