@@ -2417,10 +2417,13 @@ int print_user_var_by_name (const char *name,
         print_scalar_by_name(name, prn);
     } else if (u->type == GRETL_TYPE_MATRIX) {
         gretl_matrix *tmp = u->ptr;
+
         if (tmp->is_complex || opt & OPT_C) {
-            err = gretl_cmatrix_print(u->ptr, name, prn);
-        } else {
-            gretl_matrix_print_to_prn(u->ptr, name, prn);
+            err = gretl_cmatrix_print(tmp, name, prn);
+        } else if (opt & OPT_H) {
+	    err = hex_print_matrix(tmp, prn);
+	} else {
+            gretl_matrix_print_to_prn(tmp, name, prn);
         }
     } else if (u->type == GRETL_TYPE_BUNDLE) {
         if (opt & OPT_T) {

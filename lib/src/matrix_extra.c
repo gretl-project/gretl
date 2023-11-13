@@ -3094,3 +3094,31 @@ gretl_matrix *vector_from_strings (char **S, int ns,
 
     return m;
 }
+
+int hex_print_matrix (const gretl_matrix *m, PRN *prn)
+{
+    guint32 ui;
+    double xi;
+    int i, n;
+
+    n = m->rows * m->cols;
+
+    for (i=0; i<n; i++) {
+	xi = m->val[i];
+	if (!na(xi) && (xi < 0 || xi != floor(xi) || xi > G_MAXUINT32)) {
+	    return E_TYPES;
+	}
+    }
+
+    for (i=0; i<n; i++) {
+	xi = m->val[i];
+	if (na(xi)) {
+	    pprintf(prn, "NA\n");
+	} else {
+	    ui = (guint32) xi;
+	    pprintf(prn, "0x%06x\n", ui);
+	}
+    }
+
+    return 0;
+}
