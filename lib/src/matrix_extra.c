@@ -3095,9 +3095,8 @@ gretl_matrix *vector_from_strings (char **S, int ns,
     return m;
 }
 
-int hex_print (const gretl_matrix *m, int hash, PRN *prn)
+int hex_print_matrix (const gretl_matrix *m, PRN *prn)
 {
-    char pfx[3];
     guint32 ui;
     double xi;
     int i, n;
@@ -3111,15 +3110,13 @@ int hex_print (const gretl_matrix *m, int hash, PRN *prn)
 	}
     }
 
-    strcpy(pfx, hash ? "#" : "0x");
-
     for (i=0; i<n; i++) {
 	xi = m->val[i];
 	if (na(xi)) {
 	    pprintf(prn, "NA\n");
 	} else {
 	    ui = (guint32) xi;
-	    pprintf(prn, "%s%06x\n", pfx, ui);
+	    pprintf(prn, "0x%06x\n", ui);
 	}
     }
 

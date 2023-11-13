@@ -3965,8 +3965,6 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
             if (!p->err) {
                 p->err = check_cswitch_param(m, &k);
             }
-	} else if (f == F_HEXPRINT) {
-	    k = node_get_bool(r, p, 0);
         } else {
             k = node_get_int(r, p);
         }
@@ -3977,11 +3975,7 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
             p->err = E_CMPLX;
         }
         if (!p->err) {
-	    if (f == F_HEXPRINT) {
-		ret = aux_scalar_node(p);
-	    } else {
-		ret = aux_matrix_node(p);
-	    }
+	    ret = aux_matrix_node(p);
         }
         if (p->err) {
             return NULL;
@@ -4003,9 +3997,7 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
                 k = (k == 1)? 1 : 0;
                 ret->v.m = gretl_cmatrix_switch(m, k, &p->err);
             }
-        } else if (f == F_HEXPRINT) {
-	    ret->v.xval = hex_print(m, k, p->prn);
-	}
+        }
     } else {
         ret = aux_any_node(p);
     }
@@ -17606,7 +17598,6 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_MSORTBY:
     case F_CSWITCH:
-    case F_HEXPRINT:
         /* matrix on left, scalar on right */
         if (l->t == MAT && null_or_scalar(r)) {
             ret = matrix_scalar_func(l, r, t->t, p);
