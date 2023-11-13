@@ -500,7 +500,7 @@
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>don't print anything</effect>
+	  <effect>don't print confirmation message</effect>
 	</option>
 	<optnote>See below for additional specialized options</optnote>
       </options>
