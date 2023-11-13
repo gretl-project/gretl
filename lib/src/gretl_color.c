@@ -137,7 +137,7 @@ gretl_matrix *colormix_vector (gretlRGB c1, gretlRGB c2,
 
     if (*err == 0 && do_plot) {
 	show_colors(c1, c2, ret->val, f->val, n);
-    }    
+    }
 
     return ret;
 }
@@ -214,7 +214,7 @@ static int show_colors (gretlRGB c1, gretlRGB c2,
     err = finalize_plot_input_file(fp);
     if (!err && gretl_in_gui_mode()) {
 	manufacture_gui_callback(GNUPLOT);
-    }    
+    }
 
     return err;
 }
