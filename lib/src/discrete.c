@@ -309,7 +309,7 @@ static int op_compute_probs (const double *theta, op_container *OC)
 	}
 #if LPDEBUG > 1
 	fprintf(stderr, "t:%4d/%d s=%d y=%d, ndx = %10.6f, ystar0 = %9.7f, ystar1 = %9.7f\n",
-		t, OC->nobs, s, yt, OC->ndx[s], ystar0, ystar1);
+		t+1, OC->nobs, s, yt, OC->ndx[s], ystar0, ystar1);
 #endif
 	if (ystar0 < 6.0 || OC->ci == LOGIT) {
 	    P0 = (yt == 0)? 0.0 : lp_cdf(ystar0, OC->ci);
@@ -325,7 +325,7 @@ static int op_compute_probs (const double *theta, op_container *OC)
 	    OC->dP[s] = dP;
 	} else {
 #if LPDEBUG
-	    fprintf(stderr, "very small dP at obs %d; y=%d, ndx=%g, dP=%g\n",
+	    fprintf(stderr, "very small dP at obs %d; y=%d, ndx=%g, dP=%.15g\n",
  		    t, yt, OC->ndx[s], dP);
 #endif
 	    return 1;
@@ -740,26 +740,68 @@ static void cut_points_init (op_container *OC,
     }
 }
 
+static void add_pseudo_rsquared (MODEL *pmod, double L0,
+				 int k, int T, gretlopt opt)
+{
+    if (opt & OPT_S) {
+	/* Estrella pseudo-R^2 */
+	double expon = -2.0 * L0/T;
+
+	pmod->rsq = 1.0 - pow(pmod->lnL/L0, expon);
+	pmod->adjrsq = 1.0 - pow((pmod->lnL - k)/L0, expon);
+	pmod->opt |= OPT_S;
+    } else {
+	/* McFadden pseudo-R^2 */
+	pmod->rsq = 1.0 - pmod->lnL/L0;
+	pmod->adjrsq = 1.0 - (pmod->lnL - k)/L0;
+    }
+}
+
+static double binary_null_loglik (int *y, int T)
+{
+    double L0 = 0;
+    int ones = 0;
+    int zeros, t;
+
+    for (t=0; t<T; t++) {
+	ones += y[t];
+    }
+    zeros = T - ones;
+
+    L0 = ones * log(ones / (double) T);
+    L0 += zeros * log(zeros / (double) T);
+
+    return L0;
+}
+
 static void op_LR_test (MODEL *pmod, op_container *OC,
 			const double **Z)
 {
-    int nx = OC->nx;
+    int full_nx = OC->nx;
+    int restore = 1;
     double L0;
 
-    OC->k -= OC->nx;
-    OC->nx = 0;
-
-    cut_points_init(OC, pmod, Z);
-    L0 = op_loglik(OC->theta, OC);
+    if (OC->ymax == 1) {
+	restore = 0;
+	L0 = binary_null_loglik(OC->y, OC->nobs);
+    } else {
+	OC->k -= OC->nx;
+	OC->nx = 0;
+	cut_points_init(OC, pmod, Z);
+	L0 = op_loglik(OC->theta, OC);
+    }
 
     if (!na(L0) && L0 <= pmod->lnL) {
 	pmod->chisq = 2.0 * (pmod->lnL - L0);
-	gretl_model_set_int(pmod, "lr_df", nx);
+	gretl_model_set_int(pmod, "lr_df", full_nx);
+	add_pseudo_rsquared(pmod, L0, full_nx, OC->nobs, OC->opt);
     }
 
-    /* restore original data on OC */
-    OC->nx = nx;
-    OC->k += nx;
+    if (restore) {
+	/* restore original data on OC */
+	OC->nx = full_nx;
+	OC->k += OC->nx;
+    }
 }
 
 static int oprobit_normtest (MODEL *pmod,
@@ -2386,7 +2428,6 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
 	if (pmod->ifc) {
 	    df -= mnl->n;
 	}
-
 	for (i=0; i<=mnl->n; i++) {
 	    ni = valcount[i];
 	    if (pmod->ifc) {
@@ -2395,7 +2436,6 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
 		L0 += ni * log(1.0 / (mnl->n + 1));
 	    }
 	}
-
 	pmod->chisq = 2.0 * (pmod->lnL - L0);
 	pmod->dfn = df;
     }
@@ -2832,8 +2872,7 @@ static int binary_variance_matrix (MODEL *pmod, bin_info *bin,
 static void binary_model_chisq (bin_info *bin, MODEL *pmod,
 				gretlopt opt)
 {
-    int t, zeros, ones = 0;
-    double Lr, chisq;
+    double L0;
 
     if (pmod->ncoeff == 1 && pmod->ifc) {
 	/* constant-only model */
@@ -2843,32 +2882,13 @@ static void binary_model_chisq (bin_info *bin, MODEL *pmod,
 	return;
     }
 
-    for (t=0; t<bin->T; t++) {
-	ones += bin->y[t];
-    }
+    L0 = binary_null_loglik(bin->y, bin->T);
 
-    zeros = bin->T - ones;
-
-    Lr = ones * log(ones / (double) bin->T);
-    Lr += zeros * log(zeros / (double) bin->T);
-    chisq = 2.0 * (pmod->lnL - Lr);
-
-    if (chisq < 0) {
-	pmod->rsq = pmod->adjrsq = pmod->chisq = NADBL;
+    if (!na(L0) && L0 <= pmod->lnL) {
+	pmod->chisq = 2.0 * (pmod->lnL - L0);
+	add_pseudo_rsquared(pmod, L0, bin->k, bin->T, opt);
     } else {
-	pmod->chisq = chisq;
-	if (opt & OPT_S) {
-	    /* Estrella pseudo-R^2 */
-	    double expon = -2.0 * Lr/bin->T;
-
-	    pmod->rsq = 1.0 - pow(pmod->lnL/Lr, expon);
-	    pmod->adjrsq = 1.0 - pow((pmod->lnL - bin->k)/Lr, expon);
-	    pmod->opt |= OPT_S;
-	} else {
-	    /* McFadden pseudo-R^2 */
-	    pmod->rsq = 1.0 - pmod->lnL/Lr;
-	    pmod->adjrsq = 1.0 - (pmod->lnL - bin->k)/Lr;
-	}
+	pmod->rsq = pmod->adjrsq = pmod->chisq = NADBL;
     }
 }
 

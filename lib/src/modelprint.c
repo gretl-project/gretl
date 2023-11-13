@@ -3223,7 +3223,7 @@ static void print_middle_table (MODEL *pmod, PRN *prn, int code)
     } else if (COUNT_MODEL(pmod->ci)) {
 	key[K_RSQ] = (tex)? N_("McFadden $R^2$") :
 	    N_("McFadden R-squared");  /* 22: McFadden pseudo-R^2 */
-    } else if (binary_model(pmod)) {
+    } else if (binary_model(pmod) || ordered_model(pmod)) {
 	if (pmod->opt & OPT_S) {
 	    key[K_RSQ] = (tex)? N_("Estrella $R^2$") :
 		N_("Estrella R-squared");  /* 22: Estrella pseudo-R^2 */

@@ -31,6 +31,7 @@
 #include "uservar.h"
 #include "matrix_extra.h"
 #include "boxplots.h"
+#include "gretl_string_table.h"
 #include "libglue.h"
 
 /*
@@ -496,6 +497,40 @@ MODEL quantreg_driver (const char *param, const int *list,
     return mod;
 }
 
+static int handle_binary_strval (DATASET *dset, int v)
+{
+    series_table *st = series_get_string_table(dset, v);
+    int t, ns = series_table_get_n_strings(st);
+
+    if (ns == 2) {
+	/* convert temporarily to 0/1 */
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    dset->Z[v][t] -= 1.0;
+	}
+	return 1;
+    }
+
+    return 0;
+}
+
+static void restore_binary_strval (MODEL *pmod, DATASET *dset, int v)
+{
+    const char *yname = dset->varname[v];
+    const char *valstr;
+    int n, t;
+
+    /* restore the original numeric codes */
+    for (t=dset->t1; t<=dset->t2; t++) {
+	dset->Z[v][t] += 1.0;
+    }
+
+    /* and construct a suitable depvar name */
+    valstr = series_get_string_for_value(dset, v, 2.0);
+    n = strlen(yname) + strlen(valstr) + 5;
+    pmod->depvar = calloc(n, 1);
+    sprintf(pmod->depvar, "%s==\"%s\"", yname, valstr);
+}
+
 /* wrapper for the various sorts of logit and probit models
    that gretl supports
 */
@@ -503,14 +538,21 @@ MODEL quantreg_driver (const char *param, const int *list,
 MODEL logit_probit (int *list, DATASET *dset, int ci,
 		    gretlopt opt, PRN *prn)
 {
-    MODEL ret;
     int yv = list[1];
+    int restore = 0;
+    MODEL ret;
 
     if (ci == LOGIT && (opt & OPT_M)) {
-	ret = multinomial_logit(list, dset, opt, prn);
+	return multinomial_logit(list, dset, opt, prn);
     } else if (ci == PROBIT && (opt & OPT_E)) {
-	ret = reprobit_model(list, dset, opt, prn);
-    } else if (gretl_isdummy(dset->t1, dset->t2, dset->Z[yv])) {
+	return reprobit_model(list, dset, opt, prn);
+    }
+
+    if (is_string_valued(dset, yv)) {
+	restore = handle_binary_strval(dset, yv);
+    }
+
+    if (gretl_isdummy(dset->t1, dset->t2, dset->Z[yv])) {
 	if (ci == LOGIT) {
 	    ret = binary_logit(list, dset, opt, prn);
 	} else {
@@ -522,6 +564,10 @@ MODEL logit_probit (int *list, DATASET *dset, int ci,
 	} else {
 	    ret = ordered_probit(list, dset, opt, prn);
 	}
+    }
+
+    if (restore) {
+	restore_binary_strval(&ret, dset, yv);
     }
 
     return ret;
