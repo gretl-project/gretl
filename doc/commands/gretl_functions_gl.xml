@@ -42,7 +42,7 @@
       <description>
 	<para>
 	  Se pode calcularse, devolve un escalar co valor do Criterio de
-	  Información Bayesiano (BIC) de Schwarz do último modelo estimado.
+	  Información Baiesiano (BIC) de Schwarz do último modelo estimado.
 	  Máis detalles sobre o cálculo no <guideref targ="chap:criteria"/>.
 	</para>
       </description>
@@ -1197,6 +1197,29 @@
 	  <seelist>
             <fncref targ="$pvalue"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="$time" section="access" output="series">
+      <description>
+	<para>
+	  Para datos de series temporais ou de panel, xera un índice con
+	  enteiros positivos do período temporal. No caso do panel, a secuencia
+	  de valores repítese para cada unidade de sección cruzada.
+	</para>
+	<para>
+	  A instrución <quote><lit>genr time</lit></quote> é unha alternativa,
+	  coa diferenza de que a variante <lit>genr</lit> xera automaticamente
+	  unha serie nomeada <lit>time</lit>, mentres que o nomeamento da
+	  serie corresponde ao solicitante cando se utiliza <lit>$time</lit>,
+	  como en
+	</para>
+	<code>
+	  series trend = $time
+	</code>
+	<para>
+	  Este accesorio non está dispoñible para datos de sección cruzada.
 	</para>
       </description>
     </function>
@@ -3323,6 +3346,74 @@
             <fncref targ="mcorr"/>
             <fncref targ="npcorr"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="corresp" section="stats" output="scalar">
+      <fnargs>
+	<fnarg type="series-or-vec">a</fnarg>
+	<fnarg type="series-or-vec">b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  En base a unha tabulación cruzada de <argname>a</argname> e
+	  <argname>b</argname>, devolve un código de tipo enteiro que indica
+	  a clase de correspondencia entre as dúas variables, do seguinte
+	  xeito.
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      Código = 2: hai unha relación de tipo 1 a 1.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Código = 1: hai unha relación de tipo 1 a n
+	      (<argname>a</argname> <quote>aniña</quote>
+	      <argname>b</argname>, pode interpretarse como unha función de
+	      <argname>b</argname> en senso matemático).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Código = &minus;1: hai unha relación de tipo n a 1
+	      (<argname>b</argname> <quote>aniña</quote>
+	      <argname>a</argname>, pode interpretarse como unha función de
+	      <argname>a</argname>).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	    Code = 0: non hai ningunha relación.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
+	  Cae na conta de que estes códigos baséanse exclusivamente nos valores
+	  mostrais dos dous argumentos. No caso de que <argname>b</argname>
+	  sexa o cadrado de <argname>a</argname>, por exemplo, o resultado
+	  vai diferir dependendo de se <argname>a</argname> contén algúns
+	  pares de valores que unicamente se diferencien no signo
+	  (código = &minus;1), ou non (código = 2).
+	</para>
+	<para>
+	  Un caso de posible utilización consiste en comprobar se dúas series
+	  discretas codifican a mesma información. Por exemplo, as seguintes
+	  expresións
+	</para>
+	<code>
+	  open grunfeld.gdt
+	  c = correspondence($unit, firm)
+	</code>
+	<para>
+	  proporcionan <lit>c</lit> = 2, indicando que a serie <lit>firm</lit>
+	  é de feito un único identificador para as unidades de sección
+	  cruzada nese conxunto de datos de panel.
+	</para>
+	<para>
+	  Consulta tamén <fncref targ="mxtab"/>.
 	</para>
       </description>
     </function>
@@ -5801,8 +5892,7 @@
       <description>
 	<para>
 	  Devolve unha matriz <by r="m" c="r"/> que contén <math>m</math>
-	  secuencias de Halton de lonxitude <math>r</math>, onde o valor de
-	  <math>m</math> está limitado a un máximo de 40. As secuencias
+	  secuencias de Halton de lonxitude <math>r</math>. As secuencias
 	  constrúense utilizando os primeiros <math>m</math> números primos.
 	  Por defecto, descártanse os primeiros 10 elementos de cada unha das
 	  secuencias, aínda que podes axustar isto por medio do argumento
@@ -9599,14 +9689,17 @@
 	<para>
 	  Devolve unha matriz que inclúe a tabulación cruzada dos valores
 	  contidos en <argname>x</argname> (por filas) e <argname>y</argname>
-	  (por columnas). Os dous argumentos desta función deben de ser
-	  do mesmo tipo (ambas series ou ambos vectores columna) e, a causa
-	  da utilización típica desta función, asúmese que contén unicamente
-	  valores enteiros.
+	  (por columnas). Os dous argumentos desta función deben ser do
+	  mesmo tipo (ser series ambas ou vectores columna ambos). Xeralmente
+	  agárdase (aínda que non é imprescindible) que os argumentos teñan
+	  valores discretos, con menos valores diferentes que observacións.
+	  Doutro xeito, a tabulación cruzada pode resultar moi grande e non
+	  moi informativa.
 	</para>
 	<para>
 	  <seelist>
             <fncref targ="values"/>
+            <fncref targ="corresp"/>
 	  </seelist>
 	</para>
       </description>

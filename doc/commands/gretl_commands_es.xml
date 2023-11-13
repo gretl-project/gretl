@@ -5277,11 +5277,6 @@
 	  <effect>Mira abajo</effect>
         </option>
         <option>
-	  <flag>--band-style</flag>
-	  <optparm>estilofranja</optparm>
-	  <effect>Mira abajo</effect>
-        </option>
-        <option>
 	  <flag>--matrix</flag>
 	  <optparm>nombrematriz</optparm>
 	  <effect>Representa las columnas de la matriz indicada</effect>
@@ -5318,7 +5313,7 @@
 
     <description>
       <para>
-	Las variables de la lista <repl>yvars</repl> se dibujan frente a
+	Las series de la lista <repl>yvars</repl> se dibujan frente a
 	<repl>xvar</repl>. Para un gráfico de una serie temporal puedes
 	bien proponer <lit>time</lit> en lugar de <repl>xvar</repl>, o bien
 	utilizar el indicador de opción <opt>time-series</opt>. Consulta
@@ -5327,17 +5322,17 @@
       <para>
 	Por defecto, las posiciones de los datos se muestran con puntos,
 	pero puedes anular esto indicando una de las siguientes opciones:
-	<opt>with-lines</opt>, <opt>with-lp</opt>, <opt>with-impulses</opt>
-	o <opt>with-steps</opt>. Cuando vas a representar más de una
-	variable en el eje de la <math>y</math>, puedes limitar el efecto
-	de estas opciones a un subconjunto de las variables utilizando el
-	parámetro <repl>varspec</repl>. Este deberá tener el formato
-	de un listado con los nombres o números (en ambos casos separados por
-	comas) de las variables que se van a representar respectivamente.
+	<opt>with-lines</opt> (líneas y puntos), <opt>with-lp</opt>,
+	<opt>with-impulses</opt> o <opt>with-steps</opt>. Cuando vas a
+	representar más de una variable en el eje de la <math>y</math>, puedes
+	limitar el efecto de estas opciones a un subconjunto de las variables
+	utilizando el parámetro <repl>varspec</repl>. Este deberá tener el
+	formato de un listado con los nombres o números (en ambos casos separados
+	por comas) de las variables que se van a representar respectivamente.
 	Por ejemplo, en el último ejemplo de arriba se muestra como
 	representar <lit>y1</lit> e <lit>y2</lit> frente a <lit>x</lit>,
 	de tal modo que <lit>y2</lit> se representa con una línea mientras
-	<lit>y1</lit> con símbolos.
+	<lit>y1</lit> con puntos.
       </para>
       <para>
 	Cuando selecciones la opción <opt>dummy</opt>, debes indicar
@@ -5362,7 +5357,7 @@
 	<math>z</math>.
       </para>
       <para>
-	Puedes escoger que la escala del eje 'y' sea logarítmica en lugar
+	Puedes especificar que la escala del eje 'y' sea logarítmica en lugar
 	de lineal, utilizando la opción <opt>ylogscale</opt>, junto con un
 	parámetro de base. Por ejemplo,
       </para>
@@ -5375,17 +5370,16 @@
       </para>
       <subhead>Cogiendo datos de una matriz</subhead>
       <para>
-	Generalmente se requieren los argumentos <repl>yvars</repl> y
-	<repl>xvar</repl> que se refieren a series del conjunto vigente
-	de datos (indicados por el nombre o por el número ID).
-	Pero si mediante la opción <opt>matrix</opt>, indicas una
-	matriz ya definida, estos argumentos se convierten en opcionales:
-	si la matriz especificada tiene <math>k</math> columnas, por
-	defecto se tratan las primeras <math>k</math> &minus; 1
-	columnas como las <repl>yvars</repl> y la última columna
-	se trata como <repl>xvar</repl>. Sin embargo, cuando indicas la opción
-	<opt>time-series</opt>, todas las <math>k</math> columnas
-	se representan frente al tiempo. Si quieres representar columnas
+	En el caso básico se requieren los argumentos <repl>yvars</repl> y
+	<repl>xvar</repl> que se refieren a series del conjunto vigente de datos
+	(indicados por el nombre o por el número ID). Pero si mediante la
+	opción <opt>matrix</opt>, indicas una matriz ya definida, estos
+	argumentos se convierten en opcionales: si la matriz especificada
+	tiene <math>k</math> columnas, por defecto se tratan las primeras
+	<math>k</math> &minus; 1 columnas como las <repl>yvars</repl> y la
+	última columna se trata como <repl>xvar</repl>. Sin embargo, cuando
+	indicas la opción <opt>time-series</opt>, todas las <math>k</math>
+	columnas se representan frente al tiempo. Si quieres representar columnas
 	escogidas de la matriz, debes especificar <repl>yvars</repl>
 	y <repl>xvar</repl> con el formato de números de columna enteros
 	positivos. Por ejemplo, si quieres un gráfico de dispersión de la
@@ -5409,8 +5403,8 @@
       <ilist>
 	<li>
 	  <para>
-	    <lit>linear</lit>: Muestra el ajuste MCO independientemente del
-	    nivel de significación estadística.
+	    <lit>linear</lit>: Muestra el ajuste MCO lineal independientemente
+	    del nivel de significación estadística.
 	  </para>
 	</li>
 	<li>
@@ -5420,14 +5414,14 @@
 	</li>
 	<li>
 	  <para>
-	    <lit>inverse</lit>, <lit>quadratic</lit>, <lit>cubic</lit>,
-	    <lit>semilog</lit> o <lit>linlog</lit>: Muestran una línea de ajuste
-	    basada en la regresión del tipo especificado. Con <lit>semilog</lit>
-	    queremos decir una regresión del logaritmo de <math>y</math> sobre
-	    <math>x</math>; entonces la línea ajustada representa la esperanza
-	    condicionada de <math>y</math>, obtenida mediante la función exponencial.
-	    Con <lit>linlog</lit> se quiere decir una regresión de <math>y</math>
-	    sobre el logaritmo de <math>x</math>.
+	    <lit>inverse</lit> (inversa), <lit>quadratic</lit> (cuadrática),
+	    <lit>cubic</lit> (cúbica), <lit>semilog</lit> o <lit>linlog</lit>:
+	    Muestran una línea de ajuste basada en la regresión del tipo indicado.
+	    Con <lit>semilog</lit> queremos decir una regresión del logaritmo de
+	    <math>y</math> sobre <math>x</math>; entonces la línea ajustada
+	    representa la esperanza condicionada de <math>y</math>, obtenida por
+	    medio de la función exponencial. Con <lit>linlog</lit> se quiere decir
+	    una regresión de <math>y</math> sobre el logaritmo de <math>x</math>.
 	  </para>
 	</li>
 	<li>
@@ -5440,33 +5434,107 @@
       </ilist>
       <subhead>Representando una franja</subhead>
       <para>
-	Puedes utilizar la opción <opt>band</opt> para representar cero o
-	más series acompañadas de una <quote>franja</quote> de algún tipo
-	(típicamente representa un intervalo de confianza). Esta opción
-	requiere dos parámetros separados por una coma: el nombre o el número
-	ID de una serie que represente el centro de la franja, y el nombre o ID
-	de una serie que indique el ancho de la franja: el efecto de esto consiste
-	en dibujar una franja con ordenadas <math>y</math> que son iguales al
-	centro más/menos el ancho. Puedes utilizar un tercer parámetro
-	opcional (de nuevo separado por una coma) con el formato de una constante
-	numérica o el nombre de una variable escalar, para indicar un múltiplo
-	de la dimensión de anchura. Así, por ejemplo, el siguiente caso permite
-	representar <lit>y</lit> junto con una franja de más/menos 1.96
-	veces <lit>se_y</lit>:
+	Puedes utilizar la opción <opt>band</opt> para representar una
+	<quote>franja</quote> de algún tipo (típicamente representa un intervalo
+	de confianza) junto con otros datos. El modo recomendado de especificar
+	esa franja es mediante un ‘bundle', cuyo nombre se indica como
+	parámetro de esa opción. Un paquete <lit>band</lit> requiere dos
+	elementos que son necesarios: una clave <lit>center</lit>, el nombre
+	de una serie para el centro de la franja; y una clave <lit>width</lit>,
+	el nombre de una serie que represente el ancho de la franja (ambos
+	indicados como cadenas de texto entre comillas). Además, se admiten
+	otros cuatro elementos opcionales, del modo que se indica a continuación.
+      </para>
+      <ilist>
+	<li>
+	  <para>En la clave <lit>factor</lit>: un escalar que indica el factor
+	  por el que se debe multiplicar el ancho (siendo 1 el valor por
+	  defecto).
+	  </para>
+	</li>
+	<li>
+	  <para>En la clave <lit>style</lit> : una cadena de texto para
+	  especificar cómo se representa la franja; y que debe ser una de entre
+	  <lit>line</lit> (línea, predeterminada), <lit>fill</lit> (relleno),
+	  <lit>dash</lit> (raya), <lit>bars</lit> (barra) o <lit>step</lit> (escalón).
+	  </para>
+	</li>
+	<li>
+	  <para>En la clave <lit>color</lit>: un color para la franja, como una
+	  cadena de texto que contenga el nombre de un color de Gnuplot, o como
+	  una representación de RGB en hexadecimal (indicada como cadena de texto
+	  o como escalar). Por defecto, el color se selecciona automáticamente.
+	  </para>
+	</li>
+	<li>
+	  <para>En la clave <lit>title</lit>: un título para la franja, para que
+	  aparezca en la clave o leyenda del gráfico. Por defecto, las franjas
+	  no tienen título.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Ten en cuenta que puedes acceder al listado de nombres de color que
+	reconoce Gnuplot, mediante la instrucción del propio Gnuplot 
+	<quote><lit>show colornames</lit></quote>; o por medio de la consola
+	de GRETL, utilizando:
       </para>
       <code>
-	gnuplot y --time-series --band=y,se_y,1.96 --with-lines
+	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
       </code>
       <para>
-	Cuando indicas la opción <opt>band</opt>, puedes usar la opción
-	adjunta <opt>band-style</opt> para controlar la representación
-	de la franja. Por defecto, los límites superior e inferior se muestran
-	con líneas sólidas, pero los parámetros <lit>fill</lit>,
-	<lit>dash</lit>, <lit>bars</lit> o <lit>step</lit> provocan que la
-	franja se dibuje respectivamente como un área sombreada,
-	utilizando líneas con rayas, utilizando barras de error o utilizando escalones.
-	Además, puedes añadir (después de una coma) o substituir una
-	especificación del color. Aquí tienes algunos ejemplos de estilo:
+	Aquí tienes dos ejemplos de uso, en los que se emplea la sintaxis abreviada
+	<lit>_()</lit> para definir un 'bundle'. El primero únicamente satisface
+	los requerimientos mínimos, mientras que en el segundo se practican las
+	tres opciones. Se está asumiendo que todas as series <lit>y</lit>,
+	<lit>x</lit> y <lit>w</lit> están en el conjunto de datos vigente.
+      </para>
+      <code>
+	bundle b1 = _(center="x", width="w")
+	gnuplot y --time-series --with-lines --band=b1
+	bundle b2 = _(center="x", width="w", factor=1.96, style="fill")
+	b2.color=0xcccccc
+	b2.title = "Intervalo del 95%"
+	gnuplot y --time-series --with-lines --band=b2
+      </code>
+      <para>
+	Si el gráfico va a contener dos o más de esas bandas, el indicador de
+	opción se debe expresar en plural, y su parámetro debe ser el nombre
+	de un <emphasis>array</emphasis> de paquetes (bundles), como
+	(continuando el ejemplo anterior) en lo que sigue:
+      </para>
+      <code>
+	bundles bb = defarray(b1, b2)
+	gnuplot y --time-series --with-lines --bands=bb
+      </code>
+      <para>
+	Cuando se representa gráficamente una matriz, en lugar de datos de
+	series, la única diferencia es que los elementos <lit>centro</lit> (center)
+	y <lit>ancho</lit> (width) del ‘bundle’ de la franja se sustituyen por un
+	único elemento en la clave <lit>bandmat</lit>; este debe ser el nombre
+	entre comillas de una matriz con dos columnas, con el centro en la columna 1
+	y el ancho en la columna 2.
+      </para>
+      <subhead>Sintaxis heredada de franja</subhead>
+      <para>
+	La sintaxis descrita más arriba fue introducida en el GRETL 2023c.
+	Previamente a esa edición, solo se podía especificar una franja por
+	gráfico y la sintaxis era un poco diferente. El enfoque antiguo (que
+	todavía se va a admitir hasta que se comunique lo contrario) divide los
+	detalles de la franja en dos opciones. Primero, la opción <opt>band</opt>
+	que requiere como parámetro los nombres de dos series que indican el
+	centro y el ancho, separadas por una coma. El <lit>factor</lit>
+	multiplicativo para el ancho se puede añadir como tercer elemento
+	separado por otra coma. Ejemplos:
+      </para>
+      <code>
+	gnuplot ... --band=x,w
+	gnuplot ... --band=x,w,1.96
+      </code>
+      <para>
+	La segunda opción, <opt>band-style</opt>, admite uno o los dos indicadores
+	del estilo y del color de la franja, en ese orden y separados de nuevo
+	por una coma, como en estos ejemplos:
       </para>
       <code>
 	gnuplot ... --band-style=fill
@@ -5474,49 +5542,37 @@
 	gnuplot ... --band-style=,black
 	gnuplot ... --band-style=bars,blue
       </code>
+      <subhead>Barras de recesión</subhead>
       <para>
-	El primer ejemplo produce un área sombreada en el color establecido
-	por defecto; el segundo pasa a usar líneas con rayas con un color específico
-	gris azulado; el tercero utiliza líneas negras sólidas; y el último muestra
-	barras azules. Ten en cuenta que puedes indicar los colores bien como
-	valores RGB hexadecimales, o bien por el nombre; y puedes acceder a la lista
-	de nombres de colores reconocidos por Gnuplot dando la instrucción
-	<quote><lit>show colornames</lit></quote> en el propio Gnuplot
-	o, en la propia consola de GRETL, haciendo
-      </para>
-      <code>
-	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
-      </code>
-      <subhead>Franjas de recesión</subhead>
-      <para>
-	También puedes utilizar las opciones <quote>band</quote> que se han
-	descrito más arriba, para añadir <quote>franjas de recesión</quote>
-	a un	gráfico. De este modo nos referimos a franjas verticales que
-	ocupan todo el rango de la dimensión <math>y</math> del gráfico, y
-	que indican la presencia (con franja) o ausencia (sin franja) de
-	alguna característica cualitativa, en un gráfico de series de tiempo.
-	Estas franjas habitualmente se utilizan para indicar períodos de
-	recesión; pero también puedes usarlas para señalar períodos de guerra,
-	o cualquier cosa que pueda codificarse con una variable ficticia 0/1.
+	También puedes utilizar la opción <quote>band</quote> para añadir
+	<quote>barras de recesión</quote> a un gráfico. De este modo nos referimos
+	a barras verticales que ocupan todo el rango de la dimensión <math>y</math>
+	del gráfico, y que indican la presencia (con barra) o ausencia (sin barra)
+	de alguna característica cualitativa, en un gráfico de series de tiempo.
+	Estas barras habitualmente se utilizan para indicar períodos de recesión;
+	pero también puedes usarlas para señalar períodos de guerra, o cualquier
+	cosa que pueda codificarse con una variable ficticia 0/1.
       </para>
       <para>
 	En este contexto, la opción <opt>band</opt> requiere un único parámetro:
-	el identificador de una serie que tenga valores 0 y 1, donde el 1 indica
-	<quote>presencia</quote> y el 0 indica <quote>ausencia</quote>. Puedes
-	utilizar la opción <opt>band-style</opt> para especificar un color para
-	las franjas, indicado bien mediante formato hexadecimal, o bien mediante
-	un nombre que resulte reconocible por gnuplot (consulta la sección
-	previa). Aquí debajo se presenta un ejemplo para representar una única
-	franja:
+	en la clave <lit>dummy</lit>, un nombre entre comillas de una serie 0/1
+	(o el nombre entre comillas de un vector columna adecuado, en caso de una
+	matriz de datos). Las barras verticales estarán <quote>activas</quote>
+	para las observaciones en las que esa serie o vector tome el valor 1 e
+	<quote>inactivas</quote> cuando sea 0. Las claves de <lit>centro</lit>
+	(center), <lit>ancho</lit> (width), <lit>factor</lit> y <lit>estilo</lit>
+	(style) no son pertinentes, pero se puede usar <lit>color</lit>. Observa
+	que solo puede usarse una de esas especificaciones por cada gráfico.
+	Aquí tienes un ejemplo:
       </para>
       <code>
 	open AWM17 --quiet
 	series dum = obs &gt;= 1990:1 &amp;&amp; obs &lt;= 1994:2
+	bundle b = _(dummy="dum", color=0xcccccc)
 	gnuplot YER URX --with-lines --time-series \
-	  --band=dum --band-style=0xcccccc --output=display \
-	  {set key top left;}
+	  --band=b --output=display {set key top left;}
       </code>
-      <subhead>Controlando el resultado</subhead>
+      <subhead>Controlando la salida de resultados</subhead>
       <para>
 	En modo interactivo, el gráfico se muestra inmediatamente pero, en modo
 	de procesamiento por lotes, el procedimiento por defecto consiste
@@ -6251,34 +6307,34 @@
       </para>
       <para>
 	HC0 produce las <quote>Desviaciones típicas de White</quote> originales;
-	HC1, HC2, HC3 y HC3a son variantes subsiguientes que generalmente se
-	considera que producen resultados superiores (más fiables). Para
-	obtener más detalles sobre los estimadores, consulta
-	<cite key="mackinnon-white85">MacKinnon y White (Journal of Econometrics, 1985)</cite>
+	HC1, HC2, HC3 y HC3a son variantes subsiguientes que generalmente
+	se considera que producen resultados superiores (más fiables).
+	La variante HC3a es la también denominada <quote>navaja</quote>
+	(jackknife) de la que HC3 es una estrecha aproximación. Para obtener
+	más detalles sobre los estimadores, consulta
+	<guideref targ="chap:robust_vcv"/>
 	o
-	<cite key="davidson-mackinnon04">Davidson y MacKinnon, Econometric Theory and Methods (Oxford, 2004)</cite>.
-	Las etiquetas que se indican aquí son las utilizadas por Davidson y
-	MacKinnon. La variante <quote>HC3a</quote> es la 'navaja' (jackknife) tal
-	como se describe en MacKinnon y White; y HC3 es una aproximación
-	estrecha a la 'navaja'.
+	<cite key="davidson-mackinnon04">Davidson y MacKinnon, 2004)</cite>.
       </para>
       <para>
 	Si utilizas el estimador HAC para MCO con datos de series temporales,
-	puedes afinar la longitud del retardo utilizando la instrucción <cmd>set</cmd>.
-	Consulta el manual de GRETL o el archivo de ayuda de las instrucciones de un
-	guion para obtener más detalles.
-      </para>
-      <para>
-	Cuando estimas un modelo que utiliza datos de panel mediante MCO, el
-	estimador robusto de la matriz de covarianzas que se usa por defecto es el
-	proporcionado por Arellano. La alternativa es el de las Desviaciones Típicas
-	Corregidas de Panel (PCSE) de Beck y Katz. Lo último tiene en cuenta
-	la heterocedasticidad pero no la autocorrelación.
+	puedes afinar la longitud del retardo y otros detalles utilizando
+	la instrucción <cmdref targ="set"/>.
       </para>
       <para>
 	Se ofrecen dos estimadores robustos de la matriz de covarianzas para
 	modelos GARCH: QML es el estimador de Cuasi-Máxima Verosimilitud (CMV),
 	y BW es el estimador de Bollerslev-Wooldridge.
+      </para>
+      <para>
+	Cando se estiman modelos con datos de panel, el estimador robusto
+	predeterminado de la matriz de covarianzas es el proporcionado por
+	<cite key="arellano03">Arellano (2003)</cite>. Las alternativas son tanto
+	las Desviaciones Típicas Corregidas de Panel (DTCP, PCSE) de
+	<cite key="beck-katz95">Beck y Katz (1995)</cite> como el estimador
+	Consistente de Correlación Espacial (CCE, SCC) de
+	<cite key="driscoll_kraay98">Driscoll y Kraay (1998)</cite>.
+	Consulta <guideref targ="chap:robust_vcv"/> para obtener más detalles.
       </para>
       <para>
 	Por defecto, GRETL usa la distribución <math>t</math>-Student al calcular
@@ -10949,6 +11005,11 @@
 	  <effect>Desviaciones típicas robustas; mira abajo</effect>
         </option>
         <option>
+	  <flag>--cluster</flag>
+	  <optparm>cvar</optparm>
+	  <effect>Desviaciones típicas conglomeradas; mira abajo</effect>
+        </option>
+        <option>
 	  <flag>--time-dummies</flag>
 	  <effect>Incluye variables ficticias temporales</effect>
         </option>
@@ -10981,6 +11042,7 @@
 	<examples>
 	<demos>
 	  <demo>penngrow.inp</demo>
+	  <demo>panel-robust.inp</demo>
 	</demos>
 	</examples>
     </usage>
@@ -11018,25 +11080,32 @@
 	utilizando las medias de los grupos).
       </para>
       <para context="cli">
-	El procedimiento por defecto para calcular desviaciones típicas robustas
-	en modelos con datos de panel, es el estimador HAC de Arellano, pero
-	puedes escoger las <quote>Desviaciones Típicas Corregidas de Panel</quote>
-	de Beck&ndash;Katz mediante la instrucción <lit>set pcse on</lit>. Cuando
-	especificas la opción robusta, se ejecuta el contraste conjunto <math>F</math>
-	sobre los efectos fijos utilizando el método robusto de
-	<cite key="welch51">Welch (1951)</cite>.
+	El procedimiento por defecto para calcular Desviaciones típicas robustas
+	en modelos con datos de panel, es el estimador HAC de 
+	<cite key="arellano03">Arellano (2003)</cite>
+	(conglomerado por unidad de panel). Las alternativas son las
+	<quote>Desviaciones Típicas Corregidas de Panel</quote>
+	(<cite key="beck-katz95">Beck y Katz, 1995</cite>) y las desviaciones
+	típicas <quote>Consistentes de Correlación Espacial</quote>
+	(<cite key="driscoll_kraay98">Driscoll y Kraay, 1998</cite>). Estas se
+	pueden seleccionar mediante la instrución <lit>set panel_robust</lit> con
+	los argumentos <lit>pcse</lit> y <lit>scc</lit>, respectivamente. Otras
+	alternativas a estas tres opciones están disponibles mediante la opción
+	<opt>cluster</opt>; por favor, consulta <guideref targ="chap:robust_vcv"/>
+	para tener más detalles. Si se especifican las desviaciones típicas robustas,
+	se ejecuta el contraste conjunto <math>F</math> sobre los efectos fijos
+	utilizando el método robusto de <cite key="welch51">Welch (1951)</cite>.
       </para>
       <para context="gui">
-	Si marcas el cuadradito de 'Efectos aleatorios', se van a calcular las
-	estimaciones (MCG) de efectos aleatorios. Por defecto, se utiliza el
-	método de Swamy y Arora para la transformación MCG, pero está
+	Si marcas el cuadradito <quote>Efectos aleatorios</quote>, se van a
+	calcular las estimaciones (MCG) de efectos aleatorios. Por defecto, se
+	utiliza el método de Swamy y Arora para la transformación MCG, pero está
 	disponible el método de Nerlove como opción (mediante el botón para
 	desplegar). El método de <quote>Swamy-Arora/Baltagi-Chang</quote>
 	también es una opción adicional, pues en caso de un panel no equilibrado
 	hace una llamada a una modificación del método de Swamy-Arora ideada
 	por <cite key="baltagi-chang94">Baltagi and Chang (1994)</cite>.
-	En otro caso, simplemente es equivalente al método normal de
-	Swamy-Arora.
+	En otro caso, simplemente es equivalente al método normal de Swamy-Arora.
       </para>
       <para context="cli">
 	La opción <opt>unbalanced</opt> está disponible solo para modelos
@@ -11083,43 +11152,100 @@
 
     <description>
       <para>
-	Este diálogo ofrece hasta 3 opciones con respecto a la definición de un conjunto
-	de datos como un panel. Las dos primeras opciones requieren que el conjunto
-	de datos esté ya organizado en el formato de un panel (incluso aunque GRETL
-	todavía no lo tenga reconocido). La tercera opción requiere que el conjunto
-	de datos contenga variables que representen la estructura de un panel.
+	Este diálogo ofrece hasta 4 opciones para definir un conjunto de datos
+	como un panel. Las dos primeras opciones requieren que el conjunto
+	de datos esté ya organizado en el formato de un panel (incluso aunque
+	GRETL todavía no lo tenga reconocido). La tercera opción requiere que
+	el conjunto de datos contenga variables que representen la estructura
+	de un panel. Y la cuarta requiere que el conjunto de datos tenga la
+	estructura de una serie temporal.
       </para>
       <para>
-	<emphasis>Series temporales apiladas</emphasis>: Supón que <repl>N</repl>
-	es el total de unidades de sección cruzada del conjunto de datos, y que
-	<repl>T</repl> = el número observaciones de las series temporales por unidad.
-	Escogiendo esta opción le estás indicando a GRETL que el conjunto de datos
-	se compone en ese momento de <repl>N</repl> bloques consecutivos de
-	<repl>T</repl> observaciones de series temporales, uno por cada unidad de
-	sección cruzada. La siguiente etapa será especificar el valor de <repl>N</repl>.
+	<emphasis>Series temporales apiladas</emphasis>: Supón que
+	<repl>N</repl> es el total de unidades de sección cruzada del conjunto
+	de datos, y que <repl>T</repl> = el número observaciones de las series
+	temporales por unidad. Escogiendo esta opción le estás indicando a GRETL
+	que el conjunto de datos se compone en ese momento de <repl>N</repl>
+	bloques consecutivos de <repl>T</repl> observaciones de series temporales,
+	uno por cada unidad de sección cruzada. La siguiente etapa será
+	especificar el valor de <repl>N</repl>.
       </para>
       <para>
-	<emphasis>Secciones cruzadas apiladas</emphasis>: Le estás indicando a
-	GRETL que el conjunto de datos se compone en ese momento de <repl>T</repl>
-	bloques consecutivos de <repl>N</repl> observaciones de sección cruzada,
-	uno por cada período de tiempo. La siguiente etapa, de nuevo, será especificar
-	el valor de <repl>N</repl>.
+	<emphasis>Secciones cruzadas apiladas</emphasis>: Le estás indicando
+	a GRETL que el conjunto de datos se compone en ese momento de
+	<repl>T</repl> bloques consecutivos de <repl>N</repl> observaciones
+	de sección cruzada, uno por cada período de tiempo. La siguiente etapa,
+	de nuevo, será especificar el valor de
+	<repl>N</repl>.
       </para>
       <para>
 	Si el número total de observaciones del conjunto vigente de datos es primo,
-	no tienes disponibles las opciones de arriba.
+	no tienes disponibles las dos opciones mencionadas arriba.
       </para>
       <para>
-	<emphasis>Utilizar variables índice</emphasis>: Estás indicando que el
-	conjunto de datos está organizado en ese momento de modo descuidado (no
-	importa cómo), pero que contiene dos variables que indexan las unidades de
-	sección cruzada y los períodos de tiempo, respectivamente. La siguiente etapa
+	<emphasis>Utilizar variables índice</emphasis>: Aplicado si el conjunto
+	de datos está organizado en ese momento de modo descuidado (no importa
+	cómo), pero contiene dos variables que indexan las unidades de sección
+	cruzada y los períodos de tiempo, respectivamente. La siguiente etapa
 	será escoger esas dos variables. Las variables índices de un panel no
-	deben tener nada excepto valores enteros no negativos, sin valores ausentes.
-	Si no hay tales variables en el conjunto de datos, no dispones de esta opción.
+	deben tener nada excepto valores enteros no negativos, sin valores
+	ausentes. Si no hay tales variables en el conjunto de datos, no dispones
+	de esta opción.
+      </para>
+      <para>
+	<emphasis>Convertir de series temporales juntas unas con otras</emphasis>:
+	Esta opción solo está disponible si el conjunto de datos vigente tiene
+	una estructura de series temporales y contiene varias variables. Cuando
+	se selecciona esta opción, los detalles se proporcionan mediante el
+	botón de Ayuda en el siguiente paso.
       </para>
     </description>
 
+  </command>
+
+  <command name="ts-to-panel" section="Dataset" context="gui"
+    label="Series temporales en paralelo unas con otras, a panel">
+
+    <description>
+      <para>
+	Vamos a explicar para qué es conveniente esta instrucción, mediante
+	dos ejemplos.
+      </para>
+      <para>
+	<emphasis>Ejemplo 1</emphasis>: Un conjunto de datos de series temporales
+	tiene cuatro series (aparte de <lit>const</lit>), que contienen el PIB de
+	Francia, Alemania, Italia y España. Seleccionas 1 (el predeterminado)
+	para el <quote>Número de bloques en paralelo unos con otros</quote>, y
+	ves 4 para el <quote>Número de unidades de sección cruzada</quote>.
+	Entonces puedes pasar las cuatro series a una única serie de panel con el
+	PIB; los datos por país están apilados en el orden del conjunto de datos.
+      </para>
+      <para>
+	<emphasis>Ejemplo 2</emphasis>: El conjunto de datos es como el descrito
+	en el Ejemplo 1, excepto que las series de PIB por país están seguidas por
+	cuatro series más, que contienen datos de desempleo <emphasis>para los
+	mismos cuatro países, en el mismo orden que las series de PIB</emphasis>.
+	Seleccionas 2 bloques en paralelo unos con otros, y ves 4 para el número
+	de unidades de sección cruzada. El procesamiento va a proporcionar dos
+	series de panel, una para el PIB y otra para el desempleo.
+      </para>
+      <para>
+	Puede haber tantos bloques de series (y consiguientemente tantas series
+	de panel) como desees, puesto que cada bloque contiene datos para el
+	mismo conjunto de unidades de sección cruzada, proporcionados en el mismo
+	orden. En caso contrario, el conjunto de datos de <quote>panel</quote>
+	resultante sería absurdo.
+      </para>
+      <para>
+	Como comprobación de corrección, el número total de series temporales
+	debe ser exactamente divisible por el número de bloques en paralelo unos
+	con otros. Eso significa que si el conjunto de datos original contiene
+	un número primo de series, la única opción que se ofrece es convertirlas
+	en una única serie de panel. Si el conjunto de datos contiene alguna
+	serie adicional estraña, debes eliminarla antes de intentar esta
+	operación.
+      </para>
+    </description>
   </command>
 
   <command name="panel-wls" section="Estimation" context="gui"
@@ -13600,8 +13726,8 @@
 	variable adicional en la lista.
       </para>
       <para context="cli">
-	Por defecto, los gráficos son de dispersión, pero si indicas la opción
-	<opt>with-lines</opt> serán gráficos de líneas.
+	Por defecto, los datos se muestran con puntos, pero si indicas la
+	opción <opt>with-lines</opt> serán gráficos de líneas.
       </para>
       <para context="cli">
 	Para obtener más detalles sobre el uso de la opción <opt>output</opt>,
@@ -13623,15 +13749,20 @@
 	número máximo de gráficos es de 16, por lo que se va a ignorar cualquier
 	variable adicional en la lista.
       </para>
+      <para context="cli">
+	Por defecto, los datos se muestran con puntos, pero si indicas la
+	opción <opt>Usar líneas</opt> serán gráficos de líneas.
+      </para>
       <para>
-	Cuando el conjunto de datos es de series temporales, entonces puedes omitir la
-	segunda lista, pues en ese caso se va a tomar implícitamente al 'tiempo' como
-	tal, por lo que puedes dibujar varias series temporales en gráficos separados.
+	Consulta también la instrucción <cmdref targ="tsplots"/> para ver un
+	modo sencillo de generar gráficos múltiples de series temporales, y la
+	instrucción <cmdref targ="gridplot"/> para ver un modo más flexible
+	de combinar gráficos en una parrilla.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Ver/Gráficos múltiples</menu-path>
+      <menu-path>/Ver/Gráficos múltiples/Gráficos X-Y (scatters)</menu-path>
     </gui-access>
 
   </command>
@@ -14315,17 +14446,17 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>pcse</lit>: <lit>off</lit> (por defecto) u <lit>on</lit>.
-	  Por defecto, cuando se estima un modelo utilizando MCO combinados
-	  con datos de panel con la opción <opt>robust</opt>, se utiliza el
-	  estimador de Arellano para la matriz de covarianzas. Cuando pones
-	  <lit>pcse</lit> en <quote>on</quote>, esto fuerza que se utilicen
-	  las Desviaciones Típicas Corregidas de Panel de Beck y Katz (que
-	  no tienen en cuenta la autocorrelación).
+	  <para>
+	  <lit>panel_robust</lit>: <lit>arellano</lit> (por defecto),
+	  <lit>pcse</lit> o <lit>scc</lit>. Esto selecciona el estimador de la
+	  matriz de covarianzas robustas para ser utilizado con los modelos
+	  con datos de panel. Consulta a instrución <cmdref targ="panel"/> e
+	  o <guideref targ="chap:robust_vcv"/> para obter máis detalles.
 	  </para>
 	</li>
 	<li>
-	  <para><lit>qs_bandwidth</lit>: Ancho de banda para la estimación
+	  <para>
+	  <lit>qs_bandwidth</lit>: Ancho de banda para la estimación
 	  HAC en caso de que selecciones el kernel Espectral Cuadrado (QS).
 	  (A diferencia de los 'kernels' de Bartlett y de Parzen, el ancho de banda
 	  QS no requiere ser un entero.)
@@ -16188,6 +16319,56 @@
       <menu-path>/Modelo/Variables instrumentales</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="tsplots" section="Graphs"
+	   label="Gráficos de múltiples series temporales">
+    <usage>
+      <arguments>
+        <argument>listavar</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--matrix</flag>
+	  <optparm>nombre</optparm>
+	  <effect>Representa las columnas de la matriz citada</effect>
+        </option>
+        <option>
+	  <flag>--output</flag>
+	  <optparm>nombrearch</optparm>
+	  <effect>Envía el resultado al archivo indicado</effect>
+        </option>
+      </options>
+      <examples>
+        <example>tsplots 1 2 3 4</example>
+        <example>tsplots 1 2 3 4 --matrix=X</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+	Proporciona un modo sencillo de representar gráficamente múltiples series
+	temporales (hasta un máximo de 16) en un único cuadro. Puedes indicar el
+	argumento <repl>listavar</repl> como una lista de números ID (o de nombres
+	de series), o como números de columnas en caso de introducir una matriz.
+      </para>
+      <para context="cli">
+	Consulta también <cmdref targ="scatters"/> para ver formas de generar
+	múltiples gráficos de dispersión, y <cmdref targ="gridplot"/> para ver
+	un modo más flexible de combinar gráficos en una parrilla.
+      </para>
+      <para context="gui">
+	Proporciona un modo sencillo de representar gráficamente múltiples series
+	temporales (hasta un máximo de 16) en un único cuadro. Consulta también
+	<cmdref targ="scatters"/> para ver formas de generar múltiples gráficos
+	de dispersión, y <cmdref targ="gridplot"/> para ver un modo más flexible
+	de combinar gráficos en una parrilla.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Ver/Gráficos múltiples/Series temporales</menu-path>
+    </gui-access>
   </command>
 
   <command name="var" section="Estimation"

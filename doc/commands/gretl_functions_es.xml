@@ -1201,6 +1201,29 @@
       </description>
     </function>
 
+    <function name="$time" section="access" output="series">
+      <description>
+	<para>
+	  Para datos de series temporales o de panel, genera un índice con
+	  enteros positivos del período temporal. En el caso del panel, la
+	  secuencia de valores se repite para cada unidad de sección cruzada.
+	</para>
+	<para>
+	  La instrucción <quote><lit>genr time</lit></quote> es una alternativa,
+	  con la diferencia de que la variante <lit>genr</lit> genera de modo
+	  automático una serie denominada <lit>time</lit>, mientras que la
+	  denominación de la serie corresponde al solicitante cuando se
+	  utiliza <lit>$time</lit>, como en
+	</para>
+	<code>
+	  series trend = $time
+	</code>
+	<para>
+	  Este accesor no está disponible para datos de sección cruzada.
+	</para>
+      </description>
+    </function>
+
     <function name="$tmax" section="access" output="int">
       <description>
 	<para>
@@ -3323,6 +3346,74 @@
             <fncref targ="mcorr"/>
             <fncref targ="npcorr"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="corresp" section="stats" output="scalar">
+      <fnargs>
+	<fnarg type="series-or-vec">a</fnarg>
+	<fnarg type="series-or-vec">b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  En base a una tabulación cruzada de <argname>a</argname> y
+	  <argname>b</argname>, devuelve un código de tipo entero que indica
+	  la clase de correspondencia entre las dos variables, del siguiente
+	  modo.
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      Código = 2: hay una relación de tipo 1 a 1.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Código = 1: hay una relación de tipo 1 a n
+	      (<argname>a</argname> <quote>anida</quote>
+	      <argname>b</argname>, puede interpretarse como una función de
+	      <argname>b</argname> en sentido matemático).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Código = &minus;1: hay una relación de tipo n a 1
+	      (<argname>b</argname> <quote>anida</quote>
+	      <argname>a</argname>, puede interpretarse como una función de
+	      <argname>a</argname>).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	    Código = 0: hay ninguna relación.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
+	  Ten en cuenta que estos códigos se basan exclusivamente en los valores
+	  muestrales de los dos argumentos. En caso de que <argname>b</argname>
+	  sea el cuadrado de <argname>a</argname>, por ejemplo, el resultado
+	  va a diferir dependiendo de si <argname>a</argname> contiene algunos
+	  pares de valores que únicamente se diferencien en el signo
+	  (código = &minus;1), o no (código = 2).
+	</para>
+	<para>
+	  Un caso de posible utilización consiste en comprobar si dos series
+	  discretas codifican la misma información. Por ejemplo, las siguientes
+	  expresiones
+	</para>
+	<code>
+	  open grunfeld.gdt
+	  c = correspondence($unit, firm)
+	</code>
+	<para>
+	  proporcionan <lit>c</lit> = 2, indicando que la serie <lit>firm</lit>
+	  es de hecho un único identificador para las unidades de sección
+	  cruzada en ese conjunto de datos de panel.
+	</para>
+	<para>
+	  Consulta también <fncref targ="mxtab"/>.
 	</para>
       </description>
     </function>
@@ -5801,8 +5892,7 @@
       <description>
 	<para>
 	  Devuelve una matriz <by r="m" c="r"/> que contiene <math>m</math>
-	  secuencias de Halton de longitud <math>r</math>, donde el valor de
-	  <math>m</math> está limitado a un máximo de 40. Las secuencias
+	  secuencias de Halton de longitud <math>r</math>. Las secuencias
 	  se construyen utilizando los primeros <math>m</math> números primos.
 	  Por defecto, se descartan los primeros 10 elementos de cada una de las
 	  secuencias, aunque puedes ajustar esto por medio del argumento
@@ -9600,13 +9690,16 @@
 	  Devuelve una matriz que incluye la tabulación cruzada de los valores
 	  contenidos en <argname>x</argname> (por filas) e <argname>y</argname>
 	  (por columnas). Los dos argumentos de esta función deben ser
-	  del mismo tipo (ambas series o ambos vectores columna) y, a causa
-	  de la utilización típica de esta función, se asume que contiene únicamente
-	  valores enteros.
+	  del mismo tipo (ser series ambas o vectores columna ambos). Generalmente
+	  se espera (aunque no es imprescindible) que los argumentos tengan
+	  valores discretos, con menos valores diferentes que observaciones.
+	  De otro modo, la tabulación cruzada puede resultar muy grande y
+	  no muy informativa.
 	</para>
 	<para>
 	  <seelist>
             <fncref targ="values"/>
+            <fncref targ="corresp"/>
 	  </seelist>
 	</para>
       </description>
