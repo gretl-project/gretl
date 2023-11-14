@@ -4869,60 +4869,66 @@ static void print_ar_sum (const MODEL *pmod, PRN *prn)
 }
 
 static void mn_logit_coeffsep (char *sep, const MODEL *pmod,
-			       const DATASET *dset, int i)
+                               const DATASET *dset, int i)
 {
     const char *vname = gretl_model_get_depvar_name(pmod, dset);
-    const gretl_matrix *y = gretl_model_get_data(pmod, "yvals");
-    int val = (y != NULL)? y->val[i] : i;
+    int v = pmod->list[1];
 
-    sprintf(sep, "%s = %d", vname, val);
+    if (is_string_valued(dset, v)) {
+        const char *value = series_get_string_for_value(dset, v, i);
+        sprintf(sep, "%s = %s", vname, value);
+    } else {
+        const gretl_matrix *y = gretl_model_get_data(pmod, "yvals");
+        int val = (y != NULL)? y->val[i] : i;
+        sprintf(sep, "%s = %d", vname, val);
+    }
 }
 
 static int separator_wanted (int i, int seppos, char **sepstr,
-			     const MODEL *pmod)
+                             const MODEL *pmod)
 {
     int ret = 0;
 
     if (i == seppos) {
-	/* the straightforward criterion */
-	ret = 1;
+        /* the straightforward criterion */
+        ret = 1;
     } else if (pmod->ci == MIDASREG && sepstr != NULL) {
-	const int *seplist = gretl_model_get_list(pmod, "seplist");
-	int j = 0;
+        const int *seplist = gretl_model_get_list(pmod, "seplist");
+        int j = 0;
 
-	if (seplist != NULL && (j = in_gretl_list(seplist, i)) > 0) {
-	    char *mtl = get_midas_term_line(pmod, j-1);
+        if (seplist != NULL && (j = in_gretl_list(seplist, i)) > 0) {
+            char *mtl = get_midas_term_line(pmod, j-1);
 
-	    if (*sepstr != NULL) {
-		/* avoid memory leak */
-		free(*sepstr);
-	    }
-	    *sepstr = mtl;
-	    if (*sepstr != NULL) {
-		ret = 1;
-	    }
-	}
+            if (*sepstr != NULL) {
+                /* avoid memory leak */
+                free(*sepstr);
+            }
+            *sepstr = mtl;
+            if (*sepstr != NULL) {
+                ret = 1;
+            }
+        }
     } else if (pmod->ci == BIPROBIT && i == pmod->ncoeff - 1) {
-	/* the last coefficient is biprobit rho */
-	ret = 1;
+        /* the last coefficient is biprobit rho */
+        ret = 1;
     }
 
     return ret;
 }
 
 static int plain_print_coeffs (const MODEL *pmod,
-			       const DATASET *dset,
-			       PRN *prn)
+                               const DATASET *dset,
+                               PRN *prn)
 {
     struct printval **vals, *vij;
     const char *headings[] = {
-	N_("coefficient"),
-	N_("std. error"),
-	N_("t-ratio"),
-	N_("p-value"),
-	N_("slope"),
-	N_("lower"),
-	N_("upper")
+        N_("coefficient"),
+        N_("std. error"),
+        N_("t-ratio"),
+        N_("p-value"),
+        N_("slope"),
+        N_("lower"),
+        N_("upper")
     };
     const double *b = pmod->coeff;
     const double *se = pmod->sderr;
@@ -4949,149 +4955,149 @@ static int plain_print_coeffs (const MODEL *pmod,
     int err = 0;
 
     if (model_use_zscore(pmod)) {
-	headings[2] = N_("z");
+        headings[2] = N_("z");
     }
 
     if (pmod->ci == AR || pmod->ci == ARCH) {
-	k = 0;
-	if (pmod->ci == AR) {
-	    err = get_ar_data(pmod, &xb, &xse, &k);
-	} else {
-	    err = get_arch_data(pmod, &xb, &xse, &k);
-	}
-	if (!err) {
-	    b = xb;
-	    se = xse;
-	    nc += k;
-	}
+        k = 0;
+        if (pmod->ci == AR) {
+            err = get_ar_data(pmod, &xb, &xse, &k);
+        } else {
+            err = get_arch_data(pmod, &xb, &xse, &k);
+        }
+        if (!err) {
+            b = xb;
+            se = xse;
+            nc += k;
+        }
     } else if (pmod->ci == LAD) {
-	gretl_matrix *m = gretl_model_get_data(pmod, "coeff_intervals");
+        gretl_matrix *m = gretl_model_get_data(pmod, "coeff_intervals");
 
-	if (m != NULL) {
-	    se = m->val;
-	    intervals = 1;
-	    ncols = 3;
-	}
+        if (m != NULL) {
+            se = m->val;
+            intervals = 1;
+            ncols = 3;
+        }
     } else if (NONLIST_MODEL(pmod->ci)) {
-	headings[0] = N_("estimate");
+        headings[0] = N_("estimate");
     }
 
     if (err) {
-	return err;
+        return err;
     }
 
     nc -= gretl_model_get_int(pmod, "skipdums");
 
     vals = allocate_printvals(nc, ncols);
     if (vals == NULL) {
-	return E_ALLOC;
+        return E_ALLOC;
     }
 
     names = strings_array_new_with_length(nc, 32);
     if (names == NULL) {
-	err = E_ALLOC;
-	goto bailout;
+        err = E_ALLOC;
+        goto bailout;
     }
 
     show_slope = binary_model(pmod) && !(pmod->opt & OPT_P);
     if (show_slope) {
-	slopes = gretl_model_get_data(pmod, "slopes");
+        slopes = gretl_model_get_data(pmod, "slopes");
     }
 
     if (pmod->aux == AUX_ADF || pmod->aux == AUX_DF) {
-	adfnum = gretl_model_get_int(pmod, "dfnum");
+        adfnum = gretl_model_get_int(pmod, "dfnum");
     }
 
     gretl_model_get_coeff_separator(pmod, &sepstr, &seppos);
     if (seppos == -1) {
-	if (pmod->ci == GARCH && pmod->list[0] > 4) {
-	    seppos = pmod->list[0] - 4;
-	} else if (pmod->ci == AR || pmod->ci == ARCH) {
-	    seppos = pmod->ncoeff;
-	} else if (multinomial_model(pmod)) {
-	    cblock = gretl_model_get_int(pmod, "cblock");
-	}
+        if (pmod->ci == GARCH && pmod->list[0] > 4) {
+            seppos = pmod->list[0] - 4;
+        } else if (pmod->ci == AR || pmod->ci == ARCH) {
+            seppos = pmod->ncoeff;
+        } else if (multinomial_model(pmod)) {
+            cblock = gretl_model_get_int(pmod, "cblock");
+        }
     }
 
     coeff_digits = get_gretl_digits();
 
     for (i=0; i<nc; i++) {
-	if (na(b[i])) {
-	    err = E_NAN;
-	    goto bailout;
-	}
-	gretl_model_get_param_name(pmod, dset, i, names[i]);
-	n = char_len(names[i]);
-	if (n > namelen) {
-	    namelen = n;
-	}
-	if (na(se[i]) || se[i] <= 0) {
-	    tval = pval = NADBL;
-	} else {
-	    tval = b[i] / se[i];
-	    if (slopes != NULL) {
-		/* last column: actually slope at mean */
-		pval = (pmod->list[i+2] == 0)? 0 : slopes[i];
-	    } else if (i == adfnum) {
-		/* special Dickey-Fuller p-value */
-		pval = gretl_model_get_double(pmod, "dfpval");
-	    } else if (!intervals) {
-		/* regular p-value */
-		pval = model_coeff_pval(pmod, tval);
-	    }
-	}
-	for (j=0; j<ncols; j++) {
-	    if (j < 2) {
-		/* coeff, standard error or lower c.i. limit */
-		d = coeff_digits;
-		vals[i][j].x = (j==0)? b[i] : se[i];
-	    } else if (j == 2) {
-		/* t-ratio or upper c.i. limit */
-		if (intervals) {
-		    d = coeff_digits;
-		    vals[i][j].x = se[i + nc];
-		} else {
-		    d = 4;
-		    vals[i][j].x = tval;
-		}
-	    } else {
-		/* p-value or slope */
-		d = (show_slope)? coeff_digits : -4;
-		vals[i][j].x = pval;
-	    }
-	    if (show_slope && j == 3 && pmod->list[i+2] == 0) {
-		/* don't show 'slope' for constant */
-		vals[i][j].s[0] = '\0';
-		vals[i][j].lw = vals[i][j].rw = 0;
-	    } else if (pmod->ci == DURATION && j > 1 &&
-		       !strcmp(names[i], "sigma")) {
-		/* suppress result for H0: sigma = 0 */
-		vals[i][j].x = NADBL;
-		vals[i][j].s[0] = '\0';
-		vals[i][j].lw = vals[i][j].rw = 0;
-	    } else {
-		gretl_sprint_fullwidth_double(vals[i][j].x, d, vals[i][j].s, prn);
-		get_number_dims(&vals[i][j], &lmax[j], &rmax[j]);
-	    }
-	}
+        if (na(b[i])) {
+            err = E_NAN;
+            goto bailout;
+        }
+        gretl_model_get_param_name(pmod, dset, i, names[i]);
+        n = char_len(names[i]);
+        if (n > namelen) {
+            namelen = n;
+        }
+        if (na(se[i]) || se[i] <= 0) {
+            tval = pval = NADBL;
+        } else {
+            tval = b[i] / se[i];
+            if (slopes != NULL) {
+                /* last column: actually slope at mean */
+                pval = (pmod->list[i+2] == 0)? 0 : slopes[i];
+            } else if (i == adfnum) {
+                /* special Dickey-Fuller p-value */
+                pval = gretl_model_get_double(pmod, "dfpval");
+            } else if (!intervals) {
+                /* regular p-value */
+                pval = model_coeff_pval(pmod, tval);
+            }
+        }
+        for (j=0; j<ncols; j++) {
+            if (j < 2) {
+                /* coeff, standard error or lower c.i. limit */
+                d = coeff_digits;
+                vals[i][j].x = (j==0)? b[i] : se[i];
+            } else if (j == 2) {
+                /* t-ratio or upper c.i. limit */
+                if (intervals) {
+                    d = coeff_digits;
+                    vals[i][j].x = se[i + nc];
+                } else {
+                    d = 4;
+                    vals[i][j].x = tval;
+                }
+            } else {
+                /* p-value or slope */
+                d = (show_slope)? coeff_digits : -4;
+                vals[i][j].x = pval;
+            }
+            if (show_slope && j == 3 && pmod->list[i+2] == 0) {
+                /* don't show 'slope' for constant */
+                vals[i][j].s[0] = '\0';
+                vals[i][j].lw = vals[i][j].rw = 0;
+            } else if (pmod->ci == DURATION && j > 1 &&
+                       !strcmp(names[i], "sigma")) {
+                /* suppress result for H0: sigma = 0 */
+                vals[i][j].x = NADBL;
+                vals[i][j].s[0] = '\0';
+                vals[i][j].lw = vals[i][j].rw = 0;
+            } else {
+                gretl_sprint_fullwidth_double(vals[i][j].x, d, vals[i][j].s, prn);
+                get_number_dims(&vals[i][j], &lmax[j], &rmax[j]);
+            }
+        }
     }
 
     if (namelen < 8) {
-	namelen = 8;
+        namelen = 8;
     } else if (namelen > NAMETRUNC) {
-	namelen = NAMETRUNC;
+        namelen = NAMETRUNC;
     }
 
     /* figure appropriate column separation */
 
     for (j=0; j<ncols; j++) {
-	w[j] = lmax[j] + rmax[j];
-	head = get_col_heading(headings, j, show_slope, intervals);
-	hlen = char_len(head);
-	if (hlen > w[j]) {
-	    addoff[j] = (hlen - w[j]) / 2;
-	    w[j] = hlen;
-	}
+        w[j] = lmax[j] + rmax[j];
+        head = get_col_heading(headings, j, show_slope, intervals);
+        hlen = char_len(head);
+        if (hlen > w[j]) {
+            addoff[j] = (hlen - w[j]) / 2;
+            w[j] = hlen;
+        }
     }
 
     figure_colsep(namelen, ncols, w, &colsep);
@@ -5100,11 +5106,11 @@ static int plain_print_coeffs (const MODEL *pmod,
 
     bufspace(namelen + 2 + colsep, prn);
     for (j=0; j<ncols; j++) {
-	head = get_col_heading(headings, j, show_slope, intervals);
-	print_padded_head(head, w[j], prn);
-	if (j < ncols - 1) {
-	    bufspace(colsep, prn);
-	}
+        head = get_col_heading(headings, j, show_slope, intervals);
+        print_padded_head(head, w[j], prn);
+        if (j < ncols - 1) {
+            bufspace(colsep, prn);
+        }
     }
 
     /* separator row */
@@ -5112,32 +5118,32 @@ static int plain_print_coeffs (const MODEL *pmod,
 
     /* biprobit special: name of first dependent variable */
     if (pmod->ci == BIPROBIT) {
-	print_coeff_left_string(gretl_model_get_depvar_name(pmod, dset),
-				prn);
+        print_coeff_left_string(gretl_model_get_depvar_name(pmod, dset),
+                                prn);
     }
 
     /* print row values */
 
     k = 0;
     for (i=0; i<nc; i++) {
-	char tmp[NAMETRUNC];
-	int namepad;
+        char tmp[NAMETRUNC];
+        int namepad;
 
-	if (separator_wanted(i, seppos, &sepstr, pmod)) {
-	    if (pmod->ci == BIPROBIT) {
-		pputc(prn, '\n');
-		if (i == seppos) {
-		    print_coeff_left_string(sepstr, prn);
-		}
-	    } else {
-		print_coeff_separator(sepstr, dotlen, prn);
-	    }
-	    free(sepstr);
-	    sepstr = NULL;
-	} else if (cblock > 0 && i % cblock == 0) {
-	    char mnlsep[32];
+        if (separator_wanted(i, seppos, &sepstr, pmod)) {
+            if (pmod->ci == BIPROBIT) {
+                pputc(prn, '\n');
+                if (i == seppos) {
+                    print_coeff_left_string(sepstr, prn);
+                }
+            } else {
+                print_coeff_separator(sepstr, dotlen, prn);
+            }
+            free(sepstr);
+            sepstr = NULL;
+        } else if (cblock > 0 && i % cblock == 0) {
+            char mnlsep[32];
 
-	    mn_logit_coeffsep(mnlsep, pmod, dset, ++k);
+            mn_logit_coeffsep(mnlsep, pmod, dset, ++k);
 	    print_coeff_separator(mnlsep, 0, prn);
 	}
 	maybe_trim_varname(tmp, names[i]);
