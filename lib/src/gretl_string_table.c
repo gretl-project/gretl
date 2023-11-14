@@ -371,7 +371,7 @@ series_table *series_table_new (char **strs, int n_strs, int *err)
     series_table *st = series_table_alloc();
     int i;
 
-    if (st == NULL) {
+    if (st == NULL || strs == NULL) {
 	*err = E_ALLOC;
     } else {
 	st->n_strs = n_strs;

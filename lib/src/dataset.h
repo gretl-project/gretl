@@ -581,6 +581,8 @@ int series_recode_strings (DATASET *dset, int v, gretlopt opt,
 
 int series_alphabetize_strings (DATASET *dset, int v);
 
+int series_reorder_strings (DATASET *dset, int v, gretl_array *a);
+
 int assign_numeric_to_strvar (DATASET *dset, int targ,
 			      const double *src);
 

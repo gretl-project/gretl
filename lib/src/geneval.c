@@ -15936,7 +15936,9 @@ static NODE *stringify_series (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL) {
-	if (f == F_STRVSORT) {
+	if (f == F_STRVSORT && !null_node(r)) {
+	    ret->v.xval = series_reorder_strings(p->dset, l->vnum, r->v.a);
+	} else if (f == F_STRVSORT) {
 	    ret->v.xval = series_alphabetize_strings(p->dset, l->vnum);
 	} else if (null_node(r)) {
 	    ret->v.xval = series_destroy_string_table(p->dset, l->vnum);
@@ -18974,17 +18976,11 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_STRINGIFY:
+    case F_STRVSORT:
 	if (useries_node(l) && (r->t == ARRAY || null_node(r))) {
 	    ret = stringify_series(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
-        }
-        break;
-    case F_STRVSORT:
-	if (useries_node(l)) {
-	    ret = stringify_series(l, NULL, t->t, p);
-	} else {
-	    node_type_error(t->t, 0, USERIES, l, p);
         }
         break;
     case F_DEC2BIN:

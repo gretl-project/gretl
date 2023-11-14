@@ -269,7 +269,6 @@ enum {
     F_BIN2DEC,
     F_ACCESS,
     F_POLROOTS,
-    F_STRVSORT,
     HF_JBTERMS,
     HF_FDEPTH,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
@@ -401,6 +400,7 @@ enum {
     F_MEANR,
     F_ASORT,
     F_CORRESP,
+    F_STRVSORT,
     HF_GLASSO,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,

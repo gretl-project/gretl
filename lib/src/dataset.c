@@ -5365,7 +5365,8 @@ static int ssr_lookup (strval_sorter *ssr, int ns, int oldcode)
 int series_alphabetize_strings (DATASET *dset, int v)
 {
     strval_sorter *ssr;
-    series_table *st0, *st1;
+    series_table *st0;
+    series_table *st1;
     char **S;
     double xi;
     int i, ns;
@@ -5420,6 +5421,89 @@ int series_alphabetize_strings (DATASET *dset, int v)
     }
 
     free(ssr);
+
+    return err;
+}
+
+int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
+{
+    series_table *st0;
+    series_table *st1;
+    const double *x;
+    double *y = NULL;
+    double *v0 = NULL;
+    double *v1 = NULL;
+    char **S0;
+    char **S1;
+    int i, j, ns, ns1;
+    int found;
+    int err = 0;
+
+    st0 = series_get_string_table(dset, v);
+    if (st0 == NULL) {
+	return E_TYPES;
+    }
+
+    S0 = series_table_get_strings(st0, &ns);
+    if (S0 == NULL) {
+	return E_DATA;
+    }
+
+    S1 = gretl_array_get_strings(a, &ns1);
+    if (S1 == NULL || ns1 != ns) {
+	return E_NONCONF;
+    }
+
+    v0 = malloc(2 * ns * sizeof *v0);
+    v1 = v0 + ns;
+
+    for (i=0; i<ns && !err; i++) {
+	found = 0;
+	for (j=0; j<ns; j++) {
+	    if (!strcmp(S1[j], S0[i])) {
+		v1[i] = j+1;
+		found = 1;
+		break;
+	    }
+	}
+	if (!found) {
+	    err = E_DATA;
+	} else {
+	    v0[i] = i+1;
+	}
+    }
+
+    if (!err) {
+	/* storage for replaced numeric codes */
+	y = malloc(dset->n * sizeof *y);
+	if (y == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    /* perform the replacement, into @y */
+	    x = dset->Z[v];
+	    err = substitute_values(y, x, dset->n, v0, ns, v1, ns);
+	}
+    }
+
+    if (!err) {
+	/* create new series table */
+	char **Snew = strings_array_dup(S1, ns);
+
+	st1 = series_table_new(Snew, ns, &err);
+	if (err) {
+	    strings_array_free(Snew, ns);
+	}
+    }
+
+    if (!err) {
+	/* actually revise the original series */
+	memcpy(dset->Z[v], y, dset->n * sizeof *y);
+	series_table_destroy(st0);
+	dset->varinfo[v]->st = st1;
+    }
+
+    free(v0);
+    free(y);
 
     return err;
 }

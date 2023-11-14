@@ -13235,18 +13235,49 @@
     <function name="strvsort" section="strings" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg optional="true" type="strings">S</fnarg>
       </fnargs>
       <description>
 	<para>
-	  The argument <argname>y</argname> must be string-valued.
-	  The effect of this function is to sort such a series in this
-	  particular sense: the distinct string values are
-	  alphabetized and then the series is re-coded such that 1 is
-	  assigned for the first of the ordered strings, 2 for the
-	  second, and so on. This can be useful, among other reasons,
-	  for ensuring a uniform encoding for multiple series that
-	  share the same set of string values. The nominal return
-	  value is 0 on successful completion.
+	  Carries out one or other of two sorts of rearrangment of the
+	  series <argname>y</argname>, which must be
+	  string-valued. The nominal return value is 0 on successful
+	  completion.
+	</para>
+	<para>
+	  Method 1: If the second argument is not given, the effect is
+	  to sort <argname>y</argname> in this sense: the distinct
+	  string values are alphabetized and then the series is
+	  recoded such that 1 is assigned for the first of the ordered
+	  strings, 2 for the second, and so on. This can be useful,
+	  among other reasons, for ensuring a uniform encoding for
+	  multiple series that share the same set of string values.
+	</para>
+	<para>
+	  Method 2: If the second argument is given, it must be an
+	  array which contains exactly the distinct string values of
+	  <argname>y</argname> (which can be found via <fncref
+	  targ="strvals"/>), but put into a preferred order. Then the
+	  effect is to recode the series such that value 1 is assigned
+	  for the first string in <argname>S</argname>, value 2 for
+	  the second, and so on.  This can be useful for ensuring that
+	  the numeric codes <quote>make sense</quote> when string
+	  values can be thought of as naturally ordered.
+	</para>
+	<para>
+	  The primary use case for these methods is the handling of
+	  string-valued series imported from third-party sources such
+	  as comma-separated files. For such data, gretl assigns
+	  numeric codes based simply on the order of occurrence of the
+	  strings across the rows of the file. So in a series with
+	  values <lit>low</lit>, <lit>middle</lit> and
+	  <lit>high</lit>, <lit>high</lit> will be assigned code 1 if
+	  it happens to occur first, rather than 3, which would
+	  clearly be more <quote>natural</quote>. This can be fixed
+	  using Method 2. Moreover, if two or more series share the
+	  same string values, they will be encoded differently unless
+	  their distinct values happen to appear in the same order in
+	  the data file. This could be fixed by either method.
 	</para>
 	<para>
 	  <seelist>
