@@ -4875,7 +4875,7 @@ static void mn_logit_coeffsep (char *sep, const MODEL *pmod,
     int v = pmod->list[1];
 
     if (is_string_valued(dset, v)) {
-        const char *value = series_get_string_for_value(dset, v, i);
+        const char *value = series_get_string_for_value(dset, v, i+1);
         sprintf(sep, "%s = %s", vname, value);
     } else {
         const gretl_matrix *y = gretl_model_get_data(pmod, "yvals");
