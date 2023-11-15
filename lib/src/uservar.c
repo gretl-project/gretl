@@ -2420,8 +2420,6 @@ int print_user_var_by_name (const char *name,
 
         if (tmp->is_complex || opt & OPT_C) {
             err = gretl_cmatrix_print(tmp, name, prn);
-        } else if (opt & OPT_H) {
-	    err = hex_print_matrix(tmp, prn);
 	} else {
             gretl_matrix_print_to_prn(tmp, name, prn);
         }
