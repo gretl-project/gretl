@@ -680,6 +680,25 @@ int gretl_compare_ints (const void *a, const void *b)
 }
 
 /**
+ * gretl_compare_strings:
+ * @a: pointer to first element to compare.
+ * @b: pointer to second element to compare.
+ *
+ * Comparison function for use with qsort.  Sorts strings in
+ * alphabetical order.
+ *
+ * Returns: appropriate value for qsort.
+ */
+
+int gretl_compare_strings (const void *a, const void *b)
+{
+    const char **sa = (const char **) a;
+    const char **sb = (const char **) b;
+
+    return g_strcmp0(*sa, *sb);
+}    
+
+/**
  * count_distinct_values:
  * @x: sorted array of doubles.
  * @n: number of elements in array.

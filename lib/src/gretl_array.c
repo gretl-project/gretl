@@ -1612,14 +1612,6 @@ gretl_array *gretl_array_copy (const gretl_array *A,
     return Acpy;
 }
 
-static int compare_strings (const void *a, const void *b)
-{
-    const char **sa = (const char **) a;
-    const char **sb = (const char **) b;
-
-    return g_strcmp0(*sa, *sb);
-}
-
 static int inverse_compare_strings (const void *a, const void *b)
 {
     const char **sa = (const char **) a;
@@ -1645,7 +1637,7 @@ gretl_array *gretl_strings_sort (const gretl_array *A,
 	}
 	if (!*err) {
 	    qsort(Asrt->data, Asrt->n, sizeof *Asrt->data,
-		  descending ? inverse_compare_strings : compare_strings);
+		  descending ? inverse_compare_strings : gretl_compare_strings);
 	}
     }
 

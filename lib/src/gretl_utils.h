@@ -118,6 +118,8 @@ int rearrange_id_array (double *x, int m, int n);
 
 int gretl_compare_ints (const void *a, const void *b);
 
+int gretl_compare_strings (const void *a, const void *b);
+
 /* miscellaneous */
 
 int gretl_version_number (const char *version);

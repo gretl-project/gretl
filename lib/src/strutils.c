@@ -2224,14 +2224,6 @@ char **strings_array_dup_selected (char **strs, int n,
     return S;
 }
 
-static int compare_strings (const void *a, const void *b)
-{
-    const char **sa = (const char **) a;
-    const char **sb = (const char **) b;
-
-    return strcmp(*sa, *sb);
-}
-
 /**
  * strings_array_sort:
  * @pS: location of array of strings.
@@ -2260,7 +2252,7 @@ int strings_array_sort (char ***pS, int *n, gretlopt opt)
     S = *pS;
     ns = *n;
 
-    qsort(S, ns, sizeof *S, compare_strings);
+    qsort(S, ns, sizeof *S, gretl_compare_strings);
 
     if (opt & OPT_U) {
 	int i, j, m = ns;
