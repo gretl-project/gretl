@@ -5425,17 +5425,27 @@ int series_alphabetize_strings (DATASET *dset, int v)
     return err;
 }
 
+/* In a sense the function series_alphabetize_strings() (above) is
+   just a special case of the following, where in place of an array @a
+   specified by the caller we use an implicit array holding the
+   distinct string values in alphabetical order. So it might appear
+   that series_alphabetize_strings() might better be implemented as a
+   case of the following (when @a == NULL). However, it turns out that
+   the alphabetization case lends itself to a particularly efficient
+   implementation which is not available in the general case, hence
+   the two separate functions.
+*/
+
 int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
 {
-    series_table *st0;
-    series_table *st1;
-    const double *x;
-    double *y = NULL;
+    series_table *st0 = NULL;
+    series_table *st1 = NULL;
     double *v0 = NULL;
     double *v1 = NULL;
     char **S0;
     char **S1;
     int i, j, ns, ns1;
+    int changed;
     int found;
     int err = 0;
 
@@ -5456,6 +5466,7 @@ int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
 
     v0 = malloc(2 * ns * sizeof *v0);
     v1 = v0 + ns;
+    changed = 0;
 
     for (i=0; i<ns && !err; i++) {
 	found = 0;
@@ -5470,23 +5481,21 @@ int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
 	    err = E_DATA;
 	} else {
 	    v0[i] = i+1;
+	    if (v1[i] != v0[i]) {
+		changed = 1;
+	    }
 	}
     }
 
-    if (!err) {
-	/* storage for replaced numeric codes */
-	y = malloc(dset->n * sizeof *y);
-	if (y == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    /* perform the replacement, into @y */
-	    x = dset->Z[v];
-	    err = substitute_values(y, x, dset->n, v0, ns, v1, ns);
-	}
+    if (!err && !changed) {
+	/* nothing to be done */
+	free(v0);
+	return 0;
     }
 
     if (!err) {
-	/* create new series table */
+	/* create new series table: since S1 belongs to @a
+	   it must be copied */
 	char **Snew = strings_array_dup(S1, ns);
 
 	st1 = series_table_new(Snew, ns, &err);
@@ -5496,14 +5505,28 @@ int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
     }
 
     if (!err) {
-	/* actually revise the original series */
-	memcpy(dset->Z[v], y, dset->n * sizeof *y);
+	/* perform the replacement, into @y */
+	double *x = dset->Z[v];
+
+	for (i=0; i<dset->n; i++) {
+	    for (j=0; j<ns; j++) {
+		if (x[i] == v0[j]) {
+		    x[i] = v1[j];
+		    break;
+		}
+	    }
+	}
+    }
+
+    if (!err) {
+	/* finish revision of the original series */
 	series_table_destroy(st0);
 	dset->varinfo[v]->st = st1;
+    } else {
+	series_table_destroy(st1);
     }
 
     free(v0);
-    free(y);
 
     return err;
 }
