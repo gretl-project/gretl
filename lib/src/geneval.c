@@ -42,6 +42,7 @@
 #include "gretl_tdisagg.h"
 #include "gretl_xml.h"
 #include "gretl_mt.h"
+#include "gretl_color.h"
 #include "var.h"
 #include "vartest.h"
 #include "flow_control.h"
@@ -3954,7 +3955,7 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 
     if (starting(p)) {
         gretl_matrix *m = l->v.m;
-        int k;
+        int k = 0;
 
         if (f == F_CSWITCH) {
             k = 1; /* default */
@@ -3974,7 +3975,7 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
             p->err = E_CMPLX;
         }
         if (!p->err) {
-            ret = aux_matrix_node(p);
+	    ret = aux_matrix_node(p);
         }
         if (p->err) {
             return NULL;
@@ -14242,7 +14243,8 @@ static int check_argc (int f, int k, parser *p)
         { F_MIDASMULT, 1, 3 },
         { F_TDISAGG,   3, 5 },
         { F_COMMUTE,   2, 5 },
-        { F_TOEPSOLV,  3, 4 }
+        { F_TOEPSOLV,  3, 4 },
+	{ F_RGBMIX,    3, 4 }
     };
 
     int argc_min = 2;
@@ -15035,6 +15037,50 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                 user_var_set_scalar_value(uv, d);
             }
         }
+    } else if (t->t == F_RGBMIX) {
+	guint32 c[2] = {0};
+	double f = NADBL;
+	gretl_matrix *fmat = NULL;
+	int do_plot = 0;
+	int mret = 0;
+
+	for (i=0; i<k && !p->err; i++) {
+	    e = n->v.bn.n[i];
+	    if (i < 2) {
+		/* color specs */
+		if (e->t == NUM) {
+		    c[i] = node_get_guint32(e, p);
+		} else if (e->t == STR) {
+		    c[i] = numeric_color_from_string(e->v.str, &p->err);
+		} else {
+		    p->err = E_TYPES;
+		}
+	    } else if (i == 2) {
+		/* mixing spec(s) */
+		if (e->t == NUM) {
+		    f = node_get_scalar(e, p);
+		} else if (e->t == MAT) {
+		    mret = 1;
+		    fmat = e->v.m;
+		} else {
+		    p->err = E_TYPES;
+		}
+	    } else {
+		/* plot option */
+		do_plot = node_get_bool(e, p, 0);
+	    }
+	}
+
+	if (!p->err) {
+	    ret = mret ? aux_matrix_node(p) : aux_scalar_node(p);
+	}
+	if (!p->err) {
+	    if (mret) {
+		ret->v.m = colormix_vector(c[0], c[1], fmat, do_plot, &p->err);
+	    } else {
+		ret->v.xval = colormix_scalar(c[0], c[1], f, do_plot, &p->err);
+	    }
+	}
     } else if (t->t == HF_FELOGITR) {
         gretl_matrix *U = NULL;
         gretl_matrix *X = NULL;
@@ -15072,62 +15118,6 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
 
     return ret;
 }
-
-#if 0 /* not yet */
-
-static NODE *color_mix_node (NODE *n, parser *p)
-{
-    NODE *e, *ret = NULL;
-    int i, k = n->v.bn.n_nodes;
-    guint32 c[2] = {0};
-    double f = NADBL;
-    gretl_matrix *fmat = NULL;
-    int show_plot = 0;
-    int mret = 0;
-
-    if (k < 3) {
-	p->err = E_ARGS;
-	return NULL;
-    }
-
-    for (i=0; i<k && !p->err; i++) {
-	e = n->v.bn.n[i];
-	if (i < 2) {
-	    if (e->t == NUM) {
-		c[i] = node_get_guint32(e, p);
-	    } else if (e->t == STR) {
-		c[i] = numeric_color_from_string(e->v.str, &p->err);
-	    } else {
-		p->err = E_TYPES;
-	    }
-	} else if (i == 3) {
-	    if (e->t == NUM) {
-		f = node_get_scalar(e, p);
-	    } else if (e->t == MAT) {
-		fmat = e->v.m;
-	    } else {
-		p->err = E_TYPES;
-	    }
-	} else {
-	    show_plot = node_get_bool(e, p, 0);
-	}
-    }
-
-    if (!p->err) {
-	ret = mret ? aux_matrix_node(p) : aux_scalar_node(p);
-    }
-    if (!p->err) {
-	if (mret) {
-	    ret->v.m = colormix_vector(c[0], c[1], fmat, &p->err);
-	} else {
-	    ret->v.xval = colormix_scalar(c[0], c[1], f, &p->err);
-	}
-    }
-
-    return ret;
-}
-
-#endif
 
 /* evaluate an object definition function (bundle, array, list) */
 
@@ -18584,6 +18574,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MIDASMULT:
     case F_COMMUTE:
     case F_TOEPSOLV:
+    case F_RGBMIX:
     case HF_FELOGITR:
         /* built-in functions taking more than three args */
         if (multi == NULL) {
