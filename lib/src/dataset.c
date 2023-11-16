@@ -5439,6 +5439,19 @@ int series_alphabetize_strings (DATASET *dset, int v)
 
 #define USE_SSR2 0 /* experimental */
 
+/* "SSR2" uses sorting in the context of series_reorder_strings
+   (below), which implements the userspace strvsort when a second
+   (array of strings) argument is supplied. This should be faster than
+   the alternative (which does not require sorting), if the number of
+   distinct strings (ns) is large enough, since the alternative
+   requires up to ns^2 calls to strcmp. However, for moderate ns the
+   alternative seems to be faster.
+
+   Instead of conditionalizing the variant on a preprocessor define we
+   could substitute a run-time condition based on ns, but this would
+   require some experimentation to find a suitable threshold.
+*/
+
 #if USE_SSR2
 
 typedef struct strval_sorter2_ {
@@ -5473,7 +5486,7 @@ static strval_sorter2 *make_strval_sorter2 (char **S0,
 	return NULL;
     }
 
-    /* fill sorter array */
+    /* fill sorter array in two tranches */
     for (i=0; i<ns; i++) {
 	ssr[i].s = S0[i];
 	ssr[i].code = i+1;
@@ -5545,6 +5558,9 @@ int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
 
     for (j=0, i=0; j<2*ns; j+=2) {
 	if (strcmp(ssr[j].s, ssr[j+1].s)) {
+	    /* the two arrays of strings do not have
+	       all the same elements
+	    */
 	    err = E_INVARG;
 	    break;
 	}
@@ -5572,7 +5588,7 @@ int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
 	    changed = 1;
 	}
     }
-#endif
+#endif /* USE_SSR2 or not */
 
     if (!err && !changed) {
 	/* nothing to be done */
