@@ -31,9 +31,9 @@ union channels {
     guint8 u8[4];
 };
 
-static int show_colors (gretlRGB c1, gretlRGB c2,
-			double *xmix, double *f,
-			int n);
+static int show_mixed_colors (gretlRGB c1, gretlRGB c2,
+			      guint32 *mix, const double *f,
+			      int n);
 
 /* rgb color mixing: (1-f) * c1 + f * c2 */
 
@@ -65,89 +65,53 @@ static RGB RGB_from_guint32 (guint32 u)
     return out;
 }
 
-double colormix_scalar (gretlRGB c1, gretlRGB c2, double f,
-			int do_plot, int *err)
+gretl_array *colormix_array (gretlRGB c1, gretlRGB c2,
+			     const double *f, int nf,
+			     int do_plot, int *err)
 {
-    guint32 u = 0;
-    double du = 0;
-
-    if (na(f) || f < 0 || f > 1) {
-	*err = E_INVARG;
-    } else {
-	RGB rgb1 = RGB_from_guint32(c1);
-	RGB rgb2 = RGB_from_guint32(c2);
-	RGB mix  = rgb_mix(&rgb1, &rgb2, f);
-
-	u = (mix.r << 16) | (mix.g << 8) | mix.b;
-	du = (double) u;
-    }
-
-    if (*err == 0 && do_plot) {
-	show_colors(c1, c2, &du, &f, 1);
-    }
-
-    return du;
-}
-
-static int get_f_length (const gretl_matrix *f, int *err)
-{
-    int n = gretl_vector_get_length(f);
-
-    if (n == 0) {
-	*err = E_INVARG;
-    } else {
-	double fi;
-	int i;
-
-	for (i=0; i<n; i++) {
-	    fi = f->val[i];
-	    if (na(fi) || fi < 0 || fi > 1) {
-		*err = E_INVARG;
-		break;
-	    }
-	}
-    }
-
-    return n;
-}
-
-gretl_matrix *colormix_vector (gretlRGB c1, gretlRGB c2,
-			       const gretl_matrix *f,
-			       int do_plot, int *err)
-{
-    gretl_vector *ret = NULL;
+    gretl_array *ret = NULL;
+    guint32 *uvec = NULL;
+    char color[9] = {0};
     RGB rgb1, rgb2, mix;
     guint32 u;
-    int i, n;
+    int i;
 
-    n = get_f_length(f, err);
+    ret = gretl_array_new(GRETL_TYPE_STRINGS, nf, err);
     if (*err) {
 	return NULL;
     }
 
-    ret = gretl_zero_matrix_new(1, n);
+    if (do_plot) {
+	uvec = malloc(nf * sizeof *uvec);
+    }
+
     rgb1 = RGB_from_guint32(c1);
     rgb2 = RGB_from_guint32(c2);
 
-    for (i=0; i<n; i++) {
-	mix = rgb_mix(&rgb1, &rgb2, f->val[i]);
+    for (i=0; i<nf; i++) {
+	mix = rgb_mix(&rgb1, &rgb2, f[i]);
 	u = (mix.r << 16) | (mix.g << 8) | mix.b;
-	ret->val[i] = (double) u;
+	sprintf(color, "0x%06x", u);
+	gretl_array_set_string(ret, i, color, 1);
+	if (do_plot) {
+	    uvec[i] = u;
+	}
     }
 
     if (*err == 0 && do_plot) {
-	show_colors(c1, c2, ret->val, f->val, n);
+	show_mixed_colors(c1, c2, uvec, f, nf);
     }
+
+    free(uvec);
 
     return ret;
 }
 
-static int show_colors (gretlRGB c1, gretlRGB c2,
-			double *xmix, double *f,
-			int n)
+static int show_mixed_colors (gretlRGB c1, gretlRGB c2,
+			      guint32 *mix, const double *f,
+			      int n)
 {
     FILE *fp;
-    guint32 u;
     int i, j;
     int err = 0;
 
@@ -157,15 +121,11 @@ static int show_colors (gretlRGB c1, gretlRGB c2,
 	return err;
     }
 
-    if (n == 1) {
-	u = (guint32) xmix[0];
-    }
-
     fprintf(fp, "set title \"mix #%06x and #%06x via RGB\\n", c1, c2);
     if (n == 1) {
 	fprintf(fp, "f = %g\"\n", f[0]);
 	fprintf(fp, "set xtics (\"#%06x\" 1, \"#%06x\" 2, \"#%06x\" 3)\n",
-		c1, c2, u);
+		c1, c2, mix[0]);
     } else {
 	fprintf(fp, "f = ");
 	for (i=0; i<n; i++) {
@@ -174,7 +134,7 @@ static int show_colors (gretlRGB c1, gretlRGB c2,
 	}
 	fputs("set xtics (", fp);
 	for (i=0; i<n; i++) {
-	    fprintf(fp, "\"#%06x\" %d", (guint32) xmix[i], i+1);
+	    fprintf(fp, "\"#%06x\" %d", mix[i], i+1);
 	    fputs(i < n-1 ? ", " : ")\n", fp);
 	}
     }
@@ -187,13 +147,12 @@ static int show_colors (gretlRGB c1, gretlRGB c2,
 	/* show c1, c2, mix */
 	fprintf(fp, "set linetype 1 lc rgb \"#%06x\"\n", c1);
 	fprintf(fp, "set linetype 2 lc rgb \"#%06x\"\n", c2);
-	fprintf(fp, "set linetype 3 lc rgb \"#%06x\"\n", u);
+	fprintf(fp, "set linetype 3 lc rgb \"#%06x\"\n", mix[0]);
 	n = 3;
     } else {
 	/* just show the mixes */
 	for (i=0; i<n; i++) {
-	    u = (guint32) xmix[i];
-	    fprintf(fp, "set linetype %d lc rgb \"#%06x\"\n", i+1, u);
+	    fprintf(fp, "set linetype %d lc rgb \"#%06x\"\n", i+1, mix[i]);
 	}
     }
     fputs("$data << EOD\n", fp);

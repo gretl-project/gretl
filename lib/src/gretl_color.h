@@ -20,11 +20,8 @@
 #ifndef GRETL_COLOR_H
 #define GRETL_COLOR_H
 
-double colormix_scalar (gretlRGB c1, gretlRGB c2, double f,
-			int do_plot, int *err);
-
-gretl_matrix *colormix_vector (gretlRGB c1, gretlRGB c2,
-			       const gretl_matrix *f,
-			       int do_plot, int *err);
+gretl_array *colormix_array (gretlRGB c1, gretlRGB c2,
+			     const double *f, int nf,
+			     int do_plot, int *err);
 
 #endif /* GRETL_COLOR_H */

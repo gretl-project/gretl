@@ -15039,10 +15039,9 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
         }
     } else if (t->t == F_RGBMIX) {
 	guint32 c[2] = {0};
-	double f = NADBL;
-	gretl_matrix *fmat = NULL;
+	double *f = NULL;
 	int do_plot = 0;
-	int mret = 0;
+	int nf = 0;
 
 	for (i=0; i<k && !p->err; i++) {
 	    e = n->v.bn.n[i];
@@ -15057,11 +15056,13 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
 		}
 	    } else if (i == 2) {
 		/* mixing spec(s) */
-		if (e->t == NUM) {
-		    f = node_get_scalar(e, p);
-		} else if (e->t == MAT) {
-		    mret = 1;
-		    fmat = e->v.m;
+		if (e->t == MAT) {
+		    nf = gretl_vector_get_length(e->v.m);
+		    if (nf == 0) {
+			p->err = E_INVARG;
+		    } else {
+			f = e->v.m->val;
+		    }
 		} else {
 		    p->err = E_TYPES;
 		}
@@ -15070,16 +15071,11 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
 		do_plot = node_get_bool(e, p, 0);
 	    }
 	}
-
 	if (!p->err) {
-	    ret = mret ? aux_matrix_node(p) : aux_scalar_node(p);
+	    ret = aux_array_node(p);
 	}
 	if (!p->err) {
-	    if (mret) {
-		ret->v.m = colormix_vector(c[0], c[1], fmat, do_plot, &p->err);
-	    } else {
-		ret->v.xval = colormix_scalar(c[0], c[1], f, do_plot, &p->err);
-	    }
+	    ret->v.a = colormix_array(c[0], c[1], f, nf, do_plot, &p->err);
 	}
     } else if (t->t == HF_FELOGITR) {
         gretl_matrix *U = NULL;
