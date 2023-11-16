@@ -5349,6 +5349,28 @@ static int ssr_lookup (strval_sorter *ssr, int ns, int oldcode)
     return 0;
 }
 
+static strval_sorter *make_strval_sorter (char **S, int ns)
+{
+    strval_sorter *ssr;
+    int i;
+
+    ssr = malloc(ns * sizeof *ssr);
+    if (ssr == NULL) {
+	return NULL;
+    }
+
+    /* fill sorter array */
+    for (i=0; i<ns; i++) {
+	ssr[i].s = S[i];
+	ssr[i].oldcode = i+1;
+        ssr[i].newcode = 0;
+    }
+
+    qsort(ssr, ns, sizeof *ssr, compare_strvals);
+
+    return ssr;
+}
+
 /**
  * series_alphabetize_strings:
  * @dset: dataset.
@@ -5382,21 +5404,11 @@ int series_alphabetize_strings (DATASET *dset, int v)
 	return E_DATA;
     }
 
-    /* allocate sorter array */
-    ssr = malloc(ns * sizeof *ssr);
+    /* allocate and sort special array */
+    ssr = make_strval_sorter(S, ns);
     if (ssr == NULL) {
 	return E_ALLOC;
     }
-
-    /* fill sorter array */
-    for (i=0; i<ns; i++) {
-	ssr[i].s = S[i];
-	ssr[i].oldcode = i+1;
-        ssr[i].newcode = 0;
-    }
-
-    /* do the actual sorting */
-    qsort(ssr, ns, sizeof *ssr, compare_strvals);
 
     /* look up the new numerical codings */
     for (i=0; i<dset->n; i++) {
@@ -5425,11 +5437,65 @@ int series_alphabetize_strings (DATASET *dset, int v)
     return err;
 }
 
+#define USE_SSR2 0 /* experimental */
+
+#if USE_SSR2
+
+typedef struct strval_sorter2_ {
+    const char *s; /* string value */
+    int code;      /* integer code value */
+} strval_sorter2;
+
+static int compare_strvals2 (const void *a, const void *b)
+{
+    const strval_sorter2 *ssa = a;
+    const strval_sorter2 *ssb = b;
+    int ret = g_strcmp0(ssa->s, ssb->s);
+
+    if (ret == 0) {
+	/* ensure a stable sort */
+	ret = ssa->code - ssb->code;
+    }
+
+    return ret;
+}
+
+static strval_sorter2 *make_strval_sorter2 (char **S0,
+					    char **S1,
+					    int ns)
+{
+    strval_sorter2 *ssr;
+    int i, n = 2 * ns;
+
+    /* allocate sorter array */
+    ssr = malloc(n * sizeof *ssr);
+    if (ssr == NULL) {
+	return NULL;
+    }
+
+    /* fill sorter array */
+    for (i=0; i<ns; i++) {
+	ssr[i].s = S0[i];
+	ssr[i].code = i+1;
+    }
+    for (i=ns; i<n; i++) {
+	ssr[i].s = S1[i-ns];
+	/* set high codes for stable sort */
+	ssr[i].code = i+1;
+    }
+
+    qsort(ssr, n, sizeof *ssr, compare_strvals2);
+
+    return ssr;
+}
+
+#endif /* USE_SSR2 */
+
 /* In a sense the function series_alphabetize_strings() (above) is
    just a special case of the following, where in place of an array @a
    specified by the caller we use an implicit array holding the
    distinct string values in alphabetical order. So it might appear
-   that series_alphabetize_strings() might better be implemented as a
+   that series_alphabetize_strings() could better be implemented as a
    case of the following (when @a == NULL). However, it turns out that
    the alphabetization case lends itself to a particularly efficient
    implementation which is not available in the general case, hence
@@ -5438,15 +5504,19 @@ int series_alphabetize_strings (DATASET *dset, int v)
 
 int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
 {
+#if USE_SSR2
+    strval_sorter2 *ssr = NULL;
+    int newcode;
+#else
+    int found;
+#endif
     series_table *st0 = NULL;
     series_table *st1 = NULL;
-    double *v0 = NULL;
-    double *v1 = NULL;
+    int *v1 = NULL;
     char **S0;
     char **S1;
     int i, j, ns, ns1;
-    int changed;
-    int found;
+    int changed = 0;
     int err = 0;
 
     st0 = series_get_string_table(dset, v);
@@ -5464,10 +5534,29 @@ int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
 	return E_NONCONF;
     }
 
-    v0 = malloc(2 * ns * sizeof *v0);
-    v1 = v0 + ns;
-    changed = 0;
+    v1 = malloc(ns * sizeof *v1);
 
+#if USE_SSR2
+    ssr = make_strval_sorter2(S0, S1, ns);
+    if (ssr == NULL) {
+	free(v1);
+	return E_ALLOC;
+    }
+
+    for (j=0, i=0; j<2*ns; j+=2) {
+	if (strcmp(ssr[j].s, ssr[j+1].s)) {
+	    err = E_INVARG;
+	    break;
+	}
+	/* reduce new code to 1-based */
+	newcode = ssr[j+1].code - ns;
+	if (newcode != ssr[j].code) {
+	    changed = 1;
+	}
+	v1[i++] = newcode;
+    }
+    free(ssr);
+#else
     for (i=0; i<ns && !err; i++) {
 	found = 0;
 	for (j=0; j<ns; j++) {
@@ -5479,17 +5568,15 @@ int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
 	}
 	if (!found) {
 	    err = E_DATA;
-	} else {
-	    v0[i] = i+1;
-	    if (v1[i] != v0[i]) {
-		changed = 1;
-	    }
+	} else if (v1[i] != i+1) {
+	    changed = 1;
 	}
     }
+#endif
 
     if (!err && !changed) {
 	/* nothing to be done */
-	free(v0);
+	free(v1);
 	return 0;
     }
 
@@ -5505,15 +5592,12 @@ int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
     }
 
     if (!err) {
-	/* perform the replacement, into @y */
+	/* perform the replacement */
 	double *x = dset->Z[v];
 
 	for (i=0; i<dset->n; i++) {
-	    for (j=0; j<ns; j++) {
-		if (x[i] == v0[j]) {
-		    x[i] = v1[j];
-		    break;
-		}
+	    if (!na(x[i])) {
+		x[i] = (double) v1[(int) (x[i]-1)];
 	    }
 	}
     }
@@ -5526,7 +5610,7 @@ int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
 	series_table_destroy(st1);
     }
 
-    free(v0);
+    free(v1);
 
     return err;
 }
