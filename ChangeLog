@@ -15,9 +15,13 @@ version 2023c, in progress
 - String-valued series: support returning such series from a
   user function, and loosen the restrictions on assignment to
   such series
+- New usage of the '*' operator to augment a string via
+  repetition, for example: string s = "abc" * 3
 - New function asort() for sorting arrays of all types
 - New function corresp() to determine the correspondence (if
   any) between two series or vectors
+- New function rgbmix() to do mixing of colors via their R, G
+  and B channels
 - String functions strsub(), regsub(), substr(), tolower() and
   toupper(): generalize to support strings arrays and string-
   valued series as arguments, as well as individual strings
