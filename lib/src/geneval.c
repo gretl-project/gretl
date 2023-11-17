@@ -2455,6 +2455,8 @@ static NODE *scalar_calc (NODE *x, NODE *y, int f, parser *p)
     return ret;
 }
 
+/* support addition of integer meaning subset of string */
+
 static NODE *string_offset (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_string_node(p);
@@ -2475,6 +2477,43 @@ static NODE *string_offset (NODE *l, NODE *r, parser *p)
         if (!p->err && ret->v.str == NULL) {
             p->err = E_ALLOC;
         }
+    }
+
+    return ret;
+}
+
+/* support multiplication by integer meaning repetition of a string */
+
+static NODE *string_mult (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_string_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const char *s = NULL;
+	int k = 0;
+
+	if (l->t == STR && r->t == NUM) {
+	    s = l->v.str;
+	    k = node_get_int(r, p);
+	} else if (l->t == NUM && r->t == STR) {
+	    s = r->v.str;
+	    k = node_get_int(l, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	if (!p->err && k < 0) {
+	    p->err = E_INVARG;
+	}
+	if (!p->err && k == 0) {
+	    ret->v.str = gretl_strdup("");
+	} else if (!p->err) {
+	    int i, n = strlen(s);
+
+	    ret->v.str = calloc(k * n + 1, 1);
+	    for (i=0; i<k; i++) {
+		strcat(ret->v.str, s);
+	    }
+	}
     }
 
     return ret;
@@ -17488,6 +17527,8 @@ static NODE *eval (NODE *t, parser *p)
             ret = augment_array_node(l, r, p);
         } else if (t->t == B_SUB && l->t == ARRAY) {
             ret = subtract_from_array_node(l, r, p);
+	} else if (t->t == B_MUL && (l->t == STR || r->t == STR)) {
+	    ret = string_mult(l, r, p);
         } else {
             p->err = E_TYPES;
         }
