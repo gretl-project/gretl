@@ -5340,9 +5340,9 @@ static int ssr_lookup (strval_sorter *ssr, int ns, int oldcode)
 
     for (j=0; j<ns; j++) {
 	if (oldcode == ssr[j].oldcode) {
-            /* return value is also 1-based */
+            /* record the mapping we want */
             ssr[k].newcode = j + 1;
-	    return j + 1;
+	    return ssr[k].newcode;
 	}
     }
 
@@ -5410,7 +5410,7 @@ int series_alphabetize_strings (DATASET *dset, int v)
 	return E_ALLOC;
     }
 
-    /* look up the new numerical codings */
+    /* substitute the new numerical codings */
     for (i=0; i<dset->n; i++) {
 	xi = dset->Z[v][i];
 	if (!na(xi)) {
@@ -5436,23 +5436,6 @@ int series_alphabetize_strings (DATASET *dset, int v)
 
     return err;
 }
-
-#define USE_SSR2 0 /* experimental */
-
-/* "SSR2" uses sorting in the context of series_reorder_strings
-   (below), which implements the userspace strvsort when a second
-   (array of strings) argument is supplied. This should be faster than
-   the alternative (which does not require sorting), if the number of
-   distinct strings (ns) is large enough, since the alternative
-   requires up to ns^2 calls to strcmp. However, for moderate ns the
-   alternative seems to be faster.
-
-   Instead of conditionalizing the variant on a preprocessor define we
-   could substitute a run-time condition based on ns, but this would
-   require some experimentation to find a suitable threshold.
-*/
-
-#if USE_SSR2
 
 typedef struct strval_sorter2_ {
     const char *s; /* string value */
@@ -5502,33 +5485,25 @@ static strval_sorter2 *make_strval_sorter2 (char **S0,
     return ssr;
 }
 
-#endif /* USE_SSR2 */
-
 /* In a sense the function series_alphabetize_strings() (above) is
    just a special case of the following, where in place of an array @a
    specified by the caller we use an implicit array holding the
    distinct string values in alphabetical order. So it might appear
-   that series_alphabetize_strings() could better be implemented as a
-   case of the following (when @a == NULL). However, it turns out that
-   the alphabetization case lends itself to a particularly efficient
-   implementation which is not available in the general case, hence
-   the two separate functions.
+   that series_alphabetize_strings() could just be implemented as a
+   case of the following. However, it turns out that each case has its
+   own path to greatest efficiency, hence the two separate functions.
 */
 
 int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
 {
-#if USE_SSR2
     strval_sorter2 *ssr = NULL;
-    int newcode;
-#else
-    int found;
-#endif
     series_table *st0 = NULL;
     series_table *st1 = NULL;
     int *v1 = NULL;
     char **S0;
     char **S1;
     int i, j, ns, ns1;
+    int newcode;
     int changed = 0;
     int err = 0;
 
@@ -5549,7 +5524,6 @@ int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
 
     v1 = malloc(ns * sizeof *v1);
 
-#if USE_SSR2
     ssr = make_strval_sorter2(S0, S1, ns);
     if (ssr == NULL) {
 	free(v1);
@@ -5558,9 +5532,7 @@ int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
 
     for (j=0, i=0; j<2*ns; j+=2) {
 	if (strcmp(ssr[j].s, ssr[j+1].s)) {
-	    /* the two arrays of strings do not have
-	       all the same elements
-	    */
+	    gretl_errmsg_set("Missing or duplicated string in reordered array");
 	    err = E_INVARG;
 	    break;
 	}
@@ -5572,23 +5544,6 @@ int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
 	v1[i++] = newcode;
     }
     free(ssr);
-#else
-    for (i=0; i<ns && !err; i++) {
-	found = 0;
-	for (j=0; j<ns; j++) {
-	    if (!strcmp(S1[j], S0[i])) {
-		v1[i] = j+1;
-		found = 1;
-		break;
-	    }
-	}
-	if (!found) {
-	    err = E_DATA;
-	} else if (v1[i] != i+1) {
-	    changed = 1;
-	}
-    }
-#endif /* USE_SSR2 or not */
 
     if (!err && !changed) {
 	/* nothing to be done */
@@ -5608,7 +5563,7 @@ int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
     }
 
     if (!err) {
-	/* perform the replacement */
+	/* perform the numeric replacement */
 	double *x = dset->Z[v];
 
 	for (i=0; i<dset->n; i++) {
