@@ -27,14 +27,15 @@ version 2023c, in progress
   valued series as arguments, as well as individual strings
 - New function strvsort(): recodes a string-valued series such
   that the numeric codes correspond to the alphabetical order
-  of the string values
+  of the string values, or in line with a reordering specified
+  by the user
 - Add documentation for the functions dec2bin() and bin2dec(),
   which were first defined in version 2022b
 - kdensity() function: clarify its documentation
 - halton() function: remove the limit of 40 on the number of
   sequences this function can generate
 - Input of numeric constants: support hexadecimal notation
-- $sysinfo bundle: add CPU information
+- $sysinfo accessor bundle: add CPU information
 - Fix bug dating from 2022c: broken handling of the syntax
   listname.series when used in a function that is called from
   within a loop
