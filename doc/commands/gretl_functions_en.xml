@@ -11872,6 +11872,65 @@
       </description>
     </function>
 
+    <function name="rgbmix" section="data-utils" output="strings">
+      <fnargs>
+	<fnarg type="string">color1</fnarg>
+	<fnarg type="string">color2</fnarg>
+	<fnarg type="matrix">f</fnarg>
+	<fnarg type="bool" optional="true">plot</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Given two colors and a vector <argname>f</argname> of
+	  length <math>n</math> containing values in [0,1], this
+	  function returns an array of <math>n</math> strings, element
+	  <math>i</math> of which holds the hexadecimal RGB code for a
+	  mixture of the form (1-<math>f</math><sub>i</sub>) &times;
+	  <lit>color1</lit> + <math>f</math><sub>i</sub> &times;
+	  <lit>color2</lit>. The weighted average is taken over
+	  the Red, Green and Blue channels of the input colors.
+	</para>
+	<para>
+	  The color arguments can be specified by names known to
+	  <cmdref targ="gnuplot"/>, or as hexadecimal values in the form
+	  <lit>0xrrggbb</lit> or <lit>#rrggbb</lit>. Hex values in the
+	  first of these forms may be given numerically, otherwise
+	  strings are needed. If a non-zero value is given for the
+	  <argname>plot</argname> argument, a plot that shows the
+	  color mixtures is produced.
+	</para>
+	<para>
+	  This function offers a means of generating a set of related
+	  colors for plotting purposes, the primary use case being
+	  specification of multiple bands in a plot (for example, to
+	  indicate confidence intervals at more than one level). Three
+	  examples follow: the first produces successive lightenings of
+	  an initial blue; the second progressive darkenings of a
+	  pink shade; and the third a transition from red to yellow.
+	</para>
+	<code>
+	  f = {0, 0.5, 0.75, 0.875, 0.9375}
+	  mixes = rgbmix(0x1b43dc, "white", f, 1)
+	  print mixes
+	  f = {0, 0.1, 0.2, 0.3, 0.4}
+	  rgbmix(0xefd0d3, "black", f, 1)
+	  f = {0, 0.2, 0.4, 0.6, 0.8, 1}
+	  rgbmix("red", "yellow", f, 1)
+	</code>
+	<para>
+	  The output from the <lit>print</lit> command in the first example
+	  is
+	</para>
+	<code>
+	  [1] "0x1b43dc"
+	  [2] "0x8da1ee"
+	  [3] "0xc6d0f6"
+	  [4] "0xe2e8fb"
+	  [5] "0xf1f3fd"
+	</code>
+      </description>
+    </function>
+
     <function name="round" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
