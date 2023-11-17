@@ -5489,9 +5489,9 @@ static strval_sorter2 *make_strval_sorter2 (char **S0,
    just a special case of the following, where in place of an array @a
    specified by the caller we use an implicit array holding the
    distinct string values in alphabetical order. So it might appear
-   that series_alphabetize_strings() could just be implemented as a
-   case of the following. However, it turns out that each case has its
-   own path to greatest efficiency, hence the two separate functions.
+   that series_alphabetize_strings() could just be implemented under
+   the following. However, it turns out that each case has its own
+   path to greatest efficiency, hence the two distinct functions.
 */
 
 int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
