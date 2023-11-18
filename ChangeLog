@@ -60,6 +60,8 @@ version 2023c, in progress
   main window by clicking the headers
 - GUI: add a menu item to install a local function package,
   under the "/File/Function packages" menu
+- GUI: add Ctrl + mouse wheel as a means of changing text
+  size in various windows
 
 2023-07-21 version 2023b
 - New command "kdplot": simple access to a kernel density plot

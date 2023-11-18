@@ -1120,6 +1120,11 @@ static gboolean ctrl_scroll (GtkWidget *w, GdkEvent *event,
 
 static void connect_text_sizer (windata_t *vwin)
 {
+    /* I don't know why there's a difference between GTK2
+       and GTK3 in this respect, but here's what I had to
+       do to get both working: select a different widget
+       as the anchor for the scroll-event callback.
+    */
 #if GTK_MAJOR_VERSION == 2
     g_signal_connect(vwin->text, "scroll-event",
 		     G_CALLBACK(ctrl_scroll), vwin);
