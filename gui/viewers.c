@@ -1098,6 +1098,37 @@ void set_model_save_state (windata_t *vwin, gboolean s)
 
 #endif
 
+/* Respond to Ctrl + mouse wheel to increase or reduce font size */
+
+static gboolean ctrl_scroll (GtkWidget *w, GdkEvent *event,
+			     gpointer data)
+{
+    GdkEventScroll *scroll = (GdkEventScroll *) event;
+
+    if (scroll->state & GDK_CONTROL_MASK) {
+	if (scroll->direction == GDK_SCROLL_UP) {
+	    text_larger(w, data);
+	    return TRUE;
+	} else if (scroll->direction == GDK_SCROLL_DOWN) {
+	    text_smaller(w, data);
+	    return TRUE;
+	}
+    }
+
+    return FALSE;
+}
+
+static void connect_text_sizer (windata_t *vwin)
+{
+#if GTK_MAJOR_VERSION == 2
+    g_signal_connect(vwin->text, "scroll-event",
+		     G_CALLBACK(ctrl_scroll), vwin);
+#else
+    g_signal_connect(vwin->main, "scroll-event",
+		     G_CALLBACK(ctrl_scroll), vwin);
+#endif
+}
+
 windata_t *
 view_buffer_with_parent (windata_t *parent, PRN *prn,
 			 int hsize, int vsize,
@@ -1221,6 +1252,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     }
 
     gtk_widget_grab_focus(vwin->text);
+    connect_text_sizer(vwin);
 
     return vwin;
 }
@@ -1618,26 +1650,6 @@ static void add_text_closer (windata_t *vwin)
     gtk_text_buffer_apply_tag(tbuf, tag, &iter, &iend);
 }
 
-/* Respond to Ctrl + mouse wheel to increase or reduce font size */
-
-static gboolean mouse_scroll (GtkWidget *w, GdkEvent *event,
-			      gpointer data)
-{
-    GdkEventScroll *scroll = (GdkEventScroll *) event;
-
-    if (scroll->state & GDK_CONTROL_MASK) {
-	if (scroll->direction == GDK_SCROLL_UP) {
-	    text_larger(w, data);
-	    return TRUE;
-	} else if (scroll->direction == GDK_SCROLL_DOWN) {
-	    text_smaller(w, data);
-	    return TRUE;
-	}
-    }
-
-    return FALSE;
-}
-
 /* For use when we want to display a piece of formatted text -- such
    as help for a gretl function package or a help bibliography entry
    -- in a window of its own, without any menu apparatus on the
@@ -1679,13 +1691,7 @@ windata_t *view_formatted_text_buffer (const gchar *title,
     if (role != VIEW_BIBITEM) {
 	gtk_widget_show(vwin->main);
 	gtk_widget_grab_focus(vwin->text);
-#if GTK_MAJOR_VERSION == 2
-	g_signal_connect(vwin->text, "scroll-event",
-			 G_CALLBACK(mouse_scroll), vwin);
-#else
-	g_signal_connect(vwin->main, "scroll-event",
-			 G_CALLBACK(mouse_scroll), vwin);
-#endif
+	connect_text_sizer(vwin);
     }
 
     return vwin;
