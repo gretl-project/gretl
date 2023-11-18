@@ -1679,8 +1679,13 @@ windata_t *view_formatted_text_buffer (const gchar *title,
     if (role != VIEW_BIBITEM) {
 	gtk_widget_show(vwin->main);
 	gtk_widget_grab_focus(vwin->text);
+#if GTK_MAJOR_VERSION == 2
 	g_signal_connect(vwin->text, "scroll-event",
 			 G_CALLBACK(mouse_scroll), vwin);
+#else
+	g_signal_connect(vwin->main, "scroll-event",
+			 G_CALLBACK(mouse_scroll), vwin);
+#endif
     }
 
     return vwin;
