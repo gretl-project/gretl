@@ -1618,6 +1618,26 @@ static void add_text_closer (windata_t *vwin)
     gtk_text_buffer_apply_tag(tbuf, tag, &iter, &iend);
 }
 
+/* Respond to Ctrl + mouse wheel to increase or reduce font size */
+
+static gboolean mouse_scroll (GtkWidget *w, GdkEvent *event,
+			      gpointer data)
+{
+    GdkEventScroll *scroll = (GdkEventScroll *) event;
+
+    if (scroll->state & GDK_CONTROL_MASK) {
+	if (scroll->direction == GDK_SCROLL_UP) {
+	    text_larger(w, data);
+	    return TRUE;
+	} else if (scroll->direction == GDK_SCROLL_DOWN) {
+	    text_smaller(w, data);
+	    return TRUE;
+	}
+    }
+
+    return FALSE;
+}
+
 /* For use when we want to display a piece of formatted text -- such
    as help for a gretl function package or a help bibliography entry
    -- in a window of its own, without any menu apparatus on the
@@ -1659,6 +1679,8 @@ windata_t *view_formatted_text_buffer (const gchar *title,
     if (role != VIEW_BIBITEM) {
 	gtk_widget_show(vwin->main);
 	gtk_widget_grab_focus(vwin->text);
+	g_signal_connect(vwin->text, "scroll-event",
+			 G_CALLBACK(mouse_scroll), vwin);
     }
 
     return vwin;

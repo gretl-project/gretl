@@ -1131,6 +1131,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	    gretl_build_path(path, dir, pkgname, NULL);
 	    strcat(path, ".pdf");
 	} else {
+	    /* VIEW_FN_PKG_INFO */
 	    gretl_build_path(path, dir, pkgname, NULL);
 	    strcat(path, ".gfn");
 	}
