@@ -1783,22 +1783,18 @@ static double mn_logit_loglik (const double *theta, void *ptr)
     double x, xti, exti, ll = 0.0;
     int yt, i, t;
 
-    errno = 0;
-
     for (i=0; i<mnl->npar; i++) {
 	mnl->b->val[i] = theta[i];
     }
 
     gretl_matrix_multiply(mnl->X, mnl->b, mnl->Xb);
 
-    /* 2020-05-06: errno was ref'd below */
-
     for (t=0; t<mnl->T; t++) {
 	x = 1.0;
 	for (i=0; i<mnl->n; i++) {
 	    /* sum row i of exp(Xb) */
 	    xti = gretl_matrix_get(mnl->Xb, t, i);
-	    exti = exp(xti); /* errno check? */
+	    exti = exp(xti);
 	    x += exti;
 	}
 	ll -= log(x);
@@ -1819,8 +1815,6 @@ static int mn_logit_score (double *theta, double *s, int npar,
     int i, j, k, t, yt;
     int err = 0;
 
-    errno = 0;
-
     for (i=0; i<npar; i++) {
 	s[i] = 0.0;
     }
@@ -1830,29 +1824,21 @@ static int mn_logit_score (double *theta, double *s, int npar,
 	for (i=0; i<mnl->n; i++) {
 	    /* sum row i of exp(Xb) */
 	    xti = gretl_matrix_get(mnl->Xb, t, i);
-	    exti = exp(xti); /* errno check */
+	    exti = exp(xti);
 	    x += exti;
 	    gretl_matrix_set(mnl->P, t, i, exti);
 	}
-
-	if (!errno) { /* conditionality? */
-	    yt = gretl_vector_get(mnl->y, t);
-	    k = 0;
-	    for (i=0; i<mnl->n; i++) {
-		pti = gretl_matrix_get(mnl->P, t, i) / x;
-		gretl_matrix_set(mnl->P, t, i, pti);
-		p = (i == (yt-1)) - pti;
-		for (j=0; j<mnl->k; j++) {
-		    g = p * gretl_matrix_get(mnl->X, t, j);
-		    s[k++] += g;
-		}
+	yt = gretl_vector_get(mnl->y, t);
+	k = 0;
+	for (i=0; i<mnl->n; i++) {
+	    pti = gretl_matrix_get(mnl->P, t, i) / x;
+	    gretl_matrix_set(mnl->P, t, i, pti);
+	    p = (i == (yt-1)) - pti;
+	    for (j=0; j<mnl->k; j++) {
+		g = p * gretl_matrix_get(mnl->X, t, j);
+		s[k++] += g;
 	    }
 	}
-    }
-
-    if (errno != 0) {
-	/* ?? */
-	err = E_NAN;
     }
 
     return err;
