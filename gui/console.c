@@ -564,6 +564,7 @@ windata_t *gretl_console (void)
     }
 
     gtk_widget_grab_focus(vwin->text);
+    connect_text_sizer(vwin);
 
     if (!swallow) {
 	/* enter command loop */

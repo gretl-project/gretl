@@ -115,6 +115,8 @@ void add_popup_item (const gchar *label, GtkWidget *menu,
 gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event,
 			     gpointer p);
 
+void connect_text_sizer (windata_t *vwin);
+
 #ifndef GRETL_EDIT
 
 void set_model_save_state (windata_t *vwin, gboolean s);

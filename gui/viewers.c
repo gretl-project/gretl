@@ -1118,7 +1118,7 @@ static gboolean ctrl_scroll (GtkWidget *w, GdkEvent *event,
     return FALSE;
 }
 
-static void connect_text_sizer (windata_t *vwin)
+void connect_text_sizer (windata_t *vwin)
 {
     /* I don't know why there's a difference between GTK2
        and GTK3 in this respect, but here's what I had to
@@ -1459,6 +1459,7 @@ view_file_with_title (const char *filename, int editable, fmode mode,
 
     cursor_to_top(vwin);
     gtk_widget_grab_focus(vwin->text);
+    connect_text_sizer(vwin);
 
 #if 0 /* not yet */
     if (vwin->flags & VWIN_SWALLOW) {
