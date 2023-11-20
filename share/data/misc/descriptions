@@ -12,6 +12,7 @@
 "bjg","Box and Jenkins Series G (airline passengers)","time series, T=144"
 "brand_cassola","Euro area money demand data","time series, T=79"
 "broiler","Epple and McCallum broiler chicken data","time series, T=52"
+"CardKrueger94","Effect of minimum wage on emplolyment","cross section, n=410"
 "CEL","Caselli, Esquivel and Lefort growth panel data","panel, T=8 N=97"
 "chomage","D.S.G. Pollock's Swiss unemployment data","time series, T=66"
 "credscore","Greene's credit scoring data","cross section, n=100"
