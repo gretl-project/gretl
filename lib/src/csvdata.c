@@ -2707,7 +2707,10 @@ static int csv_is_numeric (const char *s, csvdata *c)
 {
     int ret = 0;
 
-    if (c->decpoint == '.') {
+    if (!strcmp(s, ".")) {
+	/* treat as NA? */
+	ret = 1;
+    } else if (c->decpoint == '.') {
         ret = numeric_string(s);
     } else {
         /* decimal comma in force */

@@ -738,8 +738,7 @@ static struct extmap data_ftype_map[] = {
     { GRETL_WF1,          ".wf1" },
     { GRETL_DTA,          ".dta" },
     { GRETL_SAV,          ".sav" },
-    { GRETL_SAS,          ".xpt" },
-    { GRETL_JMULTI,       ".dat" }
+    { GRETL_SAS,          ".xpt" }
 };
 
 static const char *map_suffixes[] = {
