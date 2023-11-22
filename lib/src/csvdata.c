@@ -1959,44 +1959,49 @@ void import_na_init (void)
     strcpy(import_na, s);
 }
 
-/* Returns 1 if the string @s should be counted representing
-   an NA or missing value, 0 otherwise. If there is a user-set
-   "csv_read_na" value this is used for comparison, otherwise
-   a set of default values is consulted.
+/* Returns 1 if the string @s should be counted representing an NA or
+   missing value, 0 otherwise. If there is a user-set "csv_read_na"
+   value we check it first. In any case a set of default values is
+   consulted. The second point is a possibly debatable change dating
+   from 2023-11-22; prior to then a specified "csv_read_na" value was
+   taken as the only missing-value indicator.
 */
 
 int import_na_string (const char *s)
 {
-    if (*import_na != '\0' && strcmp(import_na, "default")) {
-        /* the user has set a specific "NA" string, so
-           respect it */
-        return !strcmp(s, import_na);
-    } else {
-        /* consult a list of common representations of NA */
-        const char *defaults[] = {
-            "NA",
-            "N.A.",
-            "n.a.",
-            "na",
-            "n/a",
-            "N/A",
-            "#N/A",
-            "NaN",
-            ".NaN",
-            ".",
-            "..",
-            "-999",
-            "-9999",
-            "-",
-            NULL
-        };
-        int i;
+    const char *defaults[] = {
+	"NA",
+	"N.A.",
+	"n.a.",
+	"na",
+	"n/a",
+	"N/A",
+	"#N/A",
+	"NaN",
+	".NaN",
+	".",
+	"..",
+	"-999",
+	"-9999",
+	"-",
+	NULL
+    };
+    int i;
 
-        for (i=0; defaults[i] != NULL; i++) {
-            if (!strcmp(s, defaults[i])) {
-                return 1;
-            }
-        }
+    if (*import_na != '\0' && strcmp(import_na, "default")) {
+        /* the user has set a specific "NA" string */
+	if (!strcmp(s, import_na)) {
+	    return 1;
+	}
+    }
+
+    /* Should we continue in the following way if "csv_read_na"
+       is specified? */
+
+    for (i=0; defaults[i] != NULL; i++) {
+	if (!strcmp(s, defaults[i])) {
+	    return 1;
+	}
     }
 
     return 0;
