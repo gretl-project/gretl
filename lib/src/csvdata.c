@@ -1959,12 +1959,12 @@ void import_na_init (void)
     strcpy(import_na, s);
 }
 
-/* Returns 1 if the string @s should be counted representing an NA or
-   missing value, 0 otherwise. If there is a user-set "csv_read_na"
-   value we check it first. In any case a set of default values is
+/* Returns 1 if the string @s should be counted representing a missing
+   value, 0 otherwise. If there is a user-set "csv_read_na" value we
+   check it first. In any case a set of default values is
    consulted. The second point is a possibly debatable change dating
-   from 2023-11-22; prior to then a specified "csv_read_na" value was
-   taken as the only missing-value indicator.
+   from 2023-11-22; prior to then a user-specified "csv_read_na" value
+   was taken as the ONLY missing-value indicator.
 */
 
 int import_na_string (const char *s)
