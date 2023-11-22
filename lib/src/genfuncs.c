@@ -1459,6 +1459,7 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
     u2 = dset->t2 / T;
 
     if (k == F_PNOBS) {
+	/* the number of valid observations */
         for (i=u1; i<=u2; i++) {
             Ti = 0;
             for (t=0; t<T; t++) {
@@ -1479,6 +1480,7 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
                 s = i*T + t;
                 if (panel_obs_ok(x, s, mask)) {
                     if (na(yi)) {
+			/* the first valid observation */
                         yi = x[s];
                     } else if (k == F_PMIN && x[s] < yi) {
                         yi = x[s];
@@ -1494,95 +1496,56 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
             }
         }
     } else if (k == F_PMEAN || k == F_PSD) {
-        /* first check for presence of time-variation */
-        double xref;
-        int TV = 0;
+	/* in both of these cases we need the mean */
+	double xbar;
 
-        for (i=u1; i<=u2 && !TV; i++) {
-            xref = NADBL;
-            for (t=0; t<T && !TV; t++) {
-                s = i*T + t;
-                if (panel_obs_ok(x, s, mask)) {
-                    if (na(xref)) {
-                        xref = x[s];
-                    } else if (x[s] != xref) {
-                        TV = 1;
-                    }
-                }
-            }
-        }
-#if 0
-        fprintf(stderr, "panel_statistic: time-varying = %d\n", TV);
-#endif
-        if (k == F_PMEAN || TV) {
-            double xbar;
-
-            for (i=u1; i<=u2; i++) {
-                xbar = NADBL;
-                Ti = 0;
-                for (t=0; t<T; t++) {
-                    s = i*T + t;
-                    if (panel_obs_ok(x, s, mask)) {
-                        if (na(xbar) || !TV) {
-                            xbar = x[s];
-                        } else {
-                            xbar += x[s];
-                        }
-                        Ti++;
-                    }
-                }
-                if (!na(xbar) && TV) {
-                    xbar /= Ti;
-                }
-                for (t=0; t<T; t++) {
-                    y[i*T + t] = xbar;
-                }
-            }
-        }
-
-        if (k == F_PSD && !TV) {
-            /* s.d. with no time variation! */
-            double sd;
+	for (i=u1; i<=u2; i++) {
+	    xbar = NADBL;
+	    Ti = 0;
+	    for (t=0; t<T; t++) {
+		s = i*T + t;
+		if (panel_obs_ok(x, s, mask)) {
+		    if (na(xbar)) {
+			/* the first valid observation */
+			xbar = x[s];
+		    } else {
+			/* cumulate */
+			xbar += x[s];
+		    }
+		    Ti++;
+		}
+	    }
+	    if (!na(xbar)) {
+		xbar /= Ti;
+	    }
+	    for (t=0; t<T; t++) {
+		y[i*T + t] = xbar;
+	    }
+	}
+        if (k == F_PSD) {
+	    /* now we need the deviations from the mean */
+	    double xbar, dev, ssx, sd;
 
             for (i=u1; i<=u2; i++) {
+                xbar = y[i*T]; /* the mean calculated above */
+		if (na(xbar)) {
+		    /* no calculation needed */
+		    for (t=1; t<T; t++) {
+			y[i*T + t] = NADBL;
+		    }
+		    continue;
+		}
+		ssx = 0;
                 Ti = 0;
-                for (t=0; t<T; t++) {
-                    if (panel_obs_ok(x, i*T + t, mask)) {
-                        Ti++;
-                        break;
-                    }
-                }
-                sd = Ti > 0 ? 0.0 : NADBL;
-                for (t=0; t<T; t++) {
-                    y[i*T + t] = sd;
-                }
-            }
-        } else if (k == F_PSD) {
-            /* the time-varying case: we use the mean
-               calculated above */
-            double sd, xbar, ssx, dev;
-
-            for (i=u1; i<=u2; i++) {
-                ssx = NADBL;
-                xbar = y[i*T];
-                Ti = 0;
-                if (!na(xbar)) {
-                    for (t=0; t<T; t++) {
-                        s = i*T + t;
-                        if (panel_obs_ok(x, s, mask)) {
-                            dev = x[s] - xbar;
-                            if (na(ssx)) {
-                                ssx = dev * dev;
-                            } else {
-                                ssx += dev * dev;
-                            }
-                            Ti++;
-                        }
-                    }
-                }
-                if (na(ssx)) {
-                    sd = NADBL;
-                } else if (Ti == 1) {
+		for (t=0; t<T; t++) {
+		    s = i*T + t;
+		    if (panel_obs_ok(x, s, mask)) {
+			dev = x[s] - xbar;
+			ssx += dev * dev;
+			Ti++;
+		    }
+		}
+                if (Ti == 1) {
                     sd = 0.0;
                 } else {
                     sd = sqrt(ssx / (Ti-1));
