@@ -1114,7 +1114,7 @@
     </description>
   </command>
 
-    <command name="bds" section="Tests" label="BDS nonlinearity test">
+  <command name="bds" section="Tests" label="BDS nonlinearity test">
     <usage>
       <arguments>
         <argument>ordine</argument>
@@ -6226,279 +6226,281 @@
 	    che non dovrebbe essere presentata all'utente in
 	    nessun'altra forma.
 	  </para>
-	</description>
-      </command>
+    </description>
+  </command>
 
-<command name="gui-htest" section="Tests" context="gui"
-	 label="Calcolatore per le statistiche test">
+  <command name="gui-htest" section="Tests" context="gui"
+	   label="Calcolatore per le statistiche test">
+    
+    <description>
+      <para>
+	Il calcolatore dei test di Gretl calcola statistiche test e
+	p-value per molti tipi di test di ipotesi su una o due
+	popolazioni.  Per utilizzarlo, occorre indicare le statistiche
+	campionarie derivate da uno o due campioni, a seconda del test
+	scelto. Queste possono essere indicate esplicitamente in forma
+	numerica, oppure, se si ha un file di dati aperto, è possibile
+	far calcolare a gretl le statistiche test per una o più
+	variabili selezionate dal dataset (nel caso delle medie e
+	varianze, ma non nel caso delle proporzioni).
+      </para>
+      <para>
+	Per eseguire un test indicando una variabile del dataset,
+	occorre per prima cosa attivare questa opzione selezionando la
+	casella <quote>Usa variabile dal dataset</quote>, e poi
+	scegliere la variabile nella lista.  Appena si sceglie una
+	variabile, i valori delle statistiche rilevanti sono
+	automaticamente inseriti nelle caselle sottostanti.
+      </para>
+      <para>
+	Oltre che selezionare semplicemente una variabile, è possibile
+	specificare un sotto-campione. Ad esempio, si ipotizzi di avere
+	dei dati sui salari in una variabile chiamata <lit>wage</lit> e
+	una variabile dummy chiamata <lit>gender</lit>, pari a 1 per gli
+	uomini e 0 per le donne (o viceversa). Quindi, nel test per la
+	differenza fra le medie, è possibile selezionare <lit>wage</lit>
+	in entrambi i campi, ma aggiungendo nel campo superiore
+	<lit>(gender=0)</lit> e nel campo inferiore
+	<lit>(gender=1)</lit> si otterrà un test per la differenza tra
+	il reddito medio degli uomini e delle donne. Quando si specifica
+	un vincolo che identifica un sotto-campione, occorre premere il
+	tasto Invio perché le statistiche campionarie siano calcolate.
+      </para>
+      <para>
+	Il vincolo che definisce il sotto-campione deve essere indicato tra
+	parentesi e in generale prende la forma "variabile operatore
+	valore", come in
+      </para>
+      <code>
+	var2 op val
+      </code>
+      <para>
+	dove <lit>var2</lit> è il nome di una variabile nel dataset
+	attuale, <lit>val</lit> è un valore numerico e <lit>val</lit>
+	è un operatore di confronto, da scegliere tra
+      </para>
+      <code>
+	==  !=   &lt;  &gt;  &lt;  &gt;
+      </code>
+      <para>
+	(rispettivamente: uguale, diverso, minore, maggiore, minore o
+	uguale, maggiore o uguale). Gli spazi prima e dopo
+	l'operatore sono opzionali.
+      </para>
+    </description>
+  </command>
 
-  <description>
-    <para>
-      Il calcolatore dei test di Gretl calcola statistiche test e
-      p-value per molti tipi di test di ipotesi su una o due
-      popolazioni.  Per utilizzarlo, occorre indicare le statistiche
-      campionarie derivate da uno o due campioni, a seconda del test
-      scelto. Queste possono essere indicate esplicitamente in forma
-      numerica, oppure, se si ha un file di dati aperto, è possibile
-      far calcolare a gretl le statistiche test per una o più
-      variabili selezionate dal dataset (nel caso delle medie e
-      varianze, ma non nel caso delle proporzioni).
-    </para>
-    <para>
-      Per eseguire un test indicando una variabile del dataset,
-      occorre per prima cosa attivare questa opzione selezionando la
-      casella <quote>Usa variabile dal dataset</quote>, e poi
-      scegliere la variabile nella lista.  Appena si sceglie una
-      variabile, i valori delle statistiche rilevanti sono
-      automaticamente inseriti nelle caselle sottostanti.
-    </para>
-    <para>
-      Oltre che selezionare semplicemente una variabile, è possibile
-      specificare un sotto-campione. Ad esempio, si ipotizzi di avere
-      dei dati sui salari in una variabile chiamata <lit>wage</lit> e
-      una variabile dummy chiamata <lit>gender</lit>, pari a 1 per gli
-      uomini e 0 per le donne (o viceversa). Quindi, nel test per la
-      differenza fra le medie, è possibile selezionare <lit>wage</lit>
-      in entrambi i campi, ma aggiungendo nel campo superiore
-      <lit>(gender=0)</lit> e nel campo inferiore
-      <lit>(gender=1)</lit> si otterrà un test per la differenza tra
-      il reddito medio degli uomini e delle donne. Quando si specifica
-      un vincolo che identifica un sotto-campione, occorre premere il
-      tasto Invio perché le statistiche campionarie siano calcolate.
-    </para>
-    <para>
-      Il vincolo che definisce il sotto-campione deve essere indicato tra
-      parentesi e in generale prende la forma "variabile operatore
-      valore", come in
-    </para>
-    <code>
-      var2 op val
-    </code>
-    <para>
-      dove <lit>var2</lit> è il nome di una variabile nel dataset
-      attuale, <lit>val</lit> è un valore numerico e <lit>val</lit>
-      è un operatore di confronto, da scegliere tra
-    </para>
-    <code>
-      ==  !=   &lt;  &gt;  &lt;  &gt;
-    </code>
-    <para>
-      (rispettivamente: uguale, diverso, minore, maggiore, minore o
-      uguale, maggiore o uguale). Gli spazi prima e dopo
-      l'operatore sono opzionali.
-    </para>
-  </description>
-</command>
+  <command name="gui-htest-np" section="Tests" context="gui"
+           label="Test non parametrici">
+    
+    <description>
+      <para>
+        Tre tipologie di test non parametrici sono disponibili
+        tramite questa finestra di dialogo: test delle differenze
+        tra gruppi, per la casualità e per la correlazione (o il rango).
+      </para>
+      <subhead>Test delle differenze</subhead>
+      <para>
+        Nella finestra <quote>Test delle differenze</quote> è possibile svolgere
+        dei test non parametrici per la differenza tra due popolazioni o gruppi,
+        ed è possibile scegliere vari tipi specifici di test:
+      </para>
+      <ilist>
+        <li>
+          <para>
+            <emphasis>Test del segno</emphasis>: si basa sul fatto che per due campioni
+            <math>x</math> e <math>y</math> estratti casualmente dalla
+            stessa distribuzione, la probabilità che valga
+            <math>x</math><sub>i</sub> &gt;
+            <math>y</math><sub>i</sub> per ogni osservazione
+            <math>i</math> dovrebbe valere 0.5. La statistica test è
+            <math>w</math>, ossia il numero di osservazioni per cui vale
+            <math>x</math><sub>i</sub> &gt;
+            <math>y</math><sub>i</sub>. Sotto l'ipotesi nulla, questa
+            grandezza si distribuisce come una binomiale con parametri
+            (<math>n</math>, 0.5), dove <math>n</math> è il numero di
+            osservazioni.
+          </para>
+        </li>
+        <li>
+          <para>
+            <emphasis>Test rank sum di Wilcoxon</emphasis>: questo test
+            procede ordinando le osservazioni estratte da entrambi i
+            campioni dalla più piccola alla più grande, e quindi
+            calcolando la somma dei ranghi delle osservazioni da uno dei
+            campioni. I due campioni non devono necessariamente avere la
+            stessa dimensione: se sono diversi, viene usato il campione
+            più piccolo per calcolare la somma dei ranghi. Sotto
+            l'ipotesi nulla che i campioni siano estratti da popolazioni
+            con la stessa mediana, la distribuzione di probabilità della
+            somma dei ranghi può essere calcolata per ogni valore
+            dell'ampiezza dei due campioni, mentre per campioni
+            abbastanza ampi essa approssima la distribuzione normale.
+          </para>
+        </li>
+        <li>
+          <para>
+            <emphasis>Test signed rank di Wilcoxon</emphasis>: questo
+            test è valido per "coppie di campioni", come possono
+            essere ad esempio i valori di una variabile in un gruppo
+            di individui prima e dopo un certo trattamento. Il test
+            procede calcolando le differenze tra le coppie di
+            osservazioni <math>x</math><sub>i</sub> &minus;
+            <math>y</math><sub>i</sub>, ordinando queste differenze
+            per valore assoluto e assegnando ad ogni coppia un valore
+            di rango con segno, in cui il segno rispecchia il segno
+            della differenza. Quindi viene calcolato
+            <math>W</math><sub>+</sub>, la somma di tutti i ranghi con
+            segno positivo. Come avviene per il test rank-sum, questa
+            statistica ha una distribuzione precisa nell'ipotesi nulla
+            che la differenza mediana sia zero, distribuzione che
+            converte alla normale nel caso di campioni abbastanza
+            ampi.
+          </para>
+        </li>
+      </ilist>
+      <subhead>Casualità</subhead>
+      <para>
+	Nella finestra <quote>Test delle successioni</quote> è
+	possibile eseguire un test per la casualità di una certa
+	variabile, basato sul numero di successioni di valori
+	consecutivi positivi o negativi.  Con l'opzione <quote>Usa la
+	differenza prima</quote>, la variabile viene differenziata
+	prima dell'analisi, quindi le successioni sono interpretabili
+	come sequenze di incrementi o decrementi consecutivi nel
+	valore della variabile. La statistica test è basata su
+	un'approssimazione normale alla distribuzione del numero di
+	sequenze sotto l'ipotesi nulla di casualità.
+      </para>
+      <subhead>Correlazione</subhead>
+      <para>
+	Nella finestra <quote>Correlazione</quote> si ha a disposione il test per il
+	rango della correlazione rho di Spearman e tau di Kendall.
+      </para>
+    </description>
+  </command>
 
-<command name="gui-htest-np" section="Tests" context="gui"
-	 label="Test non parametrici">
+  <command name="hccme" section="Estimation" context="gui"
+           label="Errori standard robusti">
 
-  <description>
-    <para>
-      Tre tipologie di test non parametrici sono disponibili
-      tramite questa finestra di dialogo: test delle differenze
-      tra gruppi, per la casualità e per la correlazione (o il rango).
-    </para>
-
-    <subhead>Test delle differenze</subhead>
-    <para>
-      Nella finestra <quote>Test delle differenze</quote> è possibile svolgere
-      dei test non parametrici per la differenza tra due popolazioni o gruppi,
-      ed è possibile scegliere vari tipi specifici di test:
-    </para>
-    <ilist>
-      <li>
-	<para>
-	  <emphasis>Test del segno</emphasis>: si basa sul fatto che per due campioni
-	  <math>x</math> e <math>y</math> estratti casualmente dalla
-          stessa distribuzione, la probabilità che valga
-	  <math>x</math><sub>i</sub> &gt;
-	  <math>y</math><sub>i</sub> per ogni osservazione
-	  <math>i</math> dovrebbe valere 0.5. La statistica test è
-	  <math>w</math>, ossia il numero di osservazioni per cui vale
-	  <math>x</math><sub>i</sub> &gt;
-	  <math>y</math><sub>i</sub>. Sotto l'ipotesi nulla, questa
-          grandezza si distribuisce come una binomiale con parametri
-	  (<math>n</math>, 0.5), dove <math>n</math> è il numero di
-          osservazioni.
-	</para>
-      </li>
-      <li>
-	<para>
-	  <emphasis>Test rank sum di Wilcoxon</emphasis>: questo test
-	  procede ordinando le osservazioni estratte da entrambi i
-	  campioni dalla più piccola alla più grande, e quindi
-	  calcolando la somma dei ranghi delle osservazioni da uno dei
-	  campioni. I due campioni non devono necessariamente avere la
-	  stessa dimensione: se sono diversi, viene usato il campione
-	  più piccolo per calcolare la somma dei ranghi. Sotto
-	  l'ipotesi nulla che i campioni siano estratti da popolazioni
-	  con la stessa mediana, la distribuzione di probabilità della
-	  somma dei ranghi può essere calcolata per ogni valore
-	  dell'ampiezza dei due campioni, mentre per campioni
-	  abbastanza ampi essa approssima la distribuzione normale.
-	</para>
-      </li>
-      <li>
-	<para>
-	  <emphasis>Test signed rank di Wilcoxon</emphasis>: questo test è valido per "coppie di
-	  campioni", come possono essere ad esempio i valori di una variabile in un
-	  gruppo di individui prima e dopo un certo trattamento. Il test procede
-	  calcolando le differenze tra le coppie di osservazioni
-	  <math>x</math><sub>i</sub> &minus;
-	  <math>y</math><sub>i</sub>, ordinando queste differenze per valore
-	  assoluto e assegnando ad ogni coppia un valore di rango con segno, in cui
-	  il segno rispecchia il segno della differenza. Quindi viene calcolato
-	  <math>W</math><sub>+</sub>, la somma di tutti i ranghi con segno
-	  positivo. Come avviene per il test rank-sum, questa statistica ha una
-	  distribuzione precisa nell'ipotesi nulla che la differenza mediana sia
-	  zero, distribuzione che converte alla normale nel caso di campioni
-	  abbastanza ampi.
-	  </para>
-	  </li>
-	  </ilist>
-	  <subhead>Casualità</subhead>
-	  <para>
-	    Nella finestra <quote>Test delle successioni</quote> è possibile
-	    eseguire un test per la casualità di una certa variabile, basato
-	    sul numero di successioni di valori consecutivi positivi o negativi.
-	    Con l'opzione <quote>Usa la differenza prima</quote>, la variabile viene
-	    differenziata prima dell'analisi, quindi le successioni sono
-	    interpretabili come sequenze di incrementi o decrementi consecutivi nel
-	    valore della variabile. La statistica test è basata su un'approssimazione
-	    normale alla distribuzione del numero di sequenze sotto l'ipotesi nulla
-	    di casualità.
-	  </para>
-    <subhead>Correlazione</subhead>
-    <para>
-      Nella finestra <quote>Correlazione</quote> si ha a disposione il test per il
-      rango della correlazione rho di Spearman e tau di Kendall.
-	  </para>
-	  </description>
-
-</command>
-
-<command name="hccme" section="Estimation" context="gui"
-	 label="Errori standard robusti">
-
-  <description>
-    <para>
-      Sono disponibili vari modi di calcolare gli errori standard
-      robusti in presenza di eteroschedasticità (e, nel caso dello
-      stimatore HAC, di autocorrelazione).
+    <description>
+      <para>
+	Sono disponibili vari modi di calcolare gli errori standard
+	robusti in presenza di eteroschedasticità (e, nel caso dello
+	stimatore HAC, di autocorrelazione).
 </para>
 <para>
   HC0 produce gli <quote>errori standard originali di
   White</quote>; HC1, HC2, HC3 e HC3a sono varianti che si ritiene
-  producano risultati migliori (più affidabili). Per i dettagli
-  sugli stimatori, si veda <cite key="mackinnon-white85">MacKinnon
-  e White (Journal of Econometrics, 1985)</cite> o <cite
-  key="davidson-mackinnon04">Davidson e MacKinnon, Econometric
-  Theory and Methods (Oxford, 2004)</cite>. Le sigle usate sono
-  quelle proposte da Davidson e MacKinnon. La variante
-  <quote>HC3a</quote> è il <quote>jackknife</quote> descritto da
-  MacKinnon e White (1985); HC3 è una sua vicina approssimazione.
-</para>
-<para>
-  Se si usa lo stimatore HAC per serie storiche, è possibile calibrare
-  la lunghezza dei ritardi usando il comando <cmd>set</cmd>. Si veda il
-  manuale di gretl o i file di aiuto per i dettagli.
-</para>
-<para>
-  Quando si stima un  modello OLS su dati panel, lo stimatore robusto
-  predefinito per la matrice di covarianza è quello dato da Arellano.
-  L'alternativa è lo stimatore PCSE (Panel Corrected Standard Errors) di
-  Beck e Katz, che tiene conto dell'eteroschedasticità, ma non
-  dell'autocorrelazione.
-</para>
-<para>
-  Per i modelli GARCH sono disponibili due stimatori robusti della
-  matrice di covarianza: QML è lo stimatore di quasi massima verosimiglianza,
-  e BW è lo stimatore di Bollerslev-Wooldridge.
-</para>
-<para>
-  Di default gretl utilizza la distribuzione <math>t</math> di
-  Student quando calcola i p-value basati su errori standard
-  robusti, in un contesto di stimatori dei minimi
-  quadrati. L'opzione denomionata <quote>Usa la distribuzione
-  normale per p-value robusti</quote> può essere utilizzata in
-  alternativa al metodo predefinito.
-</para>
-</description>
+      producano risultati migliori (più affidabili). Per i dettagli
+      sugli stimatori, si veda <cite key="mackinnon-white85">MacKinnon
+      e White (Journal of Econometrics, 1985)</cite> o <cite
+      key="davidson-mackinnon04">Davidson e MacKinnon, Econometric
+      Theory and Methods (Oxford, 2004)</cite>. Le sigle usate sono
+      quelle proposte da Davidson e MacKinnon. La variante
+      <quote>HC3a</quote> è il <quote>jackknife</quote> descritto da
+      MacKinnon e White (1985); HC3 è una sua vicina approssimazione.
+    </para>
+    <para>
+      Se si usa lo stimatore HAC per serie storiche, è possibile calibrare
+      la lunghezza dei ritardi usando il comando <cmd>set</cmd>. Si veda il
+      manuale di gretl o i file di aiuto per i dettagli.
+    </para>
+    <para>
+      Quando si stima un  modello OLS su dati panel, lo stimatore robusto
+      predefinito per la matrice di covarianza è quello dato da Arellano.
+      L'alternativa è lo stimatore PCSE (Panel Corrected Standard Errors) di
+      Beck e Katz, che tiene conto dell'eteroschedasticità, ma non
+      dell'autocorrelazione.
+    </para>
+    <para>
+      Per i modelli GARCH sono disponibili due stimatori robusti della
+      matrice di covarianza: QML è lo stimatore di quasi massima verosimiglianza,
+      e BW è lo stimatore di Bollerslev-Wooldridge.
+    </para>
+    <para>
+      Di default gretl utilizza la distribuzione <math>t</math> di
+      Student quando calcola i p-value basati su errori standard
+      robusti, in un contesto di stimatori dei minimi
+      quadrati. L'opzione denomionata <quote>Usa la distribuzione
+      normale per p-value robusti</quote> può essere utilizzata in
+      alternativa al metodo predefinito.
+    </para>
+  </description>
 
 </command>
 
 <command name="heckit" section="Estimation" context="cli"
-	 label="Modello di selezione di Heckman">
+         label="Modello di selezione di Heckman">
 
   <usage>
     <arguments>
-<argument>variabile-dipendente</argument>
-<argument>variabili-indipendenti</argument>
-<argument separated="true">equazione di selezione</argument>
-</arguments>
-<options>
-  <option>
-<flag>--quiet</flag>
-<effect>non mostra i risultati</effect>
-</option>
-<option>
-<flag>--two-step</flag>
-<effect>esegue la stima in due passi</effect>
-</option>
-<option>
-<flag>--vcv</flag>
-<effect>mostra la matrice di covarianza</effect>
-</option>
-<option>
-<flag>--opg</flag>
-<effect>errori standard OPG</effect>
-</option>
-<option>
-<flag>--robust</flag>
-<effect>errori standard QML</effect>
-</option>
-<option>
-<flag>--cluster</flag>
-<optparm>clustvar</optparm>
-<effect>vedi <cmdref targ="logit"/> per una spiegazione</effect>
-</option>
-<option>
-<flag>--verbose</flag>
-<effect>mostra risultati aggiuntivi</effect>
-</option>
-</options>
-<examples>
-<example>heckit y 0 x1 x2 ; ys 0 x3 x4</example>
-<demos>
-<demo>heckit.inp</demo>
-</demos>
-</examples>
-</usage>
+      <argument>variabile-dipendente</argument>
+      <argument>variabili-indipendenti</argument>
+      <argument separated="true">equazione di selezione</argument>
+    </arguments>
+    <options>
+      <option>
+        <flag>--quiet</flag>
+        <effect>non mostra i risultati</effect>
+      </option>
+      <option>
+        <flag>--two-step</flag>
+        <effect>esegue la stima in due passi</effect>
+      </option>
+      <option>
+        <flag>--vcv</flag>
+        <effect>mostra la matrice di covarianza</effect>
+      </option>
+      <option>
+        <flag>--opg</flag>
+        <effect>errori standard OPG</effect>
+      </option>
+      <option>
+        <flag>--robust</flag>
+        <effect>errori standard QML</effect>
+      </option>
+      <option>
+        <flag>--cluster</flag>
+        <optparm>clustvar</optparm>
+        <effect>vedi <cmdref targ="logit"/> per una spiegazione</effect>
+      </option>
+      <option>
+        <flag>--verbose</flag>
+        <effect>mostra risultati aggiuntivi</effect>
+      </option>
+    </options>
+    <examples>
+      <example>heckit y 0 x1 x2 ; ys 0 x3 x4</example>
+      <demos>
+        <demo>heckit.inp</demo>
+      </demos>
+    </examples>
+  </usage>
 
-<description>
-  <para>
-    Modello di selezione di tipo Heckman. Nella specificazione, la lista che
-    precede il punto e virgola rappresenta l'equazione principale, mentre la
-    seconda lista rappresenta l'equazione di selezione. La variabile
-dipendente nell'equazione di selezione (<lit>ys</lit>
-nell'esempio visto sopra) deve essere una variabile binaria.
-</para>
+  <description>
+    <para>
+      Modello di selezione di tipo Heckman. Nella specificazione, la lista che
+      precede il punto e virgola rappresenta l'equazione principale, mentre la
+      seconda lista rappresenta l'equazione di selezione. La variabile
+      dipendente nell'equazione di selezione (<lit>ys</lit>
+      nell'esempio visto sopra) deve essere una variabile binaria.
+    </para>
 
-<para>
-  Per impostazione predefinita, i parametri sono stimati per massima
-  verosimiglianza. La matrice di covarianza dei parametri è calcolata
-  usando l'inversa negativa dell'Hessiana. Se si vuole usare la procedura
-  di stima in due passi, basta usare l'opzione <opt>two-step</opt>.
-  In questo caso, la matrice di covarianza dei parametri dell'equazione
-  principale è corretta nel modo descritto da <cite key="heckman79">Heckman (1979)</cite>.
-</para>
+    <para>
+      Per impostazione predefinita, i parametri sono stimati per massima
+      verosimiglianza. La matrice di covarianza dei parametri è calcolata
+      usando l'inversa negativa dell'Hessiana. Se si vuole usare la procedura
+      di stima in due passi, basta usare l'opzione <opt>two-step</opt>.
+      In questo caso, la matrice di covarianza dei parametri dell'equazione
+      principale è corretta nel modo descritto da <cite key="heckman79">Heckman (1979)</cite>.
+    </para>
 
-</description>
+  </description>
 
-<gui-access>
-  <menu-path>/Modello/Variabile dipendente limitata/Heckit</menu-path>
-</gui-access>
+  <gui-access>
+    <menu-path>/Modello/Variabile dipendente limitata/Heckit</menu-path>
+  </gui-access>
 
 </command>
 
@@ -6506,226 +6508,226 @@ nell'esempio visto sopra) deve essere una variabile binaria.
 
   <usage>
     <altforms>
-<altform><lit>help</lit></altform>
-<altform><lit>help functions</lit></altform>
-<altform><lit>help</lit> <repl>comando</repl></altform>
-<altform><lit>help</lit> <repl>funzione</repl></altform>
-</altforms>
-<options>
-  <option>
-<flag>--func</flag>
-<effect>sceglie l'aiuto sulle funzioni</effect>
-</option>
-</options>
-</usage>
+      <altform><lit>help</lit></altform>
+      <altform><lit>help functions</lit></altform>
+      <altform><lit>help</lit> <repl>comando</repl></altform>
+      <altform><lit>help</lit> <repl>funzione</repl></altform>
+    </altforms>
+    <options>
+      <option>
+        <flag>--func</flag>
+        <effect>sceglie l'aiuto sulle funzioni</effect>
+      </option>
+    </options>
+  </usage>
 
-<description>
-  <para>
-    Se non vengono indicati argomenti, mostra un elenco dei comandi disponibili.
-    Indicando l'argomento <lit quote="true">functions</lit>, mostra un
-    elenco delle funzioni disponibili (si veda <cmdref targ="genr"/>).
-</para>
-<para>
-<cmd>help</cmd> <repl>comando</repl> descrive il <repl>comando</repl>
-(ad es.  <cmd>help smpl</cmd>). <lit>help</lit> <repl>funzione</repl>
-descrive la <repl>funzione</repl> (&eg; <lit>help ldet</lit>).
-Alcune funzioni hanno lo stesso nome dei comandi relativi (&eg;
-<lit>diff</lit>): in questo caso verrà mostrato l'aiuto relativo al
-comando, a meno che non si usi l'opzione <opt>func</opt>.
-</para>
-</description>
+  <description>
+    <para>
+      Se non vengono indicati argomenti, mostra un elenco dei comandi disponibili.
+      Indicando l'argomento <lit quote="true">functions</lit>, mostra un
+      elenco delle funzioni disponibili (si veda <cmdref targ="genr"/>).
+    </para>
+    <para>
+      <cmd>help</cmd> <repl>comando</repl> descrive il <repl>comando</repl>
+      (ad es.  <cmd>help smpl</cmd>). <lit>help</lit> <repl>funzione</repl>
+      descrive la <repl>funzione</repl> (&eg; <lit>help ldet</lit>).
+      Alcune funzioni hanno lo stesso nome dei comandi relativi (&eg;
+      <lit>diff</lit>): in questo caso verrà mostrato l'aiuto relativo al
+      comando, a meno che non si usi l'opzione <opt>func</opt>.
+    </para>
+  </description>
 
-<gui-access>
-<menu-path>/Aiuto</menu-path>
-</gui-access>
+  <gui-access>
+    <menu-path>/Aiuto</menu-path>
+  </gui-access>
 
 </command>
 
 <command name="hfplot" section="Graphs"
-	 label="Crea un grafico MIDAS" context="cli">
+         label="Crea un grafico MIDAS" context="cli">
 
   <usage>
     <arguments>
-<argument>hflist</argument>
-<argument optional="true" separated="true">lflist</argument>
-</arguments>
-<options>
-  <option>
-<flag>--with-lines</flag>
-<effect>crea grafico lineare</effect>
-</option>
-<option>
-<flag>--time-series</flag>
-<effect>tempo in ascissa</effect>
-</option>
-<option>
-<flag>--output</flag>
-<optparm>filename</optparm>
-<effect>manda l'output al file specificato</effect>
-</option>
-</options>
-</usage>
+      <argument>hflist</argument>
+      <argument optional="true" separated="true">lflist</argument>
+    </arguments>
+    <options>
+      <option>
+	<flag>--with-lines</flag>
+	<effect>crea grafico lineare</effect>
+      </option>
+      <option>
+	<flag>--time-series</flag>
+	<effect>tempo in ascissa</effect>
+      </option>
+      <option>
+	<flag>--output</flag>
+	<optparm>filename</optparm>
+	<effect>manda l'output al file specificato</effect>
+      </option>
+    </options>
+  </usage>
 
-<description>
-  <para>
-    Consente di creare un grafico di una serie ad alta frequenza,
-    anche assieme ad una o più serie osservate alla frequenza base
-    del dataset.  Il primo argomento dev'essere una <cmdref
-    targ="MIDAS_list"/>; gli argomenti aggiuntivi opzionali
-    <repl>lflist</repl>, separati da un punto e virgola, devono
-    essere normali serie a bassa frequenza.
-</para>
-<para>
-  Per ulteriori dettagli sull'effetto dell'opzione <opt>output</opt>,
-  consultare lo help per il comando <cmdref targ="gnuplot"/>.
-</para>
-</description>
+  <description>
+    <para>
+      Consente di creare un grafico di una serie ad alta frequenza,
+      anche assieme ad una o più serie osservate alla frequenza base
+      del dataset.  Il primo argomento dev'essere una <cmdref
+      targ="MIDAS_list"/>; gli argomenti aggiuntivi opzionali
+      <repl>lflist</repl>, separati da un punto e virgola, devono
+      essere normali serie a bassa frequenza.
+    </para>
+    <para>
+      Per ulteriori dettagli sull'effetto dell'opzione <opt>output</opt>,
+      consultare lo help per il comando <cmdref targ="gnuplot"/>.
+    </para>
+  </description>
 
 </command>
 
 <command name="hsk" section="Estimation"
-	 label="Stime corrette per l'eteroschedasticità">
+         label="Stime corrette per l'eteroschedasticità">
 
   <usage>
     <arguments>
-<argument>variabile-dipendente</argument>
-<argument>variabili-indipendenti</argument>
-</arguments>
-<options>
-  <option>
-<flag>--no-squares</flag>
-<effect>si veda sotto</effect>
-</option>
-<option>
-<flag>--vcv</flag>
-<effect>mostra la matrice di covarianza</effect>
-</option>
-<option>
-<flag>--quiet</flag>
-<effect>non stampa nulla</effect>
-</option>
-</options>
-</usage>
+      <argument>variabile-dipendente</argument>
+      <argument>variabili-indipendenti</argument>
+    </arguments>
+    <options>
+      <option>
+	<flag>--no-squares</flag>
+	<effect>si veda sotto</effect>
+      </option>
+      <option>
+	<flag>--vcv</flag>
+	<effect>mostra la matrice di covarianza</effect>
+      </option>
+      <option>
+	<flag>--quiet</flag>
+	<effect>non stampa nulla</effect>
+      </option>
+    </options>
+  </usage>
 
-<description>
-  <para>
-    Questo comando è utile in presenza di eteroschedasticità sotto forma di
-    una funzione incognita dei regressori, che può essere approssimata da
-    una relazione quadratica. In questo contesto, offre la possibilità di
-    avere errori standard consistenti e stime dei parametri più efficienti,
-    rispetto alla stima OLS.
-</para>
-<para>
-  La procedura richiede: (a) la stima OLS del modello, (b) una regressione
-  ausiliaria per generare la stima della varianza dell'errore e (c) la
-  stima con minimi quadrati ponderati, usando come peso il reciproco della
-  varianza stimata.
-</para>
-<para>
-  Nella regressione ausiliaria (b) il logaritmo dei quadrati dei residui
-  dalla prima regressione OLS viene regredito sui regressori originali e
-sui loro quadrati (o solamente sui regressori originali se l'opzione <opt>no-squares</opt>
-è data). La trasformazione logaritmica viene effettuata per
-assicurarsi che le varianze stimate siano non negative. Indicando con
-<math>u</math><sup>*</sup> i valori stimati da questa regressione, la
-serie dei pesi per la regressione con minimi quadrati ponderati è data
-da 1/exp(<math>u</math><sup>*</sup>).
-</para>
-<para context="gui">
-  Nella regressione ausiliaria (b) il logaritmo dei quadrati dei
-  residui dalla prima regressione OLS viene regredito sui
-  regressori originali e sui loro quadrati (di default), o
-  solamente sui regressori originali qualora la casella
-  <quote>include squares</quote> sia stata deselezionata.  La
-  trasformazione logaritmica viene effettuata per assicurarsi
-  che le varianze stimate siano non negative. Indicando con
-  <math>u</math><sup>*</sup> i valori stimati da questa
-  regressione, la serie dei pesi per la regressione con minimi
-  quadrati ponderati è data da
-  1/exp(<math>u</math><sup>*</sup>).
-</para>
-</description>
+  <description>
+    <para>
+      Questo comando è utile in presenza di eteroschedasticità sotto forma di
+      una funzione incognita dei regressori, che può essere approssimata da
+      una relazione quadratica. In questo contesto, offre la possibilità di
+      avere errori standard consistenti e stime dei parametri più efficienti,
+      rispetto alla stima OLS.
+    </para>
+    <para>
+      La procedura richiede: (a) la stima OLS del modello, (b) una regressione
+      ausiliaria per generare la stima della varianza dell'errore e (c) la
+      stima con minimi quadrati ponderati, usando come peso il reciproco della
+      varianza stimata.
+    </para>
+    <para>
+      Nella regressione ausiliaria (b) il logaritmo dei quadrati dei residui
+      dalla prima regressione OLS viene regredito sui regressori originali e
+      sui loro quadrati (o solamente sui regressori originali se l'opzione <opt>no-squares</opt>
+      è data). La trasformazione logaritmica viene effettuata per
+      assicurarsi che le varianze stimate siano non negative. Indicando con
+      <math>u</math><sup>*</sup> i valori stimati da questa regressione, la
+      serie dei pesi per la regressione con minimi quadrati ponderati è data
+      da 1/exp(<math>u</math><sup>*</sup>).
+    </para>
+    <para context="gui">
+      Nella regressione ausiliaria (b) il logaritmo dei quadrati dei
+      residui dalla prima regressione OLS viene regredito sui
+      regressori originali e sui loro quadrati (di default), o
+      solamente sui regressori originali qualora la casella
+      <quote>include squares</quote> sia stata deselezionata.  La
+      trasformazione logaritmica viene effettuata per assicurarsi
+      che le varianze stimate siano non negative. Indicando con
+      <math>u</math><sup>*</sup> i valori stimati da questa
+      regressione, la serie dei pesi per la regressione con minimi
+      quadrati ponderati è data da
+      1/exp(<math>u</math><sup>*</sup>).
+    </para>
+  </description>
 
-<gui-access>
-<menu-path>/Modello/Altri modelli lineari/HSK - WLS corretti per eteroschedasticità</menu-path>
-</gui-access>
+  <gui-access>
+    <menu-path>/Modello/Altri modelli lineari/HSK - WLS corretti per eteroschedasticità</menu-path>
+  </gui-access>
 
 </command>
 
 <command name="hurst" section="Statistics"
-	 label="Esponente di Hurst">
+         label="Esponente di Hurst">
 
   <usage>
     <arguments>
-<argument>nome-variabile</argument>
-</arguments>
-<options>
-  <option>
-<flag>--plot</flag>
-<optparm>tipologia o nome del file</optparm>
-<effect>si veda sotto</effect>
-</option>
-</options>
-</usage>
+      <argument>nome-variabile</argument>
+    </arguments>
+    <options>
+      <option>
+	<flag>--plot</flag>
+	<optparm>tipologia o nome del file</optparm>
+	<effect>si veda sotto</effect>
+      </option>
+    </options>
+  </usage>
 
-<description>
-  <para>
-    Calcola l'esponente di Hurst (una misura di persistenza, o di memoria
-    lunga) per una serie storica con almeno 128 osservazioni.
-  </para>
+  <description>
+    <para>
+      Calcola l'esponente di Hurst (una misura di persistenza, o di memoria
+      lunga) per una serie storica con almeno 128 osservazioni.
+    </para>
 
-  <para>
-    L'esponente di Hurst è discusso da <cite key="mandelbrot83">Mandelbrot (1983)</cite>.
-    In termini teorici è l'esponente <math>H</math> nella relazione
-    <equation status="display"
-              tex="\[\mathrm{RS}(x) = an^H\]"
-              ascii="RS(x) = an^H"
-              graphic="hurst"/>dove RS è l'<quote>intervallo riscalato</quote>
-    della variabile <math>x</math> in un campione dell'ampiezza
-    <math>n</math>, mentre <math>a</math> è una
-    costante. L'intervallo riscalato è l'intervallo (valore massimo
-    meno valore minimo) del valore cumulato, o somma parziale, di
-    <math>x</math> sul periodo del campione (dopo aver sottratto la
-    media campionaria), diviso per lo scarto quadratico medio campionario.
-</para>
+    <para>
+      L'esponente di Hurst è discusso da <cite key="mandelbrot83">Mandelbrot (1983)</cite>.
+      In termini teorici è l'esponente <math>H</math> nella relazione
+      <equation status="display"
+		tex="\[\mathrm{RS}(x) = an^H\]"
+		ascii="RS(x) = an^H"
+		graphic="hurst"/>dove RS è l'<quote>intervallo riscalato</quote>
+      della variabile <math>x</math> in un campione dell'ampiezza
+      <math>n</math>, mentre <math>a</math> è una
+      costante. L'intervallo riscalato è l'intervallo (valore massimo
+      meno valore minimo) del valore cumulato, o somma parziale, di
+      <math>x</math> sul periodo del campione (dopo aver sottratto la
+      media campionaria), diviso per lo scarto quadratico medio campionario.
+    </para>
 
-<para>
-  Come punto di riferimento, se <math>x</math> è un rumore bianco
-  (media zero, persistenza zero) l'intervallo dei suoi valori cumulati
-  (che forma una passeggiata casuale), scalato per lo scarto quadratico medio,
-  cresce come la radice quadrata dell'ampiezza campionaria, ossia ha un
-  esponente di Hurst atteso pari a 0.5. Valori dell'esponente sensibilmente
-  maggiori di 0.5 indicano persistenza della serie, mentre valori minori di
-  0.5 indicano anti-persistenza (autocorrelazione negativa). In teoria
-  l'esponente deve essere compreso tra 0 e 1, ma in campioni finiti è
-  possibile ottenere delle stime per l'esponente maggiori di 1.
-</para>
+    <para>
+      Come punto di riferimento, se <math>x</math> è un rumore bianco
+      (media zero, persistenza zero) l'intervallo dei suoi valori cumulati
+      (che forma una passeggiata casuale), scalato per lo scarto quadratico medio,
+      cresce come la radice quadrata dell'ampiezza campionaria, ossia ha un
+      esponente di Hurst atteso pari a 0.5. Valori dell'esponente sensibilmente
+      maggiori di 0.5 indicano persistenza della serie, mentre valori minori di
+      0.5 indicano anti-persistenza (autocorrelazione negativa). In teoria
+      l'esponente deve essere compreso tra 0 e 1, ma in campioni finiti è
+      possibile ottenere delle stime per l'esponente maggiori di 1.
+    </para>
 
-<para>
-  In gretl, l'esponente è stimato usando il sotto-campionamento binario:
-  si inizia dall'intero intervallo dei dati, quindi si usano le due metà
-  dell'intervallo, poi i quattro quarti, e così via. Per ampiezze campionarie
-  minori dell'intervallo dei dati complessivo il valore RS è la
-  media presa sui vari campioni. L'esponente è quindi stimato come il
-  coefficiente di pendenza della regressione del logaritmo di RS sul
-  logaritmo dell'ampiezza del campione.
-</para>
-<para>
-  Di default, viene mostrato un grafico dell'intervallo
-  riscalato se il programma è in modalità interattiva. Questo
-  comportamento può essere calibrato attraverso l'opzione
-  <opt>plot</opt>. I parametri accettabili dall'opzione sono
-  <lit>none</lit>, per non mostrare il grafico,
-  <lit>display</lit>, per mostrare il grafico anche in batch
-  mode, o un nome di file. L'effetto di fornire un nome di file
-  è reperibile alla descrizione del comando <cmdref
-  targ="gnuplot"/>, sotto l'opzione <opt>output</opt>.
-</para>
-</description>
+    <para>
+      In gretl, l'esponente è stimato usando il sotto-campionamento binario:
+      si inizia dall'intero intervallo dei dati, quindi si usano le due metà
+      dell'intervallo, poi i quattro quarti, e così via. Per ampiezze campionarie
+      minori dell'intervallo dei dati complessivo il valore RS è la
+      media presa sui vari campioni. L'esponente è quindi stimato come il
+      coefficiente di pendenza della regressione del logaritmo di RS sul
+      logaritmo dell'ampiezza del campione.
+    </para>
+    <para>
+      Di default, viene mostrato un grafico dell'intervallo
+      riscalato se il programma è in modalità interattiva. Questo
+      comportamento può essere calibrato attraverso l'opzione
+      <opt>plot</opt>. I parametri accettabili dall'opzione sono
+      <lit>none</lit>, per non mostrare il grafico,
+      <lit>display</lit>, per mostrare il grafico anche in batch
+      mode, o un nome di file. L'effetto di fornire un nome di file
+      è reperibile alla descrizione del comando <cmdref
+      targ="gnuplot"/>, sotto l'opzione <opt>output</opt>.
+    </para>
+  </description>
 
-<gui-access>
-<menu-path>/Variabile/Esponente di Hurst</menu-path>
-</gui-access>
+  <gui-access>
+    <menu-path>/Variabile/Esponente di Hurst</menu-path>
+  </gui-access>
 
 </command>
 
@@ -6735,81 +6737,81 @@ da 1/exp(<math>u</math><sup>*</sup>).
     <para>
       Struttura di controllo per l'esecuzione dei comandi. Sono supportate le
       tre forme seguenti:
-</para>
-<code>
-  # forma semplice
-  if condition
-  commands
-  endif
+    </para>
+    <code>
+      # forma semplice
+      if condition
+      commands
+      endif
 
-  # a due rami
-  if condition
-  commands1
-  else
-  commands2
-  endif
+      # a due rami
+      if condition
+      commands1
+      else
+      commands2
+      endif
 
-  # a tre o più rami
-  if condition1
-  commands1
-  elif condition2
-  commands2
-  else
-  commands3
-  endif
-</code>
-<para>
-  La <repl quote="true">condizione</repl> deve essere un'espressione
-  Booleana, per la cui sintassi si veda <cmdref targ="genr"/>.
-  Può essere incluso più di un blocco <cmd>elif</cmd>.
-Inoltre, i blocchi <lit>if</lit> &hellip; <lit>endif</lit>
-possono essere nidificati.
-</para>
+      # a tre o più rami
+      if condition1
+      commands1
+      elif condition2
+      commands2
+      else
+      commands3
+      endif
+    </code>
+    <para>
+      La <repl quote="true">condizione</repl> deve essere un'espressione
+      Booleana, per la cui sintassi si veda <cmdref targ="genr"/>.
+      Può essere incluso più di un blocco <cmd>elif</cmd>.
+      Inoltre, i blocchi <lit>if</lit> &hellip; <lit>endif</lit>
+      possono essere nidificati.
+    </para>
 
-</description>
+  </description>
 
 </command>
 
 <command name="include" section="Programming" label="Include definizioni di
-						     funzioni" context="cli">
+                                                     funzioni" context="cli">
 
   <usage>
     <arguments>
-      <argument>filename</argument>
-    </arguments>
-    <options>
-      <option>
-	<flag>--force</flag>
-	<effect>forza una rilettura dal file</effect>
-      </option>
-    </options>
-    <examples>
-      <example>include myfile.inp</example>
-      <example>include sols.gfn</example>
-    </examples>
-  </usage>
+<argument>filename</argument>
+</arguments>
+<options>
+  <option>
+<flag>--force</flag>
+<effect>forza una rilettura dal file</effect>
+</option>
+</options>
+<examples>
+<example>include myfile.inp</example>
+<example>include sols.gfn</example>
+</examples>
+</usage>
 
-  <description>
-    <para>
-      Da usare in uno script di comandi, principalmente per includere
-      definizioni di funzioni. Il comando <repl>filename</repl> dovrebbe
-      includere l'estensione <lit>inp</lit> (un script di testo semplice)
-      oppure l'estensione <lit>gfn</lit> (una pacchetto di funzioni gretl).
-      I comandi del <repl>filename</repl> vengono eseguiti e il controllo viene
-      restituito allo script principale.
-    </para>
-    <para>
-      L'opzione <opt>force</opt> è specifica dei file di tipo
-      <lit>gfn</lit>: quest'ultima ha come effetto quello di forzare
-      gretl a rileggere il pacchetto di funzioni anche se quest'ultimo
-      è già stato caricato in memoria.  (In risposta a questo comando,
-      gli script di testo semplici <lit>inp</lit> sono sempre
-      ricaricati.)
-    </para>
-    <para>
-      Si veda anche il comando <cmdref targ="run"/>.
-    </para>
-  </description>
+<description>
+  <para>
+    Da usare in uno script di comandi, principalmente per includere
+    definizioni di funzioni. Il comando <repl>filename</repl> dovrebbe
+    includere l'estensione <lit>inp</lit> (un script di testo semplice)
+    oppure l'estensione <lit>gfn</lit> (una pacchetto di funzioni gretl).
+    I comandi del <repl>filename</repl> vengono eseguiti e il controllo viene
+    restituito allo script principale.
+</para>
+<para>
+  L'opzione <opt>force</opt> è specifica dei file di tipo
+  <lit>gfn</lit>: quest'ultima ha come effetto quello di forzare
+  gretl a rileggere il pacchetto di funzioni anche se quest'ultimo
+  è già stato caricato in memoria.  (In risposta a questo comando,
+  gli script di testo semplici <lit>inp</lit> sono sempre
+  ricaricati.)
+</para>
+<para>
+  Si veda anche il comando <cmdref targ="run"/>.
+</para>
+</description>
 
 </command>
 
@@ -6840,31 +6842,31 @@ possono essere nidificati.
     </arguments>
     <options>
       <option>
-	<flag>--quiet</flag>
-	<effect>non mostra i risultati</effect>
+        <flag>--quiet</flag>
+        <effect>non mostra i risultati</effect>
       </option>
       <option>
-	<flag>--verbose</flag>
-	<effect>mostra i dettagli delle iterazioni</effect>
+        <flag>--verbose</flag>
+        <effect>mostra i dettagli delle iterazioni</effect>
       </option>
       <option>
-	<flag>--robust</flag>
-	<effect>errori standard robusti</effect>
+        <flag>--robust</flag>
+        <effect>errori standard robusti</effect>
       </option>
       <option>
-	<flag>--opg</flag>
-	<effect>vedi sotto</effect>
+        <flag>--opg</flag>
+        <effect>vedi sotto</effect>
       </option>
       <option>
-	<flag>--cluster</flag>
-	<optparm>clustvar</optparm>
-	<effect>vedi <cmdref targ="logit"/> per la spiegazione</effect>
+        <flag>--cluster</flag>
+        <optparm>clustvar</optparm>
+        <effect>vedi <cmdref targ="logit"/> per la spiegazione</effect>
       </option>
     </options>
     <examples>
       <example>intreg lo hi const x1 x2</example>
       <demos>
-	<demo>wtp.inp</demo>
+        <demo>wtp.inp</demo>
       </demos>
     </examples>
   </usage>
@@ -6877,10 +6879,10 @@ possono essere nidificati.
       altre parole, si ipotizza che il processo generatore dei dati
       sia
       <equation status="display" tex="\[y^*_t = x_t
-				      \beta+\epsilon_t\]" ascii="y* = x b + u"/>
+                                      \beta+\epsilon_t\]" ascii="y* = x b + u"/>
       ma che solo
       <equation status="inline" tex="\[m_t \le y_t \le M_t\]"
-		ascii="m &lt;= y* &lt;= M"/>
+                ascii="m &lt;= y* &lt;= M"/>
       sia osservato (l'intervallo può
       essere limitato a destra o a sinistra). Si noti che per alcune
       osservazioni <math>m</math> può essere uguale a
@@ -6930,7 +6932,7 @@ possono essere nidificati.
 
 
 <command name="irfboot" section="Graphs" context="gui"
-	 label="Bootstrap impulso-risposta">
+         label="Bootstrap impulso-risposta">
 
   <description>
     <para>
@@ -6973,52 +6975,52 @@ possono essere nidificati.
       <argument>ordine</argument>
       <argument>lista-y</argument>
       <argblock optional="true" separated="true">
-	<argument>lista-x</argument>
+        <argument>lista-x</argument>
       </argblock>
       <argblock optional="true" separated="true">
-	<argument>lista-rx</argument>
+        <argument>lista-rx</argument>
       </argblock>
     </arguments>
     <options>
       <option>
-	<flag>--nc</flag>
-	<effect>senza costante</effect>
+        <flag>--nc</flag>
+        <effect>senza costante</effect>
       </option>
       <option>
-	<flag>--rc</flag>
-	<effect>costante vincolata</effect>
+        <flag>--rc</flag>
+        <effect>costante vincolata</effect>
       </option>
       <option>
-	<flag>--uc</flag>
-	<effect>costante non vincolata</effect>
+        <flag>--uc</flag>
+        <effect>costante non vincolata</effect>
       </option>
       <option>
-	<flag>--crt</flag>
-	<effect>costante e trend vincolato</effect>
+        <flag>--crt</flag>
+        <effect>costante e trend vincolato</effect>
       </option>
       <option>
-	<flag>--ct</flag>
-	<effect>costante e trend non vincolato</effect>
+        <flag>--ct</flag>
+        <effect>costante e trend non vincolato</effect>
       </option>
       <option>
-	<flag>--seasonals</flag>
-	<effect>include dummy stagionali centrate</effect>
+        <flag>--seasonals</flag>
+        <effect>include dummy stagionali centrate</effect>
       </option>
       <option>
-	<flag>--asy</flag>
-	<effect>registra i p-value asintotici</effect>
+        <flag>--asy</flag>
+        <effect>registra i p-value asintotici</effect>
       </option>
       <option>
-	<flag>--silent</flag>
-	<effect>non mostra nulla</effect>
+        <flag>--silent</flag>
+        <effect>non mostra nulla</effect>
       </option>
       <option>
-	<flag>--quiet</flag>
-	<effect>mostra solo i test</effect>
+        <flag>--quiet</flag>
+        <effect>mostra solo i test</effect>
       </option>
       <option>
-	<flag>--verbose</flag>
-	<effect>mostra i dettagli delle regressioni ausiliarie</effect>
+        <flag>--verbose</flag>
+        <effect>mostra i dettagli delle regressioni ausiliarie</effect>
       </option>
     </options>
     <examples>
@@ -7026,8 +7028,8 @@ possono essere nidificati.
       <example>johansen 4 y x1 x2 --verbose</example>
       <example>johansen 3 y x1 x2 --rc</example>
       <demos>
-	<demo>hamilton.inp</demo>
-	<demo>denmark.inp</demo>
+        <demo>hamilton.inp</demo>
+        <demo>denmark.inp</demo>
       </demos>
     </examples>
   </usage>
@@ -7166,7 +7168,7 @@ possono essere nidificati.
 </command>
 
 <command name="join" section="Dataset" label="Manage data sources"
-	 context="cli">
+         context="cli">
 
   <usage>
     <arguments>
@@ -7175,38 +7177,38 @@ possono essere nidificati.
     </arguments>
     <options>
       <option>
-	<flag>--data</flag>
-	<optparm>column-name</optparm>
-	<effect>v. oltre</effect>
+        <flag>--data</flag>
+        <optparm>column-name</optparm>
+        <effect>v. oltre</effect>
       </option>
       <option>
-	<flag>--filter</flag>
-	<optparm>expression</optparm>
-	<effect>v. oltre</effect>
+        <flag>--filter</flag>
+        <optparm>expression</optparm>
+        <effect>v. oltre</effect>
       </option>
       <option>
-	<flag>--ikey</flag>
-	<optparm>inner-key</optparm>
-	<effect>v. oltre</effect>
+        <flag>--ikey</flag>
+        <optparm>inner-key</optparm>
+        <effect>v. oltre</effect>
       </option>
       <option>
-	<flag>--okey</flag>
-	<optparm>outer-key</optparm>
-	<effect>v. oltre</effect>
+        <flag>--okey</flag>
+        <optparm>outer-key</optparm>
+        <effect>v. oltre</effect>
       </option>
       <option>
-	<flag>--aggr</flag>
-	<optparm>method</optparm>
-	<effect>v. oltre</effect>
+        <flag>--aggr</flag>
+        <optparm>method</optparm>
+        <effect>v. oltre</effect>
       </option>
       <option>
-	<flag>--tkey</flag>
-	<optparm>nome-colonna,stringa-formato</optparm>
-	<effect>v. oltre</effect>
+        <flag>--tkey</flag>
+        <optparm>nome-colonna,stringa-formato</optparm>
+        <effect>v. oltre</effect>
       </option>
       <option>
-	<flag>--verbose</flag>
-	<effect>visualizza dettagli sul comando</effect>
+        <flag>--verbose</flag>
+        <effect>visualizza dettagli sul comando</effect>
       </option>
     </options>
   </usage>
@@ -7271,7 +7273,7 @@ possono essere nidificati.
 </command>
 
 <command name="join" section="Dataset" label="Aggiungi dati con controlli"
-	 context="gui">
+         context="gui">
   <description>
     <para>
       Questa finestra di dialogo permette di usare un buon
@@ -7300,31 +7302,31 @@ possono essere nidificati.
     </para>
     <ilist>
       <li>
-	<para>
-	  Un nuovo nome per la serie importata.  (Di default,si
-	  mantiene lo stesso nome del file esterno).
-	</para>
+        <para>
+          Un nuovo nome per la serie importata.  (Di default,si
+          mantiene lo stesso nome del file esterno).
+        </para>
       </li>
       <li>
-	<para>
-	  Un'espressione filtro. Essa verrà calcolata per ogni riga
-	  del dataset esterno, e verranno importate solo le righe
-	  corrispondenti a valori non-zero.
-	</para>
+        <para>
+          Un'espressione filtro. Essa verrà calcolata per ogni riga
+          del dataset esterno, e verranno importate solo le righe
+          corrispondenti a valori non-zero.
+        </para>
       </li>
       <li>
-	<para>
-	  Un metodo di aggregazione. Questo non va specificato, a meno
-	  che l'accoppiamento fra chiavi interne ed esterne produca
-	  più di una riga per osservazioni interne.
-	</para>
+        <para>
+          Un metodo di aggregazione. Questo non va specificato, a meno
+          che l'accoppiamento fra chiavi interne ed esterne produca
+          più di una riga per osservazioni interne.
+        </para>
       </li>
     </ilist>
   </description>
 </command>
 
 <command name="kalman" section="Utilities"
-	 label="State space modeling" context="gui">
+         label="State space modeling" context="gui">
   <description>
     <para>
       Questa interfaccia grafica offre una piccola parte delle
@@ -7344,54 +7346,54 @@ possono essere nidificati.
   </description>
 </command>
 
-  <command name="kdplot" section="Graphs" label="Kernel density plot">
-    <usage>
-      <arguments>
-	<argument>y</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--alt</flag>
-	  <effect>usa il kernel di Epanechnikov</effect>
-        </option>
-        <option>
-	  <flag>--scale</flag>
-	  <optparm>s</optparm>
-	  <effect>fattore di scala per l'ampiezza di banda</effect>
-        </option>
-        <option>
-	  <flag>--output</flag>
-	  <optparm>nome file</optparm>
-	  <effect>salva il grafico nel file specificato</effect>
-        </option>
-      </options>
-    </usage>
-    <description>
-      <para>
-	Produce una stima della densità del kernel per la serie
-	<argname>y</argname>. Di default, il kernel è gaussiano, ma se
-	con l'opzione <opt>alt</opt> viene usato il kernel di
-	Epanechnikov. L'opzione <opt>scale</opt>, il cui valore predefinito è
-	1.0, serve a controllare quanto sia liscio il risultato
-	(valori più alti producono un risultato più liscio). 
-      </para>
-      <para context="cli">
-	L'opzione <opt>output</opt> ha l'effetto di salvare il output
-	nel file specificato; usando <quote>display</quote> l'output
-	andrà sullo schermo. Vedi il comando <cmdref targ="gnuplot"/>
-	per maggiori dettagli su questa opzione.  command for more
-	detail on this option.
-      </para>
-      <para>
-	Vedi anche, per un'opzione più flessibile che consente di
-	salvare il risultato in una matrice, la funzione <fncref
-	targ="kdensity"/>.
-      </para>
-    </description>
-    <gui-access>
-      <menu-path>/Variabile/Grafico densità stimata</menu-path>
-    </gui-access>
-  </command>
+<command name="kdplot" section="Graphs" label="Kernel density plot">
+  <usage>
+    <arguments>
+      <argument>y</argument>
+    </arguments>
+    <options>
+      <option>
+        <flag>--alt</flag>
+        <effect>usa il kernel di Epanechnikov</effect>
+      </option>
+      <option>
+        <flag>--scale</flag>
+        <optparm>s</optparm>
+        <effect>fattore di scala per l'ampiezza di banda</effect>
+      </option>
+      <option>
+        <flag>--output</flag>
+        <optparm>nome file</optparm>
+        <effect>salva il grafico nel file specificato</effect>
+      </option>
+    </options>
+  </usage>
+  <description>
+    <para>
+      Produce una stima della densità del kernel per la serie
+      <argname>y</argname>. Di default, il kernel è gaussiano, ma se
+      con l'opzione <opt>alt</opt> viene usato il kernel di
+      Epanechnikov. L'opzione <opt>scale</opt>, il cui valore predefinito è
+      1.0, serve a controllare quanto sia liscio il risultato
+      (valori più alti producono un risultato più liscio). 
+    </para>
+    <para context="cli">
+      L'opzione <opt>output</opt> ha l'effetto di salvare il output
+      nel file specificato; usando <quote>display</quote> l'output
+      andrà sullo schermo. Vedi il comando <cmdref targ="gnuplot"/>
+      per maggiori dettagli su questa opzione.  command for more
+      detail on this option.
+    </para>
+    <para>
+      Vedi anche, per un'opzione più flessibile che consente di
+      salvare il risultato in una matrice, la funzione <fncref
+      targ="kdensity"/>.
+    </para>
+  </description>
+  <gui-access>
+    <menu-path>/Variabile/Grafico densità stimata</menu-path>
+  </gui-access>
+</command>
 
 
 
@@ -7403,24 +7405,24 @@ possono essere nidificati.
     </arguments>
     <options>
       <option>
-	<flag>--trend</flag>
-	<effect>include un trend</effect>
+        <flag>--trend</flag>
+        <effect>include un trend</effect>
       </option>
       <option>
-	<flag>--seasonals</flag>
-	<effect>include dummy stagionali</effect>
+        <flag>--seasonals</flag>
+        <effect>include dummy stagionali</effect>
       </option>
       <option>
-	<flag>--verbose</flag>
-	<effect>mostra i risultati della regressione</effect>
+        <flag>--verbose</flag>
+        <effect>mostra i risultati della regressione</effect>
       </option>
       <option>
-	<flag>--quiet</flag>
-	<effect>non mostra i risultati</effect>
+        <flag>--quiet</flag>
+        <effect>non mostra i risultati</effect>
       </option>
       <option>
-	<flag>--difference</flag>
-	<effect>usa la differenza prima della variabile</effect>
+        <flag>--difference</flag>
+        <effect>usa la differenza prima della variabile</effect>
       </option>
     </options>
     <examples>
@@ -7455,56 +7457,56 @@ possono essere nidificati.
       questione sia stazionaria, attorno a un valore fisso o, se è
       stata usata l'opzione <opt>trend</opt>, attorno a un trend
       deterministico lineare.
-      </para>
+    </para>
 
-      <para context="gui">
-	L'argomento ordine determina la dimensione della finestra usata per
-        il livellamento di Bartlett.  Se si usa l'opzione <lit>Mostra i risultati
-        della regressione</lit>, vengono mostrati anche i risultati della
-        regressione ausiliaria, insieme alla varianza stimata della componente
-        random walk della variabile.
-      </para>
-      <para context="cli">> L'argomento <repl>order</repl> determina
-      l'ampiezza della finestra usata per il livellamento di
-      Bartlett. Se viene dato un valore negativo questo è considerato
-      come un segnale per l'utilizzo in automatico di una finestra di
-      riferimento di ampiezza 4(<math>T</math>/100)<sup>0.25</sup>,
-      dove <math>T</math> è l'ampiezza del campione.
-      </para>
-      <para context="cli">
-	Se si sceglie l'opzione <opt>verbose</opt> il risultato
-	della regressione ausiliaria verrà stampato insieme alla
-	varianza stimata della componente di random walk della
-	variabile
-      </para>
-      <para>
-	Il valori critici riportati per questa statistica test sono
-	basati sulle superfici di risposta stimate secondo il metodo
-	descritto da <cite key="sephton95">Sephton (Economics Letters,
-	1995)</cite>, che per piccoli campioni sono più accurate di
-	quelle fornite nell'articolo originale di KPSS. Quando la
-	statistica test si trova fra i valori critici al 10 e all'1
-	per cento viene mostrato un p-value ottenuto per
-	interpolazione lineare, che non dovrebbe essere accettato in
-	maniera acritica. Vedi anche la funzione <fncref
-	targ="kpsscrit"/> per ottenere questi valori critici come
-	codice.
-      </para>
+    <para context="gui">
+      L'argomento ordine determina la dimensione della finestra usata per
+      il livellamento di Bartlett.  Se si usa l'opzione <lit>Mostra i risultati
+      della regressione</lit>, vengono mostrati anche i risultati della
+      regressione ausiliaria, insieme alla varianza stimata della componente
+      random walk della variabile.
+    </para>
+    <para context="cli">> L'argomento <repl>order</repl> determina
+    l'ampiezza della finestra usata per il livellamento di
+    Bartlett. Se viene dato un valore negativo questo è considerato
+    come un segnale per l'utilizzo in automatico di una finestra di
+    riferimento di ampiezza 4(<math>T</math>/100)<sup>0.25</sup>,
+    dove <math>T</math> è l'ampiezza del campione.
+    </para>
+    <para context="cli">
+      Se si sceglie l'opzione <opt>verbose</opt> il risultato
+      della regressione ausiliaria verrà stampato insieme alla
+      varianza stimata della componente di random walk della
+      variabile
+    </para>
+    <para>
+      Il valori critici riportati per questa statistica test sono
+      basati sulle superfici di risposta stimate secondo il metodo
+      descritto da <cite key="sephton95">Sephton (Economics Letters,
+      1995)</cite>, che per piccoli campioni sono più accurate di
+      quelle fornite nell'articolo originale di KPSS. Quando la
+      statistica test si trova fra i valori critici al 10 e all'1
+      per cento viene mostrato un p-value ottenuto per
+      interpolazione lineare, che non dovrebbe essere accettato in
+      maniera acritica. Vedi anche la funzione <fncref
+      targ="kpsscrit"/> per ottenere questi valori critici come
+      codice.
+    </para>
 
-      <subhead context="cli">Dati panel</subhead>
+    <subhead context="cli">Dati panel</subhead>
 
-      <para context="cli">
-	Quando il comando <lit>kpss</lit> viene usato con dati panel
-	per calcolare un test panel di radice unitaria, le opzioni
-	applicabili e i risultati mostrati sono leggermente
-	diversi. Mentre nel caso di serie storiche regolari potete
-	fornire una lista di variabili da testare, con dati panel il
-	comando può testare solo una variabile alla volta. L'opzione
-	<opt>verbose</opt>, inoltre, ha un significato diverso:
-	produce un breve resoconto del test per ciascuna singola serie
-	storica (di default viene mostrato solo il risultato
-	complessivo).
-      </para>
+    <para context="cli">
+      Quando il comando <lit>kpss</lit> viene usato con dati panel
+      per calcolare un test panel di radice unitaria, le opzioni
+      applicabili e i risultati mostrati sono leggermente
+      diversi. Mentre nel caso di serie storiche regolari potete
+      fornire una lista di variabili da testare, con dati panel il
+      comando può testare solo una variabile alla volta. L'opzione
+      <opt>verbose</opt>, inoltre, ha un significato diverso:
+      produce un breve resoconto del test per ciascuna singola serie
+      storica (di default viene mostrato solo il risultato
+      complessivo).
+    </para>
 
       <para context="cli">
 	Se possibile, viene calcolato il test complessivo (ipotesi
@@ -11286,6 +11288,52 @@ del comando <cmdref targ="set"/>.
   </description>
 
 </command>
+
+  <command name="ts-to-panel" section="Dataset" context="gui"
+    label="Side-by-side time series to panel">
+
+    <description>
+      <para>
+	Per spiegare questa opzione, la cosa migliore è fare due esempi.
+      </para>
+      <para>
+	<emphasis>Esempio 1</emphasis>: un dataset di serie storiche
+	contiene quattro serie (a parte <lit>const</lit>), che
+	contengono il PIL di Francia, Germania, Italia e
+	Spagna. Selezionando 1 (il valore predefinito) per il
+	<quote>Numero di blocchi affiancati</quote> si vedrà 4 per il
+	<quote>Numero di unità</quote>. È quindi possibile
+	trasformare le quattro serie in un'unica serie per il PIL in
+	formato panel; i dati per paese sono impilati nell'ordine del
+	set di dati.
+	</para>
+	<para>
+	  <emphasis>Esempio 2</emphasis>: il dataset è come
+	  nell'esempio 1, tranne per il fatto che le serie del PIL per
+	  paese sono seguite da altre quattro serie, contenenti dati
+	  sulla disoccupazione <emphasis>per gli stessi quattro paesi,
+	  nello stesso ordine della serie del
+	  PIL</emphasis>. Selezionando 2 blocchi affiancati si vedrà 4
+	  come il numero di unità. Procedendo, verranno fornite due
+	  serie panel, uno per il PIL e uno per la disoccupazione.
+      </para>
+      <para>
+	Possono esserci tanti blocchi di serie (e quindi quante serie
+	panel) si voglia, a condizione che ciascun blocco contenga
+	dati per lo stesso insieme di unità, nello stesso ordine. In
+	caso contrario, il dataset panel risultante non avrebbe senso.
+      </para>
+      <para>
+	Come controllo di integrità, il numero totale di serie
+	temporali deve essere esattamente divisibile per il numero di
+	blocchi affiancati. Ne consegue che se il dataset originale
+	contiene un numero primo di serie, l'unica opzione offerta è
+	quella di trasformarle in un'unica serie panel. Se il dataset
+	contiene serie aggiuntive da non trasformare, bisogna eliminarle
+	prima di procedere.
+      </para>
+    </description>
+  </command>
 
 <command name="panel-wls" section="Estimation" context="gui"
 	 label="Minimi quadrati ponderati a gruppi">
@@ -15359,15 +15407,6 @@ qual caso viene usato QML.
 
 </command>
 
-  <command name="sprintf" section="Printing" context="cli">
-    <description>
-      <para>
-	Questo comando è obsoleto: al suo posto, usare la funzione
-	<fncref targ="sprintf"/>.
-      </para>
-    </description>
-  </command>
-
   <command name="square" section="Transformations" label="Crea quadrati delle
 							  variabili" context="cli">
 
@@ -16394,6 +16433,58 @@ qual caso viene usato QML.
       <menu-path>/Modello/TSLS - Minimi quadrati a due stadi</menu-path>
     </gui-access>
 
+  </command>
+
+
+  <command name="tsplots" section="Graphs"
+	   label="Multiple time-series plots">
+    <usage>
+      <arguments>
+        <argument>lista-var</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--matrix</flag>
+	  <optparm>nome</optparm>
+	  <effect>plotta colonne della matrice</effect>
+        </option>
+        <option>
+	  <flag>--output</flag>
+	  <optparm>nomefile</optparm>
+	  <effect>manda l'output al file specificato</effect>
+        </option>
+      </options>
+      <examples>
+        <example>tsplots 1 2 3 4</example>
+        <example>tsplots 1 2 3 4 --matrix=X</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+	Fornisce un modo semplice per plottare più serie temporali
+	(fino a un massimo di 16) su un unico grafico. L'argomento
+	<repl>lista-var</repl> può essere fornito come un elenco di
+	numeri ID o nomi di serie, o come numeri di colonna nel caso
+	in cui l'input sia una matrice.
+       </para>
+       <para contesto="cli">
+	 Vedi anche <cmdref targ="scatters"/> per produrre grafici a
+	 dispersione multipli, e <cmdref targ="gridplot"/> per un modo
+	 più flessibile di combinare grafici in una griglia.
+       </para>
+       <para context="gui">
+	Fornisce un modo semplice per plottare più serie temporali
+	(fino a un massimo di 16) su un unico grafico. Vedi anche
+	<cmdref targ="scatters"/> per produrre grafici a dispersione
+	multipli, e <cmdref targ="gridplot"/> per un modo più
+	flessibile di combinare grafici in una griglia.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/View/Multiple graphs/Time series</menu-path>
+    </gui-access>
   </command>
 
   <command name="var" section="Estimation"
