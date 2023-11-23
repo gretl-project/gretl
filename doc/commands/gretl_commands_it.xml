@@ -5952,6 +5952,178 @@
     </description>
   </command>
 
+  <command name="gridplot" section="Graphs" context="cli">
+    <usage>
+      <arguments>
+        <argument>plotspecs</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--fontsize</flag>
+	  <optparm>fs</optparm>
+	  <effect>dimensione del font in punti [10]</effect>
+	</option>
+	<option>
+	  <flag>--width</flag>
+	  <optparm>w</optparm>
+	  <effect>larghezza in pixel [800]</effect>
+	</option>
+	<option>
+	  <flag>--height</flag>
+	  <optparm>h</optparm>
+	  <effect>altezza in pixel [600]</effect>
+	</option>
+	<option>
+	  <flag>--rows</flag>
+	  <optparm>r</optparm>
+	  <effect>vedi sotto</effect>
+	</option>
+	<option>
+	  <flag>--cols</flag>
+	  <optparm>c</optparm>
+	  <effect>vedi sotto</effect>
+	</option>
+	<option>
+	  <flag>--layout</flag>
+	  <optparm>lmat</optparm>
+	  <effect>vedi sotto</effect>
+	</option>
+	<option>
+	  <flag>--output</flag>
+	  <optparm>destination</optparm>
+	  <effect>vedi sotto</effect>
+	</option>
+	<option>
+	  <flag>--outbuf</flag>
+	  <optparm>alternative destination</optparm>
+	  <effect>vedi sotto</effect>
+	</option>
+      </options>
+      <examples>
+        <example>gridplot myspecs --rows=3 --output=display</example>
+        <example>gridplot myspecs --layout=lmat --output=composite.pdf</example>
+      </examples>
+    </usage>
+    <description>
+      <para>
+	Questo comando prende due o più specifiche per grafici e le
+	dispone in una griglia. L'unico argomento richiesto,
+	<repl>plotspecs</repl>, è un array di stringhe, ciascuna delle
+	quali specifica un grafico. Il comando complementare <cmdref
+	targ="gpbuild"/> offre un modo semplice per creare un array di
+	questo tipo.
+      </para>
+      <subhead>Specifica della griglia</subhead>
+      <para>
+	La forma della griglia può essere impostata da una delle tre
+	opzioni (reciprocamente incompatibili) <opt>rows</opt>,
+	<opt>cols</opt> e <opt>layout</opt>. Se nessuna opzione viene
+	fornita, il numero di righe viene impostato sulla radice
+	quadrata del numero di grafici (la dimensione dell'array di
+	input), arrotondato per eccesso all'intero più vicino se
+	necessario. Quindi il numero di colonne viene impostato sul
+	numero di grafici diviso per il numero di righe, nuovamente
+	arrotondato se necessario. I grafici vengono posizionati nella
+	griglia per riga, nell'ordine in cui sono disposti. Se viene
+	fornita l'opzione <opt>rows</opt>, questa prende il posto
+	dell'impostazione automatica, ma il numero di colonne viene
+	impostato automaticamente come descritto sopra. Se invece
+	viene fornita l'opzione<opt>cols</opt>, il numero di righe
+	viene impostato automaticamente.
+      </para>
+      <para>
+	L'opzione <opt>layout</opt>, che richiede come parametro una
+	matrice, offre un'alternativa più flessibile. La matrice
+	specifica il layout della griglia in questo modo: gli elementi
+	0 richiedono celle vuote nella griglia e gli elementi interi
+	da 1 a <math>n</math> si riferiscono ai singoli grafici nel
+	loro ordine nell'array. Quindi, ad esempio,
+      </para>
+      <code>
+	matrix m = {1,0,0; 2,3,0; 4,5,6}
+	gridplot ... --layout=m ...
+      </code>
+      <para>
+	imposta sei grafici in un triangolo basso su una griglia <by
+	r="3" c="3"/>. Con questa opzione alcuni grafici possono
+	essere omessi o ripetuti.
+      </para>
+      <subhead>Opzioni di output</subhead>
+      <para>
+	L'opzione <opt>output</opt> può essere utilizzata per
+	specificare <lit>display</lit> (mostrare immediatamente il
+	grafico) o il nome di un file di output. In alternativa
+	<opt>outbuf</opt> può essere utilizzato per indirizzare
+	l'output, sotto forma di buffer di comandi gnuplot, a una
+	stringa con nome. In assenza di queste opzioni l'output è un
+	file di comandi gnuplot denominato automaticamente. Vedi
+	<cmdref targ="gnuplot"/> per maggiori dettagli.
+      </para>
+    </description>
+  </command>
+
+  <command name="gpbuild" section="Graphs" context="cli">
+    <usage>
+      <arguments>
+	<argument>plotspecs</argument>
+      </arguments>
+      <examples>
+        <example>gpbuild MyPlots</example>
+      </examples>
+    </usage>
+    <description>
+      <para>
+	Questo comando avvia un blocco in cui qualsiasi chiamata a
+	comandi o funzioni che producono grafici viene trattata in
+	modo speciale, al fine di produrre un array di stringhe di
+	specifiche della trama da utilizzare con <cmdref
+	targ="gridplot"/>: l'argomento <repl>plotspecs</repl> indica
+	il nome di questo array. Tale blocco viene terminato dal
+	comando <quote><lit>end gpbuild</lit></quote>
+      </para>
+      <subhead>Due restrizioni</subhead>
+      <para>
+	All'interno di un blocco <lit>gpbuild</lit> solo i comandi che
+	producono grafici ricevono un trattamento speciale; tutti gli
+	altri comandi vengono eseguiti normalmente. Ci sono solo due
+	restrizioni da notare. Innanzitutto, tali comandi
+	<emphasis>non</emphasis> devono includere una specifica di
+	output in questo contesto poiché ciò entrerebbe in conflitto
+	con la reindirizzamento automatico dell'output all'array
+	<repl>plotspecs</repl>. In secondo luogo, i grafici che
+	invocano la direttiva <quote><lit>multiplot</lit></quote> di
+	gnuplot non sono adatti per essere inclusi in un blocco
+	<lit>gpbuild</lit>. Questo perché <lit>gridplot</lit> utilizza
+	<lit>multiplot</lit> internamente e questi costrutti non
+	possono essere annidati.
+      </para>
+      <subhead>Alternativa manuale</subhead>
+      <para>
+	È possiboile preparare un array di grafici per uso con
+	<lit>gridplot</lit> senza per forza usare un blocco
+	<lit>gpbuild</lit>, come nell'esempio seguente:
+      </para>
+      <code>
+	open data4-10
+	strings MyPlots = array(3)
+	gnuplot ENROLL CATHOL --outbuf=MyPlots[1]
+	gnuplot ENROLL INCOME --outbuf=MyPlots[2]
+	gnuplot ENROLL COLLEGE --outbuf=MyPlots[3]
+      </code>
+      <para>
+	Il codice sopra è essenmzialmente equivalente a
+      </para>
+      <code>
+	open data4-10
+	gpbuild MyPlots
+	   gnuplot ENROLL CATHOL
+	   gnuplot ENROLL INCOME
+	   gnuplot ENROLL COLLEGE
+	end gpbuild
+      </code>
+    </description>
+  </command>
+  
   <command name="3-D" section="Graphs" context="gui"
 	   label="Grafici tridimensionali">
 
