@@ -2939,7 +2939,8 @@
     label="Kernel density estimation">
 
     <description>
-      <para>Kernel density estimation proceeds by defining a set of
+      <para>
+	Kernel density estimation proceeds by defining a set of
 	evenly spaced reference points, over a suitable range in
 	relation to the range of the data, and attributing a density
 	to each reference point based on the actual observations in

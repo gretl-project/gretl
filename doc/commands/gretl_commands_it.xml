@@ -3007,32 +3007,14 @@
 	circostanti.
       </para>
       <para>
-        La formula usata per calcolare la densità stimata in ognuno dei punti di
-        riferimento <math>x</math> è
-	<equation status="display"
-		  tex="\[f(x)=(1/nh) \sum_{t-1}^{n} k\left((x-x_t)/h\right)\]"
-		  ascii="f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)"
-		  graphic="kernel1"/>
-	dove <math>n</math> denota il numero delle osservazioni,
-	<math>h</math> è un parametro di "larghezza di banda" e
-	<math>k</math>() è la funzione kernel. All'aumentare del parametro
-	di banda, aumenta il livellamento della densità stimata.
-      </para>
-      <para>
 	È possibile usare un kernel Gaussiano (la densità normale
 	standard) o il kernel di Epanechnikov, mentre la larghezza di
-	banda predefinita è quella suggerita da <cite key="silverman96">Silverman (1986)</cite>,
-	ossia
-	<equation status="display"
-		  tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{-1/5}\]"
-		  ascii="h = 0.9 min(s, IQR/1.349) n^{-1/5}"
-		  graphic="kernel2"/>
-	dove <math>s</math> denota lo scarto quadratico medio dei dati e
-	IQR denota il range interquartile. È possibile allargare o
-	restringere la banda usando il <quote>fattore di aggiustamento
-	della banda</quote>: la banda effettivamente utilizzata si
-	ottiene moltiplicando il valore di Silverman per il fattore di
-	aggiustamento.
+	banda predefinita è quella suggerita da <cite
+	key="silverman96">Silverman (1986)</cite>. È possibile
+	allargare o restringere la banda usando il <quote>fattore di
+	aggiustamento della banda</quote>: la banda effettivamente
+	utilizzata si ottiene moltiplicando il valore di Silverman per
+	il fattore di aggiustamento.
       </para>
       <para>
 	Per una buona discussione introduttiva della stima kernel, si
@@ -11285,6 +11267,13 @@ del comando <cmdref targ="set"/>.
       interi e non negativi e non devono avere valori mancanti. Se il dataset
       non contiene variabili di questo tipo, questa opzione non è disponibile.
     </para>
+      <para>
+	<emphasis>Converti da serie temporali affiancate</emphasis>:
+	questa opzione è disponibile solo se il dataset corrente ha
+	una struttura di serie striche e contiene più di una
+	variabile. Selezionando questa opzione, i dettagli vengono
+	forniti tramite il pulsante Guida nel passaggio successivo.
+      </para>
   </description>
 
 </command>
