@@ -1206,6 +1206,28 @@
       </description>
     </function>
 
+    <function name="$time" section="access" output="series">
+      <description>
+	<para>
+	  Per dataset panel o di serie storiche, crea un indice a base
+	  1 del tempo. Nel caso panel la sequenza si ripete per ogni unità.
+	</para>
+	<para>
+	  Il comando <quote><lit>genr time</lit></quote> è una
+	  alternativa, con la differenza che la variante
+	  <lit>genr</lit> crea automaticamente una serie di nome
+	  <lit>time</lit> mentre quando si usa <lit>$time</lit> il
+	  nome della serie è deciso dal chiamante, come ad esempio in
+	</para>
+	<code>
+	  series trend = $time
+	</code>
+	<para>
+	  Questo accessore non è disponibile per dati cross-section.
+	</para>
+      </description>
+    </function>
+
     <function name="$tmax" section="access" output="int">
       <description>
 	<para>
@@ -1738,6 +1760,56 @@
 	  <seelist>
             <fncref targ="sinh"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="asort" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="array">a</fnarg>
+	<fnarg type="string">fname</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esegue un ordinamento sul posto degli elementi di
+	  <argname>a</argname>, utilizzando una funzione comparatrice
+	  specificata dal chiamante sotto il controllo della routine
+	  quicksort.
+	</para>
+	<para>
+	  L'argomento <argname>a</argname> può essere di qualsiasi
+	  tipo supportato per un array gretl, vale a dire
+	  <lit>strings</lit>, <lit>matrices</lit>, <lit>bundles</lit>,
+	  <lit>lists</lit> o <lit>arrays</lit>. L'argomento
+	  <argname>fname</argname> deve essere il nome di una funzione
+	  a due argomenti <lit>const</lit>, il cui tipo corrisponde a
+	  quello degli elementi di <argname>a</argname>. Tale funzione
+	  deve tornare un valore intero secondo il seguente schema: 0
+	  se due gli argomenti hanno lo stesso ordinamento, negativo
+	  se il primo l'argomento viene ordinato prima del secondo, o
+	  positivo se è il secondo ordina prima del primo. (I valori
+	  esatti non contano.)
+	</para>
+	<para>
+	  Ad esempio, supponiamo di voler ordinare un array di bundle,
+	  ognuno dei quali contiene uno scalare chiamato
+	  <lit>crit</lit>, per valori crescenti di <lit>crit</lit>. La
+	  funzione seguente sarebbe adatta come argomento di
+	  <lit>asort</lit>:
+	</para>
+	<code>
+	  function scalar my_bsort (const bundle b1, const bundle b2)
+	    return b1.crit - b2.crit
+	  end function
+	</code>
+	<para>
+	  Se si desidera preservare l'array non ordinato, bisogna crearne una copia
+	  prima di passarlo a <lit>asort</lit>. Il valore restituito
+	  dalla funzione è 0 in caso di successo.
+	</para>
+	<para>
+	  Vedi anche <fncref targ="sort"/> per l'ordinamento semplice di un
+	  array di stringhe.
 	</para>
       </description>
     </function>
@@ -3284,6 +3356,73 @@
       </description>
     </function>
 
+    <function name="corresp" section="stats" output="scalar">
+      <fnargs>
+	<fnarg type="series-or-vec">a</fnarg>
+	<fnarg type="series-or-vec">b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Sulla base di una tabulazione incrociata di <argname>a</argname>
+	  e <argname>b</argname>, restituisce un codice intero
+	  indicando il tipo di corrispondenza tra i due
+	  variabili, come segue.
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      Codice = 2: esiste una relazione 1 a 1.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Codice = 1: esiste una relazione 1 a n
+	      (<argname>a</argname> può essere interpretato come una
+	      funzione di <argname>b</argname> in senso matematico).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Codice = &minus;1: esiste una relazione n a 1
+	      (<argname>b</argname> può essere interpretato come una
+	      funzione di <argname>a</argname>).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Codice = 0: non c'è relazione.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
+	  Si noti che questi codici si basano esclusivamente sui
+	  valori campionari dei due argomenti. Nel caso in cui
+	  <argname>b</argname> sia il quadrato di
+	  <argname>a</argname>, ad esempio, il risultato sarà diverso
+	  a seconda che <argname>a</argname> contenga o meno alcune
+	  coppie di valori che differiscono solo per il segno (codice
+	  = &minus;1), oppure no (codice = 2).
+	</para>
+	<para>
+	  Un possibile caso d'uso è verificare se due serie discrete
+	  codificano le stesse informazioni. Ad esempio, il
+	  codice:
+	</para>
+	<code>
+	  open grunfeld.gdt
+	  c = corresp($unit, firm)
+	</code>
+	<para>
+	  ritorna <lit>c</lit> = 2, indicando che la serie
+	  <lit>firm</lit> è in effetti un identificatore univoco per
+	  le unità in questo dataset panel.
+	</para>
+	<para>
+	  Vedi anche <fncref targ="mxtab"/>.
+	</para>
+      </description>
+    </function>
+    
     <function name="corrgm" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="smlist">x</fnarg>
@@ -11760,6 +11899,66 @@
       </description>
     </function>
 
+    <function name="rgbmix" section="data-utils" output="strings">
+      <fnargs>
+	<fnarg type="string">colore1</fnarg>
+	<fnarg type="string">colore2</fnarg>
+	<fnarg type="matrix">f</fnarg>
+	<fnarg type="bool" optional="true">mostra</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Dati due colori e un vettore <argname>f</argname> di
+	  lunghezza <math>n</math> contenente valori in [0,1], questa
+	  funzione restituisce un array di stringhe <math>n</math>, il
+	  cui elemento <math>i</math>-esimo contiene il codice RGB
+	  esadecimale per una combinazione della forma
+	  (1-<math>f</math><sub>i</sub>) &times; <lit>colore1</lit> +
+	  <math>f</math><sub>i</sub> &times; <lit>colore2</lit>. La
+	  media ponderata viene rilevata sui canali Rosso, Verde e Blu
+	  dei colori di input.
+	</para>
+	<para>
+	  Gli argomenti colore possono essere specificati con nomi
+	  conosciuti da <cmdref targ="gnuplot"/>, o come valori
+	  esadecimali nella forma <lit>0xrrggbb</lit> o
+	  <lit>#rrggbb</lit>. I valori esadecimali nella prima di
+	  queste forme possono essere forniti numericamente,
+	  altrimenti va usata una stringa. Se viene fornito un valore
+	  diverso da zero per l'argomento <argname>mostra</argname>,
+	  viene prodotto un grafico che mostra le miscele di colori.
+	</para>
+	<para>
+	  Questa funzione offre un mezzo per generare un insieme di
+	  colori correlati quando si creano dei grafici. Il caso d'uso
+	  principale è quando si hanno più bande in un grafico (ad
+	  esempio, per indicare intervalli di confidenza a più di un
+	  livello). Seguono tre esempi: il primo produce tinte sempre
+	  più chiare di un blu iniziale; il secondo un rosa sempre più
+	  scuro e il terzo una transizione dal rosso al giallo.
+	</para>
+	<code>
+	  f = {0, 0.5, 0.75, 0.875, 0.9375}
+	  mixes = rgbmix(0x1b43dc, "white", f, 1)
+	  print mixes
+	  f = {0, 0.1, 0.2, 0.3, 0.4}
+	  rgbmix(0xefd0d3, "black", f, 1)
+	  f = {0, 0.2, 0.4, 0.6, 0.8, 1}
+	  rgbmix("red", "yellow", f, 1)
+	</code>
+	<para>
+	  L'output del comando <lit>print</lit> nel primo esempio è
+	</para>
+	<code>
+	  [1] "0x1b43dc"
+	  [2] "0x8da1ee"
+	  [3] "0xc6d0f6"
+	  [4] "0xe2e8fb"
+	  [5] "0xf1f3fd"
+	</code>
+      </description>
+    </function>
+
     <function name="round" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -13128,6 +13327,67 @@
       </description>
     </function>
 
+
+    <function name="strvsort" section="strings" output="int">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg optional="true" type="strings">S</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esegue uno di due tipi di riorganizzazione della serie
+	  <argname>y</argname>, che deve avere valori di stringa. Il
+	  valore di ritorno nominale è 0 se la funzione va a buon fine.
+	</para>
+	<para>
+	  Metodo 1: Se il secondo argomento non viene fornito,
+	  l'effetto è di ordinare <argname>y</argname> in questo
+	  senso: i distinti valori di stringa vengono messi in ordine
+	  alfabetico e quindi la serie viene ricodificata in modo tale
+	  che venga assegnato 1 per la prima stringa, 2 per la seconda
+	  e così via. Ciò può essere utile, ad esempio, per garantire
+	  una codifica uniforme per più serie che condividono lo
+	  stesso insieme di valori stringa.
+	</para>
+	<para>
+	  Metodo 2: se viene fornito il secondo argomento, esso deve
+	  essere un array che contiene esattamente i valori stringa
+	  distinti di <argname>y</argname> (che può essere creato
+	  tramite <fncref targ="strvals"/>), ma ricombinati in un
+	  ordine preferito. L'effetto è quindi di ricodificare la
+	  serie in modo tale che venga assegnato il valore 1 alla
+	  prima stringa in <argname>S</argname>, il valore 2 alla
+	  seconda e così via. Ciò può essere utile per garantire che i
+	  codici numerici <quote>abbiano senso</quote> quando i valori
+	  delle stringhe possono essere considerati come ordinati in
+	  modo naturale.
+	</para>
+	<para>
+	  Il caso d'uso principale di questi metodi è la gestione di
+	  serie con valori stringa importate da origini di terze parti
+	  come ad esempio file CSV. Per tali dati, gretl assegna
+	  codici numerici basati semplicemente sull'ordine in cui
+	  compaiono le stringhe nelle righe del file. Quindi in una
+	  serie con valori <lit>basso</lit>, <lit>medio</lit> e
+	  <lit>alto</lit>, a <lit>alto</lit> verrà assegnato il codice
+	  1 questa stringa è trovata per prima, anziché 3, il che
+	  sarebbe chiaramente più <quote>naturale</quote>. Questo
+	  problema può essere risolto utilizzando il Metodo
+	  2. Inoltre, se due o più serie condividono gli stessi valori
+	  di stringa, essi verranno codificati in modo diverso a meno
+	  che i loro valori distinti non appaiano nello stesso ordine
+	  nel file di dati. Questo problema potrebbe essere risolto
+	  con entrambi i metodi.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="stringify"/>
+	    <fncref targ="strvals"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
     <function name="substr" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>

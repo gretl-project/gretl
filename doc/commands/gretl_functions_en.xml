@@ -3405,7 +3405,7 @@
 	</para>
 	<code>
 	  open grunfeld.gdt
-	  c = correspondence($unit, firm)
+	  c = corresp($unit, firm)
 	</code>
 	<para>
 	  gives <lit>c</lit> = 2, indicating that the series
