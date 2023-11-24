@@ -1,5 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
-<html> 
+<html>
 <head>
 <title>gretl on macOS</title>
 <LINK REL=STYLESHEET TYPE="text/css" HREF="css-gretl.html">
@@ -14,21 +14,6 @@
 <h1>Gretl: Gnu Regression, Econometrics and Time-series Library</h1>
 <h2>for macOS</h2>
 </center>
-
-<p><b>Troubleshooting tip:</b> In 2022 and 2023 there have been rare reports
- that gretl on MacOS was not starting up anymore. If you are experiencing this
- issue, please try deleting your prior gretl configuration file by opening a
- Terminal window and executing the following command: 
- <pre>rm -f ~/.gretl2rc</pre>
- The gretl team is still investigating what exactly is causing the problem
- (and which part of the gretl2rc file plays a role in it), so we would
- appreciate if you could report back whether or not this interim solution
- worked for you. You can do so either by adding a comment to the 
- <a href="https://sourceforge.net/p/gretl/bugs/291/">corresponding bug 
- ticket</a> (even if it is closed), or by sending a message to the 
- <a href="https://gretlml.univpm.it/postorius/lists/gretl-users.gretlml.univpm.it/">mailing 
- list</a>.
- </p> 
 
 <h2>What's on this page</h2>
 <p>
@@ -56,9 +41,12 @@ what's new in the snapshot, take a look at the gretl
 <a href="../ChangeLog.html">Change log</a> (the "in progress"
 entry).</p>
 
-<p><b>Tip</b>: If you're updating your gretl installation it may
+<p><b>Tip 1</b>: If you're updating your gretl installation it may
   be advisable to delete the old version of gretl before
   installing the new one.</p>
+
+<p><b>Tip 2</b>: If gretl &ldquo;won't start&rdquo; all of a sudden (not very
+  likely), please see <a href="#trouble">below</a>.</p>
 
 <h2>gretl for macOS 11 (Big Sur) or higher, with "Apple Silicon"</h2>
 
@@ -133,6 +121,28 @@ explained at
 </p></li>
 </ol>
 
+<h2><a name="trouble"></a>Troubleshooting</h2>
+
+<p>In 2022 and 2023 there have been (rare) reports that gretl on MacOS
+ was not starting up any more, after an update of some kind. If you
+ experience this issue, please try opening a Terminal window and
+ executing the following two commands (which first copy your prior
+ gretl configuration file then delete it):
+  <pre>
+    cp ~/.gretl2rc ~/bad.gretl2rc
+    rm -f ~/.gretl2rc
+  </pre>
+ The gretl team is still investigating what exactly is causing the
+ problem (and which part of the <kbd>gretl2rc</kbd> file plays a role
+ in it). We would appreciate if you could report whether this interim
+ solution works for you, and we'd be very interested to see the copied
+ file, <kbd>bad.gretl2rc</kbd>. Please add a comment to the
+ <a href="https://sourceforge.net/p/gretl/bugs/291/">corresponding bug
+ ticket</a> (even if it is closed), or send a message to the
+ <a href="https://gretlml.univpm.it/postorius/lists/gretl-users.gretlml.univpm.it/">mailing
+ list</a>.
+</p>
+
 <h2><a name="optextra">Optional extras</a></h2>
 
 <p>You may wish to install X-13-ARIMA-SEATS and/or TRAMO/SEATS. These
@@ -152,7 +162,7 @@ program, as follows.</p>
   # TRAMO/SEATS (Intel Mac)
   pkg install tramo-seats-mac-intel.tar.gz
   # TRAMO/SEATS (Apple Silicon Mac)
-  pkg install tramo-seats-mac-arm64.tar.gz  
+  pkg install tramo-seats-mac-arm64.tar.gz
 </pre>
 
 <p>
