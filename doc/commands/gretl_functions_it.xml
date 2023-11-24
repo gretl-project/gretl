@@ -873,7 +873,13 @@
       <description>
 	<para>
 	  Produce l'<math>R</math><sup>2</sup> non aggiustato
-	  dell'ultimo modello stimato.
+	  dell'ultimo modello stimato, se disponibile. Normalmente
+	  questo sarà l'indice <math>R</math><sup>2</sup> centrato ma
+	  se la specifica non contiene una costante (e nessun insieme
+	  di regressori che <quote>si sommano</quote> a una costante),
+	  allora sarà la versione non centrata. In tal caso è
+	  possibile accedere alla versione centrata come
+	  <lit>$model.centered_R2</lit>.
 	</para>
       </description>
     </function>
@@ -2616,6 +2622,7 @@
 	<para>
 	  <seelist>
 	    <fncref targ="abs"/>
+	    <fncref targ="cmod"/>
 	    <fncref targ="atan2"/>
 	  </seelist>
 	</para>
@@ -2975,12 +2982,6 @@
 	  alla radice quadrata di <math>x</math><sup>2</sup> +
 	  <math>y</math><sup>2</sup>.
 	</para>
-	<para>
-	  NOTA: questa funzione è obsoleta, ed è rimpiazzata dalla
-	  funzione <fncref targ="abs"/>. Per il momento, è mantenuta
-	  in vita per compatibilità all'indietro, ma prima o poi verrà
-	  cancellata. Vi consigliamo di aggiornare i vostri script.
-        </para>
 	<para>
 	  <seelist>
 	    <fncref targ="carg"/>
@@ -7296,6 +7297,19 @@
 	  <argname>x</argname>. La prima contiene un insieme di valori
 	  in ascissa equispaziati e le altre riportano le stime della
 	  densità in ciascuno di questi punti.
+        </para>
+	<para>
+	  La formula utilizzata per calcolare la densità stimata in
+	  ciascun punto di riferimento, <math>x</math>, è
+	  <equation status="display"
+              tex="\[f(x)=(1/nh) \sum_{t-1}^{n} k\left((x-x_t)/h\right)\]"
+              ascii="f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)"
+              graphic="kernel1"/>
+	  dove <math>n</math> indica il numero dei dati,
+	  <math>h</math> è una larghezza di banda e <math>k</math>() è
+	  la funzione kernel.  Maggiore è il valore del parametro
+	  della larghezza di banda, più liscia sarà la densità
+	  stimata.
 	</para>
 	<para>
 	  Il parametro opzionale <argname>scale</argname> può essere
@@ -11775,15 +11789,10 @@
 	  può essere cancellato.
 	</para>
 	<para>
-	  Se <argname>fname</argname> contiene un percorso completo,
-	  gretl proverà a cancellare quel file e ritornerà un errore
-	  se non ci riesce, perché il file non esiste o per un
-	  problema di privilegi. Se <argname>fname</argname> invece
+	  Se <argname>fname</argname> invece
 	  non contiene un percorso completo, gretl darà per scontato
 	  che il nome file è relativo alla <cmdref targ="workdir"/>
-	  attuale. Se il file non viene trovato o non si hanno i
-	  privilegi per cancellarlo, la ricerca non si estenderà ad
-	  altre directory.
+	  attuale.
 	</para>
       </description>
     </function>
