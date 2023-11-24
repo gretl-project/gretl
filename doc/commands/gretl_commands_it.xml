@@ -3675,15 +3675,13 @@
 
   <command name="end" section="Programming"
 	   label="Chiude un blocco di comandi" context="cli">
-
     <description>
       <para>
-	Termina un blocco di comandi di qualsiasi tipo.
-        Ad esempio, <cmd>end system</cmd> termina un <cmdref targ="system"/>
-        (sistema di equazioni).
+	Termina un blocco di comandi di qualsiasi tipo.  Ad esempio,
+	<cmd>end system</cmd> termina un <cmdref targ="system"/>
+	(sistema di equazioni).
       </para>
     </description>
-
   </command>
 
   <command name="endif" section="Programming" label="Strutture di controllo" context="cli">
@@ -7276,7 +7274,10 @@
       della serie da importare, e (se necessario) il nome delle serie
       corrispondenti alle chiavi <quote>interne</quote>, da usare come
       <quote>chiavi esterne</quote>. (Di default, si assume che le
-      chiavi interna ed esterna si chiamino allo stesso modo.)
+      chiavi interna ed esterna si chiamino allo stesso modo.) In
+      questa finestra c'è anche una voce "<quote>fittizia</quote>",
+      <lit>$obsmajor</lit>. Questa serie non può essere importata, ma può
+      essere utilizzata come chiave; vedi <fncref targ="$obsmajor"/>.
     </para>
     <para>
       Nel pannello di mezzo, vengono specificati, volendo, parametri
@@ -7304,6 +7305,17 @@
         </para>
       </li>
     </ilist>
+    <subhead>Dati in serie storiche</subhead>
+    <para>
+      Se il dataset corrente è di serie storiche, è probabile che
+      anche lo siano anche i dati da aggiungere. In tal caso gretl
+      potrebbe essere in grado di capire il da farsi senza l'aiuto
+      delle chiavi specificate dall'utente. Ciò è segnalato dalla
+      stringa segnaposto <quote>auto-detect</quote> nelle caselle di
+      immissione della chiave interna. Sebbene non vi sia alcuna
+      garanzia che il risultato sia quello voluto, può valer la pena
+      provare prima di ricorrere a un approccio più complicato.
+    </para>
   </description>
 </command>
 
@@ -17291,11 +17303,9 @@ qual caso viene usato QML.
       <menu-path>/Visualizza/Correlogramma</menu-path>
       <other-access>Menù pop-up nella finestra principale (selezione multipla)</other-access>
     </gui-access>
-
   </command>
 
   <command name="xtab" section="Statistics" label="Tabulazione incrociata">
-
     <usage>
       <arguments>
 	<argument>lista-y</argument>
@@ -17343,6 +17353,9 @@ qual caso viene usato QML.
 	<example>xtab --matrix=A</example>
 	<example>xtab 1 2 --tex="xtab.tex"</example>
       </examples>
+      <demos>
+	<demo>ooballot.inp</demo>
+      </demos>
     </usage>
 
     <description context="cli">
@@ -17405,13 +17418,14 @@ qual caso viene usato QML.
 
       <subhead>Il caso bivariato</subhead>
       <para>
-	Nel caso base di una semplice tabella a doppia entrata si
-	possono usare gli accessori <fncref targ="$test"/> e <fncref
-	targ="$pvalue"/> per il test chi-quadro di Pearson ed il
-	p-value corrispondente, a patto che sia rispettata la
-	condizione sul valore atteso minimo. In questo contesto,
-	l'opzione <opt>quiet</opt> fa sì che la tavola non venga
-	stampata.
+	Nel caso base di una semplice tabella a doppia entrata, la
+	tabella è accessibile tramite l'accessore <fncref
+	targ="$result"/>, e si possono usare gli accessori <fncref
+	targ="$test"/> e <fncref targ="$pvalue"/> per il test
+	chi-quadro di Pearson ed il p-value corrispondente, a patto
+	che sia rispettata la condizione sul valore atteso minimo. In
+	questo contesto, l'opzione <opt>quiet</opt> fa sì che la
+	tavola non venga stampata.
       </para>
 
       <subhead>&latex; output</subhead>
@@ -17431,15 +17445,7 @@ qual caso viene usato QML.
 	l'opzione <opt>tex</opt> o quando una delle due variabili sia
 	di tipo stringa.
       </para>
-
-      <subhead>Salvare la tavola come matrice</subhead>
-      <para>
-	Quando l'argomento del comando è dato da una sola lista, la
-	tavola di contingenza può essere salvata come matrice
-	attraverso l'accessore <fncref targ="$result"/>.
-      </para>
     </description>
-
     <description context="gui">
       <para>
 	Mostra la tabella di contingenza, o la tabulazione incrociata,
