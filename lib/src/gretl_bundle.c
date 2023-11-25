@@ -3117,8 +3117,8 @@ gretl_bundle *gretl_bundle_read_from_buffer (const char *buf,
     xmlDocPtr doc = NULL;
     gretl_bundle *b = NULL;
 
-    xmlKeepBlanksDefault(0);
-    doc = xmlReadMemory(buf, len, NULL, NULL, XML_PARSE_HUGE);
+    // xmlKeepBlanksDefault(0);
+    doc = xmlReadMemory(buf, len, NULL, NULL, XML_PARSE_HUGE | XML_PARSE_NOBLANKS);
 
     if (doc == NULL) {
         gretl_errmsg_set(_("xmlReadMemory failed"));

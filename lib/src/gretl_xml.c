@@ -60,14 +60,14 @@ int gretl_xml_open_doc_root (const char *fname,
     int err = 0;
 
     LIBXML_TEST_VERSION;
-    xmlKeepBlanksDefault(0);
+    // xmlKeepBlanksDefault(0);
 
     *pdoc = NULL;
     if (pnode != NULL) {
 	*pnode = NULL;
     }
 
-    doc = xmlReadFile(fname, NULL, XML_PARSE_HUGE);
+    doc = xmlReadFile(fname, NULL, XML_PARSE_HUGE | XML_PARSE_NOBLANKS);
     if (doc == NULL) {
 	gretl_errmsg_sprintf(_("xmlReadFile failed on %s"), fname);
 	err = 1;
@@ -112,14 +112,15 @@ int gretl_xml_read_buffer (const char *buf,
     int err = 0;
 
     LIBXML_TEST_VERSION;
-    xmlKeepBlanksDefault(0);
+    // xmlKeepBlanksDefault(0);
 
     *pdoc = NULL;
     if (pnode != NULL) {
 	*pnode = NULL;
     }
 
-    doc = xmlReadMemory(buf, strlen(buf), "include.xml", NULL, XML_PARSE_HUGE);
+    doc = xmlReadMemory(buf, strlen(buf), "include.xml", NULL,
+			XML_PARSE_HUGE | XML_PARSE_NOBLANKS);
     if (doc == NULL) {
 	gretl_errmsg_set(_("xmlReadMemory failed"));
 	err = 1;
