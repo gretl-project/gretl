@@ -421,9 +421,9 @@ static int parse_frb_xml (const char *fname, FILE *fidx, FILE *fbin)
     xmlNodePtr node, cur;
     int err = 0;
 
-    doc = xmlParseFile(fname);
+    doc = xmlReadFile(fname, NULL, XML_PARSE_NOBLANKS);
     if (doc == NULL) {
-	fprintf(stderr, "parse_frb_xml: xmlParseFile failed\n");
+	fprintf(stderr, "parse_frb_xml: xmlReadFile failed\n");
 	err = 1;
     }
 
@@ -457,7 +457,6 @@ int main (int argc, char **argv)
 {
     FILE *fidx = NULL, *fbin = NULL;
     const char *fname;
-    int err = 0;
 
     if (argc < 2) {
 	fprintf(stderr, "%s: give the nname of an FRB data file to parse\n", argv[0]);
@@ -476,10 +475,8 @@ int main (int argc, char **argv)
 	fputs("# Federal Reserve Board (interest rates)\n", fidx);
     }
 
-    xmlKeepBlanksDefault(0);
     xmlInitParser(); 
-
-    err = parse_frb_xml(fname, fidx, fbin);
+    parse_frb_xml(fname, fidx, fbin);
 
     fclose(fidx);
     fclose(fbin);

@@ -454,9 +454,10 @@ static int parse_fred_xml (FREDbuf *fb, FILE *fidx, FILE *fbin)
     xmlNodePtr node;
     int err = 0;
 
-    doc = xmlParseMemory((const char *) fb->buf, fb->size);
+    doc = xmlReadMemory((const char *) fb->buf, fb->size,
+                        NULL, NULL, XML_PARSE_NOBLANKS);
     if (doc == NULL) {
-	fprintf(stderr, "parse_fred_xml: xmlParseMemory failed\n");
+	fprintf(stderr, "parse_fred_xml: xmlReadMemory failed\n");
 	err = 1;
     }
 
@@ -638,7 +639,6 @@ int main (int argc, char **argv)
     }
 
     curl_global_init(CURL_GLOBAL_DEFAULT);
-    xmlKeepBlanksDefault(0);
     xmlInitParser();
 
     for (i=0; i<n_series && !err; i++) {
