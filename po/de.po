@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-11-26 15:45-0500\n"
-"PO-Revision-Date: 2023-11-22 23:39+0100\n"
+"PO-Revision-Date: 2023-11-26 22:19+0100\n"
 "Last-Translator: Sven Schreiber <svetosch (at) gmx (dot) net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -2797,7 +2797,7 @@ msgstr "erhielt ungültiges Feld '%s'"
 #: lib/src/geneval.c:2722
 #, c-format
 msgid "%s: series usage is valid only in direct assignment"
-msgstr ""
+msgstr "%s: Verwendung als Reihe nur in direkter Zuweisung gültig."
 
 #: lib/src/geneval.c:2728 lib/src/gretl_panel.c:6806
 msgid "Sorry, can't do this with a sub-sampled dataset"
@@ -7014,9 +7014,8 @@ msgid "Asymptotic standard errors"
 msgstr "Asymptotische Standardfehler"
 
 #: lib/src/modelprint.c:1416 lib/src/modelprint.c:1418
-#, fuzzy
 msgid "Standard errors clustered by unit"
-msgstr "Standardfehler geclustert gemäß %d Werten von %s"
+msgstr "Standardfehler nach Gruppe(n) geclustert"
 
 #: lib/src/modelprint.c:1423 lib/src/modelprint.c:1427
 msgid "Beck-Katz standard errors"
@@ -7027,29 +7026,27 @@ msgid "Beck--Katz standard errors"
 msgstr "Beck--Katz-Standardfehler"
 
 #: lib/src/modelprint.c:1432 lib/src/modelprint.c:1434
-#, fuzzy
 msgid "Standard errors clustered by time"
-msgstr "Standardfehler geclustert gemäß %d Werten von %s"
+msgstr "Standardfehler nach Zeitperioden geclustert"
 
 #: lib/src/modelprint.c:1440 lib/src/modelprint.c:1447
-#, fuzzy, c-format
+#, c-format
 msgid "Driscoll-Kraay standard errors, bandwidth %d"
-msgstr "HAC Standardfehler, Bandbreite %d"
+msgstr "Driscoll-Kraay-Standardfehler, Bandbreite %d"
 
 #: lib/src/modelprint.c:1444
-#, fuzzy, c-format
+#, c-format
 msgid "Driscoll--Kraay standard errors, bandwidth %d"
-msgstr "HAC Standardfehler, Bandbreite %d"
+msgstr "Driscoll--Kraay Standardfehler, Bandbreite %d"
 
 #: lib/src/modelprint.c:1453 lib/src/modelprint.c:1455
-#, fuzzy
 msgid "Standard errors clustered by unit and time"
-msgstr "Standardfehler geclustert gemäß %d Werten von %s"
+msgstr "Standardfehler nach Gruppen und Zeitperioden geclustert"
 
 #: lib/src/modelprint.c:1467
-#, fuzzy, c-format
+#, c-format
 msgid "Standard errors clustered by %s and %s"
-msgstr "Standardfehler geclustert gemäß %d Werten von %s"
+msgstr "Standardfehler nach %s und %s geclustert"
 
 #: lib/src/modelprint.c:1472
 #, c-format
@@ -11337,16 +11334,15 @@ msgstr "Panelstruktur"
 
 #: gui/datawiz.c:129
 msgid "Side-by-side structure"
-msgstr ""
+msgstr "Nebeneinander-Struktur"
 
 #: gui/datawiz.c:130
 msgid "Panel index variables"
 msgstr "Panel-Indexvariable"
 
 #: gui/datawiz.c:131
-#, fuzzy
 msgid "Panel series name"
-msgstr "Panel-Zeitreihengraph"
+msgstr "Panel-Reihenname"
 
 #: gui/datawiz.c:132
 msgid "Panel time dimension"
@@ -11441,7 +11437,7 @@ msgstr "Benutze Indexvariablen"
 
 #: gui/datawiz.c:618
 msgid "Convert from side-by-side time series"
-msgstr ""
+msgstr "Konvertiere von nebeneinander-Zeitreihen"
 
 #: gui/datawiz.c:637 gui/datawiz.c:658
 msgid "Non-standard frequency"
@@ -11478,6 +11474,8 @@ msgid ""
 "Comprises a single series '%s', constructed\n"
 "by stacking %d individual time series."
 msgstr ""
+"Enthält eine Reihe '%s', erstellt durch\n"
+"Stapelung von %d einzelnen Zeitreihen."
 
 #: gui/datawiz.c:836
 #, c-format
@@ -11485,6 +11483,8 @@ msgid ""
 "Comprises %d series, each constructed by stacking\n"
 "%d individual time series."
 msgstr ""
+"Enthält %d Reihen, die jeweils durch Stapelung von\n"
+"%d einzelnen Reihen erstellt wurden."
 
 #: gui/datawiz.c:843
 msgid "stacked cross sections"
@@ -11533,19 +11533,17 @@ msgid "Time index variable"
 msgstr "Zeit-Indexvariable"
 
 #: gui/datawiz.c:1848
-#, fuzzy
 msgid "Click on Help for guidance."
-msgstr "(Bitte konsultieren Sie dafür die Hilfe)"
+msgstr "Klicken Sie auf Hilfe für Hinweise."
 
 #: gui/datawiz.c:1852
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d time series."
-msgstr "Zeitreihen"
+msgstr "Fand %d Zeitreihen."
 
 #: gui/datawiz.c:1878
-#, fuzzy
 msgid "Number of side-by-side blocks"
-msgstr "Wieviele Leerzeichen pro Tab"
+msgstr "Zahl der Nebeneinander-Blöcke"
 
 #: gui/datawiz.c:1953
 msgid "purge missing observations"
@@ -11561,20 +11559,20 @@ msgid "The data set contains no suitable index variables"
 msgstr "Der Datensatz enthält keine geeigneten Indexvariablen"
 
 #: gui/datawiz.c:2232
-#, fuzzy
 msgid "The data set contains no suitable time series"
-msgstr "Der Datensatz enthält keine geeigneten Indexvariablen"
+msgstr "Der Datensatz enthält keine geeigneten Zeitreihen."
 
 #: gui/datawiz.c:2265
-#, fuzzy
 msgid "Give a name for the panel series"
-msgstr "Sie müssen einen Variablennamen angeben"
+msgstr "Sie müssen einen Panel-Reihennamen angeben."
 
 #: gui/datawiz.c:2285
 msgid ""
 "The individual series will be named by appending \"1\", \"2\", ...\n"
 "You can modify these names once this operation is completed."
 msgstr ""
+"Die einzelnen Reihen werden benannt durch Anhängen von \"1\", \"2\", …\n"
+"Diese Namen können nach dieser Operation geändert werden."
 
 #: gui/datawiz.c:2502
 msgid "start entering data values"
@@ -13937,9 +13935,8 @@ msgid "gretl: graph color selection"
 msgstr "gretl: Graph-Farbauswahl"
 
 #: gui/gpt_dialog.c:355
-#, fuzzy
 msgid "Copy color string"
-msgstr "Leere Zeichenkette\n"
+msgstr "Kopiere Farbcode"
 
 #: gui/gpt_dialog.c:374
 msgid "Select color"
@@ -14271,9 +14268,8 @@ msgid "dump gretl configuration to file"
 msgstr "gretl-Konfigurations-Dump in Datei"
 
 #: gui/gretl.c:150
-#, fuzzy
 msgid "ignore gretl configuration file"
-msgstr "gretl-Konfigurations-Dump in Datei"
+msgstr "ignoriere gretl-Konfigurationsdatei"
 
 #: gui/gretl.c:153
 msgid "send debugging info to console"
@@ -14552,9 +14548,8 @@ msgid "Start GNU _R"
 msgstr "Starte GNU _R"
 
 #: gui/gretl.c:1856
-#, fuzzy
 msgid "Color tool"
-msgstr "Farbe %d"
+msgstr "Farbwerkzeug"
 
 #: gui/gretl.c:1857
 msgid "_NIST test suite"
@@ -19473,9 +19468,8 @@ msgid "complex matrix"
 msgstr "komplexe Matrix"
 
 #: gui/ssheet.c:4118
-#, fuzzy
 msgid "matrix"
-msgstr "Neue Matrix"
+msgstr "Matrix"
 
 #: gui/ssheet.c:4132 plugin/geoplot.c:1162 plugin/geoplot.c:1167
 #: plugin/geoplot.c:1172
