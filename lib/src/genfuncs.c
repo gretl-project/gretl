@@ -7023,7 +7023,9 @@ static gretl_matrix *real_aggregate_by (const double *x,
                                         const int *ylist,
                                         DATASET *dset,
                                         double *tmp,
-                                        double (*builtin)
+                                        double (*dbuiltin)
+                                        (int, int, const double *),
+                                        int (*ibuiltin)
                                         (int, int, const double *),
                                         fncall *fc,
                                         int just_count,
@@ -7139,8 +7141,10 @@ static gretl_matrix *real_aggregate_by (const double *x,
                 break;
             } else {
                 /* aggregate x at current y values */
-                if (builtin != NULL) {
-                    fx = (*builtin)(0, ni-1, tmp);
+                if (dbuiltin != NULL) {
+                    fx = (*dbuiltin)(0, ni-1, tmp);
+		} else if (ibuiltin != NULL) {
+		    fx = (double) (*ibuiltin)(0, ni-1, tmp);
                 } else {
                     double *pfx = &fx;
 
@@ -7336,7 +7340,8 @@ gretl_matrix *aggregate_by (const double *x,
 {
     gretl_matrix *m = NULL;
     double *tmp = NULL;
-    double (*builtin) (int, int, const double *) = NULL;
+    double (*dbuiltin) (int, int, const double *) = NULL;
+    int (*ibuiltin) (int, int, const double *) = NULL;
     fncall *fc = NULL;
     int just_count = 0;
     int n;
@@ -7356,43 +7361,49 @@ gretl_matrix *aggregate_by (const double *x,
 
         switch (f) {
         case F_SUM:
-            builtin = gretl_sum;
+            dbuiltin = gretl_sum;
             break;
         case F_SUMALL:
-            builtin = series_sum_all;
+            dbuiltin = series_sum_all;
             break;
         case F_MEAN:
-            builtin = gretl_mean;
+            dbuiltin = gretl_mean;
             break;
         case F_SD:
-            builtin = gretl_stddev;
+            dbuiltin = gretl_stddev;
             break;
         case F_VCE:
-            builtin = gretl_variance;
+            dbuiltin = gretl_variance;
             break;
         case F_SST:
-            builtin = gretl_sst;
+            dbuiltin = gretl_sst;
             break;
         case F_SKEWNESS:
-            builtin = gretl_skewness;
+            dbuiltin = gretl_skewness;
             break;
         case F_KURTOSIS:
-            builtin = gretl_kurtosis;
+            dbuiltin = gretl_kurtosis;
             break;
         case F_MIN:
-            builtin = gretl_min;
+            dbuiltin = gretl_min;
             break;
         case F_MAX:
-            builtin = gretl_max;
+            dbuiltin = gretl_max;
             break;
         case F_MEDIAN:
-            builtin = gretl_median;
+            dbuiltin = gretl_median;
             break;
         case F_GINI:
-            builtin = gretl_gini;
+            dbuiltin = gretl_gini;
             break;
         case F_NOBS:
-            builtin = series_get_nobs;
+            dbuiltin = series_get_nobs;
+            break;
+        case F_ISCONST:
+            ibuiltin = gretl_isconst;
+            break;
+        case F_ISDUMMY:
+            ibuiltin = gretl_isdummy;
             break;
         default:
             break;
@@ -7407,7 +7418,7 @@ gretl_matrix *aggregate_by (const double *x,
         tmp = malloc(n * sizeof *tmp);
         if (tmp == NULL) {
             *err = E_ALLOC;
-        } else if (builtin == NULL) {
+        } else if (dbuiltin == NULL && ibuiltin == NULL) {
             fc = get_user_aggrby_call(fname, tmp, err);
         }
     }
@@ -7418,7 +7429,8 @@ gretl_matrix *aggregate_by (const double *x,
         x = (x == NULL)? NULL : x + dset->t1;
         y = (y == NULL)? NULL : y + dset->t1;
         m = real_aggregate_by(x, y, xlist, ylist, dset, tmp,
-                              builtin, fc, just_count, err);
+                              dbuiltin, ibuiltin, fc, just_count,
+			      err);
         dset->t2 = save_t2;
     }
 

@@ -1612,13 +1612,15 @@
 	  targ="sd"/>, <fncref targ="var"/>, <fncref targ="sst"/>,
 	  <fncref targ="skewness"/>, <fncref targ="kurtosis"/>,
 	  <fncref targ="min"/>, <fncref targ="max"/>, <fncref
-	  targ="median"/>, <fncref targ="nobs"/> and <fncref
-	  targ="gini"/>. Each of these functions takes a series
+	  targ="median"/>, <fncref targ="nobs"/>, <fncref
+	  targ="gini"/>, <fncref targ="isconst"/> and <fncref
+	  targ="isdummy"/>. Each of these functions takes a series
 	  argument and returns a scalar value, and in that sense can
 	  be said to <quote>aggregate</quote> the series in some way.
-	  You may give the name of a user-defined function as the
-	  aggregator; like the built-ins, such a function must
-	  take a single series argument and return a scalar value.
+	  If none of these built-in functions does what you need, you
+	  can give the name of a user-defined function as the
+	  aggregator; like the built-ins, such a function must take a
+	  single series argument and return a scalar value.
 	</para>
 	<para>
 	  Note that although a count of cases is provided
