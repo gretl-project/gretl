@@ -31,11 +31,13 @@ lib/src/gretl_bfgs.c
 lib/src/gretl_btree.c
 lib/src/gretl_bundle.c
 lib/src/gretl_cmatrix.c
+lib/src/gretl_color.c
 lib/src/gretl_commands.c
 lib/src/gretl_data_io.c
 lib/src/gretl_errors.c
 lib/src/gretl_foreign.c
 lib/src/gretl_func.c
+lib/src/gretl_gridplot.c
 lib/src/gretl_help.c
 lib/src/gretl_intl.c
 lib/src/gretl_join.c
@@ -46,7 +48,6 @@ lib/src/gretl_midas.c
 lib/src/gretl_model.c
 lib/src/gretl_mpi.c
 lib/src/gretl_mt.c
-lib/src/gretl_multiplot.c
 lib/src/gretl_normal.c
 lib/src/gretl_panel.c
 lib/src/gretl_paths.c
