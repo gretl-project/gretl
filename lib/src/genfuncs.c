@@ -7285,6 +7285,7 @@ static fncall *get_user_aggrby_call (const char *s,
     fncall *fc = NULL;
 
     if (uf == NULL) {
+	gretl_errmsg_sprintf("aggregate: '%s' is not a supported function", s);
         *err = E_INVARG;
     } else {
         GretlType rt = user_func_get_return_type(uf);
