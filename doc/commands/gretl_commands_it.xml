@@ -230,9 +230,9 @@
 	In tutti i casi, la variabile dipendente nella regressione
 	usata per calcolare il test è la differenza prima della
 	variabile specificata, <math>y</math>, e la variabile
-	dipendente più importante è il ritardo (di ordine uno) di
+	indipendente più importante è il ritardo (di ordine uno) di
 	<math>y</math>. Il modello è costruito in modo che il
-	coefficiente della variabile ritardata <math>y</math> è pari a
+	coefficiente della variabile ritardata <math>y</math> sia pari a
 	1 meno la radice. Ad esempio, il modello con una costante può
 	essere scritto come <equation status="display"
 	tex="\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]"
@@ -246,15 +246,15 @@
       <subhead context="cli">Selezione dell'ordine dei ritardi</subhead>
 
       <para context="cli">
-	Nella versione più semplice del test Dickey&ndash;Fuller test
-	si assume che il termine di errore nella regressione di test
-	sia serialmente incorrelato. Poiché questo è spesso
-	implausibile, la specificazione viene spesso estesa includendo
-	uno o più ritardi della variabile dipendente, dando così luogo
-	al cosiddetto test ADF (Augmented Dickey&ndash;Fuller).
+	Nella versione più semplice del test si assume che il termine di 
+  errore 	nella regressione del test 	sia serialmente incorrelato.
+	Poiché questo è 	spesso 	implausibile, la specificazione viene
+  spesso estesa includendo uno o più ritardi della variabile
+  dipendente, dando così luogo al cosiddetto test ADF 
+  (Augmented Dickey&ndash;Fuller). 
 	L'argomento <repl>ordine</repl> indica il numero di tali
 	ritardi, <math>k</math>, che può dipendere dall'ampiezza
-	campiopnaria <math>T</math>.
+	campionaria <math>T</math>.
       </para>
       <ilist context="cli">
 	<li>
@@ -266,7 +266,7 @@
 	<li>
 	  <para>
 	    Per avere un numero di ritardi dipendente da
-	    <math>T</math>, specificare come <repl>order</repl> il
+	    <math>T</math>, specificare come <repl>ordine</repl> il
 	    numero &minus;1. In questo caso, l'ordine viene
 	    automaticamente scelto secondo l'indicazione di <cite
 	    key="schwert89">Schwert (1989)</cite>, ossia la parte
@@ -277,14 +277,14 @@
 
       <para context="cli">
 	In generale, però, non si sa quanti ritardi siano necessari
-	per <quote>sbiancare</quote> i residui
-	Dickey&ndash;Fuller. Spesso si specifica il valore
-	<emphasis>massimo</emphasis>  di <math>k</math> e si lascia
-	decidere ai dati il numero di ritardi effettivo.  Per fare
-	questo, c'è l'opzione <opt>test-down</opt>: il criterio usato
-	per scegliere il <math>k</math> ottimale è determinato dal
-	parametro dato a questa opzione, che deve essere uno fra
-	<lit>AIC</lit> (default), <lit>BIC</lit> o <lit>tstat</lit>.
+	per <quote>pulire</quote> i residui della regressione test. 
+  Spesso si	specifica il valore <emphasis>massimo</emphasis>
+  di <math>k</math>, 	lasciando 	decidere ai dati il numero di 
+  ritardi effettivo. Per fare questo, c'è l'opzione 
+  <opt>test-down</opt>: il criterio usato 	per scegliere il 
+  <math>k</math> ottimale è determinato dal 	parametro dato a 
+  questa opzione, che deve essere uno fra <lit>AIC</lit> (default),
+  <lit>BIC</lit> o <lit>tstat</lit>.
       </para>
 
       <para context="gui">
@@ -301,20 +301,20 @@
       </para>
 
       <para context="cli">
-	Quando si testa "all'indietro" con lo AIC o il BIC, l'ordine
+	Quando si testa "all'indietro" con l'AIC o il BIC, l'ordine
 	dei ritardi finale viene scelto in modo da ottimizzare
 	rispettivamente una versione modificata del Criterio di
 	Informazione di Akaike o del Criterio Bayesiano di
-	Schwartz. La procedura varia a seconda se si sia scelta
-	l'opzione <opt>gls</opt>: con la de-trendizzazione GLS, i
+	Schwartz. La procedura varia a seconda se sia stata scelta
+	l'opzione <opt>gls</opt>: con la detrendizzazione GLS, i
 	valori AIC e BIC sono quelli <quote>modificati</quote>
 	descritti in <cite key="ng-perron01">Ng e Perron
 	(2001)</cite>, altrimenti sono quelli standard. Nel caso GLS è
 	disponibile un'ulteriore opzione, e cioè <opt>perron-qu</opt>;
-	essa fa sì che i criteri di informazione modificati sono
+	essa fa sì che i criteri di informazione modificati siano
 	calcolati secondo il metodo raccomandato in <cite
 	key="perron-qu07">Perron e Qu (2007)</cite>. In quest'ultimo
-	caso, i dati sono prima centrati in media o detrendizzati via
+	caso, i dati sono prima centrati in media o detrendizzati mediante
 	OLS; il GLS viene applicato dopo aver scelto l'ordine dei ritardi.
       </para>
 
@@ -331,15 +331,15 @@
       </para>
       <nlist>
 	<li><para>
-	  Stima la regressione Dickey&ndash;Fuller con
+	  Stima della regressione Dickey&ndash;Fuller con
 	  <math>k</math> ritardi della variabile dipendente.
 	</para>
 	</li>
-	<li><para>Se questo ordine di ritardi è significativo, esegue
-	il test con l'ordine di ritardo <math>k</math>.  Altrimenti,
-	prova il test con <math>k</math> = <math>k</math> &minus; 1;
-	se <math>k</math> = 0, esegue il test con ordine di ritardo 0,
-	altrimenti va al punto 1.
+	<li><para>E' significativo l'ultimo ritardo? In caso affermativo, 
+  si esegue	il test con l'ordine di ritardo <math>k</math>. 
+  Altrimenti, si setta <math>k</math> = <math>k</math> &minus; 1;
+	se <math>k</math> = 0, si esegue il test con ordine di ritardo 0,
+	altrimenti si va al punto 1.
       </para>
 	</li>
       </nlist>
@@ -360,7 +360,7 @@
 	adf -1 y --c --gls --test-down --perron-qu
       </code>
       <para context="cli">
-	(Sosotituendo <opt>ct</opt> a <opt>c</opt> se la serie
+	(Sostituendo <opt>ct</opt> a <opt>c</opt> se la serie
 	contiene un trend evidente.)  L'ordine dei ritardi del test
 	verrà determinato testando all'indietro con il criterio AIC
 	modificato partendo del massimo di Schwert maximum, col
@@ -390,12 +390,12 @@
 	In primo luogo, mentre nel caso di serie storiche pure è
 	possibile indicare un elenco di variabili da testare, con dati
 	panel ciascun comando può esaminare una sola variabile alla
-	volta.  Secondo, le opzioni che governano l'inclusione di
-	trend deterministici diventano mutualmente esclusive: è
+	volta.  In secondo luogo, le opzioni che governano l'inclusione 
+  di trend deterministici diventano mutualmente esclusive: è
 	necessario scegliere fra il caso senza costante, quello con
 	solo la costante, e quello che la costante e il trend; il
 	default è il secondo.  L'opzione <opt>seasonals</opt>,
-	inoltre, non è disponibile.  Terzo, l'opzione
+	inoltre, non è disponibile.  Infine, l'opzione
 	<opt>verbose</opt> ha un significato diverso: produce un breve
 	resoconto del test per ciascuna singola serie storica (il
 	default prevede di mostrare solo il risultato complessivo).
@@ -413,17 +413,16 @@
 	omesso. La statistica riportata per il test di Im, Pesaran e
 	Shin varia come segue: se l'ordine di ritardi per il test è
 	positivo, viene riportata la statistica <math>W</math>;
-	altrimenti, viene riportata la statistica <math>Z</math> se la
-	lunghezza delle serie è diversa fra individui, quella
-	<math>t</math> barrato se è uguale per tutte le unità. vedi
+	altrimenti, viene riportata o la statistica <math>Z</math> se la
+	lunghezza delle serie è diversa fra individui o la statistica
+	<math>t</math> barrato se è uguale per tutte le unità. Vedi
 	anche il comando <cmdref targ="levinlin"/>.
       </para>
 
     </description>
 
     <gui-access>
-      <menu-path>/Variabile/Test di radice unitaria/Test Dickey-Fuller
-      aumentato</menu-path>
+      <menu-path>/Variabile/Test di radice unitaria/Test Dickey-Fuller aumentato</menu-path>
     </gui-access>
 
   </command>
@@ -2709,7 +2708,7 @@
       <options>
 	<option>
 	  <flag>--panel-time</flag>
-	  <effect>vedi oltre, sotto addobs</effect>
+	  <effect>vedi sotto addobs</effect>
 	</option>
       </options>
       <examples>
@@ -2730,13 +2729,13 @@
 
     <description>
       <para>
-	Esegue varie operazioni sull'intero dataset, a seconda della
+	Esegue varie operazioni sull'intero dataset a seconda della
 	<repl>parola-chiave</repl> usata, che può essere
 	<lit>addobs</lit>, <lit>insobs</lit>, <lit>clear</lit>,
 	<lit>compact</lit>, <lit>expand</lit>, <lit>transpose</lit>,
 	<lit>sortby</lit>, <lit>dsortby</lit>, <lit>resample</lit>,
-	<lit>renumber</lit> o <lit>pad-daily</lit> o
-	<lit>unpad-daily</lit> . Nota: ad eccezione del comando
+	<lit>renumber</lit>, <lit>pad-daily</lit> o
+	<lit>unpad-daily</lit> . Nota: ad eccezione di
 	<lit>clear</lit> questi comandi non sono disponibili quando
 	sul dataset è definito un sotto-campione ottenuto selezionando
 	le osservazioni con un criterio Booleano.
@@ -2750,9 +2749,9 @@
 	ma alcune variabili deterministiche, ad esempio le tendenze
 	lineari e le variabili dummy periodiche, sono riconosciute ed
 	estese. Se il dataset aperto è di tipo panel, l'opzione
-	<opt>panel-time</opt> è quella di allungare il campione di
+	<opt>panel-time</opt> consente di allungare il campione di
 	<math>n</math> osservazioni per ogni unità cross-sezionale
-	(mentre il default è di aggiungere <math>n</math>unità).
+	(mentre il default è di aggiungere <math>n</math> unità).
       </para>
       <para>
 	<lit>insobs</lit>: Deve essere seguito da un intero positivo
@@ -2765,35 +2764,52 @@
 	mancanti. Questa azione non è disponibile in dataset panel.
       </para>
       <para>
-	<lit>clear</lit>: Non richiede parametri. Elimina il campione corrente e
-	riporta gretl al suo stato iniziale senza dati.
+	<lit>clear</lit>: Non richiede parametri. Elimina il campione 
+  corrente e 	riporta gretl al suo stato iniziale senza dati.
       </para>
       <para>
-	<lit>compact</lit>: deve essere seguito da un intero positivo
-	che rappresenta la nuova frequenza dei dati, che dovrebbe
-	essere minore di quella attuale (ad esempio un valore 4 quando
-	la frequenza attuale è 12 significa che si compatterà un
-	dataset mensile in uno trimestrale).  Questo comando è
-	disponibile solo se il dataset contiene serie storiche:
-	compatta tutte le serie del dataset alla nuova frequenza. È
-	possibile dare un secondo parametro, tra <lit>sum</lit>,
+	<lit>compact</lit>: Questo comando è 	disponibile solo se il
+  dataset contiene serie storiche: 	compatta tutte le serie del
+  dataset ad una nuova frequenza. Deve essere seguito da un 
+  intero   positivo 	rappresentante la frequenza scelta.
+  Quest'ultima dovrebbe 	essere minore di quella attuale 
+  (ad esempio, un valore 4 quando 	la frequenza attuale è 12 
+  compatterà un 	dataset mensile in uno trimestrale); la sola
+  eccezione ammessa è una frequenza   di 52 (settimanale) quando
+  il dataset è giornaliero (frequenza 5, 6 o 7). È 	possibile 
+  fornire un secondo parametro tra <lit>sum</lit>,
 	<lit>first</lit>, <lit>last</lit> o <lit>spread</lit>, per
-	specificare, rispettivamente, di compattare usando la somma
-	dei valori alla frequenza maggior, i valori di inizio periodo
-	o fine periodo, o di <quote>spalmare</quote> i valori ad alta
-	frequenza su più serie (una per sottoperiodo). Il
-	comportamento predefinito consiste nel prendere la media dei
-	valori sul periodo.
+	specificare di compattare, rispettivamente, usando la somma
+	dei valori alla frequenza maggiore, i valori di inizio periodo, 
+  di 	fine periodo, o di <quote>spalmare</quote> i valori ad alta
+	frequenza su più serie (una per sottoperiodo). Il	comportamento
+  predefinito consiste nel prendere la media dei valori sul periodo.
+   </para>
+   <para>
+	Nel caso di compattamento da frequenza giornaliera a settimanale,
+  due opzioni	aggiuntive sono disponibili, <opt>repday</opt> e
+	<opt>weekstart</opt>. La prima permette di fissare il valore 
+  settimanale sulla base 	di un <quote>giorno rappresentativo</quote>
+  della settimana. Il parametro dell'opzione deve essere un numero
+	intero da 0 (Domenica) a 6 (Sabato). Ad esempio, <opt>--repday=3</opt>
+  fissa il valore dell'intera settimana a quello di Mercoledì. Nel caso
+  in cui <opt>repday</opt> sia omesso, è necessario	sapere il giorno
+  da cui la settimana cominci (per allineare correttamente i dati). 
+  Per dati giornalieri di 5 o 6 giorni, questo è sempre Lunedì; con il
+  formato da 7 giorni è possibile invece	scegliere tra Domenica
+  (<opt>weekstart=0</opt>) e Lunedì (<opt>weekstart=1</opt>), con il
+  secondo come default.
       </para>
       <para>
 	<lit>expand</lit>: Questo comando è disponibile solo per serie
-	storiche annuali o trimestrali. I dati annuali vengono espansi
-	a trimestrali, quelli trimestrali a mensili. Tutte le serie
-	nel dataset verranno espanse ripetendo il valore a bassa
-	frequenza. Se il dataset originale è annual l'espansione di
-	defaultè trimestrale ma si può far seguire <lit>expand</lit>
-	dal numero <lit>12</lit> per effettuare l'espansione a
-	mensile.
+	storiche annuali o trimestrali. I dati annuali vengono
+  <quote>espansi</quote> a trimestrali, quelli trimestrali a mensili. 
+  L'operazione si applica a tutte le serie nel dataset, ripetendo il
+  valore a bassa frequenza. Se il dataset originale è annuale, l'espansione 
+  di 	default è trimestrale, anche se si può far seguire <lit>expand</lit>
+	dal numero <lit>12</lit> per effettuare l'espansione 	mensile. 
+  Consultare la funzione <fncref targ="tdisagg"/> per le metodologie
+	più avanzate di conversione dati ad alta frequenza.
       </para>
       <para>
 	<lit>transpose</lit>: non richiede parametri
@@ -2802,61 +2818,61 @@
 	e ogni variabile un'osservazione. Questo comando è utile
 	quando si importano da fonti esterne dei dati organizzati con
 	le variabili disposte per riga.
-      </para>
-      <para>
-        <lit>sortby</lit>: richiede il nome di una variabile o di una
-        lista. Con una variabile, questa viene usata come criterio di
-        ordinamento. Le osservazioni di tutte le altre variabili del
-        dataset sono riordinate secondo valori crescenti della
-        variabile indicata. Nel caso di una lista, il comando procede
-        gerarchicamente: il primo criterio di ordinamento è la prima
-        variabile, nel caso in cui si arrivi ad una situazione di
-        stallo si passa alla seconda variabile della lista per
-        risolvere il problema, e se il problema persiste si passa alla
-        terza e così via, finchè lo stallo non si esaurisce o si
-        esauriscono le variabili presenti nella lista.  Questo comando
-        è disponibile solo per dati non datati.
-      </para>
-      <para>
+    </para>
+    <para>
+  <lit>sortby</lit>: richiede il nome di una variabile o di una
+  lista. Nel primo caso la variabile scelta viene usata come criterio 
+  di ordinamento. Le osservazioni di tutte le altre variabili del
+  dataset sono riordinate secondo valori crescenti della  variabile 
+  indicata. Nel secondo caso (lista), invece, il comando procede
+  gerarchicamente: il primo criterio di ordinamento è la prima
+  variabile, nel caso in cui si arrivi ad una situazione di
+  stallo si passa alla seconda variabile della lista per
+  risolvere il problema, e se il problema persiste si passa alla
+  terza e così via, finché lo stallo non si esaurisce o si
+  esauriscono le variabili presenti nella lista.  Questo comando
+  è disponibile solo per dataset non datati.
+    </para>
+    <para>
 	<lit>dsortby</lit>: funziona come <lit>sortby</lit> ma riordina le
 	osservazioni secondo i valori decrescenti della variabile specificata.
-      </para>
-      <para>
+    </para>
+    <para>
 	<lit>resample</lit>: costruisce un nuovo dataset attraverso un
-        campionamento causale, con reimmissione, delle righe del dataset
-        attuale. È richiesto un argomento, ossia il numero di righe da
-        includere, che può essere minore, uguale o maggiore del numero di
-        osservazioni nei dati originali. Il dataset originale può essere
-        recuperato usando il comando <lit>smpl full</lit>.
+  campionamento causale, con reimmissione, delle righe del dataset
+  attuale. È richiesto un argomento, ossia il numero di righe da
+  includere, che può essere minore, uguale o maggiore del numero di
+  osservazioni dei dati originali. Il dataset originale può essere
+  recuperato usando il comando <lit>smpl full</lit>.
       </para>
       <para>
-	<lit>renumber</lit>: Richiede il nome di una variabile esistente seguito da
-	un intero compreso fra 1 e il numero delle variabili nel campione meno 1. Sposta
-	la serie specificata nel dataset nella posizione indicata, rinumerando le altre
-	variabili di conseguenza. (La posizione 0 è occupata dalla costante che non può
-	essere spostata.)
-      </para>
-      <para>
+	<lit>renumber</lit>: Richiede il nome di una variabile esistente
+  seguito da un intero compreso fra 1 e il numero delle variabili 
+  nel campione meno 1. Sposta	la serie specificata nel dataset nella
+  posizione indicata, rinumerando le altre variabili di conseguenza. 
+  (La posizione 0 è occupata dalla costante che non può essere spostata.)
+    </para>
+    <para>
 	<lit>pad-daily</lit>: valido solamente se il dataset corrente
 	contiene dei dati giornalieri di un calendario incompleto. L'effetto
 	prodotto dal comando sarà quello di riempire il calendario aggiungendo
-	le date mancanti come righe vuote (in pratica significa creare delle righe
-	vuote contenenti solamente valori <lit>NA</lit>). Quest'opzione richiede un
-	parametro intero, ovvero il numero di giorni della settimana (che deve essere
-	un numero tra 5, 6 o 7), e deve essere maggiore, o uguale, alle correnti
-	frequenze del dataset. Una volta avvenuto con successo il completamento,
+	le date mancanti come righe vuote (ossia righe	contenenti solamente 
+  valori <lit>NA</lit>). Quest'opzione richiede un	parametro intero,
+  ovvero il numero di giorni della settimana (che deve essere	un numero 
+  tra 5, 6 o 7), e deve essere maggiore, o uguale, alle	frequenze del 
+  dataset attuale. Una volta avvenuto con successo il completamento,
 	il calendario dei dati risulterà <quote>completo</quote> relativamente al
 	valore del parametro dato. Ad esempio, se i giorni della settimana sono 5
-	allora tutti i giorni della settimana verranno rappresentati, sia che i dati
-	per questi giorni siano disponibili oppure no.
+	allora tutti i giorni della settimana verranno rappresentati, sia che i 
+  dati 	per questi giorni siano disponibili oppure no.
       </para>
       <para>
-       <lit>unpad-daily</lit>: opzione valida solo se il dataset
-       corrente contiene dati giornalieri. L'opzione produce l'inverso
-       di <lit>pad-daily</lit>, ossia: ogni riga in cui tutte le
-       osservazioni sono mancanti viene rimossa, anche se le proprietà
-       di serie storiche del dataset sono preservate, assieme alle date
-       delle osservazioni individuali.
+  <lit>unpad-daily</lit>: opzione valida solo se il dataset
+  corrente contiene dati giornalieri. L'opzione produce l'inverso
+  di <lit>pad-daily</lit>, ossia: ogni riga in cui tutte le
+  osservazioni sono mancanti viene rimossa. Le proprietà
+  di serie storiche del dataset sono preservate, assieme alle date
+  delle osservazioni individuali.
       </para>
     </description>
 
@@ -4038,21 +4054,8 @@
 
     <usage>
       <altforms>
-	<altform>
-	  <lit>
-	    fcast [</lit><repl>oss-iniziale oss-finale</repl><lit>]
-	    [</lit><repl>nome-variabile</repl><lit>]
-	  </lit>
-	</altform>
-	<altform>
-	  <lit>
-	    fcast [</lit><repl>oss-iniziale oss-finale</repl><lit>]
-	  </lit>
-	  <repl>passi-avanti</repl>
-	  <lit>
-	    [</lit><repl>nome-variabile</repl><lit>] --recursive
-	  </lit>
-	</altform>
+	<altform><lit>fcast [</lit><repl>oss-iniziale oss-finale</repl><lit>] [</lit><repl>nome-variabile</repl><lit>]</lit></altform>
+	<altform><lit>fcast [</lit><repl>oss-iniziale oss-finale</repl><lit>] </lit><repl>passi-avanti</repl><lit>[</lit><repl>nome-variabile</repl><lit>] --recursive </lit>	</altform>
       </altforms>
       <options>
 	<option>
@@ -4129,7 +4132,7 @@
 	i valori della previsione non sono mostrati, ma vengono salvati nel
 	dataset con il nome di variabile indicato. Se l'ultimo modello stimato è
 	un sistema di equazioni, <repl>nome-variabile</repl> ha un effetto
-	diverso, ossia seleziona una particolare varabile endogena per cui
+	diverso, ossia seleziona una particolare variabile endogena per cui
 	effettuare la previsione (l'impostazione predefinita consiste nel
 	produrre previsioni per tutte le variabili endogene). Nel caso del
 	sistema, o se non viene specificata <repl>nome-variabile</repl>, i
@@ -4153,10 +4156,9 @@
 	se si dispone di una precedente previsione per
 	<math>y</math> nel 2007.
       </para>
-
       <para>
 	La scelta predefinita consiste nel fornire una previsione statica per
-	ogni porzione dell'intervallo di previsione che fa parte dell'intervallo
+	ogni porzione dell'intervallo di previsione che fa parte 
 	del campione su cui il modello è stato stimato, e una previsione
 	dinamica (se rilevante) fuori dal campione. L'opzione
 	<lit>dynamic</lit> richiede di produrre previsioni dinamiche a partire
@@ -4462,11 +4464,12 @@
       <option>
 	<flag>--matrix</flag>
 	<optparm>nome</optparm>
-	<effect>usa una colonna di una matrice indicata per nome</effect>
+	<effect>usa una colonna di una matrice specificata</effect>
       </option>
       <option>
-	<flag>--show-plot</flag>
-	<effect>v. oltre</effect>
+	<flag>--plot</flag>
+	  <optparm>mode-or-filename</optparm>
+	  <effect>vedi oltre</effect>
       </option>
       <option>
         <flag>--quiet</flag>
@@ -4486,12 +4489,13 @@
     <para>
       Se non vengono indicate opzioni, mostra la distribuzione di
       frequenza per la <repl>variabile</repl> (indicata con il nome
-      o il numero).
+      o il numero), con il numero di intervalli e ampiezza scelti
+      automaticamente.
     </para>
     <para>
       Se viene indicata l'opzione <opt>matrix</opt>, <repl>var</repl>
-      (che deve essere un intero) viene invece interpretato come un indice
-      di base 1 che individua una colonna in una matrice indicata per nome.
+      (un numero intero in questo caso) viene invece interpretato come 
+      un indice di base 1 che individua una colonna nella matrice indicata. 
       Nel caso in cui la matrice in questione sia un vettore colonna allora
       l'argomento <repl>var</repl> può essere omesso.
     </para>
@@ -4515,24 +4519,14 @@
       distribuzione gamma in gretl è (forma, scala).
     </para>
     <para>
-      Di default, viene mostrato un grafico della distribuzione se
-      il programma non è in batch mode ma in modalità
-      interattiva. Questo comportamento può essere modulato con
-      l'opzione <opt>plot</opt>. I parametri accettabili per questa
-      opzione sono <lit>none</lit>, per sopprimere il grafico,
-      <lit>display</lit>, per mostrare il grafico a video anche in
-      batch mode, o un nome di file. L'effetto del fornire un nome
-      di file è lo stesso di quello descritto dall'opzione
+      Se il programma non è in batch mode, viene mostrato di default un 
+      grafico della distribuzione in modalità interattiva. 
+      Questo comportamento può essere modulato con l'opzione <opt>plot</opt>. 
+      I parametri accettabili per questa opzione sono <lit>none</lit>, 
+      per sopprimere il grafico; <lit>display</lit>, per mostrare il 
+      grafico a video anche in batch mode; un nome di file. L'effetto 
+      del fornire un nome di file è lo stesso di quello descritto dall'opzione
       <opt>output</opt> del comando <cmdref targ="gnuplot"/>.
-    </para>
-    <para>
-      In modalità interattiva viene mostrato anche un grafico della
-      distribuzione, a meno che non si usi l'opzione
-      <opt>quiet</opt>. Per converso, il grafico non viene
-      mostrato quando il comando è invocato da script, a meno che
-      non venga usata l'opzione <opt>show-plot</opt>. (Questo non
-      si applica alla versione di gretl a linea di comando,
-      <lit>gretlcli</lit>.)
     </para>
     <para>
       L'opzione <opt>silent</opt> sopprime interamente l'output
@@ -4546,11 +4540,10 @@
       del testo.
     </para>
     <para>
-      Si noti che in gretl non è disponibile una funzione che
-      è parallela a questo comando, ma è possibile utilizzare
-      una funzione parallela che permette di raggiungere lo
-      stesso scopo, che è <fncref targ="aggregate"/>. Inoltre
-      la distribuzione di frequenza costruita con il comando
+      Si noti che in gretl non è disponibile una funzione analoga 
+      a questo comando, anche se la funzione generica <fncref targ="aggregate"/> 
+      consente di raggiungere un risultato equivalente. 
+      Inoltre, la distribuzione di frequenza costruita con il comando
       <lit>freq</lit> può essere ottenuta in forma matriciale
       attraverso l'utilizzo dell'accessore <fncref targ="$result"/>.
     </para>
@@ -4569,8 +4562,8 @@
     </para>
     <para>
       In alternativa, è possibile specificare il limite inferiore del primo
-      intervallo e la larghezza degli intervalli; in questo caso il numero di
-      intervalli viene calcolato automaticamente.
+      intervallo e la larghezza degli intervalli; anche in questo caso il
+      numero di intervalli viene calcolato automaticamente.
     </para>
     <para>
       Se si vuole che gli intervalli corrispondano a numeri interi, è
@@ -5384,11 +5377,6 @@
 	  <effect>si veda sotto</effect>
 	</option>
 	<option>
-	  <flag>--band-style</flag>
-	  <optparm>style</optparm>
-	  <effect>si veda sotto</effect>
-	</option>
-	<option>
 	  <flag>--matrix</flag>
 	  <optparm>name</optparm>
 	  <effect>mostra le colonne di una data matrice</effect>
@@ -5426,31 +5414,28 @@
     <description>
       <para>
 	Le variabili nella lista <repl>variabili-y</repl> vengono
-	mostrate rispetto alla variabile <repl>variabile-x</repl>. Per
-	avere un grafico storico è possibile usare <lit>time</lit>
+	mostrate rispetto a <repl>variabile-x</repl>. Per	avere un 
+  grafico a serie storica è possibile usare <lit>time</lit>
 	come <repl>variabile-x</repl>, oppure usare l'opzione
 	<opt>time-series</opt>. Vedi anche i comandi <cmdref
 	targ="plot"/> e <cmdref targ="panplot"/>.
       </para>
       <para>
-	Per default, i dati sono mostrati come punti; ma questa scelta
-	può essere modificata usando una delle opzioni
-	<opt>with-lines</opt>, <opt>with-lp</opt> o
-	<opt>with-impulses</opt>. Se il grafico contiene più di una
-	serie, l'effetto di queste opzioni può essere limitato ad un
-	sottoinsieme delle variabili usando il parametro
-	<repl>varspec</repl>. Esso deve essere dato sotto forma di una
-	lista separata da virgole dei nomi (o dei numeri) delle
-	variabili da tracciare con linee e/o con impulsi. L'ultimo tra gli
+	Di default, i dati sono mostrati come punti; ma questa scelta
+	può essere modificata usando una delle opzioni 	<opt>with-lines</opt>,
+  <opt>with-lp</opt> o <opt>with-impulses</opt>. Se il grafico contiene
+  più di una serie, l'effetto di queste opzioni può essere limitato ad un
+	sottoinsieme delle stesse usando il parametro	<repl>varspec</repl>.
+  Questo deve essere una lista dei nomi (o dei numeri), separati da virgole, 
+  delle variabili da tracciare con linee e/o con impulsi. L'ultimo tra gli
 	esempi di cui sopra mostra come tracciare <lit>y1</lit> e <lit>y2</lit>
-	contro <lit>x</lit>, in modo tale che <lit>y2</lit> sia
-	rappresentata da una linea ma <lit>y1</lit> da punti.
-      </para>
-      <para>
-	Usando l'opzione <opt>dummy</opt>, occorre fornire
-	esattamente tre variabili: una variabile <math>y</math>, una
-	variabile <math>x</math>, e una variabile dummy
-	<repl>dumvar</repl>. L'effetto è quello di mostrare
+	contro <lit>x</lit>,in modo tale che <lit>y2</lit> sia
+	rappresentata da una linea, ma <lit>y1</lit> da punti.
+    </para>
+    <para>
+	Usando l'opzione <opt>dummy</opt>, solo tre variabili sono ammesse 
+  come argomenti: una variabile <math>y</math>, una variabile <math>x</math>
+  e una variabile dummy <repl>dumvar</repl>. L'effetto è quello di mostrare
 	<repl>y</repl> rispetto a <repl>x</repl> colorando in modo
 	diverso i vari punti, a seconda che <repl>dumvar</repl> valga
 	1 o 0.
@@ -5470,9 +5455,9 @@
 	<emphasis>contemporaneamente</emphasis>.
       </para>
       <para>
-	Usando l'opzione <opt>ylogscale</opt> si punò far sì che
-	l'asse delle ordinate sia logaritmico anziché
-	lineare. L'opzione accetta un parametro come base. Ad esempio,
+	L'opzione <opt>ylogscale</opt> fa sì che 	l'asse delle ordinate 
+  sia logaritmico anziché lineare. L'opzione accetta un parametro
+  come base. Ad esempio,
       </para>
       <code>
 	gnuplot y x --ylogscale=2
@@ -5482,20 +5467,20 @@
 	termini di potenze di 2. Se la base è omessa, si userà il
 	valore 10.
       </para>
-      <subhead>Creare un grafico da dati in una matrice</subhead>
+      <subhead>Creare un grafico da una matrice</subhead>
       <para>
-	In generale è necessario specificare sia l'argomento <repl>yvars</repl>
-	che quello <repl>xvar</repl>; entrambi devono indicare variabili
-	nel dataset corrente (per nome o numero identificativo). Se tuttavia
-	viene specificata con l'opzione <opt>matrix</opt> una matrice definita
-	in precedenza questi argomenti diventano opzionali: se la matrice
-	specificata ha <math>k</math> colonne, di default le prime <math>k</math>
-	&minus; 1 sono considerate come <repl>yvars</repl>, e l'ultima come
-	<repl>xvar</repl>. Se viene indicata l'opzione <opt>time-series</opt>,
-	tuttavia, il comando fornisce il grafico di tutte le <math>k</math>
-	variabili rispetto al tempo. Se si desidera il grafico solo di alcune
-	colonne della matrice è necessario identificare
-	<repl>yvars</repl> e <repl>xvar</repl> fornendo l'indice delle colonne
+	In generale, il comando richiede di specificare sia l'argomento 
+  <repl>variabili-y</repl> che quello <repl>variabile-x</repl> in termini di 
+  variabili 	del dataset corrente (per nome o numero identificativo). 
+  Questi argomenti 	diventano tuttavia opzionali se viene impiegata l'opzione 
+  <opt>matrix</opt> seguita da una matrice definita	in precedenza: 
+  se la matrice specificata ha <math>k</math> colonne, di default le 
+  prime <math>k</math> 	&minus; 1 sono considerate come <repl>variabili-y</repl>,
+  mentre l'ultima come <repl>variabile-x</repl>. Se viene indicata l'opzione 
+  <opt>time-series</opt>, tuttavia, il comando fornisce il grafico di tutte
+  le <math>k</math> variabili rispetto al tempo. Se si desidera il grafico
+  di solo alcune 	colonne, allora è necessario identificare
+	<repl>variabili-y</repl> e <repl>variabile-x</repl> fornendo l'indice delle colonne
 	corrispondenti, dove la prima colonna ha indice 1. Per esempio,
 	se si desidera un grafico a dispersione della colonna 2 della
 	matrice <lit>M</lit> rispetto alla colonna 1, il comando da digitare è:
@@ -5534,7 +5519,7 @@
 	    <lit>cubic</lit>, <lit>semilog</lit> o <lit>linlog</lit>:
 	    mostrano una linea interpolante basata su una regressione
 	    del tipo corrispondente. Per <lit>semilog</lit>, si
-	    intende una regressione del logaritmo <math>y</math> on
+	    intende una regressione del logaritmo di <math>y</math> su
 	    <math>x</math>; la linea interpolante mostra la media
 	    condizionale di <math>y</math>, ottenuta per
 	    esponenziazione. Per <lit>linlog</lit>, si intende una
@@ -5551,32 +5536,104 @@
       </ilist>
       <subhead>Bande</subhead>
       <para>
-	L'opzione <opt>band</opt> si usa per mostrare zero o più serie
+	L'opzione <opt>band</opt> si usa per mostrare una o più serie
 	assieme ad una <quote>banda</quote> (spesso, ma non sempre,
-	associata ad un intervallo di confidenza). Questa opzione
-	richede due parametri, separati da una virgola: il nome (o
-	numero ID) di una serie con il centro della banda e il nome(o
-	numero ID) di una con la sua ampiezza: l'effetto ottenuto è
-	una banda con coordinate in ordinata date dal centro, più o
-	meno l'ampiezza. Si può usare un terzo parametro opzionale
-	(anch'esso separato da virgola), dato da uno scalare, per
-	specificare un moltiplicatore per l'ampiezza. Ad esempio, il
-	codice che segue disegna <lit>y</lit> assieme ad una banda di
-	1.96 volte <lit>se_y</lit>:
+	associata ad un intervallo di confidenza). Il modo consigliato 
+  per definire e 	personalizzare la banda è tramite un bundle, da
+  fornire come parametro 	dell'opzione.  Il bundle 
+	richiede la chiave <lit>center</lit> che identifica il nome della 
+  serie attorno a cui si costruirà la banda, e la chiave <lit>width</lit> 
+  per il nome della serie rappresentante l'ampiezza della banda&mdash; 
+  entrambe le chiavi accettano stringhe di testo.
+  Inoltre, quattro elementi opzionali sono previsti:
+  </para>
+      <ilist>
+	<li>
+	  <para>la chiave <lit>factor</lit>, corrispondente ad uno scalare che
+	  moltiplicherà l'ampiezza della banda (default pari ad 1).
+	  </para>
+	</li>
+	<li>
+	  <para>la chiave <lit>style</lit>, una stringa di testo per definire come la
+	  banda sarà rappresentata. I valori ammessi sono <lit>line</lit>(default),
+	  <lit>fill</lit>, <lit>dash</lit>, <lit>bars</lit> or <lit>step</lit>.
+	  </para>
+	</li>
+	<li>
+	  <para>la chiave <lit>color</lit> identifica il colore della
+	  banda; può essere usata o una stringa riportante la denominazione 
+    del colore à la gnuplot o  mediante la rappresentazione RGB esadecimale
+    (come stringa o scalare). Di default il colore è scelto automaticamente.
+	  </para>
+	</li>
+	<li>
+	  <para>la chiave <lit>title</lit>, è una stringa corrispondente alla
+	  denominazione della banda nella legenda del grafico. Di default, le bande
+	  non hanno denominazioni.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+Si noti che la lista di colori disponibili può essere consultata con
+il comando <quote><lit>show colornames</lit></quote> all'interno di
+gnuplot, o in una console gretl mediante la seguente linea di codice:
       </para>
       <code>
-	gnuplot y --time-series --band=y,se_y,1.96 --with-lines
+	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
       </code>
       <para>
-	Assieme all'opzione <opt>band</opt>, esiste l'opzione
-	<opt>band-style</opt> per controllare l'aspetto della
-	banda. Di default, i limiti alto e basso vengono mostrati con
-	linee continue, ma i parametri <lit>fill</lit>,
-	<lit>dash</lit>, <lit>bars</lit> o <lit>step</lit> alterano
-	questa scelta, usando rispettivamente un'area, linee
-	tratteggiate, barre verticali o scalini. In più, si può
-	aggiungere una specificazione di colore (dopo una virgola). Ad
-	esempio:
+	A seguito sono riportati due esempi per la personalizzazione delle bande,
+	sfruttando in entrambi i casi la sintassi <lit>_()</lit> per costruire
+  bundle. La prima implementazione è essenziale, mentre nella seconda 
+  tutte le opzioni sono sfruttate. Assumiamo che <lit>y</lit>, <lit>x</lit>
+	e <lit>w</lit> siano serie del dataset in uso.
+      </para>
+      <code>
+	bundle b1 = _(center="x", width="w")
+	gnuplot y --time-series --with-lines --band=b1
+	bundle b2 = _(center="x", width="w", factor=1.96, style="fill")
+	b2.color=0xcccccc
+	b2.title = "95% interval"
+	gnuplot y --time-series --with-lines --band=b2
+      </code>
+      <para>
+	Se il grafico fosse destinato a contenere due o più bande, il flag
+  dell'opzione dovrebbe essere riportato al plurale e i relativi 
+  parametri come <emphasis>array</emphasis> di bundle. Ciò è illustrato
+  nel seguente esempio (che richiama quello precedente):
+        </para>
+      <code>
+	bundles bb = defarray(b1, b2)
+	gnuplot y --time-series --with-lines --bands=bb
+      </code>
+      <para>
+	La sola differenza nel caso di grafici di matrici, anziché di serie, 
+  concerne la sostituzione di <lit>center</lit> e <lit>width</lit>
+	con la chiave <lit>bandmat</lit>; questa deve essere il nome (virgolettato)
+  di una matrice a due colonne contenente nella prima il corrispettivo 
+  di <lit>center</lit> e nella seconda il corrispettivo di <lit>width</lit>.
+      </para>
+      <subhead>Sintassi preesistente</subhead>
+      <para>
+	La sintassi sopra riportata è stata introdotta a partire da gretl
+	2023c. Precedentemente, una sola banda per grafico poteva essere specificata e
+	la sintassi richiesta era differente. L'approccio preesistente, ancora
+	accettato, consentiva di personalizzare la banda mediante due opzioni. La
+	prima era <opt>band</opt>, che richiedeva il nome (o numero ID) di una 
+	serie come centro della banda e il nome (o numero ID) di un'altra come
+	ampiezza, entrambe separate da una virgola. Il 	fattore moltiplicativo
+  <lit>factor</lit> per l'ampiezza poteva essere aggiunto come terzo termine,
+  anch'esso separato dalla virgola. Ad esempio,
+      </para>
+      <code>
+	gnuplot ... --band=x,w
+	gnuplot ... --band=x,w,1.96
+      </code>
+      <para>
+	La seconda opzione, <opt>band-style</opt>, accettava uno o entrambi i 
+  parametri di stile e colore, seguendo l'ordine <quote>stile,colore</quote> 
+  e usando la virgola come separatore. A seguito sono riportati
+	alcuni esempi,
       </para>
       <code>
 	gnuplot ... --band-style=fill
@@ -5584,48 +5641,36 @@
 	gnuplot ... --band-style=,black
 	gnuplot ... --band-style=bars,blue
       </code>
-      <para>
-	Il primo esempio produce un'area col colore di default; il
-	secondo passa a linee tratteggiate in un azzurro grigiastro;
-	il terzo, linee continue nere, e l'ultimo barre blu. Si noti
-	che i colori possono essere dati con specifica esadecimale o
-	nomi (in inglese); la lista dei colori ammessi da gnuplotpuò
-	essere viaulizzata dando il comando <quote><lit>show
-	colornames</lit></quote> in gnuplot, o eseguendo nella console
-	di gretl il comando
-      </para>
-      <code>
-	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
-      </code>
       <subhead>Barre di recessione</subhead>
       <para>
-	L'opzione <quote>band</quote> descritta sopra può inoltre
-	essere utilizzata per aggiungere di barre di recessione al
-	grafico. Con ciò si intendono delle barre verticali che
+  L'opzione <quote>band</quote> sopra descritta può inoltre
+	essere utilizzata per aggiungere delle barre di recessione al
+	grafico. Con ciò si intendono barre verticali che
 	occuperanno l'intera dimensione <math>y</math> del grafico ed
-	indicando la presenza (con barra) o l'assenza (senza barra) di
-	alcune caratteristiche qualitative in grafico di serie
-	storiche.  Queste barre sono comunemente utilizzate per
-	indicare periodi di recessione/periodi di guerra/qualasiasi
-	cosa possa essere codificata da una variabile dummy 0/1.
+	indicheranno la presenza (con barra) o l'assenza (senza barra) di
+	alcune caratteristiche qualitative in una serie
+	storica. 
+	Queste barre sono comunemente utilizzate per
+	indicare periodi di recessione/guerra/qualsiasi
+	cosa codificabile da una variabile dummy 0/1.
       </para>
       <para>
-	In questo contesto l'opzione <opt>band</opt> richiede un solo
-	paramentro: l'identificatore di serie con valori 0 e 1, dove 1
-	indica <quote>on</quote> e 0 indica
-	<quote>off</quote>. L'opzione <opt>band-style</opt> può essere
-	utilizzata per specificare il colore delle barre, dando o
-	l'idendificatore esadecimale del colore o il nome riconosciuto
-	da gnuplot (vedi la sezione precedente).  Un esempio che
-	mostra l'utilizzo del comandso su una singola barra è il
-	seguente:
+  In questo caso, il bundle per la banda ha solo un prerequisito,
+  la chiave  <lit>dummy</lit>, che ospiterà il nome virgolettato di 
+  una serie binaria 0/1  (o nel caso di una matrice, il nome virgolettato 
+  di una specifica colonna). Le barre verticali appariranno <quote>sulle</quote>
+  osservazioni corrispondenti al valore 1 della serie (o vettore) dummy. 
+  Le chiavi <lit>center</lit>, <lit>width</lit>, <lit>factor</lit> e
+	<lit>style</lit> sono ininfluenti; <lit>color</lit>, per contro, può essere
+	usato. Si noti che solo una di queste specificazioni può essere usata per
+	grafico. Un esempio,
       </para>
       <code>
 	open AWM17 --quiet
 	series dum = obs &gt;= 1990:1 &amp;&amp; obs &lt;= 1994:2
+	bundle b = _(dummy="dum", color=0xcccccc)
 	gnuplot YER URX --with-lines --time-series \
-	--band=dum --band-style=0xcccccc --output=display \
-	{set key top left;}
+	  --band=b --output=display {set key top left;}
       </code>
       <subhead>Controllo dell'output</subhead>
       <para>
@@ -5635,19 +5680,20 @@
 	<filename>gpttmpN.plt</filename>, a partire da N =
 	<lit>01</lit>; il grafico vero e proprio può essere generato
 	usando il programma <program>gnuplot</program> (su MS Windows:
-	<program>wgnuplot</program>).  Questo comportamento può essere
-	modificato usando l'opzione
-	<opt>output=</opt><repl>filename</repl>, che controlla il nome
-	del file utilizzato e contemporaneamente permette di
+	<program>wgnuplot</program>).  Alternativamente, usando l'opzione
+	<opt>output=</opt><repl>filename</repl>, è possibile controllare il nome
+	del file utilizzato e contemporaneamente 
 	specificare un particolare formato di output usando
 	l'estensione del nome del file (le tre lettere che seguono il
 	.): <lit>.eps</lit> produce un file Encapsulated PostScript
 	(EPS); <lit>.pdf</lit> produce un file PDF; <lit>.png</lit>
 	produce un formato PNG, <lit>.emf</lit> un formato EMF
-	(Enhanced MetaFile), <lit>.fig</lit> un file Xfig, e
-	<lit>.svg</lit> uno SVG (Scalable Vector Graphics). Se come
+	(Enhanced MetaFile), <lit>.fig</lit> un file Xfig;
+	<lit>.svg</lit> uno SVG (Scalable Vector Graphics) e 
+	<lit>.html</lit> per un canvas HTML. 
+  Se come
 	nome del file si indica <quote><lit>display</lit></quote>, il
-	grafico è inviato allo schermo come nella modalità
+	grafico è visualizzato su schermo come nella modalità
 	interattiva.  Se si indica un nome del file con un'estensione
 	diversa da quelle appena citate viene prodotto un file di
 	comandi gnuplot.
@@ -5663,10 +5709,11 @@
       <para>
 	L'opzione <opt>font</opt> può essere utilizzata per specificare
 	un particolare tipo di font per il grafico. Il parametro
-	<repl>fontspec</repl> dovrebbe assumere la forma del nome di un
-	carattere, ed opzionalmente dovrebbe essere seguito da la grandezza
-	dei punti (separati dal nome da una virgola od uno spazione, il tutto
-	messo dentro le doppie virgolette ""). Di seguito un esempio:
+	<repl>fontspec</repl> dovrebbe corrispondere al nome di un
+	carattere, ed opzionalmente dovrebbe essere seguito dalla  
+  dimensione dello stesso in punti (separati dal nome con una 
+  virgola od uno spazio, il tutto messo dentro le doppie virgolette "").
+  Di seguito un esempio:
       </para>
       <code>
 	--font="serif,12"
@@ -5674,7 +5721,7 @@
       <para>
 	Nota: i font disponibili per gnuplot variano da piattaforma a
 	piattaforma, quindi se si intende scrivere un comando di
-	<lit>plot</lit> portabile allora è consigliabile optare per
+	<lit>plot</lit> trasferibile allora è consigliabile optare per
 	font generici come <lit>sans</lit> oppure <lit>serif</lit>.
       </para>
       <subhead>Aggiungere comandi gnuplot</subhead>
@@ -8650,7 +8697,7 @@ contenga un percorso completo.
       stringhe da tradurre del pacchetto, in formato C; per il
       pacchetto <lit>pippo</lit> questo file in questione dovrà chiamarsi
       <lit>pippo-i18n.c</lit>. Questi file non vengono prodotti se si opera
-      tramite la modalità zip con l'utilizzo di un file gfn pre-esistente.
+      tramite la modalità zip con l'utilizzo di un file gfn preesistente.
     </para>
     <para>
       Per maggiori dettagli, consultare <mnu targ="Pkgbook">Guida ai
@@ -13286,7 +13333,7 @@ l'effetto in questo contesto dell'opzione <opt>midas</opt>
 	  mostrati i coefficienti vincolati stimati, a meno che non si
 	  utilizzi l'opzione <opt>quiet</opt> all'inizio del comando
 	  <lit>restrict</lit>.  Come alternativa al test di Wald è
-	  possibile dare usare l'opzione <opt>bootstrap</opt> affinchè
+	  possibile dare usare l'opzione <opt>bootstrap</opt> affinché
 	  venga eseguito un test sulla restrizione attraverso tale
 	  metodo; ciò è consentito solamente per modelli stimati
 	  attraverso OLS o WLS.
