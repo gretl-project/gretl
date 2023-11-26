@@ -124,19 +124,18 @@ explained at
 <h2><a name="trouble"></a>Troubleshooting</h2>
 
 <p>In 2022 and 2023 there have been (rare) reports that gretl on MacOS
- was failing to start, after an update of some kind. If you
- experience this issue, please try opening a Terminal window and
- executing the following two commands (which first copy your prior
- gretl configuration file then delete it):
+ was failing to start, after an update of some kind.  If you
+ experience this issue, please open a Terminal window and execute the
+ following command (which renames your prior gretl configuration file
+ so that gretl will not read it on start-up):
   <pre>
-    cp ~/.gretl2rc ~/bad.gretl2rc
-    rm -f ~/.gretl2rc
+    mv ~/.gretl2rc ~/old_gretl2rc.txt
   </pre>
  The gretl team is still investigating what exactly is causing the
- problem (and which part of the <kbd>gretl2rc</kbd> file plays a role
+ problem (and which part of the configuration file plays a role
  in it). We would appreciate if you could report whether this interim
- solution works for you, and we'd be very interested to see the copied
- file, <kbd>bad.gretl2rc</kbd>. Please add a comment to the
+ solution works for you, and we'd be very interested to see the renamed
+ file, <kbd>old_gretl2rc.txt</kbd>. Please add a comment to the
  <a href="https://sourceforge.net/p/gretl/bugs/291/">corresponding bug
  ticket</a> (even if it is closed), or send a message to the
  <a href="https://gretlml.univpm.it/postorius/lists/gretl-users.gretlml.univpm.it/">mailing
