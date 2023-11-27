@@ -1611,10 +1611,12 @@
 	  <fncref targ="sumall"/>, <fncref targ="mean"/>, <fncref targ="sd"/>,
 	  <fncref targ="var"/>, <fncref targ="sst"/>, <fncref targ="skewness"/>,
 	  <fncref targ="kurtosis"/>, <fncref targ="min"/>, <fncref targ="max"/>,
-	  <fncref targ="median"/>, <fncref targ="nobs"/> y <fncref targ="gini"/>.
-	  Cada una de estas funciones utiliza a su vez una serie como argumento
-	  y devuelve un valor escalar; por eso, en este sentido, puede decirse que
-	  de algún modo <quote>agregan</quote> la serie. Puedes utilizar
+	  <fncref targ="median"/>, <fncref targ="nobs"/> y <fncref targ="gini"/>,
+	  <fncref targ="isconst"/> e <fncref targ="isdummy"/>.
+	  Cada una de estas funciones utiliza una serie como argumento y
+	  devuelve un valor escalar; por eso, en este sentido, puede decirse que
+	  de algún modo <quote>agregan</quote> la serie. Si no hay ninguha de
+	  estas funciones originales que haga lo que necesitas, puedes utilizar
 	  una función definida por el usuario como <quote>agregador</quote>;
 	  en ese caso, del mismo modo que las funciones originales, esa función
 	  debe tener como argumento únicamente una serie, y devolver un
@@ -3405,7 +3407,7 @@
 	</para>
 	<code>
 	  open grunfeld.gdt
-	  c = correspondence($unit, firm)
+	  c = corresp($unit, firm)
 	</code>
 	<para>
 	  proporcionan <lit>c</lit> = 2, indicando que la serie <lit>firm</lit>
@@ -11872,6 +11874,65 @@
       </description>
     </function>
 
+    <function name="rgbmix" section="data-utils" output="strings">
+      <fnargs>
+	<fnarg type="string">color1</fnarg>
+	<fnarg type="string">color2</fnarg>
+	<fnarg type="matrix">f</fnarg>
+	<fnarg type="bool" optional="true">grafico</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Dados dos colores y un vector <argname>f</argname> de longitud
+	  <math>n</math> que contenga valores en [0,1], esta función devuelve
+	  un 'array' de <math>n</math> cadenas de texto, en el que su elemento
+	  <math>i</math> contiene el código RGB hexadecimal para una mixtura
+	  de tipo (1-<math>f</math><sub>i</sub>) &times; <lit>color1</lit>
+	  + <math>f</math><sub>i</sub> &times; <lit>color2</lit>. La media
+	  ponderada se toma sobre los canales de Rojo, Verde y Azul de los
+	  colores de entrada.
+	</para>
+	<para>
+	  Puedes especificar los argumentos de color con nombres reconocidos por
+	  <cmdref targ="gnuplot"/>, o como valores hexadecimales con el formato
+	  <lit>0xrrggbb</lit> o <lit>#rrggbb</lit>. En el primero de estos
+	  formatos, se pueden indicar numéricamente los valores hex; de otro modo,
+	  son necesarias las cadenas de texto. Si indicas un valor no nulo para
+	  el argumento <argname>grafico</argname>, se produce un gráfico que
+	  muestra las mezclas de colores.
+	</para>
+	<para>
+	  Esta función ofrece un medio de generar un conjunto de colores
+	  relacionados con un propósito de representación gráfica, siendo su uso
+	  principal la especificación de múltiples franjas en un gráfico (por
+	  ejemplo, para indicar intervalos de confianza con más de un nivel). A
+	  continuación hay tres ejemplos: el primero genera sucesivos aclarados
+	  de un azul inicial; el segundo genera progresivos oscurecimientos de
+	  un tono rosa; y el tercero, una transición del rojo al amarillo.
+	</para>
+	<code>
+	  f = {0, 0.5, 0.75, 0.875, 0.9375}
+	  mezclas = rgbmix(0x1b43dc, "white", f, 1)
+	  print mezclas
+	  f = {0, 0.1, 0.2, 0.3, 0.4}
+	  rgbmix(0xefd0d3, "black", f, 1)
+	  f = {0, 0.2, 0.4, 0.6, 0.8, 1}
+	  rgbmix("red", "yellow", f, 1)
+	</code>
+	<para>
+	  El resultado de la instrucción <lit>print</lit> para el primer ejemplo
+	  será
+	</para>
+	<code>
+	  [1] "0x1b43dc"
+	  [2] "0x8da1ee"
+	  [3] "0xc6d0f6"
+	  [4] "0xe2e8fb"
+	  [5] "0xf1f3fd"
+	</code>
+      </description>
+    </function>
+
     <function name="round" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -13235,18 +13296,49 @@
     <function name="strvsort" section="strings" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg optional="true" type="strings">S</fnarg>
       </fnargs>
       <description>
 	<para>
-	  El argumento <argname>y</argname> debe tener valores en cadenas de
-	  texto. El efecto de esta función consiste en ordenar una serie del
-	  siguiente modo especial: los diferentes valores de cadena se alfabetizan
-	  y a continuación la serie se recodifica de forma que el 1 se asigna a
-	  la primera de las cadenas ya ordenadas, el 2 se asigna a la segunda,
-	  etcétera. Esto puede ser útil, entre otras razones, para asegurar una
-	  codificación uniforme de múltiples series que comparten el mismo
-	  conjunto de valores en cadenas de texto. El valor nominal que devuelve
-	  esta función es cero, cuando se completa con éxito.
+	  Lleva a cabo uno de los dos tipos de reordenación de la serie
+	  <argname>y</argname>, que debe constar de valores en cadenas de
+	  texto. El valor nominal que se devuelve es 0, cuando se completa con
+	  éxito.
+	</para>
+	<para>
+	  Método 1: Si no indicas el segundo argumento, el efecto que se
+	  produce es la ordenación de <argname>y</argname> en este sentido: los
+	  valores de cadena diferentes se alfabetizan y la serie se recodifica
+	  entonces de modo que se asigna el 1 a la primera cadena ordenada, el 2
+	  a la segunda, etcétera. Esto puede ser útil, entre otras razones, para
+	  asegurar una codificación uniforme para múltiples series que compartan
+	  el mismo conjunto de valores en cadenas.
+	</para>
+	<para>
+	  Método 2: Si indicas el segundo argumento, este debe ser un 'array'
+	  que contenga exactamente los diferentes valores de <argname>y</argname>
+	  en cadenas (y que pueden conseguirse mediante <fncref targ="strvals"/>),
+	  pero colocados en un orden preferido. El efecto entonces consiste en
+	  una recodificación de la serie de modo que el valor 1 se asigna a la
+	  primera cadena de texto de <argname>S</argname>, el valor 2 a la segunda,
+	  etcétera. Esto puede ser útil para asegurar que los códigos numéricos
+	  <quote>tengan sentido</quote> cuando los valores en cadenas de texto
+	  puedan concebirse como naturalmente ordenados.
+	</para>
+	<para>
+	  El principal uso de estos métodos es en el manejo de series con valores
+	  en cadenas de texto importadas de fuentes de terceros, como son los
+	  archivos con información separada por comas. Para esos datos, GRETL
+	  asigna códigos numéricos basados simplemente en el orden en que están
+	  las cadenas de texto a lo largo de las filas del archivo. Así, en una
+	  serie con valores <lit>bajo</lit>, <lit>medio</lit> y <lit>alto</lit>,
+	  se va a asignar a <lit>alto</lit> el código 1 si sucede primero, en
+	  lugar de 3 (lo que sería claramente más <quote>natural</quote>).
+	  Esto se puede fijar utilizando el Método 2. Además, si dos o más
+	  series comparten los mismos valores en cadenas de texto, se van a
+	  codificar de modo distinto excepto que suceda que sus valores
+	  diferentes aparezcan en el mismo orden en el archivo de datos. Esto
+	  se puede fijar mediante cualquiera de los métodos.
 	</para>
 	<para>
 	  <seelist>

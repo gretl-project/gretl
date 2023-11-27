@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-11-26 15:45-0500\n"
-"PO-Revision-Date: 2023-08-17 20:01+0200\n"
+"PO-Revision-Date: 2023-11-26 22:43+0100\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -2807,7 +2807,7 @@ msgstr "Obtívose un campo *%s* incorrecto"
 #: lib/src/geneval.c:2722
 #, c-format
 msgid "%s: series usage is valid only in direct assignment"
-msgstr ""
+msgstr "%s: O uso de series é válido só na asignación directa"
 
 #: lib/src/geneval.c:2728 lib/src/gretl_panel.c:6806
 msgid "Sorry, can't do this with a sub-sampled dataset"
@@ -7038,9 +7038,8 @@ msgid "Asymptotic standard errors"
 msgstr "Desvíos padrón asintóticos"
 
 #: lib/src/modelprint.c:1416 lib/src/modelprint.c:1418
-#, fuzzy
 msgid "Standard errors clustered by unit"
-msgstr "Desvíos padrón agrupados en %d valores de *%s*"
+msgstr "Desvíos padrón agrupados por unidade"
 
 #: lib/src/modelprint.c:1423 lib/src/modelprint.c:1427
 msgid "Beck-Katz standard errors"
@@ -7051,29 +7050,27 @@ msgid "Beck--Katz standard errors"
 msgstr "Desvíos padrón de Beck--Katz"
 
 #: lib/src/modelprint.c:1432 lib/src/modelprint.c:1434
-#, fuzzy
 msgid "Standard errors clustered by time"
-msgstr "Desvíos padrón agrupados en %d valores de *%s*"
+msgstr "Desvíos padrón agrupados por tempo"
 
 #: lib/src/modelprint.c:1440 lib/src/modelprint.c:1447
-#, fuzzy, c-format
+#, c-format
 msgid "Driscoll-Kraay standard errors, bandwidth %d"
-msgstr "Desvíos padrón HAC, con ancho de banda %d"
+msgstr "Desvíos padrón de Driscoll-Kraay, con ancho de banda %d"
 
 #: lib/src/modelprint.c:1444
-#, fuzzy, c-format
+#, c-format
 msgid "Driscoll--Kraay standard errors, bandwidth %d"
-msgstr "Desvíos padrón HAC, con ancho de banda %d"
+msgstr "Desvíos padrón de Driscoll--Kraay, con ancho de banda %d"
 
 #: lib/src/modelprint.c:1453 lib/src/modelprint.c:1455
-#, fuzzy
 msgid "Standard errors clustered by unit and time"
-msgstr "Desvíos padrón agrupados en %d valores de *%s*"
+msgstr "Desvíos padrón agrupados por unidade e tempo"
 
 #: lib/src/modelprint.c:1467
-#, fuzzy, c-format
+#, c-format
 msgid "Standard errors clustered by %s and %s"
-msgstr "Desvíos padrón agrupados en %d valores de *%s*"
+msgstr "Desvíos padrón agrupados por %s e %s"
 
 #: lib/src/modelprint.c:1472
 #, c-format
@@ -11397,16 +11394,15 @@ msgstr "Estrutura de panel"
 
 #: gui/datawiz.c:129
 msgid "Side-by-side structure"
-msgstr ""
+msgstr "Estrutura en paralelo"
 
 #: gui/datawiz.c:130
 msgid "Panel index variables"
 msgstr "Variables índices de panel"
 
 #: gui/datawiz.c:131
-#, fuzzy
 msgid "Panel series name"
-msgstr "Nome do servidor de bancos de datos"
+msgstr "Nome da serie de panel"
 
 #: gui/datawiz.c:132
 msgid "Panel time dimension"
@@ -11501,7 +11497,7 @@ msgstr "Utilizar variables índice"
 
 #: gui/datawiz.c:618
 msgid "Convert from side-by-side time series"
-msgstr ""
+msgstr "Converter de series temporais en paralelo unhas coas outras"
 
 #: gui/datawiz.c:637 gui/datawiz.c:658
 msgid "Non-standard frequency"
@@ -11538,6 +11534,8 @@ msgid ""
 "Comprises a single series '%s', constructed\n"
 "by stacking %d individual time series."
 msgstr ""
+"Inclúe unha única serie *%s*, formada\n"
+"amontoando %d series temporais individuais."
 
 #: gui/datawiz.c:836
 #, c-format
@@ -11545,6 +11543,8 @@ msgid ""
 "Comprises %d series, each constructed by stacking\n"
 "%d individual time series."
 msgstr ""
+"Inclúe %d series, cada unha formada amontoando\n"
+"%d series temporais individuais."
 
 #: gui/datawiz.c:843
 msgid "stacked cross sections"
@@ -11594,19 +11594,17 @@ msgid "Time index variable"
 msgstr "Variable índice de tempo"
 
 #: gui/datawiz.c:1848
-#, fuzzy
 msgid "Click on Help for guidance."
-msgstr "(Consulta a Axuda para ter máis información)"
+msgstr "Fai clic na Axuda para ter máis información."
 
 #: gui/datawiz.c:1852
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d time series."
-msgstr "serie temporal"
+msgstr "Atopadas %d series temporais"
 
 #: gui/datawiz.c:1878
-#, fuzzy
 msgid "Number of side-by-side blocks"
-msgstr "Nº de espazos por tabulador"
+msgstr "Nº de bloques en paralelo uns cos outros"
 
 #: gui/datawiz.c:1953
 msgid "purge missing observations"
@@ -11622,20 +11620,20 @@ msgid "The data set contains no suitable index variables"
 msgstr "O conxunto de datos non contén variables índice axeitadas"
 
 #: gui/datawiz.c:2232
-#, fuzzy
 msgid "The data set contains no suitable time series"
-msgstr "O conxunto de datos non contén variables índice axeitadas"
+msgstr "O conxunto de datos contén series temporais non axeitadas"
 
 #: gui/datawiz.c:2265
-#, fuzzy
 msgid "Give a name for the panel series"
-msgstr "Debes de elixir un nome para a variable"
+msgstr "Indicar un nome para a serie de panel"
 
 #: gui/datawiz.c:2285
 msgid ""
 "The individual series will be named by appending \"1\", \"2\", ...\n"
 "You can modify these names once this operation is completed."
 msgstr ""
+"As series individuais vanse nomear engadindo \"1\", \"2\", ...\n"
+"Podes modificar estes nomes unha vez que remate esta operación."
 
 #: gui/datawiz.c:2502
 msgid "start entering data values"
@@ -13999,7 +13997,7 @@ msgstr "GRETL: Escoller a cor da gráfica"
 
 #: gui/gpt_dialog.c:355
 msgid "Copy color string"
-msgstr ""
+msgstr "Copiar a cadea de texto da cor"
 
 #: gui/gpt_dialog.c:374
 msgid "Select color"
@@ -14331,9 +14329,8 @@ msgid "dump gretl configuration to file"
 msgstr "Gardar a configuración de GRETL nun ficheiro"
 
 #: gui/gretl.c:150
-#, fuzzy
 msgid "ignore gretl configuration file"
-msgstr "Gardar a configuración de GRETL nun ficheiro"
+msgstr "Ignorar o ficheiro de configuración de GRETL"
 
 #: gui/gretl.c:153
 msgid "send debugging info to console"
@@ -14612,9 +14609,8 @@ msgid "Start GNU _R"
 msgstr "Iniciar GNU _R"
 
 #: gui/gretl.c:1856
-#, fuzzy
 msgid "Color tool"
-msgstr "Cor %d"
+msgstr "Ferramenta da cor"
 
 #: gui/gretl.c:1857
 msgid "_NIST test suite"
@@ -19537,9 +19533,8 @@ msgid "complex matrix"
 msgstr "Matriz complexa"
 
 #: gui/ssheet.c:4118
-#, fuzzy
 msgid "matrix"
-msgstr "Nova matriz"
+msgstr "matriz"
 
 #: gui/ssheet.c:4132 plugin/geoplot.c:1162 plugin/geoplot.c:1167
 #: plugin/geoplot.c:1172
