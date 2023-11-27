@@ -3,15 +3,15 @@
 */
 
 function string modelstring(int type)
-    /*
-    The original idea about the number 10 for sign restrictions was,
-    apart fromit being very different from the other types (haha),
-    that we could combine the types by summing them.
-    (E.g. 12 == 2 + 10 would be zero restrictions on the C matrix
-     coupled with sign stuff.)
+/*
+   The original idea about the number 10 for sign restrictions was,
+   apart fromit being very different from the other types (haha),
+   that we could combine the types by summing them.
+   (E.g. 12 == 2 + 10 would be zero restrictions on the C matrix
+   coupled with sign stuff.)
 
-    But in fact it turns out that this is not really needed, so 10 is
-    probably going to stay that way.
+   But in fact it turns out that this is not really needed, so 10 is
+   probably going to stay that way.
     */
     string ret = ""
     if type == 1
@@ -116,6 +116,22 @@ function string BCstring(int level)
     return ret
 end function
 
+function bundle calendar_info(void)
+    bundle ret
+    ret.t1 = $t1
+    ret.t2 = $t2
+    pd = $pd
+    ret.pd = pd
+    limitobs = $obsmajor[$t1] | $obsmajor[$t2]
+    if pd != 1
+        limitobs ~= $obsminor[$t1] | $obsminor[$t2]
+    endif
+    if contains(pd, {5,6,7})
+        limitobs ~= $obsmicro[$t1] | $obsmicro[$t2]
+    endif
+    ret.limitobs = limitobs
+    return ret
+end function
 
 function matrix set_default_dimensions(bundle *mod, list lY,
                                        list lX[null], int varorder)
@@ -146,8 +162,7 @@ function matrix set_default_dimensions(bundle *mod, list lY,
     smpl everything --no-missing
     matrix mreg = { everything }
     mod.T = rows(mreg)
-    mod.t1 = $t1
-    mod.t2 = $t2
+    mod.calinfo = calendar_info()
 
     return mreg
 end function
@@ -167,14 +182,14 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
        The switch 'checkid_storeSRirf' is now "overloaded" with different
        meanings, depending on the model type:
        - For traditional types it takes the meaning of 'checkident'.
-         (Default 1 = yes, do it.)
+       (Default 1 = yes, do it.)
        - For set-identified (sign restriction) models checking the
-         identification separately makes no sense, so here this becomes
-         'storeSRirf', serving to decide whether the full IRF data of all
-         accepted draws should be stored in the model bundle. This can
-         inflate the bundle quite a bit, but in general shouldn't be a
-         problem on modern computers.
-         (Default 1 = yes, store all IRF data.)
+       identification separately makes no sense, so here this becomes
+       'storeSRirf', serving to decide whether the full IRF data of all
+       accepted draws should be stored in the model bundle. This can
+       inflate the bundle quite a bit, but in general shouldn't be a
+       problem on modern computers.
+       (Default 1 = yes, store all IRF data.)
 
        In both cases it is just copied into the model bundle and still needs
        to be processed later (e.g. within SVAR_estimate).
@@ -241,21 +256,21 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
     ret.checkident = 0  # needs to exist, override below
 
     /* ----------------------------------------------------------------
-        type-specific stuff
-       ----------------------------------------------------------------*/
+       type-specific stuff
+    ----------------------------------------------------------------*/
 
     if type != 10    # (traditional, no sign restrictions)
 
-        /*
-        The constraint matrices.
-        "Rd1" contains short-run constraints on B (and therefore C in non-AB models);
-        "Rd1l" contains long-run constraints on C (not supported in AB models);
-        "Rd0" contains short-run constraints on A in AB;
+    /*
+       The constraint matrices.
+       "Rd1" contains short-run constraints on B (and therefore C in non-AB models);
+       "Rd1l" contains long-run constraints on C (not supported in AB models);
+       "Rd0" contains short-run constraints on A in AB;
 
-        note that "Rd1l" and "Rd0" were both "aux" in previous versions.
+       note that "Rd1l" and "Rd0" were both "aux" in previous versions.
 
-        Initially, they are empty. Except for the "plain" model, it's up to
-        the user to fill them up later, via SVAR_restrict() or by hand
+       Initially, they are empty. Except for the "plain" model, it's up to
+       the user to fill them up later, via SVAR_restrict() or by hand
         */
 
         matrix ret.Rd1 = type==1 ? cholRd(n) : {}
@@ -287,19 +302,19 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
 
     else #  10 (SR)
 
-	# mixed restrictions are for the moment limited to
-	# C-model-like zero restrictions. Possibly, we'll also
-	# add in the future long run (Blanchard-Quah-like) restrictions
-	# so we add to the bundle both kinds of matrices
+        # mixed restrictions are for the moment limited to
+        # C-model-like zero restrictions. Possibly, we'll also
+        # add in the future long run (Blanchard-Quah-like) restrictions
+        # so we add to the bundle both kinds of matrices
 
-	matrix ret.Rd1 = {}
+        matrix ret.Rd1 = {}
         matrix ret.Rd1l = {}
 
         # matrix for holding sign restrictions
         matrix ret.SRest = {}
 
-	/* Since for sign restrictions the traditional estimation step doesn't apply,
-        but we need the reduced-form coefficients, we already do it here automatically. */
+        /* Since for sign restrictions the traditional estimation step doesn't apply,
+          but we need the reduced-form coefficients, we already do it here automatically. */
 
         ret.storeSRirfs = checkid_storeSRirfs
         SVAR_estimate(&ret, 0)
@@ -345,9 +360,9 @@ function scalar SVAR_restrict(bundle *b, string code, int r, int c[0], scalar d[
             # (p.29, section 7 of the doc)
             return 4
         endif
-    # elif type == 10
-    #     print "Use specialized functions (SVAR_SRplain etc.) for sign restrictions."
-    #     return 5
+        # elif type == 10
+        #     print "Use specialized functions (SVAR_SRplain etc.) for sign restrictions."
+        #     return 5
     endif
 
     # if no input error, proceed with this:
@@ -469,7 +484,7 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
         err = rows(jbeta) != n+1
     endif
     errorif( err, sprintf("jbeta: has %d rows, should have %d", rows(jbeta), \
-          dcase%2 ? n : n+1))
+      dcase%2 ? n : n+1))
 
     r = cols(jbeta)
     err = n < r # should this be <=? hmm.
@@ -490,91 +505,91 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
     if err
         # (currently err==1 here always, Sven believes)
         outfile stderr --quiet # --write
-            printf "SVAR_coint: returning on err = %d\n", err
-        end outfile
-        return err
-    endif
-
-    # fill up the object with the info
-
-    SVARobj.crank = r
-    SVARobj.jcase = dcase
-    SVARobj.jbeta = jbeta
-    SVARobj.jalpha = jalpha
-    SVARobj.free_a = free_a
-
-    if verbose
-        if dcase == 1
-            printf "No constant, "
-        elif dcase == 2
-            printf "Restricted constant, "
-        elif dcase == 3
-            printf "Unrestricted constant, "
-        elif dcase == 4
-            printf "Restricted trend, "
-        elif dcase == 5
-            printf "Unrestricted trend, "
-        endif
-
-        printf "beta =\n%11.5f\n", jbeta
-
-        if free_a
-            printf "alpha is unrestricted\n"
-        else
-            printf "alpha =\n%9.5f\n", jalpha
-            printf "PI =\n%9.5f\n", jalpha * jbeta'
-        endif
-    endif
-
-    # relabel transitory structural shocks
-    strings sn = SVARobj.snames
-
-    if n-r == 1
-        sn[1] = sprintf("Permanent")
-        if r == 1
-            sn[2] = "Transitory"
-        else
-            loop i = 2..n
-                sn[i] = sprintf("Transitory_%d", i-1)
-            endloop
-        endif
-    else
-        loop i = 1..n
-            sn[i] = sprintf("Permanent_%d", i)
-        endloop
-        if r == 1
-            sn[n] = "Transitory"
-        else
-            loop i = 1..r
-                sn[n-r+i] = sprintf("Transitory_%d", i)
-            endloop
-        endif
-    endif
-
-    SVARobj.snames = sn
-    if !err
-        SVARobj.cointsetup = 1	# flag success
-    endif
-
+        printf "SVAR_coint: returning on err = %d\n", err
+    end outfile
     return err
+endif
+
+# fill up the object with the info
+
+SVARobj.crank = r
+SVARobj.jcase = dcase
+SVARobj.jbeta = jbeta
+SVARobj.jalpha = jalpha
+SVARobj.free_a = free_a
+
+if verbose
+    if dcase == 1
+        printf "No constant, "
+    elif dcase == 2
+        printf "Restricted constant, "
+    elif dcase == 3
+        printf "Unrestricted constant, "
+    elif dcase == 4
+        printf "Restricted trend, "
+    elif dcase == 5
+        printf "Unrestricted trend, "
+    endif
+
+    printf "beta =\n%11.5f\n", jbeta
+
+    if free_a
+        printf "alpha is unrestricted\n"
+    else
+        printf "alpha =\n%9.5f\n", jalpha
+        printf "PI =\n%9.5f\n", jalpha * jbeta'
+    endif
+endif
+
+# relabel transitory structural shocks
+strings sn = SVARobj.snames
+
+if n-r == 1
+    sn[1] = sprintf("Permanent")
+    if r == 1
+        sn[2] = "Transitory"
+    else
+        loop i = 2..n
+            sn[i] = sprintf("Transitory_%d", i-1)
+        endloop
+    endif
+else
+    loop i = 1..n
+        sn[i] = sprintf("Permanent_%d", i)
+    endloop
+    if r == 1
+        sn[n] = "Transitory"
+    else
+        loop i = 1..r
+            sn[n-r+i] = sprintf("Transitory_%d", i)
+        endloop
+    endif
+endif
+
+SVARobj.snames = sn
+if !err
+    SVARobj.cointsetup = 1	# flag success
+endif
+
+return err
 end function
 
 ####
 
 function scalar SVAR_cumulate(bundle *b, int nv)
-    err = nv>b.n || nv<1 # was nv<0, but 0 makes no sense (?)
-    if !err
-        vn = b.Ynames
-        printf "Variable %s cumulated\n",  vn[nv]
-        b.cumul  |= {nv}
-        b.ncumul += 1
+err = nv>b.n || nv<1 # was nv<0, but 0 makes no sense (?)
+if !err
+    vn = b.Ynames
+    printf "Variable %s cumulated\n",  vn[nv]
+    b.cumul  |= {nv}
+    b.ncumul += 1
 
-        # The following code was in doIRF but doesn't depend
-        # on the data, so slightly inefficient for the bootstrap.
-        # Instead we introduce b.cumsel which can be reused later
-        tmp = zeros(b.n, b.n)
-        tmp[b.cumul,] = 1
-        matrix b.cumsel = selifr(transp(seq(1, b.n * b.n)), vec(tmp))
-    endif
-    return err
+    # The following code was in doIRF but doesn't depend
+    # on the data, so slightly inefficient for the bootstrap.
+    # Instead we introduce b.cumsel which can be reused later
+    tmp = zeros(b.n, b.n)
+    tmp[b.cumul,] = 1
+    matrix b.cumsel = selifr(transp(seq(1, b.n * b.n)), vec(tmp))
+endif
+return err
 end function
