@@ -4258,7 +4258,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    }
 	    no_key = 0;
 	}
-	if (gi.flags & GPT_RESIDS && !(gi.flags & GPT_DUMMY)) {
+	if (gi.flags & GPT_RESIDS) {
 	    const char *vlabel = series_get_label(dset, list[1]);
 
 	    make_gtitle(&gi, GTITLE_RESID, vlabel == NULL ? "residual" : vlabel,
@@ -4286,6 +4286,8 @@ int gnuplot (const int *plotlist, const char *literal,
 			series_get_graph_name(dset, list[3]), fp);
 	}
 	print_axis_label('y', series_get_graph_name(dset, list[2]), fp);
+    } else if (gi.flags & GPT_DUMMY) {
+	print_axis_label('y', series_get_graph_name(dset, list[1]), fp);
     }
 
     if (many) {
@@ -4361,8 +4363,6 @@ int gnuplot (const int *plotlist, const char *literal,
 	int dv = list[3];
 	series_table *st;
 
-	strcpy(s1, (gi.flags & GPT_RESIDS)? _("residual") :
-	       series_get_graph_name(dset, list[1]));
 	strcpy(s2, series_get_graph_name(dset, dv));
 	st = series_get_string_table(dset, dv);
 
@@ -4370,11 +4370,11 @@ int gnuplot (const int *plotlist, const char *literal,
 	    double di = gretl_vector_get(gi.dvals, i);
 
 	    if (st != NULL) {
-		fprintf(fp, " '-' using 1:2 title \"%s (%s=%s)\" w points",
-			s1, s2, series_table_get_string(st, di));
+		fprintf(fp, " '-' using 1:2 title \"%s\" w points",
+			series_table_get_string(st, di));
 	    } else {
-		fprintf(fp, " '-' using 1:2 title \"%s (%s=%g)\" w points",
-			s1, s2, di);
+		fprintf(fp, " '-' using 1:2 title \"%s=%g\" w points",
+			s2, di);
 	    }
 	    if (i < nd - 1) {
 		fputs(", \\\n", fp);
