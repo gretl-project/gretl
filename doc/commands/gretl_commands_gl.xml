@@ -500,7 +500,7 @@
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>Non presenta nada</effect>
+	  <effect>Non presenta mensaxe de confirmación</effect>
 	</option>
 	<optnote>Mira abaixo para opcións adicionais especiais</optnote>
       </options>
@@ -2939,7 +2939,8 @@
     label="Estimación da densidade Kernel">
 
     <description>
-      <para>A estimación da densidade Kernel realízase definindo
+      <para>
+	A estimación da densidade Kernel realízase definindo
 	un conxunto de puntos de referencia separados de xeito uniforme
 	sobre un rango apropiado relacionado co rango dos datos, e atribuíndo
 	unha densidade a cada punto de referencia baseada nas observacións
