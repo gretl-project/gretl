@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-11-26 15:45-0500\n"
-"PO-Revision-Date: 2023-02-21 23:11+0100\n"
+"PO-Revision-Date: 2023-11-27 15:51+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -18,18 +18,17 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: lib/src/addons_utils.c:179
-#, fuzzy, c-format
+#, c-format
 msgid "check for %s\n"
-msgstr "Controlla disponibilità _componenti aggiuntivi"
+msgstr "Controlla disponibilità addon %s\n"
 
 #: lib/src/addons_utils.c:191 lib/src/addons_utils.c:204
 msgid "try"
-msgstr ""
+msgstr "provo"
 
 #: lib/src/addons_utils.c:193 lib/src/addons_utils.c:206
-#, fuzzy
 msgid "found version"
-msgstr "Osservazioni limitate"
+msgstr "versione trovata: "
 
 #: lib/src/addons_utils.c:195 lib/src/addons_utils.c:208
 #: lib/src/gretl_zip.c:495 lib/src/gretl_zip.c:503 gui/fncall.c:4708
@@ -37,23 +36,22 @@ msgid "not found"
 msgstr "non trovato"
 
 #: lib/src/addons_utils.c:220
-#, fuzzy
 msgid "indexed version"
-msgstr "Variabile indice"
+msgstr "versione indicizzata: "
 
 #: lib/src/adf_kpss.c:179
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "GLS demean/detrend: using %s-%s (T = %d)\n"
-msgstr "Stime %s usando le osservazioni %s-%s (T = %d)"
+msgstr "\ncentratura/detrendizzazione GLS: %s-%s (T = %d)\n"
 
 #: lib/src/adf_kpss.c:260
 #, c-format
 msgid ""
 "\n"
 "OLS demean/detrend: (T = %d)\n"
-msgstr ""
+msgstr "\ncentratura/detrendizzazione OLS: (T = %d)\n"
 
 #: lib/src/adf_kpss.c:595
 msgid "lagged differences"
@@ -240,7 +238,7 @@ msgstr "%s è una costante"
 
 #: lib/src/adf_kpss.c:1700 lib/src/adf_kpss.c:1724 lib/src/adf_kpss.c:1743
 msgid "Im-Pesaran-Shin test: cannot be computed\n"
-msgstr ""
+msgstr "Impossibile calcolare il test IM-Pesaran-Shin\n"
 
 #: lib/src/adf_kpss.c:1763 lib/src/adf_kpss.c:1801
 msgid "Inverse chi-square"
@@ -375,29 +373,27 @@ msgstr "H0: tutti i gruppi sono stazionari"
 
 #: lib/src/adf_kpss.c:2513
 msgid "Note: these are LOWER BOUNDS on the true p-values"
-msgstr ""
+msgstr "Nota: questi sono ESTREMI INFERIORI per i veri p-value"
 
 #: lib/src/adf_kpss.c:2514
 msgid "Individual p-values > .10, and recorded as .10"
-msgstr ""
+msgstr "p-value indviduali > 0.10, e registrati come 0.10"
 
 #: lib/src/adf_kpss.c:2517
 msgid "Note: these are UPPER BOUNDS on the true p-values"
-msgstr ""
+msgstr "Nota: questi sono ESTREMI SUPERIORI per i veri p-value"
 
 #: lib/src/adf_kpss.c:2518
 msgid "Individual p-values < .01, and recorded as .01"
-msgstr ""
+msgstr "p-value indviduali < 0.01, e registrati come 0.01"
 
 #: lib/src/adf_kpss.c:2523
-#, fuzzy
 msgid "Choi test: cannot be calculated\n"
-msgstr "Non si può ritardare la costante"
+msgstr "Choi test non calcolabile\n"
 
 #: lib/src/adf_kpss.c:2782
-#, fuzzy
 msgid "Sorry, this command is not yet available for panel data"
-msgstr "Questo comando non è disponibile in modalità loop\n"
+msgstr "Questo comando non è ancora disponibile per dati panel"
 
 #: lib/src/adf_kpss.c:2833 lib/src/adf_kpss.c:2876
 #, c-format
@@ -664,9 +660,9 @@ msgid "with p-value"
 msgstr "con p-value"
 
 #: lib/src/compare.c:1254
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to add %d variable(s)"
-msgstr "Impossibile aggiungere una variabile indice per i grafici"
+msgstr "Impossibile aggiungere %d variabili"
 
 #: lib/src/compare.c:1422
 #, c-format
@@ -721,9 +717,8 @@ msgid "lagging uhat failed"
 msgstr "Impossibile calcolare i ritardi dei residui"
 
 #: lib/src/compare.c:2231
-#, fuzzy
 msgid "Insufficient degrees of freedom for test"
-msgstr "Gradi di libertà insufficienti per la regressione"
+msgstr "Gradi di libertà insufficienti per il test"
 
 #: lib/src/compare.c:2245
 msgid "Error calculating Ljung-Box statistic"
@@ -784,14 +779,13 @@ msgid "Asymptotic p-value = %.6g for chi-square(%d) = %g"
 msgstr "p-value asintotico = %.6g [Chi-quadro(%d) = %g]"
 
 #: lib/src/compare.c:3047
-#, fuzzy
 msgid "Couldn't compute Chow test statistic\n"
-msgstr "Impossibile calcolare la statistica test\n"
+msgstr "Impossibile calcolare la statistica test di Chow\n"
 
 #: lib/src/compare.c:3049
 #, c-format
 msgid "Couldn't compute Chow test p-value (test = %g)\n"
-msgstr ""
+msgstr "p-value per il Chow test non calcolabile (test = %g)\n"
 
 #: lib/src/compare.c:3060 lib/src/gretl_model.c:4278
 #, c-format
@@ -987,9 +981,9 @@ msgid ""
 msgstr ""
 
 #: lib/src/csvdata.c:631
-#, fuzzy, c-format
+#, c-format
 msgid "Error: date '%s' out of bounds\n"
-msgstr "La stima della parte MA è fuori dai limiti.\n"
+msgstr "Errore: la data '%s' è fuori dai limiti\n"
 
 #: lib/src/csvdata.c:634
 #, c-format
@@ -1002,14 +996,12 @@ msgid "   \"%s\": quarterly date with spurious zero?\n"
 msgstr ""
 
 #: lib/src/csvdata.c:767
-#, fuzzy
 msgid "not a consistent date"
-msgstr "data inesistente"
+msgstr "la data non ha senso"
 
 #: lib/src/csvdata.c:774
-#, fuzzy
 msgid "quarterly data pretending to be monthly?"
-msgstr "Espandi dati da frequenza trimestrale ad annuale"
+msgstr "dati trimestrali camuffati da mensili?"
 
 #: lib/src/csvdata.c:777
 msgid "BLS-type nonsense? Trying again"
@@ -1237,9 +1229,8 @@ msgid "   line: %s\n"
 msgstr "   Riga: %s\n"
 
 #: lib/src/csvdata.c:2974
-#, fuzzy
 msgid "No relevant columns were found"
-msgstr "Non è stata trovata alcuna osservazione"
+msgstr "Non sono state trovate colonne rilevanti"
 
 #: lib/src/csvdata.c:2985 plugin/excel_import.c:1733
 msgid "it seems there are no variable names\n"
@@ -1356,14 +1347,12 @@ msgid "Out of memory\n"
 msgstr "Memoria esaurita\n"
 
 #: lib/src/csvdata.c:3940
-#, fuzzy
 msgid "Couldn't find all variable names"
-msgstr "Nomi di variabile in conflitto"
+msgstr "Impossibile trovare tutti i nomi di variabile"
 
 #: lib/src/dataio.c:107
-#, fuzzy
 msgid "Expected an identifier"
-msgstr "È necessario un identificatore di tipo"
+msgstr "È necessario un identificatore"
 
 #: lib/src/dataio.c:112
 msgid "Varname exceeds the maximum of 31 characters"
@@ -1463,9 +1452,8 @@ msgid "append: don't know how to align the new series!"
 msgstr "append: non si cpaisce come allineare la nuova serie!"
 
 #: lib/src/dataio.c:1817
-#, fuzzy
 msgid "No overlap in data ranges"
-msgstr "Campione completo dei dati"
+msgstr "Gli intervalli di dati non si sovrappongono"
 
 #: lib/src/dataio.c:1871 lib/src/dataio.c:2269 lib/src/dataio.c:2281
 #: lib/src/dataio.c:3280 lib/src/dataio.c:3289 cli/gretlcli.c:268
@@ -1482,9 +1470,8 @@ msgid "New data not conformable for appending\n"
 msgstr "I nuovi dati non sono nel formato adatto per essere aggiunti\n"
 
 #: lib/src/dataio.c:2243
-#, fuzzy
 msgid "Found no data conformable for appending"
-msgstr "I nuovi dati non sono nel formato adatto per essere aggiunti\n"
+msgstr "Non ho trovato dati nel formato adatto per essere aggiunti"
 
 #: lib/src/dataio.c:2247
 msgid "Inconsistency in observation markers\n"
@@ -1500,58 +1487,52 @@ msgid "Data appended OK\n"
 msgstr "Dati aggiunti con successo\n"
 
 #: lib/src/dataio.c:2526
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid characters in imported string, line %d"
-msgstr "Carattere errato %d in una data"
+msgstr "Carattere non valido in una stringa importata (linea %d)"
 
 #: lib/src/dataio.c:2632
-#, fuzzy, c-format
+#, c-format
 msgid "Expected %d markers; found %d\n"
-msgstr "Atteso '%c' ma trovato '%c'\n"
+msgstr "Attesi %d marcatori ma %d trovati\n"
 
 #: lib/src/dataio.c:2636
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't read marker on line %d"
-msgstr "Impossibile aprire '%s'"
+msgstr "Impossibile leggere i marcatori a linea %d"
 
 #: lib/src/dataio.c:2944
-#, fuzzy
 msgid "No labels found"
-msgstr "Non è stato trovato alcun file database"
+msgstr "Etichette non trovate"
 
 #: lib/src/dataio.c:2957
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no such array"
-msgstr "%s: matrice inesistente"
+msgstr "%s: array inesistente"
 
 #: lib/src/dataio.c:3003
-#, fuzzy
 msgid "No labels are available for writing\n"
-msgstr "Non è disponibile alcun marcatore per la scrittura"
+msgstr "Non è disponibile alcuna etichetta per la scrittura\n"
 
 #: lib/src/dataio.c:3012
-#, fuzzy
 msgid "Labels written OK\n"
-msgstr "%s scritto con successo"
+msgstr "Etichette scritte con successo\n"
 
 #: lib/src/dataio.c:3023
-#, fuzzy
 msgid "Labels loaded OK\n"
-msgstr "%s aperto con successo\n"
+msgstr "Etichette caricate\n"
 
 #: lib/src/dataio.c:3072
 msgid "No markers are available for writing"
 msgstr "Non è disponibile alcun marcatore per la scrittura"
 
 #: lib/src/dataio.c:3084
-#, fuzzy
 msgid "Markers written OK\n"
-msgstr "%s scritto con successo"
+msgstr "Marcatori scritti con successo\n"
 
 #: lib/src/dataio.c:3090
-#, fuzzy
 msgid "Markers loaded OK\n"
-msgstr "Marcatori aggiunti"
+msgstr "Marcatori caricati\n"
 
 #: lib/src/dataio.c:3163
 #, c-format
@@ -1612,39 +1593,36 @@ msgid "This dataset is on 6-day calendar, but %s are blank."
 msgstr ""
 
 #: lib/src/dataio.c:4017
-#, fuzzy
 msgid "Sundays"
-msgstr "Domenica"
+msgstr "Domeniche"
 
 #: lib/src/dataio.c:4017
-#, fuzzy
 msgid "Saturdays"
-msgstr "Sabato"
+msgstr "Sabati"
 
 #: lib/src/dataio.c:4022
-#, fuzzy
 msgid "In addition,"
-msgstr "Opzione non valida"
+msgstr "In aggiunta,"
 
 #: lib/src/dataio.c:4024
-#, fuzzy, c-format
+#, c-format
 msgid "%.2f percent of weekday observations are missing."
-msgstr "%s: %d osservazioni sono state trasformate in \"mancante\"\n"
+msgstr "%.2f per cento delle osservazioni giornaliere sono mancanti"
 
 #: lib/src/dataio.c:4027
-#, fuzzy, c-format
+#, c-format
 msgid "%g percent of weekday observations are missing."
-msgstr "%s: %d osservazioni sono state trasformate in \"mancante\"\n"
+msgstr "%g per cento delle osservazioni giornaliere sono mancanti"
 
 #: lib/src/dataio.c:4040
-#, fuzzy, c-format
+#, c-format
 msgid "%.2f percent of daily observations are missing."
-msgstr "%s: %d osservazioni sono state trasformate in \"mancante\"\n"
+msgstr "%.2f per cento delle osservazioni giornaliere sono mancanti"
 
 #: lib/src/dataio.c:4043
-#, fuzzy, c-format
+#, c-format
 msgid "%g percent of daily observations are missing."
-msgstr "%s: %d osservazioni sono state trasformate in \"mancante\"\n"
+msgstr "%g per cento delle osservazioni giornaliere sono mancanti"
 
 #: lib/src/dataset.c:462
 msgid "auto-generated constant"
@@ -1662,14 +1640,12 @@ msgid "The variable %s is read-only"
 msgstr "La variabile %s è di sola lettura"
 
 #: lib/src/dataset.c:1868
-#, fuzzy
 msgid "There is already an object of this name"
-msgstr "'%s': c'è già un oggetto con questo nome"
+msgstr "Un oggetto con questo nome esiste già"
 
 #: lib/src/dataset.c:1874
-#, fuzzy
 msgid "There is already a series of this name"
-msgstr "'%s': c'è già una variabile con questo nome"
+msgstr "C'è già una variabile con questo nome"
 
 #: lib/src/dataset.c:2111 lib/src/dataset.c:2121 lib/src/uservar.c:478
 #, c-format
@@ -1731,7 +1707,7 @@ msgstr "ore"
 #: lib/src/dataset.c:2834
 #, fuzzy
 msgid "You can only do this with undated data"
-msgstr "Impossibile eseguire l'operazione su un dataset sotto-campionato"
+msgstr "Questa operazione si può eseguire solo su un dataset non datato"
 
 #: lib/src/dataset.c:2975
 #, fuzzy
@@ -4396,14 +4372,13 @@ msgid "no specification of public functions was found\n"
 msgstr "Non è stato trovato alcun file di funzioni aggiuntivo"
 
 #: lib/src/gretl_func.c:4340
-#, fuzzy, c-format
+#, c-format
 msgid "number of public interfaces = %d\n"
-msgstr "Numero di strumenti = %d"
+msgstr "Numero di funzioni pubbliche = %d\n"
 
 #: lib/src/gretl_func.c:4349
-#, fuzzy
 msgid ": *** not found"
-msgstr "non trovato"
+msgstr ": *** non trovato"
 
 #: lib/src/gretl_func.c:4351
 #, fuzzy, c-format

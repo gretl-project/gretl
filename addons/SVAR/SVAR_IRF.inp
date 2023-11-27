@@ -224,9 +224,12 @@ function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
     # (drawix only meant for the set id case (type 10))
 
     list ret = null
-    loop foreach i n p t1 t2 type T k
+    loop foreach i n p type T k
         scalar $i = Mod.$i
     endloop
+    scalar t1 = Mod.calinfo.t1
+    scalar t2 = Mod.calinfo.t2
+    
     matrix B10 = {} # to be filled for type 10
 
     if nv > n
