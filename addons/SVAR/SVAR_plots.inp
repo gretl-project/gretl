@@ -395,7 +395,8 @@ function string make_xtics(bundle calinfo, scalar ntics[12])
             omin = zeros(T, 1)
             i = 1
             loop while i<=T
-                isgood = (pd == 6 && wd > 0) || (pd == 5 && contains(wd, {0,6})) 
+                wd = weekday(y, m, d)
+                isgood = (pd == 7) || (pd == 6 && wd > 0) || (pd == 5 && contains(wd, seq(1,5))) 
                 if isgood
                     omaj[i] = y
                     omin[i] = m
