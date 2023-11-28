@@ -87,7 +87,7 @@
 
 \title{The SVAR addon for \app{gretl}}
 \author{Jack Lucchetti and Sven Schreiber}
-\date{Version 2.0}
+\date{Version 2.1}
 
 \begin{document}
 
@@ -3357,8 +3357,9 @@ typically be called before \texttt{SVAR\_SRirf}.
     \texttt{Y}	  & endogenous variables data matrix \\
     \texttt{X}	  & exogenous variables data matrix \\
     \texttt{calc\_lr} & switch to get long-run matrix \texttt{lrmat} in short-run models \\ 
-    \texttt{checkident} & switch indicating whether to check identification before 
-    estimation\\
+    \texttt{checkident} & switch indicating whether to check
+                          identification before estimation\\
+    \texttt{calinfo} & bundle, calendar info: periodicity, sample size etc.
     \end{tabular}
     
     \begin{tabular}{rp{0.8\textwidth}}
@@ -3472,6 +3473,13 @@ typically be called before \texttt{SVAR\_SRirf}.
   
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
+
+\subsection*{Version 2.1, November 2023}
+\begin{itemize}
+\item Add the ``calinfo'' bundle to the model bundle. 
+\item Switch to the ``stacked-bars'' version for historical
+  decomposition plots. 
+\end{itemize}
 
 \subsection*{Version 2.0, June/July 2023}
 \begin{itemize}
