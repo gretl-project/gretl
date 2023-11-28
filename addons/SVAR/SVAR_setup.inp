@@ -126,7 +126,7 @@ function bundle calendar_info(void)
     if pd != 1
         limitobs ~= $obsminor[$t1] | $obsminor[$t2]
     endif
-    if contains(pd, {5,6,7})
+    if contains(pd, {5,6,7,52})
         limitobs ~= $obsmicro[$t1] | $obsmicro[$t2]
     endif
     ret.limitobs = limitobs
@@ -504,92 +504,93 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
     # if anything goes wrong, return
     if err
         # (currently err==1 here always, Sven believes)
-        outfile stderr --quiet # --write
-        printf "SVAR_coint: returning on err = %d\n", err
-    end outfile
+        outfile stderr --quiet
+            printf "SVAR_coint: returning on err = %d\n", err
+        end outfile
+        return err
+    endif
+
+    # fill up the object with the info
+
+    SVARobj.crank = r
+    SVARobj.jcase = dcase
+    SVARobj.jbeta = jbeta
+    SVARobj.jalpha = jalpha
+    SVARobj.free_a = free_a
+
+    if verbose
+        if dcase == 1
+            printf "No constant, "
+        elif dcase == 2
+            printf "Restricted constant, "
+        elif dcase == 3
+            printf "Unrestricted constant, "
+        elif dcase == 4
+            printf "Restricted trend, "
+        elif dcase == 5
+            printf "Unrestricted trend, "
+        endif
+
+        printf "beta =\n%11.5f\n", jbeta
+
+        if free_a
+            printf "alpha is unrestricted\n"
+        else
+            printf "alpha =\n%9.5f\n", jalpha
+            printf "PI =\n%9.5f\n", jalpha * jbeta'
+        endif
+    endif
+
+    # relabel transitory structural shocks
+    strings sn = SVARobj.snames
+
+    if n-r == 1
+        sn[1] = sprintf("Permanent")
+        if r == 1
+            sn[2] = "Transitory"
+        else
+            loop i = 2..n
+                sn[i] = sprintf("Transitory_%d", i-1)
+            endloop
+        endif
+    else
+        loop i = 1..n
+            sn[i] = sprintf("Permanent_%d", i)
+        endloop
+        if r == 1
+            sn[n] = "Transitory"
+        else
+            loop i = 1..r
+                sn[n-r+i] = sprintf("Transitory_%d", i)
+            endloop
+        endif
+    endif
+
+    SVARobj.snames = sn
+    if !err
+        SVARobj.cointsetup = 1	# flag success
+    endif
+
     return err
-endif
-
-# fill up the object with the info
-
-SVARobj.crank = r
-SVARobj.jcase = dcase
-SVARobj.jbeta = jbeta
-SVARobj.jalpha = jalpha
-SVARobj.free_a = free_a
-
-if verbose
-    if dcase == 1
-        printf "No constant, "
-    elif dcase == 2
-        printf "Restricted constant, "
-    elif dcase == 3
-        printf "Unrestricted constant, "
-    elif dcase == 4
-        printf "Restricted trend, "
-    elif dcase == 5
-        printf "Unrestricted trend, "
-    endif
-
-    printf "beta =\n%11.5f\n", jbeta
-
-    if free_a
-        printf "alpha is unrestricted\n"
-    else
-        printf "alpha =\n%9.5f\n", jalpha
-        printf "PI =\n%9.5f\n", jalpha * jbeta'
-    endif
-endif
-
-# relabel transitory structural shocks
-strings sn = SVARobj.snames
-
-if n-r == 1
-    sn[1] = sprintf("Permanent")
-    if r == 1
-        sn[2] = "Transitory"
-    else
-        loop i = 2..n
-            sn[i] = sprintf("Transitory_%d", i-1)
-        endloop
-    endif
-else
-    loop i = 1..n
-        sn[i] = sprintf("Permanent_%d", i)
-    endloop
-    if r == 1
-        sn[n] = "Transitory"
-    else
-        loop i = 1..r
-            sn[n-r+i] = sprintf("Transitory_%d", i)
-        endloop
-    endif
-endif
-
-SVARobj.snames = sn
-if !err
-    SVARobj.cointsetup = 1	# flag success
-endif
-
-return err
 end function
 
 ####
 
 function scalar SVAR_cumulate(bundle *b, int nv)
-err = nv>b.n || nv<1 # was nv<0, but 0 makes no sense (?)
-if !err
-    vn = b.Ynames
-    printf "Variable %s cumulated\n",  vn[nv]
-    b.cumul  |= {nv}
-    b.ncumul += 1
 
-    # The following code was in doIRF but doesn't depend
-    # on the data, so slightly inefficient for the bootstrap.
-    # Instead we introduce b.cumsel which can be reused later
-    tmp = zeros(b.n, b.n)
-    tmp[b.cumul,] = 1
-    matrix b.cumsel = selifr(transp(seq(1, b.n * b.n)), vec(tmp))
-endif
-return err
+    err = nv>b.n || nv<1 # was nv<0, but 0 makes no sense (?)
+    if !err
+        vn = b.Ynames
+        printf "Variable %s cumulated\n",  vn[nv]
+        b.cumul  |= {nv}
+        b.ncumul += 1
+
+        # The following code was in doIRF but doesn't depend
+        # on the data, so slightly inefficient for the bootstrap.
+        # Instead we introduce b.cumsel which can be reused later
+        tmp = zeros(b.n, b.n)
+        tmp[b.cumul,] = 1
+        matrix b.cumsel = selifr(transp(seq(1, b.n * b.n)), vec(tmp))
+    endif
+    return err
 end function

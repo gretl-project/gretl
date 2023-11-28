@@ -8,12 +8,12 @@ function scalar check_bounds(int s, int v, int n)
 
     scalar ret = 0
     if abs(s)>n || s==0
-	# the number of the shock is greater than the system size
-	# however, negative s is allowed and means "flip the shock"
+        # the number of the shock is greater than the system size
+        # however, negative s is allowed and means "flip the shock"
         ret = 1
 
     elif v>n || v<1
-	# non-existent variable
+        # non-existent variable
         ret = 2
     endif
 
@@ -38,7 +38,7 @@ function string IRFgrph(const matrix IRFmat, int snum, int vnum, scalar scale, \
     #  function.)
 
     errorif( whichdraw && (exists(boot) || bc), \
-        "cannot have SR/whichdraw and bootstrap options together")
+      "cannot have SR/whichdraw and bootstrap options together")
 
     flip = snum < 0
     snum = abs(snum)
@@ -177,10 +177,10 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
     loop snum = sfrom .. sto
         loop vnum = vfrom .. vto
             err = check_bounds(snum, vnum, n)
-	    if err
-		break
-	    endif
-	endloop
+            if err
+                break
+            endif
+        endloop
     endloop
 
     errorif(err == 1, sprintf("Shock number %d out of bounds\n", abs(snum)))
@@ -345,13 +345,6 @@ function void FEVDsave(string outfilename, bundle *obj, int vnum[0], \
     endif
 
     loop vnum = vfrom..vto
-        # was:
-        /*
-        if vnum < 1 || vnum > n
-            printf "Variable number %d out of bounds\n", vnum
-            return
-        endif
-        */
         errorif(vnum < 1 || vnum > n, \
           sprintf("Variable number %d out of bounds\n", vnum))
 
@@ -377,10 +370,38 @@ end function
 /* --- HD public graphing functions ------------------------------------- */
 /* ---------------------------------------------------------------------- */
 
+
+function string make_xtics(bundle calinfo, scalar ntics[12])
+    string ret = "set xtics ("
+    
+    pd = calinfo.pd
+    T = calinfo.t2 - calinfo.t1 + 1
+    tt = seq(1, T)'
+    omaj = calinfo.limitobs[1,1] + floor(tt/pd)
+    if cols(calinfo.limitobs) > 1
+        omin = 1 + (calinfo.limitobs[1,2] + (tt-2)) % pd
+    endif
+
+    width = floor(T/(ntics-1))
+    head = ceil((T%ntics) / 2)
+
+    j = head+1
+    loop i = 1 .. ntics
+        if pd == 1 || pd == 52 
+            xtic = sprintf("%d", omaj[j])
+        elif calinfo.pd == 4 || calinfo.pd == 12 
+            xtic = sprintf("%d:%d", omaj[j], omin[j])
+        endif
+        ret ~= sprintf("\"%s\" %d,", xtic, j)
+        j += width
+    endloop
+
+    ret[end] = ")"
+    return ret
+end function
+
 function void HDsave(string outfilename, bundle *obj, int vnum[0],
                      int drawix[0::0])
-
-    # more fashionable (=Dynare-like) style
 
     # Interpret vnum==0 as meaning "all 1..n"
     scalar n = obj.n
@@ -394,40 +415,80 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0],
         string tmpout = sprintf("%s.%s", be[1], be[2]) # might be overriden
     endif
 
+    OLD = 0
     loop vnum = vfrom..vto
         errorif(vnum < 1 || vnum > n, \
           sprintf("Variable number %d out of bounds\n", vnum))
-
-        list tmp = SVAR_hd(&obj, vnum, drawix)
 
         # prepare extended plot title, only for SR
         whichdraw = drawix ? drawix : obj.bestdraw
         string drawinfo = obj.type == 10 ? sprintf(" (draw %d)", whichdraw) : ""
 
-        tmp -= tmp[1] # take away deterministic component
-        loop i = 1..nelem(tmp)
-            string sn = obj.snames[i]
-            setinfo tmp[i] --graph-name="@sn"
-        endloop
-
-        series tmpvar = sum(tmp)
-        string gnam = sprintf("%s (stoch. component)", obj.Ynames[vnum])
-        setinfo tmpvar --graph-name="@gnam"
-        tmp = tmp tmpvar
-        # (put the line with the target var (stoch.comp) _last_
-        # such that the shock colors match those in FEVD
+        list HDData = SVAR_hd(&obj, vnum, drawix)
 
         if exists(be) && vfrom != vto	# no display, multiple plots
             tmpout = sprintf("%s_%d.%s", be[1], vnum, be[2])
         endif
 
-        plot tmp
-            option time-series
-            option single-yaxis
-            option with-boxes
-            option with-lines=tmpvar
-            printf "set title \"HD for %s%s\"", obj.Ynames[vnum], drawinfo
-        end plot --output="@tmpout"
+        string gnam = sprintf("%s (stoch. component)", obj.Ynames[vnum])
+
+        if OLD
+            HDData -= HDData[1] # take away deterministic component
+            loop i = 1..nelem(HDData)
+                string sn = obj.snames[i]
+                setinfo HDData[i] --graph-name="@sn"
+            endloop
+
+            series tmpvar = sum(HDData)
+            setinfo tmpvar --graph-name="@gnam"
+            # (put the line with the target var (stoch.comp) _last_
+            # such that the shock colors match those in FEVD
+            HDData += tmpvar
+
+            plot HDData
+                option time-series
+                option single-yaxis
+                option with-boxes
+                option with-lines=tmpvar
+                printf "set title \"HD for %s%s\"", obj.Ynames[vnum], drawinfo
+            end plot --output="@tmpout"
+        else
+            
+            # more fashionable (=Dynare-like) style
+            mat = {HDData}[obj.p+1:,]
+
+            n = cols(mat)
+            # we use column 1 for the "stochastic only" variable
+            mat[,1] = sumr(mat[,2:])
+
+            ret = ""
+
+            outfile --buffer=ret --quiet
+                printf "set xlabel ''\n"
+                printf "set xzeroaxis\n"
+                printf "set key left top\n"
+                printf "set style histogram rowstacked\n"
+                printf "set key outside below\n"
+                printf "set style fill solid 0.5\n"
+                printf "\n"
+                printf "%s\n", make_xtics(obj.calinfo)
+                printf "\n"
+                printf "set title \"HD for %s%s\"\n\n", obj.Ynames[vnum], drawinfo
+
+                printf "$data << EOD\n"
+                printf "%12.5g", mat
+                printf "EOD\n\n"
+
+                printf "plot"
+                loop i = 2 .. n
+                    printf " $data u %d w hist t \"%s\", \\\n", i, obj.snames[i-1]
+                endloop
+
+                printf " $data using 1 w lines lc \"black\" lw 1.5 t '%s'\n", gnam
+            end outfile
+            gnuplot --inbuf=ret --output="@tmpout"
+        endif
+
     endloop
 end function
 
