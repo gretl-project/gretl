@@ -2758,7 +2758,7 @@ static void load_default_path (char *targ)
     } else if (targ == paths.x12a) {
         sprintf(targ, "%s\\x13as\\x13as.exe", progfiles);
     } else if (targ == paths.tramo) {
-        sprintf(targ, "%s\\tramo\\tramo.exe", pfx86);
+        sprintf(targ, "%s\\tramo\\tramo.exe", pfx86); /* ? */
     } else if (targ == paths.rbinpath) {
         R_path_from_registry(targ, REXE);
     } else if (targ == paths.rlibpath) {
