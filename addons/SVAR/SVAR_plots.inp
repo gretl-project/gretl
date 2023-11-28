@@ -374,23 +374,51 @@ end function
 function string make_xtics(bundle calinfo, scalar ntics[12])
     string ret = "set xtics ("
     
-    pd = calinfo.pd
-    T = calinfo.t2 - calinfo.t1 + 1
-    tt = seq(1, T)'
+    scalar pd = calinfo.pd
+    scalar T = calinfo.t2 - calinfo.t1 + 1
+    matrix tt = seq(1, T)'
     omaj = calinfo.limitobs[1,1] + floor(tt/pd)
     if cols(calinfo.limitobs) > 1
-        omin = 1 + (calinfo.limitobs[1,2] + (tt-2)) % pd
+        # not yearly
+        if calinfo.pd == 4 || calinfo.pd == 12
+            # quarterly/monthly
+            omin = 1 + (calinfo.limitobs[1,2] + (tt-2)) % pd
+        elif contains(calinfo.pd, {5,6,7})
+            # daily
+            d0 = calinfo.limitobs[1,]
+            y = d0[1]
+            m = d0[2]
+            d = d0[3]
+            ed = epochday(y, m, d)
+            wd = weekday(y, m, d)
+            
+            omin = zeros(T, 1)
+            i = 1
+            loop while i<=T
+                isgood = (pd == 6 && wd > 0) || (pd == 5 && contains(wd, {0,6})) 
+                if isgood
+                    omaj[i] = y
+                    omin[i] = m
+                    i++
+                endif
+                cur = isodate(ed++)
+                d = cur % 100
+                cur = (cur-d)/100
+                m = cur % 100
+                y = (cur-m)/100
+            endloop
+        endif
     endif
-
+    
     width = floor(T/(ntics-1))
     head = ceil((T%ntics) / 2)
 
     j = head+1
     loop i = 1 .. ntics
         if pd == 1 || pd == 52 
-            xtic = sprintf("%d", omaj[j])
-        elif calinfo.pd == 4 || calinfo.pd == 12 
-            xtic = sprintf("%d:%d", omaj[j], omin[j])
+            string xtic = sprintf("%d", omaj[j])
+        elif calinfo.pd == 4 || calinfo.pd == 12 || contains(calinfo.pd, {5,6,7})
+            string xtic = sprintf("%d:%d", omaj[j], omin[j])
         endif
         ret ~= sprintf("\"%s\" %d,", xtic, j)
         j += width
@@ -462,7 +490,8 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0],
             mat[,1] = sumr(mat[,2:])
 
             ret = ""
-
+            set force_decpoint on
+            
             outfile --buffer=ret --quiet
                 printf "set xlabel ''\n"
                 printf "set xzeroaxis\n"
