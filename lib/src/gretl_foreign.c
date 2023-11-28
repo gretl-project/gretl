@@ -2635,7 +2635,7 @@ static int try_set_R_home (void)
 
 static int gretl_Rlib_init (void)
 {
-    char *Rhome;
+    char *Rhome = NULL;
     int err = 0;
 
 #if FDEBUG

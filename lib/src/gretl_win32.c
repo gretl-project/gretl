@@ -1473,7 +1473,7 @@ int R_path_from_registry (char *s, int which)
     }
 
     if (windebug) {
-	fprintf(stderr, "R_path_from_registry (%d): '%s'\n", s, which);
+	fprintf(stderr, "R_path_from_registry (%d): '%s'\n", which, s);
     }
 
     return err;
