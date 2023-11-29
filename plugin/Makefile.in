@@ -274,7 +274,7 @@ override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(MPFR_CFLAGS) \
 all: .deps $(PLUGINS)
 
 .deps:
-	mkdir $@
+	$(AMP)mkdir $@
 
 -include .deps/*.d
 
