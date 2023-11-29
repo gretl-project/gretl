@@ -2635,7 +2635,7 @@ static int try_set_R_home (void)
 
 static int gretl_Rlib_init (void)
 {
-    char *Rhome = NULL;
+    char *Rhome;
     int err = 0;
 
 #if FDEBUG
@@ -2662,16 +2662,9 @@ static int gretl_Rlib_init (void)
     Rhome = R_get_HOME();
     fprintf(stderr, "R_get_HOME() gave '%s'\n", Rhome);
     if (Rhome == NULL) {
-	char tmp[MAXLEN] = {0};
-
-	err = R_path_from_registry(tmp, RBASE);
-	if (err || tmp[0] == '\0') {
-	    fprintf(stderr, "To use Rlib, the variable R_HOME must be set\n");
-	    err = E_EXTERNAL;
-	    goto bailout;
-	} else {
-	    set_path_for_Rlib(tmp);
-	}
+        fprintf(stderr, "To use Rlib, the variable R_HOME must be set\n");
+        err = E_EXTERNAL;
+        goto bailout;
     } else {
         set_path_for_Rlib(Rhome);
     }
