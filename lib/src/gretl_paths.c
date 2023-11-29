@@ -2160,6 +2160,12 @@ static void R_path_try_registry (int which, char *targ)
 
     err = R_path_from_registry(tmp, which);
 
+    if (which == RLIB) {
+	fprintf(stderr, "R_path_try_registry (RLIB):\n"
+		" incoming value '%s'\n"
+		" registry value '%s'\n", targ, tmp);
+    }
+
     if (!err) {
         *targ = '\0';
         strncat(targ, tmp, MAXLEN - 1);

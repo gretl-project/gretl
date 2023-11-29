@@ -1413,8 +1413,8 @@ static void append_R_filename (char *s, int which)
    is optional.
 
    To complicate matters, the path within the registry where
-   we might find this information changed somewhere between
-   R 2.9.1 and R 2.11.1.
+   we might find this information has not remained constant
+   across subsequwnt R versions.
 */
 
 int R_path_from_registry (char *s, int which)
