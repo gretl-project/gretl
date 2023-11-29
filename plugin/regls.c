@@ -1629,7 +1629,9 @@ static int ccd_prep (regls_info *ri, ccd_info *ci)
     int nlam = ri->nlam;
     int k = ri->k;
 
+#if 0
     fprintf(stderr, "*** ccd_prep ***\n");
+#endif
 
     ci->MB = gretl_matrix_block_new(&ci->xv, k, 1,
 				    &ci->Xty, k, 1,
