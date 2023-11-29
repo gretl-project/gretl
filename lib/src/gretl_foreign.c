@@ -2642,27 +2642,7 @@ static int gretl_Rlib_init (void)
     fprintf(stderr, "gretl_Rlib_init: starting\n");
 #endif
 
-#ifdef WIN32
-    Rhome = R_get_HOME();
-    fprintf(stderr, "R_get_HOME() gave '%s'\n", Rhome);
-    if (Rhome != NULL) {
-	set_path_for_Rlib(Rhome);
-    } else {
-	/* 2023-11-29: R-4.3.2 */
-	char tmp[MAXLEN] = {0};
-
-	err = R_path_from_registry(tmp, RBASE);
-	fprintf(stderr, "RBASE: '%s'\n", tmp);
-	if (!err) {
-	    gretl_setenv("R_HOME", tmp);
-	    set_path_for_Rlib(tmp);
-	}
-    }
-    if (err) {
-	fprintf(stderr, "gretl_Rlib_init: couldn't determine R_HOME\n");
-	return E_EXTERNAL;
-    }
-#else
+#ifndef WIN32
     Rhome = getenv("R_HOME");
     if (Rhome == NULL || *Rhome == '\0') {
         err = try_set_R_home();
@@ -2677,6 +2657,31 @@ static int gretl_Rlib_init (void)
         fprintf(stderr, "gretl_Rlib_init: failed to load R functions\n");
         goto bailout;
     }
+
+#ifdef WIN32
+    /* note: this code block requires that load_R_symbols()
+       has succeeded
+    */
+    Rhome = R_get_HOME();
+    fprintf(stderr, "R_get_HOME() gave '%s'\n", Rhome);
+    if (Rhome != NULL) {
+        /* worked OK with R-4.2.2 */
+	set_path_for_Rlib(Rhome);
+    } else {
+	/* 2023-11-29: R-4.3.2 */
+	char tmp[MAXLEN] = {0};
+
+	err = R_path_from_registry(tmp, RBASE);
+	fprintf(stderr, "RBASE: '%s'\n", tmp);
+	if (!err) {
+	    gretl_setenv("R_HOME", tmp);
+	    set_path_for_Rlib(tmp);
+	} else {
+            fprintf(stderr, "gretl_Rlib_init: couldn't determine R_HOME\n");
+            return E_EXTERNAL;
+        }
+    }
+#endif
 
     /* ensure common filenames are in place */
     make_gretl_R_names();
