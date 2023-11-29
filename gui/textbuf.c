@@ -1275,7 +1275,7 @@ static GtkTextTagTable *gretl_tags_new (void)
     table = gtk_text_tag_table_new();
 
     tag = gtk_text_tag_new("bluetext");
-    g_object_set(tag, "foreground", special_text_color(), NULL);
+    g_object_set(tag, "foreground", blue_for_text(), NULL);
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("redtext");
@@ -1569,7 +1569,8 @@ void textview_set_text_dbsearch (windata_t *vwin, const char *buf)
 	}
 	tag = gtk_text_tag_table_lookup(tab, dsname);
 	if (tag == NULL) {
-	    tag = gtk_text_buffer_create_tag(tbuf, dsname, "foreground", "blue",
+	    tag = gtk_text_buffer_create_tag(tbuf, dsname, "foreground",
+                                             blue_for_text(),
 					     NULL);
 	    object_set_int(tag, "page", page);
 	}
@@ -1842,18 +1843,20 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
     tag = gtk_text_tag_table_lookup(tab, tagname);
 
     if (tag == NULL) {
+        const char *myblue = blue_for_text();
+
 	if (page == GUIDE_PAGE || page == BIB_PAGE || page == MNU_PAGE) {
-	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue",
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", myblue,
 					     "family", helpfont, NULL);
 	} else if (page == SCRIPT_PAGE || page == EXT_PAGE ||
 		   page == PDF_PAGE) {
-	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue",
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", myblue,
 					     "font-desc", fixed_font, NULL);
 	} else if (indent != NULL) {
-	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue",
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", myblue,
 					     "left_margin", 30, NULL);
 	} else {
-	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", NULL);
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", myblue, NULL);
 	}
 	object_set_int(tag, "page", page);
     }
@@ -1889,14 +1892,16 @@ static gboolean insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter,
 
     if (tag == NULL) {
 	/* the required tag is not already in the table */
+        const char *myblue = blue_for_text();
+
 	if (gfr) {
-	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue",
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", myblue,
 					     "family", helpfont, NULL);
 	} else if (indent != NULL) {
-	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue",
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", myblue,
 					     "left_margin", 30, NULL);
 	} else {
-	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", NULL);
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", myblue, NULL);
 	}
 	object_set_int(tag, "page", page);
 	object_set_int(tag, "xref", 1);
@@ -4823,7 +4828,7 @@ static GtkTextTagTable *gretl_console_tags_new (void)
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("bluetext");
-    g_object_set(tag, "foreground", "blue",
+    g_object_set(tag, "foreground", blue_for_text(),
 		 "weight", PANGO_WEIGHT_NORMAL, NULL);
     gtk_text_tag_table_add(table, tag);
 

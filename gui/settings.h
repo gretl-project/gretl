@@ -55,7 +55,7 @@ int autoicon_on (void);
 
 int get_icon_sizing (void);
 
-const char *special_text_color (void);
+const char *blue_for_text (void);
 
 int use_tabbed_editor (void);
 

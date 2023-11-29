@@ -1211,7 +1211,7 @@ void set_workdir_label (void)
         gchar *fmt, *wdir, *buf;
 
         fmt = g_strdup_printf("<span color=\"%s\">%%s</span>",
-                              special_text_color());
+                              blue_for_text());
         wdir = g_strdup(gretl_workdir());
         trim_slash(wdir);
         if (g_utf8_strlen(wdir, -1) > 56) {

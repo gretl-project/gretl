@@ -194,7 +194,7 @@ void about_dialog (GtkWidget *parent)
     gtk_event_box_set_visible_window(GTK_EVENT_BOX(ebox), FALSE);
     gtk_widget_set_can_default(ebox, FALSE);
     fmt = g_strdup_printf("<span color=\"%s\">%%s</span>",
-                          special_text_color());
+                          blue_for_text());
     buf = g_markup_printf_escaped(fmt, website);
     label = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(label), buf);

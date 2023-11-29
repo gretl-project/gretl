@@ -466,7 +466,7 @@ int autoicon_on (void)
 
 #endif
 
-const char *special_text_color (void)
+const char *blue_for_text (void)
 {
 #ifdef G_OS_WIN32
     if (strstr(themepref, "Dark") ||
