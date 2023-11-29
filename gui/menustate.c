@@ -1208,14 +1208,13 @@ void set_workdir_label (void)
     wlabel = g_object_get_data(G_OBJECT(mdata->main), "wlabel");
 
     if (wlabel != NULL) {
-        const char fmt[] = "<span color=\"blue\">%s</span>";
-        gchar *wdir, *buf;
-        int len;
+        gchar *fmt, *wdir, *buf;
 
+        fmt = g_strdup_printf("<span color=\"%s\">%%s</span>",
+                              special_text_color());
         wdir = g_strdup(gretl_workdir());
         trim_slash(wdir);
-        len = g_utf8_strlen(wdir, -1);
-        if (len > 56) {
+        if (g_utf8_strlen(wdir, -1) > 56) {
             gretl_utf8_truncate(wdir, 53);
             strcat(wdir, "...");
         }
@@ -1223,6 +1222,7 @@ void set_workdir_label (void)
         gtk_label_set_markup(GTK_LABEL(wlabel), buf);
         g_free(buf);
         g_free(wdir);
+        g_free(fmt);
     }
 }
 

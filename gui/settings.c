@@ -167,9 +167,9 @@ static double graph_scales[] = {
 static int n_graph_scales = G_N_ELEMENTS(graph_scales);
 
 #if defined(MAC_THEMING)
-static char themepref[12] = "Adwaita";
+static char themepref[16] = "Adwaita";
 #elif defined(G_OS_WIN32)
-static char themepref[12] = "Windows-10";
+static char themepref[16] = "Windows-10";
 #endif
 
 /* model table display variables */
@@ -230,7 +230,7 @@ RCVAR rc_vars[] = {
 #endif
 #if defined(MAC_THEMING) || defined(G_OS_WIN32)
     { "themepref", N_("Theme preference"), NULL, themepref,
-      LISTSET | RESTART, 12, TAB_MAIN, NULL },
+      LISTSET | RESTART, 16, TAB_MAIN, NULL },
 #endif
 #if !defined(G_OS_WIN32) && !defined(OS_OSX)
     { "browser", N_("Web browser"), NULL, Browser,
@@ -465,6 +465,17 @@ int autoicon_on (void)
 }
 
 #endif
+
+const char *special_text_color (void)
+{
+#ifdef G_OS_WIN32
+    if (strstr(themepref, "Dark") ||
+        strstr(themepref, "dark")) {
+        return "#B0EFEE";
+    }
+#endif
+    return "blue";
+}
 
 int get_icon_sizing (void)
 {
@@ -1427,7 +1438,8 @@ static const char **get_list_setting_strings (void *var, int *n)
 #elif defined(G_OS_WIN32) && GTK_MAJOR_VERSION < 3
     else if (var == themepref) {
 	static const char *theme_strs[] = {
-            "Windows-10", "MS-Windows", "Clearlooks", "Raleigh"
+            "Windows-10", "Windows-10-Dark", "MS-Windows",
+            "Clearlooks", "Raleigh"
 	};
 
 	strs = theme_strs;
@@ -3485,6 +3497,7 @@ void set_up_mac_look (void)
 void set_up_windows_look (void)
 {
     if (!strcmp(themepref, "Windows-10") ||
+        !strcmp(themepref, "Windows-10-Dark") ||
 	!strcmp(themepref, "MS-Windows") ||
 	!strcmp(themepref, "Clearlooks")) {
 	const char *prefix;

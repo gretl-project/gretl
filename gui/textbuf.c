@@ -1275,7 +1275,7 @@ static GtkTextTagTable *gretl_tags_new (void)
     table = gtk_text_tag_table_new();
 
     tag = gtk_text_tag_new("bluetext");
-    g_object_set(tag, "foreground", "blue", NULL);
+    g_object_set(tag, "foreground", special_text_color(), NULL);
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("redtext");

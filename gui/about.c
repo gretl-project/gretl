@@ -135,7 +135,7 @@ void about_dialog (GtkWidget *parent)
     GtkWidget *vbox, *hbox, *label;
     GtkWidget *dialog, *image, *button;
     GtkWidget *ebox, *abox;
-    gchar *buf;
+    gchar *fmt, *buf;
 
 #ifdef GRETL_EDIT
     const char *prog = "gretl_edit";
@@ -193,11 +193,13 @@ void about_dialog (GtkWidget *parent)
     ebox = gtk_event_box_new();
     gtk_event_box_set_visible_window(GTK_EVENT_BOX(ebox), FALSE);
     gtk_widget_set_can_default(ebox, FALSE);
-    buf = g_markup_printf_escaped("<span color=\"blue\">%s</span>",
-                                  website);
+    fmt = g_strdup_printf("<span color=\"%s\">%%s</span>",
+                          special_text_color());
+    buf = g_markup_printf_escaped(fmt, website);
     label = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(label), buf);
     g_free(buf);
+    g_free(fmt);
     gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
     gtk_container_add(GTK_CONTAINER(ebox), label);
     gtk_box_pack_start(GTK_BOX(vbox), ebox, FALSE, FALSE, 0);
