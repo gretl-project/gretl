@@ -10911,6 +10911,30 @@ static int wordmatch (const char *s, const char *test)
     return (!strncmp(s, test, n) && (s[n] == '\0' || isspace(s[n])));
 }
 
+static int legacy_outfile_syntax (const char *s)
+{
+    const char *p, *q;
+    int legacy = 0;
+
+    p = strstr(s, "--write");
+    if (p != NULL) {
+	q = strchr(s, '#');
+	if (q == NULL && q - p > 0) {
+	    legacy = 1;
+	}
+    } else {
+	p = strstr(s, "--close");
+	if (p != NULL) {
+	    q = strchr(s, '#');
+	    if (q == NULL && q - p > 0) {
+		legacy = 1;
+	    }
+	}
+    }
+
+    return legacy;
+}
+
 void adjust_indent (const char *s, int *this_indent, int *next_indent)
 {
     const char *block_starts[] = {
@@ -10948,7 +10972,7 @@ void adjust_indent (const char *s, int *this_indent, int *next_indent)
 	   finish. We should indent <lines> in the first case
 	   but not the second.
 	*/
-	if (strstr(s, "--close") || strstr(s, "--write")) {
+	if (legacy_outfile_syntax(s)) {
 	    ; /* no-op */
 	} else {
 	    /* note: --append is ambiguous wrt indenting! */
@@ -11032,7 +11056,8 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
 		}
 		if (!strcmp(word, "outfile") || !strcmp(word, "gridplot")) {
 		    /* handle possible block/nonblock, including legacy syntax for
-		       "outfile"*/
+		       "outfile"
+		    */
 		    adjust_indent(ins, &this_indent, &next_indent);
 		} else {
 		    adjust_indent(word, &this_indent, &next_indent);
