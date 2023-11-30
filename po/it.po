@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-11-26 15:45-0500\n"
-"PO-Revision-Date: 2023-11-27 15:51+0100\n"
+"PO-Revision-Date: 2023-11-30 23:38+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -966,12 +966,12 @@ msgstr "Osservazioni giornaliere mancanti: %d\n"
 #: lib/src/csvdata.c:613
 #, c-format
 msgid "Found a Saturday (%s): re-trying with pd = %d\n"
-msgstr ""
+msgstr "Ho trovato un sabato (%s): riprovo con pd = %d\n"
 
 #: lib/src/csvdata.c:619
 #, c-format
 msgid "Found a Sunday (%s): re-trying with pd = %d\n"
-msgstr ""
+msgstr "Ho trovato una domenica (%s): riprovo con pd = %d\n"
 
 #: lib/src/csvdata.c:626
 #, c-format
@@ -979,6 +979,8 @@ msgid ""
 "Daily dates error at t = %d:\n"
 "  calendar_obs_number() for '%s' = %d but t = %d\n"
 msgstr ""
+"Errore nelle date giornaliere a t = %d\n"
+"  calendar_obs_number() per '%s' = %d ma t = %d\n"
 
 #: lib/src/csvdata.c:631
 #, c-format
@@ -988,12 +990,12 @@ msgstr "Errore: la data '%s' è fuori dai limiti\n"
 #: lib/src/csvdata.c:634
 #, c-format
 msgid "Error: date '%s' is repeated\n"
-msgstr ""
+msgstr "Errore: la data '%s' è ripetuta\n"
 
 #: lib/src/csvdata.c:758
 #, c-format
 msgid "   \"%s\": quarterly date with spurious zero?\n"
-msgstr ""
+msgstr "  \"%s\"; data trimestrale con uno zero spurio?\n"
 
 #: lib/src/csvdata.c:767
 msgid "not a consistent date"
@@ -1705,16 +1707,12 @@ msgid "hours"
 msgstr "ore"
 
 #: lib/src/dataset.c:2834
-#, fuzzy
 msgid "You can only do this with undated data"
 msgstr "Questa operazione si può eseguire solo su un dataset non datato"
 
 #: lib/src/dataset.c:2975
-#, fuzzy
 msgid "stack: this function cannot be used when the dataset is sub-sampled"
-msgstr ""
-"Non è possibile trasformare uno scalare in un vettore se sul dataset è "
-"definito un sotto-campione."
+msgstr "Non è possibile usare la funzione stack se sul dataset è definito un sotto-campione."
 
 #: lib/src/dataset.c:3234 lib/src/dataset.c:3262 gui/library.c:6488
 msgid "The data set is currently sub-sampled.\n"
@@ -1731,9 +1729,8 @@ msgid "Dataset extended by %d observations"
 msgstr "Il dataset è stato esteso di %d osservazioni"
 
 #: lib/src/dataset.c:3375
-#, fuzzy
 msgid "This conversion is not supported"
-msgstr "Libsvm non è supportata"
+msgstr "Coversione non supportata"
 
 #: lib/src/dataset.c:3392
 #, c-format
@@ -1777,27 +1774,24 @@ msgstr "Al momento sul dataset è definito un sotto-campione"
 #: lib/src/dataset.c:3847
 #, fuzzy
 msgid "Dataset is not dated daily"
-msgstr "Il dataset è andato"
+msgstr "Il dataset non è giornaliero"
 
 #: lib/src/dataset.c:5133
-#, fuzzy
 msgid "The target series has no valid values"
-msgstr "Ci sono valori mancanti nei dati"
+msgstr "La serie destinazione non ha valori validi"
 
 #: lib/src/dataset.c:5144
-#, fuzzy
 msgid "The minimum value of the target series must be >= 1"
-msgstr "Il numero di prove deve essere almeno 1"
+msgstr "Il minimo della serie destinazione deve essere almeno 1"
 
 #: lib/src/dataset.c:5152
-#, fuzzy
 msgid "The series values must be integers"
-msgstr "Il valore di \"toler\" dev'essere numerico"
+msgstr "I valori della serie devono essere interi"
 
 #: lib/src/dataset.c:5166
-#, fuzzy, c-format
+#, c-format
 msgid "String %d is not valid UTF-8"
-msgstr "La linea di comando contiene dei caratteri non UTF-8"
+msgstr "La strings %d non è UTF-8"
 
 #: lib/src/dataset.c:5990
 #, c-format
@@ -1816,7 +1810,7 @@ msgstr "il campione del dataset è ridotto"
 
 #: lib/src/dataset.c:6745
 msgid "map and dataset are out of sync!"
-msgstr ""
+msgstr "La mappa e il dataset non sono allineati!"
 
 #: lib/src/dbnread.c:35 lib/src/dbnread.c:41 gui/fncall.c:4797
 #, c-format
@@ -1890,7 +1884,7 @@ msgstr "Impossibile creare dataset vuoto\n"
 #: lib/src/dbread.c:1872
 #, c-format
 msgid "Connected to ODBC data source '%s'\n"
-msgstr ""
+msgstr "Connessione alla fonte ODBC '%s'\n"
 
 #: lib/src/dbread.c:1896 lib/src/subsample.c:2860
 msgid "Invalid null sample"
@@ -1914,7 +1908,7 @@ msgstr "Era atteso un nome di variabile valido"
 #: lib/src/dbread.c:2324 lib/src/dbread.c:2335
 #, c-format
 msgid "%s: can't mix numeric and string data"
-msgstr ""
+msgstr "%s: non si possono mischiare dati numerici e stringhe"
 
 #: lib/src/dbread.c:2331
 #, fuzzy, c-format
@@ -3228,21 +3222,20 @@ msgstr "La lista ha %d elementi, ma il vettore b ne ha %d"
 
 #: lib/src/genfuncs.c:4634
 msgid "theta must be a 2-vector"
-msgstr ""
+msgstr "theta deve avere 2 elementi"
 
 #: lib/src/genfuncs.c:4637
 msgid "theta must be a 3-vector"
-msgstr ""
+msgstr "theta deve avere 3 elementi"
 
 #: lib/src/genfuncs.c:4641
-#, fuzzy
 msgid "beta: parameters must be positive"
-msgstr "Le durate devono essere positive"
+msgstr "beta: i parametri devono essere positivi"
 
 #: lib/src/genfuncs.c:4758
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to calculate MIDAS weights: %s"
-msgstr "Impossibile calcolare lo Jacobiano"
+msgstr "Impossibile calcolare i pesi MIDAS: %s"
 
 #: lib/src/genfuncs.c:5036
 #, fuzzy, c-format
@@ -4230,7 +4223,7 @@ msgstr "MPI già inizialiazzato"
 #: lib/src/gretl_foreign.c:238
 #, c-format
 msgid "%s: unknown language\n"
-msgstr ""
+msgstr "'%s': linguaggio sconosciuto\n"
 
 #: lib/src/gretl_foreign.c:264
 #, c-format
@@ -4238,9 +4231,8 @@ msgid "%s exited with status %d\n"
 msgstr ""
 
 #: lib/src/gretl_foreign.c:299
-#, fuzzy
 msgid "Got no output"
-msgstr "Risultati di gretl"
+msgstr "Non c'è output"
 
 #: lib/src/gretl_foreign.c:778
 msgid "line could not be converted to UTF-8\n"
@@ -4253,7 +4245,7 @@ msgstr "'%s': lista inesistente"
 
 #: lib/src/gretl_foreign.c:2622
 msgid "Can't determine R_HOME"
-msgstr ""
+msgstr "Impossibile determinare R_HOME"
 
 #: lib/src/gretl_foreign.c:2923
 msgid "Only strings arrays are accepted as R-function arguments"
@@ -4265,19 +4257,19 @@ msgid "%s: not handled\n"
 msgstr "la cancellazione di %s non è consentita\n"
 
 #: lib/src/gretl_foreign.c:3077
-#, fuzzy, c-format
+#, c-format
 msgid "%s: not handled as R-function argument\n"
-msgstr "%s: argomento non valido per l'opzione"
+msgstr "%s: argomento non valido per una funzione R\n"
 
 #: lib/src/gretl_foreign.c:3221
 #, fuzzy, c-format
 msgid "%s: invalid matrix dimensions, %d x %d"
-msgstr "%s: la matrice è vuota (%d x %d)"
+msgstr "%s: le dimensioni della matrice non sono valide (%d x %d)"
 
 #: lib/src/gretl_foreign.c:3258
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid array length %d"
-msgstr "%s: valore non valido '%s'"
+msgstr "%s: lunghezza dell'array non valida (%d)"
 
 #: lib/src/gretl_foreign.c:3284
 #, c-format
@@ -4882,7 +4874,7 @@ msgstr ""
 #: lib/src/gretl_join.c:2170
 #, c-format
 msgid "'%s' is a string variable: aggregation type is not applicable"
-msgstr ""
+msgstr "'%s' è una variabile stringa: questo tipo di aggregazione non è applicabile"
 
 #: lib/src/gretl_join.c:2200
 #, fuzzy, c-format
@@ -5797,12 +5789,11 @@ msgstr "l'osservazione iniziale '%s' non è valida"
 #: lib/src/gretl_utils.c:1020
 #, c-format
 msgid "the starting date was corrected to Monday %s"
-msgstr ""
+msgstr "la data iniziale è stata corretta a lunedì %s"
 
 #: lib/src/gretl_utils.c:1185
-#, fuzzy
 msgid "You cannot do this within a function"
-msgstr "Non si può definire una funzione dentro una funzione"
+msgstr "Operazione non valida dentro una funzione"
 
 #: lib/src/gretl_utils.c:1217 lib/src/gretl_utils.c:1242
 #, c-format
@@ -6266,21 +6257,19 @@ msgstr ""
 #: lib/src/kalman.c:3112
 #, c-format
 msgid "obsx should have %d rows but has %d\n"
-msgstr ""
+msgstr "obsx dovrebbe avere %d righe ma ne ha %d\n"
 
 #: lib/src/kalman.c:3331
-#, fuzzy
 msgid "Failed to compute factor of Omega_t"
-msgstr "Impossibile calcolare il p-value"
+msgstr "Impossibile calcolare il fattore di Omega_t"
 
 #: lib/src/kalman.c:3353
-#, fuzzy
 msgid "Failed to compute factor of Omega"
-msgstr "Impossibile calcolare il p-value"
+msgstr "Impossibile calcolare il fattore di Omega"
 
 #: lib/src/kalman.c:3402
 msgid "You cannot resize a state-space system matrix"
-msgstr ""
+msgstr "Non si può ridimensionare una matrice di un sistema stato-spazio"
 
 #: lib/src/kalman.c:3831
 msgid ""
@@ -15891,10 +15880,9 @@ msgstr "gretl: aggiungi dati"
 
 #: gui/gui_utils.c:933
 msgid "Replace the current dataset (clears the current session)"
-msgstr ""
+msgstr "Rimpiazza il dataset corrente (azzera la sessione corrente)"
 
 #: gui/gui_utils.c:934
-#, fuzzy
 msgid "Try appending to the current dataset"
 msgstr "Prova ad aggiungere al dataset attuale"
 
@@ -20764,11 +20752,11 @@ msgstr "Esponente di Hurst stimato"
 
 #: plugin/garch.c:280
 msgid "Manual initialization of parameters"
-msgstr ""
+msgstr "Inizializzazione manuale dei parametri"
 
 #: plugin/garch.c:282
 msgid "Automatic initialization of parameters"
-msgstr ""
+msgstr "Inizializzazione automatica dei parametri"
 
 #: plugin/garch.c:285
 msgid "Regression coefficients"
@@ -20798,6 +20786,9 @@ msgid ""
 "Convergence was not reached.  One possible reason for this is\n"
 "autocorrelation in the error term.\n"
 msgstr ""
+"\n"
+"La convergenza non è stata raggiunta. Una possibile ragione potrebbe\n"
+"essere l'autocorrelazione nel termine di errore.\n"
 
 #: plugin/garch.c:737
 #, c-format
@@ -20805,10 +20796,12 @@ msgid ""
 "After estimating the model by OLS, the following result was\n"
 "obtained for a test of autocorrelation of order %d:\n"
 msgstr ""
+"Dopo aver stimato il modello tramite OLS, il seguente risultato è\n"
+"stato ottenuto per un test di autocorrelazione di ordine %d:\n"
 
 #: plugin/geoplot.c:1556
 msgid "unrecognized geoplot option(s): "
-msgstr ""
+msgstr "opzione(i) geoplot non riconosciuta(e)"
 
 #: plugin/gnumeric_import.c:415
 #, c-format
@@ -20830,7 +20823,7 @@ msgstr "Non sono stati trovati dati numerici"
 #: plugin/import_common.c:344
 #, c-format
 msgid "Bad date on row %d: '%s'\n"
-msgstr ""
+msgstr "Data non valida nella riga %d: '%s'\n"
 
 #: plugin/import_common.c:414
 #, fuzzy, c-format
@@ -20881,7 +20874,7 @@ msgstr "rho troncato a zero"
 #: plugin/interpolate.c:325
 #, c-format
 msgid "rho as revised via ML: %g\n"
-msgstr ""
+msgstr "rho rivisto tramite ML: %g\n"
 
 #: plugin/interpolate.c:883
 #, fuzzy, c-format
@@ -21118,9 +21111,8 @@ msgid "lpsolve: failed to load %s"
 msgstr "Impossibile caricare il plugin: %s"
 
 #: plugin/lpsolve.c:666
-#, fuzzy
 msgid "lpsolve: didn't find a model specification"
-msgstr "gretl: test diagnostici per modelli panel"
+msgstr "lpsolve: sopecificazione non trovata"
 
 #: plugin/lpsolve.c:673
 msgid "lpsolve: failed to build model"
