@@ -221,31 +221,31 @@ struct fnpkg_ {
 
 /* acceptable types for parameters of user-defined functions */
 
-#define ok_function_arg_type(t) (t == GRETL_TYPE_BOOL ||		\
-				 t == GRETL_TYPE_INT ||			\
-				 t == GRETL_TYPE_OBS ||			\
-				 t == GRETL_TYPE_DOUBLE ||		\
-				 t == GRETL_TYPE_SERIES ||		\
-				 t == GRETL_TYPE_LIST ||		\
-				 t == GRETL_TYPE_MATRIX ||		\
-				 t == GRETL_TYPE_STRING ||		\
-				 t == GRETL_TYPE_BUNDLE ||		\
-				 t == GRETL_TYPE_SCALAR_REF ||		\
-				 t == GRETL_TYPE_SERIES_REF ||		\
-				 t == GRETL_TYPE_MATRIX_REF ||		\
-				 t == GRETL_TYPE_BUNDLE_REF ||		\
-				 t == GRETL_TYPE_STRING_REF ||		\
-				 t == GRETL_TYPE_STRINGS ||		\
-				 t == GRETL_TYPE_MATRICES ||		\
-				 t == GRETL_TYPE_BUNDLES||		\
-				 t == GRETL_TYPE_LISTS ||               \
-				 t == GRETL_TYPE_ARRAYS ||		\
-				 t == GRETL_TYPE_STRINGS_REF ||		\
-				 t == GRETL_TYPE_MATRICES_REF ||	\
-	                         t == GRETL_TYPE_BUNDLES_REF ||         \
-	                         t == GRETL_TYPE_LISTS_REF ||           \
-				 t == GRETL_TYPE_ARRAYS_REF ||		\
-				 t == GRETL_TYPE_NUMERIC)
+#define ok_function_arg_type(t) (t == GRETL_TYPE_BOOL ||                \
+                                 t == GRETL_TYPE_INT ||                 \
+                                 t == GRETL_TYPE_OBS ||                 \
+                                 t == GRETL_TYPE_DOUBLE ||              \
+                                 t == GRETL_TYPE_SERIES ||              \
+                                 t == GRETL_TYPE_LIST ||                \
+                                 t == GRETL_TYPE_MATRIX ||              \
+                                 t == GRETL_TYPE_STRING ||              \
+                                 t == GRETL_TYPE_BUNDLE ||              \
+                                 t == GRETL_TYPE_SCALAR_REF ||          \
+                                 t == GRETL_TYPE_SERIES_REF ||          \
+                                 t == GRETL_TYPE_MATRIX_REF ||          \
+                                 t == GRETL_TYPE_BUNDLE_REF ||          \
+                                 t == GRETL_TYPE_STRING_REF ||          \
+                                 t == GRETL_TYPE_STRINGS ||             \
+                                 t == GRETL_TYPE_MATRICES ||            \
+                                 t == GRETL_TYPE_BUNDLES||              \
+                                 t == GRETL_TYPE_LISTS ||               \
+                                 t == GRETL_TYPE_ARRAYS ||              \
+                                 t == GRETL_TYPE_STRINGS_REF ||         \
+                                 t == GRETL_TYPE_MATRICES_REF ||        \
+                                 t == GRETL_TYPE_BUNDLES_REF ||         \
+                                 t == GRETL_TYPE_LISTS_REF ||           \
+                                 t == GRETL_TYPE_ARRAYS_REF ||          \
+                                 t == GRETL_TYPE_NUMERIC)
 
 /* structure representing an argument to a user-defined function */
 
@@ -255,14 +255,14 @@ struct fn_arg_ {
     char *upname;         /* name of supplied arg at caller level */
     user_var *uvar;       /* reference to "parent", if any */
     union {
-	int idnum;        /* named series arg (series ID) */
-	double x;         /* scalar arg */
-	double *px;       /* anonymous series arg */
-	gretl_matrix *m;  /* matrix arg */
-	char *str;        /* string arg */
-	int *list;        /* list arg */
-	gretl_bundle *b;  /* anonymous bundle pointer */
-	gretl_array *a;   /* array argument */
+        int idnum;        /* named series arg (series ID) */
+        double x;         /* scalar arg */
+        double *px;       /* anonymous series arg */
+        gretl_matrix *m;  /* matrix arg */
+        char *str;        /* string arg */
+        int *list;        /* list arg */
+        gretl_bundle *b;  /* anonymous bundle pointer */
+        gretl_array *a;   /* array argument */
     } val;
 };
 
@@ -277,9 +277,9 @@ static fnpkg *current_pkg;  /* pointer to package currently being edited */
 static int function_package_record (fnpkg *pkg);
 static void function_package_free (fnpkg *pkg);
 static int load_function_package (const char *fname,
-				  gretlopt opt,
-				  GArray *pstack,
-				  PRN *prn);
+                                  gretlopt opt,
+                                  GArray *pstack,
+                                  PRN *prn);
 static int ufunc_get_structure (ufunc *u);
 #if CALL_DEBUG
 static void print_callstack (ufunc *fun);
@@ -321,11 +321,11 @@ static struct flag_and_key pkg_lookups[] = {
 };
 
 #define pkg_aux_role(r) (r == UFUN_BUNDLE_PRINT || \
-			 r == UFUN_BUNDLE_PLOT ||  \
-			 r == UFUN_BUNDLE_TEST ||  \
-			 r == UFUN_BUNDLE_FCAST || \
-			 r == UFUN_BUNDLE_EXTRA || \
-			 r == UFUN_R_SETUP || \
+                         r == UFUN_BUNDLE_PLOT ||  \
+                         r == UFUN_BUNDLE_TEST ||  \
+                         r == UFUN_BUNDLE_FCAST || \
+                         r == UFUN_BUNDLE_EXTRA || \
+                         r == UFUN_R_SETUP || \
                          r == UFUN_UI_MAKER)
 
 static int pkg_key_get_role (const char *key)
@@ -333,11 +333,11 @@ static int pkg_key_get_role (const char *key)
     int i;
 
     if (key != NULL && *key != '\0') {
-	for (i=0; pkg_lookups[i].flag > 0; i++) {
-	    if (!strcmp(key, pkg_lookups[i].key)) {
-		return pkg_lookups[i].flag;
-	    }
-	}
+        for (i=0; pkg_lookups[i].flag > 0; i++) {
+            if (!strcmp(key, pkg_lookups[i].key)) {
+                return pkg_lookups[i].flag;
+            }
+        }
     }
 
     return UFUN_ROLE_NONE;
@@ -348,9 +348,9 @@ const char *package_role_get_key (int flag)
     int i;
 
     for (i=0; pkg_lookups[i].flag > 0; i++) {
-	if (flag == pkg_lookups[i].flag) {
-	    return pkg_lookups[i].key;
-	}
+        if (flag == pkg_lookups[i].flag) {
+            return pkg_lookups[i].key;
+        }
     }
 
     return NULL;
@@ -359,9 +359,9 @@ const char *package_role_get_key (int flag)
 static void set_function_private (ufunc *u, gboolean s)
 {
     if (s) {
-	u->flags |= UFUN_PRIVATE;
+        u->flags |= UFUN_PRIVATE;
     } else {
-	u->flags &= ~UFUN_PRIVATE;
+        u->flags &= ~UFUN_PRIVATE;
     }
 }
 
@@ -373,12 +373,12 @@ int gretl_compiling_function (void)
 int gretl_compiling_python (const char *line)
 {
     if (compiling_python) {
-	char s1[4], s2[8];
+        char s1[4], s2[8];
 
-	if (sscanf(line, "%3s %7s", s1, s2) == 2 &&
-	    !strcmp(s1, "end") && !strcmp(s2, "foreign")) {
-	    compiling_python = 0;
-	}
+        if (sscanf(line, "%3s %7s", s1, s2) == 2 &&
+            !strcmp(s1, "end") && !strcmp(s2, "foreign")) {
+            compiling_python = 0;
+        }
     }
 
     return compiling_python;
@@ -404,23 +404,23 @@ static void adjust_array_arg_type (fn_arg *arg)
     GretlType t = gretl_array_get_type(arg->val.a);
 
     if (arg->type == GRETL_TYPE_ARRAY_REF) {
-	arg->type = gretl_type_get_ref_type(t);
+        arg->type = gretl_type_get_ref_type(t);
     } else {
-	arg->type = t;
+        arg->type = t;
     }
 }
 
 static void nullify_upname (fn_arg *arg)
 {
     if (arg != NULL && arg->upname != NULL) {
-	free(arg->upname);
-	arg->upname = NULL;
+        free(arg->upname);
+        arg->upname = NULL;
     }
 }
 
 static int fn_arg_set_data (fn_arg *arg, const char *name,
-			    user_var *uvar, GretlType type,
-			    void *p)
+                            user_var *uvar, GretlType type,
+                            void *p)
 {
     int err = 0;
 
@@ -430,35 +430,35 @@ static int fn_arg_set_data (fn_arg *arg, const char *name,
     arg->upname = (name != NULL)? gretl_strdup(name) : NULL;
 
     if (type == GRETL_TYPE_NONE) {
-	arg->val.x = 0;
+        arg->val.x = 0;
     } else if (type == GRETL_TYPE_DOUBLE ||
-	       type == GRETL_TYPE_SCALAR_REF) {
-	arg->val.x = *(double *) p;
+               type == GRETL_TYPE_SCALAR_REF) {
+        arg->val.x = *(double *) p;
     } else if (type == GRETL_TYPE_INT ||
-	       type == GRETL_TYPE_OBS) {
-	arg->val.x = *(int *) p;
+               type == GRETL_TYPE_OBS) {
+        arg->val.x = *(int *) p;
     } else if (type == GRETL_TYPE_SERIES) {
-	arg->val.px = (double *) p;
+        arg->val.px = (double *) p;
     } else if (type == GRETL_TYPE_MATRIX ||
-	       type == GRETL_TYPE_MATRIX_REF) {
-	arg->val.m = (gretl_matrix *) p;
+               type == GRETL_TYPE_MATRIX_REF) {
+        arg->val.m = (gretl_matrix *) p;
     } else if (type == GRETL_TYPE_STRING ||
-	       type == GRETL_TYPE_STRING_REF) {
-	arg->val.str = (char *) p;
+               type == GRETL_TYPE_STRING_REF) {
+        arg->val.str = (char *) p;
     } else if (type == GRETL_TYPE_LIST) {
-	arg->val.list = (int *) p;
+        arg->val.list = (int *) p;
     } else if (type == GRETL_TYPE_SERIES_REF ||
-	       type == GRETL_TYPE_USERIES) {
-	arg->val.idnum = *(int *) p;
+               type == GRETL_TYPE_USERIES) {
+        arg->val.idnum = *(int *) p;
     } else if (type == GRETL_TYPE_BUNDLE ||
-	       type == GRETL_TYPE_BUNDLE_REF) {
-	arg->val.b = (gretl_bundle *) p;
+               type == GRETL_TYPE_BUNDLE_REF) {
+        arg->val.b = (gretl_bundle *) p;
     } else if (type == GRETL_TYPE_ARRAY ||
-	       type == GRETL_TYPE_ARRAY_REF) {
-	arg->val.a = (gretl_array *) p;
-	adjust_array_arg_type(arg);
+               type == GRETL_TYPE_ARRAY_REF) {
+        arg->val.a = (gretl_array *) p;
+        adjust_array_arg_type(arg);
     } else {
-	err = E_TYPES;
+        err = E_TYPES;
     }
 
     return err;
@@ -472,14 +472,14 @@ static int fncall_add_args_array (fncall *fc)
     fc->args = malloc(np * sizeof *fc->args);
 
     if (fc->args == NULL) {
-	err = E_ALLOC;
+        err = E_ALLOC;
     } else {
-	for (i=0; i<np; i++) {
-	    fc->args[i].type = 0;
-	    fc->args[i].shifted = 0;
-	    fc->args[i].upname = NULL;
-	    fc->args[i].uvar = NULL;
-	}
+        for (i=0; i<np; i++) {
+            fc->args[i].type = 0;
+            fc->args[i].shifted = 0;
+            fc->args[i].upname = NULL;
+            fc->args[i].uvar = NULL;
+        }
     }
 
     return err;
@@ -491,12 +491,12 @@ static void fncall_clear_args_array (fncall *fc)
     fn_arg *arg;
 
     for (i=0; i<np; i++) {
-	arg = &fc->args[i];
-	arg->type = 0;
-	arg->shifted = 0;
-	nullify_upname(arg);
-	arg->uvar = NULL;
-	arg->val.px = NULL;
+        arg = &fc->args[i];
+        arg->type = 0;
+        arg->shifted = 0;
+        nullify_upname(arg);
+        arg->uvar = NULL;
+        arg->val.px = NULL;
     }
 
     fc->argc = 0;
@@ -507,7 +507,7 @@ static void fncall_destroy_args_array (fncall *fc)
     int i;
 
     if (fc->args == NULL) {
-	return;
+        return;
     }
 
     for (i=0; i<fc->fun->n_params; i++) {
@@ -539,24 +539,24 @@ static void maybe_set_param_const (fn_param *fp)
  */
 
 int push_function_arg (fncall *fc, const char *name,
-		       void *uvar, GretlType type,
-		       void *value)
+                       void *uvar, GretlType type,
+                       void *value)
 {
     int err = 0;
 
     if (fc == NULL || fc->fun == NULL) {
-	err = E_DATA;
+        err = E_DATA;
     } else if (fc->argc >= fc->fun->n_params) {
-	fprintf(stderr, "function %s has %d parameters but argc = %d\n",
-		fc->fun->name, fc->fun->n_params, fc->argc);
-	err = E_DATA;
+        fprintf(stderr, "function %s has %d parameters but argc = %d\n",
+                fc->fun->name, fc->fun->n_params, fc->argc);
+        err = E_DATA;
     } else if (fc->args == NULL) {
-	err = fncall_add_args_array(fc);
+        err = fncall_add_args_array(fc);
     }
 
     if (!err) {
-	err = fn_arg_set_data(&fc->args[fc->argc], name, uvar, type, value);
-	fc->argc += 1;
+        err = fn_arg_set_data(&fc->args[fc->argc], name, uvar, type, value);
+        fc->argc += 1;
     }
 
     return err;
@@ -595,10 +595,10 @@ int push_anon_function_arg (fncall *fc, GretlType type, void *value)
 int set_anon_function_arg (fncall *fc, int i, GretlType type, void *value)
 {
     if (i >= 0 && i < fc->argc) {
-	fn_arg_set_data(&fc->args[i], NULL, NULL, type, value);
-	return 0;
+        fn_arg_set_data(&fc->args[i], NULL, NULL, type, value);
+        return 0;
     } else {
-	return E_DATA;
+        return E_DATA;
     }
 }
 
@@ -622,13 +622,13 @@ int push_function_args (fncall *fc, ...)
 
     va_start(ap, fc);
     for (i=0; !err; i++) {
-	argtype = va_arg(ap, int);
-	if (argtype < 0) {
-	    /* reached the end of the args */
-	    break;
-	}
-	value = va_arg(ap, void *);
-	err = push_function_arg(fc, NULL, NULL, argtype, value);
+        argtype = va_arg(ap, int);
+        if (argtype < 0) {
+            /* reached the end of the args */
+            break;
+        }
+        value = va_arg(ap, void *);
+        err = push_function_arg(fc, NULL, NULL, argtype, value);
     }
     va_end(ap);
 
@@ -646,18 +646,18 @@ fncall *fncall_new (ufunc *fun, int preserve)
     fncall *call = malloc(sizeof *call);
 
     if (call != NULL) {
-	call->fun = fun;
-	call->ptrvars = NULL;
-	call->listvars = NULL;
-	call->lists = NULL;
-	call->retname = NULL;
-	call->rtype = fun->rettype;
-	call->argc = 0;
-	call->args = NULL;
-	call->flags = preserve ? FC_PRESERVE : 0;
-	call->line = NULL;
-	call->lgen = NULL;
-	call->n_lgen = 0;
+        call->fun = fun;
+        call->ptrvars = NULL;
+        call->listvars = NULL;
+        call->lists = NULL;
+        call->retname = NULL;
+        call->rtype = fun->rettype;
+        call->argc = 0;
+        call->args = NULL;
+        call->flags = preserve ? FC_PRESERVE : 0;
+        call->line = NULL;
+        call->lgen = NULL;
+        call->n_lgen = 0;
     }
 
     return call;
@@ -666,14 +666,14 @@ fncall *fncall_new (ufunc *fun, int preserve)
 static int call_is_in_use (fncall *fc)
 {
     if (callstack != NULL) {
-	GList *tmp = g_list_last(callstack);
+        GList *tmp = g_list_last(callstack);
 
-	while (tmp != NULL) {
-	    if (fc == tmp->data) {
-		return 1;
-	    }
-	    tmp = tmp->prev;
-	}
+        while (tmp != NULL) {
+            if (fc == tmp->data) {
+                return 1;
+            }
+            tmp = tmp->prev;
+        }
     }
 
     return 0;
@@ -682,7 +682,7 @@ static int call_is_in_use (fncall *fc)
 static void clear_fncall_data (fncall *fc)
 {
     if (fc->args != NULL) {
-	fncall_clear_args_array(fc);
+        fncall_clear_args_array(fc);
     }
     if (fc->ptrvars != NULL) {
         free(fc->ptrvars);
@@ -731,7 +731,7 @@ fncall *user_func_get_fncall (ufunc *fun)
 
 #if REC_DEBUG
     fprintf(stderr, "call for %s, depth %d: %p (n_lgen %d)\n", fun->name,
-	    gretl_function_depth(), (void *) fun->call, fun->call->n_lgen);
+            gretl_function_depth(), (void *) fun->call, fun->call->n_lgen);
 #endif
 
     return fun->call;
@@ -741,24 +741,24 @@ void fncall_destroy (void *data)
 {
     if (data != NULL) {
 #if CALL_DEBUG
-	fprintf(stderr, "destroying fncall at %p\n", data);
+        fprintf(stderr, "destroying fncall at %p\n", data);
 #endif
         fncall *call = data;
 
-	fncall_destroy_args_array(call);
-	free(call->ptrvars);
-	free(call->listvars);
-	free(call->retname);
-	g_list_free(call->lists);
-	if (call->n_lgen > 0) {
-	    int i;
+        fncall_destroy_args_array(call);
+        free(call->ptrvars);
+        free(call->listvars);
+        free(call->retname);
+        g_list_free(call->lists);
+        if (call->n_lgen > 0) {
+            int i;
 
-	    for (i=0; i<call->n_lgen; i++) {
-		destroy_genr(call->lgen[i].genr);
-	    }
-	    free(call->lgen);
-	}
-	free(call);
+            for (i=0; i<call->n_lgen; i++) {
+                destroy_genr(call->lgen[i].genr);
+            }
+            free(call->lgen);
+        }
+        free(call);
     }
 }
 
@@ -775,7 +775,7 @@ static void maybe_destroy_fncall (fncall **pcall)
                 call->fun->call = NULL;
             }
         }
-	fncall_destroy(call);
+        fncall_destroy(call);
         *pcall = NULL;
     }
 }
@@ -788,7 +788,7 @@ static void maybe_destroy_fncall (fncall **pcall)
 GretlType fncall_get_return_type (fncall *call)
 {
     if (call != NULL) {
-	return call->rtype;
+        return call->rtype;
     }
 
     return GRETL_TYPE_NONE;
@@ -812,8 +812,8 @@ GretlType fncall_get_return_type (fncall *call)
 */
 
 fncall *get_pkg_function_call (const char *funcname,
-			       const char *pkgname,
-			       const char *pkgpath)
+                               const char *pkgname,
+                               const char *pkgpath)
 {
     fncall *fc = NULL;
     ufunc *uf = NULL;
@@ -822,32 +822,32 @@ fncall *get_pkg_function_call (const char *funcname,
     /* is the package already loaded? */
     pkg = get_function_package_by_name(pkgname);
     if (pkg == NULL) {
-	/* no, so look it up */
-	int err = 0;
+        /* no, so look it up */
+        int err = 0;
 
-	if (pkgpath != NULL) {
-	    /* path was supplied by caller */
-	    pkg = get_function_package_by_filename(pkgpath, &err);
-	} else {
-	    /* we need to search */
-	    char *mypath;
+        if (pkgpath != NULL) {
+            /* path was supplied by caller */
+            pkg = get_function_package_by_filename(pkgpath, &err);
+        } else {
+            /* we need to search */
+            char *mypath;
 
-	    mypath = gretl_function_package_get_path(pkgname, PKG_ALL);
-	    if (mypath != NULL) {
-		pkg = get_function_package_by_filename(mypath, &err);
-		free(mypath);
-	    }
-	}
+            mypath = gretl_function_package_get_path(pkgname, PKG_ALL);
+            if (mypath != NULL) {
+                pkg = get_function_package_by_filename(mypath, &err);
+                free(mypath);
+            }
+        }
     }
 
     if (pkg != NULL) {
-	uf = get_function_from_package(funcname, pkg);
+        uf = get_function_from_package(funcname, pkg);
     }
 
     if (uf == NULL) {
-	gretl_errmsg_sprintf(_("Couldn't find function %s"), funcname);
+        gretl_errmsg_sprintf(_("Couldn't find function %s"), funcname);
     } else {
-	fc = fncall_new(uf, 0); /* FIXME second arg? */
+        fc = fncall_new(uf, 0); /* FIXME second arg? */
     }
 
     return fc;
@@ -858,13 +858,13 @@ static fnpkg *function_package_alloc (const char *fname)
     fnpkg *pkg = malloc(sizeof *pkg);
 
     if (pkg == NULL) {
-	return NULL;
+        return NULL;
     }
 
     pkg->fname = gretl_strdup(fname);
     if (pkg->fname == NULL) {
-	free(pkg);
-	return NULL;
+        free(pkg);
+        return NULL;
     }
 
 #if PKG_DEBUG
@@ -917,22 +917,22 @@ static void set_listargs_from_call (fncall *call, DATASET *dset)
     int i, vi;
 
     if (dset == NULL) {
-	return;
+        return;
     }
 
     for (i=1; i<dset->v; i++) {
-	series_unset_flag(dset, i, VAR_LISTARG);
+        series_unset_flag(dset, i, VAR_LISTARG);
     }
 
     if (call != NULL && call->listvars != NULL) {
-	for (i=1; i<=call->listvars[0]; i++) {
-	    vi = call->listvars[i];
+        for (i=1; i<=call->listvars[0]; i++) {
+            vi = call->listvars[i];
 #if ARGS_DEBUG
-	    fprintf(stderr, "setting listarg status on var %d (%s)\n",
-		    vi, dset->varname[vi]);
+            fprintf(stderr, "setting listarg status on var %d (%s)\n",
+                    vi, dset->varname[vi]);
 #endif
-	    series_set_flag(dset, vi, VAR_LISTARG);
-	}
+            series_set_flag(dset, vi, VAR_LISTARG);
+        }
     }
 }
 
@@ -943,17 +943,17 @@ static void get_prior_call_for_function (ufunc *fun)
 
     tmp = tmp->prev;
     while (tmp != NULL) {
-	call = tmp->data;
-	if (call->fun == fun) {
-	    /* reattach */
+        call = tmp->data;
+        if (call->fun == fun) {
+            /* reattach */
 #if CALL_DEBUG
-	    fprintf(stderr, "reattach call at %p to function %s\n",
-		    (void *) call, fun->name);
+            fprintf(stderr, "reattach call at %p to function %s\n",
+                    (void *) call, fun->name);
 #endif
-	    fun->call = call;
-	    break;
-	}
-	tmp = tmp->prev;
+            fun->call = call;
+            break;
+        }
+        tmp = tmp->prev;
     }
 }
 
@@ -974,52 +974,52 @@ static void set_executing_off (fncall **pcall, DATASET *dset, PRN *prn)
     fn_executing--;
 
     if (is_recursing(thiscall)) {
-	get_prior_call_for_function(fun);
+        get_prior_call_for_function(fun);
     }
 
     callstack = g_list_remove(callstack, thiscall);
 
 #if CALL_DEBUG || EXEC_DEBUG
     fprintf(stderr, "set_executing_off: removed call %p to %s, depth now %d\n",
-	    (void *) thiscall, fun->name, g_list_length(callstack));
+            (void *) thiscall, fun->name, g_list_length(callstack));
 #endif
 
     if (dbg) {
-	pputs(prn, "*** ");
-	bufspace(gretl_function_depth(), prn);
-	pprintf(prn, "exiting function %s, ", fun->name);
+        pputs(prn, "*** ");
+        bufspace(gretl_function_depth(), prn);
+        pprintf(prn, "exiting function %s, ", fun->name);
     }
 
     maybe_destroy_fncall(pcall);
 
     if (fn_executing > 0) {
-	GList *tmp = g_list_last(callstack);
+        GList *tmp = g_list_last(callstack);
 
-	popcall = tmp->data;
+        popcall = tmp->data;
     } else {
-	g_list_free(callstack);
-	callstack = NULL;
-	gretl_insert_builtin_string("pkgdir", NULL);
+        g_list_free(callstack);
+        callstack = NULL;
+        gretl_insert_builtin_string("pkgdir", NULL);
     }
 
     if (dset != NULL) {
-	set_listargs_from_call(popcall, dset);
+        set_listargs_from_call(popcall, dset);
     }
 
     if (popcall == NULL) {
-	/* returning to main */
-	switch_uservar_hash(0);
-	if (dset != NULL) {
-	    series_ensure_level_zero(dset);
-	}
+        /* returning to main */
+        switch_uservar_hash(0);
+        if (dset != NULL) {
+            series_ensure_level_zero(dset);
+        }
     }
 
     if (dbg) {
-	if (popcall != NULL) {
-	    pprintf(prn, "returning to %s\n", popcall->fun->name);
-	} else {
-	    pputs(prn, "returning to main\n");
-	}
+        if (popcall != NULL) {
+            pprintf(prn, "returning to %s\n", popcall->fun->name);
+        } else {
+            pputs(prn, "returning to main\n");
+        }
     }
 }
 
@@ -1047,9 +1047,9 @@ int n_free_functions (void)
     int i, n = 0;
 
     for (i=0; i<n_ufuns; i++) {
-	if (ufuns[i]->pkg == NULL) {
-	    n++;
-	}
+        if (ufuns[i]->pkg == NULL) {
+            n++;
+        }
     }
 
     return n;
@@ -1093,7 +1093,7 @@ int fn_n_params (const ufunc *fun)
 int fn_param_type (const ufunc *fun, int i)
 {
     return (i < 0 || i >= fun->n_params)? 0 :
-	fun->params[i].type;
+        fun->params[i].type;
 }
 
 /**
@@ -1108,7 +1108,7 @@ int fn_param_type (const ufunc *fun, int i)
 const char *fn_param_name (const ufunc *fun, int i)
 {
     return (i < 0 || i >= fun->n_params)? NULL :
-	fun->params[i].name;
+        fun->params[i].name;
 }
 
 /**
@@ -1123,7 +1123,7 @@ const char *fn_param_name (const ufunc *fun, int i)
 const char *fn_param_descrip (const ufunc *fun, int i)
 {
     return (i < 0 || i >= fun->n_params)? NULL :
-	fun->params[i].descrip;
+        fun->params[i].descrip;
 }
 
 /**
@@ -1137,14 +1137,14 @@ const char *fn_param_descrip (const ufunc *fun, int i)
  */
 
 const char **fn_param_value_labels (const ufunc *fun, int i,
-				    int *n)
+                                    int *n)
 {
     if (i >= 0 && i < fun->n_params) {
-	*n = fun->params[i].nlabels;
-	return (const char **) fun->params[i].labels;
+        *n = fun->params[i].nlabels;
+        return (const char **) fun->params[i].labels;
     } else {
-	*n = 0;
-	return NULL;
+        *n = 0;
+        return NULL;
     }
 }
 
@@ -1160,11 +1160,11 @@ const char **fn_param_value_labels (const ufunc *fun, int i,
 int fn_param_has_default (const ufunc *fun, int i)
 {
     if (i < 0 || i >= fun->n_params) {
-	return 0;
+        return 0;
     } else {
-	fn_param *fp = &fun->params[i];
+        fn_param *fp = &fun->params[i];
 
-	return !default_unset(fp);
+        return !default_unset(fp);
     }
 }
 
@@ -1180,11 +1180,11 @@ int fn_param_has_default (const ufunc *fun, int i)
 double fn_param_default (const ufunc *fun, int i)
 {
     if (i < 0 || i >= fun->n_params) {
-	return NADBL;
+        return NADBL;
     } else {
-	fn_param *fp = &fun->params[i];
+        fn_param *fp = &fun->params[i];
 
-	return default_unset(fp)? NADBL : fp->deflt;
+        return default_unset(fp)? NADBL : fp->deflt;
     }
 }
 
@@ -1200,7 +1200,7 @@ double fn_param_default (const ufunc *fun, int i)
 double fn_param_minval (const ufunc *fun, int i)
 {
     return (i < 0 || i >= fun->n_params)? NADBL :
-	fun->params[i].min;
+        fun->params[i].min;
 }
 
 /**
@@ -1215,7 +1215,7 @@ double fn_param_minval (const ufunc *fun, int i)
 double fn_param_maxval (const ufunc *fun, int i)
 {
     return (i < 0 || i >= fun->n_params)? NADBL :
-	fun->params[i].max;
+        fun->params[i].max;
 }
 
 /**
@@ -1230,17 +1230,17 @@ double fn_param_maxval (const ufunc *fun, int i)
 double fn_param_step (const ufunc *fun, int i)
 {
     return (i < 0 || i >= fun->n_params)? NADBL :
-	fun->params[i].step;
+        fun->params[i].step;
 }
 
 static int arg_may_be_optional (GretlType t)
 {
     return gretl_ref_type(t) || gretl_is_array_type(t) ||
-	t == GRETL_TYPE_SERIES ||
-	t == GRETL_TYPE_MATRIX ||
-	t == GRETL_TYPE_BUNDLE ||
-	t == GRETL_TYPE_LIST ||
-	t == GRETL_TYPE_STRING;
+        t == GRETL_TYPE_SERIES ||
+        t == GRETL_TYPE_MATRIX ||
+        t == GRETL_TYPE_BUNDLE ||
+        t == GRETL_TYPE_LIST ||
+        t == GRETL_TYPE_STRING;
 }
 
 /**
@@ -1256,11 +1256,11 @@ static int arg_may_be_optional (GretlType t)
 int fn_param_automatic (const ufunc *fun, int i)
 {
     if (i < 0 || i >= fun->n_params) {
-	return 0;
+        return 0;
     }
 
     return arg_may_be_optional(fun->params[i].type) &&
-	(fun->params[i].flags & FP_AUTO);
+        (fun->params[i].flags & FP_AUTO);
 }
 
 /**
@@ -1275,11 +1275,11 @@ int fn_param_automatic (const ufunc *fun, int i)
 int fn_param_optional (const ufunc *fun, int i)
 {
     if (i < 0 || i >= fun->n_params) {
-	return 0;
+        return 0;
     }
 
     return arg_may_be_optional(fun->params[i].type) &&
-	(fun->params[i].flags & FP_OPTIONAL);
+        (fun->params[i].flags & FP_OPTIONAL);
 }
 
 /**
@@ -1295,11 +1295,11 @@ int fn_param_optional (const ufunc *fun, int i)
 int fn_param_uses_xlist (const ufunc *fun, int i)
 {
     if (i < 0 || i >= fun->n_params) {
-	return 0;
+        return 0;
     }
 
     return (fun->params[i].type == GRETL_TYPE_INT &&
-	    fun->params[i].deflt == INT_USE_XLIST);
+            fun->params[i].deflt == INT_USE_XLIST);
 }
 
 /**
@@ -1315,11 +1315,11 @@ int fn_param_uses_xlist (const ufunc *fun, int i)
 int fn_param_uses_mylist (const ufunc *fun, int i)
 {
     if (i < 0 || i >= fun->n_params) {
-	return 0;
+        return 0;
     }
 
     return (fun->params[i].type == GRETL_TYPE_INT &&
-	    fun->params[i].deflt == INT_USE_MYLIST);
+            fun->params[i].deflt == INT_USE_MYLIST);
 }
 
 /**
@@ -1332,9 +1332,9 @@ int fn_param_uses_mylist (const ufunc *fun, int i)
 int user_func_get_return_type (const ufunc *fun)
 {
     if (fun == NULL) {
-	return GRETL_TYPE_NONE;
+        return GRETL_TYPE_NONE;
     } else {
-	return fun->rettype;
+        return fun->rettype;
     }
 }
 
@@ -1348,9 +1348,9 @@ int user_func_get_return_type (const ufunc *fun)
 int user_func_is_noprint (const ufunc *fun)
 {
     if (fun == NULL) {
-	return 0;
+        return 0;
     } else {
-	return function_is_noprint(fun);
+        return function_is_noprint(fun);
     }
 }
 
@@ -1365,9 +1365,9 @@ int user_func_is_noprint (const ufunc *fun)
 int user_func_is_menu_only (const ufunc *fun)
 {
     if (fun == NULL) {
-	return 0;
+        return 0;
     } else {
-	return function_is_menu_only(fun);
+        return function_is_menu_only(fun);
     }
 }
 
@@ -1383,9 +1383,9 @@ int user_func_is_menu_only (const ufunc *fun)
 const char *user_function_name_by_index (int i)
 {
     if (i >= 0 && i < n_ufuns) {
-	return ufuns[i]->name;
+        return ufuns[i]->name;
     } else {
-	return NULL;
+        return NULL;
     }
 }
 
@@ -1404,15 +1404,15 @@ const char *user_function_name_by_index (int i)
  */
 
 int user_function_index_by_name (const char *name,
-				 fnpkg *pkg)
+                                 fnpkg *pkg)
 {
     int i;
 
     for (i=0; i<n_ufuns; i++) {
-	if ((pkg == NULL || ufuns[i]->pkg == pkg) &&
-	    !strcmp(name, ufuns[i]->name)) {
-	    return i;
-	}
+        if ((pkg == NULL || ufuns[i]->pkg == pkg) &&
+            !strcmp(name, ufuns[i]->name)) {
+            return i;
+        }
     }
 
     return -1;
@@ -1445,17 +1445,17 @@ const char *next_available_function_name (fnpkg *pkg, int *idxp)
     ufunc *fun;
 
     if (n_ufuns == 0) {
-	fname_idx = 0;
-	return NULL;
+        fname_idx = 0;
+        return NULL;
     }
 
     while (fname_idx < n_ufuns) {
-	fun = ufuns[fname_idx++];
-	if (fun->pkg == NULL || fun->pkg == pkg) {
-	    ret = fun->name;
-	    *idxp = fname_idx - 1;
-	    break;
-	}
+        fun = ufuns[fname_idx++];
+        if (fun->pkg == NULL || fun->pkg == pkg) {
+            ret = fun->name;
+            *idxp = fname_idx - 1;
+            break;
+        }
     }
 
     return ret;
@@ -1466,11 +1466,11 @@ const char *next_available_function_name (fnpkg *pkg, int *idxp)
 static fncall *current_function_call (void)
 {
     if (callstack != NULL) {
-	GList *tmp = g_list_last(callstack);
+        GList *tmp = g_list_last(callstack);
 
-	return tmp->data;
+        return tmp->data;
     } else {
-	return NULL;
+        return NULL;
     }
 }
 
@@ -1482,17 +1482,17 @@ static ufunc *currently_called_function (void)
 }
 
 void current_function_info (char const **funcname,
-			    char const **pkgname)
+                            char const **pkgname)
 {
     ufunc *u = currently_called_function();
 
     if (u != NULL) {
-	if (funcname != NULL) {
-	    *funcname = u->name;
-	}
-	if (pkgname != NULL && u->pkg != NULL) {
-	    *pkgname = u->pkg->name;
-	}
+        if (funcname != NULL) {
+            *funcname = u->name;
+        }
+        if (pkgname != NULL && u->pkg != NULL) {
+            *pkgname = u->pkg->name;
+        }
     }
 }
 
@@ -1501,17 +1501,17 @@ int function_is_executing (const char *funcname)
     int ret = 0;
 
     if (callstack != NULL) {
-	GList *tmp = g_list_last(callstack);
-	fncall *call;
+        GList *tmp = g_list_last(callstack);
+        fncall *call;
 
-	while (tmp != NULL) {
-	    call = tmp->data;
-	    if (!strcmp(call->fun->name, funcname)) {
-		ret = 1;
-		break;
-	    }
-	    tmp = tmp->prev;
-	}
+        while (tmp != NULL) {
+            call = tmp->data;
+            if (!strcmp(call->fun->name, funcname)) {
+                ret = 1;
+                break;
+            }
+            tmp = tmp->prev;
+        }
     }
 
     return ret;
@@ -1522,14 +1522,14 @@ fnpkg *get_active_function_package (gretlopt opt)
     ufunc *u = currently_called_function();
 
     if (u != NULL && u->pkg != NULL) {
-	if (opt == OPT_NONE) {
-	    return u->pkg;
-	} else if ((opt & OPT_O) && u->pkg->overrides) {
-	    /* in this case we're only interested if the
-	       package overrides any built-in functions
-	    */
-	    return u->pkg;
-	}
+        if (opt == OPT_NONE) {
+            return u->pkg;
+        } else if ((opt & OPT_O) && u->pkg->overrides) {
+            /* in this case we're only interested if the
+               package overrides any built-in functions
+            */
+            return u->pkg;
+        }
     }
 
     return NULL;
@@ -1555,19 +1555,19 @@ static void print_callstack (ufunc *fun)
 
     fputs("callstack:\n", stderr);
     while (tmp != NULL) {
-	call = tmp->data;
-	*s = '\0';
-	if (fun == call->fun) {
-	    strcpy(s, " *");
-	}
-	if (call->flags & FC_PRESERVE) {
-	    strcat(s, " preserve");
-	}
-	if (call->flags & FC_RECURSING) {
-	    strcat(s, " recursing");
-	}
-	fprintf(stderr, "  %s %p%s\n", call->fun->name, (void *) call, s);
-	tmp = tmp->next;
+        call = tmp->data;
+        *s = '\0';
+        if (fun == call->fun) {
+            strcpy(s, " *");
+        }
+        if (call->flags & FC_PRESERVE) {
+            strcat(s, " preserve");
+        }
+        if (call->flags & FC_RECURSING) {
+            strcat(s, " recursing");
+        }
+        fprintf(stderr, "  %s %p%s\n", call->fun->name, (void *) call, s);
+        tmp = tmp->next;
     }
 }
 
@@ -1581,11 +1581,11 @@ static int function_in_use (ufunc *fun)
     fncall *call;
 
     while (tmp != NULL) {
-	call = tmp->data;
-	if (fun == call->fun) {
-	    return 1;
-	}
-	tmp = tmp->next;
+        call = tmp->data;
+        if (fun == call->fun) {
+            return 1;
+        }
+        tmp = tmp->next;
     }
 
     return 0;
@@ -1594,12 +1594,12 @@ static int function_in_use (ufunc *fun)
 int gretl_function_recursing (void)
 {
     if (callstack != NULL) {
-	GList *tmp = g_list_last(callstack);
-	fncall *call = tmp->data;
+        GList *tmp = g_list_last(callstack);
+        fncall *call = tmp->data;
 
-	return is_recursing(call);
+        return is_recursing(call);
     } else {
-	return 0;
+        return 0;
     }
 }
 
@@ -1611,13 +1611,13 @@ static fnpkg *find_caller_package (const char *name)
     int i;
 
     for (i=0; i<n_ufuns; i++) {
-	if (!strcmp(name, ufuns[i]->name)) {
-	    if (ufuns[i]->pkg != NULL) {
-		ufuns[i]->pkg->prechecked = 1;
-		pkg = ufuns[i]->pkg;
-	    }
-	    break;
-	}
+        if (!strcmp(name, ufuns[i]->name)) {
+            if (ufuns[i]->pkg != NULL) {
+                ufuns[i]->pkg->prechecked = 1;
+                pkg = ufuns[i]->pkg;
+            }
+            break;
+        }
     }
 
     return pkg;
@@ -1643,73 +1643,73 @@ ufunc *get_user_function_by_name (const char *name)
     int i;
 
     if (n_ufuns == 0) {
-	return NULL;
+        return NULL;
     }
 
     if (pkg == NULL) {
-	fun = currently_called_function();
-	if (fun != NULL) {
-	    pkg = fun->pkg;
-	    fun = NULL;
-	}
+        fun = currently_called_function();
+        if (fun != NULL) {
+            pkg = fun->pkg;
+            fun = NULL;
+        }
     }
 
 #ifdef HAVE_MPI
     if (pkg == NULL && *mpi_caller != '\0') {
-	pkg = find_caller_package(mpi_caller);
+        pkg = find_caller_package(mpi_caller);
     }
 #endif
 
     if (pkg != NULL) {
-	/* There's an active function package: try first
-	   for functions that belong to the package.
-	*/
-	for (i=0; i<pkg->n_pub; i++) {
-	    /* public members */
-	    if (!strcmp(name, pkg->pub[i]->name)) {
-		fun = pkg->pub[i];
-		break;
-	    }
-	}
-	if (fun == NULL) {
-	    /* private members */
-	    for (i=0; i<pkg->n_priv; i++) {
-		if (!strcmp(name, pkg->priv[i]->name)) {
-		    fun = pkg->priv[i];
-		    break;
-		}
-	    }
-	}
-	if (fun == NULL && pkg->provider != NULL) {
-	    /* functions shared by provider */
-	    fnpkg *ppkg = get_function_package_by_name(pkg->provider);
+        /* There's an active function package: try first
+           for functions that belong to the package.
+        */
+        for (i=0; i<pkg->n_pub; i++) {
+            /* public members */
+            if (!strcmp(name, pkg->pub[i]->name)) {
+                fun = pkg->pub[i];
+                break;
+            }
+        }
+        if (fun == NULL) {
+            /* private members */
+            for (i=0; i<pkg->n_priv; i++) {
+                if (!strcmp(name, pkg->priv[i]->name)) {
+                    fun = pkg->priv[i];
+                    break;
+                }
+            }
+        }
+        if (fun == NULL && pkg->provider != NULL) {
+            /* functions shared by provider */
+            fnpkg *ppkg = get_function_package_by_name(pkg->provider);
 
-	    if (ppkg != NULL) {
-		for (i=0; i<ppkg->n_priv; i++) {
-		    if (!strcmp(name, ppkg->priv[i]->name)) {
-			fun = ppkg->priv[i];
-			break;
-		    }
-		}
-	    }
-	}
+            if (ppkg != NULL) {
+                for (i=0; i<ppkg->n_priv; i++) {
+                    if (!strcmp(name, ppkg->priv[i]->name)) {
+                        fun = ppkg->priv[i];
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     if (fun == NULL) {
-	/* Match any non-private function */
-	for (i=0; i<n_ufuns; i++) {
-	    if (!function_is_private(ufuns[i]) &&
-		!strcmp(name, ufuns[i]->name)) {
-		fun = ufuns[i];
-		break;
-	    }
-	}
+        /* Match any non-private function */
+        for (i=0; i<n_ufuns; i++) {
+            if (!function_is_private(ufuns[i]) &&
+                !strcmp(name, ufuns[i]->name)) {
+                fun = ufuns[i];
+                break;
+            }
+        }
     }
 
 #if FN_DEBUG > 1
     if (fun != NULL) {
-	fprintf(stderr, "get_user_function_by_name: name = '%s' (n_ufuns = %d);"
-		" found match\n", name, n_ufuns);
+        fprintf(stderr, "get_user_function_by_name: name = '%s' (n_ufuns = %d);"
+                " found match\n", name, n_ufuns);
     }
 #endif
 
@@ -1745,10 +1745,10 @@ ufunc *get_function_from_package (const char *funname, fnpkg *pkg)
     int i;
 
     for (i=0; i<n_ufuns; i++) {
-	if (ufuns[i]->pkg == pkg &&
-	    !strcmp(funname, ufuns[i]->name)) {
-	    return ufuns[i];
-	}
+        if (ufuns[i]->pkg == pkg &&
+            !strcmp(funname, ufuns[i]->name)) {
+            return ufuns[i];
+        }
     }
 
     return NULL;
@@ -1763,20 +1763,20 @@ static fn_param *allocate_params (int n)
 
     params = malloc(n * sizeof *params);
     if (params == NULL) {
-	return NULL;
+        return NULL;
     }
 
     for (i=0; i<n; i++) {
-	params[i].name = NULL;
-	params[i].type = 0;
-	params[i].descrip = NULL;
-	params[i].labels = NULL;
-	params[i].nlabels = 0;
-	params[i].flags = 0;
-	params[i].deflt = UNSET_VALUE;
-	params[i].min = NADBL;
-	params[i].max = NADBL;
-	params[i].step = NADBL;
+        params[i].name = NULL;
+        params[i].type = 0;
+        params[i].descrip = NULL;
+        params[i].labels = NULL;
+        params[i].nlabels = 0;
+        params[i].flags = 0;
+        params[i].deflt = UNSET_VALUE;
+        params[i].min = NADBL;
+        params[i].max = NADBL;
+        params[i].step = NADBL;
     }
 
     return params;
@@ -1787,7 +1787,7 @@ static ufunc *ufunc_new (void)
     ufunc *fun = malloc(sizeof *fun);
 
     if (fun == NULL) {
-	return NULL;
+        return NULL;
     }
 
     fun->name[0] = '\0';
@@ -1824,13 +1824,13 @@ static void free_lines_array (fn_line *lines, int n)
 
     for (i=0; i<n; i++) {
         line = &lines[i];
-	free(line->s);
-	if (line_has_loop(line)) {
+        free(line->s);
+        if (line_has_loop(line)) {
 #if COMP_DEBUG
             fprintf(stderr, "  L%d: has_loop at %p\n", i, (void *) line->ptr);
 #endif
-	    gretl_loop_destroy(line->ptr);
-	}
+            gretl_loop_destroy(line->ptr);
+        }
     }
 
     free(lines);
@@ -1843,9 +1843,9 @@ static void free_params_array (fn_param *params, int n)
     if (params == NULL) return;
 
     for (i=0; i<n; i++) {
-	free(params[i].name);
-	free(params[i].descrip);
-	strings_array_free(params[i].labels, params[i].nlabels);
+        free(params[i].name);
+        free(params[i].descrip);
+        strings_array_free(params[i].labels, params[i].nlabels);
     }
     free(params);
 }
@@ -1854,8 +1854,8 @@ static void destroy_ufunc_calls (ufunc *fun)
 {
     if (fun->calls != NULL) {
         g_list_free_full(fun->calls, fncall_destroy);
-	fun->calls = NULL;
-	fun->call = NULL;
+        fun->calls = NULL;
+        fun->call = NULL;
     } else if (fun->call != NULL) {
         fncall_destroy(fun->call);
         fun->call = NULL;
@@ -1897,7 +1897,7 @@ static int add_allocated_ufunc (ufunc *fun)
     myfuns = realloc(ufuns, (nf + 1) * sizeof *myfuns);
 
     if (myfuns == NULL) {
-	return E_ALLOC;
+        return E_ALLOC;
     }
 
     ufuns = myfuns;
@@ -1906,7 +1906,7 @@ static int add_allocated_ufunc (ufunc *fun)
 
 #if PKG_DEBUG
     fprintf(stderr, "add_allocated_ufunc: name '%s', n_ufuns = %d\n",
-	    fun->name, n_ufuns);
+            fun->name, n_ufuns);
 #endif
 
     return 0;
@@ -1921,11 +1921,11 @@ static ufunc *add_ufunc (const char *fname)
 #endif
 
     if (fun != NULL) {
-	strncat(fun->name, fname, FN_NAMELEN - 1);
-	if (add_allocated_ufunc(fun)) {
-	    ufunc_free(fun);
-	    fun = NULL;
-	}
+        strncat(fun->name, fname, FN_NAMELEN - 1);
+        if (add_allocated_ufunc(fun)) {
+            ufunc_free(fun);
+            fun = NULL;
+        }
     }
 
     return fun;
@@ -1936,9 +1936,9 @@ static int no_scalar_default (fn_param *fp)
     int ret = 0;
 
     if (default_unset(fp)) {
-	ret = 1;
+        ret = 1;
     } else if (fp->type != GRETL_TYPE_DOUBLE && na(fp->deflt)) {
-	ret = 1;
+        ret = 1;
     }
 
     return ret;
@@ -1958,90 +1958,90 @@ enum {
 static const char *arg_type_xml_string (int t)
 {
     if (t == GRETL_TYPE_SCALAR_REF) {
-	return "scalarref";
+        return "scalarref";
     } else if (t == GRETL_TYPE_SERIES_REF) {
-	return "seriesref";
+        return "seriesref";
     } else if (t == GRETL_TYPE_MATRIX_REF) {
-	return "matrixref";
+        return "matrixref";
     } else if (t == GRETL_TYPE_BUNDLE_REF) {
-	return "bundleref";
+        return "bundleref";
     } else if (t == GRETL_TYPE_STRING_REF) {
-	return "stringref";
+        return "stringref";
     } else if (t == GRETL_TYPE_STRINGS_REF) {
-	return "stringsref";
+        return "stringsref";
     } else if (t == GRETL_TYPE_MATRICES_REF) {
-	return "matricesref";
+        return "matricesref";
     } else if (t == GRETL_TYPE_BUNDLES_REF) {
-	return "bundlesref";
+        return "bundlesref";
     } else if (t == GRETL_TYPE_LISTS_REF) {
-	return "listsref"; /* not actually allowed */
+        return "listsref"; /* not actually allowed */
     } else {
-	return gretl_type_get_name(t);
+        return gretl_type_get_name(t);
     }
 }
 
 static GretlType return_type_from_string (const char *s,
-					  int *err)
+                                          int *err)
 {
     GretlType t;
 
     if (!strcmp(s, "void")) {
-	/* not OK as arg type, but OK as return */
-	t = GRETL_TYPE_VOID;
+        /* not OK as arg type, but OK as return */
+        t = GRETL_TYPE_VOID;
     } else {
-	t = gretl_type_from_string(s);
+        t = gretl_type_from_string(s);
     }
 
     if (!ok_function_return_type(t)) {
-	if (*s == '\0') {
-	    gretl_errmsg_sprintf(_("Missing function return type"));
-	} else if (t == GRETL_TYPE_NONE) {
-	    gretl_errmsg_sprintf(_("Expected a function return type, found '%s'"),
-				 s);
-	} else {
-	    gretl_errmsg_sprintf(_("%s: invalid return type for function"),
-				 s);
-	}
-	*err = E_TYPES;
+        if (*s == '\0') {
+            gretl_errmsg_sprintf(_("Missing function return type"));
+        } else if (t == GRETL_TYPE_NONE) {
+            gretl_errmsg_sprintf(_("Expected a function return type, found '%s'"),
+                                 s);
+        } else {
+            gretl_errmsg_sprintf(_("%s: invalid return type for function"),
+                                 s);
+        }
+        *err = E_TYPES;
     }
 
     return t;
 }
 
 static GretlType param_field_to_type (const char *s,
-				      const char *funname,
-				      int *err)
+                                      const char *funname,
+                                      int *err)
 {
     GretlType t = gretl_type_from_string(s);
 
     if (!ok_function_arg_type(t)) {
-	gretl_errmsg_sprintf(_("function %s: invalid parameter type '%s'"),
-			     funname, s);
-	*err = E_INVARG;
+        gretl_errmsg_sprintf(_("function %s: invalid parameter type '%s'"),
+                             funname, s);
+        *err = E_INVARG;
     }
 
     return t;
 }
 
 static gboolean special_int_default (fn_param *param,
-				     xmlNodePtr np)
+                                     xmlNodePtr np)
 {
     gboolean ret = FALSE;
 
     if (param->type == GRETL_TYPE_INT) {
-	char *s = NULL;
+        char *s = NULL;
 
-	gretl_xml_get_prop_as_string(np, "default", &s);
-	if (s != NULL) {
-	    if (strstr(s, "$mylist")) {
-		param->deflt = INT_USE_MYLIST;
-		ret = TRUE;
-	    } else if (strstr(s, "$xlist")) {
-		param->deflt = INT_USE_XLIST;
-		ret = TRUE;
-	    }
-	    free(s);
-	}
+        gretl_xml_get_prop_as_string(np, "default", &s);
+        if (s != NULL) {
+            if (strstr(s, "$mylist")) {
+                param->deflt = INT_USE_MYLIST;
+                ret = TRUE;
+            } else if (strstr(s, "$xlist")) {
+                param->deflt = INT_USE_XLIST;
+                ret = TRUE;
+            }
+            free(s);
+        }
     }
 
     return ret;
@@ -2050,24 +2050,24 @@ static gboolean special_int_default (fn_param *param,
 /* read the parameter info for a function from XML file */
 
 static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
-			     ufunc *fun)
+                             ufunc *fun)
 {
     xmlNodePtr cur;
     char *field;
     int n, err = 0;
 
     if (!gretl_xml_get_prop_as_int(node, "count", &n) || n < 0) {
-	fprintf(stderr, "Couldn't read param count\n");
-	return E_DATA;
+        fprintf(stderr, "Couldn't read param count\n");
+        return E_DATA;
     }
 
     if (n == 0) {
-	return 0;
+        return 0;
     }
 
     fun->params = allocate_params(n);
     if (fun->params == NULL) {
-	return E_ALLOC;
+        return E_ALLOC;
     }
 
     fun->n_params = n;
@@ -2078,59 +2078,59 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
     n = 0;
 
     while (cur != NULL && !err) {
-	if (!xmlStrcmp(cur->name, (XUC) "param")) {
-	    fn_param *param = &fun->params[n++];
+        if (!xmlStrcmp(cur->name, (XUC) "param")) {
+            fn_param *param = &fun->params[n++];
 
-	    if (gretl_xml_get_prop_as_string(cur, "name", &field)) {
-		param->name = field;
-	    } else {
-		err = E_DATA;
-		break;
-	    }
-	    if (gretl_xml_get_prop_as_string(cur, "type", &field)) {
-		param->type = param_field_to_type(field, fun->name, &err);
-		free(field);
-		if (special_int_default(param, cur)) {
-		    ; /* handled */
-		} else if (gretl_scalar_type(param->type)) {
-		    double x;
+            if (gretl_xml_get_prop_as_string(cur, "name", &field)) {
+                param->name = field;
+            } else {
+                err = E_DATA;
+                break;
+            }
+            if (gretl_xml_get_prop_as_string(cur, "type", &field)) {
+                param->type = param_field_to_type(field, fun->name, &err);
+                free(field);
+                if (special_int_default(param, cur)) {
+                    ; /* handled */
+                } else if (gretl_scalar_type(param->type)) {
+                    double x;
 
-		    if (gretl_xml_get_prop_as_double(cur, "default", &x)) {
-			param->deflt = x;
-		    } else {
-			param->deflt = UNSET_VALUE;
-		    }
-		    if (param->type != GRETL_TYPE_BOOL) {
-			gretl_xml_get_prop_as_double(cur, "min", &param->min);
-			gretl_xml_get_prop_as_double(cur, "max", &param->max);
-			gretl_xml_get_prop_as_double(cur, "step", &param->step);
-		    }
-		}
-		if (gretl_xml_get_prop_as_bool(cur, "auto")) {
-		    set_param_auto(param);
-		} else if (gretl_xml_get_prop_as_bool(cur, "optional")) {
-		    set_param_optional(param);
-		}
-		if (gretl_xml_get_prop_as_bool(cur, "const")) {
-		    maybe_set_param_const(param);
-		}
-	    } else {
-		err = E_DATA;
-		break;
-	    }
-	    gretl_xml_child_get_string(cur, doc, "description",
-				       &param->descrip);
-	    gretl_xml_child_get_strings_array(cur, doc, "labels",
-					      &param->labels,
-					      &param->nlabels);
-	}
-	cur = cur->next;
+                    if (gretl_xml_get_prop_as_double(cur, "default", &x)) {
+                        param->deflt = x;
+                    } else {
+                        param->deflt = UNSET_VALUE;
+                    }
+                    if (param->type != GRETL_TYPE_BOOL) {
+                        gretl_xml_get_prop_as_double(cur, "min", &param->min);
+                        gretl_xml_get_prop_as_double(cur, "max", &param->max);
+                        gretl_xml_get_prop_as_double(cur, "step", &param->step);
+                    }
+                }
+                if (gretl_xml_get_prop_as_bool(cur, "auto")) {
+                    set_param_auto(param);
+                } else if (gretl_xml_get_prop_as_bool(cur, "optional")) {
+                    set_param_optional(param);
+                }
+                if (gretl_xml_get_prop_as_bool(cur, "const")) {
+                    maybe_set_param_const(param);
+                }
+            } else {
+                err = E_DATA;
+                break;
+            }
+            gretl_xml_child_get_string(cur, doc, "description",
+                                       &param->descrip);
+            gretl_xml_child_get_strings_array(cur, doc, "labels",
+                                              &param->labels,
+                                              &param->nlabels);
+        }
+        cur = cur->next;
     }
 
     gretl_pop_c_numeric_locale();
 
     if (!err && n != fun->n_params) {
-	err = E_DATA;
+        err = E_DATA;
     }
 
     return err;
@@ -2213,7 +2213,7 @@ static int buf_get_n_lines (const char *buf)
 
     while ((p = strchr(p, '\n')) != NULL) {
         if (prev != NULL && p - prev > 1) {
-	    n++;
+            n++;
         }
         prev = p++;
     }
@@ -2239,7 +2239,7 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
 
     buf = (char *) xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
     if (buf == NULL) {
-	return 1;
+        return 1;
     }
 
     n_lines = buf_get_n_lines(buf);
@@ -2251,19 +2251,19 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     fun->lines = calloc(n_lines, sizeof *fun->lines);
 
     while (bufgets(line, sizeof line, buf)) {
-	s = line;
-	while (isspace(*s)) s++;
+        s = line;
+        while (isspace(*s)) s++;
         state.line = s;
         err = get_command_index(&state, FUNC, save_comments);
         if (err) {
             break;
         }
-	if (cmd.ci == SET) {
-	    uses_set = 1;
-	} else if (cmd.ci == IF || cmd.ci == LOOP) {
-	    has_flow = 1;
-	}
-	tailstrip(s);
+        if (cmd.ci == SET) {
+            uses_set = 1;
+        } else if (cmd.ci == IF || cmd.ci == LOOP) {
+            has_flow = 1;
+        }
+        tailstrip(s);
         if (string_is_blank(s)) {
             fun->line_idx += 1;
         } else {
@@ -2277,10 +2277,10 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     }
 
     if (uses_set) {
-	fun->flags |= UFUN_USES_SET;
+        fun->flags |= UFUN_USES_SET;
     }
     if (has_flow) {
-	fun->flags |= UFUN_HAS_FLOW;
+        fun->flags |= UFUN_HAS_FLOW;
     }
 
     bufgets_finalize(buf);
@@ -2298,16 +2298,16 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
 static void print_opt_flags (fn_param *param, PRN *prn)
 {
     if (param_is_auto(param)) {
-	pputs(prn, "[auto]");
+        pputs(prn, "[auto]");
     } else if (param_is_optional(param)) {
-	pputs(prn, "[null]");
+        pputs(prn, "[null]");
     }
 }
 
 static void print_param_description (fn_param *param, PRN *prn)
 {
     if (param->descrip != NULL && *param->descrip != '\0') {
-	pprintf(prn, " \"%s\"", param->descrip);
+        pprintf(prn, " \"%s\"", param->descrip);
     }
 }
 
@@ -2318,10 +2318,10 @@ static void print_param_labels (fn_param *param, PRN *prn)
     pputs(prn, " {");
 
     for (i=0; i<param->nlabels; i++) {
-	pprintf(prn, "\"%s\"", param->labels[i]);
-	if (i < param->nlabels - 1) {
-	    pputs(prn, ", ");
-	}
+        pprintf(prn, "\"%s\"", param->labels[i]);
+        if (i < param->nlabels - 1) {
+            pputs(prn, ", ");
+        }
     }
 
     pputc(prn, '}');
@@ -2330,21 +2330,21 @@ static void print_param_labels (fn_param *param, PRN *prn)
 static void print_min_max_deflt (fn_param *param, PRN *prn)
 {
     if (na(param->min) && na(param->max) && default_unset(param)) {
-	return; /* no-op */
+        return; /* no-op */
     } else if (na(param->min) && na(param->max)) {
-	/* got a default value only? */
-	if (!default_unset(param)) {
-	    if (na(param->deflt)) {
-		pputs(prn, "[NA]");
-	    } else if (param->deflt == INT_USE_XLIST) {
-		pputs(prn, "[$xlist]");
-	    } else if (param->deflt == INT_USE_MYLIST) {
-		pputs(prn, "[$mylist]");
-	    } else {
-		pprintf(prn, "[%g]", param->deflt);
-	    }
-	}
-	return;
+        /* got a default value only? */
+        if (!default_unset(param)) {
+            if (na(param->deflt)) {
+                pputs(prn, "[NA]");
+            } else if (param->deflt == INT_USE_XLIST) {
+                pputs(prn, "[$xlist]");
+            } else if (param->deflt == INT_USE_MYLIST) {
+                pputs(prn, "[$mylist]");
+            } else {
+                pprintf(prn, "[%g]", param->deflt);
+            }
+        }
+        return;
     }
 
     pputc(prn, '[');
@@ -2359,17 +2359,17 @@ static void print_min_max_deflt (fn_param *param, PRN *prn)
 
     /* default */
     if (!default_unset(param)) {
-	if (na(param->deflt)) {
-	    pputs(prn, "NA");
-	} else {
-	    pprintf(prn, "%g", param->deflt);
-	}
+        if (na(param->deflt)) {
+            pputs(prn, "NA");
+        } else {
+            pprintf(prn, "%g", param->deflt);
+        }
     }
 
     if (!na(param->step)) {
-	/* step */
-	pputc(prn, ':');
-	pprintf(prn, "%g", param->step);
+        /* step */
+        pputc(prn, ':');
+        pprintf(prn, "%g", param->step);
     }
 
     pputc(prn, ']');
@@ -2383,33 +2383,33 @@ static void ufunc_unload (ufunc *fun)
     int i, j, found = 0;
 
     if (n_ufuns == 0 || fun == NULL) {
-	return;
+        return;
     }
 
 #if PKG_DEBUG
     fprintf(stderr, "ufunc_unload: name %s, pkg %p\n",
-	    fun->name, (void *) fun->pkg);
+            fun->name, (void *) fun->pkg);
 #endif
 
     /* remove this function from the array of loaded functions */
 
     for (i=0; i<n_ufuns; i++) {
-	if (ufuns[i] == fun) {
-	    for (j=i; j<n_ufuns-1; j++) {
-		ufuns[j] = ufuns[j+1];
-	    }
-	    found = 1;
-	    break;
-	}
+        if (ufuns[i] == fun) {
+            for (j=i; j<n_ufuns-1; j++) {
+                ufuns[j] = ufuns[j+1];
+            }
+            found = 1;
+            break;
+        }
     }
 
     if (fun->pkg != NULL && fun->pkg->overrides) {
-	delete_function_override(fun->name, fun->pkg->name);
+        delete_function_override(fun->name, fun->pkg->name);
     }
     ufunc_free(fun);
 
     if (found) {
-	n_ufuns--;
+        n_ufuns--;
     }
 }
 
@@ -2423,35 +2423,35 @@ static void real_function_package_unload (fnpkg *pkg, int full)
 
 #if PKG_DEBUG
     fprintf(stderr, "function_package_unload: unloading '%s', full=%d\n",
-	    pkg->name, full);
+            pkg->name, full);
 #endif
 
     /* unload children? */
     if (full) {
-	for (i=0; i<pkg->n_priv; i++) {
-	    ufunc_unload(pkg->priv[i]);
-	}
-	for (i=0; i<pkg->n_pub; i++) {
-	    ufunc_unload(pkg->pub[i]);
-	}
+        for (i=0; i<pkg->n_priv; i++) {
+            ufunc_unload(pkg->priv[i]);
+        }
+        for (i=0; i<pkg->n_pub; i++) {
+            ufunc_unload(pkg->pub[i]);
+        }
     }
 
     /* remove this package from the array of loaded packages */
     for (i=0; i<n_pkgs; i++) {
-	if (pkgs[i] == pkg) {
-	    for (j=i; j<n_pkgs-1; j++) {
-		pkgs[j] = pkgs[j+1];
-	    }
-	    found = 1;
-	    break;
-	}
+        if (pkgs[i] == pkg) {
+            for (j=i; j<n_pkgs-1; j++) {
+                pkgs[j] = pkgs[j+1];
+            }
+            found = 1;
+            break;
+        }
     }
 
     /* free the package itself */
     function_package_free(pkg);
 
     if (found) {
-	n_pkgs--;
+        n_pkgs--;
     }
 }
 
@@ -2468,31 +2468,31 @@ static int attach_ufunc_to_package (ufunc *fun, fnpkg *pkg)
     int n, err = 0;
 
     if (function_is_private(fun)) {
-	n = pkg->n_priv;
-	ufs = realloc(pkg->priv, (n + 1) * sizeof *ufs);
-	if (ufs == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    pkg->priv = ufs;
-	    pkg->priv[n] = fun;
-	    pkg->n_priv += 1;
-	}
+        n = pkg->n_priv;
+        ufs = realloc(pkg->priv, (n + 1) * sizeof *ufs);
+        if (ufs == NULL) {
+            err = E_ALLOC;
+        } else {
+            pkg->priv = ufs;
+            pkg->priv[n] = fun;
+            pkg->n_priv += 1;
+        }
     } else {
-	n = pkg->n_pub;
-	ufs = realloc(pkg->pub, (n + 1) * sizeof *ufs);
-	if (ufs == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    pkg->pub = ufs;
-	    pkg->pub[n] = fun;
-	    pkg->n_pub += 1;
-	}
+        n = pkg->n_pub;
+        ufs = realloc(pkg->pub, (n + 1) * sizeof *ufs);
+        if (ufs == NULL) {
+            err = E_ALLOC;
+        } else {
+            pkg->pub = ufs;
+            pkg->pub[n] = fun;
+            pkg->n_pub += 1;
+        }
     }
 
 #if PKG_DEBUG
     fprintf(stderr, "attach_ufunc_to_package: package = %s, "
-	    "private = %d, err = %d\n", pkg->name,
-	    function_is_private(fun), err);
+            "private = %d, err = %d\n", pkg->name,
+            function_is_private(fun), err);
 #endif
 
     return err;
@@ -2501,9 +2501,9 @@ static int attach_ufunc_to_package (ufunc *fun, fnpkg *pkg)
 static void maybe_set_menu_only (ufunc *fun, fnpkg *pkg)
 {
     if (pkg->mpath != NULL && strstr(pkg->mpath, "MODELWIN")) {
-	if (fun->pkg_role == UFUN_GUI_MAIN) {
-	    fun->flags |= UFUN_MENU_ONLY;
-	}
+        if (fun->pkg_role == UFUN_GUI_MAIN) {
+            fun->flags |= UFUN_MENU_ONLY;
+        }
     }
 }
 
@@ -2520,99 +2520,99 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     int err = 0;
 
     if (fun == NULL) {
-	return E_ALLOC;
+        return E_ALLOC;
     }
 
     if (!gretl_xml_get_prop_as_string(node, "name", &tmp)) {
-	ufunc_free(fun);
-	return E_DATA;
+        ufunc_free(fun);
+        return E_DATA;
     }
 
     strncat(fun->name, tmp, FN_NAMELEN - 1);
     free(tmp);
 
     if (pkg != NULL) {
-	fun->pkg = pkg;
+        fun->pkg = pkg;
     }
 
     if (gretl_xml_get_prop_as_string(node, "type", &tmp)) {
-	fun->rettype = return_type_from_string(tmp, &err);
-	free(tmp);
+        fun->rettype = return_type_from_string(tmp, &err);
+        free(tmp);
     } else {
-	fun->rettype = GRETL_TYPE_VOID;
+        fun->rettype = GRETL_TYPE_VOID;
     }
 
     if (err) {
-	ufunc_free(fun);
-	return err;
+        ufunc_free(fun);
+        return err;
     }
 
     if (gretl_xml_get_prop_as_bool(node, "private")) {
-	fun->flags |= UFUN_PRIVATE;
+        fun->flags |= UFUN_PRIVATE;
     }
     if (gretl_xml_get_prop_as_bool(node, "no-print")) {
-	fun->flags |= UFUN_NOPRINT;
+        fun->flags |= UFUN_NOPRINT;
     }
     if (gretl_xml_get_prop_as_bool(node, "menu-only")) {
-	fun->flags |= UFUN_MENU_ONLY;
+        fun->flags |= UFUN_MENU_ONLY;
     }
     if (gretl_xml_get_prop_as_string(node, "pkg-role", &tmp)) {
-	fun->pkg_role = pkg_key_get_role(tmp);
-	free(tmp);
+        fun->pkg_role = pkg_key_get_role(tmp);
+        free(tmp);
     }
     if (!(fun->flags & UFUN_MENU_ONLY) && pkg != NULL) {
-	maybe_set_menu_only(fun, pkg);
+        maybe_set_menu_only(fun, pkg);
     }
 
 #if PKG_DEBUG
     fprintf(stderr, "read_ufunc_from_xml: name '%s', type %d\n"
-	    " private = %d\n", fun->name, fun->rettype,
-	    function_is_private(fun));
+            " private = %d\n", fun->name, fun->rettype,
+            function_is_private(fun));
 #endif
 
     if (pkg == NULL && function_is_private(fun)) {
-	fprintf(stderr, "unpackaged function: can't be private\n");
-	ufunc_free(fun);
-	return E_DATA;
+        fprintf(stderr, "unpackaged function: can't be private\n");
+        ufunc_free(fun);
+        return E_DATA;
     }
 
     cur = node->xmlChildrenNode;
 
     while (cur != NULL && !err) {
-	if (!xmlStrcmp(cur->name, (XUC) "help")) {
-	    /* backward compatibility: help used to be attached to
-	       a package's public interface */
-	    if (pkg->help != NULL) {
-		free(pkg->help);
-	    }
-	    pkg->help = gretl_xml_get_string(cur, doc);
-	} else if (!xmlStrcmp(cur->name, (XUC) "params")) {
-	    err = func_read_params(cur, doc, fun);
-	    if (err) {
-		fprintf(stderr, "%s: error parsing function parameters\n",
-			fun->name);
-	    }
-	} else if (!xmlStrcmp(cur->name, (XUC) "return")) {
-	    gretl_errmsg_set(_("Old-style function definitions no longer supported"));
-	    err = E_DATA;
-	} else if (!xmlStrcmp(cur->name, (XUC) "code")) {
-	    err = func_read_code(cur, doc, fun);
-	}
-	cur = cur->next;
+        if (!xmlStrcmp(cur->name, (XUC) "help")) {
+            /* backward compatibility: help used to be attached to
+               a package's public interface */
+            if (pkg->help != NULL) {
+                free(pkg->help);
+            }
+            pkg->help = gretl_xml_get_string(cur, doc);
+        } else if (!xmlStrcmp(cur->name, (XUC) "params")) {
+            err = func_read_params(cur, doc, fun);
+            if (err) {
+                fprintf(stderr, "%s: error parsing function parameters\n",
+                        fun->name);
+            }
+        } else if (!xmlStrcmp(cur->name, (XUC) "return")) {
+            gretl_errmsg_set(_("Old-style function definitions no longer supported"));
+            err = E_DATA;
+        } else if (!xmlStrcmp(cur->name, (XUC) "code")) {
+            err = func_read_code(cur, doc, fun);
+        }
+        cur = cur->next;
     }
 
     if (!err) {
-	if (pkg != NULL) {
-	    /* function belongs to a package */
-	    err = attach_ufunc_to_package(fun, pkg);
-	} else {
-	    /* reading a standalone function from session file */
-	    err = add_allocated_ufunc(fun);
-	}
+        if (pkg != NULL) {
+            /* function belongs to a package */
+            err = attach_ufunc_to_package(fun, pkg);
+        } else {
+            /* reading a standalone function from session file */
+            err = add_allocated_ufunc(fun);
+        }
     }
 
     if (err) {
-	ufunc_free(fun);
+        ufunc_free(fun);
     }
 
 #if PKG_DEBUG
@@ -2625,21 +2625,21 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 static void print_param_limit (fn_param *param, int i, PRN *prn)
 {
     if (param->type == GRETL_TYPE_INT) {
-	if (i == 0) {
-	    pprintf(prn, " min=\"%.0f\"", param->min);
-	} else if (i == 1) {
-	    pprintf(prn, " max=\"%.0f\"", param->max);
-	} else {
-	    pprintf(prn, " default=\"%.0f\"", param->deflt);
-	}
+        if (i == 0) {
+            pprintf(prn, " min=\"%.0f\"", param->min);
+        } else if (i == 1) {
+            pprintf(prn, " max=\"%.0f\"", param->max);
+        } else {
+            pprintf(prn, " default=\"%.0f\"", param->deflt);
+        }
     } else {
-	if (i == 0) {
-	    pprintf(prn, " min=\"%.15g\"", param->min);
-	} else if (i == 1) {
-	    pprintf(prn, " max=\"%.15g\"", param->max);
-	} else {
-	    pprintf(prn, " default=\"%.15g\"", param->deflt);
-	}
+        if (i == 0) {
+            pprintf(prn, " min=\"%.15g\"", param->min);
+        } else if (i == 1) {
+            pprintf(prn, " max=\"%.15g\"", param->max);
+        } else {
+            pprintf(prn, " default=\"%.15g\"", param->deflt);
+        }
     }
 }
 
@@ -2657,84 +2657,84 @@ static int write_function_xml (ufunc *fun, PRN *prn, int mpi)
     int i;
 
     if (rtype == GRETL_TYPE_NONE) {
-	rtype = GRETL_TYPE_VOID;
+        rtype = GRETL_TYPE_VOID;
     }
 
     pprintf(prn, "<gretl-function name=\"%s\" type=\"%s\"",
             fun->name, gretl_type_get_name(rtype));
 
     if (function_is_private(fun)) {
-	pputs(prn, " private=\"1\"");
+        pputs(prn, " private=\"1\"");
     }
     if (function_is_noprint(fun)) {
-	pputs(prn, " no-print=\"1\"");
+        pputs(prn, " no-print=\"1\"");
     }
     if (function_is_menu_only(fun)) {
-	pputs(prn, " menu-only=\"1\"");
+        pputs(prn, " menu-only=\"1\"");
     }
 
     if (fun->pkg_role) {
-	pprintf(prn, " pkg-role=\"%s\"", package_role_get_key(fun->pkg_role));
+        pprintf(prn, " pkg-role=\"%s\"", package_role_get_key(fun->pkg_role));
     }
 
     pputs(prn, ">\n");
 
     if (fun->n_params > 0) {
-	fn_param *param;
+        fn_param *param;
 
-	gretl_push_c_numeric_locale();
-	pprintf(prn, " <params count=\"%d\">\n", fun->n_params);
-	for (i=0; i<fun->n_params; i++) {
-	    param = &fun->params[i];
-	    pprintf(prn, "  <param name=\"%s\" type=\"%s\"",
-		    param->name, arg_type_xml_string(param->type));
-	    if (!na(param->min)) {
-		print_param_limit(param, 0, prn);
-	    }
-	    if (!na(param->max)) {
-		print_param_limit(param, 1, prn);
-	    }
-	    if (!default_unset(param)) {
-		if (na(param->deflt)) {
-		    pputs(prn, " default=\"NA\"");
-		} else if (param->deflt == INT_USE_MYLIST) {
-		    pputs(prn, " default=\"$mylist\"");
-		} else if (param->deflt == INT_USE_XLIST) {
-		    pputs(prn, " default=\"$xlist\"");
-		} else {
-		    print_param_limit(param, 2, prn);
-		}
-	    }
-	    if (!na(param->step)) {
-		pprintf(prn, " step=\"%g\"", param->step);
-	    }
-	    if (param_is_auto(param)) {
-		pputs(prn, " auto=\"true\"");
-	    } else if (param_is_optional(param)) {
-		pputs(prn, " optional=\"true\"");
-	    }
-	    if (param_is_const(param)) {
-		pputs(prn, " const=\"true\"");
-	    }
-	    if (parm_has_children(param)) {
-		pputs(prn, ">\n"); /* terminate opening tag */
-		if (param->descrip != NULL) {
-		    gretl_xml_put_tagged_string("description",
-						param->descrip,
-						prn);
-		}
-		if (param->nlabels > 0) {
-		    gretl_xml_put_strings_array_quoted("labels",
-						       (const char **) param->labels,
-						       param->nlabels, prn);
-		}
-		pputs(prn, "  </param>\n");
-	    } else {
-		pputs(prn, "/>\n"); /* terminate opening tag */
-	    }
-	}
-	pputs(prn, " </params>\n");
-	gretl_pop_c_numeric_locale();
+        gretl_push_c_numeric_locale();
+        pprintf(prn, " <params count=\"%d\">\n", fun->n_params);
+        for (i=0; i<fun->n_params; i++) {
+            param = &fun->params[i];
+            pprintf(prn, "  <param name=\"%s\" type=\"%s\"",
+                    param->name, arg_type_xml_string(param->type));
+            if (!na(param->min)) {
+                print_param_limit(param, 0, prn);
+            }
+            if (!na(param->max)) {
+                print_param_limit(param, 1, prn);
+            }
+            if (!default_unset(param)) {
+                if (na(param->deflt)) {
+                    pputs(prn, " default=\"NA\"");
+                } else if (param->deflt == INT_USE_MYLIST) {
+                    pputs(prn, " default=\"$mylist\"");
+                } else if (param->deflt == INT_USE_XLIST) {
+                    pputs(prn, " default=\"$xlist\"");
+                } else {
+                    print_param_limit(param, 2, prn);
+                }
+            }
+            if (!na(param->step)) {
+                pprintf(prn, " step=\"%g\"", param->step);
+            }
+            if (param_is_auto(param)) {
+                pputs(prn, " auto=\"true\"");
+            } else if (param_is_optional(param)) {
+                pputs(prn, " optional=\"true\"");
+            }
+            if (param_is_const(param)) {
+                pputs(prn, " const=\"true\"");
+            }
+            if (parm_has_children(param)) {
+                pputs(prn, ">\n"); /* terminate opening tag */
+                if (param->descrip != NULL) {
+                    gretl_xml_put_tagged_string("description",
+                                                param->descrip,
+                                                prn);
+                }
+                if (param->nlabels > 0) {
+                    gretl_xml_put_strings_array_quoted("labels",
+                                                       (const char **) param->labels,
+                                                       param->nlabels, prn);
+                }
+                pputs(prn, "  </param>\n");
+            } else {
+                pputs(prn, "/>\n"); /* terminate opening tag */
+            }
+        }
+        pputs(prn, " </params>\n");
+        gretl_pop_c_numeric_locale();
     }
 
     pputs(prn, "<code>");
@@ -2774,52 +2774,52 @@ static void print_function_start (ufunc *fun, PRN *prn)
     int i, pos = 0;
 
     if (fun->rettype == GRETL_TYPE_NONE) {
-	pos += pprintf(prn, "function void %s ", fun->name);
+        pos += pprintf(prn, "function void %s ", fun->name);
     } else {
-	const char *typestr = gretl_type_get_name(fun->rettype);
+        const char *typestr = gretl_type_get_name(fun->rettype);
 
-	pos += pprintf(prn, "function %s %s ", typestr, fun->name);
+        pos += pprintf(prn, "function %s %s ", typestr, fun->name);
     }
 
     gretl_push_c_numeric_locale();
 
     if (fun->n_params == 0) {
-	pputs(prn, "(void)");
+        pputs(prn, "(void)");
     } else {
-	pos += pputc(prn, '(');
+        pos += pputc(prn, '(');
     }
 
     for (i=0; i<fun->n_params; i++) {
-	fn_param *fp = &fun->params[i];
+        fn_param *fp = &fun->params[i];
 
-	if (fp->flags & FP_CONST) {
-	    pputs(prn, "const ");
-	}
-	s = gretl_type_get_name(fp->type);
-	if (s[strlen(s) - 1] == '*') {
-	    pprintf(prn, "%s%s", s, fp->name);
-	} else {
-	    pprintf(prn, "%s %s", s, fp->name);
-	}
-	if (fp->type == GRETL_TYPE_BOOL) {
-	    if (!default_unset(fp) && !na(fp->deflt)) {
-		pprintf(prn, "[%g]", fp->deflt); /* FIXME? */
-	    }
-	} else if (gretl_scalar_type(fp->type)) {
-	    print_min_max_deflt(fp, prn);
-	} else if (arg_may_be_optional(fp->type)) {
-	    print_opt_flags(fp, prn);
-	}
-	print_param_description(fp, prn);
-	if (fp->nlabels > 0) {
-	    print_param_labels(fp, prn);
-	}
-	if (i == fun->n_params - 1) {
-	    pputc(prn, ')');
-	} else {
-	    pputs(prn, ",\n");
-	    bufspace(pos, prn);
-	}
+        if (fp->flags & FP_CONST) {
+            pputs(prn, "const ");
+        }
+        s = gretl_type_get_name(fp->type);
+        if (s[strlen(s) - 1] == '*') {
+            pprintf(prn, "%s%s", s, fp->name);
+        } else {
+            pprintf(prn, "%s %s", s, fp->name);
+        }
+        if (fp->type == GRETL_TYPE_BOOL) {
+            if (!default_unset(fp) && !na(fp->deflt)) {
+                pprintf(prn, "[%g]", fp->deflt); /* FIXME? */
+            }
+        } else if (gretl_scalar_type(fp->type)) {
+            print_min_max_deflt(fp, prn);
+        } else if (arg_may_be_optional(fp->type)) {
+            print_opt_flags(fp, prn);
+        }
+        print_param_description(fp, prn);
+        if (fp->nlabels > 0) {
+            print_param_labels(fp, prn);
+        }
+        if (i == fun->n_params - 1) {
+            pputc(prn, ')');
+        } else {
+            pputs(prn, ",\n");
+            bufspace(pos, prn);
+        }
     }
 
     pputc(prn, '\n');
@@ -2833,32 +2833,32 @@ static void print_function_start (ufunc *fun, PRN *prn)
 */
 
 static void foreign_adjust_indent (const char *s,
-				   int *this_indent,
-				   int *next_indent)
+                                   int *this_indent,
+                                   int *next_indent)
 {
     int n = strlen(s);
 
     *this_indent = *next_indent;
 
     if (strncmp(s, "} else", 6) == 0) {
-	*next_indent = *this_indent;
-	*this_indent = *this_indent - 1;
+        *next_indent = *this_indent;
+        *this_indent = *this_indent - 1;
     } else if (s[n-1] == '{') {
-	*next_indent = *this_indent + 1;
+        *next_indent = *this_indent + 1;
     } else if (strcmp(s, "}") == 0 ||
-	       strncmp(s, "} else", 6) == 0) {
-	*this_indent = *next_indent = *this_indent - 1;
+               strncmp(s, "} else", 6) == 0) {
+        *this_indent = *next_indent = *this_indent - 1;
     }
 }
 
 static void maybe_toggle_foreign (const char *s, int *in_foreign)
 {
     if (!*in_foreign) {
-	if (strncmp(s, "foreign ", 8) == 0) {
-	    *in_foreign = 1;
-	}
+        if (strncmp(s, "foreign ", 8) == 0) {
+            *in_foreign = 1;
+        }
     } else if (strncmp(s, "end foreign", 11) == 0) {
-	*in_foreign = 0;
+        *in_foreign = 0;
     }
 }
 
@@ -2885,33 +2885,33 @@ int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn)
     int i, j;
 
     if (u == NULL) {
-	return E_DATA;
+        return E_DATA;
     }
 
     if (tabwidth == 0) {
-	tabwidth = 2;
+        tabwidth = 2;
     }
 
     ptmp = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
     print_function_start(u, ptmp);
 
     for (i=0; i<u->n_lines; i++) {
-	maybe_toggle_foreign(u->lines[i].s, &in_foreign);
-	if (in_foreign) {
-	    foreign_adjust_indent(u->lines[i].s, &this_indent, &next_indent);
-	} else {
-	    adjust_indent(u->lines[i].s, &this_indent, &next_indent);
-	}
-	for (j=0; j<=this_indent; j++) {
-	    bufspace(tabwidth, ptmp);
-	}
-	pputs(ptmp, u->lines[i].s);
-	if (i < u->n_lines - 1) {
-	    if (u->lines[i+1].idx > u->lines[i].idx + 1) {
-		pputc(ptmp, '\n');
-	    }
-	}
-	pputc(ptmp, '\n');
+        maybe_toggle_foreign(u->lines[i].s, &in_foreign);
+        if (in_foreign) {
+            foreign_adjust_indent(u->lines[i].s, &this_indent, &next_indent);
+        } else {
+            adjust_indent(u->lines[i].s, &this_indent, &next_indent);
+        }
+        for (j=0; j<=this_indent; j++) {
+            bufspace(tabwidth, ptmp);
+        }
+        pputs(ptmp, u->lines[i].s);
+        if (i < u->n_lines - 1) {
+            if (u->lines[i+1].idx > u->lines[i].idx + 1) {
+                pputc(ptmp, '\n');
+            }
+        }
+        pputc(ptmp, '\n');
     }
 
     pputs(ptmp, "end function\n");
@@ -2934,24 +2934,24 @@ char **gretl_function_retrieve_code (ufunc *u, int *nlines)
 
     for (i=0; i<u->n_lines; i++) {
         line = &(u->lines[i]);
-	if (!ignore_line(line)) {
-	    j++;
-	}
+        if (!ignore_line(line)) {
+            j++;
+        }
     }
 
     if (j > 0) {
-	S = strings_array_new(j);
+        S = strings_array_new(j);
     }
 
     if (S != NULL) {
-	*nlines = j;
-	j = 0;
-	for (i=0; i<u->n_lines; i++) {
+        *nlines = j;
+        j = 0;
+        for (i=0; i<u->n_lines; i++) {
             line = &(u->lines[i]);
-	    if (!ignore_line(line)) {
-		S[j++] = line->s;
-	    }
-	}
+            if (!ignore_line(line)) {
+                S[j++] = line->s;
+            }
+        }
     }
 
     return S;
@@ -2967,18 +2967,18 @@ static void name_package_from_filename (fnpkg *pkg)
     int n;
 
     if (p != NULL) {
-	p++;
+        p++;
     } else {
-	p = pkg->fname;
+        p = pkg->fname;
     }
 
     n = strlen(p);
     if (has_suffix(p, ".gfn")) {
-	n -= 4;
+        n -= 4;
     }
 
     if (n > FN_NAMELEN - 1) {
-	n = FN_NAMELEN - 1;
+        n = FN_NAMELEN - 1;
     }
 
     *pkg->name = '\0';
@@ -2986,7 +2986,7 @@ static void name_package_from_filename (fnpkg *pkg)
 
 #if PKG_DEBUG
     fprintf(stderr, "filename '%s' -> pkgname '%s'\n",
-	    pkg->fname, pkg->name);
+            pkg->fname, pkg->name);
 #endif
 }
 
@@ -2999,11 +2999,11 @@ static ufunc *get_uf_array_member (const char *name, fnpkg *pkg)
     int i;
 
     for (i=0; i<n_ufuns; i++) {
-	if (ufuns[i]->pkg == pkg || ufuns[i]->pkg == NULL) {
-	    if (!strcmp(name, ufuns[i]->name)) {
-		return ufuns[i];
-	    }
-	}
+        if (ufuns[i]->pkg == pkg || ufuns[i]->pkg == NULL) {
+            if (!strcmp(name, ufuns[i]->name)) {
+                return ufuns[i];
+            }
+        }
     }
 
     return NULL;
@@ -3014,11 +3014,11 @@ static void check_special_comments (ufunc *fun)
     int i;
 
     for (i=0; i<fun->n_lines; i++) {
-	if (strstr(fun->lines[i].s, "## no-print ##")) {
-	    fun->flags |= UFUN_NOPRINT;
-	} else if (strstr(fun->lines[i].s, "## menu-only ##")) {
-	    fun->flags |= UFUN_MENU_ONLY;
-	}
+        if (strstr(fun->lines[i].s, "## no-print ##")) {
+            fun->flags |= UFUN_NOPRINT;
+        } else if (strstr(fun->lines[i].s, "## menu-only ##")) {
+            fun->flags |= UFUN_MENU_ONLY;
+        }
     }
 }
 
@@ -3031,22 +3031,22 @@ static void package_disconnect_funcs (fnpkg *pkg)
     int i;
 
     if (pkg->pub != NULL) {
-	for (i=0; i<pkg->n_pub; i++) {
-	    pkg->pub[i]->pkg = NULL;
-	}
-	free(pkg->pub);
-	pkg->pub = NULL;
-	pkg->n_pub = 0;
+        for (i=0; i<pkg->n_pub; i++) {
+            pkg->pub[i]->pkg = NULL;
+        }
+        free(pkg->pub);
+        pkg->pub = NULL;
+        pkg->n_pub = 0;
     }
 
     if (pkg->priv != NULL) {
-	for (i=0; i<pkg->n_priv; i++) {
-	    pkg->priv[i]->pkg = NULL;
-	    set_function_private(pkg->priv[i], FALSE);
-	}
-	free(pkg->priv);
-	pkg->priv = NULL;
-	pkg->n_priv = 0;
+        for (i=0; i<pkg->n_priv; i++) {
+            pkg->priv[i]->pkg = NULL;
+            set_function_private(pkg->priv[i], FALSE);
+        }
+        free(pkg->priv);
+        pkg->priv = NULL;
+        pkg->n_priv = 0;
     }
 }
 
@@ -3057,7 +3057,7 @@ static void package_disconnect_funcs (fnpkg *pkg)
 */
 
 static int set_uf_array_from_names (fnpkg *pkg, char **names,
-				    int n, int priv)
+                                    int n, int priv)
 {
     ufunc **uf = NULL;
     ufunc *fun;
@@ -3065,42 +3065,42 @@ static int set_uf_array_from_names (fnpkg *pkg, char **names,
 
     /* check the supplied names */
     for (i=0; i<n; i++) {
-	for (j=0; j<i; j++) {
-	    if (!strcmp(names[j], names[i])) {
-		gretl_errmsg_sprintf(_("Duplicated function name '%s'"), names[i]);
-		return E_DATA;
-	    }
-	}
-	if (get_uf_array_member(names[i], NULL) == NULL) {
-	    fprintf(stderr, "%s: function not found!\n", names[i]);
-	    return E_DATA;
-	}
+        for (j=0; j<i; j++) {
+            if (!strcmp(names[j], names[i])) {
+                gretl_errmsg_sprintf(_("Duplicated function name '%s'"), names[i]);
+                return E_DATA;
+            }
+        }
+        if (get_uf_array_member(names[i], NULL) == NULL) {
+            fprintf(stderr, "%s: function not found!\n", names[i]);
+            return E_DATA;
+        }
     }
 
     /* allocate storage */
     if (n > 0) {
-	uf = malloc(n * sizeof *uf);
-	if (uf == NULL) {
-	    return E_ALLOC;
-	}
+        uf = malloc(n * sizeof *uf);
+        if (uf == NULL) {
+            return E_ALLOC;
+        }
     }
 
     /* connect the specified functions */
     for (i=0; i<n; i++) {
-	fun = get_uf_array_member(names[i], NULL);
-	fun->pkg = pkg;
-	set_function_private(fun, priv);
-	check_special_comments(fun);
-	uf[i] = fun;
+        fun = get_uf_array_member(names[i], NULL);
+        fun->pkg = pkg;
+        set_function_private(fun, priv);
+        check_special_comments(fun);
+        uf[i] = fun;
     }
 
     /* set up the package info */
     if (priv) {
-	pkg->priv = uf;
-	pkg->n_priv = n;
+        pkg->priv = uf;
+        pkg->n_priv = n;
     } else {
-	pkg->pub = uf;
-	pkg->n_pub = n;
+        pkg->pub = uf;
+        pkg->n_pub = n;
     }
 
     return 0;
@@ -3122,8 +3122,8 @@ static int set_uf_array_from_names (fnpkg *pkg, char **names,
  */
 
 int function_package_connect_funcs (fnpkg *pkg,
-				    char **pubnames, int n_pub,
-				    char **privnames, int n_priv)
+                                    char **pubnames, int n_pub,
+                                    char **privnames, int n_priv)
 {
     int err;
 
@@ -3133,7 +3133,7 @@ int function_package_connect_funcs (fnpkg *pkg,
     err = set_uf_array_from_names(pkg, pubnames, n_pub, 0);
 
     if (!err) {
-	err = set_uf_array_from_names(pkg, privnames, n_priv, 1);
+        err = set_uf_array_from_names(pkg, privnames, n_priv, 1);
     }
 
     return err;
@@ -3158,39 +3158,39 @@ int function_package_connect_funcs (fnpkg *pkg,
  */
 
 fnpkg *function_package_new (const char *fname,
-			     char **pubnames, int n_pub,
-			     char **privnames, int n_priv,
-			     int *err)
+                             char **pubnames, int n_pub,
+                             char **privnames, int n_priv,
+                             int *err)
 {
     fnpkg *pkg = NULL;
 
     if (n_pub <= 0) {
-	/* we need at least one public function */
-	*err = E_DATA;
+        /* we need at least one public function */
+        *err = E_DATA;
     } else {
-	pkg = function_package_alloc(fname);
-	if (pkg == NULL) {
-	    *err = E_ALLOC;
-	}
+        pkg = function_package_alloc(fname);
+        if (pkg == NULL) {
+            *err = E_ALLOC;
+        }
     }
 
     if (*err) {
-	return NULL;
+        return NULL;
     }
 
     name_package_from_filename(pkg);
 
     *err = function_package_connect_funcs(pkg, pubnames, n_pub,
-					  privnames, n_priv);
+                                          privnames, n_priv);
 
     if (!*err) {
-	*err = function_package_record(pkg);
+        *err = function_package_record(pkg);
     }
 
     if (*err) {
-	/* note: this does not free the packaged functions, if any */
-	function_package_free(pkg);
-	pkg = NULL;
+        /* note: this does not free the packaged functions, if any */
+        function_package_free(pkg);
+        pkg = NULL;
     }
 
     return pkg;
@@ -3213,47 +3213,47 @@ static int package_write_translatable_strings (fnpkg *pkg, PRN *prn)
 
     fp = gretl_fopen(trname, "wb");
     if (fp == NULL) {
-	gretl_errmsg_sprintf(_("Couldn't open %s"), trname);
-	g_free(trname);
-	return E_FOPEN;
+        gretl_errmsg_sprintf(_("Couldn't open %s"), trname);
+        g_free(trname);
+        return E_FOPEN;
     }
 
     if (pkg->pub != NULL) {
-	int j, k;
+        int j, k;
 
-	for (i=0; i<pkg->n_pub; i++) {
-	    ufunc *fun = pkg->pub[i];
+        for (i=0; i<pkg->n_pub; i++) {
+            ufunc *fun = pkg->pub[i];
 
-	    for (j=0; j<fun->n_params; j++) {
-		fn_param *param = &fun->params[j];
+            for (j=0; j<fun->n_params; j++) {
+                fn_param *param = &fun->params[j];
 
-		if (param->descrip != NULL) {
-		    strings_array_add(&S, &n, param->descrip);
-		}
-		for (k=0; k<param->nlabels; k++) {
-		    strings_array_add(&S, &n, param->labels[k]);
-		}
-	    }
-	}
+                if (param->descrip != NULL) {
+                    strings_array_add(&S, &n, param->descrip);
+                }
+                for (k=0; k<param->nlabels; k++) {
+                    strings_array_add(&S, &n, param->labels[k]);
+                }
+            }
+        }
     }
 
     if (pkg->label != NULL || S != NULL) {
-	fprintf(fp, "const char *%s_translations[] = {\n", pkg->name);
-	if (pkg->label != NULL) {
-	    fprintf(fp, "    N_(\"%s\"),\n", pkg->label);
-	}
-	if (S != NULL) {
-	    strings_array_sort(&S, &n, OPT_U);
-	    for (i=0; i<n; i++) {
-		fprintf(fp, "    N_(\"%s\")", S[i]);
-		if (i < n-1) {
-		    fputc(',', fp);
-		}
-		fputc('\n', fp);
-	    }
-	    strings_array_free(S, n);
-	}
-	fputs("};\n", fp);
+        fprintf(fp, "const char *%s_translations[] = {\n", pkg->name);
+        if (pkg->label != NULL) {
+            fprintf(fp, "    N_(\"%s\"),\n", pkg->label);
+        }
+        if (S != NULL) {
+            strings_array_sort(&S, &n, OPT_U);
+            for (i=0; i<n; i++) {
+                fprintf(fp, "    N_(\"%s\")", S[i]);
+                if (i < n-1) {
+                    fputc(',', fp);
+                }
+                fputc('\n', fp);
+            }
+            strings_array_free(S, n);
+        }
+        fputs("};\n", fp);
     }
 
     fclose(fp);
@@ -3274,8 +3274,8 @@ static int package_write_index (fnpkg *pkg, PRN *inprn)
 
     prn = gretl_print_new_with_filename(idxname, &err);
     if (prn == NULL) {
-	g_free(idxname);
-	return err;
+        g_free(idxname);
+        return err;
     }
 
     gretl_xml_header(prn);
@@ -3283,33 +3283,33 @@ static int package_write_index (fnpkg *pkg, PRN *inprn)
     pprintf(prn, "<gretl-addon name=\"%s\"", pkg->name);
 
     if (pkg->dreq == FN_NEEDS_TS) {
-	pprintf(prn, " %s=\"true\"", NEEDS_TS);
+        pprintf(prn, " %s=\"true\"", NEEDS_TS);
     } else if (pkg->dreq == FN_NEEDS_QM) {
-	pprintf(prn, " %s=\"true\"", NEEDS_QM);
+        pprintf(prn, " %s=\"true\"", NEEDS_QM);
     } else if (pkg->dreq == FN_NEEDS_PANEL) {
-	pprintf(prn, " %s=\"true\"", NEEDS_PANEL);
+        pprintf(prn, " %s=\"true\"", NEEDS_PANEL);
     } else if (pkg->dreq == FN_NODATA_OK) {
-	pprintf(prn, " %s=\"true\"", NO_DATA_OK);
+        pprintf(prn, " %s=\"true\"", NO_DATA_OK);
     }
 
     if (pkg->modelreq > 0) {
-	pprintf(prn, " model-requirement=\"%s\"",
-		gretl_command_word(pkg->modelreq));
+        pprintf(prn, " model-requirement=\"%s\"",
+                gretl_command_word(pkg->modelreq));
     }
 
     if (pkg->minver > 0) {
-	char vstr[8];
+        char vstr[8];
 
-	pprintf(prn, " minver=\"%s\"",
-		gretl_version_string(vstr, pkg->minver));
+        pprintf(prn, " minver=\"%s\"",
+                gretl_version_string(vstr, pkg->minver));
     }
 
     if (pkg->uses_subdir) {
-	pputs(prn, " lives-in-subdir=\"true\"");
+        pputs(prn, " lives-in-subdir=\"true\"");
     }
 
     if (pkg->data_access) {
-	pputs(prn, " wants-data-access=\"true\"");
+        pputs(prn, " wants-data-access=\"true\"");
     }
 
     pputs(prn, ">\n");
@@ -3320,15 +3320,15 @@ static int package_write_index (fnpkg *pkg, PRN *inprn)
     gretl_xml_put_tagged_string("description", pkg->descrip, prn);
 
     if (pkg->tags != NULL) {
-	gretl_xml_put_tagged_string("tags", pkg->tags, prn);
+        gretl_xml_put_tagged_string("tags", pkg->tags, prn);
     }
 
     if (pkg->label != NULL) {
-	gretl_xml_put_tagged_string("label", pkg->label, prn);
+        gretl_xml_put_tagged_string("label", pkg->label, prn);
     }
 
     if (pkg->mpath != NULL) {
-	gretl_xml_put_tagged_string("menu-attachment", pkg->mpath, prn);
+        gretl_xml_put_tagged_string("menu-attachment", pkg->mpath, prn);
     }
 
     pputs(prn, "</gretl-addon>\n");
@@ -3354,143 +3354,143 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn, int mpi)
     int i, err = 0;
 
     if (standalone) {
-	prn = gretl_print_new_with_filename(pkg->fname, &err);
-	if (prn == NULL) {
-	    return err;
-	} else {
-	    gretl_xml_header(prn);
-	    pputs(prn, "<gretl-functions>\n");
-	}
+        prn = gretl_print_new_with_filename(pkg->fname, &err);
+        if (prn == NULL) {
+            return err;
+        } else {
+            gretl_xml_header(prn);
+            pputs(prn, "<gretl-functions>\n");
+        }
     }
 
     pputs(prn, "<gretl-function-package");
 
     if (pkg->name[0] == '\0') {
-	name_package_from_filename(pkg);
+        name_package_from_filename(pkg);
     }
 
     pprintf(prn, " name=\"%s\"", pkg->name);
 
     if (pkg->dreq == FN_NEEDS_TS) {
-	pprintf(prn, " %s=\"true\"", NEEDS_TS);
+        pprintf(prn, " %s=\"true\"", NEEDS_TS);
     } else if (pkg->dreq == FN_NEEDS_QM) {
-	pprintf(prn, " %s=\"true\"", NEEDS_QM);
+        pprintf(prn, " %s=\"true\"", NEEDS_QM);
     } else if (pkg->dreq == FN_NEEDS_PANEL) {
-	pprintf(prn, " %s=\"true\"", NEEDS_PANEL);
+        pprintf(prn, " %s=\"true\"", NEEDS_PANEL);
     } else if (pkg->dreq == FN_NODATA_OK) {
-	pprintf(prn, " %s=\"true\"", NO_DATA_OK);
+        pprintf(prn, " %s=\"true\"", NO_DATA_OK);
     }
 
     if (pkg->modelreq > 0) {
-	pprintf(prn, " model-requirement=\"%s\"",
-		gretl_command_word(pkg->modelreq));
+        pprintf(prn, " model-requirement=\"%s\"",
+                gretl_command_word(pkg->modelreq));
     }
 
     if (pkg->minver > 0) {
-	char vstr[8];
+        char vstr[8];
 
-	pprintf(prn, " minver=\"%s\"", gretl_version_string(vstr, pkg->minver));
+        pprintf(prn, " minver=\"%s\"", gretl_version_string(vstr, pkg->minver));
     }
 
     if (pkg->uses_subdir) {
-	pprintf(prn, " lives-in-subdir=\"true\"");
+        pprintf(prn, " lives-in-subdir=\"true\"");
     }
 
     if (pkg->data_access) {
-	pprintf(prn, " wants-data-access=\"true\"");
+        pprintf(prn, " wants-data-access=\"true\"");
     }
 
     pputs(prn, ">\n");
 
     if (pkg->email != NULL && *pkg->email != '\0') {
-	gretl_xml_put_tagged_string_plus("author", pkg->author,
-					 "email", pkg->email,
-					 prn);
+        gretl_xml_put_tagged_string_plus("author", pkg->author,
+                                         "email", pkg->email,
+                                         prn);
     } else {
-	gretl_xml_put_tagged_string("author", pkg->author, prn);
+        gretl_xml_put_tagged_string("author", pkg->author, prn);
     }
     gretl_xml_put_tagged_string("version", pkg->version, prn);
     gretl_xml_put_tagged_string("date",    pkg->date, prn);
     gretl_xml_put_tagged_string("description", pkg->descrip, prn);
 
     if (pkg->tags != NULL) {
-	gretl_xml_put_tagged_string("tags", pkg->tags, prn);
+        gretl_xml_put_tagged_string("tags", pkg->tags, prn);
     }
 
     if (pkg->label != NULL) {
-	gretl_xml_put_tagged_string("label", pkg->label, prn);
+        gretl_xml_put_tagged_string("label", pkg->label, prn);
     }
 
     if (pkg->mpath != NULL) {
-	gretl_xml_put_tagged_string("menu-attachment", pkg->mpath, prn);
+        gretl_xml_put_tagged_string("menu-attachment", pkg->mpath, prn);
     }
 
     if (pkg->help != NULL && !mpi) {
-	if (pkg->help_fname != NULL) {
-	    pprintf(prn, "<help filename=\"%s\">\n", pkg->help_fname);
-	} else {
-	    pputs(prn, "<help>\n");
-	}
-	gretl_xml_put_string(trim_text(pkg->help), prn);
-	pputs(prn, "\n</help>\n");
+        if (pkg->help_fname != NULL) {
+            pprintf(prn, "<help filename=\"%s\">\n", pkg->help_fname);
+        } else {
+            pputs(prn, "<help>\n");
+        }
+        gretl_xml_put_string(trim_text(pkg->help), prn);
+        pputs(prn, "\n</help>\n");
     }
 
     if (pkg->gui_help != NULL && !mpi) {
-	if (pkg->gui_help_fname != NULL) {
-	    pprintf(prn, "<gui-help filename=\"%s\">\n",
-			      pkg->gui_help_fname);
-	} else {
-	    pputs(prn, "<gui-help>\n");
-	}
-	gretl_xml_put_string(trim_text(pkg->gui_help), prn);
-	pputs(prn, "\n</gui-help>\n");
+        if (pkg->gui_help_fname != NULL) {
+            pprintf(prn, "<gui-help filename=\"%s\">\n",
+                              pkg->gui_help_fname);
+        } else {
+            pputs(prn, "<gui-help>\n");
+        }
+        gretl_xml_put_string(trim_text(pkg->gui_help), prn);
+        pputs(prn, "\n</gui-help>\n");
     }
 
     if (pkg->datafiles != NULL) {
-	gretl_xml_put_strings_array("data-files",
-				    (const char **) pkg->datafiles,
-				    pkg->n_files, prn);
+        gretl_xml_put_strings_array("data-files",
+                                    (const char **) pkg->datafiles,
+                                    pkg->n_files, prn);
     }
 
     if (pkg->depends != NULL) {
-	gretl_xml_put_strings_array("depends",
-				    (const char **) pkg->depends,
-				    pkg->n_depends, prn);
+        gretl_xml_put_strings_array("depends",
+                                    (const char **) pkg->depends,
+                                    pkg->n_depends, prn);
     }
     if (pkg->provider != NULL) {
-	gretl_xml_put_tagged_string("provider", pkg->provider, prn);
+        gretl_xml_put_tagged_string("provider", pkg->provider, prn);
     }
     if (pkg->Rdeps != NULL) {
-	gretl_xml_put_tagged_string("R-depends", pkg->Rdeps, prn);
+        gretl_xml_put_tagged_string("R-depends", pkg->Rdeps, prn);
     }
 
     if (pkg->pub != NULL) {
-	for (i=0; i<pkg->n_pub; i++) {
-	    write_function_xml(pkg->pub[i], prn, mpi);
-	}
+        for (i=0; i<pkg->n_pub; i++) {
+            write_function_xml(pkg->pub[i], prn, mpi);
+        }
     }
     if (pkg->priv != NULL) {
-	for (i=0; i<pkg->n_priv; i++) {
-	    write_function_xml(pkg->priv[i], prn, mpi);
-	}
+        for (i=0; i<pkg->n_priv; i++) {
+            write_function_xml(pkg->priv[i], prn, mpi);
+        }
     }
 
     if (pkg->sample != NULL && !mpi) {
-	if (pkg->sample_fname != NULL) {
-	    pprintf(prn, "<sample-script filename=\"%s\">\n",
-			      pkg->sample_fname);
-	} else {
-	    pputs(prn, "<sample-script>\n");
-	}
-	gretl_xml_put_string(trim_text(pkg->sample), prn);
-	pputs(prn, "\n</sample-script>\n");
+        if (pkg->sample_fname != NULL) {
+            pprintf(prn, "<sample-script filename=\"%s\">\n",
+                              pkg->sample_fname);
+        } else {
+            pputs(prn, "<sample-script>\n");
+        }
+        gretl_xml_put_string(trim_text(pkg->sample), prn);
+        pputs(prn, "\n</sample-script>\n");
     }
 
     pputs(prn, "</gretl-function-package>\n");
 
     if (standalone) {
-	pputs(prn, "</gretl-functions>\n");
-	gretl_print_destroy(prn);
+        pputs(prn, "</gretl-functions>\n");
+        gretl_print_destroy(prn);
     }
 
     return err;
@@ -3520,9 +3520,9 @@ static int is_unclaimed (const char *s, char **S, int n)
     int i;
 
     for (i=0; i<n; i++) {
-	if (strcmp(s, S[i]) == 0) {
-	    return 0;
-	}
+        if (strcmp(s, S[i]) == 0) {
+            return 0;
+        }
     }
 
     return 1;
@@ -3531,12 +3531,12 @@ static int is_unclaimed (const char *s, char **S, int n)
 static void strip_cr (gchar *s)
 {
     while (*s) {
-	if (*s == 0x0d && *(s+1) == 0x0a) {
-	    /* CR + LF -> LF */
-	    memmove(s, s+1, strlen(s));
-	    s++;
-	}
-	s++;
+        if (*s == 0x0d && *(s+1) == 0x0a) {
+            /* CR + LF -> LF */
+            memmove(s, s+1, strlen(s));
+            s++;
+        }
+        s++;
     }
 }
 
@@ -3549,11 +3549,11 @@ static gchar *pkg_aux_content (const char *fname, int *err)
     g_file_get_contents(fname, &ret, &len, &gerr);
 
     if (gerr != NULL) {
-	gretl_errmsg_set(gerr->message);
-	g_error_free(gerr);
-	*err = E_FOPEN;
+        gretl_errmsg_set(gerr->message);
+        g_error_free(gerr);
+        *err = E_FOPEN;
     } else if (strchr(ret, '\r')) {
-	strip_cr(ret);
+        strip_cr(ret);
     }
 
     return ret;
@@ -3564,15 +3564,15 @@ static int pkg_set_dreq (fnpkg *pkg, const char *s)
     int err = 0;
 
     if (!strcmp(s, NEEDS_TS)) {
-	pkg->dreq = FN_NEEDS_TS;
+        pkg->dreq = FN_NEEDS_TS;
     } else if (!strcmp(s, NEEDS_QM)) {
-	pkg->dreq = FN_NEEDS_QM;
+        pkg->dreq = FN_NEEDS_QM;
     } else if (!strcmp(s, NEEDS_PANEL)) {
-	pkg->dreq = FN_NEEDS_PANEL;
+        pkg->dreq = FN_NEEDS_PANEL;
     } else if (!strcmp(s, NO_DATA_OK)) {
-	pkg->dreq = FN_NODATA_OK;
+        pkg->dreq = FN_NODATA_OK;
     } else {
-	err = E_PARSE;
+        err = E_PARSE;
     }
 
     return err;
@@ -3583,10 +3583,10 @@ static int pkg_set_modelreq (fnpkg *pkg, const char *s)
     int ci = gretl_command_number(s);
 
     if (ci > 0) {
-	pkg->modelreq = ci;
-	return 0;
+        pkg->modelreq = ci;
+        return 0;
     } else {
-	return E_PARSE;
+        return E_PARSE;
     }
 }
 
@@ -3595,21 +3595,21 @@ static int pkg_set_datafiles (fnpkg *pkg, const char *s)
     int err = 0;
 
     if (string_is_blank(s)) {
-	err = E_DATA;
+        err = E_DATA;
     } else {
-	int n = 0;
+        int n = 0;
 
-	pkg->datafiles = gretl_string_split(s, &n, NULL);
-	if (pkg->datafiles == NULL) {
-	    pkg->n_files = 0;
-	    err = E_ALLOC;
-	} else {
-	    pkg->n_files = n;
-	}
+        pkg->datafiles = gretl_string_split(s, &n, NULL);
+        if (pkg->datafiles == NULL) {
+            pkg->n_files = 0;
+            err = E_ALLOC;
+        } else {
+            pkg->n_files = n;
+        }
     }
 
     if (!err) {
-	pkg->uses_subdir = 1;
+        pkg->uses_subdir = 1;
     }
 
     return err;
@@ -3620,17 +3620,17 @@ static int pkg_set_depends (fnpkg *pkg, const char *s)
     int err = 0;
 
     if (string_is_blank(s)) {
-	err = E_DATA;
+        err = E_DATA;
     } else {
-	int n = 0;
+        int n = 0;
 
-	pkg->depends = gretl_string_split(s, &n, NULL);
-	if (pkg->depends == NULL) {
-	    pkg->n_depends = 0;
-	    err = E_ALLOC;
-	} else {
-	    pkg->n_depends = n;
-	}
+        pkg->depends = gretl_string_split(s, &n, NULL);
+        if (pkg->depends == NULL) {
+            pkg->n_depends = 0;
+            err = E_ALLOC;
+        } else {
+            pkg->n_depends = n;
+        }
     }
 
     return err;
@@ -3639,9 +3639,9 @@ static int pkg_set_depends (fnpkg *pkg, const char *s)
 static int pkg_boolean_from_string (const char *s)
 {
     if (!strcmp(s, "true")) {
-	return 1;
+        return 1;
     } else {
-	return 0;
+        return 0;
     }
 }
 
@@ -3651,18 +3651,18 @@ static int pkg_remove_role (fnpkg *pkg, int role)
     int i;
 
     for (i=0; i<pkg->n_priv; i++) {
-	u = pkg->priv[i];
-	if (u->pkg_role == role) {
-	    u->pkg_role = UFUN_ROLE_NONE;
-	    return 0;
-	}
+        u = pkg->priv[i];
+        if (u->pkg_role == role) {
+            u->pkg_role = UFUN_ROLE_NONE;
+            return 0;
+        }
     }
     for (i=0; i<pkg->n_pub; i++) {
-	u = pkg->pub[i];
-	if (u->pkg_role == role) {
-	    u->pkg_role = UFUN_ROLE_NONE;
-	    return 0;
-	}
+        u = pkg->pub[i];
+        if (u->pkg_role == role) {
+            u->pkg_role = UFUN_ROLE_NONE;
+            return 0;
+        }
     }
 
     return E_DATA;
@@ -3671,12 +3671,12 @@ static int pkg_remove_role (fnpkg *pkg, int role)
 static int valid_list_maker (ufunc *u)
 {
     if (u->n_params == 0) {
-	return 1; /* OK */
+        return 1; /* OK */
     } else if (u->n_params == 1 &&
-	       u->params[0].type == GRETL_TYPE_LIST) {
-	return 1; /* OK */
+               u->params[0].type == GRETL_TYPE_LIST) {
+        return 1; /* OK */
     } else {
-	return 0;
+        return 0;
     }
 }
 
@@ -3711,16 +3711,16 @@ static ufunc *get_package_member_by_name (const char *name,
 }
 
 int function_set_package_role (const char *name, fnpkg *pkg,
-			       const char *attr, PRN *prn)
+                               const char *attr, PRN *prn)
 {
     ufunc *u = NULL;
     int role = pkg_key_get_role(attr);
     int err = 0;
 
     if (name == NULL) {
-	/* removing a role altogether */
-	pkg_remove_role(pkg, role);
-	return 0;
+        /* removing a role altogether */
+        pkg_remove_role(pkg, role);
+        return 0;
     } else if (role == UFUN_ROLE_NONE) {
         /* canceling a function's role */
         u = get_package_member_by_name(name, pkg, 1, 1);
@@ -3842,113 +3842,113 @@ int function_set_package_role (const char *name, fnpkg *pkg,
 */
 
 int function_ok_for_package_role (const char *name,
-				  int role)
+                                  int role)
 {
     ufunc *u = NULL;
     int i, err = 0;
 
     if (name == NULL || role == UFUN_ROLE_NONE) {
-	return 0;
+        return 0;
     }
 
     for (i=0; i<n_ufuns; i++) {
-	if (!strcmp(name, ufuns[i]->name)) {
-	    u = ufuns[i];
-	    break;
-	}
+        if (!strcmp(name, ufuns[i]->name)) {
+            u = ufuns[i];
+            break;
+        }
     }
 
     if (u == NULL) {
-	return 0;
+        return 0;
     }
 
     if (role == UFUN_GUI_PRECHECK) {
-	if (u->rettype != GRETL_TYPE_DOUBLE) {
-	    err = E_TYPES;
-	} else if (u->n_params > 0) {
-	    err = E_TYPES;
-	}
-	return !err; /* found */
+        if (u->rettype != GRETL_TYPE_DOUBLE) {
+            err = E_TYPES;
+        } else if (u->n_params > 0) {
+            err = E_TYPES;
+        }
+        return !err; /* found */
     } else if (role == UFUN_LIST_MAKER) {
-	if (u->rettype != GRETL_TYPE_LIST) {
-	    err = E_TYPES;
-	} else if (!valid_list_maker(u)) {
-	    err = E_TYPES;
-	}
-	return !err; /* found */
+        if (u->rettype != GRETL_TYPE_LIST) {
+            err = E_TYPES;
+        } else if (!valid_list_maker(u)) {
+            err = E_TYPES;
+        }
+        return !err; /* found */
     } else if (role == UFUN_R_SETUP) {
-	if (u->rettype != GRETL_TYPE_VOID) {
-	    err = E_TYPES;
-	} else if (u->n_params > 0) {
-	    err = E_TYPES;
-	}
-	return !err; /* found */
+        if (u->rettype != GRETL_TYPE_VOID) {
+            err = E_TYPES;
+        } else if (u->n_params > 0) {
+            err = E_TYPES;
+        }
+        return !err; /* found */
     } else if (role == UFUN_UI_MAKER) {
-	if (u->rettype != GRETL_TYPE_BUNDLE) {
-	    err = E_TYPES;
-	} else if (u->n_params > 0) {
-	    err = E_TYPES;
-	}
-	return !err; /* found */
+        if (u->rettype != GRETL_TYPE_BUNDLE) {
+            err = E_TYPES;
+        } else if (u->n_params > 0) {
+            err = E_TYPES;
+        }
+        return !err; /* found */
     }
 
     if (role == UFUN_GUI_MAIN) {
-	; /* OK, we don't mind what type it is */
+        ; /* OK, we don't mind what type it is */
     } else {
-	/* bundle-print, bundle-plot, etc. */
-	if (u->n_params == 0) {
-	    err = E_TYPES;
-	}
-	for (i=0; i<u->n_params && !err; i++) {
-	    if (i == 0 && u->params[i].type != GRETL_TYPE_BUNDLE_REF) {
-		err = E_TYPES;
-	    } else if (i == 1 && u->params[i].type != GRETL_TYPE_INT) {
-		err = E_TYPES;
-	    } else if (i > 1 && !fn_param_optional(u, i) &&
-		       na(fn_param_default(u, i))) {
-		err = E_TYPES;
-	    }
-	}
+        /* bundle-print, bundle-plot, etc. */
+        if (u->n_params == 0) {
+            err = E_TYPES;
+        }
+        for (i=0; i<u->n_params && !err; i++) {
+            if (i == 0 && u->params[i].type != GRETL_TYPE_BUNDLE_REF) {
+                err = E_TYPES;
+            } else if (i == 1 && u->params[i].type != GRETL_TYPE_INT) {
+                err = E_TYPES;
+            } else if (i > 1 && !fn_param_optional(u, i) &&
+                       na(fn_param_default(u, i))) {
+                err = E_TYPES;
+            }
+        }
     }
 
     return !err;
 }
 
 static int pkg_set_funcs_attribute (fnpkg *pkg, const char *s,
-				    int flag)
+                                    int flag)
 {
     char **S;
     int ns = 0, err = 0;
 
     S = gretl_string_split(s, &ns, NULL);
     if (ns == 0) {
-	err = E_DATA;
+        err = E_DATA;
     } else {
-	int i, j, match;
+        int i, j, match;
 
-	for (i=0; i<ns && !err; i++) {
-	    match = 0;
-	    for (j=0; j<pkg->n_pub; j++) {
-		if (!strcmp(S[i], pkg->pub[j]->name)) {
-		    pkg->pub[j]->flags |= flag;
-		    match = 1;
-		    break;
-		}
-	    }
-	    if (!match) {
-		err = E_DATA;
-	    }
-	}
+        for (i=0; i<ns && !err; i++) {
+            match = 0;
+            for (j=0; j<pkg->n_pub; j++) {
+                if (!strcmp(S[i], pkg->pub[j]->name)) {
+                    pkg->pub[j]->flags |= flag;
+                    match = 1;
+                    break;
+                }
+            }
+            if (!match) {
+                err = E_DATA;
+            }
+        }
 
-	strings_array_free(S, ns);
+        strings_array_free(S, ns);
     }
 
     return err;
 }
 
 static void function_package_set_auxfile (fnpkg *pkg,
-					  const char *id,
-					  const char *fname)
+                                          const char *id,
+                                          const char *fname)
 {
     gchar *test = NULL;
 
@@ -3959,41 +3959,41 @@ static void function_package_set_auxfile (fnpkg *pkg,
     */
 
     if (!strcmp(id, "help-fname")) {
-	test = g_strdup_printf("%s_help.txt", pkg->name);
+        test = g_strdup_printf("%s_help.txt", pkg->name);
     } else if (!strcmp(id, "gui-help-fname")) {
-	test = g_strdup_printf("%s_gui_help.txt", pkg->name);
+        test = g_strdup_printf("%s_gui_help.txt", pkg->name);
     } else if (!strcmp(id, "sample-fname")) {
-	test = g_strdup_printf("%s_sample.inp", pkg->name);
+        test = g_strdup_printf("%s_sample.inp", pkg->name);
     }
 
     if (test != NULL) {
-	if (strcmp(fname, test)) {
-	   function_package_set_properties(pkg, id, fname, NULL);
-	}
-	g_free(test);
+        if (strcmp(fname, test)) {
+           function_package_set_properties(pkg, id, fname, NULL);
+        }
+        g_free(test);
     }
 }
 
 static int check_for_pdf_ref (const char *s, fnpkg *pkg,
-			      int *err)
+                              int *err)
 {
     int len, ret = 0;
 
     if (!strncmp(s, "pdfdoc:", 7)) {
-	s += 7;
+        s += 7;
     }
 
     len = strlen(s);
     if (len < 64 && strchr(s, ' ') == NULL && has_suffix(s, ".pdf")) {
-	char *tmp = gretl_strndup(s, len - 4);
+        char *tmp = gretl_strndup(s, len - 4);
 
-	if (strcmp(tmp, pkg->name)) {
-	    gretl_errmsg_sprintf(_("PDF doc should be called %s.pdf"), pkg->name);
-	    *err = E_DATA;
-	} else {
-	    ret = 1;
-	}
-	free(tmp);
+        if (strcmp(tmp, pkg->name)) {
+            gretl_errmsg_sprintf(_("PDF doc should be called %s.pdf"), pkg->name);
+            *err = E_DATA;
+        } else {
+            ret = 1;
+        }
+        free(tmp);
     }
 
     return ret;
@@ -4002,10 +4002,10 @@ static int check_for_pdf_ref (const char *s, fnpkg *pkg,
 static int is_pdf_ref (const char *s)
 {
     if (!strncmp(s, "pdfdoc:", 7)) {
-	s += 7;
+        s += 7;
     }
     return strlen(s) < 64 && strchr(s, ' ') == NULL &&
-	has_suffix(s, ".pdf");
+        has_suffix(s, ".pdf");
 }
 
 static int validate_R_depends (const char *s)
@@ -4013,35 +4013,35 @@ static int validate_R_depends (const char *s)
     int err = 0;
 
     if (strncmp(s, "R ", 2)) {
-	err = E_DATA;
+        err = E_DATA;
     } else {
-	/* skip "R " */
-	s += 2;
-	s += strcspn(s, " ");
-	if (*s == '\0') {
-	    err = E_DATA;
-	} else {
-	    /* skip R version */
-	    s += strcspn(s, " ");
-	    while (*s && !err) {
-		s += strspn(s, " ");
-		if (*s == '\0') break;
-		/* R package? */
-		s += strcspn(s, " ");
-		s += strspn(s, " ");
-		if (*s == '\0') {
-		    /* no version given? */
-		    err = E_DATA;
-		} else {
-		    /* skip package version */
-		    s += strcspn(s, " ");
-		}
-	    }
-	}
+        /* skip "R " */
+        s += 2;
+        s += strcspn(s, " ");
+        if (*s == '\0') {
+            err = E_DATA;
+        } else {
+            /* skip R version */
+            s += strcspn(s, " ");
+            while (*s && !err) {
+                s += strspn(s, " ");
+                if (*s == '\0') break;
+                /* R package? */
+                s += strcspn(s, " ");
+                s += strspn(s, " ");
+                if (*s == '\0') {
+                    /* no version given? */
+                    err = E_DATA;
+                } else {
+                    /* skip package version */
+                    s += strcspn(s, " ");
+                }
+            }
+        }
     }
 
     if (err) {
-	gretl_errmsg_set(_("Invalid R-depends line"));
+        gretl_errmsg_set(_("Invalid R-depends line"));
     }
 
     return err;
@@ -4053,8 +4053,8 @@ static int validate_R_depends (const char *s)
 */
 
 static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
-				       FILE *fp, gretlopt opt,
-				       PRN *prn)
+                                       FILE *fp, gretlopt opt,
+                                       PRN *prn)
 {
     const char *okstr, *failed;
     gchar *currdir = NULL;
@@ -4064,23 +4064,23 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
     int err = 0;
 
     if (opt & OPT_G) {
-	/* GUI use */
-	okstr = "<@ok>\n";
-	failed = "<@fail>\n";
+        /* GUI use */
+        okstr = "<@ok>\n";
+        failed = "<@fail>\n";
     } else {
-	okstr = "OK\n";
-	failed = "failed\n";
+        okstr = "OK\n";
+        failed = "failed\n";
     }
 
     if (strrslash(fname) != NULL) {
-	/* directory change needed */
-	char dirname[FILENAME_MAX];
+        /* directory change needed */
+        char dirname[FILENAME_MAX];
 
-	strcpy(dirname, fname);
-	p = strrslash(dirname);
-	*p = '\0';
-	currdir = g_get_current_dir();
-	err = gretl_chdir(dirname);
+        strcpy(dirname, fname);
+        p = strrslash(dirname);
+        *p = '\0';
+        currdir = g_get_current_dir();
+        err = gretl_chdir(dirname);
     }
 
 #if PKG_DEBUG
@@ -4088,173 +4088,173 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 #endif
 
     while (fgets(line, sizeof line, fp) && !err) {
-	if (*line == '#' || string_is_blank(line)) {
-	    continue;
-	}
-	tailstrip(line);
-	p = strchr(line, '=');
-	if (p == NULL) {
-	    continue;
-	} else {
-	    p++;
-	    p += strspn(p, " ");
-	    if (!strncmp(line, "author", 6)) {
-		err = function_package_set_properties(pkg, "author", p, NULL);
-		if (!err) got++;
-	    } else if (!strncmp(line, "email", 5)) {
-		err = function_package_set_properties(pkg, "email", p, NULL);
-	    } else if (!strncmp(line, "version", 7)) {
-		err = function_package_set_properties(pkg, "version", p, NULL);
-		if (!err) got++;
-	    } else if (!strncmp(line, "date", 4)) {
-		err = function_package_set_properties(pkg, "date", p, NULL);
-		if (!err) got++;
-	    } else if (!strncmp(line, "description", 11)) {
-		err = function_package_set_properties(pkg, "description", p, NULL);
-		if (!err) got++;
-	    } else if (!strncmp(line, "tags", 4)) {
-		err = function_package_set_properties(pkg, "tags", p, NULL);
-	    } else if (!strncmp(line, "label", 5)) {
-		err = function_package_set_properties(pkg, "label", p, NULL);
-	    } else if (!strncmp(line, "menu-attachment", 15)) {
-		err = function_package_set_properties(pkg, "menu-attachment", p, NULL);
-	    } else if (!strncmp(line, "provider", 8)) {
-		if (!quiet) {
-		    pprintf(prn, "Recording provider %s\n", p);
-		}
-		err = function_package_set_properties(pkg, "provider", p, NULL);
-	    } else if (!strncmp(line, "help", 4)) {
-		gchar *hstr = NULL;
-		int pdfdoc;
+        if (*line == '#' || string_is_blank(line)) {
+            continue;
+        }
+        tailstrip(line);
+        p = strchr(line, '=');
+        if (p == NULL) {
+            continue;
+        } else {
+            p++;
+            p += strspn(p, " ");
+            if (!strncmp(line, "author", 6)) {
+                err = function_package_set_properties(pkg, "author", p, NULL);
+                if (!err) got++;
+            } else if (!strncmp(line, "email", 5)) {
+                err = function_package_set_properties(pkg, "email", p, NULL);
+            } else if (!strncmp(line, "version", 7)) {
+                err = function_package_set_properties(pkg, "version", p, NULL);
+                if (!err) got++;
+            } else if (!strncmp(line, "date", 4)) {
+                err = function_package_set_properties(pkg, "date", p, NULL);
+                if (!err) got++;
+            } else if (!strncmp(line, "description", 11)) {
+                err = function_package_set_properties(pkg, "description", p, NULL);
+                if (!err) got++;
+            } else if (!strncmp(line, "tags", 4)) {
+                err = function_package_set_properties(pkg, "tags", p, NULL);
+            } else if (!strncmp(line, "label", 5)) {
+                err = function_package_set_properties(pkg, "label", p, NULL);
+            } else if (!strncmp(line, "menu-attachment", 15)) {
+                err = function_package_set_properties(pkg, "menu-attachment", p, NULL);
+            } else if (!strncmp(line, "provider", 8)) {
+                if (!quiet) {
+                    pprintf(prn, "Recording provider %s\n", p);
+                }
+                err = function_package_set_properties(pkg, "provider", p, NULL);
+            } else if (!strncmp(line, "help", 4)) {
+                gchar *hstr = NULL;
+                int pdfdoc;
 
-		pdfdoc = check_for_pdf_ref(p, pkg, &err);
-		if (pdfdoc) {
-		    if (!quiet) {
-			pprintf(prn, "Recording help reference %s\n", p);
-		    }
-		    hstr = g_strdup_printf("pdfdoc:%s", p);
-		} else if (!err) {
-		    if (!quiet) {
-			pprintf(prn, "Looking for help text in %s... ", p);
-		    }
-		    hstr = pkg_aux_content(p, &err);
-		    if (err) {
-			pputs(prn, failed);
-		    } else {
-			pputs(prn, okstr);
-		    }
-		}
-		if (!err) {
-		    err = function_package_set_properties(pkg, "help", hstr, NULL);
-		    if (!err) {
-			got++;
-			if (!pdfdoc) {
-			    function_package_set_auxfile(pkg, "help-fname", p);
-			}
-		    }
-		}
-		g_free(hstr);
-	    } else if (!strncmp(line, "gui-help", 8)) {
-		gchar *ghstr = NULL;
+                pdfdoc = check_for_pdf_ref(p, pkg, &err);
+                if (pdfdoc) {
+                    if (!quiet) {
+                        pprintf(prn, "Recording help reference %s\n", p);
+                    }
+                    hstr = g_strdup_printf("pdfdoc:%s", p);
+                } else if (!err) {
+                    if (!quiet) {
+                        pprintf(prn, "Looking for help text in %s... ", p);
+                    }
+                    hstr = pkg_aux_content(p, &err);
+                    if (err) {
+                        pputs(prn, failed);
+                    } else {
+                        pputs(prn, okstr);
+                    }
+                }
+                if (!err) {
+                    err = function_package_set_properties(pkg, "help", hstr, NULL);
+                    if (!err) {
+                        got++;
+                        if (!pdfdoc) {
+                            function_package_set_auxfile(pkg, "help-fname", p);
+                        }
+                    }
+                }
+                g_free(hstr);
+            } else if (!strncmp(line, "gui-help", 8)) {
+                gchar *ghstr = NULL;
 
-		if (!quiet) {
-		    pprintf(prn, "Looking for GUI help text in %s... ", p);
-		}
-		ghstr = pkg_aux_content(p, &err);
-		if (err) {
-		    pputs(prn, failed);
-		} else {
-		    pputs(prn, okstr);
-		    err = function_package_set_properties(pkg, "gui-help", ghstr, NULL);
-		    if (!err) {
-			function_package_set_auxfile(pkg, "gui-help-fname", p);
-		    }
-		}
-		g_free(ghstr);
-	    } else if (!strncmp(line, "sample-script", 13)) {
-		gchar *script = NULL;
+                if (!quiet) {
+                    pprintf(prn, "Looking for GUI help text in %s... ", p);
+                }
+                ghstr = pkg_aux_content(p, &err);
+                if (err) {
+                    pputs(prn, failed);
+                } else {
+                    pputs(prn, okstr);
+                    err = function_package_set_properties(pkg, "gui-help", ghstr, NULL);
+                    if (!err) {
+                        function_package_set_auxfile(pkg, "gui-help-fname", p);
+                    }
+                }
+                g_free(ghstr);
+            } else if (!strncmp(line, "sample-script", 13)) {
+                gchar *script = NULL;
 
-		if (!quiet) {
-		    pprintf(prn, "Looking for sample script in %s... ", p);
-		}
-		script = pkg_aux_content(p, &err);
-		if (err) {
-		    pputs(prn, failed);
-		} else {
-		    pputs(prn, okstr);
-		    err = function_package_set_properties(pkg, "sample-script", script, NULL);
-		    if (!err) {
-			got++;
-			function_package_set_auxfile(pkg, "sample-fname", p);
-		    }
-		}
-		g_free(script);
-	    } else if (!strncmp(line, "data-files", 10)) {
-		if (!quiet) {
-		    pprintf(prn, "Recording data-file list: %s\n", p);
-		}
-		err = pkg_set_datafiles(pkg, p);
-	    } else if (!strncmp(line, "depends", 7)) {
-		if (!quiet) {
-		    pprintf(prn, "Recording dependency list: %s\n", p);
-		}
-		err = pkg_set_depends(pkg, p);
-	    } else if (!strncmp(line, "R-depends", 9)) {
-		err = validate_R_depends(p);
-		if (!err) {
-		    if (!quiet) {
-			pprintf(prn, "Recording R dependency list: %s\n", p);
-		    }
-		    err = function_package_set_properties(pkg, "R-depends", p, NULL);
-		}
-	    } else if (!strncmp(line, "data-requirement", 16)) {
-		err = pkg_set_dreq(pkg, p);
-	    } else if (!strncmp(line, "model-requirement", 17)) {
-		err = pkg_set_modelreq(pkg, p);
-	    } else if (!strncmp(line, "min-version", 11)) {
-		pkg->minver = gretl_version_number(p);
-		got++;
-	    } else if (!strncmp(line, "lives-in-subdir", 15)) {
-		pkg->uses_subdir = pkg_boolean_from_string(p);
-	    } else if (!strncmp(line, "wants-data-access", 17)) {
-		pkg->data_access = pkg_boolean_from_string(p);
-	    } else if (!strncmp(line, "no-print", 8)) {
-		err = pkg_set_funcs_attribute(pkg, p, UFUN_NOPRINT);
-	    } else if (!strncmp(line, "menu-only", 9)) {
-		err = pkg_set_funcs_attribute(pkg, p, UFUN_MENU_ONLY);
-	    } else {
-		const char *key;
-		int i;
+                if (!quiet) {
+                    pprintf(prn, "Looking for sample script in %s... ", p);
+                }
+                script = pkg_aux_content(p, &err);
+                if (err) {
+                    pputs(prn, failed);
+                } else {
+                    pputs(prn, okstr);
+                    err = function_package_set_properties(pkg, "sample-script", script, NULL);
+                    if (!err) {
+                        got++;
+                        function_package_set_auxfile(pkg, "sample-fname", p);
+                    }
+                }
+                g_free(script);
+            } else if (!strncmp(line, "data-files", 10)) {
+                if (!quiet) {
+                    pprintf(prn, "Recording data-file list: %s\n", p);
+                }
+                err = pkg_set_datafiles(pkg, p);
+            } else if (!strncmp(line, "depends", 7)) {
+                if (!quiet) {
+                    pprintf(prn, "Recording dependency list: %s\n", p);
+                }
+                err = pkg_set_depends(pkg, p);
+            } else if (!strncmp(line, "R-depends", 9)) {
+                err = validate_R_depends(p);
+                if (!err) {
+                    if (!quiet) {
+                        pprintf(prn, "Recording R dependency list: %s\n", p);
+                    }
+                    err = function_package_set_properties(pkg, "R-depends", p, NULL);
+                }
+            } else if (!strncmp(line, "data-requirement", 16)) {
+                err = pkg_set_dreq(pkg, p);
+            } else if (!strncmp(line, "model-requirement", 17)) {
+                err = pkg_set_modelreq(pkg, p);
+            } else if (!strncmp(line, "min-version", 11)) {
+                pkg->minver = gretl_version_number(p);
+                got++;
+            } else if (!strncmp(line, "lives-in-subdir", 15)) {
+                pkg->uses_subdir = pkg_boolean_from_string(p);
+            } else if (!strncmp(line, "wants-data-access", 17)) {
+                pkg->data_access = pkg_boolean_from_string(p);
+            } else if (!strncmp(line, "no-print", 8)) {
+                err = pkg_set_funcs_attribute(pkg, p, UFUN_NOPRINT);
+            } else if (!strncmp(line, "menu-only", 9)) {
+                err = pkg_set_funcs_attribute(pkg, p, UFUN_MENU_ONLY);
+            } else {
+                const char *key;
+                int i;
 
-		for (i=0; pkg_lookups[i].key != NULL; i++) {
-		    key = pkg_lookups[i].key;
-		    if (!strncmp(line, key, strlen(key))) {
-			err = function_set_package_role(p, pkg, key, prn);
-			if (!err && !quiet) {
-			    pprintf(prn, "%s function is %s, %s", key, p, okstr);
-			}
-			break;
-		    }
-		}
-	    }
-	}
+                for (i=0; pkg_lookups[i].key != NULL; i++) {
+                    key = pkg_lookups[i].key;
+                    if (!strncmp(line, key, strlen(key))) {
+                        err = function_set_package_role(p, pkg, key, prn);
+                        if (!err && !quiet) {
+                            pprintf(prn, "%s function is %s, %s", key, p, okstr);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     if (!err && pkg->provider != NULL) {
-	/* in case provider isn't registered as a dependency */
-	err = strings_array_prepend_uniq(&pkg->depends, &pkg->n_depends,
-					 pkg->provider);
+        /* in case provider isn't registered as a dependency */
+        err = strings_array_prepend_uniq(&pkg->depends, &pkg->n_depends,
+                                         pkg->provider);
     }
 
     if (currdir != NULL) {
-	/* go back where we came from */
-	gretl_chdir(currdir);
-	g_free(currdir);
+        /* go back where we came from */
+        gretl_chdir(currdir);
+        g_free(currdir);
     }
 
     if (!err && got < 7) {
-	gretl_errmsg_set(_("Some required information was missing"));
-	err = E_DATA;
+        gretl_errmsg_set(_("Some required information was missing"));
+        err = E_DATA;
     }
 
     return err;
@@ -4265,19 +4265,19 @@ static int is_public_funcs_line (const char *line, int *offset)
     const char *s = line;
 
     if (!strncmp(s, "public", 6)) {
-	s += 6;
-	s += strspn(s, " ");
-	if (*s == '=') {
-	    *offset = 1 + s - line;
-	    return 1;
-	}
+        s += 6;
+        s += strspn(s, " ");
+        if (*s == '=') {
+            *offset = 1 + s - line;
+            return 1;
+        }
     }
 
     return 0;
 }
 
 static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
-				      PRN *prn, int *err)
+                                      PRN *prn, int *err)
 {
     fnpkg *pkg = NULL;
     char fname[FILENAME_MAX];
@@ -4286,129 +4286,129 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
     FILE *fp;
 
     if (!has_suffix(gfnname, ".gfn")) {
-	gretl_errmsg_set(_("Output must have extension \".gfn\""));
-	*err = E_DATA;
-	return NULL;
+        gretl_errmsg_set(_("Output must have extension \".gfn\""));
+        *err = E_DATA;
+        return NULL;
     }
 
     switch_ext(fname, gfnname, "spec");
     fp = gretl_fopen(fname, "r"); /* "rb" ? */
 
     if (fp == NULL) {
-	*err = E_FOPEN;
+        *err = E_FOPEN;
     } else {
-	char **pubnames = NULL;
-	char **privnames = NULL;
-	int npub = 0, npriv = 0;
-	ufunc *uf;
-	int i;
+        char **pubnames = NULL;
+        char **privnames = NULL;
+        int npub = 0, npriv = 0;
+        ufunc *uf;
+        int i;
 
-	if (!quiet) {
-	    pprintf(prn, _("Found spec file '%s'\n"), fname);
-	}
+        if (!quiet) {
+            pprintf(prn, _("Found spec file '%s'\n"), fname);
+        }
 
-	/* first pass: gather names of public functions */
+        /* first pass: gather names of public functions */
 
-	while (fgets(line, sizeof line, fp) && !*err) {
-	    int offset = 0;
+        while (fgets(line, sizeof line, fp) && !*err) {
+            int offset = 0;
 
-	    if (is_public_funcs_line(line, &offset)) {
-		while (ends_with_backslash(line)) {
-		    gretl_charsub(line, '\\', '\0');
-		    *cont = '\0';
-		    if (fgets(cont, sizeof cont, fp)) {
-			strcat(line, cont);
-		    } else {
-			*err = E_PARSE;
-		    }
-		}
-		if (!*err) {
-		    tailstrip(line);
-		    pubnames = gretl_string_split(line + offset, &npub, NULL);
-		}
-		break;
-	    }
-	}
+            if (is_public_funcs_line(line, &offset)) {
+                while (ends_with_backslash(line)) {
+                    gretl_charsub(line, '\\', '\0');
+                    *cont = '\0';
+                    if (fgets(cont, sizeof cont, fp)) {
+                        strcat(line, cont);
+                    } else {
+                        *err = E_PARSE;
+                    }
+                }
+                if (!*err) {
+                    tailstrip(line);
+                    pubnames = gretl_string_split(line + offset, &npub, NULL);
+                }
+                break;
+            }
+        }
 
-	if (npub == 0) {
-	    pprintf(prn, _("no specification of public functions was found\n"));
-	    *err = E_DATA;
-	}
+        if (npub == 0) {
+            pprintf(prn, _("no specification of public functions was found\n"));
+            *err = E_DATA;
+        }
 
-	if (!*err) {
-	    if (!quiet) {
-		pprintf(prn, _("number of public interfaces = %d\n"), npub);
-	    }
-	    for (i=0; i<npub && !*err; i++) {
-		uf = get_user_function_by_name(pubnames[i]);
-		if (!quiet) {
-		    pprintf(prn, " %s", pubnames[i]);
-		}
-		if (uf == NULL) {
-		    if (!quiet) {
-			pputs(prn, _(": *** not found"));
-		    }
-		    gretl_errmsg_sprintf(_("'%s': no such function"), pubnames[i]);
-		    *err = E_DATA;
-		}
-		if (!quiet) {
-		    pputc(prn, '\n');
-		}
-	    }
-	}
+        if (!*err) {
+            if (!quiet) {
+                pprintf(prn, _("number of public interfaces = %d\n"), npub);
+            }
+            for (i=0; i<npub && !*err; i++) {
+                uf = get_user_function_by_name(pubnames[i]);
+                if (!quiet) {
+                    pprintf(prn, " %s", pubnames[i]);
+                }
+                if (uf == NULL) {
+                    if (!quiet) {
+                        pputs(prn, _(": *** not found"));
+                    }
+                    gretl_errmsg_sprintf(_("'%s': no such function"), pubnames[i]);
+                    *err = E_DATA;
+                }
+                if (!quiet) {
+                    pputc(prn, '\n');
+                }
+            }
+        }
 
-	/* note: any other functions currently loaded are assumed to be
-	   private functions for this package */
+        /* note: any other functions currently loaded are assumed to be
+           private functions for this package */
 
-	if (!*err) {
-	    npriv = n_free_functions() - npub;
-	    if (npriv < 0) {
-		npriv = 0;
-	    }
-	}
+        if (!*err) {
+            npriv = n_free_functions() - npub;
+            if (npriv < 0) {
+                npriv = 0;
+            }
+        }
 
-	if (!*err && npriv > 0) {
-	    npriv = 0;
-	    for (i=0; i<n_ufuns && !*err; i++) {
-		if (ufuns[i]->pkg == NULL && is_unclaimed(ufuns[i]->name, pubnames, npub)) {
-		    *err = strings_array_add(&privnames, &npriv, ufuns[i]->name);
-		}
-	    }
-	}
+        if (!*err && npriv > 0) {
+            npriv = 0;
+            for (i=0; i<n_ufuns && !*err; i++) {
+                if (ufuns[i]->pkg == NULL && is_unclaimed(ufuns[i]->name, pubnames, npub)) {
+                    *err = strings_array_add(&privnames, &npriv, ufuns[i]->name);
+                }
+            }
+        }
 
-	if (!quiet && !*err && npriv > 0) {
-	    pprintf(prn, "number of private functions = %d\n", npriv);
-	    for (i=0; i<npriv; i++) {
-		pprintf(prn, " %s\n", privnames[i]);
-	    }
-	}
+        if (!quiet && !*err && npriv > 0) {
+            pprintf(prn, "number of private functions = %d\n", npriv);
+            for (i=0; i<npriv; i++) {
+                pprintf(prn, " %s\n", privnames[i]);
+            }
+        }
 
-	if (!*err) {
-	    pkg = function_package_new(gfnname, pubnames, npub,
-				       privnames, npriv, err);
-	}
+        if (!*err) {
+            pkg = function_package_new(gfnname, pubnames, npub,
+                                       privnames, npriv, err);
+        }
 
-	strings_array_free(pubnames, npub);
-	strings_array_free(privnames, npriv);
+        strings_array_free(pubnames, npub);
+        strings_array_free(privnames, npriv);
 
-	if (!*err) {
-	    rewind(fp);
-	    *err = new_package_info_from_spec(pkg, fname, fp, opt, prn);
-	}
+        if (!*err) {
+            rewind(fp);
+            *err = new_package_info_from_spec(pkg, fname, fp, opt, prn);
+        }
 
-	if (*err && pkg != NULL) {
-	    real_function_package_unload(pkg, 0);
-	    pkg = NULL;
-	}
+        if (*err && pkg != NULL) {
+            real_function_package_unload(pkg, 0);
+            pkg = NULL;
+        }
 
-	fclose(fp);
+        fclose(fp);
     }
 
     return pkg;
 }
 
 static int cli_validate_package_file (const char *fname,
-				      gretlopt opt, PRN *prn)
+                                      gretlopt opt, PRN *prn)
 {
     char dtdname[FILENAME_MAX];
     xmlDocPtr doc = NULL;
@@ -4417,54 +4417,54 @@ static int cli_validate_package_file (const char *fname,
 
     err = gretl_xml_open_doc_root(fname, NULL, &doc, NULL);
     if (err) {
-	pprintf(prn, "Couldn't parse %s\n", fname);
-	return 1;
+        pprintf(prn, "Couldn't parse %s\n", fname);
+        return 1;
     }
 
     *dtdname = '\0';
 
     if (opt & OPT_D) {
-	const char *dpath = get_optval_string(MAKEPKG, OPT_D);
+        const char *dpath = get_optval_string(MAKEPKG, OPT_D);
 
-	if (dpath != NULL && *dpath != '\0') {
-	    strcat(dtdname, dpath);
-	}
+        if (dpath != NULL && *dpath != '\0') {
+            strcat(dtdname, dpath);
+        }
     } else {
-	sprintf(dtdname, "%sfunctions%cgretlfunc.dtd", gretl_home(), SLASH);
+        sprintf(dtdname, "%sfunctions%cgretlfunc.dtd", gretl_home(), SLASH);
     }
 
     if (*dtdname != '\0') {
-	dtd = xmlParseDTD(NULL, (const xmlChar *) dtdname);
+        dtd = xmlParseDTD(NULL, (const xmlChar *) dtdname);
     }
 
     if (dtd == NULL) {
-	pputs(prn, "Couldn't open DTD to check package\n");
+        pputs(prn, "Couldn't open DTD to check package\n");
     } else {
-	const char *pkgname = path_last_element(fname);
-	xmlValidCtxtPtr cvp = xmlNewValidCtxt();
+        const char *pkgname = path_last_element(fname);
+        xmlValidCtxtPtr cvp = xmlNewValidCtxt();
 
-	if (cvp == NULL) {
-	    pputs(prn, "Couldn't get an XML validation context\n");
-	    xmlFreeDtd(dtd);
-	    xmlFreeDoc(doc);
-	    return 0;
-	}
+        if (cvp == NULL) {
+            pputs(prn, "Couldn't get an XML validation context\n");
+            xmlFreeDtd(dtd);
+            xmlFreeDoc(doc);
+            return 0;
+        }
 
-	cvp->userData = (void *) prn;
-	cvp->error    = (xmlValidityErrorFunc) pprintf2;
-	cvp->warning  = (xmlValidityWarningFunc) pprintf2;
+        cvp->userData = (void *) prn;
+        cvp->error    = (xmlValidityErrorFunc) pprintf2;
+        cvp->warning  = (xmlValidityWarningFunc) pprintf2;
 
-	pprintf(prn, "Checking against %s\n", dtdname);
+        pprintf(prn, "Checking against %s\n", dtdname);
 
-	if (!xmlValidateDtd(cvp, doc, dtd)) {
-	    err = 1;
-	} else {
-	    pprintf(prn, _("%s: validated against DTD OK"), pkgname);
-	    pputc(prn, '\n');
-	}
+        if (!xmlValidateDtd(cvp, doc, dtd)) {
+            err = 1;
+        } else {
+            pprintf(prn, _("%s: validated against DTD OK"), pkgname);
+            pputc(prn, '\n');
+        }
 
-	xmlFreeValidCtxt(cvp);
-	xmlFreeDtd(dtd);
+        xmlFreeValidCtxt(cvp);
+        xmlFreeDtd(dtd);
     }
 
     xmlFreeDoc(doc);
@@ -4473,9 +4473,9 @@ static int cli_validate_package_file (const char *fname,
 }
 
 static int get_gfn_info_for_zip (const char *fname,
-				 int *pdfdoc,
-				 char ***datafiles,
-				 int *n_datafiles)
+                                 int *pdfdoc,
+                                 char ***datafiles,
+                                 int *n_datafiles)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
@@ -4485,47 +4485,47 @@ static int get_gfn_info_for_zip (const char *fname,
 
     err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
     if (err) {
-	return err;
+        return err;
     }
 
     node = node->xmlChildrenNode;
     while (node != NULL && found < 2) {
-	if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
-	    sub = node->xmlChildrenNode;
-	    while (sub != NULL && found < 2) {
-		if (!xmlStrcmp(sub->name, (XUC) "help")) {
-		    char *s = NULL;
+        if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
+            sub = node->xmlChildrenNode;
+            while (sub != NULL && found < 2) {
+                if (!xmlStrcmp(sub->name, (XUC) "help")) {
+                    char *s = NULL;
 
-		    gretl_xml_node_get_trimmed_string(sub, doc, &s);
-		    *pdfdoc = is_pdf_ref(s);
-		    free(s);
-		    found++;
-		} else if (!xmlStrcmp(sub->name, (XUC) "data-files")) {
-		    *datafiles =
-			gretl_xml_get_strings_array(sub, doc, n_datafiles,
-						    0, &err);
-		    found++;
-		} else if (!xmlStrcmp(sub->name, (XUC) "gretl-function")) {
-		    /* we've overshot */
-		    found = 2;
-		}
-		sub = sub->next;
-	    }
-	}
-	node = node->next;
+                    gretl_xml_node_get_trimmed_string(sub, doc, &s);
+                    *pdfdoc = is_pdf_ref(s);
+                    free(s);
+                    found++;
+                } else if (!xmlStrcmp(sub->name, (XUC) "data-files")) {
+                    *datafiles =
+                        gretl_xml_get_strings_array(sub, doc, n_datafiles,
+                                                    0, &err);
+                    found++;
+                } else if (!xmlStrcmp(sub->name, (XUC) "gretl-function")) {
+                    /* we've overshot */
+                    found = 2;
+                }
+                sub = sub->next;
+            }
+        }
+        node = node->next;
     }
 
     if (doc != NULL) {
-	xmlFreeDoc(doc);
+        xmlFreeDoc(doc);
     }
 
     return err;
 }
 
 static int cli_build_zip_package (const char *fname,
-				  const char *gfnname,
-				  fnpkg *pkg,
-				  PRN *prn)
+                                  const char *gfnname,
+                                  fnpkg *pkg,
+                                  PRN *prn)
 {
     char **datafiles = NULL;
     int n_datafiles = 0;
@@ -4534,31 +4534,31 @@ static int cli_build_zip_package (const char *fname,
     int err = 0;
 
     if (pkg != NULL) {
-	datafiles = pkg->datafiles;
-	n_datafiles = pkg->n_files;
-	pdfdoc = is_pdf_ref(pkg->help);
+        datafiles = pkg->datafiles;
+        n_datafiles = pkg->n_files;
+        pdfdoc = is_pdf_ref(pkg->help);
     } else {
-	/* grope in the gfn file */
-	err = get_gfn_info_for_zip(gfnname,
-				   &pdfdoc,
-				   &datafiles,
-				   &n_datafiles);
-	freeit = 1;
+        /* grope in the gfn file */
+        err = get_gfn_info_for_zip(gfnname,
+                                   &pdfdoc,
+                                   &datafiles,
+                                   &n_datafiles);
+        freeit = 1;
     }
 
     if (!err) {
-	err = package_make_zipfile(gfnname,
-				   pdfdoc,
-				   datafiles,
-				   n_datafiles,
-				   NULL,
-				   fname,
-				   OPT_NONE,
-				   prn);
+        err = package_make_zipfile(gfnname,
+                                   pdfdoc,
+                                   datafiles,
+                                   n_datafiles,
+                                   NULL,
+                                   fname,
+                                   OPT_NONE,
+                                   prn);
     }
 
     if (freeit) {
-	strings_array_free(datafiles, n_datafiles);
+        strings_array_free(datafiles, n_datafiles);
     }
 
     return err;
@@ -4572,28 +4572,28 @@ static int should_rebuild_gfn (const char *gfnname)
 
     err = gretl_stat(gfnname, &b1);
     if (err) {
-	/* gfn not found: so have to rebuild */
-	return 1;
+        /* gfn not found: so have to rebuild */
+        return 1;
     }
 
     switch_ext(testname, gfnname, "inp");
     err = gretl_stat(testname, &b2);
     if (err) {
-	/* no corresponding inp: can't rebuild */
-	return 0;
+        /* no corresponding inp: can't rebuild */
+        return 0;
     }
 
     switch_ext(testname, gfnname, "spec");
     err = gretl_stat(testname, &b3);
     if (err) {
-	/* no corresponding spec: can't rebuild */
-	return 0;
+        /* no corresponding spec: can't rebuild */
+        return 0;
     }
 
     if (b2.st_mtime > b1.st_mtime ||
-	b3.st_mtime > b1.st_mtime) {
-	/* inp or spec is newer than gfn */
-	return 1;
+        b3.st_mtime > b1.st_mtime) {
+        /* inp or spec is newer than gfn */
+        return 1;
     }
 
     return 0;
@@ -4613,8 +4613,8 @@ static int should_rebuild_gfn (const char *gfnname)
  */
 
 int create_and_write_function_package (const char *fname,
-				       gretlopt opt,
-				       PRN *prn)
+                                       gretlopt opt,
+                                       PRN *prn)
 {
     char gfnname[FILENAME_MAX];
     fnpkg *pkg = NULL;
@@ -4623,39 +4623,39 @@ int create_and_write_function_package (const char *fname,
     int err = 0;
 
     if (has_suffix(fname, ".zip")) {
-	/* building a zip package */
-	switch_ext(gfnname, fname, "gfn");
-	build_gfn = should_rebuild_gfn(gfnname);
-	build_zip = 1;
+        /* building a zip package */
+        switch_ext(gfnname, fname, "gfn");
+        build_gfn = should_rebuild_gfn(gfnname);
+        build_zip = 1;
     } else {
-	/* just building a gfn file */
-	strcpy(gfnname, fname);
+        /* just building a gfn file */
+        strcpy(gfnname, fname);
     }
 
     if (build_gfn && n_free_functions() == 0) {
-	gretl_errmsg_set(_("No functions are available for packaging at present."));
-	err = E_DATA;
+        gretl_errmsg_set(_("No functions are available for packaging at present."));
+        err = E_DATA;
     } else if (build_gfn) {
-	pkg = new_pkg_from_spec_file(gfnname, opt, prn, &err);
-	if (pkg != NULL) {
-	    err = function_package_write_file(pkg);
-	    if (!err) {
-		err = cli_validate_package_file(gfnname, opt, prn);
-		/* should we delete @gfnname ? */
-	    }
-	    if (!err) {
-		if (opt & OPT_T) {
-		    package_write_translatable_strings(pkg, prn);
-		}
-		if (opt & OPT_I) {
-		    package_write_index(pkg, prn);
-		}
-	    }
-	}
+        pkg = new_pkg_from_spec_file(gfnname, opt, prn, &err);
+        if (pkg != NULL) {
+            err = function_package_write_file(pkg);
+            if (!err) {
+                err = cli_validate_package_file(gfnname, opt, prn);
+                /* should we delete @gfnname ? */
+            }
+            if (!err) {
+                if (opt & OPT_T) {
+                    package_write_translatable_strings(pkg, prn);
+                }
+                if (opt & OPT_I) {
+                    package_write_index(pkg, prn);
+                }
+            }
+        }
     }
 
     if (!err && build_zip) {
-	err = cli_build_zip_package(fname, gfnname, pkg, prn);
+        err = cli_build_zip_package(fname, gfnname, pkg, prn);
     }
 
     return err;
@@ -4683,21 +4683,21 @@ const char *function_package_get_name (fnpkg *pkg)
 double function_package_get_version (fnpkg *pkg)
 {
     if (pkg == NULL) {
-	return NADBL;
+        return NADBL;
     } else {
-	return dot_atof(pkg->version);
+        return dot_atof(pkg->version);
     }
 }
 
 static int maybe_replace_string_var (char **svar, const char *src)
 {
     if (src == NULL) {
-	gretl_errmsg_set(_("string value is missing"));
-	return E_DATA;
+        gretl_errmsg_set(_("string value is missing"));
+        return E_DATA;
     } else {
-	free(*svar);
-	*svar = gretl_strdup(src);
-	return (*svar == NULL)? E_ALLOC : 0;
+        free(*svar);
+        *svar = gretl_strdup(src);
+        return (*svar == NULL)? E_ALLOC : 0;
     }
 }
 
@@ -4707,13 +4707,13 @@ static int maybe_replace_string_var (char **svar, const char *src)
 static int maybe_replace_optional_string_var (char **svar, const char *src)
 {
     if (src == NULL) {
-	free(*svar);
-	*svar = NULL;
-	return 0;
+        free(*svar);
+        *svar = NULL;
+        return 0;
     } else {
-	free(*svar);
-	*svar = gretl_strdup(src);
-	return (*svar == NULL)? E_ALLOC : 0;
+        free(*svar);
+        *svar = gretl_strdup(src);
+        return (*svar == NULL)? E_ALLOC : 0;
     }
 }
 
@@ -4728,25 +4728,25 @@ static void pkg_set_gui_attrs (fnpkg *pkg, const unsigned char *attrs)
     int i, r;
 
     for (r=1; r<UFUN_GUI_PRECHECK; r++) {
-	uf = NULL;
-	for (i=0; i<n_ufuns; i++) {
-	    if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == r) {
-		uf = ufuns[i];
-		break;
-	    }
-	}
-	if (uf != NULL) {
-	    if (attrs[r-1] & UFUN_NOPRINT) {
-		uf->flags |= UFUN_NOPRINT;
-	    } else {
-		uf->flags &= ~UFUN_NOPRINT;
-	    }
-	    if (attrs[r-1] & UFUN_MENU_ONLY) {
-		uf->flags |= UFUN_MENU_ONLY;
-	    } else {
-		uf->flags &= ~UFUN_MENU_ONLY;
-	    }
-	}
+        uf = NULL;
+        for (i=0; i<n_ufuns; i++) {
+            if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == r) {
+                uf = ufuns[i];
+                break;
+            }
+        }
+        if (uf != NULL) {
+            if (attrs[r-1] & UFUN_NOPRINT) {
+                uf->flags |= UFUN_NOPRINT;
+            } else {
+                uf->flags &= ~UFUN_NOPRINT;
+            }
+            if (attrs[r-1] & UFUN_MENU_ONLY) {
+                uf->flags |= UFUN_MENU_ONLY;
+            } else {
+                uf->flags &= ~UFUN_MENU_ONLY;
+            }
+        }
     }
 }
 
@@ -4762,69 +4762,69 @@ static void pkg_get_gui_attrs (fnpkg *pkg, unsigned char *attrs)
     int i, r;
 
     for (r=1; r<UFUN_GUI_PRECHECK; r++) {
-	uf = NULL;
-	a = 0;
-	for (i=0; i<n_ufuns; i++) {
-	    if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == r) {
-		uf = ufuns[i];
-		break;
-	    }
-	}
-	if (uf != NULL) {
-	    if (uf->flags & UFUN_NOPRINT) {
-		a |= UFUN_NOPRINT;
-	    }
-	    if (uf->flags & UFUN_MENU_ONLY) {
-		a |= UFUN_MENU_ONLY;
-	    }
-	}
-	attrs[r-1] = a;
+        uf = NULL;
+        a = 0;
+        for (i=0; i<n_ufuns; i++) {
+            if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == r) {
+                uf = ufuns[i];
+                break;
+            }
+        }
+        if (uf != NULL) {
+            if (uf->flags & UFUN_NOPRINT) {
+                a |= UFUN_NOPRINT;
+            }
+            if (uf->flags & UFUN_MENU_ONLY) {
+                a |= UFUN_MENU_ONLY;
+            }
+        }
+        attrs[r-1] = a;
     }
 }
 
 static char **pkg_strvar_pointer (fnpkg *pkg, const char *key,
-				  int *optional)
+                                  int *optional)
 {
     *optional = 0;
 
     if (!strcmp(key, "fname")) {
-	return &pkg->fname;
+        return &pkg->fname;
     } else if (!strcmp(key, "author")) {
-	return &pkg->author;
+        return &pkg->author;
     } else if (!strcmp(key, "email")) {
-	return &pkg->email;
+        return &pkg->email;
     } else if (!strcmp(key, "version")) {
-	return &pkg->version;
+        return &pkg->version;
     } else if (!strcmp(key, "date")) {
-	return &pkg->date;
+        return &pkg->date;
     } else if (!strcmp(key, "description")) {
-	return &pkg->descrip;
+        return &pkg->descrip;
     } else if (!strcmp(key, "help")) {
-	return &pkg->help;
+        return &pkg->help;
     } else if (!strcmp(key, "sample-script")) {
-	return &pkg->sample;
+        return &pkg->sample;
     }
 
     *optional = 1;
 
     if (!strcmp(key, "tags")) {
-	return &pkg->tags; /* FIXME should be non-optional */
+        return &pkg->tags; /* FIXME should be non-optional */
     } else if (!strcmp(key, "label")) {
-	return &pkg->label;
+        return &pkg->label;
     } else if (!strcmp(key, "menu-attachment")) {
-	return &pkg->mpath;
+        return &pkg->mpath;
     } else if (!strcmp(key, "gui-help")) {
-	return &pkg->gui_help;
+        return &pkg->gui_help;
     } else if (!strcmp(key, "R-depends")) {
-	return &pkg->Rdeps;
+        return &pkg->Rdeps;
     } else if (!strcmp(key, "help-fname")) {
-	return &pkg->help_fname;
+        return &pkg->help_fname;
     } else if (!strcmp(key, "gui-help-fname")) {
-	return &pkg->gui_help_fname;
+        return &pkg->gui_help_fname;
     } else if (!strcmp(key, "sample-fname")) {
-	return &pkg->sample_fname;
+        return &pkg->sample_fname;
     } else if (!strcmp(key, "provider")) {
-	return &pkg->provider;
+        return &pkg->provider;
     }
 
     return NULL;
@@ -4846,47 +4846,47 @@ int function_package_set_properties (fnpkg *pkg, ...)
     va_start(ap, pkg);
 
     for (i=1; !err; i++) {
-	key = va_arg(ap, const char *);
-	if (key == NULL) {
-	    break;
-	}
+        key = va_arg(ap, const char *);
+        if (key == NULL) {
+            break;
+        }
 
-	sptr = pkg_strvar_pointer(pkg, key, &optional);
+        sptr = pkg_strvar_pointer(pkg, key, &optional);
 
-	if (sptr != NULL) {
-	    const char *sval = va_arg(ap, const char *);
+        if (sptr != NULL) {
+            const char *sval = va_arg(ap, const char *);
 
-	    if (optional) {
-		err = maybe_replace_optional_string_var(sptr, sval);
-	    } else {
-		err = maybe_replace_string_var(sptr, sval);
-	    }
+            if (optional) {
+                err = maybe_replace_optional_string_var(sptr, sval);
+            } else {
+                err = maybe_replace_string_var(sptr, sval);
+            }
 
-	    if (!err && !strcmp(key, "help")) {
-		if (!strncmp(sval, "pdfdoc", 6) ||
-		    is_pdf_ref(sval)) {
-		    pkg->uses_subdir = 1;
-		}
-	    }
-	} else if (!strcmp(key, "gui-attrs")) {
-	    const unsigned char *np = va_arg(ap, const unsigned char *);
+            if (!err && !strcmp(key, "help")) {
+                if (!strncmp(sval, "pdfdoc", 6) ||
+                    is_pdf_ref(sval)) {
+                    pkg->uses_subdir = 1;
+                }
+            }
+        } else if (!strcmp(key, "gui-attrs")) {
+            const unsigned char *np = va_arg(ap, const unsigned char *);
 
-	    pkg_set_gui_attrs(pkg, np);
-	} else {
-	    int ival = va_arg(ap, int);
+            pkg_set_gui_attrs(pkg, np);
+        } else {
+            int ival = va_arg(ap, int);
 
-	    if (!strcmp(key, "data-requirement")) {
-		pkg->dreq = ival;
-	    } else if (!strcmp(key, "model-requirement")) {
-		pkg->modelreq = ival;
-	    } else if (!strcmp(key, "min-version")) {
-		pkg->minver = ival;
-	    } else if (!strcmp(key, "lives-in-subdir")) {
-		pkg->uses_subdir = (ival != 0);
-	    } else if (!strcmp(key, "wants-data-access")) {
-		pkg->data_access = (ival != 0);
-	    }
-	}
+            if (!strcmp(key, "data-requirement")) {
+                pkg->dreq = ival;
+            } else if (!strcmp(key, "model-requirement")) {
+                pkg->modelreq = ival;
+            } else if (!strcmp(key, "min-version")) {
+                pkg->minver = ival;
+            } else if (!strcmp(key, "lives-in-subdir")) {
+                pkg->uses_subdir = (ival != 0);
+            } else if (!strcmp(key, "wants-data-access")) {
+                pkg->data_access = (ival != 0);
+            }
+        }
     }
 
     va_end(ap);
@@ -4915,37 +4915,37 @@ static int *function_package_get_list (fnpkg *pkg, int code, int n)
     int j = 0;
 
     if (n > 0) {
- 	list = gretl_list_new(n);
-	if (list != NULL) {
-	    int i, priv, menu_only;
+        list = gretl_list_new(n);
+        if (list != NULL) {
+            int i, priv, menu_only;
 
-	    for (i=0; i<n_ufuns; i++) {
-		if (ufuns[i]->pkg == pkg) {
-		    priv = function_is_private(ufuns[i]);
-		    menu_only = function_is_menu_only(ufuns[i]);
-		    if (code == PRIVLIST && priv) {
-			list[++j] = i;
-		    } else if (code == PUBLIST && !priv) {
-			list[++j] = i;
-		    } else if (code == GUILIST && !priv && !menu_only &&
-			       !pkg_aux_role(ufuns[i]->pkg_role)) {
-			/* in the GUI list of public functions, don't
-			   display post-processing functions
-			*/
-			list[++j] = i;
-		    }
-		}
-	    }
-	}
+            for (i=0; i<n_ufuns; i++) {
+                if (ufuns[i]->pkg == pkg) {
+                    priv = function_is_private(ufuns[i]);
+                    menu_only = function_is_menu_only(ufuns[i]);
+                    if (code == PRIVLIST && priv) {
+                        list[++j] = i;
+                    } else if (code == PUBLIST && !priv) {
+                        list[++j] = i;
+                    } else if (code == GUILIST && !priv && !menu_only &&
+                               !pkg_aux_role(ufuns[i]->pkg_role)) {
+                        /* in the GUI list of public functions, don't
+                           display post-processing functions
+                        */
+                        list[++j] = i;
+                    }
+                }
+            }
+        }
     }
 
     if (list != NULL) {
-	if (j == 0) {
-	    free(list);
-	    list = NULL;
-	} else {
-	    list[0] = j;
-	}
+        if (j == 0) {
+            free(list);
+            list = NULL;
+        } else {
+            list[0] = j;
+        }
     }
 
     return list;
@@ -4956,9 +4956,9 @@ static gchar *pkg_get_special_func_name (fnpkg *pkg, UfunRole role)
     int i;
 
     for (i=0; i<n_ufuns; i++) {
-	if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == role) {
-	    return g_strdup(ufuns[i]->name);
-	}
+        if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == role) {
+            return g_strdup(ufuns[i]->name);
+        }
     }
 
     return NULL;
@@ -4969,9 +4969,9 @@ static int pkg_get_special_func_id (fnpkg *pkg, UfunRole role)
     int i;
 
     for (i=0; i<n_ufuns; i++) {
-	if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == role) {
-	    return i;
-	}
+        if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == role) {
+            return i;
+        }
     }
 
     return -1;
@@ -4980,9 +4980,9 @@ static int pkg_get_special_func_id (fnpkg *pkg, UfunRole role)
 static void handle_optional_string (char **ps, const char *src)
 {
     if (src == NULL) {
-	*ps = NULL;
+        *ps = NULL;
     } else {
-	*ps = g_strdup(src);
+        *ps = g_strdup(src);
     }
 }
 
@@ -5008,108 +5008,108 @@ int function_package_get_properties (fnpkg *pkg, ...)
     g_return_val_if_fail(pkg != NULL, E_DATA);
 
     for (i=0; i<n_ufuns; i++) {
-	if (ufuns[i]->pkg == pkg) {
-	    if (function_is_private(ufuns[i])) {
-		npriv++;
-	    } else {
-		npub++;
-	    }
-	}
+        if (ufuns[i]->pkg == pkg) {
+            if (function_is_private(ufuns[i])) {
+                npriv++;
+            } else {
+                npub++;
+            }
+        }
     }
 
     va_start(ap, pkg);
 
     for (i=1; ; i++) {
-	key = va_arg(ap, const char *);
-	if (key == NULL) {
-	    break;
-	}
-	ptr = va_arg(ap, void *);
-	if (ptr == NULL) {
-	    break;
-	}
-	if (!strcmp(key, "name")) {
-	    ps = (char **) ptr;
-	    *ps = g_strdup(pkg->name);
-	} else if (!strcmp(key, "author")) {
-	    ps = (char **) ptr;
-	    *ps = g_strdup(pkg->author);
-	} else if (!strcmp(key, "email")) {
-	    ps = (char **) ptr;
-	    if (pkg->email != NULL) {
-		*ps = g_strdup(pkg->email);
-	    } else {
-		*ps = g_strdup(""); /* ? */
-	    }
-	} else if (!strcmp(key, "date")) {
-	    ps = (char **) ptr;
-	    *ps = g_strdup(pkg->date);
-	} else if (!strcmp(key, "version")) {
-	    ps = (char **) ptr;
-	    *ps = g_strdup(pkg->version);
-	} else if (!strcmp(key, "description")) {
-	    ps = (char **) ptr;
-	    *ps = g_strdup(pkg->descrip);
-	} else if (!strcmp(key, "help")) {
-	    ps = (char **) ptr;
-	    *ps = g_strdup(pkg->help);
-	} else if (!strcmp(key, "gui-help")) {
-	    ps = (char **) ptr;
-	    handle_optional_string(ps, pkg->gui_help);
-	} else if (!strcmp(key, "R-depends")) {
-	    ps = (char **) ptr;
-	    handle_optional_string(ps, pkg->Rdeps);
-	} else if (!strcmp(key, "sample-script")) {
-	    ps = (char **) ptr;
-	    *ps = g_strdup(pkg->sample);
-	} else if (!strcmp(key, "help-fname")) {
-	    ps = (char **) ptr;
-	    handle_optional_string(ps, pkg->help_fname);
-	} else if (!strcmp(key, "gui-help-fname")) {
-	    ps = (char **) ptr;
-	    handle_optional_string(ps, pkg->gui_help_fname);
-	} else if (!strcmp(key, "sample-fname")) {
-	    ps = (char **) ptr;
-	    handle_optional_string(ps, pkg->sample_fname);
-	} else if (!strcmp(key, "tags")) {
-	    ps = (char **) ptr;
-	    *ps = g_strdup(pkg->tags);
-	} else if (!strcmp(key, "label")) {
-	    ps = (char **) ptr;
-	    *ps = g_strdup(pkg->label);
-	} else if (!strcmp(key, "menu-attachment")) {
-	    ps = (char **) ptr;
-	    *ps = g_strdup(pkg->mpath);
-	} else if (!strcmp(key, "provider")) {
-	    ps = (char **) ptr;
-	    *ps = g_strdup(pkg->provider);
-	} else if (!strcmp(key, "data-requirement")) {
-	    pi = (int *) ptr;
-	    *pi = pkg->dreq;
-	} else if (!strcmp(key, "model-requirement")) {
-	    pi = (int *) ptr;
-	    *pi = pkg->modelreq;
-	} else if (!strcmp(key, "min-version")) {
-	    pi = (int *) ptr;
-	    *pi = pkg->minver;
-	} else if (!strcmp(key, "lives-in-subdir")) {
-	    pi = (int *) ptr;
-	    *pi = pkg->uses_subdir;
-	} else if (!strcmp(key, "wants-data-access")) {
-	    pi = (int *) ptr;
-	    *pi = pkg->data_access;
-	} else if (!strcmp(key, "publist")) {
-	    plist = (int **) ptr;
-	    *plist = function_package_get_list(pkg, PUBLIST, npub);
-	} else if (!strcmp(key, "gui-publist")) {
-	    plist = (int **) ptr;
-	    *plist = function_package_get_list(pkg, GUILIST, npub);
-	} else if (!strcmp(key, "privlist")) {
-	    plist = (int **) ptr;
-	    *plist = function_package_get_list(pkg, PRIVLIST, npriv);
-	} else if (!strcmp(key, "gui-main-id")) {
-	    pi = (int *) ptr;
-	    *pi = pkg_get_special_func_id(pkg, UFUN_GUI_MAIN);
+        key = va_arg(ap, const char *);
+        if (key == NULL) {
+            break;
+        }
+        ptr = va_arg(ap, void *);
+        if (ptr == NULL) {
+            break;
+        }
+        if (!strcmp(key, "name")) {
+            ps = (char **) ptr;
+            *ps = g_strdup(pkg->name);
+        } else if (!strcmp(key, "author")) {
+            ps = (char **) ptr;
+            *ps = g_strdup(pkg->author);
+        } else if (!strcmp(key, "email")) {
+            ps = (char **) ptr;
+            if (pkg->email != NULL) {
+                *ps = g_strdup(pkg->email);
+            } else {
+                *ps = g_strdup(""); /* ? */
+            }
+        } else if (!strcmp(key, "date")) {
+            ps = (char **) ptr;
+            *ps = g_strdup(pkg->date);
+        } else if (!strcmp(key, "version")) {
+            ps = (char **) ptr;
+            *ps = g_strdup(pkg->version);
+        } else if (!strcmp(key, "description")) {
+            ps = (char **) ptr;
+            *ps = g_strdup(pkg->descrip);
+        } else if (!strcmp(key, "help")) {
+            ps = (char **) ptr;
+            *ps = g_strdup(pkg->help);
+        } else if (!strcmp(key, "gui-help")) {
+            ps = (char **) ptr;
+            handle_optional_string(ps, pkg->gui_help);
+        } else if (!strcmp(key, "R-depends")) {
+            ps = (char **) ptr;
+            handle_optional_string(ps, pkg->Rdeps);
+        } else if (!strcmp(key, "sample-script")) {
+            ps = (char **) ptr;
+            *ps = g_strdup(pkg->sample);
+        } else if (!strcmp(key, "help-fname")) {
+            ps = (char **) ptr;
+            handle_optional_string(ps, pkg->help_fname);
+        } else if (!strcmp(key, "gui-help-fname")) {
+            ps = (char **) ptr;
+            handle_optional_string(ps, pkg->gui_help_fname);
+        } else if (!strcmp(key, "sample-fname")) {
+            ps = (char **) ptr;
+            handle_optional_string(ps, pkg->sample_fname);
+        } else if (!strcmp(key, "tags")) {
+            ps = (char **) ptr;
+            *ps = g_strdup(pkg->tags);
+        } else if (!strcmp(key, "label")) {
+            ps = (char **) ptr;
+            *ps = g_strdup(pkg->label);
+        } else if (!strcmp(key, "menu-attachment")) {
+            ps = (char **) ptr;
+            *ps = g_strdup(pkg->mpath);
+        } else if (!strcmp(key, "provider")) {
+            ps = (char **) ptr;
+            *ps = g_strdup(pkg->provider);
+        } else if (!strcmp(key, "data-requirement")) {
+            pi = (int *) ptr;
+            *pi = pkg->dreq;
+        } else if (!strcmp(key, "model-requirement")) {
+            pi = (int *) ptr;
+            *pi = pkg->modelreq;
+        } else if (!strcmp(key, "min-version")) {
+            pi = (int *) ptr;
+            *pi = pkg->minver;
+        } else if (!strcmp(key, "lives-in-subdir")) {
+            pi = (int *) ptr;
+            *pi = pkg->uses_subdir;
+        } else if (!strcmp(key, "wants-data-access")) {
+            pi = (int *) ptr;
+            *pi = pkg->data_access;
+        } else if (!strcmp(key, "publist")) {
+            plist = (int **) ptr;
+            *plist = function_package_get_list(pkg, PUBLIST, npub);
+        } else if (!strcmp(key, "gui-publist")) {
+            plist = (int **) ptr;
+            *plist = function_package_get_list(pkg, GUILIST, npub);
+        } else if (!strcmp(key, "privlist")) {
+            plist = (int **) ptr;
+            *plist = function_package_get_list(pkg, PRIVLIST, npriv);
+        } else if (!strcmp(key, "gui-main-id")) {
+            pi = (int *) ptr;
+            *pi = pkg_get_special_func_id(pkg, UFUN_GUI_MAIN);
         } else if (!strcmp(key, "gui-attrs")) {
             unsigned char *s = (unsigned char *) ptr;
 
@@ -5128,28 +5128,28 @@ int function_package_get_properties (fnpkg *pkg, ...)
 /* don't tamper with return value! */
 
 const char *function_package_get_string (fnpkg *pkg,
-					 const char *id)
+                                         const char *id)
 {
     if (pkg == NULL || id == NULL) {
-	return NULL;
+        return NULL;
     } else if (!strcmp(id, "fname")) {
-	return pkg->fname;
+        return pkg->fname;
     } else if (!strcmp(id, "help-fname")) {
-	return pkg->help_fname;
+        return pkg->help_fname;
     } else if (!strcmp(id, "gui-help-fname")) {
-	return pkg->gui_help_fname;
+        return pkg->gui_help_fname;
     } else if (!strcmp(id, "sample-fname")) {
-	return pkg->sample_fname;
+        return pkg->sample_fname;
     } else if (!strcmp(id, "sample-script")) {
-	return pkg->sample;
+        return pkg->sample;
     } else if (!strcmp(id, "help")) {
-	return pkg->help;
+        return pkg->help;
     } else if (!strcmp(id, "gui-help")) {
-	return pkg->gui_help;
+        return pkg->gui_help;
     } else if (!strcmp(id, "R-depends")) {
-	return pkg->Rdeps;
+        return pkg->Rdeps;
     } else {
-	return NULL;
+        return NULL;
     }
 }
 
@@ -5159,10 +5159,10 @@ char **function_package_get_data_files (fnpkg *pkg, int *n)
 
     *n = 0;
     if (pkg->datafiles != NULL) {
-	S = strings_array_dup(pkg->datafiles, pkg->n_files);
-	if (S != NULL) {
-	    *n = pkg->n_files;
-	}
+        S = strings_array_dup(pkg->datafiles, pkg->n_files);
+        if (S != NULL) {
+            *n = pkg->n_files;
+        }
     }
 
     return S;
@@ -5174,10 +5174,10 @@ char **function_package_get_depends (fnpkg *pkg, int *n)
 
     *n = 0;
     if (pkg->depends != NULL) {
-	S = strings_array_dup(pkg->depends, pkg->n_depends);
-	if (S != NULL) {
-	    *n = pkg->n_depends;
-	}
+        S = strings_array_dup(pkg->depends, pkg->n_depends);
+        if (S != NULL) {
+            *n = pkg->n_depends;
+        }
     }
 
     return S;
@@ -5188,23 +5188,23 @@ int function_package_set_data_files (fnpkg *pkg, char **S, int n)
     int err = 0;
 
     if (pkg->datafiles != NULL) {
-	strings_array_free(pkg->datafiles, pkg->n_files);
-	pkg->datafiles = NULL;
-	pkg->n_files = 0;
+        strings_array_free(pkg->datafiles, pkg->n_files);
+        pkg->datafiles = NULL;
+        pkg->n_files = 0;
     }
 
     if (n > 0) {
-	if (S == NULL) {
-	    err = E_DATA;
-	} else {
-	    pkg->datafiles = strings_array_dup(S, n);
-	    if (pkg->datafiles == NULL) {
-		err = E_ALLOC;
-	    } else {
-		pkg->n_files = n;
-		pkg->uses_subdir = 1;
-	    }
-	}
+        if (S == NULL) {
+            err = E_DATA;
+        } else {
+            pkg->datafiles = strings_array_dup(S, n);
+            if (pkg->datafiles == NULL) {
+                err = E_ALLOC;
+            } else {
+                pkg->n_files = n;
+                pkg->uses_subdir = 1;
+            }
+        }
     }
 
     return err;
@@ -5215,28 +5215,28 @@ int function_package_set_depends (fnpkg *pkg, char **S, int n)
     int err = 0;
 
     if (pkg->depends != NULL) {
-	strings_array_free(pkg->depends, pkg->n_depends);
-	pkg->depends = NULL;
-	pkg->n_depends = 0;
+        strings_array_free(pkg->depends, pkg->n_depends);
+        pkg->depends = NULL;
+        pkg->n_depends = 0;
     }
 
     if (n > 0) {
-	if (S == NULL) {
-	    err = E_DATA;
-	} else {
-	    pkg->depends = strings_array_dup(S, n);
-	    if (pkg->depends == NULL) {
-		err = E_ALLOC;
-	    } else {
-		pkg->n_depends = n;
-	    }
-	}
+        if (S == NULL) {
+            err = E_DATA;
+        } else {
+            pkg->depends = strings_array_dup(S, n);
+            if (pkg->depends == NULL) {
+                err = E_ALLOC;
+            } else {
+                pkg->n_depends = n;
+            }
+        }
     }
 
     if (!err && pkg->provider != NULL) {
-	err = strings_array_prepend_uniq(&pkg->depends,
-					 &pkg->n_depends,
-					 pkg->provider);
+        err = strings_array_prepend_uniq(&pkg->depends,
+                                         &pkg->n_depends,
+                                         pkg->provider);
     }
 
     return err;
@@ -5250,11 +5250,11 @@ int function_package_set_depends (fnpkg *pkg, char **S, int n)
 static int validate_function_package (fnpkg *pkg)
 {
     if (pkg->pub == NULL || pkg->author == NULL ||
-	pkg->version == NULL || pkg->date == NULL ||
-	pkg->descrip == NULL) {
-	return 0;
+        pkg->version == NULL || pkg->date == NULL ||
+        pkg->descrip == NULL) {
+        return 0;
     } else if (pkg->name[0] == '\0') {
-	return 0;
+        return 0;
     }
 
     return 1;
@@ -5269,12 +5269,12 @@ int write_loaded_functions_file (const char *fname, int mpicall)
     int i, err = 0;
 
     if (n_ufuns == 0) {
-	return 0;
+        return 0;
     }
 
     prn = gretl_print_new_with_filename(fname, &err);
     if (prn == NULL) {
-	return err;
+        return err;
     }
 
     gretl_xml_header(prn);
@@ -5282,29 +5282,29 @@ int write_loaded_functions_file (const char *fname, int mpicall)
 
 #ifdef HAVE_MPI
     if (mpicall) {
-	/* if we're launching MPI, record the name of the
-	   currently executing function, if any
-	*/
-	ufunc *u = currently_called_function();
+        /* if we're launching MPI, record the name of the
+           currently executing function, if any
+        */
+        ufunc *u = currently_called_function();
 
-	if (u != NULL) {
-	    pprintf(prn, "<caller>%s</caller>\n", u->name);
-	}
+        if (u != NULL) {
+            pprintf(prn, "<caller>%s</caller>\n", u->name);
+        }
     }
 #endif
 
     /* write any loaded function packages */
     for (i=0; i<n_pkgs; i++) {
-	if (validate_function_package(pkgs[i])) {
-	    real_write_function_package(pkgs[i], prn, mpicall);
-	}
+        if (validate_function_package(pkgs[i])) {
+            real_write_function_package(pkgs[i], prn, mpicall);
+        }
     }
 
     /* then any unpackaged functions */
     for (i=0; i<n_ufuns; i++) {
-	if (ufuns[i]->pkg == NULL) {
-	    write_function_xml(ufuns[i], prn, mpicall);
-	}
+        if (ufuns[i]->pkg == NULL) {
+            write_function_xml(ufuns[i], prn, mpicall);
+        }
     }
 
     pputs(prn, "</gretl-functions>\n");
@@ -5324,52 +5324,52 @@ int write_loaded_functions_file (const char *fname, int mpicall)
 static void real_function_package_free (fnpkg *pkg, int full)
 {
     if (pkg != NULL) {
-	int i;
+        int i;
 
-	if (full) {
-	    for (i=0; i<pkg->n_pub; i++) {
-		ufunc_free(pkg->pub[i]);
-	    }
-	    for (i=0; i<pkg->n_priv; i++) {
-		ufunc_free(pkg->priv[i]);
-	    }
-	} else {
-	    for (i=0; i<n_ufuns; i++) {
-		if (ufuns[i]->pkg == pkg) {
-		    /* remove package info */
-		    ufuns[i]->pkg = NULL;
-		    set_function_private(ufuns[i], FALSE);
-		}
-	    }
-	}
+        if (full) {
+            for (i=0; i<pkg->n_pub; i++) {
+                ufunc_free(pkg->pub[i]);
+            }
+            for (i=0; i<pkg->n_priv; i++) {
+                ufunc_free(pkg->priv[i]);
+            }
+        } else {
+            for (i=0; i<n_ufuns; i++) {
+                if (ufuns[i]->pkg == pkg) {
+                    /* remove package info */
+                    ufuns[i]->pkg = NULL;
+                    set_function_private(ufuns[i], FALSE);
+                }
+            }
+        }
 
-	if (pkg->datafiles != NULL && pkg->n_files > 0) {
-	    strings_array_free(pkg->datafiles, pkg->n_files);
-	}
-	if (pkg->depends != NULL && pkg->n_depends > 0) {
-	    strings_array_free(pkg->depends, pkg->n_depends);
-	}
+        if (pkg->datafiles != NULL && pkg->n_files > 0) {
+            strings_array_free(pkg->datafiles, pkg->n_files);
+        }
+        if (pkg->depends != NULL && pkg->n_depends > 0) {
+            strings_array_free(pkg->depends, pkg->n_depends);
+        }
 
-	free(pkg->pub);
-	free(pkg->priv);
-	free(pkg->fname);
-	free(pkg->author);
-	free(pkg->email);
-	free(pkg->version);
-	free(pkg->date);
-	free(pkg->descrip);
-	free(pkg->help);
-	free(pkg->gui_help);
-	free(pkg->Rdeps);
-	free(pkg->sample);
-	free(pkg->help_fname);
-	free(pkg->gui_help_fname);
-	free(pkg->sample_fname);
-	free(pkg->tags);
-	free(pkg->label);
-	free(pkg->mpath);
-	free(pkg->provider);
-	free(pkg);
+        free(pkg->pub);
+        free(pkg->priv);
+        free(pkg->fname);
+        free(pkg->author);
+        free(pkg->email);
+        free(pkg->version);
+        free(pkg->date);
+        free(pkg->descrip);
+        free(pkg->help);
+        free(pkg->gui_help);
+        free(pkg->Rdeps);
+        free(pkg->sample);
+        free(pkg->help_fname);
+        free(pkg->gui_help_fname);
+        free(pkg->sample_fname);
+        free(pkg->tags);
+        free(pkg->label);
+        free(pkg->mpath);
+        free(pkg->provider);
+        free(pkg);
     }
 }
 
@@ -5386,21 +5386,21 @@ static void function_package_free_full (fnpkg *pkg)
 /* is the package with filename @fname already in memory? */
 
 static fnpkg *get_loaded_pkg_by_filename (const char *fname,
-					  const char **version)
+                                          const char **version)
 {
     int i;
 
     if (fname == NULL) {
-	return NULL;
+        return NULL;
     }
 
     for (i=0; i<n_pkgs; i++) {
-	if (!strcmp(fname, pkgs[i]->fname)) {
-	    if (version != NULL) {
-		*version = pkgs[i]->version;
-	    }
-	    return pkgs[i];
-	}
+        if (!strcmp(fname, pkgs[i]->fname)) {
+            if (version != NULL) {
+                *version = pkgs[i]->version;
+            }
+            return pkgs[i];
+        }
     }
 
     return NULL;
@@ -5411,13 +5411,13 @@ static fnpkg *get_loaded_pkg_by_name (const char *pkgname)
     int i;
 
     if (pkgname == NULL) {
-	return NULL;
+        return NULL;
     }
 
     for (i=0; i<n_pkgs; i++) {
-	if (!strcmp(pkgname, pkgs[i]->name)) {
-	    return pkgs[i];
-	}
+        if (!strcmp(pkgname, pkgs[i]->name)) {
+            return pkgs[i];
+        }
     }
 
     return NULL;
@@ -5438,7 +5438,7 @@ void function_package_unload_by_filename (const char *fname)
     fnpkg *pkg = get_loaded_pkg_by_filename(fname, NULL);
 
     if (pkg != NULL) {
-	real_function_package_unload(pkg, 0);
+        real_function_package_unload(pkg, 0);
     }
 }
 
@@ -5456,7 +5456,7 @@ void function_package_unload_full_by_filename (const char *fname)
     fnpkg *pkg = get_loaded_pkg_by_filename(fname, NULL);
 
     if (pkg != NULL) {
-	real_function_package_unload(pkg, 1);
+        real_function_package_unload(pkg, 1);
     }
 }
 
@@ -5477,10 +5477,10 @@ int function_package_unload_full (const char *pkgname)
     fnpkg *pkg = get_loaded_pkg_by_name(pkgname);
 
     if (pkg != NULL) {
-	real_function_package_unload(pkg, 1);
-	return 1;
+        real_function_package_unload(pkg, 1);
+        return 1;
     } else {
-	return 0;
+        return 0;
     }
 }
 
@@ -5495,11 +5495,11 @@ static int function_package_record (fnpkg *pkg)
     tmp = realloc(pkgs, (n_pkgs + 1) * sizeof *tmp);
 
     if (tmp == NULL) {
-	err = E_ALLOC;
+        err = E_ALLOC;
     } else {
-	pkgs = tmp;
-	pkgs[n_pkgs] = pkg;
-	n_pkgs++;
+        pkgs = tmp;
+        pkgs[n_pkgs] = pkg;
+        n_pkgs++;
     }
 
     return err;
@@ -5508,8 +5508,8 @@ static int function_package_record (fnpkg *pkg)
 static int broken_package_error (fnpkg *pkg)
 {
     gretl_errmsg_sprintf(_("'%s': package contains "
-			 "duplicated function names"),
-			 pkg->name);
+                         "duplicated function names"),
+                         pkg->name);
     return E_DATA;
 }
 
@@ -5551,7 +5551,7 @@ static int verify_libR_functionality (PRN *prn)
         }
     }
     if (doc != NULL) {
-	xmlFreeDoc(doc);
+        xmlFreeDoc(doc);
     }
 
     if (err) {
@@ -5588,13 +5588,13 @@ static int package_run_R_setup (ufunc *fun, PRN *prn)
     }
 
     if (!err) {
-	fprn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+        fprn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
     }
 
     if (fprn != NULL) {
         const char *s;
 
-	for (i=0; i<fun->n_lines; i++) {
+        for (i=0; i<fun->n_lines; i++) {
             s = fun->lines[i].s;
             /* skip "foreign" and "end foreign" */
             if (!strncmp(s, "foreign lan", 11) ||
@@ -5603,17 +5603,17 @@ static int package_run_R_setup (ufunc *fun, PRN *prn)
             } else if (fun->lines[i].flags & LINE_IGNORE) {
                 continue;
             } else {
-		pputs(fprn, s);
-		pputc(fprn, '\n');
-	    }
-	}
-	buf = gretl_print_steal_buffer(fprn);
-	gretl_print_destroy(fprn);
+                pputs(fprn, s);
+                pputc(fprn, '\n');
+            }
+        }
+        buf = gretl_print_steal_buffer(fprn);
+        gretl_print_destroy(fprn);
     }
 
     if (buf != NULL) {
-	err = execute_R_buffer(buf, NULL, OPT_NONE, NULL);
-	free(buf);
+        err = execute_R_buffer(buf, NULL, OPT_NONE, NULL);
+        free(buf);
     }
 
     fprintf(stderr, "package_run_R_setup: err = %d\n", err);
@@ -5636,27 +5636,27 @@ static int load_private_function (fnpkg *pkg, int i, PRN *prn)
     int j, err = 0;
 
     for (j=0; j<n_ufuns; j++) {
-	if (!strcmp(fun->name, ufuns[j]->name)) {
-	    if (pkg == ufuns[j]->pkg) {
-		return broken_package_error(pkg);
-	    }
-	}
+        if (!strcmp(fun->name, ufuns[j]->name)) {
+            if (pkg == ufuns[j]->pkg) {
+                return broken_package_error(pkg);
+            }
+        }
     }
 
 #if USE_RLIB
     if (fun->pkg_role == UFUN_R_SETUP) {
-	err = package_run_R_setup(fun, prn);
+        err = package_run_R_setup(fun, prn);
     }
 #endif
 
     if (!err) {
-	err = add_allocated_ufunc(fun);
-	if (!err && function_lookup(fun->name)) {
-	    gretl_warnmsg_sprintf(_("'%s' is the name of a built-in function"),
-				  fun->name);
-	    install_function_override(fun->name, fun->pkg->name, fun);
-	    pkg->overrides += 1;
-	}
+        err = add_allocated_ufunc(fun);
+        if (!err && function_lookup(fun->name)) {
+            gretl_warnmsg_sprintf(_("'%s' is the name of a built-in function"),
+                                  fun->name);
+            install_function_override(fun->name, fun->pkg->name, fun);
+            pkg->overrides += 1;
+        }
     }
 
     return err;
@@ -5675,43 +5675,43 @@ static int load_public_function (fnpkg *pkg, int i)
     int err = 0;
 
     for (j=0; j<n_ufuns; j++) {
-	if (!strcmp(fun->name, ufuns[j]->name)) {
-	    if (pkg == ufuns[j]->pkg) {
-		/* name duplication in single package */
-		err = broken_package_error(pkg);
-	    } else if (ufuns[j]->pkg == NULL) {
-		/* conflicting unpackaged function */
-		ufunc_free(ufuns[j]);
-		ufuns[j] = fun;
-		done = 1;
-	    } else if (!function_is_private(ufuns[j])) {
-		/* got a conflicting package */
-		gretl_errmsg_sprintf(_("The function %s is already defined "
-				     "by package '%s'"), fun->name,
-				     ufuns[j]->pkg->name);
-		err = E_DATA;
-		break;
-	    }
-	}
+        if (!strcmp(fun->name, ufuns[j]->name)) {
+            if (pkg == ufuns[j]->pkg) {
+                /* name duplication in single package */
+                err = broken_package_error(pkg);
+            } else if (ufuns[j]->pkg == NULL) {
+                /* conflicting unpackaged function */
+                ufunc_free(ufuns[j]);
+                ufuns[j] = fun;
+                done = 1;
+            } else if (!function_is_private(ufuns[j])) {
+                /* got a conflicting package */
+                gretl_errmsg_sprintf(_("The function %s is already defined "
+                                     "by package '%s'"), fun->name,
+                                     ufuns[j]->pkg->name);
+                err = E_DATA;
+                break;
+            }
+        }
     }
 
     if (!err && !done && function_lookup(fun->name)) {
-	if (strcmp(fun->name, "bkw")) {
-	    /* for now, don't throw an error on loading Lee Adkins'
-	       bkw package */
-	    gretl_errmsg_sprintf(_("Package loading error:\n"
-				   "%s %s defines a function %s(), "
-				   "which conflicts with a built-in\n"
-				   "function in gretl %s. Please check for an "
-				   "updated version of %s."),
-				 pkg->name, pkg->version, fun->name,
-				 GRETL_VERSION, pkg->name);
-	    err = E_DATA;
-	}
+        if (strcmp(fun->name, "bkw")) {
+            /* for now, don't throw an error on loading Lee Adkins'
+               bkw package */
+            gretl_errmsg_sprintf(_("Package loading error:\n"
+                                   "%s %s defines a function %s(), "
+                                   "which conflicts with a built-in\n"
+                                   "function in gretl %s. Please check for an "
+                                   "updated version of %s."),
+                                 pkg->name, pkg->version, fun->name,
+                                 GRETL_VERSION, pkg->name);
+            err = E_DATA;
+        }
     }
 
     if (!err && !done) {
-	err = add_allocated_ufunc(fun);
+        err = add_allocated_ufunc(fun);
     }
 
     return err;
@@ -5723,10 +5723,10 @@ static int pkg_in_stack (const char *name, GArray *pstack)
     int i;
 
     for (i=0; i<pstack->len; i++) {
-	s = g_array_index(pstack, char *, i);
-	if (!strcmp(name, s)) {
-	    return 1;
-	}
+        s = g_array_index(pstack, char *, i);
+        if (!strcmp(name, s)) {
+            return 1;
+        }
     }
 
     return 0;
@@ -5737,36 +5737,36 @@ static int load_gfn_dependencies (fnpkg *pkg, GArray *pstack)
     int err = 0;
 
     if (pkg->depends != NULL) {
-	char *pkgpath;
-	int i;
+        char *pkgpath;
+        int i;
 
-	fprintf(stderr, "*** load_gfn_dependencies for %s ***\n", pkg->name);
+        fprintf(stderr, "*** load_gfn_dependencies for %s ***\n", pkg->name);
 
-	for (i=0; i<pkg->n_depends && !err; i++) {
-	    const char *dep = pkg->depends[i];
+        for (i=0; i<pkg->n_depends && !err; i++) {
+            const char *dep = pkg->depends[i];
 
-	    if (get_function_package_by_name(dep) != NULL) {
-		; /* OK, already loaded */
-	    } else if (pkg_in_stack(dep, pstack)) {
-		fprintf(stderr, " found %s in pstack\n", dep);
-		; /* don't go into infinite loop! */
-	    } else {
-		fprintf(stderr, " trying for %s\n", dep);
-		pkgpath = gretl_function_package_get_path(dep, PKG_ALL);
-		if (pkgpath == NULL) {
-		    err = E_DATA;
-		    gretl_errmsg_sprintf(_("%s: dependency %s was not found"),
-					 pkg->name, dep);
-		} else {
-		    err = load_function_package(pkgpath, OPT_NONE,
-						pstack, NULL);
-		    free(pkgpath);
-		    if (!err) {
-			g_array_append_val(pstack, dep);
-		    }
-		}
-	    }
-	}
+            if (get_function_package_by_name(dep) != NULL) {
+                ; /* OK, already loaded */
+            } else if (pkg_in_stack(dep, pstack)) {
+                fprintf(stderr, " found %s in pstack\n", dep);
+                ; /* don't go into infinite loop! */
+            } else {
+                fprintf(stderr, " trying for %s\n", dep);
+                pkgpath = gretl_function_package_get_path(dep, PKG_ALL);
+                if (pkgpath == NULL) {
+                    err = E_DATA;
+                    gretl_errmsg_sprintf(_("%s: dependency %s was not found"),
+                                         pkg->name, dep);
+                } else {
+                    err = load_function_package(pkgpath, OPT_NONE,
+                                                pstack, NULL);
+                    free(pkgpath);
+                    if (!err) {
+                        g_array_append_val(pstack, dep);
+                    }
+                }
+            }
+        }
     }
 
     return err;
@@ -5790,33 +5790,33 @@ static int real_load_package (fnpkg *pkg, GArray *pstack, PRN *prn)
     gretl_error_clear();
 
     if (pstack != NULL) {
-	err = load_gfn_dependencies(pkg, pstack);
+        err = load_gfn_dependencies(pkg, pstack);
     }
 
     if (!err && pkg->pub != NULL) {
-	for (i=0; i<pkg->n_pub && !err; i++) {
-	    err = load_public_function(pkg, i);
-	}
+        for (i=0; i<pkg->n_pub && !err; i++) {
+            err = load_public_function(pkg, i);
+        }
     }
 
     if (!err && pkg->priv != NULL) {
-	for (i=0; i<pkg->n_priv && !err; i++) {
-	    err = load_private_function(pkg, i, prn);
-	}
+        for (i=0; i<pkg->n_priv && !err; i++) {
+            err = load_private_function(pkg, i, prn);
+        }
     }
 
     if (!err && pkg->provider != NULL) {
-	/* check that provider really got loaded */
-	if (get_function_package_by_name(pkg->provider) == NULL) {
-	    gretl_errmsg_sprintf(_("Provider package %s is not loaded\n"),
-				 pkg->provider);
-	    err = E_DATA;
-	}
+        /* check that provider really got loaded */
+        if (get_function_package_by_name(pkg->provider) == NULL) {
+            gretl_errmsg_sprintf(_("Provider package %s is not loaded\n"),
+                                 pkg->provider);
+            err = E_DATA;
+        }
     }
 
     if (!err) {
-	/* add to array of loaded packages */
-	err = function_package_record(pkg);
+        /* add to array of loaded packages */
+        err = function_package_record(pkg);
     }
 
     return err;
@@ -5825,15 +5825,15 @@ static int real_load_package (fnpkg *pkg, GArray *pstack, PRN *prn)
 static const char *data_needs_string (DataReq dr)
 {
     if (dr == FN_NEEDS_TS) {
-	return N_("Time-series data");
+        return N_("Time-series data");
     } else if (dr == FN_NEEDS_QM) {
-	return N_("Quarterly or monthly data");
+        return N_("Quarterly or monthly data");
     } else if (dr == FN_NEEDS_PANEL) {
-	return N_("Panel data");
+        return N_("Panel data");
     } else if (dr == FN_NODATA_OK) {
-	return N_("none");
+        return N_("none");
     } else {
-	return N_("some sort of dataset");
+        return N_("some sort of dataset");
     }
 }
 
@@ -5862,25 +5862,25 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
     remote = (strstr(fname, "dltmp.") != NULL);
 
     if (!remote && g_path_is_absolute(fname)) {
-	pprintf(prn, "<@itl=\"File\">: %s\n\n", fname);
+        pprintf(prn, "<@itl=\"File\">: %s\n\n", fname);
     }
 
     if (pkg->name[0] == '\0' || pkg->author == NULL ||
-	pkg->minver <= 0 || pkg->descrip == NULL ||
-	pkg->version == NULL || pkg->date == NULL ||
-	pkg->help == NULL) {
-	pprintf(prn, _("\nBroken package! Basic information is missing\n"));
-	return;
+        pkg->minver <= 0 || pkg->descrip == NULL ||
+        pkg->version == NULL || pkg->date == NULL ||
+        pkg->help == NULL) {
+        pprintf(prn, _("\nBroken package! Basic information is missing\n"));
+        return;
     }
 
     gretl_version_string(vstr, pkg->minver);
     pdfdoc = is_pdf_ref(pkg->help);
 
     pprintf(prn, "<@itl=\"Package\">: %s %s (%s)\n", pkg->name, pkg->version,
-	    pkg->date);
+            pkg->date);
     pprintf(prn, "<@itl=\"Author\">: %s\n", pkg->author);
     if (pkg->email != NULL && *pkg->email != '\0') {
-	pprintf(prn, "<@itl=\"Email\">: %s\n", pkg->email);
+        pprintf(prn, "<@itl=\"Email\">: %s\n", pkg->email);
     }
     pprintf(prn, "<@itl=\"Required gretl version\">: %s\n", vstr);
     pprintf(prn, "<@itl=\"Data requirement\">: %s\n", _(data_needs_string(pkg->dreq)));
@@ -5889,80 +5889,80 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
         pkg_print_depends(pkg, prn);
     }
     if (pkg->provider != NULL) {
-	pprintf(prn, "<@itl=\"Provider\">: %s\n", pkg->provider);
+        pprintf(prn, "<@itl=\"Provider\">: %s\n", pkg->provider);
     }
 
     if (pdfdoc) {
-	const char *s = strrchr(pkg->help, ':');
+        const char *s = strrchr(pkg->help, ':');
 
-	if (remote) {
-	    pprintf(prn, "<@itl=\"Documentation\">: %s\n\n", s + 1);
-	} else {
-	    gchar *localpdf = g_strdup(fname);
-	    gchar *p = strrchr(localpdf, '.');
+        if (remote) {
+            pprintf(prn, "<@itl=\"Documentation\">: %s\n\n", s + 1);
+        } else {
+            gchar *localpdf = g_strdup(fname);
+            gchar *p = strrchr(localpdf, '.');
 
-	    *p = '\0';
-	    strcat(p, ".pdf");
-	    pprintf(prn, "<@itl=\"Documentation\">: <@adb=\"%s\">\n\n", localpdf);
-	    g_free(localpdf);
-	}
+            *p = '\0';
+            strcat(p, ".pdf");
+            pprintf(prn, "<@itl=\"Documentation\">: <@adb=\"%s\">\n\n", localpdf);
+            g_free(localpdf);
+        }
     } else {
-	pputc(prn, '\n');
+        pputc(prn, '\n');
     }
 
     if (pkg->pub != NULL) {
-	if (pkg->n_pub == 1) {
-	    if (strcmp(pkg->pub[0]->name, pkg->name)) {
-		pputs(prn, "<@itl=\"Public interface\">: ");
-		pputs(prn, "<mono>\n");
-		pprintf(prn, "%s()\n", pkg->pub[0]->name);
-		pputs(prn, "</mono>\n\n");
-	    }
-	} else {
-	    pputs(prn, "<@itl=\"Public interfaces\">:\n\n");
-	    pputs(prn, "<mono>\n");
-	    for (i=0; i<pkg->n_pub; i++) {
-		pprintf(prn, "  %s()\n", pkg->pub[i]->name);
-	    }
-	    pputs(prn, "</mono>\n\n");
-	}
+        if (pkg->n_pub == 1) {
+            if (strcmp(pkg->pub[0]->name, pkg->name)) {
+                pputs(prn, "<@itl=\"Public interface\">: ");
+                pputs(prn, "<mono>\n");
+                pprintf(prn, "%s()\n", pkg->pub[0]->name);
+                pputs(prn, "</mono>\n\n");
+            }
+        } else {
+            pputs(prn, "<@itl=\"Public interfaces\">:\n\n");
+            pputs(prn, "<mono>\n");
+            for (i=0; i<pkg->n_pub; i++) {
+                pprintf(prn, "  %s()\n", pkg->pub[i]->name);
+            }
+            pputs(prn, "</mono>\n\n");
+        }
     }
 
     if (pkg->help_fname != NULL && has_suffix(pkg->help_fname, ".md")) {
-	md_to_gretl(pkg->help, prn);
+        md_to_gretl(pkg->help, prn);
     } else if (!pdfdoc) {
-	pputs(prn, "<@itl=\"Help text\">:\n\n");
-	pputs(prn, "<mono>\n");
-	pputs(prn, pkg->help);
-	pputs(prn, "\n\n");
-	pputs(prn, "</mono>\n");
+        pputs(prn, "<@itl=\"Help text\">:\n\n");
+        pputs(prn, "<mono>\n");
+        pputs(prn, pkg->help);
+        pputs(prn, "\n\n");
+        pputs(prn, "</mono>\n");
     }
 
     if (remote && pkg->sample != NULL) {
-	pputs(prn, "<@itl=\"Sample script\">:\n\n");
-	pputs(prn, "<code>\n");
-	pputs(prn, pkg->sample);
-	pputs(prn, "</code>\n");
-	pputc(prn, '\n');
+        pputs(prn, "<@itl=\"Sample script\">:\n\n");
+        pputs(prn, "<code>\n");
+        pputs(prn, pkg->sample);
+        pputs(prn, "</code>\n");
+        pputc(prn, '\n');
     }
 }
 
 static void plain_print_package_info (const fnpkg *pkg,
-				      const char *fname,
-				      PRN *prn)
+                                      const char *fname,
+                                      PRN *prn)
 {
     char vstr[8];
     int i;
 
     if (g_path_is_absolute(fname) && !strstr(fname, "dltmp.")) {
-	pprintf(prn, "File: %s\n", fname);
+        pprintf(prn, "File: %s\n", fname);
     }
     if (pkg->name[0] == '\0' || pkg->author == NULL ||
-	pkg->minver <= 0 || pkg->descrip == NULL ||
-	pkg->version == NULL || pkg->date == NULL ||
-	pkg->help == NULL) {
-	pprintf(prn, _("Broken package! Basic information is missing\n"));
-	return;
+        pkg->minver <= 0 || pkg->descrip == NULL ||
+        pkg->version == NULL || pkg->date == NULL ||
+        pkg->help == NULL) {
+        pprintf(prn, _("Broken package! Basic information is missing\n"));
+        return;
     }
 
     gretl_version_string(vstr, pkg->minver);
@@ -5970,39 +5970,39 @@ static void plain_print_package_info (const fnpkg *pkg,
     pprintf(prn, "Package: %s %s (%s)\n", pkg->name, pkg->version, pkg->date);
     pprintf(prn, "Author: %s\n", pkg->author);
     if (pkg->email != NULL && *pkg->email != '\0') {
-	pprintf(prn, "Email: %s\n", pkg->email);
+        pprintf(prn, "Email: %s\n", pkg->email);
     }
     pprintf(prn, "Required gretl version: %s (%d)\n", vstr, pkg->minver);
     pprintf(prn, "Data requirement: %s\n", _(data_needs_string(pkg->dreq)));
     pprintf(prn, "Description: %s\n", gretl_strstrip(pkg->descrip));
     if (pkg->n_depends > 0) {
-	pputs(prn, "Dependencies: ");
-	for (i=0; i<pkg->n_depends; i++) {
-	    pprintf(prn, "%s%s", pkg->depends[i],
-		    (i < pkg->n_depends-1)? ", " : "\n");
-	}
+        pputs(prn, "Dependencies: ");
+        for (i=0; i<pkg->n_depends; i++) {
+            pprintf(prn, "%s%s", pkg->depends[i],
+                    (i < pkg->n_depends-1)? ", " : "\n");
+        }
     }
     if (pkg->provider != NULL) {
-	pprintf(prn, "Provider: %s\n", pkg->provider);
+        pprintf(prn, "Provider: %s\n", pkg->provider);
     }
     pputc(prn, '\n');
 }
 
 static void real_bundle_package_info (const fnpkg *pkg,
-				      const char *fname,
-				      gretl_bundle *b)
+                                      const char *fname,
+                                      gretl_bundle *b)
 {
     int err = 0;
 
     if (g_path_is_absolute(fname) && !strstr(fname, "dltmp.")) {
-	gretl_bundle_set_string(b, "file", fname);
+        gretl_bundle_set_string(b, "file", fname);
     }
     if (pkg->name[0] == '\0' || pkg->author == NULL ||
-	pkg->minver <= 0 || pkg->descrip == NULL ||
-	pkg->version == NULL || pkg->date == NULL ||
-	pkg->help == NULL) {
-	gretl_bundle_set_int(b, "broken", 1);
-	return;
+        pkg->minver <= 0 || pkg->descrip == NULL ||
+        pkg->version == NULL || pkg->date == NULL ||
+        pkg->help == NULL) {
+        gretl_bundle_set_int(b, "broken", 1);
+        return;
     }
 
     gretl_bundle_set_string(b, "name", pkg->name);
@@ -6010,7 +6010,7 @@ static void real_bundle_package_info (const fnpkg *pkg,
     gretl_bundle_set_scalar(b, "version", dot_atof(pkg->version));
     gretl_bundle_set_string(b, "date", pkg->date);
     if (pkg->email != NULL && *pkg->email != '\0') {
-	gretl_bundle_set_string(b, "email", pkg->email);
+        gretl_bundle_set_string(b, "email", pkg->email);
     }
     gretl_bundle_set_int(b, "gretl_version", pkg->minver);
     gretl_bundle_set_string(b, "description", gretl_strstrip(pkg->descrip));
@@ -6018,13 +6018,13 @@ static void real_bundle_package_info (const fnpkg *pkg,
     gretl_bundle_set_string(b, "data_requirement", data_needs_string(pkg->dreq));
 
     if (pkg->n_depends > 0) {
-	gretl_array *D = gretl_array_from_strings(pkg->depends,
-						  pkg->n_depends,
-						  1, &err);
-	gretl_bundle_donate_data(b, "depends", D, GRETL_TYPE_ARRAY, 0);
+        gretl_array *D = gretl_array_from_strings(pkg->depends,
+                                                  pkg->n_depends,
+                                                  1, &err);
+        gretl_bundle_donate_data(b, "depends", D, GRETL_TYPE_ARRAY, 0);
     }
     if (pkg->provider != NULL) {
-	gretl_bundle_set_string(b, "provider", pkg->provider);
+        gretl_bundle_set_string(b, "provider", pkg->provider);
     }
 }
 
@@ -6036,30 +6036,30 @@ static void reflow_package_help (const char *help, PRN *prn)
     bufgets_init(help);
 
     while (bufgets(line, sizeof line, help)) {
-	if (strlen(line) <= lmax) {
-	    pputs(prn, line);
-	} else {
-	    rem = line;
-	    prev = NULL;
-	    while (strlen(rem) > lmax) {
-		for (i=lmax-1; i>0; i--) {
-		    if (rem[i] == ' ') {
-			rem[i] = '\0';
-			pprintf(prn, "%s\n", rem);
-			rem = rem + i + 1;
-			break;
-		    }
-		}
-		if (rem == line || rem == prev) {
-		    /* let's not get into an infinite loop */
-		    break;
-		}
-		prev = rem;
-	    }
-	    if (*rem != '\0') {
-		pputs(prn, rem);
-	    }
-	}
+        if (strlen(line) <= lmax) {
+            pputs(prn, line);
+        } else {
+            rem = line;
+            prev = NULL;
+            while (strlen(rem) > lmax) {
+                for (i=lmax-1; i>0; i--) {
+                    if (rem[i] == ' ') {
+                        rem[i] = '\0';
+                        pprintf(prn, "%s\n", rem);
+                        rem = rem + i + 1;
+                        break;
+                    }
+                }
+                if (rem == line || rem == prev) {
+                    /* let's not get into an infinite loop */
+                    break;
+                }
+                prev = rem;
+            }
+            if (*rem != '\0') {
+                pputs(prn, rem);
+            }
+        }
     }
 
     bufgets_finalize(help);
@@ -6073,12 +6073,12 @@ static void reflow_package_help (const char *help, PRN *prn)
 */
 
 static void print_package_help (const fnpkg *pkg,
-				const char *fname,
+                                const char *fname,
                                 char **pbuf,
-				PRN *prn)
+                                PRN *prn)
 {
     pprintf(prn, "%s %s (%s), %s\n", pkg->name, pkg->version,
-	    pkg->date, pkg->author);
+            pkg->date, pkg->author);
     pputs(prn, gretl_strstrip(pkg->descrip));
     pputs(prn, "\n\n");
 
@@ -6097,28 +6097,28 @@ static void print_package_help (const fnpkg *pkg,
 }
 
 static void print_package_code (const fnpkg *pkg,
-				int tabwidth,
-				PRN *prn)
+                                int tabwidth,
+                                PRN *prn)
 {
     int i;
 
     pprintf(prn, "# hansl code from package %s %s (%s)\n\n",
-	    pkg->name, pkg->version, pkg->date);
+            pkg->name, pkg->version, pkg->date);
 
     if (pkg->priv != NULL) {
-	pputs(prn, "# private functions\n\n");
-	for (i=0; i<pkg->n_priv; i++) {
-	    gretl_function_print_code(pkg->priv[i], tabwidth, prn);
-	    pputc(prn, '\n');
-	}
+        pputs(prn, "# private functions\n\n");
+        for (i=0; i<pkg->n_priv; i++) {
+            gretl_function_print_code(pkg->priv[i], tabwidth, prn);
+            pputc(prn, '\n');
+        }
     }
 
     if (pkg->pub != NULL) {
-	pputs(prn, "# public functions\n\n");
-	for (i=0; i<pkg->n_pub; i++) {
-	    gretl_function_print_code(pkg->pub[i], tabwidth, prn);
-	    pputc(prn, '\n');
-	}
+        pputs(prn, "# public functions\n\n");
+        for (i=0; i<pkg->n_pub; i++) {
+            gretl_function_print_code(pkg->pub[i], tabwidth, prn);
+            pputc(prn, '\n');
+        }
     }
 }
 
@@ -6129,10 +6129,10 @@ static void print_package_code (const fnpkg *pkg,
 static void maybe_update_ts_path (fnpkg *pkg)
 {
     if (pkg->mpath != NULL) {
-	if (!strcmp(pkg->mpath, "MAINWIN/Model/TSModels/TSMulti")) {
-	    free(pkg->mpath);
-	    pkg->mpath = gretl_strdup("MAINWIN/Model/TSMulti");
-	}
+        if (!strcmp(pkg->mpath, "MAINWIN/Model/TSModels/TSMulti")) {
+            free(pkg->mpath);
+            pkg->mpath = gretl_strdup("MAINWIN/Model/TSMulti");
+        }
     }
 }
 
@@ -6140,8 +6140,8 @@ static void maybe_update_ts_path (fnpkg *pkg)
 
 static fnpkg *
 real_read_package (xmlDocPtr doc, xmlNodePtr node,
-		   const char *fname, int get_funcs,
-		   int *err)
+                   const char *fname, int get_funcs,
+                   int *err)
 {
     xmlNodePtr cur;
     fnpkg *pkg;
@@ -6153,40 +6153,40 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node,
 
     pkg = function_package_alloc(fname);
     if (pkg == NULL) {
-	*err = E_ALLOC;
-	return NULL;
+        *err = E_ALLOC;
+        return NULL;
     }
 
     gretl_xml_get_prop_as_string(node, "name", &tmp);
 
     if (tmp == NULL) {
-	fprintf(stderr, "real_read_package: package has no name\n");
-	*err = E_DATA;
-	function_package_free(pkg);
-	return NULL;
+        fprintf(stderr, "real_read_package: package has no name\n");
+        *err = E_DATA;
+        function_package_free(pkg);
+        return NULL;
     }
 
     strncat(pkg->name, tmp, FN_NAMELEN - 1);
     free(tmp);
 
     if (gretl_xml_get_prop_as_bool(node, NEEDS_TS)) {
-	pkg->dreq = FN_NEEDS_TS;
+        pkg->dreq = FN_NEEDS_TS;
     } else if (gretl_xml_get_prop_as_bool(node, NEEDS_QM)) {
-	pkg->dreq = FN_NEEDS_QM;
+        pkg->dreq = FN_NEEDS_QM;
     } else if (gretl_xml_get_prop_as_bool(node, NEEDS_PANEL)) {
-	pkg->dreq = FN_NEEDS_PANEL;
+        pkg->dreq = FN_NEEDS_PANEL;
     } else if (gretl_xml_get_prop_as_bool(node, NO_DATA_OK)) {
-	pkg->dreq = FN_NODATA_OK;
+        pkg->dreq = FN_NODATA_OK;
     }
 
     if (gretl_xml_get_prop_as_string(node, "model-requirement", &tmp)) {
-	pkg->modelreq = gretl_command_number(tmp);
-	free(tmp);
+        pkg->modelreq = gretl_command_number(tmp);
+        free(tmp);
     }
 
     if (gretl_xml_get_prop_as_string(node, "minver", &tmp)) {
-	pkg->minver = gretl_version_number(tmp);
-	free(tmp);
+        pkg->minver = gretl_version_number(tmp);
+        free(tmp);
     }
 
     pkg->uses_subdir = gretl_xml_get_prop_as_bool(node, "lives-in-subdir");
@@ -6195,56 +6195,56 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node,
     cur = node->xmlChildrenNode;
 
     while (cur != NULL) {
-	if (!xmlStrcmp(cur->name, (XUC) "author")) {
-	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->author);
-	    gretl_xml_get_prop_as_string(cur, "email", &pkg->email);
-	} else if (!xmlStrcmp(cur->name, (XUC) "version")) {
-	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->version);
-	} else if (!xmlStrcmp(cur->name, (XUC) "date")) {
-	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->date);
-	} else if (!xmlStrcmp(cur->name, (XUC) "description")) {
-	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->descrip);
-	} else if (!xmlStrcmp(cur->name, (XUC) "help")) {
-	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->help);
-	    gretl_xml_get_prop_as_string(cur, "filename", &pkg->help_fname);
-	} else if (!xmlStrcmp(cur->name, (XUC) "gui-help")) {
-	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->gui_help);
-	    gretl_xml_get_prop_as_string(cur, "filename", &pkg->gui_help_fname);
-	} else if (!xmlStrcmp(cur->name, (XUC) "R-depends")) {
-	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->Rdeps);
-	} else if (!xmlStrcmp(cur->name, (XUC) "sample-script")) {
-	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->sample);
-	    gretl_xml_get_prop_as_string(cur, "filename", &pkg->sample_fname);
-	} else if (!xmlStrcmp(cur->name, (XUC) "tags")) {
-	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->tags);
-	} else if (!xmlStrcmp(cur->name, (XUC) "label")) {
-	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->label);
-	} else if (!xmlStrcmp(cur->name, (XUC) "menu-attachment")) {
-	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->mpath);
-	    maybe_update_ts_path(pkg);
-	} else if (!xmlStrcmp(cur->name, (XUC) "provider")) {
-	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->provider);
-	} else if (!xmlStrcmp(cur->name, (XUC) "data-files")) {
-	    pkg->datafiles =
-		gretl_xml_get_strings_array(cur, doc, &pkg->n_files,
-					    0, err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "depends")) {
-	    pkg->depends =
-		gretl_xml_get_strings_array(cur, doc, &pkg->n_depends,
-					    0, err);
-	}
+        if (!xmlStrcmp(cur->name, (XUC) "author")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, &pkg->author);
+            gretl_xml_get_prop_as_string(cur, "email", &pkg->email);
+        } else if (!xmlStrcmp(cur->name, (XUC) "version")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, &pkg->version);
+        } else if (!xmlStrcmp(cur->name, (XUC) "date")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, &pkg->date);
+        } else if (!xmlStrcmp(cur->name, (XUC) "description")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, &pkg->descrip);
+        } else if (!xmlStrcmp(cur->name, (XUC) "help")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, &pkg->help);
+            gretl_xml_get_prop_as_string(cur, "filename", &pkg->help_fname);
+        } else if (!xmlStrcmp(cur->name, (XUC) "gui-help")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, &pkg->gui_help);
+            gretl_xml_get_prop_as_string(cur, "filename", &pkg->gui_help_fname);
+        } else if (!xmlStrcmp(cur->name, (XUC) "R-depends")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, &pkg->Rdeps);
+        } else if (!xmlStrcmp(cur->name, (XUC) "sample-script")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, &pkg->sample);
+            gretl_xml_get_prop_as_string(cur, "filename", &pkg->sample_fname);
+        } else if (!xmlStrcmp(cur->name, (XUC) "tags")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, &pkg->tags);
+        } else if (!xmlStrcmp(cur->name, (XUC) "label")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, &pkg->label);
+        } else if (!xmlStrcmp(cur->name, (XUC) "menu-attachment")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, &pkg->mpath);
+            maybe_update_ts_path(pkg);
+        } else if (!xmlStrcmp(cur->name, (XUC) "provider")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, &pkg->provider);
+        } else if (!xmlStrcmp(cur->name, (XUC) "data-files")) {
+            pkg->datafiles =
+                gretl_xml_get_strings_array(cur, doc, &pkg->n_files,
+                                            0, err);
+        } else if (!xmlStrcmp(cur->name, (XUC) "depends")) {
+            pkg->depends =
+                gretl_xml_get_strings_array(cur, doc, &pkg->n_depends,
+                                            0, err);
+        }
 
-	cur = cur->next;
+        cur = cur->next;
     }
 
     if (get_funcs) {
-	cur = node->xmlChildrenNode;
-	while (cur != NULL && !*err) {
-	    if (!xmlStrcmp(cur->name, (XUC) "gretl-function")) {
-		*err = read_ufunc_from_xml(cur, doc, pkg);
-	    }
-	    cur = cur->next;
-	}
+        cur = node->xmlChildrenNode;
+        while (cur != NULL && !*err) {
+            if (!xmlStrcmp(cur->name, (XUC) "gretl-function")) {
+                *err = read_ufunc_from_xml(cur, doc, pkg);
+            }
+            cur = cur->next;
+        }
     }
 
 #if PKG_DEBUG
@@ -6274,54 +6274,54 @@ int read_session_functions_file (const char *fname)
 
     err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
     if (err) {
-	return err;
+        return err;
     }
 
 #ifdef HAVE_MPI
     if (gretl_mpi_rank() >= 0) {
-	get_caller = 1;
+        get_caller = 1;
     }
 #endif
 
     /* get any function packages from this file */
     cur = node->xmlChildrenNode;
     while (cur != NULL && !err) {
-	if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
-	    pkg = real_read_package(doc, cur, fname, 1, &err);
-	    if (!err) {
-		err = real_load_package(pkg, NULL, NULL);
-	    }
-	}
+        if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
+            pkg = real_read_package(doc, cur, fname, 1, &err);
+            if (!err) {
+                err = real_load_package(pkg, NULL, NULL);
+            }
+        }
 #ifdef HAVE_MPI
-	else if (get_caller && !xmlStrcmp(cur->name, (XUC) "caller")) {
-	    /* are these functions being loaded from within a
-	       function that's calling mpi?
-	    */
-	    char *caller = gretl_xml_get_string(cur, doc);
+        else if (get_caller && !xmlStrcmp(cur->name, (XUC) "caller")) {
+            /* are these functions being loaded from within a
+               function that's calling mpi?
+            */
+            char *caller = gretl_xml_get_string(cur, doc);
 
-	    if (caller != NULL) {
-		strcpy(mpi_caller, caller);
-		free(caller);
-	    }
-	    get_caller = 0;
-	}
+            if (caller != NULL) {
+                strcpy(mpi_caller, caller);
+                free(caller);
+            }
+            get_caller = 0;
+        }
 #endif
-	cur = cur->next;
+        cur = cur->next;
     }
 
     /* then get any unpackaged functions */
     if (!err) {
-	cur = node->xmlChildrenNode;
-	while (cur != NULL && !err) {
-	    if (!xmlStrcmp(cur->name, (XUC) "gretl-function")) {
-		err = read_ufunc_from_xml(cur, doc, NULL);
-	    }
-	    cur = cur->next;
-	}
+        cur = node->xmlChildrenNode;
+        while (cur != NULL && !err) {
+            if (!xmlStrcmp(cur->name, (XUC) "gretl-function")) {
+                err = read_ufunc_from_xml(cur, doc, NULL);
+            }
+            cur = cur->next;
+        }
     }
 
     if (doc != NULL) {
-	xmlFreeDoc(doc);
+        xmlFreeDoc(doc);
     }
 
 #if PKG_DEBUG
@@ -6338,8 +6338,8 @@ int read_session_functions_file (const char *fname)
 */
 
 static fnpkg *read_package_file (const char *fname,
-				 int get_funcs,
-				 int *err)
+                                 int get_funcs,
+                                 int *err)
 {
     fnpkg *pkg = NULL;
     xmlDocPtr doc = NULL;
@@ -6352,24 +6352,24 @@ static fnpkg *read_package_file (const char *fname,
 
     *err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
     if (*err) {
-	return NULL;
+        return NULL;
     }
 
     cur = node->xmlChildrenNode;
     while (cur != NULL && !*err) {
-	if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
-	    pkg = real_read_package(doc, cur, fname, get_funcs, err);
-	    break;
-	}
-	cur = cur->next;
+        if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
+            pkg = real_read_package(doc, cur, fname, get_funcs, err);
+            break;
+        }
+        cur = cur->next;
     }
 
     if (doc != NULL) {
-	xmlFreeDoc(doc);
+        xmlFreeDoc(doc);
     }
 
     if (!*err && pkg == NULL) {
-	*err = E_DATA;
+        *err = E_DATA;
     }
 
 #if PKG_DEBUG
@@ -6388,13 +6388,13 @@ char **package_peek_dependencies (const char *fname, int *ndeps)
     pkg = read_package_file(fname, 0, &err);
 
     if (pkg != NULL) {
-	deps = pkg->depends; /* stolen! */
-	*ndeps = pkg->n_depends;
-	pkg->depends = NULL;
-	pkg->n_depends = 0;
-	function_package_free(pkg);
+        deps = pkg->depends; /* stolen! */
+        *ndeps = pkg->n_depends;
+        pkg->depends = NULL;
+        pkg->n_depends = 0;
+        function_package_free(pkg);
     } else {
-	*ndeps = 0;
+        *ndeps = 0;
     }
 
     return deps;
@@ -6410,7 +6410,7 @@ char **package_peek_dependencies (const char *fname, int *ndeps)
  */
 
 int function_package_is_loaded (const char *fname,
-				const char **version)
+                                const char **version)
 {
     return (get_loaded_pkg_by_filename(fname, version) != NULL);
 }
@@ -6428,15 +6428,15 @@ int gfn_is_loaded (const char *gfnname)
     int ret = 0;
 
     if (strchr(gfnname, SLASH) == NULL && has_suffix(gfnname, ".gfn")) {
-	/* plain basename of gfn file */
-	gchar *test = g_strdup(gfnname);
-	gchar *p = strrchr(test, '.');
+        /* plain basename of gfn file */
+        gchar *test = g_strdup(gfnname);
+        gchar *p = strrchr(test, '.');
 
-	*p = '\0';
-	if (get_function_package_by_name(test)) {
-	    ret = 1;
-	}
-	g_free(test);
+        *p = '\0';
+        if (get_function_package_by_name(test)) {
+            ret = 1;
+        }
+        g_free(test);
     }
 
     return ret;
@@ -6456,11 +6456,11 @@ static fnpkg *check_for_loaded (const char *fname, gretlopt opt)
     fnpkg *pkg = get_loaded_pkg_by_filename(fname, NULL);
 
     if (pkg != NULL) {
-	if (opt & OPT_F) {
-	    /* force re-reading from file */
-	    real_function_package_unload(pkg, 1);
-	    pkg = NULL;
-	}
+        if (opt & OPT_F) {
+            /* force re-reading from file */
+            real_function_package_unload(pkg, 1);
+            pkg = NULL;
+        }
     }
 
     return pkg;
@@ -6481,43 +6481,43 @@ static fnpkg *check_for_loaded (const char *fname, gretlopt opt)
  */
 
 static int load_function_package (const char *fname,
-				  gretlopt opt,
-				  GArray *pstack,
-				  PRN *prn)
+                                  gretlopt opt,
+                                  GArray *pstack,
+                                  PRN *prn)
 {
     fnpkg *pkg;
     int err = 0;
 
     pkg = check_for_loaded(fname, opt);
     if (pkg != NULL) {
-	return 0;
+        return 0;
     }
 
     pkg = read_package_file(fname, 1, &err);
 
     if (!err && pkg->Rdeps != NULL) {
-	err = check_R_depends(pkg->name, pkg->Rdeps, prn);
+        err = check_R_depends(pkg->name, pkg->Rdeps, prn);
     }
 
     if (!err) {
-	/* Let's double-check that we don't have a
-	   colliding package (it would have to be
-	   with a different filename).
-	*/
-	fnpkg *oldpkg;
+        /* Let's double-check that we don't have a
+           colliding package (it would have to be
+           with a different filename).
+        */
+        fnpkg *oldpkg;
 
-	oldpkg = get_function_package_by_name(pkg->name);
-	if (oldpkg != NULL) {
-	    real_function_package_unload(oldpkg, 1);
-	}
-	err = real_load_package(pkg, pstack, prn);
+        oldpkg = get_function_package_by_name(pkg->name);
+        if (oldpkg != NULL) {
+            real_function_package_unload(oldpkg, 1);
+        }
+        err = real_load_package(pkg, pstack, prn);
     }
 
     if (err) {
-	fprintf(stderr, "load function package: failed on %s\n", fname);
+        fprintf(stderr, "load function package: failed on %s\n", fname);
     } else if (pkg != NULL && prn != NULL && not_mpi_duplicate()) {
-	pprintf(prn, "%s %s, %s (%s)\n", pkg->name, pkg->version,
-		pkg->date, pkg->author);
+        pprintf(prn, "%s %s, %s (%s)\n", pkg->name, pkg->version,
+                pkg->date, pkg->author);
     }
 
     return err;
@@ -6546,7 +6546,7 @@ int include_gfn (const char *fname, gretlopt opt, PRN *prn)
     pkgname = g_path_get_basename(fname);
     p = strrchr(pkgname, '.');
     if (p != NULL) {
-	*p = '\0';
+        *p = '\0';
     }
 
     pstack = g_array_new(FALSE, FALSE, sizeof(char *));
@@ -6577,24 +6577,24 @@ fnpkg *get_function_package_by_filename (const char *fname, int *err)
     int i, myerr = 0;
 
     for (i=0; i<n_pkgs; i++) {
-	if (!strcmp(fname, pkgs[i]->fname)) {
-	    pkg = pkgs[i];
-	    break;
-	}
+        if (!strcmp(fname, pkgs[i]->fname)) {
+            pkg = pkgs[i];
+            break;
+        }
     }
 
     if (pkg == NULL) {
         PRN *prn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
 
-	myerr = include_gfn(fname, OPT_NONE, prn);
-	if (!myerr) {
-	    for (i=0; i<n_pkgs; i++) {
-		if (!strcmp(fname, pkgs[i]->fname)) {
-		    pkg = pkgs[i];
-		    break;
-		}
-	    }
-	} else if (prn != NULL) {
+        myerr = include_gfn(fname, OPT_NONE, prn);
+        if (!myerr) {
+            for (i=0; i<n_pkgs; i++) {
+                if (!strcmp(fname, pkgs[i]->fname)) {
+                    pkg = pkgs[i];
+                    break;
+                }
+            }
+        } else if (prn != NULL) {
             const char *buf = gretl_print_get_buffer(prn);
 
             gretl_errmsg_set(buf);
@@ -6603,7 +6603,7 @@ fnpkg *get_function_package_by_filename (const char *fname, int *err)
     }
 
     if (err != NULL) {
-	*err = myerr;
+        *err = myerr;
     }
 
     return pkg;
@@ -6622,27 +6622,27 @@ fnpkg *get_function_package_by_name (const char *pkgname)
     int i;
 
     if (has_suffix(pkgname, ".gfn") || has_suffix(pkgname, ".zip")) {
-	/* just in case: strip off the extension */
-	gchar *tmp = g_strdup(pkgname);
-	gchar *p = strrchr(tmp, '.');
-	fnpkg *ret = NULL;
+        /* just in case: strip off the extension */
+        gchar *tmp = g_strdup(pkgname);
+        gchar *p = strrchr(tmp, '.');
+        fnpkg *ret = NULL;
 
-	*p = '\0';
-	for (i=0; i<n_pkgs; i++) {
-	    if (!strcmp(tmp, pkgs[i]->name)) {
-		ret = pkgs[i];
-		break;
-	    }
-	}
-	g_free(tmp);
-	return ret;
+        *p = '\0';
+        for (i=0; i<n_pkgs; i++) {
+            if (!strcmp(tmp, pkgs[i]->name)) {
+                ret = pkgs[i];
+                break;
+            }
+        }
+        g_free(tmp);
+        return ret;
     } else {
-	for (i=0; i<n_pkgs; i++) {
-	    if (!strcmp(pkgname, pkgs[i]->name)) {
-		return pkgs[i];
-	    }
-	}
-	return NULL;
+        for (i=0; i<n_pkgs; i++) {
+            if (!strcmp(pkgname, pkgs[i]->name)) {
+                return pkgs[i];
+            }
+        }
+        return NULL;
     }
 }
 
@@ -6659,9 +6659,9 @@ const char *get_function_package_path_by_name (const char *pkgname)
     int i;
 
     for (i=0; i<n_pkgs; i++) {
-	if (!strcmp(pkgname, pkgs[i]->name)) {
-	    return pkgs[i]->fname;
-	}
+        if (!strcmp(pkgname, pkgs[i]->name)) {
+            return pkgs[i]->fname;
+        }
     }
 
     return NULL;
@@ -6673,15 +6673,15 @@ static int gfn_version_fail (const char *fname, PRN *prn)
     int err = 0;
 
     if (fp != NULL) {
-	char line[128];
+        char line[128];
 
-	if (fgets(line, sizeof line, fp) &&
-	    strchr(line, '<') == NULL &&
-	    strstr(line, "requires gretl") != NULL) {
-	    gretl_errmsg_set(gretl_strstrip(line));
-	    err = 1;
-	}
-	fclose(fp);
+        if (fgets(line, sizeof line, fp) &&
+            strchr(line, '<') == NULL &&
+            strstr(line, "requires gretl") != NULL) {
+            gretl_errmsg_set(gretl_strstrip(line));
+            err = 1;
+        }
+        fclose(fp);
     }
 
     return err;
@@ -6694,8 +6694,8 @@ static int gfn_version_fail (const char *fname, PRN *prn)
 
 static int real_print_gfn_data (const char *fname,
                                 char **pbuf, PRN *prn,
-				int tabwidth, int task,
-				gretl_bundle *b)
+                                int tabwidth, int task,
+                                gretl_bundle *b)
 {
     fnpkg *pkg = NULL;
     int free_pkg = 0;
@@ -6706,9 +6706,9 @@ static int real_print_gfn_data (const char *fname,
 #endif
 
     if (task == FUNCS_INFO && prn != NULL && strstr(fname, "dltmp.")) {
-	if (gfn_version_fail(fname, prn)) {
-	    return 1;
-	}
+        if (gfn_version_fail(fname, prn)) {
+            return 1;
+        }
     }
 
     pkg = get_loaded_pkg_by_filename(fname, NULL);
@@ -6718,42 +6718,42 @@ static int real_print_gfn_data (const char *fname,
 #endif
 
     if (pkg == NULL) {
-	/* package is not loaded, read it now */
-	int get_funcs = 1;
+        /* package is not loaded, read it now */
+        int get_funcs = 1;
 
-	if (task == FUNCS_HELP || task == FUNCS_INFO ||
-	    task == FUNCS_SAMPLE || task == FUNCS_QUERY) {
-	    get_funcs = 0;
-	}
-	pkg = read_package_file(fname, get_funcs, &err);
-	free_pkg = 1;
+        if (task == FUNCS_HELP || task == FUNCS_INFO ||
+            task == FUNCS_SAMPLE || task == FUNCS_QUERY) {
+            get_funcs = 0;
+        }
+        pkg = read_package_file(fname, get_funcs, &err);
+        free_pkg = 1;
     }
 
     if (!err) {
-	if (task == FUNCS_HELP) {
-	    print_package_help(pkg, fname, pbuf, prn);
-	} else if (task == FUNCS_INFO) {
-	    print_package_info(pkg, fname, prn);
-	} else if (task == FUNCS_QUERY) {
-	    if (b != NULL) {
-		real_bundle_package_info(pkg, fname, b);
-	    } else {
-		plain_print_package_info(pkg, fname, prn);
-	    }
-	} else if (task == FUNCS_SAMPLE) {
-	    pputs(prn, pkg->sample);
-	} else if (task == FUNCS_CODE) {
-	    /* called by print_function_package_code() */
-	    print_package_code(pkg, tabwidth, prn);
-	}
-	if (free_pkg) {
-	    function_package_free_full(pkg);
-	}
+        if (task == FUNCS_HELP) {
+            print_package_help(pkg, fname, pbuf, prn);
+        } else if (task == FUNCS_INFO) {
+            print_package_info(pkg, fname, prn);
+        } else if (task == FUNCS_QUERY) {
+            if (b != NULL) {
+                real_bundle_package_info(pkg, fname, b);
+            } else {
+                plain_print_package_info(pkg, fname, prn);
+            }
+        } else if (task == FUNCS_SAMPLE) {
+            pputs(prn, pkg->sample);
+        } else if (task == FUNCS_CODE) {
+            /* called by print_function_package_code() */
+            print_package_code(pkg, tabwidth, prn);
+        }
+        if (free_pkg) {
+            function_package_free_full(pkg);
+        }
     }
 
 #if PKG_DEBUG
     fprintf(stderr, "real_get_function_file_info: err = %d (free_pkg = %d)\n",
-	    err, free_pkg);
+            err, free_pkg);
 #endif
 
     return err;
@@ -6762,7 +6762,7 @@ static int real_print_gfn_data (const char *fname,
 /* callback used in the GUI function package browser */
 
 int print_function_package_info (const char *fname, int gui_mode,
-				 PRN *prn)
+                                 PRN *prn)
 {
     int mode = gui_mode ? FUNCS_INFO : FUNCS_QUERY;
 
@@ -6779,7 +6779,7 @@ int bundle_function_package_info (const char *fname, gretl_bundle *b)
 /* callback used in the GUI function package browser (gui/datafiles.c) */
 
 int print_function_package_code (const char *fname, int tabwidth,
-				 PRN *prn)
+                                 PRN *prn)
 {
     return real_print_gfn_data(fname, NULL, prn, tabwidth, FUNCS_CODE, NULL);
 }
@@ -6787,7 +6787,7 @@ int print_function_package_code (const char *fname, int tabwidth,
 /* callback used in the GUI function package browser */
 
 int print_function_package_sample (const char *fname, int tabwidth,
-				   PRN *prn)
+                                   PRN *prn)
 {
     return real_print_gfn_data(fname, NULL, prn, tabwidth, FUNCS_SAMPLE, NULL);
 }
@@ -6804,15 +6804,15 @@ static void maybe_fix_broken_date (char **pdate)
     char *date = *pdate;
 
     if (strlen(date) < 10 && date[4] == '-') {
-	int y, m, d;
+        int y, m, d;
 
-	if (sscanf(date, "%d-%d-%d", &y, &m, &d) == 3) {
-	    char tmp[12];
+        if (sscanf(date, "%d-%d-%d", &y, &m, &d) == 3) {
+            char tmp[12];
 
-	    sprintf(tmp, "%d-%02d-%02d", y, m, d);
-	    free(*pdate);
-	    *pdate = gretl_strdup(tmp);
-	}
+            sprintf(tmp, "%d-%02d-%02d", y, m, d);
+            free(*pdate);
+            *pdate = gretl_strdup(tmp);
+        }
     }
 }
 
@@ -6845,8 +6845,8 @@ static int get_pdfdoc_status (xmlNodePtr sub,
 */
 
 int get_function_file_header (const char *fname, char **pdesc,
-			      char **pver, char **pdate,
-			      char **pauthor, int *pdfdoc)
+                              char **pver, char **pdate,
+                              char **pauthor, int *pdfdoc)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
@@ -6862,82 +6862,82 @@ int get_function_file_header (const char *fname, char **pdesc,
 
     err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
     if (err) {
-	return err;
+        return err;
     }
 
     if (pdfdoc == NULL) {
-	/* not wanted, so count it as "done" already */
-	docdone = 1;
+        /* not wanted, so count it as "done" already */
+        docdone = 1;
     } else {
-	*pdfdoc = 0;
+        *pdfdoc = 0;
     }
 
     node = node->xmlChildrenNode;
     while (node != NULL) {
-	if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
-	    sub = node->xmlChildrenNode;
-	    while (sub != NULL) {
-		if (!xmlStrcmp(sub->name, (XUC) "description")) {
-		    gretl_xml_node_get_trimmed_string(sub, doc, pdesc);
+        if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
+            sub = node->xmlChildrenNode;
+            while (sub != NULL) {
+                if (!xmlStrcmp(sub->name, (XUC) "description")) {
+                    gretl_xml_node_get_trimmed_string(sub, doc, pdesc);
                     ndone++;
-		} else if (!xmlStrcmp(sub->name, (XUC) "version")) {
-		    gretl_xml_node_get_trimmed_string(sub, doc, pver);
+                } else if (!xmlStrcmp(sub->name, (XUC) "version")) {
+                    gretl_xml_node_get_trimmed_string(sub, doc, pver);
                     ndone++;
-		} else if (!xmlStrcmp(sub->name, (XUC) "date")) {
-		    gretl_xml_node_get_trimmed_string(sub, doc, pdate);
-		    if (*pdate != NULL) {
-			maybe_fix_broken_date(pdate);
-		    }
+                } else if (!xmlStrcmp(sub->name, (XUC) "date")) {
+                    gretl_xml_node_get_trimmed_string(sub, doc, pdate);
+                    if (*pdate != NULL) {
+                        maybe_fix_broken_date(pdate);
+                    }
                     ndone++;
-		} else if (!xmlStrcmp(sub->name, (XUC) "author")) {
-		    gretl_xml_node_get_trimmed_string(sub, doc, pauthor);
+                } else if (!xmlStrcmp(sub->name, (XUC) "author")) {
+                    gretl_xml_node_get_trimmed_string(sub, doc, pauthor);
                     ndone++;
-		} else if (!docdone && !xmlStrcmp(sub->name, (XUC) "help")) {
+                } else if (!docdone && !xmlStrcmp(sub->name, (XUC) "help")) {
                     *pdfdoc = get_pdfdoc_status(sub, doc);
-		    docdone = 1;
-		}
-		if (docdone && ndone == 4) {
-		    break;
-		}
-		sub = sub->next;
-	    }
-	    if (docdone && ndone == 4) {
-		/* we've already got what we want */
-		break;
-	    }
-	}
-	node = node->next;
+                    docdone = 1;
+                }
+                if (docdone && ndone == 4) {
+                    break;
+                }
+                sub = sub->next;
+            }
+            if (docdone && ndone == 4) {
+                /* we've already got what we want */
+                break;
+            }
+        }
+        node = node->next;
     }
 
     if (doc != NULL) {
-	xmlFreeDoc(doc);
+        xmlFreeDoc(doc);
     }
 
     if (*pdesc == NULL) {
-	*pdesc = gretl_strdup(_("No description available"));
+        *pdesc = gretl_strdup(_("No description available"));
     }
     if (*pver == NULL) {
-	*pver = gretl_strdup("unknown");
+        *pver = gretl_strdup("unknown");
     }
     if (*pdate == NULL) {
-	*pdate = gretl_strdup("unknown");
+        *pdate = gretl_strdup("unknown");
     }
     if (*pauthor == NULL) {
-	*pauthor = gretl_strdup("unknown");
+        *pauthor = gretl_strdup("unknown");
     }
 
     if (*pdesc == NULL || *pver == NULL ||
         *pdate == NULL || *pauthor == NULL) {
-	err = E_ALLOC;
+        err = E_ALLOC;
     }
 
     return err;
 }
 
 int package_has_menu_attachment (const char *fname,
-				 char **pkgname,
-				 char **attach,
-				 char **label)
+                                 char **pkgname,
+                                 char **attach,
+                                 char **label)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
@@ -6950,69 +6950,69 @@ int package_has_menu_attachment (const char *fname,
 
     err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
     if (err) {
-	return 0;
+        return 0;
     }
 
     node = node->xmlChildrenNode;
 
     while (!stop && node != NULL) {
-	if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
-	    if (pkgname != NULL) {
-		gretl_xml_get_prop_as_string(node, "name", pkgname);
-		if (*pkgname != NULL && !strcmp(*pkgname, "ridge")) {
-		    /* don't put it into menu */
-		    stop = 1;
-		}
-	    }
-	    sub = node->xmlChildrenNode;
-	    while (!stop && sub != NULL) {
-		if (!xmlStrcmp(sub->name, (XUC) "menu-attachment")) {
-		    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
-		    if (tmp != NULL) {
-			got_attach = 1;
-			if (got_attach && got_label) {
-			    stop = 1;
-			}
-			if (attach != NULL) {
-			    *attach = tmp;
-			} else {
-			    free(tmp);
-			}
-		    }
-		} else if (!xmlStrcmp(sub->name, (XUC) "label")) {
-		    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
-		    if (tmp != NULL) {
-			got_label = 1;
-			if (got_attach && got_label) {
-			    stop = 1;
-			}
-			if (label != NULL) {
-			    *label = tmp;
-			} else {
-			    free(tmp);
-			}
-		    }
-		} else if (!xmlStrcmp(sub->name, (XUC) "help")) {
-		    /* we've overshot */
-		    stop = 1;
-		}
-		sub = sub->next;
-	    }
-	}
-	node = node->next;
+        if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
+            if (pkgname != NULL) {
+                gretl_xml_get_prop_as_string(node, "name", pkgname);
+                if (*pkgname != NULL && !strcmp(*pkgname, "ridge")) {
+                    /* don't put it into menu */
+                    stop = 1;
+                }
+            }
+            sub = node->xmlChildrenNode;
+            while (!stop && sub != NULL) {
+                if (!xmlStrcmp(sub->name, (XUC) "menu-attachment")) {
+                    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
+                    if (tmp != NULL) {
+                        got_attach = 1;
+                        if (got_attach && got_label) {
+                            stop = 1;
+                        }
+                        if (attach != NULL) {
+                            *attach = tmp;
+                        } else {
+                            free(tmp);
+                        }
+                    }
+                } else if (!xmlStrcmp(sub->name, (XUC) "label")) {
+                    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
+                    if (tmp != NULL) {
+                        got_label = 1;
+                        if (got_attach && got_label) {
+                            stop = 1;
+                        }
+                        if (label != NULL) {
+                            *label = tmp;
+                        } else {
+                            free(tmp);
+                        }
+                    }
+                } else if (!xmlStrcmp(sub->name, (XUC) "help")) {
+                    /* we've overshot */
+                    stop = 1;
+                }
+                sub = sub->next;
+            }
+        }
+        node = node->next;
     }
 
     if (doc != NULL) {
-	xmlFreeDoc(doc);
+        xmlFreeDoc(doc);
     }
 
     return got_attach && got_label;
 }
 
 int package_needs_zipping (const char *fname,
-			   int *pdfdoc,
-			   char ***datafiles,
-			   int *n_files)
+                           int *pdfdoc,
+                           char ***datafiles,
+                           int *n_files)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
@@ -7025,50 +7025,50 @@ int package_needs_zipping (const char *fname,
 
     err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
     if (err) {
-	return 0;
+        return 0;
     }
 
     if (datafiles != NULL) {
-	retmax = 2;
+        retmax = 2;
     }
 
     node = node->xmlChildrenNode;
 
     while (!stop && node != NULL) {
-	if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
-	    sub = node->xmlChildrenNode;
-	    while (!stop && sub != NULL) {
-		if (!xmlStrcmp(sub->name, (XUC) "help")) {
-		    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
-		    if (tmp != NULL && !strncmp(tmp, "pdfdoc:", 7)) {
-			if (pdfdoc != NULL) {
-			    *pdfdoc = 1;
-			}
-			ret++;
-		    }
-		    free(tmp);
-		} else if (!xmlStrcmp(sub->name, (XUC) "data-files")) {
-		    if (datafiles != NULL) {
-			*datafiles = gretl_xml_get_strings_array(sub, doc, n_files,
-								 0, &err);
-		    }
-		    ret++;
-		} else if (!xmlStrcmp(sub->name, (XUC) "gretl-function")) {
-		    /* we've overshot */
-		    stop = 1;
-		}
-		if (ret == retmax) {
-		    stop = 1;
-		} else {
-		    sub = sub->next;
-		}
-	    }
-	}
-	node = node->next;
+        if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
+            sub = node->xmlChildrenNode;
+            while (!stop && sub != NULL) {
+                if (!xmlStrcmp(sub->name, (XUC) "help")) {
+                    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
+                    if (tmp != NULL && !strncmp(tmp, "pdfdoc:", 7)) {
+                        if (pdfdoc != NULL) {
+                            *pdfdoc = 1;
+                        }
+                        ret++;
+                    }
+                    free(tmp);
+                } else if (!xmlStrcmp(sub->name, (XUC) "data-files")) {
+                    if (datafiles != NULL) {
+                        *datafiles = gretl_xml_get_strings_array(sub, doc, n_files,
+                                                                 0, &err);
+                    }
+                    ret++;
+                } else if (!xmlStrcmp(sub->name, (XUC) "gretl-function")) {
+                    /* we've overshot */
+                    stop = 1;
+                }
+                if (ret == retmax) {
+                    stop = 1;
+                } else {
+                    sub = sub->next;
+                }
+            }
+        }
+        node = node->next;
     }
 
     if (doc != NULL) {
-	xmlFreeDoc(doc);
+        xmlFreeDoc(doc);
     }
 
     return ret;
@@ -7084,27 +7084,27 @@ double gfn_file_get_version (const char *fname)
     err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
 
     if (!err) {
-	xmlNodePtr sub;
-	int found = 0;
+        xmlNodePtr sub;
+        int found = 0;
 
-	node = node->xmlChildrenNode;
-	while (node != NULL && !found) {
-	    if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
-		sub = node->xmlChildrenNode;
-		while (sub != NULL && !found) {
-		    if (!xmlStrcmp(sub->name, (XUC) "version")) {
-			gretl_xml_node_get_double(sub, doc, &version);
-			found = 1;
-		    }
-		    sub = sub->next;
-		}
-	    }
-	    node = node->next;
-	}
+        node = node->xmlChildrenNode;
+        while (node != NULL && !found) {
+            if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
+                sub = node->xmlChildrenNode;
+                while (sub != NULL && !found) {
+                    if (!xmlStrcmp(sub->name, (XUC) "version")) {
+                        gretl_xml_node_get_double(sub, doc, &version);
+                        found = 1;
+                    }
+                    sub = sub->next;
+                }
+            }
+            node = node->next;
+        }
     }
 
     if (doc != NULL) {
-	xmlFreeDoc(doc);
+        xmlFreeDoc(doc);
     }
 
     return version;
@@ -7136,19 +7136,19 @@ static int skip_private_func (ufunc *ufun)
     int skip = 0;
 
     if (function_is_private(ufun)) {
-	/* skip it, unless we're "authorized" to edit it,
-	   i.e. coming from the gui package editor */
-	skip = 1;
-	if (ufun->pkg != NULL && ufun->pkg == current_pkg) {
-	    skip = 0;
-	}
+        /* skip it, unless we're "authorized" to edit it,
+           i.e. coming from the gui package editor */
+        skip = 1;
+        if (ufun->pkg != NULL && ufun->pkg == current_pkg) {
+            skip = 0;
+        }
     }
 
     return skip;
 }
 
 static int check_function_name (const char *name, ufunc **pfun,
-				const DATASET *dset, PRN *prn)
+                                const DATASET *dset, PRN *prn)
 {
     int i, err = 0;
 
@@ -7157,41 +7157,41 @@ static int check_function_name (const char *name, ufunc **pfun,
 #endif
 
     if (!isalpha((unsigned char) *name)) {
-	gretl_errmsg_set(_("Function names must start with a letter"));
-	err = 1;
+        gretl_errmsg_set(_("Function names must start with a letter"));
+        err = 1;
     } else if (gretl_reserved_word(name)) {
-	err = 1;
+        err = 1;
     } else if (function_lookup(name)) {
-	gretl_errmsg_sprintf(_("'%s' is the name of a built-in function"), name);
-	err = 1;
+        gretl_errmsg_sprintf(_("'%s' is the name of a built-in function"), name);
+        err = 1;
     } else if (gretl_is_user_var(name)) {
-	gretl_errmsg_sprintf(_("'%s' is the name of a variable"), name);
-	err = 1;
+        gretl_errmsg_sprintf(_("'%s' is the name of a variable"), name);
+        err = 1;
     } else if (gretl_is_series(name, dset)) {
-	gretl_errmsg_sprintf(_("'%s' is the name of a variable"), name);
-	err = 1;
+        gretl_errmsg_sprintf(_("'%s' is the name of a variable"), name);
+        err = 1;
     } else {
-	/* @name is OK, now check for existing function of the same name */
-	for (i=0; i<n_ufuns; i++) {
-	    if (!skip_private_func(ufuns[i]) && !strcmp(name, ufuns[i]->name)) {
+        /* @name is OK, now check for existing function of the same name */
+        for (i=0; i<n_ufuns; i++) {
+            if (!skip_private_func(ufuns[i]) && !strcmp(name, ufuns[i]->name)) {
 #if FN_DEBUG
-		fprintf(stderr, "'%s': found an existing function of this name\n", name);
+                fprintf(stderr, "'%s': found an existing function of this name\n", name);
 #endif
-		if (ufuns[i]->pkg != NULL && ufuns[i]->pkg != current_pkg) {
-		    /* don't allow overwriting */
-		    gretl_errmsg_sprintf(_("The function %s is already defined "
-					 "by package '%s'"), name,
-					 ufuns[i]->pkg->name);
-		    err = E_DATA;
-		} else if (pfun != NULL) {
-		    clear_ufunc_data(ufuns[i]);
-		    *pfun = ufuns[i];
-		} else {
-		    ufunc_unload(ufuns[i]);
-		}
-		break;
-	    }
-	}
+                if (ufuns[i]->pkg != NULL && ufuns[i]->pkg != current_pkg) {
+                    /* don't allow overwriting */
+                    gretl_errmsg_sprintf(_("The function %s is already defined "
+                                         "by package '%s'"), name,
+                                         ufuns[i]->pkg->name);
+                    err = E_DATA;
+                } else if (pfun != NULL) {
+                    clear_ufunc_data(ufuns[i]);
+                    *pfun = ufuns[i];
+                } else {
+                    ufunc_unload(ufuns[i]);
+                }
+                break;
+            }
+        }
     }
 
     return err;
@@ -7203,18 +7203,18 @@ static int maybe_delete_function (const char *fname, PRN *prn)
     int err = 0;
 
     if (fun == NULL) {
-	; /* no-op */
+        ; /* no-op */
     } else if (function_in_use(fun)) {
-	gretl_errmsg_sprintf(_("%s: function is in use"), fname);
-	err = 1;
+        gretl_errmsg_sprintf(_("%s: function is in use"), fname);
+        err = 1;
     } else if (fun->pkg != NULL) {
-	gretl_errmsg_sprintf(_("%s: function belongs to package"), fname);
-	err = 1;
+        gretl_errmsg_sprintf(_("%s: function belongs to package"), fname);
+        err = 1;
     } else {
-	ufunc_unload(fun);
-	if (gretl_messages_on()) {
-	    pprintf(prn, _("Deleted function '%s'\n"), fname);
-	}
+        ufunc_unload(fun);
+        if (gretl_messages_on()) {
+            pprintf(prn, _("Deleted function '%s'\n"), fname);
+        }
     }
 
     return err;
@@ -7229,57 +7229,57 @@ static int comma_count (const char *s)
     int nc = 0;
 
     while (*s) {
-	if (!quoted) {
-	    if (*s == '{') {
-		braced++;
-	    } else if (*s == '}') {
-		braced--;
-	    }
-	}
-	if (*s == '"') {
-	    quoted = !quoted;
-	} else if (!quoted && !braced && *s == ',') {
-	    nc++;
-	}
-	s++;
+        if (!quoted) {
+            if (*s == '{') {
+                braced++;
+            } else if (*s == '}') {
+                braced--;
+            }
+        }
+        if (*s == '"') {
+            quoted = !quoted;
+        } else if (!quoted && !braced && *s == ',') {
+            nc++;
+        }
+        s++;
     }
 
     return nc;
 }
 
 static int check_parm_min_max (fn_param *p, const char *name,
-			       int *nvals)
+                               int *nvals)
 {
     int err = 0;
 
     if (p->type != GRETL_TYPE_DOUBLE && na(p->deflt)) {
-	gretl_errmsg_sprintf(_("%s: parameters of type %s cannot have a "
-			     "default value of NA"), name,
-			     gretl_type_get_name(p->type));
-	err = E_DATA;
+        gretl_errmsg_sprintf(_("%s: parameters of type %s cannot have a "
+                             "default value of NA"), name,
+                             gretl_type_get_name(p->type));
+        err = E_DATA;
     }
 
     if (!err && !na(p->min) && !na(p->max)) {
-	if (p->min > p->max) {
-	    gretl_errmsg_sprintf("%s: min > max", name);
-	    err = E_DATA;
-	} else if (!na(p->step) && p->step > p->max - p->min) {
-	    gretl_errmsg_sprintf("%s: step > max - min", name);
-	    err = E_DATA;
-	}
-	if (!err) {
-	    *nvals = (int) p->max - (int) p->min + 1;
-	}
+        if (p->min > p->max) {
+            gretl_errmsg_sprintf("%s: min > max", name);
+            err = E_DATA;
+        } else if (!na(p->step) && p->step > p->max - p->min) {
+            gretl_errmsg_sprintf("%s: step > max - min", name);
+            err = E_DATA;
+        }
+        if (!err) {
+            *nvals = (int) p->max - (int) p->min + 1;
+        }
     }
 
     if (!err && !na(p->deflt) && !default_unset(p)) {
-	if (!na(p->min) && p->deflt < p->min) {
-	    gretl_errmsg_sprintf(_("%s: default value out of bounds"), name);
-	    err = E_DATA;
-	} else if (!na(p->max) && p->deflt > p->max) {
-	    gretl_errmsg_sprintf(_("%s: default value out of bounds"), name);
-	    err = E_DATA;
-	}
+        if (!na(p->min) && p->deflt < p->min) {
+            gretl_errmsg_sprintf(_("%s: default value out of bounds"), name);
+            err = E_DATA;
+        } else if (!na(p->max) && p->deflt > p->max) {
+            gretl_errmsg_sprintf(_("%s: default value out of bounds"), name);
+            err = E_DATA;
+        }
     }
 
     return err;
@@ -7290,10 +7290,10 @@ static int colon_count (const char *p)
     int n = 0;
 
     while (*p && *p != ']') {
-	if (*p == ':') {
-	    n++;
-	}
-	p++;
+        if (*p == ':') {
+            n++;
+        }
+        p++;
     }
 
     return n;
@@ -7302,7 +7302,7 @@ static int colon_count (const char *p)
 #define VALDEBUG 0
 
 static int read_min_max_deflt (char **ps, fn_param *param,
-			       const char *name, int *nvals)
+                               const char *name, int *nvals)
 {
     char *p = *ps;
     int err = 0;
@@ -7312,79 +7312,79 @@ static int read_min_max_deflt (char **ps, fn_param *param,
     errno = 0;
 
     if (!strcmp(p, "[null]")) {
-	gretl_errmsg_set(_("'null' is not a valid default for scalars"));
-	err = E_TYPES;
+        gretl_errmsg_set(_("'null' is not a valid default for scalars"));
+        err = E_TYPES;
     } else if (!strcmp(p, "[auto]")) {
-	/* FIXME */
-	err = E_TYPES;
+        /* FIXME */
+        err = E_TYPES;
     } else if (param->type == GRETL_TYPE_BOOL) {
-	if (!strncmp(p, "[TRUE]", 6)) {
-	    param->deflt = 1;
-	} else if (!strncmp(p, "[FALSE]", 7)) {
-	    param->deflt = 0;
-	} else if (sscanf(p, "[%lf]", &param->deflt) != 1) {
-	    err = E_PARSE;
-	}
+        if (!strncmp(p, "[TRUE]", 6)) {
+            param->deflt = 1;
+        } else if (!strncmp(p, "[FALSE]", 7)) {
+            param->deflt = 0;
+        } else if (sscanf(p, "[%lf]", &param->deflt) != 1) {
+            err = E_PARSE;
+        }
     } else if (!strncmp(p, "[$xlist]", 8)) {
-	param->deflt = INT_USE_XLIST;
+        param->deflt = INT_USE_XLIST;
     } else if (!strncmp(p, "[$mylist]", 9)) {
-	param->deflt = INT_USE_MYLIST;
+        param->deflt = INT_USE_MYLIST;
     } else {
-	int i, len, nf = colon_count(p) + 1;
-	char *test, valstr[32];
-	char *q = p + 1;
-	double x[4] = {NADBL, NADBL, UNSET_VALUE, NADBL};
+        int i, len, nf = colon_count(p) + 1;
+        char *test, valstr[32];
+        char *q = p + 1;
+        double x[4] = {NADBL, NADBL, UNSET_VALUE, NADBL};
 
-	for (i=0; i<nf && !err; i++) {
-	    len = strcspn(q, ":]");
-	    if (len > 31) {
-		err = E_PARSE;
-	    } else if (len > 0) {
-		*valstr = '\0';
-		strncat(valstr, q, len);
+        for (i=0; i<nf && !err; i++) {
+            len = strcspn(q, ":]");
+            if (len > 31) {
+                err = E_PARSE;
+            } else if (len > 0) {
+                *valstr = '\0';
+                strncat(valstr, q, len);
 #if VALDEBUG > 1
-		fprintf(stderr, "valstr(%d) = '%s'\n", i, valstr);
+                fprintf(stderr, "valstr(%d) = '%s'\n", i, valstr);
 #endif
-		if (!strcmp(valstr, "NA")) {
-		    x[i] = NADBL;
-		} else {
-		    x[i] = strtod(valstr, &test);
-		    if (*test != '\0' || errno) {
-			err = E_PARSE;
-		    }
-		}
-	    }
-	    q += len + 1;
-	}
+                if (!strcmp(valstr, "NA")) {
+                    x[i] = NADBL;
+                } else {
+                    x[i] = strtod(valstr, &test);
+                    if (*test != '\0' || errno) {
+                        err = E_PARSE;
+                    }
+                }
+            }
+            q += len + 1;
+        }
 
-	if (!err) {
-	    if (nf == 1) {
-		/* we take a single value with no colons as
-		   indicating a default */
-		param->deflt = x[0];
-	    } else {
-		param->min = x[0];
-		param->max = x[1];
-		param->deflt = x[2];
-		param->step = x[3];
-	    }
+        if (!err) {
+            if (nf == 1) {
+                /* we take a single value with no colons as
+                   indicating a default */
+                param->deflt = x[0];
+            } else {
+                param->min = x[0];
+                param->max = x[1];
+                param->deflt = x[2];
+                param->step = x[3];
+            }
 #if VALDEBUG
-	    fprintf(stderr, "min %g, max %g, deflt %g, step %g\n",
-		    param->min, param->max, param->deflt, param->step);
+            fprintf(stderr, "min %g, max %g, deflt %g, step %g\n",
+                    param->min, param->max, param->deflt, param->step);
 #endif
-	    err = check_parm_min_max(param, name, nvals);
-	}
+            err = check_parm_min_max(param, name, nvals);
+        }
     }
 
     gretl_pop_c_numeric_locale();
 
     if (!err) {
-	p = strchr(p, ']');
-	if (p == NULL) {
-	    err = E_PARSE;
-	} else {
-	    *ps = p + 1;
-	}
+        p = strchr(p, ']');
+        if (p == NULL) {
+            err = E_PARSE;
+        } else {
+            *ps = p + 1;
+        }
     }
 
     return err;
@@ -7400,13 +7400,13 @@ static int read_param_option (char **ps, fn_param *param)
 
     if (!strncmp(*ps, "[auto]", 6)) {
         set_param_auto(param);
-	*ps += 6;
+        *ps += 6;
     } else if (!strncmp(*ps, "[null]", 6)) {
         set_param_optional(param);
-	*ps += 6;
+        *ps += 6;
     } else {
-	gretl_errmsg_sprintf(_("got invalid field '%s'"), *ps);
-	err = E_PARSE;
+        gretl_errmsg_sprintf(_("got invalid field '%s'"), *ps);
+        err = E_PARSE;
     }
 
     return err;
@@ -7421,23 +7421,23 @@ static int read_param_descrip (char **ps, fn_param *param)
     int err = E_PARSE;
 
     while (*p) {
-	if (*p == '"') {
-	    /* OK, found closing quote */
-	    err = 0;
-	    break;
-	}
-	len++;
-	p++;
+        if (*p == '"') {
+            /* OK, found closing quote */
+            err = 0;
+            break;
+        }
+        len++;
+        p++;
     }
 
     if (!err && len > 0) {
-	p = *ps + 1;
-	param->descrip = gretl_strndup(p, len);
-	if (param->descrip == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    *ps = p + len + 1;
-	}
+        p = *ps + 1;
+        param->descrip = gretl_strndup(p, len);
+        if (param->descrip == NULL) {
+            err = E_ALLOC;
+        } else {
+            *ps = p + len + 1;
+        }
     }
 
     return err;
@@ -7446,41 +7446,41 @@ static int read_param_descrip (char **ps, fn_param *param)
 /* get the value labels for a function parameter */
 
 static int read_param_labels (char **ps, fn_param *param,
-			      const char *name, int nvals)
+                              const char *name, int nvals)
 {
     char *p = *ps + 1; /* skip opening '{' */
     int len = 0;
     int err = E_PARSE;
 
     while (*p) {
-	if (*p == '}') {
-	    /* OK, found closing brace */
-	    err = 0;
-	    break;
-	}
-	len++;
-	p++;
+        if (*p == '}') {
+            /* OK, found closing brace */
+            err = 0;
+            break;
+        }
+        len++;
+        p++;
     }
 
     if (!err && len > 0) {
-	char *tmp;
+        char *tmp;
 
-	p = *ps + 1;
-	tmp = gretl_strndup(p, len);
+        p = *ps + 1;
+        tmp = gretl_strndup(p, len);
 
-	if (tmp == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    *ps = p + len + 1;
-	    param->labels = gretl_string_split_quoted(tmp, &param->nlabels,
-						      " ,", &err);
-	    free(tmp);
-	    if (!err && param->nlabels != nvals) {
-		gretl_errmsg_sprintf(_("%s: found %d values but %d value-labels"),
-				     name, nvals, param->nlabels);
-		err = E_DATA;
-	    }
-	}
+        if (tmp == NULL) {
+            err = E_ALLOC;
+        } else {
+            *ps = p + len + 1;
+            param->labels = gretl_string_split_quoted(tmp, &param->nlabels,
+                                                      " ,", &err);
+            free(tmp);
+            if (!err && param->nlabels != nvals) {
+                gretl_errmsg_sprintf(_("%s: found %d values but %d value-labels"),
+                                     name, nvals, param->nlabels);
+                err = E_DATA;
+            }
+        }
     }
 
     return err;
@@ -7492,9 +7492,9 @@ static void trash_param_info (char *name, fn_param *param)
     free(param->descrip);
     param->descrip = NULL;
     if (param->nlabels > 0) {
-	strings_array_free(param->labels, param->nlabels);
-	param->labels = NULL;
-	param->nlabels = 0;
+        strings_array_free(param->labels, param->nlabels);
+        param->labels = NULL;
+        param->nlabels = 0;
     }
 }
 
@@ -7515,65 +7515,65 @@ static int parse_function_param (char *s, fn_param *param, int i)
 
     /* pick up the "const" flag if present */
     if (!strncmp(s, "const ", 6)) {
-	const_flag = 1;
-	s += 6;
-	while (isspace(*s)) s++;
+        const_flag = 1;
+        s += 6;
+        while (isspace(*s)) s++;
     }
 
     /* get parameter type, required */
     len = gretl_namechar_spn(s);
     if (len > 21) {
-	err = E_PARSE;
+        err = E_PARSE;
     } else {
-	strncat(tstr, s, len);
-	s += len;
-	while (isspace(*s)) s++;
-	if (*s == '*') {
-	    strcat(tstr, " *");
-	    s++;
-	}
-	if (*tstr == '\0') {
-	    gretl_errmsg_set(_("Expected a type identifier"));
-	    err = E_PARSE;
-	} else {
-	    type = gretl_type_from_string(tstr);
-	    if (type == 0) {
-		gretl_errmsg_sprintf(_("Unrecognized data type '%s'"), tstr);
-		err = E_PARSE;
-	    } else if (!ok_function_arg_type(type)) {
-		gretl_errmsg_sprintf(_("%s: invalid parameter type"), tstr);
-		err = E_INVARG;
-	    }
-	}
+        strncat(tstr, s, len);
+        s += len;
+        while (isspace(*s)) s++;
+        if (*s == '*') {
+            strcat(tstr, " *");
+            s++;
+        }
+        if (*tstr == '\0') {
+            gretl_errmsg_set(_("Expected a type identifier"));
+            err = E_PARSE;
+        } else {
+            type = gretl_type_from_string(tstr);
+            if (type == 0) {
+                gretl_errmsg_sprintf(_("Unrecognized data type '%s'"), tstr);
+                err = E_PARSE;
+            } else if (!ok_function_arg_type(type)) {
+                gretl_errmsg_sprintf(_("%s: invalid parameter type"), tstr);
+                err = E_INVARG;
+            }
+        }
     }
 
     if (err) {
-	return err;
+        return err;
     }
 
     /* get the required parameter name */
     while (isspace(*s)) s++;
     len = gretl_namechar_spn(s);
     if (len == 0) {
-	gretl_errmsg_sprintf(_("parameter %d: name is missing"), i + 1);
-	err = E_PARSE;
+        gretl_errmsg_sprintf(_("parameter %d: name is missing"), i + 1);
+        err = E_PARSE;
     } else {
-	name = gretl_strndup(s, len);
-	if (name == NULL) {
-	    err = E_ALLOC;
-	} else if (gretl_reserved_word(name)) {
-	    free(name);
-	    err = E_DATA;
-	}
+        name = gretl_strndup(s, len);
+        if (name == NULL) {
+            err = E_ALLOC;
+        } else if (gretl_reserved_word(name)) {
+            free(name);
+            err = E_DATA;
+        }
     }
 
     if (err) {
-	return err;
+        return err;
     }
 
     param->type = type;
     if (const_flag) {
-	maybe_set_param_const(param);
+        maybe_set_param_const(param);
     }
 
     s += len;
@@ -7586,24 +7586,24 @@ static int parse_function_param (char *s, fn_param *param, int i)
     */
 
     if (*s == '[') {
-	if (gretl_scalar_type(type)) {
-	    err = read_min_max_deflt(&s, param, name, &nvals);
-	} else if (arg_may_be_optional(type)) {
-	    err = read_param_option(&s, param);
-	} else {
-	    gretl_errmsg_sprintf(_("'%s': error scanning default value"),
-				 name);
-	    err = E_PARSE;
-	}
-	s += strspn(s, " ");
+        if (gretl_scalar_type(type)) {
+            err = read_min_max_deflt(&s, param, name, &nvals);
+        } else if (arg_may_be_optional(type)) {
+            err = read_param_option(&s, param);
+        } else {
+            gretl_errmsg_sprintf(_("'%s': error scanning default value"),
+                                 name);
+            err = E_PARSE;
+        }
+        s += strspn(s, " ");
     }
 
     /* then we may have a double-quoted descriptive string
        for the parameter */
 
     if (!err && *s == '"') {
-	err = read_param_descrip(&s, param);
-	s += strspn(s, " ");
+        err = read_param_descrip(&s, param);
+        s += strspn(s, " ");
     }
 
     /* and finally we may have a set of value-labels enclosed
@@ -7613,37 +7613,37 @@ static int parse_function_param (char *s, fn_param *param, int i)
     */
 
     if (!err && *s == '{') {
-	if (nvals == 0) {
-	    err = E_PARSE;
-	} else {
-	    err = read_param_labels(&s, param, name, nvals);
-	}
-	s += strspn(s, " ");
+        if (nvals == 0) {
+            err = E_PARSE;
+        } else {
+            err = read_param_labels(&s, param, name, nvals);
+        }
+        s += strspn(s, " ");
     }
 
     if (!err && *s != '\0') {
-	/* got trailing unparseable stuff */
-	err = E_PARSE;
+        /* got trailing unparseable stuff */
+        err = E_PARSE;
     }
 
     if (!err) {
-	param->name = name;
+        param->name = name;
     } else {
-	trash_param_info(name, param);
+        trash_param_info(name, param);
     }
 
 #if FNPARSE_DEBUG
     if (!err) {
-	fprintf(stderr, " param[%d] = '%s', ptype = %d (%s)\n",
-		i, name, type, gretl_type_get_name(type));
-	fprintf(stderr, "  min=%g, max=%g, deflt=%g\n",
-		param->min, param->max, param->deflt);
-	if (param->descrip != NULL) {
-	    fprintf(stderr, "  comment = '%s'\n", param->descrip);
-	}
-	if (param->nlabels > 0) {
-	    fprintf(stderr, "  value labels: %d\n", param->nlabels);
-	}
+        fprintf(stderr, " param[%d] = '%s', ptype = %d (%s)\n",
+                i, name, type, gretl_type_get_name(type));
+        fprintf(stderr, "  min=%g, max=%g, deflt=%g\n",
+                param->min, param->max, param->deflt);
+        if (param->descrip != NULL) {
+            fprintf(stderr, "  comment = '%s'\n", param->descrip);
+        }
+        if (param->nlabels > 0) {
+            fprintf(stderr, "  value labels: %d\n", param->nlabels);
+        }
     }
 #endif
 
@@ -7655,19 +7655,19 @@ static void arg_tail_strip (char *s)
     int i, n = strlen(s);
 
     for (i=n-1; i>=0; i--) {
-	if (isspace(s[i]) || s[i] == ')') {
-	    s[i] = '\0';
-	} else {
-	    break;
-	}
+        if (isspace(s[i]) || s[i] == ')') {
+            s[i] = '\0';
+        } else {
+            break;
+        }
     }
 }
 
 static int parse_function_parameters (const char *str,
-				      fn_param **pparams,
-				      int *pnp,
-				      const char *fname,
-				      PRN *prn)
+                                      fn_param **pparams,
+                                      int *pnp,
+                                      const char *fname,
+                                      PRN *prn)
 {
     fn_param *params = NULL;
     char *p, *s;
@@ -7676,123 +7676,123 @@ static int parse_function_parameters (const char *str,
 
     s = gretl_strdup(str);
     if (s == NULL) {
-	return E_ALLOC;
+        return E_ALLOC;
     }
 
     if (!strcmp(s, ")")) {
-	/* we got a void function "foo()" */
-	free(s);
-	return 0;
+        /* we got a void function "foo()" */
+        free(s);
+        return 0;
     }
 
     /* strip trailing ')' and space */
     arg_tail_strip(s);
     np = comma_count(s) + 1;
     if (np == 1 && !strcmp(s, "void")) {
-	free(s);
-	return 0;
+        free(s);
+        return 0;
     }
 
 #if FNPARSE_DEBUG
     fprintf(stderr, "function %s: looking for %d parameters\n",
-	    fname, np);
+            fname, np);
 #endif
 
     params = allocate_params(np);
     if (params == NULL) {
-	err = E_ALLOC;
+        err = E_ALLOC;
     }
 
     if (!err) {
-	int quoted = 0;
-	int braced = 0;
+        int quoted = 0;
+        int braced = 0;
 
-	p = s;
-	while (*p) {
-	    if (!quoted) {
-		if (*p == '{') {
-		    braced++;
-		} else if (*p == '}') {
-		    braced--;
-		}
-	    }
-	    if (*p == '"') {
-		quoted = !quoted;
-	    } else if (!quoted && !braced && *p == ',') {
-		*p = '\0';
-	    }
-	    p++;
-	}
-	p = s;
-	if (braced != 0) {
-	    err = E_PARSE;
-	}
-	for (i=0; i<np && !err; i++) {
-	    err = parse_function_param(p, &params[i], i);
-	    p += strlen(p) + 1;
-	}
+        p = s;
+        while (*p) {
+            if (!quoted) {
+                if (*p == '{') {
+                    braced++;
+                } else if (*p == '}') {
+                    braced--;
+                }
+            }
+            if (*p == '"') {
+                quoted = !quoted;
+            } else if (!quoted && !braced && *p == ',') {
+                *p = '\0';
+            }
+            p++;
+        }
+        p = s;
+        if (braced != 0) {
+            err = E_PARSE;
+        }
+        for (i=0; i<np && !err; i++) {
+            err = parse_function_param(p, &params[i], i);
+            p += strlen(p) + 1;
+        }
     }
 
     free(s);
 
     for (i=0; i<np && !err; i++) {
-	for (j=i+1; j<np && !err; j++) {
-	    if (!strcmp(params[i].name, params[j].name)) {
-		gretl_errmsg_sprintf(_("%s: duplicated parameter name '%s'"),
-				     fname, params[i].name);
-		err = E_DATA;
-	    }
-	}
+        for (j=i+1; j<np && !err; j++) {
+            if (!strcmp(params[i].name, params[j].name)) {
+                gretl_errmsg_sprintf(_("%s: duplicated parameter name '%s'"),
+                                     fname, params[i].name);
+                err = E_DATA;
+            }
+        }
     }
 
     if (err) {
-	free_params_array(params, np);
+        free_params_array(params, np);
     } else {
-	*pparams = params;
-	*pnp = np;
+        *pparams = params;
+        *pnp = np;
     }
 
     return err;
 }
 
 static int get_two_words (const char *s, char *w1, char *w2,
-			  int *err)
+                          int *err)
 {
     int nf = 0;
 
     if (strncmp(s, "function ", 9)) {
-	*err = E_PARSE;
+        *err = E_PARSE;
     } else {
-	int n;
+        int n;
 
-	*w1 = *w2 = '\0';
+        *w1 = *w2 = '\0';
 
-	s += 9;
-	s += strspn(s, " ");
+        s += 9;
+        s += strspn(s, " ");
 
-	/* @w1 should be a return type, except in the case
-	   of "function foo delete"
-	*/
-	n = strcspn(s, " ");
+        /* @w1 should be a return type, except in the case
+           of "function foo delete"
+        */
+        n = strcspn(s, " ");
 
-	if (n == 0 || n >= FN_NAMELEN) {
-	    *err = E_PARSE;
-	} else {
-	    strncat(w1, s, n);
-	    nf++;
-	    s += n;
-	    s += strspn(s, " ");
-	    n = strcspn(s, " (");
-	}
+        if (n == 0 || n >= FN_NAMELEN) {
+            *err = E_PARSE;
+        } else {
+            strncat(w1, s, n);
+            nf++;
+            s += n;
+            s += strspn(s, " ");
+            n = strcspn(s, " (");
+        }
 
-	/* @w2 should generally be the function name */
-	if (n > 0 && n < FN_NAMELEN) {
-	    strncat(w2, s, n);
-	    nf++;
-	} else if (n >= FN_NAMELEN) {
-	    gretl_errmsg_set(_("Identifier exceeds the maximum of 31 characters"));
-	    *err = E_PARSE;
-	}
+        /* @w2 should generally be the function name */
+        if (n > 0 && n < FN_NAMELEN) {
+            strncat(w2, s, n);
+            nf++;
+        } else if (n >= FN_NAMELEN) {
+            gretl_errmsg_set(_("Identifier exceeds the maximum of 31 characters"));
+            *err = E_PARSE;
+        }
     }
 
     return nf;
@@ -7811,8 +7811,8 @@ static int get_two_words (const char *s, char *w1, char *w2,
  */
 
 int gretl_start_compiling_function (const char *line,
-				    const DATASET *dset,
-				    PRN *prn)
+                                    const DATASET *dset,
+                                    PRN *prn)
 {
     ufunc *fun = NULL;
     fn_param *params = NULL;
@@ -7824,20 +7824,20 @@ int gretl_start_compiling_function (const char *line,
     int err = 0;
 
     if (gretl_function_depth() > 0) {
-	return E_FNEST;
+        return E_FNEST;
     }
 
     nf = get_two_words(line, s1, s2, &err);
 
     if (err) {
-	return err;
+        return err;
     } else if (nf < 2) {
-	gretl_errmsg_set(_("A function definition must have a return type and name"));
-	return E_PARSE;
+        gretl_errmsg_set(_("A function definition must have a return type and name"));
+        return E_PARSE;
     }
 
     if (!strcmp(s2, "clear") || !strcmp(s2, "delete")) {
-	return maybe_delete_function(s1, prn);
+        return maybe_delete_function(s1, prn);
     }
 
     /* If we didn't get a special such as "function foo delete",
@@ -7849,51 +7849,51 @@ int gretl_start_compiling_function (const char *line,
     rettype = return_type_from_string(s1, &err);
 
     if (!err) {
-	/* note: this handles a name collision */
-	err = check_function_name(name, &fun, dset, prn);
+        /* note: this handles a name collision */
+        err = check_function_name(name, &fun, dset, prn);
     }
 
     if (!err) {
-	/* now for the args bit */
-	p = strchr(line, '(');
-	if (p == NULL || strchr(p, ')') == NULL) {
-	    err = E_PARSE;
-	} else {
-	    p++; /* skip the left paren */
-	}
+        /* now for the args bit */
+        p = strchr(line, '(');
+        if (p == NULL || strchr(p, ')') == NULL) {
+            err = E_PARSE;
+        } else {
+            p++; /* skip the left paren */
+        }
     }
 
     if (!err) {
-	err = parse_function_parameters(p, &params, &n_params,
-					name, prn);
+        err = parse_function_parameters(p, &params, &n_params,
+                                        name, prn);
     }
 
     if (err) {
-	pprintf(prn, "> %s\n", line);
+        pprintf(prn, "> %s\n", line);
     }
 
     if (!err && fun == NULL) {
-	fun = add_ufunc(name);
-	if (fun == NULL) {
-	    free_params_array(params, n_params);
-	    err = E_ALLOC;
-	}
+        fun = add_ufunc(name);
+        if (fun == NULL) {
+            free_params_array(params, n_params);
+            err = E_ALLOC;
+        }
     }
 
 #if COMP_DEBUG
     fprintf(stderr, "started compiling function %s (err = %d)\n",
-	    name, err);
+            name, err);
 #endif
 
     if (!err) {
-	strcpy(fun->name, name);
-	fun->params = params;
-	fun->n_params = n_params;
-	fun->rettype = rettype;
-	current_fdef = fun;
-	set_compiling_on();
+        strcpy(fun->name, name);
+        fun->params = params;
+        fun->n_params = n_params;
+        fun->rettype = rettype;
+        current_fdef = fun;
+        set_compiling_on();
     } else {
-	current_fdef = NULL;
+        current_fdef = NULL;
     }
 
     return err;
@@ -7904,18 +7904,18 @@ static void python_check (const char *line)
     char s1[8], s2[16];
 
     if (sscanf(line, "%7s %15s", s1, s2) == 2) {
-	if (!strcmp(s1, "foreign") && strstr(s2, "ytho")) {
-	    compiling_python = 1;
-	} else if (!strcmp(s1, "end") && !strcmp(s2, "foreign")) {
-	    compiling_python = 0;
-	}
+        if (!strcmp(s1, "foreign") && strstr(s2, "ytho")) {
+            compiling_python = 1;
+        } else if (!strcmp(s1, "end") && !strcmp(s2, "foreign")) {
+            compiling_python = 0;
+        }
     }
 }
 
 static int ufunc_get_structure (ufunc *u)
 {
     return statements_get_structure(u->lines, u->n_lines,
-				    FUNC, u->name);
+                                    FUNC, u->name);
 }
 
 #define NEEDS_IF(c) (c == ELSE || c == ELIF || c == ENDIF)
@@ -7944,22 +7944,22 @@ int gretl_function_append_line (ExecState *s)
     int i, err = 0;
 
     if (fun == NULL) {
-	fprintf(stderr, "gretl_function_append_line: fun is NULL\n");
-	return 1;
+        fprintf(stderr, "gretl_function_append_line: fun is NULL\n");
+        return 1;
     }
 
     blank = string_is_blank(line);
 
 #if FNPARSE_DEBUG
     if (fun->line_idx == 1) {
-	fputc('\n', stderr);
+        fputc('\n', stderr);
     }
     if (blank) {
-	fprintf(stderr, "%s: append blank line (idx = %d)\n",
-		fun->name, fun->line_idx);
+        fprintf(stderr, "%s: append blank line (idx = %d)\n",
+                fun->name, fun->line_idx);
     } else {
-	fprintf(stderr, "%s: append line '%s' (idx = %d)\n",
-		fun->name, line, fun->line_idx);
+        fprintf(stderr, "%s: append line '%s' (idx = %d)\n",
+                fun->name, line, fun->line_idx);
     }
 #endif
 
@@ -7967,52 +7967,52 @@ int gretl_function_append_line (ExecState *s)
     origline = gretl_strdup(line);
 
     if (!blank) {
-	err = get_command_index(s, FUNC, 0);
+        err = get_command_index(s, FUNC, 0);
     }
     if (blank || err) {
-	goto next_step;
+        goto next_step;
     }
 
     /* carry out some basic structural checks */
     if (cmd->ci == QUIT) {
-	gretl_errmsg_sprintf(_("%s: \"quit\" cannot be used in a function"),
-			     fun->name);
-	err = E_PARSE;
-	cmd->ci = 0;
+        gretl_errmsg_sprintf(_("%s: \"quit\" cannot be used in a function"),
+                             fun->name);
+        err = E_PARSE;
+        cmd->ci = 0;
     } else if (cmd->flags & CMD_ENDFUN) {
-	if (fun->n_lines == 0) {
-	    gretl_errmsg_sprintf(_("%s: empty function"), fun->name);
-	    err = 1;
-	}
-	set_compiling_off();
+        if (fun->n_lines == 0) {
+            gretl_errmsg_sprintf(_("%s: empty function"), fun->name);
+            err = 1;
+        }
+        set_compiling_off();
     } else if (cmd->ci == SET) {
         fun->flags |= UFUN_USES_SET;
     } else if (cmd->ci == FUNC) {
-	err = E_FNEST;
+        err = E_FNEST;
     } else if (FLOW_CI(cmd->ci)) {
-	if (cmd->ci == IF) {
-	    fun->flags |= UFUN_HAS_FLOW;
-	    ifdepth++;
-	} else if (ifdepth == 0) {
-	    gretl_errmsg_sprintf(_("%s: unbalanced if/else/endif"), fun->name);
-	    err = E_PARSE;
-	} else if (cmd->ci == ELSE && last_flow == ELSE) {
-	    gretl_errmsg_sprintf(_("%s: unbalanced if/else/endif"), fun->name);
-	    err = E_PARSE;
-	} else if (cmd->ci == ENDIF) {
-	    ifdepth--;
-	}
-	last_flow = cmd->ci;
+        if (cmd->ci == IF) {
+            fun->flags |= UFUN_HAS_FLOW;
+            ifdepth++;
+        } else if (ifdepth == 0) {
+            gretl_errmsg_sprintf(_("%s: unbalanced if/else/endif"), fun->name);
+            err = E_PARSE;
+        } else if (cmd->ci == ELSE && last_flow == ELSE) {
+            gretl_errmsg_sprintf(_("%s: unbalanced if/else/endif"), fun->name);
+            err = E_PARSE;
+        } else if (cmd->ci == ENDIF) {
+            ifdepth--;
+        }
+        last_flow = cmd->ci;
     } else if (cmd->ci == LOOP) {
         fun->flags |= UFUN_HAS_FLOW;
     } else if (cmd->ci < 0) {
-	ignore = 1;
+        ignore = 1;
     }
 
   next_step:
 
     if (err) {
-	set_compiling_off();
+        set_compiling_off();
     }
 
     if (compiling) {
@@ -8024,7 +8024,7 @@ int gretl_function_append_line (ExecState *s)
             i = fun->n_lines;
             err = push_function_line(fun, origline, cmd->ci, 1, NULL);
             if (!err) {
-		origline = NULL; /* successfully donated */
+                origline = NULL; /* successfully donated */
                 if (ignore) {
                     fun->lines[i].flags |= LINE_IGNORE;
                 } else {
@@ -8033,28 +8033,28 @@ int gretl_function_append_line (ExecState *s)
             }
         }
     } else {
-	/* finished compilation */
-	if (!err && ifdepth != 0) {
-	    gretl_errmsg_sprintf(_("%s: unbalanced if/else/endif"), fun->name);
-	    err = E_PARSE;
-	}
+        /* finished compilation */
+        if (!err && ifdepth != 0) {
+            gretl_errmsg_sprintf(_("%s: unbalanced if/else/endif"), fun->name);
+            err = E_PARSE;
+        }
 #if COMP_DEBUG
-	fprintf(stderr, "finished compiling function %s\n", fun->name);
+        fprintf(stderr, "finished compiling function %s\n", fun->name);
 #endif
-	/* reset static var */
-	ifdepth = 0;
-	last_flow = 0;
+        /* reset static var */
+        ifdepth = 0;
+        last_flow = 0;
     }
 
     if (!err && !compiling && (fun->flags & UFUN_HAS_FLOW)) {
-	ufunc_get_structure(fun);
+        ufunc_get_structure(fun);
     }
 
     free(origline);
     cmd->flags &= ~CMD_ENDFUN;
 
     if (err) {
-	ufunc_unload(fun);
+        ufunc_unload(fun);
     }
 
     return err;
@@ -8077,71 +8077,71 @@ int gretl_function_append_line (ExecState *s)
 */
 
 static int add_empty_list (fncall *call, fn_param *fp,
-			   DATASET *dset)
+                           DATASET *dset)
 {
     int err = 0;
 
     if (dset == NULL || dset->n == 0) {
-	err = E_NODATA;
+        err = E_NODATA;
     } else {
-	int tmp[] = {0};
+        int tmp[] = {0};
 
-	copy_list_as_arg(fp->name, tmp, &err);
+        copy_list_as_arg(fp->name, tmp, &err);
     }
 
     return err;
 }
 
 static void localize_list_members (fncall *call, int *list,
-				   const char *lname,
-				   DATASET *dset)
+                                   const char *lname,
+                                   DATASET *dset)
 {
     int i, vi, level = fn_executing + 1;
 
     for (i=1; i<=list[0]; i++) {
-	vi = list[i];
-	if (vi > 0 && vi < dset->v) {
-	    if (!in_gretl_list(call->listvars, vi)) {
-		gretl_list_append_term(&call->listvars, vi);
-	    }
-	    series_set_stack_level(dset, vi, level);
-	}
+        vi = list[i];
+        if (vi > 0 && vi < dset->v) {
+            if (!in_gretl_list(call->listvars, vi)) {
+                gretl_list_append_term(&call->listvars, vi);
+            }
+            series_set_stack_level(dset, vi, level);
+        }
     }
 }
 
 static int localize_list (fncall *call, fn_arg *arg,
-			  fn_param *fp, DATASET *dset)
+                          fn_param *fp, DATASET *dset)
 {
     int *list = NULL;
     int err = 0;
 
     if (arg->type == GRETL_TYPE_LIST) {
-	/* actual list arg -> copy to function level */
-	list = arg->val.list;
-	err = copy_as_arg(fp->name, GRETL_TYPE_LIST, list);
-	call->lists = g_list_prepend(call->lists, fp->name);
+        /* actual list arg -> copy to function level */
+        list = arg->val.list;
+        err = copy_as_arg(fp->name, GRETL_TYPE_LIST, list);
+        call->lists = g_list_prepend(call->lists, fp->name);
     } else if (arg->type == GRETL_TYPE_USERIES) {
-	/* series arg -> becomes a singleton list */
-	int tmp[] = {1, arg->val.idnum};
+        /* series arg -> becomes a singleton list */
+        int tmp[] = {1, arg->val.idnum};
 
-	list = copy_list_as_arg(fp->name, tmp, &err);
-	nullify_upname(arg);
+        list = copy_list_as_arg(fp->name, tmp, &err);
+        nullify_upname(arg);
     } else {
-	/* "can't happen" */
-	err = E_DATA;
+        /* "can't happen" */
+        err = E_DATA;
     }
 
     if (!err && list == NULL) {
-	err = E_ALLOC;
+        err = E_ALLOC;
     }
 
     if (!err) {
-	localize_list_members(call, list, fp->name, dset);
+        localize_list_members(call, list, fp->name, dset);
     }
 
 #if ARGS_DEBUG
     fprintf(stderr, "localize_list (%s): returning %d\n",
-	    fp->name, err);
+            fp->name, err);
 #endif
 
     return err;
@@ -8160,37 +8160,37 @@ const char *series_get_list_parent (int ID)
     const char *ret = NULL;
 
     if (call != NULL && call->lists != NULL) {
-	GList *L = call->lists;
-	int *list;
+        GList *L = call->lists;
+        int *list;
 
-	while (L != NULL) {
-	    list = get_list_by_name(L->data);
-	    if (list != NULL && in_gretl_list(list, ID)) {
-		ret = L->data;
-		break;
-	    }
-	    L = L->next;
-	}
+        while (L != NULL) {
+            list = get_list_by_name(L->data);
+            if (list != NULL && in_gretl_list(list, ID)) {
+                ret = L->data;
+                break;
+            }
+            L = L->next;
+        }
     }
 
     return ret;
 }
 
 static int localize_bundled_lists (fncall *call, fn_arg *arg,
-				   fn_param *fp, DATASET *dset)
+                                   fn_param *fp, DATASET *dset)
 {
     gretl_bundle *b = arg->val.b;
     GList *ll = gretl_bundle_get_lists(b);
     int err = 0;
 
     if (ll != NULL) {
-	GList *lli = g_list_first(ll);
+        GList *lli = g_list_first(ll);
 
-	while (lli != NULL) {
-	    localize_list_members(call, lli->data, NULL, dset);
-	    lli = g_list_next(lli);
-	}
-	g_list_free(ll);
+        while (lli != NULL) {
+            localize_list_members(call, lli->data, NULL, dset);
+            lli = g_list_next(lli);
+        }
+        g_list_free(ll);
     }
 
     return err;
@@ -8201,17 +8201,17 @@ static void *arg_get_data (fn_arg *arg, GretlType type)
     void *data = NULL;
 
     if (type == 0) {
-	type = arg->type;
+        type = arg->type;
     }
 
     if (type == GRETL_TYPE_MATRIX) {
-	data = arg->val.m;
+        data = arg->val.m;
     } else if (type == GRETL_TYPE_BUNDLE) {
-	data = arg->val.b;
+        data = arg->val.b;
     } else if (type == GRETL_TYPE_STRING) {
-	data = arg->val.str;
+        data = arg->val.str;
     } else if (gretl_is_array_type(type)) {
-	data = arg->val.a;
+        data = arg->val.a;
     }
 
     return data;
@@ -8221,7 +8221,7 @@ static void *arg_get_data (fn_arg *arg, GretlType type)
    object in "pointerized" form */
 
 static int localize_object_as_shell (fn_arg *arg,
-				     fn_param *fp)
+                                     fn_param *fp)
 {
     GretlType type = gretl_type_get_plain_type(arg->type);
     void *data = arg_get_data(arg, type);
@@ -8236,40 +8236,40 @@ static int localize_const_object (fncall *call, int i, fn_param *fp)
     int err = 0;
 
     if (data == NULL) {
-	err = E_DATA;
+        err = E_DATA;
     } else if (arg->uvar == NULL) {
-	/* the const argument is an anonymous object */
-	err = arg_add_as_shell(fp->name, arg->type, data);
+        /* the const argument is an anonymous object */
+        err = arg_add_as_shell(fp->name, arg->type, data);
     } else {
-	/* a named object: in the simplest case we just
-	   adjust the level and name of the object for
-	   the duration of the function call, but note
-	   that we can do this only once for any given
-	   object.
-	*/
-	user_var *thisvar = arg->uvar;
-	int j, done = 0;
+        /* a named object: in the simplest case we just
+           adjust the level and name of the object for
+           the duration of the function call, but note
+           that we can do this only once for any given
+           object.
+        */
+        user_var *thisvar = arg->uvar;
+        int j, done = 0;
 
-	for (j=0; j<i; j++) {
-	    if (call->args[j].uvar == thisvar) {
-		/* we've already localized this one! */
-		err = arg_add_as_shell(fp->name, arg->type, data);
-		done = 1;
-		break;
-	    }
-	}
-	if (!done) {
-	    user_var_adjust_level(thisvar, 1);
-	    user_var_set_name(thisvar, fp->name);
-	    arg->shifted = 1;
-	}
+        for (j=0; j<i; j++) {
+            if (call->args[j].uvar == thisvar) {
+                /* we've already localized this one! */
+                err = arg_add_as_shell(fp->name, arg->type, data);
+                done = 1;
+                break;
+            }
+        }
+        if (!done) {
+            user_var_adjust_level(thisvar, 1);
+            user_var_set_name(thisvar, fp->name);
+            arg->shifted = 1;
+        }
     }
 
     return err;
 }
 
 static int localize_series_ref (fncall *call, fn_arg *arg,
-				fn_param *fp, DATASET *dset)
+                                fn_param *fp, DATASET *dset)
 {
     int v = arg->val.idnum;
 
@@ -8277,7 +8277,7 @@ static int localize_series_ref (fncall *call, fn_arg *arg,
     strcpy(dset->varname[v], fp->name);
 
     if (!in_gretl_list(call->ptrvars, v)) {
-	gretl_list_append_term(&call->ptrvars, v);
+        gretl_list_append_term(&call->ptrvars, v);
     }
 
     return 0;
@@ -8288,8 +8288,8 @@ static int argval_get_int (fn_param *param, double x, int *err)
     int ret = gretl_int_from_double(x, err);
 
     if (*err) {
-	gretl_errmsg_sprintf(_("%s: expected an integer but found %g"),
-			     param->name, x);
+        gretl_errmsg_sprintf(_("%s: expected an integer but found %g"),
+                             param->name, x);
     }
 
     return ret;
@@ -8300,28 +8300,28 @@ static int real_add_scalar_arg (fn_param *param, double x)
     int err = 0;
 
     if (na(x)) {
-	/* always allow NA for scalar args (?) */
-	err = copy_as_arg(param->name, GRETL_TYPE_DOUBLE, &x);
+        /* always allow NA for scalar args (?) */
+        err = copy_as_arg(param->name, GRETL_TYPE_DOUBLE, &x);
     } else {
-	if (param->type == GRETL_TYPE_BOOL) {
-	    if (x != 0.0) {
-		x = 1.0;
-	    }
-	} else if (param->type == GRETL_TYPE_INT ||
-		   param->type == GRETL_TYPE_OBS) {
-	    x = argval_get_int(param, x, &err);
-	}
+        if (param->type == GRETL_TYPE_BOOL) {
+            if (x != 0.0) {
+                x = 1.0;
+            }
+        } else if (param->type == GRETL_TYPE_INT ||
+                   param->type == GRETL_TYPE_OBS) {
+            x = argval_get_int(param, x, &err);
+        }
 
-	if (!err) {
-	    if ((!na(param->min) && x < param->min) ||
-		(!na(param->max) && x > param->max)) {
-		gretl_errmsg_sprintf(_("%s: argument value %g is out of bounds"),
-				     param->name, x);
-		err = E_DATA;
-	    } else {
-		err = copy_as_arg(param->name, GRETL_TYPE_DOUBLE, &x);
-	    }
-	}
+        if (!err) {
+            if ((!na(param->min) && x < param->min) ||
+                (!na(param->max) && x > param->max)) {
+                gretl_errmsg_sprintf(_("%s: argument value %g is out of bounds"),
+                                     param->name, x);
+                err = E_DATA;
+            } else {
+                err = copy_as_arg(param->name, GRETL_TYPE_DOUBLE, &x);
+            }
+        }
     }
 
     return err;
@@ -8334,10 +8334,10 @@ static int real_add_scalar_arg (fn_param *param, double x)
 static int add_scalar_arg_default (fn_param *param)
 {
     if (default_unset(param)) {
-	/* should be impossible here, but... */
-	return E_DATA;
+        /* should be impossible here, but... */
+        return E_DATA;
     } else {
-	return real_add_scalar_arg(param, param->deflt);
+        return real_add_scalar_arg(param, param->deflt);
     }
 }
 
@@ -8362,11 +8362,11 @@ static int do_scalar_matrix_cast (fn_arg *arg, fn_param *param)
     int err = 0;
 
     if (m == NULL) {
-	err = E_ALLOC;
+        err = E_ALLOC;
     } else {
-	m->val[0] = arg->val.x;
-	err = copy_as_arg(param->name, GRETL_TYPE_MATRIX, m);
-	gretl_matrix_free(m);
+        m->val[0] = arg->val.x;
+        err = copy_as_arg(param->name, GRETL_TYPE_MATRIX, m);
+        gretl_matrix_free(m);
     }
 
     return err;
@@ -8377,22 +8377,22 @@ static void fncall_finalize_listvars (fncall *call)
     int i, v;
 
     for (i=call->listvars[0]; i>0; i--) {
-	v = call->listvars[i];
-	if (in_gretl_list(call->ptrvars, v)) {
-	    gretl_list_delete_at_pos(call->listvars, i);
-	}
+        v = call->listvars[i];
+        if (in_gretl_list(call->ptrvars, v)) {
+            gretl_list_delete_at_pos(call->listvars, i);
+        }
     }
 
     if (call->listvars[0] == 0) {
-	free(call->listvars);
-	call->listvars = NULL;
+        free(call->listvars);
+        call->listvars = NULL;
     }
 }
 
 static int upnames_match (fn_arg *ai, fn_arg *aj)
 {
     return ai->upname != NULL && aj->upname != NULL &&
-	strcmp(ai->upname, aj->upname) == 0;
+        strcmp(ai->upname, aj->upname) == 0;
 }
 
 static int duplicated_pointer_arg_check (fncall *call)
@@ -8407,38 +8407,38 @@ static int duplicated_pointer_arg_check (fncall *call)
     */
 
     for (i=0; i<call->argc && !err; i++) {
-	ai = &call->args[i];
-	if (gretl_ref_type(ai->type)) {
-	    for (j=i+1; j<call->argc && !err; j++) {
-		aj = &call->args[j];
-		if (gretl_ref_type(aj->type) && upnames_match(ai, aj)) {
-		    gretl_errmsg_set(_("Duplicated pointer argument: not allowed"));
-		    err = E_DATA;
-		}
-	    }
-	}
+        ai = &call->args[i];
+        if (gretl_ref_type(ai->type)) {
+            for (j=i+1; j<call->argc && !err; j++) {
+                aj = &call->args[j];
+                if (gretl_ref_type(aj->type) && upnames_match(ai, aj)) {
+                    gretl_errmsg_set(_("Duplicated pointer argument: not allowed"));
+                    err = E_DATA;
+                }
+            }
+        }
     }
 
     return err;
 }
 
 static int process_series_arg (fncall *call, fn_param *fp,
-			       fn_arg *arg, DATASET *dset)
+                               fn_arg *arg, DATASET *dset)
 {
     if (arg->type == GRETL_TYPE_USERIES) {
-	/* an existing named series */
-	if (param_is_const(fp)) {
-	    /* we can pass it by reference */
-	    return localize_series_ref(call, arg, fp, dset);
-	} else {
-	    /* pass it by value */
-	    return dataset_copy_series_as(dset, arg->val.idnum, fp->name);
-	}
+        /* an existing named series */
+        if (param_is_const(fp)) {
+            /* we can pass it by reference */
+            return localize_series_ref(call, arg, fp, dset);
+        } else {
+            /* pass it by value */
+            return dataset_copy_series_as(dset, arg->val.idnum, fp->name);
+        }
     } else if (arg->val.px != NULL) {
-	/* an on-the-fly series */
-	return dataset_add_series_as(dset, arg->val.px, fp->name);
+        /* an on-the-fly series */
+        return dataset_add_series_as(dset, arg->val.px, fp->name);
     } else {
-	return E_DATA;
+        return E_DATA;
     }
 }
 
@@ -8449,12 +8449,12 @@ static int process_object_arg (fncall *call, int i, fn_param *fp)
     fn_arg *arg = &call->args[i];
 
     if (param_is_const(fp)) {
-	/* we can pass it by reference */
-	return localize_const_object(call, i, fp);
+        /* we can pass it by reference */
+        return localize_const_object(call, i, fp);
     } else {
-	/* pass it by value */
-	return copy_as_arg(fp->name, arg->type,
-			   arg_get_data(arg, 0));
+        /* pass it by value */
+        return copy_as_arg(fp->name, arg->type,
+                           arg_get_data(arg, 0));
     }
 }
 
@@ -8463,9 +8463,9 @@ static int process_object_arg (fncall *call, int i, fn_param *fp)
 static int process_object_ref_arg (fn_arg *arg, fn_param *fp)
 {
     if (arg->upname != NULL) {
-	return user_var_localize(arg->upname, fp->name, fp->type);
+        return user_var_localize(arg->upname, fp->name, fp->type);
     } else {
-	return localize_object_as_shell(arg, fp);
+        return localize_object_as_shell(arg, fp);
     }
 }
 
@@ -8485,104 +8485,104 @@ static int allocate_function_args (fncall *call, DATASET *dset)
     err = duplicated_pointer_arg_check(call);
 
     for (i=0; i<call->argc && !err; i++) {
-	arg = &call->args[i];
-	fp = &fun->params[i];
+        arg = &call->args[i];
+        fp = &fun->params[i];
 
 #if ARGS_DEBUG
-	fprintf(stderr, "arg[%d], param type %s (%s), arg type %s (%s)\n",
-		i, gretl_type_get_name(fp->type), fp->name,
-		gretl_type_get_name(arg->type), arg->upname);
+        fprintf(stderr, "arg[%d], param type %s (%s), arg type %s (%s)\n",
+                i, gretl_type_get_name(fp->type), fp->name,
+                gretl_type_get_name(arg->type), arg->upname);
         fprintf(stderr, "  const %s, optional %s\n",
                 param_is_const(fp) ? "yes" : "no",
                 param_is_optional(fp) ? "yes" : "no");
 #endif
         if (arg->upname != NULL && object_is_const(arg->upname, -1) &&
-	    gretl_ref_type(fp->type) && !param_is_const(fp)) {
-	    const char *caller;
+            gretl_ref_type(fp->type) && !param_is_const(fp)) {
+            const char *caller;
 
-	    current_function_info(&caller, NULL);
-	    gretl_errmsg_sprintf(_("%s() tries to pass const argument "
-				 "%s to %s() in pointer form with no\n"
-				 "const guarantee\n"),
-				 caller, fp->name, call->fun->name);
-	    err = E_INVARG;
-	    break;
-	}
+            current_function_info(&caller, NULL);
+            gretl_errmsg_sprintf(_("%s() tries to pass const argument "
+                                 "%s to %s() in pointer form with no\n"
+                                 "const guarantee\n"),
+                                 caller, fp->name, call->fun->name);
+            err = E_INVARG;
+            break;
+        }
 
-	if (arg->type == GRETL_TYPE_NONE) {
-	    if (gretl_scalar_type(fp->type)) {
-		err = add_scalar_arg_default(fp);
-	    } else if (fp->type == GRETL_TYPE_LIST) {
-		err = add_empty_list(call, fp, dset);
-	    }
-	    continue;
-	}
+        if (arg->type == GRETL_TYPE_NONE) {
+            if (gretl_scalar_type(fp->type)) {
+                err = add_scalar_arg_default(fp);
+            } else if (fp->type == GRETL_TYPE_LIST) {
+                err = add_empty_list(call, fp, dset);
+            }
+            continue;
+        }
 
-	if (fp->type == GRETL_TYPE_NUMERIC) {
-	    /* param supports overloading */
-	    if (gretl_scalar_type(arg->type)) {
-		err = real_add_scalar_arg(fp, arg->val.x);
-	    } else if (gretl_is_series_type(arg->type)) {
-		process_series_arg(call, fp, arg, dset);
-	    } else if (arg->type == GRETL_TYPE_MATRIX) {
-		err = process_object_arg(call, i, fp);
-	    } else if (arg->type == GRETL_TYPE_LIST) {
-		err = localize_list(call, arg, fp, dset);
-	    }
-	    continue;
-	}
+        if (fp->type == GRETL_TYPE_NUMERIC) {
+            /* param supports overloading */
+            if (gretl_scalar_type(arg->type)) {
+                err = real_add_scalar_arg(fp, arg->val.x);
+            } else if (gretl_is_series_type(arg->type)) {
+                process_series_arg(call, fp, arg, dset);
+            } else if (arg->type == GRETL_TYPE_MATRIX) {
+                err = process_object_arg(call, i, fp);
+            } else if (arg->type == GRETL_TYPE_LIST) {
+                err = localize_list(call, arg, fp, dset);
+            }
+            continue;
+        }
 
-	if (gretl_scalar_type(fp->type)) {
-	    if (arg->type == GRETL_TYPE_MATRIX) {
-		err = do_matrix_scalar_cast(arg, fp);
-	    } else {
-		err = real_add_scalar_arg(fp, arg->val.x);
-	    }
-	} else if (fp->type == GRETL_TYPE_SERIES) {
-	    err = process_series_arg(call, fp, arg, dset);
-	} else if (fp->type == GRETL_TYPE_MATRIX &&
-		   arg->type == GRETL_TYPE_DOUBLE) {
-	    err = do_scalar_matrix_cast(arg, fp);
-	} else if (fp->type == GRETL_TYPE_MATRIX ||
-		   fp->type == GRETL_TYPE_BUNDLE ||
-		   fp->type == GRETL_TYPE_STRING ||
-		   gretl_array_type(fp->type)) {
-	    err = process_object_arg(call, i, fp);
-	} else if (fp->type == GRETL_TYPE_LIST) {
-	    err = localize_list(call, arg, fp, dset);
-	} else if (fp->type == GRETL_TYPE_SERIES_REF) {
-	    err = localize_series_ref(call, arg, fp, dset);
-	} else if (gretl_ref_type(fp->type)) {
-	    err = process_object_ref_arg(arg, fp);
-	}
-	if (!err && (fp->type == GRETL_TYPE_BUNDLE ||
-		     fp->type == GRETL_TYPE_BUNDLE_REF)) {
-	    err = localize_bundled_lists(call, arg, fp, dset);
-	}
+        if (gretl_scalar_type(fp->type)) {
+            if (arg->type == GRETL_TYPE_MATRIX) {
+                err = do_matrix_scalar_cast(arg, fp);
+            } else {
+                err = real_add_scalar_arg(fp, arg->val.x);
+            }
+        } else if (fp->type == GRETL_TYPE_SERIES) {
+            err = process_series_arg(call, fp, arg, dset);
+        } else if (fp->type == GRETL_TYPE_MATRIX &&
+                   arg->type == GRETL_TYPE_DOUBLE) {
+            err = do_scalar_matrix_cast(arg, fp);
+        } else if (fp->type == GRETL_TYPE_MATRIX ||
+                   fp->type == GRETL_TYPE_BUNDLE ||
+                   fp->type == GRETL_TYPE_STRING ||
+                   gretl_array_type(fp->type)) {
+            err = process_object_arg(call, i, fp);
+        } else if (fp->type == GRETL_TYPE_LIST) {
+            err = localize_list(call, arg, fp, dset);
+        } else if (fp->type == GRETL_TYPE_SERIES_REF) {
+            err = localize_series_ref(call, arg, fp, dset);
+        } else if (gretl_ref_type(fp->type)) {
+            err = process_object_ref_arg(arg, fp);
+        }
+        if (!err && (fp->type == GRETL_TYPE_BUNDLE ||
+                     fp->type == GRETL_TYPE_BUNDLE_REF)) {
+            err = localize_bundled_lists(call, arg, fp, dset);
+        }
     }
 
     /* now for any trailing parameters without matching arguments */
 
     for (i=call->argc; i<fun->n_params && !err; i++) {
-	fp = &fun->params[i];
-	if (gretl_scalar_type(fp->type)) {
-	    err = add_scalar_arg_default(fp);
-	} else if (fp->type == GRETL_TYPE_LIST) {
-	    err = add_empty_list(call, fp, dset);
-	}
+        fp = &fun->params[i];
+        if (gretl_scalar_type(fp->type)) {
+            err = add_scalar_arg_default(fp);
+        } else if (fp->type == GRETL_TYPE_LIST) {
+            err = add_empty_list(call, fp, dset);
+        }
     }
 
     if (call->listvars != NULL) {
-	if (err) {
-	    free(call->listvars);
-	    call->listvars = NULL;
-	} else {
-	    fncall_finalize_listvars(call);
-	}
+        if (err) {
+            free(call->listvars);
+            call->listvars = NULL;
+        } else {
+            fncall_finalize_listvars(call);
+        }
     }
 
     if (!err) {
-	set_listargs_from_call(call, dset);
+        set_listargs_from_call(call, dset);
     }
 
 #if ARGS_DEBUG
@@ -8607,42 +8607,42 @@ static int allocate_function_args (fncall *call, DATASET *dset)
  */
 
 int check_function_needs (const DATASET *dset, DataReq dreq,
-			  int minver)
+                          int minver)
 {
     static int thisver = 0;
 
     if (thisver == 0) {
-	thisver = gretl_version_number(GRETL_VERSION);
+        thisver = gretl_version_number(GRETL_VERSION);
     }
 
     if (minver > thisver) {
-	char vstr[8];
+        char vstr[8];
 
-	gretl_version_string(vstr, minver);
-	gretl_errmsg_sprintf(_("This function needs gretl version %s"), vstr);
-	return 1;
+        gretl_version_string(vstr, minver);
+        gretl_errmsg_sprintf(_("This function needs gretl version %s"), vstr);
+        return 1;
     }
 
     if ((dset == NULL || dset->v == 0) && dreq != FN_NODATA_OK) {
-	gretl_errmsg_set(_("This function needs a dataset in place"));
-	return E_DATA;
+        gretl_errmsg_set(_("This function needs a dataset in place"));
+        return E_DATA;
     }
 
     if (dreq == FN_NEEDS_TS && !dataset_is_time_series(dset)) {
-	gretl_errmsg_set(_("This function needs time-series data"));
-	return E_DATA;
+        gretl_errmsg_set(_("This function needs time-series data"));
+        return E_DATA;
     }
 
     if (dreq == FN_NEEDS_PANEL && !dataset_is_panel(dset)) {
-	gretl_errmsg_set(_("This function needs panel data"));
-	return E_DATA;
+        gretl_errmsg_set(_("This function needs panel data"));
+        return E_DATA;
     }
 
     if (dreq == FN_NEEDS_QM &&
-	(!dataset_is_time_series(dset) ||
-	 (dset->pd != 4 && dset->pd != 12))) {
-	gretl_errmsg_set(_("This function needs quarterly or monthly data"));
-	return E_DATA;
+        (!dataset_is_time_series(dset) ||
+         (dset->pd != 4 && dset->pd != 12))) {
+        gretl_errmsg_set(_("This function needs quarterly or monthly data"));
+        return E_DATA;
     }
 
     return 0;
@@ -8666,34 +8666,34 @@ int package_version_ok (int minver, char *reqstr)
     int ret = 0;
 
     if (thisver == 0) {
-	thisver = gretl_version_number(GRETL_VERSION);
+        thisver = gretl_version_number(GRETL_VERSION);
     }
 
     ret = thisver >= minver;
 
     if (!ret && reqstr != NULL) {
-	gretl_version_string(reqstr, minver);
+        gretl_version_string(reqstr, minver);
     }
 
     return ret;
 }
 
 static int maybe_check_function_needs (const DATASET *dset,
-				       const ufunc *fun)
+                                       const ufunc *fun)
 {
     if (fun->pkg == NULL || fun->pkg->prechecked) {
-	return 0;
+        return 0;
     }
 
 #ifdef HAVE_MPI
     if (*mpi_caller != '\0') {
-	/* let's assume we're OK */
-	return 0;
+        /* let's assume we're OK */
+        return 0;
     }
 #endif
 
     return check_function_needs(dset, fun->pkg->dreq,
-				fun->pkg->minver);
+                                fun->pkg->minver);
 }
 
 /* next block: handling function return values */
@@ -8705,22 +8705,22 @@ static int handle_scalar_return (fncall *call, void *ptr, int rtype)
     int err = 0;
 
     if (gretl_is_scalar(vname)) {
-	xret = gretl_scalar_get_value(vname, NULL);
+        xret = gretl_scalar_get_value(vname, NULL);
     } else {
-	gretl_matrix *m = get_matrix_by_name(vname);
+        gretl_matrix *m = get_matrix_by_name(vname);
 
-	if (gretl_matrix_is_scalar(m)) {
-	    xret = m->val[0];
-	} else {
-	    user_var *uv = get_user_var_by_name(vname);
-	    GretlType t = user_var_get_type(uv);
+        if (gretl_matrix_is_scalar(m)) {
+            xret = m->val[0];
+        } else {
+            user_var *uv = get_user_var_by_name(vname);
+            GretlType t = user_var_get_type(uv);
 
-	    gretl_errmsg_sprintf(_("Function %s did not provide the specified return value\n"
-				 "(expected %s, got %s)"), call->fun->name,
-				 gretl_type_get_name(rtype), gretl_type_get_name(t));
-	    err = E_TYPES;
-	    xret = NADBL;
-	}
+            gretl_errmsg_sprintf(_("Function %s did not provide the specified return value\n"
+                                 "(expected %s, got %s)"), call->fun->name,
+                                 gretl_type_get_name(rtype), gretl_type_get_name(t));
+            err = E_TYPES;
+            xret = NADBL;
+        }
     }
 
     *(double **) ptr = &xret;
@@ -8729,74 +8729,74 @@ static int handle_scalar_return (fncall *call, void *ptr, int rtype)
 }
 
 static int handle_series_return (const char *vname, void *ptr,
-				 DATASET *dset, int copy,
-				 char **label, series_table **stab)
+                                 DATASET *dset, int copy,
+                                 char **label, series_table **stab)
 {
     int v = series_index(dset, vname);
     double *x = NULL;
     int err = 0;
 
     if (!copy && v == 0) {
-	copy = 1;
+        copy = 1;
     }
 
     if (v >= 0 && v < dset->v) {
-	if (copy) {
-	    x = copyvec(dset->Z[v], dset->n);
-	    if (x == NULL) {
-		err = E_ALLOC;
-	    }
-	} else {
-	    x = dset->Z[v];
-	    dset->Z[v] = NULL;
-	}
+        if (copy) {
+            x = copyvec(dset->Z[v], dset->n);
+            if (x == NULL) {
+                err = E_ALLOC;
+            }
+        } else {
+            x = dset->Z[v];
+            dset->Z[v] = NULL;
+        }
     } else {
-	err = E_UNKVAR;
+        err = E_UNKVAR;
     }
 
     *(double **) ptr = x;
 
     if (!err) {
-	if (label != NULL) {
-	    const char *vstr = series_get_label(dset, v);
+        if (label != NULL) {
+            const char *vstr = series_get_label(dset, v);
 
-	    if (vstr != NULL) {
-		*label = gretl_strdup(vstr);
-	    } else {
-		*label = gretl_strdup("");
-	    }
-	}
-	if (stab != NULL && is_string_valued(dset, v)) {
-	    series_table *st = series_get_string_table(dset, v);
+            if (vstr != NULL) {
+                *label = gretl_strdup(vstr);
+            } else {
+                *label = gretl_strdup("");
+            }
+        }
+        if (stab != NULL && is_string_valued(dset, v)) {
+            series_table *st = series_get_string_table(dset, v);
 
-	    *stab = series_table_copy(st);
-	}
+            *stab = series_table_copy(st);
+        }
     }
 
     return err;
 }
 
 static int handle_matrix_return (const char *name, void *ptr,
-				 int copy)
+                                 int copy)
 {
     gretl_matrix *ret = NULL;
     int err = 0;
 
     if (copy) {
-	gretl_matrix *m = get_matrix_by_name(name);
+        gretl_matrix *m = get_matrix_by_name(name);
 
-	if (m != NULL) {
-	    ret = gretl_matrix_copy(m);
-	    if (ret == NULL) {
-		err = E_ALLOC;
-	    }
-	}
+        if (m != NULL) {
+            ret = gretl_matrix_copy(m);
+            if (ret == NULL) {
+                err = E_ALLOC;
+            }
+        }
     } else {
-	ret = steal_matrix_by_name(name);
+        ret = steal_matrix_by_name(name);
     }
 
     if (ret == NULL && !err) {
-	err = E_UNKVAR;
+        err = E_UNKVAR;
     }
 
     *(gretl_matrix **) ptr = ret;
@@ -8805,20 +8805,20 @@ static int handle_matrix_return (const char *name, void *ptr,
 }
 
 static GretlType fix_numeric_return_type (fncall *call,
-					  DATASET *dset)
+                                          DATASET *dset)
 {
     GretlType t = 0;
     user_var *uv;
 
     uv = user_var_get_value_and_type(call->retname, &t);
     if (uv != NULL) {
-	call->rtype = t;
+        call->rtype = t;
     } else {
-	int v = current_series_index(dset, call->retname);
+        int v = current_series_index(dset, call->retname);
 
-	if (v >= 0) {
-	    t = call->rtype = GRETL_TYPE_SERIES;
-	}
+        if (v >= 0) {
+            t = call->rtype = GRETL_TYPE_SERIES;
+        }
     }
 
     return t;
@@ -8831,20 +8831,20 @@ static int handle_bundle_return (fncall *call, void *ptr, int copy)
     int err = 0;
 
     if (copy) {
-	gretl_bundle *b = get_bundle_by_name(name);
+        gretl_bundle *b = get_bundle_by_name(name);
 
-	if (b != NULL) {
-	    ret = gretl_bundle_copy(b, &err);
-	}
+        if (b != NULL) {
+            ret = gretl_bundle_copy(b, &err);
+        }
     } else {
-	ret = gretl_bundle_pull_from_stack(name, &err);
+        ret = gretl_bundle_pull_from_stack(name, &err);
     }
 
     if (ret != NULL && call->fun->pkg != NULL &&
-	gretl_function_depth() == 1) {
-	if (call->fun->pkg_role != UFUN_BUNDLE_FCAST) {
-	    gretl_bundle_set_creator(ret, call->fun->pkg->name);
-	}
+        gretl_function_depth() == 1) {
+        if (call->fun->pkg_role != UFUN_BUNDLE_FCAST) {
+            gretl_bundle_set_creator(ret, call->fun->pkg->name);
+        }
     }
 
     *(gretl_bundle **) ptr = ret;
@@ -8859,13 +8859,13 @@ static int handle_array_return (fncall *call, void *ptr, int copy)
     int err = 0;
 
     if (copy) {
-	gretl_array *a = get_array_by_name(name);
+        gretl_array *a = get_array_by_name(name);
 
-	if (a != NULL) {
-	    ret = gretl_array_copy(a, &err);
-	}
+        if (a != NULL) {
+            ret = gretl_array_copy(a, &err);
+        }
     } else {
-	ret = gretl_array_pull_from_stack(name, &err);
+        ret = gretl_array_pull_from_stack(name, &err);
     }
 
     *(gretl_array **) ptr = ret;
@@ -8880,7 +8880,7 @@ static void replace_caller_series (int targ, int src, DATASET *dset)
 
     /* replace data values */
     for (t=dset->t1; t<=dset->t2; t++) {
-	dset->Z[targ][t] = dset->Z[src][t];
+        dset->Z[targ][t] = dset->Z[src][t];
     }
 
     /* replace variable info? */
@@ -8910,8 +8910,8 @@ static void replace_caller_series (int targ, int src, DATASET *dset)
 */
 
 static int unlocalize_list (fncall *call, const char *lname,
-			    fn_arg *arg, void *ret,
-			    DATASET *dset)
+                            fn_arg *arg, void *ret,
+                            DATASET *dset)
 {
     int *list = get_list_by_name(lname);
     int d = gretl_function_depth();
@@ -8920,80 +8920,80 @@ static int unlocalize_list (fncall *call, const char *lname,
 
 #if ARGS_DEBUG
     fprintf(stderr, "\n*** unlocalize_list '%s', function %s depth = %d\n",
-	    lname, call->fun->name, d);
+            lname, call->fun->name, d);
     printlist(list, lname);
     fprintf(stderr, " dset = %p, dset->v = %d\n", (void *) dset, dset->v);
     fprintf(stderr, " list is direct return value? %s\n", arg == NULL ? "yes" : "no");
 #endif
 
     if (list == NULL) {
-	return E_DATA;
+        return E_DATA;
     }
 
     if (arg == NULL && ret == NULL) {
-	; /* no-op: we'll trash the list later */
+        ; /* no-op: we'll trash the list later */
     } else if (arg == NULL) {
-	/* handle list as direct return value */
-	int j, lev, overwrite;
-	const char *vname;
+        /* handle list as direct return value */
+        int j, lev, overwrite;
+        const char *vname;
 
-	for (i=1; i<=list[0]; i++) {
-	    overwrite = 0;
-	    vi = list[i];
-	    vname = dset->varname[vi];
-	    if (in_gretl_list(call->ptrvars, vi)) {
-		/* 2021-06-28: detect a somewhat anomalous case */
-		fprintf(stderr, "*** return list '%s' contains series %s, passed in "
-			"pointer form ***\n", lname, vname);
-		continue;
-	    }
-	    series_unset_flag(dset, vi, VAR_LISTARG);
-	    if (vi > 0 && vi < dset->v && series_get_stack_level(dset, vi) == d) {
-		for (j=1; j<dset->v; j++) {
-		    lev = series_get_stack_level(dset, j);
-		    if (lev == upd && !strcmp(dset->varname[j], vname)) {
-			overwrite = 1;
-			break;
-		    }
-		    if (lev == d && j < vi && series_is_listarg(dset, j, NULL) &&
-			!strcmp(dset->varname[j], vname)) {
-			overwrite = 1;
-			break;
-		    }
-		}
-		if (overwrite) {
-		    replace_caller_series(j, vi, dset);
-		    /* replace ID number in list */
-		    list[i] = j;
-		} else {
-		    series_set_stack_level(dset, vi, upd);
-		}
-	    }
+        for (i=1; i<=list[0]; i++) {
+            overwrite = 0;
+            vi = list[i];
+            vname = dset->varname[vi];
+            if (in_gretl_list(call->ptrvars, vi)) {
+                /* 2021-06-28: detect a somewhat anomalous case */
+                fprintf(stderr, "*** return list '%s' contains series %s, passed in "
+                        "pointer form ***\n", lname, vname);
+                continue;
+            }
+            series_unset_flag(dset, vi, VAR_LISTARG);
+            if (vi > 0 && vi < dset->v && series_get_stack_level(dset, vi) == d) {
+                for (j=1; j<dset->v; j++) {
+                    lev = series_get_stack_level(dset, j);
+                    if (lev == upd && !strcmp(dset->varname[j], vname)) {
+                        overwrite = 1;
+                        break;
+                    }
+                    if (lev == d && j < vi && series_is_listarg(dset, j, NULL) &&
+                        !strcmp(dset->varname[j], vname)) {
+                        overwrite = 1;
+                        break;
+                    }
+                }
+                if (overwrite) {
+                    replace_caller_series(j, vi, dset);
+                    /* replace ID number in list */
+                    list[i] = j;
+                } else {
+                    series_set_stack_level(dset, vi, upd);
+                }
+            }
 #if ARGS_DEBUG
-	    fprintf(stderr, " list-member var %d, '%s': ", vi, vname);
-	    if (overwrite) {
-		fprintf(stderr, "found match in caller, overwrote var %d\n", j);
-	    } else {
-		fprintf(stderr, "no match in caller\n");
-	    }
+            fprintf(stderr, " list-member var %d, '%s': ", vi, vname);
+            if (overwrite) {
+                fprintf(stderr, "found match in caller, overwrote var %d\n", j);
+            } else {
+                fprintf(stderr, "no match in caller\n");
+            }
 #endif
-	}
+        }
     } else {
-	/* list was given as argument to function */
-	for (i=1; i<=list[0]; i++) {
-	    vi = list[i];
-	    if (vi == LISTSEP) {
-		continue;
-	    }
-	    if (series_is_listarg(dset, vi, NULL)) {
-		series_unset_flag(dset, vi, VAR_LISTARG);
-		series_set_stack_level(dset, vi, upd);
-	    }
-	}
-	if (arg->type != GRETL_TYPE_LIST) {
-	    /* the list was constructed on the fly */
-	    user_var_delete_by_name(lname, NULL);
-	}
+        /* list was given as argument to function */
+        for (i=1; i<=list[0]; i++) {
+            vi = list[i];
+            if (vi == LISTSEP) {
+                continue;
+            }
+            if (series_is_listarg(dset, vi, NULL)) {
+                series_unset_flag(dset, vi, VAR_LISTARG);
+                series_set_stack_level(dset, vi, upd);
+            }
+        }
+        if (arg->type != GRETL_TYPE_LIST) {
+            /* the list was constructed on the fly */
+            user_var_delete_by_name(lname, NULL);
+        }
     }
 
     return 0;
@@ -9006,12 +9006,12 @@ static int handle_string_return (const char *sname, void *ptr)
     int err = 0;
 
     if (s == NULL) {
-	err = E_DATA;
+        err = E_DATA;
     } else {
-	ret = gretl_strdup(s);
-	if (ret == NULL) {
-	    err = E_ALLOC;
-	}
+        ret = gretl_strdup(s);
+        if (ret == NULL) {
+            err = E_ALLOC;
+        }
     }
 
     *(char **) ptr = ret;
@@ -9027,34 +9027,34 @@ static int check_sub_object_return (fn_arg *arg, fn_param *fp)
     int err = 0;
 
     if (curr == NULL) {
-	fprintf(stderr, "sub_object return: value has disappeared!\n");
-	err = E_DATA;
+        fprintf(stderr, "sub_object return: value has disappeared!\n");
+        err = E_DATA;
     } else if (curr != orig) {
-	/* reattachment is needed */
-	GretlType uptype = user_var_get_type(arg->uvar);
-	void *updata = user_var_get_value(arg->uvar);
+        /* reattachment is needed */
+        GretlType uptype = user_var_get_type(arg->uvar);
+        void *updata = user_var_get_value(arg->uvar);
 
-	if (uptype == GRETL_TYPE_ARRAY) {
-	    gretl_array *a = updata;
-	    int i, n = gretl_array_get_length(a);
-	    int found = 0;
+        if (uptype == GRETL_TYPE_ARRAY) {
+            gretl_array *a = updata;
+            int i, n = gretl_array_get_length(a);
+            int found = 0;
 
-	    for (i=0; i<n; i++) {
-		if (gretl_array_get_data(a, i) == orig) {
-		    gretl_array_set_data(a, i, curr);
-		    found = 1;
-		}
-	    }
-	    if (!found) {
-		err = E_DATA;
-	    }
-	} else if (uptype == GRETL_TYPE_BUNDLE) {
-	    fprintf(stderr, "sub_object return: uptype = bundle, not handled\n");
-	    err = E_DATA;
-	} else {
-	    /* no other types handled */
-	    err = E_TYPES;
-	}
+            for (i=0; i<n; i++) {
+                if (gretl_array_get_data(a, i) == orig) {
+                    gretl_array_set_data(a, i, curr);
+                    found = 1;
+                }
+            }
+            if (!found) {
+                err = E_DATA;
+            }
+        } else if (uptype == GRETL_TYPE_BUNDLE) {
+            fprintf(stderr, "sub_object return: uptype = bundle, not handled\n");
+            err = E_DATA;
+        } else {
+            /* no other types handled */
+            err = E_TYPES;
+        }
     }
 
     return err;
@@ -9065,17 +9065,17 @@ static int is_pointer_arg (fncall *call, int rtype)
     ufunc *u = call->fun;
 
     if (call->retname != NULL) {
-	fn_param *fp;
-	int i;
+        fn_param *fp;
+        int i;
 
-	for (i=0; i<call->argc; i++) {
-	    fp = &u->params[i];
-	    if ((fp->type == gretl_type_get_ref_type(rtype) ||
-		 (fp->flags & FP_CONST)) &&
-		strcmp(fp->name, call->retname) == 0) {
-		return 1;
-	    }
-	}
+        for (i=0; i<call->argc; i++) {
+            fp = &u->params[i];
+            if ((fp->type == gretl_type_get_ref_type(rtype) ||
+                 (fp->flags & FP_CONST)) &&
+                strcmp(fp->name, call->retname) == 0) {
+                return 1;
+            }
+        }
     }
 
     return 0;
@@ -9093,15 +9093,15 @@ static void push_series_to_caller (ufunc *u, fn_arg *arg, DATASET *dset)
     int v = arg->val.idnum;
 
     if (arg->upname == NULL) {
-	fprintf(stderr, "ERROR in push_series_to_caller: arg->upname is NULL\n");
-	return;
+        fprintf(stderr, "ERROR in push_series_to_caller: arg->upname is NULL\n");
+        return;
     }
 
     series_decrement_stack_level(dset, v);
     if (series_get_stack_level(dset, v) < 0) {
-	fprintf(stderr, "@@@ After decrement in %s, stack level=%d for %s @@@\n",
-		u->name, series_get_stack_level(dset, v), arg->upname);
-	/*_set_stack_level(dset, v, 0); */
+        fprintf(stderr, "@@@ After decrement in %s, stack level=%d for %s @@@\n",
+                u->name, series_get_stack_level(dset, v), arg->upname);
+        /*_set_stack_level(dset, v, 0); */
     }
     strcpy(dset->varname[v], arg->upname);
 }
@@ -9115,71 +9115,71 @@ static void push_object_to_caller (fn_arg *arg)
 #define null_return(t) (t == GRETL_TYPE_VOID || t == GRETL_TYPE_NONE)
 
 #define needs_dataset(t) (t == GRETL_TYPE_SERIES || \
-			  t == GRETL_TYPE_LIST ||   \
-			  t == GRETL_TYPE_SERIES_REF || \
-			  t == GRETL_TYPE_LISTS || \
-			  t == GRETL_TYPE_LISTS_REF)
+                          t == GRETL_TYPE_LIST ||   \
+                          t == GRETL_TYPE_SERIES_REF || \
+                          t == GRETL_TYPE_LISTS || \
+                          t == GRETL_TYPE_LISTS_REF)
 
 static int
 function_assign_returns (fncall *call, int rtype,
-			 DATASET *dset, void *ret,
-			 char **label, series_table **stab,
-			 PRN *prn, int *perr)
+                         DATASET *dset, void *ret,
+                         char **label, series_table **stab,
+                         PRN *prn, int *perr)
 {
     ufunc *u = call->fun;
     int i, err = 0;
 
 #if ARGS_DEBUG
     fprintf(stderr, "function_assign_returns: rtype = %s, call->retname = %s\n",
-	    gretl_type_get_name(rtype), call->retname);
+            gretl_type_get_name(rtype), call->retname);
 #endif
 
     if (*perr == 0 && !null_return(rtype) && call->retname == NULL) {
-	/* missing return value */
-	gretl_errmsg_sprintf(_("Function %s did not provide the specified return value\n"
-			     "(expected %s)"), u->name, gretl_type_get_name(rtype));
-	*perr = err = E_UNKVAR;
+        /* missing return value */
+        gretl_errmsg_sprintf(_("Function %s did not provide the specified return value\n"
+                             "(expected %s)"), u->name, gretl_type_get_name(rtype));
+        *perr = err = E_UNKVAR;
     } else if (*perr == 0 && needs_dataset(rtype) && dset == NULL) {
-	/* "can't happen" */
-	*perr = err = E_DATA;
+        /* "can't happen" */
+        *perr = err = E_DATA;
     }
 
     if (*perr == 0) {
-	/* first we work on the value directly returned by the
-	   function (but only if there's no error)
-	*/
-	int copy = is_pointer_arg(call, rtype);
+        /* first we work on the value directly returned by the
+           function (but only if there's no error)
+        */
+        int copy = is_pointer_arg(call, rtype);
 
-	if (rtype == GRETL_TYPE_NUMERIC) {
-	    rtype = fix_numeric_return_type(call, dset);
-	}
+        if (rtype == GRETL_TYPE_NUMERIC) {
+            rtype = fix_numeric_return_type(call, dset);
+        }
 
-	if (rtype == GRETL_TYPE_DOUBLE) {
-	    err = handle_scalar_return(call, ret, rtype);
-	} else if (rtype == GRETL_TYPE_SERIES) {
-	    err = handle_series_return(call->retname, ret, dset, copy, label, stab);
-	} else if (rtype == GRETL_TYPE_MATRIX) {
-	    err = handle_matrix_return(call->retname, ret, copy);
-	} else if (rtype == GRETL_TYPE_LIST) {
-	    /* note: in this case the job is finished in
-	       stop_fncall(); here we just adjust the info on the
-	       listed variables so they don't get deleted
-	    */
-	    err = unlocalize_list(call, call->retname, NULL, ret, dset);
-	} else if (rtype == GRETL_TYPE_BUNDLE) {
-	    err = handle_bundle_return(call, ret, copy);
-	} else if (gretl_array_type(rtype)) {
-	    err = handle_array_return(call, ret, copy);
-	} else if (rtype == GRETL_TYPE_STRING) {
-	    err = handle_string_return(call->retname, ret);
-	}
+        if (rtype == GRETL_TYPE_DOUBLE) {
+            err = handle_scalar_return(call, ret, rtype);
+        } else if (rtype == GRETL_TYPE_SERIES) {
+            err = handle_series_return(call->retname, ret, dset, copy, label, stab);
+        } else if (rtype == GRETL_TYPE_MATRIX) {
+            err = handle_matrix_return(call->retname, ret, copy);
+        } else if (rtype == GRETL_TYPE_LIST) {
+            /* note: in this case the job is finished in
+               stop_fncall(); here we just adjust the info on the
+               listed variables so they don't get deleted
+            */
+            err = unlocalize_list(call, call->retname, NULL, ret, dset);
+        } else if (rtype == GRETL_TYPE_BUNDLE) {
+            err = handle_bundle_return(call, ret, copy);
+        } else if (gretl_array_type(rtype)) {
+            err = handle_array_return(call, ret, copy);
+        } else if (rtype == GRETL_TYPE_STRING) {
+            err = handle_string_return(call->retname, ret);
+        }
 
-	if (err == E_UNKVAR) {
-	    pprintf(prn, _("Function %s did not provide the specified return value\n"),
-		    u->name);
-	}
+        if (err == E_UNKVAR) {
+            pprintf(prn, _("Function %s did not provide the specified return value\n"),
+                    u->name);
+        }
 
-	*perr = err;
+        *perr = err;
     }
 
     /* "Indirect return" values and other pointerized args:
@@ -9187,44 +9187,44 @@ function_assign_returns (fncall *call, int rtype,
     */
 
     for (i=0; i<call->argc; i++) {
-	fn_arg *arg = &call->args[i];
-	fn_param *fp = &u->params[i];
-	int ierr = 0;
+        fn_arg *arg = &call->args[i];
+        fn_param *fp = &u->params[i];
+        int ierr = 0;
 
-	if (needs_dataset(fp->type) && dset == NULL) {
-	    ierr = E_DATA;
-	} else if (gretl_ref_type(fp->type)) {
-	    if (arg->type == GRETL_TYPE_SERIES_REF) {
-		push_series_to_caller(u, arg, dset);
-	    } else if (arg->upname != NULL) {
-		push_object_to_caller(arg);
-	    } else if (arg->uvar != NULL) {
-		ierr = check_sub_object_return(arg, fp);
-	    } else {
-		; /* pure "shell" object: no-op */
-	    }
-	} else if (arg->type == GRETL_TYPE_USERIES &&
-		   (fp->type == GRETL_TYPE_SERIES ||
-		    fp->type == GRETL_TYPE_NUMERIC) &&
-		   param_is_const(fp)) {
-	    push_series_to_caller(u, arg, dset);
-	} else if ((fp->type == GRETL_TYPE_MATRIX ||
-		    fp->type == GRETL_TYPE_BUNDLE ||
-		    fp->type == GRETL_TYPE_STRING ||
-		    fp->type == GRETL_TYPE_NUMERIC ||
-		    gretl_array_type(fp->type))) {
-	    if (arg->shifted) {
-		/* non-pointerized const object argument,
-		   which we renamed and shifted
-		*/
-		push_object_to_caller(arg);
-	    }
-	} else if (fp->type == GRETL_TYPE_LIST) {
-	    unlocalize_list(call, fp->name, arg, NULL, dset);
-	}
-	if (ierr) {
-	    *perr = err = ierr;
-	}
+        if (needs_dataset(fp->type) && dset == NULL) {
+            ierr = E_DATA;
+        } else if (gretl_ref_type(fp->type)) {
+            if (arg->type == GRETL_TYPE_SERIES_REF) {
+                push_series_to_caller(u, arg, dset);
+            } else if (arg->upname != NULL) {
+                push_object_to_caller(arg);
+            } else if (arg->uvar != NULL) {
+                ierr = check_sub_object_return(arg, fp);
+            } else {
+                ; /* pure "shell" object: no-op */
+            }
+        } else if (arg->type == GRETL_TYPE_USERIES &&
+                   (fp->type == GRETL_TYPE_SERIES ||
+                    fp->type == GRETL_TYPE_NUMERIC) &&
+                   param_is_const(fp)) {
+            push_series_to_caller(u, arg, dset);
+        } else if ((fp->type == GRETL_TYPE_MATRIX ||
+                    fp->type == GRETL_TYPE_BUNDLE ||
+                    fp->type == GRETL_TYPE_STRING ||
+                    fp->type == GRETL_TYPE_NUMERIC ||
+                    gretl_array_type(fp->type))) {
+            if (arg->shifted) {
+                /* non-pointerized const object argument,
+                   which we renamed and shifted
+                */
+                push_object_to_caller(arg);
+            }
+        } else if (fp->type == GRETL_TYPE_LIST) {
+            unlocalize_list(call, fp->name, arg, NULL, dset);
+        }
+        if (ierr) {
+            *perr = err = ierr;
+        }
     }
 
 #if ARGS_DEBUG
@@ -9267,24 +9267,24 @@ static void restore_obs_info (obsinfo *oi, DATASET *dset)
 static void push_verbosity (fncall *call)
 {
     if (!is_recursing(call)) {
-	if (gretl_messages_on()) {
-	    call->flags |= FC_PREV_MSGS;
-	} else {
-	    call->flags &= ~FC_PREV_MSGS;
-	}
-	if (gretl_echo_on()) {
-	    call->flags |= FC_PREV_ECHO;
-	} else {
-	    call->flags &= ~FC_PREV_ECHO;
-	}
+        if (gretl_messages_on()) {
+            call->flags |= FC_PREV_MSGS;
+        } else {
+            call->flags &= ~FC_PREV_MSGS;
+        }
+        if (gretl_echo_on()) {
+            call->flags |= FC_PREV_ECHO;
+        } else {
+            call->flags &= ~FC_PREV_ECHO;
+        }
     }
 }
 
 static void pop_verbosity (fncall *call)
 {
     if (!is_recursing(call)) {
-	set_gretl_messages(call->flags & FC_PREV_MSGS);
-	set_gretl_echo(call->flags & FC_PREV_ECHO);
+        set_gretl_messages(call->flags & FC_PREV_MSGS);
+        set_gretl_echo(call->flags & FC_PREV_ECHO);
     }
 }
 
@@ -9293,7 +9293,7 @@ static void pop_verbosity (fncall *call)
 */
 
 static int stop_fncall (fncall *call, int rtype, void *ret,
-			DATASET *dset, PRN *prn, int redir_level)
+                        DATASET *dset, PRN *prn, int redir_level)
 {
     int i, d = gretl_function_depth();
     int delv, anyerr = 0;
@@ -9301,8 +9301,8 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 
 #if FN_DEBUG
     fprintf(stderr, "stop_fncall: terminating call to "
-	    "function '%s' at depth %d, dset->v = %d\n",
-	    call->fun->name, d, (dset != NULL)? dset->v : 0);
+            "function '%s' at depth %d, dset->v = %d\n",
+            call->fun->name, d, (dset != NULL)? dset->v : 0);
 #endif
 
     /* below: delete series local to the function, taking care not to
@@ -9312,38 +9312,38 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     */
 
     if (dset != NULL) {
-	for (i=call->orig_v, delv=0; i<dset->v; i++) {
-	    if (series_get_stack_level(dset, i) == d) {
-		delv++;
-	    }
-	}
-	if (delv > 0) {
-	    if (delv == dset->v - call->orig_v) {
-		/* deleting all added series */
-		anyerr = dataset_drop_last_variables(dset, delv);
-		if (anyerr && !err) {
-		    err = anyerr;
-		}
-	    } else {
-		for (i=dset->v-1; i>=call->orig_v; i--) {
-		    if (series_get_stack_level(dset, i) == d) {
-			anyerr = dataset_drop_variable(i, dset);
-			if (anyerr && !err) {
-			    err = anyerr;
-			}
-		    }
-		}
-	    }
-	}
-	if (call->listvars != NULL) {
-	    int vi;
+        for (i=call->orig_v, delv=0; i<dset->v; i++) {
+            if (series_get_stack_level(dset, i) == d) {
+                delv++;
+            }
+        }
+        if (delv > 0) {
+            if (delv == dset->v - call->orig_v) {
+                /* deleting all added series */
+                anyerr = dataset_drop_last_variables(dset, delv);
+                if (anyerr && !err) {
+                    err = anyerr;
+                }
+            } else {
+                for (i=dset->v-1; i>=call->orig_v; i--) {
+                    if (series_get_stack_level(dset, i) == d) {
+                        anyerr = dataset_drop_variable(i, dset);
+                        if (anyerr && !err) {
+                            err = anyerr;
+                        }
+                    }
+                }
+            }
+        }
+        if (call->listvars != NULL) {
+            int vi;
 
-	    for (i=1; i<=call->listvars[0]; i++) {
-		vi = call->listvars[i];
-		series_unset_flag(dset, vi, VAR_LISTARG);
-		series_set_stack_level(dset, vi, d - 1);
-	    }
-	}
+            for (i=1; i<=call->listvars[0]; i++) {
+                vi = call->listvars[i];
+                series_unset_flag(dset, vi, VAR_LISTARG);
+                series_set_stack_level(dset, vi, d - 1);
+            }
+        }
     }
 
     /* direct list return: write the possibly revised list to the
@@ -9353,46 +9353,46 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     */
 
     if (!err && rtype == GRETL_TYPE_LIST && ret != NULL) {
-	int *lret = gretl_list_copy(get_list_by_name(call->retname));
+        int *lret = gretl_list_copy(get_list_by_name(call->retname));
 
-	if (lret != NULL) {
-	    *(int **) ret = lret;
-	} else {
-	    err = E_ALLOC;
-	}
+        if (lret != NULL) {
+            *(int **) ret = lret;
+        } else {
+            err = E_ALLOC;
+        }
     }
 
     /* now we're ready to trash function-local vars */
     anyerr = destroy_user_vars_at_level(d);
 
     if (anyerr && !err) {
-	err = anyerr;
+        err = anyerr;
     }
 
     /* if any anonymous equations system was defined: clean up */
     delete_anonymous_equation_system(d);
 
     if (call->fun->flags & UFUN_USES_SET) {
-	pop_program_state();
+        pop_program_state();
     } else {
-	pop_verbosity(call);
+        pop_verbosity(call);
     }
 
     if (dset != NULL && dset->v > 0) {
-	restore_obs_info(&call->obs, dset);
+        restore_obs_info(&call->obs, dset);
     }
 
     set_executing_off(&call, dset, prn);
 
     if (print_redirection_level(prn) > redir_level) {
-	gretl_errmsg_set(_("Incorrect use of 'outfile' in function"));
-	err = 1;
+        gretl_errmsg_set(_("Incorrect use of 'outfile' in function"));
+        err = 1;
     }
 
     if (call != NULL && call->retname != NULL) {
-	/* we're surely done with this now: avoid potential leak */
-	free(call->retname);
-	call->retname = NULL;
+        /* we're surely done with this now: avoid potential leak */
+        free(call->retname);
+        call->retname = NULL;
     }
 
     return err;
@@ -9408,17 +9408,17 @@ static void reset_saved_uservars (ufunc *u, int on_recurse)
 
 #if COMP_DEBUG
     if (on_recurse) {
-	fprintf(stderr, "on recursion of %s, reset_saved_uservars\n", u->name);
+        fprintf(stderr, "on recursion of %s, reset_saved_uservars\n", u->name);
     } else {
-	fprintf(stderr, "at exit from %s, reset_saved_uservars\n", u->name);
+        fprintf(stderr, "at exit from %s, reset_saved_uservars\n", u->name);
     }
 #endif
 
     for (i=0; i<u->n_lines; i++) {
         line = &(u->lines[i]);
-	if (line_has_loop(line)) {
-	    loop_reset_uvars(line->ptr);
-	}
+        if (line_has_loop(line)) {
+            loop_reset_uvars(line->ptr);
+        }
     }
 
 #if 1
@@ -9430,9 +9430,9 @@ static void reset_saved_uservars (ufunc *u, int on_recurse)
 #endif
 
     if (u->call != NULL && u->call->lgen != NULL) {
-	for (i=0; i<u->call->n_lgen; i++) {
-	    genr_reset_uvars(u->call->lgen[i].genr);
-	}
+        for (i=0; i<u->call->n_lgen; i++) {
+            genr_reset_uvars(u->call->lgen[i].genr);
+        }
     }
 }
 
@@ -9441,10 +9441,10 @@ static void set_pkgdir (fnpkg *pkg)
     const char *p = strrslash(pkg->fname);
 
     if (p != NULL) {
-	char *pkgdir = gretl_strndup(pkg->fname, p - pkg->fname);
+        char *pkgdir = gretl_strndup(pkg->fname, p - pkg->fname);
 
-	gretl_insert_builtin_string("pkgdir", pkgdir);
-	free(pkgdir);
+        gretl_insert_builtin_string("pkgdir", pkgdir);
+        free(pkgdir);
     }
 }
 
@@ -9454,65 +9454,65 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
     fncall *prevcall;
 
     while (tmp != NULL) {
-	prevcall = tmp->data;
-	if (prevcall->fun == call->fun) {
-	    set_call_recursing(call);
+        prevcall = tmp->data;
+        if (prevcall->fun == call->fun) {
+            set_call_recursing(call);
             reset_saved_uservars(call->fun, 1); /* 2022-08-27 */
-	    break;
-	}
-	tmp = tmp->prev;
+            break;
+        }
+        tmp = tmp->prev;
     }
 
     set_previous_depth(fn_executing);
     fn_executing++;
 
     if (call->fun->flags & UFUN_USES_SET) {
-	push_program_state();
+        push_program_state();
     } else {
-	push_verbosity(call);
+        push_verbosity(call);
     }
 
     callstack = g_list_append(callstack, call);
 
 #if EXEC_DEBUG
     fprintf(stderr, "start_fncall: %s, depth now %d, recursing %d\n",
-	    call->fun->name, g_list_length(callstack), is_recursing(call));
+            call->fun->name, g_list_length(callstack), is_recursing(call));
 #endif
 
     switch_uservar_hash(fn_executing);
 
     if (dset != NULL && dset->v > 0) {
-	record_obs_info(&call->obs, dset);
+        record_obs_info(&call->obs, dset);
     }
 
     if (gretl_debugging_on()) {
-	set_gretl_echo(1);
-	set_gretl_messages(1);
-	pputs(prn, "*** ");
-	bufspace(gretl_function_depth(), prn);
-	pprintf(prn, "executing function %s\n", call->fun->name);
+        set_gretl_echo(1);
+        set_gretl_messages(1);
+        pputs(prn, "*** ");
+        bufspace(gretl_function_depth(), prn);
+        pprintf(prn, "executing function %s\n", call->fun->name);
     } else {
-	set_gretl_echo(0);
-	set_gretl_messages(0);
+        set_gretl_echo(0);
+        set_gretl_messages(0);
     }
 
     if (fn_executing == 1 && call->fun->pkg != NULL) {
-	set_pkgdir(call->fun->pkg);
+        set_pkgdir(call->fun->pkg);
     }
 
     return 0;
 }
 
 static int func_exec_callback (ExecState *s, void *ptr,
-			       GretlObjType type)
+                               GretlObjType type)
 {
     if (s->cmd->ci == FLUSH || is_plotting_command(s->cmd)) {
-	/* we permit "reach-back" into the GUI for these */
-	EXEC_CALLBACK gc = get_gui_callback();
+        /* we permit "reach-back" into the GUI for these */
+        EXEC_CALLBACK gc = get_gui_callback();
 
-	if (gc != NULL) {
-	    gc(s, NULL, 0);
-	}
+        if (gc != NULL) {
+            gc(s, NULL, 0);
+        }
     }
 
     return 0;
@@ -9521,11 +9521,11 @@ static int func_exec_callback (ExecState *s, void *ptr,
 static double arg_get_double_val (fn_arg *arg)
 {
     if (gretl_scalar_type(arg->type)) {
-	return arg->val.x;
+        return arg->val.x;
     } else if (arg->type == GRETL_TYPE_MATRIX) {
-	return arg->val.m->val[0];
+        return arg->val.m->val[0];
     } else {
-	return NADBL;
+        return NADBL;
     }
 }
 
@@ -9538,58 +9538,58 @@ static int check_function_args (fncall *call, PRN *prn)
     int i, err = 0;
 
     for (i=0; i<call->argc && !err; i++) {
-	int scalar_check = 1;
+        int scalar_check = 1;
 
-	arg = &call->args[i];
-	fp = &u->params[i];
+        arg = &call->args[i];
+        fp = &u->params[i];
 
-	if (param_is_optional(fp) && arg->type == GRETL_TYPE_NONE) {
-	    ; /* this is OK */
-	} else if (gretl_scalar_type(fp->type) && arg->type == GRETL_TYPE_DOUBLE) {
-	    ; /* OK: types match */
-	} else if (fp->type == GRETL_TYPE_SERIES && arg->type == GRETL_TYPE_USERIES) {
-	    ; /* OK: types match */
-	} else if (gretl_scalar_type(fp->type) &&
-		   arg->type == GRETL_TYPE_MATRIX &&
-		   gretl_matrix_is_scalar(arg->val.m)) {
-	    ; /* OK: either types match or we can convert */
-	} else if (fp->type == GRETL_TYPE_MATRIX && arg->type == GRETL_TYPE_DOUBLE) {
-	    ; /* OK, we can convert */
-	} else if (fp->type == GRETL_TYPE_LIST && arg->type == GRETL_TYPE_USERIES) {
-	    ; /* OK, we'll handle it (create singleton list) */
-	} else if (fp->type == GRETL_TYPE_LIST && arg->type == GRETL_TYPE_NONE) {
-	    ; /* OK (special: "null" was passed as argument) */
-	} else if (gretl_scalar_type(fp->type) && arg->type == GRETL_TYPE_NONE &&
-		   !no_scalar_default(fp)) {
-	    scalar_check = 0; /* OK: arg missing but we have a default value */
-	} else if (fp->type == GRETL_TYPE_NUMERIC && NUMERIC_TYPE(arg->type)) {
-	    ; /* OK, for overloaded param */
-	} else if (fp->type != arg->type) {
-	    pprintf(prn, _("%s: argument %d is of the wrong type (is %s, should be %s)\n"),
-		    u->name, i + 1, gretl_type_get_name(arg->type),
-		    gretl_type_get_name(fp->type));
-	    err = E_TYPES;
-	}
+        if (param_is_optional(fp) && arg->type == GRETL_TYPE_NONE) {
+            ; /* this is OK */
+        } else if (gretl_scalar_type(fp->type) && arg->type == GRETL_TYPE_DOUBLE) {
+            ; /* OK: types match */
+        } else if (fp->type == GRETL_TYPE_SERIES && arg->type == GRETL_TYPE_USERIES) {
+            ; /* OK: types match */
+        } else if (gretl_scalar_type(fp->type) &&
+                   arg->type == GRETL_TYPE_MATRIX &&
+                   gretl_matrix_is_scalar(arg->val.m)) {
+            ; /* OK: either types match or we can convert */
+        } else if (fp->type == GRETL_TYPE_MATRIX && arg->type == GRETL_TYPE_DOUBLE) {
+            ; /* OK, we can convert */
+        } else if (fp->type == GRETL_TYPE_LIST && arg->type == GRETL_TYPE_USERIES) {
+            ; /* OK, we'll handle it (create singleton list) */
+        } else if (fp->type == GRETL_TYPE_LIST && arg->type == GRETL_TYPE_NONE) {
+            ; /* OK (special: "null" was passed as argument) */
+        } else if (gretl_scalar_type(fp->type) && arg->type == GRETL_TYPE_NONE &&
+                   !no_scalar_default(fp)) {
+            scalar_check = 0; /* OK: arg missing but we have a default value */
+        } else if (fp->type == GRETL_TYPE_NUMERIC && NUMERIC_TYPE(arg->type)) {
+            ; /* OK, for overloaded param */
+        } else if (fp->type != arg->type) {
+            pprintf(prn, _("%s: argument %d is of the wrong type (is %s, should be %s)\n"),
+                    u->name, i + 1, gretl_type_get_name(arg->type),
+                    gretl_type_get_name(fp->type));
+            err = E_TYPES;
+        }
 
-	if (!err && scalar_check && fp->type == GRETL_TYPE_DOUBLE) {
-	    /* check for out-of-bounds scalar value */
-	    x = arg_get_double_val(arg);
-	    if ((!na(fp->min) && x < fp->min) ||
-		(!na(fp->max) && x > fp->max)) {
-		pprintf(prn, _("%s, argument %d: value %g is out of bounds\n"),
-			u->name, i + 1, x);
-		err = E_INVARG;
-	    }
-	}
+        if (!err && scalar_check && fp->type == GRETL_TYPE_DOUBLE) {
+            /* check for out-of-bounds scalar value */
+            x = arg_get_double_val(arg);
+            if ((!na(fp->min) && x < fp->min) ||
+                (!na(fp->max) && x > fp->max)) {
+                pprintf(prn, _("%s, argument %d: value %g is out of bounds\n"),
+                        u->name, i + 1, x);
+                err = E_INVARG;
+            }
+        }
     }
 
     for (i=call->argc; i<u->n_params && !err; i++) {
-	/* do we have defaults for any empty args? */
-	fp = &u->params[i];
-	if (!param_is_optional(fp) && no_scalar_default(fp)) {
-	    pprintf(prn, _("%s: not enough arguments\n"), u->name);
-	    err = E_ARGS;
-	}
+        /* do we have defaults for any empty args? */
+        fp = &u->params[i];
+        if (!param_is_optional(fp) && no_scalar_default(fp)) {
+            pprintf(prn, _("%s: not enough arguments\n"), u->name);
+            err = E_ARGS;
+        }
     }
 
 #if ARGS_DEBUG
@@ -9604,84 +9604,84 @@ static const char *get_funcerr_message (ExecState *state)
     const char *p = state->cmd->param;
 
     if (p != NULL && strlen(p) == gretl_namechar_spn(p)) {
-	const char *s = get_string_by_name(p);
+        const char *s = get_string_by_name(p);
 
-	if (s != NULL) {
-	    return s;
-	}
+        if (s != NULL) {
+            return s;
+        }
     } else if (p == NULL) {
-	return "none";
+        return "none";
     }
 
     return p;
 }
 
 static void set_func_error_message (int err, ufunc *u,
-				    ExecState *state,
-				    const char *cmdline,
-				    fn_line *fline)
+                                    ExecState *state,
+                                    const char *cmdline,
+                                    fn_line *fline)
 {
     if (err == E_FUNCERR) {
-	/* let the function writer set the message? */
-	const char *msg = get_funcerr_message(state);
+        /* let the function writer set the message? */
+        const char *msg = get_funcerr_message(state);
 
-	if (msg != NULL && strcmp(msg, "none")) {
-	    gretl_errmsg_sprintf(_("Error message from %s():\n %s"),
-				 u->name, msg);
-	    return;
-	}
+        if (msg != NULL && strcmp(msg, "none")) {
+            gretl_errmsg_sprintf(_("Error message from %s():\n %s"),
+                                 u->name, msg);
+            return;
+        }
     }
 
     if (err == E_STOP) {
-	; /* no-op */
+        ; /* no-op */
     } else {
-	/* we'll handle this here */
-	const char *msg = gretl_errmsg_get();
-	int showline = 1;
+        /* we'll handle this here */
+        const char *msg = gretl_errmsg_get();
+        int showline = 1;
 
-	if (*msg == '\0') {
-	    msg = errmsg_get_with_default(err);
-	    gretl_errmsg_set(msg);
-	}
+        if (*msg == '\0') {
+            msg = errmsg_get_with_default(err);
+            gretl_errmsg_set(msg);
+        }
 
-	if (*cmdline == '\0' || strncmp(cmdline, "funcerr(", 8) == 0 ||
-	    strncmp(cmdline, "errorif(", 8) == 0) {
-	    showline = 0;
-	}
+        if (*cmdline == '\0' || strncmp(cmdline, "funcerr(", 8) == 0 ||
+            strncmp(cmdline, "errorif(", 8) == 0) {
+            showline = 0;
+        }
 
-	if (fline == NULL) {
-	    /* indicates that we don't have a real line number
-	       available (the error occurred inside a loop)
-	    */
-	    if (showline && err != E_FNEST) {
-		gretl_errmsg_sprintf(_("*** error within loop in function %s\n> %s"),
-				     u->name, cmdline);
-	    } else {
-		gretl_errmsg_sprintf(_("*** error within loop in function %s\n"),
-				     u->name);
-	    }
-	} else {
-	    if (showline && err != E_FNEST) {
-		gretl_errmsg_sprintf(_("*** error in function %s, line %d\n> %s"),
-				     u->name, fline->idx, cmdline);
-	    } else {
-		gretl_errmsg_sprintf(_("*** error in function %s, line %d\n> %s\n"),
-				     u->name, fline->idx, fline->s);
-	    }
-	}
+        if (fline == NULL) {
+            /* indicates that we don't have a real line number
+               available (the error occurred inside a loop)
+            */
+            if (showline && err != E_FNEST) {
+                gretl_errmsg_sprintf(_("*** error within loop in function %s\n> %s"),
+                                     u->name, cmdline);
+            } else {
+                gretl_errmsg_sprintf(_("*** error within loop in function %s\n"),
+                                     u->name);
+            }
+        } else {
+            if (showline && err != E_FNEST) {
+                gretl_errmsg_sprintf(_("*** error in function %s, line %d\n> %s"),
+                                     u->name, fline->idx, cmdline);
+            } else {
+                gretl_errmsg_sprintf(_("*** error in function %s, line %d\n> %s\n"),
+                                     u->name, fline->idx, fline->s);
+            }
+        }
 
-	if (gretl_function_depth() > 1) {
-	    GList *tmp = g_list_last(callstack);
+        if (gretl_function_depth() > 1) {
+            GList *tmp = g_list_last(callstack);
 
-	    if (tmp != NULL) {
-		tmp = g_list_previous(tmp);
-		if (tmp != NULL) {
-		    fncall *call = tmp->data;
+            if (tmp != NULL) {
+                tmp = g_list_previous(tmp);
+                if (tmp != NULL) {
+                    fncall *call = tmp->data;
 
-		    gretl_errmsg_sprintf(_(" called by function %s"), call->fun->name);
-		}
-	    }
-	}
+                    gretl_errmsg_sprintf(_(" called by function %s"), call->fun->name);
+                }
+            }
+        }
     }
 }
 
@@ -9691,15 +9691,15 @@ static GENERATOR *fnline_get_genr (fncall *call, fn_line *line)
     int i;
 
     for (i=0; i<call->n_lgen; i++) {
-	if (call->lgen[i].idx == line->idx) {
-	    genr = call->lgen[i].genr;
-	    break;
-	}
+        if (call->lgen[i].idx == line->idx) {
+            genr = call->lgen[i].genr;
+            break;
+        }
     }
 
 #if REC_DEBUG
     fprintf(stderr, "?? seek genr for call %p line idx %d: got %p (n_lgen %d)\n",
-	    (void *) call, line->idx, (void *) genr, call->n_lgen);
+            (void *) call, line->idx, (void *) genr, call->n_lgen);
 #endif
 
     return genr;
@@ -9729,35 +9729,35 @@ static int fnline_set_genr (fncall *call, fn_line *line, GENERATOR *genr)
 }
 
 static int generate_return_value2 (fncall *call,
-				   ExecState *state,
-				   DATASET *dset,
-				   const char *s,
-				   fn_line *line)
+                                   ExecState *state,
+                                   DATASET *dset,
+                                   const char *s,
+                                   fn_line *line)
 {
     gchar *formula = g_strdup_printf("$retval=%s", s);
     int done = 0;
     int err = 0;
 
     if (line != NULL) {
-	/* try compilation */
-	GENERATOR *genr;
+        /* try compilation */
+        GENERATOR *genr;
 
-	genr = genr_compile(formula, dset, call->fun->rettype,
-			    OPT_P, state->prn, &err);
-	if (!err && genr != NULL) {
-	    /* succeeded */
-	    fnline_set_genr(call, line, genr);
-	    done = 1;
-	} else if (err == E_EQN) {
-	    /* failed, but not fatally */
+        genr = genr_compile(formula, dset, call->fun->rettype,
+                            OPT_P, state->prn, &err);
+        if (!err && genr != NULL) {
+            /* succeeded */
+            fnline_set_genr(call, line, genr);
+            done = 1;
+        } else if (err == E_EQN) {
+            /* failed, but not fatally */
             fprintf(stderr, "did NOT attach genr at %p\n", line->ptr);
-	    line->flags |= LINE_NOCOMP;
-	    err = 0;
-	}
+            line->flags |= LINE_NOCOMP;
+            err = 0;
+        }
     }
     if (!done && !err) {
-	err = generate(formula, dset, call->fun->rettype,
-		       OPT_P, state->prn);
+        err = generate(formula, dset, call->fun->rettype,
+                       OPT_P, state->prn);
     }
     g_free(formula);
 
@@ -9765,9 +9765,9 @@ static int generate_return_value2 (fncall *call,
 }
 
 static int generate_return_value1 (fncall *call,
-				   ExecState *state,
-				   DATASET *dset,
-				   const char *s)
+                                   ExecState *state,
+                                   DATASET *dset,
+                                   const char *s)
 {
     gchar *formula = g_strdup_printf("$retval=%s", s);
     int err;
@@ -9779,33 +9779,33 @@ static int generate_return_value1 (fncall *call,
 }
 
 static int handle_return_statement (fncall *call,
-				    ExecState *state,
-				    DATASET *dset,
-				    int gencomp,
-				    fn_line *line)
+                                    ExecState *state,
+                                    DATASET *dset,
+                                    int gencomp,
+                                    fn_line *line)
 {
     ufunc *fun = call->fun;
     const char *s = NULL;
     int err = 0;
 
     if (line != NULL) {
-	GENERATOR *genr = fnline_get_genr(call, line);
+        GENERATOR *genr = fnline_get_genr(call, line);
 
- 	if (genr != NULL) {
+        if (genr != NULL) {
 #if REC_DEBUG
-	    fprintf(stderr, "%s: handle_return: exec compiled genr %p\n",
-		    fun->name, genr);
+            fprintf(stderr, "%s: handle_return: exec compiled genr %p\n",
+                    fun->name, genr);
 #endif
             /* FIXME: when exactly is this reset required? */
             genr_reset_uvars(genr);
-	    err = execute_genr(genr, dset, state->prn);
-	    goto last_step;
-	} else {
-	    err = parse_command_line(state, dset, NULL);
-	    if (err) {
-		goto last_step;
-	    }
-	}
+            err = execute_genr(genr, dset, state->prn);
+            goto last_step;
+        } else {
+            err = parse_command_line(state, dset, NULL);
+            if (err) {
+                goto last_step;
+            }
+        }
     }
 
     s = state->cmd->vstart;
@@ -9883,24 +9883,24 @@ static gchar *return_line;
 int set_function_should_return (const char *line)
 {
     if (gretl_function_depth() > 0) {
-	g_free(return_line);
-	return_line = g_strdup(line);
-	return 0;
+        g_free(return_line);
+        return_line = g_strdup(line);
+        return 0;
     } else {
-	gretl_errmsg_set(_("return: can only be used in a function"));
-	return E_PARSE;
+        gretl_errmsg_set(_("return: can only be used in a function"));
+        return E_PARSE;
     }
 }
 
 static int get_return_line (ExecState *state)
 {
     if (return_line == NULL) {
-	return 0;
+        return 0;
     } else {
-	strcpy(state->line, return_line);
-	g_free(return_line);
-	return_line = NULL;
-	return 1;
+        strcpy(state->line, return_line);
+        g_free(return_line);
+        return_line = NULL;
+        return 1;
     }
 }
 
@@ -9915,9 +9915,9 @@ static int prepare_func_exec_state (ExecState *s,
 
     model = allocate_working_model();
     if (model == NULL) {
-	err = E_ALLOC;
+        err = E_ALLOC;
     } else {
-	err = gretl_cmd_init(&cmd);
+        err = gretl_cmd_init(&cmd);
     }
 
     if (!err) {
@@ -9939,8 +9939,8 @@ static int prepare_func_exec_state (ExecState *s,
 #define may_have_genr(c) (c == IF || c == ELIF || c == GENR)
 
 int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
-			      void *ret, char **descrip,
-			      series_table **stab, PRN *prn)
+                              void *ret, char **descrip,
+                              series_table **stab, PRN *prn)
 {
     ufunc *u = call->fun;
     ExecState state = {0};
@@ -9959,23 +9959,23 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
 
 #if COMP_DEBUG || EXEC_DEBUG
     fprintf(stderr, "gretl_function_exec: starting %s (depth %d)\n",
-	    u->name, gretl_function_depth());
+            u->name, gretl_function_depth());
 #endif
 
     err = maybe_check_function_needs(dset, u);
     if (err) {
-	maybe_destroy_fncall(&call);
-	return err;
+        maybe_destroy_fncall(&call);
+        return err;
     }
 
     /* record incoming dataset dimensions */
     if (dset != NULL) {
-	call->orig_v = dset->v;
-	orig_n = dset->n;
-	orig_t1 = dset->t1;
-	orig_t2 = dset->t2;
+        call->orig_v = dset->v;
+        orig_n = dset->n;
+        orig_t1 = dset->t1;
+        orig_t2 = dset->t2;
     } else {
-	call->orig_v = 0;
+        call->orig_v = 0;
     }
 
     /* precaution aganst early error */
@@ -9983,12 +9983,12 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
 
     err = check_function_args(call, prn);
     if (!err) {
-	err = allocate_function_args(call, dset);
+        err = allocate_function_args(call, dset);
     }
     if (err) {
-	/* get out before allocating further storage */
-	maybe_destroy_fncall(&call);
-	return err;
+        /* get out before allocating further storage */
+        maybe_destroy_fncall(&call);
+        return err;
     }
 
     err = prepare_func_exec_state(&state, line, dset, prn);
@@ -9998,7 +9998,7 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
 #endif
 
     if (!err) {
-	start_fncall(call, dset, prn);
+        start_fncall(call, dset, prn);
         started = 1;
         redir_level = print_redirection_level(prn);
     }
@@ -10012,73 +10012,73 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
         fn_line *fline = &u->lines[i];
         int this_gencomp = gencomp && !line_no_comp(fline);
 
-	if (gretl_echo_on()) {
-	    pprintf(prn, "? %s\n", fline->s);
-	}
-	if (ignore_line(fline)) {
-	    continue;
-	}
+        if (gretl_echo_on()) {
+            pprintf(prn, "? %s\n", fline->s);
+        }
+        if (ignore_line(fline)) {
+            continue;
+        }
         strcpy(line, fline->s); /* needed? */
-	call->line = fline;
+        call->line = fline;
 
-	if (this_gencomp && may_have_genr(fline->ci)) {
-	    genr = fnline_get_genr(call, fline);
-	} else {
-	    genr = NULL;
-	}
+        if (this_gencomp && may_have_genr(fline->ci)) {
+            genr = fnline_get_genr(call, fline);
+        } else {
+            genr = NULL;
+        }
 
 #if 0
         fprintf(stderr, " line %d: '%s' (no_comp %d, genr %p)\n",
-		i, fline->s, line_no_comp(fline), (void *) genr);
+                i, fline->s, line_no_comp(fline), (void *) genr);
 #endif
 
-	/* check and adjust the if-state */
-	if (do_if_check(fline->ci)) {
-	    if (fline->ci == ELSE || fline->ci == ENDIF) {
-		state.cmd->ci = fline->ci;
-		flow_control(&state, NULL, NULL);
-	    } else if (genr != NULL) {
-		state.cmd->ci = fline->ci;
-		flow_control(&state, dset, &genr);
-	    } else {
-		ptr = this_gencomp ? &genr : NULL;
-		err = maybe_exec_line(&state, dset, ptr);
+        /* check and adjust the if-state */
+        if (do_if_check(fline->ci)) {
+            if (fline->ci == ELSE || fline->ci == ENDIF) {
+                state.cmd->ci = fline->ci;
+                flow_control(&state, NULL, NULL);
+            } else if (genr != NULL) {
+                state.cmd->ci = fline->ci;
+                flow_control(&state, dset, &genr);
+            } else {
+                ptr = this_gencomp ? &genr : NULL;
+                err = maybe_exec_line(&state, dset, ptr);
                 if (genr != NULL) {
                     fnline_set_genr(call, fline, genr);
                 } else if (ptr != NULL) {
-		    fline->flags |= LINE_NOCOMP;
-		}
-	    }
-	    if (err) {
-		goto err_next;
-	    } else if (gretl_if_state_false() && fline->next > 0) {
+                    fline->flags |= LINE_NOCOMP;
+                }
+            }
+            if (err) {
+                goto err_next;
+            } else if (gretl_if_state_false() && fline->next > 0) {
                 /* skip to next relevant statement */
                 i = fline->next - 1;
             }
             continue;
         }
 
-	if (fline->ci == LOOP) {
-	    if (fline->ptr != NULL) {
-		state.loop = fline->ptr;
-		err = gretl_loop_exec(&state, dset);
-		n_saved++;
-	    } else {
-		/* assemble then execute the loop */
-		if (this_gencomp && !gretl_function_recursing()) {
-		    ptr = &fline->ptr;
-		} else {
-		    ptr = NULL;
-		}
-		for (j=i; j<=fline->next && !err; j++) {
-		    strcpy(line, u->lines[j].s);
-		    err = maybe_exec_line(&state, dset, ptr);
-		}
-		if (!err) {
-		    state.loop = fline->ptr;
-		    err = gretl_loop_exec(&state, dset);
-		}
-	    }
+        if (fline->ci == LOOP) {
+            if (fline->ptr != NULL) {
+                state.loop = fline->ptr;
+                err = gretl_loop_exec(&state, dset);
+                n_saved++;
+            } else {
+                /* assemble then execute the loop */
+                if (this_gencomp && !gretl_function_recursing()) {
+                    ptr = &fline->ptr;
+                } else {
+                    ptr = NULL;
+                }
+                for (j=i; j<=fline->next && !err; j++) {
+                    strcpy(line, u->lines[j].s);
+                    err = maybe_exec_line(&state, dset, ptr);
+                }
+                if (!err) {
+                    state.loop = fline->ptr;
+                    err = gretl_loop_exec(&state, dset);
+                }
+            }
             if (err) {
                 set_func_error_message(err, u, &state, state.line, NULL);
                 break;
@@ -10086,103 +10086,103 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
                 /* a "return" statement was encountered in the loop */
                 err = handle_return_statement(call, &state, dset,
                                               this_gencomp, NULL);
-		if (i < u->n_lines) {
-		    retline = i;
-		}
+                if (i < u->n_lines) {
+                    retline = i;
+                }
                 break;
             }
-	    /* skip past the loop lines */
-	    i = fline->next;
-	    continue;
-	} else if (fline->ci == FUNCRET) {
+            /* skip past the loop lines */
+            i = fline->next;
+            continue;
+        } else if (fline->ci == FUNCRET) {
             err = handle_return_statement(call, &state, dset, this_gencomp, fline);
-	    if (i < u->n_lines) {
-		retline = i;
-	    }
-	    break;
+            if (i < u->n_lines) {
+                retline = i;
+            }
+            break;
         } else if (genr != NULL) {
-	    err = execute_genr(genr, dset, prn);
+            err = execute_genr(genr, dset, prn);
             n_saved++;
-	} else {
+        } else {
             ptr = (this_gencomp && may_have_genr(fline->ci))? &genr : NULL;
-	    err = maybe_exec_line(&state, dset, ptr);
+            err = maybe_exec_line(&state, dset, ptr);
             if (genr != NULL) {
                 fnline_set_genr(call, fline, genr);
             } else if (ptr != NULL) {
-		fline->flags |= LINE_NOCOMP;
-	    }
- 	}
+                fline->flags |= LINE_NOCOMP;
+            }
+        }
 
     err_next:
 
-	if (err) {
-	    set_func_error_message(err, u, &state, line, fline);
-	    break;
-	}
+        if (err) {
+            set_func_error_message(err, u, &state, line, fline);
+            break;
+        }
     }
 
 #if EXEC_DEBUG
     fprintf(stderr, "gretl_function_exec: %s: finished main exec, "
-	    "err = %d, dset->v = %d\n", u->name, err,
-	    (dset != NULL)? dset->v : 0);
+            "err = %d, dset->v = %d\n", u->name, err,
+            (dset != NULL)? dset->v : 0);
 #endif
 
     if (dset != NULL) {
-	/* restore the sample that was in place on entry */
-	if (complex_subsampled()) {
-	    if (state.submask == NULL) {
-		/* we were not sub-sampled on entry */
-		restore_full_sample(dset, NULL);
-	    } else if (submask_cmp(state.submask, dset->submask)) {
-		/* we were sub-sampled differently on entry */
-		gretlopt opt = state.padded ? OPT_B : OPT_NONE;
+        /* restore the sample that was in place on entry */
+        if (complex_subsampled()) {
+            if (state.submask == NULL) {
+                /* we were not sub-sampled on entry */
+                restore_full_sample(dset, NULL);
+            } else if (submask_cmp(state.submask, dset->submask)) {
+                /* we were sub-sampled differently on entry */
+                gretlopt opt = state.padded ? OPT_B : OPT_NONE;
 
-		restore_full_sample(dset, NULL);
-		restrict_sample_from_mask(state.submask, dset, opt);
-	    }
-	} else if (dset->n > orig_n) {
-	    /* some observations were added inside the function; note
-	       that this is not allowed if the dataset is subsampled
-	       on entry
-	    */
-	    dataset_drop_observations(dset, dset->n - orig_n);
-	}
-	dset->t1 = orig_t1;
-	dset->t2 = orig_t2;
+                restore_full_sample(dset, NULL);
+                restrict_sample_from_mask(state.submask, dset, opt);
+            }
+        } else if (dset->n > orig_n) {
+            /* some observations were added inside the function; note
+               that this is not allowed if the dataset is subsampled
+               on entry
+            */
+            dataset_drop_observations(dset, dset->n - orig_n);
+        }
+        dset->t1 = orig_t1;
+        dset->t2 = orig_t2;
     }
 
     if (err || (retline >= 0)) {
-	/* hit an error, or returned prior to the end of the function */
-	gretl_if_state_reset(indent0);
+        /* hit an error, or returned prior to the end of the function */
+        gretl_if_state_reset(indent0);
     } else {
-	err = gretl_if_state_check(indent0);
+        err = gretl_if_state_check(indent0);
     }
 
     function_assign_returns(call, rtype, dset, ret, descrip, stab, prn, &err);
 
     if (gencomp || n_saved > 0) {
-	reset_saved_uservars(call->fun, 0);
+        reset_saved_uservars(call->fun, 0);
     }
 
     gretl_exec_state_clear(&state);
 
     if (started) {
-	int stoperr = stop_fncall(call, rtype, ret, dset, prn, redir_level);
+        int stoperr = stop_fncall(call, rtype, ret, dset, prn, redir_level);
 
-	if (stoperr && !err) {
-	    err = stoperr;
-	}
+        if (stoperr && !err) {
+            err = stoperr;
+        }
     } else {
-	maybe_destroy_fncall(&call);
+        maybe_destroy_fncall(&call);
     }
 
 #if EXEC_DEBUG
     fprintf(stderr, "gretl_function_exec (%s) finished: err = %d\n",
-	    u->name, err);
+            u->name, err);
 #endif
 #if COMP_DEBUG
     if (err) {
-	fprintf(stderr, "*** %s: exiting with err = %d ***\n", u->name, err);
+        fprintf(stderr, "*** %s: exiting with err = %d ***\n", u->name, err);
     }
 #endif
 
@@ -10190,10 +10190,10 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
 }
 
 int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
-			 void *ret, PRN *prn)
+                         void *ret, PRN *prn)
 {
     return gretl_function_exec_full(call, rtype, dset, ret,
-				    NULL, NULL, prn);
+                                    NULL, NULL, prn);
 }
 
 /* look up name of supplied argument based on name of variable
@@ -10207,23 +10207,23 @@ char *gretl_func_get_arg_name (const char *argvar, int *err)
     *err = E_DATA;
 
     if (call != NULL) {
-	ufunc *u = call->fun;
-	int i, n = call->argc;
+        ufunc *u = call->fun;
+        int i, n = call->argc;
 
-	for (i=0; i<n; i++) {
-	    if (!strcmp(argvar, u->params[i].name)) {
-		*err = 0;
-		if (call->args[i].upname != NULL) {
-		    ret = gretl_strdup(call->args[i].upname);
-		} else {
-		    ret = gretl_strdup("");
-		}
-		if (ret == NULL) {
-		    *err = E_ALLOC;
-		}
-		break;
-	    }
-	}
+        for (i=0; i<n; i++) {
+            if (!strcmp(argvar, u->params[i].name)) {
+                *err = 0;
+                if (call->args[i].upname != NULL) {
+                    ret = gretl_strdup(call->args[i].upname);
+                } else {
+                    ret = gretl_strdup("");
+                }
+                if (ret == NULL) {
+                    *err = E_ALLOC;
+                }
+                break;
+            }
+        }
     }
 
     return ret;
@@ -10249,29 +10249,29 @@ int object_is_const (const char *name, int vnum)
     int ret = 0;
 
     if (call != NULL) {
-	if (name != NULL) {
-	    fn_param *param;
-	    int i;
+        if (name != NULL) {
+            fn_param *param;
+            int i;
 
-	    for (i=0; i<call->fun->n_params; i++) {
+            for (i=0; i<call->fun->n_params; i++) {
                 param = &call->fun->params[i];
-		if (!strcmp(name, param->name)) {
-		    ret = param_is_const(param);
-		    break;
-		}
-	    }
-	}
-	if (!ret && vnum > 0 && vnum < call->orig_v) {
-	    /* We're looking at a series that is not local to
-	       the called function, but not yet identified as
-	       read-only. It probably _should_ be read-only
-	       unless it was given in pointer form.
-	       Note: this check added 2018-10-18.
-	    */
-	    if (!in_gretl_list(call->ptrvars, vnum)) {
-		ret = 1;
-	    }
-	}
+                if (!strcmp(name, param->name)) {
+                    ret = param_is_const(param);
+                    break;
+                }
+            }
+        }
+        if (!ret && vnum > 0 && vnum < call->orig_v) {
+            /* We're looking at a series that is not local to
+               the called function, but not yet identified as
+               read-only. It probably _should_ be read-only
+               unless it was given in pointer form.
+               Note: this check added 2018-10-18.
+            */
+            if (!in_gretl_list(call->ptrvars, vnum)) {
+                ret = 1;
+            }
+        }
     }
 
     return ret;
@@ -10293,14 +10293,14 @@ int object_is_function_arg (const char *name)
     fncall *call = current_function_call();
 
     if (call != NULL) {
-	fn_param *params = call->fun->params;
-	int i;
+        fn_param *params = call->fun->params;
+        int i;
 
-	for (i=0; i<call->fun->n_params; i++) {
-	    if (!strcmp(name, params[i].name)) {
-		return params[i].type;
-	    }
-	}
+        for (i=0; i<call->fun->n_params; i++) {
+            if (!strcmp(name, params[i].name)) {
+                return params[i].type;
+            }
+        }
     }
 
     return 0;
@@ -10311,9 +10311,9 @@ static int allow_full_data;
 void allow_full_data_access (int s)
 {
     if (s > 0) {
-	allow_full_data = 1;
+        allow_full_data = 1;
     } else if (s == 0) {
-	allow_full_data = 0;
+        allow_full_data = 0;
     }
 }
 
@@ -10336,23 +10336,23 @@ void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2)
     int tvals[2] = {0, dset->n - 1};
 
     if (!allow_full_data) {
-	fncall *call = current_function_call();
+        fncall *call = current_function_call();
 
-	if (call != NULL) {
-	    tvals[0] = call->obs.t1;
-	    tvals[1] = call->obs.t2 + call->obs.added;
+        if (call != NULL) {
+            tvals[0] = call->obs.t1;
+            tvals[1] = call->obs.t2 + call->obs.added;
             /* FIXME this needs to be smarter */
             if (tvals[1] > dset->n - 1) {
                 tvals[1] = dset->n - 1;
             }
-	}
+        }
     }
 
     if (t1 != NULL) {
-	*t1 = tvals[0];
+        *t1 = tvals[0];
     }
     if (t2 != NULL) {
-	*t2 = tvals[1];
+        *t2 = tvals[1];
     }
 }
 
@@ -10361,7 +10361,7 @@ void extend_function_sample_range (int addobs)
     fncall *call = current_function_call();
 
     if (call != NULL) {
-	call->obs.added += addobs;
+        call->obs.added += addobs;
     }
 }
 
@@ -10390,26 +10390,26 @@ int series_is_accessible_in_function (int ID, const DATASET *dset)
     int ret = 1;
 
     if (fc != NULL) {
-	/* assume not accessible without contrary evidence */
-	ret = 0;
-	if (ID == 0 || ID == LISTSEP) {
-	    /* the constant, always OK; also LISTSEP */
-	    ret = 1;
-	} else if (ID >= fc->orig_v) {
-	    /* the series post-dates the start of execution */
-	    ret = 1;
-	} else if (in_gretl_list(fc->listvars, ID)) {
-	    /* series was given in a list argument */
-	    ret = 1;
-	} else if (in_gretl_list(fc->ptrvars, ID)) {
-	    /* series was given in "pointer" form */
-	    ret = 1;
-	}
+        /* assume not accessible without contrary evidence */
+        ret = 0;
+        if (ID == 0 || ID == LISTSEP) {
+            /* the constant, always OK; also LISTSEP */
+            ret = 1;
+        } else if (ID >= fc->orig_v) {
+            /* the series post-dates the start of execution */
+            ret = 1;
+        } else if (in_gretl_list(fc->listvars, ID)) {
+            /* series was given in a list argument */
+            ret = 1;
+        } else if (in_gretl_list(fc->ptrvars, ID)) {
+            /* series was given in "pointer" form */
+            ret = 1;
+        }
     }
 
     if (ret == 0) {
-	gretl_errmsg_sprintf("Series %d (%s) is not accessible",
-			     ID, dset->varname[ID]);
+        gretl_errmsg_sprintf("Series %d (%s) is not accessible",
+                             ID, dset->varname[ID]);
     }
 
     return ret;
@@ -10428,7 +10428,7 @@ void gretl_functions_cleanup (void)
     int i;
 
     for (i=0; i<n_ufuns; i++) {
-	ufunc_free(ufuns[i]);
+        ufunc_free(ufuns[i]);
     }
 
     free(ufuns);
@@ -10436,7 +10436,7 @@ void gretl_functions_cleanup (void)
     n_ufuns = 0;
 
     for (i=0; i<n_pkgs; i++) {
-	function_package_free(pkgs[i]);
+        function_package_free(pkgs[i]);
     }
 
     free(pkgs);
@@ -10445,7 +10445,7 @@ void gretl_functions_cleanup (void)
 }
 
 static void show_gfn_help (fnpkg *pkg, int gui_help,
-			   int markup, PRN *prn)
+                           int markup, PRN *prn)
 {
     const char *fname;
     const char *text;
@@ -10456,20 +10456,20 @@ static void show_gfn_help (fnpkg *pkg, int gui_help,
     mdconv = fname != NULL && has_suffix(fname, ".md");
 
     if (mdconv) {
-	/* help is in markdown */
-	md_to_gretl(text, prn);
+        /* help is in markdown */
+        md_to_gretl(text, prn);
     } else {
-	if (markup) {
-	    pputs(prn, "<@itl=\"Help text\">:\n\n");
-	    pputs(prn, "<mono>\n");
-	} else {
-	    pputs(prn, "Help text:\n");
-	}
-	pputs(prn, text);
-	if (markup) {
-	    pputs(prn, "\n</mono>");
-	}
-	pputs(prn, "\n\n");
+        if (markup) {
+            pputs(prn, "<@itl=\"Help text\">:\n\n");
+            pputs(prn, "<mono>\n");
+        } else {
+            pputs(prn, "Help text:\n");
+        }
+        pputs(prn, text);
+        if (markup) {
+            pputs(prn, "\n</mono>");
+        }
+        pputs(prn, "\n\n");
     }
 }
 
@@ -10485,101 +10485,101 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
     int i;
 
     if (markup) {
-	pprintf(prn, "<@itl=\"Function\">: %s\n", fun->name);
+        pprintf(prn, "<@itl=\"Function\">: %s\n", fun->name);
     } else {
-	pprintf(prn, "Function: %s\n", fun->name);
+        pprintf(prn, "Function: %s\n", fun->name);
     }
 
     if (pkg != NULL) {
-	if (markup) {
-	    pprintf(prn, "<@itl=\"Package\">: %s %s (%s)\n", pkg->name, pkg->version,
-		    pkg->date);
-	    pprintf(prn, "<@itl=\"Author\">: %s\n", pkg->author? pkg->author : "unknown");
-	    if (pkg->email != NULL && *pkg->email != '\0') {
-		pprintf(prn, "<@itl=\"Email\">: %s\n", pkg->email);
-	    }
-	} else {
-	    pprintf(prn, "Package: %s %s (%s)\n", pkg->name, pkg->version,
-		    pkg->date);
-	    pprintf(prn, "Author: %s\n", pkg->author? pkg->author : "unknown");
-	    if (pkg->email != NULL && *pkg->email != '\0') {
-		pprintf(prn, "Email:  %s\n", pkg->email);
-	    }
-	}
-	pputc(prn, '\n');
+        if (markup) {
+            pprintf(prn, "<@itl=\"Package\">: %s %s (%s)\n", pkg->name, pkg->version,
+                    pkg->date);
+            pprintf(prn, "<@itl=\"Author\">: %s\n", pkg->author? pkg->author : "unknown");
+            if (pkg->email != NULL && *pkg->email != '\0') {
+                pprintf(prn, "<@itl=\"Email\">: %s\n", pkg->email);
+            }
+        } else {
+            pprintf(prn, "Package: %s %s (%s)\n", pkg->name, pkg->version,
+                    pkg->date);
+            pprintf(prn, "Author: %s\n", pkg->author? pkg->author : "unknown");
+            if (pkg->email != NULL && *pkg->email != '\0') {
+                pprintf(prn, "Email:  %s\n", pkg->email);
+            }
+        }
+        pputc(prn, '\n');
     }
 
     if ((opt & OPT_G) && pkg != NULL && pkg->gui_help != NULL) {
-	/* GUI-specific help is preferred, and is available */
-	show_gfn_help(pkg, 1, markup, prn);
-	return;
+        /* GUI-specific help is preferred, and is available */
+        show_gfn_help(pkg, 1, markup, prn);
+        return;
     }
 
     if (markup) {
-	pputs(prn, "<@itl=\"Parameters\">: ");
+        pputs(prn, "<@itl=\"Parameters\">: ");
     } else {
-	pputs(prn, "Parameters: ");
+        pputs(prn, "Parameters: ");
     }
 
     if (fun->n_params > 0) {
-	pputc(prn, '\n');
-	for (i=0; i<fun->n_params; i++) {
-	    pprintf(prn, " %s (%s",
-		    fun->params[i].name, gretl_type_get_name(fun->params[i].type));
-	    if (fun->params[i].descrip != NULL) {
-		pprintf(prn, ": %s)\n", fun->params[i].descrip);
-	    } else {
-		pputs(prn, ")\n");
-	    }
-	}
-	pputc(prn, '\n');
+        pputc(prn, '\n');
+        for (i=0; i<fun->n_params; i++) {
+            pprintf(prn, " %s (%s",
+                    fun->params[i].name, gretl_type_get_name(fun->params[i].type));
+            if (fun->params[i].descrip != NULL) {
+                pprintf(prn, ": %s)\n", fun->params[i].descrip);
+            } else {
+                pputs(prn, ")\n");
+            }
+        }
+        pputc(prn, '\n');
     } else {
-	pputs(prn, "none\n\n");
+        pputs(prn, "none\n\n");
     }
 
     if (markup) {
-	pputs(prn, "<@itl=\"Return value\">: ");
+        pputs(prn, "<@itl=\"Return value\">: ");
     } else {
-	pputs(prn, "Return value: ");
+        pputs(prn, "Return value: ");
     }
 
     if (fun->rettype != GRETL_TYPE_NONE && fun->rettype != GRETL_TYPE_VOID) {
-	pprintf(prn, "%s\n\n", gretl_type_get_name(fun->rettype));
+        pprintf(prn, "%s\n\n", gretl_type_get_name(fun->rettype));
     } else {
-	pputs(prn, "none\n\n");
+        pputs(prn, "none\n\n");
     }
 
     if (pkg != NULL && pkg->help != NULL) {
-	if (is_pdf_ref(pkg->help)) {
-	    gchar *pdfname = g_strdup(pkg->fname);
-	    gchar *p = strrchr(pdfname, '.');
+        if (is_pdf_ref(pkg->help)) {
+            gchar *pdfname = g_strdup(pkg->fname);
+            gchar *p = strrchr(pdfname, '.');
 
-	    *p = '\0';
-	    strcat(p, ".pdf");
-	    if (markup) {
-		pprintf(prn, "<@itl=\"Documentation\">: <@adb=\"%s\">\n\n", pdfname);
-	    } else {
-		pprintf(prn, "See %s\n\n", pdfname);
-	    }
-	    g_free(pdfname);
-	} else {
-	    show_gfn_help(pkg, 0, markup, prn);
-	}
+            *p = '\0';
+            strcat(p, ".pdf");
+            if (markup) {
+                pprintf(prn, "<@itl=\"Documentation\">: <@adb=\"%s\">\n\n", pdfname);
+            } else {
+                pprintf(prn, "See %s\n\n", pdfname);
+            }
+            g_free(pdfname);
+        } else {
+            show_gfn_help(pkg, 0, markup, prn);
+        }
     }
 
     if (pkg != NULL && pkg->sample != NULL) {
-	if (markup) {
-	    pputs(prn, "<@itl=\"Sample script\">:\n\n");
-	    pputs(prn, "<code>\n");
-	} else {
-	    pputs(prn, "Sample script:\n\n");
-	}
-	pputs(prn, pkg->sample);
-	if (markup) {
-	    pputs(prn, "\n</code>\n");
-	} else {
-	    pprintf(prn, "\n\n");
-	}
+        if (markup) {
+            pputs(prn, "<@itl=\"Sample script\">:\n\n");
+            pputs(prn, "<code>\n");
+        } else {
+            pputs(prn, "Sample script:\n\n");
+        }
+        pputs(prn, pkg->sample);
+        if (markup) {
+            pputs(prn, "\n</code>\n");
+        } else {
+            pprintf(prn, "\n\n");
+        }
     }
 }
 
@@ -10603,10 +10603,10 @@ int user_function_help (const char *fnname, gretlopt opt, PRN *prn)
     int err = 0;
 
     if (fun == NULL) {
-	pprintf(prn, _("\"%s\" is not defined.\n"), fnname);
-	err = 1;
+        pprintf(prn, _("\"%s\" is not defined.\n"), fnname);
+        err = 1;
     } else {
-	real_user_function_help(fun, opt, prn);
+        real_user_function_help(fun, opt, prn);
     }
 
     return err;
@@ -10629,13 +10629,13 @@ int function_package_has_PDF_doc (fnpkg *pkg, char **pdfname)
     int ret = 0;
 
     if (pkg->help != NULL && !strncmp(pkg->help, "pdfdoc", 6)) {
-	ret = 1;
-	if (pdfname != NULL) {
-	    *pdfname = switch_ext_new(pkg->fname, "pdf");
-	    if (*pdfname == NULL) {
-		ret = 0;
-	    }
-	}
+        ret = 1;
+        if (pdfname != NULL) {
+            *pdfname = switch_ext_new(pkg->fname, "pdf");
+            if (*pdfname == NULL) {
+                ret = 0;
+            }
+        }
     }
 
     return ret;
@@ -10658,7 +10658,7 @@ int function_package_has_gui_help (fnpkg *pkg)
 void function_package_set_editor (fnpkg *pkg, void *editor)
 {
     if (pkg != NULL) {
-	pkg->editor = editor;
+        pkg->editor = editor;
     }
 }
 
@@ -10688,48 +10688,48 @@ int delete_function_package (const char *gfnpath)
     errno = 0;
 
     if (p != NULL) {
-	/* @pkgname: strip extension from @gfnpath */
-	pkgname = g_strdup(p + 1);
-	p = strrchr(pkgname, '.');
-	if (p != NULL) {
-	    *p = '\0';
-	}
-	/* @pkgdir: directory in which the gfn lives */
-	pkgdir = g_strdup(gfnpath);
-	p = strrslash(pkgdir);
-	*p = '\0';
-	p = strrslash(pkgdir);
-	/* @pkgsub: subdir in which the gfn lives */
-	if (p != NULL) {
-	    pkgsub = g_strdup(p + 1);
-	}
+        /* @pkgname: strip extension from @gfnpath */
+        pkgname = g_strdup(p + 1);
+        p = strrchr(pkgname, '.');
+        if (p != NULL) {
+            *p = '\0';
+        }
+        /* @pkgdir: directory in which the gfn lives */
+        pkgdir = g_strdup(gfnpath);
+        p = strrslash(pkgdir);
+        *p = '\0';
+        p = strrslash(pkgdir);
+        /* @pkgsub: subdir in which the gfn lives */
+        if (p != NULL) {
+            pkgsub = g_strdup(p + 1);
+        }
     }
 
     if (pkgname != NULL && pkgdir != NULL && pkgsub != NULL &&
-	!strcmp(pkgname, pkgsub)) {
-	/* We should delete the tree @pkgdir only if the last
-	   directory in that path, @pkgsub, compares equal to
-	   the basename of the package, @pkgname. For example:
-	   foo(.gfn) lives in <path-to-functions>/foo/.
-	*/
-	err = gretl_deltree(pkgdir);
-	if (err) {
-	    gretl_errmsg_sprintf(_("Couldn't delete %s"), pkgdir);
-	}
+        !strcmp(pkgname, pkgsub)) {
+        /* We should delete the tree @pkgdir only if the last
+           directory in that path, @pkgsub, compares equal to
+           the basename of the package, @pkgname. For example:
+           foo(.gfn) lives in <path-to-functions>/foo/.
+        */
+        err = gretl_deltree(pkgdir);
+        if (err) {
+            gretl_errmsg_sprintf(_("Couldn't delete %s"), pkgdir);
+        }
     } else {
-	/* just delete the .gfn file itself */
-	err = gretl_remove(gfnpath);
+        /* just delete the .gfn file itself */
+        err = gretl_remove(gfnpath);
 
-	if (err) {
-	    gretl_errmsg_sprintf(_("Couldn't delete %s"), gfnpath);
-	}
+        if (err) {
+            gretl_errmsg_sprintf(_("Couldn't delete %s"), gfnpath);
+        }
     }
 
     if (err) {
-	fprintf(stderr, "failure in delete_function_package: gfnpath '%s'\n",
-		gfnpath);
-	fprintf(stderr, " pkgname '%s', pkgdir '%s', pkgsub '%s'\n",
-		pkgname, pkgdir, pkgsub);
+        fprintf(stderr, "failure in delete_function_package: gfnpath '%s'\n",
+                gfnpath);
+        fprintf(stderr, " pkgname '%s', pkgdir '%s', pkgsub '%s'\n",
+                pkgname, pkgdir, pkgsub);
     }
 
     g_free(pkgname);
@@ -10749,7 +10749,7 @@ int delete_function_package (const char *gfnpath)
  */
 
 int uninstall_function_package (const char *package, gretlopt opt,
-				PRN *prn)
+                                PRN *prn)
 {
     gchar *gfnname = NULL;
     gchar *pkgname = NULL;
@@ -10757,36 +10757,36 @@ int uninstall_function_package (const char *package, gretlopt opt,
     int err;
 
     if (has_suffix(package, ".gfn")) {
-	gfnname = g_strdup(package);
-	pkgname = g_strdup(package);
-	p = strrchr(pkgname, '.');
-	*p = '\0';
+        gfnname = g_strdup(package);
+        pkgname = g_strdup(package);
+        p = strrchr(pkgname, '.');
+        *p = '\0';
     } else {
-	gfnname = g_strdup_printf("%s.gfn", package);
-	pkgname = g_strdup(package);
+        gfnname = g_strdup_printf("%s.gfn", package);
+        pkgname = g_strdup(package);
     }
 
     *fname = '\0';
     err = get_full_filename(gfnname, fname, OPT_I);
 
     if (!err && !gretl_file_exists(fname)) {
-	gretl_errmsg_sprintf(_("Couldn't find %s"), gfnname);
-	err = E_FOPEN;
+        gretl_errmsg_sprintf(_("Couldn't find %s"), gfnname);
+        err = E_FOPEN;
     }
 
     if (!err) {
-	function_package_unload_full_by_filename(fname);
-	if (opt & OPT_P) {
-	    err = delete_function_package(fname);
-	}
+        function_package_unload_full_by_filename(fname);
+        if (opt & OPT_P) {
+            err = delete_function_package(fname);
+        }
     }
 
     if (!err && gretl_messages_on()) {
-	if (opt & OPT_P) {
-	    pprintf(prn, _("Removed %s\n"), pkgname);
-	} else {
-	    pprintf(prn, _("Unloaded %s\n"), pkgname);
-	}
+        if (opt & OPT_P) {
+            pprintf(prn, _("Removed %s\n"), pkgname);
+        } else {
+            pprintf(prn, _("Unloaded %s\n"), pkgname);
+        }
     }
 
     g_free(gfnname);
@@ -10800,11 +10800,11 @@ int uninstall_function_package (const char *package, gretlopt opt,
 static void get_cmdword (const char *s, char *word)
 {
     if (!strncmp(s, "catch ", 6)) {
-	s += 6;
+        s += 6;
     }
 
     if (sscanf(s, "%*s <- %8s", word) != 1) {
-	sscanf(s, "%8s", word);
+        sscanf(s, "%8s", word);
     }
 }
 
@@ -10819,31 +10819,31 @@ static void check_for_comment (const char *s, int *incomm)
     int quoted = 0;
 
     while (*p) {
-	if (!quoted && !*incomm && *p == '#') {
-	    break;
-	}
-	if (!*incomm && bare_quote(p, s)) {
-	    quoted = !quoted;
-	}
-	if (!quoted) {
-	    if (starts_ccmt(p)) {
-		*incomm = 1;
-		p += 2;
-	    } else if (ends_ccmt(p)) {
-		*incomm = 0;
-		p += 2;
-		p += strspn(p, " ");
-	    }
-	}
-	if (*p) {
-	    p++;
-	}
+        if (!quoted && !*incomm && *p == '#') {
+            break;
+        }
+        if (!*incomm && bare_quote(p, s)) {
+            quoted = !quoted;
+        }
+        if (!quoted) {
+            if (starts_ccmt(p)) {
+                *incomm = 1;
+                p += 2;
+            } else if (ends_ccmt(p)) {
+                *incomm = 0;
+                p += 2;
+                p += strspn(p, " ");
+            }
+        }
+        if (*p) {
+            p++;
+        }
     }
 
     if (*incomm && commbak) {
-	/* on the second or subsequent line of a multiline
-	   comment */
-	*incomm = 2;
+        /* on the second or subsequent line of a multiline
+           comment */
+        *incomm = 2;
     }
 }
 
@@ -10857,18 +10857,18 @@ static int line_broken (const char *s)
     int ret = 0;
 
     if (*s != '\0') {
-	int i, n = strlen(s);
+        int i, n = strlen(s);
 
-	for (i=n-1; i>=0; i--) {
-	    if (s[i] == '\\' || s[i] == ',') {
-		ret = 1;
-	    } else if (!ret && !isspace(s[i])) {
-		break;
-	    } else if (ret && s[i] == '#') {
-		ret = 0;
-		break;
-	    }
-	}
+        for (i=n-1; i>=0; i--) {
+            if (s[i] == '\\' || s[i] == ',') {
+                ret = 1;
+            } else if (!ret && !isspace(s[i])) {
+                break;
+            } else if (ret && s[i] == '#') {
+                ret = 0;
+                break;
+            }
+        }
     }
 
     return ret;
@@ -10879,11 +10879,11 @@ static void strip_trailing_whitespace (char *s)
     int i, n = strlen(s);
 
     for (i=n-1; i>=0; i--) {
-	if (s[i] == '\n' || s[i] == ' ' || s[i] == '\t') {
-	    s[i] = '\0';
-	} else {
-	    break;
-	}
+        if (s[i] == '\n' || s[i] == ' ' || s[i] == '\t') {
+            s[i] = '\0';
+        } else {
+            break;
+        }
     }
 
     strcat(s, "\n");
@@ -10898,9 +10898,9 @@ static int left_paren_offset (const char *s)
     const char *p = strchr(s, '(');
 
     if (p != NULL && strchr(p, ')') == NULL) {
-	return p - s;
+        return p - s;
     } else {
-	return 0;
+        return 0;
     }
 }
 
@@ -10918,18 +10918,18 @@ static int legacy_outfile_syntax (const char *s)
 
     p = strstr(s, "--write");
     if (p != NULL) {
-	q = strchr(s, '#');
-	if (q == NULL && q - p > 0) {
-	    legacy = 1;
-	}
+        q = strchr(s, '#');
+        if (q == NULL && q - p > 0) {
+            legacy = 1;
+        }
     } else {
-	p = strstr(s, "--close");
-	if (p != NULL) {
-	    q = strchr(s, '#');
-	    if (q == NULL && q - p > 0) {
-		legacy = 1;
-	    }
-	}
+        p = strstr(s, "--close");
+        if (p != NULL) {
+            q = strchr(s, '#');
+            if (q == NULL && q - p > 0) {
+                legacy = 1;
+            }
+        }
     }
 
     return legacy;
@@ -10938,60 +10938,60 @@ static int legacy_outfile_syntax (const char *s)
 void adjust_indent (const char *s, int *this_indent, int *next_indent)
 {
     const char *block_starts[] = {
-	"loop", "if", "nls", "mle", "gmm", "mpi", "plot",
-	"function", "restrict", "system", "foreign",
-	"gpbuild", NULL
+        "loop", "if", "nls", "mle", "gmm", "mpi", "plot",
+        "function", "restrict", "system", "foreign",
+        "gpbuild", NULL
     };
     int ti = *next_indent;
     int ni = *next_indent;
     int i, matched = 0;
 
     if (*s == '\0') {
-	*this_indent = *next_indent;
-	return;
+        *this_indent = *next_indent;
+        return;
     }
 
     /* skip "catch" if present */
     if (!strncmp(s, "catch ", 6)) {
-	s += 6;
-	s += strspn(s, " ");
+        s += 6;
+        s += strspn(s, " ");
     }
 
     for (i=0; block_starts[i] != NULL && !matched; i++) {
-	if (wordmatch(s, block_starts[i])) {
-	    matched = 1;
-	    ni++;
-	}
+        if (wordmatch(s, block_starts[i])) {
+            matched = 1;
+            ni++;
+        }
     }
 
     if (!matched && wordmatch(s, "outfile")) {
-	/* Current syntax is "outfile <lines> end outfile", with
-	   options --append, --quiet, --buffer available on
-	   the initial line. Legacy syntax is "outfile --write"
-	   (or --append) to start and "outfile --close" to
-	   finish. We should indent <lines> in the first case
-	   but not the second.
-	*/
-	if (legacy_outfile_syntax(s)) {
-	    ; /* no-op */
-	} else {
-	    /* note: --append is ambiguous wrt indenting! */
-	    ni++;
-	}
-	matched = 1;
+        /* Current syntax is "outfile <lines> end outfile", with
+           options --append, --quiet, --buffer available on
+           the initial line. Legacy syntax is "outfile --write"
+           (or --append) to start and "outfile --close" to
+           finish. We should indent <lines> in the first case
+           but not the second.
+        */
+        if (legacy_outfile_syntax(s)) {
+            ; /* no-op */
+        } else {
+            /* note: --append is ambiguous wrt indenting! */
+            ni++;
+        }
+        matched = 1;
     }
 
     if (!matched) {
-	if (wordmatch(s, "end") ||
-	    wordmatch(s, "endif") ||
-	    wordmatch(s, "endloop")) {
-	    ti--;
-	    ni--;
-	} else if (wordmatch(s, "else") ||
-		   wordmatch(s, "elif")) {
-	    ni = ti;
-	    ti--;
-	}
+        if (wordmatch(s, "end") ||
+            wordmatch(s, "endif") ||
+            wordmatch(s, "endloop")) {
+            ti--;
+            ni--;
+        } else if (wordmatch(s, "else") ||
+                   wordmatch(s, "elif")) {
+            ni = ti;
+            ti--;
+        }
     }
 
     *this_indent = ti;
@@ -11019,74 +11019,74 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
     bufgets_init(buf);
 
     while (safe_bufgets(&line, &llen, buf)) {
-	int handled = 0;
+        int handled = 0;
 
-	strip_trailing_whitespace(line);
+        strip_trailing_whitespace(line);
 
-	if (string_is_blank(line)) {
-	    pputc(prn, '\n');
-	    continue;
-	}
+        if (string_is_blank(line)) {
+            pputc(prn, '\n');
+            continue;
+        }
 
-	if (llen > prevlen) {
-	    prevline = realloc(prevline, llen);
-	}
+        if (llen > prevlen) {
+            prevline = realloc(prevline, llen);
+        }
 
-	check_for_comment(line, &incomment);
+        check_for_comment(line, &incomment);
 
-	ins = line + strspn(line, " \t");
-	if (!incomment) {
-	    *word = '\0';
-	    get_cmdword(ins, word);
-	    if (!strcmp(word, "foreign")) {
-		inforeign = 1;
-	    } else if (inforeign) {
-		if (!strncmp(ins, "end foreign", 11)) {
-		    inforeign = 0;
-		} else {
-		    /* insert foreign line as is */
-		    pputs(prn, line);
-		    handled = 1;
-		}
-	    } else {
-		if (!strcmp(word, "function")) {
-		    lp_pos = left_paren_offset(ins);
-		} else if (lp_pos > 0 && strchr(ins, ')') != NULL) {
-		    lp_zero = 1;
-		}
-		if (!strcmp(word, "outfile") || !strcmp(word, "gridplot")) {
-		    /* handle possible block/nonblock, including legacy syntax for
-		       "outfile"
-		    */
-		    adjust_indent(ins, &this_indent, &next_indent);
-		} else {
-		    adjust_indent(word, &this_indent, &next_indent);
-		}
-	    }
-	}
+        ins = line + strspn(line, " \t");
+        if (!incomment) {
+            *word = '\0';
+            get_cmdword(ins, word);
+            if (!strcmp(word, "foreign")) {
+                inforeign = 1;
+            } else if (inforeign) {
+                if (!strncmp(ins, "end foreign", 11)) {
+                    inforeign = 0;
+                } else {
+                    /* insert foreign line as is */
+                    pputs(prn, line);
+                    handled = 1;
+                }
+            } else {
+                if (!strcmp(word, "function")) {
+                    lp_pos = left_paren_offset(ins);
+                } else if (lp_pos > 0 && strchr(ins, ')') != NULL) {
+                    lp_zero = 1;
+                }
+                if (!strcmp(word, "outfile") || !strcmp(word, "gridplot")) {
+                    /* handle possible block/nonblock, including legacy syntax for
+                       "outfile"
+                    */
+                    adjust_indent(ins, &this_indent, &next_indent);
+                } else {
+                    adjust_indent(word, &this_indent, &next_indent);
+                }
+            }
+        }
 
-	if (!handled) {
-	    nsp = this_indent * tabwidth;
-	    if (incomment == 2) {
-		/* comment continuation */
-		nsp += 3;
-	    } else if (line_broken(prevline)) {
-		if (lp_pos > 0) {
-		    nsp = lp_pos + 1;
-		} else {
-		    nsp += 2;
-		}
-	    }
-	    /* insert required number of spaces */
-	    bufspace(nsp, prn);
-	    /* insert line, with leading space pruned */
-	    pputs(prn, ins);
-	}
+        if (!handled) {
+            nsp = this_indent * tabwidth;
+            if (incomment == 2) {
+                /* comment continuation */
+                nsp += 3;
+            } else if (line_broken(prevline)) {
+                if (lp_pos > 0) {
+                    nsp = lp_pos + 1;
+                } else {
+                    nsp += 2;
+                }
+            }
+            /* insert required number of spaces */
+            bufspace(nsp, prn);
+            /* insert line, with leading space pruned */
+            pputs(prn, ins);
+        }
 
-	strcpy(prevline, line);
-	if (lp_zero) {
-	    lp_zero = lp_pos = 0;
-	}
+        strcpy(prevline, line);
+        if (lp_zero) {
+            lp_zero = lp_pos = 0;
+        }
     }
 
     bufgets_finalize(buf);
