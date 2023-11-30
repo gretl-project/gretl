@@ -476,13 +476,13 @@ const char *blue_for_text (void)
 
     strcpy(blue, "blue");
 
-#ifdef G_OS_WIN32
+#if defined(G_OS_WIN32) || defined(MAC_THEMING)
     if (strstr(themepref, "Dark") ||
         strstr(themepref, "dark")) {
 	strcpy(blue, "#B0EFEE");
     }
 #else
-    /* macOS? */
+    /* Linux, etc. */
     GSettings *settings;
 
     settings = g_settings_new("org.gnome.desktop.interface");
@@ -1455,7 +1455,7 @@ static const char **get_list_setting_strings (void *var, int *n)
 #if defined(MAC_THEMING)
     else if (var == themepref) {
 	static const char *theme_strs[] = {
-	    "Adwaita", "Clearlooks", "Lion-like", "Raleigh"
+	    "Adwaita", "Adwaita-dark", "Clearlooks", "Lion-like", "Raleigh"
 	};
 
 	strs = theme_strs;
@@ -3489,7 +3489,7 @@ void workdir_dialog1 (void)
 
 void set_up_mac_look (void)
 {
-    if (!strcmp(themepref, "Adwaita") ||
+    if (!strncmp(themepref, "Adwaita", 7) ||
 	!strcmp(themepref, "Clearlooks") ||
 	!strcmp(themepref, "Lion-like")) {
 	char *topdir = getenv("GTK_DATA_PREFIX");
