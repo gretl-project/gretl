@@ -468,13 +468,39 @@ int autoicon_on (void)
 
 const char *blue_for_text (void)
 {
+    static char blue[8];
+
+    if (*blue) {
+	return blue;
+    }
+
+    strcpy(blue, "blue");
+
 #ifdef G_OS_WIN32
     if (strstr(themepref, "Dark") ||
         strstr(themepref, "dark")) {
-        return "#B0EFEE";
+	strcpy(blue, "#B0EFEE");
+    }
+#else
+    /* macOS? */
+    GSettings *settings;
+
+    settings = g_settings_new("org.gnome.desktop.interface");
+    if (settings != NULL) {
+	gchar *theme = g_settings_get_string(settings, "gtk-theme");
+
+	if (theme != NULL) {
+	    if (strstr(theme, "Dark") ||
+		strstr(theme, "dark")) {
+		strcpy(blue, "#B0EFEE");
+	    }
+	    g_free(theme);
+	}
+	g_object_unref(settings);
     }
 #endif
-    return "blue";
+
+    return blue;
 }
 
 int get_icon_sizing (void)
