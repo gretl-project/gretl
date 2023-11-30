@@ -49,6 +49,10 @@ void cursor_to_mark (windata_t *vwin, GtkTextMark *mark);
 
 void scroll_to_foot (windata_t *vwin);
 
+void scroll_to_line (windata_t *vwin, int line);
+
+int textbuf_get_n_lines (windata_t *vwin);
+
 gint get_char_width (GtkWidget *widget);
 
 gint get_char_height (GtkWidget *widget);

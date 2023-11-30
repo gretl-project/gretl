@@ -192,6 +192,30 @@ void cursor_to_mark (windata_t *vwin, GtkTextMark *mark)
     gtk_text_view_scroll_to_mark(view, mark, 0.0, TRUE, 0, 0.1);
 }
 
+void scroll_to_line (windata_t *vwin, int line)
+{
+    GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(view);
+    GtkTextIter iter;
+    GtkTextMark *mark;
+
+    gtk_text_buffer_get_start_iter(buf, &iter);
+    gtk_text_iter_forward_lines(&iter, line - 1);
+    mark = gtk_text_buffer_create_mark(buf, NULL, &iter, FALSE);
+    gtk_text_view_scroll_to_mark(view, mark, 0.0, FALSE, 0, 0);
+    gtk_text_buffer_delete_mark(buf, mark);
+}
+
+int textbuf_get_n_lines (windata_t *vwin)
+{
+    GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(view);
+    GtkTextIter end;
+
+    gtk_text_buffer_get_end_iter(buf, &end);
+    return gtk_text_iter_get_line(&end) + 1;
+}
+
 static void get_char_width_and_height (GtkWidget *widget,
 				       int *width,
 				       int *height)

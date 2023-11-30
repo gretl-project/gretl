@@ -466,6 +466,17 @@ static int is_control_key (guint k)
 
 #endif
 
+/* respond to Ctrl+L in editable window */
+
+static gint go_to_line (windata_t *vwin)
+{
+    int n = textbuf_get_n_lines(vwin);
+
+    fprintf(stderr, "Ctrl+L: lines = %d\n", n);
+
+    return TRUE; /* handled */
+}
+
 /* Signal attached to editor/viewer windows. Note that @w is
    generally the top-level GtkWidget vwin->main; exceptions
    are (a) tabbed windows, where @w is the embedding window,
@@ -563,6 +574,8 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 		/* Ctrl-T: open new tab */
 		do_new_script(vwin->role, NULL, NULL);
 		return TRUE;
+	    } else if (upkey == GDK_L) {
+		return go_to_line(vwin);
 	    }
 	}
 	if (window_is_tab(vwin)) {
