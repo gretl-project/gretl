@@ -10911,36 +10911,12 @@ static int wordmatch (const char *s, const char *test)
     return (!strncmp(s, test, n) && (s[n] == '\0' || isspace(s[n])));
 }
 
-static int legacy_outfile_syntax (const char *s)
-{
-    const char *p, *q;
-    int legacy = 0;
-
-    p = strstr(s, "--write");
-    if (p != NULL) {
-        q = strchr(s, '#');
-        if (q == NULL && q - p > 0) {
-            legacy = 1;
-        }
-    } else {
-        p = strstr(s, "--close");
-        if (p != NULL) {
-            q = strchr(s, '#');
-            if (q == NULL && q - p > 0) {
-                legacy = 1;
-            }
-        }
-    }
-
-    return legacy;
-}
-
 void adjust_indent (const char *s, int *this_indent, int *next_indent)
 {
     const char *block_starts[] = {
         "loop", "if", "nls", "mle", "gmm", "mpi", "plot",
         "function", "restrict", "system", "foreign",
-        "gpbuild", NULL
+        "outfile", "gpbuild", NULL
     };
     int ti = *next_indent;
     int ni = *next_indent;
@@ -10962,23 +10938,6 @@ void adjust_indent (const char *s, int *this_indent, int *next_indent)
             matched = 1;
             ni++;
         }
-    }
-
-    if (!matched && wordmatch(s, "outfile")) {
-        /* Current syntax is "outfile <lines> end outfile", with
-           options --append, --quiet, --buffer available on
-           the initial line. Legacy syntax is "outfile --write"
-           (or --append) to start and "outfile --close" to
-           finish. We should indent <lines> in the first case
-           but not the second.
-        */
-        if (legacy_outfile_syntax(s)) {
-            ; /* no-op */
-        } else {
-            /* note: --append is ambiguous wrt indenting! */
-            ni++;
-        }
-        matched = 1;
     }
 
     if (!matched) {

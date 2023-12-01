@@ -2323,19 +2323,6 @@ static void print_tokens (CMD *c)
 
 #endif /* CDEBUG */
 
-static int legacy_accept_strays (CMD *c, int i)
-{
-    if (c->ci == OUTFILE && c->opt == OPT_C) {
-	/* redundant parameter for outfile --close ? */
-	fprintf(stderr, "+++ outfile --close: ignoring "
-		"redundant filename\n");
-	mark_token_done(c->toks[i]);
-	return 1;
-    }
-
-    return 0;
-}
-
 static int stray_symbol_error (cmd_token *tok)
 {
     GretlType t = user_var_get_type_by_name(tok->s);
@@ -2360,7 +2347,7 @@ static int check_for_stray_tokens (CMD *c)
 
 	for (i=0; i<c->ntoks && !c->err; i++) {
 	    tok = &c->toks[i];
-	    if (!token_done(tok) && !legacy_accept_strays(c, i)) {
+	    if (!token_done(tok)) {
 		c->err = stray_symbol_error(tok);
 	    }
 	}
@@ -3296,14 +3283,9 @@ static int check_end_command (CMD *cmd)
 {
     int endci = gretl_command_number(cmd->param);
 
-    if (endci == OUTFILE) {
-	/* special case, alias */
-	cmd->ci = OUTFILE;
-	cmd->opt = OPT_C;
+    if (endci == OUTFILE || endci == GPBUILD) {
+	/* special cases where no "context" is required */
 	return 0;
-    } else if (endci == GPBUILD) {
-        /* special case: no "context" required */
-        return 0;
     }
 
     if (endci == 0 || endci != cmd->context) {
@@ -3815,10 +3797,6 @@ static void handle_option_inflections (CMD *cmd)
     } else if (cmd->ci == SET) {
 	if (cmd->opt & (OPT_F | OPT_T)) {
 	    /* from file, to file */
-	    cmd->ciflags = 0;
-	}
-    } else if (cmd->ci == OUTFILE) {
-	if (cmd->opt & OPT_C) {
 	    cmd->ciflags = 0;
 	}
     } else if (cmd->ci == GNUPLOT) {

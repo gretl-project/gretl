@@ -516,8 +516,6 @@ struct gretl_option gretl_opts[] = {
     { OPEN,     OPT_I, "ignore-quotes", 0 },
     { OPEN,     OPT_U, "bundle", 2 },
     { OUTFILE,  OPT_A, "append", 0 },
-    { OUTFILE,  OPT_C, "close", 0 },
-    { OUTFILE,  OPT_W, "write", 0 },
     { OUTFILE,  OPT_Q, "quiet", 0 },
     { OUTFILE,  OPT_B, "buffer", 1 }, /* note: 1 is for backward compat */
     { OUTFILE,  OPT_T, "tempfile", 2 },

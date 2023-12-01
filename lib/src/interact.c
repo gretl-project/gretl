@@ -676,9 +676,8 @@ static int command_is_silent (const CMD *cmd, const char *line)
         return 1;
     }
 
-    if ((cmd->ci == OUTFILE && cmd->opt == OPT_C) ||
-        (cmd->ci == END && cmd->param != NULL &&
-         !strcmp(cmd->param, "outfile"))) {
+    if (cmd->ci == END && cmd->param != NULL &&
+	!strcmp(cmd->param, "outfile")) {
         return 1;
     }
 
@@ -1139,8 +1138,8 @@ do_outfile_command (gretlopt opt, const char *fname,
         return 0;
     }
 
-    /* make --write the default in the absence of a
-       contrary option (--append or --close)
+    /* Make writing the default in the absence of a contrary
+       option, either OPT_A (--append) or the internal OPT_C.
     */
     if (!(opt & (OPT_A | OPT_C))) {
         opt |= OPT_W;
@@ -1166,7 +1165,7 @@ do_outfile_command (gretlopt opt, const char *fname,
                 pprintf(prn, _("Closed output file '%s'\n"), savename);
             }
         }
-        return err;
+        return err; /* handled */
     }
 
     /* pre-check: in the buffer or tempfile cases, did we
