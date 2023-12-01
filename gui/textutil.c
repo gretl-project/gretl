@@ -195,6 +195,9 @@ static void replace_single_callback (GtkWidget *button,
 
     gtk_widget_set_sensitive(button, FALSE);
     g_free(text);
+
+    /* automatically move to next match after replace */
+    replace_find_callback(NULL, s);
 }
 
 /* Replace all occurrences of the Find string, in the text
@@ -427,8 +430,8 @@ static void replace_string_dialog (windata_t *vwin)
     gtk_widget_set_sensitive(button, FALSE);
     s->r_button = button;
 
-    /* Cancel button */
-    button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
+    /* Close button */
+    button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
     gtk_widget_set_can_default(button, TRUE);
     gtk_box_pack_start(GTK_BOX(abox), button, TRUE, TRUE, 0);
     g_signal_connect_swapped(G_OBJECT(button), "clicked",
