@@ -606,8 +606,8 @@ struct str_table funcs[] = {
 };
 
 struct str_table func_alias[] = {
-    { F_EIGEN,    "eiggen2" },
-    { F_FFT,      "fft2" },
+    { F_EIGEN,    "eiggen2" }, /* deprecated */
+    { F_FFT,      "fft2" },    /* deprecated */
     { F_NMMAX,    "NMmin" },
     { F_NRMAX,    "NRmin" },
     { F_BFGSMAX,  "BFGSmin" },
@@ -787,8 +787,10 @@ static int real_function_lookup (const char *s, int aliases,
 	/* note: point d'appui for deprecation of built-in function */
 	if (st->id == F_EIGGEN) {
 	    pprintf(p->prn, "*** Warning: %s() is obsolete, please use "
-		    "eigen() instead ***\n",
-		    st->str);
+		    "eigen() instead ***\n", st->str);
+	} else if (st->id == F_CHOWLIN) {
+	    pprintf(p->prn, "*** Warning: %s() is obsolete, please use "
+		    "tdisagg() instead ***\n", st->str);
 	}
 #endif
 	return st->id;
@@ -803,6 +805,8 @@ static int real_function_lookup (const char *s, int aliases,
 		if (!strcmp(s, "isnull")) {
 		    gretl_warnmsg_set(_("obsolete function isnull(): "
 					"please use !exists() instead"));
+		} else if (!strcmp(s, "fft2")) {
+		    gretl_warnmsg_set(_("deprecated alias 'fft2': please call fft()"));
 		}
 #endif
 		if (p != NULL) {

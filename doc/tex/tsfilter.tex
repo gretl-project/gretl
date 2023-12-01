@@ -260,7 +260,7 @@ frequency response as well as the smoothed series and/or the residual
 or cycle.
 
 \section{The discrete Fourier transform}
-\label{sec:genr-fft} % Moved here from the genr chapter, thus this label.
+\label{sec:genr-fft}
 
 The Fourier transform is not itself a time-series filter, but by providing
 the bridge between the time and the frequency domain it is a fundamental
@@ -305,20 +305,12 @@ techniques employed in \texttt{fftw3} is commonly known as the
 \emph{Fast} Fourier Transform.
 
 Gretl provides two matrix functions for performing the Fourier
-transform and its inverse: \texttt{fft2} and
-\texttt{ffti}.\footnote{The same functionality is available via the
-  legacy function \texttt{fft}, that predates gretl's native support
-  of complex matrices. It is more limited than \texttt{fft2}, as the
-  input is understood to be real. It returns the real and imaginary
-  parts of the result in separate columns.  The \texttt{fft} function
-  is kept for backward compatibility, but for new scripts it is
-  recommended to use the newer function \texttt{fft2} instead. The
-  inverse function \texttt{ffti} supports both representations.} For
+transform and its inverse: \texttt{fft} and \texttt{ffti}. For
 example:
 \begin{code}
 matrix x1 = { 1 ; 2 ; 3 }
 # perform the transform
-matrix f = fft2(x1)
+matrix f = fft(x1)
 # perform the inverse transform
 matrix x2 = ffti(f)
 \end{code}
@@ -351,8 +343,8 @@ illustrates how to compute the coefficients of $c(x)$:
 a = { 1, 0.5, 0, 0 }'
 b = { 1, 0.3, -0.8, 0 }'
 # perform the transforms
-fa = fft2(a)
-fb = fft2(b)
+fa = fft(a)
+fb = fft(b)
 # multiply the two transforms element by element
 fc = fa .* fb 
 # compute the coefficients of c via the inverse transform
@@ -369,7 +361,7 @@ rows/columns:
 a = { 1 ; 0.5; 0 ; 0 }
 b = { 1 ; 0.3 ; -0.8 ; 0 }
 # perform the transforms jointly
-f = fft2(a ~ b)
+f = fft(a ~ b)
 # complex-multiply the two transforms
 fc = f[,1] .* f[,2]
 # compute the coefficients of c via the inverse transform
@@ -379,7 +371,7 @@ c = ffti(fc)
 Traditionally, the Fourier transform in econometrics has been mostly
 used in time-series analysis, the periodogram being the best known
 example. Listing~\ref{scr:pergm-fft} shows how to compute the
-periodogram of a time series via the \texttt{fft2} function.
+periodogram of a time series via the \texttt{fft} function.
 
 \begin{script}[htbp]
   \scriptcaption{Periodogram via the Fourier transform}
@@ -394,7 +386,7 @@ x = 0.9*x(-1) + e
 
 # compute the periodogram
 
-F = fft2({x}) # note that the series is turned into a matrix on the fly 
+F = fft({x}) # note that the series is turned into a matrix on the fly 
 S = abs(F).^2
 S = S[2:($nobs/2)+1] / (2*$pi*$nobs)
 sfreq = seq(1,($nobs/2))'
