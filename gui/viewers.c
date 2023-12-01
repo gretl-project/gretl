@@ -471,10 +471,17 @@ static int is_control_key (guint k)
 static gint go_to_line (windata_t *vwin)
 {
     int n = textbuf_get_n_lines(vwin);
+    int lno = 1;
+    int resp;
 
-    fprintf(stderr, "Ctrl+L: lines = %d\n", n);
+    resp = spin_dialog(NULL, NULL, &lno,
+		       _("Go to line"), 1, n,
+		       0, vwin_toplevel(vwin));
+    if (resp != GRETL_CANCEL) {
+	scroll_to_line(vwin, lno);
+    }
 
-    return TRUE; /* handled */
+    return TRUE;
 }
 
 /* Signal attached to editor/viewer windows. Note that @w is
