@@ -62,6 +62,9 @@ version 2023c, in progress
   under the "/File/Function packages" menu
 - GUI: add Ctrl + mouse wheel as a means of changing text
   size in various windows
+- GUI editor and gretl_edit: add the Ctrl-L accelerator, improve
+  the search/replace dialog and fix a problem with automatic
+  indentation
 - Windows and macOS packages: add a dark GTK theme
 
 2023-07-21 version 2023b
