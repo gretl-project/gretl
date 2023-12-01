@@ -201,6 +201,7 @@ void scroll_to_line (windata_t *vwin, int line)
 
     gtk_text_buffer_get_start_iter(buf, &iter);
     gtk_text_iter_forward_lines(&iter, line - 1);
+    gtk_text_buffer_place_cursor(buf, &iter);
     mark = gtk_text_buffer_create_mark(buf, NULL, &iter, FALSE);
     gtk_text_view_scroll_to_mark(view, mark, 0.0, FALSE, 0, 0);
     gtk_text_buffer_delete_mark(buf, mark);
