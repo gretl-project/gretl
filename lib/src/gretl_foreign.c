@@ -2627,6 +2627,158 @@ static int try_set_R_home (void)
 
 #endif /* WIN32 or not */
 
+static char RHOME[MAXLEN];
+
+#ifdef G_OS_WIN32
+
+int check_set_R_home (void)
+{
+    const char *Rhome = NULL;
+    const char *path = gretl_rlib_path();
+    const char *orig = path;
+    char tmp[MAXLEN];
+    gchar *lp = NULL;
+    int err = 0;
+
+    err = gretl_test_fopen(path, "r");
+    fprintf(stderr, "user path '%s', err %d\n", path, err);
+    /* an error here is not necessarily fatal, if we can get
+       the R path from the registry.
+    */
+    if (err) {
+	path = NULL;
+	err = 0;
+    }
+
+    err = R_path_from_registry(tmp, RBASE);
+
+    if (!err) {
+	/* verify registry entry */
+	const char *arch = "x64"; /* FIXME */
+
+	lp = g_strdup_printf("%s\\bin\\%s\\R.dll", tmp, arch);
+	err = gretl_test_fopen(lp, "r");
+	fprintf(stderr, "lp '%s', err %d\n", lp, err);
+	if (!err) {
+	    strcpy(RHOME, tmp);
+	    path = lp;
+	}
+    }
+
+    if (path == NULL) {
+	g_free(lp);
+	gretl_errmsg_set(_("Can't find the R shared library"));
+	return E_EXTERNAL;
+    }
+
+    if (!err) {
+	/* put R_HOME into env */
+	if (strcmp(path, orig)) {
+	    gretl_set_path_by_name("rlibpath", path);
+	}
+	fprintf(stderr, "setting R_HOME='%s'\n", RHOME);
+	gretl_setenv("R_HOME", RHOME);
+        set_path_for_Rlib(RHOME);
+    }
+
+    g_free(lp);
+
+    return err;
+}
+
+#else /* non-Windows variant */
+
+int check_set_R_home (void)
+{
+    const char *Rhome = NULL;
+    const char *path = gretl_rlib_path();
+    const char *orig = path;
+    struct stat buf = {0};
+    gchar *lp = NULL;
+    char tmp[2048] = {0};
+    int do_setenv = 0;
+    int err = 0;
+
+    err = (lstat(path, &buf) != 0);
+    fprintf(stderr, "user path '%s', err %d\n", path, err);
+    /* an error here is not necessarily fatal, if R_HOME
+       is defined and works OK.
+    */
+    if (err) {
+	path = NULL;
+	err = 0;
+    }
+
+    Rhome = getenv("R_HOME");
+    fprintf(stderr, "Rhome = '%s'\n", Rhome);
+
+    if (Rhome == NULL || *Rhome == '\0') {
+	fprintf(stderr, "No R_HOME\n");
+	do_setenv = 1;
+    } else {
+	/* verify R_HOME */
+	lp = g_strdup_printf("%s/lib/libR.so", Rhome);
+	err = (lstat(lp, &buf) != 0);
+	fprintf(stderr, "lp '%s', err %d\n", lp, err);
+	if (err) {
+	    /* needs correcting */
+	    do_setenv = 1;
+	} else {
+	    strcpy(RHOME, Rhome);
+	    path = lp;
+	}
+    }
+
+    if (path == NULL) {
+	g_free(lp);
+	gretl_errmsg_set(_("Can't find the R shared library"));
+	return E_EXTERNAL;
+    }
+
+    if (S_ISLNK(buf.st_mode)) {
+	/* the path is a symlink */
+	ssize_t n = readlink(path, tmp, sizeof(tmp) - 1);
+
+	fprintf(stderr, "The R library path '%s' seems to be a symlink\n", path);
+	if (n < 0 || n >= sizeof tmp) {
+	    fprintf(stderr, " couldn't resolve it (n=%d, tmp='%s'\n", (int) n, tmp);
+	    err = E_EXTERNAL;
+	} else {
+	    fprintf(stderr, " resolved to '%s'\n", tmp);
+	    if (!g_path_is_absolute(tmp)) {
+		err = absolutize_R_path(tmp, path);
+	    }
+	}
+    } else if (S_ISREG(buf.st_mode)) {
+	/* the given path is a regular file */
+	strcpy(tmp, path);
+    }
+
+    if (!err && strcmp(tmp, orig)) {
+	gretl_set_path_by_name("rlibpath", tmp);
+    }
+
+    if (!err && do_setenv) {
+	char *s = strstr(tmp, "/lib/libR");
+
+	if (s != NULL) {
+	    *s = '\0';
+	    fprintf(stderr, "setting R_HOME='%s'\n", tmp);
+	    gretl_setenv("R_HOME", tmp);
+	    strcpy(RHOME, tmp);
+	} else {
+	    gretl_errmsg_set(_("Can't determine R_HOME"));
+	    err = E_EXTERNAL;
+	}
+    }
+
+    g_free(lp);
+
+    return err;
+}
+
+#endif
+
 /* Initialize the R library for use with gretl.  Note that we only
    need do this once per gretl session.  We need to check that the
    environment is set to R's liking first, otherwise initialization
@@ -2638,11 +2790,15 @@ static int gretl_Rlib_init (void)
     char *Rhome = NULL;
     int err = 0;
 
-#if FDEBUG
+#if 1 || FDEBUG
     fprintf(stderr, "gretl_Rlib_init: starting\n");
+    err = check_set_R_home();
+    if (err) {
+        return err;
+    }
 #endif
 
-#ifndef WIN32
+#if 0 // ndef WIN32
     Rhome = getenv("R_HOME");
     if (Rhome == NULL || *Rhome == '\0') {
         err = try_set_R_home();
@@ -2658,7 +2814,7 @@ static int gretl_Rlib_init (void)
         goto bailout;
     }
 
-#ifdef WIN32
+#if 0 // def WIN32
     /* note: this code block requires that load_R_symbols()
        has succeeded
     */
@@ -2717,7 +2873,7 @@ static int gretl_Rlib_init (void)
 
  bailout:
 
-#if FDEBUG
+#if 1 || FDEBUG
     fprintf(stderr, "gretl_Rlib_init: returning %d\n", err);
 #endif
 
