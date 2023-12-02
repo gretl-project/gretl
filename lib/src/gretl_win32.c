@@ -1408,13 +1408,12 @@ static void append_R_filename (char *s, int which)
 }
 
 /* See if we can get the R installation path from the Windows
-   registry. This is not a sure thing, since at least as of R
-   2.11.1 recording the path in the registry on installation
-   is optional.
+   registry. This is not a sure thing, since recording the path
+   in the registry on installation is optional.
 
    To complicate matters, the path within the registry where
    we might find this information has not remained constant
-   across subsequwnt R versions.
+   across R versions.
 */
 
 int R_path_from_registry (char *s, int which)
@@ -1423,6 +1422,7 @@ int R_path_from_registry (char *s, int which)
 
     *s = '\0';
 
+    /* try for an admin install first */
     err = try_for_R_path(HKEY_LOCAL_MACHINE, s);
 
     if (err) {

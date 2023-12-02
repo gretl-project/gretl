@@ -2541,6 +2541,8 @@ int gretl_set_path_by_name (const char *name, const char *path)
         targ = paths.gnuplot;
     } else if (!strcmp(name, "plotfile")) {
         targ = paths.plotfile;
+    } else if (!strcmp(name, "rlibpath")) {
+	targ = paths.rlibpath;
     } else if (!strcmp(name, "tramo")) {
         targ = paths.tramo;
         builtin = 1;
