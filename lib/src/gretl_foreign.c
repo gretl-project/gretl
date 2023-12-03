@@ -2522,13 +2522,15 @@ static char RHOME[MAXLEN];
 
 #ifdef G_OS_WIN32
 
-static void set_path_for_Rlib (const char *Rhome,
-			       const char *arch)
+static void set_path_for_Rlib (const char *libpath)
 {
     char *oldpath = getenv("PATH");
-    gchar *Rpath;
+    gchar *Rpath = g_strdup(libpath);
+    gchar *s;
 
-    Rpath = g_strdup_printf("%s\\bin\\%s", Rhome, arch);
+    /* chop off the last libpath element */
+    s = strrchr(Rpath, '\\');
+    *s = '\0';
 
     if (oldpath != NULL && strstr(oldpath, Rpath) != NULL) {
         ; /* nothing to be done */
@@ -2587,7 +2589,7 @@ int check_set_R_home (void)
 	}
 	if (RHOME[0] == '\0') {
 	    char *s;
-	    
+
 	    strcpy(RHOME, path);
 	    s = strstr(RHOME, "\\bin");
 	    if (s != NULL) {
@@ -2597,7 +2599,7 @@ int check_set_R_home (void)
 	/* put R_HOME into env */
 	fprintf(stderr, "setting R_HOME='%s'\n", RHOME);
 	gretl_setenv("R_HOME", RHOME);
-        set_path_for_Rlib(RHOME, arch);
+        set_path_for_Rlib(path);
     }
 
     return err;
@@ -2608,7 +2610,7 @@ int check_set_R_home (void)
 static int absolutize_R_path (char *targ, const char *path)
 {
     gchar *s = g_strdup(path);
-    gchar *p = strstr(s, "/libR.so");
+    gchar *p = strrchr(s, '/');
     int err = 0;
 
     if (p != NULL) {
@@ -2642,7 +2644,7 @@ int check_set_R_home (void)
     if (RHOME[0] != '\0') {
 	/* we've already done this */
 	return 0;
-    }    
+    }
 
     err = (lstat(path, &buf) != 0);
     fprintf(stderr, "user path '%s', err %d\n", path, err);
@@ -2662,7 +2664,12 @@ int check_set_R_home (void)
 	do_setenv = 1;
     } else {
 	/* verify R_HOME */
-	lp = g_strdup_printf("%s/lib/libR.so", Rhome);
+#ifdef OS_OSX
+        const char *libname = "libR.dylib";
+#else
+        const char *libname = "libR.so";
+#endif
+	lp = g_strdup_printf("%s/lib/%s", Rhome, libname);
 	err = (lstat(lp, &buf) != 0);
 	fprintf(stderr, "lp '%s', err %d\n", lp, err);
 	if (err) {
