@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-11-26 15:45-0500\n"
-"PO-Revision-Date: 2023-11-30 23:38+0100\n"
+"PO-Revision-Date: 2023-12-03 19:57+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -1061,7 +1061,7 @@ msgstr "trimestre %s?\n"
 #: lib/src/csvdata.c:1062 lib/src/csvdata.c:1076
 #, c-format
 msgid "quarter %d: not possible\n"
-msgstr ""
+msgstr "il trimestre %d non esiste\n"
 
 #: lib/src/csvdata.c:1073
 #, c-format
@@ -1076,7 +1076,7 @@ msgstr "mese %s?\n"
 #: lib/src/csvdata.c:1083
 #, c-format
 msgid "month %d: not possible\n"
-msgstr ""
+msgstr "il mese %d non esiste\n"
 
 #: lib/src/csvdata.c:1132 lib/src/csvdata.c:1162
 msgid "   but the dates are not complete and consistent\n"
@@ -1447,7 +1447,7 @@ msgstr ""
 #: lib/src/dataio.c:1579
 #, c-format
 msgid "Can't replace %s with a series"
-msgstr ""
+msgstr "Impossibile rimpiazzare %s con una serie"
 
 #: lib/src/dataio.c:1718
 msgid "append: don't know how to align the new series!"
@@ -1587,12 +1587,12 @@ msgstr "Dati importati dal formato %s, %s\n"
 
 #: lib/src/dataio.c:4014
 msgid "This dataset is on 7-day calendar, but weekends are blank."
-msgstr ""
+msgstr "Questo dataset ha settimane di 7 giorni, ma i fine settimana sono vuoti."
 
 #: lib/src/dataio.c:4016
 #, c-format
 msgid "This dataset is on 6-day calendar, but %s are blank."
-msgstr ""
+msgstr "Questo datasert ha settimane di 6 giorni, ma non ci sono %s."
 
 #: lib/src/dataio.c:4017
 msgid "Sundays"
@@ -1742,7 +1742,7 @@ msgstr ""
 
 #: lib/src/dataset.c:3413
 msgid "Undated daily data: can't do compaction"
-msgstr ""
+msgstr "Dati giornalieri senza data: il compattamento è impossibile"
 
 #: lib/src/dataset.c:3625
 #, c-format
@@ -3069,7 +3069,7 @@ msgstr "LEVERAGE - _Osservazioni influenti"
 
 #: lib/src/genfuncs.c:2754 lib/src/genfuncs.c:2761
 msgid "Butterworth: infeasible lambda value"
-msgstr ""
+msgstr "Butterworth: valore di lambda non utilizzabile"
 
 #: lib/src/genfuncs.c:3088 gui/datawiz.c:744 gui/dialogs.c:3856
 msgid "Monday"
@@ -3238,9 +3238,9 @@ msgid "Failed to calculate MIDAS weights: %s"
 msgstr "Impossibile calcolare i pesi MIDAS: %s"
 
 #: lib/src/genfuncs.c:5036
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to calculate MIDAS gradient: %s"
-msgstr "Impossibile calcolare lo Jacobiano"
+msgstr "Impossibile calcolare il gradiente MIDAS: %s"
 
 #: lib/src/genfuncs.c:5092
 #, fuzzy
@@ -3275,9 +3275,9 @@ msgid "other"
 msgstr "altro"
 
 #: lib/src/genfuncs.c:7880 lib/src/genfuncs.c:7883
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid observation %s"
-msgstr "Specifica di osservazione non valida \"%s\""
+msgstr "Osservazione %s non valida"
 
 #: lib/src/genfuncs.c:7933
 #, c-format
@@ -3937,9 +3937,9 @@ msgid "bundle union: the right-hand operand cannot be a kalman bundle"
 msgstr ""
 
 #: lib/src/gretl_bundle.c:1971
-#, fuzzy, c-format
+#, c-format
 msgid "%s: should be scalar\n"
-msgstr "%s: l'argomento dovrebbe essere %s"
+msgstr "%s: dovrebbe essere uno scalare\n"
 
 #: lib/src/gretl_bundle.c:1976
 #, fuzzy, c-format
