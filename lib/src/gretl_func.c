@@ -5553,7 +5553,6 @@ static int verify_libR_functionality (PRN *prn)
     if (doc != NULL) {
         xmlFreeDoc(doc);
     }
-
     if (err) {
         pputs(prn, _("Warning: R_functions could not be enabled\n"));
     }

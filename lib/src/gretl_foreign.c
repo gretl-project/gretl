@@ -2549,16 +2549,9 @@ static void set_path_for_Rlib (const char *Rhome,
 
 int check_set_R_home (void)
 {
-#ifdef _WIN64
-    const char *arch = "x64";
-#else
-    const char *arch = "i386";
-#endif    
-    const char *Rhome = NULL;
     const char *path = gretl_rlib_path();
     const char *orig = path;
-    char tmp[MAXLEN];
-    gchar *lp = NULL;
+    char tmp[MAX_PATH];
     int err = 0;
 
     if (RHOME[0] != '\0') {
@@ -2576,27 +2569,19 @@ int check_set_R_home (void)
 	err = 0;
     }
 
-    err = R_path_from_registry(tmp, RBASE);
-
+    err = R_home_from_registry(tmp);
     if (!err) {
-	/* verify registry entry */
-	lp = g_strdup_printf("%s\\bin\\%s\\R.dll", tmp, arch);
-	err = gretl_test_fopen(lp, "r");
-	fprintf(stderr, "lp '%s', err %d\n", lp, err);
-	if (!err) {
-	    strcpy(RHOME, tmp);
-	    path = lp;
-	}
+	strcpy(RHOME, tmp);
+	err = win32_R_path(tmp, RLIB);
+	path = tmp;
     }
 
     if (path == NULL) {
-	g_free(lp);
 	gretl_errmsg_set(_("Can't find the R shared library"));
 	return E_EXTERNAL;
     }
 
     if (!err) {
-	/* put R_HOME into env */
 	if (strcmp(path, orig)) {
 	    gretl_set_path_by_name("rlibpath", path);
 	}
@@ -2609,12 +2594,11 @@ int check_set_R_home (void)
 		*s = '\0';
 	    }
 	}
+	/* put R_HOME into env */
 	fprintf(stderr, "setting R_HOME='%s'\n", RHOME);
 	gretl_setenv("R_HOME", RHOME);
         set_path_for_Rlib(RHOME, arch);
     }
-
-    g_free(lp);
 
     return err;
 }
@@ -2748,7 +2732,6 @@ int check_set_R_home (void)
 
 static int gretl_Rlib_init (void)
 {
-    char *Rhome = NULL;
     int err = 0;
 
 #if FDEBUG
@@ -2797,8 +2780,6 @@ static int gretl_Rlib_init (void)
             err = Rlib_err = E_EXTERNAL;
         }
     }
-
- bailout:
 
 #if FDEBUG
     fprintf(stderr, "gretl_Rlib_init: returning %d\n", err);

@@ -135,12 +135,12 @@ int win32_run_async (const char *prog, const char *arg)
 
 /* try registry for path to Rgui.exe */
 
-static int Rgui_path_from_registry (void)
+static int get_Rgui_path (void)
 {
     char tmp[MAX_PATH];
     int err;
 
-    err = R_path_from_registry(tmp, RGUI);
+    err = win32_R_path(tmp, RGUI);
 
     if (!err) {
 	*Rcommand = '\0';
@@ -164,7 +164,7 @@ void win32_start_R_async (void)
 	   entered by the user via the GUI, didn't work, so we try
 	   figuring this out from the registry.
 	*/
-	err = Rgui_path_from_registry();
+	err = get_Rgui_path();
 	if (!err) {
 	    real_create_child_process(Rcommand, NULL, opts, 1);
 	} else {

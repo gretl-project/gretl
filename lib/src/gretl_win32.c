@@ -1371,8 +1371,8 @@ static int try_for_R_path (HKEY tree, char *s)
 {
     int err = 0;
 
-    /* this used to work with R 2.9.1 */
     err = read_reg_val(tree, "R-core\\R", "InstallPath", s);
+    fprintf(stderr, "try_for_R_path(1), err %d\n", err);
 
     if (err) {
 	char version[8], path[32];
@@ -1380,15 +1380,66 @@ static int try_for_R_path (HKEY tree, char *s)
 	/* new-style: path contains R version number */
 	err = read_reg_val(tree, "R-core\\R", "Current Version",
 			   version);
+	fprintf(stderr, "try_for_R_path(2), err %d\n", err);
 	if (!err) {
 	    sprintf(path, "R-core\\R\\%s", version);
 	    err = read_reg_val(tree, path, "InstallPath", s);
+	    fprintf(stderr, "try_for_R_path(3), err %d\n", err);
 	}
     }
 
     if (err) {
 	/* did this variant work at one time? */
 	err = read_reg_val(tree, "R", "InstallPath", s);
+	fprintf(stderr, "try_for_R_path(4), err %d\n", err);
+    }
+
+    return err;
+}
+
+/* See if we can get the R installation path from the Windows
+   registry. This is not a sure thing, since recording the path
+   in the registry on installation is optional.
+
+   To complicate matters, the path within the registry where
+   we might find this information has not remained constant
+   across R versions.
+*/
+
+int R_home_from_registry (char *s)
+{
+    static char Rbase[MAX_PATH];
+    int err = 0;
+
+    if (Rbase[0] != '\0') {
+	strcpy(s, Rbase);
+	return 0;
+    }
+
+    *s = '\0';
+
+    /* try for an admin install first */
+    err = try_for_R_path(HKEY_LOCAL_MACHINE, Rbase);
+    if (err) {
+	/* maybe user is not an admin? */
+	err = try_for_R_path(HKEY_CURRENT_USER, Rbase);
+    }
+
+    if (!err) {
+	/* verify that the directory actually exists */
+	GDir *dir = g_dir_open(Rbase, 0, NULL);
+
+	if (dir == NULL) {
+	    err = E_EXTERNAL;
+	    Rbase[0] = '\0';
+	} else {
+	    g_dir_close(dir);
+	    strcpy(s, Rbase);
+	}
+    }
+
+    if (windebug) {
+	fprintf(stderr, "R_home_from_registry: '%s'\n", s);
     }
 
     return err;
@@ -1407,73 +1458,48 @@ static void append_R_filename (char *s, int which)
     }
 }
 
-/* See if we can get the R installation path from the Windows
-   registry. This is not a sure thing, since recording the path
-   in the registry on installation is optional.
-
-   To complicate matters, the path within the registry where
-   we might find this information has not remained constant
-   across R versions.
-*/
-
-int R_path_from_registry (char *s, int which)
+int win32_R_path (char *s, int which)
 {
+    int openerr = 0;
     int err;
 
-    *s = '\0';
-
-    /* try for an admin install first */
-    err = try_for_R_path(HKEY_LOCAL_MACHINE, s);
-
+    err = R_home_from_registry(s);
     if (err) {
-	/* maybe user is not an admin? */
-	err = try_for_R_path(HKEY_CURRENT_USER, s);
+	return err;
     }
 
-    if (!err && which != RBASE) {
-	int openerr = 0;
+    strcat(s, "\\bin\\");
+    append_R_filename(s, which);
+    openerr = gretl_test_fopen(s, "rb");
 
-	strcat(s, "\\bin\\");
+    if (openerr) {
+#ifdef _WIN64
+	const char *arch[] = {
+	    "x64\\",
+	    "i386\\"
+	};
+#else
+	const char *arch[] = {
+	    "i386\\",
+	    "x64\\"
+	};
+#endif
+	char *p = strrchr(s, 'R');
+
+	*p = '\0';
+	strcat(s, arch[0]);
 	append_R_filename(s, which);
 	openerr = gretl_test_fopen(s, "rb");
 	if (openerr) {
-#ifdef _WIN64
-	    const char *arch[] = {
-		"x64\\",
-		"i386\\"
-	    };
-#else
-	    const char *arch[] = {
-		"i386\\",
-		"x64\\"
-	    };
-#endif
-	    char *p = strrchr(s, 'R');
-
+	    /* try for alternate arch */
 	    *p = '\0';
-	    strcat(s, arch[0]);
+	    strcat(s, arch[1]);
 	    append_R_filename(s, which);
 	    openerr = gretl_test_fopen(s, "rb");
 	    if (openerr) {
-		/* try for alternate arch */
-		*p = '\0';
-		strcat(s, arch[1]);
-		append_R_filename(s, which);
-		openerr = gretl_test_fopen(s, "rb");
-		if (openerr) {
-		    err = E_FOPEN;
-		}
+		err = E_FOPEN;
 	    }
 	}
-    }
-
-    if (err) {
-	/* scrub invalid path */
-	*s = '\0';
-    }
-
-    if (windebug) {
-	fprintf(stderr, "R_path_from_registry: '%s'\n", s);
     }
 
     return err;

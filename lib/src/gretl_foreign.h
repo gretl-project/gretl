@@ -38,6 +38,8 @@ int foreign_execute (const DATASET *dset, gretlopt opt, PRN *prn);
 
 void foreign_destroy (void);
 
+int check_set_R_home (void);
+
 int execute_R_buffer (const char *buf,
 		      const DATASET *dset,
 		      gretlopt opt,

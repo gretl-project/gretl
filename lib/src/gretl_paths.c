@@ -2149,38 +2149,13 @@ int gretl_x12_is_x13 (void)
     return strstr(paths.x12a, "x13") != NULL;
 }
 
-#ifdef WIN32
-
-/* try to avoid using a stale value saved to .gretl2rc */
-
-static void R_path_try_registry (int which, char *targ)
-{
-    char tmp[MAX_PATH];
-    int err;
-
-    err = R_path_from_registry(tmp, which);
-
-    if (which == RLIB) {
-	fprintf(stderr, "R_path_try_registry (RLIB):\n"
-		" incoming value '%s'\n"
-		" registry value '%s'\n", targ, tmp);
-    }
-
-    if (!err) {
-        *targ = '\0';
-        strncat(targ, tmp, MAXLEN - 1);
-    }
-}
-
-#endif
-
 const char *gretl_rbin_path (void)
 {
 #ifdef WIN32
     static int checked;
 
     if (!checked) {
-        R_path_try_registry(REXE, paths.rbinpath);
+        win32_R_path(paths.rbinpath, REXE);
         checked = 1;
     }
 #endif
@@ -2198,7 +2173,7 @@ const char *gretl_rlib_path (void)
     static int checked;
 
     if (!checked) {
-        R_path_try_registry(RLIB, paths.rlibpath);
+	win32_R_path(paths.rlibpath, RLIB);
         checked = 1;
     }
 #endif
@@ -2768,9 +2743,9 @@ static void load_default_path (char *targ)
     } else if (targ == paths.tramo) {
         sprintf(targ, "%s\\tramo\\tramo.exe", pfx86); /* ? */
     } else if (targ == paths.rbinpath) {
-        R_path_from_registry(targ, REXE);
+        win32_R_path(targ, REXE);
     } else if (targ == paths.rlibpath) {
-        R_path_from_registry(targ, RLIB);
+        win32_R_path(targ, RLIB);
     } else if (targ == paths.oxlpath) {
         sprintf(targ, "%s\\OxMetrics8\\Ox\\bin\\oxl.exe", progfiles);
     } else if (targ == paths.octpath) {

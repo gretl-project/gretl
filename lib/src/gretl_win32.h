@@ -86,7 +86,9 @@ int win32_write_access (const char *path);
 
 int win32_remove (const char *path);
 
-int R_path_from_registry (char *s, int which);
+int R_home_from_registry (char *s);
+
+int win32_R_path (char *s, int which);
 
 int win32_check_for_program (const char *prog);
 

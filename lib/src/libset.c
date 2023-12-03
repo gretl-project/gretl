@@ -27,6 +27,7 @@
 #include "gretl_func.h"
 #include "gretl_string_table.h"
 #include "gretl_mt.h"
+#include "gretl_foreign.h"
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
@@ -2093,9 +2094,16 @@ static int check_R_setting (gint8 *var, SetKey key, int val)
 	/* R_functions depends on having R_lib on, so in case
 	   the latter is off we should turn it on too.
 	*/
-	libset_set_bool(R_LIB, val);
+	err = check_set_R_home();
+	if (err) {
+	    gretl_errmsg_set(_("R_functions could not be enabled"));
+	} else {
+	    libset_set_bool(R_LIB, val);
+	    *var = val;
+	}
+    } else {
+	*var = val;
     }
-    *var = val;
 #else
     if (val) {
 	const char *s = (key == R_FUNCTIONS)? "R_functions" : "R_lib";
