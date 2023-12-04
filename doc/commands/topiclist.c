@@ -155,7 +155,8 @@ static int section_already_recorded (sectlist *s, const char *name)
 
 static int ref_cmd_in_gretl (const char *cmdword)
 {
-    int n = gretl_command_number(cmdword);
+    //int n = gretl_command_number(cmdword);
+    int n = gretl_help_index(xmdword);
 
     return n > 0;
 }
