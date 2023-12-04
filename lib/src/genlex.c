@@ -784,13 +784,15 @@ static int real_function_lookup (const char *s, int aliases,
 	    p->data = sx->ptr;
 	}
 #if 1
-	/* note: point d'appui for deprecation of built-in function */
-	if (st->id == F_EIGGEN) {
-	    pprintf(p->prn, "*** Warning: %s() is obsolete, please use "
-		    "eigen() instead ***\n", st->str);
-	} else if (st->id == F_CHOWLIN) {
-	    pprintf(p->prn, "*** Warning: %s() is obsolete, please use "
-		    "tdisagg() instead ***\n", st->str);
+	if (p != NULL) {
+	    /* note: point d'appui for deprecation of built-in function */
+	    if (st->id == F_EIGGEN) {
+		pprintf(p->prn, "*** Warning: %s() is obsolete, please use "
+			"eigen() instead ***\n", st->str);
+	    } else if (st->id == F_CHOWLIN) {
+		pprintf(p->prn, "*** Warning: %s() is obsolete, please use "
+			"tdisagg() instead ***\n", st->str);
+	    }
 	}
 #endif
 	return st->id;
