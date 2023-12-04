@@ -57,7 +57,7 @@ struct tab_labeler labelers[] = {
     { TAB_PROGRAM,    "Programming" },
     { TAB_UTILITIES,  "Utilities" },
     { TAB_MAX,        NULL }
-};    
+};
 
 char reffile[FILENAME_MAX];
 
@@ -175,7 +175,7 @@ static int gui_only (xmlNodePtr node)
     return ret;
 }
 
-static int 
+static int
 maybe_add_section (xmlDocPtr doc, xmlNodePtr node, sectlist *slist)
 {
     section *sect, **sects = NULL;
@@ -190,7 +190,7 @@ maybe_add_section (xmlDocPtr doc, xmlNodePtr node, sectlist *slist)
     if (tmp == NULL) {
 	missing_attrib("command", "section");
 	return 1;
-    } 
+    }
 
     if (!approved_section_title(tmp)) {
 	fprintf(stderr, "*** Found unapproved section heading '%s'\n", tmp);
@@ -221,14 +221,14 @@ maybe_add_section (xmlDocPtr doc, xmlNodePtr node, sectlist *slist)
 	slist->sections = sects;
 	slist->sections[ns - 1] = sect;
 	slist->nsects = ns;
-    } 
+    }
 
     free(tmp);
 
     return err;
 }
 
-static int 
+static int
 place_command (xmlDocPtr doc, xmlNodePtr node, sectlist *s)
 {
     command *cmd, **cmds = NULL;
@@ -248,11 +248,11 @@ place_command (xmlDocPtr doc, xmlNodePtr node, sectlist *s)
 	fprintf(stderr, "*** '%s': obsolete command, skipping\n", cname);
 	goto bailout;
     }
-    
+
     if (sname == NULL || cname == NULL) {
 	fprintf(stderr, "Error parsing command\n");
 	return 1;
-    }	
+    }
 
     for (i=0; i<s->nsects; i++) {
 	if (!strcmp(sname, s->sections[i]->name)) {
@@ -278,7 +278,7 @@ place_command (xmlDocPtr doc, xmlNodePtr node, sectlist *s)
 	fprintf(stderr, "Out of memory\n");
 	return 1;
     }
-	
+
     s->sections[n]->cmds = cmds;
     s->sections[n]->cmds[nc-1] = cmd;
     s->sections[n]->ncmds = nc;
@@ -302,13 +302,10 @@ static int parse_ref_file (sectlist *slist)
     xmlNodePtr cur;
     int err = 0;
 
-    LIBXML_TEST_VERSION 
-	xmlKeepBlanksDefault(0);
+    LIBXML_TEST_VERSION;
 
-    xmlSubstituteEntitiesDefault(1);
-    xmlLoadExtDtdDefaultValue = 1;
-
-    doc = xmlParseFile(reffile);
+    doc = xmlReadFile(reffile, NULL, XML_PARSE_NOBLANKS |
+                      XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
     if (doc == NULL) {
 	err = 1;
 	goto bailout;
@@ -321,7 +318,7 @@ static int parse_ref_file (sectlist *slist)
     }
 
     if (xmlStrcmp(cur->name, (UTF) ROOTNODE)) {
-	fprintf(stderr, "File of the wrong type, root node not %s\n", 
+	fprintf(stderr, "File of the wrong type, root node not %s\n",
 		ROOTNODE);
 	err = 1;
 	goto bailout;
@@ -334,7 +331,7 @@ static int parse_ref_file (sectlist *slist)
 	    err = maybe_add_section(doc, cur, slist);
 	}
 	cur = cur->next;
-    }   
+    }
 
     /* second pass: assemble commands in sections */
     if (!err) {
@@ -346,7 +343,7 @@ static int parse_ref_file (sectlist *slist)
 	    }
 	    cur = cur->next;
 	}
-    } 
+    }
 
  bailout:
 

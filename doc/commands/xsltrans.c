@@ -186,13 +186,10 @@ int process_xml_file (const char *fname, int content, int format)
     char lang[8] = "en";
     int err = 0;
 
-    LIBXML_TEST_VERSION
-	xmlKeepBlanksDefault(0);
+    LIBXML_TEST_VERSION;
 
-    xmlSubstituteEntitiesDefault(1);
-    xmlLoadExtDtdDefaultValue = 1;
-
-    doc = xmlParseFile(fname);
+    doc = xmlReadFile(fname, NULL, XML_PARSE_NOBLANKS |
+                      XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
     if (doc == NULL) {
 	err = 1;
 	goto bailout;

@@ -227,13 +227,10 @@ static int parse_ref_file (cmdlist *clist)
     xmlNodePtr cur;
     int err = 0;
 
-    LIBXML_TEST_VERSION 
-	xmlKeepBlanksDefault(0);
+    LIBXML_TEST_VERSION;
 
-    xmlSubstituteEntitiesDefault(1);
-    xmlLoadExtDtdDefaultValue = 1;
-
-    doc = xmlParseFile(reffile);
+    doc = xmlReadFile(reffile, NULL, XML_PARSE_NOBLANKS |
+                      XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
     if (doc == NULL) {
 	err = 1;
 	goto bailout;

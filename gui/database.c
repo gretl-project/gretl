@@ -3859,7 +3859,6 @@ gint populate_remote_addons_list (windata_t *vwin)
     fprintf(stderr, "'%s'\n", getbuf);
 #endif
 
-    // xmlKeepBlanksDefault(0);
     doc = xmlReadMemory(getbuf, strlen(getbuf), NULL, NULL, XML_PARSE_NOBLANKS);
     if (doc == NULL) {
 	err = E_DATA;

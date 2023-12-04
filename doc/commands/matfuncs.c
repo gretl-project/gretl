@@ -183,7 +183,7 @@ static int add_section (sectlist *slist, const char *name)
 {
     section *sect, **sects = NULL;
     int ns;
-    
+
     sect = section_new(name);
     if (sect == NULL) {
 	return 1;
@@ -204,7 +204,7 @@ static int add_section (sectlist *slist, const char *name)
     return 0;
 }
 
-static int 
+static int
 maybe_add_section (xmlDocPtr doc, xmlNodePtr node, sectlist *slist)
 {
     char *tmp;
@@ -235,7 +235,7 @@ maybe_add_section (xmlDocPtr doc, xmlNodePtr node, sectlist *slist)
 	fprintf(stderr, " not recorded: adding new section\n");
 #endif
 	err = add_section(slist, tmp);
-    } 
+    }
 
     free(tmp);
 
@@ -278,7 +278,7 @@ static int ok_matrix_arg (char *atype)
     return ret;
 }
 
-static int 
+static int
 place_function (xmlDocPtr doc, xmlNodePtr node, sectlist *s)
 {
     xmlNodePtr n1, n2;
@@ -297,7 +297,7 @@ place_function (xmlDocPtr doc, xmlNodePtr node, sectlist *s)
 	fprintf(stderr, "*** '%s': obsolete function, skipping\n", fname);
 	goto bailout;
     }
-    
+
     if (sname == NULL || fname == NULL || retval == NULL) {
 	fprintf(stderr, "Error parsing function\n");
 	return 1;
@@ -338,14 +338,14 @@ place_function (xmlDocPtr doc, xmlNodePtr node, sectlist *s)
 		}
 	    }
 	    n1 = n1->next;
-	} 
-    }  
+	}
+    }
 
     if (!matrix_ok) {
 	goto bailout;
     }
 
- specials:    
+ specials:
 
     for (i=0; i<s->nsects; i++) {
 	if (!strcmp(sname, s->sections[i]->name)) {
@@ -371,7 +371,7 @@ place_function (xmlDocPtr doc, xmlNodePtr node, sectlist *s)
 	fprintf(stderr, "Out of memory\n");
 	return 1;
     }
-	
+
     s->sections[n]->funs = funs;
     s->sections[n]->funs[nc-1] = fun;
     s->sections[n]->nfuns = nc;
@@ -395,13 +395,10 @@ static int parse_ref_file (sectlist *slist)
     char *listname;
     int err = 0;
 
-    LIBXML_TEST_VERSION 
-	xmlKeepBlanksDefault(0);
+    LIBXML_TEST_VERSION;
 
-    xmlSubstituteEntitiesDefault(1);
-    xmlLoadExtDtdDefaultValue = 1;
-
-    doc = xmlParseFile(reffile);
+    doc = xmlReadFile(reffile, NULL, XML_PARSE_NOBLANKS |
+                      XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
     if (doc == NULL) {
 	err = 1;
 	goto bailout;
@@ -414,7 +411,7 @@ static int parse_ref_file (sectlist *slist)
     }
 
     if (xmlStrcmp(cur->name, (UTF) ROOTNODE)) {
-	fprintf(stderr, "File of the wrong type, root node not %s\n", 
+	fprintf(stderr, "File of the wrong type, root node not %s\n",
 		ROOTNODE);
 	err = 1;
 	goto bailout;
@@ -434,7 +431,7 @@ static int parse_ref_file (sectlist *slist)
 	    }
 	}
 	cur = cur->next;
-    } 
+    }
 
     if (flist == NULL) {
 	fprintf(stderr, "Couldn't find functions list\n");
@@ -449,7 +446,7 @@ static int parse_ref_file (sectlist *slist)
 	    err = maybe_add_section(doc, cur, slist);
 	}
 	cur = cur->next;
-    }   
+    }
 
     /* second pass: assemble functions in sections */
     if (!err) {
@@ -461,7 +458,7 @@ static int parse_ref_file (sectlist *slist)
 	    }
 	    cur = cur->next;
 	}
-    } 
+    }
 
  bailout:
 

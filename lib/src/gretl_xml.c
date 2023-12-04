@@ -60,7 +60,6 @@ int gretl_xml_open_doc_root (const char *fname,
     int err = 0;
 
     LIBXML_TEST_VERSION;
-    // xmlKeepBlanksDefault(0);
 
     *pdoc = NULL;
     if (pnode != NULL) {
@@ -112,7 +111,6 @@ int gretl_xml_read_buffer (const char *buf,
     int err = 0;
 
     LIBXML_TEST_VERSION;
-    // xmlKeepBlanksDefault(0);
 
     *pdoc = NULL;
     if (pnode != NULL) {
