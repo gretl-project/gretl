@@ -136,8 +136,6 @@ int apply_xslt (xmlDocPtr doc, int content, int format,
     char const *xsl_params[12] = {0};
     int err = 0;
 
-    xmlIndentTreeOutput = 1;
-
     if (format == FORMAT_PANGO) {
 	get_full_filename(styname, docdir, "gretlhlp.xsl");
     } else if (format == FORMAT_TEX) {
