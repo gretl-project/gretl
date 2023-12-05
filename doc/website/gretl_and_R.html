@@ -33,8 +33,46 @@ has a chapter devoted to this topic.</p>
 
 <p>To find out more about GNU R, we recommend starting with 
 <a href="http://cran.r-project.org/doc/manuals/R-intro.pdf">An Introduction to R</a>. 
-For further information, and to download R, visit <a
-href="http://cran.r-project.org/">cran.r-project.org</a>.</p>
+For further information, and to download R,
+visit <a href="http://cran.r-project.org/">cran.r-project.org</a>.</p>
+
+<p>The most efficient interaction with R is achieved by gretl calling
+  into the R shared library (<kbd>libR.so</kbd> on
+  Linux, <kbd>libR.dylib</kbd> on macOS, or <kbd>R.dll</kbd> on MS
+  Windows).  This requires that the R library knows where its
+  &ldquo;home&rdquo; is. The details of ensuring this point vary by
+  platform, as follows.</p>
+
+<h2>MS Windows</h2>
+
+<p>By default, the R installer writes the required information into
+  the Windows registry. It's possible to customize the install such
+  that no registry entry is created: <i>don't do that if you want to
+  use R with gretl</i>.
+</p>
+
+<h2>Linux or similar</h2>
+
+<p><kbd>R_HOME</kbd> should be defined in the environment.  This
+  should be the parent directory of <kbd>lib/libR.so</kbd>. For
+  example, if
+  <kbd>/usr/lib/R/lib/libR.so</kbd> exists, <kbd>/usr/lib/R</kbd>
+  is the correct value for <kbd>R_HOME</kbd>.
+</p>
+
+<h2>macOS</h2>
+
+<p>Given a standard installation of R, nothing special should be
+  needed. In a non-standard case you should define <kbd>R_HOME</kbd>
+  to point to the parent directory of <kbd>lib/libR.dylib</kbd>,
+  similar to the Linux case.
+</p>
+
+<p>On both Linux and macOS, an alternative is to specify the path to
+  the shared library itself, under /Tools/Preferences/General/Programs
+  in gretl. The relevant entry is &ldquo;Path to R library&rdquo;. If
+  that setting is correct it should not be necessary to
+  have <kbd>R_HOME</kbd> set in the environment.
 
 </body>
 
