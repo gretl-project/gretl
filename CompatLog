@@ -1,4 +1,4 @@
-2023c, in progress
+2023-12-05 version 2023c
 
 Compaction of undated daily data is now disabled, since it is
 not a meaningful operation.
@@ -7,7 +7,8 @@ The long-deprecated "sscanf" and "sprintf" commands are now
 removed: use the functions of the same names.
 
 The old syntax for the "outfile" command, which was replaced
-in gretl 2018c, is no longer supported.
+in gretl 2018c, is no longer supported. See the "outfile" help
+text for current syntax.
 
 There is new, preferred syntax for the --band option to the
 "gnuplot" command, but the old syntax will continue to work

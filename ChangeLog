@@ -1,4 +1,4 @@
-version 2023c, in progress
+2023-12-05 version 2023c
 - New commands "gridplot" and "gpbuild" for constructing
   composite plots
 - "gnuplot" command: implement new option syntax to support
@@ -62,10 +62,12 @@ version 2023c, in progress
   under the "/File/Function packages" menu
 - GUI: add Ctrl + mouse wheel as a means of changing text
   size in various windows
-- GUI editor and gretl_edit: add the Ctrl-L accelerator, improve
-  the search/replace dialog and fix a problem with automatic
-  indentation
+- GUI editor and gretl_edit: add Ctrl-L keystroke for going
+  to a specifed line, improve the search/replace dialog and
+  fix a problem with automatic indentation
 - Windows and macOS packages: add a dark GTK theme
+- R interaction via embeddedR: update mechanism for determining
+  R_HOME
 
 2023-07-21 version 2023b
 - New command "kdplot": simple access to a kernel density plot

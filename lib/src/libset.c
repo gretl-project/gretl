@@ -2096,7 +2096,8 @@ static int check_R_setting (gint8 *var, SetKey key, int val)
 	*/
 	err = check_set_R_home();
 	if (err) {
-	    gretl_errmsg_set(_("R_functions could not be enabled"));
+	    gretl_errmsg_set(_("R_functions could not be enabled\n"
+                               "Please see https://gretl.sourceforge.net/gretl_and_R.html"));
 	} else {
 	    libset_set_bool(R_LIB, val);
 	    *var = val;

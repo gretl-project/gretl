@@ -2942,7 +2942,6 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
     path_init(paths.x12a, cpaths->x12a, 0);
     path_init(paths.tramo, cpaths->tramo, 0);
     path_init(paths.rbinpath, cpaths->rbinpath, 0);
-    fprintf(stderr, "copy_paths_with_fallback\n rlibpath '%s'\n", cpaths->rlibpath);
     path_init(paths.rlibpath, cpaths->rlibpath, 0);
     path_init(paths.oxlpath, cpaths->oxlpath, 0);
     path_init(paths.octpath, cpaths->octpath, 0);
