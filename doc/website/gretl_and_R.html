@@ -46,7 +46,7 @@ visit <a href="http://cran.r-project.org/">cran.r-project.org</a>.</p>
 <h2>MS Windows</h2>
 
 <p>By default, the R installer writes the required information into
-  the Windows registry. It's possible to customize the install such
+  the Windows Registry. It's possible to customize the install such
   that no registry entry is created: <i>don't do that if you want to
   use R with gretl</i>.
 </p>
@@ -68,11 +68,16 @@ visit <a href="http://cran.r-project.org/">cran.r-project.org</a>.</p>
   similar to the Linux case.
 </p>
 
-<p>On both Linux and macOS, an alternative is to specify the path to
-  the shared library itself, under /Tools/Preferences/General/Programs
-  in gretl. The relevant entry is &ldquo;Path to R library&rdquo;. If
-  that setting is correct it should not be necessary to
-  have <kbd>R_HOME</kbd> set in the environment.
+<h2>Alternative method</h2>
+
+<p>An alternative is to specify the path to the shared library itself,
+  under /Tools/Preferences/General/Programs in gretl. The relevant
+  entry is &ldquo;Path to R library&rdquo;. If that setting is correct
+  gretl can take care of putting a suitable value
+  for <kbd>R_HOME</kbd> into the environment. On Windows, however,
+  this setting will require updating whenever a new version of R is
+  installed, so relying on the Registry is preferred.
+</p>
 
 </body>
 
