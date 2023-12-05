@@ -1406,9 +1406,10 @@ static int try_for_R_path (HKEY tree, char *s)
    across R versions.
 */
 
+static char Rbase[MAXLEN];
+
 int R_home_from_registry (char *s)
 {
-    static char Rbase[MAX_PATH];
     int err = 0;
 
     if (Rbase[0] != '\0') {
@@ -1462,6 +1463,21 @@ int win32_R_path (char *s, int which)
 {
     int openerr = 0;
     int err;
+
+    if (strstr(s, "\\bin\\")) {
+        err = gretl_test_fopen(s, "rb");
+        if (!err) {
+            if (Rbase[0] == '\0') {
+                /* use verified filename to set Rbase */
+                char *p;
+
+                strcpy(Rbase, s);
+                p = strstr(Rbase, "\\bin\\");
+                *p = '\0';
+            }
+            return 0;
+        }
+    }
 
     err = R_home_from_registry(s);
     if (err) {

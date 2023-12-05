@@ -2172,12 +2172,8 @@ const char *gretl_rlib_path (void)
 #ifdef WIN32
     static int checked;
 
-    fprintf(stderr, "gretl_rlib_path, checked = %d\n", checked);
-    fprintf(stderr, " prior value '%s'\n", paths.rlibpath);
-
     if (!checked) {
 	win32_R_path(paths.rlibpath, RLIB);
-	fprintf(stderr, " 'this' value '%s'\n", paths.rlibpath);
         checked = 1;
     }
 #endif
