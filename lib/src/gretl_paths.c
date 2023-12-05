@@ -2172,8 +2172,12 @@ const char *gretl_rlib_path (void)
 #ifdef WIN32
     static int checked;
 
+    fprintf(stderr, "gretl_rlib_path, checked = %d\n", checked);
+    fprintf(stderr, " prior value '%s'\n", paths.rlibpath);
+
     if (!checked) {
 	win32_R_path(paths.rlibpath, RLIB);
+	fprintf(stderr, " 'this' value '%s'\n", paths.rlibpath);
         checked = 1;
     }
 #endif
@@ -2942,6 +2946,7 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
     path_init(paths.x12a, cpaths->x12a, 0);
     path_init(paths.tramo, cpaths->tramo, 0);
     path_init(paths.rbinpath, cpaths->rbinpath, 0);
+    fprintf(stderr, "copy_paths_with_fallback\n rlibpath '%s'\n", cpaths->rlibpath);
     path_init(paths.rlibpath, cpaths->rlibpath, 0);
     path_init(paths.oxlpath, cpaths->oxlpath, 0);
     path_init(paths.octpath, cpaths->octpath, 0);
