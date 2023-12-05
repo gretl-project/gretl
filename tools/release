@@ -13,7 +13,6 @@ Local:
 * Create a new versioned directory in the sourceforge files area
 * Make and upload the MS Windows installers (32- and 64-bit)
 * Make and upload the macOS installers (intel and arm64)
-* Upload a new version of RELEASE to the gretl cgi-bin directory
 
 Remote:
 * On sourceforge, make a new versioned subdirectory for gretl,
@@ -26,10 +25,10 @@ Remote:
   containing the new version ID, e.g. "gretl-2021d"
 
 Local:
-* Update all the web docs (this is automated: ./update_html)
+* Update all the web docs (this is automated: ./update_html auto)
   and upload them to sourceforge
 * Update the libgretl API docs and upload ("apipack")
 * Send a message to gretl-announce
 
 Allin Cottrell
-last revised, May 2021
+last revised, Dec 2023
