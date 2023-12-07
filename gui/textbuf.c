@@ -1022,7 +1022,11 @@ static void set_console_output_style (GtkSourceBuffer *sbuf,
     }
     if (tag != NULL && !done) {
 	/* fallback */
-	g_object_set(tag, "foreground", "black", "background", "white", NULL);
+	if (dark_theme_active()) {
+	    g_object_set(tag, "foreground", "#d3d7cf", "background", "#242424", NULL);
+	} else {
+	    g_object_set(tag, "foreground", "black", "background", "white", NULL);
+	}
     }
 }
 
