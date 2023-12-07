@@ -1,3 +1,6 @@
+version 2024a, in progress
+- GUI: small fixes for dark GTK themes
+
 2023-12-05 version 2023c
 - New commands "gridplot" and "gpbuild" for constructing
   composite plots

@@ -466,20 +466,14 @@ int autoicon_on (void)
 
 #endif
 
-const char *blue_for_text (void)
+int dark_theme_active (void)
 {
-    static char blue[8];
-
-    if (*blue) {
-	return blue;
-    }
-
-    strcpy(blue, "blue");
+    int ret = 0;
 
 #if defined(G_OS_WIN32) || defined(MAC_THEMING)
     if (strstr(themepref, "Dark") ||
         strstr(themepref, "dark")) {
-	strcpy(blue, "#B0EFEE");
+	ret = 1;
     }
 #else
     /* Linux, etc. */
@@ -490,15 +484,29 @@ const char *blue_for_text (void)
 	gchar *theme = g_settings_get_string(settings, "gtk-theme");
 
 	if (theme != NULL) {
-	    if (strstr(theme, "Dark") ||
-		strstr(theme, "dark")) {
-		strcpy(blue, "#B0EFEE");
+	    if (strstr(theme, "Dark") || strstr(theme, "dark")) {
+		ret = 1;
 	    }
 	    g_free(theme);
 	}
 	g_object_unref(settings);
     }
 #endif
+
+    return ret;
+}
+
+const char *blue_for_text (void)
+{
+    static char blue[8];
+
+    if (*blue == '\0') {
+	if (dark_theme_active()) {
+	    strcpy(blue, "#B0EFEE");
+	} else {
+	    strcpy(blue, "blue");
+	}
+    }
 
     return blue;
 }

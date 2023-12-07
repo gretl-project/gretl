@@ -104,43 +104,48 @@ enum {
 
 int toolbar_icon_size = GTK_ICON_SIZE_MENU;
 
+enum {
+    I_IN_MENU  = 1 << 0,
+    I_HAS_DARK = 1 << 1
+} icon_flags;
+
 struct png_stock_maker {
-    char *fname;
+    char *name;
     const char *id;
-    gint8 in_menu;
+    gint8 flags;
 };
 
 struct png_stock_maker png_stocks[] = {
-    { "calc.png",      GRETL_STOCK_CALC, 0 },
-    { "database.png",  GRETL_STOCK_DB, 0 },
-    { "fx.png",        GRETL_STOCK_FUNC, 0 },
-    { "betahat.png",   GRETL_STOCK_MODEL, 0 },
-    { "iconview.png",  GRETL_STOCK_ICONS, 0 },
-    { "console.png",   GRETL_STOCK_CONSOLE, 0 },
-    { "plot.png",      GRETL_STOCK_SCATTER, 0 },
-    { "winlist.png",   GRETL_STOCK_WINLIST },
-    { "bundle.png",    GRETL_STOCK_BUNDLE, 1 },
-    { "alpha.png",     GRETL_STOCK_ALPHA, 0 },
-    { "tex.png",       GRETL_STOCK_TEX, 0 },
-    { "bigger.png",    GRETL_STOCK_BIGGER, 0 },
-    { "smaller.png",   GRETL_STOCK_SMALLER, 0 },
-    { "menu.png",      GRETL_STOCK_MENU, 0 },
-    { "tools.png",     GRETL_STOCK_TOOLS, 0 },
-    { "dbnomics.png",  GRETL_STOCK_DBN, 1 },
-    { "fcast.png",     GRETL_STOCK_FCAST, 0 },
-    { "heatmap.png",   GRETL_STOCK_HMAP, 0 },
-    { "pushpin.png",   GRETL_STOCK_PIN, 0 },
-    { "mail.png",      GRETL_STOCK_MAIL, 1 },
-    { "pdf.png",       GRETL_STOCK_PDF, 1 },
-    { "split_h.png",   GRETL_STOCK_SPLIT_H, 0 },
-    { "join_h.png",    GRETL_STOCK_JOIN_H, 0 },
-    { "split_v.png",   GRETL_STOCK_SPLIT_V, 0 },
-    { "join_v.png",    GRETL_STOCK_JOIN_V, 0 },
-    { "boxplot.png",   GRETL_STOCK_BOX, 0 },
-    { "tsplot.png",    GRETL_STOCK_TS, 0 },
-    { "coeffplot.png", GRETL_STOCK_CP, 0 },
-    { "book.png",      GRETL_STOCK_BOOK, 0 },
-    { "query.png",     GRETL_STOCK_QUERY, 0 },
+    { "calc",      GRETL_STOCK_CALC, 0 },
+    { "database",  GRETL_STOCK_DB, 0 },
+    { "fx",        GRETL_STOCK_FUNC, I_HAS_DARK },
+    { "betahat",   GRETL_STOCK_MODEL, I_HAS_DARK },
+    { "iconview",  GRETL_STOCK_ICONS, 0 },
+    { "console",   GRETL_STOCK_CONSOLE, 0 },
+    { "plot",      GRETL_STOCK_SCATTER, 0 },
+    { "winlist",   GRETL_STOCK_WINLIST },
+    { "bundle",    GRETL_STOCK_BUNDLE, I_IN_MENU },
+    { "alpha",     GRETL_STOCK_ALPHA, 0 },
+    { "tex",       GRETL_STOCK_TEX, 0 },
+    { "bigger",    GRETL_STOCK_BIGGER, 0 },
+    { "smaller",   GRETL_STOCK_SMALLER, 0 },
+    { "menu",      GRETL_STOCK_MENU, 0 },
+    { "tools",     GRETL_STOCK_TOOLS, 0 },
+    { "dbnomics",  GRETL_STOCK_DBN, I_IN_MENU },
+    { "fcast",     GRETL_STOCK_FCAST, 0 },
+    { "heatmap",   GRETL_STOCK_HMAP, 0 },
+    { "pushpin",   GRETL_STOCK_PIN, 0 },
+    { "mail",      GRETL_STOCK_MAIL, I_IN_MENU },
+    { "pdf",       GRETL_STOCK_PDF, I_IN_MENU },
+    { "split_h",   GRETL_STOCK_SPLIT_H, 0 },
+    { "join_h",    GRETL_STOCK_JOIN_H, 0 },
+    { "split_v",   GRETL_STOCK_SPLIT_V, 0 },
+    { "join_v",    GRETL_STOCK_JOIN_V, 0 },
+    { "boxplot",   GRETL_STOCK_BOX, 0 },
+    { "tsplot",    GRETL_STOCK_TS, 0 },
+    { "coeffplot", GRETL_STOCK_CP, 0 },
+    { "book",      GRETL_STOCK_BOOK, 0 },
+    { "query",     GRETL_STOCK_QUERY, 0 },
 };
 
 struct xpm_stock_maker {
@@ -186,12 +191,13 @@ void gretl_stock_icons_init (void)
 
     if (gretl_factory == NULL) {
 	int bigger = (get_icon_sizing() == ICON_SIZE_MEDIUM);
-	char icon_path[48], menu_path[48];
+	char pngname[16], icon_path[48], menu_path[48];
 	gchar *p, *pm, *respath;
 	GResource *icons;
 	GtkIconSource *isrc;
 	GtkIconSet *iset;
 	GdkPixbuf *pbuf;
+	int dark = 0;
 	int i;
 
 #if GTK_MAJOR_VERSION == 3
@@ -229,15 +235,22 @@ void gretl_stock_icons_init (void)
 	}
 	p = strrchr(icon_path, '/') + 1;
 
+	dark = dark_theme_active();
+
 	for (i=0; i<n1; i++) {
-	    strcat(icon_path, png_stocks[i].fname);
+	    if (dark && (png_stocks[i].flags & I_HAS_DARK)) {
+		sprintf(pngname, "%s_dk.png", png_stocks[i].name);
+	    } else {
+		sprintf(pngname, "%s.png", png_stocks[i].name);
+	    }
+	    strcat(icon_path, pngname);
 	    pbuf = gdk_pixbuf_new_from_resource(icon_path, NULL);
 	    if (pbuf == NULL) {
 		fprintf(stderr, "Failed to load %s\n", icon_path);
 		*p = '\0';
 		continue;
 	    }
-	    if (bigger && png_stocks[i].in_menu) {
+	    if (bigger && (png_stocks[i].flags & I_IN_MENU)) {
 		iset = gtk_icon_set_new();
 		/* for toolbar use */
 		isrc = gtk_icon_source_new();
@@ -247,7 +260,7 @@ void gretl_stock_icons_init (void)
 		gtk_icon_set_add_source(iset, isrc);
 		g_object_unref(pbuf);
 		/* for menu use */
-		strcat(menu_path, png_stocks[i].fname);
+		strcat(menu_path, pngname);
 		pbuf = gdk_pixbuf_new_from_resource(menu_path, NULL);
 		isrc = gtk_icon_source_new();
 		gtk_icon_source_set_pixbuf(isrc, pbuf);
