@@ -859,9 +859,14 @@ static int closing_quote_pos (const char *s, int ci, int *esc)
     s++;
     while (*s) {
 	if (ci == PRINT && *s == '"' && *(s-1) == '\\') {
-	    *esc = 1;
+	    if (*(s+1) == '\0') {
+		return n;
+	    } else {
+		*esc = 1;
+	    }
 	}
 	if (*s == '"' && *(s-1) != '\\') {
+	    /* got it */
 	    return n;
 	}
 	s++;
