@@ -1293,10 +1293,13 @@ void text_smaller (GtkWidget *w, gpointer data)
 
 static GtkTextTagTable *gretl_tags_new (void)
 {
+    const char *code_bg;
     GtkTextTagTable *table;
     GtkTextTag *tag;
     int bigsize;
     int smallsize;
+
+    code_bg = dark_theme_active() ? "#216fb6" : "#e6f3ff";
 
     bigsize = 15 * PANGO_SCALE;
     smallsize = 8 * PANGO_SCALE;
@@ -1390,7 +1393,7 @@ static GtkTextTagTable *gretl_tags_new (void)
 
     tag = gtk_text_tag_new("code");
     g_object_set(tag, "font-desc", fixed_font,
-		 "paragraph-background", "#e6f3ff",
+		 "paragraph-background", code_bg,
 		 NULL);
     gtk_text_tag_table_add(table, tag);
 
