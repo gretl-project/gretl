@@ -2057,6 +2057,52 @@ void listbox_select_first (windata_t *vwin)
     gtk_widget_grab_focus(vwin->listbox);
 }
 
+static gint catch_browser_key (GtkWidget *w, GdkEventKey *event,
+			       windata_t *vwin)
+{
+    int Ctrl = (event->state & GDK_CONTROL_MASK);
+    guint key = event->keyval;
+
+    if (is_control_key(event->keyval) || !Ctrl) {
+	return FALSE;
+    }
+    if (!gdk_keyval_is_upper(event->keyval)) {
+	key = gdk_keyval_to_upper(event->keyval);
+    }
+
+    if (vwin->role == FUNC_FILES && key == GDK_R) {
+	/* "Execute" */
+	browser_call_func(NULL, vwin);
+	return TRUE;
+    } else if (key == GDK_S) {
+	/* "Info" */
+	if (vwin->role == TEXTBOOK_DATA) {
+	    show_datafile_info(NULL, vwin);
+	} else if (vwin->role == FUNC_FILES) {
+	    show_function_info(NULL, vwin);
+	} else if (vwin->role == REMOTE_FUNC_FILES) {
+	    pkg_info_from_server(NULL, vwin);
+	} else if (vwin->role == REMOTE_ADDONS) {
+	    show_addon_info(NULL, vwin);
+	} else if (vwin->role == DBNOMICS_DB) {
+	    show_dbnomics_dimensions(NULL, vwin);
+	}
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+static void set_up_browser_keystrokes (windata_t *vwin)
+{
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event",
+		     G_CALLBACK(catch_browser_key), vwin);
+}
+
+#define want_keyvals(r) (r==FUNC_FILES || r==TEXTBOOK_DATA || \
+			 r==REMOTE_FUNC_FILES || r==REMOTE_ADDONS || \
+			 r==DBNOMICS_DB)
+
 #define notebook_needed(r) (r==TEXTBOOK_DATA || r==PS_FILES)
 
 void display_files (int role, const gchar *path)
@@ -2205,6 +2251,9 @@ void display_files (int role, const gchar *path)
 	gtk_widget_grab_focus(vwin->listbox);
 	if (role == NATIVE_DB || role == FUNC_FILES) {
 	    set_up_viewer_drag_target(vwin);
+	}
+	if (want_keyvals(role)) {
+	    set_up_browser_keystrokes(vwin);
 	}
     }
 
