@@ -770,8 +770,12 @@ static int push_quoted_token (CMD *c, const char *s,
 	    /* unescape escaped quotes */
 	    while (*p) {
 		if (*p == '\\' && *(p+1) == '"') {
-		    tok[i++] = '"';
-		    p += 2;
+		    if (*(p+2) == '\0') {
+			tok[i++] = *p++;
+		    } else {
+			tok[i++] = '"';
+			p += 2;
+		    }
 		} else if (*p == '"') {
 		    tok[i] = '\0';
 		    break;
@@ -848,15 +852,17 @@ static int wild_spn (const char *s)
 }
 
 /* We allow here for special behavior with PRINT, whereby
-   the occurrence of \" will require (limited) escaping of
-   a string literal.
+   '\"' is interpreted as an escaped double-quote, unless
+   it occurs at the end of the string literal. We set *esc
+   to non-zero if @s contains any occurrences of the
+   special combination of bytes.
 */
 
 static int closing_quote_pos (const char *s, int ci, int *esc)
 {
     int n = 0;
 
-    s++;
+    s++; /* skip the opening quote */
     while (*s) {
 	if (ci == PRINT && *s == '"' && *(s-1) == '\\') {
 	    if (*(s+1) == '\0') {
@@ -866,7 +872,7 @@ static int closing_quote_pos (const char *s, int ci, int *esc)
 	    }
 	}
 	if (*s == '"' && *(s-1) != '\\') {
-	    /* got it */
+	    /* got the closer */
 	    return n;
 	}
 	s++;
@@ -3437,7 +3443,7 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 #if CDEBUG || TDEBUG
     fprintf(stderr, "*** %s: line = '%s'\n",
 	    compmode ? "get_command_index" : "parse_command_line", s);
-    fprintf(stderr, " first byte %0x\n", (unsigned char) s[0]);
+    // fprintf(stderr, " first byte %0x\n", (unsigned char) s[0]);
 #endif
 
     if (utf8_fail(s)) {
