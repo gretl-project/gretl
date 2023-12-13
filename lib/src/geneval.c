@@ -17210,6 +17210,9 @@ static void node_type_error (int ntype, int argnum, int goodt,
 
     if (bad != NULL) {
         pprintf(p->prn, _(", is %s"), typestr(bad->t));
+	if (bad->t == STR) {
+	    pprintf(p->prn, " (%s)", bad->v.str);
+	}
     }
     pputc(p->prn, '\n');
 
