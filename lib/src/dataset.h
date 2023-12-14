@@ -374,7 +374,7 @@ int dataset_shrink_obs_range (DATASET *dset);
 
 int dataset_add_series (DATASET *dset, int newvars);
 
-int matrix_dataset_add_series (DATASET *dset, int newvars);
+int matrix_dataset_expand_Z (DATASET *dset, int newcols);
 
 int dataset_add_NA_series (DATASET *dset, int newvars);
 

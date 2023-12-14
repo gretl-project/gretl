@@ -326,6 +326,7 @@ typedef struct DATASET_ {
     char *mapfile;      /* name of associated map (polygons) file, if any */
     unsigned int rseed; /* resampling seed */
     int auxiliary;      /* 0 for regular dataset, 1 for auxiliary dataset */
+    int n_varinfo;      /* # of named series with metadata, if < @v above */
     char *pangrps;      /* panel-only: name of series holding group names */
     int panel_pd;       /* panel-only: panel time-series frequency */
     double panel_sd0;   /* panel-only: time-series start */

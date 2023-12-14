@@ -147,7 +147,7 @@ static void free_varinfo (DATASET *dset, int v)
 
 void clear_datainfo (DATASET *dset, int code)
 {
-    int i;
+    int i, vmax;
 
     if (dset == NULL) return;
 
@@ -173,16 +173,18 @@ void clear_datainfo (DATASET *dset, int code)
 
     /* if this is not a sub-sample datainfo, free varnames, labels, etc. */
 
+    vmax = dset->n_varinfo > 0 ? dset->n_varinfo : dset->v;
+
     if (code == CLEAR_FULL) {
 	if (dset->varname != NULL) {
-	    for (i=0; i<dset->v; i++) {
+	    for (i=0; i<vmax; i++) {
 		free(dset->varname[i]);
 	    }
 	    free(dset->varname);
 	    dset->varname = NULL;
 	}
 	if (dset->varinfo != NULL) {
-	    for (i=0; i<dset->v; i++) {
+	    for (i=0; i<vmax; i++) {
 		free_varinfo(dset, i);
 	    }
 	    free(dset->varinfo);
@@ -200,6 +202,7 @@ void clear_datainfo (DATASET *dset, int code)
 	maybe_free_full_dataset(dset);
 
 	dset->v = dset->n = 0;
+	dset->n_varinfo = 0;
 	dset->structure = 0;
 	dset->pd = 1;
     }
@@ -507,6 +510,7 @@ void datainfo_init (DATASET *dset)
     dset->panel_sd0 = 0;
 
     dset->auxiliary = 0;
+    dset->n_varinfo = 0;
     dset->rseed = 0;
 }
 
@@ -1446,16 +1450,8 @@ int dataset_shrink_obs_range (DATASET *dset)
     return err;
 }
 
-/* The @dummy argument to dataset_expand_varinfo() creates
-   null varnames and varinfos for the added series, on the
-   assumption that these pointers will not be dereferenced.
-   This is relevant when a temporary auxiliary dataset is
-   created from a matrix.
-*/
-
-static int
-dataset_expand_varinfo (int v0, int newvars, DATASET *dset,
-			int dummy)
+static int dataset_expand_varinfo (int v0, int newvars,
+				   DATASET *dset)
 {
     char **varname = NULL;
     VARINFO **varinfo = NULL;
@@ -1471,15 +1467,11 @@ dataset_expand_varinfo (int v0, int newvars, DATASET *dset,
 
     for (i=0; i<newvars && !err; i++) {
 	v = v0 + i;
-	if (dummy) {
-	    dset->varname[v] = NULL;
+	dset->varname[v] = malloc(VNAMELEN);
+	if (dset->varname[v] == NULL) {
+	    err = E_ALLOC;
 	} else {
-	    dset->varname[v] = malloc(VNAMELEN);
-	    if (dset->varname[v] == NULL) {
-		err = E_ALLOC;
-	    } else {
-		dset->varname[v][0] = '\0';
-	    }
+	    dset->varname[v][0] = '\0';
 	}
     }
 
@@ -1492,20 +1484,16 @@ dataset_expand_varinfo (int v0, int newvars, DATASET *dset,
 	}
 	for (i=0; i<newvars && !err; i++) {
 	    v = v0 + i;
-	    if (dummy) {
-		dset->varinfo[v] = NULL;
+	    dset->varinfo[v] = malloc(sizeof **varinfo);
+	    if (dset->varinfo[v] == NULL) {
+		err = E_ALLOC;
 	    } else {
-		dset->varinfo[v] = malloc(sizeof **varinfo);
-		if (dset->varinfo[v] == NULL) {
-		    err = E_ALLOC;
-		} else {
-		    gretl_varinfo_init(dset->varinfo[v]);
-		}
+		gretl_varinfo_init(dset->varinfo[v]);
 	    }
 	}
     }
 
-    if (!err && !dummy) {
+    if (!err) {
 	sync_dataset_shared_members(dset);
     }
 
@@ -1561,7 +1549,7 @@ static int real_add_series (int newvars, double *x,
 	   since in that case varinfo is shared between
 	   the two datasets
 	*/
-	err = dataset_expand_varinfo(v0, newvars, dset, 0);
+	err = dataset_expand_varinfo(v0, newvars, dset);
     }
 
     if (!err) {
@@ -1608,20 +1596,28 @@ int dataset_add_series (DATASET *dset, int newvars)
     return err;
 }
 
-/* It's up the caller to finish the job here */
+/* Special functionality for the case where @dset is made
+   from a matrix with dset->Z[i], i > 0, borrowed from the
+   matrix @val member. In expanding dset->Z we assume that
+   series names and other metadata are NOT required for the
+   newly added Z columns.
+*/
 
-int matrix_dataset_add_series (DATASET *dset, int newvars)
+int matrix_dataset_expand_Z (DATASET *dset, int newcols)
 {
-    double **ztmp = NULL;
+    double **tmp = NULL;
     int v0 = dset->v;
-    int err;
+    int err = 0;
 
-    ztmp = realloc(dset->Z, (v0 + newvars) * sizeof *ztmp);
-    if (ztmp == NULL) {
+    tmp = realloc(dset->Z, (v0 + newcols) * sizeof *tmp);
+    if (tmp == NULL) {
 	err = E_ALLOC;
     } else {
-	dset->Z = ztmp;
-	err = dataset_expand_varinfo(v0, newvars, dset, 1);
+	dset->Z = tmp;
+	if (dset->n_varinfo == 0) {
+	    dset->n_varinfo = dset->v;
+	}
+	dset->v += newcols;
     }
 
     return err;
