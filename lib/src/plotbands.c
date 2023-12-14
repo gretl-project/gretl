@@ -109,14 +109,8 @@ static int process_band_matrix (const char *mname,
         /* enlarge the dset->Z array and stick bi->center and
            bi->width onto the end of it
         */
-        int newv = dset->v + 2;
-        double **tmp = realloc(dset->Z, newv * sizeof *tmp);
-
-        if (tmp == NULL) {
-            err = E_ALLOC;
-        } else {
-            /* note: we don't need varnames here */
-            dset->Z = tmp;
+	err = matrix_dataset_add_series(dset, 2);
+        if (!err) {
             bi->center = dset->v;
             bi->width = dset->v + 1;
             dset->Z[bi->center] = m->val;

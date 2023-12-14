@@ -124,6 +124,9 @@ void dataset_destroy_obs_markers (DATASET *dset)
 
 static void free_varinfo (DATASET *dset, int v)
 {
+    if (dset->varinfo[v] == NULL) {
+	return;
+    }
     if (dset->varinfo[v]->st != NULL) {
 	series_table_destroy(dset->varinfo[v]->st);
     }
@@ -600,9 +603,7 @@ static double **make_borrowed_Z (int v, int n)
 	for (i=0; i<v; i++) {
 	    Z[i] = NULL;
 	}
-
 	Z[0] = malloc(n * sizeof **Z);
-
 	if (Z[0] == NULL) {
 	    free(Z);
 	    Z = NULL;
@@ -1445,8 +1446,16 @@ int dataset_shrink_obs_range (DATASET *dset)
     return err;
 }
 
+/* The @dummy argument to dataset_expand_varinfo() creates
+   null varnames and varinfos for the added series, on the
+   assumption that these pointers will not be dereferenced.
+   This is relevant when a temporary auxiliary dataset is
+   created from a matrix.
+*/
+
 static int
-dataset_expand_varinfo (int v0, int newvars, DATASET *dset)
+dataset_expand_varinfo (int v0, int newvars, DATASET *dset,
+			int dummy)
 {
     char **varname = NULL;
     VARINFO **varinfo = NULL;
@@ -1462,11 +1471,15 @@ dataset_expand_varinfo (int v0, int newvars, DATASET *dset)
 
     for (i=0; i<newvars && !err; i++) {
 	v = v0 + i;
-	dset->varname[v] = malloc(VNAMELEN);
-	if (dset->varname[v] == NULL) {
-	    err = E_ALLOC;
+	if (dummy) {
+	    dset->varname[v] = NULL;
 	} else {
-	    dset->varname[v][0] = '\0';
+	    dset->varname[v] = malloc(VNAMELEN);
+	    if (dset->varname[v] == NULL) {
+		err = E_ALLOC;
+	    } else {
+		dset->varname[v][0] = '\0';
+	    }
 	}
     }
 
@@ -1479,16 +1492,20 @@ dataset_expand_varinfo (int v0, int newvars, DATASET *dset)
 	}
 	for (i=0; i<newvars && !err; i++) {
 	    v = v0 + i;
-	    dset->varinfo[v] = malloc(sizeof **varinfo);
-	    if (dset->varinfo[v] == NULL) {
-		err = E_ALLOC;
+	    if (dummy) {
+		dset->varinfo[v] = NULL;
 	    } else {
-		gretl_varinfo_init(dset->varinfo[v]);
+		dset->varinfo[v] = malloc(sizeof **varinfo);
+		if (dset->varinfo[v] == NULL) {
+		    err = E_ALLOC;
+		} else {
+		    gretl_varinfo_init(dset->varinfo[v]);
+		}
 	    }
 	}
     }
 
-    if (!err) {
+    if (!err && !dummy) {
 	sync_dataset_shared_members(dset);
     }
 
@@ -1544,7 +1561,7 @@ static int real_add_series (int newvars, double *x,
 	   since in that case varinfo is shared between
 	   the two datasets
 	*/
-	err = dataset_expand_varinfo(v0, newvars, dset);
+	err = dataset_expand_varinfo(v0, newvars, dset, 0);
     }
 
     if (!err) {
@@ -1586,6 +1603,25 @@ int dataset_add_series (DATASET *dset, int newvars)
 		dset->Z[v][t] = 0.0;
 	    }
 	}
+    }
+
+    return err;
+}
+
+/* It's up the caller to finish the job here */
+
+int matrix_dataset_add_series (DATASET *dset, int newvars)
+{
+    double **ztmp = NULL;
+    int v0 = dset->v;
+    int err;
+
+    ztmp = realloc(dset->Z, (v0 + newvars) * sizeof *ztmp);
+    if (ztmp == NULL) {
+	err = E_ALLOC;
+    } else {
+	dset->Z = ztmp;
+	err = dataset_expand_varinfo(v0, newvars, dset, 1);
     }
 
     return err;
