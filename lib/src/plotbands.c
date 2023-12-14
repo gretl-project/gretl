@@ -110,7 +110,6 @@ static int process_band_matrix (const char *mname,
            bi->width onto the end of it
         */
 	err = matrix_dataset_expand_Z(dset, 2);
-	fprintf(stderr, "HERE expand dset by 2 cols\n");
         if (!err) {
             bi->center = dset->v - 2;
             bi->width = dset->v - 1;

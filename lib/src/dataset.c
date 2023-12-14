@@ -1615,6 +1615,9 @@ int matrix_dataset_expand_Z (DATASET *dset, int newcols)
     } else {
 	dset->Z = tmp;
 	if (dset->n_varinfo == 0) {
+            /* record the number of varnames and varinfo
+               elements before incrementing dset->v
+            */
 	    dset->n_varinfo = dset->v;
 	}
 	dset->v += newcols;
