@@ -766,7 +766,25 @@ static const char *get_filename_extension (const char *fname)
     return ext;
 }
 
-static GretlFileType data_file_type_from_extension (const char *ext)
+static GretlFileType dat_filetype (const char *fname)
+{
+    FILE *fp = gretl_fopen(fname, "rb");
+    GretlFileType ret = GRETL_CSV;
+
+    if (fp != NULL) {
+	char test[3] = {0};
+
+	if (fread(test, 1, 2, fp) == 2 && !strcmp(test, "/*")) {
+	    ret = GRETL_JMULTI;
+	}
+	fclose(fp);
+    }
+
+    return ret;
+}
+
+static GretlFileType data_file_type_from_extension (const char *ext,
+						    const char *fname)
 {
     int i, n = G_N_ELEMENTS(data_ftype_map);
 
@@ -774,6 +792,11 @@ static GretlFileType data_file_type_from_extension (const char *ext)
 	if (!g_ascii_strcasecmp(ext, data_ftype_map[i].ext)) {
 	    return data_ftype_map[i].ftype;
 	}
+    }
+
+    /* try to handle JMulTi */
+    if (!g_ascii_strcasecmp(ext, ".dat")) {
+	return dat_filetype(fname);
     }
 
     /* a few extras */
@@ -810,7 +833,7 @@ GretlFileType data_file_type_from_name (const char *fname)
 #endif
 
     if (ext != NULL) {
-	return data_file_type_from_extension(ext);
+	return data_file_type_from_extension(ext, fname);
     }
 
     return GRETL_UNRECOGNIZED;
@@ -3561,14 +3584,14 @@ static int is_jmulti_datafile (const char *fname)
 
 int gretl_is_pkzip_file (const char *fname)
 {
-    FILE *fp;
-    char test[3] = {0};
+    FILE *fp = gretl_fopen(fname, "rb");
     int ret = 0;
 
-    fp = gretl_fopen(fname, "rb");
     if (fp != NULL) {
-	if (fread(test, 1, 2, fp) == 2) {
-	    if (!strcmp(test, "PK")) ret = 1;
+	char test[3] = {0};
+
+	if (fread(test, 1, 2, fp) == 2 && !strcmp(test, "PK")) {
+	    ret = 1;
 	}
 	fclose(fp);
     }
@@ -3608,7 +3631,7 @@ GretlFileType detect_filetype (char *fname, gretlopt opt)
 		ftype = GRETL_SCRIPT;
 	    }
 	} else {
-	    ftype = data_file_type_from_extension(ext);
+	    ftype = data_file_type_from_extension(ext, fname);
 	    if (ftype == GRETL_UNRECOGNIZED) {
 		/* check for database types */
 		if (!strcmp(ext, ".bin")) {
@@ -3634,7 +3657,7 @@ GretlFileType detect_filetype (char *fname, gretlopt opt)
 	ext = get_filename_extension(fname);
 	if (ext != NULL) {
 	    /* check again for known data file types */
-	    ftype = data_file_type_from_extension(ext);
+	    ftype = data_file_type_from_extension(ext, fname);
 	}
     }
 
