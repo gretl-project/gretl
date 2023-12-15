@@ -500,7 +500,7 @@
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>don't print confirmation message</effect>
+	  <effect>print less confirmation details, see below</effect>
 	</option>
 	<optnote>See below for additional specialized options</optnote>
       </options>
@@ -550,6 +550,14 @@
 	<opt>coloffset</opt>, <opt>rowoffset</opt> and
 	<opt>fixed-cols</opt> work in the same way as with <cmdref
 	targ="open"/>; see that command for explanations.
+      </para>
+      <para>
+        By default some information about the appended dataset is printed.
+        The <opt>quiet</opt> option reduces that printout to a 
+        confirmatory message stating just the path to the file. If you 
+        want the operation to be completely silent, then issue the
+        command <lit>set verbose off</lit> before appending the data,
+        in combination with the <opt>quiet</opt> option. 
       </para>
       <subhead>Panel data</subhead>
       <para>
