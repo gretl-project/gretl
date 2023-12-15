@@ -3,6 +3,7 @@ version 2024a, in progress
   followed by double-quote in string literals
 - Fix bug: crash when plotting matrix data with the multiple
   bands option
+- Fix bug: restore ability to open JMulTi .data files
 - GUI: some legibility fixes for dark GTK themes
 - GUI: enable the advertised keystrokes in file "browser"
   windows (bug #294)
