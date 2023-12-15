@@ -11787,14 +11787,14 @@
 	  <effect>see below</effect>
         </option>
         <option>
-	  <flag>--band-style</flag>
-	  <optparm>style</optparm>
-	  <effect>see below</effect>
-        </option>
-        <option>
 	  <flag>--output</flag>
 	  <optparm>filename</optparm>
 	  <effect>send output to specified file</effect>
+        </option>
+        <option>
+	  <flag>--outbuf</flag>
+	  <optparm>stringname</optparm>
+	  <effect>send output to specified string</effect>
         </option>
       </options>
 	<examples>
@@ -11873,9 +11873,7 @@
 	<lit>option</lit> or <lit>options</lit> keywords, it is not
 	necessary to supply the customary double-dash before the
 	option specifier. For details on the effects of the various
-	options please see <cmdref targ="gnuplot"/> (but see
-	below for some specifics on using the <opt>band</opt>
-	option in the <lit>plot</lit> context).
+	options please see <cmdref targ="gnuplot"/>.
       </para>
       <para>
 	The intended use of the <lit>plot</lit> block is best
@@ -11888,8 +11886,8 @@
 	    options with-lines fit=none
 	    literal set linetype 3 lc rgb "#0000ff"
 	    literal set nokey
-	    printf "set title \"%s\"", title
-	    printf "set xlabel \"%s\"", xname
+	    printf "set title '%s'", title
+	    printf "set xlabel '%s'", xname
 	end plot --output=display
       </code>
       <para>
@@ -11899,33 +11897,10 @@
 	the <opt>output</opt> option (only) on the last line of the
 	block; other options should be placed within the block.
       </para>
-      <subhead>Plotting a band with matrix data</subhead>
-      <para>
-	The <opt>band</opt> and <opt>band-style</opt> options mostly
-	work as described in the help for <cmdref targ="gnuplot"/>,
-	with the following exception: when the data to be plotted are
-	given in the form of a matrix, the first parameter to
-	<opt>band</opt> must be given as the name of a matrix with two
-	columns (holding, respectively, the center and the width of
-	the band). This parameter takes the place of the two values
-	(series names or ID numbers, or matrix columns) required by
-	the <lit>gnuplot</lit> version of this option. An illustration
-	follows:
-      </para>
-      <code>
-	scalar n = 100
-	matrix x = seq(1,n)'
-	matrix y = x + filter(mnormal(n,1), 1, {1.8, -0.9})
-	matrix B = y ~ muniform(n,1)
-	plot y
-	    options time-series with-lines
-	    options band=B,10 band-style=fill
-	end plot --output=display
-      </code>
       <subhead>Plotting without data</subhead>
       <para>
-	The following example shows a simple case of specifying a
-	plot without a data source.
+	The following example shows a case of specifying a plot
+	without a data source.
       </para>
       <code>
 	plot

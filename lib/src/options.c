@@ -567,6 +567,7 @@ struct gretl_option gretl_opts[] = {
     { PLOT,     OPT_Y, "single-yaxis", 0 },
     { PLOT,     OPT_Z, "dummy", 0 },
     { PLOT,     OPT_N, "band", 2 },
+    { PLOT,     OPT_a, "bands", 2 },
     { PLOT,     OPT_J, "band-style", 2 },
     { PLOT,     OPT_W, "font", 2 },
     { PLOT,     OPT_L, "ylogscale", 1 },

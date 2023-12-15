@@ -3992,7 +3992,8 @@ int matrix_plot (gretl_matrix *m, const int *list, const char *literal,
     }
 
     if (!err) {
-	if (opt & OPT_N) {
+	if (opt & (OPT_N | OPT_a)) {
+	    /* --band or --bands */
 	    gnuplot_info gi;
 
 	    err = gpinfo_init(&gi, opt, plotlist, literal, dset);
