@@ -172,6 +172,8 @@ const char *gp_justification_string (int j);
 
 int split_graph_fontspec (const char *s, char *name, int *psz);
 
+double gnuplot_version (void);
+
 void gnuplot_missval_string (FILE *fp);
 
 void write_gp_dataval (double x, FILE *fp, int final);

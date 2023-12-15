@@ -244,7 +244,7 @@ int gnuplot_test_command (const char *cmd)
 
 #ifdef G_OS_WIN32
 
-static double gnuplot_version (void)
+double gnuplot_version (void)
 {
     /* As of October 2022, the gretl packages for MS Windows
        include gnuplot 5.2.6 (32-bit) or 5.4.1 (64-bit).
@@ -258,7 +258,7 @@ static double gnuplot_version (void)
 
 #elif defined(OS_OSX) && defined(PKGBUILD)
 
-static double gnuplot_version (void)
+double gnuplot_version (void)
 {
     /* As of October 2022, the gretl packages for Mac
        include gnuplot 5.4.1.
@@ -268,7 +268,7 @@ static double gnuplot_version (void)
 
 #else /* Linux, or non-packaged build for other OS */
 
-static double gnuplot_version (void)
+double gnuplot_version (void)
 {
     static double vnum = 0.0;
 
