@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-11-26 15:45-0500\n"
-"PO-Revision-Date: 2023-11-26 22:19+0100\n"
+"PO-Revision-Date: 2023-12-17 00:00+0100\n"
 "Last-Translator: Sven Schreiber <svetosch (at) gmx (dot) net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -2667,7 +2667,7 @@ msgstr "mit Koenkers robustem Varianzschätzer"
 
 #: lib/src/estimate.c:2816 lib/src/gretl_model.c:4305 lib/src/modelprint.c:913
 msgid "White's test for heteroskedasticity"
-msgstr "White's Test für Heteroskedastizität"
+msgstr "Whites Test auf Heteroskedastizität"
 
 #: lib/src/estimate.c:3353
 msgid "Generalized Cochrane-Orcutt estimation"
@@ -7037,7 +7037,7 @@ msgstr "Driscoll-Kraay-Standardfehler, Bandbreite %d"
 #: lib/src/modelprint.c:1444
 #, c-format
 msgid "Driscoll--Kraay standard errors, bandwidth %d"
-msgstr "Driscoll--Kraay Standardfehler, Bandbreite %d"
+msgstr "Driscoll--Kraay-Standardfehler, Bandbreite %d"
 
 #: lib/src/modelprint.c:1453 lib/src/modelprint.c:1455
 msgid "Standard errors clustered by unit and time"
@@ -15735,11 +15735,11 @@ msgstr "_Panel-Spezifikation"
 
 #: gui/gui_utils.c:256 gui/gui_utils.c:263
 msgid "White's test"
-msgstr "Heteroskedastizität/_White's Test"
+msgstr "_Whites Test"
 
 #: gui/gui_utils.c:257
 msgid "White's test (squares only)"
-msgstr "Heteroskedastizität/_White's Test (nur Quadrate)"
+msgstr "_Whites Test (nur Quadrate)"
 
 #: gui/gui_utils.c:264
 msgid "_groupwise"
