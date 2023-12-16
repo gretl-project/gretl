@@ -4342,7 +4342,7 @@ int csv_open_dialog (const char *fname)
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     hbox = gtk_hbox_new(FALSE, 5);
-    label = gtk_label_new("Data file options:");
+    label = gtk_label_new(_("Data file options:"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 
@@ -4359,14 +4359,14 @@ int csv_open_dialog (const char *fname)
     }
 
     hbox = gtk_hbox_new(FALSE, 5);
-    label = gtk_label_new("\"View\": view the first few lines of the file");
+    label = gtk_label_new(_("\"View\": view the first few lines of the file"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
     /* buttons */
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
     /* View (the first few lines) */
-    button = gtk_button_new_with_label("View");
+    button = gtk_button_new_with_label(_("View"));
     gtk_container_add(GTK_CONTAINER(hbox), button);
     gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(hbox),
 				       button, TRUE);
