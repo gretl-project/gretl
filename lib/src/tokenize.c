@@ -1565,7 +1565,7 @@ static int handle_datamod_param (CMD *c)
 {
     int op = dataset_op_from_string(c->param);
 
-    /* some nasty legacy suff here: we should probably use
+    /* some nasty legacy stuff here: we should probably use
        options to clean this up */
 
     if (op == DS_NONE) {
