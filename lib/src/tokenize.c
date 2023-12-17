@@ -1565,9 +1565,6 @@ static int handle_datamod_param (CMD *c)
 {
     int op = dataset_op_from_string(c->param);
 
-    /* some nasty legacy stuff here: we should probably use
-       options to clean this up */
-
     if (op == DS_NONE) {
 	c->err = E_PARSE;
     } else {
@@ -1578,7 +1575,7 @@ static int handle_datamod_param (CMD *c)
 	    /* we need a one-member list plus param */
 	    c->ciflags = CI_PARM1 | CI_LIST | CI_LLEN1 | CI_PARM2;
 	} else if (op == DS_COMPACT) {
-	    /* dataset compact: the second param may contain
+	    /* "dataset compact": the second param may contain
 	       two fields, as in "4 last", so parse it as a
 	       case of 'extra'
 	    */
@@ -1692,7 +1689,7 @@ static int get_param (CMD *c, const DATASET *dset)
     }
 
     if (c->ci == DATAMOD) {
-	/* "dataset" command: a legacy special! */
+	/* the "dataset" command */
 	handle_datamod_param(c);
     } else if (c->ci == SMPL) {
 	/* "smpl" command: drop the requirement for a second param
