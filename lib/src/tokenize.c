@@ -3812,8 +3812,10 @@ static void handle_option_inflections (CMD *cmd)
 	}
     } else if (cmd->ci == GNUPLOT) {
 	if (cmd->opt & (OPT_I | OPT_i)) {
-	    /* we got --input or --inbuf, so no args wanted */
-	    cmd->ciflags = 0;
+	    /* we got --input or --inbuf, so no args wanted,
+	       but still accept "{...}" stuff?
+	    */
+	    cmd->ciflags = CI_EXTRA;
 	} else if (cmd->opt & OPT_X) {
 	    /* with --matrix, default to all columns */
 	    cmd->ciflags |= CI_DOALL;

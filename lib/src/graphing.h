@@ -324,7 +324,7 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b,
 int xy_plot_with_control (const int *list, const char *literal,
 			  const DATASET *dset, gretlopt opt);
 
-int gnuplot_process_input (gretlopt opt, PRN *prn);
+int gnuplot_process_input (const char *literal, gretlopt opt, PRN *prn);
 
 int print_gnuplot_literal_lines (const char *s, int ci,
 				 gretlopt opt, FILE *fp);

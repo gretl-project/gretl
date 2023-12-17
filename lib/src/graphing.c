@@ -8996,20 +8996,54 @@ int is_auto_fit_string (const char *s)
     return 0;
 }
 
+static void inbuf_inject_literal (const char *buf,
+				  const char *literal,
+				  FILE *fp)
+{
+    char *p = strstr(buf, "\nplot ");
+
+    if (p != NULL) {
+	int n = p - buf;
+
+	fwrite(buf, 1, n, fp);
+	print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
+	fputs(p + 1, fp);
+    } else {
+	fputs(buf, fp);
+    }
+}
+
+static void infile_inject_literal (FILE *fin,
+				   const char *literal,
+				   FILE *fout)
+{
+    char line[1024];
+
+    while (fgets(line, sizeof line, fin)) {
+	if (!strncmp(line, "plot ", 5)) {
+	    print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fout);
+	}
+	fputs(line, fout);
+    }
+}
+
 /**
  * gnuplot_process_input:
+ * @literal: literal "extra" gnuplot commands.
  * @opt: should be OPT_I (input file) or OPT_i (input buffer)
  * @prn: gretl printing struct.
  *
  * Respond to the "gnuplot" command with %OPT_I, to specify
  * that input should be taken from a user-created gnuplot
  * command file, or %OPT_i, to take input from a named
- * string variable.
+ * string variable. If @literal is non-NULL we'll inject
+ * the literal gnuplot commands immediately preceding the
+ * "plot" line in the file or buffer input.
  *
  * Returns: 0 on success, error code on error.
  */
 
-int gnuplot_process_input (gretlopt opt, PRN *prn)
+int gnuplot_process_input (const char *literal, gretlopt opt, PRN *prn)
 {
     const char *iname = NULL;
     const char *buf = NULL;
@@ -9041,15 +9075,21 @@ int gnuplot_process_input (gretlopt opt, PRN *prn)
     fq = open_plot_input_file(PLOT_USER, 0, &err);
 
     if (!err) {
-        if (fp != NULL) {
+	if (literal != NULL && *literal != '\0') {
+	    if (fp != NULL) {
+		infile_inject_literal(fp, literal, fq);
+	    } else {
+		inbuf_inject_literal(buf, literal, fq);
+	    }
+	} else if (fp != NULL) {
             char line[1024];
 
             while (fgets(line, sizeof line, fp)) {
                 fputs(line, fq);
             }
         } else {
-            fputs(buf, fq);
-        }
+	    fputs(buf, fq);
+	}
 	err = finalize_plot_input_file(fq);
     }
 
