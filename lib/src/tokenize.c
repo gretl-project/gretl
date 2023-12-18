@@ -129,7 +129,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { HURST,    "hurst",    CI_LIST | CI_LLEN1 },
     { IF,       "if",       CI_EXPR },
     { INCLUDE,  "include",  CI_PARM1 | CI_FNAME },
-    { INFO,     "info",     CI_NOOPT },
+    { INFO,     "info",     0 },
     { INTREG,   "intreg",   CI_LIST },
     { JOIN,     "join",     CI_PARM1 | CI_FNAME | CI_EXTRA },
     { KDPLOT,   "kdplot",   CI_LIST | CI_LLEN1 },

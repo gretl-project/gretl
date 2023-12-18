@@ -2,6 +2,8 @@ version 2024a, in progress
 - $sysinfo bundle: add gnuplot version as scalar ("gnuplot")
 - "plot" command: update the help text and apply a fix for the
   case of showing multiple bands
+- "info" command: add --to-file and --from-file options for
+  manipulating the description of a dataset
 - Fix broken backward compatibility in handling of backslash
   followed by double-quote in string literals
 - Fix bug: crash when plotting matrix data with the multiple

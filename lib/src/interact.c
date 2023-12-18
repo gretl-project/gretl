@@ -3553,7 +3553,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case INFO:
-        print_info(cmd->opt, dset, prn);
+        if (cmd->opt & (OPT_F | OPT_T)) {
+            err = read_or_write_dset_description(cmd->opt, dset, prn);
+        } else {
+            print_info(cmd->opt, dset, prn);
+        }
         break;
 
     case RENAME:

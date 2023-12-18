@@ -352,6 +352,8 @@ struct gretl_option gretl_opts[] = {
     { HFPLOT,   OPT_T, "time-series", 0 },
     { HSK,      OPT_N, "no-squares", 0 },
     { INCLUDE,  OPT_F, "force", 0 },
+    { INFO,     OPT_F, "from-file", 2},
+    { INFO,     OPT_T, "to-file", 2},
     { INTREG,   OPT_G, "opg", 0 },
     { INTREG,   OPT_R, "robust", 0 },
     { INTREG,   OPT_C, "cluster", 2 },

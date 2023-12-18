@@ -6738,20 +6738,27 @@
   </command>
 
   <command name="info" section="Dataset"
-    label="Information on data set" context="cli">
-
+	   label="Information on data set" context="cli">
+    <usage>
+      <altforms>
+	<altform><lit>info</lit></altform>
+	<altform><lit>info --to-file=</lit><repl>filename</repl></altform>
+	<altform><lit>info --from-file=</lit><repl>filename</repl></altform>
+      </altforms>
+    </usage>
     <description>
       <para>
-	Prints out any supplementary information stored with the
-	current datafile.
+	In its basic form, displays any supplementary information
+	(metadata) stored with the current datafile. Otherwise, writes
+	this information to file (with the <opt>to-file</opt> option),
+	or reads metadata from a specified file and attaches it to the
+	current dataset (with <opt>from-file</opt>, in which case the
+	text should be valid UTF-8).
       </para>
     </description>
-
     <gui-access>
       <menu-path>/Data/Dataset info</menu-path>
-      <other-access>Data browser windows</other-access>
     </gui-access>
-
   </command>
 
   <command name="intreg" section="Estimation" label="Interval regression model">
@@ -7477,7 +7484,7 @@
 	<altform><lit>labels --from-file=</lit><repl>filename</repl></altform>
 	<altform><lit>labels --delete</lit></altform>
       </altforms>
-	<examples>
+      <examples>
 	<demos>
 	  <demo>oprobit.inp</demo>
 	</demos>

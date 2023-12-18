@@ -2832,6 +2832,24 @@ int save_var_labels_to_file (const DATASET *dset,
     return err;
 }
 
+static int save_dset_description_to_file (const DATASET *dset,
+					  const char *fname)
+{
+    FILE *fp;
+    int err = 0;
+
+    fp = gretl_fopen(fname, "w");
+
+    if (fp == NULL) {
+	err = E_FOPEN;
+    } else {
+	fputs(dset->descrip, fp);
+	fclose(fp);
+    }
+
+    return err;
+}
+
 static int save_var_labels_to_array (const DATASET *dset,
 				     const char *aname)
 {
@@ -2971,6 +2989,49 @@ int add_var_labels_from_file (DATASET *dset, const char *fname)
     return err;
 }
 
+static int add_dset_description_from_file (DATASET *dset,
+					   const char *fname)
+{
+    gchar *buf = NULL;
+    GError *gerr = NULL;
+    gsize size;
+    int err = 0;
+
+    g_file_get_contents(fname, &buf, &size, &gerr);
+
+    if (gerr != NULL) {
+	gretl_errmsg_set(gerr->message);
+	g_error_free(gerr);
+	return E_DATA;
+    }
+
+    if (size == 0) {
+	gretl_errmsg_set("No content found");
+	err = E_DATA;
+    } else if (g_utf8_validate(buf, -1, NULL)) {
+	free(dset->descrip);
+	dset->descrip = gretl_strdup(buf);
+    } else {
+	gchar *trstr = NULL;
+
+	trstr = g_locale_to_utf8(buf, -1, NULL,
+				 &size, &gerr);
+	if (gerr != NULL) {
+	    gretl_errmsg_set(gerr->message);
+	    g_error_free(gerr);
+	    err = E_DATA;
+	} else {
+	    free(dset->descrip);
+	    dset->descrip = gretl_strdup(trstr);
+	    g_free(trstr);
+	}
+    }
+
+    g_free(buf);
+
+    return err;
+}
+
 static int add_var_labels_from_array (DATASET *dset, const char *aname)
 {
     gretl_array *a = get_array_by_name(aname);
@@ -3044,6 +3105,55 @@ int read_or_write_var_labels (gretlopt opt, DATASET *dset, PRN *prn)
 	}
 	if (!err && gretl_messages_on()) {
 	    pprintf(prn, _("Labels loaded OK\n"));
+	}
+    }
+
+    return err;
+}
+
+int read_or_write_dset_description (gretlopt opt, DATASET *dset, PRN *prn)
+{
+    const char *fname = NULL;
+    int err;
+
+    if (dset == NULL) {
+	return E_NODATA;
+    }
+
+    err = incompatible_options(opt, OPT_F | OPT_T);
+    if (err) {
+	return err;
+    }
+
+    fname = get_optval_string(INFO, opt);
+    if (fname == NULL) {
+	err = E_BADOPT;
+    }
+
+    gretl_maybe_switch_dir(fname);
+
+    if (opt & OPT_T) {
+	/* to-file */
+	if (dset->descrip == NULL) {
+	    pputs(prn, _("No description is available\n"));
+	    err = E_DATA;
+	} else {
+	    err = save_dset_description_to_file(dset, fname);
+	    if (!err && gretl_messages_on()) {
+		pputs(prn, _("dataset description written OK\n"));
+	    }
+	}
+    } else if (opt & OPT_F) {
+	/* from-file */
+	int have_desc = dset->descrip != NULL;
+
+	err = add_dset_description_from_file(dset, fname);
+	if (!err && gretl_messages_on()) {
+	    if (have_desc) {
+		pputs(prn, _("description replaced OK\n"));
+	    } else {
+		pputs(prn, _("description loaded OK\n"));
+	    }
 	}
     }
 
