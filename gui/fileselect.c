@@ -410,7 +410,12 @@ static void script_open_choice (const char *fname, windata_t *vwin,
     int resp;
 
     gretl_basename(newname, fname, 0);
-    gretl_basename(origname, vwin->fname, 0);
+    if (strstr(vwin->fname, gretl_dotdir()) &&
+	strstr(vwin->fname, "script_tmp")) {
+	sprintf(origname, "[%s]", _("untitled"));
+    } else {
+	gretl_basename(origname, vwin->fname, 0);
+    }
     opts[0] = g_strdup_printf(_("Open %s in new window"), newname);
     opts[1] = g_strdup_printf(_("Replace %s"), origname);
 
