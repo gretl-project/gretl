@@ -1144,8 +1144,10 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     gtk_text_view_set_editable(view, editable);
     gtk_text_view_set_cursor_visible(view, editable);
 
-    gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text),
-					  script_line_numbers);
+    if (vwin->role != EDIT_HEADER) {
+	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text),
+					      script_line_numbers);
+    }
 
     if (lm != NULL) {
 	set_style_for_buffer(sbuf, get_sourceview_style(), vwin->role);
