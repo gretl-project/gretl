@@ -16,5 +16,8 @@
 # Stock and Watson, Introduction to Econometrics
 640949 Foo Dec 30 00:00:00 2006 verbeek.tar.gz
 # Marno Verbeek, Guide to Modern Econometrics
-2558434 Foo Sep 06 00:00:00 2008 wooldridge.tar.gz
+2554217 Foo Nov 17 00:00:00 2022 wooldridge.tar.gz
 # Jeffrey Wooldridge, Introductory Econometrics
+138812 Foo Dec 18 00:00:00 2023 luetkepohl.tar.gz
+# Helmut Lütkepohl, Applied Time Series Econometrics & New Intro...
+
