@@ -2212,7 +2212,7 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
         free(loop->mrecords);
         loop->mrecords = NULL;
         loop->n_models = 0;
-#endif /* HAVE_GMP */
+#endif /* HAVE_GMP or not */
     }
 
     return err;
