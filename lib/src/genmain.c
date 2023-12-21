@@ -858,8 +858,11 @@ int generate (const char *line, DATASET *dset,
     return p.err;
 }
 
-/* Get a pointer to a sub-object of type @gtype (array or bundle),
-   if possible.
+/* Get a pointer to a sub-object of type @gtype (an array or bundle),
+   answering to the specification in @spec. This gets called in the
+   context of a "foreach" loop if we can't find a "top-level" array
+   or bundle as data source; we then see if it could be an embedded
+   object.
 */
 
 void *genr_get_pointer (const char *spec, GretlType gtype, int *errp)
