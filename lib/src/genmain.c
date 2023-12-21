@@ -864,7 +864,7 @@ int generate (const char *line, DATASET *dset,
 
 void *genr_get_pointer (const char *spec, GretlType gtype, int *errp)
 {
-    genflags flags = P_PRIV | P_QUIET | P_PTR;
+    genflags flags = P_PRIV | P_QUIET;
     void *ret = NULL;
     parser p;
     int err;
