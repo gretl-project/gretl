@@ -1164,7 +1164,7 @@ static GretlType find_target_in_parentage (LOOPSET *loop,
 */
 
 static int list_loop_setup (LOOPSET *loop, char *s, int *nf,
-                            int *idxmax, DATASET *dset)
+                            int *idxmax)
 {
     GretlType t = 0;
     gretl_array *a = NULL;
@@ -1381,7 +1381,7 @@ parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
         /* try for a named list or array? */
         int nelem = -1;
 
-        err = list_loop_setup(loop, s, &nf, &nelem, dset);
+        err = list_loop_setup(loop, s, &nf, &nelem);
         if (!err && nelem >= 0) {
             /* got an array, but not of strings */
             return set_alt_each_loop(loop, dset, ivar, nelem);
