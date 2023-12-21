@@ -688,7 +688,8 @@ typedef enum {
     P_STACK   = 1 << 26, /* executing stack() */
     P_ALTINP  = 1 << 27, /* the input string has been substituted */
     P_OBJQRY  = 1 << 28, /* querying the existence of an object */
-    P_PRNLIST = 1 << 29  /* defining a list for "print" */
+    P_PRNLIST = 1 << 29, /* defining a list for "print" */
+    P_PTR     = 1 << 30  /* just getting pointer to (sub-) object */
 } genflags;
 
 struct lhinfo {

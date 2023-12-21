@@ -33,6 +33,7 @@
 #include "system.h"
 #include "genparse.h"
 #include "gretl_string_table.h"
+#include "gretl_typemap.h"
 #include "genr_optim.h"
 
 #include <time.h>
@@ -590,7 +591,7 @@ void gretl_loop_destroy (LOOPSET *loop)
         return;
     }
 
-#if COMP_DEBUG || LOOP_DEBUG
+#if 1 || COMP_DEBUG || LOOP_DEBUG
     fprintf(stderr, "destroying LOOPSET at %p\n", (void *) loop);
 #endif
 
@@ -621,6 +622,9 @@ void gretl_loop_destroy (LOOPSET *loop)
     if (loop->mrecords != NULL) {
         free(loop->mrecords);
     }
+
+    fprintf(stderr, "HERE destroy loop, eachstrs %p, eachname '%s'\n",
+	    (void *) loop->eachstrs, loop->eachname);
 
     if (loop->eachstrs != NULL && loop->eachtype != GRETL_TYPE_STRINGS) {
         strings_array_free(loop->eachstrs, loop->itermax);
@@ -962,7 +966,8 @@ static int list_vars_to_strings (LOOPSET *loop, const int *list,
     return err;
 }
 
-static void *get_eachvar_by_name (const char *s, GretlType *t)
+static void *get_eachvar_by_name (const char *s, GretlType *t,
+				  DATASET *dset)
 {
     void *ptr = NULL;
 
@@ -986,13 +991,13 @@ static void *get_eachvar_by_name (const char *s, GretlType *t)
     return ptr;
 }
 
-/* At loop runtime, check the named list and insert the names (or
-   numbers) of the variables as "eachstrs"; flag an error if the list
-   has disappeared. We also have to handle the case where the name
-   of the loop-controlling list is subject to $-substitution.
+/* At loop runtime, check the named list or array and insert the names
+   (or numbers) of the variables as "eachstrs"; flag an error if the
+   source has disappeared. We also have to handle the case where the
+   name of the loop-controlling list is subject to $-substitution.
 */
 
-static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
+static int loop_list_refresh (LOOPSET *loop, DATASET *dset)
 {
     void *eachvar = NULL;
     const char *strval = NULL;
@@ -1006,17 +1011,17 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
         err = make_dollar_substitutions(vname, VNAMELEN, loop,
                                         dset, NULL, OPT_T);
         if (!err) {
-            eachvar = get_eachvar_by_name(vname, &loop->eachtype);
+            eachvar = get_eachvar_by_name(vname, &loop->eachtype, dset);
         }
     } else if (*loop->eachname == '@') {
         /* @-string substitution required */
         strval = get_string_by_name(loop->eachname + 1);
         if (strval != NULL && strlen(strval) < VNAMELEN) {
-            eachvar = get_eachvar_by_name(strval, &loop->eachtype);
+            eachvar = get_eachvar_by_name(strval, &loop->eachtype, dset);
         }
     } else {
         /* no string substitution needed */
-        eachvar = get_eachvar_by_name(loop->eachname, &loop->eachtype);
+        eachvar = get_eachvar_by_name(loop->eachname, &loop->eachtype, dset);
     }
 
     /* note: if @eachvar is an array of strings then loop->eachstrs
@@ -1103,7 +1108,52 @@ static GretlType find_target_in_parentage (LOOPSET *loop,
     return GRETL_TYPE_NONE;
 }
 
-/* We're looking at a "foreach" loop with just one field after the
+#if 1 /* not yet */
+
+static int try_for_sub_object (LOOPSET *loop, const char *s,
+			       DATASET *dset, int *nf,
+			       int *idxmax)
+{
+    char vname[VNAMELEN];
+    GretlType t;
+    gchar *line;
+    int err;
+
+    sprintf(vname, "EACHVAR__%p", (void *) loop);
+    line = g_strdup_printf("%s=%s", vname, s);
+    err = generate(line, dset, GRETL_TYPE_ANY, OPT_P, NULL);
+    fprintf(stderr, "HERE genr err %d from '%s'\n", err, line);
+    g_free(line);
+    if (err) {
+	return err;
+    }
+
+    t = genr_get_last_output_type();
+
+    if (t == GRETL_TYPE_ARRAY) {
+	gretl_array *a = get_array_by_name(vname);
+	GretlType at = gretl_array_get_type(a);
+	int len = gretl_array_get_length(a);
+
+	if (at == GRETL_TYPE_STRINGS) {
+	    loop->eachtype = at;
+	    strcpy(loop->eachname, vname);
+	    *nf = len;
+	} else {
+	    gretl_array_destroy(a);
+            *idxmax = len;
+        }
+    } else {
+	/* bundle might be supported? */
+	err = E_TYPES;
+    }
+
+    return err;
+}
+
+#endif
+
+/* We're looking at a "foreach" loop with a single field after the
    index variable, so it's most likely a loop over a list or array.
 
    We begin by looking for a currently existing named list, but if
@@ -1123,7 +1173,7 @@ static GretlType find_target_in_parentage (LOOPSET *loop,
 */
 
 static int list_loop_setup (LOOPSET *loop, char *s, int *nf,
-                            int *idxmax)
+                            int *idxmax, DATASET *dset)
 {
     GretlType t = 0;
     gretl_array *a = NULL;
@@ -1165,7 +1215,12 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf,
     }
 
     if (t == GRETL_TYPE_NONE) {
-        err = E_UNKVAR;
+#if 1
+	fprintf(stderr, "HERE call try...\n");
+	err = try_for_sub_object(loop, s, dset, nf, idxmax);
+#else
+	err = E_UNKVAR;
+#endif
     } else {
         loop->eachtype = t;
         *loop->eachname = '\0';
@@ -1340,7 +1395,7 @@ parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
         /* try for a named list or array? */
         int nelem = -1;
 
-        err = list_loop_setup(loop, s, &nf, &nelem);
+        err = list_loop_setup(loop, s, &nf, &nelem, dset);
         if (!err && nelem >= 0) {
             /* got an array, but not of strings */
             return set_alt_each_loop(loop, dset, ivar, nelem);

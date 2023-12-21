@@ -858,6 +858,42 @@ int generate (const char *line, DATASET *dset,
     return p.err;
 }
 
+/* Get a pointer to  (sub-)object, if possible, and if so write
+   its GretlType into @t.
+*/
+
+void *genr_get_pointer (const char *line, DATASET *dset,
+			GretlType *t, int *err)
+{
+    void *ret = NULL;
+
+    if (line == NULL) {
+	*err = E_ARGS;
+    } else {
+	genflags flags = 0;
+	parser p;
+
+	flags = P_PRIV | P_QUIET | P_PTR;
+	*err = realgen(line, &p, dset, NULL, flags, UNK);
+	if (!*err) {
+	    *t = p.ret->t;
+	    if (p.ret->t == ARRAY) {
+		ret = p.ret->v.a;
+		p.ret->v.a = NULL;
+	    } else {
+		*err = E_TYPES;
+	    }
+	}
+	gen_cleanup(&p);
+    }
+
+#if GDEBUG
+    fprintf(stderr, "genr_get_pointer: returning %p\n", ret);
+#endif
+
+    return ret;
+}
+
 /* retrieve a scalar result directly */
 
 static double generate_scalar_full (const char *s, DATASET *dset,

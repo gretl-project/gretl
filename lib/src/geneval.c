@@ -21802,6 +21802,9 @@ void gen_save_or_print (parser *p, PRN *prn)
         }
     } else if (p->flags & P_DECL) {
         do_declaration(p);
+    } else if (p->flags & P_PTR) {
+	/* responding to genr_get_pointer() */
+	;
     } else {
         save_generated_var(p, prn);
     }
