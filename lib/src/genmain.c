@@ -858,33 +858,38 @@ int generate (const char *line, DATASET *dset,
     return p.err;
 }
 
-/* Get a pointer to  (sub-)object, if possible, and if so write
-   its GretlType into @t.
+/* Get a pointer to a sub-object of type @gtype (array or bundle),
+   if possible.
 */
 
-void *genr_get_pointer (const char *line, DATASET *dset,
-			GretlType *t, int *err)
+void *genr_get_pointer (const char *spec, GretlType gtype, int *errp)
 {
+    genflags flags = P_PRIV | P_QUIET | P_PTR;
     void *ret = NULL;
+    parser p;
+    int err;
 
-    if (line == NULL) {
-	*err = E_ARGS;
-    } else {
-	genflags flags = 0;
-	parser p;
+    err = realgen(spec, &p, NULL, NULL, flags, UNK);
 
-	flags = P_PRIV | P_QUIET | P_PTR;
-	*err = realgen(line, &p, dset, NULL, flags, UNK);
-	if (!*err) {
-	    *t = p.ret->t;
-	    if (p.ret->t == ARRAY) {
-		ret = p.ret->v.a;
-		p.ret->v.a = NULL;
-	    } else {
-		*err = E_TYPES;
-	    }
+    if (!err) {
+	if (p.tree->t != BMEMB && p.tree->t != OSL) {
+	    /* we didn't get a sub-object */
+	    err = E_TYPES;
+	} else if (gtype == GRETL_TYPE_ARRAY && p.ret->t == ARRAY) {
+	    ret = p.ret->v.a;
+	    p.ret->v.a = NULL;
+	} else if (gtype == GRETL_TYPE_BUNDLE && p.ret->t == BUNDLE) {
+	    ret = p.ret->v.b;
+	    p.ret->v.b = NULL;
+	} else {
+	    err = E_TYPES;
 	}
-	gen_cleanup(&p);
+    }
+
+    gen_cleanup(&p);
+
+    if (errp != NULL) {
+	*errp = err;
     }
 
 #if GDEBUG

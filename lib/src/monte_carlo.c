@@ -591,7 +591,7 @@ void gretl_loop_destroy (LOOPSET *loop)
         return;
     }
 
-#if 1 || COMP_DEBUG || LOOP_DEBUG
+#if COMP_DEBUG || LOOP_DEBUG
     fprintf(stderr, "destroying LOOPSET at %p\n", (void *) loop);
 #endif
 
@@ -622,9 +622,6 @@ void gretl_loop_destroy (LOOPSET *loop)
     if (loop->mrecords != NULL) {
         free(loop->mrecords);
     }
-
-    fprintf(stderr, "HERE destroy loop, eachstrs %p, eachname '%s'\n",
-	    (void *) loop->eachstrs, loop->eachname);
 
     if (loop->eachstrs != NULL && loop->eachtype != GRETL_TYPE_STRINGS) {
         strings_array_free(loop->eachstrs, loop->itermax);
@@ -966,24 +963,63 @@ static int list_vars_to_strings (LOOPSET *loop, const int *list,
     return err;
 }
 
-static void *get_eachvar_by_name (const char *s, GretlType *t,
-				  DATASET *dset)
+static gretl_bundle *look_up_bundle (const char *s)
+{
+    gretl_bundle *b = get_bundle_by_name(s);
+
+    if (b == NULL) {
+	int err = 0;
+	b = genr_get_pointer(s, GRETL_TYPE_BUNDLE, &err);
+    }
+
+    return b;
+}
+
+static gretl_array *look_up_array (const char *s)
+{
+    gretl_array *a = get_array_by_name(s);
+
+    if (a == NULL) {
+	int err = 0;
+	a = genr_get_pointer(s, GRETL_TYPE_ARRAY, &err);
+    }
+
+    return a;
+}
+
+static gretl_array *look_up_strings_array (const char *s)
+{
+    gretl_array *a = get_strings_array_by_name(s);
+
+    if (a == NULL) {
+	a = look_up_array(s);
+	if (a != NULL) {
+	    if (gretl_array_get_type(a) != GRETL_TYPE_STRINGS) {
+		a = NULL;
+	    }
+	}
+    }
+
+    return a;
+}
+
+static void *get_eachvar_by_name (const char *s, GretlType *t)
 {
     void *ptr = NULL;
 
     if (*t == GRETL_TYPE_LIST) {
         ptr = get_list_by_name(s);
     } else if (*t == GRETL_TYPE_STRINGS) {
-        ptr = get_strings_array_by_name(s);
+        ptr = look_up_strings_array(s);
     } else if (*t == GRETL_TYPE_BUNDLE) {
-        ptr = get_bundle_by_name(s);
+        ptr = look_up_bundle(s);
     } else {
         /* type not yet determined */
         if ((ptr = get_list_by_name(s)) != NULL) {
             *t = GRETL_TYPE_LIST;
-        } else if ((ptr = get_strings_array_by_name(s)) != NULL) {
+        } else if ((ptr = look_up_strings_array(s)) != NULL) {
             *t = GRETL_TYPE_STRINGS;
-        } else if ((ptr = get_bundle_by_name(s)) != NULL) {
+        } else if ((ptr = look_up_bundle(s)) != NULL) {
             *t = GRETL_TYPE_BUNDLE;
         }
     }
@@ -1011,17 +1047,17 @@ static int loop_list_refresh (LOOPSET *loop, DATASET *dset)
         err = make_dollar_substitutions(vname, VNAMELEN, loop,
                                         dset, NULL, OPT_T);
         if (!err) {
-            eachvar = get_eachvar_by_name(vname, &loop->eachtype, dset);
+            eachvar = get_eachvar_by_name(vname, &loop->eachtype);
         }
     } else if (*loop->eachname == '@') {
         /* @-string substitution required */
         strval = get_string_by_name(loop->eachname + 1);
         if (strval != NULL && strlen(strval) < VNAMELEN) {
-            eachvar = get_eachvar_by_name(strval, &loop->eachtype, dset);
+            eachvar = get_eachvar_by_name(strval, &loop->eachtype);
         }
     } else {
         /* no string substitution needed */
-        eachvar = get_eachvar_by_name(loop->eachname, &loop->eachtype, dset);
+        eachvar = get_eachvar_by_name(loop->eachname, &loop->eachtype);
     }
 
     /* note: if @eachvar is an array of strings then loop->eachstrs
@@ -1108,51 +1144,6 @@ static GretlType find_target_in_parentage (LOOPSET *loop,
     return GRETL_TYPE_NONE;
 }
 
-#if 1 /* not yet */
-
-static int try_for_sub_object (LOOPSET *loop, const char *s,
-			       DATASET *dset, int *nf,
-			       int *idxmax)
-{
-    char vname[VNAMELEN];
-    GretlType t;
-    gchar *line;
-    int err;
-
-    sprintf(vname, "EACHVAR__%p", (void *) loop);
-    line = g_strdup_printf("%s=%s", vname, s);
-    err = generate(line, dset, GRETL_TYPE_ANY, OPT_P, NULL);
-    fprintf(stderr, "HERE genr err %d from '%s'\n", err, line);
-    g_free(line);
-    if (err) {
-	return err;
-    }
-
-    t = genr_get_last_output_type();
-
-    if (t == GRETL_TYPE_ARRAY) {
-	gretl_array *a = get_array_by_name(vname);
-	GretlType at = gretl_array_get_type(a);
-	int len = gretl_array_get_length(a);
-
-	if (at == GRETL_TYPE_STRINGS) {
-	    loop->eachtype = at;
-	    strcpy(loop->eachname, vname);
-	    *nf = len;
-	} else {
-	    gretl_array_destroy(a);
-            *idxmax = len;
-        }
-    } else {
-	/* bundle might be supported? */
-	err = E_TYPES;
-    }
-
-    return err;
-}
-
-#endif
-
 /* We're looking at a "foreach" loop with a single field after the
    index variable, so it's most likely a loop over a list or array.
 
@@ -1200,7 +1191,7 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf,
     if ((list = get_list_by_name(s)) != NULL) {
         t = GRETL_TYPE_LIST;
         len = list[0];
-    } else if ((a = get_array_by_name(s)) != NULL) {
+    } else if ((a = look_up_array(s)) != NULL) {
         t = gretl_array_get_type(a);
         len = gretl_array_get_length(a);
         if (t != GRETL_TYPE_STRINGS) {
@@ -1215,12 +1206,7 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf,
     }
 
     if (t == GRETL_TYPE_NONE) {
-#if 1
-	fprintf(stderr, "HERE call try...\n");
-	err = try_for_sub_object(loop, s, dset, nf, idxmax);
-#else
 	err = E_UNKVAR;
-#endif
     } else {
         loop->eachtype = t;
         *loop->eachname = '\0';

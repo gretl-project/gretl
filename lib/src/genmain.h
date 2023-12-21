@@ -161,8 +161,7 @@ GENERATOR *genr_compile (const char *s, DATASET *dset,
 			 GretlType gtype, gretlopt opt,
 			 PRN *prn, int *err);
 
-void *genr_get_pointer (const char *line, DATASET *dset,
-			GretlType *t, int *err);
+void *genr_get_pointer (const char *spec, GretlType gtype, int *errp);
 
 int execute_genr (GENERATOR *genr, DATASET *dset, PRN *prn);
 
