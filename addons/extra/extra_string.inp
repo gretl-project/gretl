@@ -225,7 +225,7 @@ function string mat2latex (matrix mprint, bundle useropts[null])
         printf "\\hline\n"
         printf "\end{tabular}\n"
 
-    outfile --close
+    end outfile
 
     return ret
 end function

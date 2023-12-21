@@ -8,7 +8,7 @@ function scalar dateton(scalar t)
     else
         string datefmt = "%d-%d-%d"
     endif
-    
+
     if (pd==5) || (pd==6) || (pd==7)
         sscanf(s,datefmt, yy, mm, dd)
         ret = yy + ok(mm)*(mm-1)/12 + ok(dd)*(dd-1)*12/365
@@ -22,8 +22,8 @@ function scalar dateton(scalar t)
     return ret
 end function
 
-function string do_xtics(scalar t1, scalar t2, scalar d1, scalar d2, 
-			 scalar n)
+function string do_xtics(scalar t1, scalar t2, scalar d1, scalar d2,
+                         scalar n)
 
     string ret = "set xtics("
     s = seq(1,n)/n - 1/(2*n)
@@ -31,14 +31,14 @@ function string do_xtics(scalar t1, scalar t2, scalar d1, scalar d2,
     t = t1 + (t2 - t1)/(2*n)
 
     loop for i = 1 .. n
-	string tmp = sprintf("'%s' %g", obslabel(round(t)), s_d[i])
-	ret += tmp
-	if i==n
-	    ret += ")"
-	else
-	    ret += ", "
-	endif
-	t += (t2 - t1)/n
+        string tmp = sprintf("'%s' %g", obslabel(round(t)), s_d[i])
+        ret += tmp
+        if i==n
+            ret += ")"
+        else
+            ret += ", "
+        endif
+        t += (t2 - t1)/n
     endloop
 
     return ret
@@ -51,48 +51,48 @@ function string gig_grph(string yname, series u, series h)
 
     scalar tmpfname = int(1000*muniform(1,1))
     if $windows
-	tmpfile=sprintf("@dotdir\\gig%d.gp", tmpfname)
+        tmpfile=sprintf("@dotdir\\gig%d.gp", tmpfname)
     else
-	tmpfile=sprintf("@dotdir/gig%d.gp", tmpfname)
+        tmpfile=sprintf("@dotdir/gig%d.gp", tmpfname)
     endif
 
     scalar t1 = $t1
     scalar t2 = $t2
 
     ### FIXME 10/11/2020: this can probably be made much smarter by using
-    ### more recent calendar functions 
+    ### more recent calendar functions
     scalar d1 = dateton(t1)
     scalar d2 = dateton(t2)
     scalar incr = (d2-d1)/($nobs-1)
     series xt = d1 + incr*(time - min(time))
 
     set force_decpoint on
-  
+
     outfile "@tmpfile" --write
-    printf "set nokey\n"
-#    printf "unset xzeroaxis\n"
+        printf "set nokey\n"
+        #    printf "unset xzeroaxis\n"
 
-    printf "set title '%s: Residuals and conditional sd'\n", yname
-    printf "%s\n", do_xtics(t1, t2, d1, d2, 6)
-  
-    printf "plot '-' using 1:2 title 'residual' w lines, \\\n"
-    printf "'-' using 1:2 w lines lt 2, \\\n"
-    printf "'-' using 1:2 w lines lt 2 \n"
+        printf "set title '%s: Residuals and conditional sd'\n", yname
+        printf "%s\n", do_xtics(t1, t2, d1, d2, 6)
 
-    loop for t = t1 .. t2
-	printf "%12.6f %12.6f\n", xt[t], u[t]
-    endloop
-    printf "e\n"
-    loop for t = t1 .. t2
-	printf "%12.6f %12.6f\n", xt[t], s[t]
-    endloop
-    printf "e\n"
-     loop for t = t1 .. t2
-     	printf "%12.6f %12.6f\n", xt[t], -s[t]
-     endloop
-     printf "e\n"
+        printf "plot '-' using 1:2 title 'residual' w lines, \\\n"
+        printf "'-' using 1:2 w lines lt 2, \\\n"
+        printf "'-' using 1:2 w lines lt 2 \n"
 
-    outfile --close
+        loop for t = t1 .. t2
+            printf "%12.6f %12.6f\n", xt[t], u[t]
+        endloop
+        printf "e\n"
+        loop for t = t1 .. t2
+            printf "%12.6f %12.6f\n", xt[t], s[t]
+        endloop
+        printf "e\n"
+        loop for t = t1 .. t2
+            printf "%12.6f %12.6f\n", xt[t], -s[t]
+        endloop
+        printf "e\n"
+
+    end outfile
     set force_decpoint off
 
     return tmpfile
@@ -107,32 +107,32 @@ function string gig_dgrph(matrix X, string desc)
 
     scalar tmpfname = int(1000*muniform(1,1))
     if $windows
-	 tmpfile = sprintf("@dotdir\\gig%d.gp", tmpfname)
+        tmpfile = sprintf("@dotdir\\gig%d.gp", tmpfname)
     else
-	 tmpfile = sprintf("@dotdir/gig%d.gp", tmpfname)
+        tmpfile = sprintf("@dotdir/gig%d.gp", tmpfname)
     endif
 
     set force_decpoint on
-  
+
     outfile "@tmpfile" --write
-    printf "set nokey\n"
-    printf "set yzeroaxis\n"
+        printf "set nokey\n"
+        printf "set yzeroaxis\n"
 
-    printf "set title 'std residuals: kernel density vs %s'\n", desc
-  
-    printf "plot '-' using 1:2 title 'kernel' w lines, \\\n"
-    printf "'-' using 1:2 title 'theoretical' w lines lt 2 \n"
+        printf "set title 'std residuals: kernel density vs %s'\n", desc
 
-    loop for i = 1 .. n
-	printf "%12.6f %12.6f\n", x[i], kd[i]
-    endloop
-    printf "e\n"
-    loop for i = 1 .. n
-	printf "%12.6f %12.6f\n", x[i], td[i]
-    endloop
-    printf "e\n"
+        printf "plot '-' using 1:2 title 'kernel' w lines, \\\n"
+        printf "'-' using 1:2 title 'theoretical' w lines lt 2 \n"
 
-    outfile --close
+        loop for i = 1 .. n
+            printf "%12.6f %12.6f\n", x[i], kd[i]
+        endloop
+        printf "e\n"
+        loop for i = 1 .. n
+            printf "%12.6f %12.6f\n", x[i], td[i]
+        endloop
+        printf "e\n"
+
+    end outfile
     set force_decpoint off
 
     return tmpfile
@@ -146,17 +146,17 @@ end function
 function matrix pdf_skt(matrix *e, scalar df, scalar ht_skew)
     matrix ret = NA
 
-    if (df>2) 
-	# sqrt(pi) = 1.77245385090551602729816748334
+    if (df>2)
+        # sqrt(pi) = 1.77245385090551602729816748334
         scalar q = lngamma((df+1)/2) - lngamma(df/2)
-	scalar c = exp(q)/(sqrt(df-2)*1.77245385090551602729816748334)
+        scalar c = exp(q)/(sqrt(df-2)*1.77245385090551602729816748334)
 
-	scalar a = 4 * ht_skew * c * ((df-2)/(df-1))
-	scalar b = sqrt(1 + 3*ht_skew^2 - a^2)
-	matrix d = (b.* e + a)
-	sk = (d.<0) .* (1-ht_skew) + (d.>0) .* (1+ht_skew)
-	d = d ./ sk
-	ret = b*c / exp( ((df+1)/2) * ln(1+(d.^2/(df-2))) )
+        scalar a = 4 * ht_skew * c * ((df-2)/(df-1))
+        scalar b = sqrt(1 + 3*ht_skew^2 - a^2)
+        matrix d = (b.* e + a)
+        sk = (d.<0) .* (1-ht_skew) + (d.>0) .* (1+ht_skew)
+        d = d ./ sk
+        ret = b*c / exp( ((df+1)/2) * ln(1+(d.^2/(df-2))) )
     endif
 
     return ret
@@ -168,18 +168,18 @@ function matrix pdf_skged(matrix *x, scalar ni, scalar ta)
     lgp  = lngamma(p)
     lg2p = lngamma(2*p)
     lg3p = lngamma(3*p)
-    tap1 = 1 + ta    
-    tam1 = 1 - ta    
+    tap1 = 1 + ta
+    tam1 = 1 - ta
 
     scalar beta = 0.5 * exp(lg3p - lgp) * (tap1^3 + tam1^3) - \
-        4*ta^2 * exp(2 * (lg2p - lgp))
+      4*ta^2 * exp(2 * (lg2p - lgp))
     beta = sqrt(beta)
 
     # m: mode
     scalar m = - 2*ta/beta * exp( lg2p - lgp )
     scalar lnorm = ln(0.5 * beta) - lngamma(p+1)
 
-    matrix sk = (x.<m) .* (-tam1) + (x.>m) .* tap1 
+    matrix sk = (x.<m) .* (-tam1) + (x.>m) .* tap1
     matrix z = (x-m) ./ sk
     matrix ret = lnorm - (z.^ni)
     return exp(ret)
@@ -195,52 +195,52 @@ function void gig_dplot(bundle *model)
 
     if dtype == 0 # Normal
         matrix d = pdf(z, e)
-	string descstr = "Std Normal"
+        string descstr = "Std Normal"
 
     elif dtype == 1 # Student's t
-	scalar ni = theta[ncoef]
-	scalar hadj = sqrt(1-2/ni)
+        scalar ni = theta[ncoef]
+        scalar hadj = sqrt(1-2/ni)
         matrix d = pdf(t, ni, e/hadj)/hadj
-	descstr = sprintf("t(%g)", ni)
+        descstr = sprintf("t(%g)", ni)
 
     elif dtype == 2 # GED
-	scalar ni = theta[ncoef]
-	scalar p = 1/ni
-	scalar lg1 = lngamma(p)
-	scalar lg3 = lngamma(3*p)
-	    
-	scalar lC = ln(ni/2) + 0.5*(lg3 - 3*lg1)
-	scalar k = exp(0.5*(lg1-lg3)) * (0.5^p)
-	matrix u = abs(e)/k
-	matrix d = exp(lC - 0.5*(u.^ni))
-	descstr = sprintf("GED(%g)", ni)
-	
+        scalar ni = theta[ncoef]
+        scalar p = 1/ni
+        scalar lg1 = lngamma(p)
+        scalar lg3 = lngamma(3*p)
+
+        scalar lC = ln(ni/2) + 0.5*(lg3 - 3*lg1)
+        scalar k = exp(0.5*(lg1-lg3)) * (0.5^p)
+        matrix u = abs(e)/k
+        matrix d = exp(lC - 0.5*(u.^ni))
+        descstr = sprintf("GED(%g)", ni)
+
     elif dtype == 3 # Skewed-T
-	scalar ni = theta[ncoef-1]
-	scalar alpha = tanh(theta[ncoef])
-	matrix d = pdf_skt(&e, ni, alpha)
-	descstr = sprintf("Skewed t(%g, %g)", ni, alpha)
+        scalar ni = theta[ncoef-1]
+        scalar alpha = tanh(theta[ncoef])
+        matrix d = pdf_skt(&e, ni, alpha)
+        descstr = sprintf("Skewed t(%g, %g)", ni, alpha)
 
     elif dtype == 4 # Skewed-GED
-	scalar ni = theta[ncoef-1]
-	scalar alpha = tanh(theta[ncoef])
-	matrix d = pdf_skged(&e, ni, alpha)
-	descstr = sprintf("Skewed GED(%g, %g)", ni, alpha)
+        scalar ni = theta[ncoef-1]
+        scalar alpha = tanh(theta[ncoef])
+        matrix d = pdf_skged(&e, ni, alpha)
+        descstr = sprintf("Skewed GED(%g, %g)", ni, alpha)
 
     endif
 
     string tmpfile = gig_dgrph(X~d, descstr)
     gnuplot --input="@tmpfile" --output="display"
 end function
-    
+
 function void GUI_gig_plot(bundle *model, int ptype[0:2:0] \
                            "Plot type" {"Time series", "Density", "Forecast"})
     if ptype == 0
         gig_plot(&model)
     elif ptype == 1
-        gig_dplot(&model)  
+        gig_dplot(&model)
     elif ptype == 2
-	matrix tmp = gig_var_fcast(&model, 15, 1024)
-        gig_vfgraph(tmp, model, 60, 0.9)  
+        matrix tmp = gig_var_fcast(&model, 15, 1024)
+        gig_vfgraph(tmp, model, 60, 0.9)
     endif
 end function
