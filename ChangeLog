@@ -4,12 +4,14 @@ version 2024a, in progress
   case of showing multiple bands
 - "info" command: add --to-file and --from-file options for
   manipulating the description of a dataset
+- "loop foreach": support arrays and bundles that are located
+  inside other arrays or bundles
 - Fix broken backward compatibility in handling of backslash
   followed by double-quote in string literals
 - Fix bug: crash when plotting matrix data with the multiple
   bands option
-- Fix bug: restore ability to open JMulTi .dat files
-- GUI: some legibility fixes for dark GTK themes
+- Fix bug: restore support for reading JMulTi .dat files
+- GUI: apply some legibility fixes for dark GTK themes
 - GUI: enable the advertised keystrokes in file "browser"
   windows (bug #294)
 
