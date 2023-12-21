@@ -1198,7 +1198,7 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf,
             *idxmax = len;
             return 0;
         }
-    } else if ((b = get_bundle_by_name(s)) != NULL) {
+    } else if ((b = look_up_bundle(s)) != NULL) {
         t = GRETL_TYPE_BUNDLE;
         len = gretl_bundle_get_n_keys(b);
     } else {
