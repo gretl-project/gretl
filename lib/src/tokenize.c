@@ -3322,7 +3322,6 @@ static int check_for_list (CMD *cmd)
 	} else if ((cmd->ci == FREQ || cmd->ci == BDS) && (cmd->opt & OPT_X)) {
 	    ; /* using a matrix: may be OK */
 	} else {
-	    fprintf(stderr, "check_for_list: cmd->list is NULL\n");
 	    cmd->err = E_ARGS;
 	}
     } else {
