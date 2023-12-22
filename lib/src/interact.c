@@ -82,16 +82,30 @@ static int install_function_package (const char *pkgname,
 
 static int strip_inline_comments (char *s)
 {
-    int ret = 0;
+    char *p = strchr(s, '#');
 
-    if (*s == '#') {
+    /* We return 1 if and only if the entire line is a #-comment;
+       otherwise we try to ensure that if '#' occurs in its role
+       as comment-opener, the comment is trimmed off.
+    */
+
+    if (p - s == 0) {
         /* the entire line is a comment */
-        ret = 1;
-    } else if (strstr(s, "#")) {
+        return 1;
+    } else if (p == NULL) {
+        /* no '#' in line */
+        return 0;
+    }
+
+    if (strchr(p+1, '"') == NULL &&
+        strchr(p+1, '{') == NULL) {
+        /* '#' must start a comment */
+        *p = '\0';
+    } else {
         int quoted = 0;
         int braced = 0;
-        char *p = s;
 
+        p = s;
         while (*p) {
             if (bare_quote(p, s)) {
                 quoted = !quoted;
@@ -112,7 +126,7 @@ static int strip_inline_comments (char *s)
         }
     }
 
-    return ret;
+    return 0;
 }
 
 static void toggle_ccmt (CMD *cmd, int state)
