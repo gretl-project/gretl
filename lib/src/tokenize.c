@@ -752,20 +752,12 @@ static int push_quoted_token (CMD *c, const char *s,
 	const char *p = s + 1;
 	int i = 0;
 
-	if (c->ci == PRINT && !esc) {
-	    /* "print" with no occurrences of backslash-quote */
+	if (c->ci == PRINTF || (c->ci == PRINT && !esc)) {
+	    /* either a format string, or "print" with no
+	       backslash-quote escapes
+	    */
 	    *tok = '\0';
 	    strncat(tok, p, len);
-	} else if (c->ci == PRINTF) {
-	    /* format strings: don't mess! */
-	    while (*p) {
-		if (*p == '"' && *(p-1) != '\\') {
-		    tok[i] = '\0';
-		    break;
-		} else {
-		    tok[i++] = *p++;
-		}
-	    }
 	} else {
 	    /* unescape escaped quotes */
 	    while (*p) {
@@ -860,23 +852,36 @@ static int wild_spn (const char *s)
 
 static int closing_quote_pos (const char *s, int ci, int *esc)
 {
-    int n = 0;
+    int i, j, bsl;
 
-    s++; /* skip the opening quote */
-    while (*s) {
-	if (ci == PRINT && *s == '"' && *(s-1) == '\\') {
-	    if (*(s+1) == '\0') {
-		return n;
+    for (i=1; s[i]; i++) {
+	if (s[i] == '"' && ci == PRINT) {
+	    if (s[i-1] == '\\') {
+		if (s[i+1] == '\0') {
+		    /* got the closer */
+		    return i-1;
+		} else {
+		    /* the quote is escaped */
+		    *esc = 1;
+		}
 	    } else {
-		*esc = 1;
+		/* not preceded by backslash */
+		return i-1;
+	    }
+	} else if (s[i] == '"') {
+	    /* not plain PRINT */
+	    bsl = 0;
+	    for (j=i-1; j>=1; j--) {
+		if (s[j] == '\\') {
+		    bsl++;
+		} else {
+		    break;
+		}
+	    }
+	    if (bsl % 2 == 0) {
+		return i-1;
 	    }
 	}
-	if (*s == '"' && *(s-1) != '\\') {
-	    /* got the closer */
-	    return n;
-	}
-	s++;
-	n++;
     }
 
     return -1;

@@ -2457,6 +2457,11 @@ void lex (parser *p)
 	    } else if (p->ch == '"') {
 		p->idstr = get_quoted_string(p, prevsyms[0]);
 		return;
+	    } else if (p->ch == '#' && prevsyms[0] == CSTR) {
+		/* 2023-12-22: an uncaught inline comment? */
+		p->ch = '\0';
+		p->sym = EOT;
+		return;
 	    } else {
 		parser_print_input(p);
 		if (isprint(p->ch)) {
