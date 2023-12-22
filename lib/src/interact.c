@@ -294,7 +294,7 @@ int parse_command_line (ExecState *s, DATASET *dset, void *ptr)
     gretl_error_clear();
 
 #if CMD_DEBUG
-    fprintf(stderr, "parse_command_line: '%s' (nosub=%d)\n",
+    fprintf(stderr, "\nparse_command_line: '%s' (nosub=%d)\n",
             line, cmd_nosub(cmd) ? 1 : 0);
 #endif
 
