@@ -4487,6 +4487,20 @@ static int print_add_omit_varnames (const char *s, PRN *prn)
     return 0;
 }
 
+const char *get_h0_string_for_test (ModelTestType ttype)
+{
+    const char *ret = NULL;
+    int i;
+
+    for (i=0; tstrings[i].ID < GRETL_TEST_MAX; i++) {
+	if (ttype == tstrings[i].ID) {
+	    ret = tstrings[i].H0;
+	}
+    }
+
+    return ret;
+}
+
 static void gretl_test_print_h_0 (const ModelTest *test, int heading,
 				  PRN *prn)
 {

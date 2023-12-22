@@ -485,6 +485,8 @@ void gretl_model_print_last_test (const MODEL *pmod, PRN *prn);
 void gretl_model_test_print_direct (const ModelTest *test, int heading,
 				    PRN *prn);
 
+const char *get_h0_string_for_test (ModelTestType ttype);
+
 void gretl_model_destroy_tests (MODEL *pmod);
 
 void model_list_to_string (int *list, char *buf);

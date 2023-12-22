@@ -1966,6 +1966,9 @@ int reset_test (MODEL *pmod, DATASET *dset,
 	pval = snedecor_cdf_comp(addv, aux.dfd, RF);
 
 	if (!silent) {
+	    const char *h0 = get_h0_string_for_test(GRETL_TEST_RESET);
+
+	    pprintf(prn, "%s: %s\n", _("Null hypothesis"), _(h0));
 	    pprintf(prn, "%s: F = %f,\n", _("Test statistic"), RF);
 	    pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"),
 		    addv, aux.dfd, RF, pval);
