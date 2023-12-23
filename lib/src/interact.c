@@ -86,7 +86,10 @@ static int strip_inline_comments (char *s)
 
     /* We return 1 if and only if the entire line is a #-comment;
        otherwise we try to ensure that if '#' occurs in its role
-       as comment-opener, the comment is trimmed off.
+       as comment-opener, the comment is trimmed off. The only
+       cases where '#' is not a comment-opener are when it
+       occurs in a string literal, or inside "{...}" in the
+       supplement to a plotting command.
     */
 
     if (p - s == 0) {
@@ -98,7 +101,7 @@ static int strip_inline_comments (char *s)
     }
 
     if (strchr(p+1, '"') == NULL &&
-        strchr(p+1, '{') == NULL) {
+        strchr(p+1, '}') == NULL) {
         /* '#' must start a comment */
         *p = '\0';
     } else {
