@@ -402,35 +402,31 @@ static int compute_ar_stats (MODEL *pmod, const DATASET *dset,
 static void get_wls_stats (MODEL *pmod, const DATASET *dset,
 			   gretlopt opt)
 {
-    double x, dy, wmean = 0.0, wsum = 0.0;
-    int yno = pmod->list[1];
+    const double *y = dset->Z[pmod->list[1]];
+    const double *w = dset->Z[pmod->nwt];
+    double wmean = 0.0, wsum = 0.0;
+    double dy, tss = 0;
     int t;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (model_missing(pmod, t)) {
-	    continue;
-	}
-	if (dset->Z[pmod->nwt][t] > 0) {
-	    wmean += dset->Z[pmod->nwt][t] * dset->Z[yno][t];
-	    wsum += dset->Z[pmod->nwt][t];
+	if (!model_missing(pmod, t) && w[t] > 0) {
+	    wmean += w[t] * y[t];
+	    wsum += w[t];
 	}
     }
 
     wmean /= wsum;
-    x = 0.0;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (model_missing(pmod, t) || dset->Z[pmod->nwt][t] == 0.0) {
-	    continue;
-	}
-	dy = dset->Z[yno][t] - wmean;
-	x += dset->Z[pmod->nwt][t] * dy * dy;
+	if (!model_missing(pmod, t) && w[t] > 0) {
+	    dy = y[t] - wmean;
+	    tss += w[t] * dy * dy;
     }
 
     if (!(opt & OPT_R)) {
-	pmod->fstt = ((x - pmod->ess) * pmod->dfd) / (pmod->dfn * pmod->ess);
+	pmod->fstt = ((tss - pmod->ess) * pmod->dfd) / (pmod->dfn * pmod->ess);
     }
-    pmod->rsq = (1 - (pmod->ess / x));
+    pmod->rsq = (1 - (pmod->ess / tss));
     pmod->adjrsq = 1 - ((1 - pmod->rsq) * (pmod->nobs - 1)/pmod->dfd);
 }
 
