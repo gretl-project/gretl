@@ -12,14 +12,14 @@ rr = 100*ldiff(djclose)
 
 set stopwatch
 bundle basemod = gig_setup(rr, 7, const)
-loop for i=0..4 --quiet
+loop i = 0 .. 4
     bundle b$i = basemod
     gig_set_dist(&b$i, i)
     gig_estimate(&b$i, 0)
 endloop
 t0 = $stopwatch
 
-loop for i=0..4 --quiet
+loop i = 0 .. 4
     gig_print(&b$i)
 endloop
 printf "\nElapsed time = %g seconds\n", t0

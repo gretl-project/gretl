@@ -30,7 +30,7 @@ function string do_xtics(scalar t1, scalar t2, scalar d1, scalar d2,
     s_d = d1 + s .* (d2 - d1)
     t = t1 + (t2 - t1)/(2*n)
 
-    loop for i = 1 .. n
+    loop i = 1 .. n
         string tmp = sprintf("'%s' %g", obslabel(round(t)), s_d[i])
         ret += tmp
         if i==n
@@ -49,13 +49,6 @@ function string gig_grph(string yname, series u, series h)
     series s = sqrt(h)
     smpl ok(s) --restrict
 
-    scalar tmpfname = int(1000*muniform(1,1))
-    if $windows
-        tmpfile=sprintf("@dotdir\\gig%d.gp", tmpfname)
-    else
-        tmpfile=sprintf("@dotdir/gig%d.gp", tmpfname)
-    endif
-
     scalar t1 = $t1
     scalar t2 = $t2
 
@@ -67,8 +60,9 @@ function string gig_grph(string yname, series u, series h)
     series xt = d1 + incr*(time - min(time))
 
     set force_decpoint on
+    string gpbuf = ""
 
-    outfile "@tmpfile" --write
+    outfile --buffer=gpbuf
         printf "set nokey\n"
         #    printf "unset xzeroaxis\n"
 
@@ -79,15 +73,15 @@ function string gig_grph(string yname, series u, series h)
         printf "'-' using 1:2 w lines lt 2, \\\n"
         printf "'-' using 1:2 w lines lt 2 \n"
 
-        loop for t = t1 .. t2
+        loop t = t1 .. t2
             printf "%12.6f %12.6f\n", xt[t], u[t]
         endloop
         printf "e\n"
-        loop for t = t1 .. t2
+        loop t = t1 .. t2
             printf "%12.6f %12.6f\n", xt[t], s[t]
         endloop
         printf "e\n"
-        loop for t = t1 .. t2
+        loop t = t1 .. t2
             printf "%12.6f %12.6f\n", xt[t], -s[t]
         endloop
         printf "e\n"
@@ -95,7 +89,7 @@ function string gig_grph(string yname, series u, series h)
     end outfile
     set force_decpoint off
 
-    return tmpfile
+    return gpbuf
 end function
 
 function string gig_dgrph(matrix X, string desc)
@@ -105,16 +99,10 @@ function string gig_dgrph(matrix X, string desc)
     kd = X[,2]
     td = X[,3]
 
-    scalar tmpfname = int(1000*muniform(1,1))
-    if $windows
-        tmpfile = sprintf("@dotdir\\gig%d.gp", tmpfname)
-    else
-        tmpfile = sprintf("@dotdir/gig%d.gp", tmpfname)
-    endif
-
     set force_decpoint on
+    string gpbuf = ""
 
-    outfile "@tmpfile" --write
+    outfile --buffer=gpbuf
         printf "set nokey\n"
         printf "set yzeroaxis\n"
 
@@ -123,11 +111,11 @@ function string gig_dgrph(matrix X, string desc)
         printf "plot '-' using 1:2 title 'kernel' w lines, \\\n"
         printf "'-' using 1:2 title 'theoretical' w lines lt 2 \n"
 
-        loop for i = 1 .. n
+        loop i = 1 .. n
             printf "%12.6f %12.6f\n", x[i], kd[i]
         endloop
         printf "e\n"
-        loop for i = 1 .. n
+        loop i = 1 .. n
             printf "%12.6f %12.6f\n", x[i], td[i]
         endloop
         printf "e\n"
@@ -135,12 +123,12 @@ function string gig_dgrph(matrix X, string desc)
     end outfile
     set force_decpoint off
 
-    return tmpfile
+    return gpbuf
 end function
 
 function void gig_plot(bundle *model)
-    string tmpfile = gig_grph(model.depvarname, model.uhat, model.h)
-    gnuplot --input="@tmpfile" --output="display"
+    string buffer = gig_grph(model.depvarname, model.uhat, model.h)
+    gnuplot --inbuf=buffer --output="display"
 end function
 
 function matrix pdf_skt(matrix *e, scalar df, scalar ht_skew)
@@ -229,8 +217,8 @@ function void gig_dplot(bundle *model)
 
     endif
 
-    string tmpfile = gig_dgrph(X~d, descstr)
-    gnuplot --input="@tmpfile" --output="display"
+    string buffer = gig_dgrph(X~d, descstr)
+    gnuplot --inbuf=buffer --output="display"
 end function
 
 function void GUI_gig_plot(bundle *model, int ptype[0:2:0] \

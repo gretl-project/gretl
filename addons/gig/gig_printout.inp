@@ -2,7 +2,7 @@ function string s_modeltype(bundle *mod)
     scalar type = mod.type
     scalar p    = mod.p
     scalar q    = mod.q
-    
+
     if type ==  0
         return sprintf("ARCH(%d) [Engle]", p)
     elif type ==  1
@@ -24,13 +24,13 @@ function string s_modeltype(bundle *mod)
     elif type ==  9
         return sprintf("free-APARCH(%d,%d)", p, q)
     endif
-end function			    
+end function
 
 function void gig_printHeader(bundle *mod)
 
     ncoeff  = rows(mod.coeff) # rows
     nfitted = rows(mod.active) # cols
-	
+
     type  = mod.type
     dtype = mod.cdist
     vtype = mod.vcvtype
@@ -46,7 +46,7 @@ function void gig_printHeader(bundle *mod)
     # DISTRIBUTIONS ordered by no. of extra params
 
     if dtype ==  0
-        printf " (Normal)" 
+        printf " (Normal)"
     elif dtype ==  1
         printf " (Student's t)"
     elif dtype ==  2
@@ -58,7 +58,7 @@ function void gig_printHeader(bundle *mod)
     endif
 
     if ascore_ok(type, dtype)
-	printf "*"
+        printf "*"
     endif
 
     # OBS used
@@ -66,12 +66,12 @@ function void gig_printHeader(bundle *mod)
     printf "\nDependent variable: %s", mod.depvarname
     printf "\nSample: %s -- %s (T = %d)", obslabel(t1), obslabel(t2), T
 
-    # VCV 
+    # VCV
 
     printf ", VCV method: "
 
     if vtype ==  0
-        printf "Robust" 
+        printf "Robust"
     elif vtype ==  1
         printf "Hessian"
     else
@@ -91,7 +91,7 @@ function void gig_printHeader(bundle *mod)
 end function
 
 function void GJR_alt_param(matrix coeff, matrix vcv, scalar p, scalar q,
-			    scalar nmX, scalar nvX, string svX)
+                            scalar nmX, scalar nvX, string svX)
 
     matrix c_om = coeff[nmX+1:nmX+nvX]
     matrix v_om = vcv[nmX+1:nmX+nvX, nmX+1:nmX+nvX]
@@ -103,47 +103,47 @@ function void GJR_alt_param(matrix coeff, matrix vcv, scalar p, scalar q,
     matrix v_bt = vcv[nmX+nvX+2*q+1:nmX+nvX+2*q+p, nmX+nvX+2*q+1:nmX+nvX+2*q+p]
 
     if nvX == 1
-    	parNames = "delta"
+        parNames = "delta"
     else
-	parNames = svX
+        parNames = svX
     endif
 
     cs = c_om ~ sqrt(diag(v_om))
 
-    if q == 1 
-	parNames += ",alpha,gamma"
+    if q == 1
+        parNames += ",alpha,gamma"
     else
-	loop for i=1..q --quiet
-	    parNames += ",alpha_$i"
-	endloop
-	loop for i=1..q --quiet
-	    parNames += ",gamma_$i"
-	endloop
+        loop i = 1 .. q
+            parNames += ",alpha_$i"
+        endloop
+        loop i = 1 .. q
+            parNames += ",gamma_$i"
+        endloop
     endif
 
-    c_ag2 = zeros(2*q,1)
-    J = zeros(2*q,2*q) # Jacobian
+    matrix c_ag2 = zeros(2*q,1)
+    matrix J = zeros(2*q,2*q) # Jacobian
 
     loop i = 1 .. q
-	alpha = c_ag[i]
-	gamma = c_ag[i+q]
-	c_ag2[i] = alpha * (1-gamma)^2
-	c_ag2[i+q] = 4 * alpha * gamma
-	J[i,i] = (1-gamma)^2
-	J[i,i+q] = -2 * alpha * (1-gamma)
-	J[i+q,i] = 4 * gamma
-	J[i+q,i+q] = 4 * alpha
+        alpha = c_ag[i]
+        gamma = c_ag[i+q]
+        c_ag2[i] = alpha * (1-gamma)^2
+        c_ag2[i+q] = 4 * alpha * gamma
+        J[i,i] = (1-gamma)^2
+        J[i,i+q] = -2 * alpha * (1-gamma)
+        J[i+q,i] = 4 * gamma
+        J[i+q,i+q] = 4 * alpha
     endloop
 
-    v_ag2 = qform(J, v_ag)
+    matrix v_ag2 = qform(J, v_ag)
     cs |= (c_ag2 ~ sqrt(diag(v_ag2)))
 
     if p == 1
-	parNames += ",beta"
-    else	
-	loop for i=1..p --quiet
-	    parNames += ",beta_$i"
-	endloop
+        parNames += ",beta"
+    else
+        loop i = 1 .. p
+            parNames += ",beta_$i"
+        endloop
     endif
 
     cs |= (c_bt ~ sqrt(diag(v_bt)))
@@ -172,115 +172,115 @@ function void maybe_gig_print(bundle *mod, scalar verbose[0:3:0])
     vcv = mod.vcv
 
     # Composing print-out results
-	
+
     coeff  = mod.coeff
     sel    = mod.active
     stderr = mod.stderr
 
-    cs2 = coeff[sel] ~ stderr 
+    cs2 = coeff[sel] ~ stderr
 
     # MEAN REGR
     if nmX > 0
         parNames = mod.mXnames
-	cs = cs2[1:nmX,]
+        cs = cs2[1:nmX,]
 
-	if cols(cs)>0
+        if cols(cs)>0
             printf "    Conditional mean equation\n"
             modprint cs parNames
-	endif
-    endif    
+        endif
+    endif
 
     # VAR REGR
 
     if nvX == 1
-    	parNames = "omega"
+        parNames = "omega"
     else
-	parNames = mod.vXnames
+        parNames = mod.vXnames
     endif
 
     #ALPHAS
     counter = nmX+nvX
-    if q == 1 
-	parNames += ",alpha"
+    if q == 1
+        parNames += ",alpha"
     else
-	loop for i=1..q --quiet
-	    parNames += ",alpha_$i"
-	endloop
+        loop i = 1 .. q
+            parNames += ",alpha_$i"
+        endloop
     endif
     counter += q
 
     #GAMMAS
     if has_asymm_fx(type)
-	if q == 1 
-	    parNames += ",gamma"
-	else		
-	    loop for i=1..q --quiet
-		parNames += ",gamma_$i"
-	    endloop
-	endif
+        if q == 1
+            parNames += ",gamma"
+        else
+            loop i = 1 .. q
+                parNames += ",gamma_$i"
+            endloop
+        endif
     endif
     counter += q
 
     #BETAS
     if type>0
-	if p == 1
-	    parNames += ",beta"
-	else	
-	    loop for i=1..p --quiet
-		parNames += ",beta_$i"
-	    endloop
-	endif
+        if p == 1
+            parNames += ",beta"
+        else
+            loop i = 1 .. p
+                parNames += ",beta_$i"
+            endloop
+        endif
     endif
     counter += p
-		
+
     #DELTAS
-    if (type==5) || (type==6) 
-	parNames += ",delta"
+    if (type==5) || (type==6)
+        parNames += ",delta"
     endif
 
     if type != 9
-	cs = cs2[nmX+1:nfitted,]
-	limit = nfitted-nmX
+        cs = cs2[nmX+1:nfitted,]
+        limit = nfitted-nmX
     else
-	cs = cs2[nmX+1:,]
-	limit = ncoeff-nmX
+        cs = cs2[nmX+1:,]
+        limit = ncoeff-nmX
     endif
 
     printf "    Conditional variance equation\n"
 
-    if dtype > 0    	
-	ndenspar = n_cdist_par(dtype)
-	csdens = cs[limit-ndenspar+1:limit,]
-	cs = cs[1:limit-ndenspar,]
+    if dtype > 0
+        ndenspar = n_cdist_par(dtype)
+        csdens = cs[limit-ndenspar+1:limit,]
+        cs = cs[1:limit-ndenspar,]
     endif
 
     modprint cs parNames
     if (type == 3) # GJR
-	GJR_alt_param(coeff, vcv, p, q, nmX, nvX, mod.vXnames)
+        GJR_alt_param(coeff, vcv, p, q, nmX, nvX, mod.vXnames)
     endif
 
-    if dtype > 0    	
-	# DENSITY FUNCTION PART
+    if dtype > 0
+        # DENSITY FUNCTION PART
 
-	/*
-	   FIXME (or maybe not):
-	   for asymmetric densities what we're actually printing here 
-	   is not really \lambda, but rather atanh(\lambda). In most cases,
-	   the difference is so minuscule to be inconsequential. Besides, 
-	   I don't think anyone is going to care. However, it's annoying.
-	   What shall we do? Transform the estimated parameter (and vcv) into 
-	   \lambda or just correct its label? Note that when we plot the 
-	   density (see gig_plot.inp) we do transform the parameter back to 
-	   \lambda, so we should at least be consistent. Hmmm.
-	 */
+        /*
+           FIXME (or maybe not):
+           for asymmetric densities what we're actually printing here
+           is not really \lambda, but rather atanh(\lambda). In most cases,
+           the difference is so minuscule to be inconsequential. Besides,
+           I don't think anyone is going to care. However, it's annoying.
+           What shall we do? Transform the estimated parameter (and vcv) into
+           \lambda or just correct its label? Note that when we plot the
+           density (see gig_plot.inp) we do transform the parameter back to
+           \lambda, so we should at least be consistent. Hmmm.
+        */
 
-	if dtype<3
-	    parNames = ",ni"
-	elif dtype<5
-	    parNames = "ni,lambda"
-	endif
-	printf "    Conditional density parameters\n"
-	modprint csdens parNames
+        if dtype<3
+            parNames = ",ni"
+        elif dtype<5
+            parNames = "ni,lambda"
+        endif
+        printf "    Conditional density parameters\n"
+        modprint csdens parNames
     endif
 
     # INFO
@@ -294,38 +294,38 @@ function void maybe_gig_print(bundle *mod, scalar verbose[0:3:0])
         # Starting Values
         printf "Starting/Fitted Values Comparison Matrix:\n\n"
         printf "       Initial         Final    Difference\n\n"
-    
+
         fitted  = mod.coeff
-	initial = mod.inipar
-        loop for i=1..ncoeff -q
-	    difff = initial[i] - fitted[i]
-	    printf "%14.7f%14.7f%14.7f\n", initial[i], fitted[i], difff
-        endloop			
+        initial = mod.inipar
+        loop i = 1 .. ncoeff
+            difff = initial[i] - fitted[i]
+            printf "%14.7f%14.7f%14.7f\n", initial[i], fitted[i], difff
+        endloop
         printf "\n"
     endif
 
 end function
 
 /*
- * Prints the requested info from the results matrix
- */
+   * Prints the requested info from the results matrix
+*/
 
 function void gig_print(bundle *b, scalar verbose[0:3:0])
 
     err = b.errcode
     if err == 0
-	gig_printHeader(&b)
-	maybe_gig_print(&b, verbose)
+        gig_printHeader(&b)
+        maybe_gig_print(&b, verbose)
     else
-	printf "\nESTIMATION FAILED: %s\n", errmsg(err)
+        printf "\nESTIMATION FAILED: %s\n", errmsg(err)
     endif
 
 end function
 
 /*
-  This function could be eliminated if the default verbose
-  value for gig_print were 1
-*/  
+   This function could be eliminated if the default verbose
+   value for gig_print were 1
+*/
 
 function void gig_bundle_print(bundle *b)
     gig_print(&b, 1)

@@ -1,113 +1,113 @@
-function series ln_pdf_skt(series *u, scalar df, scalar ht_skew)
+function series ln_pdf_skt(const series u, scalar df, scalar ht_skew)
     series ret = NA
 
-    if (df>2) 
-	# sqrt(pi) = 1.77245385090551602729816748334
+    if (df>2)
+        # sqrt(pi) = 1.77245385090551602729816748334
         scalar q = lngamma((df+1)/2) - lngamma(df/2)
-	scalar c = exp(q)/(sqrt(df-2)*1.77245385090551602729816748334)
+        scalar c = exp(q)/(sqrt(df-2)*1.77245385090551602729816748334)
 
-	scalar a = 4 * ht_skew * c * ((df-2)/(df-1))
-	scalar b = sqrt(1 + 3*ht_skew^2 - a^2)
-	series d = (b*u + a)
-	d = (d<0) ? d/(1-ht_skew) : d/(1+ht_skew)
-	ret = log(b) + log(c) - ((df+1)/2) * log(1+(d^2/(df-2)))
+        scalar a = 4 * ht_skew * c * ((df-2)/(df-1))
+        scalar b = sqrt(1 + 3*ht_skew^2 - a^2)
+        series d = (b*u + a)
+        d = (d<0) ? d/(1-ht_skew) : d/(1+ht_skew)
+        ret = log(b) + log(c) - ((df+1)/2) * log(1+(d^2/(df-2)))
     endif
 
     return ret
 end function
 
-function series ln_pdf_skged(series *x, scalar ni, scalar ta)
+function series ln_pdf_skged(const series x, scalar ni, scalar ta)
     scalar p  = 1/ni
 
     lgp  = lngamma(p)
     lg2p = lngamma(2*p)
     lg3p = lngamma(3*p)
-    tap1 = 1 + ta    
-    tam1 = 1 - ta    
+    tap1 = 1 + ta
+    tam1 = 1 - ta
 
     scalar beta = 0.5 * exp(lg3p - lgp) * (tap1^3 + tam1^3) - \
-        4*ta^2 * exp(2 * (lg2p - lgp))
+      4*ta^2 * exp(2 * (lg2p - lgp))
     beta = sqrt(beta)
 
     # m: mode
     scalar m = - 2*ta/beta * exp( lg2p - lgp )
     scalar lnorm = log(0.5 * beta) - lngamma(p+1)
 
-    series z = (x<m) ? (m-x)*beta/tam1 : (x-m)*beta/tap1 
+    series z = (x<m) ? (m-x)*beta/tam1 : (x-m)*beta/tap1
     ret = lnorm - (z^ni)
     return ret
 end function
 
 
 /*
- * One-size-fits-all Loglikelihood function
- */
+   * One-size-fits-all Loglikelihood function
+*/
 
-function series gig_loglik(series *e, series *h, scalar distrType, 
-			   matrix addpar, series *de, series *dh, 
-			   matrix *dd)
+function series gig_loglik(const series e, const series h, scalar distrType,
+                           matrix addpar, series *de, series *dh, matrix *dd)
+                           
+    # e: residuals, h: variance, distrType: code for densiity, addpar: additional
+    # parameters (eg df for Student's t), de: differential of residuals, dh: 
+    # differential for variance, dd: differential for addpar
+    
     series ret = NA
     de = NA
     dh = NA
     dd = {}
 
     if distrType == 0 # Normal
-	series u = e/h
+        series u = e/h
         ret = -.91893853320467274177 - 0.5*(log(h) + e*u)
-	de = -u
-	dh = -0.5/h * (1 - e*u)
+        de = -u
+        dh = -0.5/h * (1 - e*u)
 
     elif distrType == 1 # Student's t
-	scalar ni = addpar[1]
-	if (ni>2)
+        scalar ni = addpar[1]
+        if (ni>2)
 
-            # series hadj = sqrt(h*(1-2/ni))
-            # series u = e/hadj
-	    # ret = log(pdf(t, ni, u)/hadj)
+            series e2 = e*e
+            scalar K1 = lngamma((ni+1)/2) - lngamma(ni/2) - 0.5*log($pi*(ni-2))
+            series ret = K1 - 0.5 * log(h) - 0.5*(ni+1) * log(1 + e2/(h*(ni-2)))
 
-	    series e2 = e*e
-	    scalar K1 = lngamma((ni+1)/2) - lngamma(ni/2) - 0.5*log($pi*(ni-2))
-	    series ret = K1 - 0.5 * log(h) - 0.5*(ni+1) * log(1 + e2/(h*(ni-2)))
+            series den = e2 + (ni-2)*h
+            de = - (ni + 1) * e / den
+            dh = 0.5/h  * ((ni + 1)* e2 / den - 1)
 
-	    series den = e2 + (ni-2)*h
-	    de = - (ni + 1) * e / den
-	    dh = 0.5/h  * ((ni + 1)* e2 / den - 1)
+            scalar k1 = digamma((ni+1)/2) - digamma(ni/2) - 1/(ni-2)
+            series s1 = (ni + 1)/(ni - 2) * e2/den
+            series s2 = log(1 + e2/(h*(ni-2)))
 
-	    scalar k1 = digamma((ni+1)/2) - digamma(ni/2) - 1/(ni-2)
-	    series s1 = (ni + 1)/(ni - 2) * e2/den
-	    series s2 = log(1 + e2/(h*(ni-2)))
-
-	    matrix dd = 0.5*(k1 + s1 - s2)
-	endif
+            matrix dd = 0.5*(k1 + s1 - s2)
+        endif
 
     elif distrType == 2 # GED
-	scalar ni = addpar[1]
-	if (ni>0) 
-	    scalar p = 1/ni
-	    scalar lg1 = lngamma(p)
-	    scalar lg3 = lngamma(3*p)
-	    
-	    scalar lC = log(ni/2) + 0.5*(lg3 - 3*lg1)
-	    scalar k = exp(0.5*(lg1-lg3)) * (0.5^p)
-	    series u = abs(e)/(k*sqrt(h))
-	    ret = lC - 0.5*(u^ni + log(h))
-	endif
-	
+        scalar ni = addpar[1]
+        if (ni>0)
+            scalar p = 1/ni
+            scalar lg1 = lngamma(p)
+            scalar lg3 = lngamma(3*p)
+
+            scalar lC = log(ni/2) + 0.5*(lg3 - 3*lg1)
+            scalar k = exp(0.5*(lg1-lg3)) * (0.5^p)
+            series u = abs(e)/(k*sqrt(h))
+            ret = lC - 0.5*(u^ni + log(h))
+        endif
+
     elif distrType == 3 # Skewed-T
-	scalar ni = addpar[1]
-	if (ni>2) 
-	    series u = e/sqrt(h)
-	    alpha    = tanh(addpar[2])
-	    ret      = ln_pdf_skt(&u, ni, alpha) - 0.5*log(h)
-	endif
+        scalar ni = addpar[1]
+        if (ni>2)
+            series u = e/sqrt(h)
+            alpha    = tanh(addpar[2])
+            ret      = ln_pdf_skt(u, ni, alpha) - 0.5*log(h)
+        endif
 
     elif distrType == 4 # Skewed-GED
-	scalar ni = addpar[1]
-	if (ni>0) 
-	    series u = e/sqrt(h)
-	    alpha    = tanh(addpar[2])
-	    ret      = ln_pdf_skged(&u, ni, alpha) - 0.5*log(h)
-	endif
+        scalar ni = addpar[1]
+        if (ni>0)
+            series u = e/sqrt(h)
+            alpha    = tanh(addpar[2])
+            ret      = ln_pdf_skged(u, ni, alpha) - 0.5*log(h)
+        endif
 
     endif
 
@@ -115,322 +115,317 @@ function series gig_loglik(series *e, series *h, scalar distrType,
 end function
 
 /*
- * Computes conditional variance and errors for the APARCH model.
- * Returns an error code if any of the parameters is out of its domain.
- */
+   * Computes conditional variance and errors for the APARCH model.
+   * Returns an error code if any of the parameters is out of its domain.
+*/
 
-function scalar aparchFilter(series *depVar, series *h, series *e, 
-			     matrix *mReg, matrix *vX, 
-			     scalar p, scalar q, matrix *parameters,
-			     scalar is_asymmetric,
-			     matrix *deriv_h[null], matrix *deriv_e[null])
+function scalar aparchFilter(const series depVar, series *h, series *e,
+                             const matrix mReg, const matrix vX,
+                             scalar p, scalar q, const matrix parameters,
+                             scalar is_asymmetric,
+                             matrix *deriv_h[null], matrix *deriv_e[null])
 
-   nmX = cols(mReg)
-   nvX = cols(vX)
-   scalar base = nmX + nvX
+    nmX = cols(mReg)
+    nvX = cols(vX)
+    scalar base = nmX + nvX
 
-   a0pos = base + 1
-   a1pos = a0pos + q -1
-   g0pos = a1pos + 1
-   g1pos = g0pos + q - 1
-   b0pos = g1pos + 1
-   b1pos = b0pos + p - 1
-   dpos  = b1pos + 1
+    a0pos = base + 1
+    a1pos = a0pos + q -1
+    g0pos = a1pos + 1
+    g1pos = g0pos + q - 1
+    b0pos = g1pos + 1
+    b1pos = b0pos + p - 1
+    dpos  = b1pos + 1
 
-   matrix avec = {0}
-   matrix gvec = {0}
-   matrix bvec = {0}
+    matrix avec = {0}
+    matrix gvec = {0}
+    matrix bvec = {0}
 
-   matrix omegas = parameters[nmX+1:base]
+    matrix omegas = parameters[nmX+1:base]
 
-   if q > 0
-       matrix avec = parameters[a0pos:a1pos]
-       matrix gvec = parameters[g0pos:g1pos]
-   endif
+    if q > 0
+        matrix avec = parameters[a0pos:a1pos]
+        matrix gvec = parameters[g0pos:g1pos]
+    endif
 
-   if p > 0
-       matrix bvec = parameters[b0pos:b1pos]
-   endif
+    if p > 0
+        matrix bvec = parameters[b0pos:b1pos]
+    endif
 
-   delta = parameters[dpos]
+    delta = parameters[dpos]
 
-   err = 0
+    err = 0
 
-   # Checking
-   # checks on alpha & beta are disabled
-   err = err || ((nvX==1) && omegas[1] < 0)
-#  err = err || (sumc(avec) + sumc(bvec)) > 1
-#  err = err || minc(avec | bvec) < 0
-   err = err || delta <= 0
-   # shape? gamma?
+    # Checking
+    # checks on alpha & beta are disabled
+    err = err || ((nvX==1) && omegas[1] < 0)
+    #  err = err || (sumc(avec) + sumc(bvec)) > 1
+    #  err = err || minc(avec | bvec) < 0
+    err = err || delta <= 0
+    # shape? gamma?
 
-   minh = 0
+    minh = 0
 
-   if err == 0
-       # handle the conditional mean first
-       if nmX > 0
-           series e = depVar - (mReg * parameters[1:nmX])
-       else
-           series e = depVar
-       endif
-       scalar e0 = mean(e^2)
+    if err == 0
+        # handle the conditional mean first
+        series e = depVar
+        if nmX > 0
+            series e -= mReg * parameters[1:nmX]
+        endif
+        
+        scalar e0 = mean(e^2)
 
-       matrix tmp_ae = mlag({abs(e)}, seq(1,q), e0 ^ (1/delta))
-       if is_asymmetric == 1
-	   elag = mlag({e}, seq(1,q))
-       	   tmp_ae -= elag .* gvec'
-       endif
+        matrix tmp_ae = mlag({abs(e)}, seq(1,q), e0 ^ (1/delta))
+        if is_asymmetric == 1
+            elag = mlag({e}, seq(1,q))
+            tmp_ae -= elag .* gvec'
+        endif
 
-       # Raising a negative value to a non-integer 
-       # produces a complex number
-       err = (delta != floor(delta)) && (minc(minr(tmp_ae)) < 0) 
-       if (!err)
-	   Kd = tmp_ae .^ delta
-	   series h = Kd * avec
-	   
-	   # Var regressors
-	   if (nvX>1)
-	       series h += vX * omegas 
-	   else
-	       series h += omegas[1]
-	   endif
+        # Raising a negative value to a non-integer
+        # produces a complex number
+        err = (delta != floor(delta)) && (minc(minr(tmp_ae)) < 0)
+        if (!err)
+            Kd = tmp_ae .^ delta
+            series h = Kd * avec
 
-	   if p>0
-	       h = filter(h, null, bvec, e0)
-	   endif
+            # Var regressors
+            if (nvX>1)
+                series h += vX * omegas
+            else
+                series h += omegas[1]
+            endif
 
-	   err = min(h)<0 || max(!ok(h))
-	   # the loglikelihood function needs sigma^2
-	   if !err && (delta != 2)
-	       h = h^(2/delta)
-	   endif
-       endif
-   endif
+            if p>0
+                h = filter(h, 1, bvec, e0)
+            endif
 
-   if (!err && exists(deriv_h) && exists(deriv_e))
-       # FIXME: incomplete and experimental --------------------------------
-       #
-       # deriv_e and deriv_h should contain (eventually), the derivatives
-       # of (doh!) e and h, WITH RESPECT TO THE PARAMETERS
-       # what we have atm is a rough attempt to have it working in the GARCH 
-       # case; we'll see about generalising it later
+            err = min(h)<0 || max(!ok(h))
+            # the loglikelihood function needs sigma^2
+            if !err && (delta != 2)
+                h = h^(2/delta)
+            endif
+        endif
+    endif
 
-       # ----------- mean eq. --------------
-       if nmX > 0
-    	   deriv_e = -mReg
-       else
-    	   deriv_e = {}
-       endif
+    if (!err && exists(deriv_h) && exists(deriv_e))
+        # FIXME: incomplete and experimental --------------------------------
+        #
+        # deriv_e and deriv_h should contain (eventually), the derivatives
+        # of (doh!) e and h, WITH RESPECT TO THE PARAMETERS
+        # what we have atm is a rough attempt to have it working in the GARCH
+        # case; we'll see about generalising it later
 
-       scalar zcols = nvX + p + q * (1+is_asymmetric)
-       deriv_e ~= zeros(rows(vX), zcols)
+        # ----------- mean eq. --------------
+        
+        deriv_e = nmX > 0 ? -mReg : {}
+        scalar zcols = nvX + p + q * (1+is_asymmetric)
+        deriv_e ~= zeros(rows(vX), zcols)
 
-       # ----------- var eq. ---------------
-       # omega comes 2nd from last 
-       # mu comes last 
-       
-       # alphas
-       me = Kd
-       matrix eeff = tmp_ae.^(delta-1)
+        # ----------- var eq. ---------------
+        # omega comes 2nd from last
+        # mu comes last
 
-       if is_asymmetric == 1 # deltas
-       	   mh = -delta .* eeff .* ( elag .* avec' )
-	   me ~= mh
-       endif
+        # alphas
+        me = Kd
+        matrix eeff = tmp_ae.^(delta-1)
 
-       if (p > 0) # betas
-	   mh = mlag({h}, seq(1, p), e0)
-           me ~= mh
-       endif
-       
-       dr = rows(me) - rows(vX)
-       if (dr>0) 
-	   deriv_h = ( zeros(dr, cols(vX)) | vX ) ~ me
-       else
-	   deriv_h = vX ~ me
-       endif
+        if is_asymmetric == 1 # deltas
+            mh = -delta .* eeff .* ( elag .* avec' )
+            me ~= mh
+        endif
 
-       if nmX > 0 
-	   series tmpser = (e>0) ? -1 : 1
-	   matrix sgn = {tmpser}
+        if (p > 0) # betas
+            mh = mlag({h}, seq(1, p), e0)
+            me ~= mh
+        endif
 
-	   matrix mfocs = meanc({e} .* mReg)
-	   matrix dmu = zeros(rows(deriv_h), nmX)
+        dr = rows(me) - rows(vX)
+        if (dr>0)
+            deriv_h = ( zeros(dr, cols(vX)) | vX ) ~ me
+        else
+            deriv_h = vX ~ me
+        endif
 
-	   loop for i = 1 .. q
-	       matrix focs = eeff[,i] .* mlag(mReg, i)
-	       matrix tmpmat = (mlag(sgn, i) + gvec[i]) .* focs
-	       dmu += avec[i] .* tmpmat
-	   endloop
-	   dmu = dmu .* delta
+        if nmX > 0
+            series tmpser = (e>0) ? -1 : 1
+            matrix sgn_ = {tmpser}
 
-	   dmu[1,] = -2*mfocs*sumc(avec|bvec)
-	   deriv_h = dmu ~ deriv_h
-       endif
+            matrix mfocs = meanc({e} .* mReg)
+            matrix dmu = zeros(rows(deriv_h), nmX)
 
-       if p > 0
-	   loop for i = 1 .. cols(deriv_h)
-	       series tmpser = deriv_h[,i]
-	       tmpser = filter(tmpser, null, bvec)
-	       deriv_h[,i] = tmpser
-	   endloop
-       endif	   
+            loop i = 1 .. q
+                matrix focs = eeff[,i] .* mlag(mReg, i)
+                matrix tmpmat = (mlag(sgn_, i) + gvec[i]) .* focs
+                dmu += avec[i] .* tmpmat
+            endloop
+            dmu = dmu .* delta
 
-       if (delta != 2)
-	   deriv_h =  h^(delta/2) .* deriv_h .* (2/delta)
-       endif
-   endif
-   # -------------------------------------------------------------------
+            dmu[1,] = -2*mfocs*sumc(avec|bvec)
+            deriv_h = dmu ~ deriv_h
+        endif
 
-   return err
+        if p > 0
+            loop i = 1 .. cols(deriv_h)
+                series tmpser = deriv_h[,i]
+                tmpser = filter(tmpser, null, bvec)
+                deriv_h[,i] = tmpser
+            endloop
+        endif
+
+        if (delta != 2)
+            deriv_h =  h^(delta/2) .* deriv_h .* (2/delta)
+        endif
+    endif
+    # -------------------------------------------------------------------
+
+    return err
 
 end function
 
 /*
- * Computes conditional variance and errors for the EGARCH model.
- * Returns an error code if any of the parameters is out of its domain. 
- */
-function scalar egarchFilter(series *y, series *h, series *u, \
- 			     matrix *mReg, matrix *vReg, \
- 			     scalar p, scalar q, matrix *params)
+   * Computes conditional variance and errors for the EGARCH model.
+   * Returns an error code if any of the parameters is out of its domain.
+*/
+function scalar egarchFilter(const series y, series *h, series *u, \
+                             const matrix mReg, const matrix vReg, \
+                             scalar p, scalar q, const matrix parms)
 
     scalar n_mX = cols(mReg)
     scalar n_vX = cols(vReg)
     scalar err = 0
 
-    if n_mX == 0
-	series e = y
-    else
-        series e = y - (mReg * params[1:n_mX])
+    series e = y
+    if n_mX > 0
+        e -= mReg * parms[1:n_mX]
     endif
 
-    series u = misszero(e) # Reassigns residuals for the next computation
+    series u = misszero(e)   # Reassign residuals for the next computation
     scalar omegaini = n_mX + 1
     scalar base = n_mX + n_vX
     if n_vX == 1
-	series omega = params[omegaini]
+        series omega = parms[omegaini]
     else
-	series omega = vReg * params[omegaini:base]
+        series omega = vReg * parms[omegaini:base]
     endif
-    
+
     series logh = log(var(e))
-    
+
     # ERRORS
     series d = (e>0)
     series ae = abs(e)
-    
-    if (p == 0) && (q<3)
-    	if q == 1
-    	    scalar g = params[base+1]
-    	    scalar a = params[base+2]
-    	    series tmp = d(-1) ? (g+a) : (g-a)
-    	    series logh = omega + tmp*ae(-1)/exp(logh(-1)*0.5)
-    	elif q == 2
-    	    scalar g1 = params[base+1]
-    	    scalar g2 = params[base+2]
-    	    scalar a1 = params[base+3]
-    	    scalar a2 = params[base+4]
-    	    series tmp1 = d(-1) ? (g1+a1) : (g1-a1)
-    	    series tmp2 = d(-2) ? (g2+a2) : (g2-a2)
-    	    series logh = omega + tmp1*ae(-1)/exp(logh(-1)*0.5) \
-    		+ tmp2*ae(-2)/exp(logh(-2)*0.5)
-    	endif
-    elif (p == 1) && (q<3)
-    	if q == 1
-    	    scalar g = params[base+1]
-    	    scalar a = params[base+2]
-    	    scalar b = params[base+3]
-	    if (b<1)
-    		series tmp = d(-1) ? (g+a) : (g-a)
-    		series logh = omega + tmp*ae(-1)/exp(logh(-1)*0.5) + b*logh(-1)
-	    else
-		err = 1
-	    endif
 
-    	elif q == 2
-    	    scalar g1 = params[base+1]
-    	    scalar g2 = params[base+2]
-    	    scalar a1 = params[base+3]
-    	    scalar a2 = params[base+4]
-    	    scalar b  = params[base+5]
-    	    series tmp1 = d(-1) ? (g1+a1) : (g1-a1)
-    	    series tmp2 = d(-2) ? (g2+a2) : (g2-a2)
-    	    series logh = omega + tmp1*ae(-1)/exp(logh(-1)*0.5)) \
-    		+ tmp2*ae(-2)/exp(logh(-2)*0.5)) \
-    		+ b*logh(-1)
-    	endif
+    if (p == 0) && (q<3)
+        if q == 1
+            scalar g = parms[base+1]
+            scalar a = parms[base+2]
+            series tmp = d(-1) ? (g+a) : (g-a)
+            series logh = omega + tmp*ae(-1)/exp(logh(-1)*0.5)
+        elif q == 2
+            scalar g1 = parms[base+1]
+            scalar g2 = parms[base+2]
+            scalar a1 = parms[base+3]
+            scalar a2 = parms[base+4]
+            series tmp1 = d(-1) ? (g1+a1) : (g1-a1)
+            series tmp2 = d(-2) ? (g2+a2) : (g2-a2)
+            series logh = omega + tmp1*ae(-1)/exp(logh(-1)*0.5) \
+              + tmp2*ae(-2)/exp(logh(-2)*0.5)
+        endif
+    elif (p == 1) && (q<3)
+        if q == 1
+            scalar g = parms[base+1]
+            scalar a = parms[base+2]
+            scalar b = parms[base+3]
+            if (b<1)
+                series tmp = d(-1) ? (g+a) : (g-a)
+                series logh = omega + tmp*ae(-1)/exp(logh(-1)*0.5) + b*logh(-1)
+            else
+                err = 1
+            endif
+
+        elif q == 2
+            scalar g1 = parms[base+1]
+            scalar g2 = parms[base+2]
+            scalar a1 = parms[base+3]
+            scalar a2 = parms[base+4]
+            scalar b  = parms[base+5]
+            series tmp1 = d(-1) ? (g1+a1) : (g1-a1)
+            series tmp2 = d(-2) ? (g2+a2) : (g2-a2)
+            series logh = omega + tmp1*ae(-1)/exp(logh(-1)*0.5)) \
+              + tmp2*ae(-2)/exp(logh(-2)*0.5)) \
+              + b*logh(-1)
+        endif
     else
         string evalstr = "omega"
-    
-        loop for i = 1 .. q
-    	    scalar a$i = params[base+i]
-            scalar g$i = params[base+i+p+q]
-    	    evalstr += " + a$i*abs(e(-$i)/exp(logh(-$i)*0.5)) + g$i*e(-$i)/exp(logh(-$i)*0.5)"
+
+        loop i = 1 .. q
+            scalar a$i = parms[base+i]
+            scalar g$i = parms[base+i+p+q]
+            evalstr += " + a$i*abs(e(-$i)/exp(logh(-$i)*0.5)) + g$i*e(-$i)/exp(logh(-$i)*0.5)"
         endloop
-    
-        loop for i = 1 .. p
-    	    scalar b$i = params[base+p+i]
-    	    evalstr += " + b$i*logh(-$i)"
+
+        loop i = 1 .. p
+            scalar b$i = parms[base+p+i]
+            evalstr += " + b$i*logh(-$i)"
         endloop
-    
+
         series logh = @evalstr
     endif
 
-    if (!err) 
-	if max(logh) > 100
-	    #Overflow check
-	    logh = NA
-	else
-	    h = exp(logh)
-	endif
+    if (!err)
+        if max(logh) > 100
+            #Overflow check
+            logh = NA
+        else
+            h = exp(logh)
+        endif
     endif
 
     return err
-    
+
 end function
 
-function scalar gfilter(scalar type, 
-			series *depVar, series *h, series *e, 
- 			matrix *mReg, matrix *vReg, 
- 			scalar p, scalar q, matrix *parameters, 
-			matrix *DH[null], matrix *DE[null])
+function scalar gfilter(scalar type,
+                        const series depVar, series *h, series *e,
+                        const matrix mReg, const matrix vReg,
+                        scalar p, scalar q, const matrix parameters,
+                        matrix *DH[null], matrix *DE[null])
 
     ascore = exists(DH) && exists(DE)
 
     if type < 7 # aparch
-	if ascore
-	    err = aparchFilter(&depVar, &h, &e, &mReg, &vReg, p, q, 
-			       &parameters, has_asymm_fx(type), &DH, &DE)
-	else
-	    err = aparchFilter(&depVar, &h, &e, &mReg, &vReg, p, q, 
-			       &parameters, has_asymm_fx(type))
-	endif
+        if ascore
+            err = aparchFilter(depVar, &h, &e, mReg, vReg, p, q,
+              parameters, has_asymm_fx(type), &DH, &DE)
+        else
+            err = aparchFilter(depVar, &h, &e, mReg, vReg, p, q,
+              parameters, has_asymm_fx(type))
+        endif
 
     elif type == 7
-	err = egarchFilter(&depVar, &h, &e, &mReg, &vReg, p, q, &parameters)
+        err = egarchFilter(depVar, &h, &e, mReg, vReg, p, q, parameters)
     else
-	err = 1
+        err = 1
     endif
 
     return err
 
 end function
 
-function matrix do_score(series *de, series *dh, matrix *DE, matrix *DH,
-			 matrix *dd)
-    ret = {}
+function matrix do_score(const series de, const series dh, const matrix DE, 
+                         const matrix DH, const matrix dd)
+    # ret = {}
 
     matrix mde = misszero(de)
     matrix mdh = misszero(dh)
 
-#    printf "rows(mde) = %d, rows(mdh) = %d\n", rows(mde), rows(mdh)
-#    printf "rows(DE)  = %d, rows(DH)  = %d\n", rows(DE), rows(DH)
+    #    printf "rows(mde) = %d, rows(mdh) = %d\n", rows(mde), rows(mdh)
+    #    printf "rows(DE)  = %d, rows(DH)  = %d\n", rows(DE), rows(DH)
 
-#    printf "%16.9f\n", mde[1:10] ~ DE[1:10,]
-#    printf "%16.9f\n", mdh[1:10] ~ DH[1:10,]
- 
-    ret = (mde .* DE + mdh .* DH) ~ dd
-    
+    #    printf "%16.9f\n", mde[1:10] ~ DE[1:10,]
+    #    printf "%16.9f\n", mdh[1:10] ~ DH[1:10,]
+
+    matrix ret = (mde .* DE + mdh .* DH) ~ dd
+
     return ret
 end function
 
@@ -456,37 +451,37 @@ function scalar do_mle(bundle *model, bool verbose)
     mleString = "-"
 
     if verbose
-	string mleString += "v"
+        string mleString += "v"
     else
-	string mleString += "q"
+        string mleString += "q"
     endif
-	
+
     if model.vcvtype == 0 # robust
-	string mleString += "r"
+        string mleString += "r"
     elif model.vcvtype == 1 # hessian
-	string mleString += "h"
-	# otherwise opg 
+        string mleString += "h"
+        # otherwise opg
     endif
 
     if mleString == "-"
-	mleString = ""
+        mleString = ""
     endif
 
     fulltheta = model.coeff
     inipar = fulltheta
     sel = model.active
-    theta = fulltheta[sel] 
+    theta = fulltheta[sel]
 
     filtpar_end = rows(fulltheta) - n_cdist_par(cdist)
 
     mX = model.mX
     if model.vX_QR == 1
-	vX = model.QvX
-	ini = model.mk+1
-	fin = ini+model.vk-1
-	theta[ini:fin] = model.vX_R * theta[ini:fin]
+        vX = model.QvX
+        ini = model.mk+1
+        fin = ini+model.vk-1
+        theta[ini:fin] = model.vX_R * theta[ini:fin]
     else
-	vX = model.vX
+        vX = model.vX
     endif
 
     set warnings off
@@ -502,48 +497,48 @@ function scalar do_mle(bundle *model, bool verbose)
     matrix score = NA
 
     if !ascore_ok(type, cdist)
-	catch mle loglik = ll 
-            # put the newly estimated values into the full params vector
-	    fulltheta[sel] = theta
-	    filtpar = fulltheta[1:filtpar_end]
-	    matrix dpar = distpar(cdist, fulltheta)
-	    
-	    # FILTER
-	    err = gfilter(type, &depVar, &h, &e, &mX, &vX, p, q, &filtpar)
-	    ll = err ? NA : gig_loglik(&e, &h, cdist, dpar, &de, &dh, &dd)
+        catch mle loglik = ll
+            # put the newly estimated values into the full param vector
+            fulltheta[sel] = theta
+            filtpar = fulltheta[1:filtpar_end]
+            matrix dpar = distpar(cdist, fulltheta)
 
-	    params theta
-	end mle @mleString
-	err = $error
+            # FILTER
+            err = gfilter(type, depVar, &h, &e, mX, vX, p, q, filtpar)
+            ll = err ? NA : gig_loglik(e, h, cdist, dpar, &de, &dh, &dd)
+
+            params theta
+        end mle @mleString
+        err = $error
     else
-	catch mle loglik = ll 
-            # put the newly estimated values into the full params vector
-	    fulltheta[sel] = theta
-	    filtpar = fulltheta[1:filtpar_end]
-	    matrix dpar = distpar(cdist, fulltheta)
-	    
-	    # FILTER
-	    err = gfilter(type, &depVar, &h, &e, &mX, &vX, p, q, &filtpar, &DH, &DE)
-	    ll = err ? NA : gig_loglik(&e, &h, cdist, dpar, &de, &dh, &dd)
-	    
-	    # SCORE
-	    score = do_score(&de, &dh, &DE, &DH, &dd)
-	    deriv theta = score
-	end mle @mleString --no-gradient-check
-	err = $error
+        catch mle loglik = ll
+            # put the newly estimated values into the full param vector
+            fulltheta[sel] = theta
+            filtpar = fulltheta[1:filtpar_end]
+            matrix dpar = distpar(cdist, fulltheta)
+
+            # FILTER
+            err = gfilter(type, depVar, &h, &e, mX, vX, p, q, filtpar, &DH, &DE)
+            ll = err ? NA : gig_loglik(e, h, cdist, dpar, &de, &dh, &dd)
+
+            # SCORE
+            score = do_score(de, dh, DE, DH, dd)
+            deriv theta = score
+        end mle @mleString --no-gradient-check
+        err = $error
     endif
 
-  # err = gfilter(type, &depVar, &h, &e, &mX, &vX, p, q, &filtpar, &DH, &DE)
-  # score = do_score(&de, &dh, &DE, &DH, &dd)
-  # printf "Score:\n%20.10f\n", sumc(score)
-    
+    # err = gfilter(type, &depVar, &h, &e, &mX, &vX, p, q, &filtpar, &DH, &DE)
+    # score = do_score(&de, &dh, &DE, &DH, &dd)
+    # printf "Score:\n%20.10f\n", sumc(score)
+
     if (err==0)
-	matrix crit = {$lnl; $aic; $bic; $hqc}
-	matrix V = $vcv
+        matrix crit = {$lnl; $aic; $bic; $hqc}
+        matrix V = $vcv
     else
-	matrix crit = zeros(4,1)
-	npar = rows(theta)
-	matrix V = zeros(npar, npar)
+        matrix crit = zeros(4,1)
+        npar = rows(theta)
+        matrix V = zeros(npar, npar)
     endif
 
     gig_packResults(&model, err, theta, &h, &e, inipar, V, crit)
