@@ -3144,9 +3144,9 @@ func_convert_path_check ()
   $debug_cmd
 
   if test -z "$4" && test -n "$3"; then
-    func_error "Could not determine the host path corresponding to"
-    func_error "  '$3'"
-    func_error "Continuing, but uninstalled executables may not work."
+    # func_error "Could not determine the host path corresponding to"
+    # func_error "  '$3'"
+    # func_error "Continuing, but uninstalled executables may not work."
     # Fallback.  This is a deliberately simplistic "conversion" and
     # should not be "improved".  See libtool.info.
     if test "x$1" != "x$2"; then
