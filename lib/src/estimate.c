@@ -421,6 +421,7 @@ static void get_wls_stats (MODEL *pmod, const DATASET *dset,
 	if (!model_missing(pmod, t) && w[t] > 0) {
 	    dy = y[t] - wmean;
 	    tss += w[t] * dy * dy;
+	}
     }
 
     if (!(opt & OPT_R)) {
