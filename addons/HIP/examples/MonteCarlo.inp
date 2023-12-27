@@ -29,13 +29,13 @@ matrix Omega = ((1 ~ lambda') | (lambda ~ Sigma))
 # build exogenous vars
 
 list X1 = const
-loop i=1..(k1-1) --quiet
+loop i = 1 .. (k1-1) --quiet
     series x_$i = normal()
     list X1 += x_$i
 endloop
 
 list X2 = null
-loop i=1..k2 --quiet
+loop i = 1 .. k2 --quiet
     series z_$i = normal()
     list X2 += z_$i
 endloop
@@ -46,7 +46,7 @@ list X = X1 X2
 Repli = 400
 
 string ToSave = ""
-loop i=1..k2 --quiet
+loop i = 1 .. k2 --quiet
     ToSave += "b$i "
     scalar b$i = NA
 endloop
@@ -67,7 +67,7 @@ loop h = 1 .. Repli --quiet --progressive
     
     matrix E = mnormal($nobs, p+1) * K
     series epsilon = E[,1]
-    loop for i=1..p --quiet
+    loop i = 1 .. p --quiet
 	series u_$i = E[,i+1]
     endloop
 
@@ -75,7 +75,7 @@ loop h = 1 .. Repli --quiet --progressive
 
     list Y = null
 
-    loop i=1..p --quiet
+    loop i = 1 .. p --quiet
 	series y_$i = lincomb(X, Pi[,i]) + u_$i
 	list Y += y_$i
     endloop
@@ -85,7 +85,7 @@ loop h = 1 .. Repli --quiet --progressive
 
     list Inst = null
 
-    loop i=1..k2 --quiet
+    loop i = 1 .. k2 --quiet
 	list Inst += z_$i
 
 	# estimate only; we don't neet the printout
