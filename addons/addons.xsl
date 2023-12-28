@@ -19,7 +19,7 @@
       Look for the item &#8220;Check for addons&#8221; under the Help menu.
       </p>
       <p>There are also numerous 
-      <a href="http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi?opt=SHOW_FUNCS">contributed
+      <a href="https://gretl.sourceforge.net/cgi-bin/gretldata.cgi?opt=SHOW_FUNCS">contributed
        function packages</a> for gretl.</p>
       <div class="gfn-info">
 	<xsl:apply-templates/>
