@@ -32,7 +32,7 @@ $(SUBDIRS):
 	$(MAKE) -C $@
 
 addons.xml: gfnindex $(SUBDIRS)
-	./gfnindex $(SUBDIRS) > $@
+	./gfnindex $(topsrc) $(SUBDIRS) > $@
 
 addons-i18n.c: gfnstrings $(XMLSUBDIRS)
 	./gfnstrings $(XMLSUBDIRS) > $@
