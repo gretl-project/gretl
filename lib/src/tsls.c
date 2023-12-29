@@ -28,7 +28,6 @@
 #include "tsls.h"
 
 #define TDEBUG 0
-#define HTDEBUG 0
 
 static void tsls_omitzero (int *list, const DATASET *dset,
                            const char *mask)
@@ -416,7 +415,10 @@ int *tsls_make_endolist (const int *reglist, int **instlist,
     return endolist;
 }
 
-/* fill the residuals matrix for tsls likelihood calculation */
+/* Fill the residuals matrix for tsls likelihood calculation.
+   We run a multivariate regression of the dependent variable
+   and the endogenous regressors on all the instruments.
+*/
 
 static int fill_E_matrix (gretl_matrix *E,
                           const MODEL *pmod,
@@ -431,6 +433,7 @@ static int fill_E_matrix (gretl_matrix *E,
     int ny, *ylist;
     int i, err = 0;
 
+    /* form list of LHS series */
     ny = endolist[0] + 1;
     ylist = gretl_list_new(ny);
     ylist[1] = reglist[1];
@@ -438,11 +441,11 @@ static int fill_E_matrix (gretl_matrix *E,
         ylist[i] = endolist[i-1];
     }
 
-    /* dependent variable plus endogenous regressors on LHS */
+    /* LHS: depvar and endogenous regressors */
     Y = gretl_matrix_data_subset_masked(ylist, dset, pmod->t1, pmod->t2,
                                         missmask, &err);
     if (!err) {
-        /* all instruments on RHS */
+        /* RHS: all instruments */
         X = gretl_matrix_data_subset_masked(instlist, dset, pmod->t1, pmod->t2,
                                             missmask, &err);
     }
@@ -458,6 +461,8 @@ static int fill_E_matrix (gretl_matrix *E,
 
     return err;
 }
+
+/* calculate the log determinant */
 
 static double tsls_get_ldet (gretl_matrix *S, int *err)
 {
@@ -681,6 +686,139 @@ static void add_hausman_to_model (MODEL *pmod, double HTest, int df)
     }
 }
 
+/* Hausman test via the matrix method (both plain and robust).  See
+   Alecos Papadopoulos, 'A New Matrix Statistic for the Hausman
+   Endogeneity Test under Heteroskedasticity', Econometrics 11:23,
+   2023. https://doi.org/10.3390/
+*/
+
+static int tsls_matrix_hausman_test (MODEL *pmod,
+				     const int *reglist,
+				     const int *hatlist,
+				     const int *endolist,
+				     const int *instlist,
+				     const char *missmask,
+				     gretlopt opt,
+				     DATASET *dset)
+{
+    gretl_matrix *X = NULL;
+    gretl_matrix *y = NULL;
+    gretl_matrix *X1 = NULL;
+    gretl_matrix *Z = NULL;
+    gretl_matrix *u = NULL;
+    gretl_matrix *E = NULL;
+    gretl_matrix *X1u = NULL;
+    gretl_matrix *A = NULL;
+    int *xlist = NULL;
+    int i, ylist[2];
+    double q;
+    int err = 0;
+
+    /* Step 1: obtain residuals from estimation of the specified
+       model via plain OLS.
+    */
+
+    xlist = gretl_list_new(reglist[0] - 1);
+    for (i=1; i<=xlist[0]; i++) {
+	xlist[i] = reglist[i+1];
+    }
+    ylist[0] = 1;
+    ylist[1] = reglist[1];
+
+    /* all regressors */
+    X = gretl_matrix_data_subset_masked(xlist, dset, pmod->t1, pmod->t2,
+					missmask, &err);
+    if (!err) {
+	y = gretl_matrix_data_subset_masked(ylist, dset, pmod->t1, pmod->t2,
+					    missmask, &err);
+    }
+    if (!err) {
+	/* put OLS residuals into @u */
+	u = gretl_matrix_alloc(X->rows, 1);
+	gretl_matrix_ols(y, X, NULL, NULL, u, NULL);
+    }
+
+    /* Step 2: fill @X1 with \hat{X1} */
+    X1 = gretl_matrix_data_subset_masked(hatlist, dset, pmod->t1, pmod->t2,
+					 missmask, &err);
+
+    if (!err) {
+	/* some more required allocation */
+	X1u = gretl_matrix_alloc(X1->cols, 1);
+	E = gretl_matrix_alloc(X1->rows, X1->cols);
+	A = gretl_matrix_alloc(X1->cols, X1->cols);
+	if (X1u == NULL || E == NULL || A == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err) {
+	goto bailout;
+    }
+
+    /* Step 3: form X1u = \hat{X}_1'\hat{u} */
+    gretl_matrix_multiply_mod(X1, GRETL_MOD_TRANSPOSE,
+			      u, GRETL_MOD_NONE,
+			      X1u, GRETL_MOD_NONE);
+
+    /* Step 4: form E = M_x \hat{X}_1 */
+    err = gretl_matrix_multi_ols(X1, X, NULL, E, NULL);
+
+    if (!err) {
+	if (opt & OPT_R) {
+	    /* Step 5 (robust): A = qform(M_x \hat{X_1}', diag(u.^2)) */
+	    double ui;
+
+	    for (i=0; i<u->rows; i++) {
+		ui = u->val[i];
+		u->val[i] = ui * ui;
+	    }
+	    gretl_matrix_diag_qform(E, GRETL_MOD_TRANSPOSE, u,
+				    A, GRETL_MOD_NONE);
+	} else {
+	    /* Step 5 (plain): A = \hat{X_1}' M_x \hat{X_1} */
+	    double s2 = 0;
+
+	    for (i=0; i<u->rows; i++) {
+		s2 += u->val[i] * u->val[i];
+	    }
+	    s2 /= u->rows;
+	    gretl_matrix_multiply_mod(X1, GRETL_MOD_TRANSPOSE,
+				      E, GRETL_MOD_NONE,
+				      A, GRETL_MOD_NONE);
+	    gretl_matrix_multiply_by_scalar(A, s2);
+	}
+	err = gretl_invert_symmetric_matrix(A);
+	if (err) {
+	    gretl_errmsg_set("Hausman test matrix could not be inverted: "
+			     "this indicates invalid instruments");
+	}
+    }
+
+    if (err) {
+	q = NADBL;
+    } else {
+	q = gretl_scalar_qform(X1u, A, &err);
+	if (!err) {
+	    add_hausman_to_model(pmod, q, X1->cols);
+	}
+    }
+
+ bailout:
+
+    gretl_matrix_free(X);
+    gretl_matrix_free(y);
+    gretl_matrix_free(X1);
+    gretl_matrix_free(Z);
+    gretl_matrix_free(u);
+    gretl_matrix_free(E);
+    gretl_matrix_free(X1u);
+    gretl_matrix_free(A);
+    free(xlist);
+
+    return err;
+}
+
 /* Hausman test via the regression method */
 
 static int
@@ -696,12 +834,6 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     int n_drop = 0;
     int ku = 0;
     int err = 0;
-
-#if HTDEBUG
-    int nobs1 = 0;
-    PRN *dbgprn = NULL;
-    dbgprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
-#endif
 
     /* create regression list for unrestricted model by appending
        @hatlist to @reglist */
@@ -731,12 +863,6 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 
     n_drop = hausman_drop_check(&hmod, hatlist, endolist, dset);
 
-#if HTDEBUG
-    pprintf(dbgprn, "Hausman: unrestricted model (df = %d)\n", hmod.dfd);
-    printmodel(&hmod, dset, OPT_NONE, dbgprn);
-    nobs1 = hmod.nobs;
-#endif
-
     if (hmod.dfd == 0) {
         /* perfect fit, can't do test */
         goto bailout;
@@ -764,9 +890,6 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     /* record U-model info */
     URSS = hmod.ess;
     ku = hmod.ncoeff;
-#if HTDEBUG
-    pprintf(dbgprn, "URSS = %g (ku = %d)\n", URSS, ku);
-#endif
 
     /* add fitted values from unrestricted model to dataset */
     err = dataset_add_series(dset, 1);
@@ -795,14 +918,6 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     */
     hmod = lsq(HT_list, dset, OLS, OPT_A);
 
-#if HTDEBUG
-    strcpy(dset->varname[dset->v - 1], "Ufitvals");
-    pprintf(dbgprn, "Hausman: aux regression\n", hmod.dfd);
-    printmodel(&hmod, dset, OPT_NONE, dbgprn);
-    pprintf(dbgprn, "smpl1 = %d, smpl2 = %d\n", nobs1, hmod.nobs);
-    pprintf(dbgprn, "k1 = %d, k2 = %d\n", hmod.ncoeff, ku);
-#endif
-
     if (hmod.errcode) {
         fprintf(stderr, "tsls_hausman_test: hmod.errcode (D) = %d\n", hmod.errcode);
         err = hmod.errcode;
@@ -814,19 +929,10 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
         double DRSS = hmod.ess;
         double HTest = (DRSS/URSS) * hmod.nobs;
 
-#if HTDEBUG
-        pprintf(dbgprn, "df = %d - %d = %d\n", ku, hmod.ncoeff, df);
-        pprintf(dbgprn, "DRSS = (RRSS - URSS) = %g, URSS = %g\n", DRSS, URSS);
-        pprintf(dbgprn, "Htest = %g [%.4f]\n", HTest, chisq_cdf_comp(df, HTest));
-#endif
         add_hausman_to_model(tmod, HTest, df);
     }
 
  bailout:
-
-#if HTDEBUG
-    gretl_print_destroy(dbgprn);
-#endif
 
     dataset_drop_last_variables(dset, dset->v - nv);
     clear_model(&hmod);
@@ -1870,7 +1976,12 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 
     if (!sysest && !no_tests) {
         if (nendo > 0 && hatlist != NULL) {
-            tsls_hausman_test(&tsls, reglist, hatlist, endolist, opt, dset);
+	    if (opt & OPT_M) {
+		tsls_matrix_hausman_test(&tsls, reglist, hatlist, endolist,
+					 instlist, missmask, opt, dset);
+	    } else {
+		tsls_hausman_test(&tsls, reglist, hatlist, endolist, opt, dset);
+	    }
         }
         if (OverIdRank > 0) {
             ivreg_sargan_test(&tsls, OverIdRank, instlist, dset);
