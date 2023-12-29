@@ -12624,7 +12624,8 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
  * gretl_matrix_ols:
  * @y: dependent variable vector.
  * @X: matrix of independent variables.
- * @b: vector to hold coefficient estimates.
+ * @b: vector to hold coefficient estimates, or NULL if this
+ * is not needed.
  * @vcv: matrix to hold the covariance matrix of the coefficients,
  * or NULL if this is not needed.
  * @uhat: vector to hold the regression residuals, or NULL if
@@ -12646,19 +12647,25 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
                       gretl_vector *uhat, double *s2)
 {
     gretl_matrix *XTX = NULL;
+    gretl_matrix *c = NULL;
     int use_lapack = 0;
     int try_QR = 0;
     int nasty = 0;
     int k, T, err = 0;
 
     if (gretl_is_null_matrix(y) ||
-        gretl_is_null_matrix(X) ||
-        gretl_is_null_matrix(b)) {
+        gretl_is_null_matrix(X)) {
         return E_DATA;
     }
 
+    if (b == NULL) {
+	c = gretl_matrix_alloc(X->cols, 1);
+	b = c;
+    }
+
     if (libset_get_bool(USE_SVD)) {
-        return gretl_matrix_SVD_ols(y, X, b, vcv, uhat, s2);
+        err = gretl_matrix_SVD_ols(y, X, b, vcv, uhat, s2);
+	goto finish;
     }
 
     k = X->cols;
@@ -12666,15 +12673,15 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 
     if (gretl_vector_get_length(b) != k ||
         gretl_vector_get_length(y) != T) {
-        return E_NONCONF;
+        err = E_NONCONF;
+    } else if (T < k) {
+        err = E_DF;
+    } else if (vcv != NULL && (vcv->rows != k || vcv->cols != k)) {
+        err = E_NONCONF;
     }
 
-    if (T < k) {
-        return E_DF;
-    }
-
-    if (vcv != NULL && (vcv->rows != k || vcv->cols != k)) {
-        return E_NONCONF;
+    if (err) {
+	goto finish;
     }
 
     if (k >= 50 || (T >= 250 && k >= 30)) {
@@ -12687,11 +12694,10 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     } else {
         XTX = gretl_matrix_packed_XTX_new(X, &nasty);
     }
-    if (XTX == NULL) {
-        return E_ALLOC;
-    }
 
-    if (use_lapack) {
+    if (XTX == NULL) {
+        err = E_ALLOC;
+    } else if (use_lapack) {
         if (!err) {
             err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
                                             y, GRETL_MOD_NONE,
@@ -12725,11 +12731,9 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
         }
     }
 
-    if (XTX != NULL) {
-        gretl_matrix_free(XTX);
-    }
+    gretl_matrix_free(XTX);
 
-    if (try_QR) {
+    if (!err && try_QR) {
         fprintf(stderr, "gretl_matrix_ols: switching to QR decomp\n");
         err = gretl_matrix_QR_ols(y, X, b, NULL, NULL, NULL);
     }
@@ -12745,6 +12749,10 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
             get_ols_uhat(y, X, b, uhat);
         }
     }
+
+ finish:
+
+    gretl_matrix_free(c);
 
     return err;
 }
