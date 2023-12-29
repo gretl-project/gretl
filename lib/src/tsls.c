@@ -689,7 +689,7 @@ static void add_hausman_to_model (MODEL *pmod, double HTest, int df)
 /* Hausman test via the matrix method (both plain and robust).  See
    Alecos Papadopoulos, 'A New Matrix Statistic for the Hausman
    Endogeneity Test under Heteroskedasticity', Econometrics 11:23,
-   2023. https://doi.org/10.3390/
+   2023. https://doi.org/10.3390/econometrics11040023
 */
 
 static int tsls_matrix_hausman_test (MODEL *pmod,
