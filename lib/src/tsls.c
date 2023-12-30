@@ -29,8 +29,67 @@
 
 #define TDEBUG 0
 
-static void tsls_omitzero (int *list, const DATASET *dset,
-                           const char *mask)
+struct iv_info_ {
+    MODEL *pmod;      /* pointer to the model to be returned */
+    gretl_matrix *Q;  /* matrix for creating "hat" variables */
+    gretl_matrix *g;  /* auxiliary matrix */
+    char *missmask;   /* missing observations mask */
+    int *reglist;     /* full list of regressors */
+    int *instlist;    /* list of instruments */
+    int *hatlist;     /* list of fitted values of endogenous regressors */
+    int *s2list;      /* regression list for second stage */
+    int *exolist;     /* list of exogenous regressors */
+    int *endolist;    /* list of endogenous regressors */
+    int *idroplist;   /* list of dropped instruments */
+    int overid;       /* over-identification rank */
+};
+
+typedef struct iv_info_ iv_info;
+
+static iv_info *iv_info_new (MODEL *pmod)
+{
+    iv_info *ivi = malloc(sizeof *ivi);
+
+    if (ivi != NULL) {
+	ivi->pmod = pmod;
+	ivi->Q = ivi->g = NULL;
+	ivi->missmask = NULL;
+	ivi->reglist = NULL;
+	ivi->instlist = NULL;
+	ivi->hatlist = NULL;
+	ivi->s2list = NULL;
+	ivi->exolist = NULL;
+	ivi->endolist = NULL;
+	ivi->idroplist = NULL;
+	ivi->overid = 0;
+    }
+
+    return ivi;
+}
+
+static void iv_info_destroy (iv_info *ivi)
+{
+    if (ivi == NULL) {
+	return;
+    }
+
+    gretl_matrix_free(ivi->Q);
+    gretl_matrix_free(ivi->g);
+
+    free(ivi->missmask);
+    free(ivi->reglist);
+    free(ivi->instlist);
+    free(ivi->hatlist);
+    free(ivi->s2list);
+    free(ivi->exolist);
+    free(ivi->endolist);
+    free(ivi->idroplist);
+
+    free(ivi);
+}
+
+static void tsls_omitzero (int *list, const char *mask,
+			   const DATASET *dset)
 {
     int i, v, t, allzero;
 
@@ -81,10 +140,9 @@ void tsls_free_data (const MODEL *pmod)
    values on the model under the key "tslsX".
 */
 
-static int
-tsls_save_data (MODEL *pmod, const int *hatlist, const int *exolist,
-                DATASET *dset)
+static int tsls_save_data (iv_info *ivi, DATASET *dset)
 {
+    MODEL *pmod = ivi->pmod;
     gretl_matrix *endog = NULL;
     double **X = NULL;
     size_t Xsize, xs_old;
@@ -92,7 +150,7 @@ tsls_save_data (MODEL *pmod, const int *hatlist, const int *exolist,
     int recycle_e = 0;
     int i, v, err = 0;
 
-    Xsize = hatlist[0] * sizeof *X;
+    Xsize = ivi->hatlist[0] * sizeof *X;
 
     /* re-use old pointers if applicable */
 
@@ -135,15 +193,15 @@ tsls_save_data (MODEL *pmod, const int *hatlist, const int *exolist,
     }
 
     /* steal the appropriate columns from Z */
-    for (i=1; i<=hatlist[0]; i++) {
-        v = hatlist[i];
+    for (i=1; i<=ivi->hatlist[0]; i++) {
+        v = ivi->hatlist[i];
         X[i-1] = dset->Z[v];
         dset->Z[v] = NULL;
     }
 
     for (i=0; i<pmod->ncoeff; i++) {
         v = pmod->list[i+2];
-        endog->val[i] = !in_gretl_list(exolist, v);
+        endog->val[i] = !in_gretl_list(ivi->exolist, v);
     }
 
      /* now attach X and endog to the model */
@@ -420,34 +478,31 @@ int *tsls_make_endolist (const int *reglist, int **instlist,
    and the endogenous regressors on all the instruments.
 */
 
-static int fill_E_matrix (gretl_matrix *E,
-                          const MODEL *pmod,
-                          const int *endolist,
-                          const int *reglist,
-                          const int *instlist,
-                          const char *missmask,
+static int fill_E_matrix (gretl_matrix *E, iv_info *ivi,
                           const DATASET *dset)
 {
+    MODEL *pmod = ivi->pmod;
     gretl_matrix *Y = NULL;
     gretl_matrix *X = NULL;
     int ny, *ylist;
     int i, err = 0;
 
     /* form list of LHS series */
-    ny = endolist[0] + 1;
+    ny = ivi->endolist[0] + 1;
     ylist = gretl_list_new(ny);
-    ylist[1] = reglist[1];
+    ylist[1] = ivi->reglist[1];
     for (i=2; i<=ny; i++) {
-        ylist[i] = endolist[i-1];
+        ylist[i] = ivi->endolist[i-1];
     }
 
     /* LHS: depvar and endogenous regressors */
     Y = gretl_matrix_data_subset_masked(ylist, dset, pmod->t1, pmod->t2,
-                                        missmask, &err);
+                                        ivi->missmask, &err);
     if (!err) {
         /* RHS: all instruments */
-        X = gretl_matrix_data_subset_masked(instlist, dset, pmod->t1, pmod->t2,
-                                            missmask, &err);
+        X = gretl_matrix_data_subset_masked(ivi->instlist, dset,
+					    pmod->t1, pmod->t2,
+                                            ivi->missmask, &err);
     }
 
     if (!err) {
@@ -484,19 +539,14 @@ static double tsls_get_ldet (gretl_matrix *S, int *err)
 /* calculate the maximized log-likelihood for a just-identified
    model */
 
-static int tsls_loglik (MODEL *pmod,
-                        const int *endolist,
-                        const int *reglist,
-                        const int *instlist,
-                        const char *missmask,
-                        DATASET *dset)
+static int tsls_loglik (iv_info *ivi, DATASET *dset)
 {
     gretl_matrix *E, *S;
-    int T = pmod->nobs;
-    int k = 1 + endolist[0];
+    int T = ivi->pmod->nobs;
+    int k = 1 + ivi->endolist[0];
     int err = 0;
 
-    pmod->lnL = NADBL;
+    ivi->pmod->lnL = NADBL;
 
     E = gretl_matrix_alloc(T, k);
     S = gretl_matrix_alloc(k, k);
@@ -504,8 +554,7 @@ static int tsls_loglik (MODEL *pmod,
     if (E == NULL || S == NULL) {
         err = E_ALLOC;
     } else {
-        err = fill_E_matrix(E, pmod, endolist, reglist, instlist,
-                            missmask, dset);
+        err = fill_E_matrix(E, ivi, dset);
     }
 
     if (!err) {
@@ -518,16 +567,16 @@ static int tsls_loglik (MODEL *pmod,
         double ldet = tsls_get_ldet(S, &err);
 
         if (na(ldet)) {
-            pmod->lnL = NADBL;
+            ivi->pmod->lnL = NADBL;
         } else {
             /* Davidson and MacKinnon, ETM, p. 538, taking
                kappa = 1 for the just-identified case
             */
-            pmod->lnL = -(T / 2.0) * (LN_2_PI + ldet);
+            ivi->pmod->lnL = -(T / 2.0) * (LN_2_PI + ldet);
         }
     }
 
-    mle_criteria(pmod, 0);
+    mle_criteria(ivi->pmod, 0);
 
     gretl_matrix_free(E);
     gretl_matrix_free(S);
@@ -537,21 +586,13 @@ static int tsls_loglik (MODEL *pmod,
 
 /* perform the Sargan overidentification test for an IV model */
 
-static int
-ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist,
-                   DATASET *dset)
+static int ivreg_sargan_test (iv_info *ivi, DATASET *dset)
 {
-    int t1 = pmod->t1;
-    int t2 = pmod->t2;
-    int ninst = instlist[0];
-    int i, t, err = 0;
+    MODEL *pmod = ivi->pmod;
     MODEL smod;
+    int i, t, err = 0;
     int *OT_list = NULL;
     int nv = dset->v;
-
-    if (Orank == 0) {
-        return 0;
-    }
 
     if (pmod->list[0] == 2 && pmod->list[2] == 0) {
         /* degenerate model with const only */
@@ -564,11 +605,11 @@ ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist,
     }
 
     /* add the @pmod residual to the dataset */
-    for (t=t1; t<=t2; t++) {
+    for (t=pmod->t1; t<=pmod->t2; t++) {
         dset->Z[nv][t] = pmod->uhat[t];
     }
 
-    OT_list = gretl_list_new(ninst + 1);
+    OT_list = gretl_list_new(ivi->instlist[0] + 1);
     if (OT_list == NULL) {
         dataset_drop_last_variables(dset, 1);
         return E_ALLOC;
@@ -576,27 +617,13 @@ ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist,
 
     OT_list[1] = nv;
     for (i=2; i<=OT_list[0]; i++) {
-        OT_list[i] = instlist[i-1];
+        OT_list[i] = ivi->instlist[i-1];
     }
-
-#if TDEBUG
-    fprintf(stderr, "running regression for Sargan test\n");
-#endif
 
     /* OLS: the dependent variable is the residual from @pmod;
        the regressors are the (full set of) instruments
     */
     smod = lsq(OT_list, dset, OLS, OPT_A);
-
-#if TDEBUG
-    if (!smod.errcode) {
-        PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
-
-        strcpy(dset->varname[nv], "IV uhat");
-        printmodel(&smod, dset, OPT_NONE, prn);
-        gretl_print_destroy(prn);
-    }
-#endif
 
     if (smod.errcode) {
         fprintf(stderr, "ivreg_sargan_test: smod.errcode = %d\n", smod.errcode);
@@ -605,16 +632,11 @@ ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist,
         ModelTest *test = model_test_new(GRETL_TEST_SARGAN);
         double OTest = smod.rsq * smod.nobs;
 
-#if TDEBUG
-        fprintf(stderr, "Otest = %g * %d = %g\n", smod.rsq, smod.nobs,
-                smod.rsq * smod.nobs);
-#endif
-
         if (test != NULL) {
             model_test_set_teststat(test, GRETL_STAT_LM);
-            model_test_set_dfn(test, Orank);
+            model_test_set_dfn(test, ivi->overid);
             model_test_set_value(test, OTest);
-            model_test_set_pvalue(test, chisq_cdf_comp(Orank, OTest));
+            model_test_set_pvalue(test, chisq_cdf_comp(ivi->overid, OTest));
             maybe_add_test_to_model(pmod, test);
         }
     }
@@ -692,15 +714,12 @@ static void add_hausman_to_model (MODEL *pmod, double HTest, int df)
    2023. https://doi.org/10.3390/econometrics11040023
 */
 
-static int tsls_matrix_hausman_test (MODEL *pmod,
-				     const int *reglist,
-				     const int *hatlist,
-				     const int *endolist,
-				     const int *instlist,
-				     const char *missmask,
+static int tsls_matrix_hausman_test (iv_info *ivi,
 				     gretlopt opt,
 				     DATASET *dset)
 {
+    const char *mask = ivi->missmask;
+    MODEL *pmod = ivi->pmod;
     gretl_matrix *X = NULL;
     gretl_matrix *y = NULL;
     gretl_matrix *X1 = NULL;
@@ -718,19 +737,19 @@ static int tsls_matrix_hausman_test (MODEL *pmod,
        model via plain OLS.
     */
 
-    xlist = gretl_list_new(reglist[0] - 1);
+    xlist = gretl_list_new(ivi->reglist[0] - 1);
     for (i=1; i<=xlist[0]; i++) {
-	xlist[i] = reglist[i+1];
+	xlist[i] = ivi->reglist[i+1];
     }
     ylist[0] = 1;
-    ylist[1] = reglist[1];
+    ylist[1] = ivi->reglist[1];
 
     /* all regressors */
     X = gretl_matrix_data_subset_masked(xlist, dset, pmod->t1, pmod->t2,
-					missmask, &err);
+					mask, &err);
     if (!err) {
 	y = gretl_matrix_data_subset_masked(ylist, dset, pmod->t1, pmod->t2,
-					    missmask, &err);
+					    mask, &err);
     }
     if (!err) {
 	/* put OLS residuals into @u */
@@ -739,8 +758,8 @@ static int tsls_matrix_hausman_test (MODEL *pmod,
     }
 
     /* Step 2: fill @X1 with \hat{X1} */
-    X1 = gretl_matrix_data_subset_masked(hatlist, dset, pmod->t1, pmod->t2,
-					 missmask, &err);
+    X1 = gretl_matrix_data_subset_masked(ivi->hatlist, dset, pmod->t1, pmod->t2,
+					 mask, &err);
 
     if (!err) {
 	/* some more required allocation */
@@ -821,9 +840,7 @@ static int tsls_matrix_hausman_test (MODEL *pmod,
 
 /* Hausman test via the regression method */
 
-static int
-tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
-                   int *endolist, gretlopt opt, DATASET *dset)
+static int tsls_hausman_test (iv_info *ivi, gretlopt opt, DATASET *dset)
 {
     MODEL hmod;
     double URSS;
@@ -837,18 +854,13 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 
     /* create regression list for unrestricted model by appending
        @hatlist to @reglist */
-    HT_list = gretl_list_add(reglist, hatlist, &err);
+    HT_list = gretl_list_add(ivi->reglist, ivi->hatlist, &err);
     if (err == E_NOADD) {
         err = 0; /* more of a no-op than an error */
     } else if (err) {
         fprintf(stderr, "tsls_hausman_test: gretl_list_add: err = %d\n", err);
         return err;
     }
-
-#if TDEBUG
-    fprintf(stderr, "running regression for Hausman test, 1\n");
-    printlist(HT_list, "Hausman list");
-#endif
 
     /* option for unrestricted regression */
     uopt = (opt & OPT_R)? (OPT_A | OPT_R) : OPT_A;
@@ -861,7 +873,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
         goto bailout;
     }
 
-    n_drop = hausman_drop_check(&hmod, hatlist, endolist, dset);
+    n_drop = hausman_drop_check(&hmod, ivi->hatlist, ivi->endolist, dset);
 
     if (hmod.dfd == 0) {
         /* perfect fit, can't do test */
@@ -876,13 +888,13 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
         double HTest = NADBL;
 
         if (n_drop > 0) {
-            HTest = tsls_robust_hausman_fixup(hatlist, &hmod, &df);
+            HTest = tsls_robust_hausman_fixup(ivi->hatlist, &hmod, &df);
         } else {
-            HTest = wald_omit_chisq(hatlist, &hmod);
-            df = hatlist[0];
+            HTest = wald_omit_chisq(ivi->hatlist, &hmod);
+            df = ivi->hatlist[0];
         }
         if (!na(HTest)) {
-            add_hausman_to_model(tmod, HTest, df);
+            add_hausman_to_model(ivi->pmod, HTest, df);
         }
         goto bailout;
     }
@@ -906,7 +918,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     /* redefine HT_list: dep var is the fitted value from the
        U-model, regressors are from @reglist */
     free(HT_list);
-    HT_list = gretl_list_copy(reglist);
+    HT_list = gretl_list_copy(ivi->reglist);
     HT_list[1] = nv;
 
 #if TDEBUG
@@ -929,7 +941,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
         double DRSS = hmod.ess;
         double HTest = (DRSS/URSS) * hmod.nobs;
 
-        add_hausman_to_model(tmod, HTest, df);
+        add_hausman_to_model(ivi->pmod, HTest, df);
     }
 
  bailout:
@@ -942,49 +954,49 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 }
 
 /* form matrix of instruments and perform QR decomposition
-   of this matrix; return Q */
+   of this matrix; attach return Q to @ivi; return 0 on
+   success, error code on error.
+*/
 
-static gretl_matrix *tsls_Q (int *instlist, int **pdlist,
-                             const DATASET *dset, char *mask,
-                             int *err)
+static int tsls_add_Q (iv_info *ivi, const DATASET *dset)
 {
-    gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
     int rank, ndrop = 0;
-    int *droplist = NULL;
+    int *dlist = NULL;
     double test;
     int i, j, k;
+    int err = 0;
 
-    Q = gretl_matrix_data_subset_masked(instlist, dset,
-                                        dset->t1, dset->t2,
-                                        mask, err);
-    if (*err) {
-        return NULL;
+    ivi->Q = gretl_matrix_data_subset_masked(ivi->instlist, dset,
+					     dset->t1, dset->t2,
+					     ivi->missmask, &err);
+    if (err) {
+        return err;
     }
 
-    k = gretl_matrix_cols(Q);
+    k = gretl_matrix_cols(ivi->Q);
 
-    if (k > Q->rows) {
+    if (k > ivi->Q->rows) {
         /* can't do QR decomp! */
         gretl_errmsg_sprintf(_("Number of instruments (%d) exceeds the "
                                "number of observations (%d)"),
-                             k, Q->rows);
-        *err = E_DF;
+                             k, ivi->Q->rows);
+        err = E_DF;
         goto bailout;
     }
 
     R = gretl_matrix_alloc(k, k);
     if (R == NULL) {
-        *err = E_ALLOC;
+        err = E_ALLOC;
         goto bailout;
     }
 
-    *err = gretl_matrix_QR_decomp(Q, R);
-    if (*err) {
+    err = gretl_matrix_QR_decomp(ivi->Q, R);
+    if (err) {
         goto bailout;
     }
 
-    rank = gretl_check_QR_rank(R, err, NULL);
+    rank = gretl_check_QR_rank(R, &err, NULL);
 
 #if TDEBUG
     fprintf(stderr, "tsls_Q: k = Q->cols = %d, rank = %d\n", k, rank);
@@ -993,7 +1005,7 @@ static gretl_matrix *tsls_Q (int *instlist, int **pdlist,
     }
 #endif
 
-    if (*err) {
+    if (err) {
         goto bailout;
     } else if (rank < k) {
         fprintf(stderr, "tsls_Q: k = %d, rank = %d\n", k, rank);
@@ -1001,33 +1013,33 @@ static gretl_matrix *tsls_Q (int *instlist, int **pdlist,
     }
 
     if (ndrop > 0) {
-        droplist = gretl_list_new(ndrop);
-        if (droplist != NULL) {
-            droplist[0] = 0;
+        dlist = gretl_list_new(ndrop);
+        if (dlist != NULL) {
+            dlist[0] = 0;
         }
         j = 1;
         for (i=0; i<k; i++) {
             test = gretl_matrix_get(R, i, i);
             if (fabs(test) < R_DIAG_MIN) {
-                if (droplist != NULL) {
-                    droplist[0] += 1;
-                    droplist[droplist[0]] = instlist[j];
+                if (dlist != NULL) {
+                    dlist[0] += 1;
+                    dlist[dlist[0]] = ivi->instlist[j];
                 }
                 fprintf(stderr, "tsls_Q: dropping redundant instrument %d (%s)\n",
-                        instlist[j], dset->varname[instlist[j]]);
-                gretl_list_delete_at_pos(instlist, j--);
+                        ivi->instlist[j], dset->varname[ivi->instlist[j]]);
+                gretl_list_delete_at_pos(ivi->instlist, j--);
             }
             j++;
         }
 
-        k = instlist[0];
-        gretl_matrix_free(Q);
-        Q = gretl_matrix_data_subset_masked(instlist, dset,
-                                            dset->t1, dset->t2,
-                                            mask, err);
-        if (!*err) {
+        k = ivi->instlist[0];
+        gretl_matrix_free(ivi->Q);
+        ivi->Q = gretl_matrix_data_subset_masked(ivi->instlist, dset,
+						 dset->t1, dset->t2,
+						 ivi->missmask, &err);
+        if (!err) {
             R = gretl_matrix_reuse(R, k, k);
-            *err = gretl_matrix_QR_decomp(Q, R);
+            err = gretl_matrix_QR_decomp(ivi->Q, R);
         }
     }
 
@@ -1035,24 +1047,24 @@ static gretl_matrix *tsls_Q (int *instlist, int **pdlist,
 
     gretl_matrix_free(R);
 
-    if (*err) {
-        free(droplist);
-        gretl_matrix_free(Q);
-        Q = NULL;
+    if (err) {
+        free(dlist);
+        gretl_matrix_free(ivi->Q);
+        ivi->Q = NULL;
     } else {
-        *pdlist = droplist;
+        ivi->idroplist = dlist;
     }
 
-    return Q;
+    return err;
 }
 
-static int tsls_form_xhat (gretl_matrix *Q, gretl_matrix *g,
-                           DATASET *dset, int v0, int v1,
-                           const char *mask)
+static int tsls_form_xhat (iv_info *ivi, DATASET *dset,
+			   int v0, int v1)
 {
+    const char *mask = ivi->missmask;
     const double *x = dset->Z[v0];
     double *xhat = dset->Z[v1];
-    int k = gretl_matrix_cols(Q);
+    int k = gretl_matrix_cols(ivi->Q);
     int allzero = 1;
     int i, t, s = 0;
     int err = 0;
@@ -1064,13 +1076,13 @@ static int tsls_form_xhat (gretl_matrix *Q, gretl_matrix *g,
 
     /* form g = Q'x */
     for (i=0; i<k; i++) {
-        g->val[i] = 0.0;
+        ivi->g->val[i] = 0.0;
         s = 0;
         for (t=dset->t1; t<=dset->t2; t++) {
             if (mask != NULL && mask[t - dset->t1]) {
                 continue;
             }
-            g->val[i] += gretl_matrix_get(Q, s++, i) * x[t];
+            ivi->g->val[i] += gretl_matrix_get(ivi->Q, s++, i) * x[t];
         }
     }
 
@@ -1083,7 +1095,7 @@ static int tsls_form_xhat (gretl_matrix *Q, gretl_matrix *g,
         }
         xhat[t] = 0.0;
         for (i=0; i<k; i++) {
-            xhat[t] += gretl_matrix_get(Q, s, i) * g->val[i];
+            xhat[t] += gretl_matrix_get(ivi->Q, s, i) * ivi->g->val[i];
         }
         if (xhat[t] != 0) {
             allzero = 0;
@@ -1104,12 +1116,12 @@ static int tsls_form_xhat (gretl_matrix *Q, gretl_matrix *g,
     return err;
 }
 
-static void tsls_residuals (MODEL *pmod, const int *reglist,
-                            const DATASET *dset,
-                            gretlopt opt)
+static void tsls_residuals (iv_info *ivi, gretlopt opt,
+                            const DATASET *dset)
 {
-    int yno = reglist[1];
+    MODEL *pmod = ivi->pmod;
     double yh, sigma0 = pmod->sigma;
+    int yno = ivi->reglist[1];
     int i, t;
 
     pmod->ess = 0.0;
@@ -1120,7 +1132,7 @@ static void tsls_residuals (MODEL *pmod, const int *reglist,
         }
         yh = 0.0;
         for (i=0; i<pmod->ncoeff; i++) {
-            yh += pmod->coeff[i] * dset->Z[reglist[i+2]][t];
+            yh += pmod->coeff[i] * dset->Z[ivi->reglist[i+2]][t];
         }
         pmod->yhat[t] = yh;
         pmod->uhat[t] = dset->Z[yno][t] - yh;
@@ -1144,9 +1156,11 @@ static void tsls_residuals (MODEL *pmod, const int *reglist,
     }
 }
 
-static void tsls_extra_stats (MODEL *pmod, int yno, int overid,
-                              gretlopt opt, const DATASET *dset)
+static void tsls_extra_stats (iv_info *ivi, gretlopt opt,
+			      const DATASET *dset)
 {
+    MODEL *pmod = ivi->pmod;
+    int yno = ivi->reglist[1];
     double r;
 
     /* squared correlation between y and yhat */
@@ -1158,7 +1172,7 @@ static void tsls_extra_stats (MODEL *pmod, int yno, int overid,
     pmod->fstt = pmod->chisq = NADBL;
 
     if (pmod->ncoeff > 1) {
-        if ((opt & OPT_N) || (overid && pmod->ncoeff == 2)) {
+        if ((opt & OPT_N) || (ivi->overid && pmod->ncoeff == 2)) {
             pmod->chisq = wald_omit_chisq(NULL, pmod);
         } else {
             pmod->fstt = wald_omit_F(NULL, pmod);
@@ -1181,22 +1195,21 @@ static void tsls_extra_stats (MODEL *pmod, int yno, int overid,
     }
 }
 
-static void tsls_recreate_full_list (MODEL *pmod, const int *reglist,
-                                     const int *instlist)
+static void tsls_recreate_full_list (iv_info *ivi)
 {
     int *full_list;
 
-    if (instlist != NULL && instlist[0] > 0) {
-        full_list = gretl_lists_join_with_separator(reglist, instlist);
+    if (ivi->instlist != NULL && ivi->instlist[0] > 0) {
+        full_list = gretl_lists_join_with_separator(ivi->reglist, ivi->instlist);
     } else {
-        full_list = gretl_list_copy(reglist);
+        full_list = gretl_list_copy(ivi->reglist);
     }
 
     if (full_list == NULL) {
-        pmod->errcode = E_ALLOC;
+        ivi->pmod->errcode = E_ALLOC;
     } else {
-        free(pmod->list);
-        pmod->list = full_list;
+        free(ivi->pmod->list);
+        ivi->pmod->list = full_list;
     }
 }
 
@@ -1212,13 +1225,9 @@ static void replace_list_element (int *list, int targ, int repl)
     }
 }
 
-static int reglist_remove_redundant_vars (const MODEL *tmod,
-                                          int *s2list,
-                                          int *reglist,
-                                          int *endolist,
-                                          int *hatlist)
+static int reglist_remove_redundant_vars (iv_info *ivi)
 {
-    int *dlist = gretl_model_get_list(tmod, "droplist");
+    int *dlist = gretl_model_get_list(ivi->pmod, "droplist");
     int i, pos;
 
     if (dlist == NULL) {
@@ -1226,13 +1235,13 @@ static int reglist_remove_redundant_vars (const MODEL *tmod,
     }
 
     for (i=1; i<=dlist[0]; i++) {
-        pos = in_gretl_list(s2list, dlist[i]);
+        pos = in_gretl_list(ivi->s2list, dlist[i]);
         if (pos > 1) {
-            gretl_list_delete_at_pos(reglist, pos);
+            gretl_list_delete_at_pos(ivi->reglist, pos);
         }
-        if (endolist != NULL) {
+        if (ivi->endolist != NULL) {
             /* note: if endolist is NULL, so is hatlist */
-            pos = in_gretl_list(hatlist, dlist[i]);
+            pos = in_gretl_list(ivi->hatlist, dlist[i]);
             if (pos > 1) {
                 /* First replace dlist[i] with the ID of the original
                    regressor from @endolist, in place of the "hatlist"
@@ -1245,9 +1254,9 @@ static int reglist_remove_redundant_vars (const MODEL *tmod,
                    and hatlist, so that subsequent calculations will not
                    get messed up.
                 */
-                dlist[i] = endolist[pos];
-                gretl_list_delete_at_pos(endolist, pos);
-                gretl_list_delete_at_pos(hatlist, pos);
+                dlist[i] = ivi->endolist[pos];
+                gretl_list_delete_at_pos(ivi->endolist, pos);
+                gretl_list_delete_at_pos(ivi->hatlist, pos);
             }
         }
     }
@@ -1264,21 +1273,19 @@ static int reglist_remove_redundant_vars (const MODEL *tmod,
    http://ksghome.harvard.edu/~JStock/pdf/rfa_6.pdf
 */
 
-static int
-compute_stock_yogo (MODEL *pmod, const int *endolist,
-                    const int *instlist, const int *hatlist,
-                    const DATASET *dset)
+static int compute_stock_yogo (iv_info *ivi, const DATASET *dset)
 {
     const double **dZ = (const double **) dset->Z;
+    MODEL *pmod = ivi->pmod;
     gretl_matrix_block *B = NULL;
     gretl_matrix_block *B2 = NULL;
     gretl_matrix *G, *S, *Y;
     gretl_matrix *Ya, *YPY;
     gretl_matrix *X, *Z, *E = NULL;
     int T = pmod->nobs;
-    int n = endolist[0];
+    int n = ivi->endolist[0];
     int K1 = pmod->ncoeff - n;
-    int K2 = instlist[0] - K1;
+    int K2 = ivi->instlist[0] - K1;
     int i, s, vi, vj, t;
     int err = 0;
 
@@ -1313,9 +1320,9 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
         }
 
         /* form the X and Z matrices */
-        for (i=1; i<=instlist[0]; i++) {
-            vi = instlist[i];
-            if (in_gretl_list(pmod->list, vi)) {
+        for (i=1; i<=ivi->instlist[0]; i++) {
+            vi = ivi->instlist[i];
+            if (in_gretl_list(ivi->pmod->list, vi)) {
                 /* included exogenous var -> X */
                 M = X;
                 j = ix++;
@@ -1335,7 +1342,7 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
 
     /* form Y matrix */
     for (i=0; i<n; i++) {
-        vi = endolist[i+1];
+        vi = ivi->endolist[i+1];
         s = 0;
         for (t=pmod->t1; t<=pmod->t2; t++) {
             if (!na(pmod->uhat[t])) {
@@ -1347,7 +1354,7 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
     if (K1 == 0) {
         /* form Y-hat matrix in Ya */
         for (i=0; i<n; i++) {
-            vi = hatlist[i+1];
+            vi = ivi->hatlist[i+1];
             s = 0;
             for (t=pmod->t1; t<=pmod->t2; t++) {
                 if (!na(pmod->uhat[t])) {
@@ -1402,8 +1409,8 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
 
     /* now write first-stage residuals into Ya */
     for (i=0; i<n && !err; i++) {
-        vi = endolist[i+1];
-        vj = hatlist[i+1];
+        vi = ivi->endolist[i+1];
+        vj = ivi->hatlist[i+1];
         s = 0;
         for (t=pmod->t1; t<=pmod->t2; t++) {
             if (!na(pmod->uhat[t])) {
@@ -1432,10 +1439,7 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
     if (!err) {
         double rc = gretl_symmetric_matrix_rcond(S, &err);
 
-        if (!err && (na(rc) || rc < 1.0e-7)) { /* note: was 1.0e-6 */
-#if 0
-            fprintf(stderr, "Stock-Yogo: rcond(S) = %g\n", rc);
-#endif
+        if (!err && (na(rc) || rc < 1.0e-7)) {
             err = E_SINGULAR;
         }
     }
@@ -1485,12 +1489,8 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
    covariance estimator.
 */
 
-static int compute_first_stage_F (MODEL *pmod,
-                                  const int *endolist,
-                                  const int *reglist,
-                                  const int *instlist,
-                                  DATASET *dset,
-                                  gretlopt opt)
+static int compute_first_stage_F (iv_info *ivi, gretlopt opt,
+				  DATASET *dset)
 {
     MODEL mod1;
     int *list1 = NULL;
@@ -1500,7 +1500,7 @@ static int compute_first_stage_F (MODEL *pmod,
     int err = 0;
 
     gretl_model_init(&mod1, dset);
-    ev = endolist[1];
+    ev = ivi->endolist[1];
 
     /* The regression list, list1, has endogenous regressor ev as the
        dependent variable and includes all instruments; the list for
@@ -1512,14 +1512,14 @@ static int compute_first_stage_F (MODEL *pmod,
         return E_ALLOC;
     }
 
-    for (i=1; i<=instlist[0]; i++) {
-        vi = instlist[i];
+    for (i=1; i<=ivi->instlist[0]; i++) {
+        vi = ivi->instlist[i];
         list1 = gretl_list_append_term(&list1, vi);
         if (list1 == NULL) {
             err = E_ALLOC;
             break;
         }
-        if (!in_gretl_list(reglist, vi)) {
+        if (!in_gretl_list(ivi->reglist, vi)) {
             flist = gretl_list_append_term(&flist, vi);
             if (flist == NULL) {
                 err = E_ALLOC;
@@ -1546,12 +1546,12 @@ static int compute_first_stage_F (MODEL *pmod,
     }
 
     if (!err) {
-        gretl_model_set_double(pmod, "stage1-F", F);
-        gretl_model_set_int(pmod, "stage1-dfn", flist[0]);
-        gretl_model_set_int(pmod, "stage1-dfd", mod1.dfd);
+        gretl_model_set_double(ivi->pmod, "stage1-F", F);
+        gretl_model_set_int(ivi->pmod, "stage1-dfn", flist[0]);
+        gretl_model_set_int(ivi->pmod, "stage1-dfd", mod1.dfd);
         if (!(opt & OPT_R)) {
             /* flag lookup of Stock-Yogo critical values */
-            gretl_model_set_double(pmod, "gmin", F);
+            gretl_model_set_double(ivi->pmod, "gmin", F);
         }
     }
 
@@ -1754,45 +1754,42 @@ int ivreg_process_lists (const int *list, int **reglist, int **instlist)
 MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 {
     MODEL tsls;
-    gretl_matrix *Q = NULL, *g = NULL;
-    char *missmask = NULL;
+    iv_info *ivi = NULL;
     int orig_t1 = dset->t1, orig_t2 = dset->t2;
-    int *reglist = NULL, *instlist = NULL;
-    int *hatlist = NULL, *s2list = NULL;
-    int *exolist = NULL, *endolist = NULL;
-    int *idroplist = NULL;
-    int addconst = 0;
-    int nendo = 0, nreg = 0;
     int orig_nvar = dset->v;
     int sysest = (opt & OPT_E);
     int no_tests = (opt & OPT_X);
-    int OverIdRank = 0;
+    int addconst = 0;
+    int nendo = 0;
+    int nreg = 0;
     int i, err = 0;
-
-#if TDEBUG
-    printlist(list, "tsls: incoming list");
-#endif
 
     /* initialize model in case we bail out early on error */
     gretl_model_init(&tsls, dset);
 
-    gretl_error_clear();
+    /* allocate container struct */
+    ivi = iv_info_new(&tsls);
+    if (ivi == NULL) {
+	tsls.errcode = E_ALLOC;
+	return tsls;
+    }
 
     /* reglist: dependent var plus list of regressors
        instlist: list of instruments
     */
-    tsls.errcode = ivreg_process_lists(list, &reglist, &instlist);
+    tsls.errcode = ivreg_process_lists(list, &ivi->reglist, &ivi->instlist);
     if (tsls.errcode) {
+	iv_info_destroy(ivi);
         return tsls;
     }
 
     /* adjust sample range for missing observations */
-    err = tsls_adjust_sample(list, dset, &missmask);
+    err = tsls_adjust_sample(list, dset, &ivi->missmask);
 
     if (!err) {
         /* allocate second stage regression list */
-        s2list = gretl_list_copy(reglist);
-        if (s2list == NULL) {
+        ivi->s2list = gretl_list_copy(ivi->reglist);
+        if (ivi->s2list == NULL) {
             err = E_ALLOC;
         }
     }
@@ -1803,19 +1800,19 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 
     /* in case we drop any instruments as redundant */
     if (sysest) {
-        exolist = gretl_list_copy(instlist);
+        ivi->exolist = gretl_list_copy(ivi->instlist);
     }
 
     /* drop any vars that are all zero, and reshuffle the constant
        into first position among the independent vars
     */
-    tsls_omitzero(reglist, dset, missmask);
-    reglist_check_for_const(reglist, dset);
-    tsls_omitzero(instlist, dset, missmask);
+    tsls_omitzero(ivi->reglist, ivi->missmask, dset);
+    reglist_check_for_const(ivi->reglist, dset);
+    tsls_omitzero(ivi->instlist, ivi->missmask, dset);
 
 #if TDEBUG
-    printlist(reglist, "reglist");
-    printlist(instlist, "instlist");
+    printlist(ivi->reglist, "reglist");
+    printlist(ivi->instlist, "instlist");
 #endif
 
     /* Determine the list of variables (endolist) for which we need to
@@ -1824,25 +1821,26 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
        TSLS is in fact redundant); this may sometimes be required
        when tsls is called in the context of system estimation.
     */
-    endolist = tsls_make_endolist(reglist, &instlist, &addconst, &err);
+    ivi->endolist = tsls_make_endolist(ivi->reglist, &ivi->instlist,
+				       &addconst, &err);
     if (err) {
         goto bailout;
     }
 
 #if TDEBUG
-    printlist(endolist, "endolist, in tsls");
+    printlist(ivi->endolist, "endolist, in tsls");
 #endif
 
-    if (endolist != NULL) {
-        nendo = endolist[0];
-        hatlist = gretl_list_copy(endolist);
-        if (hatlist == NULL) {
+    if (ivi->endolist != NULL) {
+        nendo = ivi->endolist[0];
+        ivi->hatlist = gretl_list_copy(ivi->endolist);
+        if (ivi->hatlist == NULL) {
             err = E_ALLOC;
         }
     }
 
     if (!err) {
-        Q = tsls_Q(instlist, &idroplist, dset, missmask, &err);
+        err = tsls_add_Q(ivi, dset);
     }
 
     if (err) {
@@ -1852,25 +1850,25 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     /* check (again) for order condition: we do this after tsls_Q in case
        any instruments get dropped at that stage
     */
-    nreg = reglist[0] - 1;
-    OverIdRank = instlist[0] - nreg;
-    if (OverIdRank < 0) {
+    nreg = ivi->reglist[0] - 1;
+    ivi->overid = ivi->instlist[0] - nreg;
+    if (ivi->overid < 0) {
         gretl_errmsg_sprintf(_("The order condition for identification is not satisfied.\n"
-                               "At least %d more instruments are needed."), -OverIdRank);
+                               "At least %d more instruments are needed."), -ivi->overid);
         err = E_DATA;
         goto bailout;
     }
 
 #if TDEBUG
-    fprintf(stderr, "nreg = %d, OverIdRank = %d\n", nreg, OverIdRank);
+    fprintf(stderr, "nreg = %d, OverIdRank = %d\n", nreg, ivi->overid);
 #endif
 
     /* allocate storage for fitted vars (etc.), if needed */
     if (nendo > 0) {
         err = dataset_add_series(dset, nendo);
         if (!err) {
-            g = gretl_vector_alloc(Q->cols);
-            if (g == NULL) {
+            ivi->g = gretl_vector_alloc(ivi->Q->cols);
+            if (ivi->g == NULL) {
                 err = E_ALLOC;
             }
         }
@@ -1879,72 +1877,59 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
         }
     }
 
-    /*
-       Deal with the variables for which instruments are needed: loop
+    /* Deal with the variables for which instruments are needed: loop
        across the list of variables to be instrumented (endolist),
        form the fitted values as QQ'x_i, and add these fitted values
        into the data array, dset->Z.
     */
 
     for (i=0; i<nendo; i++) {
-        int v0 = endolist[i+1];
+        int v0 = ivi->endolist[i+1];
         int v1 = orig_nvar + i;
 
         /* form xhat_i = QQ'x_i */
-        err = tsls_form_xhat(Q, g, dset, v0, v1, missmask);
+        err = tsls_form_xhat(ivi, dset, v0, v1);
         if (err) {
             goto bailout;
         }
 
         /* substitute v1 into the right place in the second-stage
            regression list */
-        replace_list_element(s2list, v0, v1);
+        replace_list_element(ivi->s2list, v0, v1);
 
         /* and update hatlist */
-        hatlist[i+1] = v1;
+        ivi->hatlist[i+1] = v1;
     }
 
     /* second-stage regression */
-    tsls = lsq(s2list, dset, OLS, (sysest)? OPT_Z : OPT_NONE);
+    tsls = lsq(ivi->s2list, dset, OLS, (sysest)? OPT_Z : OPT_NONE);
     if (tsls.errcode) {
         fprintf(stderr, "tsls, stage 2: tsls.errcode = %d\n", tsls.errcode);
         goto bailout;
     }
 
-#if TDEBUG > 1
-    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
-
-    printmodel(&tsls, dset, OPT_S, prn);
-    gretl_print_destroy(prn);
-#endif
-
-    if (tsls.list[0] < s2list[0]) {
+    if (tsls.list[0] < ivi->s2list[0]) {
         /* Were collinear regressors dropped? If so, adjustments are needed */
-        OverIdRank += s2list[0] - tsls.list[0];
-        reglist_remove_redundant_vars(&tsls, s2list, reglist, endolist,
-                                      hatlist);
-        if (endolist != NULL) {
-            nendo = endolist[0];
+        ivi->overid += ivi->s2list[0] - tsls.list[0];
+        reglist_remove_redundant_vars(ivi);
+        if (ivi->endolist != NULL) {
+            nendo = ivi->endolist[0];
         }
-#if TDEBUG
-        fprintf(stderr, "tsls: dropped collinear vars\n");
-#endif
     }
 
-    if (instlist != NULL && instlist[0] > 0) {
+    if (ivi->instlist != NULL && ivi->instlist[0] > 0) {
         /* record the number of instruments used */
-        gretl_model_set_int(&tsls, "ninst", instlist[0]);
+        gretl_model_set_int(&tsls, "ninst", ivi->instlist[0]);
     }
 
     if (!no_tests) {
         if (!sysest || (opt & OPT_H)) {
             if (nendo == 1) {
                 /* handles robust estimation, for single endogenous regressor */
-                compute_first_stage_F(&tsls, endolist, reglist, instlist,
-                                      dset, opt);
+                compute_first_stage_F(ivi, opt, dset);
             } else if (nendo > 0 && !(opt & OPT_R)) {
                 /* at present, only handles case of i.i.d. errors */
-                compute_stock_yogo(&tsls, endolist, instlist, hatlist, dset);
+                compute_stock_yogo(ivi, dset);
             }
         }
     }
@@ -1952,7 +1937,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     if (nendo > 0) {
         /* special: we need to use the original RHS vars to compute
            residuals and associated statistics */
-        tsls_residuals(&tsls, reglist, dset, opt);
+        tsls_residuals(ivi, opt, dset);
     }
 
     if (opt & OPT_C) {
@@ -1971,22 +1956,21 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 
     if (nendo > 0) {
         /* compute additional statistics (R^2, F, etc.) */
-        tsls_extra_stats(&tsls, reglist[1], OverIdRank, opt, dset);
+        tsls_extra_stats(ivi, opt, dset);
     }
 
     if (!sysest && !no_tests) {
-        if (nendo > 0 && hatlist != NULL) {
+        if (nendo > 0 && ivi->hatlist != NULL) {
 	    if (opt & OPT_M) {
-		tsls_matrix_hausman_test(&tsls, reglist, hatlist, endolist,
-					 instlist, missmask, opt, dset);
+		tsls_matrix_hausman_test(ivi, opt, dset);
 	    } else {
-		tsls_hausman_test(&tsls, reglist, hatlist, endolist, opt, dset);
+		tsls_hausman_test(ivi, opt, dset);
 	    }
         }
-        if (OverIdRank > 0) {
-            ivreg_sargan_test(&tsls, OverIdRank, instlist, dset);
+        if (ivi->overid > 0) {
+            ivreg_sargan_test(ivi, dset);
         } else if (nendo > 0) {
-            tsls_loglik(&tsls, endolist, reglist, instlist, missmask, dset);
+            tsls_loglik(ivi, dset);
         }
     }
 
@@ -1997,23 +1981,13 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
        instruments, possibly purged of redundant elements) into the model
        for future reference
     */
-    tsls_recreate_full_list(&tsls, reglist, instlist);
+    tsls_recreate_full_list(ivi);
 
-    if (idroplist != NULL) {
-        gretl_model_set_list_as_data(&tsls, "inst_droplist", idroplist);
+    if (ivi->idroplist != NULL) {
+        gretl_model_set_list_as_data(&tsls, "inst_droplist", ivi->idroplist);
     }
-
-#if 0
-    if (addconst) {
-        gretl_model_set_int(&tsls, "addconst", addconst);
-    }
-#endif
 
  bailout:
-
-    gretl_matrix_free(Q);
-    gretl_matrix_free(g);
-    free(missmask);
 
     if (err && !tsls.errcode) {
         tsls.errcode = err;
@@ -2022,26 +1996,21 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     if (!tsls.errcode && nendo > 0) {
         if (sysest) {
             /* save first-stage fitted values */
-            tsls_save_data(&tsls, hatlist, exolist, dset);
+            tsls_save_data(ivi, dset);
         }
         if (!sysest || (opt & OPT_H)) {
             /* save list of endogenous regressors on model */
-            gretl_model_set_list_as_data(&tsls, "endolist", endolist);
-            endolist = NULL; /* model takes ownership */
-            gretl_model_set_list_as_data(&tsls, "instlist", instlist);
-            instlist = NULL; /* ditto */
+            gretl_model_set_list_as_data(&tsls, "endolist", ivi->endolist);
+            ivi->endolist = NULL; /* model takes ownership */
+            gretl_model_set_list_as_data(&tsls, "instlist", ivi->instlist);
+            ivi->instlist = NULL; /* ditto */
         }
     }
 
     /* delete any first-stage fitted values from dataset */
     dataset_drop_last_variables(dset, dset->v - orig_nvar);
 
-    free(reglist);
-    free(instlist);
-    free(hatlist);
-    free(exolist);
-    free(endolist);
-    free(s2list);
+    iv_info_destroy(ivi);
 
     if ((opt & OPT_A) || tsls.errcode) {
         model_count_minus(&tsls); /* OK? */
