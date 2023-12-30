@@ -3882,7 +3882,7 @@ static int ivreg_set_params (nlspec *spec, MODEL *pmod)
 static int finalize_ivreg_model (MODEL *pmod, MODEL *ols,
 				 const int *biglist,
 				 const int *mlist,
-				 int **ilist,
+				 const int *ilist,
 				 const double **Z,
 				 int rv)
 {
@@ -3923,7 +3923,7 @@ static int finalize_ivreg_model (MODEL *pmod, MODEL *ols,
 	pmod->yhat[t] = Z[yno][t] - Z[rv][t];
     }
 
-    endolist = tsls_make_endolist(mlist, ilist, NULL, &err);
+    endolist = tsls_make_endolist(mlist, ilist, &err);
 
     if (endolist != NULL) {
 	gretl_model_set_list_as_data(pmod, "endolist", endolist);
@@ -3996,7 +3996,7 @@ MODEL ivreg_via_gmm (const int *list, DATASET *dset, gretlopt opt)
 	model.errcode = err;
     } else {
 	/* turn the output model into an "ivreg" type */
-	finalize_ivreg_model(&model, &olsmod, list, mlist, &ilist,
+	finalize_ivreg_model(&model, &olsmod, list, mlist, ilist,
 			     (const double **) dset->Z, rv);
     }
 

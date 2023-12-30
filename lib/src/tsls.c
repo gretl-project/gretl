@@ -423,54 +423,48 @@ static int zlist_prepend_const (int **pzlist)
  * tsls_make_endolist:
  * @reglist: regression specification.
  * @instlist: predetermined and exogenous variables.
- * @addconst: location to receive notification of whether
- * the constant was added to the content of @instlist,
- * or NULL.
  * @err: location to receive error code.
  *
  * Determines which variables in @reglist, when checked against the
  * predetermined and exogenous vars in @instlist, need to be
  * instrumented, and populates the returned list accordingly.
  *
- * If @addconst is non-NULL and the constant is found in @reglist
- * but not in @instlist, then it is added to @instlist and this
- * is flagged by writing 1 into @addconst.
- *
  * Returns: allocated list of variables to be instrumented or
  * NULL if there are no such variables.
  */
 
-int *tsls_make_endolist (const int *reglist, int **instlist,
-                         int *addconst, int *err)
+int *tsls_make_endolist (const int *reglist,
+			 const int *instlist,
+                         int *err)
 {
-    int *endolist = NULL;
-    int i, vi;
+    int *ret = NULL;
+    int i, nendo = 0;
 
     for (i=2; i<=reglist[0]; i++) {
-        vi = reglist[i];
-        if (!in_gretl_list(*instlist, vi)) {
-            if (vi == 0) {
-                /* found const in reglist but not instlist:
-                   needs fixing -- or is this debatable? */
-                if (addconst != NULL) {
-                    *addconst = 1;
-                }
-            } else {
-                endolist = gretl_list_append_term(&endolist, vi);
-                if (endolist == NULL) {
-                    *err = E_ALLOC;
-                    return NULL;
-                }
-            }
-        }
+        if (!in_gretl_list(instlist, reglist[i])) {
+	    nendo++;
+	}
     }
 
-    if (addconst != NULL && *addconst) {
-        /* add constant to list of instruments */
-        *err = zlist_prepend_const(instlist);
+    if (nendo > 0) {
+	ret = gretl_list_new(nendo);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
     }
 
-    return endolist;
+    if (ret != NULL) {
+	int vi, j = 1;
+
+	for (i=2; i<=reglist[0]; i++) {
+	    vi = reglist[i];
+	    if (!in_gretl_list(instlist, vi)) {
+		ret[j++] = vi;
+	    }
+	}
+    }
+
+    return ret;
 }
 
 /* Fill the residuals matrix for tsls likelihood calculation.
@@ -1679,23 +1673,23 @@ static int tsls_adjust_sample (const int *list, DATASET *dset,
 
 int ivreg_process_lists (const int *list, int **reglist, int **instlist)
 {
-    int *rlist, *zlist;
+    int *rlist = NULL;
+    int *zlist = NULL;
     int i, err;
 
-    err = gretl_list_split_on_separator(list, reglist, instlist);
+    err = gretl_list_split_on_separator(list, &rlist, &zlist);
     if (err) {
-        fprintf(stderr, "gretl_list_split_on_separator: failed\n");
         return err;
     }
 
-    rlist = *reglist;
-    zlist = *instlist;
+    /* The regression list must have at least two members, and the
+       instrument list must not be empty */
 
     if (rlist[0] < 2 || zlist == NULL || zlist[0] < 1) {
         err = E_ARGS;
     } else {
         for (i=1; i<=zlist[0]; i++) {
-            if (zlist[i] == list[1]) {
+            if (zlist[i] == rlist[1]) {
                 gretl_errmsg_set(_("You can't use the dependent variable as an instrument"));
                 err = E_DATA;
                 break;
@@ -1704,30 +1698,31 @@ int ivreg_process_lists (const int *list, int **reglist, int **instlist)
     }
 
     if (!err) {
-        int oid = zlist[0] - rlist[0] + 1;
+	if (in_gretl_list(rlist, 0) > 1 && !in_gretl_list(zlist, 0)) {
+	    /* Don't treat the constant as if it were endogenous: if
+	       it's in the regressor list ensure it's also in the
+	       instrument list.
+	    */
+	    err = zlist_prepend_const(&zlist);
+	}
+    }
 
-        if (oid < 0 && (in_gretl_list(rlist, 0) > 1) &&
-            !in_gretl_list(zlist, 0)) {
-            /* do not treat the constant as if it were endogenous */
-            err = zlist_prepend_const(instlist);
-            if (!err) {
-                zlist = *instlist;
-                oid++;
-            }
-        }
-        if (!err && oid < 0) {
+    if (!err) {
+        int oc = zlist[0] - rlist[0] + 1;
+
+        if (oc < 0) {
             gretl_errmsg_sprintf(_("The order condition for identification is not satisfied.\n"
-                                   "At least %d more instruments are needed."), -oid);
-            fprintf(stderr, "zlist[0] = %d, rlist[0] = %d\n", zlist[0], rlist[0]);
+                                   "At least %d more instruments are needed."), -oc);
             err = E_DATA;
         }
     }
 
     if (err) {
-        free(*reglist);
-        free(*instlist);
-        *reglist = NULL;
-        *instlist = NULL;
+        free(rlist);
+        free(zlist);
+    } else {
+	*reglist = rlist;
+	*instlist = zlist;
     }
 
     return err;
@@ -1759,7 +1754,6 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     int orig_nvar = dset->v;
     int sysest = (opt & OPT_E);
     int no_tests = (opt & OPT_X);
-    int addconst = 0;
     int nendo = 0;
     int nreg = 0;
     int i, err = 0;
@@ -1821,8 +1815,9 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
        TSLS is in fact redundant); this may sometimes be required
        when tsls is called in the context of system estimation.
     */
-    ivi->endolist = tsls_make_endolist(ivi->reglist, &ivi->instlist,
-				       &addconst, &err);
+    ivi->endolist = tsls_make_endolist(ivi->reglist,
+				       ivi->instlist,
+				       &err);
     if (err) {
         goto bailout;
     }
