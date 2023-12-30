@@ -446,14 +446,14 @@ int *tsls_make_endolist (const int *reglist,
 	}
     }
 
-    if (nendo > 0) {
-	ret = gretl_list_new(nendo);
-	if (ret == NULL) {
-	    *err = E_ALLOC;
-	}
+    if (nendo == 0) {
+	return ret;
     }
 
-    if (ret != NULL) {
+    ret = gretl_list_new(nendo);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    } else {
 	int vi, j = 1;
 
 	for (i=2; i<=reglist[0]; i++) {
@@ -1675,55 +1675,48 @@ int ivreg_process_lists (const int *list, int **reglist, int **instlist)
 {
     int *rlist = NULL;
     int *zlist = NULL;
-    int i, err;
+    int i, oc, err;
 
     err = gretl_list_split_on_separator(list, &rlist, &zlist);
     if (err) {
         return err;
     }
 
-    /* The regression list must have at least two members, and the
-       instrument list must not be empty */
-
     if (rlist[0] < 2 || zlist == NULL || zlist[0] < 1) {
+	/* The regression list must have at least two members, and the
+	   instrument list must not be empty
+	*/
         err = E_ARGS;
     } else {
-        for (i=1; i<=zlist[0]; i++) {
+        for (i=1; i<=zlist[0] && !err; i++) {
             if (zlist[i] == rlist[1]) {
                 gretl_errmsg_set(_("You can't use the dependent variable as an instrument"));
                 err = E_DATA;
-                break;
             }
         }
     }
 
-    if (!err) {
-	if (in_gretl_list(rlist, 0) > 1 && !in_gretl_list(zlist, 0)) {
-	    /* Don't treat the constant as if it were endogenous: if
-	       it's in the regressor list ensure it's also in the
-	       instrument list.
-	    */
-	    err = zlist_prepend_const(&zlist);
-	}
+    if (!err && in_gretl_list(rlist, 0) > 1 && !in_gretl_list(zlist, 0)) {
+	/* Don't treat the constant as if it were endogenous: if
+	   it's in the regressor list ensure it's also in the
+	   instrument list.
+	*/
+	err = zlist_prepend_const(&zlist);
     }
 
-    if (!err) {
-        int oc = zlist[0] - rlist[0] + 1;
-
-        if (oc < 0) {
-            gretl_errmsg_sprintf(_("The order condition for identification is not satisfied.\n"
-                                   "At least %d more instruments are needed."), -oc);
-            err = E_DATA;
-        }
+    if (!err && (oc = zlist[0] - rlist[0] + 1) < 0) {
+	gretl_errmsg_sprintf(_("The order condition for identification is not satisfied.\n"
+			       "At least %d more instruments are needed."), -oc);
+	err = E_DATA;
     }
 
-    if (err) {
-        free(rlist);
-        free(zlist);
-    } else {
-	*reglist = rlist;
-	*instlist = zlist;
-    }
+if (err) {
+    free(rlist);
+    free(zlist);
+ } else {
+    *reglist = rlist;
+    *instlist = zlist;
+ }
 
     return err;
 }
@@ -1980,6 +1973,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 
     if (ivi->idroplist != NULL) {
         gretl_model_set_list_as_data(&tsls, "inst_droplist", ivi->idroplist);
+	ivi->idroplist = NULL; /* don't free */
     }
 
  bailout:
