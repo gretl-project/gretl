@@ -4,6 +4,8 @@ version 2024a, in progress
   case of showing multiple bands
 - "info" command: add --to-file and --from-file options for
   manipulating the description of a dataset
+- "tsls" command: add a --matrix-diff option for the Hausman
+  test, using the method of Padadopoulos (Econometrics, 2023)
 - "loop foreach": support arrays and bundles that are located
   inside other arrays or bundles
 - Fix broken backward compatibility in handling of backslash

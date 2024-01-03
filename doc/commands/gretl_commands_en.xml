@@ -16179,6 +16179,10 @@
 	  <optparm>clustvar</optparm>
 	  <effect>clustered standard errors</effect>
         </option>
+        <option>
+	  <flag>--matrix-diff</flag>
+	  <effect>compute Hausman test via matrix difference</effect>
+        </option>
 	<option>
 	  <flag>--liml</flag>
 	  <effect>use Limited Information Maximum Likelihood</effect>
@@ -16213,6 +16217,11 @@
 	<lit>x</lit>s are the exogenous variables. Note that exogenous
 	regressors should appear in both lists.
       </para>
+      <para context="cli">
+	For details on the effects of the <opt>robust</opt> and
+	<opt>cluster</opt> options, please see the help for
+	<cmdref targ="ols"/>.
+      </para>
 
       <para context="gui">
 	This command requires the selection of two lists of variables: the
@@ -16220,24 +16229,36 @@
 	instruments.  Note that any exogenous regressors should appear in both
 	lists.
       </para>
-
+      <subhead>TSLS-specific tests</subhead>
       <para>
-	Output for two-stage least squares estimates includes the Hausman
-	test and, if the model is over-identified, the Sargan
-	over-identification test.  In the Hausman test, the null
-	hypothesis is that OLS estimates are consistent, or in other words
-	estimation by means of instrumental variables is not really
-	required.  A model of this sort is over-identified if there are
-	more instruments than are strictly required.  The Sargan test is
-	based on an auxiliary regression of the residuals from the
-	two-stage least squares model on the full list of instruments.
-	The null hypothesis is that all the instruments are valid, and
-	suspicion is thrown on this hypothesis if the auxiliary regression
-	has a significant degree of explanatory power. For a good
-	explanation of both tests see chapter 8 of <cite
-	key="davidson-mackinnon04">Davidson and MacKinnon (2004)</cite>.
+	Output for two-stage least squares estimates includes the
+	Hausman test and, if the model is overidentified, the Sargan
+	overidentification test. For a good explanation of both tests
+	see chapter 8 of <cite key="davidson-mackinnon04">Davidson and
+	MacKinnon (2004)</cite>.
       </para>
-
+      <para>
+	In the Hausman test, the null hypothesis is that OLS estimates
+	are consistent, or in other words estimation by means of
+	instrumental variables is not really required.  By default
+	this test is implemented by the regression method, but if the
+	<opt>matrix-diff</opt> option is given the method of <cite
+	key="papadopoulos23">Papadopoulos (2023)</cite> is used. In
+	both cases a robust variant is employed if the
+	<opt>robust</opt> option is also given.
+      </para>
+      <para>
+	A model of this sort is overidentified if there are more
+	instruments than are strictly required.  The Sargan
+	overidentification test <cite key="sargan58" p="true">(Sargan,
+	1958)</cite> is based on an auxiliary regression of the
+	residuals from the two-stage least squares model on the full
+	list of instruments.  The null hypothesis is that all the
+	instruments are valid, and suspicion is thrown on this
+	hypothesis if the auxiliary regression has a significant
+	degree of explanatory power.
+      </para>
+      <subhead>Weak instruments</subhead>
       <para>
 	For both TSLS and LIML estimation, an additional test result is
 	shown provided that the model is estimated under the assumption of
@@ -16255,25 +16276,19 @@
 	of <cite key="stock-yogo03">Stock and Yogo (2003)</cite> are shown
 	when available.
       </para>
-
+      <subhead>R-squared</subhead>
       <para>
 	The R-squared value printed for models estimated via two-stage least
 	squares is the square of the correlation between the dependent
 	variable and the fitted values.
       </para>
-
-      <para context="cli">
-	For details on the effects of the <opt>robust</opt> and
-	<opt>cluster</opt> options, please see the help for
-	<cmdref targ="ols"/>.
-      </para>
-
+      <subhead>Alternative estimators</subhead>
       <para context="cli">
 	As alternatives to TSLS, the model may be estimated via Limited
 	Information Maximum Likelihood (the <opt>liml</opt> option) or via
 	the Generalized Method of Moments (<opt>gmm</opt> option). Note that
 	if the model is just identified these methods should produce the same
-	results as TSLS, but if it is over-identified the results will differ
+	results as TSLS, but if it is overidentified the results will differ
 	in general.
       </para>
 

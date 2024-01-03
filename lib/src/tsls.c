@@ -852,7 +852,6 @@ static int tsls_hausman_test (iv_info *ivi, gretlopt opt, DATASET *dset)
     if (err == E_NOADD) {
         err = 0; /* more of a no-op than an error */
     } else if (err) {
-        fprintf(stderr, "tsls_hausman_test: gretl_list_add: err = %d\n", err);
         return err;
     }
 
