@@ -3359,7 +3359,12 @@ typically be called before \texttt{SVAR\_SRirf}.
     \texttt{calc\_lr} & switch to get long-run matrix \texttt{lrmat} in short-run models \\ 
     \texttt{checkident} & switch indicating whether to check
                           identification before estimation\\
-    \texttt{calinfo} & bundle, calendar info: periodicity, sample size etc.
+    \texttt{calinfo} & bundle, calendar info: the ``t1'', ``t2'' and
+                       ``pd'' keys are taken from the corresponding
+                       accessors when the model was created. The
+                       ``limitobs'' matrix is a 2-row matrix with a
+                       numerical representation of the dates for the
+                       first and last observations
     \end{tabular}
     
     \begin{tabular}{rp{0.8\textwidth}}
