@@ -13727,9 +13727,8 @@
       <para context="cli">
 	If a named matrix is specified as the data source the
 	<repl>x</repl> and <repl>y</repl> lists should be given as
-	1-based column numbers; or alternatively, if no such numbers
-	are given, all the columns are plotted against time or an
-	index variable.
+	1-based column numbers. Alternatively, if no lists are given,
+	all the columns are plotted against time or an index variable.
       </para>
       <para context="gui">
 	Generates pairwise graphs of the selected <quote>Y-axis
@@ -13740,7 +13739,7 @@
 	maximum number of plots is 16; any extra variables will be
 	ignored.
       </para>
-      <para context="cli">
+      <para context="gui">
 	By default the data are shown as points, but if you check the
 	<quote>Use lines</quote> button they will be line graphs.
       </para>
