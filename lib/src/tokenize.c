@@ -185,7 +185,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { RMPLOT,   "rmplot",   CI_LIST | CI_LLEN1 },
     { RUN,      "run",      CI_PARM1 | CI_FNAME | CI_NOOPT },
     { RUNS,     "runs",     CI_LIST | CI_LLEN1 },
-    { SCATTERS, "scatters", CI_LIST },
+    { SCATTERS, "scatters", CI_LIST | CI_INFL },
     { SDIFF,    "sdiff",    CI_LIST | CI_NOOPT },
     { SET,      "set",      CI_PARM1 | CI_PARM2 | CI_INFL },
     { SETINFO,  "setinfo",  CI_LIST | CI_LLEN1 | CI_INFL }, /* + special: handled later */
@@ -3819,6 +3819,10 @@ static void handle_option_inflections (CMD *cmd)
 	    cmd->ciflags = CI_EXTRA;
 	} else if (cmd->opt & OPT_X) {
 	    /* with --matrix, default to all columns */
+	    cmd->ciflags |= CI_DOALL;
+	}
+    } else if (cmd->ci == SCATTERS) {
+	if (cmd->opt & OPT_T) {
 	    cmd->ciflags |= CI_DOALL;
 	}
     } else if (cmd->ci == OPEN) {
