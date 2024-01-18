@@ -4316,7 +4316,8 @@ int get_command_index (ExecState *s, int cmode, int preserve)
     }
 
 #if CMD_DEBUG
-    fprintf(stderr, " get_command_index: cmd->ci set to %d\n", cmd->ci);
+    fprintf(stderr, " get_command_index: cmd->ci set to %d (%s)\n",
+	    cmd->ci, gretl_command_word(cmd->ci));
 #endif
 
     return 0;

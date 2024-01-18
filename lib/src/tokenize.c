@@ -4100,7 +4100,8 @@ static int real_parse_command (ExecState *s,
     int err = 0;
 
 #if CDEBUG
-    fprintf(stderr, "real_parse: '%s', compmode = %d\n", line, compmode);
+    fprintf(stderr, "real_parse_command: '%s', compmode = %d (%s)\n",
+	    line, compmode, gretl_command_word(compmode));
 #endif
 
     maybe_init_shadow();
