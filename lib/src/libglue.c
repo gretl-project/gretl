@@ -863,6 +863,37 @@ int do_modprint (const char *mname, const char *names,
     return err;
 }
 
+static void maybe_add_tsinfo (DATASET *mdset,
+			      const gretl_matrix *m,
+			      const DATASET *dset)
+{
+    int ts_ok = 0;
+
+    if (dset != NULL && dataset_is_time_series(dset)) {
+	int t1, t2;
+
+	if (m->rows == dset->n) {
+	    t1 = 0;
+	    t2 = dset->n - 1;
+	    ts_ok = 1;
+	} else {
+	    /* subsampled? */
+	    t1 = gretl_matrix_get_t1(m);
+	    t2 = gretl_matrix_get_t2(m);
+	    if (t2 > t1 && t2 < dset->n) {
+		ts_ok = 1;
+	    }
+	}
+	if (ts_ok) {
+	    mdset->pd = dset->pd;
+	    mdset->structure = dset->structure;
+	    ntolabel(mdset->stobs, t1, dset);
+	    ntolabel(mdset->endobs, t2, dset);
+	    mdset->sd0 = get_date_x(mdset->pd, mdset->stobs);
+	}
+    }
+}
+
 int matrix_command_driver (int ci,
 			   const int *list,
 			   const char *param,
@@ -906,14 +937,15 @@ int matrix_command_driver (int ci,
 	}
     }
 
-    if (!err) {
-	if (ci != GNUPLOT) {
-	    opt &= ~OPT_X;
+    if (!err && ci == GNUPLOT) {
+	if (opt & OPT_T) {
+	    maybe_add_tsinfo(mdset, m, dset);
 	}
+	err = gnuplot(collist, param, mdset, opt);
+    } else if (!err) {
+	opt &= ~OPT_X;
 	if (ci == BXPLOT) {
 	    err = boxplots(collist, param, mdset, opt);
-	} else if (ci == GNUPLOT) {
-	    err = gnuplot(collist, param, mdset, opt);
 	} else if (ci == SUMMARY) {
 	    err = list_summary(collist, 0, mdset, opt, prn);
 	} else if (ci == CORR) {

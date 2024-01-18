@@ -2,6 +2,10 @@ version 2024a, in progress
 - $sysinfo bundle: add gnuplot version as scalar ("gnuplot")
 - "plot" command: update the help text and apply a fix for the
   case of showing multiple bands
+- "tsplots" command with matrix input: don't require a list
+  argument, plot all columns by default
+- "gnuplot" command with --matrix and --time-series options:
+  show dataset time on x-axis if possible
 - "info" command: add --to-file and --from-file options for
   manipulating the description of a dataset
 - "tsls" command: add a --matrix-diff option for the Hausman
