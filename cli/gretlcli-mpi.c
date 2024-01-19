@@ -171,7 +171,7 @@ static void noalloc (void)
     mpi_exit(1);
 }
 
-static int file_get_line (ExecState *s)
+static int file_get_line (ExecState *s, const char *fname)
 {
     char *line = s->line;
     int len = 0;
@@ -186,6 +186,11 @@ static int file_get_line (ExecState *s)
     }
 
     if (*line == '\0') {
+	if (fb != stdin && gretl_compiling_loop()) {
+	    gretl_errmsg_sprintf(_("Broken syntax in %s: unmatched %s"), fname,
+				 "loop/endloop");
+	    return E_PARSE;
+	}
         strcpy(line, "quit");
         s->cmd->ci = QUIT;
     } else if (len == MAXLINE - 1 && line[len-1] != '\n') {
@@ -270,9 +275,9 @@ static int cli_clear_data (ExecState *s, DATASET *dset)
     return err;
 }
 
-static int cli_get_input_line (ExecState *s)
+static int cli_get_input_line (ExecState *s, const char *fname)
 {
-    return file_get_line(s);
+    return file_get_line(s, fname);
 }
 
 /* allow for continuation of lines */
@@ -492,7 +497,7 @@ int main (int argc, char *argv[])
                 break;
             }
         } else {
-            err = cli_get_input_line(&state);
+            err = cli_get_input_line(&state, runfile);
             if (err) {
                 errmsg(err, prn);
                 break;

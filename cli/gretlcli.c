@@ -269,7 +269,7 @@ static void noalloc (void)
     exit(EXIT_FAILURE);
 }
 
-static int file_get_line (ExecState *s)
+static int file_get_line (ExecState *s, const char *fname)
 {
     char *line = s->line;
     int len = 0;
@@ -284,6 +284,11 @@ static int file_get_line (ExecState *s)
     }
 
     if (*line == '\0') {
+	if (fb != stdin && gretl_compiling_loop()) {
+	    gretl_errmsg_sprintf(_("Broken syntax in %s: unmatched %s"), fname,
+				 "loop/endloop");
+	    return E_PARSE;
+	}
         strcpy(line, "quit");
         s->cmd->ci = QUIT;
     } else if (len == MAXLINE - 1 && line[len-1] != '\n') {
@@ -384,7 +389,7 @@ static const char *get_prompt (ExecState *s)
     }
 }
 
-/* this function is set up as it is to make it available for debugging
+/* this function is set up so as to make it available for debugging
    purposes */
 
 static int get_interactive_line (void *p)
@@ -414,13 +419,13 @@ static int get_interactive_line (void *p)
     return err;
 }
 
-static int cli_get_input_line (ExecState *s)
+static int cli_get_input_line (ExecState *s, const char *fname)
 {
     int err = 0;
 
     if (runit || batch) {
         /* reading from script file */
-        err = file_get_line(s);
+        err = file_get_line(s, fname);
     } else {
         /* interactive use */
         err = get_interactive_line(s);
@@ -866,13 +871,12 @@ int main (int argc, char *argv[])
         if (err && gretl_error_is_fatal()) {
             gretl_abort(linecopy);
         }
-
         if (gretl_execute_loop()) {
             state.cmd->ci = RUNLOOP;
             err = cli_exec_line(&state, dset, cmdprn);
             state.cmd->ci = 0;
         } else {
-            err = cli_get_input_line(&state);
+            err = cli_get_input_line(&state, runfile);
             if (err) {
                 errmsg(err, prn);
                 break;
