@@ -2541,6 +2541,7 @@ static int validate_plot_context (const char *s)
 {
     if (!strcmp(s, "option") ||
 	!strcmp(s, "options") ||
+        !strcmp(s, "printf") ||
 	!strcmp(s, "literal")) {
 	return 0;
     } else {
