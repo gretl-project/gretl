@@ -38,8 +38,7 @@ typedef struct {
 } mplot_option;
 
 static gretl_array *mp_array;
-static const char *array_name;
-static int prior_array;
+static gchar *array_name;
 static int mp_fontsize = 10;
 static int mp_width = 800;
 static int mp_height = 600;
@@ -96,9 +95,9 @@ static void set_multiplot_defaults (void)
 }
 
 /* Set up the strings array in which gpbuild will cumulate
-   sub-plots. If @param identifies an existing array we clear
-   out its content, otherwise we create a new, empty array as
-   a user-visible object ("uservar").
+   sub-plots, with checks that @param is not the name of
+   an existing object of incompatible type, and is a
+   valid gretl identifier.
 */
 
 static int initialize_mp_array (const char *param, DATASET *dset)
@@ -108,24 +107,27 @@ static int initialize_mp_array (const char *param, DATASET *dset)
     mp_array = get_strings_array_by_name(param);
 
     if (mp_array != NULL) {
-	prior_array = 1;
-	gretl_array_void_content(mp_array);
+	; /* OK, there's already a strings array of this name */
+    } else if (gretl_is_user_var(param) ||
+	       current_series_index(dset, param) >= 0) {
+	/* there's already an object of this name, but of the wrong type */
+	err = E_TYPES;
     } else {
-	gchar *s = g_strdup_printf("%s = array(0)", param);
+	/* check validity of @param as identifier */
+	err = check_identifier(param);
+    }
 
-	err = generate(s, dset, GRETL_TYPE_STRINGS, OPT_NONE, NULL);
-	if (!err) {
-	    mp_array = get_strings_array_by_name(param);
-	}
-	g_free(s);
+    if (!err) {
+	mp_array = gretl_array_new(GRETL_TYPE_STRINGS, 0, &err);
     }
 
     if (mp_array != NULL) {
-#if GRID_DEBUG
-	fprintf(stderr, "gpbuild: started array %s\n", param);
-#endif
-	array_name = param;
+	array_name = g_strdup(param);
 	mp_collecting = 1;
+#if GRID_DEBUG
+	fprintf(stderr, "gpbuild: started strings array %p (%s)\n",
+		(void *) mp_array, array_name);
+#endif
     }
 
     return err;
@@ -139,19 +141,17 @@ void gretl_multiplot_clear (int err)
 		err, gretl_array_get_length(mp_array));
 #endif
 	if (err) {
-	    if (prior_array) {
-		/* empty a pre-existing uservar array */
-		gretl_array_void_content(mp_array);
-	    } else {
-		/* or destroy a newly created uservar */
-		user_var_delete_by_name(array_name, NULL);
-	    }
+	    gretl_array_destroy(mp_array);
+	} else {
+	    err = user_var_add_or_replace(array_name,
+					  GRETL_TYPE_STRINGS,
+					  mp_array);
 	}
         mp_array = NULL;
     }
 
+    g_free(array_name);
     array_name = NULL;
-    prior_array = 0;
     mp_collecting = 0;
 }
 
