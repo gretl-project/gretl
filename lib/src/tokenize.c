@@ -2537,6 +2537,18 @@ static void maybe_report_command_index (CMD *cmd, const char *s)
 
 #endif
 
+static int validate_plot_context (const char *s)
+{
+    if (!strcmp(s, "option") ||
+	!strcmp(s, "options") ||
+	!strcmp(s, "literal")) {
+	return 0;
+    } else {
+	gretl_errmsg_sprintf(_("'%s': invalid keyword in plot block"), s);
+	return E_PARSE;
+    }
+}
+
 /* If we have enough tokens parsed, try to determine the
    current command index.
 */
@@ -2572,7 +2584,13 @@ static int try_for_command_index (CMD *cmd, int i,
 	    } else if (cmd->context == SYSTEM && cmd->ci == EQUATION) {
 		; /* OK */
 	    } else {
-		cmd->ci = cmd->context;
+		if (cmd->context == PLOT) {
+		    *err = validate_plot_context(test);
+		    return 0;
+		}
+		if (!*err) {
+		    cmd->ci = cmd->context;
+		}
 	    }
 	}
     }
@@ -3444,7 +3462,6 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 #if CDEBUG || TDEBUG
     fprintf(stderr, "*** %s: line = '%s'\n",
 	    compmode ? "get_command_index" : "parse_command_line", s);
-    // fprintf(stderr, " first byte %0x\n", (unsigned char) s[0]);
 #endif
 
     if (utf8_fail(s)) {
