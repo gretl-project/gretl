@@ -8046,7 +8046,7 @@ int gretl_function_append_line (ExecState *s)
     }
 
     if (!err && !compiling && (fun->flags & UFUN_HAS_FLOW)) {
-        err = ufunc_get_structure(fun);
+        ufunc_get_structure(fun);
     }
 
     free(origline);
@@ -10075,7 +10075,12 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
                 }
                 if (!err) {
                     state.loop = fline->ptr;
-                    err = gretl_loop_exec(&state, dset);
+		    if (state.loop == NULL) {
+			gretl_errmsg_sprintf(_("Broken loop in function %s"), u->name);
+			err = E_PARSE;
+		    } else {
+			err = gretl_loop_exec(&state, dset);
+		    }
                 }
             }
             if (err) {
