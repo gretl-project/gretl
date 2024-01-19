@@ -229,17 +229,19 @@ int statements_get_structure (stmt *lines,
     int *match_start = NULL;
     int *match_end = NULL;
     int *next_from_loop = NULL;
-    int d_max = 0, ld_max = 0;
-    int d = 0, ld = 0;
-    int lmax = 0;
-    int lmin = -1;
+    int if_depth = 0;
+    int max_if_depth = 0;
+    int loop_depth = 0;
+    int max_loop_depth = 0;
+    int loop_imax = 0;
+    int loop_imin = -1;
     int target, src;
     int i, j, ci;
     int err = 0;
 
     /* first pass: determine the maximum depth of conditionality (and
        looping, if in a function). Also record the indices of the
-       first and last lines "of interest" (lmin and lmax).
+       first and last lines "of interest" (loop_imin and loop_imax).
     */
     for (i=0; i<n_lines; i++) {
 	ci = lines[i].ci;
@@ -250,122 +252,121 @@ int statements_get_structure (stmt *lines,
 #endif
         if (context == FUNC) {
             if (ci == LOOP) {
-                if (lmin < 0) {
-                    lmin = i;
+                if (loop_imin < 0) {
+                    loop_imin = i;
                 }
-                if (++ld > ld_max) {
-                    ld_max = ld;
+                if (++loop_depth > max_loop_depth) {
+                    max_loop_depth = loop_depth;
                 }
             } else if (ci == ENDLOOP) {
-                if (i > lmax) {
-                    lmax = i;
+                if (i > loop_imax) {
+                    loop_imax = i;
                 }
-                ld--;
-            } else if (ld > 0) {
+                loop_depth--;
+            } else if (loop_depth > 0) {
                 continue;
             }
         }
 	if (ci == IF) {
-            if (lmin < 0) {
-                lmin = i;
+            if (loop_imin < 0) {
+                loop_imin = i;
             }
-            if (++d > d_max) {
-                d_max = d;
+            if (++if_depth > max_if_depth) {
+                max_if_depth = if_depth;
             }
 	} else if (ci == ENDIF) {
-            if (i > lmax) {
-                lmax = i;
+            if (i > loop_imax) {
+                loop_imax = i;
             }
-            d--;
+            if_depth--;
 	}
     }
 
 #if COMP_DEBUG
     fprintf(stderr, "\n%s: max if-depth %d, max loop-depth %d\n",
-            name, d_max, ld_max);
+            name, max_if_depth, max_loop_depth);
 #endif
 
-    if (d != 0 || ld != 0) {
-	gretl_errmsg_sprintf(_("broken syntax in %s: unmatched %s"), name,
-			     d ? "if/endif" : "loop/endloop");
+    if (if_depth != 0 || loop_depth != 0) {
+	gretl_errmsg_sprintf(_("Broken syntax in %s: unmatched %s"), name,
+			     if_depth ? "if/endif" : "loop/endloop");
 	return E_PARSE;
     }
 
-    if (d_max > 0) {
-        match_start = gretl_list_new(d_max);
-        match_end = gretl_list_new(d_max);
+    if (max_if_depth > 0) {
+        match_start = gretl_list_new(max_if_depth);
+        match_end = gretl_list_new(max_if_depth);
     }
-    if (ld_max > 0) {
-        next_from_loop = gretl_list_new(ld_max);
+    if (max_loop_depth > 0) {
+        next_from_loop = gretl_list_new(max_loop_depth);
     }
 
     /* second pass: analysis */
-    for (i=lmin; i<=lmax && !err; i++) {
+    for (i=loop_imin; i<=loop_imax && !err; i++) {
 	line = &lines[i];
 	if (context == FUNC) {
             if (line->ci == LOOP) {
-                ld++;
-                next_from_loop[ld] = i;
+                loop_depth++;
+                next_from_loop[loop_depth] = i;
             } else if (line->ci == ENDLOOP) {
-                if (ld == 0) {
+                if (loop_depth == 0) {
                     err = E_PARSE;
                 } else {
-                    j = next_from_loop[ld];
+                    j = next_from_loop[loop_depth];
                     lines[j].next = i;
-                    ld--;
+                    loop_depth--;
                 }
-            } else if (ld > 0) {
+            } else if (loop_depth > 0) {
                 continue;
             }
         }
 	if (line->ci == IF) {
-	    d++;
-	    match_start[d] = i;
+	    match_start[++if_depth] = i;
 	} else if (line->ci == ENDIF) {
-	    if (d == 0) {
+	    if (if_depth == 0) {
 		err = E_PARSE;
 	    } else {
-                line->next = -d;
-		j = match_start[d];
+                line->next = -if_depth;
+		j = match_start[if_depth];
 		lines[j].next = i;
-                d--;
+                if_depth--;
 	    }
 	} else if (line->ci == ELIF || line->ci == ELSE) {
-	    if (d == 0) {
+	    if (if_depth == 0) {
 		err = E_PARSE;
 	    } else {
                 if (lines[i-1].ci != ENDIF) {
-                    lines[i-1].next = -d;
+                    lines[i-1].next = -if_depth;
                 }
-		j = match_start[d];
+		j = match_start[if_depth];
 		lines[j].next = i;
-		match_start[d] = i;
+		match_start[if_depth] = i;
 	    }
 	}
     }
 
     if (!err) {
         /* third pass: fill in goto's for true-block terminators */
-        ld = d = target = src = 0;
-        for (i=lmax; i>=lmin; i--) {
+        loop_depth = if_depth = target = src = 0;
+        for (i=loop_imax; i>=loop_imin; i--) {
             line = &lines[i];
             if (context == FUNC) {
                 if (line->ci == ENDLOOP) {
-                    ld++;
+                    loop_depth++;
                 } else if (line->ci == LOOP) {
-                    ld--;
-                } else if (ld > 0) {
+                    loop_depth--;
+                } else if (loop_depth > 0) {
                     continue;
                 }
             }
             if (line->ci == ENDIF) {
-                d++;
-                target = match_start[d] = line->next;
-                src = match_end[d] = i;
+                if_depth++;
+                target = match_start[if_depth] = line->next;
+                src = match_end[if_depth] = i;
             } else if (line->ci == IF) {
-                target = (d == 0)? 0 : match_start[d];
-                src = (d == 0)? 0 : match_end[d];
-                d--;
+                target = (if_depth == 0)? 0 : match_start[if_depth];
+                src = (if_depth == 0)? 0 : match_end[if_depth];
+                if_depth--;
             } else if (target < 0 && line->next == target) {
                 line->next = src;
             }
