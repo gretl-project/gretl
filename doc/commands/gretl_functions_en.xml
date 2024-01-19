@@ -3099,7 +3099,9 @@
 	  <argname>S</argname> is an array of strings, it should
 	  contain <math>k</math> elements.  A single string is also
 	  acceptable as the second argument; in that case it should
-	  contain <math>k</math> space-separated substrings.
+	  contain <math>k</math> space-separated substrings. As a
+	  special case, passing an empty string as the second argument
+	  has the effect of removing any existing column names.
 	</para>
 	<para>
 	  The nominal return value is 0 on successful completion; in
@@ -8018,7 +8020,11 @@
 	  Otherwise, if <argname>X</argname> has column names set (see
 	  <fncref targ="cnameset"/>) these names are used.  Finally,
 	  if neither of the above conditions is satisfied, the names
-	  are <lit>column1</lit>, <lit>column2</lit> and so on.
+	  are <lit>column1</lit>, <lit>column2</lit> and so on. Note
+	  that this policy may result in overwriting existing series;
+	  if you don't want that to happen, take charge of naming the
+	  columns explicitly via <lit>cnameset</lit>, or supply
+	  <argname>prefix</argname>.
 	</para>
 	<para>
 	  Here is an illustrative example of usage:
