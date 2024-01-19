@@ -286,7 +286,8 @@ int statements_get_structure (stmt *lines,
 #endif
 
     if (d != 0 || ld != 0) {
-	fprintf(stderr, "broken structure: d = %d, ld = %d at end\n", d, ld);
+	gretl_errmsg_sprintf(_("broken syntax in %s: unmatched %s"), name,
+			     d ? "if/endif" : "loop/endloop");
 	return E_PARSE;
     }
 

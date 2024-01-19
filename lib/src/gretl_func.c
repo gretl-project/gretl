@@ -8046,7 +8046,7 @@ int gretl_function_append_line (ExecState *s)
     }
 
     if (!err && !compiling && (fun->flags & UFUN_HAS_FLOW)) {
-        ufunc_get_structure(fun);
+        err = ufunc_get_structure(fun);
     }
 
     free(origline);
