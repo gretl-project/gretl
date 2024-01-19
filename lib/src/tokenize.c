@@ -2587,7 +2587,9 @@ static int try_for_command_index (CMD *cmd, int i,
 	    } else {
 		if (cmd->context == PLOT) {
 		    *err = validate_plot_context(test);
-		    return 0;
+                    if (*err) {
+                        return 0;
+                    }
 		}
 		if (!*err) {
 		    cmd->ci = cmd->context;
