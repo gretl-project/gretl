@@ -2585,10 +2585,9 @@ static int try_for_command_index (CMD *cmd, int i,
 		cmd->opt |= OPT_M;
 	    } else if (cmd->context == SYSTEM && cmd->ci == EQUATION) {
 		; /* OK */
+	    } else if (cmd->context == PLOT && !is_plot_keyword(test, err)) {
+		return 0;
 	    } else {
-		if (cmd->context == PLOT && !is_plot_keyword(test, err)) {
-		    return 0;
-		}
 		cmd->ci = cmd->context;
 	    }
 	}
