@@ -201,16 +201,16 @@ struct fnpkg_ {
     char *label;      /* for use in GUI menus */
     char *mpath;      /* menu path in GUI */
     int minver;       /* minimum required gretl version */
-    char uses_subdir; /* lives in subdirectory (0/1) */
-    char prechecked;  /* already checked for data requirement */
-    char data_access; /* wants access to full data range */
+    guint8 uses_subdir; /* lives in subdirectory (0/1) */
+    guint8 prechecked;  /* already checked for data requirement */
+    guint8 data_access; /* wants access to full data range */
     DataReq dreq;     /* data requirement */
     int modelreq;     /* required model type, if applicable */
     ufunc **pub;      /* pointers to public interfaces */
     ufunc **priv;     /* pointers to private functions */
     int n_pub;        /* number of public functions */
     int n_priv;       /* number of private functions */
-    char overrides;   /* number of overrides of built-in functions */
+    guint8 overrides; /* number of overrides of built-in functions */
     char **datafiles; /* names of packaged data files */
     char **depends;   /* names of dependencies */
     char *provider;   /* name of "provider" package, if applicable */
