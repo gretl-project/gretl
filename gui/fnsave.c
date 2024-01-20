@@ -2849,7 +2849,7 @@ static void gui_help_text_callback (GtkButton *b, function_info *finfo)
     g_free(title);
 }
 
-/* callback for editing plain-text package help */
+/* callback for editing plain-text (or markdown) package help */
 
 static void regular_help_text_callback (GtkButton *b, function_info *finfo)
 {
@@ -4825,9 +4825,9 @@ static int maybe_write_aux_file (function_info *finfo,
 		s = strrslash(tmp);
 		*(s + 1) = '\0';
 		strcat(tmp, auxname);
-		fp = gretl_fopen(tmp, "wb"); /* 21017-02-22: was "w" */
+		fp = gretl_fopen(tmp, "wb");
 	    } else {
-		fp = gretl_fopen(auxname, "wb"); /* 21017-02-22: was "w" */
+		fp = gretl_fopen(auxname, "wb");
 	    }
 
 	    if (fp != NULL) {

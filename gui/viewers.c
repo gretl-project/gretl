@@ -138,9 +138,9 @@ void mark_vwin_content_saved (windata_t *vwin)
     }
 }
 
-/* save content function for an editor window that is hooked
+/* Save content function for an editor window that is hooked
    up to a given text buffer rather than in the business of
-   saving to file
+   saving to file.
 */
 
 static void buf_edit_save (GtkWidget *w, windata_t *vwin)
