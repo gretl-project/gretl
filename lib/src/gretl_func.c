@@ -5910,6 +5910,7 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
     }
 
     if (pkg->pub != NULL) {
+	/* note: pkg->pub is non-NULL only if the package is loaded */
         if (pkg->n_pub == 1) {
             if (strcmp(pkg->pub[0]->name, pkg->name)) {
                 pputs(prn, "<@itl=\"Public interface\">: ");
@@ -5927,7 +5928,7 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
         }
     }
 
-    if (pkg->help_fname != NULL && has_suffix(pkg->help_fname, ".md")) {
+    if (!pdfdoc && help_text_is_markdown(pkg->help)) {
         md_to_gretl(pkg->help, prn);
     } else if (!pdfdoc) {
         pputs(prn, "<@itl=\"Help text\">:\n\n");
@@ -6081,8 +6082,7 @@ static void print_package_help (const fnpkg *pkg,
     pputs(prn, gretl_strstrip(pkg->descrip));
     pputs(prn, "\n\n");
 
-    if (pbuf != NULL && pkg->help_fname != NULL &&
-        has_suffix(pkg->help_fname, ".md")) {
+    if (pbuf != NULL && help_text_is_markdown(pkg->help)) {
         PRN *myprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
 
         /* FIXME should the next line really be needed? */
@@ -10446,13 +10446,11 @@ void gretl_functions_cleanup (void)
 static void show_gfn_help (fnpkg *pkg, int gui_help,
                            int markup, PRN *prn)
 {
-    const char *fname;
     const char *text;
     int mdconv;
 
     text = gui_help ? pkg->gui_help : pkg->help;
-    fname = gui_help ? pkg->gui_help_fname : pkg->help_fname;
-    mdconv = fname != NULL && has_suffix(fname, ".md");
+    mdconv = help_text_is_markdown(text);
 
     if (mdconv) {
         /* help is in markdown */

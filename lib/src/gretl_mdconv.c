@@ -352,7 +352,9 @@ int md_to_gretl (const char *buf, PRN *prn)
 
 int help_text_is_markdown (const char *buf)
 {
-    if (strchr(buf, '#') || strchr(buf, '`')) {
+    if (buf == NULL) {
+	return 0;
+    } else if (strchr(buf, '#') || strchr(buf, '`')) {
 	/* these bytes are unlikely to occur in non-markdown text */
 	return 1;
     } else {
