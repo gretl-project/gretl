@@ -10075,12 +10075,7 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
                 }
                 if (!err) {
                     state.loop = fline->ptr;
-		    if (state.loop == NULL) {
-			gretl_errmsg_sprintf(_("Broken loop in function %s"), u->name);
-			err = E_PARSE;
-		    } else {
-			err = gretl_loop_exec(&state, dset);
-		    }
+		    err = gretl_loop_exec(&state, dset);
                 }
             }
             if (err) {

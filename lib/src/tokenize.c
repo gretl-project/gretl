@@ -2537,16 +2537,17 @@ static void maybe_report_command_index (CMD *cmd, const char *s)
 
 #endif
 
-static int validate_plot_context (const char *s)
+static int is_plot_keyword (const char *s, int *err)
 {
     if (!strcmp(s, "option") ||
 	!strcmp(s, "options") ||
         !strcmp(s, "printf") ||
 	!strcmp(s, "literal")) {
-	return 0;
+	return 1;
     } else {
 	gretl_errmsg_sprintf(_("'%s': invalid keyword in plot block"), s);
-	return E_PARSE;
+	*err = E_PARSE;
+	return 0;
     }
 }
 
@@ -2584,16 +2585,10 @@ static int try_for_command_index (CMD *cmd, int i,
 		cmd->opt |= OPT_M;
 	    } else if (cmd->context == SYSTEM && cmd->ci == EQUATION) {
 		; /* OK */
+	    } else if (cmd->context == PLOT && !is_plot_keyword(test, err)) {
+		return 0;
 	    } else {
-		if (cmd->context == PLOT) {
-		    *err = validate_plot_context(test);
-                    if (*err) {
-                        return 0;
-                    }
-		}
-		if (!*err) {
-		    cmd->ci = cmd->context;
-		}
+		cmd->ci = cmd->context;
 	    }
 	}
     }
