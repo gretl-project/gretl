@@ -2693,7 +2693,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
     if (loop == NULL) {
         pputs(prn, "Got a NULL loop\n");
         set_loop_off();
-        return 1;
+        return E_DATA;
     }
 
     gui_mode = gretl_in_gui_mode();
