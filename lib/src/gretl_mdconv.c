@@ -345,3 +345,36 @@ int md_to_gretl (const char *buf, PRN *prn)
 
     return handle_conv_error();
 }
+
+/* heuristic to determine whether the help text for a gretl
+   function package (probably) employs markdown
+*/
+
+int help_text_is_markdown (const char *buf)
+{
+    if (strchr(buf, '#') || strchr(buf, '`')) {
+	/* these bytes are unlikely to occur in non-markdown text */
+	return 1;
+    } else {
+	/* look for "*word*" */
+	const char *s = buf;
+	int i;
+
+	while (*s) {
+	    if (*s == '*') {
+		for (i=1; s[i]; i++) {
+		    if (!isalpha(s[i])) {
+			break;
+		    }
+		}
+		if (s[i] == '*') {
+		    return 1;
+		}
+		s += i;
+	    }
+	    s++;
+	}
+    }
+
+    return 0;
+}
