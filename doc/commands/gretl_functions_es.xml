@@ -3099,7 +3099,9 @@
 	  de cadenas de texto, deberá tener <math>k</math> elementos. Como
 	  segundo argumento también se acepta una única cadea de texto; en ese
 	  caso, esta cadena necesita tener <math>k</math> subcadenas separadas
-	  por espacios.
+	  por espacios. Como caso especial, el hecho de indicar una cadena de
+	  texto vacía como segundo argumento, tiene como efecto la eliminación
+	  de cualquier nombre de columna existente.
 	</para>
 	<para>
 	  Devuelve el valor nominal 0 si las columnas son nombradas con éxito;
@@ -8018,7 +8020,11 @@
 	  conjunto de nombres de las columnas (consulta <fncref targ="cnameset"/>),
 	  se utilizan esos nombres. Finalmente, si no se cumple ninguna de las
 	  condiciones anteriores, los nombres son <lit>columna1</lit>,
-	  <lit>columna2</lit>, etcétera.
+	  <lit>columna2</lit>, etcétera. Ten en cuenta que esta política puede
+	  tener como consecuencia que se sobrescriban series ya existentes;
+	  si no quieres que ello suceda, toma la precaución de nombrar las
+	  columnas explícitamente mediante la función <lit>cnameset</lit>, o
+	  indica la opción <argname>prefix</argname>.
 	</para>
 	<para>
 	  Aquí tienes un ejemplo ilustrativo de su uso:

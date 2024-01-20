@@ -500,7 +500,7 @@
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>No presenta mensaje de confirmación</effect>
+	  <effect>Presenta menos detalles de confirmación; mira abajo</effect>
 	</option>
 	<optnote>Mira abajo para opciones adicionales especiales</optnote>
       </options>
@@ -550,6 +550,14 @@
 	<opt>rowoffset</opt> y <opt>fixed-cols</opt> funcionan del mismo modo
 	que con <cmdref targ="open"/>; consulta esa instrucción para obtener más
 	explicaciones.
+      </para>
+      <para>
+	Por defecto, se presenta alguna información sobre el conjunto de datos
+	agregado. La opción <opt>quiet</opt> reduce esa informacióna a un
+	simple mensaje confirmatorio que solo indica la ruta hasta el archivo.
+	Si quieres que la operación se complete de modo silencioso, indica la
+	instrucción <lit>set verbose off</lit> antes de agregar los datos, en
+	combinación con la opción <opt>quiet</opt>.
       </para>
       <subhead>Datos de panel</subhead>
       <para>
@@ -6731,19 +6739,26 @@
 
   <command name="info" section="Dataset"
     label="Información sobre el conjunto de datos" context="cli">
-
+    <usage>
+      <altforms>
+	<altform><lit>info</lit></altform>
+	<altform><lit>info --to-file=</lit><repl>nombrearchivo</repl></altform>
+	<altform><lit>info --from-file=</lit><repl>nombrearchivo</repl></altform>
+      </altforms>
+    </usage>
     <description>
       <para>
-	Presenta cualquier información complementaria guardada con el archivo
-	vigente de datos.
+	En su forma básica, presenta cualquier información adicional (metadatos)
+	guardada con el archivo de datos vigente. Alternativamente, escribe esta
+	información en un archivo (mediante la opción <opt>to-file</opt>), o
+	lee los metadatos de un archivo especificado y los incorpora al conjunto
+	de datos vigente (mediante <opt>from-file</opt>; en cuyo caso el texto
+	debe tener un formato UTF-8 correcto).
       </para>
     </description>
-
     <gui-access>
       <menu-path>/Datos/Información del conjunto de datos</menu-path>
-      <other-access>Ventanas del buscador de datos</other-access>
     </gui-access>
-
   </command>
 
   <command name="intreg" section="Estimation" label="Modelo de regresión por intervalos">
@@ -11779,14 +11794,14 @@
 	  <effect>Mira abajo</effect>
         </option>
         <option>
-	  <flag>--band-style</flag>
-	  <optparm>estilofranja</optparm>
-	  <effect>Mira abajo</effect>
-        </option>
-        <option>
 	  <flag>--output</flag>
 	  <optparm>nombrearchivo</optparm>
-	  <effect>Envía el resultado al archivo especificado</effect>
+	  <effect>Envía el resultado al archivo indicado</effect>
+        </option>
+        <option>
+	  <flag>--outbuf</flag>
+	  <optparm>nomecadea</optparm>
+	  <effect>Envía el resultado a la cadena de texto indicada</effect>
         </option>
       </options>
 	<examples>
@@ -11865,9 +11880,7 @@
 	palabras clave <lit>option</lit> u <lit>options</lit>, no es
 	necesario proporcionar el habitual doble guion antes del indicador
 	de opción. Para obtener más detalles sobre los efectos de las distintas
-	opciones, consulta <cmdref targ="gnuplot"/> (pero mira abajo para
-	algunos detalles específicos de utilizar la opción <opt>band</opt>
-	en el contexto <lit>plot</lit>).
+	opciones, consulta <cmdref targ="gnuplot"/>.
       </para>
       <para>
 	La intención de utilizar el bloque <lit>plot</lit> se ilustra mejor con el
@@ -11880,8 +11893,8 @@
 	    options with-lines fit=none
 	    literal set linetype 3 lc rgb "#0000ff"
 	    literal set nokey
-	    printf "set title \"%s\"", title
-	    printf "set xlabel \"%s\"", xname
+	    printf "set title '%s'", title
+	    printf "set xlabel '%s'", xname
 	end plot --output=display
       </code>
       <para>
@@ -11891,33 +11904,10 @@
 	(únicamente) la opción <opt>output</opt> en la última línea del bloque;
 	otras opciones deberías colocarlas dentro del bloque.
       </para>
-      <subhead>Dibujar una franja con datos de matrices</subhead>
-      <para>
-	Las opciones <opt>band</opt> y <opt>band-style</opt> funcionan
-	la mayoría de las veces como se describe en la ayuda para
-	<cmdref targ="gnuplot"/>, con la siguiente excepción: cuando se
-	proporcionan los datos a representar en forma de una matriz, el
-	primer parámetro para <opt>band</opt> debe indicarse con el nombre
-	de una matriz de 2 columnas (que contengan el centro y el ancho de la
-	franja, respectivamente). Este parámetro ocupa el lugar de los dos
-	primeros valores (nombres de series, números ID o columnas de
-	matriz) que requiere la versión <lit>gnuplot</lit> de esta opción (el tercero
-	es un factor multiplicador). A continuación tienes un ejemplo:
-      </para>
-      <code>
-	scalar n = 100
-	matrix x = seq(1,n)'
-	matrix y = x + filter(mnormal(n,1), 1, {1.8, -0.9})
-	matrix B = y ~ muniform(n,1)
-	plot y
-	    options time-series with-lines
-	    options band=B,10 band-style=fill
-	end plot --output=display
-      </code>
       <subhead>Dibujar un gráfico sin datos</subhead>
       <para>
-	El seguiente ejemplo muestra un caso sencillo de cómo especificar
-	la representación de una gráfica sin ter una fuente de datos.
+	El seguiente ejemplo muestra un caso de cómo especificar la representación
+	de una gráfica sin ter una fuente de datos.
       </para>
       <code>
 	plot
@@ -13736,10 +13726,9 @@
       </para>
       <para context="cli">
 	Si especificas una matriz ya definida como origen de los datos, debes
-	expresar las listas <repl>x</repl> e <repl>y</repl> con números
-	naturales positivos que indiquen la columna; o, en caso contrario, si
-	no indicas esos números, se representan todas las columnas frente
-	al tiempo o a una variable índice.
+	expresar las listas <repl>x</repl> e <repl>y</repl> con números naturales
+	positivos para indicar la columna. Alternativamente, si no indicas esas
+	listas, se representan todas las columnas frente al tiempo o a una variable índice.
       </para>
       <para context="gui">
 	Genera gráficos de dos variables, de la <quote>Variable del eje Y</quote>
@@ -13750,7 +13739,7 @@
 	número máximo de gráficos es de 16, por lo que se va a ignorar cualquier
 	variable adicional en la lista.
       </para>
-      <para context="cli">
+      <para context="gui">
 	Por defecto, los datos se muestran con puntos, pero si indicas la
 	opción <opt>Usar líneas</opt> serán gráficos de líneas.
       </para>
@@ -16184,16 +16173,20 @@
 	  <flag>--robust</flag>
 	  <effect>Desviaciones típicas robustas</effect>
         </option>
-	<option>
+        <option>
 	  <flag>--cluster</flag>
 	  <optparm>clustvar</optparm>
 	  <effect>Desviaciones típicas agrupadas</effect>
         </option>
-	<option>
+        <option>
+	  <flag>--matrix-diff</flag>
+	  <effect>Calcula el contraste de Hausman mediante diferencia de matrices</effect>
+        </option>
+        <option>
 	  <flag>--liml</flag>
 	  <effect>Utiliza Máxima Verosimilitud con Información Limitada</effect>
         </option>
-	<option>
+        <option>
 	  <flag>--gmm</flag>
 	  <effect>Utiliza el Método Generalizado de los Momentos</effect>
         </option>
@@ -16223,6 +16216,11 @@
 	las <lit>x</lit>s son las variables exógenas. Ten en cuenta que los
 	regresores exógenos deben aparecer en ambas listas.
       </para>
+      <para context="cli">
+	Para obtener más detalles en relación a los efectos de las opciones
+	<opt>robust</opt> y <opt>cluster</opt>, consulta la ayuda para
+	<cmdref targ="ols"/>.
+      </para>
 
       <para context="gui">
 	La instrucción requiere que se seleccionen 2 listas de variables:
@@ -16230,24 +16228,36 @@
 	un conjunto de instrumentos. Ten en cuenta que cualquier regresor
 	exógeno debe aparecer en ambas listas.
       </para>
-
+      <subhead>Contrastes específicos para MC2E</subhead>
       <para>
 	El resultado de las estimaciones de Mínimos Cuadrados en 2 Etapas incluyen
 	el contraste de Hausman y (si el modelo está sobreidentificado) el contraste de
-	sobreidentificación de Sargan. En el contraste de Hausman, la hipótesis nula
-	es que las estimaciones MCO son consistentes o, en otras palabras, que
-	la estimación por medio de variables instrumentales en realidad no es
-	necesaria. Un modelo de este tipo está sobreidentificado si hay más
-	instrumentos de los que estrictamente se requieren. El contraste de Sargan se
-	basa en una regresión auxiliar de los errores de la estimación del modelo por
-	Mínimos Cuadrados en 2 Etapas sobre la lista completa de instrumentos.
-	La hipótesis nula es que todos los instrumentos son válidos, y se sospecha
-	de la validez de esta hipótesis si la regresión auxiliar tiene un grado de poder
-	explicativo que es significativo. Para una buena explicación de los dos
+	sobreidentificación de Sargan. Para una buena explicación de los dos
 	contrastes, consulta el capítulo 8 de
 	<cite key="davidson-mackinnon04">Davidson y MacKinnon (2004)</cite>.
       </para>
-
+      <para>
+	En el contraste de Hausman, la hipótesis nula es que las estimaciones
+	MCO son consistentes o, en otras palabras, que la estimación por
+	medio de variables instrumentales en realidad no es necesaria. Por
+	defecto, este contraste se aplica por el método de regresión pero si
+	indicas la opción <opt>matrix-diff</opt> se utiliza el método de
+	<cite key="papadopoulos23">Papadopoulos (2023)</cite>. En ambos
+	casos puedes emplear una variante robusta si indicas la opción
+	<opt>robust</opt>.
+      </para>
+      <para>
+	Un modelo de este tipo está sobreidentificado si hay más instrumentos
+	de los estrictamente requeridos. El contraste de sobreidentificación
+	de Sargan <cite key="sargan58" p="true">(Sargan, 1958)</cite> se
+	basa en una regresión auxiliar de los errores de la estimación del
+	modelo, mediante Mínimos Cuadrados en 2 Etapas sobre la lista
+	completa de instrumentos. La hipótesis nula sostiene que todos los
+	instrumentos son válidos; pero se sospecha de la validez de esta
+	hipótesis si la regresión auxiliar tiene un grado de poder explicativo
+	que es significativo. 
+      </para>
+      <subhead>Instrumentos débiles</subhead>
       <para>
 	Tanto para MC2E (TSLS) como para la estimación MVIL (LIML), se muestra
 	el resultado de un contraste adicional, puesto que el modelo se estima bajo
@@ -16265,19 +16275,13 @@
 	Carlo de <cite key="stock-yogo03">Stock y Yogo (2003)</cite>, cuando
 	estén disponibles.
       </para>
-
+      <subhead>R-cuadrado</subhead>
       <para>
 	El valor de R-cuadrado que se presenta para modelos estimados mediante
 	Mínimos Cuadrados en 2 Etapas es el cuadrado de la correlación entre la variable
 	dependiente y la variable con los valores ajustados.
       </para>
-
-      <para context="cli">
-	Para obtener más detalles en relación a los efectos de las opciones
-	<opt>robust</opt> y <opt>cluster</opt>, consulta la ayuda para
-	<cmdref targ="ols"/>.
-      </para>
-
+      <subhead>Estimadores alternativos</subhead>
       <para context="cli">
 	Como alternativas a MC2E, el modelo puede estimarse mediante Máxima
 	Verosimilitud con Información Limitada (opción <opt>liml</opt>) o
