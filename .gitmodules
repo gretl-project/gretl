@@ -1,0 +1,3 @@
+[submodule "workspace"]
+	path = workspace
+	url = https://git.code.sf.net/p/gretl/workspace

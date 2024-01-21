@@ -1,0 +1,53 @@
+name: Build and Test
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v3.3.0
+      with:
+        submodules: true
+    - name: Fetch tags
+      run: |
+        git fetch --prune --depth=1
+    - name: Setup environment and 
+      run: |
+        sudo apt update && sudo apt install gnuplot build-essential libfftw3-dev liblapack-dev gfortran libxml2 \
+                zlib1g-dev libreadline-dev libgtksourceview-3.0-dev libgmp-dev curl \
+                libcurl4-gnutls-dev libjson-glib-dev libmpfr-dev
+    - name: Configure, Compile and Install
+      run: |
+        ./configure -q --enable-quiet-build --disable-nls
+        make clean lib cli gui plugin po share tests doc xdg addons
+        sudo mkdir -p /usr/share/desktop-directories
+        sudo make install
+        sudo ldconfig
+
+    - name: Run GUI
+      run: |
+        Xvfb &
+        export DISPLAY=:0
+        which gretl
+        xvfb-run --server-args="-screen 0, 1280x720x24" -a gretl &
+        sleep 10
+        killall xvfb-run
+
+    - name: Run tests
+      run: |
+        Xvfb &
+        export DISPLAY=:0
+        cd workspace/tests
+        ./run_tests.sh --practice
+        ./run_tests.sh --commands
+        ./run_tests.sh --functions
+        ./run_tests.sh --fundamentals
+        ./run_tests.sh --plots
+
