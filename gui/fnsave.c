@@ -21,6 +21,7 @@
 #include "version.h"
 #include "gretl_xml.h"
 #include "libset.h"
+#include "gretl_mdconv.h"
 #include "dlgutils.h"
 #include "datafiles.h"
 #include "textbuf.h"
