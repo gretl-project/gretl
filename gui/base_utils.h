@@ -34,6 +34,8 @@ FILE *gretl_tempfile_open (char *fname);
 
 int bufopen (PRN **pprn);
 
+PRN *gui_prn_new (void);
+
 void set_wait_cursor (GdkWindow **pcwin);
 
 void unset_wait_cursor (GdkWindow *cwin);

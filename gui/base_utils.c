@@ -116,6 +116,18 @@ int bufopen (PRN **pprn)
     return err;
 }
 
+PRN *gui_prn_new (void)
+{
+    int err = 0;
+    PRN *prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+
+    if (err) {
+        gui_errmsg(err);
+    }
+
+    return prn;
+}
+
 void set_wait_cursor (GdkWindow **pcwin)
 {
     GdkDisplay *disp = gdk_display_get_default();
