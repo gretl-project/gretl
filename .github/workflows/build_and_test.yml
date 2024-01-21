@@ -29,6 +29,7 @@ jobs:
         make clean lib cli gui plugin po share tests doc xdg addons
         sudo mkdir -p /usr/share/desktop-directories
         sudo make install
+        sudo ldconfig
 
     - name: Run GUI
       run: |
