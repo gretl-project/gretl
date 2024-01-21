@@ -55,6 +55,8 @@
 #define GRETL_STOCK_FCAST   "gretl-fcast"
 #define GRETL_STOCK_CLOSE   "gretl-close"
 #define GRETL_STOCK_QUERY   "gretl-query"
+#define GRETL_STOCK_EYE     "gretl-eye"
+#define GRETL_STOCK_EYE_OFF "gretl-eye-off"
 
 typedef enum {
     VWIN_HELP_ACTIVE     = 1 << 0,

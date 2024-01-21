@@ -20,6 +20,8 @@ version 2024a, in progress
 - GUI: apply some legibility fixes for dark GTK themes
 - GUI: enable the advertised keystrokes in file "browser"
   windows (bug #294)
+- GUI function package editor: add support specific to the
+  editing of markdown help
 
 2023-12-05 version 2023c
 - New commands "gridplot" and "gpbuild" for constructing

@@ -42,6 +42,7 @@
 #include "uservar.h"
 #include "forecast.h"
 #include "gretl_www.h"
+#include "gretl_mdconv.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -59,6 +60,10 @@
 #include "../pixmaps/mini.gretl.xpm"
 #include "../pixmaps/mini.table.xpm"
 #include "../pixmaps/mini.page.xpm"
+
+/* for markdown editor */
+#include "../pixmaps/eye.xpm"
+#include "../pixmaps/eye-off.xpm"
 
 enum {
     SAVE_ITEM = 1,
@@ -179,11 +184,13 @@ static void try_auto_icon_sizing (int *bigger)
 void gretl_stock_icons_init (void)
 {
     struct xpm_stock_maker xpm_stocks[] = {
-	{ mini_en_xpm, GRETL_STOCK_EN },
-	{ mini_gretl_xpm, GRETL_STOCK_GRETL},
-	{ mini_table_xpm, GRETL_STOCK_TABLE},
-	{ mini_page_xpm, GRETL_STOCK_PAGE},
-	{ close_16_xpm, GRETL_STOCK_CLOSE}
+	{mini_en_xpm, GRETL_STOCK_EN},
+	{mini_gretl_xpm, GRETL_STOCK_GRETL},
+	{mini_table_xpm, GRETL_STOCK_TABLE},
+	{mini_page_xpm, GRETL_STOCK_PAGE},
+	{close_16_xpm, GRETL_STOCK_CLOSE},
+	{eye_xpm, GRETL_STOCK_EYE},
+	{eye_off_xpm, GRETL_STOCK_EYE_OFF}
     };
     static GtkIconFactory *gretl_factory;
     int n1 = G_N_ELEMENTS(png_stocks);
@@ -506,6 +513,11 @@ static void window_print_callback (GtkWidget *w, windata_t *vwin)
 static void window_help (GtkWidget *w, windata_t *vwin)
 {
     show_gui_help(vwin->role);
+}
+
+static void markdown_help (GtkWidget *w, windata_t *vwin)
+{
+    show_gui_help(MDHELP);
 }
 
 static void multi_save_as_callback (GtkWidget *w, windata_t *vwin)
@@ -878,6 +890,63 @@ static void build_pkg_callback (GtkWidget *w, windata_t *vwin)
     }
 
     build_package_from_spec_file(vwin);
+}
+
+static void enable_markdown_editor (windata_t *vwin,
+				    gboolean s)
+{
+    GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
+    GtkToolbar *tbar = GTK_TOOLBAR(vwin->mbar);
+    int i, n = gtk_toolbar_get_n_items(tbar);
+    GtkToolItem *item;
+
+    /* item n-1 is the preview toggle button, which should
+       not be made insensitive
+    */
+    for (i=0; i<n-1; i++) {
+	item = gtk_toolbar_get_nth_item(tbar, i);
+	if (GTK_IS_TOOL_BUTTON(item)) {
+	    gtk_widget_set_sensitive(GTK_WIDGET(item), s);
+	}
+    }
+
+    gtk_text_view_set_editable(view, s);
+    gtk_text_view_set_cursor_visible(view, s);
+    widget_set_int(vwin->text, "preview_on", !s);
+}
+
+static void toggle_md_preview (GtkWidget *w, windata_t *vwin)
+{
+    GtkToolItem *item;
+
+    if (widget_get_int(vwin->text, "preview_on")) {
+	/* return to editing mode */
+	gchar *buf = g_object_get_data(G_OBJECT(vwin->mbar), "raw_text");
+
+	textview_set_text(vwin->text, buf);
+	item = g_object_get_data(G_OBJECT(vwin->mbar), "eye_button");
+	gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(item), GRETL_STOCK_EYE);
+	enable_markdown_editor(vwin, TRUE);
+	g_free(buf);
+	g_object_set_data(G_OBJECT(vwin->mbar), "raw_text", NULL);
+    } else {
+	/* preview formatted markdown */
+	PRN *prn = gui_prn_new();
+
+	if (prn != NULL) {
+	    gchar *buf = textview_get_text(vwin->text);
+	    char *pbuf;
+
+	    g_object_set_data(G_OBJECT(vwin->mbar), "raw_text", buf);
+	    md_to_gretl(buf, prn);
+	    pbuf = gretl_print_steal_buffer(prn);
+	    gretl_viewer_set_formatted_buffer(vwin, pbuf);
+	    item = g_object_get_data(G_OBJECT(vwin->mbar), "eye_button");
+	    gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(item), GRETL_STOCK_EYE_OFF);
+	    enable_markdown_editor(vwin, FALSE);
+	    gretl_print_destroy(prn);
+	}
+    }
 }
 
 static int bundle_plot_ok (windata_t *vwin)
@@ -1547,6 +1616,43 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
     }
 }
 
+static void destroy_md_text (GtkWidget *w, GtkWidget *mbar)
+{
+    gchar *buf = g_object_get_data(G_OBJECT(mbar), "raw_text");
+
+    if (buf != NULL) {
+	g_free(buf);
+    }
+}
+
+static void add_markdown_items (windata_t *vwin)
+{
+    static GretlToolItem markdown_items[] = {
+	{ N_("Help"), GTK_STOCK_HELP, G_CALLBACK(markdown_help), 0 },
+	{ N_("Toggle preview"), GRETL_STOCK_EYE, G_CALLBACK(toggle_md_preview), 0 }
+    };
+    GretlToolItem *tool;
+    GtkToolItem *item;
+    int i;
+
+    item = gtk_separator_tool_item_new();
+    gtk_separator_tool_item_set_draw(GTK_SEPARATOR_TOOL_ITEM(item), TRUE);
+    gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), item, -1);
+
+    for (i=0; i<2; i++) {
+	tool = &markdown_items[i];
+	item = gtk_tool_button_new_from_stock(tool->icon);
+	g_signal_connect(G_OBJECT(item), "clicked", tool->func, vwin);
+	gretl_tool_item_set_tip(item, tool);
+	gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), item, -1);
+    }
+
+    g_object_set_data(G_OBJECT(vwin->mbar), "eye_button", item);
+    /* try to ensure no memory leakage */
+    g_signal_connect(G_OBJECT(vwin->main), "destroy",
+		     G_CALLBACK(destroy_md_text), vwin->mbar);
+}
+
 void vwin_add_viewbar (windata_t *vwin, ViewbarFlags flags)
 {
     if ((flags & VIEWBAR_HAS_TEXT) || vwin->role == SCRIPT_OUT) {
@@ -1556,6 +1662,10 @@ void vwin_add_viewbar (windata_t *vwin, ViewbarFlags flags)
 
     vwin->mbar = gretl_toolbar_new(NULL);
     viewbar_add_items(vwin, flags);
+    if (vwin->role == EDIT_PKG_HELP ||
+	vwin->role == EDIT_PKG_GHLP) {
+	add_markdown_items(vwin);
+    }
     vwin_pack_toolbar(vwin);
 }
 
