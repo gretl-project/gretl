@@ -27,6 +27,7 @@ jobs:
       run: |
         ./configure -q --enable-quiet-build --disable-nls
         make clean lib cli gui plugin po share tests doc xdg addons
+        sudo mkdir -p /usr/share/desktop-directories
         sudo make install
 
     - name: Run GUI
