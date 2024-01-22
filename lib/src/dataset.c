@@ -1419,9 +1419,8 @@ int dataset_shrink_obs_range (DATASET *dset)
 	   the original, shift each series back to the start of
 	   its Z[i] array.
 	*/
-	int i, mvsize;
+	int i, mvsize = newn * sizeof **dset->Z;
 
-	mvsize = newn * sizeof **dset->Z;
 	for (i=0; i<dset->v; i++) {
 	    memmove(dset->Z[i], dset->Z[i] + offset, mvsize);
 	}
