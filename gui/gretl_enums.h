@@ -148,6 +148,7 @@ enum extra_cmds {
     PKGHELP,
     DBNHELP,
     MAPHELP,
+    MDHELP,
     KALMAN,
     GUI_CMD_MAX
 };

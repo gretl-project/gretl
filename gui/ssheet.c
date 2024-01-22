@@ -1560,7 +1560,7 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 
     if (newvars > 0) {
 	int vj, v0 = sheet->varlist[0];
-	const gchar *newname;
+	const gchar *title;
 
 	if (dataset_add_series(dataset, newvars)) {
 	    nomem();
@@ -1568,7 +1568,9 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 	}
 
 	for (j=0; j<newvars; j++) {
-	    newname = NULL;
+	    char newname[VNAMELEN];
+
+	    title = NULL;
 	    vj = oldv + j;
 	    gretl_list_append_term(&sheet->varlist, vj);
 	    if (sheet->varlist == NULL) {
@@ -1576,7 +1578,8 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 		return;
 	    }
 	    column = gtk_tree_view_get_column(view, v0 + 1 + j);
-	    newname = gtk_tree_view_column_get_title(column);
+	    title = gtk_tree_view_column_get_title(column);
+	    single_underscores(newname, title);
 	    strcpy(dataset->varname[vj], newname);
 	    for (i=0; i<dataset->n; i++) {
 		dataset->Z[vj][i] = NADBL;

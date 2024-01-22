@@ -553,11 +553,11 @@
       </para>
       <para>
         By default some information about the appended dataset is printed.
-        The <opt>quiet</opt> option reduces that printout to a 
-        confirmatory message stating just the path to the file. If you 
+        The <opt>quiet</opt> option reduces that printout to a
+        confirmatory message stating just the path to the file. If you
         want the operation to be completely silent, then issue the
         command <lit>set verbose off</lit> before appending the data,
-        in combination with the <opt>quiet</opt> option. 
+        in combination with the <opt>quiet</opt> option.
       </para>
       <subhead>Panel data</subhead>
       <para>
@@ -9059,6 +9059,73 @@
 	and type in the value <quote>-1</quote> (without the quotes).
 	Gretl will then read the -1s as missing observations.
       </para>
+    </description>
+  </command>
+
+  <command name="mdhelp" section="Programming" label="Markdown help"
+    context="gui">
+
+    <description>
+      <para>
+	In this editor window you can insert markdown elements as
+	follows. Note that by <quote>immediately</quote> below we
+	mean, without any intervening space.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Boldface: Put two asterisks (<lit>**</lit>) immediately
+	    before and after a piece of text.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Italic: Put a single asterisk or underscore immediately
+	    before and after a piece of text.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Monospace: Put a single left quote (<lit>`</lit>) immediately
+	    before and after a piece of text.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Level 1 heading: Put a single hash mark (<lit>#</lit>)
+	    before the heading. Leave a blank line following the
+	    heading.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Level 2 heading: Put two successive hash marks before the
+	    heading. Leave a blank line following.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Code block: Put three successive single left quotes
+	    (<lit>```</lit>) on the line right before the code, and
+	    another three on the line following the code.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Bulleted list: Leave a blank line before the list, and
+	    insert hyphen plus space (<quote><lit>- </lit></quote>)
+	    before each item. Take a new line for each item.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Numbered list: Leave a blank line before the list, and
+	    insert number, dot and a space
+	    (for example, <quote><lit>1. </lit></quote>) before each
+	    item. Take a new line for each item.
+	  </para>
+	</li>
+      </ilist>
     </description>
   </command>
 

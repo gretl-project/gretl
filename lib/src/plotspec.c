@@ -2033,8 +2033,7 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
     return err;
 }
 
-/* next: apparatus for producing shaded bars in time-series
-   plots */
+/* next: apparatus for producing shaded bars in time-series plots */
 
 #define BDEBUG 0
 
@@ -2080,6 +2079,8 @@ static plotbars *parse_bars_file (const char *fname,
     char line[128];
     int ncolon = 0;
     int ndash = 0;
+    int nyrs = 0;
+    int ntypes = 0;
     int nother = 0;
     int d1, d2, d3, d4;
 
@@ -2102,24 +2103,25 @@ static plotbars *parse_bars_file (const char *fname,
 	    ncolon++;
 	} else if (sscanf(line, "%d-%d %d-%d", &d1, &d2, &d3, &d4) == 4) {
 	    ndash++;
+	} else if (sscanf(line, "%d %d", &d1, &d3) == 2) {
+	    nyrs++;
 	} else {
 	    nother++;
 	}
     }
+
+    ntypes = (ncolon > 0) + (ndash > 0) + (nyrs > 0);
 
     /* initial check and allocation */
 
     if (nother > 0) {
 	/* non-comment, non-blank, non-parseable cruft found */
 	*err = E_DATA;
-    } else if (ncolon == 0 && ndash == 0) {
-	/* no parseable data found */
-	*err = E_DATA;
-    } else if (ncolon > 0 && ndash > 0) {
-	/* unparseable mash-up found */
+    } else if (ntypes == 0 || ntypes > 1) {
+	/* no parseable data found, or a mash-up */
 	*err = E_DATA;
     } else {
-	bars = plotbars_new(ncolon + ndash);
+	bars = plotbars_new(ncolon + ndash + nyrs);
 	if (bars == NULL) {
 	    *err = E_ALLOC;
 	}
@@ -2137,13 +2139,17 @@ static plotbars *parse_bars_file (const char *fname,
 	    if (*line == '#' || string_is_blank(line)) {
 		continue;
 	    }
-	    if (ncolon) {
+	    if (nyrs) {
+		sscanf(line, "%d %d", &d1, &d3);
+		d2 = 1;
+		d4 = 12;
+	    } else if (ncolon) {
 		sscanf(line, "%d:%d %d:%d", &d1, &d2, &d3, &d4);
 	    } else {
 		sscanf(line, "%d-%d %d-%d", &d1, &d2, &d3, &d4);
 	    }
 	    x0 = d1 + (d2 - 1.0) / 12;
-	    x1 = d3 + (d4 - 1.0) / 12;
+	    x1 = d3 + nyrs ? d4 / 12 : (d4 - 1.0) / 12;
 #if BDEBUG > 1
 	    fprintf(stderr, "%.4f %.4f\n", x0, x1);
 #endif

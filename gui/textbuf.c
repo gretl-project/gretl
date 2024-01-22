@@ -4703,21 +4703,6 @@ void gretl_viewer_set_formatted_buffer (windata_t *vwin, const char *buf)
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(vwin->text), textb);
     cursor_to_top(vwin);
 
-#if 0
-    /* temporary experiment */
-    gchar *gmk = NULL;
-    gsize sz = 0;
-
-    gretl_file_get_contents("test.gmk", &gmk, &sz);
-
-    if (gmk != NULL) {
-	fprintf(stderr, "got test, sz = %d\n", (int) sz);
-	gtk_text_buffer_get_end_iter(textb, &iter);
-	insert_text_with_markup(textb, &iter, gmk, FUNC_HELP);
-	g_free(gmk);
-    }
-#endif
-
     if (links) {
 	connect_link_signals(vwin);
     }
