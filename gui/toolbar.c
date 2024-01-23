@@ -902,10 +902,10 @@ static void enable_markdown_editor (windata_t *vwin,
     int i, n = gtk_toolbar_get_n_items(tbar);
     GtkToolItem *item;
 
-    /* item n-1 is the preview toggle button, which should
-       not be made insensitive, and button 0 is the save
-       button, which should be sensitive just if content
-       is changed
+    /* item 0 is the Save button, which should be sensitive
+       just if editable content is changed, and item n-1 is
+       the preview toggle button, which should not be made
+       insensitive (yet)
     */
     item = gtk_toolbar_get_nth_item(tbar, 0);
     gtk_widget_set_sensitive(GTK_WIDGET(item),
