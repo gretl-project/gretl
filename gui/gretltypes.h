@@ -57,6 +57,7 @@
 #define GRETL_STOCK_QUERY   "gretl-query"
 #define GRETL_STOCK_EYE     "gretl-eye"
 #define GRETL_STOCK_EYE_OFF "gretl-eye-off"
+#define GRETL_STOCK_MD      "gretl-markdown"
 
 typedef enum {
     VWIN_HELP_ACTIVE     = 1 << 0,

@@ -9105,9 +9105,10 @@
 	</li>
 	<li>
 	  <para>
-	    Code block: Put three successive single left quotes
-	    (<lit>```</lit>) on the line right before the code, and
-	    another three on the line following the code.
+	    Code block: Leave a blank line then put three successive
+	    single left quotes (<lit>```</lit>) on the line right
+	    before the code, and another three on the line following
+	    the code.
 	  </para>
 	</li>
 	<li>
@@ -9126,6 +9127,12 @@
 	  </para>
 	</li>
       </ilist>
+      <para>
+	The eye icon in this window allows you to preview your help
+	text as markdown. Note that if the text does not actually
+	contain markdown annotations the <quote>preview</quote> may
+	not look good.
+      </para>
     </description>
   </command>
 

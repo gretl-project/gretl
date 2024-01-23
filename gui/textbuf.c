@@ -4708,6 +4708,17 @@ void gretl_viewer_set_formatted_buffer (windata_t *vwin, const char *buf)
     }
 }
 
+void gretl_viewer_insert_formatted_buffer (windata_t *vwin, const char *buf)
+{
+    GtkTextBuffer *textb;
+    GtkTextIter start, end;
+
+    textb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    gtk_text_buffer_get_bounds(textb, &start, &end);
+    gtk_text_buffer_delete(textb, &start, &end);
+    insert_text_with_markup(textb, &start, buf, FUNC_HELP);
+}
+
 int get_screen_height (void)
 {
     static int screen_height;

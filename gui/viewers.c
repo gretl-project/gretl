@@ -41,6 +41,7 @@
 #include "uservar.h"
 #include "forecast.h"
 #include "var.h"
+#include "gretl_mdconv.h"
 #endif
 
 static gboolean not_space (gunichar c, gpointer p)
@@ -1004,10 +1005,12 @@ static void content_changed (GtkWidget *w, windata_t *vwin)
 static void attach_content_changed_signal (windata_t *vwin)
 {
     GtkTextBuffer *tbuf;
+    gulong id;
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
-    g_signal_connect(G_OBJECT(tbuf), "changed",
-		     G_CALLBACK(content_changed), vwin);
+    id = g_signal_connect(G_OBJECT(tbuf), "changed",
+			  G_CALLBACK(content_changed), vwin);
+    widget_set_int(tbuf, "changed_id", id);
 }
 
 #define viewing_source(r) (r == VIEW_PKG_CODE || \
@@ -1231,6 +1234,11 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     } else if (role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP) {
 	/* editable text */
 	create_text(vwin, hsize, vsize, nlines, TRUE);
+	if (prn != NULL) {
+	    if (help_text_is_markdown(gretl_print_get_buffer(prn))) {
+		widget_set_int(vwin->text, "md", 1);
+	    }
+	}
     } else {
 	/* non-editable text */
 	create_text(vwin, hsize, vsize, nlines, FALSE);
