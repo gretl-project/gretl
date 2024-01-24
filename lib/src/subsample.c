@@ -294,7 +294,7 @@ int dataset_is_resampled (const DATASET *dset)
     return (dset != NULL && dset->submask == RESAMPLED);
 }
 
-void maybe_free_full_dataset (const DATASET *dset)
+void maybe_free_full_dataset (DATASET *dset)
 {
     if (dset == peerset) {
 	if (fullset != NULL) {
@@ -308,6 +308,10 @@ void maybe_free_full_dataset (const DATASET *dset)
 	    clear_datainfo(fullset, CLEAR_SUBSAMPLE);
 	    free(fullset);
 	    fullset = NULL;
+	}
+	if (dset->submask != NULL) {
+	    free(dset->submask);
+	    dset->submask = NULL;
 	}
 	peerset = NULL;
     }
@@ -2334,7 +2338,8 @@ static int real_restrict_sample (const char *param,
 	printlist(list, "list param");
     }
     fprintf(stderr, "options:%s\n", print_flags(opt, SMPL));
-    fprintf(stderr, "panmask = %p\n\n", panmask);
+    fprintf(stderr, "panmask = %p\n", panmask);
+    fprintf(stderr, "t1=%d, t2=%d, n=%d\n\n", dset->t1, dset->t2, dset->n);
 #endif
 
     if (opt & OPT_C) {
@@ -2352,7 +2357,9 @@ static int real_restrict_sample (const char *param,
 	/* not replacing but cumulating any existing restrictions */
 	oldmask = make_current_sample_mask(dset, &err);
 	if (!err) {
-	    free_oldmask = 1;
+	    if (oldmask != NULL) {
+		free_oldmask = 1;
+	    }
 	    if (dset->restriction != NULL) {
 		oldrestr = gretl_strdup(dset->restriction);
 	    }
