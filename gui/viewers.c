@@ -1227,6 +1227,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	}
     }
 
+#ifndef GRETL_EDIT    
     if (role == VIEW_PKG_CODE || role == VIEW_PKG_SAMPLE || role == VIEW_LOG) {
 	create_source(vwin, hsize, vsize, FALSE);
     } else if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE) {
@@ -1243,6 +1244,9 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	/* non-editable text */
 	create_text(vwin, hsize, vsize, nlines, FALSE);
     }
+#else
+    create_text(vwin, hsize, vsize, nlines, FALSE);
+#endif    
 
     text_table_setup(vwin->vbox, vwin->text);
 
