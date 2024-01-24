@@ -1416,10 +1416,10 @@ static void spec_save_ok (GtkWidget *button, gpointer data)
     gtk_widget_destroy(sinfo->dialog);
 }
 
-static gchar *get_pkg_text_filename (function_info *finfo,
-				     const char *pkgname,
-				     const char **ids,
-				     int i)
+static gchar *get_pkg_aux_filename (function_info *finfo,
+				    const char *pkgname,
+				    const char **ids,
+				    int i)
 {
     const char *s;
     gchar *fname = NULL;
@@ -1513,7 +1513,7 @@ static int gfn_spec_save_dialog (function_info *finfo,
 	    sinfo.checks[i] = sinfo.entries[i] = NULL;
 	    continue;
 	}
-	tmp = get_pkg_text_filename(finfo, pkgname, ids, i);
+	tmp = get_pkg_aux_filename(finfo, pkgname, ids, i);
 	w = sinfo.checks[i] = gtk_check_button_new_with_label(_(msgs[i]));
 	if (finfo->save_flags & flags[i]) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
@@ -3900,11 +3900,9 @@ static void finfo_dialog (function_info *finfo)
 	gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), label, 0, 1, i, i+1);
 
-	entry = gtk_entry_new();
+	finfo->entries[i] = entry = gtk_entry_new();
 	gtk_entry_set_width_chars(GTK_ENTRY(entry), 40);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, i, i+1);
-
-	finfo->entries[i] = entry;
 
 	if (entry_texts[i] != NULL) {
 	    gtk_entry_set_text(GTK_ENTRY(entry), entry_texts[i]);
@@ -4790,57 +4788,57 @@ static void maybe_print (PRN *prn, const char *key,
     }
 }
 
-static int maybe_write_aux_file (function_info *finfo,
-				 const char *fname,
-				 const char *id,
-				 const gchar *content,
-				 PRN *prn)
+static int write_aux_file (function_info *finfo,
+			   const char *spec_fname,
+			   const gchar *content,
+			   int flag, PRN *prn)
 {
+    const char *auxname = NULL;
+    const char *id;
     int ret = 0;
 
-    if (content != NULL && *content != '\0') {
-	const char *auxname = NULL;
-	int flag;
+    if (content == NULL || *content == '\0') {
+	return 0;
+    }
 
-	if (!strcmp(id, "sample-script")) {
-	    auxname = finfo->sample_fname;
-	    flag = WRITE_SAMPFILE;
-	} else if (!strcmp(id, "help")) {
-	    auxname = finfo->help_fname;
-	    flag = WRITE_HELPFILE;
+    if (flag == WRITE_SAMPFILE) {
+	auxname = finfo->sample_fname;
+	id = "sample-script";
+    } else if (flag == WRITE_HELPFILE) {
+	auxname = finfo->help_fname;
+	id = "help";
+    } else if (flag == WRITE_GUI_HELP) {
+	auxname = finfo->gui_help_fname;
+	id = "gui-help";
+    } else {
+	return 0;
+    }
+
+    /* record filename in spec file */
+    pprintf(prn, "%s = %s\n", id, auxname);
+
+    if (finfo->save_flags & flag) {
+	/* write out the actual file */
+	FILE *fp = NULL;
+
+	if (path_last_slash_const(spec_fname)) {
+	    /* the spec filename has a directory component */
+	    char *s, tmp[FILENAME_MAX];
+
+	    strcpy(tmp, spec_fname);
+	    s = strrslash(tmp);
+	    *(s + 1) = '\0';
+	    strcat(tmp, auxname);
+	    fp = gretl_fopen(tmp, "wb");
 	} else {
-	    auxname = finfo->gui_help_fname;
-	    flag = WRITE_GUI_HELP;
+	    fp = gretl_fopen(auxname, "wb");
 	}
 
-	if (auxname != NULL && (finfo->save_flags & flag)) {
-	    /* we'll write out the actual file */
-	    FILE *fp = NULL;
-
-	    if (path_last_slash_const(fname)) {
-		/* package fname has directory component */
-		char *s, tmp[FILENAME_MAX];
-
-		strcpy(tmp, fname);
-		s = strrslash(tmp);
-		*(s + 1) = '\0';
-		strcat(tmp, auxname);
-		fp = gretl_fopen(tmp, "wb");
-	    } else {
-		fp = gretl_fopen(auxname, "wb");
-	    }
-
-	    if (fp != NULL) {
-		fputs(content, fp);
-		fputc('\n', fp);
-		fclose(fp);
-		ret = 1;
-	    }
-	}
-
-	if (auxname != NULL) {
-	    /* record filename in spec file */
-	    pputs(prn, auxname);
+	if (fp != NULL) {
+	    fputs(content, fp);
+	    fputc('\n', fp);
+	    fclose(fp);
+	    ret = 1;
 	}
     }
 
@@ -4849,7 +4847,8 @@ static int maybe_write_aux_file (function_info *finfo,
 
 /* Given the in-memory representation of a gfn package, write
    out the corresponding .spec file. Also write out to separate
-   files the package's help text and sample script, if available.
+   files the package's sample script, help text and GUI help,
+   if applicable.
 */
 
 int save_function_package_spec (const char *fname, gpointer p)
@@ -4991,15 +4990,10 @@ int save_function_package_spec (const char *fname, gpointer p)
 	pputc(prn, '\n');
     }
 
-    /* write out help text? */
-    if (finfo->pdfdoc || finfo->help != NULL) {
-	pputs(prn, "help = ");
-	if (finfo->pdfdoc) {
-	    pprintf(prn, "%s.pdf\n", function_package_get_name(finfo->pkg));
-	} else {
-	    maybe_write_aux_file(finfo, fname, "help", finfo->help, prn);
-	    pputc(prn, '\n');
-	}
+    if (finfo->pdfdoc) {
+	pprintf(prn, "help = %s.pdf\n", function_package_get_name(finfo->pkg));
+    } else if (finfo->help != NULL) {
+	write_aux_file(finfo, fname, finfo->help, WRITE_HELPFILE, prn);
     }
 
     gui_help = (finfo->gui_help != NULL)? finfo->gui_help :
@@ -5007,20 +5001,14 @@ int save_function_package_spec (const char *fname, gpointer p)
 
     /* write out GUI-specific help text? */
     if (gui_help != NULL) {
-	pputs(prn, "gui-help = ");
-	maybe_write_aux_file(finfo, fname, "gui-help",
-			     gui_help, prn);
-	pputc(prn, '\n');
+	write_aux_file(finfo, fname, gui_help, WRITE_GUI_HELP, prn);
     }
 
     sample = (finfo->sample != NULL)? finfo->sample :
 	function_package_get_string(finfo->pkg, "sample-script");
 
     /* write out sample script? */
-    pputs(prn, "sample-script = ");
-    maybe_write_aux_file(finfo, fname, "sample-script",
-			 sample, prn);
-    pputc(prn, '\n');
+    write_aux_file(finfo, fname, sample, WRITE_SAMPFILE, prn);
 
     /* write out data-files listing? */
     if (finfo->datafiles != NULL) {
@@ -5294,11 +5282,13 @@ void edit_function_package (const char *fname)
 					  "help", &finfo->help,
 					  "help-fname", &finfo->help_fname,
 					  "sample-script", &finfo->sample,
+					  "sample-fname", &finfo->sample_fname,
 					  "data-requirement", &finfo->dreq,
 					  "min-version", &finfo->minver,
 					  "menu-attachment", &finfo->menupath,
 					  "label", &finfo->menulabel,
 					  "gui-help", &finfo->gui_help,
+					  "gui-help-fname", &finfo->gui_help_fname,
 					  "lives-in-subdir", &finfo->uses_subdir,
 					  "wants-data-access", &finfo->data_access,
 					  "model-requirement", &finfo->mreq,
@@ -5355,7 +5345,7 @@ void edit_function_package (const char *fname)
     } else {
 	/* record opening */
 	mkfilelist(FILE_LIST_GFN, finfo->fname, 0);
-	/* and go for it */
+	/* and create the user interface */
 	finfo_dialog(finfo);
     }
 }
