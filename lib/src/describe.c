@@ -3520,6 +3520,15 @@ static void handle_corrgm_plot_options (int ci,
 		return;
 	    }
 	}
+    } else if (opt & OPT_b) {
+	/* --outbuf=whatever */
+	const char *s = get_optval_string(ci, OPT_b);
+
+	if (s != NULL) {
+	    /* implies use of gnuplot */
+	    *gp = 1;
+	    return;
+	}
     }
 
     /* the defaults */
@@ -4489,6 +4498,14 @@ static int pergm_do_plot (gretlopt opt)
 		/* implies use of gnuplot */
 		return 1;
 	    }
+	}
+    } else if (opt & OPT_b) {
+	/* --outbuf=whatever */
+	const char *s = get_optval_string(PERGM, OPT_b);
+
+	if (s != NULL) {
+	    /* implies use of gnuplot */
+	    return 1;
 	}
     }
 
