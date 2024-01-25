@@ -1928,7 +1928,6 @@ int set_tex_param_format (const char *s)
     }
 
     i = 0;
-
     while (i < 4) {
 	if (*s == '|' || *s == '\0') {
 	    if (n > 7) {
