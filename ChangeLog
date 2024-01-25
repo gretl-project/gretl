@@ -10,6 +10,8 @@ version 2024a, in progress
   manipulating the description of a dataset
 - "tsls" command: add a --matrix-diff option for the Hausman
   test, using the method of Padadopoulos (Econometrics, 2023)
+- "corrgm", "xcorrgm", "pergm" and "qlrtest" commands: support
+  the --outbuf option for directing plot output to a buffer
 - "loop foreach": support arrays and bundles that are located
   inside other arrays or bundles
 - Fix broken backward compatibility in handling of backslash
@@ -17,6 +19,9 @@ version 2024a, in progress
 - Fix bug: crash when plotting matrix data with the multiple
   bands option
 - Fix bug: restore support for reading JMulTi .dat files
+- Fix bug: the "smpl" command with --dummy option could end
+  up broken after doing "Save data" in the GUI when there's
+  a sample restriction in place
 - GUI: apply some legibility fixes for dark GTK themes
 - GUI: enable the advertised keystrokes in file "browser"
   windows (bug #294)
