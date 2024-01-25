@@ -1834,15 +1834,15 @@ gui-help = bpgui.help
 The purpose of the optional \texttt{gui-help} keyword is to specify
 help text to be presented in response to the \textsf{Help} button in a
 dialog box. Note that in the online help for core gretl commands, a
-distinction is made (maybe not quite as consistently as it should be)
-between text to be shown for scripting use and text to be shown if the
-user clicks on \textsf{Help}. The former may refer to option flags and
-arguments, the latter to buttons and pull-down lists. The
-\texttt{gui-help} spec file item extends this possibility to function
-packages. The string to the right of the equals sign should give the
-name of a plain text (UTF-8) file containing the GUI-specific help
-text. In the GUI you can edit or add GUI help under ``Extra
-properties'' via a button in the ``Menu attachment'' tab.
+distinction is made between text to be shown for scripting use and
+text to be shown if the user clicks on \textsf{Help}. The former may
+refer to option flags and arguments, the latter to buttons and
+pull-down lists. The \texttt{gui-help} spec file item extends this
+possibility to function packages. The string to the right of the
+equals sign should give the name of a plain text (UTF-8) file
+containing the GUI-specific help text. In the GUI you can edit or add
+GUI help under ``Extra properties'' via a button in the ``Menu
+attachment'' tab.
 
 You may wonder, what happens if your package offers PDF documentation
 but you also choose to give some \texttt{gui-help} text? Answer: when
@@ -2542,11 +2542,13 @@ the \textsf{Extra properties} button.
   \vbusage{} \verb|gui-main = GUI_lp_mfx|
 
 \item \texttt{gui-help} (optional): The name of a UTF-8 file
-  containing GUI-specific help text, to be shown when the user
-  clicks on \textsf{Help} in a dialog box representing the
-  package. Such text may make reference to buttons, pull-down lists
-  and the like rather than using language appropriate to command-line
-  usage.
+  containing GUI-specific help text, to be shown when the user clicks
+  on \textsf{Help} in a dialog box representing the package. Such text
+  may make reference to buttons, pull-down lists and the like rather
+  than using language appropriate to command-line usage. To edit this
+  text in the GUI package editor click on \textsf{Extra properties},
+  select the \textsf{Menu attachment} tab and click on the \textsf{GUI
+    help text} button.
 
   \ttusage{gui-help = bpgui.help}
 
