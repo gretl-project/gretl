@@ -108,9 +108,10 @@ functionality in non-trivial ways.\footnote{For an extended discussion
   has become somewhat blurred, as regular packages have gradually
   acquired many of the rights and responsibilities previously confined
   to official gretl ``addons''. On the rights side, regular packages
-are now able to hook into the gretl GUI; on the responsibilities side,
-contributed packages are now subject to (minimal) vetting before they
-can appear in the public download area on the gretl server.}
+  are now able to hook into the gretl GUI; on the responsibilities
+  side, contributed packages are now subject to a degree of vetting
+  before they can appear in the public download area on the gretl
+  server.}
 
 \section{The form of function packages}
 \label{sec:pkgform}
@@ -134,12 +135,12 @@ Such files contain
 While it is possible in principle to create and edit a \textsf{gfn}
 file ``manually'', using a suitable text editor, this is not
 recommended. Gretl provides tools (both command-line and GUI) to create
-and maintain package files, such that authors are not required to
+and maintain package files, so that authors are not required to
 mess with raw XML.
 
 We will refer to packages that consist of a gfn file alone as ``simple
-packages'' (the included hansl code may not be simple, but the
-structure is).
+packages'' (the included hansl code may not be particularly simple,
+but the structure is simple).
 
 The alternative to a simple package we will call a ``zip package''.
 Such packages take the form of a \textsf{PKZIP} archive containing a
@@ -161,12 +162,12 @@ chapter~\ref{chap:zipfile}.
 Chapter~\ref{chap:users} gives an account of function packages from
 the user's point of view. Even those who are familiar with packages
 might want to take a look, since there are some finer points that
-might not be totally evident. Moreover, there are several changes
-and enhancements in recent gretl versions.
+might not be immediately evident. Moreover, there have been several
+changes and enhancements in recent gretl versions.
 
-Chapter~\ref{chap:authors} gives a walk-through of the means of
-creating, refining and publishing function packages, both via
-the command-line and via the GUI.
+Chapter~\ref{chap:authors} takes the author's point of view, giving a
+walk-through of the means of creating, refining and publishing
+function packages, both via the command-line and via the GUI.
 
 Chapters~\ref{chap:specfile} and \ref{chap:zipfile} provide reference
 material on the details of package specification and structure, along
@@ -196,8 +197,8 @@ server. It can be opened via the menu item ``File, Function packages,
 On server.'' The same listing can be accessed via a web
 interface,\footnote{See
   \url{http://gretl.sourceforge.net/cgi-bin/gretldata.cgi?opt=SHOW_FUNCS}.}
-but for most purposes it will be more convenient to work from within
-gretl.
+but for most purposes it will probably be more convenient to work from
+within gretl.
 
 The two browsers are interconnected: from the ``local machine'' window
 you can open the ``on server'' one by clicking on the Network button
@@ -219,11 +220,11 @@ package of interest.
 \label{sec:acquire}
 
 We'll focus here on packages available from the gretl server. These
-have passed a minimal checking procedure on the part of the gretl
-development team, designed to ensure that they are usable with the
-current version of gretl. This does not mean, however, that they are
-guaranteed to be bug-free, or to deliver accurate results; those
-responsibilities rest on the shoulders of the package authors.
+have passed a checking procedure on the part of the gretl development
+team, designed to ensure that they are usable with the current version
+of gretl. This does not mean, however, that they are guaranteed to be
+bug-free, or to deliver accurate results; those responsibilities rest
+on the shoulders of the package authors.
 
 Some authors may choose to make their packages available via other
 means. In that case, once the user has the package file available,
@@ -288,8 +289,7 @@ with a window like Figure~\ref{fig:ghegy-info}.
 Yes, this definitely looks like it. At this point, all you have to do
 is install the package: click on the ``Install'' icon in the browser
 window, or, again, right-click on the package entry. Gretl will now
-download the package from the server at Wake Forest University and
-install it.
+download the package from the sourceforge server and install it.
 
 \begin{figure}[htbp]
 \begin{center}
@@ -301,18 +301,18 @@ install it.
 
 The final step of your installation is shown in
 Figure~\ref{fig:ghegy-menu}.  Function packages may offer the option
-of integrating into gretl's GUI menus: in this case, the author chose
-to make it available among the other unit-root tests that gretl
-provides natively. You may choose to accept this option (which makes
-it handy to use the package from gretl's graphical interface) or not,
-if you don't want to clutter up your menus with anything more than the
+of attaching to gretl's GUI menus: in this case, the author chose to
+make it available among the other unit-root tests that gretl provides
+natively. You may choose to accept this option (which makes it handy
+to use the package from gretl's graphical interface) or not, if you
+don't want to clutter up your menus with anything more than the
 essential entries. Even if you say ``No'' here, however, the package
 will still be available to you from the GUI interface---it just won't
 have a dedicated menu entry. But note, this is not just a one-time
-option; see section~\ref{manage-menus} for an account of how to
-add or remove installed packages from gretl's menus.\label{pg:menu-hook}
+option; see section~\ref{manage-menus} for an account of how to add or
+remove installed packages from gretl's menus.\label{pg:menu-hook}
 
-Suppose, for now, you say ``Yes'' to \textsf{GHegy}'s offer of a menu
+Suppose you say ``Yes'' to \textsf{GHegy}'s offer of a menu
 attachment. Then the HEGY unit-root test should be available where
 you'd expect to find it (Figure~\ref{fig:ghegy-hook}).\footnote{You
   used to have to restart the program to get such dynamic menu items
@@ -341,11 +341,11 @@ variants:
 pkg install GHegy
 \end{code}
 %
-the presumption is that you mean to install a package named
-\textsf{GHegy} (either \texttt{.gfn} or \texttt{.zip}, that will be
-determined automatically) from the gretl server. So, another way
-of doing what we just walked through, if you know in advance exactly
-what you want.
+  the presumption is that you mean to install a package named
+  \textsf{GHegy} (either \texttt{.gfn} or \texttt{.zip}, that will be
+  determined automatically) from the gretl server. So that's another
+  way of doing what we just walked through, if you know in advance
+  exactly what you want.
 \item Suppose a colleague has given you a link to a function package
   that's not on the gretl server. Then you can download and install it
   on your own machine using the full URL, as in
@@ -458,16 +458,15 @@ comment. However, the two invocations of the \cmd{GHegy\_test}
 function may not be totally transparent. In general you should expect
 some documentation on (a) which functions are contained in the package
 and (b) their syntax: the parameters they accept, what they do, what
-they return.\footnote{This is something that the package authors are
-  completely in charge of: we, as the gretl development team, try to
-  ensure that packages obtained via the gretl server contain at least
-  minimal documentation, but we cannot guarantee anything more.}  To
-find this, go to the list of locally-installed packages and click on
-the ``Info'' icon. A text box will appear showing the documentation
-provided by the package author. In the \textsf{GHegy} case, for
-example, not only are we told all we need to know about the
-\cmd{GHegy\_test} function, but we also discover that the package
-contains two additional functions we can use, namely
+they return.\footnote{This is the responsibility of package authors.
+  However, the gretl development team tries try to ensure that
+  packages obtained via the gretl server contain at least minimal
+  documentation.}  To find this, go to the list of locally-installed
+packages and click on the ``Info'' icon. A text box will appear
+showing the documentation provided by the package author. In the
+\textsf{GHegy} case, for example, not only are we told all we need to
+know about the \cmd{GHegy\_test} function, but we also discover that
+the package contains two additional functions that we can use, namely
 \cmd{GHegy\_bundle\_print} and \cmd{GHegy\_test\_plot}.  So, for
 example, we could use the latter to enhance Ignacio's sample script,
 appending the line
@@ -501,7 +500,7 @@ in general, see the \textit{Hansl Primer} \citep{hansl-primer}.
 
 Of course, if a package offers to attach to a gretl menu, and you
 accepted that offer when you installed the package (see
-p.~\pageref{pg:menu-hook}) then you should know where to find it.
+page~\pageref{pg:menu-hook}) then you should know where to find it.
 But if a package doesn't have its own place in the menus, the
 package browser is the place to go to invoke it by GUI means.
 
@@ -517,11 +516,11 @@ interface you may get an initial dialog asking you to choose a
 particular function to call.) If the package's data requirement is not
 met, you'll be told what's wrong and asked if you'd like to run the
 sample script. This should load suitable data and ``demo'' the
-package.\footnote{By the way, if a package's sample script does not
-  run correctly you are encouraged to report that to the author of the
-  package or the \texttt{gretl-users} mailing list. Although gretl
-  function packages carry no warranty it is supposed to be an absolute
-  requirement that the sample script runs OK.}
+package.\footnote{If a package's sample script does \textit{not} run
+  correctly, please report that to the author of the package or the
+  \texttt{gretl-users} mailing list. Although gretl function packages
+  carry no warranty it is supposed to be a firm requirement that the
+  sample script runs OK.}
 
 \begin{figure}[htbp]
   \centering
@@ -548,9 +547,9 @@ this call.
 We have moved the mouse pointer over the ``bundle'' icon in the
 toolbar of this window to reveal the tooltip, ``Save bundle content.''
 What's going on here is that \textsf{GHegy} has constructed a gretl
-bundle containing various details of the unit root test, and we can
-extract these details if we wish. Package authors: for an account of
-how to do this sort of thing see section~\ref{sec:idioms}.
+bundle containing various details of the unit root test, and you can
+extract these details if you wish. Package authors: for an account of
+how to enable this sort of thing see section~\ref{sec:idioms}.
 
 
 \section{Some finer points}
@@ -665,23 +664,22 @@ functions/mypkg.gfn
 functions/mypkg/mypkg.gfn
 \end{code}
 %
-Here's the thing: if a package includes PDF documentation, or any
+Why the difference? If a package includes PDF documentation, or any
 other files besides the \texttt{gfn}, \textit{it must be in its own
-  subdirectory} (the second pattern). If the package consists of a gfn
-file only, then in general it should go directly into the functions
+  subdirectory} (the second pattern). But if the package consists of a
+gfn file only, then it should go directly into the \texttt{functions}
 directory (the first pattern).  Gretl should get this right when
 installing a package for you but if you install a package by hand,
-copying it to the \texttt{functions} directory yourself, you need to
+copying it to the \texttt{functions} directory yourself, you should
 pay attention to this point.
 
 \subsection{Examining a package in depth}
 
-Suppose you get interested in some function package to the point where
-you don't just want to use it---you want to see how it works, maybe
-borrow ideas from it, even fix bugs in the package or modify it for
-your own purposes.\footnote{If you do come up with any fixes or
-  enhancements, then naturally we ask that you share them with the
-  package author.}
+Suppose you get seriously interested in some function package: you
+don't just want to use it, you want to see how it works, maybe borrow
+ideas from it, even fix bugs in the package or modify it for your own
+purposes.\footnote{If you do come up with any fixes or enhancements,
+  then naturally we ask that you share them with the package author.}
 
 Once again, you can start from the browser window for packages ``on
 local machine.'' The \textsf{View code} button or right-click menu
@@ -788,8 +786,8 @@ decide to tackle an ambitious function-package project.
 \label{sec:cli-build}
 
 Here we assume you are at least somewhat familiar with the
-shell---that is, the command processor which awaits your input when
-you open a terminal window. So we assume you know how to perform
+``shell''---that is, the command processor which awaits your input
+when you open a terminal window. So we assume you know how to perform
 simple operating-system tasks such as copying/deleting files, listing
 the contents of a directory and so on via the appropriate shell
 commands. A reminder of the basics is provided in
@@ -822,7 +820,7 @@ well as the \app{bash} shell.
 First of all, we strongly recommend that when starting work on a
 package you create a specific directory to hold the makings of the
 package. For illustration we'll suppose the package is called
-``mypkg''. (Naturally, you should replace all occurrences of
+``mypkg''. (You should, of course, replace all occurrences of
 \texttt{mypkg} below with the actual name of the package you're
 building.) So, starting from some suitable point in your file system,
 you might begin with
@@ -836,16 +834,17 @@ Now, the minimum requirement for building your package (as a ``simple
 package'' or stand-alone \textsf{gfn} file) is the following set of
 files:
 \begin{enumerate}
-\item At least one (for now, let's just say one) hansl \textsf{inp}
-  file containing definitions of the functions you wish to
-  package. Let's call this \texttt{mypkg.inp}.
+\item At least one (for now, let's say one) hansl \textsf{inp} file
+  containing definitions of the functions you wish to package. Let's
+  call this \texttt{mypkg.inp}.
 \item A \textsf{spec} file, which supplies metadata and tells gretl how the
   package should be assembled; call this \texttt{mypkg.spec}.
 \item A sample script (\textsf{inp} file) which exercises your
   package; call this \texttt{mypkg\_sample.inp}.
-\item A text file containing help on the packaged function(s). The
-  filename should have suffix \texttt{.md} if you're using gretl's
-  markdown option (recommended: see Section~\ref{sec:md} below).
+\item A text file containing help on the packaged function(s). Call
+  this \texttt{mypkg\_help.txt}, or preferably \texttt{mypkg\_help.md}
+  if you're going to use gretl's markdown option (which is
+  recommended: see Section~\ref{sec:md} below).
 \end{enumerate}
 
 The four files listed above are all UTF-8 text files that you can view
@@ -860,7 +859,7 @@ You will need to create such files in the current directory (or maybe
 copy or move them from elsewhere if you've already made a start). It's
 not absolutely necessary that \textit{all} the filenames are
 regimented as shown (starting with the name of the package in each
-case), but as we'll see before long this can make life easier.
+case), but as we'll see shortly this can make life easier.
 
 The \textsf{inp} file containing your function definitions we won't
 say much about here. If you're contemplating writing a package you
@@ -890,16 +889,10 @@ min-version = 2017a
 
 According to this spec, the package has a single public function,
 \texttt{myfunc}, and requires gretl 2017a or higher to run
-properly. For details on the specification keys used here (e.g.\
-\texttt{tags} or \texttt{min-version}) see
-section~\ref{sec:spec-basic}.
-
-In fact, writing a \textsf{spec} from scratch may be tricky. Some may
-prefer adapting a pre-existing template \textsf{spec} file; you can
-find one at
-\url{https://sourceforge.net/projects/gretl/files/misc/template.spec}.
-Regardless, you still may want to refer to chapter \ref{chap:specfile}
-for a fuller description of the various entries.
+correctly. Writing a \textsf{spec} from scratch may be tricky. Please
+refer to chapter~\ref{chap:specfile} for a fuller account of the
+various keywords, and in particular section~\ref{sec:spec-basic} for
+the obligatory basics.
 
 Now, assuming all the required files are in place, how do we actually
 build the package? Simple: the shell command
@@ -966,11 +959,12 @@ Gretl's markdown variant currently supports the following features.
 \end{itemize}
 
 Note that itemized and enumerated lists cannot be nested, and a blank
-line should be inserted before starting each type of list.
+line should be inserted before starting an itemized list, an
+enumerated list, or a code block.
 
 URLs starting with \texttt{http[s]} automatically turn into
-hyperlinks.  Paired ASCII straight double quotes are replaced by left-
-and right-hand quotes.
+hyperlinks.  Paired ASCII straight double quotes are automatically
+replaced by left- and right-hand quotes.
 
 \subsection{Adding extra material}
 
