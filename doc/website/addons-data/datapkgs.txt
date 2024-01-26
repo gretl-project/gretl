@@ -20,4 +20,6 @@
 # Jeffrey Wooldridge, Introductory Econometrics
 138812 Foo Dec 18 00:00:00 2023 luetkepohl.tar.gz
 # Helmut Lütkepohl, Applied Time Series Econometrics & New Intro...
+1704458 Foo Jan 26 00:00:00 2024 isl.tar.gz
+# James et al, Introduction to Statistical Learning
 
