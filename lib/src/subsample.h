@@ -90,7 +90,7 @@ int backup_full_dataset (DATASET *dset);
 int count_missing_values (const DATASET *dset, gretlopt opt, 
 			  PRN *prn, int *err);
 
-void maybe_free_full_dataset (const DATASET *dset);
+void maybe_free_full_dataset (DATASET *dset);
 
 int model_sample_problem (const MODEL *pmod, const DATASET *dset);
 

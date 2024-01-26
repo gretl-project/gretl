@@ -63,6 +63,8 @@ GtkTextBuffer *gretl_text_buf_new (void);
 
 void gretl_viewer_set_formatted_buffer (windata_t *vwin, const char *buf);
 
+void gretl_viewer_insert_formatted_buffer (windata_t *vwin, const char *buf);
+
 gchar *textview_get_text (GtkWidget *view);
 
 gchar *textview_get_hansl (GtkWidget *view, int save);

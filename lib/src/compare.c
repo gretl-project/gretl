@@ -2830,14 +2830,21 @@ static int QLR_plot_wanted (gretlopt opt)
 
     if (opt & OPT_U) {
 	/* but the default can be overruled by @opt */
-	const char *plotparm = get_optval_string(QLRTEST, OPT_U);
+	const char *s = get_optval_string(QLRTEST, OPT_U);
 
-	if (plotparm != NULL) {
-	    if (!strcmp(plotparm, "none")) {
+	if (s != NULL) {
+	    if (!strcmp(s, "none")) {
 		ret = 0;
 	    } else {
 		ret = 1;
 	    }
+	}
+    } else if (opt & OPT_b) {
+	/* --outbuf=whatever */
+	const char *s = get_optval_string(QLRTEST, OPT_b);
+
+	if (s != NULL) {
+	    return 1;
 	}
     }
 

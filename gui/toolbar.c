@@ -64,6 +64,7 @@
 /* for markdown editor */
 #include "../pixmaps/eye.xpm"
 #include "../pixmaps/eye-off.xpm"
+#include "../pixmaps/markdown.xpm"
 
 enum {
     SAVE_ITEM = 1,
@@ -190,7 +191,8 @@ void gretl_stock_icons_init (void)
 	{mini_page_xpm, GRETL_STOCK_PAGE},
 	{close_16_xpm, GRETL_STOCK_CLOSE},
 	{eye_xpm, GRETL_STOCK_EYE},
-	{eye_off_xpm, GRETL_STOCK_EYE_OFF}
+	{eye_off_xpm, GRETL_STOCK_EYE_OFF},
+	{markdown_xpm, GRETL_STOCK_MD}
     };
     static GtkIconFactory *gretl_factory;
     int n1 = G_N_ELEMENTS(png_stocks);
@@ -900,10 +902,15 @@ static void enable_markdown_editor (windata_t *vwin,
     int i, n = gtk_toolbar_get_n_items(tbar);
     GtkToolItem *item;
 
-    /* item n-1 is the preview toggle button, which should
-       not be made insensitive
+    /* item 0 is the Save button, which should be sensitive
+       just if editable content is changed, and item n-1 is
+       the preview toggle button, which should not be made
+       insensitive (yet)
     */
-    for (i=0; i<n-1; i++) {
+    item = gtk_toolbar_get_nth_item(tbar, 0);
+    gtk_widget_set_sensitive(GTK_WIDGET(item),
+			     vwin->flags & VWIN_CONTENT_CHANGED);
+    for (i=1; i<n-1; i++) {
 	item = gtk_toolbar_get_nth_item(tbar, i);
 	if (GTK_IS_TOOL_BUTTON(item)) {
 	    gtk_widget_set_sensitive(GTK_WIDGET(item), s);
@@ -917,7 +924,13 @@ static void enable_markdown_editor (windata_t *vwin,
 
 static void toggle_md_preview (GtkWidget *w, windata_t *vwin)
 {
+    GtkTextBuffer *tbuf;
     GtkToolItem *item;
+    PRN *prn = NULL;
+    gulong cid;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    cid = widget_get_int(tbuf, "changed_id");
 
     if (widget_get_int(vwin->text, "preview_on")) {
 	/* return to editing mode */
@@ -926,26 +939,41 @@ static void toggle_md_preview (GtkWidget *w, windata_t *vwin)
 	textview_set_text(vwin->text, buf);
 	item = g_object_get_data(G_OBJECT(vwin->mbar), "eye_button");
 	gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(item), GRETL_STOCK_EYE);
+	gtk_tool_item_set_tooltip_text(item, _("Preview as markdown"));
 	enable_markdown_editor(vwin, TRUE);
 	g_free(buf);
 	g_object_set_data(G_OBJECT(vwin->mbar), "raw_text", NULL);
-    } else {
+	g_signal_handler_unblock(G_OBJECT(tbuf), cid);
+    } else if ((prn = gui_prn_new()) != NULL) {
 	/* preview formatted markdown */
-	PRN *prn = gui_prn_new();
+	gchar *buf = textview_get_text(vwin->text);
+	char *pbuf;
 
-	if (prn != NULL) {
-	    gchar *buf = textview_get_text(vwin->text);
-	    char *pbuf;
+	g_signal_handler_block(G_OBJECT(tbuf), cid);
+	g_object_set_data(G_OBJECT(vwin->mbar), "raw_text", buf);
+	md_to_gretl(buf, prn);
+	pbuf = gretl_print_steal_buffer(prn);
+	gretl_viewer_insert_formatted_buffer(vwin, pbuf);
+	item = g_object_get_data(G_OBJECT(vwin->mbar), "eye_button");
+	gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(item), GRETL_STOCK_EYE_OFF);
+	gtk_tool_item_set_tooltip_text(item, _("Return to editing"));
+	enable_markdown_editor(vwin, FALSE);
+	gretl_print_destroy(prn);
+    }
+}
 
-	    g_object_set_data(G_OBJECT(vwin->mbar), "raw_text", buf);
-	    md_to_gretl(buf, prn);
-	    pbuf = gretl_print_steal_buffer(prn);
-	    gretl_viewer_set_formatted_buffer(vwin, pbuf);
-	    item = g_object_get_data(G_OBJECT(vwin->mbar), "eye_button");
-	    gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(item), GRETL_STOCK_EYE_OFF);
-	    enable_markdown_editor(vwin, FALSE);
-	    gretl_print_destroy(prn);
-	}
+static void set_md_status (GtkWidget *w, windata_t *vwin)
+{
+    const char *opts[] = {
+	N_("plain literal text"),
+	N_("markdown")
+    };
+    int def = widget_get_int(vwin->text, "md");
+    int resp;
+
+    resp = radio_dialog(_("Text status"), NULL, opts, 2, def, 0, vwin->main);
+    if (resp >= 0 && resp != def) {
+	widget_set_int(vwin->text, "md", resp);
     }
 }
 
@@ -1107,6 +1135,8 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 	               r != EDIT_NOTES && \
 	               r != EDIT_PKG_CODE && \
 		       r != EDIT_PKG_SAMPLE && \
+		       r != EDIT_PKG_HELP && \
+		       r != EDIT_PKG_GHLP && \
 		       r != CONSOLE && \
 		       r != VIEW_BUNDLE && \
 		       r != VIEW_DBNOMICS)
@@ -1629,7 +1659,8 @@ static void add_markdown_items (windata_t *vwin)
 {
     static GretlToolItem markdown_items[] = {
 	{ N_("Help"), GTK_STOCK_HELP, G_CALLBACK(markdown_help), 0 },
-	{ N_("Toggle preview"), GRETL_STOCK_EYE, G_CALLBACK(toggle_md_preview), 0 }
+	{ N_("Set markdown status"), GRETL_STOCK_MD, G_CALLBACK(set_md_status), 0 },
+	{ N_("Preview as markdown"), GRETL_STOCK_EYE, G_CALLBACK(toggle_md_preview), 0 }
     };
     GretlToolItem *tool;
     GtkToolItem *item;
@@ -1639,7 +1670,7 @@ static void add_markdown_items (windata_t *vwin)
     gtk_separator_tool_item_set_draw(GTK_SEPARATOR_TOOL_ITEM(item), TRUE);
     gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), item, -1);
 
-    for (i=0; i<2; i++) {
+    for (i=0; i<3; i++) {
 	tool = &markdown_items[i];
 	item = gtk_tool_button_new_from_stock(tool->icon);
 	g_signal_connect(G_OBJECT(item), "clicked", tool->func, vwin);
