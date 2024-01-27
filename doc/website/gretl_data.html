@@ -16,7 +16,7 @@
   <td><img alt="gretl image" src="./images/gretl-image.png"></td>
   <td align=left>
       <p><a href="#db">gretl databases</a></p>
-      <p><a href="#jw">textbook datasets</a></p>
+      <p><a href="#tb">textbook datasets</a></p>
       <p><a href="#df">larger datafiles</a></p>
       <p><a href="#custom">custom data collections</a></p>
       <p><a href="#utils">data utilities</a></p>
@@ -55,14 +55,14 @@ access. You can access these additional databases from within gretl,
 via the menu item <kbd>File/Databases/On database server</kbd>
 (provided you are connected to the internet).</p>
 
-<h2><a name="jw">2. Textbook datasets</a></h2>
+<h2><a name="tb">2. Textbook datasets</a></h2>
 
 <p>Datasets (and in some cases replication scripts) are available for
 several popular econometrics textbooks, as shown in the table below.
-Please note that the <b>.exe</b> files are self-installers, for use on
-MS Windows only; the <b>.tar.gz</b> and <b>.zip</b> files are
+Please note that the <kbd>.exe</kbd> files are self-installers, for use on
+MS Windows only; the <kdb>.tar.gz</kbd> and <kbd>.zip</kbd> files are
 compressed archives that are usable on any operating system.  Notes on
-installing the files can be found beneath the table.  </p>
+installing the files can be found beneath the table.</p>
 
 <p>Note that <a href="http://www.learneconometrics.com/gretl.html">Lee Adkins</a> offers
 additional material relating to <i>Principles of Econometrics</i></a> by Hill, Griffiths and Lim,
@@ -190,32 +190,43 @@ including a free companion pdf book, <i>Using gretl for Principles of Econometri
   <p><a href="https://link.springer.com/book/10.1007/978-3-540-27752-1"><i>New Introduction to Multiple Time Series Analysis</i></a>
   </p></td>
   <td><p>
-      <a href="http://sourceforge.net/projects/gretl/files/datafiles/HLBooks.exe/download">HLBooks.exe</a>
-      <img alt="MS Windows" src="./images/mswin.png"/><br>
-      <a href="http://sourceforge.net/projects/gretl/files/datafiles/HLBooks.tar.gz/download">HLBooks.tar.gz</a>
+      <a href="http://sourceforge.net/projects/gretl/files/datafiles/luetkepohl.tar.gz/download">luetkepohl.tar.gz</a>
   </p></td>
- </tr>
+</tr>
+<tr bgcolor="#E0E0E0">
+  <td><p>Gareth James and others</p></td>
+  <td><p><a href="https://www.statlearning.com/"><i>An Introduction to Statistical Learning</i></a>
+  </p></td>
+  <td><p>
+      <a href="http://sourceforge.net/projects/gretl/files/datafiles/isl.tar.gz/download">isl.tar.gz</a>
+  </p></td>
+</tr>
 </table>
 
 <h3>Installing the textbook data</h3>
 
-<p>With the Windows self-installers, just download them to the desktop then double-click 
-on the installer icon.  (Once the datasets are installed you can delete the installer.)</p>
+<p>The recommended method is to install these data collections from
+  within gretl. Go to /File/Open data/Sample file in the menus of the
+  main gretl window. In the browser that appears, click the button
+  with tooltip &ldquo;Look on server&rdquo; to see what's available.
+  Select a collection to download, right-click, and select Install.
+</p>
 
-<p>The compressed data packages should be unpacked in the gretl "data" directory.  For
-example, if gretl is installed under <kbd>/usr</kbd> you could install the Stock and Watson 
-data like this (as the root user):</p>
+<p>On Windows you also have the option of downloading a self-installer from
+  this page and double-clicking on the installer exe. Once it has done
+  its job you can delete the <kbd>exe</kbd> file.
+</p>
 
-<pre>
-cd /usr/share/gretl/data
-wget http://ricardo.ecn.wfu.edu/pub/gretl/stock_watson.tar.gz
-tar xvfz stock_watson.tar.gz
-rm stock_watson.tar.gz
-</pre>
+<p>A third option is to download a <kbd>tar.gz</kbd> file from this page and
+  decompress it yourself, if you know what you're doing.
+</p>
+
+<p>In all cases you should restart gretl to access a newly installed
+  file collection.</p>
 
 <p>
-The Stock and Watson scripts package should be unpacked in 
-<kbd>/usr/share/gretl/scripts</kbd> (or the corresponding location if gretl is
+The scripts zipfiles for Stock and Watson (and Hill, Griffiths and Lim)
+should be unpacked in <kbd>/usr/share/gretl/scripts</kbd> (or the corresponding location if gretl is
 not installed under <kbd>/usr</kbd>).
 </p>
 
