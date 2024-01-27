@@ -2531,8 +2531,6 @@ static int ggz_extract (char *ggzname)
 	}
     }
 
-    gretl_remove(ggzname);
-
     return err;
 }
 
@@ -2622,11 +2620,14 @@ static void gfn_install_notify (const gchar *objname,
 }
 
 static int gui_install_gfn (const gchar *objname,
+			    const gchar *dlname,
+			    const char *target,
 			    int zipfile,
 			    gchar *depends,
 			    windata_t *vwin)
 {
-    const char *instpath = gretl_function_package_path();
+    const gchar *p = strrslash(target);
+    gchar *instpath = g_strndup(target, p - target + 1);
     int err = 0;
 
     if (depends != NULL) {
@@ -2649,17 +2650,13 @@ static int gui_install_gfn (const gchar *objname,
     }
 
     if (!err) {
-	const char *ext = zipfile ? ".zip" : ".gfn";
-	gchar *dlname = g_strdup_printf("%s%s", objname, ext);
-	gchar *fullname;
+	gchar *fullname = (gchar *) target;
 
-	fullname = g_strdup_printf("%s%s", instpath, dlname);
-	err = retrieve_remote_function_package(dlname, fullname);
+	err = retrieve_remote_function_package(dlname, target);
 	if (!err && zipfile) {
-	    err = gretl_unzip_into(fullname, instpath);
-	    gretl_remove(fullname);
+	    err = gretl_unzip_into(target, instpath);
+	    gretl_remove(target);
 	    if (!err) {
-		g_free(fullname);
 		fullname = g_strdup_printf("%s%s%c%s.gfn", instpath,
 					   objname, SLASH, objname);
 	    }
@@ -2667,11 +2664,70 @@ static int gui_install_gfn (const gchar *objname,
 	if (!err) {
 	    gfn_install_notify(objname, fullname, vwin);
 	}
-	g_free(fullname);
-	g_free(basename);
+	if (fullname != target) {
+	    g_free(fullname);
+	}
     }
 
+    g_free(instpath);
+
     return err;
+}
+
+static gchar *add_suffix (const gchar *objname, int role,
+			  int zipfile)
+{
+    const char *sfx = NULL;
+
+    if (role == REMOTE_DB) {
+	sfx = ".ggz";
+    } else if (role == REMOTE_FUNC_FILES) {
+	sfx = zipfile ? ".zip" : ".gfn";
+    } else {
+	sfx = ".tar.gz";
+    }
+
+    return g_strdup_printf("%s%s", objname, sfx);
+}
+
+static void finalize_db_download (char *target,
+				  windata_t *vwin)
+{
+    int err = ggz_extract(target);
+
+    if (err) {
+	if (err != E_FOPEN) {
+	    msgbox(_("Error unzipping compressed data"),
+		   GTK_MESSAGE_ERROR, vwin_toplevel(vwin));
+	}
+    } else {
+	windata_t *local = get_local_viewer(vwin->role);
+
+	tree_store_set_string(GTK_TREE_VIEW(vwin->listbox),
+			      vwin->active_var, 2,
+			      _("Up to date"));
+	if (local != NULL) {
+	    populate_filelist(local, NULL);
+	} else if (target != NULL) {
+	    offer_db_open(target, vwin);
+	}
+    }
+    gretl_remove(target);
+}
+
+static void finalize_datafiles_download (char *target,
+					windata_t *vwin)
+{
+    int err = unpack_datafile_collection(target);
+
+    if (err) {
+	msgbox(_("Error unzipping compressed data"),
+	       GTK_MESSAGE_ERROR, vwin_toplevel(vwin));
+    } else {
+	msgbox(_("Restart gretl to access this database"),
+	       GTK_MESSAGE_INFO, vwin_toplevel(vwin));
+    }
+    gretl_remove(target);
 }
 
 /* note: @vwin here is the source viewer window displaying the
@@ -2682,16 +2738,22 @@ static int gui_install_gfn (const gchar *objname,
 void install_file_from_server (GtkWidget *w, windata_t *vwin)
 {
     gchar *objname = NULL;
-    gchar *depends = NULL;
+    gchar *dlname = NULL;
     gchar *target = NULL;
+    gchar *depends = NULL;
     gboolean zipfile = FALSE;
+    int role = vwin->role;
+    CGIOpt opt;
     int err = 0;
 
-    /* note: addon files are handled separately, by the function
-       install_addon_callback() in datafiles.c
-    */
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+    opt = GRAB_NBO_DATA;
+#else
+    opt = GRAB_DATA;
+#endif
 
-    if (vwin->role == REMOTE_DB) {
+    /* (1) determine the name of the object that's wanted */
+    if (role == REMOTE_DB) {
 	/* database files */
 	GtkTreeSelection *sel;
 	GtkTreeModel *model;
@@ -2712,77 +2774,47 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 				 vwin->active_var, DEPENDS_COLUMN, &depends);
 	}
     }
-
     if (objname == NULL || *objname == '\0') {
+	errbox("Couldn't determine name of object to download");
 	g_free(objname);
 	g_free(depends);
 	return;
     }
 
-    if (!zipfile && vwin->role != REMOTE_FUNC_FILES) {
-	const char *ext = vwin->role == REMOTE_DB ? ".ggz" : ".tar.gz";
-	gchar *dlname = g_strdup_printf("%s%s", objname, ext);
-
-	target = get_download_path(dlname, &err);
-	if (target == NULL) {
-	    g_free(objname);
-	    return;
-	}
-	g_free(dlname);
+    /* (2) determine download path */
+    dlname = add_suffix(objname, role, zipfile);
+    target = get_download_path(dlname, &err);
+    if (target == NULL) {
+	errbox_printf("Couldn't determine download path for %s", dlname);
+	gui_errmsg(err);
+	goto finish;
     }
 
-    if (vwin->role == REMOTE_FUNC_FILES) {
-	err = gui_install_gfn(objname, zipfile, depends, vwin);
-    } else if (vwin->role == REMOTE_DATA_PKGS) {
-	gchar *tarname = g_strdup_printf("%s.tar.gz", objname);
-
-	err = retrieve_remote_datafiles_package(tarname, target);
-	g_free(tarname);
-    } else if (vwin->role == REMOTE_DB) {
-#if G_BYTE_ORDER == G_BIG_ENDIAN
-	err = retrieve_remote_db(objname, target, GRAB_NBO_DATA);
-#else
-	err = retrieve_remote_db(objname, target, GRAB_DATA);
-#endif
+    /* (3) do the download */
+    if (role == REMOTE_DB) {
+	err = retrieve_remote_db(objname, target, opt);
+    } else if (role == REMOTE_DATA_PKGS) {
+	err = retrieve_remote_datafiles_package(dlname, target);
+    } else if (role == REMOTE_FUNC_FILES) {
+	/* note: includes pre- and post-processing */
+	err = gui_install_gfn(objname, dlname, target, zipfile, depends, vwin);
     }
-
     if (err) {
 	show_network_error(NULL);
-    } else if (vwin->role == REMOTE_DATA_PKGS) {
-	fprintf(stderr, "downloaded '%s'\n", target);
-	err = unpack_datafile_collection(target);
-	gretl_remove(target);
-	if (err) {
-	    msgbox(_("Error unzipping compressed data"),
-		   GTK_MESSAGE_ERROR, vwin_toplevel(vwin));
-	} else {
-	    msgbox(_("Restart gretl to access this database"),
-		   GTK_MESSAGE_INFO, vwin_toplevel(vwin));
-	}
-    } else if (vwin->role == REMOTE_DB) {
-	/* gretl-zipped database package */
-	fprintf(stderr, "downloaded '%s'\n", target);
-	err = ggz_extract(target);
-	if (err) {
-	    if (err != E_FOPEN) {
-		msgbox(_("Error unzipping compressed data"),
-		       GTK_MESSAGE_ERROR, vwin_toplevel(vwin));
-	    }
-	} else {
-	    windata_t *local = get_local_viewer(vwin->role);
-
-	    tree_store_set_string(GTK_TREE_VIEW(vwin->listbox),
-				  vwin->active_var, 2,
-				  _("Up to date"));
-	    if (local != NULL) {
-		populate_filelist(local, NULL);
-	    } else if (target != NULL) {
-		offer_db_open(target, vwin);
-	    }
-	}
+	goto finish;
     }
 
+    /* (4) carry out post-processing as needed */
+    if (role == REMOTE_DB) {
+	finalize_db_download(target, vwin);
+    } else if (role == REMOTE_DATA_PKGS) {
+	finalize_datafiles_download(target, vwin);
+    }
+
+finish:
+
     g_free(objname);
+    g_free(dlname);
     g_free(depends);
     g_free(target);
 }
