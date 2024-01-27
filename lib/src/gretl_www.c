@@ -663,7 +663,6 @@ static int retrieve_url (const char *hostname,
     }
 
     err = curl_get(&u);
-
     urlinfo_finalize(&u, getbuf, &err);
 
     return err;
