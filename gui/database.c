@@ -2552,158 +2552,10 @@ static void offer_db_open (char *target, windata_t *vwin)
     }
 }
 
-static int get_target_in_home (char *targ, int code,
-			       const char *objname,
-			       const char *ext)
-{
-    GString *gs = g_string_new(NULL);
-#ifdef OS_OSX
-    const char *savedir = gretl_app_support_dir();
-#else
-    const char *savedir = gretl_dotdir();
-#endif
-    int err = 0;
-
-    if (savedir == NULL || *savedir == '\0') {
-	err = E_FOPEN;
-    } else {
-	int subdir = 1;
-
-	if (code == REMOTE_FUNC_FILES) {
-	    g_string_append_printf(gs, "%sfunctions", savedir);
-	} else if (code == REMOTE_DB) {
-	    g_string_append_printf(gs, "%sdb", savedir);
-	} else if (code == REMOTE_DATA_PKGS) {
-	    g_string_append_printf(gs, "%sdata", savedir);
-	} else {
-	    g_string_append_printf(gs, "%s%s%s", savedir, objname, ext);
-	    subdir = 0;
-	}
-
-	if (subdir) {
-	    err = gretl_mkdir(gs->str);
-	    if (!err) {
-		g_string_append_c(gs, SLASH);
-		g_string_append(gs, objname);
-		g_string_append(gs, ext);
-	    }
-	}
-    }
-
-    strcpy(targ, gs->str);
-    g_string_free(gs, TRUE);
-
-    return err;
-}
-
-#if !defined(G_OS_WIN32) && !defined(OS_OSX)
-
-static void get_system_target (char *targ, int code,
-			       const char *objname,
-			       const char *ext)
-{
-    if (code == REMOTE_DB) {
-	get_default_dir_for_action(targ, SAVE_REMOTE_DB);
-    } else if (code == REMOTE_DATA_PKGS) {
-	get_default_dir_for_action(targ, SAVE_DATA_PKG);
-    } else if (code == REMOTE_FUNC_FILES) {
-	get_default_dir_for_action(targ, SAVE_FUNCTIONS);
-    }
-
-    strcat(targ, objname);
-    strcat(targ, ext);
-}
-
-#endif
-
 enum {
     REAL_INSTALL,
     TMP_INSTALL
 };
-
-/* Try to find a suitable path, for which the user has write
-   permission, for installing a database or collection of
-   data files.
-*/
-
-static char *get_writable_target (int code, char *objname)
-{
-    const char *ext;
-    char *targ;
-    int done_home = 0;
-    int err = 0;
-
-#if 0
-    fprintf(stderr, "get_writable_target, starting\n");
-#endif
-
-    targ = mymalloc(MAXLEN);
-    if (targ == NULL) {
-	return NULL;
-    }
-
-    *targ = '\0';
-
-    if (code == REMOTE_DB) {
-	ext = ".ggz";
-    } else {
-	ext = ".tar.gz";
-    }
-
-#if defined(G_OS_WIN32) || defined(OS_OSX)
-    /* On macOS we prefer writing to ~/Library/Application Support
-       rather than /Applications/Gretl.app, and on Windows let's
-       steer clear of Program Files.
-    */
-    err = get_target_in_home(targ, code, objname, ext);
-    done_home = 1;
-#else
-    get_system_target(targ, code, objname, ext);
-#endif
-
-    if (!err) {
-	err = gretl_test_fopen(targ, "w");
-	if (err == EACCES && !done_home) {
-	    /* permissions problem: write to home dir instead */
-	    err = get_target_in_home(targ, code, objname, ext);
-	}
-    }
-
-    if (err) {
-	file_write_errbox(targ);
-	free(targ);
-	targ = NULL;
-    }
-
-#if 0
-    fprintf(stderr, "writable targ: '%s'\n", targ);
-#endif
-
-    return targ;
-}
-
-static int unpack_book_data (const char *fname)
-{
-    char *p, *path = g_strdup(fname);
-    int err = 0;
-
-    p = strrslash(path);
-    if (p != NULL) {
-	*p = '\0';
-    }
-
-    if (gretl_chdir(path) != 0) {
-	err = E_FOPEN;
-    }
-
-    if (!err) {
-	err = gretl_untar(fname);
-    }
-
-    g_free(path);
-
-    return err;
-}
 
 static gchar *make_gfn_path (const char *pkgname,
 			     const char *fpath)
@@ -2798,11 +2650,11 @@ static int gui_install_gfn (const gchar *objname,
 
     if (!err) {
 	const char *ext = zipfile ? ".zip" : ".gfn";
-	gchar *basename = g_strdup_printf("%s%s", objname, ext);
+	gchar *dlname = g_strdup_printf("%s%s", objname, ext);
 	gchar *fullname;
 
-	fullname = g_strdup_printf("%s%s", instpath, basename);
-	err = retrieve_remote_function_package(basename, fullname);
+	fullname = g_strdup_printf("%s%s", instpath, dlname);
+	err = retrieve_remote_function_package(dlname, fullname);
 	if (!err && zipfile) {
 	    err = gretl_unzip_into(fullname, instpath);
 	    gretl_remove(fullname);
@@ -2831,8 +2683,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 {
     gchar *objname = NULL;
     gchar *depends = NULL;
-    gchar *tarname = NULL;
-    char *targ = NULL;
+    gchar *target = NULL;
     gboolean zipfile = FALSE;
     int err = 0;
 
@@ -2869,32 +2720,38 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
     }
 
     if (!zipfile && vwin->role != REMOTE_FUNC_FILES) {
-	targ = get_writable_target(vwin->role, objname);
-	if (targ == NULL) {
+	const char *ext = vwin->role == REMOTE_DB ? ".ggz" : ".tar.gz";
+	gchar *dlname = g_strdup_printf("%s%s", objname, ext);
+
+	target = get_download_path(dlname, &err);
+	if (target == NULL) {
 	    g_free(objname);
 	    return;
 	}
+	g_free(dlname);
     }
 
     if (vwin->role == REMOTE_FUNC_FILES) {
 	err = gui_install_gfn(objname, zipfile, depends, vwin);
     } else if (vwin->role == REMOTE_DATA_PKGS) {
-	tarname = g_strdup_printf("%s.tar.gz", objname);
-	err = retrieve_remote_datafiles_package(tarname, targ);
+	gchar *tarname = g_strdup_printf("%s.tar.gz", objname);
+
+	err = retrieve_remote_datafiles_package(tarname, target);
+	g_free(tarname);
     } else if (vwin->role == REMOTE_DB) {
 #if G_BYTE_ORDER == G_BIG_ENDIAN
-	err = retrieve_remote_db(objname, targ, GRAB_NBO_DATA);
+	err = retrieve_remote_db(objname, target, GRAB_NBO_DATA);
 #else
-	err = retrieve_remote_db(objname, targ, GRAB_DATA);
+	err = retrieve_remote_db(objname, target, GRAB_DATA);
 #endif
     }
 
     if (err) {
 	show_network_error(NULL);
     } else if (vwin->role == REMOTE_DATA_PKGS) {
-	fprintf(stderr, "downloaded '%s'\n", targ);
-	err = unpack_book_data(targ);
-	gretl_remove(targ);
+	fprintf(stderr, "downloaded '%s'\n", target);
+	err = unpack_datafile_collection(target);
+	gretl_remove(target);
 	if (err) {
 	    msgbox(_("Error unzipping compressed data"),
 		   GTK_MESSAGE_ERROR, vwin_toplevel(vwin));
@@ -2904,8 +2761,8 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	}
     } else if (vwin->role == REMOTE_DB) {
 	/* gretl-zipped database package */
-	fprintf(stderr, "downloaded '%s'\n", targ);
-	err = ggz_extract(targ);
+	fprintf(stderr, "downloaded '%s'\n", target);
+	err = ggz_extract(target);
 	if (err) {
 	    if (err != E_FOPEN) {
 		msgbox(_("Error unzipping compressed data"),
@@ -2919,16 +2776,15 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 				  _("Up to date"));
 	    if (local != NULL) {
 		populate_filelist(local, NULL);
-	    } else if (targ != NULL) {
-		offer_db_open(targ, vwin);
+	    } else if (target != NULL) {
+		offer_db_open(target, vwin);
 	    }
 	}
     }
 
     g_free(objname);
     g_free(depends);
-    g_free(tarname);
-    free(targ);
+    g_free(target);
 }
 
 /* called from within datafiles.c, when dragging a

@@ -3881,3 +3881,102 @@ gretl_bundle *foreign_info (void)
 
     return b;
 }
+
+/* next: determining the path for gretl package downloads */
+
+static int get_target_in_home (GString *gs, const char *dlname)
+{
+#ifdef OS_OSX
+    const char *savedir = gretl_app_support_dir();
+#else
+    const char *savedir = gretl_dotdir();
+#endif
+    int subdir = 1;
+    int err = 0;
+
+    if (savedir == NULL || *savedir == '\0') {
+	return E_FOPEN;
+    }
+
+    g_string_assign(gs, savedir);
+
+    if (strstr(dlname, ".gfn") || strstr(dlname, ".zip")) {
+	g_string_append(gs, "functions");
+    } else if (strstr(dlname, ".ggz")) {
+	g_string_append(gs, "db");
+    } else if (strstr(dlname, ".tar.gz")) {
+	g_string_append(gs, "data");
+    } else {
+	g_string_append(gs, dlname);
+	subdir = 0;
+    }
+
+    if (subdir) {
+	err = gretl_mkdir(gs->str);
+	if (!err) {
+	    g_string_append_c(gs, SLASH);
+	    g_string_append(gs, dlname);
+	}
+    }
+
+    return err;
+}
+
+#if !defined(G_OS_WIN32) && !defined(OS_OSX)
+
+static void get_system_target (GString *gs, const char *dlname)
+{
+    g_string_assign(gs, gretl_home());
+
+    if (strstr(dlname, ".ggz")) {
+	g_string_append(gs, "db");
+    } else if (strstr(dlname, ".tar.gz")) {
+	g_string_append(gs, "data");
+    } else {
+	g_string_append(gs, "functions");
+    }
+
+    g_string_append_c(gs, SLASH);
+    g_string_append(gs, dlname);
+}
+
+#endif
+
+/* Given the name of a file to be downloaded, @dlname, construct a
+   suitable path (for which the user has write permission) into which
+   the downloaded content should be written.
+*/
+
+gchar *get_download_path (const char *dlname, int *err)
+{
+    GString *gs = g_string_new(NULL);
+    gchar *targ = NULL;
+    int done_home = 0;
+
+#if defined(G_OS_WIN32) || defined(OS_OSX)
+    /* On macOS we prefer writing to ~/Library/Application Support
+       rather than /Applications/Gretl.app, and on Windows let's
+       steer clear of Program Files.
+    */
+    *err = get_target_in_home(gs, dlname);
+    done_home = 1;
+#else
+    get_system_target(gs, dlname);
+#endif
+
+    if (!*err) {
+	*err = gretl_test_fopen(gs->str, "w");
+	if (*err == EACCES && !done_home) {
+	    /* permissions problem: write to home dir instead */
+	    *err = get_target_in_home(gs, dlname);
+	}
+    }
+
+    if (*err) {
+	g_string_free(gs, TRUE);
+    } else {
+	targ = g_string_free(gs, FALSE);
+    }
+
+    return targ;
+}

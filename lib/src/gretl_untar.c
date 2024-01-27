@@ -188,3 +188,28 @@ int gretl_untar (const char *fname)
 
     return err;
 }
+
+/* decompress a gzipped tar archive containing a data-file collection */
+
+int unpack_datafile_collection (const char *fname)
+{
+    char *p, *path = g_strdup(fname);
+    int err = 0;
+
+    p = strrslash(path);
+    if (p != NULL) {
+	*p = '\0';
+    }
+
+    if (gretl_chdir(path) != 0) {
+	err = E_FOPEN;
+    }
+
+    if (!err) {
+	err = gretl_untar(fname);
+    }
+
+    g_free(path);
+
+    return err;
+}

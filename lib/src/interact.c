@@ -48,6 +48,7 @@
 #include "matrix_extra.h"
 #include "addons_utils.h"
 #include "gretl_gridplot.h"
+#include "gretl_untar.h"
 #ifdef USE_CURL
 # include "gretl_www.h"
 #endif
@@ -2787,11 +2788,9 @@ static int package_check_dependencies (const char *fname,
 
 #if DO_BINPKG
 
-#include "gretl_untar.h"
-
-static int handle_tgz (const char *fname,
-                       ExecState *s,
-                       PRN *prn)
+static int handle_binary_package (const char *fname,
+				  ExecState *es,
+				  PRN *prn)
 {
     const char *sf = "https://sourceforge.net/projects/gretl/files";
     const char *sfdir, *path_id = NULL;
@@ -2862,12 +2861,12 @@ static int handle_tgz (const char *fname,
         pprintf(prn, _("Installed %s\n"), fname);
     }
 
-    if (!err && s != NULL && path_id != NULL && gui_callback != NULL) {
+    if (!err && es != NULL && path_id != NULL && gui_callback != NULL) {
         gretl_bundle *b = gretl_bundle_new();
 
         gretl_bundle_set_string(b, "path_id", path_id);
         gretl_bundle_set_int(b, "binpkg", 1);
-        gui_callback(s, b, GRETL_OBJ_BUNDLE);
+        gui_callback(es, b, GRETL_OBJ_BUNDLE);
     }
 
     g_free(fullname);
@@ -2908,8 +2907,10 @@ static int install_function_package (const char *pkgname,
     int err = 0;
 
 #if DO_BINPKG
-    if (!local && strstr(pkgname, ".tar.gz")) {
-        return handle_tgz(pkgname, s, prn);
+    if (!local && has_suffix(pkgname, ".tar.gz") &&
+	(strstr(pkgname, "tramo") || strstr(pkgname, "x13as"))) {
+	/* specific to macOS at present */
+        return handle_binary_package(pkgname, s, prn);
     }
 #endif
 
@@ -2932,10 +2933,12 @@ static int install_function_package (const char *pkgname,
         local = 1;
     }
 
-    if (strstr(pkgname, ".gfn")) {
+    if (has_suffix(pkgname, ".gfn")) {
         filetype = 1;
-    } else if (strstr(pkgname, ".zip")) {
+    } else if (has_suffix(pkgname, ".zip")) {
         filetype = 2;
+    } else if (!local && has_suffix(pkgname, ".tar.gz")) {
+	filetype = 3;
     } else if (local || http) {
         /* must have suitable suffix */
         err = E_DATA;
@@ -2948,7 +2951,21 @@ static int install_function_package (const char *pkgname,
     }
 
     if (!err) {
-        if (http) {
+	if (filetype == 3) {
+	    gchar *dlpath = get_download_path(pkgname, &err);
+
+	    if (!err) {
+		err = retrieve_remote_datafiles_package(pkgname, dlpath);
+	    }
+	    if (!err) {
+		err = unpack_datafile_collection(dlpath);
+	    }
+	    if (!err) {
+		pprintf(prn, _("Installed %s\n"), pkgname);
+	    }
+	    gretl_remove(dlpath);
+	    return err;
+	} else if (http) {
             /* get @fname as last portion of URL */
             const char *p = strrchr(pkgname, '/');
 

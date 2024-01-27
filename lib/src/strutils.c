@@ -373,39 +373,19 @@ char *comma_separate_numbers (char *s)
 
  int has_suffix (const char *str, const char *sfx)
  {
-     const char *p;
-     int comp, ret = 0;
+     int offset;
 
      if (str == NULL || sfx == NULL) {
 	 return 0;
      }
 
-     /* Have we got a compound suffix (e.g. ".csv.gz")? */
-     comp = (strchr(sfx + 1, '.') != NULL);
-
-     /* find the rightmost '.' in @str */
-     p = strrchr(str, *sfx);
-
-     /* if @sfx is compound, try backing up */
-     if (comp && p - str > 4) {
-	 p -= 4;
+     offset = strlen(str) - strlen(sfx);
+     if (offset < 0) {
+	 return 0;
      }
 
-     if (p != NULL && strlen(p) == strlen(sfx)) {
-	 /* check for case-insensitive match */
-	 ret = 1;
-	 while (*p) {
-	     if (*p != *sfx && *p != toupper(*sfx)) {
-		 ret = 0;
-		 break;
-	     }
-	     p++;
-	     sfx++;
-	 }
-     }
-
-     return ret;
- }
+     return g_ascii_strcasecmp(str + offset, sfx) == 0;
+}
 
 /**
  * has_native_data_suffix:
@@ -417,19 +397,7 @@ char *comma_separate_numbers (char *s)
 
 int has_native_data_suffix (const char *fname)
 {
-    const char *p;
-
-    if (fname != NULL && (p = strrchr(fname, '.')) != NULL) {
-	p++;
-	if (!strcmp(p, "gdt") || !strcmp(p, "gdtb")) {
-	    return 1;
-	}
-	if (!strcmp(p, "GDT") || !strcmp(p, "GDTB")) {
-	    return 1;
-	}
-    }
-
-    return 0;
+    return has_suffix(fname, ".gdt") || has_suffix(fname, ".gdtb");
 }
 
 /**

@@ -22,4 +22,6 @@
 
 int gretl_untar (const char *fname);
 
+int unpack_datafile_collection (const char *fname);
+
 #endif /* GRETL_UNTAR_H */
