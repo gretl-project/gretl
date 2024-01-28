@@ -2724,7 +2724,8 @@ static void finalize_datafiles_download (char *target,
 	msgbox(_("Error unzipping compressed data"),
 	       GTK_MESSAGE_ERROR, vwin_toplevel(vwin));
     } else {
-	msgbox(_("Restart gretl to access this collection"),
+	destroy_file_collections();
+	msgbox(_("Reopen the local window to access this collection"),
 	       GTK_MESSAGE_INFO, vwin_toplevel(vwin));
     }
     gretl_remove(target);

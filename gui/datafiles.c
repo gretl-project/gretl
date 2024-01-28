@@ -88,6 +88,7 @@ enum {
 #define DBNOMICS_ACTION(c) (c == DBNOMICS_DB || c == DBNOMICS_SERIES)
 
 static GList *collections[COLL_MAX];
+static gboolean collections_built;
 
 static int role_to_index (int role)
 {
@@ -298,6 +299,8 @@ void destroy_file_collections (void)
 	    collections[i] = NULL;
 	}
     }
+
+    collections_built = FALSE;
 }
 
 static void sort_files_stack (int role)
@@ -463,10 +466,9 @@ static void print_collections (int role)
 
 static int build_file_collections (int role)
 {
-    static int built;
     static int err;
 
-    if (!built && !err) {
+    if (!collections_built && !err) {
 	const char *wd;
 	int derr[3] = {0};
 	int serr[3] = {0};
@@ -529,7 +531,7 @@ static int build_file_collections (int role)
 		sort_files_stack(PS_FILES);
 	    }
 	}
-	built = 1;
+	collections_built = TRUE;
     }
 
 #if COLL_DEBUG
