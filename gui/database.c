@@ -2716,7 +2716,7 @@ static void finalize_db_download (char *target,
 }
 
 static void finalize_datafiles_download (char *target,
-					windata_t *vwin)
+					 windata_t *vwin)
 {
     int err = unpack_datafile_collection(target);
 

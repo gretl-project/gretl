@@ -2542,7 +2542,8 @@ static int is_plot_keyword (const char *s, int *err)
     if (!strcmp(s, "option") ||
 	!strcmp(s, "options") ||
         !strcmp(s, "printf") ||
-	!strcmp(s, "literal")) {
+	!strcmp(s, "literal") ||
+	*s == '@') {
 	return 1;
     } else {
 	gretl_errmsg_sprintf(_("'%s': invalid keyword in plot block"), s);
