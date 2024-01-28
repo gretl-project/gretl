@@ -9616,7 +9616,11 @@ static void handle_gui_pkg_install (gretl_bundle *b)
         filename = gretl_bundle_get_string(b, "filename", &err);
         pkgname = gretl_bundle_get_string(b, "pkgname", &err);
         zipfile = gretl_bundle_get_int(b, "zipfile", &err);
-        if (!err) {
+	if (!err && strstr(filename, ".tar.gz")) {
+	    /* installed a data-file collection: clear the cache, if any */
+	    destroy_file_collections();
+        } else if (!err) {
+	    /* installed a function package */
             maybe_update_pkgview(filename, pkgname, zipfile,
                                  pkgview_parent);
         }

@@ -76,10 +76,10 @@
 #define starts_ccmt(p)  (*p == '/' && *(p+1) == '*')
 #define ends_ccmt(p)    (*p == '*' && *(p+1) == '/')
 
-static int install_function_package (const char *pkgname,
-                                     gretlopt opt,
-                                     ExecState *s,
-                                     PRN *prn);
+static int install_package (const char *pkgname,
+			    gretlopt opt,
+			    ExecState *s,
+			    PRN *prn);
 
 static int strip_inline_comments (char *s)
 {
@@ -1390,7 +1390,7 @@ static int do_pkg_command (const char *action,
     int err = 0;
 
     if (!strcmp(action, "install")) {
-        err = install_function_package(pkgname, opt, s, prn);
+        err = install_package(pkgname, opt, s, prn);
     } else if (!strcmp(action, "unload")) {
         err = uninstall_function_package(pkgname, OPT_NONE, prn);
     } else if (!strcmp(action, "remove")) {
@@ -2765,7 +2765,7 @@ static int package_check_dependencies (const char *fname,
         for (i=0; i<ndeps && !err; i++) {
             pkgpath = gretl_function_package_get_path(depends[i], PKG_ALL);
             if (pkgpath == NULL) {
-                err = install_function_package(depends[i], OPT_D, s, prn);
+                err = install_package(depends[i], OPT_D, s, prn);
             }
             free(pkgpath);
         }
@@ -2893,10 +2893,36 @@ static int really_local (const char *pkgname)
     return 0;
 }
 
-static int install_function_package (const char *pkgname,
-                                     gretlopt opt,
-                                     ExecState *s,
-                                     PRN *prn)
+static void pkg_install_invoke_callback (ExecState *s,
+					 const char *basename,
+					 const char *fullname,
+					 int filetype)
+{
+    gretl_bundle *b = gretl_bundle_new();
+
+    if (strstr(basename, ".tar.gz")) {
+	/* a data-file collection */
+	gretl_bundle_set_string(b, "pkgname", basename);
+    } else {
+	/* a function package */
+	char *nosfx = g_strdup(basename);
+	char *p = strrchr(nosfx, '.');
+
+	if (p != NULL) {
+	    *p = '\0';
+	}
+	gretl_bundle_set_string(b, "pkgname", nosfx);
+	gretl_bundle_set_int(b, "zipfile", filetype == 2);
+	g_free(nosfx);
+    }
+    gretl_bundle_set_string(b, "filename", fullname);
+    gui_callback(s, b, GRETL_OBJ_BUNDLE);
+}
+
+static int install_package (const char *pkgname,
+			    gretlopt opt,
+			    ExecState *s,
+			    PRN *prn)
 {
     char *fname = NULL;
     gchar *gfname = NULL;
@@ -2952,6 +2978,7 @@ static int install_function_package (const char *pkgname,
 
     if (!err) {
 	if (filetype == 3) {
+	    /* data-files collection tar.gz */
 	    gchar *dlpath = get_download_path(pkgname, &err);
 
 	    if (!err) {
@@ -2964,6 +2991,9 @@ static int install_function_package (const char *pkgname,
 		pprintf(prn, _("Installed %s\n"), pkgname);
 	    }
 	    gretl_remove(dlpath);
+	    if (!err && s != NULL && gui_callback != NULL) {
+		pkg_install_invoke_callback(s, pkgname, dlpath, filetype);
+	    }
 	    return err;
 	} else if (http) {
             /* get @fname as last portion of URL */
@@ -3037,19 +3067,8 @@ static int install_function_package (const char *pkgname,
 
         if (!err && s != NULL && gui_callback != NULL &&
             !addon && !(opt & OPT_D)) {
-            /* FIXME: handling of OPT_D here? */
-            gretl_bundle *b = gretl_bundle_new();
-            char *p, *nosfx = gretl_strdup(basename);
-
-            p = strrchr(nosfx, '.');
-            if (p != NULL) {
-                *p = '\0';
-            }
-            gretl_bundle_set_string(b, "filename", fullname);
-            gretl_bundle_set_string(b, "pkgname", nosfx);
-            gretl_bundle_set_int(b, "zipfile", filetype == 2);
-            gui_callback(s, b, GRETL_OBJ_BUNDLE);
-            free(nosfx);
+            /* FIXME: handling of OPT_D (dependency) here? */
+	    pkg_install_invoke_callback(s, basename, fullname, filetype);
         }
 
         g_free(fullname);
@@ -3068,10 +3087,10 @@ static int install_function_package (const char *pkgname,
 
 /* in this case we can only install from a local file */
 
-static int install_function_package (const char *pkgname,
-                                     gretlopt opt,
-                                     ExecState *s,
-                                     PRN *prn)
+static int install_package (const char *pkgname,
+			    gretlopt opt,
+			    ExecState *s,
+			    PRN *prn)
 {
     char *fname = NULL;
     int filetype = 0;
