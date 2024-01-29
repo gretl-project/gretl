@@ -14305,7 +14305,7 @@ static int check_argc (int f, int k, parser *p)
     return p->err;
 }
 
-#define nargs_needs_ts(f) (f == F_BKFILT || f == F_FILTER)
+#define nargs_needs_ts(f) (f == F_BKFILT)
 
 /* evaluate a built-in function that has more than three arguments */
 
