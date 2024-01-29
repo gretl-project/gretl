@@ -11719,7 +11719,8 @@
 	querying or deleting gretl function packages. The
 	<repl>action</repl> argument must be one of
 	<lit>install</lit>, <lit>query</lit>, <lit>unload</lit>,
-	<lit>remove</lit> or <lit>index</lit>.
+	<lit>remove</lit> or <lit>index</lit>. An extension to
+        support data file packages is described below.
       </para>
       <para>
 	<lit>install</lit>: In the most basic form, with no option
@@ -11773,6 +11774,21 @@
       <code>
 	pkg index addons --verbose
       </code>
+      <subhead>Data file packages</subhead>
+      <para>
+        Besides its usage with function packages, the <lit>pkg install</lit>
+        command can also be used with data file packages of the
+        <lit>tar.gz</lit> type, as listed at
+        <url>https://gretl.sourceforge.net/gretl_data.html</url>. For
+        example, to install the Verbeek data files one can do
+      </para>
+      <code>
+        pkg install verbeek.tar.gz
+      </code>
+      <para>
+        Note that <lit>install</lit> is the only action supported
+        operation for such files.
+      </para>
     </description>
 
     <gui-access>
