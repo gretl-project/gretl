@@ -14305,6 +14305,16 @@ static int check_argc (int f, int k, parser *p)
     return p->err;
 }
 
+static int no_ts_data (parser *p)
+{
+    if (!dataset_is_time_series(p->dset)) {
+        gretl_errmsg_set(_("This function requires time-series data"));
+        p->err = E_DATA;
+    }
+
+    return p->err;
+}
+
 #define nargs_needs_ts(f) (f == F_BKFILT)
 
 /* evaluate a built-in function that has more than three arguments */
@@ -14319,9 +14329,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
         return NULL;
     }
 
-    if (!dataset_is_time_series(p->dset) && nargs_needs_ts(t->t)) {
-        gretl_errmsg_set(_("This function requires time-series data"));
-        p->err = E_DATA;
+    if (nargs_needs_ts(t->t) && no_ts_data(p)) {
         return NULL;
     }
 
@@ -14363,10 +14371,12 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                 /* the series or matrix to filter */
                 if (e->t != SERIES && e->t != MAT) {
                    node_type_error(t->t, i+1, 0, e, p);
+                } else if (e->t == SERIES && no_ts_data(p)) {
+                    ; /* p->err is set */
                 } else if (e->t == SERIES) {
-                   x = e->v.xvec;
+                    x = e->v.xvec;
                 } else {
-                   X = e->v.m;
+                    X = e->v.m;
                 }
             } else if (i == 1) {
                 /* matrix for MA polynomial (but we'll take a scalar) */
