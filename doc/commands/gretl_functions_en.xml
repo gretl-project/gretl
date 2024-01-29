@@ -1967,7 +1967,7 @@
     <function name="bcheck" section="programming" output="scalar">
       <fnargs>
 	<fnarg type="bundleref">target</fnarg>
-	<fnarg type="bundle">input</fnarg>
+	<fnarg type="bundle" optional="true">input</fnarg>
 	<fnarg type="strings" optional="true">required-keys</fnarg>
       </fnargs>
       <description>
@@ -1979,7 +1979,11 @@
 	  Some elements of the bundle may have default values&mdash;so
 	  the caller is not obliged to make an explicit
 	  choice&mdash;while other elements may be required. You want
-	  to determine whether the argument you get is valid.
+	  to determine whether the argument you get is valid. The
+          main text below assumes than an <argname>input</argname>
+          bundle is supplied by the caller of your function, but see
+          the section headed <quote>No input bundle</quote> for
+          the contrary case.
 	</para>
 	<para>
 	  To use <lit>bcheck</lit> you construct a template bundle
@@ -2065,6 +2069,17 @@
 	     # proceed, using the values in target
 	  endif
 	</code>
+        <subhead>No input bundle</subhead>
+        <para>
+          If the <argname>input</argname> bundle is not supplied to
+          <lit>bcheck</lit>, it behaves as follows. If the
+          <argname>required-keys</argname> argument is not given, it returns
+          zero (since none of the error conditions mentioned above can
+          occur), and <argname>target</argname> is not modified.  Otherwise
+          it returns non-zero since it's clear that one or more
+          specifications must be missing. This means that it's safe to pass
+          a null <argname>input</argname> to <lit>bcheck</lit>.
+        </para>
       </description>
     </function>
 

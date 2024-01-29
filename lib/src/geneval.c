@@ -13496,23 +13496,29 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
         }
     } else if (f == F_BCHECK) {
         gretl_bundle *lb = NULL;
+        gretl_bundle *mb = NULL;
         gretl_array *reqd = NULL;
 
         post_process = 0;
         if ((lb = ptr_node_get_bundle(l, p)) == NULL) {
             node_type_error(f, 1, BUNDLE, l, p);
-        } else if (m->t != BUNDLE) {
+        } else if (!null_node(m) && m->t != BUNDLE) {
             node_type_error(f, 2, BUNDLE, m, p);
         } else if (!null_node(r) && r->t != ARRAY) {
             node_type_error(f, 3, ARRAY, r, p);
         } else {
             ret = aux_scalar_node(p);
         }
-        if (!p->err && !null_node(r)) {
-            reqd = r->v.a;
+        if (!p->err) {
+            if (!null_node(m)) {
+                mb = m->v.b;
+            }
+            if (!null_node(r)) {
+                reqd = r->v.a;
+            }
         }
         if (!p->err) {
-            ret->v.xval = gretl_bundle_extract_args(lb, m->v.b, reqd,
+            ret->v.xval = gretl_bundle_extract_args(lb, mb, reqd,
                                                     NULL, p->prn,
                                                     &p->err);
         }

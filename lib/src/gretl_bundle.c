@@ -2142,6 +2142,17 @@ int gretl_bundle_extract_args (gretl_bundle *defaults,
         return *err;
     }
 
+    if (input == NULL) {
+        if (reqd == NULL) {
+            /* OK, it's a no-op */
+            return 0;
+        } else {
+            /* null @input is not acceptable given @reqd */
+            pprintf(prn, "bcheck: required input bundle is missing\n");
+            return 1;
+        }
+    }
+
     if (reqd != NULL) {
         int i, n = gretl_array_get_length(reqd);
         const char *key;
