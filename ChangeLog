@@ -14,6 +14,9 @@ version 2024a, in progress
   the --outbuf option for directing plot output to a buffer
 - "loop foreach": support arrays and bundles that are located
   inside other arrays or bundles
+- "pkg install" command: support installation of data file
+  packages in tar.gz format from the gretl server
+- bcheck() function: make the second argument optional
 - Fix broken backward compatibility in handling of backslash
   followed by double-quote in string literals
 - Fix bug: crash when plotting matrix data with the multiple
@@ -27,6 +30,9 @@ version 2024a, in progress
   windows (bug #294)
 - GUI function package editor: add support specific to the
   editing of markdown help
+- GUI: make a newly installed data file package accessible
+  by reopening the relevant window; don't require a restart
+  of gretl
 
 2023-12-05 version 2023c
 - New commands "gridplot" and "gpbuild" for constructing

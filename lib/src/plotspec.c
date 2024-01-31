@@ -2080,8 +2080,8 @@ static plotbars *parse_bars_file (const char *fname,
     int ncolon = 0;
     int ndash = 0;
     int nyrs = 0;
-    int ntypes = 0;
     int nother = 0;
+    int ntypes = 0;
     int d1, d2, d3, d4;
 
     fp = gretl_fopen(fname, "r");
@@ -2149,7 +2149,7 @@ static plotbars *parse_bars_file (const char *fname,
 		sscanf(line, "%d-%d %d-%d", &d1, &d2, &d3, &d4);
 	    }
 	    x0 = d1 + (d2 - 1.0) / 12;
-	    x1 = d3 + nyrs ? d4 / 12 : (d4 - 1.0) / 12;
+	    x1 = d3 + (nyrs ? d4 / 12.0 : (d4 - 1.0) / 12);
 #if BDEBUG > 1
 	    fprintf(stderr, "%.4f %.4f\n", x0, x1);
 #endif
