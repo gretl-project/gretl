@@ -25,6 +25,8 @@ version 2024a, in progress
 - Fix bug: the "smpl" command with --dummy option could end
   up broken after doing "Save data" in the GUI when there's
   a sample restriction in place
+- Fix bug: possible crash when a dbnomics download fails, if
+  called for using the "data" command
 - GUI: apply some legibility fixes for dark GTK themes
 - GUI: enable the advertised keystrokes in file "browser"
   windows (bug #294)
