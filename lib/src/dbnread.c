@@ -208,8 +208,11 @@ static int get_one_dbnomics_series (const char *datacode,
     }
 
     gretl_bundle_destroy(b);
-    gretl_remove(tmpname);
-    g_free(tmpname);
+
+    if (tmpname != NULL) {
+	gretl_remove(tmpname);
+	g_free(tmpname);
+    }
 
     return err;
 }
