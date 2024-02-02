@@ -3278,12 +3278,20 @@ static int read_observations_subset (xmlDocPtr doc,
     }
 
     if (sscanf((char *) tmp, "%d", &n) == 1) {
-	dset->n = n;
-	free(tmp);
+	if (dset->n > 0 && n != dset->n) {
+	    gretl_errmsg_set(_("Inconsistent record of number of observations"));
+	    err = E_DATA;
+	} else {
+	    dset->n = n;
+	}
     } else {
 	gretl_errmsg_set(_("Failed to parse number of observations"));
-	free(tmp);
-	return E_DATA;
+	err = E_DATA;
+    }
+
+    free(tmp);
+    if (err) {
+	return err;
     }
 
     if (opt & OPT_M) {
@@ -3891,7 +3899,7 @@ static int real_read_gdt (const char *fname, const char *srcname,
     DATASET *tmpset;
     xmlDocPtr doc = NULL;
     xmlNodePtr cur;
-    int gotvars = 0, gotobs = 0, err = 0;
+    int gotvars = 0, err = 0;
     int caldata = 0, repad = 0;
     double gdtversion = 1.0;
     double myversion;
@@ -4005,8 +4013,6 @@ static int real_read_gdt (const char *fname, const char *srcname,
 					binary, gdtversion, fname);
 		if (err) {
 		    fprintf(stderr, "error %d in read_observations\n", err);
-		} else {
-		    gotobs = 1;
 		}
 	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "string-tables")) {
@@ -4141,6 +4147,11 @@ static int real_read_gdt_subset (const char *fname,
     }
 
     /* set some datainfo parameters */
+
+    err = xml_get_nobs(cur, &tmpset->n);
+    if (err) {
+	goto bailout;
+    }
 
     err = xml_get_data_structure(cur, &tmpset->structure);
     if (err) {

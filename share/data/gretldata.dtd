@@ -1,12 +1,13 @@
 <!--
-  Document Type Definition (DTD) for gretl data files
+  Document Type Definition (DTD) for gretl data files, gdt version 1.5
  -->
 
-<!ELEMENT gretldata (description?, variables, observations, string-tables?, panel-info?)>
+<!ELEMENT gretldata (description?, variables, observations?, string-tables?, panel-info?)>
 <!ATTLIST gretldata
    version      NMTOKEN #IMPLIED
    name         NMTOKEN #IMPLIED
    frequency    CDATA #IMPLIED
+   n            CDATA #IMPLIED
    startobs     CDATA #IMPLIED
    endobs       CDATA #IMPLIED
    type         CDATA #REQUIRED
