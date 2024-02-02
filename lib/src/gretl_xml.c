@@ -3601,6 +3601,10 @@ static int xml_get_nobs (xmlNodePtr node, int *n)
 
     if (tmp != NULL) {
 	*n = gretl_int_from_string((const char *) tmp, &err);
+	if (*n <= 0) {
+	    gretl_errmsg_sprintf("%d: invalid number of observations", *n);
+	    err = E_DATA;
+	}
 	free(tmp);
     } else {
 	*n = 0;
@@ -3816,22 +3820,32 @@ static long get_filesize (const char *fname)
 static int remedy_empty_data (DATASET *dset)
 {
     int add_idx = gretl_in_gui_mode();
-    int err = 0;
+    int i, err = 0;
+
+    if (dset->Z[0] == NULL) {
+	dset->Z[0] = malloc(dset->n * sizeof **dset->Z);
+	if (dset->Z[0] == NULL) {
+	    return E_ALLOC;
+	}
+	for (i=0; i<dset->n; i++) {
+	    dset->Z[0][i] = 1.0;
+	}
+    }
 
     if (add_idx) {
 	err = dataset_add_series(dset, 1);
     }
 
     if (!err) {
-	int t;
+	int i;
 
 	dset->t1 = 0;
 	dset->t2 = dset->n - 1;
 	if (add_idx) {
 	    strcpy(dset->varname[1], "index");
 	    series_set_label(dset, 1, _("index variable"));
-	    for (t=0; t<dset->n; t++) {
-		dset->Z[1][t] = (double) (t + 1);
+	    for (i=0; i<dset->n; i++) {
+		dset->Z[1][i] = (double) (i + 1);
 	    }
 	}
     }
@@ -3947,12 +3961,13 @@ static int real_read_gdt (const char *fname, const char *srcname,
     /* optional */
     gretl_xml_get_prop_as_string(cur, "mapfile", &tmpset->mapfile);
 
-    /* set some required datainfo parameters */
-
+    /* required only if the <observations> element is absent */
     err = xml_get_nobs(cur, &tmpset->n);
     if (err) {
 	goto bailout;
     }
+
+    /* set some required datainfo parameters */
 
     err = xml_get_data_structure(cur, &tmpset->structure);
     if (err) {
