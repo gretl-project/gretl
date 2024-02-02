@@ -46,7 +46,7 @@
 
 #undef XML_DEBUG
 
-#define GRETLDATA_VERSION "1.4"
+#define GRETLDATA_VERSION "1.5"
 #define GRETLDATA_COMPAT  "1.3" /* status quo as of gretl 2018b */
 
 #define GDT_DEBUG 0
