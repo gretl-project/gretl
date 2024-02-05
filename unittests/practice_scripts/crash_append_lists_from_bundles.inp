@@ -1,0 +1,26 @@
+clear
+set verbose off
+
+open denmark.gdt -q
+
+# Add series to a list using the wildcard operator
+list ALL = null
+list L = LRM LRY
+ALL += L				# Works
+
+# Make use of bundle elements (list)
+function void somefun (bundle *b)
+    list b.ALL = null
+    list b.A = null
+    list b.B = null
+end function
+
+bundle b = null
+somefun(&b)
+
+# works
+b.A += L
+b.B += IBO
+
+# Crashes
+b.ALL += b.A b.B			# Crash in case at least 2 lists are passed!

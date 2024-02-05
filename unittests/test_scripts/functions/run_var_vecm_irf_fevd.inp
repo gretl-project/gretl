@@ -1,0 +1,177 @@
+set verbose off
+clear
+set assert stop
+
+
+string PkgName = "assertion"
+pkg query @PkgName --quiet
+bundle Pkg = $result
+if !nelem(Pkg)
+    pkg install extra
+    pkg install @PkgName
+endif
+include extra.gfn
+include assertion.gfn
+
+open denmark --quiet
+
+
+function scalar assert_almost_equal_num_any (matrix a,
+                                             matrix b,
+                                             const scalar tolerance[1e-7])
+    /* Test for equality of two vectors.
+    return: scalar, TRUE if both vectors are identical, otherwise FALSE. */
+
+    a = vec(a)
+    b = vec(b)
+
+    matrix is_equal = zeros(rows(a), 1)
+
+    loop i=1..rows(a)
+        catch assert_almost_equal_num(a[i], b[i], tolerance)
+        if !$error
+            is_equal[i] = TRUE
+        endif
+    endloop
+
+    return sum(is_equal) == rows(a) ? TRUE : FALSE
+end function
+
+
+# ======
+# V A R
+# ======
+
+bundles Params = null
+Params += _(order = 2, ylist = "LRM LRY IBO", option = "")
+Params += _(order = 2, ylist = "LRM LRY IBO", option = "--nc")
+Params += _(order = 2, ylist = "LRM LRY IBO", option = "--trend")
+Params += _(order = 2, ylist = "LRM LRY IBO", option = "--trend --seasonals")
+
+function void test_var_irf (const bundles P, const list L)
+    print "Start testing var + irf()."
+
+    loop foreach i P
+        string option = P[i].option
+        string ynames = P[i].ylist
+        list ylist = L.@ynames
+        scalar order = P[i].order
+
+        var order ylist @option --silent
+
+        loop foreach shock ylist
+            loop foreach target ylist
+                matrix direct = irf(target, shock)
+                bundle B = $system
+                matrix sys = irf(target, shock, null, B)
+
+                scalar is_equal = assert_almost_equal_num_any(direct, sys)
+                assert(is_equal == TRUE)
+            endloop
+        endloop
+    endloop
+end function
+test_var_irf(Params, dataset)
+
+
+function void test_var_fevd (const bundles P, const list L)
+    print "Start testing var + fevd()."
+
+    loop foreach i P
+        string option = P[i].option
+        string ynames = P[i].ylist
+        list ylist = L.@ynames
+        scalar order = P[i].order
+
+        var order ylist @option --silent
+
+        loop foreach shock ylist
+            loop foreach target ylist
+                matrix direct = fevd(target, shock)
+                bundle B = $system
+                matrix sys = fevd(target, shock, B)
+
+                scalar is_equal = assert_almost_equal_num_any(direct, sys)
+                assert(is_equal == TRUE)
+            endloop
+        endloop
+    endloop
+end function
+test_var_fevd(Params, dataset)
+
+
+
+# ========
+# V E C M
+# ========
+
+bundles Params = null
+Params += _(order = 2, rank = 2, ylist = "LRM LRY IBO", option = "")
+Params += _(order = 2, rank = 2, ylist = "LRM LRY IBO", option = "--nc")
+Params += _(order = 2, rank = 2, ylist = "LRM LRY IBO", option = "--rc")
+Params += _(order = 2, rank = 2, ylist = "LRM LRY IBO", option = "--uc")
+Params += _(order = 2, rank = 2, ylist = "LRM LRY IBO", option = "--crt")
+Params += _(order = 2, rank = 2, ylist = "LRM LRY IBO", option = "--ct")
+Params += _(order = 2, rank = 2, ylist = "LRM LRY IBO", option = "--ct --seasonals")
+
+function void test_vecm_irf (const bundles P, const list L)
+    print "Start testing vecm + irf()."
+
+    loop foreach i P
+        string option = P[i].option
+        string ynames = P[i].ylist
+        list ylist = L.@ynames
+        scalar order = P[i].order
+        scalar rank = P[i].rank
+
+        vecm order rank ylist @option --silent
+
+        loop foreach shock ylist
+            loop foreach target ylist
+                matrix direct = irf(target, shock)
+                bundle B = $system
+                matrix sys = irf(target, shock, null, B)
+
+                scalar is_equal = assert_almost_equal_num_any(direct, sys)
+                assert(is_equal == TRUE)
+            endloop
+        endloop
+    endloop
+end function
+test_vecm_irf(Params, dataset)
+
+
+
+function void test_vecm_fevd (const bundles P, const list L)
+    print "Start testing vecm + fevd()."
+
+    loop foreach i P
+        string option = P[i].option
+        string ynames = P[i].ylist
+        list ylist = L.@ynames
+        scalar order = P[i].order
+        scalar rank = P[i].rank
+
+        vecm order rank ylist @option --silent
+
+        loop foreach shock ylist
+            loop foreach target ylist
+                matrix direct = fevd(target, shock)
+                bundle B = $system
+                matrix sys = fevd(target, shock, B)
+
+                scalar is_equal = assert_almost_equal_num_any(direct, sys)
+                assert(is_equal == TRUE)
+            endloop
+        endloop
+    endloop
+end function
+test_vecm_fevd(Params, dataset)
+
+
+
+
+
+
+print "Succesfully finished tests."
+quit

@@ -1,0 +1,15 @@
+set verbose off
+/*
+https://gretlml.univpm.it/hyperkitty/list/gretl-devel@gretlml.univpm.it/message/EOP7WIAKZCBLEFZLIBZGZ2FRCPZNCZKW/
+*/
+
+actual = 2
+expected = actual
+
+catch eval mean(
+eval $error
+
+# pseudo-test: just look whether this assert is ever reached
+assert(actual == expected)
+
+quit

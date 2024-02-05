@@ -1,0 +1,204 @@
+clear
+set verbose off
+set assert stop
+
+
+function void test_bundles_extend_string (void)
+    print "Start testing initiating a null bundles and try\
+        augmenting it with a string."
+
+    # Given
+    bundles B
+
+    # When
+    scalar expected_length = 1
+    scalar expected_err = FALSE
+
+    catch B = B + _(value = "foo")
+    scalar actual_err = $error
+    scalar actual_length = nelem(B)
+
+    # Then
+    assert(actual_length == expected_length)
+    assert(actual_err == expected_err)
+end function
+test_bundles_extend_string()
+
+
+function void test_bundles_extend_bundle (void)
+    print "Start testing initiating empty bundles and try\
+        augmenting it with a bundle."
+
+    # Given
+    bundles B
+    bundle input = _(foo = "foo")
+
+    # When
+    scalar expected_length = 1
+    scalar expected_err = FALSE
+
+    catch B = B + _(value = input)
+    scalar actual_err = $error
+    scalar actual_length = nelem(B)
+
+    # Then
+    assert(actual_length == expected_length)
+    assert(actual_err == expected_err)
+end function
+test_bundles_extend_bundle()
+
+
+function void test_bundles_extend_bundle_dir (void)
+    print "Start testing initiating empty bundles and try\
+        augmenting it with a bundle."
+
+    # Given
+    bundles B
+
+    # When
+    scalar expected_length = 1
+    scalar expected_err = FALSE
+
+    catch B = B + _(value = _(foo = "foo"))
+    scalar actual_err = $error
+    scalar actual_length = nelem(B)
+
+    # Then
+    assert(actual_length == expected_length)
+    assert(actual_err == expected_err)
+end function
+test_bundles_extend_bundle_dir()
+
+
+
+function void test_bundles_extend_marray (void)
+    print "Start testing initiating empty bundles and try\
+        augmenting it with an array of matrices."
+
+    # Given
+    bundles B
+    matrices input = array(3)
+
+    # When
+    scalar expected_length = 1
+    scalar expected_err = FALSE
+
+    catch B = B + _(value = input)
+    scalar actual_err = $error
+    scalar actual_length = nelem(B)
+
+    # Then
+    assert(actual_length == expected_length)
+    assert(actual_err == expected_err)
+end function
+test_bundles_extend_marray()
+
+
+function void test_bundles_extend_marray_dir (void)
+    print "Start testing initiating empty bundles and try\
+        augmenting it with an array of matrices."
+
+    # Given
+    bundles B
+
+    # When
+    scalar expected_length = 1
+    scalar expected_err = FALSE
+
+    catch B = B + _(value = array(3))
+    scalar actual_err = $error
+    scalar actual_length = nelem(B)
+
+    # Then
+    assert(actual_length == expected_length)
+    assert(actual_err == expected_err)
+end function
+test_bundles_extend_marray_dir()
+
+
+function void test_bundles_extend_strarray (void)
+    print "Start testing initiating a null bundles and try\
+        augmenting it with an array of strings."
+
+    # Given
+    bundles B
+    strings input = defarray("A", "B", "C")
+
+    # When
+    scalar expected_length = 1
+    scalar expected_err = FALSE
+
+    catch B = B + _(value = input)
+    scalar actual_err = $error
+    scalar actual_length = nelem(B)
+
+    # Then
+    assert(actual_length == expected_length)
+    assert(actual_err == expected_err)
+end function
+test_bundles_extend_strarray()
+
+
+function void test_bundles_strarray (void)
+    print "Start testing initiating a null bundles and try\
+        augmenting it with an array of strings."
+
+    # Given
+    bundles B = array(1)
+
+    # When
+    scalar expected_length = 1
+    scalar expected_err = FALSE
+
+    catch B[1] = _(value = defarray("A", "B", "C"))
+    scalar actual_err = $error
+    scalar actual_length = nelem(B)
+
+    # Then
+    assert(actual_length == expected_length)
+    assert(actual_err == expected_err)
+end function
+test_bundles_strarray()
+
+
+function void test_bundles_extend_strarray_dr (void)
+    print "Start testing initiating a null bundles and try\
+        augmenting it with an array of strings."
+
+    # Given
+    bundles B
+
+    # When
+    scalar expected_length = 1
+    scalar expected_err = FALSE
+
+    catch B = B + _(value = defarray("A", "B", "C"))    # FAILS
+    scalar actual_err = $error
+    scalar actual_length = nelem(B)                 # length is zero
+
+    # Then
+    assert(actual_length == expected_length)        # FAILS
+    assert(actual_err == expected_err)
+end function
+test_bundles_extend_strarray_dr()
+
+
+
+function void test_defbundle_trailing_commata (void)
+    print "Start testing defbundle() with trailing commata."
+
+    # Given
+    scalar err_expected = TRUE
+
+    # When
+    catch bundle b = defbundle("a",1,)
+    scalar err_actual = $error != 0
+
+    # Then
+    assert(err_actual == err_expected)
+end function
+test_defbundle_trailing_commata()
+
+
+print "Succesfully finished tests."
+quit

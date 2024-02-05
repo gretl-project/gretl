@@ -1,0 +1,289 @@
+set verbose off
+clear
+set assert stop
+
+nulldata 2
+
+matrix my = {1, 11}
+matrix mx = {12, 13}
+matrix mI = I(1,1)
+
+series y = my
+series x = mx
+
+list Lempty
+list L1 = y
+list L2 = y x
+
+function void test_empty_list (const list L)
+    print "Start testing empty list"
+
+    # Given
+    string buffer
+    string expected = ""
+
+    # When
+    outfile --buffer=buffer
+        print L    # does not print anything
+    end outfile
+
+    # Then
+    assert(buffer == expected)
+end function
+test_empty_list(Lempty)
+
+
+function void test_single_item_list (const list L)
+    print "Start testing list with single item"
+
+    # Given
+    string buffer
+    string expected = "Full data range: 1 - 2 (n = 2)"
+
+    # When
+    outfile --buffer=buffer
+        print L
+    end outfile
+
+    strings actual = strsplit(buffer, "\n")
+
+    # Then
+    print actual
+    print expected
+    assert(actual[1] == expected)
+end function
+test_single_item_list(L1)
+
+
+function void test_two_items_list (const list L)
+    print "Start testing list with two items"
+
+    # Given
+    string buffer
+    string expected = "L.y:"
+
+    # When
+    outfile --buffer=buffer
+        print L
+    end outfile
+
+    strings actual = strsplit(buffer, "\n")
+
+    # Then
+    assert(actual[1] == expected)
+end function
+test_two_items_list(L2)
+
+
+function void test_scalar_ref_to_list (const list L)
+    print "Start testing scalar referring to existing series ID"
+
+    # Given
+    string buffer
+    string expected = "Full data range: 1 - 2 (n = 2)"
+
+    # When
+    outfile --buffer=buffer
+        print 1
+    end outfile
+
+    strings actual = strsplit(buffer, "\n")
+
+    # Then
+    assert(actual[1] == expected)
+end function
+test_scalar_ref_to_list(dataset)
+
+
+function void test_scalar_noref_to_list (const list L)
+    print "Start testing scalar referring to non-existing series ID"
+
+    # Given
+    string buffer
+    scalar expected_err = 14
+
+    # When
+    outfile --buffer=buffer
+        catch print 1111   # arbitrary large number
+    end outfile
+
+    # Then
+    assert($error == expected_err)
+end function
+test_scalar_noref_to_list(dataset)
+
+
+function void test_scalar_var_ref_to_list (const list L)
+    print "Start testing pred-defined scalar referring to existing series ID"
+
+    # Given
+    scalar VALUE = 1
+    string buffer
+    string expected = "VALUE =  1.0000000"
+
+    # When
+    outfile --buffer=buffer
+        print VALUE
+    end outfile
+
+    strings actual = strsplit(buffer, "\n")
+
+    # Then
+    assert(strstrip(actual[1]) == expected)
+end function
+test_scalar_var_ref_to_list(dataset)
+
+
+function void test_scalar_var_noref_to_list (const list L)
+    print "Start testing pred-defined scalar referring to non-existing series ID"
+
+    # Given
+    scalar VALUE = 11111
+    string buffer
+    string expected = "VALUE =  11111.000"
+
+    # When
+    outfile --buffer=buffer
+        print VALUE
+    end outfile
+
+    strings actual = strsplit(buffer, "\n")
+
+    # Then
+    assert(strstrip(actual[1]) == expected)
+end function
+test_scalar_var_noref_to_list(dataset)
+
+
+function void test_matrix_scalar_ref_to_list (const list L)
+    print "Start testing matrix integer entry referring to existing series ID"
+
+    # Given
+    matrix m = {1, 111}
+
+    string buffer
+    string expected = "1"
+
+    # When
+    outfile --buffer=buffer
+        print m[1]
+    end outfile
+
+    strings actual = strsplit(buffer, "\n")
+
+    # Then
+    assert(strstrip(actual[1]) == expected)
+end function
+test_matrix_scalar_ref_to_list(dataset)
+
+
+function void test_matrix_I_ref_to_list (const list L)
+    print "Start testing matrix integer entry of identiy matrix referring to existing series ID"
+
+    # Given
+    matrix m = I(1, 1)
+
+    string buffer
+    string expected = "1"
+
+    # When
+    outfile --buffer=buffer
+        print m[1]
+    end outfile
+
+    strings actual = strsplit(buffer, "\n")
+
+    # Then
+    assert(strstrip(actual[1]) == expected)
+end function
+test_matrix_I_ref_to_list(dataset)
+
+
+function void test_mat_scalar_noref_to_list (const list L)
+    print "Start testing matrix integer entry referring to non-existing series ID"
+
+    # Given
+    matrix m = {1, 111}
+    string buffer
+    string expected = "111"
+
+    # When
+    outfile --buffer=buffer
+        print m[2]
+    end outfile
+
+    strings actual = strsplit(buffer, "\n")
+
+    # Then
+    assert(strstrip(actual[1]) == expected)
+end function
+test_mat_scalar_noref_to_list(dataset)
+
+
+function void test_row_vector (const list L)
+    print "Start testing matrix integer entries -- each referring to existing series IDs"
+
+    # Given
+    matrix m = {1, 2}
+    string buffer
+    string expected = "m (1 x 2)"
+
+    # When
+    outfile --buffer=buffer
+        print m
+    end outfile
+
+    strings actual = strsplit(buffer, "\n")
+
+    # Then
+    assert(strstrip(actual[1]) == expected)
+end function
+test_row_vector(dataset)
+
+
+function void test_row_vector_range (const list L)
+    print "Start testing matrix integer entries -- each referring to existing series IDs"
+
+    # Given
+    matrix m = {1, 2}
+    string buffer
+    string expected = "L.index:"
+
+    # When
+    outfile --buffer=buffer
+        print m[1:]
+    end outfile
+
+    strings actual = strsplit(buffer, "\n")
+
+    # Then
+    assert(strstrip(actual[1]) == expected)
+end function
+test_row_vector_range(dataset)
+
+
+function void test_row_vector_range (const list L)
+    print "Start testing matrix integer entries -- each referring to existing series IDs"
+
+    # Given
+    matrix m = {1, 2}
+    string buffer
+    string expected = "2"
+
+    # When
+    outfile --buffer=buffer
+        print m[2:]
+    end outfile
+
+    strings actual = strsplit(buffer, "\n")
+
+    # Then
+    assert(strstrip(actual[1]) == expected)
+end function
+test_row_vector_range(dataset)
+
+
+
+print "Succesfully finished tests."
+quit
+

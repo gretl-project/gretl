@@ -1,0 +1,7 @@
+set verbose off
+/*
+https://gretlml.univpm.it/hyperkitty/list/gretl-users@gretlml.univpm.it/message/GGP2RYU2SQBTOHDIAZM2TLZYEMKY4G7O/
+*/
+
+open credscore.gdt
+summary --simple --by=Selfempl

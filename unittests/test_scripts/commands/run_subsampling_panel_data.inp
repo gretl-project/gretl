@@ -1,0 +1,60 @@
+set verbose off
+clear
+set assert stop
+
+# setobs does not work within functions
+open grunfeld.gdt --quiet
+print "Start testing setobs command."
+
+# Given
+scalar err_expected = FALSE
+scalar T_expected = $nobs
+invest = (t>196) ? NA : invest
+
+# When
+smpl --no-missing
+setobs firm year --panel-vars
+scalar err_actual = $error
+scalar T_actual = $nobs
+
+# Then
+assert(err_actual == err_expected)
+assert(T_actual == T_expected)
+
+open grunfeld.gdt --quiet
+function void test_arbitrary_sample (const list L)
+    print "Start testing restricting panel sample arbitrarily."
+
+    # Given
+    scalar not_expected = 0
+
+    # When
+    catch smpl 1 196
+    scalar actual = $error
+
+    # Then
+    assert(actual != not_expected)
+end function
+test_arbitrary_sample(dataset)
+
+open grunfeld.gdt --quiet
+function void test_unit_with_nonpanel_sample (series y)
+    print "Start testing $unit with non-panel sample"
+
+    # Given
+    series y = (t > 196) ? NA : y
+    smpl --no-missing
+
+    scalar not_expected = 0
+
+    # When
+    catch series u = $unit
+    scalar actual = $error
+
+    # Then
+    assert(actual != not_expected)
+end function
+test_unit_with_nonpanel_sample(invest)
+
+print "Successfully finished tests."
+quit

@@ -1,0 +1,33 @@
+set verbose off
+clear
+set assert stop
+
+/*
+Bug reported here:
+https://gretlml.univpm.it/hyperkitty/list/gretl-devel@gretlml.univpm.it/message/FUS2UNGSLARMGWYQFJDTHNUH6WIP4AU6/
+*/
+
+function void test (series y)
+  # Given
+  series u = $unit
+  scalar val1 = 2
+  scalar val2 = 4
+
+  # When
+  smpl u == val1 --restrict
+  catch smpl u == val2 --restrict --replace
+
+  # Then
+  assert($error == FALSE)
+end function
+
+nulldata 8
+setobs 2 1:1 --stacked-time
+series y = normal()
+setobs 4 2000:1 --panel-time
+smpl $obsdate < 20001001 --restrict
+
+test(y)
+
+print "Successfully finished tests."
+quit

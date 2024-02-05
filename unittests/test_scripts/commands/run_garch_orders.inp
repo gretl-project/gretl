@@ -1,0 +1,37 @@
+set verbose off
+clear
+set assert stop
+
+open b-g --quiet
+
+bundles Params = null
+Params = Params + _(p = 0, q = 0)
+Params = Params + _(p = 2, q = 1)
+Params = Params + _(p = -1, q = 0)
+Params = Params + _(p = 0, q = -1)
+
+function void test_garch_pq (const list L, const bundles P)
+    print "Start testing garch command and retrieve lag orders."
+
+    loop foreach i P
+        # Given
+        scalar p_input = P[i].p
+        scalar q_input = P[i].q
+
+        # When
+        catch garch p_input q_input ; L.Y
+
+        bundle model = $model
+        p_actual = model.garch_p
+        q_actual = model.garch_q
+
+        # Then
+        assert(p_input == p_actual)
+        assert(q_input == q_actual)
+    endloop
+end function
+
+test_garch_pq(dataset, Params)
+
+print "Successfully finished tests."
+quit

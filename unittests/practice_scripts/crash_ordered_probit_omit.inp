@@ -1,0 +1,19 @@
+set verbose off
+/*
+https://gretlml.univpm.it/hyperkitty/list/gretl-devel@gretlml.univpm.it/message/LYZ4HAEDSEHSTYXUDDY4QXBC2RBMYEI5/
+*/
+
+open "./data/crash_ordered_probit_omit.gdt" --quiet
+
+list LHS = arng_ind_r
+list RHS = const arng_ind_r_7 arng_ind_r_8 arng_ind_r_9 arng_ind_r_10 ipidx_d_3 \
+ ipidx_d_4 ipidx_d_5 ipidx_d_6 jobvac_dln_3 jobvac_dln_4 jobvac_dln_5 \
+ jobvac_dln_6 ifo_r1_dln_1 ifo_r1_dln_2 ifo_r1_dln_3 ifo_r1_dln_4 \
+ eubor_3m_1 eubor_3m_2 eubor_3m_3 eubor_3m_4 cdax_dln_1 cdax_dln_2 \
+ cdax_dln_3 cdax_dln_4 crp_sprd_1 crp_sprd_2 crp_sprd_3 crp_sprd_4 \
+ aftg_inl_dln_3 aftg_inl_dln_4 aftg_inl_dln_5 aftg_inl_dln_6 aftg_aus_dln_3 \
+ aftg_aus_dln_4 aftg_aus_dln_5 aftg_aus_dln_6 yc10y_1 yc10y_2 yc10y_3 \
+  yc10y_4
+
+probit LHS RHS --quiet
+omit RHS --auto=0.05 --silent

@@ -1,0 +1,17 @@
+set verbose off
+clear
+
+/*
+Function which led to a crash in the past.
+*/
+
+bundle b
+string b.s = "foo"
+
+function void fun (const strings S)
+    print "..."
+end function
+
+fun(defarray(b.s))
+
+quit

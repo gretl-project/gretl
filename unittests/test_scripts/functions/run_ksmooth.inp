@@ -1,0 +1,46 @@
+set verbose off
+clear
+
+set assert stop
+
+/*
+Bug report:
+https://gretlml.univpm.it/hyperkitty/list/gretl-users@gretlml.univpm.it/message/JHIVHWQ3IZMWMEHVWCCA5RNJG6HISADH/
+*/
+
+
+set verbose off
+nulldata 100
+setobs 1 1 --special-time-series
+
+loop i=1..4
+
+    smpl full
+    # ma(1) example with known variance
+
+    e = normal()
+    theta = 0.8
+    y = e + theta * e(-1)
+    smpl +1 ;
+
+    par = 0.8
+    T = {0, 0; 1, 0}
+    Q = {1, 0 ;0, 0}
+
+    mod = ksetup(y, {1; par}, T, Q)
+
+    mle ll = misszero(llik)
+        mod.obsymat[2] = par
+        kfilter(&mod)
+        series llik = mod.llt
+        params par
+    end mle --hessian
+
+    catch ksmooth(&mod)
+
+    assert($error == FALSE)
+endloop
+
+
+print "Finished all tests succesfully."
+quit

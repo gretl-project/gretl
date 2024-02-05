@@ -1,0 +1,30 @@
+set verbose off
+clear
+set assert stop
+
+
+function scalar foo (const numeric x, int min_nobs)
+    scalar ret = FALSE
+
+    if typestr(typeof(x)) == "series"
+        catch smpl x --no-missing
+    if $error == 0
+            ret = nobs(x) >= min_nobs
+        endif
+    else
+        ret = sumc(ok(x)) == rows(x)
+    endif
+    return ret
+end function
+
+nulldata 12
+rename index origname
+eval foo(origname, 10)
+varlist
+
+catch print origname        # "origname" git lost before fix in May 2023
+eval $error
+assert($error == FALSE)
+
+print "Succesfully finished tests."
+quit

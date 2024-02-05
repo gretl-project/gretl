@@ -1,0 +1,39 @@
+set verbose off
+
+# target matrix chunk
+a = zeros(3,3)
+a[1:2,2:3]++
+print a
+
+# target element of matrix in array
+matrices mm = array(2)
+mm[1] = {0}
+mm[2] = {1}
+mm[2][1]--
+eval mm[2]
+
+# target matrix element in loop
+a = {0}
+loop 5
+  a[1]++
+endloop
+print a
+
+# target bundle member
+bundle b = _(x=0)
+b.x++
+eval b.x
+loop 5
+  b.x--
+endloop
+eval b.x
+
+# target element in bundled matrix
+b.m = I(3)
+b.m[2,2]++
+eval b.m
+
+# element in bundled array of matrices
+b.a = defarray(zeros(2,2), ones(2,2))
+b.a[1][1,1]++
+eval b.a[1]

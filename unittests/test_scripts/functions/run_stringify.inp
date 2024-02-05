@@ -1,0 +1,146 @@
+set verbose off
+clear
+set assert stop
+
+
+nulldata 3
+
+function void test_stringify (void)
+    print "Start testing stringify()."
+
+    # Given
+    series y = seq(1, 3)'
+    strings S = defarray("A", "B", "C")
+
+    # When
+    scalar expected0 = stringify(y, S)
+    string expected1 = y[1]
+    string expected2 = y[2]
+    string expected3 = y[3]
+
+    # Then
+    assert(expected0 == FALSE)
+    assert(expected1 == "A")
+    assert(expected2 == "B")
+    assert(expected3 == "C")
+end function
+test_stringify()
+
+
+function void test_stringify_nobs_more_nelem (void)
+    print "Start testing stringify() where nobs(y) > nelem(S)."
+
+    # Given
+    series y = seq(1, 3)'
+    strings S = defarray("A", "B")
+
+    # When
+    catch stringify(y, S)
+    scalar expected0 = $error
+    scalar expected1 = y[1]
+    scalar expected2 = y[2]
+    scalar expected3 = y[3]
+
+    # Then
+    assert(expected0 != 0)
+    assert(expected1 == 1)
+    assert(expected2 == 2)
+    assert(expected3 == 3)
+end function
+test_stringify_nobs_more_nelem()
+
+
+function void test_stringify_y_isconst (void)
+    print "Start testing stringify() where nobs(y) == nelem(S) and \
+    y is a constant."
+
+    # Given
+    series y = 1
+    strings S = defarray("A", "B", "C")
+
+    # When
+    scalar expected0 = stringify(y, S)
+    string expected1 = y[1]
+    string expected2 = y[2]
+    string expected3 = y[3]
+
+    # Then
+    assert(expected0 == FALSE)
+    assert(expected1 == "A")
+    assert(expected2 == "A")
+    assert(expected3 == "A")
+end function
+test_stringify_y_isconst()
+
+
+function void test_stringify_nobs_eq_nelem (void)
+    print "Start testing stringify() where nobs(y) == nelem(S)."
+
+    # Given
+    series y = seq(1, 3)'
+    strings S = defarray("A", "B", "C")
+
+    # When
+    scalar expected0 = stringify(y, S)
+    string expected1 = y[1]
+    string expected2 = y[2]
+    string expected3 = y[3]
+
+    # Then
+    assert(expected0 == FALSE)
+    assert(expected1 == "A")
+    assert(expected2 == "B")
+    assert(expected3 == "C")
+end function
+test_stringify_nobs_eq_nelem()
+
+
+function void test_stringify_nobs_less_nelem (void)
+    print "Start testing stringify() where nobs(y) < nelem(S)."
+
+    # Given
+    series y = 1
+    strings S = defarray("A", "B", "C", "D")
+
+    # When
+    scalar expected0 = stringify(y, S)
+    string expected1 = y[1]
+    string expected2 = y[2]
+    string expected3 = y[3]
+
+    # Then
+    assert(expected0 == FALSE)
+    assert(expected1 == "A")
+    assert(expected2 == "A")
+    assert(expected3 == "A")
+end function
+test_stringify_nobs_less_nelem()
+
+
+
+/*
+Crash reported by Sven Schreiber on 2022-03-31
+*/
+
+nulldata 3
+
+function void test_stringify_series (const list L)
+    print "Start testing function stringify()"
+
+    # Given
+    series countrycodes
+
+    # When
+    catch stringify(countrycodes, defarray("FR","DE","IT"))
+
+    # Then
+    assert($error != FALSE)
+end function
+test_stringify_series(dataset)
+
+
+
+
+
+print "Succesfully finished tests."
+quit

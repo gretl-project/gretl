@@ -1,0 +1,39 @@
+set verbose off
+set assert stop
+
+open denmark.gdt --quiet
+
+function scalar print_function (list L)
+    return nelem(L)
+end function
+
+
+function void test_case_1 (list hu[null])
+    print "Start with test case 1."
+    # Given
+    scalar expected = 0
+
+    # When
+    scalar actual = print_function(hu)
+
+    # Then
+    assert(actual == expected)
+end function
+test_case_1()
+
+function void test_case_2 (list hu[null])
+    print "Start with test case 2."
+    # Given
+    scalar expected = 0
+
+    # When
+    scalar actual = print_function(deflist(hu))
+
+    # Then
+    assert(actual == expected)
+end function
+test_case_2()
+
+
+print "Succesfully finished tests."
+quit

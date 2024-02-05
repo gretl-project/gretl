@@ -1,0 +1,29 @@
+set verbose off
+clear
+set assert stop
+
+
+open grunfeld.gdt --quiet
+list L = const value kstock
+
+
+function void test_fixed_effects (const series y, const list L)
+    print "Start testing the estimated fixed effects."
+    /* https://sourceforge.net/p/gretl/bugs/240/ */
+
+    # Given
+    panel y L
+    series a = $ahat
+
+    # When
+    scalar T_expected = nobs(y)
+    scalar T_actual = nobs(a)
+
+    # Then
+    assert(T_actual == T_expected)
+end function
+test_fixed_effects(invest, L)
+
+
+print "Successfully finished tests."
+quit

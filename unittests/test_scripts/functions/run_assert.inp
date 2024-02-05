@@ -1,0 +1,151 @@
+clear
+set verbose off
+set assert stop
+
+
+bundle Parameter = _(\
+                    A = {1, 0, FALSE},\
+                    B = {0, 1, FALSE},\
+                    C = {1, 1, TRUE},\
+                    D = {0, 0, TRUE},\
+                    E = {0, NA, FALSE},\
+                    F = {NA, 0, FALSE},
+                    G = {1, NA, FALSE},\
+                    H = {NA, 1, FALSE},
+                    I = {NA, NA, FALSE})
+function void test_assert_int (const bundle P)
+    print "Start testing assert() INTs."
+    set assert off
+
+    loop foreach i P
+        scalar expected = P["$i"][3]
+        scalar actual = assert(P["$i"][1] == P["$i"][2])
+        set assert stop
+        assert(actual == expected)
+        set assert off
+    endloop
+end function
+test_assert_int(Parameter)
+
+
+bundles Parameters = array(2)
+Parameters[1] = _(value_1 = FALSE, value_2 = TRUE, expected = FALSE)
+Parameters[2] = _(value_1 = TRUE, value_2 = FALSE, expected = FALSE)
+function void test_assert_true_false (const bundles P)
+    print "Start testing assert() TRUE and FALSE"
+
+    loop i=1..nelem(P)
+        expected = P[i].expected
+        scalar actual = assert(P[i].value_1 == P[i].value_2)
+        assert(actual == expected)
+    endloop
+end function
+test_assert_true_false(Parameters)
+
+
+bundles Parameters = array(4)
+Parameters[1] = _(value_1 = "ABC", value_2 = "ABC", expected = TRUE)
+Parameters[2] = _(value_1 = "", value_2 = "", expected = TRUE)
+Parameters[3] = _(value_1 = "__/%(=O?", value_2 = "__/%(=O?", expected = TRUE)
+Parameters[4] = _(value_1 = "739838", value_2 = "739838", expected = TRUE)
+function void test_assert_equal_str (const bundles P)
+    print "Start testing assert() equal strings."
+
+    loop i=1..nelem(P)
+        expected = P[i].expected
+        scalar actual = assert(P[i].value_1 == P[i].value_2)
+        assert(actual == expected)
+    endloop
+end function
+test_assert_equal_str(Parameters)
+
+
+bundles Parameters = array(4)
+Parameters[1] = _(value_1 = "ABC", value_2 = "abc", expected = FALSE)
+Parameters[2] = _(value_1 = "ABC", value_2 = "", expected = FALSE)
+Parameters[3] = _(value_1 = "", value_2 = "__/%(=O?", expected = FALSE)
+Parameters[4] = _(value_1 = "739838", value_2 = "1234", expected = FALSE)
+function void test_assert_unequal_str (const bundles P)
+    print "Start testing assert() unequal strings."
+
+    loop i=1..nelem(P)
+        expected = P[i].expected
+        scalar actual = assert(P[i].value_1 == P[i].value_2)
+        assert(actual == expected)
+    endloop
+end function
+test_assert_unequal_str(Parameters)
+
+
+function void test_assert_greater_num (void)
+    print "Start testing assert() greater."
+
+    # Given
+    scalar value_1 = -3.2
+    scalar value_2 = 1.4
+    scalar value_3 = 22
+
+    # When
+    scalar actual_12 = assert(value_1 > value_2)
+    scalar actual_21 = assert(value_2 > value_1)
+    scalar actual_13 = assert(value_1 > value_3)
+    scalar actual_31 = assert(value_3 > value_1)
+    scalar actual_23 = assert(value_2 > value_3)
+    scalar actual_32 = assert(value_3 > value_2)
+
+    scalar expected_12 = FALSE
+    scalar expected_21 = TRUE
+    scalar expected_13 = FALSE
+    scalar expected_31 = TRUE
+    scalar expected_23 = FALSE
+    scalar expected_32 = TRUE
+
+    # Then
+    assert(actual_12 == expected_12)
+    assert(actual_21 == expected_21)
+    assert(actual_13 == expected_13)
+    assert(actual_31 == expected_31)
+    assert(actual_23 == expected_23)
+    assert(actual_32 == expected_32)
+end function
+test_assert_greater_num()
+
+
+function void test_assert_greater_equal_num (void)
+    print "Start testing assert() greater-equal."
+
+    # Given
+    scalar value_1 = -3.2
+    scalar value_2 = 1.4
+    scalar value_3 = 22
+
+    # When
+    scalar actual_12 = assert(value_1 >= value_2)
+    scalar actual_21 = assert(value_2 >= value_1)
+    scalar actual_13 = assert(value_1 >= value_3)
+    scalar actual_31 = assert(value_3 >= value_1)
+    scalar actual_23 = assert(value_2 >= value_3)
+    scalar actual_32 = assert(value_3 >= value_2)
+
+    scalar expected_12 = FALSE
+    scalar expected_21 = TRUE
+    scalar expected_13 = FALSE
+    scalar expected_31 = TRUE
+    scalar expected_23 = FALSE
+    scalar expected_32 = TRUE
+
+    # Then
+    assert(actual_12 == expected_12)
+    assert(actual_21 == expected_21)
+    assert(actual_13 == expected_13)
+    assert(actual_31 == expected_31)
+    assert(actual_23 == expected_23)
+    assert(actual_32 == expected_32)
+end function
+test_assert_greater_equal_num()
+
+
+
+
+print "Succesfully finished tests."
+quit

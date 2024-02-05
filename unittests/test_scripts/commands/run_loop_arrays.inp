@@ -1,0 +1,49 @@
+set verbose off
+clear
+set assert stop
+
+
+strings input = defarray("R1", "R2", "R3")
+
+
+function void array_of_strings_inside_array (const strings input)
+    strings numbers = defarray("one", "two", "three")
+    arrays aa = defarray(input, numbers)
+    loop foreach i aa[2]
+       print "$i"
+    endloop
+end function
+array_of_strings_inside_array(input)
+
+function void array_of_strings_inside_bundle (const strings input)
+    bundle B = _(input)
+    loop foreach i B.input
+       print "$i"
+    endloop
+end function
+array_of_strings_inside_bundle(input)
+
+
+function void bundle_inside_array (const strings input)
+    bundle B = _(input)
+    bundles bb = array(2)
+    bb[1] = B
+    bb[2] = _(x=13, y=27, z="foo")
+    loop foreach i bb[2]
+       print "$i"
+    endloop
+end function
+bundle_inside_array(input)
+
+
+function void array_strings_in_bundle_in_arr (const strings input)
+    loop foreach i bb[1].input
+       print "$i"
+    endloop
+end function
+array_strings_in_bundle_in_arr(input)
+
+
+
+print "Successfully finished tests."
+quit

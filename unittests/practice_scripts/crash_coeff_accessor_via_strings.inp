@@ -1,0 +1,21 @@
+set verbose off
+open data7-11.gdt
+
+/* Let to a crash
+https://gretlml.univpm.it/hyperkitty/list/gretl-users@gretlml.univpm.it/message/3K3CA5VA7NXARAWR4CXY4Y4T7D4VD6SL/
+*/
+
+# crash test
+series l_price = log(price)
+list y = l_price
+list x = bedrms age baths
+strings xnames = defarray("const") + varnames(x)
+
+ols y const x --robust --quiet
+scalar i = 1
+string xname = xnames[i]
+scalar coeff = $coeff(xname)
+scalar coeff = $coeff(xnames[i])
+
+
+scalar coeff = $coeff(xnames[i])

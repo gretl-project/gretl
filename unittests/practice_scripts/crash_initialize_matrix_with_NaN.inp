@@ -1,0 +1,7 @@
+set verbose off
+
+/* Let to a crash
+https://gretlml.univpm.it/hyperkitty/list/gretl-users@gretlml.univpm.it/message/KFX6DD6LMI3N6CQWP7Z64YI2HPNTIGZW/ */
+
+catch m[1,1]=.NaN,
+eval $error

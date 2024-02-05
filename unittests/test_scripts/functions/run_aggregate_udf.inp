@@ -1,0 +1,40 @@
+/* BUG reported: https://sourceforge.net/p/gretl/bugs/290/ */
+set verbose off
+clear
+set assert stop
+
+open grunfeld.gdt -q
+
+function scalar quantile_range (series y)
+    /* Compute the interquartile range. */
+
+    if $nobs == 0 || sum(ok(y)) == 0
+        return NA
+    endif
+
+    scalar ret = quantile(y, 0.75) - quantile(y, 0.25)
+
+    return ret
+end function
+
+
+function void test_aggregate_udf (const list L)
+
+    # Given
+    scalar n_expected = nobs(L.year)
+
+    smpl L.year == min(L.year) --restrict
+    matrix agg = aggregate(L.invest, L.firmname, "quantile_range")
+    smpl full
+
+    # When
+    scalar n_actual = nobs(L.year)
+
+    # Then
+    assert(n_actual == n_expected)
+end function
+test_aggregate_udf(dataset)
+
+
+print "Succesfully finished tests."
+quit

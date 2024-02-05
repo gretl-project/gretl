@@ -1,0 +1,47 @@
+clear
+set verbose off
+
+/* Let a to a crash in the past */
+
+function bundle default_naiveFC_opts (const series y)
+    bundle self = null
+    self.h = 10
+    return self
+end function
+
+
+function bundle naiveFC (const series y,
+                         string which "Select method",
+                         bundle opts[null])
+
+    # Set up the bundle
+    bundle self = default_naiveFC_opts(y)
+    if exists(opts)
+        self = opts + self
+    endif
+
+    series self.y = y
+    
+    # call method
+    if which=="meanf"
+        meanf(&self)		# !!! fails with a crash !!!
+        self.fc = meanf2(&self)		# works
+    endif
+
+    return self
+end function
+
+
+function matrix meanf2 (bundle *self)    
+    return ones(self.h, 1) .* mean(self.y)
+end function
+
+function void meanf (bundle *self)    
+    self.fc = ones(self.h, 1) .* mean(self.y)
+    eval self.fc
+end function
+
+# Example
+open nysewk.gdt -q
+bundle b = naiveFC(close, "meanf")
+

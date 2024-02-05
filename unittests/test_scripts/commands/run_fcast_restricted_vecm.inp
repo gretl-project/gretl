@@ -1,0 +1,25 @@
+set verbose off
+clear
+set assert stop
+
+/*
+Bug reported here:
+https://gretlml.univpm.it/hyperkitty/list/gretl-devel@gretlml.univpm.it/message/SSD4WJYBZWKEZVQTF2LEJLH2I42SNTQ6/
+*/
+
+open sw_ch14.gdt --quiet
+infl = 100 * sdiff(log(PUNEW))
+vecm 2 1 infl LHUR --crt --quiet
+
+restrict --full --silent
+    b[1,1] = 1
+    a[1,1] = 0
+end restrict
+
+catch fcast infl
+
+assert($error == FALSE)
+
+
+print "Successfully finished tests."
+quit

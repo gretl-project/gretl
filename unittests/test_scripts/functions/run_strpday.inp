@@ -1,0 +1,32 @@
+set verbose off
+clear
+set assert stop
+
+bundles Params = null
+Params = Params + _(date = "2022-12-23", expected = 738512)
+Params = Params + _(date = "2022-12-23", format = "%Y-%m-%d",
+                    expected = 738512)
+
+function void test_strpday (const bundles P)
+    print "Start testing function strpday()."
+
+    loop foreach i P
+        # When
+        if inbundle(P[i], "format")
+            scalar actual = strpday(P[i].date, P[i].format)
+        else
+            scalar actual = strpday(P[i].date)
+        endif
+
+        # Then
+        assert(actual == P[i].expected)
+    endloop
+end function
+test_strpday(Params)
+
+
+
+
+print "Succesfully finished tests."
+quit
+

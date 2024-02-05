@@ -1,0 +1,25 @@
+set verbose off
+clear
+set assert stop
+set seed 1234
+
+function void check_trace (int n)
+    printf "Start executing check_trace() for n=%d.\n", n
+
+    # Given, When
+    X = mnormal(n,n)
+    l = eigen(X)
+    t = sumc(diag(X))
+
+    # Then
+    d = abs(sumc(l) - t)
+    assert(d <= 1e-10)
+end function
+
+matrix N = vec({10, 50, 100})
+loop i=1..rows(N)
+    check_trace(N[i])
+endloop
+
+print "Successfully finished tests."
+quit

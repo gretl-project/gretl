@@ -1,0 +1,24 @@
+set verbose off
+/* 
+https://gretlml.univpm.it/hyperkitty/list/gretl-users@gretlml.univpm.it/message/6VR7F5VYXCR2PGENASXIPKSB2KQI4P6R/
+*/
+
+nulldata 10
+function series f1(series z)
+    series s=1
+    loop i=1..1
+        s[1]=0
+    endloop
+    return s
+end function
+function scalar f2(matrix *my,matrix *ma)
+    series z=1
+    series f=f1(z)
+    return 1
+end function
+series y=0
+matrix my=ones(10,1)
+matrix par=1
+scalar a=BFGSmax(par,f2(&my,&par))
+series yy=0
+series x=f1(y)

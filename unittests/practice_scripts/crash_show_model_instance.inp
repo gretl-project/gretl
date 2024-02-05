@@ -1,0 +1,9 @@
+set verbose off
+clear
+
+open data4-1
+RES <- ols 1 0 2
+RES.show
+
+print "Successfully finished tests."
+quit

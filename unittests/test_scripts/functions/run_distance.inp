@@ -1,0 +1,134 @@
+set verbose off
+clear
+
+set assert stop
+
+matrix Xmat1 = {3}
+matrix Xmat2 = {1, 2; 3, 4}
+
+bundles Params = null
+
+Params = Params + _(Xmat = Xmat1,\
+                    Ymat = {3},\
+                    expected_distances = {0},
+                    metric = "manhattan"\
+                    )
+Params = Params + _(Xmat = Xmat1,\
+                    Ymat = {2},\
+                    expected_distances = {1},
+                    metric = "manhattan"\
+                    )
+Params = Params + _(Xmat = Xmat1,\
+                    Ymat = {4},\
+                    expected_distances = {1},
+                    metric = "manhattan"\
+                    )
+Params = Params + _(Xmat = Xmat2,\
+                    Ymat = {1, 2; 0, 3},\
+                    expected_distances = {0, 2; 4, 4},
+                    metric = "manhattan"\
+                    )
+
+function void test_distance_manhattan (const bundles P)
+    print "Start testing function distance() for manhattan type."
+
+    loop foreach i P
+        # Given
+        matrix expected_distances = vec(P[i].expected_distances)
+        matrix x = P[i].Xmat
+        matrix y = P[i].Ymat
+
+        # When
+        matrix actual = distance(x, P[i].metric, y)
+        actual = vec(actual)
+
+        # Then
+        loop j=1..rows(expected_distances)
+            assert(actual[j] == expected_distances[j])
+        endloop
+    endloop
+end function
+test_distance_manhattan(Params)
+
+
+
+
+bundles Params = null
+matrix Xmat1 = {0, 1; 1, 1}
+matrix Xmat2 = {0, 1; 0, 1}
+
+Params = Params + _(Xmat = Xmat1,\
+                    Ymat = Xmat1,\
+                    expected_distances = {0, 1; 1, 0},\
+                    metric = "euclidean"\
+                    )
+Params = Params + _(Xmat = Xmat2,\
+                    Ymat = Xmat2,\
+                    expected_distances = {0, 0; 0, 0},\
+                    metric = "euclidean"\
+                    )
+Params = Params + _(Xmat = Xmat1,\
+                    Ymat = {0, 0},\
+                    expected_distances = {1, sqrt(2)},\
+                    metric = "euclidean"\
+                    )
+
+function void test_distance_euclidean (const bundles P)
+    print "Start testing function distance() for euclidean type with metric string passed."
+
+    loop foreach i P
+        # Given
+        matrix expected_distances = vec(P[i].expected_distances)
+        matrix x = P[i].Xmat
+        matrix y = P[i].Ymat
+
+        # When
+        matrix actual = distance(x, P[i].metric, y)
+        actual = vec(actual)
+
+        # Then
+        loop j=1..rows(expected_distances)
+            assert(actual[j] == expected_distances[j])
+        endloop
+    endloop
+end function
+test_distance_euclidean(Params)
+
+
+Params = Params + _(Xmat = Xmat1,\
+                    Ymat = Xmat1,\
+                    expected_distances = {0, 1; 1, 0}\
+                    )
+Params = Params + _(Xmat = Xmat2,\
+                    Ymat = Xmat2,\
+                    expected_distances = {0, 0; 0, 0}\
+                    )
+Params = Params + _(Xmat = Xmat1,\
+                    Ymat = {0, 0},\
+                    expected_distances = {1, sqrt(2)}\
+                    )
+
+function void test_distance_euclide_no_metric (const bundles P)
+    print "Start testing function distance() for euclidean type no metric string passed."
+
+    loop foreach i P
+        # Given
+        matrix expected_distances = vec(P[i].expected_distances)
+        matrix x = P[i].Xmat
+        matrix y = P[i].Ymat
+
+        # When
+        matrix actual = distance(x, null, y)
+        actual = vec(actual)
+
+        # Then
+        loop j=1..rows(expected_distances)
+            assert(actual[j] == expected_distances[j])
+        endloop
+    endloop
+end function
+test_distance_euclide_no_metric(Params)
+
+
+print "Finished all tests succesfully."
+quit

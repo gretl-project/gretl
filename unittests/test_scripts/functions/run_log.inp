@@ -1,0 +1,27 @@
+set verbose off
+clear
+set assert stop
+
+
+function void test_log (void)
+    print "Start testing log()."
+
+    # Given
+    scalar value1 = 0
+    scalar value2 = 1
+    scalar expected1 = NA
+    scalar expected2 = 0
+
+    # When
+    scalar actual1 = log(value1)
+    scalar actual2 = log(value2)
+
+    # Then
+    assert(ok(actual1) == FALSE)
+    assert(actual2 == expected2)
+end function
+test_log()
+
+
+print "Succesfully finished tests."
+quit

@@ -1,0 +1,74 @@
+set verbose off
+clear
+set assert stop
+
+open denmark.gdt --quiet
+
+
+bundles Parameters = null
+Parameters = Parameters + _(value = {1, 2, 3, 4}', err_expected = 0)
+function void test_add_var_by_number_to_list (const list Data, const bundles P)
+    print "Start testing adding series to a list by ID reference."
+
+    loop foreach i P
+        # Given
+        list L = null
+        scalar n = rows(P[i].value[j])
+        loop j=1..n
+            # When
+            catch L += P[i].value[j]
+
+            # Then
+            assert($error == P[i].err_expected)
+        endloop
+    endloop
+end function
+test_add_var_by_number_to_list(dataset, Parameters)
+
+
+bundles Parameters = null
+Parameters = Parameters + _(value = {1, 2, 3, 4}', err_not_expected = FALSE)
+function void test_add_var_by_num_to_na_lists (const list Data, const bundles P)
+    print "Start testing adding series to an array of lists by ID reference."
+
+    print "Run with null list array."
+    loop foreach i P
+        # Given
+        lists L = null
+
+        scalar n = rows(P[i].value[j])
+        loop j=1..n
+            # When
+            catch list L[1] += P[i].value[j]
+
+            # Then
+            assert($error != P[i].err_not_expected)
+        endloop
+    endloop
+end function
+test_add_var_by_num_to_na_lists(dataset, Parameters)
+
+
+bundles Parameters = null
+Parameters = Parameters + _(value = {1, 2, 3, 4}', err_expected = FALSE)
+function void test_add_var_by_num_to_lists (const list Data, const bundles P)
+    print "Run with list array of dimension 1."
+    loop foreach i P
+        # Given
+        lists L = array(1)
+
+        scalar n = rows(P[i].value[j])
+        loop j=1..n
+            # When
+            catch list L[1] += P[i].value[j]
+
+            # Then
+            assert($error == P[i].err_expected)
+        endloop
+    endloop
+end function
+test_add_var_by_num_to_lists(dataset, Parameters)
+
+
+print "Succesfully finished tests."
+quit

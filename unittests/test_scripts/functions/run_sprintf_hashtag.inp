@@ -1,0 +1,23 @@
+/*
+Background: https://sourceforge.net/p/gretl/bugs/296/
+*/
+set verbose off
+clear
+set assert stop
+
+
+string folder = "Hansl\Gretl/witch"
+catch folder = strsub(folder, sprintf("\\"), "/") #
+if $error
+    stop
+endif
+
+catch folder = sprintf("\\") #
+if $error
+    stop
+endif
+
+
+
+print "Succesfully finished tests."
+quit

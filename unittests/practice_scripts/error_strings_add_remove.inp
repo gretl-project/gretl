@@ -1,0 +1,25 @@
+clear
+set verbose off
+set assert stop
+
+print "Experiment 1"
+strings S = defarray("a")
+catch S -= "a"
+assert($error == FALSE)
+print S
+
+print "Experiment 2"
+strings S = defarray("a", "b")
+catch S -= "a"
+assert($error == FALSE)
+print S
+
+print "Experiment 3"
+strings S = defarray("a", "b")
+catch S -= "b"
+assert($error == FALSE)
+print S
+
+
+print "Successfully finished tests."
+quit

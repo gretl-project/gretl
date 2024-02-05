@@ -1,0 +1,93 @@
+set verbose off
+clear
+set assert stop
+
+string PkgName = "assertion"
+pkg query @PkgName --quiet
+bundle Pkg = $result
+if !nelem(Pkg)
+    pkg install extra
+    pkg install @PkgName
+endif
+include extra.gfn
+include assertion.gfn
+
+
+function void test_polyfit (const bundles P)
+    print "Start testing function polyfit()."
+
+    loop foreach i P
+        print i
+
+        # Given
+        series y = P[i].y
+        series expected = P[i].expected
+
+        # When
+        series actual = polyfit(y, P[i].order)
+
+        print actual expected -o
+
+        # Then
+        assert_almost_equal_num(sum(actual - expected), 0, 10e-15)
+    endloop
+end function
+
+
+# =============
+# Panel dataset
+# =============
+nulldata 8 --preserve
+setobs 4 1:1 --stacked-time-series
+
+bundles Params = null
+Params = Params + _(y = {1; 2; 3; 4; 2; 2; 2; 2},\
+                    expected = {1; 2; 3; 4; 2; 2; 2; 2},\
+                    order = 1)
+Params = Params + _(y = {1; 2; 4; 8; 2; 4; 8; 16},\
+                    expected = {0.3; 2.6; 4.9; 7.2; 0.6; 5.2; 9.8; 14.4},\
+                    order = 2)
+Params = Params + _(y = {1; 2; 3; 4; 2; 2; 2; 2},\
+                    expected = {1; 2; 3; 4; 2; 2; 2; 2},\
+                    order = 3)
+
+Params = Params + _(y = {NA; 2; 3; 4; 2; 2; 2; 2},\
+                    expected = {NA; NA; NA; NA; 2; 2; 2; 2},\
+                    order = 1)
+Params = Params + _(y = {1; 2; 4; NA; 2; 4; 8; 16},\
+                    expected = {NA; NA; NA; NA; 0.6; 5.2; 9.8; 14.4},\
+                    order = 2)
+
+print "*** Start test for panel dataset ***"
+test_polyfit(Params)
+
+
+# =============
+# Time-series dataset
+# =============
+nulldata 4 --preserve
+setobs 1 1 --time-series
+
+bundles Params = null
+Params = Params + _(y = {1; 2; 3; 4},\
+                    expected = {1; 2; 3; 4},\
+                    order = 1)
+Params = Params + _(y = {1; 2; 4; 8},\
+                    expected = {0.3; 2.6; 4.9; 7.2},\
+                    order = 2)
+Params = Params + _(y = {1; 2; 3; 4},\
+                    expected = {1; 2; 3; 4},\
+                    order = 3)
+
+Params = Params + _(y = {NA; 2; 3; 4},\
+                    expected = {NA; 2; 3; 4},\
+                    order = 1)
+Params = Params + _(y = {1; 2; 4; NA},\
+                    expected = {1; 2; 4; NA},\
+                    order = 2)
+
+print "*** Start test for time-series dataset ***"
+test_polyfit(Params)
+
+print "Succesfully finished tests."
+quit

@@ -1,0 +1,37 @@
+set verbose off
+clear
+set assert stop
+
+
+open denmark.gdt --quiet
+list L = LRM LRY
+
+function void test_system_t1_and_t2_var (const list L)
+    print "Start testing $system.t1 and $system.t2 for var command"
+    /* https://gretlml.univpm.it/hyperkitty/list/gretl-devel@gretlml.univpm.it/message/CV2XCK3YS6GZQQQFRW5BWDMBS733VGI4/ */
+
+    # Given
+    scalar lag = 2
+    scalar expected_t1_obsnum = $t1
+    string expected_t1_obslabel = obslabel($t1)
+    scalar expected_t2_obsnum = $t2
+    string expected_t2_obslabel = obslabel($t2)
+
+    # When
+    var lag L --silent
+    scalar actual_t1_obsnum = $system.sample_t1
+    string actual_t1_obslabel = obslabel($system.sample_t1)
+    scalar actual_t2_obsnum = $system.sample_t2
+    string actual_t2_obslabel = obslabel($system.sample_t2)
+
+    # Then
+    assert(actual_t1_obsnum == expected_t1_obsnum)
+    assert(actual_t2_obsnum == expected_t2_obsnum)
+    assert(actual_t1_obslabel == expected_t1_obslabel)
+    assert(actual_t2_obslabel == expected_t2_obslabel)
+end function
+test_system_t1_and_t2_var(L)
+
+
+print "Successfully finished tests."
+quit

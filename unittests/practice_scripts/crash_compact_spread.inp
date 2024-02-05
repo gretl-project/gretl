@@ -1,0 +1,12 @@
+set verbose off
+/*
+Replicating the script through GUI let to a crash:
+https://gretlml.univpm.it/hyperkitty/list/gretl-users@gretlml.univpm.it/message/IWONW3ZWCV5BK7WC7M6MFLR4EKAPGHT6/
+*/
+
+T = smplspan("1980:1", "2017:4", 4)
+nulldata T --preserve
+setobs 4 1980:1
+open fedstl.bin
+data unrate cpiaucsl --compact=spread
+print --byobs

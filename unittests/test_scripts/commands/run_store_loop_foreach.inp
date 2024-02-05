@@ -1,0 +1,46 @@
+set verbose off
+clear
+set assert stop
+
+
+# Global parameters
+matrices M = array(2)
+M[1] = mnormal(3,2)
+M[2] = mnormal(3,2)
+strings S = defarray("A", "B", "C")
+bundle b = _(A = 1, B = 2)
+bundles B = array(2)
+B[1] = b
+B[2] = b
+
+
+bundles Parameters = array()
+Parameters = Parameters + _(matrices = M)
+Parameters = Parameters + _(strings = S)
+Parameters = Parameters + _(bundle = b)
+Parameters = Parameters + _(bundles = B)
+function void test_foreach_loop (const bundles P)
+    print "Start testing foreach-loop."
+
+    loop i=1..nelem(P)
+        # Given
+        bundle btmp = null
+        btmp = P[i]
+        printf "Run for %s:\n", getkeys(btmp)[1]
+        scalar expected = nelem(btmp)
+        scalar actual = 0
+
+        # When
+        loop foreach j btmp
+            actual++
+        endloop
+
+        # Then
+        assert(actual == expected)
+    endloop
+end function
+test_foreach_loop(Parameters)
+
+
+print "Succesfully finished tests."
+quit

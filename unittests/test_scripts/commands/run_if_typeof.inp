@@ -1,0 +1,42 @@
+/*
+  Reported by Marcin:
+  https://gretlml.univpm.it/hyperkitty/list/gretl-devel@gretlml.univpm.it/message/CF6NLHNTBZKRGOR2VY4R4SYZG25ND5ZN/
+*/
+clear
+set verbose off
+
+function void FOO (bundle UserOpts)
+    bundle Overloadable
+    string arg_name, type_of
+    strings OverloadableKeys
+
+    Overloadable["bic_type"] = _(bic=1, hbic=2, ibic=3)
+    Overloadable["model_prior"] = _(binomial=1, betabinomial=2)
+    Overloadable["with_const"] = _(never=0, always=1, canbedropped=2)
+
+    OverloadableKeys = getkeys(Overloadable)
+
+    loop i=1..nelem(OverloadableKeys) --quiet
+        arg_name = OverloadableKeys[i]
+        if inbundle(UserOpts, arg_name)
+            if typeof(UserOpts[arg_name]) == 4
+                type_of = "string"
+            else
+                type_of = "non-string"
+            endif
+            printf "Typeof %s is %s\n", arg_name, type_of
+        endif
+    endloop
+end function
+
+printf "The first examle:\n"
+FOO(_(bic_type="bic", with_const=0))
+
+printf "\nThe second examle:\n"
+FOO(_(bic_type="bic", model_prior="binomial", with_const="always"))
+
+printf "\nThe third examle:\n"
+FOO(_(bic_type="bic", model_prior="binomial", with_const=0)) 
+
+print "Successfully finished tests."
+quit

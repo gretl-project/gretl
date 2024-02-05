@@ -1,0 +1,113 @@
+set verbose off
+clear
+set assert stop
+
+/*
+Bug reported here:
+https://gretlml.univpm.it/hyperkitty/list/gretl-devel@gretlml.univpm.it/thread/5DF74WAG2ONFVHTSIG7BL42A3HJXQ4OT/
+*/
+
+THRESHOLD_DATE = 20210301
+INIT_DATE = "2020:1"
+
+open grunfeld.gdt --quiet --preserve
+setobs 4 "@INIT_DATE" --panel-time
+
+series unitid = $unit
+catch series obsdate = $obsdate
+
+assert($error == FALSE)
+
+
+function matrices statio_contrasts_test2(series y, int target_group,
+                                        int start_treatment)
+
+    # We assume a panel, and that wanted groups (donors) have been
+    # preselected by sample restriction.
+    # The target group is compared with the other N groups.
+    #
+    # Returns: a matrix array with the test results and its implications
+    #  for the candidate donors:
+    #
+    #  1: the group IDs (in a vector) which are _not_ rejected at 10%
+    #  2: the group IDs ...                                ... at 5%
+    #  3: the group IDs ...                                ... at 1%
+    #  4: the test statistics, p-values (when available), and rejection step
+    #   1st col group id, 2nd col teststat, 3rd col pval, 4th col 0/1/2/3
+    #   (pvalue may be NA due to underlying kpss output, because p-values
+    #    are only provided between 10% and 1%.)
+    #
+    # TODO: allow seasonal dummies
+    # FIXME: rather use an options bundle
+
+    # initialize the date information in ISO format
+    series date = $obsdate # getdateser()
+
+    series unit = $unit
+    series before = date < start_treatment
+    matrix unitnums = values(unit)
+    errorif( !sum(unitnums .= target_group), "target_group number not found in sample")
+
+    N = nelem(unitnums) - 1
+
+    # retain only the partners, not the target
+    unitnums = selifr(unitnums, unitnums .!= target_group)
+
+    # initialize the output container,
+    # 1st col group id, 2nd col teststat, 3rd col pval,
+    # 4th col:  can be 0, 1 (10% only), 2 (5% only), or 3 (1%)
+    matrix results = unitnums ~ mshape(NA, N, 3)
+
+    # create the negative of the target_group for calculating the cross-diff
+    # (the y of the target group isn't needed for anything else...)
+    smpl unit == target_group --restrict
+    y = -y
+    smpl full
+
+    # analyze all the (potential) donors
+    loop i = 1..N
+        series contrast = NA    # reset after each iteration
+        donor = unitnums[i]
+        smpl unit == donor || unit == target_group --restrict
+        smpl before --restrict
+
+        # calculate the pairwise cross-difference
+        # (given the minus of the target_group above)
+        contrast = pxsum(y)
+        # narrow down on a single time series (single group)
+        smpl unit == target_group --restrict
+
+        # conduct the test (with auto bandwidth choice)
+        kpss -1 contrast --quiet
+        results[i, 2] = $test
+        results[i, 3] = $pvalue
+        results[i, 4] = sum($test .> kpsscrit($nobs, FALSE))
+
+        smpl full
+    endloop
+
+    # construct the different sets of "surviving" donors
+    return defarray( \
+      selifr(unitnums, results[,4] .= 0),  \
+      selifr(unitnums, results[,4] .<= 1), \
+      selifr(unitnums, results[,4] .<= 2), \
+      results)
+end function
+
+
+smpl full
+smpl obsdate < max(obsdate) --restrict
+
+# need to reinstate the panel information after the restriction
+setobs 4 "@INIT_DATE" --panel-time
+series datecheck = $obsdate
+assert($error == FALSE)
+
+matrices whichdonors = statio_contrasts_test2(invest, 5, THRESHOLD_DATE)
+series datecheck = $obsdate  # fails
+assert($error == FALSE)
+
+
+
+print "Successfully finished tests."
+quit

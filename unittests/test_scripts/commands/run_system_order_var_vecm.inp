@@ -1,0 +1,72 @@
+set verbose off
+clear
+set assert stop
+
+open denmark.gdt --quiet
+
+# Parameters
+list L = LRM LRY
+scalar LAGORDER_MIN = 0
+scalar LAGORDER_MAX = 3
+scalar RANK = 1
+
+
+function void print_err (const int actual, const int expected)
+    errorif(TRUE,\
+            printf("\nExpected lagorder = %d but got lagorder = %d instead.\n", expected, actual))
+end function
+
+
+function void test_var (const list L,
+                        const int lagorder_min[0::],
+                        const int lagorder_max[0::])
+    print "Start testing $system.order for VAR model"
+
+    loop i=lagorder_min..lagorder_max
+
+        # Given
+        scalar expected = $i
+        var $i L --silent
+
+        # When
+        actual = $system.order
+
+        # Then
+        catch assert(actual == expected)
+        if $error
+            print_err(actual, expected)
+        endif
+    endloop
+end function
+test_var(L, LAGORDER_MIN, LAGORDER_MAX)
+
+
+function void test_vecm (const list L,
+                         const int lagorder_min[0::],
+                         const int lagorder_max[0::],
+                         const int rank[1::])
+    print "Start testing $system.order for VEC model"
+
+    loop i=lagorder_min..lagorder_max
+
+        # Given
+        scalar expected = $i
+        vecm $i rank L --silent
+
+        # When
+        actual = $system.order
+
+        # Then
+        catch assert(actual == expected)
+        if $error
+            print_err(actual, expected)
+        endif
+    endloop
+end function
+test_vecm(L, xmax(1, LAGORDER_MIN), LAGORDER_MAX, RANK)
+
+
+
+
+print "Successfully finished tests."
+quit

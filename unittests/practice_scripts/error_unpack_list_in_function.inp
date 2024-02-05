@@ -1,0 +1,22 @@
+/*
+Failed due to a bug in commit e926c9402b4d on July 26 2023. Fixed on 8th of Aug. 2023.
+*/
+clear
+set verbose off
+set assert stop
+
+function void unpack_list_in_func (const list L)
+   loop foreach y L
+      loop foreach x L
+         list yx = L.$x L.$y
+         list yx print
+      endloop
+   endloop
+end function
+
+open data4-1
+list L = price sqft baths
+unpack_list_in_func(L)
+
+print "Successfully finished tests."
+quit

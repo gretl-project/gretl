@@ -1,0 +1,33 @@
+set verbose off
+clear
+
+pkg install extra  # PanelTools depends on this addon
+
+string PkgName = "PanelTools"
+pkg query @PkgName --quiet
+bundle Pkg = $result
+if !nelem(Pkg)
+    pkg install @PkgName
+    include @PkgName.gfn
+endif
+
+
+open grunfeld --quiet
+
+setopt gridplot persist --height=700 --width=1200 --fontsize=10
+
+gpbuild Pans
+   boxplot invest
+   panplot invest --means
+   panplot_quantile(invest, TRUE)
+   bundle Plot = _(title = "Cross-sectional quantiles over time",
+     key_position = "outside below",
+     yrange_max = 1250,
+     quantiles = {0.15, 0.5, 0.88})
+   panplot_quantile(invest, TRUE, Plot)
+end gpbuild
+gridplot Pans --output=display
+
+
+print "Successfully finished tests."
+quit

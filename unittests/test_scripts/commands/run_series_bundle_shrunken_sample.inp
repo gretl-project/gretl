@@ -1,0 +1,21 @@
+set verbose off
+clear
+set assert stop
+nulldata 10
+
+# Series with NAs
+bundle B = null
+series y_full = index % 3 ? 1 : NA
+series B.y = y_full
+
+# Restrict sample
+smpl 1 5 --permanent
+
+catch eval B.y          # this failed before 2022c
+assert($error == FALSE)
+
+catch series y_restricted  = B.y
+assert($error != FALSE)
+
+print "Successfully finished tests."
+quit

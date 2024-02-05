@@ -1,0 +1,16 @@
+# Example using the gridplot command without calling
+# the gpbuild-block
+clear
+set verbose off
+open data4-10 --quiet
+
+strings S = array(2)
+
+gnuplot ENROLL CATHOL --outbuf=S[1]
+gnuplot ENROLL INCOME --outbuf=S[2]
+
+print S
+gridplot S --output=display
+
+print "Successfully finished tests."
+quit

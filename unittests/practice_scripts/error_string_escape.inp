@@ -1,0 +1,44 @@
+clear
+set verbose off
+set assert stop
+
+
+function string cs (string s)
+    return s
+end function
+
+
+function void test_plain (void)
+    print "Start testing not calling cs()"
+
+    # Given
+    string input = sprintf("\"")
+    string expected = "\""
+
+    # When
+    string actual = input
+
+    # Then
+    assert(expected == actual)
+end function
+test_plain()
+
+
+function void test_via_function (void)
+    print "Start testing calling cs()"
+
+    # Given
+    string input = sprintf("\"")
+    string expected = "\""
+
+    # When
+    string actual = cs(input)
+
+    # Then
+    assert(expected == actual)
+end function
+test_via_function()
+
+
+print "Successfully finished tests."
+quit

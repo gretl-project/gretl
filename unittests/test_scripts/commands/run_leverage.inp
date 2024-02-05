@@ -1,0 +1,45 @@
+set verbose off
+clear
+set assert stop
+
+open data4-10 --quiet
+list Current = dataset
+
+strings expected_colnames = defarray("leverage", "influence", "studres")
+
+ols ENROLL const CATHOL PUPIL WHITE --quiet
+leverage --save --quiet
+
+Result = $result
+strings actual_colnames = cnameget(Result)
+
+series h = Result[,1]
+
+list New = lever influ
+
+/*
+Besides the distinction between "internally" and "externally" studentized residuals there is a (quantitatively minor) difference between the formula for the latter given in wikipedia and that employed in R's rstudent() function. For discussion of the latter see
+
+https://stats.stackexchange.com/questions/204708/is-studentized-residuals-v-s-standardized-residuals-in-lm-model
+
+And whaddya know? Our original code for standardized residuals agrees exactly with rstudent(), while our new "corrected" code (per wikipedia) is close but not an exact match.
+
+# series studres = $uhat / ($sigma * sqrt(1 - h))
+# New += studres
+
+--> Thus, we do not test for equivalence of studres here.
+*/
+
+# Compare results
+loop foreach i New
+    print "Compare column '$i'"
+    assert(sum({$i} .- Result[,i]) == 0)
+endloop
+
+
+loop foreach i expected_colnames
+    assert("$i" == actual_colnames[i])
+endloop
+
+print "Succesfully finished tests."
+quit

@@ -1,0 +1,28 @@
+quit
+
+# Failure is expected since plot_season_plot() output already contains
+# a multiplot specification.
+
+set verbose off
+clear
+open data9-13.gdt -p -q  # monthly
+series y = bkret
+
+include season_plot.gfn
+
+setopt gridplot persist --height=700 --width=1200 --fontsize=10
+
+bundle b = set_season_plot(y)
+
+
+gpbuild Plots
+   plot_season_plot(b, "obsmajor")
+   plot_season_plot(b, "obsminor")
+   if max($pd .= {5,6,7})
+      plot_season_plot(b, "obsmicro", "season_plot_obsmicro.png")
+   endif
+end gpbuild
+gridplot Plots --output=display
+
+print "Successfully finished tests."
+quit
