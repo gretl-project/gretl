@@ -1292,14 +1292,15 @@ void free_freq (FreqDist *freq)
     free(freq);
 }
 
-static FreqDist *freq_new (const char *vname)
+static FreqDist *freq_new (const DATASET *dset, int v)
 {
     FreqDist *freq;
 
     freq = malloc(sizeof *freq);
     if (freq == NULL) return NULL;
 
-    strcpy(freq->varname, vname);
+    strcpy(freq->varname, dset->varname[v]);
+    strcpy(freq->gname, series_get_graph_name(dset, v));
 
     freq->midpt = NULL;
     freq->endpt = NULL;
@@ -1811,7 +1812,7 @@ FreqDist *get_string_freq (int v, const DATASET *dset,
     char **S;
     int i, t, n, ns;
 
-    freq = freq_new(dset->varname[v]);
+    freq = freq_new(dset, v);
     if (freq == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -1879,7 +1880,7 @@ FreqDist *get_discrete_freq (int v, const DATASET *dset,
     double last;
     int i, t, nv;
 
-    freq = freq_new(dset->varname[v]);
+    freq = freq_new(dset, v);
     if (freq == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -2028,7 +2029,7 @@ FreqDist *get_freq (int varno, const DATASET *dset,
 	return get_discrete_freq(varno, dset, opt, err);
     }
 
-    freq = freq_new(dset->varname[varno]);
+    freq = freq_new(dset, varno);
     if (freq == NULL) {
 	*err = E_ALLOC;
 	return NULL;
