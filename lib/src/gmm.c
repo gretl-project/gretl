@@ -68,7 +68,21 @@ struct ocset_ {
 
 #define using_HAC(s) (s->oc->hinfo.kern >= KERNEL_BARTLETT)
 
-/* destructor for set of O.C. info */
+/* destructor apparatus for set of O.C. info */
+
+static void destroy_oc_strings (char **strs, int nstrs)
+{
+    int i;
+
+    for (i=0; i<nstrs; i++) {
+        if (!strcmp(strs[i], "oc_lhs_tmp___") ||
+            !strcmp(strs[i], "oc_rhs_tmp___")) {
+            user_var_delete_by_name(strs[i], NULL);
+        }
+        free(strs[i]);
+    }
+    free(strs);
+}
 
 void oc_set_destroy (ocset *oc)
 {
@@ -85,13 +99,11 @@ void oc_set_destroy (ocset *oc)
     free(oc->ecols);
 
     if (oc->lnames != NULL) {
-	strings_array_free(oc->lnames, oc->n_names);
+        destroy_oc_strings(oc->lnames, oc->n_names);
     }
-
     if (oc->rnames != NULL) {
-	strings_array_free(oc->rnames, oc->n_names);
+	destroy_oc_strings(oc->rnames, oc->n_names);
     }
-
     if (!oc->userwts) {
 	/* we used auto-generated weights */
 	gretl_matrix_free(oc->W);
@@ -652,6 +664,36 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
     return err;
 }
 
+/* construct a list from two or more series names */
+
+static int get_oc_list (gchar **ps, GretlType *pt,
+                        const DATASET *dset, int rhs)
+{
+    int *list = NULL;
+    gchar *lname = NULL;
+    int err = 0;
+
+    list = gretl_list_from_varnames(*ps, dset, &err);
+
+    if (!err) {
+        if (rhs) {
+            lname = g_strdup("oc_rhs_tmp___");
+        } else {
+            lname = g_strdup("oc_lhs_tmp___");
+        }
+        err = user_var_add(lname, GRETL_TYPE_LIST, list);
+        user_var_privatize_by_name(lname);
+    }
+
+    if (!err) {
+        g_free(*ps);
+        *ps = lname;
+        *pt = GRETL_TYPE_LIST;
+    }
+
+    return err;
+}
+
 /* Add a set of orthogonality conditions to a GMM specification.
    The source command takes the form:
 
@@ -662,11 +704,12 @@ int
 nlspec_add_orthcond (nlspec *s, const char *str,
 		     const DATASET *dset)
 {
-    char lname[VNAMELEN];
-    char rname[VNAMELEN];
-    char fmt[16];
-    int ltype = GRETL_TYPE_NONE;
-    int rtype = GRETL_TYPE_NONE;
+    const char *p;
+    gchar *lhs = NULL;
+    gchar *rhs = NULL;
+    GretlType ltype = GRETL_TYPE_NONE;
+    GretlType rtype = GRETL_TYPE_NONE;
+    int nl, nr;
     int n, err = 0;
 
     if (s->ci != GMM) {
@@ -685,10 +728,31 @@ nlspec_add_orthcond (nlspec *s, const char *str,
 
     str += strspn(str, " ");
 
-    sprintf(fmt, "%%%d[^; ] ; %%%ds", VNAMELEN-1, VNAMELEN-1);
-
-    if (sscanf(str, fmt, lname, rname) != 2) {
+    p = strchr(str, ';');
+    if (p == NULL) {
 	return E_PARSE;
+    }
+
+    nl = p - str;
+    nr = strlen(str) - nl - 1;
+    if (nl == 0 || nr == 0) {
+	return E_PARSE;
+    }
+
+    lhs = g_strstrip(g_strndup(str, nl));
+    rhs = g_strstrip(g_strndup(p+1, nr));
+
+    if (strchr(lhs, ' ') != NULL) {
+        err = get_oc_list(&lhs, &ltype, dset, 0);
+        if (err) {
+            goto bailout;
+        }
+    }
+    if (strchr(rhs, ' ') != NULL) {
+        err = get_oc_list(&rhs, &rtype, dset, 1);
+        if (err) {
+            goto bailout;
+        }
     }
 
     if (s->oc == NULL) {
@@ -698,20 +762,22 @@ nlspec_add_orthcond (nlspec *s, const char *str,
 	}
     }
 
-    ltype = oc_get_type(lname, dset, &err);
+    if (ltype == GRETL_TYPE_NONE) {
+        ltype = oc_get_type(lhs, dset, &err);
+    }
 
-    if (!err) {
-	rtype = oc_get_type(rname, dset, &err);
+    if (!err && rtype == GRETL_TYPE_NONE) {
+	rtype = oc_get_type(rhs, dset, &err);
     }
 
     if (!err) {
-	err = oc_add_matrices(s, ltype, lname, rtype, rname, dset);
+	err = oc_add_matrices(s, ltype, lhs, rtype, rhs, dset);
     }
 
     if (!err && gretl_in_gui_mode()) {
 	n = s->oc->n_names;
-	strings_array_add(&s->oc->lnames, &s->oc->n_names, lname);
-	strings_array_add(&s->oc->rnames, &n, rname);
+	strings_array_add(&s->oc->lnames, &s->oc->n_names, lhs);
+	strings_array_add(&s->oc->rnames, &n, rhs);
     }
 
     if (err) {
@@ -719,6 +785,11 @@ nlspec_add_orthcond (nlspec *s, const char *str,
 	oc_set_destroy(s->oc);
 	s->oc = NULL;
     }
+
+ bailout:
+
+    g_free(lhs);
+    g_free(rhs);
 
     return err;
 }
