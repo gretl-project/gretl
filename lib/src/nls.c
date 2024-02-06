@@ -3609,6 +3609,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 
     destroy_private_scalars();
     clear_nlspec(spec);
+    destroy_private_lists();
 
 #if NLS_DEBUG
     fprintf(stderr, "real_nl_model: finishing, dropping %d series\n",

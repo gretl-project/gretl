@@ -70,20 +70,6 @@ struct ocset_ {
 
 /* destructor apparatus for set of O.C. info */
 
-static void destroy_oc_strings (char **strs, int nstrs)
-{
-    int i;
-
-    for (i=0; i<nstrs; i++) {
-        if (!strcmp(strs[i], "oc_lhs_tmp___") ||
-            !strcmp(strs[i], "oc_rhs_tmp___")) {
-            user_var_delete_by_name(strs[i], NULL);
-        }
-        free(strs[i]);
-    }
-    free(strs);
-}
-
 void oc_set_destroy (ocset *oc)
 {
     if (oc == NULL) {
@@ -99,10 +85,10 @@ void oc_set_destroy (ocset *oc)
     free(oc->ecols);
 
     if (oc->lnames != NULL) {
-        destroy_oc_strings(oc->lnames, oc->n_names);
+        strings_array_free(oc->lnames, oc->n_names);
     }
     if (oc->rnames != NULL) {
-	destroy_oc_strings(oc->rnames, oc->n_names);
+	strings_array_free(oc->rnames, oc->n_names);
     }
     if (!oc->userwts) {
 	/* we used auto-generated weights */

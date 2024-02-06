@@ -1461,6 +1461,13 @@ int destroy_private_matrices (void)
                                            0);
 }
 
+int destroy_private_lists (void)
+{
+    return real_destroy_user_vars_at_level(LEV_PRIVATE,
+                                           GRETL_TYPE_LIST,
+                                           0);
+}
+
 int delete_user_vars_of_type (GretlType type, PRN *prn)
 {
     int err = 0;

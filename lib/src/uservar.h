@@ -135,6 +135,8 @@ int destroy_user_vars_at_level (int level);
 
 int destroy_private_matrices (void);
 
+int destroy_private_lists (void);
+
 int destroy_private_uvars (void);
 
 int delete_user_vars_of_type (GretlType type, PRN *prn);
