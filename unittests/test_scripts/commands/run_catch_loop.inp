@@ -1,0 +1,85 @@
+/* A bug pertaining to the use of the "catch" modifier in a loop crept in between the 2022b and 2022c releases of gretl. The effect was that on the second and subsequent iterations of the loop "catch" would not work as intended (would fail to block an error) -- unless, oddly enough, "catch" had to deal with an error condition on the first iteration, in which case it would work correctly thereafter. */
+set verbose off
+clear
+set assert stop
+
+open denmark --quiet
+
+
+function void test_catch_noloop (const list L)
+    print "Start testing function test_catch_noloop()"
+
+    # Given
+    scalar expected_err_tmax = 0
+    scalar expected_err_tmax_plus_1 = 2
+
+    # When
+    catch value = L.LRM[$tmax]
+    scalar actual_err_tmax = $error
+
+    catch value = L.LRM[$tmax + 1]
+    scalar actual_err_tmax_plus_1 = $error
+
+    # Then
+    assert(actual_err_tmax == expected_err_tmax)
+    assert(actual_err_tmax_plus_1 == expected_err_tmax_plus_1)
+end function
+test_catch_noloop(dataset)
+
+
+function void test_catch_loop (const list L)
+    print "Start testing function test_catch_loop()"
+
+    # Given + When
+    loop i = $tmax..($tmax + 1)
+        catch value = L.LRM[i]
+        scalar err = $error # This line necessary to provoke the problem!
+    endloop
+end function
+test_catch_loop(dataset)
+
+
+function void test_catch_loop_eval (const list L)
+    print "Start testing function test_catch_loop_eval()"
+
+    # Given + When
+    loop i = $tmax..($tmax + 1)
+        catch value = L.LRM[i]
+        eval $error # This line necessary to provoke the problem!
+    endloop
+end function
+test_catch_loop_eval(dataset)
+
+
+function void test_catch_loop_noeval (const list L)
+    print "Start testing function test_catch_loop_noeval()"
+
+    # Given + When
+    loop i = $tmax..($tmax + 1)
+        catch value = L.LRM[i]
+    endloop
+end function
+test_catch_loop_noeval(dataset)
+
+
+function void test_catch_while_loop_noeval (const list L)
+    print "Start testing function test_catch_while_loop_noeval()"
+
+    scalar index = $tmax
+
+    loop while index <= ($tmax + 1)
+        catch value = L.LRM[index]  # should not fail
+        index++
+    endloop
+end function
+test_catch_while_loop_noeval(dataset)
+
+
+
+
+
+
+
+
+print "Successfully finished tests."
+quit

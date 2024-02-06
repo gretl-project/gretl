@@ -239,12 +239,12 @@ numerical approximation to the Hessian.
 \label{sec:ml-gamma}
 
 Suppose we have a sample of $T$ independent and identically
-distributed observations from a Gamma distribution. The density
+distributed observations from a Gamma distribution with shape
+parameter $k$ and scale parameter $\theta$. The density
 function for each observation $x_t$ is
 \begin{equation}
   \label{eq:gammadens}
-  f(x_t) = \frac{\alpha^p}{\Gamma(p)} x_t^{p-1} \exp\left({-\alpha
-      x_t}\right)
+  f(x_t) = \frac{1}{\Gamma(k) \theta^k} \cdot \,x_t^{k-1} \,e^{-x_t/\theta}
 \end{equation}
 The log-likelihood for the entire sample can be written as the
 logarithm of the joint density of all the observations. Since these
@@ -252,110 +252,138 @@ are independent and identical, the joint density is the product of the
 individual densities, and hence its log is
 \begin{equation}
   \label{eq:gammaloglik}
-  \LogLik(\alpha, p) = \sum_{t=1}^T \log \left[ \frac{\alpha^p}{\Gamma(p)} x_t^{p-1} \exp\left({-\alpha
-      x_t}\right) \right] = 
+  \LogLik(k, \theta) = \sum_{t=1}^T \log \left[ \frac{x_t^{k-1}
+      e^{-x_t/\theta}}{\Gamma(k) \theta^k} \right] =
       \sum_{t=1}^T \ell_t
 \end{equation}
 where 
 \[
-  \ell_t = p \cdot \log (\alpha x_t) - \gamma(p) - \log x_t - \alpha x_t
+  \ell_t = k \, \log (x_t/\theta) - \gamma(k) - \log x_t - x_t/\theta
 \]
 and $\gamma(\cdot)$ is the log of the gamma function.  In order to
-estimate the parameters $\alpha$ and $p$ via ML, we need to maximize
-(\ref{eq:gammaloglik}) with respect to them. The corresponding
-gretl code snippet is
+estimate the parameters $k$ and $\theta$ via ML, we need to maximize
+(\ref{eq:gammaloglik}) with respect to them. Here's a simple snippet
+of gretl code to do the job.
 
 \begin{code}
-scalar alpha = 1
-scalar p = 1
+scalar k = 1
+scalar theta = 1
 
-mle logl =  p*ln(alpha * x) - lngamma(p) - ln(x) - alpha * x 
-  params alpha p
+mle logl =  k*ln(x/theta) - lngamma(k) - ln(x) - x/theta 
+  params k theta
 end mle 
 \end{code}
 
-The first two statements
+The first two statements above are necessary to ensure that the
+variables \texttt{k} and \texttt{theta} exist before the computation
+of \texttt{logl} is attempted. Inside the \texttt{mle} block these
+variables (which could be either scalars, vectors or a combination of
+the two---see below for examples) are identified via the
+\texttt{params} keyword as the parameters that should be adjusted to
+maximize the likelihood.  Their values will be changed by the
+execution of the \texttt{mle} command; upon successful completion,
+they will be replaced by the ML estimates. We set the starting value
+to 1 for both; this is arbitrary, but does not matter much in this
+example (more on this later).
 
+The code above can be made more readable, and marginally more
+efficient, by defining a series to hold $x_t/\theta$, which we'll call
+\texttt{y}. This command can be embedded in the \texttt{mle} block as
+follows:
 \begin{code}
-alpha = 1
-p = 1
-\end{code}
-
-are necessary to ensure that the variables \texttt{alpha} and
-\texttt{p} exist before the computation of \texttt{logl} is
-attempted. Inside the \texttt{mle} block these variables (which could
-be either scalars, vectors or a combination of the two --- see below
-for an example) are identified as the parameters that should be
-adjusted to maximize the likelihood via the \texttt{params} keyword.
-Their values will be changed by the execution of the \texttt{mle}
-command; upon successful completion, they will be replaced by the ML
-estimates. The starting value is 1 for both; this is arbitrary and
-does not matter much in this example (more on this later).
-
-The above code can be made more readable, and marginally more
-efficient, by defining a variable to hold $\alpha \cdot x_t$. This
-command can be embedded in the \texttt{mle} block as follows:
-\begin{code}
-mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax 
-  series ax = alpha*x
+mle logl = p*ln(y) - lngamma(k) - ln(x) - y
+  series y = x/theta
   params alpha p
 end mle 
 \end{code}
-The variable \texttt{ax} is not added to the \texttt{params} list,
-of course, since it is just an auxiliary variable to facilitate
-the calculations.  You can insert as many such auxiliary lines
-as you require before the \texttt{params} line, with the restriction
-that they must contain either (a) commands to generate series,
-scalars or matrices or (b) print commands (which may be used to
-aid in debugging).
+You can insert as many such auxiliary lines as you require before the
+\texttt{params} line, with the restriction that they must contain
+either (a) commands to generate series, scalars or matrices or (b)
+\texttt{print} commands (which may be used to aid in debugging).
 
 In a simple example like this, the choice of the starting values is
-almost inconsequential; the algorithm is likely to converge no
-matter what the starting values are. However, consistent
-method-of-moments estimators of $p$ and $\alpha$ can be simply
-recovered from the sample mean $m$ and variance $V$: since it can be
-shown that
+almost inconsequential; the algorithm is likely to converge regardless
+of the initialization. However, consistent method-of-moments
+estimators of $k$ and $\theta$ can easily be recovered from the sample
+mean $m$ and variance $V$. It can be shown that
 \[
-  E(x_t) = p/\alpha \qquad  V(x_t) = p/\alpha^2
+  E(x_t) = k\theta \qquad  V(x_t) = k\theta^2
 \]
-it follows that the following estimators 
+hence the following estimators 
 \begin{eqnarray*}
-  \bar{\alpha} & = &  m/V \\
-  \bar{p} & = & m \cdot \bar{\alpha} 
+  \bar{\theta} & = & V/m \\
+  \bar{k} & = & m/\theta
 \end{eqnarray*}
-are consistent, and therefore suitable to be used as starting point
-for the algorithm.  The gretl script code then becomes
+are consistent, and therefore suitable to be used as a starting point
+for the algorithm.  The original initializers for $k$ and $\theta$
+could then be replaced by
 \begin{code}
 scalar m = mean(x)
-scalar alpha = m/var(x)
-scalar p = m*alpha
-
-mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax 
-  series ax = alpha*x
-  params alpha p
-end mle 
+scalar theta = m/var(x)
+scalar k = m/theta
 \end{code}
 
 Another thing to note is that sometimes parameters are constrained
-within certain boundaries: in this case, for example, both $\alpha$
-and $p$ must be positive numbers. Gretl does not check for this:
-it is the user's responsibility to ensure that the function is
-always evaluated at an admissible point in the parameter space during
-the iterative search for the maximum. An effective technique is to
-define a variable for checking that the parameters are admissible and
-setting the log-likelihood as undefined if the check fails. An
-example, which uses the conditional assignment operator, follows:
+within certain boundaries. In this case, for example, both Gamma
+parameters must be positive numbers. Gretl can't check for this
+automatically; it's the user's responsibility to ensure that the
+function is always evaluated at an admissible point in the parameter
+space during the iterative search for the maximum. An effective
+technique is to define a scalar variable that checks the validity of
+the parameters, and set the log-likelihood as undefined (\texttt{NA})
+if the check fails. To implement this, the mle block above could be
+modified as follows:
 \begin{code}
-scalar m = mean(x)
-scalar alpha = m/var(x)
-scalar p = m*alpha
-
-mle logl = check ? p*ln(ax) - lngamma(p) - ln(x) - ax : NA
-  series ax = alpha*x
-  scalar check = (alpha>0) && (p>0)
-  params alpha p
+mle logl = check ? p*ln(y) - lngamma(p) - ln(x) - y : NA
+  series y = x/theta
+  scalar check = k > 0 && theta > 0
+  params k theta
 end mle 
 \end{code}
+
+For reference, Listing~\ref{gamma-mle} presents a complete script that
+generates artificial Gamma data and obtains ML estimates of the
+parameters, employing the various refinements described above.
+
+\begin{script}[htbp]
+  \scriptcaption{ML estimation of Gamma parameters}
+  \label{gamma-mle}
+\begin{scode}
+# create an empty data set with 200 observations
+nulldata 200
+
+# fix a random seed for replicability
+set seed 1707138404
+
+# generate a Gamma random variable x with shape k = 3 and scale theta = 2
+series x = randgen(G, 3, 2)
+
+# initialize estimates via sample moments
+m = mean(x)
+theta = var(x) / m
+k = m / theta_hat
+
+mle logl = check ? k*ln(y) - lngamma(k) - ln(x) - y : NA
+   series y = x/theta
+   check = k > 0 && theta > 0
+   params k theta
+end mle
+\end{scode}
+  The \texttt{mle} output is:
+\begin{code}
+Model 1: ML, using observations 1-200
+logl = check ? k*ln(y) - lngamma(k) - ln(x) - y : NA
+Standard errors based on Outer Products matrix
+
+             estimate   std. error     z     p-value 
+  ---------------------------------------------------
+  k          3.28159     0.309764    10.59   3.18e-26 ***
+  theta      1.86066     0.181566    10.25   1.21e-24 ***
+
+Log-likelihood      -504.8970   Akaike criterion     1013.794
+Schwarz criterion    1020.391   Hannan-Quinn         1016.463
+\end{code}
+\end{script}
 
 \section{Stochastic frontier cost function}
 \label{sec:frontier}

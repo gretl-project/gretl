@@ -1,0 +1,33 @@
+set verbose off
+clear
+set assert stop
+
+function void test_if_NA (const strings comparisons)
+    print "Start testing if command with inequality statements"
+
+    loop i=1..nelem(comparisons)
+        # Given
+        scalar value = NA
+        string comparison = comparisons[i]
+
+        # When
+        scalar actual = @comparison
+
+        # Then
+        assert(missing(actual))
+    endloop
+end function
+
+strings comparisons = array(7)
+comparisons[1] = "value"
+comparisons[2] = "value < 0"
+comparisons[3] = "value > 0"
+comparisons[4] = "value == 0"
+comparisons[5] = "value <= 0"
+comparisons[6] = "value >= 0"
+comparisons[7] = "value != 0"
+
+test_if_NA(comparisons)
+
+print "Successfully finished tests."
+quit

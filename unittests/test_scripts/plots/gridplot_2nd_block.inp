@@ -1,0 +1,30 @@
+set verbose off
+clear
+open denmark --quiet
+
+# Fine tune the graph if wished
+setopt gridplot persist --height=700 --width=1200 --fontsize=10
+
+gpbuild MyPlots
+   setopt gnuplot persist --time-series --with-lines
+   gnuplot LRM { set title "foo" ; set yrange[10:12]; \
+     set ylabel "ylabel"; set linetype 1 lw 2 pt 6 lc rgb "blue" ; }
+   gnuplot LRY { set title "bar" ; set xlabel "xlabel"; }
+   gnuplot IBO { set title "baz" ; set grid ; }
+   boxplot diff(LRM) {set title "some boxplot"; set xlabel "x-label"; }
+end gpbuild
+
+gridplot MyPlots --output=display
+# gridplot MyPlots --output="my.pdf"
+# quit
+
+open grunfeld -q
+
+gpbuild Plots2
+   boxplot invest
+   panplot invest --means
+end gpbuild
+gridplot Plots2 --output=display
+
+print "Successfully finished tests."
+quit

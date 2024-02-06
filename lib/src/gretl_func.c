@@ -8426,8 +8426,11 @@ static int process_series_arg (fncall *call, fn_param *fp,
 {
     if (arg->type == GRETL_TYPE_USERIES) {
         /* an existing named series */
-        if (param_is_const(fp)) {
-            /* we can pass it by reference */
+        if (param_is_const(fp) && arg->val.idnum != 0) {
+            /* we can pass it by reference, if the series
+	       in question is not the one named "const",
+	       with ID number 0
+	    */
             return localize_series_ref(call, arg, fp, dset);
         } else {
             /* pass it by value */
@@ -9091,7 +9094,11 @@ static void push_series_to_caller (ufunc *u, fn_arg *arg, DATASET *dset)
 {
     int v = arg->val.idnum;
 
-    if (arg->upname == NULL) {
+    if (v == 0) {
+	/* this is a no-op */
+	return;
+    } else if (arg->upname == NULL) {
+	/* an internal error! */
         fprintf(stderr, "ERROR in push_series_to_caller: arg->upname is NULL\n");
         return;
     }
@@ -9100,7 +9107,7 @@ static void push_series_to_caller (ufunc *u, fn_arg *arg, DATASET *dset)
     if (series_get_stack_level(dset, v) < 0) {
         fprintf(stderr, "@@@ After decrement in %s, stack level=%d for %s @@@\n",
                 u->name, series_get_stack_level(dset, v), arg->upname);
-        /*_set_stack_level(dset, v, 0); */
+        /* set_stack_level(dset, v, 0); */
     }
     strcpy(dset->varname[v], arg->upname);
 }

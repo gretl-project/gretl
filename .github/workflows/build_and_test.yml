@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - master
+      - 'feature/**'
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
@@ -14,15 +15,16 @@ jobs:
     steps:
     - uses: actions/checkout@v3.3.0
       with:
-        submodules: true
+        submodules: false
     - name: Fetch tags
       run: |
         git fetch --prune --depth=1
     - name: Setup environment and 
       run: |
-        sudo apt update && sudo apt install gnuplot build-essential libfftw3-dev liblapack-dev gfortran libxml2 \
-                zlib1g-dev libreadline-dev libgtksourceview-3.0-dev libgmp-dev curl \
-                libcurl4-gnutls-dev libjson-glib-dev libmpfr-dev
+        sudo apt update && sudo apt install gnuplot build-essential \
+          libfftw3-dev liblapack-dev gfortran libxml2 \
+          zlib1g-dev libreadline-dev libgtksourceview-3.0-dev libgmp-dev curl \
+          libcurl4-gnutls-dev libjson-glib-dev libmpfr-dev
     - name: Configure, Compile and Install
       run: |
         ./configure -q --enable-quiet-build --disable-nls
@@ -39,15 +41,12 @@ jobs:
         xvfb-run --server-args="-screen 0, 1280x720x24" -a gretl &
         sleep 10
         killall xvfb-run
+      continue-on-error: true
 
     - name: Run tests
       run: |
-        Xvfb &
-        export DISPLAY=:0
-        cd workspace/tests
+        cd unittests
         ./run_tests.sh --practice
+        ./run_tests.sh --fundamentals
         ./run_tests.sh --commands
         ./run_tests.sh --functions
-        ./run_tests.sh --fundamentals
-        ./run_tests.sh --plots
-

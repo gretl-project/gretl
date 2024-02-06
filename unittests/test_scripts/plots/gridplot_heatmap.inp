@@ -1,0 +1,33 @@
+set verbose off
+clear
+
+string PkgName = "heatmap"
+pkg query @PkgName --quiet
+bundle Pkg = $result
+if !nelem(Pkg)
+    pkg install @PkgName
+    include @PkgName.gfn
+endif
+
+a = 0 # try different values between -1 and 1
+smooth = I(2) .* (1-a) + a
+X = conv2d(mnormal(30,30), smooth)
+
+# polyglot labels
+ilabs = defarray("uno", "due", "tre", "quattro", "cinque", "sei")
+flabs = defarray("un", "deux", "trois", "quatre", "cinq")
+r = nelem(ilabs)
+c = nelem(flabs)
+Mat = I(r,c) - 0.2 * exp( 0.3 * abs(seq(1,c) .- seq(1,r)'))
+cnameset(Mat, flabs)
+rnameset(Mat, ilabs)
+
+gpbuild Heats
+   heatmap(X)
+   heatmap(Mat, _(title="Just a title", zerowhite=1, do_labels=1))
+end gpbuild
+gridplot Heats --height=700 --width=1200 --fontsize=10 --output=display
+
+
+print "Successfully finished tests."
+quit

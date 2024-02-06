@@ -1,0 +1,16 @@
+set verbose off
+
+N = 100
+
+matrix center = sin(seq(1, N)/10)'
+matrix width = ones(N, 1)
+matrix bnd = center ~ width
+bundle b1 = _(bandmat="bnd", factor=1, color="blue", title="blue")
+bundle b2 = _(bandmat="bnd", factor=2, color="red", title="red")
+
+bundles bb = defarray(b1, b2)
+gnuplot --matrix=center --time-series --with-lines --bands=bb --output=display
+
+
+print "Successfully finished tests."
+quit

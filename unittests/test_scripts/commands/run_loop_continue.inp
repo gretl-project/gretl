@@ -1,0 +1,57 @@
+set verbose off
+clear
+set assert stop
+
+
+function void test_continue (void)
+    print "Start testing function name()"
+
+    # Given
+    scalar actual = 0
+    scalar expected = 2
+
+
+    # When
+    loop i=1..(2 + expected)
+        if i < (1 + expected)
+            actual++
+            continue
+        else
+            break
+        endif
+    endloop
+
+    # Then
+    assert(actual == expected)
+end function
+test_continue()
+
+
+
+function void test_continue_ignore (void)
+    print "Start testing function name()"
+
+    # Given
+    scalar actual_value = 0
+    scalar expected_value = 0
+
+
+    # When
+    loop i=1..(2 + expected_value)
+        if i < (1 + expected_value)
+            continue
+            actual_value++  # should be ignored
+        else
+            break
+        endif
+    endloop
+
+    # Then
+    assert(actual_value == expected_value)
+end function
+test_continue_ignore()
+
+
+
+print "Successfully finished tests."
+quit

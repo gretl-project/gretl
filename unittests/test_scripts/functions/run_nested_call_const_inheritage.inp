@@ -1,0 +1,55 @@
+clear
+set verbose off
+set assert stop
+
+function void f1 (matrix X)
+    X[1,1] = 1
+end function
+
+function void f2 (matrix *X)
+    X[1,1] = 1
+end function
+
+function void call_f1_no_const (matrix X, bool expected_error)
+    matrix X0 = X
+    catch feval("f1", X)
+    err = $error != FALSE
+    assert(err == expected_error && X == X0)
+end function
+
+function void call_f2_no_const (matrix X, bool expected_error)
+    matrix X0 = X
+    catch feval("f2", &X)
+    err = $error != FALSE
+    assert(err == expected_error && X != X0)
+end function
+
+function void call_f1_const (const matrix X, bool expected_error)
+    matrix X0 = X
+    catch feval("f1", X)
+    err = $error != FALSE
+    assert(err == expected_error && X == X0)
+end function
+
+function void call_f2_const (const matrix X, bool expected_error)
+    catch feval("f2", &X)
+    err = $error != FALSE
+    assert(err == expected_error)
+end function
+
+matrix X = zeros(2, 2)
+printf "Run f1() with call_f1_no_const\n"
+call_f1_no_const(X, FALSE)
+matrix X = zeros(2, 2)
+printf "Run f2() with call_f2_no_const\n"
+call_f2_no_const(X, FALSE)
+
+matrix X = zeros(2, 2)
+printf "Run f1() with call_f1_const\n"
+call_f1_const(X, FALSE)
+matrix X = zeros(2, 2)
+printf "Run f2() with call_f2_const\n"
+call_f2_const(X, TRUE)
+
+print "Successfully finished tests."
+quit

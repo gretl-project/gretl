@@ -1,0 +1,13 @@
+set verbose off
+
+/*
+https://gretlml.univpm.it/hyperkitty/list/gretl-users@gretlml.univpm.it/message/MKH6JI2Q3UIXJC7SJYS33FSGZXRRX3S2/
+*/
+
+nulldata 14000
+series foo = 1
+strings S = array($nobs)
+loop i=1..$nobs -q
+     S[i] = "Entry_$i"
+endloop
+stringify(foo,S)

@@ -1,0 +1,11 @@
+set verbose off
+clear
+set assert stop
+
+catch eval 1==2 && a==b  # evaluates to FALSE
+assert($error == FALSE)
+
+catch eval 1==1 || a==b  # evaluates to TRUE
+assert($error == FALSE)
+
+quit

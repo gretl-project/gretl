@@ -129,64 +129,62 @@ implemented in gretl through some examples.
 \section{GMM as Method of Moments}
 \label{sec:gmm-as-mom}
 
-\emph{This section draws from a kind contribution by Alecos
-  Papadopoulos, whom we thank.}
+\emph{We thank Alecos Papadopoulos, who kindly contributed a document
+  on which this section is based.}
 
 A very simple illustration of GMM can be given by dropping the ``G'',
-via an example of the time-honored statistical technique known as
-``method of moments''; let's see how to estimate the parameters of a
-gamma distribution, which we also used as an example for ML estimation
-in section~\ref{sec:ml-gamma}.
+via an example of the time-honored statistical technique known as the
+method of moments. Let's see how to estimate the parameters of a gamma
+distribution, a task which we used to exemplify ML estimation in
+section~\ref{sec:ml-gamma}.
 
-Assume that we have an i.i.d. sample of size $T$ from a gamma
+Suppose that we have an i.i.d. sample of size $T$ from a gamma
 distribution. The gamma density can be parameterized in terms of the
-two parameters $p$ (shape) and $\theta$ (scale), both real and
-positive.\footnote{In section \ref{sec:ml-gamma} we used a slightly
-  different, perhaps more common, parametrization, employing
-  $\theta = 1/\alpha$. We are switching to the shape/scale
-  parametrization here for the sake of convenience.}  In order to
-estimate them by the method of moments, we need two moment conditions
-so that we have two equations and two unknowns (in the GMM jargon,
-this amounts to exact identification). The two relations we need are
+two parameters $k$ (shape) and $\theta$ (scale), both real and
+positive.  In order to estimate them by the method of moments, we need
+two moment conditions so that we have two equations in the two
+unknowns (in GMM terms, this amounts to exact identification). The two
+relations we need are
 \[
-  E(x_i) = p \cdot \theta \qquad V(x_i) = p \cdot \theta^2
+  E(x_i) = k \cdot \theta \qquad V(x_i) = k \cdot \theta^2
 \]
 
-These will become our moment conditions; substituting the finite
-sample analogues of the theoretical moments we have
+Substituting the finite-sample counterparts of the theoretical moments
+we have
 \begin{eqnarray}
   \label{eq:mm-ex-mean}
-  \bar{X} & = & \hat{p} \cdot \hat{\theta} \\
+  \bar{X} & = & \hat{k} \cdot \hat{\theta} \\
   \label{eq:mm-ex-var}
-  V(x_i) & = & \hat{p} \cdot \hat{\theta}^2
+  V(x_i) & = & \hat{k} \cdot \hat{\theta}^2
 \end{eqnarray}
+These two equations are easy to solve analytically, giving
+$\hat{\theta} = \hat{V}/\bar{X}$ and
+$\hat{k} = \bar{X}/\hat{\theta}$, ($\hat{V}$ being the sample
+variance of $x_i$), but it's instructive to see how the \cmd{gmm}
+command will solve this system of equations numerically.
 
-Of course, the two equations above are easy to solve analytically,
-giving $\hat{\theta} = \frac{\hat{V}}{\bar{X}}$ and $\hat{p} =
-\frac{\bar{X}}{\hat{\theta}}$, ($\hat{V}$ being the sample variance of
-$x_i$), but it's instructive to see how the \cmd{gmm} command will
-solve this system of equations numerically.
-
-We feed gretl the necessary ingredients for GMM estimation
-in a command block, starting with \texttt{gmm} and ending with
-\texttt{end gmm}. Three elements are compulsory within a \texttt{gmm}
+We feed gretl the necessary ingredients for GMM estimation in a
+command block that starts with \texttt{gmm} and ends with \texttt{end
+  gmm}. The following elements are compulsory within a \texttt{gmm}
 block:
 \begin{enumerate}
+\item one or more statements to calculate the left-hand side of the
+  orthogonality conditions.
 \item one or more \texttt{orthog} statements
 \item one \texttt{weights} statement
 \item one \texttt{params} statement
 \end{enumerate}
-The three elements should be given in the stated order.
+These elements should be given in the stated order.
 
 The \texttt{orthog} statements are used to specify the orthogonality
 conditions.  They must follow the syntax
 \begin{code}
   orthog x ; Z
 \end{code}
-where \texttt{x} may be a series, matrix or list of series and
+where \texttt{x} may be a series, matrix or named list of series and
 \texttt{Z} may also be a series, matrix or list. Note the structure of
-the orthogonality condition: it is assumed that the term to the left
-of the semicolon represents a quantity that depends on the estimated
+the statement: it is assumed that the term to the left of the
+semicolon represents a quantity that depends on the estimated
 parameters (and so must be updated in the process of iterative
 estimation), while the term on the right is a constant function of the
 data.
@@ -198,95 +196,107 @@ The \texttt{params} statement specifies the parameters with respect to
 which the GMM criterion should be minimized; it follows the same logic
 and rules as in the \texttt{mle} and \texttt{nls} commands.
 
-The minimum is found through numerical minimization via BFGS (see
-chapters~\ref{chap:numerical} and~\ref{chap:mle}).  The
-progress of the optimization procedure can be observed by appending
-the \option{verbose} switch to the \texttt{end gmm} line.
+The minimum is found numerically using BFGS (see
+chapters~\ref{chap:numerical} and~\ref{chap:mle}).  The progress of
+the optimization procedure can be observed by appending the
+\option{verbose} switch to the \texttt{end gmm} line.
 
 \bigskip
 
 Equations \ref{eq:mm-ex-mean} and \ref{eq:mm-ex-var} are not yet in
 the ``moment condition'' form required by the \cmd{gmm} command. We
-need to transform them and arrive at something looking like $E(e_{j,i}
-z_{j,i}) = 0$, with $j=1 \ldots 2$. Therefore, we need two
-corresponding observable variables $e_1$ and $e_2$ with corresponding
-instruments $z_1$ and $z_2$ and tell gretl that $\hat{E}(e_j
-z_j) = 0$ must be satisfied (where we used the $\hat{E}(\cdot)$
-notation to indicate sample moments).
+need to transform them and arrive at something looking like
+$E(e_{j,i} z_{j,i}) = 0$ for $j=1, 2$. We therefore need two variables
+$e_1$ and $e_2$ with associated instruments $z_1$ and $z_2$; we can
+then tell gretl that $\hat{E}(e_j z_j) = 0$ must be satisfied (where
+the $\hat{E}(\cdot)$ notation indicates sample moments).
 
-If we define the instrument as a series of ones, and set $e_{1,i} =
-x_i - p\theta$, then we can re-write the first moment condition as
+If we define the instrument as a series of ones, and define a series
+\texttt{e1} such that $e_{1,i} = x_i - k \theta$, we can rewrite the
+first moment condition as
 \[
-\hat{E}[(x_i - p\theta) \cdot 1] = 0.
+\hat{E}[e_{1,i} \cdot 1] = 0
 \]
-This is in the form required by the \cmd{gmm} command: in the
-required input statement ``\verb|orthog e ; z|'', \texttt{e} will be
-the variable on the left (defined as a series) and \texttt{z} will the
-variable to the right of the semicolon. Since $z_{1,i} = 1$ for all
-$i$, we can use the built-in series \texttt{const} for that.
-
-For the second moment condition we have, analogously,
+In similar manner we can define a series \texttt{e2} such that
+$e_{2,i} = (x_i - \bar{X})^2 - k \theta^2$ (and set $z_2 = z_1$), so
+that the second moment condition is
 \[
-\hat{E}\left\{\left[(x_i - \bar{X})^2 - p\theta^2\right] \cdot 1\right\} = 0,
+  \hat{E}[e_{2,i} \cdot 1] = 0
 \]
-so that by setting $e_{2,i} = (x_i - \bar{X})^2 - p\theta^2$ and $z_2
-= z_1$ we can re-write the second moment condition as $\hat{E}[e_{2,i}
-\cdot 1] = 0$.
+Since the built-in \texttt{const} is just a series of 1s we could
+express these moment conditions in the notation that gretl expects as
+\begin{code}
+orthog e1 ; const
+orthog e2 ; const
+\end{code}
+But given that the right-hand side is the same for each, it might be
+more elegant to define a list comprising \texttt{e1} and \texttt{e2}
+and use a single \texttt{orthog} statement, as in
+\begin{code}
+list E = e1 e2
+...
+orthog E ; const
+\end{code}
 
-The weighting matrix, which is required by the \cmd{gmm} command, can
-be set to any $2 \times 2$ positive definite matrix, since under exact
-identification the choice does not matter and its dimension is
-determined by the number of orthogonality conditions. Therefore, we'll
-use the identity matrix.
+The required weighting matrix can be set to any positive definite
+$2 \times 2$ matrix, since under exact identification the choice
+doesn't matter and its dimension is determined by the number of
+orthogonality conditions. So we'll use the $I_2$ identity
+matrix. Example code is shown in Listing~\ref{gamma-gmm}, along with
+the output it produces.
 
-Example code follows:
+\begin{script}[htbp]
+  \scriptcaption{MM estimation of Gamma parameters}
+  \label{gamma-gmm}
 \begin{scode}
-# create an empty data set 
+# create an empty data set with 200 observations
 nulldata 200
 
-# fix a random seed
-set seed 2207092
+# fix a random seed for replicability
+set seed 1707138404
 
-#generate a gamma random variable with, say, shape p = 3 and scale theta = 2
+# generate a Gamma random variable x with shape k = 3 and scale theta = 2
 series x = randgen(G, 3, 2)  
 
-#declare and set some initial value for parameters p and theta
-scalar p = 1				
-scalar theta =1
+# declare and initialize the parameter estimates
+scalar k = 1				
+scalar theta = 1
 								
-#create the weight matrix as the identity matrix
+# create the weight matrix as the identity matrix
 matrix W = I(2)
 
-#declare the series to be used in the orthogonality conditions
+# declare two series, and a list, for use in the orthogonality conditions
 series e1 = 0				
-series e2 = 0				
+series e2 = 0
+list E = e1 e2
+
+# obtain the sample mean of x
+scalar m = mean(x)
 
 gmm
-    scalar m = mean(x)
-    series e1 = x - p*theta
-    series e2 = (x - m)^2 - p*theta^2
-    orthog e1 ; const
-    orthog e2 ; const
+    series e1 = x - k*theta
+    series e2 = (x - m)^2 - k*theta^2
+    orthog E ; const
     weights W
-    params p theta
+    params k theta
 end gmm
 \end{scode}
-
-The corresponding output is
+The \texttt{gmm} output is:
 \begin{code}
 Model 1: 1-step GMM, using observations 1-200
 
              estimate   std. error     z     p-value 
   ---------------------------------------------------
-  p          3.09165     0.346565    8.921   4.63e-19 ***
-  theta      1.89983     0.224418    8.466   2.55e-17 ***
+  p          3.08539     0.412149    7.486   7.09e-14 ***
+  theta      1.97898     0.286796    6.900   5.19e-12 ***
 
-  GMM criterion: Q = 4.97341e-28 (TQ = 9.94682e-26)
+  GMM criterion: Q = 1.19302e-28 (TQ = 2.38604e-26)
 \end{code}
+\end{script}
 
-
-If we want to use the unbiased estimator for the sample variance, we'd
-have to adjust the second moment condition by substituting
+In order to use the \textit{unbiased} estimator of the sample
+variance, we have to modify the second moment condition by
+substituting
 \begin{code}
 series e2 = (x - m)^2 - p*theta^2
 \end{code}
@@ -295,32 +305,31 @@ with
 scalar adj = $nobs / ($nobs - 1)
 series e2 = adj * (x - m)^2 - p*theta^2
 \end{code}
-with the corresponding slight change in the output:
+The output then becomes:
 \begin{code}
 Model 1: 1-step GMM, using observations 1-200
 
              estimate   std. error     z     p-value 
   ---------------------------------------------------
-  p          3.07619     0.344832    8.921   4.63e-19 ***
-  theta      1.90937     0.225546    8.466   2.55e-17 ***
+  p          3.06997     0.410088    7.486   7.09e-14 ***
+  theta      1.98892     0.288237    6.900   5.19e-12 ***
 
-  GMM criterion: Q = 2.80713e-28 (TQ = 5.61426e-26)
+  GMM criterion: Q = 1.66926e-28 (TQ = 3.33852e-26)
 \end{code}
-One can observe tiny improvements in the point estimates, since both
-moved a tad closer to the true values. This, however, is just a
-small-sample effect and not something you should expect in larger
-samples.
+In this case both of the point estimates are marginally closer to the
+true values. But this is a small-sample effect, not something to
+be expected in large samples.
 
 \section{OLS as GMM}
 \label{sec:gmm-ols}
 
-Let us now move to an example that is closer to econometrics proper:
-the linear model $y_t = x_t \beta + u_t$.  Although most of us are
-used to read it as the sum of a hazily defined ``systematic part''
-plus an equally hazy ``disturbance'', a more rigorous interpretation
-of this familiar expression comes from the \emph{hypothesis} that the
-conditional mean $E(y_t|x_t)$ is linear and the \emph{definition} of
-$u_t$ as $y_t - E(y_t|x_t)$.
+We now move to an example closer to econometrics proper: the linear
+model $y_t = x_t \beta + u_t$.  Although most of us are used to read
+it as the sum of a hazily defined ``systematic part'' plus an equally
+hazy ``disturbance'', a more rigorous interpretation of this familiar
+expression comes from the \emph{hypothesis} that the conditional mean
+$E(y_t|x_t)$ is linear and the \emph{definition} of $u_t$ as
+$y_t - E(y_t|x_t)$.
 
 From the definition of $u_t$, it follows that $E(u_t|x_t) = 0$. 
 The following orthogonality condition is therefore available:

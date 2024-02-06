@@ -1,0 +1,16 @@
+set verbose off
+/*
+https://gretlml.univpm.it/hyperkitty/list/gretl-devel@gretlml.univpm.it/message/WX3PYTQSPYIPPXNHHBMY54VR3WVIKFMB/
+*/
+
+clear
+set verbose off
+
+function void simple (const int N[2::])
+  print "very simple"
+end function
+
+# should not catch outside functions but I don't see an alternative here
+catch simple(1)
+
+quit

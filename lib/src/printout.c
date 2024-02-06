@@ -2557,7 +2557,7 @@ static int print_by_var (const int *list, const DATASET *dset,
 
     for (i=1; i<=list[0]; i++) {
 	vi = list[i];
-	if (vi > dset->v) {
+	if (vi < 0 || vi > dset->v) {
 	    continue;
 	}
 	if (list[0] > 1) {
@@ -2625,20 +2625,23 @@ int printdata (const int *list, const char *ostr,
     int err = 0;
 
     if (list != NULL && list[0] == 0) {
-	/* explicitly empty list given */
+	/* an explicitly empty list was given */
 	if (ostr == NULL) {
 	    return 0; /* no-op */
 	} else {
 	    goto endprint;
 	}
     } else if (list == NULL) {
-	/* no list given */
+	/* no list was given */
 	if (ostr == NULL && dset != NULL) {
 	    int nvars = 0;
 
 	    plist = full_var_list(dset, &nvars);
 	    if (nvars == 0) {
 		/* no-op */
+		if (gretl_messages_on()) {
+		    pputs(prn, "no data\n");
+		}
 		return 0;
 	    }
 	} else {

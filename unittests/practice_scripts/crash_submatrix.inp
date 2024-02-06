@@ -1,0 +1,12 @@
+/*
+Let to a crash before version 2022c.
+*/
+clear
+set verbose off
+
+matrix A = I(4)
+catch matrix B = A[,4:3]
+assert($error != FALSE)
+
+print "Succesfully finished tests."
+quit

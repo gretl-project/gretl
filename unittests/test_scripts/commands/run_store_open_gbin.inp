@@ -1,0 +1,114 @@
+set verbose off
+clear
+set assert stop
+
+# Store gbin timeseries data set
+open denmark.gdt --quiet
+strings vnames_expected = varnames(dataset)
+string filename = sprintf("%s/ts_gbin.gdtb", $dotdir)
+matrix timeseries_actual = {dataset}
+
+store "@filename"
+open "@filename" --preserve
+strings vnames_actual = varnames(dataset)
+matrix timeseries_expected = {dataset}
+
+
+function void test_equality_vnames_timeseries (const strings actual,
+                                               const strings expected)
+    print "Start testing variable names of imported time-series."
+
+    # When
+    scalar nvars_actual = nelem(actual)
+    scalar nvars_expected = nelem(expected)
+
+    # Then
+    assert(nvars_actual == nvars_expected)
+
+    loop foreach i actual
+        assert(actual[i] == expected[i])
+    endloop
+end function
+test_equality_vnames_timeseries(vnames_actual, vnames_expected)
+
+
+function void test_equality_values_timeseries (const matrix actual,
+                                               const matrix expected)
+    print "Start testing values of imported time-series."
+
+    assert(cols(actual) == cols(expected))
+
+    # Then
+    loop i=1..cols(actual)
+        assert(sumc(actual[, i]) == sumc(expected[, i]))
+    endloop
+end function
+test_equality_values_timeseries(timeseries_actual, timeseries_expected)
+
+
+# Store gbin panel data set with string-values series
+open grunfeld.gdt --quiet
+strings firmnames_expected = strvals(firmname)
+strings vnames_expected = varnames(dataset)
+string filename = sprintf("%s/panel_gbin.gdtb", $dotdir)
+matrix panelseries_actual = {dataset}
+
+store "@filename"
+open "@filename" --preserve
+strings firmnames_actual = strvals(firmname)
+strings vnames_actual = varnames(dataset)
+matrix panelseries_expected = {dataset}
+
+
+function void test_equality_vnames_panel (const strings actual,
+                                          const strings expected)
+    print "Start testing variable names of imported panel series."
+
+    # When
+    scalar nvars_actual = nelem(actual)
+    scalar nvars_expected = nelem(expected)
+
+    # Then
+    assert(nvars_actual == nvars_expected)
+
+    loop foreach i actual
+        assert(actual[i] == expected[i])
+    endloop
+end function
+test_equality_vnames_panel(vnames_actual, vnames_expected)
+
+
+function void test_equality_vnames_panel (const strings actual,
+                                          const strings expected)
+    print "Start testing firm names of imported panel series."
+
+    # When
+    scalar nvars_actual = nelem(actual)
+    scalar nvars_expected = nelem(expected)
+
+    # Then
+    assert(nvars_actual == nvars_expected)
+
+    loop foreach i expected
+        assert(actual[i] == expected[i])
+    endloop
+end function
+test_equality_vnames_panel(firmnames_actual, firmnames_expected)
+
+
+function void test_equality_values_panel (const matrix actual,
+                                          const matrix expected)
+    print "Start testing values of imported panel series."
+
+    assert(cols(actual) == cols(expected))
+
+    # Then
+    loop i=1..cols(actual)
+        assert(sumc(actual[, i]) == sumc(expected[, i]))
+    endloop
+end function
+test_equality_values_panel(panelseries_actual, panelseries_expected)
+
+
+print "Succesfully finished tests."
+quit

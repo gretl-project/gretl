@@ -46,6 +46,7 @@ typedef struct Summary_ {
 
 typedef struct FreqDist_ {
     char varname[VNAMELEN];  /* for ID purposes */
+    char gname[MAXDISP];     /* name to use in plots */
     int discrete;            /* 1 if series contains integers */
     int strvals;             /* 1 if series is string-valued */
     int dist;                /* code for theoretical distribution */

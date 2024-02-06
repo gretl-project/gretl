@@ -1,0 +1,28 @@
+set verbose off
+clear
+set assert stop
+
+/*
+https://gretlml.univpm.it/hyperkitty/list/gretl-devel@gretlml.univpm.it/message/TBUT6VU7NHOXURNK2V4AFCPZ2HXB5K2A/
+*/
+
+
+function void test_sleep (void)
+    print "Start testing function sleep()"
+
+    matrix times = {-1, -0.1, 0.5}
+    matrix expected_err = {17, 17, FALSE}
+
+    loop foreach i times
+        # Given + When
+        catch sleep(times[i])
+
+        # Then
+        assert($error == expected_err[i])
+    endloop
+end function
+test_sleep()
+
+
+print "Succesfully finished tests."
+quit

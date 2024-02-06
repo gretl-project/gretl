@@ -1,0 +1,16 @@
+set verbose off
+set assert stop
+
+/* Let to a crash
+https://gretlml.univpm.it/hyperkitty/list/gretl-devel@gretlml.univpm.it/message/6Q4QBSM3II3H7BEPRA2PCAZTW2TN2QOB/ */
+
+matrices MM = defarray(I(2), I(3))
+assert(nelem(MM) == 2)
+MM = I(4)    # implicitly turn to a 1-elem array? actually legal?
+
+eval typestr(typeof(MM))    # array, OK
+eval nelem(MM)              # 1, semi-expected
+
+
+catch matrix m = MM[,1]           # illegal indexing -> crash
+assert($error != 0)

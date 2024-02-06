@@ -1,0 +1,15 @@
+set verbose off
+clear
+set assert stop
+
+loop i = 1..3
+    strings name = defarray("a")
+    name += "b"
+
+    assert(name[1] == "a")
+    assert(name[2] == "b")
+endloop
+
+
+print "Successfully finished tests."
+quit

@@ -1,0 +1,55 @@
+clear
+set verbose off
+
+nulldata 4
+setobs 4 2022:01 --time-series
+
+series num = normal()
+series str = defarray("A", "B", "C", "D")
+
+print "Start with strategy 'last'"
+dataset compact 1 last
+
+print "Store as csv"
+fname = sprintf("%s/foo.csv", $dotdir)
+store "@fname"
+print "Successfully stored  csv"
+
+print "Store as gdtb"
+fname = sprintf("%s/foo.gdtb", $dotdir)
+store "@fname"
+print "Successfully stored gdtb"
+
+print "Store as gdt"
+fname = sprintf("%s/foo.gdt", $dotdir)
+store "@fname"
+print "Successfully stored  gdt"
+
+
+nulldata 4
+setobs 4 2022:01 --time-series
+
+series num = normal()
+series str = defarray("A", "B", "C", "D")
+
+print "Start with strategy 'first'"
+dataset compact 1 first
+
+print "Store as csv"
+fname = sprintf("%s/foo.csv", $dotdir)
+store "@fname"
+print "Successfully stored  csv"
+
+print "Store as gdtb"
+fname = sprintf("%s/foo.gdtb", $dotdir)
+store "@fname"
+print "Successfully stored gdtb"
+
+print "Store as gdt"
+fname = sprintf("%s/foo.gdt", $dotdir)
+store "@fname"
+print "Successfully stored  gdt"
+
+
+print "Succesfully finished tests."
+quit 

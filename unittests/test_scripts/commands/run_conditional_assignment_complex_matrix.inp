@@ -1,0 +1,37 @@
+set verbose off
+clear
+set assert stop
+
+
+
+bundles Params = array()
+Params = Params + _(re = {0.24949; 0.54287; 0.22521; 0.36900},\
+                    im = {0.93292; 0.61444; 0.29212; 0.89897},\
+                    expected_re = {0.24949; 0; 0.22521; 0.36900},\
+                    expected_im = {0.93292; 0; 0.29212; 0.89897})
+
+function void test_conditional_assignment (const bundles P)
+    print "Start testing conditional assignment of complex matrix."
+
+    loop i=1..nelem(P)
+        # Given
+        z = complex(P[i].re, P[i].im)
+
+        # When
+        matrix actual = P[i].re .> 0.5 ? 0 : z
+        actual = cswitch(actual, 2)
+        actual_re = actual[,1]
+        actual_im = actual[,2]
+
+        # Then
+        loop j=1..rows(actual)
+            assert(actual_re[j] == P[i].expected_re[j])
+            assert(actual_im[j] == P[i].expected_im[j])
+        endloop
+    endloop
+end function
+test_conditional_assignment(Params)
+
+
+print "Succesfully finished tests."
+quit

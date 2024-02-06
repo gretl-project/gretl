@@ -1,0 +1,51 @@
+set verbose off
+set assert stop
+
+
+
+function void test_matrix_directly (void)
+    print "Start testing 1-by-1 matrix directly."
+
+    # Given
+    matrix m = {3.14}
+    expected_type = "matrix"
+    expected_rows = 1
+    expected_value = 3.14
+
+    # When
+    actual_type = typestr(typeof(m))
+    actual_rows = rows(m)
+    actual_value = m[1]
+
+    # Then
+    assert(actual_type == expected_type)
+    assert(actual_rows == expected_rows)
+    assert(actual_value == expected_value)
+end function
+test_matrix_directly()
+
+
+function void test_matrix_bundle (void)
+    print "Start testing 1-by-1 matrix exported to bundle."
+
+    # Given
+    matrix m = {3.14}
+    expected_type = "scalar"
+    expected_rows = 1
+    expected_value = 3.14
+
+    # When
+    bundle B = _(m)
+    actual_type = typestr(typeof(B.m))
+    actual_rows = rows(B.m)
+    actual_value = B.m[1]
+
+    # Then
+    assert(actual_type == expected_type)
+    assert(actual_rows == expected_rows)
+    assert(actual_value == expected_value)
+end function
+test_matrix_bundle()
+
+
+quit

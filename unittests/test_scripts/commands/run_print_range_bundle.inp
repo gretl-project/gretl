@@ -1,0 +1,50 @@
+set verbose off
+clear
+set assert stop
+
+
+function void test_no_bundle (void)
+    print "Start testing ()"
+
+    # Given
+    matrix m = seq(1, 10)' - 0.1
+    scalar max_row = 5
+    string buffer
+    scalar expected = max_row + 3 # print produces 3 additional lines of output
+
+    # When
+    outfile --buffer=buffer
+        print m --range=1:max_row
+    end outfile
+
+    # Then
+    assert(nlines(buffer) == expected)
+
+end function
+test_no_bundle()
+
+
+function void test_in_bundle (void)
+    print "Start testing () within bundle"
+
+    # Given
+    matrix m = seq(1, 10)' - 0.1
+    bundle b = _(m)
+    scalar max_row = 5
+    string buffer
+    scalar expected = max_row + 1 # works like "eval", just 1 extra line
+
+    # When
+    outfile --buffer=buffer
+        print b.m --range=1:max_row
+    end outfile
+
+    # Then
+    assert(nlines(buffer) == expected)
+end function
+test_in_bundle()
+
+
+
+print "Succesfully finished tests."
+quit

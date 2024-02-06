@@ -1,0 +1,25 @@
+set verbose off
+clear
+set assert stop
+
+function void test_print_strarray_unvalid_idx (void)
+    print "Start testing print command."
+
+    # Given
+    strings S = defarray("a")
+    scalar err_unexpected = FALSE
+
+    # When
+    catch print S[i]
+    scalar err_actual = $error
+    print err_actual
+    print "still going!"
+
+    # Then
+    assert(err_actual != err_unexpected)
+end function
+test_print_strarray_unvalid_idx()
+
+
+print "Succesfully finished tests."
+quit

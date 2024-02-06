@@ -1,0 +1,19 @@
+set verbose off
+clear
+set assert stop
+
+
+string first_column_name_expected = "ColumnOne"
+string second_column_name_expected = "ColumnTwo"
+
+open "../data/spaced_headers.txt" --preserve
+
+string first_column_name_actual = getinfo(1).name
+string second_column_name_actual = getinfo(2).name
+
+assert(first_column_name_actual == first_column_name_expected)
+assert(second_column_name_actual == second_column_name_expected)
+
+
+print "Succesfully finished tests."
+quit

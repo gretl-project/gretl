@@ -1,0 +1,238 @@
+set verbose off
+clear
+set assert stop
+
+# Data
+matrix mempty = {}
+matrix v = seq(1, 3)'
+matrix m = v ~ seq(4, 6)'
+matrices M = defarray(mempty, v, m)
+strings Sempty = array()
+strings S = defarray("a", "b", "c")
+string str1 = "motörhead"
+string str2 = "motorhead"
+bundle b1 = _(s = 1)
+bundle b2 = _(s = 2)
+bundles B = defarray(b1, b2)
+
+
+
+bundles Params = null
+
+Params = Params + _(input = B, restriction = "end", expected_n = 1,\
+                    expected_s = 2)
+Params = Params + _(input = B, restriction = "2:end", expected_n = 1,\
+                    expected_s = 2)
+Params = Params + _(input = B, restriction = "(end-1)", expected_n = 1,\
+                    expected_s = 1)
+Params = Params + _(input = B, restriction = "1:(end-1)", expected_n = 1,\
+                    expected_s = 1)
+Params = Params + _(input = B, restriction = "end:end", expected_n = 1,\
+                    expected_s = 2)
+
+function void test_end_operator_bundles (const bundles P)
+    print "Start testing end operator using a bundles."
+
+    loop foreach i P
+        # Given
+        string restriction = P[i].restriction
+        bundles input = P[i].input
+        scalar expected_n = P[i].expected_n
+        scalar expected_s = P[i].expected_s
+
+        # When
+        bundle actual = input[@restriction]
+
+        # Then
+        assert(nelem(actual) == expected_n)
+        assert(actual.s == expected_s)
+    endloop
+end function
+test_end_operator_bundles(Params)
+
+
+bundles Params = null
+
+Params = Params + _(input = v, restriction = "end", expected = {3})
+Params = Params + _(input = v, restriction = "(end-1)", expected = {2})
+Params = Params + _(input = v, restriction = "1:end", expected = {1; 2; 3})
+Params = Params + _(input = v, restriction = "1:(end-1)", expected = {1; 2})
+Params = Params + _(input = v, restriction = "end:end", expected = {3})
+
+Params = Params + _(input = v', restriction = "end", expected = {3})
+Params = Params + _(input = v', restriction = "(end-1)", expected = {2})
+Params = Params + _(input = v', restriction = "1:end", expected = {1; 2; 3})
+Params = Params + _(input = v', restriction = "1:(end-1)", expected = {1; 2})
+Params = Params + _(input = v', restriction = "end:end", expected = {3})
+
+Params = Params + _(input = m, restriction = ",end", expected = {4; 5; 6})
+Params = Params + _(input = m, restriction = ",(end-1)", expected = {1; 2; 3})
+Params = Params + _(input = m, restriction = ",1:end",\
+                    expected = {1; 2; 3; 4; 5; 6})
+Params = Params + _(input = m, restriction = ",1:(end-1)",\
+                    expected = {1; 2; 3})
+
+Params = Params + _(input = m, restriction = "end,", expected = {3; 6})
+Params = Params + _(input = m, restriction = "(end-1),", expected = {2; 5})
+Params = Params + _(input = m, restriction = "1:end,",\
+                    expected = {1; 2; 3; 4; 5; 6})
+Params = Params + _(input = m, restriction = "1:(end-1),",\
+                    expected = {1; 2; 4; 5})
+Params = Params + _(input = m, restriction = "end,end", expected = {6})
+
+function void test_end_operator_matrix (const bundles P)
+    print "Start testing end operator using a matrix."
+
+    loop foreach i P
+        print i
+        # Given
+        string restriction = P[i].restriction
+        matrix input = P[i].input
+        matrix expected = vec(P[i].expected)
+
+        # When
+        matrix actual = input[@restriction]
+        actual = vec(actual)
+
+        # Then
+        assert(nelem(actual) == nelem(expected))
+        loop j=1..rows(actual)
+            assert(actual[j] == expected[j])
+        endloop
+    endloop
+end function
+test_end_operator_matrix(Params)
+
+
+bundles Params = null
+
+Params = Params + _(input = M, restriction = "end", expected = M[3])
+Params = Params + _(input = M, restriction = "(end-1)", expected = M[2])
+Params = Params + _(input = M, restriction = "1:end", expected = M)
+Params = Params + _(input = M, restriction = "1:(end-1)", expected = M[1:2])
+Params = Params + _(input = M, restriction = "end:end", expected = M[3])
+
+function void test_end_operator_matrices (const bundles P)
+    print "Start testing end operator using a matrices."
+
+    loop foreach i P
+        # Given
+        string restriction = P[i].restriction
+        matrices input = P[i].input
+        matrices expected = P[i].expected
+
+        # When
+        matrices actual = input[@restriction]
+
+        # Then
+        assert(nelem(actual) == nelem(expected))
+        loop j=1..nelem(actual)
+            assert(nelem(actual[j]) == nelem(expected[j]))
+        endloop
+    endloop
+end function
+test_end_operator_matrices(Params)
+
+
+
+bundles Params = null
+Params = Params + _(input = str1, restriction = "end", expected = "d")
+Params = Params + _(input = str2, restriction = "end", expected = "d")
+
+function void test_end_operator_string (const bundles P)
+    print "Start testing end operator using a string."
+
+    loop foreach i P
+        # Given
+        string restriction = P[i].restriction
+        string input = P[i].input
+        string expected = P[i].expected
+
+        # When
+        strings actual = input[@restriction]
+
+        # Then
+        assert(nelem(actual) == nelem(expected))
+        loop j=1..nelem(actual)
+            assert(actual[j] == expected[j])
+        endloop
+    endloop
+end function
+test_end_operator_string(Params)
+
+
+
+bundles Params = null
+#Params = Params + _(input = Sempty, restriction = "end", expected = array(0))
+Params = Params + _(input = S, restriction = "end", expected = defarray("c"))
+Params = Params + _(input = S, restriction = "(end-1)",\
+                    expected = defarray("b"))
+Params = Params + _(input = S, restriction = "1:end",\
+                    expected = defarray("a", "b", "c"))
+Params = Params + _(input = S, restriction = "1:(end-1)",\
+                    expected = defarray("a", "b"))
+Params = Params + _(input = S, restriction = "end:end",\
+                    expected = defarray("c"))
+
+function void test_end_operator_strings (const bundles P)
+    print "Start testing end operator using strings."
+
+    loop foreach i P
+        # Given
+        string restriction = P[i].restriction
+        strings input = P[i].input
+        strings expected = P[i].expected
+
+        # When
+        strings actual = input[@restriction]
+
+        # Then
+        assert(nelem(actual) == nelem(expected))
+        loop j=1..nelem(actual)
+            assert(actual[j] == expected[j])
+        endloop
+    endloop
+end function
+test_end_operator_strings(Params)
+
+
+open denmark.gdt --quiet --preserve
+list L0 = null
+list L1 = LRM
+list L2 = L1 IBO
+
+function void test_end_operator_list (const bundle P, const list input)
+    print "Start testing end operator using a list."
+
+    # Given
+    string restriction = P.restriction
+    scalar expected_n = P.expected_n
+
+    # When
+    list actual = input[@restriction]
+
+    # Then
+    assert(nelem(actual) == expected_n)
+end function
+#bundle P = _(restriction = "end", expected_n = 0)
+#test_end_operator_list(P, L0)
+bundle P = _(restriction = "end", expected_n = 1)
+test_end_operator_list(P, L1)
+bundle P = _(restriction = "1:end", expected_n = 1)
+test_end_operator_list(P, L1)
+bundle P = _(restriction = "end", expected_n = 1)
+test_end_operator_list(P, L2)
+bundle P = _(restriction = "1:end", expected_n = 2)
+test_end_operator_list(P, L2)
+bundle P = _(restriction = "2:end", expected_n = 1)
+test_end_operator_list(P, L2)
+bundle P = _(restriction = "1:(end-1)", expected_n = 1)
+test_end_operator_list(P, L2)
+bundle P = _(restriction = "end:end", expected_n = 1)
+test_end_operator_list(P, L2)
+
+
+
+
+print "Successfully finished tests."
+quit

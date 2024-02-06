@@ -1,0 +1,43 @@
+set verbose off
+clear
+
+open denmark --quiet
+
+
+function void test_system (const list L)
+    print "Start testing injected restriction based on a system"
+
+    # Given
+    system method=ols --quiet
+        equation L.LRM 0
+        equation L.LRY 0
+    end system
+
+    # When
+    RR = defarray("[2 , 10] = 0b") # the "b" got shuffled around
+    catch restrict
+        inject RR
+    catch end restrict
+
+    assert($error == TRUE)
+end function
+test_system(dataset)
+
+
+function void test_single_eq (const list L)
+    print "Start testing injected restriction based on single eq."
+
+    # Given
+    ols LRY 0 LRM --quiet
+
+    RR = defarray("[2] = 0b")
+    catch restrict
+        inject RR
+    catch end restrict
+
+    assert($error == TRUE)
+end function
+test_single_eq(dataset)
+
+
+quit

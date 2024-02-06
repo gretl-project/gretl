@@ -1,0 +1,38 @@
+set verbose off
+clear
+set assert stop
+
+
+function void test_exp_0 (void)
+    print "Start testing feval()."
+
+    # Given
+    scalar expected = exp(0)
+
+    # When
+    scalar actual = feval("exp", 0)
+
+    # Then
+    assert(actual == expected)
+end function
+test_exp_0()
+
+function void test_seq (void)
+    print "Start testing feval() plus seq()."
+
+    # Given
+    scalar error_expected = 0
+
+    # When
+    catch matrix m = feval("seq", 1, 4)
+    error_actual = $error
+
+    # Then
+    assert(error_actual == error_expected)
+end function
+test_seq()
+
+
+
+print "Succesfully finished tests."
+quit

@@ -28,6 +28,7 @@
 #include "dbread.h"
 #include "swap_bytes.h"
 #include "gretl_zip.h"
+#include "libset.h"
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
@@ -45,7 +46,7 @@
 
 #undef XML_DEBUG
 
-#define GRETLDATA_VERSION "1.4"
+#define GRETLDATA_VERSION "1.5"
 #define GRETLDATA_COMPAT  "1.3" /* status quo as of gretl 2018b */
 
 #define GDT_DEBUG 0
@@ -2422,8 +2423,8 @@ static int real_write_gdt (const char *fname,
 
     /* how many series are we storing? */
     nvars = storelist != NULL ? storelist[0] : dset->v - 1;
-    if (nvars <= 0) {
-	gretl_errmsg_set("No data to save!");
+    if (nvars < 0) {
+	gretl_errmsg_set("Invalid number of series to save");
 	return E_DATA;
     }
 
@@ -2482,8 +2483,8 @@ static int real_write_gdt (const char *fname,
     pprintf(prn, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 	    "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
 	    "<gretldata version=\"%s\" name=\"%s\" frequency=\"%s\" "
-	    "startobs=\"%s\" endobs=\"%s\" ", GRETLDATA_VERSION,
-	    xmlbuf, freqstr, startdate, enddate);
+	    "n=\"%d\" startobs=\"%s\" endobs=\"%s\" ", GRETLDATA_VERSION,
+	    xmlbuf, freqstr, sample_size(dset), startdate, enddate);
 
     pprintf(prn, "type=\"%s\"", data_structure_string(dset->structure));
 
@@ -2531,8 +2532,10 @@ static int real_write_gdt (const char *fname,
     gdt_write_series_info(dset, storelist, skip_padding, prn);
 
     /* write listing of observations */
-    gdt_write_observations(dset, storelist, skip_padding,
-			   T, show_progress, prn);
+    if (nvars > 0) {
+	gdt_write_observations(dset, storelist, skip_padding,
+			       T, show_progress, prn);
+    }
 
     /* maybe write string tables */
     if (dset->varinfo != NULL) {
@@ -2738,7 +2741,6 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
     if (err) {
 	return err;
     } else if (nv == 0) {
-	fprintf(stderr, "Empty dataset!\n");
 	return 0;
     }
 
@@ -3118,12 +3120,20 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
     }
 
     if (sscanf((char *) tmp, "%d", &n) == 1) {
-	dset->n = n;
-	free(tmp);
+	if (dset->n > 0 && n != dset->n) {
+	    gretl_errmsg_set(_("Inconsistent record of number of observations"));
+	    err = E_DATA;
+	} else {
+	    dset->n = n;
+	}
     } else {
 	gretl_errmsg_set(_("Failed to parse number of observations"));
-	free(tmp);
-	return E_DATA;
+	err = E_DATA;
+    }
+
+    free(tmp);
+    if (err) {
+	return err;
     }
 
     if (dsize > 100000 && !binary) {
@@ -3268,12 +3278,20 @@ static int read_observations_subset (xmlDocPtr doc,
     }
 
     if (sscanf((char *) tmp, "%d", &n) == 1) {
-	dset->n = n;
-	free(tmp);
+	if (dset->n > 0 && n != dset->n) {
+	    gretl_errmsg_set(_("Inconsistent record of number of observations"));
+	    err = E_DATA;
+	} else {
+	    dset->n = n;
+	}
     } else {
 	gretl_errmsg_set(_("Failed to parse number of observations"));
-	free(tmp);
-	return E_DATA;
+	err = E_DATA;
+    }
+
+    free(tmp);
+    if (err) {
+	return err;
     }
 
     if (opt & OPT_M) {
@@ -3576,6 +3594,25 @@ static int xml_get_data_frequency (xmlNodePtr node, int *pd, int *dattype)
     return err;
 }
 
+static int xml_get_nobs (xmlNodePtr node, int *n)
+{
+    xmlChar *tmp = xmlGetProp(node, (XUC) "n");
+    int err = 0;
+
+    if (tmp != NULL) {
+	*n = gretl_int_from_string((const char *) tmp, &err);
+	if (*n <= 0) {
+	    gretl_errmsg_sprintf("%d: invalid number of observations", *n);
+	    err = E_DATA;
+	}
+	free(tmp);
+    } else {
+	*n = 0;
+    }
+
+    return err;
+}
+
 static int likely_calendar (const char *s)
 {
     return strchr(s, '-') || strchr(s, '/');
@@ -3782,15 +3819,34 @@ static long get_filesize (const char *fname)
 
 static int remedy_empty_data (DATASET *dset)
 {
-    int err = dataset_add_series(dset, 1);
+    int add_idx = gretl_in_gui_mode();
+    int i, err = 0;
+
+    if (dset->Z[0] == NULL) {
+	dset->Z[0] = malloc(dset->n * sizeof **dset->Z);
+	if (dset->Z[0] == NULL) {
+	    return E_ALLOC;
+	}
+	for (i=0; i<dset->n; i++) {
+	    dset->Z[0][i] = 1.0;
+	}
+    }
+
+    if (add_idx) {
+	err = dataset_add_series(dset, 1);
+    }
 
     if (!err) {
-	int t;
+	int i;
 
-	strcpy(dset->varname[1], "index");
-	series_set_label(dset, 1, _("index variable"));
-	for (t=0; t<dset->n; t++) {
-	    dset->Z[1][t] = (double) (t + 1);
+	dset->t1 = 0;
+	dset->t2 = dset->n - 1;
+	if (add_idx) {
+	    strcpy(dset->varname[1], "index");
+	    series_set_label(dset, 1, _("index variable"));
+	    for (i=0; i<dset->n; i++) {
+		dset->Z[1][i] = (double) (i + 1);
+	    }
 	}
     }
 
@@ -3857,7 +3913,7 @@ static int real_read_gdt (const char *fname, const char *srcname,
     DATASET *tmpset;
     xmlDocPtr doc = NULL;
     xmlNodePtr cur;
-    int gotvars = 0, gotobs = 0, err = 0;
+    int gotvars = 0, err = 0;
     int caldata = 0, repad = 0;
     double gdtversion = 1.0;
     double myversion;
@@ -3892,7 +3948,11 @@ static int real_read_gdt (const char *fname, const char *srcname,
     gdtversion = get_gdt_version(cur);
     myversion = dot_atof(GRETLDATA_VERSION);
     if (gdtversion > myversion) {
-	future_datafile_warning(gdtversion, myversion);
+	if (gdtversion == 1.5 && myversion == 1.4) {
+	    ; /* this shouldn't be a problem */
+	} else {
+	    future_datafile_warning(gdtversion, myversion);
+	}
     }
 
     /* optional */
@@ -3900,6 +3960,12 @@ static int real_read_gdt (const char *fname, const char *srcname,
 
     /* optional */
     gretl_xml_get_prop_as_string(cur, "mapfile", &tmpset->mapfile);
+
+    /* required only if the <observations> element is absent */
+    err = xml_get_nobs(cur, &tmpset->n);
+    if (err) {
+	goto bailout;
+    }
 
     /* set some required datainfo parameters */
 
@@ -3962,8 +4028,6 @@ static int real_read_gdt (const char *fname, const char *srcname,
 					binary, gdtversion, fname);
 		if (err) {
 		    fprintf(stderr, "error %d in read_observations\n", err);
-		} else {
-		    gotobs = 1;
 		}
 	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "string-tables")) {
@@ -4001,11 +4065,6 @@ static int real_read_gdt (const char *fname, const char *srcname,
 	err = 1;
     }
 
-    if (!err && !gotobs) {
-	gretl_errmsg_set(_("No observations were found"));
-	err = 1;
-    }
-
     if (!err && caldata && tmpset->S != NULL) {
 	check_for_daily_date_strings(tmpset);
     }
@@ -4040,11 +4099,9 @@ static int real_read_gdt (const char *fname, const char *srcname,
 	if (!err && dset->structure == STACKED_CROSS_SECTION) {
 	    err = switch_panel_orientation(dset);
 	}
-
 	if (!err && dset->v == 1) {
 	    err = remedy_empty_data(dset);
 	}
-
 	if (!err && gdtversion < 1.2) {
 	    record_transform_info(dset, gdtversion);
 	}
@@ -4105,6 +4162,11 @@ static int real_read_gdt_subset (const char *fname,
     }
 
     /* set some datainfo parameters */
+
+    err = xml_get_nobs(cur, &tmpset->n);
+    if (err) {
+	goto bailout;
+    }
 
     err = xml_get_data_structure(cur, &tmpset->structure);
     if (err) {

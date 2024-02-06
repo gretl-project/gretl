@@ -1,0 +1,29 @@
+set verbose off
+clear
+
+string PkgName = "PairPlot"
+pkg query @PkgName --quiet
+bundle Pkg = $result
+if !nelem(Pkg)
+    pkg install @PkgName
+    include @PkgName.gfn
+endif
+
+open grunfeld --quiet
+
+setopt gridplot persist --height=700 --width=1200 --fontsize=10
+
+# The inclusion of PairPlot() output fails because it already contains
+# a multiplot specification. But no error message is seen since
+# PairPlot employs "catch" to suppress errors.
+
+gpbuild Pairs
+   boxplot invest
+   panplot invest --means
+   list y = 1..4    		# list of series to plot
+   PairPlot(y)
+end gpbuild
+gridplot Pairs --output=display
+
+print "Successfully finished tests."
+quit

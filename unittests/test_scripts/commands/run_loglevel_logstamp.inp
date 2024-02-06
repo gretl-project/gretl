@@ -1,0 +1,79 @@
+set verbose off
+clear
+set assert stop
+
+bundle Loglevels = _(\
+                     debug = 0,\
+                     info = 1,\
+                     warn = 2,\
+                     error = 3,\
+                     critical = 4\
+                     )
+
+bundle Logstamp = _(\
+                    off = 0,\
+                    on = 1\
+                    )
+
+
+
+function void test_loglevel_numeric (const bundle B)
+    print "Start testing loglevel setter and accessor value when passing the loglevel as a numeric."
+
+    loop foreach i B
+        # Given & when
+        string level = sprintf("%d", B["$i"])  # must be a string for some reason
+        set loglevel @level
+
+        # Then
+        assert($loglevel == B["$i"])
+    endloop
+end function
+test_loglevel_numeric(Loglevels)
+
+
+function void test_loglevel_string (const bundle B)
+    print "Start testing loglevel setter and accessor value when passing the loglevel as a string."
+
+    loop foreach i B
+        # Given & when
+        set loglevel "$i"
+
+        # Then: compare numerical values
+        assert($loglevel == B["$i"])
+    endloop
+end function
+test_loglevel_string(Loglevels)
+
+
+function void test_logstamp_numeric (const bundle B)
+    print "Start testing logstamp setter and accessor value when passing the logstamp as a numeric."
+
+    loop foreach i B
+        # Given & when
+        string level = sprintf("%d", B["$i"])  # must be a string for some reason
+        set logstamp @level
+
+        # Then
+        assert($logstamp == B["$i"])
+    endloop
+end function
+test_logstamp_numeric(Logstamp)
+
+
+function void test_logstamp_string (const bundle B)
+    print "Start testing logstamp setter and accessor value when passing the logstamp as a string."
+
+    loop foreach i B
+        # Given & when
+        set logstamp "$i"
+
+        # Then: compare numerical values
+        assert($logstamp == B["$i"])
+    endloop
+end function
+test_logstamp_string(Logstamp)
+
+
+print "Successfully finished tests."
+quit

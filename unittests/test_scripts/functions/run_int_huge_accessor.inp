@@ -1,0 +1,29 @@
+clear
+set verbose off
+set assert stop
+
+bundles Params = null
+# 2147483648 refers to the 32-bit integer range limit
+Params = Params + _(input = -2147483648, funcname = "int",
+                    expected = -2147483648)
+Params = Params + _(input = 2147483647, funcname = "int",
+                    expected =  2147483647)
+Params = Params + _(input = $huge, funcname = "int", expected = NA)
+Params = Params + _(input = -$huge, funcname = "int", expected = NA)
+
+function void test_huge (const bundles P)
+    print "Start testing function test_huge()."
+
+    loop foreach i P
+        # When
+        scalar actual = feval(P[i].funcname, P[i].input)
+
+        # Then
+        assert(missing(P[i].expected) && missing(actual) ||\
+               P[i].expected == actual)
+    endloop
+end function
+test_huge(Params)
+
+print "Succesfully finished tests."
+quit

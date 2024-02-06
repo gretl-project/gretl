@@ -1,0 +1,47 @@
+clear
+set verbose off
+set assert stop
+
+
+# This script would currently fail for the guthub-action due to missing
+# installation of R
+quit
+
+
+string PkgName = "assertion"
+pkg query @PkgName --quiet
+bundle Pkg = $result
+if !nelem(Pkg)
+    pkg install @PkgName
+endif
+include assertion.gfn
+
+open data4-10 --quiet
+
+ols ENROLL const CATHOL PUPIL WHITE --quiet
+
+leverage --save --quiet
+series h = lever
+
+# back out our original studentized residuals
+series oldstud = dffits / sqrt(h / (1 - h))
+
+list L = ENROLL CATHOL PUPIL WHITE
+
+foreign language=R --send-data=L
+  model <- lm(ENROLL ~ CATHOL + PUPIL + WHITE)
+  stud_resids <- rstudent(model)
+  gretl.export(as.matrix(stud_resids), "Rstud")
+end foreign
+
+series Rstud = mread("Rstud.mat", 1)
+
+ols oldstud 0 Rstud --simple
+matrix coeff = $coeff
+
+assert_almost_equal_num(coeff[1], 0)
+assert_almost_equal_num(coeff[2], 1)
+
+
+print "Succesfully finished tests."
+quit

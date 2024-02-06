@@ -1,0 +1,31 @@
+set verbose off
+clear
+string PkgName = "ghosts"
+pkg query @PkgName --quiet
+bundle Pkg = $result
+if !nelem(Pkg)
+    pkg install @PkgName
+    include @PkgName.gfn
+endif
+
+setopt gridplot persist --height=700 --width=1200 --fontsize=10
+
+
+open AWM18.gdt --quiet
+
+list L = URX EEN EXR
+spans = {11,11} # set to 0 to disable smoothing
+taper = 0.1     # percentage of tapered obs
+smpl +1 ;
+zoo = mvspec(L, spans, taper)
+
+logscale = 1
+gpbuild Plots
+   spplot(zoo, 1, logscale)
+   coplot(zoo, 1, 2)
+   phplot(zoo, 3, 2)
+end gpbuild
+gridplot Plots --output=display
+
+print "Successfully finished tests."
+quit

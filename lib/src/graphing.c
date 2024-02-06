@@ -5478,7 +5478,7 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	fprintf(fp, "set title \"%s: relative frequencies\"\n",
 		freq->varname);
     } else {
-	fprintf(fp, "set xlabel '%s'\n", freq->varname);
+	fprintf(fp, "set xlabel '%s'\n", freq->gname);
 	if (dist) {
 	    fprintf(fp, "set ylabel '%s'\n", _("Density"));
 	} else {

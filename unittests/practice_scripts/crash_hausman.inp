@@ -1,0 +1,13 @@
+set verbose off
+/*
+https://gretlml.univpm.it/hyperkitty/list/gretl-devel@gretlml.univpm.it/message/7ZBMLY6YVAW654BT4ZO7LGDE32RR2XR4/
+*/
+
+open abdata.gdt --quiet
+
+ols WAGE const CAP --quiet
+hausman
+
+hausman  # this 2nd call led to a crash
+
+quit

@@ -1,0 +1,57 @@
+set verbose off
+clear
+open denmark -q
+
+# Select an example case
+CASE = 1
+
+# Fine tune the graph if wished
+setopt gridplot persist --height=700 --fontsize=10
+
+series dum = obs >= 1980:1 && obs <= 1983:2
+
+gpbuild Myplots
+   if CASE == 1
+      setopt gnuplot persist --time-series --with-lines
+      gnuplot LRM { set title "foo" ; set yrange[10:12]; \
+        set ylabel "ylabel"; set linetype 1 lw 2 pt 6 lc rgb "blue" ; }
+      gnuplot LRY { set title "bar" ; set xlabel "xlabel"; }
+      gnuplot IBO { set title "baz" ; set grid ; }
+      boxplot diff(LRM) {set title "some boxplot"; set xlabel "x-label"; }
+   elif CASE == 2
+      list X = LRM LRY IBO IDE
+      loop foreach i X
+         qqplot $i --raw
+      endloop
+   elif CASE == 3
+      qqplot LRM
+      qqplot LRY
+      gnuplot IBO --time-series --with-lines \
+        { set title "foo" ; set grid ; }
+      gnuplot IDE --time-series --with-lines
+      gnuplot LRM LRY --with-lines --time-series \
+        --band=dum --band-style=0xcccccc {set key top left;}
+   elif CASE == 4
+      gnuplot IBO --time-series --with-lines \
+        { set title "foo" ; set yrange[-10:10];  set ylabel "ylabel"; }
+      gnuplot IDE --time-series --with-lines \
+        { set title "foo" ; set xlabel "xlabel"; }
+      qqplot IBO
+      freq IDE
+   elif CASE == 5
+      var 2 LRM LRY --silent
+      matrix irf_11 = irf(1, 1, 0.1)
+      matrix plt1 = irf_11[,1] ~ (irf_11[,3] - irf_11[,2])
+      matrix irf_12 = irf(1, 2, 0.1)
+      matrix plt2 = irf_12[,1] ~ (irf_12[,3] - irf_12[,2])
+      gnuplot 1 --matrix=plt1 --time-series --with-lines --band=1,2 --band-style=fill
+      gnuplot 1 --matrix=plt2 --time-series --with-lines --band=1,2 --band-style=bars
+   endif
+end gpbuild
+
+# eval typestr(typeof(MyBuffer)) # is a string
+gridplot Myplots --output="display"
+gridplot Myplots --output="my.pdf"
+
+print "Successfully finished tests."
+quit

@@ -1,0 +1,30 @@
+set verbose off
+clear
+set assert stop
+
+
+bundles Params = null
+Params = Params + _(date = "1984", input_format = "%Y",\
+                    output_format = "%Y", expected = "1984")
+Params = Params + _(date = "1984", input_format = "%Y",\
+                    output_format = "%Y-%m-%d %H:%M", expected = "1984-01-01 00:00")
+
+
+
+function void test_strptime_strftime (const bundles P)
+    print "Start testing strptime() followed by strftime()."
+
+    loop foreach i P
+        # Given + When
+        scalar sec = strptime(P[i].date, P[i].input_format)
+        string actual = strftime(sec, P[i].output_format)
+
+        # Then
+        assert(actual == P[i].expected)
+    endloop
+end function
+test_strptime_strftime(Params)
+
+
+print "Succesfully finished tests."
+quit

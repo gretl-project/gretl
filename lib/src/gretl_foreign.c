@@ -1458,9 +1458,11 @@ static void put_foreign_buffer (const char *buf, FILE *fp)
     bufgets_finalize(buf);
 }
 
-static int no_data_check (const DATASET *dset)
+static int no_data_check (const DATASET *dset, int ci)
 {
-    if (dset == NULL || dset->n == 0 || dset->v == 0) {
+    if (dset == NULL || dset->v == 0) {
+	return E_NODATA;
+    } else if (ci != MPI && dset->n == 0) {
         return E_NODATA;
     } else {
         return 0;
@@ -1502,28 +1504,33 @@ static int *get_send_data_list (int ci, const DATASET *dset,
 
 #ifdef HAVE_MPI
 
-static int mpi_send_data_setup (const DATASET *dset, FILE *fp)
+static int mpi_send_data_setup (const DATASET *dset,
+				gretlopt opt, FILE *fp)
 {
+    int zlist[2] = {1, 0};
     int *list = NULL;
     size_t datasize;
     int nvars;
     gchar *fname;
     int err;
 
-    err = no_data_check(dset);
+    err = no_data_check(dset, MPI);
     if (err) {
         return err;
     }
 
-    list = get_send_data_list(MPI, dset, &err);
-    if (err) {
-        return err;
-    }
-
-    if (list != NULL) {
-        nvars = list[0];
+    if (opt & OPT_M) {
+	nvars = 0; /* excludes const */
+	list = zlist;
     } else {
-        nvars = dset->v;
+	list = get_send_data_list(MPI, dset, &err);
+	if (err) {
+	    return err;
+	} else if (list != NULL) {
+	    nvars = list[0];
+	} else {
+	    nvars = dset->v;
+	}
     }
 
     datasize = dset->n * nvars;
@@ -1568,16 +1575,22 @@ static int mpi_send_funcs_setup (FILE *fp)
 static int write_gretl_mpi_script (gretlopt opt, const DATASET *dset)
 {
     const gchar *fname = get_mpi_scriptname();
-    FILE *fp = gretl_fopen(fname, "w");
-    int err = 0;
+    FILE *fp = NULL;
+    int err;
 
+    err = incompatible_options(opt, OPT_D | OPT_M);
+    if (err) {
+	return err;
+    }
+
+    fp = gretl_fopen(fname, "w");
     if (fp == NULL) {
         return E_FOPEN;
     }
 
-    if (opt & OPT_D) {
+    if (opt & (OPT_D | OPT_M)) {
         /* honor the --send-data option */
-        err = mpi_send_data_setup(dset, fp);
+        err = mpi_send_data_setup(dset, opt, fp);
     }
 
     if (opt & OPT_F) {
@@ -1637,7 +1650,7 @@ static int write_data_for_stata (const DATASET *dset,
     char save_na[8];
     int err;
 
-    err = no_data_check(dset);
+    err = no_data_check(dset, FOREIGN);
     if (err) {
         return err;
     }
@@ -1676,7 +1689,7 @@ static int write_data_for_octave (const DATASET *dset,
     int *list = NULL;
     int err;
 
-    err = no_data_check(dset);
+    err = no_data_check(dset, FOREIGN);
     if (err) {
         return err;
     }
@@ -1842,7 +1855,7 @@ static int write_data_for_R (const DATASET *dset,
     int *list = NULL;
     int ts, err;
 
-    err = no_data_check(dset);
+    err = no_data_check(dset, FOREIGN);
     if (err) {
         return err;
     }

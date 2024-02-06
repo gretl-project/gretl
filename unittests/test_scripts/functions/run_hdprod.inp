@@ -1,0 +1,48 @@
+set verbose off
+clear
+set assert stop
+
+
+function matrix getX ()
+    X = mshape(seq(1,2), 2, 2)
+    X[diag] = 0
+    return X
+end function
+
+bundles Params = null
+Params = Params + _(X = getX(),\
+                    Y = getX(),\
+                    expected = {0; 4; 0; 0; 0; 0; 1; 0}\
+                    )
+Params = Params + _(X = getX(),\
+                    Y = {},\
+                    expected = {0; 4; 0; 0; 1; 0}\
+                    )
+function void test_hdprod (const bundles P)
+    print "Start testing hdprod()."
+
+    loop foreach i P
+        # Given
+        matrix X = getX()
+
+        # When
+        if nelem(P[i].Y)
+            matrix actual = hdprod(P[i].X, P[i].Y)
+        else
+            matrix actual = hdprod(P[i].X)
+        endif
+        actual = vec(actual)
+
+        # Then
+        assert(rows(actual) == rows(P[i].expected))
+
+        loop j=1..rows(actual)
+            assert(actual[j] == P[i].expected[j])
+        endloop
+    endloop
+end function
+test_hdprod(Params)
+
+
+print "Succesfully finished tests."
+quit

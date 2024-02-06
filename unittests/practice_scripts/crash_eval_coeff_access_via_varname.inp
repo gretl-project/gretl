@@ -1,0 +1,7 @@
+set verbose off
+/*
+https://gretlml.univpm.it/hyperkitty/list/gretl-devel@gretlml.univpm.it/message/7HQLXE4L2WF4SYMC3HOJNICLFQC2DICE/
+*/
+open denmark
+ols IBO const IDE
+catch eval $coeff[IDE]

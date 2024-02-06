@@ -1,0 +1,169 @@
+clear
+set verbose off
+set assert stop
+
+
+# Given
+string s1 = "some_argument"
+string s2 = "foo"
+string s3 = ""
+
+function void test_argname_string (const string actual1,
+                                   string actual2,
+                                   const string actual3)
+    print "Start testing argname() for strings."
+
+    # When
+    expected1 = argname(actual1)
+    expected2 = argname(actual2)
+    expected3 = argname(actual3)
+
+    # Then
+    assert(expected1 == "s1")
+    assert(expected2 == "s2")
+    assert(expected3 == "s3")
+end function
+test_argname_string(s1, s2, s3)
+
+
+strings S1 = defarray("foo")
+strings S2 = defarray("foo")
+strings S3 = defarray("")
+
+
+function void test_argname_strings (const strings actual1,
+                                    strings actual2,
+                                    const strings actual3)
+    print "Start testing argname() for string arrays."
+
+    # When
+    expected1 = argname(actual1)
+    expected2 = argname(actual2)
+    expected3 = argname(actual3)
+
+    # Then
+    assert(expected1 == "S1")
+    assert(expected2 == "S2")
+    assert(expected3 == "S3")
+end function
+test_argname_strings(S1, S2, S3)
+
+
+# Given
+scalar scalar1 = -4
+scalar scalar2 = NA
+scalar scalar3 = 3
+
+function void test_argname_scalar (const scalar actual1,
+                                   scalar actual2,
+                                   const scalar actual3)
+    print "Start testing argname() for scalars."
+
+    # When
+    expected1 = argname(actual1)
+    expected2 = argname(actual2)
+    expected3 = argname(actual3)
+
+    # Then
+    assert(expected1 == "scalar1")
+    assert(expected2 == "scalar2")
+    assert(expected3 == "scalar3")
+end function
+test_argname_scalar(scalar1, scalar2, scalar3)
+
+
+
+# Given
+matrices matrices1 = array(3)
+matrices matrices2 = array(3)
+matrices matrices3 = array(0)
+
+function void test_argname_matrix (const matrices actual1,
+                                   matrices actual2,
+                                   const matrices actual3)
+    print "Start testing argname() for matrix arrays."
+
+    # When
+    expected1 = argname(actual1)
+    expected2 = argname(actual2)
+    expected3 = argname(actual3)
+
+    # Then
+    assert(expected1 == "matrices1")
+    assert(expected2 == "matrices2")
+    assert(expected3 == "matrices3")
+end function
+test_argname_matrix(matrices1, matrices2, matrices3)
+
+
+# Given
+matrix matrix1 = {}
+matrix matrix2 = mshape(NA, 2, 2)
+matrix matrix3 = mnormal(2, 3)
+
+function void test_argname_matrices (const matrix actual1,
+                                     matrix actual2,
+                                     const matrix actual3)
+    print "Start testing argname() for matrix."
+
+    # When
+    expected1 = argname(actual1)
+    expected2 = argname(actual2)
+    expected3 = argname(actual3)
+
+    # Then
+    assert(expected1 == "matrix1")
+    assert(expected2 == "matrix2")
+    assert(expected3 == "matrix3")
+end function
+test_argname_matrices(matrix1, matrix2, matrix3)
+
+
+# Given
+open denmark.gdt --preserve --quiet
+
+function void test_argname_series (const series actual1,
+                                   series actual2,
+                                   const series actual3)
+    print "Start testing argname() for series."
+
+    # When
+    expected1 = argname(actual1)
+    expected2 = argname(actual2)
+    expected3 = argname(actual3)
+
+    # Then
+    assert(expected1 == "LRM")
+    assert(expected2 == "LRY")
+    assert(expected3 == "IBO")
+end function
+test_argname_series(LRM, LRY, IBO)
+
+
+# Given
+open denmark.gdt --preserve --quiet
+list L1 = dataset
+list L2 = dataset
+list L3 = null
+
+function void test_argname_list (const list actual1,
+                                 list actual2,
+                                 const list actual3)
+    print "Start testing argname() for lists."
+
+    # When
+    expected1 = argname(actual1)
+    expected2 = argname(actual2)
+    expected3 = argname(actual3)
+
+    # Then
+    assert(expected1 == "L1")
+    assert(expected2 == "L2")
+    assert(expected3 == "L3")
+end function
+test_argname_list(L1, L2, L3)
+
+
+
+print "Succesfully finished tests."
+quit

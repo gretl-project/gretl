@@ -1,0 +1,13 @@
+set verbose off
+clear
+open us-states.geojson --frompkg=geoplot --quiet
+
+gpbuild Geos
+    geoplot()
+    geoplot()
+end gpbuild
+
+gridplot Geos --height=700 --width=700 --fontsize=10 --output=display
+
+print "Successfully finished tests."
+quit

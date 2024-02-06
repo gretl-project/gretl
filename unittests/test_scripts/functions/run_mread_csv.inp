@@ -1,0 +1,47 @@
+set verbose off
+clear
+set assert stop
+
+quit ## skip as for github-actions further changes are needed
+
+string FILENAME_DATA = "matrix.csv"
+
+bundles Parameters = null
+Parameters = Parameters + _(\
+            filename = sprintf("../data/%s", FILENAME_DATA),\
+            expected = FALSE)
+
+# Test whether file exists first
+string filename = Parameters[1].filename
+catch string content = readfile("@filename")
+if $error
+    print "Warning: csv file does not exist. Ignore test"
+    quit
+endif
+
+function void test_mread (const bundles P)
+    print "Start testing mread()"
+
+    loop foreach i P
+        # Given + When
+        print P[i].filename
+        catch matrix m = mread(P[i].filename)
+
+        actual = $error
+        printf "\nReturned error code: %d\n", actual
+
+        # Then
+        assert(actual == P[i].expected)
+    endloop
+end function
+test_mread(Parameters)
+
+
+print "Open command should work using relative path"
+filename = sprintf("../data/%s", FILENAME_DATA)
+catch open "@filename"
+assert($error == FALSE)
+
+
+print "Succesfully finished tests."
+quit

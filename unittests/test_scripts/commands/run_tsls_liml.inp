@@ -1,0 +1,36 @@
+set verbose off
+clear
+set assert stop
+
+nulldata 100
+
+function void tsls_with_ancillary_regression (void)
+  series w = uniform()
+  series x = normal()
+  series y = normal()
+
+  catch tsls y const x ; const w --quiet
+  assert($error == FALSE)
+
+  catch tsls y const x ; const w --liml --quiet
+  assert($error == FALSE)
+end function
+tsls_with_ancillary_regression()
+
+
+function void tsls_no_ancillary_regression (void)
+  series w = uniform()
+  series x = normal()
+  series y = normal()
+
+  catch tsls y x ; w --quiet
+  assert($error == FALSE)
+
+  catch tsls y x ; w --liml --quiet
+  assert($error == FALSE)
+end function
+tsls_no_ancillary_regression()
+
+
+print "Successfully finished tests."
+quit

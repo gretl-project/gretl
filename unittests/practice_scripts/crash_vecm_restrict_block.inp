@@ -1,0 +1,17 @@
+set verbose off
+/*
+https://gretlml.univpm.it/hyperkitty/list/gretl-users@gretlml.univpm.it/message/PLMXMPDIJ555QQAQKYPNTJSEKLSLTHQF/
+*/
+
+open np.gdt --quiet
+
+vecm 4 1 ngnp emply pcons money --silent
+
+restrict --full
+    b[1] = 1
+    b[3] = 0
+    a[3] = 0
+    a[4] = 0
+end restrict
+
+quit

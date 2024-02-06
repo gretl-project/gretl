@@ -1,0 +1,28 @@
+set verbose off
+clear
+set assert stop
+
+nulldata 10
+setobs 1 1 --time-series
+
+function void check_filter(void)
+    print "Start executing check_filter()"
+
+    # Given
+    scalar k = $nobs
+    x = normal()
+
+    # When
+    a = movavg(x, k)
+    b = filter(x, ones(k,1)/k)
+    smpl k ;
+
+    # Then
+    d = max(abs(a - b))
+    assert(d <= 1e-10)
+end function
+
+check_filter()
+
+print "Successfully finished tests."
+quit

@@ -1,0 +1,51 @@
+set verbose off
+clear
+set assert stop
+
+scalar T = 3
+scalar N = 2
+scalar NT = N * T
+
+nulldata NT --preserve
+setobs T 1:1 --stacked-time-series
+
+
+bundles Params = null
+Params += _(input = {1; 2},
+            expected = {1; 1; 1; 2; 2; 2},
+            option = FALSE,
+            error = FALSE)
+Params += _(input = {1; 2; 3},
+            expected = {1; 2; 3; 1; 2; 3},
+            option = TRUE,
+            error = FALSE)
+# should fail
+Params += _(input = {1; 2},
+            expected = {1; 1; 1; 2; 2; 2},
+            option = TRUE,
+            error = 17)
+Params += _(input = {1; 2; 3},
+            expected = {1; 2; 3; 1; 2; 3},
+            option = FALSE,
+            error = 17)
+
+
+function void test_succeed (const bundles P)
+    print "Start testing function pexpand() succeeding."
+
+    loop foreach i P
+        # Given + When
+        catch series actual = pexpand(P[i].input, P[i].option)
+
+        # Then
+        assert($error == P[i].error)
+        if P[i].error == FALSE
+            assert(sum(actual - P[i].expected) == FALSE)
+        endif
+    endloop
+end function
+test_succeed(Params)
+
+
+print "Succesfully finished tests."
+quit
