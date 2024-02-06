@@ -10,6 +10,8 @@ version 2024a, in progress
   manipulating the description of a dataset
 - "tsls" command: add a --matrix-diff option for the Hausman
   test, using the method of Padadopoulos (Econometrics, 2023)
+- "gmm" command block: support lists of series in extenso on
+  either side of an "orthog" statement
 - "corrgm", "xcorrgm", "pergm" and "qlrtest" commands: support
   the --outbuf option for directing plot output to a buffer
 - "loop foreach": support arrays and bundles that are located
@@ -26,7 +28,7 @@ version 2024a, in progress
   up broken after doing "Save data" in the GUI when there's
   a sample restriction in place
 - Fix bug: possible crash when a dbnomics download fails, if
-  called for using the "data" command
+  invoked via the "data" command
 - GUI: apply some legibility fixes for dark GTK themes
 - GUI: enable the advertised keystrokes in file "browser"
   windows (bug #294)
@@ -35,6 +37,10 @@ version 2024a, in progress
 - GUI: make a newly installed data file package accessible
   by reopening the relevant window; don't require a restart
   of gretl
+- gdt and gdtb data file specification: allow files which
+  contain no actual data series, just the implicit "const"
+  plus metadata
+- add a suite of unit tests to the gretl source tree
 
 2023-12-05 version 2023c
 - New commands "gridplot" and "gpbuild" for constructing
