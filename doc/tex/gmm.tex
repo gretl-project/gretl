@@ -282,7 +282,7 @@ gmm
 end gmm
 \end{scode}
 The \texttt{gmm} output is:
-\begin{code}
+\begin{scodebot}
 Model 1: 1-step GMM, using observations 1-200
 
              estimate   std. error     z     p-value 
@@ -291,7 +291,7 @@ Model 1: 1-step GMM, using observations 1-200
   theta      1.97898     0.286796    6.900   5.19e-12 ***
 
   GMM criterion: Q = 1.19302e-28 (TQ = 2.38604e-26)
-\end{code}
+\end{scodebot}
 \end{script}
 
 In order to use the \textit{unbiased} estimator of the sample
@@ -324,12 +324,11 @@ be expected in large samples.
 \label{sec:gmm-ols}
 
 We now move to an example closer to econometrics proper: the linear
-model $y_t = x_t \beta + u_t$.  Although most of us are used to read
-it as the sum of a hazily defined ``systematic part'' plus an equally
-hazy ``disturbance'', a more rigorous interpretation of this familiar
-expression comes from the \emph{hypothesis} that the conditional mean
-$E(y_t|x_t)$ is linear and the \emph{definition} of $u_t$ as
-$y_t - E(y_t|x_t)$.
+model $y_t = x_t \beta + u_t$.  Most of us are used to reading it
+informally as the sum of a ``systematic part'' and a ``disturbance'',
+but a more rigorous interpretation of this familiar expression rests
+on the \emph{hypothesis} that the conditional mean $E(y_t|x_t)$ is
+linear plus the \emph{definition} of $u_t$ as $y_t - E(y_t|x_t)$.
 
 From the definition of $u_t$, it follows that $E(u_t|x_t) = 0$. 
 The following orthogonality condition is therefore available:
