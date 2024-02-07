@@ -31,7 +31,7 @@ for f in `find $INPPATH/practice_scripts -name "*.inp"` ; do
    # Check if the script failed
    if [ $? != 0 ] ; then
       # Print 'Failed', update status variable, and log the failed script
-      echo " [\e[0;31mFailed\e[0m]"
+      echo -e " [\e[0;31mFailed\e[0m]"
       my_status=1
       echo $f >> $HERE/fails
    else
@@ -61,8 +61,10 @@ done
 
 # If there were any failures, print the names of the failed scripts
 if test -f fails ; then
-   echo "Failed script(s):"
+   echo -e "\e[0;31mFailed script(s):\e[0m"
    cat fails
+else
+   echo "No errors were found"
 fi
 
 # Exit with status code 0 if all scripts passed, 1 if any script failed.
