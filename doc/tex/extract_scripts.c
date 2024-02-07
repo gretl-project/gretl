@@ -149,6 +149,8 @@ int process_tex_file (const char *fname)
     if (fp == NULL) {
 	fprintf(stderr, "couldn't open %s\n", fname);
 	return 1;
+    } else {
+        printf("\nprocessing %s\n", fname);
     }
 
     while (fgets(line, sizeof line, fp)) {
@@ -212,7 +214,7 @@ int process_tex_file (const char *fname)
 	FILE *fa = open_aux_file(fname);
 	int i, err = 0;
 
-	printf("\nChapter ID '%s': %d script(s)\n", chaplabel, n_scripts);
+	printf("Chapter ID '%s': %d script(s)\n", chaplabel, n_scripts);
 	if (fa == NULL) {
 	    exit(EXIT_FAILURE);
 	}
@@ -243,7 +245,7 @@ int process_tex_file (const char *fname)
 	    fclose(fa);
 	}
     } else {
-	printf("\nChapter ID '%s': no scripts\n", chaplabel);
+	printf("Chapter ID '%s': no scripts\n", chaplabel);
     }
 
     return 0;
