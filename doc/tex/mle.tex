@@ -291,9 +291,9 @@ efficient, by defining a series to hold $x_t/\theta$, which we'll call
 \texttt{y}. This command can be embedded in the \texttt{mle} block as
 follows:
 \begin{code}
-mle logl = p*ln(y) - lngamma(k) - ln(x) - y
+mle logl = k*ln(y) - lngamma(k) - ln(x) - y
   series y = x/theta
-  params alpha p
+  params k theta
 end mle 
 \end{code}
 You can insert as many such auxiliary lines as you require before the
@@ -334,7 +334,7 @@ the parameters, and set the log-likelihood as undefined (\texttt{NA})
 if the check fails. To implement this, the mle block above could be
 modified as follows:
 \begin{code}
-mle logl = check ? p*ln(y) - lngamma(p) - ln(x) - y : NA
+mle logl = check ? k*ln(y) - lngamma(k) - ln(x) - y : NA
   series y = x/theta
   scalar check = k > 0 && theta > 0
   params k theta
