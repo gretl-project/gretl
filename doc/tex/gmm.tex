@@ -181,13 +181,12 @@ conditions.  They must follow the syntax
 \begin{code}
   orthog x ; Z
 \end{code}
-where \texttt{x} may be a series, matrix or named list of series and
-\texttt{Z} may also be a series, matrix or list. Note the structure of
-the statement: it is assumed that the term to the left of the
-semicolon represents a quantity that depends on the estimated
-parameters (and so must be updated in the process of iterative
-estimation), while the term on the right is a constant function of the
-data.
+where \texttt{x} may be a series, matrix or list of series (given either
+by name or \textit{in extenso}) \texttt{Z} may also be a series, matrix or
+list. Note the structure of the statement: it is assumed that the term to
+the left of the semicolon represents a quantity that depends on the
+estimated parameters (and so must be updated in the process of iterative
+estimation), while the term on the right is a constant function of the data.
 
 The \texttt{weights} statement is used to specify the initial
 weighting matrix and its syntax is straightforward. 
@@ -229,13 +228,10 @@ express these moment conditions in the notation that gretl expects as
 orthog e1 ; const
 orthog e2 ; const
 \end{code}
-But given that the right-hand side is the same for each, it might be
-more elegant to define a list comprising \texttt{e1} and \texttt{e2}
-and use a single \texttt{orthog} statement, as in
+But given that the right-hand side is the same for each the conditions
+can be combined, using a list on the left:
 \begin{code}
-list E = e1 e2
-...
-orthog E ; const
+orthog e1 e2 ; const
 \end{code}
 
 The required weighting matrix can be set to any positive definite
@@ -265,10 +261,9 @@ scalar theta = 1
 # create the weight matrix as the identity matrix
 matrix W = I(2)
 
-# declare two series, and a list, for use in the orthogonality conditions
+# declare two series for use in the orthogonality conditions
 series e1 = 0				
 series e2 = 0
-list E = e1 e2
 
 # obtain the sample mean of x
 scalar m = mean(x)
@@ -276,7 +271,7 @@ scalar m = mean(x)
 gmm
     series e1 = x - k*theta
     series e2 = (x - m)^2 - k*theta^2
-    orthog E ; const
+    orthog e1 e2 ; const
     weights W
     params k theta
 end gmm
