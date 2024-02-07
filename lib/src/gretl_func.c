@@ -7506,11 +7506,11 @@ static int parse_function_param (char *s, fn_param *param, int i)
     int const_flag = 0;
     int err = 0;
 
+    while (isspace(*s)) s++;
+
 #if FNPARSE_DEBUG
     fprintf(stderr, "parse_function_param: s = '%s'\n", s);
 #endif
-
-    while (isspace(*s)) s++;
 
     /* pick up the "const" flag if present */
     if (!strncmp(s, "const ", 6)) {
@@ -7858,7 +7858,9 @@ int gretl_start_compiling_function (const char *line,
         if (p == NULL || strchr(p, ')') == NULL) {
             err = E_PARSE;
         } else {
-            p++; /* skip the left paren */
+	    /* skip the left paren and any following spaces */
+            p++;
+	    p += strspn(p, " \t");
         }
     }
 
