@@ -57,7 +57,7 @@ struct nlspec_ {
 			*/
     int nparam;         /* number of parameters */
     int ncoeff;         /* number of coefficients (allows for vector params) */
-    int nvec;           /* number of vector parameters */
+    int nmat;           /* number of matrix parameters */
     int naux;           /* number of auxiliary commands */
     int ngenrs;         /* number of variable-generating formulae */
     int iters;          /* number of iterations performed */

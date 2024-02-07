@@ -53,7 +53,7 @@
 struct parm_ {
     char name[VNAMELEN];  /* name of parameter */
     gretl_bundle *bundle; /* parent bundle, if applicable */
-    int type;             /* type of parameter (scalar or vector) */
+    GretlType type;       /* type of parameter (scalar or matrix) */
     int dvtype;           /* type of derivative for parameter */
     char *deriv;          /* string representation of derivative of regression
 			     function with respect to param (or NULL) */
@@ -62,7 +62,7 @@ struct parm_ {
 			     with the parameter */
     char dname[VNAMELEN]; /* name of variable holding the derivative */
     GENERATOR *dgenr;     /* generator for derivative */
-    gretl_matrix *vec;    /* pointer to vector parameter */
+    gretl_matrix *mat;    /* pointer to matrix parameter */
 };
 
 #define scalar_param(s,i) (s->params[i].type == GRETL_TYPE_DOUBLE)
@@ -547,9 +547,9 @@ void nlspec_destroy_arrays (nlspec *s)
     s->ncoeff = 0;
 }
 
-/* add a vector of coefficients to the model specification */
+/* add an array of coefficients to the model specification */
 
-static int push_vec_coeffs (nlspec *s, gretl_matrix *m, int k)
+static int push_matrix_coeffs (nlspec *s, gretl_matrix *m, int k)
 {
     double *coeff;
     int i, nc = s->ncoeff;
@@ -616,7 +616,7 @@ static double get_param_scalar (parm *p)
     return x;
 }
 
-static gretl_matrix *get_param_vector (parm *p)
+static gretl_matrix *get_param_matrix (parm *p)
 {
     gretl_matrix *m = NULL;
 
@@ -632,7 +632,7 @@ static gretl_matrix *get_param_vector (parm *p)
 }
 
 /* add a parameter to the model specification: this may be
-   either a scalar or a vector
+   either a scalar or a matrix
 */
 
 static int nlspec_push_param (nlspec *s,
@@ -662,7 +662,7 @@ static int nlspec_push_param (nlspec *s,
     p->nc = 1;
     p->dname[0] = '\0';
     p->dgenr = NULL;
-    p->vec = NULL;
+    p->mat = NULL;
 
 #if NLS_DEBUG
     fprintf(stderr, "added param[%d] = '%s'\n", np, p->name);
@@ -676,17 +676,17 @@ static int nlspec_push_param (nlspec *s,
 
 	err = push_scalar_coeff(s, x);
     } else {
-	gretl_matrix *m = get_param_vector(p);
-	int k = gretl_vector_get_length(m);
+	gretl_matrix *m = get_param_matrix(p);
+	int k = m->rows * m->cols;
 
 #if NLS_DEBUG
-	fprintf(stderr, "vector param: m = %p, k = %d\n", (void *) m, k);
+	fprintf(stderr, "matrix param: m = %p, k = %d\n", (void *) m, k);
 #endif
-	p->vec = m;
+	p->mat = m;
 	p->nc = k;
-	err = push_vec_coeffs(s, m, k);
+	err = push_matrix_coeffs(s, m, k);
 	if (!err) {
-	    s->nvec += 1;
+	    s->nmat += 1;
 	}
     }
 
@@ -704,15 +704,18 @@ static int check_matrix_param (const char *name, gretl_bundle *b)
 	m = gretl_bundle_get_matrix(b, name, &err);
     }
 
-    if (err || m == NULL || gretl_vector_get_length(m) == 0) {
-	gretl_errmsg_sprintf(_("'%s': expected a scalar or vector"), name);
+    /* 2024-02-07: allow a matrix parameter which is not a vector,
+       deleting the check clause 'gretl_vector_get_length(m) == 0'
+    */
+    if (err || gretl_is_null_matrix(m)) {
+	gretl_errmsg_sprintf(_("'%s': expected a scalar or matrix"), name);
 	err = E_TYPES;
     }
 
     return err;
 }
 
-/* Do we have a valid name (the name of a scalar or vector?):
+/* Do we have a valid name (the name of a scalar or matrix?):
    if so return 0, else return E_TYPES.
 */
 
@@ -848,7 +851,7 @@ static int nlspec_add_param_names (nlspec *spec, const char *s)
 
    specifying the parameters to be estimated.  Here we parse such a
    list and add the parameter info to the spec.  The terms in the list
-   must be pre-existing scalars or vectors, either objects in their
+   must be pre-existing scalars or matrices, either objects in their
    own right or members of a bundle.
 */
 
@@ -954,7 +957,7 @@ int aux_nlspec_add_param_list (nlspec *spec, int np, double *vals,
 				    OPT_A);
 }
 
-/* update the 'external' values of scalars or vectors using
+/* update the 'external' values of scalars or matrices using
    the values produced by the optimizer.
 */
 
@@ -973,20 +976,20 @@ int update_coeff_values (const double *b, nlspec *s)
 		err = gretl_scalar_set_value(p->name, b[k++]);
 	    }
 	} else {
-	    gretl_matrix *m = get_param_vector(p);
+	    gretl_matrix *m = get_param_matrix(p);
 
 	    if (m == NULL) {
 		fprintf(stderr, "Couldn't find location for coeff %d\n", k);
 		err = E_DATA;
 	    } else {
-		if (m != p->vec) {
+		if (m != p->mat) {
 		    fprintf(stderr, "*** coeff_address: by name, '%s' is at %p; "
 			    "stored addr = %p\n", p->name,
-			    (void *) m, (void *) p->vec);
-		    p->vec = m;
+			    (void *) m, (void *) p->mat);
+		    p->mat = m;
 		}
 		for (j=0; j<p->nc; j++) {
-		    gretl_vector_set(m, j, b[k++]);
+		    m->val[j] = b[k++];
 		}
 	    }
 	}
@@ -2388,7 +2391,7 @@ static void clear_nlspec (nlspec *spec)
     free(spec->coeff);
     spec->coeff = NULL;
     spec->ncoeff = 0;
-    spec->nvec = 0;
+    spec->nmat = 0;
 
     if (spec->aux != NULL) {
 	for (i=0; i<spec->naux; i++) {
@@ -3526,7 +3529,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 	if (spec->lvec != NULL) {
 	    memcpy(spec->fvec, spec->lvec->val, fvec_bytes);
 	} else {
-	    /* not scalar or vector: must be a series */
+	    /* not scalar or matrix: must be a series */
 	    if (dset == NULL || dset->v == 0) {
 		nlmod.errcode = E_NODATA;
 		goto bailout;
@@ -3598,12 +3601,12 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
     }
 
     /* ensure that the canonical parameter values get back
-       into external scalars or vectors */
+       into external scalars or matrices */
     update_coeff_values(spec->coeff, spec);
 
  bailout:
 
-    if (spec->nvec > 0 && analytic_mode(spec)) {
+    if (spec->nmat > 0 && analytic_mode(spec)) {
 	destroy_private_matrices();
     }
 
@@ -3713,7 +3716,7 @@ nlspec *nlspec_new (int ci, const DATASET *dset)
 
     spec->coeff = NULL;
     spec->ncoeff = 0;
-    spec->nvec = 0;
+    spec->nmat = 0;
 
     spec->Hinv = NULL;
 
@@ -4126,10 +4129,10 @@ static int save_scalar_param (parm *p, double **px, int *n)
     return err;
 }
 
-static int save_vector_param (parm *p, gretl_matrix ***pm,
+static int save_matrix_param (parm *p, gretl_matrix ***pm,
 			      int *n)
 {
-    gretl_matrix *m = get_param_vector(p);
+    gretl_matrix *m = get_param_matrix(p);
     int err = 0;
 
     if (m == NULL) {
@@ -4198,7 +4201,7 @@ int nls_boot_calc (const MODEL *pmod, DATASET *dset,
 	if (p->type == GRETL_TYPE_DOUBLE) {
 	    err = save_scalar_param(p, &xsave, &nx);
 	} else {
-	    err = save_vector_param(p, &msave, &nm);
+	    err = save_matrix_param(p, &msave, &nm);
 	}
     }
 
@@ -4291,7 +4294,7 @@ int nls_boot_calc (const MODEL *pmod, DATASET *dset,
 	}
     }
 
-    if (spec->nvec > 0 && analytic_mode(spec)) {
+    if (spec->nmat > 0 && analytic_mode(spec)) {
 	destroy_private_matrices();
     }
 
@@ -4310,9 +4313,9 @@ int nls_boot_calc (const MODEL *pmod, DATASET *dset,
 	    }
 	    ix++;
 	} else if (im < nm) {
-	    gretl_matrix *m0 = get_param_vector(p);
+	    gretl_matrix *m0 = get_param_matrix(p);
 	    gretl_matrix *m1 = msave[im];
-	    int k, len = gretl_vector_get_length(m0);
+	    int k, len = m0->rows * m0->cols;
 
 	    for (k=0; k<len; k++) {
 		m0->val[k] = m1->val[k];
