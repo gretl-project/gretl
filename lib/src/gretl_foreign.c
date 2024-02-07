@@ -2575,7 +2575,6 @@ int check_set_R_home (void)
     }
 
     err = gretl_test_fopen(path, "r");
-    fprintf(stderr, "user path '%s', err %d\n", path, err);
     /* an error here is not necessarily fatal, if we can get
        the R path from the registry.
     */
@@ -2670,7 +2669,6 @@ int check_set_R_home (void)
     }
 
     Rhome = getenv("R_HOME");
-    fprintf(stderr, "Rhome = '%s'\n", Rhome);
 
     if (Rhome == NULL || *Rhome == '\0') {
 	fprintf(stderr, "No R_HOME\n");
@@ -2684,7 +2682,6 @@ int check_set_R_home (void)
 #endif
 	lp = g_strdup_printf("%s/lib/%s", Rhome, libname);
 	err = (lstat(lp, &buf) != 0);
-	fprintf(stderr, "lp '%s', err %d\n", lp, err);
 	if (err) {
 	    /* needs correcting */
 	    do_setenv = 1;
