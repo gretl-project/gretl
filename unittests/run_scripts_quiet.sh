@@ -1,17 +1,27 @@
 #!/bin/bash
 
+if [ "x$1" != "x" ] ; then
+   # executing in build tree
+   INPPATH=$1
+   GRETLCLI="../cli/gretlcli"
+else
+   # executing "here" using installed gretlcli
+   INPPATH="."
+   GRETLCLI="gretlcli"
+fi
+
 # Remove the 'fails' file if it exists
 rm -f fails
 
 # Store the current directory path
 HERE=`pwd`
 
-# Initialize status variable
+# Initialize exit status variable
 my_status=0
 
-# Start testing scripts in the 'practice_scripts' directory
+# Test scripts in the 'practice_scripts' directory
 echo "*** practice scripts ***"
-for f in `find ./practice_scripts -name "*.inp"` ; do
+for f in `find $INPPATH/practice_scripts -name "*.inp"` ; do
    # Print the name of the script being tested
    echo -n `basename $f`
 
@@ -30,10 +40,10 @@ for f in `find ./practice_scripts -name "*.inp"` ; do
    fi
 done
 
-# Start testing scripts in the 'commands', 'functions', and 'fundamentals' directories
+# Test scripts in the 'commands', 'functions', and 'fundamentals' directories
 for d in commands functions fundamentals ; do
    echo "*** $d ***"
-   cd ./test_scripts/$d
+   cd $INPPATH/test_scripts/$d
    for f in `find . -name "*.inp"` ; do
       echo -n `basename $f`
       gretlcli -b -q -e $f > /dev/null 2>&1
@@ -55,5 +65,5 @@ if test -f fails ; then
    cat fails
 fi
 
-# Exit with the status code. 0 if all scripts passed, 1 if any script failed.
+# Exit with status code 0 if all scripts passed, 1 if any script failed.
 exit $my_status
