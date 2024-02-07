@@ -1029,6 +1029,7 @@ po/Makefile.in
 share/Makefile
 share/bcih/Makefile
 tests/Makefile
+unittests/Makefile
 apidemo/Makefile
 redhat/gretl.spec
 utils/emacs/Makefile

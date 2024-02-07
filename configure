@@ -18513,11 +18513,11 @@ if test x$ac_prog_cxx_stdcxx = xno
 then :
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $CXX option to enable C++11 features" >&5
 printf %s "checking for $CXX option to enable C++11 features... " >&6; }
-if test ${ac_cv_prog_cxx_11+y}
+if test ${ac_cv_prog_cxx_cxx11+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
-  ac_cv_prog_cxx_11=no
+  ac_cv_prog_cxx_cxx11=no
 ac_save_CXX=$CXX
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -18559,11 +18559,11 @@ if test x$ac_prog_cxx_stdcxx = xno
 then :
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $CXX option to enable C++98 features" >&5
 printf %s "checking for $CXX option to enable C++98 features... " >&6; }
-if test ${ac_cv_prog_cxx_98+y}
+if test ${ac_cv_prog_cxx_cxx98+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
-  ac_cv_prog_cxx_98=no
+  ac_cv_prog_cxx_cxx98=no
 ac_save_CXX=$CXX
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -25008,7 +25008,7 @@ fi
 
 CFLAGS="$orig_CFLAGS"
 
-ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui/Makefile gui/debug xdg/gretl.desktop xdg/gretl_edit.desktop xdg/Makefile cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile apidemo/Makefile redhat/gretl.spec utils/emacs/Makefile utils/dbzip/Makefile doc/gretl.sty doc/gretl-lite.sty"
+ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui/Makefile gui/debug xdg/gretl.desktop xdg/gretl_edit.desktop xdg/Makefile cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile unittests/Makefile apidemo/Makefile redhat/gretl.spec utils/emacs/Makefile utils/dbzip/Makefile doc/gretl.sty doc/gretl-lite.sty"
 
 
 if test "${darwin_build}" = "yes" ; then
@@ -26282,6 +26282,7 @@ do
     "share/Makefile") CONFIG_FILES="$CONFIG_FILES share/Makefile" ;;
     "share/bcih/Makefile") CONFIG_FILES="$CONFIG_FILES share/bcih/Makefile" ;;
     "tests/Makefile") CONFIG_FILES="$CONFIG_FILES tests/Makefile" ;;
+    "unittests/Makefile") CONFIG_FILES="$CONFIG_FILES unittests/Makefile" ;;
     "apidemo/Makefile") CONFIG_FILES="$CONFIG_FILES apidemo/Makefile" ;;
     "redhat/gretl.spec") CONFIG_FILES="$CONFIG_FILES redhat/gretl.spec" ;;
     "utils/emacs/Makefile") CONFIG_FILES="$CONFIG_FILES utils/emacs/Makefile" ;;

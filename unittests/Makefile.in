@@ -1,0 +1,5 @@
+topsrc = @top_srcdir@
+testsrc = $(topsrc)/unittests
+
+check:
+	$(testsrc)/run_scripts_quiet.sh $(testsrc)
