@@ -2103,6 +2103,10 @@
 	  <flag>--triangle</flag>
 	  <effect>only plot lower half, see below</effect>
      </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>do not print anything</effect>
+     </option>
 
       </options>
       <examples>
