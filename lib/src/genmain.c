@@ -1194,6 +1194,10 @@ parser *genr_compile (const char *s, DATASET *dset,
 	flags |= P_ANON;
     }
 
+#if GDEBUG
+    fprintf(stderr, "*** targtype = %s\n", getsymb(targtype));
+#endif
+
     *err = realgen(s, p, dset, prn, flags, targtype);
 
     if (*err == 0 && p != NULL &&
