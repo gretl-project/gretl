@@ -2416,7 +2416,7 @@ static int blas_variant;
 
 static int parse_ldd_output (const char *s)
 {
-    char found[5] = {0};
+    char found[6] = {0};
     char line[512];
     int i = 0;
     int ret = BLAS_UNKNOWN;
@@ -2427,26 +2427,30 @@ static int parse_ldd_output (const char *s)
         if (*s == '\n') {
             /* got to the end of a line */
             line[i] = '\0';
-            if (strstr(line, "libblis")) {
-                found[4] = 1;
-            } else if (strstr(line, "Accelerate.frame")) {
-                found[3] = 1;
-            } else if (strstr(line, "libmkl")) {
-                found[2] = 1;
-            } else if (strstr(line, "atlas")) {
-                found[1] = 1;
-            } else if (strstr(line, "libblas")) {
-                found[0] = 1;
-            }
-            *line = '\0';
-            i = 0;
-        } else {
-            line[i++] = *s;
-        }
-        s++;
+	    if (strstr(line, "libopenblas")) {
+		found[5] = 5;
+	    } else if (strstr(line, "libblis")) {
+		found[4] = 1;
+	    } else if (strstr(line, "Accelerate.frame")) {
+		found[3] = 1;
+	    } else if (strstr(line, "libmkl")) {
+		found[2] = 1;
+	    } else if (strstr(line, "atlas")) {
+		found[1] = 1;
+	    } else if (strstr(line, "libblas")) {
+		found[0] = 1;
+	    }
+	    *line = '\0';
+	    i = 0;
+	} else {
+	    line[i++] = *s;
+	}
+	s++;
     }
 
-    if (found[4]) {
+    if (found[5]) {
+	ret = BLAS_OPENBLAS;
+    } else if (found[4]) {
         ret = BLAS_BLIS;
     } else if (found[3]) {
         ret = BLAS_VECLIB;
@@ -2467,7 +2471,7 @@ static int parse_ldd_output (const char *s)
 
 static int detect_blas_via_ldd (void)
 {
-    gchar *prog;
+    gchar *targ;
     gchar *sout = NULL;
     gchar *errout = NULL;
     gint status = 0;
@@ -2476,16 +2480,16 @@ static int detect_blas_via_ldd (void)
 
 #ifdef OS_OSX
     gchar *argv[4];
-    prog = g_strdup_printf("%sgretlcli", gretl_bindir());
+    targ = g_strdup_printf("%sgretlcli", gretl_bindir());
     argv[0] = "otool";
     argv[1] = "-L";
-    argv[2] = prog;
+    argv[2] = targ;
     argv[3] = NULL;
 #else
     gchar *argv[3];
-    prog = g_strdup(GRETL_PREFIX "/bin/gretlcli");
+    targ = g_strdup(GRETL_PREFIX "/lib/libgretl-1.0.so");
     argv[0] = "ldd";
-    argv[1] = prog;
+    argv[1] = targ;
     argv[2] = NULL;
 #endif
 
@@ -2506,7 +2510,7 @@ static int detect_blas_via_ldd (void)
 
     g_free(sout);
     g_free(errout);
-    g_free(prog);
+    g_free(targ);
 
     return variant;
 }
