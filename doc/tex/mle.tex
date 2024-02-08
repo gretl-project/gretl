@@ -319,7 +319,7 @@ for the algorithm.  The original initializers for $k$ and $\theta$
 could then be replaced by
 \begin{code}
 scalar m = mean(x)
-scalar theta = m/var(x)
+scalar theta = var(x)/m
 scalar k = m/theta
 \end{code}
 
@@ -361,7 +361,7 @@ series x = randgen(G, 3, 2)
 # initialize estimates via sample moments
 m = mean(x)
 theta = var(x) / m
-k = m / theta_hat
+k = m / theta
 
 mle logl = check ? k*ln(y) - lngamma(k) - ln(x) - y : NA
    series y = x/theta
