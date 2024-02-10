@@ -380,8 +380,7 @@ regressors rather than solely on the values of the exogenous and
 predetermined variables.
 
 \begin{script}[htbp]
-  \scriptcaption{Simulation from a simultaneous equation system}
-  \label{system-simula}
+  \scriptinfo{system-simulation}{Simulation from a simultaneous equation system}
 \begin{scode}
 set verbose off
 set seed 131020
@@ -448,7 +447,7 @@ print Sim
 On the contrary, gretl does not provide a native command for
 generating simulated data from a multi-equation system, but this is
 relatively easily accomplished by means of scripting: script
-\ref{system-simula} gives an example on a 3-variable
+\ref{ex:system-simulation} gives an example on a 3-variable
 system.\footnote{Note: the system of equations that is being estimated
   here is not meant to stand for a realistic model of the European
   economy. It is just set up in such a way to provide a simple

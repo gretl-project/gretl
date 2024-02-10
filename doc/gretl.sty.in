@@ -70,23 +70,31 @@
 \newenvironment{textcode}{\par\small\ttfamily}
 {\normalfont\normalsize\par}
 
+%% basic inline code style
 \DefineVerbatimEnvironment%
 {code}{Verbatim}
 {fontsize=\small, xleftmargin=1em}
 
+%% style for the first, or only, piece of hansl code inside
+%% a \script environment
 \DefineVerbatimEnvironment%
 {scode}{Verbatim}
 {frame=lines, framesep=2ex, fontsize=\small,
  formatcom=\color{myteal}, rulecolor=\color{mygray}}
 
+%% style for an incomplete piece of hansl code inside a
+%% a \script environment (without any horizontal rules)
 \DefineVerbatimEnvironment%
 {scodebit}{Verbatim}
 {fontsize=\small, formatcom=\color{myteal}}
 
+%% style for output to accompany hansl code inside a
+%% a \script environment
 \DefineVerbatimEnvironment%
 {outbit}{Verbatim}
 {fontsize=\small, formatcom=\color{myteal}}
 
+%% like scode above, but without the upper separator rule
 \DefineVerbatimEnvironment%
 {scodebot}{Verbatim}
 {frame=bottomline, framesep=2ex, fontsize=\small,
@@ -293,17 +301,21 @@
 \renewcommand{\l@section}{\@dottedtocline{1}{1.5em}{2.8em}}
 \renewcommand{\l@subsection}{\@dottedtocline{2}{4.3em}{3.2em}}
 
-%% for downloadable script examples
-\newcommand{\scriptcaption}[1]{%
-  \def\@scriptname{%
-    example-\ifnum\value{chapter}<10 0\fi\arabic{chapter}.\arabic{script}%
-  }
-  \caption{#1 %
-  \href{http://gretl.sourceforge.net/guidefiles/\@scriptname.inp}%
-  {[Download $\blacktriangledown$]}}%
+%% For downloadable example scripts which appear within \begin{script}
+%% and \end{script}: the first argument serves as the basename of the
+%% associated script file (".inp" will be added), and a \label{} is
+%% automatically constructed out of "ex:" plus this argument. The
+%% second argument is the caption text for the script.
+\newcommand{\scriptinfo}[2]{%
+  \def\@inpname{#1.inp}
+  \caption{#2 %
+  \href{http://gretl.sourceforge.net/guidefiles/\@inpname}%
+  {[Download $\blacktriangledown$]}}
+  \label{ex:#1}
 }
 
-%% for scripts that are incomplete or require special set-up
+%% for scripts that are incomplete or require special set-up --
+%% maybe redundant?
 \newcommand{\fragcaption}[1]{%
   \def\@scriptname{%
     example-\ifnum\value{chapter}<10 0\fi\arabic{chapter}.\arabic{script}%

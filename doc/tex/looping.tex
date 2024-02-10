@@ -331,11 +331,10 @@ one such \cmd{store} can be used in a given loop.
 \label{loop-mc-example}
 
 A simple example of a Monte Carlo loop in ``progressive'' mode is
-shown in Listing~\ref{monte-carlo-loop}.
+shown in Listing~\ref{ex:monte-carlo-loop}.
 
 \begin{script}[htbp]
-  \scriptcaption{Simple Monte Carlo loop}
-  \label{monte-carlo-loop}
+  \scriptinfo{monte-carlo-loop}{Simple Monte Carlo loop}
 \begin{scode}
 nulldata 50
 set seed 547
@@ -376,7 +375,7 @@ repeatable pseudo-random series.
 \subsection{Iterated least squares}
 \label{loop-ils-examples}
 
-Listing \ref{greene-ils-script} uses a ``while'' loop to replicate the
+Listing \ref{ex:greene-ils} uses a ``while'' loop to replicate the
 estimation of a nonlinear consumption function of the form
 \[ C = \alpha + \beta Y^{\gamma} + \epsilon \]
 as presented in \cite{greene00}, Example 11.3.  This script is included
@@ -390,8 +389,7 @@ round the loop, but the results from the regression on the last
 iteration will be printed when the loop terminates.
 
 \begin{script}[htbp]
-  \scriptcaption{Nonlinear consumption function}
-  \label{greene-ils-script}
+  \scriptinfo{greene-ils}{Nonlinear consumption function}
 \begin{scode}
 open greene11_3.gdt
 # run initial OLS
@@ -423,7 +421,7 @@ printf "gamma = %g\n", gamma
 \end{scode}
 \end{script}
 
-Listing~\ref{jack-arma} shows how a loop can be used to estimate an
+Listing~\ref{ex:arma11} shows how a loop can be used to estimate an
 ARMA model, exploiting the ``outer product of the gradient'' (OPG)
 regression discussed by \cite{davidson-mackinnon93}.
 
@@ -431,8 +429,7 @@ Further examples of \cmd{loop} usage that may be of interest can be
 found in chapter~\ref{chap:cheatsheet}.
 
 \begin{script}[htbp]
-  \scriptcaption{ARMA 1, 1}
-  \label{jack-arma}
+  \scriptinfo{arma11}{ARMA 1, 1}
 \begin{scode}
 # Estimation of an ARMA(1,1) model "manually", using a loop
 

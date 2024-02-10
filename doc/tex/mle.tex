@@ -130,13 +130,12 @@ statements within the block (details below); and a trailer line to
 close the block: \texttt{end mle}. Option flags may be appended to the
 trailer line.
 
-Listing~\ref{ols-mle} gives a simple but complete example which serves
+Listing~\ref{ex:ols-mle} gives a simple but complete example which serves
 to illustrate the equivalence of MLE and OLS in the context of the
 normal linear model.
 
 \begin{script}[htbp]
-  \scriptcaption{OLS and MLE}
-  \label{ols-mle}
+  \scriptinfo{ols-mle}{OLS and MLE}
 \begin{scode}
 open data9-7
 list X = const INCOME PRICE
@@ -158,7 +157,7 @@ end mle
 If possible the given expression should evaluate to a series or vector
 (contribution to the loglikelihood per observation). Failing that, it
 must evaluate to a scalar (the total loglikelihood).  The identifier
-on the left-hand side (\texttt{lt} in Listing~\ref{ols-mle}) is up to
+on the left-hand side (\texttt{lt} in Listing~\ref{ex:ols-mle}) is up to
 the user. If the variable in question is defined prior to the
 \texttt{mle} block it can be referenced after ML estimation; otherwise
 it is treated as a temporary variable and is destroyed after
@@ -341,13 +340,12 @@ mle logl = check ? k*ln(y) - lngamma(k) - ln(x) - y : NA
 end mle 
 \end{code}
 
-For reference, Listing~\ref{gamma-mle} presents a complete script that
+For reference, Listing~\ref{ex:gamma-mle} presents a complete script that
 generates artificial Gamma data and obtains ML estimates of the
 parameters, employing the various refinements described above.
 
 \begin{script}[htbp]
-  \scriptcaption{ML estimation of Gamma parameters}
-  \label{gamma-mle}
+  \scriptinfo{gamma-mle}{ML estimation of Gamma parameters}
 \begin{scode}
 # create an empty data set with 200 observations
 nulldata 200
@@ -468,14 +466,13 @@ $\varepsilon_i$. Both issues can be addressed by estimating
 OLS estimation is a quick and convenient way to provide starting
 values for the MLE algorithm.
 
-Listing \ref{cost-estimation} shows how to implement the model
+Listing \ref{ex:frontier1} shows how to implement the model
 described so far. The \texttt{banks91} file contains part of the data
 used in \citet*{lucchetti01}.
 
 \begin{script}[htbp]
-  \scriptcaption{Estimation of stochastic frontier cost function (with
-    scalar parameters)}
-  \label{cost-estimation}
+  \scriptinfo{frontier1}{Estimation of stochastic frontier cost
+    function (with scalar parameters)}
 \begin{scode}
 open banks91.gdt
 
@@ -516,18 +513,17 @@ end mle
 \end{scode}
 \end{script}
 
-The script in example \ref{cost-estimation} is relatively easy to
+The script in example \ref{ex:frontier1} is relatively easy to
 modify to show how one can use vectors (that is, 1-dimensional
 matrices) for storing the parameters to optimize: example
-\ref{cost-estimation-vec} holds essentially the same script in which
+\ref{ex:frontier2} holds essentially the same script in which
 the parameters of the cost function are stored together in a
 vector. Of course, this makes also possible to use variable lists and
 other refinements which make the code more compact and readable.
 
 \begin{script}[htbp]
-  \scriptcaption{Estimation of stochastic frontier cost function (with
-    matrix parameters)}
-  \label{cost-estimation-vec}
+  \scriptinfo{frontier2}{Estimation of stochastic frontier cost
+    function (with matrix parameters)}
 \begin{scode}
 open banks91.gdt
 
@@ -847,8 +843,7 @@ zip(y, X)
 \end{code}
 
 \begin{script}[htbp]
-  \scriptcaption{Zero-inflated Poisson Model -- user-level function}
-  \label{mle-zip-main}
+  \scriptinfo{poisson-mle}{Zero-inflated Poisson Model -- user-level function}
 \begin{scode}
 /*
   user-level function: estimate the model and print out
@@ -867,7 +862,7 @@ end function
 Let's see how this can be done.  First we need to define a function
 called \texttt{zip()} that will take two arguments: a dependent
 variable \texttt{y} and a list of explanatory variables \texttt{X}. An
-example of such function can be seen in script~\ref{mle-zip-main}. By
+example of such function can be seen in script~\ref{ex:poisson-mle}. By
 inspecting the function code, you can see that the actual estimation
 does not happen here: rather, the \texttt{zip()} function merely
 uses the built-in \cmd{modprint} command to print out the results
@@ -875,8 +870,7 @@ coming from another user-written function, namely
 \texttt{zip\_estimate()}.
 
 \begin{script}[htbp]
-  \scriptcaption{Zero-inflated Poisson Model --- internal functions}
-  \label{mle-zip-inc}
+  \scriptinfo{poisson-functions}{Zero-inflated Poisson Model --- internal functions}
 \begin{scode}
 /* compute log probabilities for the plain Poisson model */
 function series ln_poi_prob(series y, list X, matrix beta)
@@ -919,9 +913,9 @@ directly; it just contains the number-crunching part of the job, whose
 results are then picked up by the end function \texttt{zip()}. In
 turn, \texttt{zip\_estimate()} calls other user-written functions to
 perform other tasks. The whole set of ``internal'' functions is shown
-in the panel \ref{mle-zip-inc}.
+in the panel \ref{ex:poisson-functions}.
 
-All the functions shown in \ref{mle-zip-main} and \ref{mle-zip-inc} can
+All the functions shown in \ref{ex:poisson-mle} and \ref{ex:poisson-functions} can
 be stored in a separate \texttt{inp} file and executed once, at the
 beginning of our job, by means of the \texttt{include}
 command.  Assuming the name of this script file is
@@ -1312,14 +1306,15 @@ numerical differentiation (available via the function \cmd{fdjac} ---
 see section \ref{sec:fdjac}) is a viable alternative. Note that the
 matrix produced by this method will be singular by construction.
 
-The example reported in script \ref{ex:mle-constr} is perhaps a little
-contrived, but useful to elucidate the technique. Suppose we wish to
-estimate mean and variance of an iid sample of Gaussian random
-variables, under the constraint that $V(x_i) = \sigma^2 = \exp[E(x_i)]
-= \exp(\mu)$. Of course the unconstrained ML estimators $\hat{\mu} =
-\bar{X}$ and $\hat{\sigma}^2 = n^{-1} \sum_i (x_i - \bar{X})^2$
-are not guaranteed to satisfy the constraints (in fact, the
-probability that they do is 0). 
+The example reported in script \ref{ex:constrained-mle} is perhaps a
+little contrived, but useful to elucidate the technique. Suppose we
+wish to estimate mean and variance of an iid sample of Gaussian random
+variables, under the constraint that
+$V(x_i) = \sigma^2 = \exp[E(x_i)] = \exp(\mu)$. Of course the
+unconstrained ML estimators $\hat{\mu} = \bar{X}$ and
+$\hat{\sigma}^2 = n^{-1} \sum_i (x_i - \bar{X})^2$ are not guaranteed
+to satisfy the constraints (in fact, the probability that they do is
+0).
 
 The Lagrangean in this case would be
 \[
@@ -1349,8 +1344,7 @@ $\theta$ can be recovered by computing the Jacobian as
 and applying formula \eqref{eq:mle-constvar}.
 
 \begin{script}[htbp]
-  \scriptcaption{Example of ML estimation of a model under constraints}
-  \label{ex:mle-constr}
+  \scriptinfo{constrained-mle}{Example of ML estimation of a model under constraints}
   \begin{scode}
 set verbose off
 set seed 7120
@@ -1466,8 +1460,7 @@ may be of your interest, including the total number of function
 evaluations.
 
 \begin{script}[htbp]
-  \scriptcaption{Handling non-convergence via \cmd{catch}}
-  \label{ex:catch-mle}
+  \scriptinfo{catch-mle}{Handling non-convergence via \cmd{catch}}
 \begin{scode}
 set verbose off
 nulldata 200

@@ -102,8 +102,7 @@ these models is the cointegrated VAR model, discussed in chapter
 \label{sec:var-estim}
 
 \begin{script}[htbp]
-  \scriptcaption{Estimation of a VAR via OLS}
-  \label{script:var-ols}
+  \scriptinfo{var-via-ols}{Estimation of a VAR via OLS}
 Input:
 \begin{scodebit}
 open sw_ch14.gdt
@@ -194,7 +193,7 @@ parameters.\footnote{In fact, under normality of $\epsilon_t$ OLS is
   methods if you need to estimate a VAR in which some parameters are
   constrained.}  Given the simplicity of OLS, this is what every
 software package, including gretl, uses; example script
-\ref{script:var-ols} exemplifies the fact that the \cmd{var} command
+\ref{ex:var-via-ols} exemplifies the fact that the \cmd{var} command
 gives you exactly the output you would have from a battery of OLS
 regressions. The advantage of using the dedicated command is that,
 after estimation is done, it makes it much easier to access certain
@@ -529,7 +528,7 @@ of degrees of freedom in small samples. As a fallback, the
 \option{univariate} option can be used to specify that the tests
 be run per-equation rather than in multivariate mode.
 
-Listing~\ref{script:var-autocorr} illustrates the VAR autocorrelation
+Listing~\ref{ex:var-autocorrelation} illustrates the VAR autocorrelation
 tests, replicating an example given by \citet[p.\ 174]{Lutkepohl05}.
 Note the difference in the interpretation of the \textsl{order}
 argument to \cmd{modtest} with the \option{autocorr} option (this also
@@ -541,8 +540,7 @@ also exposes what exactly is returned by the \dollar{test} and
 \dollar{pvalue} accessors in the two variants.
 
 \begin{script}[htbp]
-  \scriptcaption{VAR autocorrelation test from L\"utkepohl}
-  \label{script:var-autocorr}
+  \scriptinfo{var-autocorrelation}{VAR autocorrelation test from L\"utkepohl}
 Input:
 \begin{scodebit}
 open wgmacro.gdt --quiet

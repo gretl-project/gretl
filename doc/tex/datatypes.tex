@@ -378,7 +378,7 @@ However, it is important to bear in mind the following limitations.
   (though it can always be extracted as a row vector).
 \end{itemize}
 
-The points made above are illustrated in Listing~\ref{bunlimits}.  In
+The points made above are illustrated in Listing~\ref{ex:bundle-limits}.  In
 ``Case 1'' we open a little dataset with just 14 cross-sectional
 observations and put a series into a bundle. We then open a
 time-series dataset with 64 observations, while preserving the bundle,
@@ -415,8 +415,7 @@ reference to the data that might ``go bad''. See
 chapter~\ref{chap:matrices} for more on this.
 
 \begin{script}[htbp]
-  \scriptcaption{Series and lists in bundles}
-  \label{bunlimits}
+  \scriptinfo{bundle-limits}{Series and lists in bundles}
 \begin{scode}
 # Case 1: store and retrieve series, OK?
 open data4-1

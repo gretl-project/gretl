@@ -477,7 +477,7 @@ memory. Otherwise, the time gretl spends transcribing the value of the
 variable to the local copy may be non-negligible compared to the time
 the function spends doing the job it was written for.
 
-Listing \ref{ex:perf-pointers} takes this to the extreme.  We define
+Listing \ref{ex:pointer-args} takes this to the extreme.  We define
 two functions which return the number of rows of a matrix (a pretty
 fast operation).  The first gets a matrix as argument while the second
 gets a pointer to a matrix.  The functions are evaluated 500 times on
@@ -485,7 +485,7 @@ a matrix with 2000 rows and 2000 columns; on a typical system
 floating-point numbers take 8 bytes of memory, so the total size of
 the matrix is roughly 32 megabytes.
 
-Running the code in example \ref{ex:perf-pointers} will produce output
+Running the code in example \ref{ex:pointer-args} will produce output
 similar to the following (the actual numbers of course depend on the
 machine you're using):
 \begin{code}
@@ -495,8 +495,7 @@ with pointers (no copy) = 0.00378627 seconds
 \end{code}
 
 \begin{script}[htbp]
-  \scriptcaption{Performance comparison: values versus pointer}
-  \label{ex:perf-pointers}
+  \scriptinfo{pointer-args}{Performance comparison: values versus pointer}
   \begin{scode}
 function scalar rowcount1 (matrix X)
   return rows(X)
@@ -532,7 +531,7 @@ If a pointer argument is used for this sort of purpose---and the
 object to which the pointer points is not modified (is treated as
 read-only) by the function---one can signal this to the user by adding
 the \texttt{const} qualifier, as shown for function \texttt{rowcount2}
-in Listing~\ref{ex:perf-pointers}.  When a pointer argument is
+in Listing~\ref{ex:pointer-args}.  When a pointer argument is
 qualified in this way, any attempt to modify the object within the
 function will generate an error.
 
@@ -825,7 +824,7 @@ If your function is going to return a certain specific type (say,
 value should be labeled accordingly: use \texttt{numeric} for the
 return only if it's truly unknown in advance.
 
-Listing~\ref{ex:overload} offers an (admittedly artificial) example:
+Listing~\ref{ex:overloading} offers an (admittedly artificial) example:
 its \texttt{numeric} inputs can be scalars, series or column vectors
 but they must be of a single type.
 
@@ -834,8 +833,7 @@ should state clearly in its documentation what is supported and what
 is not.
 
 \begin{script}[htbp]
-  \scriptcaption{Example of overloaded function}
-  \label{ex:overload}
+  \scriptinfo{overloading}{Example of overloaded function}
   \begin{scode}
 function numeric x_plus_b_y (numeric x, scalar b, numeric y)
    errorif(typeof(x) != typeof(y), "x and y must be of the same type")

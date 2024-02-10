@@ -52,8 +52,7 @@ utility of a consumer, the first argument might contain the quantities
 of goods and the second one their prices and disposable income.
 
 \begin{script}[htbp]
-  \scriptcaption{Finding the minimum of the Rosenbrock function}
-  \label{rosenbrock}
+  \scriptinfo{rosenbrock}{Finding the minimum of the Rosenbrock function}
 \begin{scode}
 function scalar Rosenbrock(const matrix param)
   scalar x = param[1]
@@ -85,7 +84,7 @@ contour lines are banana-shaped. It is defined by:
 \]
 %
 The function has a global minimum at $(x,y) = (1,1)$ where $f(x,y) =
-0$.  Listing~\ref{rosenbrock} shows a gretl script that
+0$.  Listing~\ref{ex:rosenbrock} shows a gretl script that
 discovers the minimum using \texttt{BFGSmax} (giving a verbose account
 of progress). Note that, in this particular case, the function to be
 maximized only depends on the parameters, so the second parameter is
@@ -121,15 +120,14 @@ the gradient vector appropriately.  It is not required that the
 gradient function returns any value directly; if it does, that value
 is ignored.
 
-Listing~\ref{rosen-analytical} illustrates, showing how the Rosenbrock
+Listing~\ref{ex:rosen-analytical} illustrates, showing how the Rosenbrock
 script can be modified to use analytical derivatives.  (Note that
 since this is a minimization problem the values written into
 \texttt{g[1]} and \texttt{g[2]} in the function \verb|Rosen_grad| are
 in fact the derivatives of the negative of the Rosenbrock function.)
 
 \begin{script}[htbp]
-  \scriptcaption{Rosenbrock function with analytical gradient}
-  \label{rosen-analytical}
+  \scriptinfo{rosen-analytical}{Rosenbrock function with analytical gradient}
 \begin{scode}
 function scalar Rosenbrock (const matrix param)
   scalar x = param[1]
@@ -227,7 +225,7 @@ can happen far from the maximum.
 Script~\ref{rosen-newton} extends the Rosenbrock example, using
 \texttt{NRmax} with a function \verb+Rosen_hess+ to compute the
 Hessian. The functions \texttt{Rosenbrock} and \verb+Rosen_grad+ are
-just the same as in Listing~\ref{rosen-analytical} and are omitted for
+just the same as in Listing~\ref{ex:rosen-analytical} and are omitted for
 brevity.
 
 \begin{script}[htbp]
@@ -259,16 +257,16 @@ approximation to the maximand, under the assumption that it is
 concave. If this is true, the method is very effective. However, if
 the algorithm happens to evaluate the function at a point where the
 Hessian is not negative definite, things may go wrong. Script
-\ref{ex:BFGS-vs-NR} exemplifies this by using a normal density, which
-is concave in the interval $(-1,1)$ and convex elsewhere. If the
-algorithm is started from within the interval everything goes well
-and NR is (slightly) more effective than BFGS. If, however, the
-Hessian is positive at the starting point BFGS converges with only
-little more difficulty, while Newton--Raphson fails.
+\ref{ex:alternative-maximizers} exemplifies this by using a normal
+density, which is concave in the interval $(-1,1)$ and convex
+elsewhere. If the algorithm is started from within the interval
+everything goes well and NR is (slightly) more effective than
+BFGS. If, however, the Hessian is positive at the starting point BFGS
+converges with only little more difficulty, while Newton--Raphson
+fails.
 
 \begin{script}[htbp]
-  \scriptcaption{Maximization of a Gaussian density}
-  \label{ex:BFGS-vs-NR}
+  \scriptinfo{alternative-maximizers}{Maximization of a Gaussian density}
 \begin{scode}
 function scalar ND(matrix x)
     scalar z = x[1]
@@ -391,17 +389,16 @@ $\theta_n$. In other words, failing an actual improvement in the
 criterion, \texttt{simann} randomizes the starting point, which may be
 helpful in tricky optimization problems.
 
-Listing~\ref{ex:simann} shows \texttt{simann} at work as a helper for
-\texttt{BFGSmax} in finding the maximum of a bimodal function.
-Unaided, \texttt{BFGSmax} requires 60 function evaluations and
-55 evaluations of the gradient, while after simulated annealing
-the maximum is found with 7 function evaluations and 6 evaluations
-of the gradient.\footnote{Your mileage may vary: these figures
-are somewhat compiler- and machine-dependent.}
+Listing~\ref{ex:simulated-annealing} shows \texttt{simann} at work as
+a helper for \texttt{BFGSmax} in finding the maximum of a bimodal
+function.  Unaided, \texttt{BFGSmax} requires 60 function evaluations
+and 55 evaluations of the gradient, while after simulated annealing
+the maximum is found with 7 function evaluations and 6 evaluations of
+the gradient.\footnote{Your mileage may vary: these figures are
+  somewhat compiler- and machine-dependent.}
 
 \begin{script}[htbp]
-  \scriptcaption{BFGS with initialization via Simulated Annealing}
-  \label{ex:simann}
+  \scriptinfo{simulated-annealing}{BFGS with initialization via Simulated Annealing}
 \begin{scode}
 function scalar bimodal (matrix x, matrix A)
     scalar ret = exp(-qform((x-1)', A))
@@ -543,8 +540,7 @@ where $T$ is the sample size and $J$ is the Jacobian
 $\left.\pder{g(x)}{x}\right|_{x = \theta}$.
 
 \begin{script}[htbp]
-  \scriptcaption{Delta Method}
-  \label{delta-method}
+  \scriptinfo{delta-method}{Delta Method}
 \begin{scode}
 function matrix MPC(matrix *param, matrix *Y)
   beta = param[2]
@@ -586,7 +582,7 @@ printf "\nTest for MPC = 1: %g (p-value = %g)\n", \
 \end{scode}
 \end{script}
 
-Script \ref{delta-method} exemplifies such a case: the example is
+Script \ref{ex:delta-method} exemplifies such a case: the example is
 taken from \cite{greene03}, section 9.3.1. The slight differences
 between the results reported in the original source and what
 gretl returns are due to the fact that the Jacobian is computed

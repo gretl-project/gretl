@@ -365,15 +365,14 @@ agrees with the standard errors printed as part of the per-equation
 VAR output.
 
 A fuller example of usage of the \dollar{xtxinv} accessor is given in
-Listing~\ref{GCtest}: this shows how one can replicate the $F$-tests
+Listing~\ref{ex:causality-test}: this shows how one can replicate the $F$-tests
 for Granger causality that are displayed by default by the \cmd{var}
 command, with the refinement that, depending on the setting of the
 \verb|USE_F| flag, these tests can be done using a small sample
 correction as in gretl's output or in asymptotic ($\chi^2$) form.
 
 \begin{script}[htbp]
-  \scriptcaption{Computing statistics to test for Granger causality}
-  \label{GCtest}
+  \scriptinfo{causality-test}{Computing statistics to test for Granger causality}
 \begin{scode}
 open denmark.gdt
 list LST = LRM LRY IBO IDE

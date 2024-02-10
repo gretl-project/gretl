@@ -238,12 +238,11 @@ The required weighting matrix can be set to any positive definite
 $2 \times 2$ matrix, since under exact identification the choice
 doesn't matter and its dimension is determined by the number of
 orthogonality conditions. So we'll use the $I_2$ identity
-matrix. Example code is shown in Listing~\ref{gamma-gmm}, along with
+matrix. Example code is shown in Listing~\ref{ex:gamma-gmm}, along with
 the output it produces.
 
 \begin{script}[htbp]
-  \scriptcaption{MM estimation of Gamma parameters}
-  \label{gamma-gmm}
+  \scriptinfo{gamma-gmm}{MM estimation of Gamma parameters}
 \begin{scode}
 # create an empty data set with 200 observations
 nulldata 200
@@ -400,7 +399,7 @@ $\hat{u}_t$ as $y_t - X_t \hat{\beta}$, as usual.  But instead of
 relying on $E(u|X) = 0$ as in OLS, we base estimation on the condition
 $E(u|Z) = 0$.  In this case it is natural to base the initial
 weighting matrix on the covariance matrix of the instruments.
-Listing~\ref{gmm-tsls-ex} presents a model from Stock and Watson's
+Listing~\ref{ex:tsls-gmm} presents a model from Stock and Watson's
 \textit{Introduction to Econometrics}.  The demand for cigarettes is
 modeled as a linear function of the logs of price and income; income
 is treated as exogenous while price is taken to be endogenous and two
@@ -435,8 +434,7 @@ exclusive options can be specified: \option{two-step} or
 \option{iterate}, whose meaning should be obvious.
 
 \begin{script}[htbp]
-  \scriptcaption{TSLS via GMM}
-  \label{gmm-tsls-ex}
+  \scriptinfo{tsls-gmm}{TSLS via GMM}
 \begin{scode}
 open cig_ch10.gdt
 # real avg price including sales tax
@@ -616,8 +614,7 @@ an instrument.
 
 
 \begin{script}[htbp]
-  \scriptcaption{Estimation of the Consumption Based Asset Pricing Model}
-  \label{gmm-CBAPM-script}
+  \scriptinfo{cbapm}{Estimation of the Consumption Based Asset Pricing Model}
 \begin{scode}
 open hall.gdt
 set force_hc on
@@ -707,7 +704,7 @@ e = d*ewr*consrat^(alpha-1) - 1
 \end{outbit}
 \end{script}
 
-In the example code given in \ref{gmm-CBAPM-script}, we replicate
+In the example code given in \ref{ex:cbapm}, we replicate
 selected portions of table 3.7 in \cite{hall05}.  The variable
 \texttt{consrat} is defined as the ratio of monthly consecutive real
 per capita consumption (services and nondurables) for the US, and

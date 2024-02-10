@@ -418,7 +418,7 @@ thereafter, relative to the figure they arrived at with a lag of a
 year.
 
 The script that produced this Figure is shown in full in
-Listing~\ref{ex:revisions}. Note that in this script we are using a
+Listing~\ref{ex:realtime-revisions}. Note that in this script we are using a
 somewhat more efficient version of the \verb|rel_ok| function shown
 above, where we pass the required series arguments in ``pointer'' form
 to avoid having to copy them (see chapter~\ref{chap:functions}).
@@ -431,9 +431,8 @@ to avoid having to copy them (see chapter~\ref{chap:functions}).
 \end{figure}
 
 \begin{script}[htbp]
-  \scriptcaption{Retrieving successive realtime lags of US industrial
-    production}
-  \label{ex:revisions}
+  \scriptinfo{realtime-revisions}{Retrieving successive realtime lags of
+  US industrial production}
 \begin{scode}
 function series rel_ok (series *obsdate, series *reldate, int p)
   series y_obs, m_obs, d_obs, y_rel, m_rel, d_rel
@@ -490,7 +489,7 @@ production). In this exercise we are switching the time axis: the
 observation period is a fixed point and time is ``vintage
 time''. 
 
-A suitable script is shown in Listing~\ref{ex:revhistory}.  We first
+A suitable script is shown in Listing~\ref{ex:revision-history}.  We first
 select an observation to track (January 1970). We start the clock in
 the following month, when a data-point for this period was first
 published, and let it run to the end of the vintage history (in this
@@ -513,8 +512,7 @@ this sample period the periodic re-basing of the index overshadows
 amendments due to accrual of new information.
 
 \begin{script}[htbp]
-  \scriptcaption{Retrieving a revision history}
-  \label{ex:revhistory}
+  \scriptinfo{revision-history}{Retrieving a revision history}
 \begin{scode}
 # choose the observation to track here (YYYYMMDD)
 scalar target = 19700101

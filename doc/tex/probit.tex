@@ -89,31 +89,25 @@ user, since usually only a few iterations are needed to ensure
 convergence. The \option{verbose} switch can be used to track the
 maximization algorithm.
 
-\begin{script}[htbp]
-  \scriptcaption{Estimation of simple logit and probit models}
-  \label{simple-QR}
-\begin{scode}
-open greene19_1
+\bigskip
 
+By way of example, the commands below reproduce results given in
+chapter 21 of \cite{greene00}, regarding the effectiveness of a
+program for teaching economics.
+\begin{code}
+open greene19_1
 logit GRADE const GPA TUCE PSI
 probit GRADE const GPA TUCE PSI
-\end{scode}
-\end{script}
-
-As an example, we reproduce the results given in chapter 21 of
-\cite{greene00}, where the effectiveness of a program for teaching
-economics is evaluated by the improvements of students' grades.  The
-dependent variable, \texttt{GRADE}, equals 1 if a student's grade
-increased over a certain period, 0 otherwise. The independent
+\end{code}
+The binary dependent variable, \texttt{GRADE}, equals 1 if a student's
+grade improved over a certain period, 0 otherwise. The independent
 variables are \texttt{PSI} (= 1 if the student participated in the
 program in question, otherwise 0) plus two controls, the student's
-initial Grade Point Average (\texttt{GPA}) and score on an economics
-test (\texttt{TUCE}).
-
-Running the code in Listing~\ref{simple-QR} gives the output reported
-in Table \ref{tab:logit-probit}. Note that for the probit model a
-conditional moment test on skewness and kurtosis \citep*{JBL84} is
-printed automatically as a test for normality.
+initial Grade Point Average (\texttt{GPA}) and score on a prior
+economics test (\texttt{TUCE}).  Output is shown in Table
+\ref{tab:logit-probit}. Note that for the probit model a conditional
+moment test on skewness and kurtosis \citep*{JBL84} is printed
+automatically as a test for normality.
 
 \begin{table}
   \centering
@@ -197,12 +191,11 @@ of the latent disturbances $\varepsilon_i$. These are defined as
 Among other uses, generalized residuals are often used for diagnostic
 purposes.  For example, it is very easy to set up an omitted variables
 test equivalent to the familiar LM test in the context of a linear
-regression; example \ref{QR-add} shows how to perform a variable
+regression; example \ref{ex:addition-test} shows how to perform a variable
 addition test.
 
 \begin{script}[htbp]
-  \scriptcaption{Variable addition test in a probit model}
-  \label{QR-add}
+  \scriptinfo{addition-test}{Variable addition test in a probit model}
 \begin{scode}
 open greene19_1
 
@@ -360,8 +353,7 @@ separate command for ordered models: the \texttt{logit} and
 the dependent variable is acceptable, but not binary.
 
 \begin{script}[htbp]
-  \scriptcaption{Ordered probit model}
-  \label{ex:oprobit}
+  \scriptinfo{ordered-probit}{Ordered probit model}
 \begin{scodebit}
 /*
   Replicate the results in Wooldridge, Econometric Analysis of Cross
@@ -424,16 +416,16 @@ printf "Estimated choice effect via ML = %.2f (OLS = %.2f)\n", E1 - E0,
 \end{scodebit}
 \end{script}
 
-Listing \ref{ex:oprobit} reproduces the results presented in section
-15.10 of \cite{wooldridge-panel}.  The question of interest in this
-analysis is what difference it makes, to the allocation of assets
-in pension funds, whether individual plan participants have a
-choice in the matter.  The response variable is an ordinal measure of
-the weight of stocks in the pension portfolio.  Having reported the
+Listing \ref{ex:ordered-probit} reproduces the results presented in
+section 15.10 of \cite{wooldridge-panel}.  The question of interest in
+this analysis is what difference it makes, to the allocation of assets
+in pension funds, whether individual plan participants have a choice
+in the matter.  The response variable is an ordinal measure of the
+weight of stocks in the pension portfolio.  Having reported the
 results of estimation of the ordered model, Wooldridge illustrates the
 effect of the \texttt{choice} variable by reference to an ``average''
 participant.  The example script shows how one can compute this effect
-in gretl.  
+in gretl.
 
 After estimating ordered models, the \dollar{uhat} accessor yields
 generalized residuals as in binary models; additionally, the
@@ -787,8 +779,7 @@ above).  An example is contained in the sample script
 \texttt{wtp.inp}, provided with the gretl distribution.
 
 \begin{script}[ht]
-  \scriptcaption{Interval model on artificial data}
-  \label{ex:interval}
+  \scriptinfo{interval-estimation}{Interval model on artificial data}
 Input:
 \begin{scodebit}
 nulldata 100
@@ -839,15 +830,15 @@ Under the null hypothesis of no correlation:
 
 As with the probit and Tobit models, after a model has been estimated
 the \dollar{uhat} accessor returns the generalized residual, which is
-an estimate of $\epsilon_i$: more precisely, it equals $y_i - x_i
-\hat{\beta}$ for point observations and $E(\epsilon_i| m_i, M_i, x_i)$
-otherwise. Note that it is possible to compute an unbiased predictor
-of $y^*_i$ by summing this estimate to $x_i \hat{\beta}$. Listing
-\ref{ex:interval} shows an example. As a further similarity with
-Tobit, the interval regression model may deliver inconsistent
-estimates if the disturbances are non-normal; hence, the
-\cite{chesher-irish87} test for normality is included by default here
-too.
+an estimate of $\epsilon_i$: more precisely, it equals
+$y_i - x_i \hat{\beta}$ for point observations and
+$E(\epsilon_i| m_i, M_i, x_i)$ otherwise. Note that it is possible to
+compute an unbiased predictor of $y^*_i$ by summing this estimate to
+$x_i \hat{\beta}$. Listing \ref{ex:interval-estimation} shows an
+example. As a further similarity with Tobit, the interval regression
+model may deliver inconsistent estimates if the disturbances are
+non-normal; hence, the \cite{chesher-irish87} test for normality is
+included by default here too.
 
 
 \section{Sample selection model}
@@ -932,8 +923,7 @@ equal the difference between actual and fitted $y_i$ only for
 uncensored observations (those for which $d_i = 1$).
 
 \begin{script}[htbp]
-  \scriptcaption{Heckit model}
-  \label{ex:heckit}
+  \scriptinfo{heckit-estimation}{Heckit model}
 \begin{scode}
 open mroz87.gdt
 
@@ -960,10 +950,10 @@ heckit lww X ; LFP Z --two-step
 \end{scode}
 \end{script}
 
-Listing \ref{ex:heckit} shows two estimates from the dataset used in
-\cite{mroz87}: the first one replicates Table 22.7 in
-\cite{greene03},\footnote{Note that the estimates given by gretl
-  do not coincide with those found in the printed volume.  They do,
+Listing \ref{ex:heckit-estimation} shows two estimates from the
+dataset used in \cite{mroz87}: the first one replicates Table 22.7 in
+\cite{greene03},\footnote{Note that the estimates given by gretl do
+  not coincide with those found in the printed volume.  They do,
   however, match those found on the errata web page for Greene's book:
   \url{http://pages.stern.nyu.edu/~wgreene/Text/Errata/ERRATA5.htm}.}
 while the second one replicates table 17.1 in \cite{wooldridge-panel}.
@@ -1313,7 +1303,7 @@ contains several covariates, which are described in the data file; we
 will focus below on interpretation of the \texttt{married} variable, a
 dummy which equals 1 if the respondent was married when imprisoned.
 
-Listing~\ref{ex:duration1} shows the gretl commands for Weibull and
+Listing~\ref{ex:duration} shows the gretl commands for Weibull and
 log-normal models along with most of the output.  Consider first the
 Weibull scale factor, $\sigma$. The estimate is 1.241 with a standard
 error of 0.048.  (We don't print a $z$ score and $p$-value for this
@@ -1326,8 +1316,7 @@ crime again diminishes. (The exponential model would therefore not be
 appropriate in this case.)
 
 \begin{script}[htbp]
-  \scriptcaption{Models for recidivism data}
-  \label{ex:duration1}
+  \scriptinfo{duration}{Models for recidivism data}
 Input:
 \begin{scodebit}
 open recid.gdt
@@ -1430,8 +1419,7 @@ gradually declines from 1.6703 at one month to 1.1766 at 100 months.
 
 
 \begin{script}[htbp]
-  \scriptcaption{Create plots showing conditional hazards}
-  \label{ex:hazard-plots}
+  \scriptinfo{hazard-plots}{Create plots showing conditional hazards}
 \begin{scode}
 open recid.gdt -q
 

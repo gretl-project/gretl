@@ -487,11 +487,10 @@ output.
 Using this method, replicating the example in the previous subsection
 is rather easy: basically, all it takes is encapsulating the content
 of the \app{R} script in a \texttt{foreign}\ldots\texttt{end foreign}
-block; see Listing~\ref{RStructTS-simple}.
+block; see Listing~\ref{ex:R-simple}.
 
 \begin{script}[htbp]
-  \scriptcaption{Estimation of the Basic Structural Model -- simple}
-  \label{RStructTS-simple}
+  \scriptinfo{R-simple}{Estimation of the Basic Structural Model -- simple}
 \begin{scode}
 open bjg.gdt
 
@@ -515,12 +514,11 @@ vars = mread("vars.mat", 1)
 
 The above syntax, despite being already quite useful by itself, shows
 its full power when it is used in conjunction with user-written
-functions.  Listing~\ref{RStructTS-func} shows how to define a
+functions.  Listing~\ref{ex:R-function} shows how to define a
 gretl function that calls \app{R} internally.
 
 \begin{script}[htbp]
-  \scriptcaption{Estimation of the Basic Structural Model -- via a function}
-  \label{RStructTS-func}
+  \scriptinfo{R-function}{Estimation of the Basic Structural Model -- via a function}
 \begin{scode}
 function list RStructTS(series myseries)
     smpl ok(myseries) --restrict

@@ -93,15 +93,14 @@ on:
 series yh = loess(y, x, 2, 0.75, 1)
 \end{code}
 
-An illustration of loess is provided in Listing~\ref{scr:loess-sine}:
+An illustration of loess is provided in Listing~\ref{ex:loess-sine}:
 we generate a series that has a deterministic sine wave component
 overlaid with noise uniformly distributed on $(-1,1)$. Loess is then
 used to retrieve a good approximation to the sine function.  The
 resulting graph is shown in Figure~\ref{fig:loess-sine}.
 
 \begin{script}[htbp]
-  \scriptcaption{Loess script}
-  \label{scr:loess-sine}
+  \scriptinfo{loess-sine}{Loess script}
 \begin{scode}
 nulldata 120
 series x = index
@@ -185,12 +184,11 @@ interquartile range.
 
 \subsection{Example and prediction}
 
-By way of example, Listing~\ref{scr:nadarwat-ex} produces the graph
+By way of example, Listing~\ref{ex:nadaraya-watson} produces the graph
 shown in Figure~\ref{fig:nadarwat-ex} (after some slight editing).
 
 \begin{script}[htbp]
-  \scriptcaption{Nadaraya--Watson example}
-  \label{scr:nadarwat-ex}
+  \scriptinfo{nadaraya-watson}{Nadaraya--Watson example}
 \begin{scode}
 # Nonparametric regression example: husband's age on wife's age
 open mroz87.gdt

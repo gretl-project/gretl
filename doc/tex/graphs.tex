@@ -425,8 +425,7 @@ dataset is time series, it's assumed you want a time-series plot.
 \subsubsection{Example: Plotting an histogram together with a density}
 
 \begin{script}[htbp]
-  \scriptcaption{Plotting the log wage from the Mroz example dataset}
-  \label{ex:Mroz-logwage}
+  \scriptinfo{mroz-logwage}{Plotting the log wage from the Mroz example dataset}
 \begin{scode}
 set verbose off
 open mroz87.gdt --quiet
@@ -473,7 +472,7 @@ end plot --output=display
 \end{scode}
 \end{script}
 
-Listing \ref{ex:Mroz-logwage} contains a slightly more elaborate
+Listing \ref{ex:mroz-logwage} contains a slightly more elaborate
 example: here we load the Mroz example dataset and calculate the log
 of the individual's wage. Then, we match the histogram of a
 discretized version of the same variable (obtained via the
@@ -503,21 +502,20 @@ There are a few points to note:
   actually, it's a rather good idea to comment as much as possible (as
   always)!
 \end{itemize}
-The output from the script is shown in Figure \ref{fig:Mroz-logwage}.
+The output from the script is shown in Figure \ref{fig:mroz-logwage}.
 
 
 \begin{figure}[htbp]
   \centering
   \includegraphics{figures/Mroz-logwage}
-  \caption{Output from listing \ref{ex:Mroz-logwage}}
-  \label{fig:Mroz-logwage}
+  \caption{Output from listing \ref{ex:mroz-logwage}}
+  \label{fig:mroz-logwage}
 \end{figure}
 
 \subsubsection{Example: Plotting Student's $t$ densities}
 
 \begin{script}[htbp]
-  \scriptcaption{Plotting $t$ densities for varying degrees of freedom}
-  \label{ex:StudentPlot}
+  \scriptinfo{student_plot}{Plotting $t$ densities for varying degrees of freedom}
 \begin{scode}
 set verbose off
 
@@ -539,7 +537,7 @@ end plot --output=display
 
 The power of the \cmd{printf} statement in a \cmd{plot} block becomes
 apparent when used jointly with user-defined functions, as exemplified
-in Listing \ref{ex:StudentPlot}, in which we create a plot showing
+in Listing \ref{ex:student_plot}, in which we create a plot showing
 the density functions of Student's $t$ distribution for three
 different settings of the ``degrees of freedom'' parameter (note that
 plotting a $t$ density is very easy to do from the GUI: just go to the
@@ -558,7 +556,7 @@ The output from the script is shown in Figure \ref{fig:StudentPlot}.
 \begin{figure}[htbp]
   \centering
   \includegraphics{figures/StudentPlot}
-  \caption{Output from listing \ref{ex:StudentPlot}}
+  \caption{Output from listing \ref{ex:student_plot}}
   \label{fig:StudentPlot}
 \end{figure}
 

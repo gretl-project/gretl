@@ -153,8 +153,7 @@ be adjusted to compensate for heteroskedasticity: this is accomplished
 via the \option{robust} switch.
 
 \begin{script}[htbp]
-  \scriptcaption{NLS estimation of a Probit model}
-  \label{script:nls-probit-numder}
+  \scriptinfo{probit-nls}{NLS estimation of a Probit model}
   \begin{scode}
     open greene25_1.gdt
     list X = const age income ownrent selfempl
@@ -174,7 +173,7 @@ via the \option{robust} switch.
   \end{scode}
 \end{script}
 
-The example in script \ref{script:nls-probit-numder} can be enhanced by
+The example in script \ref{ex:probit-nls} can be enhanced by
 using analytical derivatives: since
 \[
 \frac{\partial g(\bm{x}_i)}{\partial b_j} = \varphi(\bm{b}'\bm{x}_i) \cdot x_{ij}

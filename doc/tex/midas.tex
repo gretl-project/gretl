@@ -223,7 +223,7 @@ midasreg dy const dy(-1) ; mds(dX,1,9,1,theta1) mds(Z,1,6,3,theta2)
 \subsection{Replication exercise}
 
 We give a substantive illustration of \texttt{midasreg} in
-Listing~\ref{lst:midasreg-ghysels}. This replicates the first
+Listing~\ref{ex:midas-ghysels}. This replicates the first
 practical example discussed by Ghysels in the user's guide titled
 \textit{MIDAS Matlab Toolbox},\footnote{See \cite{ghysels15}. This
   document announces itself as Version 2.0 of the guide and is dated
@@ -254,8 +254,7 @@ pseudo-out-of-sample forecasts are recorded so that their Root Mean
 Square Errors can be compared.
 
 \begin{script}[p]
-  \scriptcaption{Script to replicate results given by Ghysels}
-  \label{lst:midasreg-ghysels}
+  \scriptinfo{midas-ghysels}{Script to replicate results given by Ghysels}
 \begin{scode}
 set verbose off
 open gdp_midas.gdt --quiet
@@ -520,7 +519,7 @@ nls dy = b[1] + b[2]*dy1 + b[3]*mdx
 end nls
 \end{code}
 
-Listing~\ref{lst:manual-beta1} presents a more ambitious example: we
+Listing~\ref{ex:midas-beta} presents a more ambitious example: we
 use \texttt{GSSmin} (Golden Section minimizer) to estimate a MIDAS
 model with the ``one-parameter beta'' specification (that is, the
 two-parameter beta with $\theta_1$ clamped at 1). Note that while the
@@ -530,8 +529,7 @@ calculating the Gauss--Newton regression for an ADL(1) MIDAS
 model, and it could be generalized further without much difficulty.
 
 \begin{script}[p]
-  \scriptcaption{Manual MIDAS: one-parameter beta specification}
-  \label{lst:manual-beta1}
+  \scriptinfo{midas-beta}{Manual MIDAS: one-parameter beta specification}
 \begin{scode}
 set verbose off
 

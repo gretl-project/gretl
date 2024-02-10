@@ -475,7 +475,7 @@ throughout'', it can be proven the this approach is equivalent to
 using centered unit dummies instead of plain 0/1 dummies.
 
 The method that gretl uses internally is exemplified in
-Listing~\ref{fe-intercept}. The coefficients in the second OLS
+Listing~\ref{ex:fixed-effects-intercept}. The coefficients in the second OLS
 estimation, including the intercept, agree with those in the initial
 fixed effects model, though the standard errors differ due to a
 degrees of freedom correction in the fixed-effects covariance matrix.
@@ -487,8 +487,7 @@ method to ``OLS plus centered dummies''. (Note that in this case the
 standard errors agree with the initial estimates.)
 
 \begin{script}[htbp]
-  \scriptcaption{Calculating the intercept in the fixed effects model}
-  \label{fe-intercept}
+  \scriptinfo{fixed-effects-intercept}{Calculating the intercept in the fixed effects model}
 \begin{scode}
 open abdata.gdt
 
@@ -692,14 +691,13 @@ correlated.
 The Anderson--Hsiao estimator is not provided as a built-in function
 in gretl, since gretl's sensible handling of lags and
 differences for panel data makes it a simple application of regression
-with instrumental variables---see Listing~\ref{script:anderson-hsiao},
+with instrumental variables---see Listing~\ref{ex:anderson-hsiao},
 which is based on a study of country growth rates by
 \cite{nerlove99}.\footnote{Also see Clint Cummins' benchmarks page,
   \url{http://www.stanford.edu/~clint/bench/}.}
  
 \begin{script}[htbp]
-  \scriptcaption{The Anderson--Hsiao estimator for a dynamic panel model}
-  \label{script:anderson-hsiao}
+  \scriptinfo{anderson-hsiao}{The Anderson--Hsiao estimator for a dynamic panel model}
 \begin{scode}
 # Penn World Table data as used by Nerlove
 open penngrow.gdt

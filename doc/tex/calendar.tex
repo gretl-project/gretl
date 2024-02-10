@@ -724,8 +724,7 @@ calendar. We can then construct a series, \texttt{hcal}, which
 switches calendar at the right historical point.
 
 \begin{script}[htbp]
-  \scriptcaption{Historical calendar for Britain in 1752}
-  \label{ex:britain-1752}
+  \scriptinfo{britain-1752}{Historical calendar for Britain in 1752}
 \begin{scodebit}
 # 1752 was a short year on the British calendar!
 nulldata 355
@@ -764,36 +763,15 @@ historical calendar (in ``basic'' form), the observation labels (in
 the first column of the output) are still just index numbers. It may
 be preferable to have historical dates in that role. To achieve this
 we can decompose the \texttt{hcal} series into year, month and day,
-then use the special \texttt{genr markers} apparatus (see
-chapter~\ref{chap:datafiles}). Suitable code along with partial output
-is shown in Listing~\ref{ex:britain-1752a}.
-
-\begin{script}[htbp]
-  \scriptcaption{Continuation of Britain 1752 example}
-  \label{ex:britain-1752a}
-Additional input:
-\begin{scodebit}
+then use the \texttt{genr markers} apparatus (see
+chapter~\ref{chap:datafiles}). Here's additional code to do this job
+and show the result.
+\begin{code}
 series y, m, d
 isoconv(hcal, &y, &m, &d)
 genr markers = "%04d-%02d-%02d", y, m, d
 print ed jdate gdate hcal -o
-\end{scodebit}
-
-Partial output:
-\begin{outbit}
-                     ed        jdate        gdate         hcal
-
-1752-01-01       639551     17520101     17520112     17520101
-1752-01-02       639552     17520102     17520113     17520102
-...
-1752-09-01       639795     17520901     17520912     17520901
-1752-09-02       639796     17520902     17520913     17520902
-1752-09-14       639797     17520903     17520914     17520914
-1752-09-15       639798     17520904     17520915     17520915
-...
-1752-12-31       639905     17521220     17521231     17521231
-\end{outbit}
-\end{script}
+\end{code}
 
 \subsection{Year numbering}
 \label{sec:cal-yearnum}
@@ -808,8 +786,7 @@ illustrated for the year 1751 (as we would now call it) in
 Listing~\ref{ex:britain-1751}.
 
 \begin{script}[htbp]
-  \scriptcaption{Historical calendar for England in 1751}
-  \label{ex:britain-1751}
+  \scriptinfo{britain-1751}{Historical calendar for England in 1751}
 Input:
 \begin{scodebit}
 nulldata 365 # a common year

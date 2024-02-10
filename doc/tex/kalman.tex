@@ -939,8 +939,7 @@ illustrate the most important points covered in this chapter.
 Functions illustrated in this example: \cmd{ksetup}, \cmd{kfilter}.
 
 \begin{script}[htbp]
-  \scriptcaption{ARMA estimation}
-  \label{script:armaest}
+  \scriptinfo{arma-kalman}{ARMA estimation}
 \begin{scode}
 function void arma11_via_kalman (series y)
     /* parameter initialization */
@@ -1021,7 +1020,7 @@ to execute the \cmd{kfilter} function and read the Kalman bundle's
 appropriately if the likelihood has to be maximized through
 \cmd{mle}---\texttt{llt}, which gives the series of contributions to
 the log-likelihood per observation. An example is shown in
-script~\ref{script:armaest}.
+script~\ref{ex:arma-kalman}.
 
 \subsection{The Hodrick--Prescott filter}
 \label{sec:example_hp}
@@ -1030,8 +1029,7 @@ Functions illustrated in this example: \cmd{ksetup}, \cmd{kfilter},
 \cmd{ksmooth}.
 
 \begin{script}[htbp]
-  \scriptcaption{HP filter}
-  \label{script:hp}
+  \scriptinfo{hp-filter}{HP filter}
 \begin{scode}
 function series hp_via_kalman(series y, scalar lambda[0], bool oneside[0])
     if lambda == 0
@@ -1126,7 +1124,7 @@ A possible space-state representation of the model above is
 \end{eqnarray*}
 Estimates for $\mu_t$ can be obtained by running a forward filter for
 the one-sided version, plus a smoothing pass for the two-sided
-one. Code implementing the filter is shown in script~\ref{script:hp},
+one. Code implementing the filter is shown in script~\ref{ex:hp-filter},
 along with an example using the ``housing starts'' series from the
 St.~Louis Fed database. The example also compares the result of the
 function to that from gretl's native \cmd{hpfilt()} function.
@@ -1163,7 +1161,7 @@ llmod.diffuse = 1
 \end{code}
 
 The two unknown parameters $\sigma^2_1$ and $\sigma^2_2$ can be
-estimated via maximum likelihood.  Listing~\ref{script:loclev} provides
+estimated via maximum likelihood.  Listing~\ref{ex:local-level} provides
 an example of simulation and estimation of such a model. Since
 simulating the local level model is trivial using ordinary gretl
 commands, we don't use \cmd{ksimul} in this context.\footnote{Warning:
@@ -1178,8 +1176,7 @@ commands, we don't use \cmd{ksimul} in this context.\footnote{Warning:
   focus on the interesting aspects.}
 
 \begin{script}[htbp]
-  \scriptcaption{Local level model}
-  \label{script:loclev}
+  \scriptinfo{local-level}{Local level model}
 \begin{scode}
 nulldata 200
 set seed 101010
@@ -1233,8 +1230,7 @@ where the slope coefficient $\beta_1$ evolves through time according to
 \end{equation}
 
 \begin{script}[htbp]
-  \scriptcaption{Phillips curve on Euro data with time-varying slope}
-  \label{script:PhCurve}
+  \scriptinfo{phillips-curve}{Phillips curve on Euro data with time-varying slope}
 \begin{scode}
 function void at_each_step(bundle *b)
     b.obsymat = transp(b.mX[b.t,])
@@ -1293,12 +1289,12 @@ time-varying $x_t$.
 Once the system is framed as a state-space model, estimation of the
 three unknown parameters $\beta_0$, $\sigma^2_{\varepsilon}$ and
 $\sigma^2_{\eta}$ can proceed by maximum likelihood in a manner
-similar to example \ref{script:armaest} and \ref{script:loclev}. The
+similar to example \ref{ex:arma-kalman} and \ref{ex:local-level}. The
 sequence of slope coefficients $\beta_{1,t}$ can then be estimated by
 running the smoother, which also yields a consistent estimate of the
 dispersion of the estimated state.
 
-Listing \ref{script:PhCurve} presents an example in which data from
+Listing \ref{ex:phillips-curve} presents an example in which data from
 the AWM database are used to estimate a Phillips Curve with
 time-varying slope:
 \[
@@ -1324,8 +1320,7 @@ in the state-space literature. We focus on the state equation; that
 is, the random-walk component of the observed series.
 
 \begin{script}[htbp]
-  \scriptcaption{Working with smoothed disturbances -- Nile data}
-  \label{script:auxres}
+  \scriptinfo{auxiliary-residuals}{Working with smoothed disturbances -- Nile data}
 \begin{scode}
 open nile.gdt
 
@@ -1372,9 +1367,9 @@ end plot --output=display
   \label{fig:nile}
 \end{figure}
 
-Our script is shown in Listing~\ref{script:auxres}. This is an
+Our script is shown in Listing~\ref{ex:auxiliary-residuals}. This is an
 instance of the Local Level model and the ML variance estimates are
-obtained as in Listing~\ref{script:loclev}. In the first call to
+obtained as in Listing~\ref{ex:local-level}. In the first call to
 \cmd{kdsmooth} we omit the optional switch and therefore compute
 $E(\hat{\eta}_t\hat{\eta}_t')$ for each $t$. This quantity is suitable
 for constructing the auxiliary residuals shown in the top panel of

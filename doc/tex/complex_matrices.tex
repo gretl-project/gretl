@@ -246,11 +246,11 @@ In addition there are the complex-only functions \cmd{cmod}
 (complex argument), \cmd{conj} (complex conjugate), \cmd{Re}
 (real part) and \cmd{Im} (imaginary part). Note that
 $\mbox{carg}(z) = \mbox{atan2}(y,x)$ for $z=x +
-y\,i$. Listing~\ref{cmplx-modes} illustrates usage of \cmd{cmod}
+y\,i$. Listing~\ref{ex:complex-modes} illustrates usage of \cmd{cmod}
 and \cmd{carg}.
 
 \begin{script}[htbp]
-  \scriptcaption{Variant representations of complex numbers. We picked 8
+  \scriptinfo{complex-modes}{Variant representations of complex numbers. We picked 8
     points on the unit circle in the complex plane, so their modulus
     is constant and equal to 1. The \texttt{Polar} matrix below shows
     that the complex argument is expressed in radians; multiplying by
@@ -259,8 +259,7 @@ and \cmd{carg}.
     from the polar form in either of the two ways mentioned at the
     start of the chapter: $z = |z|\,(\cos \theta + i\,\sin \theta)$ or
     $z = |z|\,e^{i\theta}$.}
-  \label{cmplx-modes}
-\begin{scodebit}
+\begin{scode}
 # complex values in a + b*i form
 scalar rp5 = sqrt(0.5)
 matrix A = {1, rp5, 0, -rp5, -1, -rp5,  0,  rp5}'
@@ -279,8 +278,7 @@ matrix Z1 = zmod .* complex(cos(theta), sin(theta))
 matrix Z2 = zmod .* exp(complex(0, theta))
 matrix chk = Z ~ Z1 ~ Z2
 print chk
-\end{scodebit}
-
+\end{scode}
 
   Printing of \texttt{Polar} and \texttt{chk}
 \begin{outbit}
@@ -331,14 +329,13 @@ complex matrices as a whole. The options are:
 
 At present binary mode transfer of complex matrices is supported for
 \textsf{octave}, \textsf{python} and \textsf{julia}.
-Listing~\ref{cmplx-io} shows some examples: we export a complex matrix
+Listing~\ref{ex:complex-io} shows some examples: we export a complex matrix
 to each of these programs in turn; calculate its inverse in the
 foreign program; then verify that the result as imported back into
 gretl is the same as that calculated in gretl.
 
 \begin{script}[htbp]
-  \scriptcaption{Exporting and importing complex matrices}
-  \label{cmplx-io}
+  \scriptinfo{complex-io}{Exporting and importing complex matrices}
 \begin{scode}
 set seed 34756
 matrix C = complex(mnormal(3,3), mnormal(3,3))

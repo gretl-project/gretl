@@ -413,11 +413,10 @@ the plot following a semicolon. Supported options are
 have the same effects as with the gretl's \texttt{gnuplot} command.
 
 An example based on Figure 1 in \cite{armesto10} is shown in
-Listing~\ref{lst:armesto} and Figure~\ref{fig:armesto}.
+Listing~\ref{ex:midas-armesto} and Figure~\ref{fig:armesto}.
 
 \begin{script}[p]
-  \scriptcaption{Replication of a plot from Armesto et al}
-  \label{lst:armesto}
+  \scriptinfo{midas-armesto}{Replication of a plot from Armesto et al}
 \begin{scode}
 open gdp_midas.gdt
 
@@ -448,7 +447,7 @@ hfplot dX ; dy --with-lines --time-series --output=display
 
 \subsection*{Importation via a column vector}
 
-Listing~\ref{hflist} illustrates how one can construct via hansl a
+Listing~\ref{ex:midas-list} illustrates how one can construct via hansl a
 MIDAS list from a matrix (column vector) holding data of a higher
 frequency than the given dataset. In practice one would probably read
 high frequency data from file using the \texttt{mread} function, but
@@ -461,8 +460,7 @@ is suitably dimensioned, with a single column of length equal to
 quarterly).
 
 \begin{script}[htbp]
-  \scriptcaption{Create a midas list from a matrix}
-  \label{hflist}
+  \scriptinfo{midas-list}{Create a midas list from a matrix}
 \begin{scode}
 function list high_freq_list (const matrix x, int compfac, string vname)
   list ret = deflist()
@@ -651,12 +649,11 @@ in missing and non-existent daily values. It's not clear that this
 would be worthwhile, but it's open to discussion.
 
 A little daily-to-monthly example is shown in
-Listing~\ref{lst:midas-daily} and Figure~\ref{fig:daily}. The example
+Listing~\ref{ex:midas-daily} and Figure~\ref{fig:daily}. The example
 exercises the \texttt{hfplot} command (see section~\ref{sec:hfplot}).
 
 \begin{script}[htbp]
-  \scriptcaption{Monthly plus daily data}
-  \label{lst:midas-daily}
+  \scriptinfo{midas-daily}{Monthly plus daily data}
 \begin{scode}
 # open a daily dataset
 open djclose.gdt

@@ -793,14 +793,13 @@ throughout. (As a purely notational matter, we now use ``$t-1$'' to
 refer to values five years prior to $t$, as in \cite{Bond2001}).
 
 The gretl script to do this job is shown in
-Listing~\ref{script:cel}. Note that the final transformed versions of
+Listing~\ref{ex:cel}. Note that the final transformed versions of
 the variables (logs, with time-means subtracted) are named \texttt{ly}
 ($y_{it}$), \texttt{linv} ($s_{it}$) and \texttt{lngd}
 ($n_{it} + g + \delta$).
 
 \begin{script}[htbp]
-  \scriptcaption{GDP growth example}
-  \label{script:cel}
+  \scriptinfo{cel}{GDP growth example}
 \begin{scode}
 open CEL.gdt
 
@@ -1044,12 +1043,11 @@ when 1-step estimation is selected. Note also that \texttt{GMMinst}
 and \texttt{wgtmat} (which may be quite large matrices) are not saved
 in the \dollar{model} bundle by default; that requires use of the
 \option{keep-extra} option with the \cmd{dpanel}
-command. Listing~\ref{ex:dpanel-rep} illustrates use of these matrices
+command. Listing~\ref{ex:dpanel} illustrates use of these matrices
 to replicate via hansl commands the calculation of the GMM estimator.
 
 \begin{script}[p]
-  \scriptcaption{replication of built-in command via hansl commands}
-  \label{ex:dpanel-rep}
+  \scriptinfo{dpanel}{replication of built-in command via hansl commands}
 \begin{scode}
 set verbose off
 open abdata.gdt

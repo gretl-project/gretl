@@ -800,10 +800,8 @@ postulated long-run relationships feature only three free parameters,
 so the over-identification rank is 3.
 
 \begin{script}[htbp]
-  \scriptcaption{Estimation of a money demand system with constraints on $\beta$}
-  \label{brand-cassola-script}
-Input:
-\begin{scodebit}
+  \scriptinfo{brand-cassola}{Estimation of a money demand system with constraints on $\beta$}
+\begin{scode}
 open brand_cassola.gdt
 
 # perform a few transformations
@@ -832,7 +830,7 @@ restrict --full
   b[3,5] = 0
 end restrict
 ll1 = $rlnl
-\end{scodebit}
+\end{scode}
 
 Partial output:
 \begin{outbit}
@@ -856,12 +854,12 @@ y         -1.3304       0.0000       0.0000
 \end{outbit}
 \end{script}
 
-Listing \ref{brand-cassola-script} replicates Table 4 on page 824 of
-the Brand and Cassola article.\footnote{Modulo what appear to be a few
+Listing \ref{ex:brand-cassola} replicates Table 4 on page 824 of the
+Brand and Cassola article.\footnote{Modulo what appear to be a few
   typos in the article.} Note that we use the \dollar{lnl} accessor
 after the \texttt{vecm} command to store the unrestricted
 log-likelihood and the \dollar{rlnl} accessor after \texttt{restrict}
-for its restricted counterpart. 
+for its restricted counterpart.
 
 The example continues in script~\ref{brand-cassola-tab5}, where we
 perform further testing to check whether (a) the income elasticity in

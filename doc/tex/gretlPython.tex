@@ -63,7 +63,7 @@ to use these two functions.
 \section{Illustration: linear regression with multicollinearity}
 \label{sec:Python-longley}
 
-Listing~\ref{lst:Python-longley} compares the numerical accuracy of
+Listing~\ref{ex:python-longley} compares the numerical accuracy of
 gretl's \texttt{ols} command with that of the function
 \texttt{linalg.lstsq} in \app{NumPy}, using the notorious Longley test
 data which exhibit extreme multicollinearity.  Unlike some
@@ -77,8 +77,7 @@ maximum of 15). The results will likely differ somewhat by computer
 architecture and compiler.
 
 \begin{script}[htbp]
-  \scriptcaption{Comparing regression results with \app{Python}}
-  \label{lst:Python-longley}
+  \scriptinfo{python-longley}{Comparing regression results with \app{Python}}
 \begin{scode}
 set verbose off
 

@@ -811,7 +811,7 @@ returned.
 The complementary function \texttt{mwrite} produces text files
 formatted as described above.  The column separator is the tab
 character, so import into spreadsheets should be straightforward.
-Usage is illustrated in example \ref{matrix-rw}.  Matrices stored via
+Usage is illustrated in example \ref{ex:matrix-files}.  Matrices stored via
 the \texttt{mwrite} command can be easily read by other programs; the
 following table summarizes the appropriate commands for reading a
 matrix \texttt{A} from a file called \texttt{a.mat} in some
@@ -840,8 +840,7 @@ widely-used programs.\footnote{Matlab users may find the Octave
 
 
 \begin{script}[htbp]
-  \scriptcaption{Matrix input/output via text files}
-  \label{matrix-rw}
+  \scriptinfo{matrix-files}{Matrix input/output via text files}
   \begin{scode}
 nulldata 64
 scalar n = 3
@@ -1063,13 +1062,12 @@ conversion; that is, it must be a row or column vector containing
 non-negative integer values, none of which exceeds the highest ID
 number of a series in the current dataset.
 
-Listing~\ref{normalize-list} illustrates the use of this sort of
+Listing~\ref{ex:normalize-list} illustrates the use of this sort of
 conversion to ``normalize'' a list, moving the constant (variable 0)
 to first position.
 
 \begin{script}[htbp]
-  \scriptcaption{Manipulating a list}
-  \label{normalize-list}
+  \scriptinfo{normalize-list}{Manipulating a list}
 \begin{scode}
 function void normalize_list (matrix *x)
   # If the matrix (representing a list) contains var 0,
@@ -1160,12 +1158,11 @@ M (3 x 3)
 \section{Example: OLS using matrices}
 \label{matrix-example}
 
-Listing~\ref{matrixOLS} shows how matrix methods can be used to
+Listing~\ref{ex:matrix-ols} shows how matrix methods can be used to
 replicate gretl's built-in OLS functionality.
 
 \begin{script}[htbp]
-  \scriptcaption{OLS via matrix methods}
-  \label{matrixOLS}
+  \scriptinfo{matrix-ols}{OLS via matrix methods}
 \begin{scode}
 open data4-1
 matrix X = { const, sqft }

@@ -342,7 +342,7 @@ slope parameter equals zero can then be found using the $t(\nu)$
 distribution.  Depending on the context, however, we may doubt whether
 the ratio of coefficient to standard error truly follows the $t(\nu)$
 distribution.  In that case we could derive a bootstrap p-value as
-shown in Listing~\ref{resampling-loop}.  
+shown in Listing~\ref{ex:bootstrap-pvalue}.  
 
 Under the null hypothesis that the slope with respect to $x$ is zero,
 $y$ is simply equal to its mean plus an error term.  We simulate $y$
@@ -356,8 +356,7 @@ bootstrapping, see Davidson and MacKinnon
 (\citeyear{davidson-flachaire01}) is also instructive.
 
 \begin{script}[htbp]
-  \scriptcaption{Calculation of bootstrap p-value}
-  \label{resampling-loop}
+  \scriptinfo{bootstrap-pvalue}{Calculation of bootstrap p-value}
 \begin{scode}
 nulldata 50
 set seed 54321
