@@ -2659,7 +2659,9 @@ int check_set_R_home (void)
     }
 
     err = (lstat(path, &buf) != 0);
-    fprintf(stderr, "user path '%s', err %d\n", path, err);
+    if (err) {
+	fprintf(stderr, "R_home: user path '%s', err %d\n", path, err);
+    }
     /* an error here is not necessarily fatal, if R_HOME
        is defined and works OK.
     */
