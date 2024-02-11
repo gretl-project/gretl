@@ -314,14 +314,5 @@
   \label{ex:#1}
 }
 
-%% for scripts that are incomplete or require special set-up --
-%% maybe redundant?
-\newcommand{\fragcaption}[1]{%
-  \def\@scriptname{%
-    example-\ifnum\value{chapter}<10 0\fi\arabic{chapter}.\arabic{script}%
-  }
-  \caption{#1}
-}
-
 \endinput
 %% end of gretl.sty

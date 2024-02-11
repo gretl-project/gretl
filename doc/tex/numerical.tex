@@ -222,14 +222,14 @@ invert it; \texttt{NRmax} takes care of inversion, with special
 handling for the case where the matrix is not negative definite, which
 can happen far from the maximum.
 
-Script~\ref{rosen-newton} extends the Rosenbrock example, using
+Listing~\ref{rosen-newton} extends the Rosenbrock example, using
 \texttt{NRmax} with a function \verb+Rosen_hess+ to compute the
 Hessian. The functions \texttt{Rosenbrock} and \verb+Rosen_grad+ are
 just the same as in Listing~\ref{ex:rosen-analytical} and are omitted for
 brevity.
 
 \begin{script}[htbp]
-  \fragcaption{Rosenbrock function via Newton--Raphson}
+  \caption{Rosenbrock function via Newton--Raphson}
   \label{rosen-newton}
 \begin{scode}
 function void Rosen_hess (matrix *H, const matrix param)
