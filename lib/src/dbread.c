@@ -4894,8 +4894,6 @@ int compact_dataset (DATASET *dset, int newpd,
 	return E_INVARG;
     }
 
-    fprintf(stderr, "HERE 1 wkstart=%d, repday=%d\n", wkstart, repday);
-
     /* catch a couple of special cases */
     if (default_method == COMPACT_SPREAD) {
 	return do_compact_spread(dset, newpd);
