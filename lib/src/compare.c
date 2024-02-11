@@ -1,4 +1,4 @@
-  /*
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
  *
@@ -89,7 +89,7 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 	}
 	off2 = pmod->list[1];
     } else if (pmod->ci == NEGBIN) {
-	cmax -= 1;
+	cmax--;
     }
 
     for (i=0; i<cmax; i++) {
@@ -116,6 +116,12 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 		list[0], nmask);
 	*err = E_DATA;
     }
+
+#if WDEBUG
+    for (i=0; i<pmod->ncoeff; i++) {
+	fprintf(stderr, "mask[%d] = %d\n", i, mask[i]);
+    }
+#endif
 
     return mask;
 }
@@ -150,6 +156,11 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
     if (!err) {
 	b = gretl_coeff_vector_from_model(pmod, mask, &err);
     }
+
+#if WDEBUG
+    gretl_matrix_print(C, "VCV");
+    gretl_matrix_print(b, "coeff");
+#endif
 
     if (!err) {
 	/* use "left division" to explicit inversion of @C */
@@ -464,6 +475,22 @@ static void maybe_add_info_score (struct COMPARE *cmp,
     }
 }
 
+static void compare_init (struct COMPARE *cmp,
+			  MODEL *pmod, int ci,
+			  const int *testvars)
+{
+    cmp->ci = ci;
+    cmp->stat = 0;
+    cmp->test = cmp->pval = NADBL;
+    cmp->F = cmp->X2 = cmp->LR = NADBL;
+    cmp->score = -1;
+    cmp->robust = 0;
+    cmp->dfn = testvars[0];
+    cmp->testvars = testvars;
+    cmp->model_ci = pmod->ci;
+    cmp->model_id = pmod->ID;
+}
+
 static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB,
 				const int *testvars, const DATASET *dset,
 				int ci, gretlopt opt, PRN *prn)
@@ -473,16 +500,7 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB,
     int iv_special = 0;
     int err = 0;
 
-    cmp.ci = ci;
-    cmp.stat = 0;
-    cmp.test = cmp.pval = NADBL;
-    cmp.F = cmp.X2 = cmp.LR = NADBL;
-    cmp.score = -1;
-    cmp.robust = 0;
-    cmp.dfn = testvars[0];
-    cmp.testvars = testvars;
-    cmp.model_ci = pmodA->ci;
-    cmp.model_id = pmodA->ID;
+    compare_init(&cmp, pmodA, ci, testvars);
 
     if (ci == OMIT) {
 	/* the unrestricted model is the original one, 'A' */
@@ -529,7 +547,8 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB,
 	       !(opt & OPT_X)) {
 	/* plain OLS with both the restricted and unrestricted
 	   models available: base F-test on sums of squared
-	   residuals */
+	   residuals
+	*/
 	cmp.stat = GRETL_STAT_F;
 	cmp.test = ((rmod->ess - umod->ess) / umod->ess) *
 	    cmp.dfd / cmp.dfn;
@@ -563,7 +582,6 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB,
 
     if (!err) {
 	record_test_result(cmp.test, cmp.pval);
-
 	if (opt & OPT_S) {
 	    /* attach test to model */
 	    add_omit_attach(&cmp, pmodA, dset);
@@ -714,11 +732,18 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 
     cname = gretl_model_get_cluster_vname(orig);
     if (cname != NULL) {
-	/* FIXME second cname? */
+	/* FIXME second cluster-var name? */
 	cv = current_series_index(dset, cname);
 	if (cv > 0) {
 	    myopt |= OPT_C;
-	    set_optval_string(orig->ci, OPT_C, cname);
+	    if (orig->ci == OLS && gretl_model_get_int(orig, "pooled")) {
+		/* transcribe the cluster spec to "panel", since
+		   we'll be calling panel_model() below
+		*/
+		set_optval_string(PANEL, OPT_C, cname);
+	    } else {
+		set_optval_string(orig->ci, OPT_C, cname);
+	    }
 	}
     }
 
@@ -909,6 +934,10 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
     if ((myopt & OPT_A) && get_model_count() > mc) {
 	model_count_minus(NULL);
     }
+
+#if 0
+    printmodel(&rep, dset, OPT_NONE, prn);
+#endif
 
     return rep;
 }

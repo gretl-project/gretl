@@ -197,6 +197,7 @@ gretl_vcv_matrix_from_model (MODEL *pmod, const char *select, int *err)
     /* first ensure the model _has_ a vcv */
     *err = makevcv(pmod, pmod->sigma);
     if (*err) {
+	fprintf(stderr, "gretl_vcv_matrix_from_model: no $vcv!\n");
 	return NULL;
     }
 

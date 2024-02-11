@@ -2451,6 +2451,7 @@ static int qr_make_cluster_vcv (MODEL *pmod, int ci,
     if (!err) {
         gretl_model_set_cluster_vcv_info(pmod, cname, NULL);
         gretl_model_set_int(pmod, "n_clusters", n_c);
+	pmod->dfd = n_c - 1; /* added 2024-02-11 */
     }
 
     gretl_matrix_free(V);

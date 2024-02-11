@@ -4840,16 +4840,12 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 
     if (opt & OPT_P) {
         /* doing pooled OLS */
-        if (opt & OPT_C) {
-            /* clustered */
-            ols_opt |= (OPT_C | OPT_R);
-        }
         if (opt & OPT_N) {
             /* no-df-corr */
             ols_opt |= OPT_N;
         }
     } else {
-        /* not just pooled OLS */
+        /* all other variants */
         mod.errcode = panel_check_for_const(list);
         if (mod.errcode) {
             return mod;
@@ -4895,6 +4891,8 @@ MODEL real_panel_model (const int *list, DATASET *dset,
         fprintf(stderr, "\n*** Doing fixed effects\n");
     } else if (pan_opt & OPT_U) {
         fprintf(stderr, "\n*** Doing random effects\n");
+    } else if (pan_opt & OPT_P) {
+	fprintf(stderr, "\n*** Doing pooled OLS\n");
     }
 #endif
 
@@ -5033,6 +5031,11 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     if (complex_subsampled()) {
         dataset_drop_last_variables(dset, dset->v - orig_v);
     }
+
+#if PDEBUG
+    fprintf(stderr, "real_panel_model return: mod.errcode = %d\n",
+	    mod.errcode);
+#endif
 
     return mod;
 }

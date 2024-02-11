@@ -1626,12 +1626,17 @@ int set_optval_int (int ci, gretlopt opt, int k)
 
 int set_optval_string (int ci, gretlopt opt, const char *s)
 {
-    char *scpy = gretl_strdup(s);
-
-    if (scpy == NULL) {
-        return E_ALLOC;
+    if (s == NULL) {
+	gretl_errmsg_set("set_optval_string: no string was supplied");
+	return E_DATA;
     } else {
-        return real_push_option(ci, opt, scpy, 1, 0);
+	char *scpy = gretl_strdup(s);
+
+	if (scpy == NULL) {
+	    return E_ALLOC;
+	} else {
+	    return real_push_option(ci, opt, scpy, 1, 0);
+	}
     }
 }
 
