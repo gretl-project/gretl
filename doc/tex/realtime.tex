@@ -4,14 +4,13 @@
 \section{Introduction}
 \label{sec:realtime-intro}
 
-As of gretl version 1.9.13 the \cmd{join} command (see chapter
-\ref{chap:join}) has been enhanced to deal with so-called realtime
-datasets in a straightforward manner.  Such datasets contain
-information on when the observations in a time series were actually
-published by the relevant statistical agency and how they have been
-revised over time. Probably the most popular sources of such data are
-the ``Alfred'' online database at the St.\ Louis Fed
-(\url{http://alfred.stlouisfed.org/}) and the OECD's
+The \cmd{join} command in gretl (see chapter \ref{chap:join}) deals in
+a fairly straightforward manner with so-called realtime datasets.
+Such datasets contain information on when the observations in a time
+series were actually published by the relevant statistical agency and
+how they have been revised over time. Probably the most popular
+sources of such data are the ``Alfred'' online database at the St.\
+Louis Fed (\url{http://alfred.stlouisfed.org/}) and the OECD's
 \textsf{StatExtracts} site, \url{http://stats.oecd.org/}.  The
 examples in this chapter deal with files downloaded from these
 sources, but should be easy to adapt to files with a slightly
@@ -91,14 +90,14 @@ differently formatted dates. Note that daily dates are appropriate for
 the last two columns, which jointly record the interval over which a
 given data vintage was current. Daily dates might, however, be
 considered overly precise for the first column, since the data period
-may well be the year, quarter or month (as it is in fact
-here). However, following Alfred's practice it is acceptable to
-specify a daily date, indicating the first day of the period, even for
-non-daily data.\footnote{Notice that this implies that in the Alfred
-  example it is not clear without further information whether the
-  observation period is the first quarter of 1960, the month January
-  1960, or the day January 1st 1960.  However, we assume that this
-  information is always available in context.}
+may well be the year, quarter or month.  However, following Alfred's
+practice it is acceptable to specify a daily date, indicating the
+first day of the period, even for non-daily data.\footnote{Notice that
+  this implies that in the Alfred example it is not clear without
+  further information whether the observation period is the first
+  quarter of 1960, the month January 1960, or the day January 1st
+  1960.  However, we assume that this information is always available
+  in context.}
 
 Compare the first data line of the OECD example. There's a greater
 amount of leading metadata, which is left implicit in the Alfred
@@ -126,9 +125,9 @@ the OECD file we have to scan down several lines until we find
 \begin{code}
 "United Kingdom","INDPRO","Monthly","Jan-1990","March 1999",100,
 \end{code}
-This difference is basically irrelevant because \cmd{join} can
-handle the case where the lines appear in random order, although some
-operations can be coded more conveniently if we're able to assume
+This difference in format is basically irrelevant because \cmd{join}
+can handle the case where the lines appear in random order, although
+some operations can be coded more conveniently if we're able to assume
 chronological ordering (either on the Alfred or the OECD pattern, it
 doesn't matter).
 
@@ -165,7 +164,7 @@ conveys no independent information.\footnote{Email received from
 
 Before we get properly started it is worth saying a little more about
 the \option{tkey} and \option{tconvert} options to \cmd{join}
-(first introduced in section~\ref{sec:join-tconvert}), as they apply in
+(introduced in section~\ref{sec:join-tconvert}), as they apply in
 the case of realtime data.
 
 When you're working with regular time series data \texttt{tkey} is
@@ -203,7 +202,7 @@ applies:
   overrides any format given via the \option{tconv-fmt} option.
 \item If a format is given via \texttt{tconv-fmt} it is assumed to
   apply to all the \texttt{tconvert} columns, unless this assumption
-  is overriden by rule 1.
+  is preempted by rule 1.
 \end{enumerate}
 
 \section{Getting a certain data vintage}
@@ -236,7 +235,7 @@ string fname = "C:/Users/yourname/Downloads/INDPRO.txt"
 \end{code}
 
 We can then import the data vintage 2011-06-15 using \cmd{join},
-arbitrarily choosing the self-explanatory identifier
+arbitrarily choosing the (hopefully) self-explanatory identifier
 \texttt{ip\_asof\_20110615}.
 
 \begin{code}
@@ -282,12 +281,13 @@ Here some detailed explanations of the various options are warranted:
  \end{code}
   and then use \texttt{vintage} in the \cmd{join} command instead.
   Here we tell \cmd{join} that we only want to extract those
-  publications that (1) already appeared before (and including) June 15th 2011, and
-  (2) were not yet obsoleted by a newer release.\footnote{By implementing 
-  the second condition through the \texttt{max} aggregation on the 
-  \verb|realtime_start_date| column alone, without using the 
-  \verb|realtime_end_date| column, we make use of the fact that Alfred
-  files cannot have ``holes'' as explained before.}
+  publications that (1) already appeared before (and including) June
+  15th 2011, and (2) were not yet obsoleted by a newer
+  release.\footnote{By implementing the second condition through the
+    \texttt{max} aggregation on the \verb|realtime_start_date| column
+    alone, without using the \verb|realtime_end_date| column, we make
+    use of the fact that Alfred files cannot have ``holes'' as
+    explained before.}
 \end{itemize}
 
 As a result, your dataset will now contain a time series named
@@ -360,7 +360,7 @@ OK'') and the \texttt{join} command which calls it. Here's the
 function:
 %
 \begin{code}
-function series rel_ok (series obsdate, series reldate, int p)
+function series rel_ok (const series obsdate, const series reldate, int p)
   series y_obs, m_obs, y_rel, m_rel
   # get year and month from observation date
   isoconv(obsdate, &y_obs, &m_obs)
@@ -373,7 +373,10 @@ function series rel_ok (series obsdate, series reldate, int p)
 end function
 \end{code}
 %
-And here's the command:
+Note that the series arguments to \verb|rel_ok| are marked as
+\texttt{const} so that they're simply shared with the function rather
+than being copied (since they're not being modified; see
+chapter~\ref{chap:functions}). And here's the command:
 %
 \begin{code}
 scalar lag = 3  # choose your fixed lag here
@@ -418,10 +421,7 @@ thereafter, relative to the figure they arrived at with a lag of a
 year.
 
 The script that produced this Figure is shown in full in
-Listing~\ref{ex:realtime-revisions}. Note that in this script we are using a
-somewhat more efficient version of the \verb|rel_ok| function shown
-above, where we pass the required series arguments in ``pointer'' form
-to avoid having to copy them (see chapter~\ref{chap:functions}).
+Listing~\ref{ex:realtime-revisions}.
 
 \begin{figure}[htbp]
   \centering
@@ -434,7 +434,7 @@ to avoid having to copy them (see chapter~\ref{chap:functions}).
   \scriptinfo{realtime-revisions}{Retrieving successive realtime lags of
   US industrial production}
 \begin{scode}
-function series rel_ok (series *obsdate, series *reldate, int p)
+function series rel_ok (const series obsdate, const series reldate, int p)
   series y_obs, m_obs, d_obs, y_rel, m_rel, d_rel
   isoconv(obsdate, &y_obs, &m_obs, &d_obs)
   isoconv(reldate, &y_rel, &m_rel, &d_rel)
@@ -454,19 +454,19 @@ join @fname firstpub --data=INDPRO --tkey=observation_date \
 # plus 3 months
 join @fname plus3 --data=INDPRO --tkey=observation_date \
 --tconvert="observation_date,realtime_start_date" \
---filter="rel_ok(&observation_date, &realtime_start_date, 3)" \
+--filter="rel_ok(observation_date, realtime_start_date, 3)" \
 --aggr=max(realtime_start_date)
 
 # plus 6 months
 join @fname plus6 --data=INDPRO --tkey=observation_date \
 --tconvert="observation_date,realtime_start_date" \
---filter="rel_ok(&observation_date, &realtime_start_date, 6)" \
+--filter="rel_ok(observation_date, realtime_start_date, 6)" \
 --aggr=max(realtime_start_date)
 
 # plus 12 months
 join @fname plus12 --data=INDPRO --tkey=observation_date \
 --tconvert="observation_date,realtime_start_date" \
---filter="rel_ok(&observation_date, &realtime_start_date, 12)" \
+--filter="rel_ok(observation_date, realtime_start_date, 12)" \
 --aggr=max(realtime_start_date)
 
 setinfo firstpub --graph-name="First publication"
