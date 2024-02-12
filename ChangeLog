@@ -29,6 +29,9 @@ version 2024a, in progress
   a sample restriction in place
 - Fix bug: possible crash when a dbnomics download fails, if
   invoked via the "data" command
+- Fix bug: after estimation of a panel data model via pooled
+  OLS with the --cluster option, the "add" test was not
+  working
 - GUI: apply some legibility fixes for dark GTK themes
 - GUI: enable the advertised keystrokes in file "browser"
   windows (bug #294)
@@ -39,7 +42,7 @@ version 2024a, in progress
   of gretl
 - gdt and gdtb data file specification: allow files which
   contain no actual data series, just the implicit "const"
-  plus metadata
+  plus metadata (structure and number of observations)
 - add a suite of unit tests to the gretl source tree
 
 2023-12-05 version 2023c
