@@ -1,6 +1,6 @@
 /* Extract downloadable example scripts from the tex files that constitute
    the Gretl User's Guide, 2020-12-06, revised 2022-08-09, revised again
-   2024-02-09.
+   2024-02-12.
 */
 
 #include <stdio.h>
@@ -52,8 +52,9 @@ int process_tex_file (const char *fname)
 {
     char outtemp[32];
     char chaplabel[32];
-    int n_scripts = 0;
     FILE *fp, *fs;
+    int n_scripts = 0;
+    int err = 0;
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
@@ -93,16 +94,7 @@ int process_tex_file (const char *fname)
                                 nlines[n_scripts-1] += 1;
                             }
                         }
-                    } else if (strstr(line, "begin{scodebit}")) {
-                        while (fgets(line, sizeof line, fp)) {
-                            if (strstr(line, "end{scodebit}")) {
-                                break;
-                            } else {
-                                fputs(line, fs);
-                                nlines[n_scripts-1] += 1;
-                            }
-                        }
-                    }
+		    }
                 }
 		if (strstr(line, "end{script}")) {
 		    fclose(fs);
@@ -116,15 +108,16 @@ int process_tex_file (const char *fname)
 
     if (n_scripts > 0) {
 	char outname[32];
-	int i, err = 0;
+	int i;
 
 	printf("Chapter ID '%s': %d script(s)\n", chaplabel, n_scripts);
-	for (i=0; i<n_scripts && !err; i++) {
+	for (i=0; i<n_scripts; i++) {
 	    sprintf(outtemp, "script%d", i + 1);
 	    printf(" %d: '%s'\n", i+1, labels[i]);
 	    if (nlines[i] < 5) {
-		printf("     nlines = %d, skipping\n", nlines[i]);
+		printf("     nlines = %d, fail\n", nlines[i]);
 		remove(outtemp);
+		err = 1;
 	    } else {
 		sprintf(outname, "%s.inp", labels[i]);
 		rename(outtemp, outname);
@@ -134,10 +127,10 @@ int process_tex_file (const char *fname)
 	    nlines[i] = 0;
 	}
     } else {
-	printf("Chapter ID '%s': no scripts\n", chaplabel);
+	printf("Chapter ID '%s': no downloadable scripts\n", chaplabel);
     }
 
-    return 0;
+    return err;
 }
 
 int main (int argc, char **argv)
@@ -146,6 +139,7 @@ int main (int argc, char **argv)
     char fullname[512];
     char chap[32];
     FILE *fp;
+    int err = 0;
 
     if (argc < 2) {
 	fprintf(stderr, "%s: need path to tex files\n", argv[0]);
@@ -164,15 +158,19 @@ int main (int argc, char **argv)
 	exit(EXIT_FAILURE);
     }
 
-    while (fgets(line, sizeof line, fp)) {
+    while (fgets(line, sizeof line, fp) && !err) {
 	if (!strncmp(line, "\\guidechap{", 11)) {
 	    sscanf(line + 11, "%[^}]", chap);
 	    sprintf(fullname, "%s/%s.tex", texpath, chap);
-	    process_tex_file(fullname);
+	    err = process_tex_file(fullname);
 	}
     }
 
     fclose(fp);
+
+    if (err) {
+	exit(EXIT_FAILURE);
+    }
 
     return 0;
 }
