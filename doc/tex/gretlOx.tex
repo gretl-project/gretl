@@ -112,12 +112,13 @@ expects to find the named file in the user's dotdir.
 \section{Illustration: replication of DPD model}
 \label{sec:dpd-replication}
 
-Listing~\ref{script:Ox-DPD} shows a more ambitious case.  This script
+Listing~\ref{ex:ox-dpd} shows a more ambitious case.  This script
 replicates one of the dynamic panel data models in
 \cite{arellano-bond91}, first using gretl and then using \app{Ox}; we
 then check the relative differences between the parameter estimates
 produced by the two programs (which turn out to be reassuringly
-small).
+small). This was last tested using version 9.10 of \app{Ox console}
+for Linux.
 
 Unlike the previous example, in this case we pass the dataset from
 gretl to \app{Ox} as a CSV file in order to preserve the
@@ -131,30 +132,29 @@ We get the parameter estimates back from \app{Ox} using
 gretl side.  The \verb|gretl_export| function takes two arguments, a
 matrix and a file name.  The file is written into the user's dotdir,
 from where it can be picked up using \texttt{mread}.  The final
-portion of the output from Listing~\ref{script:Ox-DPD} is shown below:
+portion of the output from Listing~\ref{ex:ox-dpd} is shown below:
 %
 \begin{code}
 ? matrix oxparm = mread("oxparm.mat", 1)
 Generated matrix oxparm
 ? eval abs((parm - oxparm) ./ oxparm)
-  1.4578e-13 
-  3.5642e-13 
-  5.0672e-15 
-  1.6091e-13 
-  8.9808e-15 
-  2.0450e-14 
-  1.0218e-13 
-  2.1048e-13 
-  9.5898e-15 
-  1.8658e-14 
-  2.1852e-14 
-  2.9451e-13 
-  1.9398e-13 
+  1.1094e-12 
+  1.6314e-12 
+  1.7885e-13 
+  1.1949e-12 
+  1.8999e-13 
+  1.1359e-13 
+  6.5339e-13 
+  3.1943e-12 
+  1.2108e-12 
+  3.7335e-13 
+  1.7468e-12 
+  3.9536e-12 
+  2.0980e-12
 \end{code}
 
 \begin{script}[htbp]
-  \caption{Estimation of dynamic panel data model via gretl and \app{Ox}}
-  \label{script:Ox-DPD}
+  \scriptinfo{ox-dpd}{Estimation of dynamic panel data model via gretl and \app{Ox}}
 \begin{scode}
 open abdata.gdt
 
@@ -169,7 +169,7 @@ store @dotdir/abdata.csv
 # Replicate using the Ox DPD package
 foreign language=Ox
 #include <oxstd.h>
-#import <packages/dpd/dpd>
+#import <packages/DPD/dpd>
 
 main ()
 {
@@ -177,12 +177,12 @@ main ()
     dpd.Load("@dotdir/abdata.csv"); 
     dpd.SetYear("YEAR");
 
-    dpd.Select(Y_VAR, {"n", 0, 2});
-    dpd.Select(X_VAR, {"w", 0, 1, "k", 0, 0, "ys", 0, 1});
-    dpd.Select(I_VAR, {"w", 0, 1, "k", 0, 0, "ys", 0, 1});
+    dpd.Select(DPD::Y_VAR, {"n", 0, 2});
+    dpd.Select(DPD::X_VAR, {"w", 0, 1, "k", 0, 0, "ys", 0, 1});
+    dpd.Select(DPD::I_VAR, {"w", 0, 1, "k", 0, 0, "ys", 0, 1});
 
     dpd.Gmm("n", 2, 99);  // GMM-type instrument
-    dpd.SetDummies(D_CONSTANT + D_TIME);
+    dpd.SetDummies(DPD::D_CONSTANT + DPD::D_TIME);
     dpd.SetTest(2, 2); // Sargan, AR 1-2 tests
     dpd.Estimate();    // 1-step estimation
     decl parm = dpd.GetPar();
