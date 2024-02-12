@@ -725,7 +725,7 @@ switches calendar at the right historical point.
 
 \begin{script}[htbp]
   \scriptinfo{britain-1752}{Historical calendar for Britain in 1752}
-\begin{scodebit}
+\begin{scode}
 # 1752 was a short year on the British calendar!
 nulldata 355
 # give a negative year to indicate Julian date
@@ -740,7 +740,7 @@ series gdate = isodate(ed)
 series hcal = ed > epochday(-1752,9,2) ? gdate : jdate
 # And let's take a look
 print ed jdate gdate hcal -o
-\end{scodebit}
+\end{scode}
   
 Partial output:
 \begin{outbit}
@@ -787,8 +787,7 @@ Listing~\ref{ex:britain-1751}.
 
 \begin{script}[htbp]
   \scriptinfo{britain-1751}{Historical calendar for England in 1751}
-Input:
-\begin{scodebit}
+\begin{scode}
 nulldata 365 # a common year
 ed0 = epochday(-1751,1,1)
 ed1 = epochday(-1751,3,25)
@@ -799,7 +798,7 @@ isoconv(jdate, &y, &m, &d)
 y = ed < ed1 ? y-1 : y
 genr markers = "%04d-%02d-%02d", y, m, d
 print index -o
-\end{scodebit}
+\end{scode}
 
 Partial output:
 \begin{outbit}

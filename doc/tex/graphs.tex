@@ -298,9 +298,14 @@ broadly grouped in three categories:
   plots into text documents.
 \end{enumerate}
 
-The following script uses the AWM dataset to exemplify some
-traditional plots in macroeconomics:
+Listing~\ref{awm-plots} shows examples of some traditional plots in macroeconomics,
+using time series from the ``area-wide model'' dataset produced by the 
+European Central Bank, which is shipped with gretl in the file \texttt{AWM.gdt}.
+\texttt{PCR} is aggregate private real consumption and \texttt{YER} is real GDP.
 
+\begin{script}
+  \caption{Plotting macroeconomic data}
+  \label{awm-plots}
 \begin{scode}
 open AWM.gdt --quiet
 
@@ -318,11 +323,10 @@ gnuplot INFQ URX --fit=none --output=display
 gnuplot INFQ URX --fit=inverse --output=display
 gnuplot INFQ URX --fit=loess --output=display
 \end{scode}
+\end{script}
 
-These examples use variables from the ``area-wide model'' dataset by the 
-European Central Bank (ECB) which is shipped with gretl in the AWM.gdt file.
-PCR is aggregate private real consumption and YER is real GDP. The first command 
-line above thus plots consumption against income as a kind of Keynesian 
+The first command line in the listing
+plots consumption against income as a kind of Keynesian 
 consumption function. More precisely, it produces a simple scatter plot with
 an automatically linear fitted line. If this is executed in the gretl console
 the plot will be directly shown in a new window, but if this line is contained
@@ -336,7 +340,7 @@ with a certain symbol determined by gnuplot defaults. If you add the option
 \cmd{--with-lines} the points will be connected with a continuous line and the
 symbols omitted.
 
-The second set of example lines above demonstrate how the fitted line in the 
+The second batch of examples demonstrate how the fitted line in the 
 scatter plot can be controlled from gretl's side. The option \cmd{--fit=none}
 overrides gnuplot's default to draw a line if it deems the fit to be ``good
 enough''. The effect of \cmd{--fit=inverse} is to consider the variable on the

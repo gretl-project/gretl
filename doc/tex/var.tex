@@ -103,8 +103,7 @@ these models is the cointegrated VAR model, discussed in chapter
 
 \begin{script}[htbp]
   \scriptinfo{var-via-ols}{Estimation of a VAR via OLS}
-Input:
-\begin{scodebit}
+\begin{scode}
 open sw_ch14.gdt
 series infl = 400*sdiff(log(PUNEW))
 
@@ -117,7 +116,7 @@ loop foreach i X
 endloop
 
 var p X
-\end{scodebit}
+\end{scode}
 
 Output (selected portions):
 \begin{outbit}
@@ -136,7 +135,6 @@ Mean dependent var   6.019198   S.D. dependent var   1.502549
 Sum squared resid    8.654176   S.E. of regression   0.237830
 
 ...
-
 
 VAR system, lag order 2
 OLS estimates, observations 1960:3-1999:4 (T = 158)
@@ -258,13 +256,12 @@ VAR lag selection'' entry under the Model menu.
 \begin{script}[htbp]
   \caption{VAR lag selection via Information Criteria}
   \label{script:var-lagselect}
-Input:
-\begin{scodebit}
+\begin{scode}
 open denmark
 list Y = 1 2 3 4
 var 4 Y --lagselect
 var 6 Y --lagselect
-\end{scodebit}
+\end{scode}
 % $
 Output (selected portions):
 \begin{outbit}
@@ -541,8 +538,7 @@ also exposes what exactly is returned by the \dollar{test} and
 
 \begin{script}[htbp]
   \scriptinfo{var-autocorrelation}{VAR autocorrelation test from L\"utkepohl}
-Input:
-\begin{scodebit}
+\begin{scode}
 open wgmacro.gdt --quiet
 list Y = investment income consumption
 list dlnY = ldiff(Y)
@@ -552,7 +548,7 @@ modtest 4 --autocorr
 eval $test ~ $pvalue
 modtest 4 --autocorr --univariate
 eval $test ~ $pvalue
-\end{scodebit}
+\end{scode}
 
 Output from tests:
 \begin{outbit}

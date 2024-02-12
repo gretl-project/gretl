@@ -310,9 +310,14 @@ $y_0 < y_1$, then $x_0$ is replaced and the interval becomes
 $[x_1, x_2]$. The width of the interval shrinks progressively, so
 after a few iterations you should end close to the maximum.
 
-As an illustration, consider the function $f(x) = 50 \cdot x^{3/2}
-e^{-x}$, which is maximized at $x = 1.5$. The following script sets as
-the initial interval the range $[0, 10]$:
+As an illustration, consider the function
+$f(x) = 50 \cdot x^{3/2} e^{-x}$, which is maximized at $x = 1.5$. In
+Listing~\ref{ex:golden} we set as the initial interval the range
+$[0, 10]$ ad observe the progress of the algorithm.
+
+\begin{script}[htpb]
+  \caption{Golden section example}
+  \label{ex:golden}
 \begin{scode}
 function scalar g(scalar x)
     return 50 * x^(1.5) * exp(-x)
@@ -325,7 +330,7 @@ printf "\nf(%g) = %g\n", m[1], y
 \end{scode}
 
 The output is
-\begin{code}
+\begin{outbit}
 1: bracket={3.81966,6.18034}, values={8.18747,1.59001}
 2: bracket={2.36068,3.81966}, values={17.1118,8.18747}
 3: bracket={1.45898,2.36068}, values={20.4841,17.1118}
@@ -335,18 +340,19 @@ The output is
 21: bracket={1.50001,1.50017}, values={20.4958,20.4958}
 
 f(1.49996) = 20.4958
-\end{code}
+\end{outbit}
+\end{script}
 
 As you can see from the output, the bracket shrinks progressively; the
-center of the interval when the algorithm stops is $x=1.49996$;
-figure \ref{fig:goldenratio} gives a pictorial representation of the
-process, where the blue line is the function to maximize and the red
-segments are the successive choices for the bracket.
+center of the interval when the algorithm stops is $x=1.49996$.
+Figure~\ref{fig:goldenratio} depicts the process.
 
 \begin{figure}[htpb]
   \centering
   \includegraphics[scale=0.8]{figures/gss}
-  \caption{Golden section search method: example}
+  \caption{Golden section search: the blue line shows the function
+    to be maximized and the red segments show successive choices
+    for the bracket.}
   \label{fig:goldenratio}
 \end{figure}
 

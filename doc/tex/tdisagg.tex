@@ -562,8 +562,7 @@ Several other example scripts are available from
 
 \begin{script}[htbp]
   \scriptinfo{tdisagg-usage}{Example of \texttt{tdisagg} usage}
- Input:
-\begin{scodebit}
+\begin{scode}
 ### Traditional Chow-Lin: y is a series with repetition
 ### and X is a list of series. This corresponds to case 4(a)
 ### as described in section 9.3 of the documentation above.
@@ -586,7 +585,7 @@ smpl --no-missing
 scalar s = 3
 list X = indpro payems
 series gdpm = tdisagg(gdpc1, X, s, _(verbose=1, aggtype="sum"))
-\end{scodebit}
+\end{scode}
 
 Output:
 \begin{outbit}

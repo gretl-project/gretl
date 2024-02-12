@@ -201,7 +201,7 @@ listing~\ref{ex:engel-curve}.
 
 \begin{script}[htbp]
   \scriptinfo{engel-curve}{Food expenditure and income, Engel data}
-\begin{scodebit}
+\begin{scode}
 # this data file is supplied with gretl
 open engel.gdt
 
@@ -215,7 +215,7 @@ QM1 <- quantreg tau foodexp 0 income --intervals
 logs foodexp income
 smpl obs!=105 && obs!=138 --restrict
 QM2 <- quantreg tau l_foodexp 0 l_income --intervals
-\end{scodebit}
+\end{scode}
   The script saves the two models ``as icons''. Double-clicking on a
   model's icon opens a window to display the results, and the Graph
   menu in this window gives access to a tau-sequence plot.

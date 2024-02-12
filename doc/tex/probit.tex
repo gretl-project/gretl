@@ -104,14 +104,14 @@ grade improved over a certain period, 0 otherwise. The independent
 variables are \texttt{PSI} (= 1 if the student participated in the
 program in question, otherwise 0) plus two controls, the student's
 initial Grade Point Average (\texttt{GPA}) and score on a prior
-economics test (\texttt{TUCE}).  Output is shown in Table
-\ref{tab:logit-probit}. Note that for the probit model a conditional
-moment test on skewness and kurtosis \citep*{JBL84} is printed
-automatically as a test for normality.
+economics test (\texttt{TUCE}).  Output is shown in
+Table~\ref{tab:logit-probit}. Note that for the probit model a
+conditional moment test on skewness and kurtosis \citep*{JBL84} is
+printed automatically as a test for normality.
 
 \begin{table}
   \centering
-\begin{code}
+\begin{outbit}
 Model 1: Logit estimates using the 32 observations 1-32
 Dependent variable: GRADE
 
@@ -166,7 +166,7 @@ Test for normality of residual -
   Null hypothesis: error is normally distributed
   Test statistic: Chi-square(2) = 3.61059
   with p-value = 0.164426
-\end{code}
+\end{outbit}
   \caption{Example logit and probit output}
   \label{tab:logit-probit}
 \end{table}
@@ -354,7 +354,7 @@ the dependent variable is acceptable, but not binary.
 
 \begin{script}[htbp]
   \scriptinfo{ordered-probit}{Ordered probit model}
-\begin{scodebit}
+\begin{scode}
 /*
   Replicate the results in Wooldridge, Econometric Analysis of Cross
   Section and Panel Data, section 15.10, using pension-plan data from
@@ -413,7 +413,7 @@ E1 = 50 * P50 + 100 * P100
 printf "\nWith choice, E(y) = %.2f, without E(y) = %.2f\n", E1, E0
 printf "Estimated choice effect via ML = %.2f (OLS = %.2f)\n", E1 - E0,
   choice_ols
-\end{scodebit}
+\end{scode}
 \end{script}
 
 Listing \ref{ex:ordered-probit} reproduces the results presented in
@@ -460,12 +460,11 @@ and
 \begin{script}[htbp]
   \caption{Multinomial logit}
   \label{ex:mlogit}
-Input:
-\begin{scodebit}
+\begin{scode}
 open keane.gdt
 smpl year==87 --restrict
 logit status 0 educ exper expersq black --multinomial
-\end{scodebit}
+\end{scode}
 Output (selected portions):
 \begin{outbit}
 Model 1: Multinomial Logit, using observations 1-1738 (n = 1717)
@@ -780,8 +779,7 @@ above).  An example is contained in the sample script
 
 \begin{script}[ht]
   \scriptinfo{interval-estimation}{Interval model on artificial data}
-Input:
-\begin{scodebit}
+\begin{scode}
 nulldata 100
 # generate artificial data
 set seed 201449 
@@ -798,7 +796,7 @@ intreg lo_bound hi_bound const x
 gen_resid = $uhat
 yhat = $yhat + gen_resid
 corr ystar yhat 
-\end{scodebit}
+\end{scode}
 
 Output (selected portions):
 \begin{outbit}
@@ -1317,14 +1315,13 @@ appropriate in this case.)
 
 \begin{script}[htbp]
   \scriptinfo{duration}{Models for recidivism data}
-Input:
-\begin{scodebit}
+\begin{scode}
 open recid.gdt
 list X = workprg priors tserved felon alcohol drugs \
  black married educ age
 duration durat 0 X ; cens
 duration durat 0 X ; cens --lognormal
-\end{scodebit}
+\end{scode}
 
 Partial output:
 \begin{outbit}

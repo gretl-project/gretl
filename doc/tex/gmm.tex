@@ -437,19 +437,25 @@ exclusive options can be specified: \option{two-step} or
   \scriptinfo{tsls-gmm}{TSLS via GMM}
 \begin{scode}
 open cig_ch10.gdt
+
 # real avg price including sales tax
 ravgprs = avgprs / cpi
+
 # real avg cig-specific tax
 rtax = tax / cpi
+
 # real average total tax
 rtaxs = taxs / cpi
+
 # real average sales tax
 rtaxso = rtaxs - rtax
+
 # logs of consumption, price, income
 lpackpc = log(packpc)
 lravgprs = log(ravgprs)
 perinc = income / (pop*cpi)
 lperinc = log(perinc)
+
 # restrict sample to 1995 observations
 smpl --restrict year==1995
 # Equation (10.16) by tsls
@@ -476,7 +482,7 @@ end gmm
 \begin{script}[htbp]
   \caption{TSLS via GMM: partial output}
   \label{gmm-tsls-out}
-\begin{code}
+\begin{outbit}
 Model 1: TSLS estimates using the 48 observations 1-48
 Dependent variable: lpackpc
 Instruments: rtaxso rtax 
@@ -498,7 +504,7 @@ e = lpackpc - b0 - b1*lravgprs - b2*lperinc
   b2                    0.280405         0.245828      1.141   0.25401
 
   GMM criterion = 0.0110046
-\end{code}
+\end{outbit}
 \end{script}
 
 

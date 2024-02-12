@@ -875,8 +875,7 @@ data, with p-values of $0.002$ and $0.004$.
 \begin{script}[htbp]
   \caption{Further testing of money demand system}
   \label{brand-cassola-tab5}
-Input:
-\begin{scodebit}
+\begin{scode}
 restrict
   b[1,5] = -1
 end restrict
@@ -899,7 +898,7 @@ printf "  chi^2(4) = %g [%6.4f]\n", 2*(ll0-ll_uie), \
 printf "Homogeneity in the Fisher hypothesis:\n"
 printf "  LR-test, rank = 3: chi^2(4) = %6.3f [%6.4f]\n", 2*(ll0-ll_hfh), \
 	pvalue(X, 4, 2*(ll0-ll_hfh))
-\end{scodebit}
+\end{scode}
 
 Output:
 \begin{outbit}
@@ -928,8 +927,7 @@ and real GDP (p-values $0.07$ and $0.08$ respectively).
 \begin{script}[htbp]
   \caption{Testing for weak exogeneity}
   \label{brand-cassola-exog}
-Input:
-\begin{scodebit}
+\begin{scode}
 restrict
   a1 = 0
 end restrict
@@ -958,7 +956,7 @@ ts_y = 2*(ll0 - $rlnl)
 loop foreach i m p l s y
   printf "Delta $i\t%6.3f [%6.4f]\n", ts_$i, pvalue(X, 6, ts_$i)
 endloop
-\end{scodebit}
+\end{scode}
 
 Output (variable, LR test, p-value):
 \begin{outbit}

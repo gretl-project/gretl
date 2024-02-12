@@ -71,9 +71,12 @@ program and part of its output.
 In addition you can embed \app{Ox} code within a gretl script
 using a \texttt{foreign} block, as described in connection with
 \app{R}.  A trivial example, which simply prints the gretl data
-matrix within \app{Ox}, is shown below:
-%
-\begin{code}
+matrix within \app{Ox}, is shown in Listing~\ref{ex:ox-simple}.
+
+\begin{script}
+  \caption{Simple example of \app{Ox} usage}
+  \label{ex:ox-simple}
+\begin{scode}
 open data4-1
 matrix m = {dataset}
 mwrite(m, "gretl.mat", 1)
@@ -86,13 +89,14 @@ main()
    print(gmat);
 }
 end foreign
-\end{code}
+\end{scode}
+\end{script}
 
-The above example illustrates how a matrix can be passed from
-gretl to \app{Ox}.  We use the \texttt{mwrite} function to write
-a matrix into the user's ``dotdir'' (see
-section~\ref{sec:named-strings}), then in \app{Ox} we use the function
-\verb|gretl_loadmat| to retrieve the matrix.
+The listing illustrates how a matrix can be passed from gretl to
+\app{Ox}.  We use the \texttt{mwrite} function to write a matrix into
+the user's ``dotdir'' (see section~\ref{sec:named-strings}), then in
+\app{Ox} we use the function \verb|gretl_loadmat| to retrieve the
+matrix.
 
 How does \verb|gretl_loadmat| come to be defined?  When gretl
 writes out the \app{Ox} program corresponding to your \texttt{foreign}

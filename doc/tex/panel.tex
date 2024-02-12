@@ -493,31 +493,20 @@ open abdata.gdt
 
 list X = w k ys                  # list of explanatory variables
 
-###
 ### built-in method
-###
-
 panel n const X --fixed-effects
 
-###
 ### recentering "by hand"
-###
-
 depvar = n - pmean(n) + mean(n)  # redefine the dependent variable
-
 list indepvars = const
 loop foreach i X
     # redefine the explanatory variables
     x_$i = $i - pmean($i) + mean($i)
     indepvars += x_$i
 endloop
-
 ols depvar indepvars             # perform estimation
 
-###
 ### using centered dummies
-###
-
 list C = dummify(unit)           # create the unit dummies
 smpl n X --no-missing            # adjust to perform centering correctly
 list D = stdize(C, -1)           # center the unit dummies
@@ -701,14 +690,19 @@ which is based on a study of country growth rates by
 \begin{scode}
 # Penn World Table data as used by Nerlove
 open penngrow.gdt
+
 # Fixed effects (for comparison)
 panel Y 0 Y(-1) X
+
 # Random effects (for comparison)
 panel Y 0 Y(-1) X --random-effects
+
 # take differences of all variables
 diff Y X
+
 # Anderson-Hsiao, using Y(-2) as instrument
 tsls d_Y d_Y(-1) d_X ; 0 d_X Y(-2)
+
 # Anderson-Hsiao, using d_Y(-2) as instrument
 tsls d_Y d_Y(-1) d_X ; 0 d_X d_Y(-2)
 \end{scode}

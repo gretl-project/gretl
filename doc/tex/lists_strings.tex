@@ -313,12 +313,12 @@ series), \texttt{Z} is a list (or a single series)\footnote{Warning:
   \texttt{Z} are of the the list type.}; all the interactions will be
 created and listed together under the name \texttt{H}.
 
-An example is provided in script \ref{ex:interaction-lists}
+An example is provided in Listing~\ref{ex:interaction-lists}.
 
 \begin{script}[ht]
   \scriptinfo{interaction-lists}{Usage of interaction lists}
 Input:
-\begin{scodebit}
+\begin{scode}
 open mroz87.gdt --quiet
 
 # the coding below makes it so that
@@ -335,7 +335,7 @@ list INTER = D ^ X
 smpl 1 6
 
 print D X INTER -o
-\end{scodebit}
+\end{scode}
 
 Output (selected portions):
 \begin{outbit}

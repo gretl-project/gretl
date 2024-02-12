@@ -1373,7 +1373,6 @@ printf "check:  vhat - exp(muhat) = %g\n\n", s2hat - exp(muhat)
 # now estimate under the constraint exp(mean) = variance
 
 psi = {1}
-
 mle loglik = -0.5*log(2*$pi) - 0.5*log(s2) - 0.5*(x-m)^2/s2
     matrix par = h(psi)
     scalar m = par[1]
@@ -1382,21 +1381,17 @@ mle loglik = -0.5*log(2*$pi) - 0.5*log(s2) - 0.5*(x-m)^2/s2
 end mle
 
 # now map psi to the constrained parametrisation
-
 matrix par = h(psi)
 
 # show that now the constraint holds
-
 printf "check:  vhat - exp(muhat) = %g\n\n", par[2] - exp(par[1])
 
 # take care of the covariance matrix
-
 matrix vpar = qform(anJacob(psi)', $vcv)
 # alternatively, one could use the numerical Jacobian, as in
 # matrix vpar = qform(fdjac(psi, "h(psi)"), $vcv)
 
 # finally, print out the constrained parameters via "modprint"
-
 matrix cs = par ~ sqrt(diag(vpar))
 modprint cs "mean variance"
 \end{scode}
