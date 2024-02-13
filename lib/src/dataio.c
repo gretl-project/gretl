@@ -2754,12 +2754,18 @@ static int add_obs_markers_from_series (DATASET *dset, const char *vname)
 
     for (t=0; t<dset->n; t++) {
 	s = series_get_string_for_obs(dset, v, t);
-	s += strspn(s, white);
-	*marker = '\0';
-	strncat(marker, s, 31);
-	g_strstrip(marker);
-	gretl_utf8_truncate_b(marker, OBSLEN-1);
-	strcpy(S[t], marker);
+	if (s == NULL) {
+	    gretl_errmsg_sprintf(_("Missing marker at observation %d"), t+1);
+	    err = E_DATA;
+	    break;
+	} else {
+	    s += strspn(s, white);
+	    *marker = '\0';
+	    strncat(marker, s, 31);
+	    g_strstrip(marker);
+	    gretl_utf8_truncate_b(marker, OBSLEN-1);
+	    strcpy(S[t], marker);
+	}
     }
 
     finalize_add_markers(dset, S, err);
