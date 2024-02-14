@@ -2411,6 +2411,7 @@ static int real_write_gdt (const char *fname,
 {
     PRN *prn = NULL;
     int T = sample_size(dset);
+    int dslength = T;
     char startdate[OBSLEN], enddate[OBSLEN];
     char datname[MAXLEN], freqstr[32];
     char xmlbuf[1024];
@@ -2465,8 +2466,14 @@ static int real_write_gdt (const char *fname,
 	}
     }
 
-    ntolabel(startdate, dset->t1, dset);
-    ntolabel(enddate, dset->t2, dset);
+    if (opt & OPT_F) {
+	dslength = dset->n;
+	ntolabel(startdate, 0, dset);
+	ntolabel(enddate, dset->n - 1, dset);
+    } else {
+	ntolabel(startdate, dset->t1, dset);
+	ntolabel(enddate, dset->t2, dset);
+    }
 
     simple_fname(datname, fname);
     uerr = gretl_xml_encode_to_buf(xmlbuf, datname, sizeof xmlbuf);
@@ -2484,7 +2491,7 @@ static int real_write_gdt (const char *fname,
 	    "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
 	    "<gretldata version=\"%s\" name=\"%s\" frequency=\"%s\" "
 	    "n=\"%d\" startobs=\"%s\" endobs=\"%s\" ", GRETLDATA_VERSION,
-	    xmlbuf, freqstr, sample_size(dset), startdate, enddate);
+	    xmlbuf, freqstr, dslength, startdate, enddate);
 
     pprintf(prn, "type=\"%s\"", data_structure_string(dset->structure));
 
@@ -2498,6 +2505,9 @@ static int real_write_gdt (const char *fname,
 	if (uerr == 0) {
 	    pprintf(prn, " mapfile=\"%s\"", xmlbuf);
 	}
+    }
+    if (opt & OPT_F) {
+	pputs(prn, " metadata=\"true\"");
     }
 
     pputs(prn, ">\n");
@@ -2524,6 +2534,10 @@ static int real_write_gdt (const char *fname,
 	    pputs(prn, "</description>\n");
 	    free(dbuf);
 	}
+    }
+
+    if (opt & OPT_F) {
+	pprintf(prn, "<sample t1=\"%d\" t2=\"%d\"/>\n", dset->t1, dset->t2);
     }
 
     gretl_push_c_numeric_locale();
@@ -2632,7 +2646,8 @@ static int gdt_store_prepare (const DATASET *dset,
  * @fname: name of file to write.
  * @list: list of variables to write (or %NULL to write all).
  * @dset: dataset struct.
- * @opt: if %OPT_Z write gzipped data, else uncompressed.
+ * @opt: if %OPT_Z write gzipped data, else uncompressed; if
+ * %OPT_F write full data and include sample range data.
  * @progress: may be 1 when called from gui to display progress
  * bar in case of a large data write; generally should be 0.
  *
@@ -2702,6 +2717,34 @@ static void transcribe_string (char *targ, const char *src, int maxlen)
 {
     *targ = '\0';
     strncat(targ, src, maxlen - 1);
+}
+
+static int process_sample (xmlNodePtr node, int sample[],
+			   DATASET *dset)
+{
+    xmlChar *st1 = xmlGetProp(node, (XUC) "t1");
+    xmlChar *st2 = xmlGetProp(node, (XUC) "t2");
+    int err = 0;
+
+    if (st1 == NULL || st2 == NULL) {
+	err = E_DATA;
+    } else {
+	int t1 = gretl_int_from_string((const char *) st1, &err);
+	int t2 = gretl_int_from_string((const char *) st2, &err);
+
+	if (!err && (t1 < 0 || t2 >= dset->n || t2 < t1)) {
+	    err = E_DATA;
+	}
+	if (!err) {
+	    sample[0] = t1;
+	    sample[1] = t2;
+	}
+    }
+
+    free(st1);
+    free(st2);
+
+    return err;
 }
 
 /* Note: if @probe is non-zero, this means that we're really just
@@ -3915,6 +3958,8 @@ static int real_read_gdt (const char *fname, const char *srcname,
     xmlNodePtr cur;
     int gotvars = 0, err = 0;
     int caldata = 0, repad = 0;
+    int sample[2] = {0};
+    int readsmpl = 0;
     double gdtversion = 1.0;
     double myversion;
     int in_c_locale = 0;
@@ -3954,6 +3999,9 @@ static int real_read_gdt (const char *fname, const char *srcname,
 	    future_datafile_warning(gdtversion, myversion);
 	}
     }
+
+    /* optional */
+    readsmpl = gretl_xml_get_prop_as_bool(cur, "metadata");
 
     /* optional */
     gretl_xml_get_prop_as_unsigned_int(cur, "rseed", &tmpset->rseed);
@@ -4010,6 +4058,13 @@ static int real_read_gdt (const char *fname, const char *srcname,
         if (!xmlStrcmp(cur->name, (XUC) "description")) {
 	    tmpset->descrip = (char *)
 		xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+	} else if (readsmpl && !xmlStrcmp(cur->name, (XUC) "sample")) {
+	    err = process_sample(cur, sample, tmpset);
+	    if (err) {
+		fprintf(stderr, "error processing sample range\n");
+	    } else {
+		readsmpl = 2;
+	    }
         } else if (!xmlStrcmp(cur->name, (XUC) "variables")) {
 	    err = process_varlist(cur, tmpset, 0);
 	    if (err) {
@@ -4123,6 +4178,12 @@ static int real_read_gdt (const char *fname, const char *srcname,
 
 	gretl_errmsg_ensure(msg);
 	g_free(msg);
+    }
+
+    if (!err && readsmpl == 2) {
+	/* the gdt file contained a sample-range spec */
+	dset->t1 = sample[0];
+	dset->t2 = sample[1];
     }
 
 #if GDT_DEBUG

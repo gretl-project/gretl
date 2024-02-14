@@ -1505,8 +1505,10 @@ static int *get_send_data_list (int ci, const DATASET *dset,
 #ifdef HAVE_MPI
 
 static int mpi_send_data_setup (const DATASET *dset,
-				gretlopt opt, FILE *fp)
+				gretlopt opt,
+				FILE *fp)
 {
+    gretlopt gdt_opt = OPT_NONE;
     int zlist[2] = {1, 0};
     int *list = NULL;
     size_t datasize;
@@ -1520,8 +1522,14 @@ static int mpi_send_data_setup (const DATASET *dset,
     }
 
     if (opt & OPT_M) {
-	nvars = 0; /* excludes const */
+	/* --send-metadata */
+	const char *s = get_optval_string(MPI, OPT_M);
+
+	nvars = 0; /* nvars is net of const */
 	list = zlist;
+	if (s != NULL && !strcmp(s, "full")) {
+	    gdt_opt = OPT_F;
+	}
     } else {
 	list = get_send_data_list(MPI, dset, &err);
 	if (err) {
@@ -1542,7 +1550,7 @@ static int mpi_send_data_setup (const DATASET *dset,
         fname = gretl_make_dotpath("mpi-data.gdt");
     }
 
-    err = gretl_write_gdt(fname, list, dset, OPT_NONE, 0);
+    err = gretl_write_gdt(fname, list, dset, gdt_opt, 0);
 
     if (!err) {
         /* here we're writing into the file to be run
@@ -1572,7 +1580,7 @@ static int mpi_send_funcs_setup (FILE *fp)
     return err;
 }
 
-static int write_gretl_mpi_script (gretlopt opt, const DATASET *dset)
+static int write_gretl_mpi_script (gretlopt opt, DATASET *dset)
 {
     const gchar *fname = get_mpi_scriptname();
     FILE *fp = NULL;
@@ -3759,8 +3767,7 @@ static void try_for_mpi_errmsg (PRN *prn)
  * Returns: 0 on success, non-zero on error.
  */
 
-int foreign_execute (const DATASET *dset,
-                     gretlopt opt, PRN *prn)
+int foreign_execute (DATASET *dset, gretlopt opt, PRN *prn)
 {
 #if defined(MPI_REALTIME)
     static struct iodata io;

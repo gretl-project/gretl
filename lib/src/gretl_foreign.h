@@ -34,7 +34,7 @@ int foreign_start (int ci, const char *param, gretlopt opt, PRN *prn);
 
 int foreign_append (const char *line, int context);
 
-int foreign_execute (const DATASET *dset, gretlopt opt, PRN *prn);
+int foreign_execute (DATASET *dset, gretlopt opt, PRN *prn);
 
 void foreign_destroy (void);
 
