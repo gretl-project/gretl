@@ -244,6 +244,8 @@ int gnuplot_test_command (const char *cmd)
 
 #ifdef G_OS_WIN32
 
+/* FIXME */
+
 double gnuplot_version (void)
 {
     /* As of October 2022, the gretl packages for MS Windows
@@ -256,7 +258,7 @@ double gnuplot_version (void)
 # endif
 }
 
-#elif defined(OS_OSX) && defined(PKGBUILD)
+#elif 0 // defined(OS_OSX) && defined(PKGBUILD)
 
 double gnuplot_version (void)
 {
@@ -266,9 +268,9 @@ double gnuplot_version (void)
     return 5.4;
 }
 
-#else /* Linux, or non-packaged build for other OS */
+#else /* Linux or macOS (or non-packaged build for other OS) */
 
-double gnuplot_version (void)
+static double gnuplot_version_full (char *vstr)
 {
     static double vnum = 0.0;
 
@@ -300,12 +302,14 @@ double gnuplot_version (void)
 	if (ok && sout != NULL) {
 	    if (!strncmp(sout, "gnuplot ", 8)) {
 		/* e.g. "gnuplot 5.0 patchlevel 0" */
-		char *s = strstr(sout, "patchlevel");
-		int plev;
+		const char *fmt = "gnuplot %d.%d patchlevel %d";
+		int maj, min, plev;
 
-		vnum = dot_atof(sout + 8);
-		if (s != NULL && sscanf(s + 10, "%d", &plev) == 1) {
-		    vnum += plev / 100.0;
+		if (sscanf(sout, fmt, &maj, &min, &plev)) {
+		    vnum = maj + min / 10.0 + plev / 100.0;
+		    if (vstr != NULL) {
+			sprintf(vstr, "%d.%d.%d", maj, min, plev);
+		    }
 		}
 	    }
 	}
@@ -327,7 +331,14 @@ double gnuplot_version (void)
     return vnum;
 }
 
-#endif /* platform variants of gnuplot_version() */
+double gnuplot_version (void)
+{
+    return gnuplot_version_full(NULL);
+}
+
+#endif /* platform-specific variants of gnuplot_version() */
+
+#if defined(G_OS_WIN32) // || (defined(OS_OSX) && defined(PKGBUILD))
 
 char *gnuplot_version_string (void)
 {
@@ -340,6 +351,22 @@ char *gnuplot_version_string (void)
     return s;
 }
 
+#else
+
+char *gnuplot_version_string (void)
+{
+    char tmp[16];
+    double x;
+
+    x = gnuplot_version_full(tmp);
+    if (x > 0) {
+	return gretl_strdup(tmp);
+    } else {
+	return gretl_strdup("unknown");
+    }
+}
+
+#endif
 
 static int gp_list_pos (const char *s, const int *list,
 			const DATASET *dset)
