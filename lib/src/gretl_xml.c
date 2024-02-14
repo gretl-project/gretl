@@ -2189,7 +2189,8 @@ static void strval_saver_restore (DATASET *dset,
 
 static int gdt_write_observations (const DATASET *dset,
 				   const int *storelist,
-				   int skip_padding, int T,
+				   int skip_padding,
+				   int full_range,
 				   int (*show_progress)
                                    (double, double, int),
 				   PRN *prn)
@@ -2198,9 +2199,19 @@ static int gdt_write_observations (const DATASET *dset,
     char *p15 = NULL;
     int gdt_digits = 17;
     int i, v, t, nvars;
+    int T, t1, t2;
     int err = 0;
 
     nvars = storelist != NULL ? storelist[0] : dset->v - 1;
+
+    if (full_range) {
+	t1 = 0;
+	t2 = dset->n - 1;
+    } else {
+	t1 = dset->t1;
+	t2 = dset->t2;
+    }
+    T = t2 - t1 + 1;
 
     p15 = calloc(nvars, 1);
     if (p15 != NULL) {
@@ -2215,7 +2226,7 @@ static int gdt_write_observations (const DATASET *dset,
 	    (dset->S != NULL)? "true" : "false");
     pputs(prn, ">\n");
 
-    for (t=dset->t1; t<=dset->t2; t++) {
+    for (t=t1; t<=t2; t++) {
 	if (skip_padding && row_is_padding(dset, t, dset->v)) {
 	    continue;
 	}
@@ -2419,6 +2430,7 @@ static int real_write_gdt (const char *fname,
     double dsize = 0;
     int nvars;
     int skip_padding = 0;
+    int full_range = 0;
     int uerr = 0;
     int err = 0;
 
@@ -2507,7 +2519,7 @@ static int real_write_gdt (const char *fname,
 	}
     }
     if (opt & OPT_F) {
-	pputs(prn, " metadata=\"true\"");
+	pputs(prn, " mpi-transfer=\"true\"");
     }
 
     pputs(prn, ">\n");
@@ -2538,6 +2550,7 @@ static int real_write_gdt (const char *fname,
 
     if (opt & OPT_F) {
 	pprintf(prn, "<sample t1=\"%d\" t2=\"%d\"/>\n", dset->t1, dset->t2);
+	full_range = 1;
     }
 
     gretl_push_c_numeric_locale();
@@ -2548,7 +2561,7 @@ static int real_write_gdt (const char *fname,
     /* write listing of observations */
     if (nvars > 0) {
 	gdt_write_observations(dset, storelist, skip_padding,
-			       T, show_progress, prn);
+			       full_range, show_progress, prn);
     }
 
     /* maybe write string tables */
@@ -4001,7 +4014,7 @@ static int real_read_gdt (const char *fname, const char *srcname,
     }
 
     /* optional */
-    readsmpl = gretl_xml_get_prop_as_bool(cur, "metadata");
+    readsmpl = gretl_xml_get_prop_as_bool(cur, "mpi-transfer");
 
     /* optional */
     gretl_xml_get_prop_as_unsigned_int(cur, "rseed", &tmpset->rseed);

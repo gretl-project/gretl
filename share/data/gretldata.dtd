@@ -14,7 +14,7 @@
    binary       CDATA #IMPLIED
    rseed        CDATA #IMPLIED
    mapfile      CDATA #IMPLIED
-   metadata     CDATA #IMPLIED
+   mpi-transfer CDATA #IMPLIED
 >
 
 <!ELEMENT description ( #PCDATA )>

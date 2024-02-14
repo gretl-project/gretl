@@ -1521,15 +1521,15 @@ static int mpi_send_data_setup (const DATASET *dset,
         return err;
     }
 
-    if (opt & OPT_M) {
-	/* --send-metadata */
-	const char *s = get_optval_string(MPI, OPT_M);
+    if (opt & OPT_R) {
+	/* --full-range */
+	gdt_opt = OPT_F;
+    }
 
+    if (opt & OPT_M) {
+	/* --send-metadata (only) */
 	nvars = 0; /* nvars is net of const */
 	list = zlist;
-	if (s != NULL && !strcmp(s, "full")) {
-	    gdt_opt = OPT_F;
-	}
     } else {
 	list = get_send_data_list(MPI, dset, &err);
 	if (err) {
