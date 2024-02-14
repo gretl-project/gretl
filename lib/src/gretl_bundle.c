@@ -3274,7 +3274,7 @@ gretl_bundle *get_sysinfo_bundle (int *err)
             gretl_bundle_set_string(b, "os", "other");
 #endif
             gretl_bundle_set_string(b, "hostname", g_get_host_name());
-	    gretl_bundle_set_scalar(b, "gnuplot", gnuplot_version());
+            gretl_bundle_set_string(b, "gnuplot", gnuplot_version_string());
             gretl_bundle_set_string(b, "blas", blas_variant_string());
             if (get_blas_details(&s1, &s2, &s3)) {
                 gretl_bundle_set_string(b, "blascore", s1);

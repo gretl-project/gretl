@@ -329,6 +329,18 @@ double gnuplot_version (void)
 
 #endif /* platform variants of gnuplot_version() */
 
+char *gnuplot_version_string (void)
+{
+    char *s = calloc(8,1);
+
+    gretl_push_c_numeric_locale();
+    sprintf(s, "%g", gnuplot_version());
+    gretl_pop_c_numeric_locale();
+
+    return s;
+}
+
+
 static int gp_list_pos (const char *s, const int *list,
 			const DATASET *dset)
 {
