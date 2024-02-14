@@ -1543,7 +1543,7 @@ static int mpi_send_data_setup (const DATASET *dset,
 
     datasize = dset->n * nvars;
 
-    if (datasize > 10000) {
+    if (!(opt & OPT_R) && datasize > 10000) {
         /* write "big" data as binary? */
         fname = gretl_make_dotpath("mpi-data.gdtb");
     } else {
