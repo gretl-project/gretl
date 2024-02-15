@@ -2673,7 +2673,7 @@ static void register_mkl_details (void *handle)
     int nt = 0, blas_nt = 0, id = 0;
 
     /* Functions from libmkl_intel_lp64.so we need. */
-    void (*MKL_get_version) (MKL_version*);
+    void (*MKL_get_version) (MKL_version *);
     int (*MKL_get_max_threads) (void);
     int (*MKL_cbwr_get_auto_branch) (void);
 

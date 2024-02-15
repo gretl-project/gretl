@@ -3274,7 +3274,6 @@ gretl_bundle *get_sysinfo_bundle (int *err)
             gretl_bundle_set_string(b, "os", "other");
 #endif
             gretl_bundle_set_string(b, "hostname", g_get_host_name());
-            gretl_bundle_set_string(b, "gnuplot", gnuplot_version_string());
             gretl_bundle_set_string(b, "blas", blas_variant_string());
             if (get_blas_details(&s1, &s2, &s3)) {
                 gretl_bundle_set_string(b, "blascore", s1);
@@ -3283,10 +3282,15 @@ gretl_bundle *get_sysinfo_bundle (int *err)
                     gretl_bundle_set_string(b, "blas_version", s3);
                 }
             }
-            gretl_bundle_set_string(b, "cpuid", get_cpu_details());
 #if defined(COMPILER_IDENT)
             gretl_bundle_set_string(b, "compiler", COMPILER_IDENT);
 #endif
+	    /* allocated strings */
+	    gretl_bundle_donate_data(b, "gnuplot", gnuplot_version_string(),
+				     GRETL_TYPE_STRING, 0);
+	    gretl_bundle_donate_data(b, "cpuid", get_cpu_details(),
+				     GRETL_TYPE_STRING, 0);
+	    /* information pertaining to 'foreign' programs */
             fb = foreign_info();
             if (fb != NULL) {
                 gretl_bundle_donate_data(b, "foreign", fb,
