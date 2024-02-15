@@ -240,117 +240,95 @@ int gnuplot_test_command (const char *cmd)
 
 #endif /* not WIN32 */
 
-/* variants of gnuplot_version() per platform */
+/* Apparatus for getting the gnuplot version, either
+   in numerical form or as a string
+*/
 
-#ifdef G_OS_WIN32
+static char gpver_string[16];
+static double gpver_number;
 
-double gnuplot_version (void)
+static void set_gpver_number (const char *s)
 {
-    /* As of October 2022, the gretl packages for MS Windows
-       include gnuplot 5.2.6 (32-bit) or 5.4.1 (64-bit).
-       To date we haven't found a way of getting the
-       wgnuplot.exe version programatically.
-    */
-# if defined(_WIN64)
-    return 5.4;
-# else
-    return 5.2;
-# endif
+    const char *fmt = "%d.%d.%d";
+    int maj, min, plev;
+
+    if (sscanf(s, fmt, &maj, &min, &plev) == 3) {
+	gpver_number = maj + min / 10.0 + plev / 100.0;
+    }
 }
 
-char *gnuplot_version_string (void)
+static int get_gp_version_info (void)
 {
-    char *s = calloc(8, 1);
+    gchar *qname = NULL;
+    gchar *fname = NULL;
+    gchar *buf = NULL;
+    FILE *fp;
+    int err = 0;
 
-    gretl_push_c_numeric_locale();
-    sprintf(s, "%g", gnuplot_version());
-    gretl_pop_c_numeric_locale();
-
-    return s;
-}
-
-#else /* not Windows */
-
-static double gnuplot_version_full (char *vstr)
-{
-    static double vnum = 0.0;
-
-    if (vnum == 0.0) {
-	GError *gerr = NULL;
-	gchar *sout = NULL;
-	gchar *serr = NULL;
-	gchar *argv[] = { NULL, NULL, NULL };
-	gboolean ok;
-
-	if (*gnuplot_path == '\0') {
-	    strcpy(gnuplot_path, gretl_gnuplot_path());
-	}
-
-	argv[0] = gnuplot_path;
-	argv[1] = "--version";
-
-	ok = g_spawn_sync (NULL,
-			   argv,
-			   NULL,
-			   G_SPAWN_SEARCH_PATH,
-			   NULL,
-			   NULL,
-			   &sout,
-			   &serr,
-			   NULL,
-			   &gerr);
-
-	if (ok && sout != NULL) {
-	    if (!strncmp(sout, "gnuplot ", 8)) {
-		/* e.g. "gnuplot 5.2 patchlevel 6" */
-		const char *fmt = "gnuplot %d.%d patchlevel %d";
-		int maj, min, plev;
-
-		if (sscanf(sout, fmt, &maj, &min, &plev) == 3) {
-		    vnum = maj + min / 10.0 + plev / 100.0;
-		    if (vstr != NULL) {
-			sprintf(vstr, "%d.%d.%d", maj, min, plev);
-		    }
-		}
-	    }
-	}
-
-	if (vnum == 0) {
-	    /* didn't get a version number */
-	    if (gerr != NULL) {
-		gretl_errmsg_set(gerr->message);
-		g_error_free(gerr);
-	    } else if (serr != NULL && *serr != '\0') {
-		gretl_errmsg_set(serr);
-	    }
-	}
-
-	g_free(sout);
-	g_free(serr);
+    if (*gnuplot_path == '\0') {
+	strcpy(gnuplot_path, gretl_gnuplot_path());
     }
 
-    return vnum;
-}
+    qname = gretl_make_dotpath("gpver_query");
+    fname = gretl_make_dotpath("gpver.txt");
 
-double gnuplot_version (void)
-{
-    return gnuplot_version_full(NULL);
-}
-
-char *gnuplot_version_string (void)
-{
-    char tmp[16];
-    double x;
-
-    x = gnuplot_version_full(tmp);
-    if (x > 0) {
-	return gretl_strdup(tmp);
+    fp = gretl_fopen(qname, "w");
+    if (fp == NULL) {
+	err = E_FOPEN;
     } else {
-	return gretl_strdup("unknown");
+	/* write a little query script */
+	fputs("gpver = sprintf(\"%.1f.%s\", GPVAL_VERSION, GPVAL_PATCHLEVEL)\n", fp);
+	fprintf(fp, "set print \"%s\"\n", fname);
+	fputs("print gpver\n", fp);
+	fclose(fp);
     }
+
+    if (!err) {
+	/* send script to gnuplot for execution */
+	buf = g_strdup_printf("\"%s\" \"%s\"", gnuplot_path, qname);
+	err = gretl_spawn(buf);
+    }
+
+    if (!err) {
+	/* read version info from response */
+	fp = gretl_fopen(fname, "r");
+	if (fp != NULL) {
+	    if (fgets(gpver_string, sizeof gpver_string, fp)) {
+		g_strstrip(gpver_string);
+		set_gpver_number(gpver_string);
+	    }
+	    fclose(fp);
+	}
+    }
+
+    gretl_remove(qname);
+    gretl_remove(fname);
+    g_free(qname);
+    g_free(fname);
+    g_free(buf);
+
+    return err;
 }
 
-#endif /* platform-specific variants of gnuplot_version() */
+double gnuplot_version (void)
+{
+    if (gpver_number == 0) {
+	get_gp_version_info();
+    }
+
+    return gpver_number;
+}
+
+char *gnuplot_version_string (void)
+{
+    if (gpver_number == 0) {
+	get_gp_version_info();
+    }
+
+    return gpver_number == 0 ? "unknown" : gpver_string;
+}
+
+/* end gnuplot version apparatus */
 
 static int gp_list_pos (const char *s, const int *list,
 			const DATASET *dset)
