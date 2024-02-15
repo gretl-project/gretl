@@ -271,6 +271,9 @@ static int get_gp_version_info (void)
 
     qname = gretl_make_dotpath("gpver_query");
     fname = gretl_make_dotpath("gpver.txt");
+#ifdef WIN32
+    win32_forwardize(fname);
+#endif
 
     fp = gretl_fopen(qname, "w");
     if (fp == NULL) {
