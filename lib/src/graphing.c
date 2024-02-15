@@ -244,25 +244,13 @@ int gnuplot_test_command (const char *cmd)
 
 #ifdef G_OS_WIN32
 
-static void gpver_test (void)
-{
-    gchar *cmdline;
-    char *sout = NULL;
-    int err;
-
-    cmdline = g_strdup_printf("\"%s\" --version", gretl_gnuplot_path());
-    err = gretl_win32_grab_stdout(cmdline, NULL, &sout);
-    fprintf(stderr, "gpver_test: err = %d, sout = '%s'\n", err, sout);
-    free(sout);
-    g_free(cmdline);
-}
-
 double gnuplot_version (void)
 {
     /* As of October 2022, the gretl packages for MS Windows
        include gnuplot 5.2.6 (32-bit) or 5.4.1 (64-bit).
+       To date we haven't found a way of getting the
+       wgnuplot.exe version programatically.
     */
-    gpver_test();
 # if defined(_WIN64)
     return 5.4;
 # else
@@ -270,17 +258,18 @@ double gnuplot_version (void)
 # endif
 }
 
-#elif 0 // defined(OS_OSX) && defined(PKGBUILD)
-
-double gnuplot_version (void)
+char *gnuplot_version_string (void)
 {
-    /* As of October 2022, the gretl packages for Mac
-       include gnuplot 5.4.1.
-    */
-    return 5.4;
+    char *s = calloc(8, 1);
+
+    gretl_push_c_numeric_locale();
+    sprintf(s, "%g", gnuplot_version());
+    gretl_pop_c_numeric_locale();
+
+    return s;
 }
 
-#else /* Linux or macOS (or non-packaged build for other OS) */
+#else /* not Windows */
 
 static double gnuplot_version_full (char *vstr)
 {
@@ -313,11 +302,11 @@ static double gnuplot_version_full (char *vstr)
 
 	if (ok && sout != NULL) {
 	    if (!strncmp(sout, "gnuplot ", 8)) {
-		/* e.g. "gnuplot 5.0 patchlevel 0" */
+		/* e.g. "gnuplot 5.2 patchlevel 6" */
 		const char *fmt = "gnuplot %d.%d patchlevel %d";
 		int maj, min, plev;
 
-		if (sscanf(sout, fmt, &maj, &min, &plev)) {
+		if (sscanf(sout, fmt, &maj, &min, &plev) == 3) {
 		    vnum = maj + min / 10.0 + plev / 100.0;
 		    if (vstr != NULL) {
 			sprintf(vstr, "%d.%d.%d", maj, min, plev);
@@ -348,23 +337,6 @@ double gnuplot_version (void)
     return gnuplot_version_full(NULL);
 }
 
-#endif /* platform-specific variants of gnuplot_version() */
-
-#if defined(G_OS_WIN32) // || (defined(OS_OSX) && defined(PKGBUILD))
-
-char *gnuplot_version_string (void)
-{
-    char *s = calloc(8,1);
-
-    gretl_push_c_numeric_locale();
-    sprintf(s, "%g", gnuplot_version());
-    gretl_pop_c_numeric_locale();
-
-    return s;
-}
-
-#else
-
 char *gnuplot_version_string (void)
 {
     char tmp[16];
@@ -378,7 +350,7 @@ char *gnuplot_version_string (void)
     }
 }
 
-#endif
+#endif /* platform-specific variants of gnuplot_version() */
 
 static int gp_list_pos (const char *s, const int *list,
 			const DATASET *dset)
