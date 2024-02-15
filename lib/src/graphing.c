@@ -244,13 +244,25 @@ int gnuplot_test_command (const char *cmd)
 
 #ifdef G_OS_WIN32
 
-/* FIXME */
+static void gpver_test (void)
+{
+    gchar *cmdline;
+    char *sout = NULL;
+    int err;
+
+    cmdline = g_strdup_printf("\"%s\" --version", gretl_gnuplot_path());
+    err = gretl_win32_grab_stdout(cmdline, NULL, &sout);
+    fprintf(stderr, "gpver_test: err = %d, sout = '%s'\n", err, sout);
+    free(sout);
+    g_free(cmdline);
+}
 
 double gnuplot_version (void)
 {
     /* As of October 2022, the gretl packages for MS Windows
        include gnuplot 5.2.6 (32-bit) or 5.4.1 (64-bit).
     */
+    gpver_test();
 # if defined(_WIN64)
     return 5.4;
 # else
