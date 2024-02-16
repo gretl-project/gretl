@@ -971,7 +971,6 @@ MODEL *maybe_stack_model (MODEL *pmod, CMD *cmd, PRN *prn, int *err)
 	} else if (*name != '\0') {
 	    *err = real_stack_object(cpy, GRETL_OBJ_EQN, name, NULL);
 	}
-
 	if (!*err) {
 	    set_as_last_model(cpy, GRETL_OBJ_EQN);
 	    if (*name != '\0') {

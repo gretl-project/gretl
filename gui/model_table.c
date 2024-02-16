@@ -45,6 +45,8 @@ static void print_rtf_row_spec (PRN *prn, int tall);
 #define MAX_PORTRAIT_MODELS 6
 #define MAX_TABLE_MODELS 12
 
+#define MT_DEBUG 0
+
 enum {
     COLHEAD_ARABIC,
     COLHEAD_ROMAN,
@@ -88,7 +90,7 @@ static int model_table_too_many (int gui)
 
 int in_model_table (const MODEL *pmod)
 {
-    int i;
+    int i, ID;
 
     if (pmod == NULL || n_models == 0) {
 	return 0;
@@ -98,7 +100,8 @@ int in_model_table (const MODEL *pmod)
 	if (table_models[i] == NULL) {
 	    continue;
 	}
-	if (pmod == table_models[i] || pmod->ID == table_models[i]->ID) {
+	ID = table_models[i]->ID;
+	if (pmod == table_models[i] || (pmod->ID > 0 && pmod->ID == ID)) {
 	    return 1;
 	}
     }
@@ -1369,6 +1372,10 @@ static int cli_modeltab_add (PRN *prn)
     void *ptr = get_last_model(&type);
     int err = 0;
 
+#if MT_DEBUG
+    fprintf(stderr, "cli_modeltab_add, ptr = %p\n", ptr);
+#endif
+
     if (type != GRETL_OBJ_EQN) {
 	gretl_errmsg_set(_("No model is available"));
 	err = 1;
@@ -1379,6 +1386,7 @@ static int cli_modeltab_add (PRN *prn)
 
 	err = model_table_precheck(pmod, MODEL_ADD_BY_CMD);
 	if (err) {
+	    fprintf(stderr, "cli_modeltab_add: precheck error\n");
 	    return err;
 	}
 
@@ -1394,6 +1402,9 @@ static int cli_modeltab_add (PRN *prn)
 
 	if (!err) {
 	    err = real_add_to_model_table(cpy, MODEL_ADD_BY_CMD, 0, prn);
+#if MT_DEBUG
+	    fprintf(stderr, "real_add: cpy = %p, err = %d\n", (void *) cpy, err);
+#endif
 	}
 
 	if (err && freeit) {
@@ -1458,6 +1469,10 @@ static int print_model_table_direct (const char *fname,
 int modeltab_exec (const char *param, gretlopt opt, PRN *prn)
 {
     int err = 0;
+
+#if MT_DEBUG
+    fprintf(stderr, "*** modeltab_exec ***\n");
+#endif
 
     if ((param != NULL && (opt & OPT_O)) ||
 	(param == NULL && !(opt & OPT_O))) {
