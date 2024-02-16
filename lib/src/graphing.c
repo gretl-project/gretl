@@ -145,6 +145,10 @@ static char *gretl_emf_term_line (char *term_line,
 				  PlotType ptype,
 				  GptFlags flags);
 
+#ifdef WIN32
+static void win32_forwardize (gchar *fname);
+#endif
+
 #ifndef WIN32
 
 #define SPAWN_DEBUG 0
