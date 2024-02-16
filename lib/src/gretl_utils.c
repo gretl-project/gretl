@@ -2568,13 +2568,11 @@ static void register_openblas_details (void *handle)
     }
 
     if (OB_get_config != NULL) {
-        char *ver = NULL;
+        char *ver = OB_get_config();
 
-        ver = OB_get_config();
         if (ver != NULL) {
             *blas_version = '\0';
-            snprintf(blas_version, 7, "%s", ver+9);
-            ver = NULL;
+            sscanf(ver, "OpenBLAS %16[^ ]", blas_version);
         }
     } else {
         fprintf(stderr, "Couldn't find openblas_get_config()\n");
@@ -2652,7 +2650,6 @@ static void register_blis_details (void *handle)
     if (buf != NULL) {
         *blas_core = '\0';
         strncat(blas_core, buf, 31);
-        buf = NULL;
     }
 }
 
@@ -2766,7 +2763,6 @@ static void register_mkl_details (void *handle)
             buf = "unknown";
         }
         strncat(blas_core, buf, 63);
-        buf = NULL;
     }
 }
 
