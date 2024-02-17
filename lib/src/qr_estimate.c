@@ -806,8 +806,8 @@ gretl_matrix *HAC_XOX (const gretl_matrix *X,
     }
 
 #if NW_DEBUG
-    fprintf(stderr, "*** HAC: kern = %d, prewhiten = %d ***\n",
-            kern, prewhiten);
+    fprintf(stderr, "*** HAC_XOX: kern = %d, data_based = %d, prewhiten = %d ***\n",
+            kern, data_based, prewhiten);
 #endif
 
     if (use_prior) {
@@ -850,6 +850,9 @@ gretl_matrix *HAC_XOX (const gretl_matrix *X,
         } else {
             p = get_hac_lag(T);
         }
+#if NW_DEBUG
+	fprintf(stderr, "*** bt = %g, p = %d ***\n", bt, p);
+#endif
     }
 
     if (!*err) {
