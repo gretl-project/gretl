@@ -4002,16 +4002,16 @@ static double sneq_reldiff (double x, double y, double ad)
     double rd;
 
     if (x == 0.0) {
-        rd = fabs(y);
+        rd = y;
     } else if (y == 0.0) {
-        rd = fabs(x);
+        rd = x;
     } else if (x > y) {
         rd = ad / y;
     } else {
         rd = ad / x;
     }
 
-    return rd;
+    return fabs(rd);
 }
 
 static int real_gretl_matrix_is_symmetric (const gretl_matrix *m,
@@ -4032,7 +4032,8 @@ static int real_gretl_matrix_is_symmetric (const gretl_matrix *m,
             if (ad < 1.0e-12) {
                 continue;
             }
-            if ((rd = sneq_reldiff(x, y, ad)) > eq_tol) {
+	    rd = sneq_reldiff(x, y, ad);
+            if (rd > eq_tol) {
                 if (verbose) {
                     fprintf(stderr, "M(%d,%d) = %.16g but M(%d,%d) = %.16g\n"
                             " reldiff = %g\n", i, j, x, j, i, y, rd);
