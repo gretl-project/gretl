@@ -1,0 +1,64 @@
+set verbose off
+clear
+set assert stop
+
+print "Start checking type-functions."
+
+bundle b = _(y={1,2})
+m = b.y
+
+t = typeof(b)
+assert(t == 5)
+t = typeof(m)
+assert(t == 3)
+t = typeof(c)
+assert(t == 0)
+
+t = typeof(b.y)
+assert(t == 3)
+t = exists(b.y)
+assert(t == 3)
+t = inbundle(b, "y")
+assert(t == 3)
+
+t = typeof(b.x)
+assert(t == 0)
+t = exists(b.x)
+assert(t == 0)
+t = inbundle(b, "x")
+assert(t == 0)
+
+s = typename(b.y)
+assert(s == "matrix")
+s = typename(b.x)
+assert(s == "null")
+
+matrices M = array(1)
+s = typestr(typeof(M))
+assert(s == "array")
+s = typestr(typeof(M[1]))
+assert(s == "matrix")
+s = typename(M)
+assert(s == "matrices")
+s = typename(M[1])
+assert(s == "matrix")
+
+t = exists(m*3)
+assert(t == 0)
+t = typeof(m*3)
+assert(t == 0)
+s = typename(m*3)
+assert(s == "null")
+t = typeof("foo")
+assert(t == 0)
+
+arrays A = array(2)
+strings A[1] = defarray("foo", "bar")
+s = typename(A)
+assert(s == "arrays")
+s = typename(A[1])
+assert(s == "strings")
+s = typename(A[1][1])
+assert(s == "string")
+
+print "Successfully finished tests."
