@@ -670,6 +670,19 @@ GretlType user_var_get_type_by_name (const char *name)
     return u == NULL ? GRETL_TYPE_NONE : u->type;
 }
 
+GretlType user_var_get_specific_type (const char *name)
+{
+    user_var *u;
+
+    u = get_user_var_of_type_by_name(name, GRETL_TYPE_ANY);
+
+    if (u != NULL && u->type == GRETL_TYPE_ARRAY) {
+	return gretl_array_get_type(u->ptr);
+    } else {
+	return u == NULL ? GRETL_TYPE_NONE : u->type;
+    }
+}
+
 void *user_var_get_value_and_type (const char *name,
                                    GretlType *type)
 {

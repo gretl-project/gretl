@@ -56,6 +56,8 @@ const char *uservar_name_complete (const char *s);
 
 GretlType user_var_get_type_by_name (const char *name);
 
+GretlType user_var_get_specific_type (const char *name);
+
 user_var *get_user_var_by_name (const char *name);
 
 user_var *get_user_var_of_type_by_name (const char *name,

@@ -7782,6 +7782,12 @@ static NODE *object_status (NODE *n, NODE *func, parser *p)
     NODE *ret = aux_scalar_node(p);
     int f = func->t;
 
+    if (f == F_TYPENAME) {
+	ret = aux_string_node(p);
+    } else {
+	ret = aux_scalar_node(p);
+    }
+
     if (ret != NULL && starting(p)) {
         const char *s = n->v.str;
 
@@ -7793,14 +7799,19 @@ static NODE *object_status (NODE *n, NODE *func, parser *p)
             if (m != NULL) {
                 ret->v.xval = matrix_is_complex(m);
             }
-        } else if (f == F_EXISTS) {
+        } else if (f == F_EXISTS || f == F_TYPEOF || f == F_TYPENAME) {
             GretlType type = user_var_get_type_by_name(s);
 
             if (type == 0 && gretl_is_series(s, p->dset)) {
                 type = GRETL_TYPE_SERIES;
             }
-            if (alias_reversed(func)) {
-                /* handle the "isnull" alias */
+	    if (f == F_TYPENAME) {
+		if (type == GRETL_TYPE_ARRAY) {
+		    type = user_var_get_specific_type(s);
+		}
+		ret->v.str = gretl_strdup(gretl_type_get_name(type));
+	    } else if (alias_reversed(func)) {
+                /* handle the "isnull" alias for exists() */
                 ret->v.xval = (type == 0);
             } else {
                 ret->v.xval = gretl_type_get_order(type);
@@ -7882,43 +7893,30 @@ static NODE *multi_str_node (NODE *l, int f, parser *p)
     return ret;
 }
 
-/* legacy support */
-
 static NODE *generic_typeof_node (NODE *n, NODE *func, parser *p)
 {
-    NODE *ret = aux_scalar_node(p);
+    NODE *ret = NULL;
+
+    if (func->t == F_TYPENAME) {
+	ret = aux_string_node(p);
+    } else {
+	ret = aux_scalar_node(p);
+    }
 
     if (ret != NULL) {
         GretlType t = gretl_type_from_gen_type(n->t);
 
-        if (alias_reversed(func)) {
-            /* handle the "isnull" alias */
+	if (func->t == F_TYPENAME) {
+	    if (t == GRETL_TYPE_ARRAY) {
+		t = gretl_array_get_type(n->v.a);
+	    }
+	    ret->v.str = gretl_strdup(gretl_type_get_name(t));
+	} else if (alias_reversed(func)) {
+            /* handle the "isnull" alias for exists() */
             ret->v.xval = (t == 0);
         } else {
             ret->v.xval = gretl_type_get_order(t);
         }
-    }
-
-    return ret;
-}
-
-static NODE *type_name_node (NODE *n, parser *p)
-{
-    NODE *ret = aux_string_node(p);
-
-    if (ret != NULL) {
-        const char *s = "null";
-        GretlType t;
-
-        if (n->t == ARRAY) {
-            t = gretl_array_get_type(n->v.a);
-            s = gretl_type_get_name(t);
-        } else {
-            t = gretl_type_from_gen_type(n->t);
-            s = gretl_type_get_name(t);
-        }
-
-        ret->v.str = gretl_strdup(s);
     }
 
     return ret;
@@ -17365,7 +17363,7 @@ static NODE *eval (NODE *t, parser *p)
 
     if (!p->err && t->L != NULL && !ldone) {
         t->L->parent = t;
-        if (t->t == F_EXISTS || t->t == F_TYPEOF) {
+        if (t->t == F_EXISTS || t->t == F_TYPEOF || t->t == F_TYPENAME) {
             p->flags |= P_OBJQRY;
             l = eval(t->L, p);
             p->flags ^= P_OBJQRY;
@@ -18704,18 +18702,14 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_EXISTS:
+    case F_TYPEOF:
+    case F_TYPENAME:
         if (l->t == STR && !is_aux_node(l)) {
-            /* l is direct child of exists(): straight look-up */
+            /* @l is direct child: straight look-up */
             ret = object_status(l, t, p);
         } else {
             ret = generic_typeof_node(l, t, p);
         }
-        break;
-    case F_TYPEOF:
-        ret = generic_typeof_node(l, t, p);
-        break;
-    case F_TYPENAME:
-        ret = type_name_node(l, p);
         break;
     case F_NELEM:
         ret = n_elements_node(l, p);
