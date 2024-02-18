@@ -3,7 +3,7 @@
 if [ "x$1" != "x" ] ; then
    # executing in build tree
    INPPATH=$1
-   GRETLCLI="../cli/gretlcli"
+   GRETLCLI="$(pwd)/../cli/gretlcli"
 else
    # executing "here" using installed gretlcli
    INPPATH="."
@@ -26,7 +26,7 @@ for f in `find $INPPATH/practice_scripts -name "*.inp"` ; do
    echo -n `basename $f`
 
    # Run the script with gretlcli in batch and quiet mode
-   gretlcli -b -q -e $f > /dev/null 2>&1
+   ${GRETLCLI} -b -q -e $f > /dev/null 2>&1
 
    # Check if the script failed
    if [ $? != 0 ] ; then
@@ -46,7 +46,7 @@ for d in commands functions fundamentals ; do
    cd $INPPATH/test_scripts/$d
    for f in `find . -name "*.inp"` ; do
       echo -n `basename $f`
-      gretlcli -b -q -e $f > /dev/null 2>&1
+      ${GRETLCLI} -b -q -e $f > /dev/null 2>&1
       if [ $? != 0 ] ; then
            echo -e " [\e[0;31mFailed\e[0m]"
            my_status=1
