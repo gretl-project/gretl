@@ -120,6 +120,7 @@ distclean: clean
 
 check:
 	$(MAKE) -C tests check
+	$(MAKE) -C unittests
 
 osx-dist:
 	$(MAKE) -C osx postinst
