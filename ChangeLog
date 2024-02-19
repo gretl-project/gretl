@@ -32,6 +32,12 @@ version 2024a, in progress
 - Fix bug: after estimation of a panel data model via pooled
   OLS with the --cluster option, the "add" test was not
   working
+- Fix bug: the symmetry checker for gretl matrices could fail
+  to flag asymmetry in some cases
+- Fix bug: typeof() and typename() flagging an error in case
+  no object was found corresponding to the argument
+- Fix bug: "modeltab" command flagging a spurious error in
+  some cases
 - GUI: apply some legibility fixes for dark GTK themes
 - GUI: enable the advertised keystrokes in file "browser"
   windows (bug #294)
