@@ -1857,11 +1857,10 @@ void add_mainwin_toolbar (GtkWidget *vbox)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 }
 
-/* Add a temporary menubar for use in a script output
-   window, while we're waiting for the output. If the
-   output window is being reused this is a bit more
-   complicated; we have to "hide" the regular menubar
-   before inserting the temporary one.
+/* Add a temporary menubar for use in a script output window, while
+   we're waiting for the output. If the output window is being reused
+   this is a bit more complicated; we have to "hide" the regular
+   menubar before inserting the temporary one.
  */
 
 void vwin_add_tmpbar (windata_t *vwin)
