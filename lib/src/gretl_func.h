@@ -268,6 +268,8 @@ const char *get_function_package_path_by_name (const char *pkgname);
 
 char **package_peek_dependencies (const char *fname, int *ndeps);
 
+int grab_package_sample (const char *s, char **pscript);
+
 int include_gfn (const char *fname, gretlopt opt, PRN *prn);
 
 int function_package_is_loaded (const char *fname,

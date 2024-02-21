@@ -6686,6 +6686,72 @@ static int gfn_version_fail (const char *fname, PRN *prn)
     return err;
 }
 
+static char *sample_script_from_xml (const char *pkgname, int *err)
+{
+    char *ret = NULL;
+    gchar *gfnname = NULL;
+    char fullname[MAXLEN];
+    xmlDocPtr doc = NULL;
+    xmlNodePtr node = NULL;
+    xmlNodePtr cur = NULL;
+
+    gfnname = g_strdup_printf("%s.gfn", pkgname);
+    *err = get_full_filename(gfnname, fullname, OPT_I);
+    if (!*err) {
+	*err = gretl_xml_open_doc_root(fullname, "gretl-functions", &doc, &node);
+    }
+
+    cur = node->xmlChildrenNode;
+    while (cur != NULL) {
+        if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
+	    cur = cur->xmlChildrenNode;
+	    while (cur != NULL) {
+		if (!xmlStrcmp(cur->name, (XUC) "sample-script")) {
+		    gretl_xml_node_get_trimmed_string(cur, doc, &ret);
+		    break;
+		}
+		cur = cur->next;
+	    }
+	    break;
+	}
+    }
+
+    g_free(gfnname);
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+    }
+
+    return ret;
+}
+
+int grab_package_sample (const char *s, char **pscript)
+{
+    const char *pkgname = get_optval_string(RUN, OPT_K);
+    int err = 0;
+
+    if (strcmp(s, "sample")) {
+	/* ? */
+	fprintf(stderr, "bad param '%s'\n", s);
+	return E_DATA;
+    }
+
+    if (pkgname == NULL) {
+	err = E_DATA;
+    } else {
+	fnpkg *pkg = get_loaded_pkg_by_name(pkgname);
+	char *ss = NULL;
+
+	if (pkg != NULL) {
+	    ss = gretl_strdup(pkg->sample);
+	} else {
+	    ss = sample_script_from_xml(pkgname, &err);
+	}
+	*pscript = ss;
+    }
+
+    return err;
+}
+
 /* Retrieve summary info, sample script, or code listing for a
    function package, identified by its filename.  This is called
    (indirectly) from the GUI (see below for the actual callbacks).

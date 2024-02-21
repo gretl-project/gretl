@@ -22,8 +22,6 @@
 
 windata_t *gretl_console (void);
 
-windata_t *get_console_vwin (void);
-
 void console_record_sample (const DATASET *pdinfo);
 
 int console_sample_changed (const DATASET *pdinfo);

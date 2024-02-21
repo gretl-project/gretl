@@ -8350,7 +8350,7 @@ static void handle_flush_callback (gretlopt opt)
             if (oh.flushing) {
                 scroll_to_foot(oh.vwin);
             }
-            gretl_print_destroy(oh.prn);
+	    gretl_print_destroy(oh.prn);
         } else {
             /* prepare for another chunk of output */
             if (!ctrlr && !(opt & OPT_Q)) {
@@ -8384,14 +8384,12 @@ static int start_script_output_handler (PRN *prn, int role,
         return 1;
     }
 
-    if (role == CONSOLE) {
-        vwin = get_console_vwin();
-        oh.reusable = 1;
-    } else if (outwin != NULL && *outwin != NULL) {
-        /* using an existing viewer */
-        oh.reusable = 1;
+    if (outwin != NULL && *outwin != NULL) {
+	oh.reusable = 1;
         vwin = *outwin;
-        vwin_add_tmpbar(vwin);
+	if (role != CONSOLE) {
+	    vwin_add_tmpbar(vwin);
+	}
     } else {
         /* new viewer needed */
         vwin = hansl_output_viewer_new(prn, role, title);
@@ -8483,8 +8481,8 @@ static int already_running_script (void)
    viewer window @vwin
 */
 
-void run_native_script (windata_t *vwin, gchar *buf,
-                        char *fname, int silent)
+void run_native_script (windata_t *vwin, const char *buf,
+			char *fname, int silent)
 {
     int policy = get_script_output_policy();
     int exec_code = SCRIPT_EXEC;
@@ -8494,6 +8492,11 @@ void run_native_script (windata_t *vwin, gchar *buf,
     int save_batch;
     int untmp = 0;
     int err;
+
+#if 0
+    fprintf(stderr, "run_native_script, starting, vwin=%p\n", (void *) vwin);
+    fprintf(stderr, " console? %d\n", vwin->role == CONSOLE);
+#endif
 
     if (already_running_script()) {
         return;
@@ -8531,20 +8534,18 @@ void run_native_script (windata_t *vwin, gchar *buf,
 
     if (targ == NULL) {
         /* there's no pre-existing output window */
-        err = start_script_output_handler(prn, SCRIPT_OUT,
-                                          NULL, NULL);
+        err = start_script_output_handler(prn, SCRIPT_OUT, NULL, NULL);
         if (err) {
-            gretl_print_destroy(prn);
+	    gretl_print_destroy(prn);
             return;
         }
     } else if (vwin->role == CONSOLE) {
-        start_script_output_handler(prn, CONSOLE,
-                                    NULL, NULL);
+	pputc(prn, '\n');
+        start_script_output_handler(prn, CONSOLE, NULL, &targ);
         untmp = 1;
     } else {
         set_reuseable_output_window(policy, targ);
-        start_script_output_handler(prn, SCRIPT_OUT,
-                                    NULL, &targ);
+        start_script_output_handler(prn, SCRIPT_OUT, NULL, &targ);
         untmp = 1;
     }
 
@@ -10006,13 +10007,38 @@ static int cli_save_session (const char *fname, PRN *prn)
 }
 
 static int try_run_include (ExecState *s, char *runfile,
-                            PRN *prn, GtkWidget *parent)
+                            const char *buf, PRN *prn,
+			    GtkWidget *parent)
 {
     int save_batch, orig_flags, err;
 
-    if (gretl_test_fopen(runfile, "r") != 0) {
-        pprintf(prn, _("Error reading %s\n"), runfile);
-        return process_command_error(s, E_FOPEN);
+    if (parent != NULL) {
+	windata_t *vwin = g_object_get_data(G_OBJECT(parent), "vwin");
+
+	if (vwin != NULL && vwin->role == CONSOLE) {
+	    if (buf != NULL) {
+		fprintf(stderr, "buf='%s'\n", buf);
+		textview_append_text(vwin->text, "\n");
+		run_native_script(vwin, buf, NULL, 0);
+	    } else {
+		const char *pb = gretl_print_get_buffer(prn);
+
+		textview_append_text(vwin->text, "\n");
+		textview_append_text(vwin->text, pb);
+		gretl_print_reset_buffer(prn);
+		run_native_script(vwin, NULL, runfile, 0);
+	    }
+	    return 0;
+	}
+    }
+
+    if (runfile != NULL) {
+	if (gretl_test_fopen(runfile, "r") != 0) {
+	    pprintf(prn, _("Error reading %s\n"), runfile);
+	    return process_command_error(s, E_FOPEN);
+	}
+	/* 2019-11-22: next line was conditional on ci != INCLUDE */
+	gretl_set_script_dir(runfile);
     }
 
     save_batch = gretl_in_batch_mode();
@@ -10021,10 +10047,7 @@ static int try_run_include (ExecState *s, char *runfile,
     if (s->cmd->ci == INCLUDE) {
         s->flags |= INCLUDE_EXEC;
     }
-    /* 2019-11-22: next line was conditional on ci != INCLUDE */
-    gretl_set_script_dir(runfile);
-    err = execute_script(runfile, NULL, prn, s->flags,
-                         parent);
+    err = execute_script(runfile, buf, prn, s->flags, parent);
     gretl_set_batch_mode(save_batch);
     s->flags = orig_flags;
 
@@ -10159,6 +10182,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
     char runfile[MAXLEN];
+    char *buf = NULL;
     int ppos = -1;
     int err = 0;
 
@@ -10359,7 +10383,14 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 
     case RUN:
     case INCLUDE:
-        if (cmd->ci == INCLUDE) {
+	if (cmd->ci == RUN && (cmd->opt & OPT_K)) {
+	    err = grab_package_sample(cmd->param, &buf);
+	    if (!err) {
+		err = try_run_include(s, NULL, buf, prn, parent);
+		free(buf);
+	    }
+	    break;
+	} else if (cmd->ci == INCLUDE) {
             err = gui_get_include_file(cmd->param, runfile);
         } else {
             err = get_full_filename(cmd->param, runfile, OPT_S);
@@ -10384,7 +10415,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
             pprintf(prn, _("Infinite loop detected in script\n"));
             err = 1;
         } else {
-            err = try_run_include(s, runfile, prn, parent);
+            err = try_run_include(s, runfile, NULL, prn, parent);
         }
         break;
 
