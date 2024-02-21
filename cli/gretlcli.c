@@ -1078,7 +1078,7 @@ static int run_include_error (ExecState *s, const char *param,
 {
     const char *msg = gretl_errmsg_get();
 
-    pprintf(prn, _("Error reading %s\n"), param);
+    pprintf(prn, _("Error reading '%s'\n"), param);
     if (*msg != '\0') {
         pprintf(prn, "%s\n", msg);
     }
@@ -1121,6 +1121,37 @@ static void cli_quit (ExecState *s, PRN *cmdprn, int err)
             maybe_save_session_output(cmdfile);
         }
     }
+}
+
+static int do_pkg_sample (const char *param, char *runfile, PRN *prn)
+{
+    const char *pkgname = get_optval_string(RUN, OPT_K);
+    char *buf = NULL;
+    int err = 0;
+
+    err = grab_package_sample(param, &buf);
+
+    if (err) {
+	// pprintf(prn, "%s\n", gretl_errmsg_get());
+	err = 1;
+    } else {
+	gchar *base = g_strdup_printf("%s_sample.inp", pkgname);
+	gchar *fname = gretl_make_dotpath(base);
+	FILE *fp = gretl_fopen(fname, "w");
+
+	if (fp == NULL) {
+	    err = 1;
+	} else {
+	    fputs(buf, fp);
+	    fclose(fp);
+	    strcpy(runfile, fname);
+	}
+	g_free(base);
+	g_free(fname);
+	free(buf);
+    }
+
+    return err;
 }
 
 /* cli_exec_line: this is called to execute both interactive and
@@ -1313,7 +1344,9 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 
     case RUN:
     case INCLUDE:
-        if (cmd->ci == INCLUDE) {
+	if (cmd->ci == RUN && (cmd->opt & OPT_K)) {
+	    err = do_pkg_sample(cmd->param, runfile, prn);
+	} else if (cmd->ci == INCLUDE) {
             err = get_full_filename(cmd->param, runfile, OPT_I);
         } else {
             err = get_full_filename(cmd->param, runfile, OPT_S);

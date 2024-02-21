@@ -6701,18 +6701,20 @@ static char *sample_script_from_xml (const char *pkgname, int *err)
 	*err = gretl_xml_open_doc_root(fullname, "gretl-functions", &doc, &node);
     }
 
-    cur = node->xmlChildrenNode;
-    while (cur != NULL) {
-        if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
-	    cur = cur->xmlChildrenNode;
-	    while (cur != NULL) {
-		if (!xmlStrcmp(cur->name, (XUC) "sample-script")) {
-		    gretl_xml_node_get_trimmed_string(cur, doc, &ret);
-		    break;
+    if (!*err) {
+	cur = node->xmlChildrenNode;
+	while (cur != NULL) {
+	    if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
+		cur = cur->xmlChildrenNode;
+		while (cur != NULL) {
+		    if (!xmlStrcmp(cur->name, (XUC) "sample-script")) {
+			gretl_xml_node_get_trimmed_string(cur, doc, &ret);
+			break;
+		    }
+		    cur = cur->next;
 		}
-		cur = cur->next;
+		break;
 	    }
-	    break;
 	}
     }
 
@@ -6730,9 +6732,8 @@ int grab_package_sample (const char *s, char **pscript)
     int err = 0;
 
     if (strcmp(s, "sample")) {
-	/* ? */
-	fprintf(stderr, "bad param '%s'\n", s);
-	return E_DATA;
+	fprintf(stderr, "grab_package_sample: bad param '%s'\n", s);
+	return E_PARSE;
     }
 
     if (pkgname == NULL) {
@@ -6747,6 +6748,10 @@ int grab_package_sample (const char *s, char **pscript)
 	    ss = sample_script_from_xml(pkgname, &err);
 	}
 	*pscript = ss;
+	if (ss == NULL) {
+	    gretl_errmsg_sprintf(_("Couldn't find sample script for '%s'"), pkgname);
+	    err = E_DATA;
+	}
     }
 
     return err;
