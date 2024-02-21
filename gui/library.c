@@ -8477,8 +8477,9 @@ static int already_running_script (void)
     }
 }
 
-/* Execute a script from a buffer or filename supplied by
-   viewer window @vwin
+/* Execute a script from a buffer or filename supplied by viewer
+   window @vwin, with special accommodation for the case when @vwin
+   holds the gretl console.
 */
 
 void run_native_script (windata_t *vwin, const char *buf,
@@ -8540,7 +8541,6 @@ void run_native_script (windata_t *vwin, const char *buf,
             return;
         }
     } else if (vwin->role == CONSOLE) {
-	pputc(prn, '\n');
         start_script_output_handler(prn, CONSOLE, NULL, &targ);
         untmp = 1;
     } else {
