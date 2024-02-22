@@ -7177,13 +7177,14 @@ int cli_panel_plot (const int *list, const char *literal,
 	}
     }
 
-    if (opt & OPT_U) {
-	/* handle output spec? */
-	const char *s = get_optval_string(PANPLOT, OPT_U);
+    if (opt & (OPT_U | OPT_b)) {
+	/* handle output or outbuf spec */
+	gretlopt outopt = (opt & OPT_U) ? OPT_U : OPT_b;
+	const char *s = get_optval_string(PANPLOT, outopt);
 	int pci = (opt & (OPT_B | OPT_C)) ? BXPLOT : GNUPLOT;
 
 	if (s != NULL) {
-	    set_optval_string(pci, OPT_U, s);
+	    set_optval_string(pci, outopt, s);
 	}
     }
 
