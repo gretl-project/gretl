@@ -3458,6 +3458,13 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 
     gretl_model_init(&nlmod, dset);
 
+    if (spec->ci == GMM) {
+	nlmod.errcode = incompatible_options(opt, OPT_I | OPT_T);
+	if (nlmod.errcode) {
+	    return nlmod;
+	}
+    }
+
     if (dset != NULL) {
 	origv = dset->v;
     }
