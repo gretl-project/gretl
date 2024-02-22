@@ -14,6 +14,8 @@ version 2024a, in progress
   either side of an "orthog" statement
 - "corrgm", "xcorrgm", "pergm" and "qlrtest" commands: support
   the --outbuf option for directing plot output to a buffer
+- "gmm" command: mark the --two-step and --iterate options as
+  mutually exclusive
 - "loop foreach": support arrays and bundles that are located
   inside other arrays or bundles
 - "pkg install" command: support installation of data file
@@ -38,6 +40,8 @@ version 2024a, in progress
   no object was found corresponding to the argument
 - Fix bug: "modeltab" command flagging a spurious error in
   some cases
+- GUI: fix for the "Dataset structure" mechanism when trying
+  to convert from side-by-side time series to panel
 - GUI: apply some legibility fixes for dark GTK themes
 - GUI: enable the advertised keystrokes in file "browser"
   windows (bug #294)

@@ -121,7 +121,10 @@ PangoFontDescription *fixed_font;
 
 /* end font handling */
 
+/* status flag for console actually swallowed */
 int swallow = 0;
+/* status flag for console-swallowing selected */
+static int swallow_pref = 0;
 
 static int usecwd;
 static int shellok;
@@ -246,7 +249,7 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_MAIN, NULL },
     { "collect_plots", N_("Enable collecting plots"), NULL, &auto_collect,
       BOOLSET, 0, TAB_MAIN, NULL },
-    { "swallow_console", N_("Main window includes console"), NULL, &swallow,
+    { "swallow_console", N_("Main window includes console"), NULL, &swallow_pref,
       BOOLSET | RESTART, 0, TAB_MAIN, NULL },
     { "icon_sizing", N_("Toolbar icon size"), NULL, &icon_sizing,
       LISTSET | INTSET | RESTART, 0, TAB_MAIN, NULL },
@@ -2552,6 +2555,7 @@ static void find_and_set_rc_var (const char *key, const char *val)
 		    if (!strcmp(key, "collect_plots")) {
 			/* special: set to "off" or "auto" */
 			int *bvar = (int *) rcvar->var;
+
 			libset_set_int(PLOT_COLLECT, *bvar);
 		    }
 		} else if (rcvar->flags & INTSET) {
@@ -2564,6 +2568,9 @@ static void find_and_set_rc_var (const char *key, const char *val)
 		    strncat(strvar, val, rcvar->len - 1);
 		}
 		rcvar->flags |= GOTSET;
+	    }
+	    if (rcvar->var == &swallow_pref) {
+		swallow = swallow_pref;
 	    }
 	    break;
 	}
