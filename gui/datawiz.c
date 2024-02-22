@@ -88,7 +88,8 @@ enum {
     DW_NOBS_DONE  = 1 << 4,
     DW_NSER_DONE  = 1 << 5,
     DW_NO_PANEL   = 1 << 6,
-    DW_SSHEET     = 1 << 7
+    DW_SSHEET     = 1 << 7,
+    DW_SBS_ONLY   = 1 << 8
 };
 
 #define dw_nobs_is_prime(o) (o->flags & DW_NOBS_PRIME)
@@ -661,7 +662,7 @@ static const char *panel_ts_frequency_string (const DATASET *dwinfo)
 /* For a step that involves a radio-button choice, figure
    out the default value */
 
-static int dwiz_radio_default (DATASET *dwinfo, int step)
+static int dwiz_radio_default (DATASET *dwinfo, dw_opts *opts, int step)
 {
     int deflt = 1;
 
@@ -684,7 +685,7 @@ static int dwiz_radio_default (DATASET *dwinfo, int step)
     } else if (step == DW_WEEKLY_SELECT) {
         deflt = dwinfo->v;
     } else if (step == DW_PANEL_MODE) {
-        deflt = dwinfo->structure;
+	deflt = dwinfo->structure;
     } else if (step == DW_PANEL_PD) {
         if (dwinfo->panel_pd == 0 && dataset_is_panel(dataset)) {
             /* try for evidence of annual panel time? */
@@ -1493,10 +1494,12 @@ static int panelvars_list_ok (dw_opts *opts)
    of the current dataset.  This is impossible if the total number of
    observations is prime (cannot be factored as n * T) and the dataset
    contains no variables that might plausibly represent panel unit and
-   period respectively.
+   period respectively. However, if the user has "side-by_side" in
+   mind, restructuring as a panel is possible provided the current
+   dataset is time series.
 */
 
-static int panel_possible (dw_opts *opts)
+static int panel_possible (DATASET *dwinfo, dw_opts *opts)
 {
     int ok = 1;
 
@@ -1512,8 +1515,15 @@ static int panel_possible (dw_opts *opts)
     }
 
     if (!ok) {
-        opts->flags |= DW_NO_PANEL;
-        warnbox(_("This dataset cannot be interpreted as a panel"));
+	if (dataset->structure == TIME_SERIES) {
+	    opts->flags |= DW_SBS_ONLY;
+	    dwinfo->structure = PANEL_SIDE_BY_SIDE;
+	    ok = 1; /* reprieve */
+	} else {
+	    opts->flags |= DW_NO_PANEL;
+	    warnbox(_("This dataset cannot be interpreted as a panel"));
+	    dwinfo->structure = dataset->structure;
+	}
     }
 
     return ok;
@@ -2006,7 +2016,7 @@ static void set_up_dw_opts (dw_opts *opts, int step,
     opts->entry = NULL;
     opts->n_radios = 0;
 
-    opts->deflt = dwiz_radio_default(dwinfo, step);
+    opts->deflt = dwiz_radio_default(dwinfo, opts, step);
 
     if (step == DW_SET_TYPE) {
         if (opts->flags & DW_NO_PANEL) {
@@ -2206,21 +2216,16 @@ static void dwiz_build_radios (int step, DATASET *dwinfo,
                          G_CALLBACK(dwiz_set_radio_opt), opts);
         g_object_set_data(G_OBJECT(button), "setval", GINT_TO_POINTER(setval));
 
-        if (step == DW_PANEL_MODE && dw_nobs_is_prime(opts)) {
-            /* only the "index variables" option should be active */
-            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button),
-                                         setval == PANEL_UNKNOWN);
-            gtk_widget_set_sensitive(button, setval == PANEL_UNKNOWN);
-        } else if (opts->deflt == setval) {
-            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-            if (opts->setvar != NULL && setval >= 0) {
-                /* preset the variable to its default value */
-                *opts->setvar = setval;
-            }
-        }
-
         if (step == DW_PANEL_MODE) {
-            if (i == opts->n_radios - 2 && !panelvars_list_ok(opts)) {
+	    if (opts->flags & DW_SBS_ONLY) {
+		/* only the "side_by_side" option should be active */
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button),
+					     setval == PANEL_SIDE_BY_SIDE);
+		gtk_widget_set_sensitive(button, setval == PANEL_SIDE_BY_SIDE);
+	    } else if (i < 2 && dw_nobs_is_prime(opts)) {
+		/* disable the two "stacked" options */
+		gtk_widget_set_sensitive(button, FALSE);
+            } else if (i == opts->n_radios - 2 && !panelvars_list_ok(opts)) {
                 /* disable the "index variables" option */
                 gtk_widget_set_sensitive(button, FALSE);
                 gretl_tooltips_add(button,
@@ -2230,7 +2235,18 @@ static void dwiz_build_radios (int step, DATASET *dwinfo,
 		gtk_widget_set_sensitive(button, FALSE);
                 gretl_tooltips_add(button,
                                    _("The data set contains no suitable time series"));
+	    } else if (dw_nobs_is_prime(opts)) {
+		/* only the "index variables" option should be active */
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button),
+					     setval == PANEL_UNKNOWN);
+		gtk_widget_set_sensitive(button, setval == PANEL_UNKNOWN);
 	    }
+        } else if (opts->deflt == setval) {
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+            if (opts->setvar != NULL && setval >= 0) {
+                /* preset the variable to its default value */
+                *opts->setvar = setval;
+            }
         }
 
         gtk_widget_show(button);
@@ -2313,7 +2329,8 @@ static int dwiz_compute_step (int prevstep, int direction, DATASET *dwinfo,
                 } else {
                     step = DW_PANEL_MODE;
                 }
-            } else if (dwinfo->structure == PANEL_UNKNOWN) {
+            } else if (dwinfo->structure == PANEL_UNKNOWN ||
+		       dwinfo->structure == PANEL_SIDE_BY_SIDE) {
                 step = DW_PANEL_MODE;
             } else {
                 /* cross section */
@@ -2551,7 +2568,6 @@ static void dwiz_prepare_page (GtkNotebook *nb,
                 dwiz_build_radios(step, dwinfo, opts, page);
             }
         }
-
         if (step == DW_STARTING_OBS || step == DW_PANEL_STOBS) {
             add_startobs_spinner(page, dwinfo, opts, direction, step);
             if (dataset != NULL && dataset->Z != NULL &&
@@ -2633,9 +2649,8 @@ static void dwiz_forward (GtkWidget *b, GtkWidget *dlg)
     int i, newpg;
 
     if (pg == DW_SET_TYPE) {
-        if (any_panel(dwinfo) && !panel_possible(opts)) {
+        if (any_panel(dwinfo) && !panel_possible(dwinfo, opts)) {
             /* special case: called for panel but it won't work */
-            dwinfo->structure = dataset->structure;
             dwiz_prepare_page(nb, DW_SET_TYPE, DW_BACK, dwinfo);
             gtk_notebook_set_current_page(nb, DW_SET_TYPE);
             return;
