@@ -12699,11 +12699,9 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     if (XTX == NULL) {
         err = E_ALLOC;
     } else if (use_lapack) {
-        if (!err) {
-            err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-                                            y, GRETL_MOD_NONE,
-                                            b, GRETL_MOD_NONE);
-        }
+	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+					y, GRETL_MOD_NONE,
+					b, GRETL_MOD_NONE);
         if (!err) {
             err = gretl_cholesky_decomp_solve(XTX, b);
             if (err) {
@@ -12714,7 +12712,7 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
             }
         }
     } else {
-        if (!err && !nasty) {
+        if (!nasty) {
             err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
                                             y, GRETL_MOD_NONE,
                                             b, GRETL_MOD_NONE);
@@ -12734,7 +12732,7 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 
     gretl_matrix_free(XTX);
 
-    if (!err && try_QR) {
+    if (try_QR) {
         fprintf(stderr, "gretl_matrix_ols: switching to QR decomp\n");
         err = gretl_matrix_QR_ols(y, X, b, NULL, NULL, NULL);
     }
