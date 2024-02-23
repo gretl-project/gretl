@@ -6726,15 +6726,9 @@ static char *sample_script_from_xml (const char *pkgname, int *err)
     return ret;
 }
 
-int grab_package_sample (const char *s, char **pscript)
+int grab_package_sample (const char *pkgname, char **pscript)
 {
-    const char *pkgname = get_optval_string(RUN, OPT_K);
     int err = 0;
-
-    if (strcmp(s, "sample")) {
-	fprintf(stderr, "grab_package_sample: bad param '%s'\n", s);
-	return E_PARSE;
-    }
 
     if (pkgname == NULL) {
 	err = E_DATA;

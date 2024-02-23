@@ -1123,18 +1123,14 @@ static void cli_quit (ExecState *s, PRN *cmdprn, int err)
     }
 }
 
-static int do_pkg_sample (const char *param, char *runfile, PRN *prn)
+static int cli_do_pkg_sample (const char *pkgname, char *runfile, PRN *prn)
 {
-    const char *pkgname = get_optval_string(RUN, OPT_K);
     char *buf = NULL;
     int err = 0;
 
-    err = grab_package_sample(param, &buf);
+    err = grab_package_sample(pkgname, &buf);
 
-    if (err) {
-	// pprintf(prn, "%s\n", gretl_errmsg_get());
-	err = 1;
-    } else {
+    if (!err) {
 	gchar *base = g_strdup_printf("%s_sample.inp", pkgname);
 	gchar *fname = gretl_make_dotpath(base);
 	FILE *fp = gretl_fopen(fname, "w");
@@ -1344,8 +1340,14 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 
     case RUN:
     case INCLUDE:
-	if (cmd->ci == RUN && (cmd->opt & OPT_K)) {
-	    err = do_pkg_sample(cmd->param, runfile, prn);
+    case PKG:
+	if (cmd->ci == PKG) {
+	    if (!strcmp(cmd->param, "run-sample")) {
+		err = cli_do_pkg_sample(cmd->parm2, runfile, prn);
+	    } else {
+		err = gretl_cmd_exec(s, dset);
+		break;
+	    }
 	} else if (cmd->ci == INCLUDE) {
             err = get_full_filename(cmd->param, runfile, OPT_I);
         } else {
@@ -1386,6 +1388,8 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
             gretl_set_script_dir(runfile);
             if (cmd->ci == INCLUDE) {
                 pprintf(cmdprn, "include \"%s\"\n", runfile);
+	    } else if (cmd->ci == PKG) {
+		pprintf(cmdprn, "pkg run-sample \"%s\"\n", cmd->parm2);
             } else {
                 pprintf(cmdprn, "run \"%s\"\n", runfile);
             }

@@ -183,7 +183,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { RESET,    "reset",    0 },
     { RESTRICT, "restrict", CI_PARM1 | CI_BLOCK },
     { RMPLOT,   "rmplot",   CI_LIST | CI_LLEN1 },
-    { RUN,      "run",      CI_PARM1 | CI_FNAME },
+    { RUN,      "run",      CI_PARM1 | CI_FNAME | CI_NOOPT },
     { RUNS,     "runs",     CI_LIST | CI_LLEN1 },
     { SCATTERS, "scatters", CI_LIST | CI_DOALL },
     { SDIFF,    "sdiff",    CI_LIST | CI_NOOPT },

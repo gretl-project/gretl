@@ -81,6 +81,10 @@ static int install_package (const char *pkgname,
 			    ExecState *s,
 			    PRN *prn);
 
+static int run_script (const char *fname, ExecState *s,
+                       DATASET *dset, gretlopt opt,
+                       PRN *prn);
+
 static int strip_inline_comments (char *s)
 {
     char *p = strchr(s, '#');
@@ -1381,12 +1385,47 @@ static void query_package (const char *pkgname,
     }
 }
 
-static int do_pkg_command (const char *action,
-                           const char *pkgname,
-                           gretlopt opt,
+static int lib_run_pkg_sample (const char *pkgname,
+			       char *runfile,
+			       DATASET *dset,
+			       ExecState *s,
+			       PRN *prn)
+{
+    char *buf = NULL;
+    int err = 0;
+
+    err = grab_package_sample(pkgname, &buf);
+
+    if (!err) {
+	gchar *base = g_strdup_printf("%s_sample.inp", pkgname);
+	gchar *fname = gretl_make_dotpath(base);
+	FILE *fp = gretl_fopen(fname, "w");
+
+	if (fp == NULL) {
+	    err = 1;
+	} else {
+	    fputs(buf, fp);
+	    fclose(fp);
+	    strcpy(runfile, fname);
+	    err = run_script(runfile, s, dset, OPT_NONE, prn);
+	    gretl_remove(runfile);
+	}
+	g_free(base);
+	g_free(fname);
+	free(buf);
+    }
+
+    return err;
+}
+
+static int do_pkg_command (char *readfile,
+			   DATASET *dset,
                            ExecState *s,
                            PRN *prn)
 {
+    const char *action = s->cmd->param;
+    const char *pkgname = s->cmd->parm2;
+    gretlopt opt = s->cmd->opt;
     int err = 0;
 
     if (!strcmp(action, "install")) {
@@ -1397,6 +1436,8 @@ static int do_pkg_command (const char *action,
         err = uninstall_function_package(pkgname, OPT_P, prn);
     } else if (!strcmp(action, "query")) {
         query_package(pkgname, opt, prn);
+    } else if (!strcmp(action, "run-sample")) {
+	err = lib_run_pkg_sample(pkgname, readfile, dset, s, prn);
     } else if (!strcmp(action, "index") && !strcmp(pkgname, "addons")) {
         update_addons_index((opt & OPT_V)? prn : NULL);
     } else {
@@ -3794,7 +3835,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case PKG:
-        err = do_pkg_command(cmd->param, cmd->parm2, cmd->opt, s, prn);
+        err = do_pkg_command(readfile, dset, s, prn);
         break;
 
     case MAKEPKG:

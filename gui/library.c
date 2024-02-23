@@ -10383,14 +10383,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 
     case RUN:
     case INCLUDE:
-	if (cmd->ci == RUN && (cmd->opt & OPT_K)) {
-	    err = grab_package_sample(cmd->param, &buf);
-	    if (!err) {
-		err = try_run_include(s, NULL, buf, prn, parent);
-		free(buf);
-	    }
-	    break;
-	} else if (cmd->ci == INCLUDE) {
+	if (cmd->ci == INCLUDE) {
             err = gui_get_include_file(cmd->param, runfile);
         } else {
             err = get_full_filename(cmd->param, runfile, OPT_S);
@@ -10443,6 +10436,14 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
         if (!strcmp(cmd->param, "unload") ||
             !strcmp(cmd->param, "remove")) {
             err = script_delete_function_package(cmd->param, cmd->parm2, prn);
+	} else if (!strcmp(cmd->param, "run-sample")) {
+	    err = grab_package_sample(cmd->parm2, &buf);
+	    if (err) {
+		gui_errmsg(err);
+	    } else {
+		err = try_run_include(s, NULL, buf, prn, parent);
+		free(buf);
+	    }
         } else {
             set_pkgview_parent(parent);
             err = gretl_cmd_exec(s, dset);
