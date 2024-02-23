@@ -1453,6 +1453,7 @@ real_textview_add_colorized (GtkWidget *view, const char *buf,
     GtkTextIter iter;
     int nextcolor, thiscolor = PLAIN_TEXT;
     int in_comment = 0;
+    int blanks = 0;
     char readbuf[4096];
     int console;
     int i = 0;
@@ -1473,6 +1474,15 @@ real_textview_add_colorized (GtkWidget *view, const char *buf,
     while (bufgets(readbuf, sizeof readbuf, buf)) {
 	if (trim && i++ < 2) {
 	    continue;
+	}
+
+	/* try to avoid successive blank lines */
+	if (*readbuf == '\n' && readbuf[1] == '\0') {
+	    if (++blanks > 1) {
+		continue;
+	    }
+	} else {
+	    blanks = 0;
 	}
 
 	if (ends_with_backslash(readbuf)) {
