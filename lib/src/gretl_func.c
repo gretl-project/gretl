@@ -4098,7 +4098,9 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
         } else {
             p++;
             p += strspn(p, " ");
-            if (!strncmp(line, "author", 6)) {
+	    if (!strncmp(line, "public", 6)) {
+		continue;
+	    } else if (!strncmp(line, "author", 6)) {
                 err = function_package_set_properties(pkg, "author", p, NULL);
                 if (!err) got++;
             } else if (!strncmp(line, "email", 5)) {
@@ -4224,6 +4226,7 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
                 err = pkg_set_funcs_attribute(pkg, p, UFUN_MENU_ONLY);
             } else {
                 const char *key;
+		int found = 0;
                 int i;
 
                 for (i=0; pkg_lookups[i].key != NULL; i++) {
@@ -4233,9 +4236,13 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
                         if (!err && !quiet) {
                             pprintf(prn, "%s function is %s, %s", key, p, okstr);
                         }
+			found = 1;
                         break;
                     }
                 }
+		if (!found) {
+		    fprintf(stderr, "*** unrecognized '%s' ***\n", line);
+		}
             }
         }
     }
