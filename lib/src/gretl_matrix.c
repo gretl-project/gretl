@@ -12659,75 +12659,74 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
         return E_DATA;
     }
 
+    k = X->cols;
+    T = X->rows;
+
+    /* check dimensions */
+    if ((b != NULL && gretl_vector_get_length(b) != k) ||
+	gretl_vector_get_length(y) != T) {
+	return E_NONCONF;
+    } else if (T < k) {
+	return E_DF;
+    } else if (vcv != NULL && (vcv->rows != k || vcv->cols != k)) {
+	return E_NONCONF;
+    }
+
     if (b == NULL) {
+	/* we'll handle the case where @b is not wanted */
 	c = gretl_matrix_alloc(X->cols, 1);
 	b = c;
     }
 
     if (libset_get_bool(USE_SVD)) {
+	/* this call is deferred in case @b is NULL on input */
         err = gretl_matrix_SVD_ols(y, X, b, vcv, uhat, s2);
 	goto finish;
     }
 
-    k = X->cols;
-    T = X->rows;
-
-    if (gretl_vector_get_length(b) != k ||
-        gretl_vector_get_length(y) != T) {
-        err = E_NONCONF;
-    } else if (T < k) {
-        err = E_DF;
-    } else if (vcv != NULL && (vcv->rows != k || vcv->cols != k)) {
-        err = E_NONCONF;
-    }
-
-    if (err) {
-	goto finish;
-    }
-
+    /* It should be worth using lapack's Cholesky routine if the input
+       is big enough, but this condition could do with some more tuning?
+    */
     if (k >= 50 || (T >= 250 && k >= 30)) {
-        /* this could maybe do with some more tuning? */
         use_lapack = 1;
-    }
-
-    if (use_lapack) {
-        XTX = gretl_matrix_XTX_new(X);
+	XTX = gretl_matrix_XTX_new(X);
     } else {
+	/* using gretl's native Cholesky */
         XTX = gretl_matrix_packed_XTX_new(X, &nasty);
     }
 
     if (XTX == NULL) {
-        err = E_ALLOC;
-    } else if (use_lapack) {
-	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-					y, GRETL_MOD_NONE,
-					b, GRETL_MOD_NONE);
-        if (!err) {
-            err = gretl_cholesky_decomp_solve(XTX, b);
-            if (err) {
-                try_QR = 1;
-            }
-            if (vcv != NULL) {
-                gretl_matrix_copy_values(vcv, XTX);
-            }
-        }
+	err = E_ALLOC;
+	goto finish;
+    }
+
+    if (use_lapack || !nasty) {
+	/* preliminary Cholesky step: shouldn't fail */
+	gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+				  y, GRETL_MOD_NONE,
+				  b, GRETL_MOD_NONE);
+    }
+
+    if (use_lapack) {
+	err = gretl_cholesky_decomp_solve(XTX, b);
+	if (err) {
+	    try_QR = 1;
+	}
+	if (vcv != NULL) {
+	    /* we'll want this even if we switch to QR */
+	    gretl_matrix_copy_values(vcv, XTX);
+	}
     } else {
-        if (!nasty) {
-            err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-                                            y, GRETL_MOD_NONE,
-                                            b, GRETL_MOD_NONE);
+        if (vcv != NULL) {
+	    /* we'll want this even if the next step fails */
+            gretl_matrix_unvectorize_h(vcv, XTX);
         }
-        if (!err && vcv != NULL) {
-            err = gretl_matrix_unvectorize_h(vcv, XTX);
-        }
-        if (!err) {
-            if (!nasty) {
-                err = native_cholesky_decomp_solve(XTX, b);
-            }
-            if (nasty || err == E_SINGULAR) {
-                try_QR = 1;
-            }
-        }
+	if (!nasty) {
+	    err = native_cholesky_decomp_solve(XTX, b);
+	}
+	if (nasty || err == E_SINGULAR) {
+	    try_QR = 1;
+	}
     }
 
     gretl_matrix_free(XTX);
