@@ -7543,12 +7543,12 @@ static void do_panel_plot (int vnum)
         ppopt = OPT_S;
     } else if (sel == 3) {
         /* small multiples in grid */
-        err = gretl_panel_ts_plot(vnum, dataset, OPT_S);
-        ppopt = OPT_D;
+	ppopt = OPT_D;
+        err = gretl_panel_ts_plot(vnum, dataset, ppopt);
     } else if (sel == 4) {
         /* small multiples stacked vertically */
-        err = gretl_panel_ts_plot(vnum, dataset, OPT_S | OPT_V);
-        ppopt = OPT_A;
+	ppopt = OPT_A;
+        err = gretl_panel_ts_plot(vnum, dataset, ppopt);
     } else if (sel == 5) {
         /* boxplots by group */
         do_boxplot_var(vnum, OPT_P);

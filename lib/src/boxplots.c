@@ -985,11 +985,9 @@ static int real_boxplots (const int *list,
         if (k == 0 || plot->min < grp->gmin) {
             grp->gmin = plot->min;
         }
-
         if (k == 0 || plot->max > grp->gmax) {
             grp->gmax = plot->max;
         }
-
         if (do_intervals(grp)) {
             if (median_interval(grp->x, n, &plot->conf[0], &plot->conf[1])) {
                 plot->conf[0] = plot->conf[1] = NADBL;
@@ -1028,7 +1026,8 @@ static int real_boxplots (const int *list,
 /* boxplots using a single selected series, by panel group */
 
 static int panel_group_boxplots (int vnum, const DATASET *dset,
-                                 const char *literal, gretlopt opt)
+                                 const char *literal,
+				 gretlopt opt)
 {
     DATASET *gdset;
     int nunits, T = dset->pd;

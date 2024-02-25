@@ -6522,8 +6522,11 @@ static int panel_ytic_width (double ymin, double ymax)
     return (n1 > n2)? n1 : n2;
 }
 
-/* Panel: produce a time-series plot for the group mean of the
-   series in question.
+/* Panel: produce a single time-series plot showing the mean across
+   groups of the series in question. Note that this function calls
+   the main gnuplot() function after some panel-specific setup.
+   The incoming @opt will be forwarded to gnuplot() and must not
+   contain any "foreign matter".
 */
 
 static int panel_means_ts_plot (const int vnum,
@@ -6539,8 +6542,6 @@ static int panel_means_ts_plot (const int vnum,
     int i, t, s, s0;
     int err = 0;
 
-    nunits = panel_sample_size(dset);
-
     gset = create_auxiliary_dataset(2, T, 0);
     if (gset == NULL) {
 	return E_ALLOC;
@@ -6549,6 +6550,7 @@ static int panel_means_ts_plot (const int vnum,
     strcpy(gset->varname[1], dset->varname[vnum]);
     series_set_display_name(gset, 1, series_get_display_name(dset, vnum));
 
+    nunits = panel_sample_size(dset);
     time_series_from_panel(gset, dset);
 
     s0 = dset->t1;
@@ -6568,7 +6570,8 @@ static int panel_means_ts_plot (const int vnum,
 	gset->Z[1][t] = (n == 0)? NADBL : xsum / n;
     }
 
-    opt |= (OPT_O | OPT_T); /* use lines, time series */
+    /* ensure use of lines, time series */
+    opt |= (OPT_O | OPT_T);
 
     title = g_strdup_printf(_("mean %s"),
 			    series_get_graph_name(dset, vnum));
@@ -6828,11 +6831,13 @@ static int dataset_has_panel_labels (const DATASET *dset,
 
 /* Panel: plot one series using separate lines for each
    cross-sectional unit. The individuals' series are overlaid, in the
-   same manner as a plot of several distinct time series. To do
-   this we construct on the fly a notional time-series dataset.
+   same manner as a plot of several distinct time series. To do this
+   we construct on the fly a notional time-series dataset.  But note:
+   if it turns out the series in question is invariant across groups,
+   just show a single line.
 
-   But note: if it turns out the series in question is invariant
-   across groups, just show a single line.
+   This function calls gnuplot() after performing the required setup.
+   and forwards the incoming @opt flags.
 */
 
 static int panel_overlay_ts_plot (const int vnum,
@@ -6966,14 +6971,18 @@ static int panel_overlay_ts_plot (const int vnum,
     return err;
 }
 
-/* Panel: plot one variable as a time series, with separate plots for
+/* Panel: plot one variable as time series, with separate plots for
    each cross-sectional unit.  By default we arrange the plots in a
-   grid, but if OPT_V is given we make each plot full width and
-   stack the plots vertically on the "page".
+   grid, but if @vstack is non-zero we make each plot full width and
+   stack the plots vertically on the "page". This option is limited
+   to a relatively small number of units.
+
+   This function employs gnuplot's multiplot mechanism, and
+   does not call libgretl's gnuplot() function.
 */
 
 static int panel_grid_ts_plot (int vnum, const DATASET *dset,
-			       gretlopt opt)
+			       int vstack)
 {
     FILE *fp = NULL;
     int w, rows, cols;
@@ -7016,7 +7025,7 @@ static int panel_grid_ts_plot (int vnum, const DATASET *dset,
 	return E_MISSDATA;
     }
 
-    if (opt & OPT_V) {
+    if (vstack) {
 	int xvar = plausible_panel_time_var(dset);
 
 	if (xvar > 0) {
@@ -7054,7 +7063,7 @@ static int panel_grid_ts_plot (int vnum, const DATASET *dset,
     fprintf(fp, "set format y \"%%%dg\"\n", w);
     fprintf(fp, "set multiplot layout %d,%d\n", rows, cols);
 
-    if (opt & OPT_V) {
+    if (vstack) {
 	fputs("set noxlabel\n", fp);
     } else {
 	fprintf(fp, "set xlabel '%s'\n", _("time"));
@@ -7083,7 +7092,7 @@ static int panel_grid_ts_plot (int vnum, const DATASET *dset,
 	} else {
 	    sprintf(uname, "%d", u0+i+1);
 	}
-	if (opt & OPT_V) {
+	if (vstack) {
 	    gretl_minmax(t0, t0 + T - 1, y, &ymin, &ymax);
 	    incr = (ymax - ymin) / 2.0;
 	    fprintf(fp, "set ytics %g\n", incr);
@@ -7120,22 +7129,25 @@ static int panel_grid_ts_plot (int vnum, const DATASET *dset,
     return finalize_plot_input_file(fp);
 }
 
+/* This is called from the GUI only: see do_panel_plot() in
+   gui/library.c. The incoming @opt flags here are as described
+   below for cli_panel_plot(); they are not gnuplot options.
+*/
+
 int gretl_panel_ts_plot (int vnum, DATASET *dset, gretlopt opt)
 {
-    /* FIXME clarify exactly what's going on with the
-       option flags here
-    */
-    if (opt & OPT_S) {
-	/* small multiples */
-	return panel_grid_ts_plot(vnum, dset, opt);
+    if (opt & OPT_D) {
+	/* small multiples in grid */
+	return panel_grid_ts_plot(vnum, dset, 0);
+    } else if (opt & OPT_A) {
+	/* small multiples in vertical stack */
+	return panel_grid_ts_plot(vnum, dset, 1);
     } else if (opt & OPT_M) {
-	/* group means */
-	opt &= ~OPT_M;
-	opt |= OPT_S; /* suppress fitted? */
-	return panel_means_ts_plot(vnum, NULL, dset, opt);
+	/* time-series of group means */
+	return panel_means_ts_plot(vnum, NULL, dset, OPT_NONE);
     } else {
-	/* default: overlay units */
-	return panel_overlay_ts_plot(vnum, NULL, dset, opt);
+	/* default: overlaid time series (OPT_V) */
+	return panel_overlay_ts_plot(vnum, NULL, dset, OPT_NONE);
     }
 }
 
@@ -7149,12 +7161,18 @@ int gretl_panel_ts_plot (int vnum, DATASET *dset, gretlopt opt)
    OPT_A --stack
    OPT_B --boxplots
    OPT_C --boxplot
+
+   In addition there are some gnuplot-compatible options:
+
    OPT_Y --single-yaxis
+   OPT_U --output=...
+   OPT_b --outbuf=...
 */
 
 int cli_panel_plot (const int *list, const char *literal,
 		    const DATASET *dset, gretlopt opt)
 {
+    gretlopt gp_opt = OPT_NONE;
     int N, vnum = list[1];
     int err;
 
@@ -7200,6 +7218,11 @@ int cli_panel_plot (const int *list, const char *literal,
 	}
     }
 
+    /* transcribe any gnuplot-compatible flags from the
+       incoming @opt to @gp_opt
+    */
+    transcribe_option_flags(&gp_opt, opt, OPT_U | OPT_b | OPT_Y);
+
     if (opt & (OPT_U | OPT_b)) {
 	/* handle output or outbuf spec */
 	gretlopt outopt = (opt & OPT_U) ? OPT_U : OPT_b;
@@ -7213,33 +7236,27 @@ int cli_panel_plot (const int *list, const char *literal,
 
     if (opt & OPT_M) {
 	/* --means */
-	opt &= ~OPT_M;
-	opt |= OPT_S;
-	err = panel_means_ts_plot(vnum, literal, dset, opt);
+	err = panel_means_ts_plot(vnum, literal, dset, gp_opt);
     } else if (opt & OPT_V) {
 	/* --overlay */
-	opt &= ~OPT_V;
-	err = panel_overlay_ts_plot(vnum, literal, dset, opt);
+	err = panel_overlay_ts_plot(vnum, literal, dset, gp_opt);
     } else if (opt & OPT_S) {
 	/* --sequence */
-	opt &= ~OPT_S;
-	err = gnuplot(list, literal, dset, opt | OPT_O | OPT_T);
+	err = gnuplot(list, literal, dset, gp_opt | OPT_O | OPT_T);
     } else if (opt & OPT_D) {
-	/* --grid */
-	opt &= ~OPT_D;
-	err = panel_grid_ts_plot(vnum, dset, opt);
+	/* --grid (uses multiplot) */
+	err = panel_grid_ts_plot(vnum, dset, 0);
     } else if (opt & OPT_A) {
-	/* --stack */
-	opt &= ~OPT_A;
-	err = panel_grid_ts_plot(vnum, dset, opt | OPT_S | OPT_V);
+	/* --stack (uses multiplot) */
+	err = panel_grid_ts_plot(vnum, dset, 1);
     } else if (opt & OPT_B) {
 	/* --boxplots */
-	opt &= ~OPT_B;
-	err = boxplots(list, literal, dset, opt | OPT_P);
+	gp_opt &= ~OPT_Y;
+	err = boxplots(list, literal, dset, gp_opt | OPT_P);
     } else if (opt & OPT_C) {
 	/* --boxplot */
-	opt &= ~OPT_C;
-	err = boxplots(list, literal, dset, opt);
+	gp_opt &= ~OPT_Y;
+	err = boxplots(list, literal, dset, gp_opt);
     }
 
     return err;
