@@ -4083,6 +4083,11 @@ static int time_fit_wanted (gretlopt *popt)
  *
  * Writes a gnuplot plot file to display the values of the
  * variables in @list and calls gnuplot to make the graph.
+ * The option flags available in hansl are set out in
+ * options.c (see GNUPLOT). Three additional flags are
+ * supported for use in C code: OPT_S is equivalent to
+ * the hansl option --fit=none; OPT_A and OPT_S signal
+ * a residual plot and a fitted/actual plot, respectively.
  *
  * Returns: 0 on successful completion, non-zero code on error.
  */
