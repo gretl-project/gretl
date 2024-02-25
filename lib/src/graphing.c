@@ -661,11 +661,6 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	}
     }
 
-    if (opt & OPT_G) {
-	/* internal option, saving as icon */
-	gi->flags |= GPT_ICON;
-    }
-
     gi->fit = PLOT_FIT_NONE;
 
     if (!(gi->flags & GPT_FIT_OMIT) && n_yvars == 1) {
@@ -2191,8 +2186,6 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
     } else if (outspec != NULL) {
 	/* --output=filename or --buffer=starvar specified */
 	interactive = 0;
-    } else if (flags & GPT_ICON) {
-	interactive = 1;
     } else {
 	/* default */
 	interactive = !gretl_in_batch_mode();
@@ -4449,8 +4442,7 @@ int gnuplot (const int *plotlist, const char *literal,
     return err;
 }
 
-int theil_forecast_plot (const int *plotlist, const DATASET *dset,
-			 gretlopt opt)
+int theil_forecast_plot (const int *plotlist, const DATASET *dset)
 {
     FILE *fp = NULL;
     gnuplot_info gi;
@@ -4463,7 +4455,8 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
 	return E_DATA;
     }
 
-    err = gpinfo_init(&gi, opt | OPT_S, plotlist, NULL, dset);
+    /* OPT_S: don't show auto-fitted line */
+    err = gpinfo_init(&gi, OPT_S, plotlist, NULL, dset);
     if (err) {
 	goto bailout;
     }
@@ -5016,11 +5009,11 @@ static FILE *get_3d_input_file (int *err)
 
 static gchar *maybe_get_surface (const int *list,
 				 DATASET *dset,
-				 gretlopt opt)
+				 int force_show)
 {
     MODEL smod;
-    double umin, umax, vmin, vmax;
     int olslist[5];
+    int show = force_show;
     gchar *ret = NULL;
 
     olslist[0] = 4;
@@ -5029,22 +5022,33 @@ static gchar *maybe_get_surface (const int *list,
     olslist[3] = list[2];
     olslist[4] = list[1];
 
-    gretl_minmax(dset->t1, dset->t2, dset->Z[list[2]], &umin, &umax);
-    gretl_minmax(dset->t1, dset->t2, dset->Z[list[1]], &vmin, &vmax);
-
+    /* get OLS estimates */
     smod = lsq(olslist, dset, OLS, OPT_A);
 
-    if (!smod.errcode && !na(smod.fstt) &&
-	(snedecor_cdf_comp(smod.dfn, smod.dfd, smod.fstt) < .10 || (opt & OPT_A))) {
-	double uadj = (umax - umin) * 0.02;
-	double vadj = (vmax - vmin) * 0.02;
+    if (smod.errcode) {
+	show = 0;
+    } else if (!show) {
+	/* show fit if "good enough" */
+	show = !na(smod.fstt) &&
+	    snedecor_cdf_comp(smod.dfn, smod.dfd, smod.fstt) < 0.10;
+    }
+
+    if (show) {
+	/* formulate parametric plot line */
+	double adj, umin, umax, vmin, vmax;
+	double *b = smod.coeff;
+
+	gretl_minmax(dset->t1, dset->t2, dset->Z[list[2]], &umin, &umax);
+	gretl_minmax(dset->t1, dset->t2, dset->Z[list[1]], &vmin, &vmax);
+	adj = (umax - umin) * 0.02;
+	umin -= adj; umax += adj;
+	adj = (vmax - vmin) * 0.02;
+	vmin -= adj; vmax += adj;
 
 	ret = g_strdup_printf("[u=%g:%g] [v=%g:%g] "
 			      "%g+(%g)*u+(%g)*v notitle",
-			      umin - uadj, umax + uadj,
-			      vmin - vadj, vmax + vadj,
-			      smod.coeff[0], smod.coeff[1],
-			      smod.coeff[2]);
+			      umin, umax, vmin, vmax,
+			      b[0], b[1], b[2]);
     }
 
     clear_model(&smod);
@@ -5057,29 +5061,29 @@ static gchar *maybe_get_surface (const int *list,
  * @list: list of variables to plot, by ID number: Y, X, Z
  * @literal: literal command(s) to pass to gnuplot (or NULL)
  * @dset: pointer to dataset.
- * @opt: may include OPT_A to force display of fitted surface;
- * may include OPT_I to force an interactive (rotatable) plot.
- * Note that OPT_I may be removed on output if a suitable
- * gnuplot terminal is not present.
+ * @show_surface: show surface unconditionally.
+ * @interactive: on input, whether an interactive 3-D plot
+ * is wanted; on output, whether it's actually implemented.
  *
- * Writes a gnuplot plot file to display a 3D plot (Z on
+ * Writes a gnuplot plot file to display a 3-D plot (Z on
  * the vertical axis, X and Y on base plane).
  *
  * Returns: 0 on successful completion, error code on error.
  */
 
 int gnuplot_3d (int *list, const char *literal,
-		DATASET *dset, gretlopt *opt)
+		DATASET *dset, int show_surface,
+		int *interactive)
 {
     FILE *fp = NULL;
-    int t, t1 = dset->t1, t2 = dset->t2;
-    int save_t1 = dset->t1, save_t2 = dset->t2;
+    int t1 = dset->t1;
+    int t2 = dset->t2;
+    int save_t1, save_t2;
     int lo = list[0];
     int datlist[4];
-    int interactive = (*opt & OPT_I);
     const char *term = NULL;
     gchar *surface = NULL;
-    int err = 0;
+    int t, err = 0;
 
     if (lo != 3) {
 	fprintf(stderr, "gnuplot_3d needs three variables (only)\n");
@@ -5094,7 +5098,7 @@ int gnuplot_3d (int *list, const char *literal,
     }
 
 #ifndef WIN32
-    if (interactive) {
+    if (*interactive) {
 	/* On Windows we let the gnuplot terminal default to
 	   "win"; on other systems we need a suitable
 	   terminal for interactive 3-D display.
@@ -5106,13 +5110,12 @@ int gnuplot_3d (int *list, const char *literal,
 	} else if (gnuplot_has_qt()) {
 	    term = "qt";
 	} else {
-	    *opt &= ~OPT_I;
-	    interactive = 0;
+	    *interactive = 0;
 	}
     }
 #endif
 
-    if (interactive) {
+    if (*interactive) {
 	fp = get_3d_input_file(&err);
     } else {
 	fp = open_plot_input_file(PLOT_3D, 0, &err);
@@ -5122,10 +5125,13 @@ int gnuplot_3d (int *list, const char *literal,
 	return err;
     }
 
+    /* record and (potentially) modify sample range */
+    save_t1 = dset->t1;
+    save_t2 = dset->t2;
     dset->t1 = t1;
     dset->t2 = t2;
 
-    if (interactive) {
+    if (*interactive) {
 	if (term != NULL) {
 	    fprintf(fp, "set term %s\n", term);
 	}
@@ -5140,10 +5146,11 @@ int gnuplot_3d (int *list, const char *literal,
 
     gnuplot_missval_string(fp);
 
-    print_gnuplot_literal_lines(literal, GNUPLOT, *opt, fp);
+    if (literal != NULL) {
+	print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
+    }
 
-    surface = maybe_get_surface(list, dset, *opt);
-
+    surface = maybe_get_surface(list, dset, show_surface);
     if (surface != NULL) {
 	fprintf(fp, "splot %s, \\\n'-' notitle w p\n", surface);
 	g_free(surface);
@@ -7115,19 +7122,35 @@ static int panel_grid_ts_plot (int vnum, const DATASET *dset,
 
 int gretl_panel_ts_plot (int vnum, DATASET *dset, gretlopt opt)
 {
+    /* FIXME clarify exactly what's going on with the
+       option flags here
+    */
     if (opt & OPT_S) {
+	/* small multiples */
 	return panel_grid_ts_plot(vnum, dset, opt);
     } else if (opt & OPT_M) {
 	/* group means */
 	opt &= ~OPT_M;
-	opt |= OPT_S;
+	opt |= OPT_S; /* suppress fitted? */
 	return panel_means_ts_plot(vnum, NULL, dset, opt);
     } else {
+	/* default: overlay units */
 	return panel_overlay_ts_plot(vnum, NULL, dset, opt);
     }
 }
 
-/* The following implements the script command "panplot" */
+/* The following implements the "panplot" command.
+   Option flags specific to this command are:
+
+   OPT_M --means
+   OPT_V --overlay
+   OPT_S --sequence
+   OPT_D --grid
+   OPT_A --stack
+   OPT_B --boxplots
+   OPT_C --boxplot
+   OPT_Y --single-yaxis
+*/
 
 int cli_panel_plot (const int *list, const char *literal,
 		    const DATASET *dset, gretlopt opt)
@@ -7333,9 +7356,9 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock,
 				 int periods, double alpha,
 				 const DATASET *dset,
-				 gretlopt opt)
+				 int error_bars)
 {
-    int use_fill = !(opt & OPT_E);
+    int use_fill = !error_bars;
     gretl_matrix *resp;
     int err = 0;
 
@@ -7367,13 +7390,15 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     return err;
 }
 
+/* Show as a histogram if requested, otherwise do a regular plot */
+
 int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
-			 const DATASET *dset, gretlopt opt)
+			 const DATASET *dset, int histogram)
 {
     FILE *fp = NULL;
     gretl_matrix *V;
     gchar *title;
-    int i, t, v, histo;
+    int i, t, v;
     PlotType ptype;
     int err = 0;
 
@@ -7382,8 +7407,7 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
 	return E_ALLOC;
     }
 
-    histo = (opt & OPT_H)? 1 : 0;
-    ptype = histo ? PLOT_STACKED_BAR : PLOT_REGULAR;
+    ptype = histogram ? PLOT_STACKED_BAR : PLOT_REGULAR;
 
     fp = open_plot_input_file(ptype, 0, &err);
     if (err) {
@@ -7399,7 +7423,7 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
     fprintf(fp, "set title '%s'\n", title);
     g_free(title);
 
-    if (histo) {
+    if (histogram) {
 	fputs("set key outside\n", fp);
 	fputs("# literal lines = 3\n", fp);
 	fputs("set style fill solid 0.35\n", fp);
@@ -7416,7 +7440,7 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
 
     for (i=0; i<var->neqns; i++) {
 	v = gretl_VAR_get_variable_number(var, i);
-	if (histo) {
+	if (histogram) {
 	    fprintf(fp, "'-' using 2 title \"%s\"", dset->varname[v]);
 	} else {
 	    fprintf(fp, "'-' using 1:2 title \"%s\" w lines", dset->varname[v]);
@@ -7444,25 +7468,21 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
     return finalize_plot_input_file(fp);
 }
 
-#define NEW_IRF 1
-
 int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 				 int periods, double alpha,
 				 const DATASET *dset,
-				 gretlopt opt)
+				 int error_bars)
 {
     FILE *fp = NULL;
     GptFlags flags = 0;
     int confint = 0;
-    int use_fill = !(opt & OPT_E);
+    int use_fill = !error_bars;
     gchar *title = NULL;
     int n = var->neqns;
     int nplots = n * n;
     int vtarg, vshock;
-#if NEW_IRF
     gretl_matrix *R = NULL;
     int Rcol, Rstep;
-#endif
     int t, i, j;
     int err = 0;
 
@@ -7495,7 +7515,6 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
     /* Use facility to get all impulse responses
        via one call
     */
-#if NEW_IRF
     R = gretl_VAR_get_impulse_response(var, -1, -1, periods,
 				       alpha, dset, &err);
     if (!err && R->cols > nplots) {
@@ -7561,73 +7580,6 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 	}
     }
     gretl_matrix_free(R);
-#else /* old IRF method */
-    for (i=0; i<n && !err; i++) {
-	vtarg = gretl_VAR_get_variable_number(var, i);
-
-	for (j=0; j<n; j++) {
-	    gretl_matrix *resp;
-
-	    resp = gretl_VAR_get_impulse_response(var, i, j, periods,
-						  alpha, dset, &err);
-	    if (err) {
-		break;
-	    }
-
-	    if (i == 0 && j == 0) {
-		/* the first plot */
-		if (gretl_matrix_cols(resp) > 1) {
-		    confint = 1;
-		    fputs("set key left top\n", fp);
-		} else {
-		    fputs("set nokey\n", fp);
-		}
-	    }
-
-	    vshock = gretl_VAR_get_variable_number(var, j);
-	    fprintf(fp, "set title '%s -> %s'\n", dset->varname[vshock],
-		    dset->varname[vtarg]);
-
-	    fputs("plot \\\n", fp);
-
-	    if (confint && use_fill) {
-		print_filledcurve_line(NULL, NULL, fp);
-		fputs("'-' using 1:2 notitle w lines lt 1\n", fp);
-	    } else if (confint) {
-		fputs("'-' using 1:2 notitle w lines, \\\n", fp);
-		fputs("'-' using 1:2:3:4 notitle w errorbars\n", fp);
-	    } else {
-		fputs("'-' using 1:2 notitle w lines\n", fp);
-	    }
-
-	    if (confint && use_fill) {
-		for (t=0; t<periods; t++) {
-		    fprintf(fp, "%d %.10g %.10g\n", t,
-			    gretl_matrix_get(resp, t, 1),
-			    gretl_matrix_get(resp, t, 2));
-		}
-		fputs("e\n", fp);
-	    }
-
-	    for (t=0; t<periods; t++) {
-		fprintf(fp, "%d %.10g\n", t, gretl_matrix_get(resp, t, 0));
-	    }
-	    fputs("e\n", fp);
-
-	    if (confint && !use_fill) {
-		for (t=0; t<periods; t++) {
-		    fprintf(fp, "%d %.10g %.10g %.10g\n", t,
-			    gretl_matrix_get(resp, t, 0),
-			    gretl_matrix_get(resp, t, 1),
-			    gretl_matrix_get(resp, t, 2));
-		}
-		fputs("e\n", fp);
-	    }
-
-	    gretl_matrix_free(resp);
-	}
-    }
-#endif /* NEW_IRF or not */
 
     gretl_pop_c_numeric_locale();
 
@@ -8221,9 +8173,10 @@ static int roundup_mod (int i, double x)
     return (int) ceil((double) x * i);
 }
 
-/* options: OPT_R use radians as unit
-   OPT_D use degrees as unit
-   OPT_L use log scale
+/* option flags:
+   OPT_R --radians: use radians as unit
+   OPT_D --degrees: use degrees as unit
+   OPT_L --log: use log scale
 */
 
 static int real_pergm_plot (const char *vname,
@@ -8529,6 +8482,8 @@ static int qq_plot_two_series (const int *list,
     return finalize_plot_input_file(fp);
 }
 
+/* Option flags: OPT_R --raw, OPT_Z --z-scores */
+
 static int normal_qq_plot (const int *list,
 			   const DATASET *dset,
 			   gretlopt opt)
@@ -8561,6 +8516,7 @@ static int normal_qq_plot (const int *list,
     }
 
     if (!(opt & OPT_R)) {
+	/* without the --raw option */
 	ym = gretl_mean(0, n-1, y);
 	ys = gretl_stddev(0, n-1, y);
 
@@ -8570,10 +8526,6 @@ static int normal_qq_plot (const int *list,
 		y[i] = (y[i] - ym) / ys;
 	    }
 	}
-    }
-
-    if (opt & OPT_G) {
-	flags = GPT_ICON;
     }
 
     fp = open_plot_input_file(PLOT_QQ, flags, &err);

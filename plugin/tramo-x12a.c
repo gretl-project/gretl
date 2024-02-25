@@ -1813,7 +1813,8 @@ int exec_tx_script (char *outname, const gchar *buf)
 int write_tx_data (char *fname,
                    int varnum,
                    DATASET *dset,
-                   gretlopt *opt, int tramo,
+                   gretlopt *opt,
+		   int tramo,
                    int *warning,
                    GtkWindow *mainwin,
                    void (*help_func))

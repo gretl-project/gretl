@@ -3016,17 +3016,13 @@ static void toggle_activate_fitvals (GtkAdjustment *adj, GtkWidget *w)
     gtk_widget_set_sensitive(w, gtk_adjustment_get_value(adj) > 0);
 }
 
-static void toggle_graph_opt (GtkToggleButton *b, gretlopt *gopt)
+static void toggle_error_bars (GtkToggleButton *b, int *error_bars)
 {
-    if (button_is_active(b)) {
-        *gopt |= OPT_E; /* error bars */
-    } else {
-        *gopt &= ~OPT_E;
-    }
+    *error_bars = button_is_active(b);
 }
 
 void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
-                                     gretlopt *gopt)
+                                     int *error_bars)
 {
     GtkWidget *spin, *lbl, *cb;
     GtkWidget *vbox, *hbox;
@@ -3047,7 +3043,7 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
     gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    if (gopt != NULL) {
+    if (error_bars != NULL) {
         GSList *group;
         GtkWidget *r1, *r2;
 
@@ -3062,9 +3058,9 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
         gtk_box_pack_start(GTK_BOX(hbox2), r2, FALSE, FALSE, 5);
         gtk_box_pack_start(GTK_BOX(vbox), hbox2, FALSE, FALSE, 5);
         g_signal_connect(G_OBJECT(r2), "toggled",
-                         G_CALLBACK(toggle_graph_opt), gopt);
+                         G_CALLBACK(toggle_error_bars), error_bars);
 
-        if (*gopt & OPT_E) {
+        if (*error_bars) {
             gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(r2), TRUE);
         } else {
             gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(r1), TRUE);
@@ -3446,7 +3442,6 @@ int forecast_dialog (int t1min, int t1max, int *t1,
                 }
             }
         }
-
         if (fixit) {
             gtk_widget_set_sensitive(combo, FALSE);
         }
@@ -4861,7 +4856,7 @@ build_checks_dialog (const char *title, const char *blurb,
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     if (nradios < 0) {
-        /* negative value for nradios says put the radios first */
+        /* negative value for @nradios says put the radios first */
         radios_first = 1;
         nradios = -nradios;
     }
