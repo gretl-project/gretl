@@ -981,7 +981,7 @@ static void real_run_script (windata_t *vwin, int silent)
             gretl_chdir(dname);
             g_free(dname);
         } else if (vwin->role != EDIT_GP && vwin->role != EDIT_PKG_SAMPLE) {
-            /* native script */
+            /* native script (possibly a gfn sample script) */
             gretl_set_script_dir(vwin->fname);
         }
     }

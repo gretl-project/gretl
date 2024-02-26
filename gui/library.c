@@ -10018,7 +10018,6 @@ static int try_run_include (ExecState *s, char *runfile,
 
 	if (vwin != NULL && vwin->role == CONSOLE) {
 	    if (buf != NULL) {
-		fprintf(stderr, "buf='%s'\n", buf);
 		textview_append_text(vwin->text, "\n");
 		run_native_script(vwin, buf, NULL, 0);
 	    } else {
