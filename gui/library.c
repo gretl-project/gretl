@@ -10259,7 +10259,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
         return 1;
     }
 
-    if (cmd->ci == LOOP && (s->flags & CONSOLE_EXEC)) {
+    if (cmd->ci == LOOP && !gui_main_exec && (s->flags & CONSOLE_EXEC)) {
         pputs(prn, _("Enter commands for loop.  "
                      "Type 'endloop' to get out\n"));
     }
