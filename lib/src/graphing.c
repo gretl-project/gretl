@@ -565,6 +565,9 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 
     gi->flags = 0;
 
+    /* can't have --single-yaxis and --y2axis */
+    err = incompatible_options(opt, OPT_Y | OPT_D);
+
     if (opt & (OPT_N | OPT_a)) {
 	/* --band or --bands */
 	if (opt & OPT_T) {
@@ -3152,6 +3155,22 @@ void check_for_yscale (gnuplot_info *gi, const double **Z, int *oddman)
     }
 }
 
+static int get_y2_oddman (gnuplot_info *gi,
+			  const DATASET *dset)
+{
+    const char *targ = get_optval_string(GNUPLOT, OPT_D);
+    int i, vi;
+
+    for (i=1; i<=gi->list[0]; i++) {
+	vi = gi->list[i];
+	if (!strcmp(targ, dset->varname[vi])) {
+	    return i;
+	}
+    }
+
+    return 0;
+}
+
 static int print_gp_dummy_data (gnuplot_info *gi,
 				const DATASET *dset,
 				FILE *fp)
@@ -3384,7 +3403,10 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 	return E_ALLOC;
     }
 
-    if ((l0 > 2 || (l0 > 1 && (gi->flags & GPT_IDX))) &&
+    if (opt & OPT_D) {
+	/* got explicit --y2axis spec */
+	gi->flags |= GPT_Y2AXIS;
+    } else if ((l0 > 2 || (l0 > 1 && (gi->flags & GPT_IDX))) &&
 	l0 < 7 && !(gi->flags & GPT_RESIDS) && !(gi->flags & GPT_FA)
 	&& !(gi->flags & GPT_DUMMY) && !(opt & OPT_Y)) {
 	/* FIXME GPT_XYZ ? */
@@ -4146,6 +4168,14 @@ int gnuplot (const int *plotlist, const char *literal,
 	goto bailout;
     }
 
+    if (opt & OPT_D) {
+	oddman = get_y2_oddman(&gi, dset);
+	if (oddman == 0) {
+	    err = E_DATA;
+	    goto bailout;
+	}
+    }
+
 #if GP_DEBUG
     fprintf(stderr, "after gpinfo_init: gi.fit = %d\n", gi.fit);
 #endif
@@ -4320,7 +4350,9 @@ int gnuplot (const int *plotlist, const char *literal,
     }
 
     if (gi.flags & GPT_Y2AXIS) {
-	check_for_yscale(&gi, (const double **) dset->Z, &oddman);
+	if (oddman == 0) {
+	    check_for_yscale(&gi, (const double **) dset->Z, &oddman);
+	}
 	if (gi.flags & GPT_Y2AXIS) {
 	    fputs("set ytics nomirror\n", fp);
 	    fputs("set y2tics\n", fp);
@@ -4395,7 +4427,6 @@ int gnuplot (const int *plotlist, const char *literal,
 	fprintf(fp, "%s title '%s' w lines\n", gi.yformula, _("fitted"));
     } else if (gi.flags & GPT_FA) {
 	/* this is a fitted vs actual plot */
-	/* try reversing here: 2014-09-22 */
 	int tmp = list[1];
 
 	list[1] = list[2];
