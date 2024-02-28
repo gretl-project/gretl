@@ -39,7 +39,7 @@ function execute_inp_files {
 
 	for f in *.inp; do
 		echo "$(date '+ %F %T')"
-		echo -n `basename $f`
+		echo `basename $f`
 
     	gretlcli -b -e -q $f #> /dev/null 2>&1
 
@@ -47,7 +47,7 @@ function execute_inp_files {
 			# Print 'Error', update status variable, and log the failed script
 			echo -e " [\e[0;31mERROR\e[0m]"
 			error_code=1
-			#failed_files+=("$f")
+			failed_files+=("$f")
 		else
 			# Print 'OK' if the script succeeded
 			echo -e " [\e[0;32mOK\e[0m]"

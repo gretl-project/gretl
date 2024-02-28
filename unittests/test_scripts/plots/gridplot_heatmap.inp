@@ -6,8 +6,8 @@ pkg query @PkgName --quiet
 bundle Pkg = $result
 if !nelem(Pkg)
     pkg install @PkgName
-    include @PkgName.gfn
 endif
+include @PkgName.gfn
 
 a = 0 # try different values between -1 and 1
 smooth = I(2) .* (1-a) + a

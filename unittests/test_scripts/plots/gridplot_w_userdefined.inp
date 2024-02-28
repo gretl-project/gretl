@@ -1,13 +1,12 @@
-set verbose off
+# set verbose off
 
 string PkgName = "fdensity"
 pkg query @PkgName --quiet
 bundle Pkg = $result
 if !nelem(Pkg)
     pkg install @PkgName
-    include @PkgName.gfn
 endif
-
+include @PkgName.gfn
 
 open mroz87.gdt --quiet
 gpbuild Plots
@@ -15,7 +14,6 @@ gpbuild Plots
    fdensity(WA, LFP)
 end gpbuild
 gridplot Plots --output=display
-
 
 print "Successfully finished tests."
 quit

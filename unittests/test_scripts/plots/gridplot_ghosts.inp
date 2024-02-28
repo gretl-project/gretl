@@ -5,8 +5,8 @@ pkg query @PkgName --quiet
 bundle Pkg = $result
 if !nelem(Pkg)
     pkg install @PkgName
-    include @PkgName.gfn
 endif
+include @PkgName.gfn
 
 setopt gridplot persist --height=700 --width=1200 --fontsize=10
 
