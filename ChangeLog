@@ -40,6 +40,7 @@ version 2024a, in progress
   no object was found corresponding to the argument
 - Fix bug: "modeltab" command flagging a spurious error in
   some cases
+- geoplot addon: fix obsolete usage of "outfile"
 - GUI: fix for the "Dataset structure" mechanism when trying
   to convert from side-by-side time series to panel
 - GUI: apply some legibility fixes for dark GTK themes
