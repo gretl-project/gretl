@@ -1,3 +1,9 @@
+quit
+
+# The inclusion of PairPlot() output fails because it already contains
+# a multiplot specification. But no error message is seen since
+# PairPlot employs "catch" to suppress errors.
+
 set verbose off
 clear
 
@@ -6,16 +12,12 @@ pkg query @PkgName --quiet
 bundle Pkg = $result
 if !nelem(Pkg)
     pkg install @PkgName
-    include @PkgName.gfn
 endif
+include @PkgName.gfn
 
 open grunfeld --quiet
 
 setopt gridplot persist --height=700 --width=1200 --fontsize=10
-
-# The inclusion of PairPlot() output fails because it already contains
-# a multiplot specification. But no error message is seen since
-# PairPlot employs "catch" to suppress errors.
 
 gpbuild Pairs
    boxplot invest

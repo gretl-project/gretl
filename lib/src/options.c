@@ -332,6 +332,7 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_a, "bands", 2 },
     { GNUPLOT,  OPT_W, "font", 2 },
     { GNUPLOT,  OPT_L, "ylogscale", 1 },
+    { GNUPLOT,  OPT_D, "y2axis", 2 },
     { GRAPHPG,  OPT_M, "monochrome", 0 },
     { GRAPHPG,  OPT_O, "output", 2 },
     { GRIDPLOT, OPT_F, "fontsize", 2 },

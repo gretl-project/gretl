@@ -839,7 +839,7 @@ int generate (const char *line, DATASET *dset,
     }
 
     genr_last_type = out_t = genr_get_output_type(&p);
-    if (out_t == GRETL_TYPE_SERIES) {
+    if (out_t == GRETL_TYPE_SERIES || out_t == GRETL_TYPE_LIST) {
 	set_dataset_is_changed(dset, 1);
     }
     if (!p.err && gtype == GRETL_TYPE_NUMERIC && !NUMERIC_TYPE(out_t)) {

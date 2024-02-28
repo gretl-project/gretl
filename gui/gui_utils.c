@@ -2404,7 +2404,7 @@ static void dialog_add_order_selector (GtkWidget *dlg, GRETL_VAR *var,
 static int
 impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon,
 			int *bootstrap, double *alpha, int *piters,
-			gretlopt *gopt, GtkWidget *parent)
+			int *error_bars, GtkWidget *parent)
 {
     gchar *title;
     int h = default_VAR_horizon(dataset);
@@ -2430,7 +2430,8 @@ impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon,
 	return -1;
     }
 
-    dialog_add_confidence_selector(dlg, &conf, gopt);
+    /* includes OPT_E to specify error bars */
+    dialog_add_confidence_selector(dlg, &conf, error_bars);
 
     if (iters == 0) {
 	iters = libset_get_int(BOOT_ITERS);
@@ -2458,7 +2459,7 @@ impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon,
 }
 
 static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec,
-		       int *horizon, gretlopt *opt,
+		       int *horizon, int *histogram,
 		       GtkWidget *parent)
 {
     const char *opts[] = {
@@ -2468,18 +2469,17 @@ static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec,
     gchar *title;
     int h = default_VAR_horizon(dataset);
     GtkWidget *dlg;
-    int lines = 0;
+    int optval = 0;
     int resp = -1;
 
     title = g_strdup_printf("gretl: %s", _("Forecast variance decomposition"));
 
     dlg = build_checks_dialog(title, NULL, opts,
 			      0, NULL, 0, 0, /* no checks */
-			      2, &lines, /* two radio buttons */
+			      2, &optval, /* two radio buttons */
 			      &h, _("forecast horizon (periods):"),
 			      2, dataset->n / 2, 0,
 			      parent, &resp);
-
     g_free(title);
 
     if (dlg == NULL) {
@@ -2489,7 +2489,6 @@ static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec,
     if (ordvec != NULL) {
 	dialog_add_order_selector(dlg, var, ordvec);
     }
-
     gtk_widget_show_all(dlg);
 
     if (resp < 0) {
@@ -2497,9 +2496,7 @@ static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec,
 	*horizon = 0;
     } else {
 	*horizon = h;
-	if (!lines) {
-	    *opt = OPT_H;
-	}
+	*histogram = (optval == 0);
     }
 
     return resp;
@@ -2561,13 +2558,13 @@ static void FEVD_plot_call (GtkAction *action, gpointer p)
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     int targ, horizon;
     gretl_matrix *ordvec = NULL;
-    gretlopt opt = OPT_NONE;
+    int histogram = 0;
     int resp, err;
 
     FEVD_param_from_action(action, &targ);
     ordvec = cholesky_order_vector(var);
 
-    resp = FEVD_setup(var, ordvec, &horizon, &opt, vwin->main);
+    resp = FEVD_setup(var, ordvec, &horizon, &histogram, vwin->main);
 
     if (resp < 0) {
 	/* canceled */
@@ -2584,7 +2581,7 @@ static void FEVD_plot_call (GtkAction *action, gpointer p)
 	}
     }
 
-    err = gretl_VAR_plot_FEVD(var, targ, horizon, dataset, opt);
+    err = gretl_VAR_plot_FEVD(var, targ, horizon, dataset, histogram);
     gui_graph_handler(err);
 }
 
@@ -2595,7 +2592,7 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     int horizon, bootstrap;
     gint shock, targ;
     static double alpha = 0.10;
-    static gretlopt gopt = OPT_NONE;
+    static int error_bars = 0;
     static int iters = 0;
     gretl_matrix *ordvec = NULL;
     double this_alpha = 0;
@@ -2607,7 +2604,8 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     save_iters = libset_get_int(BOOT_ITERS);
 
     resp = impulse_response_setup(var, ordvec, &horizon, &bootstrap,
-				  &alpha, &iters, &gopt, vwin->main);
+				  &alpha, &iters, &error_bars,
+				  vwin->main);
 
     if (resp < 0) {
 	/* canceled */
@@ -2633,7 +2631,7 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     }
     err = gretl_VAR_plot_impulse_response(var, targ, shock,
 					  horizon, this_alpha,
-					  dataset, gopt);
+					  dataset, error_bars);
     if (iters != save_iters) {
 	libset_set_int(BOOT_ITERS, save_iters);
     }
@@ -2647,7 +2645,7 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     int horizon, bootstrap;
     static double alpha = 0.10;
-    static gretlopt gopt = OPT_NONE;
+    static int error_bars = 0;
     static int iters = 0;
     gretl_matrix *ordvec = NULL;
     double this_alpha = 0;
@@ -2658,7 +2656,8 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
     save_iters = libset_get_int(BOOT_ITERS);
 
     resp = impulse_response_setup(var, ordvec, &horizon, &bootstrap,
-				  &alpha, &iters, &gopt, vwin->main);
+				  &alpha, &iters, &error_bars,
+				  vwin->main);
 
     if (resp < 0) {
 	/* canceled */
@@ -2683,7 +2682,7 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
 	libset_set_int(BOOT_ITERS, iters);
     }
     err = gretl_VAR_plot_multiple_irf(var, horizon, this_alpha,
-				      dataset, gopt);
+				      dataset, error_bars);
     if (iters != save_iters) {
 	libset_set_int(BOOT_ITERS, save_iters);
     }

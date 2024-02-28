@@ -29,7 +29,8 @@ Usage: ./run_tests.sh --OPTION
 --all            Run all scripts
 
 EOF
-# EOF is found above and hence cat command stops reading. This is equivalent to echo but much neater when printing out.
+# EOF is found above and hence cat command stops reading.
+# This is equivalent to echo but much neater when printing out.
 }
 
 # Function to execute general tasks
@@ -150,7 +151,7 @@ fi
 echo -n "Number of failed unit-tests = $exitcode"
 
 printf "\n=================================================\n"
-if [ ${#fails[@]} -gt 0 ]; then
+if [ "$exitcode" -gt "0" ]; then
 	printf "Summary: Scripts which failed for $1:\n"
 	echo "------------------------------"
 

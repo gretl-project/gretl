@@ -4717,7 +4717,7 @@ void do_nonparam_plot (windata_t *vwin)
             }
             literal = g_strdup_printf("{ set title \"%s\"; }", title);
             set_optval_string(GNUPLOT, OPT_O, "fitted");
-            err = matrix_plot(plotmat, NULL, literal, OPT_O | OPT_G);
+            err = matrix_plot(plotmat, NULL, literal, OPT_O);
             gui_graph_handler(err);
             g_free(literal);
             g_free(title);
@@ -5692,7 +5692,7 @@ static void x12a_help (void)
 static void real_do_tramo_x12a (int v, int tramo)
 {
     /* save options between invocations */
-    static gretlopt opt = OPT_G;
+    static gretlopt opt = OPT_G; /* show graph */
     int oldv = dataset->v;
     int save_t1 = dataset->t1;
     int save_t2 = dataset->t2;
@@ -7055,7 +7055,7 @@ void resid_plot (GtkAction *action, gpointer p)
         g_free(label);
     }
 
-    opt = OPT_G | OPT_R; /* gui, resids */
+    opt = OPT_R; /* resids */
     if (pdum) {
         opt |= OPT_Z; /* dummy */
     }
@@ -7117,13 +7117,13 @@ static void theil_plot (MODEL *pmod, DATASET *dset)
     series_set_display_name(dset, fv, dname);
     g_free(dname);
 
-    err = theil_forecast_plot(plotlist, dset, OPT_G);
+    err = theil_forecast_plot(plotlist, dset);
     gui_graph_handler(err);
 }
 
 void fit_actual_plot (GtkAction *action, gpointer p)
 {
-    gretlopt opt = OPT_G | OPT_A;
+    gretlopt opt = OPT_A;
     int plotlist[4];
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
@@ -7195,7 +7195,8 @@ void fit_actual_splot (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    gretlopt plotopt = OPT_A;
+    int show_surface = 1;
+    int interactive = 0;
     DATASET *dset;
     int origv = dataset->v;
     int *xlist = NULL;
@@ -7226,17 +7227,15 @@ void fit_actual_splot (GtkAction *action, gpointer p)
     free(xlist);
 
 #ifdef GNUPLOT3D
-    /* We have a fully interactive gnuplot terminal
-       (note: you can't rotate plots with aquaterm)
-    */
-    plotopt |= OPT_I;
+    /* We're supposed to have a fully interactive gnuplot terminal */
+    interactive = 1;
 #endif
 
-    err = gnuplot_3d(list, NULL, dset, &plotopt);
+    err = gnuplot_3d(list, NULL, dset, show_surface, &interactive);
 
     if (err) {
         gui_errmsg(err);
-    } else if (plotopt & OPT_I) {
+    } else if (interactive) {
         gnuplot_view_3d(gretl_plotfile());
     } else {
         register_graph();
@@ -7494,7 +7493,7 @@ static int regular_ts_plot (int v)
     int list[2] = {1, v};
     int err;
 
-    err = gnuplot(list, NULL, dataset, OPT_G | OPT_O | OPT_T);
+    err = gnuplot(list, NULL, dataset, OPT_O | OPT_T);
 
     if (!err) {
         lib_command_sprintf("gnuplot %s --time-series --with-lines",
@@ -7532,11 +7531,11 @@ static void do_panel_plot (int vnum)
 
     if (sel == 0) {
         /* group means time series */
-        err = gretl_panel_ts_plot(vnum, dataset, OPT_G | OPT_M);
+        err = gretl_panel_ts_plot(vnum, dataset, OPT_M);
         ppopt = OPT_M;
     } else if (sel == 1) {
         /* time-series overlay */
-        err = gretl_panel_ts_plot(vnum, dataset, OPT_G);
+        err = gretl_panel_ts_plot(vnum, dataset, OPT_NONE);
         ppopt = OPT_V;
     } else if (sel == 2) {
         /* sequential by unit */
@@ -7544,12 +7543,12 @@ static void do_panel_plot (int vnum)
         ppopt = OPT_S;
     } else if (sel == 3) {
         /* small multiples in grid */
-        err = gretl_panel_ts_plot(vnum, dataset, OPT_S);
-        ppopt = OPT_D;
+	ppopt = OPT_D;
+        err = gretl_panel_ts_plot(vnum, dataset, ppopt);
     } else if (sel == 4) {
         /* small multiples stacked vertically */
-        err = gretl_panel_ts_plot(vnum, dataset, OPT_S | OPT_V);
-        ppopt = OPT_A;
+	ppopt = OPT_A;
+        err = gretl_panel_ts_plot(vnum, dataset, ppopt);
     } else if (sel == 5) {
         /* boxplots by group */
         do_boxplot_var(vnum, OPT_P);
@@ -7785,7 +7784,7 @@ int do_dummy_graph (selector *sr)
         return err;
     }
 
-    err = gnuplot(libcmd.list, NULL, dataset, OPT_G | OPT_Z);
+    err = gnuplot(libcmd.list, NULL, dataset, OPT_Z);
     gui_graph_handler(err);
     if (!err) {
         record_lib_command();
@@ -7845,7 +7844,7 @@ int do_qq_from_selector (selector *sr)
 
 int do_graph_from_selector (selector *sr)
 {
-    gretlopt opt = OPT_G;
+    gretlopt opt = OPT_NONE;
     const char *buf = selector_list(sr);
     int code = selector_code(sr);
     int err;
@@ -7879,6 +7878,8 @@ int do_splot_from_selector (selector *sr)
 {
     const char *buf = selector_list(sr);
     gretlopt opt = selector_get_opts(sr);
+    int interactive = (opt & OPT_I) ? 1 : 0;
+    int show_surface = 0;
     int *list = NULL;
     int err = 0;
 
@@ -7887,11 +7888,11 @@ int do_splot_from_selector (selector *sr)
         return err;
     }
 
-    err = gnuplot_3d(list, NULL, dataset, &opt);
+    err = gnuplot_3d(list, NULL, dataset, show_surface, &interactive);
 
     if (err) {
         gui_errmsg(err);
-    } else if (opt & OPT_I) {
+    } else if (interactive) {
 	gnuplot_view_3d(gretl_plotfile());
     } else {
 	register_graph();
@@ -7960,7 +7961,7 @@ static int maybe_reorder_list (char *liststr, dialog_opts *opts)
 
 void plot_from_selection (int code)
 {
-    gretlopt opt = OPT_G;
+    gretlopt opt = OPT_NONE;
     int pan_between = 0;
     int multiplot = 0;
     int *list = NULL;
@@ -8183,7 +8184,7 @@ void midas_list_callback (const int *list,
             view_buffer(prn, 36, 400, title, PRINT, NULL);
         }
     } else if (ci == PLOT) {
-        err = hf_plot(list, NULL, dataset, OPT_G | OPT_O);
+        err = hf_plot(list, NULL, dataset, OPT_O);
         gui_graph_handler(err);
     } else {
         dummy_call();
@@ -9685,7 +9686,7 @@ static int handle_data_open_callback (CMD *cmd, void *ptr,
 }
 
 /* Callback from libgretl to update the GUI in light of
-   execution of commands via script.
+   execution of commands executed via script.
 */
 
 static int gui_exec_callback (ExecState *s, void *ptr,
@@ -10017,7 +10018,6 @@ static int try_run_include (ExecState *s, char *runfile,
 
 	if (vwin != NULL && vwin->role == CONSOLE) {
 	    if (buf != NULL) {
-		fprintf(stderr, "buf='%s'\n", buf);
 		textview_append_text(vwin->text, "\n");
 		run_native_script(vwin, buf, NULL, 0);
 	    } else {

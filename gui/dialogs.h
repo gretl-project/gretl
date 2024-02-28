@@ -174,7 +174,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 int simple_forecast_dialog (int *t1, int *t2, GtkWidget *parent);
 
 void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
-				     gretlopt *gopt);
+				     int *error_bars);
 
 void dialog_add_iters_spinner (GtkWidget *dlg, int *iters);
 

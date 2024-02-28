@@ -52,9 +52,8 @@ typedef enum {
     GPT_XXL            = 1 << 24, /* extra-large */
     GPT_XW             = 1 << 25, /* extra-wide */
     GPT_TIMEFMT        = 1 << 26, /* using gnuplot "timefmt" */
-    GPT_ICON           = 1 << 27, /* saving plot "as icon" */
-    GPT_STEPS          = 1 << 28, /* force steps for plot */
-    GPT_LOGY           = 1 << 29  /* log y axis */
+    GPT_STEPS          = 1 << 27, /* force steps for plot */
+    GPT_LOGY           = 1 << 28  /* log y axis */
 } GptFlags;
 
 /* an extra "command" for use with GUI callback */
@@ -237,7 +236,8 @@ int matrix_multi_plots (const gretl_matrix *m, const int *list,
 			const DATASET *dset, gretlopt opt);
 
 int gnuplot_3d (int *list, const char *literal,
-		DATASET *dset, gretlopt *opt);
+		DATASET *dset, int show_surface,
+		int *interactive);
 
 int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt);
 
@@ -272,8 +272,7 @@ int periodogram_plot (const char *vname,
 int arma_spectrum_plot (MODEL *pmod, const DATASET *dset,
 			gretlopt opt);
 
-int theil_forecast_plot (const int *plotlist, const DATASET *dset,
-			 gretlopt opt);
+int theil_forecast_plot (const int *plotlist, const DATASET *dset);
 
 int gretl_panel_ts_plot (int vnum, DATASET *dset, gretlopt opt);
 
@@ -299,16 +298,16 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock,
 				 int periods, double alpha,
 				 const DATASET *dset,
-				 gretlopt opt);
+				 int error_bars);
 
 int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
-			 const DATASET *dset, gretlopt opt);
+			 const DATASET *dset, int histogram);
 
 int
 gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 			     int periods, double alpha,
 			     const DATASET *dset,
-			     gretlopt opt);
+			     int error_bars);
 
 int gretl_VECM_combined_EC_plot (GRETL_VAR *var,
 				 const DATASET *dset);

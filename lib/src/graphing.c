@@ -565,6 +565,9 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 
     gi->flags = 0;
 
+    /* can't have --single-yaxis and --y2axis */
+    err = incompatible_options(opt, OPT_Y | OPT_D);
+
     if (opt & (OPT_N | OPT_a)) {
 	/* --band or --bands */
 	if (opt & OPT_T) {
@@ -659,11 +662,6 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	    /* --with-boxes */
 	    gp_set_non_point_info(gi, list, dset, OPT_B);
 	}
-    }
-
-    if (opt & OPT_G) {
-	/* internal option, saving as icon */
-	gi->flags |= GPT_ICON;
     }
 
     gi->fit = PLOT_FIT_NONE;
@@ -2191,8 +2189,6 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
     } else if (outspec != NULL) {
 	/* --output=filename or --buffer=starvar specified */
 	interactive = 0;
-    } else if (flags & GPT_ICON) {
-	interactive = 1;
     } else {
 	/* default */
 	interactive = !gretl_in_batch_mode();
@@ -3159,6 +3155,22 @@ void check_for_yscale (gnuplot_info *gi, const double **Z, int *oddman)
     }
 }
 
+static int get_y2_oddman (gnuplot_info *gi,
+			  const DATASET *dset)
+{
+    const char *targ = get_optval_string(GNUPLOT, OPT_D);
+    int i, vi;
+
+    for (i=1; i<=gi->list[0]; i++) {
+	vi = gi->list[i];
+	if (!strcmp(targ, dset->varname[vi])) {
+	    return i;
+	}
+    }
+
+    return 0;
+}
+
 static int print_gp_dummy_data (gnuplot_info *gi,
 				const DATASET *dset,
 				FILE *fp)
@@ -3391,7 +3403,10 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 	return E_ALLOC;
     }
 
-    if ((l0 > 2 || (l0 > 1 && (gi->flags & GPT_IDX))) &&
+    if (opt & OPT_D) {
+	/* got explicit --y2axis spec */
+	gi->flags |= GPT_Y2AXIS;
+    } else if ((l0 > 2 || (l0 > 1 && (gi->flags & GPT_IDX))) &&
 	l0 < 7 && !(gi->flags & GPT_RESIDS) && !(gi->flags & GPT_FA)
 	&& !(gi->flags & GPT_DUMMY) && !(opt & OPT_Y)) {
 	/* FIXME GPT_XYZ ? */
@@ -4090,6 +4105,11 @@ static int time_fit_wanted (gretlopt *popt)
  *
  * Writes a gnuplot plot file to display the values of the
  * variables in @list and calls gnuplot to make the graph.
+ * The option flags available in hansl are set out in
+ * options.c (see GNUPLOT). Three additional flags are
+ * supported for use in C code: OPT_S is equivalent to
+ * the hansl option --fit=none; OPT_A and OPT_S signal
+ * a residual plot and a fitted/actual plot, respectively.
  *
  * Returns: 0 on successful completion, non-zero code on error.
  */
@@ -4146,6 +4166,14 @@ int gnuplot (const int *plotlist, const char *literal,
     err = gpinfo_init(&gi, opt, plotlist, literal, dset);
     if (err) {
 	goto bailout;
+    }
+
+    if (opt & OPT_D) {
+	oddman = get_y2_oddman(&gi, dset);
+	if (oddman == 0) {
+	    err = E_DATA;
+	    goto bailout;
+	}
     }
 
 #if GP_DEBUG
@@ -4322,7 +4350,9 @@ int gnuplot (const int *plotlist, const char *literal,
     }
 
     if (gi.flags & GPT_Y2AXIS) {
-	check_for_yscale(&gi, (const double **) dset->Z, &oddman);
+	if (oddman == 0) {
+	    check_for_yscale(&gi, (const double **) dset->Z, &oddman);
+	}
 	if (gi.flags & GPT_Y2AXIS) {
 	    fputs("set ytics nomirror\n", fp);
 	    fputs("set y2tics\n", fp);
@@ -4397,7 +4427,6 @@ int gnuplot (const int *plotlist, const char *literal,
 	fprintf(fp, "%s title '%s' w lines\n", gi.yformula, _("fitted"));
     } else if (gi.flags & GPT_FA) {
 	/* this is a fitted vs actual plot */
-	/* try reversing here: 2014-09-22 */
 	int tmp = list[1];
 
 	list[1] = list[2];
@@ -4449,8 +4478,7 @@ int gnuplot (const int *plotlist, const char *literal,
     return err;
 }
 
-int theil_forecast_plot (const int *plotlist, const DATASET *dset,
-			 gretlopt opt)
+int theil_forecast_plot (const int *plotlist, const DATASET *dset)
 {
     FILE *fp = NULL;
     gnuplot_info gi;
@@ -4463,7 +4491,8 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
 	return E_DATA;
     }
 
-    err = gpinfo_init(&gi, opt | OPT_S, plotlist, NULL, dset);
+    /* OPT_S: don't show auto-fitted line */
+    err = gpinfo_init(&gi, OPT_S, plotlist, NULL, dset);
     if (err) {
 	goto bailout;
     }
@@ -5016,11 +5045,11 @@ static FILE *get_3d_input_file (int *err)
 
 static gchar *maybe_get_surface (const int *list,
 				 DATASET *dset,
-				 gretlopt opt)
+				 int force_show)
 {
     MODEL smod;
-    double umin, umax, vmin, vmax;
     int olslist[5];
+    int show = force_show;
     gchar *ret = NULL;
 
     olslist[0] = 4;
@@ -5029,22 +5058,33 @@ static gchar *maybe_get_surface (const int *list,
     olslist[3] = list[2];
     olslist[4] = list[1];
 
-    gretl_minmax(dset->t1, dset->t2, dset->Z[list[2]], &umin, &umax);
-    gretl_minmax(dset->t1, dset->t2, dset->Z[list[1]], &vmin, &vmax);
-
+    /* get OLS estimates */
     smod = lsq(olslist, dset, OLS, OPT_A);
 
-    if (!smod.errcode && !na(smod.fstt) &&
-	(snedecor_cdf_comp(smod.dfn, smod.dfd, smod.fstt) < .10 || (opt & OPT_A))) {
-	double uadj = (umax - umin) * 0.02;
-	double vadj = (vmax - vmin) * 0.02;
+    if (smod.errcode) {
+	show = 0;
+    } else if (!show) {
+	/* show fit if "good enough" */
+	show = !na(smod.fstt) &&
+	    snedecor_cdf_comp(smod.dfn, smod.dfd, smod.fstt) < 0.10;
+    }
+
+    if (show) {
+	/* formulate parametric plot line */
+	double adj, umin, umax, vmin, vmax;
+	double *b = smod.coeff;
+
+	gretl_minmax(dset->t1, dset->t2, dset->Z[list[2]], &umin, &umax);
+	gretl_minmax(dset->t1, dset->t2, dset->Z[list[1]], &vmin, &vmax);
+	adj = (umax - umin) * 0.02;
+	umin -= adj; umax += adj;
+	adj = (vmax - vmin) * 0.02;
+	vmin -= adj; vmax += adj;
 
 	ret = g_strdup_printf("[u=%g:%g] [v=%g:%g] "
 			      "%g+(%g)*u+(%g)*v notitle",
-			      umin - uadj, umax + uadj,
-			      vmin - vadj, vmax + vadj,
-			      smod.coeff[0], smod.coeff[1],
-			      smod.coeff[2]);
+			      umin, umax, vmin, vmax,
+			      b[0], b[1], b[2]);
     }
 
     clear_model(&smod);
@@ -5057,29 +5097,29 @@ static gchar *maybe_get_surface (const int *list,
  * @list: list of variables to plot, by ID number: Y, X, Z
  * @literal: literal command(s) to pass to gnuplot (or NULL)
  * @dset: pointer to dataset.
- * @opt: may include OPT_A to force display of fitted surface;
- * may include OPT_I to force an interactive (rotatable) plot.
- * Note that OPT_I may be removed on output if a suitable
- * gnuplot terminal is not present.
+ * @show_surface: show surface unconditionally.
+ * @interactive: on input, whether an interactive 3-D plot
+ * is wanted; on output, whether it's actually implemented.
  *
- * Writes a gnuplot plot file to display a 3D plot (Z on
+ * Writes a gnuplot plot file to display a 3-D plot (Z on
  * the vertical axis, X and Y on base plane).
  *
  * Returns: 0 on successful completion, error code on error.
  */
 
 int gnuplot_3d (int *list, const char *literal,
-		DATASET *dset, gretlopt *opt)
+		DATASET *dset, int show_surface,
+		int *interactive)
 {
     FILE *fp = NULL;
-    int t, t1 = dset->t1, t2 = dset->t2;
-    int save_t1 = dset->t1, save_t2 = dset->t2;
+    int t1 = dset->t1;
+    int t2 = dset->t2;
+    int save_t1, save_t2;
     int lo = list[0];
     int datlist[4];
-    int interactive = (*opt & OPT_I);
     const char *term = NULL;
     gchar *surface = NULL;
-    int err = 0;
+    int t, err = 0;
 
     if (lo != 3) {
 	fprintf(stderr, "gnuplot_3d needs three variables (only)\n");
@@ -5094,7 +5134,7 @@ int gnuplot_3d (int *list, const char *literal,
     }
 
 #ifndef WIN32
-    if (interactive) {
+    if (*interactive) {
 	/* On Windows we let the gnuplot terminal default to
 	   "win"; on other systems we need a suitable
 	   terminal for interactive 3-D display.
@@ -5106,13 +5146,12 @@ int gnuplot_3d (int *list, const char *literal,
 	} else if (gnuplot_has_qt()) {
 	    term = "qt";
 	} else {
-	    *opt &= ~OPT_I;
-	    interactive = 0;
+	    *interactive = 0;
 	}
     }
 #endif
 
-    if (interactive) {
+    if (*interactive) {
 	fp = get_3d_input_file(&err);
     } else {
 	fp = open_plot_input_file(PLOT_3D, 0, &err);
@@ -5122,10 +5161,13 @@ int gnuplot_3d (int *list, const char *literal,
 	return err;
     }
 
+    /* record and (potentially) modify sample range */
+    save_t1 = dset->t1;
+    save_t2 = dset->t2;
     dset->t1 = t1;
     dset->t2 = t2;
 
-    if (interactive) {
+    if (*interactive) {
 	if (term != NULL) {
 	    fprintf(fp, "set term %s\n", term);
 	}
@@ -5140,10 +5182,11 @@ int gnuplot_3d (int *list, const char *literal,
 
     gnuplot_missval_string(fp);
 
-    print_gnuplot_literal_lines(literal, GNUPLOT, *opt, fp);
+    if (literal != NULL) {
+	print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
+    }
 
-    surface = maybe_get_surface(list, dset, *opt);
-
+    surface = maybe_get_surface(list, dset, show_surface);
     if (surface != NULL) {
 	fprintf(fp, "splot %s, \\\n'-' notitle w p\n", surface);
 	g_free(surface);
@@ -6515,8 +6558,11 @@ static int panel_ytic_width (double ymin, double ymax)
     return (n1 > n2)? n1 : n2;
 }
 
-/* Panel: produce a time-series plot for the group mean of the
-   series in question.
+/* Panel: produce a single time-series plot showing the mean across
+   groups of the series in question. Note that this function calls
+   the main gnuplot() function after some panel-specific setup.
+   The incoming @opt will be forwarded to gnuplot() and must not
+   contain any "foreign matter".
 */
 
 static int panel_means_ts_plot (const int vnum,
@@ -6532,8 +6578,6 @@ static int panel_means_ts_plot (const int vnum,
     int i, t, s, s0;
     int err = 0;
 
-    nunits = panel_sample_size(dset);
-
     gset = create_auxiliary_dataset(2, T, 0);
     if (gset == NULL) {
 	return E_ALLOC;
@@ -6542,6 +6586,7 @@ static int panel_means_ts_plot (const int vnum,
     strcpy(gset->varname[1], dset->varname[vnum]);
     series_set_display_name(gset, 1, series_get_display_name(dset, vnum));
 
+    nunits = panel_sample_size(dset);
     time_series_from_panel(gset, dset);
 
     s0 = dset->t1;
@@ -6561,7 +6606,8 @@ static int panel_means_ts_plot (const int vnum,
 	gset->Z[1][t] = (n == 0)? NADBL : xsum / n;
     }
 
-    opt |= (OPT_O | OPT_T); /* use lines, time series */
+    /* ensure use of lines, time series */
+    opt |= (OPT_O | OPT_T);
 
     title = g_strdup_printf(_("mean %s"),
 			    series_get_graph_name(dset, vnum));
@@ -6821,11 +6867,13 @@ static int dataset_has_panel_labels (const DATASET *dset,
 
 /* Panel: plot one series using separate lines for each
    cross-sectional unit. The individuals' series are overlaid, in the
-   same manner as a plot of several distinct time series. To do
-   this we construct on the fly a notional time-series dataset.
+   same manner as a plot of several distinct time series. To do this
+   we construct on the fly a notional time-series dataset.  But note:
+   if it turns out the series in question is invariant across groups,
+   just show a single line.
 
-   But note: if it turns out the series in question is invariant
-   across groups, just show a single line.
+   This function calls gnuplot() after performing the required setup.
+   and forwards the incoming @opt flags.
 */
 
 static int panel_overlay_ts_plot (const int vnum,
@@ -6959,14 +7007,18 @@ static int panel_overlay_ts_plot (const int vnum,
     return err;
 }
 
-/* Panel: plot one variable as a time series, with separate plots for
+/* Panel: plot one variable as time series, with separate plots for
    each cross-sectional unit.  By default we arrange the plots in a
-   grid, but if OPT_V is given we make each plot full width and
-   stack the plots vertically on the "page".
+   grid, but if @vstack is non-zero we make each plot full width and
+   stack the plots vertically on the "page". This option is limited
+   to a relatively small number of units.
+
+   This function employs gnuplot's multiplot mechanism, and
+   does not call libgretl's gnuplot() function.
 */
 
 static int panel_grid_ts_plot (int vnum, const DATASET *dset,
-			       gretlopt opt)
+			       int vstack)
 {
     FILE *fp = NULL;
     int w, rows, cols;
@@ -7009,7 +7061,7 @@ static int panel_grid_ts_plot (int vnum, const DATASET *dset,
 	return E_MISSDATA;
     }
 
-    if (opt & OPT_V) {
+    if (vstack) {
 	int xvar = plausible_panel_time_var(dset);
 
 	if (xvar > 0) {
@@ -7047,7 +7099,7 @@ static int panel_grid_ts_plot (int vnum, const DATASET *dset,
     fprintf(fp, "set format y \"%%%dg\"\n", w);
     fprintf(fp, "set multiplot layout %d,%d\n", rows, cols);
 
-    if (opt & OPT_V) {
+    if (vstack) {
 	fputs("set noxlabel\n", fp);
     } else {
 	fprintf(fp, "set xlabel '%s'\n", _("time"));
@@ -7076,7 +7128,7 @@ static int panel_grid_ts_plot (int vnum, const DATASET *dset,
 	} else {
 	    sprintf(uname, "%d", u0+i+1);
 	}
-	if (opt & OPT_V) {
+	if (vstack) {
 	    gretl_minmax(t0, t0 + T - 1, y, &ymin, &ymax);
 	    incr = (ymax - ymin) / 2.0;
 	    fprintf(fp, "set ytics %g\n", incr);
@@ -7113,25 +7165,50 @@ static int panel_grid_ts_plot (int vnum, const DATASET *dset,
     return finalize_plot_input_file(fp);
 }
 
+/* This is called from the GUI only: see do_panel_plot() in
+   gui/library.c. The incoming @opt flags here are as described
+   below for cli_panel_plot(); they are not gnuplot options.
+*/
+
 int gretl_panel_ts_plot (int vnum, DATASET *dset, gretlopt opt)
 {
-    if (opt & OPT_S) {
-	return panel_grid_ts_plot(vnum, dset, opt);
+    if (opt & OPT_D) {
+	/* small multiples in grid */
+	return panel_grid_ts_plot(vnum, dset, 0);
+    } else if (opt & OPT_A) {
+	/* small multiples in vertical stack */
+	return panel_grid_ts_plot(vnum, dset, 1);
     } else if (opt & OPT_M) {
-	/* group means */
-	opt &= ~OPT_M;
-	opt |= OPT_S;
-	return panel_means_ts_plot(vnum, NULL, dset, opt);
+	/* time-series of group means */
+	return panel_means_ts_plot(vnum, NULL, dset, OPT_NONE);
     } else {
-	return panel_overlay_ts_plot(vnum, NULL, dset, opt);
+	/* default: overlaid time series (OPT_V) */
+	return panel_overlay_ts_plot(vnum, NULL, dset, OPT_NONE);
     }
 }
 
-/* The following implements the script command "panplot" */
+/* The following implements the "panplot" command.
+   Option flags specific to this command are:
+
+   OPT_M --means
+   OPT_V --overlay
+   OPT_S --sequence
+   OPT_D --grid
+   OPT_A --stack
+   OPT_B --boxplots
+   OPT_C --boxplot
+
+   In addition there are some gnuplot-compatible options:
+
+   OPT_Y --single-yaxis
+   OPT_U --output=...
+   OPT_b --outbuf=...
+*/
 
 int cli_panel_plot (const int *list, const char *literal,
 		    const DATASET *dset, gretlopt opt)
 {
+    gretlopt gp_opt = OPT_NONE;
     int N, vnum = list[1];
     int err;
 
@@ -7177,6 +7254,11 @@ int cli_panel_plot (const int *list, const char *literal,
 	}
     }
 
+    /* transcribe any gnuplot-compatible flags from the
+       incoming @opt to @gp_opt
+    */
+    transcribe_option_flags(&gp_opt, opt, OPT_U | OPT_b | OPT_Y);
+
     if (opt & (OPT_U | OPT_b)) {
 	/* handle output or outbuf spec */
 	gretlopt outopt = (opt & OPT_U) ? OPT_U : OPT_b;
@@ -7190,33 +7272,27 @@ int cli_panel_plot (const int *list, const char *literal,
 
     if (opt & OPT_M) {
 	/* --means */
-	opt &= ~OPT_M;
-	opt |= OPT_S;
-	err = panel_means_ts_plot(vnum, literal, dset, opt);
+	err = panel_means_ts_plot(vnum, literal, dset, gp_opt);
     } else if (opt & OPT_V) {
 	/* --overlay */
-	opt &= ~OPT_V;
-	err = panel_overlay_ts_plot(vnum, literal, dset, opt);
+	err = panel_overlay_ts_plot(vnum, literal, dset, gp_opt);
     } else if (opt & OPT_S) {
 	/* --sequence */
-	opt &= ~OPT_S;
-	err = gnuplot(list, literal, dset, opt | OPT_O | OPT_T);
+	err = gnuplot(list, literal, dset, gp_opt | OPT_O | OPT_T);
     } else if (opt & OPT_D) {
-	/* --grid */
-	opt &= ~OPT_D;
-	err = panel_grid_ts_plot(vnum, dset, opt);
+	/* --grid (uses multiplot) */
+	err = panel_grid_ts_plot(vnum, dset, 0);
     } else if (opt & OPT_A) {
-	/* --stack */
-	opt &= ~OPT_A;
-	err = panel_grid_ts_plot(vnum, dset, opt | OPT_S | OPT_V);
+	/* --stack (uses multiplot) */
+	err = panel_grid_ts_plot(vnum, dset, 1);
     } else if (opt & OPT_B) {
 	/* --boxplots */
-	opt &= ~OPT_B;
-	err = boxplots(list, literal, dset, opt | OPT_P);
+	gp_opt &= ~OPT_Y;
+	err = boxplots(list, literal, dset, gp_opt | OPT_P);
     } else if (opt & OPT_C) {
 	/* --boxplot */
-	opt &= ~OPT_C;
-	err = boxplots(list, literal, dset, opt);
+	gp_opt &= ~OPT_Y;
+	err = boxplots(list, literal, dset, gp_opt);
     }
 
     return err;
@@ -7333,9 +7409,9 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock,
 				 int periods, double alpha,
 				 const DATASET *dset,
-				 gretlopt opt)
+				 int error_bars)
 {
-    int use_fill = !(opt & OPT_E);
+    int use_fill = !error_bars;
     gretl_matrix *resp;
     int err = 0;
 
@@ -7367,13 +7443,15 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     return err;
 }
 
+/* Show as a histogram if requested, otherwise do a regular plot */
+
 int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
-			 const DATASET *dset, gretlopt opt)
+			 const DATASET *dset, int histogram)
 {
     FILE *fp = NULL;
     gretl_matrix *V;
     gchar *title;
-    int i, t, v, histo;
+    int i, t, v;
     PlotType ptype;
     int err = 0;
 
@@ -7382,8 +7460,7 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
 	return E_ALLOC;
     }
 
-    histo = (opt & OPT_H)? 1 : 0;
-    ptype = histo ? PLOT_STACKED_BAR : PLOT_REGULAR;
+    ptype = histogram ? PLOT_STACKED_BAR : PLOT_REGULAR;
 
     fp = open_plot_input_file(ptype, 0, &err);
     if (err) {
@@ -7399,7 +7476,7 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
     fprintf(fp, "set title '%s'\n", title);
     g_free(title);
 
-    if (histo) {
+    if (histogram) {
 	fputs("set key outside\n", fp);
 	fputs("# literal lines = 3\n", fp);
 	fputs("set style fill solid 0.35\n", fp);
@@ -7416,7 +7493,7 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
 
     for (i=0; i<var->neqns; i++) {
 	v = gretl_VAR_get_variable_number(var, i);
-	if (histo) {
+	if (histogram) {
 	    fprintf(fp, "'-' using 2 title \"%s\"", dset->varname[v]);
 	} else {
 	    fprintf(fp, "'-' using 1:2 title \"%s\" w lines", dset->varname[v]);
@@ -7444,25 +7521,21 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
     return finalize_plot_input_file(fp);
 }
 
-#define NEW_IRF 1
-
 int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 				 int periods, double alpha,
 				 const DATASET *dset,
-				 gretlopt opt)
+				 int error_bars)
 {
     FILE *fp = NULL;
     GptFlags flags = 0;
     int confint = 0;
-    int use_fill = !(opt & OPT_E);
+    int use_fill = !error_bars;
     gchar *title = NULL;
     int n = var->neqns;
     int nplots = n * n;
     int vtarg, vshock;
-#if NEW_IRF
     gretl_matrix *R = NULL;
     int Rcol, Rstep;
-#endif
     int t, i, j;
     int err = 0;
 
@@ -7495,7 +7568,6 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
     /* Use facility to get all impulse responses
        via one call
     */
-#if NEW_IRF
     R = gretl_VAR_get_impulse_response(var, -1, -1, periods,
 				       alpha, dset, &err);
     if (!err && R->cols > nplots) {
@@ -7561,73 +7633,6 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 	}
     }
     gretl_matrix_free(R);
-#else /* old IRF method */
-    for (i=0; i<n && !err; i++) {
-	vtarg = gretl_VAR_get_variable_number(var, i);
-
-	for (j=0; j<n; j++) {
-	    gretl_matrix *resp;
-
-	    resp = gretl_VAR_get_impulse_response(var, i, j, periods,
-						  alpha, dset, &err);
-	    if (err) {
-		break;
-	    }
-
-	    if (i == 0 && j == 0) {
-		/* the first plot */
-		if (gretl_matrix_cols(resp) > 1) {
-		    confint = 1;
-		    fputs("set key left top\n", fp);
-		} else {
-		    fputs("set nokey\n", fp);
-		}
-	    }
-
-	    vshock = gretl_VAR_get_variable_number(var, j);
-	    fprintf(fp, "set title '%s -> %s'\n", dset->varname[vshock],
-		    dset->varname[vtarg]);
-
-	    fputs("plot \\\n", fp);
-
-	    if (confint && use_fill) {
-		print_filledcurve_line(NULL, NULL, fp);
-		fputs("'-' using 1:2 notitle w lines lt 1\n", fp);
-	    } else if (confint) {
-		fputs("'-' using 1:2 notitle w lines, \\\n", fp);
-		fputs("'-' using 1:2:3:4 notitle w errorbars\n", fp);
-	    } else {
-		fputs("'-' using 1:2 notitle w lines\n", fp);
-	    }
-
-	    if (confint && use_fill) {
-		for (t=0; t<periods; t++) {
-		    fprintf(fp, "%d %.10g %.10g\n", t,
-			    gretl_matrix_get(resp, t, 1),
-			    gretl_matrix_get(resp, t, 2));
-		}
-		fputs("e\n", fp);
-	    }
-
-	    for (t=0; t<periods; t++) {
-		fprintf(fp, "%d %.10g\n", t, gretl_matrix_get(resp, t, 0));
-	    }
-	    fputs("e\n", fp);
-
-	    if (confint && !use_fill) {
-		for (t=0; t<periods; t++) {
-		    fprintf(fp, "%d %.10g %.10g %.10g\n", t,
-			    gretl_matrix_get(resp, t, 0),
-			    gretl_matrix_get(resp, t, 1),
-			    gretl_matrix_get(resp, t, 2));
-		}
-		fputs("e\n", fp);
-	    }
-
-	    gretl_matrix_free(resp);
-	}
-    }
-#endif /* NEW_IRF or not */
 
     gretl_pop_c_numeric_locale();
 
@@ -8221,9 +8226,10 @@ static int roundup_mod (int i, double x)
     return (int) ceil((double) x * i);
 }
 
-/* options: OPT_R use radians as unit
-   OPT_D use degrees as unit
-   OPT_L use log scale
+/* option flags:
+   OPT_R --radians: use radians as unit
+   OPT_D --degrees: use degrees as unit
+   OPT_L --log: use log scale
 */
 
 static int real_pergm_plot (const char *vname,
@@ -8529,6 +8535,8 @@ static int qq_plot_two_series (const int *list,
     return finalize_plot_input_file(fp);
 }
 
+/* Option flags: OPT_R --raw, OPT_Z --z-scores */
+
 static int normal_qq_plot (const int *list,
 			   const DATASET *dset,
 			   gretlopt opt)
@@ -8561,6 +8569,7 @@ static int normal_qq_plot (const int *list,
     }
 
     if (!(opt & OPT_R)) {
+	/* without the --raw option */
 	ym = gretl_mean(0, n-1, y);
 	ys = gretl_stddev(0, n-1, y);
 
@@ -8570,10 +8579,6 @@ static int normal_qq_plot (const int *list,
 		y[i] = (y[i] - ym) / ys;
 	    }
 	}
-    }
-
-    if (opt & OPT_G) {
-	flags = GPT_ICON;
     }
 
     fp = open_plot_input_file(PLOT_QQ, flags, &err);
