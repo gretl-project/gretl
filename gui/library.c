@@ -9686,7 +9686,7 @@ static int handle_data_open_callback (CMD *cmd, void *ptr,
 }
 
 /* Callback from libgretl to update the GUI in light of
-   execution of commands via script.
+   execution of commands executed via script.
 */
 
 static int gui_exec_callback (ExecState *s, void *ptr,
