@@ -5746,6 +5746,7 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
 static void fcast_print_y_data (const double *x,
 				const double *y,
 				int t0, int t1, int t2,
+				const DATASET *dset,
 				FILE *fp)
 {
     int i, t, n = t2 - t0 + 1;
@@ -5756,10 +5757,16 @@ static void fcast_print_y_data (const double *x,
 	yt = t < t1 ? NADBL : y[t];
 	fprintf(fp, "%.10g ", x[t]);
 	write_gp_dataval(yt, fp, 1);
+	if (dataset_is_panel(dset) && ((t+1) % dset->pd == 0)) {
+	    /* hack, 2024-02-28 */
+	    fprintf(fp, "%g %s\n", x[t] + 0.5, GPNA);
+	}
     }
 
     fputs("e\n", fp);
 }
+
+/* public because called from plotbands.c */
 
 void print_user_y_data (const double *x,
 			const double *y,
@@ -5787,6 +5794,7 @@ static void print_confband_data (const double *x,
 				 const double *y,
 				 const double *e,
 				 int t0, int t1, int t2,
+				 const DATASET *dset,
 				 int mode, FILE *fp)
 {
     int i, t, n = t2 - t0 + 1;
@@ -5809,6 +5817,14 @@ static void print_confband_data (const double *x,
 	    fprintf(fp, "%.10g %.10g\n", xt, y[t] + e[t]);
 	} else {
 	    fprintf(fp, "%.10g %.10g %.10g\n", xt, y[t], e[t]);
+	}
+	if (dataset_is_panel(dset) && ((t+1) % dset->pd == 0)) {
+	    /* hack, 2024-02-28 */
+	    if (mode == CONF_LOW || mode == CONF_HIGH) {
+		fprintf(fp, "%g %s\n", x[t] + 0.5, GPNA);
+	    } else {
+		fprintf(fp, "%g %s %s\n", x[t] + 0.5, GPNA, GPNA);
+	    }
 	}
     }
 
@@ -6022,26 +6038,26 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     if (use_fill) {
 	if (do_errs) {
 	    print_confband_data(obs, fr->fitted, maxerr,
-				t1, yhmin, t2, CONF_FILL, fp);
+				t1, yhmin, t2, dset, CONF_FILL, fp);
 	}
 	if (depvar_present) {
-	    fcast_print_y_data(obs, fr->actual, t1, t1, t2, fp);
+	    fcast_print_y_data(obs, fr->actual, t1, t1, t2, dset, fp);
 	}
-	fcast_print_y_data(obs, fr->fitted, t1, yhmin, t2, fp);
+	fcast_print_y_data(obs, fr->fitted, t1, yhmin, t2, dset, fp);
     } else {
 	if (depvar_present) {
-	    fcast_print_y_data(obs, fr->actual, t1, t1, t2, fp);
+	    fcast_print_y_data(obs, fr->actual, t1, t1, t2, dset, fp);
 	}
-	fcast_print_y_data(obs, fr->fitted, t1, yhmin, t2, fp);
+	fcast_print_y_data(obs, fr->fitted, t1, yhmin, t2, dset, fp);
 	if (do_errs) {
 	    if (use_lines) {
 		print_confband_data(obs, fr->fitted, maxerr,
-				    t1, yhmin, t2, CONF_LOW, fp);
+				    t1, yhmin, t2, dset, CONF_LOW, fp);
 		print_confband_data(obs, fr->fitted, maxerr,
-				    t1, yhmin, t2, CONF_HIGH, fp);
+				    t1, yhmin, t2, dset, CONF_HIGH, fp);
 	    } else {
 		print_confband_data(obs, fr->fitted, maxerr,
-				    t1, yhmin, t2, CONF_BARS, fp);
+				    t1, yhmin, t2, dset, CONF_BARS, fp);
 	    }
 	}
     }
