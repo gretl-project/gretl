@@ -142,12 +142,12 @@ end function
 function matrix describe_feature(const bundle feat, scalar index, scalar verbose)
     if inbundle(feat, "geometry")
         ft = feat.geometry.type
-	if index == 0
+        if index == 0
             printf "\ngeometry type = %s, ", ft
-	else
+        else
             printf "\n%4d: geometry type = %s, ", index, ft
-	endif
-	
+        endif
+
         if inbundle(feat, "id")
             if typeof(feat.id) == 1
                 printf "id (numeric) = %g\n", feat.id
@@ -161,7 +161,7 @@ function matrix describe_feature(const bundle feat, scalar index, scalar verbose
         endif
 
         print_properties(feat.properties)
-	
+
         matrix extents = {$huge, -$huge; $huge, -$huge}
 
         if ft == "Point"
@@ -179,7 +179,7 @@ function matrix describe_feature(const bundle feat, scalar index, scalar verbose
         elif ft == "Polygon"
             printf "\t%s\n", describe_poly_coords(feat.geometry.coordinates, &extents, verbose, 0)
             printf "\tExtents: X = {%g,%g}; Y = {%g,%g}\n", extents[1,1], extents[1,2],
-            extents[2,1], extents[2,2]
+              extents[2,1], extents[2,2]
         elif ft == "MultiPolygon"
             mcoords = feat.geometry.coordinates
             nmulti = nelem(mcoords)
@@ -189,7 +189,7 @@ function matrix describe_feature(const bundle feat, scalar index, scalar verbose
                     printf "\t%s\n", describe_poly_coords(mcoords[j], &extents, verbose-1, j)
                 endloop
                 printf "\tExtents: X = {%g,%g}; Y = {%g,%g}\n", extents[1,1], extents[1,2],
-                extents[2,1], extents[2,2]
+                  extents[2,1], extents[2,2]
             endif
         endif
     else
@@ -201,7 +201,7 @@ end function
 
 function void print_properties(const bundle f)
     skeys = sort(getkeys(f))
-    
+
     loop i = 1 .. nelem(skeys)
         key = skeys[i]
         t = typeof(f[key])
@@ -222,23 +222,23 @@ end function
 
 function void polyplot(const matrices coords, string title, matrix extents)
     npoly = nelem(coords)
-    
-    ratio = (extents[2,2] - extents[2,1]) / (extents[1,2] - extents[1,1]) 
-    
-    outfile "@dotdir/temp.plt" --write
-    printf "set term wxt persist\n"
-    printf "unset border\n"
-    printf "set grid back\n"
-    printf "set size ratio %g\n", ratio
 
-    printf "set title \"%s\"\n", title
-    printf "unset key\n$coords << EOD\n"
-    loop i = 1 .. npoly
-        printf "%8.3f\n", coords[i]
-    endloop
-    printf "EOD\nplot for [i=0:*] $coords index i lc black with lines\n"
-end outfile
-!gnuplot "@dotdir/temp.plt"
+    ratio = (extents[2,2] - extents[2,1]) / (extents[1,2] - extents[1,1])
+
+    outfile "@dotdir/temp.plt"
+        printf "set term wxt persist\n"
+        printf "unset border\n"
+        printf "set grid back\n"
+        printf "set size ratio %g\n", ratio
+
+        printf "set title \"%s\"\n", title
+        printf "unset key\n$coords << EOD\n"
+        loop i = 1 .. npoly
+            printf "%8.3f\n", coords[i]
+        endloop
+        printf "EOD\nplot for [i=0:*] $coords index i lc black with lines\n"
+    end outfile
+    !gnuplot "@dotdir/temp.plt"
 end function
 
 function void plot_feature(const bundle b, scalar i, string title, matrix extents)
@@ -287,12 +287,12 @@ function matrix visvalingam(const matrix poly, scalar nout)
 
     loop while k > (nout+1)
         d = iminc(areas)
-        
+
         if 0
             printf "\n\nbefore drop (d = %d, k = %d)\n", d, k
             eval seq(1,k+1)' ~ ret ~ areas
         endif
-        
+
         if (d > 2) && (d < k)
             # drop central triangle
             ret = ret[-d, ]
