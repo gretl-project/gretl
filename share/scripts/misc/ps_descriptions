@@ -12,6 +12,7 @@
 "credscore","Testing for heteroskedasticity","credit card spending"
 "denmark","Vector Error Correction Model","Danish macro data"
 "ects_nls","Nonlinear least squares (Davidson)","artificial data"
+"fanchart","Plotting a fan chart","unemployment data"
 "frontier","Stochastic frontier cost function","Italian banks"
 "garch","GARCH (Bollerslev and Ghysels, 1996)","exchange rate"
 "gdp_midas","MIDAS examples from Ghysels","GDP and employment"

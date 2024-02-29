@@ -1,0 +1,58 @@
+###
+### this script provides an example on how to use the
+### "overlapping bands" facilities in the plot/gnuplot command 
+### and the rgbmix() function to handle colour scales
+###
+
+set verbose off
+
+function void fanchart(series y, series se, matrix in_alpha[null])
+
+    matrix alpha = exists(in_alpha) ? in_alpha : {0.683, 0.9, 0.99}
+    alpha = -sort(-vec(alpha)) # ensure proper ordering for ovelapping bands
+    scalar n = nelem(alpha)
+    bundles bbs = array(n)
+    # make colours customisable, perhaps?
+    col0 = 0xd42042
+    col1 = 0xffdcdc
+    colors = rgbmix(col0, col1, alpha)
+    loop i = 1 .. n
+        f = invcdf(z, 0.5+alpha[i]/2)
+        bbs[i] = _(center="y", width="se", factor=f, style="fill", color = colors[i])
+    endloop
+
+    gnuplot y --time-series --with-lines --output=display --bands=bbs
+
+end function
+
+### example
+
+# load FED data 
+
+clear 
+open fedstl.bin 
+data unratensa --name=y
+
+# forecast using a SARIMA model
+
+horizon = 18
+arima 2 0 ; 1 0 ; y
+
+# set up forecast for plotting 
+
+matrix tmp = 0 * {const}
+dataset addobs horizon
+fcast --out-of-sample yhat
+tmp = tmp | $fcse
+
+series plt = ok(yhat) ? yhat : y 
+series se = tmp 
+
+# plot with default band widths
+
+smpl 2021:6 ;
+fanchart(plt, se)
+
+# nd with custom band widths
+
+fanchart(plt, se, {0.5, 0.95})
