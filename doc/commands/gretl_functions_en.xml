@@ -1025,6 +1025,12 @@
 	</para>
 	<ilist>
 	  <li>
+	    <para>
+	      <lit>gui_mode</lit>: integer, equals 1 if libgretl is
+	      being called by the GUI program, otherwise 0.
+	    </para>
+	  </li>
+	  <li>
             <para>
               <lit>mpi</lit>: integer, equals 1 if the system supports
               MPI (Message Passing Interface), otherwise 0.
@@ -1091,6 +1097,46 @@
 	      and free or available memory, expressed in MB. This
 	      information may not be available on all systems but
 	      should be on Windows, macOS and Linux.
+            </para>
+	  </li>
+	  <li>
+	    <para>
+              <lit>blas</lit>: string identifying the supplier of the
+              BLAS (Basic Linear Algebra Subprograms) library in use
+              by gretl.
+            </para>
+	  </li>
+	  <li>
+	    <para>
+              <lit>blas_version</lit>: string identifying the version
+	      number of the blas library in use.
+            </para>
+	  </li>
+	  <li>
+	    <para>
+              <lit>blascore</lit>: (if applicable) a string
+              identifying the CPU type for which the current blas
+              library is optimized.
+            </para>
+	  </li>
+	  <li>
+	    <para>
+              <lit>compiler</lit>: a string identifying the compiler
+              used when building libgretl.
+            </para>
+	  </li>
+	  <li>
+	    <para>
+              <lit>cpuid</lit>: a string identifying the vendor and
+              model of the CPU on which libgretl is running.
+            </para>
+	  </li>
+	  <li>
+	    <para>
+              <lit>gnuplot</lit>: a string identifying the version of
+              gnuplot available to gretl for plotting, in the form of
+              three dot-separated numbers giving major version, minor
+              version and patchlevel.
             </para>
 	  </li>
 	  <li>

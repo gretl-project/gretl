@@ -15128,6 +15128,7 @@
 	<altform><lit>smpl</lit> <lit>--contiguous [ </lit><repl>varlist</repl> <lit>]</lit></altform>
 	<altform><lit>smpl</lit> <repl>n</repl> <lit>--random</lit></altform>
 	<altform><lit>smpl full</lit></altform>
+	<altform><lit>smpl</lit></altform>
       </altforms>
       <options>
         <option>
@@ -15195,12 +15196,13 @@
 
     <description>
       <para>
-	Resets the sample range.  The new range can be defined in
-	several ways.  In the first alternate form (and the first two
-	examples) above, <repl>startobs</repl> and <repl>endobs</repl>
-	must be consistent with the periodicity of the data.  Either
-	one may be replaced by a semicolon to leave the value
-	unchanged. (For more on <repl>startobs</repl> and
+	When no arguments are given, displays the current sample
+	range, otherwise sets the sample range.  The range can be
+	defined in several ways.  In the first alternate form (and the
+	first two examples) above, <repl>startobs</repl> and
+	<repl>endobs</repl> must be consistent with the periodicity of
+	the data.  Either one may be replaced by a semicolon to leave
+	the value unchanged. (For more on <repl>startobs</repl> and
 	<repl>endobs</repl> see the section titled <quote>Dates versus
 	sequential indices</quote> below.)  In the second form, the
 	integers <repl>i</repl> and <repl>j</repl> (which may be
