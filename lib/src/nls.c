@@ -3464,12 +3464,12 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 
     if (spec->ci == GMM) {
 	nlmod.errcode = incompatible_options(opt, OPT_I | OPT_T);
-	if (nlmod.errcode) {
-	    goto bailout;
-	}
     } else if (spec->nlfunc == NULL) {
 	gretl_errmsg_set(_("No function has been specified"));
 	nlmod.errcode = E_PARSE;
+    }
+
+    if (nlmod.errcode) {
 	goto bailout;
     }
 
@@ -3628,7 +3628,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 	dataset_drop_last_variables(dset, dset->v - origv);
     }
 
-    if (!(opt & OPT_A) && !nlmod.errcode) {
+    if (!nlmod.errcode && !(opt & OPT_A)) {
 	set_model_id(&nlmod, opt);
     }
 
