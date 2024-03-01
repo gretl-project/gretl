@@ -3458,18 +3458,16 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 
     gretl_model_init(&nlmod, dset);
 
-    if (spec->ci == GMM) {
-	nlmod.errcode = incompatible_options(opt, OPT_I | OPT_T);
-	if (nlmod.errcode) {
-	    return nlmod;
-	}
-    }
-
     if (dset != NULL) {
 	origv = dset->v;
     }
 
-    if (spec->nlfunc == NULL && spec->ci != GMM) {
+    if (spec->ci == GMM) {
+	nlmod.errcode = incompatible_options(opt, OPT_I | OPT_T);
+	if (nlmod.errcode) {
+	    goto bailout;
+	}
+    } else if (spec->nlfunc == NULL) {
 	gretl_errmsg_set(_("No function has been specified"));
 	nlmod.errcode = E_PARSE;
 	goto bailout;
