@@ -1301,7 +1301,7 @@ int get_package_data_path (int ci, const char *fname, char *fullname)
                 needle = fname;
             }
 
-            if (!find_file_in_dir(needle, gfnpath, fullname, 1, 0)) {
+            if (!find_file_in_dir(needle, gfnpath, fullname, 2, 0)) {
                 gretl_errmsg_sprintf(_("Couldn't find file %s for package %s"),
                                      needle, pkgname);
                 *fullname = '\0';
