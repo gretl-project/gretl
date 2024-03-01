@@ -5954,6 +5954,167 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
     }
 }
 
+/* start apparatus for augmenting "pkg query" to cover contents
+   of the "examples" directory of a function package, as of
+   February/March 2024.
+*/
+
+static int resource_wanted (const char *s)
+{
+    return has_suffix(s, ".inp") ||
+	has_suffix(s, ".gdt") ||
+	has_suffix(s, ".gdtb");
+}
+
+static int pkg_has_examples (const fnpkg *pkg)
+{
+    int i;
+
+    for (i=0; i<pkg->n_files; i++) {
+        if (!strcmp(pkg->datafiles[i], "examples")) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+/* helper for compare_resources() below */
+
+static int same_subdir (const char *sa, const char *sb)
+{
+    int n = strcspn(sa, SLASHSTR);
+
+    if (strcspn(sb, SLASHSTR) != n) {
+	return 0;
+    } else {
+	return strncmp(sa, sb, n) == 0;
+    }
+}
+
+/* qsort callback for resource filenames */
+
+static int compare_resources (const void *a, const void *b)
+{
+    const char *sa = *(const char **) a;
+    const char *sb = *(const char **) b;
+    int ac = strchr(sa, SLASH) != NULL;
+    int bc = strchr(sb, SLASH) != NULL;
+
+    if (ac + bc == 1) {
+	/* sort top-level files before subdir contents */
+	return ac ? 1 : -1;
+    } else {
+	/* sort scripts before data files, per directory */
+	int same_dir = (ac + bc == 0) ? 1 : same_subdir(sa, sb);
+
+	if (same_dir) {
+	    ac = has_suffix(sa, ".inp");
+	    bc = has_suffix(sb, ".inp");
+	    if (ac + bc == 1) {
+		return ac ? -1 : 1;
+	    }
+	}
+	/* just alphabetize */
+	return strcmp(sa, sb);
+    }
+}
+
+static char **package_resources_info (const fnpkg *pkg,
+                                      const char *fname,
+                                      char resdir[],
+                                      int *pn_res)
+{
+    char **resources = NULL;
+    gchar *pkg_base = NULL;
+    const gchar *dname;
+    const gchar *subdir;
+    char tmp[128];
+    gchar *savedir = NULL;
+    GDir *dir = NULL;
+    GDir *child = NULL;
+    int path_len = 0;
+    int n_res = 0;
+
+    path_len = strlen(fname) - strlen(pkg->name) - 4;
+    pkg_base = g_strndup(fname, path_len);
+
+    gretl_build_path(resdir, pkg_base, "examples", NULL);
+    dir = gretl_opendir(resdir);
+    if (dir == NULL) {
+	g_free(pkg_base);
+	return NULL;
+    }
+
+    /* cd into the examples directory to make life easier */
+    savedir = g_get_current_dir();
+    gretl_chdir(resdir);
+
+    /* first get a count of relevant files */
+    while ((dname = g_dir_read_name(dir)) != NULL) {
+	if (g_file_test(dname, G_FILE_TEST_IS_DIR)) {
+	    child = gretl_opendir(dname);
+	    if (child != NULL) {
+		while ((dname = g_dir_read_name(child)) != NULL) {
+		    if (resource_wanted(dname)) {
+			n_res++;
+		    }
+		}
+		g_dir_close(child);
+	    }
+	} else if (resource_wanted(dname)) {
+	    n_res++;
+	}
+    }
+
+    if (n_res > 0) {
+	/* if there are any relevant files, create an array */
+	int i = 0;
+
+	resources = strings_array_new(n_res);
+	g_dir_rewind(dir);
+
+	while ((dname = g_dir_read_name(dir)) != NULL) {
+	    if (g_file_test(dname, G_FILE_TEST_IS_DIR)) {
+		child = gretl_opendir(dname);
+		if (child != NULL) {
+		    subdir = dname;
+		    while ((dname = g_dir_read_name(child)) != NULL) {
+			if (resource_wanted(dname)) {
+			    sprintf(tmp, "%s%c%s", subdir, SLASH, dname);
+			    resources[i++] = gretl_strdup(tmp);
+			}
+		    }
+		    g_dir_close(child);
+		}
+	    } else if (resource_wanted(dname)) {
+		resources[i++] = gretl_strdup(dname);
+	    }
+	}
+    }
+
+    if (dir != NULL) {
+        g_dir_close(dir);
+    }
+
+    if (savedir != NULL) {
+	/* return to the original working directory */
+	gretl_chdir(savedir);
+	g_free(savedir);
+    }
+
+    *pn_res = n_res;
+    g_free(pkg_base);
+
+    if (resources != NULL) {
+	qsort(resources, n_res, sizeof *resources, compare_resources);
+    }
+
+    return resources;
+}
+
+/* end apparatus for augmenting "pkg query" to "examples" */
+
 static void plain_print_package_info (const fnpkg *pkg,
                                       const char *fname,
                                       PRN *prn)
@@ -5992,6 +6153,22 @@ static void plain_print_package_info (const fnpkg *pkg,
     if (pkg->provider != NULL) {
         pprintf(prn, "Provider: %s\n", pkg->provider);
     }
+
+    if (pkg_has_examples(pkg)) {
+        char resdir[MAXLEN];
+        char **resources;
+        int n_res = 0;
+
+        resources = package_resources_info(pkg, fname, resdir, &n_res);
+        if (resources != NULL) {
+            pprintf(prn, "Resources in %s:\n", resdir);
+            for (i=0; i<n_res; i++) {
+                pprintf(prn, "%s\n", resources[i]);
+            }
+            strings_array_free(resources, n_res);
+        }
+    }
+
     pputc(prn, '\n');
 }
 
@@ -6014,7 +6191,7 @@ static void real_bundle_package_info (const fnpkg *pkg,
 
     gretl_bundle_set_string(b, "name", pkg->name);
     gretl_bundle_set_string(b, "author", pkg->author);
-    gretl_bundle_set_scalar(b, "version", dot_atof(pkg->version));
+    gretl_bundle_set_string(b, "version", pkg->version);
     gretl_bundle_set_string(b, "date", pkg->date);
     if (pkg->email != NULL && *pkg->email != '\0') {
         gretl_bundle_set_string(b, "email", pkg->email);
@@ -6032,6 +6209,22 @@ static void real_bundle_package_info (const fnpkg *pkg,
     }
     if (pkg->provider != NULL) {
         gretl_bundle_set_string(b, "provider", pkg->provider);
+    }
+
+    if (pkg_has_examples(pkg)) {
+        char resdir[MAXLEN];
+        char **resources;
+        int n_res = 0;
+
+        resources = package_resources_info(pkg, fname, resdir, &n_res);
+        if (resources != NULL) {
+            gretl_array *R = gretl_array_from_strings(resources, n_res, 0, &err);
+
+            if (!err) {
+		gretl_bundle_set_string(b, "resource_dir", resdir);
+                gretl_bundle_donate_data(b, "resources", R, GRETL_TYPE_ARRAY, 0);
+            }
+        }
     }
 }
 
