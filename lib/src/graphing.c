@@ -4168,7 +4168,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	goto bailout;
     }
 
-    if (opt & OPT_D) {
+    if ((opt & OPT_D) && gi.list[0] > 1) {
 	oddman = get_y2_oddman(&gi, dset);
 	if (oddman == 0) {
 	    err = E_DATA;
