@@ -4386,10 +4386,6 @@
 	  <optparm>mode-or-filename</optparm>
 	  <effect>see below</effect>
         </option>
-        <option>
-	  <flag>--quiet</flag>
-	  <effect>suppress the plot</effect>
-        </option>
       </options>
       <examples>
         <example>freq x</example>
@@ -4402,8 +4398,10 @@
     <description context="cli">
       <para>
 	With no options given, displays the frequency distribution for
-	the series <repl>var</repl> (given by name or number), with
-	the number of bins and their size chosen automatically.
+	the series <repl>var</repl> (given by name or number) in
+	tabular form, with the number of bins and their size chosen
+	automatically, with or without an accompanying plot as
+	explained below.
       </para>
       <para>
 	If the <opt>matrix</opt> option is given, <repl>var</repl>
@@ -4413,11 +4411,15 @@
 	<repl>var</repl> argument may be omitted.
       </para>
       <para>
-	To control the presentation of the distribution you may
-	specify <emphasis>either</emphasis> the number of bins or
-	the minimum value plus the width of the bins, as shown in
-	the last two examples above. The <opt>min</opt> option
-	sets the lower limit of the left-most bin.
+	By default the frequency distribution employs an automatically
+	calculated number of bins if the data are continuous, or no
+	binning if the data are discrete. To control this point you
+	can (a) use the <cmdref targ="discrete"/> command to set the
+	status of <repl>var</repl> or (b), if the data are
+	continuous, specify <emphasis>either</emphasis> the number of
+	bins or the minimum value and the width of the bins, as shown
+	in the last two examples above. The <opt>min</opt> option sets
+	the lower limit of the left-most bin.
       </para>
       <para>
 	If the <opt>normal</opt> option is given, the

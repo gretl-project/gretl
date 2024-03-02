@@ -6,8 +6,13 @@ version 2024a, in progress
   argument, plot all columns by default
 - "gnuplot" command with --matrix and --time-series options:
   show dataset time on x-axis if possible
+- "gnuplot" command: add --y2axis option to specify placement
+  of a specifed y-variable on a second axis
+  show dataset time on x-axis if possible
 - "info" command: add --to-file and --from-file options for
   manipulating the description of a dataset
+- "freq" command: automatically switch to no binning in case
+  of few distinct values of the series argument
 - "tsls" command: add a --matrix-diff option for the Hausman
   test, using the method of Padadopoulos (Econometrics, 2023)
 - "gmm" command block: support lists of series in extenso on
@@ -20,6 +25,8 @@ version 2024a, in progress
   inside other arrays or bundles
 - "pkg install" command: support installation of data file
   packages in tar.gz format from the gretl server
+- "pkg query" command: show details of script and data files
+  from a package's "examples" directory, if present
 - bcheck() function: make the second argument optional
 - Fix broken backward compatibility in handling of backslash
   followed by double-quote in string literals
