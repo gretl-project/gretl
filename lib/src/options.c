@@ -54,7 +54,6 @@
                          c == FCAST ||          \
                          c == FOREIGN ||        \
                          c == FRACTINT ||       \
-                         c == FREQ ||           \
                          c == KPSS ||           \
                          c == MAKEPKG ||        \
                          c == MODTEST ||        \
@@ -291,7 +290,7 @@ struct gretl_option gretl_opts[] = {
     { FOREIGN,  OPT_I, "io-funcs", 2 },
     { FRACTINT, OPT_G, "gph", 0 },
     { FRACTINT, OPT_A, "all", 0 },
-    { FREQ,     OPT_G, "show-plot", 0 }, /* legacy */
+    { FREQ,     OPT_Q, "quiet", 0 }, /* legacy alias */
     { FREQ,     OPT_O, "gamma", 0 },
     { FREQ,     OPT_S, "silent", 0 },
     { FREQ,     OPT_Z, "normal", 0 },

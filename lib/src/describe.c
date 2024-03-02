@@ -1696,41 +1696,20 @@ static int freq_add_arrays (FreqDist *freq, int n)
     return err;
 }
 
-int freq_setup (int v, const DATASET *dset, int *pn,
-		double *pxmax, double *pxmin, int *nbins,
-		double *binwidth)
+static int freq_n_bins (int k0, int n, double s, double r)
 {
-    const double *x = dset->Z[v];
-    double xrange, xmin = 0, xmax = 0;
-    int t, k = 0, n = 0;
+    int k;
 
-    for (t=dset->t1; t<=dset->t2; t++) {
-	if (!na(x[t])) {
-	    if (n == 0) {
-		xmax = xmin = x[t];
-	    } else {
-		if (x[t] > xmax) xmax = x[t];
-		if (x[t] < xmin) xmin = x[t];
-	    }
-	    n++;
-	}
-    }
+#if 0 /* maybe enable this? */
+    /* Scott's bin width rule */
+    double h = 3.49 * s * pow((double) n, -1.0/3.0);
+    fprintf(stderr, "s = %g, n = %d, Scott's h = %g\n", s, n, h);
+    fprintf(stderr, " => nbins ~= %d\n", (int) (r/h));
+#endif
 
-    if (n < 8) {
-	gretl_errmsg_sprintf(_("Insufficient data to build frequency "
-			       "distribution for variable %s"),
-			     dset->varname[v]);
-	return E_TOOFEW;
-    }
-
-    xrange = xmax - xmin;
-    if (xrange == 0) {
-	gretl_errmsg_sprintf(_("%s is a constant"), dset->varname[v]);
-	return E_DATA;
-    }
-
-    if (*nbins > 0) {
-	k = *nbins;
+    if (k0 > 0) {
+	/* got a pre-specified value */
+	k = k0;
     } else if (n < 16) {
 	k = 5;
     } else if (n < 50) {
@@ -1743,18 +1722,62 @@ int freq_setup (int v, const DATASET *dset, int *pn,
 	    k = 99;
 	}
     }
-
     if (k % 2 == 0) {
 	k++;
     }
 
-    *pn = n;
-    *pxmax = xmax;
-    *pxmin = xmin;
-    *nbins = k;
-    *binwidth = xrange / (k - 1);
+    return k;
+}
 
-    return 0;
+int freq_setup (int v, const DATASET *dset, int *pn,
+		double *pxmax, double *pxmin, int *nbins,
+		double *binwidth)
+{
+    const double *x = dset->Z[v];
+    gretl_matrix *xvals;
+    int all_n = sample_size(dset);
+    int nv, missvals = 0;
+    int n = 0;
+    int err = 0;
+
+    xvals = gretl_matrix_values_full(x + dset->t1, all_n, OPT_S,
+				     &missvals, &err);
+    if (!err) {
+	nv = xvals->rows;
+	n = all_n - missvals;
+	if (nv < 2) {
+	    gretl_errmsg_sprintf(_("%s is a constant"), dset->varname[v]);
+	    err = E_DATA;
+	} else if (n < 8) {
+	    gretl_errmsg_sprintf(_("Insufficient data to build frequency "
+				   "distribution for variable %s"),
+				 dset->varname[v]);
+	    err = E_TOOFEW;
+	}
+    }
+
+    if (!err) {
+	double xmin = xvals->val[0];
+	double xmax = xvals->val[nv-1];
+	double xrange = xmax - xmin;
+	double s = gretl_stddev(dset->t1, dset->t2, x);
+	int k = freq_n_bins(*nbins, n, s, xrange);
+
+	if (nv < k) {
+	    /* too few distinct values: don't do binning */
+	    *nbins = 0;
+	} else {
+	    *nbins = k;
+	    *binwidth = xrange / (k - 1);
+	}
+	*pn = n;
+	*pxmax = xmax;
+	*pxmin = xmin;
+    }
+
+    gretl_matrix_free(xvals);
+
+    return err;
 }
 
 /* calculate test stat for distribution, if the sample
@@ -2019,13 +2042,9 @@ FreqDist *get_freq (int varno, const DATASET *dset,
 
     if (is_string_valued(dset, varno)) {
 	return get_string_freq(varno, dset, err);
-    }
-
-    if (series_is_discrete(dset, varno) || (opt & OPT_D)) {
+    } else if (series_is_discrete(dset, varno) || (opt & OPT_D)) {
 	return get_discrete_freq(varno, dset, opt, err);
-    }
-
-    if (gretl_isdiscrete(dset->t1, dset->t2, dset->Z[varno]) > 1) {
+    } else if (gretl_isdiscrete(dset->t1, dset->t2, dset->Z[varno]) > 1) {
 	return get_discrete_freq(varno, dset, opt, err);
     }
 
@@ -2036,6 +2055,12 @@ FreqDist *get_freq (int varno, const DATASET *dset,
     }
 
     *err = freq_setup(varno, dset, &n, &xmax, &xmin, &nbins, &binwidth);
+
+    if (!*err && nbins == 0) {
+	/* no binning wanted: switch to discrete variant */
+	free_freq(freq);
+	return get_discrete_freq(varno, dset, opt, err);
+    }
 
     if (*err) {
 	goto bailout;
@@ -2267,12 +2292,6 @@ int freqdist (int varno, const DATASET *dset,
     }
 
     if (!(opt & OPT_Q)) {
-	if (opt & OPT_G) {
-	    /* it's a legacy thing */
-	    opt |= OPT_U;
-	    opt &= ~OPT_G;
-	    set_optval_string(FREQ, OPT_U, "display");
-	}
 	do_graph = gnuplot_graph_wanted(ptype, opt);
     }
 
