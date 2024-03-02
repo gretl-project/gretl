@@ -5262,6 +5262,11 @@
 	  <effect>force use of just one y-axis</effect>
         </option>
         <option>
+	  <flag>--y2axis</flag>
+	  <optparm>yvar</optparm>
+	  <effect>put specified variable on second y-axis</effect>
+        </option>
+        <option>
 	  <flag>--ylogscale</flag>
 	  <optparm optional="true">base</optparm>
 	  <effect>use log scale for vertical axis</effect>
@@ -5346,6 +5351,16 @@
 	shows how to plot <lit>y1</lit> and <lit>y2</lit> against
 	<lit>x</lit>, such that <lit>y2</lit> is represented by a line
 	but <lit>y1</lit> by points.
+      </para>
+      <para>
+	When <repl>yvars</repl> contains more than one variable it may
+	be preferable to use two y axes (left and right). By default
+	this is handled automatically, via a heuristic based on the
+	relative scales of the variables, but two (mutually exclusive)
+	options can be used to override the default. As you'd expect,
+	<opt>single-yaxis</opt> prevents use of a second axis, while
+	<opt>y2axis=</opt><repl>yvar</repl> specifies that a selected
+	variable (only) be plotted relative to a second axis.
       </para>
       <para>
 	If the <opt>dummy</opt> option is selected, exactly three
