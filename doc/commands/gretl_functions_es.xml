@@ -1025,6 +1025,12 @@
 	</para>
 	<ilist>
 	  <li>
+	          <para>
+	            <lit>gui_mode</lit>: número entero igual a 1 si libgretl
+	            está siendo invocado por el programa GUI, y 0 en caso contrario.
+	          </para>
+	  </li>
+	  <li>
             <para>
               <lit>mpi</lit>: número entero igual a 1 si el sistema admite
               MPI (Interfaz de Paso de Mensajes), y 0 en caso contrario.
@@ -1091,6 +1097,46 @@
               física total, y la memoria libre o disponible, expresadas en
               MB. Esta información puede no estar disponible en todos los
               sistemas, pero debiera estarlo en Windows, macOS y Linux.
+            </para>
+	  </li>
+	  <li>
+	          <para>
+              <lit>blas</lit>: cadena de texto que identifica el proveedor de
+              la biblioteca BLAS (Subprogramas Básicos de Álgebra Lineal)
+              que utiliza GRETL.
+            </para>
+	  </li>
+	  <li>
+	          <para>
+              <lit>blas_version</lit>: cadena de texto que identifica el
+              número de la versión de la biblioteca BLAS que se utiliza.
+            </para>
+	  </li>
+	  <li>
+	          <para>
+              <lit>blascore</lit>: (si es aplicable) una cadena de texto que
+              identifica el tipo de CPU para el que está optimizada la
+              biblioteca BLAS vigente.
+            </para>
+	  </li>
+	  <li>
+	    <para>
+              <lit>compiler</lit>: una cadena de texto que identifica el
+              compilador utilizado al generar libgretl.
+            </para>
+	  </li>
+	  <li>
+	    <para>
+              <lit>cpuid</lit>: una cadena de texto que identifica el vendedor
+              y el modelo de la CPU en la que está ejecutándose libgretl.
+            </para>
+	  </li>
+	  <li>
+	    <para>
+              <lit>gnuplot</lit>: una cadena de texto que identifica la
+              versión disponible de Gnuplot para que GRETL haga gráficos,
+              con formato de 3 números separados por puntos que indican
+              la versión principal, la versión secundaria y el nivel de parche.
             </para>
 	  </li>
 	  <li>
@@ -1967,7 +2013,7 @@
     <function name="bcheck" section="programming" output="scalar">
       <fnargs>
 	<fnarg type="bundleref">objetivo</fnarg>
-	<fnarg type="bundle">entrada</fnarg>
+	<fnarg type="bundle" optional="true">entrada</fnarg>
 	<fnarg type="strings" optional="true">claves-requeridas</fnarg>
       </fnargs>
       <description>
@@ -1978,8 +2024,12 @@
 	  mediante el que el solicitante puede hacer varias elecciones. Algunos
 	  elementos del 'bundle' pueden tener valores predeterminados &mdash;
 	  por lo que el solicitante no está obligado a hacer una elección
-	  explícita &mdash; aunque pueden necesitarse otros elementos. Quieres
-	  determinar si el argumento que obtienes, es correcto.
+	  explícita &mdash; aunque pueden necesitarse otros elementos. Lo
+	  que quieres es determinar si el argumento que obtienes es correcto.
+	  El texto principal de abajo asume que el solicitante de tu función
+	  proporciona un 'bundle' de <argname>entrada</argname>, pero consulta
+	  la sección titulada <quote>Sin paquete de entrada</quote>, en caso
+	  contrario.
 	</para>
 	<para>
 	  Para utilizar <lit>bcheck</lit>, construyes un modelo de 'bundle' que
@@ -2065,6 +2115,17 @@
 	     # Proceder utilizando los valores en el objetivo
 	  endif
 	</code>
+	<subhead>Sin paquete de entrada</subhead>
+	<para>
+	  Si no se proporciona el 'bundle' de <argname>entrada</argname> a
+	  <lit>bcheck</lit>, se comporta del siguiente modo. Si el argumento
+    <argname>claves-requeridas</argname> no se indica, devuelve el cero
+    (puesto que no puede suceder ninguna de las condiciones de fallo que se
+    mencionan más arriba), y <argname>objetivo</argname> no se modifica.
+    En caso contrario, devuelve un valor no nulo puesto que está claro que
+    una o más especificaciones deben estar ausentes. Esto significa que es
+    seguro pasar una <argname>entrada</argname> nula a <lit>bcheck</lit>.
+        </para>
       </description>
     </function>
 

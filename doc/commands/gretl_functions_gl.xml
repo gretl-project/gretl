@@ -1025,6 +1025,12 @@
 	</para>
 	<ilist>
 	  <li>
+	          <para>
+	            <lit>gui_mode</lit>: número enteiro igual a 1 se libgretl
+	            está sendo invocado polo programa GUI, e 0 noutro caso.
+	          </para>
+	  </li>
+	  <li>
             <para>
               <lit>mpi</lit>: número enteiro igual a 1 se o sistema admite
               MPI (Interface de Paso de Mensaxes), e 0 noutro caso.
@@ -1091,6 +1097,46 @@
               física total, e a memoria libre ou dispoñible, expresadas en
               MB. Esta información pode que non estea dispoñible en todos
               os sistemas, pero debera estalo en Windows, macOS e Linux.
+            </para>
+	  </li>
+	  <li>
+	          <para>
+              <lit>blas</lit>: cadea de texto que identifica o provedor da
+              biblioteca BLAS (Subprogramas Básicos de Álxebra Linear)
+              que utiliza GRETL.
+            </para>
+	  </li>
+	  <li>
+	          <para>
+              <lit>blas_version</lit>: cadea de texto que identifica o número
+              da versión da biblioteca BLAS que se utiliza.
+            </para>
+	  </li>
+	  <li>
+	          <para>
+              <lit>blascore</lit>: (se é aplicable) unha cadea de texto que
+              identifica o tipo de CPU para o que está optimizada a
+              biblioteca BLAS vixente.
+            </para>
+	  </li>
+	  <li>
+	    <para>
+              <lit>compiler</lit>: unha cadea de texto que identifica o
+              compilador utilizado ao xerar libgretl.
+            </para>
+	  </li>
+	  <li>
+	    <para>
+              <lit>cpuid</lit>: unha cadea de texto que identifica o vendedor
+              e o modelo da CPU na que está executándose libgretl.
+            </para>
+	  </li>
+	  <li>
+	    <para>
+              <lit>gnuplot</lit>: unha cadea de texto que identifica a
+              versión dispoñible de Gnuplot para que GRETL faga gráficas,
+              no formato de 3 números separados por puntos que indican
+              a versión principal, a versión secundaria e o nivel de parche.
             </para>
 	  </li>
 	  <li>
@@ -1967,7 +2013,7 @@
     <function name="bcheck" section="programming" output="scalar">
       <fnargs>
 	<fnarg type="bundleref">obxectivo</fnarg>
-	<fnarg type="bundle">entrada</fnarg>
+	<fnarg type="bundle" optional="true">entrada</fnarg>
 	<fnarg type="strings" optional="true">teclas-requiridas</fnarg>
       </fnargs>
       <description>
@@ -1978,8 +2024,12 @@
 	  o solicitante pode facer varias eleccións. Algúns elementos do feixe
 	  poden ter valores predeterminados &mdash;polo que o solicitante
 	  non está obrigado a facer unha elección explícita&mdash; anque
-	  poden necesitarse outros elementos. Queres determinar se o
-	  argumento que obtés, é correcto.
+	  poden necesitarse outros elementos. O que queres é determinar
+	  se o argumento que obtés é correcto. O texto principal de abaixo
+	  asume que o solicitante da túa función proporciona un paquete
+	  (bundle) de <argname>entrada</argname>, pero consulta a sección
+	  titulada <quote>Sen paquete de entrada</quote>, en caso
+	  contrario.
 	</para>
 	<para>
 	  Para utilizar <lit>bcheck</lit>, constrúes un modelo de feixe que
@@ -2065,6 +2115,17 @@
 	     # Continuar utilizando os valores no obxectivo
 	  endif
 	</code>
+	<subhead>Sen paquete de entrada</subhead>
+	<para>
+	  Se non se proporciona o paquete (bundle) de <argname>entrada</argname>
+	  a <lit>bcheck</lit>, se comporta do seguinte xeito. Se o argumento
+    <argname>teclas-requiridas</argname> non se indica, devolve o cero
+    (posto que non pode acontecer ningunha das condicións de fallo que se
+    mencionan máis arriba), e <argname>obxectivo</argname> non se modifica.
+    Noutro caso, devolve un valor non nulo posto que está claro que unha ou
+    máis especificacións deben estar ausentes. Isto significa que é seguro pasar unha
+    <argname>entrada</argname> nula a <lit>bcheck</lit>.
+        </para>
       </description>
     </function>
 

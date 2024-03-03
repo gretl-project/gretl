@@ -2103,6 +2103,10 @@
 	  <flag>--triangle</flag>
 	  <effect>Representa só a metade inferior, mira abaixo</effect>
 	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>Non presenta nada</effect>
+	</option>
 	
       </options>
       <examples>
@@ -9062,6 +9066,80 @@
     </description>
   </command>
 
+  <command name="mdhelp" section="Programming" label="Axuda para marcado Markdown"
+    context="gui">
+
+    <description>
+      <para>
+	Nesta xanela do editor podes inserir elementos para marcado lixeiro como
+	se indica despois; pero observa que a expresión <quote>inmediatamente</quote>
+	de máis abaixo, quere dicir que non teña ningún espazo intermedio.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Grosa: Coloca dous asteriscos (<lit>**</lit>),
+	    inmediatamente antes e despois dun anaco de texto.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Cursiva: Coloca un único asterisco ou guión baixo,
+	    inmediatamente antes e despois dun anaco de texto.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Monoespazada: Coloca unha comiña simple esquerda (<lit>`</lit>),
+	    inmediatamente antes e despois dun anaco de texto.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Cabeceira de nivel 1: Coloca un único cancelo (<lit>#</lit>)
+	    antes da cabeceira, e deixa unha liña en branco despois da
+	    mesma.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Cabeceira de nivel 2: Coloca dos cancelos sucesivos antes da
+	    cabeceira, e deixa unha liña en branco a continuación.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Bloque de código: Deixa unha liña en branco e a continuación
+	    coloca tres comiñas simples esquerdas sucesivas (<lit>```</lit>)
+	    na liña xusto anterior ao código, e outras tres na liña xusto
+	    despois do mesmo.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Lista non numerada: Deixa unha liña en branco antes da lista, e
+	    insire un guión cun espazo (<quote><lit>- </lit></quote>) antes
+	    de cada elemento, usando unha nova liña para cada un deles.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Lista numerada: Deixa unha liña en branco antes da lista, e
+	    insire o número, un punto e un espazo (por exemplo,
+	    <quote><lit>1. </lit></quote>) antes de cada elemento, usando
+	    unha nova liña para cada un deles.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	A icona dun ollo desta xanela te permite obter unha visión previa do
+	texto de axuda con marcado lixeiro (markdown). Cae na conta de que
+	se realmente o texto non contén anotacións de marcado lixeiro, a
+	<quote>visión previa</quote> podería non ter unha boa aparencia.
+      </para>
+    </description>
+  </command>
+
   <command name="menu-attach" section="Programming"
 	   label="Anexo ao menú" context="gui">
     <description>
@@ -11645,7 +11723,8 @@
 	eliminar ou indexar paquetes de funcións de GRETL. O argumento
 	<repl>acción</repl> debe de ser algún de entre <lit>install</lit>,
 	<lit>query</lit>, <lit>unload</lit>, <lit>remove</lit> ou <lit>index</lit>,
-	respectivamente.
+	respectivamente. Unha extensión para dar soporte a paquetes de
+	ficheiros de datos descríbese máis abaixo.
       </para>
       <para>
 	<lit>install</lit>: Na súa forma máis elemental, sen ningún indicador
@@ -11698,7 +11777,22 @@
       </para>
       <code>
 	pkg index addons --verbose
-      </code>
+      </code>>
+	<subhead>Paquetes de ficheiros de datos</subhead>
+	    <para>
+	Ademais da súa utilización con paquetes de funcións, a instrución
+	<lit>pkg install</lit> tamén se pode usar con paquetes de ficheiros
+	de datos do tipo <lit>tar.gz</lit> como se indican na listaxe de
+	<url>https://gretl.sourceforge.net/gretl_data.html</url>. Por exemplo,
+	para instalar os ficheiros de datos de Verbeek, pódese facer
+	    </para>
+	    <code>
+	pkg install verbeek.tar.gz
+	    </code>
+	    <para>
+  Cae na conta de que <lit>install</lit> é a única operación admitida
+  para eses ficheiros.
+      </para>
     </description>
 	
     <gui-access>
@@ -15034,6 +15128,7 @@
 	<altform><lit>smpl</lit> <lit>--contiguous [ </lit><repl>listavariables</repl> <lit>]</lit></altform>
 	<altform><lit>smpl</lit> <repl>n</repl> <lit>--random</lit></altform>
 	<altform><lit>smpl full</lit></altform>
+	<altform><lit>smpl</lit></altform>
       </altforms>
       <options>
         <option>
@@ -15101,7 +15196,8 @@
 
     <description>
       <para>
-	Restablece o rango da mostra. Podes definir o novo rango de varios
+	Cando non indicas ningún argumento, presenta o rango mostral vixente;
+	noutro caso, establece o rango mostral. Podes definir o rango de varios
 	xeitos. Na primeira alternativa (e nos dous primeiros exemplos) de
 	arriba, <repl>obsinicio</repl> e <repl>obsfin</repl> deben de ser
 	consistentes coa periodicidade dos datos. Podes substituír calquera
