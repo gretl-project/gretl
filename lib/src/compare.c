@@ -2665,6 +2665,31 @@ static void write_plot_x_range (const double *x, int t1, int t2,
     fprintf(fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);
 }
 
+/* try to ensure that the critical value, @cv, is not squashed
+   against the bottom or top of the plot
+*/
+
+static void write_plot_y_range (const double *y, int T,
+				double cv, FILE *fp)
+{
+    double ymin, ymax, yrange;
+    double f = 0.025;
+
+    gretl_minmax(0, T, y, &ymin, &ymax);
+    if (cv < ymin) {
+	ymin = cv;
+	f = 0.05;
+    } else if (cv > ymax) {
+	ymax = cv;
+	f = 0.05;
+    }
+    yrange = ymax - ymin;
+    ymin -= f * yrange;
+    ymax += f * yrange;
+
+    fprintf(fp, "set yrange [%.10g:%.10g]\n", ymin, ymax);
+}
+
 static int QLR_graph (const double *testvec, int t1, int t2,
 		      const DATASET *dset, int df, int robust)
 {
@@ -2676,12 +2701,18 @@ static int QLR_graph (const double *testvec, int t1, int t2,
     const char *title;
     double (*qlr_critval) (int);
     double critval = NADBL;
+    GptFlags flags = 0;
     FILE *fp;
-    int t, err = 0;
+    int t;
+    int err = 0;
 
     set_effective_plot_ci(QLRTEST);
 
-    fp = open_plot_input_file(PLOT_REGULAR, 0, &err);
+    if (dataset_is_time_series(dset)) {
+	flags = GPT_TS | GPT_LETTERBOX;
+    }
+
+    fp = open_plot_input_file(PLOT_REGULAR, flags, &err);
     if (err) {
 	return err;
     }
@@ -2707,9 +2738,10 @@ static int QLR_graph (const double *testvec, int t1, int t2,
     write_plot_x_range(x, t1, t2, fp);
 
     if (!na(critval)) {
+	write_plot_y_range(testvec, t2 - t1, critval, fp);
 	fprintf(fp, "plot \\\n"
 		"'-' using 1:2 title \"%s\" w lines , \\\n"
-		"%g title \"%s\" w lines lt 0\n",
+		"%g title \"%s\" w lines dt 2\n",
 		_(title), critval, _("5% QLR critical value"));
     } else {
 	fprintf(fp, "plot \\\n"
@@ -3325,12 +3357,17 @@ static int cusum_do_graph (double a, double b, const double *W,
 			   DATASET *dset, gretlopt opt)
 {
     FILE *fp = NULL;
+    GptFlags flags = 0;
     const double *obs = NULL;
     double frac = 1.0;
     double x0 = 0.0;
     int j, t, err = 0;
 
-    fp = open_plot_input_file(PLOT_CUSUM, 0, &err);
+    if (dataset_is_time_series(dset)) {
+	flags = GPT_TS | GPT_LETTERBOX;
+    }
+
+    fp = open_plot_input_file(PLOT_CUSUM, flags, &err);
     if (err) {
 	return err;
     }
