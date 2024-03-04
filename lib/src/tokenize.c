@@ -1641,6 +1641,11 @@ looks_like_list_token (CMD *c, cmd_token *tok, const DATASET *dset)
     return 0;
 }
 
+/* special case: MODELTAB command: param is optional iff
+   OPT_B (--options) is given
+*/
+#define param_excused(c) (c->ci == MODELTAB && (c->opt & OPT_B))
+
 /* Get command parameter in first position; may involve
    compositing tokens.
 */
@@ -1651,7 +1656,7 @@ static int get_param (CMD *c, const DATASET *dset)
     cmd_token *tok;
 
     if (pos < 0) {
-	if (!param_optional(c->ci)) {
+	if (!param_optional(c->ci) && !param_excused(c)) {
 	    c->err = E_ARGS;
 	    fprintf(stderr, "%s: required param is missing\n",
 		    c->toks[c->cstart].s);
@@ -3856,8 +3861,8 @@ static void handle_option_inflections (CMD *cmd)
 	    cmd->ciflags = CI_PARM1;
 	}
     } else if (cmd->ci == MODELTAB) {
-	if (cmd->opt == OPT_O) {
-	    /* --output: no arg needed */
+	if (cmd->opt & OPT_O) {
+	    /* --output: no arg needed or allowed */
 	    cmd->ciflags &= ~CI_PARM1;
 	}
     } else if (cmd->ci == XTAB) {
@@ -3958,7 +3963,7 @@ static int assemble_command (CMD *cmd, DATASET *dset,
 
     /* legacy stuff */
 
-    if (cmd->ci == TABPRINT || cmd->ci == TABPRINT) {
+    if (cmd->ci == EQNPRINT || cmd->ci == TABPRINT) {
 	legacy_get_filename(cmd);
     } else if (cmd->ci == SETINFO) {
 	get_quoted_dash_fields(cmd, "dn");

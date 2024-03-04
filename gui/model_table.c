@@ -54,6 +54,122 @@ enum {
     COLHEAD_NAMES
 };
 
+/* transcribe file-scope values to settings.c */
+
+static void record_mtable_settings (void)
+{
+    set_model_table_prefs(colheads,
+			  use_tstats,
+			  do_pvals,
+			  do_asts,
+			  mt_figs,
+			  mt_fmt);
+}
+
+/* load file-scope values from settings.c */
+
+static void load_mtable_settings (void)
+{
+    get_model_table_prefs(&colheads,
+			  &use_tstats,
+			  &do_pvals,
+			  &do_asts,
+			  &mt_figs,
+			  &mt_fmt);
+}
+
+static int mtable_opt_from_bundle (gretl_bundle *b,
+				   const char *key, int j)
+{
+    int limits[6][2] = {
+	{1,4}, {0,1}, {0,1}, {0,1}, {2,6}, {2,6}
+    };
+    int *targets[] = {
+	&colheads, &use_tstats, &do_pvals, &do_asts
+    };
+    int val, err = 0;
+
+    val = gretl_bundle_get_int(b, key, &err);
+    if (!err) {
+	if (val < limits[j][0] || val > limits[j][1]) {
+	    err = E_INVARG;
+	}
+    }
+    if (!err) {
+	if (j == 0) {
+	    /* convert to 0-based */
+	    *targets[j] = val - 1;
+	} else if (j < 4) {
+	    *targets[j] = val;
+	} else {
+	    mt_figs = val;
+	    mt_fmt = (j == 4)? 'g' : 'f';
+	}
+    }
+
+    return err;
+}
+
+static void set_mtable_defaults (void)
+{
+    colheads = 0;
+    use_tstats = 0;
+    do_pvals = 0;
+    do_asts = 1;
+    mt_figs = 4;
+    mt_fmt = 'g';
+    record_mtable_settings();
+}
+
+static int mtable_read_bundle (gretl_bundle *b)
+{
+    const char *ok_keys[] = {
+	"colheads", "tstats", "pvalues", "asterisks",
+	"digits", "decplaces", NULL
+    };
+    gretl_array *a;
+    int err = 0;
+
+    a = gretl_bundle_get_keys(b, &err);
+
+    if (!err) {
+	const char *key;
+	int i, j, n, found;
+	int got_digits = 0;
+
+	n = gretl_array_get_length(a);
+	for (i=0; i<n && !err; i++) {
+	    key = gretl_array_get_data(a, i);
+	    found = 0;
+	    for (j=0; ok_keys[j] != NULL; j++) {
+		if (!strcmp(key, ok_keys[j])) {
+		    found = 1;
+		    if (j == 4) {
+			got_digits = 1;
+		    } else if (got_digits && j == 5) {
+			err = E_INVARG;
+		    }
+		    if (!err) {
+			err = mtable_opt_from_bundle(b, key, j);
+		    }
+		}
+	    }
+	    if (!err && !found) {
+		gretl_errmsg_sprintf("modeltab: invalid option-key '%s'", key);
+		err = E_INVARG;
+	    }
+	}
+    }
+
+    if (!err) {
+	record_mtable_settings();
+    }
+
+    gretl_array_destroy(a);
+
+    return err;
+}
+
 static void mtable_errmsg (char *msg, int gui)
 {
     if (gui) {
@@ -1138,38 +1254,24 @@ static void plain_print_model_table (PRN *prn)
 
 int display_model_table (int gui)
 {
-    int winwidth = 78;
+    int winwidth;
     PRN *prn;
 
     if (model_table_is_empty()) {
 	mtable_errmsg(_("The model table is empty"), gui);
 	return 1;
-    }
-
-    if (make_full_param_list()) {
+    } else if (make_full_param_list()) {
 	return 1;
-    }
-
-    if (bufopen(&prn)) {
+    } else if (bufopen(&prn)) {
 	clear_model_table(0, NULL);
 	return 1;
     }
 
-    get_model_table_prefs(&colheads,
-			  &use_tstats,
-			  &do_pvals,
-			  &do_asts,
-			  &mt_figs,
-			  &mt_fmt);
-
+    load_mtable_settings();
     plain_print_model_table(prn);
-
-    if (real_table_n_models() > 5) {
-	winwidth = 90;
-    }
-
-    view_buffer(prn, winwidth, 450, _("gretl: model table"), VIEW_MODELTABLE,
-		NULL);
+    winwidth = real_table_n_models() > 5 ? 90 : 78;
+    view_buffer(prn, winwidth, 450, _("gretl: model table"),
+		VIEW_MODELTABLE, NULL);
 
     return 0;
 }
@@ -1350,12 +1452,7 @@ static int rtf_print_model_table (PRN *prn)
 
 int special_print_model_table (PRN *prn)
 {
-    get_model_table_prefs(&colheads,
-			  &use_tstats,
-			  &do_pvals,
-			  &do_asts,
-			  &mt_figs,
-			  &mt_fmt);
+    load_mtable_settings();
 
     if (tex_format(prn)) {
 	return tex_print_model_table(prn);
@@ -1474,37 +1571,65 @@ int modeltab_exec (const char *param, gretlopt opt, PRN *prn)
     fprintf(stderr, "*** modeltab_exec ***\n");
 #endif
 
-    if ((param != NULL && (opt & OPT_O)) ||
-	(param == NULL && !(opt & OPT_O))) {
-	/* the --output option rules out the various
-	   command params; otherwise a param value is
-	   needed
+    if (param != NULL && (opt & OPT_O)) {
+	/* the --output option is incompatible with the
+	   various "action" parameters
 	*/
-	return E_PARSE;
-    } else if (opt & OPT_O) {
-	/* --output="filename" */
-	const char *outfile;
+	return E_BADOPT;
+    }
 
-	outfile = get_optval_string(MODELTAB, OPT_O);
-	if (outfile == NULL) {
+    if (opt & OPT_B) {
+	/* --options */
+	const char *optstr;
+	gretl_bundle *b = NULL;
+
+	optstr = get_optval_string(MODELTAB, OPT_B);
+	if (optstr != NULL && !strcmp(optstr, "defaults")) {
+	    set_mtable_defaults();
+	} else if ((b = get_bundle_by_name(optstr)) == NULL) {
+	    err = E_DATA;
+	} else {
+	    err = mtable_read_bundle(b);
+	}
+    }
+
+    if (!err && (opt & OPT_O)) {
+	/* --output */
+	const char *fname = get_optval_string(MODELTAB, OPT_O);
+
+	if (fname == NULL) {
 	    err = E_PARSE;
 	} else {
-	    err = print_model_table_direct(outfile, opt, prn);
+	    err = print_model_table_direct(fname, opt, prn);
 	}
-    } else if (!strcmp(param, "add")) {
-	err = cli_modeltab_add(prn);
-    } else if (!strcmp(param, "show")) {
-	err = display_model_table(0);
-    } else if (!strcmp(param, "free")) {
-	if (!model_table_is_empty()) {
-	    clear_model_table(0, prn);
+	return err;
+    }
+
+    if (!err && param != NULL && *param != '\0') {
+	if (!strcmp(param, "add")) {
+	    err = cli_modeltab_add(prn);
+	} else if (!strcmp(param, "show")) {
+	    err = display_model_table(0);
+	} else if (!strcmp(param, "free")) {
+	    if (!model_table_is_empty()) {
+		clear_model_table(0, prn);
+	    }
+	} else {
+	    err = E_PARSE;
 	}
-    } else {
-	err = E_PARSE;
+    }
+
+    if (err) {
+	gui_errmsg(err);
     }
 
     return err;
 }
+
+/* Implement on-the-fly reformatting of the model table, in
+   response to clicking on the "Reformat" button in a model
+   table viewer window.
+*/
 
 void format_model_table (windata_t *vwin)
 {
@@ -1514,13 +1639,10 @@ void format_model_table (windata_t *vwin)
     char fmt;
     int resp;
 
-    get_model_table_prefs(&colheads,
-			  &use_tstats,
-			  &do_pvals,
-			  &do_asts,
-			  &figs,
-			  &fmt);
+    /* load the stored values from settings.c */
+    load_mtable_settings();
 
+    /* and record these to temporary variables */
     colhead_opt = colheads;
     se_opt = use_tstats;
     pv_opt = do_pvals;
@@ -1528,6 +1650,7 @@ void format_model_table (windata_t *vwin)
     figs = mt_figs;
     fmt = mt_fmt;
 
+    /* put up a dialog giving formatting choices */
     resp = model_table_dialog(&colhead_opt, &se_opt, &pv_opt, &ast_opt,
 			      &figs, &fmt, vwin->main);
 
@@ -1537,13 +1660,14 @@ void format_model_table (windata_t *vwin)
 
     if (colhead_opt == colheads && se_opt == use_tstats &&
 	pv_opt == do_pvals && ast_opt == do_asts && figs == mt_figs) {
-	/* no-op */
+	/* no-op: nothing was changed */
 	return;
     } else {
 	GtkTextBuffer *buf;
 	const char *newtext;
 	PRN *prn;
 
+	/* update the active variables */
 	colheads = colhead_opt;
 	use_tstats = se_opt;
 	do_pvals = pv_opt;
@@ -1551,17 +1675,13 @@ void format_model_table (windata_t *vwin)
 	mt_figs = figs;
 	mt_fmt = fmt;
 
-	set_model_table_prefs(colheads,
-			      use_tstats,
-			      do_pvals,
-			      do_asts,
-			      mt_figs,
-			      mt_fmt);
+	/* and push their values back to settings.c */
+	record_mtable_settings();
 
 	if (bufopen(&prn)) {
 	    return;
 	}
-
+	/* reprint the table and replace the prior window content */
 	plain_print_model_table(prn);
 	newtext = gretl_print_get_buffer(prn);
 	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));

@@ -24,8 +24,6 @@
 #include "johansen.h"
 #include "texprint.h"
 
-#include <glib.h>
-
 static char colspec[4][8];
 static int use_custom;
 static int use_pdf;
