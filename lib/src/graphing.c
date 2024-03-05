@@ -1221,6 +1221,8 @@ int set_plotstyle (const char *style)
     }
 }
 
+/* called from libset.c */
+
 const char *get_plotstyle (void)
 {
     static char pstyle[32];
@@ -1232,7 +1234,11 @@ const char *get_plotstyle (void)
 	*p = '\0';
     }
 
-    return pstyle;
+    if (pstyle[0] == '\0') {
+	return "classic";
+    } else {
+	return pstyle;
+    }
 }
 
 /* Write the content of either the default, or an alternative,

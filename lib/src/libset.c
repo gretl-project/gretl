@@ -1399,6 +1399,8 @@ static int print_settings (PRN *prn, gretlopt opt)
 {
     const char *workdir = gretl_workdir();
 
+    gretl_push_c_numeric_locale();
+
     if (opt & OPT_D) {
 	pputs(prn, _("Variables that can be set using \"set\""));
 	pputs(prn, " (");
@@ -1409,14 +1411,10 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_header(N_("Program interaction and behavior"), prn, opt);
 
     if (opt & OPT_D) {
-	pprintf(prn, " workdir = '%s'\n", workdir);
+	pprintf(prn, " workdir = \"%s\"\n", workdir);
     } else if (0) {
-	/* non-portable? */
-	if (strchr(workdir, ' ')) {
-	    pprintf(prn, "set workdir \"%s\"\n", workdir);
-	} else {
-	    pprintf(prn, "set workdir %s\n", workdir);
-	}
+	/* do we want this? */
+	pprintf(prn, "set workdir \"%s\"\n", workdir);
     }
 
     if (opt & OPT_D) {
@@ -1469,6 +1467,8 @@ static int print_settings (PRN *prn, gretlopt opt)
     print_vars_for_category(CAT_TS, prn, opt);
 
     pputc(prn, '\n');
+
+    gretl_pop_c_numeric_locale();
 
     return 0;
 }
