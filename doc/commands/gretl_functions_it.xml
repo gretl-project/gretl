@@ -1036,6 +1036,12 @@
 	</para>
 	<ilist>
 	  <li>
+	    <para>
+	      <lit>gui_mode</lit>: intero, pari a 1 se gretl è
+	      eseguito in modalità GUI, altrimenti è pari a 0.
+	    </para>
+	  </li>
+	  <li>
             <para>
               <lit>mpi</lit>: intero, pari a 1 se il sistema è compatibile con
               MPI (Message Passing Interface), altrimenti è pari a 0.
@@ -1106,14 +1112,53 @@
             </para>
 	  </li>
 	  <li>
+	    <para>
+              <lit>blas</lit>: stringa identificativa della Libreria
+              BLAS (Basic Linear Algebra Subprograms) in uso di gretl.
+             </para>
+	  </li>
+	  <li>
+	    <para>
+              <lit>blas_version</lit>: stringa che identifica la versione
+	      della libreria blas in uso.
+            </para>
+	  </li>
+	  <li>
+	    <para>
+              <lit>blascore</lit>: (se applicabile) una stringa che
+              identifica il tipo di CPU per cui l'attuale libreria
+              blas è ottimizzata.
+            </para>
+	  </li>
+	  <li>
+	    <para>
+              <lit>compilatore</lit>: una stringa che identifica il compilatore
+              utilizzato durante la creazione di libgretl.
+            </para>
+	  </li>
+	  <li>
+	    <para>
+              <lit>cpuid</lit>: una stringa che identifica marca e
+              modello della CPU su cui è in esecuzione libgretl.
+            </para>
+	  </li>
+	  <li>
+	    <para>
+              <lit>gnuplot</lit>: una stringa che identifica la versione di
+              gnuplot disponibile per gretl, sotto forma di
+              tre numeri separati da punti che danno la versione maggiore, minore
+              e livello di patch.
+            </para>
+	  </li>
+	  <li>
             <para>
-              <lit>foreign</lit>:  un bundle contenente
-              indicatori binari per la presenza nel sistema di vari
+	      <lit>foreign</lit>:  un bundle contenente
+	      indicatori binari per la presenza nel sistema di vari
 	      programmi utilizzabili col comando <cmdref targ
 	      ="foreign">foreign</cmdref>, ossia <lit>julia</lit>,
-              <lit>octave</lit>, <lit>ox</lit>, <lit>python</lit>,
-              <lit>Rbin</lit>, <lit>Rlib</lit> e <lit>stata</lit>.
-              Le due chiavi relative a R fanno riferimento
+	      <lit>octave</lit>, <lit>ox</lit>, <lit>python</lit>,
+	      <lit>Rbin</lit>, <lit>Rlib</lit> e <lit>stata</lit>.
+	      Le due chiavi relative a R fanno riferimento
 	      rispettivamente all'eseguibile R e alla libreria.
             </para>
 	  </li>
@@ -1566,6 +1611,11 @@
       </fnargs>
       <description>
 	<para>
+	  La maggior parte di quel che segue assumne che i primi due
+	  argomenti siano serie o liste, ma si veda sotto 
+	  <quote>Input matriciale</quote> per un uso alternativo.
+	</para>
+	<para>
 	  Nella versione più minimale, <argname>x</argname> è la
 	  parola chiave <lit>null</lit>, <argname>byvar</argname> è
 	  una serie e il terzo argomento è omesso oppure
@@ -1609,13 +1659,13 @@
 	  colonne della matrice risultato.
 	</para>
 	<para>
-	  Quindi, nel caso particolare in cui sia <argname>x</argname> che
-	  <argname>byvar</argname> siano serie, la matrice risultato
-	  avrà tre colonne, contenenti rispettivamente i valori di
-	  <argname>byvar</argname>, in senso ascendente, il numero di
-	  osservazioni di <argname>byvar</argname>
-	  per ognuno di essi e i valori della statistica specificata
-	  da <argname>funcname</argname>, calcolati su
+	  Quindi, nel caso particolare in cui sia <argname>x</argname>
+	  che <argname>byvar</argname> siano serie, la matrice
+	  risultato avrà tre colonne, contenenti rispettivamente i
+	  valori di <argname>byvar</argname>, in senso ascendente, il
+	  numero di osservazioni di <argname>byvar</argname> per
+	  ognuno di essi e i valori della statistica specificata da
+	  <argname>funcname</argname>, calcolati su
 	  <argname>x</argname> sul sottocampione dato dalle
 	  osservazioni in cui <argname>byvar</argname> prende il
 	  valore in colonna 1.
@@ -1627,15 +1677,16 @@
 	  targ="mean"/>, <fncref targ="sd"/>, <fncref targ="var"/>,
 	  <fncref targ="sst"/>, <fncref targ="skewness"/>, <fncref
 	  targ="kurtosis"/>, <fncref targ="min"/>, <fncref
-	  targ="max"/>, <fncref targ="median"/>, <fncref targ="nobs"/>
-	  e <fncref targ="gini"/>. Ciascuna di queste funzioni accetta
-	  come argomento una variabile e restituisce uno scalare, e in tal
-	  senso può dirsi che <quote>aggrega</quote> la variabile in un
-	  qualche modo. È anche possibile inserire il nome di
-	  una funzione definita dall'utente come aggregatore; come le
-	  funzioni supportate in modo nativo, tale funzione deve
-	  accettare come argomento una singola variabile e ritornare uno
-	  scalare.
+	  targ="max"/>, <fncref targ="median"/>, <fncref
+	  targ="nobs"/>, <fncref targ="gini"/>, <fncref
+	  targ="isconst"/> e <fncref targ="isdummy"/>. Ciascuna di
+	  queste funzioni accetta come argomento una variabile e
+	  restituisce uno scalare, e in tal senso può dirsi che
+	  <quote>aggrega</quote> la variabile in un qualche modo. È
+	  anche possibile inserire il nome di una funzione definita
+	  dall'utente come aggregatore; come le funzioni supportate in
+	  modo nativo, tale funzione deve accettare come argomento una
+	  singola variabile e ritornare uno scalare.
 	</para>
 	<para>
 	  Si noti che, benché il conteggio dei casi sia fornito
@@ -1697,6 +1748,19 @@
 	  scalar c = nelem(BY)
 	  m = selifr(m, m[,c+1])
 	</code>
+	<subhead>Input matriciale</subhead>
+	<para>
+	  Anziché serie o liste, <argname>x</argname> e
+	  <argname>byvar</argname> possono essere matrici. Tuttavia,
+	  se vengono forniti entrambi gli argomenti, devono
+	  corrispondere nel tipo (non è possibile fornire una serie o
+	  un elenco per un argomento e una matrice per l'altro) e le
+	  due matrici devono avere lo stesso numero di righe. Si noti
+	  inoltre che in questo contesto le colonne della matrice
+	  vengono trattate come se fossero serie, quindi la funzione
+	  di aggregazione deve seguire lo schema descritto sopra,
+	  prendendo un argomento di serie e restituendo uno scalare.
+	</para>
       </description>
     </function>
 
@@ -1982,7 +2046,7 @@
       <fnargs>
 	<fnarg type="bundleref">target</fnarg>
 	<fnarg type="bundle">input</fnarg>
-	<fnarg type="strings" optional="true">required-keys</fnarg>
+	<fnarg type="strings" optional="true">chiaviric</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -1992,7 +2056,11 @@
 	  possibili: alcuni elementi del bundle possono avere dei
 	  default, cosicché una scelta esplicita non è indispensabile,
 	  mentre altri elementi potrebbero essere obbligatori. Bisogna
-	  determinare se il bundle passato come argomento è valido.
+	  determinare se il bundle passato come argomento è valido. Il
+	  testo che segue assume che venga fornito un bundle
+	  <argname>input</argname> dal chiamante, ma si veda la
+	  sezione <quote>Nessun bundle in input</quote>per il caso opposto.
+
 	</para>
 	<para>
 	  A tal fine, si costruisce un bundle di riferimento che
@@ -2082,6 +2150,19 @@
 	     # vai avanti
 	  endif
 	</code>
+        <subhead>Nessun bundle in input</subhead>
+        <para>
+	  Se il bundle <argname>input</argname> non viene fornito a
+	  <lit>bcheck</lit>, questa si comporta come segue. Se
+	  l'argomento <argname>chiaviric</argname> non viene fornito,
+	  restituisce zero (poiché nessuna delle condizioni di errore
+	  menzionate sopra può verificarsi) e
+	  <argname>target</argname> non viene modificato. Altrimenti
+	  restituisce un valore diverso da zero poiché è chiaro che
+	  una o più specifiche mancano. Questo comportamento fa sì che
+	  passare un <argname>input</argname> nullo a
+	  <lit>bcheck</lit> non provoca errori.
+        </para>
       </description>
     </function>
 
@@ -3107,7 +3188,9 @@
 	  le colonne di <argname>M</argname>. Se <argname>S</argname> è un
 	  array di stringhe, deve contenere <math>n</math> elementi; se
 	  invece è una sola stringa, deve contenere <math>n</math>
-	  sub-stringhe separate da spazi.
+	  sub-stringhe separate da spazi. Come caso particolare,
+	  se il secondo argomento è una stringa vuota, i nomi di
+	  colonna esistenti saranno rimossi.
 	</para>
 	<para>
 	  Restituisce 0 se la funzione è andata a buon fine; in caso
@@ -6698,6 +6781,7 @@
     <function name="invpd" section="linalg" output="smatrix">
       <fnargs>
 	<fnarg type="pdmat">A</fnarg>
+	<fnarg optional="true" type="scalarref">&amp;logdet</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6708,15 +6792,26 @@
 	  ragione deve essere utilizzata con attenzione.
 	</para>
 	<para>
-	  Notare che nel calcolo dell'inversa di una matrice del tipo
-	  <math>X'X</math>, ove <math>X</math> sia di dimensioni elevate,
-	  è preferibile utilizzare la forma <lit>X'X</lit> invece della
-	  più generale sintassi <lit>X'*X</lit>. La prima espressione
-	  utilizza infatti un algoritmo specifico che presenta il duplice
-	  vantaggio di essere più efficiente dal punto di vista
-	  computazionale e di assicurare come risultato una matrice priva
-	  per costruzione di approssimazioni indotte dalla precisione
-	  macchina, che possono renderlo numericamente non simmetrico.
+	  Se l'argomento opzionale <argname>&amp;logdet</argname> è
+	  presente e la funzione termina senza errori, lo scalare
+	  corrispondente conterrà il log determininante di
+	  <argname>A</argname>. In certi casi (come ad esempio il
+	  calcolo di una log-verosimiglianza gaussiana) questo numero
+	  è utile perché viene calcolato come sottoprodotto
+	  dell'algoritmo di inversione e il ricorso a
+	  <argname>&amp;logdet</argname> evita calcoli non necessari.
+	</para>
+	<para>
+	  Si noti che nel calcolo dell'inversa di una matrice del tipo
+	  <math>X'X</math>, ove <math>X</math> sia di dimensioni
+	  elevate, è preferibile utilizzare la forma <lit>X'X</lit>
+	  invece della più generale sintassi <lit>X'*X</lit>. La prima
+	  espressione utilizza infatti un algoritmo specifico che
+	  presenta il duplice vantaggio di essere più efficiente dal
+	  punto di vista computazionale e di assicurare come risultato
+	  una matrice priva per costruzione di approssimazioni indotte
+	  dalla precisione macchina, che possono renderlo
+	  numericamente non simmetrico.
 	</para>
       </description>
     </function>
@@ -7111,7 +7206,7 @@
       <fnargs>
 	<fnarg type="string">buf</fnarg>
 	<fnarg type="string">path</fnarg>
-	<fnarg optional="true" type="scalarref">nread</fnarg>
+	<fnarg optional="true" type="scalarref">&amp;nread</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -8059,7 +8154,11 @@
 	  Altrimenti, se <argname>X</argname> ha dei nomi di colonna (vedi
 	  <fncref targ="cnameset"/>) vengono usati questi.  Infine,
 	  se nessuna delle due condizioni è vera, i nomi sono
-	  <lit>column1</lit>, <lit>column2</lit> e così via.
+	  <lit>column1</lit>, <lit>column2</lit> e così via. Si noti
+	  che questo può avere l'effetto di sovrascrivere serie
+	  esistenti; per evitare che ciò accada si possono
+	  nominare le colonne esplicitamente usando
+	  <lit>cnameset</lit>, oppure usare l'argomento <argname>prefix</argname>.
 	</para>
 	<para>
 	  Quello che segue è un piccolo esempio:
@@ -13670,7 +13769,7 @@
 	<fnarg type="vector">c</fnarg>
 	<fnarg type="vector">r</fnarg>
 	<fnarg type="vector">b</fnarg>
-	<fnarg optional="true" type="scalarref">det</fnarg>
+	<fnarg optional="true" type="scalarref">&amp;det</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -14557,7 +14656,7 @@ d =  8.0000000
       <fnargs>
 	<fnarg type="string">buf</fnarg>
 	<fnarg type="string-or-strings">percorso</fnarg>
-	<fnarg optional="true" type="scalarref">trovati</fnarg>
+	<fnarg optional="true" type="scalarref">&amp;trovati</fnarg>
       </fnargs>
       <description>
 	<para>

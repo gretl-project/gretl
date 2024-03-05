@@ -1732,7 +1732,7 @@
 	  arguments must have the same number of rows. Also note that
 	  in this context matrix columns are treated as if they were
 	  series, so the aggregation function must follow the pattern
-	  described above, taking a series arument and returning a
+	  described above, taking a series argument and returning a
 	  scalar.
 	</para>
       </description>
@@ -2026,7 +2026,7 @@
 	  the caller is not obliged to make an explicit
 	  choice&mdash;while other elements may be required. You want
 	  to determine whether the argument you get is valid. The
-          main text below assumes than an <argname>input</argname>
+          main text below assumes that an <argname>input</argname>
           bundle is supplied by the caller of your function, but see
           the section headed <quote>No input bundle</quote> for
           the contrary case.
@@ -6735,6 +6735,7 @@
     <function name="invpd" section="linalg" output="smatrix">
       <fnargs>
 	<fnarg type="pdmat">A</fnarg>
+	<fnarg optional="true" type="scalarref">&amp;logdet</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6743,6 +6744,17 @@
 	  <fncref targ="inv"/> for large matrices, since no check for
 	  symmetry is performed; for that reason it should be used with
 	  care.
+	</para>
+	<para>
+	  If the optional argument <argname>&amp;logdet</argname> is
+	  present, the corresponding scalar will contain on successful
+	  exit the log determininant of <argname>A</argname>. This may
+	  be convenient to have in some cases, for example in the
+	  context of the evaluation of a Gaussian log-likelihood,
+	  because the log determinant is a by-product of the inversion
+	  algorithm and retrieving it via the
+	  <argname>&amp;logdet</argname> argument avoids extra
+	  computations.
 	</para>
 	<para>
 	  Note: if you're interested in the inversion of a matrix of
@@ -7143,7 +7155,7 @@
       <fnargs>
 	<fnarg type="string">buf</fnarg>
 	<fnarg type="string">path</fnarg>
-	<fnarg optional="true" type="scalarref">nread</fnarg>
+	<fnarg optional="true" type="scalarref">&amp;nread</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -13695,7 +13707,7 @@
 	<fnarg type="vector">c</fnarg>
 	<fnarg type="vector">r</fnarg>
 	<fnarg type="vector">b</fnarg>
-	<fnarg optional="true" type="scalarref">det</fnarg>
+	<fnarg optional="true" type="scalarref">&amp;det</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -14577,7 +14589,7 @@ d =  8.0000000
       <fnargs>
 	<fnarg type="string">buf</fnarg>
 	<fnarg type="string-or-strings">path</fnarg>
-	<fnarg optional="true" type="scalarref">matches</fnarg>
+	<fnarg optional="true" type="scalarref">&amp;matches</fnarg>
       </fnargs>
       <description>
 	<para>
