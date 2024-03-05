@@ -9473,19 +9473,23 @@ static NODE *atof_node (NODE *l, parser *p)
 {
     NODE *ret = NULL;
     char *endptr = NULL;
+    int warn = 0;
 
     errno = 0;
+
+    gretl_push_c_numeric_locale();
 
     if (l->t == STR) {
         ret = aux_scalar_node(p);
         if (ret != NULL && starting(p)) {
-            gretl_push_c_numeric_locale();
+	    if (strchr(l->v.str, ',') != NULL) {
+		warn = 1;
+	    }
             ret->v.xval = strtod(l->v.str, &endptr);
             if (errno || endptr == l->v.str) {
                 errno = 0;
                 ret->v.xval = NADBL;
             }
-            gretl_pop_c_numeric_locale();
         }
     } else if (l->t == SERIES) {
         int v = l->vnum;
@@ -9499,13 +9503,15 @@ static NODE *atof_node (NODE *l, parser *p)
             const char *st;
             int t;
 
-            gretl_push_c_numeric_locale();
             for (t=p->dset->t1; t<=p->dset->t2; t++) {
                 st = series_get_string_for_obs(p->dset, v, t);
                 if (st == NULL) {
                     /* happens if obs @t is missing */
                     ret->v.xvec[t] = NADBL;
                 } else {
+		    if (!warn && strchr(st, ',') != NULL) {
+			warn = 1;
+		    }
                     ret->v.xvec[t] = strtod(st, &endptr);
                     if (errno || endptr == st) {
                         errno = 0;
@@ -9513,9 +9519,14 @@ static NODE *atof_node (NODE *l, parser *p)
                     }
                 }
             }
-            gretl_pop_c_numeric_locale();
         }
     }
+
+    if (warn) {
+	gretl_warnmsg_set(_("comma(s) found in atof() input"));
+    }
+
+    gretl_pop_c_numeric_locale();
 
     return ret;
 }
