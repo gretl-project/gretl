@@ -2221,6 +2221,22 @@ static int buf_get_n_lines (const char *buf)
     return n;
 }
 
+/* does a line that starts with "set" actually change
+   the program state? heuristic
+*/
+
+static int changes_state (const char *line)
+{
+    if (string_is_blank(line)) {
+	return 0;
+    } else {
+	char setarg[16];
+
+	sscanf(line, "%15s", setarg);
+	return strcmp(setarg, "stopwatch");
+    }
+}
+
 /* Read the lines of hansl code from the <code> element of the XML
    representation of a function.
 */
@@ -2258,7 +2274,7 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
         if (err) {
             break;
         }
-        if (cmd.ci == SET) {
+        if (cmd.ci == SET && changes_state(s + 3)) {
             uses_set = 1;
         } else if (cmd.ci == IF || cmd.ci == LOOP) {
             has_flow = 1;
@@ -8197,13 +8213,14 @@ static int ufunc_get_structure (ufunc *u)
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_function_append_line (ExecState *s)
+int gretl_function_append_line (ExecState *state)
 {
     static int ifdepth;
     static int last_flow;
-    CMD *cmd = s->cmd;
-    char *line = s->line;
+    CMD *cmd = state->cmd;
+    char *line = state->line;
     char *origline = NULL;
+    char *s;
     ufunc *fun = current_fdef;
     int blank = 0;
     int ignore = 0;
@@ -8233,7 +8250,10 @@ int gretl_function_append_line (ExecState *s)
     origline = gretl_strdup(line);
 
     if (!blank) {
-        err = get_command_index(s, FUNC, 0);
+	s = line + strspn(line, " \t");
+	state->line = s;
+        err = get_command_index(state, FUNC, 0);
+	state->line = line;
     }
     if (blank || err) {
         goto next_step;
@@ -8251,7 +8271,7 @@ int gretl_function_append_line (ExecState *s)
             err = 1;
         }
         set_compiling_off();
-    } else if (cmd->ci == SET) {
+    } else if (cmd->ci == SET && changes_state(s + 3)) {
         fun->flags |= UFUN_USES_SET;
     } else if (cmd->ci == FUNC) {
         err = E_FNEST;
