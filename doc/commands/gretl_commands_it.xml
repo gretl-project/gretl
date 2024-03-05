@@ -2146,6 +2146,10 @@
 	  <flag>--triangle</flag>
 	  <effect>si veda di seguito</effect>
 	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra i risultati</effect>
+	</option>
       </options>
       <examples>
         <example>corr y x1 x2 x3</example>
@@ -4485,10 +4489,6 @@
 	  <optparm>mode-or-filename</optparm>
 	  <effect>vedi oltre</effect>
       </option>
-      <option>
-        <flag>--quiet</flag>
-        <effect>non mostra il grafico</effect>
-      </option>
     </options>
     <examples>
       <example>freq x</example>
@@ -4504,7 +4504,8 @@
       Se non vengono indicate opzioni, mostra la distribuzione di
       frequenza per la <repl>variabile</repl> (indicata con il nome
       o il numero), con il numero di intervalli e ampiezza scelti
-      automaticamente.
+      automaticamente; a seconda dei casi un grafico può essere
+      mostrato o no (vedi sotto).
     </para>
     <para>
       Se viene indicata l'opzione <opt>matrix</opt>, <repl>var</repl>
@@ -4514,12 +4515,16 @@
       l'argomento <repl>var</repl> può essere omesso.
     </para>
     <para>
-      Per controllare la presentazione della distribuzione è
-      possibile specificare <emphasis>o</emphasis> il numero di
-      intervalli o il valore minimo più l'ampiezza degli intervalli,
-      come illustrato negli ultimi due esempi precedenti. L'opzione
-      <opt>min</opt> fissa il limite inferiore dell'intervallo più
-      a sinistra.
+      Per impostazione predefinita, il comando usa un numero di
+      intervalli calcolato automaticamente se i dati sono continui
+      oppure nessun intervallo se i dati sono discreti. A questo fine,
+      si può (a) utilizzare il comando <cmdref targ="discrete"/> per
+      impostare lo stato di <repl>variabile</repl> o (b), se i dati
+      sono continui, specificare il numero di categorie
+      <emphasis>oppure</emphasis> il valore minimo e la loro larghezza
+      dei contenitori, come mostrato negli ultimi due esempi
+      sopra. L'opzione <opt>min</opt> imposta il limite inferiore della
+      categoria più a sinistra.
     </para>
     <para>
       Usando l'opzione <opt>normal</opt>, vengono mostrati i
@@ -5363,6 +5368,12 @@
 	  <effect>forza l'uso di un solo asse delle ordinate</effect>
 	</option>
 	<option>
+	  <flag>--y2axis</flag>
+	  <optparm>yvar</optparm>
+	  <effect>mette la variabile specificata sul secondo asse
+	  delle ordinate</effect>
+	</option>
+	<option>
 	  <flag>--ylogscale</flag>
 	  <optparm optional="true">base</optparm>
 	  <effect>ordinate in scala logaritmica</effect>
@@ -5448,6 +5459,18 @@
 	<lit>y2</lit> contro <lit>x</lit>,in modo tale che
 	<lit>y2</lit> sia rappresentata da una linea, ma <lit>y1</lit>
 	da punti.
+    </para>
+    <para>
+      Quando <repl>yvars</repl> contiene più di una variabile potrebbe
+      essere preferibile utilizzare due scale (sinistra e destra) per
+      le ordinate. Per default, questo viene gestito automaticamente,
+      tramite un'euristica basata sugli ordini di grandezza relativi
+      delle variabili, ma è possibile utilizzare due opzioni
+      (mutuamente esclusive) per cambiare l'impostazione di
+      default. Come è ovvio, <opt>single-yaxis</opt> impedisce l'uso
+      di un secondo asse, mentre <opt>y2axis=</opt><repl>yvar</repl>
+      specifica che una variabile selezionata deve essere
+      plottata usando un secondo asse delle ordinate.
     </para>
     <para>
 	Usando l'opzione <opt>dummy</opt>, solo tre variabili sono
@@ -15217,6 +15240,7 @@ qual caso viene usato QML.
       <altform><lit>smpl</lit> <lit>--contiguous [ </lit><repl>lista-variabili</repl> <lit>]</lit></altform>
       <altform><lit>smpl</lit> <repl>n</repl> <lit>--random</lit></altform>
       <altform><lit>smpl full</lit></altform>
+      <altform><lit>smpl</lit></altform>
     </altforms>
     <options>
       <option>
@@ -15281,22 +15305,23 @@ qual caso viene usato QML.
 
   <description>
     <para>
-      Reimposta l'intervallo del campione. Il nuovo intervallo può
-      essere definito in vari modi. Nel primo modo (corrispondente
-      ai primi due esempi precedenti) <repl>oss-iniziale</repl> e
-      <repl>oss-finale</repl> devono essere coerenti con la
-      periodicità dei dati. Una delle due può essere sostituita da
-      un punto e virgola per lasciare intatto il valore attuale. Nel
-      secondo modo, gli interi <repl>i</repl> e <repl>j</repl> (che
-      possono essere positivi o negativi e vanno indicati con il
-      segno) sono presi come spostamenti relativi ai punti iniziale
-      e finale del campione in uso. Nel terzo modo,
+      Questo comando, usato senza argomenti, mostra l'intervallo
+      corrente del campione. altrimenti lo reimposta. Il nuovo
+      intervallo può essere definito in vari modi. Nel primo modo
+      (corrispondente ai primi due esempi precedenti)
+      <repl>oss-iniziale</repl> e <repl>oss-finale</repl> devono
+      essere coerenti con la periodicità dei dati. Una delle due può
+      essere sostituita da un punto e virgola per lasciare intatto il
+      valore attuale. Nel secondo modo, gli interi <repl>i</repl> e
+      <repl>j</repl> (che possono essere positivi o negativi e vanno
+      indicati con il segno) sono presi come spostamenti relativi ai
+      punti iniziale e finale del campione in uso. Nel terzo modo,
       <repl>variabile-dummy</repl> deve essere una variabile
       indicatrice che assume solo valori 0 o 1 e il campione verrà
       ristretto alle osservazioni per cui la variabile dummy vale 1.
-      Il quarto modo, che usa <opt>restrict</opt>, limita il
-      campione alle osservazioni che soddisfano la condizione
-      booleana specificata secondo la sintassi del comando <cmdref
+      Il quarto modo, che usa <opt>restrict</opt>, limita il campione
+      alle osservazioni che soddisfano la condizione booleana
+      specificata secondo la sintassi del comando <cmdref
       targ="genr"/>.
     </para>
 
