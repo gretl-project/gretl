@@ -255,7 +255,7 @@ enum browser_codes {
     PCGIVE_SERIES,
     REMOTE_SERIES,
     DBNOMICS_SERIES,
-    REMOTE_ADDONS,
+    ADDONS_FILES,
     PKG_REGISTRY,
     MAINWIN
 };

@@ -317,7 +317,7 @@
       <menuitem action="gretlLpsolve"/>
       <separator/>
       <menuitem action="UpdateCheck"/>
-      <menuitem action="SFAddons"/>
+      <menuitem action="Addons"/>
       <menuitem action="About"/>
     </menu>
   </menubar>

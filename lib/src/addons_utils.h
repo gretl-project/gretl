@@ -21,7 +21,9 @@ int is_gretl_addon (const char *pkgname);
 
 const char **get_addon_names (int *n);
 
-char *get_addon_version (const char *fname, char **date);
+int get_addon_basic_info (const char *addon,
+			  char **version,
+			  char **date);
 
 int update_addons_index (PRN *prn);
 
@@ -32,4 +34,3 @@ char *gretl_addon_get_path (const char *addon);
 char *get_addon_examples_dir (const char *addon);
 
 char *get_addon_pdf_path (const char *addon);
-

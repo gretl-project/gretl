@@ -24,7 +24,7 @@
 #include "build.h"
 #include "gretl_xml.h"
 
-/* Note: here's the canonical listing of gretl addons. */
+/* Note: here's the canonical listing of gretl addons */
 
 static const char *addon_names[] = {
     "SVAR", "gig", "HIP", "ivpanel",
@@ -32,27 +32,57 @@ static const char *addon_names[] = {
     "regls", "logging", "KFgui", NULL
 };
 
-static int n_addons = G_N_ELEMENTS(addon_names) - 1;
+typedef struct addon_basics_ {
+    char path[MAXLEN];
+    char *version;
+    char *date;
+    char *descrip;
+    int ok;
+} addon_basics;
 
-/* Determine if @pkgname is the name of an addon:
-   @pkgname may be given with or without the ".gfn"
-   suffix.
+static void clear_addon_basics (addon_basics *ab)
+{
+    ab->path[0] = '\0';
+    free(ab->version);
+    free(ab->date);
+    free(ab->descrip);
+    ab->version = ab->date = ab->descrip = NULL;
+    ab->ok = 0;
+}
+
+static int get_n_addons (void)
+{
+    static int n;
+
+    if (n == 0) {
+	int i;
+
+	for (i=0; addon_names[i] != NULL; i++) {
+	    n++;
+	}
+    }
+
+    return n;
+}
+
+/* Determine if @pkgname is the name of an addon: @pkgname may be
+   given with or without the ".gfn" suffix.
 */
 
 int is_gretl_addon (const char *pkgname)
 {
-    int i;
+    int i, n = get_n_addons();
 
     if (has_suffix(pkgname, ".gfn")) {
 	int n = strlen(pkgname) - 4;
 
-	for (i=0; i<n_addons; i++) {
+	for (i=0; i<n; i++) {
 	    if (!strncmp(pkgname, addon_names[i], n)) {
 		return 1;
 	    }
 	}
     } else {
-	for (i=0; i<n_addons; i++) {
+	for (i=0; i<n; i++) {
 	    if (!strcmp(pkgname, addon_names[i])) {
 		return 1;
 	    }
@@ -62,43 +92,39 @@ int is_gretl_addon (const char *pkgname)
     return 0;
 }
 
-/* Return a NULL-terminated array of addons names;
-   optionally, if @n is non-NULL, supply the number
-   of addons.
+/* Return a NULL-terminated array of addons names; optionally, if @n
+   is non-NULL, supply the number of addons.
 */
 
 const char **get_addon_names (int *n)
 {
     if (n != NULL) {
-	*n = n_addons;
+	*n = get_n_addons();
     }
     return addon_names;
 }
 
-/* Given a full path to an addon package, return its
-   version string. If @date is non-NULL, also return its
-   release date via this pointer. In both cases the
-   strings are allocated, and belong to the caller.
+/* Given the full path to an addon gfn file, supply its version, date
+   and description. The strings are newly allocated and belong to the
+   caller. Return non-zero on error.
 */
 
-char *get_addon_version (const char *fname, char **date)
+static int addon_basics_from_gfn (addon_basics *ab)
 {
-    char *version = NULL;
     xmlDocPtr doc = NULL;
     xmlNodePtr node, n1, n2;
-    int targ, got = 0;
+    int targ = 3;
+    int got = 0;
 
-    if (gretl_stat(fname, NULL) != 0) {
-	/* not found */
-	return NULL;
+    if (gretl_stat(ab->path, NULL) != 0) {
+	return E_FOPEN;
     }
 
-    gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
+    gretl_xml_open_doc_root(ab->path, "gretl-functions", &doc, &node);
     if (doc == NULL || node == NULL) {
-	return NULL;
+	return E_FOPEN;
     }
 
-    targ = (date != NULL)? 2 : 1;
     n1 = node->xmlChildrenNode;
 
     while (n1 != NULL && got < targ) {
@@ -106,10 +132,13 @@ char *get_addon_version (const char *fname, char **date)
 	    n2 = n1->xmlChildrenNode;
 	    while (n2 != NULL && got < targ) {
 		if (!xmlStrcmp(n2->name, (XUC) "version")) {
-		    gretl_xml_node_get_trimmed_string(n2, doc, &version);
+		    gretl_xml_node_get_trimmed_string(n2, doc, &ab->version);
 		    got++;
-		} else if (date != NULL && !xmlStrcmp(n2->name, (XUC) "date")) {
-		    gretl_xml_node_get_trimmed_string(n2, doc, date);
+		} else if (!xmlStrcmp(n2->name, (XUC) "date")) {
+		    gretl_xml_node_get_trimmed_string(n2, doc, &ab->date);
+		    got++;
+		} else if (!xmlStrcmp(n2->name, (XUC) "description")) {
+		    gretl_xml_node_get_trimmed_string(n2, doc, &ab->descrip);
 		    got++;
 		}
 		n2 = n2->next;
@@ -122,7 +151,7 @@ char *get_addon_version (const char *fname, char **date)
 	xmlFreeDoc(doc);
     }
 
-    return version;
+    return (got < targ)? E_DATA: 0;
 }
 
 static char *get_user_path (char *targ, const char *pgkname,
@@ -137,13 +166,54 @@ static char *get_user_path (char *targ, const char *pgkname,
 #endif
 }
 
+static int select_addon_file (addon_basics *sys_ab,
+			      addon_basics *usr_ab)
+{
+    int err = 0;
+
+    if (sys_ab->ok) {
+	sys_ab->ok = !strcmp(sys_ab->version, GRETL_VERSION);
+    }
+    if (usr_ab->ok) {
+	usr_ab->ok = !strcmp(usr_ab->version, GRETL_VERSION);
+    }
+
+    if (sys_ab->ok && usr_ab->ok) {
+	/* both match gretl version, compare dates */
+	guint32 sed = get_epoch_day(sys_ab->date);
+	guint32 ued = get_epoch_day(usr_ab->date);
+
+	if (sed >= ued) {
+	    usr_ab->ok = 0;
+	} else {
+	    sys_ab->ok = 0;
+	}
+    } else if (sys_ab->ok == 0 && usr_ab->ok == 0) {
+	err = E_DATA;
+    }
+
+    return err;
+}
+
+static void report_addon_result (addon_basics *ab,
+				 int err, PRN *prn)
+{
+    pprintf(prn, " %s '%s'\n", _("try"), ab->path);
+    if (!err) {
+	pprintf(prn, "  %s %s (%s)\n", _("found version"),
+		ab->version, ab->date);
+    } else {
+	pprintf(prn, "  %s\n", _("not found"));
+    }
+}
+
 /* Build a plain text index of the installed addons, holding name,
-   version and full path, one addon per line. We allow for the fact
-   that a given addon might exist both in the "system" location and in
-   the user's personal filespace.  (This may happen if a user lacking
-   write-permission for the system location installs or updates an
-   addon.) In the case of such duplicates we determine which version
-   is newer and enter its details in the index file.
+   version, date and full path, one addon per line. We allow for the
+   fact that a given addon might exist both in the "system" location
+   and in the user's personal filespace.  (This may happen if a user
+   lacking write-permission for the system location installs or
+   updates an addon.) In the case of such duplicates we determine
+   which version is newer and enter its details in the index file.
 
    This update routine is called automatically when (a) a user
    installs an addon (FIXME: is this true for all ways an addon can be
@@ -158,13 +228,11 @@ static char *get_user_path (char *targ, const char *pgkname,
 int update_addons_index (PRN *prn)
 {
     gchar *idxname = gretl_make_dotpath("addons.idx");
-    char *pkgver1 = NULL;
-    char *pkgver2 = NULL;
-    char syspath[MAXLEN];
-    char usrpath[MAXLEN];
+    addon_basics sys_ab = {0};
+    addon_basics usr_ab = {0};
     char gfnname[64];
     int verbose = (prn != NULL);
-    double v1, v2;
+    int n_addons = get_n_addons();
     FILE *fp;
     int i;
 
@@ -175,53 +243,62 @@ int update_addons_index (PRN *prn)
     }
 
     for (i=0; i<n_addons; i++) {
+	int err = 0;
+
+	/* construct the gfn name */
+	sprintf(gfnname, "%s.gfn", addon_names[i]);
 	if (verbose) {
 	    pprintf(prn, _("check for %s\n"), addon_names[i]);
 	}
-	/* construct the gfn name */
-	sprintf(gfnname, "%s.gfn", addon_names[i]);
 
-	/* build the "system" path for the addon */
-	gretl_build_path(syspath, gretl_home(), "functions",
+	/* (1) build and check the system path */
+	gretl_build_path(sys_ab.path, gretl_home(), "functions",
 			 addon_names[i], gfnname, NULL);
-	/* and try to get its version */
-	pkgver1 = get_addon_version(syspath, NULL);
-	v1 = (pkgver1 != NULL)? dot_atof(pkgver1) : 0;
-	if (verbose) {
-	    pprintf(prn, " %s '%s'\n", _("try"), syspath);
-	    if (v1 > 0) {
-		pprintf(prn, "  %s %s\n", _("found version"), pkgver1);
-	    } else {
-		pprintf(prn, "  %s\n", _("not found"));
-	    }
+	err = addon_basics_from_gfn(&sys_ab);
+	if (!err) {
+	    sys_ab.ok = 1;
 	}
-	/* build expected "userspace" path for the addon */
-	get_user_path(usrpath, addon_names[i], gfnname);
-	/* and try to get its version */
-	pkgver2 = get_addon_version(usrpath, NULL);
-	v2 = (pkgver2 != NULL)? dot_atof(pkgver2) : 0;
 	if (verbose) {
-	    pprintf(prn, " %s '%s'\n", _("try"), usrpath);
-	    if (v2 > 0) {
-		pprintf(prn, "  %s %s\n", _("found version"), pkgver2);
+	    report_addon_result(&sys_ab, err, prn);
+	}
+
+	/* (2) build and check the userspace path */
+	get_user_path(usr_ab.path, addon_names[i], gfnname);
+	err = addon_basics_from_gfn(&usr_ab);
+	if (!err) {
+	    usr_ab.ok = 1;
+	}
+	if (verbose) {
+	    report_addon_result(&usr_ab, err, prn);
+	}
+
+	if (sys_ab.ok || usr_ab.ok) {
+	    /* carry out further checks */
+	    err = select_addon_file(&sys_ab, &usr_ab);
+	} else {
+	    err = E_DATA;
+	}
+
+	if (!err) {
+	    /* write line to addons.idx */
+	    addon_basics *ab = sys_ab.ok ? &sys_ab : &usr_ab;
+
+	    fprintf(fp, "%s %s %s \"%s\" \"%s\"\n", addon_names[i],
+		    ab->version, ab->date, ab->descrip, ab->path);
+	}
+	if (verbose) {
+	    if (err) {
+		pprintf(prn, " %s\n", _("no valid version found"));
 	    } else {
-		pprintf(prn, "  %s\n", _("not found"));
+		pprintf(prn, " %s %s (%s)\n", _("indexed version"),
+			sys_ab.ok ? sys_ab.version : usr_ab.version,
+			sys_ab.ok ? sys_ab.date : usr_ab.date);
 	    }
 	}
 
-	if (v1 >= v2) {
-	    /* system version is at least as new (or the only one) */
-	    fprintf(fp, "%s %s %s\n", addon_names[i], pkgver1, syspath);
-	} else if (v2 > 0) {
-	    /* user version is newer (or the only one) */
-	    fprintf(fp, "%s %s %s\n", addon_names[i], pkgver2, usrpath);
-	}
-	if (verbose && (v1 > 0 || v2 > 0)) {
-	    pprintf(prn, " %s %s\n", _("indexed version"), v1 > v2 ?
-		    pkgver1 : pkgver2);
-	}
-	free(pkgver1);
-	free(pkgver2);
+	/* clear for next addon */
+	clear_addon_basics(&sys_ab);
+	clear_addon_basics(&usr_ab);
     }
 
     fclose(fp);
@@ -359,4 +436,58 @@ char *get_addon_pdf_path (const char *addon)
     free(path);
 
     return ret;
+}
+
+int get_addon_basic_info (const char *addon,
+			  char **version,
+			  char **date,
+			  char **descrip)
+{
+    gchar *idxname = gretl_make_dotpath("addons.idx");
+    FILE *fp = gretl_fopen(idxname, "rb");
+    int err = 0;
+
+    if (fp == NULL) {
+	err = update_addons_index(NULL);
+	if (err) {
+	    return err;
+	} else {
+	    fp = gretl_fopen(idxname, "rb");
+	    if (fp == NULL) {
+		err = E_FOPEN;
+	    }
+	}
+    }
+
+    if (fp != NULL) {
+	char line[1024];
+	char name[16];
+	char verstr[16];
+	char datestr[16];
+	char descstr[32];
+	int got = 0;
+
+	while (fgets(line, sizeof line, fp) && !got) {
+	    if (sscanf(line, "%s %s %s \"%31[^\"]", name, verstr,
+		       datestr, descstr) == 3) {
+		if (!strcmp(name, addon)) {
+		    got = 1;
+		    *version = gretl_strdup(verstr);
+		    *date = gretl_strdup(datestr);
+		    *descrip = gretl_strdup(descstr);
+		}
+	    }
+	}
+	fclose(fp);
+	if (!got) {
+	    fprintf(stderr, "addons.idx: couldn't find '%s'\n", addon);
+	    err = E_DATA;
+	}
+    } else {
+	fprintf(stderr, "failed to read addons.idx\n");
+    }
+
+    g_free(idxname);
+
+    return err;
 }

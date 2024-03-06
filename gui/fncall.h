@@ -82,12 +82,6 @@ int query_addons (void);
 
 int download_addon (const char *pkgname, char **local_path);
 
-void get_installed_addon_status (const char *path,
-				 const char *server_ver,
-				 int gretl_minver,
-				 char **local_ver,
-				 char **status);
-
 int dbnomics_get_series_call (const char *datacode);
 
 int dbnomics_get_dimensions_call (const char *provider,

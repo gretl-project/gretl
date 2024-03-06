@@ -4690,46 +4690,6 @@ int gui_function_pkg_query_register (const char *fname,
     return notified;
 }
 
-/* Called from database.c, when populating the list box showing
-   addons, on the local machine and on the server.
-*/
-
-void get_installed_addon_status (const char *path,
-				 const char *server_ver,
-				 int gretl_minver,
-				 char **local_ver,
-				 char **status)
-{
-    if (path != NULL) {
-	*local_ver = get_addon_version(path, NULL);
-    }
-
-    if (*local_ver == NULL) {
-	*local_ver = gretl_strdup(_("not found"));
-    } else {
-	double svnum = dot_atof(server_ver);
-	double ivnum = dot_atof(*local_ver);
-
-	if (ivnum < svnum) {
-	    /* Not current. Can the addon be updated?  It may be
-	       that the running instance of gretl is too old.
-	    */
-	    char reqstr[8] = {0};
-	    int update_ok = package_version_ok(gretl_minver, reqstr);
-
-	    if (update_ok) {
-		*status = gretl_strdup(_("Can be updated"));
-	    } else if (*reqstr != '\0') {
-		*status = gretl_strdup_printf(_("Requires gretl %s"), reqstr);
-	    }
-	} else if (ivnum == svnum) {
-	    *status = gretl_strdup(_("Up to date"));
-	} else {
-	    *status = gretl_strdup(_("Local is newer"));
-	}
-    }
-}
-
 /* We invoke this function on the two GUI "entry-points" to
    dbnomics, namely retrieving a specified series and getting
    the current list of providers. We thereby ensure that if

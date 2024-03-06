@@ -3693,122 +3693,46 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
     return err;
 }
 
-static int get_remote_addon_info (xmlNodePtr node, xmlDocPtr doc,
-				  char **S, const char *minvstr)
+/* Columns: name, version, date */
+
+gint populate_addons_list (windata_t *vwin)
 {
-    xmlNodePtr cur = node->xmlChildrenNode;
+    GtkListStore *store;
+    GtkTreeIter iter;
+    const char **anames;
+    int n_addons = 0;
+    int i, n_found = 0;
     int err = 0;
 
-    /* note: could get the date of the addon on the server via
-       the "date" cur->name, but we're not doing that at present
-    */
+    anames = get_addon_names(&n_addons);
+    store = GTK_LIST_STORE(gtk_tree_view_get_model
+			   (GTK_TREE_VIEW(vwin->listbox)));
+    gtk_list_store_clear(store);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    while (cur != NULL) {
-	if (!xmlStrcmp(cur->name, (XUC) "version")) {
-	    gretl_xml_node_get_trimmed_string(cur, doc, &S[2]);
-	} else if (!xmlStrcmp(cur->name, (XUC) "description")) {
-	    gretl_xml_node_get_trimmed_string(cur, doc, &S[4]);
-	}
-	cur = cur->next;
-    }
+    for (i=0; i<n_addons; i++) {
+	const char *addon = anames[i];
+	char *version = NULL;
+	char *date = NULL;
 
-    if (S[2] == NULL || S[4] == NULL) {
-	err = E_DATA;
-    } else {
-	char *path = gretl_addon_get_path(S[0]);
-	int minver = gretl_version_number(minvstr);
-
-	get_installed_addon_status(path, S[2], minver, &S[1], &S[3]);
-	if (path != NULL) {
-	    free(path);
-	}
-    }
-
-    return err;
-}
-
-/* Columns: name, installed version, version on server, comment */
-
-gint populate_remote_addons_list (windata_t *vwin)
-{
-    xmlDocPtr doc;
-    xmlNodePtr node = NULL;
-    char *getbuf = NULL;
-    int n = 0, err = 0;
-
-    err = query_sourceforge("/addons-data/addons.xml", &getbuf);
-    if (err) {
-	show_network_error(NULL);
-	free(getbuf);
-	return err;
-    }
-
-#if 0
-    fprintf(stderr, "populate_remote_addons_list: got XML:\n");
-    fprintf(stderr, "'%s'\n", getbuf);
-#endif
-
-    doc = xmlReadMemory(getbuf, strlen(getbuf), NULL, NULL, XML_PARSE_NOBLANKS);
-    if (doc == NULL) {
-	err = E_DATA;
-    } else {
-	node = xmlDocGetRootElement(doc);
-	if (node == NULL || xmlStrcmp(node->name, (XUC) "gretl-addons")) {
-	    err = E_DATA;
-	}
-    }
-
-    if (!err) {
-	GtkListStore *store;
-	GtkTreeIter iter;
-	char *S[5] = { NULL };
-	char *minvstr = NULL;
-	int i;
-
-	store = GTK_LIST_STORE(gtk_tree_view_get_model
-			       (GTK_TREE_VIEW(vwin->listbox)));
-	gtk_list_store_clear(store);
-	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-	node = node->xmlChildrenNode;
-
-	while (node != NULL && !err) {
-	    if (!xmlStrcmp(node->name, (XUC) "gretl-addon")) {
-		gretl_xml_get_prop_as_string(node, "name", &S[0]);
-		gretl_xml_get_prop_as_string(node, "minver", &minvstr);
-		if (S[0] == NULL) {
-		    err = E_DATA;
-		} else {
-		    err = get_remote_addon_info(node, doc, S, minvstr);
-		    if (!err) {
-			gtk_list_store_append(store, &iter);
-			gtk_list_store_set(store, &iter,
-					   0, S[0], 1, S[1],
-					   2, S[2], 3, S[3],
-					   4, S[4], -1);
-			for (i=0; i<5; i++) {
-			    free(S[i]);
-			    S[i] = NULL;
-			}
-			n++;
-		    }
-		}
-	    }
-	    node = node->next;
+	err = get_addon_basic_info(addon, &version, &date);
+	if (!err) {
+	    gtk_list_store_append(store, &iter);
+	    gtk_list_store_set(store, &iter, 0, addon,
+			       1, version, 2, date, -1);
+	    free(version);
+	    free(date);
+	    n_found++;
 	}
     }
 
     if (err) {
 	gui_errmsg(err);
-    } else if (n == 0) {
-	warnbox(_("No function packages found"));
+    } else if (n_found == 0) {
+	warnbox(_("No addons were found"));
+	/* FIXME offer download here? */
 	err = 1;
     }
-
-    if (doc != NULL) {
-	xmlFreeDoc(doc);
-    }
-
-    free(getbuf);
 
     return err;
 }

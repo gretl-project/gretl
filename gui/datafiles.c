@@ -81,7 +81,6 @@ enum {
 #define REMOTE_ACTION(c) (c == REMOTE_DB || \
                           c == REMOTE_FUNC_FILES || \
                           c == REMOTE_DATA_PKGS || \
-                          c == REMOTE_ADDONS || \
 	                  c == DBNOMICS_DB || \
 	                  c == DBNOMICS_SERIES)
 
@@ -1195,6 +1194,9 @@ static void browser_functions_handler (windata_t *vwin, int task)
 
 static void show_addon_info (GtkWidget *w, gpointer data)
 {
+#if 1
+    dummy_call(); /* FIXME */
+#else
     windata_t *vwin = (windata_t *) data;
     gchar *pkgname = NULL;
     gchar *descrip = NULL;
@@ -1241,7 +1243,15 @@ static void show_addon_info (GtkWidget *w, gpointer data)
     g_free(pkgname);
     g_free(descrip);
     g_free(status);
+#endif
 }
+
+#if 0
+
+/* 2024-03-06: this is not wanted any more, but perhaps should be
+   replaced by functionality to install the full set of addons,
+   to support a build of gretl without addons being enabled.
+*/
 
 static void install_addon_callback (GtkWidget *w, gpointer data)
 {
@@ -1275,6 +1285,8 @@ static void install_addon_callback (GtkWidget *w, gpointer data)
 	g_free(pkgname);
     }
 }
+
+#endif
 
 /* this function is public because it's called from
    doubleclick_action() in callbacks.c
@@ -1508,13 +1520,11 @@ static void build_funcfiles_popup (windata_t *vwin)
 	add_popup_item(_("Install"), vwin->popup,
 		       G_CALLBACK(install_file_from_server),
 		       vwin);
-    } else if (vwin->role == REMOTE_ADDONS) {
+    } else if (vwin->role == ADDONS_FILES) {
 	add_popup_item(_("Info"), vwin->popup,
 		       G_CALLBACK(show_addon_info),
 		       vwin);
-	add_popup_item(_("Install"), vwin->popup,
-		       G_CALLBACK(install_addon_callback),
-		       vwin);
+	/* note: install_addon_callback removed */
     } else if (vwin->role == PKG_REGISTRY) {
 	add_popup_item(_("Remove"), vwin->popup,
 		       G_CALLBACK(gfn_registry_remove),
@@ -1759,9 +1769,10 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	    return (role == FUNC_FILES);
 	}
     } else if (item->flag == BTN_INST) {
-	if (role == REMOTE_ADDONS) {
-	    item->func = G_CALLBACK(install_addon_callback);
-	    return 1;
+	if (role == ADDONS_FILES) {
+	    // item->func = G_CALLBACK(install_addon_callback);
+	    // return 1;
+	    return 0;
 	} else {
 	    item->func = G_CALLBACK(install_file_from_server);
 	    return (role == REMOTE_DB ||
@@ -1790,7 +1801,7 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	    item->func = G_CALLBACK(show_function_info);
 	} else if (role == REMOTE_FUNC_FILES) {
 	    item->func = G_CALLBACK(pkg_info_from_server);
-	} else if (role == REMOTE_ADDONS) {
+	} else if (role == ADDONS_FILES) {
 	    item->func = G_CALLBACK(show_addon_info);
 	} else if (role == DBNOMICS_DB) {
 	    item->func = G_CALLBACK(show_dbnomics_dimensions);
@@ -2084,7 +2095,7 @@ static gint catch_browser_key (GtkWidget *w, GdkEventKey *event,
 	    show_function_info(NULL, vwin);
 	} else if (vwin->role == REMOTE_FUNC_FILES) {
 	    pkg_info_from_server(NULL, vwin);
-	} else if (vwin->role == REMOTE_ADDONS) {
+	} else if (vwin->role == ADDONS_FILES) {
 	    show_addon_info(NULL, vwin);
 	} else if (vwin->role == DBNOMICS_DB) {
 	    show_dbnomics_dimensions(NULL, vwin);
@@ -2102,7 +2113,7 @@ static void set_up_browser_keystrokes (windata_t *vwin)
 }
 
 #define want_keyvals(r) (r==FUNC_FILES || r==TEXTBOOK_DATA || \
-			 r==REMOTE_FUNC_FILES || r==REMOTE_ADDONS || \
+			 r==REMOTE_FUNC_FILES || r==ADDONS_FILES || \
 			 r==DBNOMICS_DB)
 
 #define notebook_needed(r) (r==TEXTBOOK_DATA || r==PS_FILES)
@@ -2140,7 +2151,7 @@ void display_files (int role, const gchar *path)
 	title = g_strdup(_("gretl: function packages on server"));
     } else if (role == REMOTE_DATA_PKGS) {
 	title = g_strdup(_("gretl: data packages on server"));
-    } else if (role == REMOTE_ADDONS) {
+    } else if (role == ADDONS_FILES) {
 	title = g_strdup(_("gretl: addons"));
     } else if (role == PKG_REGISTRY) {
 	title = g_strdup(_("gretl: packages on menus"));
@@ -2195,7 +2206,7 @@ void display_files (int role, const gchar *path)
 	    L = L->next;
 	}
     } else if (role == FUNC_FILES || role == REMOTE_FUNC_FILES ||
-	       role == REMOTE_ADDONS || role == PKG_REGISTRY) {
+	       role == ADDONS_FILES || role == PKG_REGISTRY) {
 	g_signal_connect(G_OBJECT(vwin->listbox), "button-press-event",
 			 G_CALLBACK(funcfiles_popup_handler),
 			 vwin);
@@ -2282,8 +2293,8 @@ static int display_files_code (const gchar *s)
 	return FUNC_FILES;
     if (!strcmp(s, "RemoteGfn"))
 	return REMOTE_FUNC_FILES;
-    if (!strcmp(s, "SFAddons"))
-	return REMOTE_ADDONS;
+    if (!strcmp(s, "Addons"))
+	return ADDONS_FILES;
     if (!strcmp(s, "DBNbrowse"))
 	return DBNOMICS_TOP;
 
@@ -2939,8 +2950,8 @@ gint populate_filelist (windata_t *vwin, gpointer p)
 	return populate_remote_data_pkg_list(vwin);
     } else if (vwin->role == FUNC_FILES) {
 	return populate_gfn_list(vwin);
-    } else if (vwin->role == REMOTE_ADDONS) {
-	return populate_remote_addons_list(vwin);
+    } else if (vwin->role == ADDONS_FILES) {
+	return populate_addons_list(vwin);
     } else if (vwin->role == PKG_REGISTRY) {
 	return populate_gfn_registry_list(vwin);
     } else {
@@ -3002,10 +3013,9 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	N_("Local status")
     };
     const char *addons_titles[] = {
-	N_("Package"),
-	N_("Installed"),
-	N_("On server"),
-	N_("Comment")
+	N_("Addon"),
+	N_("Version"),
+	N_("Date")
     };
     const char *registry_titles[] = {
 	N_("Package"),
@@ -3040,13 +3050,6 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	G_TYPE_STRING,
 	G_TYPE_BOOLEAN,  /* hidden boolean: zipfile? */
 	G_TYPE_STRING    /* hidden string: dependencies */
-    };
-    GType addons_types[] = {
-	G_TYPE_STRING,
-	G_TYPE_STRING,
-	G_TYPE_STRING,
-	G_TYPE_STRING,
-	G_TYPE_STRING  /* hidden string: description */
     };
     const char **titles = data_titles;
     GType *types = types_2;
@@ -3110,11 +3113,9 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	full_width = 760;
 	file_height = 340;
 	break;
-    case REMOTE_ADDONS:
+    case ADDONS_FILES:
 	titles = addons_titles;
-	types = addons_types;
-	cols = G_N_ELEMENTS(addons_types);
-	hidden_cols = 1;
+	cols = 3;
 	full_width = 480;
 	break;
     case PKG_REGISTRY:

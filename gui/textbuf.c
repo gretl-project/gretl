@@ -1807,7 +1807,7 @@ static gchar *get_mnu_string (const char *key)
 	s = _("On _server...");
     } else if (!strcmp(key, "Pkgbook")) {
 	s = _("_Function package guide");
-    } else if (!strcmp(key, "SFAddons")) {
+    } else if (!strcmp(key, "Addons")) {
 	s = _("Check for _addons");
     } else if (!strcmp(key, "Registry")) {
 	s = _("Package registry");
@@ -2091,8 +2091,8 @@ static void open_menu_item (GtkTextTag *tag)
 	    display_files(REMOTE_FUNC_FILES, NULL);
 	} else if (!strcmp(name, "LocalGfn")) {
 	    display_files(FUNC_FILES, NULL);
-	} else if (!strcmp(name, "SFAddons")) {
-	    display_files(REMOTE_ADDONS, NULL);
+	} else if (!strcmp(name, "Addons")) {
+	    display_files(ADDONS_FILES, NULL);
 	} else if (!strcmp(name, "Registry")) {
 	    display_files(PKG_REGISTRY, NULL);
 	} else if (!strcmp(name, "SetSeed")) {
