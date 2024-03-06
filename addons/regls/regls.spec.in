@@ -1,6 +1,6 @@
 author = Allin Cottrell
 email = cottrell@wfu.edu
-version = 0.9
+version = @VERSION@
 date = 2023-05-20
 description = Regularized least squares
 tags = C20 C52
@@ -13,4 +13,4 @@ bundle-plot = regls_bundle_plot
 help = regls.pdf
 sample-script = regls_sample.inp
 data-files = examples
-min-version = 2023b
+min-version = @VERSION@
