@@ -43,8 +43,8 @@ dnl
 build_gui="yes"
 prefer_gtk2="no"
 build_docs="no"
-build_addons="no"
-build_addons_doc="no"
+build_addons="yes"
+build_addons_doc="yes"
 build_editor="no"
 use_lucida="no"
 build_po="no"
@@ -146,7 +146,7 @@ else
 fi])
 
 AC_ARG_ENABLE(build-addons,
-[  --enable-build-addons   Enable building of gretl addons [[default=no]]],
+[  --enable-build-addons   Enable building of gretl addons [[default=yes]]],
 [if test "$enableval" = "yes"
 then
   build_addons=yes
@@ -1104,35 +1104,45 @@ if test "${build_addons}" = "yes" ; then
   AC_CONFIG_FILES([
     addons/Makefile
     addons/gig/Makefile
+    addons/gig/gig.spec
     addons/gig/pkg.inp
     addons/gig/doc/Makefile
     addons/HIP/Makefile
+    addons/HIP/HIP.spec
     addons/HIP/pkg.inp
     addons/HIP/doc/Makefile
     addons/ivpanel/Makefile
+    addons/ivpanel/ivpanel.spec
     addons/ivpanel/pkg.inp
     addons/ivpanel/doc/Makefile
     addons/SVAR/Makefile
+    addons/SVAR/SVAR.spec
     addons/SVAR/pkg.inp
     addons/SVAR/doc/Makefile
     addons/dbnomics/Makefile
+    addons/dbnomics/dbnomics.spec
     addons/dbnomics/pkg.inp
     addons/dbnomics/doc/Makefile
+    addons/extra/extra.spec
     addons/extra/pkg.inp
     addons/extra/Makefile
     addons/extra/doc/Makefile
-    addons/geoplot/pkg.inp
     addons/geoplot/Makefile
+    addons/geoplot/geoplot.spec
+    addons/geoplot/pkg.inp
     addons/geoplot/doc/Makefile
     addons/geoplot/examples/Makefile
-    addons/regls/pkg.inp
     addons/regls/Makefile
+    addons/regls/regls.spec
+    addons/regls/pkg.inp
     addons/regls/doc/Makefile
-    addons/logging/pkg.inp
     addons/logging/Makefile
+    addons/logging/logging.spec
+    addons/logging/pkg.inp
     addons/logging/doc/Makefile
-    addons/KFgui/pkg.inp
     addons/KFgui/Makefile
+    addons/KFgui/KFgui.spec
+    addons/KFgui/pkg.inp
   ])
 fi
 

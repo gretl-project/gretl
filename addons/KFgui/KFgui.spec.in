@@ -1,10 +1,10 @@
 author = Riccardo "Jack" Lucchetti
 email = r.lucchetti@univpm.it
-version = 1.0
+version = @VERSION@
 date = 2022-01-15
 description = Kalman Filter GUI
 tags = C32
-min-version = 2022a
+min-version = @VERSION@
 public = KFgui KFgui_plot KFgui_print
 help = KFgui.txt
 sample-script = KFgui_sample.inp

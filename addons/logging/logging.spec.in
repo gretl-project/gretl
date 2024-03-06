@@ -1,11 +1,11 @@
 author = Artur Tarassow
 email = atecon@posteo.de
-version = 1.0
+version = @VERSION@
 date = 2021-07-08
 description = Structured logging for script execution
 tags = C81
 data-requirement = no-data-ok
-min-version = 2021c
+min-version = @VERSION@
 public = Debug Info Warn Error Critical
 help = logging.pdf
 sample-script = logging_sample.inp

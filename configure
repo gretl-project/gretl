@@ -1603,7 +1603,7 @@ Optional Features:
   --enable-gui            Enable gui [default=yes]
   --enable-gtk2           Use GTK 2.0 in preference to GTK 3.0 [default=no]
   --enable-build-doc      Enable building of gretl docs [git only]
-  --enable-build-addons   Enable building of gretl addons [default=no]
+  --enable-build-addons   Enable building of gretl addons [default=yes]
   --enable-addons-doc     Enable building addons documentation [default=auto]
   --enable-build-editor   Enable building of gretl_edit [default=no]
   --enable-quiet-build    Enable quiet building
@@ -3455,8 +3455,8 @@ echo "configuring for $PACKAGE $VERSION (library version $LIBVERSION)"
 build_gui="yes"
 prefer_gtk2="no"
 build_docs="no"
-build_addons="no"
-build_addons_doc="no"
+build_addons="yes"
+build_addons_doc="yes"
 build_editor="no"
 use_lucida="no"
 build_po="no"
@@ -25171,7 +25171,7 @@ if test "${build_docs}" = "yes" ; then
 fi
 
 if test "${build_addons}" = "yes" ; then
-  ac_config_files="$ac_config_files addons/Makefile addons/gig/Makefile addons/gig/pkg.inp addons/gig/doc/Makefile addons/HIP/Makefile addons/HIP/pkg.inp addons/HIP/doc/Makefile addons/ivpanel/Makefile addons/ivpanel/pkg.inp addons/ivpanel/doc/Makefile addons/SVAR/Makefile addons/SVAR/pkg.inp addons/SVAR/doc/Makefile addons/dbnomics/Makefile addons/dbnomics/pkg.inp addons/dbnomics/doc/Makefile addons/extra/pkg.inp addons/extra/Makefile addons/extra/doc/Makefile addons/geoplot/pkg.inp addons/geoplot/Makefile addons/geoplot/doc/Makefile addons/geoplot/examples/Makefile addons/regls/pkg.inp addons/regls/Makefile addons/regls/doc/Makefile addons/logging/pkg.inp addons/logging/Makefile addons/logging/doc/Makefile addons/KFgui/pkg.inp addons/KFgui/Makefile"
+  ac_config_files="$ac_config_files addons/Makefile addons/gig/Makefile addons/gig/gig.spec addons/gig/pkg.inp addons/gig/doc/Makefile addons/HIP/Makefile addons/HIP/HIP.spec addons/HIP/pkg.inp addons/HIP/doc/Makefile addons/ivpanel/Makefile addons/ivpanel/ivpanel.spec addons/ivpanel/pkg.inp addons/ivpanel/doc/Makefile addons/SVAR/Makefile addons/SVAR/SVAR.spec addons/SVAR/pkg.inp addons/SVAR/doc/Makefile addons/dbnomics/Makefile addons/dbnomics/dbnomics.spec addons/dbnomics/pkg.inp addons/dbnomics/doc/Makefile addons/extra/extra.spec addons/extra/pkg.inp addons/extra/Makefile addons/extra/doc/Makefile addons/geoplot/Makefile addons/geoplot/geoplot.spec addons/geoplot/pkg.inp addons/geoplot/doc/Makefile addons/geoplot/examples/Makefile addons/regls/Makefile addons/regls/regls.spec addons/regls/pkg.inp addons/regls/doc/Makefile addons/logging/Makefile addons/logging/logging.spec addons/logging/pkg.inp addons/logging/doc/Makefile addons/KFgui/Makefile addons/KFgui/KFgui.spec addons/KFgui/pkg.inp"
 
 fi
 
@@ -26309,35 +26309,45 @@ do
     "doc/reference/Makefile") CONFIG_FILES="$CONFIG_FILES doc/reference/Makefile" ;;
     "addons/Makefile") CONFIG_FILES="$CONFIG_FILES addons/Makefile" ;;
     "addons/gig/Makefile") CONFIG_FILES="$CONFIG_FILES addons/gig/Makefile" ;;
+    "addons/gig/gig.spec") CONFIG_FILES="$CONFIG_FILES addons/gig/gig.spec" ;;
     "addons/gig/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/gig/pkg.inp" ;;
     "addons/gig/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/gig/doc/Makefile" ;;
     "addons/HIP/Makefile") CONFIG_FILES="$CONFIG_FILES addons/HIP/Makefile" ;;
+    "addons/HIP/HIP.spec") CONFIG_FILES="$CONFIG_FILES addons/HIP/HIP.spec" ;;
     "addons/HIP/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/HIP/pkg.inp" ;;
     "addons/HIP/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/HIP/doc/Makefile" ;;
     "addons/ivpanel/Makefile") CONFIG_FILES="$CONFIG_FILES addons/ivpanel/Makefile" ;;
+    "addons/ivpanel/ivpanel.spec") CONFIG_FILES="$CONFIG_FILES addons/ivpanel/ivpanel.spec" ;;
     "addons/ivpanel/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/ivpanel/pkg.inp" ;;
     "addons/ivpanel/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/ivpanel/doc/Makefile" ;;
     "addons/SVAR/Makefile") CONFIG_FILES="$CONFIG_FILES addons/SVAR/Makefile" ;;
+    "addons/SVAR/SVAR.spec") CONFIG_FILES="$CONFIG_FILES addons/SVAR/SVAR.spec" ;;
     "addons/SVAR/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/SVAR/pkg.inp" ;;
     "addons/SVAR/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/SVAR/doc/Makefile" ;;
     "addons/dbnomics/Makefile") CONFIG_FILES="$CONFIG_FILES addons/dbnomics/Makefile" ;;
+    "addons/dbnomics/dbnomics.spec") CONFIG_FILES="$CONFIG_FILES addons/dbnomics/dbnomics.spec" ;;
     "addons/dbnomics/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/dbnomics/pkg.inp" ;;
     "addons/dbnomics/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/dbnomics/doc/Makefile" ;;
+    "addons/extra/extra.spec") CONFIG_FILES="$CONFIG_FILES addons/extra/extra.spec" ;;
     "addons/extra/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/extra/pkg.inp" ;;
     "addons/extra/Makefile") CONFIG_FILES="$CONFIG_FILES addons/extra/Makefile" ;;
     "addons/extra/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/extra/doc/Makefile" ;;
-    "addons/geoplot/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/geoplot/pkg.inp" ;;
     "addons/geoplot/Makefile") CONFIG_FILES="$CONFIG_FILES addons/geoplot/Makefile" ;;
+    "addons/geoplot/geoplot.spec") CONFIG_FILES="$CONFIG_FILES addons/geoplot/geoplot.spec" ;;
+    "addons/geoplot/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/geoplot/pkg.inp" ;;
     "addons/geoplot/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/geoplot/doc/Makefile" ;;
     "addons/geoplot/examples/Makefile") CONFIG_FILES="$CONFIG_FILES addons/geoplot/examples/Makefile" ;;
-    "addons/regls/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/regls/pkg.inp" ;;
     "addons/regls/Makefile") CONFIG_FILES="$CONFIG_FILES addons/regls/Makefile" ;;
+    "addons/regls/regls.spec") CONFIG_FILES="$CONFIG_FILES addons/regls/regls.spec" ;;
+    "addons/regls/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/regls/pkg.inp" ;;
     "addons/regls/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/regls/doc/Makefile" ;;
-    "addons/logging/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/logging/pkg.inp" ;;
     "addons/logging/Makefile") CONFIG_FILES="$CONFIG_FILES addons/logging/Makefile" ;;
+    "addons/logging/logging.spec") CONFIG_FILES="$CONFIG_FILES addons/logging/logging.spec" ;;
+    "addons/logging/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/logging/pkg.inp" ;;
     "addons/logging/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/logging/doc/Makefile" ;;
-    "addons/KFgui/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/KFgui/pkg.inp" ;;
     "addons/KFgui/Makefile") CONFIG_FILES="$CONFIG_FILES addons/KFgui/Makefile" ;;
+    "addons/KFgui/KFgui.spec") CONFIG_FILES="$CONFIG_FILES addons/KFgui/KFgui.spec" ;;
+    "addons/KFgui/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/KFgui/pkg.inp" ;;
     "editor/Makefile") CONFIG_FILES="$CONFIG_FILES editor/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;

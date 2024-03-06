@@ -1,10 +1,10 @@
 author = The gretl team
 email = <use the mailing list or trackers>
-version = 1.8
+version = @VERSION@
 date = 2023-07-13
 description = extra functions for hansl scripting
 tags = C88
-min-version = 2022a
+min-version = @VERSION@
 data-requirement = no-data-ok
 public = gap_filler winsor nearPSD zeroifclose \
   eliminate duplicate truncnorm scores2x2 WSRcritical WSRpvalue \

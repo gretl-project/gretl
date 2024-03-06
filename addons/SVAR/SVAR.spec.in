@@ -1,7 +1,7 @@
 author = Riccardo "Jack" Lucchetti and Sven Schreiber
 email = r.lucchetti@univpm.it
 tags = C32
-version = 2.1
+version = @VERSION@
 date = 2023-11-28
 description = Structural VARs
 public = SVAR_setup SVAR_restrict SVAR_ident SVAR_estimate \
@@ -26,7 +26,7 @@ help = SVAR.pdf
 sample-script = examples/Traditional/simple_C.inp
 data-files = examples
 
-min-version = 2023b
+min-version = @VERSION@
 depends = extra
 data-requirement = needs-time-series-data
 

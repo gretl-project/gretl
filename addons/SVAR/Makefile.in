@@ -29,7 +29,6 @@ PKG = SVAR
 PKGSRC = $(topsrc)/addons/$(PKG)
 
 vpath %.inp $(PKGSRC)
-vpath %.spec $(PKGSRC)
 
 INP =   SVAR_ABfuncs.inp \
 	SVAR_Cfuncs.inp \
@@ -61,7 +60,6 @@ $(PKG).zip: $(PKG).gfn doc/$(PKG).pdf
 .PHONY : symlinks check install installdirs clean
 
 symlinks:
-	@if [ ! -f $(SPEC) ] || [ $(PKGSRC)/$(SPEC) -nt $(SPEC) ] ; then ln -sf $(PKGSRC)/$(SPEC) . ; fi
 	@if [ ! -d examples ] || [ $(PKGSRC)/examples -nt examples ] ; then ln -s $(PKGSRC)/examples . ; fi
 
 check: $(PKG).gfn
