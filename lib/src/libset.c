@@ -1301,6 +1301,11 @@ static void libset_print_bool (SetKey key, const char *s,
 {
     int v = libset_get_bool(key);
 
+    if (gretl_function_depth() > 0 &&
+	(key == ECHO_ON || key == MSGS_ON || key == VERBOSE)) {
+	return;
+    }
+
     if (s == NULL) {
 	s = setkey_get_name(key);
     }
@@ -1442,7 +1447,7 @@ static int print_settings (PRN *prn, gretlopt opt)
 
     libset_header(N_("Numerical methods"), prn, opt);
     print_vars_for_category(CAT_NUMERIC, prn, opt);
-    if (opt & OPT_D) {
+    if ((opt & OPT_D) && gretl_function_depth() == 0) {
 	/* script version of this? */
 	print_state_matrix(INITVALS, prn, opt);
 	print_state_matrix(INITCURV, prn, opt);
