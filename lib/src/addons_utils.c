@@ -230,10 +230,9 @@ int update_addons_index (PRN *prn)
     return 0;
 }
 
-/* Determine whether gretl has been updated since it was
-   last run. We do this by comparing the build_date string
-   in the program itself with that previously saved in the
-   gretl config file.
+/* Determine whether gretl has been updated since it was last run. We
+   do this by comparing the build_date string in the program itself
+   with that previously saved in the gretl config file.
 */
 
 int gretl_is_updated (const char *prev_build)
@@ -250,13 +249,12 @@ int gretl_is_updated (const char *prev_build)
     return b_curr > b_prev;
 }
 
-/* Get the full path to the .gfn file for a given
-   addon. We first try for this via the simple plain
-   text index file addons.idx. If that's not found
-   we construct the index from scratch.
+/* Get the full path to the .gfn file for a given addon. We first try
+   for this via the simple plain text index file addons.idx. If that's
+   not found we construct the index from scratch.
 
-   The path that's returned is newly allocated and
-   should be freed by the caller.
+   The path that's returned is newly allocated and should be freed by
+   the caller.
 */
 
 char *gretl_addon_get_path (const char *addon)
@@ -300,9 +298,8 @@ char *gretl_addon_get_path (const char *addon)
     return ret;
 }
 
-/* Retrieve the path to an addon's "examples" sub-dir.
-   Note that it's not required that every addon has
-   such (though maybe it should be?).
+/* Retrieve the path to an addon's "examples" sub-dir.  Note that it's
+   not required that every addon has such.
 */
 
 char *get_addon_examples_dir (const char *addon)
@@ -326,9 +323,9 @@ char *get_addon_examples_dir (const char *addon)
     return ret;
 }
 
-/* Retrieve the path to an addon's PDF documentation,
-   which is required of every addon. We accept the
-   @addon argument with or without the ".pdf" suffix.
+/* Retrieve the path to an addon's PDF documentation, which is
+   required of every addon. We accept the @addon argument with or
+   without the ".pdf" suffix.
 */
 
 char *get_addon_pdf_path (const char *addon)
