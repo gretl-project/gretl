@@ -23,7 +23,9 @@ const char **get_addon_names (int *n);
 
 int get_addon_basic_info (const char *addon,
 			  char **version,
-			  char **date);
+			  char **date,
+			  char **descrip,
+			  char **path);
 
 int update_addons_index (PRN *prn);
 

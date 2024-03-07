@@ -44,7 +44,6 @@ build_gui="yes"
 prefer_gtk2="no"
 build_docs="no"
 build_addons="yes"
-build_addons_doc="yes"
 build_editor="no"
 use_lucida="no"
 build_po="no"
@@ -150,18 +149,8 @@ AC_ARG_ENABLE(build-addons,
 [if test "$enableval" = "yes"
 then
   build_addons=yes
-  build_addons_doc=yes
 else
   build_addons=no
-fi])
-
-AC_ARG_ENABLE(addons-doc,
-[  --enable-addons-doc     Enable building addons documentation [[default=auto]]],
-[if test "$enableval" = "yes"
-then
-  build_addons_doc=yes
-else
-  build_addons_doc=no
 fi])
 
 AC_ARG_ENABLE(build-editor,
@@ -653,15 +642,15 @@ fi
 dnl
 dnl Check for pdflatex executable
 dnl
-AC_DEFUN([AC_PROG_LATEX],
-[AC_CHECK_PROG(LATEX,pdflatex,yes)])
+AC_DEFUN([AC_PROG_PDFLATEX],
+[AC_CHECK_PROG(PDFLATEX,pdflatex,yes)])
 
-AC_PROG_LATEX
-test x"${LATEX}" = xyes && AC_DEFINE(HAVE_LATEX)
-if test x"${LATEX}" = xyes ; then
-  have_latex="yes"
+AC_PROG_PDFLATEX
+test x"${PDFLATEX}" = xyes && AC_DEFINE(HAVE_PDFLATEX)
+if test x"${PDFLATEX}" = xyes ; then
+  have_pdflatex="yes"
 else
-  have_latex="no"
+  have_pdflatex="no"
 fi
 
 dnl
@@ -945,7 +934,7 @@ fi
 
 dnl If building docs was requested, see if we can do it
 if test "${build_docs}" = "yes" ; then
-   if test "$have_xslt" = "no" || test "$have_latex" = "no" ; then
+   if test "$have_xslt" = "no" || test "$have_pdflatex" = "no" ; then
       build_docs="no"
       echo "*** Can't build gretl docs: XSLT and/or pdflatex not found"
    fi
@@ -953,17 +942,14 @@ fi
 
 dnl If building addons was requested, see if we can do it
 if test "${build_addons}" = "yes" ; then
-   if test "${build_addons_doc}" = "yes" ; then
-      if test "$have_latex" = "no" ; then
-         echo "*** Can't build documentation for addons: pdflatex not found."
-         build_addons="no"
-      fi
+   if test "$have_pdflatex" = "no" ; then
+      echo "*** Can't build documentation for addons: pdflatex not found."
+      build_addons="no"
    fi
 fi
 
 AC_SUBST(build_docs)
 AC_SUBST(build_addons)
-AC_SUBST(build_addons_doc)
 AC_SUBST(build_editor)
 AC_SUBST(quiet_build)
 AC_SUBST(pkg_build)
@@ -1236,7 +1222,7 @@ Configuration:
   Installation path:                      ${prefix}
   Use readline library:                   ${have_readline}
   Use gnuplot for graphs:                 ${have_gnuplot}
-  Use pdflatex for typesetting:           ${have_latex}
+  Use pdflatex for typesetting:           ${have_pdflatex}
   Use libgsf for zip/unzip:               ${use_gsf}
   SIMD support for RNG:                   ${sse2_result}
   OpenMP support:                         ${ac_openmp_result}
@@ -1248,7 +1234,6 @@ Configuration:
   Use Lucida fonts:                       ${use_lucida}
   Build message catalogs:                 ${build_po}
   Build gretl addons:                     ${build_addons}
-  Build addons documentation:             ${build_addons_doc}
   Build gretl_edit:                       ${build_editor}
   X-12-ARIMA support:                     ${have_x12a}
   TRAMO/SEATS support:                    ${have_tramo}

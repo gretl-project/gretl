@@ -24,6 +24,8 @@
 #include "build.h"
 #include "gretl_xml.h"
 
+#define A_DEBUG 0
+
 /* Note: here's the canonical listing of gretl addons */
 
 static const char *addon_names[] = {
@@ -236,6 +238,10 @@ int update_addons_index (PRN *prn)
     FILE *fp;
     int i;
 
+#if AU_DEBUG
+    fprintf(stderr, "*** update_addons_index called ***\n");
+#endif
+
     fp = gretl_fopen(idxname, "wb");
     if (fp == NULL) {
 	g_free(idxname);
@@ -339,35 +345,49 @@ char *gretl_addon_get_path (const char *addon)
     gchar *idxname = gretl_make_dotpath("addons.idx");
     FILE *fp = gretl_fopen(idxname, "rb");
     char *ret = NULL;
+    int err = 0;
+
+#if AU_DEBUG
+    fprintf(stderr, "gretl_addon_get_path: '%s'\n", addon);
+#endif
 
     if (fp == NULL) {
-	update_addons_index(NULL);
-	fp = gretl_fopen(idxname, "rb");
+	err = update_addons_index(NULL);
+	if (!err) {
+	    fp = gretl_fopen(idxname, "rb");
+	}
     }
 
-    if (fp != NULL) {
-	char *s, line[512];
-	int nsp, n = strlen(addon);
-	int got = 0;
+    if (fp == NULL) {
+	fprintf(stderr, "failed to read addons.idx\n");
+    } else {
+	char *s, line[1024];
+	int n = strlen(addon);
+	int nq = 0;
 
-	while (fgets(line, sizeof line, fp) && !got) {
+	while (fgets(line, sizeof line, fp)) {
 	    if (!strncmp(addon, line, n)) {
-		s = line;
-		nsp = 0;
-		while (*s && !got) {
-		    if (*s == ' ') nsp++;
-		    if (nsp == 2) {
-			ret = gretl_strdup(s + 1);
-			g_strchomp(ret);
-			got = 1;
+		char *p = NULL;
+		char *q = NULL;
+
+		s = line + n;
+		while (*s) {
+		    if (*s == '"') {
+			nq++;
+			if (nq == 3) {
+			    p = s + 1;
+			} else if (nq == 4) {
+			    q = s;
+			}
 		    }
 		    s++;
+		}
+		if (p != NULL && q != NULL) {
+		    ret = gretl_strndup(p, q - p);
 		}
 	    }
 	}
 	fclose(fp);
-    } else {
-	fprintf(stderr, "failed to read addons.idx\n");
     }
 
     g_free(idxname);
@@ -441,7 +461,8 @@ char *get_addon_pdf_path (const char *addon)
 int get_addon_basic_info (const char *addon,
 			  char **version,
 			  char **date,
-			  char **descrip)
+			  char **descrip,
+			  char **fname)
 {
     gchar *idxname = gretl_make_dotpath("addons.idx");
     FILE *fp = gretl_fopen(idxname, "rb");
@@ -449,32 +470,31 @@ int get_addon_basic_info (const char *addon,
 
     if (fp == NULL) {
 	err = update_addons_index(NULL);
-	if (err) {
-	    return err;
-	} else {
+	if (!err) {
 	    fp = gretl_fopen(idxname, "rb");
-	    if (fp == NULL) {
-		err = E_FOPEN;
-	    }
 	}
     }
 
-    if (fp != NULL) {
+    if (fp == NULL) {
+	err = E_FOPEN;
+    } else {
 	char line[1024];
 	char name[16];
-	char verstr[16];
-	char datestr[16];
-	char descstr[32];
+	char vstr[16];
+	char dstr[16];
+	char desc[64];
+	char path[MAXLEN];
 	int got = 0;
 
 	while (fgets(line, sizeof line, fp) && !got) {
-	    if (sscanf(line, "%s %s %s \"%31[^\"]", name, verstr,
-		       datestr, descstr) == 3) {
+	    if (sscanf(line, "%s %s %s \"%63[^\"]\" \"%511[^\"]",
+		       name, vstr, dstr, desc, path) == 5) {
 		if (!strcmp(name, addon)) {
 		    got = 1;
-		    *version = gretl_strdup(verstr);
-		    *date = gretl_strdup(datestr);
-		    *descrip = gretl_strdup(descstr);
+		    *version = gretl_strdup(vstr);
+		    *date = gretl_strdup(dstr);
+		    *descrip = gretl_strdup(desc);
+		    *fname = gretl_strdup(path);
 		}
 	    }
 	}
@@ -483,8 +503,6 @@ int get_addon_basic_info (const char *addon,
 	    fprintf(stderr, "addons.idx: couldn't find '%s'\n", addon);
 	    err = E_DATA;
 	}
-    } else {
-	fprintf(stderr, "failed to read addons.idx\n");
     }
 
     g_free(idxname);

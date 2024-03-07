@@ -3693,7 +3693,7 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
     return err;
 }
 
-/* Columns: name, version, date */
+/* Columns: name, summary, version, date, path (hidden) */
 
 gint populate_addons_list (windata_t *vwin)
 {
@@ -3714,14 +3714,19 @@ gint populate_addons_list (windata_t *vwin)
 	const char *addon = anames[i];
 	char *version = NULL;
 	char *date = NULL;
+	char *descrip = NULL;
+	char *path = NULL;
 
-	err = get_addon_basic_info(addon, &version, &date);
+	err = get_addon_basic_info(addon, &version, &date, &descrip, &path);
 	if (!err) {
 	    gtk_list_store_append(store, &iter);
 	    gtk_list_store_set(store, &iter, 0, addon,
-			       1, version, 2, date, -1);
+			       1, descrip, 2, version,
+			       3, date, 4, path, -1);
 	    free(version);
 	    free(date);
+	    free(descrip);
+	    free(path);
 	    n_found++;
 	}
     }

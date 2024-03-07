@@ -677,7 +677,6 @@ swap_ends
 pkg_build
 quiet_build
 build_editor
-build_addons_doc
 build_addons
 build_docs
 GSF_LIBS
@@ -730,7 +729,7 @@ FFTW_CFLAGS
 PKG_CONFIG_LIBDIR
 PKG_CONFIG_PATH
 PKG_CONFIG
-LATEX
+PDFLATEX
 GNUPLOT
 ODBC_LIBS
 ODBC_CFLAGS
@@ -888,7 +887,6 @@ enable_gui
 enable_gtk2
 enable_build_doc
 enable_build_addons
-enable_addons_doc
 enable_build_editor
 enable_quiet_build
 enable_swap_ends
@@ -1604,7 +1602,6 @@ Optional Features:
   --enable-gtk2           Use GTK 2.0 in preference to GTK 3.0 [default=no]
   --enable-build-doc      Enable building of gretl docs [git only]
   --enable-build-addons   Enable building of gretl addons [default=yes]
-  --enable-addons-doc     Enable building addons documentation [default=auto]
   --enable-build-editor   Enable building of gretl_edit [default=no]
   --enable-quiet-build    Enable quiet building
   --enable-swap-ends      Build FRED database with swapped endianness
@@ -3456,7 +3453,6 @@ build_gui="yes"
 prefer_gtk2="no"
 build_docs="no"
 build_addons="yes"
-build_addons_doc="yes"
 build_editor="no"
 use_lucida="no"
 build_po="no"
@@ -7824,21 +7820,8 @@ then :
   enableval=$enable_build_addons; if test "$enableval" = "yes"
 then
   build_addons=yes
-  build_addons_doc=yes
 else
   build_addons=no
-fi
-fi
-
-
-# Check whether --enable-addons-doc was given.
-if test ${enable_addons_doc+y}
-then :
-  enableval=$enable_addons_doc; if test "$enableval" = "yes"
-then
-  build_addons_doc=yes
-else
-  build_addons_doc=no
 fi
 fi
 
@@ -23238,12 +23221,12 @@ fi
 set dummy pdflatex; ac_word=$2
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 printf %s "checking for $ac_word... " >&6; }
-if test ${ac_cv_prog_LATEX+y}
+if test ${ac_cv_prog_PDFLATEX+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
-  if test -n "$LATEX"; then
-  ac_cv_prog_LATEX="$LATEX" # Let the user override the test.
+  if test -n "$PDFLATEX"; then
+  ac_cv_prog_PDFLATEX="$PDFLATEX" # Let the user override the test.
 else
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
@@ -23256,7 +23239,7 @@ do
   esac
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
-    ac_cv_prog_LATEX="yes"
+    ac_cv_prog_PDFLATEX="yes"
     printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -23266,22 +23249,22 @@ IFS=$as_save_IFS
 
 fi
 fi
-LATEX=$ac_cv_prog_LATEX
-if test -n "$LATEX"; then
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $LATEX" >&5
-printf "%s\n" "$LATEX" >&6; }
+PDFLATEX=$ac_cv_prog_PDFLATEX
+if test -n "$PDFLATEX"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $PDFLATEX" >&5
+printf "%s\n" "$PDFLATEX" >&6; }
 else
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
 printf "%s\n" "no" >&6; }
 fi
 
 
-test x"${LATEX}" = xyes && printf "%s\n" "#define HAVE_LATEX 1" >>confdefs.h
+test x"${PDFLATEX}" = xyes && printf "%s\n" "#define HAVE_PDFLATEX 1" >>confdefs.h
 
-if test x"${LATEX}" = xyes ; then
-  have_latex="yes"
+if test x"${PDFLATEX}" = xyes ; then
+  have_pdflatex="yes"
 else
-  have_latex="no"
+  have_pdflatex="no"
 fi
 
 if test -z "$PKG_CONFIG"; then
@@ -24924,21 +24907,18 @@ fi
 fi
 
 if test "${build_docs}" = "yes" ; then
-   if test "$have_xslt" = "no" || test "$have_latex" = "no" ; then
+   if test "$have_xslt" = "no" || test "$have_pdflatex" = "no" ; then
       build_docs="no"
       echo "*** Can't build gretl docs: XSLT and/or pdflatex not found"
    fi
 fi
 
 if test "${build_addons}" = "yes" ; then
-   if test "${build_addons_doc}" = "yes" ; then
-      if test "$have_latex" = "no" ; then
-         echo "*** Can't build documentation for addons: pdflatex not found."
-         build_addons="no"
-      fi
+   if test "$have_pdflatex" = "no" ; then
+      echo "*** Can't build documentation for addons: pdflatex not found."
+      build_addons="no"
    fi
 fi
-
 
 
 
@@ -27855,7 +27835,7 @@ Configuration:
   Installation path:                      ${prefix}
   Use readline library:                   ${have_readline}
   Use gnuplot for graphs:                 ${have_gnuplot}
-  Use pdflatex for typesetting:           ${have_latex}
+  Use pdflatex for typesetting:           ${have_pdflatex}
   Use libgsf for zip/unzip:               ${use_gsf}
   SIMD support for RNG:                   ${sse2_result}
   OpenMP support:                         ${ac_openmp_result}
@@ -27867,7 +27847,6 @@ Configuration:
   Use Lucida fonts:                       ${use_lucida}
   Build message catalogs:                 ${build_po}
   Build gretl addons:                     ${build_addons}
-  Build addons documentation:             ${build_addons_doc}
   Build gretl_edit:                       ${build_editor}
   X-12-ARIMA support:                     ${have_x12a}
   TRAMO/SEATS support:                    ${have_tramo}

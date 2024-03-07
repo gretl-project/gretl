@@ -68,8 +68,8 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Define if using libgsf (>= 1.14.31) for zip/unzip */
 #undef USE_GSF
 
-/* Is LaTeX available? */
-#undef HAVE_LATEX
+/* Is pdflatex available? */
+#undef HAVE_PDFLATEX
 
 /* using gtk+ 3 */
 #undef USE_GTK3

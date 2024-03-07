@@ -1194,56 +1194,21 @@ static void browser_functions_handler (windata_t *vwin, int task)
 
 static void show_addon_info (GtkWidget *w, gpointer data)
 {
-#if 1
-    dummy_call(); /* FIXME */
-#else
     windata_t *vwin = (windata_t *) data;
-    gchar *pkgname = NULL;
-    gchar *descrip = NULL;
-    gchar *status = NULL;
     int v = vwin->active_var;
+    gchar *pkgname = NULL;
+    gchar *pkgpath = NULL;
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), v, 0, &pkgname);
-    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), v, 4, &descrip);
-    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), v, 3, &status);
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), v, 4, &pkgpath);
 
-    if (pkgname == NULL || descrip == NULL) {
-	gui_errmsg(E_DATA);
+    if (pkgname != NULL && pkgpath != NULL) {
+	display_function_package_data(pkgname, pkgpath, VIEW_PKG_INFO);
+	g_free(pkgname);
+	g_free(pkgpath);
     } else {
-	gchar *localver = NULL;
-	int done = 0;
-
-	if (status != NULL) {
-	    char *path = gretl_addon_get_path(pkgname);
-	    char *ver = NULL, *date = NULL;
-
-	    if (path != NULL && !strcmp(status, _("Not up to date"))) {
-		ver = get_addon_version(path, &date);
-		if (ver != NULL && date != NULL) {
-		    localver = g_strdup_printf("Installed version is %s (%s)",
-					       ver, date);
-		}
-		free(ver);
-		free(date);
-	    } else if (path != NULL && !strcmp(status, _("Up to date")) &&
-		       display_function_package_data(pkgname, path, VIEW_PKG_INFO)) {
-		done = 1;
-	    }
-	    free(path);
-	}
-
-	if (localver != NULL) {
-	    infobox_printf("%s:\n%s\n%s", pkgname, descrip, localver);
-	    g_free(localver);
-	} else if (!done) {
-	    infobox_printf("%s:\n%s", pkgname, descrip);
-	}
+	errbox("Couldn't get info for addon");
     }
-
-    g_free(pkgname);
-    g_free(descrip);
-    g_free(status);
-#endif
 }
 
 #if 0
@@ -3014,6 +2979,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
     };
     const char *addons_titles[] = {
 	N_("Addon"),
+	N_("Summary"),
 	N_("Version"),
 	N_("Date")
     };
@@ -3031,6 +2997,13 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_STRING
+    };
+    GType addons_types[] = {
+	G_TYPE_STRING,
+	G_TYPE_STRING,
+	G_TYPE_STRING,
+	G_TYPE_STRING,
+	G_TYPE_STRING    /* hidden string: full path */
     };
     GType func_types[] = {
 	G_TYPE_STRING,
@@ -3115,8 +3088,10 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	break;
     case ADDONS_FILES:
 	titles = addons_titles;
-	cols = 3;
-	full_width = 480;
+	types = addons_types;
+	cols = G_N_ELEMENTS(addons_types);
+	hidden_cols = 1;
+	full_width = 600;
 	break;
     case PKG_REGISTRY:
 	titles = registry_titles;
