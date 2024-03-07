@@ -1048,6 +1048,10 @@ static int process_cluster_string (const char *s,
     const char *p = strchr(s, ',');
     int err = 0;
 
+#if CDEBUG
+    fprintf(stderr, "process_cluster_string: '%s'\n", s);
+#endif
+
     if (p == NULL) {
 	/* no comma: should have a single name */
 	ci->target = 0;
@@ -1091,18 +1095,27 @@ static int check_cluster_var (MODEL *pmod,
                               const DATASET *dset,
                               cluster_info *ci)
 {
-    const char *s = get_optval_string(PANEL, OPT_C);
+    /* note: OPT_L means that we came here from "ols" */
+    int opt_ci = (pan->opt & OPT_L)? OLS : PANEL;
+    const char *s = get_optval_string(opt_ci, OPT_C);
     int err = 0;
+
+#if CDEBUG
+    fprintf(stderr, "check_cluster_var: s = '%s'\n", s);
+#endif
 
     if (s == NULL || *s == '\0') {
         err = E_DATA;
-    } else {
+    } else if (dset != NULL) {
+	/* @pset is distinct from @dset */
 	err = process_cluster_string(s, dset, ci);
+    } else if (0) {
+	/* @pset is the same thing as @dset: NOT YET */
+	err = process_cluster_string(s, pset, ci);
     }
 
 #if CDEBUG
-    fprintf(stderr, "check_cluster_var: dcvar0 %d, dcvar1 %d\n",
-	    ci->dcvar0, ci->dcvar1);
+    fprintf(stderr, "  dcvar0 %d, dcvar1 %d\n", ci->dcvar0, ci->dcvar1);
 #endif
 
     if (err) {
@@ -1111,7 +1124,7 @@ static int check_cluster_var (MODEL *pmod,
 	; /* nothing more to be done */
     } else if (by_time_or_unit(ci) && !two_way(ci)) {
 	; /* nothing more to be done */
-    } else {
+    } else if (dset != NULL) {
         int n_add = 1; /* default number of series to be added */
 	int v0;        /* position of (first) added series */
 
