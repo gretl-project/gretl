@@ -3400,7 +3400,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     if (cmd->ci == OLS && dataset_is_panel(dset)) {
         cmd->ci = PANEL;
-        cmd->opt |= OPT_P; /* panel pooled OLS flag */
+        cmd->opt |= (OPT_P | OPT_L); /* panel pooled OLS flag */
     }
 
 #if 0

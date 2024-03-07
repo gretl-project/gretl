@@ -393,3 +393,43 @@ function matrix drawbootres(const matrix U,
 
 end function
 
+function bundle get_settings (const string key[null])
+    /* Allin's function to get a bundle containing libset settings
+       (either all of them or one specific one). Added 2024-03-07.
+       Correct handling of floating point values depends on git master
+       as of 2024-03-06.
+    */
+    scalar lookup = exists(key)
+    bundle ret
+    string buf
+    outfile --buffer=buf --quiet
+        set
+    end outfile
+    string line setvar setval
+    scalar gotkey = 0
+    scalar v
+    loop while getline(buf, &line) && !gotkey
+        if sscanf(line, "%s = %s", setvar, setval) == 2
+            if setvar == "workdir"
+                setval = sprintf("%s", $workdir)
+            endif
+            if lookup && setvar == key
+                v = atof(setval)
+                ret[setvar] = ok(v) ? v : setval
+                gotkey = 1
+            elif !lookup
+                v = atof(setval)
+                ret[setvar] = ok(v) ? v : setval
+            endif
+        endif
+    endloop
+    if lookup
+        # clean-up call
+        getline(buf, null)
+        # and error check
+        if !gotkey
+            printf "'%s': key was not found\n", key
+        endif
+    endif
+    return ret
+end function
