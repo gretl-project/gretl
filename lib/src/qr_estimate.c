@@ -2093,7 +2093,7 @@ int lapack_cholesky_regress (MODEL *pmod, const DATASET *dset,
     return err;
 }
 
-int qr_tsls_vcv (MODEL *pmod, const DATASET *dset, gretlopt opt)
+int qr_tsls_vcv (MODEL *pmod, DATASET *dset, gretlopt opt)
 {
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
