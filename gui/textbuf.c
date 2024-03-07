@@ -599,7 +599,6 @@ static void sourceview_apply_language (windata_t *vwin)
     const char *id = NULL;
 
     lm = g_object_get_data(G_OBJECT(vwin->sbuf), "languages-manager");
-
     if (lm == NULL) {
 	return;
     }
@@ -913,7 +912,7 @@ static gchar *ensure_utf8_path (gchar *path)
 
 # endif
 
-/* Packages for Windows and OS X: gtksourceview needs to
+/* Packages for Windows and macOS: gtksourceview needs to
    be told where to find its language-specs and style
    files: these live under gtksourceview inside the package.
 
