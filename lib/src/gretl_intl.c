@@ -430,7 +430,7 @@ set_locale_with_workaround (int langid, const char *lcode,
     char *test = setlocale(LC_ALL, lcode);
 
 # ifndef WIN32
-    if (test == NULL) {
+    if (test == NULL && lcode != NULL) {
         char lfix[32];
 
         sprintf(lfix, "%s.UTF-8", lcode);
