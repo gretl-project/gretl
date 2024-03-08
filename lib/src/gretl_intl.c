@@ -439,13 +439,8 @@ set_locale_with_workaround (int langid, const char *lcode,
     if (test != NULL) {
 	fprintf(stderr, "setlocale: '%s' -> '%s'\n", lcode, test);
 	if (strcmp("_File", _("_File")) == 0) {
-	    const char *langstr;
-	    char tmp[64];
-
-	    langstr = lang_string_from_id(langid);
-	    sscanf(langstr, "%s", tmp);
-	    gretl_lower(tmp);
-	    gretl_setenv("LANGUAGE", tmp);
+	    fprintf(stderr, "translation not activated: try setenv workaround\n");
+	    gretl_setenv("LANGUAGE", lcode);
 	}
     }
 

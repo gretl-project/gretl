@@ -753,6 +753,7 @@ int gretl_setenv (const char *name, const char *value)
     int ok;
 
     /* belt and braces */
+    // ?? g_setenv(name, value, 1);
     estr = g_strdup_printf("%s=%s", name, value);
     putenv(estr);
 

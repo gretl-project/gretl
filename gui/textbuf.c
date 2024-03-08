@@ -592,47 +592,47 @@ static int source_buffer_load_buf (GtkSourceBuffer *sbuf, const char *buf)
     return 0;
 }
 
+struct sv_lang {
+    int role;
+    const char *str;
+};
+
 static void sourceview_apply_language (windata_t *vwin)
 {
+    struct sv_lang sv_langs[] = {
+	{ EDIT_GP,      "gnuplot" },
+	{ EDIT_R,       "r" },
+	{ EDIT_OX,      "cpp" },
+	{ EDIT_OCTAVE,  "octave" },
+	{ EDIT_PYTHON,  "python" },
+	{ EDIT_JULIA,   "julia" },
+	{ EDIT_STATA,   "stata" },
+	{ EDIT_DYNARE,  "cpp" },
+	{ EDIT_LPSOLVE, "lpsolve" },
+	{ EDIT_SPEC,    "gfnspec" }
+    };
     GtkSourceLanguageManager *lm;
     GtkSourceLanguage *lang = NULL;
-    const char *id = NULL;
+    const char *lname = "gretl";
+    int i;
 
     lm = g_object_get_data(G_OBJECT(vwin->sbuf), "languages-manager");
     if (lm == NULL) {
 	return;
     }
 
-    if (vwin->role == EDIT_GP) {
-	id = "gnuplot";
-    } else if (vwin->role == EDIT_R) {
-	id = "r";
-    } else if (vwin->role == EDIT_OX) {
-	id = "cpp";
-    } else if (vwin->role == EDIT_OCTAVE) {
-	id = "octave";
-    } else if (vwin->role == EDIT_PYTHON) {
-	id = "python";
-    } else if (vwin->role == EDIT_JULIA) {
-	id = "julia";
-    } else if (vwin->role == EDIT_STATA) {
-	id = "stata";
-    } else if (vwin->role == EDIT_DYNARE) {
-	id = "cpp";
-    } else if (vwin->role == EDIT_LPSOLVE) {
-	id = "lpsolve";
-    } else if (vwin->role == EDIT_SPEC) {
-	id = "gfnspec";
-    } else {
-	id = "gretl";
+    for (i=0; i<G_N_ELEMENTS(sv_langs); i++) {
+	if (vwin->role == sv_langs[i].role) {
+	    lname = sv_langs[i].str;
+	}
     }
 
-    lang = gtk_source_language_manager_get_language(lm, id);
+    lang = gtk_source_language_manager_get_language(lm, lname);
 
     if (lang == NULL) {
 	const gchar * const *S = gtk_source_language_manager_get_search_path(lm);
 
-	fprintf(stderr, "*** gtksourceview: lang is NULL for id='%s'\n", id);
+	fprintf(stderr, "*** gtksourceview: lang is NULL for '%s'\n", lname);
 	if (S != NULL) {
 	    fprintf(stderr, "the gtksourceview search path:\n");
 	    while (*S != NULL) {
