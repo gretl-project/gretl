@@ -1926,7 +1926,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 		int jj = 0;
 
 		for (j=LANG_AUTO; j<LANG_MAX; j++) {
-		    str = lang_string_from_id(j);
+		    str = gretl_lang_string_from_id(j);
 		    if (str != NULL) {
 			combo_box_append_text(rc->widget, str);
 			if (!strcmp(str, strvar)) {
@@ -2145,7 +2145,7 @@ static void rcvar_set_int (RCVAR *rcvar, int ival, int *changed)
 	flag_changed(rcvar, changed);
 	*intvar = ival;
 	if (intvar == &lcnumeric) {
-	    int langid = lang_id_from_name(langpref);
+	    int langid = gretl_lang_id_from_name(langpref);
 
 #ifdef G_OS_WIN32
             if (langid == LANG_AUTO && !getenv("LANG")) {
@@ -2518,7 +2518,7 @@ static int common_read_rc_setup (int updated)
 # endif
 #endif
 
-    langid = lang_id_from_name(langpref);
+    langid = gretl_lang_id_from_name(langpref);
 #ifdef G_OS_WIN32
     fprintf(stderr, "rc_setup: langpref='%s', langid=%d, lcnumeric=%d\n",
 	    langpref, langid, lcnumeric);

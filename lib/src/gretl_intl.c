@@ -252,7 +252,7 @@ static struct localeinfo locales[] = {
     { LANG_MAX,    NULL }
 };
 
-const char *locale_code_from_id (int langid)
+static const char *locale_code_from_id (int langid)
 {
     int i;
 
@@ -300,7 +300,9 @@ static struct langinfo langs[] = {
     { LANG_MAX,    NULL,                   NULL   }
 };
 
-const char *lang_string_from_id (int langid)
+/* called from settings.c */
+
+const char *gretl_lang_string_from_id (int langid)
 {
     int i;
 
@@ -313,7 +315,7 @@ const char *lang_string_from_id (int langid)
     return NULL;
 }
 
-int lang_id_from_name (const char *s)
+int gretl_lang_id_from_name (const char *s)
 {
     if (s != NULL && *s != '\0') {
         int i;
@@ -328,7 +330,7 @@ int lang_id_from_name (const char *s)
     return 0;
 }
 
-const char *lang_code_from_id (int langid)
+static const char *lang_code_from_id (int langid)
 {
     int i;
 
@@ -467,7 +469,7 @@ int test_locale (const char *langstr)
     char *orig, ocpy[64];
     int langid, err = 0;
 
-    langid = lang_id_from_name(langstr);
+    langid = gretl_lang_id_from_name(langstr);
     lcode = get_setlocale_string(langid);
     orig = setlocale(LC_ALL, NULL);
 

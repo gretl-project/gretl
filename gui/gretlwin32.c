@@ -256,7 +256,7 @@ int win32_lang_id_from_locale (void)
             i++;
         }
         if (*lword) {
-            return lang_id_from_name(lword);
+            return gretl_lang_id_from_name(lword);
         }
     }
 
