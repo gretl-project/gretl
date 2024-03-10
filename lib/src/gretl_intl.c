@@ -423,6 +423,15 @@ void set_lcnumeric (int langid, int lcnumeric)
     reset_local_decpoint();
 }
 
+static char *setlocale_with_suffix (const char *lcode,
+				    const char *sfx)
+{
+    char lfix[32];
+
+    sprintf(lfix, "%s%s", lcode, sfx);
+    return setlocale(LC_ALL, lfix);
+}
+
 static int
 set_locale_with_workaround (int langid, const char *lcode,
 			    char **locp)
@@ -433,12 +442,12 @@ set_locale_with_workaround (int langid, const char *lcode,
     int err = 0;
 
 # ifndef WIN32
+    int lfix_tried = 0;
+
     if (test == NULL && lcode != NULL) {
 	/* try a fix for no locale obtained */
-        char lfix[32];
-
-        sprintf(lfix, "%s.UTF-8", lcode);
-        test = setlocale(LC_ALL, lfix);
+	test = setlocale_with_suffix(lcode, ".UTF-8");
+	lfix_tried = 1;
     }
     if (orig != NULL && test != NULL) {
 	/* check for broken locale setup */
@@ -449,19 +458,18 @@ set_locale_with_workaround (int langid, const char *lcode,
 		orig, orig_u8);
 	fprintf(stderr, "revised locale '%s', utf8 = %d\n",
 		test, u8);
-	if (orig_u8 && !u8) {
+	if (!u8) {
 	    /* got a legacy charset */
-	    char *sfx = strchr(orig, '.');
-
 	    err = 1;
-	    if (sfx != NULL) {
-		char lfix[32];
+	    if (orig_u8 && !lfix_tried) {
+		char *sfx = strchr(orig, '.');
 
-		sprintf(lfix, "%s%s", lcode, sfx);
-		test = setlocale(LC_ALL, lfix);
-		if (test != NULL && g_get_charset(NULL)) {
-		    fprintf(stderr, "Applied fix for broken locale\n");
-		    err = 0;
+		if (sfx != NULL) {
+		    test = setlocale_with_suffix(lcode, sfx);
+		    if (test != NULL && g_get_charset(NULL)) {
+			fprintf(stderr, "Applied fix for broken locale\n");
+			err = 0;
+		    }
 		}
 	    }
 	    if (err) {
