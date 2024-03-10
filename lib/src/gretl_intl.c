@@ -425,36 +425,70 @@ void set_lcnumeric (int langid, int lcnumeric)
 
 static int
 set_locale_with_workaround (int langid, const char *lcode,
-                            char **locp)
+			    char **locp)
 {
+    char *orig = gretl_strdup(setlocale(LC_COLLATE, NULL));
+    int orig_u8 = g_get_charset(NULL);
     char *test = setlocale(LC_ALL, lcode);
+    int err = 0;
 
 # ifndef WIN32
     if (test == NULL && lcode != NULL) {
+	/* try a fix for no locale obtained */
         char lfix[32];
 
         sprintf(lfix, "%s.UTF-8", lcode);
         test = setlocale(LC_ALL, lfix);
     }
-# endif
-
-    if (test != NULL) {
+    if (orig != NULL && test != NULL) {
+	/* check for broken locale setup */
 	const char *cset = NULL;
+	int u8 = g_get_charset(&cset);
 
-        fprintf(stderr, "setlocale: '%s' -> '%s'\n", lcode, test);
-	g_get_charset(&cset);
-	fprintf(stderr, "memo: charset is '%s'\n", cset);
-        if (lcode != NULL && strcmp("_File", _("_File")) == 0) {
+	fprintf(stderr, "original locale '%s', utf8 = %d\n",
+		orig, orig_u8);
+	fprintf(stderr, "revised locale '%s', utf8 = %d\n",
+		test, u8);
+	if (orig_u8 && !u8) {
+	    /* got a legacy charset */
+	    char *sfx = strchr(orig, '.');
+
+	    err = 1;
+	    if (sfx != NULL) {
+		char lfix[32];
+
+		sprintf(lfix, "%s%s", lcode, sfx);
+		test = setlocale(LC_ALL, lfix);
+		if (test != NULL && g_get_charset(NULL)) {
+		    fprintf(stderr, "Applied fix for broken locale\n");
+		    err = 0;
+		}
+	    }
+	    if (err) {
+		fprintf(stderr, "Unsupported locale %s.%s\n", test, cset);
+		/* try walking this back */
+		setlocale(LC_ALL, orig);
+	    }
+	}
+    }
+#endif
+
+    if (!err) {
+	if (test == NULL) {
+	    err = E_DATA;
+	} else if (lcode != NULL && strcmp("_File", _("_File")) == 0) {
             fprintf(stderr, "translation not activated: try setenv workaround\n");
             gretl_setenv("LANGUAGE", lcode);
         }
     }
 
-    if (locp != NULL && test != NULL) {
+    free(orig);
+
+    if (!err && locp != NULL && test != NULL) {
         *locp = gretl_strdup(test);
     }
 
-    return test == NULL;
+    return err;
 }
 
 # ifdef WIN32
