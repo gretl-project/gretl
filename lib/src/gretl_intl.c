@@ -468,7 +468,7 @@ set_locale_with_workaround (int langid, const char *lcode,
 		}
 	    }
 	    if (err) {
-		fprintf(stderr, "Unsupported locale %s.%s\n", test, cset);
+		fprintf(stderr, "Unsupported locale %s.%s\n", lcode, cset);
 		/* try walking this back */
 		setlocale(LC_ALL, orig);
 	    }
