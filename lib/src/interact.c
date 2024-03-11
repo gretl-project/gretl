@@ -3046,6 +3046,7 @@ static int install_package (const char *pkgname,
 	    } else if (!err && s != NULL && gui_callback != NULL) {
 		pkg_install_invoke_callback(s, pkgname, dlpath, filetype);
 	    }
+	    g_free(dlpath);
 	    return err;
 	} else if (http) {
             /* get @fname as last portion of URL */

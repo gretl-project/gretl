@@ -33,6 +33,7 @@
 #include "mapinfo.h"
 #include "gretl_zip.h"
 #include "addons_utils.h"
+#include "gretl_untar.h"
 #include "database.h"
 #include "guiprint.h"
 #include "ssheet.h"
@@ -3269,10 +3270,58 @@ int query_addons (void)
     return err;
 }
 
-int maybe_download_addons (void)
+/* @basename and @filepath can be given if the caller wants the path
+   to a specific newly installed file on success, otherwise NULLs
+   are OK.
+
+   Note: the return value is non-zero iff download and installation
+   are successful.
+*/
+
+DLCode maybe_download_addons (GtkWidget *parent,
+			      const char *basename,
+			      char **filepath)
 {
-    dummy_call();
-    return 1;
+    const char *msg = N_("You have selected an action that requires access to\n"
+			 "the gretl addons. But these packages are missing,\n"
+			 "incomplete or not up to date.\n\n"
+			 "Do you want to download and install the current\n"
+			 "addons now?");
+    int resp = yes_no_dialog(NULL, _(msg), parent);
+    DLCode ret = DL_CANCEL;
+    int err = 0;
+
+    if (resp == GRETL_YES) {
+	gchar *dlpath = get_download_path("addons.tar.gz", &err);
+
+	if (!err) {
+	    err = retrieve_addons_package(dlpath);
+	}
+	if (!err) {
+	    err = unpack_files_collection(dlpath);
+	}
+	if (!err) {
+	    update_addons_index(NULL);
+	}
+
+	if (err) {
+	    ret = DL_FAIL;
+	} else {
+	    ret = DL_SUCCESS;
+	    if (basename != NULL && filepath != NULL) {
+		if (has_suffix(basename, ".pdf")) {
+		    *filepath = get_addon_pdf_path(basename);
+		} else {
+		    *filepath = gretl_addon_get_path(basename);
+		}
+	    }
+	}
+
+	 gretl_remove(dlpath);
+	 g_free(dlpath);
+    }
+
+    return ret;
 }
 
 /* information about a function package that offers a
@@ -3560,26 +3609,7 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
     }
 
     if (gpi->filepath == NULL && is_gretl_addon(pkgname)) {
-	maybe_download_addons();
-#if 0
-	/* FIXME set gpi->filepath */
-	gchar *msg = g_strdup_printf(_("The %s package was not found, or is not "
-				       "up to date.\nWould you like to try "
-				       "downloading it now?"), pkgname);
-	int resp = yes_no_dialog(NULL, msg, vwin_toplevel(vwin));
-
-	g_free(msg);
-	if (resp == GRETL_YES) {
-	    int err = download_addon(pkgname, &gpi->filepath);
-
-	    if (err) {
-		return;
-	    }
-	} else {
-	    /* canceled, effectively */
-	    return;
-	}
-#endif
+	maybe_download_addons(vwin_toplevel(vwin), pkgname, &gpi->filepath);
     }
 
     if (gpi->filepath != NULL) {
@@ -4685,8 +4715,7 @@ static fncall *get_addon_function_call (const char *addon,
 	*ppkgpath = gretl_addon_get_path(addon);
 	if (*ppkgpath == NULL || gretl_test_fopen(*ppkgpath, "r") != 0) {
 	    /* not found locally */
-	    //err = download_addon(addon, ppkgpath);
-	    maybe_download_addons();
+	    maybe_download_addons(NULL, addon, ppkgpath);
 	}
     }
 

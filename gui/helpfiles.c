@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "textbuf.h"
 #include "gretl_www.h"
+#include "addons_utils.h"
 #include "dlgutils.h"
 #include "toolbar.h"
 #include "winstack.h"
@@ -2356,6 +2357,8 @@ static const char *show_translation (int code)
     return fname;
 }
 
+#define is_addon_doc(c) (c == GRETL_DBN || c == GRETL_GEO)
+
 /* @pref is the documentation preference registered in settings.c:
    0 = English, US letter
    1 = English, A4
@@ -2397,6 +2400,7 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
 	"gretl-lpsolve-a4.pdf"
     };
     const char *fname = NULL;
+    char *gotpath = NULL;
     int gotit = 0;
     int err = 0;
 
@@ -2446,15 +2450,11 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
     } else if (code == X12A_REF) {
 	fname = gretl_x12_is_x13() ? "docX13AS.pdf" : "x12adocV03.pdf";
     } else if (code == GRETL_DBN) {
-	/* FIXME path */
 	fname = "dbnomics.pdf";
-	sprintf(fullpath, "%sfunctions%cdbnomics%c%s",
-		gretl_home(), SLASH, SLASH, fname);
+	gotpath = get_addon_pdf_path(fname);
     } else if (code == GRETL_GEO) {
-	/* FIXME path */
 	fname = "geoplot.pdf";
-	sprintf(fullpath, "%sfunctions%cgeoplot%c%s",
-		gretl_home(), SLASH, SLASH, fname);
+	gotpath = get_addon_pdf_path(fname);
     } else {
 	return E_DATA;
     }
@@ -2463,11 +2463,27 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
 
     fprintf(stderr, "pdf help: looking for '%s'\n", fname);
 
-    if (code != GRETL_DBN && code != GRETL_GEO) {
-	/* is the file available in public dir? */
-	sprintf(fullpath, "%sdoc%c%s", gretl_home(), SLASH, fname);
+    if (is_addon_doc(code)) {
+	DLCode dlc = DL_SUCCESS;
+
+	if (gotpath == NULL) {
+	    dlc = maybe_download_addons(NULL, fname, &gotpath);
+	}
+	if (dlc == DL_SUCCESS) {
+	    strcpy(fullpath, gotpath);
+	    free(gotpath);
+	} else {
+	    err = E_FOPEN;
+	    if (dlc == DL_FAIL) {
+		/* as opposed to DL_CANCEL */
+		gui_errmsg(E_FOPEN);
+	    }
+	}
+	return err;
     }
 
+    /* Is the file available in system dir? Or in the CWD? */
+    sprintf(fullpath, "%sdoc%c%s", gretl_home(), SLASH, fname);
     if (*fullpath != '\0' && gretl_test_fopen(fullpath, "r") == 0) {
 	gotit = 1;
     } else if (fname != NULL && *fname != '\0' &&
@@ -2488,27 +2504,14 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
 
     if (!gotit) {
 	/* try in the user's dotdir? */
-	if (code == GRETL_DBN) {
-	    sprintf(fullpath, "%sfunctions%cdbnomics%cdbnomics.pdf",
-		    gretl_dotdir(), SLASH, SLASH);
-	} else if (code == GRETL_GEO) {
-	    sprintf(fullpath, "%sfunctions%cgeojson%cgeoplot.pdf",
-		    gretl_dotdir(), SLASH, SLASH);
-	} else {
-	    sprintf(fullpath, "%sdoc%c%s", gretl_dotdir(), SLASH, fname);
-	}
+	sprintf(fullpath, "%sdoc%c%s", gretl_dotdir(), SLASH, fname);
 	err = gretl_test_fopen(fullpath, "r");
 	if (!err) {
 	    gotit = 1;
 	}
     }
 
-#ifndef GRETL_EDIT
-    if (!gotit && code == GRETL_DBN) {
-	maybe_download_addons(); /* FIXME open pdf */
-    }
-#endif
-    if (!gotit && code != GRETL_DBN) {
+    if (!gotit) {
 	/* try downloading the manual file */
 	err = get_writable_doc_path(fullpath, fname);
 	if (!err) {
