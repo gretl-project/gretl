@@ -80,7 +80,7 @@ void get_registered_pkg_info (int i, char **name, char **path,
 
 int query_addons (void);
 
-int download_addon (const char *pkgname, char **local_path);
+int maybe_download_addons (void);
 
 int dbnomics_get_series_call (const char *datacode);
 

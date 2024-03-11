@@ -212,16 +212,14 @@ static void report_addon_result (addon_basics *ab,
 /* Build a plain text index of the installed addons, holding name,
    version, date and full path, one addon per line. We allow for the
    fact that a given addon might exist both in the "system" location
-   and in the user's personal filespace.  (This may happen if a user
-   lacking write-permission for the system location installs or
-   updates an addon.) In the case of such duplicates we determine
-   which version is newer and enter its details in the index file.
+   and in the user's personal filespace.  In case of such duplicates
+   we determine which version is newer and enter its details in the
+   index file.
 
    This update routine is called automatically when (a) a user
-   installs an addon (FIXME: is this true for all ways an addon can be
-   installed?) or (b) gretl figures out that it has been updated (new
-   release or snapshot). It can also be called explicitly by the user,
-   via the command "pkg index addons".
+   installs an addons package (addons.tar.gz) or (b) gretl figures out
+   that it has been updated (new release or snapshot). It can also be
+   called explicitly by the user, via the command "pkg index addons".
 
    if @prn is non-NULL verbose output will be printed, otherwise the
    function operates silently.

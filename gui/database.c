@@ -2718,7 +2718,7 @@ static void finalize_db_download (char *target,
 static void finalize_datafiles_download (char *target,
 					 windata_t *vwin)
 {
-    int err = unpack_datafile_collection(target);
+    int err = unpack_files_collection(target);
 
     if (err) {
 	msgbox(_("Error unzipping compressed data"),
@@ -2744,14 +2744,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
     gchar *depends = NULL;
     gboolean zipfile = FALSE;
     int role = vwin->role;
-    CGIOpt opt;
     int err = 0;
-
-#if G_BYTE_ORDER == G_BIG_ENDIAN
-    opt = GRAB_NBO_DATA;
-#else
-    opt = GRAB_DATA;
-#endif
 
     /* (1) determine the name of the object that's wanted */
     if (role == REMOTE_DB) {
@@ -2793,7 +2786,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 
     /* (3) do the download */
     if (role == REMOTE_DB) {
-	err = retrieve_remote_db(objname, target, opt);
+	err = retrieve_remote_db(objname, target);
     } else if (role == REMOTE_DATA_PKGS) {
 	err = retrieve_remote_datafiles_package(dlname, target);
     } else if (role == REMOTE_FUNC_FILES) {

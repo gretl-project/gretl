@@ -51,6 +51,29 @@
 # define USE_XFERINFOFUNCTION
 #endif
 
+typedef enum {
+    LIST_DBS = 1,
+    GRAB_IDX,
+    GRAB_DATA,
+    SHOW_IDX,
+    SHOW_DBS,
+    GRAB_NBO_DATA,
+    GRAB_FILE,
+    LIST_FUNCS,
+    GRAB_FUNC,
+    GRAB_PDF,
+    CHECK_DB,
+    UPLOAD,
+    LIST_PKGS,
+    GRAB_PKG,
+    GRAB_FOREIGN,
+    QUERY_SF,
+    GRAB_FUNC_INFO,
+    FUNC_FULLNAME,
+    LIST_CATS,
+    ALL_CATS
+} CGIOpt;
+
 enum {
     SAVE_NONE,
     SAVE_TO_FILE,
@@ -59,6 +82,7 @@ enum {
 
 static const char *updatecgi    = "/cgi-bin/gretl_update.cgi";
 static const char *manual_path  = "/project/gretl/manual/";
+static const char *addons_path  = "/project/gretl/";
 static const char *dataset_path = "/project/gretl/datafiles/";
 static const char *datapkg_list = "/addons-data/datapkgs.txt";
 static const char *sffiles      = "downloads.sourceforge.net";
@@ -106,7 +130,7 @@ static void urlinfo_init (urlinfo *u,
         if (opt == UPLOAD) {
             sprintf(u->url, "https://%s", hostname);
         } else {
-            sprintf(u->url, "http://%s", hostname);
+            sprintf(u->url, "https://%s", hostname);
         }
     }
 
@@ -637,7 +661,11 @@ static int retrieve_url (const char *hostname,
         strcat(u.url, manual_path);
         strcat(u.url, fname);
     } else if (opt == GRAB_PKG) {
-        strcat(u.url, dataset_path);
+	if (strstr(fname, "addons")) {
+	    strcat(u.url, addons_path);
+	} else {
+	    strcat(u.url, dataset_path);
+	}
         strcat(u.url, fname);
     } else if (opt == GRAB_FILE) {
         strcat(u.url, updatecgi);
@@ -985,9 +1013,14 @@ int retrieve_remote_db_index (const char *dbname, char **getbuf)
 }
 
 int retrieve_remote_db (const char *dbname,
-                        const char *localname,
-                        int opt)
+                        const char *localname)
 {
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+    CGIOpt opt = GRAB_NBO_DATA;
+#else
+    CGIOpt opt = GRAB_DATA;
+#endif
+
     return retrieve_url(gretlhost, opt, dbname, NULL,
                         localname, 0, NULL);
 }
@@ -1136,63 +1169,22 @@ char *retrieve_remote_pkg_filename (const char *pkgname,
     return fname;
 }
 
-char *get_uri_for_addon (const char *pkgname, int *err)
+int retrieve_addons_package (const char *localname)
 {
-    const char *SF = "http://downloads.sourceforge.net/"
-        "project/gretl/addons";
-    char *p, pkgdir[16];
-    gchar *query, *pkgbase;
-    char *buf = NULL;
-    char *uri = NULL;
+    gchar *pkgpath;
+    int err = 0;
 
-    /* we want the plain package name: allow for the
-       possibility that @pkgname has been passed with
-       its ".zip" extension
-    */
-    pkgbase = g_strdup(pkgname);
-    if ((p = strrchr(pkgbase, '.')) != NULL) {
-        *p = '\0';
-    }
-
-    query = g_strdup_printf("/addons-data/pkgdir.php?gretl_version=%s"
-                            "&pkg=%s", GRETL_VERSION, pkgbase);
-    *err = query_sourceforge(query, &buf);
-    g_free(query);
-
-    if (!*err && buf == NULL) {
-        /* shouldn't happen */
-        *err = E_DATA;
-    }
-
-    if (!*err && buf != NULL && strstr(buf, "<head>")) {
-        /* got some sort of garbage */
-        *err = E_DATA;
-    }
-
-    if (!*err) {
-        p = strchr(buf, ':');
-        if (p == NULL ||
-            sscanf(p + 2, "%15s", pkgdir) != 1 ||
-            strcmp(pkgdir, "none") == 0) {
-            *err = E_DATA;
-        }
-    }
-
-    free(buf);
-
-    if (*err) {
-        gretl_errmsg_sprintf(_("Couldn't find %s for gretl %s"),
-                             pkgbase, GRETL_VERSION);
+    if (strstr(GRETL_VERSION, "git")) {
+	pkgpath = g_strdup("snapshots/addons.tar.gz");
     } else {
-        int n = strlen(SF) + strlen(pkgdir) + strlen(pkgbase) + 7;
-
-        uri = calloc(n + 7, 1);
-        sprintf(uri, "%s/%s/%s.zip", SF, pkgdir, pkgbase);
+	pkgpath = g_strdup_printf("gretl/%s/addons.tar.gz", GRETL_VERSION);
     }
 
-    g_free(pkgbase);
+    err = retrieve_url(sffiles, GRAB_PKG, pkgpath, NULL,
+		       localname, 0, NULL);
+    g_free(pkgpath);
 
-    return uri;
+    return err;
 }
 
 /**
@@ -1220,8 +1212,6 @@ int retrieve_remote_datafiles_package (const char *pkgname,
  * @varname: name of the variable (series) to retrieve.
  * @getbuf: location to receive allocated buffer containing
  * the data.
- * @opt: either GRAB_NBO_DATA to get data in network byte
- * order, or GRAB_DATA to get the data in little-endian order.
  *
  * Retrieves the specified data from the gretl data server.
  *
@@ -1230,9 +1220,14 @@ int retrieve_remote_datafiles_package (const char *pkgname,
 
 int retrieve_remote_db_data (const char *dbname,
                              const char *varname,
-                             char **getbuf,
-                             int opt)
+                             char **getbuf)
 {
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+    CGIOpt opt = GRAB_NBO_DATA;
+#else
+    CGIOpt opt = GRAB_DATA;
+#endif
+
     return retrieve_url(gretlhost, opt, dbname, varname,
                         NULL, 0, getbuf);
 }

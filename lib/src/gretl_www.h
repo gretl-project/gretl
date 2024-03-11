@@ -20,29 +20,6 @@
 #ifndef GRETL_WWW_H
 #define GRETL_WWW_H
 
-typedef enum {
-    LIST_DBS = 1,
-    GRAB_IDX,
-    GRAB_DATA,
-    SHOW_IDX,
-    SHOW_DBS,
-    GRAB_NBO_DATA,
-    GRAB_FILE,
-    LIST_FUNCS,
-    GRAB_FUNC,
-    GRAB_PDF,
-    CHECK_DB,
-    UPLOAD,
-    LIST_PKGS,
-    GRAB_PKG,
-    GRAB_FOREIGN,
-    QUERY_SF,
-    GRAB_FUNC_INFO,
-    FUNC_FULLNAME,
-    LIST_CATS,
-    ALL_CATS
-} CGIOpt;
-
 int gretl_www_init (const char *proxy, int use_proxy);
 
 void gretl_www_cleanup (void);
@@ -60,8 +37,7 @@ int list_remote_data_packages (char **getbuf);
 int retrieve_remote_db_index (const char *dbname, char **getbuf);
 
 int retrieve_remote_db (const char *dbname, 
-			const char *localname,
-			int opt);
+			const char *localname);
 
 int check_remote_db (const char *dbname);
 
@@ -79,8 +55,7 @@ int retrieve_remote_datafiles_package (const char *pkgname,
 
 int retrieve_remote_db_data (const char *dbname,
 			     const char *varname,
-			     char **getbuf,
-			     int opt);
+			     char **getbuf);
 
 int retrieve_manfile (const char *fname, const char *localname);
 
@@ -95,7 +70,7 @@ int retrieve_public_file (const char *uri, char *localname);
 char *retrieve_public_file_as_buffer (const char *uri, size_t *len,
 				      int *err);
 
-char *get_uri_for_addon (const char *pkgname, int *err);
+int retrieve_addons_package (const char *localname);
 
 int query_sourceforge (const char *query, char **getbuf);
 

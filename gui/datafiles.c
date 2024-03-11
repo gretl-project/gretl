@@ -1218,7 +1218,7 @@ static void show_addon_info (GtkWidget *w, gpointer data)
    to support a build of gretl without addons being enabled.
 */
 
-static void install_addon_callback (GtkWidget *w, gpointer data)
+static void install_addons_callback (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
     gchar *pkgname = NULL;

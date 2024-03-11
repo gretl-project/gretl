@@ -3269,50 +3269,10 @@ int query_addons (void)
     return err;
 }
 
-int download_addon (const char *pkgname, char **local_path)
+int maybe_download_addons (void)
 {
-    char *uri;
-    int err = 0;
-
-    uri = get_uri_for_addon(pkgname, &err);
-
-    if (!err) {
-	const char *path = gretl_function_package_path();
-	gchar *fullname = g_strdup_printf("%s%s.zip", path, pkgname);
-
-#if 1
-	fprintf(stderr, "download_addon: uri   = '%s'\n", uri);
-	fprintf(stderr, "download_addon: fname = '%s'\n", fullname);
-#endif
-
-	err = retrieve_public_file(uri, fullname);
-	fprintf(stderr, "retrieve_public_file: err = %d\n", err);
-	if (!err) {
-	    err = gretl_unzip_into(fullname, path);
-	    fprintf(stderr, "gretl_unzip_into: err = %d\n", err);
-	    gretl_remove(fullname);
-	}
-	if (err) {
-	    gui_errmsg(err);
-	} else {
-	    update_addons_index(NULL);
-	    if (local_path != NULL) {
-		/* fill local path to gfn file */
-		gchar *tmp;
-
-		tmp = g_build_filename(path, pkgname, pkgname, NULL);
-		*local_path = calloc(strlen(tmp) + 5, 1);
-		sprintf(*local_path, "%s.gfn", tmp);
-		g_free(tmp);
-		fprintf(stderr, "local_path: '%s'\n", *local_path);
-	    }
-	}
-	g_free(fullname);
-    }
-
-    free(uri);
-
-    return err;
+    dummy_call();
+    return 1;
 }
 
 /* information about a function package that offers a
@@ -3600,6 +3560,9 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
     }
 
     if (gpi->filepath == NULL && is_gretl_addon(pkgname)) {
+	maybe_download_addons();
+#if 0
+	/* FIXME set gpi->filepath */
 	gchar *msg = g_strdup_printf(_("The %s package was not found, or is not "
 				       "up to date.\nWould you like to try "
 				       "downloading it now?"), pkgname);
@@ -3616,6 +3579,7 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 	    /* canceled, effectively */
 	    return;
 	}
+#endif
     }
 
     if (gpi->filepath != NULL) {
@@ -4721,7 +4685,8 @@ static fncall *get_addon_function_call (const char *addon,
 	*ppkgpath = gretl_addon_get_path(addon);
 	if (*ppkgpath == NULL || gretl_test_fopen(*ppkgpath, "r") != 0) {
 	    /* not found locally */
-	    err = download_addon(addon, ppkgpath);
+	    //err = download_addon(addon, ppkgpath);
+	    maybe_download_addons();
 	}
     }
 

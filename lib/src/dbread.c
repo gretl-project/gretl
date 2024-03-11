@@ -225,14 +225,7 @@ int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo,
     netfloat nf;
 #endif
 
-#if G_BYTE_ORDER == G_BIG_ENDIAN
-    err = retrieve_remote_db_data(dbbase, sinfo->varname, &getbuf,
-				  GRAB_NBO_DATA);
-#else
-    err = retrieve_remote_db_data(dbbase, sinfo->varname, &getbuf,
-				  GRAB_DATA);
-#endif
-
+    err = retrieve_remote_db_data(dbbase, sinfo->varname, &getbuf);
     if (err) {
 	free(getbuf);
 	return E_FOPEN;

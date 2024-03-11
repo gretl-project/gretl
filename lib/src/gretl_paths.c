@@ -3905,6 +3905,8 @@ static int get_target_in_home (GString *gs, const char *dlname)
 	g_string_append(gs, "functions");
     } else if (strstr(dlname, ".ggz")) {
 	g_string_append(gs, "db");
+    } else if (strstr(dlname, "addons")) {
+	g_string_append(gs, "functions");
     } else if (strstr(dlname, ".tar.gz")) {
 	g_string_append(gs, "data");
     } else {
@@ -3931,6 +3933,8 @@ static void get_system_target (GString *gs, const char *dlname)
 
     if (strstr(dlname, ".ggz")) {
 	g_string_append(gs, "db");
+    } else if (strstr(dlname, "addons")) {
+	g_string_append(gs, "functions");
     } else if (strstr(dlname, ".tar.gz")) {
 	g_string_append(gs, "data");
     } else {

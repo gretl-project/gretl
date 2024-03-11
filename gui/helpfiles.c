@@ -2446,10 +2446,12 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
     } else if (code == X12A_REF) {
 	fname = gretl_x12_is_x13() ? "docX13AS.pdf" : "x12adocV03.pdf";
     } else if (code == GRETL_DBN) {
+	/* FIXME path */
 	fname = "dbnomics.pdf";
 	sprintf(fullpath, "%sfunctions%cdbnomics%c%s",
 		gretl_home(), SLASH, SLASH, fname);
     } else if (code == GRETL_GEO) {
+	/* FIXME path */
 	fname = "geoplot.pdf";
 	sprintf(fullpath, "%sfunctions%cgeoplot%c%s",
 		gretl_home(), SLASH, SLASH, fname);
@@ -2503,15 +2505,7 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
 
 #ifndef GRETL_EDIT
     if (!gotit && code == GRETL_DBN) {
-	/* try installing the dbnomics package */
-	char *dlpath = NULL;
-
-	err = download_addon("dbnomics", &dlpath);
-	if (!err) {
-	    /* .gfn -> .pdf */
-	    switch_ext(fullpath, dlpath, "pdf");
-	    free(dlpath);
-	}
+	maybe_download_addons(); /* FIXME open pdf */
     }
 #endif
     if (!gotit && code != GRETL_DBN) {

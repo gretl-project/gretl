@@ -2970,10 +2970,9 @@ static int install_package (const char *pkgname,
 			    PRN *prn)
 {
     char *fname = NULL;
-    gchar *gfname = NULL;
     int filetype = 0;
     int local = (opt & OPT_L);
-    int addon = 0;
+    int addons = 0;
     int http = 0;
     int err = 0;
 
@@ -2986,13 +2985,9 @@ static int install_package (const char *pkgname,
 #endif
 
     if (!local && is_gretl_addon(pkgname)) {
-        addon = 1;
-        filetype = 2;
-        if (strchr(pkgname, '.') == NULL) {
-            gfname = g_strdup_printf("%s.zip", pkgname);
-            fname = gfname;
-        }
-        goto next_step;
+	/* FIXME? */
+	gretl_errmsg_set("Downloading individual addons is not supported");
+	return E_DATA;
     }
 
     if (!strncmp(pkgname, "http://", 7) ||
@@ -3008,8 +3003,16 @@ static int install_package (const char *pkgname,
         filetype = 1;
     } else if (has_suffix(pkgname, ".zip")) {
         filetype = 2;
-    } else if (!local && has_suffix(pkgname, ".tar.gz")) {
+    } else if (has_suffix(pkgname, ".tar.gz")) {
 	filetype = 3;
+	if (local) {
+	    /* maybe FIXME ? */
+	    gretl_errmsg_set("Installation of local tar.gz files is not supported");
+	    return E_BADOPT;
+	}
+	if (strstr(pkgname, "addons")) {
+	    addons = 1;
+	}
     } else if (local || http) {
         /* must have suitable suffix */
         err = E_DATA;
@@ -3023,20 +3026,24 @@ static int install_package (const char *pkgname,
 
     if (!err) {
 	if (filetype == 3) {
-	    /* data-files collection tar.gz */
+	    /* a tar.gz file */
 	    gchar *dlpath = get_download_path(pkgname, &err);
 
-	    if (!err) {
+	    if (!err && addons) {
+		err = retrieve_addons_package(dlpath);
+	    } else if (!err) {
 		err = retrieve_remote_datafiles_package(pkgname, dlpath);
 	    }
 	    if (!err) {
-		err = unpack_datafile_collection(dlpath);
+		err = unpack_files_collection(dlpath);
 	    }
 	    if (!err) {
 		pprintf(prn, _("Installed %s\n"), pkgname);
 	    }
 	    gretl_remove(dlpath);
-	    if (!err && s != NULL && gui_callback != NULL) {
+	    if (!err && addons) {
+		update_addons_index(NULL);
+	    } else if (!err && s != NULL && gui_callback != NULL) {
 		pkg_install_invoke_callback(s, pkgname, dlpath, filetype);
 	    }
 	    return err;
@@ -3060,8 +3067,6 @@ static int install_package (const char *pkgname,
         }
     }
 
- next_step:
-
     if (!err && filetype) {
         const char *basename = fname != NULL ? fname : pkgname;
         const char *instpath = gretl_function_package_path();
@@ -3069,14 +3074,7 @@ static int install_package (const char *pkgname,
 
         fullname = g_strdup_printf("%s%s", instpath, basename);
 
-        if (addon) {
-            gchar *uri = get_uri_for_addon(basename, &err);
-
-            if (!err) {
-                err = retrieve_public_file(uri, fullname);
-            }
-            g_free(uri);
-        } else if (local) {
+        if (local) {
             err = gretl_copy_file(pkgname, fullname);
         } else if (http) {
             /* get file from a specified server */
@@ -3095,11 +3093,7 @@ static int install_package (const char *pkgname,
         }
 
         if (!err) {
-	    if (addon) {
-		update_addons_index((opt & OPT_V)? prn : NULL);
-	    } else {
-		package_check_dependencies(fullname, s, prn);
-	    }
+	    package_check_dependencies(fullname, s, prn);
         }
 
         if (!err && gretl_messages_on()) {
@@ -3110,8 +3104,7 @@ static int install_package (const char *pkgname,
             }
         }
 
-        if (!err && s != NULL && gui_callback != NULL &&
-            !addon && !(opt & OPT_D)) {
+        if (!err && s != NULL && gui_callback != NULL && !(opt & OPT_D)) {
             /* FIXME: handling of OPT_D (dependency) here? */
 	    pkg_install_invoke_callback(s, basename, fullname, filetype);
         }
@@ -3119,11 +3112,7 @@ static int install_package (const char *pkgname,
         g_free(fullname);
     }
 
-    if (addon) {
-        g_free(gfname);
-    } else {
-        free(fname);
-    }
+    free(fname);
 
     return err;
 }

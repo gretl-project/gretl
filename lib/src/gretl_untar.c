@@ -189,9 +189,11 @@ int gretl_untar (const char *fname)
     return err;
 }
 
-/* decompress a gzipped tar archive containing a data-file collection */
+/* decompress a gzipped tar archive containing either addons
+   or a data-file collection
+*/
 
-int unpack_datafile_collection (const char *fname)
+int unpack_files_collection (const char *fname)
 {
     char *p, *path = g_strdup(fname);
     int err = 0;
