@@ -86,6 +86,7 @@ static int untar (gzFile in)
     int len, remaining = 0;
     FILE *outfile = NULL;
     char fname[BLOCKSIZE];
+    int verbose = 0;
     int tarmode = 0;
     time_t tartime = (time_t) 0;
     int err = 0;
@@ -129,11 +130,11 @@ static int untar (gzFile in)
 			    outfile = gretl_fopen(fname, "wb");
 			}
 		    }
-		    if (outfile != NULL) {
-			fprintf(stderr, "Extracting %s\n", fname);
-		    } else {
+		    if (outfile == NULL) {
 			fprintf(stderr, "Couldn't create %s\n", fname);
 			err = E_FOPEN;
+		    } else if (verbose) {
+			fprintf(stderr, "Extracting %s\n", fname);
 		    }
 		} else {
 		    outfile = NULL;
