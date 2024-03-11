@@ -5,6 +5,7 @@
 \usepackage[pdftex]{graphicx}
 \usepackage{gretl}
 \usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
+\usepackage{hyperref}
 %\usepackage[pdftex,hyperfootnotes=false]{hyperref}
 
 %\usepackage[a4paper,body={6.1in,9.7in},top=.8in,left=1.1in]{geometry}
@@ -16,7 +17,7 @@
 
 \newcommand{\argname}[1]{\textsl{#1}}
 
-\title{ivpanel version 1.1}
+\title{\textsf{ivpanel}: IV estimation of panel-data models}
 \author{Allin Cottrell}
 \date{February 15, 2021}
 \maketitle
@@ -169,11 +170,9 @@ bundle as its sole argument.
 
 \section{Change log}
 
-2021-02-15: version 1.1: add guard against excessive collinearity and
-raise the minimum gretl version to 2016c.\\
-2020-09-22: version 1.0: avoid use of deprecated \texttt{isnull}
-function.\\
-2015-10-17: version 0.5: first release as addon. \\
+2021-02-15: add guard against excessive collinearity.\\
+2020-09-22: avoid use of deprecated \texttt{isnull} function.\\
+2015-10-17: first release as addon. \\
 
 \bibliographystyle{gretl}
 \bibliography{gretl}

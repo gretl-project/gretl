@@ -34,9 +34,9 @@
 {\noindent\hrulefill\\[-12pt]}
 {\medbreak}
 
-\title{regls 0.9: regularized least squares for gretl}
+\title{\textsf{regls}: regularized least squares for gretl}
 \author{Allin Cottrell}
-\date{Last revised May 20, 2023}
+\date{May 20, 2023}
 
 \begin{document}
 \maketitle
@@ -806,21 +806,21 @@ void glmnet_multiprint (const matrix RB, const matrix Rlam,
 \section{Change log}
 \label{sec:changes}
 
-Version 0.9, 2023-05-20: Add support for matrix input via the
-\texttt{mregls} function; simplify the signature of
-\texttt{regls\_multiprint}; add function \texttt{glmnet\_multiprint}.\\
-Version 0.4, 2022-10-02: Enhancements for regls plots; document GUI
-usage; update an internal function signature to comply with gretl's
+2023-05-20: Add support for matrix input via the \texttt{mregls}
+function; simplify the signature of \texttt{regls\_multiprint};
+add function \texttt{glmnet\_multiprint}.\\
+2022-10-02: Enhancements for regls plots; document GUI usage;
+update an internal function signature to comply with gretl's
 new ``const inheritance'' policy.\\
-Version 0.32, 2022-08-05: fix breakage for single-lambda case.\\
-Version 0.31, 2022-06-03: update URL; revise fragile list-saving code;
+2022-08-05: fix breakage for single-lambda case.\\
+2022-06-03: update URL; revise fragile list-saving code;
 allow ``lambda'' as alternative to ``lfrac'' on input.\\
-Version 0.3, 2021-04-17: fix bug with Ridge verbose printout, and
-replace some tables with figures in the doc for ease of comprehension
+2021-04-17: fix bug with Ridge verbose printout, and replace
+some tables with figures in the doc for ease of comprehension
 of comparative experiments.\\
-Version 0.2, 2021-01-29: support a higher verbosity level for GUI use;
+2021-01-29: support a higher verbosity level for GUI use;
 improve printout for LASS0 coefficients, when applicable.\\
-Version 0.1, 2020-10-09: initial release.
+2020-10-09: initial release.
 
 \begin{script}
   \caption{LASSO with lambda sequence}
