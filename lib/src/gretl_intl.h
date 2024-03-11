@@ -68,13 +68,11 @@ typedef enum {
     LANG_MAX
 } GretlLangCode;
 
-const char *lang_string_from_id (int langid);
+const char *gretl_lang_string_from_id (int langid);
 
 char *utf8_to_rtf (const char *s);
 
-int lang_id_from_name (const char *s);
-
-int lang_id_from_code (const char *s);
+int gretl_lang_id_from_name (const char *s);
 
 void set_lcnumeric (int langid, int lcnumeric);
 

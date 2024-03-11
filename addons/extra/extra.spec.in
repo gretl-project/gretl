@@ -9,6 +9,6 @@ data-requirement = no-data-ok
 public = gap_filler winsor nearPSD zeroifclose \
   eliminate duplicate truncnorm scores2x2 WSRcritical WSRpvalue \
   powerset onemode drill combinations qformvech splitfname multi_instrings mat2latex \
-  correspondence fracorder put_outofsmpl drawbootres combine
+  correspondence fracorder put_outofsmpl drawbootres combine get_settings
 help = extra.pdf
 sample-script = extra_sample.inp

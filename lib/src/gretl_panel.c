@@ -523,6 +523,7 @@ typedef struct cluster_info_ {
     int pcid[3];         /* IDs of up to three @pset series */
     int nc[2];           /* number(s) of clusters */
     gint8 target;        /* 0 or 1 for first or second cluster var */
+    gint8 pooled;        /* flag for the pooled OLS case */
 } cluster_info;
 
 #define by_time_and_unit(ci) (ci->dcid[0] < -1 && ci->dcid[1] < -1)
@@ -533,12 +534,13 @@ typedef struct cluster_info_ {
 #define two_way(ci) (ci->dcid[0] != -1 && ci->dcid[1] != -1)
 #define is_present(v) (v != -1)
 
-static cluster_info *cluster_info_new (void)
+static cluster_info *cluster_info_new (panelmod_t *pan)
 {
     cluster_info *ci = calloc(1, sizeof *ci);
 
     ci->dcid[0] = ci->dcid[1] = -1;
     ci->target = 0;
+    ci->pooled = (pan->opt & OPT_P)? 1 : 0;
 
     return ci;
 }
@@ -648,16 +650,27 @@ time_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 }
 
 static int panel_cval_count (MODEL *pmod, panelmod_t *pan,
-                             cluster_info *ci, int i)
+                             cluster_info *ci, int i,
+			     const double *cvar)
 {
     double cvi = ci->cvals->val[i];
     int s, t, cc = 0;
 
-    for (s=0; s<pmod->nobs; s++) {
-        t = big_index(pan, s);
-        if (!na(pmod->uhat[t]) && ci->cz[s] == cvi) {
-            cc++;
-        }
+    if (cvar != NULL) {
+	/* the pooled OLS case */
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (!na(pmod->uhat[t]) && cvar[t] == cvi) {
+		cc++;
+	    }
+	}
+    } else {
+	/* other cases */
+	for (s=0; s<pmod->nobs; s++) {
+	    t = big_index(pan, s);
+	    if (!na(pmod->uhat[t]) && ci->cz[s] == cvi) {
+		cc++;
+	    }
+	}
     }
 
     return cc;
@@ -665,13 +678,14 @@ static int panel_cval_count (MODEL *pmod, panelmod_t *pan,
 
 static int panel_cval_count_max (MODEL *pmod,
                                  panelmod_t *pan,
-                                 cluster_info *ci)
+                                 cluster_info *ci,
+				 const double *cvar)
 {
     int n = gretl_vector_get_length(ci->cvals);
     int i, cc, cmax = 0;
 
     for (i=0; i<n; i++) {
-        cc = panel_cval_count(pmod, pan, ci, i);
+        cc = panel_cval_count(pmod, pan, ci, i, cvar);
         if (cc > cmax) {
             cmax = cc;
         }
@@ -685,6 +699,7 @@ generic_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
                      const gretl_matrix *XX, gretl_matrix *W,
                      gretl_matrix *V, cluster_info *ci)
 {
+    const double *cvar = NULL;
     gretl_vector *ei = NULL;
     gretl_matrix *Xi = NULL;
     gretl_vector *eXi = NULL;
@@ -695,7 +710,14 @@ generic_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     int n_c = 0;
     int err = 0;
 
-    R = panel_cval_count_max(pmod, pan, ci);
+    if (ci->pooled) {
+	cvar = dset->Z[ci->dcid[idx]];
+    }
+
+    R = panel_cval_count_max(pmod, pan, ci, cvar);
+#if CDEBUG
+    fprintf(stderr, "generic_cluster_vcv: M=%d, R=%d\n", M, R);
+#endif
     ei  = gretl_column_vector_alloc(R);
     Xi  = gretl_matrix_alloc(R, k);
     eXi = gretl_vector_alloc(k);
@@ -707,41 +729,57 @@ generic_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 
     for (i=0; i<M; i++) {
         double cvi = ci->cvals->val[i];
-        int Ni = panel_cval_count(pmod, pan, ci, i);
+        int Ni = panel_cval_count(pmod, pan, ci, i, cvar);
         int s, p = 0;
 
+#if CDEBUG > 1
+        fprintf(stderr, "cvals[%d]=%g, count=%d\n", i, cvi, Ni);
+#endif
         if (Ni == 0) {
             continue;
         }
 
-#if CDEBUG
-        fprintf(stderr, "cvals[%d]=%g, count=%d\n", i, cvi, Ni);
-#endif
         ei = gretl_matrix_reuse(ei, Ni, -1);
         Xi = gretl_matrix_reuse(Xi, Ni, -1);
 
-        for (s=0; s<pmod->nobs; s++) {
-            t = big_index(pan, s);
-            if (!na(pmod->uhat[t]) && ci->cz[s] == cvi) {
-                gretl_vector_set(ei, p, pmod->uhat[t]);
-                for (j=0; j<k; j++) {
-                    v = pmod->list[j+2];
-                    gretl_matrix_set(Xi, p, j, dset->Z[v][s]);
-                }
-                p++;
-            }
-            if (p == Ni) {
-                break;
-            }
-        }
+	if (ci->pooled) {
+	    /* working with the full dataset */
+	    for (t=pmod->t1; t<=pmod->t2; t++) {
+		if (!na(pmod->uhat[t]) && cvar[t] == cvi) {
+		    gretl_vector_set(ei, p, pmod->uhat[t]);
+		    for (j=0; j<k; j++) {
+			v = pmod->list[j+2];
+			gretl_matrix_set(Xi, p, j, dset->Z[v][t]);
+		    }
+		    p++;
+		}
+		if (p == Ni) {
+		    break;
+		}
+	    }
+	} else {
+	    /* working with dataset from which NAs have been purged */
+	    for (s=0; s<pmod->nobs; s++) {
+		t = big_index(pan, s);
+		if (!na(pmod->uhat[t]) && ci->cz[s] == cvi) {
+		    gretl_vector_set(ei, p, pmod->uhat[t]);
+		    for (j=0; j<k; j++) {
+			v = pmod->list[j+2];
+			gretl_matrix_set(Xi, p, j, dset->Z[v][s]);
+		    }
+		    p++;
+		}
+		if (p == Ni) {
+		    break;
+		}
+	    }
+	}
         augment_clustered_W(ei, Xi, eXi, W);
         n_c++;
     }
 
     finalize_clustered_vcv(pmod, pan, XX, W, V, n_c);
-#if CDEBUG
-    gretl_matrix_print(V, "clustered V");
-#endif
+
     if (!two_way(ci)) {
         /* not doing two-way clustering, so finish the job */
 	const char *cname = dset->varname[ci->pcid[idx]];
@@ -875,6 +913,7 @@ unit_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     }
 
     finalize_clustered_vcv(pmod, pan, XX, W, V, pan->effn);
+
     if (!two_way(ci)) {
         /* finish the job if not doing two-way clustering */
 	gretl_model_set_vcv_info(pmod, VCV_PANEL, PANEL_HAC);
@@ -923,6 +962,15 @@ static void make_unit_or_period (MODEL *pmod,
     }
 }
 
+static int cluster_missval_error (DATASET *dset, int v, int t)
+{
+    char obs[OBSLEN];
+
+    gretl_errmsg_sprintf("cluster variable '%s' missing at observation %s",
+			 dset->varname[v], ntolabel(obs, t, dset));
+    return E_MISSDATA;
+}
+
 /* The role of this function is to transcribe a clustering variable
    into the panel-estimation dataset, @pset, the destination series ID
    being given by ci->pcid. As for the source of the data, there are
@@ -960,7 +1008,7 @@ static int transcribe_cluster_var (MODEL *pmod,
     dest = pset->Z[ci->pcid[idx]];
 
 #if CDEBUG
-    fprintf(stderr, "  transcribe: target %d, pcid %d, srcv %d %s\n",
+    fprintf(stderr, "  transcribe: target=%d, pcid=%d, srcv=%d (%s)\n",
 	    idx, ci->pcid[idx], srcv, srcv > 0 ? dset->varname[srcv] :
 	    srcv == CI_TIME ? "TIME" : "UNIT");
 #endif
@@ -973,18 +1021,18 @@ static int transcribe_cluster_var (MODEL *pmod,
 
     src = dset->Z[srcv];
 
-    if (pset == dset) {
-        for (s=0; s<pmod->nobs && !err; s++) {
-            t = big_index(pan, s);
+    if (ci->pooled) {
+	for (t=pmod->t1; t<=pmod->t2; t++) {
             if (!na(pmod->uhat[t]) && na(src[t])) {
-		err = E_MISSDATA;
+		err = cluster_missval_error(dset, srcv, t);
+		break;
             }
         }
     } else if (pset->n == dset->n) {
         /* balanced */
         for (t=0; t<dset->n; t++) {
             if (na(src[t])) {
-                err = E_MISSDATA;
+                err = cluster_missval_error(dset, srcv, t);
                 break;
             }
         }
@@ -997,7 +1045,7 @@ static int transcribe_cluster_var (MODEL *pmod,
             t = big_index(pan, s);
             if (!na(pmod->uhat[t])) {
                 if (na(src[t])) {
-                    err = E_MISSDATA;
+                    err = cluster_missval_error(dset, srcv, t);
                 } else {
                     dest[s] = src[t];
                 }
@@ -1006,15 +1054,25 @@ static int transcribe_cluster_var (MODEL *pmod,
     }
 
     if (!err) {
+	int nread = pmod->nobs;
+
         if (ci->cvals != NULL) {
             gretl_matrix_free(ci->cvals);
         }
-        ci->cvals = gretl_matrix_values(dest, pmod->nobs, OPT_S, &err);
+	if (ci->pooled) {
+	    dest += pmod->t1;
+	    nread = pmod->t2 - pmod->t1 + 1;
+	}
+        ci->cvals = gretl_matrix_values(dest, nread, OPT_S, &err);
         ci->cz = dest;
 #if CDEBUG > 1
         gretl_matrix_print(ci->cvals, "cluster var values");
 #endif
     }
+
+#if CDEBUG
+    fprintf(stderr, "transcribe: returning %d\n", err);
+#endif
 
     return err;
 }
@@ -1136,7 +1194,7 @@ static int check_cluster_var (MODEL *pmod,
 	int adds[3] = {0};
         int v, n_add = 0;
 
-	if (pset == dset && ci->dcid[0] > 0) {
+	if (ci->pooled && ci->dcid[0] > 0) {
 	    /* using an existing series for first var */
 	    ci->pcid[0] = ci->dcid[0];
 	} else {
@@ -1493,7 +1551,12 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
         goto bailout;
     }
 
-    ci = cluster_info_new();
+    ci = cluster_info_new(pan);
+
+#if CDEBUG
+    fprintf(stderr, "start panel_robust_vcv (pooled = %d)\n", ci->pooled);
+    gretl_matrix_print(XX, "X'X^{-1}");
+#endif
 
     if (pan->opt & OPT_C) {
         err = check_cluster_var(pmod, pan, pset, dset, ci);
@@ -1530,8 +1593,6 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan,
     }
 
 #if CDEBUG
-    fprintf(stderr, "\npanel_robust_vcv:\n");
-    gretl_matrix_print(XX, "X'X^{-1}");
     gretl_matrix_print(W, "W");
     gretl_matrix_print(V, "V");
 #endif
@@ -4805,24 +4866,30 @@ static int get_ntdum (const int *orig, const int *new)
     return n;
 }
 
-static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
-                               DATASET *dset)
+static int save_pooled_model (MODEL *pmod, panelmod_t *pan,
+			      DATASET *dset)
 {
-    gretl_model_set_int(pmod, "pooled", 1);
-    add_panel_obs_info(pmod, pan);
-
-    if (!(pan->opt & OPT_A)) {
-        set_model_id(pmod, pan->opt);
-    }
+    int err = 0;
 
     if (pan->opt & OPT_R) {
-        panel_robust_vcv(pmod, pan, dset, dset);
-        pmod->opt |= OPT_R;
-        pmod->fstt = panel_overall_test(pmod, pan, 0, OPT_NONE);
-        pmod->dfd = pan->effn - 1;
+        err = panel_robust_vcv(pmod, pan, dset, dset);
+	if (!err) {
+	    pmod->opt |= OPT_R;
+	    pmod->fstt = panel_overall_test(pmod, pan, 0, OPT_NONE);
+	    pmod->dfd = pan->effn - 1;
+	}
     }
 
-    panel_dwstat(pmod, pan);
+    if (!err) {
+	gretl_model_set_int(pmod, "pooled", 1);
+	add_panel_obs_info(pmod, pan);
+	if (!(pan->opt & OPT_A)) {
+	    set_model_id(pmod, pan->opt);
+	}
+	panel_dwstat(pmod, pan);
+    }
+
+    return err;
 }
 
 /* fixed effects | random effects | between | pooled */
@@ -4951,7 +5018,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     }
 
     if (opt & OPT_P) {
-        save_pooled_model(&mod, &pan, dset);
+        err = save_pooled_model(&mod, &pan, dset);
         goto bailout;
     }
 

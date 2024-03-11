@@ -35,7 +35,7 @@
 \title{The extra package\\
 (a collection of various convenience functions for hansl programming) }
 
-\date{September 2023, release 1.8}
+\date{March 2024, release 2024a}
 
 \author{The \noun{gretl} team\thanks{Currently co-ordinated by Sven
 Schreiber.}}
@@ -62,65 +62,6 @@ functions do not live here, but would go into the
 
 \section{Matrix-related functions}
 
-\subsection{eliminate}
-
-\ArgRet{\texttt{matrix vecA}}{matrix}
-
-Each column of the input vecA is assumed to come from the operation vec(A)
-on a square matrix, thus rows(vecA) must be a square number.
-Returns vech(A), which is the result of pre-multiplying vec(A) with the
-"elimination" matrix $L_m$.
-If vecA has several columns, each column is
-treated separately as described above (and the results stacked side-by-side).
-
-\subsection{duplicate}
-
-\ArgRet{\texttt{matrix vechA}}{matrix}
-
-The input is a vector assumed to come from an operation like vech(A).
-Returns vec(A), which is the result of pre-multiplying vech(A) with the
-"duplication" matrix $D_m$. If vechA has several columns, each column is
-treated separately as described above (and the results stacked side-by-side).
-
-\subsection{nearPSD}
-
-\ArgRet{\texttt{matrix} pointer \texttt{{*}m}, \texttt{scalar epsilon}
-(optional)}{scalar}
-
-Forces the matrix $m$ into the positive semi-definite region. Algorithm
-ported from ``DomPazz'' in Stackoverflow,
-apparently mimicking the nearPD() function in R. Because of re-scaling
-(to correlation matrix), the \texttt{epsilon} criterion value should
-implicitly apply to the correlation-based eigenvalues. The return
-value 0 or 1 indicates whether \texttt{m} was altered or not.
-
-\subsection{zeroifclose}
-
-\ArgRet{\texttt{matrix} pointer \texttt{{*}m}, \texttt{scalar thresh}
-(optional)}{scalar}
-
-Sets elements of \texttt{m} to zero if they are really close. The
-return value 0 or 1 indicates whether \texttt{m} was altered or not.
-
-The default value for the threshold has been \texttt{1e-12} since extra
-version 0.7. In some applications smaller (in absolute value) but
-mathematically truly non-zero results may occur, in which case a smaller
-threshold can be chosen.
-
-\subsection{drill}
-
-\ArgRet{\texttt{matrices} array, \texttt{matrix rowspec} (optional),
-  \texttt{matrix colspec} (optional)}{matrix}
-
-This function "drills through" a matrix array and returns a matrix;
-for example, \cmd{drill(x, 2, 3)} returns a vector with the
-\texttt{[2,3]} elements of all matrices in the \texttt{x}
-array. Omitting one of rowspec, colspec or entering "0" means to
-select all rows or columns respectively.  (Of course at least one of
-rowspec, colspec must be specified.)
-
-\emph{Nota bene}: all matrices in the array must be of the same dimensions.
-
 \subsection{combinations}
 
 \ArgRet{\texttt{matrix x}, \texttt{int h}}{matrix} This function
@@ -141,176 +82,84 @@ matrix with an NA value.
 \emph{Nota bene}: The recursive algorithm used may be a little slow if
 the number of elements of $x$ is large.
 
-\subsection{qformvech}
+\subsection{drawbootres}
 
-\ArgRet{\texttt{matrix Xt}}{matrix}
-This function relies on the relation
-$vech(X'AX) = P (X \otimes X)' Q \; vech(A) = G \; vech(A)$,
-where $P$ and $Q$ are certain interim results.
-It takes the matrix $X'$ and returns the matrix $G$ such that the right-hand
-side of the equalities becomes feasible, which should be
-numerically more efficient than the direct application
-of the left-hand side.
+\ArgRet{\texttt{const matrix U}, \texttt{bundle bparams} (optional),
+\texttt{int bootcode} (optional)}{matrix}
+Construct a new draw of innovations (residuals) for bootstrapping, based on the
+input matrix \texttt{U}, interpreted to be T-by-K (observations in rows). The
+return value has the same shape. \texttt{U} can be original residuals or some
+pre-processed input -- the pre-processing is not done here to avoid doing it
+repeatedly during the bootstrap.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Two ways of choosing the bootstrap type are supported: Either by adding a
+string element to the \texttt{bparams} bundle under the key 'btypestr', or by
+using the associated number code in the \texttt{bootcode} argument, where the
+bundle-based choice takes precedence. Both ways are optional, the general
+default is plain resampling. Here is a brief description of the meanings of the
+codes (see also the SVAR addon's documentation):
 
-\section{Other functions working without a dataset in place}
-
-\subsection{scores2x2}
-
-\ArgRet{\texttt{matrix in, bool verbose} (optional)}{matrix}
-
-Computes some standard score measures for a $2\times 2$ contingency
-table of the form:
-
-\begin{center}
-\begin{tabular}{cccc}
-\toprule
- &  & \multicolumn{2}{c}{Observed}\tabularnewline
- &  & 1 & 0\tabularnewline
-\midrule
-\multirow{2}{*}{Predicted} & 1 & h(its) & f(alse)\tabularnewline
- & 0 & m(iss) & z(eros)\tabularnewline
-\bottomrule
-\end{tabular}
-\end{center}
-
-\noindent and $n=h+f+m+z$ (total observations). Returns a column vector with the
-elements listed in Table \ref{tab:scores2x2}. The input is always
-sanitized by taking the upper 2x2 part, using absolute values, and
-integer-ization. Warnings are issued if \texttt{verbose} is 1.
-
-
-\begin{table}[htbp]
-\begin{tabular}{rlp{0.35\textwidth}c}
-  \hline
-  \textbf{Number} &\textbf{Acronym} &  \textbf{Description} &\textbf{Formula} \\
-  \hline
-  1 & POD & prob of detection & $\frac{h}{h+m}$ \\
-2 & POFD & prob of false detection & $\frac{f}{f+z}$ \\
-3 & HR & hit rate & $\frac{h+z}{n}$ \\
-4 & FAR & false alarm rate & $\frac{f}{h+f}$ \\
-5 & CSI & critical success index & $\frac{h}{h+f+m}$\\
-6 & OR & odds ratio & $\frac{h \cdot z}{f \cdot m}$\\
-7 & BIAS & bias score & $\frac{h+f}{h+m}$\\
-8 & TSS & true skill stat ($POD-POFD$); also known as the
-          Hanssen-Kuipers score & $\frac{h}{h+m} -\frac{f}{f+z}$. \\
-9 & HSS & Heidke skill score & $2 \frac{h \cdot z - f \cdot m}{(h+m) \cdot (m+z)+(h+f) \cdot (f+z)}$ \\
-10 & ETS & equitable threat score & $\frac{h \cdot z-f \cdot m}{(f+m) \cdot n+(h \cdot z-f \cdot m)}$ \\
-11 & PRC & precision & $\frac{h}{h+f}$ \\
-12 & FSC & $F$-Score & $2 \frac{PRC \cdot POD}{PRC+POD} = 2 \frac{h}{1+h+m}$.\\
-  \hline
-\end{tabular}
-\caption{Elements returned by the \cmd{scores2x2} function}
-\label{tab:scores2x2}
-\end{table}
-
-
-\subsection{truncnorm}
-
-\ArgRet{\texttt{int n, scalar m, scalar sigma, scalar below, scalar
-above}}{matrix}
-
-Generates $n$ truncated normal random values. Specify mean \texttt{m}
-and standard deviation \texttt{sigma}, and the left/right truncation values
-\texttt{below} and \texttt{above}. (Pass NA for any one of them to
-skip the respective truncation.) Returns a column vector of values.
-
-
-\subsection{WSRcritical}
-
-\ArgRet{\texttt{int n, scalar prob }(optional)\texttt{, bool forcenorm}
-(optional)}{matrix}
-
-Concerns the distribution of Wilcoxon's signed rank test statistic for
-\texttt{n} trials (at least 4). Tries to find the critical values
-(low/hi) where the two-sided area to the outside is as close as
-possible to the given \texttt{prob} (default: 0.05). (Note that
-``outside'' means including the critical values themselves in the
-exact/discrete case.) If we end up in the interior region not covered
-by the exact table (for \texttt{prob} far away from 0 and also from
-1), we fall back to the normal approximation. The function returns a
-column vector \verb|{lo; hi; epv}|, where \texttt{epv} is the actual
-probability mass (close to \texttt{prob} but not equal in general for
-small samples). \texttt{lo} and \texttt{hi} can be non-integers in the normal
-approximation case. The normal approximation instead of the exact
-table values can be enforced with the \texttt{forcenorm} argument
-(default: zero, do not enforce).
-
-See also the sister function \cmd{WSRpvalue}.
-
-\subsection{WSRpvalue}
-
-\ArgRet{\texttt{int n, scalar W, bool forcenorm} (optional)}{scalar}
-
-Concerns the distribution of Wilcoxon's signed rank test statistic for
-\texttt{n} trials (at least 4), returns $P(X\geq W)$. In the interior
-region not covered by the exact table, the true value is $\geq$ 12.5\%
-(and $\leq$87.5\%) according to the table used,\footnote{Source of the
-  table: Wilfrid J Dixon and Frank J. Massey, Jr., Introduction to
-  Statistical Analysis, 2nd ed. (New York: McGraw-Hill, 1957), pp.
-  443-444.} so typically based on such values H0 would not be
-rejected. We fall back to the normal approximation in this region. In
-the extreme outer regions not explicitly covered by the table, the
-deviation from 0 or 1 will be smaller than 0.5\% = 0.005. We return
-values 0.001 or 0.999 as an approximation here. The test statistic
-\texttt{W} should usually be an integer, but in case of bindings it
-could be fractional as well; in this case we also fall back to the
-normal approximation.
-
-The normal approximation instead of the exact table values can be
-enforced with the \texttt{forcenorm} argument (default: zero, do not
-enforce).
-
-See also the sister function \cmd{WSRcritical}.
-
-\subsection{powerset}
-
-\ArgRet{\texttt{strings S}}{strings (array)}
-
-Computes the powerset of the input S, i.e. all possible combinations
-of the string elements in S. (Including the empty set /
-empty string "".) Each combination yields one string in the output
-array. Being a set, the ordering is not defined and arbitrary.
-
-
-\subsection{onemode}
-
-\ArgRet{\texttt{matrix v}}{matrix}
-
-Finds the mode of the empirical distribution of the input data.
-If that is multi-modal, details of internal computer arithmetic can
-influence which of the modes is actually found. Returns a 2-element column vector with the modal value and its absolute frequency. If v is an empty
-matrix (comprises only nan values) a 1x1 matrix with nan is returned.
-
-
-\subsection{splitfname}
-
-\ArgRet{\texttt{string fn}}{strings (array)}
-
-The idea is to take a file name or full path and extract three components:
 \begin{enumerate}
-\item The path prefix (may be empty; without the trailing / or \textbackslash)
-\item The "base" component of the file name, without the extension and without the path prefix
-\item The file extension (without the dot; may be empty)
+  \item plain resampling -- A standard draw with replacement based on
+    libgretl's \texttt{resample} function; so if this is all that's needed, you
+    might be better off using \texttt{resample} directly. (Allowed string code:
+    any word starting with "re", e.g. "resampling".)
+
+  \item wild, Normal -- A draw for the wild bootstrapping scheme, where each
+    row of the input matrix is scaled randomly according to Gaussian noise.
+    (string code "wildN" or simply "wild")
+  \item wild, Rademacher -- Here the signs of all rows are flipped randomly. 
+    (string code "wildR") 
+  \item wild, Mammen -- Here the multiplicative factors for the rows are the
+    ones proposed by Mammen (see the SVAR documenation; string code "wildM").
+  \item moving blocks -- Provides a draw of moving blocks of the input, see 
+    for example Brüggemann, Jentsch \& Trenkler (2016; Journal of Econometrics,
+    vol. 191, issue 1, 69-85). By default a block length of 10\% of the input 
+    length \texttt{T} is used (rounded, at least 2). The block length can be
+    overridden by supplying the 'moveblocklen' scalar element inside the
+    \texttt{bparams} bundle argument. (Allowed string codes: any word starting
+    with "mov", or "MBB".)
+
 \end{enumerate}
-In principle should work with forward as well as backslashes and also with double forward slashes.
 
-Example:
+Note that this function is included in extra's version 1.7 and made public for
+convenience of potential users, but it may be moved to another separate addon
+in the future. 
 
-Input string: "/what/on/earth/isthisfile.gdt"
 
-Output equivalent to:
+\subsection{drill}
 
-\cmd{defarray("/what/on/earth", "isthisfile", "gdt")}
+\ArgRet{\texttt{matrices} array, \texttt{matrix rowspec} (optional),
+  \texttt{matrix colspec} (optional)}{matrix}
 
-\subsection{multi\_instrings}
+This function "drills through" a matrix array and returns a matrix;
+for example, \cmd{drill(x, 2, 3)} returns a vector with the
+\texttt{[2,3]} elements of all matrices in the \texttt{x}
+array. Omitting one of rowspec, colspec or entering "0" means to
+select all rows or columns respectively.  (Of course at least one of
+rowspec, colspec must be specified.)
 
-\ArgRet{\texttt{strings lookinhere}, \texttt{strings tofind}}{matrix}
+\emph{Nota bene}: all matrices in the array must be of the same dimensions.
 
-Returns in a column vector the positions (indices) in `lookinhere' where any of the
-strings from `tofind' occur. If there are duplicates in `tofind' then the output
-may also contain duplicate indices. Use \cmd{uniq()} or \cmd{values()} afterwards if needed.
+\subsection{duplicate}
+
+\ArgRet{\texttt{matrix vechA}}{matrix}
+
+The input is a vector assumed to come from an operation like vech(A).
+Returns vec(A), which is the result of pre-multiplying vech(A) with the
+"duplication" matrix $D_m$. If vechA has several columns, each column is
+treated separately as described above (and the results stacked side-by-side).
+
+\subsection{eliminate}
+
+\ArgRet{\texttt{matrix vecA}}{matrix}
+
+Each column of the input vecA is assumed to come from the operation vec(A)
+on a square matrix, thus rows(vecA) must be a square number.
+Returns vech(A), which is the result of pre-multiplying vec(A) with the
+"elimination" matrix $L_m$.
+If vecA has several columns, each column is
+treated separately as described above (and the results stacked side-by-side).
 
 \subsection{mat2latex}
 
@@ -375,55 +224,228 @@ TOTAL & 95	 & 5	 & 100 \\
 \end{tabular}
 \end{center}
 
+\subsection{nearPSD}
 
-\subsection{drawbootres}
+\ArgRet{\texttt{matrix} pointer \texttt{{*}m}, \texttt{scalar epsilon}
+(optional)}{scalar}
 
-\ArgRet{\texttt{const matrix U}, \texttt{bundle bparams} (optional),
-\texttt{int bootcode} (optional)}{matrix}
-Construct a new draw of innovations (residuals) for bootstrapping, based on the
-input matrix \texttt{U}, interpreted to be T-by-K (observations in rows). The
-return value has the same shape. \texttt{U} can be original residuals or some
-pre-processed input -- the pre-processing is not done here to avoid doing it
-repeatedly during the bootstrap.
+Forces the matrix $m$ into the positive semi-definite region. Algorithm
+ported from ``DomPazz'' in Stackoverflow,
+apparently mimicking the nearPD() function in R. Because of re-scaling
+(to correlation matrix), the \texttt{epsilon} criterion value should
+implicitly apply to the correlation-based eigenvalues. The return
+value 0 or 1 indicates whether \texttt{m} was altered or not.
 
-Two ways of choosing the bootstrap type are supported: Either by adding a
-string element to the \texttt{bparams} bundle under the key 'btypestr', or by
-using the associated number code in the \texttt{bootcode} argument, where the
-bundle-based choice takes precedence. Both ways are optional, the general
-default is plain resampling. Here is a brief description of the meanings of the
-codes (see also the SVAR addon's documentation):
+\subsection{qformvech}
 
+\ArgRet{\texttt{matrix Xt}}{matrix}
+This function relies on the relation
+$vech(X'AX) = P (X \otimes X)' Q \; vech(A) = G \; vech(A)$,
+where $P$ and $Q$ are certain interim results.
+It takes the matrix $X'$ and returns the matrix $G$ such that the right-hand
+side of the equalities becomes feasible, which should be
+numerically more efficient than the direct application
+of the left-hand side.
+
+\subsection{zeroifclose}
+
+\ArgRet{\texttt{matrix} pointer \texttt{{*}m}, \texttt{scalar thresh}
+(optional)}{scalar}
+
+Sets elements of \texttt{m} to zero if they are really close. The
+return value 0 or 1 indicates whether \texttt{m} was altered or not.
+
+The default value for the threshold has been \texttt{1e-12} since extra
+version 0.7. In some applications smaller (in absolute value) but
+mathematically truly non-zero results may occur, in which case a smaller
+threshold can be chosen.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Other functions working without a dataset in place}
+
+\subsection{get\_settings}
+
+\ArgRet{\texttt{string key} (optional)}{bundle}
+
+Generates  bundle containing libset settings, either a specific one
+if the optional \texttt{key} parameter is supplied, or all of them otherwise.
+
+\subsection{multi\_instrings}
+
+\ArgRet{\texttt{strings lookinhere}, \texttt{strings tofind}}{matrix}
+
+Returns in a column vector the positions (indices) in `lookinhere' where any of the
+strings from `tofind' occur. If there are duplicates in `tofind' then the output
+may also contain duplicate indices. Use \cmd{uniq()} or \cmd{values()} afterwards if needed.
+
+\subsection{onemode}
+
+\ArgRet{\texttt{matrix v}}{matrix}
+
+Finds the mode of the empirical distribution of the input data.
+If that is multi-modal, details of internal computer arithmetic can
+influence which of the modes is actually found. Returns a 2-element column vector with the modal value and its absolute frequency. If v is an empty
+matrix (comprises only nan values) a 1x1 matrix with nan is returned.
+
+\subsection{powerset}
+
+\ArgRet{\texttt{strings S}}{strings (array)}
+
+Computes the powerset of the input S, i.e. all possible combinations
+of the string elements in S. (Including the empty set /
+empty string "".) Each combination yields one string in the output
+array. Being a set, the ordering is not defined and arbitrary.
+
+
+\subsection{scores2x2}
+
+\ArgRet{\texttt{matrix in, bool verbose} (optional)}{matrix}
+
+Computes some standard score measures for a $2\times 2$ contingency
+table of the form:
+
+\begin{center}
+\begin{tabular}{cccc}
+\toprule
+ &  & \multicolumn{2}{c}{Observed}\tabularnewline
+ &  & 1 & 0\tabularnewline
+\midrule
+\multirow{2}{*}{Predicted} & 1 & h(its) & f(alse)\tabularnewline
+ & 0 & m(iss) & z(eros)\tabularnewline
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent and $n=h+f+m+z$ (total observations). Returns a column vector with the
+elements listed in Table \ref{tab:scores2x2}. The input is always
+sanitized by taking the upper 2x2 part, using absolute values, and
+integer-ization. Warnings are issued if \texttt{verbose} is 1.
+
+
+\begin{table}[htbp]
+\begin{tabular}{rlp{0.35\textwidth}c}
+  \hline
+  \textbf{Number} &\textbf{Acronym} &  \textbf{Description} &\textbf{Formula} \\
+  \hline
+  1 & POD & prob of detection & $\frac{h}{h+m}$ \\
+2 & POFD & prob of false detection & $\frac{f}{f+z}$ \\
+3 & HR & hit rate & $\frac{h+z}{n}$ \\
+4 & FAR & false alarm rate & $\frac{f}{h+f}$ \\
+5 & CSI & critical success index & $\frac{h}{h+f+m}$\\
+6 & OR & odds ratio & $\frac{h \cdot z}{f \cdot m}$\\
+7 & BIAS & bias score & $\frac{h+f}{h+m}$\\
+8 & TSS & true skill stat ($POD-POFD$); also known as the
+          Hanssen-Kuipers score & $\frac{h}{h+m} -\frac{f}{f+z}$. \\
+9 & HSS & Heidke skill score & $2 \frac{h \cdot z - f \cdot m}{(h+m) \cdot (m+z)+(h+f) \cdot (f+z)}$ \\
+10 & ETS & equitable threat score & $\frac{h \cdot z-f \cdot m}{(f+m) \cdot n+(h \cdot z-f \cdot m)}$ \\
+11 & PRC & precision & $\frac{h}{h+f}$ \\
+12 & FSC & $F$-Score & $2 \frac{PRC \cdot POD}{PRC+POD} = 2 \frac{h}{1+h+m}$.\\
+  \hline
+\end{tabular}
+\caption{Elements returned by the \cmd{scores2x2} function}
+\label{tab:scores2x2}
+\end{table}
+
+\subsection{splitfname}
+
+\ArgRet{\texttt{string fn}}{strings (array)}
+
+The idea is to take a file name or full path and extract three components:
 \begin{enumerate}
-  \item plain resampling -- A standard draw with replacement based on
-    libgretl's \texttt{resample} function; so if this is all that's needed, you
-    might be better off using \texttt{resample} directly. (Allowed string code:
-    any word starting with "re", e.g. "resampling".)
-
-  \item wild, Normal -- A draw for the wild bootstrapping scheme, where each
-    row of the input matrix is scaled randomly according to Gaussian noise.
-    (string code "wildN" or simply "wild")
-  \item wild, Rademacher -- Here the signs of all rows are flipped randomly. 
-    (string code "wildR") 
-  \item wild, Mammen -- Here the multiplicative factors for the rows are the
-    ones proposed by Mammen (see the SVAR documenation; string code "wildM").
-  \item moving blocks -- Provides a draw of moving blocks of the input, see 
-    for example Brüggemann, Jentsch \& Trenkler (2016; Journal of Econometrics,
-    vol. 191, issue 1, 69-85). By default a block length of 10\% of the input 
-    length \texttt{T} is used (rounded, at least 2). The block length can be
-    overridden by supplying the 'moveblocklen' scalar element inside the
-    \texttt{bparams} bundle argument. (Allowed string codes: any word starting
-    with "mov", or "MBB".)
-
+\item The path prefix (may be empty; without the trailing / or \textbackslash)
+\item The "base" component of the file name, without the extension and without the path prefix
+\item The file extension (without the dot; may be empty)
 \end{enumerate}
+In principle should work with forward as well as backslashes and also with double forward slashes.
 
-Note that this function is included in extra's version 1.7 and made public for
-convenience of potential users, but it may be moved to another separate addon
-in the future. 
+Example:
 
+Input string: "/what/on/earth/isthisfile.gdt"
+
+Output equivalent to:
+
+\cmd{defarray("/what/on/earth", "isthisfile", "gdt")}
+
+
+\subsection{truncnorm}
+
+\ArgRet{\texttt{int n, scalar m, scalar sigma, scalar below, scalar
+above}}{matrix}
+
+Generates $n$ truncated normal random values. Specify mean \texttt{m}
+and standard deviation \texttt{sigma}, and the left/right truncation values
+\texttt{below} and \texttt{above}. (Pass NA for any one of them to
+skip the respective truncation.) Returns a column vector of values.
+
+
+\subsection{WSRcritical}
+
+\ArgRet{\texttt{int n, scalar prob }(optional)\texttt{, bool forcenorm}
+(optional)}{matrix}
+
+Concerns the distribution of Wilcoxon's signed rank test statistic for
+\texttt{n} trials (at least 4). Tries to find the critical values
+(low/hi) where the two-sided area to the outside is as close as
+possible to the given \texttt{prob} (default: 0.05). (Note that
+``outside'' means including the critical values themselves in the
+exact/discrete case.) If we end up in the interior region not covered
+by the exact table (for \texttt{prob} far away from 0 and also from
+1), we fall back to the normal approximation. The function returns a
+column vector \verb|{lo; hi; epv}|, where \texttt{epv} is the actual
+probability mass (close to \texttt{prob} but not equal in general for
+small samples). \texttt{lo} and \texttt{hi} can be non-integers in the normal
+approximation case. The normal approximation instead of the exact
+table values can be enforced with the \texttt{forcenorm} argument
+(default: zero, do not enforce).
+
+See also the sister function \cmd{WSRpvalue}.
+
+\subsection{WSRpvalue}
+
+\ArgRet{\texttt{int n, scalar W, bool forcenorm} (optional)}{scalar}
+
+Concerns the distribution of Wilcoxon's signed rank test statistic for
+\texttt{n} trials (at least 4), returns $P(X\geq W)$. In the interior
+region not covered by the exact table, the true value is $\geq$ 12.5\%
+(and $\leq$87.5\%) according to the table used,\footnote{Source of the
+  table: Wilfrid J Dixon and Frank J. Massey, Jr., Introduction to
+  Statistical Analysis, 2nd ed. (New York: McGraw-Hill, 1957), pp.
+  443-444.} so typically based on such values H0 would not be
+rejected. We fall back to the normal approximation in this region. In
+the extreme outer regions not explicitly covered by the table, the
+deviation from 0 or 1 will be smaller than 0.5\% = 0.005. We return
+values 0.001 or 0.999 as an approximation here. The test statistic
+\texttt{W} should usually be an integer, but in case of bindings it
+could be fractional as well; in this case we also fall back to the
+normal approximation.
+
+The normal approximation instead of the exact table values can be
+enforced with the \texttt{forcenorm} argument (default: zero, do not
+enforce).
+
+See also the sister function \cmd{WSRcritical}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Functions requiring a dataset}
+
+\subsection{combine}
+
+\ArgRet{\texttt{series a, series b}}{series}
+
+This function takes as arguments two discrete series computes all the
+combinations of their values that occur in the selected sample of the
+currently open dataset. These are stored in the resulting series.
+
+For example, suppose you have a dataset of trade flows, with two
+series \texttt{ic} and \texttt{ec} for the importing and exporting
+countries, respectively. Then \cmd{combine(ic,ec)} will generate a
+series in which each pair has a distinct encoding.
+
+If the two input series are both string-valued, then the output series
+will also be string-valued, as long as it's possible to assign unique
+labels to each value.
 
 \subsection{correspondence}
 
@@ -445,6 +467,34 @@ the same variable. For example, the code:
 % $
 sets \texttt{c} to 2, indicating that the variable \texttt{firm} is in fact the
 panel cross-sectional identifier.
+
+\subsection{fracorder}
+
+\ArgRet{\texttt{series x, int order} (optional), \texttt{bool verbosity}
+ (optional)}{matrix}
+
+Meta function to invoke all the various ways in gretl to estimate the order of
+fractional integration of the input series, namely the Local Whittle estimator,
+the one by Geweke \& Porter-Hudak (GPH), and the Hurst exponent minus $0.5$.
+The first two are executed through gretl's command \texttt{fractint}, the
+latter via \texttt{hurst}.\footnote{Another estimation approach for the Hurst
+exponent is provided in the user-contributed function package 'gen\_hurst'.}
+% This function only works with gretl 2020c or higher.
+
+Returns a matrix with three rows corresponding to the methods above; the four
+columns contain (1) the point estimate, (2) its standard error, (3) the test
+statistic for the null hypothesis of integration order zero, (4) the associated
+p-value. For example, to obtain the standard error of the Local Whittle
+estimator one picks the 1,2-element of the output matrix. The optional
+'verbosity' switch is set to 0 (OFF) by default, otherwise the standard output
+of the underlying commands is printed out.
+
+The optional 'order' argument only applies to the Local Whittle and GPH
+estimators and overrides gretl's default lag order of $\min(T/2, T^{0.6})$.
+
+For the Hurst method a minimum of 128 observations is required, and test
+results are never available. Also note that by construction this estimator can
+only take values between $-0.5$ and $0.5$.
 
 \subsection{gap\_filler}
 
@@ -477,6 +527,7 @@ Note that the function only replaces NAs between valid observations;
 therefore, if the origin series has missing values at the beginning or
 the end of the sample, they will be in the returned series too.
 
+
 \subsection{winsor}
 
 \ArgRet{\texttt{series x, scalar p} (optional), \texttt{scalar
@@ -489,51 +540,6 @@ tail frequencies \texttt{p} and \texttt{phi}. Default lower and upper
 frequencies are 0.05, but re-settable with \texttt{p}. Pass \texttt{phi}
 in addition to \texttt{p} for an asymmetric trimming, then \texttt{p}
 determines only the lower frequency and \texttt{phi} the upper.
-
-\subsection{fracorder}
-
-\ArgRet{\texttt{series x, int order} (optional), \texttt{bool verbosity}
- (optional)}{matrix}
-
-Meta function to invoke all the various ways in gretl to estimate the order of
-fractional integration of the input series, namely the Local Whittle estimator,
-the one by Geweke \& Porter-Hudak (GPH), and the Hurst exponent minus $0.5$.
-The first two are executed through gretl's command \texttt{fractint}, the
-latter via \texttt{hurst}.\footnote{Another estimation approach for the Hurst
-exponent is provided in the user-contributed function package 'gen\_hurst'.}
-% This function only works with gretl 2020c or higher.
-
-Returns a matrix with three rows corresponding to the methods above; the four
-columns contain (1) the point estimate, (2) its standard error, (3) the test
-statistic for the null hypothesis of integration order zero, (4) the associated
-p-value. For example, to obtain the standard error of the Local Whittle
-estimator one picks the 1,2-element of the output matrix. The optional
-'verbosity' switch is set to 0 (OFF) by default, otherwise the standard output
-of the underlying commands is printed out.
-
-The optional 'order' argument only applies to the Local Whittle and GPH
-estimators and overrides gretl's default lag order of $\min(T/2, T^{0.6})$.
-
-For the Hurst method a minimum of 128 observations is required, and test
-results are never available. Also note that by construction this estimator can
-only take values between $-0.5$ and $0.5$.
-
-\subsection{combine}
-
-\ArgRet{\texttt{series a, series b}}{series}
-
-This function takes as arguments two discrete series computes all the
-combinations of their values that occur in the selected sample of the
-currently open dataset. These are stored in the resulting series.
-
-For example, suppose you have a dataset of trade flows, with two
-series \texttt{ic} and \texttt{ec} for the importing and exporting
-countries, respectively. Then \cmd{combine(ic,ec)} will generate a
-series in which each pair has a distinct encoding.
-
-If the two input series are both string-valued, then the output series
-will also be string-valued, as long as it's possible to assign unique
-labels to each value.
 
 \section{Authors}
 \begin{itemize}
