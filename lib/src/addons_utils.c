@@ -34,6 +34,8 @@ static const char *addon_names[] = {
     "regls", "logging", "KFgui", NULL
 };
 
+static int n_addons = (G_N_ELEMENTS(addon_names)) - 1;
+
 typedef struct addon_basics_ {
     char path[MAXLEN];
     char *version;
@@ -52,42 +54,21 @@ static void clear_addon_basics (addon_basics *ab)
     ab->ok = 0;
 }
 
-static int get_n_addons (void)
-{
-    static int n;
-
-    if (n == 0) {
-	int i;
-
-	for (i=0; addon_names[i] != NULL; i++) {
-	    n++;
-	}
-    }
-
-    return n;
-}
-
 /* Determine if @pkgname is the name of an addon: @pkgname may be
    given with or without the ".gfn" suffix.
 */
 
 int is_gretl_addon (const char *pkgname)
 {
-    int i, n = get_n_addons();
+    int i, n = strlen(pkgname);
 
     if (has_suffix(pkgname, ".gfn")) {
-	int n = strlen(pkgname) - 4;
+	n -= 4;
+    }
 
-	for (i=0; i<n; i++) {
-	    if (!strncmp(pkgname, addon_names[i], n)) {
-		return 1;
-	    }
-	}
-    } else {
-	for (i=0; i<n; i++) {
-	    if (!strcmp(pkgname, addon_names[i])) {
-		return 1;
-	    }
+    for (i=0; i<n_addons; i++) {
+	if (!strncmp(pkgname, addon_names[i], n)) {
+	    return 1;
 	}
     }
 
@@ -101,7 +82,7 @@ int is_gretl_addon (const char *pkgname)
 const char **get_addon_names (int *n)
 {
     if (n != NULL) {
-	*n = get_n_addons();
+	*n = n_addons;
     }
     return addon_names;
 }
@@ -232,7 +213,6 @@ int update_addons_index (PRN *prn)
     addon_basics usr_ab = {0};
     char gfnname[64];
     int verbose = (prn != NULL);
-    int n_addons = get_n_addons();
     FILE *fp;
     int i;
 
@@ -487,7 +467,8 @@ int get_addon_basic_info (const char *addon,
 	while (fgets(line, sizeof line, fp) && !got) {
 	    if (sscanf(line, "%s %s %s \"%63[^\"]\" \"%511[^\"]",
 		       name, vstr, dstr, desc, path) == 5) {
-		if (!strcmp(name, addon)) {
+		if (!strcmp(name, addon) &&
+		    gretl_test_fopen(path, "r") == 0) {
 		    got = 1;
 		    *version = gretl_strdup(vstr);
 		    *date = gretl_strdup(dstr);

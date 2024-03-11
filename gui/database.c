@@ -3694,12 +3694,13 @@ gint populate_addons_list (windata_t *vwin)
     GtkTreeIter iter;
     const char **anames;
     int n_addons = 0;
-    int i, n_found = 0;
+    int i, n_retry = 0;
     int err = 0;
 
     anames = get_addon_names(&n_addons);
     store = GTK_LIST_STORE(gtk_tree_view_get_model
 			   (GTK_TREE_VIEW(vwin->listbox)));
+ try_again:
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
@@ -3711,7 +3712,9 @@ gint populate_addons_list (windata_t *vwin)
 	char *path = NULL;
 
 	err = get_addon_basic_info(addon, &version, &date, &descrip, &path);
-	if (!err) {
+	if (err) {
+	    break;
+	} else {
 	    gtk_list_store_append(store, &iter);
 	    gtk_list_store_set(store, &iter, 0, addon,
 			       1, descrip, 2, version,
@@ -3720,16 +3723,18 @@ gint populate_addons_list (windata_t *vwin)
 	    free(date);
 	    free(descrip);
 	    free(path);
-	    n_found++;
 	}
     }
 
-    if (err) {
-	gui_errmsg(err);
-    } else if (n_found == 0) {
-	warnbox(_("No addons were found"));
-	/* FIXME offer download here? */
-	err = 1;
+    if (err && n_retry == 0) {
+	DLCode dlc = maybe_download_addons(vwin_toplevel(vwin), NULL, NULL);
+
+	if (dlc == DL_SUCCESS) {
+	    n_retry++;
+	    goto try_again;
+	} else if (dlc == DL_FAIL) {
+	    err = 1;
+	}
     }
 
     return err;

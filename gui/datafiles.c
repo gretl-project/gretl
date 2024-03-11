@@ -1211,48 +1211,6 @@ static void show_addon_info (GtkWidget *w, gpointer data)
     }
 }
 
-#if 0
-
-/* 2024-03-06: this is not wanted any more, but perhaps should be
-   replaced by functionality to install the full set of addons,
-   to support a build of gretl without addons being enabled.
-*/
-
-static void install_addons_callback (GtkWidget *w, gpointer data)
-{
-    windata_t *vwin = (windata_t *) data;
-    gchar *pkgname = NULL;
-    int v = vwin->active_var;
-
-    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), v, 0, &pkgname);
-
-    if (pkgname == NULL) {
-	gui_errmsg(E_DATA);
-    } else {
-	char *local_path = NULL;
-	int err = download_addon(pkgname, &local_path);
-
-	if (!err) {
-	    list_store_set_string(GTK_TREE_VIEW(vwin->listbox), v, 3,
-				  _("Up to date"));
-	    /* if there was an old version of the addon loaded,
-	       we need to unload it now so as to get correct
-	       information in response to a subsequent call to
-	       "check for addons"
-	    */
-	    if (function_package_unload_full(pkgname)) {
-		/* old version was loaded, so load the new one */
-		include_gfn(local_path, OPT_NONE, NULL);
-	    }
-	    free(local_path);
-	}
-
-	g_free(pkgname);
-    }
-}
-
-#endif
-
 /* this function is public because it's called from
    doubleclick_action() in callbacks.c
 */
@@ -1489,7 +1447,6 @@ static void build_funcfiles_popup (windata_t *vwin)
 	add_popup_item(_("Info"), vwin->popup,
 		       G_CALLBACK(show_addon_info),
 		       vwin);
-	/* note: install_addon_callback removed */
     } else if (vwin->role == PKG_REGISTRY) {
 	add_popup_item(_("Remove"), vwin->popup,
 		       G_CALLBACK(gfn_registry_remove),
@@ -1947,7 +1904,10 @@ static void make_files_toolbar (windata_t *vwin)
     }
 
     vwin_add_winlist(vwin);
-    vwin_add_finder(vwin);
+    if (vwin->role != ADDONS_FILES) {
+	/* there aren't enough addons to warrant this */
+	vwin_add_finder(vwin);
+    }
     gtk_widget_show_all(hbox);
 }
 

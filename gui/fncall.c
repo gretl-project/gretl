@@ -3284,7 +3284,7 @@ DLCode maybe_download_addons (GtkWidget *parent,
 {
     const char *msg = N_("You have selected an action that requires access to\n"
 			 "the gretl addons. But these packages are missing,\n"
-			 "incomplete or not up to date.\n\n"
+			 "incomplete, or not up to date.\n\n"
 			 "Do you want to download and install the current\n"
 			 "addons now?");
     int resp = yes_no_dialog(NULL, _(msg), parent);

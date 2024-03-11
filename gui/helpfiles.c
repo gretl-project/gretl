@@ -1059,7 +1059,7 @@ static void add_finder_icon (windata_t *vwin, GtkWidget *entry)
 		     vwin);
 }
 
-/* add a "search box" to the right of a viewer window's toolbar */
+/* add a search box to a viewer window's toolbar */
 
 void vwin_add_finder (windata_t *vwin)
 {
