@@ -46,6 +46,7 @@
 #include "gfn_arglists.h"
 #include "gpt_control.h"
 #include "fnsave.h"
+#include "gui_addons.h"
 #include "fncall.h"
 
 #include <errno.h>
@@ -3268,60 +3269,6 @@ int query_addons (void)
     free(buf);
 
     return err;
-}
-
-/* @basename and @filepath can be given if the caller wants the path
-   to a specific newly installed file on success, otherwise NULLs
-   are OK.
-
-   Note: the return value is non-zero iff download and installation
-   are successful.
-*/
-
-DLCode maybe_download_addons (GtkWidget *parent,
-			      const char *basename,
-			      char **filepath)
-{
-    const char *msg = N_("You have selected an action that requires access to\n"
-			 "the gretl addons. But these packages are missing,\n"
-			 "incomplete, or not up to date.\n\n"
-			 "Do you want to download and install the current\n"
-			 "addons now?");
-    int resp = yes_no_dialog(NULL, _(msg), parent);
-    DLCode ret = DL_CANCEL;
-    int err = 0;
-
-    if (resp == GRETL_YES) {
-	gchar *dlpath = get_download_path("addons.tar.gz", &err);
-
-	if (!err) {
-	    err = retrieve_addons_package(dlpath);
-	}
-	if (!err) {
-	    err = unpack_files_collection(dlpath);
-	}
-	if (!err) {
-	    update_addons_index(NULL);
-	}
-
-	if (err) {
-	    ret = DL_FAIL;
-	} else {
-	    ret = DL_SUCCESS;
-	    if (basename != NULL && filepath != NULL) {
-		if (has_suffix(basename, ".pdf")) {
-		    *filepath = get_addon_pdf_path(basename);
-		} else {
-		    *filepath = gretl_addon_get_path(basename);
-		}
-	    }
-	}
-
-	 gretl_remove(dlpath);
-	 g_free(dlpath);
-    }
-
-    return ret;
 }
 
 /* information about a function package that offers a

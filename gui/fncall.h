@@ -22,12 +22,6 @@
 
 #include "gretl_func.h"
 
-typedef enum {
-    DL_SUCCESS = 0,
-    DL_FAIL,
-    DL_CANCEL
-} DLCode;
-
 int open_function_package (const char *pkgname,
 			   const char *fname,
 			   windata_t *vwin);
@@ -85,10 +79,6 @@ void get_registered_pkg_info (int i, char **name, char **path,
 			      char **label, int *modelwin);
 
 int query_addons (void);
-
-DLCode maybe_download_addons (GtkWidget *parent,
-			      const char *basename,
-			      char **filepath);
 
 int dbnomics_get_series_call (const char *datacode);
 

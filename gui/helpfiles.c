@@ -27,12 +27,12 @@
 #include "toolbar.h"
 #include "winstack.h"
 #include "base_utils.h"
+#include "gui_addons.h"
 
 #ifndef GRETL_EDIT
 #include "treeutils.h"
 #include "menustate.h"
 #include "database.h"
-#include "fncall.h"
 #endif
 
 #ifdef G_OS_WIN32

@@ -200,6 +200,7 @@ SRCS = about.c \
 	gretl.c \
 	gretl_ipc.c \
 	guiprint.c \
+	gui_addons.c \
 	gui_recode.c \
 	gui_utils.c \
 	helpfiles.c \

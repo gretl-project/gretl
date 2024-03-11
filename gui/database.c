@@ -36,7 +36,7 @@
 #include "winstack.h"
 #include "toolbar.h"
 #include "dlgutils.h"
-#include "fncall.h"
+#include "gui_addons.h"
 #include "dbread.h"
 #include "fncall.h"
 #include "varinfo.h"
