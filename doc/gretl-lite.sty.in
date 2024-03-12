@@ -1,28 +1,35 @@
-%% gretl-lite.sty, originally by Allin Cottrell, <2012/03/03>
+%% gretl-lite.sty written by Allin Cottrell, last revised <2024/03/12>
 
 @FONTREQ@
+\RequirePackage{fancyvrb}
 \ProvidesPackage{gretl-lite}
 
 \newcommand{\app}[1]{\textsf{#1}}
+\newcommand{\cmd}[1]{\texttt{#1}}
 \newcommand{\ttsl}[1]{\ttfamily{\textsl{#1}}\normalfont}
 
 \renewcommand{\arraystretch}{1.2}
 
-\renewcommand\section{\@startsection{section}{1}{\z@}%
-                                   {-3ex \@plus -1ex \@minus -.2ex}%
-                                   {.5ex \@plus .2ex}%
-                                   {\normalfont\large\sffamily}}
-
+\renewcommand\section{\@startsection {section}{1}{\z@}%
+                                   {-3.5ex \@plus -1ex \@minus -.2ex}%
+                                   {2.3ex \@plus.2ex}%
+                                   {\normalfont\Large\bfseries}}
 \renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
-                                     {-2.5ex\@plus -1ex \@minus -.2ex}%
-                                     {.2ex \@plus .5ex}%
-                                     {\normalfont\bfseries}}
-
-\renewcommand\subsubsection{\@startsection{subsubsection}{2}{\z@}%
-                                     {-2ex\@plus -1ex \@minus -.2ex}%
-                                     {.2ex \@plus .2ex}%
+                                     {-3.25ex\@plus -1ex \@minus -.2ex}%
+                                     {1.5ex \@plus .2ex}%
+                                     {\normalfont\large\sffamily}}
+\renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
+                                     {-2.0ex\@plus -1ex \@minus -.2ex}%
+                                     {1.0ex \@plus .2ex}%
                                      {\normalfont\normalsize\itshape}}
 
-                           
+\newenvironment{textcode}{\par\small\ttfamily}
+{\normalfont\normalsize\par}
+
+%% basic inline code style
+\DefineVerbatimEnvironment%
+{code}{Verbatim}
+{fontsize=\small, xleftmargin=1em}
+
 \endinput
 %% end of gretl-lite.sty
