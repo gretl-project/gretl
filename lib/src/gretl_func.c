@@ -5995,6 +5995,20 @@ static int pkg_has_examples (const fnpkg *pkg)
     return 0;
 }
 
+static int pkg_has_datafiles (const fnpkg *pkg)
+{
+    int i;
+
+    for (i=0; i<pkg->n_files; i++) {
+        if (strlen(pkg->datafiles[i]) > 4 &&
+	    has_suffix(pkg->datafiles[i], ".gdt")) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 /* helper for compare_resources() below */
 
 static int same_subdir (const char *sa, const char *sb)
@@ -6129,6 +6143,59 @@ static char **package_resources_info (const fnpkg *pkg,
     return resources;
 }
 
+static char **package_datafiles_info (const fnpkg *pkg,
+                                      const char *fname,
+                                      char resdir[],
+                                      int *pn_res)
+{
+    char **resources = NULL;
+    const gchar *dname;
+    GDir *dir = NULL;
+    int path_len = 0;
+    int n_res = 0;
+
+    path_len = strlen(fname) - strlen(pkg->name) - 5;
+    resdir[0] = '\0';
+    strncat(resdir, fname, path_len);
+
+    dir = gretl_opendir(resdir);
+    if (dir == NULL) {
+	return NULL;
+    }
+
+    /* first get a count of relevant files */
+    while ((dname = g_dir_read_name(dir)) != NULL) {
+	if (resource_wanted(dname)) {
+	    n_res++;
+	}
+    }
+
+    if (n_res > 0) {
+	/* if there are any relevant files, create an array */
+	int i = 0;
+
+	resources = strings_array_new(n_res);
+	g_dir_rewind(dir);
+	while ((dname = g_dir_read_name(dir)) != NULL) {
+	    if (resource_wanted(dname)) {
+		resources[i++] = gretl_strdup(dname);
+	    }
+	}
+    }
+
+    if (dir != NULL) {
+        g_dir_close(dir);
+    }
+
+    *pn_res = n_res;
+
+    if (resources != NULL) {
+	qsort(resources, n_res, sizeof *resources, compare_resources);
+    }
+
+    return resources;
+}
+
 /* end apparatus for augmenting "pkg query" to "examples" */
 
 static void plain_print_package_info (const fnpkg *pkg,
@@ -6136,6 +6203,7 @@ static void plain_print_package_info (const fnpkg *pkg,
                                       PRN *prn)
 {
     char vstr[8];
+    int has_examples = 0;
     int i;
 
     if (g_path_is_absolute(fname) && !strstr(fname, "dltmp.")) {
@@ -6156,7 +6224,7 @@ static void plain_print_package_info (const fnpkg *pkg,
     if (pkg->email != NULL && *pkg->email != '\0') {
         pprintf(prn, "Email: %s\n", pkg->email);
     }
-    pprintf(prn, "Required gretl version: %s (%d)\n", vstr, pkg->minver);
+    pprintf(prn, "Required gretl version: %s\n", vstr);
     pprintf(prn, "Data requirement: %s\n", _(data_needs_string(pkg->dreq)));
     pprintf(prn, "Description: %s\n", gretl_strstrip(pkg->descrip));
     if (pkg->n_depends > 0) {
@@ -6170,12 +6238,18 @@ static void plain_print_package_info (const fnpkg *pkg,
         pprintf(prn, "Provider: %s\n", pkg->provider);
     }
 
-    if (pkg_has_examples(pkg)) {
+    has_examples = pkg_has_examples(pkg);
+
+    if (has_examples || pkg_has_datafiles(pkg)) {
         char resdir[MAXLEN];
         char **resources;
         int n_res = 0;
 
-        resources = package_resources_info(pkg, fname, resdir, &n_res);
+	if (has_examples) {
+	    resources = package_resources_info(pkg, fname, resdir, &n_res);
+	} else {
+	    resources = package_datafiles_info(pkg, fname, resdir, &n_res);
+	}
         if (resources != NULL) {
             pprintf(prn, "Resources in %s:\n", resdir);
             for (i=0; i<n_res; i++) {
@@ -6192,6 +6266,7 @@ static void real_bundle_package_info (const fnpkg *pkg,
                                       const char *fname,
                                       gretl_bundle *b)
 {
+    int has_examples = 0;
     int err = 0;
 
     if (g_path_is_absolute(fname) && !strstr(fname, "dltmp.")) {
@@ -6227,12 +6302,18 @@ static void real_bundle_package_info (const fnpkg *pkg,
         gretl_bundle_set_string(b, "provider", pkg->provider);
     }
 
-    if (pkg_has_examples(pkg)) {
+    has_examples = pkg_has_examples(pkg);
+
+    if (has_examples || pkg_has_datafiles(pkg)) {
         char resdir[MAXLEN];
         char **resources;
         int n_res = 0;
 
-        resources = package_resources_info(pkg, fname, resdir, &n_res);
+	if (has_examples) {
+	    resources = package_resources_info(pkg, fname, resdir, &n_res);
+	} else {
+	    resources = package_datafiles_info(pkg, fname, resdir, &n_res);
+	}
         if (resources != NULL) {
             gretl_array *R = gretl_array_from_strings(resources, n_res, 0, &err);
 
