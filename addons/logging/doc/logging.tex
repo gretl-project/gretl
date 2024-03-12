@@ -14,7 +14,7 @@
 
 \newcommand{\argname}[1]{\textsl{#1}}
 
-\title{logging version 1.0}
+\title{\textsf{logging}: structured logging for gretl}
 \author{Artur Tarassow}
 \date{July 8, 2021}
 \maketitle
@@ -196,14 +196,13 @@ testlog(NA)
 The settings of \texttt{loglevel}, \texttt{logstamp} and
 \texttt{logfile} can be accessed via \dollar{loglevel},
 \dollar{logstamp} and \dollar{logfile}, respectively. The first two
-acessors return a numerical value (0/1 for \texttt{logstamp});
+accessors return a numerical value (0/1 for \texttt{logstamp});
 \dollar{logfile} returns an empty string if redirection is not
 set. However, these accessors are basically internals of the addon,
 unlikely to be of interest to its users.
 
 \section{Changelog}
 
-v1.0 (July 2021)
-- Initial version.
+2021-07-08 Initial version.
 
 \end{document}
