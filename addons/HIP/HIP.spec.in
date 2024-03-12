@@ -2,7 +2,7 @@ author = Riccardo "Jack" Lucchetti and Claudia Pigini
 email = r.lucchetti@univpm.it
 tags = C25 C26
 version = @VERSION@
-date = 2023-07-10
+date = 2023-09-14
 description = Heteroskedastic IV Probit
 public = HIP_setup HIP_estimate HIP_printout HIP_setoption HIP
 
