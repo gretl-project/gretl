@@ -9453,6 +9453,7 @@
 	<altform><lit>modeltab show</lit></altform>
 	<altform><lit>modeltab free</lit></altform>
 	<altform><lit>modeltab --output=</lit><repl>filename</repl></altform>
+	<altform><lit>modeltab --options=</lit><repl>bundle</repl></altform>
       </altforms>
     </usage>
 
@@ -9468,13 +9469,11 @@
 	given model, and each row contains the estimates for a given
 	variable across the models.
       </para>
-
       <para>
 	Gretl provides a means of constructing such a table (and
 	copying it in plain text, &latex; or Rich Text Format).  Here is
 	how to do it:
       </para>
-
       <nlist>
 	<li>
 	  <para>
@@ -9558,6 +9557,76 @@
       </para>
       <code>
 	modeltab --output="myfile.tex" --complete
+      </code>
+      <para>
+	The <opt>options=</opt> flag, which rwquires the name of a
+	gretl bundle, can be used to control certain aspects of the
+	formatting of the model table. The following keys are
+	recognized:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>colheads</lit>: integer from 1 to 4, selects from the
+	    four supported column-head styles: Arabic numbering, Roman
+	    numbering, alphabetical, or using the names under which
+	    models have been saved. The default is 1 (Arabic
+	    numbering).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>tstats</lit>: boolean, replace standard errors with
+	    t-statistics or not (default 0).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>pvalues</lit>: boolean, include <math>P</math>-values
+	    or not (default 0).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>asterisks</lit>: boolean, show significance-level
+	    asterisks or not (default 1).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>digits</lit>: integer from 2 to 6, selects the number
+	    of significant digits shown (default 4).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>decplaces</lit>: integer from 2 to 6, selects the
+	    number of decimal places shown.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Note that the last two keys are mutually exclusive. They offer
+	alternative ways of specifying the precision to which
+	numerical values are shown: either in terms of significant
+	digits or decimal places. The default is 4 significant digits.
+      </para>
+      <para>
+	An options bundle can be supplied via a stand-alone command
+	(as in the last of the examples above) or it can be combined
+	with the <lit>show</lit> action or <opt>output</opt>
+	option. For example, the following script builds a simple
+	model table and displays it, with <math>P</math>-values shown
+	instead of significance asterisks:
+      </para>
+      <code>
+	open data9-7
+	ols 1 0 2 3 4
+	modeltab add
+	ols 1 0 2 3
+	modeltab add
+	bundle myopts = _(pvalues=1, asterisks=0)
+	modeltab show --options=myopts
       </code>
     </description>
 
@@ -11730,6 +11799,7 @@
         <example>pkg install armax</example>
 	<example>pkg install /path/to/myfile.gfn --local</example>
 	<example>pkg query ghosts</example>
+	<example>pkg run-sample ghosts</example>
 	<example>pkg unload armax</example>
      </examples>
     </usage>
@@ -11739,9 +11809,10 @@
 	This command provides a means of installing, unloading,
 	querying or deleting gretl function packages. The
 	<repl>action</repl> argument must be one of
-	<lit>install</lit>, <lit>query</lit>, <lit>unload</lit>,
-	<lit>remove</lit> or <lit>index</lit>. An extension to
-        support data file packages is described below.
+	<lit>install</lit>, <lit>query</lit>,
+	<lit>run&#8209;sample</lit>, <lit>unload</lit>,
+	<lit>remove</lit> or <lit>index</lit>. An extension to support
+	data file packages is described below.
       </para>
       <para>
 	<lit>install</lit>: In the most basic form, with no option
@@ -11763,11 +11834,17 @@
       <para>
 	<lit>query</lit>: The default effect is to print basic
 	information about the specified package (author, version,
-	etc.). But if the <opt>quiet</opt> option is appended nothing
+	etc.). If the package includes extra resources (data files
+	and/or additional scripts) a listing of these files is
+	included.  If the <opt>quiet</opt> option is appended nothing
 	is printed; the package information is instead stored in the
 	form of a gretl bundle, which can be accessed via <fncref
 	targ="$result"/>. If no information can be found this bundle
 	will be empty.
+      </para>
+      <para>
+	<lit>run-sample</lit>: Provides a command-line means of
+	running the sample script included in the specified package.
       </para>
       <para>
 	<lit>unload</lit>: <repl>pkgname</repl> should be given in
