@@ -1,98 +1,22 @@
 \documentclass[a4paper,10pt]{article}
-\usepackage{geometry,gretlhds}
-\usepackage{url,fancyvrb}
+\usepackage{geometry,gretl-lite}
+\usepackage{url}
 \usepackage{pifont}
 \usepackage[utf8]{inputenc}
 \usepackage[pdftex]{graphicx}
-\usepackage{color}
-\usepackage{dcolumn,amsmath,mathrsfs}
-%\usepackage{bm,bbm}
+\usepackage{dcolumn,amsmath}
 \usepackage{bm}
+% \usepackage[pdftex]{hyperref}
 \usepackage{natbib}
-%\bibliographystyle{apalike2}
 \bibliographystyle{gretl}
-
-%\graphicspath{{graphs/}}
 
 \newenvironment{funcdoc}[1]
 {\noindent\hrulefill\newline\texttt{#1}\par\noindent\hrulefill\par\medskip\par}
 {\bigskip}
 
-% ---------- Ripped from gretl.sty ----------------------------------------
-
-\newcommand{\scriptname}{Listing}
-
-\newcommand{\app}[1]{\textsf{#1}}
-\newcommand{\cmd}[1]{\texttt{#1}}
-\newcommand{\varname}[1]{\texttt{#1}}
-\newcommand{\option}[1]{\texttt{-{}-#1}}
-
-\newcommand{\ttsl}[1]{\ttfamily{\textsl{#1}}\normalfont}
-
-\newenvironment{textcode}{\par\small\ttfamily}
-{\normalfont\normalsize\par}
-
-\DefineVerbatimEnvironment%
-{code}{Verbatim}
-{fontsize=\small, xleftmargin=1em}
-
-\DefineVerbatimEnvironment%
-{scode}{Verbatim}
-{frame=lines, framesep=2ex, fontsize=\small,
- formatcom=\color{myteal}, rulecolor=\color{mygray}}
-
-\DefineVerbatimEnvironment%
-{scodebit}{Verbatim}
-{fontsize=\small, formatcom=\color{myteal}}
-
-\DefineVerbatimEnvironment%
-{scodebot}{Verbatim}
-{frame=bottomline, framesep=2ex, fontsize=\small,
- formatcom=\color{myteal}, rulecolor=\color{mygray}}
-
-\renewcommand{\arraystretch}{1.2}
-
-\definecolor{mygray}{rgb}{0.85,0.85,0.85} 
-\definecolor{myteal}{rgb}{0.0,0.25,0.15} 
-
-\def\floatpagefraction{.8}
-
-%% add script as float (Listing)
-\newcounter{script}[section]
-\renewcommand \thescript
-     {\ifnum \c@chapter>\z@ \thechapter.\fi \@arabic\c@script}
-\def\fps@script{tbp}
-\def\ftype@script{1}
-\def\ext@script{los}
-\def\fnum@script{\scriptname\nobreakspace\thescript}
-\newenvironment{script}
-               {\@float{script}}
-               {\end@float}
-\newenvironment{script*}
-               {\@dblfloat{script}}
-               {\end@dblfloat}
-\newcommand\theHscript{\thechapter.\arabic{script}}
-
-\newcommand{\tip}[1]{\par\vspace{4pt}
- \ding{43} {\small \sffamily #1}\par}
-
-%% define a very simple bibliography environment
-
-% \newcommand{\bibname}{References}
-% \renewenvironment{thebibliography}
-%      {\section*{\bibname}
-%       \label{refs}
-%       \addcontentsline{toc}{section}{\bibname}
-%       \setlength\parindent{0pt}
-%       \setlength\parskip{6pt}}
-%       {}
-
-% ---------- End rip ------------------------------------------------------
-
 \newcommand{\stdu}{\ensuremath \varepsilon}
 \newcommand{\uhat}{\ensuremath u}
 \newcommand{\pder}[2]{\ensuremath\frac{\partial #1}{\partial #2}}
-%\newcommand{\Indic}{\mathbbm{1}}
 \newcommand{\Indic}{\ensuremath I}
 \newcommand{\e}{\varepsilon}
 \newcommand{\up}{\upsilon}
@@ -222,7 +146,7 @@ To begin with, we'll apply IV probit to a time-honoured problem, that
 is female labour force participation.\footnote{Examples like the one
   presented here are quite common in several other software
   packages. Go check.} We'll use the immortal dataset used in
-\cite{Mroz87}, supplied among \app{gretl}'s example datasets. We will
+\cite{mroz87}, supplied among \app{gretl}'s example datasets. We will
 exemplify \HIP\ through a script first, and then we'll take a look
 at the GUI hook that \HIP\ provides. Of course, in both examples we'll
 assume \HIP\ has correctly been installed.
@@ -350,7 +274,7 @@ want to keep (see Figure \ref{fig:iconview}).
 \subsection{Heteroskedastic probit}
 
 Here, we'll replicate the example given in William Greene's textbook
-(7th edition), which also uses \citeauthor{Mroz87}'s dataset. The
+(7th edition), which also uses \citeauthor{mroz87}'s dataset. The
 script goes like this:
 
 \begin{code}
@@ -428,8 +352,8 @@ Heteroskedasticity test (LR) = 6.42453 (2 df, p-value = 0.0403)
 Chesher and Irish normality test = 6.23055 (2 df, p-value = 0.0444)
 \end{code}
 
-\subsection{Let's get HIP. Heteroskedasticity and endogeneity at the
-  same time.}
+\subsection{Let's get HIP: heteroskedasticity and endogeneity at the
+  same time}
 
 The script goes:
 \begin{code}
@@ -524,42 +448,10 @@ If this happens, here are some points to consider.
 \end{description}
 
 %\clearpage
-\bibliography{HIP}
+\bibliography{gretl}
 
 \clearpage
 \appendix
-
-% \section{Installation}
-% \label{sec:intall}
-
-% Put the \texttt{HIP.gfn} file into a directory where \app{gretl}
-% can find it. An excellent choice is the subdirectory where
-% \app{gretl} keeps ordinary function files, which is the
-% \texttt{function} subdirectory of \app{gretl}'s main directory. You
-% may find out what this corresponds to on your system by inspecting the
-% content of the built-in string \texttt{gretldir}. For example:
-% \begin{code}
-% gretl version 1.9.0cvs
-% Copyright Ramu Ramanathan, Allin Cottrell and Riccardo "Jack" Lucchetti
-% This is free software with ABSOLUTELY NO WARRANTY
-% Current session: 2010-06-10 15:37
-
-% "help" gives a list of commands
-% Type "open filename" to open a data set
-% ? gretldir
-%  gretldir
-% /usr/local/share/gretl
-% ? 
-% \end{code}
-% so the subdirectory to use is
-% \texttt{/usr/local/share/gretl/functions} in this example.
-
-% This would install \HIP\ on a system-wide basis. On a multi-user
-% system, you may want to put \texttt{HIP.gfn} in a user-specific place:
-% on Linux (and, we assume, OSX), that would be
-% \texttt{\$HOME/gretl/functions/}; on Windows, a likely candidate is
-% \texttt{"My
-%   Documents}$\backslash$\texttt{gretl}$\backslash$\texttt{functions"}.
 
 \section{The boring stuff}
 
@@ -873,7 +765,7 @@ main equation only, 2 = first stages, 3 = mle verbose.
   \texttt{CraggDondald} & scalar  & \cite{CraggDonald1993} statistic
   for weak instruments\\
   \texttt{normtest}  & matrix & Conditional moment test for normality
-  of $\varepsilon_i$ \cite{ChesherIrish1987} \\
+  of $\varepsilon_i$ \cite{chesher-irish87} \\
 \hline
 \end{tabular}
 \end{footnotesize}

@@ -1,5 +1,6 @@
 topsrc = @top_srcdir@
 TEXDIR = $(topsrc)/doc/tex
+BLDDOC = ../../../doc
 
 PKG = HIP
 DOCDIR = $(topsrc)/addons/$(PKG)/doc
@@ -8,7 +9,7 @@ FIGS = HIP-sshot1.png \
        HIP-sshot2.png \
        HIP-sshot3.png
 
-SRCS = $(PKG).bib $(PKG).tex $(FIGS) gretl.bst gretlhds.sty
+SRCS = $(PKG).tex $(FIGS) gretl.bib gretl.bst gretl-lite.sty
 
 $(PKG).pdf: $(SRCS)
 	@pdflatex $(PKG) && bibtex $(PKG) && pdflatex $(PKG) && pdflatex $(PKG)
@@ -19,9 +20,11 @@ $(SRCS): | symlinks
 .PHONY : symlinks clean
 
 symlinks:
-	@for f in gretl.bst gretlhds.sty ; do \
+	@for f in gretl.bib gretl.bst ; do \
 	if [ ! -f $$f ] || [ $(TEXDIR)/$$f -nt $$f ] ; then ln -sf $(TEXDIR)/$$f . ; fi ; done
-	@for f in $(PKG).bib $(PKG).tex $(FIGS) ; do \
+	@for f in gretl-lite.sty ; do \
+	if [ ! -f $$f ] || [ $(BLDDOC)/$$f -nt $$f ] ; then ln -sf $(BLDDOC)/$$f . ; fi ; done
+	@for f in $(PKG).tex $(FIGS) ; do \
 	if [ ! -f $$f ] || [ $(DOCDIR)/$$f -nt $$f ] ; then ln -sf $(DOCDIR)/$$f . ; fi ; done
 
 clean:
