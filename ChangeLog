@@ -27,6 +27,10 @@ version 2024a, in progress
   packages in tar.gz format from the gretl server
 - "pkg query" command: show details of script and data files
   from a package's "examples" directory, if present
+- "pkg" command: add "run-sample" action to run the sample
+  script from a specified package
+- "modeltab" command: add an --options flag to control
+  formatting via the command line.
 - bcheck() function: make the second argument optional
 - Fix broken backward compatibility in handling of backslash
   followed by double-quote in string literals
@@ -38,9 +42,9 @@ version 2024a, in progress
   a sample restriction in place
 - Fix bug: possible crash when a dbnomics download fails, if
   invoked via the "data" command
-- Fix bug: after estimation of a panel data model via pooled
-  OLS with the --cluster option, the "add" test was not
-  working
+- Fix bugs connected with estimation of panel data models via
+  pooled OLS with the --cluster option: the option was being
+  ignored in some cases and the "add" test was not working
 - Fix bug: the symmetry checker for gretl matrices could fail
   to flag asymmetry in some cases
 - Fix bug: typeof() and typename() flagging an error in case
