@@ -29,7 +29,7 @@
 \newcommand{\argname}[1]{\textsl{#1}}
 \newcommand{\DB}{\textsf{dbnomics}}
   
-\title{dbnomics for gretl, version 0.44}
+\title{dbnomics for gretl}
 \author{Allin Cottrell \and Jack Lucchetti}
 \date{June 26, 2022}
 \maketitle
@@ -676,28 +676,28 @@ We show below a brief history of changes in the gretl \DB{}
 package. Details can be found at
 \url{https://sourceforge.net/p/gretl/git/ci/master/tree/addons/dbnomics/}.
 
-\begin{tabular}{llp{.6\textwidth}}
-  0.44 & 2022-06-26 & ensure deletion of temporary data files \\
-  0.43 & 2022-01-12 & update for absence of \texttt{series\_name} \\
-  0.42 & 2021-10-21 & fix handling of quarterly data with gaps \\
-  0.41 & 2021-03-29 & cut out waste of time downloading metadata \\
-  0.40 & 2021-03-10 & update for presence of metadata switch in API \\
-  0.39 & 2021-01-06 & update for absence of
+\begin{tabular}{lp{.6\textwidth}}
+  2022-06-26 & ensure deletion of temporary data files \\
+  2022-01-12 & update for absence of \texttt{series\_name} \\
+  2021-10-21 & fix handling of quarterly data with gaps \\
+  2021-03-29 & cut out waste of time downloading metadata \\
+  2021-03-10 & update for presence of metadata switch in API \\
+  2021-01-06 & update for absence of
                       \texttt{complete\_missing\_periods} \\
-  0.38 & 2020-10-22 & update for absence of
+  2020-10-22 & update for absence of
                       \texttt{dimensions\_labels} in
                       many datasets \\
-  0.37 & 2020-02-27 & add \texttt{dbnomics\_printer} function \\
-  0.36 & 2020-01-25 & add the \texttt{commit\_missing\_periods} flag to our \DB{}
+  2020-02-27 & add \texttt{dbnomics\_printer} function \\
+  2020-01-25 & add the \texttt{commit\_missing\_periods} flag to our \DB{}
                       requests to ensure we get a full data calendar \\
-  0.35 & 2019-07-01 & more work on handling nested JSON arrays \\
-  0.34 & 2019-06-26 & work around nested arrays in \DB{} ``dimensions'' info\\
-  0.33 & 2019-03-03 & another fix in light of API switch \\
-  0.32 & 2019-02-28 & fix minor breakage due to API switch\\
-  0.31 & 2019-01-17 & update \DB{} URL\\
-  0.3 & 2018-12-23 & switch to version 22 of \DB{} API\\
-  0.2 & 2018-11-28 & support downloading of multiple series bundles\\
-  0.1 & 2018-06-27 & initial entry as gretl addon
+  2019-07-01 & more work on handling nested JSON arrays \\
+  2019-06-26 & work around nested arrays in \DB{} ``dimensions'' info\\
+  2019-03-03 & another fix in light of API switch \\
+  2019-02-28 & fix minor breakage due to API switch\\
+  2019-01-17 & update \DB{} URL\\
+  2018-12-23 & switch to version 22 of \DB{} API\\
+  2018-11-28 & support downloading of multiple series bundles\\
+  2018-06-27 & initial entry as gretl addon
 \end{tabular}
 
 \end{document}
