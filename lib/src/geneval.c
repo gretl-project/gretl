@@ -7267,9 +7267,15 @@ static NODE *list_to_series_func (NODE *n, int f, NODE *o, parser *p)
     NODE *ret = aux_series_node(p);
 
     if (ret != NULL && starting(p)) {
-        int deflt = (f == F_MIN || f == F_MAX);
-        int partial_ok = node_get_bool(o, p, deflt);
+        int partial_ok = 0;
         int *list = NULL;
+
+	if (f != F_NOBS) {
+	    /* can we accept partial observations? */
+	    int deflt = (f == F_MIN || f == F_MAX);
+
+	    partial_ok = node_get_bool(o, p, deflt);
+	}
 
         if (!p->err) {
             list = node_get_list(n, p);
@@ -18171,7 +18177,7 @@ static NODE *eval (NODE *t, parser *p)
         } else if ((t->t == F_MEAN || t->t == F_SD ||
                     t->t == F_VCE || t->t == F_MIN ||
                     t->t == F_MAX || t->t == F_SUM ||
-                    t->t == F_MEDIAN)
+                    t->t == F_MEDIAN || t->t == F_NOBS)
                    && ok_list_node(l, p)) {
             /* list -> series also acceptable for these cases */
             ret = list_to_series_func(l, t->t, r, p);

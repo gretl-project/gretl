@@ -4379,51 +4379,52 @@ static int data_and_weight_at_obs (double **targ, int *pn,
     return (j == 0)? E_MISSDATA : 0;
 }
 
-/* Fill @targ with data (from @xlist) for the cross-
-   section at obs @t. If @partial_ok is 0 (false) we
-   return E_MISSDATA if any values are missing at @t,
-   otherwise we skip missing terms and return the count
-   of valid values in @pn.
+/* data_at_obs: returns a count of the non-missing values of
+   the members of @list at observation @t. If @targ is non-NULL,
+   enter valid values into this array.
 */
 
-static int data_at_obs (double *targ, int *pn,
-                        const int *list,
+static int data_at_obs (const int *list, int t,
                         const DATASET *dset,
-                        int t, int partial_ok)
+			double *targ)
 {
     int i, j = 0;
-    double xi;
+    double xit;
 
     for (i=1; i<=list[0]; i++) {
-        xi = dset->Z[list[i]][t];
-        if (!na(xi)) {
-            targ[j++] = xi;
-        } else if (!partial_ok) {
-            return E_MISSDATA;
-        }
+        xit = dset->Z[list[i]][t];
+	if (!na(xit)) {
+	    if (targ != NULL) {
+		targ[j] = xit;
+	    }
+	    j++;
+	}
     }
 
-    *pn = j;
-    return (j == 0)? E_MISSDATA : 0;
+    return j;
 }
 
 int cross_sectional_stat (double *y, const int *list,
                           const DATASET *dset, int f,
                           int partial_ok)
 {
-    double *x;
-    int missing;
+    double *x = NULL;
+    int nv = list[0];
     int i, t, n;
 
-    /* to hold the cross section */
-    x = malloc(list[0] * sizeof *x);
-    if (x == NULL) {
-        return E_ALLOC;
+    if (f != F_NOBS) {
+	/* storage for the cross section, if needed */
+	x = malloc(nv * sizeof *x);
+	if (x == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     for (t=dset->t1; t<=dset->t2; t++) {
-        missing = data_at_obs(x, &n, list, dset, t, partial_ok);
-        if (missing) {
+        n = data_at_obs(list, t, dset, x);
+	if (f == F_NOBS) {
+	    y[t] = (double) n;
+        } else if (n == 0 || (n < nv && !partial_ok)) {
             y[t] = NADBL;
         } else if ((f == F_VCE || f == F_SD) && n == 1) {
             y[t] = NADBL;
