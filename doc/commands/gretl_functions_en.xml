@@ -10010,14 +10010,21 @@
       </description>
     </function>
 
-    <function name="nobs" section="stats" output="int">
+    <function name="nobs" section="stats" output="scalar-or-series">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-list">x</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the number of non-missing observations for the variable
-	  <argname>y</argname> in the currently selected sample.
+	  If <argname>x</argname> is a series, returns the number of
+	  non-missing observations for this series in the currently
+	  selected sample.
+	</para>
+	<para>
+	  If <argname>x</argname> is a list, returns a series
+	  <math>y</math> such that <math>y</math><sub>t</sub> is the
+	  count of the series in the list that have a non-missing
+	  value at observation <math>t</math>.
 	</para>
 	<para>
 	  <seelist>
@@ -12158,7 +12165,7 @@
 	<para>
 	  If <argname>x</argname> is a list, returns a series
 	  <math>y</math> such that <math>y</math><sub>t</sub> is the
-	  sample standard deviation of the values of the variables in
+	  sample standard deviation of the values of the series in
 	  the list at observation <math>t</math>.  By default the
 	  standard deviation is recorded as <lit>NA</lit> if there are
 	  any missing values at <math>t</math>, but if you pass a

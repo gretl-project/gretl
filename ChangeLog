@@ -32,6 +32,7 @@ version 2024a, in progress
 - "modeltab" command: add an --options flag to control
   formatting via the command line.
 - bcheck() function: make the second argument optional
+- nobs() function: accept a list argument
 - Fix broken backward compatibility in handling of backslash
   followed by double-quote in string literals
 - Fix bug: crash when plotting matrix data with the multiple
