@@ -10075,15 +10075,21 @@
       </description>
     </function>
 
-    <function name="nobs" section="stats" output="int">
+    <function name="nobs" section="stats" output="scalar-or-series">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-list">x</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce il numero di osservazioni non mancanti per la
-	  variabile <argname>y</argname> nella selezione corrente del
+	  Se <argname>x</argname> è una serie, restituisce il numero di
+	  osservazioni non mancanti nella selezione corrente del
 	  campione.
+	</para>
+	<para>
+	  Se <argname>x</argname> è una lista, restituisce una serie
+	  <math>y</math> in cui <math>y</math><sub>t</sub> è il
+	  numero di elementi della lista che hanno un valori validi
+	  all'osservazione <math>t</math>.
        </para>
        <para>
 	 <seelist>
