@@ -10088,7 +10088,7 @@
 	<para>
 	  Se <argname>x</argname> è una lista, restituisce una serie
 	  <math>y</math> in cui <math>y</math><sub>t</sub> è il
-	  numero di elementi della lista che hanno un valori validi
+	  numero di elementi della lista che hanno un valore valido
 	  all'osservazione <math>t</math>.
        </para>
        <para>
