@@ -15852,20 +15852,28 @@
 	In its first form, this command prints summary statistics for
 	the variables in <repl>varlist</repl>, or for all the
 	variables in the data set if <repl>varlist</repl> is omitted.
-	By default, output consists of the mean, standard deviation
-	(sd), coefficient of variation (= sd/mean), median, minimum,
-	maximum, skewness coefficient, and excess kurtosis.  If the
-	<opt>simple</opt> option is given, output is restricted to
-	the mean, minimum, maximum and standard deviation.
+	By default, output consists of the mean, median, minimum,
+	maximum, standard deviation (sd), coefficient of variation (=
+	sd/mean), skewness coefficient, excess kurtosis, 5th and 95th
+	percentiles, inter-quartile range and number of missing
+	observations. But if the <opt>simple</opt> option is given,
+	output is restricted to the mean, median, standard deviation,
+	minimum and maximum.
       </para>
       <para>
-	If the <opt>by</opt> option is given (in which case the
+	If the <opt>weight</opt> option is given, in which case the
+	parameter <repl>wtvar</repl> should be the name of a series
+	supplying weights per observation, the statistics are weighted
+	accordingly.
+      </para>
+      <para>
+	If the <opt>by</opt> option is given, in which case the
 	parameter <repl>byvar</repl> should be the name of a discrete
-	variable), then statistics are printed for sub-samples
+	variable, then statistics are printed for sub-samples
 	corresponding to the distinct values taken on by
 	<repl>byvar</repl>.  For example, if <repl>byvar</repl> is a
 	(binary) dummy variable, statistics are given for the cases
-	<lit>byvar = 0</lit> and <lit>byvar = 1</lit>. Note: at
+	<lit>byvar=0</lit> and <lit>byvar=1</lit>. Note: at
 	present, this option is incompatible with the
 	<opt>weight</opt> option.
       </para>
