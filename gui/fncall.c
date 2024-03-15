@@ -282,25 +282,63 @@ static GtkWidget *get_selector_for_param (call_info *cinfo,
     return NULL;
 }
 
+static void toggle_sensitivity (GtkWidget *cb, GtkWidget *w)
+{
+    gint a = gtk_combo_box_get_active(GTK_COMBO_BOX(cb));
+    gint v = widget_get_int(w, "condval");
+
+    gtk_widget_set_sensitive(w, a == v);
+}
+
+static void condition_on_combo (GtkWidget *w, GtkWidget *cb)
+{
+    g_signal_connect(G_OBJECT(cb), "changed",
+		     G_CALLBACK(toggle_sensitivity), w);
+}
+
 static void check_depends (call_info *cinfo, int i,
 			   gretl_bundle *ui)
 {
-    const char *dep;
+    const char *depstr;
 
     /* first attach @ui to widget for future reference */
     g_object_set_data(G_OBJECT(cinfo->sels[i]), "ui", ui);
 
     /* see if we have a dependency */
-    dep = gretl_bundle_get_string(ui, "depends", NULL);
+    depstr = gretl_bundle_get_string(ui, "depends", NULL);
 
-    if (dep != NULL) {
-	GtkWidget *b = get_selector_for_param(cinfo, dep);
+    if (depstr != NULL) {
+	GtkWidget *dep = NULL;
+	const char *depname = depstr;
+	char ctrl[32] = {0};
+	int val = 1;
 
-	if (b != NULL && GTK_IS_TOGGLE_BUTTON(b)) {
-	    if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b))) {
-		gtk_widget_set_sensitive(cinfo->sels[i], FALSE);
+	if (sscanf(depstr, "%31[^=]=%d", ctrl, &val) == 2) {
+	    depname = ctrl;
+	}
+	dep = get_selector_for_param(cinfo, depname);
+	if (dep == NULL) {
+	    fprintf(stderr, "Couldn't find widget for '%s'\n", depname);
+	    return;
+	}
+	if (GTK_IS_TOGGLE_BUTTON(dep)) {
+	    gboolean a = button_is_active(dep);
+
+	    if (val) {
+		gtk_widget_set_sensitive(cinfo->sels[i], a);
+		sensitize_conditional_on(cinfo->sels[i], dep);
+	    } else {
+		gtk_widget_set_sensitive(cinfo->sels[i], !a);
+		desensitize_conditional_on(cinfo->sels[i], dep);
 	    }
-	    sensitize_conditional_on(cinfo->sels[i], b);
+	} else if (GTK_IS_COMBO_BOX(dep)) {
+	    gint a = gtk_combo_box_get_active(GTK_COMBO_BOX(dep));
+
+	    gtk_widget_set_sensitive(cinfo->sels[i], a == val);
+	    widget_set_int(cinfo->sels[i], "condval", val);
+	    condition_on_combo(cinfo->sels[i], dep);
+	} else {
+	    fprintf(stderr, "ui: check_depends: unsupported usage '%s'\n", depstr);
 	}
     }
 }
@@ -1361,7 +1399,8 @@ static GtkWidget *int_arg_selector (call_info *cinfo,
 }
 
 static GtkWidget *double_arg_selector (call_info *cinfo, int i,
-				       const char *prior_val)
+				       const char *prior_val,
+				       gretl_bundle *ui)
 {
     double minv  = fn_param_minval(cinfo->func, i);
     double maxv  = fn_param_maxval(cinfo->func, i);
@@ -1371,6 +1410,12 @@ static GtkWidget *double_arg_selector (call_info *cinfo, int i,
     GtkWidget *spin;
     gchar *p, *tmp;
     int ndec = 0;
+
+    if (ui != NULL) {
+	double *dvals[] = {&minv, &maxv, &deflt};
+
+	min_max_def_from_ui(ui, dvals);
+    }
 
     tmp = g_strdup_printf("%g", maxv - step);
     p = strchr(tmp, '.');
@@ -1819,11 +1864,10 @@ static int function_call_dialog (call_info *cinfo)
 	    sel = mylist_int_selector(cinfo, i);
 	} else if (ptype == GRETL_TYPE_BOOL) {
 	    sel = bool_arg_selector(cinfo, i, prior_val);
-	} else if (ptype == GRETL_TYPE_INT ||
-		   ptype == GRETL_TYPE_OBS) {
+	} else if (ptype == GRETL_TYPE_INT || ptype == GRETL_TYPE_OBS) {
 	    sel = int_arg_selector(cinfo, i, ptype, prior_val, ui);
 	} else if (spinnable) {
-	    sel = double_arg_selector(cinfo, i, prior_val);
+	    sel = double_arg_selector(cinfo, i, prior_val, ui);
 	} else {
 	    sel = combo_arg_selector(cinfo, ptype, i, prior_val, ui);
 	}
@@ -2629,7 +2673,8 @@ static void maybe_set_gui_interface (call_info *cinfo,
 
     if (fid >= 0) {
 	/* we found a usable gui-main */
-	gchar *name = NULL, *label = NULL;
+	gchar *name = NULL;
+	gchar *label = NULL;
 
 	cinfo->iface = fid;
         if (fid == gmid || gmid < 0) {
@@ -3684,7 +3729,7 @@ static int discover_gfn_requirement (const char *pkgname,
    this if the package attaches under the main-window Model menu: in
    that case its sensitivity will be governed by the code that sets
    the overall sensitivity of the Model menu and its sub-menus
-   (time-series, panel).
+   (time-series, panel and so on).
 */
 
 static int need_gfn_data_req (const char *path)
@@ -4115,11 +4160,11 @@ static void add_package_to_menu (gui_package_info *gpi,
 }
 
 /* run a package's gui-precheck function to determine if
-   it's OK to add its GUI interface to a gretl
-   model-window menu
+   it's OK to add its GUI interface to a gretl model window
+   menu, dependent on some characteristic(s) of the model
 */
 
-static int precheck_error (ufunc *func, windata_t *vwin)
+static int model_precheck_error (ufunc *func, windata_t *vwin)
 {
     PRN *prn;
     double check_err = 0;
@@ -4207,7 +4252,7 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
 	if (!skip && precheck != NULL) {
 	    ufunc *func = get_function_from_package(precheck, pkg);
 
-	    if (func == NULL || precheck_error(func, vwin)) {
+	    if (func == NULL || model_precheck_error(func, vwin)) {
 		skip = 1;
 	    }
 	}
