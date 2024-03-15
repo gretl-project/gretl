@@ -8301,10 +8301,11 @@ static NODE *do_assert (NODE *l, NODE *r, parser *p)
 
 static NODE *contains_node (NODE *val, NODE *set, parser *p)
 {
-    gretl_matrix *m = set->v.m;
     NODE *ret = NULL;
 
     if (starting(p)) {
+	const gretl_matrix *m = node_get_matrix(set, p, 0, 2);
+
         if (val->t == NUM) {
             ret = aux_scalar_node(p);
         } else if (val->t == SERIES) {
@@ -18856,7 +18857,8 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_CONTAINS:
-        if (r->t == MAT && (l->t == NUM || l->t == SERIES || l->t == MAT)) {
+        if ((r->t == MAT || r->t == NUM) &&
+	    (l->t == NUM || l->t == SERIES || l->t == MAT)) {
             ret = contains_node(l, r, p);
         } else {
             p->err = E_TYPES;
