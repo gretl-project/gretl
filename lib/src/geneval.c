@@ -15300,13 +15300,59 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
     return ret;
 }
 
+/* helper for fevalb() in case a bundled series is found */
+
+static NODE *fevalb_get_bundled_series (gretl_bundle *b,
+					const char *key,
+					parser *p)
+{
+    NODE *ret = NULL;
+    double *x = NULL;
+    int n, s;
+
+    s = sample_size(p->dset);
+    if (s == 0) {
+	no_data_error(p);
+	return NULL;
+    }
+
+    x = gretl_bundle_get_series(b, key, &n, NULL);
+    if (x == NULL) {
+	p->err = E_DATA;
+    } else if (n != p->dset->n && n != s) {
+	p->err = E_NONCONF;
+    }
+
+    if (!p->err) {
+	int v = current_series_index(p->dset, key);
+	size_t sz = s * sizeof *x;
+
+	if (v < 0) {
+	    /* we need a new series */
+	    p->err = dataset_add_NA_series(p->dset, 1);
+	    if (!p->err) {
+		v = p->dset->v - 1;
+		p->err = dataset_rename_series(p->dset, v, key);
+	    }
+	}
+	if (!p->err) {
+	    memcpy(p->dset->Z[v] + p->dset->t1, x, sz);
+	    ret = new_node(SERIES);
+	    ret->vnum = v;
+	    ret->v.xvec = p->dset->Z[v];
+	    ret->vname = gretl_strdup(key);
+	}
+    }
+
+    return ret;
+}
+
 /* helper function for fevalb() */
 
 static NODE **multi_node_from_bundle (gretl_bundle *b, int n,
 				      parser *p)
 {
     gretl_array *a = NULL;
-    NODE *save_aux = p->aux;
     NODE **nn;
     int i;
 
@@ -15320,7 +15366,9 @@ static NODE **multi_node_from_bundle (gretl_bundle *b, int n,
     a = gretl_bundle_get_keys(b, &p->err);
 
     if (a != NULL) {
+	NODE *save_aux = p->aux;
 	char **S = NULL;
+	GretlType t;
 	NODE bn = {0};
 	NODE sn = {0};
 	int ns = 0;
@@ -15331,20 +15379,27 @@ static NODE **multi_node_from_bundle (gretl_bundle *b, int n,
 
 	S = gretl_array_get_strings(a, &ns);
 	strings_array_sort(&S, &ns, OPT_NONE);
+	p->aux = NULL;
 	for (i=0; i<n; i++) {
-	    sn.v.str = S[i];
-	    nn[i] = get_bundle_member(&bn, &sn, p);
+	    t = gretl_bundle_get_member_type(b, S[i], NULL);
+	    if (t == GRETL_TYPE_SERIES) {
+		nn[i] = fevalb_get_bundled_series(b, S[i], p);
+	    } else {
+		sn.v.str = S[i];
+		nn[i] = get_bundle_member(&bn, &sn, p);
+	    }
 	    if (p->err) {
 		break;
 	    }
 	}
+	p->aux = save_aux;
     }
-
-    p->aux = save_aux;
 
     if (p->err && nn != NULL) {
 	for (i=0; i<n; i++) {
-	    free_node(nn[i], p);
+	    if (nn[i] != NULL) {
+		free_node(nn[i], p);
+	    }
 	}
 	free(nn);
 	nn = NULL;
@@ -15470,7 +15525,7 @@ static NODE *eval_feval (int f, NODE *l, NODE *r, parser *p)
 	int i;
 
 	for (i=0; i<argc; i++) {
-#if 1 /* fevalb() debugging */
+#if 0 /* fevalb() debugging */
 	    fprintf(stderr, "fevalb, nn[%d] %p: %s aux %d, parent %s\n",
 		    i, (void *) nn[i], getsymb(nn[i]->t), is_aux_node(nn[i]),
 		    nn[i]->parent ? getsymb(nn[i]->parent->t) : "none");
