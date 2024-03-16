@@ -177,13 +177,17 @@ void set_user_qsorting (int s)
     }
 }
 
-/* ok_list_node: This is a first-pass assessment of whether
-   a given node _may_ be interpretable as holding a LIST.
-   The follow-up is node_get_list(), and that will determine
-   whether the interpretation really works.
+/* ok_list_node: This is a first-pass assessment of whether a given
+   node _may_ be interpretable as holding a LIST.  The follow-up is
+   node_get_list(), which will determine whether the interpretation
+   really works. The code below dates from 2023-05-11, when we
+   reverted to an earlier version [a9ec40]. In the interim, version
+   [b6ed06] had "if (null_node(n))" as the first test and "return
+   scalar_node(n)" as the consequent of the last test, giving a
+   somewhat different take on the case where @n is an EMPTY node (as
+   opposed to NULL). It seems that the interim version broke some
+   things.
 */
-
-# if 1 /* 2023-05-11: revert to earlier version of this: [a9ec40] */
 
 static int ok_list_node (NODE *n, parser *p)
 {
@@ -202,30 +206,9 @@ static int ok_list_node (NODE *n, parser *p)
     return 0;
 }
 
-#else /* [b6ed06] */
-
-static int ok_list_node (NODE *n, parser *p)
-{
-    if (null_node(n)) {
-        return 0;
-    } else if (n->t == LIST) {
-        return 1;
-    } else if (n->t == SERIES && n->vnum >= 0) {
-        /* can interpret as singleton list */
-        return 1;
-    } else if (p->flags & P_LISTDEF) {
-        /* when defining a list we can be a bit more accommodating */
-	return scalar_node(n);
-    }
-
-    return 0;
-}
-
-#endif
-
-/* more "lenient" version of the above, to accommodate
-   list expressions such as (L - 0), indicating the list
-   that results from dropping the constant from L
+/* a more "lenient" version of the above, to accommodate list
+   expressions such as (L - 0), indicating the list that results from
+   dropping the constant from L
 */
 
 static int ok_list_node_plus (NODE *n)
@@ -15317,93 +15300,187 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
     return ret;
 }
 
-static NODE *eval_feval (NODE *t, NODE *n, parser *p)
+/* helper function for fevalb() */
+
+static NODE **multi_node_from_bundle (gretl_bundle *b, int n,
+				      parser *p)
 {
-    NODE *e, *ret = NULL;
-    int argc, f = 0;
+    gretl_array *a = NULL;
+    NODE *save_aux = p->aux;
+    NODE **nn;
+    int i;
+
+    nn = calloc(n, sizeof *nn);
+    if (nn == NULL) {
+	p->err = E_ALLOC;
+	return NULL;
+    }
+
+    p->aux = NULL;
+    a = gretl_bundle_get_keys(b, &p->err);
+
+    if (a != NULL) {
+	char **S = NULL;
+	NODE bn = {0};
+	NODE sn = {0};
+	int ns = 0;
+
+	bn.t = BUNDLE;
+	bn.v.b = b;
+	sn.t = STR;
+
+	S = gretl_array_get_strings(a, &ns);
+	strings_array_sort(&S, &ns, OPT_NONE);
+	for (i=0; i<n; i++) {
+	    sn.v.str = S[i];
+	    nn[i] = get_bundle_member(&bn, &sn, p);
+	    if (p->err) {
+		break;
+	    }
+	}
+    }
+
+    p->aux = save_aux;
+
+    if (p->err && nn != NULL) {
+	for (i=0; i<n; i++) {
+	    free_node(nn[i], p);
+	}
+	free(nn);
+	nn = NULL;
+    }
+
+    gretl_array_destroy(a);
+
+    return nn;
+}
+
+/* In the "traditional" feval() case @l is a multi-node holding the
+   function name plus arguments and @r is not referenced.
+
+   In the bundlized fevalb() case, @l holds the name of the function
+   to be called and @r holds a bundle of arguments,
+*/
+
+static NODE *eval_feval (int f, NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+    NODE **nn = NULL;
+    char *fname = NULL;
     ufunc *u = NULL;
-    int k = n->v.bn.n_nodes;
+    int argc, fid = 0;
 
-    if (k < 1) {
-        p->err = E_ARGS;
-        return NULL;
+    if (f == F_FEVALB) {
+	gretl_bundle *argb = r->v.b;
+
+	fname = l->v.str;
+	argb = r->v.b;
+	argc = gretl_bundle_get_n_members(argb);
+	nn = multi_node_from_bundle(argb, argc, p);
+    } else {
+	int k = l->v.bn.n_nodes;
+	NODE *e = NULL;
+
+	if (k < 1) {
+	    p->err = E_ARGS;
+	} else {
+	    e = l->v.bn.n[0];
+	    if (e->t != STR) {
+		node_type_error(f, 1, STR, e, p);
+	    }
+	}
+	if (!p->err) {
+	    argc = k - 1;
+	    fname = e->v.str;
+	    nn = l->v.bn.n + 1; /* array of arg nodes */
+	}
     }
 
-    /* the first (string) arg should be the name of a function */
-    e = n->v.bn.n[0];
-    if (!p->err && e->t != STR) {
-        node_type_error(t->t, 1, STR, e, p);
-        return NULL;
+    if (p->err) {
+	return NULL;
     }
-
-    /* the number of remaining arguments available for passing */
-    argc = k - 1;
 
     /* first try for a built-in function */
-    f = function_lookup(e->v.str);
-    if (f != 0) {
-        NODE **nn = n->v.bn.n;
+    fid = function_lookup(fname);
+    if (fid != 0) {
         NODE tmp = {0};
         NODE aux = {0};
-        NODE l = {0};
+        NODE mn = {0};
         int np;
 
-        tmp.t = f;
-        if (f < FP_MAX) {
-            tmp.v.ptr = get_genr_function_pointer(f);
+        tmp.t = fid;
+        if (fid < FP_MAX) {
+            tmp.v.ptr = get_genr_function_pointer(fid);
         }
 
-        np = func1_symb(f) ? 1 : func2_symb(f) ? 2 :
-            func3_symb(f) ? 3 : -1;
+        np = func1_symb(fid) ? 1 : func2_symb(fid) ? 2 :
+            func3_symb(fid) ? 3 : -1;
         aux.t = EMPTY;
 
         if (np > 0) {
             /* known max number of arguments */
             if (argc > np) {
-                gretl_errmsg_sprintf("%s: too many arguments", e->v.str);
+                gretl_errmsg_sprintf("%s: too many arguments", fname);
                 p->err = E_DATA;
             } else if (np == 1) {
-                tmp.L = argc > 0 ? nn[1] : &aux;
+                tmp.L = argc > 0 ? nn[0] : &aux;
             } else if (np == 2) {
-                tmp.L = argc > 0 ? nn[1] : &aux;
-                tmp.R = argc > 1 ? nn[2] : &aux;
+                tmp.L = argc > 0 ? nn[0] : &aux;
+                tmp.R = argc > 1 ? nn[1] : &aux;
             } else if (np == 3) {
-                tmp.L = argc > 0 ? nn[1] : &aux;
-                tmp.M = argc > 1 ? nn[2] : &aux;
-                tmp.R = argc > 2 ? nn[3] : &aux;
+                tmp.L = argc > 0 ? nn[0] : &aux;
+                tmp.M = argc > 1 ? nn[1] : &aux;
+                tmp.R = argc > 2 ? nn[2] : &aux;
             }
         } else {
             /* multi-arg function */
-            l.t = FARGS;
-            l.v.bn.n_nodes = argc;
-            l.v.bn.n = n->v.bn.n + 1;
-            tmp.L = &l;
+            mn.t = FARGS;
+            mn.v.bn.n_nodes = argc;
+            mn.v.bn.n = nn;
+            tmp.L = &mn;
         }
         if (!p->err) {
             ret = eval(&tmp, p);
         }
     }
 
-    if (!p->err && f == 0) {
+    if (!p->err && fid == 0) {
         /* try for a user function */
-        u = get_user_function_by_name(e->v.str);
+        u = get_user_function_by_name(fname);
         if (u != NULL) {
             NODE tmp = {0};
-            NODE r = {0};
+            NODE mn = {0};
 
             tmp.t = UFUN;
-            tmp.vname = e->v.str;
+            tmp.vname = fname;
             tmp.v.ptr = u;
-            r.v.bn.n_nodes = argc;
-            r.v.bn.n = n->v.bn.n + 1;
-            tmp.R = &r;
-            ret = eval_ufunc(&tmp, &r, p);
+            mn.v.bn.n_nodes = argc;
+            mn.v.bn.n = nn;
+            tmp.R = &mn;
+            ret = eval_ufunc(&tmp, &mn, p);
         }
     }
 
-    if (!p->err && f == 0 && u == NULL) {
-        gretl_errmsg_sprintf("%s: function not found", e->v.str);
+    if (!p->err && fid == 0 && u == NULL) {
+        gretl_errmsg_sprintf("%s: function not found", fname);
 	p->err = E_DATA;
+    }
+
+    if (f == F_FEVALB) {
+	int i;
+
+	for (i=0; i<argc; i++) {
+#if 1 /* fevalb() debugging */
+	    fprintf(stderr, "fevalb, nn[%d] %p: %s aux %d, parent %s\n",
+		    i, (void *) nn[i], getsymb(nn[i]->t), is_aux_node(nn[i]),
+		    nn[i]->parent ? getsymb(nn[i]->parent->t) : "none");
+#endif
+	    if (nn[i]->parent != NULL) {
+		nn[i]->parent->aux = NULL;
+	    }
+	    free_node(nn[i], p);
+	}
+	free(nn);
     }
 
     return ret;
@@ -18653,11 +18730,14 @@ static NODE *eval (NODE *t, parser *p)
             fprintf(stderr, "INTERNAL ERROR: @multi is NULL\n");
             p->err = E_DATA;
         } else if (t->t == F_FEVAL) {
-            ret = eval_feval(t, multi, p);
+            ret = eval_feval(t->t, multi, NULL, p);
         } else {
             ret = eval_nargs_func(t, multi, p);
         }
         break;
+    case F_FEVALB:
+	ret = eval_feval(t->t, l, r, p);
+	break;
     case F_DEFARRAY:
     case F_DEFBUNDLE:
     case F_DEFARGS:
@@ -19080,7 +19160,7 @@ static NODE *eval (NODE *t, parser *p)
     }
 
     if (!p->err && ret != NULL && ret != t && is_aux_node(ret)) {
-        if (t->t == F_FEVAL && ret->refcount > 0) {
+        if ((t->t == F_FEVAL || t->t == F_FEVALB) && ret->refcount > 0) {
             ; /* don't attach, it belongs elsewhere! */
         } else {
             p->err = attach_aux_node(t, ret, p);

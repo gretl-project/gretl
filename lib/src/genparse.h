@@ -401,6 +401,7 @@ enum {
     F_ASORT,
     F_CORRESP,
     F_STRVSORT,
+    F_FEVALB,
     HF_GLASSO,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,

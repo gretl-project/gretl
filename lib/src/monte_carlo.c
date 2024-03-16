@@ -2321,6 +2321,11 @@ static int try_add_loop_genr (LOOPSET *loop,
     gretlopt gopt = OPT_NONE;
     int err = 0;
 
+    /* 2024-03-16: stop a memory leak */
+    if (strstr(line, "feval")) {
+	return 0;
+    }
+
     if (cmd->opt & OPT_O) {
         gopt |= OPT_O;
     }

@@ -565,6 +565,7 @@ struct str_table funcs[] = {
     { F_SVM,       "svm" },
     { F_GETKEYS,   "getkeys" },
     { F_FEVAL,     "feval" },
+    { F_FEVALB,    "fevalb" },
     { F_BRENAME,   "brename" },
     { F_CCODE,     "isocountry" },
     { F_LSOLVE,    "Lsolve" },
