@@ -15876,9 +15876,16 @@ qual caso viene usato QML.
 	<repl>lista-variabili</repl>.  L'output comprende media,
 	scarto quadratico medio, coefficiente di variazione (= scarto
 	quadratico medio / media), mediana, minimo, massimo,
-	coefficiente di asimmetria, curtosi in eccesso. Dando
-	l'opzione <opt>simple</opt>, si avranno soltanto media,
-	minimo, massimo e scarto quadratico medio.
+	coefficiente di asimmetria, curtosi in eccesso, 5&deg; e
+	95&deg; percentile, range interquartile e numero di
+	osservazioni mancanti. Con l'opzione <opt>simple</opt>, si
+	avranno soltanto media, minimo, massimo e scarto quadratico
+	medio.
+      </para>
+      <para>
+	Con l'opzione <opt>weight</opt>, dove il parametro
+	parameter <repl>wtvar</repl> deve essere una serie contenente
+	i pesi per osservazione, le statistiche saranno ponderate.
       </para>
       <para>
 	L'opzione <opt>by</opt> (dove il parametro
@@ -15888,7 +15895,7 @@ qual caso viene usato QML.
 	<repl>byvar</repl>.  Ad esempio, se <repl>byvar</repl> è una
 	variabile binaria (dummy), verranno riportate separatamente le
 	statistiche relative ai sottocampioni definitia dai due casi
-	<lit>byvar = 0</lit> e <lit>byvar = 1</lit>. Nota: al momento,
+	<lit>byvar=0</lit> e <lit>byvar=1</lit>. Nota: al momento,
 	questa opzione è incompatibile con l'altra opzione
 	<opt>weight</opt>.
       </para>
