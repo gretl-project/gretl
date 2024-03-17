@@ -15499,8 +15499,6 @@ static NODE *eval_feval (int f, NODE *l, NODE *r, parser *p)
         }
         if (!p->err) {
             ret = eval(&tmp, p);
-	    fprintf(stderr, "HERE ret = %p, parent %p, tmp.aux = %p\n",
-		    (void *) ret, (void *) ret->parent, (void *) tmp.aux);
         }
     }
 
