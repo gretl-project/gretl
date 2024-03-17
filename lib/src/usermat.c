@@ -23,7 +23,6 @@
 #include "gretl_cmatrix.h"
 #include "gretl_normal.h"
 #include "usermat.h"
-#include "genparse.h"
 #include "uservar.h"
 
 #define MDEBUG 0
@@ -1406,7 +1405,7 @@ char *user_matrix_get_row_name (const gretl_matrix *M, int row,
 
 double
 user_matrix_get_determinant (gretl_matrix *m, int tmpmat,
-			     int f, int *err)
+			     int ldet, int *err)
 {
     gretl_matrix *R = NULL;
     double d = NADBL;
@@ -1422,7 +1421,7 @@ user_matrix_get_determinant (gretl_matrix *m, int tmpmat,
     }
 
     if (R != NULL) {
-	if (f == F_LDET) {
+	if (ldet) {
 	    d = gretl_matrix_log_determinant(R, err);
 	} else {
 	    d = gretl_matrix_determinant(R, err);

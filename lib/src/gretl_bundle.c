@@ -26,7 +26,7 @@
 #include "gretl_xml.h"
 #include "gretl_foreign.h"
 #include "gretl_typemap.h"
-#include "genparse.h"
+#include "gen_public.h"
 #include "kalman.h"
 #include "var.h"
 #include "system.h"

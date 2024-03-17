@@ -18,7 +18,7 @@
  */
 
 #include "gretl.h"
-#include "genparse.h"
+#include "gen_public.h"
 #include "completions.h"
 
 #if GTKSOURCEVIEW_VERSION > 2

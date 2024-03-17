@@ -20,6 +20,7 @@
 /* syntax tree evaluator for "genr" */
 
 #include "genparse.h"
+#include "gen_public.h"
 #include "monte_carlo.h"
 #include "gretl_string_table.h"
 #include "gretl_typemap.h"
@@ -4348,7 +4349,8 @@ static NODE *matrix_to_alt_node (NODE *n, int f, parser *p)
         } else {
             int tmpmat = (n->t == MAT && is_tmp_node(n));
 
-            ret->v.xval = user_matrix_get_determinant(m, tmpmat, f, &p->err);
+            ret->v.xval =
+		user_matrix_get_determinant(m, tmpmat, f==F_LDET, &p->err);
         }
     }
 
@@ -15463,6 +15465,7 @@ static NODE *eval_feval (int f, NODE *l, NODE *r, parser *p)
         NODE mn = {0};
         int np;
 
+	/* temporary function node */
         tmp.t = fid;
         if (fid < FP_MAX) {
             tmp.v.ptr = get_genr_function_pointer(fid);
@@ -15496,6 +15499,8 @@ static NODE *eval_feval (int f, NODE *l, NODE *r, parser *p)
         }
         if (!p->err) {
             ret = eval(&tmp, p);
+	    fprintf(stderr, "HERE ret = %p, parent %p, tmp.aux = %p\n",
+		    (void *) ret, (void *) ret->parent, (void *) tmp.aux);
         }
     }
 
@@ -18791,7 +18796,11 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_FEVALB:
-	ret = eval_feval(t->t, l, r, p);
+	if (l->t == STR && r->t == BUNDLE) {
+	    ret = eval_feval(t->t, l, r, p);
+	} else {
+	    p->err = E_TYPES;
+	}
 	break;
     case F_DEFARRAY:
     case F_DEFBUNDLE:
