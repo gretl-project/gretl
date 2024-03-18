@@ -2157,8 +2157,8 @@
 	(otherwise this option is ignored).
       </para>
       <para>
-	If <repl>varlist</repl> contains more than two series and the
-	program is not in batch mode, a <quote>heatmap</quote> plot of
+	If <repl>varlist</repl> contains more than two series and
+	gretl is not in batch mode, a <quote>heatmap</quote> plot of
 	the correlation matrix is shown.  This can be adjusted via the
 	<opt>plot</opt> option. The acceptable parameters to this
 	option are <lit>none</lit> (to suppress the plot);
@@ -2192,50 +2192,58 @@
 
     <usage>
       <arguments>
-        <argument>series</argument>
+        <argument>y</argument>
         <argument optional="true">order</argument>
       </arguments>
       <options>
-       <option>
+	<option>
 	  <flag>--bartlett</flag>
 	  <effect>use Bartlett standard errors</effect>
         </option>
-       <option>
+	<option>
 	  <flag>--plot</flag>
 	  <optparm>mode-or-filename</optparm>
 	  <effect>see below</effect>
+	</option>
+	<option>
+	  <flag>--silent</flag>
+	  <effect>don't print anything</effect>
         </option>
-        <option>
-	  <flag>--quiet</flag>
-	  <effect>suppress the plot</effect>
+	<option>
+	  <flag>--acf-only</flag>
+	  <effect>omit partial autocorrelations</effect>
         </option>
       </options>
       <examples>
         <example>corrgm x 12</example>
+	<example>corrgm GDP 12 --acf-only</example>
       </examples>
     </usage>
 
     <description>
       <para context="notex">
-	Prints the values of the autocorrelation function (ACF) for
-	<repl>series</repl>, which may be specified by name or number.
-	The values are defined as &rgr;(<math>u</math><sub>t</sub>,
+	Prints and/or graphs the values of the autocorrelation
+	function (ACF) for the series <repl>y</repl>, which may be
+	specified by name or number.  The values are defined as
+	&rgr;(<math>u</math><sub>t</sub>,
 	<math>u</math><sub>t-s</sub>) where <math>u</math><sub>t</sub>
 	is the <math>t</math><sup>th</sup> observation of the variable
 	<math>u</math> and <math>s</math> denotes the number of lags.
       </para>
       <para context="tex">
-	Prints the values of the autocorrelation function (ACF) for
-	<repl>series</repl>, which may be specified by name or number. The
-	values are defined as $\hat{\rho}(u_t, u_{t-s})$, where
-	$u_t$ is the $t^{\rm th}$ observation of the variable $u$ and
-	$s$ denotes the number of lags.
+	Prints and/or graphs the values of the autocorrelation
+	function (ACF) for the series <repl>y</repl>, which may be
+	specified by name or number. The values are defined as
+	$\hat{\rho}(u_t, u_{t-s})$, where $u_t$ is the $t^{\rm th}$
+	observation of the variable $u$ and $s$ denotes the number of
+	lags.
       </para>
       <para>
-	The partial autocorrelations (PACF, calculated using the
+	Unless the <opt>acf-only</opt> option is given, partial
+	autocorrelations (PACF, calculated using the
 	Durbin&ndash;Levinson algorithm) are also shown: these are net
 	of the effects of intervening lags.  In addition the
-	Ljung&ndash;Box <math>Q</math> statistic is printed.  This may
+	Ljung&ndash;Box <math>Q</math> statistic is shown.  This may
 	be used to test the null hypothesis that the series is
 	<quote>white noise</quote>; it is asymptotically distributed
 	as chi-square with degrees of freedom equal to the number of
@@ -2265,18 +2273,18 @@
 	function of the frequency of the data and the number of
 	observations.
       </para>
+      <subhead context="cli">Plotting</subhead>
       <para context="cli">
-	By default, a plot of the correlogram is produced: a gnuplot
-	graph in interactive mode or an ASCII graphic in batch mode.
-	This can be adjusted via the <opt>plot</opt> option. The
-	acceptable parameters to this option are <lit>none</lit> (to
-	suppress the plot); <lit>ascii</lit> (to produce a text
-	graphic even when in interactive mode); <lit>display</lit> (to
-	produce a gnuplot graph even when in batch mode); or a file
-	name. The effect of providing a file name is as described for
-	the <opt>output</opt> option of the <cmdref targ="gnuplot"/>
-	command.
+	By default, if gretl is not in batch mode a plot of the
+	correlogram is shown.  This can be adjusted via the
+	<opt>plot</opt> option. The acceptable parameters to this
+	option are <lit>none</lit> (to suppress the plot);
+	<lit>display</lit> (to show a plot even when in batch mode);
+	or a file name. The effect of providing a file name is as
+	described for the <opt>output</opt> option of the <cmdref
+	targ="gnuplot"/> command.
       </para>
+      <subhead context="cli">Accessors</subhead>
       <para context="cli">
 	Upon successful completion, the accessors <fncref
 	targ="$test"/> and <fncref targ="$pvalue"/> contain the
@@ -2407,7 +2415,7 @@
 	(1994)</cite>.
       </para>
       <para>
-	By default, if the program is not in batch mode a plot of the
+	By default, if gretl is not in batch mode a plot of the
 	cumulated series and confidence band is shown.  This can be
 	adjusted via the <opt>plot</opt> option. The acceptable
 	parameters to this option are <lit>none</lit> (to suppress the
@@ -4433,7 +4441,7 @@
 	(shape, scale).
       </para>
       <para>
-	By default, if the program is not in batch mode a plot of the
+	By default, if gretl is not in batch mode a plot of the
 	distribution is shown.  This can be adjusted via the
 	<opt>plot</opt> option. The acceptable parameters to this
 	option are <lit>none</lit> (to suppress the plot);
@@ -6660,7 +6668,7 @@
 	the log of sample size.
       </para>
       <para>
-	By default, if the program is not in batch mode a plot of the
+	By default, if gretl is not in batch mode a plot of the
 	rescaled range is shown.  This can be adjusted via the
 	<opt>plot</opt> option. The acceptable parameters to this
 	option are <lit>none</lit> (to suppress the plot);
@@ -11731,6 +11739,10 @@
 	  <optparm>mode-or-filename</optparm>
 	  <effect>see below</effect>
         </option>
+	<option>
+	  <flag>--silent</flag>
+	  <effect>suppress printed output</effect>
+        </option>
       </options>
     </usage>
 
@@ -11758,7 +11770,7 @@
 	or from 0 to 180&deg;, respectively.
       </para>
       <para>
-	By default, if the program is not in batch mode a plot of the
+	By default, if gretl is not in batch mode a plot of the
 	periodogram is shown.  This can be adjusted via the
 	<opt>plot</opt> option. The acceptable parameters to this
 	option are <lit>none</lit> (to suppress the plot);
@@ -17332,8 +17344,8 @@
 	  <effect>see below</effect>
         </option>
         <option>
-	  <flag>--quiet</flag>
-	  <effect>suppress plot</effect>
+	  <flag>--silent</flag>
+	  <effect>suppress printed output</effect>
         </option>
       </options>
       <examples>
@@ -17343,7 +17355,7 @@
 
     <description>
       <para>
-	Prints and graphs the cross-correlogram for
+	Prints and/or graphs the cross-correlogram for
 	<repl>series1</repl> and <repl>series2</repl>, which may be
 	specified by name or number.  The values are the sample
 	correlation coefficients between the current value of
@@ -17352,18 +17364,16 @@
       </para>
       <para>
 	If an <repl>order</repl> value is specified the length of the
-	cross-correlogram is limited to at most that number of leads and
-	lags, otherwise the length is determined automatically, as a
-	function of the frequency of the data and the number of
+	cross-correlogram is limited to at most that number of leads
+	and lags, otherwise the length is determined automatically, as
+	a function of the frequency of the data and the number of
 	observations.
       </para>
       <para>
-	By default, a plot of the cross-correlogram is produced: a
-	gnuplot graph in interactive mode or an ASCII graphic in batch
-	mode.  This can be adjusted via the <opt>plot</opt>
-	option. The acceptable parameters to this option are
-	<lit>none</lit> (to suppress the plot); <lit>ascii</lit> (to
-	produce a text graphic even when in interactive mode);
+	By default, when gretl is not in batch mode a plot of the
+	cross-correlogram is shown.  This can be adjusted via the
+	<opt>plot</opt> option. The acceptable parameters to this
+	option are <lit>none</lit> (to suppress the plot);
 	<lit>display</lit> (to produce a gnuplot graph even when in
 	batch mode); or a file name. The effect of providing a file
 	name is as described for the <opt>output</opt> option of the

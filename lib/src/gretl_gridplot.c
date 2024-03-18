@@ -48,7 +48,7 @@ static int mp_collecting;
 
 /* called in graphing.c */
 
-int gretl_multiplot_collecting (void)
+int gretl_gridplot_collecting (void)
 {
     return mp_array != NULL && mp_collecting;
 }
@@ -133,11 +133,11 @@ static int initialize_mp_array (const char *param, DATASET *dset)
     return err;
 }
 
-void gretl_multiplot_clear (int err)
+void gretl_gridplot_clear (int err)
 {
     if (mp_array != NULL) {
 #if GRID_DEBUG
-	fprintf(stderr, "gretl_multiplot_clear: err=%d, array length %d\n",
+	fprintf(stderr, "gretl_gridplot_clear: err=%d, array length %d\n",
 		err, gretl_array_get_length(mp_array));
 #endif
 	if (err) {
@@ -157,15 +157,15 @@ void gretl_multiplot_clear (int err)
 
 /* called from interact.c: process_command_error() */
 
-void gretl_multiplot_destroy (void)
+void gretl_gridplot_destroy (void)
 {
-    gretl_multiplot_clear(1);
+    gretl_gridplot_clear(1);
 }
 
 /* This responds to the starting command for a "gpbuild" block */
 
-int gretl_multiplot_start (const char *param, gretlopt opt,
-			   DATASET *dset)
+int gretl_gridplot_start (const char *param, gretlopt opt,
+			  DATASET *dset)
 {
     int err = 0;
 
@@ -190,7 +190,7 @@ static int invalid_mp_error (int ci)
    called in graphing.c, but only inside a gpbuild block.
 */
 
-int gretl_multiplot_add_plot (gchar *buf)
+int gretl_gridplot_add_plot (gchar *buf)
 {
     int err = 0;
 
@@ -201,12 +201,12 @@ int gretl_multiplot_add_plot (gchar *buf)
 	    gretl_array_append_string(mp_array, buf, 1);
         }
     } else {
-	gretl_errmsg_set("gretl_multiplot_add_plot: failed");
+	gretl_errmsg_set("gretl_gridplot_add_plot: failed");
         err = E_DATA;
     }
 
 #if GRID_DEBUG
-    fprintf(stderr, "gretl_multiplot_add_plot, err = %d\n", err);
+    fprintf(stderr, "gretl_gridplot_add_plot, err = %d\n", err);
 #endif
 
     return err;
@@ -381,19 +381,19 @@ static int set_mp_layout (gretl_matrix **pm, int *np)
 
 /* respond to "end gpbuild" */
 
-int gretl_multiplot_finalize (gretlopt opt)
+int gretl_gridplot_finalize (gretlopt opt)
 {
     int err = 0;
 
 #if GRID_DEBUG
-    fprintf(stderr, "gretl_multiplot_finalize\n");
+    fprintf(stderr, "gretl_gridplot_finalize\n");
 #endif
 
     if (mp_array == NULL) {
 	gretl_errmsg_set("end gpbuild: building not started");
 	err = E_DATA;
     } else {
-	gretl_multiplot_clear(0);
+	gretl_gridplot_clear(0);
     }
 
     return err;
@@ -505,7 +505,7 @@ static int retrieve_plots_array (const char *argname,
    manually by the user.
 */
 
-int gretl_multiplot_from_array (const char *param, gretlopt opt)
+int gretl_gridplot_from_array (const char *param, gretlopt opt)
 {
     gretl_array *a = NULL;
     gretl_matrix *m = NULL;
@@ -526,7 +526,7 @@ int gretl_multiplot_from_array (const char *param, gretlopt opt)
     set_multiplot_defaults();
 
 #if GRID_DEBUG
-    fprintf(stderr, "gretl_multiplot_from_array: np = %d, opt = %d\n",
+    fprintf(stderr, "gretl_gridplot_from_array: np = %d, opt = %d\n",
 	    np, opt);
 #endif
 
