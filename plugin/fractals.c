@@ -281,7 +281,7 @@ int hurst_exponent (int vnum, const DATASET *dset, gretlopt opt,
 	set_last_result_data(result, GRETL_TYPE_MATRIX);
     }
 
-    if (!err && gnuplot_graph_wanted(PLOT_HURST, opt)) {
+    if (!err && gnuplot_graph_wanted(PLOT_HURST, opt, &err)) {
 	err = do_hurst_plot(k, hset, &hmod, dset->varname[vnum]);
     }
 

@@ -187,7 +187,7 @@ int finalize_plot_input_file (FILE *fp);
 
 int finalize_3d_plot_input_file (FILE *fp);
 
-int gnuplot_graph_wanted (PlotType ptype, gretlopt opt);
+int gnuplot_graph_wanted (PlotType ptype, gretlopt opt, int *err);
 
 void gnuplot_cleanup (void);
 
@@ -202,6 +202,8 @@ void write_plot_line_styles (int ptype, FILE *fp);
 int write_plot_bounding_box_request (FILE *fp);
 
 void set_effective_plot_ci (int ci);
+
+void reset_effective_plot_ci (void);
 
 void set_special_plot_size (float width, float height);
 

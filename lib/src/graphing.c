@@ -358,6 +358,11 @@ void set_effective_plot_ci (int ci)
     plot_ci = ci;
 }
 
+void reset_effective_plot_ci (void)
+{
+    plot_ci = GNUPLOT;
+}
+
 int get_effective_plot_ci (void)
 {
     return plot_ci;
@@ -421,6 +426,8 @@ static int gp_set_non_point_info (gnuplot_info *gi,
 
     return 0;
 }
+
+/* note: @plot_ci is a file-scope global */
 
 static int plain_lines_spec (gretlopt opt)
 {
@@ -2062,7 +2069,7 @@ static int got_none_option (const char *s)
 static const char *plot_output_option (PlotType p, int *pci, int *err)
 {
     int grid_mode = gretl_gridplot_collecting();
-    int ci = plot_ci;
+    int ci = get_effective_plot_ci();
     const char *s;
 
     /* clear any previous setting */
@@ -2108,8 +2115,6 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 
     s = get_optval_string(ci, OPT_U);
 
-    fprintf(stderr, "HERE cmd=%s, s='%s'\n", gretl_command_word(ci), s);
-
     if (grid_mode && s != NULL) {
 	if (gretl_function_depth() > 0 && !strcmp(s, "display")) {
 	    /* let this pass: hansl functions that do plots
@@ -2119,7 +2124,9 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 	} else if (p == PLOT_GEOMAP) {
 	    s = NULL;
 	} else {
-	    fprintf(stderr, "HERE set E_BADOPT\n");
+	    const char *msg = N_("incompatible output specification");
+
+	    gretl_errmsg_sprintf("gpbuild: %s '%s'", _(msg), s);
 	    *err = E_BADOPT;
 	    return NULL;
 	}
@@ -2227,18 +2234,32 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
    figure out if a plot is actually wanted or not. In interactive mode
    the answer will be Yes unless --plot=none has been given; in batch
    mode the answer will be No unless --plot=display or --plot=fname
-   has been given.
+   has been given, or we're inside a "gpbuild" block.
+
+   The @err location will receive an error code only in the gpbuild
+   case, if the command in question a --plot specification that's
+   incompatible with gpbuild. But err = NULL is accepted, in which
+   case the error code is (obviously) not passed on, but the "wanted"
+   return value is zero. This is a dispensation for commands where the
+   plot is incidental.
 */
 
-int gnuplot_graph_wanted (PlotType ptype, gretlopt opt)
+int gnuplot_graph_wanted (PlotType ptype, gretlopt opt, int *err)
 {
     const char *optname = NULL;
     int ret = 0;
-    int err = 0;
 
     if (opt & (OPT_U | OPT_b)) {
 	/* check for --plot or --outbuf option */
-	optname = plot_output_option(ptype, NULL, &err);
+	int griderr = 0;
+
+	optname = plot_output_option(ptype, NULL, &griderr);
+	if (griderr) {
+	    if (err != NULL) {
+		*err = griderr;
+	    }
+	    return 0;
+	}
     }
 
     if (got_none_option(optname)) {
@@ -8908,7 +8929,7 @@ int hf_plot (const int *list, const char *literal,
     err = gnuplot(gplist, literal != NULL ? literal : mylit,
 		  hset, plotopt);
     na_skiplist = NULL;
-    set_effective_plot_ci(GNUPLOT);
+    reset_effective_plot_ci();
 
     free(gplist);
     free(hflist);

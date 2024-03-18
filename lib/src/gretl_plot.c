@@ -78,7 +78,7 @@ static void clear_plot (void)
     strings_array_free(plot.lines, plot.nlines);
     plot.lines = NULL;
     plot.nlines = 0;
-    set_effective_plot_ci(GNUPLOT);
+    reset_effective_plot_ci();
 }
 
 static int no_data_plot (gretlopt opt)

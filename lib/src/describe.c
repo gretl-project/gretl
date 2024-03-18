@@ -2264,6 +2264,17 @@ static void record_freq_matrix (FreqDist *fd)
     }
 }
 
+static int freq_plot_wanted (PlotType ptype, gretlopt opt,
+			     int *err)
+{
+    if (opt & OPT_Q) {
+	/* handle legacy option: --quiet = no plot */
+	return 0;
+    } else {
+	return gnuplot_graph_wanted(ptype, opt, err);
+    }
+}
+
 /* Wrapper function: get the distribution, print it if
    wanted, graph it if wanted, then free stuff.
 */
@@ -2278,7 +2289,7 @@ int freqdist (int varno, const DATASET *dset,
     double fwid = NADBL;
     int n_bins = 0;
     int do_graph = 0;
-    int err;
+    int err = 0;
 
     if (opt & OPT_O) {
 	dist = D_GAMMA;
@@ -2290,11 +2301,11 @@ int freqdist (int varno, const DATASET *dset,
 	ptype = PLOT_FREQ_SIMPLE;
     }
 
-    if (!(opt & OPT_Q)) {
-	do_graph = gnuplot_graph_wanted(ptype, opt);
-    }
+    do_graph = freq_plot_wanted(ptype, opt, &err);
 
-    err = check_freq_opts(opt, &n_bins, &fmin, &fwid);
+    if (!err) {
+	err = check_freq_opts(opt, &n_bins, &fmin, &fwid);
+    }
 
     if (!err) {
 	gretlopt fopt = opt;
@@ -3489,14 +3500,22 @@ gretl_xcf (int k, int t1, int t2, const double *x, const double *y,
     return num / sqrt(den1 * den2);
 }
 
-static int corrgm_plot_wanted (PlotType ptype, gretlopt opt)
+static int corrgm_plot_wanted (PlotType ptype, gretlopt opt, int *err)
 {
     if (opt & OPT_Q) {
-	/* backward compat: --quiet = no plot */
+	/* handle legacy option: --quiet = no plot */
 	return 0;
+    } else if (opt & OPT_U) {
+	/* ignore legacy option: --plot=ascii */
+	int ci = ptype == PLOT_CORRELOGRAM ? CORRGM : XCORRGM;
+	const char *s = get_optval_string(ci, OPT_U);
+
+	if (s != NULL && !strcmp(s, "ascii")) {
+	    return 0;
+	}
     }
 
-    return gnuplot_graph_wanted(ptype, opt);
+    return gnuplot_graph_wanted(ptype, opt, err);
 }
 
 static void do_acf_bartlett (gretl_matrix *PM, int i,
@@ -3509,6 +3528,30 @@ static void do_acf_bartlett (gretl_matrix *PM, int i,
     for (j=0; j<PM->cols; j++) {
 	b = z[j] * sqrt((1.0/T) * (1 + 2*ssr));
 	gretl_matrix_set(PM, i, j, b);
+    }
+}
+
+static void corrgm_do_ljung_box (const double *acf,
+				 int m, int T,
+				 int nparam)
+{
+    double lbox = 0.0;
+    int k, dfQ = 0;
+
+    for (k=0; k<m; k++) {
+	if (!na(acf[k])) {
+	    lbox += (T * (T + 2.0)) * acf[k] * acf[k] / (T - (k + 1));
+	    dfQ++;
+	}
+    }
+
+    dfQ -= nparam;
+    if (lbox > 0 && dfQ > 0) {
+	double pval = chisq_cdf_comp(dfQ, lbox);
+
+	if (!na(pval)) {
+	    record_test_result(lbox, pval);
+	}
     }
 }
 
@@ -3731,6 +3774,12 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	}
     }
 
+    /* graphing? */
+    do_plot = corrgm_plot_wanted(PLOT_CORRELOGRAM, opt, &err);
+    if (err) {
+	goto bailout;
+    }
+
     /* convenience pointer into @A */
     acf = A->val;
 
@@ -3746,13 +3795,12 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	pacf = pacf_err ? NULL : acf + m;
     }
 
-    /* graphing? */
-    do_plot = corrgm_plot_wanted(PLOT_CORRELOGRAM, opt);
-
     vname = series_get_graph_name(dset, varno);
 
     if (do_print) {
 	corrgm_print(vname, acf, pacf, PM, m, T, nparam, opt, prn);
+    } else {
+	corrgm_do_ljung_box(acf, m, T, nparam);
     }
 
     if (do_plot) {
@@ -4139,6 +4187,12 @@ int xcorrgram (const int *list, int order, DATASET *dset,
 	return err;
     }
 
+    /* graphing? */
+    do_plot = corrgm_plot_wanted(PLOT_XCORRELOGRAM, opt, &err);
+    if (err) {
+	return err;
+    }
+
     xname = dset->varname[list[1]];
     yname = dset->varname[list[2]];
 
@@ -4153,9 +4207,6 @@ int xcorrgram (const int *list, int order, DATASET *dset,
     if (err) {
 	return err;
     }
-
-    /* graphing? */
-    do_plot = corrgm_plot_wanted(PLOT_XCORRELOGRAM, opt);
 
     /* for confidence bands */
     pm[0] = 1.65 / sqrt((double) T);
@@ -4689,6 +4740,7 @@ pergm_or_fractint (int usage, const double *x, int t1, int t2,
     int bartlett = (opt & OPT_O);
     int whittle_only = 0;
     int t, T, L = 0;
+    int do_plot = 0;
     int err = 0;
 
     gretl_error_clear();
@@ -4707,6 +4759,13 @@ pergm_or_fractint (int usage, const double *x, int t1, int t2,
     }
     if (err) {
 	return err;
+    }
+
+    if (usage == PERGM_CMD) {
+	do_plot = gnuplot_graph_wanted(PLOT_PERIODOGRAM, opt, &err);
+	if (err) {
+	    return err;
+	}
     }
 
     if (usage == FRACTINT_CMD) {
@@ -4777,8 +4836,8 @@ pergm_or_fractint (int usage, const double *x, int t1, int t2,
 	    /* not --silent */
 	    pergm_print(vname, dens, T, L, opt, prn);
 	}
-	if (gnuplot_graph_wanted(PLOT_PERIODOGRAM, opt)) {
-	    periodogram_plot(vname, T, L, dens, opt);
+	if (do_plot) {
+	    err = periodogram_plot(vname, T, L, dens, opt);
 	}
     }
 
@@ -6541,7 +6600,7 @@ int gretl_corrmx (int *list, const DATASET *dset,
 	if (!(opt & OPT_Q)) {
 	    print_corrmat(corr, dset, prn);
 	}
-	if (corr->dim > 2 && gnuplot_graph_wanted(PLOT_HEATMAP, opt)) {
+	if (corr->dim > 2 && gnuplot_graph_wanted(PLOT_HEATMAP, opt, NULL)) {
 	    err = plot_corrmat(corr, opt);
 	}
 

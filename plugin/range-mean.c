@@ -298,7 +298,7 @@ int range_mean_graph (int vnum, DATASET *dset,
 	}
 
 	if (!err && !quiet) {
-	    if (gnuplot_graph_wanted(PLOT_RANGE_MEAN, opt)) {
+	    if (gnuplot_graph_wanted(PLOT_RANGE_MEAN, opt, &err)) {
 		err = do_range_mean_plot(y, X, b0, b1, dset->varname[vnum]);
 	    }
 	}
