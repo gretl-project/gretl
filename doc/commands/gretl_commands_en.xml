@@ -2238,16 +2238,17 @@
 	observation of the variable $u$ and $s$ denotes the number of
 	lags.
       </para>
-      <para>
+      <para context="cli">
 	Unless the <opt>acf-only</opt> option is given, partial
 	autocorrelations (PACF, calculated using the
 	Durbin&ndash;Levinson algorithm) are also shown: these are net
-	of the effects of intervening lags.  In addition the
-	Ljung&ndash;Box <math>Q</math> statistic is shown.  This may
-	be used to test the null hypothesis that the series is
-	<quote>white noise</quote>; it is asymptotically distributed
-	as chi-square with degrees of freedom equal to the number of
-	lags used.
+	of the effects of intervening lags.
+      </para>
+      <para context="gui">
+	By default partial autocorrelations (PACF, calculated using
+	the Durbin&ndash;Levinson algorithm) are also shown: these are
+	net of the effects of intervening lags. You can turn this off
+	if you wish.
       </para>
       <para context="cli">
 	Asterisks are used to indicate statistical significance of the
@@ -2256,7 +2257,9 @@
 	size, but if the <opt>bartlett</opt> option is given then
 	Bartlett standard errors are used for the ACF. This option
 	also governs the confidence band drawn in the ACF plot, if
-	applicable.
+	applicable. In addition the Ljung&ndash;Box <math>Q</math>
+	statistic is shown; this tests the null that the series is
+	<quote>white noise</quote> up to the given lag.
       </para>
       <para context="gui">
 	Asterisks are used to indicate statistical significance of the
@@ -2264,7 +2267,9 @@
 	a standard error of one over the square root of the sample
 	size, but you have the choice of using Bartlett standard
 	errors for the ACF. This option also governs the confidence
-	band drawn in the ACF plot.
+	band drawn in the ACF plot. In addition the Ljung&ndash;Box
+	<math>Q</math> statistic is shown; this tests the null that
+	the series is <quote>white noise</quote> up to the given lag.
       </para>
       <para context="cli">
 	If an <repl>order</repl> value is specified the length of the
@@ -2287,11 +2292,11 @@
       <subhead context="cli">Accessors</subhead>
       <para context="cli">
 	Upon successful completion, the accessors <fncref
-	targ="$test"/> and <fncref targ="$pvalue"/> contain the
-	corresponding figures of the Ljung&ndash;Box test for the
-	maximum order displayed. Note that if you just want to compute
-	the <math>Q</math> statistic, you'll probably want to use the
-	<fncref targ="ljungbox"/> function instead.
+	targ="$test"/> and <fncref targ="$pvalue"/> can be used to
+	retrieve the <math>Q</math> statistic and its
+	<math>P</math>-value, evaluated at the maximum lag.  Note that
+	if you just want this test you can use use the <fncref
+	targ="ljungbox"/> function instead.
       </para>
     </description>
 
