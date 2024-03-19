@@ -9234,7 +9234,7 @@ int do_local_pkg_install (const char *filename)
     gchar *s;
     int err;
 
-    s = g_strdup_printf("pkg install %s --local", filename);
+    s = g_strdup_printf("pkg install \"%s\" --local", filename);
     err = emulate_console_command(s);
     g_free(s);
 
