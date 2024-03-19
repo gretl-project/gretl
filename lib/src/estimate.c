@@ -23,7 +23,6 @@
 #include "qr_estimate.h"
 #include "gretl_panel.h"
 #include "libset.h"
-#include "compat.h"
 #include "missing_private.h"
 #include "estim_private.h"
 #include "system.h"
@@ -2157,8 +2156,7 @@ static int rho_val_ends_row (int k)
 
 static void hilu_print_iter (double r, double ess, int iter,
 			     double *ssr, double *rh,
-			     int *ip, int asciiplot,
-			     PRN *prn)
+			     int *ip, PRN *prn)
 {
     char num[8];
     int k;
@@ -2169,12 +2167,6 @@ static void hilu_print_iter (double r, double ess, int iter,
     /* we'll not print all 199 rho values */
 
     if (k == -99 || k == 99 || k % 10 == 0) {
-	if (asciiplot) {
-	    /* recording a subset of values */
-	    ssr[*ip] = ess;
-	    rh[*ip] = r;
-	    *ip += 1;
-	}
 	pprintf(prn, " %5.2f %#12.6g", r, ess);
 	if (rho_val_ends_row(k)) {
 	    pputc(prn, '\n');
@@ -2210,13 +2202,13 @@ static double hilu_search (const int *list, DATASET *dset,
     double essmin = 1.0e200;
     double ess, r, hl_rho = 0;
     int quiet = (opt & OPT_Q);
-    int niceplot = (opt & OPT_G);
+    int do_plot = (opt & OPT_G);
     int iter = 0, i = 0;
     int nplot = 0;
 
     if (!quiet) {
 	/* allocate arrays for recording plot info */
-	nplot = niceplot ? 199 : 21;
+	nplot = do_plot ? 199 : 21;
 	ssr = malloc(2 * nplot * sizeof *ssr);
 	if (ssr == NULL) {
 	    pmod->errcode = E_ALLOC;
@@ -2239,9 +2231,8 @@ static double hilu_search (const int *list, DATASET *dset,
 	ess = pmod->ess;
 
 	if (!quiet) {
-	    hilu_print_iter(r, ess, iter, ssr, rh, &i,
-			    !niceplot, prn);
-	    if (niceplot) {
+	    hilu_print_iter(r, ess, iter, ssr, rh, &i, prn);
+	    if (do_plot) {
 		/* record full data for plotting */
 		ssr[i] = ess;
 		rh[i++] = r;
@@ -2290,12 +2281,8 @@ static double hilu_search (const int *list, DATASET *dset,
 
     if (!quiet) {
 	pprintf(prn, _("\n\nESS is minimized for rho = %g\n\n"), hl_rho);
-	if (niceplot) {
+	if (do_plot) {
 	    hilu_plot(ssr, rh, nplot);
-	} else {
-	    /* ascii plot */
-	    graphyx(ssr, rh, nplot, "ESS", "RHO", prn);
-	    pputs(prn, "\n");
 	}
     }
 

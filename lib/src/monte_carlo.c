@@ -22,7 +22,6 @@
 #include "libgretl.h"
 #include "monte_carlo.h"
 #include "libset.h"
-#include "compat.h"
 #include "cmd_private.h"
 #include "var.h"
 #include "objstack.h"

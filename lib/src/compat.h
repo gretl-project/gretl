@@ -20,10 +20,6 @@
 #ifndef COMPAT_H
 #define COMPAT_H
 
-int graphyx (const double *y, const double *x, int n,
-	     const char *yname, const char *xname, 
-	     PRN *prn);
-
 int textplot (const int *list, const DATASET *dset, 
 	      gretlopt opt, PRN *prn);
 
