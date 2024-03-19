@@ -8106,56 +8106,83 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b,
     return finalize_plot_input_file(fp);
 }
 
-static void corrgm_min_max (const double *acf, const double *pacf,
-			    int m, double pm, double *ymin, double *ymax)
+static void corrgm_min_max (const double *acf,
+			    const double *pacf,
+			    const gretl_matrix *PM,
+			    int m, double pm,
+			    double *pymin,
+			    double *pymax)
 {
+    double ymax = 0;
+    double ymin = 0;
+    double pmk;
+    int PMcol = 0;
     int k;
 
-    /* the range should include the plus/minus bands, but
-       should not go outside (-1, 1)
-    */
-    *ymax = pm * 1.2;
-    if (*ymax > 1) *ymax = 1;
-    *ymin = -pm * 1.2;
-    if (*ymin < -1) *ymin = -1;
+    if (PM != NULL && PM->cols == 3) {
+	PMcol = 1;
+    }
 
-    /* adjust based on min and max of ACF, and PACF if present */
+    /* Basic "pm" is relevant if PM (Bartlett) is not present
+       or pacf is present.
+    */
+    if (PM == NULL || pacf != NULL) {
+	ymax = pm;
+	ymin = -pm;
+    }
+
+    /* adjust the above based on max and min of ACF, PM and PACF */
     for (k=0; k<m; k++) {
-	if (acf[k] > *ymax) {
-	    *ymax = acf[k];
-	} else if (acf[k] < *ymin) {
-	    *ymin = acf[k];
+	if (acf[k] > ymax) {
+	    ymax = acf[k];
+	} else if (acf[k] < ymin) {
+	    ymin = acf[k];
+	}
+	if (PM != NULL) {
+	    pmk = gretl_matrix_get(PM, k, PMcol);
+	    if (pmk > ymax) {
+		ymax = pmk;
+	    } else if (-pmk < ymin) {
+		ymin = -pmk;
+	    }
 	}
 	if (pacf != NULL) {
-	    if (pacf[k] > *ymax) {
-		*ymax = pacf[k];
-	    } else if (pacf[k] < *ymin) {
-		*ymin = pacf[k];
+	    if (pacf[k] > ymax) {
+		ymax = pacf[k];
+	    } else if (pacf[k] < ymin) {
+		ymin = pacf[k];
 	    }
 	}
     }
 
     if (pacf == NULL) {
-	*ymax *= 1.2;
-	*ymin *= 1.2;
+	/* just create a little "breathing space" */
+	ymax *= 1.2;
+	ymin *= 1.2;
     } else {
-	if (*ymax > 0.5) {
-	    *ymax = 1;
+	if (ymax > 0.6) {
+	    ymax = 1;
 	} else {
-	    *ymax *= 1.2;
+	    ymax *= 1.2;
 	}
-	if (*ymin < -0.5) {
-	    *ymin = -1;
+	if (ymin < -0.6) {
+	    ymin = -1;
 	} else {
-	    *ymin *= 1.2;
+	    ymin *= 1.2;
 	}
 	/* make the range symmetrical */
-	if (fabs(*ymin) > *ymax) {
-	    *ymax = -*ymin;
-	} else if (*ymax > fabs(*ymin)) {
-	    *ymin = -*ymax;
+	if (fabs(ymin) > ymax) {
+	    ymax = -ymin;
+	} else if (ymax > fabs(ymin)) {
+	    ymin = -ymax;
 	}
     }
+
+    if (ymax > 1.0) ymax = 1;
+    if (ymin < -1.0) ymin = -1;
+
+    *pymax = ymax;
+    *pymin = ymin;
 }
 
 static int real_correlogram_print_plot (const char *vname,
@@ -8166,15 +8193,19 @@ static int real_correlogram_print_plot (const char *vname,
 					gretlopt opt,
 					FILE *fp)
 {
-    /* xgettext:no-c-format */
-    const char *PM_title = N_("95% interval");
     char pm_title[16];
     double ymin, ymax;
+    int multi = pacf != NULL;
+    int PMcol = 0;
     int k;
 
-    sprintf(pm_title, "%.2f/T^%.1f", 1.96, 0.5);
+    if (PM == NULL || multi) {
+	sprintf(pm_title, "%.2f/T^%.1f", 1.96, 0.5);
+    } else if (PM != NULL && PM->cols) {
+	PMcol = 1;
+    }
 
-    corrgm_min_max(acf, pacf, m, pm, &ymin, &ymax);
+    corrgm_min_max(acf, pacf, PM, m, pm, &ymin, &ymax);
 
     gretl_push_c_numeric_locale();
 
@@ -8188,8 +8219,8 @@ static int real_correlogram_print_plot (const char *vname,
 
     fprintf(fp, "set yrange [%.2f:%.2f]\n", ymin, ymax);
 
-    /* upper plot: Autocorrelation Function or ACF */
-    if (pacf != NULL) {
+    /* upper (or only) plot: ACF */
+    if (multi) {
 	fputs("set origin 0.0,0.50\n", fp);
     }
     if (opt & OPT_R) {
@@ -8198,7 +8229,11 @@ static int real_correlogram_print_plot (const char *vname,
 	fprintf(fp, "set title '%s %s'\n", _("ACF for"), vname);
     }
     fprintf(fp, "set xrange [0:%d]\n", m + 1);
+
     if (PM != NULL) {
+	/* xgettext:no-c-format */
+	const char *PM_title = N_("95% interval");
+
 	fprintf(fp, "plot \\\n"
 		"'-' using 1:2 notitle w impulses lw 5, \\\n"
 		"'-' title '%s' w lines lt 2, \\\n"
@@ -8209,24 +8244,27 @@ static int real_correlogram_print_plot (const char *vname,
 		"%g title '+- %s' lt 2, \\\n"
 		"%g notitle lt 2\n", pm, pm_title, -pm);
     }
+
+    /* data for ACF plot */
     for (k=0; k<m; k++) {
 	fprintf(fp, "%d %g\n", k + 1, acf[k]);
     }
     fputs("e\n", fp);
+
     if (PM != NULL) {
 	/* Bartlett-type confidence band data */
 	for (k=0; k<m; k++) {
-	    fprintf(fp, "%d %g\n", k + 1, gretl_matrix_get(PM, k, 1));
+	    fprintf(fp, "%d %g\n", k + 1, gretl_matrix_get(PM, k, PMcol));
 	}
 	fputs("e\n", fp);
 	for (k=0; k<m; k++) {
-	    fprintf(fp, "%d -%g\n", k + 1, gretl_matrix_get(PM, k, 1));
+	    fprintf(fp, "%d -%g\n", k + 1, gretl_matrix_get(PM, k, PMcol));
 	}
 	fputs("e\n", fp);
     }
 
-    if (pacf != NULL) {
-	/* lower plot: Partial Autocorrelation Function or PACF */
+    if (multi) {
+	/* lower plot: PACF */
 	fputs("set origin 0.0,0.0\n", fp);
 	if (opt & OPT_R) {
 	    fprintf(fp, "set title '%s'\n", _("Residual PACF"));
@@ -8238,13 +8276,14 @@ static int real_correlogram_print_plot (const char *vname,
 		"'-' using 1:2 notitle w impulses lw 5, \\\n"
 		"%g title '+- %s' lt 2, \\\n"
 		"%g notitle lt 2\n", pm, pm_title, -pm);
+	/* PACF data */
 	for (k=0; k<m; k++) {
 	    fprintf(fp, "%d %g\n", k + 1, pacf[k]);
 	}
 	fputs("e\n", fp);
     }
 
-    if (pacf != NULL) {
+    if (multi) {
 	fputs("unset multiplot\n", fp);
     }
 

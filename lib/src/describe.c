@@ -3518,16 +3518,44 @@ static int corrgm_plot_wanted (PlotType ptype, gretlopt opt, int *err)
     return gnuplot_graph_wanted(ptype, opt, err);
 }
 
-static void do_acf_bartlett (gretl_matrix *PM, int i,
+/* Full Bartlett calculation for three z-values, called from
+   corrgm_plot() if we're printing ACF output. BPM will have three
+   columns.
+*/
+
+static void do_acf_bartlett (gretl_matrix *BPM, int i,
 			     int T, double ssr,
 			     const double *z)
 {
-    double b;
+    double c = sqrt((1.0/T) * (1 + 2*ssr));
     int j;
 
-    for (j=0; j<PM->cols; j++) {
-	b = z[j] * sqrt((1.0/T) * (1 + 2*ssr));
-	gretl_matrix_set(PM, i, j, b);
+    for (j=0; j<BPM->cols; j++) {
+	gretl_matrix_set(BPM, i, j, z[j] * c);
+    }
+}
+
+/* Basic Bartlett if we're not printing ACF output. BPM will have a
+   single column.
+*/
+
+static void corrgm_basic_bartlett (const double *acf,
+				   gretl_matrix *BPM,
+				   int T)
+{
+    double Tm1 = 1.0 / T;
+    double z = 1.96;
+    double ssr = 0;
+    int k;
+
+    for (k=0; k<BPM->rows; k++) {
+	if (na(acf[k])) {
+	    continue;
+	}
+	if (k > 0 && !na(acf[k-1])) {
+	    ssr += acf[k-1] * acf[k-1];
+	}
+	BPM->val[k] = z * sqrt(Tm1 * (1 + 2*ssr));
     }
 }
 
@@ -3555,10 +3583,16 @@ static void corrgm_do_ljung_box (const double *acf,
     }
 }
 
+/* The following is called if the --silent option is not given to
+   "corrgm". Note that it embeds Bartlett calculations for three
+   confidence levels. We make do with a simpler Bartlett variant if
+   we're not printing the ACF table.
+*/
+
 static void corrgm_print (const char *vname,
 			  const double *acf,
 			  const double *pacf,
-			  gretl_matrix *PM,
+			  gretl_matrix *BPM,
 			  int m, int T,
 			  int nparam,
 			  gretlopt opt,
@@ -3595,8 +3629,8 @@ static void corrgm_print (const char *vname,
     }
     pputs(prn, "\n\n");
 
-    if (PM == NULL) {
-	/* for non-Bartlett confidence bands */
+    if (BPM == NULL) {
+	/* if we're not doing Bartlett confidence bands */
 	for (i=0; i<3; i++) {
 	    pm[i] = z[i] / sqrt((double) T);
 	    if (pm[i] > 0.5) {
@@ -3615,14 +3649,14 @@ static void corrgm_print (const char *vname,
 
 	/* ACF */
 	pprintf(prn, "%5d%9.4f ", k + 1, acf[k]);
-	if (PM != NULL) {
+	if (BPM != NULL) {
 	    if (k > 0 && !na(acf[k-1])) {
 		ssr += acf[k-1] * acf[k-1];
 	    }
-	    do_acf_bartlett(PM, k, T, ssr, z);
-	    pm0 = gretl_matrix_get(PM, k, 0);
-	    pm1 = gretl_matrix_get(PM, k, 1);
-	    pm2 = gretl_matrix_get(PM, k, 2);
+	    do_acf_bartlett(BPM, k, T, ssr, z);
+	    pm0 = gretl_matrix_get(BPM, k, 0);
+	    pm1 = gretl_matrix_get(BPM, k, 1);
+	    pm2 = gretl_matrix_get(BPM, k, 2);
 	} else {
 	    pm0 = pm[0];
 	    pm1 = pm[1];
@@ -3638,7 +3672,7 @@ static void corrgm_print (const char *vname,
 	    pputs(prn, "    ");
 	}
 
-	/* PACF? */
+	/* PACF, if present */
 	if (pacf != NULL) {
 	    if (na(pacf[k])) {
 		bufspace(13, prn);
@@ -3699,12 +3733,13 @@ static void corrgm_print (const char *vname,
 int corrgram (int varno, int order, int nparam, DATASET *dset,
 	      gretlopt opt, PRN *prn)
 {
-    gretl_matrix *PM = NULL;
+    gretl_matrix *BPM = NULL;
     gretl_matrix *A = NULL;
     double ybar;
     double *acf = NULL;
     double *pacf = NULL;
     const char *vname;
+    int BPMcols = 3;
     int k, m, T;
     int do_plot = 0;
     int do_print = 1;
@@ -3741,6 +3776,7 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 
     if (opt & OPT_S) {
 	do_print = 0;
+	BPMcols = 1;
     }
     if (opt & OPT_A) {
 	do_pacf = 0;
@@ -3767,8 +3803,8 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 
     if (opt & OPT_B) {
 	/* Bartlett */
-	PM = gretl_matrix_alloc(m, 3);
-	if (PM == NULL) {
+	BPM = gretl_matrix_alloc(m, BPMcols);
+	if (BPM == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
 	}
@@ -3798,8 +3834,11 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
     vname = series_get_graph_name(dset, varno);
 
     if (do_print) {
-	corrgm_print(vname, acf, pacf, PM, m, T, nparam, opt, prn);
+	corrgm_print(vname, acf, pacf, BPM, m, T, nparam, opt, prn);
     } else {
+	if (opt & OPT_B) {
+	    corrgm_basic_bartlett(acf, BPM, T);
+	}
 	corrgm_do_ljung_box(acf, m, T, nparam);
     }
 
@@ -3807,13 +3846,13 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	double pm = 1.96 / sqrt((double) T);
 
 	if (pm > 0.5) pm = 0.5;
-	err = correlogram_plot(vname, acf, pacf, PM, m, pm, opt);
+	err = correlogram_plot(vname, acf, pacf, BPM, m, pm, opt);
     }
 
  bailout:
 
     gretl_matrix_free(A);
-    gretl_matrix_free(PM);
+    gretl_matrix_free(BPM);
 
     return err;
 }
