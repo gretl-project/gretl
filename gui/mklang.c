@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 #include "libgretl.h"
-#include "genparse.h"
+#include "gen_public.h"
 
 const char *special_keyword[] = {
     "for",

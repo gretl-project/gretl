@@ -6,7 +6,7 @@
 */
 
 #include "libgretl.h"
-#include "genparse.h"
+#include "gen_public.h"
 
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>

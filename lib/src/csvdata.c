@@ -22,7 +22,6 @@
 #include "libset.h"
 #include "usermat.h"
 #include "uservar.h"
-#include "genparse.h"
 #include "gretl_xml.h"
 #include "gretl_midas.h"
 #include "matrix_extra.h"

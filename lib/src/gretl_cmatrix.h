@@ -92,7 +92,7 @@ int apply_cmatrix_unary_op (gretl_matrix *targ,
 			    int op);
 
 gretl_matrix *gretl_cmatrix_determinant (const gretl_matrix *X,
-					 int log, int *err);
+					 int ldet, int *err);
 
 gretl_matrix *gretl_cmatrix_trace (const gretl_matrix *X,
 				   int *err);

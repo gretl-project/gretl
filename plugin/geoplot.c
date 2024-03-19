@@ -1572,7 +1572,7 @@ static int should_display_map (mapinfo *mi)
 {
     int ret = 1;
 
-    if (gretl_multiplot_collecting()) {
+    if (gretl_gridplot_collecting()) {
         mi->flags |= MAP_MULTI;
         ret = 0;
     } else if (mi->opts != NULL &&

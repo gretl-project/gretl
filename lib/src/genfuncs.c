@@ -19,7 +19,9 @@
 
 /* various functions called by 'genr' */
 
+#include "libgretl.h"
 #include "genparse.h"
+#include "gen_public.h"
 #include "libset.h"
 #include "monte_carlo.h"
 #include "gretl_panel.h"

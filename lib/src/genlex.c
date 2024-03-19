@@ -565,6 +565,7 @@ struct str_table funcs[] = {
     { F_SVM,       "svm" },
     { F_GETKEYS,   "getkeys" },
     { F_FEVAL,     "feval" },
+    { F_FEVALB,    "fevalb" },
     { F_BRENAME,   "brename" },
     { F_CCODE,     "isocountry" },
     { F_LSOLVE,    "Lsolve" },
@@ -1584,6 +1585,79 @@ static int char_past_point (parser *p)
 	    }
 	}
     }
+    return 0;
+}
+
+/* helpers specific to the stack() function -- dispensable if
+   we decide not to support the old-style syntax any more
+*/
+
+static int get_oldstyle_stack_args (const char *s, char **arg,
+				    char **opt1, char **opt2)
+{
+    const char *p1, *p2;
+    int len;
+
+    /* Let the marker for old-style uage be the presence of
+       one or more legacy option flags */
+
+    p1 = strstr(s, "--length=");
+    if (p1 != NULL) {
+	len = strcspn(p1 + 9, " \n");
+	*opt1 = gretl_strndup(p1 + 9, len);
+    }
+
+    p2 = strstr(s, "--offset=");
+    if (p2 != NULL) {
+	len = strcspn(p2 + 9, " \n");
+	*opt2 = gretl_strndup(p2 + 9, len);
+    }
+
+    if (p1 != NULL || p2 != NULL) {
+	len = strcspn(s, ")");
+	*arg = gretl_strndup(s, len);
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+static int stack_update_parser_input (parser *p)
+{
+    char *arg = NULL, *opt1 = NULL, *opt2 = NULL;
+    char *s, *start;
+    gchar *tmp = NULL;
+    GString *gs;
+    int offset;
+
+    offset = p->point - p->input;
+    start = gretl_strndup(p->input, offset);
+    gs = g_string_new(start);
+    free(start);
+
+    s = strstr(p->input, "stack(") + 6;
+    get_oldstyle_stack_args(s, &arg, &opt1, &opt2);
+    if (arg != NULL) {
+	gs = g_string_append(gs, arg);
+	free(arg);
+    }
+    if (opt1 != NULL) {
+	gs = g_string_append_c(gs, ',');
+	gs = g_string_append(gs, opt1);
+	free(opt1);
+    }
+    if (opt2 != NULL) {
+	gs = g_string_append_c(gs, ',');
+	gs = g_string_append(gs, opt2);
+	free(opt2);
+    }
+    gs = g_string_append_c(gs, ')');
+    tmp = g_string_free(gs, FALSE);
+
+    p->input = tmp;
+    p->point = p->input + offset;
+    p->flags |= P_ALTINP;
+
     return 0;
 }
 

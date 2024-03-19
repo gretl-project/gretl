@@ -2757,7 +2757,7 @@ static int QLR_graph (const double *testvec, int t1, int t2,
 
     err = finalize_plot_input_file(fp);
 
-    set_effective_plot_ci(GNUPLOT);
+    reset_effective_plot_ci();
 
     return err;
 }
@@ -2884,34 +2884,6 @@ static void save_chow_test (MODEL *pmod, const char *chowstr,
     }
 }
 
-static int QLR_plot_wanted (gretlopt opt)
-{
-    /* the default: show a plot only if in interactive mode */
-    int ret = !gretl_in_batch_mode();
-
-    if (opt & OPT_U) {
-	/* but the default can be overruled by @opt */
-	const char *s = get_optval_string(QLRTEST, OPT_U);
-
-	if (s != NULL) {
-	    if (!strcmp(s, "none")) {
-		ret = 0;
-	    } else {
-		ret = 1;
-	    }
-	}
-    } else if (opt & OPT_b) {
-	/* --outbuf=whatever */
-	const char *s = get_optval_string(QLRTEST, OPT_b);
-
-	if (s != NULL) {
-	    return 1;
-	}
-    }
-
-    return ret;
-}
-
 /*
  * real_chow_test:
  * @chowparm: sample breakpoint; or ID number of dummy
@@ -2983,7 +2955,6 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
     if (QLR) {
 	/* Quandt likelihood ratio */
 	int robust = (pmod->opt & OPT_R);
-	int do_plot = QLR_plot_wanted(opt);
 	gretlopt lsqopt = OPT_A;
 	double test, testmax = 0.0;
 	double *testvec = NULL;
@@ -2993,9 +2964,11 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 	int tmax = 0;
 	int i, t;
 
-	if (do_plot) {
+	set_effective_plot_ci(QLRTEST);
+	if (gnuplot_graph_wanted(PLOT_REGULAR, opt, NULL)) {
 	    testvec = malloc((smax - split + 1) * sizeof *testvec);
 	}
+	reset_effective_plot_ci();
 
 	if (robust) {
 	    lsqopt |= OPT_R;
@@ -3581,7 +3554,7 @@ int cusum_test (MODEL *pmod, DATASET *dset,
 	}
 
 	/* plot with 95% confidence band if wanted */
-	if (gnuplot_graph_wanted(PLOT_CUSUM, opt)) {
+	if (gnuplot_graph_wanted(PLOT_CUSUM, opt, NULL)) {
 	    err = cusum_do_graph(a, b, W, pmod->t1, k, m, dset, opt);
 	}
     }

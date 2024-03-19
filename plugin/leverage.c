@@ -436,8 +436,8 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
     /* print the results, unless in quiet mode */
     if (!(opt & OPT_Q)) {
 	leverage_print(pmod, S, Xvalcrit, dset, prn);
-	if (gnuplot_graph_wanted(PLOT_LEVERAGE, opt)) {
-	    leverage_plot(pmod, S, dset);
+	if (gnuplot_graph_wanted(PLOT_LEVERAGE, opt, err)) {
+	    *err = leverage_plot(pmod, S, dset);
 	}
     }
 

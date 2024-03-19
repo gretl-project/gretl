@@ -33,10 +33,10 @@
 #include "uservar.h"
 #include "flow_control.h"
 #include "system.h"
-#include "genparse.h"
 #include "genr_optim.h"
 #include "gretl_foreign.h"
 #include "gretl_mdconv.h"
+#include "gen_public.h"
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"

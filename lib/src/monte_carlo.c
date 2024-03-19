@@ -31,7 +31,7 @@
 #include "uservar_priv.h"
 #include "flow_control.h"
 #include "system.h"
-#include "genparse.h"
+#include "gen_public.h"
 #include "gretl_string_table.h"
 #include "gretl_typemap.h"
 #include "genr_optim.h"
@@ -2320,6 +2320,13 @@ static int try_add_loop_genr (LOOPSET *loop,
     const char *line = cmd->vstart;
     gretlopt gopt = OPT_NONE;
     int err = 0;
+
+#if 1
+    /* 2024-03-16: stop a memory leak */
+    if (strstr(line, "feval")) {
+	return 0;
+    }
+#endif
 
     if (cmd->opt & OPT_O) {
         gopt |= OPT_O;

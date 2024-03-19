@@ -4176,8 +4176,7 @@ static int real_parse_command (ExecState *s,
 	*/
 	if (ptr != NULL && (cmd->flags & CMD_SUBST)) {
 	    /* don't attempt to compile if string substitution
-	       is going on
-	    */
+	       is going on */
 	    ptr = NULL;
 	}
 	if (!err && flow_control(s, dset, ptr)) {

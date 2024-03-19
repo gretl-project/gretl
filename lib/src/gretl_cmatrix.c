@@ -1780,7 +1780,7 @@ gretl_matrix *gretl_cmatrix_from_scalar (double complex z, int *err)
 /* Determinant via eigenvalues */
 
 gretl_matrix *gretl_cmatrix_determinant (const gretl_matrix *X,
-					 int log, int *err)
+					 int ldet, int *err)
 {
     gretl_matrix *E = NULL;
     gretl_matrix *ret = NULL;
@@ -1800,7 +1800,7 @@ gretl_matrix *gretl_cmatrix_determinant (const gretl_matrix *X,
 	    cret *= E->z[i];
 	}
 	gretl_matrix_free(E);
-	if (log) {
+	if (ldet) {
 	    cret = clog(cret);
 	}
 	ret = gretl_cmatrix_from_scalar(cret, err);

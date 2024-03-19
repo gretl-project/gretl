@@ -24,7 +24,6 @@
 #include "gretl_panel.h"
 #include "gretl_string_table.h"
 #include "libset.h"
-#include "compat.h"
 #include "plotspec.h"
 #include "usermat.h"
 
@@ -2265,6 +2264,17 @@ static void record_freq_matrix (FreqDist *fd)
     }
 }
 
+static int freq_plot_wanted (PlotType ptype, gretlopt opt,
+			     int *err)
+{
+    if (opt & OPT_Q) {
+	/* handle legacy option: --quiet = no plot */
+	return 0;
+    } else {
+	return gnuplot_graph_wanted(ptype, opt, err);
+    }
+}
+
 /* Wrapper function: get the distribution, print it if
    wanted, graph it if wanted, then free stuff.
 */
@@ -2279,7 +2289,7 @@ int freqdist (int varno, const DATASET *dset,
     double fwid = NADBL;
     int n_bins = 0;
     int do_graph = 0;
-    int err;
+    int err = 0;
 
     if (opt & OPT_O) {
 	dist = D_GAMMA;
@@ -2291,11 +2301,11 @@ int freqdist (int varno, const DATASET *dset,
 	ptype = PLOT_FREQ_SIMPLE;
     }
 
-    if (!(opt & OPT_Q)) {
-	do_graph = gnuplot_graph_wanted(ptype, opt);
-    }
+    do_graph = freq_plot_wanted(ptype, opt, &err);
 
-    err = check_freq_opts(opt, &n_bins, &fmin, &fwid);
+    if (!err) {
+	err = check_freq_opts(opt, &n_bins, &fmin, &fwid);
+    }
 
     if (!err) {
 	gretlopt fopt = opt;
@@ -3298,7 +3308,10 @@ int model_error_dist (const MODEL *pmod, DATASET *dset,
     return err;
 }
 
-/* PACF via Durbin-Levinson algorithm */
+/* Compute PACF via Durbin-Levinson algorithm and write
+   the values into @A following the ACF values already
+   present.
+*/
 
 static int get_pacf (gretl_matrix *A)
 {
@@ -3487,76 +3500,22 @@ gretl_xcf (int k, int t1, int t2, const double *x, const double *y,
     return num / sqrt(den1 * den2);
 }
 
-static int corrgm_ascii_plot (const char *vname,
-			      const gretl_matrix *A,
-			      PRN *prn)
-{
-    int k, m = gretl_matrix_rows(A);
-    double *xk = malloc(m * sizeof *xk);
-
-    if (xk == NULL) {
-	return E_ALLOC;
-    }
-
-    for (k=0; k<m; k++) {
-	xk[k] = k + 1.0;
-    }
-
-    pprintf(prn, "\n\n%s\n\n", _("Correlogram"));
-    graphyx(A->val, xk, m, vname, _("lag"), prn);
-
-    free(xk);
-
-    return 0;
-}
-
-static void handle_corrgm_plot_options (int ci,
-					gretlopt opt,
-					int *ascii,
-					int *gp)
+static int corrgm_plot_wanted (PlotType ptype, gretlopt opt, int *err)
 {
     if (opt & OPT_Q) {
-	/* backward compat: --quiet = no plot */
-	*ascii = *gp = 0;
-	return;
-    }
-
-    if (opt & OPT_U) {
-	/* --plot=whatever */
+	/* handle legacy option: --quiet = no plot */
+	return 0;
+    } else if (opt & OPT_U) {
+	/* ignore legacy option: --plot=ascii */
+	int ci = ptype == PLOT_CORRELOGRAM ? CORRGM : XCORRGM;
 	const char *s = get_optval_string(ci, OPT_U);
 
-	if (s != NULL) {
-	    if (!strcmp(s, "none")) {
-		/* no plot */
-		*ascii = *gp = 0;
-		return;
-	    } else if (!strcmp(s, "ascii")) {
-		*ascii = 1;
-		*gp = 0;
-		return;
-	    } else {
-		/* implies use of gnuplot */
-		*gp = 1;
-		return;
-	    }
-	}
-    } else if (opt & OPT_b) {
-	/* --outbuf=whatever */
-	const char *s = get_optval_string(ci, OPT_b);
-
-	if (s != NULL) {
-	    /* implies use of gnuplot */
-	    *gp = 1;
-	    return;
+	if (s != NULL && !strcmp(s, "ascii")) {
+	    return 0;
 	}
     }
 
-    /* the defaults */
-    if (gretl_in_batch_mode()) {
-	*ascii = 1;
-    } else {
-	*gp = 1;
-    }
+    return gnuplot_graph_wanted(ptype, opt, err);
 }
 
 static void do_acf_bartlett (gretl_matrix *PM, int i,
@@ -3572,110 +3531,45 @@ static void do_acf_bartlett (gretl_matrix *PM, int i,
     }
 }
 
-/**
- * corrgram:
- * @varno: ID number of variable to process.
- * @order: integer order for autocorrelation function.
- * @nparam: number of estimated parameters (e.g. for the
- * case of ARMA), used to correct the degrees of freedom
- * for Q test.
- * @dset: dataset struct.
- * @opt: if includes OPT_R, variable in question is a model
- * residual generated "on the fly"; OPT_U can be used to
- * specify a plot option.
- * @prn: gretl printing struct.
- *
- * Computes the autocorrelation function and plots the correlogram for
- * the variable specified by @varno.
- *
- * Returns: 0 on successful completion, error code on error.
- */
+static void corrgm_do_ljung_box (const double *acf,
+				 int m, int T,
+				 int nparam)
+{
+    double lbox = 0.0;
+    int k, dfQ = 0;
 
-int corrgram (int varno, int order, int nparam, DATASET *dset,
-	      gretlopt opt, PRN *prn)
+    for (k=0; k<m; k++) {
+	if (!na(acf[k])) {
+	    lbox += (T * (T + 2.0)) * acf[k] * acf[k] / (T - (k + 1));
+	    dfQ++;
+	}
+    }
+
+    dfQ -= nparam;
+    if (lbox > 0 && dfQ > 0) {
+	double pval = chisq_cdf_comp(dfQ, lbox);
+
+	if (!na(pval)) {
+	    record_test_result(lbox, pval);
+	}
+    }
+}
+
+static void corrgm_print (const char *vname,
+			  const double *acf,
+			  const double *pacf,
+			  gretl_matrix *PM,
+			  int m, int T,
+			  int nparam,
+			  gretlopt opt,
+			  PRN *prn)
 {
     const double z[] = {1.65, 1.96, 2.58};
-    gretl_matrix *PM = NULL;
-    gretl_matrix *A = NULL;
-    double ybar, ssr, lbox;
+    double pm[3] = {0};
     double pval = NADBL;
-    double pm[3];
-    double *acf, *pacf;
-    const char *vname;
-    int i, k, m, T, dfQ;
-    int ascii_plot = 0;
-    int use_gnuplot = 0;
-    int t1 = dset->t1, t2 = dset->t2;
-    int err = 0, pacf_err = 0;
-
-    gretl_error_clear();
-
-    if (order < 0) {
-	gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
-	return E_DATA;
-    }
-
-    err = series_adjust_sample(dset->Z[varno], &t1, &t2);
-    if (err) {
-	return err;
-    }
-
-    if ((T = t2 - t1 + 1) < 4) {
-	return E_TOOFEW;
-    }
-
-    if (gretl_isconst(t1, t2, dset->Z[varno])) {
-	gretl_errmsg_sprintf(_("%s is a constant"), dset->varname[varno]);
-	return E_DATA;
-    }
-
-    ybar = gretl_mean(t1, t2, dset->Z[varno]);
-    if (na(ybar)) {
-	return E_DATA;
-    }
-
-    vname = series_get_graph_name(dset, varno);
-
-    /* lag order for acf */
-    m = order;
-    if (m == 0) {
-	m = auto_acf_order(T);
-    } else if (m > T - dset->pd) {
-	int mmax = T - 1;
-
-	if (m > mmax) {
-	    m = mmax;
-	}
-    }
-
-    A = gretl_matrix_alloc(m, 2);
-    if (A == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    if (opt & OPT_B) {
-	PM = gretl_matrix_alloc(m, 3);
-	if (PM == NULL) {
-	    err = E_ALLOC;
-	    goto bailout;
-	}
-    }
-
-    acf = A->val;
-    pacf = acf + m;
-
-    /* calculate acf up to order acf_m */
-    for (k=1; k<=m; k++) {
-	acf[k-1] = gretl_acf(k, t1, t2, dset->Z[varno], ybar);
-    }
-
-    /* graphing? */
-    handle_corrgm_plot_options(CORRGM, opt, &ascii_plot, &use_gnuplot);
-
-    if (ascii_plot) {
-	corrgm_ascii_plot(vname, A, prn);
-    }
+    double lbox = 0.0;
+    double ssr = 0.0;
+    int i, k, dfQ = 1;
 
     if (opt & OPT_R) {
 	pprintf(prn, "\n%s\n", _("Residual autocorrelation function"));
@@ -3694,25 +3588,22 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
     }
 
     pputs(prn, "\n\n");
-
-    /* for confidence bands */
-    for (i=0; i<3; i++) {
-	pm[i] = z[i] / sqrt((double) T);
-	if (pm[i] > 0.5) {
-	    pm[i] = 0.5;
-	}
+    if (pacf != NULL) {
+	pputs(prn, _("  LAG      ACF          PACF         Q-stat. [p-value]"));
+    } else {
+	pputs(prn, _("  LAG      ACF          Q-stat. [p-value]"));
     }
-
-    /* generate (and if not in batch mode) plot partial
-       autocorrelation function */
-
-    err = pacf_err = get_pacf(A);
-
-    pputs(prn, _("  LAG      ACF          PACF         Q-stat. [p-value]"));
     pputs(prn, "\n\n");
 
-    lbox = ssr = 0.0;
-    dfQ = 1;
+    if (PM == NULL) {
+	/* for non-Bartlett confidence bands */
+	for (i=0; i<3; i++) {
+	    pm[i] = z[i] / sqrt((double) T);
+	    if (pm[i] > 0.5) {
+		pm[i] = 0.5;
+	    }
+	}
+    }
 
     for (k=0; k<m; k++) {
 	double pm0, pm1, pm2;
@@ -3747,19 +3638,22 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	    pputs(prn, "    ");
 	}
 
-	if (na(pacf[k])) {
-	    bufspace(13, prn);
-	} else {
-	    /* PACF */
-	    pprintf(prn, "%9.4f", pacf[k]);
-	    if (fabs(pacf[k]) > pm[2]) {
-		pputs(prn, " ***");
-	    } else if (fabs(pacf[k]) > pm[1]) {
-		pputs(prn, " ** ");
-	    } else if (fabs(pacf[k]) > pm[0]) {
-		pputs(prn, " *  ");
+	/* PACF? */
+	if (pacf != NULL) {
+	    if (na(pacf[k])) {
+		bufspace(13, prn);
 	    } else {
-		pputs(prn, "    ");
+		/* PACF */
+		pprintf(prn, "%9.4f", pacf[k]);
+		if (fabs(pacf[k]) > pm[2]) {
+		    pputs(prn, " ***");
+		} else if (fabs(pacf[k]) > pm[1]) {
+		    pputs(prn, " ** ");
+		} else if (fabs(pacf[k]) > pm[0]) {
+		    pputs(prn, " *  ");
+		} else {
+		    pputs(prn, "    ");
+		}
 	    }
 	}
 
@@ -3780,10 +3674,140 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
     if (lbox > 0 && !na(pval)) {
 	record_test_result(lbox, pval);
     }
+}
 
-    if (use_gnuplot) {
-	err = correlogram_plot(vname, acf, (pacf_err)? NULL : pacf,
-			       PM, m, pm[1], opt);
+/**
+ * corrgram:
+ * @varno: ID number of variable to process.
+ * @order: integer order for autocorrelation function.
+ * @nparam: number of estimated parameters (e.g. for the
+ * case of ARMA), used to correct the degrees of freedom
+ * for Q test.
+ * @dset: dataset struct.
+ * @opt: if includes OPT_R, variable in question is a model
+ * residual generated "on the fly"; OPT_U can be used to
+ * specify a plot option; OPT_S says not to print anything;
+ * OPT_A means ACF only (no PACF); OPT_B means Bartlett.
+ * @prn: gretl printing struct.
+ *
+ * Computes the autocorrelation function and plots the correlogram for
+ * the variable specified by @varno.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int corrgram (int varno, int order, int nparam, DATASET *dset,
+	      gretlopt opt, PRN *prn)
+{
+    gretl_matrix *PM = NULL;
+    gretl_matrix *A = NULL;
+    double ybar;
+    double *acf = NULL;
+    double *pacf = NULL;
+    const char *vname;
+    int k, m, T;
+    int do_plot = 0;
+    int do_print = 1;
+    int do_pacf = 1;
+    int t1 = dset->t1;
+    int t2 = dset->t2;
+    int err = 0;
+
+    gretl_error_clear();
+
+    if (order < 0) {
+	gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
+	return E_DATA;
+    }
+
+    err = series_adjust_sample(dset->Z[varno], &t1, &t2);
+    if (err) {
+	return err;
+    }
+
+    if ((T = t2 - t1 + 1) < 4) {
+	return E_TOOFEW;
+    }
+
+    if (gretl_isconst(t1, t2, dset->Z[varno])) {
+	gretl_errmsg_sprintf(_("%s is a constant"), dset->varname[varno]);
+	return E_DATA;
+    }
+
+    ybar = gretl_mean(t1, t2, dset->Z[varno]);
+    if (na(ybar)) {
+	return E_DATA;
+    }
+
+    if (opt & OPT_S) {
+	do_print = 0;
+    }
+    if (opt & OPT_A) {
+	do_pacf = 0;
+    }
+
+    /* lag order for acf */
+    m = order;
+    if (m == 0) {
+	m = auto_acf_order(T);
+    } else if (m > T - dset->pd) {
+	int mmax = T - 1;
+
+	if (m > mmax) {
+	    m = mmax;
+	}
+    }
+
+    /* allocate space for ACF, and perhaps PACF */
+    A = gretl_matrix_alloc(m, do_pacf ? 2 : 1);
+    if (A == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    if (opt & OPT_B) {
+	/* Bartlett */
+	PM = gretl_matrix_alloc(m, 3);
+	if (PM == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+    }
+
+    /* graphing? */
+    do_plot = corrgm_plot_wanted(PLOT_CORRELOGRAM, opt, &err);
+    if (err) {
+	goto bailout;
+    }
+
+    /* convenience pointer into @A */
+    acf = A->val;
+
+    /* calculate acf up to order @m */
+    for (k=0; k<m; k++) {
+	acf[k] = gretl_acf(k+1, t1, t2, dset->Z[varno], ybar);
+    }
+
+    /* try adding pacf into @A if wanted */
+    if (do_pacf) {
+	int pacf_err = get_pacf(A);
+
+	pacf = pacf_err ? NULL : acf + m;
+    }
+
+    vname = series_get_graph_name(dset, varno);
+
+    if (do_print) {
+	corrgm_print(vname, acf, pacf, PM, m, T, nparam, opt, prn);
+    } else {
+	corrgm_do_ljung_box(acf, m, T, nparam);
+    }
+
+    if (do_plot) {
+	double pm = 1.96 / sqrt((double) T);
+
+	if (pm > 0.5) pm = 0.5;
+	err = correlogram_plot(vname, acf, pacf, PM, m, pm, opt);
     }
 
  bailout:
@@ -3876,7 +3900,6 @@ gretl_matrix *acf_matrix (const double *x, int order,
     }
 
     A = gretl_matrix_alloc(m, 2);
-
     if (A == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -3954,27 +3977,6 @@ static int xcorrgm_graph (const char *xname, const char *yname,
     gretl_pop_c_numeric_locale();
 
     return finalize_plot_input_file(fp);
-}
-
-static int xcorrgm_ascii_plot (double *xcf, int xcf_m, PRN *prn)
-{
-    double *xk = malloc((xcf_m * 2 + 1) * sizeof *xk);
-    int k;
-
-    if (xk == NULL) {
-	return E_ALLOC;
-    }
-
-    for (k=-xcf_m; k<=xcf_m; k++) {
-	xk[k+xcf_m] = k;
-    }
-
-    pprintf(prn, "\n\n%s\n\n", _("Cross-correlogram"));
-    graphyx(xcf, xk, 2 * xcf_m + 1, "", _("lag"), prn);
-
-    free(xk);
-
-    return 0;
 }
 
 /* We assume here that all data issues have already been
@@ -4152,8 +4154,7 @@ int xcorrgram (const int *list, int order, DATASET *dset,
     const char *xname, *yname;
     const double *x, *y;
     int t1 = dset->t1, t2 = dset->t2;
-    int ascii_plot = 0;
-    int use_gnuplot = 0;
+    int do_plot = 0;
     int k, p, badvar = 0;
     int T, err = 0;
 
@@ -4186,6 +4187,12 @@ int xcorrgram (const int *list, int order, DATASET *dset,
 	return err;
     }
 
+    /* graphing? */
+    do_plot = corrgm_plot_wanted(PLOT_XCORRELOGRAM, opt, &err);
+    if (err) {
+	return err;
+    }
+
     xname = dset->varname[list[1]];
     yname = dset->varname[list[2]];
 
@@ -4199,13 +4206,6 @@ int xcorrgram (const int *list, int order, DATASET *dset,
     xcf = real_xcf_vec(x + t1, y + t1, p, T, &err);
     if (err) {
 	return err;
-    }
-
-    /* graphing? */
-    handle_corrgm_plot_options(XCORRGM, opt, &ascii_plot, &use_gnuplot);
-
-    if (ascii_plot) {
-	xcorrgm_ascii_plot(xcf->val, p, prn);
     }
 
     /* for confidence bands */
@@ -4235,7 +4235,7 @@ int xcorrgram (const int *list, int order, DATASET *dset,
     }
     pputc(prn, '\n');
 
-    if (use_gnuplot) {
+    if (do_plot) {
 	int allpos = 1;
 
 	for (k=-p; k<=p; k++) {
@@ -4505,33 +4505,9 @@ static int fract_int_LWE (const double *x, int m, int t1, int t2,
     return err;
 }
 
-static int pergm_do_plot (gretlopt opt)
-{
-    if (opt & OPT_U) {
-	/* --plot=whatever */
-	const char *s = get_optval_string(PERGM, OPT_U);
-
-	if (s != NULL) {
-	    if (!strcmp(s, "none")) {
-		return 0;
-	    } else {
-		/* implies use of gnuplot */
-		return 1;
-	    }
-	}
-    } else if (opt & OPT_b) {
-	/* --outbuf=whatever */
-	const char *s = get_optval_string(PERGM, OPT_b);
-
-	if (s != NULL) {
-	    /* implies use of gnuplot */
-	    return 1;
-	}
-    }
-
-    /* the default */
-    return !gretl_in_batch_mode();
-}
+/* called by pergm_or_fractint(), when responding to the
+   "pergm" command only, without its --silent option
+*/
 
 static void pergm_print (const char *vname, const double *d,
 			 int T, int L, gretlopt opt, PRN *prn)
@@ -4578,10 +4554,6 @@ static void pergm_print (const char *vname, const double *d,
     }
 
     pputc(prn, '\n');
-
-    if (pergm_do_plot(opt)) {
-	periodogram_plot(vname, T, L, d, opt);
-    }
 }
 
 static int finalize_fractint (const double *x,
@@ -4768,6 +4740,7 @@ pergm_or_fractint (int usage, const double *x, int t1, int t2,
     int bartlett = (opt & OPT_O);
     int whittle_only = 0;
     int t, T, L = 0;
+    int do_plot = 0;
     int err = 0;
 
     gretl_error_clear();
@@ -4775,20 +4748,24 @@ pergm_or_fractint (int usage, const double *x, int t1, int t2,
     /* common to all uses: check for data problems */
 
     err = series_adjust_sample(x, &t1, &t2);
-
     if (!err && (T = t2 - t1 + 1) < 12) {
 	err = E_TOOFEW;
     }
-
     if (!err && gretl_isconst(t1, t2, x)) {
 	if (vname != NULL) {
 	    gretl_errmsg_sprintf(_("%s is a constant"), vname);
 	}
 	err = E_DATA;
     }
-
     if (err) {
 	return err;
+    }
+
+    if (usage == PERGM_CMD) {
+	do_plot = gnuplot_graph_wanted(PLOT_PERIODOGRAM, opt, &err);
+	if (err) {
+	    return err;
+	}
     }
 
     if (usage == FRACTINT_CMD) {
@@ -4850,12 +4827,18 @@ pergm_or_fractint (int usage, const double *x, int t1, int t2,
 	    }
 	}
     } else if (usage == FRACTINT_CMD) {
-	/* supporting "fractint" command */
+	/* supporting the "fractint" command */
 	err = finalize_fractint(x, dens, t1, t2, width,
 				vname, opt, prn);
     } else {
-	/* supporting "pergm" command */
-	pergm_print(vname, dens, T, L, opt, prn);
+	/* supporting the "pergm" command */
+	if (!(opt & OPT_S)) {
+	    /* not --silent */
+	    pergm_print(vname, dens, T, L, opt, prn);
+	}
+	if (do_plot) {
+	    err = periodogram_plot(vname, T, L, dens, opt);
+	}
     }
 
     free(dens);
@@ -4869,7 +4852,7 @@ pergm_or_fractint (int usage, const double *x, int t1, int t2,
  * @width: width of window.
  * @dset: dataset struct.
  * @opt: if includes OPT_O, use Bartlett lag window for periodogram;
- * OPT_L, use log scale.
+ * OPT_L, use log scale; OPT_S, don't print anything (just do plot).
  * @prn: gretl printing struct.
  *
  * Computes and displays the periodogram for the series specified
@@ -6617,7 +6600,7 @@ int gretl_corrmx (int *list, const DATASET *dset,
 	if (!(opt & OPT_Q)) {
 	    print_corrmat(corr, dset, prn);
 	}
-	if (corr->dim > 2 && gnuplot_graph_wanted(PLOT_HEATMAP, opt)) {
+	if (corr->dim > 2 && gnuplot_graph_wanted(PLOT_HEATMAP, opt, NULL)) {
 	    err = plot_corrmat(corr, opt);
 	}
 

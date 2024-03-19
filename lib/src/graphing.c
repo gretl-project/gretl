@@ -358,6 +358,11 @@ void set_effective_plot_ci (int ci)
     plot_ci = ci;
 }
 
+void reset_effective_plot_ci (void)
+{
+    plot_ci = GNUPLOT;
+}
+
 int get_effective_plot_ci (void)
 {
     return plot_ci;
@@ -421,6 +426,8 @@ static int gp_set_non_point_info (gnuplot_info *gi,
 
     return 0;
 }
+
+/* note: @plot_ci is a file-scope global */
 
 static int plain_lines_spec (gretlopt opt)
 {
@@ -518,7 +525,7 @@ static int set_plot_buffer_name (const char *bname)
 int plot_output_to_buffer (void)
 {
     return *plot_buffer_name != '\0' ||
-	gretl_multiplot_collecting();
+	gretl_gridplot_collecting();
 }
 
 static int make_plot_commands_buffer (const char *fname)
@@ -534,8 +541,8 @@ static int make_plot_commands_buffer (const char *fname)
 	gretl_errmsg_set(gerr->message);
 	g_error_free(gerr);
 	err = E_FOPEN;
-    } else if (gretl_multiplot_collecting()) {
-	err = gretl_multiplot_add_plot(contents);
+    } else if (gretl_gridplot_collecting()) {
+	err = gretl_gridplot_add_plot(contents);
     } else if (*plot_buffer_idx != '\0') {
 	gretl_array *a = get_strings_array_by_name(plot_buffer_name);
         int i = generate_int(plot_buffer_idx, NULL, &err);
@@ -2061,8 +2068,8 @@ static int got_none_option (const char *s)
 
 static const char *plot_output_option (PlotType p, int *pci, int *err)
 {
-    int mp_mode = gretl_multiplot_collecting();
-    int ci = plot_ci;
+    int grid_mode = gretl_gridplot_collecting();
+    int ci = get_effective_plot_ci();
     const char *s;
 
     /* clear any previous setting */
@@ -2108,7 +2115,7 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 
     s = get_optval_string(ci, OPT_U);
 
-    if (mp_mode && s != NULL) {
+    if (grid_mode && s != NULL) {
 	if (gretl_function_depth() > 0 && !strcmp(s, "display")) {
 	    /* let this pass: hansl functions that do plots
 	       generally seem to default to "display"
@@ -2117,14 +2124,18 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 	} else if (p == PLOT_GEOMAP) {
 	    s = NULL;
 	} else {
+	    const char *msg = N_("incompatible output specification");
+
+	    gretl_errmsg_sprintf("gpbuild: %s '%s'", _(msg), s);
 	    *err = E_BADOPT;
 	    return NULL;
 	}
     }
 
     if (s != NULL && *s == '\0') {
+	/* cancel an empty @s */
 	s = NULL;
-    } else if (s == NULL && !mp_mode) {
+    } else if (s == NULL && !grid_mode) {
 	/* try for --outbuf=<strname> */
 	s = get_optval_string(ci, OPT_b);
 	if (s != NULL && *s == '\0') {
@@ -2187,7 +2198,7 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
 	return NULL;
     }
 
-    if (gretl_multiplot_collecting()) {
+    if (gretl_gridplot_collecting()) {
 	interactive = 0;
     } else if (got_display_option(outspec)) {
 	/* --output=display specified */
@@ -2223,18 +2234,32 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
    figure out if a plot is actually wanted or not. In interactive mode
    the answer will be Yes unless --plot=none has been given; in batch
    mode the answer will be No unless --plot=display or --plot=fname
-   has been given.
+   has been given, or we're inside a "gpbuild" block.
+
+   The @err location will receive an error code only in the gpbuild
+   case, if the command in question a --plot specification that's
+   incompatible with gpbuild. But err = NULL is accepted, in which
+   case the error code is (obviously) not passed on, but the "wanted"
+   return value is zero. This is a dispensation for commands where the
+   plot is incidental.
 */
 
-int gnuplot_graph_wanted (PlotType ptype, gretlopt opt)
+int gnuplot_graph_wanted (PlotType ptype, gretlopt opt, int *err)
 {
     const char *optname = NULL;
     int ret = 0;
-    int err = 0;
 
     if (opt & (OPT_U | OPT_b)) {
 	/* check for --plot or --outbuf option */
-	optname = plot_output_option(ptype, NULL, &err);
+	int griderr = 0;
+
+	optname = plot_output_option(ptype, NULL, &griderr);
+	if (griderr) {
+	    if (err != NULL) {
+		*err = griderr;
+	    }
+	    return 0;
+	}
     }
 
     if (got_none_option(optname)) {
@@ -2243,7 +2268,7 @@ int gnuplot_graph_wanted (PlotType ptype, gretlopt opt)
     } else if (optname != NULL) {
 	/* --plot=display or --plot=fname specified */
 	ret = 1;
-    } else if (gretl_multiplot_collecting()) {
+    } else if (gretl_gridplot_collecting()) {
 	ret = 1;
     } else {
 	/* defaults */
@@ -8087,43 +8112,49 @@ static void corrgm_min_max (const double *acf, const double *pacf,
     int k;
 
     /* the range should include the plus/minus bands, but
-       should not go outside (-1, 1) */
+       should not go outside (-1, 1)
+    */
     *ymax = pm * 1.2;
     if (*ymax > 1) *ymax = 1;
     *ymin = -pm * 1.2;
     if (*ymin < -1) *ymin = -1;
 
-    /* adjust based on min and max of ACF, PACF */
+    /* adjust based on min and max of ACF, and PACF if present */
     for (k=0; k<m; k++) {
 	if (acf[k] > *ymax) {
 	    *ymax = acf[k];
 	} else if (acf[k] < *ymin) {
 	    *ymin = acf[k];
 	}
-	if (pacf[k] > *ymax) {
-	    *ymax = pacf[k];
-	} else if (pacf[k] < *ymin) {
-	    *ymin = pacf[k];
+	if (pacf != NULL) {
+	    if (pacf[k] > *ymax) {
+		*ymax = pacf[k];
+	    } else if (pacf[k] < *ymin) {
+		*ymin = pacf[k];
+	    }
 	}
     }
 
-    if (*ymax > 0.5) {
-	*ymax = 1;
-    } else {
+    if (pacf == NULL) {
 	*ymax *= 1.2;
-    }
-
-    if (*ymin < -0.5) {
-	*ymin = -1;
-    } else {
 	*ymin *= 1.2;
-    }
-
-    /* make the range symmetrical */
-    if (fabs(*ymin) > *ymax) {
-	*ymax = -*ymin;
-    } else if (*ymax > fabs(*ymin)) {
-	*ymin = -*ymax;
+    } else {
+	if (*ymax > 0.5) {
+	    *ymax = 1;
+	} else {
+	    *ymax *= 1.2;
+	}
+	if (*ymin < -0.5) {
+	    *ymin = -1;
+	} else {
+	    *ymin *= 1.2;
+	}
+	/* make the range symmetrical */
+	if (fabs(*ymin) > *ymax) {
+	    *ymax = -*ymin;
+	} else if (*ymax > fabs(*ymin)) {
+	    *ymin = -*ymax;
+	}
     }
 }
 
@@ -8898,7 +8929,7 @@ int hf_plot (const int *list, const char *literal,
     err = gnuplot(gplist, literal != NULL ? literal : mylit,
 		  hset, plotopt);
     na_skiplist = NULL;
-    set_effective_plot_ci(GNUPLOT);
+    reset_effective_plot_ci();
 
     free(gplist);
     free(hflist);

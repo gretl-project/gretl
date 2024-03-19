@@ -19,6 +19,9 @@
 
 /* shared private header for all 'genr' related modules */
 
+#ifndef GENPARSE_H
+#define GENPARSE_H
+
 #include "libgretl.h"
 #include "uservar.h"
 #include "gretl_func.h"
@@ -401,6 +404,7 @@ enum {
     F_ASORT,
     F_CORRESP,
     F_STRVSORT,
+    F_FEVALB,
     HF_GLASSO,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,
@@ -764,24 +768,8 @@ int realgen (const char *s, parser *p, DATASET *dset,
 	     PRN *prn, int flags, int targtype);
 void gen_save_or_print (parser *p, PRN *prn);
 void gen_cleanup (parser *p);
-void parser_free_aux_nodes (parser *p);
 
-/* name lookup functions */
-const char *constname (int c);
-const char *dvarname (int t);
-const char *mvarname (int t);
-const char *bvarname (int t);
-const char *dumname (int t);
-int is_gretl_accessor (const char *s);
-int mvar_lookup (const char *s);
-
-int install_function_override (const char *funname,
-			       const char *pkgname,
-			       gpointer data);
-int delete_function_override (const char *funname,
-			      const char *pkgname);
-
-/* handling declarations of variables */
+/* handling declarations of variables, wanted in genfuncs.c */
 int check_declarations (char ***pS, parser *p);
 
 /* in genfuncs.c, used only internally */
@@ -793,24 +781,11 @@ int x_sectional_weighted_stat (double *x, const int *list,
 			       const DATASET *dset,
 			       int f, int partial_ok);
 
-/* in geneval.c, used only internally */
+/* in geneval.c, wanted in geneval.c */
 double dvar_get_scalar (int i, const DATASET *dset);
 int *node_get_list (NODE *n, parser *p);
 
-/* in genmain.c, used only internally */
-int stack_update_parser_input (parser *p);
-
-/* in genlex.c, used only internally */
+/* in genlex.c, used only in geneval.c */
 void *get_genr_function_pointer (int f);
 
-/* helper functions for manual, gretl.lang file */
-int gen_func_count (void);
-const char *gen_func_name (int i);
-int model_var_count (void);
-const char *model_var_name (int i);
-int data_var_count (void);
-const char *data_var_name (int i);
-int bundle_var_count (void);
-const char *bundle_var_name (int i);
-int gretl_const_count (void);
-const char *gretl_const_name (int i);
+#endif /* GENPARSE_H */
