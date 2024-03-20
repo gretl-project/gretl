@@ -2239,7 +2239,7 @@
 
     <usage>
       <arguments>
-        <argument>variabile</argument>
+        <argument>y</argument>
         <argument optional="true">max-ritardo</argument>
       </arguments>
       <options>
@@ -2253,19 +2253,24 @@
 	  <effect>si veda sotto</effect>
 	</option>
 	<option>
-	  <flag>--quiet</flag>
-	  <effect>non mostra il grafico</effect>
-	</option>
+	  <flag>--silent</flag>
+	  <effect>sopprime l'ouput</effect>
+        </option>
+	<option>
+	  <flag>--acf-only</flag>
+	  <effect>omit partial autocorrelations</effect>
+        </option>
       </options>
       <examples>
         <example>corrgm x 12</example>
+	<example>corrgm GDP 12 --acf-only</example>
       </examples>
     </usage>
 
     <description>
       <para context="notex">
 	Mostra i valori della funzione di autocorrelazione per la
-	<repl>variabile</repl> specificata (dal nome o dal numero).  I
+	serie <repl>y</repl> specificata (dal nome o dal numero).  I
 	valori sono definiti come &rgr;(<math>u</math><sub>t</sub>,
 	<math>u</math><sub>t-s</sub>) dove <math>u</math><sub>t</sub>
 	è la <math>t</math>-esima osservazione della variabile
@@ -2273,20 +2278,27 @@
 	ritardi.
       </para>
       <para context="tex">
-	Mostra i valori della funzione di autocorrelazione per la
-	<repl>variabile</repl> specificata (dal nome o dal numero).  I
+	Mostra i valori della funzione di autocorrelazione per la serie
+	<repl>y</repl> specificata (dal nome o dal numero).  I
 	valori sono definiti come $\hat{\rho}(u_t, u_{t-s})$, where
 	$u_t$ è la $t$-esima osservazione della variabile e $s$ è il
 	numero dei ritardi.
       </para>
+      <para context="cli">
+	A meno che non sia attiva l'opzione <opt>acf-only</opt>,
+	vengono mostrate anche le autocorrelazioni parziali (calcolate
+	con l'algoritmo di Durbin&ndash;Levinson), ossia al netto
+	dell'effetto dei ritardi intermedi.
+      </para>
+      <para context="gui">
+	Per impostazione predefinita, vengono mostrate anche le
+	autocorrelazioni parziali (calcolate con l'algoritmo di
+	Durbin&ndash;Levinson), ossia al netto dell'effetto dei
+	ritardi intermedi, ma volendo questa opzione può essere
+	disattivata.
+      </para>
       <para>
-	Vengono mostrate anche le autocorrelazioni parziali (calcolate con
-        l'algoritmo di Durbin&ndash;Levinson), ossia al
-	netto dell'effetto dei ritardi intermedi. Il comando produce anche
-        un grafico del correlogramma e mostra la statistica
-        <math>Q</math> di Ljung&ndash;Box per testare l'ipotesi nulla
-        che la serie sia <quote>white noise</quote> (priva di
-        autocorrelazione). La statistica si distribuisce asintoticamente come
+	La statistica si distribuisce asintoticamente come
         chi-quadro con gradi di libertà pari al numero di ritardi specificati.
       </para>
       <para context="cli">
@@ -2296,7 +2308,11 @@
 	campionaria, ma con l'opzione <opt>bartlett</opt> vengono
 	usate le formule di Bartlett per l'ACF. Quest'opzione, se
 	applicabile, controlla anche la banda di confidenza mostrata
-	nel grafico.
+	nel grafico. Il comando produce anche
+        un grafico del correlogramma e mostra la statistica
+        <math>Q</math> di Ljung&ndash;Box per testare l'ipotesi nulla
+        che la serie sia <quote>white noise</quote> (priva di
+        autocorrelazione) fino a quel certo ritardo. 
       </para>
       <para context="gui">
 	La significatività statistica delle singole autocorrelazioni
@@ -2304,7 +2320,11 @@
 	calcolata per mezzo della radice inversa dell'ampiezza
 	campionaria, ma è anche possibile usare le formule di Bartlett
 	per l'ACF. Quest'opzione, se applicabile, controlla anche la
-	banda di confidenza mostrata nel grafico.
+	banda di confidenza mostrata nel grafico. Il comando produce anche
+        un grafico del correlogramma e mostra la statistica
+        <math>Q</math> di Ljung&ndash;Box per testare l'ipotesi nulla
+        che la serie sia <quote>white noise</quote> (priva di
+        autocorrelazione) fino a quel certo ritardo. 
       </para>
       <para context="cli">
 	Se viene specificato un valore <repl>max-ritardo</repl>, la
@@ -2314,16 +2334,17 @@
 	osservazioni.
       </para>
       <para context="cli">
-	Di default viene mostrato un grafico del correlogramma: un grafico
-	gnuplot in modalità interattiva o un grafico ASCII in modalità batch.
-	Questo comportamento può essere modificato con l'opzione <opt>plot</opt>.
-	Per questa opzione i parametri accettabili sono <lit>none</lit> (per
-	eliminare il grafico); <lit>ascii</lit> (per produrre un grafico
-	in formato testo anche in modalità interattiva); <lit>display</lit> (per
-	produrre un grafico gnuplot anche in modalità batch); oppure il
-	nome di un file. In quest'ultimo caso l'effetto è quello descritto
-	per l'opzione <opt>output</opt> del comando <cmdref targ="gnuplot"/>.
+	Di default, se gretl non è in modalità batch, viene mostrato
+	un grafico del correlogramma.  Questo
+	comportamento può essere modificato con l'opzione
+	<opt>plot</opt>.  Per questa opzione i parametri accettabili
+	sono <lit>none</lit> (per eliminare il grafico); <lit>display</lit> (per
+	produrre un grafico gnuplot anche in modalità batch); oppure
+	il nome di un file. In quest'ultimo caso l'effetto è quello
+	descritto per l'opzione <opt>output</opt> del comando <cmdref
+	targ="gnuplot"/>.
       </para>
+      <subhead context="cli">Accessori</subhead>
       <para>
 	Se il comando va a buon fine, gli accessori <fncref targ="$test"/> e
 	<fncref targ="$pvalue"/> conterranno i valori corrispondenti per la
@@ -17370,8 +17391,8 @@ qual caso viene usato QML.
 	  <effect>vedi sotto</effect>
 	</option>
         <option>
-	  <flag>--quiet</flag>
-	  <effect>non produrre il grafico</effect>
+	  <flag>--silent</flag>
+	  <effect>sopprime l'output</effect>
         </option>
       </options>
       <examples>
