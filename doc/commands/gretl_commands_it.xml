@@ -11959,56 +11959,14 @@ del comando <cmdref targ="set"/>.
     </arguments>
     <options>
       <option>
-	<flag>--with-lines</flag>
-	<optparm optional="true">varspec</optparm>
-	<effect>usa linee, non punto</effect>
-      </option>
-      <option>
-	<flag>--with-lp</flag>
-	<optparm optional="true">varspec</optparm>
-	<effect>usa linee e punti</effect>
-      </option>
-      <option>
-	<flag>--with-impulses</flag>
-	<optparm optional="true">varspec</optparm>
-	<effect>usa linee verticali</effect>
-      </option>
-      <option>
-	<flag>--with-steps</flag>
-	<optparm optional="true">varspec</optparm>
-	<effect>usa linee verticali ed orizzontali</effect>
-      </option>
-      <option>
-	<flag>--time-series</flag>
-	<effect>mostra il grafico rispetto al tempo</effect>
-      </option>
-      <option>
-	<flag>--single-yaxis</flag>
-	<effect>forza all'uso di un solo asse delle ordinate</effect>
-      </option>
-      <option>
-	<flag>--dummy</flag>
-	<effect>si veda oltre</effect>
-      </option>
-      <option>
-	<flag>--fit</flag>
-	<optparm>fitspec</optparm>
-	<effect>si veda oltre</effect>
-      </option>
-      <option>
-	<flag>--band</flag>
-	<optparm>bandspec</optparm>
-	<effect>si veda oltre</effect>
-      </option>
-      <option>
-	<flag>--band-style</flag>
-	<optparm>stile</optparm>
-	<effect>si veda oltre</effect>
-      </option>
-      <option>
 	<flag>--output</flag>
 	<optparm>nomefile</optparm>
 	<effect>reindirizza l'output ad un file specifico</effect>
+      </option>
+      <option>
+	<flag>--outbuf</flag>
+	<optparm>stringa</optparm>
+	<effect>invia l'output alla stringa specificata</effect>
       </option>
     </options>
     <examples>
@@ -12085,12 +12043,13 @@ del comando <cmdref targ="set"/>.
       </li>
     </ilist>
     <para>
-      Si noti che, quando si specifica un'opzione attraverso i comandi
-      <lit>option</lit> o <lit>options</lit>, il solito
-      <lit>--</lit> va omesso. Per ulteriori dettagli sugli effetti
-      delle varie opzioni si veda <cmdref targ="gnuplot"/> (ma vedi
-      anche sotto su alcune specificità dell'opzione <opt>band</opt>
-      nel contesto <lit>plot</lit>).
+      Si noti che tutte le opzioni diverse da
+      <opt>output</opt> e <opt>outbuf</opt> normalmente usate col
+      comando <cmdref targ="gnuplot"/> devono essere fornite
+      utilizzando <lit>option</lit> o <lit>options</lit> e non è
+      necessario fornire il consueto doppio trattino prima
+      dell'identificatore dell'opzione. Per i dettagli sugli effetti
+      delle varie opzioni vedere <cmdref targ="gnuplot"/>.
     </para>
     <para>
       L'uso del blocco <lit>plot</lit> è illustrato al meglio
@@ -15327,7 +15286,7 @@ qual caso viene usato QML.
   <description>
     <para>
       Questo comando, usato senza argomenti, mostra l'intervallo
-      corrente del campione. altrimenti lo reimposta. Il nuovo
+      corrente del campione, altrimenti lo reimposta. Il nuovo
       intervallo può essere definito in vari modi. Nel primo modo
       (corrispondente ai primi due esempi precedenti)
       <repl>oss-iniziale</repl> e <repl>oss-finale</repl> devono
@@ -16397,7 +16356,6 @@ qual caso viene usato QML.
 
   <command name="tsls" section="Estimation"
 	   label="Stima minimi quadrati a due stadi">
-
     <usage>
       <arguments>
 	<argument>variabile-dipendente</argument>
@@ -16466,6 +16424,11 @@ qual caso viene usato QML.
 	predeterminate. Si noti che eventuali regressori esogeni devono essere
 	inclusi in entrambe le liste.
       </para>
+      <para context="cli">
+	Per dettagli sull'effetto delle opzioni <opt>robust</opt> e
+	<opt>cluster</opt> si veda la documentazione per il comando
+	<cmdref targ="ols"/>.
+      </para>
 
       <para context="gui">
 	Questo comando richiede la scelta di due liste di variabili;
@@ -16473,25 +16436,41 @@ qual caso viene usato QML.
 	di strumenti. Si noti che eventuali regressori esogeni devono
 	essere inclusi in entrambe le liste.
       </para>
-
+      <subhead>Test specifici per la stima a due stadi</subhead>
       <para>
 	L'output delle stime TSLS comprende il test di Hausman e, se
 	il modello è sovra-identificato, il test di Sargan per la
-	sovra-identificazione. Nel test di Hausman, l'ipotesi nulla è
-	che le stime OLS siano consistenti, o in altre parole che non
-	sia richiesta la stima per mezzo di variabili strumentali. Un
-	modello di questo tipo è sovra-identificato se ci sono più
+	sovra-identificazione. Per una spiegazione accurata ed
+	esauriente di questi test si veda il capitolo 8 di <cite key="davidson-mackinnon04">Davidson and
+	MacKinnon (2004)</cite>.
+      </para>
+      <para>
+	Nel test di Hausman, l'ipotesi nulla è che le stime OLS siano
+	consistenti, o in altre parole che non sia richiesta la stima
+	per mezzo di variabili strumentali. Per impostazione
+	predefinita, questo test è implementato con una regressione
+	ausiliaria, ma se viene fornita l'opzione
+	<opt>matrix-diff</opt> viene utilizzato il metodo di <cite
+	key="papadopoulos23">Papadopoulos (2023)</cite>. In entrambi i
+	casi viene impiegata una variante robusta se viene fornita
+	anche l'opzione <opt>robust</opt>.
+      </para>
+      <para>
+	Un modello di questo tipo è sovra-identificato se ci sono più
 	strumenti di quelli strettamente necessari. Il test di Sargan
-	è basato su una regressione ausiliaria dei residui del modello
-	minimi quadrati a due stadi sull'intera lista degli
+	<cite key="sargan58" p="true">(Sargan, 1958)</cite> è basato
+	su una regressione ausiliaria dei residui del modello minimi
+	quadrati a due stadi sull'intera lista degli
 	strumenti. L'ipotesi nulla è che tutti gli strumenti siano
 	validi, cosa di cui si dovrebbe dubitare se la regressione
-	ausiliaria ha un significativo potere esplicativo. <cite
-	key="davidson-mackinnon04">Davidson e MacKinnon (2004)</cite>
-	al capitolo 8 forniscono un'eccellente spiegazione di entrambi
-	i test.
+	ausiliaria ha un significativo potere esplicativo. 
       </para>
-
+      <para>
+	Queste due statistiche sono disponibili, una volta completato
+	con successo il comando, sotto i nomi <fncref
+	targ="$hausman"/> e <fncref targ="$sargan"/>, rispettivamente.
+      </para>
+      <subhead>Strumenti deboli</subhead>
       <para>
 	Per gli stimatori TSLS e LIML, viene mostrata una statistica
 	aggiuntiva se il modello è stimato senza l'opzione
@@ -16509,19 +16488,14 @@ qual caso viene usato QML.
 	Carlo contenuta in <cite key="stock-yogo03">Stock e Yogo
 	(2003)</cite>.
       </para>
-
+      <subhead>R-quadro</subhead>
       <para>
 	Il valore R-quadro mostrato i modelli stimati con i minimi quadrati a
 	due stadi è il quadrato della correlazione tra la variabile dipendente
 	e i valori stimati.
       </para>
 
-      <para context="cli">
-	Per dettagli sull'effetto delle opzioni <opt>robust</opt> e
-	<opt>cluster</opt> si veda la documentazione per il comando
-	<cmdref targ="ols"/>.
-      </para>
-
+      <subhead>Stimatori alternativi</subhead>
       <para context="cli">
 	In alternativa al metodo TSLS, il modello può essere stimato
 	usando la massima verosimiglianza a informazione limitata
