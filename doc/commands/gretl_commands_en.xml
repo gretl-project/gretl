@@ -11952,53 +11952,6 @@
       </arguments>
       <options>
         <option>
-	  <flag>--with-lines</flag>
-	  <optparm optional="true">varspec</optparm>
-	  <effect>use lines, not points</effect>
-        </option>
-        <option>
-	  <flag>--with-lp</flag>
-	  <optparm optional="true">varspec</optparm>
-	  <effect>use lines and points</effect>
-        </option>
-        <option>
-	  <flag>--with-impulses</flag>
-	  <optparm optional="true">varspec</optparm>
-	  <effect>use vertical lines</effect>
-        </option>
-        <option>
-	  <flag>--with-steps</flag>
-	  <optparm optional="true">varspec</optparm>
-	  <effect>use perpendicular line segments</effect>
-        </option>
-        <option>
-	  <flag>--time-series</flag>
-	  <effect>plot against time</effect>
-        </option>
-        <option>
-	  <flag>--single-yaxis</flag>
-	  <effect>force use of just one y-axis</effect>
-        </option>
-        <option>
-	  <flag>--ylogscale</flag>
-	  <optparm optional="true">base</optparm>
-	  <effect>use log scale for vertical axis</effect>
-        </option>
-        <option>
-	  <flag>--dummy</flag>
-	  <effect>see below</effect>
-        </option>
-        <option>
-	  <flag>--fit</flag>
-	  <optparm>fitspec</optparm>
-	  <effect>see below</effect>
-        </option>
-        <option>
-	  <flag>--band</flag>
-	  <optparm>bandspec</optparm>
-	  <effect>see below</effect>
-        </option>
-        <option>
 	  <flag>--output</flag>
 	  <optparm>filename</optparm>
 	  <effect>send output to specified file</effect>
@@ -12081,9 +12034,11 @@
 	</li>
       </ilist>
       <para>
-	Note that when you specify an option using the
-	<lit>option</lit> or <lit>options</lit> keywords, it is not
-	necessary to supply the customary double-dash before the
+	Note that all the options other than <opt>output</opt> and
+	<opt>outbuf</opt> that you would normally give to the <cmdref
+	targ="gnuplot"/> command must be supplied using the
+	<lit>option</lit> or <lit>options</lit> keywords, and it is
+	not necessary to supply the customary double-dash before the
 	option specifier. For details on the effects of the various
 	options please see <cmdref targ="gnuplot"/>.
       </para>
@@ -16471,6 +16426,11 @@
 	instruments are valid, and suspicion is thrown on this
 	hypothesis if the auxiliary regression has a significant
 	degree of explanatory power.
+      </para>
+      <para>
+	These two statistics are available, upon successful completion
+	of the command, under the names <fncref targ="$hausman"/> and
+	<fncref targ="$sargan"/>, respectively.
       </para>
       <subhead>Weak instruments</subhead>
       <para>
