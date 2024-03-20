@@ -1418,15 +1418,6 @@ static NODE *powterm (parser *p, NODE *l)
 		get_args(t->L, p, sym, -1, opt, &next);
 	    }
 	}
-    } else if (sym == F_URCPVAL) {
-	t = new_node(sym);
-	if (t != NULL) {
-	    lex(p);
-	    t->L = newbn(FARGS);
-	    if (t != NULL) {
-		get_args(t->L, p, sym, -1, opt, &next);
-	    }
-	}
     } else if (string_arg_func(sym)) {
 	t = new_node(sym);
 	if (t != NULL) {

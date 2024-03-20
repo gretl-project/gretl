@@ -110,10 +110,12 @@ static int try_compile_func_genr (ExecState *s,
 	gopt |= OPT_O;
     }
 
-    /* 2024-03-16: stop a memory leak */
+#if !COMPILE_FEVAL
+    /* see comment on COMPILE_FEVAL in cmd_private.h */
     if (strstr(line, "feval")) {
 	return 0;
     }
+#endif
 
 #if GENCOMP_DEBUG
     fprintf(stderr, "cmd_private: calling genr_compile on '%s'\n", line);

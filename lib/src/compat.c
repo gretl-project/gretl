@@ -1,31 +1,28 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
-#include "libset.h"
 #include "compat.h"
 
 /*
-    compat.c - older functions retained for backward compatibility
+    compat.c -  ASCII graphics for backward compatibility
 */
-
-/* ASCII graphics */
 
 static void initpx (int n, char *pp)
 {
@@ -75,9 +72,9 @@ static void printgx (double x, PRN *prn)
     lw = strlen(word);
     pputs(prn, word);
     bufspace(13 - lw, prn);
-} 
+}
 
-static int z_to_xy (int v1, int v2, double *x, double *y, 
+static int z_to_xy (int v1, int v2, double *x, double *y,
 		    const DATASET *dset)
 {
     int t, m = 0;
@@ -94,7 +91,7 @@ static int z_to_xy (int v1, int v2, double *x, double *y,
     return m;
 }
 
-static int z_to_xyz (int v1, int v2, int v3, 
+static int z_to_xyz (int v1, int v2, int v3,
 		     double *x, double *y, double *z,
 		     const DATASET *dset)
 {
@@ -115,11 +112,11 @@ static int z_to_xyz (int v1, int v2, int v3,
 
 /* graph one or two y variables against a given x variable */
 
-static int graphyzx (const double *y1, const double *y2, 
-		     const double *x, int n, 
-		     const char *yname, 
+static int graphyzx (const double *y1, const double *y2,
+		     const double *x, int n,
+		     const char *yname,
 		     const char *y2name,
-		     const char *xname, 
+		     const char *xname,
 		     gretlopt opt, PRN *prn)
 {
     int ix, iy1, iy2, lx, ly, xzero, yzero;
@@ -167,14 +164,14 @@ static int graphyzx (const double *y1, const double *y2,
 
     if (na(xmin) || na(xmax)) {
 	return E_MISSDATA;
-    }    
+    }
 
     xrange = xmax - xmin;
 
     /* Initialize picture matrix */
 
     for (i=0; i<=nrows; i++) {
-	p[i][0] = (i % 5 == 0)? '+' : '|'; 
+	p[i][0] = (i % 5 == 0)? '+' : '|';
 	for (j=1; j<=ncols+1; j++) {
 	    p[i][j] = ' ';
 	}
@@ -263,13 +260,13 @@ static int graphyzx (const double *y1, const double *y2,
     bufspace(ls, prn);
     pputs(prn, word);
 
-    lw = lw + ls + ly; 
+    lw = lw + ls + ly;
 
     sprintf(word, "%g", xmax);
     ls = strlen(word);
     if (ls < 7) {
 	bufspace(73 - lw, prn);
-    } else { 
+    } else {
 	lw = lw + ls;
 	bufspace(79 - lw, prn);
     }
@@ -278,34 +275,11 @@ static int graphyzx (const double *y1, const double *y2,
     return 0;
 }
 
-/**
- * graphyx:
- * @y: y-axis data.
- * @x: x-axis data.
- * @n: number of observations.
- * @yname: y-axis label.
- * @xname: x-axis label.
- * @prn: gretl printing struct.
- *
- * Generates a simple ascii scatter-plot of @y against @x and 
- * prints the plot to @prn.
- *
- * Returns: 0 on successful completion, error code on error.
- */
-
-int graphyx (const double *y, const double *x, int n,
-	     const char *yname, const char *xname, 
-	     PRN *prn)
-{
-    return graphyzx(y, NULL, x, n, yname, NULL, xname, 
-		    OPT_NONE, prn);
-}
-
-/* OPT_O: force the two variables to be plotted on the same; 
+/* OPT_O: force the two variables to be plotted on the same scale;
    otherwise they are scaled to fit
 */
 
-static int ascii_plot (const int *list, const DATASET *dset, 
+static int ascii_plot (const int *list, const DATASET *dset,
 		       gretlopt opt, PRN *prn)
 {
     int i, nc2, vy, vz, cntrline;
@@ -315,7 +289,7 @@ static int ascii_plot (const int *list, const DATASET *dset,
     int t2 = dset->t2;
     char word[32], px[132];
     char s1[10], s2[10];
-    double xmin, xmax, xrange, ymin, ymax, yrange, xymin, xymax; 
+    double xmin, xmax, xrange, ymin, ymax, yrange, xymin, xymax;
     double xyrange, xx, yy;
     double *x, *y;
     int ls, t;
@@ -350,12 +324,12 @@ static int ascii_plot (const int *list, const DATASET *dset,
 	sprintf(word, "x-max = %g", xmax);
 	ls = 78 - ls - strlen(word);
 	bufspace(ls, prn);
-	pprintf(prn, "%s\n", word); 
+	pprintf(prn, "%s\n", word);
 
 	if (cntrline) {
 	    iy = -(xmin / xrange) * ncols;
 	    bufspace(iy + 7, prn);
-	    pputs(prn, "0.0\n"); 
+	    pputs(prn, "0.0\n");
 	}
 
 	drawline(ncols, prn);
@@ -375,7 +349,7 @@ static int ascii_plot (const int *list, const DATASET *dset,
 	    }
 	    px[ix+1] = 'o';
 	    for (i=0; i<=ncols+1; i++) {
-		pprintf(prn, "%c", px[i]); 
+		pprintf(prn, "%c", px[i]);
 	    }
 	    if (ix == ncols) {
 		pputc(prn, '\n');
@@ -513,8 +487,8 @@ static int ascii_plot (const int *list, const DATASET *dset,
     return 0;
 }
 
-static int 
-ascii_scatter (const int *list, const DATASET *dset, 
+static int
+ascii_scatter (const int *list, const DATASET *dset,
 	       gretlopt opt, PRN *prn)
 {
     int T = sample_size(dset);
@@ -551,12 +525,12 @@ ascii_scatter (const int *list, const DATASET *dset,
     }
 
     pputc(prn, '\n');
-    err = graphyzx(y1, y2, x, T, dset->varname[vy1], 
-		   (vy2 < 0)? NULL : dset->varname[vy2], 
+    err = graphyzx(y1, y2, x, T, dset->varname[vy1],
+		   (vy2 < 0)? NULL : dset->varname[vy2],
 		   dset->varname[vx], opt, prn);
     pputc(prn, '\n');
 
-    free(x); 
+    free(x);
 
     return err;
 }
@@ -575,21 +549,21 @@ ascii_scatter (const int *list, const DATASET *dset,
  *
  * In the case of a scatter plot, %OPT_T (tall) can be used to
  * request the use of 40 rows rather than the default of 20.
- * In the case of a plot by observation %OPT_O (one-scale) 
+ * In the case of a plot by observation %OPT_O (one-scale)
  * can be used to force the use of a single scale (otherwise
  * the series may be scaled to fit).
  *
  * Returns: 0 on successful completion, error code on error.
  */
 
-int textplot (const int *list, const DATASET *dset, 
+int textplot (const int *list, const DATASET *dset,
 	      gretlopt opt, PRN *prn)
 {
     if (opt & OPT_S) {
 	/* time series */
 	return ascii_plot(list, dset, opt, prn);
     } else if (list[0] < 2) {
-	return E_ARGS; 
+	return E_ARGS;
     } else {
 	return ascii_scatter(list, dset, opt, prn);
     }

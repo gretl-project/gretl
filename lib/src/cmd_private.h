@@ -7,6 +7,16 @@
 #include "gretl_func.h"
 #include "monte_carlo.h"
 
+/* As of 2024-03-18, the functions feval() and fevalb() both leak
+   memory if we "compile" them. This is a bit mysterious, but
+   understandable in principle given the complexity of the loop-back
+   into eval() that these functions involve. So long as we haven't
+   come up with a fix for this issue, we'll just block their
+   compilation via the following define (referenced in cmd_private.c
+   and monte_carlo.c).
+*/
+#define COMPILE_FEVAL 0
+
 typedef enum {
     CMD_CCMT    = 1 << 0, /* line is in a C-style multi-line comment */
     CMD_SUBST   = 1 << 1, /* string substitution has been done on command */

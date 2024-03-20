@@ -22,7 +22,6 @@
 #include "libgretl.h"
 #include "monte_carlo.h"
 #include "libset.h"
-#include "compat.h"
 #include "cmd_private.h"
 #include "var.h"
 #include "objstack.h"
@@ -2321,8 +2320,8 @@ static int try_add_loop_genr (LOOPSET *loop,
     gretlopt gopt = OPT_NONE;
     int err = 0;
 
-#if 1
-    /* 2024-03-16: stop a memory leak */
+#if !COMPILE_FEVAL
+    /* see comment on COMPILE_FEVAL in cmd_private.h */
     if (strstr(line, "feval")) {
 	return 0;
     }

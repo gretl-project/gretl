@@ -5880,18 +5880,18 @@ static void real_do_corrgm (DATASET *dset, int code,
     int T = sample_size(dset);
     int order = auto_acf_order(T);
     gretlopt opt = OPT_NONE;
-    const char *opts[1] = {NULL};
-    int bartlett = 0;
+    const char *opts[2] = {
+	N_("Show partial autocorrelations"),
+	N_("Use Bartlett standard errors")
+    };
+    int active[2] = {1, 0};
     PRN *prn;
     int err;
 
     title = gretl_window_title(_("correlogram"));
-    opts[0] = N_("Use Bartlett standard errors");
 
-    err = checks_dialog(title, NULL, opts,
-                        1, &bartlett,
-                        0, 0,
-                        0, NULL,
+    err = checks_dialog(title, NULL, opts, 2, active,
+                        0, 0, 0, NULL,
                         &order, _("Maximum lag:"),
                         1, T - 1,
                         CORRGM, parent);
@@ -5905,7 +5905,12 @@ static void real_do_corrgm (DATASET *dset, int code,
         return;
     }
 
-    if (bartlett) {
+    if (!active[0]) {
+	/* no PACF */
+	opt |= OPT_A;
+    }
+    if (active[1]) {
+	/* Bartlett */
         opt |= OPT_B;
     }
 

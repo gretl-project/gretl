@@ -15364,7 +15364,6 @@ static NODE **multi_node_from_bundle (gretl_bundle *b, int n,
 	return NULL;
     }
 
-    p->aux = NULL;
     a = gretl_bundle_get_keys(b, &p->err);
 
     if (a != NULL) {
@@ -15378,6 +15377,7 @@ static NODE **multi_node_from_bundle (gretl_bundle *b, int n,
 	bn.t = BUNDLE;
 	bn.v.b = b;
 	sn.t = STR;
+	p->aux = NULL;
 
 	S = gretl_array_get_strings(a, &ns);
 	strings_array_sort(&S, &ns, OPT_NONE);
@@ -15520,7 +15520,7 @@ static NODE *eval_feval (int f, NODE *l, NODE *r, parser *p)
     }
 
     if (!p->err && fid == 0 && u == NULL) {
-        gretl_errmsg_sprintf("%s: function not found", fname);
+        gretl_errmsg_sprintf(_("%s: function not found"), fname);
 	p->err = E_DATA;
     }
 
@@ -15528,14 +15528,6 @@ static NODE *eval_feval (int f, NODE *l, NODE *r, parser *p)
 	int i;
 
 	for (i=0; i<argc; i++) {
-#if 0 /* fevalb() debugging */
-	    fprintf(stderr, "fevalb, nn[%d] %p: %s aux %d, parent %s\n",
-		    i, (void *) nn[i], getsymb(nn[i]->t), is_aux_node(nn[i]),
-		    nn[i]->parent ? getsymb(nn[i]->parent->t) : "none");
-#endif
-	    if (nn[i]->parent != NULL) {
-		nn[i]->parent->aux = NULL;
-	    }
 	    free_node(nn[i], p);
 	}
 	free(nn);
