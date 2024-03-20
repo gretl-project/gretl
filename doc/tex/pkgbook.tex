@@ -211,7 +211,7 @@ selecting it in the server window and dragging it onto the local one.
 When we use the term ``package browser'' below we will generally mean
 the local window; we'll add the qualification ``on server'' when we're
 talking about the other one. For screenshots of both browsers see
-section~\ref{sec:gui-install} below.
+Section~\ref{sec:gui-install} below.
 
 That said, let's move on to the business of getting hold of a function
 package of interest.
@@ -229,8 +229,8 @@ on the shoulders of the package authors.
 Some authors may choose to make their packages available via other
 means. In that case, once the user has the package file available,
 either as a \textsf{gfn} file or a \textsf{zip} file (see
-section~\ref{sec:pkgform}), the package can be installed using
-the instructions below (section \ref{sec:cli-install}).
+Section~\ref{sec:pkgform}), the package can be installed using
+the instructions below (Section \ref{sec:cli-install}).
 
 \subsection{Installing a package via the GUI}
 \label{sec:gui-install}
@@ -309,7 +309,7 @@ don't want to clutter up your menus with anything more than the
 essential entries. Even if you say ``No'' here, however, the package
 will still be available to you from the GUI interface---it just won't
 have a dedicated menu entry. But note, this is not just a one-time
-option; see section~\ref{manage-menus} for an account of how to add or
+option; see Section~\ref{manage-menus} for an account of how to add or
 remove installed packages from gretl's menus.\label{pg:menu-hook}
 
 Suppose you say ``Yes'' to \textsf{GHegy}'s offer of a menu
@@ -399,7 +399,7 @@ Packages can also be removed via the command line: use the \cmd{pkg}
 command with the name of an installed package plus \option{unload} or
 \option{remove}. The former option unloads a package from memory and
 also removes its menu attachment, if any (see
-section~\ref{manage-menus}); the latter option performs these actions
+Section~\ref{manage-menus}); the latter option performs these actions
 but also deletes the package file(s).
 
 
@@ -549,7 +549,7 @@ toolbar of this window to reveal the tooltip, ``Save bundle content.''
 What's going on here is that \textsf{GHegy} has constructed a gretl
 bundle containing various details of the unit root test, and you can
 extract these details if you wish. Package authors: for an account of
-how to enable this sort of thing see section~\ref{sec:idioms}.
+how to enable this sort of thing see Section~\ref{sec:idioms}.
 
 
 \section{Some finer points}
@@ -694,7 +694,7 @@ question.  Here's a plausible scenario: you have package \textsf{XYZ}
 installed, and you don't want to (or don't have permission to) mess
 with the installed version, but at the same time you'd like to do some
 exploration and/or experimentation. Solution: go to the web interface
-to gretl packages mentioned in section~\ref{sec:browsers} and download
+to gretl packages mentioned in Section~\ref{sec:browsers} and download
 a copy of \textsf{XYZ}, placing it somewhere other than one of the
 standard gretl function directories. Then go to ``File, Function
 packages, Edit package...'' and navigate to find the \texttt{gfn}
@@ -737,7 +737,7 @@ browser window with the newly found packages.
 When the browser is redirected in this way, clicking the directory
 button gives you two options: choose another directory, or revert to
 displaying the installed packages (which may come from more than one
-directory, as explained in section~\ref{sec:installed}).
+directory, as explained in Section~\ref{sec:installed}).
 
 When the browser is newly opened it always shows the installed
 packages. However, gretl will remember (during a given session) which
@@ -753,7 +753,7 @@ that as the default selection on using the directory button.
 \chapter{For package authors}
 \label{chap:authors}
 
-Recall from section~\ref{sec:pkgform} that the core elements
+Recall from Section~\ref{sec:pkgform} that the core elements
 of a gretl function package are as follows:
 \begin{enumerate}
 \item One or more hansl functions;
@@ -813,7 +813,7 @@ emit a string & \texttt{echo} & \texttt{echo}
 \label{tab:basics}
 \end{table}
 
-With the exception of subsection~\ref{sec:using-make} all the commands
+With the exception of subection~\ref{sec:using-make} all the commands
 used in this section have been tested on Windows' \app{cmd.exe} as
 well as the \app{bash} shell.
 
@@ -867,7 +867,7 @@ should already be pretty comfortable with hansl. See the \textit{Hansl
   Primer} \citep{hansl-primer} if in doubt.
 
 The requirements on the sample script and help text are set out in
-section~\ref{sec:common-req}.  First we'll deal with the \textsf{spec}
+Section~\ref{sec:common-req}.  First we'll deal with the \textsf{spec}
 file. A simple case of this is shown in Listing~\ref{ex:spec1}.
 
 \begin{script}[htbp]
@@ -891,7 +891,7 @@ According to this spec, the package has a single public function,
 \texttt{myfunc}, and requires gretl 2017a or higher to run
 correctly. Writing a \textsf{spec} from scratch may be tricky. Please
 refer to chapter~\ref{chap:specfile} for a fuller account of the
-various keywords, and in particular section~\ref{sec:spec-basic} for
+various keywords, and in particular Section~\ref{sec:spec-basic} for
 the obligatory basics.
 
 Now, assuming all the required files are in place, how do we actually
@@ -970,7 +970,7 @@ replaced by left- and right-hand quotes.
 
 Suppose now that you want to include with your package some extra
 material (say, a specialized data file). As explained earlier (again,
-see section~\ref{sec:pkgform}), you will have to create a suitably
+see Section~\ref{sec:pkgform}), you will have to create a suitably
 organized zip file.
 
 The first thing is to update the \texttt{spec} file to refer to the
@@ -979,7 +979,7 @@ extra content: you'll want to add a line like
 data-files = somedata.gdt
 \end{code}
 where we assume that the file \texttt{somedata.gdt} file exists and is
-in the \texttt{mypkg} directory. See section~\ref{sec:spec-extra} for
+in the \texttt{mypkg} directory. See Section~\ref{sec:spec-extra} for
 more details.
 
 Creating the zip file can be done ``by hand'' if the command-line
@@ -1184,7 +1184,7 @@ information (author, email, version, date, etc.). Unless you have a
 PDF file containing help, you should also enter help text for the
 public interface: use the \textsf{Edit} button to open a text entry
 window. (If you have documentation in PDF format, see
-section~\ref{sec:gui-pdf}.) You have a further chance to edit the code
+Section~\ref{sec:gui-pdf}.) You have a further chance to edit the code
 of the function(s) to be packaged, by clicking on \textsf{Edit
   function code}.  (If the package contains more than one function, a
 drop-down selector will be shown.)
@@ -1204,13 +1204,13 @@ print LRM pcLRM --byobs
 where (a) we've decided that the package is to be called
 \textsf{pcchange}, and (b) we're going to illustrate using S\o{}ren
 Johansen's Danish macroeconomic data (included with the gretl
-package). See section~\ref{sec:common-sample} for details on what's
+package). See Section~\ref{sec:common-sample} for details on what's
 required of a sample script.
 
 At this point you should also consider the metadata items
 \textsf{Minimum gretl version}, \textsf{Data requirement} and
 \textsf{Tag}.  You can read all about these in
-section~\ref{sec:spec-basic}. For the moment, suffice it to say that
+Section~\ref{sec:spec-basic}. For the moment, suffice it to say that
 since the function code above doesn't do anything exotic you may be OK
 leaving the minimum gretl version at its default value, though if you
 want to check when some function or command was introduced you can
@@ -1230,7 +1230,7 @@ up a little menu. At this stage it's just the first item, \textsf{Save
 package specification (e.g.\ no help text), you'll get a nag box when
 you select this item. Otherwise you'll see a dialog where you get to
 choose whether to save the \textsf{gfn} file to an ``installed''
-location (see section~\ref{sec:installed}) or in some other place
+location (see Section~\ref{sec:installed}) or in some other place
 (Figure~\ref{fig:gfnsave}).
 
 \begin{figure}[htbp]
@@ -1308,9 +1308,9 @@ emulate the context of somebody who has installed your package from
 scratch.
 
 First off, that means that if you didn't choose to write your package
-into a standard location at the step in section~\ref{sec:gui-create}
+into a standard location at the step in Section~\ref{sec:gui-create}
 you should do so now. Use the ``Save...'' button in the GUI package
-editor or see section~\ref{sec:cli-install} for other options.
+editor or see Section~\ref{sec:cli-install} for other options.
 
 Once your package is in the right place, close gretl then reopen it.
 Now go to ``File, Function packages, On local machine''. If all has
@@ -1324,10 +1324,10 @@ Now, back to the ``Function packages'' window. Think for a moment: you
 required time-series data (didn't you?) so you should know that a
 double-click on your package will just offer the option of running
 your sample script if time-series data are not loaded
-(section~\ref{sec:gui-using}). And if you're following directions you
+(Section~\ref{sec:gui-using}). And if you're following directions you
 have no dataset open at present. OK, it's worth trying that; your
 sample script really, really should work regardless
-(section~\ref{sec:common-sample}), so go ahead and
+(Section~\ref{sec:common-sample}), so go ahead and
 double-click.\footnote{By the way, here's another thing: after loading
   the function(s) from the package, open the GUI console. Try typing
   \texttt{help pc}: the help text you entered should be presented.}
@@ -1384,7 +1384,7 @@ but most parameters do need comment.)
 
 If the help is not in PDF format it must be encoded in UTF-8 (or plain
 ASCII, which is a proper subset of UTF-8). Unless you use the markdown
-option (see section~\ref{sec:md}) we recommend that lines of plain
+option (see Section~\ref{sec:md}) we recommend that lines of plain
 text are kept to around 70 characters in width: some people may like
 to run gretl windows at full-screen size, but many of us do not!
 
@@ -1479,7 +1479,7 @@ version requirement of the package.
 
 The previous section set out certain basic requirements that must be
 met if a package is to be published (on which see
-section~\ref{sec:publish}). Nothing in the present section is a
+Section~\ref{sec:publish}). Nothing in the present section is a
 requirement as such, but we urge you to take a look at our discussion
 of the ``idioms'' that are found in many of the best packages. If your
 package ``speaks gretl'' fluently that will give users a better
@@ -1693,11 +1693,11 @@ end function
 
 \textit{Further reading}: For more on the special roles for functions
 within packages see sections~\ref{sec:spec-gui} and
-\ref{sec:spec-bundle}. In particular section~\ref{sec:spec-bundle}
+\ref{sec:spec-bundle}. In particular Section~\ref{sec:spec-bundle}
 explains the requirements for a function to be a candidate for a
 ``bundle special'' role. For a discussion of how a real
 package---\textsf{gig}, or GARCH in gretl, by Jack Lucchetti---does
-this sort of thing see section~4 of \cite{addons-bundles}, and for the
+this sort of thing see Section~4 of \cite{addons-bundles}, and for the
 internals of \textsf{gig} itself, find \textsf{gig} in the browser for
 packages on your local machine and select ``View
 code.''\footnote{Depending on your platform, you may have to install
@@ -1743,7 +1743,7 @@ Here's an overview of how such packages work.
 
 Let's consider this in some more detail.  First, how do we tell if any
 possibly relevant packages are available? The mechanism here relies on
-the package ``registry'' discussed in section~\ref{sec:finer}. This
+the package ``registry'' discussed in Section~\ref{sec:finer}. This
 information is stored between gretl sessions in a file named
 \texttt{packages.xml} in the user's gretl functions directory, which
 is automatically read on start-up.
@@ -1768,7 +1768,7 @@ logit models. In some cases you may want more fine-grained control
 (e.g.\ you can handle both logit and probit, but only the binary
 variants of these estimators). In that case you can use a second
 mechanism, specifying a \texttt{gui-precheck} function
-(section~\ref{sec:spec-gui}).
+(Section~\ref{sec:spec-gui}).
 
 This special function should not be included in the listing of public
 interfaces; it is intended only for internal use by gretl. It must
@@ -1942,10 +1942,10 @@ produce a plot.
 
 If you decide that you'd like to publish a package---that is, make it
 available via the channels described in
-section~\ref{sec:acquire}---here's the procedure.
+Section~\ref{sec:acquire}---here's the procedure.
 
 Preliminary: please double-check your package to ensure you have met
-the requirements in section~\ref{sec:common-req}. This will save
+the requirements in Section~\ref{sec:common-req}. This will save
 everyone's time.
 
 \subsection{Uploading to the gretl server}
@@ -2061,7 +2061,7 @@ the ``\textsf{Save...}'' button and selecting the options \textsf{Save
 the packaged functions) and \textsf{Write spec file} (accept the
 options to save the auxiliary files). This will create the source
 files you need to rebuild your package by CLI means
-(section~\ref{sec:cli-build}).
+(Section~\ref{sec:cli-build}).
 
 \textit{Case 2}: You started via the CLI but you'd like to explore
 maintaining your package by GUI means. Fine, you know that the
@@ -2087,14 +2087,14 @@ The first option is simpler, and probably best for most users. In this
 case you will presumably be using \app{cmd.exe} as your shell. The
 advantage of the second option is that it provides a much more
 powerful and versatile shell, but if you just want to do the sorts of
-things discussed in section~\ref{sec:cli-build} \app{cmd.exe} is quite
+things discussed in Section~\ref{sec:cli-build} \app{cmd.exe} is quite
 adequate, with some help from a few small additions.  We offer some
 more detail on the two options below.
 
 \subsection*{Native Windows: cmd.exe}
 \label{sec:cmd.exe}
 
-This supports all the commands shown in section~\ref{sec:cli-build}
+This supports all the commands shown in Section~\ref{sec:cli-build}
 except that the \app{make} utility is not present. But \app{make} for
 Windows can be downloaded from the \textsf{GnuWin32} project on
 sourceforge: see \url{http://gnuwin32.sf.net/packages/make.htm},
@@ -2269,7 +2269,7 @@ with a single tab character.\footnote{Explicit instructions are not
   gretl files.}
 
 Listing~\ref{ex:make2} shows a variant of the simple Makefile from
-section~\ref{sec:using-make}, where we have added PDF documentation to
+Section~\ref{sec:using-make}, where we have added PDF documentation to
 the package. In this example the initial section defines just one
 variable, \texttt{PKG}. Note the special syntax for using the value of
 a Makefile variable in the rules: the name of the variable must be
@@ -2453,7 +2453,7 @@ Figure~\ref{fig:package_editor}).
   run OK, but if in doubt it is preferable to specify a later version
   (users can always update) rather than an earlier one (on which the
   package might fail and give the user a bad impression). See
-  section~\ref{sec:versioning} for further details.
+  Section~\ref{sec:versioning} for further details.
 
    \ttusage{min-version = 2018a}
 
@@ -2484,7 +2484,7 @@ in various ways, as described below.
 
  \item \texttt{help} (required): The name of the file in which Help
    for this package can be found. This must be either a UTF-8 text
-   file (with or without usage of markdown, see section~\ref{sec:md})
+   file (with or without usage of markdown, see Section~\ref{sec:md})
    or a PDF file. The basename of the file should be the same as that
    of the package (as in \texttt{mypkg.gfn} and \texttt{mypkg.pdf}).
    The filename suffix must be \texttt{.pdf} for PDF or \texttt{.md}
@@ -2592,7 +2592,7 @@ the \textsf{Extra properties} button.
   specific relationship to the gretl model which the package
   ``targets,'' from which the user is then expected to select a
   member. This is a generalization of the \texttt{\$xlist} mechanism
-  described in section~\ref{sec:bandplot} above, and is best explained
+  described in Section~\ref{sec:bandplot} above, and is best explained
   by example. In the \textsf{exogtest} package the designated
   \texttt{list-maker} function reads as follows:
 \begin{code}
@@ -2627,65 +2627,18 @@ function bundle GUI_exogtest (int xvar[$mylist] "regressor to test")
 
   \ttusage{list-maker = exogtest\_listmaker}
 
-\item \texttt{ui-maker} (optional): This element allows fine-tuning of
-  the dialog box shown when a package is called via gretl's graphical
-  interface. At present the following points can be configured (more
-  options may be added in future):
-  \begin{itemize}
-  \item A given parameter (of any type) can be marked as dependent on
-    a specified boolean parameter.
-  \item A parameter of type \texttt{int} can be given a data-dependent
-    default, minimum and/or maximum value, to be fixed at run time.
-  \item A parameter of type \texttt{list} can be inflected in up to
-    three ways (illustrated below).
-  \end{itemize}
-  These things are achieved by including in the package a private
-  function which returns a bundle, holding a sub-bundle for each
-  parameter to be inflected.  This is most easily explained by
-  example. Here's the (slightly simplified) signature of the
-  \texttt{gui-main} function for a package currently in development:
-\begin{code}
-function bundle GUI_rf (\
-   series y "dependent variable",
-   list X "independent variables",
-   int n_train[50::] "training observations",
-   bool use_seed[0] "set random seed",
-   int seed[0:2147483647:1234567])
-\end{code}
-  Now consider the following private function, which is designed to
-  inflect the GUI representation of the above:
-\begin{code}
-function bundle rf_ui_maker (void)
-   maxstr = "ceil(0.9*$nobs)"
-   defstr = "ceil(0.65*$nobs)"
-   bundle b
-   b["seed"] = _(depends="use_seed")
-   b["n_train"] = _(maximum=maxstr, default=defstr)
-   b["X"] = _(singleton=0, exclude="y", no_const=1)
-   return b
-end function
-\end{code}
-  In this example the parameters \texttt{seed}, \texttt{n\_train} and
-  \texttt{X} are inflected. For \texttt{seed}, the \texttt{depends}
-  keyword indicates that its sensitivity should depend on the boolean
-  parameter \texttt{use\_seed}: it will be ``grayed out'' unless the
-  \texttt{use\_seed} check-box is checked. For \texttt{n\_train}, its
-  maximum and default values are configured via the strings
-  \texttt{maxstr} and \texttt{defstr}: these are treated as
-  expressions to be evaluated at run time, factoring in the size of
-  the current dataset.  Finally, the list parameter \texttt{X} has
-  three inflections: \texttt{singleton=0} means that a list with a
-  single series member is not acceptable; \texttt{exclude="y"} means
-  that if a given series is selected for the role of \texttt{y} (the
-  first parameter) it should not be shown as a candidate member of
-  \texttt{X}; and \texttt{no\_const=1} says that the automatic
-  \texttt{const} series should not be a candidate either.
+\item \texttt{ui-maker} (optional): This element allows a package
+  writer control over certain aspects of the dialog box shown when the
+  \texttt{gui-main} function of a package is called from a menu item.
+  This control is exercised via a private function which returns a
+  bundle, holding a sub-bundle for each parameter to be inflected. The
+  \texttt{ui-maker} is called internally when the relevant dialog box
+  is to be shown, and on successful execution the directives in the
+  returned bundle are followed. Since this functionality is somewhat
+  complex, its details are set out separately in
+  Section~\ref{sec:ui-maker} below.
 
-  The \texttt{ui-maker} is called internally when the relevant dialog
-  box is to be shown, and on successful execution the directives in
-  the returned bundle are followed.
-
-\ttusage{ui-maker = rf\_ui\_maker}
+  \ttusage{ui-maker = rf\_ui\_maker}
 
 \item \texttt{no-print} (optional): A list of public interfaces that
   are not designed to print anything.  Consider, for example, a
@@ -2696,7 +2649,189 @@ end function
   confusing. You can suppress the text output window by adding such a
   function to the \texttt{no-print} list.
 
+  \ttusage{no-print = foo\_plot}
+
 \end{description}
+
+\section{More on the GUI: ui-maker}
+\label{sec:ui-maker}
+
+The basic idea of the \texttt{ui-maker} function has been introduced
+above; in this section we delve into the details.  First, note that
+the private function that supports this functionality must take no
+arguments, and must return a bundle containing one or more
+sub-bundles, each identified by the name of a parameter whose GUI
+representation the author wishes to inflect, and each of which
+contains one or more special keys corresponding to recognized
+directives. So in outline such a function should look something like
+this:
+\begin{code}
+function bundle my_uimaker (void)
+    bundle ret
+
+    # add parameter-specific sub-bundles to @ret here
+
+    return ret
+end function
+\end{code}
+
+Also note that in the graphical interface the parameter list for a
+function translates into an array of widgets by means of which
+arguments corresponding to the parameters are set. This is a
+one-to-one mapping so you can refer to particular widgets by the name
+of the corresponding parameter.
+
+The aspects of the GUI that a function writer can control, or at least
+inflect, via \texttt{ui-maker} fall into three categories: conditional
+sensitivity of argument widgets, run-time determination of the
+minimum, maximum and/or default values for arguments, and restrictions
+relating to list arguments (lists of series, that is). We go into each
+of these below. For concreteness, we'll assume at first that the
+\texttt{ui-maker} returns a bundle named \texttt{ret}, as in the
+example above (though you're to choose the name yourself).
+
+\subsection{Conditional sensitivity}
+
+The widget for a given parameter---denoted by \textsf{W}$_i$, where
+$i$ indicates its place in the parameter list---can be made sensitive
+or insensitive (``grayed out'') conditional on the state of the widget
+representing a prior parameter, \textsf{W}$_j$ where $j<i$. This is
+achieved via a string under the key \texttt{depends} in the sub-bundle
+for \textsf{W}$_i$.  In the simplest case this is just the name of a
+prior boolean parameter, where \textsf{W}$_j$ takes the form of a
+check-box. Suppose we want the widget for a parameter \texttt{baz}
+to be shown as sensitive if and only if the check-box for a prior
+boolean parameter \texttt{foo} is checked. Then this statement
+in the \texttt{ui-maker} would do the job:
+\begin{code}
+ret.baz = _(depends = "foo")
+\end{code}
+
+Alternatively, \texttt{depends} may take the form
+\textsl{name}\texttt{=}\textsl{value}, where \textsl{name} is the name
+of parameter $j$ and \textit{value} is an integer value indicating the
+state of \textsf{W}$_j$.  This allows for inverse dependency on a
+check-box.  Given
+\begin{code}
+ret.baz = _(depends = "foo=0")
+\end{code}
+the widget for \texttt{baz} will be sensitive if and only if the box
+for parameter \texttt{foo} is \textit{not} checked. It also allows for
+dependency on a ``combo box'' holding a pull-down list of $n$
+options. Such options can be regarded as numbered from 1 to $n$
+(regardless of how they look in the GUI), so for example the
+sensitivity of the \texttt{baz} widget can be made conditional on the
+second option being selected for integer parameter \texttt{bar} via
+\begin{code}
+ret.baz = _(depends = "bar=2")
+\end{code}
+
+\subsection{Run-time limits and defaults}
+
+This facility is relevant if your package requires that a dataset be
+in place. In that case your \texttt{ui-maker} function will have
+access to all the usual dataset-related accessors; limits and/or
+default values can then be conditioned on the characteristics of the
+data. Such conditioning is supported for parameters of type
+\texttt{int} and \texttt{scalar}, via the keys \texttt{minimum},
+\texttt{maximum} and \texttt{default}. In each case the value of the
+bundle element should be a string: a valid hansl expression which
+yields a scalar value.
+
+For example, suppose that your function has a parameter \texttt{n}
+whose value should be no greater than 20 percent of the current sample
+size. Then you could include the following statement in your
+\texttt{ui-maker} (where \texttt{ret} is the bundle to be returned):
+\begin{code}
+ret.n = _(maximum="floor(0.2*$nobs)")
+\end{code}
+If in addition you want the default value to equal the maximum, you
+could substitute
+\begin{code}
+string maxstr = "floor(0.2*$nobs)"
+ret.n = _(maximum=maxstr, default=maxstr)
+\end{code}
+And of course you could add a data-dependent minimum value if that's
+wanted.
+
+\subsection{Restrictions on list arguments}
+
+A parameter calling for a list of series can be inflected in any of
+three ways, via the keys \texttt{no\_singleton}, \texttt{no\_const} and
+\texttt{exclude}.
+
+\begin{itemize}
+\item \texttt{no\_singleton} is a boolean, with a default value of 0,
+  meaning that it's acceptable for a list to have a single member. If
+  you want to ensure that a particular list contains more than one
+  series, give a value of 1 for this key.
+\item \texttt{no\_const} is also a boolean with a default value of 0,
+  meaning that it's acceptable for a list to contain the automatic
+  \texttt{const} series. To prevent inclusion of \texttt{const} give a
+  value of 1 for this key.
+\item \texttt{exclude} requires a string value, the name of a
+  parameter of type series. The effect is to ensure that if a given
+  series has been selected for that parameter it should not be shown
+  as a candidate for inclusion in the list in question.
+\end{itemize}
+
+To illustrate, suppose a function has a series parameter \texttt{y}
+and a list parameter \texttt{X}, which should satisfy three
+conditions: it contains more than one series, does not contain
+\texttt{const}, and does not contain the series selected as
+\texttt{y}. Then the following would work:
+\begin{code}
+ret.X = _(no_singleton=1, no_const_ok=1, exclude="y")
+\end{code}
+
+\subsection{Real-world examples}
+
+Here we give some ``live'' illustrations of \texttt{ui-maker}
+functionality, from function packages either already published or in
+development.
+
+First take a look at the following (slightly simplified) signature of
+the \texttt{gui-main} function for a package in development:
+\begin{code}
+function bundle GUI_rf (\
+   series y "dependent variable",
+   list X "independent variables",
+   int n_train[50::] "training observations",
+   bool use_seed[0] "set random seed",
+   int seed[0:2147483647:1234567])
+\end{code}
+Now consider the following function, designed to inflect the GUI
+representation of the above:
+\begin{code}
+function bundle rf_ui_maker (void)
+   maxstr = "ceil(0.9*$nobs)"
+   defstr = "ceil(0.65*$nobs)"
+   bundle b
+   b.seed = _(depends="use_seed")
+   b.n_train = _(maximum=maxstr, default=defstr)
+   b.X = _(no_singleton=1, no_const=1, exclude="y")
+   return b
+end function
+\end{code}
+
+In this example the parameters \texttt{seed}, \texttt{n\_train} and
+\texttt{X} are inflected.
+\begin{itemize}
+\item For \texttt{seed}, the \texttt{depends} keyword indicates that
+  its sensitivity should depend on the boolean parameter
+  \texttt{use\_seed}: it will be ``grayed out'' unless the
+  \texttt{use\_seed} check-box is checked.
+\item For \texttt{n\_train}, its maximum and default values are
+  configured via the strings \texttt{maxstr} and \texttt{defstr}:
+  these are expressions to be evaluated at run time, factoring in the
+  size of the current dataset.
+\item The list parameter \texttt{X} has three inflections: a list with
+  a single series member is not acceptable; \texttt{const} is not a
+  candidate for membership, and whichever series is selected for the
+  role of \texttt{y} should not be a candidate.
+\end{itemize}
+
+
 
 \section{Bundle-related elements}
 \label{sec:spec-bundle}
@@ -2781,7 +2916,7 @@ under the tabs \textsf{Data files}, \textsf{Dependencies}, and
   \texttt{data-files} (as in the example below); if several extra
   files are to be packaged, put them into a subdirectory and give its
   name as parameter. See chapter~\ref{chap:zipfile} for examples, and
-  in particular section~\ref{sec:HIP} for the special meaning of
+  in particular Section~\ref{sec:HIP} for the special meaning of
   including a subdirectory named \texttt{examples}.
 
   \ttusage{data-files = special.gdt}

@@ -245,6 +245,12 @@ static int lmaker_run (ufunc *func, call_info *cinfo)
     return err;
 }
 
+/* Here we try to access the "ui-maker" function from the package
+   @pkg. If successful, we call this function to obtain a bundle
+   containing specifications regarding the GUI representation of
+   parameters in the "gui-main" function of the package.
+*/
+
 static gretl_bundle *get_ui_from_maker (fnpkg *pkg,
 					gchar *funname)
 {
@@ -264,13 +270,22 @@ static gretl_bundle *get_ui_from_maker (fnpkg *pkg,
     return b;
 }
 
+/* If @jmax >= 0, limit the search to a specified maximum
+   position in the parameter list, otherwise check all parameters.
+*/
+
 static GtkWidget *get_selector_for_param (call_info *cinfo,
-					  const char *name)
+					  const char *name,
+					  int jmax)
 {
     const char *s;
     int j;
 
-    for (j=0; j<cinfo->n_params; j++) {
+    if (jmax < 0) {
+	jmax = cinfo->n_params;
+    }
+
+    for (j=0; j<jmax; j++) {
 	if (cinfo->sels[j] != NULL) {
 	    s = g_object_get_data(G_OBJECT(cinfo->sels[j]), "parname");
 	    if (s != NULL && !strcmp(name, s)) {
@@ -296,13 +311,33 @@ static void condition_on_combo (GtkWidget *w, GtkWidget *cb)
 		     G_CALLBACK(toggle_sensitivity), w);
 }
 
+/* Based on the @ui bundle returned by the ui-maker function of a
+   package, check for a dependency specification regarding the
+   parameter at position i in the argument list; call it P(i).  This
+   allows the sensitivity of its associated widget, call it W(i), to
+   be made conditional on the state of a widget W(j) corresponding to
+   a parameter P(j) which appears earlier in the list (j < i).
+
+   The dependency specifier (a string) may be simply the name of P(j),
+   in which case W(j) must be a check box (GTK_TOGGLE_BUTTON), and
+   W(i) is made sensitive iff W(j) is checked.
+
+   Alternatively, the specifier may take the form <name>=<value> where
+   <name> is the name of P(j) and <value> is an integer value
+   determined by the state of W(j).  This allows for inverse
+   dependency on a check button (value 0 meaning that the button is
+   NOT checked), or dependency on a pull-down list of n options
+   (GTK_COMBO_BOX), which are numbered internally from 0 to n-1.
+*/
+
 static void check_depends (call_info *cinfo, int i,
 			   gretl_bundle *ui)
 {
+    GtkWidget **W = cinfo->sels;
     const char *depstr;
 
     /* first attach @ui to widget for future reference */
-    g_object_set_data(G_OBJECT(cinfo->sels[i]), "ui", ui);
+    g_object_set_data(G_OBJECT(W[i]), "ui", ui);
 
     /* see if we have a dependency */
     depstr = gretl_bundle_get_string(ui, "depends", NULL);
@@ -311,34 +346,47 @@ static void check_depends (call_info *cinfo, int i,
 	GtkWidget *dep = NULL;
 	const char *depname = depstr;
 	char ctrl[32] = {0};
-	int val = 1;
+	int val = -1;
 
+	/* see if we can split @depstr in two */
 	if (sscanf(depstr, "%31[^=]=%d", ctrl, &val) == 2) {
+	    if (val < 0) {
+		fprintf(stderr, "ui dependency: invalid value %d\n", val);
+		return;
+	    }
+	    /* OK, we got <name>=<value> */
 	    depname = ctrl;
 	}
-	dep = get_selector_for_param(cinfo, depname);
+	/* try to find the controller widget */
+	dep = get_selector_for_param(cinfo, depname, i);
 	if (dep == NULL) {
-	    fprintf(stderr, "Couldn't find widget for '%s'\n", depname);
+	    fprintf(stderr, "ui dependency: couldn't find '%s'\n", depname);
 	    return;
 	}
 	if (GTK_IS_TOGGLE_BUTTON(dep)) {
 	    gboolean a = button_is_active(dep);
 
-	    if (val) {
-		gtk_widget_set_sensitive(cinfo->sels[i], a);
-		sensitize_conditional_on(cinfo->sels[i], dep);
-	    } else {
+	    if (val == 0) {
+		/* depend on not checked */
 		gtk_widget_set_sensitive(cinfo->sels[i], !a);
 		desensitize_conditional_on(cinfo->sels[i], dep);
+	    } else {
+		/* depend on checked */
+		gtk_widget_set_sensitive(cinfo->sels[i], a);
+		sensitize_conditional_on(cinfo->sels[i], dep);
 	    }
 	} else if (GTK_IS_COMBO_BOX(dep)) {
 	    gint a = gtk_combo_box_get_active(GTK_COMBO_BOX(dep));
 
-	    gtk_widget_set_sensitive(cinfo->sels[i], a == val);
-	    widget_set_int(cinfo->sels[i], "condval", val);
-	    condition_on_combo(cinfo->sels[i], dep);
+	    if (val >= 0) {
+		gtk_widget_set_sensitive(cinfo->sels[i], a == val);
+		widget_set_int(cinfo->sels[i], "condval", val);
+		condition_on_combo(cinfo->sels[i], dep);
+	    } else {
+		fprintf(stderr, "ui dependency: bad combo-box usage '%s'\n", depstr);
+	    }
 	} else {
-	    fprintf(stderr, "ui: check_depends: unsupported usage '%s'\n", depstr);
+	    fprintf(stderr, "ui dependency: unsupported usage '%s'\n", depstr);
 	}
     }
 }
@@ -558,7 +606,6 @@ static gchar *combo_box_get_trimmed_text (GtkComboBox *combo)
 		if (!isspace(s[i])) break;
 		len--;
 	    }
-
 	    if (len > 0) {
 		ret = g_strndup(s, len);
 	    }
@@ -647,13 +694,11 @@ static GList *add_series_names (GList *list)
 	/* don't show this first */
 	imin = 2;
     }
-
     for (i=imin; i<dataset->v; i++) {
 	if (!series_is_hidden(dataset, i)) {
 	    list = g_list_append(list, (gpointer) dataset->varname[i]);
 	}
     }
-
     for (i=0; i<imin; i++) {
 	list = g_list_append(list, (gpointer) dataset->varname[i]);
     }
@@ -1025,7 +1070,7 @@ gchar **get_listdef_exclude (gpointer p)
 	    no_const = gretl_bundle_get_bool(ui, "no_const", 0);
 	}
 	if (s != NULL) {
-	    ref = get_selector_for_param(cinfo, s);
+	    ref = get_selector_for_param(cinfo, s, -1);
 	}
 	if (ref != NULL && GTK_IS_COMBO_BOX(ref)) {
 	    x = combo_box_get_active_text(ref);
@@ -1319,6 +1364,12 @@ static GtkWidget *spin_arg_selector (call_info *cinfo, int i,
     return spin;
 }
 
+/* Check a parameter's @ui bundle for strings containing recipes to
+   generate the minimum, maximum and/or default values for the
+   parameter. If we find any, generate the value(s) in question and
+   return them indirectly via @dvals.
+*/
+
 static int min_max_def_from_ui (gretl_bundle *ui,
 				double *dvals[])
 {
@@ -1351,6 +1402,7 @@ static GtkWidget *int_arg_selector (call_info *cinfo,
     int minv, maxv, initv = 0;
 
     if (ui != NULL) {
+	/* check for run-time values */
 	double *dvals[] = {&dminv, &dmaxv, &deflt};
 
 	min_max_def_from_ui(ui, dvals);
@@ -1449,9 +1501,8 @@ static GtkWidget *double_arg_selector (call_info *cinfo, int i,
     return spin;
 }
 
-/* see if the variable named @name of type @ptype
-   has already been set as the default argument in
-   an "upstream" combo argument selector
+/* See if the variable named @name of type @ptype has already been set
+   as the default argument in an "upstream" combo argument selector.
 */
 
 static int already_set_as_default (call_info *cinfo,
@@ -1591,9 +1642,9 @@ static void arg_combo_set_default (call_info *cinfo,
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), k);
 }
 
-/* create an argument selector widget in the form of a
-   GtkComboBox, with an entry field plus a drop-down
-   list (which may initially be empty)
+/* Create an argument selector widget in the form of a GtkComboBox,
+   with an entry field plus a drop-down list (which may initially be
+   empty).
 */
 
 static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype,
