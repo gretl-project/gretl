@@ -12034,13 +12034,14 @@
 	</li>
       </ilist>
       <para>
-	Note that all the options other than <opt>output</opt> and
-	<opt>outbuf</opt> that you would normally give to the <cmdref
-	targ="gnuplot"/> command must be supplied using the
-	<lit>option</lit> or <lit>options</lit> keywords, and it is
-	not necessary to supply the customary double-dash before the
-	option specifier. For details on the effects of the various
-	options please see <cmdref targ="gnuplot"/>.
+	Note that besides <opt>output</opt> and <opt>outbuf</opt>,
+	which should be appended to the line that ends the block, all
+	the options supported by the <cmdref targ="gnuplot"/> command
+	are also supported by <lit>plot</lit>, but should be given
+	within the block using the syntax described above. In this
+	context it is not necessary to supply the customary
+	double-dash before the option specifier. For details on the
+	effects of the various options see <cmdref targ="gnuplot"/>.
       </para>
       <para>
 	The intended use of the <lit>plot</lit> block is best
@@ -16428,9 +16429,9 @@
 	degree of explanatory power.
       </para>
       <para>
-	These two statistics are available, upon successful completion
-	of the command, under the names <fncref targ="$hausman"/> and
-	<fncref targ="$sargan"/>, respectively.
+	These statistics are available, upon successful completion of
+	the command, under the names <fncref targ="$hausman"/> and
+	<fncref targ="$sargan"/> (if applicable), respectively.
       </para>
       <subhead>Weak instruments</subhead>
       <para>
