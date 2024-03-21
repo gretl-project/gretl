@@ -2790,18 +2790,20 @@ functionality based on current function packages.
 First take \textsf{cffilt} by Jack Lucchetti, which computes the
 Christiano--Fitzgerald (CF) band-pass filter. This package requires
 time-series data. The usual application of the CF filter is to extract
-motion at business-cycle frequencies from annual, quarterly or monthly
-macroeconomic data, and in this case plausible lower and upper limits
-for the pass band (minimum and maximum number of periods) can easily
-be calculated based on the data frequency. However, the filter could
-also be used on data observed at other frequencies; then it's not so
-clear what the pass band should look like.
+information at business-cycle frequencies from annual, quarterly or
+monthly macroeconomic data, in which case suitable defaults for the
+lower and upper limits for the pass band (minimum and maximum number
+of periods) can easily be calculated based on the data
+frequency. However, the filter could also be used on data observed at
+other frequencies; then it's not so clear what the pass band should
+look like.
 
 In the \texttt{gui-main} function of \textsf{cffilt} the minimum and
 maximum periods take the form of integer parameters \texttt{pl} and
 \texttt{pu}, which are given purely notional default values of 2 and
 3, respectively. Problem: how to provide sensible default values at
 run time, when possible? The solution looks something like this:
+
 \begin{code}
 function bundle cf_ui_maker (void)
     bundle ret
@@ -2813,53 +2815,58 @@ function bundle cf_ui_maker (void)
     return ret
 end function
 \end{code}
+
 Note that if the data are of non-standard frequency, the bundle
 returned by \texttt{cf\_ui\_maker} will be empty. That's OK, it just
 means the default values for \texttt{pl} and \texttt{pu} will remain
 at those set in the \texttt{gui-main} function.
 
-Second, let's take a look at the following (slightly simplified)
-signature of the \texttt{gui-main} function for a package in
-development:
+For a second example, take a look at the (slightly simplified)
+signature of the \texttt{gui-main} for \textsf{random\_forest} by
+Allin Cottrell, which provides a gretl interface to the \textsf{R}
+package \textsf{randomForest}:
 \begin{code}
-function bundle GUI_rf (\
-   series y "dependent variable",
+function bundle GUI_rf (series y "dependent variable",
    list X "independent variables",
    int n_train[50::] "training observations",
    bool use_seed[0] "set random seed",
    int seed[0:2147483647:1234567])
 \end{code}
-Now consider the following function, designed to inflect the GUI
-representation of the above:
+
+Consider the parameters \texttt{y} and \texttt{X}. Obviously, we don't
+want the series that's selected as the dependent variable to be
+included in the list of independent variables. Plus, in this
+machine-learning context it doesn't make sense to have a single
+independent variable, nor to include a constant. So the
+\texttt{ui-maker} for this package (as above, let's say its return
+value is called \texttt{ret}) includes
 \begin{code}
-function bundle rf_ui_maker (void)
-   maxstr = "ceil(0.9*$nobs)"
-   defstr = "ceil(0.65*$nobs)"
-   bundle b
-   b.seed = _(depends="use_seed")
-   b.n_train = _(maximum=maxstr, default=defstr)
-   b.X = _(no_singleton=1, no_const=1, exclude="y")
-   return b
-end function
+ret.X = _(no_singleton=1, no_const=1, exclude="y")
 \end{code}
 
-In this example the parameters \texttt{seed}, \texttt{n\_train} and
-\texttt{X} are inflected.
-\begin{itemize}
-\item For \texttt{seed}, the \texttt{depends} keyword indicates that
-  its sensitivity should depend on the boolean parameter
-  \texttt{use\_seed}: it will be ``grayed out'' unless the
-  \texttt{use\_seed} check-box is checked.
-\item For \texttt{n\_train}, its maximum and default values are
-  configured via the strings \texttt{maxstr} and \texttt{defstr}:
-  these are expressions to be evaluated at run time, factoring in the
-  size of the current dataset.
-\item The list parameter \texttt{X} has three inflections: a list with
-  a single series member is not acceptable; \texttt{const} is not a
-  candidate for membership, and whichever series is selected for the
-  role of \texttt{y} should not be a candidate.
-\end{itemize}
+Now focus on \texttt{n\_train}, the number of observations to be used
+for training. The signature above specifies a minimum of 50 but leaves
+the maximum and default values undetermined. The \texttt{ui-maker} can
+then fill in these values depending on the number of observations,
+something like:
+\begin{code}
+maxstr = "ceil(0.9*$nobs)"
+defstr = "ceil(0.65*$nobs)"
+ret.n_train = _(maximum=maxstr, default=defstr)
+\end{code}
 
+Finally, consider the \texttt{use\_seed} and \texttt{seed}
+parameters. The Random Forest algorithm, as the name implies, employs
+randomization. Setting a known seed for the random number generator
+will give reproducible results, otherwise results are likely to differ
+somewhat on each run. The seed parameter is relevant only if the user
+wants to set a seed, so this is a case for \texttt{depends} in the
+\texttt{ui-maker}:
+\begin{code}
+ret.seed = _(depends="use_seed")
+\end{code}
+Unless the user checks the \texttt{use\_seed} box, the \texttt{seed}
+widget will remain grayed out.
 
 \section{Bundle-related elements}
 \label{sec:spec-bundle}
@@ -3070,7 +3077,7 @@ same name as the package itself, and this directory must contain the
 in that case the minimal zipfile looks like this (as shown by the
 \textsf{unzip} program with its \texttt{-l} option to list the
 contents of an archive):
-%
+
 \begin{code}
 Archive:  mypkg.zip
   Length      Date    Time    Name
@@ -3185,7 +3192,7 @@ matrix C = mread(matname)
 Our final illustration is the \textsf{HIP} package (which now has
 official ``addon'' status), written by Jack Lucchetti and Claudia
 Pigini. Looking in the zipfile we see:
-%
+
 \begin{code}
 Archive:  HIP.zip
   Length      Date    Time    Name
