@@ -2629,14 +2629,13 @@ function bundle GUI_exogtest (int xvar[$mylist] "regressor to test")
 
 \item \texttt{ui-maker} (optional): This element allows a package
   writer control over certain aspects of the dialog box shown when the
-  \texttt{gui-main} function of a package is called from a menu item.
-  This control is exercised via a private function which returns a
-  bundle, holding a sub-bundle for each parameter to be inflected. The
-  \texttt{ui-maker} is called internally when the relevant dialog box
-  is to be shown, and on successful execution the directives in the
-  returned bundle are followed. Since this functionality is somewhat
-  complex, its details are set out separately in
-  Section~\ref{sec:ui-maker} below.
+  \texttt{gui-main} function of a package is called.  Control is
+  exercised via a private function which returns a bundle, holding a
+  sub-bundle for each parameter to be inflected. The \texttt{ui-maker}
+  is called internally when the relevant dialog box is to be shown,
+  and on successful execution the directives in the returned bundle
+  are followed. Since this functionality is somewhat complex, its
+  details are set out separately in Section~\ref{sec:ui-maker} below.
 
   \ttusage{ui-maker = rf\_ui\_maker}
 
@@ -2695,14 +2694,14 @@ example above (though you're to choose the name yourself).
 The widget for a given parameter---denoted by \textsf{W}$_i$, where
 $i$ indicates its place in the parameter list---can be made sensitive
 or insensitive (``grayed out'') conditional on the state of the widget
-representing a prior parameter, \textsf{W}$_j$ where $j<i$. This is
+representing a prior parameter, \textsf{W}$_j$, $j<i$. This is
 achieved via a string under the key \texttt{depends} in the sub-bundle
 for \textsf{W}$_i$.  In the simplest case this is just the name of a
 prior boolean parameter, where \textsf{W}$_j$ takes the form of a
-check-box. Suppose we want the widget for a parameter \texttt{baz}
-to be shown as sensitive if and only if the check-box for a prior
-boolean parameter \texttt{foo} is checked. Then this statement
-in the \texttt{ui-maker} would do the job:
+check-box. Suppose we want the widget for a parameter \texttt{baz} to
+be shown as sensitive if and only if the check-box for a parameter
+\texttt{foo} is checked. Then this statement in the \texttt{ui-maker}
+would do the job:
 \begin{code}
 ret.baz = _(depends = "foo")
 \end{code}
@@ -2732,11 +2731,10 @@ This facility is relevant if your package requires that a dataset be
 in place. In that case your \texttt{ui-maker} function will have
 access to all the usual dataset-related accessors; limits and/or
 default values can then be conditioned on the characteristics of the
-data. Such conditioning is supported for parameters of type
-\texttt{int} and \texttt{scalar}, via the keys \texttt{minimum},
-\texttt{maximum} and \texttt{default}. In each case the value of the
-bundle element should be a string: a valid hansl expression which
-yields a scalar value.
+data. This is supported for parameters of type \texttt{int} and
+\texttt{scalar}, via the keys \texttt{minimum}, \texttt{maximum} and
+\texttt{default}. In each case the value of the bundle element should
+be a string: a valid hansl expression which yields a scalar value.
 
 For example, suppose that your function has a parameter \texttt{n}
 whose value should be no greater than 20 percent of the current sample
@@ -2776,10 +2774,10 @@ three ways, via the keys \texttt{no\_singleton}, \texttt{no\_const} and
 \end{itemize}
 
 To illustrate, suppose a function has a series parameter \texttt{y}
-and a list parameter \texttt{X}, which should satisfy three
-conditions: it contains more than one series, does not contain
+and a list parameter \texttt{X}, with three conditions placed on
+\texttt{X}: it contains more than one series, does not contain
 \texttt{const}, and does not contain the series selected as
-\texttt{y}. Then the following would work:
+\texttt{y}. Then the following would do the job:
 \begin{code}
 ret.X = _(no_singleton=1, no_const_ok=1, exclude="y")
 \end{code}
@@ -2787,11 +2785,42 @@ ret.X = _(no_singleton=1, no_const_ok=1, exclude="y")
 \subsection{Real-world examples}
 
 Here we give some ``live'' illustrations of \texttt{ui-maker}
-functionality, from function packages either already published or in
-development.
+functionality based on current function packages.
 
-First take a look at the following (slightly simplified) signature of
-the \texttt{gui-main} function for a package in development:
+First take \textsf{cffilt} by Jack Lucchetti, which computes the
+Christiano--Fitzgerald (CF) band-pass filter. This package requires
+time-series data. The usual application of the CF filter is to extract
+motion at business-cycle frequencies from annual, quarterly or monthly
+macroeconomic data, and in this case plausible lower and upper limits
+for the pass band (minimum and maximum number of periods) can easily
+be calculated based on the data frequency. However, the filter could
+also be used on data observed at other frequencies; then it's not so
+clear what the pass band should look like.
+
+In the \texttt{gui-main} function of \textsf{cffilt} the minimum and
+maximum periods take the form of integer parameters \texttt{pl} and
+\texttt{pu}, which are given purely notional default values of 2 and
+3, respectively. Problem: how to provide sensible default values at
+run time, when possible? The solution looks something like this:
+\begin{code}
+function bundle cf_ui_maker (void)
+    bundle ret
+    if $pd == 1 || $pd == 4 || $pd == 12
+        # annual, quarterly or monthly
+        ret.pl = _(default="ceil(1.5*$pd)")
+        ret.pu = _(default="8*$pd")
+    endif
+    return ret
+end function
+\end{code}
+Note that if the data are of non-standard frequency, the bundle
+returned by \texttt{cf\_ui\_maker} will be empty. That's OK, it just
+means the default values for \texttt{pl} and \texttt{pu} will remain
+at those set in the \texttt{gui-main} function.
+
+Second, let's take a look at the following (slightly simplified)
+signature of the \texttt{gui-main} function for a package in
+development:
 \begin{code}
 function bundle GUI_rf (\
    series y "dependent variable",
@@ -2830,7 +2859,6 @@ In this example the parameters \texttt{seed}, \texttt{n\_train} and
   candidate for membership, and whichever series is selected for the
   role of \texttt{y} should not be a candidate.
 \end{itemize}
-
 
 
 \section{Bundle-related elements}
