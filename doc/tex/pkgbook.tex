@@ -2664,12 +2664,13 @@ representation the author wishes to inflect, and each of which
 contains one or more special keys corresponding to recognized
 directives. So in outline such a function should look something like
 this:
+
 \begin{code}
 function bundle my_uimaker (void)
     bundle ret
-
+    #
     # add parameter-specific sub-bundles to @ret here
-
+    #
     return ret
 end function
 \end{code}
@@ -2685,7 +2686,7 @@ inflect, via \texttt{ui-maker} fall into three categories: conditional
 sensitivity of argument widgets, run-time determination of the
 minimum, maximum and/or default values for arguments, and restrictions
 relating to list arguments (lists of series, that is). We go into each
-of these below. For concreteness, we'll assume at first that the
+of these below. For concreteness, we'll assume that the
 \texttt{ui-maker} returns a bundle named \texttt{ret}, as in the
 example above (though you're to choose the name yourself).
 
@@ -2740,6 +2741,7 @@ For example, suppose that your function has a parameter \texttt{n}
 whose value should be no greater than 20 percent of the current sample
 size. Then you could include the following statement in your
 \texttt{ui-maker} (where \texttt{ret} is the bundle to be returned):
+
 \begin{code}
 ret.n = _(maximum="floor(0.2*$nobs)")
 \end{code}
@@ -2749,6 +2751,7 @@ could substitute
 string maxstr = "floor(0.2*$nobs)"
 ret.n = _(maximum=maxstr, default=maxstr)
 \end{code}
+
 And of course you could add a data-dependent minimum value if that's
 wanted.
 
@@ -2858,9 +2861,9 @@ ret.n_train = _(maximum=maxstr, default=defstr)
 Finally, consider the \texttt{use\_seed} and \texttt{seed}
 parameters. The Random Forest algorithm, as the name implies, employs
 randomization. Setting a known seed for the random number generator
-will give reproducible results, otherwise results are likely to differ
-somewhat on each run. The seed parameter is relevant only if the user
-wants to set a seed, so this is a case for \texttt{depends} in the
+will give reproducible results, otherwise results may differ somewhat
+on each run. The seed parameter is relevant only if the user wants to
+set a seed, so this is a case for \texttt{depends} in the
 \texttt{ui-maker}:
 \begin{code}
 ret.seed = _(depends="use_seed")
@@ -3016,7 +3019,7 @@ under the tabs \textsf{Data files}, \textsf{Dependencies}, and
   which will usually be available when \textsf{R} is installed. The
   idea is that the \textsf{R} function in question is ``registered''
   with the \textsf{R} library when your package is loaded, and can
-  thereafter be called---with the prefix ``\texttt{R:}''---as if were
+  thereafter be called---with the prefix ``\texttt{R.}''---as if were
   a native gretl function, avoiding the need for further use of a
   \texttt{foreign} block. In relation to Listing~\ref{ex:rsetup}, once
   \texttt{foo} is registered with \textsf{R}, hansl code in your
@@ -3029,13 +3032,13 @@ under the tabs \textsf{Data files}, \textsf{Dependencies}, and
   the R library''. Here we'll just note that when a package includes
   an \texttt{R-setup} function it is tested for applicability when the
   package is first loaded. If the \textsf{R} library cannot be found
-  or the \textsf{R} code that defines a function is not successfully
+  or the \textsf{R} code to define a function is not successfully
   executed, the problem should be quickly apparent.
 
   \ttusage{R-setup = foo\_setup}
 
 \begin{script}[htbp]
-  \caption{Example of an \texttt{R-setup} function}
+  \caption{Skeleton of an \texttt{R-setup} function}
   \label{ex:rsetup}
 \begin{code}
    function void foo_setup (void)
@@ -3047,6 +3050,14 @@ under the tabs \textsf{Data files}, \textsf{Dependencies}, and
    end function
 \end{code}
 \end{script}
+
+The \textsf{random\_forest} package for gretl, mentioned in
+Section~\ref{sec:ui-maker} above, uses the \texttt{R-setup} apparatus.
+A hansl function named \texttt{rf\_setup} defines an \textsf{R}
+function named \texttt{randforest}, which is then called as
+\texttt{R.randforest} elsewhere in the package code. The relevant code
+can be inspected at
+\url{https://github.com/AllinCottrell/function_packages/blob/main/rf-ng/rf_main.inp}.
 
 \end{description}
 
