@@ -351,7 +351,7 @@ static void check_depends (call_info *cinfo, int i,
 	/* see if we can split @depstr in two */
 	if (sscanf(depstr, "%31[^=]=%d", ctrl, &val) == 2) {
 	    if (val < 0) {
-		fprintf(stderr, "ui dependency: invalid value %d\n", val);
+		fprintf(stderr, "ui-maker depends: invalid value %d\n", val);
 		return;
 	    }
 	    /* OK, we got <name>=<value> */
@@ -360,7 +360,7 @@ static void check_depends (call_info *cinfo, int i,
 	/* try to find the controller widget */
 	dep = get_selector_for_param(cinfo, depname, i);
 	if (dep == NULL) {
-	    fprintf(stderr, "ui dependency: couldn't find '%s'\n", depname);
+	    fprintf(stderr, "ui-maker depends: couldn't find '%s'\n", depname);
 	    return;
 	}
 	if (GTK_IS_TOGGLE_BUTTON(dep)) {
@@ -377,16 +377,19 @@ static void check_depends (call_info *cinfo, int i,
 	    }
 	} else if (GTK_IS_COMBO_BOX(dep)) {
 	    gint a = gtk_combo_box_get_active(GTK_COMBO_BOX(dep));
+	    int jmax = widget_get_int(dep, "jmax");
 
-	    if (val >= 0) {
+	    if (val >= 1 && val <= jmax) {
+		/* convert to 0-based */
+		val -= 1;
 		gtk_widget_set_sensitive(cinfo->sels[i], a == val);
 		widget_set_int(cinfo->sels[i], "condval", val);
 		condition_on_combo(cinfo->sels[i], dep);
 	    } else {
-		fprintf(stderr, "ui dependency: bad combo-box usage '%s'\n", depstr);
+		fprintf(stderr, "ui-maker depends: bad combo-box usage '%s'\n", depstr);
 	    }
 	} else {
-	    fprintf(stderr, "ui dependency: unsupported usage '%s'\n", depstr);
+	    fprintf(stderr, "ui-maker depends: unsupported usage '%s'\n", depstr);
 	}
     }
 }
@@ -709,7 +712,15 @@ static GList *add_series_names (GList *list)
 static int allow_singleton_list (gretl_bundle *ui)
 {
     if (ui != NULL) {
-	return gretl_bundle_get_bool(ui, "singleton", 1);
+	if (gretl_bundle_has_key(ui, "singleton")) {
+	    /* backward compatibility */
+	    return gretl_bundle_get_bool(ui, "singleton", 1);
+	} else {
+	    /* revised version, 2024-03-21 */
+	    int ns = gretl_bundle_get_bool(ui, "no_singleton", 0);
+
+	    return ns == 0;
+	}
     } else {
 	return 1;
     }
@@ -1329,6 +1340,7 @@ static GtkWidget *enum_arg_selector (call_info *cinfo, int i,
     combo = gtk_combo_box_text_new();
     widget_set_int(combo, "argnum", i);
     widget_set_int(combo, "minv", minv);
+    widget_set_int(combo, "jmax", jmax);
     g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(update_enum_arg), cinfo);
     for (j=0; j<jmax; j++) {
