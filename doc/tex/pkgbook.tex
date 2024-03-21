@@ -2840,9 +2840,10 @@ Consider the parameters \texttt{y} and \texttt{X}. Obviously, we don't
 want the series that's selected as the dependent variable to be
 included in the list of independent variables. Plus, in this
 machine-learning context it doesn't make sense to have a single
-independent variable, nor to include a constant. So the
-\texttt{ui-maker} for this package (as above, let's say its return
-value is called \texttt{ret}) includes
+independent variable, nor to include a constant. So here's a case in
+point for the full form of the list-restriction mechanism described
+above.  The \texttt{ui-maker} for this package (still assuming the
+return value is called \texttt{ret}) includes
 \begin{code}
 ret.X = _(no_singleton=1, no_const=1, exclude="y")
 \end{code}
@@ -3061,8 +3062,6 @@ can be inspected at
 
 \end{description}
 
-%% FIXME add an account of R-setup around here
-
 \section{A note on gretl versioning}
 \label{sec:versioning}
 
@@ -3126,7 +3125,7 @@ a \texttt{gfn} file. Such materials fall into four main categories:
 \section{Example: \textsf{almonreg}}
 
 Here's a fairly simple real case, the \textsf{almonreg} package:
-%
+
 \begin{code}
 Archive:  almonreg.zip
   Length      Date    Time    Name
@@ -3141,7 +3140,7 @@ Archive:  almonreg.zip
 
 The relevant portion of the \textsf{almonreg} spec file, calling for
 inclusion of the PDF and gdt files, reads thus:
-%
+
 \begin{code}
 help = almonreg.pdf
 data-files = almon.gdt
@@ -3150,7 +3149,7 @@ data-files = almon.gdt
 Note that when the \textsf{almonreg} sample script opens the data file
 \texttt{almon.gdt} it must employ the \option{frompkg} option to tell
 gretl where to find the file:
-%
+
 \begin{code}
 open almon.gdt --frompkg=almonreg
 \end{code}
