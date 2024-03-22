@@ -976,39 +976,6 @@ static void showlabels (const int *list, gretlopt opt,
     pputc(prn, '\n');
 }
 
-static int outfile_redirect (PRN *prn, FILE *fp, const char *strvar,
-                             const char *fname, gretlopt opt,
-                             int *parms)
-{
-    int err;
-
-    err = print_start_redirection(prn, fp, fname, strvar);
-
-    if (!err) {
-	if (opt & OPT_Q) {
-	    parms[0] = gretl_echo_on();
-	    parms[1] = gretl_messages_on();
-	    set_gretl_echo(0);
-	    set_gretl_messages(0);
-	} else {
-	    parms[0] = parms[1] = -1;
-	}
-    }
-
-    return err;
-}
-
-static void maybe_restore_vparms (int *parms)
-{
-    if (parms[0] == 1) {
-        set_gretl_echo(1);
-    }
-    if (parms[1] == 1) {
-        set_gretl_messages(1);
-    }
-    parms[0] = parms[1] = -1;
-}
-
 static int cwd_is_workdir (void)
 {
     gchar *thisdir = g_get_current_dir();
@@ -1024,15 +991,87 @@ static int cwd_is_workdir (void)
     return ret;
 }
 
+/* elements of "outfile" state */
+static char of_name[MAXLEN];
+/* allow for 7 levels of redirection */
+#define OF_MAX 7
+static guint8 of_parms[OF_MAX+1];
+
+enum {
+    OF_ECHO = 1 << 0, /* echo was on before redirection */
+    OF_MSGS = 1 << 1, /* messages were on before redirection */
+    OF_NODP = 1 << 2  /* decimal comma was on before redirection */
+};
+
+static int outfile_redirect (PRN *prn, FILE *fp, const char *strvar,
+                             const char *fname, gretlopt opt)
+{
+    int r = print_redirection_level(prn);
+    int err;
+
+    fprintf(stderr, "outfile_redirect: incoming rlevel %d\n",
+	    print_redirection_level(prn));
+
+    err = print_start_redirection(prn, fp, fname, strvar);
+
+    if (!err) {
+	of_parms[r] = 0;
+	if (opt & OPT_Q) {
+	    guint8 eo = gretl_echo_on();
+	    guint8 mo = gretl_messages_on();
+
+	    if (eo || mo) {
+		if (eo) {
+		    of_parms[r] |= OF_ECHO;
+		}
+		if (mo) {
+		    of_parms[r] |= OF_MSGS;
+		}
+		set_gretl_echo(0);
+		set_gretl_messages(0);
+	    }
+	}
+	if (opt & OPT_D) {
+	    int fd = libset_get_bool(FORCE_DECPOINT);
+	    int dp = get_local_decpoint();
+
+	    if (!fd && dp == ',') {
+		of_parms[r] |= OF_NODP;
+		libset_set_bool(FORCE_DECPOINT, 1);
+	    }
+	}
+    }
+
+    return err;
+}
+
+static void maybe_restore_outfile_parms (PRN *prn)
+{
+    int r = print_redirection_level(prn);
+
+    if (of_parms[r] & OF_ECHO) {
+        set_gretl_echo(1);
+    }
+    if (of_parms[r] & OF_MSGS) {
+        set_gretl_messages(1);
+    }
+    if (of_parms[r] & OF_NODP) {
+	libset_set_bool(FORCE_DECPOINT, 0);
+    }
+    of_parms[r] = 0;
+}
+
 static int redirection_ok (PRN *prn)
 {
+    int r = print_redirection_level(prn);
     int fd = gretl_function_depth();
 
-    if (fd == 0) {
+    if ((fd == 0 && r > 0) || print_redirected_at_level(prn, fd)) {
+	gretl_errmsg_set(_("Output has already been redirected"));
         return 0;
-    } else if (print_redirected_at_level(prn, fd)) {
-        /* we may want to lift this ban in future? */
-        return 0;
+    } else if (r == OF_MAX) {
+	gretl_errmsg_set(_("Output redirection: maximum depth reached"));
+	return 0;
     } else {
         return 1;
     }
@@ -1065,23 +1104,23 @@ int check_stringvar_name (const char *name, int allow_new,
 
 #define TMPFILE_DEBUG 0
 
-/* We come here in the --tempfile and --buffer cases of
-   "outfile". The @strvar argument, which names a string
-   variable, plays a different role in each case:
+/* We come here in the --tempfile and --buffer cases of "outfile". The
+   @strvar argument, which names a string variable, plays a different
+   role in each case:
 
-   * With --tempfile (OPT_T) @strvar should hold the name of
-   the temporary file to be created.
+   * With --tempfile (OPT_T) @strvar should hold the name of the
+   temporary file to be created.
 
-   * With --buffer (OPT_B) @strvar should hold the name of
-   the string variable that gets the _content_ of the tempfile
-   when the restriction ends.
+   * With --buffer (OPT_B) @strvar should hold the name of the string
+   variable that gets the _content_ of the tempfile when the
+   restriction ends.
 
-   We accomplish the former effect here, but arrange for the
-   latter effect by passing @strvar to outfile_redirect().
+   We accomplish the tempfile effect here, but arrange for the buffer
+   effect by passing @strvar to outfile_redirect().
 */
 
 static int redirect_to_tempfile (const char *strvar, PRN *prn,
-                                 gretlopt opt, int *vparms)
+                                 gretlopt opt)
 {
     gchar *tempname = NULL;
     FILE *fp = NULL;
@@ -1116,10 +1155,10 @@ static int redirect_to_tempfile (const char *strvar, PRN *prn,
         err = E_FOPEN;
     } else if (opt & OPT_B) {
 	/* the buffer variant */
-        err = outfile_redirect(prn, fp, strvar, tempname, opt, vparms);
+        err = outfile_redirect(prn, fp, strvar, tempname, opt);
     } else {
 	/* the explicit tempfile variant */
-        err = outfile_redirect(prn, fp, NULL, tempname, opt, vparms);
+        err = outfile_redirect(prn, fp, NULL, tempname, opt);
     }
     if (!err && (opt & OPT_T)) {
         /* write @tempname into @strvar */
@@ -1134,117 +1173,84 @@ static int redirect_to_tempfile (const char *strvar, PRN *prn,
     return err;
 }
 
-static const char *maybe_get_string_name (gretlopt opt)
-{
-    if (opt & (OPT_B | OPT_T)) {
-        gretlopt active = (opt & OPT_T)? OPT_T : OPT_B;
+/* Note, 2024-03-22: only one element of the old outfile syntax
+   (in place prior to gretl 2018d) is still supported, namely
 
-        return get_optval_string(OUTFILE, active);
-    } else {
-        return NULL;
-    }
-}
+   outfile <strname> --buffer
+
+   where the specified string is created automatically if it's
+   not already present. This is found in some older function
+   packages.
+*/
 
 static int
 do_outfile_command (gretlopt opt, const char *fname,
                     const DATASET *dset, PRN *prn)
 {
-    static char savename[MAXLEN];
-    static int vparms[2];
     const char *strvar = NULL;
-    const char *check = NULL;
-    int rlevel = 0;
     int err = 0;
 
     if (prn == NULL) {
         return 0;
     }
 
-    /* Make writing the default in the absence of a contrary
-       option, either OPT_A (--append) or the internal OPT_C.
-    */
-    if (!(opt & (OPT_A | OPT_C))) {
-        opt |= OPT_W;
-    }
-
-    /* allow at most one of --append, --buffer, --tempfile, --close */
-    err = incompatible_options(opt, (OPT_A | OPT_B | OPT_T | OPT_C));
+    /* options: allow at most one of --append, --buffer, --tempfile */
+    err = incompatible_options(opt, (OPT_A | OPT_B | OPT_T));
     if (err) {
         return err;
     }
 
-    rlevel = print_redirection_level(prn);
-
-    if (opt & OPT_C) {
-        /* command to close outfile */
-        if (rlevel == 0) {
-            pputs(prn, _("Output is not currently diverted to file\n"));
-            err = 1;
-        } else {
-            print_end_redirection(prn);
-            maybe_restore_vparms(vparms);
-            if (gretl_messages_on() && *savename != '\0') {
-                pprintf(prn, _("Closed output file '%s'\n"), savename);
-            }
-        }
-        return err; /* handled */
-    }
-
-    /* pre-check: in the buffer or tempfile cases, did we
-       get a string-name attached to the option flag?
-    */
-    strvar = maybe_get_string_name(opt);
-    check = strvar != NULL ? strvar : fname;
-
-    /* below: diverting output to a file or buffer: first
-       check that this is feasible */
-
-    if (check == NULL || *check == '\0') {
-        return E_ARGS;
-    } else if (rlevel > 0 && !redirection_ok(prn)) {
-        gretl_errmsg_sprintf(_("Output is already diverted to '%s'"),
-                             savename);
+    /* check for invalid nesting of "outfile", or hitting max depth */
+    if (!redirection_ok(prn)) {
         return 1;
     }
 
-    /* Handle the cases where we're going via a temporary
-       file (and the @fname that was passed in is really the
-       name of a string variable).
-    */
     if (opt & (OPT_B | OPT_T)) {
-        int compat = 0;
+	int compat = 0;
 
-        if (strvar == NULL) {
-            /* backward compatibility */
-            strvar = fname;
-            compat = 1;
-        }
-        err = check_stringvar_name(strvar, compat, dset);
+	/* handle the --buffer and --tempfile cases */
+	if (opt & OPT_B) {
+	    strvar = get_optval_string(OUTFILE, OPT_B);
+	    if (strvar == NULL) {
+		/* backward compatibility */
+		strvar = fname;
+		compat = 1;
+	    }
+	} else {
+	    strvar = get_optval_string(OUTFILE, OPT_T);
+	}
+	if (strvar == NULL) {
+	    return E_ARGS;
+	}
+	err = check_stringvar_name(strvar, compat, dset);
         if (!err) {
-            err = redirect_to_tempfile(strvar, prn, opt, vparms);
+            err = redirect_to_tempfile(strvar, prn, opt);
         }
-        *savename = '\0';
+        *of_name = '\0';
         return err; /* we're done */
     }
 
-    /* Handle the remaining file-based cases */
+    /* Handle the remaining cases, all of which need @fname, either
+       a genuine filename or a dummy constant such as "stderr".
+    */
+
+    if (fname == NULL || *fname == '\0') {
+	return E_ARGS;
+    }
 
     if (!strcmp(fname, "null")) {
         if (gretl_messages_on()) {
             pputs(prn, _("Now discarding output\n"));
         }
-        err = outfile_redirect(prn, NULL, NULL, "null", opt, vparms);
-        *savename = '\0';
+        err = outfile_redirect(prn, NULL, NULL, fname, opt);
+        *of_name = '\0';
     } else if (!strcmp(fname, "stderr")) {
-        err = outfile_redirect(prn, stderr, NULL, "stderr", opt, vparms);
-        *savename = '\0';
+        err = outfile_redirect(prn, stderr, NULL, fname, opt);
+        *of_name = '\0';
     } else if (!strcmp(fname, "stdout")) {
-        err = outfile_redirect(prn, stdout, NULL, "stdout", opt, vparms);
-        *savename = '\0';
+        err = outfile_redirect(prn, stdout, NULL, fname, opt);
+        *of_name = '\0';
     } else {
-        /* Should the stream be opened in binary mode on Windows?
-	   2020-12-12: it seems this may be better.
-	*/
         char outname[FILENAME_MAX];
         const char *targ;
         FILE *fp;
@@ -1253,13 +1259,12 @@ do_outfile_command (gretlopt opt, const char *fname,
         strcpy(outname, fname);
         gretl_maybe_prepend_dir(outname);
         if (opt & OPT_A) {
-            /* appending */
+            /* appending to a file */
             fp = gretl_fopen(outname, "ab");
         } else {
-            /* writing */
+            /* (over-)writing a file */
             fp = gretl_fopen(outname, "wb");
         }
-
         if (fp == NULL) {
             pprintf(prn, _("Couldn't open %s for writing\n"), outname);
             return E_FOPEN;
@@ -1277,13 +1282,32 @@ do_outfile_command (gretlopt opt, const char *fname,
             }
         }
 
-        err = outfile_redirect(prn, fp, NULL, targ, opt, vparms);
+        err = outfile_redirect(prn, fp, NULL, targ, opt);
         if (err) {
             fclose(fp);
             remove(outname);
         } else {
-            strcpy(savename, targ);
+            strcpy(of_name, targ);
         }
+    }
+
+    return err;
+}
+
+static int close_outfile (PRN *prn)
+{
+    int rlevel = print_redirection_level(prn);
+    int err = 0;
+
+    if (rlevel == 0) {
+	pputs(prn, _("Output is not currently diverted to file\n"));
+	err = 1;
+    } else {
+	print_end_redirection(prn);
+	maybe_restore_outfile_parms(prn);
+	if (gretl_messages_on() && *of_name != '\0') {
+	    pprintf(prn, _("Closed output file '%s'\n"), of_name);
+	}
     }
 
     return err;
@@ -4174,7 +4198,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         } else if (!strcmp(cmd->param, "plot")) {
             err = execute_plot_call(cmd, dset, line, prn);
         } else if (!strcmp(cmd->param, "outfile")) {
-            err = do_outfile_command(OPT_C, NULL, NULL, prn);
+            err = close_outfile(prn);
         } else if (!strcmp(cmd->param, "gpbuild")) {
             err = execute_gridplot_call(cmd, prn);
         } else {
