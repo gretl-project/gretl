@@ -2252,13 +2252,14 @@ int pop_program_state (void)
     if (n_states < 2) {
 	err = 1;
     } else {
-	int fdp = state->flags & FORCE_DECPOINT;
+	int fdp0, fdp = state->flags & FORCE_DECPOINT;
 
-	state_idx--;
-	state = g_ptr_array_index(state_stack, state_idx);
+	/* restore prior stack level */
+	state = g_ptr_array_index(state_stack, --state_idx);
 
-	if (fdp && !(state->flags & FORCE_DECPOINT)) {
-	    libset_set_decpoint(0);
+	fdp0 = state->flags & FORCE_DECPOINT;
+	if (fdp0 != fdp) {
+	    libset_set_decpoint(fdp0);
 	}
     }
 
