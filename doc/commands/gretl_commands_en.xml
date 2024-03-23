@@ -10945,6 +10945,10 @@
 	  <flag>--tempfile</flag>
 	  <effect>see below</effect>
         </option>
+        <option>
+	  <flag>--decpoint</flag>
+	  <effect>see below</effect>
+        </option>
       </options>
     </usage>
 
@@ -11070,6 +11074,15 @@
 	except that when redirection is ended the original values of
 	the <lit>echo</lit> and <lit>messages</lit> variables are
 	restored. This option is available in all cases.
+      </para>
+
+      <subhead>Decimal character</subhead>
+      <para>
+	The effect of the <opt>decpoint</opt> option is ensure that
+	the decimal point character (as opposed to comma) is in force
+	while output is redirected. When the <lit>outfile</lit> block
+	ends the decimal character reverts to whatever was in place
+	before it.
       </para>
 
       <subhead>Levels of redirection</subhead>
