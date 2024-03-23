@@ -37,6 +37,7 @@
 #include "gretl_foreign.h"
 #include "gretl_mdconv.h"
 #include "gen_public.h"
+#include "addons_utils.h"
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
