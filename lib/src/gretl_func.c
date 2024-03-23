@@ -6282,7 +6282,12 @@ static void real_bundle_package_info (const fnpkg *pkg,
 
     gretl_bundle_set_string(b, "name", pkg->name);
     gretl_bundle_set_string(b, "author", pkg->author);
-    gretl_bundle_set_string(b, "version", pkg->version);
+    if (is_gretl_addon(pkg->name)) {
+	/* this is backward incompatible for regular gfns */
+	gretl_bundle_set_string(b, "version", pkg->version);
+    } else {
+	gretl_bundle_set_scalar(b, "version", dot_atof(pkg->version));
+    }
     gretl_bundle_set_string(b, "date", pkg->date);
     if (pkg->email != NULL && *pkg->email != '\0') {
         gretl_bundle_set_string(b, "email", pkg->email);
