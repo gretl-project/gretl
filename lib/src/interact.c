@@ -1009,9 +1009,6 @@ static int outfile_redirect (PRN *prn, FILE *fp, const char *strvar,
     int r = print_redirection_level(prn);
     int err;
 
-    fprintf(stderr, "outfile_redirect: incoming rlevel %d\n",
-	    print_redirection_level(prn));
-
     err = print_start_redirection(prn, fp, fname, strvar);
 
     if (!err) {
