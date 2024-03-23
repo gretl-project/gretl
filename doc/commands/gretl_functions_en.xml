@@ -6748,7 +6748,7 @@
 	<para>
 	  If the optional argument <argname>&amp;logdet</argname> is
 	  present, the corresponding scalar will contain on successful
-	  exit the log determininant of <argname>A</argname>. This may
+	  exit the log determinant of <argname>A</argname>. This may
 	  be convenient to have in some cases, for example in the
 	  context of the evaluation of a Gaussian log-likelihood,
 	  because the log determinant is a by-product of the inversion

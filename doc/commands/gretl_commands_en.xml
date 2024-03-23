@@ -9572,7 +9572,7 @@
 	modeltab --output="myfile.tex" --complete
       </code>
       <para>
-	The <opt>options=</opt> flag, which rwquires the name of a
+	The <opt>options=</opt> flag, which requires the name of a
 	gretl bundle, can be used to control certain aspects of the
 	formatting of the model table. The following keys are
 	recognized:
@@ -15817,7 +15817,7 @@
         </option>
         <option>
 	  <flag>--weight</flag>
-	  <optparm>wvar</optparm>
+	  <optparm>wtvar</optparm>
 	  <effect>weighting variable</effect>
         </option>
         <option>
