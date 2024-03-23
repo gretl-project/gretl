@@ -1859,3 +1859,37 @@ gretl_matrix *inverse_wishart_sequence (const gretl_matrix *S,
 
     return Seq;
 }
+
+char *gretl_rand_hex_string (int len, int *err)
+{
+    const char *src = "0123456789abcdef";
+    int *ivals = NULL;
+    char *ret = NULL;
+    int i;
+
+    if (len < 0) {
+	*err = E_INVARG;
+	return NULL;
+    } else if (len == 0) {
+	return gretl_strdup("");
+    }
+
+    ivals = malloc(len * sizeof *ivals);
+    ret = malloc(len + 1);
+
+    if (ivals == NULL || ret == NULL) {
+	*err = E_ALLOC;
+	return ret;
+    }
+
+    real_gretl_rand_int_minmax(ivals, len, 0, 15, 0);
+
+    for (i=0; i<len; i++) {
+	ret[i] = src[ivals[i]];
+    }
+
+    ret[i] = '\0';
+    free(ivals);
+
+    return ret;
+}

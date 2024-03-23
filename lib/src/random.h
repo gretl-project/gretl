@@ -111,5 +111,7 @@ int gretl_rand_set_dcmt (int s);
 
 int gretl_rand_get_dcmt (void);
 
+char *gretl_rand_hex_string (int len, int *err);
+
 #endif /* RANDOM_H */
 

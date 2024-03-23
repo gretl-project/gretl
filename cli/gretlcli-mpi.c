@@ -68,7 +68,8 @@ static int cli_saved_object_action (const char *line,
                                     PRN *prn);
 
 static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
-                          double *scriptval, int *dcmt, char *fname)
+                          double *scriptval, char *mykey, int *dcmt,
+			  char *fname)
 {
     char **argv;
     int argc, gotfile = 0;
@@ -99,6 +100,8 @@ static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
             *dcmt = 0;
         } else if (!strncmp(s, "--scriptopt=", 12)) {
             *scriptval = atof(s + 12);
+	} else if (!strncmp(s, "--key=", 6)) {
+	    sscanf(s + 6, "%40[^ ]", mykey);
         } else if (*s == '-') {
             /* not a valid option */
             err = E_DATA;
@@ -372,6 +375,7 @@ int main (int argc, char *argv[])
     char filearg[MAXLEN];
     char runfile[MAXLEN];
     double scriptval = NADBL;
+    char mykey[42] = {0};
     gretlopt progopt = 0;
     int use_dcmt = 1;
     CMD cmd;
@@ -402,7 +406,7 @@ int main (int argc, char *argv[])
         usage(1);
     } else {
         err = parse_options(&argc, &argv, &progopt, &scriptval,
-                            &use_dcmt, filearg);
+                            mykey, &use_dcmt, filearg);
 
         if (err) {
             /* bad option, or missing filename */
@@ -463,6 +467,10 @@ int main (int argc, char *argv[])
 
     if (!na(scriptval)) {
         gretl_scalar_add("scriptopt", scriptval);
+    }
+    if (mykey[0] != '\0') {
+	user_var_add_or_replace("mykey", GRETL_TYPE_STRING,
+				gretl_strdup(mykey));
     }
 
     runit = 0;

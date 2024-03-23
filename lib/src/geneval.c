@@ -8100,6 +8100,8 @@ static NODE *int_to_string_func (NODE *n, int f, parser *p)
                 } else {
                     p->err = E_INVARG;
                 }
+	    } else if (f == F_RANDSTR) {
+		ret->v.str = gretl_rand_hex_string(i, &p->err);
             } else {
                 p->err = E_DATA;
             }
@@ -19016,6 +19018,13 @@ static NODE *eval (NODE *t, parser *p)
             ret = int_to_string_func(l, t->t, p);
         } else if (l->t == LIST) {
             ret = list_to_string_func(l, t->t, p);
+        } else {
+            node_type_error(t->t, 0, NUM, l, p);
+        }
+        break;
+    case F_RANDSTR:
+        if (scalar_node(l)) {
+            ret = int_to_string_func(l, t->t, p);
         } else {
             node_type_error(t->t, 0, NUM, l, p);
         }

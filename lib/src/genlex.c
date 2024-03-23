@@ -496,6 +496,7 @@ struct str_table funcs[] = {
     { F_CNAMEGET, "cnameget" },
     { F_RNAMEGET, "rnameget" },
     { F_RANDINT,  "randint" },
+    { F_RANDSTR,  "randstr" },
     { F_NADARWAT, "nadarwat" },   /* Nadaraya-Watson */
     { F_SIMANN,   "simann" },     /* simulated annealing */
     { F_LOESS,    "loess" },

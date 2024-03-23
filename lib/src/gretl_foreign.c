@@ -459,6 +459,11 @@ static int win32_run_mpi_sync (gretlopt opt, PRN *prn)
         if (opt & OPT_Q) {
             g_string_append(cmd, " --quiet");
         }
+        if (opt & OPT_K) {
+	    const char *s = optval_string(MPI, OPT_K);
+
+            g_string_append_printf(cmd, " --key=\"%s\"", s);
+        }
         g_string_append_printf(cmd, " \"%s\"", get_mpi_scriptname());
 
         if (opt & OPT_V) {
@@ -528,8 +533,9 @@ static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
     if (!err) {
         const char *mpiexec = gretl_mpiexec();
         gchar *mpiprog = gretl_mpi_binary();
+	gchar *keystr = NULL;
         const char *hostsopt = NULL;
-        char *argv[13] = {0};
+        char *argv[14] = {0};
         char npnum[8] = {0};
         int nproc, i = 0;
 
@@ -579,6 +585,12 @@ static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
         if (opt & OPT_Q) {
             argv[i++] = "--quiet";
         }
+        if (opt & OPT_K) {
+	    const char *s = get_optval_string(MPI, OPT_K);
+
+	    keystr = g_strdup_printf("--key=%s", s);
+            argv[i++] = keystr;
+        }
         argv[i++] = (char *) get_mpi_scriptname();
         argv[i] = NULL;
 
@@ -592,6 +604,7 @@ static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
         err = lib_run_prog_sync(argv, opt, LANG_MPI, prn);
 #endif
         g_free(mpiprog);
+	g_free(keystr);
     }
 
     return err;
