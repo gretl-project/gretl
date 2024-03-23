@@ -15500,6 +15500,14 @@ static NODE *eval_feval (int f, NODE *l, NODE *r, parser *p)
         if (!p->err) {
             ret = eval(&tmp, p);
         }
+	if (tmp.aux != NULL) {
+	    /* transfer guardianship to the parent of @l */
+	    if (l->parent->aux != NULL) {
+		free_node(l->parent->aux, p);
+	    }
+	    l->parent->aux = tmp.aux;
+	    tmp.aux = NULL;
+	}
     }
 
     if (!p->err && fid == 0) {
@@ -17615,10 +17623,6 @@ static NODE *eval (NODE *t, parser *p)
         }
         ret = scalar_postfix_node(t, p);
         break;
-    case FARGS:
-        fprintf(stderr, "eval: FARGS: parent %s\n", getsymb(t->parent->t));
-        ret = t;
-        break;
     case B_ADD:
     case B_SUB:
     case B_MUL:
@@ -18780,6 +18784,7 @@ static NODE *eval (NODE *t, parser *p)
             fprintf(stderr, "INTERNAL ERROR: @multi is NULL\n");
             p->err = E_DATA;
         } else if (t->t == F_FEVAL) {
+	    multi->parent = t;
             ret = eval_feval(t->t, multi, NULL, p);
         } else {
             ret = eval_nargs_func(t, multi, p);
@@ -18787,6 +18792,7 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_FEVALB:
 	if (l->t == STR && r->t == BUNDLE) {
+	    l->parent = t;
 	    ret = eval_feval(t->t, l, r, p);
 	} else {
 	    p->err = E_TYPES;
@@ -19215,7 +19221,7 @@ static NODE *eval (NODE *t, parser *p)
 
     if (!p->err && ret != NULL && ret != t && is_aux_node(ret)) {
         if ((t->t == F_FEVAL || t->t == F_FEVALB) && ret->refcount > 0) {
-            ; /* don't attach, it belongs elsewhere! */
+            ; /* special case: don't attach here */
         } else {
             p->err = attach_aux_node(t, ret, p);
         }

@@ -7,15 +7,14 @@
 #include "gretl_func.h"
 #include "monte_carlo.h"
 
-/* As of 2024-03-18, the functions feval() and fevalb() both leak
-   memory if we "compile" them. This is a bit mysterious, but
-   understandable in principle given the complexity of the loop-back
-   into eval() that these functions involve. So long as we haven't
-   come up with a fix for this issue, we'll just block their
-   compilation via the following define (referenced in cmd_private.c
-   and monte_carlo.c).
+/* As of 2024-03-23, compilation seems to be working correctly for the
+   special functions feval() and fevalb(), which had previously been
+   leaking memory when compiled (though not otherwise). For now we're
+   leaving this define here in case of trouble. The symbol
+   COMPILE_FEVAL is referenced in cmd_private.c and monte_carlo.c:
+   setting it to 0 will prevent compilation in both contexts.
 */
-#define COMPILE_FEVAL 0
+#define COMPILE_FEVAL 1
 
 typedef enum {
     CMD_CCMT    = 1 << 0, /* line is in a C-style multi-line comment */
@@ -52,7 +51,7 @@ struct CMD_ {
     int *list;       /* list of series and/or control integers */
     int *auxlist;    /* needed for "gappy" lag lists */
     char savename[MAXSAVENAME]; /* for object-saving mechanism */
-}; 
+};
 
 typedef int (*EXEC_CALLBACK) (ExecState *, void *, GretlObjType type);
 
@@ -103,7 +102,7 @@ void gretl_exec_state_init (ExecState *s,
 			    ExecFlags flags,
 			    char *line,
 			    CMD *cmd,
-			    MODEL *model, 
+			    MODEL *model,
 			    PRN *prn);
 
 void function_state_init (CMD *cmd, ExecState *state, int *indent0);
