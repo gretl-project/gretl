@@ -6,6 +6,8 @@
 \usepackage{booktabs}
 \usepackage{multirow}
 \usepackage{fancyvrb}
+\usepackage{extra}
+\usepackage[pdftex,hyperfootnotes=false]{hyperref}
 
 \DefineVerbatimEnvironment%
 {code}{Verbatim}
@@ -14,12 +16,19 @@
 \newcommand{\noun}[1]{\textsc{#1}}
 \newcommand{\dollar}[1]{\texttt{\$#1}}
 
-%% Because html converters don't know tabularnewline
-\providecommand{\tabularnewline}{\\}
-
 \usepackage{babel}
 
-\include{pkgdoc}
+\definecolor{steel}{rgb}{0.03,0.20,0.45}
+
+\hypersetup{pdftitle={The extra package},
+            pdfauthor={The gretl team},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            citecolor=steel,
+            bookmarksnumbered=true,
+            plainpages=false
+          }
 
 \newcommand{\ArgRet}[2]{%
   {\it Arguments}: {#1}%
@@ -35,9 +44,9 @@
 \title{The extra package\\
 (a collection of various convenience functions for hansl programming) }
 
-\date{March 2024, release 2024a}
+\date{March 2024}
 
-\author{The \noun{gretl} team\thanks{Currently co-ordinated by Sven
+\author{The \noun{gretl} team\thanks{Currently coordinated by Sven
 Schreiber.}}
 
 \maketitle
@@ -85,46 +94,49 @@ the number of elements of $x$ is large.
 \subsection{drawbootres}
 
 \ArgRet{\texttt{const matrix U}, \texttt{bundle bparams} (optional),
-\texttt{int bootcode} (optional)}{matrix}
-Construct a new draw of innovations (residuals) for bootstrapping, based on the
-input matrix \texttt{U}, interpreted to be T-by-K (observations in rows). The
-return value has the same shape. \texttt{U} can be original residuals or some
-pre-processed input -- the pre-processing is not done here to avoid doing it
-repeatedly during the bootstrap.
+  \texttt{int bootcode} (optional)}{matrix} Construct a new draw of
+innovations (residuals) for bootstrapping, based on the input matrix
+\texttt{U}, interpreted to be T-by-K (observations in rows). The
+return value has the same shape. \texttt{U} can be original residuals
+or some pre-processed input -- the pre-processing is not done here to
+avoid doing it repeatedly during the bootstrap.
 
-Two ways of choosing the bootstrap type are supported: Either by adding a
-string element to the \texttt{bparams} bundle under the key 'btypestr', or by
-using the associated number code in the \texttt{bootcode} argument, where the
-bundle-based choice takes precedence. Both ways are optional, the general
-default is plain resampling. Here is a brief description of the meanings of the
-codes (see also the SVAR addon's documentation):
+Two ways of choosing the bootstrap type are supported: Either by
+adding a string element to the \texttt{bparams} bundle under the key
+`btypestr', or by using the associated number code in the
+\texttt{bootcode} argument, where the bundle-based choice takes
+precedence. Both ways are optional, the general default is plain
+resampling. Here is a brief description of the meanings of the codes
+(see also the SVAR addon's documentation):
 
 \begin{enumerate}
-  \item plain resampling -- A standard draw with replacement based on
-    libgretl's \texttt{resample} function; so if this is all that's needed, you
-    might be better off using \texttt{resample} directly. (Allowed string code:
-    any word starting with "re", e.g. "resampling".)
-
-  \item wild, Normal -- A draw for the wild bootstrapping scheme, where each
-    row of the input matrix is scaled randomly according to Gaussian noise.
-    (string code "wildN" or simply "wild")
-  \item wild, Rademacher -- Here the signs of all rows are flipped randomly. 
-    (string code "wildR") 
-  \item wild, Mammen -- Here the multiplicative factors for the rows are the
-    ones proposed by Mammen (see the SVAR documenation; string code "wildM").
-  \item moving blocks -- Provides a draw of moving blocks of the input, see 
-    for example Brüggemann, Jentsch \& Trenkler (2016; Journal of Econometrics,
-    vol. 191, issue 1, 69-85). By default a block length of 10\% of the input 
-    length \texttt{T} is used (rounded, at least 2). The block length can be
-    overridden by supplying the 'moveblocklen' scalar element inside the
-    \texttt{bparams} bundle argument. (Allowed string codes: any word starting
-    with "mov", or "MBB".)
+\item plain resampling -- A standard draw with replacement based on
+  libgretl's \texttt{resample} function; so if this is all that's
+  needed, you might be better off using \texttt{resample}
+  directly. (Allowed string code: any word starting with ``re'',
+  e.g. ``resampling''.)
+\item wild, Normal -- A draw for the wild bootstrapping scheme, where
+  each row of the input matrix is scaled randomly according to
+  Gaussian noise.  (string code ``wildN'' or simply ``wild'')
+\item wild, Rademacher -- Here the signs of all rows are flipped
+  randomly.  (string code ``wildR'')
+\item wild, Mammen -- Here the multiplicative factors for the rows are
+  the ones proposed by Mammen (see the SVAR documenation; string code
+  ``wildM'').
+\item moving blocks -- Provides a draw of moving blocks of the input,
+  see for example Brüggemann, Jentsch \& Trenkler (2016; Journal of
+  Econometrics, vol. 191, issue 1, 69-85). By default a block length
+  of 10\% of the input length \texttt{T} is used (rounded, at least
+  2). The block length can be overridden by supplying the
+  `moveblocklen' scalar element inside the \texttt{bparams} bundle
+  argument. (Allowed string codes: any word starting with ``mov'', or
+  ``MBB''.)
 
 \end{enumerate}
 
-Note that this function is included in extra's version 1.7 and made public for
-convenience of potential users, but it may be moved to another separate addon
-in the future. 
+Note that this function is included in extra's version 1.7 and made
+public for convenience of potential users, but it may be moved to
+another separate addon in the future.
 
 
 \subsection{drill}
@@ -132,34 +144,36 @@ in the future.
 \ArgRet{\texttt{matrices} array, \texttt{matrix rowspec} (optional),
   \texttt{matrix colspec} (optional)}{matrix}
 
-This function "drills through" a matrix array and returns a matrix;
+This function ``drills through'' a matrix array and returns a matrix;
 for example, \cmd{drill(x, 2, 3)} returns a vector with the
 \texttt{[2,3]} elements of all matrices in the \texttt{x}
-array. Omitting one of rowspec, colspec or entering "0" means to
+array. Omitting one of rowspec, colspec or entering ``0'' means to
 select all rows or columns respectively.  (Of course at least one of
 rowspec, colspec must be specified.)
 
-\emph{Nota bene}: all matrices in the array must be of the same dimensions.
+\emph{Nota bene}: all matrices in the array must be of the same
+dimensions.
 
 \subsection{duplicate}
 
 \ArgRet{\texttt{matrix vechA}}{matrix}
 
 The input is a vector assumed to come from an operation like vech(A).
-Returns vec(A), which is the result of pre-multiplying vech(A) with the
-"duplication" matrix $D_m$. If vechA has several columns, each column is
-treated separately as described above (and the results stacked side-by-side).
+Returns vec(A), which is the result of pre-multiplying vech(A) with
+the ``duplication'' matrix $D_m$. If vechA has several columns, each
+column is treated separately as described above (and the results
+stacked side-by-side).
 
 \subsection{eliminate}
 
 \ArgRet{\texttt{matrix vecA}}{matrix}
 
-Each column of the input vecA is assumed to come from the operation vec(A)
-on a square matrix, thus rows(vecA) must be a square number.
-Returns vech(A), which is the result of pre-multiplying vec(A) with the
-"elimination" matrix $L_m$.
-If vecA has several columns, each column is
-treated separately as described above (and the results stacked side-by-side).
+Each column of the input vecA is assumed to come from the operation
+vec(A) on a square matrix, thus rows(vecA) must be a square number.
+Returns vech(A), which is the result of pre-multiplying vec(A) with
+the ``elimination'' matrix $L_m$.  If vecA has several columns, each
+column is treated separately as described above (and the results
+stacked side-by-side).
 
 \subsection{mat2latex}
 
@@ -186,7 +200,7 @@ tweaked by setting appropriate keys in the \texttt{opts} bundle:
 \begin{description}
 \item[format]: a string, to be used for aligning columns. The default
   is to have the first column left-aligned, and the subsequent ones
-  centered, as in \texttt{"lccc"}.
+  centered, as in ``texttt{lccc}''.
 \item[decimals] The number of decimals to use (default=3).
 \item[nacode] The string to use for missing entries (default: empty).
 \item[rnames] A string array for row headings.
@@ -229,23 +243,21 @@ TOTAL & 95	 & 5	 & 100 \\
 \ArgRet{\texttt{matrix} pointer \texttt{{*}m}, \texttt{scalar epsilon}
 (optional)}{scalar}
 
-Forces the matrix $m$ into the positive semi-definite region. Algorithm
-ported from ``DomPazz'' in Stackoverflow,
-apparently mimicking the nearPD() function in R. Because of re-scaling
-(to correlation matrix), the \texttt{epsilon} criterion value should
+Forces the matrix $m$ into the positive semi-definite
+region. Algorithm ported from ``DomPazz'' in Stackoverflow, apparently
+mimicking the nearPD() function in R. Because of re-scaling (to
+correlation matrix), the \texttt{epsilon} criterion value should
 implicitly apply to the correlation-based eigenvalues. The return
 value 0 or 1 indicates whether \texttt{m} was altered or not.
 
 \subsection{qformvech}
 
-\ArgRet{\texttt{matrix Xt}}{matrix}
-This function relies on the relation
-$vech(X'AX) = P (X \otimes X)' Q \; vech(A) = G \; vech(A)$,
-where $P$ and $Q$ are certain interim results.
-It takes the matrix $X'$ and returns the matrix $G$ such that the right-hand
-side of the equalities becomes feasible, which should be
-numerically more efficient than the direct application
-of the left-hand side.
+\ArgRet{\texttt{matrix Xt}}{matrix} This function relies on the
+relation $vech(X'AX) = P (X \otimes X)' Q \; vech(A) = G \; vech(A)$,
+where $P$ and $Q$ are certain interim results.  It takes the matrix
+$X'$ and returns the matrix $G$ such that the right-hand side of the
+equalities becomes feasible, which should be numerically more
+efficient than the direct application of the left-hand side.
 
 \subsection{zeroifclose}
 
@@ -268,33 +280,47 @@ threshold can be chosen.
 
 \ArgRet{\texttt{string key} (optional)}{bundle}
 
-Generates  bundle containing libset settings, either a specific one
-if the optional \texttt{key} parameter is supplied, or all of them otherwise.
+The returned bundle contains information on either one or (almost) all
+of the gretl state variables that can be configured via the
+\texttt{set} command (``libset variables''). The bundle members are
+named for the keys of the libset variables and their values are either
+strings or scalars.
+
+If no argument is given, all libset variable values are represented,
+with the exception of a few that take the form of matrices
+(\texttt{initvals}, \texttt{initcurv}), and a few others of no
+interest from a programming point of view (\texttt{echo},
+\texttt{messages}, \texttt{verbose}). If an argument is given, it
+should be the key for a particular libset variable, in which case the
+returned bundle has a single element.
 
 \subsection{multi\_instrings}
 
 \ArgRet{\texttt{strings lookinhere}, \texttt{strings tofind}}{matrix}
 
-Returns in a column vector the positions (indices) in `lookinhere' where any of the
-strings from `tofind' occur. If there are duplicates in `tofind' then the output
-may also contain duplicate indices. Use \cmd{uniq()} or \cmd{values()} afterwards if needed.
+Returns in a column vector the positions (indices) in `lookinhere'
+where any of the strings from `tofind' occur. If there are duplicates
+in `tofind' then the output may also contain duplicate indices. Use
+\cmd{uniq()} or \cmd{values()} afterwards if needed.
 
 \subsection{onemode}
 
 \ArgRet{\texttt{matrix v}}{matrix}
 
-Finds the mode of the empirical distribution of the input data.
-If that is multi-modal, details of internal computer arithmetic can
-influence which of the modes is actually found. Returns a 2-element column vector with the modal value and its absolute frequency. If v is an empty
-matrix (comprises only nan values) a 1x1 matrix with nan is returned.
+Finds the mode of the empirical distribution of the input data.  If
+that is multi-modal, details of internal computer arithmetic can
+influence which of the modes is actually found. Returns a 2-element
+column vector with the modal value and its absolute frequency. If v is
+an empty matrix (comprises only nan values) a 1x1 matrix with nan is
+returned.
 
 \subsection{powerset}
 
 \ArgRet{\texttt{strings S}}{strings (array)}
 
 Computes the powerset of the input S, i.e. all possible combinations
-of the string elements in S. (Including the empty set /
-empty string "".) Each combination yields one string in the output
+of the string elements in S. (Including the empty set / empty string
+\texttt{""}.) Each combination yields one string in the output
 array. Being a set, the ordering is not defined and arbitrary.
 
 
@@ -308,19 +334,20 @@ table of the form:
 \begin{center}
 \begin{tabular}{cccc}
 \toprule
- &  & \multicolumn{2}{c}{Observed}\tabularnewline
- &  & 1 & 0\tabularnewline
+ &  & \multicolumn{2}{c}{Observed}\\
+ &  & 1 & 0\\
 \midrule
-\multirow{2}{*}{Predicted} & 1 & h(its) & f(alse)\tabularnewline
- & 0 & m(iss) & z(eros)\tabularnewline
+\multirow{2}{*}{Predicted} & 1 & h(its) & f(alse)\\
+ & 0 & m(iss) & z(eros)\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\noindent and $n=h+f+m+z$ (total observations). Returns a column vector with the
-elements listed in Table \ref{tab:scores2x2}. The input is always
-sanitized by taking the upper 2x2 part, using absolute values, and
-integer-ization. Warnings are issued if \texttt{verbose} is 1.
+\noindent and $n=h+f+m+z$ (total observations). Returns a column
+vector with the elements listed in Table \ref{tab:scores2x2}. The
+input is always sanitized by taking the upper 2x2 part, using absolute
+values, and integer-ization. Warnings are issued if \texttt{verbose}
+is 1.
 
 
 \begin{table}[htbp]
@@ -340,8 +367,7 @@ integer-ization. Warnings are issued if \texttt{verbose} is 1.
 9 & HSS & Heidke skill score & $2 \frac{h \cdot z - f \cdot m}{(h+m) \cdot (m+z)+(h+f) \cdot (f+z)}$ \\
 10 & ETS & equitable threat score & $\frac{h \cdot z-f \cdot m}{(f+m) \cdot n+(h \cdot z-f \cdot m)}$ \\
 11 & PRC & precision & $\frac{h}{h+f}$ \\
-12 & FSC & $F$-Score & $2 \frac{PRC \cdot POD}{PRC+POD} = 2 \frac{h}{1+h+m}$.\\
-  \hline
+12 & FSC & $F$-Score & $2 \frac{PRC \cdot POD}{PRC+POD} = 2 \frac{h}{1+h+m}$\\ \hline
 \end{tabular}
 \caption{Elements returned by the \cmd{scores2x2} function}
 \label{tab:scores2x2}
@@ -354,14 +380,16 @@ integer-ization. Warnings are issued if \texttt{verbose} is 1.
 The idea is to take a file name or full path and extract three components:
 \begin{enumerate}
 \item The path prefix (may be empty; without the trailing / or \textbackslash)
-\item The "base" component of the file name, without the extension and without the path prefix
+\item The ``base'' component of the file name, without the extension
+  and without the path prefix
 \item The file extension (without the dot; may be empty)
 \end{enumerate}
-In principle should work with forward as well as backslashes and also with double forward slashes.
+In principle this should work with both forward slashes and backslashes, and also
+with doubled slashes.
 
 Example:
 
-Input string: "/what/on/earth/isthisfile.gdt"
+Input string: \cmd{"/what/on/earth/isthisfile.gdt"}
 
 Output equivalent to:
 
@@ -394,10 +422,10 @@ by the exact table (for \texttt{prob} far away from 0 and also from
 1), we fall back to the normal approximation. The function returns a
 column vector \verb|{lo; hi; epv}|, where \texttt{epv} is the actual
 probability mass (close to \texttt{prob} but not equal in general for
-small samples). \texttt{lo} and \texttt{hi} can be non-integers in the normal
-approximation case. The normal approximation instead of the exact
-table values can be enforced with the \texttt{forcenorm} argument
-(default: zero, do not enforce).
+small samples). \texttt{lo} and \texttt{hi} can be non-integers in the
+normal approximation case. The normal approximation instead of the
+exact table values can be enforced with the \texttt{forcenorm}
+argument (default: zero, do not enforce).
 
 See also the sister function \cmd{WSRpvalue}.
 
@@ -454,9 +482,10 @@ labels to each value.
 This function takes two series and establishes if there's a 1-to-1
 relationship between them, in which case it returns 2.  If there's a
 1-to-n relationship such that \texttt{a} could be interpreted as a
-(mathematical) function of \texttt{b}, it returns 1. If there's no relationship
--- for example several different values of series \texttt{a} appear together
-with some value of \texttt{b} -- it returns 0.
+(mathematical) function of \texttt{b}, it returns 1. If there's no
+relationship -- for example several different values of series
+\texttt{a} appear together with some value of \texttt{b} -- it returns
+0.
 
 One of the possible use cases is to check whether two discrete series encode
 the same variable. For example, the code:
@@ -473,28 +502,31 @@ panel cross-sectional identifier.
 \ArgRet{\texttt{series x, int order} (optional), \texttt{bool verbosity}
  (optional)}{matrix}
 
-Meta function to invoke all the various ways in gretl to estimate the order of
-fractional integration of the input series, namely the Local Whittle estimator,
-the one by Geweke \& Porter-Hudak (GPH), and the Hurst exponent minus $0.5$.
-The first two are executed through gretl's command \texttt{fractint}, the
-latter via \texttt{hurst}.\footnote{Another estimation approach for the Hurst
-exponent is provided in the user-contributed function package 'gen\_hurst'.}
+Meta function to invoke all the various ways in gretl to estimate the
+order of fractional integration of the input series, namely the Local
+Whittle estimator, the one by Geweke \& Porter-Hudak (GPH), and the
+Hurst exponent minus $0.5$.  The first two are executed through
+gretl's command \texttt{fractint}, the latter via
+\texttt{hurst}.\footnote{Another estimation approach for the Hurst
+  exponent is provided in the user-contributed function package
+  \textsf{gen\_hurst}.}
 % This function only works with gretl 2020c or higher.
 
-Returns a matrix with three rows corresponding to the methods above; the four
-columns contain (1) the point estimate, (2) its standard error, (3) the test
-statistic for the null hypothesis of integration order zero, (4) the associated
-p-value. For example, to obtain the standard error of the Local Whittle
-estimator one picks the 1,2-element of the output matrix. The optional
-'verbosity' switch is set to 0 (OFF) by default, otherwise the standard output
-of the underlying commands is printed out.
+Returns a matrix with three rows corresponding to the methods above;
+the four columns contain (1) the point estimate, (2) its standard
+error, (3) the test statistic for the null hypothesis of integration
+order zero, (4) the associated p-value. For example, to obtain the
+standard error of the Local Whittle estimator one picks the
+1,2-element of the output matrix. The optional `verbosity' switch is
+set to 0 (OFF) by default, otherwise the standard output of the
+underlying commands is printed out.
 
-The optional 'order' argument only applies to the Local Whittle and GPH
+The optional `order' argument only applies to the Local Whittle and GPH
 estimators and overrides gretl's default lag order of $\min(T/2, T^{0.6})$.
 
-For the Hurst method a minimum of 128 observations is required, and test
-results are never available. Also note that by construction this estimator can
-only take values between $-0.5$ and $0.5$.
+For the Hurst method a minimum of 128 observations is required, and
+test results are never available. Also note that by construction this
+estimator can only take values between $-0.5$ and $0.5$.
 
 \subsection{gap\_filler}
 
@@ -512,10 +544,9 @@ the gaps; 1: NAs are replaced with previous observations; 2: NAs are
 replaced with a linear interpolation (this uses the internal function
 \texttt{interpol()}). Returns the filled series.
 
-The very existence of the "0" method for interpolation may look
-bizarre at first sight, but it may make sense to have in the context
-of batch processing, like in the following example (hopefully,
-self-explanatory):
+The very existence of the ``0'' method for interpolation may look
+bizarre at first sight, but it may make sense in the context of batch
+processing, as in the following example (hopefully, self-explanatory):
 \begin{code}
 k = 1
 loop foreach i X
@@ -526,7 +557,6 @@ endloop
 Note that the function only replaces NAs between valid observations;
 therefore, if the origin series has missing values at the beginning or
 the end of the sample, they will be in the returned series too.
-
 
 \subsection{winsor}
 
@@ -559,31 +589,32 @@ Sven Schreiber
 
 \section{Changelog }
 \begin{itemize}
-\item September 2023: 1.8, add combine
-\item July 2023: 1.7, adopt the drawbootres function from the SVAR addon 
-  to make it publicly available  
-\item January 2023: 1.6, introduce the put\_outofsmpl function; internal
+\item March 2024: add the get\_settings function
+\item September 2023: add the combine function
+\item July 2023: adopt the drawbootres function from the SVAR addon
+  to make it publicly available
+\item January 2023: introduce the put\_outofsmpl function; internal
   refactoring of the mat2latex() function
-\item July 2022: 1.5, introduce the mat2latex function
-\item June 2022: 1.4, retire the commute function (now in libgretl)
-\item January 2022: 1.3, retire the mat2list function (now in
+\item July 2022: introduce the mat2latex function
+\item June 2022: retire the commute function (now in libgretl)
+\item January 2022: retire the mat2list function (now in
   libgretl), update gap\_filler
-\item October 2021: 1.2, add qformvech
-\item June 2021: 1.1, add combinations, and increase gretl version requirement
+\item October 2021: add qformvech
+\item June 2021: add combinations, and increase gretl version requirement
   to 2020c
-\item November 2020: 1.0, add mat2list
-\item September 2020: 0.8, add fracorder, remove bwritejson
-\item July 2020: 0.7, add multi\_instrings and correspondence, add deprecation
+\item November 2020: add mat2list
+\item September 2020: add fracorder, remove bwritejson
+\item July 2020: add multi\_instrings and correspondence, add deprecation
   warning to bwritejson, efficiency improvement for zeroifclose
-\item January 2020: 0.6, add drill, bwritejson, onemode, splitfname;
+\item January 2020: add drill, bwritejson, onemode, splitfname;
   finally remove the retired sepstr2arr (use native strsplit instead);
   slightly revise gap\_filler; rearrange the documentation a little
-\item October 2018: 0.5, fix small commute bug; retire sepstr2arr; add 
+\item October 2018: fix small commute bug; retire sepstr2arr; add
   powerset, eliminate, duplicate
-\item February 2018: 0.41, allow non-integer input in WSRpvalue
-\item January 2018: 0.4, add WSRcritical, WSRpvalue
-\item December 2017: 0.3, add scores2x2; switch to pdf help document
-\item September 2017: 0.2, add winsor
+\item February 2018: allow non-integer input in WSRpvalue
+\item January 2018: add WSRcritical, WSRpvalue
+\item December 2017: add scores2x2; switch to pdf help document
+\item September 2017: add winsor
 \item July 2017: initial release
 \end{itemize}
 

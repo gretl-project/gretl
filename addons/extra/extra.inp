@@ -394,10 +394,10 @@ function matrix drawbootres(const matrix U,
 end function
 
 function bundle get_settings (const string key[null])
-    /* Allin's function to get a bundle containing libset settings
+    /* Function to get a bundle containing libset settings
        (either all of them or one specific one). Added 2024-03-07.
-       Correct handling of floating point values depends on git master
-       as of 2024-03-06.
+       Correct handling of floating point values depends on git
+       master as of 2024-03-06.
     */
     scalar lookup = exists(key)
     bundle ret

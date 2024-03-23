@@ -3,7 +3,7 @@ TEXDIR = $(topsrc)/doc/tex
 
 PKG = extra
 DOCDIR = $(topsrc)/addons/$(PKG)/doc
-SRCS = $(PKG).tex pkgdoc.tex gretl.sty
+SRCS = $(PKG).tex $(PKG).sty gretl.sty
 
 $(PKG).pdf: $(SRCS)
 	@pdflatex $(PKG) && pdflatex $(PKG)
@@ -15,7 +15,7 @@ $(SRCS): | symlinks
 
 symlinks:
 	@if [ ! -f gretl.sty ] || [ ../../../doc/gretl.sty -nt gretl.sty ] ; then ln -sf ../../../doc/gretl.sty . ; fi
-	@for f in $(PKG).tex pkgdoc.tex ; do \
+	@for f in $(PKG).tex $(PKG).sty ; do \
 	if [ ! -f $$f ] || [ $(DOCDIR)/$$f -nt $$f ] ; then ln -sf $(DOCDIR)/$$f . ; fi ; done
 
 clean:
