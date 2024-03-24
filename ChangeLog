@@ -11,14 +11,16 @@ version 2024a, in progress
   show dataset time on x-axis if possible
 - "info" command: add --to-file and --from-file options for
   manipulating the description of a dataset
+- "outfile" block: add a --decpoint option to enforce use of
+  decimal point (dot) for output with the block
 - "freq" command: automatically switch to no binning in case
   of few distinct values of the series argument
 - "tsls" command: add a --matrix-diff option for the Hausman
   test, using the method of Padadopoulos (Econometrics, 2023)
 - "gmm" command block: support lists of series in extenso on
   either side of an "orthog" statement
-- "corrgm", "xcorrgm", "pergm" and "qlrtest" commands: support
-  the --outbuf option for directing plot output to a buffer
+- "corrgm", "xcorrgm", "pergm" and "qlrtest" commands: make
+  these commands work properly in a "gpbuild" block
 - "gmm" command: mark the --two-step and --iterate options as
   mutually exclusive
 - "loop foreach": support arrays and bundles that are located
