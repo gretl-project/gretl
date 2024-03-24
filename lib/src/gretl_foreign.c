@@ -460,9 +460,9 @@ static int win32_run_mpi_sync (gretlopt opt, PRN *prn)
             g_string_append(cmd, " --quiet");
         }
         if (opt & OPT_K) {
-	    const char *s = optval_string(MPI, OPT_K);
+	    const char *s = get_optval_string(MPI, OPT_K);
 
-            g_string_append_printf(cmd, " --key=\"%s\"", s);
+            g_string_append_printf(cmd, " --key=%s", s);
         }
         g_string_append_printf(cmd, " \"%s\"", get_mpi_scriptname());
 
