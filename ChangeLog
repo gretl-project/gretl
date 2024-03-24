@@ -12,7 +12,7 @@ version 2024a, in progress
 - "info" command: add --to-file and --from-file options for
   manipulating the description of a dataset
 - "outfile" block: add a --decpoint option to enforce use of
-  decimal point (dot) for output with the block
+  decimal point (dot) for output within the block
 - "freq" command: automatically switch to no binning in case
   of few distinct values of the series argument
 - "tsls" command: add a --matrix-diff option for the Hausman
