@@ -15353,22 +15353,39 @@ static NODE *fevalb_get_bundled_series (gretl_bundle *b,
 
 /* helper function for fevalb() */
 
-static NODE **multi_node_from_bundle (gretl_bundle *b, int n,
+static NODE **multi_node_from_bundle (gretl_bundle *b, int *pargc,
 				      parser *p)
 {
-    gretl_array *a = NULL;
-    NODE **nn;
+    gretl_array *keys = NULL;
+    gretl_array *args = NULL;
+    NODE **nn = NULL;
+    int argc;
     int i;
 
-    nn = calloc(n, sizeof *nn);
-    if (nn == NULL) {
-	p->err = E_ALLOC;
+    keys = gretl_bundle_get_keys(b, &p->err);
+    if (keys == NULL) {
 	return NULL;
     }
+    argc = gretl_array_get_length(keys);
 
-    a = gretl_bundle_get_keys(b, &p->err);
+    /* check for ordering array */
+    if (gretl_bundle_has_key(b, "arglist")) {
+	args = gretl_bundle_get_array(b, "arglist", &p->err);
+	if (!p->err && !arglist_validate(keys, args)) {
+	    p->err = E_INVARG;
+	}
+	if (p->err) {
+	    gretl_array_destroy(keys);
+	    return NULL;
+	}
+	argc -= 1;
+    }
 
-    if (a != NULL) {
+    nn = calloc(argc, sizeof *nn);
+
+    if (nn == NULL) {
+	p->err = E_ALLOC;
+    } else {
 	NODE *save_aux = p->aux;
 	char **S = NULL;
 	GretlType t;
@@ -15381,10 +15398,15 @@ static NODE **multi_node_from_bundle (gretl_bundle *b, int n,
 	sn.t = STR;
 	p->aux = NULL;
 
-	S = gretl_array_get_strings(a, &ns);
-	strings_array_sort(&S, &ns, OPT_NONE);
+	if (args != NULL) {
+	    S = gretl_array_get_strings(args, &ns);
+	} else {
+	    S = gretl_array_get_strings(keys, &ns);
+	    strings_array_sort(&S, &ns, OPT_NONE);
+	}
+
 	p->aux = NULL;
-	for (i=0; i<n; i++) {
+	for (i=0; i<ns; i++) {
 	    t = gretl_bundle_get_member_type(b, S[i], NULL);
 	    if (t == GRETL_TYPE_SERIES) {
 		nn[i] = fevalb_get_bundled_series(b, S[i], p);
@@ -15399,8 +15421,10 @@ static NODE **multi_node_from_bundle (gretl_bundle *b, int n,
 	p->aux = save_aux;
     }
 
-    if (p->err && nn != NULL) {
-	for (i=0; i<n; i++) {
+    if (!p->err) {
+	*pargc = argc;
+    } else if (nn != NULL) {
+	for (i=0; i<argc; i++) {
 	    if (nn[i] != NULL) {
 		free_node(nn[i], p);
 	    }
@@ -15409,7 +15433,7 @@ static NODE **multi_node_from_bundle (gretl_bundle *b, int n,
 	nn = NULL;
     }
 
-    gretl_array_destroy(a);
+    gretl_array_destroy(keys);
 
     return nn;
 }
@@ -15427,15 +15451,14 @@ static NODE *eval_feval (int f, NODE *l, NODE *r, parser *p)
     NODE **nn = NULL;
     char *fname = NULL;
     ufunc *u = NULL;
-    int argc, fid = 0;
+    int argc = 0;
+    int fid = 0;
 
     if (f == F_FEVALB) {
 	gretl_bundle *argb = r->v.b;
 
 	fname = l->v.str;
-	argb = r->v.b;
-	argc = gretl_bundle_get_n_members(argb);
-	nn = multi_node_from_bundle(argb, argc, p);
+	nn = multi_node_from_bundle(argb, &argc, p);
     } else {
 	int k = l->v.bn.n_nodes;
 	NODE *e = NULL;

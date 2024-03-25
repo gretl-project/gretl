@@ -2467,3 +2467,36 @@ int gretl_array_qsort (gretl_array *a, const char *fname,
 }
 
 /* end apparatus for sorting a gretl array via qsort */
+
+/* arglist_validate() is used only in geneval.c but it's defined here
+   because (a) geneval.c is already overburdened and (b) the job can
+   be done more efficiently with access to the internals of
+   gretl_array. We're checking that @args is an array of strings
+   holding exactly the strings in @keys minus "arglist" itself.
+*/
+
+int arglist_validate (gretl_array *keys, gretl_array *args)
+{
+    const char *sk, *sa;
+    int i, j, found = 0;
+
+    if (args->type != GRETL_TYPE_STRINGS ||
+	args->n != keys->n - 1) {
+	return 0;
+    }
+
+    for (i=0; i<keys->n; i++) {
+	sk = keys->data[i];
+	for (j=0; j<args->n; j++) {
+	    sa = args->data[j];
+	    if (sa == NULL || !strcmp(sa, "arglist")) {
+		return 0;
+	    } else if (!strcmp(sa, sk)) {
+		found++;
+		break;
+	    }
+	}
+    }
+
+    return found == keys->n - 1;
+}
