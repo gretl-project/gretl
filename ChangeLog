@@ -32,7 +32,10 @@ version 2024a, in progress
 - "pkg" command: add "run-sample" action to run the sample
   script from a specified package
 - "modeltab" command: add an --options flag to control
-  formatting via the command line.
+  formatting via the command line
+- New function fevalb(): a more flexible variant of feval()
+- New function randstr(): gives a random hexadecimal string
+  of chosen length, to serve as a unique ID
 - bcheck() function: make the second argument optional
 - nobs() function: accept a list argument
 - Fix broken backward compatibility in handling of backslash
