@@ -137,6 +137,7 @@ gui/gretl.c
 gui/gretl_ipc.c
 gui/gretlwin32.c
 gui/gtkfontselhack.c
+gui/gui_addons.c
 gui/guiprint.c
 gui/gui_recode.c
 gui/gui_utils.c
