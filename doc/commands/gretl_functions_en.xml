@@ -5120,20 +5120,18 @@
 	</para>
 	<para>
 	  Since the order of the members in a gretl bundle is
-	  indeterminate, some mechanism is required to ensure that the
-	  arguments are passed to the function in question in the
-	  right order. This is automatically ensured if the
-	  lexicographic order of the keys in the bundle gives the
-	  argument order. For examples, the keys could be
-	  <lit>arg1</lit>, <lit>arg2</lit> and so on (or
-	  <lit>arg01</lit>, <lit>arg02</lit> and so on in the unlikely
-	  event that the function takes more than nine arguments).
-	  Alternatively the bundle may contain an array of
-	  <math>n</math> &minus; 1 strings under the special key
-	  <lit>arglist</lit>, where <math>n</math> is the total number
-	  of keys. In that case the bundle members (other than
-	  <lit>arglist</lit>) are passed in their order of appearance
-	  in the array.
+	  indeterminate, some mechanism is required to ensure that
+	  they are passed to the function in question in the right
+	  order. This is automatically ensured if the lexicographic
+	  order of the keys in the bundle gives the argument
+	  order. For examples, the keys could be <lit>arg1</lit>,
+	  <lit>arg2</lit> and so on (or <lit>arg01</lit>,
+	  <lit>arg02</lit> and so on in the unlikely event that the
+	  function takes more than nine arguments).  Alternatively,
+	  the bundle may contain an array of strings under the
+	  reserved key <lit>arglist</lit>. This array must hold
+	  exactly the keys in <argname>b</argname>, except for
+	  <lit>arglist</lit> itself, in the desired order.
 	</para>
 	<para>
 	  The examples below illustrate both approaches, as applied to
@@ -11697,6 +11695,24 @@
 	<para>
 	  See also <fncref targ="resample"/> for resampling with
 	  replacement.
+	</para>
+      </description>
+    </function>
+
+    <function name="randstr" section="strings" output="string">
+      <fnargs>
+	<fnarg type="int">n</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns a random string of length <argname>n</argname>
+	  bytes. The string includes the numerals <lit>0</lit> to
+	  <lit>9</lit> and the lower-case letters <lit>a</lit> to
+	  <lit>f</lit> with equal probability, and is interpretable as
+	  a hexadecimal integer. Intended usage is as a unique
+	  identifier. For example, with <argname>n</argname> = 16 the
+	  string will one of over 10<sup>19</sup> possibilities and so
+	  unique with probability close to 1.
 	</para>
       </description>
     </function>
