@@ -5099,6 +5099,54 @@
       </description>
     </function>
 
+    <function name="fevalb" section="programming" output="seebelow">
+      <fnargs>
+	<fnarg type="string">funcname</fnarg>
+	<fnarg type="bundle">b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  This is a variant of <fncref targ="feval"/> which meets
+	  a case that may be encountered by function writers, where
+	  the number and types of the arguments to be passed to the
+	  named function are not known in advance. Instead of the
+	  arguments being passed individually, they are passed as
+	  members of the bundle argument <argname>b</argname>.
+	</para>
+	<para>
+	  Since the order of the members in a gretl bundle is
+	  indeterminate, some mechanism is required to ensure that the
+	  arguments are passed to the function in question in the
+	  right order. This is automatically ensured if the
+	  lexicographic order of the keys in the bundle gives the
+	  argument order. For examples, the keys could be
+	  <lit>arg1</lit>, <lit>arg2</lit> and so on (or
+	  <lit>arg01</lit>, <lit>arg02</lit> and so on in the unlikely
+	  event that the function takes more than nine arguments).
+	  Alternatively the bundle may contain an array of
+	  <math>n</math> &minus; 1 strings under the special key
+	  <lit>arglist</lit>, where <math>n</math> is the total number
+	  of keys. In that case the bundle members (other than
+	  <lit>arglist</lit>) are passed in their order of appearance
+	  in the array.
+	</para>
+	<para>
+	  The examples below illustrate both approaches, as applied to
+	  the <fncref targ="monthlen"/> function.
+	</para>
+	<code>
+	  # using lexicographic order
+	  bundle b = _(arg1=12, arg2=1980, arg3=5)
+	  n = feval("monthlen", b)
+
+	  # using arglist
+	  bundle b = _(month=12, year=1980, wkdays=5)
+	  b.arglist = defarray("month", "year", "wkdays")
+	  n = feval("monthlen", b)
+	</code>
+      </description>
+    </function>
+
     <function name="fevd" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="int">target</fnarg>
