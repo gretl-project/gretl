@@ -5151,11 +5151,10 @@
 	  via (o <lit>arg01</lit>, <lit>arg02</lit> e così via
 	  nell'improbabile caso in cui la funzione abbia più di nove
 	  argomenti).  In alternativa il bundle può contenere un array
-	  di <math>n</math> &minus; 1 stringhe dal nome speciale
-	  <lit>arglist</lit>, in cui <math>n</math> è il numero totale
-	  di argomenti. In tal caso i membri del bundle (diversi da
-	  <lit>arglist</lit>) vengono passati nel loro ordine di
-	  apparizione nell'array.
+	  di stringhe dal nome speciale
+	  <lit>arglist</lit>. L'array deve contenere esattamente le
+	  chiavi del bundle <argname>b</argname>, tranne che 
+	  <lit>arglist</lit> stesso, nell'ordine desiderato.
 	</para>
 	<para>
 	  L'esempio seguente illustra i due approcci applicati alla
