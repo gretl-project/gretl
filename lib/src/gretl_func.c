@@ -6283,9 +6283,12 @@ static void real_bundle_package_info (const fnpkg *pkg,
 
     gretl_bundle_set_string(b, "name", pkg->name);
     gretl_bundle_set_string(b, "author", pkg->author);
+    /* for backward compatibility, we need a numerical package
+       version in the bundle returned by "pkg query"
+    */
     if (is_gretl_addon(pkg->name)) {
-	/* this is backward incompatible for regular gfns */
-	gretl_bundle_set_string(b, "version", pkg->version);
+	gretl_bundle_set_scalar(b, "version",
+				gretl_version_number(pkg->version));
     } else {
 	gretl_bundle_set_scalar(b, "version", dot_atof(pkg->version));
     }
