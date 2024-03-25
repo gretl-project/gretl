@@ -2536,7 +2536,7 @@ static int check_folds_series (const int *list,
 
 	    pprintf(prn, _("%s: found %d folds\n"), dset->varname[v], nf);
 	    if (nf < 2 || (w->nfold > 0 && nf != w->nfold)) {
-		fprintf(stderr, _("invalid number of folds %d\n"), nf);
+		fprintf(stderr, "invalid number of folds %d\n", nf);
 		err = E_DATA;
 	    } else {
 		strcpy(w->foldname, dset->varname[v]);

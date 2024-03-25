@@ -330,7 +330,7 @@ PRN *gretl_print_new (PrnType ptype, int *err)
 PRN *gretl_print_new_with_filename (const char *fname, int *err)
 {
     if (fname == NULL) {
-	fprintf(stderr, _("gretl_prn_new: Must supply a filename\n"));
+	fprintf(stderr, "gretl_prn_new: Must supply a filename\n");
 	return NULL;
     }
 

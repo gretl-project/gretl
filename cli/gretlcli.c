@@ -231,7 +231,7 @@ static void gretl_abort (char *line)
 {
     const char *tokline = get_parser_errline();
 
-    fprintf(stderr, _("\ngretlcli: error executing script: halting\n"));
+    fprintf(stderr, "\ngretlcli: error executing script: halting\n");
 
     if (tokline != NULL && *tokline != '\0' && strcmp(tokline, line)) {
         fprintf(stderr, "> %s\n", tokline);

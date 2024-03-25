@@ -2664,7 +2664,7 @@ static int check_derivatives (nlspec *spec, PRN *prn)
 
     if (zerocount > 0) {
 	gretl_errmsg_set(_("NLS: The supplied derivatives seem to be incorrect"));
-	fprintf(stderr, _("%d out of %d tests gave zero\n"), zerocount, (int) m);
+	fprintf(stderr, "%d out of %d tests gave zero\n", zerocount, (int) m);
     } else if (badcount > 0) {
 	pputs(prn, _("Warning: The supplied derivatives may be incorrect, or perhaps\n"
 		     "the data are ill-conditioned for this function.\n"));

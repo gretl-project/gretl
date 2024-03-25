@@ -2676,7 +2676,7 @@ static int time_dummies_wald_test (panelmod_t *pan, MODEL *pmod)
 
     x = gretl_scalar_qform(b, vcv, &err);
     if (err) {
-        fprintf(stderr, _("Failed to compute test statistic\n"));
+        fprintf(stderr, "Failed to compute test statistic\n");
         goto bailout;
     }
 
