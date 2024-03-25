@@ -10973,6 +10973,10 @@ del comando <cmdref targ="set"/>.
 	  <flag>--tempfile</flag>
 	  <effect>vedi sotto</effect>
         </option>
+        <option>
+	  <flag>--decpoint</flag>
+	  <effect>vedi sotto</effect>
+        </option>
     </options>
     <examples>
 <example>outfile regress.txt</example>
@@ -11100,6 +11104,14 @@ del comando <cmdref targ="set"/>.
     se non per il fatto che al termine della ridirezione i valori
     originali di <lit>echo</lit> e <lit>messages</lit> vengono
     ripristinati. Quest'opzione è disponibile in tutti i casi.
+  </para>
+
+  <subhead>Separatore decimale</subhead>
+  <para>
+    L'effetto dell'opzione <opt>decpoint</opt> è di far sì che,
+    durante la ridirezione, il separatore decimale sia il punto
+    anziché la virgola. Al termine del blocco <lit>outfile</lit> il
+    separatore decimale torna ad essere quello che era prima.
   </para>
 
   <subhead>Livelli di ridirezione</subhead>
