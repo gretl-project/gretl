@@ -11082,7 +11082,10 @@
 	the decimal point character (as opposed to comma) is in force
 	while output is redirected. When the <lit>outfile</lit> block
 	ends the decimal character reverts to whatever was in place
-	before it.
+	before it. This option is especially useful if the text file
+	to be created is meant as an input for some other program
+	that requires digits to follow the English convention, as
+	would be the case, for example, of a gnuplot or R script.
       </para>
 
       <subhead>Levels of redirection</subhead>

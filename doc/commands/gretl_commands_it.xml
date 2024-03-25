@@ -11111,7 +11111,11 @@ del comando <cmdref targ="set"/>.
     L'effetto dell'opzione <opt>decpoint</opt> è di far sì che,
     durante la ridirezione, il separatore decimale sia il punto
     anziché la virgola. Al termine del blocco <lit>outfile</lit> il
-    separatore decimale torna ad essere quello che era prima.
+    separatore decimale torna ad essere quello che era prima. Questa
+    opzione è particolarmente utile se il file di testo da creare
+    costituisce l'input per qualche altro programma che richiede che le
+    cifre seguano la convenzione inglese, come sarebbe il caso, ad
+    esempio, di uno script gnuplot o R.
   </para>
 
   <subhead>Livelli di ridirezione</subhead>

@@ -5096,6 +5096,11 @@
 	  syntactic element that is usually fixed at the time a script
 	  is composed.
 	</para>
+	<para>
+	  <seelist>
+            <fncref targ="fevalb"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -5144,6 +5149,11 @@
 	  b.arglist = defarray("month", "year", "wkdays")
 	  n = feval("monthlen", b)
 	</code>
+	<para>
+	  <seelist>
+            <fncref targ="feval"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 

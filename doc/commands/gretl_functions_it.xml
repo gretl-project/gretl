@@ -5120,9 +5120,65 @@
 	  elemento sintattico che di solito è fisso, nel momento in cui
 	  lo script è compilato.
 	</para>
+	<para>
+	  <seelist>
+            <fncref targ="fevalb"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
+    <function name="fevalb" section="programming" output="seebelow">
+      <fnargs>
+	<fnarg type="string">funcname</fnarg>
+	<fnarg type="bundle">b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Questa funzione è una variante di <fncref targ="feval"/>,
+	  utile a gestire casi in cui il numero e il tipo di argomenti
+	  da passare alla funzione non sono noti in anticipo. Gli
+	  argomenti non vengono passati individualmente, ma come
+	  membri del bundle argomento <argname>b</argname>.
+	</para>
+	<para>
+	  Poiché l'ordine dei membri in un bundle è indeterminato, è
+	  necessario un meccanismo per garantire che il gli argomenti
+	  vengono passati alla funzione in questione nel file ordine
+	  corretto. Ciò è automaticamente garantito se le chiavi nel
+	  bundle sono in ordine lessicografico. Ad esempio, le chiavi
+	  potrebbero essere <lit>arg1</lit>, <lit>arg2</lit> e così
+	  via (o <lit>arg01</lit>, <lit>arg02</lit> e così via
+	  nell'improbabile caso in cui la funzione abbia più di nove
+	  argomenti).  In alternativa il bundle può contenere un array
+	  di <math>n</math> &minus; 1 stringhe dal nome speciale
+	  <lit>arglist</lit>, in cui <math>n</math> è il numero totale
+	  di argomenti. In tal caso i membri del bundle (diversi da
+	  <lit>arglist</lit>) vengono passati nel loro ordine di
+	  apparizione nell'array.
+	</para>
+	<para>
+	  L'esempio seguente illustra i due approcci applicati alla
+	  funzione <fncref targ="monthlen"/>.
+	</para>
+	<code>
+	  # usando l'ordine lessicografico
+	  bundle b = _(arg1=12, arg2=1980, arg3=5)
+	  n = feval("monthlen", b)
+
+	  # usando arglist
+	  bundle b = _(month=12, year=1980, wkdays=5)
+	  b.arglist = defarray("month", "year", "wkdays")
+	  n = feval("monthlen", b)
+	</code>
+	<para>
+	  <seelist>
+            <fncref targ="feval"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
     <function name="fevd" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="int">target</fnarg>
