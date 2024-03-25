@@ -120,6 +120,10 @@ eval mat2latex(X, _(nacode="NA", decimals=1))
 print "---- drawbootres ------" ##
 eval drawbootres(mnormal(10,3), _(moveblocklen=3), 5)
 
+print "---- get_settings ------" ##
+bundle gsb = get_settings()
+print gsb
+
 ######## Examples that require a dataset ############
 
 open denmark	# get some data
