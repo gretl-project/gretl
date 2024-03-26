@@ -2,7 +2,6 @@ topsrc = @top_srcdir@
 prefix = @prefix@
 datarootdir = @datarootdir@
 win32pkg = @win32pkg@
-build_addons_doc = @build_addons_doc@
 tooldir = $(topsrc)/tools
 
 MAKE = @MAKE@
@@ -18,10 +17,8 @@ else
   GFNDIR = $(datarootdir)/gretl/functions
 endif
 
-ifeq ($(build_addons_doc),yes)
-  DOC = doc/$(PKG).pdf
-  INSTDOC = install-doc
-endif
+DOC = doc/$(PKG).pdf
+INSTDOC = install-doc
 
 GRETLCLI = ../../cli/gretlcli
 
