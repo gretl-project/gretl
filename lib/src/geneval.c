@@ -7770,7 +7770,7 @@ static NODE *mxtab_func (NODE *l, NODE *r, parser *p)
 
 static NODE *object_status (NODE *n, NODE *func, parser *p)
 {
-    NODE *ret = aux_scalar_node(p);
+    NODE *ret = NULL;
     int f = func->t;
 
     if (f == F_TYPENAME) {
