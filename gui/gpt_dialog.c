@@ -174,7 +174,7 @@ static int line_get_point_type (GPT_LINE *line, int i);
 #define XPMROWS 19
 #define XPMCOLS 17
 
-#define scale_round(v) ((v) * 255.0 / 65535.0)
+#define scale_round(v) ceil(((v) * 255.0 / 65535.0))
 
 static GtkWidget *get_image_for_color (gretlRGB color)
 {
@@ -324,17 +324,20 @@ static void graph_color_selector (GtkWidget *w, gpointer p)
 static void color_tool_copy (GtkWidget *button, GtkWidget *w)
 {
     GtkWidget *csel;
-    char buf[10];
+    char buf[12];
     GdkColor gcolor;
-    guint8 r, g, b;
+    guint16 alpha;
+    guint8 a, r, g, b;
     gretlRGB rgb;
 
     csel = gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(w));
     gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &gcolor);
+    alpha = gtk_color_selection_get_current_alpha(GTK_COLOR_SELECTION(csel));
+    a = (guint8) (scale_round(alpha));
     r = (guint8) (scale_round(gcolor.red));
     g = (guint8) (scale_round(gcolor.green));
     b = (guint8) (scale_round(gcolor.blue));
-    rgb = (r << 16) | (g << 8) | b;
+    rgb = (a << 24) | (r << 16) | (g << 8) | b;
 
     print_rgb_hash(buf, rgb);
     buf_to_clipboard(buf);
@@ -350,6 +353,7 @@ void show_color_tool (void)
     cdlg = gtk_color_selection_dialog_new(_("gretl: graph color selection"));
     csel = gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(cdlg));
     gtk_color_selection_set_current_color(GTK_COLOR_SELECTION(csel), &gcolor);
+    gtk_color_selection_set_has_opacity_control(GTK_COLOR_SELECTION(csel), TRUE);
 
     g_object_get(G_OBJECT(cdlg), "ok-button", &button, NULL);
     gtk_button_set_label(GTK_BUTTON(button), _("Copy color string"));
