@@ -5,7 +5,7 @@
 \usepackage[pdftex]{graphicx}
 \usepackage{gretl}
 \usepackage[hyphens]{url}
-\usepackage{hyperref}
+\usepackage[pdftex]{hyperref}
 \usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
 
 \setlength{\parindent}{0pt}
@@ -27,11 +27,23 @@
 {\noindent\hrulefill\\[-10pt]}
 {\medskip}
 
-\title{\textsf{geoplot}: cartography in gretl}
-\author{Allin Cottrell and Jack Lucchetti}
-\date{May 1, 2023}
+\definecolor{steel}{rgb}{0.03,0.20,0.45}
+
+\hypersetup{pdftitle=geoplot: cartography in gretl,
+            pdfauthor={Allin Cottrell and Jack Lucchetti},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            citecolor=steel,
+            bookmarksnumbered=true,
+            plainpages=false
+          }
 
 \begin{document}
+
+\title{\textsf{geoplot}: cartography in gretl}
+\author{Allin Cottrell and Jack Lucchetti}
+\date{February 28, 2024}
 
 \maketitle
 
@@ -107,7 +119,7 @@ easy; we'll deal with this in Section~\ref{sec:gui}.
 \begin{figure}[htbp]
   \centering
   \includegraphics[scale=0.75]{us2020-rep}
-  \caption{Output of the \texttt{geoplot(rep)} command}
+  \caption{Output of \texttt{geoplot(rep)}}
   \label{fig:us2020-rep}
 \end{figure}
 
@@ -131,14 +143,14 @@ Section~\ref{sec:qualitative}.
 \begin{figure}[htbp]
   \centering
   \includegraphics[scale=0.75]{us2020-reg}
-  \caption{Output of the \texttt{geoplot(region)} command}
+  \caption{Output of \texttt{geoplot(region)}}
   \label{fig:us2020-reg}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[scale=0.75]{us2020-dem}
-  \caption{Output of the \texttt{geoplot(dem, \_(palette="blues"))} command}
+  \caption{Output of \texttt{geoplot(dem, \_(palette="blues"))}}
   \label{fig:us2020-dem}
 \end{figure}
 
@@ -475,7 +487,7 @@ Figure~\ref{fig:founders}.
   \begin{center}
   \includegraphics[scale=0.9]{GDPpc.pdf}
 \end{center}
-\caption{Output of script \texttt{founders.inp} (default gnuplot palette)}
+\caption{Output of \texttt{founders.inp} (default gnuplot palette)}
 \label{fig:founders}
 \end{figure}
 
@@ -1023,6 +1035,7 @@ examples. In concluding, we'll show off with a ``real'' example:
 Figure~\ref{fig:ita-covid} shows the distribution of COVID cases
 across Italian provinces as of 2020-05-15. The appearance of this plot
 was tuned using the following option settings:
+
 \begin{code}
 string cmds = sprintf("set colorbox user origin 0.9,0.45 size 0.03,0.4\n")
 cmds ~= sprintf("set xrange [6.4:20.5]")
@@ -1056,6 +1069,8 @@ axes.
 
 \section{Change log}
 
+2024-02-28: Fix obsolete use of \verb|--write| with the \texttt{outfile}
+command.\\[6pt]
 2023-05-01: Add \texttt{keypos} option for adjusting the key
 position when plotting qualitative data. \\[6pt]
 2023-01-17: Update the documentation to explain how to handle
