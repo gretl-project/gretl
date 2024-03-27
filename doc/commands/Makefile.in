@@ -199,7 +199,7 @@ biblio.html: bbl2txt ../tex/gretl-ref.bbl
 
 # List of signatures of built-in files (to stdout)
 signatures: $(EN_FNSRC) xsltrans $(FNCDTD) $(HLPXSL) $(XMLSTRS)
-	@./xsltrans --C $<
+	./xsltrans --C $<
 
 # Bibliography file
 gretlhelp.refs: ../tex/gretl-ref.bbl bbl2txt $(HELPFILES_EN)
