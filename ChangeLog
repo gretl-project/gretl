@@ -1,4 +1,5 @@
 version 2024a, in progress
+- gretl "addons": integrate with releases on all platforms
 - $sysinfo bundle: add gnuplot version as scalar ("gnuplot")
 - "plot" command: update the help text and apply a fix for the
   case of showing multiple bands
