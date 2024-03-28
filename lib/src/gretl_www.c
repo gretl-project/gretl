@@ -115,7 +115,8 @@ struct urlinfo_ {
     FILE *fp;                /* for saving content locally */
     int (*progfunc)();       /* progress indicator function */
     int pstarted;            /* progress bar status flag */
-    int timeout;             /* seconds till timing out */
+    long timeout;            /* seconds till timing out */
+    char errbuf[CURL_ERROR_SIZE]; /* for use with CURLOPT_ERRORBUFFER */
 };
 
 static void urlinfo_init (urlinfo *u,
@@ -153,6 +154,7 @@ static void urlinfo_init (urlinfo *u,
     u->progfunc = NULL;
     u->pstarted = 0;
     u->timeout = 20; /* revised 2020-08-25, was 0 */
+    u->errbuf[0] = '\0';
 
     gretl_error_clear();
 
@@ -559,6 +561,7 @@ static int curl_get (urlinfo *u)
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, u);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, u->agent);
+    curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, u->errbuf);
 
     if (u->timeout > 0) {
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, u->timeout);
@@ -600,8 +603,13 @@ static int curl_get (urlinfo *u)
     }
 
     if (res != CURLE_OK) {
-        gretl_errmsg_sprintf("cURL error %d (%s)", res,
-                             curl_easy_strerror(res));
+	char *msg = curl_easy_strerror(res);
+
+	if (u->errbuf[0] != '\0') {
+	    /* should be more informative? */
+	    msg = u->errbuf;
+	}
+        gretl_errmsg_sprintf("cURL error %d (%s)", res, msg);
         err = u->err ? u->err : 1;
     }
 
