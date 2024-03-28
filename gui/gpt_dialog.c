@@ -172,7 +172,12 @@ static int line_get_point_type (GPT_LINE *line, int i);
 
 /* graph color selection apparatus */
 
-#define scale_round(v) nearbyint(((v) * (256.0 / 65536.0)))
+#define U8MAX 255.0
+#define U16MAX 65535.0
+#define U16MUL 257
+
+/* convert from guint16 to guint8 */
+#define scale_down_round(v) nearbyint(((v) * (U8MAX / U16MAX)))
 
 static GtkWidget *get_image_for_color (gretlRGB color)
 {
@@ -208,10 +213,10 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
     gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &gcolor);
     alpha = gtk_color_selection_get_current_alpha(GTK_COLOR_SELECTION(csel));
 
-    a = (guint8) scale_round(65535 - alpha);
-    r = (guint8) scale_round(gcolor.red);
-    g = (guint8) scale_round(gcolor.green);
-    b = (guint8) scale_round(gcolor.blue);
+    a = (guint8) scale_down_round(65535 - alpha);
+    r = (guint8) scale_down_round(gcolor.red);
+    g = (guint8) scale_down_round(gcolor.green);
+    b = (guint8) scale_down_round(gcolor.blue);
 
     rgb = (a << 24) | (r << 16) | (g << 8) | b;
 
@@ -277,10 +282,10 @@ static void my_gdk_color_parse (const char *s,
 	    sscanf(s, "%x", &rgb);
 	}
 	decompose_argb(rgb, &a, &r, &g, &b);
-	*alpha = 65535 - 256 * a;
-	gcolor->red =   256 * r;
-	gcolor->green = 256 * g;
-	gcolor->blue =  256 * b;
+	*alpha = 65535 - U16MUL * a;
+	gcolor->red =   U16MUL * r;
+	gcolor->green = U16MUL * g;
+	gcolor->blue =  U16MUL * b;
     }
 }
 
@@ -344,10 +349,10 @@ static void color_tool_copy (GtkWidget *button, GtkWidget *w)
     gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &gcolor);
     alpha = gtk_color_selection_get_current_alpha(GTK_COLOR_SELECTION(csel));
 
-    a = (guint8) scale_round(65535 - alpha);
-    r = (guint8) scale_round(gcolor.red);
-    g = (guint8) scale_round(gcolor.green);
-    b = (guint8) scale_round(gcolor.blue);
+    a = (guint8) scale_down_round(65535 - alpha);
+    r = (guint8) scale_down_round(gcolor.red);
+    g = (guint8) scale_down_round(gcolor.green);
+    b = (guint8) scale_down_round(gcolor.blue);
 
     rgb = (a << 24) | (r << 16) | (g << 8) | b;
     print_rgb_hash(buf, rgb);
