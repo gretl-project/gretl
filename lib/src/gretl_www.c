@@ -603,7 +603,7 @@ static int curl_get (urlinfo *u)
     }
 
     if (res != CURLE_OK) {
-	char *msg = curl_easy_strerror(res);
+	const char *msg = curl_easy_strerror(res);
 
 	if (u->errbuf[0] != '\0') {
 	    /* should be more informative? */
