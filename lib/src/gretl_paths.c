@@ -3263,11 +3263,11 @@ int slash_terminate (char *path)
 
 static void rc_set_gp_extra_colors (const char *s)
 {
-    char cstr[2][8];
+    char cstr[2][12];
 
     *cstr[0] = *cstr[1] = '\0';
 
-    if (sscanf(s, "%7s %7s", cstr[0], cstr[1]) == 2) {
+    if (sscanf(s, "%10s %10s", cstr[0], cstr[1]) == 2) {
         set_graph_color_from_string(0, cstr[0]);
         set_graph_color_from_string(1, cstr[1]);
     }

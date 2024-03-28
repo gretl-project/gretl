@@ -884,7 +884,11 @@ void set_shadecolor (gretlRGB color) {
 
 void print_rgb_hash (char *s, gretlRGB color)
 {
-    sprintf(s, "#%06X", color);
+    if (color > 0xffffff) {
+	sprintf(s, "#%08X", color);
+    } else {
+	sprintf(s, "#%06X", color);
+    }
 }
 
 gretlRGB gretl_rgb_get (const char *s)
@@ -898,10 +902,26 @@ gretlRGB gretl_rgb_get (const char *s)
     return x;
 }
 
+/* called only by print_palette_string() below */
+
+static void print_argb_hex (char *s, gretlRGB color)
+{
+    if (color > 0xffffff) {
+	sprintf(s, "x%08X", color);
+    } else {
+	sprintf(s, "x%06X", color);
+    }
+}
+
+/* We use this format only when writing to the gretl rc file */
+
 void print_palette_string (char *s)
 {
-    sprintf(s, "x%06X x%06X", user_extra_color[0],
-	    user_extra_color[0]);
+    char cstr[2][10];
+
+    print_argb_hex(cstr[0], user_extra_color[0]);
+    print_argb_hex(cstr[1], user_extra_color[1]);
+    sprintf(s, "%s %s", cstr[0], cstr[1]);
 }
 
 gretlRGB get_graph_color (int i)
@@ -914,10 +934,10 @@ void set_graph_color_from_string (int i, const char *s)
     int err = 0;
 
     if (i >= 0 && i < 2) {
-	gretlRGB x;
+	gretlRGB u;
 
-	if (sscanf(s + 1, "%06x", &x) == 1) {
-	    user_extra_color[i] = x;
+	if (sscanf(s + 1, "%x", &u) == 1) {
+	    user_extra_color[i] = u;
 	} else {
 	    err = 1;
 	}
@@ -8513,7 +8533,7 @@ int arma_spectrum_plot (MODEL *pmod, const DATASET *dset,
    rank-ordered values.  See L. Makkonen, 'Bringing Closure to the
    Plotting Position Controversy', Communications in Statistics -
    Theory and Methods, vol 37, January 2008, for an argument in favor
-   of using k / (n + 1); but also see many uses of (k - 1/2) / n in
+   of using k/(n + 1); but also see many uses of (k - 1/2)/n in
    the literature.
 */
 

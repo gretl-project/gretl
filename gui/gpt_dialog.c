@@ -27,6 +27,7 @@
 #include "dlgutils.h"
 #include "fileselect.h"
 #include "calculator.h"
+#include "gretl_color.h"
 #include "gpt_dialog.h"
 
 #ifdef G_OS_WIN32
@@ -171,69 +172,53 @@ static int line_get_point_type (GPT_LINE *line, int i);
 
 /* graph color selection apparatus */
 
-#define XPMROWS 19
-#define XPMCOLS 17
+#define U8MAX 255.0
+#define U16MAX 65535.0
+#define U16MUL 257
 
-#define scale_round(v) ((v) * 255.0 / 65535.0)
+/* convert from guint16 to guint8 */
+#define scale_down_round(v) nearbyint(((v) * (U8MAX / U16MAX)))
 
 static GtkWidget *get_image_for_color (gretlRGB color)
 {
-    static char **xpm = NULL;
-    GdkPixbuf *icon;
     GtkWidget *image;
-    char colstr[8] = {0};
-    int i;
+    guint8 a, r, g, b;
+    GdkPixbuf *pbuf;
+    guint32 pixel;
 
-    if (xpm == NULL) {
-	xpm = strings_array_new_with_length(XPMROWS, XPMCOLS);
-	if (xpm == NULL) {
-	    return NULL;
-	}
-
-	/* common set-up */
-	strcpy(xpm[0], "16 16 2 1");
-	strcpy(xpm[1], "X      c #000000");
-	strcpy(xpm[2], ".      c #000000");
-	strcpy(xpm[3], "................");
-
-	for (i=4; i<XPMROWS-1; i++) {
-	    strcpy(xpm[i], ".XXXXXXXXXXXXXX.");
-	}
-
-	strcpy(xpm[XPMROWS-1], "................");
-    }
-
-    /* write in the specific color we want */
-    print_rgb_hash(colstr, color);
-    for (i=0; i<6; i++) {
-	xpm[1][10+i] = colstr[i+1];
-    }
-
-    icon = gdk_pixbuf_new_from_xpm_data((const char **) xpm);
-    image = gtk_image_new_from_pixbuf(icon);
-    g_object_unref(icon);
+    decompose_argb(color, &a, &r, &g, &b);
+    a = 255 - a;
+    pixel = (r << 24) | (g << 16) | (b << 8) | a;
+    pbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE, 8, 16, 16);
+    gdk_pixbuf_fill(pbuf, pixel);
+    image = gtk_image_new_from_pixbuf(pbuf);
+    g_object_unref(pbuf);
 
     return image;
 }
 
-/* ad hoc color selection for line in particular plot */
+/* ad hoc color selection for a line in a particular plot */
 
 static void color_select_callback (GtkWidget *button, GtkWidget *w)
 {
     GtkWidget *csel;
     GtkWidget *color_button, *image;
     GdkColor gcolor;
-    guint8 r, g, b;
+    guint8 a, r, g, b;
+    guint16 alpha;
     gretlRGB rgb;
 
     color_button = g_object_get_data(G_OBJECT(w), "color_button");
     csel = gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(w));
-
     gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &gcolor);
-    r = (unsigned char) (scale_round(gcolor.red));
-    g = (unsigned char) (scale_round(gcolor.green));
-    b = (unsigned char) (scale_round(gcolor.blue));
-    rgb = (r << 16) | (g << 8) | b;
+    alpha = gtk_color_selection_get_current_alpha(GTK_COLOR_SELECTION(csel));
+
+    a = (guint8) scale_down_round(65535 - alpha);
+    r = (guint8) scale_down_round(gcolor.red);
+    g = (guint8) scale_down_round(gcolor.green);
+    b = (guint8) scale_down_round(gcolor.blue);
+
+    rgb = (a << 24) | (r << 16) | (g << 8) | b;
 
     if (widget_get_int(w, "boxcolor")) {
 	set_boxcolor(rgb);
@@ -278,14 +263,41 @@ static void boxcolor_patch_button_reset (GtkWidget *button)
     g_object_set_data(G_OBJECT(button), "image", image);
 }
 
+/* supplement gdk_color_parse() to handle alpha channel */
+
+static void my_gdk_color_parse (const char *s,
+				GdkColor *gcolor,
+				guint16 *alpha)
+{
+    if (isalpha(s[0]) || (s[0] == '#' && strlen(s) == 7)) {
+	*alpha = 65535;
+	gdk_color_parse(s, gcolor);
+    } else {
+	gretlRGB rgb = 0;
+	guint8 a, r, g, b;
+
+	if (s[0] == '#') {
+	    sscanf(s, "#%x", &rgb);
+	} else {
+	    sscanf(s, "%x", &rgb);
+	}
+	decompose_argb(rgb, &a, &r, &g, &b);
+	*alpha = 65535 - U16MUL * a;
+	gcolor->red =   U16MUL * r;
+	gcolor->green = U16MUL * g;
+	gcolor->blue =  U16MUL * b;
+    }
+}
+
 static void graph_color_selector (GtkWidget *w, gpointer p)
 {
     GPT_SPEC *spec;
     GtkWidget *cdlg, *csel;
     GtkWidget *button;
     gint i = GPOINTER_TO_INT(p);
-    char colstr[8];
+    char colstr[12];
     GdkColor gcolor;
+    guint16 alpha;
 
     spec = g_object_get_data(G_OBJECT(w), "plotspec");
 
@@ -298,7 +310,8 @@ static void graph_color_selector (GtkWidget *w, gpointer p)
 	print_rgb_hash(colstr, rgb);
     }
 
-    gdk_color_parse(colstr, &gcolor);
+    /* note: for GTK "alpha" means opacity */
+    my_gdk_color_parse(colstr, &gcolor, &alpha);
 
     cdlg = gtk_color_selection_dialog_new(_("gretl: graph color selection"));
     g_object_set_data(G_OBJECT(cdlg), "color_button", w);
@@ -309,6 +322,8 @@ static void graph_color_selector (GtkWidget *w, gpointer p)
 
     csel = gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(cdlg));
     gtk_color_selection_set_current_color(GTK_COLOR_SELECTION(csel), &gcolor);
+    gtk_color_selection_set_current_alpha(GTK_COLOR_SELECTION(csel), alpha);
+    gtk_color_selection_set_has_opacity_control(GTK_COLOR_SELECTION(csel), TRUE);
 
     g_object_get(G_OBJECT(cdlg), "ok-button", &button, NULL);
     g_signal_connect(G_OBJECT(button), "clicked",
@@ -324,21 +339,27 @@ static void graph_color_selector (GtkWidget *w, gpointer p)
 static void color_tool_copy (GtkWidget *button, GtkWidget *w)
 {
     GtkWidget *csel;
-    char buf[10];
+    char buf[12];
     GdkColor gcolor;
-    guint8 r, g, b;
+    guint16 alpha;
+    guint8 a, r, g, b;
     gretlRGB rgb;
 
     csel = gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(w));
     gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &gcolor);
-    r = (guint8) (scale_round(gcolor.red));
-    g = (guint8) (scale_round(gcolor.green));
-    b = (guint8) (scale_round(gcolor.blue));
-    rgb = (r << 16) | (g << 8) | b;
+    alpha = gtk_color_selection_get_current_alpha(GTK_COLOR_SELECTION(csel));
 
+    a = (guint8) scale_down_round(65535 - alpha);
+    r = (guint8) scale_down_round(gcolor.red);
+    g = (guint8) scale_down_round(gcolor.green);
+    b = (guint8) scale_down_round(gcolor.blue);
+
+    rgb = (a << 24) | (r << 16) | (g << 8) | b;
     print_rgb_hash(buf, rgb);
     buf_to_clipboard(buf);
 }
+
+/* respond to the /Tools/Color tool menu item */
 
 void show_color_tool (void)
 {
@@ -350,6 +371,7 @@ void show_color_tool (void)
     cdlg = gtk_color_selection_dialog_new(_("gretl: graph color selection"));
     csel = gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(cdlg));
     gtk_color_selection_set_current_color(GTK_COLOR_SELECTION(csel), &gcolor);
+    gtk_color_selection_set_has_opacity_control(GTK_COLOR_SELECTION(csel), TRUE);
 
     g_object_get(G_OBJECT(cdlg), "ok-button", &button, NULL);
     gtk_button_set_label(GTK_BUTTON(button), _("Copy color string"));

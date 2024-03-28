@@ -143,7 +143,7 @@ static char scriptpage[24] = "Gretl";
 static char author_mail[32];
 static char sview_style[32] = "classic";
 static char graph_theme[24] = "dark2";
-static char gpcolors[18];
+static char gpcolors[24];
 
 static int hc_by_default;
 static char langpref[32];
@@ -2062,11 +2062,11 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 static void set_gp_colors (void)
 {
     const char *s = gpcolors;
-    char cstr[2][8];
+    char cstr[2][12];
 
     *cstr[0] = *cstr[1] = '\0';
 
-    if (sscanf(s, "%7s %7s", cstr[0], cstr[1]) == 2) {
+    if (sscanf(s, "%10s %10s", cstr[0], cstr[1]) == 2) {
 	set_graph_color_from_string(0, cstr[0]);
 	set_graph_color_from_string(1, cstr[1]);
     }
