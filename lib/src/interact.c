@@ -2832,6 +2832,8 @@ static int package_check_dependencies (const char *fname,
             pkgpath = gretl_function_package_get_path(depends[i], PKG_ALL);
             if (pkgpath == NULL) {
                 err = install_package(depends[i], OPT_D, s, prn);
+		fprintf(stderr, "pkg install dependency %s: err = %d\n",
+			depends[i], err);
             }
             free(pkgpath);
         }
