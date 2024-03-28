@@ -69,6 +69,21 @@ static ARGB ARGB_from_guint32 (guint32 u)
     return out;
 }
 
+void decompose_argb (guint32 u,
+		     guint8 *a,
+		     guint8 *r,
+		     guint8 *g,
+		     guint8 *b)
+{
+    union channels ch;
+
+    ch.u32 = u;
+    *a = ch.u8[3];
+    *r = ch.u8[2];
+    *g = ch.u8[1];
+    *b = ch.u8[0];
+}
+
 gretl_array *colormix_array (gretlRGB c0, gretlRGB c1,
 			     const double *f, int nf,
 			     int do_plot, int *err)

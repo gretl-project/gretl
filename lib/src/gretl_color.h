@@ -24,4 +24,10 @@ gretl_array *colormix_array (gretlRGB c1, gretlRGB c2,
 			     const double *f, int nf,
 			     int do_plot, int *err);
 
+void decompose_argb (guint32 u,
+		     guint8 *a,
+		     guint8 *r,
+		     guint8 *g,
+		     guint8 *b);
+
 #endif /* GRETL_COLOR_H */
