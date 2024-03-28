@@ -11757,6 +11757,26 @@
       </description>
     </function>
 
+    <function name="randstr" section="strings" output="string">
+      <fnargs>
+	<fnarg type="int">n</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Restituisce una stringa casuale di lunghezza
+	  <argname>n</argname> byte. La stringa include i numeri da
+	  <lit>0</lit> a <lit>9</lit> e le lettere minuscole da
+	  <lit>a</lit> a <lit>f</lit> con uguale probabilità, e è
+	  interpretabile come un numero intero
+	  esadecimale. Tipicamente, stringhe di questo tipo sono
+	  usate come identificatori univoci. Ad esempio, con
+	  <argname>n</argname> = 16 la stringa sarà una delle oltre
+	  10<sup>19</sup> possibilità e quindi unica con probabilità
+	  vicina a 1.
+	</para>
+      </description>
+    </function>
+
     <function name="rank" section="linalg" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
