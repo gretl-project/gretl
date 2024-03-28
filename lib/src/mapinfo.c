@@ -325,7 +325,7 @@ static int print_discrete_colors_hsv (int n, FILE *fp)
     fputs("set palette defined (", fp);
     for (i=0; i<n; i++) {
         rgb = hsv_to_rgb256(&hsv);
-        sprintf(color, "0x%02x%02x%02x", rgb.r, rgb.g, rgb.b);
+        sprintf(color, "#%02x%02x%02x", rgb.r, rgb.g, rgb.b);
         fprintf(fp, "%d '%s'", i, color);
         fputs((i < n-1)? ", " : ")\n", fp);
         hsv.h += delta;
@@ -362,7 +362,7 @@ static int print_discrete_colors_rgb (int n, FILE *fp)
         r = (guint8) gretl_matrix_get(H, 0, i);
         g = (guint8) gretl_matrix_get(H, 1, i);
         b = (guint8) gretl_matrix_get(H, 2, i);
-        sprintf(color, "0x%02x%02x%02x", r, g, b);
+        sprintf(color, "#%02x%02x%02x", r, g, b);
         fprintf(fp, "%d '%s'", i, color);
         fputs((i < n-1)? ", " : ")\n", fp);
     }

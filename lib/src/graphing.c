@@ -902,6 +902,8 @@ gretlRGB gretl_rgb_get (const char *s)
     return x;
 }
 
+/* called only by print_palette_string() below */
+
 static void print_argb_hex (char *s, gretlRGB color)
 {
     if (color > 0xffffff) {
@@ -910,6 +912,8 @@ static void print_argb_hex (char *s, gretlRGB color)
 	sprintf(s, "x%06X", color);
     }
 }
+
+/* We use this format only when writing to the gretl rc file */
 
 void print_palette_string (char *s)
 {
@@ -930,10 +934,10 @@ void set_graph_color_from_string (int i, const char *s)
     int err = 0;
 
     if (i >= 0 && i < 2) {
-	gretlRGB x;
+	gretlRGB u;
 
-	if (sscanf(s + 1, "%x", &x) == 1) {
-	    user_extra_color[i] = x;
+	if (sscanf(s + 1, "%x", &u) == 1) {
+	    user_extra_color[i] = u;
 	} else {
 	    err = 1;
 	}
