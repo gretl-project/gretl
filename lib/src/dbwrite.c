@@ -487,7 +487,7 @@ open_db_files (const char *fname, char *idxname, char *binname,
     char *p;
 
     strcpy(base, fname);
-    p = strchr(base, '.');
+    p = strrchr(base, '.');
     if (p != NULL) {
 	*p = 0;
     }
