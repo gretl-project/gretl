@@ -73,6 +73,7 @@ static int xwide = 0;
 static char ad_hoc_font[64];
 static char plot_buffer_name[32];
 static char plot_buffer_idx[8];
+static double ad_hoc_alpha;
 
 enum {
     W_POINTS,
@@ -497,6 +498,19 @@ static void maybe_record_font_choice (gretlopt opt)
     }
 }
 
+static void maybe_record_alpha (gretlopt opt)
+{
+    double alpha;
+    int err = 0;
+
+    alpha = get_optval_double(plot_ci, opt, &err);
+    if (!na(alpha) && alpha > 0 && alpha <= 1) {
+	ad_hoc_alpha = alpha;
+    } else {
+	ad_hoc_alpha = 0;
+    }
+}
+
 /* We come here in response to the --buffer option in plot
    commands, and if applicable we set the static variables
    @plot_buffer_name and @plot_buffer_idx.
@@ -591,6 +605,11 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
     if (opt & OPT_W) {
 	/* --font=<fontspec> */
 	maybe_record_font_choice(OPT_W);
+    }
+
+     if (opt & OPT_E) {
+	/* --alpha=<val> */
+	maybe_record_alpha(OPT_E);
     }
 
     if (opt & OPT_L) {
@@ -1268,6 +1287,23 @@ const char *get_plotstyle (void)
     }
 }
 
+/* e.g. line = "set linetype 1 pt 1 lc rgb \"#FF0000\"\n" */
+
+static void put_line_with_added_alpha (const char *line,
+				       guint8 a, FILE *fp)
+{
+    gchar *s = g_strdup(line);
+    gchar *p = strstr(s, "rgb ");
+    guint32 u;
+
+    *p = '\0';
+    fputs(s, fp);
+    sscanf(p+5, "#%x", &u);
+    /* put 'a' = alpha into the high bits */
+    fprintf(fp, "rgb \"#%08X\"\n", (a << 24) | u);
+    g_free(s);
+}
+
 /* Write the content of either the default, or an alternative,
    gnuplot style into @fp. The @offset argument allows for
    skipping one or more leading linetype definitions. The
@@ -1278,24 +1314,49 @@ const char *get_plotstyle (void)
 static void inject_gp_style (int offset, int linetypes, FILE *fp)
 {
     const char *sty = alt_sty != NULL ? alt_sty : classic_sty;
-    const char *sub = NULL;
 
     if (linetypes == 0) {
         /* just print what follows the linetypes, if anything */
-        sub = strstr(sty, "set bord");
+        const char *sub = strstr(sty, "set bord");
+
         if (sub != NULL) {
             fputs(sub, fp);
         }
-        return;
-    } else if (offset > 0) {
-        /* start at a specified linetype */
-	char targ[32];
+    } else {
+	const char *src = sty;
+	guint8 a = 0;
 
-	sprintf(targ, "set linetype %d", offset + 1);
-	sub = strstr(sty, targ);
+	if (!na(ad_hoc_alpha) && ad_hoc_alpha > 0) {
+	    a = nearbyint(ad_hoc_alpha * 255);
+	    ad_hoc_alpha = 0; /* don't persist */
+	}
+
+	if (offset > 0) {
+	    /* start at a specified linetype */
+	    char targ[32];
+
+	    sprintf(targ, "set linetype %d", offset + 1);
+	    src = strstr(sty, targ);
+	    if (src == NULL) {
+		src = sty;
+	    }
+	}
+	if (a == 0) {
+	    fputs(src, fp);
+	} else {
+	    char line[128];
+
+	    bufgets_init(src);
+	    while (bufgets(line, sizeof line, src)) {
+		if (strstr(line, "rgb ")) {
+		    put_line_with_added_alpha(line, a, fp);
+		} else {
+		    fputs(line, fp);
+		}
+	    }
+	    bufgets_finalize(src);
+	}
     }
-
-    fputs(sub != NULL ? sub : sty, fp);
 }
 
 void write_plot_line_styles (int ptype, FILE *fp)

@@ -334,6 +334,7 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_W, "font", 2 },
     { GNUPLOT,  OPT_L, "ylogscale", 1 },
     { GNUPLOT,  OPT_D, "y2axis", 2 },
+    { GNUPLOT,  OPT_E, "alpha", 2 }, /* experimental */
     { GRAPHPG,  OPT_M, "monochrome", 0 },
     { GRAPHPG,  OPT_O, "output", 2 },
     { GRIDPLOT, OPT_F, "fontsize", 2 },
@@ -1330,7 +1331,7 @@ const char *get_optval_string (int ci, gretlopt opt)
  * @opt: gretl option value.
  * @err: location to receive error code.
  *
- * Returns: the double-precision ancillary value currently
+ * Returns: the double-precision parameter value currently
  * associated with option @opt for command @ci, if any,
  * otherwise #NADBL. If @opt is an active option for
  * @ci but the parameter for this option cannot be
@@ -1345,7 +1346,7 @@ double get_optval_double (int ci, gretlopt opt, int *err)
 
     if (so != NULL && so->val != NULL) {
         ret = gretl_double_from_string(so->val, err);
-        if (err) {
+        if (*err) {
             ret = generate_scalar(so->val, NULL, err);
         }
         if (*err) {
