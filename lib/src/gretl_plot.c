@@ -289,10 +289,10 @@ static int check_plot_option (const char *s)
 #if PDEBUG
 	fprintf(stderr, " flag = '%s', param = '%s'\n", flag, param);
 #endif
-	opt = valid_long_opt(PLOT, flag, &status);
+	opt = valid_long_opt(GNUPLOT, flag, &status);
 	free(flag);
     } else {
-	opt = valid_long_opt(PLOT, s, &status);
+	opt = valid_long_opt(GNUPLOT, s, &status);
     }
 
     if (opt == OPT_NONE) {
@@ -311,7 +311,7 @@ static int check_plot_option (const char *s)
 		/* --font=whatever */
 		maybe_unquote_param(param);
 	    }
-	    err = push_option_param(PLOT, opt, param);
+	    err = push_option_param(GNUPLOT, opt, param);
 	    if (err) {
 		fprintf(stderr, "plot option: error pushing param: '%s'\n", s);
 	    } else {
