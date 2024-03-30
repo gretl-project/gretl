@@ -1348,7 +1348,7 @@ static void inject_gp_style (int offset, int linetypes, FILE *fp)
 
 	    bufgets_init(src);
 	    while (bufgets(line, sizeof line, src)) {
-		if (strstr(line, "rgb ")) {
+		if (strstr(line, "linetype") && strstr(line, "rgb ")) {
 		    put_line_with_added_alpha(line, a, fp);
 		} else {
 		    fputs(line, fp);
@@ -9256,6 +9256,15 @@ int gnuplot_process_input (const char *literal, gretlopt opt, PRN *prn)
     if (fp == NULL && buf == NULL) {
         gretl_errmsg_set("Couldn't find the specified input");
         return E_INVARG;
+    }
+
+    if (opt & OPT_W) {
+	/* --font=<fontspec> */
+	maybe_record_font_choice(OPT_W);
+    }
+    if (opt & OPT_E) {
+	/* --alpha=<val> */
+	maybe_record_alpha(OPT_E);
     }
 
     /* open our own file for writing */
