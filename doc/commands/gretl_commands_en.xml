@@ -1740,6 +1740,10 @@
 	  <flag>--functions</flag>
 	  <effect>clear functions (only)</effect>
 	</option>
+	<option>
+	  <flag>--all</flag>
+	  <effect>clear everything</effect>
+	</option>
       </options>
     </usage>
 
@@ -1763,6 +1767,11 @@
 	user-defined functions, and any functions defined by packages
 	that have been loaded, are cleared out of memory. The dataset
 	and other variables are not affected.
+      </para>
+      <para>
+	If the <opt>all</opt> option is given, clearing is
+	comprehensive: the dataset, saved variables of all kinds, plus
+	user-defined and packaged functions.
       </para>
     </description>
   </command>
