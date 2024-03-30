@@ -2375,7 +2375,7 @@ static int check_clear (gretlopt opt)
                              gretl_command_word(CLEAR));
         err = E_DATA;
     } else {
-	err = incompatible_options(opt, OPT_D | OPT_F);
+	err = incompatible_options(opt, OPT_A | OPT_D | OPT_F);
     }
 
     return err;
@@ -3441,11 +3441,14 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case CLEAR:
         err = check_clear(cmd->opt);
         if (!err) {
-	    if (cmd->opt & OPT_F) {
+	    if (gretl_in_gui_mode()) {
+		schedule_callback(s);
+	    } else if (cmd->opt & OPT_A) {
 		gretl_functions_cleanup();
-	    } else if (gretl_in_gui_mode()) {
-                schedule_callback(s);
-            } else {
+		lib_clear_data(s, dset);
+	    } else if (cmd->opt & OPT_F) {
+		gretl_functions_cleanup();
+	    } else {
                 lib_clear_data(s, dset);
             }
         }

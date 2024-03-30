@@ -9743,7 +9743,11 @@ static int gui_exec_callback (ExecState *s, void *ptr,
     } else if (ci == FCAST) {
         register_graph();
     } else if (ci == CLEAR) {
-	if (s->cmd->opt & OPT_F) {
+	if (s->cmd->opt & OPT_A) {
+	    /* clear all */
+	    gretl_functions_cleanup();
+	    close_session(OPT_NONE);
+	} else if (s->cmd->opt & OPT_F) {
 	    /* clear functions only */
 	    gretl_functions_cleanup();
         } else if (s->cmd->opt & OPT_D) {
@@ -10422,9 +10426,13 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
         break;
 
     case CLEAR:
-	err = incompatible_options(cmd->opt, OPT_D | OPT_F);
+	err = incompatible_options(cmd->opt, OPT_A | OPT_D | OPT_F);
 	if (!err) {
-	    if (cmd->opt & OPT_F) {
+	    if (cmd->opt & OPT_A) {
+		/* clear all */
+		gretl_functions_cleanup();
+		close_session(OPT_NONE);
+	    } else if (cmd->opt & OPT_F) {
 		/* clear functions only */
 		gretl_functions_cleanup();
 	    } else if (cmd->opt & OPT_D) {

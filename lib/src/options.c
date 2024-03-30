@@ -193,6 +193,7 @@ struct gretl_option gretl_opts[] = {
     { BXPLOT,   OPT_B, "whiskerbars", 0 },
     { CHOW,     OPT_D, "dummy", 0 },
     { CHOW,     OPT_L, "limit-to", 2 },
+    { CLEAR,    OPT_A, "all", 0 },
     { CLEAR,    OPT_D, "dataset", 0 },
     { CLEAR,    OPT_F, "functions", 0 },
     { COINT,    OPT_D, "seasonals", 0 },

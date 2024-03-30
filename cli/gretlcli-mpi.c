@@ -266,6 +266,9 @@ static int cli_clear_data (ExecState *s, DATASET *dset)
 
     clear_model(s->model);
 
+    if (clearopt & OPT_A) {
+       gretl_functions_cleanup();
+    }
     if (clearopt & OPT_D) {
         libgretl_session_cleanup(SESSION_CLEAR_DATASET);
     } else {
@@ -844,7 +847,7 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
         break;
 
     case CLEAR:
-	err = incompatible_options(cmd->opt, OPT_D | OPT_F);
+	err = incompatible_options(cmd->opt, OPT_A | OPT_D | OPT_F);
 	if (!err) {
 	    if (cmd->opt & OPT_F) {
 		gretl_functions_cleanup();
