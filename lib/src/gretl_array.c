@@ -529,6 +529,25 @@ gretl_matrix *gretl_strings_array_pos (gretl_array *A,
     return ret;
 }
 
+/* Return 1 if @A includes @s, otherwise 0 */
+
+int gretl_strings_array_includes (gretl_array *A, const char *s)
+{
+    int ret = 0;
+    const char *si;
+    int i;
+
+    for (i=0; i<A->n; i++) {
+	si = A->data[i] == NULL ? "" : A->data[i];
+	if (strcmp(si, s) == 0) {
+	    ret = 1;
+	    break;
+	}
+    }
+
+    return ret;
+}
+
 void *gretl_array_get_element (gretl_array *A, int i,
 			       GretlType *type,
 			       int *err)

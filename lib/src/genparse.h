@@ -365,7 +365,6 @@ enum {
     F_RANDPERM,
     F_CSWITCH,
     F_PSDROOT,
-    F_INSTRINGS,
     F_STRVALS,
     F_ERRORIF,
     F_BINCOEFF,
@@ -476,6 +475,7 @@ enum {
     F_SDC,
     F_CDEMEAN,
     F_STDIZE,
+    F_INSTRINGS,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_URCPVAL,

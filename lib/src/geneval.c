@@ -8970,18 +8970,29 @@ static NODE *array_sort_node (NODE *n, int f, parser *p)
     return ret;
 }
 
-static NODE *array_func_node (NODE *l, NODE *r, int f, parser *p)
+static NODE *array_func_node (NODE *l, NODE *r, NODE *b, int f, parser *p)
 {
-    GretlType t = gretl_array_get_type(l->v.a);
+    gretl_array *a = l->v.a;
+    GretlType t = gretl_array_get_type(a);
     NODE *ret = NULL;
 
     if (f == F_INSTRINGS) {
         if (t != GRETL_TYPE_STRINGS || r->t != STR) {
             p->err = E_TYPES;
         } else {
-            ret = aux_matrix_node(p);
-            if (!p->err) {
-                ret->v.m = gretl_strings_array_pos(l->v.a, r->v.str, &p->err);
+	    int simple = node_get_bool(b, p, 0);
+	    const char *s = r->v.str;
+
+	    if (!p->err && simple) {
+		ret = aux_scalar_node(p);
+		if (!p->err) {
+		    ret->v.xval = gretl_strings_array_includes(a, s);
+		}
+	    } else if (!p->err) {
+		ret = aux_matrix_node(p);
+		if (!p->err) {
+		    ret->v.m = gretl_strings_array_pos(a, s, &p->err);
+		}
             }
         }
     } else if (f == F_ASORT) {
@@ -8991,7 +9002,7 @@ static NODE *array_func_node (NODE *l, NODE *r, int f, parser *p)
             ret = aux_scalar_node(p);
 	}
 	if (!p->err) {
-	    ret->v.xval = p->err = gretl_array_qsort(l->v.a, r->v.str,
+	    ret->v.xval = p->err = gretl_array_qsort(a, r->v.str,
 						     p->dset, p->prn);
         }
     } else if (t == GRETL_TYPE_MATRICES) {
@@ -18289,7 +18300,11 @@ static NODE *eval (NODE *t, parser *p)
     case F_INSTRINGS:
     case F_ASORT:
         if (l->t == ARRAY) {
-            ret = array_func_node(l, r, t->t, p);
+	    if (t->t == F_INSTRINGS) {
+		ret = array_func_node(l, m, r, t->t, p);;
+	    } else {
+		ret = array_func_node(l, r, NULL, t->t, p);
+	    }
         } else {
             node_type_error(t->t, 0, ARRAY, l, p);
         }
