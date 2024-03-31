@@ -12,6 +12,8 @@ version 2024a, in progress
   show dataset time on x-axis if possible
 - "info" command: add --to-file and --from-file options for
   manipulating the description of a dataset
+- "clear" command: add --all option to clear both function
+  definitions and all data
 - "outfile" block: add a --decpoint option to enforce use of
   decimal point (dot) for output within the block
 - "freq" command: automatically switch to no binning in case

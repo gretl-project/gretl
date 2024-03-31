@@ -11193,7 +11193,8 @@ static void get_cmdword (const char *s, char *word)
 #define starts_ccmt(p)  (*p == '/' && *(p+1) == '*')
 #define ends_ccmt(p)    (*p == '*' && *(p+1) == '/')
 
-static void check_for_comment (const char *s, int *incomm)
+static void check_for_comment (const char *s, int *incomm,
+			       int *ccindent)
 {
     const char *p = s;
     int commbak = *incomm;
@@ -11208,6 +11209,7 @@ static void check_for_comment (const char *s, int *incomm)
         }
         if (!quoted) {
             if (starts_ccmt(p)) {
+		*ccindent = p - s;
                 *incomm = 1;
                 p += 2;
             } else if (ends_ccmt(p)) {
@@ -11349,6 +11351,7 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
     size_t prevlen = llen;
     int incomment = 0;
     int inforeign = 0;
+    int ccindent = 0;
     int lp_pos = 0;
     int lp_zero = 0;
     int nsp;
@@ -11372,10 +11375,11 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
             prevline = realloc(prevline, llen);
         }
 
-        check_for_comment(line, &incomment);
+        check_for_comment(line, &incomment, &ccindent);
 
         ins = line + strspn(line, " \t");
         if (!incomment) {
+	    ccindent = 0;
             *word = '\0';
             get_cmdword(ins, word);
             if (!strcmp(word, "foreign")) {
@@ -11408,8 +11412,14 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
         if (!handled) {
             nsp = this_indent * tabwidth;
             if (incomment == 2) {
-                /* comment continuation */
-                nsp += 3;
+		/* comment continuation */
+		if (ccindent + 3 > nsp) {
+		    nsp = ccindent + 3;
+		} else {
+		    nsp += 3;
+		}
+	    } else if (ccindent > nsp) {
+		nsp = ccindent;
             } else if (line_broken(prevline)) {
                 if (lp_pos > 0) {
                     nsp = lp_pos + 1;

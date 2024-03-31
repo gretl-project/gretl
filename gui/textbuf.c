@@ -3134,28 +3134,58 @@ static int spaces_to_tab_stop (const char *s, int targ)
     return ret;
 }
 
-/* This function is called for both indenting an entire script
-   and indenting a selected region. The @start and @end iters
-   will differ in the two cases, as will the size of &buf.
+/* This function is called for both indenting an entire script and
+   indenting a selected region. The @start and @end iters will differ
+   in the two cases, as will the size of &buf.
+
+   The selected-region case is marked by the last argument. Note that
+   in the whole-script case we automatically append a newline if the
+   script is not so terminated, but we shouldn't do that in the region
+   case unless the region runs right to the end of the buffer.
 */
 
 static void normalize_indent (GtkTextBuffer *tbuf,
 			      const gchar *buf,
 			      GtkTextIter *start,
-			      GtkTextIter *end)
+			      GtkTextIter *end,
+			      int region)
 {
-    const char *ins;
+    int strip_nl = 0;
+    char *ins;
     PRN *prn;
 
     if (buf == NULL) {
 	return;
     }
 
+    if (region) {
+	/* identify the case where a region ended prior to
+	   the end of the script, and did not include a
+	   trailing newline
+	*/
+	GtkTextIter final;
+
+	gtk_text_buffer_get_end_iter(tbuf, &final);
+	if (!gtk_text_iter_equal(end, &final) &&
+	    buf[strlen(buf)-1] != '\n') {
+	    strip_nl = 1;
+	}
+    }
+
     prn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
     normalize_hansl(buf, tabwidth, prn);
-    ins = gretl_print_get_buffer(prn);
+    ins = gretl_print_steal_buffer(prn);
+    if (strip_nl) {
+	/* strip an appended newline if need be */
+	int len = strlen(ins);
+
+	if (ins[len-1] == '\n') {
+	    ins[len-1] = '\0';
+	}
+    }
     gtk_text_buffer_delete(tbuf, start, end);
     gtk_text_buffer_insert(tbuf, start, ins, -1);
+    free(ins);
     gretl_print_destroy(prn);
 }
 
@@ -3217,7 +3247,7 @@ static void auto_indent_script (GtkWidget *w, windata_t *vwin)
     gtk_text_buffer_get_start_iter(tbuf, &start);
     gtk_text_buffer_get_end_iter(tbuf, &end);
     buf = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
-    normalize_indent(tbuf, buf, &start, &end);
+    normalize_indent(tbuf, buf, &start, &end, 0);
     g_free(buf);
 
     /* restore cursor position */
@@ -3237,7 +3267,7 @@ static void indent_region (GtkWidget *w, gpointer p)
     struct textbit *tb = (struct textbit *) p;
 
     if (smarttab) {
-	normalize_indent(tb->buf, tb->chunk, &tb->start, &tb->end);
+	normalize_indent(tb->buf, tb->chunk, &tb->start, &tb->end, 1);
     } else {
 	char line[1024];
 	int i, n;
