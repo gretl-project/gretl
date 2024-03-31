@@ -11398,14 +11398,7 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
                 } else if (lp_pos > 0 && strchr(ins, ')') != NULL) {
                     lp_zero = 1;
                 }
-                if (!strcmp(word, "outfile") || !strcmp(word, "gridplot")) {
-                    /* handle possible block/nonblock, including legacy syntax for
-                       "outfile"
-                    */
-                    adjust_indent(ins, &this_indent, &next_indent);
-                } else {
-                    adjust_indent(word, &this_indent, &next_indent);
-                }
+		adjust_indent(word, &this_indent, &next_indent);
             }
         }
 
@@ -11419,6 +11412,7 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
 		    nsp += 3;
 		}
 	    } else if (ccindent > nsp) {
+		/* try not to break good indentation */
 		nsp = ccindent;
             } else if (line_broken(prevline)) {
                 if (lp_pos > 0) {
