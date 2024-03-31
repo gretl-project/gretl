@@ -1786,6 +1786,10 @@
 	  <flag>--other</flag>
 	  <effect>cancella tutto fuorché il dataset</effect>
 	</option>
+	<option>
+          <flag>--all</flag>
+          <effect>cancella proprio tutto</effect>
+	</option>
       </options>
     </usage>
 
@@ -1802,6 +1806,11 @@
 	Con l'opzione <opt>dataset</opt> viene cancellato dalla
 	memoria solo il dataset; tutti gli altri oggetti, come matrici
 	e scalari salvati in precedenza, vengono conservati.
+      </para>
+      <para>
+	Con l'opzione <opt>all</opt>, la cancellazione è totale, e
+	riguarda il dataset, variabili di tutti i tipi, e tutte le
+	funzioni, sia definite dall'utente che provenienti da pacchetti.
       </para>
     </description>
   </command>
