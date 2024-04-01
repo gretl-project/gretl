@@ -11193,8 +11193,7 @@ static void get_cmdword (const char *s, char *word)
 #define starts_ccmt(p)  (*p == '/' && *(p+1) == '*')
 #define ends_ccmt(p)    (*p == '*' && *(p+1) == '/')
 
-static void check_for_comment (const char *s, int *incomm,
-			       int *ccindent)
+static void check_for_comment (const char *s, int *incomm)
 {
     const char *p = s;
     int commbak = *incomm;
@@ -11209,7 +11208,6 @@ static void check_for_comment (const char *s, int *incomm,
         }
         if (!quoted) {
             if (starts_ccmt(p)) {
-		*ccindent = p - s;
                 *incomm = 1;
                 p += 2;
             } else if (ends_ccmt(p)) {
@@ -11224,15 +11222,13 @@ static void check_for_comment (const char *s, int *incomm,
     }
 
     if (*incomm && commbak) {
-        /* on the second or subsequent line of a multiline
-           comment */
+        /* on the second or subsequent line of a C-style comment */
         *incomm = 2;
     }
 }
 
-/* determine whether a given line is subject to
-   continuation (i.e. ends with backslash, comma
-   or semicolon, other than in a comment)
+/* determine whether a given line is subject to continuation,
+   i.e. ends with backslash or comma, but not in a comment
 */
 
 static int line_broken (const char *s)
@@ -11342,27 +11338,26 @@ void adjust_indent (const char *s, int *this_indent, int *next_indent)
 
 void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
 {
-    int this_indent = 0;
-    int next_indent = 0;
-    char *line, *prevline;
+    char *line;
     char word[9];
     const char *ins;
+    int this_indent = 0;
+    int next_indent = 0;
+    int continuation = 0;
     size_t llen = 1024;
-    size_t prevlen = llen;
     int incomment = 0;
     int inforeign = 0;
-    int ccindent = 0;
     int lp_pos = 0;
     int lp_zero = 0;
     int nsp;
 
     line = malloc(llen);
-    prevline = malloc(llen);
-    line[0] = prevline[0] = '\0';
+    line[0] = '\0';
     bufgets_init(buf);
 
     while (safe_bufgets(&line, &llen, buf)) {
         int handled = 0;
+	int lbreak = 0;
 
         strip_trailing_whitespace(line);
 
@@ -11371,15 +11366,11 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
             continue;
         }
 
-        if (llen > prevlen) {
-            prevline = realloc(prevline, llen);
-        }
-
-        check_for_comment(line, &incomment, &ccindent);
-
+        check_for_comment(line, &incomment);
         ins = line + strspn(line, " \t");
+
         if (!incomment) {
-	    ccindent = 0;
+	    lbreak = line_broken(line);
             *word = '\0';
             get_cmdword(ins, word);
             if (!strcmp(word, "foreign")) {
@@ -11394,8 +11385,10 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
                 }
             } else {
                 if (!strcmp(word, "function")) {
+		    /* record position of left parenthesis */
                     lp_pos = left_paren_offset(ins);
                 } else if (lp_pos > 0 && strchr(ins, ')') != NULL) {
+		    /* flag end of function signature */
                     lp_zero = 1;
                 }
 		adjust_indent(word, &this_indent, &next_indent);
@@ -11405,19 +11398,14 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
         if (!handled) {
             nsp = this_indent * tabwidth;
             if (incomment == 2) {
-		/* comment continuation */
-		if (ccindent + 3 > nsp) {
-		    nsp = ccindent + 3;
-		} else {
-		    nsp += 3;
-		}
-	    } else if (ccindent > nsp) {
-		/* try not to break good indentation */
-		nsp = ccindent;
-            } else if (line_broken(prevline)) {
+		/* C-style comment continuation */
+		nsp += 3;
+            } else if (continuation) {
                 if (lp_pos > 0) {
+		    /* in a function signature */
                     nsp = lp_pos + 1;
                 } else {
+		    /* small offset for continuation */
                     nsp += 2;
                 }
             }
@@ -11427,13 +11415,15 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
             pputs(prn, ins);
         }
 
-        strcpy(prevline, line);
+	/* set parameters for next line */
+	this_indent = next_indent;
+	continuation = lbreak;
         if (lp_zero) {
+	    /* scrub the left-paren record */
             lp_zero = lp_pos = 0;
         }
     }
 
     bufgets_finalize(buf);
     free(line);
-    free(prevline);
 }
