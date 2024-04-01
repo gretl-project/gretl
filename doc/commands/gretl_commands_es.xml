@@ -1734,11 +1734,15 @@
       <options>
 	<option>
 	  <flag>--dataset</flag>
-	  <effect>Vacía solo el conjunto de datos</effect>
+	  <effect>Elimina solo el conjunto de datos</effect>
 	</option>
 	<option>
 	  <flag>--functions</flag>
 	  <effect>Elimina las funciones (unicamente)</effect>
+	</option>
+	<option>
+	  <flag>--all</flag>
+	  <effect>Elimina todo</effect>
 	</option>
       </options>
     </usage>
@@ -1753,7 +1757,7 @@
 	normalmente no necesitas hace uso explícito de <cmd>clear</cmd>.
       </para>
       <para>
-	Cuando indicas la opción <opt>dataset</opt>, entonces solo se vacía
+	Cuando indicas la opción <opt>dataset</opt>, entonces solo se elimina
 	el conjunto de datos (más cualquier lista de series definida); otros
 	objetos guardados como matrices, escalares o 'bundles', se van a
 	conservar.
@@ -1763,6 +1767,11 @@
 	la memoria cualquier función definida por el usuario y cualquier función
 	definida en los paquetes que tengas cargados. El conjunto de datos y
 	otras variables no se ven afectados.
+      </para>
+      <para>
+	Cuando indicas la opción <opt>all</opt>, entonces la eliminación es
+	completa: el conjunto de datos, las variables guardadas de todo tipo,
+	además de las funciones definidas por el usuario y en paquetes.
       </para>
     </description>
   </command>
@@ -2157,7 +2166,7 @@
 	su jerarquía (en otro caso, esta alternativa se ignora).
       </para>
       <para>
-	Si <repl>listavariables</repl> contiene más de dos series y el programa no
+	Si <repl>listavariables</repl> contiene más de dos series y GRETL no
 	está en modo de procesamiento por lotes, se muestra un gráfico de
 	<quote>mapa de calor</quote> de la matriz de correlaciones. Puedes ajustar
 	esto mediante la opción <opt>plot</opt>, en la que los parámetros que se
@@ -2192,54 +2201,63 @@
 
     <usage>
       <arguments>
-        <argument>serie</argument>
+        <argument>y</argument>
         <argument optional="true">orden</argument>
       </arguments>
       <options>
-        <option>
+	<option>
 	  <flag>--bartlett</flag>
 	  <effect>Utiliza las desviaciones típicas de Bartlett</effect>
-        </option>
-        <option>
+	</option>
+	<option>
 	  <flag>--plot</flag>
 	  <optparm>modo-o-nombrearchivo</optparm>
 	  <effect>Mira abajo</effect>
-        </option>
-        <option>
-	  <flag>--quiet</flag>
-	  <effect>No presenta el gráfico</effect>
-        </option>
+	</option>
+	<option>
+	  <flag>--silent</flag>
+	  <effect>No presenta nada</effect>
+	</option>
+	<option>
+	  <flag>--acf-only</flag>
+	  <effect>Omite las autocorrelaciones parciales</effect>
+	</option>
       </options>
       <examples>
         <example>corrgm x 12</example>
+        <example>corrgm GDP 12 --acf-only</example>
       </examples>
     </usage>
 
     <description>
       <para context="notex">
-	Presenta los valores de la función de autocorrelación (FAC) del
-	argumento <repl>serie</repl>, que puede especificarse por su nombre
-	o su número. Los valores se definen como &rgr;(<math>u</math><sub>t</sub>,
-	<math>u</math><sub>t-s</sub>) donde <math>u</math><sub>t</sub> es la
-	<math>t</math>-ésima observación de la variable <math>u</math> y <math>s</math>
-	denota el número de retardos.
+	Muestra y/o representa los valores de la función de autocorrelación (FAC)
+	de la serie <repl>y</repl>, que puede especificarse por su nombre
+	o por su número. Los valores se definen como
+	&rgr;(<math>u</math><sub>t</sub>, <math>u</math><sub>t-s</sub>) donde
+	<math>u</math><sub>t</sub> es la <math>t</math>-ésima observación
+	de la variable <math>u</math>, y <math>s</math> denota el número de
+	retardos.
       </para>
       <para context="tex">
-	Presenta los valores de la función de autocorrelación (FAC) del
-	argumento <repl>serie</repl>, que puede especificarse por su nombre
-	o su número. Los valores se definen como $\hat{\rho}(u_t, u_{t-s})$, donde
-	$u_t$ es la $t$-ésima observación de la variable $u$ y $s$ denota el número
-	de retardos.
+	Muestra y/o representa los valores de la función de autocorrelación (FAC)
+	de la serie <repl>y</repl>, que puede especificarse por su nombre
+	o su número. Los valores se definen como
+	$\hat{\rho}(u_t, u_{t-s})$, donde $u_t$ es la $t$-ésima observación
+	de la variable $u$ y $s$ denota el número de
+	retardos.
       </para>
-      <para>
-	También se presentan las autocorrelaciones parciales (FACP,
-	que se calculan utilizando el algoritmo de Durbin&ndash;Levinson),
-	y que están libres de los efectos de los retardos intermedios. Además,
-	se presenta el estadístico <math>Q</math> de Ljung&ndash;Box que
-	puedes utilizar para contrastar la hipótesis nula de que la serie es un
-	<quote>ruido blanco</quote>, y que se distribuye asintóticamente
-	como una chi-cuadrado con tantos grados de libertad como el número
-	de retardos utilizados.
+      <para context="cli">
+	A no ser que indiques la opción <opt>acf-only</opt>, también se presentan
+	los coeficientes de la función de autocorrelación parcial (FACP,
+	calculados utilizando el algoritmo de Durbin&ndash;Levinson), y que
+	están libres de los efectos de los retardos intermedios.
+      </para>
+      <para context="gui">
+	Por defecto, también se presentan los coeficientes de la función de
+	autocorrelación parcial (FACP, calculados utilizando el algoritmo de
+	Durbin&ndash;Levinson), y que están libres de los efectos de los
+	retardos intermedios. Si lo deseas, puedes desactivar esto.
       </para>
       <para context="cli">
 	Se utilizan asteriscos para indicar la significación estadística de las
@@ -2248,7 +2266,9 @@
 	del tamaño de la muestra; pero cuando indicas la opción <opt>bartlett</opt>,
 	entonces se utilizan las desviaciones típicas de Bartlett para la FAC. Si
 	resulta aplicable, esta opción también determina la banda de confianza
-	que se dibuja en el gráfico de la FAC.
+	que se dibuja en el gráfico de la FAC. Además, se muestra el estadístico
+	<math>Q</math> de Ljung&ndash;Box, que contrasta la hipótesis nula de que
+	la serie es <quote>ruido blanco</quote> hasta el nivel de retardo indicado.
       </para>
       <para context="gui">
 	Se utilizan asteriscos para indicar la significación estadística de las
@@ -2256,7 +2276,9 @@
 	una desviación típica igual al cociente entre 1 y la raíz cuadrada
 	del tamaño de la muestra, pero tienes la opción de utilizar las desviaciones
 	típicas de Bartlett para la FAC. Esta opción también determina la banda
-	de confianza que se dibuja en el gráfico de la FAC.
+	de confianza que se dibuja en el gráfico de la FAC. Además, se muestra el estadístico
+	<math>Q</math> de Ljung&ndash;Box, que contrasta la hipótesis nula de que
+	la serie es <quote>ruido blanco</quote> hasta el nivel de retardo indicado.
       </para>
       <para context="cli">
 	Si especificas un valor para <repl>orden</repl>, la longitud
@@ -2265,25 +2287,25 @@
 	como una función de la frecuencia de los datos y del número de
 	observaciones.
       </para>
+      <subhead context="cli">Representación gráfica</subhead>
       <para context="cli">
-	Por defecto, se genera un gráfico del correlograma: un gráfico de
-	Gnuplot en modo interactivo o un gráfico ASCII en modo de
-	procesamiento por lotes. Esto puedes ajustarlo mediante la opción
-	<opt>plot</opt> en la que los parámetros que se admiten son:
-	<lit>none</lit> (para no mostrar el gráfico), <lit>ascii</lit>
-	(para presentar un gráfico de texto incluso en modo interactivo),
-	<lit>display</lit> (para presentar un gráfico de Gnuplot incluso
-	en modo de procesamiento por lotes); o un nombre de archivo. El
-	efecto de indicar un nombre de archivo es como el descrito para la
-	opción <opt>output</opt> de la instrucción <cmdref targ="gnuplot"/>.
+	Por defecto, si GRETL no está en modo de procesamiento por lotes, se
+	genera un gráfico del correlograma. Esto puedes ajustarlo mediante la
+	opción <opt>plot</opt> en la que los parámetros que se admiten son:
+	<lit>none</lit> (para no mostrar el gráfico), <lit>display</lit> (para
+	presentar un gráfico incluso en modo de procesamiento por lotes);
+	o un nombre de archivo. El efecto de indicar un nombre de archivo es
+	como el descrito para la opción <opt>output</opt> de la instrucción
+	<cmdref targ="gnuplot"/>.
       </para>
+      <subhead context="cli">Accesores</subhead>
       <para context="cli">
-	Cuando se completa con éxito esta instrucción, los accesores
-	<fncref targ="$test"/> y <fncref targ="$pvalue"/> contienen los dos
-	valores respectivos del contraste de Ljung&ndash;Box para el máximo
-	orden de retardo presentado. Si únicamente quieres calcular el
-	estadístico <math>Q</math>, ten en cuenta que probablemente será
-	preferible que utilices en su lugar la función <fncref targ="ljungbox"/>.
+	Cuando se complete con éxito esta instrucción, puedes usar los accesores
+	<fncref targ="$test"/> y <fncref targ="$pvalue"/> para recuperar el
+	estadístico <math>Q</math> y su Probabilidad Asociada
+	(valor <math>P</math>), evaluados para el retardo de orden mayor. Ten
+	en cuenta que si únicamente quieres este contraste, puedes utilizar en
+	su lugar la función <fncref targ="ljungbox"/>.
       </para>
     </description>
 
@@ -2407,7 +2429,7 @@
 	en <cite key="edgerton94">Edgerton y Wells (1994)</cite>.
       </para>
       <para>
-	Por defecto, cuando el programa no está en modo de procesamiento por
+	Por defecto, cuando GRETL no está en modo de procesamiento por
 	lotes, se muestra un gráfico con la serie acumulada y el intervalo de
 	confianza. Puedes ajustar esto por medio de la opción <opt>plot</opt>.
 	Los parámetros admisibles para esta opción son <lit>none</lit> (para
@@ -4386,10 +4408,6 @@
 	  <optparm>modo-o-nombrearchivo</optparm>
 	  <effect>Mira abajo</effect>
         </option>
-        <option>
-	  <flag>--quiet</flag>
-	  <effect>No presenta el gráfico</effect>
-        </option>
       </options>
       <examples>
         <example>freq x</example>
@@ -4402,8 +4420,10 @@
     <description context="cli">
       <para>
 	Si no indicas opciones, muestra la distribución de frecuencias de la
-	serie <repl>variable</repl> (indicada por su nombre o número), con el
-	número de intervalos y sus tamaños elegidos automáticamente.
+	serie <repl>variable</repl> (indicada por su nombre o número) en
+	formato tabular, con el número de intervalos y sus tamaños elegidos
+	automáticamente, con o sin un gráfico adjunto tal como se explica
+	más abajo.
       </para>
       <para>
 	Cuando indicas la opción <opt>matrix</opt>, entonces <repl>variable</repl>
@@ -4413,11 +4433,15 @@
 	argumento <repl>variable</repl>.
       </para>
       <para>
-	Para controlar la presentación de la distribución puedes especificar,
-	o bien el número de intervalos, o bien el valor mínimo junto con el
-	ancho de los intervalos, como se mostró en los dos últimos ejemplos
-	de arriba. La opción <opt>min</opt> establece el límite inferior del
-	intervalo situado más a la izquierda.
+	Por defecto, la distribución de frecuencias utiliza un número de
+	intervalos calculado automáticamente si los datos son continuos, o no
+	agrupa en intervalos si los datos son discretos. Para controlar este
+	aspecto puedes: (a) usar la instrucción <cmdref targ="discrete"/> para
+	establecer el estatus de la <repl>variable</repl>, o (b), si los datos son
+	continuos, especificar <emphasis>o</emphasis> el número de intervalos,
+	o el valor mínimo junto con el ancho de los intervalos, como se muestra
+	en los dos últimos ejemplos de arriba. La opción <opt>min</opt> establece
+	el límite inferior del intervalo situado más a la izquierda.
       </para>
       <para>
 	Cuando indicas la opción <opt>normal</opt>, se calcula el estadístico
@@ -4431,7 +4455,7 @@
 	distribución Gamma utilizada es (forma, escala).
       </para>
       <para>
-	Por defecto, si el programa no está en modo de procesamiento por
+	Por defecto, si GRETL no está en modo de procesamiento por
 	lotes, se muestra un gráfico de la distribución, pero puedes ajustar
 	esto mediante la opción <opt>plot</opt>. Los parámetros admisibles
 	para esta opción son: <lit>none</lit> (para suprimir el gráfico),
@@ -5262,6 +5286,11 @@
 	  <effect>Fuerza el uso de un único eje de ordenadas</effect>
         </option>
         <option>
+	  <flag>--y2axis</flag>
+	  <optparm>yvar</optparm>
+	  <effect>Coloca la variable especificada en un segundo eje y</effect>
+        </option>
+        <option>
 	  <flag>--ylogscale</flag>
 	  <optparm optional="true">base</optparm>
 	  <effect>Utiliza la escala logarítmica para el eje vertical</effect>
@@ -5346,6 +5375,16 @@
 	representar <lit>y1</lit> e <lit>y2</lit> frente a <lit>x</lit>,
 	de tal modo que <lit>y2</lit> se representa con una línea mientras
 	<lit>y1</lit> con puntos.
+      </para>
+      <para>
+	Cuando <repl>yvars</repl> contiene más de una variable, podría ser
+	preferible utilizar dos ejes y (a la izquierda y a la derecha). Por defecto,
+	esto se realiza automáticamente, mediante una técnica heurística basada
+	en las escalas relativas de las variables; pero puedes utilizar dos
+	opciones (mutuamente excluyentes) para anular lo predeterminado. Como
+	cabría esperar, la opción <opt>single-yaxis</opt> evita el uso de un segundo
+	eje, mientras que <opt>y2axis=</opt><repl>yvar</repl> especifica que se
+	represente una cierta variable (únicamente) en relación al segundo eje.
       </para>
       <para>
 	Cuando selecciones la opción <opt>dummy</opt>, debes indicar
@@ -6643,7 +6682,7 @@
 	del tamaño de la muestra.
       </para>
       <para>
-	Por defecto, si el programa no está en modo de procesamiento por
+	Por defecto, si GRETL no está en modo de procesamiento por
 	lotes, se muestra un gráfico del rango reescalado pero puedes ajustar
 	esto mediante la opción <opt>plot</opt>. Los parámetros que se admiten
 	para esta opción son <lit>none</lit> (para suprimir el gráfico);
@@ -9432,10 +9471,11 @@
 
     <usage>
       <altforms>
-        <altform><lit>modeltab add</lit></altform>
+	<altform><lit>modeltab add</lit></altform>
 	<altform><lit>modeltab show</lit></altform>
 	<altform><lit>modeltab free</lit></altform>
 	<altform><lit>modeltab --output=</lit><repl>nombrearchivo</repl></altform>
+	<altform><lit>modeltab --options=</lit><repl>bundle</repl></altform>
       </altforms>
     </usage>
 
@@ -9451,13 +9491,11 @@
 	y en la que cada fila contenga las estimaciones para una determinada
 	variable en los diferentes modelos.
       </para>
-
       <para>
 	GRETL proporciona un medio para elaborar una tabla de este tipo
 	(y de copiarla en texto plano, &latex; o Rich Text Format).
 	Aquí tienes como hacerlo:
       </para>
-
       <nlist>
 	<li>
 	  <para>
@@ -9541,6 +9579,76 @@
       </para>
       <code>
 	modeltab --output="myfile.tex" --complete
+      </code>
+      <para>
+	Puedes utilizar el indicador <opt>options=</opt> (lo que requiere
+	indicar el nombre de un 'bundle' de GRETL) para controlar algunos
+	aspectos de formato en la tabla del modelo. Se admiten las siguientes
+	claves:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>colheads</lit>: Entero de 1 a 4, que permite escoger entre
+	    los cuatro estilos admitidos para el encabezamiento de columnas:
+	    numeración Arábiga, numeración Romana, alfabética, o la utilización
+	    de los nombres bajo los que se guardaron los modelos.
+	    El predeterminado es 1 (numeración Arábiga).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>tstats</lit>: Booleano, que permite sustituir las desviaciones
+	    típicas con los estadísticos t, o no (el predeterminado, 0).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>pvalues</lit>: Booleano, que permite incluir los valores
+	    <math>P</math>, o no (el predeterminado, 0).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>asterisks</lit>: Booleano, que permite mostrar asteriscos
+	    relativos al nivel de significación, o no (el predeterminado, 0).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>digits</lit>: Entero de 2 a 6, que permite elegir el número
+	    de dígitos significativos que se muestran (el predeterminado, 4).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>decplaces</lit>: Entero de 2 a 6, que permite elegir el número
+	    de posiciones decimales que se muestran.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Ten en cuenta que las dos últimas claves son mutuamente excluyentes.
+	Ofrecen modos alternativos de especificar la precisión con la que se muestran
+	los valores numéricos: o en términos de dígitos significativos, o en
+	términos de posiciones decimales. Por defecto, son 4 dígitos significativos.
+      </para>
+      <para>
+	Puedes indicar un 'bundle' de opciones mediante una instrucción
+	independiente (como en el último de los ejemplos de más abajo),
+	o se puede combinar con el proceso <lit>show</lit>, o con la opción
+	<opt>output</opt>. Por ejemplo, el siguiente guion elabora una simple
+	tabla de un modelo y la presenta, mostrando los valores <math>P</math>
+	en lugar de los asteriscos relativos al nivel de significación:
+      </para>
+      <code>
+	open data9-7
+	ols 1 0 2 3 4
+	modeltab add
+	ols 1 0 2 3
+	modeltab add
+	bundle myopts = _(pvalues=1, asterisks=0)
+	modeltab show --options=myopts
       </code>
     </description>
 
@@ -10846,6 +10954,10 @@
 	  <flag>--tempfile</flag>
 	  <effect>Mira abajo</effect>
         </option>
+        <option>
+	  <flag>--decpoint</flag>
+	  <effect>Mira abajo</effect>
+        </option>
       </options>
     </usage>
 
@@ -10971,6 +11083,18 @@
 	excepto que, cuando finaliza la redirección, se restablecen los valores
 	originales de las variables <lit>echo</lit> y <lit>messages</lit>.
 	Esta opción está disponible en todo caso.
+      </para>
+
+      <subhead>Carácter decimal</subhead>
+      <para>
+	El efecto de la opción <opt>decpoint</opt> es asegurar que el carácter
+	de punto decimal (en contraposición a la coma) está vigente mientras la
+	salida de resultados está desviada. Cuando el bloque <lit>outfile</lit>
+	finaliza, el carácter decimal vuelve al estado en que estaba antes de el.
+	Esta opción resulta especialmente útil cuando el archivo texto que se
+	va a crear, está destinado a ser una entrada para algún otro programa
+	que requiera que los dígitos sigan las convenciones del inglés, como
+	podría ser el caso de un guion de Gnuplot o de R, por ejemplo.
       </para>
 
       <subhead>Niveles de redirección</subhead>
@@ -11640,10 +11764,14 @@
 	  <flag>--degrees</flag>
 	  <effect>Muestra la frecuencia en grados</effect>
         </option>
-	<option>
+        <option>
 	  <flag>--plot</flag>
 	  <optparm>modo-o-nombrearchivo</optparm>
 	  <effect>Mira abajo</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>Omite la presentación del resultado</effect>
         </option>
       </options>
     </usage>
@@ -11672,7 +11800,7 @@
 	radianes o desde 0 a 180&deg;, respectivamente.
       </para>
       <para>
-	Por defecto, si el programa no está en modo de procesamiento por
+	Por defecto, si GRETL no está en modo de procesamiento por
 	lotes, se muestra un gráfico del periodograma. Puedes ajustar esto
 	mediante la opción <opt>plot</opt>. Los parámetros admisibles para
 	esta opción son <lit>none</lit> (para suprimir el gráfico),
@@ -11713,18 +11841,20 @@
         <example>pkg install armax</example>
         <example>pkg install /path/to/myfile.gfn --local</example>
         <example>pkg query ghosts</example>
+        <example>pkg run-sample ghosts</example>
         <example>pkg unload armax</example>
      </examples>
     </usage>
 
     <description>
       <para>
-	Esta instrucción proporciona una manera de instalar, consultar, descargar,
-	eliminar o indexar paquetes de funciones de GRETL. El argumento
-	<repl>acción</repl> debe ser alguno de entre <lit>install</lit>,
-	<lit>query</lit>, <lit>unload</lit>, <lit>remove</lit> o <lit>index</lit>,
-	respectivamente. Una extensión para dar soporte a paquetes de
-	archivos de datos se describe más abajo.
+	Esta instrucción proporciona una manera de instalar, consultar,
+	descargar, eliminar o indexar paquetes de funciones de GRETL.
+	El argumento <repl>acción</repl> debe ser alguno de entre
+	<lit>install</lit>, <lit>query</lit>, <lit>run&#8209;sample</lit>,
+	<lit>unload</lit>, <lit>remove</lit> o <lit>index</lit>, respectivamente.
+	Una extensión para dar soporte a paquetes de archivos de datos
+	se describe más abajo.
       </para>
       <para>
 	<lit>install</lit>: En su forma más elemental, sin ningún indicador de
@@ -11746,11 +11876,17 @@
       <para>
 	<lit>query</lit>: Por defecto, la consecuencia de esta opción es la
 	presentación de información básica sobre el paquete especificado
-	(autor, versión, etc.). Pero si añades la opción <opt>quiet</opt>, no
-	se presenta nada; en su lugar, se guarda la información del paquete
-	en forma de un 'bundle' de GRETL, al que se puede acceder mediante
-	<fncref targ="$result"/>. Si no se puede encontrar ninguna información,
-	este 'bundle' estará vacío.
+	(autor, versión, etc.). Si el paquete incluye recursos extra (archivos de
+	datos y/o guiones adicionales) se incluye un listado de esos archivos.
+	Si añades la opción <opt>quiet</opt>, no se presenta nada; en su
+	lugar, se guarda la información del paquete en forma de un 'bundle'
+	de GRETL, al que se puede acceder mediante <fncref targ="$result"/>.
+	Si no se puede encontrar ninguna información, este 'bundle' estará
+	vacío.
+      </para>
+      <para>
+	<lit>run-sample</lit>: Proporciona un recurso mediante linea de instrucciones
+	para ejecutar el guion de prueba incluido en el paquete especificado.
       </para>
       <para>
 	<lit>unload</lit>: Debes indicar el argumento <repl>pkgname</repl> en
@@ -11841,53 +11977,6 @@
       </arguments>
       <options>
         <option>
-	  <flag>--with-lines</flag>
-	  <optparm optional="true">varspec</optparm>
-	  <effect>Utiliza líneas, no puntos</effect>
-        </option>
-        <option>
-	  <flag>--with-lp</flag>
-	  <optparm optional="true">varspec</optparm>
-	  <effect>Utiliza líneas y puntos</effect>
-        </option>
-        <option>
-	  <flag>--with-impulses</flag>
-	  <optparm optional="true">varspec</optparm>
-	  <effect>Utiliza líneas verticales</effect>
-        </option>
-        <option>
-	  <flag>--with-steps</flag>
-	  <optparm optional="true">varspec</optparm>
-	  <effect>Utiliza segmentos de línea perpendiculares</effect>
-        </option>
-        <option>
-	  <flag>--time-series</flag>
-	  <effect>Representa frente al tiempo</effect>
-        </option>
-        <option>
-	  <flag>--single-yaxis</flag>
-	  <effect>Fuerza el uso de un único eje de ordenadas</effect>
-        </option>
-        <option>
-	  <flag>--ylogscale</flag>
-	  <optparm optional="true">base</optparm>
-	  <effect>Utiliza la escala logarítmica para el eje vertical</effect>
-        </option>
-        <option>
-	  <flag>--dummy</flag>
-	  <effect>Mira abajo</effect>
-        </option>
-        <option>
-	  <flag>--fit</flag>
-	  <optparm>espajuste</optparm>
-	  <effect>Mira abajo</effect>
-        </option>
-        <option>
-	  <flag>--band</flag>
-	  <optparm>espfranja</optparm>
-	  <effect>Mira abajo</effect>
-        </option>
-        <option>
 	  <flag>--output</flag>
 	  <optparm>nombrearchivo</optparm>
 	  <effect>Envía el resultado al archivo indicado</effect>
@@ -11970,11 +12059,14 @@
 	</li>
       </ilist>
       <para>
-	Ten en cuenta que cuando especificas una opción utilizando las
-	palabras clave <lit>option</lit> u <lit>options</lit>, no es
-	necesario proporcionar el habitual doble guion antes del indicador
-	de opción. Para obtener más detalles sobre los efectos de las distintas
-	opciones, consulta <cmdref targ="gnuplot"/>.
+	Ten en cuenta que al lado de las opciones <opt>output</opt> y
+	<opt>outbuf</opt> (que se deben añadir a la línea con que acaba el bloque),
+	todas las opciones que admite la instrucción <cmdref targ="gnuplot"/>
+	también las admite la instrucción <lit>plot</lit>, pero deben indicarse
+	dentro del bloque, utilizando la sintaxis descrita más arriba. En este
+	contexto, no es necesario proporcionar el habitual doble guion antes del
+	indicador de opción. Para obtener más detalles sobre los efectos de las
+	distintas opciones, consulta <cmdref targ="gnuplot"/>.
       </para>
       <para>
 	La intención de utilizar el bloque <lit>plot</lit> se ilustra mejor con el
@@ -15737,7 +15829,7 @@
         </option>
         <option>
 	  <flag>--weight</flag>
-	  <optparm>wvar</optparm>
+	  <optparm>wtvar</optparm>
 	  <effect>Variable de ponderación</effect>
         </option>
         <option>
@@ -15756,22 +15848,30 @@
     <description>
       <para>
 	En su primera forma, esta instrucción presenta un resumen estadístico
-	de las variables de <repl>listavariables</repl>, o de todas las
-	variables del conjunto de datos cuando omites <repl>listavariables</repl>.
-	Por defecto, el resultado consiste en la media, desviación típica (sd),
-	coeficiente de variación (= sd/media), mediana, mínimo, máximo,
-	coeficiente de asimetría y exceso de curtosis. Cuando indicas la opción
-	<opt>simple</opt>, el resultado se limita a la media, el mínimo, el máximo
-	y la desviación típica.
+	de las variables de <repl>listavariables</repl>, o de todas las variables
+	del conjunto de datos cuando omites <repl>listavariables</repl>. Por
+	defecto, el resultado consiste en la media, mediana, mínimo, máximo,
+	desviación típica (sd), coeficiente de variación (= sd/media),
+	coeficiente de asimetría, exceso de curtosis, percentiles del 5% y 95%,
+	rango intercuartílico y número de observaciones ausentes. Pero
+	cuando indicas la opción <opt>simple</opt>, el resultado se limita
+	a la media, la mediana, la desviación típica, el mínimo y el
+	máximo.
       </para>
       <para>
-	Cuando indicas la opción <opt>by</opt> (en cuyo caso el parámetro
-	<repl>byvar</repl> debe ser el nombre de una variable discreta),
+	Si indicas la opción <opt>weight</opt>, en cuyo caso el parámetro
+	<repl>wvar</repl> debería ser el nombre de una serie que ofrezca
+	las ponderaciones de cada observación, los estadísticos se ponderan
+	de acuerdo con ello.
+      </para>
+      <para>
+	Cuando indicas la opción <opt>by</opt>, en cuyo caso el parámetro
+	<repl>byvar</repl> debe ser el nombre de una variable discreta,
 	entonces se presentan los estadísticos para las submuestras que se
 	corresponden con los diferentes valores que toma <repl>byvar</repl>.
 	Por ejemplo, cuando <repl>byvar</repl> es una variable ficticia
 	(binaria), se presentan los estadísticos para los casos en los que
-	<lit>byvar = 0</lit> y <lit>byvar = 1</lit>. Advertencia: En este
+	<lit>byvar=0</lit> y <lit>byvar=1</lit>. Advertencia: En este
 	momento, esta opción es incompatible con la opción
 	<opt>weight</opt>.
       </para>
@@ -16352,6 +16452,11 @@
 	instrumentos son válidos; pero se sospecha de la validez de esta
 	hipótesis si la regresión auxiliar tiene un grado de poder explicativo
 	que es significativo. 
+      </para>
+      <para>
+	Estos estadísticos están disponibles luego de la conclusión satisfactoria
+	de la instrucción, con los nombres <fncref targ="$hausman"/> y
+	<fncref targ="$sargan"/> (si es aplicable), respectivamente.
       </para>
       <subhead>Instrumentos débiles</subhead>
       <para>
@@ -17230,8 +17335,8 @@
 	  <effect>Mira abajo</effect>
         </option>
         <option>
-	  <flag>--quiet</flag>
-	  <effect>No presenta el gráfico</effect>
+	  <flag>--silent</flag>
+	  <effect>Omite la presentación del resultado</effect>
         </option>
       </options>
       <examples>
@@ -17241,7 +17346,7 @@
 
     <description>
       <para>
-	Presenta y dibuja el correlograma cruzado de <repl>serie1</repl>
+	Presenta y/o dibuja el correlograma cruzado de <repl>serie1</repl>
 	con <repl>serie2</repl>, las que puedes especificar mediante sus
 	nombres o sus números. Los valores son los coeficientes de
 	correlación muestrales entre el valor vigente de <repl>serie1</repl>
@@ -17256,16 +17361,14 @@
 	observaciones.
       </para>
       <para>
-	Por defecto, se genera un gráfico del correlograma cruzado: un gráfico
-	Gnuplot en modo interactivo o un gráfico ASCII en modo de procesamiento
-	por lotes. Puedes ajustar esto mediante la opción <opt>plot</opt>.
-	Los parámetros admisibles para esta opción son <lit>none</lit>
-	(para omitir el gráfico), <lit>ascii</lit> (para generar un gráfico
-	de texto aunque sea en modo interactivo), <lit>display</lit>
-	(para generar un gráfico Gnuplot aunque sea en modo de
-	procesamiento por lotes), o un nombre de archivo. El efecto de
-	proporcionar un nombre de archivo es como se describió para la
-	opción <opt>output</opt> de la instrucción <cmdref targ="gnuplot"/>.
+	Por defecto, cuando GRETL no está en modo de procesamiento por lotes,
+	se muestra un gráfico del correlograma cruzado. Puedes ajustar esto
+	mediante la opción <opt>plot</opt>. Los parámetros admisibles para esta
+	opción son <lit>none</lit> (para omitir el gráfico), <lit>display</lit>
+	(para generar un gráfico Gnuplot aunque sea en modo de procesamiento
+	por lotes), o un nombre de archivo. El efecto de proporcionar un
+	nombre de archivo es como se describió para la opción <opt>output</opt>
+	de la instrucción <cmdref targ="gnuplot"/>.
       </para>
     </description>
 

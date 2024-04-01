@@ -5096,6 +5096,62 @@
 	  un elemento sintáctico que habitualmente se fija al tiempo en el
 	  que se redacta un guion.
 	</para>
+	<para>
+	  <seelist>
+            <fncref targ="fevalb"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="fevalb" section="programming" output="seebelow">
+      <fnargs>
+	<fnarg type="string">nombrefunc</fnarg>
+	<fnarg type="bundle">b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta es una variante de la función <fncref targ="feval"/> que afronta
+	  una situación en la que se pueden encontrar los creadores de
+	  funciones, cuando no se sabe de antemano el número y los tipos de
+	  argumentos que se van a pasar a la función indicada. En lugar de
+	  pasar los argumentos individualmente, se pasan como miembros de
+	  un argumento <argname>b</argname> de tipo 'bundle'.
+	</para>
+	<para>
+	  Dado que el orden de los miembros de un 'bundle' de GRETL es
+	  indeterminado, se requiere algún mecanismo para asegurarnos
+	  de que estos se pasan a la función en cuestión, en el orden
+	  correcto. Esto se asegura automáticamente si el orden lexicográfico
+	  de las claves que hay en el 'bundle', indica también el orden de
+	  los argumentos. Por ejemplo, las claves podrían ser <lit>arg1</lit>,
+	  <lit>arg2</lit>, etcétera (o <lit>arg01</lit>, <lit>arg02</lit>,
+	  etcétera en el improbable caso de que la función tuviese más de
+	  nueve argumentos). Como alternativa, el 'bundle' puede contener
+	  un 'array' cadenas de texto bajo la clave reservada <lit>arglist</lit>.
+	  Este 'array' debe contener exactamente las claves del 'bundle'
+	  <argname>b</argname> (excepto el propio <lit>arglist</lit>), en
+	  el orden deseado.
+	</para>
+	<para>
+	  Los ejemplos de abajo ilustran ambas propuestas, aplicadas a la
+	  función <fncref targ="monthlen"/>.
+	</para>
+	<code>
+	  # Utilizando el orden lexicográfico
+	  bundle b = _(arg1=12, arg2=1980, arg3=5)
+	  n = feval("monthlen", b)
+
+	  # Utilizando arglist
+	  bundle b = _(month=12, year=1980, wkdays=5)
+	  b.arglist = defarray("month", "year", "wkdays")
+	  n = feval("monthlen", b)
+	</code>
+	<para>
+	  <seelist>
+            <fncref targ="feval"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -6735,6 +6791,7 @@
     <function name="invpd" section="linalg" output="smatrix">
       <fnargs>
 	<fnarg type="pdmat">A</fnarg>
+	<fnarg optional="true" type="scalarref">&amp;logdet</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6743,6 +6800,17 @@
 	  esta función es ligeramente más rápida que <fncref targ="inv"/> puesto
 	  que con ella no se comprueba si la matriz es simétrica. Por esta razón,
 	  la función debe utilizarse con prudencia.
+	</para>
+	<para>
+	  Si está presente el argumento <argname>&amp;logdet</argname>
+	  (opcional), el escalar resultante va a contener (si acaba con éxito la
+	  función) el logaritmo del determinante de la matriz <argname>A</argname>.
+	  Disponer de esto puede ser muy interesante en algunos casos; por
+	  ejemplo, en el contexto de evaluación del logaritmo de una versosimilitud
+	  de tipo Normal (Gaussiana), porque el logaritmo del determinante
+	  es un subproducto del algoritmo de la inversion, y conseguirlo
+	  mediante el argumento <argname>&amp;logdet</argname> evita cálculos
+	  adicionales.
 	</para>
 	<para>
 	  Nota: Si pretendes invertir una matriz de la forma <math>X'X</math>,
@@ -7143,7 +7211,7 @@
       <fnargs>
 	<fnarg type="string">buf</fnarg>
 	<fnarg type="string">ruta</fnarg>
-	<fnarg optional="true" type="scalarref">nleer</fnarg>
+	<fnarg optional="true" type="scalarref">&amp;nleer</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -9998,14 +10066,21 @@
       </description>
     </function>
 
-    <function name="nobs" section="stats" output="int">
+    <function name="nobs" section="stats" output="scalar-or-series">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-list">x</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devuelve el número de observaciones no ausentes de la variable
-	  (<argname>y</argname>) en la muestra vigente seleccionada.
+	  Si <argname>x</argname> es una serie, devuelve el número de
+	  observaciones no ausentes de esa serie, en la muestra vigente
+	  seleccionada.
+	</para>
+	<para>
+	  Si <argname>x</argname> es una lista, devuelve una serie
+	  <math>y</math> tal que <math>y</math><sub>t</sub> representa
+	  el recuento de las series de la lista que no tienen un valor ausente
+	  en la observación <math>t</math>.
 	</para>
 	<para>
 	  <seelist>
@@ -11624,6 +11699,24 @@
       </description>
     </function>
 
+    <function name="randstr" section="strings" output="string">
+      <fnargs>
+	<fnarg type="int">n</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devuelve una cadena de texto aleatoria de <argname>n</argname> bytes
+	  de ancho. En la cadena se van a incluir con la misma probabilidad los
+	  números que van de <lit>0</lit> a <lit>9</lit>, y las letras minúsculas
+	  que van de <lit>a</lit> hasta <lit>f</lit>; y se interpreta como un
+	  entero hexadecimal. Su uso previsto es como un identificador único.
+	  Por ejemplo, con <argname>n</argname> = 16, se genera una cadena
+	  de entre cerca de 10<sup>19</sup> posibilidades, por lo que será
+	  única con una probabilidad próxima a 1.
+	</para>
+      </description>
+    </function>
+
     <function name="rank" section="linalg" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -12147,7 +12240,7 @@
 	  Si <argname>x</argname> es una lista, la función devuelve una
 	  serie <math>y</math> tal que <math>y</math><sub>t</sub>
 	  representa la desviación típica muestral de los valores de las
-	  variables de la lista, en la observación <math>t</math>. Por
+	  series de la lista, en la observación <math>t</math>. Por
 	  defecto, la desviación típica se registra como <lit>NA</lit>,
 	  si hay algún valor ausente en <math>t</math>; pero si le das
 	  un valor no nulo a <argname>parcial</argname>, cualquier valor
@@ -13695,7 +13788,7 @@
 	<fnarg type="vector">c</fnarg>
 	<fnarg type="vector">r</fnarg>
 	<fnarg type="vector">b</fnarg>
-	<fnarg optional="true" type="scalarref">det</fnarg>
+	<fnarg optional="true" type="scalarref">&amp;det</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -14577,7 +14670,7 @@ d =  8,0000000
       <fnargs>
 	<fnarg type="string">buf</fnarg>
 	<fnarg type="string-or-strings">ruta</fnarg>
-	<fnarg optional="true" type="scalarref">coincidencias</fnarg>
+	<fnarg optional="true" type="scalarref">&amp;coincidencias</fnarg>
       </fnargs>
       <description>
 	<para>

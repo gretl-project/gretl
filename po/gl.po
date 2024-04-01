@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-03-25 11:19-0400\n"
-"PO-Revision-Date: 2023-11-26 22:43+0100\n"
+"PO-Revision-Date: 2024-03-27 13:32+0100\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.3.2\n"
+"X-Generator: Poedit 3.1\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
 #: lib/src/addons_utils.c:184
@@ -37,9 +37,8 @@ msgid "check for %s\n"
 msgstr "Comprobar *%s*\n"
 
 #: lib/src/addons_utils.c:275
-#, fuzzy
 msgid "no valid version found"
-msgstr "Non se atoparon series correctas"
+msgstr "Non se atopou unha versión correcta"
 
 #: lib/src/addons_utils.c:277
 msgid "indexed version"
@@ -543,7 +542,7 @@ msgstr "Data de inicio incorrecta para datos de %d días"
 #: lib/src/cmd_private.c:298 cli/gretlcli.c:288 cli/gretlcli-mpi.c:193
 #, c-format
 msgid "Broken syntax in %s: unmatched %s"
-msgstr ""
+msgstr "Sintaxe rachada en %s: non coincide %s"
 
 #: lib/src/compare.c:292
 #, c-format
@@ -1517,9 +1516,9 @@ msgid "Couldn't read marker on line %d"
 msgstr "Non se puido ler o marcador da liña %d"
 
 #: lib/src/dataio.c:2758
-#, fuzzy, c-format
+#, c-format
 msgid "Missing marker at observation %d"
-msgstr "Valores ausentes na observación %d"
+msgstr "Marcador ausente na observación %d"
 
 #: lib/src/dataio.c:2991
 msgid "No labels found"
@@ -1543,26 +1542,20 @@ msgid "Labels loaded OK\n"
 msgstr "Etiquetas cargadas correctamente\n"
 
 #: lib/src/dataio.c:3144
-#, fuzzy
 msgid "No description is available\n"
-msgstr "Non se dispón dunha descrición"
+msgstr "Non se dispón dunha descrición\n"
 
 #: lib/src/dataio.c:3149
-#, fuzzy
 msgid "dataset description written OK\n"
-msgstr ""
-"Provedor/Conxunto de datos: Descripción\n"
-"\n"
+msgstr "Ben escrita a descrición do conxunto de datos\n"
 
 #: lib/src/dataio.c:3159
-#, fuzzy
 msgid "description replaced OK\n"
-msgstr "Non se dispón dunha descrición"
+msgstr "Ben substituída a descrición\n"
 
 #: lib/src/dataio.c:3161
-#, fuzzy
 msgid "description loaded OK\n"
-msgstr "Etiquetas cargadas correctamente\n"
+msgstr "Ben cargada a descrición\n"
 
 #: lib/src/dataio.c:3211
 msgid "No markers are available for writing"
@@ -2103,9 +2096,8 @@ msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
 msgstr "RETARDO   FAC          FACP         Estat-Q. [Valor p]"
 
 #: lib/src/describe.c:3628
-#, fuzzy
 msgid "  LAG      ACF          Q-stat. [p-value]"
-msgstr "RETARDO   FAC          FACP         Estat-Q. [Valor p]"
+msgstr "  RETARDO      FAC          Estat-Q. [Valor p]"
 
 #: lib/src/describe.c:3911
 msgid "Argument is a constant"
@@ -2895,7 +2887,7 @@ msgstr "Afirmación *%s* errada"
 
 #: lib/src/geneval.c:9520
 msgid "comma(s) found in atof() input"
-msgstr ""
+msgstr "Atopada(s) coma(s) na entrada de atof()"
 
 #: lib/src/geneval.c:10017
 #, c-format
@@ -2966,9 +2958,9 @@ msgid "%s: requires an even number of arguments"
 msgstr "%s: require un número par de argumentos"
 
 #: lib/src/geneval.c:15556
-#, fuzzy, c-format
+#, c-format
 msgid "%s: function not found"
-msgstr "%s: A función está usándose"
+msgstr "%s: A función non se atopa"
 
 #: lib/src/geneval.c:16108
 msgid "array: no type was specified"
@@ -3243,8 +3235,8 @@ msgstr "constantes do modelo %d por unidade"
 #: lib/src/genfuncs.c:4310
 msgid "Invalid declaration: maybe you need the \"clear\" command?"
 msgstr ""
-"Expresión incorrecta: é posible que necesites utilizar a instrución "
-"\"clear\"?"
+"Expresión incorrecta: é posible que necesites utilizar a instrución \"clear"
+"\"?"
 
 #: lib/src/genfuncs.c:4313
 msgid "Invalid declaration"
@@ -3331,7 +3323,7 @@ msgstr "Función isnull() anticuada: utiliza !exists() no seu lugar"
 
 #: lib/src/genlex.c:813
 msgid "deprecated alias 'fft2': please call fft()"
-msgstr ""
+msgstr "Alias 'fft2' obsoleto: por favor, invoca a fft()"
 
 #: lib/src/genlex.c:1226
 #, c-format
@@ -3545,9 +3537,8 @@ msgid "You must supply three variables, the last of which is discrete"
 msgstr "Debes de indicar tres variables, a última delas debe de ser discreta"
 
 #: lib/src/graphing.c:2127
-#, fuzzy
 msgid "incompatible output specification"
-msgstr "Especificación incorrecta de formato"
+msgstr "Especificación da saída de resultados incompatible"
 
 #: lib/src/graphing.c:2482 gui/gpt_dialog.c:643
 #, c-format
@@ -4296,7 +4287,7 @@ msgstr "'%s': Non existe esa listaxe"
 
 #: lib/src/gretl_foreign.c:2615 lib/src/gretl_foreign.c:2719
 msgid "Can't find the R shared library"
-msgstr ""
+msgstr "Non pode atoparse a biblioteca compartida de R"
 
 #: lib/src/gretl_foreign.c:2755
 msgid "Can't determine R_HOME"
@@ -4514,9 +4505,9 @@ msgid "Broken package! Basic information is missing\n"
 msgstr "Paquete roto! A información básica perdeuse\n"
 
 #: lib/src/gretl_func.c:7049
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find sample script for '%s'"
-msgstr "Non puido atoparse a función '%s'"
+msgstr "Non puido atoparse o guión de mostra para *%s*"
 
 #: lib/src/gretl_func.c:7284
 msgid "No description available"
@@ -5951,9 +5942,8 @@ msgid "Failed to parse data values at obs %d"
 msgstr "Fallo ao pasar valores de datos na observación %d"
 
 #: lib/src/gretl_xml.c:3180 lib/src/gretl_xml.c:3338
-#, fuzzy
 msgid "Inconsistent record of number of observations"
-msgstr "Fallo ao pasar o número de observacións"
+msgstr "Rexistro inconsistente do número de observacións"
 
 #: lib/src/gretl_xml.c:3186 lib/src/gretl_xml.c:3344
 msgid "Failed to parse number of observations"
@@ -6105,13 +6095,12 @@ msgid "No series labels are defined\n"
 msgstr "Non hai definidas etiquetas das series\n"
 
 #: lib/src/interact.c:1067
-#, fuzzy
 msgid "Output has already been redirected"
-msgstr "O resultado xa está sendo enviado a *%s*"
+msgstr "O resultado xa foi redirixido"
 
 #: lib/src/interact.c:1070
 msgid "Output redirection: maximum depth reached"
-msgstr ""
+msgstr "Redirección da saída de resultados: acadouse o fondo máximo"
 
 #: lib/src/interact.c:1094
 #, c-format
@@ -6493,6 +6482,8 @@ msgid ""
 "R_functions could not be enabled\n"
 "Please see https://gretl.sourceforge.net/gretl_and_R.html"
 msgstr ""
+"Non se poden habilitar as funcións de R\n"
+"Por favor, consulta https://gretl.sourceforge.net/gretl_and_R.html"
 
 #: lib/src/libset.c:2117
 #, c-format
@@ -8001,9 +7992,9 @@ msgstr ""
 " non produciu o tipo de resultado requirido"
 
 #: lib/src/nls.c:711
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': expected a scalar or matrix"
-msgstr "%s: Agardábase un escalar ou un vector"
+msgstr "'%s': Agardábase un escalar ou unha matriz"
 
 #: lib/src/nls.c:865
 msgid "Only one 'params' specification is allowed"
@@ -9406,9 +9397,9 @@ msgid "\"%s\": obsolete %s; please use \"%s\""
 msgstr "\"%s\": obsoleto %s; utiliza \"%s\""
 
 #: lib/src/tokenize.c:2554
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid keyword in plot block"
-msgstr "'%s': Observación final incorrecta"
+msgstr "'%s': Palabra clave incorrecta no bloque de gráficas"
 
 #: lib/src/tokenize.c:2668
 msgid "'end loop': did you mean 'endloop'"
@@ -9941,9 +9932,9 @@ msgid "writing session output to %s%s\n"
 msgstr "Escribindo os resultados de sesión a %s%s\n"
 
 #: cli/gretlcli.c:1081
-#, fuzzy, c-format
+#, c-format
 msgid "Error reading '%s'\n"
-msgstr "Fallo ao ler %s\n"
+msgstr "Fallo ao ler '%s'\n"
 
 #: cli/gretlcli.c:1093
 msgid "Terminated on error\n"
@@ -11009,7 +11000,7 @@ msgid ""
 "Provider/Dataset : description\n"
 "\n"
 msgstr ""
-"Provedor/Conxunto de datos: Descripción\n"
+"Provedor/Conxunto de datos: Descrición\n"
 "\n"
 
 #: gui/database.c:2008
@@ -11054,7 +11045,7 @@ msgstr "Fallo ao descomprimir datos"
 
 #: gui/database.c:2728
 msgid "Reopen the local window to access this collection"
-msgstr ""
+msgstr "Volver abrir a xanela local para acceder a esta colección"
 
 #: gui/database.c:3064 gui/database.c:3097
 msgid "Unknown: access error"
@@ -11400,7 +11391,7 @@ msgstr "Autor"
 
 #: gui/datafiles.c:2941
 msgid "Addon"
-msgstr ""
+msgstr "Complemento"
 
 #: gui/datafiles.c:2948 gui/fnsave.c:2907 gui/textutil.c:395
 msgid "Window"
@@ -12243,13 +12234,12 @@ msgstr ""
 "de datos, a pesar do encabezamento da columna."
 
 #: gui/dialogs.c:4340
-#, fuzzy
 msgid "Data file options:"
-msgstr "Ficheiros de datos"
+msgstr "Opcións do ficheiro de datos:"
 
 #: gui/dialogs.c:4357
 msgid "\"View\": view the first few lines of the file"
-msgstr ""
+msgstr "\"Ver\": ver algunhas das primeiras liñas do ficheiro"
 
 #: gui/dialogs.c:4364 gui/session.c:215 gui/session.c:219 gui/session.c:229
 #: gui/session.c:3510 gui/session.c:3544 gui/textutil.c:588
@@ -15463,6 +15453,12 @@ msgid ""
 "Do you want to download and install the current\n"
 "addons now?"
 msgstr ""
+"Escolliches unha acción que require acceder a\n"
+"complementos de GRETL. Pero eses paquetes\n"
+"están ausentes, incompletos ou sen actualizar.\n"
+"\n"
+"Queres descargar e instalar os complementos\n"
+"vixentes agora?"
 
 #: gui/guiprint.c:218 gui/guiprint.c:265
 #, c-format
@@ -17031,9 +17027,8 @@ msgid "gretl: Hurst exponent"
 msgstr "GRETL: Expoñente de Hurst"
 
 #: gui/library.c:5884
-#, fuzzy
 msgid "Show partial autocorrelations"
-msgstr "GRETL: Autocorrelación"
+msgstr "Amosar as Autocorrelacións Parciais"
 
 #: gui/library.c:5885
 msgid "Use Bartlett standard errors"
@@ -19828,26 +19823,23 @@ msgstr "Matriz gardada como %s"
 
 #: gui/toolbar.c:942 gui/toolbar.c:1663
 msgid "Preview as markdown"
-msgstr ""
+msgstr "Vista previa como recorte"
 
 #: gui/toolbar.c:959
 msgid "Return to editing"
-msgstr ""
+msgstr "Volver á edición"
 
 #: gui/toolbar.c:968
-#, fuzzy
 msgid "plain literal text"
-msgstr "Texto plano"
+msgstr "Texto literal plano"
 
 #: gui/toolbar.c:969
-#, fuzzy
 msgid "markdown"
 msgstr "Recorte"
 
 #: gui/toolbar.c:974
-#, fuzzy
 msgid "Text status"
-msgstr "Estatístico de proba"
+msgstr "Status do texto"
 
 #: gui/toolbar.c:1071
 msgid "New window"
@@ -19986,9 +19978,8 @@ msgid "New tab"
 msgstr "Nova lapela"
 
 #: gui/toolbar.c:1662
-#, fuzzy
 msgid "Set markdown status"
-msgstr "_Ver o status actual"
+msgstr "Establecer o status do recorte"
 
 #: gui/toolbar.c:1826
 msgid "launch calculator"
@@ -20153,9 +20144,8 @@ msgid "Buffer is empty"
 msgstr "O búfer está baldeiro"
 
 #: gui/viewers.c:481
-#, fuzzy
 msgid "Go to line"
-msgstr "Marcar como liña de comentarios"
+msgstr "Ir á liña"
 
 #: gui/viewers.c:867
 msgid "gretl: edit plot commands"
