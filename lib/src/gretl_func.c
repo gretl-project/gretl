@@ -11341,10 +11341,10 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
     char *line;
     char word[9];
     const char *ins;
+    size_t llen = 1024;
     int this_indent = 0;
     int next_indent = 0;
     int continuation = 0;
-    size_t llen = 1024;
     int incomment = 0;
     int inforeign = 0;
     int lp_pos = 0;
