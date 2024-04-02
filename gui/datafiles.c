@@ -834,8 +834,8 @@ static int gui_delete_fn_pkg (const char *pkgname, const char *fname,
 	loaded = 1;
     }
 
-    /* and see if the user is able to delete the package */
-    if (gretl_write_access((char *) fname) == 0) {
+    /* see if the user is able to delete the package */
+    if (!is_gretl_addon(pkgname) && gretl_write_access((char *) fname) == 0) {
 	delete_ok = 1;
     }
 
