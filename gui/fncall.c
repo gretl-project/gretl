@@ -3350,19 +3350,12 @@ int try_exec_bundle_print_function (gretl_bundle *b, PRN *prn)
 typedef enum {
     GPI_MODELWIN = 1 << 0,
     GPI_SUBDIR   = 1 << 1,
-    GPI_ADDON    = 1 << 2,
-    GPI_INCLUDED = 1 << 3,
-    GPI_DATAREQ  = 1 << 4
+    GPI_INCLUDED = 1 << 2,
+    GPI_DATAREQ  = 1 << 3
 } GpiFlags;
-
-enum {
-    SYS_PACKAGES,
-    USER_PACKAGES
-};
 
 #define gpi_included(g) (g->flags & GPI_INCLUDED)
 #define gpi_modelwin(g) (g->flags & GPI_MODELWIN)
-#define gpi_addon(g) (g->flags & GPI_ADDON)
 #define gpi_subdir(g) (g->flags & GPI_SUBDIR)
 #define gpi_ptype(g) ((g->flags & GPI_SUBDIR)? PKG_SUBDIR : PKG_TOPLEV)
 
@@ -3406,8 +3399,6 @@ int n_user_handled_packages (void)
     for (i=0; i<n_gpkgs; i++) {
 	if (gpkgs[i].pkgname == NULL) {
 	    /* a vacant slot */
-	    continue;
-	} else if (gpkgs[i].flags & GPI_ADDON) {
 	    continue;
 	} else {
 	    n++;
@@ -3467,7 +3458,7 @@ static void write_packages_xml (void)
 	fputs("<gretl-package-info>\n", fp);
 
 	for (i=0; i<n_gpkgs; i++) {
-	    if (gpkgs[i].pkgname != NULL && !(gpkgs[i].flags & GPI_ADDON)) {
+	    if (gpkgs[i].pkgname != NULL) {
 		fprintf(fp, "<package name=\"%s\"", gpkgs[i].pkgname);
 		fprintf(fp, " label=\"%s\"", gpkgs[i].label);
 		if (gpkgs[i].flags & GPI_MODELWIN) {
@@ -3543,9 +3534,7 @@ static gui_package_info *get_gpi_entry (const gchar *pkgname)
 void get_registered_pkg_info (int i, char **name, char **path,
 			      char **label, int *modelwin)
 {
-    if (i < 0 || i >= n_gpkgs ||
-	gpkgs[i].pkgname == NULL ||
-	(gpkgs[i].flags & GPI_ADDON)) {
+    if (i < 0 || i >= n_gpkgs || gpkgs[i].pkgname == NULL) {
 	*name = *path = *label = NULL;
     } else {
 	*name = gpkgs[i].pkgname;
@@ -3617,7 +3606,6 @@ void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 	if (filepath == NULL) {
 	    maybe_download_addons(vwin_toplevel(vwin), pkgname, &filepath);
 	}
-	/* maybe add a gpi entry? */
     } else {
 	gpi = get_gpi_entry(pkgname);
 	if (gpi == NULL) {
@@ -3663,16 +3651,12 @@ static int package_is_unseen (const char *name, int n)
 }
 
 static void gpi_set_flags (gui_package_info *gpi,
-			   int addon,
 			   int subdir,
 			   int modelwin,
 			   int need_dreq)
 {
     gpi->flags = 0;
 
-    if (addon) {
-	gpi->flags |= GPI_ADDON;
-    }
     if (subdir) {
 	gpi->flags |= GPI_SUBDIR;
     }
@@ -3768,11 +3752,27 @@ static int need_gfn_data_req (const char *path)
     return strncmp(path, "/menubar/Model", 14) != 0;
 }
 
+/* The following contributed packages were referenced in the
+   system-wide packages.xml, which was eliminated in gretl 2024a. For
+   backward compatibility, these static gpi entries should hopefully
+   prevent gretl from losing track of the affected packages.
+*/
+
+static gui_package_info old_gpi[] = {
+    { "bandplot", "Confidence band plot", "/menubar/Graphs", NULL, 0, 0,
+      GPI_MODELWIN, 0, NULL },
+    { "tobit_y", "Predicted values", "/menubar/Analysis", NULL, 0, TOBIT,
+      GPI_MODELWIN, 0, NULL },
+    { "fe_stats", "Fixed effects statistics", "/menubar/Analysis", NULL, 0, PANEL,
+      GPI_MODELWIN, 0, NULL },
+};
+
 static int read_packages_file (const char *fname, int *pn)
 {
+    static int done_old_gpi;
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
-    int err, n = *pn;
+    int i, err, n = *pn;
 
     err = gretl_xml_open_doc_root(fname, "gretl-package-info", &doc, &cur);
     if (err) {
@@ -3830,7 +3830,7 @@ static int read_packages_file (const char *fname, int *pn)
 		    gpkgs[n].label = desc;
 		    gpkgs[n].menupath = path;
 		    gpkgs[n].filepath = NULL;
-		    gpi_set_flags(&gpkgs[n], 0, !top, mw, need_dr);
+		    gpi_set_flags(&gpkgs[n], !top, mw, need_dr);
 		    gpkgs[n].dreq = (DataReq) dreq;
 		    if (mw) {
 			gpkgs[n].modelreq = modelreq;
@@ -3853,6 +3853,27 @@ static int read_packages_file (const char *fname, int *pn)
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);
+    }
+
+    if (!done_old_gpi) {
+	for (i=0; i<G_N_ELEMENTS(old_gpi); i++) {
+	    gui_package_info *gpi = &old_gpi[i];
+
+	    if (package_is_unseen(gpi->pkgname, n)) {
+		gpkgs = myrealloc(gpkgs, (n+1) * sizeof *gpkgs);
+		gpkgs[n].pkgname = gretl_strdup(gpi->pkgname);
+		gpkgs[n].label = gretl_strdup(gpi->label);
+		gpkgs[n].menupath = gretl_strdup(gpi->menupath);
+		gpkgs[n].filepath = NULL;
+		gpkgs[n].flags = gpi->flags;
+		gpkgs[n].dreq = 0;
+		gpkgs[n].modelreq = gpi->modelreq;
+		gpkgs[n].merge_id = 0;
+		gpkgs[n].ag = NULL;
+		n++;
+		done_old_gpi = 1;
+	    }
+	}
     }
 
     *pn = n;
@@ -3932,7 +3953,7 @@ static int fill_gpi_entry (gui_package_info *gpi,
     } else {
 	need_dr = need_gfn_data_req(gpi->menupath);
     }
-    gpi_set_flags(gpi, USER_PACKAGES, uses_subdir, modelwin, need_dr);
+    gpi_set_flags(gpi, uses_subdir, modelwin, need_dr);
     gpi->dreq = dreq;
 
     if (gpi->pkgname == NULL || gpi->label == NULL ||
@@ -4337,12 +4358,8 @@ void maybe_add_packages_to_model_menus (windata_t *vwin)
 	if (gpi->pkgname != NULL && gpi_modelwin(gpi)) {
 	    err = maybe_add_model_pkg(gpi, vwin);
 	    if (err) {
-		if (err == E_FOPEN && gpi_addon(gpi)) {
-		    ;
-		} else {
-		    /* delete entry from registry */
-		    gui_function_pkg_unregister(gpi->pkgname);
-		}
+		/* delete entry from registry */
+		gui_function_pkg_unregister(gpi->pkgname);
 	    }
 	}
     }
