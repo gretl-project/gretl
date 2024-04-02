@@ -14,5 +14,4 @@ sample-script = HIP_example.inp
 min-version = @VERSION@
 
 label = IV/Heteroskedastic
-menu-attachment = MAINWIN/Model/LimdepModels/probit
 data-files = examples

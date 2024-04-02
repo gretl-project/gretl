@@ -98,7 +98,7 @@ install_scripts:
 	$(INSTALL_DATA) $(sharesrc)/scripts/misc/ps_descriptions $(DESTDIR)$(gretldir)/scripts/misc
 
 install_functions:
-	for f in gretlfunc.dtd criteria.gfn packages.xml ; do \
+	for f in gretlfunc.dtd criteria.gfn ; do \
 	$(INSTALL_DATA) $(sharesrc)/functions/$$f $(DESTDIR)$(gretldir)/functions ; done
 
 install_man: gretl.1

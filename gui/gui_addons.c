@@ -25,7 +25,8 @@
 
 /* @basename and @filepath can be given if the caller wants the path
    to a specific newly installed file on success, otherwise NULLs
-   are OK.
+   are OK. As of gretl 2024a this replaces the old apparatus which
+   involved downloading of individual addons.
 
    Note: the return value is non-zero iff download and installation
    are successful.
@@ -69,7 +70,6 @@ DLCode maybe_download_addons (GtkWidget *parent,
 		}
 	    }
 	}
-
 	 gretl_remove(dlpath);
 	 g_free(dlpath);
     }

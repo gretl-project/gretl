@@ -52,8 +52,6 @@ install: $(PKG).gfn installdirs
 	for f in examples/* ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
 
-install-code: install
-
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples

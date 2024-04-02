@@ -795,21 +795,19 @@ GretlType fncall_get_return_type (fncall *call)
     return GRETL_TYPE_NONE;
 }
 
-/* Portmanteau function to get a caller struct for a
-   function named @funcname from a function package
-   named @pkgname. We first check if the specified package
-   is already in memory; if not we try to find it in
-   the local filesystem, and load it into memory if
-   successful.
+/* Portmanteau function to get a caller struct for a function named
+   @funcname from a function package named @pkgname. We first check if
+   the specified package is already in memory; if not we try to find
+   it in the local filesystem, and load it into memory if successful.
 
-   If/once the package is in fact loaded we look up the
-   specified function; and if that's successful we
-   allocate a caller struct and return it.
+   If/once the package is in fact loaded we look up the specified
+   function; and if that's successful we allocate a caller struct and
+   return it.
 
-   The @pkgpath argument can be given as NULL, but if
-   the path to the package is known to the caller and
-   is provided via this argument this will speed up the
-   look-up in case the package is not already loaded.
+   The @pkgpath argument can be given as NULL, but if the path to the
+   package is known to the caller and is provided via this argument
+   this will speed up the look-up in case the package is not already
+   loaded.
 */
 
 fncall *get_pkg_function_call (const char *funcname,
@@ -822,6 +820,7 @@ fncall *get_pkg_function_call (const char *funcname,
 
     /* is the package already loaded? */
     pkg = get_function_package_by_name(pkgname);
+
     if (pkg == NULL) {
         /* no, so look it up */
         int err = 0;

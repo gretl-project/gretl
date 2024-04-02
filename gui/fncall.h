@@ -78,8 +78,6 @@ int n_user_handled_packages (void);
 void get_registered_pkg_info (int i, char **name, char **path,
 			      char **label, int *modelwin);
 
-int query_addons (void);
-
 int dbnomics_get_series_call (const char *datacode);
 
 int dbnomics_get_dimensions_call (const char *provider,
@@ -100,8 +98,10 @@ void *dbnomics_probe_series (const char *prov,
 			     int limit, int offset,
 			     int *err);
 
-void map_plot_callback (void);
+void geoplot_callback (void);
 
 int real_do_regls (const char *buf);
+
+void gfn_menu_callback (GtkAction *action, windata_t *vwin);
 
 #endif /* FNCALL_H */

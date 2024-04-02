@@ -2409,7 +2409,6 @@ static int real_GUI_function_call (call_info *cinfo,
 			&dummy_list);
 
     /* FIXME: the following conditionality may be wrong? */
-
     if (!grab_bundle && strncmp(funname, "GUI", 3)) {
 	pprintf(prn, "? %s\n", fnline);
     }
@@ -2954,7 +2953,7 @@ static void maybe_open_sample_script (call_info *cinfo,
 
 /* Called (mostly) from the function-package browser: unless the
    package can't be loaded we should return 0 to signal that loading
-   happened.
+   happened OK.
 */
 
 int open_function_package (const char *pkgname,
@@ -3345,47 +3344,13 @@ int try_exec_bundle_print_function (gretl_bundle *b, PRN *prn)
     return ret;
 }
 
-/* get a listing of available "official" addons along with (a) the
-   name of the versioned subdirectory containing the most recent
-   usable version (given the gretl version) and (b) the date of that
-   package version, taken from its spec file. E.g.
-
-   gig 1.9.5 2011-04-22
-   ivpanel 1.9.4 2011-02-10
-*/
-
-int query_addons (void)
-{
-    gchar *query;
-    char *buf = NULL;
-    int err = 0;
-
-    query = g_strdup_printf("/addons-data/pkginfo.php?gretl_version=%s",
-			    GRETL_VERSION);
-    err = query_sourceforge(query, &buf);
-    g_free(query);
-
-    if (!err && buf == NULL) {
-	/* shouldn't happen */
-	err = E_DATA;
-    }
-
-    if (!err) {
-	infobox(buf);
-    }
-
-    free(buf);
-
-    return err;
-}
-
-/* information about a function package that offers a
-   menu attachment point */
+/* information about a function package that offers a menu attachment
+   point */
 
 typedef enum {
     GPI_MODELWIN = 1 << 0,
     GPI_SUBDIR   = 1 << 1,
-    GPI_SYSFILE  = 1 << 2,
+    GPI_ADDON    = 1 << 2,
     GPI_INCLUDED = 1 << 3,
     GPI_DATAREQ  = 1 << 4
 } GpiFlags;
@@ -3397,7 +3362,7 @@ enum {
 
 #define gpi_included(g) (g->flags & GPI_INCLUDED)
 #define gpi_modelwin(g) (g->flags & GPI_MODELWIN)
-#define gpi_sysfile(g) (g->flags & GPI_SYSFILE)
+#define gpi_addon(g) (g->flags & GPI_ADDON)
 #define gpi_subdir(g) (g->flags & GPI_SUBDIR)
 #define gpi_ptype(g) ((g->flags & GPI_SUBDIR)? PKG_SUBDIR : PKG_TOPLEV)
 
@@ -3442,9 +3407,7 @@ int n_user_handled_packages (void)
 	if (gpkgs[i].pkgname == NULL) {
 	    /* a vacant slot */
 	    continue;
-	} else if (gpkgs[i].flags & GPI_SYSFILE) {
-	    /* a file under control of the "system"
-	       packages.xml file */
+	} else if (gpkgs[i].flags & GPI_ADDON) {
 	    continue;
 	} else {
 	    n++;
@@ -3470,15 +3433,10 @@ static void gpi_entry_init (gui_package_info *gpi)
     gpi->ag = NULL;
 }
 
-static gchar *packages_xml_path (int which)
+static gchar *packages_xml_path (void)
 {
-    if (which == SYS_PACKAGES) {
-	return g_strdup_printf("%sfunctions%cpackages.xml",
-			       gretl_home(), SLASH);
-    } else {
-	return g_strdup_printf("%sfunctions%cpackages.xml",
-			       gretl_dotdir(), SLASH);
-    }
+    return g_strdup_printf("%sfunctions%cpackages.xml",
+			   gretl_dotdir(), SLASH);
 }
 
 static const char *modelreq_string (int ci)
@@ -3492,7 +3450,7 @@ static const char *modelreq_string (int ci)
 
 static void write_packages_xml (void)
 {
-    gchar *fname = packages_xml_path(USER_PACKAGES);
+    gchar *fname = packages_xml_path();
     int i, n_write = n_user_handled_packages();
 
     if (n_write == 0) {
@@ -3509,8 +3467,7 @@ static void write_packages_xml (void)
 	fputs("<gretl-package-info>\n", fp);
 
 	for (i=0; i<n_gpkgs; i++) {
-	    if (gpkgs[i].pkgname != NULL &&
-		!(gpkgs[i].flags & GPI_SYSFILE)) {
+	    if (gpkgs[i].pkgname != NULL && !(gpkgs[i].flags & GPI_ADDON)) {
 		fprintf(fp, "<package name=\"%s\"", gpkgs[i].pkgname);
 		fprintf(fp, " label=\"%s\"", gpkgs[i].label);
 		if (gpkgs[i].flags & GPI_MODELWIN) {
@@ -3588,7 +3545,7 @@ void get_registered_pkg_info (int i, char **name, char **path,
 {
     if (i < 0 || i >= n_gpkgs ||
 	gpkgs[i].pkgname == NULL ||
-	(gpkgs[i].flags & GPI_SYSFILE)) {
+	(gpkgs[i].flags & GPI_ADDON)) {
 	*name = *path = *label = NULL;
     } else {
 	*name = gpkgs[i].pkgname;
@@ -3647,37 +3604,48 @@ int package_is_available_for_menu (const gchar *pkgname,
    the package.
 */
 
-static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
+void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 {
     const gchar *pkgname = gtk_action_get_name(action);
-    gui_package_info *gpi;
+    gui_package_info *gpi = NULL;
+    char *filepath = NULL;
+    int is_addon = 0;
 
-    gpi = get_gpi_entry(pkgname);
-    if (gpi == NULL) {
-	/* "can't happen" */
-	return;
+    if (is_gretl_addon(pkgname)) {
+	is_addon = 1;
+	filepath = gretl_addon_get_path(pkgname);
+	if (filepath == NULL) {
+	    maybe_download_addons(vwin_toplevel(vwin), pkgname, &filepath);
+	}
+	/* maybe add a gpi entry? */
+    } else {
+	gpi = get_gpi_entry(pkgname);
+	if (gpi == NULL) {
+	    /* "can't happen" */
+	    return;
+	}
+	if (gpi->filepath == NULL) {
+	    gpi->filepath =
+		gretl_function_package_get_path(pkgname, gpi_ptype(gpi));
+	}
+	filepath = gpi->filepath;
     }
 
-    if (gpi->filepath == NULL) {
-	gpi->filepath =
-	    gretl_function_package_get_path(pkgname, gpi_ptype(gpi));
-    }
-
-    if (gpi->filepath == NULL && is_gretl_addon(pkgname)) {
-	maybe_download_addons(vwin_toplevel(vwin), pkgname, &gpi->filepath);
-    }
-
-    if (gpi->filepath != NULL) {
+    if (filepath != NULL) {
 	call_info *cinfo;
 	int err = 0;
 
-	cinfo = start_cinfo_for_package(pkgname, gpi->filepath, vwin, &err);
+	cinfo = start_cinfo_for_package(pkgname, filepath, vwin, &err);
 	if (cinfo != NULL) {
-	    call_function_package(cinfo, vwin, gpi->filepath, 0);
+	    call_function_package(cinfo, vwin, filepath, 0);
 	}
-    } else {
+    } else if (!is_addon) {
 	errbox_printf("Sorry, could not find %s", pkgname);
 	gui_function_pkg_unregister(pkgname);
+    }
+
+    if (is_addon && filepath != NULL) {
+	free(filepath);
     }
 }
 
@@ -3695,15 +3663,15 @@ static int package_is_unseen (const char *name, int n)
 }
 
 static void gpi_set_flags (gui_package_info *gpi,
-			   int which,
+			   int addon,
 			   int subdir,
 			   int modelwin,
 			   int need_dreq)
 {
     gpi->flags = 0;
 
-    if (which == SYS_PACKAGES) {
-	gpi->flags |= GPI_SYSFILE;
+    if (addon) {
+	gpi->flags |= GPI_ADDON;
     }
     if (subdir) {
 	gpi->flags |= GPI_SUBDIR;
@@ -3800,7 +3768,7 @@ static int need_gfn_data_req (const char *path)
     return strncmp(path, "/menubar/Model", 14) != 0;
 }
 
-static int read_packages_file (const char *fname, int *pn, int which)
+static int read_packages_file (const char *fname, int *pn)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
@@ -3808,7 +3776,7 @@ static int read_packages_file (const char *fname, int *pn, int which)
 
     err = gretl_xml_open_doc_root(fname, "gretl-package-info", &doc, &cur);
     if (err) {
-	return (which == SYS_PACKAGES)? err : 0;
+	return 0;
     }
 
     cur = cur->xmlChildrenNode;
@@ -3829,13 +3797,9 @@ static int read_packages_file (const char *fname, int *pn, int which)
 		break;
 	    }
 
-	    if (!strcmp(name, "SVAR") &&
-		!strcmp(path, "/menubar/Model/TSModels")) {
-		/* update menu path (legacy SVAR) */
-		free(path);
-		path = gretl_strdup("/menubar/Model/TSMulti");
-	    } else if (strstr(path, "TSModels/TSMulti") ||
+	    if (strstr(path, "TSModels/TSMulti") ||
 		       strstr(path, "TSModels/CointMenu")) {
+		/* update for obsolete menu paths */
 		free(path);
 		path = gretl_strdup("/menubar/Model/TSMulti");
 	    }
@@ -3866,7 +3830,7 @@ static int read_packages_file (const char *fname, int *pn, int which)
 		    gpkgs[n].label = desc;
 		    gpkgs[n].menupath = path;
 		    gpkgs[n].filepath = NULL;
-		    gpi_set_flags(&gpkgs[n], which, !top, mw, need_dr);
+		    gpi_set_flags(&gpkgs[n], 0, !top, mw, need_dr);
 		    gpkgs[n].dreq = (DataReq) dreq;
 		    if (mw) {
 			gpkgs[n].modelreq = modelreq;
@@ -4122,40 +4086,24 @@ static int update_gui_package_info (const char *pkgname,
     return err;
 }
 
-/* read "packages.xml" to find out what's what among packages
-   that offer to place themselves in the gretl menu system
+/* Read "packages.xml" to find out what's what among packages that
+   offer to place themselves in the gretl menu system.  This does not
+   apply to gretl addons, which are handled separately.
 */
 
 static int gui_package_info_init (void)
 {
     gchar *fname;
-    int err, n = 0;
+    int err = 0;
+    int n = 0;
 
-    /* start with the "system" packages.xml, which should
-       always be present */
-    fname = packages_xml_path(SYS_PACKAGES);
-    err = read_packages_file(fname, &n, SYS_PACKAGES);
-#if PKG_DEBUG
-    fprintf(stderr, "read_packages_file: n=%d, err=%d from '%s'\n",
-	    n, err, fname);
-#endif
-    g_free(fname);
+    /* read the per-user packages.xml, if present */
 
-    if (!err) {
-	/* then read the per-user packages.xml, if present */
-	fname = packages_xml_path(USER_PACKAGES);
-#if PKG_DEBUG
-	fprintf(stderr, "now trying '%s'\n", fname);
-#endif
-	if (gretl_file_exists(fname)) {
-	    err = read_packages_file(fname, &n, USER_PACKAGES);
-#if PKG_DEBUG
-	    fprintf(stderr, "read_packages_file: n=%d, err=%d from '%s'\n",
-		    n, err, fname);
-#endif
-	}
-	g_free(fname);
+    fname = packages_xml_path();
+    if (gretl_file_exists(fname)) {
+	err = read_packages_file(fname, &n);
     }
+    g_free(fname);
 
     if (err) {
 	destroy_gui_package_info();
@@ -4214,7 +4162,6 @@ static void add_package_to_menu (gui_package_info *gpi,
 	g_object_set_data(G_OBJECT(gpi->ag), "datareq", GINT_TO_POINTER(1));
     }
     gtk_ui_manager_insert_action_group(vwin->ui, gpi->ag, 0);
-    // g_object_unref(gpi->ag);
 
     g_free(fixed_label);
 #if PKG_DEBUG
@@ -4390,7 +4337,7 @@ void maybe_add_packages_to_model_menus (windata_t *vwin)
 	if (gpi->pkgname != NULL && gpi_modelwin(gpi)) {
 	    err = maybe_add_model_pkg(gpi, vwin);
 	    if (err) {
-		if (err == E_FOPEN && gpi_sysfile(gpi)) {
+		if (err == E_FOPEN && gpi_addon(gpi)) {
 		    ;
 		} else {
 		    /* delete entry from registry */
@@ -4413,15 +4360,14 @@ void maybe_add_packages_to_model_menus (windata_t *vwin)
    exist.
 */
 
-/* Find out where the package is supposed to attach: the
-   @mpath string (which gets into the gfn file from its
-   associated spec file or the GUI) should look something like
+/* Find out where the package is supposed to attach: the @mpath string
+   (which gets into the gfn file from its associated spec file or the
+   GUI) should look something like
 
    MODELWIN/Analysis or
    MAINWIN/Model
 
-   The first portion just tells us in which window it should
-   appear.
+   The first portion just tells us in which window it should appear.
 */
 
 static gchar *pkg_get_attachment (const gchar *mpath,
@@ -4505,9 +4451,8 @@ int gui_function_pkg_revise_status (const gchar *pkgname,
     int do_update = 0;
     int err = 0;
 
-    /* In this context we may, in principle, be adding,
-       removing, or revising the gui-menu status of
-       a package.
+    /* In this context we may, in principle, be adding, removing, or
+       revising the gui-menu status of a package.
     */
 
     if (label != NULL && mpath != NULL) {
@@ -4629,7 +4574,7 @@ static int gui_function_pkg_register (const char *fname,
     }
 
     if (pkg == NULL) {
-	/* not already loaded, load it now*/
+	/* not already loaded, load it now */
 	pkg = get_function_package_by_filename(fname, &err);
 	if (err == E_DEPENDS) {
 	    /* problem with R dependencies? */
@@ -4739,14 +4684,13 @@ int gui_function_pkg_query_register (const char *fname,
     return notified;
 }
 
-/* We invoke this function on the two GUI "entry-points" to
-   dbnomics, namely retrieving a specified series and getting
-   the current list of providers. We thereby ensure that if
-   the dbnomics function package is not found on the local
-   machine we try to download and install it.
+/* We invoke this function on the two GUI "entry-points" to dbnomics,
+   namely retrieving a specified series and getting the current list
+   of providers. We thereby ensure that if the dbnomics function
+   package is not found on the local machine we try to download and
+   install it.
 
-   We also invoke it for regls, which requires a distinct
-   saved path.
+   We also invoke it for regls, which requires a distinct saved path.
 */
 
 static fncall *get_addon_function_call (const char *addon,
@@ -4769,7 +4713,7 @@ static fncall *get_addon_function_call (const char *addon,
     if (!err && *ppkgpath == NULL) {
 	*ppkgpath = gretl_addon_get_path(addon);
 	if (*ppkgpath == NULL || gretl_test_fopen(*ppkgpath, "r") != 0) {
-	    /* not found locally */
+	    /* not found locally, try downloading */
 	    maybe_download_addons(NULL, addon, ppkgpath);
 	}
     }
@@ -5206,7 +5150,7 @@ int real_do_regls (const char *buf)
     return err;
 }
 
-/* geomap related functions */
+/* geoplot related functions */
 
 static int unique_string_valued (DATASET *dset, int v)
 {
@@ -5248,7 +5192,7 @@ static GList *plausible_payload_list (int *selpos)
 
 /* Called in response to "Display map" */
 
-void map_plot_callback (void)
+void geoplot_callback (void)
 {
     const char *mapfile = dataset_get_mapfile(dataset);
 

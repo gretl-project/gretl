@@ -26,7 +26,9 @@
 
 #define A_DEBUG 0
 
-/* Note: here's the canonical listing of gretl addons */
+/* Note: here's the canonical listing of gretl addons. If a new addon
+   is added this must be updated
+*/
 
 static const char *addon_names[] = {
     "SVAR", "gig", "HIP", "ivpanel",
@@ -488,3 +490,4 @@ int get_addon_basic_info (const char *addon,
 
     return err;
 }
+

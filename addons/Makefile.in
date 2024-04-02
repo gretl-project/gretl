@@ -67,9 +67,6 @@ installdirs:
 install: $(SUBDIRS) installdirs
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install; done
 
-install-code: installdirs
-	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install-code; done
-
 install-private: addons-i18n.c
 	$(INSTALL_DATA) $< $(topsrc)/plugin	
 

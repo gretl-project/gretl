@@ -256,6 +256,7 @@
 	  <menuitem action="oprobit"/>
 	  <menuitem action="biprobit"/>
 	  <menuitem action="reprobit"/>
+	  <menuitem action="HIP"/>
 	</menu>
 	<menuitem action="tobit"/>
 	<menuitem action="heckit"/>
@@ -268,6 +269,7 @@
 	<menuitem action="arima"/>
         <menuitem action="ALAGSEL"/>
 	<menuitem action="garch"/>
+	<menuitem action="gig"/>
 	<menuitem action="midasreg"/>
 	<menu action="AR-GLS">
 	  <menuitem action="ar1"/>
@@ -278,6 +280,7 @@
 	<menuitem action="var"/>
 	<menuitem action="VLAGSEL"/>
 	<menuitem action="vecm"/>
+	<menuitem action="SVAR"/>
 	<menuitem action="coint2"/>
 	<menuitem action="coint"/>
       </menu>
@@ -287,6 +290,7 @@
 	<menuitem action="PANEL_B"/>
 	<menuitem action="dpanel"/>
 	<menuitem action="FE_LOGISTIC"/>
+	<menuitem action="ivpanel"/>
       </menu>
       <menu action="RobustModels">
 	<menuitem action="lad"/>

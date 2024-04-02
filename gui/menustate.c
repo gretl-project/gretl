@@ -640,7 +640,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
         do_graph_var(v);
         break;
     case MNU_MPLOT:
-        map_plot_callback();
+        geoplot_callback();
         break;
     case MNU_MSAVE:
         map_save_callback();
@@ -813,7 +813,7 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
     } else if (i == MNU_SCATR)  {
         plot_from_selection(GR_XY);
     } else if (i == MNU_MPLOT) {
-        map_plot_callback();
+        geoplot_callback();
     } else if (i == MNU_MSAVE) {
 	map_save_callback();
     } else if (i == MNU_EDIT)  {
