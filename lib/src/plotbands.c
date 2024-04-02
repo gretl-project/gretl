@@ -336,8 +336,7 @@ static band_info **get_band_info_array (int matrix_mode,
                                         DATASET *dset,
                                         int *err)
 {
-    int pci = get_effective_plot_ci();
-    const char *s = get_optval_string(pci, OPT_a);
+    const char *s = get_optval_string(GNUPLOT, OPT_a);
     gretl_array *a = get_array_by_name(s);
     band_info **pbi = NULL;
     int i, j, n = 0;
@@ -674,8 +673,7 @@ static int parse_band_pm_option (band_info *bi,
 
 static int parse_band_style_option (band_info *bi)
 {
-    int pci = get_effective_plot_ci();
-    const char *s = get_optval_string(pci, OPT_J);
+    const char *s = get_optval_string(GNUPLOT, OPT_J);
     int err = 0;
 
     if (s != NULL) {
@@ -721,8 +719,7 @@ static band_info **get_single_band_info (int matrix_mode,
 					 gretlopt opt,
 					 int *err)
 {
-    int pci = get_effective_plot_ci();
-    const char *spec = get_optval_string(pci, OPT_N);
+    const char *spec = get_optval_string(GNUPLOT, OPT_N);
     gretl_bundle *b = NULL;
     band_info **bi = NULL;
 
