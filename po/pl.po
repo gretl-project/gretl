@@ -1,15 +1,15 @@
-# Polish translation for gretl 2023c_cvs
+# Polish translation for gretl 2024c_cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
-# Pawel Kufel <pawel.kufel@torun.merito.pl>, 2004 - 2023
-# Tadeusz Kufel <tadeusz.kufel@umk.pl>, 2004 - 2023
-# Marcin Blazejowski <marcin.blazejowski@torun.merito.pl>, 2008 - 2023
+# Pawel Kufel <pawel.kufel@torun.merito.pl>, 2004 - 2024
+# Tadeusz Kufel <tadeusz.kufel@umk.pl>, 2004 - 2024
+# Marcin Blazejowski <marcin.blazejowski@torun.merito.pl>, 2008 - 2024
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 2023c\n"
+"Project-Id-Version: gretl 2024a\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-03-25 11:19-0400\n"
-"PO-Revision-Date: 2023-12-26 19:56-0500\n"
+"PO-Revision-Date: 2024-04-02 01:00-0500\n"
 "Last-Translator: Pawel Kufel <pawel.kufel@torun.merito.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -37,9 +37,8 @@ msgid "check for %s\n"
 msgstr "Sprawdź dodatki %s\n"
 
 #: lib/src/addons_utils.c:275
-#, fuzzy
 msgid "no valid version found"
-msgstr "Nie znaleziono serii danych"
+msgstr "Nie znaleziono prawidłowej wersji"
 
 #: lib/src/addons_utils.c:277
 msgid "indexed version"
@@ -248,7 +247,7 @@ msgstr "%s jest stałą"
 
 #: lib/src/adf_kpss.c:1700 lib/src/adf_kpss.c:1724 lib/src/adf_kpss.c:1743
 msgid "Im-Pesaran-Shin test: cannot be computed\n"
-msgstr ""
+msgstr "TEST Im-Pesaran-Shin: nie można wyznaczyć\n"
 
 #: lib/src/adf_kpss.c:1763 lib/src/adf_kpss.c:1801
 msgid "Inverse chi-square"
@@ -293,7 +292,7 @@ msgid ""
 "KPSS test for %s"
 msgstr ""
 "\n"
-"Hipoteza zerowa: proces stacjonarny.\n"
+"Hipoteza zerowa: proces stacjonarny I(0).\n"
 "Test KPSS dla zmiennej %s"
 
 #: lib/src/adf_kpss.c:2358
@@ -348,7 +347,7 @@ msgid ""
 "KPSS test for %s %s\n"
 msgstr ""
 "\n"
-"Hipoteza zerowa: proces stacjonarny; test KPSS dla zmiennej %s %s\n"
+"Hipoteza zerowa: proces stacjonarny I(0); test KPSS dla zmiennej %s %s\n"
 
 #: lib/src/adf_kpss.c:2404
 msgid "(including trend)"
@@ -498,7 +497,7 @@ msgstr "mediana"
 #: lib/src/boxplots.c:332
 #, no-c-format
 msgid "(90% interval)"
-msgstr "(90% przedział)"
+msgstr " (90% przedział)"
 
 #: lib/src/boxplots.c:340 lib/src/gmm.c:1595 lib/src/prog_loop.c:710
 #: lib/src/prog_loop.c:711 gui/calculator.c:2037 gui/calculator.c:2062
@@ -536,7 +535,7 @@ msgstr "Błędna startowa data dla %d - dane dzienne"
 #: lib/src/cmd_private.c:298 cli/gretlcli.c:288 cli/gretlcli-mpi.c:193
 #, c-format
 msgid "Broken syntax in %s: unmatched %s"
-msgstr ""
+msgstr "Błędnia składnia w %s: niedopasowany %s"
 
 #: lib/src/compare.c:292
 #, c-format
@@ -1514,7 +1513,7 @@ msgid "Couldn't read marker on line %d"
 msgstr "Niemożliwe odczytanie znaku w lini %d"
 
 #: lib/src/dataio.c:2758
-#, fuzzy, c-format
+#, c-format
 msgid "Missing marker at observation %d"
 msgstr "Brak wartości dla obserwacji %d"
 
@@ -1540,26 +1539,20 @@ msgid "Labels loaded OK\n"
 msgstr "Etykiety wczytane OK\n"
 
 #: lib/src/dataio.c:3144
-#, fuzzy
 msgid "No description is available\n"
-msgstr "Niedostępny opis"
+msgstr "Niedostępny opis\n"
 
 #: lib/src/dataio.c:3149
-#, fuzzy
 msgid "dataset description written OK\n"
-msgstr ""
-"Provider/Dataset : opis bazy danych\n"
-"\n"
+msgstr "Opis zbioru danych - Ok.\n"
 
 #: lib/src/dataio.c:3159
-#, fuzzy
 msgid "description replaced OK\n"
-msgstr "Niedostępny opis"
+msgstr "Opis zastąpiony  - Ok.\n"
 
 #: lib/src/dataio.c:3161
-#, fuzzy
 msgid "description loaded OK\n"
-msgstr "Etykiety wczytane OK\n"
+msgstr "Opis wczytany - Ok.\n"
 
 #: lib/src/dataio.c:3211
 msgid "No markers are available for writing"
@@ -2092,13 +2085,12 @@ msgid "using standard error 1/T^%.1f"
 msgstr "z wykorzystaniem błędu standardowego 1/T^%.1f"
 
 #: lib/src/describe.c:3626
-msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
+msgid "  LAG       ACF         PACF         Q-stat. [p-value]"
 msgstr "Opóźnienia  ACF         PACF      Ljung-Box Q [wartość p]"
 
 #: lib/src/describe.c:3628
-#, fuzzy
-msgid "  LAG      ACF          Q-stat. [p-value]"
-msgstr "Opóźnienia  ACF         PACF      Ljung-Box Q [wartość p]"
+msgid "  LAG       ACF          Q-stat. [p-value]"
+msgstr "Opóźnienia  ACF          Q-stat. [wartość p]"
 
 #: lib/src/describe.c:3911
 msgid "Argument is a constant"
@@ -2888,7 +2880,7 @@ msgstr "Asercja '%s' nie powiodła się"
 
 #: lib/src/geneval.c:9520
 msgid "comma(s) found in atof() input"
-msgstr ""
+msgstr "znaleziono przecinek na wejściu atof()"
 
 #: lib/src/geneval.c:10017
 #, c-format
@@ -2961,9 +2953,9 @@ msgid "%s: requires an even number of arguments"
 msgstr "%s: wymaga parzystej liczby argumentów"
 
 #: lib/src/geneval.c:15556
-#, fuzzy, c-format
+#, c-format
 msgid "%s: function not found"
-msgstr "%s: funkcja jest używana"
+msgstr "%s: nie znaleziono funkcji"
 
 #: lib/src/geneval.c:16108
 msgid "array: no type was specified"
@@ -3322,7 +3314,7 @@ msgstr "przestarzała funkcja isnull(): użyj funkcji exist()"
 
 #: lib/src/genlex.c:813
 msgid "deprecated alias 'fft2': please call fft()"
-msgstr ""
+msgstr "nieaktywny alias 'fft2': wywołaj funkcję fft()"
 
 #: lib/src/genlex.c:1226
 #, c-format
@@ -3536,9 +3528,8 @@ msgstr ""
 "być zmienną dyskretną - czynnik separacji"
 
 #: lib/src/graphing.c:2127
-#, fuzzy
 msgid "incompatible output specification"
-msgstr "Błąd w specyfikacji układu"
+msgstr "niezgodna specyfikacja wyjściowa"
 
 #: lib/src/graphing.c:2482 gui/gpt_dialog.c:643
 #, c-format
@@ -4284,7 +4275,7 @@ msgstr "%s: nie jest macierzą"
 
 #: lib/src/gretl_foreign.c:2615 lib/src/gretl_foreign.c:2719
 msgid "Can't find the R shared library"
-msgstr ""
+msgstr "Nie można znaleźć współdzielonej biblioteki R"
 
 #: lib/src/gretl_foreign.c:2755
 msgid "Can't determine R_HOME"
@@ -4499,9 +4490,9 @@ msgid "Broken package! Basic information is missing\n"
 msgstr "Uszkodzony pakiet! Brakuje podstawowych informacji\n"
 
 #: lib/src/gretl_func.c:7049
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find sample script for '%s'"
-msgstr "Nie można znaleźć funkcji '%s'"
+msgstr "Nie można znaleźć przykładowego skryptu '%s'"
 
 #: lib/src/gretl_func.c:7284
 msgid "No description available"
@@ -5925,9 +5916,8 @@ msgid "Failed to parse data values at obs %d"
 msgstr "Błąd w analizie wartości dla obserwacji %d"
 
 #: lib/src/gretl_xml.c:3180 lib/src/gretl_xml.c:3338
-#, fuzzy
 msgid "Inconsistent record of number of observations"
-msgstr "Błąd w analizie liczby obserwacji"
+msgstr "Niespójny zapis liczby obserwacji"
 
 #: lib/src/gretl_xml.c:3186 lib/src/gretl_xml.c:3344
 msgid "Failed to parse number of observations"
@@ -6078,13 +6068,12 @@ msgid "No series labels are defined\n"
 msgstr "Nie zdefiniowano żadnych etykiet serii\n"
 
 #: lib/src/interact.c:1067
-#, fuzzy
 msgid "Output has already been redirected"
-msgstr "Wyniki są już kierowane do '%s'"
+msgstr "Wyniki zostały już przekierowane"
 
 #: lib/src/interact.c:1070
 msgid "Output redirection: maximum depth reached"
-msgstr ""
+msgstr "Przekierowanie wyjścia: osiągnięto maksymalną głębokość"
 
 #: lib/src/interact.c:1094
 #, c-format
@@ -6465,7 +6454,7 @@ msgstr "Stała startowa do generowania liczb pseudolosowych wynosi: %u\n"
 msgid ""
 "R_functions could not be enabled\n"
 "Please see https://gretl.sourceforge.net/gretl_and_R.html"
-msgstr ""
+msgstr "Proszę zobacz https://gretl.sourceforge.net/gretl_and_R.html"
 
 #: lib/src/libset.c:2117
 #, c-format
@@ -7972,9 +7961,9 @@ msgstr ""
 " nie utworzyła wymaganego typu wyjścia"
 
 #: lib/src/nls.c:711
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': expected a scalar or matrix"
-msgstr "'%s': oczekiwano skalara lub wektor"
+msgstr "'%s': oczekiwano skalara lub macierzy"
 
 #: lib/src/nls.c:865
 msgid "Only one 'params' specification is allowed"
@@ -9367,9 +9356,9 @@ msgid "\"%s\": obsolete %s; please use \"%s\""
 msgstr "\"%s\": przestarzała %s; proszę użyj \"%s\""
 
 #: lib/src/tokenize.c:2554
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid keyword in plot block"
-msgstr "'%s': błędna końcowa obserwacja"
+msgstr "'%s': błędne słowo w bloku plot"
 
 #: lib/src/tokenize.c:2668
 msgid "'end loop': did you mean 'endloop'"
@@ -9456,12 +9445,12 @@ msgstr "= %s times %s"
 #: lib/src/transforms.c:829
 #, c-format
 msgid "dummy for %s = '%s'"
-msgstr "sztuczna zm. %s = '%s'"
+msgstr "sztuczna zmienna 0-1, wartość 1 dla %s = '%s'"
 
 #: lib/src/transforms.c:831 lib/src/transforms.c:834
 #, c-format
 msgid "dummy for %s = %g"
-msgstr "sztuczna zm. %s = %g"
+msgstr "sztuczna zmienna 0-1, wartość 1 dla %s = %g"
 
 #: lib/src/transforms.c:1707
 #, c-format
@@ -9896,9 +9885,9 @@ msgid "writing session output to %s%s\n"
 msgstr "zapisywanie wyników sesji do %s%s\n"
 
 #: cli/gretlcli.c:1081
-#, fuzzy, c-format
+#, c-format
 msgid "Error reading '%s'\n"
-msgstr "Błąd wczytania %s\n"
+msgstr "Błąd wczytania '%s'\n"
 
 #: cli/gretlcli.c:1093
 msgid "Terminated on error\n"
@@ -10995,7 +10984,7 @@ msgstr "Błąd rozpakowania skompresowanych danych"
 
 #: gui/database.c:2728
 msgid "Reopen the local window to access this collection"
-msgstr ""
+msgstr "Otwórz ponownie okno lokalne, aby uzyskać dostęp do tej kolekcji"
 
 #: gui/database.c:3064 gui/database.c:3097
 msgid "Unknown: access error"
@@ -11168,7 +11157,7 @@ msgstr "Przeglądaj..."
 
 #: gui/datafiles.c:1606 gui/gretl.c:1820
 msgid "Specific series..."
-msgstr "Specyfikacja szeregów czasowych..."
+msgstr "Identyfikator szeregu czasowego..."
 
 #: gui/datafiles.c:1640
 msgid "Select directory"
@@ -11341,7 +11330,7 @@ msgstr "Autor pakietu funkcji"
 
 #: gui/datafiles.c:2941
 msgid "Addon"
-msgstr ""
+msgstr "Dodatek"
 
 #: gui/datafiles.c:2948 gui/fnsave.c:2907 gui/textutil.c:395
 msgid "Window"
@@ -11517,8 +11506,8 @@ msgid ""
 "Comprises a single series '%s', constructed\n"
 "by stacking %d individual time series."
 msgstr ""
-"Comprises a single series '%s', constructed\n"
-"by stacking %d individual time series."
+"Zawiera pojedynczą serię „%s”, skonstruowaną poprzez\n"
+"stos %d indywidualnych szeregów czasowych."
 
 #: gui/datawiz.c:837
 #, c-format
@@ -11526,7 +11515,7 @@ msgid ""
 "Comprises %d series, each constructed by stacking\n"
 "%d individual time series."
 msgstr ""
-"Zawiera %d szeregów, każda zbudowana poprzez układanie\n"
+"Zawiera %d szeregów, każda zbudowana poprzez stos\n"
 "%d indywidualnych szeregów czasowych."
 
 #: gui/datawiz.c:844
@@ -12184,13 +12173,12 @@ msgstr ""
 "niezależnie od nagłówka kolumny."
 
 #: gui/dialogs.c:4340
-#, fuzzy
 msgid "Data file options:"
-msgstr "Pliki danych"
+msgstr "Opcje pliku danych:"
 
 #: gui/dialogs.c:4357
 msgid "\"View\": view the first few lines of the file"
-msgstr ""
+msgstr "\"Pokaż\": wyświetl kilka pierwszych linii pliku"
 
 #: gui/dialogs.c:4364 gui/session.c:215 gui/session.c:219 gui/session.c:229
 #: gui/session.c:3510 gui/session.c:3544 gui/textutil.c:588
@@ -12263,7 +12251,7 @@ msgstr "jednostki osi częstości:"
 
 #: gui/dialogs.c:5071
 msgid "data-based"
-msgstr "bazy danych"
+msgstr "liczba okresów"
 
 #: gui/dialogs.c:5272
 msgid "Number of bins:"
@@ -15080,7 +15068,7 @@ msgstr "model ARI_MA"
 
 #: gui/gretl.c:2009 gui/selector.c:4385
 msgid "ARIMA lag selection"
-msgstr "Wybór rzędu opóźnień modelu ARIMA"
+msgstr "Wybór rzędu opóźnień p, q, P, Q dla modelu ARIMA"
 
 #: gui/gretl.c:2010
 msgid "_GARCH"
@@ -15403,6 +15391,12 @@ msgid ""
 "Do you want to download and install the current\n"
 "addons now?"
 msgstr ""
+"Wybrałeś akcję, która wymaga dostępu do dodatków\n"
+"gretla Addons. Ale brakuje tych pakietów,\n"
+"gretl jest niekompletny lub nieaktualny.\n"
+"\n"
+"Czy chcesz pobrać i zainstalować aktualne\n"
+"dodatki (Addons) teraz?"
 
 #: gui/guiprint.c:218 gui/guiprint.c:265
 #, c-format
@@ -16975,13 +16969,12 @@ msgid "gretl: Hurst exponent"
 msgstr "gretl: wykładnik Hursta"
 
 #: gui/library.c:5884
-#, fuzzy
 msgid "Show partial autocorrelations"
-msgstr "gretl: autokorelacja"
+msgstr "Pokaż funkcję autokorelacji cząstkowej (PACF)"
 
 #: gui/library.c:5885
 msgid "Use Bartlett standard errors"
-msgstr "wykorzystaj błąd standardowy Bartletta"
+msgstr "Wykorzystaj błąd standardowy Bartletta"
 
 #: gui/library.c:5891
 msgid "correlogram"
@@ -19769,26 +19762,23 @@ msgstr "Macierz zapisano jako %s"
 
 #: gui/toolbar.c:942 gui/toolbar.c:1663
 msgid "Preview as markdown"
-msgstr ""
+msgstr "Preview as markdown"
 
 #: gui/toolbar.c:959
 msgid "Return to editing"
-msgstr ""
+msgstr "Powrót do edycji"
 
 #: gui/toolbar.c:968
-#, fuzzy
 msgid "plain literal text"
 msgstr "prosty tekst ASCII"
 
 #: gui/toolbar.c:969
-#, fuzzy
 msgid "markdown"
 msgstr "Markdown"
 
 #: gui/toolbar.c:974
-#, fuzzy
 msgid "Text status"
-msgstr "Statystyka testu"
+msgstr "Stan tekstu"
 
 #: gui/toolbar.c:1071
 msgid "New window"
@@ -19927,9 +19917,8 @@ msgid "New tab"
 msgstr "Nowa zakładka"
 
 #: gui/toolbar.c:1662
-#, fuzzy
 msgid "Set markdown status"
-msgstr "Pokaż status danych"
+msgstr "Ustaw status danych"
 
 #: gui/toolbar.c:1826
 msgid "launch calculator"
@@ -20093,9 +20082,8 @@ msgid "Buffer is empty"
 msgstr "Bufor jest pusty"
 
 #: gui/viewers.c:481
-#, fuzzy
 msgid "Go to line"
-msgstr "Linia poleceń"
+msgstr "Przejdź do lini"
 
 #: gui/viewers.c:867
 msgid "gretl: edit plot commands"
@@ -22209,64 +22197,3 @@ msgstr "Statystyki/Transformacje"
 msgid "Decoration"
 msgstr "Decoration"
 
-#, c-format
-#~ msgid "gretl_prn_new: Must supply a filename\n"
-#~ msgstr "gretl_prn_new: podaj nazwę pliku\n"
-
-#, c-format
-#~ msgid "Couldn't find %s for gretl %s"
-#~ msgstr "Nie może znależć %s dla gretl %s"
-
-#, c-format
-#~ msgid "%d out of %d tests gave zero\n"
-#~ msgstr "%d spoza %d test daje zero\n"
-
-#, c-format
-#~ msgid ""
-#~ "\n"
-#~ "gretlcli: error executing script: halting\n"
-#~ msgstr ""
-#~ "\n"
-#~ "gretlcli: Błąd skryptu; przerwano wykonanie zadania\n"
-
-#, c-format
-#~ msgid ""
-#~ "\n"
-#~ "gretlmpi: error executing script: halting\n"
-#~ msgstr ""
-#~ "\n"
-#~ "gretlmpi: Błąd skryptu; przerwano wykonanie zadania\n"
-
-#~ msgid "Restart gretl to access this database"
-#~ msgstr "Aby uzyskać dostęp do tej bazy danych, uruchom ponownie gretl"
-
-#~ msgid "Installed"
-#~ msgstr "Zainstalowano"
-
-#~ msgid "On server"
-#~ msgstr "na _serwerze gretla"
-
-#~ msgid "Comment"
-#~ msgstr "Linia poleceń"
-
-#, c-format
-#~ msgid ""
-#~ "The %s package was not found, or is not up to date.\n"
-#~ "Would you like to try downloading it now?"
-#~ msgstr ""
-#~ "The %s package was not found, or is not up to date.\n"
-#~ "Would you like to try downloading it now?"
-
-#~ msgid "Can be updated"
-#~ msgstr "Można zaktualizować"
-
-#, c-format
-#~ msgid "Requires gretl %s"
-#~ msgstr "Wymagany gretl %s"
-
-#~ msgid "Local is newer"
-#~ msgstr "Lokalny jest nowszy"
-
-#, c-format
-#~ msgid "invalid number of folds %d\n"
-#~ msgstr "invalid number of folds %d\n"
