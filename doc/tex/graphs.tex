@@ -1,4 +1,4 @@
-\chapter{Graphs and plots}
+\chapter{Graphics}
 \label{chap:graphs}
 
 \section{Gnuplot graphs}
@@ -13,29 +13,32 @@ direct access, via a graphical interface, to a subset of gnuplot's
 options and it tries to choose sensible values for you; it also allows
 you to take complete control over graph details if you wish.
 
-With a graph displayed, you can click on the graph window for a pop-up
-menu with the following options.
+With a graph displayed, you can right-click on the graph window (or
+use the ``hamburger'' toolbar button) for a pop-up menu with the
+following options.
 
 \begin{itemize}
 \item \textsf{Save as PNG}: Save the graph in Portable Network
   Graphics format (the same format that you see on screen).
-\item \textsf{Save as postscript}: Save in encapsulated postscript
-  (EPS) format.
+\item \textsf{Save as postscript (EPS)}: Save in encapsulated
+  postscript format.
+\item \textsf{Save as PDF}: Save in PDF format.
 \item \textsf{Save as Windows metafile}: Save in Enhanced Metafile
-  (EMF) format.
+  (EMF) format (with color and monochrome options).
+\item \textsf{Copy to clipboard}: with color and monochrome options.
 \item \textsf{Save to session as icon}: The graph will appear in
   iconic form when you select ``Icon view'' from the View menu.
 \item \textsf{Zoom}: Lets you select an area within the graph for
   closer inspection (not available for all graphs).
-\item \textsf{Print}: (Current GTK or MS Windows only) lets you
-  print the graph directly.
-\item \textsf{Copy to clipboard}: MS Windows only, lets you paste the
-  graph into Windows applications such as MS Word.
+\item \textsf{Display PDF}: view a PDF version of the graph.
 \item \textsf{Edit}: Opens a controller for the plot which lets you
   adjust many aspects of its appearance.
 \item \textsf{Close}: Closes the graph window.
 \end{itemize}
 
+If you select \textsf{Save as postscript} or \textsf{Save as PDF} you
+get a dialog box that lets you adjust several aspects of the graph,
+and also preview the result.
 
 \subsection{Displaying data labels}
 \label{plot-labels}
@@ -62,20 +65,20 @@ is disabled for graphs containing more than 250 data points.
 \subsection{GUI plot editor}
 \label{plot-editor}
 
-Selecting the \textsf{Edit} option in the graph popup menu opens
-an editing dialog box, shown in Figure~\ref{fig-plot}.  Notice that
-there are several tabs, allowing you to adjust many aspects of
-a graph's appearance: font, title, axis scaling, line colors
-and types, and so on.  You can also add lines or descriptive
-labels to a graph (under the Lines and Labels tabs).  The
-``Apply'' button applies your changes without closing the
-editor; ``OK'' applies the changes and closes the dialog.
+Selecting the \textsf{Edit} option in the graph popup menu opens an
+editing dialog box, shown in Figure~\ref{fig-plot}.  Notice that there
+are several tabs, allowing you to adjust many aspects of a graph's
+appearance: font, title, axis scaling, line colors and types, and so
+on.  You can also add lines or descriptive labels to a graph (under
+the Lines and Labels tabs).  The ``Apply'' button applies your changes
+without closing the editor; ``OK'' applies the changes and closes the
+dialog.
 
 \begin{figure}[htbp]
   \begin{center}
     \includegraphics[scale=0.6]{figures/plot_control}
   \end{center}
-  \caption{gretl's gnuplot controller}
+  \caption{gretl's plot controller}
   \label{fig-plot}
 \end{figure}
 
@@ -117,125 +120,49 @@ access to the graph command file.
 
 Here are the basic things you can do in this window.  Obviously, you
 can edit the file you just opened.  You can also send it for
-processing by gnuplot, by clicking the ``Execute'' (cogwheel)
-icon in the toolbar.  Or you can use the ``Save as'' button to save
-a copy for editing and processing as you wish.
+processing by gnuplot, by clicking the ``Execute'' (cogwheel) icon in
+the toolbar.  Or you can use the ``Save as'' button to save a copy for
+editing and processing as you wish. And please note that the Help
+button on the toolbar (a lifebelt in Figure~\ref{fig:plot-edit}) gives
+you access to the \app{gnuplot} manual.
 
-Unless you're a gnuplot expert, most likely you'll only need to edit a
-couple of lines at the top of the file, specifying a driver (plus
-options) and an output file.  We offer here a brief summary of some
-points that may be useful.
+One relatively simple editorial job would be to set a chosen driver
+(or ``terminal'' in gnuplot parlance) and output filename. For
+example, to get PDF output you could insert lines like the following
+at the top:
 
-First, \app{gnuplot}'s output mode is set via the command \texttt{set
-  term} followed by the name of a supported driver (``terminal'' in
-gnuplot parlance) plus various possible options.  (The top line in the
-plot commands window shows the \texttt{set term} line that gretl
-used to make a PNG file, commented out.)  The graphic formats that are
-most suitable for publication are PDF and EPS.  These are supported by
-the gnuplot \texttt{term} types \texttt{pdf}, \texttt{pdfcairo} and
-\texttt{postscript} (with the \texttt{eps} option).  The
-\texttt{pdfcairo} driver has the virtue that is behaves in a very
-similar manner to the PNG one, the output of which you see on screen.
-This is provided by the version of gnuplot that is included in the
-gretl packages for MS Windows and Mac OS X; if you're on Linux
-it may or may be supported.  If \texttt{pdfcairo} is not available,
-the \texttt{pdf} terminal may be available; the \texttt{postscript}
-terminal is almost certainly available.
-
-Besides selecting a term type, if you want to get gnuplot to write the
-actual output file you need to append a \texttt{set output} line
-giving a filename.  Here are a few examples of the first two lines you
-might type in the window editing your plot commands.  We'll make
-these more ``realistic'' shortly.
-%
 \begin{code}
-set term pdfcairo
-set output 'mygraph.pdf'
-
-set term pdf
-set output 'mygraph.pdf'
-
-set term postscript eps
-set output 'mygraph.eps'
-\end{code}
-
-There are a couple of things worth remarking here.  First, you may
-want to adjust the size of the graph, and second you may want to
-change the font.  The default sizes produced by the above drivers are
-5 inches by 3 inches for \texttt{pdfcairo} and \texttt{pdf}, and 5
-inches by 3.5 inches for \texttt{postscript eps}.  In each case
-you can change this by giving a size specification, which takes the
-form \texttt{XX,YY} (examples below).  
-
-You may ask, why bother changing the size in the gnuplot command file?
-After all, PDF and EPS are both vector formats, so the graphs can be
-scaled at will.  True, but a uniform scaling will also affect the font
-size, which may end looking wrong.  You can get optimal results by
-experimenting with the \texttt{font} and \texttt{size} options to
-\app{gnuplot}'s \texttt{set term} command.  Here are some examples
-(comments follow below).
-%
-\begin{code}
-# pdfcairo, regular size, slightly amended
+# PDF, slightly amended (the default size is 5in x 3in)
 set term pdfcairo font "Sans,6" size 5in,3.5in
+set output 'mygraph1.pdf'
 # or small size
 set term pdfcairo font "Sans,5" size 3in,2in
-
-# pdf, regular size, slightly amended
-set term pdf font "Helvetica,8" size 5in,3.5in
-# or small
-set term pdf font "Helvetica,6" size 3in,2in
-
-# postscript, regular 
-set term post eps solid font "Helvetica,16"
-# or small
-set term post eps solid font "Helvetica,12" size 3in,2in
+set output 'mygraph2.pdf'
+# or with size given in centimeters
+set term pdfcairo font "Sans,6" size 6cm,4.2cm
+set output 'mygraph3.pdf'
 \end{code}
 
-On the first line we set a sans serif font for \texttt{pdfcairo} at a
-suitable size for a 5 $\times$ 3.5 inch plot (which you may find looks
-better than the rather ``letterboxy'' default of 5 $\times$ 3).  And
-on the second we illustrate what you might do to get a smaller 3
-$\times$ 2 inch plot. You can specify the plot size in centimeters
-if you prefer, as in
-\begin{code}
-set term pdfcairo font "Sans,6" size 6cm,4cm
-\end{code}
+Or substitute \texttt{epscairo} for \texttt{pdfcairo} (and change the
+filenames) if you want EPS output. However, such changes may be more
+easily made via the \textsf{Save as PDF} and \textsf{Save as
+  postscript} options in the plot menu.\footnote{A ``traditional''
+  \texttt{postscript} terminal may also be available in gnuplot, with
+  an \texttt{eps} option. The defaults in this case are quite
+  different from \texttt{epscairo}, and to make use of the alternative
+  you'll have to consult the \app{gnuplot} manual.}
 
-We then repeat the exercise for the \texttt{pdf} terminal.  Notice
-that here we're specifying one of the 35 standard PostScript fonts,
-namely Helvetica.  Unlike \texttt{pdfcairo}, the plain \texttt{pdf}
-driver is unlikely to be able to find fonts other than these.
-
-In the third pair of lines we illustrate options for the
-\texttt{postscript} driver (which, as you see, can be abbreviated as
-\texttt{post}).  Note that here we have added the option
-\texttt{solid}.  Unlike most other drivers, this one uses dashed lines
-unless you specify the \texttt{solid} option.  Also note that we've
-(apparently) specified a much larger font in this case.  That's
-because the \texttt{eps} option in effect tells the
-\texttt{postscript} driver to work at half-size (among other things),
-so we need to double the font size.
-
-Table~\ref{tab:drivers} summarizes the basics for the three drivers we
-have mentioned.
-
-\begin{table}[htbp]
-  \centering
-  \begin{tabular}{lcc}
-    Terminal & default size (inches) & suggested font \\ [6pt]
-    \texttt{pdfcairo} & 5 $\times$ 3 &   Sans,6 \\
-    \texttt{pdf}      & 5 $\times$ 3 &   Helvetica,8 \\
-    \texttt{post eps} & 5 $\times$ 3.5 & Helvetica,16 \\
-  \end{tabular}
-  \caption{Drivers for publication-quality graphics}
-  \label{tab:drivers}
-\end{table}
+The real payoff to editing the plot code can be obtained if you dive
+into the details and employ \app{gnuplot} features that are not
+accessible via gretl, and/or use one of the terminal types not
+directly supported by gretl, such as \texttt{context} (ConTeXt),
+\texttt{mp} (MetaPost), \texttt{lua} (Lua) or \texttt{pslatex}
+(\LaTeX\ picture environment with PostScript specials).
 
 To find out more about \app{gnuplot} visit
-\href{http://www.gnuplot.info/}{www.gnuplot.info}. This site has
-documentation for the current version of the program in various
-formats.
+\href{https://gnuplot.sourceforge.net/}{gnuplot.sourceforge.net}. This
+site has documentation for the current version of the program in
+various formats along with a large collection of demonstration plots.
 
 \subsection{Additional tips}
 \label{subsect-graph-tips}
