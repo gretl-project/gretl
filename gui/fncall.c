@@ -3350,8 +3350,8 @@ int try_exec_bundle_print_function (gretl_bundle *b, PRN *prn)
 typedef enum {
     GPI_MODELWIN = 1 << 0,
     GPI_SUBDIR   = 1 << 1,
-    GPI_INCLUDED = 1 << 2,
-    GPI_DATAREQ  = 1 << 3
+    GPI_DATACHK  = 1 << 2,
+    GPI_INCLUDED = 1 << 3
 } GpiFlags;
 
 #define gpi_included(g) (g->flags & GPI_INCLUDED)
@@ -3424,6 +3424,14 @@ static void gpi_entry_init (gui_package_info *gpi)
     gpi->ag = NULL;
 }
 
+static void clear_gpi_strings (gui_package_info *gpi)
+{
+    free(gpi->pkgname);
+    free(gpi->label);
+    free(gpi->menupath);
+    gpi->pkgname = gpi->label = gpi->menupath = NULL;
+}
+
 static gchar *packages_xml_path (void)
 {
     return g_strdup_printf("%sfunctions%cpackages.xml",
@@ -3470,7 +3478,7 @@ static void write_packages_xml (void)
 		if (!(gpkgs[i].flags & GPI_SUBDIR)) {
 		    fputs(" toplev=\"true\"", fp);
 		}
-		if (gpkgs[i].flags & GPI_DATAREQ) {
+		if (gpkgs[i].flags & GPI_DATACHK) {
 		    fprintf(fp, " data-requirement=\"%d\"", gpkgs[i].dreq);
 		}
 		fputs("/>\n", fp);
@@ -3607,6 +3615,7 @@ void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 	    maybe_download_addons(vwin_toplevel(vwin), pkgname, &filepath);
 	}
     } else {
+	/* a contributed package */
 	gpi = get_gpi_entry(pkgname);
 	if (gpi == NULL) {
 	    /* "can't happen" */
@@ -3637,19 +3646,6 @@ void gfn_menu_callback (GtkAction *action, windata_t *vwin)
     }
 }
 
-static int package_is_unseen (const char *name, int n)
-{
-    int i;
-
-    for (i=0; i<n; i++) {
-	if (gpkg_name_match(gpkgs[i].pkgname, name)) {
-	    return 0;
-	}
-    }
-
-    return 1;
-}
-
 static void gpi_set_flags (gui_package_info *gpi,
 			   int subdir,
 			   int modelwin,
@@ -3664,87 +3660,21 @@ static void gpi_set_flags (gui_package_info *gpi,
 	gpi->flags |= GPI_MODELWIN;
     }
     if (need_dreq) {
-	gpi->flags |= GPI_DATAREQ;
+	gpi->flags |= GPI_DATACHK;
     }
-}
-
-/* Use libxml2 to peek inside package and determine its data
-   or model requirement, without having to load the package
-   into memory.
-*/
-
-static int gfn_peek_requirement (const char *fname, int model)
-{
-    int ret = 0;
-    xmlDocPtr doc = NULL;
-    xmlNodePtr node = NULL;
-    xmlNodePtr cur;
-    int err;
-
-    err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
-
-    if (!err) {
-	cur = node->xmlChildrenNode;
-	while (cur != NULL) {
-	    if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
-		if (model) {
-		    char *s = NULL;
-
-		    gretl_xml_get_prop_as_string(cur, "model-requirement", &s);
-		    if (s != NULL) {
-			ret = gretl_command_number(s);
-			free(s);
-		    }
-		    break;
-		}
-		if (gretl_xml_get_prop_as_bool(cur, NEEDS_TS)) {
-		    ret = FN_NEEDS_TS;
-		} else if (gretl_xml_get_prop_as_bool(cur, NEEDS_QM)) {
-		    ret = FN_NEEDS_QM;
-		} else if (gretl_xml_get_prop_as_bool(cur, NEEDS_PANEL)) {
-		    ret = FN_NEEDS_PANEL;
-		} else if (gretl_xml_get_prop_as_bool(cur, NO_DATA_OK)) {
-		    ret = FN_NODATA_OK;
-		}
-		break;
-	    }
-	    cur = cur->next;
-	}
-    }
-
-    if (doc != NULL) {
-	xmlFreeDoc(doc);
-    }
-
-    return ret;
-}
-
-static int discover_gfn_requirement (const char *pkgname,
-				     int toplev, int model)
-{
-    char *path;
-    PkgType ptype;
-    int ret = 0;
-
-    ptype = toplev ? PKG_TOPLEV : PKG_SUBDIR;
-    path = gretl_function_package_get_path(pkgname, ptype);
-    if (path != NULL) {
-	ret = gfn_peek_requirement(path, model);
-	free(path);
-    }
-
-    return ret;
 }
 
 /* Figure out whether we need to pay attention to the data requirement
    of a function package in order to set its sensitivity ("grayed out"
-   or not). We don't need to do this if it has a model-window
-   attachment (the package will be added to a model-window menu only
-   if its model-type specification is matched). Neither do we need
-   this if the package attaches under the main-window Model menu: in
-   that case its sensitivity will be governed by the code that sets
-   the overall sensitivity of the Model menu and its sub-menus
-   (time-series, panel and so on).
+   or not). We don't need this if it attaches under the main-window
+   Model menu: in that case its sensitivity will be governed by the
+   code that sets the overall sensitivity of the Model menu and its
+   sub-menus (time-series, panel and so on).
+
+   Neither do we need to do this if the package has a model-window
+   attachment, since the package will be added to a model-window menu
+   only if its model-type specification is matched; but that case is
+   screened out before this function is called.
 */
 
 static int need_gfn_data_req (const char *path)
@@ -3752,133 +3682,147 @@ static int need_gfn_data_req (const char *path)
     return strncmp(path, "/menubar/Model", 14) != 0;
 }
 
-/* The following contributed packages were referenced in the
-   system-wide packages.xml, which was eliminated in gretl 2024a. For
-   backward compatibility, these static gpi entries should hopefully
-   prevent gretl from losing track of the affected packages.
+static void transcribe_to_gpi (gui_package_info *dest,
+			       gui_package_info *src,
+			       int copy)
+{
+    /* shallow-copy all members */
+    *dest = *src;
+
+    /* copy strings if needed */
+    if (copy) {
+	dest->pkgname = gretl_strdup(src->pkgname);
+	dest->label = gretl_strdup(src->label);
+	dest->menupath = gretl_strdup(src->menupath);
+    }
+}
+
+/* The following packages were referenced in the system-wide
+   packages.xml, which was eliminated in gretl 2024a. For backward
+   compatibility, these static gpi entries should hopefully prevent
+   gretl from losing track of the affected packages.
 */
 
 static gui_package_info old_gpi[] = {
-    { "bandplot", "Confidence band plot", "/menubar/Graphs", NULL, 0, 0,
-      GPI_MODELWIN, 0, NULL },
-    { "tobit_y", "Predicted values", "/menubar/Analysis", NULL, 0, TOBIT,
-      GPI_MODELWIN, 0, NULL },
-    { "fe_stats", "Fixed effects statistics", "/menubar/Analysis", NULL, 0, PANEL,
-      GPI_MODELWIN, 0, NULL },
+    { "bandplot", "Confidence band plot", "/menubar/Graphs", NULL,
+      0, 0, GPI_MODELWIN, 0, NULL },
+    { "tobit_y", "Predicted values", "/menubar/Analysis", NULL,
+      0, TOBIT, GPI_MODELWIN, 0, NULL },
+    { "fe_stats", "Fixed effects statistics", "/menubar/Analysis", NULL,
+      0, PANEL, GPI_MODELWIN, 0, NULL }
 };
 
-static int read_packages_file (const char *fname, int *pn)
+static int xml_to_gpi (xmlNodePtr np, gui_package_info *gpi,
+		       guint8 extras[])
 {
-    static int done_old_gpi;
+    int j;
+
+    gpi->pkgname  = (char *) xmlGetProp(np, (XUC) "name");
+    gpi->label    = (char *) xmlGetProp(np, (XUC) "label");
+    gpi->menupath = (char *) xmlGetProp(np, (XUC) "path");
+
+    if (gpi->pkgname == NULL || gpi->label == NULL || gpi->menupath == NULL) {
+	clear_gpi_strings(gpi);
+	return E_DATA;
+    }
+
+    for (j=0; j<3; j++) {
+	if (!strcmp(gpi->pkgname, old_gpi[j].pkgname)) {
+	    /* an @old_gpi element is already handled */
+	    extras[j] = 0;
+	    break;
+	}
+    }
+
+    if (gretl_xml_get_prop_as_bool(np, "model-window")) {
+	gpi->flags |= GPI_MODELWIN;
+    }
+    if (!gretl_xml_get_prop_as_bool(np, "toplev")) {
+	gpi->flags |= GPI_SUBDIR;
+    }
+
+    if (strstr(gpi->menupath, "TSModels/TSMulti") ||
+	strstr(gpi->menupath, "TSModels/CointMenu")) {
+	/* update for obsolete menu paths */
+	free(gpi->menupath);
+	gpi->menupath = gretl_strdup("/menubar/Model/TSMulti");
+    }
+
+    if (gpi_modelwin(gpi)) {
+	/* package with a model-window attachment */
+	gretl_xml_get_prop_as_int(np, "model-requirement", &gpi->modelreq);
+    } else if (need_gfn_data_req(gpi->menupath)) {
+	int dr = 0;
+
+	gpi->flags |= GPI_DATACHK;
+	if (gretl_xml_get_prop_as_int(np, "data-requirement", &dr)) {
+	    gpi->dreq = (DataReq) dr;
+	}
+    }
+
+    return 0;
+}
+
+static int read_packages_xml (const char *fname, int *err)
+{
+    gui_package_info tmp;
+    gui_package_info *src = &tmp;
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
-    int i, err, n = *pn;
+    guint8 extras[3] = {1,1,1};
+    int pkg_err = 0;
+    int n_extra = 0;
+    int i, nc = 0;
 
-    err = gretl_xml_open_doc_root(fname, "gretl-package-info", &doc, &cur);
-    if (err) {
+    *err = gretl_xml_open_doc_root(fname, "gretl-package-info", &doc, &cur);
+    if (*err) {
+	return 0;
+    }
+
+    nc = (int) xmlChildElementCount(cur);
+    gpkgs = mymalloc(nc * sizeof *gpkgs);
+    if (gpkgs == NULL) {
+	*err = E_ALLOC;
 	return 0;
     }
 
     cur = cur->xmlChildrenNode;
+    i = 0;
 
-    while (cur != NULL && !err) {
-        if (!xmlStrcmp(cur->name, (XUC) "package")) {
-	    int mw = gretl_xml_get_prop_as_bool(cur, "model-window");
-	    int top = gretl_xml_get_prop_as_bool(cur, "toplev");
-	    char *name, *desc, *path;
-	    int dreq, modelreq = 0, need_dr = 0;
-	    int freeit = 1;
-
-	    name = (char *) xmlGetProp(cur, (XUC) "name");
-	    desc = (char *) xmlGetProp(cur, (XUC) "label");
-	    path = (char *) xmlGetProp(cur, (XUC) "path");
-	    if (name == NULL || desc == NULL || path == NULL) {
-		err = E_DATA;
-		break;
-	    }
-
-	    if (strstr(path, "TSModels/TSMulti") ||
-		       strstr(path, "TSModels/CointMenu")) {
-		/* update for obsolete menu paths */
-		free(path);
-		path = gretl_strdup("/menubar/Model/TSMulti");
-	    }
-
-	    if (mw) {
-		/* package with a model-window attachment */
-		if (!gretl_xml_get_prop_as_int(cur, "model-requirement", &modelreq)) {
-		    modelreq = discover_gfn_requirement(name, top, 1);
-		    gpkgs_changed = 1;
-		}
+    while (cur != NULL && !*err) {
+	if (!xmlStrcmp(cur->name, (XUC) "package")) {
+	    gpi_entry_init(src);
+	    pkg_err = xml_to_gpi(cur, src, extras);
+	    if (pkg_err) {
+		fprintf(stderr, "packages.xml: broken line i = %d\n", i+1);
 	    } else {
-		/* a main-window package */
-		need_dr = need_gfn_data_req(path);
-	    }
-
-	    if (need_dr && !gretl_xml_get_prop_as_int(cur, "data-requirement", &dreq)) {
-		dreq = discover_gfn_requirement(name, top, 0);
-		gpkgs_changed = 1;
-	    }
-
-	    if (package_is_unseen(name, n)) {
-		gpkgs = myrealloc(gpkgs, (n+1) * sizeof *gpkgs);
-		if (gpkgs == NULL) {
-		    err = E_ALLOC;
-		} else {
-		    freeit = 0;
-		    gpkgs[n].pkgname = name;
-		    gpkgs[n].label = desc;
-		    gpkgs[n].menupath = path;
-		    gpkgs[n].filepath = NULL;
-		    gpi_set_flags(&gpkgs[n], !top, mw, need_dr);
-		    gpkgs[n].dreq = (DataReq) dreq;
-		    if (mw) {
-			gpkgs[n].modelreq = modelreq;
-		    }
-		    gpkgs[n].merge_id = 0;
-		    gpkgs[n].ag = NULL;
-		    n++;
-		}
-	    }
-	    if (freeit) {
-		free(name);
-		free(desc);
-		free(path);
+		transcribe_to_gpi(&gpkgs[i++], src, 0);
 	    }
 	}
-	if (!err) {
-	    cur = cur->next;
-	}
+	cur = cur->next;
     }
 
-    if (doc != NULL) {
-	xmlFreeDoc(doc);
+    xmlFreeDoc(doc);
+
+    if (i < nc) {
+	fprintf(stderr, "Processed %d out of %d XML lines\n", i, nc);
     }
 
-    if (!done_old_gpi) {
-	for (i=0; i<G_N_ELEMENTS(old_gpi); i++) {
-	    gui_package_info *gpi = &old_gpi[i];
+    n_extra = extras[0] + extras[1] + extras[2];
+    if (n_extra > 0) {
+	int j;
 
-	    if (package_is_unseen(gpi->pkgname, n)) {
-		gpkgs = myrealloc(gpkgs, (n+1) * sizeof *gpkgs);
-		gpkgs[n].pkgname = gretl_strdup(gpi->pkgname);
-		gpkgs[n].label = gretl_strdup(gpi->label);
-		gpkgs[n].menupath = gretl_strdup(gpi->menupath);
-		gpkgs[n].filepath = NULL;
-		gpkgs[n].flags = gpi->flags;
-		gpkgs[n].dreq = 0;
-		gpkgs[n].modelreq = gpi->modelreq;
-		gpkgs[n].merge_id = 0;
-		gpkgs[n].ag = NULL;
-		n++;
-		done_old_gpi = 1;
+	gpkgs = myrealloc(gpkgs, (nc + n_extra) * sizeof *gpkgs);
+	for (j=0; j<3; j++) {
+	    if (extras[j]) {
+		transcribe_to_gpi(&gpkgs[i++], &old_gpi[j], 1);
 	    }
 	}
+	nc += n_extra;
+	gpkgs_changed = 1;
     }
 
-    *pn = n;
-
-    return err;
+    return nc;
 }
 
 static void destroy_gpi_ui (gui_package_info *gpi)
@@ -4122,7 +4066,7 @@ static int gui_package_info_init (void)
 
     fname = packages_xml_path();
     if (gretl_file_exists(fname)) {
-	err = read_packages_file(fname, &n);
+	n = read_packages_xml(fname, &err);
     }
     g_free(fname);
 
@@ -4136,13 +4080,13 @@ static int gui_package_info_init (void)
 }
 
 /* For function packages offering a menu attachment point: given the
-   internal package name (e.g. "gig") and a menu path where we'd like
-   it to appear (e.g. "/menubar/Model/TSModels" -- see the ui
-   definition file gui/gretlmain.xml), construct the appropriate menu
-   item and connect it to gfn_menu_callback(), for which see above.
+   package name and the menu path where it should appear, construct
+   an appropriate menu item and connect it to gfn_menu_callback(),
+   for which see above.
 
    This is called for both main-window and model-window menu
-   attachments.
+   attachments. It does not apply to addons, whose menu attachments
+   are specified in gui/gretlmain.xml.
 */
 
 static void add_package_to_menu (gui_package_info *gpi,
@@ -4179,8 +4123,8 @@ static void add_package_to_menu (gui_package_info *gpi,
     gpi->ag = gtk_action_group_new(item.name);
     gtk_action_group_set_translation_domain(gpi->ag, "gretl");
     gtk_action_group_add_actions(gpi->ag, &item, 1, vwin);
-    if (gpi->flags & GPI_DATAREQ) {
-	g_object_set_data(G_OBJECT(gpi->ag), "datareq", GINT_TO_POINTER(1));
+    if (gpi->flags & GPI_DATACHK) {
+	g_object_set_data(G_OBJECT(gpi->ag), "datachk", GINT_TO_POINTER(1));
     }
     gtk_ui_manager_insert_action_group(vwin->ui, gpi->ag, 0);
 
@@ -4297,10 +4241,9 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
     return err;
 }
 
-/* Called from gretl.c on initializing the GUI: put suitable
-   function packages (other than those that are designed to
-   appear in model-window menus) into the appropriate main-
-   window menus.
+/* Called from gretl.c on initializing the GUI: put suitable function
+   packages (other than those that are designed to appear in
+   model-window menus) into the appropriate main- window menus.
 */
 
 void maybe_add_packages_to_menus (windata_t *vwin)
@@ -4564,7 +4507,7 @@ static int in_own_subdir (const char *pkgname, const char *path)
 	ret = 1;
     } else {
 	gretl_errmsg_sprintf(_("The function file %s.gfn is not installed correctly:\n"
-			     "it should be in a subdirectory named '%s'."),
+			       "it should be in a subdirectory named '%s'."),
 			     pkgname, pkgname);
     }
 
