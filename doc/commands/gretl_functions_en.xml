@@ -7440,7 +7440,7 @@
 
     <function name="kdsmooth" section="sspace" output="int">
       <fnargs>
-	<fnarg type="bundleref">&amp;Mod</fnarg>
+	<fnarg type="bundleref">&amp;kb</fnarg>
 	<fnarg type="bool" optional="true">MSE</fnarg>
       </fnargs>
       <description>
@@ -7453,15 +7453,15 @@
 	</para>
 	<para>
 	  On successful completion, the smoothed disturbances will be
-	  available as <lit>Mod.smdist</lit>.
+	  available as <lit>kb.smdist</lit>.
 	</para>
 	<para>
 	  The optional <argname>MSE</argname> argument determines the
-	  contents of the <lit>Mod.smdisterr</lit> key. If 0 or
+	  contents of the <lit>kb.smdisterr</lit> key. If 0 or
 	  omitted, this matrix will contain the unconditional standard
 	  errors of the smoothed disturbances, which are normally used
 	  to compute the so-called <emphasis>auxiliary
-	  residuals</emphasis>. Otherwise, <lit>Mod.smdisterr</lit>
+	  residuals</emphasis>. Otherwise, <lit>kb.smdisterr</lit>
 	  will contain the estimated root mean square deviations of
 	  the auxiliary residuals from their true value.
 	</para>
@@ -7481,7 +7481,7 @@
 
     <function name="kfilter" section="sspace" output="scalar">
       <fnargs>
-	<fnarg type="bundleref">&amp;Mod</fnarg>
+	<fnarg type="bundleref">&amp;kb</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7492,9 +7492,9 @@
 	</para>
 	<para>
 	  On successful completion, the one-step-ahead prediction
-	  errors will be available as <lit>Mod.prederr</lit> and the
+	  errors will be available as <lit>kb.prederr</lit> and the
 	  sequence of their covariance matrices as
-	  <lit>Mod.pevar</lit>. Moreover, the key <lit>Mod.llt</lit>
+	  <lit>kb.pevar</lit>. Moreover, the key <lit>kb.llt</lit>
 	  gives access to a <math>T</math>-vector containing the
 	  log-likelihood by observation.
 	</para>
@@ -7623,14 +7623,23 @@
       </description>
     </function>
 
-    <function name="ksimul" section="sspace" output="scalar">
+    <function name="ksimul" section="sspace" output="matrix">
       <fnargs>
-	<fnarg type="bundleref">&amp;Mod</fnarg>
+	<fnarg type="bundleref">&amp;kb</fnarg>
+	<fnarg type="matrix">U</fnarg>
+	<fnarg type="bool" optional="true">extra</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Uses a Kalman bundle previously set up by means of
-	  <fncref targ="ksetup"/> to simulate data.
+	  Uses a Kalman bundle previously set up by means of <fncref
+	  targ="ksetup"/> to perform simulation, the disturbances
+	  being taken from the matrix <argname>U</argname>. By default
+	  the returned matrix (which will have as many rows as
+	  <argname>U</argname>) contains simulated values of the
+	  observable(s), but if a non-zero value is given for
+	  <argname>extra</argname> the simulated state is also
+	  included. In the latter case each row holds the state first,
+	  then the observable(s).
 	</para>
 	<para>
 	  For details see <guideref targ="chap:kalman"/>.
@@ -7647,7 +7656,7 @@
 
     <function name="ksmooth" section="sspace" output="int">
       <fnargs>
-	<fnarg type="bundleref">&amp;Mod</fnarg>
+	<fnarg type="bundleref">&amp;kb</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7659,8 +7668,8 @@
 	</para>
 	<para>
 	  On successful completion, the smoothed states will be
-	  available as <lit>Mod.state</lit> and the sequence of their
-	  covariance matrices as <lit>Mod.stvar</lit>.  For more
+	  available as <lit>kb.state</lit> and the sequence of their
+	  covariance matrices as <lit>kb.stvar</lit>.  For more
 	  details see <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
