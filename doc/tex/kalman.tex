@@ -49,7 +49,8 @@ high-level overview of gretl's Kalman apparatus.
   as described in detail below.
 \item You then ``do things'' with your state space model via the
   functions \texttt{kfilter} (forecasting) \texttt{ksmooth} (state
-  smoothing) and/or \texttt{kdsmooth} (disturbance smoothing).
+  smoothing), \texttt{kdsmooth} (disturbance smoothing), and/or
+  \texttt{ksimul} (simulation).
 \end{itemize}
 
 \section{Notation}
@@ -776,16 +777,26 @@ Kalman bundle and a matrix containing artificial disturbances, and it
 returns a matrix of simulation results. An optional trailing Boolean
 argument is supported, the purpose of which is explained below.
 
+If you are calling \texttt{ksimul} as a follow-up to other state-space
+computations you will presumably have a Kalman bundle to hand to serve
+as the first argument. If you're doing simulation from scratch you
+need to create such a bundle, but note that in this case the first
+argument to \texttt{ksetup} (the matrix of observables) is really just
+a place-holder: a $2 \times n$ zero matrix will suffice (two rows
+being the minimum required for this matrix). The number of simulated
+observations is set by the row dimension of the second argument to
+\texttt{ksimul}.
+
 If the disturbances are not cross-correlated, the matrix argument must
 be either $N \times \stdim$, if there is no disturbance in the
 observation equation, or $N \times (\stdim + \obsdim)$ if the
 $\obsvar$ (\texttt{obsvar}) matrix is specified. Row $t$ holds either
-$\stdist_t'$ or $(\stdist_t', \obsdist_t')$. Note that if
-$\statevar$ (\texttt{statevar}) is not simply an identity matrix you
-will have to scale the artificial state disturbances appropriately;
-the same goes for $\obsvar$ and the observation disturbances, if
-present. Given a matrix $U$ containing standard normal variates, in
-the general case this requires finding a matrix $A$ such that
+$\stdist_t'$ or $(\stdist_t', \obsdist_t')$. Note that if $\statevar$
+(\texttt{statevar}) is not simply an identity matrix you will have to
+scale the artificial state disturbances appropriately; the same goes
+for $\obsvar$ and the observation disturbances, if present. Given a
+matrix $U$ containing standard normal variates, in the general case
+this requires finding a matrix $A$ such that
 \[
 AA' = \Lambda \equiv \left(
 \begin{array}{ll}
@@ -828,19 +839,20 @@ $\alldist_t \sim N(0, I)$ and the disturbances for the respective
 equations, $\altstatevar_t \alldist_t$ and $\altobsvar_t \alldist_t$,
 are computed internally, with regard to time-variation if applicable.
 
-For the purposes of \texttt{ksimul} the time-series length, $N$, is
-defined by the number of rows of the supplied disturbance matrix. This
-need not equal the original $N$ value (set from \texttt{obsy} in the
-initial call to \cmd{ksetup}), since \texttt{obsy} is ignored under
-simulation. However, if the model includes exogenous variables in the
-observation equation (\texttt{obsx}) and the simulation length is
-greater than the original $N$, the simulation will run out of data and
-fail unless you supply a larger $x$ matrix.  This can be done in
-either of two ways. You can add a suitably sized matrix to the Kalman
-bundle under the key \texttt{simx}; if present, this will be used in
-preference to \texttt{obsx} for simulation. Or if you don't mind
-over-writing the original \texttt{obsx} you can substitute another
-matrix with the required number of rows under that key.
+As mentioned above, for the purposes of \texttt{ksimul} the
+time-series length, $N$, is defined by the number of rows of the
+supplied disturbance matrix. This need not equal the original $N$
+value (set from \texttt{obsy} in the initial call to \cmd{ksetup}),
+since \texttt{obsy} is ignored under simulation. However, if the model
+includes exogenous variables in the observation equation
+(\texttt{obsx}) and the simulation length is greater than the original
+$N$, the simulation will run out of data and fail unless you supply a
+larger $x$ matrix.  This can be done in either of two ways. You can
+add a suitably sized matrix to the Kalman bundle under the key
+\texttt{simx}; if present, this will be used in preference to
+\texttt{obsx} for simulation. Or if you don't mind over-writing the
+original \texttt{obsx} you can substitute another matrix with the
+required number of rows under that key.
 
 By default, the value returned by \cmd{ksimul} is a
 ($N \times \obsdim$) matrix holding simulated values for the vector of
