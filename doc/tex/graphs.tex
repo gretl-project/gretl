@@ -157,7 +157,12 @@ into the details and employ \app{gnuplot} features that are not
 accessible via gretl, and/or use one of the terminal types not
 directly supported by gretl, such as \texttt{context} (ConTeXt),
 \texttt{mp} (MetaPost), \texttt{lua} (Lua) or \texttt{pslatex}
-(\LaTeX\ picture environment with PostScript specials).
+(\LaTeX\ picture environment with PostScript specials). The
+\texttt{lua} terminal with the \texttt{tikz} option is especially
+useful for \LaTeX\ users, because it produces a \texttt{tikzpicture}
+environment, which offers almost unlimited customization possibilities
+(note that in order to use plots produced in this way you'll also need
+the \texttt{gnuplot-lua-tikz} \LaTeX\ package).
 
 To find out more about \app{gnuplot} visit
 \href{https://gnuplot.sourceforge.net/}{gnuplot.sourceforge.net}. This
