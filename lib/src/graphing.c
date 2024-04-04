@@ -36,6 +36,7 @@
 #include "boxplots.h"
 #include "mapinfo.h"
 #include "gretl_func.h"
+#include "gretl_plot.h"
 #include "plot_priv.h"
 
 #ifdef WIN32
@@ -2194,7 +2195,12 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 	ci = GRIDPLOT;
     }
 
-    s = get_optval_string(ci, OPT_U);
+    /* --output or --plot, depending on the command */
+    if (plot_command_active()) {
+	s = get_optval_string(PLOT, OPT_U);
+    } else {
+	s = get_optval_string(ci, OPT_U);
+    }
 
     if (grid_mode && s != NULL) {
 	if (gretl_function_depth() > 0 && !strcmp(s, "display")) {
@@ -2218,7 +2224,11 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 	s = NULL;
     } else if (s == NULL && !grid_mode) {
 	/* try for --outbuf=<strname> */
-	s = get_optval_string(ci, OPT_b);
+	if (plot_command_active()) {
+	    s = get_optval_string(PLOT, OPT_b);
+	} else {
+	    s = get_optval_string(ci, OPT_b);
+	}
 	if (s != NULL && *s == '\0') {
 	    s = NULL;
 	} else {

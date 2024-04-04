@@ -78,7 +78,11 @@ static void clear_plot (void)
     strings_array_free(plot.lines, plot.nlines);
     plot.lines = NULL;
     plot.nlines = 0;
-    reset_effective_plot_ci();
+}
+
+int plot_command_active (void)
+{
+    return plot.in_progress;
 }
 
 static int no_data_plot (gretlopt opt)
@@ -542,8 +546,6 @@ int gretl_plot_start (const char *param, const DATASET *dset)
 
     if (!err) {
 	plot.in_progress = 1;
-	/* for option-param handling in graphing.c */
-	set_effective_plot_ci(PLOT);
     }
 
     return err;
