@@ -68,6 +68,8 @@ version 2024a, in progress
   windows (bug #294)
 - GUI function package editor: add support specific to the
   editing of markdown help
+- GUI script editor: improve handling of C-style comments in
+  auto-indentation
 - GUI: make a newly installed data file package accessible
   by reopening the relevant window; don't require a restart
   of gretl
