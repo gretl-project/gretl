@@ -5672,14 +5672,11 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	    g_free(label);
 	}
 	fputs(")\n", fp);
-    }
-#if 0 /* produces horrible results in some cases (far too many tics) */
-    else if (freq->discrete > 1 && K < 10 && fabs(freq->midpt[K-1]) < 50) {
-	/* few values, all integers: force integer tic marks */
+    } else if (freq->discrete > 1 && K < 10 && fabs(freq->midpt[K-1]) < 11) {
+	/* few values, all integers, none too big: force integer tic marks */
 	fprintf(fp, "set xtics %.0f, 1, %.0f\n", freq->midpt[0],
 		freq->midpt[K-1]);
     }
-#endif
 
     /* plot instructions */
     if (use_boxes) {
