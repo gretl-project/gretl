@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-03-25 11:19-0400\n"
-"PO-Revision-Date: 2023-11-27 14:31-0300\n"
+"PO-Revision-Date: 2024-04-05 11:03-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.4\n"
+"X-Generator: Poedit 3.4.2\n"
 "X-Poedit-SourceCharset: iso-8859-15\n"
 "X-Language: pt_BR\n"
 "X-Poedit-Basepath: .\n"
@@ -43,9 +43,8 @@ msgid "check for %s\n"
 msgstr "verificar por %s\n"
 
 #: lib/src/addons_utils.c:275
-#, fuzzy
 msgid "no valid version found"
-msgstr "Não foram encontradas séries válidas"
+msgstr "não foi encontrada uma versão válida"
 
 #: lib/src/addons_utils.c:277
 msgid "indexed version"
@@ -547,7 +546,7 @@ msgstr "Data inicial inválida para dados de %d dias"
 #: lib/src/cmd_private.c:298 cli/gretlcli.c:288 cli/gretlcli-mpi.c:193
 #, c-format
 msgid "Broken syntax in %s: unmatched %s"
-msgstr ""
+msgstr "Sintaxe com erros em %s: %s sem correspondência"
 
 #: lib/src/compare.c:292
 #, c-format
@@ -1336,7 +1335,7 @@ msgid ""
 "\n"
 msgstr ""
 "ATENÇÃO: Verifique os seus dados! gretl removeu o que aparenta ser\n"
-"linha estranhas no conjunto de dados %s: isto pode não estar correcto.\n"
+"linha estranhas no conjunto de dados %s: isto pode não estar correto.\n"
 "\n"
 
 #: lib/src/csvdata.c:3736
@@ -1525,9 +1524,9 @@ msgid "Couldn't read marker on line %d"
 msgstr "Não se conseguiu ler o marcador na linha %d"
 
 #: lib/src/dataio.c:2758
-#, fuzzy, c-format
+#, c-format
 msgid "Missing marker at observation %d"
-msgstr "Valor ausente na observação %d"
+msgstr "Marcador ausente na observação %d"
 
 #: lib/src/dataio.c:2991
 msgid "No labels found"
@@ -1551,26 +1550,20 @@ msgid "Labels loaded OK\n"
 msgstr "Etiquetas carregadas OK\n"
 
 #: lib/src/dataio.c:3144
-#, fuzzy
 msgid "No description is available\n"
-msgstr "Não há descrição disponível"
+msgstr "Não há descrição disponível\n"
 
 #: lib/src/dataio.c:3149
-#, fuzzy
 msgid "dataset description written OK\n"
-msgstr ""
-"Fornecedor/Conjunto de dados : descrição\n"
-"\n"
+msgstr "descrição do conjunto de dados escrita OK\n"
 
 #: lib/src/dataio.c:3159
-#, fuzzy
 msgid "description replaced OK\n"
-msgstr "Não há descrição disponível"
+msgstr "Descrição substituída OK\n"
 
 #: lib/src/dataio.c:3161
-#, fuzzy
 msgid "description loaded OK\n"
-msgstr "Etiquetas carregadas OK\n"
+msgstr "descrição carregadas OK\n"
 
 #: lib/src/dataio.c:3211
 msgid "No markers are available for writing"
@@ -1765,12 +1758,12 @@ msgstr "Você apenas pode fazer isto com um conjunto de dados sem data"
 #: lib/src/dataset.c:3009
 msgid "stack: this function cannot be used when the dataset is sub-sampled"
 msgstr ""
-"stack: esta função não pode ser usada quando o conjunto de dados está sub-"
-"amostrado"
+"stack: esta função não pode ser usada quando o conjunto de dados está "
+"subamostrado"
 
 #: lib/src/dataset.c:3268 lib/src/dataset.c:3296 gui/library.c:6493
 msgid "The data set is currently sub-sampled.\n"
-msgstr "O conjunto de dados está sub-amostrado.\n"
+msgstr "O conjunto de dados está subamostrado.\n"
 
 #: lib/src/dataset.c:3276
 #, c-format
@@ -1826,7 +1819,7 @@ msgstr "Infelizmente este comando não está disponível em modo de loop\n"
 
 #: lib/src/dataset.c:3744
 msgid "The data set is currently sub-sampled"
-msgstr "O conjunto de dados encontra-se sub-amostrado"
+msgstr "O conjunto de dados encontra-se subamostrado"
 
 #: lib/src/dataset.c:3881
 msgid "Dataset is not dated daily"
@@ -2113,9 +2106,8 @@ msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
 msgstr " Defas.   FAC          FACP         Estat. Q [p-valor]"
 
 #: lib/src/describe.c:3628
-#, fuzzy
 msgid "  LAG      ACF          Q-stat. [p-value]"
-msgstr " Defas.   FAC          FACP         Estat. Q [p-valor]"
+msgstr "  Defas.  FAC         Estat. Q [p-valor]"
 
 #: lib/src/describe.c:3911
 msgid "Argument is a constant"
@@ -2856,7 +2848,7 @@ msgstr "%s: o uso da série é válido somente em atribuição direta"
 #: lib/src/geneval.c:2712 lib/src/gretl_panel.c:6912
 msgid "Sorry, can't do this with a sub-sampled dataset"
 msgstr ""
-"Desculpe, isto não pode ser feito com um conjunto de dados sub-amostrado"
+"Desculpe, isto não pode ser feito com um conjunto de dados subamostrado"
 
 #: lib/src/geneval.c:3075 lib/src/geneval.c:4522
 msgid "Matrix is not symmetric"
@@ -2910,7 +2902,7 @@ msgstr "Declaração '%s' falhou"
 
 #: lib/src/geneval.c:9520
 msgid "comma(s) found in atof() input"
-msgstr ""
+msgstr "vírgula(s) encontrada(s) na entrada atof()"
 
 #: lib/src/geneval.c:10017
 #, c-format
@@ -2982,9 +2974,9 @@ msgid "%s: requires an even number of arguments"
 msgstr "%s: requer um número par de argumentos"
 
 #: lib/src/geneval.c:15556
-#, fuzzy, c-format
+#, c-format
 msgid "%s: function not found"
-msgstr "%s: função está em uso"
+msgstr "%s: função não encontrada"
 
 # I'm not sure about translating the term "array" to Portuguese.
 #: lib/src/geneval.c:16108
@@ -3348,7 +3340,7 @@ msgstr "função obsoleta isnull(): favor utilizar !exists() no lugar"
 
 #: lib/src/genlex.c:813
 msgid "deprecated alias 'fft2': please call fft()"
-msgstr ""
+msgstr "alias obsoleto 'fft2': favor utilizar fft()"
 
 #: lib/src/genlex.c:1226
 #, c-format
@@ -3561,9 +3553,8 @@ msgid "You must supply three variables, the last of which is discrete"
 msgstr "Você deve fornecer três variáveis, sendo a última discreta"
 
 #: lib/src/graphing.c:2127
-#, fuzzy
 msgid "incompatible output specification"
-msgstr "Especificação de layout inválida"
+msgstr "especificação de saída inválida"
 
 #: lib/src/graphing.c:2482 gui/gpt_dialog.c:643
 #, c-format
@@ -4310,7 +4301,7 @@ msgstr "'%s': essa lista não existe"
 
 #: lib/src/gretl_foreign.c:2615 lib/src/gretl_foreign.c:2719
 msgid "Can't find the R shared library"
-msgstr ""
+msgstr "Não foi possível encontrar a biblioteca compartilhada do R"
 
 #: lib/src/gretl_foreign.c:2755
 msgid "Can't determine R_HOME"
@@ -4525,9 +4516,9 @@ msgid "Broken package! Basic information is missing\n"
 msgstr "Pacote estragado! Falta informação básica\n"
 
 #: lib/src/gretl_func.c:7049
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find sample script for '%s'"
-msgstr "Não se encontrou a função '%s'"
+msgstr "Não foi possível encontrar o script de exemplo para '%s'"
 
 #: lib/src/gretl_func.c:7284
 msgid "No description available"
@@ -5330,7 +5321,7 @@ msgstr "omp_num_threads: tem que ser >= 1 e <= %d"
 
 #: lib/src/gretl_mt.c:188 lib/src/gretl_mt.c:213
 msgid "set_omp_n_threads: OpenMP is not enabled"
-msgstr "set_omp_n_threads: OpenMP não está activado"
+msgstr "set_omp_n_threads: OpenMP não está ativado"
 
 #: lib/src/gretl_panel.c:2572
 msgid "Variance estimators:"
@@ -5551,7 +5542,7 @@ msgid ""
 msgstr ""
 "Você não pode usar a opção --panel-vars no comando setobs quando\n"
 "\n"
-"* o conjunto de dados está sub-amostrado e\n"
+"* o conjunto de dados está subamostrado e\n"
 "* o conjunto de dados completo não é de painel.\n"
 "\n"
 "Se você estruturar primeiro o conjunto de dados completo como sendo de "
@@ -5972,9 +5963,8 @@ msgid "Failed to parse data values at obs %d"
 msgstr "Falha no processamento dos valores na observação %d"
 
 #: lib/src/gretl_xml.c:3180 lib/src/gretl_xml.c:3338
-#, fuzzy
 msgid "Inconsistent record of number of observations"
-msgstr "Falha no processamento do número de observações"
+msgstr "Registro inconsistente do número de observações"
 
 #: lib/src/gretl_xml.c:3186 lib/src/gretl_xml.c:3344
 msgid "Failed to parse number of observations"
@@ -6106,7 +6096,7 @@ msgstr "Fazendo %s... "
 #: lib/src/interact.c:844
 #, c-format
 msgid "%s cannot be set as 'coded' (%s)"
-msgstr "%s não pode ser designado como 'codificado' (%s)"
+msgstr "%s não pode ser definido como 'codificado' (%s)"
 
 #: lib/src/interact.c:846
 msgid "is a 0/1 variable"
@@ -6125,13 +6115,12 @@ msgid "No series labels are defined\n"
 msgstr "Não foram definidos rótulos de séries\n"
 
 #: lib/src/interact.c:1067
-#, fuzzy
 msgid "Output has already been redirected"
-msgstr "Saída já está redirecionada para '%s'"
+msgstr "A saída já foi redirecionada"
 
 #: lib/src/interact.c:1070
 msgid "Output redirection: maximum depth reached"
-msgstr ""
+msgstr "Redirecionamento de saída: profundidade máxima atingida"
 
 #: lib/src/interact.c:1094
 #, c-format
@@ -6351,11 +6340,11 @@ msgstr "obsx deve ter %d linhas mas tem %d\n"
 
 #: lib/src/kalman.c:3331
 msgid "Failed to compute factor of Omega_t"
-msgstr "Falhou o cálculo do factor de Omega_t"
+msgstr "Falhou o cálculo do fator de Omega_t"
 
 #: lib/src/kalman.c:3353
 msgid "Failed to compute factor of Omega"
-msgstr "Falhou o cálculo do factor de Omega"
+msgstr "Falhou o cálculo do fator de Omega"
 
 #: lib/src/kalman.c:3402
 msgid "You cannot resize a state-space system matrix"
@@ -6515,6 +6504,8 @@ msgid ""
 "R_functions could not be enabled\n"
 "Please see https://gretl.sourceforge.net/gretl_and_R.html"
 msgstr ""
+"R_functions não pode se ativada\n"
+"Por favor, consulte https://gretl.sourceforge.net/gretl_and_R.html"
 
 #: lib/src/libset.c:2117
 #, c-format
@@ -8023,9 +8014,9 @@ msgstr ""
 " não produziu o tipo de saída requerido"
 
 #: lib/src/nls.c:711
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': expected a scalar or matrix"
-msgstr "%s: é esperado um escalar ou vetor"
+msgstr "'%s': é esperado um escalar ou matriz"
 
 #: lib/src/nls.c:865
 msgid "Only one 'params' specification is allowed"
@@ -9115,7 +9106,7 @@ msgstr "o modelo é subamostrado, o conjunto de dados não\n"
 
 #: lib/src/subsample.c:3383 lib/src/subsample.c:3432
 msgid "model and dataset subsamples not the same\n"
-msgstr "o modelo e o conjunto de dados sub-amostrados são diferentes\n"
+msgstr "o modelo e o conjunto de dados subamostrados são diferentes\n"
 
 #: lib/src/subsample.c:3454
 msgid "time series"
@@ -9427,9 +9418,9 @@ msgid "\"%s\": obsolete %s; please use \"%s\""
 msgstr "\"%s\": obsoleto de \"%s\"; por favor use \"%s\""
 
 #: lib/src/tokenize.c:2554
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid keyword in plot block"
-msgstr "'%s': observação final inválida"
+msgstr "'%s': palavra-chave inválida no bloco de gráfico"
 
 #: lib/src/tokenize.c:2668
 msgid "'end loop': did you mean 'endloop'"
@@ -9959,9 +9950,9 @@ msgid "writing session output to %s%s\n"
 msgstr "escrevendo os resultados da sessão em %s%s\n"
 
 #: cli/gretlcli.c:1081
-#, fuzzy, c-format
+#, c-format
 msgid "Error reading '%s'\n"
-msgstr "Erro ao ler %s\n"
+msgstr "Erro ao ler '%s'\n"
 
 #: cli/gretlcli.c:1093
 msgid "Terminated on error\n"
@@ -10046,7 +10037,7 @@ msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>,\n"
 "Henrique Andrade <henrique.coelho@fazenda.gov.br> e\n"
 "Raquel Guimarães.\n"
-"(atualizada em 22 de novembro de 2023)"
+"(atualizada em 4 de abril de 2024)"
 
 #: gui/about.c:235
 msgid "Rationale"
@@ -11061,7 +11052,7 @@ msgstr "Erro ao descompactar dados comprimidos"
 
 #: gui/database.c:2728
 msgid "Reopen the local window to access this collection"
-msgstr ""
+msgstr "Reabra a janela local para acessar esta coleção"
 
 #: gui/database.c:3064 gui/database.c:3097
 msgid "Unknown: access error"
@@ -11408,7 +11399,7 @@ msgstr "Autor"
 
 #: gui/datafiles.c:2941
 msgid "Addon"
-msgstr ""
+msgstr "Complemento"
 
 #: gui/datafiles.c:2948 gui/fnsave.c:2907 gui/textutil.c:395
 msgid "Window"
@@ -12254,13 +12245,12 @@ msgstr ""
 "normal independentemente do cabeçalho da coluna."
 
 #: gui/dialogs.c:4340
-#, fuzzy
 msgid "Data file options:"
-msgstr "Arquivos de dados"
+msgstr "Opções para o arquivo de dados:"
 
 #: gui/dialogs.c:4357
 msgid "\"View\": view the first few lines of the file"
-msgstr ""
+msgstr "\"View\": veja as primeiras linhas do arquivo"
 
 #: gui/dialogs.c:4364 gui/session.c:215 gui/session.c:219 gui/session.c:229
 #: gui/session.c:3510 gui/session.c:3544 gui/textutil.c:588
@@ -12827,7 +12817,6 @@ msgid "Open script"
 msgstr "Abrir script"
 
 #: gui/fileselect.c:990
-#, fuzzy
 msgid "Gretl datafiles (*.gdt, *.gdtb)"
 msgstr "Arquivos de dados gretl (*.gdt, *.gdtb)"
 
@@ -12928,14 +12917,12 @@ msgid "lpsolve files (*.lp)"
 msgstr "Arquivos lpsolve (*.lp)"
 
 #: gui/fileselect.c:1212
-#, fuzzy
 msgid "Gretl datafiles (*.gdt)"
 msgstr "Arquivos de dados gretl (*.gdt)"
 
 #: gui/fileselect.c:1213
-#, fuzzy
 msgid "Gretl binary datafiles (*.gdtb)"
-msgstr "Arquivos de dados binário gretl (*.gdtb)"
+msgstr "Arquivos de dados binários gretl (*.gdtb)"
 
 #: gui/fileselect.c:1266
 msgid "Compression level (0 = none)"
@@ -14543,9 +14530,8 @@ msgid "_Databases"
 msgstr "Bases de _dados"
 
 #: gui/gretl.c:1814
-#, fuzzy
 msgid "_Gretl native..."
-msgstr "_gretl..."
+msgstr "_gretl (nativa)..."
 
 #: gui/gretl.c:1815
 msgid "_RATS 4..."
@@ -14652,7 +14638,6 @@ msgid "_Command log"
 msgstr "Registro de _comandos"
 
 #: gui/gretl.c:1853
-#, fuzzy
 msgid "_Gretl console"
 msgstr "Console _gretl"
 
@@ -15481,6 +15466,12 @@ msgid ""
 "Do you want to download and install the current\n"
 "addons now?"
 msgstr ""
+"Você selecionou uma ação que requer acesso aos\n"
+"complementos do gretl, mas esses pacotes estão\n"
+"indisponíveis, incompletos ou desatualizados.\n"
+"\n"
+"Deseja baixar e instalar os complementos\n"
+"agora?"
 
 #: gui/guiprint.c:218 gui/guiprint.c:265
 #, c-format
@@ -16530,7 +16521,7 @@ msgstr "agregação"
 
 #: gui/join-gui.c:477
 msgid "show details of importation"
-msgstr "Mostrar detalhes da importação"
+msgstr "mostrar detalhes da importação"
 
 #: gui/join-gui.c:819
 msgid "The 'seq' aggregator requires an integer parameter, as in seq:1"
@@ -17049,9 +17040,8 @@ msgid "gretl: Hurst exponent"
 msgstr "gretl: expoente de Hurst"
 
 #: gui/library.c:5884
-#, fuzzy
 msgid "Show partial autocorrelations"
-msgstr "gretl: autocorrelação"
+msgstr "Mostrar autocorrelações parciais"
 
 #: gui/library.c:5885
 msgid "Use Bartlett standard errors"
@@ -19684,12 +19674,10 @@ msgid "Couldn't read %s"
 msgstr "Não foi possível ler %s"
 
 #: gui/textbuf.c:2522
-#, fuzzy
 msgid "Gretl Command Reference"
 msgstr "Manual de Referência dos Comandos gretl"
 
 #: gui/textbuf.c:2567
-#, fuzzy
 msgid "Gretl Function Reference"
 msgstr "Manual de Referência das Funções gretl"
 
@@ -19816,7 +19804,7 @@ msgstr "Salvar texto"
 
 #: gui/toolbar.c:423
 msgid "Number of digits to show for statistics"
-msgstr "Número de dígitos a serem exibidos em estatísticas"
+msgstr "Número de dígitos a serem exibidos nas estatísticas"
 
 #: gui/toolbar.c:428
 msgid "Number of digits to show for coefficients"
@@ -19845,26 +19833,23 @@ msgstr "Matriz gravada como %s"
 
 #: gui/toolbar.c:942 gui/toolbar.c:1663
 msgid "Preview as markdown"
-msgstr ""
+msgstr "Pré-visualizar como markdown"
 
 #: gui/toolbar.c:959
 msgid "Return to editing"
-msgstr ""
+msgstr "Retornar para a edição"
 
 #: gui/toolbar.c:968
-#, fuzzy
 msgid "plain literal text"
-msgstr "texto simples"
+msgstr "texto literal simples"
 
 #: gui/toolbar.c:969
-#, fuzzy
 msgid "markdown"
-msgstr "Markdown"
+msgstr "markdown"
 
 #: gui/toolbar.c:974
-#, fuzzy
 msgid "Text status"
-msgstr "Estatística de teste"
+msgstr "Estado de teste"
 
 #: gui/toolbar.c:1071
 msgid "New window"
@@ -20003,9 +19988,8 @@ msgid "New tab"
 msgstr "Nova aba"
 
 #: gui/toolbar.c:1662
-#, fuzzy
 msgid "Set markdown status"
-msgstr "_Mostrar estado"
+msgstr "Definir estado do markdown"
 
 #: gui/toolbar.c:1826
 msgid "launch calculator"
@@ -20146,7 +20130,7 @@ msgstr "Fórmula:"
 
 #: gui/varinfo.c:914
 msgid "Display name (shown in graphs):"
-msgstr "Nome a apresentar (mostrado nos gráficos):"
+msgstr "Nome de exibição (mostrado nos gráficos):"
 
 #: gui/varinfo.c:940
 msgid "Compaction method (for reducing frequency):"
@@ -20169,9 +20153,8 @@ msgid "Buffer is empty"
 msgstr "Buffer está vazio"
 
 #: gui/viewers.c:481
-#, fuzzy
 msgid "Go to line"
-msgstr "Transformar linha em comentário"
+msgstr "Ir para a linha"
 
 #: gui/viewers.c:867
 msgid "gretl: edit plot commands"
