@@ -1,3 +1,9 @@
+2024-04-05 version 2024a
+
+ASCII graphics have been removed from a few commands that used
+to show them incidentally. For now the "textplot" command is
+still available, but it may be retired before long.
+
 2023-12-05 version 2023c
 
 Compaction of undated daily data is now disabled, since it is

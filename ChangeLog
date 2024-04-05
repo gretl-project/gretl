@@ -1,4 +1,4 @@
-version 2024a, in progress
+2024-04-05 version 2024a
 - gretl "addons": integrate with releases on all platforms
 - $sysinfo bundle: add gnuplot version as scalar ("gnuplot")
 - "plot" command: update the help text and apply a fix for the
