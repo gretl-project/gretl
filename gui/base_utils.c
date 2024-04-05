@@ -785,7 +785,7 @@ void do_new_script (int code, const char *buf,
 	/* the usual case */
 	FILE *fp;
 
-	sprintf(fname, "%sscript_tmp", gretl_dotdir());
+	sprintf(fname, "%sscript_tmp.XXXXXX", gretl_dotdir());
 	fp = gretl_tempfile_open(fname);
 	if (fp == NULL) {
 	    return;

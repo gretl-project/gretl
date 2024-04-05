@@ -4216,7 +4216,7 @@ void activate_plot_font_choice (png_plot *plot, const char *grfont)
 {
     FILE *fp = NULL;
     FILE *ftmp = NULL;
-    char tmpname[FILENAME_MAX];
+    gchar *tmpname = NULL;
     char line[256], fontspec[128];
     int gotterm = 0;
     int err = 0;
@@ -4234,9 +4234,10 @@ void activate_plot_font_choice (png_plot *plot, const char *grfont)
 	return;
     }
 
-    sprintf(tmpname, "%sgpttmp", gretl_dotdir());
+    tmpname = gretl_make_dotpath("gpttmp.XXXXXX");
     ftmp = gretl_tempfile_open(tmpname);
     if (ftmp == NULL) {
+	g_free(tmpname);
 	fclose(fp);
 	gui_errmsg(E_FOPEN);
 	return;
@@ -4263,6 +4264,8 @@ void activate_plot_font_choice (png_plot *plot, const char *grfont)
 	    err = gnuplot_make_image(plot->spec->fname);
 	}
     }
+
+    g_free(tmpname);
 
     if (err) {
 	gui_errmsg(err);
@@ -4481,6 +4484,19 @@ static int rescale_siblings (png_plot *plot, double scale)
     return err;
 }
 
+static void sensitize_scale_buttons (png_plot *plot)
+{
+    if (plot_is_zoomed(plot)) {
+	gtk_widget_set_sensitive(plot->up_icon, FALSE);
+	gtk_widget_set_sensitive(plot->down_icon, FALSE);
+    } else {
+	double scale = plot->spec->scale;
+
+	gtk_widget_set_sensitive(plot->up_icon, scale < max_graph_scale());
+	gtk_widget_set_sensitive(plot->down_icon, scale > min_graph_scale());
+    }
+}
+
 static void plot_do_rescale (png_plot *plot, int mod)
 {
     double scale = 1.0;
@@ -4512,8 +4528,7 @@ static void plot_do_rescale (png_plot *plot, int mod)
 	}
     }
 
-    gtk_widget_set_sensitive(plot->up_icon, scale < max_graph_scale());
-    gtk_widget_set_sensitive(plot->down_icon, scale > min_graph_scale());
+    sensitize_scale_buttons(plot);
 }
 
 static void show_all_labels (png_plot *plot)
@@ -5006,14 +5021,34 @@ static int repaint_png (png_plot *plot, int view)
     return render_png(plot, view);
 }
 
+/* On replacing "full" view of a plot with zoomed view:
+   sync the zoomed x and y ranges to both the plot and
+   its attached GPT_SPEC pointer.
+*/
+
+static void plot_sync_xy_ranges (png_plot *plot)
+{
+    double *rx = plot->spec->range[GP_X_RANGE];
+    double *ry = plot->spec->range[GP_Y_RANGE];
+
+    rx[0] = plot->xmin = plot->zoom_xmin;
+    rx[1] = plot->xmax = plot->zoom_xmax;
+    ry[0] = plot->ymin = plot->zoom_ymin;
+    ry[1] = plot->ymax = plot->zoom_ymax;
+
+    plot->zoom_xmin = plot->zoom_xmax = 0.0;
+    plot->zoom_ymin = plot->zoom_ymax = 0.0;
+}
+
 /* with a zoomed version of the current plot in place,
-   replace the full version wiuth the zoom
+   replace the full version with the zoom
 */
 
 static int zoom_replaces_plot (png_plot *plot)
 {
     FILE *fpin, *fpout;
-    char temp[MAXLEN], line[MAXLEN];
+    gchar *temp = NULL;
+    char line[MAXLEN];
     int err = 0;
 
     fpin = gretl_fopen(plot->spec->fname, "r");
@@ -5021,48 +5056,47 @@ static int zoom_replaces_plot (png_plot *plot)
 	return 1;
     }
 
-    sprintf(temp, "%szoomtmp", gretl_dotdir());
+    temp = gretl_make_dotpath("zoomtmp.XXXXXX");
     fpout = gretl_tempfile_open(temp);
     if (fpout == NULL) {
 	fclose(fpin);
+	g_free(temp);
 	return 1;
     }
 
-    /* write zoomed range into temporary file */
+    /* first copy into temp file, replacing data ranges */
 
     gretl_push_c_numeric_locale();
-    fprintf(fpout, "set xrange [%g:%g]\n", plot->zoom_xmin,
-	    plot->zoom_xmax);
-    fprintf(fpout, "set yrange [%g:%g]\n", plot->zoom_ymin,
-	    plot->zoom_ymax);
-    gretl_pop_c_numeric_locale();
-
     while (fgets(line, MAXLEN-1, fpin)) {
-	if (strncmp(line, "set xrange", 10) &&
-	    strncmp(line, "set yrange", 10)) {
+	if (!strncmp(line, "set xrange", 10)) {
+	    fprintf(fpout, "set xrange [%g:%g]\n", plot->zoom_xmin,
+		    plot->zoom_xmax);
+	} else if (!strncmp(line, "set yrange", 10)) {
+	    fprintf(fpout, "set yrange [%g:%g]\n", plot->zoom_ymin,
+		    plot->zoom_ymax);
+	} else {
 	    fputs(line, fpout);
 	}
     }
+    gretl_pop_c_numeric_locale();
 
     fclose(fpout);
     fclose(fpin);
 
-    /* and copy over original graph source file */
+    /* then replace the original graph source file */
 
     err = gretl_copy_file(temp, plot->spec->fname);
     if (err) {
 	gui_errmsg(err);
     } else {
-	plot->xmin = plot->zoom_xmin;
-	plot->xmax = plot->zoom_xmax;
-	plot->ymin = plot->zoom_ymin;
-	plot->ymax = plot->zoom_ymax;
-	plot->zoom_xmin = plot->zoom_xmax = 0.0;
-	plot->zoom_ymin = plot->zoom_ymax = 0.0;
+	plot_sync_xy_ranges(plot);
 	plot->status ^= PLOT_ZOOMED;
     }
 
     gretl_remove(temp);
+    g_free(temp);
+
+    sensitize_scale_buttons(plot);
 
     return err;
 }
@@ -5431,8 +5465,10 @@ static int render_png (png_plot *plot, viewcode view)
 	redraw_plot_rectangle(plot, NULL);
 	if (view == PNG_ZOOM) {
 	    plot->status |= PLOT_ZOOMED;
+	    sensitize_scale_buttons(plot);
 	} else if (view == PNG_UNZOOM) {
 	    plot->status ^= PLOT_ZOOMED;
+	    sensitize_scale_buttons(plot);
 	}
     }
 
