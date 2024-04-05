@@ -982,12 +982,10 @@ void print_plot_ranges_etc (const GPT_SPEC *spec, FILE *fp)
 	if (i < 3 && spec->logbase[i] > 0.0) {
 	    fprintf(fp, "set logscale %s %g\n", rstrs[i], spec->logbase[i]);
 	}
-
 	if (na(spec->range[i][0]) || na(spec->range[i][1]) ||
 	    spec->range[i][0] == spec->range[i][1]) {
 	    continue;
 	}
-
 	if ((i == GP_Y2_RANGE && !(spec->flags & GPT_Y2AXIS)) ||
 	    (i == GP_T_RANGE && !(spec->flags & GPT_PARAMETRIC))) {
 	    continue;

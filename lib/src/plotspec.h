@@ -140,7 +140,7 @@ struct GPT_SPEC_ {
     char xvarname[MAXDISP];    /* name of x variable */
     char yvarname[MAXDISP];    /* name of y variable */
     gchar *titles[5];          /* main, x, y, y2, x2 */
-    double range[5][2];        /* axis range specifiers */
+    double range[5][2];        /* axis range specifiers: x, y, y2, t, x2 */
     double logbase[3];         /* axis log-scales base (0 for linear) */
     int keyspec;               /* position of key (or none) */
     char xfmt[16];             /* x-axis tic format */
