@@ -569,6 +569,7 @@ struct gretl_option gretl_opts[] = {
     { PERGM,    OPT_S, "silent", 0 },
     { PKG,      OPT_L, "local", 0 },
     { PKG,      OPT_V, "verbose", 0 },
+    { PKG,      OPT_S, "staging", 0 },
     { PRINT,    OPT_O, "byobs", 0 },
     { PRINT,    OPT_L, "list", 0 },
     { PRINT,    OPT_D, "no-dates", 0 },

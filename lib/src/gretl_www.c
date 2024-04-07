@@ -1100,6 +1100,8 @@ static int check_downloaded_file (const char *fname,
  * @pkgname: name of function package to retrieve, e.g. "foo.gfn".
  * @localname: full path to which the package file should be
  * written on the local machine.
+ * @staging: if non-zero, try to get the package from the "staging"
+ * directory.
  *
  * Retrieves the specified file from the gretl data server.
  *
@@ -1107,12 +1109,21 @@ static int check_downloaded_file (const char *fname,
  */
 
 int retrieve_remote_function_package (const char *pkgname,
-                                      const char *localname)
+                                      const char *localname,
+				      int staging)
 {
     int err;
 
-    err = retrieve_url(gretlhost, GRAB_FUNC, pkgname, NULL,
-                       localname, 0, NULL);
+    if (staging) {
+	gchar *uri =
+	    g_strdup_printf("https://gretl.sourceforge.net/staging_fnfiles/%s",
+			    pkgname);
+	err = retrieve_public_file(uri, (char *) localname);
+	g_free(uri);
+    } else {
+	err = retrieve_url(gretlhost, GRAB_FUNC, pkgname, NULL,
+			   localname, 0, NULL);
+    }
     if (!err) {
         err = check_downloaded_file(localname, pkgname);
     }

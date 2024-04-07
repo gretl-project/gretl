@@ -42,7 +42,8 @@ int retrieve_remote_db (const char *dbname,
 int check_remote_db (const char *dbname);
 
 int retrieve_remote_function_package (const char *pkgname, 
-				      const char *localname);
+				      const char *localname,
+				      int staging);
 
 int retrieve_remote_gfn_content (const char *zipname, 
 				 const char *localname);

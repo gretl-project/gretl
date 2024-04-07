@@ -2994,10 +2994,20 @@ static int install_package (const char *pkgname,
 {
     char *fname = NULL;
     int filetype = 0;
-    int local = (opt & OPT_L);
+    int local = 0;
+    int staging = 0;
     int addons = 0;
     int http = 0;
-    int err = 0;
+    int err;
+
+    err = incompatible_options(opt, OPT_L | OPT_S);
+    if (err) {
+	return err;
+    } else if (opt & OPT_L) {
+	local = 1;
+    } else if (opt & OPT_S) {
+	staging = 1;
+    }
 
 #if DO_BINPKG
     if (!local && has_suffix(pkgname, ".tar.gz") &&
@@ -3008,7 +3018,6 @@ static int install_package (const char *pkgname,
 #endif
 
     if (!local && is_gretl_addon(pkgname)) {
-	/* FIXME? */
 	gretl_errmsg_set("Downloading individual addons is not supported");
 	return E_DATA;
     }
@@ -3105,7 +3114,9 @@ static int install_package (const char *pkgname,
             err = retrieve_public_file(pkgname, fullname);
         } else {
             /* get file from default gretl server */
-            err = retrieve_remote_function_package(basename, fullname);
+            err = retrieve_remote_function_package(basename,
+						   fullname,
+						   staging);
         }
 
         if (!err && filetype == 2) {

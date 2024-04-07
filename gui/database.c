@@ -2586,7 +2586,7 @@ static int try_install_dependency (const char *pkgname,
         gchar *fullname = g_strdup_printf("%s%s", instpath, fname);
 
 	/* get file from gretl server */
-	err = retrieve_remote_function_package(fname, fullname);
+	err = retrieve_remote_function_package(fname, fullname, 0);
         if (!err && filetype == 2) {
             err = gretl_unzip_into(fullname, instpath);
             if (!err) {
@@ -2652,7 +2652,7 @@ static int gui_install_gfn (const gchar *objname,
     if (!err) {
 	gchar *fullname = (gchar *) target;
 
-	err = retrieve_remote_function_package(dlname, target);
+	err = retrieve_remote_function_package(dlname, target, 0);
 	if (!err && zipfile) {
 	    err = gretl_unzip_into(target, instpath);
 	    gretl_remove(target);
@@ -2893,7 +2893,7 @@ void pkg_info_from_server (GtkWidget *w, windata_t *vwin)
 	err = retrieve_remote_gfn_content(zipname, path);
 	g_free(zipname);
     } else {
-	err = retrieve_remote_function_package(objname, path);
+	err = retrieve_remote_function_package(objname, path, 0);
     }
 
     if (err) {
