@@ -1532,7 +1532,8 @@ static char *tex_term_line (char *term_line,
     if (gnuplot_has_tikz()) {
 	strcpy(term_line, "set term tikz");
     } else {
-	strcpy(term_line, "set term cairolatex");
+	/* what about using pict2e? */
+	strcpy(term_line, "set term cairolatex pdf");
     }
 
     append_gp_encoding(term_line);
