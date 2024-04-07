@@ -6534,19 +6534,20 @@
       </description>
     </function>
 
-    <function name="instrings" section="strings" output="matrix">
+    <function name="instrings" section="strings" output="seebelow">
       <fnargs>
 	<fnarg type="strings">S</fnarg>
 	<fnarg type="string">test</fnarg>
+	<fnarg type="bool" optional="true">simple</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Checks the elements of the strings array
 	  <argname>S</argname> for equality with
-	  <argname>test</argname>. Returns a column vector of length
-	  equal to the number of matches, holding the positions of the
-	  matches within the array&mdash;or an empty matrix in case of
-	  no matches.
+	  <argname>test</argname>. By default, returns a column vector
+	  of length equal to the number of matches, holding the
+	  positions of the matches within the array&mdash;or an empty
+	  matrix in case of no matches.
 	</para>
 	<para>
 	  Example:
@@ -6557,6 +6558,14 @@
 	  2
 	  4
 	</code>
+	<para>
+	  If a non-zero value is given for the optional
+	  <argname>simple</argname> argument, the return value is a
+	  scalar: 1 if <argname>test</argname> is found in
+	  <argname>S</argname>, 0 otherwise. In this case the
+	  implementation is able to take a shortcut, so it's more
+	  efficient if you just want a boolean answer.
+	</para>
       </description>
     </function>
 
