@@ -297,18 +297,50 @@ static GtkWidget *get_selector_for_param (call_info *cinfo,
     return NULL;
 }
 
+static int cond_met (gint a, gint v, gint op)
+{
+    if (op == OP_EQ) return a == v;
+    if (op == OP_LT) return a < v;
+    if (op == OP_GT) return a > v;
+    return a != v;
+}
+
 static void toggle_sensitivity (GtkWidget *cb, GtkWidget *w)
 {
     gint a = gtk_combo_box_get_active(GTK_COMBO_BOX(cb));
     gint v = widget_get_int(w, "condval");
+    gint o = widget_get_int(w, "condop");
 
-    gtk_widget_set_sensitive(w, a == v);
+    gtk_widget_set_sensitive(w, cond_met(a, v, o));
 }
 
 static void condition_on_combo (GtkWidget *w, GtkWidget *cb)
 {
     g_signal_connect(G_OBJECT(cb), "changed",
 		     G_CALLBACK(toggle_sensitivity), w);
+}
+
+static int validate_op (const char *s)
+{
+    const char *opchars = "=<>!";
+    int i, op = 0;
+
+    if (s[1] == '\0') {
+	for (i=0; i<3; i++) {
+	    if (s[0] == opchars[i]) {
+		op = (int) s[0];
+		break;
+	    }
+	}
+    } else if (s[1] == '=') {
+	if (s[0] == '=') {
+	    op = (int) s[0];
+	} else if (s[0] == '!') {
+	    op = OP_NEQ;
+	}
+    }
+
+    return op;
 }
 
 /* Based on the @ui bundle returned by the ui-maker function of a
@@ -346,15 +378,20 @@ static void check_depends (call_info *cinfo, int i,
 	GtkWidget *dep = NULL;
 	const char *depname = depstr;
 	char ctrl[32] = {0};
+	char opstr[3] = {0};
 	int val = -1;
+	int op = 0;
 
-	/* see if we can split @depstr in two */
-	if (sscanf(depstr, "%31[^=]=%d", ctrl, &val) == 2) {
+	/* see if we can split @depstr in three */
+	if (sscanf(depstr, "%31[^=<>!]%2[=<>!]%d", ctrl, opstr, &val) == 3) {
 	    if (val < 0) {
 		fprintf(stderr, "ui-maker depends: invalid value %d\n", val);
 		return;
+	    } else if ((op = validate_op(opstr)) == 0) {
+		fprintf(stderr, "ui-maker depends: invalid operator '%s'\n", opstr);
+		return;
 	    }
-	    /* OK, we got <name>=<value> */
+	    /* OK, we got <name><op><value> */
 	    depname = ctrl;
 	}
 	/* try to find the controller widget */
@@ -363,10 +400,14 @@ static void check_depends (call_info *cinfo, int i,
 	    fprintf(stderr, "ui-maker depends: couldn't find '%s'\n", depname);
 	    return;
 	}
+
 	if (GTK_IS_TOGGLE_BUTTON(dep)) {
 	    gboolean a = button_is_active(dep);
 
-	    if (val == 0) {
+	    if (op != OP_EQ) {
+		fprintf(stderr, "ui-maker depends: invalid op for toggle '%s'\n", opstr);
+		return;
+	    } else if (val == 0) {
 		/* depend on not checked */
 		gtk_widget_set_sensitive(cinfo->sels[i], !a);
 		desensitize_conditional_on(cinfo->sels[i], dep);
@@ -382,8 +423,9 @@ static void check_depends (call_info *cinfo, int i,
 	    if (val >= 1 && val <= jmax) {
 		/* convert to 0-based */
 		val -= 1;
-		gtk_widget_set_sensitive(cinfo->sels[i], a == val);
+		gtk_widget_set_sensitive(cinfo->sels[i], cond_met(a, val, op));
 		widget_set_int(cinfo->sels[i], "condval", val);
+		widget_set_int(cinfo->sels[i], "condop", op);
 		condition_on_combo(cinfo->sels[i], dep);
 	    } else {
 		fprintf(stderr, "ui-maker depends: bad combo-box usage '%s'\n", depstr);
@@ -2345,6 +2387,10 @@ static void compose_fncall_line (char *line,
     *line = '\0';
 
     if (cinfo->rettype == GRETL_TYPE_LIST && cinfo->ret == NULL) {
+	/* 2024-04-08: it's not clear that this action is really
+	   wanted: automatic assignment to a dummy list when the
+	   user has not specified any assignment.
+	*/
 	strcpy(line, "list " DUMLIST " = ");
 	*dummy_list = 1;
     } else if (cinfo->ret != NULL) {
