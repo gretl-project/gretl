@@ -2708,22 +2708,33 @@ ret.baz = _(depends = "foo")
 \end{code}
 
 Alternatively, \texttt{depends} may take the form
-\textsl{name}\texttt{=}\textsl{value}, where \textsl{name} is the name
-of parameter $j$ and \textit{value} is an integer value indicating the
-state of \textsf{W}$_j$.  This allows for inverse dependency on a
-check-box.  Given
+\textsl{name}\,\texttt{cmp}\,\textsl{value}, where \textsl{name} is
+the name of parameter $j$, \textsl{value} is an integer indicating the
+state of \textsf{W}$_j$ and \texttt{cmp} is a `comparator':
+``\texttt{=}'' (or ``\texttt{==}'') for equality; ``\texttt{!=}'' for
+inequality; ``\texttt{<}'' and ``\texttt{>}'' for less than or greater
+than, respectively.
+
+If \textsf{W}$_j$ is a check box only the equality comparator is
+supported, but this allows for for inverse dependency. Given
 \begin{code}
 ret.baz = _(depends = "foo=0")
 \end{code}
 the widget for \texttt{baz} will be sensitive if and only if the box
-for parameter \texttt{foo} is \textit{not} checked. It also allows for
-dependency on a ``combo box'' holding a pull-down list of $n$
-options. Such options can be regarded as numbered from 1 to $n$
-(regardless of how they look in the GUI), so for example the
-sensitivity of the \texttt{baz} widget can be made conditional on the
-second option being selected for integer parameter \texttt{bar} via
+for parameter \texttt{foo} is \textit{not} checked.
+
+The extended case also allows for dependency on a ``combo box''
+holding a pull-down list of $n$ options. Such options can be regarded
+as numbered from 1 to $n$ (regardless of how they look in the
+GUI). Here are some examples of usage, where \texttt{bar} is the
+parameter on which conditionality rests:
 \begin{code}
+# sensitive only if the second option for bar is selected
 ret.baz = _(depends = "bar=2")
+# sensitive if any option but the first is selected
+ret.baz = _(depends = "bar!=1")
+# sensitive if an option higher than 2 is selected
+ret.baz = _(depends = "bar>2")
 \end{code}
 
 \subsection{Run-time limits and defaults}
@@ -2745,6 +2756,7 @@ size. Then you could include the following statement in your
 \begin{code}
 ret.n = _(maximum="floor(0.2*$nobs)")
 \end{code}
+
 If in addition you want the default value to equal the maximum, you
 could substitute
 \begin{code}
