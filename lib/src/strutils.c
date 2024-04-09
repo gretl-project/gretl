@@ -3106,10 +3106,11 @@ char *gretl_utf8_select (const char *s, const int *list)
  * Returns: newly allocated resulting string.
  */
 
-char *gretl_utf8_replace_char (char *targ, char *src, int pos)
+char *gretl_utf8_replace_char (const char *targ, const char *src,
+			       int pos)
 {
-    char *s = g_utf8_offset_to_pointer(targ, pos);
-    char *p = g_utf8_find_next_char(s, NULL);
+    const char *s = g_utf8_offset_to_pointer(targ, pos);
+    const char *p = g_utf8_find_next_char(s, NULL);
     char *ret;
     int len;
 

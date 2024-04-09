@@ -206,7 +206,8 @@ char *gretl_utf8_truncate (char *s, size_t nmax);
 
 char *gretl_utf8_truncate_b (char *s, size_t bmax);
 
-char *gretl_utf8_replace_char (char *targ, char *src, int pos);
+char *gretl_utf8_replace_char (const char *targ, const char *src,
+			       int pos);
 
 char *gretl_utf8_select (const char *s, const int *list);
 
