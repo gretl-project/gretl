@@ -918,15 +918,15 @@ include the \texttt{gretlmpi} executable linked against \textsf{Open
 \texttt{/opt/openmpi}.
 
 The details differ by processor type. For Macs with Intel processors,
-\texttt{gretlmpi} is linked against \textsf{Open MPI} version 1.6.5,
-while for Macs with arm64 processors (``Apple Silicon'') the linkage is
-to \textsf{Open MPI} 4.1.5. To activate MPI support it's necessary to
-install the appropriate package, as follows:
+\texttt{gretlmpi} is linked against \textsf{Open MPI} version 1.6.5, while
+for Macs with arm64 processors (``Apple Silicon'') the linkage is to
+\textsf{Open MPI} 4.1.6. To activate MPI support you should install the
+appropriate package, as follows:
 
 \begin{center}
 \begin{tabular}{ll}
   intel & \texttt{openmpi-1.6.5-mac-intel.zip} \\
-  arm64 & \texttt{openmpi-4.1.5-mac-arm64.zip}
+  arm64 & \texttt{openmpi-4.1.6-mac-arm64.zip}
 \end{tabular}
 \end{center}
 
@@ -934,15 +934,15 @@ These can be found at
 
 \url{http://sourceforge.net/projects/gretl/files/mpi/}
 
-To unpack the package you execute the following commands in a
-\textsf{Terminal} window:
+To unpack the package, execute the following commands in a \textsf{Terminal}
+window:
 \begin{code}
 # change to root directory
 cd /
 # for Intel
 sudo unzip /where/you/put/openmpi-1.6.5-mac-intel.zip
 # OR for arm64
-sudo unzip /where/you/put/openmpi-4.1.5-mac-arm64.zip
+sudo unzip /where/you/put/openmpi-4.1.6-mac-arm64.zip
 \end{code}
 %
 This will install the files under \texttt{/opt/openmpi}, which is
