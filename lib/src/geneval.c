@@ -12269,7 +12269,7 @@ static int set_string_value (NODE *lhs, NODE *rhs, parser *p)
     NODE *lh1 = lhs->L;
     NODE *lh2 = lhs->R;
     char *s1 = NULL;
-    char *s2 = NULL;
+    const char *s2 = NULL;
     int idx = 0, err = 0;
 
     if (p->op != B_ASN) {
@@ -12289,6 +12289,7 @@ static int set_string_value (NODE *lhs, NODE *rhs, parser *p)
         idx = lh2->v.xval;
     }
 
+    /* @s1 may be modified below */
     s1 = lh1->v.str;
 
     if (s1 == NULL) {
@@ -12317,7 +12318,6 @@ static int set_string_value (NODE *lhs, NODE *rhs, parser *p)
             if (uv != NULL) {
                 p->err = user_var_replace_value(uv, tmp,
                                                 GRETL_TYPE_STRING);
-                free(s1);
             } else {
                 p->err = E_DATA;
                 free(tmp);
