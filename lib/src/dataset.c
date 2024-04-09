@@ -3247,19 +3247,6 @@ int series_record_display_name (DATASET *dset, int i,
     return 0;
 }
 
-const char *series_get_graph_name (const DATASET *dset, int i)
-{
-    const char *ret = dset->varname[i];
-
-    if (dset->varinfo != NULL && dset->varinfo[i] != NULL) {
-	if (dset->varinfo[i]->display_name[0] != '\0') {
-	    ret = dset->varinfo[i]->display_name;
-	}
-    }
-
-    return ret;
-}
-
 static int add_obs (int n, DATASET *dset, gretlopt opt, PRN *prn)
 {
     int err = 0;
@@ -4211,12 +4198,15 @@ void series_zero_flags (DATASET *dset, int i)
  * @dset: pointer to dataset.
  * @i: index number of series.
  *
- * Returns: the descriptive label for series @i.
+ * Returns: the descriptive label for series @i, which may be
+ * empty, or NULL on failure.
  */
 
 const char *series_get_label (const DATASET *dset, int i)
 {
-    if (i >= 0 && i < dset->v) {
+    if (dset == NULL || dset->varinfo == NULL) {
+	return NULL;
+    } else if (i >= 0 && i < dset->v) {
 	return dset->varinfo[i]->label;
     } else {
 	return NULL;
@@ -4228,12 +4218,15 @@ const char *series_get_label (const DATASET *dset, int i)
  * @dset: pointer to dataset.
  * @i: index number of series.
  *
- * Returns: the display name for series @i.
+ * Returns: the display name for series @i, whivh may be
+ * empty, or NULL on failure.
  */
 
 const char *series_get_display_name (const DATASET *dset, int i)
 {
-    if (i >= 0 && i < dset->v) {
+    if (dset == NULL || dset->varinfo == NULL) {
+	return NULL;
+    } else if (i >= 0 && i < dset->v) {
 	return dset->varinfo[i]->display_name;
     } else {
 	return NULL;

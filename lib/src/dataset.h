@@ -449,8 +449,6 @@ int series_record_display_name (DATASET *dset, int i,
 int series_record_label (DATASET *dset, int i,
 			 const char *s); 
 
-const char *series_get_graph_name (const DATASET *dset, int i);
-
 unsigned int get_resampling_seed (void);
 
 int dataset_resample (DATASET *dset, int n, unsigned int seed);
