@@ -859,7 +859,7 @@ static void recession_bars_plot (band_info *bi,
 
     /* plot the actual data */
     for (i=1; i<=n_yvars; i++) {
-	const char *iname = series_get_graph_name(dset, gi->list[i]);
+	const char *iname = plotname(dset, gi->list[i], 1);
 
 	set_plot_withstr(gi, i, wspec);
 	if (gi->flags & GPT_Y2AXIS) {
@@ -904,7 +904,7 @@ static const double *gi_get_xdata (gnuplot_info *gi,
 	int xno = gi->list[xpos];
 
 	x = dset->Z[xno];
-	strcpy(xname, series_get_graph_name(dset, xno));
+	strcpy(xname, plotname(dset, xno, 1));
     }
 
     gretl_list_delete_at_pos(gi->list, xpos);
@@ -1008,7 +1008,7 @@ int plot_with_band (BPMode mode,
     }
 
     if (n_yvars == 1) {
-	const char *s = series_get_graph_name(dset, gi->list[1]);
+	const char *s = plotname(dset, gi->list[1], 1);
 
 	maybe_suppress_key(bbi, n_bands, yname, s, fp);
     }
@@ -1064,7 +1064,7 @@ int plot_with_band (BPMode mode,
     }
     /* then the non-band data */
     for (i=1; i<=n_yvars; i++) {
-	const char *iname = series_get_graph_name(dset, gi->list[i]);
+	const char *iname = plotname(dset, gi->list[i], 1);
 
 	set_plot_withstr(gi, i, wspec);
 	fprintf(fp, "'$data' using 1:%d title '%s' %s lt %d%s", i+1,

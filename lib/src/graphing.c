@@ -1917,6 +1917,53 @@ static void print_term_string (int ttype, PlotType ptype,
 static int gretl_plot_count;
 static int this_term_type;
 
+const char *plotname (const DATASET *dset, int v, int full)
+{
+    static char texname[32];
+    const char *ret = dset->varname[v];
+
+    if (full) {
+	const char *alt = series_get_display_name(dset, v);
+
+	if (alt != NULL && *alt != '\0') {
+	    ret = alt;
+	}
+    }
+
+    if ((this_term_type == GP_TERM_TEX || this_term_type == GP_TERM_TKZ) &&
+	 strchr(ret, '_') != NULL) {
+	int i = 0;
+
+	while (*ret) {
+	    if (*ret == '_') {
+		texname[i++] = '\\';
+		texname[i++] = '_';
+	    } else {
+		texname[i++] = *ret;
+	    }
+	    ret++;
+	}
+	texname[i] = '\0';
+	return texname;
+    }
+
+    return ret;
+}
+
+/* The trick used in plotname() -- with a static char object to hold a
+   TeX-corrected name -- won't work if the caller wants to define two
+   or more plotname strings before making use of them, since the first
+   will be modified before it's used. So we have to make a copy, as
+   below.
+*/
+
+static char *make_plotname (const DATASET *dset, int v)
+{
+    const char *s = plotname(dset, v, 1);
+
+    return gretl_strdup(s);
+}
+
 /* recorder for filename given via --output=foo */
 static char gnuplot_outname[FILENAME_MAX];
 
@@ -1952,6 +1999,11 @@ static int set_term_type_from_fname (const char *fname, int *err)
     } else if (!strcmp(fname, "gnuplot")) {
 	this_term_type = GP_TERM_VAR;
     }
+
+#if GP_DEBUG
+    fprintf(stderr, "set_term_type_from_fname: this_term_type = %d,"
+	    " outname '%s'\n", this_term_type, gnuplot_outname);
+#endif
 
     return this_term_type;
 }
@@ -2321,11 +2373,6 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
 	interactive = !gretl_in_batch_mode();
     }
 
-#if GP_DEBUG
-    fprintf(stderr, "outspec = '%s', interactive = %d\n",
-	    outspec == NULL ? "null" : outspec, interactive);
-#endif
-
     if (interactive) {
 	fp = gp_set_up_interactive(fname, ptype, flags, err);
     } else {
@@ -2333,7 +2380,10 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
     }
 
 #if GP_DEBUG
-    fprintf(stderr, "open_plot_input_file: '%s'\n", gretl_plotfile());
+    fprintf(stderr, "open_plot_input_file: outspec = '%s', interactive = %d\n",
+	    outspec == NULL ? "null" : outspec, interactive);
+    fprintf(stderr, " gretl_plotfile = '%s'\n", gretl_plotfile());
+    fprintf(stderr, " this_term_type = %d\n", this_term_type);
 #endif
 
     return fp;
@@ -2589,8 +2639,10 @@ static void make_gtitle (gnuplot_info *gi, int code,
     switch (code) {
     case GTITLE_VLS:
 	if (gi->fit == PLOT_FIT_OLS) {
+	    fprintf(stderr, " OLS\n");
 	    title = g_strdup_printf(_("%s versus %s (with least squares fit)"),
 				    s1, s2);
+	    fprintf(stderr, " title='%s'\n", title);
 	} else if (gi->fit == PLOT_FIT_INVERSE) {
 	    title = g_strdup_printf(_("%s versus %s (with inverse fit)"),
 				    s1, s2);
@@ -2624,7 +2676,7 @@ static void make_gtitle (gnuplot_info *gi, int code,
     }
 
     if (title != NULL) {
-	fprintf(fp, "set title \"%s\"\n", title);
+	fprintf(fp, "set title '%s'\n", title);
 	g_free(title);
     }
 }
@@ -2864,18 +2916,20 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
     }
 
     if (xno > 0) {
-	const char *s1 = series_get_graph_name(dset, yno);
-	const char *s2 = series_get_graph_name(dset, xno);
+	char *s1 = make_plotname(dset, yno);
+	char *s2 = make_plotname(dset, xno);
 
 	title = g_strdup_printf(_("%s versus %s (with loess fit)"), s1, s2);
 	print_keypos_string(GP_KEY_LEFT_TOP, fp);
-	fprintf(fp, "set title \"%s\"\n", title);
+	fprintf(fp, "set title '%s'\n", title);
 	g_free(title);
 	print_axis_label('y', s1, fp);
 	print_axis_label('x', s2, fp);
+	free(s1);
+	free(s2);
     } else {
 	print_keypos_string(GP_KEY_LEFT_TOP, fp);
-	print_axis_label('y', series_get_graph_name(dset, yno), fp);
+	print_axis_label('y', plotname(dset, yno, 1), fp);
     }
 
     print_auto_fit_string(PLOT_FIT_LOESS, fp);
@@ -3063,7 +3117,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
     }
 
     print_keypos_string(GP_KEY_LEFT_TOP, fp);
-    print_axis_label('y', series_get_graph_name(dset, yno), fp);
+    print_axis_label('y', plotname(dset, yno, 1), fp);
     print_auto_fit_string(gi->fit, fp);
     print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
 
@@ -4302,6 +4356,7 @@ int gnuplot (const int *plotlist, const char *literal,
 #if GP_DEBUG
     printlist(plotlist, "gnuplot: plotlist");
     fprintf(stderr, "incoming plot range: obs %d to %d\n", dset->t1, dset->t2);
+    fprintf(stderr, "this_term_type = %d\n", this_term_type);
 #endif
 
     err = gpinfo_init(&gi, opt, plotlist, literal, dset);
@@ -4319,6 +4374,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
 #if GP_DEBUG
     fprintf(stderr, "after gpinfo_init: gi.fit = %d\n", gi.fit);
+
 #endif
 
     err = maybe_add_plotx(&gi, time_fit, dset);
@@ -4342,13 +4398,6 @@ int gnuplot (const int *plotlist, const char *literal,
 
     /* convenience pointer */
     list = gi.list;
-
-    /* set x-axis label for non-time series plots */
-    if (!(gi.flags & GPT_TS)) {
-	int v = (gi.flags & GPT_DUMMY)? list[2] : list[list[0]];
-
-	strcpy(xlabel, series_get_graph_name(dset, v));
-    }
 
     prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
     if (err) {
@@ -4403,8 +4452,20 @@ int gnuplot (const int *plotlist, const char *literal,
 	goto bailout;
     }
 
+#if 1
+    fprintf(stderr, "After open_plot_input_file, this_term_type = %d\n",
+	    this_term_type);
+#endif
+
     fputs(gretl_print_get_buffer(prn), fp);
     gretl_print_destroy(prn);
+
+    /* set x-axis label for non-time series plots */
+    if (!(gi.flags & GPT_TS)) {
+	int v = (gi.flags & GPT_DUMMY)? list[2] : list[list[0]];
+
+	strcpy(xlabel, plotname(dset, v, 1));
+    }
 
     print_axis_label('x', xlabel, fp);
     fputs("set xzeroaxis\n", fp);
@@ -4419,7 +4480,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
     if (list[0] == 1) {
 	/* only one variable (time series) */
-	print_axis_label('y', series_get_graph_name(dset, list[1]), fp);
+	print_axis_label('y', plotname(dset, list[1], 1), fp);
 	strcpy(keystr, "set nokey\n");
     } else if (list[0] == 2) {
 	/* plotting two variables */
@@ -4428,10 +4489,14 @@ int gnuplot (const int *plotlist, const char *literal,
 	if (gi.flags & GPT_AUTO_FIT) {
 	    print_auto_fit_string(gi.fit, fp);
 	    if (gi.flags & GPT_FA) {
-		make_gtitle(&gi, GTITLE_AFV, series_get_graph_name(dset, list[1]),
-			    series_get_graph_name(dset, list[2]), fp);
+		char *tmp1 = make_plotname(dset, list[1]);
+		char *tmp2 = make_plotname(dset, list[2]);
+
+		make_gtitle(&gi, GTITLE_AFV, tmp1, tmp2, fp);
+		free(tmp1);
+		free(tmp2);
 	    } else {
-		make_gtitle(&gi, GTITLE_VLS, series_get_graph_name(dset, list[1]),
+		make_gtitle(&gi, GTITLE_VLS, plotname(dset, list[1], 1),
 			    xlabel, fp);
 	    }
 	    no_key = 0;
@@ -4443,7 +4508,7 @@ int gnuplot (const int *plotlist, const char *literal,
 			NULL, fp);
 	    fprintf(fp, "set ylabel '%s'\n", _("residual"));
 	} else {
-	    print_axis_label('y', series_get_graph_name(dset, list[1]), fp);
+	    print_axis_label('y', plotname(dset, list[1], 1), fp);
 	}
 	if (no_key) {
 	    strcpy(keystr, "set nokey\n");
@@ -4457,15 +4522,19 @@ int gnuplot (const int *plotlist, const char *literal,
     } else if (gi.flags & GPT_FA) {
 	if (list[3] == dset->v - 1) {
 	    /* x var is just time or index: is this always right? */
-	    make_gtitle(&gi, GTITLE_AF, series_get_graph_name(dset, list[2]),
+	    make_gtitle(&gi, GTITLE_AF, plotname(dset, list[2], 1),
 			NULL, fp);
 	} else {
-	    make_gtitle(&gi, GTITLE_AFV, series_get_graph_name(dset, list[2]),
-			series_get_graph_name(dset, list[3]), fp);
+	    char *s2 = make_plotname(dset, list[2]);
+	    char *s3 = make_plotname(dset, list[3]);
+
+	    make_gtitle(&gi, GTITLE_AFV, s2, s3, fp);
+	    free(s2);
+	    free(s3);
 	}
-	print_axis_label('y', series_get_graph_name(dset, list[2]), fp);
+	print_axis_label('y', plotname(dset, list[2], 1), fp);
     } else if (gi.flags & GPT_DUMMY) {
-	print_axis_label('y', series_get_graph_name(dset, list[1]), fp);
+	print_axis_label('y', plotname(dset, list[1], 1), fp);
     }
 
     if (many) {
@@ -4531,7 +4600,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    set_plot_withstr(&gi, i, withstr);
 	    fprintf(fp, " '-' using 1:2 axes %s title \"%s (%s)\" %s%s%s",
 		    (i == oddman)? "x1y2" : "x1y1",
-		    series_get_graph_name(dset, list[i]),
+		    plotname(dset, list[i], 1),
 		    (i == oddman)? _("right") : _("left"),
 		    withstr,
 		    lwstr,
@@ -4543,7 +4612,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	int dv = list[3];
 	series_table *st;
 
-	strcpy(s2, series_get_graph_name(dset, dv));
+	strcpy(s2, plotname(dset, dv, 1));
 	st = series_get_string_table(dset, dv);
 
 	for (i=0; i<nd; i++) {
@@ -4584,7 +4653,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    if (list[0] == 2 && !(gi.flags & GPT_TIMEFMT)) {
 		*s1 = '\0';
 	    } else {
-		strcpy(s1, series_get_graph_name(dset, list[i]));
+		strcpy(s1, plotname(dset, list[i], 1));
 	    }
 	    set_plot_withstr(&gi, i, withstr);
 	    fprintf(fp, " '-' using 1:2 title \"%s\" %s%s", s1, withstr, lwstr);
@@ -4654,8 +4723,8 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset)
     vx = gi.list[2];
     vy = gi.list[1];
 
-    print_axis_label('x', series_get_graph_name(dset, vx), fp);
-    print_axis_label('y', series_get_graph_name(dset, vy), fp);
+    print_axis_label('x', plotname(dset, vx, 1), fp);
+    print_axis_label('y', plotname(dset, vy, 1), fp);
 
     fputs("set xzeroaxis\n", fp);
     gnuplot_missval_string(fp);
@@ -4879,7 +4948,7 @@ int multi_plots (const int *list, const DATASET *dset,
 	if (obs != NULL) {
 	    fputs("set noxlabel\n", fp);
 	    fputs("set noylabel\n", fp);
-	    fprintf(fp, "set title '%s'\n", series_get_graph_name(dset, j));
+	    fprintf(fp, "set title '%s'\n", plotname(dset, j, 1));
 	} else {
 	    fprintf(fp, "set xlabel '%s'\n",
 		    (yvar)? dset->varname[j] :
@@ -5317,9 +5386,9 @@ int gnuplot_3d (int *list, const char *literal,
 
     gretl_push_c_numeric_locale();
 
-    print_axis_label('x', series_get_graph_name(dset, list[2]), fp);
-    print_axis_label('y', series_get_graph_name(dset, list[1]), fp);
-    print_axis_label('z', series_get_graph_name(dset, list[3]), fp);
+    print_axis_label('x', plotname(dset, list[2], 1), fp);
+    print_axis_label('y', plotname(dset, list[1], 1), fp);
+    print_axis_label('z', plotname(dset, list[3], 1), fp);
 
     gnuplot_missval_string(fp);
 
@@ -5667,7 +5736,7 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
     }
 
     if (freq->strvals) {
-	fprintf(fp, "set title \"%s: relative frequencies\"\n",
+	fprintf(fp, "set title '%s: relative frequencies'\n",
 		freq->varname);
     } else {
 	fprintf(fp, "set xlabel '%s'\n", freq->gname);
@@ -6407,8 +6476,8 @@ int plot_simple_fcast_bands (const MODEL *pmod,
 
     gnuplot_missval_string(fp);
 
-    fprintf(fp, "set xlabel \"%s\"\n", dset->varname[xv]);
-    fprintf(fp, "set ylabel \"%s\"\n", fr->depvar);
+    fprintf(fp, "set xlabel '%s'\n", dset->varname[xv]);
+    fprintf(fp, "set ylabel '%s'\n", fr->depvar);
 
     fputs("set key left top\n", fp);
     fputs("plot \\\n", fp);
@@ -6522,8 +6591,8 @@ int plot_tau_sequence (const MODEL *pmod, const DATASET *dset,
     fputs("set xlabel 'tau'\n", fp);
 
     tmp = g_strdup_printf(_("Coefficient on %s"),
-			  series_get_graph_name(dset, pmod->list[k+2]));
-    fprintf(fp, "set title \"%s\"\n", tmp);
+			  plotname(dset, pmod->list[k+2], 1));
+    fprintf(fp, "set title '%s'\n", tmp);
     g_free(tmp);
 
     fputs("set style fill solid 0.5\n", fp);
@@ -6766,9 +6835,8 @@ static int panel_means_ts_plot (const int vnum,
     /* ensure use of lines, time series */
     opt |= (OPT_O | OPT_T);
 
-    title = g_strdup_printf(_("mean %s"),
-			    series_get_graph_name(dset, vnum));
-    my_literal = g_strdup_printf("set ylabel \"%s\" ; set xlabel ;",
+    title = g_strdup_printf(_("mean %s"), plotname(dset, vnum, 1));
+    my_literal = g_strdup_printf("set ylabel '%s' ; set xlabel ;",
 				 title);
     if (literal != NULL) {
 	gchar *all_lit;
@@ -6856,7 +6924,7 @@ int panel_means_XY_scatter (const int *list,
 	}
     }
 
-    my_literal = g_strdup_printf("set title \"%s\";", _("Group means"));
+    my_literal = g_strdup_printf("set title '%s';", _("Group means"));
 
     if (literal != NULL) {
         gchar *all_lit = g_strdup_printf("%s %s", my_literal, literal);
@@ -7128,7 +7196,7 @@ static int panel_overlay_ts_plot (const int vnum,
     }
 
     if (!single_series) {
-	const char *gname = series_get_graph_name(dset, vnum);
+	const char *gname = plotname(dset, vnum, 1);
 	const char *vname = panel_group_names_varname(dset);
 
 	if (vname != NULL) {
@@ -7136,7 +7204,7 @@ static int panel_overlay_ts_plot (const int vnum,
 	} else {
 	    title = g_strdup_printf("%s by group", gname);
 	}
-	my_literal = g_strdup_printf("set title \"%s\" ; set xlabel ;", title);
+	my_literal = g_strdup_printf("set title '%s' ; set xlabel ;", title);
     }
 
     if (nunits > 80) {
@@ -8591,7 +8659,7 @@ int arma_spectrum_plot (MODEL *pmod, const DATASET *dset,
 	    fputs("set xtics (\"0\" 0, \"π/4\" pi/4, \"π/2\" pi/2, "
 		  "\"3π/4\" 3*pi/4, \"π\" pi)\n", fp);
 	}
-	fprintf(fp, "set title \"%s (%s)\"\n", _("Sample periodogram vs ARMA Spectrum"),
+	fprintf(fp, "set title '%s (%s)'\n", _("Sample periodogram vs ARMA Spectrum"),
 		_("log scale"));
 	fprintf(fp, "plot '-' using 1:2 w lines title '%s' lw 2, \\\n", _("spectrum"));
 	fprintf(fp, "'-' using 1:2 w lines title '%s' lw 0.5\n", _("periodogram"));
@@ -8697,11 +8765,11 @@ static int qq_plot_two_series (const int *list,
 	return err;
     }
 
-    fprintf(fp, "set title \"%s\"\n", _("Q-Q plot"));
+    fprintf(fp, "set title '%s'\n", _("Q-Q plot"));
     gnuplot_missval_string(fp);
     fputs("set key top left\n", fp);
-    fprintf(fp, "set xlabel \"%s\"\n", series_get_graph_name(dset, vx));
-    fprintf(fp, "set ylabel \"%s\"\n", series_get_graph_name(dset, vy));
+    fprintf(fp, "set xlabel '%s'\n", plotname(dset, vx, 1));
+    fprintf(fp, "set ylabel '%s'\n", plotname(dset, vy, 1));
     fputs("plot \\\n", fp);
     fputs(" '-' using 1:2 notitle w points, \\\n", fp);
     fputs(" x notitle w lines\n", fp);
@@ -8789,11 +8857,11 @@ static int normal_qq_plot (const int *list,
 	return err;
     }
 
-    title = g_strdup_printf(_("Q-Q plot for %s"), series_get_graph_name(dset, v));
-    fprintf(fp, "set title \"%s\"\n", title);
+    title = g_strdup_printf(_("Q-Q plot for %s"), plotname(dset, v, 1));
+    fprintf(fp, "set title '%s'\n", title);
     g_free(title);
     gnuplot_missval_string(fp);
-    fprintf(fp, "set xlabel \"%s\"\n", _("Normal quantiles"));
+    fprintf(fp, "set xlabel '%s'\n", _("Normal quantiles"));
 
     if (opt & OPT_R) {
 	fputs("set nokey\n", fp);
@@ -8803,7 +8871,7 @@ static int normal_qq_plot (const int *list,
 	fputs("set key top left\n", fp);
 	fputs("plot \\\n", fp);
 	fputs(" '-' using 1:2 notitle w points, \\\n", fp);
-	fputs(" x title \"y = x\" w lines\n", fp);
+	fputs(" x title 'y = x' w lines\n", fp);
     }
 
     gretl_push_c_numeric_locale();
@@ -9592,7 +9660,7 @@ int write_map_gp_file (void *ptr)
     if (gretl_bundle_has_key(opts, "title")) {
 	sval = gretl_bundle_get_string(opts, "title", NULL);
 	if (sval != NULL) {
-	    fprintf(fp, "set title \"%s\"\n", sval);
+	    fprintf(fp, "set title '%s'\n", sval);
 	}
     }
 
@@ -9809,7 +9877,7 @@ int write_tdisagg_plot (const gretl_matrix *YY, int mult,
     fputs("set key left top\n", fp);
     fputs("set xzeroaxis\n", fp);
     if (title != NULL) {
-	fprintf(fp, "set title \"%s\"\n", title);
+	fprintf(fp, "set title '%s'\n", title);
     }
 
     gretl_push_c_numeric_locale();

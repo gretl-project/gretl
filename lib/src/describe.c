@@ -1299,7 +1299,7 @@ static FreqDist *freq_new (const DATASET *dset, int v)
     if (freq == NULL) return NULL;
 
     strcpy(freq->varname, dset->varname[v]);
-    strcpy(freq->gname, series_get_graph_name(dset, v));
+    strcpy(freq->gname, plotname(dset, v, 1));
 
     freq->midpt = NULL;
     freq->endpt = NULL;
@@ -3831,7 +3831,7 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	pacf = pacf_err ? NULL : acf + m;
     }
 
-    vname = series_get_graph_name(dset, varno);
+    vname = plotname(dset, varno, 1);
 
     if (do_print) {
 	corrgm_print(vname, acf, pacf, BPM, m, T, nparam, opt, prn);

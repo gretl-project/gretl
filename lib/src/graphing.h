@@ -214,6 +214,8 @@ int set_plotstyle (const char *style);
 
 const char *get_plotstyle (void);
 
+const char *plotname (const DATASET *dset, int v, int full);
+
 PlotType plot_type_from_string (const char *str);
 
 void plot_get_scaled_dimensions (int *width, int *height, double scale);
