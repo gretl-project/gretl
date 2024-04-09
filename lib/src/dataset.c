@@ -4218,7 +4218,7 @@ const char *series_get_label (const DATASET *dset, int i)
  * @dset: pointer to dataset.
  * @i: index number of series.
  *
- * Returns: the display name for series @i, whivh may be
+ * Returns: the display name for series @i, which may be
  * empty, or NULL on failure.
  */
 
@@ -4338,7 +4338,7 @@ void series_set_mtime (DATASET *dset, int i)
 
 gint64 series_get_mtime (const DATASET *dset, int i)
 {
-    if (i > 0 && i < dset->v) {
+    if (dset->varinfo != NULL && i > 0 && i < dset->v) {
 	return dset->varinfo[i]->mtime;
     } else {
 	return 0;
@@ -4348,6 +4348,9 @@ gint64 series_get_mtime (const DATASET *dset, int i)
 void series_set_label (DATASET *dset, int i,
 		       const char *s)
 {
+    if (dset->varinfo == NULL) {
+	return;
+    }
     if (i > 0 && i < dset->v) {
 	copy_label(dset->varinfo[i], s);
     }
@@ -4356,16 +4359,23 @@ void series_set_label (DATASET *dset, int i,
 void series_set_display_name (DATASET *dset, int i,
 			      const char *s)
 {
+    if (dset->varinfo == NULL) {
+	return;
+    }
     if (i > 0 && i < dset->v) {
 	char *targ = dset->varinfo[i]->display_name;
 
-	if (strlen(s) >= MAXDISP) {
-	    gchar *tmp = g_strdup(s);
-
-	    strcpy(targ, gretl_utf8_truncate(tmp, MAXDISP-1));
-	    g_free(tmp);
+	if (s == NULL || *s == '\0') {
+	    *targ = '\0';
 	} else {
-	    strcpy(targ, s);
+	    if (strlen(s) >= MAXDISP) {
+		gchar *tmp = g_strdup(s);
+
+		strcpy(targ, gretl_utf8_truncate(tmp, MAXDISP-1));
+		g_free(tmp);
+	    } else {
+		strcpy(targ, s);
+	    }
 	}
     }
 }
