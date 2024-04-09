@@ -138,6 +138,7 @@ typedef enum {
     GP_TERM_PDF,
     GP_TERM_FIG,
     GP_TERM_TEX,
+    GP_TERM_TKZ,
     GP_TERM_EMF,
     GP_TERM_SVG,
     GP_TERM_HTM,

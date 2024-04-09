@@ -1529,13 +1529,17 @@ static char *tex_term_line (char *term_line,
 			    PlotType ptype,
 			    GptFlags flags)
 {
-    if (gnuplot_has_tikz()) {
-	strcpy(term_line, "set term tikz");
-    } else {
-	/* what about using pict2e? */
-	strcpy(term_line, "set term cairolatex pdf");
-    }
+    strcpy(term_line, "set term pict2e");
+    append_gp_encoding(term_line);
 
+    return term_line;
+}
+
+static char *tikz_term_line (char *term_line,
+			     PlotType ptype,
+			     GptFlags flags)
+{
+    strcpy(term_line, "set term tikz");
     append_gp_encoding(term_line);
 
     return term_line;
@@ -1711,6 +1715,8 @@ const char *gretl_gnuplot_term_line (TermType ttype,
 	append_gp_encoding(term_line);
     } else if (ttype == GP_TERM_TEX) {
 	tex_term_line(term_line, ptype, flags);
+    } else if (ttype == GP_TERM_TKZ) {
+	tikz_term_line(term_line, ptype, flags);
     } else if (ttype == GP_TERM_VAR) {
 	var_term_line(term_line, ptype, flags);
     }
@@ -1894,6 +1900,8 @@ static void print_term_string (int ttype, PlotType ptype,
 	strcpy(term_line, "set term canvas noenhanced\nset encoding utf8");
     } else if (ttype == GP_TERM_TEX) {
 	tex_term_line(term_line, ptype, flags);
+    } else if (ttype == GP_TERM_TKZ) {
+	tikz_term_line(term_line, ptype, flags);
     }
 
     if (*term_line != '\0') {
@@ -1912,7 +1920,7 @@ static int this_term_type;
 /* recorder for filename given via --output=foo */
 static char gnuplot_outname[FILENAME_MAX];
 
-static int set_term_type_from_fname (const char *fname)
+static int set_term_type_from_fname (const char *fname, int *err)
 {
     if (has_suffix(fname, ".eps")) {
 	this_term_type = GP_TERM_EPS;
@@ -1933,6 +1941,14 @@ static int set_term_type_from_fname (const char *fname)
 	this_term_type = GP_TERM_HTM;
     } else if (has_suffix(fname, ".tex")) {
 	this_term_type = GP_TERM_TEX;
+    } else if (has_suffix(fname, ".tikz")) {
+	if (gnuplot_has_tikz()) {
+	    this_term_type = GP_TERM_TKZ;
+	} else {
+	    gretl_errmsg_set("gnuplot does not support lua/tikz");
+	    this_term_type = GP_TERM_NONE;
+	    *err = 1;
+	}
     } else if (!strcmp(fname, "gnuplot")) {
 	this_term_type = GP_TERM_VAR;
     }
@@ -1997,8 +2013,10 @@ static FILE *gp_set_up_batch (char *fname,
 	fp = gretl_mktemp(fname, "w");
     } else if (outspec != NULL) {
 	/* user gave --output=<filename> */
-	fmt = set_term_type_from_fname(outspec);
-	if (fmt) {
+	fmt = set_term_type_from_fname(outspec, err);
+	if (*err) {
+	    return NULL;
+	} else if (fmt) {
 	    /* input needs processing */
 	    strcpy(gnuplot_outname, outspec);
 	    gretl_maybe_prepend_dir(gnuplot_outname);
