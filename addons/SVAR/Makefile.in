@@ -76,11 +76,7 @@ install-doc: doc/$(PKG).pdf
 	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
 
 installdirs:
-	# a few things have been renamed from 1.98 to 2.0, so
-	# for good measure zap the examples directory first
-	# and rebuild structure from scratch
 	rm -rf $(DESTDIR)$(GFNDIR)/$(PKG)/examples/*
-
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples/Traditional

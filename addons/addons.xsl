@@ -33,10 +33,8 @@
   <h2><xsl:value-of select="@name"/>: <xsl:value-of select="description"/></h2>
   
   <p>Written by <xsl:value-of select="author"/><br/>
-  Current version
-  <xsl:value-of select="version"/>, dated
-  <xsl:value-of select="date"/><br/>	      
-  Minimum gretl version required: <xsl:value-of select="@minver"/><br/>
+  For gretl <xsl:value-of select="version"/><br/>
+  Last revised <xsl:value-of select="date"/><br/>
   JEL code(s): <xsl:value-of select="tags"/><br/>
   Documentation: 
   <a href="{concat('https://sourceforge.net/projects/gretl/files/addons/doc/', @name, '.pdf')}"><xsl:value-of select="@name"/>.pdf</a>  
