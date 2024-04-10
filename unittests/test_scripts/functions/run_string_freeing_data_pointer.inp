@@ -1,0 +1,20 @@
+/*
+Bug in before 2024b.
+Allin's explanation: "The thing is that s1 was the original char * value
+attached to the uservar s, the target for replacement. Since s1 was
+just two bytes (space plus NUL) and the replacement was three (é plus
+NUL) s1 couldn't just be reused, it had to be replaced. And in doing
+so we do want to free the unused s1. However, what was overlooked here
+is that the function used to effect the replacement,
+user_var_replace_value(), already takes care of freeing the original
+data pointer on the uservar in question. So basically the solution was
+just, delete line 12320."
+*/
+
+
+string s = " "
+s[1] = "é"   # crash happens here
+
+
+print "Succesfully finished tests."
+quit
