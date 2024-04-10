@@ -382,8 +382,12 @@ static void check_depends (call_info *cinfo, int i,
 	int val = -1;
 	int op = 0;
 
-	/* see if we can split @depstr in three */
-	if (sscanf(depstr, "%31[^=<>!]%2[=<>!]%d", ctrl, opstr, &val) == 3) {
+	/* check the 'depends' string for validity */
+	if (gretl_namechar_spn(depname) == strlen(depname)) {
+	    /* the simple case: should be the ID of a toggle button */
+	    val = 1;
+	} else if (sscanf(depstr, "%31[^=<>!]%2[=<>!]%d", ctrl, opstr, &val) == 3) {
+	    /* the general case: <name><op><value> */
 	    if (val < 0) {
 		fprintf(stderr, "ui-maker depends: invalid value %d\n", val);
 		return;
@@ -391,9 +395,13 @@ static void check_depends (call_info *cinfo, int i,
 		fprintf(stderr, "ui-maker depends: invalid operator '%s'\n", opstr);
 		return;
 	    }
-	    /* OK, we got <name><op><value> */
 	    depname = ctrl;
+	} else {
+	    /* can't be right */
+	    fprintf(stderr, "ui-maker depends: invalid depends '%s'\n", depstr);
+	    return;
 	}
+
 	/* try to find the controller widget */
 	dep = get_selector_for_param(cinfo, depname, i);
 	if (dep == NULL) {
@@ -404,7 +412,7 @@ static void check_depends (call_info *cinfo, int i,
 	if (GTK_IS_TOGGLE_BUTTON(dep)) {
 	    gboolean a = button_is_active(dep);
 
-	    if (op != OP_EQ) {
+	    if (op != 0 && op != OP_EQ) {
 		fprintf(stderr, "ui-maker depends: invalid op for toggle '%s'\n", opstr);
 		return;
 	    } else if (val == 0) {
@@ -753,19 +761,24 @@ static GList *add_series_names (GList *list)
 
 static int allow_singleton_list (gretl_bundle *ui)
 {
+    int ret = 1; /* allow by default */
+
     if (ui != NULL) {
 	if (gretl_bundle_has_key(ui, "singleton")) {
 	    /* backward compatibility */
-	    return gretl_bundle_get_bool(ui, "singleton", 1);
+	    ret = gretl_bundle_get_bool(ui, "singleton", 1);
+	    if (ret == 0) {
+		gretl_bundle_set_int(ui, "no_singleton", 1);
+	    }
 	} else {
 	    /* revised version, 2024-03-21 */
 	    int ns = gretl_bundle_get_bool(ui, "no_singleton", 0);
 
-	    return ns == 0;
+	    ret = ns == 0;
 	}
-    } else {
-	return 1;
     }
+
+    return ret;
 }
 
 static GList *get_selection_list (int type, gretl_bundle *ui)
@@ -1101,7 +1114,7 @@ static int do_make_list (selector *sr)
     return err;
 }
 
-gchar **get_listdef_exclude (gpointer p)
+gchar **get_listdef_exclude (gpointer p, int *listmin)
 {
     gchar **S = NULL;
 
@@ -1121,6 +1134,9 @@ gchar **get_listdef_exclude (gpointer p)
 	if (cinfo != NULL && ui != NULL) {
 	    s = gretl_bundle_get_string(ui, "exclude", NULL);
 	    no_const = gretl_bundle_get_bool(ui, "no_const", 0);
+	    if (gretl_bundle_get_bool(ui, "no_singleton", 0)) {
+		*listmin = 2;
+	    }
 	}
 	if (s != NULL) {
 	    ref = get_selector_for_param(cinfo, s, -1);

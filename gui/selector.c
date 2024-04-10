@@ -63,7 +63,8 @@ enum {
 enum {
     SR_BLOCKING     = 1 << 0,
     SR_STATE_PUSHED = 1 << 1,
-    SR_LAGS_HIDDEN  = 1 << 2
+    SR_LAGS_HIDDEN  = 1 << 2,
+    SR_NO_SINGLE    = 1 << 3
 };
 
 #define blocking(s)     (s->flags & SR_BLOCKING)
@@ -7289,11 +7290,36 @@ static void lag_selector_button (selector *sr)
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
 }
 
+static int count_selected (GtkWidget *w)
+{
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+    int ns = 0;
+
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(w));
+
+    if (gtk_tree_model_get_iter_first(model, &iter)) {
+	do {
+	    ns++;
+	} while (gtk_tree_model_iter_next(model, &iter));
+    }
+
+    return ns;
+}
+
 static void selector_doit (GtkWidget *w, selector *sr)
 {
     if (!FNPKG_CODE(sr->ci)) {
         /* we don't need this when gathering function names */
         compose_cmdlist(sr);
+    }
+
+    if (sr->ci == DEFINE_LIST && (sr->flags & SR_NO_SINGLE)) {
+	/* respect a requirement coming from fncall.c */
+	if (count_selected(sr->rvars1) < 2) {
+	    warnbox(_("At least two series are needed"));
+	    return;
+	}
     }
 
     if (sr->error == 0) {
@@ -8294,7 +8320,12 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
 
     /* check for any specific exclusions */
     if (ci == DEFINE_LIST && data != NULL) {
-	exclude = get_listdef_exclude(data);
+	int listmin = 1;
+
+	exclude = get_listdef_exclude(data, &listmin);
+	if (listmin > 1) {
+	    sr->flags |= SR_NO_SINGLE;
+	}
     }
 
     /* add selectable series */
