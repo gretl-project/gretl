@@ -1529,7 +1529,11 @@ static char *tex_term_line (char *term_line,
 			    PlotType ptype,
 			    GptFlags flags)
 {
-    strcpy(term_line, "set term pict2e");
+    if (gpver_number < 5.4) {
+	strcpy(term_line, "set term cairolatex");
+    } else {
+	strcpy(term_line, "set term pict2e");
+    }
     append_gp_encoding(term_line);
 
     return term_line;
