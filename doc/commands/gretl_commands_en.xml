@@ -14611,14 +14611,22 @@
 	</li>
 	<li>
 	  <para>
-	    <lit>hc_version</lit>: 0 (the default), 1, 2, 3 or 3a. Sets the
-	    variant used when calculating Heteroskedasticity Consistent
-	    standard errors with cross-sectional data.  The first four options
-	    correspond to the HC0, HC1, HC2 and HC3 discussed by
-	    Davidson and MacKinnon in <book>Econometric Theory and
-	      Methods</book>, chapter 5.  HC0 produces what are usually called
-	    <quote>White's standard errors</quote>.  Variant 3a is
-	    the MacKinnon&ndash;White <quote>jackknife</quote> procedure.
+	    <lit>hc_version</lit>: 0, 1, 2, 3 or 3a. Sets the variant
+	    used when calculating Heteroskedasticity Consistent
+	    standard errors with cross-sectional data.  The first four
+	    options correspond to the HC0, HC1, HC2 and HC3 discussed
+	    by Davidson and MacKinnon in <book>Econometric Theory and
+	    Methods</book>, chapter 5.  HC0 produces what are usually
+	    called <quote>White's standard errors</quote>.  Variant 3a
+	    is the MacKinnon&ndash;White <quote>jackknife</quote>
+	    procedure. The default setting is normally 1, but this can
+	    be changed in the GUI client, by selecting the
+	    <quote>Tools/Preferences</quote> menu, under the
+	    <quote>HCCME</quote> tab. Note that this action modifies
+	    the current setting as well as the default one
+	    <emphasis>permanently</emphasis>, whereas the <lit>set
+	    hc_version</lit> command only affects the current setting
+	    and is not stored when the program is closed.
 	  </para>
 	</li>
 	<li>
