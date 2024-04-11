@@ -1055,6 +1055,7 @@ static NODE *aux_list_node (parser *p)
 #define array_pointer_node(p) get_aux_node(p,ARRAY,0,0)
 #define aux_parent_node(p) get_aux_node(p,EMPTY,0,0)
 #define aux_any_node(p) get_aux_node(p,0,0,0)
+#define aux_empty_node(p) get_aux_node(p,EMPTY,0,0)
 
 /* Start of functions that probably should not be needed in
    their present full form, but testing is required before
@@ -5728,7 +5729,8 @@ static int *array_subspec_list (NODE *l, NODE *r, parser *p)
     return list;
 }
 
-static NODE *subobject_node (NODE *l, NODE *r, parser *p)
+static NODE *subobject_node (NODE *l, NODE *r, int ptype,
+			     parser *p)
 {
     NODE *ret = NULL;
 
@@ -5736,7 +5738,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
         if (r == NULL || r->t != MSPEC) {
             p->err = e_types(r);
         } else if (l->t == MAT) {
-            return submatrix_node(l, r, p);
+            ret = submatrix_node(l, r, p);
         } else if (l->t == ARRAY) {
             int *vlist = array_subspec_list(l, r, p);
 
@@ -5818,7 +5820,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
                 }
             }
         } else if (l->t == NUM) {
-            /* allow "indexing into" a scalar, but only only for a
+            /* allow "indexing into" a scalar, but only for a
                single index with value 1
             */
             int i = get_single_element(r->v.mspec, p);
@@ -5834,6 +5836,11 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
         } else {
             p->err = e_types(l);
         }
+	if (p->err == E_BOUNDS && undef_arg_ok(ptype)) {
+	    gretl_error_clear();
+	    p->err = 0;
+	    ret = aux_empty_node(p);
+	}
     } else {
         ret = aux_any_node(p);
     }
@@ -17542,7 +17549,7 @@ static NODE *eval (NODE *t, parser *p)
 
     if (!p->err && t->L != NULL && !ldone) {
         t->L->parent = t;
-        if (undef_arg_ok(t->t) || t->t == F_EXISTS) {
+        if (undef_arg_ok(t->t)) {
             p->flags |= P_OBJQRY;
             l = eval(t->L, p);
             p->flags ^= P_OBJQRY;
@@ -18113,7 +18120,9 @@ static NODE *eval (NODE *t, parser *p)
         } else if (l->t == U_ADDR) {
             ret = process_OSL_address(t, l, r, p);
         } else {
-            ret = subobject_node(l, r, p);
+	    int pt = t->parent != NULL ? t->parent->t : 0;
+
+            ret = subobject_node(l, r, pt, p);
         }
         break;
     case SLRAW:
@@ -18898,10 +18907,10 @@ static NODE *eval (NODE *t, parser *p)
 	ret = generic_typeof_node(l, t, p);
         break;
     case F_EXISTS:
-	if (l->t == STR && !is_aux_node(l)) {
+	if (l->t == STR) {
 	    ret = object_status(l, t, p);
 	} else {
-	    ret = generic_typeof_node(l, t, p);
+	    node_type_error(t->t, 1, STR, l, p);
 	}
 	break;
     case F_NELEM:

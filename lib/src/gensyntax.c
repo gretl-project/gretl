@@ -480,7 +480,7 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 	parser_getc(p);
     }
 
-    if (!varargs_func(sym)) {
+    if (!varargs_func(sym) && sym != F_EXISTS) {
 	/* Check for a nested function call (2013-08-25) or
 	   bundle/array member (2015-09-25). Further fixes
 	   applied July 2018.
