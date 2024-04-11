@@ -1,0 +1,16 @@
+set verbose off
+clear
+set assert stop
+
+print "Start checking nonexistent."
+
+scalar t = typeof(poo)
+assert(t == 0)
+
+string s = typename(poo)
+assert(s == "null")
+
+t = iscomplex(poo)
+assert(!ok(t))
+
+print "Successfully finished tests."

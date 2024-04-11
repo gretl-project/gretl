@@ -1,0 +1,44 @@
+set verbose off
+clear
+set assert stop
+
+print "Start checking exists."
+
+matrix m
+scalar x
+string s
+
+# simple types
+t = exists(m)
+assert(t == 3)
+t = exists(x)
+assert(t == 1)
+t = exists(s)
+assert(t == 4)
+
+# expressions
+t = exists(m*3)
+assert(t == 0)
+t = exists(x/2)
+assert(t == 0)
+t = exists(s+"fig")
+assert(t == 0)
+
+# bundle and members
+bundle b =_(m=I(2))
+t = exists(b)
+assert(t == 5)
+t = exists(b.m)
+assert(t == 0)
+t = exists(b.x)
+assert(t == 0)
+
+# arrays 
+matrices M = array(3)
+t = exists(M)
+assert(t == 6)
+M[1] = m
+t = exists(M[1])
+assert(t == 0)
+
+print "Successfully finished tests."

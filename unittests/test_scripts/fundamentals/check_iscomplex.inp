@@ -1,0 +1,35 @@
+set verbose off
+clear
+set assert stop
+
+print "Start checking iscomplex()."
+
+matrix m = zeros(2,2)
+scalar s = iscomplex(m)
+assert(s == 0)
+
+matrix z1 = complex(1,0)
+scalar s = iscomplex(z1)
+assert(s == 1)
+
+matrix z2 = complex(1,1)
+s = iscomplex(z2)
+assert(s == 2)
+
+matrix z2 = complex(1,1)
+s = iscomplex(z2)
+assert(s == 2)
+
+s = iscomplex(z1*2)
+assert(s == 1)
+
+s = iscomplex(z2*2)
+assert(s == 2)
+
+s = iscomplex("foo")
+assert(!ok(s))
+
+s = iscomplex(foo)
+assert(!ok(s))
+
+print "Successfully finished tests."
