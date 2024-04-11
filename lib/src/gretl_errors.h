@@ -66,15 +66,16 @@ typedef enum {
     E_JACOBIAN,    /* 44 */
     E_TOOFEW,      /* 45 */
     E_FNEST,       /* 46 */
-    E_FUNCERR,     /* 47 : error set by function writer */
-    E_STOP,        /* 48 : user aborted execution */
-    E_BADCATCH,    /* 49 : "catch" used where it's not valid */
-    E_CMPLX,       /* 50 : complex arguments/operands not supported */
-    E_MIXED,       /* 51 : mixed complex/real operands not supported */
-    E_DEPENDS,     /* 52 : gfn dependencies not met */
-    E_DB_DUP,      /* 53 : duplicate vars found when saving to database */
-    E_OK,          /* 54 : not really an error */
-    E_MAX          /* 55 */
+    E_BOUNDS,      /* 47 */
+    E_FUNCERR,     /* 48 : error set by function writer */
+    E_STOP,        /* 49 : user aborted execution */
+    E_BADCATCH,    /* 50 : "catch" used where it's not valid */
+    E_CMPLX,       /* 51 : complex arguments/operands not supported */
+    E_MIXED,       /* 52 : mixed complex/real operands not supported */
+    E_DEPENDS,     /* 53 : gfn dependencies not met */
+    E_DB_DUP,      /* 54 : duplicate vars found when saving to database */
+    E_OK,          /* 55 : not really an error */
+    E_MAX          /* 56 */
 } GretlError; 
 
 enum gretl_warning_codes {
