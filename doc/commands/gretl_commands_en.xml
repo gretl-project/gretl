@@ -11836,6 +11836,10 @@
 	  <flag>--verbose</flag>
 	  <effect>see below</effect>
         </option>
+        <option>
+	  <flag>--staging</flag>
+	  <effect>see below</effect>
+        </option>
       </options>
      <examples>
         <example>pkg install armax</example>
@@ -11928,6 +11932,17 @@
       <para>
         Note that <lit>install</lit> is the only action supported
         operation for such files.
+      </para>
+      <subhead>Staging</subhead>
+      <para>
+	The <opt>staging</opt> option is a convenience item for
+	developers and is available only in conjunction with the
+	<lit>install</lit> action as applied to a function
+	package. Its effect is that the package in question is
+	downloaded from the <lit>staging</lit> area at sourceforge
+	rather than the public area. Packages in staging are not yet
+	approved for general use, so ignore this option unless you
+	know what you're doing.
       </para>
     </description>
 
