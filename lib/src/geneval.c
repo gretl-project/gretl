@@ -7770,39 +7770,22 @@ static NODE *mxtab_func (NODE *l, NODE *r, parser *p)
 
 static NODE *object_status (NODE *n, NODE *func, parser *p)
 {
-    NODE *ret = NULL;
+    NODE *ret = aux_scalar_node(p);
     int f = func->t;
-
-    if (f == F_TYPENAME) {
-	ret = aux_string_node(p);
-    } else {
-	ret = aux_scalar_node(p);
-    }
 
     if (ret != NULL && starting(p)) {
         const char *s = n->v.str;
 
         ret->v.xval = NADBL;
 
-        if (f == F_ISCMPLX) {
-            gretl_matrix *m = get_matrix_by_name(s);
-
-            if (m != NULL) {
-                ret->v.xval = matrix_is_complex(m);
-            }
-        } else if (f == F_EXISTS || f == F_TYPEOF || f == F_TYPENAME) {
+        if (f == F_EXISTS) {
             GretlType type = user_var_get_type_by_name(s);
 
             if (type == 0 && gretl_is_series(s, p->dset)) {
                 type = GRETL_TYPE_SERIES;
             }
-	    if (f == F_TYPENAME) {
-		if (type == GRETL_TYPE_ARRAY) {
-		    type = user_var_get_specific_type(s);
-		}
-		ret->v.str = gretl_strdup(gretl_type_get_name(type));
-	    } else if (alias_reversed(func)) {
-                /* handle the "isnull" alias for exists() */
+	    if (alias_reversed(func)) {
+                /* handle the "isnull" reversed alias for exists() */
                 ret->v.xval = (type == 0);
             } else {
                 ret->v.xval = gretl_type_get_order(type);
@@ -7902,10 +7885,17 @@ static NODE *generic_typeof_node (NODE *n, NODE *func, parser *p)
 		t = gretl_array_get_type(n->v.a);
 	    }
 	    ret->v.str = gretl_strdup(gretl_type_get_name(t));
+	} else if (func->t == F_ISCMPLX) {
+	    if (t == GRETL_TYPE_MATRIX) {
+		ret->v.xval = matrix_is_complex(n->v.m);
+	    } else {
+		ret->v.xval = NADBL;
+	    }
 	} else if (alias_reversed(func)) {
             /* handle the "isnull" alias for exists() */
             ret->v.xval = (t == 0);
         } else {
+	    /* func->t == F_TYPEOF */
             ret->v.xval = gretl_type_get_order(t);
         }
     }
@@ -17552,7 +17542,7 @@ static NODE *eval (NODE *t, parser *p)
 
     if (!p->err && t->L != NULL && !ldone) {
         t->L->parent = t;
-        if (t->t == F_EXISTS || t->t == F_TYPEOF || t->t == F_TYPENAME) {
+        if (undef_arg_ok(t->t) || t->t == F_EXISTS) {
             p->flags |= P_OBJQRY;
             l = eval(t->L, p);
             p->flags ^= P_OBJQRY;
@@ -17627,7 +17617,11 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case UNDEF:
-        ret = maybe_rescue_undef_node(t, p);
+	if (undef_arg_ok(t->parent->t)) {
+	    ret = t;
+	} else {
+	    ret = maybe_rescue_undef_node(t, p);
+	}
         break;
     case U_ADDR:
         if (!uvar_node(t->L) && t->L->t != OSL) {
@@ -18883,7 +18877,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_ISDISCR:
     case F_NLINES:
     case F_REMOVE:
-    case F_ISCMPLX:
         if (l->t == STR) {
             ret = object_status(l, t, p);
         } else {
@@ -18899,16 +18892,18 @@ static NODE *eval (NODE *t, parser *p)
             node_type_error(t->t, 1, STR, l, p);
         }
         break;
-    case F_EXISTS:
     case F_TYPEOF:
     case F_TYPENAME:
-        if (l->t == STR && !is_aux_node(l)) {
-            /* @l is direct child: straight look-up */
-            ret = object_status(l, t, p);
-        } else {
-            ret = generic_typeof_node(l, t, p);
-        }
+    case F_ISCMPLX:
+	ret = generic_typeof_node(l, t, p);
         break;
+    case F_EXISTS:
+	if (l->t == STR && !is_aux_node(l)) {
+	    ret = object_status(l, t, p);
+	} else {
+	    ret = generic_typeof_node(l, t, p);
+	}
+	break;
     case F_NELEM:
         ret = n_elements_node(l, p);
         break;

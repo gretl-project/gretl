@@ -1803,10 +1803,6 @@ static void look_up_word (const char *s, parser *p)
 	    } else if (p->flags & (P_AND | P_OR)) {
 		p->sym = UNDEF;
 		p->idstr = gretl_strdup(s);
-	    } else if (!strcmp(s, "pi")) {
-		/* deprecated */
-		p->idnum = CONST_PI;
-		p->sym = CON;
 	    } else if (gretl_get_object_by_name(s)) {
 		p->sym = UOBJ;
 		p->idstr = gretl_strdup(s);

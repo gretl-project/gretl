@@ -1425,6 +1425,9 @@ static NODE *powterm (parser *p, NODE *l)
 	    t->L = get_final_string_arg(p, t, sym, 1);
 	}
     } else if (func1_symb(sym)) {
+	if (undef_arg_ok(sym)) {
+	    set_parsing_query(1);
+	}
 	t = new_node(sym);
 	if (t != NULL) {
 	    if (sym < FP_MAX) {
@@ -1432,6 +1435,9 @@ static NODE *powterm (parser *p, NODE *l)
 	    }
 	    lex(p);
 	    get_args(t, p, sym, 1, opt, &next);
+	}
+	if (undef_arg_ok(sym)) {
+	    set_parsing_query(0);
 	}
     } else if (sym == LAG || sym == OBS) {
 	if (sym == LAG) {

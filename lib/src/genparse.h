@@ -577,9 +577,7 @@ enum {
 /* function with single string argument */
 #define string_arg_func(s) (s == F_ISDISCR || s == F_OBSNUM || \
 			    s == F_BACKTICK || s == F_VARNUM || \
-			    s == F_EXISTS || s == F_REMOVE || \
-			    s == F_ISCMPLX || s == F_TYPEOF || \
-			    s == F_TYPENAME)
+			    s == F_EXISTS || s == F_REMOVE)
 
 /* function with multiple args, string for first arg */
 #define str0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \
@@ -618,6 +616,9 @@ enum {
 /* functions where the middle argument is actually a return
    location */
 #define m_return(s) (s == F_SVD || s == F_EIGEN || s == F_QR)
+
+#define undef_arg_ok(s) (s == F_TYPEOF || s == F_TYPENAME || \
+			 s == F_ISCMPLX)
 
 #define reusable(p) (p->flags & (P_COMPILE | P_EXEC))
 
