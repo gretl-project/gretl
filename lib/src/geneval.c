@@ -1147,6 +1147,18 @@ static int gen_type_is_arrayable (int gen_t)
     return gretl_is_arrayable_type(gretl_type_from_gen_type(gen_t));
 }
 
+static int type_func_in_parentage (NODE *n)
+{
+    while (n != NULL) {
+	if (undef_arg_ok(n->t)) {
+	    return 1;
+	}
+	n = n->parent;
+    }
+
+    return 0;
+}
+
 static NODE *maybe_rescue_undef_node (NODE *n, parser *p)
 {
     int v = current_series_index(p->dset, n->vname);
@@ -1168,6 +1180,24 @@ static NODE *maybe_rescue_undef_node (NODE *n, parser *p)
         }
     } else {
         undefined_symbol_error(n->vname, p);
+    }
+
+    return n;
+}
+
+static NODE *revive_undef_node (NODE *n, parser *p)
+{
+    p->err = 0;
+    gretl_error_clear();
+
+    if (n == NULL) {
+	n = aux_empty_node(p);
+    } else {
+	if (n->vname != NULL) {
+	    free(n->vname);
+	    n->vname = NULL;
+	}
+	n->t = EMPTY;
     }
 
     return n;
@@ -5311,10 +5341,15 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 
 static NODE *mspec_node (NODE *l, NODE *r, parser *p)
 {
-    NODE *ret = aux_mspec_node(p);
+    NODE *ret = NULL;
 
-    if (ret != NULL && starting(p)) {
-        build_mspec(ret, l, r, p);
+    if (l->t == UNDEF || (r != NULL && r->t == UNDEF)) {
+	p->err = E_DATA;
+    } else {
+	ret = aux_mspec_node(p);
+	if (ret != NULL && starting(p)) {
+	    build_mspec(ret, l, r, p);
+	}
     }
 
     return ret;
@@ -5729,8 +5764,7 @@ static int *array_subspec_list (NODE *l, NODE *r, parser *p)
     return list;
 }
 
-static NODE *subobject_node (NODE *l, NODE *r, int ptype,
-			     parser *p)
+static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
@@ -5836,11 +5870,6 @@ static NODE *subobject_node (NODE *l, NODE *r, int ptype,
         } else {
             p->err = e_types(l);
         }
-	if (p->err == E_BOUNDS && undef_arg_ok(ptype)) {
-	    gretl_error_clear();
-	    p->err = 0;
-	    ret = aux_empty_node(p);
-	}
     } else {
         ret = aux_any_node(p);
     }
@@ -17549,10 +17578,14 @@ static NODE *eval (NODE *t, parser *p)
 
     if (!p->err && t->L != NULL && !ldone) {
         t->L->parent = t;
-        if (undef_arg_ok(t->t)) {
+        if (type_func_in_parentage(t)) {
             p->flags |= P_OBJQRY;
             l = eval(t->L, p);
             p->flags ^= P_OBJQRY;
+	    if (p->err) {
+		l = revive_undef_node(l, p);
+		t->L->aux = l;
+	    }
         } else {
             l = eval(t->L, p);
         }
@@ -17624,7 +17657,7 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case UNDEF:
-	if (undef_arg_ok(t->parent->t)) {
+	if (type_func_in_parentage(t)) {
 	    ret = t;
 	} else {
 	    ret = maybe_rescue_undef_node(t, p);
@@ -18120,9 +18153,7 @@ static NODE *eval (NODE *t, parser *p)
         } else if (l->t == U_ADDR) {
             ret = process_OSL_address(t, l, r, p);
         } else {
-	    int pt = t->parent != NULL ? t->parent->t : 0;
-
-            ret = subobject_node(l, r, pt, p);
+            ret = subobject_node(l, r, p);
         }
         break;
     case SLRAW:
