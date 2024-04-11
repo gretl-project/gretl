@@ -1,0 +1,29 @@
+set verbose off
+clear
+set assert stop
+
+print "Check usage of object_status() callers."
+
+string s = "poo"
+n = strlen("poo")
+assert(n == 3)
+n = strlen(s)
+assert(n == 3)
+bundle b = _(s="poo")
+n = strlen(b.s)
+assert(n == 3)
+
+string s = sprintf("one\ntwo\nthree\n")
+n = nlines(s)
+assert(n == 3)
+
+open denmark -q
+n = obsnum(1980:1)
+assert(n == 25)
+n = obsnum("1980:1")
+assert(n == 25)
+string s = "1980:1"
+n = obsnum(s)
+assert(n == 25)
+
+print "Successfully finished tests."
