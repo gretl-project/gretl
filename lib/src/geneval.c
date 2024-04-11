@@ -18886,6 +18886,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_ISDISCR:
     case F_NLINES:
     case F_REMOVE:
+    case F_EXISTS:
         if (l->t == STR) {
             ret = object_status(l, t, p);
         } else {
@@ -18906,13 +18907,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_ISCMPLX:
 	ret = generic_typeof_node(l, t, p);
         break;
-    case F_EXISTS:
-	if (l->t == STR) {
-	    ret = object_status(l, t, p);
-	} else {
-	    node_type_error(t->t, 1, STR, l, p);
-	}
-	break;
     case F_NELEM:
         ret = n_elements_node(l, p);
         break;
