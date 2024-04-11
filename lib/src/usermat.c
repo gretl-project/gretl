@@ -159,7 +159,7 @@ static int handle_vector_exclusion (const gretl_vector *s,
 	k = (int) fabs(s->val[i]);
 	if (k > n) {
 	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), k);
-	    return E_DATA;
+	    return E_BOUNDS;
 	}
     }
 
@@ -214,7 +214,7 @@ static int bad_sel_vector (const gretl_vector *v, int n)
 	k = exclude ? -v->val[i] : v->val[i];
 	if (k < 1 || k > n) {
 	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), k);
-	    return E_INVARG;
+	    return E_BOUNDS;
 	}
     }
 
@@ -228,7 +228,7 @@ static int bad_sel_range (int *range, int n)
     for (i=0; i<2; i++) {
 	k = range[i];
 	if (k != MSEL_MAX && (k < 1 || k > n)) {
-	    err = E_INVARG;
+	    err = E_BOUNDS;
 	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), k);
 	    break;
 	}
@@ -242,7 +242,7 @@ static int bad_sel_single (int *pk, int n)
     int err = 0;
 
     if (*pk != MSEL_MAX && (*pk < 1 || *pk > n)) {
-	err = E_INVARG;
+	err = E_BOUNDS;
 	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), *pk);
     }
 
@@ -291,7 +291,7 @@ int *mspec_make_list (int type, union msel *sel, int n,
 	    if (sr0 > n) {
 		gretl_errmsg_sprintf(_("Index value %d is out of bounds"),
 				     sr0);
-		*err = E_DATA;
+		*err = E_BOUNDS;
 	    } else {
 		ns = n - 1;
 		single_exclude = sr0;
@@ -303,7 +303,7 @@ int *mspec_make_list (int type, union msel *sel, int n,
 		if (ns <= 0) {
 		    gretl_errmsg_sprintf(_("Range %d to %d is non-positive!"),
 					 sel->range[0], sel->range[1]);
-		    *err = E_DATA;
+		    *err = E_INVARG;
 		}
 	    }
 	}
@@ -341,7 +341,7 @@ int *mspec_make_list (int type, union msel *sel, int n,
 	    if (slice[i] < 1 || slice[i] > n) {
 		gretl_errmsg_sprintf(_("Index value %d is out of bounds"),
 				     slice[i]);
-		*err = 1;
+		*err = E_BOUNDS;
 	    }
 	}
     }
@@ -1103,7 +1103,7 @@ double matrix_get_element (const gretl_matrix *M, int i, int *err)
 	*err = E_DATA;
     } else if (i < 0 || i >= M->rows * M->cols) {
 	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i+1);
-	*err = E_INVARG;
+	*err = E_BOUNDS;
     } else {
 	x = M->val[i];
     }
