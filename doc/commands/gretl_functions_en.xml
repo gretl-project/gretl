@@ -4902,10 +4902,18 @@
       </fnargs>
       <description>
 	<para>
-	  Returns non-zero if <argname>name</argname> is the
-	  identifier for a currently defined object, be it a scalar, a
-	  series, a matrix, list, string, bundle or array; otherwise
-	  returns 0. See also <fncref targ="typeof"/>.
+	  Returns non-zero if <argname>name</argname>, which must be
+	  valid as a gretl identifier, names a currently defined
+	  object, be it a scalar, a series, a matrix, list, string,
+	  bundle or array; otherwise returns 0.
+	</para>
+	<para>
+	  Intended usage is for the case where a user-defined function
+	  has an optional parameter with a <lit>null</lit>
+	  default. The function writer can use <lit>exists()</lit>,
+	  passing the parameter name, to check whether or not the
+	  caller supplied an argument. For related checks, see
+	  <fncref targ="typeof"/> and <fncref targ="inbundle"/>.
 	</para>
       </description>
     </function>
@@ -14001,56 +14009,67 @@ d =  8.0000000
 
     <function name="typename" section="data-utils" output="string">
       <fnargs>
-	<fnarg type="string">name</fnarg>
+	<fnarg type="string">expr</fnarg>
       </fnargs>
       <description>
 	<para>
-          If <argname>name</argname> is the identifier of a currently
-          defined object, returns the type of the object in string
-          form: <lit>scalar</lit>, <lit>series</lit>,
-          <lit>matrix</lit>, <lit>string</lit>, <lit>bundle</lit>, or
-          one of the array types: <lit>matrices</lit>,
-          <lit>bundles</lit>, <lit>strings</lit>, <lit>lists</lit> or
-          <lit>arrays</lit>.  If the argument does not identify an
-          object the string <lit>null</lit> is returned.
+	  A convenience function which combines <fncref
+	  targ="typeof"/> and <fncref targ="typestr"/>, with a little
+	  value added. Basically, the following two statements are
+	  equivalent
         </para>
-        <subhead>Compatibility note</subhead>
-        <para>
-          This function is intended as a superior replacement for the
-          old functions <fncref targ="typeof"/> and <fncref
-          targ="typestr"/>, but the latter will remain available for
-          the time being.
-        </para>
+	<code>
+	  eval typestr(typeof(x))
+	  eval typename(x)
+	</code>
+	<para>
+	  except that if <argname>expr</argname> names an array,
+	  <lit>typename</lit> returns the specific type of the
+	  array, as in
+	</para>
+	<code>
+	  strings S = defarray("foo", "bar", "baz")
+	  eval typestr(typeof(S))  # gives "array"
+	  eval typename(S)         # gives "strings"
+	</code>
       </description>
     </function>
 
     <function name="typeof" section="data-utils" output="int">
       <fnargs>
-	<fnarg type="string">name</fnarg>
+	<fnarg type="string">expr</fnarg>
       </fnargs>
       <description>
 	<para>
-          A legacy function: see <fncref targ="typename"/> for a
-          superior alternative.  Returns a numeric type-code if
-          <argname>name</argname> is the identifier of a currently
-          defined object: 1 for scalar, 2 for series, 3 for matrix, 4
-          for string, 5 for bundle, 6 for array and 7 for
-          list. Otherwise returns 0.  The function <fncref
-          targ="typestr"/> may be used to get the string corresponding
-          to the return value.
+          Returns a numeric code indicating the type of
+          <argname>expr</argname>, if it names a currently defined
+          variable, specifies a sub-object such as a bundle member or
+          array element, or is a valid expression that could stand as
+          the right-hand side of an assignment statement.  The codes
+          are 1 for scalar, 2 for series, 3 for matrix, 4 for string,
+          5 for bundle, 6 for array and 7 for list. A return value of
+          0 indicates that <argname>expr</argname> names no existing
+          object, or more generally that an assignment with
+          <argname>expr</argname> on the right-hand side would fail.
 	</para>
 	<para>
-	  This function can also be used to retrieve the type of
-	  a bundle member or array element. For example:
+	  A few examples follow:
 	</para>
 	<code>
-	  matrices M = array(1)
-	  eval typestr(typeof(M))
-	  eval typestr(typeof(M[1]))
+	  strings S = defarray("foo", "bar")
+	  eval typeof(S)            # gives 6 (array)
+	  eval typeof(S[1])         # gives 4 (string)
+	  eval typeof(S[7])         # gives 0 (out of bounds)
+	  eval typeof(S[x])         # gives 0 (invalid index)
+	  eval typeof(1+1)          # gives 1 (scalar)
+	  eval typeof(sqrt("foo"))  # gives 0 (invalid)
 	</code>
 	<para>
-	  The first <lit>eval</lit> result is <quote>array</quote> and
-	  the second is <quote>matrix</quote>.
+	  The function <fncref targ="typestr"/> may be used to get the
+	  string corresponding to the return value from
+	  <lit>typeof</lit>, though if you just want the string result
+	  <fncref targ="typename"/> may be a more convenient
+	  alternative.
 	</para>
       </description>
     </function>
@@ -14061,16 +14080,17 @@ d =  8.0000000
       </fnargs>
       <description>
 	<para>
-          A legacy function: see <fncref targ="typename"/> for a
-          superior alternative.  Returns the name of the gretl
-          data-type corresponding to <argname>typecode</argname>. This
-          may be used in conjunction with the functions <fncref
-          targ="typeof"/> and <fncref targ="inbundle"/>.  The value
-          returned is one of <quote>scalar</quote>,
-          <quote>series</quote>, <quote>matrix</quote>,
-          <quote>string</quote>, <quote>bundle</quote>,
-          <quote>array</quote>, <quote>list</quote>, or
-          <quote>null</quote>.
+	  Given a gretl type code (for example, obtained via <fncref
+	  targ="typeof"/> or <fncref targ="inbundle"/>), returns a
+	  string giving the name of the type. The mapping from codes
+	  to strings is: 1 = <quote>scalar</quote>, 2 =
+	  <quote>series</quote>, 3 = <quote>matrix</quote>, 4 =
+	  <quote>string</quote>, 5 = <quote>bundle</quote>, 6 =
+	  <quote>array</quote>, 7 = <quote>list</quote>, and 0 =
+	  <quote>null</quote>.
+	</para>
+	<para>
+	  See also <fncref targ="typename"/> for an alternative.
 	</para>
       </description>
     </function>
