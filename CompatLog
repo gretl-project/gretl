@@ -1,3 +1,12 @@
+version 2024b, in progress
+
+Recommended usage of the exists() function is now restricted to
+testing of "top-level" identifiers. For the sake of backward
+compatibility arguments of the form <bundle>.<key> are still
+handled but the preferred way of making such tests is by use
+of inbundle(), or if you're unsure about the existence of the
+bundle in question, typeof().
+
 2024-04-05 version 2024a
 
 ASCII graphics have been removed from a few commands that used

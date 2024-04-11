@@ -1,9 +1,16 @@
 version 2024b, in progress
-- instrings() function: add optinal boolean argument to get
+- instrings() function: add optional boolean argument to get
   a simple boolean return value
+- typeof() function: functionality is extended to cover hansl
+  expressions in general
+- exists() function: recommended usage is restricted to top-
+  level identifiers, but backward compatibility is preserved
+  for the present
+- GUI, function packages: further extensions to the "ui-maker"
+  functionality
 - Fix bug: crash on replacing a single character in a string
-  variable, when the replacment character takes up more bytes
-  than the original
+  variable, when the replacement UTF-8 character takes up more
+  bytes than the original
 
 2024-04-05 version 2024a
 - gretl "addons": integrate with releases on all platforms

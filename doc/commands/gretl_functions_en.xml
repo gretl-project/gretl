@@ -4902,7 +4902,7 @@
       </fnargs>
       <description>
 	<para>
-	  Returns non-zero if <argname>name</argname>, which must be
+	  Returns non-zero if <argname>name</argname>, which should be
 	  valid as a gretl identifier, names a currently defined
 	  object, be it a scalar, a series, a matrix, list, string,
 	  bundle or array; otherwise returns 0.
