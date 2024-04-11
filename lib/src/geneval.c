@@ -7804,6 +7804,29 @@ static NODE *mxtab_func (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+/* remedial code to support <bundle>.<key> as passed to exists() */
+
+static GretlType remedy_old_exists (const char *s)
+{
+    GretlType ret = GRETL_TYPE_NONE;
+    char **S;
+    int ns = 0;
+
+    S = gretl_string_split(s, &ns, ".");
+
+    if (ns == 2) {
+	gretl_bundle *b = get_bundle_by_name(S[0]);
+
+	if (b != NULL) {
+	    gretl_bundle_get_data(b, S[1], &ret, NULL, NULL);
+	}
+    }
+
+    strings_array_free(S, ns);
+
+    return ret;
+}
+
 static NODE *object_status (NODE *n, NODE *func, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -7819,13 +7842,10 @@ static NODE *object_status (NODE *n, NODE *func, parser *p)
 
             if (type == 0 && gretl_is_series(s, p->dset)) {
                 type = GRETL_TYPE_SERIES;
-            }
-	    if (alias_reversed(func)) {
-                /* handle the "isnull" reversed alias for exists() */
-                ret->v.xval = (type == 0);
-            } else {
-                ret->v.xval = gretl_type_get_order(type);
-            }
+            } else if (type == 0 && strchr(s, '.')) {
+		type = remedy_old_exists(s);
+	    }
+	    ret->v.xval = gretl_type_get_order(type);
         } else if (f == F_ISDISCR) {
             int v = current_series_index(p->dset, s);
 
