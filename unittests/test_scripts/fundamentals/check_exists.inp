@@ -29,7 +29,7 @@ bundle b =_(m=I(2))
 t = exists(b)
 assert(t == 5)
 t = exists(b.m)
-assert(t == 0)
+assert(t == 3)
 t = exists(b.x)
 assert(t == 0)
 
