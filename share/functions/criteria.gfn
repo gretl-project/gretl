@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gretl-functions>
-<gretl-function-package name="criteria" minver="2018a">
+<gretl-function-package name="criteria" no-data-ok="true" minver="2018a">
 <author email="cottrell@wfu.edu">Allin Cottrell</author>
 <version>1.5</version>
 <date>2024-04-12</date>
@@ -40,11 +40,11 @@ for the optional &quot;quiet&quot; argument to suppress printed output.
  <params count="4">
   <param name="ess" type="scalar"/>
   <param name="n" type="int"/>
-  <param name="k" type="int"/>
+  <param name="k" type="int" min="1"/>
   <param name="quiet" type="bool" default="0"/>
  </params>
-<code>if ess &lt;= 0 || k &lt; 1 || n &lt;= k
-  funcerr &quot;We require ess &gt; 0, k &gt; 0 and n &gt; k&quot;
+<code>if ess &lt;= 0 || n &lt;= k
+  funcerr &quot;We require ess &gt; 0 and n &gt; k&quot;
 endif
 
 matrix crit = zeros(1, 4)
