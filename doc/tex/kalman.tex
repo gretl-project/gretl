@@ -1424,7 +1424,7 @@ The GUI can be used for performing ML estimation of models of the kind
   \label{eq:GUIobs}
   \obsvec_t & = \obsymat \statevec_{t} + \obsdist_t \\
   \label{eq:GUIstate}
-  \statevec_{t} & = \statemat \statevec_{t-1} + \strR \steta_t
+  \statevec_{t+1} & = \statemat \statevec_t + \strR \steta_t
 \end{align}
 where $\obsvec_t$ is a vector of observables, $V(\obsdist_t)$ is a
 diagonal matrix---or possibly 0, in which case the last term of
@@ -1494,7 +1494,7 @@ coefficients and standard errors obtained via ML estimation.
 
 The model here is
 \[
-  y_t = \statevec_t + \obsdist_t \qquad \statevec_t = \statevec_{t-1} + \steta_t
+  y_t = \statevec_t + \obsdist_t \qquad \statevec_{t+1} = \statevec_t + \steta_t
 \]
 so that $\obsymat = \statemat = \strR = 1$.
 
