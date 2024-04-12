@@ -1,40 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gretl-functions>
-<gretl-function-package name="criteria" minver="1.9.4">
+<gretl-function-package name="criteria" minver="2018a">
 <author email="cottrell@wfu.edu">Allin Cottrell</author>
-<version>1.4</version>
-<date>2019-01-14</date>
+<version>1.5</version>
+<date>2024-04-12</date>
 <description>Calculate model selection criteria</description>
 <tags>C10</tags>
 <help>
-Computes the Akaike Information Criterion (AIC), Schwarz's Bayesian
+This simple package contains a single function with this signature:
+
+matrix criteria (scalar ess, int n, int k, bool quiet[0])
+
+It computes the Akaike Information Criterion (AIC), Schwarz's Bayesian
 Information Criterion (BIC), the Hannan-Quinn criterion (HQC) and the
 corrected AIC (AICc), given ess (error sum of squares), the number of
 observations (n) and the number of coefficients (k).
 
+Following estimation of a model in gretl the quantities wanted as
+arguments for criteria() can be accessed as $ess, $T and $ncoeff,
+respectively.
+
 The AIC is computed as in Akaike's original (1974) formulation, 
 namely AIC = -2L + 2k, where L denotes the maximized log-likelihood. 
 
-The BIC is computed as BIC = -2L + k log n.
+The BIC is computed as BIC = -2L + k log n
 
-The HQC is computed as HQC = -2L + 2k log log n.
+The HQC is computed as HQC = -2L + 2k log log n
 
 The AICc is AIC with a correction for small sample size, to remedy
 the tendency for AIC to overfit. It is computed as follows:
-AICc = AIC + (2*k(k+1)) / (n-k-1).
+
+AICc = AIC + (2*k(k+1)) / (n-k-1)
 
 A row vector containing the four criteria is available for assignment
-on return.
+on return. If you just want this vector you can give a non-zero value
+for the optional &quot;quiet&quot; argument to suppress printed output.
 </help>
 <gretl-function name="criteria" type="matrix">
- <params count="3">
+ <params count="4">
   <param name="ess" type="scalar"/>
-  <param name="n" type="scalar"/>
-  <param name="k" type="scalar"/>
+  <param name="n" type="int"/>
+  <param name="k" type="int"/>
+  <param name="quiet" type="bool" default="0"/>
  </params>
 <code>if ess &lt;= 0 || k &lt; 1 || n &lt;= k
   funcerr &quot;We require ess &gt; 0, k &gt; 0 and n &gt; k&quot;
 endif
+
 matrix crit = zeros(1, 4)
 scalar logn = log(n)
 scalar llm = n * log(ess)
@@ -43,8 +55,13 @@ crit[1] = llm + 2 * k
 crit[2] = llm + k * logn
 crit[3] = llm + 2 * k * log(logn)
 crit[4] = crit[1] + (2 * k * (k+1)) / (n-k-1)
-printf &quot;Using ess = %g, %d observations, %d coefficients\n&quot;, ess, n, k
-printf &quot;\nAIC  = %#g\nBIC  = %#g\nHQC  = %#g\nAICc = %#g\n\n&quot;, crit[1], crit[2], crit[3], crit[4]
+cnameset(crit, defarray(&quot;AIC&quot;, &quot;BIC&quot;, &quot;HQC&quot;, &quot;AICc&quot;))
+
+if !quiet
+  printf &quot;Using ess = %g, %d observations, %d coefficients\n&quot;, ess, n, k
+  printf &quot;\nAIC  = %#g\nBIC  = %#g\nHQC  = %#g\nAICc = %#g\n\n&quot;, crit[1], crit[2], crit[3], crit[4]
+endif
+
 return crit
 </code>
 </gretl-function>
@@ -58,7 +75,7 @@ open data4-10
 ols 1 0 2 3 4
 matrix cr = criteria($ess, $T, $ncoeff)
 
-# printing cr is somewhat redundant, but this is just for
+# printing the matrix is somewhat redundant, but this is just for
 # illustration
 print cr
 </sample-script>
