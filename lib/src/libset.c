@@ -569,7 +569,7 @@ static set_state default_state = {
     0,              /* .fdjac_qual */
     0,              /* .use_qr */
     0,              /* .max_verbose */
-    0,              /* .hc_version */
+    1,              /* .hc_version */
     0,              /* .panel_robust */
     KERNEL_BARTLETT,       /* .hac_kernel */
     AUTO_LAG_STOCK_WATSON, /* .auto_hac_lag */

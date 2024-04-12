@@ -14635,13 +14635,11 @@
 	    called <quote>White's standard errors</quote>.  Variant 3a
 	    is the MacKinnon&ndash;White <quote>jackknife</quote>
 	    procedure. The default setting is normally 1, but this can
-	    be changed in the GUI client, by selecting the
-	    <quote>Tools/Preferences</quote> menu, under the
-	    <quote>HCCME</quote> tab. Note that this action modifies
-	    the current setting as well as the default one
-	    <emphasis>permanently</emphasis>, whereas the <lit>set
-	    hc_version</lit> command only affects the current setting
-	    and is not stored when the program is closed.
+	    be changed in the GUI client, via the <quote>HCCME</quote>
+	    tab under <quote>/Tools/Preferences/General</quote>. Note
+	    that a setting made via the GUI persists across gretl
+	    sessions, as opposed to use of the <lit>set</lit> command
+	    which just affects the current session.
 	  </para>
 	</li>
 	<li>

@@ -211,20 +211,23 @@ The elaborated variants on HC$_0$ take this point on board as follows:
 The relative merits of these variants have been explored by means of
 both simulations and theoretical analysis.  Unfortunately there is not
 a clear consensus on which is ``best''.  Davidson and MacKinnon argue
-that the original HC$_0$ is likely to perform worse than the others;
-nonetheless, ``White's standard errors'' are reported more often than
-the more sophisticated variants and therefore, for reasons of
-comparability, HC$_0$ is the default HCCME in gretl.
+that the original HC$_0$ is likely to perform worse than the others
+and in gretl the default is HC$_1$. If you want comparability with
+other software that reports ``White's standard errors'' you can choose
+HC$_0$.
 
-If you wish to use HC$_1$, HC$_2$, HC$_3$, or HC$_{3a}$ you can arrange
-for this in either of two ways.  In script mode, you can do, for example,
+If you wish to use a version other than HC$_1$ you can arrange for
+this in either of two ways.  In script or console mode you can do,
+for example,
 %
 \begin{code}
 set hc_version 2
 \end{code}
 %
-In the GUI program you can go to the HCCME configuration dialog, as
-noted above, and choose any of these variants to be the default.
+and the version you specify will be applied in the current gretl
+session.  In the GUI program you can go to the HCCME configuration
+dialog, as noted above, and choose any of these variants to be the
+default: a choice made in this way persists across gretl sessions.
 
 
 \section{Time series data and HAC covariance matrices}
