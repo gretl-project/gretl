@@ -3803,13 +3803,6 @@ static int xml_to_gpi (xmlNodePtr np, gui_package_info *gpi,
 	gpi->flags |= GPI_SUBDIR;
     }
 
-    if (strstr(gpi->menupath, "TSModels/TSMulti") ||
-	strstr(gpi->menupath, "TSModels/CointMenu")) {
-	/* update for obsolete menu paths */
-	free(gpi->menupath);
-	gpi->menupath = gretl_strdup("/menubar/Model/TSMulti");
-    }
-
     if (gpi_modelwin(gpi)) {
 	/* package with a model-window attachment */
 	gretl_xml_get_prop_as_int(np, "model-requirement", &gpi->modelreq);
@@ -4396,7 +4389,6 @@ static gchar *pkg_get_attachment (const gchar *mpath,
 				  int *modelwin)
 {
     const gchar *src = mpath;
-    gchar *relpath = NULL;
 
 #if PKG_DEBUG
     fprintf(stderr, "pkg_get_attachment: mpath = '%s'\n", mpath);
@@ -4412,13 +4404,7 @@ static gchar *pkg_get_attachment (const gchar *mpath,
 	*modelwin = 1;
     }
 
-    if (!strcmp(src, "/Model/TSModels/TSMulti")) {
-	relpath = g_strdup("/Model/TSMulti");
-    } else {
-	relpath = g_strdup(src);
-    }
-
-    return relpath;
+    return g_strdup(src);
 }
 
 static int pkg_attach_query (const gchar *name,
