@@ -135,6 +135,7 @@ typedef enum {
     SV_LOGFILE,
     GRAPH_THEME,
     DISP_DIGITS,
+    TEX_PLOT_OPTS,
     SETVAR_MAX /* sentinel */
 } SetKey;
 
@@ -229,6 +230,8 @@ int set_csv_na_write_string (const char *s);
 
 const char *get_csv_na_read_string (void);
 int set_csv_na_read_string (const char *s);
+
+const char *get_tex_plot_opts (void);
 
 int execute_set (const char *setobj, const char *setarg,
 		 DATASET *dset, gretlopt opt, PRN *prn);

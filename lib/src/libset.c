@@ -240,7 +240,8 @@ setvar setvars[] = {
     { SV_WORKDIR,    "workdir",   CAT_SPECIAL },
     { SV_LOGFILE,    "logfile",   CAT_SPECIAL },
     { GRAPH_THEME,   "graph_theme", CAT_SPECIAL },
-    { DISP_DIGITS,   "display_digits", CAT_SPECIAL }
+    { DISP_DIGITS,   "display_digits", CAT_SPECIAL },
+    { TEX_PLOT_OPTS, "tex_plot_opts", CAT_SPECIAL }
 };
 
 #define libset_boolvar(k) (k < STATE_FLAG_MAX || k==R_FUNCTIONS || \
@@ -1239,6 +1240,33 @@ static int set_workdir (const char *s)
     return err;
 }
 
+static char *tex_plot_opts;
+
+static int set_tex_plot_opts (const char *arg)
+{
+    if (gretl_function_depth() > 0) {
+	/* FIXME? */
+	gretl_errmsg_sprintf("'%s': cannot be set inside a function",
+			     "tex_plot_opts");
+	return E_INVARG;
+    } else {
+	free(tex_plot_opts);
+	if (!strcmp(arg, "null") || !strcmp(arg, "none")) {
+	    tex_plot_opts = NULL;
+	} else {
+	    tex_plot_opts = gretl_strdup(arg);
+	    g_strstrip(tex_plot_opts);
+	}
+    }
+
+    return 0;
+}
+
+const char *get_tex_plot_opts (void)
+{
+    return tex_plot_opts;
+}
+
 static int set_logfile (const char *s)
 {
     int err = 0;
@@ -1428,6 +1456,8 @@ static int print_settings (PRN *prn, gretlopt opt)
 	pprintf(prn, " csv_read_na = %s\n", get_csv_na_read_string());
 	pprintf(prn, " display_digits = %d\n", get_gretl_digits());
 	pprintf(prn, " graph_theme = %s\n", get_plotstyle());
+	pprintf(prn, " tex_plot_opts = \"%s\"\n",
+		tex_plot_opts == NULL ? "null" : tex_plot_opts);
     } else {
 	const char *dl = arg_from_delim(data_delim);
 
@@ -1437,6 +1467,8 @@ static int print_settings (PRN *prn, gretlopt opt)
 	pprintf(prn, "set csv_write_na %s\n", get_csv_na_write_string());
 	pprintf(prn, "set csv_read_na %s\n", get_csv_na_read_string());
 	pprintf(prn, "set graph_theme %s\n", get_plotstyle());
+	pprintf(prn, "set tex_plot_opts \"%s\"\n",
+		tex_plot_opts == NULL ? "null" : tex_plot_opts);
     }
 
     print_vars_for_category(CAT_BEHAVE, prn, opt);
@@ -1544,6 +1576,9 @@ static int libset_query_settings (setvar *sv, PRN *prn)
     } else if (sv->key == GRAPH_THEME) {
 	pprintf(prn, "%s: keyword, currently \"%s\"\n", sv->name,
 		get_plotstyle());
+    } else if (sv->key == TEX_PLOT_OPTS) {
+	pprintf(prn, "%s: string, currently \"%s\"\n", sv->name,
+		tex_plot_opts == NULL ? "null" : tex_plot_opts);
     } else if (sv->key == VERBOSE) {
 	pprintf(prn, "%s: boolean (on/off), currently %s\n", sv->name,
 		(libset_get_bool(ECHO_ON) || libset_get_bool(MSGS_ON)) ?
@@ -1668,6 +1703,11 @@ int execute_set (const char *setobj, const char *setarg,
     int k, argc, err;
     unsigned int u;
 
+#if 0
+    fprintf(stderr, "execute_set: setobj = '%s', setarg='%s'\n",
+	    setobj, setarg);
+#endif
+
     check_for_state();
 
     if (opt != OPT_NONE) {
@@ -1720,6 +1760,8 @@ int execute_set (const char *setobj, const char *setarg,
 	    return set_display_digits(setarg);
 	} else if (sv->key == VERBOSE) {
 	    return set_verbosity(setarg);
+	} else if (sv->key == TEX_PLOT_OPTS) {
+	    return set_tex_plot_opts(setarg);
 	} else if (sv->key == OMP_MNK_MIN) {
 #if defined(_OPENMP)
 	    return set_omp_mnk_min(atoi(setarg));

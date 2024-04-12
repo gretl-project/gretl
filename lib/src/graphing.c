@@ -1525,6 +1525,16 @@ static char *eps_pdf_term_line (char *term_line,
     return term_line;
 }
 
+static void maybe_append_tex_opts (char *s)
+{
+    const char *opts = get_tex_plot_opts();
+
+    if (opts != NULL) {
+	strcat(s, " ");
+	strcat(s, opts);
+    }
+}
+
 static char *tex_term_line (char *term_line,
 			    PlotType ptype,
 			    GptFlags flags)
@@ -1534,6 +1544,7 @@ static char *tex_term_line (char *term_line,
     } else {
 	strcpy(term_line, "set term pict2e");
     }
+    maybe_append_tex_opts(term_line);
     append_gp_encoding(term_line);
 
     return term_line;
@@ -1544,6 +1555,7 @@ static char *tikz_term_line (char *term_line,
 			     GptFlags flags)
 {
     strcpy(term_line, "set term tikz");
+    maybe_append_tex_opts(term_line);
     append_gp_encoding(term_line);
 
     return term_line;
