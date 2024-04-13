@@ -250,6 +250,8 @@ static const char *typestr (int t)
         return "named series";
     case EMPTY:
         return "empty";
+    case UNDEF:
+	return "undefined";
     default:
         return "?";
     }
@@ -17414,6 +17416,9 @@ static void node_type_error (int ntype, int argnum, int goodt,
     if (ntype == 0) {
         p->err = E_TYPES;
         return;
+    } else if (bad != NULL && bad->t == UNDEF) {
+	p->err = E_UNKVAR;
+	return;
     }
 
     parser_ensure_error_buffer(p);
@@ -18197,9 +18202,9 @@ static NODE *eval (NODE *t, parser *p)
                 ret = test_bundle_key(l, r, p);
             }
         } else if (l->t == BUNDLE) {
-            node_type_error(t->t, 1, STR, r, p);
+            node_type_error(t->t, 2, STR, r, p);
         } else {
-            node_type_error(t->t, 0, BUNDLE, l, p);
+            node_type_error(t->t, 1, BUNDLE, l, p);
         }
         break;
     case F_GETKEYS:
