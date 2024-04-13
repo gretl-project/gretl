@@ -1240,13 +1240,23 @@ static int set_workdir (const char *s)
     return err;
 }
 
+/* Apparatus for handling tex_plot_opts: we allow setting of this
+   variable within a function, but only if it hasn't already been set
+   at a "higher" level of execution. If setting within a function
+   succeeds, we destroy the setting on exit so that it doesn't
+   propagate "upwards".
+*/
+
+#define TPO_UNSET 1024
 static char *tex_plot_opts;
+static int tpo_depth = TPO_UNSET;
 
 static int set_tex_plot_opts (const char *arg)
 {
-    if (gretl_function_depth() > 0) {
-	/* FIXME? */
-	gretl_errmsg_sprintf("'%s': cannot be set inside a function",
+    int fd = gretl_function_depth();
+
+    if (fd > tpo_depth) {
+	gretl_errmsg_sprintf("'%s': cannot be overwritten here",
 			     "tex_plot_opts");
 	return E_INVARG;
     } else {
@@ -1257,15 +1267,31 @@ static int set_tex_plot_opts (const char *arg)
 	    tex_plot_opts = gretl_strdup(arg);
 	    g_strstrip(tex_plot_opts);
 	}
+	tpo_depth = fd;
     }
 
     return 0;
 }
 
+/* if tex_plot_opts was set within a function, scrub it on exit */
+
+static void maybe_destroy_tpo (void)
+{
+    if (gretl_function_depth() == tpo_depth) {
+	free(tex_plot_opts);
+	tex_plot_opts = NULL;
+	tpo_depth = TPO_UNSET;
+    }
+}
+
+/* accessor, called from graphing.c */
+
 const char *get_tex_plot_opts (void)
 {
     return tex_plot_opts;
 }
+
+/* end tex_plot_opts apparatus */
 
 static int set_logfile (const char *s)
 {
@@ -2303,6 +2329,9 @@ int pop_program_state (void)
 	if (fdp0 != fdp) {
 	    libset_set_decpoint(fdp0);
 	}
+	if (tex_plot_opts != NULL) {
+	    maybe_destroy_tpo();
+	}
     }
 
 #if PPDEBUG
@@ -2349,6 +2378,10 @@ void libset_cleanup (void)
     state_idx = -1;
 
     libset_hash_cleanup();
+
+    free(tex_plot_opts);
+    tex_plot_opts = NULL;
+    tpo_depth = TPO_UNSET;
 
     free(looping);
     looping = NULL;
