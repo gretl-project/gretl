@@ -4912,8 +4912,17 @@
 	  has an optional parameter with a <lit>null</lit>
 	  default. The function writer can use <lit>exists()</lit>,
 	  passing the parameter name, to check whether or not the
-	  caller supplied an argument. For related checks, see
-	  <fncref targ="typeof"/> and <fncref targ="inbundle"/>.
+	  caller supplied an argument. But please note, lists are an
+	  exception in this respect: if a list parameter has a
+	  <lit>null</lit> default and the caller doesn't supply an
+	  argument, the function gets an empty list rather than no
+	  list; therefore <lit>exists</lit> will always return
+	  non-zero. To check for emptiness of a list argument, use
+	  <fncref targ="nelem"/>.
+	</para>
+	<para>
+	  For related checks, see <fncref targ="typeof"/> and <fncref
+	  targ="inbundle"/>.
 	</para>
       </description>
     </function>
