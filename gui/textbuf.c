@@ -1374,8 +1374,6 @@ static GtkTextTagTable *gretl_tags_new (int role)
 
     if (!help_role(role)) {
 	/* we shouldn't need the rest of these tags */
-	fprintf(stderr, "HERE stopping. role = %d (CMD_HELP = %d)\n",
-		role, CMD_HELP);
 	return table;
     }
 
