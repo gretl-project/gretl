@@ -640,7 +640,6 @@ void set_fixed_font (const char *fontname, int remember)
 	    pango_font_description_free(fixed_font);
 	}
 	fixed_font = pango_font_description_from_string(fontname);
-	revise_gretl_mono_tags();
 	if (remember) {
 	    strcpy(fixedfontname, fontname);
 	}

@@ -59,11 +59,12 @@ gint get_char_height (GtkWidget *widget);
 
 int get_screen_height (void);
 
-GtkTextBuffer *gretl_text_buf_new (void);
+void gretl_viewer_set_formatted_buffer (windata_t *vwin,
+					const char *buf,
+					int role);
 
-void gretl_viewer_set_formatted_buffer (windata_t *vwin, const char *buf);
-
-void gretl_viewer_insert_formatted_buffer (windata_t *vwin, const char *buf);
+void gretl_viewer_insert_formatted_buffer (windata_t *vwin,
+					   const char *buf);
 
 gchar *textview_get_text (GtkWidget *view);
 
@@ -103,8 +104,6 @@ int text_can_undo (windata_t *vwin);
 void text_larger (GtkWidget *w, gpointer data);
 
 void text_smaller (GtkWidget *w, gpointer data);
-
-void revise_gretl_mono_tags (void);
 
 void textview_set_text_colorized (GtkWidget *view, const char *buf);
 

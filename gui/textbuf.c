@@ -1247,10 +1247,35 @@ void update_script_editor_options (windata_t *vwin)
 #endif
 }
 
+/* Modify the tag table members that specify a monospaced
+   font, in response to the user's changing the choice of
+   such font. If we don't do this, the change will not take
+   effect until gretl is restarted.
+*/
+
+static void revise_mono_tags (GtkTextTagTable *TT,
+			      PangoFontDescription *pfd)
+{
+    const char *mono_tags[] = {
+	"literal", "optflag", "code", "mono"
+    };
+    GtkTextTag *tag;
+    int i;
+
+    for (i=0; i<G_N_ELEMENTS(mono_tags); i++) {
+	tag = gtk_text_tag_table_lookup(TT, mono_tags[i]);
+	if (tag != NULL) {
+	    g_object_set(tag, "font-desc", pfd, NULL);
+	}
+    }
+}
+
 static int text_change_size (windata_t *vwin, int delta)
 {
     static PangoFontDescription *hpf;
     static int fsize0;
+    GtkTextTagTable *TT;
+    GtkTextBuffer *tbuf;
     int fsize;
 
     if (hpf == NULL) {
@@ -1273,6 +1298,12 @@ static int text_change_size (windata_t *vwin, int delta)
     gtk_widget_modify_font(vwin->text, hpf);
     widget_set_int(vwin->text, "fsize", fsize);
 
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    TT = gtk_text_buffer_get_tag_table(tbuf);
+    if (TT != NULL) {
+	revise_mono_tags(TT, hpf);
+    }
+
     return fsize;
 }
 
@@ -1292,7 +1323,7 @@ void text_smaller (GtkWidget *w, gpointer data)
 # define helpfont "sans"
 #endif
 
-static GtkTextTagTable *gretl_tags_new (void)
+static GtkTextTagTable *gretl_tags_new (int role)
 {
     const char *code_bg;
     GtkTextTagTable *table;
@@ -1319,23 +1350,9 @@ static GtkTextTagTable *gretl_tags_new (void)
     g_object_set(tag, "foreground", "green", NULL);
     gtk_text_tag_table_add(table, tag);
 
-    tag = gtk_text_tag_new("title");
-    g_object_set(tag, "justification", GTK_JUSTIFY_CENTER,
-		 "pixels_above_lines", 15,
-		 "family", helpfont,
-		 "size", bigsize, NULL);
-    gtk_text_tag_table_add(table, tag);
-
     tag = gtk_text_tag_new("bold");
     g_object_set(tag, "family", helpfont,
 		 "weight", PANGO_WEIGHT_BOLD,
-		 NULL);
-    gtk_text_tag_table_add(table, tag);
-
-    tag = gtk_text_tag_new("grayhead");
-    g_object_set(tag, "family", helpfont,
-		 "foreground", "gray",
-		 "pixels_below_lines", 5,
 		 NULL);
     gtk_text_tag_table_add(table, tag);
 
@@ -1348,6 +1365,31 @@ static GtkTextTagTable *gretl_tags_new (void)
     tag = gtk_text_tag_new("replaceable");
     g_object_set(tag, "family", helpfont,
 		 "style", PANGO_STYLE_ITALIC,
+		 NULL);
+    gtk_text_tag_table_add(table, tag);
+
+    tag = gtk_text_tag_new("text");
+    g_object_set(tag, "family", helpfont, NULL);
+    gtk_text_tag_table_add(table, tag);
+
+    if (!help_role(role)) {
+	/* we shouldn't need the rest of these tags */
+	fprintf(stderr, "HERE stopping. role = %d (CMD_HELP = %d)\n",
+		role, CMD_HELP);
+	return table;
+    }
+
+    tag = gtk_text_tag_new("title");
+    g_object_set(tag, "justification", GTK_JUSTIFY_CENTER,
+		 "pixels_above_lines", 15,
+		 "family", helpfont,
+		 "size", bigsize, NULL);
+    gtk_text_tag_table_add(table, tag);
+
+    tag = gtk_text_tag_new("grayhead");
+    g_object_set(tag, "family", helpfont,
+		 "foreground", "gray",
+		 "pixels_below_lines", 5,
 		 NULL);
     gtk_text_tag_table_add(table, tag);
 
@@ -1384,10 +1426,6 @@ static GtkTextTagTable *gretl_tags_new (void)
 		 "foreground", "#396d60", NULL);
     gtk_text_tag_table_add(table, tag);
 
-    tag = gtk_text_tag_new("text");
-    g_object_set(tag, "family", helpfont, NULL);
-    gtk_text_tag_table_add(table, tag);
-
     tag = gtk_text_tag_new("indented");
     g_object_set(tag, "left_margin", 16, "indent", -12, NULL);
     gtk_text_tag_table_add(table, tag);
@@ -1405,43 +1443,24 @@ static GtkTextTagTable *gretl_tags_new (void)
     return table;
 }
 
-static GtkTextTagTable *gretl_tags = NULL;
+/* be conservative for now */
+#define no_tags(r) ((r >= VIEW_SERIES &&	\
+		     r <= VIEW_PKG_SAMPLE &&	\
+		     r != VIEW_PKG_INFO) ||	\
+		    r < NC)
 
-GtkTextBuffer *gretl_text_buf_new (void)
+static GtkTextBuffer *gretl_text_buf_new (int role)
 {
+    GtkTextTagTable *TT = NULL;
     GtkTextBuffer *tbuf;
 
-    if (gretl_tags == NULL) {
-	gretl_tags = gretl_tags_new();
+    if (!no_tags(role)) {
+	TT = gretl_tags_new(role);
     }
 
-    tbuf = gtk_text_buffer_new(gretl_tags);
+    tbuf = gtk_text_buffer_new(TT);
 
     return tbuf;
-}
-
-/* Modify the @gretl_tags members that specify a monospaced
-   font, in response to the user's changing the choice of
-   such font. If we don't do this, the change will not take
-   effect until gretl is restarted.
-*/
-
-void revise_gretl_mono_tags (void)
-{
-    if (gretl_tags != NULL) {
-	const char *mono_tags[] = {
-	    "literal", "optflag", "code", "mono"
-	};
-	GtkTextTag *tag;
-	int i;
-
-	for (i=0; i<G_N_ELEMENTS(mono_tags); i++) {
-	    tag = gtk_text_tag_table_lookup(gretl_tags, mono_tags[i]);
-	    if (tag != NULL) {
-		g_object_set(tag, "font-desc", fixed_font, NULL);
-	    }
-	}
-    }
 }
 
 static void
@@ -4659,7 +4678,7 @@ int set_help_topic_buffer (windata_t *hwin, int pos)
 
     push_backpage(hwin->text, hwin->active_var);
 
-    textb = gretl_text_buf_new();
+    textb = gretl_text_buf_new(hwin->role);
 
     if (pos == 0) {
 	/* no topic selected */
@@ -4729,13 +4748,15 @@ int set_help_topic_buffer (windata_t *hwin, int pos)
     return 1;
 }
 
-void gretl_viewer_set_formatted_buffer (windata_t *vwin, const char *buf)
+void gretl_viewer_set_formatted_buffer (windata_t *vwin,
+					const char *buf,
+					int role)
 {
     GtkTextBuffer *textb;
     GtkTextIter iter;
     gboolean links;
 
-    textb = gretl_text_buf_new();
+    textb = gretl_text_buf_new(vwin->role);
     gtk_text_buffer_get_iter_at_offset(textb, &iter, 0);
     links = insert_text_with_markup(textb, &iter, buf, FUNC_HELP);
 
@@ -4794,7 +4815,7 @@ static void set_max_text_width (windata_t *vwin,
 void create_text (windata_t *vwin, int hsize, int vsize,
 		  int nlines, gboolean editable)
 {
-    GtkTextBuffer *tbuf = gretl_text_buf_new();
+    GtkTextBuffer *tbuf = gretl_text_buf_new(vwin->role);
     GtkWidget *w = gtk_text_view_new_with_buffer(tbuf);
     int role = vwin->role;
 

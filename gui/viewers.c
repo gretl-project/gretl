@@ -1721,7 +1721,7 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 	text_table_setup(vwin->vbox, vwin->text);
     }
 
-    gretl_viewer_set_formatted_buffer(vwin, buf);
+    gretl_viewer_set_formatted_buffer(vwin, buf, role);
 
     if (role == VIEW_BIBITEM) {
 	add_text_closer(vwin);
