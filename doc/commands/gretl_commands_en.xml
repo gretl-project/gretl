@@ -11144,18 +11144,16 @@
       <para>
 	Gretl's functionality can be extended by the use of function
 	packages. These come in two sorts: official
-	<quote>Addons</quote> and contributed packages. Jointly, they
+	<quote>addons</quote> and contributed packages. Jointly, they
 	cover many estimators and utilities not available as built-in
 	commands or functions.
       </para>
       <para>
-	The official Addons are included in the gretl installers for
+	The official addons are included in the gretl installers for
 	Windows and Mac. On Linux if they are not preinstalled then
-	they are downloaded on demand (for example, if you select the
-	menu item /Model/Univariate time series/GARCH variants, gretl will
-	download the <lit>gig</lit> (GARCH in gretl) Addon. You can
-	check that your Addons are up to date via <mnu
-	targ="SFAddons">Check for addons</mnu> in the Help menu.
+	they are downloaded on demand. You can check that your addons
+	are up to date via <mnu targ="Addons">Check for addons</mnu>
+	in the Help menu.
       </para>
       <para>
 	You can browse the contributed packages installed on your
