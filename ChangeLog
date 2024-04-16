@@ -11,6 +11,8 @@ version 2024b, in progress
 - Fix bug: crash on replacing a single character in a string
   variable, when the replacement UTF-8 character takes up more
   bytes than the original
+- GUI: fix the "Packages" entry under Help
+- GUI: ensure that all fonts scale on zoom in/out in help
 
 2024-04-05 version 2024a
 - gretl "addons": integrate with releases on all platforms
