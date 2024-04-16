@@ -1250,27 +1250,39 @@ void update_script_editor_options (windata_t *vwin)
 #endif
 }
 
-/* Modify the tag table members that specify a monospaced
-   font, in response to the user's changing the choice of
-   such font. If we don't do this, the change will not take
-   effect until gretl is restarted.
+/* Modify the tag table members that specify a monospaced font, in
+   response to the user's changing the font size for a given window.
+   Otherwise such tagged elements of the text will not change size.
 */
+
+static const char *mono_tags[] = {
+    "literal", "optflag", "code", "mono"
+};
+
+static void revise_mono (GtkTextTag *tag, gpointer data)
+{
+    PangoFontDescription *pfd = data;
+    gchar *name = NULL;
+    int i;
+
+    g_object_get(tag, "name", &name, NULL);
+
+    for (i=0; i<5; i++) {
+	if (i < 4 && !strcmp(name, mono_tags[i])) {
+	    g_object_set(tag, "font-desc", pfd, NULL);
+	    break;
+	} else if (i == 4 && has_suffix(name, ".inp")) {
+	    g_object_set(tag, "font-desc", pfd, NULL);
+	}
+    }
+
+    g_free(name);
+}
 
 static void revise_mono_tags (GtkTextTagTable *TT,
 			      PangoFontDescription *pfd)
 {
-    const char *mono_tags[] = {
-	"literal", "optflag", "code", "mono"
-    };
-    GtkTextTag *tag;
-    int i;
-
-    for (i=0; i<G_N_ELEMENTS(mono_tags); i++) {
-	tag = gtk_text_tag_table_lookup(TT, mono_tags[i]);
-	if (tag != NULL) {
-	    g_object_set(tag, "font-desc", pfd, NULL);
-	}
-    }
+    gtk_text_tag_table_foreach(TT, revise_mono, pfd);
 }
 
 static int text_change_size (windata_t *vwin, int delta)
@@ -1476,6 +1488,9 @@ static GtkTextBuffer *gretl_text_buf_new (int role)
     }
 
     tbuf = gtk_text_buffer_new(TT);
+    if (TT != NULL) {
+	g_object_unref(TT);
+    }
 
     return tbuf;
 }
@@ -1917,6 +1932,10 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	}
     } else {
 	sprintf(tagname, "tag:p%d", page);
+    }
+
+    if (page == SCRIPT_PAGE) {
+	fprintf(stderr, "** add SCRIPT_PAGE tag, name '%s'\n", tagname);
     }
 
     tag = gtk_text_tag_table_lookup(tab, tagname);
