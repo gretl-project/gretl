@@ -2346,13 +2346,13 @@
 	</para>
 	<para context="tex">
 	  For integer arguments the result is
-	  $n!/k!(n-k)!$ but the function also accepts
+	  $n!/(k!(n-k)!)$ but the function also accepts
 	  noninteger arguments, and the formula above generalizes to
 	  $\frac{\Gamma(n+1)}{\Gamma(k+1) \Gamma(n-k+1)}$.
 	</para>
 	<para context="notex">
 	  For integer arguments the result is
-	  <math>n!/k!(n-k)!</math> but the function also accepts
+	  <math>n!/(k!(n-k)!)</math> but the function also accepts
 	  noninteger arguments, and the formula above
 	  generalizes to Γ(<math>n</math>+1)/(Γ(<math>k</math>+1)
 	  &times; Γ(<math>n-k</math>+1)).
