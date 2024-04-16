@@ -1250,39 +1250,25 @@ void update_script_editor_options (windata_t *vwin)
 #endif
 }
 
-/* Modify the tag table members that specify a monospaced font, in
+/* Modify the tag-table members that specify a monospaced font in
    response to the user's changing the font size for a given window.
-   Otherwise such tagged elements of the text will not change size.
+   Otherwise elements tagged in this way will not change size with
+   the rest of the text.
 */
 
-static const char *mono_tags[] = {
-    "literal", "optflag", "code", "mono"
-};
-
-static void revise_mono (GtkTextTag *tag, gpointer data)
+static void revise_mono_tag (GtkTextTag *tag, gpointer data)
 {
     PangoFontDescription *pfd = data;
-    gchar *name = NULL;
-    int i;
 
-    g_object_get(tag, "name", &name, NULL);
-
-    for (i=0; i<5; i++) {
-	if (i < 4 && !strcmp(name, mono_tags[i])) {
-	    g_object_set(tag, "font-desc", pfd, NULL);
-	    break;
-	} else if (i == 4 && has_suffix(name, ".inp")) {
-	    g_object_set(tag, "font-desc", pfd, NULL);
-	}
+    if (widget_get_int(tag, "mono")) {
+	g_object_set(tag, "font-desc", pfd, NULL);
     }
-
-    g_free(name);
 }
 
 static void revise_mono_tags (GtkTextTagTable *TT,
 			      PangoFontDescription *pfd)
 {
-    gtk_text_tag_table_foreach(TT, revise_mono, pfd);
+    gtk_text_tag_table_foreach(TT, revise_mono_tag, pfd);
 }
 
 static int text_change_size (windata_t *vwin, int delta)
@@ -1402,6 +1388,7 @@ static GtkTextTagTable *gretl_tags_new (int role)
     tag = gtk_text_tag_new("mono");
     g_object_set(tag, "font-desc", fixed_font, NULL);
     gtk_text_tag_table_add(table, tag);
+    widget_set_int(tag, "mono", 1);
 
     if (tags_level == 1) {
 	/* we shouldn't need the rest of these tags */
@@ -1411,6 +1398,7 @@ static GtkTextTagTable *gretl_tags_new (int role)
     tag = gtk_text_tag_new("literal");
     g_object_set(tag, "font-desc", fixed_font, NULL);
     gtk_text_tag_table_add(table, tag);
+    widget_set_int(tag, "mono", 1);
 
     tag = gtk_text_tag_new("indented");
     g_object_set(tag, "left_margin", 16, "indent", -12, NULL);
@@ -1420,6 +1408,7 @@ static GtkTextTagTable *gretl_tags_new (int role)
     g_object_set(tag, "font-desc", fixed_font,
 		 "paragraph-background", code_bg, NULL);
     gtk_text_tag_table_add(table, tag);
+    widget_set_int(tag, "mono", 1);
 
     if (tags_level == 2) {
 	/* that should be enough tags */
@@ -1468,6 +1457,7 @@ static GtkTextTagTable *gretl_tags_new (int role)
     g_object_set(tag, "font-desc", fixed_font,
 		 "foreground", "#396d60", NULL);
     gtk_text_tag_table_add(table, tag);
+    widget_set_int(tag, "mono", 1);
 
     return table;
 }
@@ -1934,10 +1924,6 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	sprintf(tagname, "tag:p%d", page);
     }
 
-    if (page == SCRIPT_PAGE) {
-	fprintf(stderr, "** add SCRIPT_PAGE tag, name '%s'\n", tagname);
-    }
-
     tag = gtk_text_tag_table_lookup(tab, tagname);
 
     if (tag == NULL) {
@@ -1950,6 +1936,7 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 		   page == PDF_PAGE) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", myblue,
 					     "font-desc", fixed_font, NULL);
+	    widget_set_int(tag, "mono", 1);
 	} else if (indent != NULL) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", myblue,
 					     "left_margin", 30, NULL);
