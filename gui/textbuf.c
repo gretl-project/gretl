@@ -87,6 +87,9 @@ enum {
 				r == EDIT_JULIA || \
 				r == EDIT_DYNARE || \
 				r == EDIT_LPSOLVE)
+#define medium_markup(r) (r == VIEW_PKG_INFO || \
+			  r == EDIT_PKG_HELP || \
+			  r == EDIT_PKG_GHLP)
 
 /* globals accessed in settings.c */
 int tabwidth = 4;
@@ -1330,6 +1333,18 @@ static GtkTextTagTable *gretl_tags_new (int role)
     GtkTextTag *tag;
     int bigsize;
     int smallsize;
+    int tags_level = 1;
+
+    if (help_role(role)) {
+	tags_level = 3;
+    } else if (medium_markup(role)) {
+	tags_level = 2;
+    }
+
+#if 0
+    fprintf(stderr, "gretl_tags_new: role %d, tags_level %d (cf. VIEW_FILE=%d)\n",
+	    role, tags_level, VIEW_FILE);
+#endif
 
     code_bg = dark_theme_active() ? "#216fb6" : "#e6f3ff";
 
@@ -1372,8 +1387,30 @@ static GtkTextTagTable *gretl_tags_new (int role)
     g_object_set(tag, "family", helpfont, NULL);
     gtk_text_tag_table_add(table, tag);
 
-    if (!help_role(role)) {
+    tag = gtk_text_tag_new("mono");
+    g_object_set(tag, "font-desc", fixed_font, NULL);
+    gtk_text_tag_table_add(table, tag);
+
+    if (tags_level == 1) {
 	/* we shouldn't need the rest of these tags */
+	return table;
+    }
+
+    tag = gtk_text_tag_new("literal");
+    g_object_set(tag, "font-desc", fixed_font, NULL);
+    gtk_text_tag_table_add(table, tag);
+
+    tag = gtk_text_tag_new("indented");
+    g_object_set(tag, "left_margin", 16, "indent", -12, NULL);
+    gtk_text_tag_table_add(table, tag);
+
+    tag = gtk_text_tag_new("code");
+    g_object_set(tag, "font-desc", fixed_font,
+		 "paragraph-background", code_bg, NULL);
+    gtk_text_tag_table_add(table, tag);
+
+    if (tags_level == 2) {
+	/* that should be enough tags */
 	return table;
     }
 
@@ -1415,27 +1452,9 @@ static GtkTextTagTable *gretl_tags_new (int role)
 		 NULL);
     gtk_text_tag_table_add(table, tag);
 
-    tag = gtk_text_tag_new("literal");
-    g_object_set(tag, "font-desc", fixed_font, NULL);
-    gtk_text_tag_table_add(table, tag);
-
     tag = gtk_text_tag_new("optflag");
     g_object_set(tag, "font-desc", fixed_font,
 		 "foreground", "#396d60", NULL);
-    gtk_text_tag_table_add(table, tag);
-
-    tag = gtk_text_tag_new("indented");
-    g_object_set(tag, "left_margin", 16, "indent", -12, NULL);
-    gtk_text_tag_table_add(table, tag);
-
-    tag = gtk_text_tag_new("code");
-    g_object_set(tag, "font-desc", fixed_font,
-		 "paragraph-background", code_bg,
-		 NULL);
-    gtk_text_tag_table_add(table, tag);
-
-    tag = gtk_text_tag_new("mono");
-    g_object_set(tag, "font-desc", fixed_font, NULL);
     gtk_text_tag_table_add(table, tag);
 
     return table;
