@@ -37,6 +37,7 @@
       <keyword>description</keyword>
       <keyword>min-version</keyword>
       <keyword>data-requirement</keyword>
+      <keyword>tags</keyword>
       <keyword>public</keyword>
       <keyword>no-print</keyword>
       <keyword>sample-script</keyword>
@@ -44,6 +45,7 @@
       <keyword>menu-attachment</keyword>
       <keyword>label</keyword>
       <keyword>gui-main</keyword>
+      <keyword>ui-maker</keyword>
       <keyword>gui-help</keyword>
       <keyword>menu-only</keyword>
       <keyword>model-requirement</keyword>
