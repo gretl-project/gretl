@@ -98,14 +98,7 @@ struct call_info_ {
 #define bundle_arg(t) (t == GRETL_TYPE_BUNDLE || t == GRETL_TYPE_BUNDLE_REF)
 #define array_arg(t)  (t == GRETL_TYPE_ARRAY  || t == GRETL_TYPE_ARRAY_REF)
 
-#define AUTOLIST "LTmp___"
-#define DUMLIST  "LRetTmp___"
 #define SELNAME "selected_series"
-
-#if 0 /* not yet */
-/* for constructing autonamed default list */
-static char lname[VNAMELEN];
-#endif
 
 static GtkWidget *open_fncall_dlg;
 static gboolean allow_full_data = TRUE;
@@ -543,10 +536,11 @@ static const char *nullarg_label (int null_OK)
     }
 }
 
-static int check_args (call_info *cinfo)
+static int check_args_etc (call_info *cinfo)
 {
     const char *argstr;
     int i, null_OK;
+    int err = 0;
 
     if (cinfo->args != NULL) {
 	for (i=0; i<cinfo->n_params; i++) {
@@ -565,7 +559,12 @@ static int check_args (call_info *cinfo)
 	}
     }
 
-    return 0;
+    if (cinfo->ret != NULL) {
+	err = gui_validate_varname(cinfo->ret, cinfo->rettype,
+				   cinfo->dlg);
+    }
+
+    return err;
 }
 
 static void fncall_dialog_destruction (GtkWidget *w, call_info *cinfo)
@@ -736,6 +735,8 @@ static GList *add_names_for_type (GList *list, GretlType type)
     }
 
     if (type == GRETL_TYPE_LIST && mdata_selection_count() > 1) {
+	/* add the (unnamed) 'list' of series selected in the
+	   main gretl window */
 	list = g_list_append(list, SELNAME);
     }
 
@@ -928,7 +929,7 @@ static int list_pos_from_name (GList *L, const char *s)
 
 static void update_combo_selectors (call_info *cinfo,
 				    GtkWidget *refsel,
-				    int ptype,
+				    GretlType ptype,
 				    const char *newname)
 {
     GList *sellist, *newlist;
@@ -1848,6 +1849,22 @@ static void set_allow_full_data (GtkWidget *b, gpointer p)
     allow_full_data_access(allow_full_data);
 }
 
+static const char *auto_listname (void)
+{
+    static char lname[8];
+    int i;
+
+    for (i=1; i<100; i++) {
+	sprintf(lname, "List%02d", i);
+	if (!gretl_is_user_var(lname) &&
+	    current_series_index(dataset, lname) < 0) {
+	    break;
+	}
+    }
+
+    return lname;
+}
+
 static int cinfo_show_return (call_info *c)
 {
     if (c->rettype == GRETL_TYPE_NONE ||
@@ -1928,7 +1945,7 @@ static int function_call_dialog (call_info *cinfo)
     for (i=0; i<cinfo->n_params; i++) {
 	const char *parname = fn_param_name(cinfo->func, i);
 	const char *desc = fn_param_descrip(cinfo->func, i);
-	int ptype = fn_param_type(cinfo->func, i);
+	GretlType ptype = fn_param_type(cinfo->func, i);
 	const char *prior_val = NULL;
 	gretl_bundle *ui = NULL;
 	int spinnable = 0;
@@ -2004,8 +2021,9 @@ static int function_call_dialog (call_info *cinfo)
 	    /* panic! */
 	    err = 1;
 	    break;
-	} else if (cinfo->sels != NULL) {
+	} else {
 	    g_object_set_data(G_OBJECT(sel), "parname", (char *) parname);
+	    widget_set_int(sel, "ptype", ptype);
 	    cinfo->sels[i] = sel;
 	    if (ui != NULL) {
 		check_depends(cinfo, i, ui);
@@ -2072,15 +2090,21 @@ static int function_call_dialog (call_info *cinfo)
     if (show_ret) {
 	/* selector/entry for return value */
 	GtkWidget *child;
-	GList *list = NULL;
+	int auto_sel = 0;
 
 	if (cinfo->n_params > 0) {
 	    /* separator row */
 	    add_table_header(tbl, "", tcols, ++row, 0);
 	}
 
-	add_table_header(tbl, _("Assign return value (optional):"),
-			 tcols, ++row, 5);
+	if (cinfo->rettype == GRETL_TYPE_LIST) {
+	    auto_sel = 1;
+	    add_table_header(tbl, _("Save return value (optional, clear box for no assigment):"),
+			     tcols, ++row, 5);
+	} else {
+	    add_table_header(tbl, _("Assign return value (optional):"),
+			     tcols, ++row, 5);
+	}
 
 	label = gtk_label_new(_("selection (or new variable)"));
 	add_table_cell(tbl, label, 1, 2, ++row);
@@ -2092,15 +2116,13 @@ static int function_call_dialog (call_info *cinfo)
 	sel = combo_box_text_new_with_entry();
 	g_signal_connect(G_OBJECT(sel), "changed",
 			 G_CALLBACK(update_return), cinfo);
-	list = get_selection_list(cinfo->rettype, NULL);
-	if (list != NULL) {
-	    set_combo_box_strings_from_list(sel, list);
-	    g_list_free(list);
+	if (auto_sel) {
+	    /* prepend automatic list name */
+	    combo_box_prepend_text(sel, auto_listname());
 	}
-
-	/* prepend blank option and select it */
+	/* prepend empty option */
 	combo_box_prepend_text(sel, "");
-	gtk_combo_box_set_active(GTK_COMBO_BOX(sel), 0);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(sel), auto_sel);
 	child = gtk_bin_get_child(GTK_BIN(sel));
 	gtk_entry_set_activates_default(GTK_ENTRY(child), TRUE);
 	add_table_cell(tbl, sel, 1, 2, row); /* same row as above */
@@ -2359,7 +2381,7 @@ static int pre_process_args (call_info *cinfo, int *autolist,
 	    g_free(cinfo->args[i]);
 	    cinfo->args[i] = g_strdup_printf("%d", val);
 	} else if (fn_param_type(cinfo->func, i) == GRETL_TYPE_LIST) {
-	    /* do we have an automatic list arg? */
+	    /* do we have an automatic (main window) list arg? */
 	    if (!strcmp(cinfo->args[i], SELNAME)) {
 		user_var_add(AUTOLIST, GRETL_TYPE_LIST,
 			     main_window_selection_as_list());
@@ -2395,13 +2417,11 @@ static void compose_fncall_line (char *line,
 				 call_info *cinfo,
 				 const char *funname,
 				 char **tmpname,
-				 int *grab_bundle,
-				 int *dummy_list)
+				 int *grab_bundle)
 {
     arglist *alist;
 
     alist = arglist_lookup(cinfo->pkgname, cinfo->func);
-
     if (alist == NULL) {
 	alist = arglist_new(cinfo->pkgname, cinfo->func,
 			    cinfo->n_params);
@@ -2409,14 +2429,7 @@ static void compose_fncall_line (char *line,
 
     *line = '\0';
 
-    if (cinfo->rettype == GRETL_TYPE_LIST && cinfo->ret == NULL) {
-	/* 2024-04-08: it's not clear that this action is really
-	   wanted: automatic assignment to a dummy list when the
-	   user has not specified any assignment.
-	*/
-	strcpy(line, "list " DUMLIST " = ");
-	*dummy_list = 1;
-    } else if (cinfo->ret != NULL) {
+    if (cinfo->ret != NULL) {
 	strcat(line, cinfo->ret);
 	strcat(line, " = ");
     } else if (cinfo->rettype == GRETL_TYPE_BUNDLE) {
@@ -2466,7 +2479,6 @@ static int real_GUI_function_call (call_info *cinfo,
     const char *title;
     gretl_bundle *bundle = NULL;
     int grab_bundle = 0;
-    int dummy_list = 0;
     int show = 1;
     int err = 0;
 
@@ -2474,11 +2486,11 @@ static int real_GUI_function_call (call_info *cinfo,
     title = cinfo->label != NULL ? cinfo->label : funname;
 
     compose_fncall_line(fnline, cinfo, funname,
-			&tmpname, &grab_bundle,
-			&dummy_list);
+			&tmpname, &grab_bundle);
 
-    /* FIXME: the following conditionality may be wrong? */
-    if (!grab_bundle && strncmp(funname, "GUI", 3)) {
+    /* note: the following conditionality is debatable */
+    if (!grab_bundle && strncmp(funname, "GUI", 3) &&
+	strstr(fnline, AUTOLIST) == NULL) {
 	pprintf(prn, "? %s\n", fnline);
     }
 
@@ -2541,16 +2553,6 @@ static int real_GUI_function_call (call_info *cinfo,
 	}
     }
 
-    if (dummy_list) {
-	/* handle use of dummy list to get series saved */
-	int *L = get_list_by_name(DUMLIST);
-
-	if (L != NULL && L[0] > 0) {
-	    set_dataset_is_changed(dataset, 1);
-	}
-	user_var_delete_by_name(DUMLIST, NULL);
-    }
-
     if (!err && strstr(fnline, AUTOLIST) == NULL) {
 	int ID = 0;
 
@@ -2566,10 +2568,6 @@ static int real_GUI_function_call (call_info *cinfo,
 	} else {
 	    lib_command_strcpy(fnline);
 	    record_command_verbatim();
-	    if (dummy_list) {
-		lib_command_strcpy("list " DUMLIST " delete");
-		record_command_verbatim();
-	    }
 	}
     }
 
@@ -2736,7 +2734,7 @@ static void pkg_select_interface (call_info *cinfo, int npub)
 
 static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
 {
-    if (check_args(cinfo)) {
+    if (check_args_etc(cinfo)) {
 	return;
     } else {
 	PRN *prn = NULL;

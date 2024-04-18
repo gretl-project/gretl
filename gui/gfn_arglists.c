@@ -120,7 +120,11 @@ int arglist_record_arg (arglist *a, int i, const char *val)
 	return E_DATA;
     } else {
 	free(a->argv[i]);
-	a->argv[i] = gretl_strdup(val);
+	if (strcmp(val, AUTOLIST)) {
+	    a->argv[i] = gretl_strdup(val);
+	} else {
+	    a->argv[i] = NULL;
+	}
 	return 0;
     }
 }

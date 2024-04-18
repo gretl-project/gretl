@@ -20,6 +20,9 @@
 #ifndef GFN_ARGLISTS_H
 #define GFN_ARGLISTS_H
 
+/* name for ad hoc list based on main-window selection */
+#define AUTOLIST "LTmp___"
+
 typedef struct arglist_ arglist;
 
 arglist *arglist_new (const char *pkgname, const void *func, int argc);
