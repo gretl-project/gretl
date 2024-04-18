@@ -426,3 +426,23 @@ gchar *name_conflict_message (const char *name, GretlType type)
 
     return s;
 }
+
+/* Used in gui/fncall.c, where (until it becomes time to initiate an
+   actual function call) we don't make a hard distinction between
+   plain and pointer types.
+*/
+
+int gretl_type_mismatch (GretlType t1, GretlType t2)
+{
+    if (t1 == t2) {
+	return 0;
+    } else {
+	t1 = gretl_type_get_plain_type(t1);
+	t2 = gretl_type_get_plain_type(t2);
+	if (t1 == t2) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}

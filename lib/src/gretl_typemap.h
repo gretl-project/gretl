@@ -53,6 +53,8 @@ int gretl_is_scalar_type (GretlType type);
 
 int gretl_is_series_type (GretlType type);
 
+int gretl_type_mismatch (GretlType t1, GretlType t2);
+
 void gretl_typemap_cleanup (void);
 
 gchar *name_conflict_message (const char *name, GretlType type);
