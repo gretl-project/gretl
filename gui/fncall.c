@@ -100,7 +100,12 @@ struct call_info_ {
 
 #define AUTOLIST "LTmp___"
 #define DUMLIST  "LRetTmp___"
-#define SELNAME "selected series"
+#define SELNAME "selected_series"
+
+#if 0 /* not yet */
+/* for constructing autonamed default list */
+static char lname[VNAMELEN];
+#endif
 
 static GtkWidget *open_fncall_dlg;
 static gboolean allow_full_data = TRUE;
@@ -308,10 +313,11 @@ static int cond_met (gint a, gint v, gint op)
 static void toggle_sensitivity (GtkWidget *cb, GtkWidget *w)
 {
     gint a = gtk_combo_box_get_active(GTK_COMBO_BOX(cb));
-    gint v = widget_get_int(w, "condval");
-    gint o = widget_get_int(w, "condop");
+    gint minv = widget_get_int(cb, "minv");
+    gint val  = widget_get_int(w, "condval");
+    gint cop  = widget_get_int(w, "condop");
 
-    gtk_widget_set_sensitive(w, cond_met(a, v, o));
+    gtk_widget_set_sensitive(w, cond_met(a + minv, val, cop));
 }
 
 static void condition_on_combo (GtkWidget *w, GtkWidget *cb)
@@ -397,7 +403,7 @@ static void check_depends (call_info *cinfo, int i,
 	    }
 	    depname = ctrl;
 	} else {
-	    /* can't be right */
+	    /* this can't be right */
 	    fprintf(stderr, "ui-maker depends: invalid depends '%s'\n", depstr);
 	    return;
 	}
@@ -426,11 +432,10 @@ static void check_depends (call_info *cinfo, int i,
 	    }
 	} else if (GTK_IS_COMBO_BOX(dep)) {
 	    gint a = gtk_combo_box_get_active(GTK_COMBO_BOX(dep));
+	    int minv = widget_get_int(dep, "minv");
 	    int jmax = widget_get_int(dep, "jmax");
 
-	    if (val >= 1 && val <= jmax) {
-		/* convert to 0-based */
-		val -= 1;
+	    if (val >= minv && val <= jmax) {
 		gtk_widget_set_sensitive(cinfo->sels[i], cond_met(a, val, op));
 		widget_set_int(cinfo->sels[i], "condval", val);
 		widget_set_int(cinfo->sels[i], "condop", op);
@@ -1379,7 +1384,9 @@ static int maybe_limit_enum (call_info *cinfo, int nvals)
 
 	if (gretl_model_get_int(pmod, "ordered") ||
 	    gretl_model_get_int(pmod, "multinom")) {
-	    /* exclude the final "per obs" option */
+	    /* exclude the final "per-obs" option: we'll do this
+	       only if the dep var is binary or logistic
+	    */
 	    return nvals - 1;
 	}
     }

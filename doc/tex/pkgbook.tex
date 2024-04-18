@@ -2724,18 +2724,27 @@ the widget for \texttt{baz} will be sensitive if and only if the box
 for parameter \texttt{foo} is \textit{not} checked.
 
 The extended case also allows for dependency on a ``combo box''
-holding a pull-down list of $n$ options. Such options can be regarded
-as numbered from 1 to $n$ (regardless of how they look in the
-GUI). Here are some examples of usage, where \texttt{bar} is the
-parameter on which conditionality rests:
+holding a pull-down list of options. Suppose we have a parameter named
+\texttt{bar}, represented thus in the signature of the function in
+question:
 \begin{code}
-# sensitive only if the second option for bar is selected
-ret.baz = _(depends = "bar=2")
-# sensitive if any option but the first is selected
-ret.baz = _(depends = "bar!=1")
-# sensitive if an option higher than 2 is selected
-ret.baz = _(depends = "bar>2")
+int bar[0:2:0] "some option" {"none", "basic", "advanced"}
 \end{code}
+Then we can make the sensitivity of parameter \texttt{baz} conditional
+on the state of \texttt{bar} in various ways:
+\begin{code}
+# sensitive if option 2 for bar is selected
+ret.baz = _(depends = "bar=2")
+# sensitive if any option but 0 is selected
+ret.baz = _(depends = "bar>0")
+# sensitive if an option lower than 2 is selected
+ret.baz = _(depends = "bar<2")
+\end{code}
+Note that the \textsl{value} to the right of the comparator refers to
+the numbering in the specification of \texttt{bar}. If the three
+option values were given as \texttt{[1:3:1]} instead of
+\texttt{[0:2:0]}, the \texttt{depends} condition would have to be
+modified accordingly.
 
 \subsection{Run-time limits and defaults}
 
