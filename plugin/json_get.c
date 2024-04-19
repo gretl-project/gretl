@@ -1601,44 +1601,40 @@ static void bundled_item_to_json (gpointer keyp,
 {
     const char *key = keyp;
     bundled_item *item = value;
-    GretlType type;
     JsonBuilder *jb = p;
-    int size;
-    void *data;
 
     json_builder_set_member_name(jb, key);
-    data = bundled_item_get_data(item, &type, &size);
 
 #if JB_DEBUG
     fprintf(stderr, "*** bundled item '%s', type %s ***\n",
 	    key, gretl_type_get_name(type));
 #endif
 
-    if (type == GRETL_TYPE_STRING) {
-	json_builder_add_string_value(jb, data);
-    } else if (type == GRETL_TYPE_DOUBLE) {
-	double x = *(double *) data;
+    if (item->type == GRETL_TYPE_STRING) {
+	json_builder_add_string_value(jb, item->data);
+    } else if (item->type == GRETL_TYPE_DOUBLE) {
+	double x = *(double *) item->data;
 
 	jb_add_double(jb, x);
-    } else if (type == GRETL_TYPE_INT) {
-	int k = *(int *) data;
+    } else if (item->type == GRETL_TYPE_INT) {
+	int k = *(int *) item->data;
 
 	json_builder_add_int_value(jb, k);
-    } else if (type == GRETL_TYPE_MATRIX ||
-	       type == GRETL_TYPE_SERIES) {
-	matrix_to_json(data, type, size, jb);
-    } else if (type == GRETL_TYPE_BUNDLE) {
-	GHashTable *ht = gretl_bundle_get_content(data);
+    } else if (item->type == GRETL_TYPE_MATRIX ||
+	       item->type == GRETL_TYPE_SERIES) {
+	matrix_to_json(item->data, item->type, item->size, jb);
+    } else if (item->type == GRETL_TYPE_BUNDLE) {
+	GHashTable *ht = gretl_bundle_get_content(item->data);
 
 	json_builder_begin_object(jb);
 	g_hash_table_foreach(ht, bundled_item_to_json, jb);
 	json_builder_end_object(jb);
-    } else if (type == GRETL_TYPE_ARRAY) {
+    } else if (item->type == GRETL_TYPE_ARRAY) {
 	json_builder_begin_array(jb);
-	gretl_array_to_json(data, jb);
+	gretl_array_to_json(item->data, jb);
 	json_builder_end_array(jb);
-    } else if (type == GRETL_TYPE_LIST) {
-	list_to_json(data, jb);
+    } else if (item->type == GRETL_TYPE_LIST) {
+	list_to_json(item->data, jb);
     }
 }
 

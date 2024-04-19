@@ -51,21 +51,6 @@ struct gretl_bundle_ {
     void *data;      /* holds pointer to struct for some uses */
 };
 
-/**
- * bundled_item:
- *
- * An item of data within a gretl_bundle. This is an
- * opaque type; use the relevant accessor functions.
- */
-
-struct bundled_item_ {
-    GretlType type;
-    int size;
-    gpointer data;
-    char *note;
-    char *name; /* pointer to associated key */
-};
-
 static gretl_bundle *sysinfo_bundle;
 
 static int real_bundle_set_data (gretl_bundle *b, const char *key,
@@ -247,7 +232,7 @@ static bundled_item *bundled_item_new (GretlType type, void *ptr,
 
     item->type = type;
     item->size = 0;
-    item->name = NULL;
+    item->key = NULL;
     item->note = NULL;
 
     if (!copy && !bundled_scalar(item->type)) {
@@ -361,14 +346,14 @@ static void bundle_item_destroy (gpointer data)
 
 #if BDEBUG
     fprintf(stderr, "bundled_item_destroy: %s\t'%s'\tdata %p\n",
-            gretl_type_get_name(item->type), item->name, (void *) item->data);
+            gretl_type_get_name(item->type), item->key, (void *) item->data);
     if (item->type == GRETL_TYPE_STRING) {
         fprintf(stderr, " string: '%s'\n", (char *) item->data);
     }
 #endif
 
     bundled_item_free_data(item->type, item->data);
-    g_free(item->name);
+    g_free(item->key);
     free(item->note);
     free(item);
 }
@@ -1294,54 +1279,6 @@ const char *gretl_bundle_get_creator (gretl_bundle *bundle)
 }
 
 /**
- * bundled_item_get_data:
- * @item: bundled item to access.
- * @type: location to receive data type.
- * @size: location to receive size of data (= series
- * length for GRETL_TYPE_SERIES, otherwise 0).
- *
- * Returns: the data pointer associated with @item, or
- * NULL on failure.
- */
-
-void *bundled_item_get_data (bundled_item *item, GretlType *type,
-                             int *size)
-{
-    *type = item->type;
-
-    if (size != NULL) {
-        *size = item->size;
-    }
-
-    return item->data;
-}
-
-/**
- * bundled_item_get_key:
- * @item: bundled item.
- *
- * Returns: the key associated with @item.
- */
-
-const char *bundled_item_get_key (bundled_item *item)
-{
-    return item->name;
-}
-
-/**
- * bundled_item_get_note:
- * @item: bundled item.
- *
- * Returns: the note string associated with @item, if any,
- * otherwise NULL.
- */
-
-const char *bundled_item_get_note (bundled_item *item)
-{
-    return item->note;
-}
-
-/**
  * gretl_bundle_get_content:
  * @bundle: bundle to access.
  *
@@ -1411,11 +1348,11 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
         item = bundled_item_new(type, ptr, size, copy, note, &err);
 
         if (!err) {
-            item->name = g_strdup(key);
+            item->key = g_strdup(key);
             if (replace) {
-                g_hash_table_replace(b->ht, item->name, item);
+                g_hash_table_replace(b->ht, item->key, item);
             } else {
-                g_hash_table_insert(b->ht, item->name, item);
+                g_hash_table_insert(b->ht, item->key, item);
             }
         }
     }
@@ -1690,9 +1627,9 @@ int gretl_bundle_rekey_data (gretl_bundle *bundle,
         err = E_DATA;
     } else {
         g_hash_table_steal(bundle->ht, oldkey);
-        g_free(item->name);
-        item->name = g_strdup(newkey);
-        g_hash_table_insert(bundle->ht, item->name, item);
+        g_free(item->key);
+        item->key = g_strdup(newkey);
+        g_hash_table_insert(bundle->ht, item->key, item);
     }
 
     return err;
@@ -1965,26 +1902,26 @@ static int bcheck_bounds (const char *key,
 
     for (i=0; i<bc->n_bounds; i++) {
         s = bc->bounds_keys[i];
-        if (!strcmp(s, src->name)) {
+        if (!strcmp(s, src->key)) {
             /* found an associated limits item */
             if (!gretl_is_scalar_type(src->type)) {
-                pprintf(bc->prn, _("%s: should be scalar\n"), src->name);
+                pprintf(bc->prn, _("%s: should be scalar\n"), src->key);
                 return 1;
             }
             val = bundled_item_get_scalar(src);
             if (na(val)) {
-                pprintf(bc->prn, _("%s: invalid (missing) value\n"), src->name);
+                pprintf(bc->prn, _("%s: invalid (missing) value\n"), src->key);
                 return 1;
             }
             lo = gretl_matrix_get(bc->bounds_mat, i, 0);
             hi = gretl_matrix_get(bc->bounds_mat, i, 1);
             if (!na(lo) && val < lo) {
                 pprintf(bc->prn, _("%s: value %g is out of bounds (lower limit %g)\n"),
-                        src->name, val, lo);
+                        src->key, val, lo);
                 return 1;
             } else if (!na(hi) && val > hi) {
                 pprintf(bc->prn, _("%s: value %g is out of bounds (upper limit %g)\n"),
-                        src->name, val, hi);
+                        src->key, val, hi);
                 return 1;
             }
             break;
@@ -2289,7 +2226,7 @@ static void print_bundled_item (gpointer value, gpointer p)
 {
     bundled_item *item = value;
     GretlType t = item->type;
-    const gchar *kstr = item->name;
+    const gchar *kstr = item->key;
     struct b_item_printer *bip = p;
     PRN *prn = bip->prn;
     int indent;
@@ -2525,7 +2462,7 @@ int gretl_bundle_print (gretl_bundle *bundle, PRN *prn)
 static void write_item_constructor (gpointer value, gpointer p)
 {
     bundled_item *item = value;
-    const gchar *kstr = item->name;
+    const gchar *kstr = item->key;
     GretlType t = item->type;
     GString *gs = p;
 
@@ -3565,7 +3502,7 @@ static gint sort_bundled_items (const void *a, const void *b)
     int ret = ta - tb;
 
     if (ret == 0) {
-        ret = g_ascii_strcasecmp(ia->name, ib->name);
+        ret = g_ascii_strcasecmp(ia->key, ib->key);
     }
 
     return ret;

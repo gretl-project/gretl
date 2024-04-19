@@ -50,6 +50,10 @@
 # define GTKSOURCEVIEW_VERSION 2
 #endif
 
+/* convenience macros */
+#define widget_get_int(w,s) GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), s))
+#define widget_set_int(w,s,i) g_object_set_data(G_OBJECT(w), s, GINT_TO_POINTER(i))
+
 /* remedial macro for Mac */
 #ifdef OS_OSX
 # define right_click(e) (e->button == 3 || \

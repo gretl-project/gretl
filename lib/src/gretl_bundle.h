@@ -38,6 +38,14 @@ typedef enum {
 
 typedef struct bundled_item_ bundled_item;
 
+struct bundled_item_ {
+    GretlType type;
+    int size;
+    gpointer data;
+    char *note;
+    char *key;
+};
+
 gretl_bundle *gretl_bundle_new (void);
 
 int gretl_is_bundle (const char *name);
@@ -125,13 +133,6 @@ gretl_bundle *gretl_bundle_get_bundle (gretl_bundle *bundle,
 const char *gretl_bundle_get_note (gretl_bundle *bundle, const char *key);
 
 const char *gretl_bundle_get_creator (gretl_bundle *bundle);
-
-const char *bundled_item_get_key (bundled_item *item);
-
-void *bundled_item_get_data (bundled_item *item, GretlType *type,
-			     int *size);
-
-const char *bundled_item_get_note (bundled_item *item);
 
 int gretl_bundle_donate_data (gretl_bundle *bundle, const char *key,
 			      void *ptr, GretlType type, int size);
