@@ -63,14 +63,8 @@ void add_popup_item (const gchar *label, GtkWidget *menu,
 
 void add_system_ui_to_vwin (windata_t *vwin);
 
-GtkWidget *make_bundle_content_menu (windata_t *vwin);
-
-GtkWidget *make_bundle_plot_menu (windata_t *vwin);
+int get_imported_data (char *fname, int ftype, int append);
 
 GtkWidget *make_bundle_save_menu (windata_t *vwin);
-
-void save_bundled_item_call (GtkAction *action, gpointer p);
-
-int get_imported_data (char *fname, int ftype, int append);
 
 #endif /* GUI_UTILS_H */

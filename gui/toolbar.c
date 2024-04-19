@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "gui_utils.h"
+#include "bundle_menus.h"
 #include "console.h"
 #include "session.h"
 #include "datafiles.h"

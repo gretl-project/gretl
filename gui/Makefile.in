@@ -176,6 +176,7 @@ vpath %.h $(topsrc)/gui
 
 SRCS = about.c \
 	base_utils.c \
+	bundle_menus.c \
 	calculator.c \
 	callbacks.c \
 	cmdstack.c \
