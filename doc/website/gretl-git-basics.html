@@ -27,6 +27,7 @@
 <a href="#history">Examining history</a><br>
 <a href="#branch">Branching</a><br>
 <a href="#branch-clean">Cleaning up old branches</a><br>
+<a href="#stash">Stashing local changes</a><br>
 <a href="#windows">Using git on MS Windows</a>
 </p>
 
@@ -248,6 +249,23 @@ Fairly simple, though not totally easy to remember:</p>
 <pre>
 git remote prune origin
 </pre>
+
+<h2><a name="stash">Stashing local changes</a></h2>
+
+<p>Stashing is particularly useful if you want to pull from the remote
+repository but have changes in your working copy that are not committed,
+and you don't really want to commit them yet. The command
+<kbd>git stash</kbd> will save your changes out of harm's way. If and
+when you're ready to revive those changes you can do:</p>
+
+<pre>
+git stash pop
+</pre>
+
+<p>to pull the last-stashed changes out of the stack and apply them to your
+working copy. There are lots of other possible stash actions, the most
+common probably being <kbd>git stash list</kbd> for a summary of what's
+in the stash and <kbd>git stash show</kbd> for details.</p>
 
 <h2><a name="windows">Using git on MS Windows</a></h2>
 

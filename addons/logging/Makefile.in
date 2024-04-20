@@ -17,9 +17,6 @@ else
   GFNDIR = $(datarootdir)/gretl/functions
 endif
 
-DOC = doc/$(PKG).pdf
-INSTDOC = install-doc
-
 GRETLCLI = ../../cli/gretlcli
 
 PKG = logging
@@ -31,7 +28,7 @@ INP = logging.inp
 SPEC = logging.spec
 SMPL = logging_sample.inp
 
-all: $(PKG).gfn $(DOC)
+all: $(PKG).gfn doc/$(PKG).pdf
 
 $(PKG).gfn: symlinks $(INP) $(SPEC) $(SMPL) $(HELP)
 	$(GRETLCLI) -t pkg.inp
@@ -50,10 +47,8 @@ symlinks:
 check: $(PKG).gfn
 	$(tooldir)/test_addon $(GRETLCLI)
 
-install: $(PKG).gfn installdirs	$(INSTDOC)
+install: $(PKG).gfn doc/$(PKG).pdf installdirs
 	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
-
-install-doc: doc/$(PKG).pdf
 	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
 
 installdirs:
