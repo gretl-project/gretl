@@ -2357,7 +2357,7 @@ static int real_restrict_sample (const char *param,
 	/* not replacing but cumulating any existing restrictions */
 	oldmask = make_current_sample_mask(dset, &err);
 	if (!err) {
-	    if (oldmask != NULL) {
+	    if (oldmask != NULL && oldmask != RESAMPLED) {
 		free_oldmask = 1;
 	    }
 	    if (dset->restriction != NULL) {
