@@ -133,6 +133,16 @@ parms.lfrac = lambda_sequence(1, 20, 0.001)
 the resulting sequence would be $s$ = \{1, 0.69519, 0.48329, \dots,
 0.00144, 0.001\}.
 
+To be clear, if no option pertaining to $\lambda$ is given that's
+equivalent to
+\begin{code}
+parms.lfrac = lambda_sequence(1, 25, 0.0001)
+\end{code}
+while if \texttt{nlambda = 100} is given that's equivalent to
+\begin{code}
+parms.lfrac = lambda_sequence(1, 100, 0.0001)
+\end{code}
+
 A second basic member of the parameter bundle is \texttt{stdize}, a
 boolean switch to toggle standardization of the data. The default is
 to perform standardization (corresponding to a non-zero value of this
@@ -169,8 +179,9 @@ bundle lb = regls(y, X, parms)
 \end{code}
 We'll then find the following in \texttt{lb}:
 \begin{itemize}
-\item \texttt{B}: The full vector of $k+1$ coefficients (including an
-  intercept).
+\item \texttt{B}: The full vector of $k+1$ coefficients, including an
+  intercept, unless \texttt{stdize} is set to 0 in which case
+  \texttt{B} will have just $k$ elements.
 \item \texttt{nzb}: A vector holding only the non-zero coefficients.
 \item \texttt{nzX}: A list identifying the regressors with non-zero
   coefficients.
@@ -204,24 +215,24 @@ squared correlation between $y$ and $\hat{y}$.
 \section{Exploring a range of regularizations}
 \label{sec:simple-search}
 
-Suppose we wish to compare results from several values of $\lambda$,
+Suppose we wish to compare results from ten values of $\lambda$,
 using all the training data. We might then revise the prior script as:
 \begin{code}
-bundle parms = _(lfrac = lambda_sequence(1, 10))
+bundle parm = _(nlambda = 10)
 smpl 1 1000
 bundle lb = regls(y, X, parms)
 \end{code}
 
 In this case \texttt{lb.B} will be a matrix holding the full
-coefficient vector for each $s$ (one column per $s$ value);
+coefficient vector for each $s$ (one column per $s$ value); and
 \texttt{lb.crit}, \texttt{R2} and \texttt{lb.BIC} will be column
-vectors holding the LASSO criterion, $R^2$ and BIC value for each
-$s$; and the bundle will contain these additional items:
+vectors of length 10 holding LASSO criterion, $R^2$ and BIC for each
+$s$, respectively. In addition the bundle will contain:
 \begin{itemize}
 \item \texttt{lfmin}: The $s$ value which produces the smallest BIC
   value.
-\item \texttt{idxmin}: The 1-based index value of \texttt{lfmin} in
-  the vector passed as \texttt{lfrac}.
+\item \texttt{idxmin}: The 1-based index of \texttt{lfmin} in the
+  vector of $\lambda$ values.
 \end{itemize}
 
 The BIC \citep{schwarz78} is calculated by \textsf{regls} as
@@ -297,8 +308,8 @@ snippet of which is shown below:
 The \texttt{MSE} value is the mean across the folds, and \texttt{se}
 is its standard error, computed as per \textsf{glmnet}.
 
-While it would seem most natural to select for further prediction the
-$s$ value that minimizes MSE on cross validation---call this
+While it would seem most natural to select for prediction the $s$
+value that minimizes MSE on cross validation---call this
 $s^*$---\textsf{glmnet} suggests an alternative policy: select the
 largest $s$ that delivers an MSE within one standard error of the
 minimum, which we'll call $s^{\dagger}$. It may be that $s^*$ and
@@ -351,6 +362,12 @@ Some additional cross validation options are supported.
   then holds just a single column. This may shave a little off the
   execution time.
 \end{itemize}
+
+\section{Obtaining predicted values}
+
+To obtain out-of-sample pedictions (and/or within-sample fitted values
+if you want them), the easiest approach is to use the
+\texttt{regls\_pred()} function. FIXME more here.
 
 \section{Execution speed}
 \label{sec:speed}
@@ -747,18 +764,17 @@ void regls_coeff_plot (const bundle b, const matrix sel[null])
 
 \begin{funcdoc}
 \begin{verbatim}
-numeric regls_pred (const bundle b, const numeric X)
+numeric regls_pred (const bundle b, const list X)
 \end{verbatim}
-  Convenience function for producing predicted values.  The bundle
-  argument should be obtained via \texttt{regls} or \texttt{mregls}
-  estimation. If estimation was by \texttt{regls} the numeric argument
-  \texttt{X} should be a list, and the function returns the
-  predictions as a series. In the case of \texttt{mregls}, \texttt{X}
-  must be a matrix and a column vector is returned.  This function
-  automatically handles the presence or absence of an estimated
-  intercept, as well as selection of a specific coefficient vector
-  when estimation has been performed for multiple values of the
-  regularization parameter.
+  A convenience function for producing predicted values. The bundle
+  argument should be obtained via \texttt{regls}. The argument
+  \texttt{X} must be the same list of series that was passed to
+  \texttt{regls} (although of course the sample range may differ), and
+  the return value is a series. This function automatically handles
+  the presence or absence of an estimated intercept, as well as
+  selection of a specific coefficient vector when estimation has been
+  performed for multiple values of the regularization parameter.  See
+  also \texttt{mregls\_pred} below.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -773,6 +789,20 @@ bundle mregls (const matrix y, const matrix X, bundle parms)
   in \texttt{regls} output \texttt{nzX} is a list of series while in
   \texttt{mregls} output it is a selection vector, picking out the
   columns of the \texttt{X} matrix that have non-zero coefficients.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+matrix mregls_pred (const bundle b, const matrix X)
+\end{verbatim}
+  Companion to \texttt{regls\_pred}, for a bundle obtained via
+  \texttt{mregls}. The matrix \texttt{X} must have the same number of
+  columns as that passed to \texttt{mregls}. The return value is a
+  column vector of length equal to the row dimension of \texttt{X}.
+  This function automatically handles the presence or absence of an
+  estimated intercept, as well as selection of a specific coefficient
+  vector when estimation has been performed for multiple values of the
+  regularization parameter.
 \end{funcdoc}
 
 \begin{funcdoc}

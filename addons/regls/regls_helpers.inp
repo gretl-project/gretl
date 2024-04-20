@@ -132,36 +132,57 @@ function void glmnet_multiprint (const matrix RB, const matrix Rlam,
    regls_multiprint(tmp, y, X)
 end function
 
-# compute fitted values
+# compute predictions/fitted values: series/list variant
 
-function numeric regls_pred (const bundle rb, const numeric X)
-   scalar matdata = 0
-   if typeof(X) == 3
-      matdata = 1
+function numeric regls_pred (const bundle rb, const list X)
+   # basic checks on validity of input
+   if typeof(rb.matrix_input) != 1 || rb.matrix_input
+      funcerr "rb is not a valid regls bundle"
    elif typeof(X) != 7
-      funcerr "X must be a list or matrix"
+      funcerr "regls bundle: X must be a list"
+   elif !inbundle(rb, "nzX")
+      funcerr "nzX is missing from the bundle argument"
    endif
-   if inbundle(rb, "nzX")
-      if matdata && rb.stdize
-         matrix yhat = X[,rb.nzX] * rb.nzb[2:] + rb.nzb[1]
-      elif matdata
-         matrix yhat = X[,rb.nzX] * rb.nzb
-      else
-         series yhat = lincomb(rb.nzX, rb.nzb)
-      endif
+   
+   if nelem(rb.nzb) == 0
+      # unlikely but possible
+      series yhat = 0
+   elif nelem(rb.nzb) == 1
+      # only a single coefficient available
+      series yhat = rb.nzb[1]
    else
-      matrix b = inbundle(rb, "b") ? rb.b : rb.B
-      if matdata && rb.stdize
-         matrix yhat = X * b[2:] + b[1]
-      elif matdata
-         matrix yhat = X * b
-      elif rb.stdize
-         list Z = const X
-         series yhat = lincomb(Z, b)
-      else
-         series yhat = lincomb(X, b)
-      endif
+      series yhat = lincomb(rb.nzX, rb.nzb)
    endif
+
+   return yhat
+end function
+
+# compute predictions/fitted values: matrix variant
+
+function matrix mregls_pred (const bundle rb, const matrix X)
+   # basic checks on validity of input
+   if typeof(rb.matrix_input) != 1 || !rb.matrix_input
+      funcerr "rb is not a valid mregls bundle"
+   elif typeof(X) != 3
+      funcerr "mregls bundle: X must be a matrix"
+   elif !inbundle(rb, "nzX")
+      funcerr "nzX is missing from the bundle argument"
+   endif
+   
+   matrix yhat
+
+   if nelem(rb.nzb) == 0
+      # unlikely but possible
+      yhat = zeros(rows(X), 1)
+   elif nelem(rb.nzb) == 1
+      # only a single coefficient available
+      yhat = zeros(rows(X), 1) + rb.nzb[1]
+   elif rb.stdize
+      yhat = X[,rb.nzX] * rb.nzb[2:] + rb.nzb[1]
+   else
+      yhat = X[,rb.nzX] * rb.nzb
+   endif
+
    return yhat
 end function
 

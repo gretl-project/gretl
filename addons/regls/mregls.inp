@@ -96,13 +96,15 @@ function bundle mregls (const matrix y, const matrix X,
    if !ret.ridge && nelem(bsel) > 0
       nx = cols(X) + ret.stdize
       matrix ret.nzX = selifc(seq(1, nx), bsel')
-      rnameset(ret.nzb, xnames[ret.nzX])
+      if nelem(ret.nzb) > 0
+         rnameset(ret.nzb, xnames[ret.nzX])
+      endif
       if ret.stdize
          # make nzX into a selection vector for cols of X
          if cols(ret.nzX) > 1
             ret.nzX = ret.nzX[2:] - 1
          else
-            delete ret.nzX
+            ret.nzX = {}
          endif
       endif
    endif
