@@ -50,8 +50,6 @@ struct combo_opts_ {
 /* convenience abbreviations */
 
 #define button_is_active(b) gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b))
-#define widget_get_int(w,s) GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), s))
-#define widget_set_int(w,s,i) g_object_set_data(G_OBJECT(w), s, GINT_TO_POINTER(i))
 #define spinner_get_int(b) gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(b))
 
 /* variant functions for incompatible GTK versions */

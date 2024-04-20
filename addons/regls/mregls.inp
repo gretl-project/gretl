@@ -99,7 +99,11 @@ function bundle mregls (const matrix y, const matrix X,
       rnameset(ret.nzb, xnames[ret.nzX])
       if ret.stdize
          # revise nzX for the caller's convenience
-         ret.nzX = ret.nzX[2:] - 1
+         if rows(ret.nzX) > 1
+            ret.nzX = ret.nzX[2:] - 1
+         else
+            ret.nzX -= 1
+         endif
       endif
    endif
 
