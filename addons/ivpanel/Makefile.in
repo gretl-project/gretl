@@ -17,9 +17,6 @@ else
   GFNDIR = $(datarootdir)/gretl/functions
 endif
 
-DOC = doc/$(PKG).pdf
-INSTDOC = install-doc
-
 GRETLCLI = ../../cli/gretlcli
 
 PKG = ivpanel
@@ -31,13 +28,10 @@ INP = ivpanel.inp
 SPEC = ivpanel.spec
 SMPL = nc_crime.inp
 
-all: $(PKG).gfn $(DOC)
+all: $(PKG).gfn doc/$(PKG).pdf
 
 $(PKG).gfn: symlinks $(INP) $(SPEC) $(SMPL)
 	$(GRETLCLI) -t pkg.inp
-
-doc/$(PKG).pdf: $(PKG).gfn
-	$(MAKE) -C doc
 
 $(PKG).zip: $(PKG).gfn doc/$(PKG).pdf
 	echo makepkg $(PKG).zip | $(GRETLCLI) -t -
@@ -50,10 +44,8 @@ symlinks:
 check: $(PKG).gfn
 	$(tooldir)/test_addon $(GRETLCLI)
 
-install: $(PKG).gfn installdirs	$(INSTDOC)
+install: $(PKG).gfn doc/$(PKG).pdf installdirs
 	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
-
-install-doc: doc/$(PKG).pdf
 	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
 
 installdirs:

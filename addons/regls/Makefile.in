@@ -17,9 +17,6 @@ else
   GFNDIR = $(datarootdir)/gretl/functions
 endif
 
-DOC = doc/$(PKG).pdf
-INSTDOC = install-doc
-
 GRETLCLI = ../../cli/gretlcli
 
 PKG = regls
@@ -31,7 +28,7 @@ INP = regls.inp regls_helpers.inp regls_plots.inp mregls.inp
 SPEC = regls.spec
 SMPL = regls_sample.inp
 
-all: $(PKG).gfn $(DOC)
+all: $(PKG).gfn doc/$(PKG).pdf
 
 $(PKG).gfn: symlinks $(INP) $(SPEC) $(SMPL)
 	$(GRETLCLI) -t pkg.inp
@@ -51,13 +48,11 @@ symlinks:
 check: $(PKG).gfn
 	$(tooldir)/test_addon $(GRETLCLI)
 
-install: $(PKG).gfn installdirs	$(INSTDOC)
+install: $(PKG).gfn doc/$(PKG).pdf installdirs
 	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
+	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
 	for f in examples/* ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
-
-install-doc: doc/$(PKG).pdf
-	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)

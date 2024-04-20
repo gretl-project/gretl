@@ -17,9 +17,6 @@ else
   GFNDIR = $(datarootdir)/gretl/functions
 endif
 
-DOC = doc/$(PKG).pdf
-INSTDOC = install-doc
-
 GRETLCLI = ../../cli/gretlcli
 
 PKG = SVAR
@@ -43,7 +40,7 @@ INP =   SVAR_ABfuncs.inp \
 
 SPEC = SVAR.spec
 
-all: $(PKG).gfn $(DOC)
+all: $(PKG).gfn doc/$(PKG).pdf
 
 $(PKG).gfn: symlinks $(INP) $(SPEC)
 	$(GRETLCLI) -t pkg.inp
@@ -62,18 +59,15 @@ symlinks:
 check: $(PKG).gfn
 	$(tooldir)/test_addon $(GRETLCLI)
 
-install: $(PKG).gfn installdirs	$(INSTDOC)
+install: $(PKG).gfn doc/$(PKG).pdf installdirs
 	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
-
+	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
 	for f in examples/*.gdt ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples/ ; done
 	for f in examples/Traditional/*.inp ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples/Traditional/ ; done
 	for f in examples/SetRestrictions/*.inp ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples/SetRestrictions/ ; done
-
-install-doc: doc/$(PKG).pdf
-	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
 
 installdirs:
 	rm -rf $(DESTDIR)$(GFNDIR)/$(PKG)/examples/*
