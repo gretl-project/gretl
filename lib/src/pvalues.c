@@ -3280,6 +3280,8 @@ double gretl_get_critval (int dist, const double *parm, double a)
 	x = poisson_critval(parm[0], a);
     } else if (dist == D_WEIBULL) {
 	x = weibull_critval(parm[0], parm[1], a);
+    } else if (dist == D_GAMMA) {
+	x = gamma_cdf_inverse(parm[0], parm[1], 1-a);
     } else if (dist == D_EXPON) {
 	/* special case of Weibull */
 	x = weibull_critval(1.0, parm[0], a);
