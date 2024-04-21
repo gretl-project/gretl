@@ -689,17 +689,15 @@ static void print_mask (const char *mask, const char *s)
 }
 #endif
 
-/* Here we make a mask representing the "complete" sample
-   restriction currently in force, for use in cumulating
-   restrictions. "Complete" means that we take into account
-   both an existing subsampling restriction, if any, and
-   possible setting of the t1 and t2 members of @dset to
-   exclude certain observation ranges.
+/* Here we make a mask representing the "complete" sample restriction
+   currently in force, for use in cumulating restrictions. "Complete"
+   means that we take into account both an existing subsampling
+   restriction, if any, and possible setting of the t1 and t2 members
+   of @dset to exclude certain observation ranges.
 
-   The mask returned, if non-NULL, will be the length of
-   the full dataset. It will be NULL (without error) if
-   the current dataset is neither subsampled nor range-
-   restricted.
+   The mask returned, if non-NULL, will be the length of the full
+   dataset. It will be NULL (without error) if the current dataset is
+   neither subsampled nor range- restricted.
 */
 
 static char *make_current_sample_mask (DATASET *dset, int *err)
@@ -731,6 +729,9 @@ static char *make_current_sample_mask (DATASET *dset, int *err)
 		}
 	    }
 	}
+    } else if (dset->submask == RESAMPLED) {
+	gretl_errmsg_set(_("You cannot subsample a resampled dataset"));
+	*err = E_DATA;
     } else {
 	/* there's a pre-existing mask: in addition we
 	   mask out observations outside of the current
