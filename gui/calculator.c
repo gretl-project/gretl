@@ -843,7 +843,6 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 	sprintf(v1, "shp%d=%f", k, parms[0]);
 	k = ids[ID_SCL] + 1;
 	sprintf(v2, "scl%d=%f", k, parms[1]);
-	fprintf(stderr, "%g, %g\n", parms[0], parms[1]);
 	break;
     }
 
@@ -898,7 +897,7 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 	if (!got[WEIBULL_DIST]) f1 = F_WEIB;
 	break;
     case GAMMA_DIST:
-	if (!got[WEIBULL_DIST]) f1 = F_GAMMA;
+	if (!got[GAMMA_DIST]) f1 = F_GAMMA;
 	break;
     }
 
