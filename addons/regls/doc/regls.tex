@@ -204,12 +204,6 @@ We'll then find the following in \texttt{lb}:
   not.
 \end{itemize}
 
-To predict for the remainder of the observations we could then do:
-\begin{code}
-smpl 1001 1200
-series pred = lincomb(lb.nzX, lb.nzb)
-\end{code}
-
 At some points below we refer to the coefficient of determination
 (under the key \texttt{R2}) as ``$R^2$''. But note that with
 regularized regression, unlike OLS, this figure is not equal to the
@@ -333,12 +327,13 @@ list All = const X
 series fitted = lincomb(All, optimal_b)
 \end{code}
 Note that \texttt{B} has as many rows as \texttt{X} has members, plus
-one for the intercept.
+one for the intercept, if present.
 
 But there's another method which may be more convenient: after cross
 validation the \texttt{regls} return bundle holds a single
-\texttt{nzb} vector and \texttt{nzX} list, such that fitted values can
-be obtained thus:
+\texttt{nzb} vector and \texttt{nzX} list (which includes
+\texttt{const}, if applicable), such that fitted values can be
+obtained thus:
 \begin{code}
 series fitted = lincomb(lb.nzX, lb.nzb)
 \end{code}
@@ -349,6 +344,10 @@ the parameter bundle passed to \texttt{regls}, as in
 \begin{code}
 parms.use_1se = 1
 \end{code}
+
+We've mentioned these points regarding fitted values in case you wish
+to take charge of prediction yourself, but see
+Section~\ref{sec:predict} for a more automated approach.
 
 \subsection*{Further cross validation options}
 
@@ -380,14 +379,32 @@ coefficients and other relevant information from the estimation phase,
 and either a list or a matrix holding values of the independent
 variables over the prediction range.
 
-MORE HERE
+In each case a single set of predictions is returned---as a series in
+the case of \texttt{regls\_pred} or a column vector for
+\texttt{mregls\_pred}---based on either the unique coefficient vector
+if just one value of $\lambda$ was used, or the preferred coefficient
+vector in the case of multiple $\lambda$ values. By ``preferred'' we
+mean the BIC minimizer if cross-validation is not performed, or that
+corresponding to either \texttt{idxmin} or \texttt{idx1se} (see above)
+after cross-validation.
 
-The one case where \texttt{regls\_pred} and \texttt{mregls\_pred} will
-not do the job, is where estimation involved multiple $\lambda$ values
-and you want to see predictions based on each value. But that can be
-accomplished quite easily.
-
-MORE HERE TOO
+Suppose, for example, that the available data comprise 1200
+observations, the first 1000 of which were used for training and 200
+of which remain for testing. And suppose that a bundle named
+\texttt{lb} has been obtained via \texttt{regls} using a list of
+regressors \texttt{X}. Then the following would serve to obtain
+predictions under the name \texttt{yhat} for the testing observations:
+\begin{code}
+smpl 1001 1200
+series yhat = regls_pred(lb, X)
+\end{code}
+The case of matrix data is similar, except that the \texttt{smpl}
+command is not relevant. If you have an integrated \texttt{X} matrix
+of 1200 rows you might pass \texttt{X[1:1000,]} to \texttt{mregls},
+then predict for the remainder of the observations via
+\begin{code}
+matrix yhat = mregls_pred(lb, X[1001:,])
+\end{code}
 
 \section{Execution speed}
 \label{sec:speed}
@@ -655,6 +672,8 @@ error'' criterion ($s^{\dagger}$, see Section~\ref{sec:xvalid}).
   \label{fig:mse-plot}
   \end{center}
 \end{figure}
+
+\clearpage
 
 \section{Reference: public functions}
 \label{sec:funcref}
