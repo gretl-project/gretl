@@ -33,6 +33,9 @@ all: $(PKG).gfn doc/$(PKG).pdf
 $(PKG).gfn: symlinks $(INP) $(SPEC) $(SMPL)
 	$(GRETLCLI) -t pkg.inp
 
+doc/$(PKG).pdf: $(PKG).gfn
+	$(MAKE) -C doc
+
 $(PKG).zip: $(PKG).gfn doc/$(PKG).pdf
 	echo makepkg $(PKG).zip | $(GRETLCLI) -t -
 
