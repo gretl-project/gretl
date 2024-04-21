@@ -36,7 +36,7 @@
 
 \title{\textsf{regls}: regularized least squares for gretl}
 \author{Allin Cottrell}
-\date{May 20, 2023}
+\date{April 20, 2024}
 
 \begin{document}
 \maketitle
@@ -102,6 +102,9 @@ function bundle regls (series y, list X, bundle parms)
 
 The \texttt{parms} argument may be omitted, in which case all settings
 assume their default values, described below.
+
+\section{Basic options}
+\label{sec:basic-opts}
 
 One basic element in the \texttt{parms} bundle is a specification for
 $\lambda$, which may take either of two forms, as follows:
@@ -181,7 +184,7 @@ We'll then find the following in \texttt{lb}:
 \begin{itemize}
 \item \texttt{B}: The full vector of $k+1$ coefficients, including an
   intercept, unless \texttt{stdize} is set to 0 in which case
-  \texttt{B} will have just $k$ elements.
+  \texttt{B} will have $k$ elements.
 \item \texttt{nzb}: A vector holding only the non-zero coefficients.
 \item \texttt{nzX}: A list identifying the regressors with non-zero
   coefficients.
@@ -364,10 +367,27 @@ Some additional cross validation options are supported.
 \end{itemize}
 
 \section{Obtaining predicted values}
+\label{sec:predict}
 
-To obtain out-of-sample pedictions (and/or within-sample fitted values
-if you want them), the easiest approach is to use the
-\texttt{regls\_pred()} function. FIXME more here.
+Optimization of out-of-sample prediction is of course the name of the
+game with regularized regression. To obtain out-of-sample predictions
+(and/or within-sample fitted values if you want them), the recommended
+approach is to use the \texttt{regls\_pred()} function---or
+\texttt{mregls\_pred()} if you're using data in matrix form and the
+\texttt{mregls()} function for estimation. Both of these prediction
+functions take two arguments: a bundle which includes estimated
+coefficients and other relevant information from the estimation phase,
+and either a list or a matrix holding values of the independent
+variables over the prediction range.
+
+MORE HERE
+
+The one case where \texttt{regls\_pred} and \texttt{mregls\_pred} will
+not do the job, is where estimation involved multiple $\lambda$ values
+and you want to see predictions based on each value. But that can be
+accomplished quite easily.
+
+MORE HERE TOO
 
 \section{Execution speed}
 \label{sec:speed}
@@ -836,20 +856,24 @@ void glmnet_multiprint (const matrix RB, const matrix Rlam,
 \section{Change log}
 \label{sec:changes}
 
+2024-04-20: Add a prediction function, \texttt{mregls\_pred}, for use
+with \texttt{mregls}; fixes for the unlikely case where none of the
+candidate regressors are effective predictors of the dependent
+variable; expansion of the documentation with respect to prediction.\\[4pt]
 2023-05-20: Add support for matrix input via the \texttt{mregls}
 function; simplify the signature of \texttt{regls\_multiprint};
-add function \texttt{glmnet\_multiprint}.\\
-2022-10-02: Enhancements for regls plots; document GUI usage;
-update an internal function signature to comply with gretl's
-new ``const inheritance'' policy.\\
-2022-08-05: fix breakage for single-lambda case.\\
+add function \texttt{glmnet\_multiprint}.\\[4pt]
+2022-10-02: Enhancements for regls plots; document GUI usage; update
+an internal function signature to comply with gretl's
+new ``const inheritance'' policy.\\[4pt]
+2022-08-05: fix breakage for single-lambda case.\\[4pt]
 2022-06-03: update URL; revise fragile list-saving code;
-allow ``lambda'' as alternative to ``lfrac'' on input.\\
-2021-04-17: fix bug with Ridge verbose printout, and replace
-some tables with figures in the doc for ease of comprehension
-of comparative experiments.\\
+allow ``lambda'' as alternative to ``lfrac'' on input.\\[4pt]
+2021-04-17: fix bug with Ridge verbose printout, and replace some
+tables with figures in the doc for ease of comprehension
+of comparative experiments.\\[4pt]
 2021-01-29: support a higher verbosity level for GUI use;
-improve printout for LASS0 coefficients, when applicable.\\
+improve printout for LASS0 coefficients, when applicable.\\[4pt]
 2020-10-09: initial release.
 
 \begin{script}
