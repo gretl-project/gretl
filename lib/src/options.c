@@ -112,7 +112,7 @@ struct gretl_option {
     int ci;              /* command index (gives context) */
     gretlopt o;          /* index of integer type */
     const char *longopt; /* "--"-style string representation of option */
-    char parminfo;       /* 0 = option can never take a parameter,
+    guint8 parminfo;     /* 0 = option can never take a parameter,
                             1 = option may take a parameter,
                             2 = option requires a parameter
                          */
@@ -120,7 +120,7 @@ struct gretl_option {
 
 struct flag_match {
     gretlopt o;
-    unsigned char c;
+    guint8 c;
 };
 
 /* Below: This is used as a one-way mapping from the long form to the
@@ -170,7 +170,7 @@ struct gretl_option gretl_opts[] = {
     { ARMA,     OPT_N, "nc", 0 },
     { ARMA,     OPT_V, "verbose", 0 },
     { ARMA,     OPT_X, "x-13arima", 0 },
-    { ARMA,     OPT_X, "x-12-arima", 0 }, /* compatibility alias */
+    { ARMA,     OPT_X, "x-12-arima", 0 }, /* legacy alias */
     { ARMA,     OPT_Y, "y-diff-only", 0 },
     { ARMA,     OPT_R, "robust", 0 },
     { ARMA,     OPT_S, "stdx", 0 },
@@ -293,7 +293,7 @@ struct gretl_option gretl_opts[] = {
     { FOREIGN,  OPT_I, "io-funcs", 2 },
     { FRACTINT, OPT_G, "gph", 0 },
     { FRACTINT, OPT_A, "all", 0 },
-    { FREQ,     OPT_Q, "quiet", 0 }, /* legacy alias */
+    { FREQ,     OPT_Q, "quiet", 0 }, /* legacy */
     { FREQ,     OPT_O, "gamma", 0 },
     { FREQ,     OPT_S, "silent", 0 },
     { FREQ,     OPT_Z, "normal", 0 },
@@ -325,7 +325,7 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_C, "control", 0 },
     { GNUPLOT,  OPT_U, "output", 2 },
     { GNUPLOT,  OPT_b, "outbuf", 2 },
-    { GNUPLOT,  OPT_b, "buffer", 2 }, /* compatibility alias */
+    { GNUPLOT,  OPT_b, "buffer", 2 }, /* legacy alias */
     { GNUPLOT,  OPT_i, "inbuf", 2 },
     { GNUPLOT,  OPT_Y, "single-yaxis", 0 },
     { GNUPLOT,  OPT_X, "matrix", 2 },
@@ -633,7 +633,7 @@ struct gretl_option gretl_opts[] = {
     { SETOBS,   OPT_I, "panel-time", 0 },
     { SMPL,     OPT_A, "no-all-missing", 0 },
     { SMPL,     OPT_B, "preserve-panel", 0 },
-    { SMPL,     OPT_B, "balanced", 0 }, /* alias */
+    { SMPL,     OPT_B, "balanced", 0 }, /* legacy alias */
     { SMPL,     OPT_C, "contiguous", 0 },
     { SMPL,     OPT_D, "dates", 0 },
     { SMPL,     OPT_F, "full", 0 },
@@ -1811,7 +1811,7 @@ static PRN *flagprn;
 const char *print_flags (gretlopt oflags, int ci)
 {
     const char *parm;
-    gretlopt opt;
+    gretlopt opt, oprev;
     int i, got_ci;
 
     if (flagprn == NULL) {
@@ -1860,10 +1860,11 @@ const char *print_flags (gretlopt oflags, int ci)
     }
 
     got_ci = 0;
+    oprev = 0;
     for (i=0; gretl_opts[i].ci != 0; i++) {
         if (ci == gretl_opts[i].ci) {
             opt = gretl_opts[i].o;
-            if (oflags & opt) {
+            if ((oflags & opt) && opt != oprev) {
                 pprintf(flagprn, " --%s", gretl_opts[i].longopt);
                 if (gretl_opts[i].parminfo) {
                     parm = get_optval_string(ci, opt);
@@ -1871,6 +1872,8 @@ const char *print_flags (gretlopt oflags, int ci)
                         print_option_param(parm, flagprn);
                     }
                 }
+		/* block printing an option alias */
+		oprev = opt;
             }
             got_ci = 1;
         } else if (got_ci) {
