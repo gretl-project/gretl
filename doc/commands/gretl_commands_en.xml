@@ -13382,15 +13382,17 @@
 	Maximum Likelihood method, or an asymptotic <math>F</math>-test
 	otherwise.
       </para>
+      <subhead>Linear restrictions: alternative syntax</subhead>
       <para>
-	There are three alternatives to the method of expressing restrictions
-	described above.  First, a set of <math>g</math> linear restrictions
-	on a <math>k</math>-vector of parameters, &bgr;, may be written
-	compactly as <math>R</math>&bgr; &minus; <math>q</math> = 0, where
-	<math>R</math> is an <by r="g" c="k"/> matrix and <math>q</math> is a
-	<math>g</math>-vector.  You can specify a restriction by giving the
-	names of pre-defined, conformable matrices to be used as
-	<math>R</math> and <math>q</math>, as in
+	There are two alternatives to the method of expressing
+	restrictions described above.  First, a set of <math>g</math>
+	restrictions on a <math>k</math>-vector of parameters, &bgr;,
+	may be written compactly as <math>R</math>&bgr; &minus;
+	<math>q</math> = 0, where <math>R</math> is an <by r="g"
+	c="k"/> matrix and <math>q</math> is a <math>g</math>-vector.
+	You can specify a restriction by giving the names of
+	pre-defined, conformable matrices to be used as <math>R</math>
+	and <math>q</math>, as in
       </para>
       <code>
 	restrict
@@ -13418,10 +13420,11 @@
 	targ="sprintf"/> to construct the strings, based on input to
 	a function.
       </para>
+      <subhead>Nonlinear restrictions</subhead>
       <para>
-	Lastly, if you wish to test a nonlinear restriction (this is
-	currently available for single-equation models only) you should give
-	the restriction as the name of a function, preceded by
+	If you wish to test a nonlinear restriction (this is currently
+	available for single-equation models only) you should give the
+	restriction as the name of a function, preceded by
 	<quote><lit>rfunc = </lit></quote>, as in
       </para>
       <code>
