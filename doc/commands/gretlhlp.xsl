@@ -668,9 +668,9 @@
 <xsl:template match="subhead">
   <xsl:if test="not(@context) or @context=$hlp">
     <xsl:text>[PARA]</xsl:text>
-    <xsl:text>&lt;@itl="</xsl:text>
+    <xsl:text>&lt;subhead&gt;</xsl:text>
     <xsl:apply-templates/>
-    <xsl:text>"&gt;</xsl:text>
+    <xsl:text>&lt;/subhead&gt;</xsl:text>
     <xsl:text>[/PARA]</xsl:text>
   </xsl:if>
 </xsl:template>
