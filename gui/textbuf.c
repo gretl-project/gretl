@@ -1411,7 +1411,7 @@ static GtkTextTagTable *gretl_tags_new (int role)
     widget_set_int(tag, "mono", 1);
 
     if (tags_level == 2) {
-	/* that should be enough tags */
+	/* the tags below are used only in the "online" help */
 	return table;
     }
 
@@ -1420,6 +1420,13 @@ static GtkTextTagTable *gretl_tags_new (int role)
 		 "pixels_above_lines", 15,
 		 "family", helpfont,
 		 "size", bigsize, NULL);
+    gtk_text_tag_table_add(table, tag);
+
+    tag = gtk_text_tag_new("subhead");
+    g_object_set(tag, "family", helpfont,
+		 "style", PANGO_STYLE_ITALIC,
+		 "pixels_below_lines", 8,
+		 NULL);
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("grayhead");
@@ -4558,6 +4565,27 @@ static int command_word_index (char *s)
     return i;
 }
 
+/* note: subhead must be a one-liner */
+
+static int handle_subhead (GtkTextBuffer *tbuf,
+			   GtkTextIter *iter,
+			   const char *p)
+{
+    const char *q;
+
+    q = strstr(p, "</sub");
+    gtk_text_buffer_insert_with_tags_by_name(tbuf, iter, p, q-p,
+					     "subhead", NULL);
+    q += 10; /* skip "</subhead>" */
+    while (*q == ' ') {
+	/* skip any trailing spaces */
+	q++;
+    }
+
+    /* add 1 to swallow a newline */
+    return 1 + q - p;
+}
+
 /* return non-zero if we inserted any hyperlinks */
 
 static gboolean
@@ -4646,6 +4674,9 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	} else if (!strncmp(p, "/mono", 5)) {
 	    mono = 0;
 	    skip = 6 + (*(p+6) == '\n');
+	} else if (!strncmp(p, "subhead", 7)) {
+	    p += 8;
+	    skip = handle_subhead(tbuf, iter, p);
 	} else {
 	    /* literal "<" */
 	    gtk_text_buffer_insert(tbuf, iter, "<", 1);
