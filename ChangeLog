@@ -6,11 +6,19 @@ version 2024b, in progress
 - exists() function: recommended usage is restricted to top-
   level identifiers, but backward compatibility is preserved
   for the present
-- GUI, function packages: further extensions to the "ui-maker"
-  functionality
+- help files: clarify the help for some commands and improve
+  formatting
 - Fix bug: crash on replacing a single character in a string
   variable, when the replacement UTF-8 character takes up more
   bytes than the original
+- Fix bug: potential crash when using the "smpl" command on a
+  dataset that is already subject to random resampling
+- GUI, function packages: further extensions to the "ui-maker"
+  functionality, plus minor fixes for the function-call dialog
+- GUI: support the --preserve-panel option in the dialog box
+  for sub-sampling
+- GUI: support the Gamma distribution under /Tools/Distribution
+  graphs
 - GUI: fix the "Packages" entry under Help
 - GUI: ensure that all fonts scale on zoom in/out in help
 
