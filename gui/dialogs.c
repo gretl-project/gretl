@@ -1591,18 +1591,8 @@ static int unit_get_last_obs (int u)
 static gboolean
 set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 {
-    const char *extra;
-    int err;
-
-    if ((rset->opt & OPT_P) && (rset->opt & OPT_T)) {
-        extra = " --replace --permanent";
-    } else if (rset->opt & OPT_P) {
-        extra = " --replace";
-    } else if (rset->opt & OPT_T) {
-        extra = " --permanent";
-    } else {
-        extra = "";
-    }
+    const char *opts = print_flags(rset->opt, SMPL);
+    int err = 0;
 
     if (rset->opt & OPT_R) {
         /* boolean restriction */
@@ -1614,7 +1604,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 
         err = bool_subsample(s, rset->opt, rset->dlg);
         if (!err) {
-            lib_command_sprintf("smpl %s --restrict%s", s, extra);
+            lib_command_sprintf("smpl %s%s", s, opts);
             record_command_verbatim();
             gtk_widget_destroy(rset->dlg);
         }
@@ -1626,7 +1616,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
         dumv = combo_box_get_active_text(GTK_COMBO_BOX(rset->combo));
         err = bool_subsample(dumv, rset->opt, rset->dlg);
         if (!err) {
-            lib_command_sprintf("smpl %s --dummy%s", dumv, extra);
+            lib_command_sprintf("smpl %s%s", dumv, opts);
             record_command_verbatim();
             gtk_widget_destroy(rset->dlg);
         }
@@ -1638,7 +1628,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 
         err = bool_subsample(nstr, rset->opt, rset->dlg);
         if (!err) {
-            lib_command_sprintf("smpl %d --random%s", subn, extra);
+            lib_command_sprintf("smpl %d%s", subn, opts);
             record_command_verbatim();
             gtk_widget_destroy(rset->dlg);
         }
@@ -2356,6 +2346,30 @@ static void add_smpl_permanent_check (GtkWidget *vbox,
                      G_CALLBACK(toggle_smpl_permanence), rset);
 }
 
+static void toggle_panel_preservation (GtkToggleButton *b,
+				       struct range_setting *rset)
+{
+    if (gtk_toggle_button_get_active(b)) {
+        rset->opt |= OPT_B;
+    } else {
+        rset->opt &= ~OPT_B;
+    }
+}
+
+static void add_panel_preserve_check (GtkWidget *vbox,
+                                      struct range_setting *rset)
+{
+    GtkWidget *hbox, *check;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    check = gtk_check_button_new_with_label(_("Preserve panel structure"));
+    gtk_box_pack_start(GTK_BOX(hbox), check, FALSE, FALSE, 5);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check), FALSE);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    g_signal_connect(G_OBJECT(check), "toggled",
+                     G_CALLBACK(toggle_panel_preservation), rset);
+}
+
 void sample_range_dialog (GtkAction *action, gpointer p)
 {
     struct range_setting *rset = NULL;
@@ -2833,6 +2847,11 @@ void sample_restrict_dialog (GtkAction *action, gpointer p)
     if (!complex_subsampled()) {
         /* add checkbox for permanence of restriction */
         add_smpl_permanent_check(vbox, rset);
+    }
+
+    if (dataset_is_panel(dataset)){
+        /* add checkbox for preserving panel structure */
+        add_panel_preserve_check(vbox, rset);
     }
 
     /* buttons */
