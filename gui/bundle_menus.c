@@ -476,12 +476,13 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin)
 	    GtkAction *action;
 	    GtkWidget *item;
 	    gchar *aname;
-	    int i;
+	    int minv, i;
 
+	    minv = (int) fn_param_minval(fun, 1);
 	    menu = gtk_menu_new();
 
 	    for (i=0; i<ng; i++) {
-		aname = g_strdup_printf("%s:%d", plotfunc, i);
+		aname = g_strdup_printf("%s:%d", plotfunc, i + minv);
 		action = gtk_action_new(aname, S[i], NULL, NULL);
 		g_signal_connect(G_OBJECT(action), "activate",
 				 G_CALLBACK(bundle_plot_call),
