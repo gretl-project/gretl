@@ -2487,6 +2487,50 @@ int gretl_array_qsort (gretl_array *a, const char *fname,
 
 /* end apparatus for sorting a gretl array via qsort */
 
+/* Check for equality between two arrays. Returns -1 if the comparison
+   cannot be made, which as of 2024-04-23 is the case if @a is an
+   array of bundles or an array of arrays. Otherwise returns 1 if the
+   two arrays are of the same type and length, and all their elements
+   (strings, matrices or lists) compare equal, else returns 0.
+*/
+
+int gretl_arrays_are_equal (const gretl_array *a,
+			    const gretl_array *b,
+			    int *err)
+{
+    if (a->type != b->type || a->n != b->n) {
+	return 0;
+    } else if (a->type == GRETL_TYPE_BUNDLES ||
+	       a->type == GRETL_TYPE_ARRAYS) {
+	*err = E_INVARG;
+	return -1;
+    } else {
+	int i, eq, nulls;
+
+	for (i=0; i<a->n; i++) {
+	    if (a->type == GRETL_TYPE_STRINGS) {
+		nulls = (a->data[i] == NULL) + (b->data[i] == NULL);
+		if (nulls == 1) {
+		    return 0;
+		} else if (nulls == 0 && strcmp(a->data[i], b->data[i])) {
+		    return 0;
+		}
+	    } else if (a->type == GRETL_TYPE_MATRICES) {
+		eq = gretl_matrices_are_equal(a->data[i], b->data[i], 0, err);
+		if (eq != 1) {
+		    /* could be 0 or invalid (-1) */
+		    return eq;
+		}
+	    } else if (a->type == GRETL_TYPE_LISTS) {
+		if (gretl_list_cmp(a->data[i], b->data[i])) {
+		    return 0;
+		}
+	    }
+	}
+	return 1;
+    }
+}
+
 /* arglist_validate() is used only in geneval.c but it's defined here
    because (a) geneval.c is already overburdened and (b) the job can
    be done more efficiently with access to the internals of
@@ -2497,10 +2541,10 @@ int gretl_array_qsort (gretl_array *a, const char *fname,
 int arglist_validate (gretl_array *keys, gretl_array *args)
 {
     const char *sk, *sa;
+    int n_keys = keys->n - 1;
     int i, j, found = 0;
 
-    if (args->type != GRETL_TYPE_STRINGS ||
-	args->n != keys->n - 1) {
+    if (args->type != GRETL_TYPE_STRINGS || args->n != n_keys) {
 	return 0;
     }
 
@@ -2517,5 +2561,5 @@ int arglist_validate (gretl_array *keys, gretl_array *args)
 	}
     }
 
-    return found == keys->n - 1;
+    return found == n_keys;
 }

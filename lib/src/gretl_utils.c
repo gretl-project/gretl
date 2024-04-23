@@ -109,9 +109,9 @@ double date_as_double (int t, int pd, double sd0)
  * @j: column number (0-based)
  * @nrows: number of rows (and columns) in symmetric matrix.
  *
- * Given a (row, column) reference into a symmetric 2-dimensional
- * matrix A, finds the index into a 1-dimensional array x
- * composed of the non-redundant (lower) elements of A.
+ * Given a (row, column) reference into a symmetric matrix A, finds
+ * the index into a 1-dimensional array x composed of the
+ * non-redundant (lower) elements of A.
  *
  * E.g. for the 3 x 3 case with 6 non-redundant elements, 0 to 5,
  *

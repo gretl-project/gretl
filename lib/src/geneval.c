@@ -4254,7 +4254,7 @@ static NODE *matrix_bool (NODE *l, NODE *r, int op, parser *p)
         if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
             ret->v.xval = NADBL;
         } else if (a->rows != b->rows || a->cols != b->cols) {
-            ret->v.xval = NADBL;
+	    ret->v.xval = op == B_NEQ ? 1 : NADBL;
         } else {
             ret->v.xval = op == B_NEQ ? 0 : 1;
             for (i=0; i<n; i++) {
@@ -7108,23 +7108,36 @@ static NODE *bundle_op (NODE *l, NODE *r, int f, parser *p)
 
 static NODE *array_op (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_array_node(p);
+    NODE *ret = NULL;
 
-    if (ret != NULL && starting(p)) {
+    if (starting(p)) {
         gretl_array *al = l->v.a;
         gretl_array *ar = r->v.a;
 
         if (!p->err) {
+	    if (f == B_EQ || f == B_NEQ) {
+		ret = aux_scalar_node(p);
+	    } else if (f == B_ADD || f == B_OR || f == B_AND) {
+		ret = aux_array_node(p);
+	    } else {
+		p->err = E_TYPES;
+	    }
+	}
+	if (!p->err) {
             if (f == B_ADD) {
                 ret->v.a = gretl_arrays_join(al, ar, &p->err);
             } else if (f == B_OR) {
                 ret->v.a = gretl_arrays_union(al, ar, &p->err);
             } else if (f == B_AND) {
                 ret->v.a = gretl_arrays_intersection(al, ar, &p->err);
-            } else {
-                p->err = E_TYPES;
-            }
+	    } else if (f == B_EQ) {
+		ret->v.xval = gretl_arrays_are_equal(al, ar, &p->err);
+	    } else {
+		ret->v.xval = !gretl_arrays_are_equal(al, ar, &p->err);
+	    }
         }
+    } else {
+	ret = aux_any_node(p);
     }
 
     return ret;

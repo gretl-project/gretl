@@ -14024,7 +14024,8 @@ int gretl_matrices_are_equal (const gretl_matrix *a,
                               double tol, int *err)
 {
     double ax, bx;
-    int i, j;
+    int nas;
+    int i, n;
 
     if (a == NULL || b == NULL) {
         *err = E_DATA;
@@ -14032,21 +14033,29 @@ int gretl_matrices_are_equal (const gretl_matrix *a,
     }
 
     if (a->rows != b->rows || a->cols != b->cols) {
-        *err = E_NONCONF;
-        return -1;
+	return 0;
+    } else if (a->is_complex + b->is_complex > 0) {
+	*err = E_CMPLX;
+	return -1;
     }
 
-    for (i=0; i<a->rows; i++) {
-        for (j=0; j<a->cols; j++) {
-            ax = gretl_matrix_get(a, i, j);
-            bx = gretl_matrix_get(b, i, j);
-            if (fabs(ax - bx) > tol) {
-                fprintf(stderr, "gretl_matrices_are_equal:\n "
-                        "a(%d,%d) = %.15g but b(%d,%d) = %.15g\n",
-                        i, j, ax, i, j, bx);
-                return 0;
-            }
-        }
+    n = a->rows * a->cols;
+
+    for (i=0; i<n; i++) {
+	ax = a->val[i];
+	bx = b->val[i];
+	nas = na(ax) + na(bx);
+	if (nas == 1) {
+	    return 0;
+	} else if (nas == 0 && fabs(ax - bx) > tol) {
+	    int j = i / a->rows;
+	    int k = i % a->rows;
+
+	    fprintf(stderr, "gretl_matrices_are_equal:\n "
+		    "at row %d, col %d (1-based)\n aij = %.15g but bij = %.15g\n",
+		    k + 1, j + 1, ax, bx);
+	    return 0;
+	}
     }
 
     return 1;

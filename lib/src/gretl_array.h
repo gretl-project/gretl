@@ -199,6 +199,10 @@ int is_strings_array_element (const char *str,
 int gretl_array_qsort (gretl_array *a, const char *fname,
 		       DATASET *set, PRN *prn);
 
+int gretl_arrays_are_equal (const gretl_array *a,
+			    const gretl_array *b,
+			    int *err);
+
 int arglist_validate (gretl_array *keys, gretl_array *args);
 
 #endif /* GRETL_ARRAY_H_ */
