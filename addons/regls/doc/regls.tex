@@ -183,7 +183,7 @@ bundle lb = regls(y, X, parms)
 We'll then find the following in \texttt{lb}:
 \begin{itemize}
 \item \texttt{B}: The full vector of $k+1$ coefficients, including an
-  intercept, unless \texttt{stdize} is set to 0 in which case
+  intercept---unless \texttt{stdize} is set to 0 in which case
   \texttt{B} will have $k$ elements.
 \item \texttt{nzb}: A vector holding only the non-zero coefficients.
 \item \texttt{nzX}: A list identifying the regressors with non-zero
@@ -246,8 +246,7 @@ effectiveness of minimization algorithms (see \ref{app:ccd}).
 When multiple $\lambda$ values are specified, the vector \texttt{nzb}
 and list \texttt{nzX} refer to the non-zero coefficients and
 associated regressors obtained with $s$ = \texttt{lfmin} (the BIC
-minimizer). Out-of-sample predictions using this $s$ can be obtained
-via \texttt{lincomb(nzX, nzb)}.
+minimizer).
 
 \section{Optimizing via cross validation}
 \label{sec:xvalid}
@@ -317,37 +316,7 @@ After cross validation, \texttt{regls} by default stores the full
 coefficient matrix (one column per value of $s$, estimated on the full
 training data) under the key \texttt{B}.  And the returned bundle also
 holds the indices of both $s^*$ and $s^{\dagger}$, under the keys
-\texttt{idxmin} and \texttt{idx1se} respectively. One can therefore
-select the desired set of coefficients and obtain fitted values using
-the full input list \texttt{X}---with \texttt{const} prepended unless
-your data are pre-standardized.
-\begin{code}
-matrix optimal_b = lb.B[,lb.idxmin] # or lb.idx1se, or other column
-list All = const X
-series fitted = lincomb(All, optimal_b)
-\end{code}
-Note that \texttt{B} has as many rows as \texttt{X} has members, plus
-one for the intercept, if present.
-
-But there's another method which may be more convenient: after cross
-validation the \texttt{regls} return bundle holds a single
-\texttt{nzb} vector and \texttt{nzX} list (which includes
-\texttt{const}, if applicable), such that fitted values can be
-obtained thus:
-\begin{code}
-series fitted = lincomb(lb.nzX, lb.nzb)
-\end{code}
-By default it's the $s^*$ (\texttt{idxmin}) column that's selected for
-forming \texttt{nzb}, but if you wish to use $s^{\dagger}$ you can
-arrange for that by setting \texttt{use\_1se} to a non-zero value in
-the parameter bundle passed to \texttt{regls}, as in
-\begin{code}
-parms.use_1se = 1
-\end{code}
-
-We've mentioned these points regarding fitted values in case you wish
-to take charge of prediction yourself, but see
-Section~\ref{sec:predict} for a more automated approach.
+\texttt{idxmin} and \texttt{idx1se} respectively.
 
 \subsection*{Further cross validation options}
 
@@ -371,22 +340,24 @@ Some additional cross validation options are supported.
 Optimization of out-of-sample prediction is of course the name of the
 game with regularized regression. To obtain out-of-sample predictions
 (and/or within-sample fitted values if you want them), the recommended
-approach is to use the \texttt{regls\_pred()} function---or
-\texttt{mregls\_pred()} if you're using data in matrix form and the
-\texttt{mregls()} function for estimation. Both of these prediction
-functions take two arguments: a bundle which includes estimated
-coefficients and other relevant information from the estimation phase,
-and either a list or a matrix holding values of the independent
-variables over the prediction range.
+approach is to use \texttt{regls\_pred()}. This function takes two
+arguments: a bundle produced by \texttt{regls()} and the list passed
+to \texttt{regls} as \texttt{X}. The return value is a series holding
+predicted values.
 
-In each case a single set of predictions is returned---as a series in
-the case of \texttt{regls\_pred} or a column vector for
-\texttt{mregls\_pred}---based on either the unique coefficient vector
-if just one value of $\lambda$ was used, or the preferred coefficient
-vector in the case of multiple $\lambda$ values. By ``preferred'' we
-mean the BIC minimizer if cross-validation is not performed, or that
-corresponding to either \texttt{idxmin} or \texttt{idx1se} (see above)
-after cross-validation.
+If you use \texttt{mregls()} for estimation, the alternative
+prediction function \texttt{mregls\_pred()} should be called in place
+of \texttt{regls\_pred}. In that case the second argument should be a
+matrix of regressors with the same number of columns as that passed to
+\texttt{mregls}, and the return value is a column vector of length
+equal to the row dimension of the matrix argument.
+
+In each case the predictions are based on either the unique
+coefficient vector if just one value of $\lambda$ was used, or the
+preferred coefficient vector in the case of multiple $\lambda$
+values. By ``preferred'' we mean the BIC minimizer if cross-validation
+is not performed, or that corresponding to either \texttt{idxmin} or
+\texttt{idx1se} (see above) after cross-validation.
 
 Suppose, for example, that the available data comprise 1200
 observations, the first 1000 of which were used for training and 200
@@ -399,11 +370,37 @@ smpl 1001 1200
 series yhat = regls_pred(lb, X)
 \end{code}
 The case of matrix data is similar, except that the \texttt{smpl}
-command is not relevant. If you have an integrated \texttt{X} matrix
-of 1200 rows you might pass \texttt{X[1:1000,]} to \texttt{mregls},
-then predict for the remainder of the observations via
+command is not relevant. If you have an \texttt{X} matrix of 1200 rows
+you might pass \texttt{X[1:1000,]} to \texttt{mregls}, then predict
+for the remainder of the observations via
 \begin{code}
 matrix yhat = mregls_pred(lb, X[1001:,])
+\end{code}
+
+MANUAL prediction notes (to be FIXED).  One can select the desired set
+of coefficients and obtain fitted values using the full input list
+\texttt{X}---with \texttt{const} prepended unless your data are
+pre-standardized.
+\begin{code}
+matrix optimal_b = lb.B[,lb.idxmin] # or lb.idx1se, or other column
+list All = const X
+series fitted = lincomb(All, optimal_b)
+\end{code}
+Note that \texttt{B} has as many rows as \texttt{X} has members, plus
+one for the intercept, if present (?).
+
+Alternative: fitted values can be calculated using \texttt{nzb} and
+\texttt{nzX} from a regls bundle:
+\begin{code}
+series fitted = lincomb(lb.nzX, lb.nzb)
+\end{code}
+In case of cross-validation, by default it's the $s^*$
+(\texttt{idxmin}) column that's selected for forming \texttt{nzb}, but
+if you wish to use $s^{\dagger}$ you can arrange for that by setting
+\texttt{use\_1se} to a non-zero value in the parameter bundle passed
+to \texttt{regls}, as in
+\begin{code}
+parms.use_1se = 1
 \end{code}
 
 \section{Execution speed}
