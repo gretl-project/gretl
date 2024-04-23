@@ -14,7 +14,6 @@ printf "Sample range %d to %d\n", $t1, $t2
 sdy = sdc({murdPerPop})
 
 bundle parms = _(nlambda=20, xvalidate=1, nfolds=10)
-parms.single_b = 1
 
 # gretl, ADMM
 
@@ -37,7 +36,8 @@ printf "Out of sample R-squared %.4f\n\n", m[2]
 
 smpl 1 1000
 parms.ccd = 1
-# parms.ccd_toler = 1.0e-10
+# uncomment the following to approximate ADMM accuracy
+# parms.ccd_toler = 1.0e-9
 set stopwatch
 bundle lb = regls(murdPerPop, X, parms)
 series pred = lincomb(lb.nzX, lb.nzb)
@@ -60,6 +60,9 @@ printf "Out of sample R-squared %.4f\n\n", m[2]
 matrix foldvec = regls_foldvec(1000, 10)
 mwrite(foldvec, "folds.mat", 1)
 
+# 2024-04-23: in the call to cv.glmnet below, one could use (say)
+# thresh=1.0e-9 to approximate the accuracy of ADMM above
+
 smpl 1 1000
 # R, glmnet
 list LL = murdPerPop X
@@ -71,7 +74,7 @@ foreign language=R --send-data=LL
   folds <- gretl.loadmat("folds.mat")
   tic("glmnet")
   m <- cv.glmnet(x, y, foldid = folds, family = "gaussian", alpha = 1,
-   nlambda = 20, standardize = T, intercept = T, thresh=1.0e-10)
+   nlambda = 20, standardize = T, intercept = T)
   toc()
   Rmse <- as.matrix(m$cvm)
   Rsd <- as.matrix(m$cvsd)
