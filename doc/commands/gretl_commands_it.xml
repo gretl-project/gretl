@@ -13348,11 +13348,11 @@ del comando <cmdref targ="set"/>.
 
   <description>
     <para>
-      Impone un insieme di vincoli (solitamente lineari) su (a) l'ultimo
-      modello stimato o (b) su un sistema di equazioni definito in precedenza.
-      In entrambi i casi, l'insieme di vincoli deve essere racchiuso
-      tra i comandi <quote>restrict</quote> e <quote>end
-	restrict</quote>.
+      Impone un insieme di vincoli (solitamente lineari) su (a)
+      l'ultimo modello stimato o (b) su un sistema di equazioni
+      definito in precedenza.  In entrambi i casi, l'insieme di
+      vincoli deve essere racchiuso tra i comandi
+      <quote>restrict</quote> e <quote>end restrict</quote>.
     </para>
     <para>
       Nel caso di una equazione singola, i vincoli sono applicati
@@ -13361,17 +13361,16 @@ del comando <cmdref targ="set"/>.
     </para>
     <para>
       Nel caso di un sistema (definito attraverso il comando <cmdref
-							       targ="system"/>), il comando iniziale <quote>restrict</quote>
-      può essere seguito dal nome di un sistema di equazioni
-      definito in precedenza; altrimenti, le restrizioni si
-      applicheranno all'ultimo modello stimato.  I vincoli vengono
-      valutati nella successiva stima del sistema effettuata con il
-      comando <cmdref targ="estimate"/>. Tuttavia, se viene usata
-      l'opzione <opt>wald</opt>, il vincolo viene testato
-      immediatamente per mezzo di un test chi quadro di Wald usando
-      la matrice di covarianze stimata. Si noti che questa opzione
-      produrrà un errore se il sistema è stato definito, ma non
-      ancora stimato.
+      targ="system"/>), il comando iniziale <quote>restrict</quote>
+      può essere seguito dal nome di un sistema di equazioni definito
+      in precedenza; altrimenti, le restrizioni si applicheranno
+      all'ultimo modello stimato.  I vincoli vengono valutati nella
+      successiva stima del sistema effettuata con il comando <cmdref
+      targ="estimate"/>. Tuttavia, se viene usata l'opzione
+      <opt>wald</opt>, il vincolo viene testato immediatamente per
+      mezzo di un test chi quadro di Wald usando la matrice di
+      covarianze stimata. Si noti che questa opzione produrrà un
+      errore se il sistema è stato definito, ma non ancora stimato.
     </para>
     <para>
       A seconda del contesto, i vincoli possono essere espressi in
@@ -13380,25 +13379,25 @@ del comando <cmdref targ="set"/>.
       sinistra e uno scalare a destra del segno di uguale (una
       costante o, volendo, il nome di una variabile scalare).
     </para>
-
     <para>
-      Nel caso della singola equazione, i parametri sono indicati
-      con la sintassi <lit>b[</lit><repl>i</repl><lit>]</lit>, dove
-      <repl>i</repl> rappresenta la posizione nella lista dei
-      regressori, a partire da uno, oppure con
+      Nel caso un cui la stima sia di una equazione singola, i
+      parametri sono indicati con la sintassi
+      <lit>b[</lit><repl>i</repl><lit>]</lit>, dove <repl>i</repl>
+      rappresenta la posizione nella lista dei regressori, a partire
+      da uno, oppure con
       <lit>b[</lit><repl>variabile</repl><lit>]</lit>, dove
       <repl>variabile</repl> è il nome del regressore in questione.
       Nel caso di sistemi, i parametri vengono indicati con la
       sintassi <lit>b</lit> seguita da due numeri tra parentesi
-      quadre.  Il primo numero rappresenta la posizione
-      dell'equazione all'interno del sistema, mentre il secondo
-      indica la posizione nella lista dei regressori. Ad esempio
-      <lit>b[2,1]</lit> indica il primo parametro della seconda
-      equazione, mentre <lit>b[3,2]</lit> il secondo parametro della
-      terza equazione. I termini <lit>b</lit> nell'equazione che
-      rappresenta un vincolo possono essere prefissati da un
-      moltiplicatore numerico, usando il segno <lit>*</lit> per
-      indicare la moltiplicazione, ad esempio <lit>3.5*b[4]</lit>.
+      quadre.  Il primo numero rappresenta la posizione dell'equazione
+      all'interno del sistema, mentre il secondo indica la posizione
+      nella lista dei regressori. Ad esempio <lit>b[2,1]</lit> indica
+      il primo parametro della seconda equazione, mentre
+      <lit>b[3,2]</lit> il secondo parametro della terza equazione. I
+      termini <lit>b</lit> nell'equazione che rappresenta un vincolo
+      possono essere prefissati da un moltiplicatore numerico, usando
+      il segno <lit>*</lit> per indicare la moltiplicazione, ad
+      esempio <lit>3.5*b[4]</lit>.
     </para>
     <para>
       Ecco un esempio di un insieme di vincoli per un modello
@@ -13424,25 +13423,25 @@ del comando <cmdref targ="set"/>.
       end restrict
     </code>
     <para>
-      Nel caso di una equazione singola le restrizioni sono
-      valutate, per default, tramite un test di Wald, che utilizza
-      la matrice di covarianze del modello in questione.  Se il
-      modello originale è stato stimato via OLS allora vengono
-      mostrati i coefficienti vincolati stimati, a meno che non si
-      utilizzi l'opzione <opt>quiet</opt> all'inizio del comando
-      <lit>restrict</lit>.  Come alternativa al test di Wald è
-      possibile dare usare l'opzione <opt>bootstrap</opt> affinché
-      venga eseguito un test sulla restrizione attraverso tale
-      metodo; ciò è consentito solamente per modelli stimati
-      attraverso OLS o WLS.
+      Nel caso di una equazione singola le restrizioni sono valutate,
+      per default, tramite un test di Wald, che utilizza la matrice di
+      covarianze del modello in questione.  Se il modello originale è
+      stato stimato via OLS allora vengono mostrati i coefficienti
+      vincolati stimati, a meno che non si utilizzi l'opzione
+      <opt>quiet</opt> all'inizio del comando <lit>restrict</lit>.
+      Come alternativa al test di Wald è possibile dare usare
+      l'opzione <opt>bootstrap</opt> affinché venga eseguito un test
+      sulla restrizione attraverso tale metodo; ciò è consentito
+      solamente per modelli stimati attraverso OLS o WLS.
     </para>
     <para>
       Nel caso di un sistema, la statistica test dipende dallo
       stimatore scelto: un test del rapporto di verosimiglianza nel
       caso di un sistema stimato con un metodo di massima
-      verosimiglianza, o un test <math>F</math> asintotico negli
-      altri casi.
+      verosimiglianza, o un test <math>F</math> asintotico negli altri
+      casi.
     </para>
+    <subhead>Restrizioni lineari: sintassi alternativa</subhead>
     <para>
       Esistono due alternative alla rappresentazione dei vincoli
       discussa sopra.  Una sfrutta la possibilità di esprimere
@@ -13462,6 +13461,26 @@ del comando <cmdref targ="set"/>.
       end restrict
     </code>
     <para>
+      Una variante che può essere utile quando si usa
+      <lit>restrict</lit> dentro una funzione prevede che le
+      restrizioni siano espresse come array di stringhe, che viene
+      usato tramite il comando <lit>inject</lit>, seguito dal nome
+      dell'array. Ecco un semplice esempio:
+    </para>
+    <code>
+      strings RS = array(2)
+      RS[1] = "b[1,2] = 0"
+      RS[2] = "b[2,1] = 0"
+      restrict
+      inject RS
+      end restrict
+    </code>
+    <para>
+      In pratica, stringhe di questo tipo possono essere create
+      usando la funzione <fncref targ="sprintf"/>.
+    </para>
+    <subhead>Restrizioni non lineari</subhead>
+    <para>
       Se si deve testare un vincolo non lineare (possibilità al
       momento prevista solo per i modelli ad equazione singola)
       bisogna dare al vincolo in nome di una funzione, preceduto da
@@ -13474,13 +13493,13 @@ del comando <cmdref targ="set"/>.
     </code>
     <para>
       La funzione vincolo deve avere, come unico argomento, una
-      <lit>const matrix</lit>, che verrà automaticamente riempita
-      col vettore dei parametri.  La funzione deve ritornare un
-      vettore zero sotto lipotesi nulla e non-zero altrimenti.
-      La lunghezza del vettore è il numero di vincoli. Questa
-      funzione è usata come <quote>callback</quote> dalla routine
-      interna di calcolo dello jacobiano, che calcola un test di
-      Wald per mezzo del <quote>delta method</quote>.
+      <lit>const matrix</lit>, che verrà automaticamente riempita col
+      vettore dei parametri.  La funzione deve ritornare un vettore
+      zero sotto lipotesi nulla e non-zero altrimenti.  La lunghezza
+      del vettore è il numero di vincoli. Questa funzione è usata come
+      argomento dalla routine interna di calcolo dello jacobiano, che
+      calcola un test di Wald per mezzo del <quote>delta
+      method</quote>.
     </para>
     <para>
       Quello che segue è un semplice esempio di funzione atta allo
@@ -13522,16 +13541,14 @@ del comando <cmdref targ="set"/>.
 	 label="Vincoli su un modello">
 
   <description>
-
     <para>
-      Ognuno dei vincoli da imporre a un modello deve essere
-      espresso sotto forma di equazione con una combinazione lineare
-      dei parametri al primo membro e un valore numerico al
-      secondo. Nel caso della singola equazione, i parametri sono
-      indicati con la sintassi
-      <lit>b[</lit><repl>i</repl><lit>]</lit>, dove <repl>i</repl>
-      rappresenta la posizione nella lista dei regressori, a partire
-      da uno, oppure
+      Ognuno dei vincoli da imporre a un modello deve essere espresso
+      sotto forma di equazione con una combinazione lineare dei
+      parametri al primo membro e un valore numerico al secondo. Nel
+      caso della singola equazione, i parametri sono indicati con la
+      sintassi <lit>b[</lit><repl>i</repl><lit>]</lit>, dove
+      <repl>i</repl> rappresenta la posizione nella lista dei
+      regressori, a partire da uno, oppure
       <lit>b[</lit><repl>variabile</repl><lit>]</lit>, dove
       <repl>variabile</repl> è il nome del regressore in questione.
     </para>
@@ -13593,13 +13610,11 @@ del comando <cmdref targ="set"/>.
 	 label="Vincoli su un VECM">
 
   <description>
-
     <para>
       Questo comando impone restrizioni lineari sulle relazioni
       di cointegrazione (beta) e/o sui coefficienti di aggiustamento (alfa)
       in un modello vettoriale a correzione d'errore (VECM).
     </para>
-
     <para>
       Ognuno dei vincoli deve essere espresso sotto forma di equazione,
       con una combinazione lineare dei parametri al primo membro e un valore
@@ -13607,7 +13622,6 @@ del comando <cmdref targ="set"/>.
       omogenee (valore diverso da zero al secondo membro), ma quelle su alfa
       devono essere omogenee (valore zero al secondo membro).
     </para>
-
     <para>
       Se il VECM è di rango 1, è possibile esprimere gli elementi di beta nella
       forma <lit>b[</lit><repl>i</repl><lit>]</lit>,  dove <repl>i</repl>
@@ -13618,28 +13632,23 @@ del comando <cmdref targ="set"/>.
       esempio <lit>b[2,1]</lit> rappresenta il primo elemento nel secondo
       vettore di cointegrazione.
     </para>
-
     <para>
       Per riferirisi agli elementi di alfa, basta usare <lit>a</lit> al posto di
       <lit>b</lit>.
     </para>
-
     <para>
       Gli identificatori dei parametri nell'equazione che rappresenta un vincolo
       possono essere prefissati con un moltiplicatore numerico usando il
       carattere <lit>*</lit> per indicare la moltiplicazione, ad esempio
       <lit>3.5*b[4]</lit>.
     </para>
-
     <para>
       Ecco ad esempio un insieme di vincoli su un VECM di rango 1.
     </para>
-
     <code>
       b[1] + b[2] = 0
       b[1] + b[3] = 0
     </code>
-
     <para>
       Si veda anche <guideref targ="chap:vecm"/>.
     </para>
@@ -13694,7 +13703,6 @@ del comando <cmdref targ="set"/>.
       media, viceversa se i punti si dispongono su una linea
       decrescente.
     </para>
-
     <para>
       Oltre al grafico, gretl mostra anche le medie e i campi di
       variazione per ogni sotto-campione, insieme al coefficiente di
@@ -13816,47 +13824,42 @@ del comando <cmdref targ="set"/>.
   <description>
     <para>
       Il menù Campione offre vari modi di selezionare un
-      sotto-campione dal dataset in uso.</para>
-
-    <para>
-      Scegliendo <quote>Campione/Imposta in base a dummy...</quote>,
-      viene chiesto di scegliere una variabile dummy (indicatrice),
-      che può assumere solo valori 0 o 1 per ogni osservazione. Il
-      campione verrà limitato alle osservazioni per cui la variabile
-      dummy vale 1.</para>
-
+      sotto-campione dal dataset in uso.
+    </para>
     <para>
       Scegliendo <quote>Campione/Imposta in base a
-	condizione...</quote>, viene chiesto di inserire un'espressione
-      Booleana (logica), dello stesso tipo di quella che si userebbe per
-      definire una variabile dummy. Ad esempio, l'espressione
-      <quote>sqft > 1400</quote> selezionerà solo le osservazioni per
-      cui la variabile sqft ha un valore maggiore di 1400. Le condizioni
-      possono essere concatenate con gli operatori logici
-      <quote>&amp;&amp;</quote> (AND) e <quote>||</quote> (OR) e possono
-      essere negate usando <quote>!</quote> (NOT).
+      condizione...</quote>, viene chiesto di inserire un'espressione
+      Booleana (logica), dello stesso tipo di quella che si userebbe
+      per definire una variabile dummy. Ad esempio, l'espressione
+      <quote>sqft &gt; 1400</quote> selezionerà solo le osservazioni
+      per cui la variabile sqft ha un valore maggiore di 1400. Le
+      condizioni possono essere concatenate con gli operatori logici
+      <quote>&amp;&amp;</quote> (AND) e <quote>||</quote> (OR) e
+      possono essere negate usando <quote>!</quote> (NOT). Se il
+      dataset contiene variabili dummy, è anche possibile selezionarne
+      una per definire il campione (le osservazioni incluse saranno
+      quelle per cui la dummy vale 1).
     </para>
-
     <para>
       Il comando <quote>Campione/Scarta valori mancanti</quote>
       ridefinisce il campione in modo da escludere tutte le osservazioni
       per cui i valori di una o più variabili sono mancanti (lasciando
-      nel campione solo i casi completi).</para>
-
+      nel campione solo i casi completi).
+    </para>
     <para>
-      Per selezionare le osservazioni per cui solo una particolare
+      Per selezionare le osservazioni per cui solo una certa
       variabile non ha valori mancanti, occorre usare
       <quote>Campione/Imposta in base a condizione...</quote> e inserire
-      la condizione Booleana <quote>!missing(nome-variabile)</quote>
+      la condizione Booleana <quote>ok(nome-variabile)</quote>
       (sostituire <quote>nome-variabile</quote> con il nome della
-      variabile che si intende usare).</para>
-
+      variabile che si intende usare).
+    </para>
     <para>
       Se sono state associate etichette alle osservazioni, è possibile
       escludere una particolare osservazione dal campione impostando una
       condizione del tipo obs!="Francia". L'etichetta dell'osservazione deve
-      essere racchiuso tra virgolette doppie.</para>
-
+      essere racchiuso tra virgolette doppie.
+    </para>
     <para>
       Occore tenere presente che ridefinendo il campione basandosi
       su una variabile dummy, un'espressione Booleana o sul criterio
@@ -13864,11 +13867,12 @@ del comando <cmdref targ="set"/>.
       <quote>strutturali</quote> contenute nel file con la descrizione
       dei dati (riguardanti la struttura di serie storiche o di panel
       dei dati) vengono perse. È possibile reimpostare la struttura
-      originale con <quote>Campione/Imposta frequenza e inizio...</quote>.</para>
-
+      originale con <quote>Campione/Imposta frequenza e
+      inizio...</quote>.
+    </para>
     <para>
-      Si veda <guideref targ="chap:sampling"/> per maggiori dettagli.</para>
-
+      Si veda <guideref targ="chap:sampling"/> per maggiori dettagli.
+    </para>
   </description>
 </command>
 
@@ -14011,25 +14015,29 @@ del comando <cmdref targ="set"/>.
       comando <cmdref targ="gnuplot"/> command.
     </para>
     <para context="cli">
-      Se la fonte dei dati è una matrice, le liste <repl>x</repl> e
-      <repl>y</repl> devono contenere in numeri di colonna; se non
-      vengono dati, tuttle le colonne sono graficate rispetto al tempo
-      o ad una variabile indice.
+      Se la fonte dei dati è una matrice predefinita, la
+      <repl>x</repl> e la <repl>y</repl> devono essere specificate coi
+      corrispondenti numeri di colonna. Se non vengono fornite liste,
+      tutte le colonne vengono mostrate avendo in ascissa il tempo o
+      una variabile indice.
     </para>
     <para context="gui">
       Produce grafici a dispersione della <quote>Variabile asse
 	Y</quote> selezionata rispetto ad ognuna delle <quote>Variabili
 	asse X</quote> selezionate (ma è possibile fare anche
       viceversa). Questi gruppi di grafici sono utili nell'analisi
-      esplorativa dei dati. È possibile creare fino a sei grafici alla
+      esplorativa dei dati. È possibile creare fino a 16 grafici alla
       volta, eventuali variabili in sovrappiù saranno ignorate.
     </para>
-    <para>
-      Se il dataset è temporale, la seconda sotto-lista può essere
-      omessa, nel qual caso si intende che le serie saranno graficate
-      rispetto al tempo in sotto-grafici separati.
+    <para context="gui">
+      Per default i data sono mostrati come punti, ma si può usare il bottone
+      <quote>Usa linee</quote>.
     </para>
-
+      <para>
+	Si veda anche <cmdref targ="tsplots"/> per semplici grafici
+	multipli di serie storiche e <cmdref targ="gridplot"/> per un
+	modo più flessibile di comporre grafici su una griglia.
+      </para>
   </description>
 
   <gui-access>

@@ -43,7 +43,7 @@ but noticeable).</description>
 <variable name="popgrow"
  label="Average growth of working-age population, 1960-85"
 />
-<variable name="inv"
+<variable name="invest"
  label="Average ratio of investment to GDP, percent"
 />
 <variable name="school"
