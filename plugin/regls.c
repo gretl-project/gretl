@@ -1497,35 +1497,12 @@ static int admm_iteration (const gretl_matrix *X,
     return err;
 }
 
-static gretl_matrix *make_coeff_matrix (regls_info *ri,
-					int *jmin,
-					int *jmax)
+static gretl_matrix *make_coeff_matrix (regls_info *ri)
 {
-    gretl_matrix *B = NULL;
-    int xv_single_b = 0;
-    int rows;
+    gretl_matrix *B;
+    int rows = ri->k + ri->stdize;
 
-    if (ri->xvalid) {
-	/* do we want just the "best" coeff vector? */
-	xv_single_b = gretl_bundle_get_bool(ri->b, "single_b", 0);
-    }
-
-    rows = ri->k + ri->stdize;
-
-    if (xv_single_b) {
-	int use_1se = gretl_bundle_get_bool(ri->b, "use_1se", 0);
-	const char *ikey = use_1se ? "idx1se" : "idxmin";
-	int idx;
-
-	idx = gretl_bundle_get_int(ri->b, ikey, NULL);
-	B = gretl_zero_matrix_new(rows, 1);
-	*jmin = idx - 1; /* zero-based */
-	*jmax = *jmin + 1;
-    } else {
-	B = gretl_zero_matrix_new(rows, ri->nlam);
-	*jmin = 0;
-	*jmax = ri->nlam;
-    }
+    B = gretl_zero_matrix_new(rows, ri->nlam);
 
     if (B != NULL) {
 	gretl_bundle_donate_data(ri->b, "B", B, GRETL_TYPE_MATRIX, 0);
@@ -1569,14 +1546,6 @@ static void ccd_make_lambda (regls_info *ri,
 static void lasso_lambda_report (regls_info *ri)
 {
     pprintf(ri->prn, "lambda-max = %g\n", ri->infnorm);
-#if 0 /* the following repeats what's shown via hansl */
-    if (ri->nlam > 1) {
-	pprintf(ri->prn, "lambda-fraction sequence of length %d, starting at %g\n",
-		ri->nlam, ri->lfrac->val[0]);
-    } else {
-	pprintf(ri->prn, "single lambda-fraction %g\n", ri->lfrac->val[0]);
-    }
-#endif
 }
 
 /* Remedial R^2 calculation for CCD: it seems that we end up
@@ -1757,7 +1726,6 @@ static int ccd_regls (regls_info *ri)
     }
 
     if (!err) {
-	// gretl_matrix_print(ci.B, "ci.B");
 	gretl_bundle_donate_data(ri->b, "B", ci.B, GRETL_TYPE_MATRIX, 0);
 	ci.B = NULL;
 	if (ri->lamscale != LAMSCALE_NONE) {
@@ -2154,7 +2122,6 @@ static int admm_lasso (regls_info *ri)
     int k = ri->k;
     int n = ri->n;
     int i, j, ldim;
-    int jmin, jmax;
     int idxmin = 0;
     int err = 0;
 
@@ -2186,7 +2153,7 @@ static int admm_lasso (regls_info *ri)
 
     if (!err) {
 	get_cholesky_factor(ri->X, L, rho);
-	B = make_coeff_matrix(ri, &jmin, &jmax);
+	B = make_coeff_matrix(ri);
 	if (B == NULL) {
 	    err = E_ALLOC;
 	}
@@ -2202,7 +2169,7 @@ static int admm_lasso (regls_info *ri)
 	llc = -0.5 * n * (1 + LN_2_PI - log(n));
     }
 
-    for (j=jmin; j<jmax && !err; j++) {
+    for (j=0; j<ri->nlam && !err; j++) {
 	/* loop across lambda values */
 	double critj, lambda = ri->lfrac->val[j] * lmax;
 	int tune_rho = 1;
@@ -3057,7 +3024,6 @@ static int mpi_parent_action (regls_info *ri)
     if (!err) {
 	err = gretl_matrix_write_to_file(ri->y, "regls_y.bin", 1);
     }
-
     if (!err) {
 	err = gretl_bundle_write_to_file(ri->b, "regls_bun.xml", 1);
     }
