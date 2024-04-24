@@ -4254,7 +4254,7 @@ static NODE *matrix_bool (NODE *l, NODE *r, int op, parser *p)
         if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
             ret->v.xval = NADBL;
         } else if (a->rows != b->rows || a->cols != b->cols) {
-	    ret->v.xval = op == B_NEQ ? 1 : NADBL;
+	    ret->v.xval = NADBL;
         } else {
             ret->v.xval = op == B_NEQ ? 0 : 1;
             for (i=0; i<n; i++) {
