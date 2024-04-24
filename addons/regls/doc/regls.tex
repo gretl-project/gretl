@@ -271,14 +271,17 @@ We then perform regularized estimation on the full training data using the
 $s$ value that yields the least total MSE on the above procedure (or
 perhaps take an alternative approach---see below).
 
-The basic options connected with cross validation (to be entered in
-the parameter bundle passed to \texttt{regls}) are as follows:
+The options connected with cross validation (to be entered in the
+parameter bundle passed to \texttt{regls}) are as follows:
 \begin{itemize}
 \item \texttt{xvalidate}: Boolean, trigger for doing cross validation (required).
 \item \texttt{nfolds}: Integer, the number of folds (optional, default
   10).
 \item \texttt{randfolds}: Boolean, whether the folds should be
   assigned randomly (optional, default 0).
+\item \texttt{seed}: Integer, relevant only when \texttt{randfolds} is
+  selected. By setting a specific seed for the random-number generator
+  you can get exactly repeatable results.
 \end{itemize}
 
 At present the folds are either assigned at random or (by default)
@@ -312,27 +315,11 @@ minimum, which we'll call $s^{\dagger}$. It may be that $s^*$ and
 $s^{\dagger}$ are the same value, but if not this policy gives the
 benefit of the doubt to parsimony.
 
-After cross validation, \texttt{regls} by default stores the full
-coefficient matrix (one column per value of $s$, estimated on the full
-training data) under the key \texttt{B}.  And the returned bundle also
-holds the indices of both $s^*$ and $s^{\dagger}$, under the keys
+After cross validation, the bundle returned by \texttt{regls} contains
+the full coefficient matrix (one column per value of $s$), estimated
+on the full training data, under the key \texttt{B}.  It also holds
+the indices of both $s^*$ and $s^{\dagger}$, under the keys
 \texttt{idxmin} and \texttt{idx1se} respectively.
-
-\subsection*{Further cross validation options}
-
-Some additional cross validation options are supported.
-
-\begin{itemize}
-\item \texttt{seed}: Integer, you can supply this to control the
-  randomization when \texttt{randfolds} is active, hence getting
-  exactly repeatable results.
-\item \texttt{single\_b}: Boolean. If non-zero it stops \texttt{regls}
-  from estimating coefficients for all $s$ values after cross
-  validation; only the selected ``best'' value ($s^*$ or
-  $s^{\dagger}$) is used. The matrix \texttt{B} mentioned above
-  then holds just a single column. This may shave a little off the
-  execution time.
-\end{itemize}
 
 \section{Obtaining predicted values}
 \label{sec:predict}
@@ -358,6 +345,7 @@ preferred coefficient vector in the case of multiple $\lambda$
 values. By ``preferred'' we mean the BIC minimizer if cross-validation
 is not performed, or that corresponding to either \texttt{idxmin} or
 \texttt{idx1se} (see above) after cross-validation.
+[FIXME describe choice under cross validation.]
 
 Suppose, for example, that the available data comprise 1200
 observations, the first 1000 of which were used for training and 200
@@ -377,30 +365,27 @@ for the remainder of the observations via
 matrix yhat = mregls_pred(lb, X[1001:,])
 \end{code}
 
-MANUAL prediction notes (to be FIXED).  One can select the desired set
-of coefficients and obtain fitted values using the full input list
-\texttt{X}---with \texttt{const} prepended unless your data are
-pre-standardized.
+You also have the option of predicting by means of built-in hansl
+functionality. This gives more flexibility, in that you can choose an
+arbitrary column of the full coefficient matrix \texttt{B}, or a
+subset of columns, or all columns. One point to note is that if
+\texttt{stdize} is selected the first row of \texttt{B} will hold an
+estimated intercept for each $\lambda$. This does not match an entry
+in the regular list or matrix of regressors, \texttt{X}, but must be
+taken into account. For example, if you wish to predict using an
+arbitrary column, \texttt{j}, of \texttt{B} after \texttt{regls} you
+can do
 \begin{code}
-matrix optimal_b = lb.B[,lb.idxmin] # or lb.idx1se, or other column
 list All = const X
-series fitted = lincomb(All, optimal_b)
+series fitted = lincomb(All, lb.B[,j])
 \end{code}
-Note that \texttt{B} has as many rows as \texttt{X} has members, plus
-one for the intercept, if present (?).
-
-Alternative: fitted values can be calculated using \texttt{nzb} and
-\texttt{nzX} from a regls bundle:
+After \texttt{mregls} you might do instead
 \begin{code}
-series fitted = lincomb(lb.nzX, lb.nzb)
+matrix fitted = (1 ~ X) * lb.B[,j]
 \end{code}
-In case of cross-validation, by default it's the $s^*$
-(\texttt{idxmin}) column that's selected for forming \texttt{nzb}, but
-if you wish to use $s^{\dagger}$ you can arrange for that by setting
-\texttt{use\_1se} to a non-zero value in the parameter bundle passed
-to \texttt{regls}, as in
+or if you prefer
 \begin{code}
-parms.use_1se = 1
+matrix fitted = X*lb.B[2:,j] + lb.B[1,j]
 \end{code}
 
 \section{Execution speed}

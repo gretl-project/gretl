@@ -106,3 +106,10 @@ function void regls_bundle_plot (const bundle *b, int unused[0],
                                  const matrix sel[null])
    regls_coeff_plot(b, sel)
 end function
+
+function matrix regls_plot_check (const bundle b)
+   if !inbundle(b, "B")
+      return {0}
+   endif
+   return cols(b.B) > 1 ? {1} : {0}
+end function

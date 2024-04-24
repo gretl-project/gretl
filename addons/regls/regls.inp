@@ -157,7 +157,7 @@ function void get_xvalidation_parms (bundle *targ, const bundle src)
    if targ.xvalidate
       matrix deflts = {10, 0, 0, 0, 0, 0, 0}
       ndef = nelem(deflts)
-      loop foreach i nfolds randfolds no_mpi mpi_np mpi_local use_1se single_b seed
+      loop foreach i nfolds randfolds no_mpi mpi_np mpi_local use_1se seed
          if inbundle(src, "$i")
             scalar targ.$i = src.$i
          elif i <= ndef

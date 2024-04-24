@@ -143,7 +143,7 @@ function numeric regls_pred (const bundle rb, const list X)
    elif !inbundle(rb, "nzX")
       funcerr "nzX is missing from the bundle argument"
    endif
-   
+
    if nelem(rb.nzb) == 0
       # unlikely but possible
       series yhat = 0
@@ -168,7 +168,7 @@ function matrix mregls_pred (const bundle rb, const matrix X)
    elif !inbundle(rb, "nzX")
       funcerr "nzX is missing from the bundle argument"
    endif
-   
+
    matrix yhat
 
    if nelem(rb.nzb) == 0
