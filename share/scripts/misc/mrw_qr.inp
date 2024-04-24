@@ -8,7 +8,7 @@ series ly60 = log(gdp60)
 series dlny = log(gdp85) - ly60
 series ngd = 0.05 + (popgrow/100)
 series lngd = log(ngd)
-series linv = log(inv/100)
+series linv = log(invest/100)
 series lschool = log(school/100)
 # set sample to non-oil producing countries
 smpl nonoil --dummy
