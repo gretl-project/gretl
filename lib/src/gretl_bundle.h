@@ -20,16 +20,17 @@
 #ifndef GRETL_BUNDLE_H_
 #define GRETL_BUNDLE_H_
 
-#define BUNDLE_PRINT "bundle-print"
-#define BUNDLE_PLOT  "bundle-plot"
-#define BUNDLE_TEST  "bundle-test"
-#define BUNDLE_FCAST "bundle-fcast"
-#define BUNDLE_EXTRA "bundle-extra"
-#define GUI_MAIN     "gui-main"
-#define GUI_PRECHECK "gui-precheck"
-#define LIST_MAKER   "list-maker"
-#define R_SETUP      "R-setup"
-#define UI_MAKER     "ui-maker"
+#define BUNDLE_PRINT  "bundle-print"
+#define BUNDLE_PLOT   "bundle-plot"
+#define BUNDLE_TEST   "bundle-test"
+#define BUNDLE_FCAST  "bundle-fcast"
+#define BUNDLE_EXTRA  "bundle-extra"
+#define GUI_MAIN      "gui-main"
+#define GUI_PRECHECK  "gui-precheck"
+#define PLOT_PRECHECK "plot-precheck"
+#define LIST_MAKER    "list-maker"
+#define R_SETUP       "R-setup"
+#define UI_MAKER      "ui-maker"
 
 typedef enum {
     BUNDLE_PLAIN,
