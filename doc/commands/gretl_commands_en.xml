@@ -13769,7 +13769,7 @@
       <para>
 	To select observations for which a particular variable has no missing
 	values, use <quote>Restrict based on criterion...</quote> and
-	supply the Boolean condition <quote>!missing(varname)</quote> (replace
+	supply the Boolean condition <quote>ok(varname)</quote> (replace
 	<quote>varname</quote> with the name of the variable you want to use).
       </para>
       <para>
