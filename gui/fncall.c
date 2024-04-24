@@ -3191,6 +3191,11 @@ static int prepare_regls_plot_call (gretl_bundle *b,
     int err = 0;
 
     B = gretl_bundle_get_matrix(b, "B", &err);
+
+    if (!err && B->cols == 1) {
+	err = E_DATA;
+    }
+
     if (!err) {
 	struct exec_data *edata = malloc(sizeof *edata);
 	selector *sr;
@@ -3202,7 +3207,13 @@ static int prepare_regls_plot_call (gretl_bundle *b,
 			      "gretl: regls coeffient plot",
 			      regls_plot_from_selector,
 			      parent, B, func);
-	selector_set_extra_data(sr, edata);
+	if (sr == NULL) {
+	    /* "can't happen" */
+	    free(edata);
+	    err = E_DATA;
+	} else {
+	    selector_set_extra_data(sr, edata);
+	}
     }
 
     return err;
@@ -4166,6 +4177,25 @@ static int model_precheck_error (ufunc *func, windata_t *vwin)
     }
 
     return err;
+}
+
+gretl_matrix *run_plot_precheck (ufunc *func, gretl_bundle *b)
+{
+    gretl_matrix *m = NULL;
+    fncall *fcall;
+    int err = 0;
+
+    fcall = fncall_new(func, 0);
+    if (fcall != NULL) {
+	push_anon_function_arg(fcall, GRETL_TYPE_BUNDLE, b);
+	err = gretl_function_exec(fcall, GRETL_TYPE_MATRIX,
+				  dataset, &m, NULL);
+	if (err) {
+	    fprintf(stderr, "run_plot_precheck: got err %d\n", err);
+	}
+    }
+
+    return m;
 }
 
 static int maybe_add_model_pkg (gui_package_info *gpi,

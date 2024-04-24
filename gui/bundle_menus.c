@@ -450,7 +450,42 @@ static void bundle_plot_call (GtkAction *action, gpointer p)
 				 aname, vwin->main);
 }
 
-GtkWidget *make_bundle_plot_menu (windata_t *vwin)
+static fnpkg *get_package_for_bundle (gretl_bundle *b)
+{
+    const char *s = gretl_bundle_get_creator(b);
+    fnpkg *pkg = NULL;
+
+    if (s != NULL) {
+	pkg = get_function_package_by_name(s);
+    }
+
+    return pkg;
+}
+
+static gretl_matrix *get_plotcheck_vec (gretl_bundle *b)
+{
+    gretl_matrix *chk = NULL;
+    gchar *checker;
+
+    checker = get_bundle_special_function(b, PLOT_PRECHECK);
+
+    if (checker != NULL) {
+	fnpkg *pkg = get_package_for_bundle(b);
+	ufunc *cfun = NULL;
+
+	if (pkg != NULL) {
+	    cfun = get_function_from_package(checker, pkg);
+	}
+	if (cfun != NULL) {
+	    chk = run_plot_precheck(cfun, b);
+	}
+	g_free(checker);
+    }
+
+    return chk;
+}
+
+GtkWidget *make_bundle_plot_menu (windata_t *vwin, int *insensitive)
 {
     gretl_bundle *bundle = vwin->data;
     gchar *plotfunc;
@@ -461,14 +496,23 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin)
     if (plotfunc != NULL) {
 	ufunc *fun = NULL;
 	const char **S = NULL;
+	gretl_matrix *chk = NULL;
 	int ng = 0;
 
 	if (strcmp(plotfunc, "builtin")) {
 	    fun = get_user_function_by_name(plotfunc);
 	}
-
 	if (fun != NULL) {
 	    S = fn_param_value_labels(fun, 1, &ng);
+	}
+
+	chk = get_plotcheck_vec(bundle);
+	if (chk != NULL && gretl_vector_get_length(chk) == 1) {
+	    if (chk->val[0] == 0) {
+		*insensitive = 1;
+		S = NULL;
+	    }
+	    fprintf(stderr, "HERE 1\n");
 	}
 
 	if (S != NULL) {
@@ -492,6 +536,7 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin)
 		g_free(aname);
 	    }
 	}
+	gretl_matrix_free(chk);
 	g_free(plotfunc);
     }
 

@@ -989,14 +989,6 @@ static int bundle_plot_ok (windata_t *vwin)
 
 	ret = 1;
 	g_free(pf);
-        s = gretl_bundle_get_creator(b);
-        if (s != NULL && !strcmp(s, "regls")) {
-	    /* regls: check for matrix requirements */
-            if (gretl_bundle_has_key(b, "lfrac") == 0 ||
-		gretl_bundle_has_key(b, "B") == 0) {
-		ret = 0;
-	    }
-        }
     }
 
     return ret;
@@ -1364,7 +1356,9 @@ static GtkWidget *make_fcast_save_menu (windata_t *vwin)
     return menu;
 }
 
-static GtkWidget *tool_item_get_menu (GretlToolItem *item, windata_t *vwin)
+static GtkWidget *tool_item_get_menu (GretlToolItem *item,
+				      windata_t *vwin,
+				      int *insensitive)
 {
     GtkWidget *menu = NULL;
 
@@ -1372,7 +1366,7 @@ static GtkWidget *tool_item_get_menu (GretlToolItem *item, windata_t *vwin)
 	if (item->flag == BUNDLE_ITEM) {
 	    menu = make_bundle_content_menu(vwin);
 	} else if (item->flag == PLOT_ITEM) {
-	    menu = make_bundle_plot_menu(vwin);
+	    menu = make_bundle_plot_menu(vwin, insensitive);
 	} else if (item->flag == SAVE_ITEM) {
 	    menu = make_bundle_save_menu(vwin);
 	    if (menu != NULL) {
@@ -1587,19 +1581,21 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
     GtkWidget *menu;
     GretlToolItem *item;
     GCallback func;
+    int insensitive;
     int i;
 
     for (i=0; i<n_viewbar_items; i++) {
+	item = &viewbar_items[i];
+	insensitive = 0;
 	func = NULL;
 	menu = NULL;
-	item = &viewbar_items[i];
 
 	/* Is there anything to hook up, in context? We
 	   try first for a menu to attach to the toolbar
 	   button; failing that we test for a "direct"
 	   callback function.
 	*/
-	menu = tool_item_get_menu(item, vwin);
+	menu = tool_item_get_menu(item, vwin, &insensitive);
 	if (menu == NULL && item->func != NULL) {
 	    func = tool_item_get_callback(item, vwin, latex_ok, sortby_ok,
 					  format_ok, save_ok);
@@ -1614,6 +1610,9 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	}
 
 	button = vwin_toolbar_insert(item, func, menu, vwin, -1);
+	if (insensitive) {
+	    gtk_widget_set_sensitive(button, FALSE);
+	}
 
 	if (func == (GCallback) split_pane_callback) {
 	    if (hpane == NULL) {

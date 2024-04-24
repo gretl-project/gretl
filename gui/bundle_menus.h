@@ -22,7 +22,7 @@
 
 GtkWidget *make_bundle_content_menu (windata_t *vwin);
 
-GtkWidget *make_bundle_plot_menu (windata_t *vwin);
+GtkWidget *make_bundle_plot_menu (windata_t *vwin, int *insensitive);
 
 #endif /* BUNDLE_MENUS_H */
 
