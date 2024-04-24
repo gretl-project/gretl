@@ -4,7 +4,7 @@ open mrw.gdt
 series lny = log(gdp85)
 series ngd = 0.05 + (popgrow/100.0)
 series lngd = log(ngd)
-series linv = log(invest/100.0)
+series linv = log(i_y/100.0)
 # generate variable for testing Solow restriction
 series x3 = linv - lngd
 # set sample to non-oil producing countries
