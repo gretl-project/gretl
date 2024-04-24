@@ -14035,7 +14035,8 @@ int gretl_matrices_are_equal (const gretl_matrix *a,
     if (a == b) {
 	return 1;
     } else if (a->rows != b->rows || a->cols != b->cols) {
-	return 0;
+	*err = E_NONCONF;
+	return -1;
     } else if (a->is_complex + b->is_complex > 0) {
 	*err = E_CMPLX;
 	return -1;
