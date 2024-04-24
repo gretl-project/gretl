@@ -308,17 +308,18 @@ struct flag_and_key {
 };
 
 static struct flag_and_key pkg_lookups[] = {
-    { UFUN_BUNDLE_PRINT, BUNDLE_PRINT },
-    { UFUN_BUNDLE_PLOT,  BUNDLE_PLOT },
-    { UFUN_BUNDLE_TEST,  BUNDLE_TEST },
-    { UFUN_BUNDLE_FCAST, BUNDLE_FCAST },
-    { UFUN_BUNDLE_EXTRA, BUNDLE_EXTRA },
-    { UFUN_GUI_MAIN,     GUI_MAIN },
-    { UFUN_GUI_PRECHECK, GUI_PRECHECK },
-    { UFUN_LIST_MAKER,   LIST_MAKER },
-    { UFUN_R_SETUP,      R_SETUP },
-    { UFUN_UI_MAKER,     UI_MAKER },
-    { -1,                NULL }
+    { UFUN_BUNDLE_PRINT,  BUNDLE_PRINT },
+    { UFUN_BUNDLE_PLOT,   BUNDLE_PLOT },
+    { UFUN_BUNDLE_TEST,   BUNDLE_TEST },
+    { UFUN_BUNDLE_FCAST,  BUNDLE_FCAST },
+    { UFUN_BUNDLE_EXTRA,  BUNDLE_EXTRA },
+    { UFUN_GUI_MAIN,      GUI_MAIN },
+    { UFUN_GUI_PRECHECK,  GUI_PRECHECK },
+    { UFUN_PLOT_PRECHECK, PLOT_PRECHECK },
+    { UFUN_LIST_MAKER,    LIST_MAKER },
+    { UFUN_R_SETUP,       R_SETUP },
+    { UFUN_UI_MAKER,      UI_MAKER },
+    { -1,                 NULL }
 };
 
 #define pkg_aux_role(r) (r == UFUN_BUNDLE_PRINT || \
@@ -3696,9 +3697,16 @@ static int valid_list_maker (ufunc *u)
     }
 }
 
-#define PRIVATE_ONLY(r) (r == UFUN_GUI_PRECHECK || \
-                         r == UFUN_LIST_MAKER ||   \
-                         r == UFUN_R_SETUP ||      \
+static int valid_plot_checker (ufunc *u)
+{
+    return (u->n_params == 1 &&
+	    u->params[0].type == GRETL_TYPE_BUNDLE);
+}
+
+#define PRIVATE_ONLY(r) (r == UFUN_GUI_PRECHECK ||	\
+			 r == UFUN_PLOT_PRECHECK ||	\
+                         r == UFUN_LIST_MAKER ||	\
+                         r == UFUN_R_SETUP ||		\
                          r == UFUN_UI_MAKER)
 
 static ufunc *get_package_member_by_name (const char *name,
@@ -3766,6 +3774,14 @@ int function_set_package_role (const char *name, fnpkg *pkg,
                 err = E_TYPES;
             } else if (u->n_params > 0) {
                 pprintf(prn, "%s: no parameters are allowed\n", attr);
+                err = E_TYPES;
+            }
+	} else if (role == UFUN_PLOT_PRECHECK) {
+            if (u->rettype != GRETL_TYPE_MATRIX) {
+                pprintf(prn, "%s: must return a matrix (vector)\n", attr);
+                err = E_TYPES;
+            } else if (!valid_plot_checker(u)) {
+                pprintf(prn, "%s: must have a single bundle parameter\n", attr);
                 err = E_TYPES;
             }
         } else if (role == UFUN_LIST_MAKER) {
@@ -3885,6 +3901,13 @@ int function_ok_for_package_role (const char *name,
             err = E_TYPES;
         }
         return !err; /* found */
+    } else if (role == UFUN_PLOT_PRECHECK) {
+	if (u->rettype != GRETL_TYPE_MATRIX) {
+	    err = E_TYPES;
+	} else if (!valid_plot_checker(u)) {
+	    err = E_TYPES;
+	}
+	return !err; /* found */
     } else if (role == UFUN_LIST_MAKER) {
         if (u->rettype != GRETL_TYPE_LIST) {
             err = E_TYPES;
@@ -4774,7 +4797,7 @@ static void pkg_set_gui_attrs (fnpkg *pkg, const unsigned char *attrs)
 }
 
 /* Called (indirectly) from GUI function packager. Note that we scrub
-   UFUN_PRIVATE,  from the user function flags passed to the packager:
+   UFUN_PRIVATE from the user function flags passed to the packager:
    this flag is handled by a different mechanism.
 */
 
