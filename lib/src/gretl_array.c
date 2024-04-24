@@ -2498,7 +2498,9 @@ int gretl_arrays_are_equal (const gretl_array *a,
 			    const gretl_array *b,
 			    int *err)
 {
-    if (a->type != b->type || a->n != b->n) {
+    if (a == b) {
+	return 1;
+    } else if (a->type != b->type || a->n != b->n) {
 	return 0;
     } else if (a->type == GRETL_TYPE_BUNDLES ||
 	       a->type == GRETL_TYPE_ARRAYS) {
