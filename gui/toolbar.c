@@ -985,8 +985,6 @@ static int bundle_plot_ok (windata_t *vwin)
     int ret = 0;
 
     if (pf != NULL) {
-	const char *s;
-
 	ret = 1;
 	g_free(pf);
     }
