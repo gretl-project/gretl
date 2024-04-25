@@ -178,9 +178,9 @@ do:
 \begin{code}
 bundle parms = _(lfrac = 0.2)
 smpl 1 1000
-bundle lb = regls(y, X, parms)
+bundle b = regls(y, X, parms)
 \end{code}
-We'll then find the following in \texttt{lb}:
+We'll then find the following in \texttt{b}:
 \begin{itemize}
 \item \texttt{B}: The full vector of $k+1$ coefficients, including an
   intercept---unless \texttt{stdize} is set to 0 in which case
@@ -217,12 +217,12 @@ using all the training data. We might then revise the prior script as:
 \begin{code}
 bundle parm = _(nlambda = 10)
 smpl 1 1000
-bundle lb = regls(y, X, parms)
+bundle b = regls(y, X, parms)
 \end{code}
 
-In this case \texttt{lb.B} will be a matrix holding the full
+In this case \texttt{b.B} will be a matrix holding the full
 coefficient vector for each $s$ (one column per $s$ value); and
-\texttt{lb.crit}, \texttt{R2} and \texttt{lb.BIC} will be column
+\texttt{b.crit}, \texttt{R2} and \texttt{b.BIC} will be column
 vectors of length 10 holding LASSO criterion, $R^2$ and BIC for each
 $s$, respectively. In addition the bundle will contain:
 \begin{itemize}
@@ -329,64 +329,83 @@ game with regularized regression. To obtain out-of-sample predictions
 (and/or within-sample fitted values if you want them), the recommended
 approach is to use \texttt{regls\_pred()}. This function takes two
 arguments: a bundle produced by \texttt{regls()} and the list passed
-to \texttt{regls} as \texttt{X}. The return value is a series holding
-predicted values.
+to \texttt{regls} as \texttt{X}. By default the return value is a
+series holding predicted values.
 
 If you use \texttt{mregls()} for estimation, the alternative
 prediction function \texttt{mregls\_pred()} should be called in place
 of \texttt{regls\_pred}. In that case the second argument should be a
 matrix of regressors with the same number of columns as that passed to
-\texttt{mregls}, and the return value is a column vector of length
-equal to the row dimension of the matrix argument.
+\texttt{mregls}, and by default the return value is a column vector of
+length equal to the row dimension of the matrix argument.
 
-In each case the predictions are based on either the unique
+In each case the default predictions are based on either the unique
 coefficient vector if just one value of $\lambda$ was used, or the
-preferred coefficient vector in the case of multiple $\lambda$
-values. By ``preferred'' we mean the BIC minimizer if cross-validation
-is not performed, or that corresponding to either \texttt{idxmin} or
-\texttt{idx1se} (see above) after cross-validation.
-[FIXME describe choice under cross validation.]
+``preferred'' coefficient vector in the case of multiple $\lambda$
+values---that is, the BIC minimizer if cross-validation is not
+performed, or that corresponding to either \texttt{idxmin} or
+\texttt{idx1se} (see above) after cross-validation. The
+\texttt{idxmin} value is used automatically unless \texttt{use\_1se}
+was set in the parameter bundle passed to \texttt{regls} or
+\texttt{mregls}.
 
 Suppose, for example, that the available data comprise 1200
 observations, the first 1000 of which were used for training and 200
 of which remain for testing. And suppose that a bundle named
-\texttt{lb} has been obtained via \texttt{regls} using a list of
+\texttt{b} has been obtained via \texttt{regls} using a list of
 regressors \texttt{X}. Then the following would serve to obtain
 predictions under the name \texttt{yhat} for the testing observations:
 \begin{code}
 smpl 1001 1200
-series yhat = regls_pred(lb, X)
+series yhat = regls_pred(b, X)
 \end{code}
 The case of matrix data is similar, except that the \texttt{smpl}
 command is not relevant. If you have an \texttt{X} matrix of 1200 rows
 you might pass \texttt{X[1:1000,]} to \texttt{mregls}, then predict
 for the remainder of the observations via
 \begin{code}
-matrix yhat = mregls_pred(lb, X[1001:,])
+matrix yhat = mregls_pred(b, X[1001:,])
 \end{code}
 
-You also have the option of predicting by means of built-in hansl
-functionality. This gives more flexibility, in that you can choose an
-arbitrary column of the full coefficient matrix \texttt{B}, or a
-subset of columns, or all columns. One point to note is that if
-\texttt{stdize} is selected the first row of \texttt{B} will hold an
-estimated intercept for each $\lambda$. This does not match an entry
-in the regular list or matrix of regressors, \texttt{X}, but must be
-taken into account. For example, if you wish to predict using an
-arbitrary column, \texttt{j}, of \texttt{B} after \texttt{regls} you
-can do
+Beyond the default behavior of the prediction functions, if multiple
+$\lambda$ values were used in estimation you can control the output by
+adding a preference to the bundle \texttt{b}, under the key
+\texttt{pred}, before passing it to \texttt{regls\_pred} or
+\texttt{mregls\_pred}. The admissible values for \texttt{pred} are as
+follows:
+\begin{enumerate}
+\item \texttt{idxmin}: use the \texttt{idxmin} column of the \texttt{B}
+  coefficient matrix for prediction (after cross validation only).
+\item \texttt{idx1se}: use the \texttt{idx1se} column of \texttt{B}
+  for prediction (after cross validation only).
+\item A scalar value between 1 and the number of $\lambda$ values, to
+  select a specific column from \texttt{B}.
+\item A row vector to select multiple columns from
+  \texttt{B}.\label{p:sel}
+\item The keyword \texttt{all} to produce predictions from all columns of
+  \texttt{B}.\label{p:all}
+\end{enumerate}
+
+Note that if alternatives~\ref{p:sel} or \ref{p:all} are used, output
+takes the form of a matrix, even if estimation was by
+\texttt{regls}. The \texttt{mat2list()} built-in function can create a
+list of series from such a matrix if you want.
+
+You can generate predictions yourself using built-in functionality,
+such as the \texttt{lincomb()} function or matrix multiplication,
+applied to elements of the bundle obtained from estimation. But note
+that if \texttt{regls} or \texttt{mregls} performs standardization the
+first row of \texttt{B} will hold an estimated intercept for each
+$\lambda$. This does not match an entry in the regular list or matrix
+of regressors, \texttt{X}, but must be taken into account. For
+example, if you wish to predict manually using an arbitrary column,
+\texttt{j}, of \texttt{B} after \texttt{regls} you can do
 \begin{code}
 list All = const X
-series fitted = lincomb(All, lb.B[,j])
+series fitted = lincomb(All, b.B[,j])
 \end{code}
-After \texttt{mregls} you might do instead
-\begin{code}
-matrix fitted = (1 ~ X) * lb.B[,j]
-\end{code}
-or if you prefer
-\begin{code}
-matrix fitted = X*lb.B[2:,j] + lb.B[1,j]
-\end{code}
+This sort of thing is handled automatically by the specialized
+prediction functions described above.
 
 \section{Execution speed}
 \label{sec:speed}
@@ -770,7 +789,7 @@ void regls_coeff_plot (const bundle b, const matrix sel[null])
   Produces a plot showing the paths of coefficient estimates as the
   LASSO or Ridge constraint is progressively relaxed. The bundle
   argument should be obtained via \texttt{regls} estimation with
-  several \texttt{lfrac} values, as in Section~\ref{sec:simple-search}
+  multiple \texttt{lfrac} values, as in Section~\ref{sec:simple-search}
   or \ref{sec:xvalid} above. The optional second argument allows you
   to pass in a selection vector to limit the number of paths shown
   (the default being to show all). For example, a matrix constructed
@@ -785,17 +804,30 @@ void regls_coeff_plot (const bundle b, const matrix sel[null])
 
 \begin{funcdoc}
 \begin{verbatim}
+void regls_criterion_plot (const bundle b)
+\end{verbatim}
+  Produces a plot showing the path of the penalized fit criterion (BIC
+  if cross validation is not performed, otherwise the MSE obtained via
+  cross validation) as the LASSO or Ridge constraint is progressively
+  relaxed. The bundle argument should be obtained via \texttt{regls}
+  estimation with multiple \texttt{lfrac} values, as in
+  Section~\ref{sec:simple-search} or \ref{sec:xvalid} above.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
 numeric regls_pred (const bundle b, const list X)
 \end{verbatim}
   A convenience function for producing predicted values. The bundle
   argument should be obtained via \texttt{regls}. The argument
   \texttt{X} must be the same list of series that was passed to
   \texttt{regls} (although of course the sample range may differ), and
-  the return value is a series. This function automatically handles
-  the presence or absence of an estimated intercept, as well as
-  selection of a specific coefficient vector when estimation has been
-  performed for multiple values of the regularization parameter.  See
-  also \texttt{mregls\_pred} below.
+  the return value is by default a series. This function automatically
+  handles the presence or absence of an estimated intercept, as well
+  as selection of a specific coefficient vector when estimation has
+  been performed for multiple values of the regularization parameter.
+  See also \texttt{mregls\_pred} below. See Section~\ref{sec:predict}
+  for details.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -818,12 +850,13 @@ matrix mregls_pred (const bundle b, const matrix X)
 \end{verbatim}
   Companion to \texttt{regls\_pred}, for a bundle obtained via
   \texttt{mregls}. The matrix \texttt{X} must have the same number of
-  columns as that passed to \texttt{mregls}. The return value is a
-  column vector of length equal to the row dimension of \texttt{X}.
-  This function automatically handles the presence or absence of an
-  estimated intercept, as well as selection of a specific coefficient
-  vector when estimation has been performed for multiple values of the
-  regularization parameter.
+  columns as that passed to \texttt{mregls}. The return value is by
+  default a column vector of length equal to the row dimension of
+  \texttt{X}.  This function automatically handles the presence or
+  absence of an estimated intercept, as well as selection of a
+  specific coefficient vector when estimation has been performed for
+  multiple values of the regularization parameter. See
+  Section~\ref{sec:predict} for details.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -894,14 +927,14 @@ printf "Sample range %d to %d\n", $t1, $t2
 
 bundle parms = _(nlambda = 8, verbosity = 0)
 
-bundle lb1 = regls(murdPerPop, X, parms)
+bundle b1 = regls(murdPerPop, X, parms)
 printf "\ngretl (ADMM):\n"
-regls_multiprint(lb1, murdPerPop, X)
+regls_multiprint(b1, murdPerPop, X)
 
 parms.ccd = 1
-bundle lb2 = regls(murdPerPop, X, parms)
+bundle b2 = regls(murdPerPop, X, parms)
 printf "\ngretl (CCD):\n"
-regls_multiprint(lb2, murdPerPop, X)
+regls_multiprint(b2, murdPerPop, X)
 
 # STOP here if R + glmnet is not available
 # quit
@@ -923,7 +956,7 @@ end foreign
 matrix Rb = mread("Rb.mat", 1)
 matrix Rlam = mread("Rlam.mat", 1)
 printf "\nglmnet:\n"
-glmnet_multiprint(Rb, Rlam, lb2, murdPerPop, X)
+glmnet_multiprint(Rb, Rlam, b2, murdPerPop, X)
 \end{scode}
 \end{script}
 
@@ -1455,11 +1488,11 @@ loop i=1..K --quiet
    dataset sortby sorter
 
    smpl 1 1200 # training data
-   bundle lb = regls(murdPerPop, X, parms)
+   bundle b = regls(murdPerPop, X, parms)
    matrix Rb = R.lasso_R({X}, {murdPerPop}, foldvec, 50)
 
    smpl 1201 1400 # testing data
-   series pred = lincomb(lb.nzX, lb.nzb)
+   series pred = lincomb(b.nzX, b.nzb)
    m = regls_get_stats(murdPerPop, pred)
    OSR2[i,1] = m[2]
    series Rpred = lincomb(X0, Rb)

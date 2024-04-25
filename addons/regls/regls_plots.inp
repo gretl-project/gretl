@@ -75,6 +75,9 @@ end function
 
 function void regls_coeff_plot (const bundle b, const matrix sel[null])
    matrix B = b.B
+   if cols(B) == 1
+      funcerr "Must have more than one lambda value"
+   endif
    strings colheads = rnameget(B)
    if exists(sel)
       colheads = colheads[sel]
@@ -102,9 +105,24 @@ function void regls_coeff_plot (const bundle b, const matrix sel[null])
    end plot --output=display
 end function
 
-function void regls_bundle_plot (const bundle *b, int unused[0],
+function void regls_criterion_plot (const bundle b)
+   if cols(b.B) == 1
+      funcerr "Must have more than one lambda value"
+   elif inbundle(b, "xvalidate")
+      regls_mse_plot(b)
+   else
+      regls_bic_plot(b)
+   endif
+end function
+
+function void regls_bundle_plot (const bundle *b,
+                                 int ptype[0:1:0] {"Criterion plot", "Coefficient paths"},
                                  const matrix sel[null])
-   regls_coeff_plot(b, sel)
+   if ptype == 0
+      regls_criterion_plot(b)
+   else
+      regls_coeff_plot(b, sel)
+   endif
 end function
 
 function matrix regls_plot_check (const bundle b)

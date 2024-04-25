@@ -132,6 +132,51 @@ function void glmnet_multiprint (const matrix RB, const matrix Rlam,
    regls_multiprint(tmp, y, X)
 end function
 
+# private: get a prediction preference, if present.
+# return a scalar index into B directly, or a
+# selection row vector via the pointer argument.
+
+function scalar get_pred_preference (const bundle b,
+                                     matrix *pvec)
+   scalar maxidx = cols(b.B)
+   scalar idx
+
+   if typeof(b.pred) == 1
+      idx = b.pred
+      if idx == b.idxmin && b.use_1se == 0
+         return 0 # the default prediction works
+      elif idx == b.idx1se && b.use_1se
+         return 0 # ditto
+      elif idx < 1 || idx > maxidx
+         funcerr "out-of-bounds prediction preference"
+      else
+         return idx
+      endif
+   elif typeof(b.pred) == 3
+      matrix v = b.pred
+      if rows(v) > 1
+         funcerr "prediction selection must be row vector"
+      elif maxr(v) > maxidx || minr(v) < 1
+         funcerr "out-of-bounds prediction preference"
+      elif nelem(v) == 1
+         idx = v[1]
+         return idx
+      else
+         pvec = v
+      endif
+   elif typeof(b.pred) == 4
+      if b.pred == "all"
+         return -1
+      else
+         funcerr "invalid prediction preference"
+      endif
+   else
+      funcerr "invalid type for prediction preference"
+   endif
+
+   return 0
+end function
+
 # compute predictions/fitted values: series/list variant
 
 function numeric regls_pred (const bundle rb, const list X)
@@ -143,7 +188,37 @@ function numeric regls_pred (const bundle rb, const list X)
    elif !inbundle(rb, "nzX")
       funcerr "nzX is missing from the bundle argument"
    endif
+   
+   scalar idx = 0
+   matrix selvec = {}
+   if inbundle(rb, "pred")
+      idx = get_pred_preference(rb, &selvec)
+   endif
 
+   # handle various non-default cases
+   if idx == -1 || nelem(selvec) > 0
+      # multiple predictions
+      set skip_missing off
+      matrix P
+      matrix MX = rb.stdize ? 1 ~ {X} : {X}
+      if idx == -1 # "all"
+         P = MX * rb.B
+      else 
+         P = MX * rb.B[,selvec]
+      endif
+      return P
+   elif idx > 0
+      # single non-standard prediction
+      if rb.stdize
+         list All = const X
+         yhat = lincomb(All, rb.B[,idx])
+      else
+         yhat = lincomb(X, rb.B[,idx])
+      endif
+      return yhat
+   endif
+
+   # use nzb and nzX
    if nelem(rb.nzb) == 0
       # unlikely but possible
       series yhat = 0
@@ -168,8 +243,27 @@ function matrix mregls_pred (const bundle rb, const matrix X)
    elif !inbundle(rb, "nzX")
       funcerr "nzX is missing from the bundle argument"
    endif
-
+   
+   scalar idx = 0
+   matrix selvec = {}
+   if inbundle(rb, "pred")
+      idx = get_pred_preference(rb, &selvec)
+   endif
+   
    matrix yhat
+   
+   # handle various non-default cases
+   if idx != 0 || nelem(selvec) > 0
+      matrix MX = rb.stdize ? 1 ~ X : X
+      if idx == -1 # "all"
+         yhat = MX * rb.B
+      elif nelem(selvec) > 0
+         yhat = MX * rb.B[,selvec]
+      else
+         yhat = MX * rb.B[,idx]
+      endif
+      return yhat
+   endif   
 
    if nelem(rb.nzb) == 0
       # unlikely but possible

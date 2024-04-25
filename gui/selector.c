@@ -142,8 +142,7 @@ enum {
     REGLS_LAMVAL,
     REGLS_NLAM,
     REGLS_NFOLDS,
-    REGLS_FTYPE,
-    REGLS_PLOT
+    REGLS_FTYPE
 };
 
 #define EXTRA_LAGS (N_EXTRA - 1)
@@ -3587,11 +3586,6 @@ static void read_regls_extras (selector *sr)
         xvalidate = 1;
     }
 
-    if (gtk_widget_is_sensitive(sr->extra[REGLS_PLOT]) &&
-        button_is_active(sr->extra[REGLS_PLOT])) {
-        gretl_bundle_set_int(rb, "crit_plot", 1);
-    }
-
     if (regls_adv != NULL) {
         regls_transcribe_advanced(rb, regls_adv, xvalidate, eid);
     }
@@ -6639,9 +6633,9 @@ static void build_regls_controls (selector *sr)
 {
     GtkWidget *w, *hbox, *b1, *b2, *b3;
     int nlambda, xvalidate, nfolds, randfolds;
-    int eid, crit_plot;
     double lfrac, alpha;
     GSList *group;
+    int eid;
 
     if (regls_bundle == NULL) {
         regls_bundle = gretl_bundle_new();
@@ -6652,7 +6646,6 @@ static void build_regls_controls (selector *sr)
     xvalidate = regls_int_default("xvalidate");
     nfolds    = regls_int_default("nfolds");
     randfolds = regls_int_default("randfolds");
-    crit_plot = regls_int_default("crit_plot");
 
     lfrac = regls_scalar_default("lfrac");
     alpha = regls_scalar_default("alpha");
@@ -6712,16 +6705,6 @@ static void build_regls_controls (selector *sr)
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
     gtk_widget_set_sensitive(hbox, xvalidate);
     sensitize_conditional_on(hbox, b3);
-
-    /* optional plot */
-    hbox = gtk_hbox_new(FALSE, 5);
-    w = gtk_check_button_new_with_label(_("Show criterion plot"));
-    sr->extra[REGLS_PLOT] = w;
-    gtk_widget_set_sensitive(w, xvalidate);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), xvalidate && crit_plot);
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-    sensitize_conditional_on(hbox, b2);
 
     /* note: b2 = multiple lambdas, b3 = xvalidate, w = plot */
     g_signal_connect(G_OBJECT(b2), "toggled",
