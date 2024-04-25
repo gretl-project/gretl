@@ -2487,11 +2487,9 @@ int gretl_array_qsort (gretl_array *a, const char *fname,
 
 /* end apparatus for sorting a gretl array via qsort */
 
-/* Check for equality between two arrays. Returns -1 if the comparison
-   cannot be made, which as of 2024-04-23 is the case if @a is an
-   array of bundles or an array of arrays. Otherwise returns 1 if the
-   two arrays are of the same type and length, and all their elements
-   (strings, matrices or lists) compare equal, else returns 0.
+/* Check for equality between two arrays. Returns 1 if the two arrays
+   are of the same type and length, and all their elements compare
+   equal, else returns 0.
 */
 
 int gretl_arrays_are_equal (const gretl_array *a,
@@ -2502,10 +2500,6 @@ int gretl_arrays_are_equal (const gretl_array *a,
 	return 1;
     } else if (a->type != b->type || a->n != b->n) {
 	return 0;
-    } else if (a->type == GRETL_TYPE_BUNDLES ||
-	       a->type == GRETL_TYPE_ARRAYS) {
-	*err = E_INVARG;
-	return -1;
     } else {
 	int i, eq, nulls;
 
@@ -2520,8 +2514,16 @@ int gretl_arrays_are_equal (const gretl_array *a,
 	    } else if (a->type == GRETL_TYPE_MATRICES) {
 		eq = gretl_matrices_are_equal(a->data[i], b->data[i], 0, err);
 		if (eq != 1) {
-		    /* could be 0 or invalid (-1) */
-		    return eq;
+		    /* could be 0 or non-conformable (-1) */
+		    return eq; /* or return 0? */
+		}
+	    } else if (a->type == GRETL_TYPE_BUNDLES) {
+		if (!gretl_bundles_are_equal(a->data[i], b->data[i])) {
+		    return 0;
+		}
+	    } else if (a->type == GRETL_TYPE_ARRAYS) {
+		if (!gretl_arrays_are_equal(a->data[i], b->data[i])) {
+		    return 0;
 		}
 	    } else if (a->type == GRETL_TYPE_LISTS) {
 		if (gretl_list_cmp(a->data[i], b->data[i])) {
