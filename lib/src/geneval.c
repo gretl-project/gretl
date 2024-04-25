@@ -7140,7 +7140,7 @@ static NODE *array_op (NODE *l, NODE *r, int f, parser *p)
             } else if (f == B_AND) {
                 ret->v.a = gretl_arrays_intersection(al, ar, &p->err);
 	    } else {
-		int eq = gretl_arrays_are_equal(al, ar, &p->err);
+		int eq = gretl_arrays_are_equal(al, ar);
 
 		ret->v.xval = (f == B_EQ)? eq : !eq;
 	    }

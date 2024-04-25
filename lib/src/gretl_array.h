@@ -200,8 +200,7 @@ int gretl_array_qsort (gretl_array *a, const char *fname,
 		       DATASET *set, PRN *prn);
 
 int gretl_arrays_are_equal (const gretl_array *a,
-			    const gretl_array *b,
-			    int *err);
+			    const gretl_array *b);
 
 int arglist_validate (gretl_array *keys, gretl_array *args);
 

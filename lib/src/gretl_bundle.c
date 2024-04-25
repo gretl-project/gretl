@@ -3573,7 +3573,7 @@ int gretl_bundles_are_equal (gretl_bundle *b1,
 		    ret = 0;
 		}
 	    } else if (t1 == GRETL_TYPE_ARRAY) {
-		if (!gretl_arrays_are_equal(v1, v2, &err)) {
+		if (!gretl_arrays_are_equal(v1, v2)) {
 		    ret = 0;
 		}
 	    } else {

@@ -2493,8 +2493,7 @@ int gretl_array_qsort (gretl_array *a, const char *fname,
 */
 
 int gretl_arrays_are_equal (const gretl_array *a,
-			    const gretl_array *b,
-			    int *err)
+			    const gretl_array *b)
 {
     if (a == b) {
 	return 1;
@@ -2502,6 +2501,7 @@ int gretl_arrays_are_equal (const gretl_array *a,
 	return 0;
     } else {
 	int i, eq, nulls;
+	int err = 0;
 
 	for (i=0; i<a->n; i++) {
 	    if (a->type == GRETL_TYPE_STRINGS) {
@@ -2512,7 +2512,7 @@ int gretl_arrays_are_equal (const gretl_array *a,
 		    return 0;
 		}
 	    } else if (a->type == GRETL_TYPE_MATRICES) {
-		eq = gretl_matrices_are_equal(a->data[i], b->data[i], 0, err);
+		eq = gretl_matrices_are_equal(a->data[i], b->data[i], 0, &err);
 		if (eq != 1) {
 		    /* could be 0 or non-conformable (-1) */
 		    return eq; /* or return 0? */
