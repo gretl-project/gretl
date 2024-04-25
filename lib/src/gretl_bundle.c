@@ -3518,6 +3518,91 @@ GList *gretl_bundle_get_sorted_items (gretl_bundle *b)
     return blist;
 }
 
+int gretl_bundles_are_equal (gretl_bundle *b1,
+			     gretl_bundle *b2)
+{
+    GList *k1 = g_hash_table_get_keys(b1->ht);
+    void *v1, *v2;
+    const char *s1;
+    GretlType t1, t2;
+    int sz1, sz2;
+    int err;
+    int ret = 1;
+
+    while (k1 != NULL && ret) {
+	s1 = k1->data;
+	v1 = gretl_bundle_get_data(b1, s1, &t1, &sz1, &err);
+	if (!gretl_bundle_has_key(b2, s1)) {
+	    ret = 0;
+	} else {
+	    v2 = gretl_bundle_get_data(b2, s1, &t2, &sz2, &err);
+	    if (t2 != t1 || sz1 != sz2) {
+		ret = 0;
+	    } else if (gretl_is_scalar_type(t1)) {
+		double d1 = gretl_bundle_get_scalar(b1, s1, NULL);
+		double d2 = gretl_bundle_get_scalar(b2, s1, NULL);
+		int nas = na(d1) + na(d2);
+
+		if (d1 != d2 && nas != 2) {
+		    ret = 0;
+		}
+	    } else if (t1 == GRETL_TYPE_SERIES) {
+		double *x1 = v1;
+		double *x2 = v2;
+		int i, nas;
+
+		for (i=0; i<sz1; i++) {
+		    nas = na(x1[i]) + na(x2[i]);
+		    if (x1[i] != x2[i] && nas != 2) {
+			ret = 0;
+			break;
+		    }
+		}
+	    } else if (t1 == GRETL_TYPE_MATRIX) {
+		int eq = gretl_matrices_are_equal(v1, v2, 0, &err);
+
+		if (eq != 1) {
+		    ret = 0;
+		}
+	    } else if (t1 == GRETL_TYPE_STRING) {
+		if (strcmp(v1, v2)) {
+		    ret = 0;
+		}
+	    } else if (t1 == GRETL_TYPE_BUNDLE) {
+		if (!gretl_bundles_are_equal(v1, v2)) {
+		    ret = 0;
+		}
+	    } else if (t1 == GRETL_TYPE_ARRAY) {
+		if (!gretl_arrays_are_equal(v1, v2, &err)) {
+		    ret = 0;
+		}
+	    } else {
+		/* must be GRETL_TYPE_LIST */
+		if (gretl_list_cmp(v1, v2)) {
+		    ret = 0;
+		}
+	    }
+	}
+	k1 = k1->next;
+    }
+
+    if (ret) {
+	GList *k2 = g_hash_table_get_keys(b2->ht);
+
+	while (k2 != NULL && ret) {
+	    if (!gretl_bundle_has_key(b1, k2->data)) {
+		ret = 0;
+	    }
+	    k2 = k2->next;
+	}
+	g_list_free(k2);
+    }
+
+    g_list_free(k1);
+
+    return ret;
+}
+
 void gretl_bundle_cleanup (void)
 {
     if (sysinfo_bundle != NULL) {

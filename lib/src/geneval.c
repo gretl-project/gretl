@@ -7083,19 +7083,28 @@ static NODE *list_list_op (NODE *l, NODE *r, int f, parser *p)
 
 static NODE *bundle_op (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_bundle_node(p);
+    NODE *ret = NULL;
 
-    if (ret != NULL && starting(p)) {
+    if (starting(p)) {
         gretl_bundle *bl = l->v.b;
         gretl_bundle *br = r->v.b;
 
-        if (!p->err) {
-            if (f == B_ADD) {
-                ret->v.b = gretl_bundle_union(bl, br, &p->err);
-            } else {
-                p->err = E_TYPES;
-            }
-        }
+	if (f == B_ADD) {
+	    ret = aux_bundle_node(p);
+	} else if (f == B_EQ || f == B_NEQ) {
+	    ret = aux_scalar_node(p);
+	} else {
+	    p->err = E_TYPES;
+	}
+        if (!p->err && f == B_ADD) {
+	    ret->v.b = gretl_bundle_union(bl, br, &p->err);
+	} else if (!p->err) {
+	    int eq = gretl_bundles_are_equal(bl, br);
+
+	    ret->v.xval = (f == B_EQ)? eq : !eq;
+	}
+    } else {
+	ret = aux_any_node(p);
     }
 
     return ret;
@@ -7130,10 +7139,10 @@ static NODE *array_op (NODE *l, NODE *r, int f, parser *p)
                 ret->v.a = gretl_arrays_union(al, ar, &p->err);
             } else if (f == B_AND) {
                 ret->v.a = gretl_arrays_intersection(al, ar, &p->err);
-	    } else if (f == B_EQ) {
-		ret->v.xval = gretl_arrays_are_equal(al, ar, &p->err);
 	    } else {
-		ret->v.xval = !gretl_arrays_are_equal(al, ar, &p->err);
+		int eq = gretl_arrays_are_equal(al, ar, &p->err);
+
+		ret->v.xval = (f == B_EQ)? eq : !eq;
 	    }
         }
     } else {

@@ -262,6 +262,9 @@ int gretl_bundle_extract_args (gretl_bundle *defaults,
 
 GList *gretl_bundle_get_sorted_items (gretl_bundle *b);
 
+int gretl_bundles_are_equal (gretl_bundle *b1,
+			     gretl_bundle *b2);
+
 void gretl_bundle_cleanup (void);
 
 #endif /* GRETL_BUNDLE_H_ */
