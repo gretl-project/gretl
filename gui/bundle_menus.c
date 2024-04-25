@@ -446,8 +446,7 @@ static void bundle_plot_call (GtkAction *action, gpointer p)
     gretl_bundle *bundle = vwin->data;
     const gchar *aname = gtk_action_get_name(action);
 
-    exec_bundle_special_function(bundle, BUNDLE_PLOT,
-				 aname, vwin->main);
+    exec_bundle_special_function(bundle, BUNDLE_PLOT, aname, vwin->main);
 }
 
 static fnpkg *get_package_for_bundle (gretl_bundle *b)
@@ -512,7 +511,6 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin, int *insensitive)
 		*insensitive = 1;
 		S = NULL;
 	    }
-	    fprintf(stderr, "HERE 1\n");
 	}
 
 	if (S != NULL) {

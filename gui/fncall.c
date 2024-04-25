@@ -3149,7 +3149,7 @@ static int regls_plot_from_selector (selector *sr)
     fncall *fc = NULL;
     gretl_matrix *sel = NULL;
     int *list = NULL;
-    int zero = 0;
+    int one = 1;
     int err = 0;
 
     edata = selector_get_extra_data(sr);
@@ -3167,7 +3167,7 @@ static int regls_plot_from_selector (selector *sr)
     }
     if (fc != NULL) {
 	push_anon_function_arg(fc, GRETL_TYPE_BUNDLE_REF, edata->b);
-	push_anon_function_arg(fc, GRETL_TYPE_INT, &zero);
+	push_anon_function_arg(fc, GRETL_TYPE_INT, &one);
 	push_anon_function_arg(fc, GRETL_TYPE_MATRIX, sel);
 	err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
 				  NULL, NULL);
@@ -3183,9 +3183,9 @@ static int regls_plot_from_selector (selector *sr)
     return err;
 }
 
-static int prepare_regls_plot_call (gretl_bundle *b,
-				    ufunc *func,
-                                    GtkWidget *parent)
+static int prepare_regls_coef_plot_call (gretl_bundle *b,
+					 ufunc *func,
+					 GtkWidget *parent)
 {
     gretl_matrix *B;
     int err = 0;
@@ -3219,10 +3219,10 @@ static int prepare_regls_plot_call (gretl_bundle *b,
     return err;
 }
 
-/* Execute a special-purpose function made available by the
-   package that produced bundle @b, possibly inflected by an
-   integer option. If an option is present it's packed into
-   @aname, following a colon.
+/* Execute a special-purpose function made available by the package
+   that produced bundle @b, possibly inflected by an integer
+   option. If an option is present it's packed into @aname, following
+   a colon.
 */
 
 int exec_bundle_special_function (gretl_bundle *b,
@@ -3267,8 +3267,9 @@ int exec_bundle_special_function (gretl_bundle *b,
 	return E_DATA;
     }
 
-    if (!strcmp(funname, "regls_bundle_plot")) {
-        return prepare_regls_plot_call(b, func, parent);
+    if (!strcmp(funname, "regls_bundle_plot") && iopt == 1) {
+	/* relevant only for the coefficient path option */
+        return prepare_regls_coef_plot_call(b, func, parent);
     }
 
     if (forecast) {

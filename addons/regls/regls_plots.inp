@@ -108,7 +108,7 @@ end function
 function void regls_criterion_plot (const bundle b)
    if cols(b.B) == 1
       funcerr "Must have more than one lambda value"
-   elif inbundle(b, "xvalidate")
+   elif inbundle(b, "xvalidate") && b.xvalidate
       regls_mse_plot(b)
    else
       regls_bic_plot(b)
