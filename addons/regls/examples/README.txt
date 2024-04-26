@@ -7,4 +7,5 @@ contain the following lines (or similar):
 # STOP here if R + glmnet is not available
 # quit
 
-You can uncomment the "quit" command to prevent an error.
+You should uncomment the "quit" command to prevent an error if you
+don't have R and glmnet installed.

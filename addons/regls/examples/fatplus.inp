@@ -23,7 +23,7 @@ summary ys --simple
 bundle parms = _(lfrac=0.35, stdize=0, verbosity=2)
 bundle b = regls(ys, LX, parms)
 eval b.nzb
-yh = lincomb(b.nzX, b.nzb)
+yh = regls_pred(b, LX)
 SSR = sum((ys - yh)^2)
 l1 = sum(abs(b.nzb))
 crit = 0.5*SSR + 0.35*l1
@@ -33,7 +33,7 @@ parms.ccd = 1
 parms.verbosity = 1
 bundle b = regls(ys, LX, parms)
 eval b.nzb
-yh = lincomb(b.nzX, b.nzb)
+yh = regls_pred(b, LX)
 SSR = sum((ys - yh)^2)
 l1 = sum(abs(b.nzb))
 crit = 0.5*SSR + 0.35*l1

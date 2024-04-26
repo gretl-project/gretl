@@ -19,7 +19,7 @@ bundle parms = _(nlambda=20, xvalidate=1, nfolds=10)
 
 set stopwatch
 bundle lb = regls(murdPerPop, X, parms)
-series pred = lincomb(lb.nzX, lb.nzb)
+series pred = regls_pred(lb, X)
 printf "time %.4fs\n", $stopwatch
 m = regls_get_stats(murdPerPop, pred)
 lambda = lb.lmax * lb.lfrac[lb.idxmin]
@@ -28,7 +28,7 @@ printf "lambda %#g, R^2 %.4f, df %d\n", lam_per, m[2], nelem(lb.nzb)
 
 # predict for the next 200 observations
 smpl 1001 1200
-series pred = lincomb(lb.nzX, lb.nzb)
+series pred = regls_pred(lb, X)
 m = regls_get_stats(murdPerPop, pred)
 printf "Out of sample R-squared %.4f\n\n", m[2]
 
@@ -40,7 +40,7 @@ parms.ccd = 1
 # parms.ccd_toler = 1.0e-9
 set stopwatch
 bundle lb = regls(murdPerPop, X, parms)
-series pred = lincomb(lb.nzX, lb.nzb)
+series pred = regls_pred(lb, X)
 printf "time %.4fs\n", $stopwatch
 m = regls_get_stats(murdPerPop, pred)
 lambda = lb.lmax * lb.lfrac[lb.idxmin]
@@ -49,7 +49,7 @@ printf "lambda %#g, R^2 %.4f, df %d\n", lam_per, m[2], nelem(lb.nzb)
 
 # predict for the next 200 observations
 smpl 1001 1200
-series pred = lincomb(lb.nzX, lb.nzb)
+series pred = regls_pred(lb, X)
 m = regls_get_stats(murdPerPop, pred)
 printf "Out of sample R-squared %.4f\n\n", m[2]
 
