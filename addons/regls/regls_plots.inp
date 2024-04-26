@@ -74,17 +74,20 @@ function void regls_bic_plot (const bundle b)
 end function
 
 function void regls_coeff_plot (const bundle b, const matrix sel[null])
-   matrix B = b.B
-   if cols(B) == 1
+   if cols(b.B) == 1
       funcerr "Must have more than one lambda value"
    endif
-   strings colheads = rnameget(B)
+   strings colheads = rnameget(b.B)
+   matrix B
+   if b.stdize
+      colheads = colheads[2:]
+      B = b.B[2:,]
+   else
+      matrix B = b.B
+   endif
    if exists(sel)
       colheads = colheads[sel]
       matrix B = B[sel,]
-   elif colheads[1] == "const"
-      colheads = colheads[2:]
-      matrix B = B[2:,]
    endif
    colheads += "lfrac"
    matrix Bs = B' ~ b.lfrac

@@ -1,3 +1,4 @@
+set verbose off
 include regls.gfn
 
 # cross validation with 10 randomized folds and 20 values
@@ -21,7 +22,7 @@ bundle lret = regls(murdPerPop, X, parms)
 
 # predict for the next 200 observations
 smpl 1001 1200
-series pred = lincomb(lret.nzX, lret.nzb)
+series pred = regls_pred(lret, X)
 m = regls_get_stats(murdPerPop, pred)
 printf "Out of sample R-squared %.4f\n\n", m[2]
 
