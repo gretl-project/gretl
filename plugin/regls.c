@@ -169,7 +169,8 @@ static int get_xvalidation_details (regls_info *ri)
     ri->nf = gretl_bundle_get_int(ri->b, "nfolds", &err);
     ri->randfolds = gretl_bundle_get_bool(ri->b, "randfolds", 0);
 
-    if (!err && ri->nf < 2) {
+    if (!err && (ri->nf < 2 || ri->nf > ri->n)) {
+	gretl_errmsg_set("Invalid number of folds for cross validation");
 	err = E_INVARG;
     }
 
@@ -2484,9 +2485,9 @@ static void prepare_xv_data (const gretl_matrix *X,
     }
 }
 
-/* Given @XVC holding criterion values per lambda (rows) and
-   per fold (columns), compose a matrix holding the means,
-   plus standard errors if wanted.
+/* Given @XVC holding criterion values per lambda (rows) and per fold
+   (columns), compose a matrix holding the means, plus standard errors
+   if wanted.
 */
 
 static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
@@ -2971,10 +2972,9 @@ int gretl_regls (gretl_matrix *X,
 
 #ifdef HAVE_MPI
 
-/* We come here if a parent process has called our
-   automatic local MPI routine for cross validation:
-   this function will be executed by all gretlmpi
-   instances.
+/* We come here if a parent process has called our automatic local MPI
+   routine for cross validation: this function will be executed by all
+   gretlmpi instances.
 */
 
 int regls_xv_mpi (PRN *prn)
