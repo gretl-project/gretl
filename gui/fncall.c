@@ -3143,11 +3143,9 @@ struct exec_data {
 
 static int regls_plot_from_selector (selector *sr)
 {
-
     const char *buf = selector_list(sr);
     struct exec_data *edata;
     fncall *fc = NULL;
-    gretl_matrix *sel = NULL;
     int *list = NULL;
     int one = 1;
     int err = 0;
@@ -3160,15 +3158,12 @@ static int regls_plot_from_selector (selector *sr)
 
     list = gretl_list_from_string(buf, &err);
     if (!err) {
-	sel = gretl_list_to_vector(list, &err);
-    }
-    if (!err) {
 	fc = fncall_new(edata->func, 0);
     }
     if (fc != NULL) {
 	push_anon_function_arg(fc, GRETL_TYPE_BUNDLE_REF, edata->b);
 	push_anon_function_arg(fc, GRETL_TYPE_INT, &one);
-	push_anon_function_arg(fc, GRETL_TYPE_MATRIX, sel);
+	push_anon_function_arg(fc, GRETL_TYPE_LIST, list);
 	err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
 				  NULL, NULL);
     }
@@ -3178,7 +3173,6 @@ static int regls_plot_from_selector (selector *sr)
     }
 
     free(list);
-    free(sel);
 
     return err;
 }
@@ -3191,8 +3185,8 @@ static int prepare_regls_coef_plot_call (gretl_bundle *b,
     int err = 0;
 
     B = gretl_bundle_get_matrix(b, "B", &err);
-
     if (!err && B->cols == 1) {
+	/* only a single lambda */
 	err = E_DATA;
     }
 
@@ -3204,7 +3198,7 @@ static int prepare_regls_coef_plot_call (gretl_bundle *b,
 	edata->func = func;
         /* select the coefficients to be plotted */
         sr = matrix_selection(REGLS_PLOTSEL,
-			      "gretl: regls coeffient plot",
+			      "gretl: regls coefficient plot",
 			      regls_plot_from_selector,
 			      parent, B, func);
 	if (sr == NULL) {

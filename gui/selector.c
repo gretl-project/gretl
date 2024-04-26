@@ -430,9 +430,19 @@ static void selector_set_blocking (selector *sr, int modal)
     gtk_main();
 }
 
-static int selection_at_max (selector *sr, int nsel)
+static int selection_at_max (selector *sr, GtkWidget *w, int nsel)
 {
-    return (TWO_VARS_CODE(sr->ci) && nsel == 2);
+    if (TWO_VARS_CODE(sr->ci) && nsel == 2) {
+	return 1;
+    } else {
+	int selmax = widget_get_int(w, "selmax");
+
+	if (selmax > 0 && nsel == selmax) {
+	    return 1;
+	}
+    }
+
+    return 0;
 }
 
 static int sr_get_lag_context (selector *sr, int locus)
@@ -2006,7 +2016,7 @@ static void real_add_generic (GtkTreeModel *srcmodel,
 
         if (gtk_tree_model_get_iter_first(model, &iter)) {
             do {
-                if (i == 0 && selection_at_max(sr, ++nvars)) {
+                if (i == 0 && selection_at_max(sr, w, ++nvars)) {
                     at_max = 1;
                 }
                 if (!at_max && !already_there) {

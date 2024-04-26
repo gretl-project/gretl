@@ -73,7 +73,17 @@ function void regls_bic_plot (const bundle b)
    end plot --output=display
 end function
 
-function void regls_coeff_plot (const bundle b, const matrix sel[null])
+function matrix regls_list2sel (const list X, const list L)
+   matrix m1 = X # will not include const
+   matrix m2 = L # may include const
+   if m2[1] == 0
+      m2 = m2[2:]
+   endif
+   n1 = nelem(m1)
+   return selifc(seq(1,n1), contains(m1,m2))
+end function
+
+function void real_regls_coeff_plot (const bundle b, const matrix sel[null])
    if cols(b.B) == 1
       funcerr "Must have more than one lambda value"
    endif
@@ -108,6 +118,19 @@ function void regls_coeff_plot (const bundle b, const matrix sel[null])
    end plot --output=display
 end function
 
+function void regls_coeff_plot (const bundle b, const list L[null])
+   if exists(L) && nelem(L) > 0
+      matrix sel = regls_list2sel(b.xlist, L)
+      real_regls_coeff_plot(b, sel)
+   else
+      real_regls_coeff_plot(b)
+   endif
+end function
+
+function void mregls_coeff_plot (const bundle b, const matrix sel[null])
+   real_regls_coeff_plot(b, sel)
+end function
+
 function void regls_criterion_plot (const bundle b)
    if cols(b.B) == 1
       funcerr "Must have more than one lambda value"
@@ -120,11 +143,18 @@ end function
 
 function void regls_bundle_plot (const bundle *b,
                                  int ptype[0:1:0] {"Criterion plot", "Coefficient paths"},
-                                 const matrix sel[null])
+                                 list sub[null])
+   # for GUI use only, so for regls, not mregls
    if ptype == 0
       regls_criterion_plot(b)
    else
-      regls_coeff_plot(b, sel)
+      if (exists(sub) && nelem(sub) > 0 && nelem(sub) < 26)
+         regls_coeff_plot(b, sub)
+      else
+         # try not to show more than 25 paths
+         sel = regls_list2sel(b.xlist, b.nzX)
+         real_regls_coeff_plot(b, sel)
+      endif
    endif
 end function
 
