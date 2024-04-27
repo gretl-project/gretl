@@ -50,7 +50,7 @@
 #include <errno.h>
 
 #define GPDEBUG 0
-#define WINDEBUG 1
+#define WINDEBUG 0
 #define POINTS_DEBUG 0
 #define COLLDEBUG 0
 #define LT_DEBUG 0
@@ -6098,7 +6098,6 @@ void display_session_graph (const char *fname,
 			    const char *title,
 			    void *session_ptr)
 {
-    const char *gppath = gretl_gnuplot_path();
     gchar *fullname = NULL;
     int err = 0;
 
@@ -6111,7 +6110,7 @@ void display_session_graph (const char *fname,
 #if WINDEBUG
     fprintf(stderr, "display_session_graph:\n fullname = '%s'\n",
 	    fullname);
-    fprintf(stderr, " gnuplot path = '%s'\n", gppath);
+    fprintf(stderr, " gnuplot path = '%s'\n", gretl_gnuplot_path());
     fprintf(stderr, " call add_png_term_to_plot\n");
 #endif
 

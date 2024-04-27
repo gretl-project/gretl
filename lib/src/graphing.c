@@ -4468,7 +4468,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	goto bailout;
     }
 
-#if 1
+#if 0
     fprintf(stderr, "After open_plot_input_file, this_term_type = %d\n",
 	    this_term_type);
 #endif
