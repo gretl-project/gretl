@@ -66,9 +66,9 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
 			    GtkWidget *parent, gpointer data);
 
 selector *
-matrix_selection (int ci, const char *title, int (*callback)(),
-		  GtkWidget *parent, const gretl_matrix *m,
-		  void *data);
+sublist_selection (int ci, const char *title, int (*callback)(),
+		   GtkWidget *parent, const int *list,
+		   const int *presel, void *data);
 
 void modelspec_dialog (int ci);
 
@@ -91,8 +91,6 @@ const char *selector_list (const selector *sr);
 int selector_list_hasconst (const selector *sr);
 
 gpointer selector_get_data (const selector *sr);
-
-void selector_set_extra_data (selector *sr, void *data);
 
 gpointer selector_get_extra_data (const selector *sr);
 

@@ -3136,7 +3136,7 @@ static int real_exec_bundle_function (gretl_bundle *b,
     return err;
 }
 
-struct exec_data {
+struct plot_data {
     gretl_bundle *b;
     ufunc *func;
 };
@@ -3144,24 +3144,24 @@ struct exec_data {
 static int regls_plot_from_selector (selector *sr)
 {
     const char *buf = selector_list(sr);
-    struct exec_data *edata;
+    struct plot_data *pdata;
     fncall *fc = NULL;
     int *list = NULL;
     int one = 1;
     int err = 0;
 
-    edata = selector_get_extra_data(sr);
+    pdata = selector_get_data(sr);
 
-    if (buf == NULL || edata == NULL) {
+    if (buf == NULL || pdata == NULL) {
 	gui_errmsg(E_DATA);
     }
 
     list = gretl_list_from_string(buf, &err);
     if (!err) {
-	fc = fncall_new(edata->func, 0);
+	fc = fncall_new(pdata->func, 0);
     }
     if (fc != NULL) {
-	push_anon_function_arg(fc, GRETL_TYPE_BUNDLE_REF, edata->b);
+	push_anon_function_arg(fc, GRETL_TYPE_BUNDLE_REF, pdata->b);
 	push_anon_function_arg(fc, GRETL_TYPE_INT, &one);
 	push_anon_function_arg(fc, GRETL_TYPE_LIST, list);
 	err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
@@ -3182,6 +3182,9 @@ static int prepare_regls_coef_plot_call (gretl_bundle *b,
 					 GtkWidget *parent)
 {
     gretl_matrix *B;
+    int *xlist = NULL;
+    int *nzX = NULL;
+    int *presel = NULL;
     int err = 0;
 
     B = gretl_bundle_get_matrix(b, "B", &err);
@@ -3191,23 +3194,40 @@ static int prepare_regls_coef_plot_call (gretl_bundle *b,
     }
 
     if (!err) {
-	struct exec_data *edata = malloc(sizeof *edata);
+	xlist = gretl_bundle_get_list(b, "xlist", &err);
+	if (xlist != NULL && xlist[0] > 25) {
+	    nzX = gretl_bundle_get_list(b, "nzX", &err);
+	    if (nzX != NULL) {
+		if (nzX[1] == 0) {
+		    presel = gretl_list_copy(nzX);
+		    gretl_list_delete_at_pos(presel, 1);
+		} else {
+		    presel = nzX;
+		}
+	    }
+	}
+    }
+
+    if (!err) {
+	struct plot_data *pdata = malloc(sizeof *pdata);
 	selector *sr;
 
-	edata->b = b;
-	edata->func = func;
+	pdata->b = b;
+	pdata->func = func;
         /* select the coefficients to be plotted */
-        sr = matrix_selection(REGLS_PLOTSEL,
-			      "gretl: regls coefficient plot",
-			      regls_plot_from_selector,
-			      parent, B, func);
+        sr = sublist_selection(REGLS_PLOTSEL,
+			       "gretl: regls coefficient plot",
+			       regls_plot_from_selector, parent,
+			       xlist, presel, pdata);
 	if (sr == NULL) {
 	    /* "can't happen" */
-	    free(edata);
+	    free(pdata);
 	    err = E_DATA;
-	} else {
-	    selector_set_extra_data(sr, edata);
 	}
+    }
+
+    if (presel != nzX) {
+	free(presel);
     }
 
     return err;

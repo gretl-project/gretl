@@ -434,7 +434,7 @@ static int selection_at_max (selector *sr, GtkWidget *w, int nsel)
 {
     if (TWO_VARS_CODE(sr->ci) && nsel == 2) {
 	return 1;
-    } else {
+    } else if (w != NULL) {
 	int selmax = widget_get_int(w, "selmax");
 
 	if (selmax > 0 && nsel == selmax) {
@@ -2053,7 +2053,7 @@ static void real_add_generic (GtkTreeModel *srcmodel,
                 varlist_insert_var_full(v, model, &iter, sr, locus);
             }
 
-            if (selection_at_max(sr, ++nvars)) {
+            if (selection_at_max(sr, w, ++nvars)) {
                 at_max = 1;
             }
         }
@@ -2294,7 +2294,7 @@ static void remove_from_right (GtkWidget *w, selector *sr,
 
     if (sr->add_button != NULL &&
         !gtk_widget_is_sensitive(sr->add_button) &&
-        !selection_at_max(sr, nrows)) {
+        !selection_at_max(sr, w, nrows)) {
         gtk_widget_set_sensitive(sr->add_button, TRUE);
     }
 
@@ -2741,7 +2741,8 @@ static void clear_vars (GtkWidget *w, selector *sr)
         }
     }
 
-    if (MODEL_CODE(sr->ci) && sr->ci != ARMA && sr->ci != GARCH) {
+    if (MODEL_CODE(sr->ci) && sr->ci != ARMA &&
+	sr->ci != GARCH && sr->ci != REGLS) {
         /* insert default const in regressors box */
         varlist_insert_const(sr->rvars1);
     }
@@ -7411,7 +7412,8 @@ static int list_show_var (selector *sr, int v, int show_lags,
 
     if (v == 0 && (ci == DEFINE_LIST || ci == DEFINE_MATRIX)) {
         ;
-    } else if (v == 0 && (!MODEL_CODE(ci) || ci == ARMA || ci == GARCH)) {
+    } else if (v == 0 && (!MODEL_CODE(ci) || ci == ARMA ||
+			  ci == GARCH || ci == REGLS)) {
         ret = 0;
     } else if (v == 0 && (ci == LOESS || ci == NADARWAT)) {
         ret = 0;
@@ -7597,7 +7599,8 @@ static void primary_rhs_varlist (selector *sr)
     gtk_tree_model_get_iter_first(mod, &iter);
 
     if (MODEL_CODE(sr->ci)) {
-        if (ARMA_RELATED(sr->ci) || sr->ci == GARCH || NONPARAM_CODE(sr->ci)) {
+        if (ARMA_RELATED(sr->ci) || sr->ci == GARCH ||
+	    sr->ci == REGLS || NONPARAM_CODE(sr->ci)) {
             ; /* skip */
         } else if (xlist == NULL || has_0(xlist)) {
             /* stick the constant in by default */
@@ -7936,7 +7939,7 @@ static char *simple_sel_label (int ci)
     case DEFINE_LIST:
         return N_("Define named list");
     case REGLS_PLOTSEL:
-	return N_("Select coefficients to track");
+	return N_("Select coefficients to track (max 25)");
     default:
         return NULL;
     }
@@ -8444,36 +8447,18 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     return sr;
 }
 
-static void list_append_named_row (GtkListStore *store,
-				   GtkTreeIter *iterp,
-				   const char **names,
-				   int i)
-{
-    gtk_list_store_append(store, iterp);
-    gtk_list_store_set(store, iterp,
-                       COL_ID, i+1, /* 1-based */
-                       COL_LAG, 0,
-                       COL_NAME, names[i],
-                       -1);
-}
-
 selector *
-matrix_selection (int ci, const char *title, int (*callback)(),
-		  GtkWidget *parent, const gretl_matrix *m,
-		  void *data)
+sublist_selection (int ci, const char *title, int (*callback)(),
+		   GtkWidget *parent, const int *list,
+		   const int *presel, void *data)
 {
     GtkListStore *store;
     GtkTreeIter iter;
     GtkWidget *left_box, *right_box;
     GtkWidget *tmp;
     selector *sr;
-    const char **rownames;
+    int selmax = 0;
     int i;
-
-    rownames = gretl_matrix_get_rownames(m);
-    if (rownames == NULL) {
-	return NULL;
-    }
 
     sr = mymalloc(sizeof *sr);
     if (sr == NULL) {
@@ -8494,17 +8479,33 @@ matrix_selection (int ci, const char *title, int (*callback)(),
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    /* add rownames of @m to @left_box */
-    for (i=0; i<m->rows; i++) {
-	if (ci == REGLS_PLOTSEL && !strcmp(rownames[i], "const")) {
-	    continue;
-	}
-	list_append_named_row(store, &iter, rownames, i);
+    /* add @list to left-hand box */
+    for (i=1; i<=list[0]; i++) {
+	list_append_var_simple(store, &iter, list[i]);
 	sr->n_left += 1;
     }
 
+    /* specify right-hand_box */
     right_box = gtk_vbox_new(FALSE, 5);
     sr->rvars1 = var_list_box_new(GTK_BOX(right_box), sr, SR_RVARS1);
+    if (ci == REGLS_PLOTSEL) {
+	selmax = 25;
+	widget_set_int(sr->rvars1, "selmax", selmax);
+    }
+    if (presel != NULL) {
+	/* put some content into the right-hand box */
+	int n_right = 0;
+
+	store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars1)));
+	gtk_list_store_clear(store);
+	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+	for (i=1; i<=presel[0]; i++) {
+	    list_append_var_simple(store, &iter, presel[i]);
+	    if (++n_right == selmax) {
+		break;
+	    }
+	}
+    }
 
     /* put buttons into mid-section */
     push_pull_buttons(sr, add_to_rvars1_callback,
@@ -8916,11 +8917,6 @@ int selector_list_hasconst (const selector *sr)
 gpointer selector_get_data (const selector *sr)
 {
     return sr->data;
-}
-
-void selector_set_extra_data (selector *sr, void *data)
-{
-    sr->extra_data = data;
 }
 
 gpointer selector_get_extra_data (const selector *sr)
