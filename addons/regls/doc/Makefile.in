@@ -4,7 +4,7 @@ TEXDIR = $(topsrc)/doc/tex
 PKG = regls
 DOCDIR = $(topsrc)/addons/$(PKG)/doc
 FIGS = murder_kd3.pdf wine_kd3.pdf admm_ccd.pdf ccd_admm.pdf ccd_svd.pdf \
-  regls_gui.png regls_output.png mse_plot.png
+  regls_gui.png regls_output.png mse_plot.png coeff_plot.png
 
 SRCS = $(PKG).tex $(FIGS) gretl.sty gretl.bst gretl.bib
 

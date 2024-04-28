@@ -654,60 +654,61 @@ validation runs.
 
 You can access \texttt{regls} in the gretl GUI via the menu item
 \textsf{Model/Other linear models/Regularized least squares}. This
-brings up the dialog box shown in Figure~\ref{fig:regls-gui}. Multiple
-$\lambda$ values and cross validation are supported as shown. Clicking
-the \textsf{Advanced} button gives access to most of the additional
-options discussed above (e.g.\ choice of algorithm, seed for
-randomized cross-validation folds). 
+brings up the dialog box shown on the left in
+Figure~\ref{fig:regls-combo}. Multiple $\lambda$ values and cross
+validation are supported as shown. Clicking the \textsf{Advanced}
+button gives access to most of the additional options discussed above
+(e.g.\ choice of algorithm, seed for randomized cross-validation
+folds).
+
+\vspace{1ex}
 
 \begin{figure}[htbp]
-  \begin{center}
-  \includegraphics[scale=0.5]{regls_gui}
-  \caption{\texttt{regls} dialog}
-  \label{fig:regls-gui}
-  \end{center}
+  \centering
+  \begin{tabular}{cc}
+    \includegraphics[scale=0.5]{regls_gui} &
+    \includegraphics[scale=0.5]{regls_output}
+  \end{tabular}
+  \caption{\texttt{regls} dialog and output window (with Graph button circled)}
+  \label{fig:regls-combo}
 \end{figure}
 
-The window that appears on clicking \textsf{OK} in the \texttt{regls}
-dialog (Figure~\ref{fig:regls-window}) shows printed output and offers
-several options via the toolbar buttons. Most of these are generic and
-should be self-explanatory. Here we'll draw attention to the button
-circled in red, with tooltip ``Graph''. This is active only when
-estimation has been performed with multiple $\lambda$ values. In that
-case it calls up a menu with two items: ``Criterion plot'' and
+The window that appears on clicking \textsf{OK} in the dialog box (on
+the right in Figure~\ref{fig:regls-combo}) shows printed output and
+offers several options via the toolbar buttons.  Most of these are
+generic and should be self-explanatory. Here we'll draw attention to
+the button circled in red, with tooltip ``Graph''. This is active only
+when estimation has been performed with multiple $\lambda$ values. In
+that case it calls up a menu with two items: ``Criterion plot'' and
 ``Coefficient paths''. Each of these explores an aspect of the
 estimates as the regularization constraint is relaxed. In the first
 case it's the optimality criterion (MSE if cross validation is
 performed, BIC otherwise); in the second it's the paths of individual
 coefficients.  Examples are shown in Figures~\ref{fig:mse-plot} and
-FIXME.
-% \ref{fig:coeff-plot}
+\ref{fig:coeff-plot}.
 
 \begin{figure}[htbp]
-  \begin{center}
-  \includegraphics[scale=0.5]{regls_output}
-  \caption{\texttt{regls} output window, graph button circled}
-  \label{fig:regls-window}
-  \end{center}
-\end{figure}
-
-\begin{figure}[htbp]
-  \begin{center}
   \includegraphics[scale=0.6]{mse_plot}
   \caption{MSE plot}
   \label{fig:mse-plot}
-  \end{center}
 \end{figure}
 
-\textit{Forecast button}: TO BE ADDED.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.6]{coeff_plot}
+  \caption{Coefficient paths}
+  \label{fig:coeff-plot}
+\end{figure}
 
-% \begin{figure}[htbp]
-%   \begin{center}
-%   \includegraphics[scale=0.6]{coeff_plot}
-%   \caption{Coefficient paths}
-%   \label{fig:coeff-plot}
-%   \end{center}
-% \end{figure}
+To the right of the Graph button is a Forecast button (binoculars
+icon). If the sample was set prior to estimation so as to leave
+some trailing observations for testing, this can be used to produce
+out-of-sample forecast evaluation statistics, accompanied by an actual
+versus predicted plot. If no out-of-sample data are available you can
+still produce the evaluation statistics and plot for the within-sample
+fit. In each case the predicted values (which might be quite numerous)
+are not shown, but they can be retrieved via the bundle button in the
+window showing the statistics (FIXME Fig wanted).
 
 \clearpage
 
@@ -1371,7 +1372,7 @@ variants.\footnote{We truncated the plot on the left to focus on the
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[scale=0.9]{murder_kd3.pdf} 
+  \includegraphics[scale=0.9]{murder_kd3.pdf}
   \caption{Estimated densities for out of sample $R^2$, Dataset 1}
   \label{fig:dset1}
 \end{figure}
@@ -1390,7 +1391,7 @@ glmnet, regls ADMM & 21.6 & 0.942 \\
 regls CCD, regls ADMM & 8.4 & 0.996 \\
   \end{tabular}
   \caption{Paired-difference tests and correlations, out of sample $R^2$}
-  \label{tab:paired}  
+  \label{tab:paired}
 \end{center}
 \end{table}
 
@@ -1424,7 +1425,7 @@ maybe not large enough to be of practical importance.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[scale=0.9]{wine_kd3.pdf} 
+  \includegraphics[scale=0.9]{wine_kd3.pdf}
   \caption{Estimated densities for out of sample $R^2$, Dataset 2}
   \label{fig:dset2}
 \end{figure}
