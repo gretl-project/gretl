@@ -1705,6 +1705,19 @@ static int unhandled_label_spec (const char *s)
     }
 }
 
+static int unhandled_key_spec (const char *s)
+{
+    if (strstr(s, "enhanced")) {
+	return 1;
+    } else if (strstr(s, "outside") &&
+	       (strstr(s, "left") || strstr(s, "right") ||
+		strstr(s, "top") || strstr(s, "bottom"))) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 /* read a gnuplot source line specifying a text label */
 
 static int parse_label_line (GPT_SPEC *spec, const char *line,
@@ -1790,14 +1803,17 @@ static int parse_label_line (GPT_SPEC *spec, const char *line,
 
 /* read a gnuplot source line specifying an arrow */
 
-static int parse_arrow_line (GPT_SPEC *spec, const char *line)
+static int parse_arrow_line (GPT_SPEC *spec, const char *line,
+			     int *unhandled)
 {
     double x0, y0, x1, y1;
     char head[12] = {0};
     int n, err = 0;
 
-    /* Example:
-       set arrow from 2000,150 to 2000,500 nohead [ lt 0 ]
+    /* Examples:
+       (a) set arrow from 2000,150 to 2000,500 nohead [ lt 0 ]
+       (b) set arrow 1 from 0.1, graph 0 to 0.1, graph 1
+       (c) set arrow 1 as 1
     */
 
     gretl_push_c_numeric_locale();
@@ -1806,6 +1822,9 @@ static int parse_arrow_line (GPT_SPEC *spec, const char *line)
     gretl_pop_c_numeric_locale();
 
     if (n < 5) {
+	if (unhandled != NULL) {
+	    *unhandled = 1;
+	}
 	err = E_DATA;
     } else {
 	err = plotspec_add_arrow(spec);
@@ -2304,7 +2323,7 @@ static int parse_gp_set_line (GPT_SPEC *spec,
 	parse_label_line(spec, s, unhandled);
 	return 0;
     } else if (!strcmp(key, "arrow")) {
-	parse_arrow_line(spec, s);
+	parse_arrow_line(spec, s, unhandled);
 	return 0;
     }
 
@@ -2363,7 +2382,11 @@ static int parse_gp_set_line (GPT_SPEC *spec,
     } else if (!strcmp(key, "x2label")) {
 	spec->titles[4] = g_strdup(val);
     } else if (!strcmp(key, "key")) {
-	spec->keyspec = gp_keypos_from_name(val);
+	if (unhandled != NULL && unhandled_key_spec(val)) {
+	    *unhandled = 1;
+	} else {
+	    spec->keyspec = gp_keypos_from_name(val);
+	}
     } else if (!strcmp(key, "xtics") || !strcmp(key, "x2tics")) {
 	read_xtics_setting(spec, key, val);
     } else if (!strcmp(key, "mxtics")) {
@@ -3148,7 +3171,9 @@ static void get_heatmap_matrix (GPT_SPEC *spec, gchar *buf,
 /* Here we're seeing if we should "promote" literal plot lines to
    supplement or override "set" variables that are recognized by gretl
    and form part of @spec. If we don't do this the GUI plot editor may
-   be broken.
+   be broken. However, at the same time we have to be careful not to
+   break literal lines by mistakenly supposing they can be parlayed
+   into elements of @spec.
 */
 
 static void maybe_promote_literal_lines (GPT_SPEC *spec,

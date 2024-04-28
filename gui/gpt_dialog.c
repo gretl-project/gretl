@@ -862,7 +862,8 @@ static int validate_range (double *r)
     if (na(r[0]) || na(r[1])) {
 	r[0] = r[1] = NADBL;
 	err = 1;
-    } else if (r[1] <= r[0]) {
+    } else if (r[1] == r[0]) {
+	/* note: a range may be reversed! */
 	r[0] = r[1] = NADBL;
 	err = 1;
     }
