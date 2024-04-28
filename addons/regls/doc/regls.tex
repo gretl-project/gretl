@@ -670,45 +670,26 @@ randomized cross-validation folds).
 
 The window that appears on clicking \textsf{OK} in the \texttt{regls}
 dialog (Figure~\ref{fig:regls-window}) shows printed output and offers
-several options. Reading left to right along the toolbar at the top of
-the window, the buttons (identified here by their ``tooltip'' strings)
-do the following.
+several options via the toolbar buttons. Most of these are generic and
+should be self-explanatory. Here we'll draw attention to the button
+circled in red, with tooltip ``Graph''. This is active only when
+estimation has been performed with multiple $\lambda$ values. In that
+case it calls up a menu with two items: ``Criterion plot'' and
+``Coefficient paths''. Each of these explores an aspect of the
+estimates as the regularization constraint is relaxed. In the first
+case it's the optimality criterion (MSE if cross validation is
+performed, BIC otherwise); in the second it's the paths of individual
+coefficients.  Examples are shown in Figures~\ref{fig:mse-plot} and
+FIXME.
+% \ref{fig:coeff-plot}
 
 \begin{figure}[htbp]
   \begin{center}
   \includegraphics[scale=0.5]{regls_output}
-  \caption{\texttt{regls} output window}
+  \caption{\texttt{regls} output window, graph button circled}
   \label{fig:regls-window}
   \end{center}
 \end{figure}
-
-\begin{itemize}
-\item ``Save'': save either the window text or the regls bundle.
-\item ``Save bundle content'': enables saving of selected content of
-  the regls bundle.
-\item ``Print'': send the window content to a printer.
-\item ``Copy'': copy the window content, as plain text or RTF.
-\item ``Find'': search the window content.
-\item ``Graph'': produce either a criterion plot or a plot of
-  coefficient paths (see below for details). This item is active only
-  when estimation involves multiple $\lambda$ values.
-\item ``Forecast'': generate forecast information (see below for
-  details).
-\item ``Toggle split'': split the window content into two panes, or
-  return to a single pane.
-\end{itemize}
-
-\textit{Graph button}: This gives two options. The first is a plot
-showing the behavior of the minimand (MSE if cross validation is
-selected, BIC otherwise) as $\lambda$ is relaxed. An example is shown
-in Figure~\ref{fig:mse-plot}. The triangle indicates the MSE minimizer
-and the circle indicates the point favored by the ``one standard
-error'' criterion ($s^{\dagger}$, see Section~\ref{sec:xvalid}).
-% The second option shows the paths of coefficient estimates as
-% $\lambda$ is relaxed; an example is given in
-% Figure~\ref{fig:coeff-plot}.
-
-\textit{Forecast button}: TO BE ADDED.
 
 \begin{figure}[htbp]
   \begin{center}
@@ -717,6 +698,8 @@ error'' criterion ($s^{\dagger}$, see Section~\ref{sec:xvalid}).
   \label{fig:mse-plot}
   \end{center}
 \end{figure}
+
+\textit{Forecast button}: TO BE ADDED.
 
 % \begin{figure}[htbp]
 %   \begin{center}
