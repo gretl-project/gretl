@@ -1687,9 +1687,28 @@ static int line_starts_heredata (const char *line,
     return ret;
 }
 
+/* This recognizes the limitations of the GPT_LABEL struct (see
+   lib/src/plotspec.h). In principle that struct could be rejigged
+   to hold information on "level" (front/back), point type and point
+   size.
+*/
+
+static int unhandled_label_spec (const char *s)
+{
+    if (strstr(s, " front") || strstr(s, " back")) {
+	return 1;
+    } else if (strstr(s, " point") || strstr(s, " pt") ||
+	       strstr(s, "ps")) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 /* read a gnuplot source line specifying a text label */
 
-static int parse_label_line (GPT_SPEC *spec, const char *line)
+static int parse_label_line (GPT_SPEC *spec, const char *line,
+			     int *unhandled)
 {
     const char *p, *s;
     char *text = NULL;
@@ -1698,8 +1717,9 @@ static int parse_label_line (GPT_SPEC *spec, const char *line)
     int err = 0;
 
     /* Examples:
-       set label "this is a label" at 1998.26,937.557 left front
-       set label 'foobar' at 1500,350 left
+       (a) set label "this is a label" at 1998.26,937.557 left front
+       (b) set label 'foobar' at 1500,350 left
+       (c) set label "" at 0.0127,0.6308 front center point pt 8 ps 2
     */
 
     /* find first double or single quote */
@@ -1713,6 +1733,7 @@ static int parse_label_line (GPT_SPEC *spec, const char *line)
 	return 1;
     }
 
+    /* note: text shouldn't be NULL but it may be empty */
     text = gretl_quoted_string_strdup(p, &s);
     if (text == NULL) {
 	return 1;
@@ -1730,6 +1751,15 @@ static int parse_label_line (GPT_SPEC *spec, const char *line)
 	if (nc != 2) {
 	    err = E_DATA;
 	}
+    }
+
+    /* We need to watch out for case like (c) above, where the
+       specification exceeds what we're currently able to pack into
+       a GPT_LABEL struct in @spec.
+    */
+    if (!err && unhandled != NULL && unhandled_label_spec(p)) {
+	*unhandled = 1;
+	return 1;
     }
 
     if (!err) {
@@ -2271,7 +2301,7 @@ static int parse_gp_set_line (GPT_SPEC *spec,
 	spec->keyspec = GP_KEY_NONE;
 	return 0;
     } else if (!strcmp(key, "label")) {
-	parse_label_line(spec, s);
+	parse_label_line(spec, s, unhandled);
 	return 0;
     } else if (!strcmp(key, "arrow")) {
 	parse_arrow_line(spec, s);
@@ -3115,10 +3145,10 @@ static void get_heatmap_matrix (GPT_SPEC *spec, gchar *buf,
     }
 }
 
-/* Here we're seeing if we should "promote" literal plot
-   lines to supplement or override "set" variables that
-   are recognized by gretl and form part of @spec. If we
-   don't do this the GUI plot editor may be broken.
+/* Here we're seeing if we should "promote" literal plot lines to
+   supplement or override "set" variables that are recognized by gretl
+   and form part of @spec. If we don't do this the GUI plot editor may
+   be broken.
 */
 
 static void maybe_promote_literal_lines (GPT_SPEC *spec,

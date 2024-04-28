@@ -109,8 +109,8 @@ typedef enum {
 
 typedef struct {
     char text[PLOT_LABEL_TEXT_LEN + 1]; 
-    double pos[2];
-    int just;
+    double pos[2]; /* x,y position on plot */
+    guint8 just;   /* justification of text, see gp_just_codes */
 } GPT_LABEL;
 
 typedef enum {
@@ -166,7 +166,7 @@ struct GPT_SPEC_ {
     gretl_matrix *data;        /* data to plot */
     char **markers;            /* data-point markers (not always present) */
     int n_markers;             /* number of such markers */
-    GPT_LABEL *labels;         /* textual labels written onto graph */
+    GPT_LABEL *labels;         /* labels written onto graph */
     int n_labels;              /* number of the above */
     GPT_ARROW *arrows;         /* arrows drawn onto graph */
     int n_arrows;              /* number of the above */
