@@ -342,9 +342,6 @@ function void read_optional_params (const bundle parms,
    if inbundle(parms, "xvalidate")
       get_xvalidation_parms(&ret, parms)
    endif
-   if inbundle(parms, "crit_plot") == 1
-      ret.crit_plot = parms.crit_plot
-   endif
 end function
 
 function bundle regls_ret_init (bool matrix_input)
@@ -494,16 +491,6 @@ function bundle regls (series depvar, list indeps,
    regls_set_notes(&ret)
    if gui
       gui_add_commands(&ret, parms, yname, xname)
-   endif
-
-   if inbundle(ret, "crit_plot") && ret.crit_plot
-      if inbundle(ret, "XVC") == 3
-         regls_mse_plot(ret)
-      elif inbundle(ret, "BIC") == 3
-         regls_bic_plot(ret)
-      else
-         delete ret.crit_plot
-      endif
    endif
 
    return ret

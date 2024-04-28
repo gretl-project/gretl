@@ -3144,16 +3144,15 @@ struct plot_data {
 static int regls_plot_from_selector (selector *sr)
 {
     const char *buf = selector_list(sr);
-    struct plot_data *pdata;
+    struct plot_data *pdata = selector_get_data(sr);
     fncall *fc = NULL;
     int *list = NULL;
-    int one = 1;
     int err = 0;
 
-    pdata = selector_get_data(sr);
-
-    if (buf == NULL || pdata == NULL) {
-	gui_errmsg(E_DATA);
+    if (buf == NULL) {
+	errbox("No coefficients selected");
+	/* go back to selector */
+	return 1;
     }
 
     list = gretl_list_from_string(buf, &err);
@@ -3161,6 +3160,8 @@ static int regls_plot_from_selector (selector *sr)
 	fc = fncall_new(pdata->func, 0);
     }
     if (fc != NULL) {
+	int one = 1;
+
 	push_anon_function_arg(fc, GRETL_TYPE_BUNDLE_REF, pdata->b);
 	push_anon_function_arg(fc, GRETL_TYPE_INT, &one);
 	push_anon_function_arg(fc, GRETL_TYPE_LIST, list);
@@ -3172,9 +3173,12 @@ static int regls_plot_from_selector (selector *sr)
 	gui_errmsg(err);
     }
 
+    free(pdata);
     free(list);
 
-    return err;
+    /* return 0 so the selector closes */
+
+    return 0;
 }
 
 static int prepare_regls_coef_plot_call (gretl_bundle *b,

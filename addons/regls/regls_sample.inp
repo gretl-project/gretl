@@ -25,4 +25,3 @@ smpl 1001 1200
 series pred = regls_pred(lret, X)
 m = regls_get_stats(murdPerPop, pred)
 printf "Out of sample R-squared %.4f\n\n", m[2]
-

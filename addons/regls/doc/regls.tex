@@ -20,6 +20,10 @@
 
 \setlength{\parskip}{1ex}
 \setlength{\parindent}{0pt}
+\setcounter{secnumdepth}{1}
+\setcounter{tocdepth}{1}
+
+\renewcommand{\floatpagefraction}{.8}
 
 \newcommand{\startappendices}{%
 \newcounter{appcount}
@@ -36,7 +40,7 @@
 
 \title{\textsf{regls}: regularized least squares for gretl}
 \author{Allin Cottrell}
-\date{April 20, 2024}
+\date{April 27, 2024}
 
 \begin{document}
 \maketitle
@@ -349,6 +353,8 @@ performed, or that corresponding to either \texttt{idxmin} or
 was set in the parameter bundle passed to \texttt{regls} or
 \texttt{mregls}.
 
+\subsection{An example}
+
 Suppose, for example, that the available data comprise 1200
 observations, the first 1000 of which were used for training and 200
 of which remain for testing. And suppose that a bundle named
@@ -366,6 +372,8 @@ for the remainder of the observations via
 \begin{code}
 matrix yhat = mregls_pred(b, X[1001:,])
 \end{code}
+
+\subsection{Further options}
 
 Beyond the default behavior of the prediction functions, if multiple
 $\lambda$ values were used in estimation you can control the output by
@@ -390,6 +398,8 @@ Note that if alternatives~\ref{p:sel} or \ref{p:all} are used, output
 takes the form of a matrix, even if estimation was by
 \texttt{regls}. The \texttt{mat2list()} built-in function can create a
 list of series from such a matrix if you want.
+
+\subsection{Manual prediction}
 
 You can generate predictions yourself using built-in functionality,
 such as the \texttt{lincomb()} function or matrix multiplication,
@@ -658,21 +668,63 @@ randomized cross-validation folds).
   \end{center}
 \end{figure}
 
-The option \texttt{Show criterion plot} (available only if multiple
-$\lambda$s are specified) produces a plot showing the behavior of the
-minimand (MSE if cross validation is selected, BIC otherwise) as
-$\lambda$ is varied. An example of the MSE case can be found in
-Figure~\ref{fig:mse-plot}. The triangle indicates the MSE minimizer
-and the circle indicates the point favored by the ``one standard
-error'' criterion ($s^{\dagger}$, see Section~\ref{sec:xvalid}).
+The window that appears on clicking \textsf{OK} in the \texttt{regls}
+dialog (Figure~\ref{fig:regls-window}) shows printed output and offers
+several options. Reading left to right along the toolbar at the top of
+the window, the buttons (identified here by their ``tooltip'' strings)
+do the following.
 
 \begin{figure}[htbp]
   \begin{center}
-  \includegraphics[scale=0.5]{mse_plot}
-  \caption{MSE plot, invoked by ``Show criterion plot''}
+  \includegraphics[scale=0.5]{regls_output}
+  \caption{\texttt{regls} output window}
+  \label{fig:regls-window}
+  \end{center}
+\end{figure}
+
+\begin{itemize}
+\item ``Save'': save either the window text or the regls bundle.
+\item ``Save bundle content'': enables saving of selected content of
+  the regls bundle.
+\item ``Print'': send the window content to a printer.
+\item ``Copy'': copy the window content, as plain text or RTF.
+\item ``Find'': search the window content.
+\item ``Graph'': produce either a criterion plot or a plot of
+  coefficient paths (see below for details). This item is active only
+  when estimation involves multiple $\lambda$ values.
+\item ``Forecast'': generate forecast information (see below for
+  details).
+\item ``Toggle split'': split the window content into two panes, or
+  return to a single pane.
+\end{itemize}
+
+\textit{Graph button}: This gives two options. The first is a plot
+showing the behavior of the minimand (MSE if cross validation is
+selected, BIC otherwise) as $\lambda$ is relaxed. An example is shown
+in Figure~\ref{fig:mse-plot}. The triangle indicates the MSE minimizer
+and the circle indicates the point favored by the ``one standard
+error'' criterion ($s^{\dagger}$, see Section~\ref{sec:xvalid}).
+% The second option shows the paths of coefficient estimates as
+% $\lambda$ is relaxed; an example is given in
+% Figure~\ref{fig:coeff-plot}.
+
+\textit{Forecast button}: TO BE ADDED.
+
+\begin{figure}[htbp]
+  \begin{center}
+  \includegraphics[scale=0.6]{mse_plot}
+  \caption{MSE plot}
   \label{fig:mse-plot}
   \end{center}
 \end{figure}
+
+% \begin{figure}[htbp]
+%   \begin{center}
+%   \includegraphics[scale=0.6]{coeff_plot}
+%   \caption{Coefficient paths}
+%   \label{fig:coeff-plot}
+%   \end{center}
+% \end{figure}
 
 \clearpage
 
@@ -784,22 +836,18 @@ void regls_multiprint (const bundle b, const numeric y, const numeric X)
 
 \begin{funcdoc}
 \begin{verbatim}
-void regls_coeff_plot (const bundle b, const matrix sel[null])
+void regls_coeff_plot (const bundle b, const list L[null])
 \end{verbatim}
   Produces a plot showing the paths of coefficient estimates as the
-  LASSO or Ridge constraint is progressively relaxed. The bundle
+  regularization constraint is progressively relaxed. The bundle
   argument should be obtained via \texttt{regls} estimation with
-  multiple \texttt{lfrac} values, as in Section~\ref{sec:simple-search}
-  or \ref{sec:xvalid} above. The optional second argument allows you
-  to pass in a selection vector to limit the number of paths shown
-  (the default being to show all). For example, a matrix constructed
-  as follows
-\begin{code}
-   matrix sel = {5,10,15,20,30}
-\end{code}
-  would limit the plot to coefficients 5, 10, 15, 20 and 30. The
-  numbering of the coefficients is 1-based and the order is that of
-  the \texttt{X} list argument to \texttt{regls}.
+  multiple \texttt{lfrac} values, as in
+  Section~\ref{sec:simple-search} or \ref{sec:xvalid} above. The
+  optional list argument can be used to select for tracking a subset
+  of the \texttt{X} list argument to \texttt{regls}.  This is
+  recommended if the model includes a large number of independent
+  variables; the plot becomes unreadable if more than 20 or so
+  coefficients are shown. See also \texttt{mregls\_coeff\_plot} below.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -808,10 +856,10 @@ void regls_criterion_plot (const bundle b)
 \end{verbatim}
   Produces a plot showing the path of the penalized fit criterion (BIC
   if cross validation is not performed, otherwise the MSE obtained via
-  cross validation) as the LASSO or Ridge constraint is progressively
+  cross validation) as the regularization constraint is progressively
   relaxed. The bundle argument should be obtained via \texttt{regls}
-  estimation with multiple \texttt{lfrac} values, as in
-  Section~\ref{sec:simple-search} or \ref{sec:xvalid} above.
+  of \texttt{mregls} estimation with multiple \texttt{lfrac} values,
+  as in Section~\ref{sec:simple-search} or \ref{sec:xvalid} above.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -861,6 +909,18 @@ matrix mregls_pred (const bundle b, const matrix X)
 
 \begin{funcdoc}
 \begin{verbatim}
+void mregls_coeff_plot (const bundle b, const matrix sel[null])
+\end{verbatim}
+  Works just like \texttt{regls\_coeff\_plot} (see above) except that
+  this variant is for use after \texttt{mregls} estimation. The
+  optional selection of coefficients to be tracked works via a
+  selection (row) vector. The elements of this vector should be column
+  indices pertaining to the \texttt{X} matrix argument to
+  \texttt{mregls}.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
 series glmnet_pred (matrix *Rb, list X)
 \end{verbatim}
   Convenience function for handling results retrieved by gretl from
@@ -890,10 +950,10 @@ void glmnet_multiprint (const matrix RB, const matrix Rlam,
 \section{Change log}
 \label{sec:changes}
 
-2024-04-20: Add a prediction function, \texttt{mregls\_pred}, for use
-with \texttt{mregls}; fixes for the unlikely case where none of the
-candidate regressors are effective predictors of the dependent
-variable; expansion of the documentation with respect to prediction.\\[4pt]
+2024-04-27: Add specific prediction and plotting functions for use
+with \texttt{mregls}; implement fixes for the unlikely case where none
+of the candidate regressors are effective predictors of the dependent
+variable; expand and update the documentation.\\[4pt]
 2023-05-20: Add support for matrix input via the \texttt{mregls}
 function; simplify the signature of \texttt{regls\_multiprint};
 add function \texttt{glmnet\_multiprint}.\\[4pt]
@@ -974,7 +1034,7 @@ and speed of the Cyclical Coordinate Descent (CCD) algorithm as
 compared to the default algorithms in \textsf{regls}---ADMM for LASSO
 and SVD for Ridge.
 
-\subsection*{Design of experiments}
+\subsection{Design of experiments}
 
 The general design of our experiments is as follows. For some selected
 dataset and sample range we compute the values of the minimized
@@ -1008,7 +1068,7 @@ timer). We're aware that the results we show are liable to be data-
 and model-dependent and we offer some comments on this in the
 concluding section.
 
-\subsection*{Ridge: SVD and CCD}
+\subsection{Ridge: SVD and CCD}
 
 The Ridge problem has an analytical solution and \textsf{regls}
 implements this using Singular Value Decomposition, which is generally
@@ -1037,7 +1097,7 @@ be little point in reducing the CCD tolerance below $10^{-9}$.
 \end{center}
 \end{figure}
 
-\subsection*{LASSO: ADMM and CCD}
+\subsection{LASSO: ADMM and CCD}
 
 LASSO is trickier than Ridge in that there's no analytical solution to
 serve as a natural benchmark. In this case we take ADMM (at its
@@ -1108,7 +1168,7 @@ $(10^{-2}, 10^{-4})$ are conservative relative to CCD at tolerance
 $10^{-7}$ in the sense that they are likely to deliver results of
 equal accuracy to CCD or better.
 
-\subsection*{Conclusion}
+\subsection{Conclusion}
 
 The results shown above, from a single dataset, are obviously
 illustrative rather than definitive. On the strength of similar tests
@@ -1167,7 +1227,7 @@ tried to ensure that our results are very close to those from
 divergence. We comment below on reasons why results may differ in
 certain respects.
 
-\subsection*{Different conventions}
+\subsection{Different conventions}
 
 It should be noted that \textsf{regls} and \textsf{glmnet} employ
 different conventions in some respects. This does not affect the
@@ -1208,7 +1268,7 @@ $\hat{\sigma}_y$. The current sample range must be the same as for
 told \textit{not} to standardize the data then this term should be
 omitted as it is assumed to be 1.
 
-\subsection*{Cross validation methodologies}
+\subsection{Cross validation methodologies}
 
 There's a substantive difference between \textsf{regls} and
 \textsf{glmnet} in respect of cross validation. This applies even if
@@ -1227,7 +1287,7 @@ suppose the training data are divided into 10 folds, each comprising
 and computes a $\lambda$ sequence using the complementary 90 percent
 of the data.
 
-\subsection*{Extended test of cross validation}
+\subsection{Extended test of cross validation}
 
 The primary point of cross validation is to determine the value of a
 hyperparameter (for LASSO, $\lambda$) that is likely to give best
@@ -1299,7 +1359,7 @@ exactly the same and the relevant difference lies in the ``excess
 precision'' afforded by ADMM over CCD, at their respective default
 tolerances, as discussed in \ref{app:ccd}.
 
-%% \subsection*{Dataset 1}
+%% \subsection{Dataset 1}
 
 Statistics for out-of-sample $R^2$ from the Dataset 1 experiment are
 shown in Table~\ref{tab:dset1}. In this experiment \textsf{regls} CCD
@@ -1355,7 +1415,7 @@ From this point of view all the differences are strongly statistically
 significant, though the advantage of ADMM over CCD might not be
 considered of much practical importance.
 
-%% \subsection*{Dataset 2}
+%% \subsection{Dataset 2}
 
 Table~\ref{tab:dset2} shows out-of-sample $R^2$ statistics for Dataset
 2. Again ADMM has the highest mean and median, and regls CCD does
@@ -1386,7 +1446,7 @@ maybe not large enough to be of practical importance.
   \label{fig:dset2}
 \end{figure}
 
-\subsection*{Dataset heterogeneity}
+\subsection{Dataset heterogeneity}
 
 Can we account for the difference in results between Dataset 1 and
 Dataset 2 by reference to the relative heterogeneity of the data?
@@ -1420,7 +1480,7 @@ good deal more homogeneous than Dataset 1. This is consistent with the
 observation that differences in out-of-sample performance attributable
 to differences in the algorithms were much smaller for Dataset 2.
 
-\subsection*{Conclusion}
+\subsection{Conclusion}
 
 It's risky to conclude much on the strength of just two
 datasets---even when leveraged by randomization and subsetting. But it
@@ -1432,7 +1492,7 @@ ADMM at its default setting is helpful for out-of-sample prediction,
 though this effect is relatively small and may or may not be
 considered worthwhile.
 
-\subsection*{Example script}
+\subsection{Example script}
 
 An example script used with Dataset 1 is shown on the following page.
 This instance produces results for \textsf{regls} CCD and

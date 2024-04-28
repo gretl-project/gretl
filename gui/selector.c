@@ -6582,13 +6582,13 @@ static int regls_int_default (const char *key)
 {
     if (gretl_bundle_has_key(regls_bundle, key)) {
         return gretl_bundle_get_int(regls_bundle, key, NULL);
+    } else if (!strcmp(key, "multi")) {
+	return 1;
     } else if (!strcmp(key, "nlambda")) {
         return 25;
     } else if (!strcmp(key, "nfolds")) {
         return 10;
     } else if (!strcmp(key, "contiguous")) {
-        return 1;
-    } else if (!strcmp(key, "crit_plot")) {
         return 1;
     } else if (!strcmp(key, "eid")) {
         if (gretl_bundle_get_int(regls_bundle, "ridge", NULL)) {
@@ -6643,7 +6643,7 @@ static GtkWidget *cross_validation_options (selector *sr,
 static void build_regls_controls (selector *sr)
 {
     GtkWidget *w, *hbox, *b1, *b2, *b3;
-    int nlambda, xvalidate, nfolds, randfolds;
+    int multi, nlambda, xvalidate, nfolds, randfolds;
     double lfrac, alpha;
     GSList *group;
     int eid;
@@ -6653,6 +6653,7 @@ static void build_regls_controls (selector *sr)
     }
 
     eid       = regls_int_default("eid");
+    multi     = regls_int_default("multi");
     nlambda   = regls_int_default("nlambda");
     xvalidate = regls_int_default("xvalidate");
     nfolds    = regls_int_default("nfolds");
@@ -6698,9 +6699,9 @@ static void build_regls_controls (selector *sr)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Multiple λ values"));
     gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 5);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), xvalidate);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), multi);
     w = sr->extra[REGLS_NLAM] = multi_lambda_spinner(nlambda);
-    gtk_widget_set_sensitive(w, xvalidate);
+    gtk_widget_set_sensitive(w, multi);
     sensitize_conditional_on(w, b2);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
@@ -6717,11 +6718,9 @@ static void build_regls_controls (selector *sr)
     gtk_widget_set_sensitive(hbox, xvalidate);
     sensitize_conditional_on(hbox, b3);
 
-    /* note: b2 = multiple lambdas, b3 = xvalidate, w = plot */
+    /* note: b2 = multiple lambdas, b3 = xvalidate */
     g_signal_connect(G_OBJECT(b2), "toggled",
                      G_CALLBACK(xvalidation_ok), b3);
-    g_signal_connect(G_OBJECT(b2), "toggled",
-                     G_CALLBACK(xvalidation_ok), w);
 
     /* "advanced" controls */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -7349,7 +7348,7 @@ static void build_selector_buttons (selector *sr)
 
     if (sr->ci != PRINT && sr->ci != SUMMARY && !FNPKG_CODE(sr->ci) &&
         sr->ci != DEFINE_LIST && sr->ci != DEFINE_MATRIX &&
-        sr->ci != ELLIPSE && sr->ci != CHOW &&
+        sr->ci != ELLIPSE && sr->ci != CHOW && sr->ci != REGLS_PLOTSEL &&
         !SAVE_DATA_ACTION(sr->ci)) {
         /* add a Help button if appropriate */
         int ci = sr->ci;
