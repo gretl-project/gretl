@@ -1273,9 +1273,9 @@ static void win32_process_graph (png_plot *plot, int dest)
 static png_plot *copyplot;
 static gboolean cb_image_mono;
 
-/* Here we're just posting the information that an image
-   should be available for pasting (and also recording
-   if the user wanted it to be monochrome).
+/* Here we're just posting the information that an image should be
+   available for pasting (and also recording if the user wanted it to
+   be monochrome).
 */
 
 static void set_plot_for_copy (png_plot *plot)
@@ -1285,9 +1285,9 @@ static void set_plot_for_copy (png_plot *plot)
     flag_image_available();
 }
 
-/* Here we're responding to a request to paste the plot
-   advertised above; @target tells us which of the posted
-   formats the application has selected.
+/* Here we're responding to a request to paste the plot advertised
+   above; @target tells us which of the posted formats the application
+   has selected.
 */
 
 int write_plot_for_copy (int target)
