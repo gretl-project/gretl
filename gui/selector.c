@@ -6709,7 +6709,7 @@ static void build_regls_controls (selector *sr)
     /* cross validation */
     hbox = gtk_hbox_new(FALSE, 5);
     b3 = gtk_check_button_new_with_label(_("Optimize via cross-validation"));
-    gtk_widget_set_sensitive(b3, xvalidate);
+    gtk_widget_set_sensitive(b3, multi);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b3), xvalidate);
     gtk_box_pack_start(GTK_BOX(hbox), b3, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
