@@ -25,7 +25,7 @@ function void regls_fcast_plot (const series y, const series yhat,
    remove(tmpname)
 end function
 
-function void regls_mse_plot (const bundle b)
+function void regls_mse_plot (const bundle b, const string output)
    matrix M = b.XVC[,1] ~ b.lfrac
    matrix B = b.XVC
    scalar ymin = 0.95 * minc(b.XVC[,1] - b.XVC[,2])
@@ -47,10 +47,10 @@ function void regls_mse_plot (const bundle b)
       printf "set label \"\" at %g,%g %s", x0, y0, lspec0
       printf "set label \"\" at %g,%g %s", x1, y1, lspec1
       literal set title 'Mean cross-validation MSE with one-s.e. band'
-   end plot --output=display
+   end plot --output="@output"
 end function
 
-function void regls_bic_plot (const bundle b)
+function void regls_bic_plot (const bundle b, const string output)
    matrix M = b.BIC ~ b.lfrac
    scalar ymin = minc(b.BIC)
    scalar ymax = maxc(b.BIC)
@@ -70,7 +70,7 @@ function void regls_bic_plot (const bundle b)
       literal set logscale x
       printf "set label \"\" at %g,%g %s", x0, y0, lspec
       literal set title 'BIC as a function of s'
-   end plot --output=display
+   end plot --output="@output"
 end function
 
 function matrix regls_list2sel (const list X, const list L)
@@ -83,7 +83,9 @@ function matrix regls_list2sel (const list X, const list L)
    return selifc(seq(1,n1), contains(m1,m2))
 end function
 
-function void real_regls_coeff_plot (const bundle b, const matrix sel[null])
+function void real_regls_coeff_plot (const bundle b,
+                                     const matrix sel[null],
+                                     const string output)
    if cols(b.B) == 1
       funcerr "Must have more than one lambda value"
    endif
@@ -115,29 +117,38 @@ function void real_regls_coeff_plot (const bundle b, const matrix sel[null])
       printf "set arrow 1 from %g, graph 0 to %g, graph 1", x0, x0
       literal set arrow 1 as 1
       printf "set title '%s coefficients as a function of s'", est
-   end plot --output=display
+   end plot --output="@output"
 end function
 
-function void regls_coeff_plot (const bundle b, const list L[null])
+function void regls_coeff_plot (const bundle b,
+                                const list L[null],
+                                const string fname[null])
+   string output = exists(fname) ? fname : "display"
    if exists(L) && nelem(L) > 0
       matrix sel = regls_list2sel(b.xlist, L)
-      real_regls_coeff_plot(b, sel)
+      real_regls_coeff_plot(b, sel, output)
    else
-      real_regls_coeff_plot(b)
+      real_regls_coeff_plot(b, null, output)
    endif
 end function
 
-function void mregls_coeff_plot (const bundle b, const matrix sel[null])
-   real_regls_coeff_plot(b, sel)
+function void mregls_coeff_plot (const bundle b,
+                                 const matrix sel[null],
+                                 const string fname[null])
+   string output = exists(fname) ? fname : "display"
+   real_regls_coeff_plot(b, sel, output)
 end function
 
-function void regls_criterion_plot (const bundle b)
+function void regls_criterion_plot (const bundle b,
+                                    const string fname[null])
    if cols(b.B) == 1
       funcerr "Must have more than one lambda value"
-   elif inbundle(b, "xvalidate") && b.xvalidate
-      regls_mse_plot(b)
+   endif
+   string output = exists(fname) ? fname : "display"
+   if inbundle(b, "xvalidate") && b.xvalidate
+      regls_mse_plot(b, output)
    else
-      regls_bic_plot(b)
+      regls_bic_plot(b, output)
    endif
 end function
 

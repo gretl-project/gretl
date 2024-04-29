@@ -1,0 +1,41 @@
+clear --all
+set verbose off
+include regls.gfn
+
+/* Basic examples of LASSO usage (Listing 1 from the regls
+   documentation)
+*/
+
+# Use the supplied data on crime-rates by locality
+open murder.gdt --quiet --frompkg=regls
+
+# The dependent variable will be the murder rate, and we
+# select 101 candidate regressors with no missing values
+series y = murdPerPop
+list X = population..LemasPctOfficDrugUn
+
+# set training sample range
+smpl 1 1000
+
+# select a case to run
+CASE = 1 # or 2, or 3
+
+if CASE == 1
+   # single regularization
+   bundle b = regls(y, X, _(lfrac = 0.5))
+elif CASE == 2
+   # multiple lambdas, no cross validation
+   bundle b = regls(y, X, _(nlambda=50))
+else # CASE 3
+   # multiple lambdas with cross validation
+   bundle parms = _(nlambda=50, xvalidate=1, nfolds=10)
+   bundle b = regls(y, X, parms)
+endif
+
+# set testing sample range
+smpl 1001 1200
+
+# take a look at basic out-of-sample stats
+series yhat = regls_pred(b, X)
+matrix s = regls_get_stats(y, yhat)
+print s

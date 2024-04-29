@@ -40,7 +40,7 @@
 
 \title{\textsf{regls}: regularized least squares for gretl}
 \author{Allin Cottrell}
-\date{April 27, 2024}
+\date{April 29, 2024}
 
 \begin{document}
 \maketitle
@@ -120,9 +120,9 @@ $\lambda$, which may take either of two forms, as follows:
   automatically.
 \end{enumerate}
 If \texttt{nlambda} is provided instead of \texttt{lfrac}, the
-automatic $s$ vector is a logarithmically declining sequence starting
-at 1 and finishing at 0.0001. For example, given \texttt{nlambda} = 5
-the sequence will be $s$ = \{1, 0.1, 0.01, 0.001, 0.0001\}.
+automatic $s$ vector is a declining logarithmic sequence starting at 1
+and finishing at 0.0001. For example, given \texttt{nlambda} = 5 the
+sequence will be $s$ = \{1, 0.1, 0.01, 0.001, 0.0001\}.
 
 If neither \texttt{lfrac} nor \texttt{nlambda} is specified, the
 default is as if \texttt{nlambda} were given as 25.
@@ -169,7 +169,53 @@ returned by \texttt{regls}, are best explained by reference to the
 various modes of usage of the function, namely estimation with a
 single value of $\lambda$; exploration of a range of $\lambda$ values
 using a unified training sample; and (probably most relevant in
-practice) search for optimal $\lambda$ via cross validation.
+practice) search for optimal $\lambda$ via cross validation. For
+reference, the script in Listing~\ref{script:123} illustrates
+basic usage for each of these modes.
+
+\begin{script}[htbp]
+  \caption{Basic LASSO examples}
+  \label{script:123}
+\begin{scode}
+set verbose off
+clear --all
+include regls.gfn
+
+# Use the supplied data on crime-rates by locality
+open murder.gdt --quiet --frompkg=regls
+
+# The dependent variable will be the murder rate, and we
+# select 101 candidate regressors with no missing values
+series y = murdPerPop
+list X = population..LemasPctOfficDrugUn
+
+# set training sample range
+smpl 1 1000
+
+# select a case to run
+CASE = 1 # or 2, or 3
+
+if CASE == 1
+   # single regularization
+   bundle b = regls(y, X, _(lfrac = 0.5))
+elif CASE == 2
+   # multiple lambdas, no cross validation
+   bundle b = regls(y, X, _(nlambda=50))
+else
+   # multiple lambdas with cross validation
+   bundle parms = _(nlambda=50, xvalidate=1, nfolds=10)
+   bundle b = regls(y, X, parms)
+endif
+
+# set testing sample range
+smpl 1001 1200
+
+# take a look at basic out-of-sample stats
+series yhat = regls_pred(b, X)
+matrix s = regls_get_stats(y, yhat)
+print s
+\end{scode}
+\end{script}
 
 \section{Estimation with a single regularization}
 \label{sec:single-lambda}
@@ -479,7 +525,7 @@ observations.
 
 Note that it's necessary to run the scripts involving randomized cross
 validation several times to get a good idea of what's going on: in
-each case there seem to be a few ``favoured solutions'' of varying
+each case there seem to be a few ``favored solutions'' of varying
 probability. Sometimes one sees \textsf{regls} finding the better one,
 sometimes \textsf{glmnet}.
 
@@ -689,7 +735,8 @@ coefficients.  Examples are shown in Figures~\ref{fig:mse-plot} and
 
 \begin{figure}[htbp]
   \includegraphics[scale=0.6]{mse_plot}
-  \caption{MSE plot}
+  \caption{MSE plot: the triangle indicates the MSE minimizer and the
+    circle the ``within one standard error'' value.}
   \label{fig:mse-plot}
 \end{figure}
 
@@ -700,15 +747,34 @@ coefficients.  Examples are shown in Figures~\ref{fig:mse-plot} and
   \label{fig:coeff-plot}
 \end{figure}
 
-To the right of the Graph button is a Forecast button (binoculars
-icon). If the sample was set prior to estimation so as to leave
-some trailing observations for testing, this can be used to produce
+To the right of the (circled) Graph button in
+Figure~\ref{fig:regls-combo} is a Forecast button (binoculars
+icon). If the sample was set prior to estimation so as to leave some
+trailing observations for testing, this can be used to produce
 out-of-sample forecast evaluation statistics, accompanied by an actual
 versus predicted plot. If no out-of-sample data are available you can
 still produce the evaluation statistics and plot for the within-sample
-fit. In each case the predicted values (which might be quite numerous)
-are not shown, but they can be retrieved via the bundle button in the
-window showing the statistics (FIXME Fig wanted).
+fit.
+
+In each case the predicted values (which might be quite numerous) are
+not shown, but they can be retrieved via the bundle button in the
+window showing the statistics, as shown in
+Figure~\ref{fig:fcast-window}. Note that in the out-of-sample case
+saved predictions will not be visible via the main gretl window until
+you set the sample range to include them.
+
+%\vspace{1em}
+
+\begin{figure}[htbp]
+  \begin{center}
+  \includegraphics[scale=0.6]{fcast_series}
+  \caption{Saving predictions (yhat) from the forecast output window.
+    The facility for saving selected content from a bundle of results
+    is also available via the bundle icon in the primary regls output
+    window.}
+  \label{fig:fcast-window}
+  \end{center}
+\end{figure}
 
 \clearpage
 
@@ -820,23 +886,30 @@ void regls_multiprint (const bundle b, const numeric y, const numeric X)
 
 \begin{funcdoc}
 \begin{verbatim}
-void regls_coeff_plot (const bundle b, const list L[null])
+void regls_coeff_plot (const bundle b, const list L[null], string fname[null])
 \end{verbatim}
   Produces a plot showing the paths of coefficient estimates as the
   regularization constraint is progressively relaxed. The bundle
   argument should be obtained via \texttt{regls} estimation with
   multiple \texttt{lfrac} values, as in
-  Section~\ref{sec:simple-search} or \ref{sec:xvalid} above. The
-  optional list argument can be used to select for tracking a subset
-  of the \texttt{X} list argument to \texttt{regls}.  This is
+  Section~\ref{sec:simple-search} or \ref{sec:xvalid} above.
+
+  The optional list argument can be used to select for tracking a
+  subset of the \texttt{X} list argument to \texttt{regls}.  This is
   recommended if the model includes a large number of independent
   variables; the plot becomes unreadable if more than 20 or so
-  coefficients are shown. See also \texttt{mregls\_coeff\_plot} below.
+  coefficients are shown.
+
+  The optional \texttt{fname} argument can be used to direct output to
+  file, as described in the documentation for gretl's \texttt{gnuplot}
+  command. By default the plot is shown on screen.
+
+  See also \texttt{mregls\_coeff\_plot} below.
 \end{funcdoc}
 
 \begin{funcdoc}
 \begin{verbatim}
-void regls_criterion_plot (const bundle b)
+void regls_criterion_plot (const bundle b, string fname[null])
 \end{verbatim}
   Produces a plot showing the path of the penalized fit criterion (BIC
   if cross validation is not performed, otherwise the MSE obtained via
@@ -844,6 +917,9 @@ void regls_criterion_plot (const bundle b)
   relaxed. The bundle argument should be obtained via \texttt{regls}
   of \texttt{mregls} estimation with multiple \texttt{lfrac} values,
   as in Section~\ref{sec:simple-search} or \ref{sec:xvalid} above.
+  The optional \texttt{fname} argument can be used to direct output to
+  file, as described in the documentation for gretl's \texttt{gnuplot}
+  command. By default the plot is shown on screen.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -893,7 +969,7 @@ matrix mregls_pred (const bundle b, const matrix X)
 
 \begin{funcdoc}
 \begin{verbatim}
-void mregls_coeff_plot (const bundle b, const matrix sel[null])
+void mregls_coeff_plot (const bundle b, const matrix sel[null], string fname[null])
 \end{verbatim}
   Works just like \texttt{regls\_coeff\_plot} (see above) except that
   this variant is for use after \texttt{mregls} estimation. The
@@ -934,10 +1010,11 @@ void glmnet_multiprint (const matrix RB, const matrix Rlam,
 \section{Change log}
 \label{sec:changes}
 
-2024-04-27: Add specific prediction and plotting functions for use
+2024-04-29: Add specific prediction and plotting functions for use
 with \texttt{mregls}; implement fixes for the unlikely case where none
 of the candidate regressors are effective predictors of the dependent
-variable; expand and update the documentation.\\[4pt]
+variable; make plots more robust; add descriptive labels to the
+included murder-rates dataset; expand and update the documentation.\\[4pt]
 2023-05-20: Add support for matrix input via the \texttt{mregls}
 function; simplify the signature of \texttt{regls\_multiprint};
 add function \texttt{glmnet\_multiprint}.\\[4pt]
@@ -1377,7 +1454,7 @@ variants.\footnote{We truncated the plot on the left to focus on the
   \label{fig:dset1}
 \end{figure}
 
-Since each mothod was given the same data at each iteration,
+Since each method was given the same data at each iteration,
 paired-difference tests for $R^2$ might be considered appropriate;
 these are shown in Table~\ref{tab:paired}, along with the correlations
 across the methods per iteration.
@@ -1403,7 +1480,7 @@ considered of much practical importance.
 
 Table~\ref{tab:dset2} shows out-of-sample $R^2$ statistics for Dataset
 2. Again ADMM has the highest mean and median, and regls CCD does
-better than glmnet on these citeria, but here the differences are
+better than glmnet on these criteria, but here the differences are
 relatively small. Kernel densities are shown in
 Figure~\ref{fig:dset2}. The displacement of the distribution between
 methods, in the same direction as for Dataset 1, is
