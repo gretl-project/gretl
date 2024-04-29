@@ -5128,7 +5128,8 @@ static void push_pull_buttons (selector *sr,
     }
 
     /* "All" button? */
-    if (SAVE_DATA_ACTION(sr->ci) || sr->ci == EXPORT) {
+    if (SAVE_DATA_ACTION(sr->ci) || sr->ci == EXPORT ||
+	(sr->ci == REGLS_PLOTSEL && sr->n_left < 21)) {
         button = gtk_button_new_with_label(_("All ->"));
         g_signal_connect(G_OBJECT(button), "clicked",
                          G_CALLBACK(add_all_to_rvars1_callback), sr);
