@@ -2679,11 +2679,13 @@ static int regls_xv (regls_info *ri)
     gretl_matrix *lam = NULL;
     gretl_matrix *XVC = NULL;
     double lmax;
-    int f, fsize, esize;
+    int f, fsize, csize;
     int err = 0;
 
+    /* the size of each fold */
     fsize = ri->n / ri->nf;
-    esize = (ri->nf - 1) * fsize;
+    /* the size of the complement of each fold */
+    csize = (ri->nf - 1) * fsize;
 
     if (ri->verbose) {
 	pprintf(prn, "regls_xv: nf=%d, fsize=%d, randfolds=%d, "
@@ -2692,15 +2694,15 @@ static int regls_xv (regls_info *ri)
 	gretl_flush(prn);
     }
 
-    XY = gretl_matrix_block_new(&Xe, esize, ri->k,
+    XY = gretl_matrix_block_new(&Xe, csize, ri->k,
 				&Xf, fsize, ri->k,
-				&ye, esize, 1,
+				&ye, csize, 1,
 				&yf, fsize, 1, NULL);
     if (XY == NULL) {
 	return E_ALLOC;
     }
 
-    lmax = get_xvalidation_lmax(ri, esize);
+    lmax = get_xvalidation_lmax(ri, csize);
     if (ri->verbose) {
 	pprintf(prn, "cross-validation lmax = %g\n\n", lmax);
 	gretl_flush(prn);
@@ -2774,7 +2776,7 @@ static int real_regls_xv_mpi (regls_info *ri)
     gretl_matrix *yf = NULL;
     gretl_matrix *lam = NULL;
     double lmax;
-    int fsize, esize;
+    int fsize, csize;
     int folds_per;
     int folds_rem;
     int rank;
@@ -2789,21 +2791,21 @@ static int real_regls_xv_mpi (regls_info *ri)
     rankmax = np - 1;
 
     fsize = ri->n / ri->nf;
-    esize = (ri->nf - 1) * fsize;
+    csize = (ri->nf - 1) * fsize;
     folds_per = ri->nf / np;
     folds_rem = ri->nf % np;
 
     /* matrix-space for per-fold data */
-    XY = gretl_matrix_block_new(&Xe, esize, ri->k,
+    XY = gretl_matrix_block_new(&Xe, csize, ri->k,
 				&Xf, fsize, ri->k,
-				&ye, esize, 1,
+				&ye, csize, 1,
 				&yf, fsize, 1, NULL);
     if (XY == NULL) {
 	return E_ALLOC;
     }
 
     if (rank == 0) {
-	lmax = get_xvalidation_lmax(ri, esize);
+	lmax = get_xvalidation_lmax(ri, csize);
     }
     gretl_mpi_bcast(&lmax, GRETL_TYPE_DOUBLE, 0);
 
