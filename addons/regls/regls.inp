@@ -522,7 +522,7 @@ function bundle regls_fcast (bundle *b, int t1, int t2)
       # mixed?
       string os = ""
    endif
-   scalar ret.R2 = 1 - sst(y-yhat) / sst(y)
+   scalar ret.R2 = 1 - sum((y-yhat)^2) / sst(y)
    matrix stats = fcstats(y, yhat)
    printf "%sforecast evaluation statistics for %s\n\n", os, b.depvar
    if !ok(stats[4])
