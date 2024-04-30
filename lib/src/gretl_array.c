@@ -1560,6 +1560,36 @@ int gretl_array_drop_string (gretl_array *A, const char *s)
     return 0;
 }
 
+int gretl_array_drop_null (gretl_array *A)
+{
+    int i, j, rem = A->n;
+    int n_orig = A->n;
+    size_t sz;
+
+    for (i=0; ; ) {
+	if (A->data[i] == NULL) {
+	    j = i + 1;
+	    rem = A->n - j;
+	    sz = rem * sizeof *A->data;
+	    memmove(A->data + i, A->data + j, sz);
+	    A->n -= 1;
+	} else {
+	    i++;
+	}
+	if (i == A->n || rem == 0) {
+	    break;
+	}
+    }
+    if (A->n == 0) {
+	free(A->data);
+	A->data = NULL;
+    } else if (A->n < n_orig) {
+	A->data = realloc(A->data, A->n * sizeof *A->data);
+    }
+
+    return 0;
+}
+
 /* @ptr must be pre-checked as matching the array type */
 
 int gretl_array_append_object (gretl_array *A,

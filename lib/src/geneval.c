@@ -20776,6 +20776,8 @@ static void do_array_subtract (parser *p)
         p->err = E_DATA;
     } else if (gretl_array_get_type(A) == GRETL_TYPE_STRINGS && rhs->t == STR) {
         p->err = gretl_array_drop_string(A, rhs->v.str);
+    } else if (rhs->t == EMPTY) {
+	p->err = gretl_array_drop_null(A);
     } else {
         p->err = E_TYPES;
     }
@@ -21061,7 +21063,7 @@ static int gen_check_return_type (parser *p)
                object which matches the content type on the left
                (but the matching check is deferred)
             */
-            if (!gen_type_is_arrayable(r->t)) {
+            if (!gen_type_is_arrayable(r->t) && r->t != EMPTY) {
                 err = E_TYPES;
             }
         }

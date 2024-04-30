@@ -78,6 +78,8 @@ int gretl_strings_array_includes (gretl_array *A,
 
 int gretl_array_drop_string (gretl_array *A, const char *s);
 
+int gretl_array_drop_null (gretl_array *A);
+
 GretlType gretl_array_get_type (gretl_array *A);
 
 GretlType gretl_array_get_content_type (gretl_array *A);
