@@ -3083,7 +3083,6 @@ static int real_exec_bundle_function (gretl_bundle *b,
 	double minv = fn_param_minval(func, 1);
 
 	if (!na(minv)) {
-	    iopt += (int) minv;
 	    err = push_anon_function_arg(fc, GRETL_TYPE_INT, &iopt);
 	}
     }

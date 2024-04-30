@@ -499,6 +499,7 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin, int *insensitive)
 	int ng = 0;
 
 	if (strcmp(plotfunc, "builtin")) {
+	    /* how can this come about? */
 	    fun = get_user_function_by_name(plotfunc);
 	}
 	if (fun != NULL) {
