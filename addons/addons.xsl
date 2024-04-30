@@ -36,8 +36,15 @@
   For gretl <xsl:value-of select="version"/><br/>
   Last revised <xsl:value-of select="date"/><br/>
   JEL code(s): <xsl:value-of select="tags"/><br/>
-  Documentation: 
-  <a href="{concat('https://sourceforge.net/projects/gretl/files/addons/doc/', @name, '.pdf')}"><xsl:value-of select="@name"/>.pdf</a>  
+
+  Documentation:
+  <xsl:element name="a">
+    <xsl:attribute name="href">
+      <xsl:text>https://sourceforge.net/projects/gretl/files/addons/doc/</xsl:text>
+      <xsl:value-of select="helpfile"/>
+    </xsl:attribute>
+    <xsl:value-of select="helpfile"/>
+  </xsl:element>
   </p>
 </xsl:template>    
 
