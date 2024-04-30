@@ -3336,6 +3336,12 @@ static int package_write_index (fnpkg *pkg, PRN *inprn)
     gretl_xml_put_tagged_string("date",    pkg->date, prn);
     gretl_xml_put_tagged_string("description", pkg->descrip, prn);
 
+    if (pkg->help_fname != NULL) {
+	gretl_xml_put_tagged_string("helpfile", pkg->help_fname, prn);
+    } else if (pkg->help != NULL && !strncmp(pkg->help, "pdfdoc:", 7)) {
+	gretl_xml_put_tagged_string("helpfile", pkg->help + 7, prn);
+    }
+
     if (pkg->tags != NULL) {
         gretl_xml_put_tagged_string("tags", pkg->tags, prn);
     }
