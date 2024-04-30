@@ -279,7 +279,8 @@ static int get_subplot_index (gretl_matrix *m, int i, int j)
 
 static int output_multiplot_script (gretl_array *a,
 				    gretl_matrix *m,
-				    int np, int maxp)
+				    int np, int maxp,
+				    const char *title)
 {
     const char *buf;
     int i, j, k, p;
@@ -295,7 +296,12 @@ static int output_multiplot_script (gretl_array *a,
     fprintf(fp, "# grid_params: plots=%d, fontsize=%d, width=%d, height=%d, ",
 	    np, mp_fontsize, mp_width, mp_height);
     fprintf(fp, "rows=%d, cols=%d\n", mp_rows, mp_cols);
-    fprintf(fp, "set multiplot layout %d,%d rowsfirst\n", mp_rows, mp_cols);
+    fprintf(fp, "set multiplot layout %d,%d rowsfirst", mp_rows, mp_cols);
+    if (title != NULL) {
+	fprintf(fp, " title '%s'\n", title);
+    } else {
+	fputc('\n', fp);
+    }
     gretl_push_c_numeric_locale();
 
     k = -1;
@@ -509,6 +515,7 @@ int gretl_gridplot_from_array (const char *param, gretlopt opt)
 {
     gretl_array *a = NULL;
     gretl_matrix *m = NULL;
+    const char *title = NULL;
     int maxp, np = 0;
     int err = 0;
 
@@ -538,6 +545,9 @@ int gretl_gridplot_from_array (const char *param, gretlopt opt)
 	    } else {
 		err = set_mp_grid(np);
 	    }
+	    if (opt & OPT_T) {
+		title = get_optval_string(GRIDPLOT, OPT_T);
+	    }
 	}
     } else {
 	/* no options supplied, figure the default grid */
@@ -547,7 +557,7 @@ int gretl_gridplot_from_array (const char *param, gretlopt opt)
     if (!err) {
 	set_special_plot_size(mp_width, mp_height);
 	set_special_font_size(mp_fontsize);
-        err = output_multiplot_script(a, m, np, maxp);
+        err = output_multiplot_script(a, m, np, maxp, title);
     }
 
     return err;

@@ -5949,6 +5949,11 @@
 	  <effect>height of plot in pixels [600]</effect>
 	</option>
 	<option>
+	  <flag>--title</flag>
+	  <optparm>quoted string</optparm>
+	  <effect>add an overall title</effect>
+	</option>
+	<option>
 	  <flag>--rows</flag>
 	  <optparm>r</optparm>
 	  <effect>see below</effect>

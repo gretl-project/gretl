@@ -1,4 +1,5 @@
 version 2024b, in progress
+- "gridplot" command: add a --title option
 - instrings() function: add optional boolean argument to get
   a simple boolean return value
 - typeof() function: functionality is extended to cover hansl
