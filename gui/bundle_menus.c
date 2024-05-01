@@ -532,6 +532,9 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin, int *insensitive)
 				 vwin);
 		item = gtk_action_create_menu_item(action);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+		if (chk != NULL && chk->val[i] == 0) {
+		    gtk_widget_set_sensitive(item, FALSE);
+		}
 		g_free(aname);
 	    }
 	}

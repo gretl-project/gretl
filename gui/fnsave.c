@@ -3161,6 +3161,7 @@ static int process_special_functions (function_info *finfo,
 }
 
 #define must_be_private(r) (r == UFUN_GUI_PRECHECK || \
+	                    r == UFUN_PLOT_PRECHECK || \
                             r == UFUN_R_SETUP || \
                             r == UFUN_UI_MAKER)
 #define must_be_public(r) (!must_be_private(r) && r != UFUN_LIST_MAKER)
