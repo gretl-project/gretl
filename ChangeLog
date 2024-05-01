@@ -7,6 +7,8 @@ version 2024b, in progress
 - exists() function: recommended usage is restricted to top-
   level identifiers, but backward compatibility is preserved
   for the present
+- Testing for equality via "==" and "!=": extend this to cover
+  arrays and bundles
 - help files: clarify the help for some commands and improve
   formatting
 - Fix bug: crash on replacing a single character in a string
