@@ -165,7 +165,7 @@ static int icon_sizing = ICON_SIZE_AUTO;
 
 static double graph_scale = 1.0;
 static double graph_scales[] = {
-    0.8, 1.0, 1.1, 1.2, 1.4
+    0.8, 1.0, 1.1, 1.2, 1.4, 1.6, 1.8, 2.0
 };
 static int n_graph_scales = G_N_ELEMENTS(graph_scales);
 
