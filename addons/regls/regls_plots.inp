@@ -169,7 +169,7 @@ function void regls_bundle_plot (const bundle *b,
    endif
 end function
 
-function matrix regls_plot_check (const bundle b)
+function matrix regls_plot_check (const bundle *b)
    if !inbundle(b, "B")
       return {0}
    endif

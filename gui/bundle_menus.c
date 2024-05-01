@@ -496,6 +496,7 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin, int *insensitive)
 	ufunc *fun = NULL;
 	const char **S = NULL;
 	gretl_matrix *chk = NULL;
+	int chklen = 0;
 	int ng = 0;
 
 	if (strcmp(plotfunc, "builtin")) {
@@ -507,8 +508,9 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin, int *insensitive)
 	}
 
 	chk = get_plotcheck_vec(bundle);
-	if (chk != NULL && gretl_vector_get_length(chk) == 1) {
-	    if (chk->val[0] == 0) {
+	if (chk != NULL) {
+	    chklen = gretl_vector_get_length(chk);
+	    if (chklen == 1 && chk->val[0] == 0) {
 		*insensitive = 1;
 		S = NULL;
 	    }
@@ -532,7 +534,7 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin, int *insensitive)
 				 vwin);
 		item = gtk_action_create_menu_item(action);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-		if (chk != NULL && chk->val[i] == 0) {
+		if (chklen > i && chk->val[i] == 0) {
 		    gtk_widget_set_sensitive(item, FALSE);
 		}
 		g_free(aname);

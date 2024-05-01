@@ -4205,7 +4205,7 @@ gretl_matrix *run_plot_precheck (ufunc *func, gretl_bundle *b)
 
     fcall = fncall_new(func, 0);
     if (fcall != NULL) {
-	push_anon_function_arg(fcall, GRETL_TYPE_BUNDLE, b);
+	push_anon_function_arg(fcall, GRETL_TYPE_BUNDLE_REF, b);
 	err = gretl_function_exec(fcall, GRETL_TYPE_MATRIX,
 				  dataset, &m, NULL);
 	if (err) {

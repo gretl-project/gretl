@@ -3706,7 +3706,7 @@ static int valid_list_maker (ufunc *u)
 static int valid_plot_checker (ufunc *u)
 {
     return (u->n_params == 1 &&
-	    u->params[0].type == GRETL_TYPE_BUNDLE);
+	    u->params[0].type == GRETL_TYPE_BUNDLE_REF);
 }
 
 #define PRIVATE_ONLY(r) (r == UFUN_GUI_PRECHECK ||	\
