@@ -1354,11 +1354,11 @@ static NODE *powterm (parser *p, NODE *l)
 		}
 	    }
 	} else if (sym == G_LPR) {
-	    /* bundle member or listvar plus lag spec? */
+	    /* (bundle member or listvar) plus lag spec? */
 	    if (l->t == BMEMB || l->t == LISTVAR) {
 		t = newb2(LAG, l, NULL);
 		if (t != NULL) {
-		    t->R = expr(p);
+		    t->R = base(p, NULL);
 		}
 	    } else {
 		context_error('(', p, "powterm");
