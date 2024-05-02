@@ -1188,7 +1188,8 @@ do_outfile_command (gretlopt opt, const char *fname,
     int err = 0;
 
     if (prn == NULL) {
-        return 0;
+	gretl_errmsg_set(_("output cannot be redirected in this context"));
+        return E_DATA;
     }
 
     /* options: allow at most one of --append, --buffer, --tempfile */

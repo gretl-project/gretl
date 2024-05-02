@@ -341,8 +341,8 @@ static int plot_printf (const char *s, const DATASET *dset)
     gretl_pop_c_numeric_locale();
 
     if (err) {
-	fprintf(stderr, "plot_printf error: genline='%s'\n",
-		genline);
+	fprintf(stderr, "plot_printf: error %d: genline='%s'\n",
+		err, genline);
     } else {
 	strings_array_add(&plot.lines, &plot.nlines, genout);
 	free(genout);
