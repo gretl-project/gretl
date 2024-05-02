@@ -1358,6 +1358,10 @@ static NODE *powterm (parser *p, NODE *l)
 	    if (l->t == BMEMB || l->t == LISTVAR) {
 		t = newb2(LAG, l, NULL);
 		if (t != NULL) {
+		    /* 2024-05-02: call base() instead of expr(): this
+		       fixes the bug reported in msg17192.html at
+		       https://www.mail-archive.com/gretl-users@gretlml.univpm.it/
+		    */
 		    t->R = base(p, NULL);
 		}
 	    } else {
