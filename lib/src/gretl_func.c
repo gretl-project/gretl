@@ -506,19 +506,16 @@ static void fncall_clear_args_array (fncall *fc)
 
 static void fncall_destroy_args_array (fncall *fc)
 {
-    int i;
+    if (fc->args != NULL) {
+	int i;
 
-    if (fc->args == NULL) {
-        return;
+	for (i=0; i<fc->fun->n_params; i++) {
+	    if (fc->args[i].upname != NULL) {
+		free(fc->args[i].upname);
+	    }
+	}
+	free(fc->args);
     }
-
-    for (i=0; i<fc->fun->n_params; i++) {
-        if (fc->args[i].upname != NULL) {
-            free(fc->args[i].upname);
-        }
-    }
-
-    free(fc->args);
 }
 
 static void maybe_set_param_const (fn_param *fp)
