@@ -1,18 +1,18 @@
 set verbose off
 clear
 
-/* Crash with gretl 2024a */
+/* Crash with gretl 2024a, fixed thereafter */
 
 open housing.gdt --quiet
 
 series trainvali = FALSE
 scalar nresample = ceil($nobs * 0.9)
 
-# necessay condition for crash
+# necessary condition for error
 dataset resample nresample
 
-# Triggers crash
-smpl trainvali == FALSE --restrict
+# correctly triggers error, used to crash
+catch smpl trainvali == FALSE --restrict
 
 print "Successfully finished tests."
-quit
+
