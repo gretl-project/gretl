@@ -8895,7 +8895,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 #endif
         if (arg->upname != NULL && object_is_const(arg->upname, -1) &&
             gretl_ref_type(fp->type) && !param_is_const(fp)) {
-            const char *caller;
+            const char *caller = NULL;
 
             current_function_info(&caller, NULL);
             gretl_errmsg_sprintf(_("%s() tries to pass const argument "
@@ -10305,35 +10305,65 @@ static int get_return_line (ExecState *state)
     }
 }
 
-static int prepare_func_exec_state (ExecState *s,
-                                    char *line,
-                                    DATASET *dset,
-                                    PRN *prn)
+static ExecState *make_func_exec_state (char *line,
+                                        DATASET *dset,
+                                        PRN *prn,
+                                        int *err)
 {
+    ExecState *state;
     MODEL *model;
     CMD cmd = {0};
-    int err;
 
+    state = calloc(1, sizeof *state);
     model = allocate_working_model();
-    if (model == NULL) {
-        err = E_ALLOC;
+
+    if (state == NULL || model == NULL) {
+        *err = E_ALLOC;
     } else {
-        err = gretl_cmd_init(&cmd);
+        *err = gretl_cmd_init(&cmd);
     }
 
-    if (!err) {
-        *line = '\0';
-        gretl_exec_state_init(s, FUNCTION_EXEC, line, &cmd, model, prn);
+    if (!*err) {
+        gretl_exec_state_init(state, FUNCTION_EXEC, line, &cmd, model, prn);
         if (dset != NULL) {
             if (dset->submask != NULL) {
-                s->submask = copy_dataset_submask(dset, &err);
+                state->submask = copy_dataset_submask(dset, err);
             }
-            s->padded = dset->padmask != NULL;
+            state->padded = dset->padmask != NULL;
         }
-        s->callback = func_exec_callback;
+        state->callback = func_exec_callback;
     }
 
-    return err;
+    return state;
+}
+
+static void restore_dataset_for_caller(ExecState *state,
+                                       DATASET *dset,
+                                       int orig_t1,
+                                       int orig_t2,
+                                       int orig_n)
+{
+    if (complex_subsampled()) {
+        if (state->submask == NULL) {
+            /* we were not sub-sampled on entry */
+            restore_full_sample(dset, NULL);
+        } else if (submask_cmp(state->submask, dset->submask)) {
+            /* we were sub-sampled differently on entry */
+            gretlopt opt = state->padded ? OPT_B : OPT_NONE;
+
+            restore_full_sample(dset, NULL);
+            restrict_sample_from_mask(state->submask, dset, opt);
+        }
+    } else if (dset->n > orig_n) {
+        /* some observations were added inside the function; note
+           that this is not allowed if the dataset is subsampled
+           on entry
+        */
+        dataset_drop_observations(dset, dset->n - orig_n);
+    }
+
+    dset->t1 = orig_t1;
+    dset->t2 = orig_t2;
 }
 
 #define do_if_check(c) (c == IF || c == ELIF || c == ELSE || c == ENDIF)
@@ -10344,9 +10374,9 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
                               series_table **stab, PRN *prn)
 {
     ufunc *u = call->fun;
-    ExecState state = {0};
+    ExecState *state = NULL;
     GENERATOR *genr = NULL;
-    void *ptr;
+    void *ptr = NULL;
     char line[MAXLINE];
     int orig_n = 0;
     int orig_t1 = 0;
@@ -10392,7 +10422,7 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
         return err;
     }
 
-    err = prepare_func_exec_state(&state, line, dset, prn);
+    state = make_func_exec_state(line, dset, prn, &err);
 
 #if EXEC_DEBUG
     fprintf(stderr, "after prepare_func_exec_state: err = %d\n", err);
@@ -10408,6 +10438,7 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
 #if 1
     gencomp = gretl_iterating() && !get_loop_renaming();
 #else
+    /* also cut out functions that recurse */
     gencomp = gretl_iterating() && !get_loop_renaming() &&
 	!(u->flags & UFUN_RECURSES);
 #endif
@@ -10441,14 +10472,14 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
         /* check and adjust the if-state */
         if (do_if_check(fline->ci)) {
             if (fline->ci == ELSE || fline->ci == ENDIF) {
-                state.cmd->ci = fline->ci;
-                flow_control(&state, NULL, NULL);
+                state->cmd->ci = fline->ci;
+                flow_control(state, NULL, NULL);
             } else if (genr != NULL) {
-                state.cmd->ci = fline->ci;
-                flow_control(&state, dset, &genr);
+                state->cmd->ci = fline->ci;
+                flow_control(state, dset, &genr);
             } else {
                 ptr = this_gencomp ? &genr : NULL;
-                err = maybe_exec_line(&state, dset, ptr);
+                err = maybe_exec_line(state, dset, ptr);
                 if (genr != NULL) {
                     fnline_set_genr(call, fline, genr);
                 } else if (ptr != NULL) {
@@ -10457,7 +10488,8 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
             }
             if (err) {
                 goto err_next;
-            } else if (gretl_if_state_false() && fline->next > 0) {
+            }
+            if (gretl_if_state_false() && fline->next > 0) {
                 /* skip to next relevant statement */
                 i = fline->next - 1;
             }
@@ -10466,8 +10498,8 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
 
         if (fline->ci == LOOP) {
             if (fline->ptr != NULL) {
-                state.loop = fline->ptr;
-                err = gretl_loop_exec(&state, dset);
+                state->loop = fline->ptr;
+                err = gretl_loop_exec(state, dset);
                 n_saved++;
             } else {
                 /* assemble then execute the loop */
@@ -10478,19 +10510,19 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
                 }
                 for (j=i; j<=fline->next && !err; j++) {
                     strcpy(line, u->lines[j].s);
-                    err = maybe_exec_line(&state, dset, ptr);
+                    err = maybe_exec_line(state, dset, ptr);
                 }
                 if (!err) {
-                    state.loop = fline->ptr;
-		    err = gretl_loop_exec(&state, dset);
+                    state->loop = fline->ptr;
+		    err = gretl_loop_exec(state, dset);
                 }
             }
             if (err) {
-                set_func_error_message(err, u, &state, state.line, NULL);
+                set_func_error_message(err, u, state, state->line, NULL);
                 break;
-            } else if (get_return_line(&state)) {
+            } else if (get_return_line(state)) {
                 /* a "return" statement was encountered in the loop */
-                err = handle_return_statement(call, &state, dset,
+                err = handle_return_statement(call, state, dset,
                                               this_gencomp, NULL);
                 if (i < u->n_lines) {
                     retline = i;
@@ -10501,7 +10533,7 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
             i = fline->next;
             continue;
         } else if (fline->ci == FUNCRET) {
-            err = handle_return_statement(call, &state, dset, this_gencomp, fline);
+            err = handle_return_statement(call, state, dset, this_gencomp, fline);
             if (i < u->n_lines) {
                 retline = i;
             }
@@ -10511,7 +10543,7 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
             n_saved++;
         } else {
             ptr = (this_gencomp && may_have_genr(fline->ci))? &genr : NULL;
-            err = maybe_exec_line(&state, dset, ptr);
+            err = maybe_exec_line(state, dset, ptr);
             if (genr != NULL) {
                 fnline_set_genr(call, fline, genr);
             } else if (ptr != NULL) {
@@ -10522,7 +10554,7 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
     err_next:
 
         if (err) {
-            set_func_error_message(err, u, &state, line, fline);
+            set_func_error_message(err, u, state, line, fline);
             break;
         }
     }
@@ -10535,26 +10567,7 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
 
     if (dset != NULL) {
         /* restore the sample that was in place on entry */
-        if (complex_subsampled()) {
-            if (state.submask == NULL) {
-                /* we were not sub-sampled on entry */
-                restore_full_sample(dset, NULL);
-            } else if (submask_cmp(state.submask, dset->submask)) {
-                /* we were sub-sampled differently on entry */
-                gretlopt opt = state.padded ? OPT_B : OPT_NONE;
-
-                restore_full_sample(dset, NULL);
-                restrict_sample_from_mask(state.submask, dset, opt);
-            }
-        } else if (dset->n > orig_n) {
-            /* some observations were added inside the function; note
-               that this is not allowed if the dataset is subsampled
-               on entry
-            */
-            dataset_drop_observations(dset, dset->n - orig_n);
-        }
-        dset->t1 = orig_t1;
-        dset->t2 = orig_t2;
+        restore_dataset_for_caller(state, dset, orig_t1, orig_t2, orig_n);
     }
 
     if (err || (retline >= 0)) {
@@ -10570,7 +10583,8 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
         reset_saved_uservars(call->fun, 0);
     }
 
-    gretl_exec_state_clear(&state);
+    gretl_exec_state_clear(state);
+    free(state);
 
     if (started) {
         int stoperr = stop_fncall(call, rtype, ret, dset, prn, redir_level);
