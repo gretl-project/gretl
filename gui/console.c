@@ -210,11 +210,11 @@ static gint console_paste_text (GtkWidget *cview, GdkAtom atom)
         GtkTextIter iter;
         char *p;
 
+	/* don't accept newlines */
         p = strchr(src, '\n');
-        if (p != NULL) {
-            /* no newlines allowed! */
-            *p = '\0';
-        }
+        if (p != NULL) *p = '\0';
+	p = strchr(src, '\r');
+	if (p != NULL) *p = '\0';
 
         buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(cview));
         gtk_text_buffer_get_end_iter(buf, &iter);
@@ -226,11 +226,11 @@ static gint console_paste_text (GtkWidget *cview, GdkAtom atom)
     return TRUE;
 }
 
-static void console_paste_handler (GtkWidget *w, gpointer p)
+static gint console_paste_handler (GtkWidget *w, gpointer p)
 {
-    /* we don't accept pasted material other than via
-       the X selection */
-    return;
+    /* we'll handle this ourselves */
+    g_signal_stop_emission_by_name(G_OBJECT(w), "paste-clipboard");
+    return console_paste_text(w, GDK_SELECTION_PRIMARY);
 }
 
 /* paste from X selection onto the command line */
