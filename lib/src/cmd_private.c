@@ -40,7 +40,7 @@ void gretl_exec_state_init (ExecState *s,
 
     s->line = line;
     if (s->line != NULL) {
-        *s->line = '\0';
+        s->line[0] = '\0';
     }
 
     s->cmd = cmd;
