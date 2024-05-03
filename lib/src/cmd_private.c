@@ -206,6 +206,29 @@ int maybe_exec_line (ExecState *s, DATASET *dset, void *ptr)
     return err;
 }
 
+/* Try to determine if a function calls itself, in case we want to
+   block "compilation" of such functions. We have to be careful to
+   avoid false positives.
+*/
+
+static int check_for_recursion (const char *line, const char *targ)
+{
+    const char *p = strstr(line, targ);
+    int ret = 0;
+
+    if (p != NULL) {
+	if (p - line > 0) {
+	    char c = *(p-1);
+
+	    ret = !isalnum(c) && c != '_';
+	} else {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
 /* Takes an array of "stmt" structs (see cmd_private.h) from a
    function or loop and examines them for structure, in terms of
    conditionality (if/elif/else/endif). The object of the exercise is
@@ -227,11 +250,11 @@ int maybe_exec_line (ExecState *s, DATASET *dset, void *ptr)
    "loop".
 */
 
-int statements_get_structure (stmt *lines,
-			      int n_lines,
-			      int context,
-			      const char *name)
+int statements_get_structure (stmt *lines, int n_lines,
+			      const char *name,
+			      int *recurses)
 {
+    gchar *self_call = NULL;
     stmt *line;
     int *match_start = NULL;
     int *match_end = NULL;
@@ -243,8 +266,18 @@ int statements_get_structure (stmt *lines,
     int loop_imax = 0;
     int loop_imin = -1;
     int target, src;
+    int context;
     int i, j, ci;
     int err = 0;
+
+    if (!strcmp(name, "loop")) {
+	context = LOOP;
+    } else {
+	context = FUNC;
+	if (recurses != NULL) {
+	    self_call = g_strdup_printf("%s(", name);
+	}
+    }
 
     /* first pass: determine the maximum depth of conditionality (and
        looping, if in a function). Also record the indices of the
@@ -258,6 +291,9 @@ int statements_get_structure (stmt *lines,
         }
 #endif
         if (context == FUNC) {
+	    if (recurses != NULL && *recurses == 0 && ci == GENR) {
+		*recurses = check_for_recursion(lines[i].s, self_call);
+	    }
             if (ci == LOOP) {
                 if (loop_imin < 0) {
                     loop_imin = i;

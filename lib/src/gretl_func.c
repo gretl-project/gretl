@@ -8296,8 +8296,16 @@ static void python_check (const char *line)
 
 static int ufunc_get_structure (ufunc *u)
 {
-    return statements_get_structure(u->lines, u->n_lines,
-                                    FUNC, u->name);
+    int ret, recurses = 0;
+
+    ret = statements_get_structure(u->lines, u->n_lines,
+				   u->name, &recurses);
+    if (recurses) {
+	fprintf(stderr, "%s calls itself\n", u->name);
+	u->flags |= UFUN_RECURSES;
+    }
+
+    return ret;
 }
 
 #define NEEDS_IF(c) (c == ELSE || c == ELIF || c == ENDIF)
@@ -10397,7 +10405,12 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
     }
 
     /* should we try to compile genrs, loops? */
+#if 1
     gencomp = gretl_iterating() && !get_loop_renaming();
+#else
+    gencomp = gretl_iterating() && !get_loop_renaming() &&
+	!(u->flags & UFUN_RECURSES);
+#endif
 
     /* get function lines in sequence and check, parse, execute */
 

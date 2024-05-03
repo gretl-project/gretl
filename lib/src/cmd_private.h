@@ -130,10 +130,9 @@ int maybe_exec_line (ExecState *s, DATASET *dset, void *ptr);
 
 int plausible_genr_start (const char *s, const DATASET *dset);
 
-int statements_get_structure (stmt *lines,
-			      int n_lines,
-			      int context,
-			      const char *name);
+int statements_get_structure (stmt *lines, int n_lines,
+			      const char *name,
+			      int *recurses);
 
 int cmd_arg1_quoted (CMD *cmd);
 

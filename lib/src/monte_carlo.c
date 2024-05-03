@@ -1840,8 +1840,9 @@ int model_is_in_loop (const MODEL *pmod)
 
 static int loop_get_structure (LOOPSET *loop)
 {
-    return statements_get_structure(loop->lines, loop->n_lines,
-				    LOOP, "loop");
+    return statements_get_structure(loop->lines,
+				    loop->n_lines,
+				    "loop", NULL);
 }
 
 static int add_more_loop_lines (LOOPSET *loop)

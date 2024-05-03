@@ -51,7 +51,8 @@ typedef enum {
     UFUN_NOPRINT   = 1 << 1, /* offers no printed output */
     UFUN_MENU_ONLY = 1 << 2, /* is GUI-only */
     UFUN_USES_SET  = 1 << 3, /* includes the "set" command */
-    UFUN_HAS_FLOW  = 1 << 4  /* includes flow-control (ifs, loops) */
+    UFUN_HAS_FLOW  = 1 << 4, /* includes flow-control (ifs, loops) */
+    UFUN_RECURSES  = 1 << 5  /* includes a call to itself */
 } UfunAttrs;
 
 #define NEEDS_TS    "needs-time-series-data"
