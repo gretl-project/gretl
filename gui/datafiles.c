@@ -1692,8 +1692,6 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	}
     } else if (item->flag == BTN_INST) {
 	if (role == ADDONS_FILES) {
-	    // item->func = G_CALLBACK(install_addon_callback);
-	    // return 1;
 	    return 0;
 	} else {
 	    item->func = G_CALLBACK(install_file_from_server);
