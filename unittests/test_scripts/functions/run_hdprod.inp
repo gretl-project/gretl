@@ -2,22 +2,12 @@ set verbose off
 clear
 set assert stop
 
-
-function matrix getX ()
+function matrix getX (void)
     X = mshape(seq(1,2), 2, 2)
     X[diag] = 0
     return X
 end function
 
-bundles Params = null
-Params = Params + _(X = getX(),\
-                    Y = getX(),\
-                    expected = {0; 4; 0; 0; 0; 0; 1; 0}\
-                    )
-Params = Params + _(X = getX(),\
-                    Y = {},\
-                    expected = {0; 4; 0; 0; 1; 0}\
-                    )
 function void test_hdprod (const bundles P)
     print "Start testing hdprod()."
 
@@ -41,8 +31,14 @@ function void test_hdprod (const bundles P)
         endloop
     endloop
 end function
-test_hdprod(Params)
 
+bundles Params = null
+Params = Params + _(X = getX(), Y = getX(),
+                    expected = {0; 4; 0; 0; 0; 0; 1; 0})
+Params = Params + _(X = getX(), Y = {},
+                    expected = {0; 4; 0; 0; 1; 0})
+
+test_hdprod(Params)
 
 print "Succesfully finished tests."
 quit
