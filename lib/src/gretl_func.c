@@ -9823,9 +9823,9 @@ static void reset_saved_uservars (ufunc *u, int on_recurse)
     }
 
 #if 1
-    /* 2022-09-11: we shouldn't have to do the next thing
-       any more, with genrs now attached to fncall rather
-       than line of function?
+    /* 2022-09-11: we shouldn't have to do genr_reset_uvars (below)
+       any more, with genrs now attached to fncall rather than line of
+       function?
     */
     if (on_recurse) return;
 #endif
