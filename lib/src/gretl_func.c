@@ -8359,9 +8359,9 @@ int gretl_function_append_line (ExecState *state)
 
     if (!blank) {
 	s = line + strspn(line, " \t");
-	state->line = s;
+	state->line = s;    /* temporary! */
         err = get_command_index(state, FUNC, 0);
-	state->line = line;
+	state->line = line; /* reset to original */
     }
     if (blank || err) {
         goto next_step;
@@ -10305,19 +10305,20 @@ static int get_return_line (ExecState *state)
     }
 }
 
-static ExecState *make_func_exec_state (char *line,
-                                        DATASET *dset,
+static ExecState *make_func_exec_state (DATASET *dset,
                                         PRN *prn,
                                         int *err)
 {
     ExecState *state;
+    char *line;
     MODEL *model;
     CMD cmd = {0};
 
     state = calloc(1, sizeof *state);
+    line = calloc(MAXLEN, 1);
     model = allocate_working_model();
 
-    if (state == NULL || model == NULL) {
+    if (state == NULL || line == NULL || model == NULL) {
         *err = E_ALLOC;
     } else {
         *err = gretl_cmd_init(&cmd);
@@ -10377,7 +10378,6 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
     ExecState *state = NULL;
     GENERATOR *genr = NULL;
     void *ptr = NULL;
-    char line[MAXLINE];
     int orig_n = 0;
     int orig_t1 = 0;
     int orig_t2 = 0;
@@ -10422,7 +10422,7 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
         return err;
     }
 
-    state = make_func_exec_state(line, dset, prn, &err);
+    state = make_func_exec_state(dset, prn, &err);
 
 #if EXEC_DEBUG
     fprintf(stderr, "after prepare_func_exec_state: err = %d\n", err);
@@ -10455,7 +10455,7 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
         if (ignore_line(fline)) {
             continue;
         }
-        strcpy(line, fline->s); /* needed? */
+        strcpy(state->line, fline->s); /* needed? */
         call->line = fline;
 
         if (this_gencomp && may_have_genr(fline->ci)) {
@@ -10509,7 +10509,7 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
                     ptr = NULL;
                 }
                 for (j=i; j<=fline->next && !err; j++) {
-                    strcpy(line, u->lines[j].s);
+                    strcpy(state->line, u->lines[j].s);
                     err = maybe_exec_line(state, dset, ptr);
                 }
                 if (!err) {
@@ -10554,7 +10554,7 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
     err_next:
 
         if (err) {
-            set_func_error_message(err, u, state, line, fline);
+            set_func_error_message(err, u, state, state->line, fline);
             break;
         }
     }
@@ -10584,6 +10584,7 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
     }
 
     gretl_exec_state_clear(state);
+    free(state->line);
     free(state);
 
     if (started) {
