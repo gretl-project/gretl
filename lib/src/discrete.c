@@ -4175,3 +4175,99 @@ MODEL reprobit_model (const int *list, DATASET *dset,
 
     return model;
 }
+
+/* apparatus for computing all combinations of @k 1s in @n bits */
+
+static guint64 next_perm (guint64 v)
+{
+    guint64 w; /* next permutation of bits */
+
+    /* t gets v's least significant 0 bits set to 1 */
+    guint64 t = v | (v - 1);
+    /* Next set to 1 the most significant bit to change, set to 0 the
+       least significant ones, and add the necessary 1 bits.
+    */
+    w = (t + 1) | (((~t & -~t) - 1) >> (__builtin_ctz(v) + 1));
+
+    return w;
+}
+
+static void binrow (int i, int n, guint64 val, gretl_matrix *m)
+{
+    int k, j = 0;
+
+    for (k=n-1; k>=0; k--) {
+	if (val & (1 << k)) {
+	    gretl_matrix_set(m, i, j, 1);
+	}
+	j++;
+    }
+}
+
+static int ncombos (int n, int k)
+{
+    double num = lngamma(n+1);
+    double den1 = lngamma(k+1);
+    double den2 = lngamma(n-k+1);
+
+    return (int) exp(num - (den1 + den2));
+}
+
+gretl_matrix *bit_combinations (int n, int k, int *err)
+{
+    gretl_matrix *ret;
+    guint64 v = 0, vmax = 0;
+    int i, nc = 0;
+
+    if (n > 64) {
+	gretl_errmsg_set("bincombos: n must be <= 64");
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    if (k == 1) {
+	ret = gretl_identity_matrix_new(n);
+    } else if (k == n - 1) {
+	ret = gretl_unit_matrix_new(n, n);
+	if (ret != NULL) {
+	    for (i=0; i<n; i++) {
+		gretl_matrix_set(ret, i, i, 0);
+	    }
+	}
+    } else if (n < 0 || k < 0 || n < k) {
+	ret = gretl_null_matrix_new();
+    } else if (k == n) {
+	ret = gretl_unit_matrix_new(1, n);
+    } else if (k == 0) {
+	ret = gretl_zero_matrix_new(1, n);
+    } else {
+	nc = ncombos(n, k);
+	ret = gretl_zero_matrix_new(nc, n);
+    }
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    } else if (nc == 0) {
+	/* result already settled */
+	return ret;
+    }
+
+    /* set the min and max of @v */
+    for (i=0; i<k; i++) {
+	v |= (1 << i);
+	vmax |= (1 << (n-1-i));
+    }
+
+    /* run the iteration */
+    for (i=0; ; i++) {
+	binrow(i, n, v, ret);
+	if (v == vmax) {
+	    break;
+	} else {
+	    v = next_perm(v);
+	}
+    }
+
+    return ret;
+}

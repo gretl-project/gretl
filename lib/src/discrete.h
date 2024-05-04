@@ -87,6 +87,8 @@ void binary_model_hatvars (MODEL *pmod,
 			   const int *y,
 			   gretlopt opt);
 
+gretl_matrix *bit_combinations (int n, int k, int *err);
+
 #endif /* DISCRETE_H */
 
 
