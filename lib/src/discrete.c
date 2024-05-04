@@ -4210,7 +4210,7 @@ static int ncombos (int n, int k)
     double den1 = lngamma(k+1);
     double den2 = lngamma(n-k+1);
 
-    return (int) exp(num - (den1 + den2));
+    return (int) nearbyint(exp(num - (den1 + den2)));
 }
 
 gretl_matrix *bit_combinations (int n, int k, int *err)
