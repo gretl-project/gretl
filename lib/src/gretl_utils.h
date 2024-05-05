@@ -178,6 +178,8 @@ int gretl_pipe_output (gchar **argv, gchar **envp,
                        const char *currdir, PRN *prn,
                        gchar **errp);
 
+int get_stack_size (void);
+
 #endif
 
 /* model selection criteria */

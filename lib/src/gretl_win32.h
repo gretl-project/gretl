@@ -109,6 +109,8 @@ int try_for_CP_65001 (void);
 
 int win32_get_core_count (void);
 
+int win32_get_stack_size (void);
+
 #endif /* WIN32 */
 
 #endif /* GRETL_WIN32_H */

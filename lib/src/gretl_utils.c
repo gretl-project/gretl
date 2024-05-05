@@ -2791,6 +2791,23 @@ int get_blas_details (char **s1, char **s2, char **s3)
 
 /* for $sysinfo bundle */
 
+#ifndef WIN32
+
+#include <sys/resource.h>
+
+int get_stack_size (void)
+{
+    struct rlimit rl;
+
+    if (getrlimit(RLIMIT_STACK, &rl) == 0) {
+        return (int) rl.rlim_cur;
+    }
+
+    return 0;
+}
+
+#endif
+
 const char *blas_variant_string (void)
 {
     if (blas_variant == BLAS_NETLIB) {

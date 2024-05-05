@@ -36,6 +36,10 @@
 #include "build.h"
 #include "gretl_bundle.h"
 
+#ifdef G_OS_WIN32
+# include "gretl_win32.h"
+#endif
+
 #define BDEBUG 0
 
 /**
@@ -3192,6 +3196,12 @@ gretl_bundle *get_sysinfo_bundle (int *err)
             gretl_bundle_set_scalar(b, "nproc", (double) ival);
             ival = gretl_n_physical_cores();
             gretl_bundle_set_scalar(b, "ncores", (double) ival);
+#if defined(G_OS_WIN32)
+            ival = win32_get_stack_size();
+#else
+            ival = get_stack_size();
+#endif
+            gretl_bundle_set_scalar(b, "stack_size", (double) ival);
             ival = gretl_in_gui_mode();
             gretl_bundle_set_scalar(b, "gui_mode", (double) ival);
             ival = 0;

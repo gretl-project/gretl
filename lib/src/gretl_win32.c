@@ -2294,3 +2294,16 @@ int win32_get_core_count (void)
 
     return n_cores;
 }
+
+int win32_get_stack_size (void)
+{
+#if _WIN32_WINNT >= 0x0602
+    ULONG_PTR low, high;
+
+    GetCurrentThreadStackLimits(&low, &high);
+
+    return (int) (high - low);
+#else
+    return 0;
+#endif
+}
