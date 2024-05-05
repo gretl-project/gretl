@@ -4226,7 +4226,10 @@ gretl_matrix *bit_combinations (int n, int k, int *err)
     }
 
     if (k == 1) {
-	ret = gretl_identity_matrix_new(n);
+	ret = gretl_zero_matrix_new(n, n);
+	for(i = n-1; i<n*n-1; i += n-1){
+	    ret->val[i] = 1.0;
+	}
     } else if (k == n - 1) {
 	ret = gretl_unit_matrix_new(n, n);
 	if (ret != NULL) {
