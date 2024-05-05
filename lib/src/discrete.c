@@ -4183,11 +4183,11 @@ static guint64 next_perm (guint64 v)
     guint64 w; /* next permutation of bits */
 
     /* t gets v's least significant 0 bits set to 1 */
-    guint64 t = v | (v - 1);
+    guint64 t = v | (v - 1LL);
     /* Next set to 1 the most significant bit to change, set to 0 the
        least significant ones, and add the necessary 1 bits.
     */
-    w = (t + 1) | (((~t & -~t) - 1) >> (__builtin_ctz(v) + 1));
+    w = (t + 1LL) | (((~t & -~t) - 1LL) >> (__builtin_ctzll(v) + 1LL));
 
     return w;
 }
@@ -4197,7 +4197,7 @@ static void binrow (int i, int n, guint64 val, gretl_matrix *m)
     int k, j = 0;
 
     for (k=n-1; k>=0; k--) {
-	if (val & (1 << k)) {
+	if (val & (1LL << k)) {
 	    gretl_matrix_set(m, i, j, 1);
 	}
 	j++;
@@ -4255,8 +4255,8 @@ gretl_matrix *bit_combinations (int n, int k, int *err)
 
     /* set the min and max of @v */
     for (i=0; i<k; i++) {
-	v |= (1 << i);
-	vmax |= (1 << (n-1-i));
+	v |= (1LL << i);
+	vmax |= (1LL << (n-1-i));
     }
 
     /* run the iteration */
