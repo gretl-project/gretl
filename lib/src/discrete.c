@@ -4178,6 +4178,12 @@ MODEL reprobit_model (const int *list, DATASET *dset,
 
 /* apparatus for computing all combinations of @k 1s in @n bits */
 
+/* The following clever algorithm to calculate the "next permutation"
+   of bits in lexicographic order is attributed to Dario Sneidermanis
+   at https://stackoverflow.com/questions/1851134/
+   generate-all-binary-strings-of-length-n-with-k-bits-set
+*/
+
 static guint64 next_perm (guint64 v)
 {
     guint64 w; /* next permutation of bits */
