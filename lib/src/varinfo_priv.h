@@ -51,4 +51,26 @@ struct VARINFO_ {
     series_table *st;
 };
 
+# if defined(G_OS_WIN32) && !defined(_WIN64)
+
+struct VARINFO64 {
+    char *label;
+    void *tmp1;
+    char display_name[MAXDISP];
+    char parent[VNAMELEN];
+    VarFlags flags;
+    char compact_method;
+    gint64 mtime;
+    short transform;    /* note: command index of transform */
+    short lag;
+    short stack_level;
+    short midas_period;
+    char midas_freq;
+    short orig_pd;
+    series_table *st;
+    void *tmp2;
+};
+
+# endif
+
 #endif /* VARINFO_PRIV_H */

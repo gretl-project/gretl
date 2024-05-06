@@ -63,7 +63,46 @@ static void varinfo_write (const DATASET *dset, int i, FILE *fp)
 
 /* Read the VARINFO struct for series @i, recording it on
    @dset if non-NULL (otherwise just skipping forward).
+   This requires special treatment for a 32-bit build.
 */
+
+#if defined(G_OS_WIN32) && !defined(_WIN64)
+
+void V32_from_V64 (VARINFO *V, struct VARINFO64 *V64)
+{
+    V->label = NULL;
+    V->display_name = V64->display_name;
+    V->parent = V64->parent;
+    V->flags = V64->flags;
+    V->compact_method = V64->compact_method;
+    V->mtime = V64->mtime;
+    V->transform = V64->transform;
+    V->lag = V64->lag;
+    V->stack_level = V64->stack_level;
+    V->midas_period = V64->midas_period;
+    V->midas_freq = V64->midas_freq;
+    V->orig_pd = V64->orig_pd;
+    V->st = NULL;
+}
+
+static int varinfo_read (DATASET *dset, int i, FILE *fp)
+{
+    struct VARINFO64 V64;
+    VARINFO V32 = {0};
+
+    if (fread(&V64, sizeof V64, 1, fp)) {
+	V32_from_V64(&V32, &V64);
+	if (dset != NULL) {
+	    *dset->varinfo[i] = V32;
+	}
+	return 0;
+    } else {
+	fprintf(stderr, "failed to read varinfo %d\n", i);
+	return E_DATA;
+    }
+}
+
+#else /* regular 64-bit code */
 
 static int varinfo_read (DATASET *dset, int i, FILE *fp)
 {
@@ -79,6 +118,8 @@ static int varinfo_read (DATASET *dset, int i, FILE *fp)
 	return E_DATA;
     }
 }
+
+#endif /* 32- vs 64-bit pointers */
 
 static void gbin_read_message (const char *fname,
 			       DATASET *dset,
