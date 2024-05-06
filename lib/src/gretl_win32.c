@@ -2295,6 +2295,16 @@ int win32_get_core_count (void)
     return n_cores;
 }
 
+#if 0 // _WIN32_WINNT == 0x0601
+/* This requires Windows 7, when NtCurrentTeb() was introduced. */
+static int win7_get_stack_size (void)
+{
+    NT_TIB *tib = (NT_TIB *) NtCurrentTeb();
+
+    return (int) (tib->StackLimit - tib->StackBase);
+}
+#endif
+
 int win32_get_stack_size (void)
 {
 #if _WIN32_WINNT >= 0x0602
