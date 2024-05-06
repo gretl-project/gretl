@@ -2307,7 +2307,7 @@ static int win7_get_stack_size (void)
 
 int win32_get_stack_size (void)
 {
-#if _WIN32_WINNT >= 0x0602
+#ifdef _WIN64
     ULONG_PTR low, high;
 
     GetCurrentThreadStackLimits(&low, &high);
