@@ -53,20 +53,31 @@ struct VARINFO_ {
 
 # if defined(G_OS_WIN32) && !defined(_WIN64)
 
+/* In the writing of gdtb files the VARINFO struct must be a fixed
+   size, invariant with respect to word length. But because of the
+   @label and @st pointers -- which are always NULL in a gtdb file,
+   but which differ in size -- the respective "native" structs are not
+   the same size. We let the burden of adjustment fall on 32-bit
+   builds: when writing to gdtb we transcribe from VARINFO to
+   VARINFO64, which includes emulated 64-bit pointers, and when
+   reading we transcribe back to the small-pointer variant. See
+   plugin/purebin/c for details.
+*/
+
 struct VARINFO64 {
-    guint64 p1;
+    guint64 p1; /* fake 64-bit pointer */
     char display_name[MAXDISP];
     char parent[VNAMELEN];
     VarFlags flags;
     char compact_method;
     gint64 mtime;
-    short transform;    /* note: command index of transform */
+    short transform;
     short lag;
     short stack_level;
     short midas_period;
     char midas_freq;
     short orig_pd;
-    guint64 p2;
+    guint64 p2; /* fake 64-bit pointer */
 };
 
 # endif
