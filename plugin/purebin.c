@@ -57,8 +57,7 @@ struct gbin_header_ {
 
 void V64_from_V32 (struct VARINFO64 *V64, VARINFO *V)
 {
-    V64->label = NULL;
-    V64->tmp1 = NULL; /* pad to 64 bits */
+    V64->p1 = 0;
     strcpy(V64->display_name, V->display_name);
     strcpy(V64->parent, V->parent);
     V64->flags = V->flags;
@@ -70,8 +69,7 @@ void V64_from_V32 (struct VARINFO64 *V64, VARINFO *V)
     V64->midas_period = V->midas_period;
     V64->midas_freq = V->midas_freq;
     V64->orig_pd = V->orig_pd;
-    V64->st = NULL;
-    V64->tmp2 = NULL; /* pad to 64 bits */
+    V64->p2 = 0;
 }
 
 static void varinfo_write (const DATASET *dset, int i, FILE *fp)
@@ -79,7 +77,7 @@ static void varinfo_write (const DATASET *dset, int i, FILE *fp)
     VARINFO V = *dset->varinfo[i]; /* shallow copy */
     struct VARINFO64 V64;
 
-    V64_from_V32(&V64, &v);
+    V64_from_V32(&V64, &V);
     fwrite(&V64, sizeof V64, 1, fp);
 }
 
@@ -108,7 +106,7 @@ void V32_from_V64 (VARINFO *V, struct VARINFO64 *V64)
 {
     V->label = NULL;
     strcpy(V->display_name, V64->display_name);
-    strcpy(V->parent = V64->parent);
+    strcpy(V->parent, V64->parent);
     V->flags = V64->flags;
     V->compact_method = V64->compact_method;
     V->mtime = V64->mtime;

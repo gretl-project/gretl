@@ -54,8 +54,7 @@ struct VARINFO_ {
 # if defined(G_OS_WIN32) && !defined(_WIN64)
 
 struct VARINFO64 {
-    char *label;
-    void *tmp1;
+    guint64 p1;
     char display_name[MAXDISP];
     char parent[VNAMELEN];
     VarFlags flags;
@@ -67,8 +66,7 @@ struct VARINFO64 {
     short midas_period;
     char midas_freq;
     short orig_pd;
-    series_table *st;
-    void *tmp2;
+    guint64 p2;
 };
 
 # endif
