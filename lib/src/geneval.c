@@ -6006,11 +6006,16 @@ static void node_set_double (NODE *n, int i, double x, parser *p)
     }
 }
 
-static double bincoeff(double n, double k, int *err)
+static int is_integral (double d)
+{
+    return d == floor(d) || d == ceil(d);
+}
+
+static double bincoeff (double n, double k, int *err)
 {
     double ret;
 
-    if ((n < k) || (k < 0)) {
+    if (n < k || k < 0) {
         *err = E_INVARG;
         return NADBL;
     }
@@ -6018,11 +6023,15 @@ static double bincoeff(double n, double k, int *err)
     /* catch special cases first */
     if (n == k || k == 0) {
         ret = 1.0;
-    } else if ((n - k) == 1|| k == 1) {
+    } else if (n - k == 1 || k == 1) {
         ret = n;
     } else {
         ret = lgamma(n+1) - lgamma(k+1) - lgamma(n-k+1);
-        ret = exp(ret);
+	if (is_integral(n) && is_integral(k)) {
+	    ret = nearbyint(exp(ret));
+	} else {
+	    ret = exp(ret);
+	}
     }
 
     return ret;
