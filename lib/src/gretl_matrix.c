@@ -333,7 +333,8 @@ static int matrix_block_error (const char *f)
 gretl_matrix *gretl_matrix_alloc (int rows, int cols)
 {
     gretl_matrix *m;
-    guint64 valsize;
+    size_t vsize = 0;
+    double chk;
 
     if (rows < 0 || cols < 0) {
         fprintf(stderr, "gretl error: gretl_matrix_alloc: rows=%d, cols=%d\n",
@@ -341,12 +342,14 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
         return NULL;
     }
 
-    valsize = (guint64) rows * cols * sizeof *m->val;
+    chk = rows * (double) cols * sizeof *m->val;
 
-    if (valsize > (guint64) SIZE_MAX) {
+    if (chk > (double) SIZE_MAX) {
 	fprintf(stderr, "gretl_matrix_alloc: max size_t exceeded\n");
 	set_gretl_matrix_err(E_ALLOC);
 	return NULL;
+    } else {
+	vsize = rows * cols * sizeof *m->val;
     }
 
     m = malloc(sizeof *m);
@@ -355,10 +358,10 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
         return NULL;
     }
 
-    if (valsize == 0) {
+    if (vsize == 0) {
         m->val = NULL;
     } else {
-        m->val = mval_malloc((size_t) valsize);
+        m->val = mval_malloc(vsize);
         if (m->val == NULL) {
             set_gretl_matrix_err(E_ALLOC);
             free(m);
