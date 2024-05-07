@@ -4231,7 +4231,11 @@ gretl_matrix *bit_combinations (int n, int k, int *err)
 	return NULL;
     }
 
-    if (k == 1) {
+    if (k == n) {
+	ret = gretl_unit_matrix_new(1, n);
+    } else if (k == 0) {
+	ret = gretl_zero_matrix_new(1, n);
+    } else if (k == 1) {
 	ret = gretl_zero_matrix_new(n, n);
 	if (ret != NULL) {
 	    for(i = n-1; i<n*n-1; i += n-1){
@@ -4247,10 +4251,6 @@ gretl_matrix *bit_combinations (int n, int k, int *err)
 	}
     } else if (n < 0 || k < 0 || n < k) {
 	ret = gretl_null_matrix_new();
-    } else if (k == n) {
-	ret = gretl_unit_matrix_new(1, n);
-    } else if (k == 0) {
-	ret = gretl_zero_matrix_new(1, n);
     } else {
 	nc = ncombos(n, k);
 	ret = gretl_zero_matrix_new(nc, n);
