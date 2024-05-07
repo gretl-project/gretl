@@ -396,7 +396,7 @@ enum {
     F_CORRESP,
     F_STRVSORT,
     F_FEVALB,
-    F_BINCOMBOS,
+    F_BINPERMS,
     HF_GLASSO,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,

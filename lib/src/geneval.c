@@ -1999,7 +1999,7 @@ static NODE *eval_urcpval (NODE *n, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *bincomb_node (NODE *l, NODE *r, parser *p)
+static NODE *binperm_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
 
@@ -2008,7 +2008,7 @@ static NODE *bincomb_node (NODE *l, NODE *r, parser *p)
 	int k = node_get_int(r, p);
 
 	if (!p->err) {
-	    ret->v.m = bit_combinations(n, k, &p->err);
+	    ret->v.m = bit_permutations(n, k, &p->err);
 	}
     }
 
@@ -19336,9 +19336,9 @@ static NODE *eval (NODE *t, parser *p)
             node_type_error(t->t, 0, MAT, l, p);
         }
         break;
-    case F_BINCOMBOS:
+    case F_BINPERMS:
         if (scalar_node(l) && scalar_node(r)) {
-            ret = bincomb_node(l, r, p);
+            ret = binperm_node(l, r, p);
         } else {
 	    p->err = E_TYPES;
         }
