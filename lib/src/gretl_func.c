@@ -10305,6 +10305,58 @@ static int get_return_line (ExecState *state)
     }
 }
 
+// #define ONE_WORKSPACE
+
+#ifdef ONE_WORKSPACE
+
+/* This is not working right yet. The troublesome case seems to be
+   when printf/sprintf calls are nested in two or more hansl
+   functions. Then the calls interfere with each other when they're
+   sharing command-line workspace.
+*/
+
+static ExecState *make_func_exec_state (DATASET *dset,
+                                        PRN *prn,
+                                        int *err)
+{
+    static char *line;
+    ExecState *state;
+    MODEL *model;
+    CMD cmd = {0};
+
+    if (line == NULL) {
+	line = calloc(MAXLEN, 1);
+	if (line == NULL) {
+	    *err = E_ALLOC;
+	    return NULL;
+	}
+    }
+
+    state = calloc(1, sizeof *state);
+    model = allocate_working_model();
+
+    if (state == NULL || model == NULL) {
+        *err = E_ALLOC;
+    } else {
+        *err = gretl_cmd_init(&cmd);
+    }
+
+    if (!*err) {
+        gretl_exec_state_init(state, FUNCTION_EXEC, line, &cmd, model, prn);
+        if (dset != NULL) {
+            if (dset->submask != NULL) {
+                state->submask = copy_dataset_submask(dset, err);
+            }
+            state->padded = dset->padmask != NULL;
+        }
+        state->callback = func_exec_callback;
+    }
+
+    return state;
+}
+
+#else /* prior code: inefficient but works OK */
+
 static ExecState *make_func_exec_state (DATASET *dset,
                                         PRN *prn,
                                         int *err)
@@ -10337,6 +10389,8 @@ static ExecState *make_func_exec_state (DATASET *dset,
 
     return state;
 }
+
+#endif /* ONE_WORKSPACE defined or not */
 
 static void restore_dataset_for_caller(ExecState *state,
                                        DATASET *dset,
@@ -10584,7 +10638,9 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
     }
 
     gretl_exec_state_clear(state);
+#ifndef ONE_WORKSPACE
     free(state->line);
+#endif
     free(state);
 
     if (started) {
