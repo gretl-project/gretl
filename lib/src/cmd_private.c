@@ -325,6 +325,8 @@ int statements_get_structure (stmt *lines, int n_lines,
 	}
     }
 
+    g_free(self_call);
+
 #if COMP_DEBUG
     fprintf(stderr, "\n%s: max if-depth %d, max loop-depth %d\n",
             name, max_if_depth, max_loop_depth);
