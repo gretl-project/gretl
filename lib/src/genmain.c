@@ -684,6 +684,21 @@ static int maybe_unassigned_fncall (const char *s)
     return s[strlen(s)-1] == ')';
 }
 
+static int call_realgen (const char *s, parser *p,
+			 DATASET *dset, PRN *prn,
+			 int flags, int targtype)
+{
+    int ret;
+
+    if (flags & P_PRIV) {
+	set_func_use_private_line(1);
+    }
+    ret = realgen(s, p, dset, prn, flags, targtype);
+    set_func_use_private_line(0);
+
+    return ret;
+}
+
 #define gen_silent(f) (f & (P_DISCARD | P_PRIV | P_DECL))
 
 int generate (const char *line, DATASET *dset,
@@ -757,7 +772,7 @@ int generate (const char *line, DATASET *dset,
 	return gen_special(vname, subline, dset, prn, &p);
     }
 
-    realgen(line, &p, dset, prn, flags, targtype);
+    call_realgen(line, &p, dset, prn, flags, targtype);
 
     if (!p.err && targtype != EMPTY) {
 	gen_save_or_print(&p, prn);
@@ -803,7 +818,7 @@ void *genr_get_pointer (const char *spec, GretlType gtype, int *errp)
     parser p;
     int err;
 
-    err = realgen(spec, &p, NULL, NULL, flags, UNK);
+    err = call_realgen(spec, &p, NULL, NULL, flags, UNK);
 
     if (!err) {
 	if (p.tree->t != BMEMB && p.tree->t != OSL) {
@@ -841,7 +856,7 @@ static double generate_scalar_full (const char *s, DATASET *dset,
     parser p;
     double x = NADBL;
 
-    *err = realgen(s, &p, dset, prn, P_PRIV | P_ANON, NUM);
+    *err = call_realgen(s, &p, dset, prn, P_PRIV | P_ANON, NUM);
 
     if (!*err) {
 	if (p.ret->t == MAT) {
@@ -909,7 +924,7 @@ int generate_void (const char *s, DATASET *dset, PRN *prn)
     parser p;
     int err;
 
-    err = realgen(s, &p, dset, prn, P_PRIV | P_VOID, EMPTY);
+    err = call_realgen(s, &p, dset, prn, P_PRIV | P_VOID, EMPTY);
 
     gen_cleanup(&p);
 
@@ -924,7 +939,7 @@ double *generate_series (const char *s, DATASET *dset, PRN *prn,
     parser p;
     double *x = NULL;
 
-    *err = realgen(s, &p, dset, prn, P_PRIV | P_ANON, SERIES);
+    *err = call_realgen(s, &p, dset, prn, P_PRIV | P_ANON, SERIES);
 
     if (!*err) {
 	NODE *n = p.ret;
@@ -957,7 +972,7 @@ gretl_matrix *generate_matrix (const char *s, DATASET *dset,
     gretl_matrix *m = NULL;
     parser p;
 
-    *err = realgen(s, &p, dset, NULL, P_PRIV | P_ANON, MAT);
+    *err = call_realgen(s, &p, dset, NULL, P_PRIV | P_ANON, MAT);
 
     if (!*err) {
 	NODE *n = p.ret;
@@ -1003,7 +1018,7 @@ char *generate_string (const char *s, DATASET *dset, int *err)
     parser p;
     char *ret = NULL;
 
-    *err = realgen(s, &p, dset, NULL, P_PRIV | P_ANON, STR);
+    *err = call_realgen(s, &p, dset, NULL, P_PRIV | P_ANON, STR);
 
     if (!*err) {
 	NODE *n = p.ret;
@@ -1045,7 +1060,7 @@ int *generate_list (const char *s, DATASET *dset, int ci, int *err)
 	flags |= P_PRNLIST;
     }
 
-    *err = realgen(s, &p, dset, NULL, flags, LIST);
+    *err = call_realgen(s, &p, dset, NULL, flags, LIST);
 
     if (!*err) {
 	ret = node_get_list(p.ret, &p);
@@ -1129,7 +1144,7 @@ parser *genr_compile (const char *s, DATASET *dset,
     fprintf(stderr, "*** targtype = %s\n", getsymb(targtype));
 #endif
 
-    *err = realgen(s, p, dset, prn, flags, targtype);
+    *err = call_realgen(s, p, dset, prn, flags, targtype);
 
     if (*err == 0 && p != NULL &&
 	!(opt & OPT_N) && p->targ != EMPTY) {
@@ -1163,7 +1178,7 @@ int execute_genr (parser *p, DATASET *dset, PRN *prn)
 	    (void *) dset->Z, (void *) prn);
 #endif
 
-    realgen(NULL, p, dset, prn, P_EXEC, UNK);
+    call_realgen(NULL, p, dset, prn, P_EXEC, UNK);
 
     if (!p->err && p->targ != EMPTY) {
 	gen_save_or_print(p, prn);
@@ -1188,8 +1203,8 @@ double evaluate_scalar_genr (parser *p, DATASET *dset,
 {
     double x = NADBL;
 
-    *err = realgen(NULL, p, dset, NULL, P_EXEC | P_PRIV | P_ANON,
-		   NUM);
+    *err = call_realgen(NULL, p, dset, NULL, P_EXEC | P_PRIV | P_ANON,
+			NUM);
 
     if (!*err) {
 	if (p->ret->t == MAT) {

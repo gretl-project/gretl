@@ -172,6 +172,8 @@ int gretl_function_append_line (ExecState *s);
 
 int gretl_is_public_user_function (const char *name);
 
+void set_func_use_private_line (int s);
+
 int gretl_function_exec_full (fncall *call, int rtype,
 			      DATASET *dset, void *ret,
 			      char **descrip, series_table **stab,

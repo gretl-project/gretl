@@ -59,6 +59,7 @@ void gretl_exec_state_init (ExecState *s,
     s->var = NULL;
     s->in_comment = 0;
     s->padded = 0;
+    s->free_line = 0;
 
     if (flags == FUNCTION_EXEC) {
         /* On entry to function execution we check if there's
