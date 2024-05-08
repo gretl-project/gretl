@@ -1,0 +1,24 @@
+include extra.gfn
+set assert stop
+
+n = 6
+k = 4
+
+c = seq(1,n)
+nc = bincoeff(n, k)
+
+x0 = combinations(c, k)
+assert(rows(x0) == nc)
+print x0
+
+loop 1
+     x1 = combinations(c, k)
+endloop
+assert(x1 == x0)
+
+loop 2
+     x2 = combinations(c, k)
+endloop
+assert(x2 == x0)
+
+
