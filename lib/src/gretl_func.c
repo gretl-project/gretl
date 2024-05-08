@@ -298,6 +298,7 @@ static char mpi_caller[FN_NAMELEN];
 #define function_is_private(f)   (f->flags & UFUN_PRIVATE)
 #define function_is_noprint(f)   (f->flags & UFUN_NOPRINT)
 #define function_is_menu_only(f) (f->flags & UFUN_MENU_ONLY)
+#define function_is_recursive(f) (f->flags & UFUN_RECURSES)
 
 #define set_call_recursing(c)   (c->flags |= FC_RECURSING)
 #define is_recursing(c)         (c->flags & FC_RECURSING)
@@ -10389,8 +10390,8 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
     int i, j, err = 0;
 
 #if COMP_DEBUG || EXEC_DEBUG
-    fprintf(stderr, "gretl_function_exec: starting %s (depth %d)\n",
-            u->name, gretl_function_depth());
+    fprintf(stderr, "gretl_function_exec: starting %s (depth %d, recursing %d)\n",
+            u->name, gretl_function_depth(), is_recursing(call));
 #endif
 
     err = maybe_check_function_needs(dset, u);
@@ -10435,12 +10436,13 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
     }
 
     /* should we try to compile genrs, loops? */
-#if 1
+#if 0
+    /* relatively permissive (too lax?) */
     gencomp = gretl_iterating() && !get_loop_renaming();
 #else
     /* also cut out functions that recurse */
     gencomp = gretl_iterating() && !get_loop_renaming() &&
-	!(u->flags & UFUN_RECURSES);
+	!function_is_recursive(u);
 #endif
 
     /* get function lines in sequence and check, parse, execute */
