@@ -60,6 +60,8 @@
 #define CALL_DEBUG 0    /* debug handling of the callstack */
 #define REC_DEBUG 0     /* debug recursion */
 
+#define COMPILE_RECURSIVE 0 /* May 2024: too risky */
+
 #define INT_USE_XLIST (-999)
 #define INT_USE_MYLIST (-777)
 
@@ -10435,12 +10437,12 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
         redir_level = print_redirection_level(prn);
     }
 
-    /* should we try to compile genrs, loops? */
-#if 0
-    /* relatively permissive (too lax?) */
+    /* when should we try to compile genrs, loops? */
+#if COMPILE_RECURSIVE
+    /* as of 2024-05-08 this seems to be too risky */
     gencomp = gretl_iterating() && !get_loop_renaming();
 #else
-    /* also cut out functions that recurse */
+    /* add clause to cut out functions that recurse */
     gencomp = gretl_iterating() && !get_loop_renaming() &&
 	!function_is_recursive(u);
 #endif
