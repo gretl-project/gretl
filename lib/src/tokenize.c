@@ -545,6 +545,10 @@ static void gretl_cmd_clear (CMD *c)
     } else if (ci > 0 && ci != SETOPT &&
 	!(c->ciflags & (CI_NOOPT | CI_EXPR | CI_VARGS))) {
 	clear_stored_options_for_command(ci);
+	if (ci == PLOT) {
+	    /* PLOT stores options on behalf of GNUPLOT */
+	    clear_stored_options_for_command(GNUPLOT);
+	}
     }
 
     c->ci = 0;
