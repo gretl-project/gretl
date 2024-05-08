@@ -185,14 +185,16 @@ function numeric regls_pred (const bundle rb, const list X)
       funcerr "rb is not a valid regls bundle"
    elif typeof(X) != 7
       funcerr "regls bundle: X must be a list"
-   elif !inbundle(rb, "nzX")
-      funcerr "nzX is missing from the bundle argument"
    endif
-   
+
+   scalar have_nzX = inbundle(rb, "nzX")
+   scalar ifc = inlist(X, 0)
    scalar idx = 0
    matrix selvec = {}
    if inbundle(rb, "pred")
       idx = get_pred_preference(rb, &selvec)
+   elif !have_nzX
+      idx = rb.idxmin
    endif
 
    # handle various non-default cases
@@ -200,16 +202,16 @@ function numeric regls_pred (const bundle rb, const list X)
       # multiple predictions
       set skip_missing off
       matrix P
-      matrix MX = rb.stdize ? 1 ~ {X} : {X}
+      matrix MX = (rb.stdize && !ifc) ? 1 ~ {X} : {X}
       if idx == -1 # "all"
          P = MX * rb.B
-      else 
+      else
          P = MX * rb.B[,selvec]
       endif
       return P
    elif idx > 0
       # single non-standard prediction
-      if rb.stdize
+      if rb.stdize && !ifc
          list All = const X
          yhat = lincomb(All, rb.B[,idx])
       else
@@ -240,18 +242,19 @@ function matrix mregls_pred (const bundle rb, const matrix X)
       funcerr "rb is not a valid mregls bundle"
    elif typeof(X) != 3
       funcerr "mregls bundle: X must be a matrix"
-   elif !inbundle(rb, "nzX")
-      funcerr "nzX is missing from the bundle argument"
    endif
-   
+
+   scalar have_nzX = inbundle(rb, "nzX")
    scalar idx = 0
    matrix selvec = {}
    if inbundle(rb, "pred")
       idx = get_pred_preference(rb, &selvec)
+   elif !have_nzX
+      idx = rb.idxmin
    endif
-   
+
    matrix yhat
-   
+
    # handle various non-default cases
    if idx != 0 || nelem(selvec) > 0
       matrix MX = rb.stdize ? 1 ~ X : X
@@ -263,7 +266,7 @@ function matrix mregls_pred (const bundle rb, const matrix X)
          yhat = MX * rb.B[,idx]
       endif
       return yhat
-   endif   
+   endif
 
    if nelem(rb.nzb) == 0
       # unlikely but possible
