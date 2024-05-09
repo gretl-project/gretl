@@ -2655,10 +2655,8 @@ static void make_gtitle (gnuplot_info *gi, int code,
     switch (code) {
     case GTITLE_VLS:
 	if (gi->fit == PLOT_FIT_OLS) {
-	    fprintf(stderr, " OLS\n");
 	    title = g_strdup_printf(_("%s versus %s (with least squares fit)"),
 				    s1, s2);
-	    fprintf(stderr, " title='%s'\n", title);
 	} else if (gi->fit == PLOT_FIT_INVERSE) {
 	    title = g_strdup_printf(_("%s versus %s (with inverse fit)"),
 				    s1, s2);
