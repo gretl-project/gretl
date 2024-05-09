@@ -2328,7 +2328,6 @@
       </description>
     </function>
 
-
     <function name="bincoeff" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">n</fnarg>
@@ -2374,6 +2373,44 @@
 	</para>
 	<para>
 	  See also <fncref targ="gammafun"/> and <fncref targ="lngamma"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="binperms" section="math" output="matrix">
+      <fnargs>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int">k</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Binary permutations: returns a <by r="p" c="n"/> matrix,
+	  each of whose rows holds a distinct arrangement of
+	  <math>k</math> ones and <math>n</math> &minus;
+	  <math>k</math> zeros. The maximum supported value of
+	  <math>n</math> is 64, <math>n</math> and <math>k</math> must
+	  be non-negative, and <math>k</math> must be no greater than
+	  <math>n</math>; otherwise an error is flagged. In case
+	  <math>n</math> = <math>k</math> = 0 an empty matrix is
+	  returned.
+	</para>
+	<para>
+	  <emphasis>Warning:</emphasis> the number of permutations,
+	  <math>p</math>, is a steeply increasing function of
+	  <math>n</math> and is greatest when <math>k</math> is about
+	  half of <math>n</math>. You may want to check in advance the
+	  size of the matrix that <lit>binperms</lit> will attempt to
+	  allocate. The <fncref targ="bincoeff"/> function returns
+	  <math>p</math>, and the size of the resulting matrix in
+	  megabytes can be calculated as
+	</para>
+	<code>
+	  MB = 8 * n * bincoeff(n, k) / 10^6
+	</code>
+	<para>
+	  For <math>n</math> = 30, this gives about 34 MB when
+	  <math>k</math> = 25, 7211 MB if <math>k</math> =
+	  20, and 20758 MB if <math>k</math> = 18.
 	</para>
       </description>
     </function>
