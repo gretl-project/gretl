@@ -1,5 +1,7 @@
 version 2024b, in progress
 
+The long-deprecated function isnull() has now been removed.
+
 Recommended usage of the exists() function is now restricted to
 testing of "top-level" identifiers. For the sake of backward
 compatibility arguments of the form <bundle>.<key> are still
