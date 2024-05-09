@@ -80,6 +80,8 @@ typedef struct ufunc_ ufunc;
 typedef struct fncall_ fncall;
 typedef struct fnpkg_ fnpkg;
 
+void set_func_use_private_line (int s);
+
 int n_user_functions (void);
 
 int n_free_functions (void);
