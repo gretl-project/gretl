@@ -13,6 +13,8 @@ version 2024b, in progress
   arrays and bundles
 - help files: clarify the help for some commands and improve
   formatting
+- $sysinfo bundle: add "stack_size"
+- mrw (Mankiw-Romer-Weil) dataset: rename "inv" as "i_y"
 - Fix bug: crash on replacing a single character in a string
   variable, when the replacement UTF-8 character takes up more
   bytes than the original
@@ -32,8 +34,12 @@ version 2024b, in progress
   graphs
 - GUI: fix the "Packages" entry under Help
 - GUI: ensure that all fonts scale on zoom in/out in help
+- GUI: add more choices for plot scaling
+- GUI: improvements to the regls dialog
 - Internals: economize stack usage in case of nested function
   calls
+- 64-bit Windows build: increase stack size to 8 MiB (as per
+  Linux and macOS)
 
 2024-04-05 version 2024a
 - gretl "addons": integrate with releases on all platforms
