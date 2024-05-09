@@ -124,5 +124,29 @@ end function
 test_truncnorm()
 
 
+clear
+function void repeated_combinations (void)
+  /* Bug reported on May 8th 2024 with Gretl 2024a for the
+  combinations() function probably due to some failure
+  related to the compilation of recursive functions. */
+
+  scalar n = 10
+  scalar k = 6
+  scalar H = 1
+  matrix c = seq(1, n)
+
+  # First run works fine
+  loop H
+      x0 = combinations(c, k)
+  endloop
+
+  # Second run failed
+  loop H
+      x0 = combinations(c, k)
+  endloop
+end function
+repeated_combinations()
+
+
 
 printf "\nInfo: All tests passed.\n"
