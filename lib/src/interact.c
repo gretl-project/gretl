@@ -4504,6 +4504,11 @@ void gretl_exec_state_clear (ExecState *s)
 {
     gretl_cmd_free(s->cmd);
 
+    if (s->free_line) {
+	free(s->line);
+	s->line = NULL;
+    }
+
     if (s->flags & FUNCTION_EXEC) {
         /* Restore whatever was the 'last model' before
            function execution. Note that this includes
