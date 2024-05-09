@@ -8304,7 +8304,9 @@ static int ufunc_get_structure (ufunc *u)
     ret = statements_get_structure(u->lines, u->n_lines,
 				   u->name, &recurses);
     if (recurses) {
+#if 0
 	fprintf(stderr, "%s calls itself\n", u->name);
+#endif
 	u->flags |= UFUN_RECURSES;
     }
 
