@@ -1,4 +1,39 @@
-include extra.gfn
+/* This function is ripped from extra_matrix.inp, where it may soon
+   be replaced by a more efficient, non-recursive variant. However,
+   in the unit test context it's a good test case for gretl's handling
+   of recursion.
+*/
+
+function matrix combinations (matrix from, int h)
+    if rows(from) > 1 && cols(from) > 1
+        return {NA}
+    endif
+    scalar n = nelem(from)
+    if h > n
+        string s = argname(from)
+        return {NA}
+    endif
+
+    # special cases
+    if h == 1
+        return vec(from)
+    elif h == 2
+        matrix a = mshape(from, n, n)
+        return (a')[lower] ~ a[lower]
+    elif h == n
+        return vec(from)'
+    elif h == n-1
+        return mshape(mshape(from, n, n-1)', n, n-1)
+    endif
+
+    matrix ret = {}
+    scalar hh = h-1
+    loop i = 1 .. (n-hh)
+        ret |= from[i] ~ combinations(from[i+1:], hh)
+    endloop
+    return ret
+end function
+
 set assert stop
 
 n = 6
