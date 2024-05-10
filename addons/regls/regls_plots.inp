@@ -173,5 +173,6 @@ function matrix regls_plot_check (const bundle *b)
    if !inbundle(b, "B")
       return {0}
    endif
-   return cols(b.B) > 1 ? {1} : {0}
+   # both plots require more than one regularization parameter
+   return cols(b.B) > 1 ? {1,1} : {0,0}
 end function

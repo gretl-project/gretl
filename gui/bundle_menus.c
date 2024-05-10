@@ -461,11 +461,14 @@ static fnpkg *get_package_for_bundle (gretl_bundle *b)
     return pkg;
 }
 
-static gretl_matrix *get_plotcheck_vec (gretl_bundle *b)
+static gretl_matrix *get_plotcheck_vec (gretl_bundle *b,
+					int *chklen,
+					int *zeros)
 {
     gretl_matrix *chk = NULL;
     gchar *checker;
 
+    *chklen = *zeros = 0;
     checker = get_bundle_special_function(b, PLOT_PRECHECK);
 
     if (checker != NULL) {
@@ -476,7 +479,18 @@ static gretl_matrix *get_plotcheck_vec (gretl_bundle *b)
 	    cfun = get_function_from_package(checker, pkg);
 	}
 	if (cfun != NULL) {
+	    int i, n, z = 0;
+
 	    chk = run_plot_precheck(cfun, b);
+	    if ((n = gretl_vector_get_length(chk)) > 0) {
+		*chklen = n;
+		for (i=0; i<n; i++) {
+		    if (chk->val[i] == 0) {
+			z++;
+		    }
+		}
+		*zeros = z;
+	    }
 	}
 	g_free(checker);
     }
@@ -497,21 +511,28 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin, int *insensitive)
 	const char **S = NULL;
 	gretl_matrix *chk = NULL;
 	int chklen = 0;
-	int ng = 0;
+	int zeros = 0;
+	int p = 1;
 
 	if (strcmp(plotfunc, "builtin")) {
 	    /* how can this come about? */
 	    fun = get_user_function_by_name(plotfunc);
 	}
 	if (fun != NULL) {
-	    S = fn_param_value_labels(fun, 1, &ng);
+	    S = fn_param_value_labels(fun, 1, &p);
 	}
 
-	chk = get_plotcheck_vec(bundle);
-	if (chk != NULL) {
-	    chklen = gretl_vector_get_length(chk);
-	    if (chklen == 1 && chk->val[0] == 0) {
+	chk = get_plotcheck_vec(bundle, &chklen, &zeros);
+
+	if (chklen > 0) {
+	    if (chklen == 1 && zeros == 1) {
+		/* backward compatibility */
 		*insensitive = 1;
+	    } else if (zeros == p) {
+		/* now preferred */
+		*insensitive = 1;
+	    }
+	    if (*insensitive) {
 		S = NULL;
 	    }
 	}
@@ -526,7 +547,7 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin, int *insensitive)
 	    minv = (int) fn_param_minval(fun, 1);
 	    menu = gtk_menu_new();
 
-	    for (i=0; i<ng; i++) {
+	    for (i=0; i<p; i++) {
 		aname = g_strdup_printf("%s:%d", plotfunc, i + minv);
 		action = gtk_action_new(aname, S[i], NULL, NULL);
 		g_signal_connect(G_OBJECT(action), "activate",
@@ -534,7 +555,7 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin, int *insensitive)
 				 vwin);
 		item = gtk_action_create_menu_item(action);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-		if (chklen > i && chk->val[i] == 0) {
+		if (chk->val[i] == 0) {
 		    gtk_widget_set_sensitive(item, FALSE);
 		}
 		g_free(aname);
