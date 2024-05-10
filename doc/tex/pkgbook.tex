@@ -2912,12 +2912,19 @@ editor these appear under the \textsf{Special functions} tab in the
   be used to produce some sort of plot or graph using the content of a
   bundle produced by the package.
 
-  \vbusage{} \verb|bundle-plot = Brown_print|
+  \vbusage{} \verb|bundle-plot = SF_Plot|
 
 \item \texttt{bundle-fcast} (optional): Identifies a function that
   generates a forecast based on a bundle's content.
 
   \vbusage{} \verb|bundle-fcast = regls_fcast|
+
+\item \texttt{plot-precheck} (optional): Relevant only if the package
+  includes a \texttt{bundle-plot} function. Identifies a function that
+  signals whether a plot is actually available, conditional on the
+  content of the bundle.
+
+  \vbusage{} \verb|plot-precheck = regls_plot_check|
 
 \end{description}
 
@@ -2945,19 +2952,54 @@ Taking the \textsf{gig} package as an example, we have:
 and
 %
 \begin{code}
-  function void GUI_gig_plot(bundle *model, int ptype[0:1:0] \
-                             "Plot type" {"Time series", "Density"})
+function void GUI_gig_plot(bundle *model, int ptype[0:2:0] \
+                           "Plot type" {"Time series", "Density", "Forecast"})
 \end{code}
 
 That is, \textsf{gig}'s \texttt{bundle-print} function has no options,
 but its \texttt{bundle-plot} function has a control parameter
 \texttt{ptype}. Note how this parameter is set up: it has a minimum
-value of 0 and a maximum of 1 (these options could be extended), and 0
+value of 0 and a maximum of 2 (these options could be extended), and 0
 is the default. Further, the parameter is given a name for display in
-the GUI, ``Plot type'', and it also has strings---``Time series'' and
-``Density''---associated with its two possible numerical values. The
-latter strings will be used to populate a menu on the window
-displaying a \textsf{gig} bundle.
+the GUI, ``Plot type'', and it also has strings---``Time series'',
+``Density'' and ``Forecast''---associated with its three possible
+numerical values. The latter strings will be used to populate a menu
+on the window displaying a \textsf{gig} bundle
+(see Figure~\ref{fig:gig-plot-menu}).
+\vspace{1ex}
+
+\begin{figure}[htbp]
+  \begin{center}
+  \includegraphics[scale=0.8]{figures/gig_plot_menu.png}
+  \caption{\texttt{gig} plot menu: the menu pops up from the plot
+    toolbar button behind it.}
+  \label{fig:gig-plot-menu}
+  \end{center}
+\end{figure}
+
+Now it may be that the availability of plotting options (if any)
+depends on the parameters with which the bundle in question was
+created. For example, if producing a forecast is an optional extra
+that has not been selected, a forecast plot should not be shown as a
+``live'' option in the bundle window. This sort of case can be handled
+by a \texttt{plot-precheck} function. There are two cases to consider.
+\begin{itemize}
+\item The \texttt{bundle-plot} function supports a single type of
+  plot. In this case we'll say $p = 1$.
+\item The \texttt{bundle-plot} function offers $p > 1$ options, with
+  associated strings.
+\end{itemize}
+In each case \texttt{plot-precheck} must return a binary $p$-vector,
+with 1s indicating options that are available given the bundle content
+and 0s indicating unavailable options. The effect in the GUI is as
+follows. Let $z$ denotes the number of 0s in the vector returned by
+\texttt{plot-precheck}. Then
+\begin{itemize}
+\item if $z = p$ no plots are available and the plot toolbar button
+  itself is insensitive (can't be clicked).
+\item if $0 < z < p$ the button is sensitive but the unavailable menu
+  item are shown as ``grayed out''.
+\end{itemize}
 
 \section{Extra elements}
 \label{sec:spec-extra}
