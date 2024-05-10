@@ -1,0 +1,19 @@
+set verbose off
+set assert stop
+/* This crashes with gretl 2024b development version. */
+
+scalar n = 3
+strings Plots = array(0)
+
+print Plots  # Works
+
+loop n
+    Plots += array(1)  # extend array
+endloop
+
+scalar n_actual = nelem(Plots)
+assert(n == n_actual)
+
+print Plots  # !!! THIS triggers the crash !!!
+
+quit
