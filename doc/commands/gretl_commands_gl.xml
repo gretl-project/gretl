@@ -5949,6 +5949,11 @@
 	  <effect>Alto da gráfica en pixels [600]</effect>
 	</option>
 	<option>
+	  <flag>--title</flag>
+	  <optparm>cadea entre comiñas</optparm>
+	  <effect>Engadir un título xeral</effect>
+	</option>
+	<option>
 	  <flag>--rows</flag>
 	  <optparm>r</optparm>
 	  <effect>Mira abaixo</effect>
@@ -11151,11 +11156,9 @@
       <para>
 	Os 'Complementos' oficiais están incluídos nos instaladores de GRETL
 	para Windows e para Mac. Para Linux, se non se instalan previamente,
-	entón descárganse cando se solicite (por exemplo, se escolles o elemento
-	do menú /Modelar/Series temporais univariantes/GARCH, entón GRETL
-	vai descargar o 'Complemento' <lit>gig</lit> (GARCH in GRETL). Podes
-	verificar que os teus 'Complementos' están actualizados mediante
-	<mnu targ="SFAddons">Comprobar complementos</mnu> no menú Axuda.
+	entón descárganse cando se solicite. Podes verificar que os teus
+	'Complementos' están actualizados mediante
+	<mnu targ="Addons">Comprobar complementos</mnu> no menú Axuda.
       </para>
       <para>
 	Podes botar unha ollada aos paquetes de contribucións instalados
@@ -11836,6 +11839,10 @@
 	  <flag>--verbose</flag>
 	  <effect>Mira abaixo</effect>
         </option>
+        <option>
+	  <flag>--staging</flag>
+	  <effect>Mira abaixo</effect>
+        </option>
       </options>
      <examples>
         <example>pkg install armax</example>
@@ -11913,7 +11920,7 @@
       </para>
       <code>
 	pkg index addons --verbose
-      </code>>
+      </code>
 	<subhead>Paquetes de ficheiros de datos</subhead>
 	    <para>
 	Ademais da súa utilización con paquetes de funcións, a instrución
@@ -11928,6 +11935,17 @@
 	    <para>
   Cae na conta de que <lit>install</lit> é a única operación admitida
   para eses ficheiros.
+      </para>
+  <subhead>Montaxe</subhead>
+      <para>
+	A opción <opt>staging</opt> é un elemento de conveniencia para os
+	desenvolvedores e está dispoñible unicamente en conxunción coa
+	acción <lit>install</lit> cando se aplica a un paquete de función.
+	O seu efecto consiste en que se descarga o paquete en cuestión da
+	área de montaxe (<lit>staging</lit>) de Sourceforge en troques de
+	facelo dunha área pública. Os paquetes en montaxe aínda non están
+	aprobados para uso xeral; por iso, ignora esta opción a non ser que
+	saibas o que estás a facer.
       </para>
     </description>
 	
@@ -13369,15 +13387,17 @@
 	utilizando un método de Máxima Verosimilitude, ou un estatístico
 	<math>F</math> asintótico, noutro caso.
       </para>
+      <subhead>Restricións lineais: sintaxe alternativa</subhead>
       <para>
-	Tes tres alternativas ao método para expresar as restricións descrito
-	máis arriba. Primeiro, podes escribir de forma compacta un conxunto de
-	<math>g</math> restricións lineais sobre o vector cos <math>k</math>
+	Tes dúas alternativas ao método para expresar as restricións descrito
+	máis arriba. Primeiro, podes escribir de forma compacta un conxunto
+	de <math>g</math> restricións sobre o vector cos <math>k</math>
 	parámetros (&bgr;), como <math>R</math>&bgr; &minus; <math>q</math> = 0,
 	onde <math>R</math> é unha matriz de dimensión <by r="g" c="k"/> e
 	<math>q</math> é un vector de dimensión <math>g</math>. Podes expresar
 	unha restrición indicando os nomes de matrices definidas previamente,
-	cómodas para utilizar como <math>R</math> e <math>q</math>, como en
+	cómodas para utilizar como <math>R</math> e <math>q</math>,
+	como en
       </para>
       <code>
 	restrict
@@ -13405,11 +13425,12 @@
 	<fncref targ="sprintf"/> para elaborar as cadeas de texto, en base
 	á entrada para unha función.
       </para>
+      <subhead>Restricións non lineais </subhead>
       <para>
-	Finalmente, se queres probar unha restrición non linear (o que
-	actualmente só está dispoñible para modelos dunha única ecuación),
-	debes de indicar a restrición co nome dunha función, precedida por
-	<quote><lit>rfunc = </lit></quote>, como en
+	Se queres probar unha restrición non linear (o que actualmente só está
+	dispoñible para modelos dunha única ecuación), debes indicar a restrición
+	co nome dunha función, precedida por <quote><lit>rfunc = </lit></quote>,
+	como en
       </para>
       <code>
 	restrict
@@ -13753,7 +13774,7 @@
       <para>
 	Para seleccionar observacións para as que unha variable concreta ten
 	valores non ausentes, usa <quote>Restrinxir, a partir do criterio...</quote>
-	e indica a condición booleana <quote>!missing(nomevar)</quote> (substitúe
+	e indica a condición booleana <quote>ok(nomevar)</quote> (substitúe
 	<quote>nomevar</quote> co nome da variable que queiras usar).
       </para>
       <para>
@@ -14611,14 +14632,20 @@
 	</li>
 	<li>
 	  <para>
-	  <lit>hc_version</lit>: 0 (por defecto), 1, 2, 3 ou 3a. Establece a variante
-	  que se utiliza ao calcular os Desvíos Padrón Consistentes ante
-	  Heterocedasticidade (HC) con datos de sección cruzada. As 4 primeiras
-	  opcións correspóndense a HC0, HC1, HC2 e HC3 discutidas por Davidson e
+	  <lit>hc_version</lit>: 0, 1, 2, 3 ou 3a. Establece a variante que se
+	  usa ao calcular os Desvíos Padrón Consistentes ante Heterocedasticidade
+	  (HC) con datos de sección cruzada. As 4 primeiras opcións se
+	  corresponden con HC0, HC1, HC2 e HC3 discutidas por Davidson e
 	  MacKinnon no capítulo 5 de <book>Econometric Theory and Methods</book>.
-	  HC0 produce os <quote>desvíos padrón de White</quote>, como se
-	  denominan habitualmente. A variante 3a é o procedemento da
-	  <quote>navalla</quote> de MacKinnon&ndash;White.
+	  HC0 produce os denominados habitualmente como
+	  <quote>desvíos padrón de White</quote>. A variante 3a é o procedemento
+	  da <quote>navalla</quote> de MacKinnon&ndash;White. A configuración
+	  predeterminada habitualmente é 1, pero isto pódese cambiar no
+	  cliente GUI, seleccionando a lapela <quote>HCCME</quote> no menú
+	  <quote>Ferramentas/Preferencias/Xeral</quote>. Cae na conta de que
+	  unha configuración feita mediante GUI persiste ao longo das sesións
+	  de GRETL, en oposición ao uso da instrución <lit>set</lit> que
+	  unicamente vai afectar á sesión vixente.
 	  </para>
 	</li>
 	<li>

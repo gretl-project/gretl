@@ -5949,6 +5949,11 @@
 	  <effect>Altura del gráfico en pixels [600]</effect>
 	</option>
 	<option>
+	  <flag>--title</flag>
+	  <optparm>cadena entre comillas</optparm>
+	  <effect>Añadir un título general</effect>
+	</option>
+	<option>
 	  <flag>--rows</flag>
 	  <optparm>r</optparm>
 	  <effect>Mira abajo</effect>
@@ -11151,11 +11156,9 @@
       <para>
 	Los 'Complementos' oficiales están incluidos en los instaladores de GRETL
 	para Windows y para Mac. Para Linux, si no se instalan previamente,
-	entonces se descargan cuando se solicite (por ejemplo, si escoges el
-	elemento del menú /Modelo/Series temporales univariantes/GARCH, entonces
-	GRETL va a descargar el 'Complemento' <lit>gig</lit> (GARCH in GRETL).
-	Puedes verificar que tus 'Complementos' están actualizados mediante
-	<mnu targ="SFAddons">Revisar complementos</mnu> en el menú Ayuda.
+	entonces se descargan cuando se solicite. Puedes verificar que tus
+	'Complementos' están actualizados mediante
+	<mnu targ="Addons">Revisar complementos</mnu> en el menú Ayuda.
       </para>
       <para>
 	Puedes echar un vistazo a los paquetes de contribuciones instalados
@@ -11836,6 +11839,10 @@
 	  <flag>--verbose</flag>
 	  <effect>Mira abajo</effect>
         </option>
+        <option>
+	  <flag>--staging</flag>
+	  <effect>Mira abajo</effect>
+        </option>
       </options>
      <examples>
         <example>pkg install armax</example>
@@ -11928,6 +11935,17 @@
 	    <para>
   Ten en cuenta que <lit>install</lit> es la única operación admitida
   para esos archivos.
+      </para>
+  <subhead>Montaje</subhead>
+      <para>
+	La opción <opt>staging</opt> es un elemento de conveniencia para los
+	desarrolladores y está disponible únicamente en conjunción con la
+	acción <lit>install</lit> cuando se aplica a un paquete de función.
+	Su efecto consiste en que se descarga el paquete en cuestión del
+	área de montaje (<lit>staging</lit>) de Sourceforge en lugar de
+	hacerlo de un área pública. Los paquetes en montaje todavía no están
+	aprobados para uso general; por eso, ignora esta opción a no ser que
+	sepas lo que estás haciendo.
       </para>
     </description>
 
@@ -13369,15 +13387,17 @@
 	utilizando un método de Máxima Verosimilitud, o un estadístico
 	<math>F</math> asintótico, en otro caso.
       </para>
+      <subhead>Restricciones lineales: sintaxis alternativa</subhead>
       <para>
-	Tienes tres alternativas al método para expresar las restricciones descrito
+	Tienes dos alternativas al método para expresar las restricciones descrito
 	más arriba. Primero, puedes escribir de forma compacta un conjunto de
-	<math>g</math> restricciones lineales sobre el vector con los <math>k</math>
+	<math>g</math> restricciones sobre el vector con los <math>k</math>
 	parámetros (&bgr;), como <math>R</math>&bgr; &minus; <math>q</math> = 0,
 	donde <math>R</math> es una matriz de dimensión <by r="g" c="k"/> y
 	<math>q</math> es un vector de dimensión <math>g</math>. Puedes expresar
 	una restricción indicando los nombres de matrices definidas previamente,
-	cómodas para utilizar como <math>R</math> y <math>q</math>, como en
+	cómodas para utilizar como <math>R</math> y <math>q</math>,
+	como en
       </para>
       <code>
 	restrict
@@ -13405,10 +13425,11 @@
 	función <fncref targ="sprintf"/> para elaborar las cadenas de texto,
 	en base a la entrada para una función.
       </para>
+      <subhead>Restricciones no lineales </subhead>
       <para>
-	Finalmente, si quieres contrastar una restricción no lineal (lo que
-	actualmente solo está disponible para modelos de una única ecuación),
-	debes indicar la restricción con el nombre de una función, precedida por
+	Si quieres contrastar una restricción no lineal (lo que actualmente solo
+	está disponible para modelos de una única ecuación), debes indicar la
+	restricción con el nombre de una función, precedida por
 	<quote><lit>rfunc = </lit></quote>, como en
       </para>
       <code>
@@ -13753,7 +13774,7 @@
       <para>
 	Para seleccionar observaciones para las que una variable concreta tiene
 	valores no ausentes, usa <quote>Restringir, a partir del criterio...</quote>
-	e indica la condición booleana <quote>!missing(nombrevar)</quote> (substituye
+	e indica la condición booleana <quote>ok(nombrevar)</quote> (substituye
 	<quote>nombrevar</quote> con el nombre de la variable que quieras usar).
       </para>
       <para>
@@ -14611,14 +14632,20 @@
 	</li>
 	<li>
 	  <para>
-	  <lit>hc_version</lit>: 0 (por defecto), 1, 2, 3 o 3a. Establece la variante
-	  que se utiliza al calcular las desviaciones típicas Consistentes ante
-	  Heterocedasticidad (HC) con datos de sección cruzada. Las 4 primeras
-	  opciones se corresponden a HC0, HC1, HC2 y HC3 discutidas por Davidson y
+	  <lit>hc_version</lit>: 0, 1, 2, 3 o 3a. Establece la variante que se usa
+	  al calcular las desviaciones típicas Consistentes ante Heterocedasticidad
+	  (HC) con datos de sección cruzada. Las 4 primeras opciones se
+	  corresponden con HC0, HC1, HC2 y HC3 discutidas por Davidson y
 	  MacKinnon en el capítulo 5 de <book>Econometric Theory and Methods</book>.
-	  HC0 produce las <quote>desviaciones típicas de White</quote>, como se
-	  denominan habitualmente. La variante 3a es el procedimiento de la
-	  <quote>navaja</quote> de MacKinnon&ndash;White.
+	  HC0 produce las denominadas habitualmente como
+	  <quote>desviaciones típicas de White</quote>. La variante 3a es el
+	  procedimiento de la <quote>navaja</quote> de MacKinnon&ndash;White.
+	  A configuración por defecto habitualmente es 1, pero esto se puede
+	  cambiar en el cliente GUI, seleccionando la opción <quote>HCCME</quote>
+	  en el menú <quote>Herramientas/Preferencias/General</quote>. Ten en
+	  cuenta que una configuración realizada mediante GUI persiste a lo
+	  largo de las sesiones de GRETL, en oposición al uso de la instrucción
+	  <lit>set</lit> que únicamente va a afectar a la sesión vigente.
 	  </para>
 	</li>
 	<li>

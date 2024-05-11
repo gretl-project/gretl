@@ -2328,7 +2328,6 @@
       </description>
     </function>
 
-
     <function name="bincoeff" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">n</fnarg>
@@ -2345,13 +2344,13 @@
 	  <equation status="inline" ascii="(1+x)^n" tex="$(1+x)^n$"/>.
 	</para>
 	<para context="tex">
-	  Para argumentos enteiros o resultado é $n!/k!(n-k)!$.
+	  Para argumentos enteiros o resultado é $n!/(k!(n-k)!)$.
 	  Pero a función tamén acepta argumentos non enteiros, e
 	  a fórmula de arriba xeneralízase como
 	  $\frac{\Gamma(n+1)}{\Gamma(k+1) \Gamma(n-k+1)}$.
 	</para>
 	<para context="notex">
-	  Para argumentos enteiros o resultado é <math>n!/k!(n-k)!</math>.
+	  Para argumentos enteiros o resultado é <math>n!/(k!(n-k)!)</math>.
 	  Pero esta función tamén acepta argumentos non enteiros,
 	  e nese caso a fórmula de arriba
 	  se xeneraliza como
@@ -2374,6 +2373,44 @@
 	</para>
 	<para>
 	  Consulta tamén <fncref targ="gammafun"/> e <fncref targ="lngamma"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="binperms" section="math" output="matrix">
+      <fnargs>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int">k</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Permutacións binarias: devolve unha matriz <by r="p" c="n"/>,
+	  na que cada unha das súas filas contén unha ordenación diferente
+	  de <math>k</math> uns e <math>n</math> &minus; <math>k</math>
+	  ceros. O valor máximo admitido para <math>n</math> é 64; tanto
+	  <math>n</math> como <math>k</math> deben ser non negativos; e
+	  <math>k</math> non debe ser maior que <math>n</math>; doutro
+	  xeito, vaise amosar un fallo. No caso de que
+	  <math>n</math> = <math>k</math> = 0 devólvese unha matriz
+	  baleira.
+	</para>
+	<para>
+	  <emphasis>Advertencia</emphasis>: O número <math>p</math> de
+	  permutacións medra rapidamente en función de <math>n</math>; e
+	  resulta maior cando <math>k</math> é aproximadamente a metade de
+	  <math>n</math>. Entón, podería interesarte comprobar con antelación
+	  a dimensión da matriz que a función <lit>binperms</lit> vai tratar de
+	  asignar. Como a función <fncref targ="bincoeff"/> devolve o valor de
+	  <math>p</math>, pódese calcular o tamaño en megabytes da matriz
+	  resultante mediante
+	</para>
+	<code>
+	  MB = 8 * n * bincoeff(n, k) / 10^6
+	</code>
+	<para>
+	  Para <math>n</math> = 30, isto da como resultado preto de 34 Mb
+	  cando <math>k</math> = 25, en torno a 7.211 Mb se <math>k</math> = 20,
+	  e 20.758 Mb aproximadamente se <math>k</math> = 18.
 	</para>
       </description>
     </function>
@@ -4902,10 +4939,27 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve un escalar non nulo se <argname>nome</argname> é o nome que
-	  identifica un obxecto que xa se definiu, sexa un escalar, unha serie,
-	  unha matriz, unha lista, unha cadea de texto, un feixe ou un arranxo.
-	  Noutro caso devolve 0. Consulta tamén <fncref targ="typeof"/>.
+	  Devolve un escalar non nulo se <argname>nome</argname> (que debe ser
+	  un identificador válido de GRETL) denomina un obxecto cunha definición
+	  vixente, sexa un escalar, unha serie, unha matriz, unha lista, unha
+	  cadea de texto, un feixe ou un arranxo. Noutro caso devolve 0.
+	</para>
+	<para>
+	  O uso pretendido disto é para o caso no que unha función definida
+	  polo usuario teña un parámetro opcional cun <lit>nulo</lit> por
+	  defecto. O redactor da función pode utilizar <lit>exists()</lit>,
+	  indicando o nome do parámetro, para comprobar se o chamador
+	  proporciona un argumento. Por favor, pero ten en conta que as listas
+	  son unha excepción a este respecto: se un parámetro dunha lista
+	  ten un <lit>nulo</lit> por defecto e o chamador non proporciona un
+	  argumento, a función colle unha lista baleira en lugar de non tomar
+	  ningunha lista; en consecuencia, a función <lit>exists</lit> sempre
+	  vai devolver non nulo. Para comprobar o baleiro no argumento de
+	  unha lista, utiliza <fncref targ="nelem"/>.
+	</para>
+	<para>
+	  Para comprobacións relacionadas, consulta <fncref targ="typeof"/>
+	  e <fncref targ="inbundle"/>.
 	</para>
       </description>
     </function>
@@ -6534,16 +6588,17 @@
       </description>
     </function>
 
-    <function name="instrings" section="strings" output="matrix">
+    <function name="instrings" section="strings" output="seebelow">
       <fnargs>
 	<fnarg type="strings">S</fnarg>
 	<fnarg type="string">cotexo</fnarg>
+	<fnarg type="bool" optional="true">simple</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Comproba se os elementos do arranxo de cadeas de texto
 	  <argname>S</argname> son iguais a <argname>cotexo</argname>.
-	  Devolve un vector columna de longura igual ao número de
+	  Por defecto, devolve un vector columna de longura igual ao número de
 	  coincidencias que se producen, e que contén a posición que
 	  ocupa cada coincidencia dentro do arranxo (ou ben unha matriz
 	  baldeira en caso de non haber coincidencias).
@@ -6557,6 +6612,14 @@
 	  2
 	  4
 	</code>
+	<para>
+	  Cando se indica un valor non nulo para o argumento opcional
+	  <argname>simple</argname>, o valor que se devolve é un escalar:
+	  1 se <argname>cotexo</argname> se atopa en <argname>S</argname>,
+	  e 0 doutro xeito. Neste caso, a implementación é capaz de coller
+	  un atallo, polo que é máis eficiente se só queres unha resposta
+	  booleana.
+	</para>
       </description>
     </function>
 
@@ -7440,7 +7503,7 @@
 
     <function name="kdsmooth" section="sspace" output="int">
       <fnargs>
-	<fnarg type="bundleref">&amp;Mod</fnarg>
+	<fnarg type="bundleref">&amp;kb</fnarg>
 	<fnarg type="bool" optional="true">MSE</fnarg>
       </fnargs>
       <description>
@@ -7453,15 +7516,15 @@
 	</para>
 	<para>
 	  Cando se completa con éxito a operación, as perturbacións suavizadas
-	  van estar dispoñibles como <lit>Mod.smdist</lit>.
+	  van estar dispoñibles como <lit>kb.smdist</lit>.
 	</para>
 	<para>
 	  O argumento <argname>MSE</argname> (opcional) determina o contido
-	  da chave <lit>Mod.smdisterr</lit>. Cando é 0 ou se omite, esta
+	  da chave <lit>kb.smdisterr</lit>. Cando é 0 ou se omite, esta
 	  matriz vai estar composta polos desvíos padrón incondicionais
 	  das perturbacións suavizadas, que habitualmente se utilizan para
 	  calcular os denominados <emphasis>erros auxiliares</emphasis>.
-	  Mais, en caso contrario, <lit>Mod.smdisterr</lit> vai conter as
+	  Mais, en caso contrario, <lit>kb.smdisterr</lit> vai conter as
 	  raíces dos desvíos cadrados medios entre os erros auxiliares
 	  e os seus valores verdadeiros.
 	</para>
@@ -7481,7 +7544,7 @@
 
     <function name="kfilter" section="sspace" output="scalar">
       <fnargs>
-	<fnarg type="bundleref">&amp;Mod</fnarg>
+	<fnarg type="bundleref">&amp;kb</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7492,9 +7555,9 @@
 	</para>
 	<para>
 	  Cando se completa con éxito, os erros de predición adiantados un paso
-	  van estar dispoñibles como <lit>Mod.prederr</lit>, e a secuencia das
-	  súas matrices de covarianzas como <lit>Mod.pevar</lit>. Por outra
-	  banda, <lit>Mod.llt</lit> permitirá que teñas acceso a un
+	  van estar dispoñibles como <lit>kb.prederr</lit>, e a secuencia das
+	  súas matrices de covarianzas como <lit>kb.pevar</lit>. Por outra
+	  banda, <lit>kb.llt</lit> permitirá que teñas acceso a un
 	  <math>T</math>-vector que vai conter o logaritmo da verosimilitude
 	  de cada observación.
 	</para>
@@ -7623,14 +7686,23 @@
       </description>
     </function>
 
-    <function name="ksimul" section="sspace" output="scalar">
+    <function name="ksimul" section="sspace" output="matrix">
       <fnargs>
-	<fnarg type="bundleref">&amp;Mod</fnarg>
+	<fnarg type="bundleref">&amp;kb</fnarg>
+	<fnarg type="matrix">U</fnarg>
+	<fnarg type="bool" optional="true">extra</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un escalar. Utiliza un feixe de tipo Kalman previamente
-	  definido coa función <fncref targ="ksetup"/> para simular datos.
+	  Devolve unha matriz. Utiliza un feixe de tipo Kalman previamente
+	  definido coa función <fncref targ="ksetup"/> para levar a cabo
+	  simulacións, tomándose as perturbacións da matriz <argname>U</argname>.
+	  Por defecto, a matriz que se devolve (que vai ter tantas filas como
+	  <argname>U</argname>) contén valores simulados do(s) observable(s),
+	  pero cando indicas un valor non nulo para <argname>extra</argname>,
+	  tamén se vai incluír o estado simulado. Neste último caso,
+	  cada fila contén primeiro o estado, e despois o(s)
+	  observable(s).
 	</para>
 	<para>
 	  Para obter máis detalles, consulta o <guideref targ="chap:kalman"/>.
@@ -7647,7 +7719,7 @@
 
     <function name="ksmooth" section="sspace" output="int">
       <fnargs>
-	<fnarg type="bundleref">&amp;Mod</fnarg>
+	<fnarg type="bundleref">&amp;kb</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7659,8 +7731,8 @@
 	</para>
 	<para>
 	  Cando se completa con éxito, vas ter á túa disposición o estado xa
-	  suavizado como <lit>Mod.state</lit>, e a secuencia das súas matrices
-	  de varianzas-covarianzas como <lit>Mod.stvar</lit>. Para obter máis
+	  suavizado como <lit>kb.state</lit>, e a secuencia das súas matrices
+	  de varianzas-covarianzas como <lit>kb.stvar</lit>. Para obter máis
 	  detalles, consulta o <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
@@ -13983,56 +14055,67 @@ d =  8,0000000
 
     <function name="typename" section="data-utils" output="string">
       <fnargs>
-	<fnarg type="string">nome</fnarg>
+	<fnarg type="string">expr</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Se <argname>nome</argname> é o identificador dun obxecto definido
-	  vixente, devolve en formato de cadea de texto, o tipo de obxecto:
-	  <lit>scalar (escalar)</lit>, <lit>series (serie)</lit>,
-	  <lit>matrix (matriz)</lit>, <lit>string (cadea de texto)</lit>,
-	  <lit>bundle (feixe)</lit>, ou un dos tipos de arranxos:
-	  <lit>matrices</lit>, <lit>bundles</lit>, <lit>strings</lit>,
-	  <lit>lists</lit> ou <lit>arrays</lit>. Cando o argumento non
-	  identifica un obxecto, devólvese a cadea <lit>null</lit>.
+	  Unha función de conveniencia que combina as funcións
+	  <fncref targ="typeof"/> e <fncref targ="typestr"/>, cun pequeno valor
+	  engadido. En esencia, os dous seguintes enunciados serían
+	  equivalentes ...
 	</para>
-	<subhead>Nota de compatibilidade</subhead>
+	<code>
+	  eval typestr(typeof(x))
+	  eval typename(x)
+	</code>
 	<para>
-	  Esta función está pensada como unha substituta superior das
-	  antigas funcións <fncref targ="typeof"/> e <fncref targ="typestr"/>,
-	  mais polo de agora estas últimas van seguir estando
-	  dispoñibles.
+	  ... agás en que cando <argname>expr</argname> denomina un arranxo,
+	  <lit>typename</lit> devolve o tipo específico de arranxo, como
+	  en
 	</para>
+	<code>
+	  strings S = defarray("foo", "bar", "baz")
+	  eval typestr(typeof(S))  # presenta "array"
+	  eval typename(S)         # presenta "strings"
+	</code>
       </description>
     </function>
 
     <function name="typeof" section="data-utils" output="int">
       <fnargs>
-	<fnarg type="string">nome</fnarg>
+	<fnarg type="string">expr</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Unha función herdada: consulta a función <fncref targ="typename"/>
-	  como alternativa superior. Devolve un código de tipo numérico cando
-	  <argname>nome</argname> é unha cadea de texto que identifica un
-	  obxecto que xa está definido: 1 para un escalar, 2 para unha serie,
-	  3 para unha matriz, 4 para unha cadea de texto, 5 para un feixe,
-	  6 para un arranxo e 7 para unha lista; noutro caso devolve 0. Para
-	  obter a cadea de texto que concorda co valor que se devolve,
-	  podes usar a función <fncref targ="typestr"/>.
+	  Devolve un código numérico indicando o tipo de <argname>expr</argname>
+	  cando denomina unha variable vixente xa definida, especifica un obxecto
+	  secundario como un elemento dun feixe ou un elemento dun arranxo,
+	  ou é unha expresión correcta que se poda colocar no lado dereito
+	  dunha operación de asignación. Os códigos son: 1 para un escalar,
+	  2 para unha serie, 3 para unha matriz, 4 para unha cadea de texto,
+	  5 para un feixe, 6 para un arranxo e 7 para unha lista. Ao devolverse
+	  un  valor igual a 0, se indica que <argname>expr</argname> denomina
+	  un obxecto que non existe ou, con máis xeneralidade, que fallaría
+	  unha asignación con <argname>expr</argname> no lado dereito.
 	</para>
 	<para>
-	  Tamén podes utilizar esta función para obter que tipo de elemento é
-	  un dos que compoñen un feixe ou un arranxo. Por exemplo...
+	  A continuación, algúns exemplos:
 	</para>
 	<code>
-	  matrices M = array(1)
-	  eval typestr(typeof(M))
-	  eval typestr(typeof(M[1]))
+	  strings S = defarray("foo", "bar")
+	  eval typeof(S)            # presenta 6 (arranxo)
+	  eval typeof(S[1])         # presenta 4 (cadea de texto)
+	  eval typeof(S[7])         # presenta 0 (fóra dos límites)
+	  eval typeof(S[x])         # presenta 0 (índice incorrecto)
+	  eval typeof(1+1)          # presenta 1 (escalar)
+	  eval typeof(sqrt("foo"))  # presenta 0 (incorrecto)
 	</code>
 	<para>
-	  .. no que o primeiro resultado da función <lit>eval</lit> é un
-	  <quote>arranxo</quote>, e o segundo é unha <quote>matriz</quote>.
+	  Pódese utilizar a función <fncref targ="typestr"/> para conseguir
+	  a cadea de texto que se corresponde co valor que se devolve con
+	  <lit>typeof</lit>; aínda que se unicamente queres o resultado da
+	  cadea, <fncref targ="typename"/> pode ser unha alternativa máis
+	  conveniente.
 	</para>
       </description>
     </function>
@@ -14043,16 +14126,17 @@ d =  8,0000000
       </fnargs>
       <description>
 	<para>
-	  Unha función herdada: consulta a función <fncref targ="typename"/>
-	  como alternativa superior. Devolve unha cadea de texto co
-	  nome do tipo de dato de GRETL que se corresponde co argumento
-	  <argname>codigotipo</argname>. Podes utilizalo xuntamente coas
-	  funcións <fncref targ="typeof"/> e <fncref targ="inbundle"/>.
-	  A cadea de texto que se devolve pode ser unha das seguintes:
-	  <quote>scalar</quote> (escalar), <quote>series</quote> (serie),
-	  <quote>matrix</quote> (matriz), <quote>string</quote> (cadea de texto),
-	  <quote>bundle</quote> (feixe), <quote>array</quote> (arranxo),
-	  <quote>list</quote> (lista), ou <quote>null</quote>.
+	  Dado un código de tipo do GRETL (por exemplo, obtido mediante
+	  <fncref targ="typeof"/> ou <fncref targ="inbundle"/>), devolve unha
+	  cadea de texto que indica o nome dese tipo. A asignación de
+	  códigos a cadeas de texto é: 1 = <quote>scalar</quote> (escalar),
+	  2 = <quote>series</quote> (serie), 3 = <quote>matrix</quote> (matriz),
+	  4 = <quote>string</quote> (cadea de texto), 5 = <quote>bundle</quote>
+	  (feixe), 6 = <quote>array</quote> (arranxo), 7 = <quote>list</quote>
+	  (lista), e 0 = <quote>null</quote> (nulo).
+	</para>
+	<para>
+	  Consulta tamén <fncref targ="typename"/> como alternativa.
 	</para>
       </description>
     </function>
