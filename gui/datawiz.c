@@ -1019,7 +1019,7 @@ static int start_year_from_time_var (int v, const DATASET *dset,
 static int opts_ensure_ptinfo (dw_opts *opts, DATASET *dwinfo)
 {
     if (opts->ptinfo == NULL) {
-        opts->ptinfo = calloc(sizeof *opts->ptinfo, 1);
+        opts->ptinfo = calloc(1, sizeof *opts->ptinfo);
         if (opts->ptinfo == NULL) {
             nomem();
             return E_ALLOC;

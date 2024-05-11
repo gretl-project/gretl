@@ -2478,8 +2478,9 @@ int *augment_regression_list (const int *orig, int aux,
     int *list;
     int listlen;
     int v_prev = dset->v;
+    int k = orig[0];
     int cnum = 0;
-    int i, k;
+    int i;
 
     if (aux == AUX_WHITE) {
 	int cpos = gretl_list_const_pos(orig, 2, dset);
@@ -2508,7 +2509,6 @@ int *augment_regression_list (const int *orig, int aux,
 
     /* add squares, cross-products or logs of independent vars */
 
-    k = list[0];
     for (i=2; i<=orig[0]; i++) {
 	int vnew, vi = orig[i];
 
