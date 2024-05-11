@@ -419,6 +419,7 @@ static void check_depends (call_info *cinfo, int i,
 	    int minv = widget_get_int(dep, "minv");
 	    int jmax = widget_get_int(dep, "jmax");
 
+	    a += minv;
 	    if (val >= minv && val <= jmax) {
 		gtk_widget_set_sensitive(cinfo->sels[i], cond_met(a, val, op));
 		widget_set_int(cinfo->sels[i], "condval", val);
