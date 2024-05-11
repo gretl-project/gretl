@@ -2803,7 +2803,7 @@ and a list parameter \texttt{X}, with three conditions placed on
 \texttt{const}, and does not contain the series selected as
 \texttt{y}. Then the following would do the job:
 \begin{code}
-ret.X = _(no_singleton=1, no_const_ok=1, exclude="y")
+ret.X = _(no_singleton=1, no_const=1, exclude="y")
 \end{code}
 
 \subsection{Real-world examples}
@@ -2970,7 +2970,7 @@ on the window displaying a \textsf{gig} bundle
 
 \begin{figure}[htbp]
   \begin{center}
-  \includegraphics[scale=0.8]{figures/gig_plot_menu.png}
+  \includegraphics[scale=0.7]{figures/gig_plot_menu.png}
   \caption{\texttt{gig} plot menu: the menu pops up from the plot
     toolbar button behind it.}
   \label{fig:gig-plot-menu}
