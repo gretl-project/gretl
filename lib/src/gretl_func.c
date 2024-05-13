@@ -10313,32 +10313,9 @@ static int get_return_line (ExecState *state)
 
 #define ONE_WORKSPACE 1
 
-#if ONE_WORKSPACE
-
 /* Under "ONE_WORKSPACE" we use a shared command line (workspace) for
-   function calls, unless this is barred for a given call by setting
-   of @func_use_private_line. Otherwise we allocate "private"
-   workspace for each function call. As of 2024-05-09,
-   @func_use_private_line is set only when generate_string() is
-   invoked (see genmain.c): in this case only (it seems) we get
-   "interference" between calls when using a shared line.
+   function calls.
 */
-
-static int func_use_private_line;
-
-void set_func_use_private_line (int s)
-{
-    func_use_private_line = s;
-}
-
-#else
-
-void set_func_use_private_line (int s)
-{
-    return; /* stub */
-}
-
-#endif
 
 static ExecState *make_func_exec_state (CMD *cmd,
 					DATASET *dset,
@@ -10354,10 +10331,7 @@ static ExecState *make_func_exec_state (CMD *cmd,
     MODEL *model;
 
 #if ONE_WORKSPACE
-    if (func_use_private_line) {
-	line = calloc(2048, 1);
-	free_line = 1;
-    } else if (shared_line == NULL) {
+    if (shared_line == NULL) {
 	line = shared_line = calloc(MAXLINE, 1);
     } else {
 	line = shared_line;

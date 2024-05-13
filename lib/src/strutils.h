@@ -81,6 +81,8 @@ char *gretl_unquote (char *str, int *err);
 
 char *gretl_strdup (const char *src);
 
+char *gretl_strdup_plus (const char *src, int plus);
+
 char *gretl_strndup (const char *src, size_t n);
 
 char *gretl_strdup_printf (const char *format, ...);

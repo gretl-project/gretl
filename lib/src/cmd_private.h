@@ -44,8 +44,8 @@ struct CMD_ {
     int cstart;      /* token index of start of 'real' command */
     int ntoks;       /* number of tokens actually used */
     int nt_alloced;  /* number of tokens allocated */
-    cmd_token *toks;    /* tokens */
-    const char *vstart; /* pointer to where in line varargs or expr start */
+    cmd_token *toks; /* tokens */
+    char *vstart;    /* portion of line where varargs or expr start */
     char *param;     /* basic parameter string */
     char *parm2;     /* second parameter string */
     int *list;       /* list of series and/or control integers */
