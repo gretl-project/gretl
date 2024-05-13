@@ -10068,8 +10068,9 @@ static void set_func_error_message (int err, ufunc *u,
             }
         } else {
             if (showline && err != E_FNEST) {
+		/* 2024-05-12: last arg here was cmdline */
                 gretl_errmsg_sprintf(_("*** error in function %s, line %d\n> %s"),
-                                     u->name, fline->idx, cmdline);
+                                     u->name, fline->idx, fline->s);
             } else {
                 gretl_errmsg_sprintf(_("*** error in function %s, line %d\n> %s\n"),
                                      u->name, fline->idx, fline->s);
