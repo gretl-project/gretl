@@ -464,12 +464,11 @@ int cmd_arg1_quoted (CMD *cmd)
 static void cmd_set_vstart (CMD *c, const char *s)
 {
     if (s != NULL && *s != '\0') {
-	fprintf(stderr, "HERE to copy = '%s'\n", s);
 	if (c->vstart != NULL) {
 	    free(c->vstart);
 	}
 	/* note: string substitution should already be done
-	   by the time @s gets here, but let's play safe?
+	   by the time @s gets here.
 	*/
 	c->vstart = gretl_strdup(s);
     }
