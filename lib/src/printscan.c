@@ -796,9 +796,10 @@ static int real_do_printf (const char *format,
 	}
 
 	if (!err && q != NULL && *q != '\0') {
-	    pputs(inprn, "\nprintf: ");
-	    pprintf(inprn, _("unprocessed argument(s): '%s'"), q);
-	    pputc(prn, '\n');
+	    gchar *s = g_strdup_printf(_("unprocessed argument(s): '%s'"), q);
+
+	    gretl_errmsg_sprintf("printf: %s", s);
+	    g_free(s);
 	    err = E_PARSE;
 	}
     }
@@ -889,7 +890,10 @@ char *do_sprintf_function (const char *format, const char *args,
     }
 
     if (!*err && q != NULL && *q != '\0') {
-	gretl_errmsg_sprintf(_("unprocessed argument(s): '%s'"), q);
+	gchar *s = g_strdup_printf(_("unprocessed argument(s): '%s'"), q);
+
+	gretl_errmsg_sprintf("sprintf: %s", s);
+	g_free(s);
 	*err = E_PARSE;
     }
 
@@ -1384,13 +1388,18 @@ int do_sscanf (const char *src, const char *format, const char *args,
 }
 
 /* Apparatus to support the command form of printf: the @quoted
-   argument indicates whether @parm1 was in quotes on input.
+   argument indicates whether @parm was in quotes on input.
 */
 
 int do_printf_command (const char *parm, const char *args,
 		       DATASET *dset, PRN *prn, int quoted)
 {
     const char *format;
+
+#if PSDEBUG
+    fprintf(stderr, "do_printf_command:\n"
+	    "  parm='%s', args='%s', quoted=%d\n", parm, args, quoted);
+#endif
 
     if (quoted) {
 	format = parm;
