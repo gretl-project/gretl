@@ -1018,7 +1018,9 @@ char *generate_string (const char *s, DATASET *dset, int *err)
     parser p;
     char *ret = NULL;
 
-    *err = call_realgen(s, &p, dset, NULL, P_PRIV | P_ANON, STR);
+    set_func_use_private_line(1);
+    *err = realgen(s, &p, dset, NULL, P_PRIV | P_ANON, STR);
+    set_func_use_private_line(0);
 
     if (!*err) {
 	NODE *n = p.ret;

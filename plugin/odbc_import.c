@@ -473,14 +473,14 @@ static DATE_STRUCT *get_date_bind_target (DATE_STRUCT ***pds,
 
     if (*pds == NULL) {
 	/* starting from scratch */
-	*pds = calloc(sizeof *pds, nv);
+	*pds = calloc(nv, sizeof *pds);
 	if (*pds == NULL) {
 	    *err = E_ALLOC;
 	}
     }
 
     if (*pds != NULL) {
-	(*pds)[j] = calloc(sizeof **pds, 1);
+	(*pds)[j] = calloc(1, sizeof **pds);
 	if ((*pds)[j] == NULL) {
 	    *err = E_ALLOC;
 	} else {

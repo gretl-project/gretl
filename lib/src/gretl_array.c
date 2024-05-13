@@ -165,7 +165,7 @@ static int array_extend_content (gretl_array *A, int plus)
 	if (data == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    for (i=A->n; i<n-1; i++) {
+	    for (i=A->n; i<n; i++) {
 		data[i] = NULL;
 	    }
 	    A->data = data;

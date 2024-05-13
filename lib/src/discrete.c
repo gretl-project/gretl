@@ -4226,13 +4226,17 @@ gretl_matrix *bit_permutations (int n, int k, int *err)
     int i, np = 0;
 
     if (n > 64) {
-        gretl_errmsg_set("binperms: n must be <= 64");
+        gretl_errmsg_set(_("binperms: n must be <= 64"));
         *err = E_INVARG;
         return NULL;
     }
 
     if (n < 0 || k < 0 || n < k) {
-        ret = gretl_null_matrix_new();
+	gretl_errmsg_set(_("binperms: we need n >= k >= 0"));
+	*err = E_INVARG;
+	return NULL;
+    } else if (n == 0 && k == 0) {
+	ret = gretl_zero_matrix_new(1, 0);
     } else if (k == n) {
         ret = gretl_unit_matrix_new(1, n);
     } else if (k == 0) {
@@ -4240,7 +4244,7 @@ gretl_matrix *bit_permutations (int n, int k, int *err)
     } else if (k == 1) {
         ret = gretl_zero_matrix_new(n, n);
         if (ret != NULL) {
-            for(i = n-1; i<n*n-1; i += n-1){
+            for (i = n-1; i<n*n-1; i += n-1) {
                 ret->val[i] = 1.0;
             }
         }

@@ -181,7 +181,7 @@ SHPHandle SHPOpen (const char *Layer, const char *Access)
     int         baselen;
     int         err = 0;
 
-    SHP = calloc(sizeof(SHPInfo), 1);
+    SHP = calloc(1, sizeof(SHPInfo));
 
     baselen = SHPGetBaselen(Layer);
     Fullname = malloc(baselen + 5);

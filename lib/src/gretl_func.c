@@ -8304,7 +8304,9 @@ static int ufunc_get_structure (ufunc *u)
     ret = statements_get_structure(u->lines, u->n_lines,
 				   u->name, &recurses);
     if (recurses) {
+#if 0
 	fprintf(stderr, "%s calls itself\n", u->name);
+#endif
 	u->flags |= UFUN_RECURSES;
     }
 
@@ -10066,8 +10068,9 @@ static void set_func_error_message (int err, ufunc *u,
             }
         } else {
             if (showline && err != E_FNEST) {
+		/* 2024-05-12: last arg here was cmdline */
                 gretl_errmsg_sprintf(_("*** error in function %s, line %d\n> %s"),
-                                     u->name, fline->idx, cmdline);
+                                     u->name, fline->idx, fline->s);
             } else {
                 gretl_errmsg_sprintf(_("*** error in function %s, line %d\n> %s\n"),
                                      u->name, fline->idx, fline->s);
@@ -10308,27 +10311,79 @@ static int get_return_line (ExecState *state)
     }
 }
 
-static ExecState *make_func_exec_state (DATASET *dset,
+#define ONE_WORKSPACE 1
+
+#if ONE_WORKSPACE
+
+/* Under "ONE_WORKSPACE" we use a shared command line (workspace) for
+   function calls, unless this is barred for a given call by setting
+   of @func_use_private_line. Otherwise we allocate "private"
+   workspace for each function call. As of 2024-05-09,
+   @func_use_private_line is set only when generate_string() is
+   invoked (see genmain.c): in this case only (it seems) we get
+   "interference" between calls when using a shared line.
+*/
+
+static int func_use_private_line;
+
+void set_func_use_private_line (int s)
+{
+    func_use_private_line = s;
+}
+
+#else
+
+void set_func_use_private_line (int s)
+{
+    return; /* stub */
+}
+
+#endif
+
+static ExecState *make_func_exec_state (CMD *cmd,
+					DATASET *dset,
                                         PRN *prn,
                                         int *err)
 {
+#if ONE_WORKSPACE
+    static char *shared_line;
+#endif
+    char *line = NULL;
+    int free_line = 0;
     ExecState *state;
-    char *line;
     MODEL *model;
-    CMD cmd = {0};
+
+#if ONE_WORKSPACE
+    if (func_use_private_line) {
+	line = calloc(2048, 1);
+	free_line = 1;
+    } else if (shared_line == NULL) {
+	line = shared_line = calloc(MAXLINE, 1);
+    } else {
+	line = shared_line;
+    }
+#else
+    /* always allocate a distinct @line */
+    line = calloc(MAXLINE, 1);
+    free_line = 1;
+#endif
+
+    if (line == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
 
     state = calloc(1, sizeof *state);
-    line = calloc(MAXLINE, 1);
     model = allocate_working_model();
 
-    if (state == NULL || line == NULL || model == NULL) {
+    if (state == NULL || model == NULL) {
         *err = E_ALLOC;
     } else {
-        *err = gretl_cmd_init(&cmd);
+        *err = gretl_cmd_init(cmd);
     }
 
     if (!*err) {
-        gretl_exec_state_init(state, FUNCTION_EXEC, line, &cmd, model, prn);
+        gretl_exec_state_init(state, FUNCTION_EXEC, line, cmd, model, prn);
         if (dset != NULL) {
             if (dset->submask != NULL) {
                 state->submask = copy_dataset_submask(dset, err);
@@ -10336,6 +10391,7 @@ static ExecState *make_func_exec_state (DATASET *dset,
             state->padded = dset->padmask != NULL;
         }
         state->callback = func_exec_callback;
+	state->free_line = free_line;
     }
 
     return state;
@@ -10380,6 +10436,7 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
     ufunc *u = call->fun;
     ExecState *state = NULL;
     GENERATOR *genr = NULL;
+    CMD cmd = {0};
     void *ptr = NULL;
     int orig_n = 0;
     int orig_t1 = 0;
@@ -10425,7 +10482,7 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
         return err;
     }
 
-    state = make_func_exec_state(dset, prn, &err);
+    state = make_func_exec_state(&cmd, dset, prn, &err);
 
 #if EXEC_DEBUG
     fprintf(stderr, "after prepare_func_exec_state: err = %d\n", err);
@@ -10588,7 +10645,6 @@ int gretl_function_exec_full (fncall *call, int rtype, DATASET *dset,
     }
 
     gretl_exec_state_clear(state);
-    free(state->line);
     free(state);
 
     if (started) {
