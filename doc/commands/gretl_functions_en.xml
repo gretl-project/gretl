@@ -2395,6 +2395,18 @@
 	  returned.
 	</para>
 	<para>
+	  For example, with <math>n</math> = 4 and <math>k</math> = 2,
+	  the result is
+	</para>
+	<code>
+	  0   0   1   1 
+	  0   1   0   1 
+	  0   1   1   0 
+	  1   0   0   1 
+	  1   0   1   0 
+	  1   1   0   0
+	</code>
+	<para>
 	  <emphasis>Warning:</emphasis> the number of permutations,
 	  <math>p</math>, is a steeply increasing function of
 	  <math>n</math> and is greatest when <math>k</math> is about

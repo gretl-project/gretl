@@ -2414,6 +2414,57 @@
       </description>
     </function>
 
+    <function name="binperms" section="math" output="matrix">
+      <fnargs>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int">k</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Permutazioni binarie: restituisce una matrice <by r="p"
+	  c="n"/>, in cui ognuna delle righe contiene un diverso modo
+	  di disporre <math>k</math> uni e <math>n</math> &minus;
+	  <math>k</math> zeri (lo so che "uni" non si dice, ma oh). Il
+	  valore massimo di <math>n</math> è 64, <math>n</math> e
+	  <math>k</math> devono essere non-negativi, e <math>k</math>
+	  deve essere minore o uguale a <math>n</math>; altrimenti, ci
+	  sarà un errore. Se <math>n</math> = <math>k</math> = 0 il
+	  risultato è una matrice vuota.
+	</para>
+	<para>
+	  Per esempio, con <math>n</math> = 4 e <math>k</math> = 2, il
+	  risultato è
+	</para>
+	<code>
+	  0   0   1   1 
+	  0   1   0   1 
+	  0   1   1   0 
+	  1   0   0   1 
+	  1   0   1   0 
+	  1   1   0   0
+	</code>
+	<para>
+	  <emphasis>Attenzione:</emphasis> il numero di permutazioni
+	  <math>p</math> cresce molto rapidamente al variare di
+	  <math>n</math> e raggiunge il massimo quando <math>k</math>
+	  è la metà di <math>n</math>. Può essere consigliabile
+	  controllare in anticipo la dimensione della matrice
+	  risultato, cosa che si può fare facilmente con <fncref
+	  targ="bincoeff"/>, che ritorna <math>p</math>, e lo spazio
+	  occupato in memoria dalla matrice risultato (espresso in Mb)
+	  si può calcolare con
+	</para>
+	<code>
+	  MB = 8 * n * bincoeff(n, k) / 10^6
+	</code>
+	<para>
+	  Ad esempio, se <math>n</math> = 30 e <math>k</math> = 25, il
+	  risultato è di circa 34Mb, ma sale a 7211 MB nel caso
+	  <math>k</math> = 20, e a 20758 MB se <math>k</math> = 18.
+	</para>
+      </description>
+    </function>
+
     <function name="bkfilt" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
