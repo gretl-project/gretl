@@ -80,8 +80,6 @@ typedef struct ufunc_ ufunc;
 typedef struct fncall_ fncall;
 typedef struct fnpkg_ fnpkg;
 
-void set_func_use_private_line (int s);
-
 int n_user_functions (void);
 
 int n_free_functions (void);
@@ -173,6 +171,8 @@ int gretl_start_compiling_function (const char *line,
 int gretl_function_append_line (ExecState *s);
 
 int gretl_is_public_user_function (const char *name);
+
+void set_func_use_private_line (int s);
 
 int gretl_function_exec_full (fncall *call, int rtype,
 			      DATASET *dset, void *ret,

@@ -1003,9 +1003,7 @@ char *generate_string (const char *s, DATASET *dset, int *err)
     parser p;
     char *ret = NULL;
 
-    set_func_use_private_line(1);
     *err = realgen(s, &p, dset, NULL, P_PRIV | P_ANON, STR);
-    set_func_use_private_line(0);
 
     if (!*err) {
 	NODE *n = p.ret;
@@ -1188,10 +1186,10 @@ int execute_genr (parser *p, DATASET *dset, PRN *prn)
 double evaluate_scalar_genr (parser *p, DATASET *dset,
 			     PRN *prn, int *err)
 {
+    int flags = P_EXEC | P_PRIV | P_ANON;
     double x = NADBL;
 
-    *err = realgen(NULL, p, dset, NULL, P_EXEC | P_PRIV | P_ANON,
-		   NUM);
+    *err = realgen(NULL, p, dset, NULL, flags, NUM);
 
     if (!*err) {
 	if (p->ret->t == MAT) {

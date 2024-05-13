@@ -46,7 +46,7 @@ struct gretl_cmd {
    strictly trailing portion of the command line and (ii) is destined
    for handling via "genr". Such commands never take options (so the
    CI_NOOPT flag would be redundant). The unparsed material can
-   therefore simply take the form of a const char pointer into the
+   therefore simply take the form of a copy of a portion of the
    command line (namely, the @vstart member of the CMD struct). The
    CI_VARGS case differs from CI_EXPR in that the former requires the
    parsing here of either one or two leading parameters; there are no
@@ -421,6 +421,7 @@ void gretl_cmd_free (CMD *cmd)
 	}
     }
 
+    free(cmd->vstart);
     free(cmd->list);
     free(cmd->param);
     free(cmd->parm2);
@@ -446,10 +447,9 @@ CMD *gretl_cmd_new (void)
     return cmd;
 }
 
-/* Tells whether the second token (typically the first
-   following a command-word) of a command was quoted
-   on input. This is something we may want to know when
-   executing the printf command.
+/* Tells whether the second token (typically the first following a
+   command-word) of a command was quoted on input. This is something
+   we may want to know when executing the printf command.
 */
 
 int cmd_arg1_quoted (CMD *cmd)
@@ -463,7 +463,16 @@ int cmd_arg1_quoted (CMD *cmd)
 
 static void cmd_set_vstart (CMD *c, const char *s)
 {
-    c->vstart = s;
+    if (s != NULL && *s != '\0') {
+	fprintf(stderr, "HERE to copy = '%s'\n", s);
+	if (c->vstart != NULL) {
+	    free(c->vstart);
+	}
+	/* note: string substitution should already be done
+	   by the time @s gets here, but let's play safe?
+	*/
+	c->vstart = gretl_strdup(s);
+    }
 }
 
 int gretl_cmd_init (CMD *c)
@@ -533,6 +542,10 @@ static void gretl_cmd_clear (CMD *c)
 	    c->parm2 = NULL;
 	}
 	cmd_token_clear(tok);
+    }
+
+    if (c->vstart != NULL) {
+	free(c->vstart);
     }
 
     /* FIXME: do the next step only if the CMD has actually
@@ -3094,7 +3107,7 @@ static int handle_adhoc_string (CMD *c)
     }
 
     if (c->vstart != NULL) {
-	const char *s = c->vstart;
+	char *s = c->vstart;
 
 	s += strspn(s, " ");
 
@@ -3104,6 +3117,7 @@ static int handle_adhoc_string (CMD *c)
 	    }
 	    pputs(prn, s);
 	} else {
+	    free(c->vstart);
 	    c->vstart = NULL;
 	}
     }
@@ -3219,9 +3233,9 @@ static int handle_command_extra (CMD *c)
     return c->err;
 }
 
-/* @vstart is a const pointer into the incoming command
-   line, holding a "genr"-type expression, a string to
-   be passed to the shell, or a varargs expression.
+/* @vstart is a copy of a trailing portion of the incoming command
+   line, holding a "genr"-type expression, a string to be passed to
+   the shell, or a varargs expression.
 */
 
 static int set_command_vstart (CMD *cmd, ExecState *state,

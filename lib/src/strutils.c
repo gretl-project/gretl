@@ -536,6 +536,36 @@ char *gretl_strdup (const char *src)
 }
 
 /**
+ * gretl_strdup_plus:
+ * @src: the string to duplicate.
+ * @plus: number of extra bytes to allocate.
+ *
+ * Returns: an allocated copy of @src, with extra trailing bytes
+ * for possible appending, or NULL on error.
+ */
+
+char *gretl_strdup_plus (const char *src, int plus)
+{
+    char *targ = NULL;
+
+    /* sanity guard */
+    if (plus < 0) {
+	plus = 0;
+    }
+
+    if (src != NULL) {
+	size_t n = strlen(src) + 1 + plus;
+
+	targ = calloc(n, 1);
+	if (targ != NULL) {
+	    memcpy(targ, src, n);
+	}
+    }
+
+    return targ;
+}
+
+/**
  * gretl_strndup:
  * @src: the string to be copied.
  * @n: the maximum number of characters to copy.
