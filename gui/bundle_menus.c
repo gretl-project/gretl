@@ -166,7 +166,7 @@ static const char *extra_content_info (bundled_item *bi)
 }
 
 static gchar *alt_bundle_content_label (bundled_item *bi,
-					int r, int c,
+					int r, int c, int n,
 					int scalar)
 {
     const char *note = extra_content_info(bi);
@@ -179,6 +179,16 @@ static gchar *alt_bundle_content_label (bundled_item *bi,
 				    note, r, c);
 	} else {
 	    label = g_strdup_printf("%s (%d x %d)", keystr, r, c);
+	}
+    } else if (n > 0) {
+	const char *typestr = gretl_type_get_name(bi->type);
+
+	if (note != NULL) {
+	    label = g_strdup_printf("%s (%s: %s, length %d)", keystr,
+				    typestr, note, n);
+	} else {
+	    label = g_strdup_printf("%s (%s, length %d)", keystr,
+				    typestr, n);
 	}
     } else if (scalar) {
 	if (bi->type == GRETL_TYPE_DOUBLE) {
@@ -200,7 +210,7 @@ static gchar *alt_bundle_content_label (bundled_item *bi,
 }
 
 static gchar *bundle_content_label (bundled_item *bi,
-				    int r, int c,
+				    int r, int c, int n,
 				    int scalar)
 {
     const char *typestr = gretl_type_get_name(bi->type);
@@ -215,6 +225,14 @@ static gchar *bundle_content_label (bundled_item *bi,
 	} else {
 	    label = g_strdup_printf("%s (%s, %d x %d)", keystr,
 				    typestr, r, c);
+	}
+    } else if (n > 0) {
+	if (note != NULL) {
+	    label = g_strdup_printf("%s (%s: %s, length %d)", keystr,
+				    typestr, note, n);
+	} else {
+	    label = g_strdup_printf("%s (%s, length %d)", keystr,
+				    typestr, n);
 	}
     } else if (scalar) {
 	if (bi->type == GRETL_TYPE_DOUBLE) {
@@ -249,6 +267,7 @@ static void add_blist_item_to_menu (gpointer listitem,
     gchar *label = NULL;
     int scalar = 0;
     int r = 0, c = 0;
+    int n = 0;
     int size = 0;
 
     if (bi->data == NULL) {
@@ -271,12 +290,16 @@ static void add_blist_item_to_menu (gpointer listitem,
 	c = 1;
     } else if (gretl_is_scalar_type(type)) {
 	scalar = 1;
+    } else if (gretl_is_array_type(type)) {
+	gretl_array *a = bi->data;
+
+	n = gretl_array_get_length(a);
     }
 
     if (widget_get_int(menu, "layered")) {
-	label = alt_bundle_content_label(bi, r, c, scalar);
+	label = alt_bundle_content_label(bi, r, c, n, scalar);
     } else {
-	label = bundle_content_label(bi, r, c, scalar);
+	label = bundle_content_label(bi, r, c, n, scalar);
     }
 
     action = gtk_action_new(bi->key, label, NULL, NULL);
@@ -349,6 +372,22 @@ static void blist_get_type_counts (gpointer listitem,
     }
 }
 
+static int bundled_types_differ (GretlType ta, GretlType tb)
+{
+    if (ta == tb) {
+	return 0;
+    } else if (gretl_is_scalar_type(ta) &&
+	       gretl_is_scalar_type(tb)) {
+	/* treat as same */
+	return 0;
+    } else if (gretl_is_array_type(ta) &&
+	       gretl_is_array_type(tb)) {
+	return 0;
+    } else {
+	return 1;
+    }
+}
+
 static void make_layered_content_menu (GList *blist,
 				       GtkWidget *menu,
 				       windata_t *vwin)
@@ -367,7 +406,7 @@ static void make_layered_content_menu (GList *blist,
     while (L != NULL) {
 	bi = L->data;
 	if (bi->data != NULL) {
-	    if (bi->type != tprev) {
+	    if (bundled_types_differ(tprev, bi->type)) {
 		if (target != NULL) {
 		    /* finalize the previous submenu */
 		    gtk_menu_item_set_submenu(GTK_MENU_ITEM(target), submenu);
