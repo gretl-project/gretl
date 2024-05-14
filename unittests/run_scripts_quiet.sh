@@ -23,7 +23,8 @@ my_status=0
 echo "*** practice scripts ***"
 for f in `find $INPPATH/practice_scripts -name "*.inp"` ; do
    # Print the name of the script being tested
-   echo -n `basename $f`
+   bname=`basename $f`
+   echo -n $bname
 
    # Run the script with gretlcli in batch and quiet mode
    ${GRETLCLI} -b -q -e $f > /dev/null 2>&1
@@ -33,7 +34,7 @@ for f in `find $INPPATH/practice_scripts -name "*.inp"` ; do
       # Print 'Failed', update status variable, and log the failed script
       echo -e " [\e[0;31mFailed\e[0m]"
       my_status=1
-      echo $f >> $HERE/fails
+      echo $INPPATH/practice_scripts/$bname >> $HERE/fails
    else
       # Print 'OK' if the script succeeded
       echo -e " [\e[0;32mOK\e[0m]"
@@ -45,12 +46,13 @@ for d in commands functions fundamentals ; do
    echo "*** $d ***"
    cd $INPPATH/test_scripts/$d
    for f in `find . -name "*.inp"` ; do
-      echo -n `basename $f`
+      bname=`basename $f`
+      echo -n $bname
       ${GRETLCLI} -b -q -e $f > /dev/null 2>&1
       if [ $? != 0 ] ; then
            echo -e " [\e[0;31mFailed\e[0m]"
            my_status=1
-           echo $f >> $HERE/fails
+           echo $INPPATH/test_scripts/$d/$bname >> $HERE/fails
       else
            echo -e " [\e[0;32mOK\e[0m]"
       fi
