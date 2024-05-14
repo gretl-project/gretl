@@ -10986,15 +10986,6 @@
 	an existing file instead, use the <opt>append</opt> flag.
       </para>
       <para>
-	Some special variations on this theme are available. If you
-	give the keyword <lit>null</lit> in place of a real filename
-	the effect is to suppress all printed output until redirection
-	is ended. If either of the keywords <lit>stdout</lit> or
-	<lit>stderr</lit> are given in place of a regular filename the
-	effect is to redirect output to standard output or standard
-	error output respectively.
-      </para>
-      <para>
 	A simple example follows, where the output from a particular
 	regression is written to a named file.
       </para>
@@ -11004,7 +10995,31 @@
 	  ols ENROLL 0 CATHOL INCOME COLLEGE
 	end outfile
       </code>
-
+      <subhead>Special dummy filenames</subhead>
+      <para>
+	Three special values for <repl>filename</repl> are supported,
+	as follows:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>null</lit>: printed output is suppressed until
+	    redirection is ended.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>stdout</lit>: output is redirected to the <quote>standard
+	    output</quote> stream.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>stderr</lit>: output is redirected to the <quote>standard
+	    error</quote> stream.
+	  </para>
+	</li>
+      </ilist>
       <subhead>Diversion to a string buffer</subhead>
       <para>
 	The <opt>buffer</opt> option is used to store output in a
