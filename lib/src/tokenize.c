@@ -2529,7 +2529,7 @@ static char runs_on (CMD *cmd, int i)
     const char *s = cmd->toks[i].lp + strlen(cmd->toks[i].s);
     char c = *s;
 
-    return (c == ' ' || c == '\0') ? 0 : c;
+    return (isspace(c) || c == '\0') ? 0 : c;
 }
 
 static int peek_end_param (CMD *cmd, int i)
