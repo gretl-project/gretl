@@ -239,6 +239,8 @@ static struct gretl_cmd gretl_cmds[] = {
 
 #define simple_flow_control(c) (c->ciflags & CI_FCMIN)
 
+static int unexpected_symbol_error (char c);
+
 static int command_get_flags (int ci)
 {
     if (ci >= 0 && ci < NC) {
@@ -603,8 +605,9 @@ static int real_add_token (CMD *c, const char *tok,
     int err = 0;
 
 #if TDEBUG
-    fprintf(stderr, "real_add_token: '%s' (%s)\n", tok,
-	    flag & TOK_QUOTED ? "quoted" : "not quoted");
+    fprintf(stderr, "real_add_token: '%s' (%s) [command: %s]\n", tok,
+	    flag & TOK_QUOTED ? "quoted" : "not quoted",
+	    c->ci > 0 ? gretl_command_word(c->ci) : "none");
 #endif
 
     if (n == c->nt_alloced - 1) {
@@ -1860,9 +1863,7 @@ static int first_arg_quoted (CMD *c)
     }
 }
 
-/* Count instances of list separator, ';', in the
-   command line.
-*/
+/* Count instances of list separator ';' in the command line. */
 
 static int cmd_get_sepcount (CMD *c)
 {
@@ -2414,10 +2415,9 @@ static int check_list_sepcount (int ci, int nsep)
     return err;
 }
 
-/* Determine if the command-line is a "genr"-type expression,
-   which will be directed to a separate parser -- this gets
-   invoked if we haven't been able to find a recognizable
-   command-word.
+/* Determine if the command-line is a "genr"-type expression, which
+   will be directed to a separate parser -- this gets invoked if we
+   haven't been able to find a recognizable command-word.
 */
 
 static int test_for_genr (CMD *c, int i, char cnext, DATASET *dset)
@@ -2524,6 +2524,14 @@ static char peek_next_char (CMD *cmd, int i)
     return *s;
 }
 
+static char runs_on (CMD *cmd, int i)
+{
+    const char *s = cmd->toks[i].lp + strlen(cmd->toks[i].s);
+    char c = *s;
+
+    return (c == ' ' || c == '\0') ? 0 : c;
+}
+
 static int peek_end_param (CMD *cmd, int i)
 {
     const char *s;
@@ -2573,8 +2581,8 @@ static int is_plot_keyword (const char *s, int *err)
     }
 }
 
-/* If we have enough tokens parsed, try to determine the
-   current command index.
+/* If we have enough tokens parsed, try to determine the current
+   command index.
 */
 
 static int try_for_command_index (CMD *cmd, int i,
@@ -2584,8 +2592,13 @@ static int try_for_command_index (CMD *cmd, int i,
 {
     cmd_token *toks = cmd->toks;
     const char *test = toks[i].s;
+    char cnext = 0;
 
     cmd->ci = gretl_command_number(test);
+    if (cmd->ci > 0) {
+	/* check for possibly extraneous trailing character */
+	cnext = runs_on(cmd, i);
+    }
 
     if (cmd->context && cmd->ci != END) {
 	if (cmd->context == FOREIGN || cmd->context == MPI) {
@@ -2615,14 +2628,20 @@ static int try_for_command_index (CMD *cmd, int i,
 	}
     }
 
-    if (cmd->ci > 0 && has_function_form(cmd->ci)) {
-	/* disambiguate command versus function */
-	if (peek_next_char(cmd, i) == '(') {
+    if (cmd->ci > 0) {
+	/* looks like we got a command word, but let's make sure */
+	if (has_function_form(cmd->ci) &&
+	    peek_next_char(cmd, i) == '(') {
 	    /* must be function form, not command proper */
 	    cmd->ci = 0;
 	    goto gentest;
+	} else if (cnext) {
+	    /* can't really be a command word */
+	    *err = unexpected_symbol_error(cnext);
+	    cmd->ci = 0;
+	    return 0;
 	}
-    } else if (cmd->ci == 0) {
+    } else {
 	cmd->ci = try_for_command_alias(test, cmd);
     }
 
