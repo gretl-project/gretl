@@ -44,7 +44,7 @@ but noticeable).</description>
  label="Average growth of working-age population, 1960-85"
 />
 <variable name="i_y"
- label="Average ratio of investment to GDP, percent (formely named 'inv')"
+ label="Average ratio of investment to GDP, percent (formerly named 'inv')"
 />
 <variable name="school"
  label="Percent of the working-age population in secondary school"
