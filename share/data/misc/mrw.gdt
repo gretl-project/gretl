@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE gretldata SYSTEM "gretldata.dtd">
 
-<gretldata version="1.3" name="mrw" frequency="1" startobs="1" endobs="121" type="cross-section">
+<gretldata version="1.5" name="mrw" frequency="1" n="121" startobs="1" endobs="121" type="cross-section">
 <description>
 Data from N. Gregory Mankiw, David Romer and David N. Weil,
 &quot;A contribution to the empirics of economic growth,&quot;
@@ -44,7 +44,7 @@ but noticeable).</description>
  label="Average growth of working-age population, 1960-85"
 />
 <variable name="i_y"
- label="Average ratio of investment to GDP, percent"
+ label="Average ratio of investment to GDP, percent (formely named 'inv')"
 />
 <variable name="school"
  label="Percent of the working-age population in secondary school"
