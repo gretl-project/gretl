@@ -10987,10 +10987,6 @@ del comando <cmdref targ="set"/>.
 	  <effect>vedi sotto</effect>
         </option>
     </options>
-    <examples>
-<example>outfile regress.txt</example>
-<example>end outfile</example>
-</examples>
 </usage>
 
 <description>
@@ -11013,16 +11009,6 @@ del comando <cmdref targ="set"/>.
     va usata l'opzione <opt>append</opt>.
   </para>
   <para>
-    Tre varianti speciali del comando sono disponibili. Se si
-    utilizza la parola chiave <lit>null</lit> al posto del vero
-    nome del file l'effetto prodotto sarà quello di sopprimere
-    tutti gli output fino alla istruzione successiva. Se una delle
-    due parole chiave, tra <lit>stdout</lit> o <lit>stderr</lit>,
-    è data al posto dello standard nome di file l'effetto che si
-    produrrà sarà quello di reindirizzare l'output sull'output
-    standard o sullo standard errors.
-  </para>
-  <para>
     Quello che segue è un semplice esempio, in cui l'output di una
     regressione viene scritto su un file.
   </para>
@@ -11032,7 +11018,31 @@ del comando <cmdref targ="set"/>.
     ols ENROLL 0 CATHOL INCOME COLLEGE
     end outfile
   </code>
-
+  <subhead>Nomi di file speciali</subhead>
+  <para>
+    Per il parametro <repl>nomefile</repl> esistono tre valori convenzionali:
+  </para>
+  <ilist>
+    <li>
+      <para>
+	<lit>null</lit>: l'output viene sopppresso fino alla fine
+	della ridirezione.
+      </para>
+    </li>
+    <li>
+      <para>
+	<lit>stdout</lit>: l'output è ridiretto sullo <quote>standard
+	output</quote>.
+      </para>
+    </li>
+    <li>
+      <para>
+	<lit>stderr</lit>: l'output è ridiretto sullo <quote>standard
+	error</quote>.
+      </para>
+    </li>
+  </ilist>
+  
   <subhead>Reindirizzamento a un buffer</subhead>
   <para>
     L'opzione <opt>buffer</opt> serve a mandare l'ouput a una
@@ -11078,28 +11088,28 @@ del comando <cmdref targ="set"/>.
     printf "The output was:\n%s\n", readfile(mytemp)
   </code>
 
-      <para>
-	In certi casi, è desiderabile avere un po' di controllo sul
-	nome del file temporaneo. Questo è possibile usando una
-	variabile stringa contenente sei <lit>X</lit> consecutive,
-	come nell'esempio seguente:
-      </para>
-      <code>
-	string mytemp = "tmpXXXXXX.csv"
-	outfile --tempfile=mytemp
-	...
-      </code>
-      <para>
-	In questo caso, <lit>XXXXXX</lit> sarà sostituito da caratteri
-	a caso che assicurano l'unicità del nome del file, ma il
-	suffisso <quote><lit>.csv</lit></quote> sarà preservato. Come
-	nel caso più semplice presentato prima, il file viene scritto
-	automaticamente nella directory <quote>nascosta</quote> e il
-	contenuto della variabile stringa passato tramite l'opzione
-	viene modificato così da contenere l'intero percorso.
-      </para>
-
-      <subhead>L'opzione quiet</subhead>
+  <para>
+    In certi casi, è desiderabile avere un po' di controllo sul
+    nome del file temporaneo. Questo è possibile usando una
+    variabile stringa contenente sei <lit>X</lit> consecutive,
+    come nell'esempio seguente:
+  </para>
+  <code>
+    string mytemp = "tmpXXXXXX.csv"
+    outfile --tempfile=mytemp
+    ...
+  </code>
+  <para>
+    In questo caso, <lit>XXXXXX</lit> sarà sostituito da caratteri
+    a caso che assicurano l'unicità del nome del file, ma il
+    suffisso <quote><lit>.csv</lit></quote> sarà preservato. Come
+    nel caso più semplice presentato prima, il file viene scritto
+    automaticamente nella directory <quote>nascosta</quote> e il
+    contenuto della variabile stringa passato tramite l'opzione
+    viene modificato così da contenere l'intero percorso.
+  </para>
+  
+  <subhead>L'opzione quiet</subhead>
   <para>
     L'effetto dell'opzione <opt>quiet</opt> è quello di disattivare la
     stampa dei comandi e dei messaggi ausiliari nel frattempo che
