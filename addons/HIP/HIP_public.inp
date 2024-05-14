@@ -188,7 +188,7 @@ function scalar HIP_estimate(bundle *b)
 
     if (s==1)
         setopt mle --hessian
-        elif(s==2)
+    elif (s==2)
         setopt mle --robust
     endif
 
