@@ -2597,7 +2597,7 @@ static int try_for_command_index (CMD *cmd, int i,
     cmd->ci = gretl_command_number(test);
     if (cmd->ci > 0) {
 	/* check for (probably) extraneous trailing character */
-	cnext = runs_on(cmd, ci);
+	cnext = runs_on(cmd, i);
     }
 
     if (cmd->context && cmd->ci != END) {
