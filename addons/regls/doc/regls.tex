@@ -355,7 +355,10 @@ snippet of which is shown below:
 \end{code}
 %
 The \texttt{MSE} value is the mean across the folds, and \texttt{se}
-is its standard error, computed as per \textsf{glmnet}.
+is its standard error, computed as per \textsf{glmnet}.  The
+\texttt{crit} member of the returned bundle is then a two-column
+matrix, holding the mean MSE values (in column 1) and their standard
+errors (in column 2).
 
 While it would seem most natural to select for prediction the $s$
 value that minimizes MSE on cross validation---call this
