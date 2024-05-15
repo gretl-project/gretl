@@ -4275,13 +4275,16 @@ gretl_matrix *bit_permutations (int n, int k, int *err)
     }
 
     /* run the iteration */
-    for (i=0; ; i++) {
+    for (i=0; i<np; i++) {
         binrow(i, n, v, ret);
-        if (v == vmax) {
-            break;
-        } else {
+	if (i < np - 1) {
             v = next_perm(v);
         }
+    }
+
+    if (v != vmax) {
+	/* "can't happen" */
+	fprintf(stderr, "binperms: something went wrong!\n");
     }
 
     return ret;
