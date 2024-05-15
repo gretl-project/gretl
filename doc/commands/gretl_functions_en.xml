@@ -2387,12 +2387,12 @@
 	  Binary permutations: returns a <by r="p" c="n"/> matrix,
 	  each of whose rows holds a distinct arrangement of
 	  <math>k</math> ones and <math>n</math> &minus;
-	  <math>k</math> zeros. The maximum supported value of
-	  <math>n</math> is 64, <math>n</math> and <math>k</math> must
-	  be non-negative, and <math>k</math> must be no greater than
-	  <math>n</math>; otherwise an error is flagged. In case
-	  <math>n</math> = <math>k</math> = 0 an empty matrix is
-	  returned.
+	  <math>k</math> zeros (in lexicographic order). The maximum
+	  supported value of <math>n</math> is 64, <math>n</math> and
+	  <math>k</math> must be non-negative, and <math>k</math> must
+	  be no greater than <math>n</math>; otherwise an error is
+	  flagged. In case <math>n</math> = <math>k</math> = 0 an
+	  empty matrix is returned.
 	</para>
 	<para>
 	  For example, with <math>n</math> = 4 and <math>k</math> = 2,

@@ -4686,12 +4686,14 @@
       </para>
 
       <para context="cli">
-	Several variant estimators of the covariance matrix are available
-	with this command.  By default, the Hessian is used unless the
-	<opt>robust</opt> option is given, in which case the QML (White)
-	covariance matrix is used.  Other possibilities (&eg; the
-	information matrix, or the Bollerslev&ndash;Wooldridge estimator)
-	can be specified using the <cmdref targ="set"/> command.
+	Several variant estimators of the covariance matrix are
+	available with this command.  By default, the Hessian is used
+	unless the <opt>robust</opt> option is given, in which case
+	the QML (White) covariance matrix is used.  Other
+	possibilities (&eg; the information matrix, or the
+	Bollerslev&ndash;Wooldridge estimator) can be specified via
+	the <lit>garch_vcv</lit> keyword under the <cmdref
+	targ="set"/> command.
       </para>
 
       <para context="gui">
