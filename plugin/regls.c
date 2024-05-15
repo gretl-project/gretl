@@ -2579,6 +2579,7 @@ static int post_xvalidation_task (regls_info *ri,
 {
     gretl_matrix *metrics;
     int imin = 0, i1se = 0;
+    char **S = NULL;
 
     metrics = process_xv_criterion(XVC, ri->lfrac, &imin, &i1se, prn);
     if (metrics == NULL) {
@@ -2593,7 +2594,12 @@ static int post_xvalidation_task (regls_info *ri,
 		ri->lfrac->val[i1se]);
     }
 
-    gretl_bundle_donate_data(ri->b, "XVC", metrics, GRETL_TYPE_MATRIX, 0);
+    S = strings_array_new(2);
+    S[0] = gretl_strdup("mean_MSE");
+    S[1] = gretl_strdup("se_MSE");
+    gretl_matrix_set_colnames(metrics, S);
+
+    gretl_bundle_donate_data(ri->b, "crit", metrics, GRETL_TYPE_MATRIX, 0);
     gretl_bundle_set_int(ri->b, "idxmin", imin + 1);
     gretl_bundle_set_int(ri->b, "idx1se", i1se + 1);
     gretl_bundle_set_scalar(ri->b, "lfmin", ri->lfrac->val[imin]);

@@ -234,8 +234,8 @@ function void regls_set_notes (bundle *b)
    if inbundle(b, "B")
       setnote(b, "B", "all coefficients")
    endif
-   if inbundle(b, "XVC")
-      setnote(b, "XVC", "cross-validation info")
+   if inbundle(b, "crit")
+      setnote(b, "crit", "criterion info")
    endif
 end function
 

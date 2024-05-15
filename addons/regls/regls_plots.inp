@@ -26,9 +26,9 @@ function void regls_fcast_plot (const series y, const series yhat,
 end function
 
 function void regls_mse_plot (const bundle b, const string output)
-   matrix M = b.XVC[,1] ~ b.lfrac
-   matrix B = b.XVC
-   scalar ymin = 0.95 * minc(b.XVC[,1] - b.XVC[,2])
+   matrix M = b.crit[,1] ~ b.lfrac
+   matrix B = b.crit
+   scalar ymin = 0.95 * minc(b.crit[,1] - b.crit[,2])
    scalar ymin = ymin < 0 ? 0 : ymin
    scalar x0 = b.lfrac[b.idxmin]
    scalar y0 = M[b.idxmin,1]
