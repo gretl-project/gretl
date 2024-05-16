@@ -6931,7 +6931,7 @@ static NODE *get_lag_list (NODE *l, NODE *r, parser *p)
                     tmp = laggenr_from_to(lv, fromlag, tolag,
                                            p->dset, &p->err);
                     if (!p->err) {
-                        p->err = gretl_list_add_list(&list, tmp);
+                        p->err = gretl_list_append_list(&list, tmp);
                         free(tmp);
                     }
                 }
@@ -7060,7 +7060,7 @@ static NODE *eval_lcat (NODE *l, NODE *r, parser *p)
             list2 = node_get_list(r, p); /* copied */
         }
         if (list2 != NULL) {
-            p->err = gretl_list_add_list(&list1, list2);
+            p->err = gretl_list_append_list(&list1, list2);
         }
         ret->v.ivec = list1;
         free(list2);
@@ -15393,7 +15393,7 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
                 p->err = e_types(e);
             }
             if (!p->err && li[0] > 0) {
-                gretl_list_append_list(&full_list, li, &p->err);
+                p->err = gretl_list_append_list(&full_list, li);
             }
             free(li);
         }
@@ -17813,7 +17813,7 @@ static NODE *eval (NODE *t, parser *p)
                    ((l->t == SERIES && r->t == STR) ||
                     (l->t == STR && r->t == SERIES))) {
             ret = series_string_calc(l, r, t->t, p);
-        } else if ((t->t == B_AND || t->t == B_OR || t->t == B_SUB) &&
+        } else if ((t->t == B_AND || t->t == B_OR || t->t == B_ADD || t->t == B_SUB) &&
                    ok_list_node_plus(l) && ok_list_node_plus(r)) {
             ret = list_list_op(l, r, t->t, p);
         } else if (t->t == B_POW && ok_list_node(l, p) && ok_list_node(r, p)) {

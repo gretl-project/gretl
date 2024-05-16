@@ -46,7 +46,7 @@ GPT_SPEC *plotspec_new (void)
 	return NULL;
     }
 
-    spec->datacols = 0;
+    spec->datacols = NULL;
     spec->heredata = 0;
 
     spec->lines = NULL;
@@ -156,59 +156,48 @@ void plotspec_destroy (GPT_SPEC *spec)
     if (spec->lines != NULL) {
 	free_plotspec_lines(spec);
     }
-
+    if (spec->datacols != NULL) {
+	free(spec->datacols);
+    }
     if (spec->labels != NULL) {
 	free(spec->labels);
     }
-
     if (spec->arrows != NULL) {
 	free(spec->arrows);
     }
-
     if (spec->data != NULL) {
 	gretl_matrix_free(spec->data);
     }
-
     if (spec->auxdata != NULL) {
 	gretl_matrix_free(spec->auxdata);
     }
-
     if (spec->reglist != NULL) {
 	free(spec->reglist);
     }
-
     if (spec->literal != NULL) {
 	strings_array_free(spec->literal, spec->n_literal);
     }
-
     if (spec->multi_xtics != NULL) {
 	strings_array_free(spec->multi_xtics, spec->n_xtics);
     }
-
     if (spec->markers != NULL) {
 	strings_array_free(spec->markers, spec->n_markers);
     }
-
     if (spec->labeled != NULL) {
 	free(spec->labeled);
     }
-
     if (spec->bars != NULL) {
 	plotbars_free(spec->bars);
     }
-
     if (spec->fontstr != NULL) {
 	free(spec->fontstr);
     }
-
     if (spec->xticstr != NULL) {
 	free(spec->xticstr);
     }
-
     if (spec->x2ticstr != NULL) {
 	free(spec->x2ticstr);
     }
-
     gretl_matrix_free(spec->b_ols);
     gretl_matrix_free(spec->b_quad);
     gretl_matrix_free(spec->b_cub);
@@ -1251,7 +1240,7 @@ static void plotspec_print_heredata (GPT_SPEC *spec,
 	fputs("EOA\n", fp);
     }
 
-    if (spec->data == NULL || spec->datacols == 0) {
+    if (spec->data == NULL || spec->datacols == NULL) {
 	return;
     }
 
@@ -1704,7 +1693,7 @@ static int set_loess_fit (GPT_SPEC *spec, int d, double q, gretl_matrix *x,
     }
 
     spec->data = m;
-    spec->datacols = 3;
+    spec->datacols = gretl_consecutive_list_new(1, 3);
     spec->nobs = spec->okobs = T;
 
     g_free(spec->lines[1].title);

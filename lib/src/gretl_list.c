@@ -1458,6 +1458,35 @@ int *gretl_list_plus (const int *l1, const int *l2, int *err)
     return ret;
 }
 
+static int list_mark_duplicates (const int *l1, int *l2)
+{
+    int n_dups = 0;
+    int i, j;
+
+    for (i=1; i<=l2[0]; i++) {
+	if (l2[i] == -1) {
+	    continue;
+	}
+	if (in_gretl_list(l1, l2[i])) {
+	    /* element already present in l1 */
+	    n_dups++;
+	    l2[i] = -1;
+	} else {
+	    /* not present in @l1, but check for duplicates of
+	       this element in @l2
+	    */
+	    for (j=1; j<=l2[0]; j++) {
+		if (j != i && l2[j] == l2[i]) {
+		    n_dups++;
+		    l2[j] = -1;
+		}
+	    }
+	}
+    }
+
+    return n_dups;
+}
+
 /**
  * gretl_list_union:
  * @l1: list of integers.
@@ -1474,7 +1503,6 @@ int *gretl_list_union (const int *l1, const int *l2, int *err)
     int *ret, *lcopy;
     int n_orig = l1[0];
     int n_add = l2[0];
-    int i, j, k;
 
     *err = 0;
 
@@ -1484,27 +1512,7 @@ int *gretl_list_union (const int *l1, const int *l2, int *err)
 	*err = E_ALLOC;
 	return NULL;
     } else {
-	/* see how many terms we're actually adding, if any */
-	for (i=1; i<=l2[0]; i++) {
-	    if (lcopy[i] == -1) {
-		continue;
-	    }
-	    k = in_gretl_list(l1, lcopy[i]);
-	    if (k > 0) {
-		/* element already present in l1 */
-		n_add--;
-		lcopy[i] = -1;
-	    } else {
-		/* not present in l1, but check for duplicates of
-		   this element in l2 */
-		for (j=1; j<=l2[0]; j++) {
-		    if (j != i && l2[j] == l2[i]) {
-			n_add--;
-			lcopy[j] = -1;
-		    }
-		}
-	    }
-	}
+	n_add -= list_mark_duplicates(l1, lcopy);
     }
 
     if (n_add == 0) {
@@ -1516,15 +1524,15 @@ int *gretl_list_union (const int *l1, const int *l2, int *err)
     if (ret == NULL) {
 	*err = E_ALLOC;
     } else if (n_add > 0) {
+	int i, j;
+
 	for (i=1; i<=n_orig; i++) {
 	    ret[i] = l1[i];
 	}
-
-	k = l1[0];
-
+	j = n_orig + 1;
 	for (i=1; i<=lcopy[0]; i++) {
 	    if (lcopy[i] != -1) {
-		ret[++k] = lcopy[i];
+		ret[j++] = lcopy[i];
 	    }
 	}
     }
@@ -1534,52 +1542,96 @@ int *gretl_list_union (const int *l1, const int *l2, int *err)
     return ret;
 }
 
+/* return a copy of @list from which any duplicated elements
+   have been deleted
+*/
+
+static int *gretl_list_uniq (const int *list)
+{
+    int *ret = gretl_list_copy(list);
+    int i, j;
+
+    for (j=list[0]; j>0; j--) {
+	for (i=1; i<j; i++) {
+	    if (list[j] == list[i]) {
+		gretl_list_delete_at_pos(ret, j);
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /**
- * gretl_list_append_list:
- * @pl1: pointer to priginal list.
- * @l2: list to append.
- * @err: location to receive error code
+ * gretl_list_merge_list:
+ * @targ: pointer to original list.
+ * @src: list to merge.
  *
- * Creates a list holding the intersection of @l1 and @l2.
+ * Appends to *targ any unique elements of @src that are not
+ * already present in *targ. @targ must not be NULL, but it's
+ * OK if the list to which it points is NULL.
  *
- * Returns: new list on success, NULL on error.
+ * Returns: 0 on success, non-zero on failure.
  */
 
-int *gretl_list_append_list (int **pl1, const int *l2, int *err)
+int gretl_list_merge_list (int **targ, const int *src)
 {
-    int *tmp, *l1 = NULL;
-    int n, n1, n2;
+    int *tmp = NULL;
+    int *scpy = NULL;
+    int n1 = 0, n2 = 0;
+    int i, j;
+    int err = 0;
 
-    if (pl1 == NULL) {
-	*err = E_INVARG;
-	return NULL;
+    if (targ == NULL) {
+	return E_INVARG;
+    } else if (src == NULL || src[0] == 0) {
+	/* no-op */
+	return 0;
     }
 
-    l1 = *pl1;
-    n1 = l1 == NULL ? 0 : l1[0];
-    n2 = l2 == NULL ? 0 : l2[0];
-    n = n1 + n2;
+    if (src[0] > 1) {
+	src = scpy = gretl_list_uniq(src);
+    }
 
+    if (*targ == NULL) {
+	/* special case */
+	*targ = gretl_list_copy(src);
+	if (*targ == NULL) {
+	    err = E_ALLOC;
+	}
+	free(scpy);
+	return err;
+    }
+
+    n1 = (*targ)[0];
+    for (i=1; i<=src[0]; i++) {
+	if (!in_gretl_list(*targ, src[i])) {
+	    n2++;
+	}
+    }
     if (n2 == 0) {
 	/* nothing to be appended */
-	return l1;
+	free(scpy);
+	return 0;
     }
 
-    tmp = realloc(l1, (n + 1) * sizeof *tmp);
+    tmp = realloc(*targ, (n1 + n2 + 1) * sizeof *tmp);
     if (tmp == NULL) {
-	*err = E_ALLOC;
-	return NULL;
+	err = E_ALLOC;
     } else {
-	int i, j = n1 + 1;
-
-	tmp[0] = n;
-	for (i=1; i<=n2; i++) {
-	    tmp[j++] = l2[i];
+	j = n1 + 1;
+	for (i=1; i<=src[0]; i++) {
+	    if (!in_gretl_list(tmp, src[i])) {
+		tmp[j++] = src[i];
+	    }
 	}
-	*pl1 = tmp;
+	tmp[0] += n2;
+	*targ = tmp;
     }
 
-    return *pl1;
+    free(scpy);
+
+    return err;
 }
 
 /**
@@ -2124,27 +2176,26 @@ int *gretl_list_diff_new (const int *biglist, const int *sublist,
 }
 
 /**
- * gretl_list_add_list:
+ * gretl_list_append_list:
  * @targ: location of list to which @src should be added.
  * @src: list to be added to @targ.
  *
  * Adds @src onto the end of @targ.  The length of @targ becomes the
- * sum of the lengths of the two original lists.
+ * sum of the lengths of the two original lists. Note that the result
+ * may contain duplicated elements.
  *
  * Returns: 0 on success, non-zero on failure.
  */
 
-int gretl_list_add_list (int **targ, const int *src)
+int gretl_list_append_list (int **targ, const int *src)
 {
-    int *big;
+    int *tmp;
     int i, n1, n2;
     int err = 0;
 
     if (targ == NULL || *targ == NULL) {
-	return E_DATA;
-    }
-
-    if (src == NULL || src[0] == 0) {
+	return E_INVARG;
+    } else if (src == NULL || src[0] == 0) {
 	/* no-op */
 	return 0;
     }
@@ -2152,16 +2203,16 @@ int gretl_list_add_list (int **targ, const int *src)
     n1 = (*targ)[0];
     n2 = src[0];
 
-    big = realloc(*targ, (n1 + n2 + 1) * sizeof *big);
+    tmp = realloc(*targ, (n1 + n2 + 1) * sizeof *tmp);
 
-    if (big == NULL) {
+    if (tmp == NULL) {
 	err = E_ALLOC;
     } else {
-	big[0] = n1 + n2;
+	tmp[0] = n1 + n2;
 	for (i=1; i<=src[0]; i++) {
-	    big[n1 + i] = src[i];
+	    tmp[n1 + i] = src[i];
 	}
-	*targ = big;
+	*targ = tmp;
     }
 
     return err;
@@ -2860,7 +2911,7 @@ int *gretl_list_build (const char *s, const DATASET *dset, int *err)
 		} else {
 		    nlist = get_list_by_name(test);
 		    if (nlist != NULL) {
-			*err = gretl_list_add_list(&list, nlist);
+			*err = gretl_list_append_list(&list, nlist);
 		    } else {
 			*err = E_UNKVAR;
 		    }

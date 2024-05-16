@@ -2269,7 +2269,7 @@ int auto_dummify_list (int **plist, DATASET *dset)
 	    dlist[1] = vi;
 	    err = real_list_dumgenr(&dlist, dset, NADBL, OPT_F | OPT_A);
 	    if (!err) {
-		gretl_list_append_list(&list, dlist, &err);
+		err = gretl_list_append_list(&list, dlist);
 	    }
 	    free(dlist);
 	} else if (!in_gretl_list(list, vi)) {

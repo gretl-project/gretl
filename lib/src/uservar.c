@@ -2659,7 +2659,7 @@ int user_list_append (user_var *uvar, const int *add)
         if (tmp == NULL) {
             err = E_ALLOC;
         } else {
-            err = gretl_list_add_list(&tmp, add);
+            err = gretl_list_append_list(&tmp, add);
             if (!err) {
                 user_var_replace_value(uvar, tmp, GRETL_TYPE_LIST);
             }

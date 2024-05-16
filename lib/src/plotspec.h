@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef PLOTSPEC_H
@@ -108,7 +108,7 @@ typedef enum {
 } gp_just_codes;
 
 typedef struct {
-    char text[PLOT_LABEL_TEXT_LEN + 1]; 
+    char text[PLOT_LABEL_TEXT_LEN + 1];
     double pos[2]; /* x,y position on plot */
     guint8 just;   /* justification of text, see gp_just_codes */
 } GPT_LABEL;
@@ -134,7 +134,7 @@ struct GPT_SPEC_ {
     FitType fit;               /* type of fitted line shown */
     int nobs;                  /* number of observations */
     int okobs;                 /* number of fully valid observations */
-    int datacols;              /* number of data columns */
+    int *datacols;             /* list of data columns */
     int pd;                    /* frequency (time series data) */
     int nbars;                 /* number of time-series shaded bars */
     char xvarname[MAXDISP];    /* name of x variable */
@@ -146,7 +146,7 @@ struct GPT_SPEC_ {
     char xfmt[16];             /* x-axis tic format */
     char xtics[64];            /* x-axis tic marks */
     char mxtics[4];            /* minor tics */
-    char yfmt[16];             /* y-axis tic format */ 
+    char yfmt[16];             /* y-axis tic format */
     char ytics[64];            /* y-axis tic marks */
     char *xticstr;             /* special xtics */
     char *x2ticstr;            /* special x2tics */
@@ -236,10 +236,10 @@ gp_key_spec *get_keypos_spec (int t);
 void print_keypos_string (int t, FILE *fp);
 
 void set_plotfit_line (GPT_LINE *line,
-		       FitType f, const double *b, 
+		       FitType f, const double *b,
 		       double x0, double pd);
 
-int plotspec_add_bars_info (GPT_SPEC *spec, 
+int plotspec_add_bars_info (GPT_SPEC *spec,
 			    double xmin, double xmax,
 			    double ymin, double ymax,
 			    const char *fname);
@@ -249,7 +249,7 @@ int plotspec_allocate_bars (GPT_SPEC *spec);
 int plotspec_set_bar_info (GPT_SPEC *spec, int i,
 			   double t1, double t2);
 
-void plotspec_set_bars_limits (GPT_SPEC *spec, 
+void plotspec_set_bars_limits (GPT_SPEC *spec,
 			       double t1, double t2,
 			       double ymin, double ymax);
 
