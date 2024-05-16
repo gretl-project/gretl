@@ -917,9 +917,9 @@ static const double *gi_get_xdata (gnuplot_info *gi,
    the y axis.
 */
 
-static void maybe_suppress_key (band_info **bb, int n_bands,
-				char *yname, const char *src,
-				FILE *fp)
+static int maybe_suppress_key (band_info **bb, int n_bands,
+			       char *yname, const char *src,
+			       FILE *fp)
 {
     int i, have_titles = 0;
 
@@ -930,9 +930,11 @@ static void maybe_suppress_key (band_info **bb, int n_bands,
 	}
     }
     if (!have_titles) {
-	fputs("set nokey\n", fp);
 	strcpy(yname, src);
 	fprintf(fp, "set ylabel \"%s\"\n", yname);
+	return 1;
+    } else {
+	return 0;
     }
 }
 
@@ -951,6 +953,7 @@ int plot_with_band (BPMode mode,
     char xname[MAXDISP];
     char wspec[16] = {0};
     int show_zero = 0;
+    int no_key = 0;
     int i, j, n_yvars = 0;
     int matrix_mode;
     int n_bands = 1;
@@ -1010,8 +1013,15 @@ int plot_with_band (BPMode mode,
     if (n_yvars == 1) {
 	const char *s = plotname(dset, gi->list[1], 1);
 
-	maybe_suppress_key(bbi, n_bands, yname, s, fp);
+	no_key = maybe_suppress_key(bbi, n_bands, yname, s, fp);
     }
+
+    if (no_key) {
+	fputs("set nokey\n", fp);
+    } else {
+	fputs("set key left top\n", fp);
+    }
+
     if (*xname != '\0') {
         fprintf(fp, "set xlabel \"%s\"\n", xname);
     }
