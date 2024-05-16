@@ -46,8 +46,9 @@ GPT_SPEC *plotspec_new (void)
 	return NULL;
     }
 
-    spec->datacols = NULL;
+    spec->n_datacols = 0;
     spec->heredata = 0;
+    spec->heredata_cols = NULL;
 
     spec->lines = NULL;
     spec->n_lines = 0;
@@ -156,8 +157,8 @@ void plotspec_destroy (GPT_SPEC *spec)
     if (spec->lines != NULL) {
 	free_plotspec_lines(spec);
     }
-    if (spec->datacols != NULL) {
-	free(spec->datacols);
+    if (spec->heredata_cols != NULL) {
+	free(spec->heredata_cols);
     }
     if (spec->labels != NULL) {
 	free(spec->labels);
@@ -1091,12 +1092,13 @@ static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
 	print_linestyle(spec, 0, 0, fp);
 	print_linestyle(spec, 1, 2, fp);
     } else {
-	/* note: handle the case where "line 0" is filledcurve,
-	   the color of which is handled separately
+	/* note: handle the case where the first "line" is a
+	   filledcurve element, the color of which is handled
+	   separately
 	*/
 	int offset = 0;
 
-	if (spec->lines[0].style == GP_STYLE_FILLEDCURVE) {
+	if (0 && spec->lines[0].style == GP_STYLE_FILLEDCURVE) {
 	    offset = 1;
 	}
 	for (i=0; i<N_GP_LINETYPES; i++) {
@@ -1240,7 +1242,7 @@ static void plotspec_print_heredata (GPT_SPEC *spec,
 	fputs("EOA\n", fp);
     }
 
-    if (spec->data == NULL || spec->datacols == NULL) {
+    if (spec->data == NULL || spec->n_datacols == 0) {
 	return;
     }
 
@@ -1693,7 +1695,7 @@ static int set_loess_fit (GPT_SPEC *spec, int d, double q, gretl_matrix *x,
     }
 
     spec->data = m;
-    spec->datacols = gretl_consecutive_list_new(1, 3);
+    spec->n_datacols = 3;
     spec->nobs = spec->okobs = T;
 
     g_free(spec->lines[1].title);

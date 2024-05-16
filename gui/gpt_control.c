@@ -1497,8 +1497,8 @@ static int get_gpt_data (GPT_SPEC *spec,
 	    continue;
 	}
 
-#if GPDEBUG
-	fprintf(stderr, "reading data, line %d\n", i);
+#if GPDEBUG > 1
+	fprintf(stderr, "reading data, line %d, ncols %d\n", i, ncols);
 #endif
 
 	if (!started_data_lines) {
@@ -1513,8 +1513,7 @@ static int get_gpt_data (GPT_SPEC *spec,
 	x[4] = x[3] + spec->nobs;
 
 	for (t=0; t<spec->nobs && !err; t++) {
-	    int missing = 0;
-	    int nf = 0;
+	    int nf, missing = 0;
 
 	    got = bufgets(s, sizeof s, buf);
 	    if (got == NULL) {
@@ -1533,7 +1532,6 @@ static int get_gpt_data (GPT_SPEC *spec,
 	    } else if (ncols == 2) {
 		nf = sscanf(s, "%31s %31s", test[0], test[1]);
 	    }
-
 	    if (nf != ncols) {
 		err = 1;
 	    }
@@ -1546,7 +1544,6 @@ static int get_gpt_data (GPT_SPEC *spec,
 		    x[j][t] = atof(test[j]);
 		}
 	    }
-
 	    if (missing) {
 		okobs--;
 	    }
@@ -1570,7 +1567,7 @@ static int get_gpt_data (GPT_SPEC *spec,
 	x[1] += (ncols - 1) * spec->nobs;
     }
 
-#if GPDEBUG
+#if GPDEBUG > 1
     gretl_matrix_print(spec->data, "spec->data");
 #endif
 
@@ -1654,7 +1651,7 @@ static int get_gpt_heredata (GPT_SPEC *spec,
 
     gretl_pop_c_numeric_locale();
 
-#if GPDEBUG
+#if GPDEBUG > 1
     gretl_matrix_print(m, "gp heredata");
 #endif
 
@@ -2103,17 +2100,16 @@ static void read_xtics_setting (GPT_SPEC *spec,
     }
 }
 
-/* Try to accept variant RGB specifications besides the
-   one that's standard in gretl plot files, namely
-   "#RRGGBB" in hex. The candidate string -- which might
-   be a color name of up to 17 characters -- is in @rgb,
-   and on success it's ovewritten by a standard gnuplot
-   hex string.
+/* Try to accept variant RGB specifications besides the one that's
+   standard in gretl plot files, namely "#RRGGBB" in hex. The
+   candidate string -- which might be a color name of up to 17
+   characters -- is in the @cstr argument; on success it's
+   overwritten by a standard gnuplot hex string.
 */
 
-static int verify_rgb (char *rgb)
+static int verify_rgb (char *cstr)
 {
-    char *s = rgb;
+    char *s = cstr;
     char delim = s[0];
     int err = 0;
 
@@ -2124,15 +2120,15 @@ static int verify_rgb (char *rgb)
 	s++;
 	p = strchr(s, delim);
 	if (p != NULL) {
-	    gretlRGB color;
+	    gretlRGB rgb;
 	    char test[18] = {0};
 	    int len = p - s;
 
 	    if (len >= 3 && len <= 17) {
 		strncat(test, s, len);
-		color = numeric_color_from_string(test, &err);
+		rgb = numeric_color_from_string(test, &err);
 		if (!err) {
-		    sprintf(rgb, "#%x", color);
+		    print_rgb_hash(cstr, rgb);
 		}
 	    } else {
 		err = E_DATA;
@@ -2690,7 +2686,7 @@ static void grab_line_rgb (char *targ, const char *src)
    using 1:($2+x)
 
    we need to extract the data column numbers, and if we
-   find special stuff inlinerecord the 'using' string as
+   find special stuff inline record the 'using' string as
    a whole
 */
 
@@ -2707,6 +2703,10 @@ static int process_using_spec (const char **ps,
     int n_uniq = 0;
     int k, n = 0;
     int err = 0;
+
+#if GPDEBUG
+    fprintf(stderr, "process_using_spec: s = '%s'\n", s);
+#endif
 
     if (isdigit(*s)) {
 	k = atoi(s);
@@ -2774,17 +2774,19 @@ static int process_using_spec (const char **ps,
 	    /* boxplot special */
 	    line->flags |= GP_LINE_BOXDATA;
 	}
-	/* cumulate total data columns */
-	if (spec->datacols > 0 && in_gretl_list(cols, 1)) {
+	if (spec->heredata) {
+	    gretl_list_merge_list(&spec->heredata_cols, cols);
+	    spec->n_datacols = spec->heredata_cols[0];
+	} else if (spec->n_datacols > 0 && in_gretl_list(cols, 1)) {
 	    /* col 1 should already be counted? */
-	    spec->datacols += line->ncols - 1;
+	    spec->n_datacols += line->ncols - 1;
 	} else {
-	    spec->datacols += line->ncols;
+	    spec->n_datacols += line->ncols;
 	}
 #if GPDEBUG
 	fprintf(stderr, "number of unique columns %d\n", n_uniq);
 	printlist(cols, "cols list");
-	fprintf(stderr, "spec->datacols now = %d\n", spec->datacols);
+	fprintf(stderr, "spec->n_datacols now = %d\n", spec->n_datacols);
 #endif
 	if (line->ustr == NULL) {
 	    line->mcols = cols;
@@ -2811,7 +2813,8 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
     int i, err;
 
 #if GPDEBUG
-    fprintf(stderr, "parse_gp_line_line, starting\n");
+    fprintf(stderr, "parse_gp_line_line, starting, heredata = %d\n",
+	    spec->heredata);
 #endif
 
     err = plotspec_add_line(spec);
@@ -2838,9 +2841,15 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 	*/
 	if (*(s+1) != '-') {
 	    fprintf(stderr, "plotting datafile, not supported\n");
+	} else if (spec->heredata) {
+	    int ltmp[] = {2, 1, 3};
+
+	    line->ncols = 2;
+	    gretl_list_merge_list(&spec->heredata_cols, ltmp);
+	    spec->n_datacols = spec->heredata_cols[0];
 	} else {
 	    line->ncols = 2;
-	    spec->datacols += 2;
+	    spec->n_datacols += 2;
 	}
     } else {
 	/* absence of "using" should mean that the line plots
@@ -2952,18 +2961,18 @@ static int plot_get_data_and_markers (GPT_SPEC *spec,
 {
     int err = 0;
 
-    if (spec->nobs == 0 || spec->datacols == 0) {
+    if (spec->nobs == 0 || spec->n_datacols == 0) {
 	/* nothing to be done */
 	return 0;
     }
 
 #if GPDEBUG
-    fprintf(stderr, "plot_get_data, allocating: nobs=%d, datacols=%d\n",
-	    spec->nobs, spec->datacols);
+    fprintf(stderr, "plot_get_data, allocating: nobs=%d, n_datacols=%d\n",
+	    spec->nobs, spec->n_datacols);
 #endif
 
     /* allocate for the plot data... */
-    spec->data = gretl_matrix_alloc(spec->nobs, spec->datacols);
+    spec->data = gretl_matrix_alloc(spec->nobs, spec->n_datacols);
     if (spec->data == NULL) {
 	err = E_ALLOC;
     }
@@ -3310,7 +3319,7 @@ static int read_plotspec_from_file (png_plot *plot)
 	return err;
     }
 
-    spec->datacols = 0;
+    spec->n_datacols = 0;
     bufgets_init(buf);
 
     /* get the number of data-points, plot type, and check for

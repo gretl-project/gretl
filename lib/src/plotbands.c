@@ -417,9 +417,9 @@ static void print_pm_filledcurve (band_info *bi, int contd,
     }
 
     if (bi->factor == 1.0) {
-	fprintf(fp, "'$data' using 1:($%d-$%d):($%d+$%d) ", c, w, c, w);
+	fprintf(fp, "$data using 1:($%d-$%d):($%d+$%d) ", c, w, c, w);
     } else {
-	fprintf(fp, "'$data' using 1:($%d-%g*$%d):($%d+%g*$%d) ",
+	fprintf(fp, "$data using 1:($%d-%g*$%d):($%d+%g*$%d) ",
 		c, f, w, c, f, w);
     }
     band_title(bi, fp);
@@ -449,11 +449,11 @@ static void print_pm_lines (band_info *bi, int n_yvars,
 	strcpy(dspec, " dt 2");
     }
     /* lower line */
-    fprintf(fp, "'$data' using 1:($%d-%g*$%d) ", c, f, w);
+    fprintf(fp, "$data using 1:($%d-%g*$%d) ", c, f, w);
     band_title(bi, fp);
     fprintf(fp, "w %s %s%s%s, \\\n", wstr, lspec, dspec, lw);
     /* upper line */
-    fprintf(fp, "'$data' using 1:($%d+%g*$%d) notitle w %s %s%s%s",
+    fprintf(fp, "$data using 1:($%d+%g*$%d) notitle w %s %s%s%s",
 	    c, f, w, wstr, lspec, dspec, lw);
     gp_newline(contd, fp);
 }
@@ -472,7 +472,7 @@ static void print_pm_bars (band_info *bi, int n_yvars,
     } else {
 	sprintf(lspec, "lt %d pt 7", n_yvars + 1);
     }
-    fprintf(fp, "'$data' using 1:%d:(%g*$%d) ", bi->center, bi->factor, bi->width);
+    fprintf(fp, "$data using 1:%d:(%g*$%d) ", bi->center, bi->factor, bi->width);
     band_title(bi, fp);
     fprintf(fp, "w errorbars %s", lspec);
     gp_newline(contd, fp);
@@ -1038,6 +1038,7 @@ int plot_with_band (BPMode mode,
     print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
 
     if (show_zero && bi->style != BAND_FILL) {
+	/* in the "fill" case xzeroaxis won't be visible */
         fputs("set xzeroaxis\n", fp);
     }
 
@@ -1064,7 +1065,8 @@ int plot_with_band (BPMode mode,
 	} else if (bi->style == BAND_FILL) {
 	    print_pm_filledcurve(bi, 1, fp);
 	    if (show_zero) {
-		fputs("0 notitle w lines lt 0, \\\n", fp);
+		/* custom xzeroaxis on top of the fill */
+		fputs("0 notitle w lines lc rgb \"#888888\" dt 2, \\\n", fp);
 	    }
 	} else if (bi->style == BAND_BARS) {
 	    print_pm_bars(bi, n_yvars, 1, fp);
@@ -1077,7 +1079,7 @@ int plot_with_band (BPMode mode,
 	const char *iname = plotname(dset, gi->list[i], 1);
 
 	set_plot_withstr(gi, i, wspec);
-	fprintf(fp, "'$data' using 1:%d title '%s' %s lt %d%s", i+1,
+	fprintf(fp, "$data using 1:%d title '%s' %s lt %d%s", i+1,
 		iname, wspec, i, lwstr);
 	gp_newline(i < n_yvars, fp);
     }

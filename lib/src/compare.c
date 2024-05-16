@@ -2756,7 +2756,6 @@ static int QLR_graph (const double *testvec, int t1, int t2,
     gretl_pop_c_numeric_locale();
 
     err = finalize_plot_input_file(fp);
-
     reset_effective_plot_ci();
 
     return err;

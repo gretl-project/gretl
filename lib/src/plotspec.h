@@ -134,7 +134,8 @@ struct GPT_SPEC_ {
     FitType fit;               /* type of fitted line shown */
     int nobs;                  /* number of observations */
     int okobs;                 /* number of fully valid observations */
-    int *datacols;             /* list of data columns */
+    int n_datacols;            /* number of data columns */
+    int *heredata_cols;        /* lists of "heredata" columns */
     int pd;                    /* frequency (time series data) */
     int nbars;                 /* number of time-series shaded bars */
     char xvarname[MAXDISP];    /* name of x variable */

@@ -1731,6 +1731,7 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 {
     GtkWidget *label, *vbox, *tbl;
     GtkWidget *hsep, *button;
+    gp_key_spec *kp;
     gchar *title;
     int i, rows = 1;
     int kactive = 0;
@@ -1776,16 +1777,13 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
     ed->keycombo = gtk_combo_box_text_new();
     gtk_table_attach_defaults(GTK_TABLE(tbl),
 			      ed->keycombo, 1, TAB_MAIN_COLS, rows-1, rows);
-    for (i=0; ; i++) {
-	gp_key_spec *kp = get_keypos_spec(i);
-
-	if (kp == NULL) {
-	    break;
-	}
+    i = 0;
+    while ((kp = get_keypos_spec(i)) != NULL) {
 	combo_box_append_text(ed->keycombo, _(kp->str));
 	if (kp->id == spec->keyspec) {
 	    kactive = i;
 	}
+	i++;
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(ed->keycombo), kactive);
     gtk_widget_show(ed->keycombo);
