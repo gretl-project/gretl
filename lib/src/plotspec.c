@@ -1073,11 +1073,11 @@ static void print_linestyle (const GPT_SPEC *spec,
 
 static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
 {
-    char cstr[8];
     int i;
 
     if (frequency_plot_code(spec->code)) {
 	gretlRGB color = get_boxcolor();
+	char cstr[10];
 
 	print_rgb_hash(cstr, color);
 	fprintf(fp, "set linetype 1 lc rgb \"%s\"\n", cstr);
@@ -1092,17 +1092,8 @@ static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
 	print_linestyle(spec, 0, 0, fp);
 	print_linestyle(spec, 1, 2, fp);
     } else {
-	/* note: handle the case where the first "line" is a
-	   filledcurve element, the color of which is handled
-	   separately
-	*/
-	int offset = 0;
-
-	if (0 && spec->lines[0].style == GP_STYLE_FILLEDCURVE) {
-	    offset = 1;
-	}
 	for (i=0; i<N_GP_LINETYPES; i++) {
-	    print_linestyle(spec, i, i + offset, fp);
+	    print_linestyle(spec, i, i, fp);
 	}
     }
 }
