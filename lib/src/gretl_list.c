@@ -1262,12 +1262,11 @@ int gretl_list_delete_at_pos (int *list, int pos)
     int i, err = 0;
 
     if (pos < 1 || pos > list[0]) {
-	err = 1;
+	err = E_INVARG;
     } else {
 	for (i=pos; i<list[0]; i++) {
 	    list[i] = list[i + 1];
 	}
-
 	list[list[0]] = 0;
 	list[0] -= 1;
     }
@@ -1294,10 +1293,10 @@ int gretl_list_purge_const (int *list, const DATASET *dset)
     int i, gotc = 0;
     int l0 = list[0];
 
-    /* handle the case where the constant comes last; if it's
+    /* Handle the case where the constant comes last; if it's
        the only element behind the list separator, remove both
-       the constant and the separator */
-
+       the constant and the separator.
+    */
     if (list[l0] == 0 || true_const(list[l0], dset)) {
 	gotc = 1;
 	list[0] -= 1;
@@ -1323,43 +1322,6 @@ int gretl_list_purge_const (int *list, const DATASET *dset)
 }
 
 /**
- * gretl_list_min_max:
- * @list: gretl list.
- * @lmin: location to receive minimum value.
- * @lmax: location to receive maximum value.
- *
- * Reads @list from position 1 onward and writes to @lmin
- * and @lmax the minimum and maximum values among the elements
- * of the list. Reading stops at the end of the list or when
- * a list separator is encountered.
- *
- * Returns: 0 on successful completion, error code if the
- * list is NULL or empty.
- */
-
-int gretl_list_min_max (const int *list, int *lmin, int *lmax)
-{
-    if (list == NULL || list[0] == 0) {
-	return E_DATA;
-    } else {
-	int i;
-
-	*lmin = *lmax = list[1];
-
-	for (i=2; i<=list[0]; i++) {
-	    if (list[i] < *lmin) {
-		*lmin = list[i];
-	    }
-	    if (list[i] > *lmax) {
-		*lmax = list[i];
-	    }
-	}
-
-	return 0;
-    }
-}
-
-/**
  * gretl_list_add:
  * @orig: an array of integers, the first element of which holds
  * a count of the number of elements following.
@@ -1378,43 +1340,43 @@ int *gretl_list_add (const int *orig, const int *add, int *err)
 {
     int n_orig = orig[0];
     int n_add = add[0];
-    int i, j, k;
-    int *big;
+    int i, j;
+    int *ret;
+
+    if (n_add == 0) {
+	*err = E_NOADD;
+	return NULL;
+    }
 
     *err = 0;
 
-    big = gretl_list_new(n_orig + n_add);
-    if (big == NULL) {
+    ret = gretl_list_new(n_orig + n_add);
+    if (ret == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
     for (i=0; i<=n_orig; i++) {
-	big[i] = orig[i];
+	ret[i] = orig[i];
     }
 
-    k = orig[0];
-
-    for (i=1; i<=n_add; i++) {
-	for (j=1; j<=n_orig; j++) {
-	    if (add[i] == orig[j]) {
-		/* a "new" var was already present */
-		free(big);
-		*err = E_ADDDUP;
-		return NULL;
-	    }
+    j = n_orig + 1;
+    for (i=1; i<=n_add && !*err; i++) {
+	if (in_gretl_list(ret, add[i])) {
+	    /* a supposedly "new" var was already present */
+	    *err = E_ADDDUP;
+	} else {
+	    ret[0] += 1;
+	    ret[j++] = add[i];
 	}
-	big[0] += 1;
-	big[++k] = add[i];
     }
 
-    if (big[0] == n_orig) {
-	free(big);
-	big = NULL;
-	*err = E_NOADD;
+    if (*err) {
+	free(ret);
+	ret = NULL;
     }
 
-    return big;
+    return ret;
 }
 
 /**
@@ -1876,14 +1838,15 @@ int *gretl_list_product (const int *X, const int *Y,
 int *gretl_list_omit_last (const int *orig, int *err)
 {
     int *list = NULL;
+    int n = orig[0];
     int i;
 
     *err = 0;
 
-    if (orig[0] < 2) {
+    if (n < 2) {
 	*err = E_NOVARS;
     } else {
-	for (i=1; i<=orig[0]; i++) {
+	for (i=1; i<=n; i++) {
 	    if (orig[i] == LISTSEP) {
 		/* can't handle compound lists */
 		*err = 1;
@@ -1893,11 +1856,11 @@ int *gretl_list_omit_last (const int *orig, int *err)
     }
 
     if (!*err) {
-	list = gretl_list_new(orig[0] - 1);
+	list = gretl_list_new(n - 1);
 	if (list == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    for (i=1; i<orig[0]; i++) {
+	    for (i=1; i<n; i++) {
 		list[i] = orig[i];
 	    }
 	}
@@ -1910,15 +1873,13 @@ static int list_count (const int *list)
 {
     int i, k = 0;
 
-    if (list == NULL) {
-	return 0;
-    }
-
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) {
-	    break;
-	} else {
-	    k++;
+    if (list != NULL) {
+	for (i=1; i<=list[0]; i++) {
+	    if (list[i] == LISTSEP) {
+		break;
+	    } else {
+		k++;
+	    }
 	}
     }
 
@@ -2047,55 +2008,6 @@ int *gretl_list_drop (const int *orig, const int *drop, int *err)
     }
 
     return ret;
-}
-
-/**
- * gretl_list_diff:
- * @targ: target list (must be pre-allocated).
- * @biglist: inclusive list.
- * @sublist: subset of biglist.
- *
- * Fills out @targ with the elements of @biglist, from position 2
- * onwards, that are not present in @sublist.  It is assumed that
- * the variable ID number in position 1 (dependent variable) is the
- * same in both lists.  It is an error if, from position 2 on,
- * @sublist is not a proper subset of @biglist.  See also
- * #gretl_list_diff_new.
- *
- * Returns: 0 on success, 1 on error.
- */
-
-int gretl_list_diff (int *targ, const int *biglist, const int *sublist)
-{
-    int i, j, k, n;
-    int match, err = 0;
-
-    n = biglist[0] - sublist[0];
-    targ[0] = n;
-
-    if (n <= 0) {
-	err = 1;
-    } else {
-	k = 1;
-	for (i=2; i<=biglist[0]; i++) {
-	    match = 0;
-	    for (j=2; j<=sublist[0]; j++) {
-		if (sublist[j] == biglist[i]) {
-		    match = 1;
-		    break;
-		}
-	    }
-	    if (!match) {
-		if (k <= n) {
-		    targ[k++] = biglist[i];
-		} else {
-		    err = 1;
-		}
-	    }
-	}
-    }
-
-    return err;
 }
 
 /**

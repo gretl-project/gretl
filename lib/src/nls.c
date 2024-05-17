@@ -1658,14 +1658,14 @@ static int add_full_std_errs_to_model (MODEL *pmod)
    in the Gauss-Newton Regression and one or more terms
    were dropped. We don't have standard errors for those
    terms but we do have coefficient estimates; we set
-   the standard errors to NA. Note that @list here is
+   the standard errors to NA. Note that @glist here is
    the full list of regressors passed to the GNR.
 */
 
 static int add_partial_std_errs_to_model (MODEL *pmod,
-					  const int *list)
+					  const int *glist)
 {
-    int ndrop = list[0] - pmod->list[0];
+    int ndrop = glist[0] - pmod->list[0];
     double *coeff, *sderr;
     int k, *dlist;
     int i, j;
@@ -1676,10 +1676,9 @@ static int add_partial_std_errs_to_model (MODEL *pmod,
 	return E_JACOBIAN;
     }
 
-    dlist = gretl_list_new(ndrop);
-    gretl_list_diff(dlist, list, pmod->list);
+    dlist = gretl_list_diff_new(glist, pmod->list, 2);
 
-    k = list[0] - 1;
+    k = glist[0] - 1;
     coeff = malloc(k * sizeof *coeff);
     sderr = malloc(k * sizeof *sderr);
 
