@@ -1366,10 +1366,10 @@ int gretl_list_min_max (const int *list, int *lmin, int *lmax)
  * @add: list of variables to be added.
  * @err: location to receive error code.
  *
- * Creates a list containing the union of elements of @orig
- * and the elements of @add.  If one or more elements of
- * @add were already present in @orig, the error code is
- * %E_ADDDUP.
+ * Creates a new list containing the elements of @orig plus
+ * those of @add. It is an error -- flagged by %E_ADDDUP --
+ * if one or more elements of @add were already present in
+ * @orig.
  *
  * Returns: new list on success, NULL on error.
  */
@@ -1648,15 +1648,24 @@ int gretl_list_merge_list (int **targ, const int *src)
 int *gretl_list_intersection (const int *l1, const int *l2, int *err)
 {
     int *ret = NULL;
-    int i, j;
-    int n = 0;
+    const int *a = l1;
+    const int *b = l2;
+    int i, j, n = 0;
 
-    for (i=1; i<=l1[0]; i++) {
-	for (j=1; j<=l2[0]; j++) {
-	    if (l2[j] == l1[i]) {
-		n++;
-		break;
-	    }
+    if (a == NULL || b == NULL) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    if (a[0] > b[0]) {
+	/* make @a the smaller list */
+	a = l2;
+	b = l1;
+    }
+
+    for (i=1; i<=a[0]; i++) {
+	if (in_gretl_list(b, a[i])) {
+	    n++;
 	}
     }
 
@@ -1665,13 +1674,10 @@ int *gretl_list_intersection (const int *l1, const int *l2, int *err)
     } else {
 	ret = gretl_list_new(n);
 	if (ret != NULL) {
-	    n = 1;
-	    for (i=1; i<=l1[0]; i++) {
-		for (j=1; j<=l2[0]; j++) {
-		    if (l2[j] == l1[i]) {
-			ret[n++] = l1[i];
-			break;
-		    }
+	    j = 1;
+	    for (i=1; i<=a[0]; i++) {
+		if (in_gretl_list(b, a[i])) {
+		    ret[j++] = a[i];
 		}
 	    }
 	}
@@ -1939,8 +1945,7 @@ static int list_count (const int *list)
  *
  * Creates a list containing the elements of @orig that are not
  * present in @omit.  It is an error if the @omit list contains
- * members that are not present in @orig, and also if the @omit
- * list contains duplicated elements.
+ * members that are not present in @orig.
  *
  * Returns: new list on success, NULL on error.
  */
@@ -1950,10 +1955,11 @@ int *gretl_list_omit (const int *orig, const int *omit,
 {
     int n_omit = omit[0];
     int n_orig = list_count(orig);
+    int n_rem = n_orig - n_omit;
     int *ret = NULL;
-    int i, j, k;
+    int i, j;
 
-    if (n_omit > n_orig) {
+    if (n_rem < 0) {
 	*err = E_DATA;
 	return NULL;
     }
@@ -1962,8 +1968,8 @@ int *gretl_list_omit (const int *orig, const int *omit,
 
     /* check for spurious "omissions" */
     for (i=1; i<=omit[0]; i++) {
-	k = in_gretl_list(orig, omit[i]);
-	if (k < minpos) {
+	j = in_gretl_list(orig, omit[i]);
+	if (j < minpos) {
 	    gretl_errmsg_sprintf(_("Variable %d was not in the original list"),
 				 omit[i]);
 	    *err = 1;
@@ -1971,30 +1977,17 @@ int *gretl_list_omit (const int *orig, const int *omit,
 	}
     }
 
-    ret = gretl_list_new(n_orig - n_omit);
+    ret = gretl_list_new(n_rem);
 
     if (ret == NULL) {
 	*err = E_ALLOC;
-    } else if (n_omit < n_orig) {
-	int match;
-
-	k = 1;
+    } else if (n_rem > 0) {
+	j = 1;
 	for (i=1; i<=n_orig; i++) {
 	    if (i < minpos) {
-		ret[k++] = orig[i];
-	    } else {
-		match = 0;
-		for (j=1; j<=n_omit; j++) {
-		    if (orig[i] == omit[j]) {
-			/* matching var: omit it */
-			match = 1;
-			break;
-		    }
-		}
-		if (!match) {
-		    /* var is not in omit list: keep it */
-		    ret[k++] = orig[i];
-		}
+		ret[j++] = orig[i];
+	    } else if (!in_gretl_list(omit, orig[i])) {
+		ret[j++] = orig[i];
 	    }
 	}
     }
@@ -2012,8 +2005,7 @@ int *gretl_list_omit (const int *orig, const int *omit,
  * Creates a list containing the elements of @orig that are not
  * present in @drop.  Unlike gretl_list_omit(), processing always
  * starts from position 1 in @orig, and it is not an error if
- * some members of @drop are not present in @orig, or if some
- * members of @drop are duplicated.
+ * some members of @drop are not present in @orig.
  *
  * Returns: new list on success, NULL on error.
  */
@@ -2023,7 +2015,7 @@ int *gretl_list_drop (const int *orig, const int *drop, int *err)
     int *lcopy = NULL;
     int *ret = NULL;
     int n_omit = 0;
-    int i, k;
+    int i, j;
 
     *err = 0;
 
@@ -2033,12 +2025,12 @@ int *gretl_list_drop (const int *orig, const int *drop, int *err)
 	*err = E_ALLOC;
 	return NULL;
     } else {
-	/* see how many terms we're omitting */
+	/* determine how many terms we're omitting */
 	for (i=1; i<=drop[0]; i++) {
-	    k = in_gretl_list(lcopy, drop[i]);
-	    if (k > 0) {
+	    j = in_gretl_list(lcopy, drop[i]);
+	    if (j > 0) {
 		n_omit++;
-		lcopy[k] = -1;
+		lcopy[j] = -1;
 	    }
 	}
     }
@@ -2046,14 +2038,16 @@ int *gretl_list_drop (const int *orig, const int *drop, int *err)
     if (n_omit == 0) {
 	ret = lcopy;
     } else {
-	ret = gretl_list_new(orig[0] - n_omit);
+	int n_rem = orig[0] - n_omit;
+
+	ret = gretl_list_new(n_rem);
 	if (ret == NULL) {
 	    *err = E_ALLOC;
-	} else if (n_omit < orig[0]) {
-	    k = 1;
+	} else if (n_rem > 0) {
+	    j = 1;
 	    for (i=1; i<=orig[0]; i++) {
 		if (lcopy[i] >= 0) {
-		    ret[k++] = orig[i];
+		    ret[j++] = orig[i];
 		}
 	    }
 	}
@@ -2316,13 +2310,16 @@ int gretl_list_insert_list_minus (int **targ, const int *src, int pos)
 int *gretl_list_sublist (const int *list, int pos0, int pos1)
 {
     int n = pos1 - pos0 + 1;
-    int *ret = gretl_list_new(n);
+    int *ret = NULL;
 
-    if (n > 0 && ret != NULL) {
-	int i, j = 1;
+    if (n >= 0) {
+	ret = gretl_list_new(n);
+	if (n > 0 && ret != NULL) {
+	    int i, j = 1;
 
-	for (i=pos0; i<=pos1; i++) {
-	    ret[j++] = list[i];
+	    for (i=pos0; i<=pos1; i++) {
+		ret[j++] = list[i];
+	    }
 	}
     }
 
@@ -2338,13 +2335,25 @@ int *gretl_list_sublist (const int *list, int pos0, int pos1)
  * of @list that are selected by @sel.
  */
 
-int *gretl_list_select (const int *list, const int *sel)
+int *gretl_list_select (const int *list, const int *sel, int *err)
 {
     int *ret = gretl_list_new(sel[0]);
-    int i, j = 1;
+    int idxmax = list[0];
+    int i, idx;
 
     for (i=1; i<=sel[0]; i++) {
-        ret[j++] = list[sel[i]];
+	idx = sel[i];
+	if (idx > 0 && idx <= idxmax) {
+	    ret[i] = list[idx];
+	} else {
+	    *err = E_INVARG;
+	    break;
+	}
+    }
+
+    if (*err) {
+	free(ret);
+	ret = NULL;
     }
 
     return ret;

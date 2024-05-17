@@ -125,7 +125,7 @@ int gretl_list_insert_list_minus (int **targ, const int *src, int pos);
 
 int *gretl_list_sublist (const int *list, int pos0, int pos1);
 
-int *gretl_list_select (const int *list, const int *sel);
+int *gretl_list_select (const int *list, const int *sel, int *err);
 
 int reglist_check_for_const (int *list, const DATASET *dset);
 

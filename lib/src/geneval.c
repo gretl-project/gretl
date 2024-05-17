@@ -5829,7 +5829,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
                     ret->v.str = gretl_utf8_select(l->v.str, vlist);
                 } else {
                     ret = aux_list_node(p);
-                    ret->v.ivec = gretl_list_select(l->v.ivec, vlist);
+                    ret->v.ivec = gretl_list_select(l->v.ivec, vlist, &p->err);
                 }
             }
             free(vlist);
