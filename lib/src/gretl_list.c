@@ -1648,23 +1648,15 @@ int gretl_list_merge_list (int **targ, const int *src)
 int *gretl_list_intersection (const int *l1, const int *l2, int *err)
 {
     int *ret = NULL;
-    const int *a = l1;
-    const int *b = l2;
     int i, j, n = 0;
 
-    if (a == NULL || b == NULL) {
+    if (l1 == NULL || l2 == NULL) {
 	*err = E_INVARG;
 	return NULL;
     }
 
-    if (a[0] > b[0]) {
-	/* make @a the smaller list */
-	a = l2;
-	b = l1;
-    }
-
-    for (i=1; i<=a[0]; i++) {
-	if (in_gretl_list(b, a[i])) {
+    for (i=1; i<=l1[0]; i++) {
+	if (in_gretl_list(l2, l1[i])) {
 	    n++;
 	}
     }
@@ -1675,9 +1667,9 @@ int *gretl_list_intersection (const int *l1, const int *l2, int *err)
 	ret = gretl_list_new(n);
 	if (ret != NULL) {
 	    j = 1;
-	    for (i=1; i<=a[0]; i++) {
-		if (in_gretl_list(b, a[i])) {
-		    ret[j++] = a[i];
+	    for (i=1; i<=l1[0]; i++) {
+		if (in_gretl_list(l2, l1[i])) {
+		    ret[j++] = l1[i];
 		}
 	    }
 	}
