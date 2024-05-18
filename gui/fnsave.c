@@ -4139,7 +4139,11 @@ struct xs_err_info {
     gchar *msg;
 };
 
+#if LIBXML_VERSION >= 21200
+static void xs_err_handler (void *arg, const xmlError *errp)
+#else
 static void xs_err_handler (void *arg, xmlErrorPtr errp)
+#endif
 {
     struct xs_err_info *xse = arg;
 
