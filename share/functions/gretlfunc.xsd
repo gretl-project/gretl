@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- XML schema for gretl function packages -->
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:element name="gretl-functions">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" ref="gretl-function-package"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="gretl-function-package">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="author"/>
+        <xs:element ref="version"/>
+        <xs:element ref="date"/>
+        <xs:element ref="description"/>
+        <xs:element ref="tags"/>
+        <xs:element minOccurs="0" ref="label"/>
+        <xs:element minOccurs="0" ref="menu-attachment"/>
+        <xs:element ref="help"/>
+        <xs:element minOccurs="0" ref="gui-help"/>
+        <xs:element minOccurs="0" ref="data-files"/>
+        <xs:element minOccurs="0" ref="depends"/>
+        <xs:element minOccurs="0" ref="provider"/>
+        <xs:element minOccurs="0" ref="R-depends"/>
+        <xs:element maxOccurs="unbounded" ref="gretl-function"/>
+        <xs:element ref="sample-script"/>
+      </xs:sequence>
+      <xs:attribute name="name" use="required"/>
+      <xs:attribute name="ID"/>
+      <xs:attribute name="needs-time-series-data" default="false">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="true"/>
+            <xs:enumeration value="false"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="needs-qm-data" default="false">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="true"/>
+            <xs:enumeration value="false"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="needs-panel-data" default="false">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="true"/>
+            <xs:enumeration value="false"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="no-data-ok" default="false">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="true"/>
+            <xs:enumeration value="false"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="has-pdf-doc" default="false">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="true"/>
+            <xs:enumeration value="false"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="lives-in-subdir" default="false">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="true"/>
+            <xs:enumeration value="false"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="wants-data-access" default="false">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="true"/>
+            <xs:enumeration value="false"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="model-requirement"/>
+      <xs:attribute name="minver"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="author">
+    <xs:complexType mixed="true">
+      <xs:attribute name="email" use="required"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="version" type="xs:string"/>
+  <xs:element name="date" type="xs:date"/>
+  <xs:element name="description">
+    <xs:complexType mixed="true">
+      <xs:attribute name="lang"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="tags" type="xs:string"/>
+  <xs:element name="label" type="xs:string"/>
+  <xs:element name="menu-attachment" type="xs:string"/>
+  <xs:element name="provider" type="xs:string"/>
+  <xs:element name="R-depends" type="xs:string"/>
+  <xs:element name="gretl-function">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" ref="params"/>
+        <xs:element minOccurs="0" ref="return"/>
+        <xs:element ref="code"/>
+      </xs:sequence>
+      <xs:attribute name="name" use="required"/>
+      <xs:attribute name="type" default="void">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="void"/>
+            <xs:enumeration value="scalar"/>
+            <xs:enumeration value="series"/>
+            <xs:enumeration value="matrix"/>
+            <xs:enumeration value="list"/>
+            <xs:enumeration value="string"/>
+            <xs:enumeration value="bundle"/>
+            <xs:enumeration value="strings"/>
+            <xs:enumeration value="matrices"/>
+            <xs:enumeration value="bundles"/>
+            <xs:enumeration value="lists"/>
+            <xs:enumeration value="arrays"/>
+            <xs:enumeration value="numeric"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="private" default="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="0"/>
+            <xs:enumeration value="1"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="plugin-wrapper" default="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="0"/>
+            <xs:enumeration value="1"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="no-print" default="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="0"/>
+            <xs:enumeration value="1"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="menu-only" default="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="0"/>
+            <xs:enumeration value="1"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="pkg-role" default="none">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="bundle-print"/>
+            <xs:enumeration value="bundle-plot"/>
+            <xs:enumeration value="bundle-test"/>
+            <xs:enumeration value="bundle-fcast"/>
+            <xs:enumeration value="bundle-extra"/>
+            <xs:enumeration value="gui-main"/>
+            <xs:enumeration value="gui-precheck"/>
+            <xs:enumeration value="plot-precheck"/>
+            <xs:enumeration value="list-maker"/>
+            <xs:enumeration value="R-setup"/>
+            <xs:enumeration value="ui-maker"/>
+            <xs:enumeration value="none"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="help">
+    <xs:complexType mixed="true">
+      <xs:attribute name="filename"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="gui-help">
+    <xs:complexType mixed="true">
+      <xs:attribute name="filename"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="data-files">
+    <xs:complexType mixed="true">
+      <xs:attribute name="count" use="required"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="depends">
+    <xs:complexType mixed="true">
+      <xs:attribute name="count" use="required"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="params">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="param"/>
+      </xs:sequence>
+      <xs:attribute name="count" use="required"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="labels">
+    <xs:complexType mixed="true">
+      <xs:attribute name="count" use="required"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="param">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" ref="description"/>
+        <xs:element minOccurs="0" ref="labels"/>
+      </xs:sequence>
+      <xs:attribute name="name" use="required"/>
+      <xs:attribute name="default"/>
+      <xs:attribute name="min"/>
+      <xs:attribute name="max"/>
+      <xs:attribute name="step"/>
+      <xs:attribute name="auto" default="false">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="true"/>
+            <xs:enumeration value="false"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="optional" default="false">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="true"/>
+            <xs:enumeration value="false"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="const" default="false">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="true"/>
+            <xs:enumeration value="false"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="type" default="series">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="bool"/>
+            <xs:enumeration value="boolean"/>
+            <xs:enumeration value="int"/>
+            <xs:enumeration value="obs"/>
+            <xs:enumeration value="scalar"/>
+            <xs:enumeration value="series"/>
+            <xs:enumeration value="list"/>
+            <xs:enumeration value="matrix"/>
+            <xs:enumeration value="bundle"/>
+            <xs:enumeration value="scalarref"/>
+            <xs:enumeration value="seriesref"/>
+            <xs:enumeration value="matrixref"/>
+            <xs:enumeration value="bundleref"/>
+            <xs:enumeration value="string"/>
+            <xs:enumeration value="stringref"/>
+            <xs:enumeration value="strings"/>
+            <xs:enumeration value="matrices"/>
+            <xs:enumeration value="bundles"/>
+            <xs:enumeration value="lists"/>
+            <xs:enumeration value="arrays"/>
+            <xs:enumeration value="stringsref"/>
+            <xs:enumeration value="matricesref"/>
+            <xs:enumeration value="bundlesref"/>
+            <xs:enumeration value="numeric"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="return">
+    <xs:complexType>
+      <xs:attribute name="name" use="required"/>
+      <xs:attribute name="type" default="series">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="scalar"/>
+            <xs:enumeration value="series"/>
+            <xs:enumeration value="matrix"/>
+            <xs:enumeration value="list"/>
+            <xs:enumeration value="string"/>
+            <xs:enumeration value="bundle"/>
+            <xs:enumeration value="strings"/>
+            <xs:enumeration value="matrices"/>
+            <xs:enumeration value="bundles"/>
+            <xs:enumeration value="arrays"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="sample-script">
+    <xs:complexType mixed="true">
+      <xs:attribute name="filename"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="code" type="xs:string"/>
+</xs:schema>
