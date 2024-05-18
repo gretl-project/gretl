@@ -2581,6 +2581,15 @@ static int is_plot_keyword (const char *s, int *err)
     }
 }
 
+static int run_on_error (const char *test, char c)
+{
+    gchar *tmp = g_strdup_printf("%s%c", test, c);
+
+    gretl_errmsg_sprintf(_("Parse error at unexpected token '%s'"), tmp);
+    g_free(tmp);
+    return E_PARSE;
+}
+
 /* If we have enough tokens parsed, try to determine the current
    command index.
 */
@@ -2637,7 +2646,7 @@ static int try_for_command_index (CMD *cmd, int i,
 	    goto gentest;
 	} else if (cnext) {
 	    /* can't really be a command word */
-	    *err = unexpected_symbol_error(cnext);
+	    *err = run_on_error(test, cnext);
 	    cmd->ci = 0;
 	    return 0;
 	}
