@@ -37,8 +37,11 @@
 #include "fncall.h"
 #include "fnsave.h"
 
-#include <libxml/xmlmemory.h>
-#include <libxml/parser.h>
+#define USE_XML_SCHEMA 1
+
+#if USE_XML_SCHEMA
+# include <libxml/xmlreader.h>
+#endif
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -4122,12 +4125,124 @@ static void login_dialog (login_info *linfo, GtkWidget *parent)
     gtk_widget_show_all(linfo->dlg);
 }
 
-/* Check the package file against gretlfunc.dtd. We call
-   this automatically before uploading a package file to
-   the server.  The user can also choose to run the test by
-   clicking the "Validate" button in the package editor;
-   in that case we set the @verbose flag.
+/* Check the package file against gretlfunc.dtd. We call this
+   automatically before uploading a package file to the server.  The
+   user can also choose to run the test by clicking the "Validate"
+   button in the package editor; in that case we set the @verbose
+   flag.
 */
+
+#if USE_XML_SCHEMA
+
+struct xs_err_info {
+    int err;
+    gchar *msg;
+};
+
+static void xs_err_handler (void *arg, xmlErrorPtr errp)
+{
+    struct xs_err_info *xse = arg;
+
+    xse->err = 1;
+    xse->msg = g_strdup_printf("%s:\nparse error at line %d, col %d: %s",
+			       errp->file, errp->line, errp->int2,
+			       errp->message);
+}
+
+static xmlSchemaValidCtxtPtr get_validation_context (const char *fname,
+						     xmlSchemaPtr *pschema,
+						     int verbose)
+{
+    xmlSchemaValidCtxtPtr vc = NULL;
+    xmlSchemaParserCtxtPtr spc;
+
+    spc = xmlSchemaNewParserCtxt(fname);
+    if (spc == NULL) {
+	if (verbose) {
+	    errbox("Couldn't open XML schema to check package");
+	} else {
+	    fprintf(stderr, "Couldn't open XML schema to check package\n");
+	}
+    } else {
+	*pschema = xmlSchemaParse(spc);
+	xmlSchemaFreeParserCtxt(spc);
+	if (*pschema == NULL) {
+	    if (verbose) {
+		errbox("Failed to parse XML schema");
+	    } else {
+		fprintf(stderr, "Failed to parse XML schema\n");
+	    }
+	} else {
+	    vc = xmlSchemaNewValidCtxt(*pschema);
+	    if (vc == NULL) {
+		if (verbose) {
+		    errbox("Failed to obtain XML schema validator");
+		} else {
+		    fprintf(stderr, "Failed to obtain XML schema validator\n");
+		}
+	    }
+	}
+    }
+
+    return vc;
+}
+
+static int validate_package_file (const char *fname, int verbose)
+{
+    xmlSchemaValidCtxtPtr validator = NULL;
+    xmlSchemaPtr schema = NULL;
+    xmlTextReaderPtr reader = NULL;
+    struct xs_err_info xse;
+    gchar *xsdpath;
+    int err = 0;
+
+    xse.err = 0;
+    xse.msg = NULL;
+
+    xsdpath = g_build_filename(gretl_home(), "functions",
+			       "gretlfunc.xsd", NULL);
+    validator = get_validation_context(xsdpath, &schema, verbose);
+    if (validator != NULL) {
+	reader = xmlReaderForFile(fname, NULL, 0);
+    }
+    g_free(xsdpath);
+
+    if (reader == NULL) {
+	errbox("Failed to obtain reader for gfn file");
+	err = 1;
+    } else {
+	int ret = -1;
+
+	xmlTextReaderSchemaValidateCtxt(reader, validator, 0);
+	xmlSchemaSetValidStructuredErrors(validator, xs_err_handler, &xse);
+	ret = xmlTextReaderRead(reader);
+	while (ret == 1 && xse.err == 0) {
+	    ret = xmlTextReaderRead(reader);
+	}
+    }
+
+    if (!err) {
+	const char *pkgname = path_last_element(fname);
+
+	if (xse.err) {
+	    errbox(xse.msg);
+	    g_free(xse.msg);
+	    err = 1;
+	} else if (verbose) {
+	    infobox_printf(_("%s: validated against DTD OK"), pkgname);
+	} else {
+	    fprintf(stderr, "%s: validated against DTD OK\n", pkgname);
+	}
+    }
+
+    xmlFreeTextReader(reader);
+    xmlSchemaFreeValidCtxt(validator);
+    xmlSchemaFree(schema);
+
+    return err;
+}
+
+#else /* use DTD, not schema */
 
 static int validate_package_file (const char *fname, int verbose)
 {
@@ -4195,6 +4310,8 @@ static int validate_package_file (const char *fname, int verbose)
 
     return err;
 }
+
+#endif /* validation by XML schema or DTD */
 
 /* Collect pkg.gfn plus additional package files (PDF doc and/or data
    files) into a temporary dir under the user's dotdir, and make a zip
