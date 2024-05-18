@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -128,11 +128,11 @@ static int error_printed;
 static int alarm_set;
 
 /**
- * errmsg_get_with_default: 
+ * errmsg_get_with_default:
  * @err: gretl error code (see #gretl_error_codes).
  *
  * Returns: a specific error message if available,
- * otherwise a generic error message corresponding to the 
+ * otherwise a generic error message corresponding to the
  * given @err.
  */
 
@@ -161,7 +161,7 @@ const char *errmsg_get_with_default (int err)
 }
 
 /**
- * gretl_warnmsg_get: 
+ * gretl_warnmsg_get:
  *
  * Returns: the current gretl warning message, or %NULL if no
  * warning is currently in place.
@@ -193,8 +193,8 @@ const char *gretl_warnmsg_get (void)
  * @err: gretl error code (see #error_codes).
  * @prn: gretl printing struct.
  *
- * Prints to @prn a specific error message if available, 
- * otherwise a generic error message corresponding to the 
+ * Prints to @prn a specific error message if available,
+ * otherwise a generic error message corresponding to the
  * given @err.
  */
 
@@ -222,7 +222,7 @@ void errmsg (int err, PRN *prn)
 	}
 	pprintf(prn, "%s\n", msg);
 	error_printed = 1;
-    } 
+    }
 }
 
 static void print_function_info (PRN *prn)
@@ -336,24 +336,51 @@ void gretl_errmsg_set (const char *str)
 
 void gretl_errmsg_append (const char *str, int err)
 {
-    int n, m = strlen(str);
+    const char *s = NULL;
+    gchar *tmp = NULL;
 
-    if (*gretl_errmsg == '\0' && err > 0 && err < E_MAX) {
-	const char *s = look_up_errmsg(err);
-
-	if (s != NULL) {
-	    strcpy(gretl_errmsg, s);
-	}
+    if (*gretl_errmsg) {
+	s = tmp = g_strdup(gretl_errmsg);
+    } else if (err > 0 && err < E_MAX) {
+	s = look_up_errmsg(err);
+    }
+    if (s == NULL) {
+	g_snprintf(gretl_errmsg, ERRLEN, "%s", str);
+    } else {
+	g_snprintf(gretl_errmsg, ERRLEN, "%s\n%s", s, str);
     }
 
-    n = strlen(gretl_errmsg);
+    g_free(tmp);
+}
 
-    if (n + m + 2 < ERRLEN) {
-	if (n > 0 && gretl_errmsg[n] != '\n') {
-	    strcat(gretl_errmsg, "\n");
-	}
-	strcat(gretl_errmsg, str);
+/**
+ * gretl_errmsg_prepend:
+ * @str: an error message.
+ * @err: the current error state, if any.
+ *
+ * Prepend @str to the current gretl error message, ending with a
+ * newline, if space permits.
+ */
+
+void gretl_errmsg_prepend (const char *str, int err)
+{
+    const char *s = NULL;
+    gchar *tmp = NULL;
+
+    if (*gretl_errmsg) {
+	s = tmp = g_strdup(gretl_errmsg);
+    } else if (err > 0 && err < E_MAX) {
+	s = look_up_errmsg(err);
     }
+    if (s == NULL) {
+	g_snprintf(gretl_errmsg, ERRLEN, "%s", str);
+    } else if (str[strlen(str)-1] != '\n') {
+	g_snprintf(gretl_errmsg, ERRLEN, "%s\n%s", str, s);
+    } else {
+	g_snprintf(gretl_errmsg, ERRLEN, "%s%s", str, s);
+    }
+
+    g_free(tmp);
 }
 
 /**
@@ -408,8 +435,8 @@ void gretl_errmsg_sprintf (const char *fmt, ...)
 	va_end(ap);
     } else if (strstr(gretl_errmsg, "*** error in fun") &&
 	       strstr(fmt, "*** error in fun")) {
-	/* don't print more than one "error in function" 
-	   message, as this gets confusing 
+	/* don't print more than one "error in function"
+	   message, as this gets confusing
 	*/
 	;
     } else {
@@ -430,7 +457,7 @@ void gretl_errmsg_sprintf (const char *fmt, ...)
 		strcat(gretl_errmsg, "\n");
 	    }
 	    strcat(gretl_errmsg, tmp);
-	} 
+	}
     }
 }
 
@@ -474,7 +501,7 @@ char *gretl_strerror (int errnum)
     if (loc == (locale_t) 0) {
 	loc = newlocale(LC_ALL_MASK, "", loc);
     }
-    
+
     if (loc != (locale_t) 0) {
 	uselocale(loc);
 	return strerror_l(errnum, loc);
@@ -490,9 +517,9 @@ char *gretl_strerror (int errnum)
  * gretl_errmsg_set_from_errno:
  * @s: string to prepend to error message, or %NULL.
  *
- * If %gretl_errmsg is currently blank, copy the string 
- * returned by %strerror into the message space; or if the 
- * error message is not blank but sufficient space remains, 
+ * If %gretl_errmsg is currently blank, copy the string
+ * returned by %strerror into the message space; or if the
+ * error message is not blank but sufficient space remains,
  * append the new error info to the message.
  */
 
@@ -530,7 +557,7 @@ int gretl_error_clear (void)
     }
     error_printed = 0;
     errno = 0;
-    
+
     return 0;
 }
 
