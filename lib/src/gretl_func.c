@@ -6832,7 +6832,10 @@ static int load_function_package (const char *fname,
     }
 
     if (err) {
-        fprintf(stderr, "load function package: failed on %s\n", fname);
+	gchar *tmp = g_strdup_printf(_("Error loading %s\n"), fname);
+
+	gretl_errmsg_prepend(tmp, err);
+	g_free(tmp);
     } else if (pkg != NULL && prn != NULL && not_mpi_duplicate()) {
         pprintf(prn, "%s %s, %s (%s)\n", pkg->name, pkg->version,
                 pkg->date, pkg->author);
