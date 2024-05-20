@@ -26,6 +26,8 @@ version 2024b, in progress
   with those passed to "gnuplot"
 - Fix bug: crash in 32-bit gretl for Windows when trying to
   read gdtb data files created on a 64-bit system
+- Function packages: validate gfn files using an XML schema
+  rather than a Document Type Definition
 - GUI, function packages: further extensions to the "ui-maker"
   functionality, plus minor fixes for the function-call dialog
 - GUI: support the --preserve-panel option in the dialog box

@@ -9,11 +9,21 @@ handled but the preferred way of making such tests is by use
 of inbundle(), or if you're unsure about the existence of the
 bundle in question, typeof().
 
+In the included data file mrw.gdt (Mankiw-Romer-Weil) the
+series formerly called "inv" has been renamed as "i_y", to
+avoid collision with the inv() function.
+
+It is now regarded as a syntax error if a command word is
+immediately followed by a non-space character. The primary
+example of disallowed usage is the following sort of thing:
+
+printf"some text"
+
 2024-04-05 version 2024a
 
 ASCII graphics have been removed from a few commands that used
-to show them incidentally. For now the "textplot" command is
-still available, but it may be retired before long.
+to show them incidentally. But for now the "textplot" command is
+still available.
 
 2023-12-05 version 2023c
 
