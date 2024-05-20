@@ -2779,19 +2779,18 @@ wanted.
 \subsection{Restrictions on list arguments}
 
 A parameter calling for a list of series can be inflected in any of
-three ways, via the keys \texttt{no\_singleton}, \texttt{no\_const} and
-\texttt{exclude}.
+three ways, via the following keys.
 
 \begin{itemize}
-\item \texttt{no\_singleton} is a boolean, with a default value of 0,
-  meaning that it's acceptable for a list to have a single member. If
-  you want to ensure that a particular list contains more than one
-  series, give a value of 1 for this key.
-\item \texttt{no\_const} is also a boolean with a default value of 0,
-  meaning that it's acceptable for a list to contain the automatic
-  \texttt{const} series. To prevent inclusion of \texttt{const} give a
-  value of 1 for this key.
-\item \texttt{exclude} requires a string value, the name of a
+\item \texttt{list\_no\_singleton} is a boolean, with a default value
+  of 0, meaning that it's acceptable for a list to have a single
+  member. If you want to ensure that a particular list contains more
+  than one series, give a value of 1 for this key.
+\item \texttt{list\_no\_const} is also a boolean with a default value
+  of 0, meaning that it's acceptable for a list to contain the
+  automatic \texttt{const} series. To prevent inclusion of
+  \texttt{const} give a value of 1 for this key.
+\item \texttt{list\_exclude} requires a string value, the name of a
   parameter of type series. The effect is to ensure that if a given
   series has been selected for that parameter it should not be shown
   as a candidate for inclusion in the list in question.
@@ -2803,8 +2802,12 @@ and a list parameter \texttt{X}, with three conditions placed on
 \texttt{const}, and does not contain the series selected as
 \texttt{y}. Then the following would do the job:
 \begin{code}
-ret.X = _(no_singleton=1, no_const=1, exclude="y")
+ret.X = _(list_no_singleton=1, list_no_const=1, list_exclude="y")
 \end{code}
+
+These three keywords can also be given in a shorter form, omitting the
+\texttt{list\_} prefix, but the more explicit long version is
+recommended for clarity.
 
 \subsection{Real-world examples}
 
@@ -2866,7 +2869,7 @@ point for the full form of the list-restriction mechanism described
 above.  The \texttt{ui-maker} for this package (still assuming the
 return value is called \texttt{ret}) includes
 \begin{code}
-ret.X = _(no_singleton=1, no_const=1, exclude="y")
+ret.X = _(list_no_singleton=1, list_no_const=1, list_exclude="y")
 \end{code}
 
 Now focus on \texttt{n\_train}, the number of observations to be used

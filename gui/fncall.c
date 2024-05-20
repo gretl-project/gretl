@@ -1087,6 +1087,26 @@ static int do_make_list (selector *sr)
     return err;
 }
 
+static gboolean ui_bundle_get_bool (gretl_bundle *b,
+				    const char *key,
+				    gboolean deflt)
+{
+    gboolean ret = deflt;
+
+    if (gretl_bundle_has_key(b, key)) {
+	ret = gretl_bundle_get_bool(b, "key", deflt);
+    } else {
+	gchar *tmp = g_strdup_printf("list_%s", key);
+
+	if (gretl_bundle_has_key(b, tmp)) {
+	    ret = gretl_bundle_get_bool(b, tmp, deflt);
+	}
+	g_free(tmp);
+    }
+
+    return ret;
+}
+
 gchar **get_listdef_exclude (gpointer p, int *listmin)
 {
     gchar **S = NULL;
@@ -1106,8 +1126,11 @@ gchar **get_listdef_exclude (gpointer p, int *listmin)
 	}
 	if (cinfo != NULL && ui != NULL) {
 	    s = gretl_bundle_get_string(ui, "exclude", NULL);
-	    no_const = gretl_bundle_get_bool(ui, "no_const", 0);
-	    if (gretl_bundle_get_bool(ui, "no_singleton", 0)) {
+	    if (s == NULL) {
+		s = gretl_bundle_get_string(ui, "list_exclude", NULL);
+	    }
+	    no_const = ui_bundle_get_bool(ui, "no_const", 0);
+	    if (ui_bundle_get_bool(ui, "no_singleton", 0)) {
 		*listmin = 2;
 	    }
 	}
