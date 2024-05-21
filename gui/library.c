@@ -10361,6 +10361,9 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
             err = script_open_session_file(cmd);
         } else {
             err = gretl_cmd_exec(s, dset);
+	    if (!err && cmd->ci == APPEND) {
+		set_dataset_is_changed(dataset, 1);
+	    }
         }
         break;
 

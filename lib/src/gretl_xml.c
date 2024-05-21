@@ -3997,8 +3997,7 @@ static int real_read_gdt (const char *fname, const char *srcname,
 	goto bailout;
     }
 
-    err = gretl_xml_open_doc_root(fname, "gretldata",
-				  &doc, &cur);
+    err = gretl_xml_open_doc_root(fname, "gretldata", &doc, &cur);
     if (err) {
 	goto bailout;
     }

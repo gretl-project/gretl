@@ -1,3 +1,8 @@
+version 2024c, in progress
+- Append data via GUI: support the fixed-sample option
+- Fix bug: append via console not updating series list in the
+  main gretl window
+
 2024-05-21 version 2024b
 - "gridplot" command: add a --title option
 - "clear" command: add an --all option

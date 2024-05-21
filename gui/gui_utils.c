@@ -466,6 +466,9 @@ static void real_register_data (int flags, const char *user_fname,
 		data_status &= ~SESSION_DATA;
 	    }
 	}
+	if (flags & DATA_APPENDED) {
+	    mark_dataset_as_modified();
+	}
     } else {
 	/* we modified the current dataset somehow */
 	data_status |= GUI_DATA;
@@ -634,7 +637,8 @@ static int datafile_missing (const char *fname)
 
 /* below: get data of a sort that requires an import plugin */
 
-int get_imported_data (char *fname, int ftype, int append)
+int get_imported_data (char *fname, int ftype, int append,
+		       gretlopt aopt)
 {
     PRN *prn = NULL;
     int list[4] = {3, 0, 0, 0};
@@ -643,6 +647,7 @@ int get_imported_data (char *fname, int ftype, int append)
 			gretlopt, PRN *, GtkWidget *);
     int (*misc_importer) (const char *, DATASET *,
 			  gretlopt, PRN *);
+    gretlopt opt = OPT_G;
     int err = 0;
 
     if (datafile_missing(fname)) {
@@ -694,14 +699,18 @@ int get_imported_data (char *fname, int ftype, int append)
 	goto bailout;
     }
 
+    if (append) {
+	opt |= aopt;
+    }
+
     /* call the actual importer function */
     if (SPREADSHEET_IMPORT(ftype)) {
 	GtkWidget *parent = (mdata == NULL)? NULL : mdata->main;
 
 	err = (*ss_importer)(fname, plist, NULL, dataset,
-			     OPT_G, prn, parent);
+			     opt, prn, parent);
     } else {
-	err = (*misc_importer)(fname, dataset, OPT_G, prn);
+	err = (*misc_importer)(fname, dataset, opt, prn);
     }
 
     if (err == -1) {
@@ -744,7 +753,8 @@ int get_imported_data (char *fname, int ftype, int append)
    plugin is not required
 */
 
-static int get_csv_data (char *fname, int ftype, int append)
+static int get_csv_data (char *fname, int ftype, int append,
+			 gretlopt aopt)
 {
     windata_t *vwin;
     PRN *prn;
@@ -756,7 +766,6 @@ static int get_csv_data (char *fname, int ftype, int append)
 	return E_FOPEN;
     }
 
-#if 1
     if (ftype == GRETL_CSV) {
         int resp = csv_open_dialog(fname);
 
@@ -767,27 +776,13 @@ static int get_csv_data (char *fname, int ftype, int append)
 	    opt = OPT_A;
 	}
     }
-#else
-    if (ftype == GRETL_CSV) {
-	const char *opts[] = {
-	    N_("Try to interpret the first column as containing\n"
-	       "observation information (for example, dates) if\n"
-	       "the column heading looks suitable."),
-	    N_("Treat the first column as an ordinary data series\n"
-	       "regardless of the column heading.")
-	};
-	int resp = radio_dialog(NULL, NULL, opts, 2, 0,
-				0, NULL);
-	if (resp == GRETL_CANCEL) {
-	    return 0;
-	} else if (resp == 1) {
-	    opt = OPT_A;
-	}
-    }
-#endif
 
     if (bufopen(&prn)) {
 	return 1;
+    }
+
+    if (append) {
+	opt |= aopt;
     }
 
     if (ftype == GRETL_OCTAVE) {
@@ -815,7 +810,7 @@ static int get_csv_data (char *fname, int ftype, int append)
 }
 
 static int get_native_data (char *fname, int ftype, int append,
-			    windata_t *fwin)
+			    gretlopt opt, windata_t *fwin)
 {
     PRN *prn = NULL;
     char *buf = NULL;
@@ -826,9 +821,9 @@ static int get_native_data (char *fname, int ftype, int append,
     }
 
     if (ftype == GRETL_XML_DATA) {
-	err = gretl_read_gdt(fname, dataset, OPT_B, prn);
+	err = gretl_read_gdt(fname, dataset, opt | OPT_B, prn);
     } else {
-	err = gretl_get_data(fname, dataset, OPT_NONE, prn);
+	err = gretl_get_data(fname, dataset, opt, prn);
     }
 
     buf = gretl_print_steal_buffer(prn);
@@ -866,15 +861,22 @@ static int get_native_data (char *fname, int ftype, int append,
     return err;
 }
 
-static int maybe_use_join (void)
+enum {
+    SIMPLE_APPEND,
+    FIXED_APPEND,
+    USE_JOIN
+};
+
+static int select_append_type (void)
 {
     const char *opts[] = {
 	N_("simple append"),
+	N_("append with fixed sample range"),
 	N_("\"join\" (advanced)")
     };
 
     return radio_dialog(_("gretl: append data"), NULL,
-		        opts, 2, 0, 0, NULL);
+		        opts, 3, 0, 0, NULL);
 }
 
 /* The gretl.c variable @tryfile will contain the name
@@ -887,7 +889,8 @@ gboolean do_open_data (windata_t *fwin, int code)
     char *fname = get_tryfile();
     char tmp[MAXLEN];
     GretlFileType ftype;
-    int use_join = 0;
+    int append_type = SIMPLE_APPEND;
+    gretlopt aopt = OPT_NONE;
     int err = 0;
 
     if (g_path_is_absolute(fname)) {
@@ -906,21 +909,23 @@ gboolean do_open_data (windata_t *fwin, int code)
 
     if (append && (ftype == GRETL_CSV || ftype == GRETL_XML_DATA ||
 		   ftype == GRETL_BINARY_DATA)) {
-	use_join = maybe_use_join();
-	if (use_join < 0) {
+	append_type = select_append_type();
+	if (append_type < 0) {
 	    /* canceled */
 	    return 0;
+	} else if (append_type == FIXED_APPEND) {
+	    aopt = OPT_X;
 	}
     }
 
-    if (use_join) {
+    if (append_type == USE_JOIN) {
 	err = gui_join_data(tmp, ftype);
     } else if (ftype == GRETL_CSV || ftype == GRETL_OCTAVE) {
-	err = get_csv_data(tmp, ftype, append);
+	err = get_csv_data(tmp, ftype, append, aopt);
     } else if (SPREADSHEET_IMPORT(ftype) || OTHER_IMPORT(ftype)) {
-	err = get_imported_data(tmp, ftype, append);
+	err = get_imported_data(tmp, ftype, append, aopt);
     } else {
-	err = get_native_data(tmp, ftype, append, fwin);
+	err = get_native_data(tmp, ftype, append, aopt, fwin);
     }
 
     return !err;
