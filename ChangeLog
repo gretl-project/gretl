@@ -1,4 +1,4 @@
-version 2024b, in progress
+2024-05-21 version 2024b
 - "gridplot" command: add a --title option
 - "clear" command: add an --all option
 - instrings() function: add optional boolean argument to get
@@ -42,6 +42,7 @@ version 2024b, in progress
   calls
 - 64-bit Windows build: increase stack size to 8 MiB (as per
   Linux and macOS)
+- regls addon: bug fixes and improved documentation
 
 2024-04-05 version 2024a
 - gretl "addons": integrate with releases on all platforms
