@@ -31,7 +31,7 @@
 #define NTESTS 6
 #define NPTESTS 3
 #define NPVAL 8
-#define NDISTS 8
+#define NDISTS 9
 #define NGRAPHS 8
 #define NRAND 9
 #define NTESTENTRY 7
