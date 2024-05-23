@@ -232,6 +232,9 @@ int list_summary (const int *list, int wgtvar,
 		  const DATASET *dset, 
 		  gretlopt opt, PRN *prn);
 
+int summary_statistics_by (const int *list, DATASET *dset,
+			   gretlopt opt, PRN *prn);
+
 void print_summary (const Summary *summ,
 		    const DATASET *dset,
 		    PRN *prn); 

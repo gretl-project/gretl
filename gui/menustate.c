@@ -81,7 +81,7 @@ static void view_items_state (gboolean s)
     const char *viewpaths[] = {
         "GraphVars",
         "MultiPlots",
-        "summary",
+        "Summary",
         "corr",
         "xtab",
         "pca",
@@ -788,7 +788,7 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
     int ci = 0;
 
     if (i == MNU_STATS) {
-        ci = SUMMARY;
+        ci = POP_SUMMARY;
     } else if (i == MNU_CORR) {
         ci = CORR;
     }

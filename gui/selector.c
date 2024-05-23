@@ -223,6 +223,8 @@ enum {
                          c == ALAGSEL || \
                          c == WLS || \
                          c == GR_BOX || \
+			 c == SUMMARY || \
+			 c == FSUMMARY || \
                          c == XTAB)
 
 #define USE_VECXLIST(c) (c == VAR || c == VLAGSEL || c == VECM || \
@@ -2682,7 +2684,7 @@ static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event,
         } else {
             if (NONPARAM_CODE(sr->ci)) {
                 set_extra_var_callback(NULL, sr);
-            } else if (sr->ci == GR_FBOX) {
+            } else if (sr->ci == GR_FBOX || sr->ci == FSUMMARY) {
                 set_third_var_callback(NULL, sr);
             } else {
                 add_to_rvars1_callback(NULL, sr);
@@ -4016,7 +4018,7 @@ static void parse_third_var_slot (selector *sr)
             return;
         } else if (sr->ci == GR_3D) {
             warnbox(_("You must select a Z-axis variable"));
-        } else if (sr->ci == GR_DUMMY || sr->ci == GR_FBOX) {
+        } else if (sr->ci == GR_DUMMY || sr->ci == GR_FBOX || sr->ci == FSUMMARY) {
             warnbox(_("You must select a factor variable"));
         } else {
             warnbox(_("You must select a control variable"));
@@ -4154,7 +4156,7 @@ static void compose_cmdlist (selector *sr)
         return;
     }
 
-    if (sr->ci == GR_FBOX || THREE_VARS_CODE(sr->ci)) {
+    if (sr->ci == GR_FBOX || sr->ci == FSUMMARY || THREE_VARS_CODE(sr->ci)) {
         parse_third_var_slot(sr);
         return;
     }
@@ -4796,6 +4798,9 @@ static void build_x_axis_section (selector *sr, int v)
     } else if (sr->ci == GR_FBOX) {
         sr->depvar = entry_with_label_and_chooser(sr, _("Variable to plot"), 0,
                                                   set_dependent_var_callback);
+    } else if (sr->ci == FSUMMARY) {
+        sr->depvar = entry_with_label_and_chooser(sr, _("Primary variable"), 0,
+                                                  set_dependent_var_callback);
     } else {
         sr->depvar = entry_with_label_and_chooser(sr, _("X-axis variable"), 0,
                                                   set_dependent_var_callback);
@@ -5003,7 +5008,7 @@ static void extra_plotvar_box (selector *sr)
 
     if (sr->ci == GR_3D) {
         label = N_("Z-axis variable");
-    } else if (sr->ci == GR_DUMMY || sr->ci == GR_FBOX) {
+    } else if (sr->ci == GR_DUMMY || sr->ci == GR_FBOX || sr->ci == FSUMMARY) {
         label = _("Factor (discrete)");
     } else if (sr->ci == GR_XYZ) {
         label = N_("Control variable");
@@ -6354,6 +6359,9 @@ static void build_selector_switches (selector *sr)
     } else if (sr->ci == MIDASREG) {
         tmp = gtk_check_button_new_with_label(_("Prefer NLS via Levenberg-Marquardt"));
         pack_switch(tmp, sr, (model_opt & OPT_L), FALSE, OPT_L, 0);
+    } else if (sr->ci == SUMMARY || sr->ci == FSUMMARY) {
+        tmp = gtk_check_button_new_with_label(_("Show all statistics"));
+        pack_switch(tmp, sr, FALSE, TRUE, OPT_S, 0);
     }
 }
 
@@ -7522,6 +7530,8 @@ static void selection_dialog_add_top_label (selector *sr)
             s = N_("factorized plot");
         else if (ci == GR_FBOX)
             s = N_("factorized boxplot");
+        else if (ci == FSUMMARY)
+            s = N_("factorized statistics");
         else if (ci == GR_XYZ)
             s = N_("scatterplot with control");
         else if (ci == ANOVA)
@@ -7799,8 +7809,8 @@ selector *selection_dialog (int ci, const char *title,
         yvar = build_depvar_section(sr, preselect);
     } else if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY ||
                ci == SCATTERS || ci == GR_3D || ci == GR_XYZ ||
-               ci == GR_FBOX) {
-        /* graphs: top right -> x-axis variable or equivalent */
+               ci == GR_FBOX || ci == FSUMMARY) {
+        /* top right -> x-axis variable or equivalent */
         build_x_axis_section(sr, preselect);
     } else if (FNPKG_CODE(ci)) {
         primary_rhs_varlist(sr);
@@ -7817,8 +7827,8 @@ selector *selection_dialog (int ci, const char *title,
 
     saverow = sr->row;
 
-    if (ci == GR_FBOX || THREE_VARS_CODE(ci)) {
-        /* choose extra var for plot */
+    if (ci == GR_FBOX || ci == FSUMMARY || THREE_VARS_CODE(ci)) {
+        /* choose extra var for plot or factorized stats */
         extra_plotvar_box(sr);
     } else if (AUX_LAST(ci)) {
         secondary_rhs_varlist(sr);
@@ -8378,7 +8388,7 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     /* pack the whole central section into the dialog's vbox */
     gtk_box_pack_start(GTK_BOX(sr->vbox), sr->table, TRUE, TRUE, 0);
 
-    /* unhide lags check box? */
+    /* "unhide lags" check box? */
     if ((sr->ci == DEFINE_LIST || sr->ci == EXPORT || SAVE_DATA_ACTION(sr->ci))
         && lags_hidden(sr)) {
         unhide_lags_switch(sr);

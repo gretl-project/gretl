@@ -289,7 +289,7 @@ void do_boxplot_var (int varnum, gretlopt opt);
 
 int do_regular_boxplot (selector *sr);
 
-int do_factorized_boxplot (selector *sr);
+int do_factorized_command (selector *sr);
 
 void ts_plot_callback (void);
 

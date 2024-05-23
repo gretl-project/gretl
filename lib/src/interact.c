@@ -2499,123 +2499,6 @@ static int do_end_restrict (ExecState *s, DATASET *dset)
     return err;
 }
 
-/* Given the name of a discrete variable, perform a command for each
-   value of the discrete variable. Note that at present the only
-   command supported in this way is SUMMARY.
-*/
-
-static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
-{
-    const char *byname = get_optval_string(cmd->ci, OPT_B);
-    int byvar;
-    series_table *st = NULL;
-    gretl_matrix *xvals = NULL;
-    const double *x;
-    int *list = cmd->list;
-    int i, nvals = 0;
-    int single, err = 0;
-
-    if (dset == NULL || byname == NULL) {
-        return E_DATA;
-    }
-
-    /* FIXME accept "unit" and "time"/"period" in place of actual
-       variables for panel data? */
-
-    byvar = current_series_index(dset, byname);
-    if (byvar < 0) {
-        return E_UNKVAR;
-    } else if (!accept_as_discrete(dset, byvar, 0)) {
-        gretl_errmsg_sprintf(_("The variable '%s' is not discrete"), byname);
-        return E_DATA;
-    }
-
-    x = (const double *) dset->Z[byvar];
-
-    if (list == NULL) {
-        /* compose full series list, but exclude the "by" variable */
-        int pos;
-
-        list = full_var_list(dset, NULL);
-        if (list == NULL) {
-            return E_ALLOC;
-        }
-        pos = in_gretl_list(list, byvar);
-        if (pos > 0) {
-            gretl_list_delete_at_pos(list, pos);
-        }
-        if (list[0] == 0) {
-            free(list);
-            return E_DATA;
-        }
-    }
-
-    single = (list[0] == 1);
-
-    xvals = gretl_matrix_values(x + dset->t1, dset->t2 - dset->t1 + 1,
-                                OPT_S, &err);
-
-    if (!err) {
-        nvals = gretl_vector_get_length(xvals);
-        if (nvals == 0) {
-            err = E_DATA;
-        } else {
-            st = series_get_string_table(dset, byvar);
-        }
-    }
-
-    if (!err && single) {
-        pputc(prn, '\n');
-        pprintf(prn, _("Summary statistics for %s, by value of %s"),
-                dset->varname[list[1]], byname);
-        pputc(prn, '\n');
-    }
-
-    for (i=0; i<nvals && !err; i++) {
-        Summary *summ = NULL;
-        char genline[64];
-        double xi = gretl_vector_get(xvals, i);
-        double *rv = NULL;
-
-        gretl_push_c_numeric_locale();
-        sprintf(genline, "%s == %g", byname, xi);
-        gretl_pop_c_numeric_locale();
-        rv = generate_series(genline, dset, prn, &err);
-
-        if (!err) {
-            summ = get_summary_restricted(list, dset, rv,
-                                          cmd->opt, prn, &err);
-        }
-
-        if (!err) {
-            if (i == 0) {
-                pputc(prn, '\n');
-            }
-            if (single) {
-                bufspace(2, prn);
-            }
-            if (st != NULL) {
-                const char *s = series_table_get_string(st, xi);
-
-                pprintf(prn, "%s = %s (n = %d):\n", byname, s, summ->n);
-            } else {
-                pprintf(prn, "%s = %g (n = %d):\n", byname, xi, summ->n);
-            }
-            print_summary(summ, dset, prn);
-            free_summary(summ);
-        }
-
-        free(rv);
-    }
-
-    gretl_matrix_free(xvals);
-    if (list != cmd->list) {
-        free(list);
-    }
-
-    return err;
-}
-
 static void exec_state_prep (ExecState *s)
 {
     s->flags &= ~CALLBACK_EXEC;
@@ -3766,7 +3649,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
             break;
         }
         if (cmd->opt & OPT_B) {
-            err = do_command_by(cmd, dset, prn);
+            err = summary_statistics_by(cmd->list, dset, cmd->opt, prn);
         } else if (cmd->opt & OPT_X) {
             err = matrix_command_driver(cmd->ci, cmd->list, cmd->param,
                                         dset, cmd->opt, prn);

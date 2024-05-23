@@ -669,11 +669,13 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
         flagstr = print_flags(opt, ci);
     }
 
-    if (ci == ALL_SUMMARY || ci == SUMMARY) {
-        /* all series or listed series */
+    if (ci == ALL_SUMMARY || ci == POP_SUMMARY) {
+        /* doing all series or listed series */
         int resp = get_summary_stats_option(&opt, parent);
 
-        if (resp == GRETL_CANCEL) return;
+        if (resp == GRETL_CANCEL) {
+	    return;
+	}
     }
 
     if (ci == ALL_CORR) {
@@ -726,12 +728,14 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
             vsize = 340;
             break;
         case SUMMARY:
+	case POP_SUMMARY:
             if (opt & OPT_S) {
                 lib_command_sprintf("summary%s --simple", liststr);
             } else {
                 lib_command_sprintf("summary%s", liststr);
             }
             title = g_strdup_printf("gretl: %s", _("summary statistics"));
+	    ci = SUMMARY;
             break;
         default:
             break;
@@ -7728,25 +7732,53 @@ int do_regular_boxplot (selector *sr)
     return 0;
 }
 
-int do_factorized_boxplot (selector *sr)
+int do_factorized_command (selector *sr)
 {
     const char *buf = selector_list(sr);
+    gretlopt opt = selector_get_opts(sr);
+    int ci = selector_code(sr);
+    char **S = NULL;
+    int ns = 0;
     int err = 0;
 
     if (buf == NULL) {
         return 1;
     }
 
-    lib_command_sprintf("boxplot %s --factorized", buf);
+    if (ci == GR_FBOX) {
+	lib_command_sprintf("boxplot %s --factorized", buf);
+    } else if (ci == FSUMMARY) {
+	S = gretl_string_split(buf, &ns, NULL);
+	if (ns == 2) {
+	    if (opt & OPT_S) {
+		lib_command_sprintf("summary %s --simple --by=%s", S[0], S[1]);
+	    } else {
+		lib_command_sprintf("summary %s --by=%s", S[0], S[1]);
+	    }
+	} else {
+	    return 1;
+	}
+    } else {
+	return 1;
+    }
 
     if (parse_lib_command()) {
         return 1;
     }
 
-    if (libcmd.list[0] != 2) {
-	err = 1;
-    } else if (!accept_as_discrete(dataset, libcmd.list[2], 0)) {
-	err = 1;
+    if (ci == GR_FBOX) {
+	if (libcmd.list[0] != 2) {
+	    err = 1;
+	} else if (!accept_as_discrete(dataset, libcmd.list[2], 0)) {
+	    err = 1;
+	}
+    } else {
+	/* factorized stats */
+	int v = current_series_index(dataset, S[1]);
+
+	if (!accept_as_discrete(dataset, v, 0)) {
+	    err = 1;
+	}
     }
     if (err) {
         errbox(_("You must supply two variables, the second of "
@@ -7754,9 +7786,28 @@ int do_factorized_boxplot (selector *sr)
         return err;
     }
 
-    err = boxplots(libcmd.list, NULL, dataset, OPT_Z);
-    gui_graph_handler(err);
+    if (ci == GR_FBOX) {
+	err = boxplots(libcmd.list, NULL, dataset, OPT_Z);
+	gui_graph_handler(err);
+    } else {
+	gchar *title = g_strdup_printf("gretl: %s", _("summary statistics"));
+	PRN *prn = NULL;
 
+	bufopen(&prn);
+	set_optval_string(SUMMARY, OPT_B, S[1]);
+	err = summary_statistics_by(libcmd.list, dataset, opt | OPT_B, prn);
+        if (!err) {
+	    view_buffer(prn, 78, 380, title, PRINT, NULL);
+        } else {
+	    gretl_print_destroy(prn);
+	    gui_errmsg(err);
+	}
+	g_free(title);
+    }
+
+    if (S != NULL) {
+	strings_array_free(S, ns);
+    }
     if (!err) {
         record_lib_command();
     }

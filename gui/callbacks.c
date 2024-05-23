@@ -460,6 +460,8 @@ static int selector_callback_code (const gchar *s)
 	return LOESS;
     if (!strcmp(s, "nadarwat"))
 	return NADARWAT;
+    if (!strcmp(s, "Fsummary"))
+	return FSUMMARY;
 
     return 0;
 }
@@ -483,7 +485,7 @@ void selector_callback (GtkAction *action, gpointer data)
         selection_dialog(ci, _("gretl: ARIMA lag selection"), NULL, do_model);
     } else if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY ||
 	       ci == SCATTERS || ci == GR_3D || ci == GR_XYZ ||
-	       ci == GR_FBOX) {
+	       ci == GR_FBOX || ci == FSUMMARY) {
 	int (*selfunc)() = NULL;
 
 	switch (ci) {
@@ -504,12 +506,17 @@ void selector_callback (GtkAction *action, gpointer data)
 	    selfunc = do_multi_plots;
 	    break;
 	case GR_FBOX:
-	    selfunc = do_factorized_boxplot;
+	case FSUMMARY:
+	    selfunc = do_factorized_command;
 	    break;
 	default:
 	    return;
 	}
-	selection_dialog(ci, _("gretl: define graph"), NULL, selfunc);
+	if (ci == FSUMMARY) {
+	    selection_dialog(ci, _("gretl: factorized statistics"), NULL, selfunc);
+	} else {
+	    selection_dialog(ci, _("gretl: define graph"), NULL, selfunc);
+	}
     } else if (ci == ADD || ci == OMIT) {
 	simple_selection_for_viewer(ci, _("gretl: model tests"),
 				    do_add_omit, vwin);
@@ -685,7 +692,7 @@ void menu_boxplot_callback (int varnum)
     } else if (ret == 2) {
 	selector_set_varnum(varnum);
 	selection_dialog(GR_FBOX, _("gretl: define graph"),
-			 NULL, do_factorized_boxplot);
+			 NULL, do_factorized_command);
     }
 }
 

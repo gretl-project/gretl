@@ -147,7 +147,10 @@
 	<menuitem action="MultiTS"/>
       </menu>
       <separator/>
-      <menuitem action="summary"/>
+      <menu action="Summary">
+	<menuitem action="summary"/>
+	<menuitem action="Fsummary"/>
+      </menu>
       <menuitem action="corr"/>
       <menuitem action="xtab"/>
       <menuitem action="pca"/>

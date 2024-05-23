@@ -6115,6 +6115,119 @@ int list_summary (const int *list, int wgtvar,
     return err;
 }
 
+int summary_statistics_by (const int *list, DATASET *dset,
+			   gretlopt opt, PRN *prn)
+{
+    const char *byname = get_optval_string(SUMMARY, OPT_B);
+    int byvar;
+    series_table *st = NULL;
+    gretl_matrix *xvals = NULL;
+    int *mylist = NULL;
+    const double *x;
+    int i, nvals = 0;
+    int single, err = 0;
+
+    if (dset == NULL || byname == NULL) {
+        return E_DATA;
+    }
+
+    /* FIXME accept "unit" and "time"/"period" in place of actual
+       variables for panel data? */
+
+    byvar = current_series_index(dset, byname);
+    if (byvar < 0) {
+        return E_UNKVAR;
+    } else if (!accept_as_discrete(dset, byvar, 0)) {
+        gretl_errmsg_sprintf(_("The variable '%s' is not discrete"), byname);
+        return E_DATA;
+    }
+
+    x = (const double *) dset->Z[byvar];
+
+    if (list == NULL) {
+        /* compose full series list, minus the "by" variable */
+        int pos;
+
+        mylist = full_var_list(dset, NULL);
+        if (mylist == NULL) {
+            return E_ALLOC;
+        }
+        pos = in_gretl_list(mylist, byvar);
+        if (pos > 0) {
+            gretl_list_delete_at_pos(mylist, pos);
+        }
+        if (mylist[0] == 0) {
+            free(mylist);
+            return E_DATA;
+        }
+	list = mylist;
+    }
+
+    single = (list[0] == 1);
+
+    xvals = gretl_matrix_values(x + dset->t1, dset->t2 - dset->t1 + 1,
+                                OPT_S, &err);
+
+    if (!err) {
+        nvals = gretl_vector_get_length(xvals);
+        if (nvals == 0) {
+            err = E_DATA;
+        } else {
+            st = series_get_string_table(dset, byvar);
+        }
+    }
+
+    if (!err && single) {
+        pputc(prn, '\n');
+        pprintf(prn, _("Summary statistics for %s, by value of %s"),
+                dset->varname[list[1]], byname);
+        pputc(prn, '\n');
+    }
+
+    for (i=0; i<nvals && !err; i++) {
+        Summary *summ = NULL;
+        char genline[64];
+        double xi = gretl_vector_get(xvals, i);
+        double *rv = NULL;
+
+        gretl_push_c_numeric_locale();
+        sprintf(genline, "%s == %g", byname, xi);
+        gretl_pop_c_numeric_locale();
+        rv = generate_series(genline, dset, prn, &err);
+
+        if (!err) {
+            summ = get_summary_restricted(list, dset, rv,
+                                          opt, prn, &err);
+        }
+        if (!err) {
+            if (i == 0) {
+                pputc(prn, '\n');
+            }
+            if (single) {
+                bufspace(2, prn);
+            }
+            if (st != NULL) {
+                const char *s = series_table_get_string(st, xi);
+
+                pprintf(prn, "%s = %s (n = %d):\n", byname, s, summ->n);
+            } else {
+                pprintf(prn, "%s = %g (n = %d):\n", byname, xi, summ->n);
+            }
+            print_summary(summ, dset, prn);
+            free_summary(summ);
+        }
+
+        free(rv);
+    }
+
+    gretl_matrix_free(xvals);
+    if (mylist != NULL) {
+        free(mylist);
+    }
+
+    return err;
+}
+
 /**
  * vmatrix_new:
  *
