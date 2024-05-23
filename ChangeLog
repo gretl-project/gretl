@@ -1,8 +1,12 @@
 version 2024c, in progress
-- Append data via GUI: support the fixed-sample option
+- Appending data via the GUI: support the fixed-sample option
 - Fix bug: append via console not updating series list in the
   main gretl window
-- GUI: support the --by option for the "summary" command
+- GUI: support the --by option for the "summary" command, when
+  called via the main-window "View" menu
+- GUI: fix the "Numerical summary" option in a window showing
+  a factorized boxplot (was broken when the factor variable was
+  string-valued)
 
 2024-05-21 version 2024b
 - "gridplot" command: add a --title option
