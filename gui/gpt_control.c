@@ -4455,7 +4455,7 @@ static void boxplot_show_summary (GPT_SPEC *spec)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	view_buffer(prn, 78, 240, _("gretl: boxplot data"), PRINT, NULL);
+	view_buffer(prn, 84, 240, _("gretl: boxplot data"), PRINT, NULL);
     }
 }
 

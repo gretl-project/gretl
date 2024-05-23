@@ -57,6 +57,7 @@ typedef struct {
     double limit;
     double *x;
     gretl_matrix *dvals;
+    char **strvals;
     char xlabel[VNAMELEN];
     char ylabel[VNAMELEN];
     const char *literal;
@@ -203,17 +204,17 @@ static void six_numbers (BOXPLOT *p, int do_mean, PRN *prn)
 
     if (do_mean) {
         if (bpna(p->mean)) {
-            pprintf(prn, "%9s", "NA");
+            pprintf(prn, "%11s", "NA");
         } else {
-            pprintf(prn, "%#9.5g", p->mean);
+            pprintf(prn, "%#11.5g", p->mean);
         }
     }
 
     for (i=0; i<5; i++) {
         if (bpna(vals[i])) {
-            pprintf(prn, "%9s", "NA");
+            pprintf(prn, "%11s", "NA");
         } else {
-            pprintf(prn, "%#9.5g", vals[i]);
+            pprintf(prn, "%#11.5g", vals[i]);
         }
     }
 
@@ -242,7 +243,9 @@ static void box_stats_leader (PLOTGROUP *grp, int i, int offset,
     if (factorized(grp)) {
         char numstr[32] = "";
 
-        if (grp->dvals != NULL) {
+	if (grp->strvals != NULL) {
+	    snprintf(numstr, 32, "%s", grp->strvals[i]);
+	} else if (grp->dvals != NULL) {
             sprintf(numstr, "%g", gretl_vector_get(grp->dvals, i));
         } else if (grp->pan_min > 0) {
             sprintf(numstr, "%d", grp->pan_min + i);
@@ -294,13 +297,31 @@ static int get_format_offset (PLOTGROUP *grp)
     return L + 2;
 }
 
+static int get_factorized_offset (PLOTGROUP *grp)
+{
+    int base = strlen(grp->xlabel);
+
+    if (grp->strvals != NULL) {
+	int i, len;
+
+	for (i=0; i<grp->nplots; i++) {
+	    len = strlen(grp->strvals[i]);
+	    if (len > base) {
+		base = len;
+	    }
+	}
+    }
+
+    return base + 2;
+}
+
 static int boxplot_print_stats (PLOTGROUP *grp, PRN *prn)
 {
     int do_mean = 0;
     int offset, pad, i;
 
     if (factorized(grp)) {
-        offset = strlen(grp->xlabel) + 2;
+	offset = get_factorized_offset(grp);
     } else {
         offset = get_format_offset(grp);
     }
@@ -310,7 +331,10 @@ static int boxplot_print_stats (PLOTGROUP *grp, PRN *prn)
                                  "interval for median"));
         pad = offset + 8;
     } else {
-        if (*grp->ylabel != '\0') {
+	if (*grp->ylabel != '\0' && *grp->xlabel != '\0') {
+	    pprintf(prn, _("Numerical summary for %s by %s"), grp->ylabel, grp->xlabel);
+	    pputs(prn, "\n\n");
+        } else if (*grp->ylabel != '\0') {
             pprintf(prn, _("Numerical summary for %s"), grp->ylabel);
             pputs(prn, "\n\n");
         } else {
@@ -337,10 +361,10 @@ static int boxplot_print_stats (PLOTGROUP *grp, PRN *prn)
         }
     } else {
         if (do_mean) {
-            pprintf(prn, "%*s%9s%9s%9s%9s%9s\n", pad, _("mean"),
+            pprintf(prn, "%*s%11s%11s%11s%11s%11s\n", pad, _("mean"),
                     "min", "Q1", _("median"), "Q3", "max");
         } else {
-            pprintf(prn, "%*s%10s%10s%10s%10s\n", pad,
+            pprintf(prn, "%*s%11s%11s%11s%11s\n", pad,
                     "min", "Q1", _("median"), "Q3", "max");
         }
         for (i=0; i<grp->nplots; i++) {
@@ -418,6 +442,10 @@ static void plotgroup_destroy (PLOTGROUP *grp)
     free(grp->plots);
     gretl_matrix_free(grp->dvals);
 
+    if (grp->strvals != NULL) {
+	strings_array_free(grp->strvals, grp->nplots);
+    }
+
     free(grp);
 }
 
@@ -476,6 +504,7 @@ static PLOTGROUP *plotgroup_new (const int *list,
     grp->plots = NULL;
     grp->x = NULL;
     grp->dvals = NULL;
+    grp->strvals = NULL;
     grp->title = NULL;
 
     grp->literal = literal;
@@ -1102,12 +1131,45 @@ int boxplots (const int *list, const char *literal,
     return err;
 }
 
-/* parse "factor" values out of the xtics line in a gretl
-   boxplot file, e.g. ("0" 1, "1" 2, "4", 3) */
-
-static int get_vals_from_tics (PLOTGROUP *grp, const char *s)
+static int get_strvals_from_tics (PLOTGROUP *grp, const char *s)
 {
+    const char *p;
+    int i, len;
+
+    grp->strvals = strings_array_new(grp->nplots);
+    if (grp->strvals == NULL) {
+        return E_ALLOC;
+    }
+
+    for (i=0; i<grp->nplots; i++) {
+        s = strchr(s, '"');
+	s++; /* skip the double quote */
+	p = s + strcspn(s, "\"");
+	len = p - s;
+	grp->strvals[i] = gretl_strndup(s, len);
+	s = p + 1;
+    }
+
+    return 0;
+}
+
+/* Try parsing numeric factor values out of the xtics line in a gretl
+   boxplot file, such as
+
+   set xtics ("0" 1, "1" 2, "4", 3)
+
+   We're looking for numeric values in quotes, but we should be prepared
+   to find string values instead (in case the factor variable happens to
+   be string-valued).
+*/
+
+static int get_vals_from_tics (PLOTGROUP *grp, const char *s,
+			       int *numvals)
+{
+    const char *p;
+    char *tmp;
     double x;
+    int len;
     int i, err = 0;
 
     grp->dvals = gretl_column_vector_alloc(grp->nplots);
@@ -1115,21 +1177,33 @@ static int get_vals_from_tics (PLOTGROUP *grp, const char *s)
         return E_ALLOC;
     }
 
-    for (i=0; i<grp->nplots && !err; i++) {
+    for (i=0; i<grp->nplots; i++) {
         s = strchr(s, '"');
         if (s == NULL) {
+	    gretl_errmsg_set("Couldn't find factor values");
             err = E_DATA;
-        } else if (sscanf(s+1, "%lf", &x) != 1) {
-            err = E_DATA;
-        } else {
-            gretl_vector_set(grp->dvals, i, x);
-            s++; /* skip the current '"' */
-            s += strcspn(s, "\""); /* skip to closing */
-            s++;
-        }
+	    break;
+	} else {
+	    s++; /* skip the double quote */
+	    p = s + strcspn(s, "\"");
+	    len = p - s;
+	    if (len == 0) {
+		err = E_DATA;
+		break;
+	    } else {
+		tmp = gretl_strndup(s, len);
+		if (numeric_string(tmp)) {
+		    sscanf(s, "%lf", &x);
+		    gretl_vector_set(grp->dvals, i, x);
+		    *numvals += 1;
+		}
+		free(tmp);
+	    }
+	    s = p + 1;
+	}
     }
 
-    if (err) {
+    if (err || *numvals < grp->nplots) {
         gretl_matrix_free(grp->dvals);
         grp->dvals = NULL;
     }
@@ -1381,6 +1455,7 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
     if (!err) {
         /* second pass: read the data */
         int i = 0, block = 0, outliers = 0;
+	int numvals = 0;
         char *label;
 
         rewind(fp);
@@ -1397,7 +1472,10 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
                 continue;
             }
             if (factorized && !strncmp(line, "set xtics (", 11)) {
-                err = get_vals_from_tics(grp, line + 10);
+                err = get_vals_from_tics(grp, line + 10, &numvals);
+		if (grp->dvals == NULL && !err) {
+		    err = get_strvals_from_tics(grp, line + 10);
+		}
             } else if (!factorized && !strncmp(line, "set label ", 10)) {
                 label = gretl_quoted_string_strdup(line + 10, NULL);
                 if (label == NULL) {
