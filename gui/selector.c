@@ -2732,7 +2732,7 @@ static void clear_vars (GtkWidget *w, selector *sr)
         gtk_entry_set_text(GTK_ENTRY(sr->extra[0]), "");
     }
 
-    if (THREE_VARS_CODE(sr->ci)) {
+    if (GTK_IS_ENTRY(sr->rvars1)) {
         /* clear special slot */
         gtk_entry_set_text(GTK_ENTRY(sr->rvars1), "");
     } else if (sr->rvars1 != NULL) {
@@ -7358,7 +7358,7 @@ static void build_selector_buttons (selector *sr)
     if (sr->ci != PRINT && sr->ci != SUMMARY && !FNPKG_CODE(sr->ci) &&
         sr->ci != DEFINE_LIST && sr->ci != DEFINE_MATRIX &&
         sr->ci != ELLIPSE && sr->ci != CHOW && sr->ci != REGLS_PLOTSEL &&
-        !SAVE_DATA_ACTION(sr->ci)) {
+        sr->ci != FSUMMARY && !SAVE_DATA_ACTION(sr->ci)) {
         /* add a Help button if appropriate */
         int ci = sr->ci;
 
@@ -7371,7 +7371,6 @@ static void build_selector_buttons (selector *sr)
         } else if (IV_MODEL(sr->ci)) {
             ci = IVREG;
         }
-
         context_help_button(sr->action_area, ci);
     }
 
