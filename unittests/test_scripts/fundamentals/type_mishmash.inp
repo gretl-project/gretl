@@ -1,0 +1,20 @@
+set verbose off
+set assert stop
+open denmark -q
+
+list L = 1 2
+series x = normal()
+series L[1] = x
+
+bundle b
+series b.s = normal()
+# eval b.s
+bundles bb = array(1)
+series bb[1].s = normal()
+# eval bb[1].s
+
+matrix M = zeros(2,2)
+catch series M[1,] = ones(1,2)
+assert($error)
+
+print "Successfully finished tests."

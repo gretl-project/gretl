@@ -19855,10 +19855,10 @@ static void parser_try_print (parser *p, const char *s, int *done)
 }
 
 /* Here we try to parse out the LHS of the statement and also the
-   operator. If we find a unitary LHS (simply an identifier) we write it
-   into p->lh.name, but if we find a compound LHS (such as a sub-matrix
-   specification) we save it as p->lh.expr. The content of @ps is advanced
-   to the first position beyond the operator.
+   operator. If we find a unitary LHS (simply an identifier) we write
+   it into p->lh.name, but if we find a compound LHS (such as a
+   sub-matrix specification) we save it as p->lh.expr. The content of
+   @ps is advanced to the first position beyond the operator.
 */
 
 static int extract_lhs_and_op (const char **ps, parser *p,
@@ -19870,7 +19870,8 @@ static int extract_lhs_and_op (const char **ps, parser *p,
     int err = 0;
 
 #if LHDEBUG
-    fprintf(stderr, "extract_lhs_and_op: input='%s'\n", s);
+    fprintf(stderr, "extract_lhs_and_op: input='%s', targ=%s\n",
+	    s, getsymb(p->targ));
 #endif
 
     if (p->targ != UNK && strchr(s, '=') == NULL) {
@@ -21562,7 +21563,12 @@ static int handle_compound_target (parser *p)
 #if LHDEBUG
 	fprintf(stderr, "OSL save: lh1 type = %s\n", getsymb(lh1->t));
 #endif
-	if (lh1->t == ARRAY) {
+	if (p->targ == SERIES && lh1->t != LIST && lh1->t != BUNDLE) {
+	    /* a sub-object can be of series type only if the "parent"
+	       object is a list or bundle
+	    */
+	    p->err = E_TYPES;
+	} else if (lh1->t == ARRAY) {
 	    p->err = set_array_value(p->lhres, r, p);
 	} else if (lh1->t == LIST) {
 	    p->err = set_list_value(p->lhres, r, p);
