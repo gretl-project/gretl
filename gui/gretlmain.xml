@@ -160,19 +160,19 @@
     <menu action="Add">
       <menuitem action="logs"/>
       <menuitem action="square"/>
+      <menuitem action="stdize"/>
+      <menuitem action="AddIndex"/>
+      <menuitem action="AddRandom"/>
+      <separator/>
       <menuitem action="lags"/>
       <menuitem action="diff"/>
       <menuitem action="ldiff"/>
       <menuitem action="sdiff"/>
       <menuitem action="pcdiff"/>
       <menuitem action="idxvals"/>
-      <menuitem action="stdize"/>
       <separator/>
-      <menuitem action="AddIndex"/>
       <menuitem action="AddTime"/>
       <menuitem action="AddUnit"/>
-      <separator/>
-      <menuitem action="AddRandom"/>
       <separator/>
       <menuitem action="PeriodDums"/>
       <menuitem action="UnitDums"/>
