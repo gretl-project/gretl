@@ -5960,83 +5960,180 @@ Summary *get_summary (const int *list, const DATASET *dset,
     return s;
 }
 
-static void record_summary (Summary *summ, const DATASET *dset)
-{
-    gretl_matrix *m = NULL;
-    char **Sc, **Sr;
-    int nv = summ->list[0];
-    int i, vi, cols;
+/* basic summary stats column heads */
+static const char *hb[] = {
+    N_("Byval"), N_("Mean"), N_("Median"), N_("S.D."), N_("Min"), N_("Max")
+};
 
-    cols = (summ->opt & OPT_S)? 5 : 12;
-    m = gretl_matrix_alloc(nv, cols);
-    if (m == NULL) {
-	return;
+/* full summary stats column heads */
+static const char *hf[] = {
+    N_("Byval"), N_("Mean"), N_("Median"), N_("Minimum"), N_("Maximum"),
+    N_("Std. Dev."), N_("C.V."), N_("Skewness"), N_("Ex. kurtosis"),
+    /* xgettext:no-c-format */
+    N_("5% perc."),
+    /* xgettext:no-c-format */
+    N_("95% perc."),
+    N_("IQ range"),
+    N_("Missing obs.")
+};
+
+static int add_summary_colnames (gretl_matrix *m,
+				 gretlopt opt)
+{
+    char **S = strings_array_new(m->cols);
+
+    if (S == NULL) {
+	return E_ALLOC;
+    } else {
+	const char **h = (opt & OPT_S)? hb : hf;
+	int k = (opt & OPT_B) ? 0 : 1;
+	int i;
+
+	for (i=0; i<m->cols; i++) {
+	    S[i] = gretl_strdup(_(h[k++]));
+	}
+	gretl_matrix_set_colnames(m, S);
     }
 
-    Sc = strings_array_new(cols);
-    Sr = strings_array_new(nv);
+    return 0;
+}
 
-    if (summ->opt & OPT_S) {
-	/* the "simple" option */
-	const char *h[] = {
-	    N_("Mean"),
-	    N_("Median"),
-	    N_("S.D."),
-	    N_("Min"),
-	    N_("Max"),
-	};
+/* the factorized statistics case */
 
-	if (Sc != NULL) {
-	    for (i=0; i<cols; i++) {
-		Sc[i] = gretl_strdup(_(h[i]));
+static int add_summary_by_rownames (gretl_matrix *m,
+				    const gretl_matrix *xvals,
+				    const DATASET *dset,
+				    series_table *st)
+{
+    char **S = strings_array_new(m->rows);
+    gchar *tmp;
+    double xvi;
+    int i;
+
+    if (S == NULL) {
+	return E_ALLOC;
+    } else {
+	for (i=0; i<m->rows; i++) {
+	    xvi = xvals->val[i];
+	    if (st != NULL) {
+		S[i] = gretl_strdup(series_table_get_string(st, xvi));
+	    } else {
+		tmp = gretl_strdup_printf("%g", xvi);
+		S[i] = gretl_strdup(tmp);
+		g_free(tmp);
 	    }
 	}
-	for (i=0; i<nv; i++) {
-	    if (Sr != NULL) {
-		vi = summ->list[i+1];
-		Sr[i] = gretl_strdup(dset->varname[vi]);
+	gretl_matrix_set_rownames(m, S);
+    }
+
+    return 0;
+}
+
+/* the (relatively) simple case */
+
+static int add_summary_rownames (gretl_matrix *m,
+				 const int *list,
+				 const DATASET *dset)
+{
+    char **S = strings_array_new(m->rows);
+    int i, vi;
+
+    if (S == NULL) {
+	return E_ALLOC;
+    } else {
+	for (i=0; i<m->rows; i++) {
+	    vi = list[i+1];
+	    S[i] = gretl_strdup(dset->varname[vi]);
+	}
+	gretl_matrix_set_rownames(m, S);
+    }
+
+    return 0;
+}
+
+static gretl_matrix *make_summary_recorder (const int *list,
+					    gretlopt opt,
+					    const DATASET *dset,
+					    const gretl_matrix *xvals,
+					    series_table *st,
+					    int *err)
+{
+    gretl_matrix *m = NULL;
+    int rows, cols;
+
+    cols = (opt & OPT_S)? 5 : 12;
+
+    if (opt & OPT_B) {
+	/* add an extra column for factor value */
+	cols++;
+	/* number of distinct factor values */
+	rows = gretl_vector_get_length(xvals);
+    } else {
+	rows = list[0];
+    }
+
+    m = gretl_zero_matrix_new(rows, cols);
+
+    if (m == NULL) {
+	*err = E_ALLOC;
+    } else {
+	*err = add_summary_colnames(m, opt);
+	if (!*err) {
+	    if (xvals != NULL) {
+		*err = add_summary_by_rownames(m, xvals, dset, st);
+	    } else {
+		*err = add_summary_rownames(m, list, dset);
 	    }
-	    gretl_matrix_set(m, i, 0, summ->mean[i]);
-	    gretl_matrix_set(m, i, 1, summ->median[i]);
-	    gretl_matrix_set(m, i, 2, summ->sd[i]);
-	    gretl_matrix_set(m, i, 3, summ->low[i]);
-	    gretl_matrix_set(m, i, 4, summ->high[i]);
+	}
+    }
+
+    if (*err && m != NULL) {
+	gretl_matrix_free(m);
+	m = NULL;
+    }
+
+    return m;
+}
+
+/* If @ival is NULL, write the content of @summ into matrix @m,
+   otherwise
+*/
+
+static void transcribe_summary (Summary *summ, gretl_matrix *m,
+				int *ival, double byval)
+{
+    int factorized = ival != NULL;
+    int nv = summ->list[0];
+    int offset = 0;
+    int i, r;
+
+    if (factorized) {
+	/* writing to a single row */
+	gretl_matrix_set(m, *ival, 0, byval);
+	offset = 1;
+    }
+
+    if (summ->opt & OPT_S) {
+	/* the "simple" case */
+	for (i=0; i<nv; i++) {
+	    r = factorized ? *ival : i;
+	    gretl_matrix_set(m, r, 0 + offset, summ->mean[i]);
+	    gretl_matrix_set(m, r, 1 + offset, summ->median[i]);
+	    gretl_matrix_set(m, r, 2 + offset, summ->sd[i]);
+	    gretl_matrix_set(m, r, 3 + offset, summ->low[i]);
+	    gretl_matrix_set(m, r, 4 + offset, summ->high[i]);
 	}
     } else {
 	/* record all available stats */
-	const char *h[] = {
-	    N_("Mean"),
-	    N_("Median"),
-	    N_("Minimum"),
-	    N_("Maximum"),
-	    N_("Std. Dev."),
-	    N_("C.V."),
-	    N_("Skewness"),
-	    N_("Ex. kurtosis"),
-	    /* xgettext:no-c-format */
-	    N_("5% perc."),
-	    /* xgettext:no-c-format */
-	    N_("95% perc."),
-	    N_("IQ range"),
-	    N_("Missing obs.")
-	};
 	double cv;
 
-	if (Sc != NULL) {
-	    for (i=0; i<cols; i++) {
-		Sc[i] = gretl_strdup(_(h[i]));
-	    }
-	}
 	for (i=0; i<nv; i++) {
-	    if (Sr != NULL) {
-		vi = summ->list[i+1];
-		Sr[i] = gretl_strdup(dset->varname[vi]);
-	    }
-	    gretl_matrix_set(m, i, 0, summ->mean[i]);
-	    gretl_matrix_set(m, i, 1, summ->median[i]);
-	    gretl_matrix_set(m, i, 2, summ->low[i]);
-	    gretl_matrix_set(m, i, 3, summ->high[i]);
-	    gretl_matrix_set(m, i, 4, summ->sd[i]);
+	    r = factorized ? *ival : i;
+	    gretl_matrix_set(m, r, 0 + offset, summ->mean[i]);
+	    gretl_matrix_set(m, r, 1 + offset, summ->median[i]);
+	    gretl_matrix_set(m, r, 2 + offset, summ->low[i]);
+	    gretl_matrix_set(m, r, 3 + offset, summ->high[i]);
+	    gretl_matrix_set(m, r, 4 + offset, summ->sd[i]);
 	    if (floateq(summ->mean[i], 0.0)) {
 		cv = NADBL;
 	    } else if (floateq(summ->sd[i], 0.0)) {
@@ -6044,19 +6141,28 @@ static void record_summary (Summary *summ, const DATASET *dset)
 	    } else {
 		cv = fabs(summ->sd[i] / summ->mean[i]);
 	    }
-	    gretl_matrix_set(m, i,  5, cv);
-	    gretl_matrix_set(m, i,  6, summ->skew[i]);
-	    gretl_matrix_set(m, i,  7, summ->xkurt[i]);
-	    gretl_matrix_set(m, i,  8, summ->perc05[i]);
-	    gretl_matrix_set(m, i,  9, summ->perc95[i]);
-	    gretl_matrix_set(m, i, 10, summ->iqr[i]);
-	    gretl_matrix_set(m, i, 11, summ->misscount[i]);
+	    gretl_matrix_set(m, r,  5 + offset, cv);
+	    gretl_matrix_set(m, r,  6 + offset, summ->skew[i]);
+	    gretl_matrix_set(m, r,  7 + offset, summ->xkurt[i]);
+	    gretl_matrix_set(m, r,  8 + offset, summ->perc05[i]);
+	    gretl_matrix_set(m, r,  9 + offset, summ->perc95[i]);
+	    gretl_matrix_set(m, r, 10 + offset, summ->iqr[i]);
+	    gretl_matrix_set(m, r, 11 + offset, summ->misscount[i]);
 	}
     }
+}
 
-    gretl_matrix_set_colnames(m, Sc);
-    gretl_matrix_set_rownames(m, Sr);
-    set_last_result_data(m, GRETL_TYPE_MATRIX);
+static void record_summary (Summary *summ, const DATASET *dset)
+{
+    gretl_matrix *m;
+    int err = 0;
+
+    m = make_summary_recorder(summ->list, summ->opt, dset,
+			      NULL, NULL, &err);
+    if (!err) {
+	transcribe_summary(summ, m, NULL, 0);
+	set_last_result_data(m, GRETL_TYPE_MATRIX);
+    }
 }
 
 /**
@@ -6119,9 +6225,11 @@ int summary_statistics_by (const int *list, DATASET *dset,
 			   gretlopt opt, PRN *prn)
 {
     const char *byname = get_optval_string(SUMMARY, OPT_B);
+    int quiet = (opt & OPT_Q);
     int byvar;
     series_table *st = NULL;
     gretl_matrix *xvals = NULL;
+    gretl_matrix *m = NULL;
     int *mylist = NULL;
     const double *x;
     int i, nvals = 0;
@@ -6178,10 +6286,13 @@ int summary_statistics_by (const int *list, DATASET *dset,
     }
 
     if (!err && single) {
-        pputc(prn, '\n');
-        pprintf(prn, _("Summary statistics for %s, by value of %s"),
-                dset->varname[list[1]], byname);
-        pputc(prn, '\n');
+	m = make_summary_recorder(list, opt, dset, xvals, st, &err);
+	if (!quiet) {
+	    pputc(prn, '\n');
+	    pprintf(prn, _("Summary statistics for %s, by value of %s"),
+		    dset->varname[list[1]], byname);
+	    pputc(prn, '\n');
+	}
     }
 
     for (i=0; i<nvals && !err; i++) {
@@ -6199,7 +6310,7 @@ int summary_statistics_by (const int *list, DATASET *dset,
             summ = get_summary_restricted(list, dset, rv,
                                           opt, prn, &err);
         }
-        if (!err) {
+        if (!err && !quiet) {
             if (i == 0) {
                 pputc(prn, '\n');
             }
@@ -6214,10 +6325,18 @@ int summary_statistics_by (const int *list, DATASET *dset,
                 pprintf(prn, "%s = %g (n = %d):\n", byname, xi, summ->n);
             }
             print_summary(summ, dset, prn);
-            free_summary(summ);
         }
-
+	if (!err && m != NULL) {
+	    transcribe_summary(summ, m, &i, xi);
+	}
+	if (summ != NULL) {
+	    free_summary(summ);
+	}
         free(rv);
+    }
+
+    if (!err && m != NULL) {
+	set_last_result_data(m, GRETL_TYPE_MATRIX);
     }
 
     gretl_matrix_free(xvals);
