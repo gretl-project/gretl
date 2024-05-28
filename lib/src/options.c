@@ -1959,7 +1959,7 @@ gretlopt delete_option_flags (gretlopt *targ, gretlopt test)
 /**
  * incompatible_options:
  * @opt: option flags to be tested.
- * @test: bitwise OR of flags that are incompatible in context.
+ * @test: bitwise OR of flags that are mutually incompatible in context.
  *
  * Returns: %E_BADOPT if @opt contains more than one of the flags
  * in @test, otherwise 0.

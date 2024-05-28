@@ -2031,15 +2031,15 @@ int adf_test (int order, const int *list, DATASET *dset,
     int panelmode;
     int err;
 
-    /* GLS incompatible with no const, quadratic trend or seasonals */
-    err = incompatible_options(opt, OPT_G | OPT_N | OPT_R);
-    if (!err) {
-	err = incompatible_options(opt, OPT_D | OPT_G);
-    }
-
-    if (!err && (opt & OPT_G)) {
-	/* under GLS, have to choose between cases */
-	err = incompatible_options(opt, OPT_C | OPT_T);
+    if (opt & OPT_G) {
+	/* GLS is incompatible with no const (OPT_N), quadratic
+	   trend (OPT_R) and seasonals (OPT_D)
+	*/
+	err = options_incompatible_with(opt, OPT_G, OPT_N | OPT_R | OPT_D);
+	if (!err) {
+	    /* and you have to choose between OPT_C nd OPT_T */
+	    err = incompatible_options(opt, OPT_C | OPT_T);
+	}
     }
 
     panelmode = multi_unit_panel_sample(dset);
