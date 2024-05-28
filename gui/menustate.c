@@ -162,6 +162,10 @@ void dataset_menubar_state (gboolean s)
 
     flip(mdata->ui, "/menubar/File/NewData", !s);
 
+    if (s) {
+	time_series_menu_state(dataset_is_time_series(dataset));
+    }
+
     set_main_colheads_clickable(s);
 }
 
@@ -345,13 +349,6 @@ void drop_obs_state (gboolean s)
 {
     if (mdata->ui != NULL) {
         flip(mdata->ui, "/menubar/Data/RemoveObs", s);
-    }
-}
-
-void compact_data_state (gboolean s)
-{
-    if (mdata->ui != NULL) {
-        flip(mdata->ui, "/menubar/Data/DataCompact", s);
     }
 }
 

@@ -14,7 +14,6 @@ void panel_menu_state (gboolean s);
 void ts_or_panel_menu_state (gboolean s);
 void session_menu_state (gboolean s);
 void sample_menubar_state (gboolean s);
-void compact_data_state (gboolean s);
 void drop_obs_state (gboolean s);
 void iconview_menubar_state (gboolean s);
 void main_menus_enable (gboolean s);

@@ -12,6 +12,10 @@ version 2024c, in progress
 - GUI: fix the "Numerical summary" option in a window showing
   a factorized boxplot (was broken when the factor variable was
   string-valued)
+- GUI: try to ensure that the "Compact data" and "Expand data"
+  menu items are disabled when the dataset is cross-sectional
+- Windows 64-bit build: make Consolas the default monospace
+  font
 
 2024-05-21 version 2024b
 - "gridplot" command: add a --title option
