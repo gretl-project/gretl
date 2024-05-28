@@ -2,6 +2,8 @@ version 2024c, in progress
 - Appending data via the GUI: support the fixed-sample option
 - Fix bug: append via console not updating series list in the
   main gretl window
+- Fix bug in "corrgm" command: spurious signifiance stars shown
+  for the PACF when the --bartlett option is given
 - Fix a lacuna in type-checking of hansl statements
 - GUI: support the --by option for the "summary" command, when
   called via the main-window "View" menu
