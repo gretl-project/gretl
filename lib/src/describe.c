@@ -3629,8 +3629,10 @@ static void corrgm_print (const char *vname,
     }
     pputs(prn, "\n\n");
 
-    if (BPM == NULL) {
-	/* if we're not doing Bartlett confidence bands */
+    if (BPM == NULL || pacf != NULL) {
+	/* if we're not doing Bartlett confidence bands, or we're
+	   showing PACF as well as ACF
+	*/
 	for (i=0; i<3; i++) {
 	    pm[i] = z[i] / sqrt((double) T);
 	    if (pm[i] > 0.5) {
