@@ -99,8 +99,13 @@ static int tmpfontscale;
 static char system_appfont[64];
 
 #if defined(G_OS_WIN32)
+# if defined(_WIN64)
+static char fixedfontname[MAXLEN] = "Consolas 10";
+static char default_fixedfont[64] = "Consolas 10";
+# else
 static char fixedfontname[MAXLEN] = "Courier New 10";
 static char default_fixedfont[64] = "Courier New 10";
+# endif
 #elif defined(OS_OSX)
 static char fixedfontname[MAXLEN] = "Menlo 13";
 static char default_fixedfont[64] = "Menlo 13";
