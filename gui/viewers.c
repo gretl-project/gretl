@@ -42,6 +42,7 @@
 #include "forecast.h"
 #include "var.h"
 #include "gretl_mdconv.h"
+#include "cmd_private.h"
 #endif
 
 static gboolean not_space (gunichar c, gpointer p)
@@ -747,99 +748,103 @@ void free_windata (GtkWidget *w, gpointer data)
 	    data, (void *) vwin->main, vwin->role);
 #endif
 
-    if (vwin != NULL) {
-	/* notify parent, if any, that child is gone */
-	if (vwin->gretl_parent != NULL) {
-	    vwin_nullify_child(vwin->gretl_parent, vwin);
-	}
+    if (vwin == NULL) {
+	return;
+    }
 
-	/* notify children, if any, that parent is gone */
-	if (vwin->n_gretl_children > 0) {
-	    int i;
+    /* notify parent, if any, that child is gone */
+    if (vwin->gretl_parent != NULL) {
+	vwin_nullify_child(vwin->gretl_parent, vwin);
+    }
 
-	    for (i=0; i<vwin->n_gretl_children; i++) {
-		if (vwin->gretl_children[i] != NULL) {
-		    vwin->gretl_children[i]->gretl_parent = NULL;
-		}
+    /* notify children, if any, that parent is gone */
+    if (vwin->n_gretl_children > 0) {
+	int i;
+
+	for (i=0; i<vwin->n_gretl_children; i++) {
+	    if (vwin->gretl_children[i] != NULL) {
+		vwin->gretl_children[i]->gretl_parent = NULL;
 	    }
-	    free(vwin->gretl_children);
 	}
+	free(vwin->gretl_children);
+    }
 
-	/* menu stuff */
-	if (vwin->popup != NULL) {
-	    gtk_widget_destroy(vwin->popup);
-	}
-	if (vwin->ui != NULL) {
-	    g_object_unref(vwin->ui);
-	}
+    /* menu stuff */
+    if (vwin->popup != NULL) {
+	gtk_widget_destroy(vwin->popup);
+    }
+    if (vwin->ui != NULL) {
+	g_object_unref(vwin->ui);
+    }
 
-	/* toolbar popups? */
-	if (vwin->mbar != NULL) {
-	    vwin_free_toolbar_popups(vwin);
-	}
+    /* toolbar popups? */
+    if (vwin->mbar != NULL) {
+	vwin_free_toolbar_popups(vwin);
+    }
 
-	/* tabbed toolbar */
-	if (window_is_tab(vwin) && vwin->mbar != NULL) {
-	    g_object_unref(vwin->mbar);
-	}
+    /* tabbed toolbar */
+    if (window_is_tab(vwin) && vwin->mbar != NULL) {
+	g_object_unref(vwin->mbar);
+    }
 
-	if (help_role(vwin->role)) {
-	    /* help file text */
-	    g_free(vwin->data);
-	}
+    if (help_role(vwin->role)) {
+	/* help file text */
+	g_free(vwin->data);
+    }
 
 #ifdef GRETL_EDIT
-	if (vwin->role == SCRIPT_OUT && vwin->data != NULL) {
-	    exec_info_destroy(vwin->data);
-	}
+    if (vwin->role == SCRIPT_OUT && vwin->data != NULL) {
+	exec_info_destroy(vwin->data);
+    }
 #else
-	/* data specific to certain windows */
-	if (vwin->role == SUMMARY) {
-	    free_summary(vwin->data);
-	} else if (vwin->role == CORR || vwin->role == PCA ||
-		   vwin->role == COVAR) {
-	    free_vmatrix(vwin->data);
-	} else if (vwin->role == FCAST || vwin->role == AFR) {
-	    free_fit_resid(vwin->data);
-	} else if (vwin->role == COEFFINT) {
-	    free_coeff_intervals(vwin->data);
-	} else if (vwin->role == VIEW_SERIES) {
-	    free_series_view(vwin->data);
-	} else if (vwin->role == VIEW_MODEL) {
-	    gretl_object_unref(vwin->data, GRETL_OBJ_EQN);
-	} else if (vwin->role == VAR || vwin->role == VECM) {
-	    gretl_object_unref(vwin->data, GRETL_OBJ_VAR);
-	} else if (vwin->role == LEVERAGE ||
-		   vwin->role == VLAGSEL ||
-		   vwin->role == ALAGSEL) {
-	    gretl_matrix_free(vwin->data);
-	} else if (vwin->role == MAHAL) {
-	    free_mahal_dist(vwin->data);
-	} else if (vwin->role == XTAB) {
-	    free_xtab(vwin->data);
-	} else if (vwin->role == COINT2) {
-	    gretl_VAR_free(vwin->data);
-	} else if (vwin->role == SYSTEM) {
-	    gretl_object_unref(vwin->data, GRETL_OBJ_SYS);
-	} else if (vwin->flags & VWIN_MULTI_SERIES) {
-	    free_series_view(vwin->data);
-	} else if (vwin->role == VIEW_BUNDLE ||
-		   vwin->role == VIEW_DBNOMICS) {
-	    if (!get_user_var_by_data(vwin->data)) {
-		gretl_bundle_destroy(vwin->data);
-	    }
-	} else if (vwin->role == LOESS || vwin->role == NADARWAT) {
+    /* data specific to certain windows */
+    if (vwin->role == SUMMARY) {
+	free_summary(vwin->data);
+    } else if (vwin->role == CORR || vwin->role == PCA ||
+	       vwin->role == COVAR) {
+	free_vmatrix(vwin->data);
+    } else if (vwin->role == FCAST || vwin->role == AFR) {
+	free_fit_resid(vwin->data);
+    } else if (vwin->role == COEFFINT) {
+	free_coeff_intervals(vwin->data);
+    } else if (vwin->role == VIEW_SERIES) {
+	free_series_view(vwin->data);
+    } else if (vwin->role == VIEW_MODEL) {
+	gretl_object_unref(vwin->data, GRETL_OBJ_EQN);
+    } else if (vwin->role == VAR || vwin->role == VECM) {
+	gretl_object_unref(vwin->data, GRETL_OBJ_VAR);
+    } else if (vwin->role == LEVERAGE ||
+	       vwin->role == VLAGSEL ||
+	       vwin->role == ALAGSEL) {
+	gretl_matrix_free(vwin->data);
+    } else if (vwin->role == MAHAL) {
+	free_mahal_dist(vwin->data);
+    } else if (vwin->role == XTAB) {
+	free_xtab(vwin->data);
+    } else if (vwin->role == COINT2) {
+	gretl_VAR_free(vwin->data);
+    } else if (vwin->role == SYSTEM) {
+	gretl_object_unref(vwin->data, GRETL_OBJ_SYS);
+    } else if (vwin->flags & VWIN_MULTI_SERIES) {
+	free_series_view(vwin->data);
+    } else if (vwin->role == VIEW_BUNDLE ||
+	       vwin->role == VIEW_DBNOMICS) {
+	if (!get_user_var_by_data(vwin->data)) {
 	    gretl_bundle_destroy(vwin->data);
 	}
+    } else if (vwin->role == LOESS || vwin->role == NADARWAT) {
+	gretl_bundle_destroy(vwin->data);
+    } else if (vwin->role == CONSOLE) {
+	gretl_exec_state_destroy(vwin->data);
+    }
 #endif
 
-	if (window_delete_filename(vwin)) {
-	    /* there's a temporary file associated */
-	    gretl_remove(vwin->fname);
-	}
-
-	free(vwin);
+    if (window_delete_filename(vwin)) {
+	/* there's a temporary file associated */
+	gretl_remove(vwin->fname);
     }
+
+    free(vwin);
 }
 
 /* called when replacing a script in (non-tabbed) script

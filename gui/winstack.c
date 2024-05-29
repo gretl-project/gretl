@@ -1459,8 +1459,7 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 windata_t *gretl_viewer_new (int role, const gchar *title,
 			     gpointer data)
 {
-    return gretl_viewer_new_with_parent(NULL, role, title,
-					data);
+    return gretl_viewer_new_with_parent(NULL, role, title, data);
 }
 
 GtkWidget *vwin_toplevel (windata_t *vwin)
