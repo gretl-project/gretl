@@ -71,7 +71,7 @@ function matrix bias_correction(const bundle b,
     */
 
     errorif( !inbundle(b,"BCiter") || !inbundle(b,"VARpar") || \
-      !inbundle(b,"E") || !inbundle(b,"X") || !inbundle(b,"boottype") || \
+      !inbundle(b,"U") || !inbundle(b,"X") || !inbundle(b,"boottype") || \
       !inbundle(b,"bmu"), "needed input missing in bundle arg")
 
     # check for stationarity first
@@ -349,7 +349,7 @@ function matrices SVAR_boot_innerloop(bundle *bobj, const bundle obj, const bund
     n2   = obj.n * obj.n
     
     # Prepare the residuals
-    matrix innov = prepres(obj.E, obj.boottype)
+    matrix innov = prepres(obj.U, obj.boottype)
 
     ## prepare output
     matrix bootirfs = zeros(obj.nboot, (obj.horizon + 1) * n2)

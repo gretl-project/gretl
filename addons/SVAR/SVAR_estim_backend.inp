@@ -4,6 +4,8 @@
 
 ##
 
+/*
+ -- deactivate this compatE function three years later, for gretl 2024c --
 function void compatE(bundle *b)
     # copy the residual matrix U into another matrix 
     # called E like it was in versions pre-1.95, just
@@ -12,7 +14,7 @@ function void compatE(bundle *b)
     
     matrix b.E = b.U
 end function
-
+*/
 
 ###########################
 
@@ -48,8 +50,8 @@ function scalar base_est(bundle *SVARobj)
         SVARobj.step = 1
         SVARobj.LL0 = T * (n* log(2*$pi) - 0.5 * log(det(Sigma)) - 0.5)
         
-        # compatibility for pre-1.95
-        compatE(&SVARobj)
+        # compatibility for pre-1.95 -- removed three years later for 2024c
+
     endif
 
     return err
@@ -194,8 +196,7 @@ function scalar vecm_est(bundle *SVARobj)
     SVARobj.step = 1
     SVARobj.LL0 = T* (n*log(2*$pi) - 0.5*log(det(Sigma)) - 0.5)
 
-    # compatibility for pre-1.95
-    compatE(&SVARobj)
+    # compatibility for pre-1.95 -- removed three years later for 2024c
     
     return 0
 end function

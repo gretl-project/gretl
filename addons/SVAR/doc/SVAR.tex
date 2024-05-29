@@ -100,7 +100,7 @@
 
 \title{The SVAR addon for \app{gretl}}
 \author{Jack Lucchetti and Sven Schreiber}
-\date{November 2023}
+\date{May 2024}
 
 \begin{document}
 
@@ -3490,6 +3490,17 @@ typically be called before \texttt{SVAR\_SRirf}.
   
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
+
+\subsection*{for gretl version 2024c, May 2024}
+\begin{itemize}
+  \item Get rid of version number since SVAR is a gretl addon, and starting
+   with gretl 2024b such official addons inherit the version number directly
+   from gretl itself.
+  \item Fix minor bug (not noticeable with standard usage): do not internally
+   require the bundle member E from the old-style (pre 1.95) notation anymore.
+   While we're at it, do not carry this compatiblity copy around anymore at
+   all, so the estimated residuals are now exclusively in the matrix member U.   
+\end{itemize}
 
 \subsection*{Version 2.1, November 2023}
 \begin{itemize}
