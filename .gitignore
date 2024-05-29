@@ -8,3 +8,6 @@
 *.lo
 *.aux
 
+# Build folder
+build/
+Build/
