@@ -391,6 +391,31 @@ int gretl_iscount (int t1, int t2, const double *x)
     return ret;
 }
 
+/**
+ * gretl_isint:
+ * @x: data series to examine.
+ * @t1: starting observation.
+ * @t2: ending observation.
+ *
+ * Check whether series @x contains nothing but integer
+ * values (disregarding NAs) over the given sample range.
+ *
+ * Returns: 1 if so, otherwise 0.
+ */
+
+int gretl_isint (int t1, int t2, const double *x)
+{
+    int t;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t]) && x[t] != floor(x[t])) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
 #define FEW_VALS 32
 #define FEWER_VALS 8
 
@@ -696,7 +721,7 @@ int gretl_compare_strings (const void *a, const void *b)
     const char **sb = (const char **) b;
 
     return g_strcmp0(*sa, *sb);
-}    
+}
 
 /**
  * count_distinct_values:
