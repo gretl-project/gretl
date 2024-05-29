@@ -9,10 +9,10 @@ clear
 open australia --quiet
 
 catch adf 3 PAU --nc --c --ct --ctt
-assert($error == FALSE)
+assert($error == 0)
 
 catch adf 3 PAU --gls --nc --c --ct --ctt
-assert($error == FALSE)
+assert($error != 0)
 
 print "Successfully finished tests."
 quit
