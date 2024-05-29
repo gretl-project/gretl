@@ -1,0 +1,33 @@
+/*
+Reported here:
+https://gretlml.univpm.it/hyperkitty/list/gretl-devel@gretlml.univpm.it/message/QCFL3MI5QBTBPN7HBWPXEGTQI4Q76IXI/
+*/
+
+set verbose off
+set assert stop
+clear
+open denmark.gdt --quiet
+
+# Expected to fail
+matrix M = zeros($nobs, 2)
+catch series M[1,] = ones(1,2)
+assert($error != FALSE)
+
+# Expected to work
+list L = 1 2
+series x = normal()
+catch series L[1] = x
+assert($error == FALSE)
+
+# Expected to work
+bundle b
+series b.s = normal()
+assert($error == FALSE)
+
+# Expected to work
+bundles bb = array(1)
+series bb[1].s = normal()
+assert($error == FALSE)
+
+print "Successfully finished tests."
+quit
