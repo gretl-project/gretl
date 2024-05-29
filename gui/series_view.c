@@ -138,7 +138,7 @@ static void single_series_view_print (windata_t *vwin)
     }
 
     if (sview->view == VIEW_STANDARD) {
-	int list[2] = { 1, sview->varnum };
+	int list[2] = {1, sview->varnum};
 
 	/* regular printout: unsort if need be */
 	if (sview->sorted) {
