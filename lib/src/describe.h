@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef DESCRIBE_H
@@ -28,11 +28,12 @@ typedef struct Summary_ {
     int weight_var;
     int *misscount;
     int *list;
+    int *ival;
     double *stats;
     double *mean;
     double *median;
     double *sd;
-    double *skew; 
+    double *skew;
     double *xkurt;
     double *low;
     double *high;
@@ -82,7 +83,7 @@ typedef struct Xtab_ {
 
 int eval_ytest (double y, GretlOp op, double test);
 
-int gretl_minmax (int t1, int t2, const double *x, 
+int gretl_minmax (int t1, int t2, const double *x,
 		  double *min, double *max);
 
 double gretl_min (int t1, int t2, const double *x);
@@ -94,10 +95,10 @@ double gretl_sum (int t1, int t2, const double *x);
 double gretl_mean (int t1, int t2, const double *x);
 
 double gretl_restricted_mean (int t1, int t2, const double *x,
-			      const double *y, GretlOp yop, 
+			      const double *y, GretlOp yop,
 			      double yval);
 
-double gretl_quantile (int t1, int t2, const double *x, 
+double gretl_quantile (int t1, int t2, const double *x,
 		       double p, gretlopt opt, int *err);
 
 int gretl_array_quantiles (double *a, int n, double *p, int k);
@@ -135,32 +136,32 @@ double gretl_skewness (int t1, int t2, const double *x);
 
 double gretl_kurtosis (int t1, int t2, const double *x);
 
-int gretl_moments (int t1, int t2, const double *x, 
+int gretl_moments (int t1, int t2, const double *x,
 		   const double *wts,
-		   double *xbar, double *sd, 
+		   double *xbar, double *sd,
 		   double *skew, double *kurt, int k);
 
 double *gretl_sorted_series (int v, const DATASET *dset,
-			     gretlopt opt, int *n, 
+			     gretlopt opt, int *n,
 			     int *err);
 
 void free_freq (FreqDist *freq);
 
-int freq_setup (int v, const DATASET *dset, int *pn, 
-		double *pxmax, double *pxmin, int *nbins, 
+int freq_setup (int v, const DATASET *dset, int *pn,
+		double *pxmax, double *pxmin, int *nbins,
 		double *binwidth);
 
-FreqDist *get_freq (int varno, const DATASET *dset, 
-		    double fmin, double fwid, int nbins, int params, 
+FreqDist *get_freq (int varno, const DATASET *dset,
+		    double fmin, double fwid, int nbins, int params,
 		    gretlopt opt, int *err);
 
-FreqDist *get_discrete_freq (int v, const DATASET *dset, 
+FreqDist *get_discrete_freq (int v, const DATASET *dset,
 			     gretlopt opt, int *err);
 
 int freqdist (int varno, const DATASET *dset,
 	      gretlopt opt, PRN *prn);
 
-gretl_matrix *freqdist_matrix (const double *x, int t1, int t2, 
+gretl_matrix *freqdist_matrix (const double *x, int t1, int t2,
 			       int *err);
 
 void *get_last_result_data (GretlType *type, int *err);
@@ -169,14 +170,14 @@ void set_last_result_data (void *ptr, GretlType type);
 
 void last_result_cleanup (void);
 
-int crosstab (const int *list, const DATASET *dset, 
+int crosstab (const int *list, const DATASET *dset,
 	      gretlopt opt, PRN *prn);
 
 int crosstab_from_matrix (gretlopt opt, PRN *prn);
 
 int compare_xtab_rows (const void *a, const void *b);
 
-Xtab *single_crosstab (const int *list, const DATASET *dset, 
+Xtab *single_crosstab (const int *list, const DATASET *dset,
 		       gretlopt opt, PRN *prn, int *err);
 
 gretl_matrix *xtab_to_matrix (const Xtab *tab);
@@ -186,7 +187,7 @@ void free_xtab (Xtab *tab);
 int correspondence (const double *x, const double *y,
 		    int n, int *err);
 
-int model_error_dist (const MODEL *pmod, DATASET *dset, 
+int model_error_dist (const MODEL *pmod, DATASET *dset,
 		      gretlopt opt, PRN *prn);
 
 int auto_acf_order (int T);
@@ -196,40 +197,40 @@ int auto_spectrum_order (int T, gretlopt opt);
 int corrgram (int varno, int order, int nparam,
 	      DATASET *dset, gretlopt opt, PRN *prn);
 
-int xcorrgram (const int *list, int order, 
+int xcorrgram (const int *list, int order,
 	       DATASET *dset, gretlopt opt, PRN *prn);
 
-int periodogram (int varno, int width, 
-		 const DATASET *dset, 
+int periodogram (int varno, int width,
+		 const DATASET *dset,
 		 gretlopt opt, PRN *prn);
 
-int residual_periodogram (const double *x, int width, 
-			  const DATASET *dset, 
+int residual_periodogram (const double *x, int width,
+			  const DATASET *dset,
 			  gretlopt opt, PRN *prn);
 
 gretl_matrix *periodogram_matrix (const double *x, int t1, int t2,
 				  int width, int *err);
 
-int fractint (int varno, int order, 
-	      const DATASET *dset, 
+int fractint (int varno, int order,
+	      const DATASET *dset,
 	      gretlopt opt, PRN *prn);
 
 Summary *get_summary (const int *list, const DATASET *dset,
-		      gretlopt opt, PRN *prn, 
+		      gretlopt opt, PRN *prn,
 		      int *err);
 
-Summary *get_summary_weighted (const int *list, const DATASET *dset, 
-			       int var, gretlopt opt, PRN *prn, 
+Summary *get_summary_weighted (const int *list, const DATASET *dset,
+			       int var, gretlopt opt, PRN *prn,
 			       int *err);
 
-Summary *get_summary_restricted (const int *list, 
-				 const DATASET *dset, 
+Summary *get_summary_restricted (const int *list,
+				 const DATASET *dset,
 				 const double *rv,
-				 gretlopt opt, PRN *prn, 
+				 gretlopt opt, PRN *prn,
 				 int *err);
 
-int list_summary (const int *list, int wgtvar, 
-		  const DATASET *dset, 
+int list_summary (const int *list, int wgtvar,
+		  const DATASET *dset,
 		  gretlopt opt, PRN *prn);
 
 int summary_statistics_by (const int *list, DATASET *dset,
@@ -237,7 +238,7 @@ int summary_statistics_by (const int *list, DATASET *dset,
 
 void print_summary (const Summary *summ,
 		    const DATASET *dset,
-		    PRN *prn); 
+		    PRN *prn);
 
 void print_summary_single (const Summary *s,
 			   int digits, int places,
@@ -255,31 +256,31 @@ VMatrix *vmatrix_new (void);
 
 void free_vmatrix (VMatrix *vmat);
 
-int gretl_corrmx (int *list, const DATASET *dset, 
+int gretl_corrmx (int *list, const DATASET *dset,
 		  gretlopt opt, PRN *prn);
 
 int satterthwaite_df (double v1, int n1,
 		      double v2, int n2);
 
-int means_test (const int *list, const DATASET *dset, 
+int means_test (const int *list, const DATASET *dset,
 		gretlopt opt, PRN *prn);
 
-int vars_test (const int *list, const DATASET *dset, 
+int vars_test (const int *list, const DATASET *dset,
 	       PRN *prn);
 
 void print_corrmat (VMatrix *corr, const DATASET *dset, PRN *prn);
 
 double doornik_chisq (double skew, double xkurt, int n);
 
-int multivariate_normality_test (const gretl_matrix *E, 
-				 const gretl_matrix *Sigma, 
+int multivariate_normality_test (const gretl_matrix *E,
+				 const gretl_matrix *Sigma,
 				 gretlopt opt, PRN *prn);
 
-int mahalanobis_distance (const int *list, DATASET *dset, 
+int mahalanobis_distance (const int *list, DATASET *dset,
 			  gretlopt opt, PRN *prn);
 
-MahalDist *get_mahal_distances (const int *list, DATASET *dset, 
-				gretlopt opt, PRN *prn, 
+MahalDist *get_mahal_distances (const int *list, DATASET *dset,
+				gretlopt opt, PRN *prn,
 				int *err);
 
 void free_mahal_dist (MahalDist *md);

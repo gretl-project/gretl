@@ -89,7 +89,7 @@ int gretl_minmax (int t1, int t2, const double *x,
     *max = *min = NADBL;
 
     for (t=t1; t<=t2; t++) {
-	if (!(na(x[t]))) {
+	if (!na(x[t])) {
 	    if (n == 0) {
 		*max = *min = x[t];
 	    } else {
@@ -98,6 +98,19 @@ int gretl_minmax (int t1, int t2, const double *x,
 	    }
 	    n++;
 	}
+    }
+
+    return n;
+}
+
+static int summary_minmax (int t1, int t2, const double *x,
+			   Summary *summ, int i)
+{
+    int n = gretl_minmax(t1, t2, x, &summ->low[i], &summ->high[i]);
+
+    if (summ->high[i] > 1.0e5 && summ->high[i] < 1.0e10) {
+	/* 2024-05-29: add check for big integers */
+	summ->ival[i] = gretl_isint(t1, t2, x);
     }
 
     return n;
@@ -4998,35 +5011,22 @@ int fractint (int varno, int order, const DATASET *dset,
     return err;
 }
 
-static void printf15 (double x, int d, PRN *prn)
+static void printfw (int w, double x, int d, int ival, PRN *prn)
 {
+    w = w - 1; /* allow for leading space */
     pputc(prn, ' ');
     if (na(x)) {
-	pprintf(prn, "%*s", UTF_WIDTH(_("NA"), 14), _("NA"));
+	pprintf(prn, "%*s", UTF_WIDTH(_("NA"), w), _("NA"));
+    } else if (ival) {
+	pprintf(prn, "%*.0f", w, x);
     } else if (x > 999 && x < 100000) {
 	int p = 1 + floor(log10(x));
 
 	d -= p;
 	if (d < 0) d = 0;
-	pprintf(prn, "%14.*f", d, x);
+	pprintf(prn, "%*.*f", w, d, x);
     } else {
-	pprintf(prn, "%#14.*g", d, x);
-    }
-}
-
-static void printf11 (double x, int d, PRN *prn)
-{
-    pputc(prn, ' ');
-    if (na(x)) {
-	pprintf(prn, "%*s", UTF_WIDTH(_("NA"), 10), _("NA"));
-    } else if (x > 999 && x < 100000) {
-	int p = 1 + floor(log10(x));
-
-	d -= p;
-	if (d < 0) d = 0;
-	pprintf(prn, "%10.*f", d, x);
-    } else {
-	pprintf(prn, "%#10.*g", d, x);
+	pprintf(prn, "%#*.*g", w, d, x);
     }
 }
 
@@ -5061,27 +5061,21 @@ static void prhdr (const char *str, const DATASET *dset,
     }
 }
 
-static void summary_print_val (double x, int digits, int places,
-			       PRN *prn)
+static void summary_print_val (int w, double x, int digits,
+			       int places, PRN *prn)
 {
     pputc(prn, ' ');
-
     if (na(x)) {
-	pprintf(prn, "%*s", UTF_WIDTH(_("NA"), 14), _("NA"));
+	pprintf(prn, "%*s", UTF_WIDTH(_("NA"), w), _("NA"));
     } else if (digits < 0) {
-	pprintf(prn, "%14d", (int) x);
-    } else if (digits > 0 || places > 0) {
-	int prec = (digits > 0)? digits : places;
-	int len = prec + 9;
-	char *s = (digits > 0)? "#" : "";
-	char t = (digits > 0)? 'g' : 'f';
-	char fmt[32];
-
-	sprintf(fmt, "%%%s%d.%d%c", s, len, prec, t);
-	pprintf(prn, fmt, x);
+	pprintf(prn, "%*.0f", w, x);
+    } else if (digits > 0) {
+	pprintf(prn, "%#*.*g", w, digits, x);
+    } else if (places > 0) {
+	pprintf(prn, "%*.*f", w, places, x);
     } else {
 	/* the default */
-	pprintf(prn, "%#14.5g", x);
+	pprintf(prn, "%#*.5g", w, x);
     }
 }
 
@@ -5195,10 +5189,10 @@ void print_summary_single (const Summary *s,
 	} else {
 	    pprintf(prn, "%-*s", UTF_WIDTH(_(labels[i]), slen), _(labels[i]));
 	}
-	if (i == NSUMM - 1) {
-	    summary_print_val(vals[i], -1, places, prn);
+	if (i == NSUMM - 1 || s->ival[0]) {
+	    summary_print_val(14, vals[i], -1, places, prn);
 	} else {
-	    summary_print_val(vals[i], digits, places, prn);
+	    summary_print_val(14, vals[i], digits, places, prn);
 	}
 	pputc(prn, '\n');
     }
@@ -5207,11 +5201,11 @@ void print_summary_single (const Summary *s,
 	pputc(prn, '\n');
 	bufspace(offset, prn);
 	pprintf(prn, "%-*s", UTF_WIDTH(_(wstr), slen), _(wstr));
-	summary_print_val(s->sw, digits, places, prn);
+	summary_print_val(14, s->sw, digits, places, prn);
 	pputc(prn, '\n');
 	bufspace(offset, prn);
 	pprintf(prn, "%-*s", UTF_WIDTH(_(bstr), slen), _(bstr));
-	summary_print_val(s->sb, digits, places, prn);
+	summary_print_val(14, s->sb, digits, places, prn);
     }
 
     pputc(prn, '\n');
@@ -5240,7 +5234,8 @@ void print_summary (const Summary *summ,
 		    PRN *prn)
 {
     int dmax, d = get_gretl_digits();
-    int len, maxlen = 0;
+    int nv = summ->list[0];
+    int len = 0;
     int i, vi;
 
     if (summ->list == NULL || summ->list[0] == 0) {
@@ -5253,25 +5248,20 @@ void print_summary (const Summary *summ,
 		       dset->varname[summ->weight_var]);
     }
 
-    if (summ->list[0] == 1) {
-	print_summary_single(summ, 0, 0, dset, prn);
+    if (nv == 1 && !(summ->opt & OPT_B)) {
+	print_summary_single(summ, 6, 0, dset, prn);
 	return;
     }
 
     /* number of significant figures to use */
-    dmax = (summ->opt & OPT_S)? 4 : 5;
+    dmax = 5; //(summ->opt & OPT_S)? 4 : 5;
     d = d > dmax ? dmax : d;
 
-    maxlen = max_namelen_in_list(summ->list, dset);
-    len = maxlen <= 8 ? 10 : (maxlen + 1);
+    if (nv > 1) {
+	int maxlen = max_namelen_in_list(summ->list, dset);
 
-#if 0
-    if (!(summ->opt & OPT_B)) {
-	int missing = summary_has_missing_values(summ);
-
-	prhdr(_("Summary statistics"), dset, missing, prn);
+	len = maxlen + 1;
     }
-#endif
 
     pputc(prn, '\n');
 
@@ -5285,22 +5275,30 @@ void print_summary (const Summary *summ,
 	    N_("Min"),
 	    N_("Max"),
 	};
+	int w = 12;
+	int ival;
 
-	pprintf(prn, "%*s%*s%*s%*s%*s%*s\n", len, " ",
-		UTF_WIDTH(_(h[0]), 11), _(h[0]),
-		UTF_WIDTH(_(h[1]), 11), _(h[1]),
-		UTF_WIDTH(_(h[2]), 11), _(h[2]),
-		UTF_WIDTH(_(h[3]), 11), _(h[3]),
-		UTF_WIDTH(_(h[4]), 11), _(h[4]));
+	if (len > 0) {
+	    pprintf(prn, "%*s", len, " ");
+	}
+	pprintf(prn, "%*s%*s%*s%*s%*s\n",
+		UTF_WIDTH(_(h[0]), w), _(h[0]),
+		UTF_WIDTH(_(h[1]), w), _(h[1]),
+		UTF_WIDTH(_(h[2]), w), _(h[2]),
+		UTF_WIDTH(_(h[3]), w), _(h[3]),
+		UTF_WIDTH(_(h[4]), w), _(h[4]));
 
 	for (i=0; i<summ->list[0]; i++) {
 	    vi = summ->list[i+1];
-	    summary_print_varname(dset->varname[vi], len, prn);
-	    printf11(summ->mean[i], d, prn);
-	    printf11(summ->median[i], d, prn);
-	    printf11(summ->sd[i], d, prn);
-	    printf11(summ->low[i], d, prn);
-	    printf11(summ->high[i], d, prn);
+	    ival = summ->ival[i];
+	    if (nv > 1) {
+		summary_print_varname(dset->varname[vi], len, prn);
+	    }
+	    printfw(w, summ->mean[i], d, ival, prn);
+	    printfw(w, summ->median[i], d, ival, prn);
+	    printfw(w, summ->sd[i], d, ival, prn);
+	    printfw(w, summ->low[i], d, ival, prn);
+	    printfw(w, summ->high[i], d, ival, prn);
 	    pputc(prn, '\n');
 	}
 	pputc(prn, '\n');
@@ -5328,20 +5326,25 @@ void print_summary (const Summary *summ,
 	};
 	/* cases where 0.05 and 0.95 quantiles are OK */
 	int npct = 0;
+	int w = 15;
+	int ival;
 
 	pprintf(prn, "%*s%*s%*s%*s%*s\n", len, " ",
-		UTF_WIDTH(_(ha[0]), 15), _(ha[0]),
-		UTF_WIDTH(_(ha[1]), 15), _(ha[1]),
-		UTF_WIDTH(_(ha[2]), 15), _(ha[2]),
-		UTF_WIDTH(_(ha[3]), 15), _(ha[3]));
+		UTF_WIDTH(_(ha[0]), w), _(ha[0]),
+		UTF_WIDTH(_(ha[1]), w), _(ha[1]),
+		UTF_WIDTH(_(ha[2]), w), _(ha[2]),
+		UTF_WIDTH(_(ha[3]), w), _(ha[3]));
 
 	for (i=0; i<summ->list[0]; i++) {
 	    vi = summ->list[i+1];
-	    summary_print_varname(dset->varname[vi], len, prn);
-	    printf15(summ->mean[i], d, prn);
-	    printf15(summ->median[i], d, prn);
-	    printf15(summ->low[i], d, prn);
-	    printf15(summ->high[i], d, prn);
+	    ival = summ->ival[i];
+	    if (nv > 1) {
+		summary_print_varname(dset->varname[vi], len, prn);
+	    }
+	    printfw(w, summ->mean[i], d, ival, prn);
+	    printfw(w, summ->median[i], d, ival, prn);
+	    printfw(w, summ->low[i], d, ival, prn);
+	    printfw(w, summ->high[i], d, ival, prn);
 	    pputc(prn, '\n');
 	    /* while we're at it, register cases where we can
 	       show the 0.05 and 0.95 quantiles
@@ -5353,17 +5356,19 @@ void print_summary (const Summary *summ,
 	pputc(prn, '\n');
 
 	pprintf(prn, "%*s%*s%*s%*s%*s\n", len, " ",
-		UTF_WIDTH(_(hb[0]), 15), _(hb[0]),
-		UTF_WIDTH(_(hb[1]), 15), _(hb[1]),
-		UTF_WIDTH(_(hb[2]), 15), _(hb[2]),
-		UTF_WIDTH(_(hb[3]), 15), _(hb[3]));
+		UTF_WIDTH(_(hb[0]), w), _(hb[0]),
+		UTF_WIDTH(_(hb[1]), w), _(hb[1]),
+		UTF_WIDTH(_(hb[2]), w), _(hb[2]),
+		UTF_WIDTH(_(hb[3]), w), _(hb[3]));
 
 	for (i=0; i<summ->list[0]; i++) {
 	    double cv;
 
 	    vi = summ->list[i+1];
-	    summary_print_varname(dset->varname[vi], len, prn);
-
+	    ival = summ->ival[i];
+	    if (nv > 1) {
+		summary_print_varname(dset->varname[vi], len, prn);
+	    }
 	    if (floateq(summ->mean[i], 0.0)) {
 		cv = NADBL;
 	    } else if (floateq(summ->sd[i], 0.0)) {
@@ -5371,11 +5376,10 @@ void print_summary (const Summary *summ,
 	    } else {
 		cv = fabs(summ->sd[i] / summ->mean[i]);
 	    }
-
-	    printf15(summ->sd[i], d, prn);
-	    printf15(cv, d, prn);
-	    printf15(summ->skew[i], d, prn);
-	    printf15(summ->xkurt[i], d, prn);
+	    printfw(w, summ->sd[i], d, ival, prn);
+	    printfw(w, cv, d, 0, prn);
+	    printfw(w, summ->skew[i], d, 0, prn);
+	    printfw(w, summ->xkurt[i], d, 0, prn);
 	    pputc(prn, '\n');
 	}
 	pputc(prn, '\n');
@@ -5387,36 +5391,39 @@ void print_summary (const Summary *summ,
 	    int n;
 
 	    pprintf(prn, "%*s", len, " ");
-	    n = 15 - g_utf8_strlen(hc0, -1);
+	    n = w - g_utf8_strlen(hc0, -1);
 	    if (n > 0) bufspace(n, prn);
 	    pputs(prn, hc0);
-	    n = 15 - g_utf8_strlen(hc1, -1);
+	    n = w - g_utf8_strlen(hc1, -1);
 	    if (n > 0) bufspace(n, prn);
 	    pputs(prn, hc1);
 	    g_free(hc0); g_free(hc1);
 
 	    pprintf(prn, "%*s%*s\n",
-		    UTF_WIDTH(_(ha[2]), 15), _(hc[2]),
-		    UTF_WIDTH(_(ha[3]), 15), _(hc[3]));
+		    UTF_WIDTH(_(ha[2]), w), _(hc[2]),
+		    UTF_WIDTH(_(ha[3]), w), _(hc[3]));
 	} else {
 	    /* not showing any 0.05, 0.95 quantiles */
 	    pprintf(prn, "%*s%*s%*s\n", len, " ",
-		    UTF_WIDTH(_(ha[2]), 15), _(hc[2]),
-		    UTF_WIDTH(_(ha[3]), 15), _(hc[3]));
+		    UTF_WIDTH(_(ha[2]), w), _(hc[2]),
+		    UTF_WIDTH(_(ha[3]), w), _(hc[3]));
 	}
 
 	for (i=0; i<summ->list[0]; i++) {
 	    vi = summ->list[i+1];
-	    summary_print_varname(dset->varname[vi], len, prn);
-	    if (!na(summ->perc05[i]) && !na(summ->perc95[i])) {
-		printf15(summ->perc05[i], d, prn);
-		printf15(summ->perc95[i], d, prn);
-	    } else if (npct > 0) {
-		pprintf(prn, "%*s", 15, "NA");
-		pprintf(prn, "%*s", 15, "NA");
+	    ival = summ->ival[i];
+	    if (nv > 1) {
+		summary_print_varname(dset->varname[vi], len, prn);
 	    }
-	    printf15(summ->iqr[i], d, prn);
-	    pprintf(prn, "%15d", (int) summ->misscount[i]);
+	    if (!na(summ->perc05[i]) && !na(summ->perc95[i])) {
+		printfw(w, summ->perc05[i], d, ival, prn);
+		printfw(w, summ->perc95[i], d, ival, prn);
+	    } else if (npct > 0) {
+		pprintf(prn, "%*s", w, "NA");
+		pprintf(prn, "%*s", w, "NA");
+	    }
+	    printfw(w, summ->iqr[i], d, ival, prn);
+	    pprintf(prn, "%*d", w, (int) summ->misscount[i]);
 	    pputc(prn, '\n');
 	}
 	pputc(prn, '\n');
@@ -5436,6 +5443,7 @@ void free_summary (Summary *summ)
     free(summ->list);
     free(summ->misscount);
     free(summ->stats);
+    free(summ->ival);
 
     free(summ);
 }
@@ -5481,6 +5489,7 @@ static Summary *summary_new (const int *list, int wv,
     s->opt = opt;
     s->n = 0;
     s->misscount = malloc(nv * sizeof *s->misscount);
+    s->ival = calloc(nv, sizeof *s->ival);
 
     s->stats = malloc(11 * nv * sizeof *s->stats);
     if (s->stats == NULL) {
@@ -5521,7 +5530,7 @@ int summary_has_missing_values (const Summary *summ)
     return 0;
 }
 
-static int compare_wgtord_rows (const void *a, const void *b)
+static int compare_wgt_ord_rows (const void *a, const void *b)
 {
     const double **da = (const double **) a;
     const double **db = (const double **) b;
@@ -5556,7 +5565,7 @@ static int weighted_order_stats (const double *y, const double *w,
 	}
     }
 
-    qsort(X, i, sizeof *X, compare_wgtord_rows);
+    qsort(X, i, sizeof *X, compare_wgt_ord_rows);
 
     for (i=0; i<k; i++) {
 	p = ostats[i] * wsum;
@@ -5679,7 +5688,7 @@ Summary *get_summary_weighted (const int *list, const DATASET *dset,
 	    pkurt = &s->xkurt[i];
 	}
 
-	gretl_minmax(t1, t2, x, &s->low[i], &s->high[i]);
+	summary_minmax(t1, t2, x, s, i);
 	gretl_moments(t1, t2, x, wts, &s->mean[i], &s->sd[i], pskew, pkurt, 1);
 
 	if (!(opt & OPT_S)) {
@@ -5846,7 +5855,7 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 	    pkurt = &s->xkurt[i];
 	}
 
-	gretl_minmax(t1, t2, x, &s->low[i], &s->high[i]);
+	summary_minmax(t1, t2, x, s, i);
 	gretl_moments(t1, t2, x, NULL, &s->mean[i], &s->sd[i], pskew, pkurt, 1);
 	s->median[i] = gretl_median(t1, t2, x);
 
@@ -5937,7 +5946,7 @@ Summary *get_summary (const int *list, const DATASET *dset,
 	    pkurt = &s->xkurt[i];
 	}
 
-	gretl_minmax(t1, t2, x, &s->low[i], &s->high[i]);
+	summary_minmax(t1, t2, x, s, i);
 
 	if (s->weight_var == 0) {
 	    gretl_moments(t1, t2, x, NULL, &s->mean[i], &s->sd[i],
@@ -6316,13 +6325,15 @@ int summary_statistics_by (const int *list, DATASET *dset,
             if (i == 0) {
                 pputc(prn, '\n');
             }
+#if 0 /* 2024-05-29 */
             if (single) {
                 bufspace(2, prn);
             }
+#endif
             if (st != NULL) {
-                const char *s = series_table_get_string(st, xi);
+                const char *si = series_table_get_string(st, xi);
 
-                pprintf(prn, "%s = %s (n = %d):\n", byname, s, summ->n);
+                pprintf(prn, "%s (n = %d):", si, summ->n);
             } else {
                 pprintf(prn, "%s = %g (n = %d):\n", byname, xi, summ->n);
             }
