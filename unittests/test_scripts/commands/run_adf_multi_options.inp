@@ -1,0 +1,18 @@
+/*
+Reported here:
+https://gretlml.univpm.it/hyperkitty/list/gretl-devel@gretlml.univpm.it/message/HHZSVAN3M6DF7PABNWBY6AB3EG2J3XGS/
+*/
+
+set verbose off
+set assert stop
+clear
+open australia --quiet
+
+catch adf 3 PAU --nc --c --ct --ctt
+assert($error == FALSE)
+
+catch adf 3 PAU --gls --nc --c --ct --ctt
+assert($error == FALSE)
+
+print "Successfully finished tests."
+quit
