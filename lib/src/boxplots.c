@@ -206,7 +206,11 @@ static void six_numbers (BOXPLOT *p, int do_mean, PRN *prn)
         if (bpna(p->mean)) {
             pprintf(prn, "%11s", "NA");
         } else {
+#ifdef G_OS_WIN32
+            pprintf(prn, "%#11.4g", p->mean);
+#else
             pprintf(prn, "%#11.5g", p->mean);
+#endif
         }
     }
 
@@ -214,7 +218,11 @@ static void six_numbers (BOXPLOT *p, int do_mean, PRN *prn)
         if (bpna(vals[i])) {
             pprintf(prn, "%11s", "NA");
         } else {
+#ifdef G_OS_WIN32
+            pprintf(prn, "%#11.4g", vals[i]);
+#else
             pprintf(prn, "%#11.5g", vals[i]);
+#endif
         }
     }
 
@@ -1356,8 +1364,8 @@ static void title_to_varname (PLOTGROUP *grp, const char *title)
 
 /* Given a gnuplot boxplot file created by gretl, parse out the
    "numerical summary" information.  Note that this requires a
-   strictly regimented plot file, so if you make any changes to the
-   way boxplot files are printed you should check this function for
+   strictly regimented plot file, so in case of any changes to the
+   way such files are printed this function should be checked for
    breakage.
 */
 
