@@ -6381,7 +6381,9 @@ VMatrix *vmatrix_new (void)
 	v->dim = 0;
 	v->t1 = 0;
 	v->t2 = 0;
-	v->n = 0;
+	v->nmin = 0;
+	v->nmax = 0;
+	v->ncrit = 0;
 	v->missing = 0;
     }
 
@@ -6432,11 +6434,12 @@ static int max_corrcov_matrix (VMatrix *v, const DATASET *dset,
 {
     double **Z = dset->Z;
     int i, j, vi, vj, nij;
-    int nmin, nmax = 0;
+    int nmax = v->t2 - v->t1 + 1;
     int m = v->dim;
     int nmiss;
 
-    nmin = v->n = v->t2 - v->t1 + 1;
+    v->nmin = nmax;
+    v->nmax = 0;
 
     for (i=0; i<m; i++) {
 	vi = v->list[i+1];
@@ -6455,35 +6458,39 @@ static int max_corrcov_matrix (VMatrix *v, const DATASET *dset,
 					     &nmiss);
 		}
 		if (nmiss > 0) {
-		    int n = v->n - nmiss;
+		    int n = nmax - nmiss;
 
-		    if (n < nmin && n > 0) {
-			nmin = n;
+		    if (n < v->nmin && n > 0) {
+			v->nmin = n;
 		    }
-		    if (n > nmax) {
-			nmax = n;
+		    if (n > v->nmax) {
+			v->nmax = n;
 		    }
-		    v->missing = 1;
+		    v->missing += 1;
 		} else {
-		    nmax = v->n;
+		    v->nmax = nmax;
 		}
 	    }
 	}
     }
 
-    /* We'll record an "n" value if there's something resembling
+    /* We'll record an "ncrit" value if there's something resembling
        a common number of observations across the coefficients.
+       Specifically, we require that the difference between the max
+       and min number of observations is less than 10 percent of the
+       maximum; in that case we set "n" to the minimum.
     */
-
-    if (v->missing) {
-	v->n = 0;
-	if (nmax > 0) {
-	    double d = (nmax - nmin) / (double) nmax;
+    if (v->missing > 0) {
+	v->ncrit = 0;
+	if (v->nmax > 0) {
+	    double d = (v->nmax - v->nmin) / (double) v->nmax;
 
 	    if (d < 0.10) {
-		v->n = nmin;
+		v->ncrit = v->nmin;
 	    }
 	}
+    } else {
+	v->ncrit = v->nmax;
     }
 
     return 0;
@@ -6618,7 +6625,7 @@ static int uniform_corrcov_matrix (VMatrix *v, const DATASET *dset,
 	}
     }
 
-    v->n = n;
+    v->nmax = v->nmin = v->ncrit = n;
 
     if (ci == PCA) {
 	v->xbar = xbar;
@@ -6750,17 +6757,17 @@ static void printcorr (const VMatrix *v, PRN *prn)
     } else {
 	pprintf(prn, " = %.8f\n", r);
 	if (fabs(r) < 1.0) {
-	    int n2 = v->n - 2;
-	    double tval = r * sqrt(n2 / (1 - r*r));
+	    int nm2 = v->ncrit - 2;
+	    double tval = r * sqrt(nm2 / (1 - r*r));
 
 	    pputs(prn, _("Under the null hypothesis of no correlation:\n "));
-	    pprintf(prn, _("t(%d) = %g, with two-tailed p-value %.4f\n"), n2,
-		    tval, student_pvalue_2(n2, tval));
+	    pprintf(prn, _("t(%d) = %g, with two-tailed p-value %.4f\n"),
+		    nm2, tval, student_pvalue_2(nm2, tval));
 	    pputc(prn, '\n');
 	} else {
-	    pprintf(prn, _("Two-tailed critical values for n = %d"), v->n);
-	    pprintf(prn, ": 5%% %.4f, 1%% %.4f\n", rhocrit(v->n, 0.05),
-		    rhocrit(v->n, 0.01));
+	    pprintf(prn, _("Two-tailed critical values for n = %d"), v->ncrit);
+	    pprintf(prn, ": 5%% %.4f, 1%% %.4f\n", rhocrit(v->ncrit, 0.05),
+		    rhocrit(v->ncrit, 0.01));
 	    pputc(prn, '\n');
 	}
     }
@@ -6788,19 +6795,30 @@ void print_corrmat (VMatrix *corr, const DATASET *dset, PRN *prn)
 
 	pputc(prn, '\n');
 
-	tmp = g_strdup_printf(_("%s, using the observations %s - %s"),
-			      _("Correlation Coefficients"), date1, date2);
+	if (corr->nmin == corr->t2 - corr->t1 + 1) {
+	    tmp = g_strdup_printf(_("%s, using the %d observations %s - %s"),
+				  _("Correlation Coefficients"), corr->ncrit,
+				  date1, date2);
+	} else if (corr->nmin == corr->nmax) {
+	    tmp = g_strdup_printf(_("%s, using %d observations from %s - %s"),
+				  _("Correlation Coefficients"), corr->ncrit,
+				  date1, date2);
+	} else {
+	    tmp = g_strdup_printf(_("%s, using samples of size %d to %d"),
+				  _("Correlation Coefficients"),
+				  corr->nmin, corr->nmax);
+	}
 	output_line(tmp, prn, 0);
 	g_free(tmp);
 
-	if (corr->missing) {
+	if (corr->missing > 0) {
 	    output_line(_("(missing values were skipped)"), prn, 1);
 	}
 
-	if (corr->n > 0) {
-	    pprintf(prn, _("Two-tailed critical values for n = %d"), corr->n);
-	    pprintf(prn, ": 5%% %.4f, 1%% %.4f\n", rhocrit(corr->n, 0.05),
-		    rhocrit(corr->n, 0.01));
+	if (corr->ncrit > 0) {
+	    pprintf(prn, _("Two-tailed critical values for n = %d"), corr->ncrit);
+	    pprintf(prn, ": 5%% %.4f, 1%% %.4f\n", rhocrit(corr->ncrit, 0.05),
+		    rhocrit(corr->ncrit, 0.01));
 	    pputc(prn, '\n');
 	}
 

@@ -5859,7 +5859,7 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
 	}
     }
 
-    df = corr->n - 2;
+    df = corr->ncrit - 2;
     if (df > 1) {
 	/* determine 20% critical value */
 	double tc = student_critval(df, 0.10);

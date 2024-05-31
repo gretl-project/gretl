@@ -1327,8 +1327,7 @@ int call_pca_plugin (VMatrix *cmat, DATASET *dset,
     return (*pca_from_cmatrix) (cmat, dset, opt, prn);
 }
 
-static int do_pca (int *list, DATASET *dset,
-                   gretlopt opt, PRN *prn)
+static int do_pca (int *list, DATASET *dset, gretlopt opt, PRN *prn)
 {
     int freelist = 0;
     int err = 0;
@@ -1345,9 +1344,10 @@ static int do_pca (int *list, DATASET *dset,
     if (list != NULL) {
         VMatrix *cmat = NULL;
 
-        /* adding OPT_U ensures a uniform sample for the
-           correlation or covariance matrix */
-        cmat = corrlist(PCA, list, dset, opt, &err);
+        /* adding OPT_N ensures a uniform sample for the correlation
+           or covariance matrix
+	*/
+        cmat = corrlist(PCA, list, dset, opt | OPT_N, &err);
         if (!err) {
             err = call_pca_plugin(cmat, dset, opt, prn);
             if (!err && (opt & (OPT_O | OPT_A))) {

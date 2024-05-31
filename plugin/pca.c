@@ -198,7 +198,7 @@ static void pca_print (VMatrix *cmat, gretl_matrix *E,
     int i, j;
 
     pprintf(prn, "%s\n", _("Principal Components Analysis"));
-    pprintf(prn, "n = %d", cmat->n);
+    pprintf(prn, "n = %d", cmat->nmax);
     if (cmat->missing > 0) {
 	pprintf(prn, _(" (dropped %d incomplete observations)"),
 		cmat->missing);
@@ -276,7 +276,7 @@ static int standardize (double *sy, const double *y,
     }
 
     if (v->ci == CORR) {
-	double sd = sqrt(v->ssx[i] / (v->n - 1));
+	double sd = sqrt(v->ssx[i] / (v->nmax - 1));
 
 	for (t=0; t<n; t++) {
 	    if (mask != NULL && mask[t]) {
@@ -334,7 +334,7 @@ static int pca_save_components (VMatrix *cmat,
 	   will be less than (cmat->t2 - cmat->t1 + 1) and
 	   we'll need a missing-values mask
 	*/
-	n = cmat->n + cmat->missing;
+	n = cmat->nmax + cmat->missing;
 	mask = calloc(n, 1);
 	for (s=0; s<n; s++) {
 	    for (i=0; i<k; i++) {
@@ -347,7 +347,7 @@ static int pca_save_components (VMatrix *cmat,
 	    }
 	}
     } else {
-	n = cmat->n;
+	n = cmat->nmax;
     }
 
     err = dataset_add_series(dset, m);
@@ -410,9 +410,9 @@ static int pca_save_components (VMatrix *cmat,
 
 /* The incoming options here:
 
-   CLI: the option may be OPT_O (save the first XX components) or
-   OPT_A (save all the components). OPT_Q suppresses printing of
-   the results.
+   CLI: the option may be OPT_O (save the first @nsave components) or
+   OPT_A (save all the components); OPT_Q suppresses printing of the
+   results.
 
    GUI: no option (simply display the results) or OPT_D. The latter
    means that we should not display the results, but should put up a
@@ -444,6 +444,7 @@ int pca_from_cmatrix (VMatrix *cmat, DATASET *dset,
 	    return 0;
 	}
     } else if (opt & OPT_O) {
+	/* how many components to save? */
 	nsave = get_optval_int(PCA, OPT_O, &err);
 	if (err) {
 	    return err;

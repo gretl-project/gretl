@@ -335,7 +335,9 @@ typedef struct DATASET_ {
 typedef struct VMatrix_ {
     int ci;
     int dim;
-    int t1, t2, n;
+    int t1, t2;
+    int nmin, nmax;
+    int ncrit; /* for assessing critical values */
     char **names;
     double *vec;
     double *xbar;
