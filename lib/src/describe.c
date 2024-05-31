@@ -6478,7 +6478,7 @@ static int max_corrcov_matrix (VMatrix *v, const DATASET *dset,
        a common number of observations across the coefficients.
        Specifically, we require that the difference between the max
        and min number of observations is less than 10 percent of the
-       maximum; in that case we set "n" to the minimum.
+       maximum; in that case we set "ncrit" to the minimum.
     */
     if (v->missing > 0) {
 	v->ncrit = 0;
