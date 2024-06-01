@@ -1,7 +1,13 @@
 version 2024c, in progress
 - Appending data via the GUI: support the fixed-sample option
+- "summary" command with --by option: provide a $result matrix
+  if the list argument contains a single series, and improve
+  the format of the printout
+- "corr" command: be more explicit about the sample(s) used
 - Fix bug: append via console not updating series list in the
   main gretl window
+- Fix bug: console command-line broken following use of "printf"
+  with no newline in the format
 - Fix bug in "corrgm" command: spurious signifiance stars shown
   for the PACF when the --bartlett option is given
 - Fix bug in "adf" command (without the --gls option): error if
