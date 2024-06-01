@@ -5254,7 +5254,7 @@ void print_summary (const Summary *summ,
     }
 
     /* number of significant figures to use */
-    dmax = 5; //(summ->opt & OPT_S)? 4 : 5;
+    dmax = 5; // was: (summ->opt & OPT_S)? 4 : 5;
     d = d > dmax ? dmax : d;
 
     if (nv > 1) {
@@ -5329,7 +5329,10 @@ void print_summary (const Summary *summ,
 	int w = 15;
 	int ival;
 
-	pprintf(prn, "%*s%*s%*s%*s%*s\n", len, " ",
+	if (len > 0) {
+	    pprintf(prn, "%*s", len, " ");
+	}
+	pprintf(prn, "%*s%*s%*s%*s\n",
 		UTF_WIDTH(_(ha[0]), w), _(ha[0]),
 		UTF_WIDTH(_(ha[1]), w), _(ha[1]),
 		UTF_WIDTH(_(ha[2]), w), _(ha[2]),
@@ -5355,7 +5358,10 @@ void print_summary (const Summary *summ,
 	}
 	pputc(prn, '\n');
 
-	pprintf(prn, "%*s%*s%*s%*s%*s\n", len, " ",
+	if (len > 0) {
+	    pprintf(prn, "%*s", len, " ");
+	}
+	pprintf(prn, "%*s%*s%*s%*s\n",
 		UTF_WIDTH(_(hb[0]), w), _(hb[0]),
 		UTF_WIDTH(_(hb[1]), w), _(hb[1]),
 		UTF_WIDTH(_(hb[2]), w), _(hb[2]),
@@ -5390,7 +5396,9 @@ void print_summary (const Summary *summ,
 	    gchar *hc1 = g_strdup(_(hc[1]));
 	    int n;
 
-	    pprintf(prn, "%*s", len, " ");
+	    if (len > 0) {
+		pprintf(prn, "%*s", len, " ");
+	    }
 	    n = w - g_utf8_strlen(hc0, -1);
 	    if (n > 0) bufspace(n, prn);
 	    pputs(prn, hc0);
@@ -5404,7 +5412,10 @@ void print_summary (const Summary *summ,
 		    UTF_WIDTH(_(ha[3]), w), _(hc[3]));
 	} else {
 	    /* not showing any 0.05, 0.95 quantiles */
-	    pprintf(prn, "%*s%*s%*s\n", len, " ",
+	    if (len > 0) {
+		pprintf(prn, "%*s", len, " ");
+	    }
+	    pprintf(prn, "%*s%*s\n",
 		    UTF_WIDTH(_(ha[2]), w), _(hc[2]),
 		    UTF_WIDTH(_(ha[3]), w), _(hc[3]));
 	}
