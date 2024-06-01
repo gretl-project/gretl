@@ -2134,7 +2134,7 @@
 	computing each pairwise coefficient, but if the option box is
 	checked the sample is limited (if necessary) so that the same
 	set of observations is used for all the coefficients.  This
-	option has an effect only if there are differing numbers of
+	option has an effect only if there are differing patterns of
 	missing values for the variables used.
       </para>
     </description>
@@ -2186,7 +2186,13 @@
       </para>
       <para>
 	The <fncref targ="$result"/> accessor can be used to obtain
-	the correlations as a matrix.
+	the correlations as a matrix. Note that if it's this
+	<emphasis>matrix</emphasis> that's of interest, not just the
+	pairwise coefficients, then in the presence of missing values
+	it's advisable to use the <opt>uniform</opt> option.  Unless a
+	common sample is used for all the correlations it is not
+	guaranteed that the correlation matrix will be positive
+	semi-definite, as it ought to be by construction.
       </para>
     </description>
 
@@ -14216,8 +14222,7 @@
 	  (the default being 6). This setting can also be used to
 	  limit the number of digits shown by the <cmdref
 	  targ="summary"/> command; in this case the default (and also
-	  the maximum) is 5, or 4 when the <opt>simple</opt> option
-	  is given.
+	  the maximum) is 5.
 	  </para>
 	</li>
 	<li>
@@ -15927,7 +15932,14 @@
       <para>
 	The table of statistics produced by <lit>summary</lit> can be
 	retrieved in matrix form via the <fncref targ="$result"/>
-	accessor.
+	accessor. When the <opt>by</opt> option is given, this
+	accessor is produced only if <repl>varlist</repl> contains a
+	single series.
+      </para>
+      <para>
+	See also the <fncref targ="aggregate"/> function for a more
+	flexible means of producing <quote>factorized</quote>
+	statistics.
       </para>
     </description>
 
