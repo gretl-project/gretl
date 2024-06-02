@@ -6649,6 +6649,49 @@ static int uniform_corrcov_matrix (VMatrix *v, const DATASET *dset,
     return 0;
 }
 
+static void corrlist_adjust_sample (const int *list, int *t1, int *t2,
+				    const DATASET *dset)
+{
+    int t1min = *t1;
+    int t2max = *t2;
+    int k = list[0];
+    int nmiss;
+    int i, t;
+
+    /* advance start of sample range to skip any all-missing obs */
+    for (t=t1min; t<t2max; t++) {
+	nmiss = 0;
+	for (i=1; i<=k; i++) {
+	    if (na(dset->Z[list[i]][t])) {
+		nmiss++;
+	    }
+	}
+	if (nmiss == k) {
+	    t1min++;
+	} else {
+	    break;
+	}
+    }
+
+    /* retard end of sample range to skip any all-missing obs */
+    for (t=t2max; t>t1min; t--) {
+	nmiss = 0;
+	for (i=1; i<=k; i++) {
+	    if (na(dset->Z[list[i]][t])) {
+		nmiss++;
+	    }
+	}
+	if (nmiss == k) {
+	    t2max--;
+	} else {
+	    break;
+	}
+    }
+
+    *t1 = t1min;
+    *t2 = t2max;
+}
+
 /**
  * corrlist:
  * @ci: command index.
@@ -6671,9 +6714,8 @@ VMatrix *corrlist (int ci, int *list, const DATASET *dset,
 		   gretlopt opt, int *err)
 {
     int flag = (opt & OPT_C)? COVMAT : CORRMAT;
-    VMatrix *v;
+    VMatrix *v = NULL;
     int i, m, mm;
-    int nmiss = 0;
 
     if (list == NULL) {
 	fprintf(stderr, "corrlist: list is NULL\n");
@@ -6704,7 +6746,7 @@ VMatrix *corrlist (int ci, int *list, const DATASET *dset,
     v->t2 = dset->t2;
 
     /* adjust sample range if need be */
-    list_adjust_sample(list, &v->t1, &v->t2, dset, &nmiss);
+    corrlist_adjust_sample(list, &v->t1, &v->t2, dset);
 
     if (v->t2 - v->t1 + 1 < 3) {
 	*err = E_TOOFEW;
