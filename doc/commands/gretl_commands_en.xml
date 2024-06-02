@@ -2190,9 +2190,9 @@
 	<emphasis>matrix</emphasis> that's of interest, not just the
 	pairwise coefficients, then in the presence of missing values
 	it's advisable to use the <opt>uniform</opt> option.  Unless a
-	common sample is used for all the correlations it is not
-	guaranteed that the correlation matrix will be positive
-	semi-definite, as it ought to be by construction.
+	single, common sample is used it is not guaranteed that the
+	correlation matrix will be positive semidefinite, as it ought
+	to be by construction.
       </para>
     </description>
 
