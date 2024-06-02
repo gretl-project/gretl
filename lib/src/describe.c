@@ -6647,29 +6647,43 @@ static int uniform_corrcov_matrix (VMatrix *v, const DATASET *dset,
     return 0;
 }
 
-static void corrlist_adjust_sample (const int *list, int *t1, int *t2,
+static int corr_skip_obs (int k, int n_ok, int uniform)
+{
+    if (uniform) {
+	return n_ok < k;
+    } else {
+	return n_ok < 2;
+    }
+}
+
+static void corrlist_adjust_sample (const int *list,
+				    int *t1, int *t2,
+				    gretlopt opt,
 				    const DATASET *dset)
 {
+    int uniform = (opt & OPT_N)? 1 : 0;
     int t1min = *t1;
     int t2max = *t2;
     int k = list[0];
-    int nmiss;
+    int n_ok;
     int i, t;
 
-    /* note: in this context an "unusable" observation is one at which
-       there are fewer than two non-NA values, or the number of NAs is
-       at least k - 1;
+    /* Note: In this context what counts as a "usable" observation
+       depends on whether the --uniform option (OPT_N) is given. If
+       so, an observation is usable only if it's "complete" (no NAs);
+       otherwise it's usable so long as there at least two non-missing
+       values among the members of @list.
     */
 
     /* advance start of sample range to skip any unusable obs */
     for (t=t1min; t<t2max; t++) {
-	nmiss = 0;
+	n_ok = k;
 	for (i=1; i<=k; i++) {
 	    if (na(dset->Z[list[i]][t])) {
-		nmiss++;
+		n_ok--;
 	    }
 	}
-	if (nmiss >= k-1) {
+	if (corr_skip_obs(k, n_ok, uniform)) {
 	    t1min++;
 	} else {
 	    break;
@@ -6678,13 +6692,13 @@ static void corrlist_adjust_sample (const int *list, int *t1, int *t2,
 
     /* retard end of sample range to skip any unusable obs */
     for (t=t2max; t>t1min; t--) {
-	nmiss = 0;
+	n_ok = k;
 	for (i=1; i<=k; i++) {
 	    if (na(dset->Z[list[i]][t])) {
-		nmiss++;
+		n_ok--;
 	    }
 	}
-	if (nmiss >= k-1) {
+	if (corr_skip_obs(k, n_ok, uniform)) {
 	    t2max--;
 	} else {
 	    break;
@@ -6749,7 +6763,7 @@ VMatrix *corrlist (int ci, int *list, const DATASET *dset,
     v->t2 = dset->t2;
 
     /* adjust sample range if need be */
-    corrlist_adjust_sample(list, &v->t1, &v->t2, dset);
+    corrlist_adjust_sample(list, &v->t1, &v->t2, opt, dset);
 
     if (v->t2 - v->t1 + 1 < 3) {
 	*err = E_TOOFEW;

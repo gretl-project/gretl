@@ -418,10 +418,10 @@ static int pca_save_components (VMatrix *cmat,
    means that we should not display the results, but should put up a
    dialog box allowing the user to decide what to save.
 
-   Note that depending on the original option supplied to the pca
+   Note that depending on the original option supplied to the "pca"
    command, the incoming matrix may be either a correlation matrix
    (the default) or a covariance matrix.  This prior option is not
-   included in the @opt passed here; rather it's encoded in the ci
+   included in the @opt passed here; rather it's encoded in the @ci
    member of the VMatrix struct.
 */
 
