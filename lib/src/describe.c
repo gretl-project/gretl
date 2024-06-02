@@ -6444,42 +6444,40 @@ static int max_corrcov_matrix (VMatrix *v, const DATASET *dset,
 			       int flag)
 {
     double **Z = dset->Z;
-    int i, j, vi, vj, nij;
-    int nmax = v->t2 - v->t1 + 1;
+    int i, j, vi, vj, idx;
+    int vn = v->t2 - v->t1 + 1;
     int m = v->dim;
-    int nmiss;
+    int nij, nmiss;
 
-    v->nmin = nmax;
+    v->nmin = vn;
     v->nmax = 0;
 
     for (i=0; i<m; i++) {
 	vi = v->list[i+1];
 	for (j=i; j<m; j++)  {
 	    vj = v->list[j+1];
-	    nij = ijton(i, j, m);
+	    idx = ijton(i, j, m);
+	    nij = vn;
 	    if (i == j && flag == CORRMAT) {
-		v->vec[nij] = 1.0;
+		v->vec[idx] = 1.0;
 	    } else {
 		nmiss = 0;
 		if (flag == COVMAT) {
-		    v->vec[nij] = gretl_covar(v->t1, v->t2, Z[vi], Z[vj],
+		    v->vec[idx] = gretl_covar(v->t1, v->t2, Z[vi], Z[vj],
 					      &nmiss);
 		} else {
-		    v->vec[nij] = gretl_corr(v->t1, v->t2, Z[vi], Z[vj],
+		    v->vec[idx] = gretl_corr(v->t1, v->t2, Z[vi], Z[vj],
 					     &nmiss);
 		}
 		if (nmiss > 0) {
-		    int n = nmax - nmiss;
-
-		    if (n < v->nmin && n > 0) {
-			v->nmin = n;
-		    }
-		    if (n > v->nmax) {
-			v->nmax = n;
-		    }
 		    v->missing += 1;
-		} else {
-		    v->nmax = nmax;
+		    nij -= nmiss;
+		}
+		if (nij > v->nmax) {
+		    v->nmax = nij;
+		}
+		if (nij < v->nmin) {
+		    v->nmin = nij;
 		}
 	    }
 	}
