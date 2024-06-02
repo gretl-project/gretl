@@ -6656,7 +6656,12 @@ static void corrlist_adjust_sample (const int *list, int *t1, int *t2,
     int nmiss;
     int i, t;
 
-    /* advance start of sample range to skip any all-missing obs */
+    /* note: in this context an "unusable" observation is one at which
+       there are fewer than two non-NA values, or the number of NAs is
+       at least k - 1;
+    */
+
+    /* advance start of sample range to skip any unusable obs */
     for (t=t1min; t<t2max; t++) {
 	nmiss = 0;
 	for (i=1; i<=k; i++) {
@@ -6664,14 +6669,14 @@ static void corrlist_adjust_sample (const int *list, int *t1, int *t2,
 		nmiss++;
 	    }
 	}
-	if (nmiss == k) {
+	if (nmiss >= k-1) {
 	    t1min++;
 	} else {
 	    break;
 	}
     }
 
-    /* retard end of sample range to skip any all-missing obs */
+    /* retard end of sample range to skip any unusable obs */
     for (t=t2max; t>t1min; t--) {
 	nmiss = 0;
 	for (i=1; i<=k; i++) {
@@ -6679,7 +6684,7 @@ static void corrlist_adjust_sample (const int *list, int *t1, int *t2,
 		nmiss++;
 	    }
 	}
-	if (nmiss == k) {
+	if (nmiss >= k-1) {
 	    t2max--;
 	} else {
 	    break;
