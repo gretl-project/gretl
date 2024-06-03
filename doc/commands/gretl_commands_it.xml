@@ -2153,7 +2153,7 @@
         </option>
 	<option>
 	  <flag>--triangle</flag>
-	  <effect>si veda di seguito</effect>
+	  <effect>stampa solo il triangolo inferiore, vedi sotto</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
@@ -2164,6 +2164,7 @@
         <example>corr y x1 x2 x3</example>
 	<example>corr ylist --uniform</example>
 	<example>corr x y --spearman</example>
+	<example>corr --matrix=X --plot=display</example>
       </examples>
     </usage>
 
@@ -2232,8 +2233,13 @@
       </para>
       <para>
 	L'accessore <fncref targ="$result"/> può essere utilizzato per
-	ottenere le correlazioni risultati dal comando sottoforma di
-	matrice utilizzabile.
+	salvare i risultati sotto forma di matrice.  Si noti che, se è
+	questa matrix l'oggetto di interesse, anziché i singoli
+	coefficienti, in presenza di valori mancanti è consigliabile
+	l'uso dell'opzione <opt>uniform</opt> option.  Se il campione
+	usato non è lo stesso per tutti i coefficienti, non c'è
+	garanzia che la matrice di correlazione sia positiva
+	semidefinita, proprietà che dovrebbe valere per costruzione.
       </para>
     </description>
 
