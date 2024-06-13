@@ -3303,19 +3303,35 @@ int gretl_matrix_transpose_in_place (gretl_matrix *m)
 
 int gretl_matrix_transpose (gretl_matrix *targ, const gretl_matrix *src)
 {
+    int r = src->rows;
+    int c = src->cols;
     int i, j, k = 0;
-    double x;
 
-    if (targ->rows != src->cols || targ->cols != src->rows) {
+    if (targ->rows != c || targ->cols != r) {
         return E_NONCONF;
     }
 
-    for (j=0; j<src->cols; j++) {
-        for (i=0; i<src->rows; i++) {
+#if 0
+    /* 2024-06-12: potentially faster variant using pointer arithmetic */
+    const double *p;
+
+    for (i=0; i<r; i++) {
+	p = src->val + i;
+	for (j=0; j<c; j++) {
+	    targ->val[k++] = *p;
+	    p += r;
+	}
+    }
+#else
+    double x;
+
+    for (j=0; j<c; j++) {
+        for (i=0; i<r; i++) {
             x = src->val[k++];
             gretl_matrix_set(targ, j, i, x);
         }
     }
+#endif
 
     return 0;
 }
