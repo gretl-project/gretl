@@ -6671,8 +6671,8 @@ static void corrlist_adjust_sample (const int *list,
     /* Note: In this context what counts as a "usable" observation
        depends on whether the --uniform option (OPT_N) is given. If
        so, an observation is usable only if it's "complete" (no NAs);
-       otherwise it's usable so long as there at least two non-missing
-       values among the members of @list.
+       otherwise it's potentially usable so long as there at least two
+       non-missing values among the members of @list.
     */
 
     /* advance start of sample range to skip any unusable obs */
