@@ -4538,10 +4538,12 @@
 
     <para>
       Se non vengono indicate opzioni, mostra la distribuzione di
-      frequenza per la <repl>variabile</repl> (indicata con il nome
-      o il numero), con il numero di intervalli e ampiezza scelti
+      frequenza per la <repl>variabile</repl> (indicata con il nome o
+      il numero), con il numero di intervalli e ampiezza scelti
       automaticamente; a seconda dei casi un grafico può essere
-      mostrato o no (vedi sotto).
+      mostrato o no (vedi sotto). Se il comando viene eseguito
+      correttamente, la tabella delle frequenze può essere salvata in
+      una matrice utilizzando l'accessore <fncref targ="$result"/>.
     </para>
     <para>
       Se viene indicata l'opzione <opt>matrix</opt>, <repl>var</repl>

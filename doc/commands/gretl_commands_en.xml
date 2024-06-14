@@ -4429,7 +4429,9 @@
 	the series <repl>var</repl> (given by name or number) in
 	tabular form, with the number of bins and their size chosen
 	automatically, with or without an accompanying plot as
-	explained below.
+	explained below. Upon successful completion of the command,
+	the frequency table can be retrieved as a matrix using the
+	<fncref targ="$result"/> accessor.
       </para>
       <para>
 	If the <opt>matrix</opt> option is given, <repl>var</repl>
