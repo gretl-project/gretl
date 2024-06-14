@@ -371,12 +371,12 @@ end function
 /* ---------------------------------------------------------------------- */
 
 
-function string make_xtics(bundle calinfo, scalar ntics[12])
+function string make_xtics(bundle calinfo, scalar VARorder, scalar ntics[12])
     string ret = "set xtics ("
     
     scalar pd = calinfo.pd
-    scalar T = calinfo.t2 - calinfo.t1 + 1
-    matrix tt = seq(1, T)'
+    scalar T = calinfo.t2 - (calinfo.t1 + VARorder) + 1
+    matrix tt = (VARorder - 1) + seq(1, T)'
     omaj = calinfo.limitobs[1,1] + floor(tt/pd)
     if cols(calinfo.limitobs) > 1
         # not yearly
@@ -411,10 +411,10 @@ function string make_xtics(bundle calinfo, scalar ntics[12])
         endif
     endif
     
-    width = floor(T/(ntics-1))
-    head = ceil((T%ntics) / 2)
+    width = floor(T/ntics)
+    head = floor((width + (T % ntics)) / 2) 
 
-    j = head+1
+    j = head
     loop i = 1 .. ntics
         if pd == 1 || pd == 52 
             string xtic = sprintf("%d", omaj[j])
@@ -501,7 +501,7 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0],
                 printf "set key outside below\n"
                 printf "set style fill solid 0.5\n"
                 printf "\n"
-                printf "%s\n", make_xtics(obj.calinfo)
+                printf "%s\n", make_xtics(obj.calinfo, obj.p)
                 printf "\n"
                 printf "set title \"HD for %s%s\"\n\n", obj.Ynames[vnum], drawinfo
 
