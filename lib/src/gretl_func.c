@@ -3315,7 +3315,7 @@ static int package_write_index (fnpkg *pkg, PRN *inprn)
     }
 
     if (pkg->minver > 0) {
-        char vstr[8];
+        char vstr[10];
 
         pprintf(prn, " minver=\"%s\"",
                 gretl_version_string(vstr, pkg->minver));
@@ -3410,7 +3410,7 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn, int mpi)
     }
 
     if (pkg->minver > 0) {
-        char vstr[8];
+        char vstr[10];
 
         pprintf(prn, " minver=\"%s\"", gretl_version_string(vstr, pkg->minver));
     }
@@ -4092,6 +4092,27 @@ static int validate_R_depends (const char *s)
     return err;
 }
 
+static int function_package_set_version (fnpkg *pkg, const char *vstr)
+{
+    int err = 0;
+
+    if (pkg->version != NULL) {
+	free(pkg->version);
+	pkg->version = NULL;
+    }
+    if (!strcmp(vstr, "@VERSION@")) {
+	if (is_gretl_addon(pkg->name)) {
+	    pkg->version = gretl_strdup(GRETL_VERSION);
+	} else {
+	    err = E_DATA;
+	}
+    } else {
+	pkg->version = gretl_strdup(vstr);
+    }
+
+    return err;
+}
+
 /* Having assembled and checked the function-listing for a new
    package, now retrieve the additional information from the
    spec file (named by @fname, opened as @fp).
@@ -4151,7 +4172,7 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
             } else if (!strncmp(line, "email", 5)) {
                 err = function_package_set_properties(pkg, "email", p, NULL);
             } else if (!strncmp(line, "version", 7)) {
-                err = function_package_set_properties(pkg, "version", p, NULL);
+                err = function_package_set_version(pkg, p);
                 if (!err) got++;
             } else if (!strncmp(line, "date", 4)) {
                 err = function_package_set_properties(pkg, "date", p, NULL);
@@ -4913,7 +4934,6 @@ int function_package_set_properties (fnpkg *pkg, ...)
             } else {
                 err = maybe_replace_string_var(sptr, sval);
             }
-
             if (!err && !strcmp(key, "help")) {
                 if (!strncmp(sval, "pdfdoc", 6) ||
                     is_pdf_ref(sval)) {

@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "version.h"
 #include "monte_carlo.h"
 #include "gretl_func.h"
 #include "objstack.h"
@@ -1547,6 +1548,10 @@ static int letter_to_int (char c)
 int gretl_version_number (const char *version)
 {
     int vnum = 0;
+
+    if (!strcmp(version, "@VERSION@")) {
+	version = GRETL_VERSION;
+    }
 
     if (atoi(version) >= 2015) {
         /* as in "2015d" and subsequent releases */
