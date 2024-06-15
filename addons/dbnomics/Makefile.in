@@ -23,6 +23,7 @@ PKG = dbnomics
 PKGSRC = $(topsrc)/addons/$(PKG)
 
 vpath %.inp $(PKGSRC)
+vpath %.spec $(PKGSRC)
 
 INP = dbnomics_public.inp \
       dbnomics_private.inp
@@ -43,6 +44,7 @@ $(PKG).zip: $(PKG).gfn doc/$(PKG).pdf
 .PHONY : symlinks check install installdirs clean
 
 symlinks:
+	@if [ ! -f $(SPEC) ] || [ $(PKGSRC)/$(SPEC) -nt $(SPEC) ] ; then ln -sf $(PKGSRC)/$(SPEC) . ; fi
 	@if [ ! -f $(SMPL) ] || [ $(PKGSRC)/$(SMPL) -nt $(SMPL) ] ; then ln -sf $(PKGSRC)/$(SMPL) . ; fi
 	@if [ ! -d examples ] || [ $(PKGSRC)/examples -nt examples ] ; then ln -sf $(PKGSRC)/examples . ; fi
 

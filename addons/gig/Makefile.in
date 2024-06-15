@@ -23,6 +23,7 @@ PKG = gig
 PKGSRC = $(topsrc)/addons/$(PKG)
 
 vpath %.inp $(PKGSRC)
+vpath %.spec $(PKGSRC)
 
 INP = gig_estimate.inp \
       gig_mle.inp \
@@ -46,6 +47,7 @@ $(PKG).zip: $(PKG).gfn doc/$(PKG).pdf
 .PHONY : symlinks check install installdirs clean
 
 symlinks:
+	@if [ ! -f $(SPEC) ] || [ $(PKGSRC)/$(SPEC) -nt $(SPEC) ] ; then ln -sf $(PKGSRC)/$(SPEC) . ; fi
 	@if [ ! -f test.sh ] || [ $(PKGSRC)/test.sh -nt test.sh ] ; then ln -sf $(PKGSRC)/test.sh . ; fi
 	@if [ ! -d examples ] || [ $(PKGSRC)/examples -nt examples ] ; then ln -s $(PKGSRC)/examples . ; fi
 

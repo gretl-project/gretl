@@ -23,6 +23,7 @@ PKG = KFgui
 PKGSRC = $(topsrc)/addons/$(PKG)
 
 vpath %.inp $(PKGSRC)
+vpath %.spec $(PKGSRC)
 
 INP = KFgui.inp
 SPEC = KFgui.spec
@@ -40,6 +41,7 @@ $(PKG).zip: $(PKG).gfn
 .PHONY : symlinks check install installdirs clean
 
 symlinks:
+	@if [ ! -f $(SPEC) ] || [ $(PKGSRC)/$(SPEC) -nt $(SPEC) ] ; then ln -sf $(PKGSRC)/$(SPEC) . ; fi
 	@if [ ! -f $(SMPL) ] || [ $(PKGSRC)/$(SMPL) -nt $(SMPL) ] ; then ln -sf $(PKGSRC)/$(SMPL) . ; fi
 	@if [ ! -f $(HELP) ] || [ $(PKGSRC)/$(HELP) -nt $(HELP) ] ; then ln -sf $(PKGSRC)/$(HELP) . ; fi
 	@if [ ! -d examples ] || [ $(PKGSRC)/examples -nt examples ] ; then ln -sf $(PKGSRC)/examples . ; fi

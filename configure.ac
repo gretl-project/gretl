@@ -1090,44 +1090,34 @@ if test "${build_addons}" = "yes" ; then
   AC_CONFIG_FILES([
     addons/Makefile
     addons/gig/Makefile
-    addons/gig/gig.spec
     addons/gig/pkg.inp
     addons/gig/doc/Makefile
     addons/HIP/Makefile
-    addons/HIP/HIP.spec
     addons/HIP/pkg.inp
     addons/HIP/doc/Makefile
     addons/ivpanel/Makefile
-    addons/ivpanel/ivpanel.spec
     addons/ivpanel/pkg.inp
     addons/ivpanel/doc/Makefile
     addons/SVAR/Makefile
-    addons/SVAR/SVAR.spec
     addons/SVAR/pkg.inp
     addons/SVAR/doc/Makefile
     addons/dbnomics/Makefile
-    addons/dbnomics/dbnomics.spec
     addons/dbnomics/pkg.inp
     addons/dbnomics/doc/Makefile
-    addons/extra/extra.spec
     addons/extra/pkg.inp
     addons/extra/Makefile
     addons/extra/doc/Makefile
     addons/geoplot/Makefile
-    addons/geoplot/geoplot.spec
     addons/geoplot/pkg.inp
     addons/geoplot/doc/Makefile
     addons/geoplot/examples/Makefile
     addons/regls/Makefile
-    addons/regls/regls.spec
     addons/regls/pkg.inp
     addons/regls/doc/Makefile
     addons/logging/Makefile
-    addons/logging/logging.spec
     addons/logging/pkg.inp
     addons/logging/doc/Makefile
     addons/KFgui/Makefile
-    addons/KFgui/KFgui.spec
     addons/KFgui/pkg.inp
   ])
 fi
