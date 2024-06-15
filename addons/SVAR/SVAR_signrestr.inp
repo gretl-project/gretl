@@ -429,10 +429,8 @@ function void SVAR_spagplot(const bundle mod,
 
     errorif( !inbundle(mod, "acc_draws"), "Need collection acc_draws as model bundle member")
 
-    # check whether it's one of the SR-id'ed shocks
-    s_inSR = nelem(instrings(mod.SRid_snames, sname)) ? 1 : 0 # was strpos_allin
     # get shock number
-    matrix snum = instrings(mod.snames, sname)
+    matrix snum = instrings(mod.SRid_snames, sname)
     errmsgshockmatch(snum, sname)
     # get var number
     matrix vnum = instrings(mod.Ynames, vname)
