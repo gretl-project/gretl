@@ -1498,8 +1498,9 @@ int gretl_int_from_string (const char *s, int *err)
  * positive_int_from_string:
  * @s: string to examine.
  *
- * If @s is a valid string representation of a positive integer,
- * return that integer, otherwise return -1.
+ * If @s is a valid string representation of a positive integer
+ * that can be represented as a 32-bit signed value return that
+ * integer, otherwise return -1.
  *
  * Returns: integer value.
  */
@@ -1514,13 +1515,48 @@ int positive_int_from_string (const char *s)
         errno = 0;
 
         ret = strtol(s, &test, 10);
-        if (*test != '\0' || !strcmp(s, test) || errno == ERANGE) {
+        if (*test != '\0' || !strcmp(s, test) ||
+	    errno == ERANGE || ret <= 0) {
             ret = -1;
         }
     }
 
     return ret;
 }
+
+#if 0 /* not yet */
+
+/**
+ * natural_number_from_string:
+ * @s: string to examine.
+ *
+ * If @s is a valid string representation of a natural number that
+ * can be represented as a 32-bit signed integer return that number,
+ * otherwise return -1.
+ *
+ * Returns: integer value.
+ */
+
+int natural_number_from_string (const char *s)
+{
+    int ret = -1;
+
+    if (s != NULL && *s != '\0') {
+        char *test;
+
+        errno = 0;
+
+        ret = strtol(s, &test, 10);
+        if (*test != '\0' || !strcmp(s, test) ||
+	    errno == ERANGE || ret < 0) {
+            ret = -1;
+        }
+    }
+
+    return ret;
+}
+
+#endif
 
 static int letter_to_int (char c)
 {
