@@ -1542,15 +1542,17 @@ int natural_number_from_string (const char *s)
     int ret = -1;
 
     if (s != NULL && *s != '\0') {
+	long lval;
         char *test;
 
         errno = 0;
 
-        ret = strtol(s, &test, 10);
-        if (*test != '\0' || !strcmp(s, test) ||
-	    errno == ERANGE || ret < 0) {
+        lval = strtol(s, &test, 10);
+        if (*test != '\0' || !strcmp(s, test) || errno == ERANGE ||
+	    lval < 0 || lval > INT_MAX) {
             ret = -1;
-        }
+        } else {
+	    ret = (int) lval;
     }
 
     return ret;
