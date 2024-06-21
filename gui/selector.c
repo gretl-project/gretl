@@ -4299,8 +4299,8 @@ static void compose_cmdlist (selector *sr)
 
         /* panel: scrub --nerlove if not doing random effects */
         if (sr->ci == PANEL) {
-            if ((sr->opts & OPT_N) && !(sr->opts & OPT_U)) {
-                sr->opts &= ~OPT_N;
+            if ((sr->opts & OPT_E) && !(sr->opts & OPT_U)) {
+                sr->opts &= ~OPT_E;
             }
         }
 
@@ -6914,10 +6914,10 @@ static void select_re_method (GtkComboBox *box, selector *sr)
     int a = gtk_combo_box_get_active(box);
 
     if (a == 2) {
-        sr->opts |= OPT_N;
+        sr->opts |= OPT_E;
         sr->opts &= ~OPT_X;
     } else {
-        sr->opts &= ~OPT_N;
+        sr->opts &= ~OPT_E;
         if (a == 1) {
             sr->opts |= OPT_X;
         } else {
