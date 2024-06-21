@@ -369,6 +369,7 @@ static void check_depends (call_info *cinfo, int i,
 	const char *depname = depstr;
 	char ctrl[32] = {0};
 	char opstr[3] = {0};
+        char valstr[16] = {0};
 	int val = -1;
 	int op = 0;
 
@@ -376,10 +377,17 @@ static void check_depends (call_info *cinfo, int i,
 	if (gretl_namechar_spn(depname) == strlen(depname)) {
 	    /* the simple case: should be the ID of a toggle button */
 	    val = 1;
-	} else if (sscanf(depstr, "%31[^=<>!]%2[=<>!]%d", ctrl, opstr, &val) == 3) {
-	    /* the general case: <name><op><value> */
+        } else if (sscanf(depstr, "%31[^=<>! ] %2[=<>!]%15s", ctrl, opstr, valstr) == 3) {
+            /* the general case: <name><op><value> */
+            if (!strcmp(valstr, "FALSE")) {
+                val = 0;
+            } else if (!strcmp(valstr, "TRUE")) {
+                val = 1;
+            } else {
+                val = atoi(valstr);
+            }
 	    if (val < 0) {
-		fprintf(stderr, "ui-maker depends: invalid value %d\n", val);
+		fprintf(stderr, "ui-maker depends: invalid value '%s'\n", valstr);
 		return;
 	    } else if ((op = validate_op(opstr)) == 0) {
 		fprintf(stderr, "ui-maker depends: invalid operator '%s'\n", opstr);
