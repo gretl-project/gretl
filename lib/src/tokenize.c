@@ -2915,6 +2915,25 @@ static void rescind_tok_done_status (CMD *c)
     }
 }
 
+static int is_bundled_matrix (char *s)
+{
+    gchar *tmp = g_strdup_printf("typeof(%s)", s);
+    GretlType t;
+    int err, ret = 0;
+
+    /* catch the case where we're considering a token as
+       a list-making symbol but actually it's a matrix,
+       inside a bundle or array
+    */
+    t = generate_scalar(tmp, NULL, &err);
+    if (t == 3) {
+        /* 'MAT' */
+        ret = 1;
+    }
+    g_free(tmp);
+    return ret;
+}
+
 static int process_command_list (CMD *c, DATASET *dset)
 {
     guint8 TOK_PROV = (TOK_DONE | TOK_LSTR);
@@ -3017,6 +3036,11 @@ static int process_command_list (CMD *c, DATASET *dset)
 
     if (!c->err && *lstr != '\0') {
 	tailstrip(lstr);
+        if ((strchr(lstr, '.') || strchr(lstr, '[')) &&
+            is_bundled_matrix(lstr)) {
+            lstr[0] = '\0';
+            rescind_tok_done_status(c);
+        }
 	if (c->ci == DPANEL || c->ci == MIDASREG) {
 	    /* We may have a ';' separator that's not followed
 	       by any regular second list, just special terms; so
