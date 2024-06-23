@@ -182,16 +182,15 @@ is to empty it---while the first may only be used once in a given
 gretl session; it is an error to attempt to declare a variable that
 already exists.
 
-To create a bundle and populate it with some members in one go, you
-can use the \texttt{defbundle} function with some arguments. For
-example:
+To create a bundle and add contents in one go, you can use the
+\texttt{defbundle} function with some arguments. For example:
 \begin{code}
 bundle foo = defbundle("x", 13, "mat", I(3), "str", "some string")
 \end{code}
-Here the arguments come in pairs: key followed by the object to be
-associated with the key, with all terms comma-separated. However, you
-may prefer to use one or other of the alternative idioms introduced in
-gretl 2021a. The first of these looks like this:
+The arguments must be given in pairs---a key followed by the object to
+be associated with the key---with all terms comma-separated. However,
+you may prefer to use one or other of the alternative idioms
+introduced in gretl 2021a. The first of these looks like this:
 \begin{code}
 bundle foo = _(x = 13, mat = I(3), str = "some string")
 \end{code}
@@ -263,8 +262,8 @@ matrix bm = foo[s]
 Note that the key identifying an object within a given bundle is
 necessarily unique. If you reuse an existing key in a new assignment,
 the effect is to replace the object which was previously stored under
-the given key. It is not required that the type of the replacement
-object is the same as that of the original.
+the given key. In this context it is not required that the type of the
+replacement object is the same as that of the original.
 
 Also note that when you add an object to a bundle, what in fact
 happens is that the bundle acquires a \textit{copy} of the object. The
@@ -494,6 +493,92 @@ function package that estimates a model might return a bundle
 containing a vector of parameter estimates, a residual series and a
 covariance matrix for the parameter estimates, among other
 possibilities.
+
+When offering a bundle as the return value from a function it's
+important to keep in mind the limitation noted above, concerning the
+inclusion of lists in bundles. Once again: a list is just an array of
+series ID numbers. Consider the following would-be function code.
+
+\begin{code}
+function bundle bunlist (const series y)
+  series y2 = y^2
+  series y3 = y^3
+  bundle ret
+  # don't do this!
+  list ret.L = y2 y3
+  return ret
+end function
+\end{code}
+
+If the intent is to give the caller a list containing two new series
+this will \textit{not} work. Suppose that when this function is
+called, the caller has in place a dataset with two series (besides the
+built-in \texttt{const}), with ID numbers 1 and 2. Then the series
+\texttt{y2} and \texttt{y3} will be given IDs 3 and 4, which will be
+duly recorded in \texttt{ret.L}. But these series are local to the
+function; at caller level there will be no series answering to IDs 3
+and 4, and the ``list'' therefore turns into the useless vector
+$\{3, 4\}$. If you want to return multiple series your options are (a)
+return a list \textit{directly}---in which case gretl adds the
+specified series to the caller's dataset---or (b) turn the list into a
+a matrix, as in
+\begin{code}
+list L = y2 y3
+matrix Y = {L}
+\end{code}
+This matrix can be returned in its own right, or can be packed into a
+bundle if the function is to return something else besides; either way
+the caller can reconstitute a list using the \texttt{mat2list}
+function.
+
+You might be wondering, if the direct return of a list works as
+mentioned above, why doesn't a bundled list work in the same way?
+That's basically because of the ``encapsulation'' policy: functions
+should not have any unexpected side effects. If a caller assigns the
+return value of a function that advertises a list return, it should be
+clear that the caller's dataset may be modified---it's all ``above
+board''. If a function that advertises a bundle return value has the
+side effect of modifying the caller's dataset, because the bundle
+happens to contain a list, that would seem to break encapsulation.
+
+For completeness, it's worth noting that there are cases where a
+function \textit{can} successfully return a list in a bundle, without
+breaking encapsulation: the requirement is just that the series IDs in
+the list are defined at caller
+level. Listing~\ref{ex:discrete-check} gives an example. A list
+argument \texttt{L} is examined and the return value is a bundle
+containing a list and a vector. The bundled list includes the IDs of
+just those series in \texttt{L} that are discrete, and the vector
+gives the number of distinct values for each of these series.
+
+\begin{script}
+    \scriptinfo{discrete-check}{Returning a list in a bundle}
+\begin{scode}
+set verbose off
+
+function bundle discrete_check (const list L)
+   list dlist
+   matrix nvals = {}
+   bundle b
+   loop i=1..nelem(L)
+      b = getinfo(L[i])
+      if b.discrete
+         dlist += L[i]
+         nvals ~= nelem(values(L[i]))
+      endif
+   endloop
+   return _(dlist, nvals)
+end function
+
+open mroz87.gdt --quiet
+list L = dataset
+bundle b = discrete_check(L)
+list print b.dlist
+print b.nvals
+\end{scode}
+\end{script}
+
+\subsection{Adding annotations}
 
 As a refinement to support the use of bundles as a function return
 type, the \texttt{setnote} function can be used to add a brief
