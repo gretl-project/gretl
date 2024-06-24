@@ -741,12 +741,13 @@ keyword \texttt{return}, followed by either the name of a variable
 definition) or an expression which produces a value of the correct
 type.
 
-Having a function return a list or bundle is a way of permitting the
-``return'' of more than one variable.  For example, you can define
-several series inside a function and package them as a list; in this
-case they are not destroyed when the function exits.  Here is a simple
-example, which also illustrates the possibility of setting the
-descriptive labels for variables generated in a function.
+Having a function return a list, bundle or array (see
+Chapter~\ref{chap:datatypes}) is a way of permitting the ``return'' of
+more than one variable.  For example, you can define several series
+inside a function and package them as a list; in this case they are
+not destroyed when the function exits.  Here is a simple example,
+which also illustrates the possibility of setting the descriptive
+labels for variables generated in a function.
 %    
 \begin{code}
 function list make_cubes (list xlist)
@@ -768,8 +769,9 @@ labels
 % $
 
 For details about the case of returning a bundle, see
-Section~\ref{sec:Bundles}, in particular the sub-section titled ``What
-are bundles good for?''.
+Section~\ref{sec:Bundles}, in particular the sub-sections titled
+``Series and lists as bundle members'' and ``What are bundles good
+for?''.
 
 A \texttt{return} statement causes the function to return (exit) at
 the point where it appears within the body of the function.  A
