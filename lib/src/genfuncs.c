@@ -8615,6 +8615,10 @@ gretl_matrix *R_from_omega (const gretl_matrix *omega, int cholesky,
  * Calculations for Matched Case-Control Studies and Survival Studies
  * with Tied Death Times", Biometrika, Vol. 68 (3), pp. 703-707
  *
+ * TODO: the function could be enhanced by also including the
+ * recursive formula for the Hessian (unnumbered equation at the end
+ * of page 706 in Gail et al).
+ *
  * Returns: a (k+1)-vector if successful, NULL on failure.
  *
  */
