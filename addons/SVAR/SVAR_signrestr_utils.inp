@@ -1,6 +1,4 @@
 # Utility functions for the sign restriction method in SVAR.
-# (Later could probably merged into SVAR_utils.inp)
-
 
 #############################
 
@@ -52,12 +50,15 @@ end function
 
 # ------------------------------
 
-function matrices muVARparE_mayberedr(const bundle Smod, matrix Bofonedraw[null])
+function matrices muVARparU_mayberedr(const bundle Smod, matrix Bofonedraw[null])
+    
     # Retrieves all the quantities that perhaps are redrawn
     # in the Bayesian set id case:
     # - mu: exog. coeffs, B[1:k , ]
     # - VARpar: autoregr. coeffs, B[k+1: ,]
-    # - E: residuals
+    # - U: residuals
+    
+    # (Function was called muVARparE_mayberedr with "E" before the notation switch.)
 
     redrawn = 0
 
@@ -90,6 +91,7 @@ end function
 function void errchkSRhisto(bundle *Smod, int drawix)
     if !inbundle(Smod, "bestdraw")
         funcerr "Model not properly initialized for SR type"
+        
     elif !Smod.bestdraw && !drawix
         funcerr "Need to pick one particular draw (run SVAR_SRgetbest?)"
 
@@ -104,6 +106,8 @@ function void errchkSRhisto(bundle *Smod, int drawix)
 end function
 
 function void errmsgshockmatch(const matrix pos, string sname)
+    #  pos is the result of an instrings() search, 0 to n-element vector
+    
     if nelem(pos) != 1
         printf "You don't have a shock named %s in your model.\n", sname
         print " (or several ones)"
@@ -139,6 +143,7 @@ function matrix rand_rotation(scalar n, const matrix sel)
 
     # we assume here that sel is a row vector containing
     # unique numbers in the range from 1 to n
+    
     scalar nk = cols(sel)
     if nk == 0
         matrix ret = qrdecomp(mnormal(n, n))
@@ -165,7 +170,11 @@ function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
         matrix b.Sigma = Mats[2]
     endif
 
+    # If the pseudo-Bayes option (for parameter uncertainty) is active,
+    # then b.Sigma was redrawn (not mod.Sigma), and so the Cholesky 
+    # factor needs to be recalculated: 
     matrix C = DO_BAYES ? cholesky(b.Sigma) : mod.C
+    
     if nelem(b.zc) == 0
         # no zero restrictions
         matrix b.rot = rand_rotation(mod.n, rotate_only)
@@ -506,12 +515,15 @@ end function
 
 function matrices xtr_blockdg_const(const matrix Rd, scalar *err)
 
-    # this function translates a constraints matrix in the "traditional" format
+    # This function translates a constraints matrix in the "traditional" format
     # into an array of per-shock restrictions (needed for the mixed
-    # identification routine)
+    # identification routine).
+    # The calling function is responsible for actually throwing the relevant error 
+    # if err != 0 on exit.
 
     scalar n = sqrt(cols(Rd)-1)
     matrices ret = array(n)
+    
     if maxc(abs(Rd[,end]))
         printf "non-homogeneous constraints not allowed!\n"
         err = 1
@@ -520,14 +532,16 @@ function matrices xtr_blockdg_const(const matrix Rd, scalar *err)
         n2 = n*n
         loop i = 1 .. p
             Ri = mshape(Rd[i, 1:n2], n, n)
-            chk = sumc(abs(Ri))
+                        
             # no cross-shock constraints allowed
+            chk = sumc(abs(Ri))
             candidate = imaxr(chk)
+            
             if maxr(chk[-candidate])>0
                 printf "cross-shock constraints not allowed!\n"
                 err = 2
                 break
-            else
+            else    
                 ret[candidate] = ret[candidate] | Ri[, candidate]'
             endif
         endloop
@@ -554,11 +568,12 @@ function matrix rank_restr(const matrices R)
 end function
 
 function matrix const_orth(const matrices constraints, const matrix C)
+    
     # this function produces an orthonormal matrix Q such that
-    # K = QC
-    # satisfies the constraints embodied in the matrix array "constraints"
+    # K = QC satisfies the constraints embodied in the matrix array "constraints"
+    # (in the outside world this matrices array is also called [bundle].zc)
 
-    DBG = 0
+    DBG = 0	# debug
     n = rows(C)
     matrix Q = I(n)
     matrix done = {}

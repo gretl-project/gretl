@@ -190,7 +190,7 @@ function series GetShock(bundle *SVARobj, int i[1::1], int drawix[0::0])
 
     matrix iC = inv(C')
 
-    matrix resids = muVARparE_mayberedr(SVARobj, B10)[3]
+    matrix resids = muVARparU_mayberedr(SVARobj, B10)[3]
 
     ## construct the wanted series ##
     extra = $nobs - rows(resids)
@@ -252,7 +252,7 @@ function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
     endif
 
     # The following might be redrawn in type10/Bayesian
-    matrices muVARparE = muVARparE_mayberedr(Mod, B10)
+    matrices muVARparU = muVARparU_mayberedr(Mod, B10)
 
     # compute the exogenous part
     if type < 4
@@ -270,7 +270,7 @@ function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
         matrix m = (mreg ~ Mod.X) * Mod.mu
 
     elif type == 10
-        matrix m = Mod.X * muVARparE[1]
+        matrix m = Mod.X * muVARparU[1]
     endif
 
     # grab the C matrix
@@ -293,16 +293,16 @@ function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
 
     smpl t1 t2
     if cols(m)>0
-        Xdet = varsimul(muVARparE[2], m[p+1:,], Mod.Y[1:p,]) # was VARpar
+        Xdet = varsimul(muVARparU[2], m[p+1:,], Mod.Y[1:p,]) # was VARpar
     else
-        Xdet = varsimul(muVARparE[2], zeros(T-p, n), Mod.Y[1:p,]) # was Mod.T
+        Xdet = varsimul(muVARparU[2], zeros(T-p, n), Mod.Y[1:p,]) # was Mod.T
     endif
 
     ret += genseries( sprintf("hd_%s_det", yn), Xdet[,nv])
 
     # the structural shocks
-    matrix U = muVARparE[3] * iC' # was E
-    rotVARpar = iC * muVARparE[2] * (I(p) ** C)
+    matrix U = muVARparU[3] * iC' # was E
+    rotVARpar = iC * muVARparU[2] * (I(p) ** C)
 
     loop i = 1..n
         a = (seq(1,n) .= i)
