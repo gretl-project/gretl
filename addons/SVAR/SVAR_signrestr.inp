@@ -432,6 +432,7 @@ function void SVAR_spagplot(const bundle mod,
     # get shock number
     matrix snum = instrings(mod.SRid_snames, sname)
     errmsgshockmatch(snum, sname)
+    
     # get var number
     matrix vnum = instrings(mod.Ynames, vname)
     if !nelem(vnum)
@@ -516,20 +517,22 @@ function bundle IRF_plotdata(bundles bs, scalar coveralpha[0.9])
     return ret
 end function
 
-function void SVAR_SRirf(const bundle mod "the model bundle",
+function strings SVAR_SRirf(const bundle mod "the model bundle",
                          strings whichvars[null] "which variables",
                          strings whichshocks[null] "which shocks",
-                         bool meanormed[0] "choose 1 for medians")
+                         bool meanormed[FALSE] "choose TRUE for medians")
 
-    # TODO: make the function return the plot code as string
-    # (but how exactly? Use 'plot' with a temporary file?)
+    # The function now also returns all the plotting codes as strings array
+    # for further use. (return value was void before)
+    # (The plots are all still displayed; might become an option in the future.)
+                              
     # TODO: check if it makes sense to use the existing IRFgrph and
     #       IRFsave functions internally
     #       (perhaps the code here is actually better (more modern))
 
     # Omitting the strings array inputs means: do all.
 
-    errorif( !inbundle(mod, "SRid_snames"), "No SR (sign restriction) specs found")
+    errorif( !inbundle(mod, "SRid_snames"), "No SR (set restriction) specs found")
     errorif( !inbundle(mod, "SRirfmeans"),  "No SR IRF results found - did you run SVAR_SRdraw?")
 
     # Which variables:
@@ -549,6 +552,11 @@ function void SVAR_SRirf(const bundle mod "the model bundle",
     endif
     errorif( !nelem(wshoix), "No matching shock names found")
 
+    # initialize containers for the plotting codes
+    string tempplotcode
+    strings plotcodes = array(nelem(wshoix) * nelem(wvarix))
+    count = 1
+    
     ## The actual plotting
     loop metaj = 1..nelem(wshoix) # for the shocks
         j = wshoix[metaj]
@@ -569,11 +577,18 @@ function void SVAR_SRirf(const bundle mod "the model bundle",
                 options band=band,1 band-style=fill
                 printf "set title '%s shock -> %s'", mod.SRid_snames[j], \
                   mod.Ynames[i]
-            end plot --output=display
+            end plot --outbuf=tempplotcode
+            
+            # directly re-route this to be displayed as before
+            gnuplot --inbuf=tempplotcode --output=display
+            
+            # and store
+            string plotcodes[count] = tempplotcode
+            count++
         endloop
     endloop
 
-    # return the gnuplot plotting code here eventually
+    return plotcodes
 end function
 
 ##############################
@@ -616,80 +631,7 @@ function scalar SVAR_SRgetbest(bundle *mod,
     # pick the right position in the matrix:
     # (taking into account partial identification, i.e.
     #  less id'ed shocks than variables)
-    # was: scalar v_ix = names2indices(mod.Ynames, defarray(vname))
     scalar v_ix = instrings(mod.Ynames, vname)
-    # was: scalar s_ix = names2indices(mod.SRid_snames, defarray(sname))
-    scalar s_ix = instrings(mod.SRid_snames, sname)
-    k = (s_ix - 1) * nelem(mod.Ynames) + v_ix
-
-    center = center[,k]
-
-    best = $huge
-    bestdraw = 0
-    loop i = 1..mod.SRacc
-        matrix IRFvec = drill(mod.acc_draws[i].irfs, v_ix, s_ix)
-        matrix distance = (IRFvec - center)[startix : finix]
-        if loss == "abs"
-            scalar objective = sum(abs(distance))
-        elif loss == "quad"
-            scalar objective = sum(distance.^2)
-        endif
-        if objective < best
-            best = objective
-            bestdraw = i
-        endif
-    endloop
-
-    errorif( !bestdraw, "shouldn't happen")
-
-    # store for further use
-    mod.bestdraw = bestdraw
-    return bestdraw
-end function
-
-##############################
-
-function scalar SVAR_SRgetbest(bundle *mod,
-                               string vname, string sname,
-                               int ini[0::0], int length[0::0],
-                               int disttarg[0:1:0] "measure to target" \
-                               {"mean", "median"},
-                               string loss[null])
-    # Function to find the set-id accepted draw which best fits a
-    # a certain IRF center
-    # vname: e.g. "Y"
-    # sname: e.g. "supply" (naming must exist in the bundle)
-    # ini: horizon range start (0 = impact)
-    # length: horizon end is ini + length
-    # disttarg: which part of the per-horizon distribution should be
-    # targeted;
-    # loss: how to evaluate deviations from the target;
-    #      possible values: "abs", "quad" (default), ...
-
-    ## implement defaults and error checks:
-    if !exists(loss)
-        string loss = "quad"
-    elif tolower(loss) != "abs" && tolower(loss) != "quad"
-        print "Warning, unrecognized loss, using 'quad'"
-        loss = "quad"
-    else
-        loss = tolower(loss)
-    endif
-
-    errorif( ini + length > mod.horizon, "ini + length too large (increase horizon)")
-    errorif( !inbundle(mod, "SRacc"), "No info on accepted draws found")
-    errorif( !inbundle(mod, "acc_draws"), "Model must be set up to store accepted draws in its bundle")
-
-    startix = ini + 1	# offset for 1-based
-    finix = startix + length
-    matrix center = !disttarg ? mod.SRirfmeans : mod.SRirfmeds
-
-    # pick the right position in the matrix:
-    # (taking into account partial identification, i.e.
-    #  less id'ed shocks than variables)
-    # was: scalar v_ix = names2indices(mod.Ynames, defarray(vname))
-    scalar v_ix = instrings(mod.Ynames, vname)
-    # was: scalar s_ix = names2indices(mod.SRid_snames, defarray(sname))
     scalar s_ix = instrings(mod.SRid_snames, sname)
     k = (s_ix - 1) * nelem(mod.Ynames) + v_ix
 
