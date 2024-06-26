@@ -226,7 +226,7 @@ function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
     # historical decomposition
     # (drawix only meant for the set id case (type 10))
 
-    list ret = null
+    list ret = empty
     loop foreach i n p type T k
         scalar $i = Mod.$i
     endloop

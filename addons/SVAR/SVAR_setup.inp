@@ -256,7 +256,7 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
     k = nelem(lX)
     n2 = n*n
 
-    bundle ret = null
+    bundle ret = empty
 
     /*-----------------------------------------------------------------------*/
     /* general info                                                          */
