@@ -50,7 +50,7 @@ end function
 /* ------------------------------------------------------------------ */
 
 function list determ(const list X, bool cnst, bool trnd, bool seas)
-    list ret = cnst ? const : null
+    list ret = cnst ? const : empty
 
     if trnd
         ret += time

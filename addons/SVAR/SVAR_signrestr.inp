@@ -28,11 +28,9 @@ function void SVAR_SRfull(bundle *mod,
     # impact prices with a negative sign on lags from 0 to 4, then
     # the function call should be
     #
-    # SVAR_SRfull(mod, "p", 1, NA, 0, 0, 4)
+    # SVAR_SRfull(&mod, "p", "mon_pol", NA, 0, 0, 4)
     #
-    # assuming the series for prices is called "p" and that we want
-    # our monetary policy shock to come 1st in the ordering (useful for
-    # models with sign restrictions on more than one shock)
+    # assuming the series for prices is called "p".
 
     # (Switched the yname/sname ordering to match SVAR_SRplain; Sven)
 
@@ -41,10 +39,11 @@ function void SVAR_SRfull(bundle *mod,
         matrix mod.SRest = {}
     endif
 
-    matrix snum = instrings(mod.snames, sname) # was strpos_allin
+    # This determines the position among _all_ shocks, not just set-ID'd:
+    matrix snum = instrings(mod.snames, sname) 
     errmsgshockmatch(snum, sname)
 
-    matrix k = instrings(mod.Ynames, yname) # was strpos_allin
+    matrix k = instrings(mod.Ynames, yname) 
     if nelem(k) != 1
         printf "Variable %s is not in the model\n", yname
         print " (or several ones with that name)"
@@ -78,7 +77,7 @@ function void SVAR_SRplain(bundle *mod,
                            string what,
                            int length[0::0], int ini[0::0])
     # shorthand for sign restrictions in narrow sense
-    # (Model type is checked downstream in SVAR_SRfull)
+    # (model type is checked downstream in SVAR_SRfull)
     scalar hi, lo
     if what == "+"
         hi = NA
@@ -117,7 +116,7 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
 
        shocks: strings array with the names of the shocks that enter this
        restriction (it's the user's responsibility to get this right;
-       in the futur maybe we can verify or check this)
+       in the future maybe we can verify or check this, TODO)
 
        needs_model: If yes, this becomes a "super-exotic" restriction,
        because it needs more input than just the boundaries; for example
@@ -128,13 +127,13 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
     errorif( mod.type != 10, "Wrong model type for set identification restrictions")
 
     if !inbundle(mod, "exoticSR")
-        strings checks = null
+        strings checks = array(0)
         bundle mod.exoticSR = _(checks=checks, spans={}, super={}, eshocks={})
     endif
 
     # store the relevant shock numbers
-    loop s = 1..nelem(shocks) -q
-        matrix snum = instrings(mod.snames, shocks[s]) # can be several! / # was strpos_allin
+    loop s = 1..nelem(shocks)
+        matrix snum = instrings(mod.snames, shocks[s])
         errorif(!nelem(snum), sprintf("No shock named %s found\n", shocks[s]))
         mod.exoticSR.eshocks |= snum
     endloop
@@ -247,6 +246,9 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     # If the DO_BAYES flag is on, the VAR parameters (including Sigma)
     # are resampled too; otherwise, they are kept fixed at the ols
     # estimates.
+    # (Since DO_BAYES just addresses parameter uncertainty using the 
+    # frequentist-estimate of the var-cov, it basically uses an 
+    # uninformative prior; perhaps call it something else in the future.)
     #
     # this version generalises a previous version of SVAR_SRdraw 
     # so as to allow for mixed restrictions
@@ -284,22 +286,23 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
 
     # which shocks are to be identified via sign restrictions?
     matrix shocks = values(mod.SRest[,6])
-    matrix allshocks = shocks
+    matrix allshocks = shocks # redundant / overridden assignment a few lines down?
     
     # do we have exotic restrictions?
     n_exotic = get_n_exotic(mod)
-    # add the ones from exotic restrictions
+    
+    # add the shocks (their positions among all shocks) from exotic restrictions
+    # (taking into account/eliminating duplicates [SRid shocks that are both exotic and non-exotic])
     matrix allshocks = n_exotic ? values(shocks | mod.exoticSR.eshocks) : shocks
-    scalar nSetIdShocks = rows(shocks)
+    nSetIdShocks = rows(shocks) # FIXME, should it really be 'shocks' here, not 'allshocks'?
 
     # Now extract the corresponding shock names
-    strings temp = mod.snames[allshocks] # was getstrings_byindex pre 2020b
-    strings mod.SRid_snames = temp 	 # workaround gretl bug to ensure strings type even if 1 elem
+    strings temp = mod.snames[allshocks]
+    strings mod.SRid_snames = temp 	 # workaround (old?) gretl bug to ensure strings type even if 1 elem
 
     # this array contains as many elements as set-identified shocks
     # basically, it's a per-shock split of the SRest bundle element
-    # was:
-    # matrices Ais = prepAis(mod, shocks)
+    # FIXME, again, really 'shocks', not 'allshocks' ?
     matrices Ais = msplitby(mod.SRest, mod.SRest[,6])[shocks]
 
     # responses to be cumulated?
@@ -431,7 +434,8 @@ function void SVAR_spagplot(const bundle mod,
 
     # get shock number
     matrix snum = instrings(mod.SRid_snames, sname)
-    errmsgshockmatch(snum, sname)
+    errorif( !nelem(snum), sprintf("The given shock %s is not set-identified, not allowed", sname)) 
+    # was: errmsgshockmatch(snum, sname)
     
     # get var number
     matrix vnum = instrings(mod.Ynames, vname)
@@ -446,6 +450,13 @@ function void SVAR_spagplot(const bundle mod,
     matrix IRFs = zeros(numh, rep) ~ seq(0, mod.horizon)'
 
     loop i = 1..rep
+        # Vnum and snum should be 1x1 here.
+        # By using snum from above, it seems that this operation assumes that
+        #  the nested 'irfs' member only holds results for the set-ID'd case.
+        #  (Otherwise the index will be wrong if the SRid shocks aren't 
+        #   all ordered before all the others.)
+        # TODO Is this assumption correct?
+         
         IRFs[,i] = drill(mod.acc_draws[i].irfs, vnum[1], snum[1])
     endloop
 

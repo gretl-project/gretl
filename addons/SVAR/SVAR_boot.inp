@@ -106,7 +106,7 @@ function matrices avg_VARpar_boot(const bundle b, const bundle stuff)
     # (This is a requirement there.)
     # Of course in essence it's still just a single matrix. 
     
-    bundle bparams = inbundle(stuff, "bparams") ? stuff.bparams : null
+    bundle bparams = inbundle(stuff, "bparams") ? stuff.bparams : empty
       
     # simulate the average reduced-form coeffs
     matrix Absum = zeros(b.n, b.n*b.p) 
@@ -263,7 +263,7 @@ function scalar SVAR_boot(bundle *obj,
     endif
     
 	# Copy optional block length choice 
-    bundle bparams = null
+    bundle bparams = empty
 	if obj.boottype == 5 && inbundle(obj, "moveblocklen")
 		bparams.moveblocklen = obj.moveblocklen
 	endif
@@ -320,7 +320,7 @@ function scalar SVAR_boot(bundle *obj,
     matrix hicb = quantile(bootirfs, 1 - q_alpha)
     matrix mdn  = quantile(bootirfs, 0.5)
 
-    bundle bootdata = null
+    bundle bootdata = empty
     bootdata.rep   = rep                # no of replications
     bootdata.alpha = alpha              # alpha
     bootdata.biascorr  = obj.biascorr   # type of bias correction
@@ -450,7 +450,7 @@ function matrices SVAR_boot_innerloop(bundle *bobj, const bundle obj, const bund
                 matrix fullRd = bobj.fullRd
             endif
 
-            matrix K = estC(&theta, bSigma, fullRd, null, &errcode, obj.optmeth, 0)
+            matrix K = estC(&theta, bSigma, fullRd, d, &errcode, obj.optmeth, 0)
 
         elif type == 3 # "AB"
             matrices transferAB = array(0)
