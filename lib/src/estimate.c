@@ -1220,14 +1220,16 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     }
 
     mdl.ncoeff = mdl.list[0] - 1;
-    if (effobs > 0 && mdl.missmask == NULL) {
+    if (effobs > 0 && effobs <= mdl.t2 - mdl.t1 + 1 && mdl.missmask == NULL) {
 	mdl.nobs = effobs;
     } else {
 	mdl.nobs = mdl.t2 - mdl.t1 + 1;
-	if (mdl.nwt) {
-	    mdl.nobs = wls_usable_obs(&mdl, dset);
-	} else if (mdl.missmask != NULL) {
-	    mdl.nobs -= model_missval_count(&mdl);
+        if (mdl.missmask != NULL) {
+            if (mdl.nwt) {
+                mdl.nobs = wls_usable_obs(&mdl, dset);
+            } else {
+                mdl.nobs -= model_missval_count(&mdl);
+            }
 	}
     }
 
