@@ -179,10 +179,11 @@ function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
         # no zero restrictions
         matrix b.rot = rand_rotation(mod.n, rotate_only)
     else
+        # honoring the restrictions defined in zc
         matrix b.rot = const_orth(b.zc, C)
     endif
 
-    if strlen(getenv("NO_AUTONORM")) == 0
+    if strlen(getenv("NO_AUTONORM")) == 0	# FIXME: let's add an option for this
         # identification: set main diagonal of instantaneous IRF
         # to positive numbers
         C = C * b.rot
@@ -486,16 +487,21 @@ end function
 ### functions pertaining to mixed (sign- and 0-restriction) models
 ###
 
-function matrix add_zero_constr(bundle mod, const matrix shocks, bundle *rotinfo)
+function matrix add_zero_constr(const bundle mod, const matrix shocks, bundle *rotinfo)
 
-    # Create the matrix array for zero restrictions if necessary and
-    # stick it into the model bundle. The return matrix holds the indices
-    # of shocks with at least one zero restriction so that they don't get
-    # rotated afterwards in check_id()
+    # Create the matrix array for zero restrictions and stick it into the
+    # special rotation-model-info bundle as 'zc'. The return matrix
+    # holds the indices of shocks with at least one zero restriction
+    # --within the group specified by the input 'shocks'-- 
+    # so that they don't get rotated afterwards in check_id().
+    #
+    # If there are no specified zero restrictions (in mod), 
+    # then an empty array is added to rotinfo, and the return 
+    # matrix is also empty.
 
     matrix zc_shocks = {}
 
-    if rows(mod.Rd1)
+    if rows(mod.Rd1)	# constraints on C
         err = 0
         matrices zc = xtr_blockdg_const(mod.Rd1, &err)
         errorif(err > 0, "zero constraints malformed!")
@@ -572,6 +578,8 @@ function matrix const_orth(const matrices constraints, const matrix C)
     # this function produces an orthonormal matrix Q such that
     # K = QC satisfies the constraints embodied in the matrix array "constraints"
     # (in the outside world this matrices array is also called [bundle].zc)
+    # 
+    # ('const' comes from 'constraint', not constant...)
 
     DBG = 0	# debug
     n = rows(C)

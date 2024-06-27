@@ -377,6 +377,9 @@ function scalar SVAR_restrict(bundle *b, string code, const numeric r, int c[0],
     
     # c gets a default so that it can be omitted with Adiag, Bdiag (?)
     # the d default is also natural
+    
+    # (maybe it would make sense to throw hard errors here instead of 
+    #  returning codes and doing nothing... (Sven))
 
     if typename(r) == "matrix"
         # the case of a full restriction pattern matrix
@@ -392,17 +395,23 @@ function scalar SVAR_restrict(bundle *b, string code, const numeric r, int c[0],
     if !instring("C lrC A B Adiag Bdiag", code) # code unknown
         print "Unknown code in SVAR_restrict."
         return 2
-
+        
+        # check for unsupported case
+    elif type==10 && code != "C"	# 10 is set identification
+        # In particular, no long-run lrC restrictions are supported here.
+        print "Only short-run C-type additional restrictions allowed in set-id'ed models."
+        return 10
+        
         # check for input mismatch
     elif (code=="C" || code=="lrC") && !contains(type, {1, 2, 4, 10})
-        print "C type restriction but not a C model."
+        print "C-type restriction but not a C-compatible model."
         return 1
 
     elif instring("A B Adiag Bdiag", code) && type!=3
         print "AB type restriction but not an AB model."
         return 1
 
-        # check for unsupported case
+        # another unsupported case
     elif code == "lrC" && type == 3
         print "Long-run restrictions only supported in C models."
         return 3	# (Which code to return here? <Sven>)
@@ -415,9 +424,7 @@ function scalar SVAR_restrict(bundle *b, string code, const numeric r, int c[0],
             # (p.29, section 7 of the doc)
             return 4
         endif
-        # elif type == 10
-        #     print "Use specialized functions (SVAR_SRplain etc.) for sign restrictions."
-        #     return 5
+        
     endif
 
     # if no input error, proceed with this:

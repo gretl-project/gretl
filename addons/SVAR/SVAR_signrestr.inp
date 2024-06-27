@@ -13,10 +13,13 @@ function void SVAR_SRfull(bundle *mod,
                           scalar lo[NA], scalar hi[NA],
                           int ini[0::0], int fin[0::0])
 
-    # this function will add to the appropriate element of
-    # the bundle "mod" a set of sign restrictions relative
-    # to one variable and one shock, organised as a row
-    # vector with the following elements; input values are:
+    # This function will add to the appropriate element of
+    # the bundle "mod" (namely mod.SRest) the definition of
+    # set restrictions relative to one variable and one shock,
+    # organised as a row vector. Basically, the names of the 
+    # target variable and of the shock are mapped to their 
+    # position numbers, and some error checks are done;
+    # input values are:
     #
     # mod      : the VAR model bundle (in pointer form)
     # yname    : a string with the name of the observable to examine
@@ -24,13 +27,15 @@ function void SVAR_SRfull(bundle *mod,
     # lo, hi   : bounds (NA for +- infty)
     # ini, fin : IRF interval to check (0-based)
     #
-    # for example, if we assume that a monetary policy shock will
+    # For example, if we assume that a monetary policy shock will
     # impact prices with a negative sign on lags from 0 to 4, then
     # the function call should be
     #
     # SVAR_SRfull(&mod, "p", "mon_pol", NA, 0, 0, 4)
     #
     # assuming the series for prices is called "p".
+    # 
+    # This function only covers "ordinary", i.e. non-exotic, set restrictions.
 
     # (Switched the yname/sname ordering to match SVAR_SRplain; Sven)
 
@@ -43,8 +48,8 @@ function void SVAR_SRfull(bundle *mod,
     matrix snum = instrings(mod.snames, sname) 
     errmsgshockmatch(snum, sname)
 
-    matrix k = instrings(mod.Ynames, yname) 
-    if nelem(k) != 1
+    matrix kpos = instrings(mod.Ynames, yname) 
+    if nelem(kpos) != 1
         printf "Variable %s is not in the model\n", yname
         print " (or several ones with that name)"
         funcerr "Specify correct and unique variable names"
@@ -67,7 +72,7 @@ function void SVAR_SRfull(bundle *mod,
     # Attention: Here the ini and fin inputs are transformed
     # to 1-based matrix indexing form, not keeping the actual
     # horizon meaning
-    mod.SRest |= {k, lo, hi, ini+1, fin+1, snum}
+    mod.SRest |= {kpos, lo, hi, ini+1, fin+1, snum}
 
 end function
 
@@ -128,7 +133,7 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
 
     if !inbundle(mod, "exoticSR")
         strings checks = array(0)
-        bundle mod.exoticSR = _(checks=checks, spans={}, super={}, eshocks={})
+        bundle mod.exoticSR = _(checks, spans={}, super={}, eshocks={})
     endif
 
     # store the relevant shock numbers
@@ -217,10 +222,34 @@ function scalar exotic_inner_check(scalar *chk, int i, const bundle mod,
     out = 0
     loop t = inip1..finp1
         matrix M = irfs[t] # hardcoded "M" for the API!
-        if needs_model
-            # FIXME This part looks very broken...!?
-            # or very outdated...
-            scalar exocheck = feval(exo_restrict, M, mod)
+        
+        if needs_model	
+            # The super-exotic case, not really documented yet.
+            /* So the implicit expectation here is:
+             'exo_restrict' is the string name of a user-defined function
+             which is specifically written to evaluate the super-exotic 
+             restriction; for example "my_super_func1". 
+             This function _must_ take the (current-horizon) 
+             IRF matrix M as first argument, and the overall model bundle 
+             mod as the second argument. Through the model bundle the 
+             function has access for example to the estimated coefficients. 
+             Then the function must return the scalar/boolean result 0 or 1,
+               indicating whether or not the restriction held for this
+               concrete rotation.
+               (This setup still has the limitation that cross-horizon 
+               restrictions cannot be formulated. In principle we could add 
+               the whole 'irfs' collection of the current rotation as a 
+               member to (a copy of) mod, and then the function could do 
+               whatever it wants with it.)  
+            */
+            catch scalar exocheck = feval(exo_restrict, M, mod)
+            if $error 
+                print "Problem with super-exotic restriction --"
+                print " review and revise your restriction function call string"
+                print " and associated function definition."
+                funcerr "Checking super-exotic restriction failed"
+            endif
+            
         else
             scalar exocheck = @exo_restrict
         endif
@@ -286,7 +315,6 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
 
     # which shocks are to be identified via sign restrictions?
     matrix shocks = values(mod.SRest[,6])
-    matrix allshocks = shocks # redundant / overridden assignment a few lines down?
     
     # do we have exotic restrictions?
     n_exotic = get_n_exotic(mod)
@@ -294,15 +322,18 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     # add the shocks (their positions among all shocks) from exotic restrictions
     # (taking into account/eliminating duplicates [SRid shocks that are both exotic and non-exotic])
     matrix allshocks = n_exotic ? values(shocks | mod.exoticSR.eshocks) : shocks
-    nSetIdShocks = rows(shocks) # FIXME, should it really be 'shocks' here, not 'allshocks'?
 
     # Now extract the corresponding shock names
     strings temp = mod.snames[allshocks]
     strings mod.SRid_snames = temp 	 # workaround (old?) gretl bug to ensure strings type even if 1 elem
 
-    # this array contains as many elements as set-identified shocks
-    # basically, it's a per-shock split of the SRest bundle element
-    # FIXME, again, really 'shocks', not 'allshocks' ?
+    # This array contains as many elements as set-identified shocks;
+    # (only non-exotic setID'd shocks so far, because mod.SRest only holds those) 
+    # Basically, it's a per-shock split of the SRest bundle element,
+    #  where a member matrix can have several rows if a shock is restricted 
+    #  to fulfill several setID restrictions. 
+    # (It has to be 'shocks', not 'allshocks', to match the content of mod.SRest.)
+    # ?? Why the name 'Ais' ?? (Sven)
     matrices Ais = msplitby(mod.SRest, mod.SRest[,6])[shocks]
 
     # responses to be cumulated?
@@ -314,18 +345,26 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
 
     # this bundle contains the necessary information for generating the rotations
     bundle b = _(B=B, Sigma=mod.Sigma, exoterms=rows(mod.mu),
-		 df= mod.T - rows(B), T=mod.T)
+		 df = mod.T - rows(B), T=mod.T)
 
-    # handle the zero constraints, if any (note: this modifies b)
-    matrix zc_shocks = add_zero_constr(mod, shocks, &b)
+    # Handle the zero constraints for the mixed case, if any (note: this puts zc into b).
+    # FIXME: In principle it seems to me (Sven) that here 'allshocks' should 
+    # be passed (including the purely exotic-restricted ones), since the aim is
+    # to avoid rotating the zero-constrained shocks, and currently we fail to 
+    # avoid this if the mixed restriction happens with an exotic shock, I think.
+    # However, the whole exotic-check apparatus probably needs to be adjusted 
+    # for that.
+    matrix zc_shocks = add_zero_constr(mod, shocks, &b) 
     
     # for the future: set a matrix for keeping some shocks from being rotated
     # eventually, this could probably be inferred from the model bundle
+    # (Downstream this only applies to non-zero restrictions, but  
+    #  why would you not want to rotate?? (sven))
     rot_only = {}
 
     loop while good<rep && iter<=maxiter
 
-        # first just using non-exotic restrictions
+        # --- first just using non-exotic restrictions ---
 
         # generate the random rotation matrix and, optionally, resample
         rot_redraw(&b, mod, DO_BAYES, B, chol_iXX, rot_only) 	# b.rot, b.B, b.Sigma
@@ -340,12 +379,23 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
         endif
 	
         chk = DO_NORM ? (rows(id_matrix) == rows(shocks)) : 0 # this check 1st!
+        # ?? But what does DO_NORM really mean? If it were set to zero,
+        #   the check always fails and no draw would be kept down the road - why?? (sven) 
+        
+        # a "coherency" check
         chk = chk && check_id(id_matrix, zc_shocks)
 
         if chk
-            if mod.n == nSetIdShocks
-                # complete system
+            if mod.n == rows(shocks)
+                # complete system 
+                # (was nSetIdShocks; 'shocks' refers to non-exotic set-ID'd, 
+                #  so "complete" is defined against that measure)
                 b.Q = b.rot * id_matrix'
+                
+                # So we save b.Q only if enough shocks are covered/addressed by 
+                # restrictions. What do we need it for, down the road?
+                # And if we need it, shouldn't exotic restrictions also count
+                # for making the system "complete"? 
             endif
 
             # perform the "reflection-permutation" step
@@ -373,6 +423,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
             endif
         endif
 
+        # print some progress info on the way
         factor = (DO_BAYES ? 100 : 500) * xmax(1,floor(sqrt(maxiter/1000)))
 
         if (iter % factor == 0) || (iter % 1000 == 0)
