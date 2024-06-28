@@ -229,7 +229,7 @@ function matrix get_id_mat (const bundle mod, const matrix shocks,
         printf "=========================================\n"
     endif
 
-    if DO_NORM
+    if DO_NORM && nshocks	# added check for positive shock number (sven)
         id_matrix = normlizA(id_matrix)
     endif
 
@@ -403,6 +403,13 @@ function scalar check_id(matrix id, matrix noswap)
     # Edit 24-05-2023: in the case of zero constraints, the columns
     # corresponding to zero-constrained shocks should not be swapped
 
+    if !nelem(id) 
+        # (Sven) add a shortcut for the 0-element case, stemming (hopefully)
+        # from the situation without non-exotic set restrictions;
+        # no such restrictions mean no problems for "coherency" of IRFs
+        return 1
+    endif
+     
     r = rows(id)
     c = cols(id)
 

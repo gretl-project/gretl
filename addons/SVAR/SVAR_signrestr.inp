@@ -313,8 +313,9 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     scalar good = 0
     scalar iter = 1
 
-    # which shocks are to be identified via sign restrictions?
-    matrix shocks = values(mod.SRest[,6])
+    # which shocks are to be identified via (non-exotic) sign restrictions?
+    # (can be empty if only exotic restrictions exist)
+    matrix shocks = rows(mod.SRest) ? values(mod.SRest[,6]) : {}
     
     # do we have exotic restrictions?
     n_exotic = get_n_exotic(mod)
@@ -334,8 +335,15 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     #  to fulfill several setID restrictions. 
     # (It has to be 'shocks', not 'allshocks', to match the content of mod.SRest.)
     # ?? Why the name 'Ais' ?? (Sven)
-    matrices Ais = msplitby(mod.SRest, mod.SRest[,6])[shocks]
-
+    
+    matrices Ais = array(0) # stays empty if only exotic shocks exist
+    if rows(mod.SRest) == 1	# work around an msplitby problem with 1-element vector in 2024b
+        Ais = defarray(mod.SRest)
+        
+    elif rows(mod.SRest) > 1
+        Ais = msplitby(mod.SRest, mod.SRest[,6])[shocks]
+    endif
+    
     # responses to be cumulated?
     matrix to_cum = mod.ncumul ? mod.cumul : {}
 
@@ -365,6 +373,12 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     loop while good<rep && iter<=maxiter
 
         # --- first just using non-exotic restrictions ---
+        # FIXME
+        # This here implicitly used to assume the existence of at least one 
+        # non-exotic set-id'd shock. Because if Ais is empty, then id_matrix below will
+        # also be empty, and this wasn't handled. Now the case of an empty
+        # id_matrix is superficially caught, but unclear whether it is enough 
+        # and still does the right thing.        
 
         # generate the random rotation matrix and, optionally, resample
         rot_redraw(&b, mod, DO_BAYES, B, chol_iXX, rot_only) 	# b.rot, b.B, b.Sigma
@@ -399,9 +413,11 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
             endif
 
             # perform the "reflection-permutation" step
-            loop i = 1..nelem(irfs)
-                irfs[i] = irfs[i] * id_matrix'
-            endloop
+            if nelem(id_matrix) # could be empty if only exotic restrictions
+                loop i = 1..nelem(irfs)
+                    irfs[i] = irfs[i] * id_matrix'
+                endloop
+            endif
 
             # --- now check for exotic restrictions if necessary -------
             if n_exotic
