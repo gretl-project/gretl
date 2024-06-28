@@ -467,13 +467,13 @@ static void fix_wls_values (MODEL *pmod, const DATASET *dset)
 
 /* drop the weight var from the list of regressors (WLS) */
 
-static void dropwt (int *list)
+static void dropwt (MODEL *pmod)
 {
     int i;
 
-    list[0] -= 1;
-    for (i=1; i<=list[0]; i++) {
-	list[i] = list[i+1];
+    pmod->list[0] -= 1;
+    for (i=1; i<=pmod->list[0]; i++) {
+	pmod->list[i] = pmod->list[i+1];
     }
 }
 
@@ -622,6 +622,17 @@ static void log_depvar_ll (MODEL *pmod, const DATASET *dset)
     }
 }
 
+/* check_weight_var(): Here we're screening out certain errors to do
+   with the weight series for WLS, and also checking for 0/1 dummy
+   weights.
+
+   * Negative weights are not permitted: we flag an error if any are
+     found.
+   * 0/1 weights are OK, but otherwise zero weights are not accepted
+     unless the --allow-zeros option (OPT_Z) is passed to the "wls"
+     command.
+*/
+
 static int check_weight_var (MODEL *pmod, const double *w, int *effobs,
 			     gretlopt opt)
 {
@@ -657,6 +668,10 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs,
 	return 1;
     }
 
+    /* note: this @effobs value does not take into account missing
+       values of dep var or regressors, and so is potentially
+       misleading! (FIXME)
+    */
     *effobs = nobs;
 
     if (is_dummy) {
@@ -1182,7 +1197,8 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     }
 
     if (ci == WLS) {
-	dropwt(mdl.list);
+        /* note: remove the WLS weight series from regression list */
+	dropwt(&mdl);
     }
 
     yno = mdl.list[1];
@@ -1221,6 +1237,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
     mdl.ncoeff = mdl.list[0] - 1;
     if (effobs > 0 && effobs <= mdl.t2 - mdl.t1 + 1 && mdl.missmask == NULL) {
+        /* FIXME: this is WLS-specific, but is it right? */
 	mdl.nobs = effobs;
     } else {
 	mdl.nobs = mdl.t2 - mdl.t1 + 1;

@@ -125,7 +125,7 @@ static char *model_missmask (const int *list, int t1, int t2,
  * @n: full length of data array.
  * @Z: data array.
  * @misst: location to receive the first observation with a
- *         missing value inside the sample range, or NULL.
+ * missing value inside the sample range, or NULL.
  *
  * Drops leading or trailing observations from the sample range
  * initially given by the values in the t1 and t2 members of
