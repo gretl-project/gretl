@@ -512,19 +512,17 @@ static int wls_usable_obs (MODEL *pmod, const DATASET *dset)
 #define SMPL_DEBUG 0
 
 static int
-lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
+lsq_check_for_missing_obs (MODEL *pmod, gretlopt opt, DATASET *dset,
 			   int *misst)
 {
-    int ref_mask = reference_missmask_present();
-    int missv = 0;
     int reject_missing = 0;
+    int missv = 0;
 
 #if SMPL_DEBUG
-    fprintf(stderr, "lsq_check_for_missing_obs: ref_mask = %d\n",
-	    ref_mask);
+    fprintf(stderr, "lsq_check_for_missing_obs\n");
 #endif
 
-    if (ref_mask) {
+    if (reference_missmask_present()) {
 	int err = apply_reference_missmask(pmod);
 
 	/* If there was a reference mask present, it was put there
@@ -539,11 +537,11 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
 	}
     }
 
-    if (opts & OPT_M) {
+    if (opt & OPT_M) {
 	reject_missing = 1;
     } else if (libset_get_int(HAC_MISSVALS) == HAC_REFUSE) {
 	/* we won't do HAC VCV with embedded missing obs */
-	if ((opts & OPT_R) && dataset_is_time_series(dset) &&
+	if ((opt & OPT_R) && dataset_is_time_series(dset) &&
 	    !libset_get_bool(FORCE_HC)) {
 	    reject_missing = 2;
 	}
