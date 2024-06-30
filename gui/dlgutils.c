@@ -24,6 +24,7 @@
 #include "tabwin.h"
 #include "base_utils.h"
 #include "dlgutils.h"
+#include "session.h"
 
 #ifndef GRETL_EDIT
 #include "menustate.h"
@@ -715,8 +716,13 @@ static void dlg_text_set_from_sys (equation_system *sys,
     gretl_print_destroy(prn);
 }
 
+#define ADD_EXISTING_EQN 1
+
 enum {
+#if ADD_EXISTING_EQN
     ADD_EQN,
+#endif    
+    NEW_EQN,
     ADD_DERIV,
     ADD_IDENT,
     ADD_ENDO_LIST,
@@ -748,7 +754,7 @@ static gint edit_popup_click (GtkWidget *w, dialog_t *d)
 	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
     const char *ins = NULL;
 
-    if (action == ADD_EQN) {
+    if (action == NEW_EQN) {
 	ins = "equation ";
     } else if (action == ADD_DERIV) {
 	ins = "deriv ";
@@ -758,6 +764,18 @@ static gint edit_popup_click (GtkWidget *w, dialog_t *d)
 	ins = "endog ";
     } else if (action == ADD_INSTR_LIST) {
 	ins = "instr ";
+#if ADD_EXISTING_EQN        
+    } else if (action == ADD_EQN) {
+        GList *list = session_model_list();
+
+        if (list == NULL) {
+            infobox("No pre-existing equations");
+        } else {
+            infobox_printf("%d pre-existing equations",
+                           g_list_length(list));
+        }
+        g_list_free(list);
+#endif        
     }
 
     if (ins != NULL) {
@@ -794,7 +812,12 @@ static gint edit_popup_click (GtkWidget *w, dialog_t *d)
 static GtkWidget *build_edit_popup (dialog_t *d)
 {
     const char *items[] = {
+#if ADD_EXISTING_EQN
+        N_("Add equation"),
+        N_("New equation"),
+#else        
 	N_("Add equation"),
+#endif        
 	N_("Add derivative"),
 	N_("Add identity"),
 	N_("Add list of endogenous variables"),
@@ -1150,8 +1173,7 @@ static void build_mle_combo (GtkWidget *vbox, dialog_t *d, MODEL *pmod)
     add_bfgs_controls(d, vbox, NULL);
 }
 
-static void system_estimator_list (GtkWidget *vbox, dialog_t *d,
-				   GtkWidget *bt, GtkWidget *bv)
+static GtkWidget *system_estimator_list (GtkWidget *vbox, dialog_t *d)
 {
     equation_system *sys = NULL;
     GtkWidget *w, *hbox;
@@ -1187,15 +1209,23 @@ static void system_estimator_list (GtkWidget *vbox, dialog_t *d,
 	}
     }
 
-    g_object_set_data(G_OBJECT(w), "bt", bt);
-    g_object_set_data(G_OBJECT(w), "bv", bv);
-    g_signal_connect(G_OBJECT(w), "changed",
-		     G_CALLBACK(set_sys_method), d);
-
     gtk_combo_box_set_active(GTK_COMBO_BOX(w), active);
 
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
     gtk_widget_show(w);
+
+    return w;
+}
+
+static void estimator_list_set_conditions (GtkWidget *w,
+                                           dialog_t *d,
+                                           GtkWidget *bt,
+                                           GtkWidget *bv)
+{
+    g_object_set_data(G_OBJECT(w), "bt", bt);
+    g_object_set_data(G_OBJECT(w), "bv", bv);
+    g_signal_connect(G_OBJECT(w), "changed",
+		     G_CALLBACK(set_sys_method), d);
 }
 
 static void dlg_display_sys (dialog_t *d)
@@ -1395,11 +1425,14 @@ blocking_edit_dialog (int ci, const char *title,
     }
 
     if (ci == SYSTEM || ci == ESTIMATE) {
-	GtkWidget *bt, *bv;
+	GtkWidget *cb, *bt, *bv;
 
-	bt = dialog_option_switch(d->vbox, d, OPT_T, NULL);
-	bv = dialog_option_switch(d->vbox, d, OPT_V, NULL);
-	system_estimator_list(d->vbox, d, bt, bv);
+        cb = system_estimator_list(d->vbox, d);
+	bt = dialog_option_switch(d->vbox, d, OPT_T, NULL); /* iteration */
+	bv = dialog_option_switch(d->vbox, d, OPT_V, NULL); /* verbosity */
+        estimator_list_set_conditions(cb, d, bt, bv);
+        gtk_widget_set_sensitive(bv, button_is_active(bt));
+        sensitize_conditional_on(bv, bt);
     } else if (ci == NLS) {
 	dialog_option_switch(d->vbox, d, OPT_V, pmod);
 	dialog_option_switch(d->vbox, d, OPT_R, pmod);
