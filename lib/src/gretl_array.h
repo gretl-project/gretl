@@ -128,7 +128,8 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
 
 gretl_array *gretl_matrix_split_by (const gretl_matrix *X,
 				    const gretl_matrix *v,
-				    int colwise, int *err);
+				    int colwise, int chunks,
+                                    int *err);
 
 int gretl_array_set_list (gretl_array *A, int i,
 			  int *L, int copy);
