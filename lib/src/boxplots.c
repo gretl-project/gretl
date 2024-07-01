@@ -33,7 +33,7 @@ typedef struct {
     double wmax, wmin; /* whisker max and min */
     int n;
     char varname[VNAMELEN];
-    char *bool;
+    char *bool;        /* FIXME */
     gretl_matrix *outliers;
 } BOXPLOT;
 
@@ -672,7 +672,7 @@ static void do_boxplot_labels (PLOTGROUP *grp, int anybool,
                                double gyrange, FILE *fp)
 {
     BOXPLOT *bp;
-    double h = gyrange / 20;
+    double h = gyrange / 12.5; /* was 20 */
     double lpos = grp->gmin - h;
     int i;
 
@@ -911,7 +911,7 @@ static int factorized_boxplot_check (const int *list,
 }
 
 /* build the boxplot group data structure, then pass it to
-   gnuplot_do_boxplot to write the command file */
+   write_gnuplot_boxplot() to write the command file */
 
 static int real_boxplots (const int *list,
                           const DATASET *dset,
