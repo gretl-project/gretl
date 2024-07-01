@@ -1930,8 +1930,8 @@ int rename_series (DATASET *dset, int v, const char *name,
     int err = 0;
 
     if (opt & OPT_C) {
-        fprintf(stderr, "NOT ready yet, v = %d, optparm=%s\n",
-                v, get_optval_string(RENAME, opt));
+        fprintf(stderr, "Not ready yet: optparm=%s, v=%d\n",
+                get_optval_string(RENAME, opt), v);
         return 1;
     }
 
