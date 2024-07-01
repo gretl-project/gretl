@@ -4111,10 +4111,14 @@ static int assemble_command (CMD *cmd, DATASET *dset,
 	if (cmd->opt != OPT_NONE &&
 	    (cmd->ci == OPEN || cmd->ci == APPEND)) {
 	    cmd->err = post_process_spreadsheet_options(cmd);
-	} else if (cmd->ci == RENAME) {
+	} else if (cmd->ci == RENAME && !(cmd->opt & OPT_C)) {
             cmd->err = post_process_rename_param(cmd, dset);
         }
     }
+
+#if CDEBUG
+    fprintf(stderr, "assemble_command: at return cmd->err = %d\n", cmd->err);
+#endif
 
     return cmd->err;
 }
