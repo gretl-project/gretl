@@ -716,7 +716,7 @@ static void dlg_text_set_from_sys (equation_system *sys,
     gretl_print_destroy(prn);
 }
 
-#define ADD_EXISTING_EQN 1
+#define ADD_EXISTING_EQN 0
 
 enum {
 #if ADD_EXISTING_EQN
