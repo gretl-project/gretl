@@ -1099,7 +1099,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 		      double rho)
 {
     MODEL mdl;
-    int effobs = 0;
+    int wtdobs = 0;
     int missv = 0, misst = 0;
     int pwe = (opt & OPT_P);
     int nullmod = 0, ldv = 0;
@@ -1163,11 +1163,13 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
     /* Doing weighted least squares? */
     if (ci == WLS) {
-	check_weight_var(&mdl, dset->Z[mdl.list[1]], &effobs, opt);
+	check_weight_var(&mdl, dset->Z[mdl.list[1]], &wtdobs, opt);
 	if (mdl.errcode) {
 	    return mdl;
 	}
 	mdl.nwt = mdl.list[1];
+        fprintf(stderr, "HERE 1 wtdobs = %d, t1=%d, t2=%d\n",
+                wtdobs, mdl.t1, mdl.t2);
     } else {
 	mdl.nwt = 0;
     }
@@ -1184,6 +1186,9 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     if (mdl.errcode) {
         goto lsq_abort;
     }
+
+    fprintf(stderr, "HERE 2, t1=%d, t2=%d, missv=%d, nobs=%d\n",
+            mdl.t1, mdl.t2, missv, mdl.nobs);
 
     /* react to presence of unhandled missing obs */
     if (missv) {
@@ -1234,14 +1239,17 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     }
 
     mdl.ncoeff = mdl.list[0] - 1;
-    if (effobs > 0 && effobs <= mdl.t2 - mdl.t1 + 1 && mdl.missmask == NULL) {
+    if (wtdobs > 0 && wtdobs <= mdl.t2 - mdl.t1 + 1 && mdl.missmask == NULL) {
         /* FIXME: this is WLS-specific, but is it right? */
-	mdl.nobs = effobs;
+	mdl.nobs = wtdobs;
+        fprintf(stderr, "HERE 3(a), nobs=%d\n", mdl.nobs);
     } else {
 	mdl.nobs = mdl.t2 - mdl.t1 + 1;
+        fprintf(stderr, "HERE 3(b), nobs=%d\n", mdl.nobs);
         if (mdl.missmask != NULL) {
             if (mdl.nwt) {
                 mdl.nobs = wls_usable_obs(&mdl, dset);
+                fprintf(stderr, "HERE 3(c), nobs=%d\n", mdl.nobs);
             } else {
                 mdl.nobs -= model_missval_count(&mdl);
             }

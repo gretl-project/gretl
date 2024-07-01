@@ -1082,8 +1082,9 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
     if (!err && yhat != NULL) {
 	err = dataset_add_NA_series(dset, 1);
 	if (!err) {
-	    vi = dset->v - 1;
-	    err = dataset_rename_series(dset, vi, vname);
+	    int list[2] = {1, dset->v - 1};
+
+	    err = rename_series(dset, list, vname, OPT_NONE);
 	    series_set_label(dset, vi, _("predicted values"));
 	}
 	if (!err) {

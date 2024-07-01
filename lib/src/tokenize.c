@@ -3,7 +3,7 @@
    release of gretl.
 */
 
-#define CDEBUG 0
+#define CDEBUG 2
 #define TDEBUG 0
 
 typedef enum {
@@ -179,7 +179,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { QLRTEST,  "qlrtest",  0 },
     { QQPLOT,   "qqplot",   CI_LIST },
     { QUIT,     "quit",     CI_NOOPT },
-    { RENAME,   "rename",   CI_PARM1 | CI_PARM2 },
+    { RENAME,   "rename",   CI_LIST | CI_LLEN1 | CI_INFL },
     { RESET,    "reset",    0 },
     { RESTRICT, "restrict", CI_PARM1 | CI_BLOCK },
     { RMPLOT,   "rmplot",   CI_LIST | CI_LLEN1 },
@@ -3844,26 +3844,6 @@ static int post_process_spreadsheet_options (CMD *cmd)
     return err;
 }
 
-static int post_process_rename_param (CMD *cmd,
-				      DATASET *dset)
-{
-    int err = 0;
-
-    if (integer_string(cmd->param)) {
-	cmd->auxint = atoi(cmd->param);
-	if (cmd->auxint < 1 || cmd->auxint >= dset->v) {
-	    err = E_DATA;
-	}
-    } else {
-	cmd->auxint = current_series_index(dset, cmd->param);
-	if (cmd->auxint < 0) {
-	    err = E_UNKVAR;
-	}
-    }
-
-    return err;
-}
-
 /* check the commands that have the CI_INFL flag:
    the precise line-up of required arguments may
    depend on the option(s) specified
@@ -3947,6 +3927,11 @@ static void handle_option_inflections (CMD *cmd)
 		cmd->ciflags &= ~CI_LLEN1;
 	    }
 	}
+    } else if (cmd->ci == RENAME) {
+        if (cmd->opt & OPT_C) {
+            cmd->ciflags &= ~CI_PARM1;
+            cmd->ciflags &= ~CI_LLEN1;
+        }
     }
 }
 
@@ -4106,8 +4091,6 @@ static int assemble_command (CMD *cmd, DATASET *dset,
 	if (cmd->opt != OPT_NONE &&
 	    (cmd->ci == OPEN || cmd->ci == APPEND)) {
 	    cmd->err = post_process_spreadsheet_options(cmd);
-	} else if (cmd->ci == RENAME) {
-	    cmd->err = post_process_rename_param(cmd, dset);
 	}
     }
 
