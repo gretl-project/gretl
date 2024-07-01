@@ -4096,7 +4096,7 @@ static NODE *matrix_vector_func (NODE *l, NODE *m, NODE *r,
             ret = aux_array_node(p);
         }
         if (ret != NULL) {
-            int chunks = m->t == NUM;
+            int chunks = m->t == NUM; /* scalar */
 
             ret->v.a = gretl_matrix_split_by(a, v, colwise, chunks, &p->err);
         }
