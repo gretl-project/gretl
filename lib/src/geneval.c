@@ -8784,6 +8784,21 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
     return ret;
 }
 
+static NODE *horizontal_concat_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (l->t == STR && r->t == STR) {
+        ret = two_string_func(l, r, NULL, B_HCAT, p);
+    } else if (ok_matrix_node(l) && ok_matrix_node(r)) {
+        ret = matrix_matrix_calc(l, r, B_HCAT, p);
+    } else {
+        p->err = E_TYPES;
+    }
+
+    return ret;
+}
+
 #define is_matcher(f) (f == F_STRSUB || f == F_REGSUB)
 
 /* helper function for variant_string_func(): multi-string case */
@@ -17892,7 +17907,6 @@ static NODE *eval (NODE *t, parser *p)
         /* matrix sub-slice, x:y, or lag range, 'p to q' */
         ret = process_subslice(l, r, p);
         break;
-    case B_HCAT:
     case B_VCAT:
     case F_QFORM:
     case F_HDPROD:
@@ -17905,10 +17919,7 @@ static NODE *eval (NODE *t, parser *p)
     case B_LDIV:
     case B_KRON:
     case F_CONV2D:
-        if (t->t == B_HCAT && l->t == STR) {
-            /* special case: string concatenation */
-            ret = two_string_func(l, r, NULL, t->t, p);
-        } else if (ok_matrix_node(l) && ok_matrix_node(r)) {
+        if (ok_matrix_node(l) && ok_matrix_node(r)) {
             /* matrix-only binary operators (but promote scalars) */
             ret = matrix_matrix_calc(l, r, t->t, p);
         } else if (ok_matrix_node(l) && null_node(r) && t->t == F_HDPROD) {
@@ -17917,6 +17928,9 @@ static NODE *eval (NODE *t, parser *p)
             node_type_error(t->t, (l->t == MAT)? 2 : 1,
                             MAT, (l->t == MAT)? r : l, p);
         }
+        break;
+    case B_HCAT:
+        ret = horizontal_concat_node(l, r, p);
         break;
     case B_ELLIP:
         /* list-making ellipsis */
