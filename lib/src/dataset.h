@@ -397,7 +397,7 @@ int dataset_replace_series_data (DATASET *dset, int v,
 				 int t1, int t2,
 				 const char *descrip);
 
-int rename_series (DATASET *dset, const int *list, const char *name,
+int rename_series (DATASET *dset, int v, const char *name,
                    gretlopt opt);
 
 int dataset_drop_listed_variables (int *list, DATASET *dset, 

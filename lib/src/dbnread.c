@@ -161,9 +161,7 @@ static int get_one_dbnomics_series (const char *datacode,
 	/* empty dataset: just import */
 	err = import_csv(tmpname, dset, OPT_NONE, NULL);
 	if (!err && *altname != '\0') {
-            int list[2] = {1,1};
-            
-	    rename_series(dset, list, altname, OPT_NONE);
+	    rename_series(dset, 1, altname, OPT_NONE);
 	}
     } else if (!err) {
 	/* otherwise use join */

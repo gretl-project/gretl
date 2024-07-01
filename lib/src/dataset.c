@@ -1917,25 +1917,23 @@ static int real_rename_series (DATASET *dset, int v, const char *name)
 /**
  * rename_series:
  * @dset: dataset information.
- * @list: list of series to be renamed.
+ * @v: ID number of series to be renamed.
  * @name: new name to give the series.
  * @opt: may include OPT_C (--case).
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int rename_series (DATASET *dset, const int *list, const char *name,
+int rename_series (DATASET *dset, int v, const char *name,
                    gretlopt opt)
 {
-    int v, err = 0;
+    int err = 0;
 
-    if (list == NULL || list[0] == 0) {
-        return E_DATA;
+    if (opt & OPT_C) {
+        fprintf(stderr, "NOT ready yet, v = %d, optparm=%s\n",
+                v, get_optval_string(RENAME, opt));
+        return 1;
     }
-
-    printlist(list, "rename_series");
-
-    v = list[1];
 
     return real_rename_series(dset, v, name);
 #if 0    
