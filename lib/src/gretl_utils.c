@@ -3073,6 +3073,30 @@ char *get_cpu_details (void)
 
 #endif /* CPU_IDENT defined or not */
 
+/* AVX support detection */
+
+int avx_support (void)
+{
+#if (defined(__x86_64__) || defined(__i386__))
+    if (__builtin_cpu_supports("avx512f") || __builtin_cpu_supports("avx512vl") ||
+         __builtin_cpu_supports("avx512bw") || __builtin_cpu_supports("avx512dq") ||
+        __builtin_cpu_supports("avx512cd") || __builtin_cpu_supports("avx512vbmi") ||
+        __builtin_cpu_supports("avx512ifma") || __builtin_cpu_supports("avx512vpopcntdq") ||
+        __builtin_cpu_supports("avx512vbmi2") || __builtin_cpu_supports("avx512vnni") ||
+        __builtin_cpu_supports("avx512bitalg")) {
+        return 512;
+    } else if (__builtin_cpu_supports("avx2")) {
+        return 2;
+    } else if (__builtin_cpu_supports("avx")) {
+        return 1;
+    } else {
+        return 0;
+    }
+#else
+    return 0;
+#endif
+}
+
 /* library init and cleanup functions */
 
 /**
