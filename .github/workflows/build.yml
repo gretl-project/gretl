@@ -3,8 +3,8 @@ on:
   push:
     branches:
       - master
-      - features
-      - bugfixes
+      - feature
+      - bugfix
       - gretl-test
   pull_request:
     types: [opened, synchronize, reopened]
@@ -13,11 +13,11 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     env:
-      SONAR_SCANNER_VERSION: 4.4.0.2170
+      SONAR_SCANNER_VERSION: 6.1.0.4477
       SONAR_SERVER_URL: "https://sonarcloud.io"
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Set up JDK 11
