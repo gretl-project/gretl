@@ -3400,3 +3400,79 @@ char *gretl_substring (const char *str, int first, int last, int *err)
 
     return ret;
 }
+
+GretlCase gretl_case_from_string (const char *s)
+{
+    if (!strcmp(s, "lower")) {
+        return CASE_LOWER;
+    } else if (!strcmp(s, "upper")) {
+        return CASE_UPPER;
+    } else if (!strcmp(s, "camel")) {
+        return CASE_CAMEL;
+    } else if (!strcmp(s, "snake")) {
+        return CASE_SNAKE;
+    } else {
+        return CASE_NONE;
+    }
+}
+
+char *gretl_change_case (const char *s, GretlCase c, int *err)
+{
+    char *ret = NULL;
+    int slen, clen;
+    int i, j, delta = 0;
+
+    if (s == NULL || c < CASE_LOWER || c > CASE_SNAKE) {
+        *err = E_INVARG;
+        return NULL;
+    }
+
+    clen = slen = strlen(s);
+
+    for (i=0; i<slen; i++) {
+        if (c == CASE_LOWER && isupper(s[i])) {
+            delta++;
+        } else if (c == CASE_UPPER && islower(s[i])) {
+            delta++;
+        } else if (c == CASE_CAMEL && s[i] == '_') {
+            delta++;
+            clen--;
+        } else if (c == CASE_SNAKE && i > 0 && isupper(s[i])) {
+            delta++;
+            clen++;
+        }
+    }
+
+    if (delta > 0) {
+        ret = calloc(clen + 1, 1);
+        if (ret == NULL) {
+            *err = E_ALLOC;
+            return NULL;
+        }
+        for (i=0, j=0; i<slen; i++) {
+            if (c == CASE_LOWER) {
+                ret[i] = isupper(s[i]) ? tolower(s[i]) : s[i];
+            } else if (c == CASE_UPPER) {
+                ret[i] = islower(s[i]) ? toupper(s[i]) : s[i];
+            } else if (c == CASE_CAMEL) {
+                if (s[i] == '_') {
+                    /* multiple underscores ? */
+                    if (islower(s[i+1])) {
+                        ret[j++] = toupper(s[++i]);
+                    }
+                } else {
+                    ret[j++] = s[i];
+                }
+            } else if (c == CASE_SNAKE) {
+                if (i > 0 && isupper(s[i])) {
+                    ret[j++] = '_';
+                    ret[j++] = tolower(s[i]);
+                } else {
+                    ret[j++] = s[i];
+                }
+            }
+        }
+    }
+
+    return ret;
+}
