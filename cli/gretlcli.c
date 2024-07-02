@@ -416,7 +416,7 @@ static int get_interactive_line (void *p)
 #else
     printf("%s", prompt);
     fflush(stdout);
-    file_get_line(s); /* note: "file" = stdin here */
+    file_get_line(s, stdin);
 #endif
 
     return err;
