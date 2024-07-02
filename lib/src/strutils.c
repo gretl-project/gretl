@@ -3456,12 +3456,11 @@ char *gretl_change_case (const char *s, GretlCase c, int *err)
                 ret[i] = islower(s[i]) ? toupper(s[i]) : s[i];
             } else if (c == CASE_CAMEL) {
                 if (s[i] == '_') {
-                    /* multiple underscores ? */
                     if (islower(s[i+1])) {
                         ret[j++] = toupper(s[++i]);
                     }
                 } else {
-                    ret[j++] = s[i];
+                    ret[j++] = tolower(s[i]);
                 }
             } else if (c == CASE_SNAKE) {
                 if (i > 0 && isupper(s[i])) {

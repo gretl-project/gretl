@@ -1930,48 +1930,22 @@ int rename_series (DATASET *dset, int v, const char *name,
     int err = 0;
 
     if (opt & OPT_C) {
-        fprintf(stderr, "Not ready yet: optparm=%s, v=%d\n",
-                get_optval_string(RENAME, opt), v);
-        return 1;
-    }
+        const char *targ = get_optval_string(RENAME, opt);
+        GretlCase c = gretl_case_from_string(targ);
+        char *newname;
+        int i;
 
-    return real_rename_series(dset, v, name);
-#if 0    
-    
-    if (v <= 0 || v >= dset->v || name == NULL) {
-	err = E_DATA;
+        for (i=1; i<dset->v && !err; i++) {
+            newname = gretl_change_case(dset->varname[i], c, &err);
+            if (newname != NULL) {
+                err = real_rename_series(dset, i, newname);
+            }
+        }
     } else {
-	err = check_varname(name);
-    }
-
-    if (!err) {
-	GretlType type;
-
-	type = user_var_get_type_by_name(name);
-	if (type != GRETL_TYPE_NONE) {
-	    gretl_errmsg_set(_("There is already an object of this name"));
-	    err = E_DATA;
-	}
-    }
-
-    if (!err && current_series_index(dset, name) >= 0) {
-	gretl_errmsg_set(_("There is already a series of this name"));
-	err = E_DATA;
-    }
-
-    if (!err && (object_is_const(dset->varname[v], v) ||
-		 series_is_parent(dset, v))) {
-	err = overwrite_err(dset->varname[v]);
-    }
-
-    if (!err && strcmp(dset->varname[v], name)) {
-	dset->varname[v][0] = '\0';
-	strncat(dset->varname[v], name, VNAMELEN-1);
-	set_dataset_is_changed(dset, 1);
+        err = real_rename_series(dset, v, name);
     }
 
     return err;
-#endif    
 }
 
 /**
