@@ -3421,6 +3421,7 @@ char *gretl_change_case (const char *s, GretlCase c, int *err)
     char *ret = NULL;
     int slen, clen;
     int i, j, delta = 0;
+    int all_upper = 0;
 
     if (s == NULL || c < CASE_LOWER || c > CASE_SNAKE) {
         *err = E_INVARG;
@@ -3428,6 +3429,9 @@ char *gretl_change_case (const char *s, GretlCase c, int *err)
     }
 
     clen = slen = strlen(s);
+    if (c == CASE_SNAKE) {
+        all_upper = 1;
+    }
 
     for (i=0; i<slen; i++) {
         if (c == CASE_LOWER && isupper(s[i])) {
@@ -3437,10 +3441,19 @@ char *gretl_change_case (const char *s, GretlCase c, int *err)
         } else if (c == CASE_CAMEL && s[i] == '_') {
             delta++;
             clen--;
-        } else if (c == CASE_SNAKE && i > 0 && isupper(s[i])) {
-            delta++;
-            clen++;
+        } else if (c == CASE_SNAKE) {
+            if (i > 0 && isupper(s[i])) {
+                delta++;
+                clen++;
+            }
+            if (islower(s[i])) {
+                all_upper = 0;
+            }
         }
+    }
+
+    if (all_upper) {
+        delta = 0;
     }
 
     if (delta > 0) {
