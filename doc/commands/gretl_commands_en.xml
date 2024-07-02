@@ -13166,20 +13166,40 @@
     only letters, digits, and the underscore character. In
     addition, it must not be the name of an existing object of any
     kind.
-
-	Usage example: <code>rename y x</code>
   </para>
   <para>
-    The <flag>--case</flag> option allows changing the case of all series names in the loaded dataset. When using this option, no series name or newname should be provided. The following case types are supported:
+	Usage example: <cmd>rename y x</cmd>
+  </para>
+  <para>
+    The <flag>--case</flag> option allows changing the case of all series names
+	in the loaded dataset. When using this option, no series name or newname
+	should be provided. The following case types are supported:
 	</para>
-	<itemize>
-		<item><repl>lower</repl>: Convert all series names to lowercase</item>
-		<item><repl>upper</repl>: Convert all series names to uppercase</item>
-		<item><repl>camel</repl>: Convert all series names to camelCase</item>
-		<item><repl>snake</repl>: Convert all series names to snake_case</item>
-	</itemize>
+	<ilist>
+		<li>
+		  <para>
+			<repl>lower</repl>: Convert all series names to lowercase
+		  </para>
+		</li>
+		<li>
+		  <para>
+			<repl>upper</repl>: Convert all series names to UPPERCASE
+		  </para>
+		</li>
+		<li>
+		  <para>
+			<repl>camel</repl>: Convert all series names to camelCase
+		  </para>
+		</li>
+		<li>
+		  <para>
+			<repl>snake</repl>: Convert all series names to snake_case
+		  </para>
+		</li>
+	</ilist>
+
 	<para>
-		Usage example: <code>rename --case=lower</code>
+		Usage example: <cmd>rename --case=lower</cmd>
 	</para>
 	</description>
 
