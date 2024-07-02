@@ -13141,29 +13141,47 @@
   <command name="rename" section="Dataset"
     label="Rename variables" context="cli">
 
-    <usage>
-      <arguments>
-	<argument>series</argument>
-	<argument>newname</argument>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--quiet</flag>
-	  <effect>suppress printed output</effect>
-        </option>
-      </options>
-    </usage>
+	<usage>
+	<arguments>
+    	<argument>series</argument>
+    	<argument>newname</argument>
+  	</arguments>
+	<options>
+		<option>
+		<flag>--quiet</flag>
+		<effect>suppress printed output</effect>
+		</option>
+		<option>
+		<flag>--case</flag>
+		<effect>change case of all series names</effect>
+		</option>
+	</options>
+	</usage>
 
     <description>
-      <para>
-	Changes the name of <repl>series</repl> (identified by name or ID
-	number) to <repl>newname</repl>.  The new name must be of 31
-	characters maximum, must start with a letter, and must be composed of
-	only letters, digits, and the underscore character. In
-	addition, it must not be the name of an existing object of any
-	kind.
-      </para>
-    </description>
+  <para>
+    Changes the name of <repl>series</repl> (identified by name or ID
+    number) to <repl>newname</repl>. The new name must be of 31
+    characters maximum, must start with a letter, and must be composed of
+    only letters, digits, and the underscore character. In
+    addition, it must not be the name of an existing object of any
+    kind.
+
+	Usage example: <code>rename y x</code>
+  </para>
+  <para>
+    The <flag>--case</flag> option allows changing the case of all series names in the loaded dataset. When using this option, no series name or newname should be provided. The following case types are supported:
+	</para>
+	<itemize>
+		<item><repl>lower</repl>: Convert all series names to lowercase</item>
+		<item><repl>upper</repl>: Convert all series names to uppercase</item>
+		<item><repl>camel</repl>: Convert all series names to camelCase</item>
+		<item><repl>snake</repl>: Convert all series names to snake_case</item>
+	</itemize>
+	<para>
+		Usage example: <code>rename --case=lower</code>
+	</para>
+	</description>
 
     <gui-access>
       <menu-path>/Variable/Edit attributes</menu-path>
