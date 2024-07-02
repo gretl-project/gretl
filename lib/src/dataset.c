@@ -1875,10 +1875,11 @@ int series_is_parent (const DATASET *dset, int v)
     return 0;
 }
 
-static int real_rename_series (DATASET *dset, int v, const char *name)
+static int real_rename_series (DATASET *dset, int v, const char *name, int *fatal)
 {
     int err = 0;
-
+    *fatal = 1;
+    
     if (v <= 0 || v >= dset->v || name == NULL) {
 	err = E_DATA;
     } else {
@@ -1903,6 +1904,7 @@ static int real_rename_series (DATASET *dset, int v, const char *name)
     if (!err && (object_is_const(dset->varname[v], v) ||
 		 series_is_parent(dset, v))) {
 	err = overwrite_err(dset->varname[v]);
+	*fatal = 0;
     }
 
     if (!err && strcmp(dset->varname[v], name)) {
@@ -1927,7 +1929,7 @@ static int real_rename_series (DATASET *dset, int v, const char *name)
 int rename_series (DATASET *dset, int v, const char *name,
                    gretlopt opt)
 {
-    int err = 0;
+    int err = 0, fatal;
 
     if (opt & OPT_C) {
         const char *targ = get_optval_string(RENAME, opt);
@@ -1938,11 +1940,12 @@ int rename_series (DATASET *dset, int v, const char *name,
         for (i=1; i<dset->v && !err; i++) {
             newname = gretl_change_case(dset->varname[i], c, &err);
             if (newname != NULL) {
-                err = real_rename_series(dset, i, newname);
-            }
-        }
+                err = real_rename_series(dset, i, newname, &fatal);
+		err = fatal ? err : 0;
+	    }
+	}
     } else {
-        err = real_rename_series(dset, v, name);
+        err = real_rename_series(dset, v, name, &fatal);
     }
 
     return err;

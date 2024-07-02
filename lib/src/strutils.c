@@ -3456,9 +3456,7 @@ char *gretl_change_case (const char *s, GretlCase c, int *err)
                 ret[i] = islower(s[i]) ? toupper(s[i]) : s[i];
             } else if (c == CASE_CAMEL) {
                 if (s[i] == '_') {
-                    if (islower(s[i+1])) {
-                        ret[j++] = toupper(s[++i]);
-                    }
+		    ret[j++] = toupper(s[++i]);
                 } else {
                     ret[j++] = tolower(s[i]);
                 }
