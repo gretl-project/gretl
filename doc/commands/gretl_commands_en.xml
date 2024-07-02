@@ -13141,67 +13141,73 @@
   <command name="rename" section="Dataset"
     label="Rename variables" context="cli">
 
-	<usage>
-	<arguments>
+    <usage>
+      <arguments>
     	<argument>series</argument>
     	<argument>newname</argument>
-  	</arguments>
-	<options>
-		<option>
-		<flag>--quiet</flag>
-		<effect>suppress printed output</effect>
-		</option>
-		<option>
-		<flag>--case</flag>
-		<effect>change case of all series names</effect>
-		</option>
-	</options>
-	</usage>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printed output</effect>
+	</option>
+	<option>
+	  <flag>--case</flag>
+	  <effect>change case of all series names (see below)</effect>
+	</option>
+      </options>
+    </usage>
 
     <description>
   <para>
-    Changes the name of <repl>series</repl> (identified by name or ID
-    number) to <repl>newname</repl>. The new name must be of 31
-    characters maximum, must start with a letter, and must be composed of
-    only letters, digits, and the underscore character. In
-    addition, it must not be the name of an existing object of any
-    kind.
+    Without the <opt>--case</opt> option this command changes the name
+    of <repl>series</repl> (identified by name or ID number) to
+    <repl>newname</repl>. The new name must be of 31 characters
+    maximum, must start with a letter, and must be composed of only
+    letters, digits, and the underscore character. In addition, it
+    must not be the name of an existing object of any kind.
   </para>
   <para>
-	Usage example: <cmd>rename y x</cmd>
+    The <opt>--case</opt> option allows changing the case of all
+    series names in the currenly open dataset. When using this option,
+    no series name or newname should be provided, because the change
+    will apply to all the series. The following case
+    types are supported:
   </para>
+  <ilist>
+    <li>
+      <para>
+	<repl>lower</repl>: Convert all series names to lowercase.
+      </para>
+    </li>
+    <li>
+      <para>
+	<repl>upper</repl>: Convert all series names to uppercase.
+      </para>
+    </li>
+    <li>
+      <para>
+	<repl>camel</repl>: Convert all series names to camel case
+	(consecutive words are indicated by an uppercase initial: eg camelCase)
+      </para>
+    </li>
+    <li>
+      <para>
+	<repl>snake</repl>: Convert all series names to snake case
+	(consecutive words are separated by an underscore: eg snake_case)
+      </para>
+    </li>
+  </ilist>
   <para>
-    The <flag>--case</flag> option allows changing the case of all series names
-	in the loaded dataset. When using this option, no series name or newname
-	should be provided. The following case types are supported:
-	</para>
-	<ilist>
-		<li>
-		  <para>
-			<repl>lower</repl>: Convert all series names to lowercase
-		  </para>
-		</li>
-		<li>
-		  <para>
-			<repl>upper</repl>: Convert all series names to UPPERCASE
-		  </para>
-		</li>
-		<li>
-		  <para>
-			<repl>camel</repl>: Convert all series names to camelCase
-		  </para>
-		</li>
-		<li>
-		  <para>
-			<repl>snake</repl>: Convert all series names to snake_case
-		  </para>
-		</li>
-	</ilist>
-
-	<para>
-		Usage example: <cmd>rename --case=lower</cmd>
-	</para>
-	</description>
+    Note that in some cases the conversion may not do what you want:
+    for example, converting an all-uppercase series to snake case
+    would look quite weird.
+  </para>
+  <code>
+    rename y x
+    rename --case=upper
+  </code>
+    </description>
 
     <gui-access>
       <menu-path>/Variable/Edit attributes</menu-path>
