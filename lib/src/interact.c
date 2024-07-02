@@ -3570,7 +3570,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case RENAME:
-        err = dataset_rename_series(dset, cmd->auxint, cmd->parm2);
+        err = rename_series(dset, cmd->auxint, cmd->parm2, cmd->opt);
         if (!err && !(cmd->opt & OPT_Q)) {
             maybe_list_series(dset, prn);
         }

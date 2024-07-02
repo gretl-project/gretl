@@ -33,6 +33,14 @@
 #define SLASHSTR "/"
 #endif
 
+typedef enum {
+    CASE_NONE,
+    CASE_LOWER,
+    CASE_UPPER,
+    CASE_CAMEL,
+    CASE_SNAKE
+} GretlCase;
+
 #define CTRLZ 26
 
 /* functions follow */
@@ -227,5 +235,9 @@ char *gretl_literal_replace (const char *orig,
 			     const char *match,
 			     const char *repl,
 			     int *err);
+
+GretlCase gretl_case_from_string (const char *s);
+
+char *gretl_change_case (const char *s, GretlCase c, int *err);
 
 #endif /* STRUTILS_H */

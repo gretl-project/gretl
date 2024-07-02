@@ -1875,16 +1875,7 @@ int series_is_parent (const DATASET *dset, int v)
     return 0;
 }
 
-/**
- * dataset_rename_series:
- * @dset: dataset information.
- * @v: ID number of the series to be renamed.
- * @name: new name to give the series.
- *
- * Returns: 0 on success, non-zero on error.
- */
-
-int dataset_rename_series (DATASET *dset, int v, const char *name)
+static int real_rename_series (DATASET *dset, int v, const char *name)
 {
     int err = 0;
 
@@ -1918,6 +1909,40 @@ int dataset_rename_series (DATASET *dset, int v, const char *name)
 	dset->varname[v][0] = '\0';
 	strncat(dset->varname[v], name, VNAMELEN-1);
 	set_dataset_is_changed(dset, 1);
+    }
+
+    return err;
+}
+
+/**
+ * rename_series:
+ * @dset: dataset information.
+ * @v: ID number of series to be renamed.
+ * @name: new name to give the series.
+ * @opt: may include OPT_C (--case).
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int rename_series (DATASET *dset, int v, const char *name,
+                   gretlopt opt)
+{
+    int err = 0;
+
+    if (opt & OPT_C) {
+        const char *targ = get_optval_string(RENAME, opt);
+        GretlCase c = gretl_case_from_string(targ);
+        char *newname;
+        int i;
+
+        for (i=1; i<dset->v && !err; i++) {
+            newname = gretl_change_case(dset->varname[i], c, &err);
+            if (newname != NULL) {
+                err = real_rename_series(dset, i, newname);
+            }
+        }
+    } else {
+        err = real_rename_series(dset, v, name);
     }
 
     return err;

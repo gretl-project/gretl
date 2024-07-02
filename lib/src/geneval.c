@@ -15458,8 +15458,8 @@ static NODE *fevalb_get_bundled_series (gretl_bundle *b,
 	    /* we need a new series */
 	    p->err = dataset_add_NA_series(p->dset, 1);
 	    if (!p->err) {
-		v = p->dset->v - 1;
-		p->err = dataset_rename_series(p->dset, v, key);
+		p->err = rename_series(p->dset, p->dset->v - 1,
+                                       key, OPT_NONE);
 	    }
 	}
 	if (!p->err) {
