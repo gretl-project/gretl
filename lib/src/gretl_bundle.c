@@ -3236,7 +3236,8 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 	    /* allocated string */
 	    gretl_bundle_donate_data(b, "cpuid", get_cpu_details(),
 				     GRETL_TYPE_STRING, 0);
-        gretl_bundle_set_scalar(b, "avx", (double) avx_support());
+            ival = avx_support();
+            gretl_bundle_set_scalar(b, "avx", (double) ival);
 	    /* information pertaining to 'foreign' programs */
             fb = foreign_info();
             if (fb != NULL) {

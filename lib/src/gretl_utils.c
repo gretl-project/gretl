@@ -3077,13 +3077,8 @@ char *get_cpu_details (void)
 
 int avx_support (void)
 {
-#if (defined(__x86_64__) || defined(__i386__))
-    if (__builtin_cpu_supports("avx512f") || __builtin_cpu_supports("avx512vl") ||
-         __builtin_cpu_supports("avx512bw") || __builtin_cpu_supports("avx512dq") ||
-        __builtin_cpu_supports("avx512cd") || __builtin_cpu_supports("avx512vbmi") ||
-        __builtin_cpu_supports("avx512ifma") || __builtin_cpu_supports("avx512vpopcntdq") ||
-        __builtin_cpu_supports("avx512vbmi2") || __builtin_cpu_supports("avx512vnni") ||
-        __builtin_cpu_supports("avx512bitalg")) {
+#if defined(__x86_64__) && !defined(OS_OSX)
+    if (__builtin_cpu_supports("avx512f")) {
         return 512;
     } else if (__builtin_cpu_supports("avx2")) {
         return 2;
