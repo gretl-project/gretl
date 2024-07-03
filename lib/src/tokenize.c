@@ -2915,7 +2915,7 @@ static void rescind_tok_done_status (CMD *c)
     }
 }
 
-static int is_bundled_matrix (char *s)
+static int is_bundled_matrix (char *s, DATASET *dset)
 {
     gchar *tmp = g_strdup_printf("typeof(%s)", s);
     GretlType t;
@@ -2925,7 +2925,7 @@ static int is_bundled_matrix (char *s)
        a list-making symbol but actually it's a matrix,
        inside a bundle or array
     */
-    t = generate_scalar(tmp, NULL, &err);
+    t = generate_scalar(tmp, dset, &err);
     if (t == 3) {
         /* 'MAT' */
         ret = 1;
@@ -3037,7 +3037,7 @@ static int process_command_list (CMD *c, DATASET *dset)
     if (!c->err && *lstr != '\0') {
 	tailstrip(lstr);
         if ((strchr(lstr, '.') || strchr(lstr, '[')) &&
-            is_bundled_matrix(lstr)) {
+            is_bundled_matrix(lstr, dset)) {
             lstr[0] = '\0';
             rescind_tok_done_status(c);
         }
