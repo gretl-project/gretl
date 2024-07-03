@@ -8789,6 +8789,51 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
     return ret;
 }
 
+static NODE *strseq_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+        const char *s = l->v.str;
+        int dim;
+
+	if (r->t == MAT) {
+	    dim = gretl_vector_get_length(r->v.m);
+	    if (dim == 0) {
+		p->err = E_INVARG;
+	    }
+	} else {
+	    p->err = E_INVARG;
+	}
+	
+        if (!p->err) {
+            ret = aux_array_node(p);
+        }
+
+        if (!p->err) {
+	    int i, d;
+	    double x;
+	    char *tmp;
+            gretl_array *S = gretl_array_new(GRETL_TYPE_STRINGS, dim, &p->err);
+
+	    for(i=0; i<dim; i++) {
+		x = r->v.m->val[i];
+		d = floor(x);
+		if (d<0) {
+		    p->err = E_INVARG;
+		    break;
+		}
+		tmp = gretl_strdup_printf("%s%d", s, d);
+		gretl_array_set_string (S, i, tmp, 0);
+	    }
+
+	    ret->v.a = S;
+        }
+    }
+    
+    return ret;
+}
+
 static NODE *horizontal_concat_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -8797,6 +8842,8 @@ static NODE *horizontal_concat_node (NODE *l, NODE *r, parser *p)
         ret = two_string_func(l, r, NULL, B_HCAT, p);
     } else if (ok_matrix_node(l) && ok_matrix_node(r)) {
         ret = matrix_matrix_calc(l, r, B_HCAT, p);
+    } else if (l->t == STR && ok_matrix_node(r)) {
+        ret = strseq_node(l, r, p);
     } else {
         p->err = E_TYPES;
     }
