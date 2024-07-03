@@ -5595,6 +5595,11 @@ static NODE *list_member_by_name (NODE *l, NODE *r, parser *p)
     const char *s = r->v.str;
     int i, v;
 
+    if (p->dset == NULL) {
+        p->err = E_DATA;
+        return NULL;
+    }
+
 #if EDEBUG
     fprintf(stderr, "list_member_by_name: %s.%s\n", l->vname, s);
 #endif
