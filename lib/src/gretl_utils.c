@@ -3078,6 +3078,9 @@ char *get_cpu_details (void)
 int avx_support (void)
 {
 #if defined(__x86_64__) && defined(CPU_IDENT)
+#ifndef _CPUID_H_INCLUDED
+# include <cpuid.h>
+#endif
     guint32 eax, ebx, ecx, edx;
     int avx = 0, avx2 = 0, avx512 = 0;
 
