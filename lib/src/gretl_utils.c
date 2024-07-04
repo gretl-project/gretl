@@ -3091,19 +3091,19 @@ int avx_support (void)
     __cpuid_count(0x00000001, 0, eax, ebx, ecx, edx);
     avx = (ecx & bit_AVX) != 0;
 
-	__cpuid_count(0x00000007, 0, eax, ebx, ecx, edx);
+    __cpuid_count(0x00000007, 0, eax, ebx, ecx, edx);
     avx2 = (ebx & bit_AVX2) != 0;
     avx512 = (ebx & bit_AVX512F) != 0;
 
-	if (avx512) {
+    if (avx512) {
         return 512;
-	} else if (avx2) {
+    } else if (avx2) {
         return 2;
-	} else if (avx) {
+    } else if (avx) {
         return 1;
-	} else {
-	    return 0;
-	}
+    } else {
+        return 0;
+    }
 #else
     return 0;
 #endif
