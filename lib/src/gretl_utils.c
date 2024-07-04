@@ -3077,16 +3077,27 @@ char *get_cpu_details (void)
 
 int avx_support (void)
 {
-#if defined(__x86_64__) && !defined(OS_OSX)
-    if (__builtin_cpu_supports("avx512f")) {
+#if defined(__x86_64__) && defined(CPU_IDENT)
+    guint32 eax, ebx, ecx, edx;
+    int avx = 0, avx2 = 0, avx512 = 0;
+
+    __cpuid(0x80000000, eax, ebx, ecx, edx);
+    __cpuid_count(0x00000001, 0, eax, ebx, ecx, edx);
+    avx = (ecx & bit_AVX) != 0;
+
+	__cpuid_count(0x00000007, 0, eax, ebx, ecx, edx);
+    avx2 = (ebx & bit_AVX2) != 0;
+    avx512 = (ebx & bit_AVX512F) != 0;
+
+	if (avx512) {
         return 512;
-    } else if (__builtin_cpu_supports("avx2")) {
+	} else if (avx2) {
         return 2;
-    } else if (__builtin_cpu_supports("avx")) {
+	} else if (avx) {
         return 1;
-    } else {
-        return 0;
-    }
+	} else {
+	    return 0;
+	}
 #else
     return 0;
 #endif
