@@ -3075,7 +3075,7 @@ char *get_cpu_details (void)
 
 /* AVX support detection */
 #if defined(__x86_64__)
-#ifndef __CPUID_H
+#if !(defined(__CPUID_H) || defined(_CPUID_H_INCLUDED))
 # include <cpuid.h>
 #endif
 #define CPU_AVX_DETECT
