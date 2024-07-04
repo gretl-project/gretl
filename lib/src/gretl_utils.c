@@ -3074,13 +3074,16 @@ char *get_cpu_details (void)
 #endif /* CPU_IDENT defined or not */
 
 /* AVX support detection */
+#if defined(__x86_64__)
+#ifndef __CPUID_H
+# include <cpuid.h>
+#endif
+#define CPU_AVX_DETECT
+#endif
 
 int avx_support (void)
 {
-#if defined(__x86_64__) && defined(CPU_IDENT)
-#ifndef _CPUID_H_INCLUDED
-# include <cpuid.h>
-#endif
+#if defined(CPU_AVX_DETECT)
     guint32 eax, ebx, ecx, edx;
     int avx = 0, avx2 = 0, avx512 = 0;
 
