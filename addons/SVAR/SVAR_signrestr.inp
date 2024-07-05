@@ -72,6 +72,9 @@ function void SVAR_SRfull(bundle *mod,
     # Attention: Here the ini and fin inputs are transformed
     # to 1-based matrix indexing form, not keeping the actual
     # horizon meaning
+    
+    # FIXME: explain more explicitly what these things are
+    
     mod.SRest |= {kpos, lo, hi, ini+1, fin+1, snum}
 
 end function
@@ -366,6 +369,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     
     # for the future: set a matrix for keeping some shocks from being rotated
     # eventually, this could probably be inferred from the model bundle
+    # 05/07/24: maybe this doesn't apply now that we have zero restrictions
     # (Downstream this only applies to non-zero restrictions, but  
     #  why would you not want to rotate?? (sven))
     rot_only = {}
@@ -378,7 +382,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
         # non-exotic set-id'd shock. Because if Ais is empty, then id_matrix below will
         # also be empty, and this wasn't handled. Now the case of an empty
         # id_matrix is superficially caught, but unclear whether it is enough 
-        # and still does the right thing.        
+        # and still does the right thing.
 
         # generate the random rotation matrix and, optionally, resample
         rot_redraw(&b, mod, DO_BAYES, B, chol_iXX, rot_only) 	# b.rot, b.B, b.Sigma

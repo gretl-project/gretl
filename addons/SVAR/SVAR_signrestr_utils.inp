@@ -1,4 +1,4 @@
-# Utility functions for the sign restriction method in SVAR.
+norm# Utility functions for the sign restriction method in SVAR.
 
 #############################
 
@@ -211,6 +211,10 @@ function matrix get_id_mat (const bundle mod, const matrix shocks,
                             const matrices irfs, const matrices Ais,
                             bool DO_NORM)
 
+    # this function constructs a matrix that lists the potential compatibility
+    # of each column of the rotated C matrix with the restrictions
+    # on each shock (one per row)                  
+
     VERB = 0
     nshocks = rows(shocks)
     matrix id_matrix = zeros(nshocks, mod.n)
@@ -229,7 +233,7 @@ function matrix get_id_mat (const bundle mod, const matrix shocks,
         printf "=========================================\n"
     endif
 
-    if DO_NORM && nshocks	# added check for positive shock number (sven)
+    if DO_NORM && nshocks	 # added check for positive shock number (sven)
         id_matrix = normlizA(id_matrix)
     endif
 
@@ -262,8 +266,8 @@ function matrix sr_correspondence(const matrix A)
         matrix z = !(candidate .= 0)
         if sumr(z) == 1
             # candidate is ok
-            scalar x = selifc(candidate, z)
-            scalar c = selifc(seq(1,nc), z)
+            x = selifc(candidate, z) # could be either 1 or -1 for a sign switch
+            c = selifc(seq(1,nc), z)
             break
         endif
         r++
@@ -288,16 +292,16 @@ function matrix normlizA(const matrix A)
     # (was normalize, but could be confused with the user option)
 
     matrix U = sr_correspondence(A) # not to confuse U with the residuals...
-    matrix ret = zeros(rows(A), cols(A))
+    matrix tmp = zeros(rows(A), cols(A))
     loop i = 1..rows(U)
         r = U[i,1]
         c = U[i,2]
         if c != 0
             x = U[i,3]
-            ret[r,c] = x
+            tmp[r,c] = x
         endif
     endloop
-    return selifr(ret, maxr(abs(ret)) .> 0)
+    return selifr(tmp, maxr(abs(tmp)) .> 0)
 end function
 
 function matrix check_one_irf(matrices M, matrix spec,
@@ -346,16 +350,15 @@ function matrix check_irfs(matrices M, matrix A, int verbose[0])
     # Tag: sign restriction apparatus
 
     # Here we examine the constraints on the IRFs
-    # We return a vector
-    # indicating if all the constraints contained in the matrix A are
-    # satisfied; each row of A contains
+    # We return a vector indicating if all the constraints 
+    # contained in the matrix A are satisfied; each row of A contains
     #
     # 1    : ordinal no of variable to check
     # 2, 3 : bounds (NA for +-infty)
     # 4, 5 : IRF interval to check (0-based)
     #
     # It may happen that the IRFs are ok up to a sign swap; we flag this
-    # case by setting the corresponding column to -1
+    # case by setting the corresponding column of the return vector to -1
 
     n = cols(M[1])
     rA = rows(A)
@@ -375,6 +378,8 @@ function matrix check_irfs(matrices M, matrix A, int verbose[0])
         print chks
     endif
 
+    # in order for a column to be "compatible", it must
+    # either be all 1s or all -1s 
     matrix positives = minc(chks) .= 1
     matrix negatives = maxc(chks) .= -1
 
