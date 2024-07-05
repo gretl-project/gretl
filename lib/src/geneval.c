@@ -8789,25 +8789,19 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
     return ret;
 }
 
-#define is_string_array(m) ( (m->t == ARRAY) && (gretl_array_get_type(m->v.a) == GRETL_TYPE_STRINGS) )
-
 static NODE *strseq_node (NODE *l, NODE *r, int rstr, parser *p)
 {
-    NODE *mn = rstr ? l : r; /* the matrix/array node */
+    NODE *ret = NULL;
+    NODE *mn = rstr ? l : r; /* the matrix or array node */
     NODE *sn = rstr ? r : l; /* the string node */
     const char *s = sn->v.str;
-
-    int is_array = is_string_array(mn);
     int dim;
     
-    if (is_array) {
+    if (mn->t == ARRAY) {
 	dim = gretl_array_get_length(mn->v.a);
     } else {
 	dim = gretl_vector_get_length(mn->v.m);
     }
-    
-    NODE *ret = NULL;
-
     if (dim == 0) {
         p->err = E_INVARG;
         return NULL;
@@ -8821,9 +8815,10 @@ static NODE *strseq_node (NODE *l, NODE *r, int rstr, parser *p)
         int i, d;
 
         for (i=0; i<dim && !p->err; i++) {
-	    if (is_array) {
+            ds = NULL;
+ 	    if (mn->t == ARRAY) {
 		d = 0;
-		ds = g_strdup_printf("%s", gretl_array_get_data(mn->v.a, i));
+                ds = g_strdup((char *) gretl_array_get_data(mn->v.a, i));
 	    } else {
 		d = floor(mn->v.m->val[i]);
 		ds = g_strdup_printf("%d", d);
@@ -8839,11 +8834,18 @@ static NODE *strseq_node (NODE *l, NODE *r, int rstr, parser *p)
                 gretl_array_set_string (S, i, tmp, 1);
                 g_free(tmp);
             }
+            g_free(ds);
         }
         ret->v.a = S;
     }
 
     return ret;
+}
+
+static int is_strings_array_node (NODE *n)
+{
+    return n->t == ARRAY &&
+        gretl_array_get_type(n->v.a) == GRETL_TYPE_STRINGS;
 }
 
 static NODE *horizontal_concat_node (NODE *l, NODE *r, parser *p)
@@ -8854,9 +8856,9 @@ static NODE *horizontal_concat_node (NODE *l, NODE *r, parser *p)
         ret = two_string_func(l, r, NULL, B_HCAT, p);
     } else if (ok_matrix_node(l) && ok_matrix_node(r)) {
         ret = matrix_matrix_calc(l, r, B_HCAT, p);
-    } else if (l->t == STR && (ok_matrix_node(r) || is_string_array(r))) {
+    } else if (l->t == STR && (ok_matrix_node(r) || is_strings_array_node(r))) {
         ret = strseq_node(l, r, 0, p);
-    } else if ((ok_matrix_node(l) || is_string_array(l)) && r->t == STR) {
+    } else if ((ok_matrix_node(l) || is_strings_array_node(l)) && r->t == STR) {
         ret = strseq_node(l, r, 1, p);
     } else {
         p->err = E_TYPES;
