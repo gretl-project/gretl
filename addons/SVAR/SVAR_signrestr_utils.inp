@@ -1,4 +1,4 @@
-norm# Utility functions for the sign restriction method in SVAR.
+# Utility functions for the sign restriction method in SVAR.
 
 #############################
 
@@ -420,10 +420,13 @@ function scalar check_id(matrix id, matrix noswap)
 
     if r < c
         # partial identification
-        ret = (rank(id) == r) && minc(sumr(abs(id)) .= 1) == 1
+        ret = minc(sumr(abs(id)) .= 1) == 1 && (rank(id) == r) 
     else
         ret = maxc(abs((id'id) - I(r))) < 1.0e-15
     endif
+
+    # possibly, the following check can be executed first (it's
+    # fast) to save time on the previous one
 
     us = nelem(noswap)
     if us
