@@ -241,26 +241,6 @@ end function
 test_row_vector(dataset)
 
 
-function void test_row_vector_range (const list L)
-    print "Start testing matrix integer entries -- each referring to existing series IDs"
-
-    # Given
-    matrix m = {1, 2}
-    string buffer
-    string expected = "L.index:"
-
-    # When
-    outfile --buffer=buffer
-        print m[1:]
-    end outfile
-
-    strings actual = strsplit(buffer, "\n")
-
-    # Then
-    assert(strstrip(actual[1]) == expected)
-end function
-test_row_vector_range(dataset)
-
 
 function void test_row_vector_range (const list L)
     print "Start testing matrix integer entries -- each referring to existing series IDs"

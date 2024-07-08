@@ -179,7 +179,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { QLRTEST,  "qlrtest",  0 },
     { QQPLOT,   "qqplot",   CI_LIST },
     { QUIT,     "quit",     CI_NOOPT },
-    { RENAME,   "rename",   CI_PARM1 | CI_PARM2 },
+    { RENAME,   "rename",   CI_PARM1 | CI_PARM2 | CI_INFL },
     { RESET,    "reset",    0 },
     { RESTRICT, "restrict", CI_PARM1 | CI_BLOCK },
     { RMPLOT,   "rmplot",   CI_LIST | CI_LLEN1 },
@@ -2915,7 +2915,7 @@ static void rescind_tok_done_status (CMD *c)
     }
 }
 
-static int is_bundled_matrix (char *s)
+static int is_bundled_matrix (char *s, DATASET *dset)
 {
     gchar *tmp = g_strdup_printf("typeof(%s)", s);
     GretlType t;
@@ -2925,7 +2925,7 @@ static int is_bundled_matrix (char *s)
        a list-making symbol but actually it's a matrix,
        inside a bundle or array
     */
-    t = generate_scalar(tmp, NULL, &err);
+    t = generate_scalar(tmp, dset, &err);
     if (t == 3) {
         /* 'MAT' */
         ret = 1;
@@ -3037,7 +3037,7 @@ static int process_command_list (CMD *c, DATASET *dset)
     if (!c->err && *lstr != '\0') {
 	tailstrip(lstr);
         if ((strchr(lstr, '.') || strchr(lstr, '[')) &&
-            is_bundled_matrix(lstr)) {
+            is_bundled_matrix(lstr, dset)) {
             lstr[0] = '\0';
             rescind_tok_done_status(c);
         }
@@ -3845,20 +3845,20 @@ static int post_process_spreadsheet_options (CMD *cmd)
 }
 
 static int post_process_rename_param (CMD *cmd,
-				      DATASET *dset)
+                                     DATASET *dset)
 {
     int err = 0;
 
     if (integer_string(cmd->param)) {
-	cmd->auxint = atoi(cmd->param);
-	if (cmd->auxint < 1 || cmd->auxint >= dset->v) {
-	    err = E_DATA;
-	}
+       cmd->auxint = atoi(cmd->param);
+       if (cmd->auxint < 1 || cmd->auxint >= dset->v) {
+           err = E_DATA;
+       }
     } else {
-	cmd->auxint = current_series_index(dset, cmd->param);
-	if (cmd->auxint < 0) {
-	    err = E_UNKVAR;
-	}
+       cmd->auxint = current_series_index(dset, cmd->param);
+       if (cmd->auxint < 0) {
+           err = E_UNKVAR;
+       }
     }
 
     return err;
@@ -3947,6 +3947,11 @@ static void handle_option_inflections (CMD *cmd)
 		cmd->ciflags &= ~CI_LLEN1;
 	    }
 	}
+    } else if (cmd->ci == RENAME) {
+        if (cmd->opt & OPT_C) {
+            cmd->ciflags &= ~CI_PARM1;
+            cmd->ciflags &= ~CI_PARM2;
+        }
     }
 }
 
@@ -4106,10 +4111,14 @@ static int assemble_command (CMD *cmd, DATASET *dset,
 	if (cmd->opt != OPT_NONE &&
 	    (cmd->ci == OPEN || cmd->ci == APPEND)) {
 	    cmd->err = post_process_spreadsheet_options(cmd);
-	} else if (cmd->ci == RENAME) {
-	    cmd->err = post_process_rename_param(cmd, dset);
-	}
+	} else if (cmd->ci == RENAME && !(cmd->opt & OPT_C)) {
+            cmd->err = post_process_rename_param(cmd, dset);
+        }
     }
+
+#if CDEBUG
+    fprintf(stderr, "assemble_command: at return cmd->err = %d\n", cmd->err);
+#endif
 
     return cmd->err;
 }

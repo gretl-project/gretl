@@ -2387,13 +2387,25 @@
 	  Permutaciones binarias: devuelve una matriz <by r="p" c="n"/>,
 	  en la que cada una de sus filas contiene una ordenación diferente
 	  de <math>k</math> unos y <math>n</math> &minus; <math>k</math>
-	  ceros. El valor máximo admitido para <math>n</math> es 64; tanto
-	  <math>n</math> como <math>k</math> deben ser no negativos; y
-	  <math>k</math> no debe ser mayor que <math>n</math>; en caso
-	  contrario, se va a mostrar un fallo. Cuando
+	  ceros (en orden lexicográfico). El valor máximo admitido para
+	  <math>n</math> es 64; tanto <math>n</math> como <math>k</math>
+	  deben ser no negativos; y <math>k</math> no debe ser mayor que
+	  <math>n</math>; en caso contrario, se va a mostrar un fallo. Cuando
 	  <math>n</math> = <math>k</math> = 0 se devuelve una matriz
 	  vacía.
 	</para>
+	<para>
+	  Por ejemplo, con <math>n</math> = 4 y <math>k</math> = 2,
+	  el resultado es
+	</para>
+	<code>
+	  0   0   1   1 
+	  0   1   0   1 
+	  0   1   1   0 
+	  1   0   0   1 
+	  1   0   1   0 
+	  1   1   0   0
+	</code>
 	<para>
 	  <emphasis>Advertencia</emphasis>: El número <math>p</math> de
 	  permutaciones aumenta rápidamente en función de <math>n</math>; y
@@ -9657,21 +9669,31 @@
 	  y como predeterminado, se hará por filas.
 	</para>
 	<para>
-	  El argumento <argname>v</argname> puede ser un vector o un escalar.
-	  En el primer caso, el vector debe tener una longitud igual a la
-	  dimensión relevante (de filas o de columnas) de la matriz
-	  <argname>X</argname>; además debe contener números enteros con
-	  un valor mínimo de 1, y un máximo igual al número de matrices que
-	  tendrá el 'array' que se quiere. Cada elemento de <argname>v</argname>
-	  representa el índice que tiene en el 'array', la matriz a la que deberá
-	  asignarse la correspondiente fila de <argname>X</argname>. Si, en cambio,
-	  <argname>v</argname> es un escalar, entonces se va a separar la matriz
-	  <argname>X</argname> en trozos que tendrán <argname>v</argname>
-	  filas/columnas cada uno (según lo exija el argumento
-	  <argname>porcolum</argname>); y se mostrará un fallo si la
-	  dimensión de la matriz relevante no es un múltiplo exacto de
-	  <argname>v</argname>.
-	</para>
+	  El argumento <argname>v</argname> puede ser un vector o un
+	  escalar.
+  </para>
+    <ilist>
+      <li>
+        <para>
+        Vector: Debe tener una longitud igual a la dimensión relevante (de
+        filas o de columnas) de la matriz <argname>X</argname>; además
+        debe contener números enteros positivos. El mayor entero establece
+        la longitud del 'array' que se devuelve. Cada elemento de
+        <argname>v</argname> indica el índice que tiene, en el 'array',
+        la matriz a la que deberá asignarse la correspondiente fila de
+        <argname>X</argname>.
+        </para>
+      </li>
+      <li>
+        <para>
+        Escalar: La dimensión relevante de la matriz <argname>X</argname>
+        (fila o columna, según determine <argname>porcolum</argname>)
+        debe ser un múltiplo exacto del valor de este escalar. La matriz
+        <argname>X</argname> se va a separar en trozos con
+        <argname>v</argname> filas o columnas en cada uno de ellos.
+        </para>
+      </li>
+    </ilist>
 	<para>
 	  En el siguiente ejemplo se separan las filas de una matriz <by r="4" c="3"/>
 	  en tres matrices: las dos primeras filas se asignan a la primera

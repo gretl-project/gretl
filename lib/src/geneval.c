@@ -4096,7 +4096,9 @@ static NODE *matrix_vector_func (NODE *l, NODE *m, NODE *r,
             ret = aux_array_node(p);
         }
         if (ret != NULL) {
-            ret->v.a = gretl_matrix_split_by(a, v, colwise, &p->err);
+            int chunks = m->t == NUM; /* scalar */
+
+            ret->v.a = gretl_matrix_split_by(a, v, colwise, chunks, &p->err);
         }
     } else {
         ret = aux_array_node(p);
@@ -5592,6 +5594,11 @@ static NODE *list_member_by_name (NODE *l, NODE *r, parser *p)
     int *list = l->v.ivec;
     const char *s = r->v.str;
     int i, v;
+
+    if (p->dset == NULL) {
+        p->err = E_DATA;
+        return NULL;
+    }
 
 #if EDEBUG
     fprintf(stderr, "list_member_by_name: %s.%s\n", l->vname, s);
@@ -8777,6 +8784,84 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
         }
     } else {
         ret = aux_any_node(p);
+    }
+
+    return ret;
+}
+
+static NODE *strseq_node (NODE *l, NODE *r, int rstr, parser *p)
+{
+    NODE *ret = NULL;
+    NODE *mn = rstr ? l : r; /* the matrix or array node */
+    NODE *sn = rstr ? r : l; /* the string node */
+    const char *s = sn->v.str;
+    int dim;
+    
+    if (mn->t == ARRAY) {
+	dim = gretl_array_get_length(mn->v.a);
+    } else {
+	dim = gretl_vector_get_length(mn->v.m);
+    }
+    if (dim == 0) {
+        p->err = E_INVARG;
+        return NULL;
+    }
+
+    ret = aux_array_node(p);
+
+    if (ret != NULL) {
+        gretl_array *S = gretl_array_new(GRETL_TYPE_STRINGS, dim, &p->err);
+        gchar *tmp, *ds;
+        int i, d;
+
+        for (i=0; i<dim && !p->err; i++) {
+            ds = NULL;
+ 	    if (mn->t == ARRAY) {
+		d = 0;
+                ds = g_strdup((char *) gretl_array_get_data(mn->v.a, i));
+	    } else {
+		d = floor(mn->v.m->val[i]);
+		ds = g_strdup_printf("%d", d);
+	    }
+            if (d < 0) {
+                p->err = E_INVARG;
+            } else {
+                if (rstr) {
+                    tmp = g_strdup_printf("%s%s", ds, s);
+                } else {
+                    tmp = g_strdup_printf("%s%s", s, ds);
+                }
+                gretl_array_set_string (S, i, tmp, 1);
+                g_free(tmp);
+            }
+            g_free(ds);
+        }
+        ret->v.a = S;
+    }
+
+    return ret;
+}
+
+static int is_strings_array_node (NODE *n)
+{
+    return n->t == ARRAY &&
+        gretl_array_get_type(n->v.a) == GRETL_TYPE_STRINGS;
+}
+
+static NODE *horizontal_concat_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (l->t == STR && r->t == STR) {
+        ret = two_string_func(l, r, NULL, B_HCAT, p);
+    } else if (ok_matrix_node(l) && ok_matrix_node(r)) {
+        ret = matrix_matrix_calc(l, r, B_HCAT, p);
+    } else if (l->t == STR && (ok_matrix_node(r) || is_strings_array_node(r))) {
+        ret = strseq_node(l, r, 0, p);
+    } else if ((ok_matrix_node(l) || is_strings_array_node(l)) && r->t == STR) {
+        ret = strseq_node(l, r, 1, p);
+    } else {
+        p->err = E_TYPES;
     }
 
     return ret;
@@ -15441,8 +15526,8 @@ static NODE *fevalb_get_bundled_series (gretl_bundle *b,
 	    /* we need a new series */
 	    p->err = dataset_add_NA_series(p->dset, 1);
 	    if (!p->err) {
-		v = p->dset->v - 1;
-		p->err = dataset_rename_series(p->dset, v, key);
+		p->err = rename_series(p->dset, p->dset->v - 1,
+                                       key, OPT_NONE);
 	    }
 	}
 	if (!p->err) {
@@ -17890,7 +17975,6 @@ static NODE *eval (NODE *t, parser *p)
         /* matrix sub-slice, x:y, or lag range, 'p to q' */
         ret = process_subslice(l, r, p);
         break;
-    case B_HCAT:
     case B_VCAT:
     case F_QFORM:
     case F_HDPROD:
@@ -17903,10 +17987,7 @@ static NODE *eval (NODE *t, parser *p)
     case B_LDIV:
     case B_KRON:
     case F_CONV2D:
-        if (t->t == B_HCAT && l->t == STR) {
-            /* special case: string concatenation */
-            ret = two_string_func(l, r, NULL, t->t, p);
-        } else if (ok_matrix_node(l) && ok_matrix_node(r)) {
+        if (ok_matrix_node(l) && ok_matrix_node(r)) {
             /* matrix-only binary operators (but promote scalars) */
             ret = matrix_matrix_calc(l, r, t->t, p);
         } else if (ok_matrix_node(l) && null_node(r) && t->t == F_HDPROD) {
@@ -17915,6 +17996,9 @@ static NODE *eval (NODE *t, parser *p)
             node_type_error(t->t, (l->t == MAT)? 2 : 1,
                             MAT, (l->t == MAT)? r : l, p);
         }
+        break;
+    case B_HCAT:
+        ret = horizontal_concat_node(l, r, p);
         break;
     case B_ELLIP:
         /* list-making ellipsis */

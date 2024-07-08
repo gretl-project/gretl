@@ -988,23 +988,24 @@ static int split_matrix_by_vector (gretl_array *A, int n,
 
 gretl_array *gretl_matrix_split_by (const gretl_matrix *X,
 				    const gretl_matrix *v,
-				    int colwise, int *err)
+				    int colwise, int chunks,
+                                    int *err)
 {
     gretl_array *ret = NULL;
     int i, dim, nm = 0;
-    int chunk = 0;
+    int chunksize = 0;
     gretl_matrix *vals = NULL;
     const double *sel;
     double x;
 
     dim = colwise ? X->cols : X->rows;
 
-    if (gretl_vector_get_length(v) == 1) {
-	/* the chunk-size variant */
-	chunk = v->val[0];
-	if (chunk <= 0 || chunk > dim) {
+    if (chunks) {
+	/* interpret single element of @v as chunk size */
+	chunksize = v->val[0];
+	if (chunksize <= 0 || chunksize > dim) {
 	    *err = E_INVARG;
-	} else if (dim % chunk != 0) {
+	} else if (dim % chunksize != 0) {
 	    *err = E_NONCONF;
 	}
     } else if (gretl_vector_get_length(v) == dim) {
@@ -1025,8 +1026,8 @@ gretl_array *gretl_matrix_split_by (const gretl_matrix *X,
     }
 
     /* How many matrices do we need ? */
-    if (chunk > 0) {
-	nm = dim / chunk;
+    if (chunksize > 0) {
+	nm = dim / chunksize;
     } else {
 	sel = v->val;
 	vals = gretl_matrix_values(sel, dim, OPT_NONE, err);
@@ -1042,9 +1043,9 @@ gretl_array *gretl_matrix_split_by (const gretl_matrix *X,
 	ret = gretl_array_new(GRETL_TYPE_MATRICES, nm, err);
     }
 
-    if (!*err && chunk > 0) {
+    if (!*err && chunksize > 0) {
 	/* the easier case */
-	*err = split_matrix_by_chunks(ret, nm, X, chunk, colwise);
+	*err = split_matrix_by_chunks(ret, nm, X, chunksize, colwise);
     } else if (!*err) {
 	/* the fiddly but general one */
 	*err = split_matrix_by_vector(ret, nm, X, dim, colwise, vals, sel);

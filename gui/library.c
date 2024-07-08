@@ -3654,6 +3654,11 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
         return;
     }
 
+    if (my_sys == NULL) {
+        errbox(_("No system was specified"));
+        return;
+    }
+
     edit_dialog_close(dlg);
 
     if (bufopen(&prn)) {
@@ -3675,6 +3680,9 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 
     g_free(buf);
     g_free(startline);
+
+    fprintf(stderr, "prn = %p, my_sys = %p\n",
+            (void *) prn, (void *) my_sys);
 
     view_buffer(prn, 78, 450,
                 (my_sys->name != NULL)? my_sys->name:

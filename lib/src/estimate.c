@@ -467,13 +467,13 @@ static void fix_wls_values (MODEL *pmod, const DATASET *dset)
 
 /* drop the weight var from the list of regressors (WLS) */
 
-static void dropwt (int *list)
+static void dropwt (MODEL *pmod)
 {
     int i;
 
-    list[0] -= 1;
-    for (i=1; i<=list[0]; i++) {
-	list[i] = list[i+1];
+    pmod->list[0] -= 1;
+    for (i=1; i<=pmod->list[0]; i++) {
+	pmod->list[i] = pmod->list[i+1];
     }
 }
 
@@ -512,19 +512,17 @@ static int wls_usable_obs (MODEL *pmod, const DATASET *dset)
 #define SMPL_DEBUG 0
 
 static int
-lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
+lsq_check_for_missing_obs (MODEL *pmod, gretlopt opt, DATASET *dset,
 			   int *misst)
 {
-    int ref_mask = reference_missmask_present();
-    int missv = 0;
     int reject_missing = 0;
+    int missv = 0;
 
 #if SMPL_DEBUG
-    fprintf(stderr, "lsq_check_for_missing_obs: ref_mask = %d\n",
-	    ref_mask);
+    fprintf(stderr, "lsq_check_for_missing_obs\n");
 #endif
 
-    if (ref_mask) {
+    if (reference_missmask_present()) {
 	int err = apply_reference_missmask(pmod);
 
 	/* If there was a reference mask present, it was put there
@@ -539,11 +537,11 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
 	}
     }
 
-    if (opts & OPT_M) {
+    if (opt & OPT_M) {
 	reject_missing = 1;
     } else if (libset_get_int(HAC_MISSVALS) == HAC_REFUSE) {
 	/* we won't do HAC VCV with embedded missing obs */
-	if ((opts & OPT_R) && dataset_is_time_series(dset) &&
+	if ((opt & OPT_R) && dataset_is_time_series(dset) &&
 	    !libset_get_bool(FORCE_HC)) {
 	    reject_missing = 2;
 	}
@@ -622,6 +620,17 @@ static void log_depvar_ll (MODEL *pmod, const DATASET *dset)
     }
 }
 
+/* check_weight_var(): Here we're screening out certain errors to do
+   with the weight series for WLS, and also checking for 0/1 dummy
+   weights.
+
+   * Negative weights are not permitted: we flag an error if any are
+     found.
+   * 0/1 weights are OK, but otherwise zero weights are not accepted
+     unless the --allow-zeros option (OPT_Z) is passed to the "wls"
+     command.
+*/
+
 static int check_weight_var (MODEL *pmod, const double *w, int *effobs,
 			     gretlopt opt)
 {
@@ -657,6 +666,10 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs,
 	return 1;
     }
 
+    /* note: this @effobs value does not take into account missing
+       values of dep var or regressors, and so is potentially
+       misleading! (FIXME)
+    */
     *effobs = nobs;
 
     if (is_dummy) {
@@ -1086,7 +1099,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 		      double rho)
 {
     MODEL mdl;
-    int effobs = 0;
+    int wtdobs = 0;
     int missv = 0, misst = 0;
     int pwe = (opt & OPT_P);
     int nullmod = 0, ldv = 0;
@@ -1150,11 +1163,13 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
     /* Doing weighted least squares? */
     if (ci == WLS) {
-	check_weight_var(&mdl, dset->Z[mdl.list[1]], &effobs, opt);
+	check_weight_var(&mdl, dset->Z[mdl.list[1]], &wtdobs, opt);
 	if (mdl.errcode) {
 	    return mdl;
 	}
 	mdl.nwt = mdl.list[1];
+        fprintf(stderr, "HERE 1 wtdobs = %d, t1=%d, t2=%d\n",
+                wtdobs, mdl.t1, mdl.t2);
     } else {
 	mdl.nwt = 0;
     }
@@ -1172,6 +1187,9 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
         goto lsq_abort;
     }
 
+    fprintf(stderr, "HERE 2, t1=%d, t2=%d, missv=%d, nobs=%d\n",
+            mdl.t1, mdl.t2, missv, mdl.nobs);
+
     /* react to presence of unhandled missing obs */
     if (missv) {
 	gretl_errmsg_sprintf(_("Missing value encountered for "
@@ -1182,7 +1200,8 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     }
 
     if (ci == WLS) {
-	dropwt(mdl.list);
+        /* note: remove the WLS weight series from regression list */
+	dropwt(&mdl);
     }
 
     yno = mdl.list[1];
@@ -1220,14 +1239,20 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     }
 
     mdl.ncoeff = mdl.list[0] - 1;
-    if (effobs > 0 && mdl.missmask == NULL) {
-	mdl.nobs = effobs;
+    if (wtdobs > 0 && wtdobs <= mdl.t2 - mdl.t1 + 1 && mdl.missmask == NULL) {
+        /* FIXME: this is WLS-specific, but is it right? */
+	mdl.nobs = wtdobs;
+        fprintf(stderr, "HERE 3(a), nobs=%d\n", mdl.nobs);
     } else {
 	mdl.nobs = mdl.t2 - mdl.t1 + 1;
-	if (mdl.nwt) {
-	    mdl.nobs = wls_usable_obs(&mdl, dset);
-	} else if (mdl.missmask != NULL) {
-	    mdl.nobs -= model_missval_count(&mdl);
+        fprintf(stderr, "HERE 3(b), nobs=%d\n", mdl.nobs);
+        if (mdl.missmask != NULL) {
+            if (mdl.nwt) {
+                mdl.nobs = wls_usable_obs(&mdl, dset);
+                fprintf(stderr, "HERE 3(c), nobs=%d\n", mdl.nobs);
+            } else {
+                mdl.nobs -= model_missval_count(&mdl);
+            }
 	}
     }
 

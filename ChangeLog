@@ -24,6 +24,7 @@ version 2024c, in progress
   menu items are disabled when the dataset is cross-sectional
 - Windows 64-bit build: make Consolas the default monospace
   font
+- Added --case option to the "rename" command, allowing bulk case conversion of all series names in the dataset.
 
 2024-05-21 version 2024b
 - "gridplot" command: add a --title option

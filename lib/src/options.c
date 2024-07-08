@@ -595,6 +595,7 @@ struct gretl_option gretl_opts[] = {
     { QUANTREG, OPT_N, "no-df-corr", 0 },
     { QUANTREG, OPT_R, "robust", 0 },
     { QUIT,     OPT_X, "exit", 0 },
+    { RENAME,   OPT_C, "case", 2 },
     { RESET,    OPT_C, "cubes-only", 0 },
     { RESET,    OPT_R, "squares-only", 0 },
     { RESET,    OPT_I, "silent", 0 },

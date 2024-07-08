@@ -2387,13 +2387,25 @@
 	  Permutacións binarias: devolve unha matriz <by r="p" c="n"/>,
 	  na que cada unha das súas filas contén unha ordenación diferente
 	  de <math>k</math> uns e <math>n</math> &minus; <math>k</math>
-	  ceros. O valor máximo admitido para <math>n</math> é 64; tanto
-	  <math>n</math> como <math>k</math> deben ser non negativos; e
-	  <math>k</math> non debe ser maior que <math>n</math>; doutro
-	  xeito, vaise amosar un fallo. No caso de que
-	  <math>n</math> = <math>k</math> = 0 devólvese unha matriz
+	  ceros (en orde lexicográfica). O valor máximo admitido para
+	  <math>n</math> é 64; tanto <math>n</math> como <math>k</math>
+	  deben ser non negativos; e <math>k</math> non debe ser maior que
+	  <math>n</math>; doutro xeito, vaise amosar un fallo. No caso de
+	  que <math>n</math> = <math>k</math> = 0 devólvese unha matriz
 	  baleira.
 	</para>
+	<para>
+	  Por exemplo, con <math>n</math> = 4 e <math>k</math> = 2,
+	  o resultado é
+	</para>
+	<code>
+	  0   0   1   1 
+	  0   1   0   1 
+	  0   1   1   0 
+	  1   0   0   1 
+	  1   0   1   0 
+	  1   1   0   0
+	</code>
 	<para>
 	  <emphasis>Advertencia</emphasis>: O número <math>p</math> de
 	  permutacións medra rapidamente en función de <math>n</math>; e
@@ -9658,20 +9670,30 @@
 	</para>
 	<para>
 	  O argumento <argname>v</argname> pode ser ben un vector ou ben
-	  un escalar. No primeiro caso, o vector debe ter unha longura
-	  igual á dimensión relevante (de filas ou de columnas) da matriz
-	  <argname>X</argname>; amais debe conter números enteiros cun
-	  valor mínimo de 1, e un máximo igual ao número de matrices que
-	  terá o arranxo que se quere. Cada elemento de <argname>v</argname>
-	  representa o índice que ten no arranxo, a matriz á que deberá asignarse
-	  a correspondente fila de <argname>X</argname>. Se, en troques,
-	  <argname>v</argname> é un escalar, entón vaise separar a matriz
-	  <argname>X</argname> en anacos que terán <argname>v</argname>
-	  filas/columnas cada un (segundo o esixa o argumento
-	  <argname>porcolum</argname>); e vaise amosar un fallo se a
-	  dimensión da matriz relevante non é un múltiplo exacto de
-	  <argname>v</argname>.
-	</para>
+	  un escalar.
+  </para>
+    <ilist>
+      <li>
+        <para>
+        Vector: Debe ter unha longura igual á dimensión relevante (de
+        filas ou de columnas) da matriz <argname>X</argname>; amais
+        debe conter números enteiros positivos. O maior enteiro establece
+        a longura do arranxo que se devolve. Cada elemento de
+        <argname>v</argname> indica o índice que ten, no arranxo,
+        a matriz á que deberá asignarse a correspondente fila de
+        <argname>X</argname>.
+        </para>
+      </li>
+      <li>
+        <para>
+        Escalar: A dimensión relevante da matriz <argname>X</argname>
+        (fila ou columna, según determine <argname>porcolum</argname>)
+        debe ser un múltiplo exacto do valor deste escalar. A matriz
+        <argname>X</argname> vaise separar en anacos con
+        <argname>v</argname> filas ou columnas en cada un deles.
+        </para>
+      </li>
+    </ilist>
 	<para>
 	  No seguinte exemplo separamos as filas dunha matriz <by r="4" c="3"/>
 	  en tres matrices: as dúas primeiras filas asígnanse á primeira

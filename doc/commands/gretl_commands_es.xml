@@ -2134,8 +2134,8 @@
 	disponibles para calcular cada coeficiente por parejas de variables,
 	pero si marcas el cuadradito de opciones, la muestra se limita (si es necesario)
 	de modo que se utiliza el mismo conjunto de observaciones para todos
-	los coeficientes. Esta opción es adecuada solo cuando hay un número
-	diferente de valores ausentes en las variables utilizadas.
+	los coeficientes. Esta opción es adecuada solo cuando hay diferentes
+	patrones de valores ausentes en las variables utilizadas.
       </para>
     </description>
 
@@ -2186,7 +2186,13 @@
       </para>
       <para>
 	Puedes usar el accesor <fncref targ="$result"/> para obtener las
-	correlaciones en forma de matriz.
+	correlaciones en forma de matriz. Ten en cuenta que cuando esta
+	es la <emphasis>matriz</emphasis> que te interese (y no solo los
+	coeficientes de las parejas), entonces en caso de que haya valores
+	ausentes se aconseja utilizar la opción <opt>uniform</opt>. A no ser
+	que utilices una muestra común única, no se garantiza que la matriz
+	de correlaciones sea semidefinida positiva, como debiera ser por
+	construcción.
       </para>
     </description>
 
@@ -4410,7 +4416,7 @@
         </option>
       </options>
       <examples>
-        <example>freq x</example>
+  <example>freq x</example>
 	<example>freq x --normal</example>
 	<example>freq x --nbins=5</example>
 	<example>freq x --min=0 --binwidth=0.10</example>
@@ -4423,7 +4429,9 @@
 	serie <repl>variable</repl> (indicada por su nombre o número) en
 	formato tabular, con el número de intervalos y sus tamaños elegidos
 	automáticamente, con o sin un gráfico adjunto tal como se explica
-	más abajo.
+	más abajo. Cuando se completa la instrucción con éxito, puedes
+	recuperar la tabla de frecuencias como una matriz utilizando
+	el accesor <fncref targ="$result"/>.
       </para>
       <para>
 	Cuando indicas la opción <opt>matrix</opt>, entonces <repl>variable</repl>
@@ -4686,12 +4694,14 @@
       </para>
 
       <para context="cli">
-	Con esta instrucción dispones de diversas variantes de la matriz estimada
-	de las covarianzas de los estimadores. Por defecto, se utiliza la matriz Hessiana
-	excepto que indiques la opción <opt>robust</opt>, en cuyo caso se va a usar
-	la matriz de covarianzas CMV (QML de White). También puedes especificar
-	otras posibilidades (&eg; la matriz de información o el estimador de
-	Bollerslev&ndash;Wooldridge) utilizando la instrucción <cmdref targ="set"/>.
+	Con esta instrucción dispones de diversas variantes de la matriz
+	estimada de las covarianzas de los estimadores. Por defecto, se usa
+	la matriz Hessiana excepto que indiques la opción <opt>robust</opt>,
+	en cuyo caso se va a usar la matriz de covarianzas CMV (QML de White).
+	También se pueden especificar otras posibilidades (&eg; la matriz
+	de información o el estimador de Bollerslev&ndash;Wooldridge)
+	mediante la clave <lit>garch_vcv</lit> bajo la instrucción
+	<cmdref targ="set"/>.
       </para>
 
       <para context="gui">
@@ -10938,7 +10948,7 @@
 
     <usage>
       <altforms>
-	<altform><lit>outfile</lit> <repl>archivo</repl></altform>
+	<altform><lit>outfile</lit> <repl>nombrearchivo</repl></altform>
 	<altform><lit>outfile</lit> <lit>--buffer=</lit><repl>strvar</repl></altform>
 	<altform><lit>outfile</lit> <lit>--tempfile=</lit><repl>strvar</repl></altform>
       </altforms>
@@ -10978,21 +10988,12 @@
       <subhead>Desvío a un archivo señalado</subhead>
       <para>
 	La primera variante que se muestra abajo envía los resultados al archivo
-	señalado por el argumento <repl>archivo</repl>. Por defecto, se crea un
+	señalado por el argumento <repl>nombrearchivo</repl>. Por defecto, se crea un
 	nuevo archivo (o se sobrescribe uno ya existente). El archivo resultante
 	se guarda en la carpeta <cmdref targ="workdir"/> de la configuración,
-	vigente excepto que la cadena de texto <repl>archivo</repl> contenga
+	vigente excepto que la cadena de texto <repl>nombrearchivo</repl> contenga
 	una especificación completa de la ruta. Pero, si quieres añadir resultados
 	a un archivo ya existente, utiliza la opción <opt>append</opt>.
-      </para>
-      <para>
-	Dispones de algunas variantes especiales de este tema. Cuando indicas
-	la palabra clave <lit>null</lit> en lugar de un nombre real de archivo,
-	la consecuencia es que se eliminan todos los resultados presentados
-	hasta que la redirección acabe. Si indicas alguna de las palabras clave
-	<lit>stdout</lit> o <lit>stderr</lit> en lugar de un nombre típico de
-	archivo, su efecto consiste en volver a dirigir el resultado a un
-	resultado estándar o a un resultado de error estándar, respectivamente.
       </para>
       <para>
 	En el sencillo ejemplo que sigue, los resultados de una determinada
@@ -11004,7 +11005,31 @@
 	  ols ENROLL 0 CATHOL INCOME COLLEGE
 	end outfile
       </code>
-
+      <subhead>Nombres de archivos ficticios especiales</subhead>
+      <para>
+	Se admiten tres valores especiales para <repl>nombrearchivo</repl>,
+	del siguiente modo:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>null</lit>: Se suprime la presentación de resultados hasta que
+	    finalice el redireccionado.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>stdout</lit>: El resultado se redirecciona al canal de
+	    <quote>resultado típico</quote>.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>stderr</lit>: El resultado se redirecciona al canal de
+	    <quote>error típico</quote>.
+	  </para>
+	</li>
+      </ilist>
       <subhead>Desvío a un buffer de cadena</subhead>
       <para>
 	La opción <opt>buffer</opt> se utiliza para guardar resultados en una
@@ -14199,8 +14224,7 @@
 	  por defecto). También puedes utilizar esta configuración para
 	  limitar el número de dígitos que se muestran con la instrucción
 	  <cmdref targ="summary"/>; siendo en este caso 5 por defecto (y
-	  también como máximo) o 4 cuando indicas la opción
-	  <opt>simple</opt>.
+	  también el máximo).
 	  </para>
 	</li>
 	<li>
@@ -15910,7 +15934,14 @@
       <para>
 	Puedes obtener, en forma de matriz, la tabla de estadísticos
 	generada con la instrucción <lit>summary</lit>, por medio del
-	accesor <fncref targ="$result"/>.
+	accesor <fncref targ="$result"/>. Cuando indiques la opción
+	<opt>by</opt>, se genera el efecto de este acceso unicamente si
+	<repl>varlist</repl> contiene una única serie.
+      </para>
+      <para>
+	Consulta también la función <fncref targ="aggregate"/> para ver
+	otras formas más flexibles de producción de estadísticos
+	<quote>factorizados</quote>.
       </para>
     </description>
 

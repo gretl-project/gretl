@@ -9670,20 +9670,30 @@
 	</para>
 	<para>
 	  The argument <argname>v</argname> can be either a vector or
-	  a scalar.  In the former case, the vector must be of length
-	  equal to the relevant (row or column) dimension of
-	  <argname>X</argname>, and should contain integer values with
-	  a minimum of 1 and a maximum equal to the number of matrices
-	  in the desired array. Each element of <argname>v</argname>
-	  indicates the array index of the matrix to which the
-	  corresponding row of <argname>X</argname> should be
-	  assigned. If, instead, <argname>v</argname> is a scalar,
-	  then <argname>X</argname> will be split in chunks with
-	  <argname>v</argname> rows/columns each (as dictated by
-	  <argname>bycol</argname>); an error will be flagged if the
-	  relevant matrix dimension is not an exact multiple of
-	  <argname>v</argname>.
-	</para>
+	  a scalar.
+        </para>
+        <ilist>
+          <li>
+            <para>
+              vector: must be of length equal to the relevant (row or
+              column) dimension of <argname>X</argname>, and must
+              contain positive integers. The greatest integer sets the
+              length of the array that is returned. Each element of
+              <argname>v</argname> indicates the array index of the
+              matrix to which the corresponding row of
+              <argname>X</argname> should be assigned.
+            </para>
+          </li>
+          <li>
+            <para>
+              scalar: the relevant dimension of
+              <argname>X</argname> (row or column, as dictated by
+              <argname>bycol</argname>) must be an exact multiple of
+              the scalar value. <argname>X</argname> will be split in
+              chunks with <argname>v</argname> rows or columns each.
+            </para>
+          </li>
+        </ilist>
 	<para>
 	  In the following example we split a <by r="4" c="3"/> matrix
 	  into three matrices: the first two rows are assigned to the

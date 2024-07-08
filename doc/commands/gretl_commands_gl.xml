@@ -2134,8 +2134,8 @@
 	dispoñibles para calcular cada coeficiente por parellas de variables,
 	pero se marcas o cadriño de opcións, a mostra limítase (se é necesario)
 	de xeito que se utiliza o mesmo conxunto de observacións para todos
-	os coeficientes. Esta opción é adecuada só cando hai un número
-	diferente de valores ausentes nas variables utilizadas.
+	os coeficientes. Esta opción é adecuada só cando hai diferentes
+	padróns de valores ausentes nas variables utilizadas.
       </para>
     </description>
 
@@ -2186,7 +2186,13 @@
       </para>
       <para>
 	Podes usar o accesorio <fncref targ="$result"/> para obter as
-	correlacións en forma de matriz.
+	correlacións en forma de matriz. Cae na conta de que cando esta
+	é a <emphasis>matriz</emphasis> que te interese (e non só os
+	coeficientes das parellas), entón no caso de que haxa valores
+	ausentes aconséllase utilizar a opción <opt>uniform</opt>. Agás que
+	utilices unha mostra común única, non se garante que a matriz de
+	correlacións sexa semidefinida positiva, como debera ser por
+	construción.
       </para>
     </description>
 
@@ -4410,7 +4416,7 @@
         </option>
       </options>
       <examples>
-        <example>freq x</example>
+  <example>freq x</example>
 	<example>freq x --normal</example>
 	<example>freq x --nbins=5</example>
 	<example>freq x --min=0 --binwidth=0.10</example>
@@ -4423,7 +4429,9 @@
 	serie <repl>variable</repl> (indicada polo seu nome ou número) en
 	formato tabular, co número de intervalos e os seus tamaños elixidos
 	automaticamente, con ou sen unha gráfica adxunta tal como se explica
-	máis abaixo.
+	máis abaixo. Cando se completa a instrución con éxito, podes
+	recuperar a táboa de frecuencias como unha matriz utilizando
+	o accesorio <fncref targ="$result"/>.
       </para>
       <para>
 	Cando indicas a opción <opt>matrix</opt>, entón <repl>variable</repl>
@@ -4686,12 +4694,14 @@
       </para>
 
       <para context="cli">
-	Con esta instrución dispós de diversas variantes da matriz estimada
-	das covarianzas dos estimadores. Por defecto, utilízase a matriz Hessiana
-	agás que indiques a opción <opt>robust</opt>, en cuxo caso vaise usar
-	a matriz de covarianzas CMV (QML de White). Tamén podes especificar
-	outras posibilidades (&eg; a matriz de información ou o estimador de
-	Bollerslev&ndash;Wooldridge) utilizando a instrución <cmdref targ="set"/>.
+	Con esta instrución dispós de diversas variantes da matriz
+	estimada das covarianzas dos estimadores. Por defecto, utilízase
+	a matriz Hessiana agás que indiques a opción <opt>robust</opt>,
+	en cuxo caso vaise usar a matriz de covarianzas CMV (QML de White).
+	Tamén se poden especificar outras posibilidades (&eg; a matriz
+	de información ou o estimador de Bollerslev&ndash;Wooldridge)
+	mediante a chave <lit>garch_vcv</lit> baixo a instrución
+	<cmdref targ="set"/>.
       </para>
 
       <para context="gui">
@@ -10938,7 +10948,7 @@
 
     <usage>
       <altforms>
-	<altform><lit>outfile</lit> <repl>ficheiro</repl></altform>
+	<altform><lit>outfile</lit> <repl>nomeficheiro</repl></altform>
 	<altform><lit>outfile</lit> <lit>--buffer=</lit><repl>strvar</repl></altform>
 	<altform><lit>outfile</lit> <lit>--tempfile=</lit><repl>strvar</repl></altform>
       </altforms>
@@ -10978,21 +10988,12 @@
       <subhead>Desvío cara a un ficheiro sinalado</subhead>
       <para>
 	A primeira variante que se amosa abaixo envía os resultados cara ao
-	ficheiro sinalado polo argumento <repl>ficheiro</repl>. Por defecto,
+	ficheiro sinalado polo argumento <repl>nomeficheiro</repl>. Por defecto,
 	créase un novo ficheiro (ou sobrescríbese un xa existente). O ficheiro
 	resultante gardarase no cartafol <cmdref targ="workdir"/> vixente da
-	configuración, agás que a cadea de texto <repl>ficheiro</repl> conteña
+	configuración, agás que a cadea de texto <repl>nomeficheiro</repl> conteña
 	unha especificación completa da ruta. Mais, se queres engadir resultados
 	a un ficheiro xa existente, utiliza a opción <opt>append</opt>.
-      </para>
-      <para>
-	Dispós de algunhas variantes especiais deste tema. Cando indicas a
-	palabra chave <lit>null</lit> en vez dun nome real de ficheiro, a
-	consecuencia é que se eliminan todos os resultados presentados
-	ata que a redirección remate. Se indicas algunha das palabras chave
-	<lit>stdout</lit> ou <lit>stderr</lit> en lugar dun nome típico de
-	ficheiro, o seu efecto consiste en volver a dirixir o resultado a un
-	resultado estándar ou a un resultado de erro estándar, respectivamente.
       </para>
       <para>
 	No sinxelo exemplo que segue, os resultados dunha determinada
@@ -11004,7 +11005,31 @@
 	  ols ENROLL 0 CATHOL INCOME COLLEGE
 	end outfile
       </code>
-
+      <subhead>Nomes de ficheiros ficticios especiais</subhead>
+      <para>
+	Admítense tres valores especiais para <repl>nomeficheiro</repl>,
+	do seguinte xeito:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>null</lit>: Elimínase a presentación de resultados ata que
+	    remate a reorientación.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>stdout</lit>: O resultado se reorienta á canle de
+	    <quote>resultado típico</quote>.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>stderr</lit>: O resultado se reorienta á canle de
+	    <quote>erro típico</quote>.
+	  </para>
+	</li>
+      </ilist>
       <subhead>Desvío cara a un buffer de cadea</subhead>
       <para>
 	A opción <opt>buffer</opt> utilízase para gardar resultados nunha
@@ -14199,8 +14224,7 @@
 	  por defecto). Tamén podes utilizar esta configuración para
 	  limitar o número de díxitos que se amosan coa instrución
 	  <cmdref targ="summary"/>; sendo neste caso 5 por defecto (e
-	  tamén como máximo) ou 4 cando indicas a opción
-	  <opt>simple</opt>.
+	  tamén o máximo).
 	  </para>
 	</li>
 	<li>
@@ -15910,7 +15934,14 @@
       <para>
 	Podes obter, en forma de matriz, a táboa de estatísticos xerada
 	pola instrución <lit>summary</lit>, mediante o accesorio
-	<fncref targ="$result"/>.
+	<fncref targ="$result"/>. Cando indiques a opción <opt>by</opt>,
+	xérase o efecto deste accesorio unicamente se <repl>varlist</repl>
+	contén unha única serie.
+      </para>
+      <para>
+	Consulta tamén a función <fncref targ="aggregate"/> para ver
+	outros xeitos máis flexibles de produción de estatísticos
+	<quote>factorizados</quote>.
       </para>
     </description>
 
