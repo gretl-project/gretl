@@ -262,10 +262,10 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
 
     DO_NORM = 1 # used later, when we check if a draw has to be kept or not
 
-    matrix iXX = {}
+    matrix chol_iXX = {}
     if DO_BAYES     # this is only needed for sampling from the posterior
         matrix Data = (mod.X ~ lags(mod.p, mod.Y, 1))[mod.p + 1 : ,]
-        iXX = invpd(Data'Data)
+        chol_iXX = cholesky(invpd(Data'Data))
         matrix mod.mreg = Data # needed to re-calc the residuals E later
     endif
 
@@ -325,7 +325,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
         # first just using non-exotic restrictions
 
         # generate the random rotation matrix and, optionally, resample
-        rot_redraw(&b, mod, DO_BAYES, B, iXX, rot_only) 	# b.rot, b.B, b.Sigma
+        rot_redraw(&b, mod, DO_BAYES, B, chol_iXX, rot_only) 	# b.rot, b.B, b.Sigma
 
         matrices irfs = gen_SRirfs(b, numh, to_cum)
         matrix id_matrix = get_id_mat(mod, shocks, irfs, Ais, DO_NORM)
