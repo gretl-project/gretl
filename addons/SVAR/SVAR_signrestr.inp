@@ -34,11 +34,20 @@ function void SVAR_SRfull(bundle *mod,
     # SVAR_SRfull(&mod, "p", "mon_pol", NA, 0, 0, 4)
     #
     # assuming the series for prices is called "p".
+    # The output is then (adding) the row with elements:
+    # 1) kpos  - variable number in system,
+    # 2) lo    - lower interval bound,
+    # 3) hi    - upper ...,
+    # 4) ini+1 - period/lag start (1-based, not the actual horizon meaning!,
+    #            i.e. impact is at 1)
+    # 5) fin+1 - ... end (1-based)
+    # 6) snum  - shock number
     # 
     # This function only covers "ordinary", i.e. non-exotic, set restrictions.
 
     # (Switched the yname/sname ordering to match SVAR_SRplain; Sven)
 
+    errorif(!inbundle(mod, "type"), "Missing info, not a valid SVAR bundle")
     errorif( mod.type != 10, "Wrong model type for set identification restrictions")
     if !inbundle(mod, "SRest")
         matrix mod.SRest = {}
@@ -68,15 +77,8 @@ function void SVAR_SRfull(bundle *mod,
     if mod.horizon <= fin
         mod.horizon = fin + 1 # to be on the safe side
     endif
-
-    # Attention: Here the ini and fin inputs are transformed
-    # to 1-based matrix indexing form, not keeping the actual
-    # horizon meaning
-    
-    # FIXME: explain more explicitly what these things are
     
     mod.SRest |= {kpos, lo, hi, ini+1, fin+1, snum}
-
 end function
 
 function void SVAR_SRplain(bundle *mod,
@@ -132,6 +134,7 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
 
     */
 
+    errorif(!inbundle(mod, "type"), "Missing info, not a valid SVAR bundle")
     errorif( mod.type != 10, "Wrong model type for set identification restrictions")
 
     if !inbundle(mod, "exoticSR")
@@ -162,9 +165,10 @@ end function
 
 function matrices gen_SRirfs(bundle b, int numh, matrix to_cum)
 
-    # This calculates results for 0..mod.horizons, which is actually
-    # like in the earlier SVAR code.
-    # TODO: Maybe merge this function with earlier ones from SVAR?
+    # This calculates results (in the set-ID'ed case) for 0..mod.horizons,
+    # which is actually like in the earlier SVAR code.
+    # TODO: Maybe merge this function with earlier (non set-ID'ed)
+    # ones from SVAR?
     #
     # So numh == mod.horizon + 1.
     # (Memo: the doc has been (up to 2020) slightly wrong in this
@@ -699,9 +703,10 @@ function scalar SVAR_SRgetbest(bundle *mod,
         loss = tolower(loss)
     endif
 
-    errorif( ini + length > mod.horizon, "ini + length too large (increase horizon)")
     errorif( !inbundle(mod, "SRacc"), "No info on accepted draws found")
     errorif( !inbundle(mod, "acc_draws"), "Model must be set up to store accepted draws in its bundle")
+    errorif( ini + length > mod.horizon, "ini + length too large (increase horizon)")
+
 
     startix = ini + 1	# offset for 1-based
     finix = startix + length
