@@ -1883,6 +1883,39 @@ gretl_array *gretl_arrays_intersection (gretl_array *A,
     return C;
 }
 
+/* respond to C = A ~ B, for strings only so far */
+
+gretl_array *gretl_arrays_concat (const gretl_array *A,
+                                  const gretl_array *B,
+                                  int *err)
+{
+    gretl_array *C = NULL;
+
+    if (A == NULL || A->type != GRETL_TYPE_STRINGS ||
+        B == NULL || B->type != GRETL_TYPE_STRINGS ||
+        A->n != B->n) {
+        *err = E_TYPES;
+        return NULL;
+    }
+
+    C = gretl_array_new(GRETL_TYPE_STRINGS, A->n, err);
+
+    if (C != NULL) {
+        char *si, *sa, *sb;
+        int i;
+
+        for (i=0; i<A->n; i++) {
+            sa = A->data[i] == NULL ? "" : (char *) A->data[i];
+            sb = B->data[i] == NULL ? "" : (char *) B->data[i];
+            si = calloc(strlen(sa) + strlen(sb) + 1, 1);
+            sprintf(si, "%s%s", sa, sb);
+            C->data[i] = si;
+        }
+    }
+
+    return C;
+}
+
 /**
  * gretl_array_copy_as:
  * @name: name of source array.

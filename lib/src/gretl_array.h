@@ -156,6 +156,10 @@ gretl_array *gretl_arrays_intersection (gretl_array *A,
 					gretl_array *B,
 					int *err);
 
+gretl_array *gretl_arrays_concat (const gretl_array *A,
+                                  const gretl_array *B,
+                                  int *err);
+
 gretl_array *gretl_array_copy (const gretl_array *A,
 			       int *err);
 
