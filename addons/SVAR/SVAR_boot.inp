@@ -450,7 +450,7 @@ function matrices SVAR_boot_innerloop(bundle *bobj, const bundle obj, const bund
                 matrix fullRd = bobj.fullRd
             endif
 
-            matrix K = estC(&theta, bSigma, fullRd, d, &errcode, obj.optmeth, 0)
+            matrix K = estC(&theta, bSigma, fullRd, null, &errcode, obj.optmeth, 0)
 
         elif type == 3 # "AB"
             matrices transferAB = array(0)
