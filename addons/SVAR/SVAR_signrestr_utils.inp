@@ -183,7 +183,9 @@ function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
         matrix b.rot = const_orth(b.zc, C)
     endif
 
-    if strlen(getenv("NO_AUTONORM")) == 0	# FIXME: let's add an option for this
+    # normalize by default, can be overriden by the user
+    # by setting mod.AUTONORM==FALSE
+    if !inbundle(mod, "AUTONORM") || mod.AUTONORM == TRUE
         # identification: set main diagonal of instantaneous IRF
         # to positive numbers
         C = C * b.rot
