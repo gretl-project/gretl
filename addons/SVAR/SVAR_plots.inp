@@ -435,7 +435,7 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0],
                      int drawix[0::0])
 
     errorif(!inbundle(obj, "type"), "Missing info, not a valid SVAR bundle")
-    
+
     # Interpret vnum==0 as meaning "all 1..n"
     scalar n = obj.n
     scalar vfrom vto
