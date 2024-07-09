@@ -209,11 +209,16 @@ end function
 
 function matrix get_id_mat (const bundle mod, const matrix shocks,
                             const matrices irfs, const matrices Ais,
-                            bool DO_NORM)
+                            bool DO_NORM[TRUE])
 
     # this function constructs a matrix that lists the potential compatibility
     # of each column of the rotated C matrix with the restrictions
-    # on each shock (one per row)                  
+    # on each shock (one per row)
+    # The default DO_NORM switch invokes a "normalization" of that list that
+    # excludes (for example) the cases where there arises an ambiguity about
+    # the mapping from shocks (defined by given restrictions) to the C columns.
+    # Further thought is needed about whether it might make sense to use
+    # the ambiguous cases somehow, instead of simply removing them.
 
     VERB = 0
     nshocks = rows(shocks)
@@ -249,8 +254,9 @@ end function
 function matrix sr_correspondence(const matrix A)
     # Tag: sign restriction apparatus
 
-    # this function checks for a possible way to couple
-    # shocks with observables, given the "candidate" matrix A
+    # This recursive function checks for a possible way to couple
+    # shocks with observables (or rather VAR equations?),
+    # given the "candidate" matrix A.
 
     nr = rows(A)
     nc = cols(A)
@@ -289,15 +295,18 @@ end function
 function matrix normlizA(const matrix A)
     # Tag: sign restriction apparatus
     # this function is for normalizing the "candidate" matrix A
-    # (was normalize, but could be confused with the user option)
+    # (the "A" doesn't correspond to any notation, just internal)
+    # (was "normalize", but could be confused with the user option)
+    # (normalizing [apparently] means to keep only those candidates
+    #  where there is a unique correspondence, e.g. no ambiguity)
 
-    matrix U = sr_correspondence(A) # not to confuse U with the residuals...
+    matrix Uc = sr_correspondence(A) # U->Uc to avoid name of residuals
     matrix tmp = zeros(rows(A), cols(A))
-    loop i = 1..rows(U)
-        r = U[i,1]
-        c = U[i,2]
-        if c != 0
-            x = U[i,3]
+    loop i = 1..rows(Uc)
+        r = Uc[i,1]
+        c = Uc[i,2]
+        if c != 0	# this check possibly redundant? but better be safe 
+            x = Uc[i,3]
             tmp[r,c] = x
         endif
     endloop
