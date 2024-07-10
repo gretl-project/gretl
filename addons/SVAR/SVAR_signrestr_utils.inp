@@ -113,9 +113,9 @@ end function
 
 # ------------------------------
 
-function void safetycheck1(const matrix Sigma, const matrix iXX, const matrix B)
+function void safetycheck1(const matrix Sigma, const matrix chol_iXX, const matrix B)
     hhh = 10
-    matrix V = Sigma ** iXX
+    matrix V = Sigma ** (chol_iXX * chol_iXX')
     chk = B[1:hhh,1] ~ sqrt(diag(V[1:hhh, 1:hhh]))
     strings pnames = array(hhh)
     loop i = 1..hhh
@@ -154,11 +154,13 @@ end function
 
 function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
                          const matrix B,
-                         const matrix iXX,
+                         const matrix chol_iXX,
                          const matrix rotate_only)
 
     if DO_BAYES
-        matrices Mats = drawnormwis(iXX, B, mod.Sigma, b.df) # changed df at source
+        # with the previous version of drawnormwis, was:
+        # matrices Mats = drawnormwis(iXX, B, mod.Sigma, b.df) 
+        matrices Mats = drawnormwis(chol_iXX, B, mod.Sigma, b.df) 
         matrix b.B = Mats[1]
         matrix b.Sigma = Mats[2]
     endif
@@ -411,14 +413,13 @@ function scalar check_id(matrix id, matrix noswap)
 end function
 
 
-### drawnormwis() was called BayesianDraw earlier
-## (It was thought it would go into extra 0.7 in some incarnation,
-##  but in the end it didn't, because it was postponed until Bayesian
-##  VARs would be implemented, and perhaps this function would then
-##  be offered at the C-level.)
+### drawnormwis_old() is the old version of the other function below,
+## which is functionally equivalent but computationally much less 
+## efficient on account that the Cholesky decomposition of iXX needn't
+## be in a loop. For the moment, we'll keep it around just in case.
 
-function matrices drawnormwis(const matrix iXX, const matrix B,
-                              const matrix Sigma, int T[1::])
+function matrices drawnormwis_old(const matrix iXX, const matrix B,
+                                  const matrix Sigma, int T[1::])
 
     # Draw from a standard Normal-(inverse)-Wishart prior
     # for a multi-equation regression model.
@@ -445,6 +446,31 @@ function matrices drawnormwis(const matrix iXX, const matrix B,
     B_draw = mshape(B_draw, K, N)
 
     return defarray(B_draw, Sigma_draw)
+end function
+
+
+function matrices drawnormwis (const matrix chol_iXX,
+                               const matrix B,
+                               const matrix S,
+                               scalar df)
+
+    # Draw from a standard Normal-(inverse)-Wishart prior
+    # for a multi-equation regression model.
+    #
+    # iXX:  K x K matrix, wholding the Cholesky decomposition of
+    #       (X'X)^{-1} (same for all equations!)
+    #       (in a VAR context gretl provides this as $xtxinv)
+    # B:    mean of the normal variates
+    # S:    cross-equation covariance matrix of innovations
+    # df:   degrees of freedom for the Wishart distribution
+
+    scalar n = rows(S)
+    scalar npar = rows(chol_iXX)
+    matrix Sdraw = iwishart(S * df, df)
+    matrix C = cholesky(Sdraw)
+    matrix alpha_draw = chol_iXX * (mnormal(npar, n) * C') + B
+    
+    return defarray(alpha_draw, Sdraw)
 end function
 
 ###
