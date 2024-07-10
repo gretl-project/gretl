@@ -43,4 +43,8 @@ SVAR_SRplain(&mod, "FF",   "Interest Rate", "+")
 SVAR_SRdraw(&mod, 256, 0, 0.95, 5000)
 
 # draw the irfs
-SVAR_SRirf(mod, mod.Ynames, mod.snames) 
+gpbuild Plots
+    SVAR_SRirf(mod, mod.Ynames, mod.snames) 
+end gpbuild
+
+gridplot Plots --output=display
