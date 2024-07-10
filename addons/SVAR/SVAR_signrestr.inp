@@ -258,16 +258,20 @@ function scalar exotic_inner_check(scalar *chk, int i, const bundle mod,
             endif
             
         else
-            scalar exocheck = @exo_restrict
+            catch scalar exocheck = @exo_restrict
+            if $error || !ok(exocheck)
+                printf "Problem with exotic restriction: %s\n", exo_restrict
+                print " Make sure it uses 'M' to denote the IRF matrix,"
+                print " and that it evaluates to a single true/false result."
+                funcerr "Checking exotic restriction failed"
+            endif
         endif
 
         if !exocheck
             chk = 0
-            out = 1
-            if 0
-                printf "Exotic check %s failed on M[%d]:\n", exo_restrict, t-1
-                printf "%7.4f\n", M
-            endif
+            out = 1 # signal to the caller that it can stop checking the rest
+            # (a little redundant given the chk result, since on 
+            # entry chk==1 will hold)
             break
         endif
     endloop
@@ -318,7 +322,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     scalar good = 0
     scalar iter = 1
 
-    # which shocks are to be identified via (non-exotic) sign restrictions?
+    # which shocks are to be identified via (non-exotic) set restrictions?
     # (can be empty if only exotic restrictions exist)
     matrix shocks = rows(mod.SRest) ? values(mod.SRest[,6]) : {}
     
@@ -390,6 +394,9 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
         rot_redraw(&b, mod, DO_BAYES, B, chol_iXX, rot_only) 	# b.rot, b.B, b.Sigma
 
         matrices irfs = gen_SRirfs(b, numh, to_cum)
+
+        # analyzing how the drawn potential C columns can be shuffled around
+        # and sign-flipped to fulfill the defined restrictions
         matrix id_matrix = get_id_mat(mod, shocks, irfs, Ais) # DO_NORM now optional
 	
         if 0
@@ -401,7 +408,11 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
         # Start checking the results
         chk = rows(id_matrix) == rows(shocks)
 
-        # a "coherency" check
+        # For the standard set-ID'ed case, a check on whether
+        # all defined shock restrictions can be properly and uniquely
+        # matched; for the mixed-zero case, fail the check for those draws
+        # that would imply swapping the columns associated with the point
+        # restrictions.
         chk = chk && check_id(id_matrix, zc_shocks)
 
         if chk
@@ -417,7 +428,18 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
                 # for making the system "complete"? 
             endif
 
-            # perform the "reflection-permutation" step
+            # Perform the "reflection-permutation" step --
+            # so the IRFs are adapted to the findings of the previous
+            # id analysis that passed the checks.
+            # (basically, swapping and sign flips)
+
+            # FIXME: However, with partial identification and r<c,
+            # we will lose IRF columns here, which will then create
+            # problems with the exotic restrictions, because we
+            # possibly cannot check them anymore.
+            # We probably would need to drag along the remaining
+            # columns unshuffled as well?
+
             if nelem(id_matrix) # could be empty if only exotic restrictions
                 loop i = 1..nelem(irfs)
                     irfs[i] = irfs[i] * id_matrix'
@@ -425,6 +447,12 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
             endif
 
             # --- now check for exotic restrictions if necessary -------
+            # Here we are less clever than before, to reduce the
+            # complexity; no column swapping is attempted anymore,
+            # but the previously id'ed and created structure is taken
+            # as-is, running the additional restriction checks on it.
+            # (This should also be OK because this type of restrictions
+            #  is used less often.)
             if n_exotic
                 loop i = 1..n_exotic
 
