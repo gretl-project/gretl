@@ -7,7 +7,7 @@ function scalar transshockcheck(const bundle b)
     # check the last r columns of C (trans shocks),
     # shouldn't have more than r-1 zeros in each of them
     # according to Luetkepohl (2008, EL)
-	# (for unrestricted alpha)
+    # (for unrestricted alpha)
     # (passing this check doesn't mean everything is OK)
 
     if b.type != 4
@@ -21,7 +21,7 @@ function scalar transshockcheck(const bundle b)
         if inbundle(b, "jalpha")
             if min(sumr(abs(b.jalpha))) < 1e-8
                 weakexo = 1
-		    endif
+            endif
         endif
 
         if !weakexo
@@ -44,13 +44,13 @@ function scalar transshockcheck(const bundle b)
 end function
 
 function scalar CheckNormalizeRd(matrix *R, matrix *d)
-/*
-   Checks that
-   (1) the constraints are consistent
-   (2) the constraints are non-contradictory (??? non-redundant ? - Sven)
+    /*
+       Checks that
+       (1) the constraints are consistent
+       (2) the constraints are non-contradictory (??? non-redundant ? - Sven)
 
-   if (1) fails, an error message is printed and R and d are replaced by
-   empty matrices; if (2) fails, redundant rows in R and d are dropped.
+       if (1) fails, an error message is printed and R and d are replaced by
+       empty matrices; if (2) fails, redundant rows in R and d are dropped.
     */
 
     p = rows(R)
@@ -116,8 +116,8 @@ function matrix cholRd(int n)
     n2 = n*n
     k = 1
     matrix ret = {}
-    loop i = 1..n 
-        loop j = 1..n 
+    loop i = 1..n
+        loop j = 1..n
             matrix tmp = zeros(1,n2+1)
             if i > j
                 tmp[k] = 1
@@ -143,8 +143,8 @@ end function
 
 function matrix imp2exp(matrix Rd)
     /*
-   Given the constraints in implicit form, returns the matrix [ S | s ]
-   of the constraints in explicit form
+       Given the constraints in implicit form, returns the matrix [ S | s ]
+       of the constraints in explicit form
     */
     errorif( !nelem(Rd), "No restrictions given.")
 
@@ -229,9 +229,9 @@ function matrix get_full_Rd(bundle *obj, int verbosity[0])
             # TODO: Here we could also check whether in a SVEC model
             # the additional long-run constraints are really related
             # to the permanent shocks.
-            # (Otherwise they will probably be either redundant or 
+            # (Otherwise they will probably be either redundant or
             # impossible. Or should we do that in the ident check?)
-  
+
             fullRd |= lrConstr(C1, obj.Rd1l) # put the constraints together
         endif
 
