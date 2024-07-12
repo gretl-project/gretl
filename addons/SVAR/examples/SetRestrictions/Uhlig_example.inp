@@ -63,4 +63,10 @@ SVAR_SRplain(&mod, "r",   "Monetary", "+", 5)    # positive from 0 to 5
 bundles moo = SVAR_SRdraw(&mod, 256, 1, 0.75) # coverage 75%
 
 # draw the irfs (page 397)
-SVAR_SRirf(mod, mod.Ynames, defarray("Monetary"))
+gpbuild IRFPlots
+    SVAR_SRirf(mod, mod.Ynames, defarray("Monetary"))
+end gpbuild
+
+gridplot IRFPlots --output=display
+
+

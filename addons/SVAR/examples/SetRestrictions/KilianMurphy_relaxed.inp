@@ -85,7 +85,12 @@ SVAR_SRexotic(&mod, exot2,  defarray("Demand"))
 SVAR_SRexotic(&mod, exot3,  defarray("Speculative Demand"))
 
 # do the rotations (this is the computationally intensive part)
-SVAR_SRdraw(&mod, numofaccept, 0, coverage, 15000)
+Bayesian = 1
+SVAR_SRdraw(&mod, numofaccept, Bayesian, coverage, 25000)
 
 # draw the irfs
-SVAR_SRirf(mod, mod.Ynames, mod.snames) 
+gpbuild IRFPlots
+    SVAR_SRirf(mod, mod.Ynames, mod.snames) 
+end gpbuild
+
+gridplot IRFPlots --output=display --cols=4 --width=1200

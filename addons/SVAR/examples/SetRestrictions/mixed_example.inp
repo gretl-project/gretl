@@ -12,13 +12,13 @@ nulldata 360
 setobs 12 1:1
 
 ###
-# set up the DGP (a trivariate VAR(1)) 
+# set up the DGP (a trivariate VAR(1))
 ###
 
-# the autoregresive matrix 
+# the autoregresive matrix
 A = {0.8, -0.1, 0.1; 0.4, 0.8, -0.1; -0.4, 0.1, 0.8}
 # the true C matrix
-C = {1, 1, 0; -0.2, 1, 0.6; -0.8, 0.0, 1} 
+C = {1, 1, 0; -0.2, 1, 0.6; -0.8, 0.0, 1}
 scalar n = rows(C)
 E = mnormal($nobs, n) * C'
 # stationarity check
@@ -84,7 +84,12 @@ DO_BAYES = 1
 SVAR_SRdraw(&mod, 192, DO_BAYES)
 
 # draw the IRFs
-SVAR_SRirf(mod, mod.Ynames, defarray("foo", "bar", "baz"))
+# draw the irfs
+gpbuild IRFPlots
+    SVAR_SRirf(mod, mod.Ynames, defarray("foo", "bar", "baz"))
+end gpbuild
+
+gridplot IRFPlots --output=display 
 
 # draw the spaghetti plots for the point restrictions
 SVAR_spagplot(mod, "y1", "baz")

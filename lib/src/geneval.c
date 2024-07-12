@@ -8860,6 +8860,11 @@ static NODE *horizontal_concat_node (NODE *l, NODE *r, parser *p)
         ret = strseq_node(l, r, 0, p);
     } else if ((ok_matrix_node(l) || is_strings_array_node(l)) && r->t == STR) {
         ret = strseq_node(l, r, 1, p);
+    } else if (is_strings_array_node(l) && is_strings_array_node(r)) {
+        ret = aux_array_node(p);
+        if (ret != NULL) {
+            ret->v.a = gretl_arrays_concat(l->v.a, r->v.a, &p->err);
+        }
     } else {
         p->err = E_TYPES;
     }

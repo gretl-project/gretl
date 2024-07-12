@@ -1,6 +1,8 @@
 # Example script for sign restrictions in gretl's SVAR addon
 
 set verbose off
+set seed 1007241513
+
 include SVAR.gfn
 
 ### supply & demand (artificial example)
@@ -10,6 +12,7 @@ setobs 12 1:1
 b = -0.8 # demand elasticity
 c =  1.1 # supply elasticity
 
+# simulate data via the reduced form
 Gamma = {1, -c; -b, 1}
 iG = inv(Gamma)
 U = 3 + filter(mnormal($nobs, 2), 1, 0.8)
@@ -17,6 +20,9 @@ Y = U * iG'
 series p = Y[,1]
 series q = Y[,2]
 list X = p q
+
+# estimate the reduced form via built-in command and check that
+# the estimated sigma si close to the true one
 
 var 1 X --quiet
 eval $sigma
