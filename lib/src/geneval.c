@@ -10801,7 +10801,7 @@ static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
 
 #if 0
     if (f->t == F_SQRT) {
-        fprintf(stderr, "HERE apply_matrix_func, sqrt, ret = %p, ret->v.m = %p\n",
+        fprintf(stderr, "apply_matrix_func, sqrt, ret = %p, ret->v.m = %p\n",
                 (void *) ret, (void *) ret->v.m);
         fprintf(stderr, " input node %p\n", (void *) t);
         gretl_matrix_print(ret->v.m, "ret->v.m");
