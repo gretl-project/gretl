@@ -2235,6 +2235,19 @@ static int got_none_option (const char *s)
     return s != NULL && !strcmp(s, "none");
 }
 
+static int gpbuild_output_conflict (const char *s)
+{
+    const char *msg = N_("incompatible output specification");
+
+    if (s == NULL) {
+        gretl_errmsg_sprintf("gpbuild: %s", _(msg));
+    } else {
+        gretl_errmsg_sprintf("gpbuild: %s '%s'", _(msg), s);
+    }
+
+    return E_BADOPT;
+}
+
 static const char *plot_output_option (PlotType p, int *pci, int *err)
 {
     int grid_mode = gretl_gridplot_collecting();
@@ -2298,10 +2311,7 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 	} else if (p == PLOT_GEOMAP) {
 	    s = NULL;
 	} else {
-	    const char *msg = N_("incompatible output specification");
-
-	    gretl_errmsg_sprintf("gpbuild: %s '%s'", _(msg), s);
-	    *err = E_BADOPT;
+            *err = gpbuild_output_conflict(s);
 	    return NULL;
 	}
     }
@@ -2309,18 +2319,24 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
     if (s != NULL && *s == '\0') {
 	/* cancel an empty @s */
 	s = NULL;
-    } else if (s == NULL && !grid_mode) {
+    } else if (s == NULL) {
 	/* try for --outbuf=<strname> */
 	if (plot_command_active()) {
 	    s = get_optval_string(PLOT, OPT_b);
 	} else {
 	    s = get_optval_string(ci, OPT_b);
 	}
-	if (s != NULL && *s == '\0') {
-	    s = NULL;
-	} else {
-	    *err = set_plot_buffer_name(s);
-	}
+        if (grid_mode) {
+            gchar *tmp = g_strdup_printf("--outbuf=%s", s);
+
+            *err = gpbuild_output_conflict(tmp);
+            g_free(tmp);
+            return NULL;
+        } else if (s != NULL && *s == '\0') {
+            s = NULL;
+        } else {
+            *err = set_plot_buffer_name(s);
+        }
     }
 
     if (pci != NULL) {
