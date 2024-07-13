@@ -2326,7 +2326,7 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
 	} else {
 	    s = get_optval_string(ci, OPT_b);
 	}
-        if (grid_mode) {
+        if (s != NULL && grid_mode) {
             gchar *tmp = g_strdup_printf("--outbuf=%s", s);
 
             *err = gpbuild_output_conflict(tmp);
