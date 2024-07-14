@@ -1068,12 +1068,10 @@ static int dummy_lookup (const char *s, parser *p)
 	*/
 	d = 0;
     } else if (d == DUM_EMPTY && strcmp(p->rhs, "empty")) {
-        /* "empty" is accepted only if it's the only term
-           on the right-hand side
+        /* if "empty" is not the only term on the right-hand
+           side, convert it to "null"
         */
-	p->sym = DUM_EMPTY;
-	p->err = E_INVARG;
-	context_error(0, p, NULL);
+	p->sym = EMPTY;
     }
 
     return d;

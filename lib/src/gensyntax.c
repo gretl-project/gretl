@@ -826,7 +826,6 @@ static NODE *get_bundle_member_name (parser *p, int dollarize)
 	    }
 	}
     } else {
-	fprintf(stderr, "HERE, get_bundle_member_name, p->ch = '%c'\n", p->ch);
 	p->err = E_PARSE;
     }
 

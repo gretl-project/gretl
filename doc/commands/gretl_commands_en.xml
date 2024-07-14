@@ -6071,16 +6071,32 @@
       <para>
 	Within a <lit>gpbuild</lit> block only plotting commands get
 	special treatment; all other commands are executed
-	normally. There are just two restrictions to note.  First,
-	plotting commands should <emphasis>not</emphasis> include an
-	output specification in this context since that would conflict
-	with the automatic redirection of output to the
-	<repl>plotspecs</repl> array.  Second, plots that invoke
-	gnuplot's <quote><lit>multiplot</lit></quote> directive are
-	not suitable for inclusion in a <lit>gpbuild</lit> block. That
-	is because <lit>gridplot</lit> employs <lit>multiplot</lit>
-	internally, and these constructs cannot be nested.
+	normally. There are just two restrictions to note.
       </para>
+      <ilist>
+        <li>
+          <para>
+            Plotting commands should <emphasis>not</emphasis> include
+            an output specification in this context, since that would
+            conflict with the automatic redirection of output to the
+            <repl>plotspecs</repl> array. An exception to this rule is
+            allowed for <lit>--output=display</lit> (which is quite
+            common as the default in plot-related function packages);
+            this directive is silently ignored in favour of the
+            automatic treatment.
+          </para>
+        </li>
+        <li>
+          <para>
+            Plots that invoke gnuplot's
+            <quote><lit>multiplot</lit></quote> directive are not
+            suitable for inclusion in a <lit>gpbuild</lit> block. That
+            is because <lit>gridplot</lit> employs
+            <lit>multiplot</lit> internally, and these constructs
+            cannot be nested.
+          </para>
+        </li>
+      </ilist>
       <subhead>Manual alternative</subhead>
       <para>
 	It is possible to prepare an array of plot specifications for
