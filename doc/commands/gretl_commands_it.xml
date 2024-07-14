@@ -6206,20 +6206,37 @@
 	All'interno di un blocco <lit>gpbuild</lit> solo i comandi che
 	producono grafici ricevono un trattamento speciale; tutti gli
 	altri comandi vengono eseguiti normalmente. Ci sono solo due
-	restrizioni da notare. Innanzitutto, tali comandi
-	<emphasis>non</emphasis> devono includere una specifica di
-	output in questo contesto poiché ciò entrerebbe in conflitto
-	con la reindirizzamento automatico dell'output all'array
-	<repl>plotspecs</repl>. In secondo luogo, i grafici che
-	invocano la direttiva <quote><lit>multiplot</lit></quote> di
-	gnuplot non sono adatti per essere inclusi in un blocco
-	<lit>gpbuild</lit>. Questo perché <lit>gridplot</lit> utilizza
-	<lit>multiplot</lit> internamente e questi costrutti non
-	possono essere annidati.
+	restrizioni di cui tener conto. 
       </para>
+      <ilist>
+	<li>
+	  <para>
+	    Innanzitutto, tali comandi <emphasis>non</emphasis> devono
+	    includere una specifica di output in questo contesto
+	    poiché ciò entrerebbe in conflitto con la ridirezione
+	    automatica dell'output all'array
+	    <repl>plotspecs</repl>. Fa eccezione a questa regola
+	    l'opzione <lit>--output=display</lit> (molto usata come
+	    default nei pacchetti di funzioni che producono grafici);
+	    questa direttiva non dà luogo a un errore, ma viene
+	    semplicemente ignorata in favore del trattamento
+	    automatico.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    In secondo luogo, i grafici che invocano la direttiva
+	    <quote><lit>multiplot</lit></quote> di gnuplot non sono
+	    compatibili con <lit>gpbuild</lit>. Questo perché
+	    <lit>gridplot</lit> utilizza <lit>multiplot</lit>
+	    internamente e questi costrutti non possono essere
+	    annidati.
+	  </para>
+	</li>
+      </ilist>
       <subhead>Alternativa manuale</subhead>
       <para>
-	È possiboile preparare un array di grafici per uso con
+	È possibile preparare un array di grafici per uso con
 	<lit>gridplot</lit> senza per forza usare un blocco
 	<lit>gpbuild</lit>, come nell'esempio seguente:
       </para>
