@@ -2,7 +2,7 @@
 #
 # And the following functions come from include SVAR_signrestr_utils.inp:
 #  correspondence, check_one_irf, check_irfs, check_id;
-#  safetycheck1, get_n_exotic, rot_redraw, prepAis, get_id_mat
+#  safetycheck1, get_n_exotic, rot_redraw, get_id_mat
 
 ###
 ### functions for setting the set constraints
@@ -105,7 +105,7 @@ end function
 #####################################################################
 
 function void SVAR_SRexotic(bundle *mod, string chkstr,
-                            strings shocks,
+                            strings involved_shocks,
                             int length[0::0], int ini[0::0],
                             bool needs_model[0])
 
@@ -127,7 +127,7 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
        (the span is then from ini to ini+length, where impact timing is 0;
        so the default settings just concern the impact effect)
 
-       - shocks: strings array with the names of the shocks that enter this
+       - involved_shocks: strings array with the names of the shocks that enter this
        restriction (it's the user's responsibility to get this right;
        in the future maybe we can verify or check this, TODO)
 
@@ -166,15 +166,17 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
     endif
 
     # eshocks: store the relevant shock numbers and check validity
-    matrix snums = zeros(nelem(shocks))'
-    loop s = 1..nelem(shocks)
-        matrix temp = instrings(mod.snames, shocks[s])
-        errorif(!nelem(temp), sprintf("No shock named %s found\n", shocks[s]))
+    matrix snums = zeros(nelem(involved_shocks))'
+    loop s = 1..nelem(involved_shocks)
+        matrix temp = instrings(mod.snames, involved_shocks[s])
+        errorif(!nelem(temp), sprintf("No shock named %s found\n", involved_shocks[s]))
 
         # impose that exotic restrictions can only affect shocks that already
         # have some standard set-ID restrictions
         errorif(!sum(contains(mod.SRest[,6], temp[1])), \
-          sprintf("First apply non-exotic set-ID restriction on shock '%s'.\n", shocks[s])) 
+          sprintf("First apply non-exotic set-ID restriction on shock '%s'.\n", \
+          involved_shocks[s]))
+           
         snums[s] = temp[1]
     endloop
     mod.exoticSR.eshocks += snums
@@ -240,18 +242,22 @@ end function
 # -------------------
 
 # helper function for SVAR_SRdraw
-function scalar exotic_inner_check(scalar *chk, int i, const bundle mod,
-                                   const matrices irfs)
+function scalar exotic_inner_check(scalar *chk, 
+                                   int i "exotic restriction number", 
+                                   const bundle mod,
+                                   const matrices irfs,
+                                   string restr_override[null])
     # (chk is a boolean, but gretl doesn't allow pointerized int or bool)
     # TODO: Check whether this setup is really compatible with a situation
-    # where we have only partial identification from the "standard"
-    # (non-exotic) restrictions, but the exotic restrictions then refer
-    # to additional shocks not covered before. (Somehow I'm worrying
-    # that the previous multiplication with the non-square id_matrix in the
-    # partial id case removes the needed irfs that would still have to be
-    # checked against the exotic restrictions. - Sven)
+    # where we have only partial identification. 
+    # 
+    # - restr_override: if not null, serves to "inject" an adjusted 
+    #   restriction string (used for the semi-exotic check)
 
-    string exo_restrict = mod.exoticSR.checks[i]
+    string exo_restrict = exists(restr_override) ? restr_override : \
+      mod.exoticSR.checks[i]
+    exo_restrict = strsub(exo_restrict, " ", "") # remove all blanks
+    
     scalar inip1 = mod.exoticSR.spans[i,1]
     scalar finp1 = mod.exoticSR.spans[i,2]
     scalar needs_model = mod.exoticSR.super[i]
@@ -370,22 +376,6 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     strings temp = mod.snames[allshocks]
     strings mod.SRid_snames = temp 	 # workaround (old?) gretl bug to ensure strings type even if 1 elem
 
-    # This array contains as many elements as set-identified shocks;
-    # (only non-exotic setID'd shocks so far, because mod.SRest only holds those)
-    # Basically, it's a per-shock split of the SRest bundle element,
-    #  where a member matrix can have several rows if a shock is restricted
-    #  to fulfill several setID restrictions.
-    # (It has to be 'shocks', not 'allshocks', to match the content of mod.SRest.)
-    # ?? Why the name 'Ais' ?? (Sven)
-
-    matrices Ais = array(0) # was: stays empty if only exotic shocks exist
-    if rows(mod.SRest) == 1	# work around an msplitby problem with 1-element vector in 2024b
-        Ais = defarray(mod.SRest)
-
-    elif rows(mod.SRest) > 1
-        Ais = msplitby(mod.SRest, mod.SRest[,6])[shocks]
-    endif
-
     # responses to be cumulated?
     matrix to_cum = mod.ncumul ? mod.cumul : {}
 
@@ -414,7 +404,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
 
         # --- first just using non-exotic restrictions ---
         # We will always have at least one non-exotic set-id'd shock, by 
-        # assumption/requirement. Otherwise Ais is empty, and so is id_matrix.
+        # assumption/requirement. Otherwise id_matrix is empty.
 
         # generate the random rotation matrix and, optionally, resample
         rot_redraw(&b, mod, DO_BAYES, B, chol_iXX, rot_only) 	# b.rot, b.B, b.Sigma
@@ -423,7 +413,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
 
         # analyzing how the drawn potential C columns can be shuffled around
         # and sign-flipped to fulfill the defined restrictions
-        matrix id_matrix = get_id_mat(mod, shocks, irfs, Ais) # DO_NORM now optional
+        matrix id_matrix = get_id_mat(mod, shocks, irfs) # DO_NORM now optional
 
         if 0
             printf "iter = %d (good = %d)\n", iter, good
@@ -475,7 +465,24 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
             if n_exotic
                 loop i = 1..n_exotic
 
-                    out = exotic_inner_check(&chk, i, mod, irfs)
+                    # TODO: When we activate the SEMI_EXOT algorithm
+                    # in get_id_mat, we should add a check here so that 
+                    # we skip those restrictions in this round, 
+                    # analyzing only the really exotic 
+                    # (and of course super-exotic) restrictions.
+                    # (Although in principle it should just be redundant 
+                    # and not do real harm.)
+                    SEMI_EXOT = FALSE 
+                    if SEMI_EXOT
+                        if nelem(mod.exoticSR.eshocks[i] > 1) || mod.exoticSR.super[i] == TRUE
+                            out = exotic_inner_check(&chk, i, mod, irfs)
+                        else
+                            out = 0
+                        endif
+                    else
+                        out = exotic_inner_check(&chk, i, mod, irfs)
+                    endif
+                    
                     if out
                         break
                     endif
