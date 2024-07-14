@@ -336,7 +336,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     if DO_BAYES     # this is only needed for sampling from the posterior
         matrix Data = (mod.X ~ lags(mod.p, mod.Y, 1))[mod.p + 1 : ,]
         chol_iXX = cholesky(invpd(Data'Data))
-        matrix mod.mreg = Data # needed to re-calc the residuals E later
+        matrix mod.mreg = Data # needed to re-calc the residuals E (now U?) later
     endif
 
     if 0
@@ -353,15 +353,18 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     scalar iter = 1
 
     # which shocks are to be identified via (non-exotic) set restrictions?
-    # (can be empty if only exotic restrictions exist)
-    matrix shocks = rows(mod.SRest) ? values(mod.SRest[,6]) : {}
+    # (should not be empty now that we do not allow exotic restrictions by themselves)
+    errorif(!rows(mod.SRest), "Need some (non-exotic) set-ID restrictions!")
+    matrix shocks = values(mod.SRest[,6])
 
     # do we have exotic restrictions?
     n_exotic = get_n_exotic(mod)
 
     # add the shocks (their positions among all shocks) from exotic restrictions
-    # (taking into account/eliminating duplicates [SRid shocks that are both exotic and non-exotic])
+    # (this should be redundant now, since we impose earlier that a shock cannot only be 
+    #  identified through an exotic restriction)
     matrix allshocks = n_exotic ? values(shocks | flatten(mod.exoticSR.eshocks,TRUE)) : shocks
+    errorif(nelem(allshocks) != nelem(shocks), "shouldn't happen")
 
     # Now extract the corresponding shock names
     strings temp = mod.snames[allshocks]
@@ -375,7 +378,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     # (It has to be 'shocks', not 'allshocks', to match the content of mod.SRest.)
     # ?? Why the name 'Ais' ?? (Sven)
 
-    matrices Ais = array(0) # stays empty if only exotic shocks exist
+    matrices Ais = array(0) # was: stays empty if only exotic shocks exist
     if rows(mod.SRest) == 1	# work around an msplitby problem with 1-element vector in 2024b
         Ais = defarray(mod.SRest)
 
@@ -395,12 +398,9 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
       df = mod.T - rows(B), T=mod.T)
 
     # Handle the zero constraints for the mixed case, if any (note: this puts zc into b).
-    # FIXME: In principle it seems to me (Sven) that here 'allshocks' should
-    # be passed (including the purely exotic-restricted ones), since the aim is
-    # to avoid rotating the zero-constrained shocks, and currently we fail to
-    # avoid this if the mixed restriction happens with an exotic shock, I think.
-    # However, the whole exotic-check apparatus probably needs to be adjusted
-    # for that.
+    # (Remark: We fixed the problem that purely exotic-restricted shocks weren't really
+    # covered by this setup simply by requiring that all set-ID'ed shocks must also have
+    # a more standard [non-exotic] restriction underneath.)
     matrix zc_shocks = add_zero_constr(mod, shocks, &b)
 
     # for the future: set a matrix for keeping some shocks from being rotated
@@ -413,12 +413,8 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     loop while good<rep && iter<=maxiter
 
         # --- first just using non-exotic restrictions ---
-        # FIXME
-        # This here implicitly used to assume the existence of at least one
-        # non-exotic set-id'd shock. Because if Ais is empty, then id_matrix below will
-        # also be empty, and this wasn't handled. Now the case of an empty
-        # id_matrix is superficially caught, but unclear whether it is enough
-        # and still does the right thing.
+        # We will always have at least one non-exotic set-id'd shock, by 
+        # assumption/requirement. Otherwise Ais is empty, and so is id_matrix.
 
         # generate the random rotation matrix and, optionally, resample
         rot_redraw(&b, mod, DO_BAYES, B, chol_iXX, rot_only) 	# b.rot, b.B, b.Sigma
@@ -454,8 +450,6 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
 
                 # So we save b.Q only if enough shocks are covered/addressed by
                 # restrictions. What do we need it for, down the road?
-                # And if we need it, shouldn't exotic restrictions also count
-                # for making the system "complete"?
             endif
 
             # Perform the "reflection-permutation" step --
@@ -463,14 +457,9 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
             # id analysis that passed the checks.
             # (basically, swapping and sign flips)
 
-            # FIXME: However, with partial identification and r<c,
-            # we will lose IRF columns here, which will then create
-            # problems with the exotic restrictions, because we
-            # possibly cannot check them anymore.
-            # We probably would need to drag along the remaining
-            # columns unshuffled as well?
-
-            if nelem(id_matrix) # could be empty if only exotic restrictions
+            if nelem(id_matrix) 
+                # (this id_matrix check should be redundant because could only 
+                #  happen for purely exotic restrictions, which is disallowed)
                 loop i = 1..nelem(irfs)
                     irfs[i] = irfs[i] * id_matrix'
                 endloop
