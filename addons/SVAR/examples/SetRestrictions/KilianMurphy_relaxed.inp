@@ -93,4 +93,4 @@ gpbuild IRFPlots
     SVAR_SRirf(mod, mod.Ynames, mod.snames) 
 end gpbuild
 
-gridplot IRFPlots --output=display --cols=4 --width=1200
+gridplot IRFPlots --output=display --cols=4 --width=1200 --height=800
