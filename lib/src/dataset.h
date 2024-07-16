@@ -338,6 +338,10 @@ DATASET *create_auxiliary_dataset (int nvar, int nobs, gretlopt opt);
 
 void destroy_dataset (DATASET *dset);
 
+DATASET *get_current_dataset (void);
+
+void set_current_dataset (DATASET *dset);
+
 void clear_datainfo (DATASET *dset, int code);
 
 int allocate_Z (DATASET *dset, gretlopt opt);

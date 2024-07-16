@@ -1817,7 +1817,7 @@ guint64 gretl_uint53_from_double (double x, int *err)
 
 GretlType gretl_type_from_name (const char *s, const DATASET *dset)
 {
-    if (dset != NULL && gretl_is_series(s, dset)) {
+    if (gretl_is_series(s, dset)) {
         return GRETL_TYPE_SERIES;
     } else {
         return user_var_get_type_by_name(s);

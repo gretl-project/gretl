@@ -525,6 +525,10 @@ int current_series_index (const DATASET *dset, const char *vname)
 int gretl_is_series (const char *name, const DATASET *dset)
 {
     if (dset == NULL) {
+        dset = get_current_dataset();
+    }
+
+    if (dset == NULL) {
 	return 0;
     } else {
 	int v = real_series_index(dset, name, 0);

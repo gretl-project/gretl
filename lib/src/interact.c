@@ -1081,6 +1081,8 @@ int check_stringvar_name (const char *name, int allow_new,
     int err = 0;
 
     if (t != GRETL_TYPE_NONE && t != GRETL_TYPE_STRING) {
+        gretl_errmsg_sprintf(_("'%s' is of type %s"), name,
+                             gretl_type_get_name(t));
         err = E_TYPES;
     } else if (t == GRETL_TYPE_NONE) {
         if (allow_new) {
@@ -1204,15 +1206,12 @@ do_outfile_command (gretlopt opt, const char *fname,
     }
 
     if (opt & (OPT_B | OPT_T)) {
-	int compat = 0;
-
 	/* handle the --buffer and --tempfile cases */
 	if (opt & OPT_B) {
 	    strvar = get_optval_string(OUTFILE, OPT_B);
 	    if (strvar == NULL) {
 		/* backward compatibility */
 		strvar = fname;
-		compat = 1;
 	    }
 	} else {
 	    strvar = get_optval_string(OUTFILE, OPT_T);
@@ -1220,7 +1219,7 @@ do_outfile_command (gretlopt opt, const char *fname,
 	if (strvar == NULL) {
 	    return E_ARGS;
 	}
-	err = check_stringvar_name(strvar, compat, dset);
+	err = check_stringvar_name(strvar, 1, dset);
         if (!err) {
             err = redirect_to_tempfile(strvar, prn, opt);
         }
