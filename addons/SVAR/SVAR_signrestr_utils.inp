@@ -318,7 +318,6 @@ function matrix get_id_mat (const bundle mod, const matrix shocks,
     # the ambiguous cases somehow, instead of simply removing them.
 
     VERB = 0
-    SEMI_EXOT = FALSE
 
     nshocks = rows(shocks)
     matrix id_matrix = zeros(nshocks, mod.n)
@@ -339,7 +338,8 @@ function matrix get_id_mat (const bundle mod, const matrix shocks,
         endif
         id_matrix[i,] = check_irfs(irfs, Ais[i], VERB)
 
-        if SEMI_EXOT
+        # The special SEMI_EXOT algorithm isn't used by default yet...
+        if inbundle(mod, "SEMI_EXOT") && mod.SEMI_EXOT == TRUE
             if contains(i, all_eshocks)	# shock i has one or more exotic restrictions
                 matrix semi_exotic_result = semi_exotic_check(i, mod, irfs)
                 

@@ -465,15 +465,14 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
             if n_exotic
                 loop i = 1..n_exotic
 
-                    # TODO: When we activate the SEMI_EXOT algorithm
-                    # in get_id_mat, we should add a check here so that 
-                    # we skip those restrictions in this round, 
+                    # With the SEMI_EXOT algorithm active
+                    # in get_id_mat, we skip those restrictions in this round, 
                     # analyzing only the really exotic 
                     # (and of course super-exotic) restrictions.
                     # (Although in principle it should just be redundant 
                     # and not do real harm.)
-                    SEMI_EXOT = FALSE 
-                    if SEMI_EXOT
+                     
+                    if inbundle(mod, "SEMI_EXOT") && mod.SEMI_EXOT == TRUE
                         if nelem(mod.exoticSR.eshocks[i] > 1) || mod.exoticSR.super[i] == TRUE
                             out = exotic_inner_check(&chk, i, mod, irfs)
                         else
