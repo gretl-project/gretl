@@ -99,7 +99,7 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 					   int import, int *err);
 
 int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
-				int export);
+				int use_dotdir);
 
 void gretl_matrix_print_to_prn (const gretl_matrix *m,
 				const char *msg,
