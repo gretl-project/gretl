@@ -272,10 +272,16 @@ function matrix semi_exotic_check(int s[1::], const bundle mod, const matrices i
     loop i = 1..nelem(mod.exoticSR.eshocks)
 
         # just one shock involved, semi-exotic; and not super-exotic
-        if nelem(mod.exoticSR.eshocks[i] == 1) && mod.exoticSR.super[i] == FALSE
+        if nelem(mod.exoticSR.eshocks[i]) == 1 && mod.exoticSR.super[i] == FALSE
+            # debug
+            # print "here only with a single shock, and not super"
 
             # and it affects the current shock
             if contains(s, mod.exoticSR.eshocks[i])
+                # debug
+#                 print "second contains, only if current shock relevant"
+#                 print i
+#                 eval mod.snames[i]
 
                 # As per the spec, we have hardcoding like "M[2,3]" in the restriction.
                 # But we want to check different potential columns for swapping,
@@ -289,18 +295,24 @@ function matrix semi_exotic_check(int s[1::], const bundle mod, const matrices i
                     # use a regexp to do like: "M[2,3]" -> "M[2,<j>]"
                     string temprestr = regsub(restr, "M\[(\d+),\d+\]", sprintf("M[\1,%d]", j))
 
+                    # debug 
+                    # print temprestr 
+                    
                     chk = 1 # will be switched off if the check fails
                     # the inner function applies this to all specified horizons
                     exotic_inner_check(&chk, i, mod, irfs, temprestr)
                     mtemp[j] = chk
                 endloop
+                # debug 
+                # print mtemp 
+                
                 results |= mtemp
 
             endif
         endif
     endloop
 
-    return minc(results) .= 1
+    return nelem(results) ? minc(results) .= 1 : results
 end function
 
 # -----------------------------------
@@ -341,11 +353,16 @@ function matrix get_id_mat (const bundle mod, const matrix shocks,
         # The special SEMI_EXOT algorithm isn't used by default yet...
         if inbundle(mod, "SEMI_EXOT") && mod.SEMI_EXOT == TRUE
             if contains(i, all_eshocks)	# shock i has one or more exotic restrictions
+                # debug
+                # print "after first contains check" 
+                
                 matrix semi_exotic_result = semi_exotic_check(i, mod, irfs)
                 
                 # combine with id_matrix row; we cannot preserve the 
                 # -1s (sign flips) there for this shock
-                id_matrix[i,] = id_matrix[i,] .= 1 && semi_exotic_result .= 1
+                if nelem(semi_exotic_result)	# otherwise not really semi-exotic
+                    id_matrix[i,] = id_matrix[i,] .= 1 && semi_exotic_result .= 1
+                endif
             endif
         endif
     endloop

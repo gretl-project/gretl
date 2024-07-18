@@ -473,6 +473,12 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
                     # and not do real harm.)
                      
                     if inbundle(mod, "SEMI_EXOT") && mod.SEMI_EXOT == TRUE
+                        # debug
+#                         print "in former exotic check..."
+#                         print i
+#                         eval nelem(mod.exoticSR.eshocks[i])
+#                         eval mod.exoticSR.super[i]
+                        
                         if nelem(mod.exoticSR.eshocks[i] > 1) || mod.exoticSR.super[i] == TRUE
                             out = exotic_inner_check(&chk, i, mod, irfs)
                         else
