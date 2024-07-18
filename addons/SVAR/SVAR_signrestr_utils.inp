@@ -248,7 +248,7 @@ function matrix get_all_eshocks(const bundle mod)
 
     matrix all_eshocks = {}
     if inbundle(mod, "exoticSR") && nelem(mod.exoticSR.checks)
-        matrix all_eshocks = values(flatten(mod.exoticSR.eshocks))
+        matrix all_eshocks = values(flatten(mod.exoticSR.eshocks, TRUE))
     endif
     return all_eshocks
 end function

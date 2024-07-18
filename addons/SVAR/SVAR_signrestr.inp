@@ -166,7 +166,7 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
     endif
 
     # eshocks: store the relevant shock numbers and check validity
-    matrix snums = zeros(nelem(involved_shocks))'
+    matrix snums = zeros(nelem(involved_shocks))
     loop s = 1..nelem(involved_shocks)
         matrix temp = instrings(mod.snames, involved_shocks[s])
         errorif(!nelem(temp), sprintf("No shock named %s found\n", involved_shocks[s]))
