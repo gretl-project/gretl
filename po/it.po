@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-03-25 11:19-0400\n"
-"PO-Revision-Date: 2023-12-03 19:57+0100\n"
+"PO-Revision-Date: 2024-07-17 17:36+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -35,7 +35,6 @@ msgid "check for %s\n"
 msgstr "Controlla disponibilità addon %s\n"
 
 #: lib/src/addons_utils.c:275
-#, fuzzy
 msgid "no valid version found"
 msgstr "Non è stata trovata alcuna serie valida"
 
@@ -541,7 +540,7 @@ msgstr "Data di inizio non valida dati a %d giorni"
 #: lib/src/cmd_private.c:298 cli/gretlcli.c:288 cli/gretlcli-mpi.c:193
 #, c-format
 msgid "Broken syntax in %s: unmatched %s"
-msgstr ""
+msgstr "Sintassi errata in %s: blocco %s non chiuso"
 
 #: lib/src/compare.c:292
 #, c-format
@@ -1020,7 +1019,7 @@ msgstr "dati trimestrali camuffati da mensili?"
 
 #: lib/src/csvdata.c:776
 msgid "BLS-type nonsense? Trying again"
-msgstr ""
+msgstr "Casino BLS? Riproviamo"
 
 #: lib/src/csvdata.c:909
 msgid "reversing the data!\n"
@@ -1332,6 +1331,8 @@ msgid ""
 "extraneous lines in a %s dataset: this may not be right.\n"
 "\n"
 msgstr ""
+"ATTENZIONE: si consglia dare un'occhiata ai dati. Gretl ha buttato via\n"
+"linee apparentemente spurie in un dataset %s (forse sbagliando).\n"
 
 #: lib/src/csvdata.c:3736
 msgid ""
@@ -1517,9 +1518,9 @@ msgid "Couldn't read marker on line %d"
 msgstr "Impossibile leggere i marcatori a linea %d"
 
 #: lib/src/dataio.c:2758
-#, fuzzy, c-format
+#, c-format
 msgid "Missing marker at observation %d"
-msgstr "Valore mancante all'osservazione %d"
+msgstr "Marcatore mancante all'osservazione %d"
 
 #: lib/src/dataio.c:2991
 msgid "No labels found"
@@ -1543,24 +1544,20 @@ msgid "Labels loaded OK\n"
 msgstr "Etichette caricate\n"
 
 #: lib/src/dataio.c:3144
-#, fuzzy
 msgid "No description is available\n"
-msgstr "Nessuna descrizione disponibile"
+msgstr "Nessuna descrizione disponibile\n"
 
 #: lib/src/dataio.c:3149
-#, fuzzy
 msgid "dataset description written OK\n"
-msgstr "gretl: descrizione del database"
+msgstr "descrizione del dataset salvata correttamente\n"
 
 #: lib/src/dataio.c:3159
-#, fuzzy
 msgid "description replaced OK\n"
-msgstr "Nessuna descrizione disponibile"
+msgstr "Descrizione modificata\n"
 
 #: lib/src/dataio.c:3161
-#, fuzzy
 msgid "description loaded OK\n"
-msgstr "Etichette caricate\n"
+msgstr "Descrzione caricata\n"
 
 #: lib/src/dataio.c:3211
 msgid "No markers are available for writing"
@@ -1780,6 +1777,8 @@ msgid ""
 "compacted\n"
 "other than via the 'first' or 'last' method."
 msgstr ""
+"Questo dataset contiese %d serie a valori stringa, che non possono\n"
+"essere compattate che coi metodi 'first' e 'last'"
 
 #: lib/src/dataset.c:3447
 msgid "Undated daily data: can't do compaction"
@@ -1813,7 +1812,6 @@ msgid "The data set is currently sub-sampled"
 msgstr "Al momento sul dataset è definito un sotto-campione"
 
 #: lib/src/dataset.c:3881
-#, fuzzy
 msgid "Dataset is not dated daily"
 msgstr "Il dataset non è giornaliero"
 
@@ -1840,14 +1838,12 @@ msgid "Dataset is already complete for %d-day calendar"
 msgstr ""
 
 #: lib/src/dataset.c:6750
-#, fuzzy
 msgid "no mapfile is present"
 msgstr "non è presente un file mappa"
 
 #: lib/src/dataset.c:6754
-#, fuzzy
 msgid "dataset is resampled!"
-msgstr "il campione del dataset è ridotto"
+msgstr "il dataset è ricampionato!"
 
 #: lib/src/dataset.c:6779
 msgid "map and dataset are out of sync!"
@@ -1885,9 +1881,8 @@ msgid "frequency %d is not supported"
 msgstr "la frequenza %d non è supportata"
 
 #: lib/src/dbread.c:1193
-#, fuzzy
 msgid "This is not a PcGive 700 data file"
-msgstr "Questo non è un valido database di RATS 4.0"
+msgstr "Questo non è un file di Pcgive 7 valido.0"
 
 #: lib/src/dbread.c:1233
 msgid "No valid series found"
@@ -1908,19 +1903,17 @@ msgid "Internet access not supported"
 msgstr "Manca l'accesso a Internet"
 
 #: lib/src/dbread.c:1834
-#, fuzzy
 msgid "You must specify a DSN using 'dsn=...'\n"
-msgstr "Occorre specificare un quantile"
+msgstr "Occorre specificare un DSN usando 'dsn=...'\n"
 
 #: lib/src/dbread.c:1858
-#, fuzzy
 msgid "Couldn't open the gretl ODBC plugin\n"
-msgstr "Impossibile aprire il file tex per la scrittura\n"
+msgstr "Impossibile aprire il plugin ODBC\n"
 
 #: lib/src/dbread.c:1860
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to connect to ODBC data source '%s'\n"
-msgstr "Impossibile creare dataset vuoto\n"
+msgstr "Impossibile connettersi alla fonte ODBC '%s'\n"
 
 #: lib/src/dbread.c:1865
 #, c-format
@@ -1952,14 +1945,14 @@ msgid "%s: can't mix numeric and string data"
 msgstr "%s: non si possono mischiare dati numerici e stringhe"
 
 #: lib/src/dbread.c:2324
-#, fuzzy, c-format
+#, c-format
 msgid "%s: string-valued\n"
-msgstr "Scartata %s: serie a valori stringa\n"
+msgstr "%s: serie a valori stringa\n"
 
 #: lib/src/dbread.c:2369
-#, fuzzy, c-format
+#, c-format
 msgid "%s: don't know how to align the data!"
-msgstr "append: non si cpaisce come allineare la nuova serie!"
+msgstr "%s: non si capisce come allineare la nuova serie!"
 
 #: lib/src/dbread.c:2392
 #, c-format
@@ -1972,9 +1965,9 @@ msgid "No database has been opened"
 msgstr "Nessun database aperto"
 
 #: lib/src/dbread.c:2503
-#, fuzzy, c-format
+#, c-format
 msgid "Retrieved %d observations on %d series via ODBC\n"
-msgstr "%d osservazioni assegnate come \"mancanti\""
+msgstr "Importate %d osservazioni su %d serie via ODBC\n"
 
 #: lib/src/dbread.c:2772
 msgid "Series imported OK"
@@ -1985,9 +1978,9 @@ msgid "This only works for gretl databases"
 msgstr ""
 
 #: lib/src/dbread.c:2963
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted %d series from %s\n"
-msgstr "Cancellate %d variabili"
+msgstr "Cancellate %d variabili da %s\n"
 
 #: lib/src/dbread.c:3021
 #, c-format
@@ -2004,14 +1997,12 @@ msgid "%s: can't handle conversion"
 msgstr "%s: impossibile gestire la conversione"
 
 #: lib/src/dbread.c:3098
-#, fuzzy
 msgid "Unsupported conversion"
-msgstr "Costante non vincolata"
+msgstr "Conversione non supportata"
 
 #: lib/src/dbread.c:3273 lib/src/dbread.c:3300
-#, fuzzy
 msgid "\"compact=spread\": requires a dataset in place"
-msgstr "Questo pacchetto richiede un dataset aperto"
+msgstr "\"compact=spread\" richiede un dataset aperto"
 
 #: lib/src/dbread.c:4592 lib/src/dbread.c:4656 lib/src/dbread.c:4952
 msgid "Compacted dataset would be empty"
@@ -2104,9 +2095,8 @@ msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
 msgstr "  LAG      ACF          PACF         Q-stat. [p-value]"
 
 #: lib/src/describe.c:3628
-#, fuzzy
 msgid "  LAG      ACF          Q-stat. [p-value]"
-msgstr "  LAG      ACF          PACF         Q-stat. [p-value]"
+msgstr "  LAG      ACF         Q-stat. [p-value]"
 
 #: lib/src/describe.c:3911
 msgid "Argument is a constant"
@@ -2380,9 +2370,9 @@ msgid "t(%d) = %g, with two-tailed p-value %.4f\n"
 msgstr "t(%d) = %g, con p-value a due code %.4f\n"
 
 #: lib/src/describe.c:6516 lib/src/describe.c:6556
-#, fuzzy, c-format
+#, c-format
 msgid "Two-tailed critical values for n = %d"
-msgstr "Il valore critico al 10%% per q = 20 è %.2f"
+msgstr "Valore critico a due code per n = %d"
 
 #: lib/src/describe.c:6547
 msgid "Correlation Coefficients"

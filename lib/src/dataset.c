@@ -224,6 +224,23 @@ void destroy_dataset (DATASET *dset)
     }
 }
 
+/* Apparatus to enable finding the current dataset when
+   it's not available in the context of a function which
+   needs to look up series by name.
+*/
+
+static DATASET *current_dset;
+
+DATASET *get_current_dataset (void)
+{
+    return current_dset;
+}
+
+void set_current_dataset (DATASET *dset)
+{
+    current_dset = dset;
+}
+
 /**
  * copy_dataset_obs_info:
  * @targ: pointer to target dataset.

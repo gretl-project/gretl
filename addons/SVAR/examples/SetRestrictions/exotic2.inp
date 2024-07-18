@@ -50,7 +50,7 @@ SVAR_SRplain(&mod, "q", "Demand", "+")  # demand shock effect on quantity is pos
 #  "about the same" up to lag 4
 
 exostring = "(-M[1,1]/M[1,2] > 0.67) && (-M[1,1]/M[1,2] < 1.5)"
-SVAR_SRexotic(&mod, exostring, defarray("Supply"), 4) # Supply = shock 1
+SVAR_SRexotic(&mod, exostring, defarray("Supply", "Demand"), 4) # Supply = shock 1
 
 # do the rotations (this is the computationally intensive part)
 SVAR_SRdraw(&mod, 100, 0)

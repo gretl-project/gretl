@@ -1817,7 +1817,7 @@ guint64 gretl_uint53_from_double (double x, int *err)
 
 GretlType gretl_type_from_name (const char *s, const DATASET *dset)
 {
-    if (dset != NULL && gretl_is_series(s, dset)) {
+    if (gretl_is_series(s, dset)) {
         return GRETL_TYPE_SERIES;
     } else {
         return user_var_get_type_by_name(s);
@@ -3016,6 +3016,7 @@ void blas_cleanup (void)
 #elif (defined(__x86_64__) || defined(__i386__))
 # include <cpuid.h>
 # define CPU_IDENT
+# define READ_CPUID_H
 #endif
 
 #ifdef CPU_IDENT
@@ -3075,7 +3076,7 @@ char *get_cpu_details (void)
 
 /* AVX support detection */
 #if defined(__x86_64__)
-#if !(defined(__CPUID_H) || defined(_CPUID_H_INCLUDED))
+#if !defined(__CPUID_H) && !defined(_CPUID_H_INCLUDED) && !defined(READ_CPUID_H)
 # include <cpuid.h>
 #endif
 #define CPU_AVX_DETECT

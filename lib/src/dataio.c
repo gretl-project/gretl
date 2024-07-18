@@ -1564,6 +1564,8 @@ int open_nulldata (DATASET *dset, int data_status, int length,
     dset->t1 = 0;
     dset->t2 = dset->n - 1;
 
+    set_current_dataset(dset);
+
     return 0;
 }
 
@@ -2531,6 +2533,8 @@ int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
     if (!keep) {
 	*pdset1 = NULL;
     }
+
+    set_current_dataset(dset0);
 
     return err;
 }
