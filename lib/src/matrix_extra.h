@@ -20,6 +20,10 @@
 #ifndef MATRIX_EXTRA_H
 #define MATRIX_EXTRA_H
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     M_MISSING_OK,
     M_MISSING_ERROR,
@@ -157,5 +161,9 @@ gretl_matrix *vector_from_strings (char **S, int ns,
 				   const char *fmt,
 				   int *nvals,
 				   int *err);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif /* MATRIX_EXTRA_H */
