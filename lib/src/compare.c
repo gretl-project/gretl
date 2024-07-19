@@ -1861,7 +1861,7 @@ double get_DW_pvalue_for_model (MODEL *pmod, DATASET *dset,
  * @pmod: pointer to model to be tested.
  * @dset: dataset struct.
  * @opt: if contains %OPT_S, save test results to model. %OPT_Q
- * suppresses the printout of the auxiliary regression. %OPT_R and
+ * suppresses the printout of the auxiliary regression. %OPT_U and
  * %OPT_C stand for "squares only" and "cubes only", respectively.
  * %OPT_I produces silent operation.
  * @prn: gretl printing struct.
@@ -1881,6 +1881,7 @@ int reset_test (MODEL *pmod, DATASET *dset,
     int save_t2 = dset->t2;
     int i, t, orig_v = dset->v;
     int addv, use_square, use_cube;
+    int robust = 0;
     const char *mode;
     int err = 0;
 
@@ -1888,7 +1889,11 @@ int reset_test (MODEL *pmod, DATASET *dset,
 	return E_OLSONLY;
     }
 
-    err = incompatible_options(opt, OPT_C | OPT_R);
+    if ((opt & OPT_R) || (pmod->opt & OPT_R)) {
+	robust = 1;
+    }
+
+    err = incompatible_options(opt, OPT_C | OPT_U);
 
     if (err) {
 	return err;
@@ -1899,11 +1904,11 @@ int reset_test (MODEL *pmod, DATASET *dset,
     }
 
     use_square = !(opt & OPT_C); /* not cubes-only */
-    use_cube = !(opt & OPT_R);   /* not squares-only */
+    use_cube = !(opt & OPT_U);   /* not squares-only */
 
     gretl_model_init(&aux, dset);
 
-    if (opt & OPT_R) {
+    if (opt & OPT_U) {
 	addv = 1;
 	mode = N_("squares only");
     } else if (opt & OPT_C) {
@@ -1965,7 +1970,12 @@ int reset_test (MODEL *pmod, DATASET *dset,
     }
 
     if (!err) {
-	aux = lsq(newlist, dset, OLS, OPT_A);
+	gretlopt auxopt = OPT_A;
+
+	if (robust) {
+	    auxopt |= OPT_R;
+	}
+	aux = lsq(newlist, dset, OLS, auxopt);
 	err = aux.errcode;
 	if (err) {
 	    errmsg(aux.errcode, prn);
@@ -1986,12 +1996,24 @@ int reset_test (MODEL *pmod, DATASET *dset,
 		    /* GUI special; see gui2/library.c */
 		    pputc(prn, '\n');
 		}
-		pputs(prn, _("RESET test for specification"));
+		if (robust) {
+		    pputs(prn, _("Robust RESET test for specification"));
+		} else {
+		    pputs(prn, _("RESET test for specification"));
+		}
 		pprintf(prn, " (%s)\n", _(mode));
 	    }
 	}
 
-	RF = ((pmod->ess - aux.ess) / addv) / (aux.ess / aux.dfd);
+	if (robust) {
+	    /* FIXME wald_omit_F(omitlist, pmod); */
+	    int *omitlist = gretl_list_diff_new(aux.list, pmod->list, 2);
+
+	    RF = wald_omit_F(omitlist, &aux);
+	    free(omitlist);
+	} else {
+	    RF = ((pmod->ess - aux.ess) / addv) / (aux.ess / aux.dfd);
+	}
 	pval = snedecor_cdf_comp(addv, aux.dfd, RF);
 
 	if (!silent) {
@@ -2009,8 +2031,11 @@ int reset_test (MODEL *pmod, DATASET *dset,
 	    gretlopt topt = OPT_NONE;
 
 	    if (test != NULL) {
-		if (opt & OPT_R) {
+		if (robust) {
 		    topt = OPT_R;
+		}
+		if (opt & OPT_U) {
+		    topt = OPT_U;
 		} else if (opt & OPT_C) {
 		    topt = OPT_C;
 		}
