@@ -2020,8 +2020,7 @@ int strings_array_add_uniq (char ***pS, int *n, const char *p,
  * @len: number of bytes per string.
  *
  * Allocates storage for @nstrs strings, each of them
- * @len bytes long.  The first byte of each string is
- * initialized to 0.
+ * @len bytes long.
  *
  * Returns: the allocated array, or NULL on failure.
  */
@@ -2039,7 +2038,7 @@ char **strings_array_new_with_length (int nstrs, int len)
     if (S == NULL) return NULL;
 
     for (i=0; i<nstrs; i++) {
-	S[i] = malloc(len);
+	S[i] = calloc(len, 1);
 	if (S[i] == NULL) {
 	    for (j=0; j<i; j++) {
 		free(S[j]);
@@ -2047,7 +2046,6 @@ char **strings_array_new_with_length (int nstrs, int len)
 	    free(S);
 	    return NULL;
 	}
-	S[i][0] = '\0';
     }
 
     return S;
@@ -2061,9 +2059,7 @@ char **strings_array_new_with_length (int nstrs, int len)
  * @len: number of bytes per string (or 0).
  *
  * Adjusts the storage in @pS to a size of @newn
- * strings, each of them @len bytes long.  If @len
- * is greater than zero the first byte of any
- * additional strings is initialized to 0.
+ * strings, each of them @len bytes long.
  * This function may be used either to expand or to
  * shrink an existing array of strings.
  *
@@ -2112,7 +2108,7 @@ char **strings_array_realloc_with_length (char ***pS,
 	int j;
 
 	for (i=oldn; i<newn; i++) {
-	    S[i] = malloc(len);
+	    S[i] = calloc(len, 1);
 	    if (S[i] == NULL) {
 		for (j=0; j<i; j++) {
 		    free(S[j]);
@@ -2120,8 +2116,6 @@ char **strings_array_realloc_with_length (char ***pS,
 		free(*pS);
 		*pS = NULL;
 		break;
-	    } else {
-		S[i][0] = '\0';
 	    }
 	}
     }
