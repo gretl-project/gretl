@@ -1,9 +1,8 @@
-nulldata 116
-setobs 4 1970:1
+set verbose off
 include SVAR.gfn
 
 # grab data from AWM
-join AWM.gdt YER PCR ITR
+open AWM.gdt --select="YER PCR ITR"
 
 # transform into logs
 series y = 100 * ln(YER)
