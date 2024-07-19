@@ -135,6 +135,7 @@ static int dcmt_late_start (void)
     if (np > 0 && self >= 0 && self < np) {
 	set_up_dcmt(np, self, 0);
     } else {
+	gretl_errmsg_set("use_dcmt: mpi is not active");
 	err = E_DATA;
     }
 
@@ -157,7 +158,7 @@ int gretl_rand_set_dcmt (int s)
 	if (dcmt == NULL) {
 	    /* dcmt not set up already */
 #ifdef HAVE_MPI
-	    err = dcmt_late_start();
+	    return dcmt_late_start();
 #else
 	    err = E_DATA;
 #endif

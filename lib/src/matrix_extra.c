@@ -1482,7 +1482,7 @@ static int matrix_to_csv (const gretl_matrix *A, const char *fname)
  * gretl_matrix_write_to_file:
  * @A: matrix to write.
  * @fname: name of file.
- * @export: non-zero means we're exporting via dotdir.
+ * @use_dotdir: non-zero means we're exporting via dotdir.
  *
  * Writes the matrix @A to a file by the name @fname; if it's a text
  * file, the column separator is tab. The number of rows and columns
@@ -1492,7 +1492,7 @@ static int matrix_to_csv (const gretl_matrix *A, const char *fname)
  */
 
 int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
-				int export)
+				int use_dotdir)
 {
     char targ[FILENAME_MAX];
     int r, c, i, j;
@@ -1516,7 +1516,7 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 	}
     }
 
-    if (export) {
+    if (use_dotdir) {
 	gretl_build_path(targ, gretl_dotdir(), fname, NULL);
     } else {
 	fname = gretl_maybe_switch_dir(fname);
