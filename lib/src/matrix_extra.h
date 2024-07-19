@@ -20,6 +20,10 @@
 #ifndef MATRIX_EXTRA_H
 #define MATRIX_EXTRA_H
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     M_MISSING_OK,
     M_MISSING_ERROR,
@@ -99,7 +103,7 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 					   int import, int *err);
 
 int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
-				int export);
+				int use_dotdir);
 
 void gretl_matrix_print_to_prn (const gretl_matrix *m,
 				const char *msg,
@@ -157,5 +161,9 @@ gretl_matrix *vector_from_strings (char **S, int ns,
 				   const char *fmt,
 				   int *nvals,
 				   int *err);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif /* MATRIX_EXTRA_H */

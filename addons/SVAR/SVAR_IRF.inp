@@ -1,8 +1,8 @@
-function void doIRF_new(bundle *SVARobj)
+function void doIRF(bundle *SVARobj)
 
     # constructs the structural VMA representation via the native vma()
     # function and stores it into the bundle
-    # (apparently this isn't used yet? - June 2021)
+    # (apparently this isn't used yet? - June 2021 ... activated in July 2024)
 
     scalar type = SVARobj.type
     matrix C
@@ -28,14 +28,17 @@ function void doIRF_new(bundle *SVARobj)
     matrix SVARobj.IRFs = ret
 end function
 
-function void doIRF(bundle *SVARobj)
-/*
+function void doIRF_old(bundle *SVARobj)
+   /*
    constructs the structural VMA representation. Note
    that the companion matrix is never used explicitly;
 
    The output is not returned by the function, but rather
    put into the bundle under the "IRFs" key.
-    */
+   
+   (Superseded by the new doIRF function which uses native vma();
+   just keeping it around for a while.)
+   */
     scalar type = SVARobj.type
     matrix varA = SVARobj.VARpar
     scalar H = SVARobj.horizon + 1
