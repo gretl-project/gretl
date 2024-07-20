@@ -135,6 +135,7 @@ PUBLIC_HDRS = \
 	gretl_bundle.h \
 	gretl_commands.h \
 	gretl_data_io.h \
+	gretl_drivers.h \
 	gretl_errors.h \
 	gretl_f2c.h \
 	gretl_foreign.h \
@@ -252,7 +253,7 @@ SRCS = adf_kpss.c \
 	gretl_zip.c \
 	interact.c \
 	kalman.c \
-	libglue.c \
+	gretl_drivers.c \
 	libset.c \
 	mapinfo.c \
 	matrix_extra.c \

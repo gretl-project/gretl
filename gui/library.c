@@ -42,7 +42,7 @@
 #include "cmd_private.h"
 #include "flow_control.h"
 #include "libset.h"
-#include "libglue.h"
+#include "gretl_drivers.h"
 #include "objstack.h"
 #include "gretl_xml.h"
 #include "gretl_panel.h"

@@ -17,8 +17,8 @@
  * 
  */
 
-#ifndef LIBGLUE_H
-#define LIBGLUE_H
+#ifndef GRETL_DRIVERS_H
+#define GRETL_DRIVERS_H
 
 int model_test_driver (int order, DATASET *dset, 
 		       gretlopt opt, PRN *prn);
@@ -63,4 +63,4 @@ int list_summary_driver (const int *list,
 int do_modprint (const char *mname, const char *names, 
 		 gretlopt opt, PRN *prn);
 
-#endif /* LIBGLUE_H */
+#endif /* GRETL_DRIVERS_H */

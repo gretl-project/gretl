@@ -19,7 +19,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
-#include "libglue.h"
+#include "gretl_drivers.h"
 #include "gretl_panel.h"
 #include "var.h"
 #include "system.h"
