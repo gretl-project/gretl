@@ -237,37 +237,43 @@ function bundle GUI_SVAR(int type[1:3:1] "Model type" \
 
         # transform the R1-matrix to SVAR-style restrictions
         if exists(R1)
-            r = rows(R1)
-            c = cols(R1)
-            errorif( r != n || c != n, "wrong R1 dimensions")
-
-            string sBorC = type==3 ? "B" : "C"
-            loop i = 1..n 
-                loop j = 1..n 
-                    scalar rij = R1[i,j]
-                    if ok(rij) # valid number = restricted element
-                        SVAR_restrict(&m, sBorC, i, j, rij)
-                    endif
-                endloop
-            endloop
+            apply_patternrestr(&m, (type==3 ? "B" : "C"), R1)
+            # old:
+            
+#             r = rows(R1)
+#             c = cols(R1)
+#             errorif( r != n || c != n, "wrong R1 dimensions")
+# 
+#             string sBorC = type==3 ? "B" : "C"
+#             loop i = 1..n 
+#                 loop j = 1..n 
+#                     scalar rij = R1[i,j]
+#                     if ok(rij) # valid number = restricted element
+#                         SVAR_restrict(&m, sBorC, i, j, rij)
+#                     endif
+#                 endloop
+#             endloop
         endif
 
         # still need to consider the A or longrun-C matrix
         # transform the R2-matrix to SVAR-style restrictions
         if exists(R2)
-            r2 = rows(R2)
-            c2 = cols(R2)
-            errorif(r2 != n || c2 != n, "wrong R2 dimension")
-
-            string sAorlrC = type == 3 ? "A" : "lrC"
-            loop i = 1..n 
-                loop j = 1..n 
-                    scalar rij = R2[i,j]
-                    if ok(rij) # valid number = restricted element
-                        SVAR_restrict(&m, sAorlrC, i, j, rij)
-                    endif
-                endloop
-            endloop
+            apply_patternrestr(&m, (type==3 ? "A" : "lrC"), R2)
+            # old:
+            
+#             r2 = rows(R2)
+#             c2 = cols(R2)
+#             errorif(r2 != n || c2 != n, "wrong R2 dimension")
+# 
+#             string sAorlrC = type == 3 ? "A" : "lrC"
+#             loop i = 1..n 
+#                 loop j = 1..n 
+#                     scalar rij = R2[i,j]
+#                     if ok(rij) # valid number = restricted element
+#                         SVAR_restrict(&m, sAorlrC, i, j, rij)
+#                     endif
+#                 endloop
+#             endloop
         endif
     endif
 

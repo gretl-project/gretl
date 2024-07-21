@@ -3,15 +3,15 @@
 */
 
 function string modelstring(int type)
-/*
-   The original idea about the number 10 for sign restrictions was,
-   apart fromit being very different from the other types (haha),
-   that we could combine the types by summing them.
-   (E.g. 12 == 2 + 10 would be zero restrictions on the C matrix
-   coupled with sign stuff.)
+    /*
+       The original idea about the number 10 for sign restrictions was,
+       apart fromit being very different from the other types (haha),
+       that we could combine the types by summing them.
+       (E.g. 12 == 2 + 10 would be zero restrictions on the C matrix
+       coupled with sign stuff.)
 
-   But in fact it turns out that this is not really needed, so 10 is
-   probably going to stay that way.
+       But in fact it turns out that this is not really needed, so 10 is
+       probably going to stay that way.
     */
     string ret = ""
     if type == 1
@@ -167,6 +167,50 @@ function matrix set_default_dimensions(bundle *mod, list lY,
     return mreg
 end function
 
+function scalar apply_patternrestr(bundle *mod, string rtype, const matrix R)
+    # Transform the given pattern matrix to SVAR-style restrictions.
+    # (This is for impact and long-run restrictions.)
+    # Each element of R can be some number, or NA for unrestricted.
+    # (R used to be R1 or R2 internally.)
+    #
+    # The restriction type rtype must be:
+    # - either "B" or "C" (that was the R1 case in the past)
+    # - or "A" or "lrC" (the R2 case)
+
+    n = mod.n
+
+    errorif(!exists(R), "need restriction pattern input")
+    errorif( mod.type==1, "plain/Cholesky model doesn't accept other restrictions")
+    rtype = strstrip(rtype)
+    r = rows(R)
+    c = cols(R)
+    errorif( r != n || c != n, "wrong restriction pattern R dimensions")
+    errorif( contains(mod.type, {2, 4, 10}) && (rtype != "C" && rtype != "lrC"), \
+      "C model only accepts C and lrC restrictions")
+    errorif( mod.type==3 && (rtype != "A" && rtype != "B"), \
+      "AB model only accepts A and B restrictions") 
+    errorif( !instring("A B C lrC", rtype), "restr type must be one of A, B, C, lrC")
+
+    err = 0
+    loop i = 1..n
+        loop j = 1..n
+            scalar rij = R[i,j]
+            if ok(rij) # valid number = restricted element
+                err = xmax(err, SVAR_restrict(&mod, rtype, i, j, rij))
+            endif
+        endloop
+    endloop
+    
+    if err
+        print "Error(s) while applying restriction pattern;"
+        print " expect problems and check your results."
+    endif
+    
+    return err
+end function
+
+# -------------------------------------------------------------------------
+
 function bundle SVAR_setup(string type_string, list lY, list lX[null],
                            int varorder[1::1], bool checkid_storeSRirfs[1])
 
@@ -261,16 +305,16 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
 
     if type != 10    # (traditional, no sign restrictions)
 
-    /*
-       The constraint matrices.
-       "Rd1" contains short-run constraints on B (and therefore C in non-AB models);
-       "Rd1l" contains long-run constraints on C (not supported in AB models);
-       "Rd0" contains short-run constraints on A in AB;
+        /*
+           The constraint matrices.
+           "Rd1" contains short-run constraints on B (and therefore C in non-AB models);
+           "Rd1l" contains long-run constraints on C (not supported in AB models);
+           "Rd0" contains short-run constraints on A in AB;
 
-       note that "Rd1l" and "Rd0" were both "aux" in previous versions.
+           note that "Rd1l" and "Rd0" were both "aux" in previous versions.
 
-       Initially, they are empty. Except for the "plain" model, it's up to
-       the user to fill them up later, via SVAR_restrict() or by hand
+           Initially, they are empty. Except for the "plain" model, it's up to
+           the user to fill them up later, via SVAR_restrict() or by hand
         */
 
         matrix ret.Rd1 = type==1 ? cholRd(n) : {}
@@ -314,7 +358,7 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
         matrix ret.SRest = {}
 
         /* Since for sign restrictions the traditional estimation step doesn't apply,
-          but we need the reduced-form coefficients, we already do it here automatically. */
+        but we need the reduced-form coefficients, we already do it here automatically. */
 
         ret.storeSRirfs = checkid_storeSRirfs
         SVAR_estimate(&ret, 0)
@@ -325,11 +369,22 @@ end function
 
 #####################################
 
-function scalar SVAR_restrict(bundle *b, string code, int r, int c[0], scalar d[0])
+function scalar SVAR_restrict(bundle *b, string code, const numeric r, int c[0], scalar d[0])
 
+    # This function specifies/applies short-run (impact) or long-run restrictions
+    # New in 2024: overload the r argument, so that it can also work with a full
+    # pattern matrix.
+    
     # c gets a default so that it can be omitted with Adiag, Bdiag (?)
     # the d default is also natural
 
+    if typename(r) == "matrix"
+        # the case of a full restriction pattern matrix
+        errorif(c != 0 || d != 0, "c and d arguments incompatible with pattern matrix r")
+        return apply_patternrestr(&b, code, r) 
+    endif
+        
+    # The following is the old function path where r is the int row index.
     type = b.type
     n = b.n
 
