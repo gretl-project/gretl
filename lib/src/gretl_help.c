@@ -435,7 +435,8 @@ int cli_help (const char *hlpword, const char *param,
 	int ci = gretl_help_index(hlpword);
 
 	if (ci == SET && param != NULL) {
-	    ok = is_libset_var(param);
+            /* respond to "help set <setvar>" */
+	    ok = libset_help_available(param);
 	    if (!ok) {
 		pprintf(prn, _("%s: sorry, no help available.\n"), param);
 		return 1;

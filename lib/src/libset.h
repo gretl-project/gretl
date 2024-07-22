@@ -160,7 +160,9 @@ double libset_get_user_tolerance (SetKey key);
 int libset_get_int (SetKey key);
 int libset_set_int (SetKey key, int val);
 
-int is_libset_var (const char *s);
+int libset_help_available (const char *s);
+
+SetKey get_libset_key (const char *s);
 
 /* GUI setter functions */
 void set_xsect_hccme (const char *s);
