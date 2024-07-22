@@ -1,3 +1,6 @@
+### Replication of Blanchard and Quah (1989), "The Dynamic Effects of 
+### Aggregate Demand and Supply Disturbances", AER
+
 set verbose off
 include SVAR.gfn
 open BlQuah.gdt --frompkg=SVAR
@@ -15,7 +18,7 @@ BQModel.horizon = 40
 SVAR_restrict(&BQModel, "lrC", 1, 2, 0)
 
 # name the shocks to something meaningful
-BQModel.snames = defarray("Supply", "Demand") # old: strsplit("Supply Demand")
+BQModel.snames = defarray("Supply", "Demand") 
 
 # cumulate the IRFs for variable 1
 SVAR_cumulate(&BQModel, 1)
@@ -27,23 +30,39 @@ SVAR_estimate(&BQModel)
 dShock = GetShock(&BQModel, 2)
 
 BQModel.biascorr = 2
-# do bootstrap
+# do bootstrap (set 'quiet' off with trailing zero arg)
 set stopwatch
-
-# bootstrap (set 'quiet' off with trailing zero arg)
 bfail = SVAR_boot(&BQModel, 1024, 0.9, 0)
-printf "Number of failed bootstrap iterations = %d, Time (bootstrap) = %g\n", bfail, $stopwatch
+printf "Number of failed bootstrap iterations = %d, Time (bootstrap) = %g\n", \
+  bfail, $stopwatch
 
-/*
-# page 662
+# page 662 (IRFs)
 
-IRFplot(&BQModel,  1, 1)
-IRFplot(&BQModel, -2, 1)
-IRFplot(&BQModel,  1, 2)
-IRFplot(&BQModel, -2, 2)
-*/
+SAVE_PLOTS = 0
 
-IRFsave("bq_Ys.pdf", &BQModel,  1, 1)
-IRFsave("bq_us.pdf", &BQModel,  1, 2)
-IRFsave("bq_Yd.pdf", &BQModel, -2, 1)
-IRFsave("bq_ud.pdf", &BQModel, -2, 2)
+if SAVE_PLOTS 
+    IRFsave("bq_Ys.pdf", &BQModel,  1, 1)
+    IRFsave("bq_us.pdf", &BQModel,  1, 2)
+    IRFsave("bq_Yd.pdf", &BQModel, -2, 1)
+    IRFsave("bq_ud.pdf", &BQModel, -2, 2)
+else
+    IRFplot(&BQModel,  1, 1)
+    IRFplot(&BQModel, -2, 1)
+    IRFplot(&BQModel,  1, 2)
+    IRFplot(&BQModel, -2, 2)
+endif
+
+# page 664-665 (Historical decompositions)
+
+list HDDY = SVAR_hd(&BQModel, 1)
+list HDU  = SVAR_hd(&BQModel, 2)
+
+# cumulate the effect of the demand shock on DY
+series hd_Y_Demand = cum(hd_DY_Demand)
+
+# reproduce Figure 8
+gnuplot hd_Y_Demand --time-series --with-lines --output=display
+# reproduce Figure 10
+gnuplot hd_U_Demand --time-series --with-lines --output=display
+# something more modern
+HDplot(&BQModel, 2)

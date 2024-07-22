@@ -1,9 +1,8 @@
-nulldata 116
-setobs 4 1970:1 
+set verbose off
 include SVAR.gfn
 
-# grab data from AWM 
-join AWM.gdt YER PCR ITR
+# grab data from AWM
+open AWM.gdt --select="YER PCR ITR"
 
 # transform into logs
 series y = 100 * ln(YER)
@@ -11,39 +10,47 @@ series c = 100 * ln(PCR)
 series i = 100 * ln(ITR)
 list X = c i y
 
-# find best lag
+# find best lag via AIC
 var 8 X --lagselect
-p = 3
+p = iminc($test)[4]
 
 # check for the "balanced growth path" hypothesis
-johansen p X 
+johansen p X
 vecm p 2 X
 restrict
     b[1,1] = -1
     b[1,2] =  0
     b[1,3] =  1
-    
+
     b[2,1] =  0
     b[2,2] = -1
     b[2,3] =  1
 end restrict
 
 # ok, now go for the real thing
-x = SVAR_setup("SVEC", X, const, p)
+bundle x = SVAR_setup("SVEC", X, const, p)
 matrix b = I(2) | -ones(1,2)
 SVAR_coint(&x, 3, b, {}, 1)
 x.horizon = 40
 SVAR_restrict(&x, "C", 1, 2, 0)
 
 SVAR_estimate(&x)
-loop j = 1..3 
-    FEVDplot(&x, j)
-endloop 
+gpbuild Fplots
+    loop j = 1..3
+        FEVDplot(&x, j, 2)
+    endloop
+end gpbuild
+
+gridplot Fplots --output=display
 
 set stopwatch
 SVAR_boot(&x, 1024, 0.90)
 printf "Elapsed time = %g seconds\n", $stopwatch
 
-loop j = 1..3 
-    IRFplot(&x, 1, j, 2)
-endloop 
+gpbuild Iplots
+    loop j = 1..3
+        IRFplot(&x, 1, j, 2)
+    endloop
+end gpbuild
+
+gridplot Iplots --output=display

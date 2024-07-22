@@ -18,11 +18,17 @@ printf "Time (Cmodel) = %g\n", $stopwatch
 
 fevdmat = FEVD(&Mod)
 print fevdmat
-#IRFplot(&Mod, 1, 1)
+IRFplot(&Mod, 1, 1)
 IRFsave("simple_C_11_noboot.pdf", &Mod, 1, 1)
 
 set stopwatch
 bfail = SVAR_boot(&Mod, 1024, 0.90)
-printf "Number of failed bootstrap iterations = %d, Time (bootstrap) = %g\n", bfail, $stopwatch
+printf "Number of failed bootstrap iterations = %d, Time (bootstrap) = %g\n", \
+  bfail, $stopwatch
 
+gpbuild Plots
+    IRFplot(&Mod, 0, 0)
+end gpbuild
+
+gridplot Plots --output=display --width=1200
 IRFsave("simpleC.pdf", &Mod, 0, 0)	# 0 means "all"
