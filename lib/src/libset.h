@@ -20,6 +20,10 @@
 #ifndef LIBSET_H
 #define LIBSET_H
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     NORM_PHILLIPS,
     NORM_DIAG,
@@ -249,5 +253,9 @@ void set_workdir_callback (int (*callback)());
 
 int libset_write_script (const char *fname);
 int libset_read_script (const char *fname);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif /* LIBSET_H */
