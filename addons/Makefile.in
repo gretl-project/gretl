@@ -52,6 +52,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/gig/examples 
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/ivpanel
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/SVAR
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/SVAR/examples
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/HIP
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/HIP/examples
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/dbnomics
@@ -63,6 +64,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/regls/examples
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/logging
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/KFgui
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/KFgui/examples
 
 install: $(SUBDIRS) installdirs
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install; done
