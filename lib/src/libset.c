@@ -1617,16 +1617,31 @@ static int libset_query_settings (setvar *sv, PRN *prn)
     return err;
 }
 
-int is_libset_var (const char *s)
+/* determine whether help text is available pertaining to
+   putative libset variable @s.
+*/
+
+int libset_help_available (const char *s)
 {
     setvar *sv = get_setvar_by_name(s);
-    int err = (sv == NULL);
+    int err = 1;
 
-    if (!err) {
+    if (sv != NULL) {
 	err = libset_query_settings(sv, NULL);
     }
 
     return (err == 0);
+}
+
+/* return the enumeration value corresponding to the putative
+   libset variable @s, or 0 on failure
+*/
+
+SetKey get_libset_key (const char *s)
+{
+    setvar *sv = get_setvar_by_name(s);
+
+    return sv != NULL ? sv->key : 0;
 }
 
 #define default_ok(k) (k == BFGS_TOLER || k == BHHH_TOLER || k == NLS_TOLER)

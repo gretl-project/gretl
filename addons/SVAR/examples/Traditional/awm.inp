@@ -10,9 +10,9 @@ series c = 100 * ln(PCR)
 series i = 100 * ln(ITR)
 list X = c i y
 
-# find best lag
+# find best lag via AIC
 var 8 X --lagselect
-p = 3
+p = iminc($test)[4]
 
 # check for the "balanced growth path" hypothesis
 johansen p X
@@ -28,7 +28,7 @@ restrict
 end restrict
 
 # ok, now go for the real thing
-x = SVAR_setup("SVEC", X, const, p)
+bundle x = SVAR_setup("SVEC", X, const, p)
 matrix b = I(2) | -ones(1,2)
 SVAR_coint(&x, 3, b, {}, 1)
 x.horizon = 40

@@ -4384,7 +4384,7 @@ static const char *test_get_descrip (const ModelTest *test)
 static const char *test_get_opt_string (const ModelTest *test)
 {
     if (test->type == GRETL_TEST_RESET) {
-	if (test->opt & OPT_R) {
+	if (test->opt & OPT_U) {
 	    return N_("squares only");
 	} else if (test->opt & OPT_C) {
 	    return N_("cubes only");

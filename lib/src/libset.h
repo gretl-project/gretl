@@ -20,6 +20,10 @@
 #ifndef LIBSET_H
 #define LIBSET_H
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     NORM_PHILLIPS,
     NORM_DIAG,
@@ -160,7 +164,9 @@ double libset_get_user_tolerance (SetKey key);
 int libset_get_int (SetKey key);
 int libset_set_int (SetKey key, int val);
 
-int is_libset_var (const char *s);
+int libset_help_available (const char *s);
+
+SetKey get_libset_key (const char *s);
 
 /* GUI setter functions */
 void set_xsect_hccme (const char *s);
@@ -247,5 +253,9 @@ void set_workdir_callback (int (*callback)());
 
 int libset_write_script (const char *fname);
 int libset_read_script (const char *fname);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif /* LIBSET_H */

@@ -256,6 +256,17 @@ static int controller_does_string_sub (const char *s,
     return subst;
 }
 
+static double get_loop_index_value (double x)
+{
+    double xi = nearbyint(x);
+
+    if (fabs(x - xi) < 1.0e-15) {
+	return xi;
+    } else {
+	return x;
+    }
+}
+
 /* For indexed loops: get a value from a loop "limit" element (lower
    or upper).  If we got the name of a scalar variable at setup time,
    look up its current value (and modify the sign if wanted).  Or if
@@ -287,7 +298,9 @@ static double controller_get_val (controller *clr,
                 gretl_errmsg_sprintf(_("'%s': not a scalar"), clr->vname);
                 *err = E_TYPES;
             } else {
-                clr->val = uvar_get_scalar_value(clr->uv) * clr->vsign;
+		double d = uvar_get_scalar_value(clr->uv) * clr->vsign;
+
+                clr->val = get_loop_index_value(d);
             }
         }
     } else if (clr->expr != NULL && clr->subst) {
@@ -791,7 +804,7 @@ static int index_get_limit (LOOPSET *loop, controller *clr,
         if (gretl_is_scalar(s)) {
             *clr->vname = '\0';
             strncat(clr->vname, s, VNAMELEN - 1);
-            clr->val = (int) gretl_scalar_get_value(s, NULL);
+	    clr->val = get_loop_index_value(gretl_scalar_get_value(s, NULL));
         } else if ((v = current_series_index(dset, s)) >= 0) {
             /* found a series by the name of @s */
             gretl_errmsg_sprintf(_("'%s': not a scalar"), s);
@@ -859,7 +872,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
     }
 
 #if LOOP_DEBUG > 1
-    fprintf(stderr, "indexed_loop: init.val=%g, final.val=%g, err=%d\n",
+    fprintf(stderr, "indexed_loop: init.val=%.16f, final.val=%.16f, err=%d\n",
             loop->init.val, loop->final.val, err);
 #endif
 
@@ -1689,7 +1702,6 @@ static int loop_condition (LOOPSET *loop, DATASET *dset, int *err)
                 }
                 if (loop->idxvar == NULL) {
                     loop->idxvar = get_user_var_by_name(loop->idxname);
-                    /* fprintf(stderr, "loop_condition: incoming idxvar was NULL\n"); */
                 }
                 if (loop->idxvar != NULL) {
                     uvar_set_scalar_fast(loop->idxvar, loop->idxval);

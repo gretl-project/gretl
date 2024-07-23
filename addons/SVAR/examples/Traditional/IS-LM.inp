@@ -1,3 +1,7 @@
+### This script reproduces example 4.7.1 in Lütkepohl and
+### Krätzig (2004), "Applied Time Series Econometrics".
+
+
 set verbose off
 include SVAR.gfn
 open IS-LM.gdt --frompkg=SVAR
@@ -9,21 +13,30 @@ list Z = const time
 
 ISLM = SVAR_setup("AB", X, Z, 4)
 ISLM.horizon = 48
-SVAR_restrict(&ISLM, "Adiag", 1)
-SVAR_restrict(&ISLM, "A", 1, 3, 0)
-SVAR_restrict(&ISLM, "A", 3, 1, 0)
-SVAR_restrict(&ISLM, "A", 3, 2, 0)
-SVAR_restrict(&ISLM, "Bdiag", NA)
-ISLM.snames = strsplit("uIS uLM uMS")
+
+### specify restrictions via pattern matrices
+
+matrix Arest = {1, NA, 0; NA, 1, NA; 0, 0, 1}
+SVAR_restrict(&ISLM, "A", Arest)
+matrix Brest = {NA, 0, 0; 0, NA, 0; 0, 0, NA}
+SVAR_restrict(&ISLM, "B", Brest)
+ISLM.snames = strsplit("eIS eLM eMS")
 
 SVAR_estimate(&ISLM)
 
 printf "Estimated contemporaneous impact matrix (x100) =\n%10.6f", \
-  100 * ISLM.C  
+  100 * ISLM.C
 
 set stopwatch
 rej = SVAR_boot(&ISLM, 2000, 0.95)
 printf "Elapsed time = %g\n", $stopwatch
-IRFsave("dynamic_IS.pdf", &ISLM, 1, 2)
-IRFplot(&ISLM, 1, 2)
 
+gpbuild Page185
+    loop col = 1 .. 3
+        loop row = 1 .. 3
+            IRFplot(&ISLM, row, col, 0)
+        endloop
+    endloop
+end gpbuild
+
+gridplot Page185 --output=display

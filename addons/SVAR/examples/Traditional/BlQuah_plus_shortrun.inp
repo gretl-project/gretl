@@ -17,11 +17,27 @@ SVAR_restrict(&BQModel, "lrC", 1, 2, 0)
 SVAR_restrict(&BQModel, "C", 1, 1, 0)
 
 # name the shocks to something meaningful
-BQModel.snames = defarray("Supply", "Demand")  # old: strsplit("Supply Demand")
+BQModel.snames = defarray("Supply", "Demand") 
 
 # cumulate the IRFs for variable 1
 SVAR_cumulate(&BQModel, 1)
 
-set stopwatch
+# perform estimation
 SVAR_estimate(&BQModel)
-printf "Time (Cmodel) = %g\n", $stopwatch
+
+### same thing with "pattern matrix" restrictions
+
+BQ2 = SVAR_setup("C", X, exog, maxlag)
+BQ2.horizon = 40
+
+# set up the long-run restriction
+SVAR_restrict(&BQ2, "lrC", {NA, 0; NA, NA})
+
+# set up the short-run restriction
+SVAR_restrict(&BQ2, "C", {0, NA; NA, NA})
+
+BQModel.snames = defarray("Supply", "Demand")
+SVAR_cumulate(&BQ2, 1)
+SVAR_estimate(&BQ2)
+
+

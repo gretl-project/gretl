@@ -32,7 +32,7 @@
 #include "matrix_extra.h"
 #include "boxplots.h"
 #include "gretl_string_table.h"
-#include "libglue.h"
+#include "gretl_drivers.h"
 
 /*
  * model_test_driver:

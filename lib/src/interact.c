@@ -42,7 +42,7 @@
 #include "boxplots.h"
 #include "gretl_plot.h"
 #include "flow_control.h"
-#include "libglue.h"
+#include "gretl_drivers.h"
 #include "csvdata.h"
 #include "gretl_zip.h"
 #include "matrix_extra.h"

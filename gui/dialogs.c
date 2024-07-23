@@ -45,7 +45,7 @@
 #include "libset.h"
 #include "uservar.h"
 #include "gretl_bfgs.h"
-#include "libglue.h"
+#include "gretl_drivers.h"
 #include "datafiles.h"
 #include "fnsave.h"
 #endif
