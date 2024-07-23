@@ -13204,13 +13204,15 @@
     <li>
       <para>
 	<repl>camel</repl>: Convert all series names to camel case
-	(consecutive words are indicated by an uppercase initial: eg camelCase)
+	(consecutive words are indicated by an uppercase initial: &eg;
+	<lit>camelCase</lit>).
       </para>
     </li>
     <li>
       <para>
 	<repl>snake</repl>: Convert all series names to snake case
-	(consecutive words are separated by an underscore: eg snake_case)
+	(consecutive words are separated by an underscore: &eg;
+	<lit>snake_case</lit>).
       </para>
     </li>
   </ilist>
