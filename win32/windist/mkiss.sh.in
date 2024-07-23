@@ -8,8 +8,10 @@ if [ "a${ARCH}" = "ai686" ] ; then
   ISSTOP="${topsrc}/win32/windist/isstop.32"
 elif [ "a${ARCH}" = "ax86_64" ] ; then
   ISSTOP="${topsrc}/win32/windist/isstop.64"
+elif [ "a${ARCH}" = "agtk3" ] ; then
+  ISSTOP="${topsrc}/win32/windist/isstop.gtk3"
 else
-  echo "Please specify i686 or x86_64"
+  echo "Please specify i686, x86_64 or gtk3"
   exit 1
 fi
 
