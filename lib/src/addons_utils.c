@@ -345,35 +345,35 @@ char *gretl_addon_get_path (const char *addon)
     gretl_print_destroy(auxprn);
     
     if (fp == NULL) {
-	fprintf(stderr, "failed to read addons.idx\n");
+        fprintf(stderr, "failed to read addons.idx\n");
     } else {
-	char *s, line[1024];
-	int n = strlen(addon);
-	int nq = 0;
+        char *s, line[1024];
+        int n = strlen(addon);
+        int nq = 0;
 
-	while (fgets(line, sizeof line, fp)) {
-	    if (!strncmp(addon, line, n)) {
-		char *p = NULL;
-		char *q = NULL;
+        while (fgets(line, sizeof line, fp)) {
+            if (!strncmp(addon, line, n)) {
+                char *p = NULL;
+                char *q = NULL;
 
-		s = line + n;
-		while (*s) {
-		    if (*s == '"') {
-			nq++;
-			if (nq == 3) {
-			    p = s + 1;
-			} else if (nq == 4) {
-			    q = s;
-			}
-		    }
-		    s++;
-		}
-		if (p != NULL && q != NULL) {
-		    ret = gretl_strndup(p, q - p);
-		}
-	    }
-	}
-	fclose(fp);
+                s = line + n;
+                while (*s) {
+                    if (*s == '"') {
+                        nq++;
+                        if (nq == 3) {
+                            p = s + 1;
+                        } else if (nq == 4) {
+                            q = s;
+                        }
+                    }
+                    s++;
+                }
+                if (p != NULL && q != NULL) {
+                    ret = gretl_strndup(p, q - p);
+                }
+            }
+        }
+        fclose(fp);
     }
 
     g_free(idxname);
@@ -392,15 +392,15 @@ char *get_addon_examples_dir (const char *addon)
     char *ret = NULL;
 
     if (path != NULL) {
-	s = strrslash(path);
-	if (s != NULL) {
-	    *s = '\0';
-	}
-	gretl_build_path(epath, path, "examples", NULL);
-	if (g_file_test(epath, G_FILE_TEST_IS_DIR)) {
-	    ret = gretl_strdup(epath);
-	}
-	free(path);
+        s = strrslash(path);
+        if (s != NULL) {
+            *s = '\0';
+        }
+        gretl_build_path(epath, path, "examples", NULL);
+        if (g_file_test(epath, G_FILE_TEST_IS_DIR)) {
+            ret = gretl_strdup(epath);
+        }
+        free(path);
     }
 
     return ret;
@@ -417,26 +417,26 @@ char *get_addon_pdf_path (const char *addon)
     char *ret = NULL;
 
     if (has_suffix(addon, ".pdf")) {
-	/* strip off the suffix */
-	gchar *tmp = g_strndup(addon, strlen(addon) - 4);
+        /* strip off the suffix */
+        gchar *tmp = g_strndup(addon, strlen(addon) - 4);
 
-	path = gretl_addon_get_path(tmp);
-	g_free(tmp);
+        path = gretl_addon_get_path(tmp);
+        g_free(tmp);
     } else {
-	path = gretl_addon_get_path(addon);
+        path = gretl_addon_get_path(addon);
     }
 
     if (path != NULL && has_suffix(path, ".gfn")) {
-	/* should be the case */
-	s = strrchr(path, '.');
-	*s = '\0';
-	strcpy(s, ".pdf");
+        /* should be the case */
+        s = strrchr(path, '.');
+        *s = '\0';
+        strcpy(s, ".pdf");
     }
 
     if (path != NULL && gretl_stat(path, NULL) == 0) {
-	/* success */
-	ret = path;
-	path = NULL;
+        /* success */
+        ret = path;
+        path = NULL;
     }
 
     free(path);
@@ -445,51 +445,51 @@ char *get_addon_pdf_path (const char *addon)
 }
 
 int get_addon_basic_info (const char *addon,
-			  char **version,
-			  char **date,
-			  char **descrip,
-			  char **fname)
+                          char **version,
+                          char **date,
+                          char **descrip,
+                          char **fname)
 {
     gchar *idxname = gretl_make_dotpath("addons.idx");
     FILE *fp = gretl_fopen(idxname, "rb");
     int err = 0;
 
     if (fp == NULL) {
-	err = update_addons_index(NULL);
-	if (!err) {
-	    fp = gretl_fopen(idxname, "rb");
-	}
+        err = update_addons_index(NULL);
+        if (!err) {
+            fp = gretl_fopen(idxname, "rb");
+        }
     }
 
     if (fp == NULL) {
-	err = E_FOPEN;
+        err = E_FOPEN;
     } else {
-	char line[1024];
-	char name[16];
-	char vstr[16];
-	char dstr[16];
-	char desc[64];
-	char path[MAXLEN];
-	int got = 0;
+        char line[1024];
+        char name[16];
+        char vstr[16];
+        char dstr[16];
+        char desc[64];
+        char path[MAXLEN];
+        int got = 0;
 
-	while (fgets(line, sizeof line, fp) && !got) {
-	    if (sscanf(line, "%s %s %s \"%63[^\"]\" \"%511[^\"]",
-		       name, vstr, dstr, desc, path) == 5) {
-		if (!strcmp(name, addon) &&
-		    gretl_test_fopen(path, "r") == 0) {
-		    got = 1;
-		    *version = gretl_strdup(vstr);
-		    *date = gretl_strdup(dstr);
-		    *descrip = gretl_strdup(desc);
-		    *fname = gretl_strdup(path);
-		}
-	    }
-	}
-	fclose(fp);
-	if (!got) {
-	    fprintf(stderr, "addons.idx: couldn't find '%s'\n", addon);
-	    err = E_DATA;
-	}
+        while (fgets(line, sizeof line, fp) && !got) {
+            if (sscanf(line, "%s %s %s \"%63[^\"]\" \"%511[^\"]",
+                       name, vstr, dstr, desc, path) == 5) {
+                if (!strcmp(name, addon) &&
+                    gretl_test_fopen(path, "r") == 0) {
+                    got = 1;
+                    *version = gretl_strdup(vstr);
+                    *date = gretl_strdup(dstr);
+                    *descrip = gretl_strdup(desc);
+                    *fname = gretl_strdup(path);
+                }
+            }
+        }
+        fclose(fp);
+        if (!got) {
+            fprintf(stderr, "addons.idx: couldn't find '%s'\n", addon);
+            err = E_DATA;
+        }
     }
 
     g_free(idxname);
