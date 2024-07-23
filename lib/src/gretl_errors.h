@@ -1,24 +1,28 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef GRETL_ERRORS_H
 #define GRETL_ERRORS_H
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef enum {
     E_DATA = 2,
@@ -76,7 +80,7 @@ typedef enum {
     E_DB_DUP,      /* 54 : duplicate vars found when saving to database */
     E_OK,          /* 55 : not really an error */
     E_MAX          /* 56 */
-} GretlError; 
+} GretlError;
 
 enum gretl_warning_codes {
     W_GRADIENT = 1,
@@ -136,5 +140,9 @@ int gretl_error_is_fatal (void);
 int gretl_errmsg_is_set (void);
 
 int invalid_field_error (const char *s);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif /* GRETL_ERRORS_H */
