@@ -1633,17 +1633,6 @@ int libset_help_available (const char *s)
     return (err == 0);
 }
 
-/* return the enumeration value corresponding to the putative
-   libset variable @s, or 0 on failure
-*/
-
-SetKey get_libset_key (const char *s)
-{
-    setvar *sv = get_setvar_by_name(s);
-
-    return sv != NULL ? sv->key : 0;
-}
-
 #define default_ok(k) (k == BFGS_TOLER || k == BHHH_TOLER || k == NLS_TOLER)
 
 #define default_str(s) (!strcmp(s, "auto") || !strcmp(s, "default"))
