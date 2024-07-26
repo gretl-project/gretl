@@ -6954,17 +6954,26 @@
 
 
 <command name="info" section="Dataset" label="Informazioni sul dataset" context="cli">
-
+    <usage>
+      <altforms>
+	<altform><lit>info</lit></altform>
+	<altform><lit>info --to-file=</lit><repl>filename</repl></altform>
+	<altform><lit>info --from-file=</lit><repl>filename</repl></altform>
+      </altforms>
+    </usage>
   <description>
     <para>
-      Mostra le informazioni aggiuntive contenute nel file di dati
-      attuale.
+      Nel suo utilizzo base, mostra le informazioni aggiuntive
+      contenute nel file di dati attuale. Altrimenti, scrive queste
+      informazioni su file (con l'opzione <opt>to-file</opt>), o legge
+      i metadati da un file specificato e li allega al set di dati
+      corrente (con <opt>from-file</opt>): in questo caso il testo
+      deve essere  UTF-8 valido.
     </para>
   </description>
 
   <gui-access>
     <menu-path>/Dati/Visualizza descrizione</menu-path>
-    <other-access>Finestre di esplorazione dei dati</other-access>
   </gui-access>
 
 </command>
@@ -9257,7 +9266,78 @@ contenga un percorso completo.
 	</description>
       </command>
 
-      <command name="menu-attach" section="Programming"
+  <command name="mdhelp" section="Programming" label="Markdown help"
+    context="gui">
+
+    <description>
+      <para>
+	In qusta finestra editor si possono inserire elementi markdown
+	come segue. Nota bene: per <quote>immediatamente</quote>
+	intendiamo "senza spazi in mezzo".
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Grassetto: Metti due asterischi (<lit>**</lit>)
+	    immediatamente prima e dopo il testo.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Corsivo: Mettin un asterisco singolo immediatamente prima
+	    e dopo il testo.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Spaziatura fissa: Metti un apostrofo rovesciato
+	    (<lit>`</lit>) immediatamente prima e dopo il testo.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Intestazione di livello 1: Metti un cancelletto (<lit>#</lit>)
+	    prima dell'intestazione, e lascia una linea vuota sotto.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Intestazione di livello 2: Metti due cancelletti prima
+	    dell'intestazione, e lascia una linea vuota sotto.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Blocco di codice: Lascia una linea vuota, e poi metti tre
+	    apostrofi rovesciti successivi (<lit>```</lit>) sulla
+	    linea appena prima del codice, e altri tre appena sotto.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Elenco puntato: Lascia una linea vuota prima dell'elenco e
+	    aggiungi un trattino e uno spazio (<quote><lit>- </lit></quote>)
+	    prima di ogni elemento. Per ogni elemento, vai a capo.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Elenco numerato: Lascia una linea vuota prima dell'elenco
+	    e aggiungi il numero, un punto e uno spazio (ad esempio,
+	    <quote><lit>1. </lit></quote>) prima di ogni elemento. Per
+	    ogni elemento, vai a capo.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	L'icona con l'occhio produce un'anterprima del testo di
+	help. Si noti che se il testo non contiene elementi markdown
+	l'<quote>anteprima</quote> potrebbe non avere un bell'aspetto.
+      </para>
+    </description>
+  </command>
+
+  <command name="menu-attach" section="Programming"
 	       label="Menu attachment" context="gui">
 	<description>
 	  <para>
@@ -9569,6 +9649,7 @@ contenga un percorso completo.
 	<altform><lit>modeltab show</lit></altform>
 	<altform><lit>modeltab free</lit></altform>
 	<altform><lit>modeltab --output=</lit><repl>nomefile</repl></altform>
+	<altform><lit>modeltab --options=</lit><repl>bundle</repl></altform>
       </altforms>
     </usage>
 
@@ -9583,13 +9664,11 @@ contenga un percorso completo.
 	standard) per un dato modello e ogni riga contiene le stime
 	per una certa variabile nei differenti modelli.
       </para>
-
       <para>
 	Gretl dà la possibilità di costruire una tabella simile (e
 	di esportarla in testo semplice, &latex; o RTF - Rich Text Format).
 	Ecco come fare:
       </para>
-
       <nlist>
 	<li>
 	  <para>
@@ -9677,7 +9756,77 @@ contenga un percorso completo.
       <code>
 	modeltab --output="myfile.tex" --complete
       </code>
-
+      <para>
+	L'opzione <opt>options=</opt>, che richiede il nome di un
+	bundle gretl, può essere utilizzato per controllare alcuni
+	aspetti della formattazione della tabella del modello. Vengono
+	riconosciute le seguenti chiavi:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>colheads</lit>: intero da 1 a 4, seleziona tra i
+	    quattro stili di intestazione di colonna supportati:
+	    numerazione araba, numerazione romana, alfabetico o
+	    utilizzando i nomi con cui sono stati salvati i
+	    modelli. Il valore predefinito è 1 (numerazione araba).
+          </para>
+       </li>
+       <li>
+	 <para>
+	   <lit>tstats</lit>: booleano, sostituisce o meno gli errori
+	   standard con le statistiche t (default 0).
+         </para>
+       </li>
+       <li>
+	 <para>
+	   <lit>pvalues</lit>: booleano, include o meno i 
+	   <math>P</math>-vaue (default 0).
+         </para>
+       </li>
+       <li>
+	 <para>
+	   <lit>asterisks</lit>: booleano, mostra o meno gli
+	   asterischi del livello di significatività (default 1).
+         </para>
+       </li>
+       <li>
+	 <para>
+	   <lit>digits</lit>: intero da 2 a 6, seleziona il numero di
+	   cifre significative visualizzate (default 4).
+         </para>
+       </li>
+       <li>
+	 <para>
+	   <lit>decplaces</lit>: intero da 2 a 6, seleziona il numero
+	   di cifre decimali visualizzate.
+        </para>
+      </li>
+      </ilist>
+      <para>
+	Si noti che le ultime due chiavi si escludono a
+	vicenda, poiché offrono modi alternativi per specificare la
+	precisione con cui vengono visualizzati i valori numerici: in
+	termini di cifre significative o cifre decimali. Il valore
+	predefinito è 4 cifre significative.
+      </para>
+      <para>
+	Un bundle di opzioni può essere fornito tramite un comando
+	autonomo (come nell'ultimo degli esempi sopra) oppure può
+	essere combinato con l'azione <lit>show</lit> o l'opzione
+	<opt>output</opt>. Ad esempio, il seguente script crea una
+	semplice tabella di modelli e la visualizza, con i
+	<math>P</math>-value visualizzati invece degli asterischi:
+       </para>
+      <code>
+	open data9-7
+	ols 1 0 2 3 4
+	modeltab add
+	ols 1 0 2 3
+	modeltab add
+	bundle myopts = _(pvalues=1, asterisks=0)
+	modeltab show --options=myopts
+      </code>
     </description>
 
     <gui-access>
@@ -13210,19 +13359,66 @@ del comando <cmdref targ="set"/>.
 	<flag>--quiet</flag>
 	<effect>sopprime la stampa dell'output</effect>
       </option>
+      <option>
+	<flag>--case</flag>
+	<effect>cambia maiuscolo/minuscolo per tutte le serie (vedi sotto)</effect>
+      </option>
     </options>
   </usage>
 
   <description>
     <para>
-      Cambia il nome di una <repl>serie</repl> (identificata da un
-      nome o da un numero identificativo) con un
-      <repl>nuovo-nome</repl>. Il nuovo nome deve essere di massimo
-      31 caratteri, deve iniziare con una lettera e deve essere
-      composto da una combinazione di sole lettere, cifre e
-      trattini.  In aggiunta il nuovo nome non deve essere già ad
-      appartenente a nessun oggetto di nessun tipo del dataset.
+      Senza l'opzione <opt>--case</opt>, questo comando cambia il nome
+      di una <repl>serie</repl> (identificata da un nome o da un
+      numero identificativo) con un <repl>nuovo-nome</repl>. Il nuovo
+      nome deve essere di massimo 31 caratteri, deve iniziare con una
+      lettera e deve essere composto da una combinazione di sole
+      lettere, cifre e trattini.  In aggiunta il nuovo nome non deve
+      essere già ad appartenente a nessun oggetto di nessun tipo del
+      dataset.
     </para>
+    <para>
+      L'opzione <opt>--case</opt> consente di cambiare tutte le serie
+      in maiuscolo/minuscolo. Con questa opzione, non si deve fornire
+      il nome della serie da rinominare, perché il cambiamento si
+      applicherà a tutto mil dataset. Sono disponibili le seguenti conversioni:
+  </para>
+  <ilist>
+    <li>
+      <para>
+	<repl>lower</repl>: Converte tutti i nomi di serie in minuscolo.
+      </para>
+    </li>
+    <li>
+      <para>
+	<repl>upper</repl>: Converte tutti i nomi di serie in maiuscolo.
+      </para>
+    </li>
+    <li>
+      <para>
+	<repl>camel</repl>: Converte tutti i nomi di serie in "camelCase"
+	(parole consecutive sono indicate dall'iniziale maiuscola: per esempio,
+	<lit>regioneMarche</lit>).
+      </para>
+    </li>
+    <li>
+      <para>
+	<repl>snake</repl>: Converte tutti i nomi di serie in "snake case"
+	(parole consecutive sono separate da un trattino basso: per
+	esempio, <lit>regione_marche</lit>).
+      </para>
+    </li>
+  </ilist>
+  <para>
+    Si noti che in qualche caso la conversione potrebbe avere effetti
+    indesiderati: ad esempio, con una serie il cui nome è tutto maiuscolo
+    la conversione a "snake case" sarebbe piuttosto bizzarra.
+  </para>
+  <code>
+    rename y x
+    rename --case=upper
+  </code>
+    
   </description>
 
   <gui-access>

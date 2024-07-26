@@ -1,26 +1,30 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef GRETL_MODEL_H
 #define GRETL_MODEL_H
 
 #include "objstack.h"
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef enum {
     ARMA_X12A  = 1 << 0, /* using X-12-ARIMA (or X-13) to generate estimates */
@@ -267,14 +271,14 @@ void display_model_data_items (const MODEL *pmod);
 
 int bundlize_model_data_items (const MODEL *pmod, gretl_bundle *b);
 
-int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *ptr, 
-					  GretlType type, size_t size, 
+int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *ptr,
+					  GretlType type, size_t size,
 					  void (*destructor) (void *));
 
-int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, 
+int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr,
 			  GretlType type, size_t size);
 
-int gretl_model_set_matrix_as_data (MODEL *pmod, const char *key, 
+int gretl_model_set_matrix_as_data (MODEL *pmod, const char *key,
 				    gretl_matrix *m);
 
 int gretl_model_set_list_as_data (MODEL *pmod, const char *key, int *list);
@@ -328,7 +332,7 @@ double gretl_model_get_double_default (const MODEL *pmod,
 
 int *gretl_model_get_list (const MODEL *pmod, const char *key);
 
-char *gretl_model_get_param_name (const MODEL *pmod, 
+char *gretl_model_get_param_name (const MODEL *pmod,
 				  const DATASET *dset,
 				  int i, char *targ);
 
@@ -336,7 +340,7 @@ gretl_array *gretl_model_get_param_names (const MODEL *pmod,
 					  const DATASET *dset,
 					  int *err);
 
-int gretl_model_get_param_number (const MODEL *pmod, 
+int gretl_model_get_param_number (const MODEL *pmod,
 				  const DATASET *dset,
 				  const char *s);
 
@@ -404,23 +408,23 @@ int gretl_model_new_vcv (MODEL *pmod, int *nelem);
 int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V);
 
 int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
-			     const gretl_matrix *H, 
+			     const gretl_matrix *H,
 			     const gretl_matrix *G,
 			     const DATASET *dset,
 			     gretlopt opt,
 			     gretl_matrix **pV);
 
-int gretl_model_add_hessian_vcv (MODEL *pmod, 
+int gretl_model_add_hessian_vcv (MODEL *pmod,
 				 const gretl_matrix *H);
 
-int gretl_model_add_OPG_vcv (MODEL *pmod, 
+int gretl_model_add_OPG_vcv (MODEL *pmod,
 			     const gretl_matrix *G,
 			     gretl_matrix **pV);
 
 VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATASET *dset);
 
 double gretl_model_get_vcv_element (const MODEL *pmod,
-				    int i, int j, 
+				    int i, int j,
 				    int np);
 
 int gretl_model_write_coeffs (MODEL *pmod, double *b, int k);
@@ -431,10 +435,10 @@ MODEL *gretl_model_copy (MODEL *pmod);
 
 void swap_models (MODEL *targ, MODEL *src);
 
-int command_ok_for_model (int test_ci, gretlopt opt, 
+int command_ok_for_model (int test_ci, gretlopt opt,
 			  const MODEL *pmod);
 
-int model_test_ok (int ci, gretlopt opt, const MODEL *pmod, 
+int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 		   const DATASET *dset);
 
 int gretl_is_simple_OLS (const MODEL *pmod);
@@ -476,7 +480,7 @@ void model_test_set_pvalue (ModelTest *test, double pval);
 void model_test_set_param (ModelTest *test, const char *s);
 void model_test_set_opt (ModelTest *test, gretlopt opt);
 void model_test_set_allocated_param (ModelTest *test, char *s);
-void model_test_set_crit_and_alpha (ModelTest *test, 
+void model_test_set_crit_and_alpha (ModelTest *test,
 				    double crit,
 				    double alpha);
 
@@ -491,7 +495,7 @@ void gretl_model_destroy_tests (MODEL *pmod);
 
 void model_list_to_string (int *list, char *buf);
 
-int highest_numbered_var_in_model (const MODEL *pmod, 
+int highest_numbered_var_in_model (const MODEL *pmod,
 				   const DATASET *dset);
 
 int mle_criteria (MODEL *pmod, int addk);
@@ -511,9 +515,9 @@ int gretl_model_allocate_param_names (MODEL *pmod, int k);
 int gretl_model_set_param_name (MODEL *pmod, int i, const char *name);
 
 int gretl_model_add_arma_varnames (MODEL *pmod, const DATASET *dset,
-				   int yno, int p, int q, 
+				   int yno, int p, int q,
 				   const char *pmask, const char *qmask,
-				   int P, int Q, 
+				   int P, int Q,
 				   int r);
 
 int gretl_model_add_panel_varnames (MODEL *pmod, const DATASET *dset,
@@ -534,20 +538,20 @@ void gretl_model_set_name (MODEL *pmod, const char *name);
 
 const char *gretl_model_get_name (const MODEL *pmod);
 
-double gretl_model_get_scalar (MODEL *pmod, 
-			       ModelDataIndex idx, 
-			       DATASET *dset, 
+double gretl_model_get_scalar (MODEL *pmod,
+			       ModelDataIndex idx,
+			       DATASET *dset,
 			       int *err);
 
-int gretl_model_get_series (double *x, MODEL *pmod, 
-			    const DATASET *dset, 
+int gretl_model_get_series (double *x, MODEL *pmod,
+			    const DATASET *dset,
 			    ModelDataIndex idx);
 
-gretl_matrix *gretl_model_get_matrix (MODEL *pmod, 
-				      ModelDataIndex idx, 
+gretl_matrix *gretl_model_get_matrix (MODEL *pmod,
+				      ModelDataIndex idx,
 				      int *err);
 
-double 
+double
 gretl_model_get_data_element (MODEL *pmod, int idx, const char *s,
 			      const DATASET *dset, int *err);
 
@@ -558,9 +562,13 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
 
 int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node);
 
-MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, 
+MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 			     const DATASET *dset,
 			     int *err);
+#endif
+
+#ifdef  __cplusplus
+}
 #endif
 
 #endif /* GRETL_MODEL_H */
