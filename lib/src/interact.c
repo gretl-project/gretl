@@ -2306,7 +2306,7 @@ static int lib_open_append (ExecState *s,
     } else if (op.dbdata) {
         err = set_db_name(op.fname, op.ftype, vprn);
     } else {
-        err = gretl_get_data(op.fname, dset, opt, vprn);
+        err = gretl_seek_data(op.fname, dset, opt, vprn);
     }
 
     if (vprn != NULL && vprn != prn) {

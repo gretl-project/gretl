@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef DATAIO_H
@@ -93,10 +93,10 @@ double get_date_x (int pd, const char *obs);
 
 void date_maj_min (int t, const DATASET *dset, int *maj, int *min);
 
-int write_data (const char *fname, int *list, const DATASET *dset, 
+int write_data (const char *fname, int *list, const DATASET *dset,
 		gretlopt opt, PRN *prn);
 
-int gui_write_data (const char *fname, int *list, const DATASET *dset, 
+int gui_write_data (const char *fname, int *list, const DATASET *dset,
 		    gretlopt opt);
 
 int is_gzipped (const char *fname);
@@ -108,13 +108,16 @@ gretlopt get_merge_opts (gretlopt opt);
 int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
 			   gretlopt opt, PRN *prn);
 
-int gretl_get_data (char *fname, DATASET *dset, 
+int gretl_seek_data (char *fname, DATASET *dset,
+		     gretlopt opt, PRN *prn);
+
+int gretl_get_data (const char *fname, DATASET *dset,
 		    gretlopt opt, PRN *prn);
 
-int open_nulldata (DATASET *dset, int data_status, 
+int open_nulldata (DATASET *dset, int data_status,
 		   int length, gretlopt opt, PRN *prn);
 
-int import_csv (const char *fname, DATASET *dset, 
+int import_csv (const char *fname, DATASET *dset,
 	        gretlopt opt, PRN *prn);
 
 int import_spreadsheet (const char *fname, GretlFileType ftype,

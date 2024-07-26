@@ -1443,22 +1443,18 @@ int is_gzipped (const char *fname)
 }
 
 /**
- * gretl_get_data:
+ * gretl_seek_data:
  * @fname: name of file to try.
  * @dset: dataset struct.
  * @opt: option flags.
  * @prn: where messages should be written.
  *
- * Read "native" data from file into gretl's work space,
- * allocating space as required. This function handles
- * both native XML data format and native binary format.
- * It also handles incomplete information: it can perform
- * path-searching on @fname, and will try adding the .gdt
- * or .gdtb extension to @fname if this is not given.
+ * Reads data from file (either "native" or "CSV") into
+ * gretl's workspace, allocating storage as required.
  *
- * Note that a more straightforward function for reading a
- * native gretl data file, given the correct path, is
- * gretl_read_gdt().
+ * Path-searching is performed on @fname, and the function
+ * will try adding the .gdt or .gdtb extension to @fname
+ * if this is not given.
  *
  * The only applicable option is that @opt may contain
  * OPT_T when appending data to a panel dataset: in
@@ -1469,18 +1465,17 @@ int is_gzipped (const char *fname)
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int gretl_get_data (char *fname, DATASET *dset,
-		    gretlopt opt, PRN *prn)
+int gretl_seek_data (char *fname, DATASET *dset,
+                     gretlopt opt, PRN *prn)
 {
-    gretlopt append_opt = OPT_NONE;
-    int gdtsuff;
+    gretlopt myopt = OPT_NONE;
     char *test;
     int err = 0;
 
     gretl_error_clear();
 
 #if 0
-    fprintf(stderr, "gretl_get_data: calling addpath\n");
+    fprintf(stderr, "gretl_seek_data: calling addpath\n");
 #endif
 
     test = gretl_addpath(fname, 0);
@@ -1488,18 +1483,53 @@ int gretl_get_data (char *fname, DATASET *dset,
 	return E_FOPEN;
     }
 
-    gdtsuff = has_native_data_suffix(fname);
-
     if (opt & OPT_T) {
-	append_opt = OPT_T;
+	myopt = OPT_T;
     }
 
-    if (gdtsuff) {
+    if (has_native_data_suffix(fname)) {
 	/* specific processing for gretl datafiles  */
-	err = gretl_read_gdt(fname, dset, append_opt, prn);
+	err = gretl_read_gdt(fname, dset, myopt, prn);
     } else {
 	/* try fallback to a "csv"-type import */
-	err = import_csv(fname, dset, append_opt, prn);
+	err = import_csv(fname, dset, myopt, prn);
+    }
+
+    return err;
+}
+
+/**
+ * gretl_get_data:
+ * @fname: name of file to try.
+ * @dset: dataset struct.
+ * @opt: option flags.
+ * @prn: where messages should be written.
+ *
+ * Works like gretl_seek_data() except that no path searching
+ * is performed; @fname is always taken "as is" and is never
+ * modified.
+ *
+ * Returns: 0 on successful completion, non-zero otherwise.
+ */
+
+int gretl_get_data (const char *fname, DATASET *dset,
+		    gretlopt opt, PRN *prn)
+{
+    gretlopt myopt = OPT_NONE;
+    int err = 0;
+
+    gretl_error_clear();
+
+    if (opt & OPT_T) {
+	myopt = OPT_T;
+    }
+
+    if (has_native_data_suffix(fname)) {
+	/* specific processing for gretl datafiles  */
+	err = gretl_read_gdt(fname, dset, myopt, prn);
+    } else {
+	/* try for a "csv"-type import */
+	err = import_csv(fname, dset, myopt, prn);
     }
 
     return err;

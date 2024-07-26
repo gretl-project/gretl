@@ -823,7 +823,7 @@ static int get_native_data (char *fname, int ftype, int append,
     if (ftype == GRETL_XML_DATA) {
 	err = gretl_read_gdt(fname, dataset, opt | OPT_B, prn);
     } else {
-	err = gretl_get_data(fname, dataset, opt, prn);
+	err = gretl_seek_data(fname, dataset, opt, prn);
     }
 
     buf = gretl_print_steal_buffer(prn);
