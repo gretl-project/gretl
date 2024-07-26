@@ -1444,30 +1444,32 @@ static int ordered_depvar_check (int v, const DATASET *dset)
    only if the verbose option has been selected
 */
 
-static MODEL ordered_estimate (int *list, DATASET *dset, int ci,
+static MODEL ordered_estimate (const int *list, DATASET *dset, int ci,
                                gretlopt opt, PRN *prn)
 {
     MODEL model;
     int orig_v = dset->v;
     double *orig_y = NULL;
+    int *mylist = NULL;
     int *biglist = NULL;
     int *dumlist = NULL;
     int ymin = 0;
     int ndum = 0;
 
+    mylist = gretl_list_copy(list);
     gretl_model_init(&model, dset);
-    model.errcode = ordered_depvar_check(list[1], dset);
+    model.errcode = ordered_depvar_check(mylist[1], dset);
 
     if (!model.errcode) {
         /* remove the constant from the incoming list, if present */
-        model.errcode = list_purge_const(list, dset);
+        model.errcode = list_purge_const(mylist, dset);
     }
 
     if (!model.errcode) {
         /* construct augmented regression list, including dummies
            for the level of the dependent variable
         */
-        biglist = make_op_list(list, dset, &dumlist, &model.errcode);
+        biglist = make_op_list(mylist, dset, &dumlist, &model.errcode);
     }
 
     if (!model.errcode) {
@@ -1479,6 +1481,7 @@ static MODEL ordered_estimate (int *list, DATASET *dset, int ci,
     }
 
     if (model.errcode) {
+        free(mylist);
         free(dumlist);
         free(biglist);
         return model;
@@ -1512,7 +1515,7 @@ static MODEL ordered_estimate (int *list, DATASET *dset, int ci,
 
     if (orig_y != NULL) {
         /* if we messed with the dependent var, put the original back */
-        restore_depvar(dset->Z, orig_y, list[1]);
+        restore_depvar(dset->Z, orig_y, mylist[1]);
     }
 
     if (dset->v > orig_v) {
@@ -1521,6 +1524,7 @@ static MODEL ordered_estimate (int *list, DATASET *dset, int ci,
     }
 
     set_model_id(&model, opt);
+    free(mylist);
 
     return model;
 }
@@ -2565,7 +2569,7 @@ static MODEL mnl_model (const int *list, DATASET *dset,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL biprobit_model (int *list, DATASET *dset,
+MODEL biprobit_model (const int *list, DATASET *dset,
                       gretlopt opt, PRN *prn)
 {
     MODEL bpmod;
@@ -3378,7 +3382,7 @@ MODEL binary_probit (const int *list, DATASET *dset,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL ordered_logit (int *list, DATASET *dset,
+MODEL ordered_logit (const int *list, DATASET *dset,
                      gretlopt opt, PRN *prn)
 {
     PRN *vprn = (opt & OPT_V)? prn : NULL;
@@ -3401,7 +3405,7 @@ MODEL ordered_logit (int *list, DATASET *dset,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL ordered_probit (int *list, DATASET *dset,
+MODEL ordered_probit (const int *list, DATASET *dset,
                       gretlopt opt, PRN *prn)
 {
     PRN *vprn = (opt & OPT_V)? prn : NULL;
@@ -3424,7 +3428,7 @@ MODEL ordered_probit (int *list, DATASET *dset,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL multinomial_logit (int *list, DATASET *dset,
+MODEL multinomial_logit (const int *list, DATASET *dset,
                          gretlopt opt, PRN *prn)
 {
     PRN *vprn = (opt & OPT_V)? prn : NULL;
@@ -3828,11 +3832,11 @@ int fishers_exact_test (const Xtab *tab, PRN *prn)
  * model specified by @list.
  */
 
-MODEL interval_model (int *list, DATASET *dset,
+MODEL interval_model (const int *list, DATASET *dset,
                       gretlopt opt, PRN *prn)
 {
     MODEL intmod;
-    MODEL (* interval_estimate) (int *, DATASET *, gretlopt,
+    MODEL (* interval_estimate) (const int *, DATASET *, gretlopt,
                                  PRN *);
 
     gretl_error_clear();

@@ -3792,11 +3792,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         } else if (cmd->ci == AR1) {
             *model = ar1_model(cmd->list, dset, cmd->opt, prn);
         } else if (cmd->ci == ARMA) {
-            *model = arma(cmd->list, cmd->auxlist, dset,
-                          cmd->opt, prn);
+            *model = arma(cmd->list, cmd->auxlist, dset, cmd->opt, prn);
         } else {
-            *model = arch_model(cmd->list, cmd->order, dset,
-                                cmd->opt);
+            *model = arch_model(cmd->list, cmd->order, dset, cmd->opt);
         }
         if (cmd->ci == ARMA && (cmd->opt & OPT_Z)) {
             ; /* no real MODEL is returned */
@@ -3847,8 +3845,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         } else if (cmd->ci == LAD) {
             *model = lad_model(cmd->list, dset, cmd->opt);
         } else if (cmd->ci == QUANTREG) {
-            *model = quantreg_driver(cmd->param, cmd->list, dset,
-                                     cmd->opt, prn);
+            *model = quantreg_driver(cmd->param, cmd->list, dset, cmd->opt, prn);
         } else if (cmd->ci == DURATION) {
             *model = duration_model(cmd->list, dset, cmd->opt, prn);
         } else if (cmd->ci == GARCH) {
@@ -3856,15 +3853,13 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         } else if (cmd->ci == PANEL) {
             *model = panel_model(cmd->list, dset, cmd->opt, prn);
         } else if (cmd->ci == DPANEL) {
-            *model = dpd_model(cmd->list, cmd->auxlist, cmd->param,
-                               dset, cmd->opt, prn);
+            *model = dpd_model(cmd->list, cmd->auxlist, cmd->param, dset, cmd->opt, prn);
         } else if (cmd->ci == INTREG) {
             *model = interval_model(cmd->list, dset, cmd->opt, prn);
         } else if (cmd->ci == BIPROBIT) {
             *model = biprobit_model(cmd->list, dset, cmd->opt, prn);
         } else if (cmd->ci == MIDASREG) {
-            *model = midas_model(cmd->list, cmd->param, dset,
-                                 cmd->opt, prn);
+            *model = midas_model(cmd->list, cmd->param, dset, cmd->opt, prn);
         } else {
             /* can't happen */
             err = 1;

@@ -1020,23 +1020,25 @@ static void maybe_reposition_const (int *list, const DATASET *dset)
     }
 }
 
-MODEL interval_estimate (int *list, DATASET *dset,
+MODEL interval_estimate (const int *list, DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
     MODEL model;
+    int *mylist = gretl_list_copy(list);
     int *initlist = NULL;
 
     gretl_model_init(&model, NULL);
 
-    if (list[0] > 3) {
-	maybe_reposition_const(list, dset);
+    if (mylist[0] > 3) {
+	maybe_reposition_const(mylist, dset);
     }
 
     /* create extra series for model initialization and
        corresponding regression list
     */
-    model.errcode = create_midpoint_y(list, dset, &initlist);
+    model.errcode = create_midpoint_y(mylist, dset, &initlist);
     if (model.errcode) {
+        free(mylist);
 	return model;
     }
 
@@ -1045,6 +1047,7 @@ MODEL interval_estimate (int *list, DATASET *dset,
     if (model.errcode) {
 	fprintf(stderr, "interval_estimate: initial OLS failed\n");
 	free(initlist);
+        free(mylist);
 	return model;
     }
 
@@ -1062,9 +1065,10 @@ MODEL interval_estimate (int *list, DATASET *dset,
     }
 
     /* do the actual analysis */
-    model.errcode = do_interval(list, dset, &model, opt, prn);
+    model.errcode = do_interval(mylist, dset, &model, opt, prn);
 
     clear_model_xpx(&model);
+    free(mylist);
 
     return model;
 }
