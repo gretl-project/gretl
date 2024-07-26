@@ -3811,13 +3811,15 @@
       <description>
 	<para context="notex">
 	  Calcola la somma cumulata di <argname>x</argname>. Se
-	  <argname>x</argname> è una variabile, restituisce una variabile
+	  <argname>x</argname> è una serie, restituisce una serie
 	  <math>y</math> in cui ciascuno degli elementi è la somma dei
 	  valori di <argname>x</argname> fino a quel punto; il primo
 	  termine della somma è la prima osservazione non mancante
-	  (non-missing) nel campione corrente. Se <argname>x</argname>
-	  è una matrice, la somma cumulata viene calcolata per
-	  ciascuna delle colonne.
+	  (non-missing) nel campione corrente. Se ci sono valori
+	  mancanti successivi in <math>x</math>, anche i valori di
+	  <math>y</math> corrispondenti saranno mancanti. Se
+	  <argname>x</argname> è una matrice, la somma cumulata viene
+	  calcolata per ciascuna delle colonne.
 	</para>
 	<para context="tex">
 	  Calcola la somma cumulata di <argname>x</argname>. Se
@@ -3830,6 +3832,18 @@
 	  <argname>x</argname> è una matrice, gli elementi vengono
 	  sommati per colonna.
 	</para>
+	<para>
+	  Nel caso di dati panel la cumulazione avviene lungo la
+	  dimensione temporale, separatamente per ogni unità.
+	</para>
+	<para>
+	  Per far sì che i valori mancanti vengano ignorati nella
+	  cumulazione, basta trattarli come zeri e applicare la
+	  funzione <fncref targ="misszero"/>. Per esempio:
+	</para>
+	<code>
+	  series cx = cum(misszero(x))
+	</code>
 	<para>
 	  <seelist>
             <fncref targ="diff"/>
@@ -4974,10 +4988,25 @@
       </fnargs>
       <description>
 	<para>
-	  Ritorna 1 se <argname>name</argname> è l'identificativo di
+	  Ritorna non-zero se <argname>name</argname> è l'identificativo di
 	  un oggetto definito, che sia uno scalare, una serie, una
 	  matrice, lista, stringa, bundle o array; altrimenti, ritorna
 	  0.  Vedi anche <fncref targ="typeof"/>.
+	</para>
+	<para>
+	  L'uso tipico riguarda il caso in cui una funzione definita
+	  dall'utente ha un parametro facoltativo con un valore
+	  predefinito <lit>null</lit>. In questo caso si può usare
+	  <lit>exists()</lit>, passando il nome del parametro, per
+	  verificare se il chiamante ha fornito o meno un
+	  argomento. Si tenga presente che a questo riguardo gli
+	  argomenti di tipo lista sono un'eccezione: se un parametro
+	  lista ha un valore predefinito <lit>null</lit> e il
+	  chiamante non fornisce un argomento, la funzione ottiene una
+	  lista vuota anziché nessuna lista; quindi <lit>exists</lit>
+	  restituirà sempre un valore diverso da zero. Per verificare
+	  se un argomento lista è vuoto, si usi <fncref
+	  targ="nelem"/>.
 	</para>
       </description>
     </function>
@@ -9698,20 +9727,32 @@
 	</para>
 	<para>
 	  L'argomento <argname>v</argname> deve essere un vettore o
-	  uno scalare. Nel primo caso, il vettore deve essere di
-	  lunghezza uguale alla dimensione rilevante (righe o colonne)
-	  di <argname>X</argname>, e dovrà contenere valori interi
-	  pari minimo ad 1 e un massimo pari al numero di matrici nel
-	  vettore desiderato.  Ogni elemento di <argname>v</argname>
-	  indica l'indice vettoriale della matrice al quale la
-	  corrispondente riga di <argname>X</argname> dovrà essere
-	  assegnata. Nel secondo caso, in cui <argname>v</argname> è
-	  uno scalare, <argname>X</argname> verrà divisa in blocchi di
-	  <argname>v</argname> righe/colonne (a seconda del valore di
-	  <argname>bycol</argname>); se la dimensione rilevante delle
-	  matrice (righe o colonne) non è un multiplo esatto di
-	  <argname>v</argname>, si verificherà un errore.
+	  uno scalare.
 	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      Nel primo caso, il vettore deve essere di lunghezza
+	      uguale alla dimensione rilevante (righe o colonne) di
+	      <argname>X</argname>, e dovrà contenere valori interi
+	      positivi, Il massimo indica il numero di elementi
+	      dell'array risultato. Ogni elemento di
+	      <argname>v</argname> indica l'indice della matrice al
+	      quale la corrispondente riga di <argname>X</argname>
+	      dovrà essere assegnata.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Nel secondo caso, in cui <argname>v</argname> è uno
+	      scalare, la dimensione rilevante (righe o colonne) di
+	      deve essere un multiplo esatto di <argname>v</argname>.
+	      <argname>X</argname> verrà divisa in blocchi di
+	      <argname>v</argname> righe/colonne (a seconda del valore
+	      di <argname>bycol</argname>).
+	    </para>
+	  </li>
+	</ilist>
 	<para>
 	  Nel seguente esempio si divide una matrice <by r="4" c="3"/>
 	  in tre matrici: le prime due righe sono assegnate alla prima
@@ -9735,7 +9776,7 @@
 	  [4] 1 x 3
 	</code>
 	<para>
-	  In questo esempio, inveced, la matrice <argname>X</argname>
+	  In questo esempio, invece, la matrice <argname>X</argname>
 	  è divisa in blocchi di dimensione uguale:
 	</para>
 	<code>
@@ -11377,6 +11418,7 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;R</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;P</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -11387,6 +11429,15 @@
 	  <by r="n" c="n"/>. La matrice <math>Q</math> viene
 	  restituita direttamente, mentre <math>R</math> può essere
 	  recuperata usando il secondo argomento opzionale.
+	</para>
+	<para>
+	  Se viene fornito il terzo argomento facoltativo, la
+	  scomposizione impiega il pivoting delle colonne e, se tutto
+	  va a buon fine, <argname>P</argname> contiene l'ordinamento
+	  finale delle colonne sotto forma di vettore riga. Se le
+	  colonne non vengono effettivamente riordinate,
+	  <argname>P</argname> sarà uguale a <fncref
+	  targ="seq"/><lit>(1, n)</lit>.
 	</para>
 	<para>
 	  <seelist>
@@ -11679,9 +11730,19 @@
 	    </para>
 	  </li>
 	  <li>
+            <para>
+              Logistica (lgt o s): posizione, scala
+            </para>
+	  </li>
+	  <li>
 	    <para>
 	      Weibull (w o W): forma, scala
 	    </para>
+	  </li>
+	  <li>
+            <para>
+              Laplace (l o L): media, scala
+            </para>
 	  </li>
 	  <li>
 	    <para>
@@ -11709,8 +11770,11 @@
 	  $F$ di Snedecor &amp; \texttt{f} o \texttt{F} &amp; gradi di libertà (num.) &amp; gradi di libertà (den.) &amp; --\\
 	  Gamma &amp; \texttt{g} o \texttt{G} &amp; forma &amp; scala &amp; --\\
 	  Binomiale &amp; \texttt{b} o \texttt{B} &amp; $p$ &amp; $n$  &amp; --\\
+	  Esponenziale &amp; \texttt{exp} &amp; scala &amp; -- &amp; --\\
+	  Logistica &amp; \texttt{s} &amp; posizione &amp; scala &amp; --\\
 	  Poisson &amp; \texttt{p} o \texttt{P} &amp; media &amp; --  &amp; --\\
 	  Weibull &amp; \texttt{w} o \texttt{W} &amp; forma &amp; scala &amp; --\\
+	  Laplace &amp; \texttt{l} o \texttt{L} &amp; media &amp; scala &amp; --\\
 	  Generalized Error &amp; \texttt{e} o \texttt{E} &amp; forma &amp; -- &amp; --\\
 	  Beta &amp; \texttt{beta} &amp; forma1 &amp; forma1 &amp; --\\
 	  Beta-Binomiale &amp; \texttt{bb} &amp; $n$ &amp; forma1 &amp; forma1
