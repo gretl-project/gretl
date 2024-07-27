@@ -282,7 +282,8 @@ static void function_package_free (fnpkg *pkg);
 static int load_function_package (const char *fname,
                                   gretlopt opt,
                                   GArray *pstack,
-                                  PRN *prn);
+                                  PRN *prn,
+                                  fnpkg **ppkg);
 static int ufunc_get_structure (ufunc *u);
 #if CALL_DEBUG
 static void print_callstack (ufunc *fun);
@@ -5803,6 +5804,33 @@ static int pkg_in_stack (const char *name, GArray *pstack)
     return 0;
 }
 
+static int merge_data_requirements (fnpkg *pa, fnpkg *pb)
+{
+    int err = 0;
+
+    /* "merging" means that if the dependency @pb has a stronger
+       data requirement than @pa, this should be imposed on @pa
+       by inheritance. It's an error if the data requirements
+       of @pa and @pb are incompatible (time-series vs panel).
+    */
+    if (pa->dreq == pb->dreq || pb->dreq == FN_NODATA_OK) {
+        return 0;
+    } else if (pa->dreq == FN_NODATA_OK && pb->dreq != FN_NODATA_OK) {
+        pa->dreq = pb->dreq;
+    } else if (pa->dreq == FN_NEEDS_DATA &&
+               (pb->dreq == FN_NEEDS_TS || pb->dreq == FN_NEEDS_QM ||
+                pb->dreq == FN_NEEDS_PANEL)) {
+        pa->dreq = pb->dreq;
+    } else if (pa->dreq == FN_NEEDS_TS && pb->dreq == FN_NEEDS_QM) {
+        pa->dreq = pb->dreq;
+    } else {
+        gretl_errmsg_set(_("dependency has incompatible data requirement"));
+        err = 1;
+    }
+
+    return err;
+}
+
 static int load_gfn_dependencies (fnpkg *pkg, GArray *pstack)
 {
     int err = 0;
@@ -5814,26 +5842,30 @@ static int load_gfn_dependencies (fnpkg *pkg, GArray *pstack)
         fprintf(stderr, "*** load_gfn_dependencies for %s ***\n", pkg->name);
 
         for (i=0; i<pkg->n_depends && !err; i++) {
-            const char *dep = pkg->depends[i];
+            const char *depname = pkg->depends[i];
+            fnpkg *dep = NULL;
 
-            if (get_function_package_by_name(dep) != NULL) {
+            if (get_function_package_by_name(depname) != NULL) {
                 ; /* OK, already loaded */
-            } else if (pkg_in_stack(dep, pstack)) {
-                fprintf(stderr, " found %s in pstack\n", dep);
+            } else if (pkg_in_stack(depname, pstack)) {
+                fprintf(stderr, " found %s in pstack\n", depname);
                 ; /* don't go into infinite loop! */
             } else {
-                fprintf(stderr, " trying for %s\n", dep);
-                pkgpath = gretl_function_package_get_path(dep, PKG_ALL);
+                fprintf(stderr, " trying for %s\n", depname);
+                pkgpath = gretl_function_package_get_path(depname, PKG_ALL);
                 if (pkgpath == NULL) {
                     err = E_DATA;
                     gretl_errmsg_sprintf(_("%s: dependency %s was not found"),
-                                         pkg->name, dep);
+                                         pkg->name, depname);
                 } else {
                     err = load_function_package(pkgpath, OPT_NONE,
-                                                pstack, NULL);
+                                                pstack, NULL, &dep);
                     free(pkgpath);
                     if (!err) {
-                        g_array_append_val(pstack, dep);
+                        err = merge_data_requirements(pkg, dep);
+                    }
+                    if (!err) {
+                        g_array_append_val(pstack, depname);
                     }
                 }
             }
@@ -6810,6 +6842,7 @@ static fnpkg *check_for_loaded (const char *fname, gretlopt opt)
  * @opt: may include OPT_F to force loading even when
  * the package is already loaded.
  * @prn: gretl printer.
+ * @ppkg: optional pointer to receive fnpkg pointer.
  *
  * Loads the function package located by @fname into
  * memory, if possible. Supports gretl's "include" command
@@ -6821,7 +6854,8 @@ static fnpkg *check_for_loaded (const char *fname, gretlopt opt)
 static int load_function_package (const char *fname,
                                   gretlopt opt,
                                   GArray *pstack,
-                                  PRN *prn)
+                                  PRN *prn,
+                                  fnpkg **ppkg)
 {
     fnpkg *pkg;
     int err = 0;
@@ -6833,8 +6867,13 @@ static int load_function_package (const char *fname,
 
     pkg = read_package_file(fname, 1, &err);
 
-    if (!err && pkg->Rdeps != NULL) {
-        err = check_R_depends(pkg->name, pkg->Rdeps, prn);
+    if (!err) {
+        if (ppkg != NULL) {
+            *ppkg = pkg;
+        }
+        if (pkg->Rdeps != NULL) {
+            err = check_R_depends(pkg->name, pkg->Rdeps, prn);
+        }
     }
 
     if (!err) {
@@ -6892,7 +6931,7 @@ int include_gfn (const char *fname, gretlopt opt, PRN *prn)
 
     pstack = g_array_new(FALSE, FALSE, sizeof(char *));
     g_array_append_val(pstack, pkgname);
-    err = load_function_package(fname, opt, pstack, prn);
+    err = load_function_package(fname, opt, pstack, prn, NULL);
     g_array_free(pstack, TRUE);
     g_free(pkgname);
 
