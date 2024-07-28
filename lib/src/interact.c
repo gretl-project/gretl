@@ -2127,7 +2127,12 @@ static int open_append_stage_1 (CMD *cmd,
 
     if (!op->dbdata) {
         if (op->http) {
+#ifdef USE_CURL
             err = try_http(cmd->param, op->fname, NULL);
+#else
+            gretl_errmsg_set("http resource: cURL is not available");
+            err = E_DATA;
+#endif
         } else if (pkgdata) {
             err = get_package_data_path(cmd->ci, cmd->param, op->fname);
         } else {
