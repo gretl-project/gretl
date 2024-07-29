@@ -2226,7 +2226,11 @@ static NODE *eval_pdist (NODE *n, NODE *r, parser *p)
             }
         } else if (m > 5) {
             n_args_error(m, 2, 5, n->t, p);
-        }
+        } else {
+            if (d == D_DIRICHLET) {
+		p->err = E_INVARG;
+	    }
+	}
 
         if (p->err) {
             goto disterr;

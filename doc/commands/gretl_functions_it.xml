@@ -9459,10 +9459,11 @@
       </examples>
       <description>
 	<para>
-	  Funziona come <fncref targ="randgen"/> tranne che il valore
-	  calcolato è una matrice anziché una variabile. Gli argomenti
-	  iniziali di questa funzione (il cui numero dipende dalla
-	  distribuzione specificata) sono come quelli descritti per
+	  Con una eccezione (vedi sotto), funziona come <fncref
+	  targ="randgen"/> tranne che il valore calcolato è una
+	  matrice anziché una variabile. Gli argomenti iniziali di
+	  questa funzione (il cui numero dipende dalla distribuzione
+	  specificata) sono come quelli descritti per
 	  <lit>randgen</lit>, ma devono essere seguiti da due interi
 	  per specificare il numero di righe (<argname>r</argname>) e
 	  colonne (<argname>c</argname>) della matrice casuale
@@ -9470,6 +9471,17 @@
 	  sono matrici, devono avere un numero di elementi pari al
 	  prodotto di <argname>righe</argname> per
 	  <argname>colonne</argname>.
+	</para>
+	<para>
+	  L'unica eccezione a quanto sopra è la distribuzione di
+	  Dirichlet; poiché questa è una distribuzione multivariata,
+	  invocando <lit>mrandgen</lit> con <quote>dir</quote> come primo
+	  parametro si attiva una sintassi speciale: l'argomento 2
+	  deve essere un vettore positivo di <math>k</math> elementi
+	  <lit>a</lit> e l'argomento 3 deve essere uno scalare
+	  <lit>r</lit>. La funzione restituirà una matrice <by r="r"
+	  c="k"/> in cui ogni riga è un'estrazione indipendente da una
+	  distribuzione di Dirichlet con parametro <lit>a</lit>.
 	</para>
 	<para>
 	  Il primo esempio fornito sopra calcola un vettore colonna

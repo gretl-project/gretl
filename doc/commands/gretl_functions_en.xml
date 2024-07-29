@@ -9409,16 +9409,28 @@
       </examples>
       <description>
 	<para>
-	  Works like <fncref targ="randgen"/> except that the return
-	  value is a matrix rather than a series. The initial
-	  arguments to this function (the number of which depends on
-	  the selected distribution) are as described for
-	  <lit>randgen</lit>, but they must be followed by two
-	  integers to specify the number of rows and columns of the
-	  desired random matrix. If <argname>p1</argname> or
-	  <argname>p2</argname> are given in matrix form they must
-	  have a number of elements equal to the product of
-	  <argname>rows</argname> and <argname>cols</argname>.
+	  With one exception (see below), this function works like
+	  <fncref targ="randgen"/> except that the return value is a
+	  matrix rather than a series. The initial arguments to this
+	  function (the number of which depends on the selected
+	  distribution) are as described for <lit>randgen</lit>, but
+	  they must be followed by two integers to specify the number
+	  of rows and columns of the desired random matrix. If
+	  <argname>p1</argname> or <argname>p2</argname> are given in
+	  matrix form they must have a number of elements equal to the
+	  product of <argname>rows</argname> and
+	  <argname>cols</argname>.
+	</para>
+	<para>
+	  The only exception to the above is the Dirichlet
+	  distribution; since this is a multivariate distribution,
+	  invoking <lit>mrandgen</lit> with <quote>dir</quote> as
+	  first parameter triggers special syntax: argument 2 must be
+	  a <math>k</math>-element positive vector <lit>a</lit> and
+	  argument 3 must be a scalar <lit>r</lit>. The function will
+	  return an <by r="r" c="k"/> matrix where each row is an
+	  independent draw from a Dirichlet distribution with
+	  parameter <lit>a</lit>.
 	</para>
 	<para>
 	  The first example above calls for a uniform random column
