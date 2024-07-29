@@ -1492,7 +1492,7 @@ int gretl_rand_discrete (double *x, int t1, int t2,
     /* force cp[n-1] to 1 to avoid numerical issues */
     cp[n-1] = 1.0;
 #if DEBUG
-    for (i=0; i<n; i++){
+    for (i=0; i<n; i++) {
         printf("cp[%d] = %11.7f\n", i, cp[i]);
     }
 #endif

@@ -2190,7 +2190,7 @@ static NODE *discrete_rand_node (NODE *n, NODE *args, parser *p)
             p->err = E_INVARG;
         }
     }
-    if (n->t == F_MRANDGEN) {
+    if (!p->err && n->t == F_MRANDGEN) {
         r = node_get_int(args->v.bn.n[2], p);
         c = node_get_int(args->v.bn.n[3], p);
         if (!p->err && (r <= 0 || c <= 0)) {
