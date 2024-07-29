@@ -218,10 +218,8 @@ int gretl_bundle_write_to_file (gretl_bundle *b,
 				const char *fname,
 				int to_dotdir);
 
-char *gretl_bundle_write_to_buffer (gretl_bundle *b,
-				    int rank,
-				    int *bytes,
-				    int *err);
+char *gretl_bundle_write_to_json_buffer (gretl_bundle *b,
+                                         int *err);
 
 gretl_bundle *gretl_bundle_read_from_file (const char *fname,
 					   int from_dotdir,

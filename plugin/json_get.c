@@ -1657,7 +1657,7 @@ static JsonBuilder *real_bundle_to_json (gretl_bundle *b)
 */
 
 int bundle_to_json (gretl_bundle *b, const char *fname,
-		    gretlopt opt)
+		    gretlopt opt, gchar **pbuf)
 {
     const char *btype;
     JsonBuilder *jb;
@@ -1705,14 +1705,21 @@ int bundle_to_json (gretl_bundle *b, const char *fname,
 	json_generator_set_pretty(jgen, TRUE);
     }
 
-    ok = json_generator_to_file(jgen, fname, &gerr);
-    if (!ok) {
-	if (gerr != NULL) {
-	    gretl_errmsg_set(gerr->message);
-	    g_error_free(gerr);
-	} else {
-	    gretl_errmsg_set("Failed writing JSON to file");
-	}
+    if (pbuf != NULL) {
+        *pbuf = json_generator_to_data(jgen, NULL);
+        if (*pbuf == NULL) {
+            err = E_EXTERNAL;
+        }
+    } else {
+        ok = json_generator_to_file(jgen, fname, &gerr);
+        if (!ok) {
+            if (gerr != NULL) {
+                gretl_errmsg_set(gerr->message);
+                g_error_free(gerr);
+            } else {
+                gretl_errmsg_set("Failed writing JSON to file");
+            }
+        }
     }
 
     json_node_free(jn);
