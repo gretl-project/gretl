@@ -1636,9 +1636,16 @@ static int check_dist_count (int d, int f, int *np, int *argc)
             err = E_INVARG;
         }
     } else if (d == D_DIRICHLET) {
-        /* randgen only */
+        /* mrandgen only */
         if (randgen(f)) {
             *np = 1; /* alpha vector */
+        } else {
+            err = E_INVARG;
+        }
+    } else if (d == D_DISCRETE) {
+        /* randgen and mrandgen only */
+        if (randgen(f)) {
+            *np = 1; /* prob vector */
         } else {
             err = E_INVARG;
         }
@@ -2171,8 +2178,49 @@ static NODE *dirichlet_node (NODE *args, parser *p)
     return ret;
 }
 
-/* return a node containing the evaluated result of a
-   probability distribution function */
+static NODE *discrete_rand_node (NODE *n, NODE *args, parser *p)
+{
+    NODE *ret = NULL;
+    gretl_matrix *probs = NULL;
+    int r = 0, c = 0;
+
+    if (args->v.bn.n[1]->t == MAT) {
+        probs = args->v.bn.n[1]->v.m;
+        if (gretl_vector_get_length(probs) == 0) {
+            p->err = E_INVARG;
+        }
+    }
+    if (n->t == F_MRANDGEN) {
+        r = node_get_int(args->v.bn.n[2], p);
+        c = node_get_int(args->v.bn.n[3], p);
+        if (!p->err && (r <= 0 || c <= 0)) {
+            p->err = E_INVARG;
+        }
+    }
+    if (!p->err && n->t == F_RANDGEN) {
+        ret = aux_series_node(p);
+        p->err = gretl_rand_discrete(ret->v.xvec,
+                                     p->dset->t1, p->dset->t2,
+                                     probs);
+    } else if (!p->err) {
+        /* mrandgen */
+        int n = r * c;
+
+        ret = aux_sized_matrix_node(p, r, c, 0);
+        if (!p->err) {
+            p->err = gretl_rand_discrete(ret->v.m->val,
+                                         0, n-1, probs);
+        }
+    }
+
+    return ret;
+}
+
+/* Return a node containing the evaluated result of a probability
+   distribution function. Here, node @n is the function node and node
+   @r holds the arguments, the number of which ir not known in
+   advance.
+*/
 
 static NODE *eval_pdist (NODE *n, NODE *r, parser *p)
 {
@@ -2180,7 +2228,7 @@ static NODE *eval_pdist (NODE *n, NODE *r, parser *p)
 
     if (starting(p)) {
         NODE *e, *s;
-        int i, k, m = r->v.bn.n_nodes;
+        int i, k, nr = r->v.bn.n_nodes;
         int rgen = (n->t == F_RANDGEN);
         int mrgen = (n->t == F_MRANDGEN);
         int rgen1 = (n->t == F_RANDGEN1);
@@ -2193,11 +2241,14 @@ static NODE *eval_pdist (NODE *n, NODE *r, parser *p)
         int rows = 0, cols = 0;
         int np, argc, bb, d = 0;
 
-        if (m < 2) {
+        if (nr < 2) {
             p->err = E_ARGS;
             goto disterr;
         }
 
+        /* the first argument must hold a string identifying
+           the distribution to be employed
+        */
         s = r->v.bn.n[0];
         if (s->t == STR) {
             char *dstr = s->v.str;
@@ -2218,18 +2269,26 @@ static NODE *eval_pdist (NODE *n, NODE *r, parser *p)
 
         if (mrgen) {
             if (d == D_DIRICHLET) {
-                if (m != 3) {
-                    n_args_error(m, 3, 3, n->t, p);
+                if (nr != 3) {
+                    n_args_error(nr, 3, 3, n->t, p);
                 }
-            } else if (m < 4 || m > 7) {
-                n_args_error(m, 4, 7, n->t, p);
+            } else if (d == D_DISCRETE) {
+                if (nr != 4) {
+                    n_args_error(nr, 4, 4, n->t, p);
+                }
+            } else if (nr < 4 || nr > 7) {
+                n_args_error(nr, 4, 7, n->t, p);
             }
-        } else if (m > 5) {
-            n_args_error(m, 2, 5, n->t, p);
+        } else if (nr > 5) {
+            n_args_error(nr, 2, 5, n->t, p);
         } else {
             if (d == D_DIRICHLET) {
+                /* mrandgen only */
 		p->err = E_INVARG;
-	    }
+	    } else if (d == D_DISCRETE && !rgen) {
+                /* mrandgen or randgen only */
+                p->err = E_INVARG;
+            }
 	}
 
         if (p->err) {
@@ -2239,7 +2298,7 @@ static NODE *eval_pdist (NODE *n, NODE *r, parser *p)
         }
         if (!p->err && d != D_DIRICHLET) {
             k = np + argc + 2 * mrgen;
-            if (k != m - 1) {
+            if (k != nr - 1) {
                 p->err = E_INVARG;
             }
         }
@@ -2256,7 +2315,10 @@ static NODE *eval_pdist (NODE *n, NODE *r, parser *p)
             /* special: bivariate normal */
             return bvnorm_node(r, p);
         } else if (d == D_DIRICHLET) {
+            /* special: dirichlet */
             return dirichlet_node(r, p);
+        } else if (d == D_DISCRETE) {
+            return discrete_rand_node(n, r, p);
         }
 
         for (i=1; i<=k && !p->err; i++) {
@@ -8800,7 +8862,7 @@ static NODE *strseq_node (NODE *l, NODE *r, int rstr, parser *p)
     NODE *sn = rstr ? r : l; /* the string node */
     const char *s = sn->v.str;
     int dim;
-    
+
     if (mn->t == ARRAY) {
 	dim = gretl_array_get_length(mn->v.a);
     } else {

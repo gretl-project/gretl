@@ -1436,111 +1436,98 @@ int gretl_rand_beta_binomial (double *x, int t1, int t2,
 #define DEBUG 0
 
 /**
- * gretl_rand_discrete
+ * gretl_rand_discrete:
  * @x: target vector.
  * @t1: start of the fill range.
  * @t2: end of the fill range.
  * @p: probabilities vector.
- * @n: number of elements of @p.
- * @err: location to receive error code.
  *
- * Fill the selected range of array @a with pseudo-random drawings
+ * Fill the selected range of array @x with pseudo-random drawings
  * from the discrete distribution defined by @p, with support from 1
  * to @n.
  *
  * Returns: 0 on success, non-zero if @p is not a proper probability vector.
  */
 
-int gretl_rand_discrete(double *x, int t1, int t2,
-                        double *p, int n)
+int gretl_rand_discrete (double *x, int t1, int t2,
+                         const gretl_vector *p)
 {
-    int err = 0;
-    int i;
-    double *cp;
     gretl_matrix *S = NULL;
     gretl_matrix *sS = NULL;
+    double *cp;
+    double u;
+    int n, nr = t2 - t1 + 1;
+    int i, j, t, pos;
+    int err = 0;
 
-    cp = malloc(n * sizeof *cp);
-    if (cp == NULL) {
-        err = E_ALLOC;
-        return err;
+    n = gretl_vector_get_length(p);
+
+    /* sanity check on @p */
+    for (i=0; i<n; i++) {
+        if (p->val[i] < 0.0 || p->val[i] > 1.0) {
+            fprintf(stderr, "gretl_rand_discrete: p is outside[0,1]\n");
+            return E_INVARG;
+        }
     }
 
-    /* --- compute cumulated probabilities ---------- */
+    cp = malloc(n * sizeof *cp);
 
-    if ((p[0] < 0.0) || (p[0] > 1.0)) {
-        fprintf(stderr, "outside[0]\n");
-        err = E_INVARG;
+    if (cp == NULL) {
+        err = E_ALLOC;
+    } else {
+        cp[0] = p->val[0];
+        for (i=1; i<n; i++) {
+            cp[i] = cp[i-1] + p->val[i];
+        }
+        if (fabs(1.0 - cp[n-1]) > 1.0e-7) {
+            free(cp);
+            err = E_INVARG;
+        }
+    }
+
+    if (err) {
         goto bailout;
     }
 
-    /* --- sanity checks on p ------------------------*/
-
-    cp[0] = p[0];
-    for (i=1; i<n; i++) {
-        if ((p[i] < 0.0) || (p[i] > 1.0)) {
-            fprintf(stderr, "outside[%d]\n", i);
-            err = E_INVARG;
-            goto bailout;
-        }
-        cp[i] = cp[i-1] + p[i];
-    }
-
-    if (fabs(1.0 - cp[n-1]) > 1.0e-7) {
-        fprintf(stderr, "sum\n");
-        err = E_INVARG;
-        return err;
-    } else {
-        /* force cp[n-1] to 1 to avoid numerical issues */
-        cp[n-1] = 1.0;
-    }
-
+    /* force cp[n-1] to 1 to avoid numerical issues */
+    cp[n-1] = 1.0;
 #if DEBUG
-    for(i = 0; i<n; i++){
-        printf("%11.7f\n", cp[i]);
+    for (i=0; i<n; i++){
+        printf("cp[%d] = %11.7f\n", i, cp[i]);
     }
 #endif
 
-    int nr = t2 - t1 + 1;
-
-    /* build a matrix with nr uniform rvs sorted ascendingly
-       in column 2 and the corresponding row index in column 1 */
-
+    /* build a matrix with @nr uniform rvs sorted ascendingly
+       in column 2 and the corresponding row index in column 1
+    */
     S = gretl_random_matrix_new(nr, 2, D_UNIFORM);
     if (S == NULL) {
         err = E_ALLOC;
         goto bailout;
-    }
-
-    for (i=0; i<nr; i++) {
-        S->val[i] = i;
-    }
-
+    } else {
+        for (i=0; i<nr; i++) {
+            S->val[i] = i;
+        }
 #if DEBUG
         gretl_matrix_print(S, "S");
 #endif
-
-    sS = gretl_matrix_sort_by_column(S, 1, &err);
-    if (sS == NULL) {
-        err = E_ALLOC;
-        goto bailout;
     }
 
+    sS = gretl_matrix_sort_by_column(S, 1, &err);
     gretl_matrix_free(S);
+    if (err) {
+        goto bailout;
+    }
 
 #if DEBUG
     gretl_matrix_print(sS, "sS");
 #endif
 
-    /* go through the rows of sS and assign the proper value
-       to the elements of x
+    /* go through the rows of @sS and assign the proper value
+       to the elements of @x
     */
-
-    int t, j, pos = 0;
-    double u;
-    i = 0;
-
-    for(t=t1; t<=t2; t++) {
+    i = pos = 0;
+    for (t=t1; t<=t2; t++) {
         j = (int)(sS->val[i]);
         u = gretl_matrix_get(sS, i++, 1);
         while (u > cp[pos]) {
@@ -1552,7 +1539,8 @@ int gretl_rand_discrete(double *x, int t1, int t2,
         x[t1+j] = pos+1;
     }
 
-    bailout:
+ bailout:
+
     free(cp);
     gretl_matrix_free(sS);
 
