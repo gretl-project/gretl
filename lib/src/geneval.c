@@ -2190,20 +2190,27 @@ static NODE *discrete_rand_node (NODE *n, NODE *args, parser *p)
             p->err = E_INVARG;
         }
     }
+
+    if (!p->err && n->t == F_RANDGEN) {
+        ret = aux_series_node(p);
+        p->err = gretl_rand_discrete(ret->v.xvec,
+                                     p->dset->t1, p->dset->t2,
+                                     probs);
+    }
+
+    if (!p->err && n->t == F_RANDGEN1) {
+	double x;
+        ret = aux_scalar_node(p);
+        p->err = gretl_rand_discrete(&x, 0, 0, probs);
+	ret->v.xval = x;
+    }
+
     if (!p->err && n->t == F_MRANDGEN) {
         r = node_get_int(args->v.bn.n[2], p);
         c = node_get_int(args->v.bn.n[3], p);
         if (!p->err && (r <= 0 || c <= 0)) {
             p->err = E_INVARG;
         }
-    }
-    if (!p->err && n->t == F_RANDGEN) {
-        ret = aux_series_node(p);
-        p->err = gretl_rand_discrete(ret->v.xvec,
-                                     p->dset->t1, p->dset->t2,
-                                     probs);
-    } else if (!p->err) {
-        /* mrandgen */
         int n = r * c;
 
         ret = aux_sized_matrix_node(p, r, c, 0);
@@ -2285,9 +2292,6 @@ static NODE *eval_pdist (NODE *n, NODE *r, parser *p)
             if (d == D_DIRICHLET) {
                 /* mrandgen only */
 		p->err = E_INVARG;
-	    } else if (d == D_DISCRETE && !rgen) {
-                /* mrandgen or randgen only */
-                p->err = E_INVARG;
             }
 	}
 

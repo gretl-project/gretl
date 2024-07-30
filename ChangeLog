@@ -1,4 +1,6 @@
 version 2024c, in progress
+- Random number generation: add Dirichlet and generic discrete
+  distributions
 - Appending data via the GUI: support the fixed-sample option
 - "summary" command with --by option: provide a $result matrix
   if the list argument contains a single series, and improve
@@ -24,7 +26,8 @@ version 2024c, in progress
   menu items are disabled when the dataset is cross-sectional
 - Windows 64-bit build: make Consolas the default monospace
   font
-- Added --case option to the "rename" command, allowing bulk case conversion of all series names in the dataset.
+- Added --case option to the "rename" command, allowing bulk
+  case conversion of all series names in the dataset.
 
 2024-05-21 version 2024b
 - "gridplot" command: add a --title option

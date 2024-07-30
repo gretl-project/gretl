@@ -11573,7 +11573,7 @@
     <function name="randgen" section="probdist" output="series">
       <fnargs>
 	<fnarg type="string">d</fnarg>
-	<fnarg type="scalar-or-series">p1</fnarg>
+	<fnarg type="seebelow">p1</fnarg>
 	<fnarg type="scalar-or-series" conditional="true">p2</fnarg>
 	<fnarg type="scalar" conditional="true">p3</fnarg>
       </fnargs>
@@ -11592,16 +11592,27 @@
 	  which the pseudo-random numbers should be drawn. The
 	  arguments <argname>p1</argname> to <argname>p3</argname>
 	  specify the parameters of the selected distribution; the
-	  number of such parameters depends on the distribution.  For
-	  distributions other than the beta-binomial, the parameters
-	  <argname>p1</argname> and (if applicable)
-	  <argname>p2</argname> may be given as either scalars or
-	  series: if they are given as scalars the output series is
-	  identically distributed, while if a series is given for
-	  <argname>p1</argname> or <argname>p2</argname> the
+	  number of such parameters (and, in some cases, their nature)
+	  depends on the distribution.
+	</para>
+	<para>
+	  For distributions other than the beta-binomial and the
+	  generic discrete, the parameters <argname>p1</argname> and
+	  (if applicable) <argname>p2</argname> may be given as either
+	  scalars or series: if they are given as scalars the output
+	  series is identically distributed, while if a series is
+	  given for <argname>p1</argname> or <argname>p2</argname> the
 	  distribution is conditional on the parameter value at each
-	  observation. In the case of the beta-binomial all the
-	  parameters must be scalars.
+	  observation.
+	</para>
+	<para>
+	  In the two special cases mentioned above, all three
+	  parameters of the beta-binomial must be scalar. For the
+	  generic discrete distribution, instead,
+	  <argname>p1</argname> must be a vector with <math>k</math>
+	  elements. These are taken to represent the probabilities of
+	  a discrete random variable with support from 1 to
+	  <math>k</math>.
 	</para>
 	<para>
 	  Specifics are given below: the string code for each
@@ -11692,6 +11703,11 @@
               Beta-Binomial (bb): trials, shape1, shape2
             </para>
 	  </li>
+	  <li>
+            <para>
+              Generic discrete (disc): probabilities
+            </para>
+	  </li>
 	</ilist>
 	<tabular colspec="lllll">
 	  \textbf{Distribution} &amp; \textsl{d} &amp; \textsl{p1} &amp; \textsl{p2} &amp; \textsl{p3}\\[4pt]
@@ -11710,7 +11726,8 @@
 	  Laplace &amp; \texttt{l} or \texttt{L} &amp; mean &amp; scale &amp; --\\
 	  Generalized Error &amp; \texttt{e} or \texttt{E} &amp; shape &amp; -- &amp; --\\
 	  Beta &amp; \texttt{beta} &amp; shape1 &amp; shape2 &amp; --\\
-	  Beta-Binomial &amp; \texttt{bb} &amp; $n$ &amp; shape1 &amp; shape2
+	  Beta-Binomial &amp; \texttt{bb} &amp; $n$ &amp; shape1 &amp; shape2 \\
+	  Generic discrete &amp; \texttt{disc} &amp; $\mathbf{p}$ &amp; -- &amp; --
 	</tabular>
 	<para>
 	  <seelist>
