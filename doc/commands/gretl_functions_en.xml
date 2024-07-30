@@ -9406,6 +9406,7 @@
       <examples>
 	<example>matrix mx = mrandgen(u, 0, 100, 50, 1)</example>
 	<example>matrix mt14 = mrandgen(t, 14, 20, 20)</example>
+        <example>matrix D = mrandgen(dir, {0.5,1,2,4}, 30)</example>
       </examples>
       <description>
 	<para>
@@ -9414,29 +9415,32 @@
 	  matrix rather than a series. The initial arguments to this
 	  function (the number of which depends on the selected
 	  distribution) are as described for <lit>randgen</lit>, but
-	  they must be followed by two integers to specify the number
-	  of rows and columns of the desired random matrix. If
+	  they must be followed by two integers to specify the row and
+	  column dimensions of the desired random matrix. If
 	  <argname>p1</argname> or <argname>p2</argname> are given in
 	  matrix form they must have a number of elements equal to the
 	  product of <argname>rows</argname> and
 	  <argname>cols</argname>.
 	</para>
 	<para>
-	  The only exception to the above is the Dirichlet
-	  distribution; since this is a multivariate distribution,
-	  invoking <lit>mrandgen</lit> with <quote>dir</quote> as
-	  first parameter triggers special syntax: argument 2 must be
-	  a <math>k</math>-element positive vector <lit>a</lit> and
-	  argument 3 must be a scalar <lit>r</lit>. The function will
+	  The exceptional case is the Dirichlet distribution. This is
+	  a multivariate distribution, and invoking
+	  <lit>mrandgen</lit> with <quote>dir</quote> as first
+	  parameter triggers special syntax: the second argument must
+	  be a <math>k</math>-element positive vector <math>a</math>,
+	  and the third a scalar <math>r</math>. The function will
 	  return an <by r="r" c="k"/> matrix where each row is an
 	  independent draw from a Dirichlet distribution with
-	  parameter <lit>a</lit>.
+	  parameter <math>a</math>.
 	</para>
 	<para>
-	  The first example above calls for a uniform random column
-	  vector of length 50, while the second example specifies a
-	  <by r="20" c="20"/> random matrix with drawings from the
-	  <math>t</math> distribution with 14 degrees of freedom.
+	  The first example above calls for a column vector of length
+	  50 holding draws from a continuous uniform distribution on
+	  [0,100]. The second example specifies a <by r="20" c="20"/>
+	  random matrix with draws from the <math>t</math>
+	  distribution with 14 degrees of freedom; and the third
+	  returns a <by r="30" c="4"/> matrix holding 30 draws from a
+	  specified Dirichlet distribution.
 	</para>
 	<para>
 	  <seelist>
@@ -11606,18 +11610,27 @@
 	  observation.
 	</para>
 	<para>
-	  In the two special cases mentioned above, all three
-	  parameters of the beta-binomial must be scalar. For the
-	  generic discrete distribution, instead,
-	  <argname>p1</argname> must be a vector with <math>k</math>
-	  elements. These are taken to represent the probabilities of
-	  a discrete random variable with support from 1 to
-	  <math>k</math>.
-	</para>
+          The two special cases have the following requirements:
+        </para>
+        <ilist>
+          <li>
+            <para>
+              beta-binomial: all three parameters must be scalar.
+            </para>
+          </li>
+          <li>
+            <para>
+              generic discrete: a single parameter is wanted, namely a
+              <math>k</math>-vector whose elements represent the
+              probabilities for an integer-valued random variable with
+              support from 1 to <math>k</math>.
+            </para>
+          </li>
+        </ilist>
 	<para>
 	  Specifics are given below: the string code for each
 	  distribution is shown in parentheses, followed by the
-	  interpretation of the argument <argname>p1</argname> and,
+	  interpretation of the arguments <argname>p1</argname> and,
 	  where applicable, <argname>p2</argname> and
 	  <argname>p3</argname>.
 	</para>
