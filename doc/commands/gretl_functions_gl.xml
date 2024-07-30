@@ -9406,25 +9406,41 @@
       <examples>
 	<example>matrix mx = mrandgen(u, 0, 100, 50, 1)</example>
 	<example>matrix mt14 = mrandgen(t, 14, 20, 20)</example>
+  <example>matrix D = mrandgen(dir, {0.5,1,2,4}, 30)</example>
       </examples>
       <description>
 	<para>
-	  Funciona da mesma forma que a función <fncref targ="randgen"/> agás
-	  polo feito de que devolve unha matriz en troques dunha serie. Os
-	  argumentos iniciais (cuxo número depende da distribución escollida)
-	  para esta función xa se describen para <lit>randgen</lit>, pero deben
-	  de estar seguidos por dous números enteiros para especificar o número
-	  de filas e de columnas que vai ter a matriz aleatoria desexada.
-	  Se indicas <argname>p1</argname> ou <argname>p2</argname>
-	  en forma matricial, deben ter un número de elementos que sexa
-	  igual ao produto de <argname>filas</argname> por
+	  Con unha excepción (mira máis abaixo), esta función opera da mesma
+	  forma que a función <fncref targ="randgen"/> agás polo feito de que
+	  devolve unha matriz en troques dunha serie. Os argumentos iniciais
+	  (cuxo número depende da distribución escollida) para esta función
+	  xa se describen para <lit>randgen</lit>, pero deben estar seguidos
+	  por dous números enteiros para especificar as dimensións de filas e
+	  de columnas que vai ter a matriz aleatoria desexada. Se indicas
+	  <argname>p1</argname> ou <argname>p2</argname> en forma matricial,
+	  deben ter un número de elementos que sexa igual ao
+	  produto de <argname>filas</argname> por
 	  <argname>columnas</argname>.
 	</para>
 	<para>
-	  O primeiro dos exemplos precedentes crea un vector columna con 50
-	  elementos, a partir dunha distribución Uniforme. O segundo exemplo
-	  crea unha matriz aleatoria de orde <by r="20" c="20"/>, con valores
-	  xerados da distribución <math>t</math> con 14 graos de liberdade.
+	  Un caso excepcional é a distribución de Dirichlet. Esta é unha
+	  distribución multivariante, e facer unha chamada a <lit>mrandgen</lit>
+	  con <quote>dir</quote> como primeiro parámetro carrexa unha sintaxe
+	  especial: o segundo argumento debe ser un vector <math>a</math>,
+	  positivo con <math>k</math> elementos, e o terceiro argumento debe
+	  ser un escalar <math>r</math>. A función vai devolver unha matriz
+	  de orde <by r="r" c="k"/> na que cada fila é unha extracción
+	  independente dunha distribución de Dirichlet con parámetro
+	  <math>a</math>.
+	</para>
+	<para>
+	  O primeiro dos exemplos precedentes solicita un vector columna de 50
+	  elementos, extraídos a partir dunha distribución Uniforme en [0,100].
+	  O segundo exemplo especifica unha matriz aleatoria de orde
+	  <by r="20" c="20"/>, con valores extraídos dunha distribución
+	  <math>t</math> con 14 grados de liberdade; e o terceiro devolve unha
+	  matriz de orde <by r="30" c="4"/> que contén 30 extraccións da
+	  distribución de Dirichlet indicada.
 	</para>
 	<para>
 	  <seelist>
@@ -11561,7 +11577,7 @@
     <function name="randgen" section="probdist" output="series">
       <fnargs>
 	<fnarg type="string">d</fnarg>
-	<fnarg type="scalar-or-series">p1</fnarg>
+	<fnarg type="seebelow">p1</fnarg>
 	<fnarg type="scalar-or-series" conditional="true">p2</fnarg>
 	<fnarg type="scalar" conditional="true">p3</fnarg>
       </fnargs>
@@ -11580,23 +11596,43 @@
 	  especificar o tipo de distribución de probabilidade da que se extraen
 	  os números pseudoaleatorios. Os argumentos de <argname>p1</argname>
 	  a <argname>p3</argname> especifican os parámetros da distribución
-	  escollida, e o número destes parámetros depende desa distribución.
-	  Para outras distribucións diferentes á Beta-Binomial, os parámetros
-	  <argname>p1</argname> e (caso de ser aplicable) <argname>p2</argname>
-	  podes indicalos en formato de escalar ou de serie. Cando os utilizas
-	  en formato escalar, a serie que resulta procede de distribucións
-	  identicamente distribuídas. Cando utilizas series para os argumentos
-	  <argname>p1</argname> ou <argname>p2</argname>, a serie resultante
-	  procede de distribucións condicionadas ao valor dos parámetros en
-	  cada observación. No caso da Beta-Binomial, todos os parámetros
-	  deben de ser escalares.
+	  escollida; o número destes parámetros (e nalgúns casos, a súa
+	  natureza) depende desa distribución.
 	</para>
+	<para>
+	  Para outras distribucións diferentes á Beta-Binomial e á Discreta
+	  xenérica, os parámetros <argname>p1</argname> e (caso de ser aplicable)
+	  <argname>p2</argname> podes indicalos en formato de escalar ou de
+	  serie. Cando os utilizas en formato escalar, a serie que resulta
+	  procede de distribucións identicamente distribuídas. Cando utilizas
+	  series para os argumentos <argname>p1</argname> ou
+	  <argname>p2</argname>, a serie resultante procede de distribucións
+	  condicionadas ao valor dos parámetros en cada observación.
+	</para>
+	<para>
+          Os dous casos especiais teñen os seguintes requirimentos:
+        </para>
+        <ilist>
+          <li>
+            <para>
+              Beta-binomial: os tres parámetros deben ser escalares.
+            </para>
+          </li>
+          <li>
+            <para>
+              Discreta xenérica: se necesita un único parámetro; en
+              concreto un vector <math>k</math> cuxos elementos
+              representen as probabilidades dunha variable aleatoria
+              con valores enteiros con soporte de 1 a <math>k</math>.
+            </para>
+          </li>
+        </ilist>
 	<para>
 	  A continuación indícanse detalles máis específicos: o código de
 	  texto para cada tipo de distribución móstrase entre parénteses,
 	  seguido da interpretación do argumento <argname>p1</argname> e,
-	  cando é aplicable, da interpretación de <argname>p2</argname> e
-	  <argname>p3</argname>.
+	  cando é aplicable, das interpretacións de <argname>p2</argname>
+	  e de <argname>p3</argname>.
 	</para>
 
 	<ilist context="notex">
@@ -11680,6 +11716,11 @@
               Beta-Binomial (bb): ensaios, forma1, forma2
             </para>
 	  </li>
+	  <li>
+            <para>
+              Discreta xenérica (disc): probabilidades
+            </para>
+	  </li>
 	</ilist>
 	<tabular colspec="lllll">
 	  \textbf{Distribución} &amp; \textsl{d} &amp; \textsl{p1} &amp; \textsl{p2} &amp; \textsl{p3}\\[4pt]
@@ -11698,7 +11739,8 @@
 	  Laplace &amp; \texttt{l} ou \texttt{L} &amp; media &amp; escala &amp; --\\
 	  Erro Xeneralizado &amp; \texttt{E} &amp; forma &amp; -- &amp; --\\
 	  Beta &amp; \texttt{beta} &amp; forma1 &amp; forma2 &amp; --\\
-	  Beta-Binomial &amp; \texttt{bb} &amp; $n$ &amp; forma1 &amp; forma2
+	  Beta-Binomial &amp; \texttt{bb} &amp; $n$ &amp; forma1 &amp; forma2 \\
+	  Discreta xenérica &amp; \texttt{disc} &amp; $\mathbf{p}$ &amp; -- &amp; --
 	</tabular>
 	<para>
 	  <seelist>

@@ -6072,15 +6072,31 @@
 	Dentro de un bloque <lit>gpbuild</lit> solo tienen un tratamiento especial
 	las instrucciones para representación gráfica; todas las otras instrucciones
 	se ejecutan normalmente. Únicamente hay dos restricciones que advertir.
-	Primero: las instrucciones de representación <emphasis>no</emphasis>
-	deben incluir una especificación de salida en este contexto, puesto que eso
-	estaría en conflicto con la redirección automática de la salida, hacia el
-	'array' de <repl>plotspecs</repl>. Segundo: los gráficos que invoquen la
-	directiva <quote><lit>multiplot</lit></quote> de GNUPLOT non son adecuados
-	para ser incluidos en un bloque <lit>gpbuild</lit>. Esto es porque
-	<lit>gridplot</lit> utiliza internamente <lit>multiplot</lit>, y esas
-	construcciones no se pueden anidar.
       </para>
+      <ilist>
+   <li>
+      <para>
+	Las instrucciones de representación <emphasis>no</emphasis> deben
+	incluir una especificación de salida en este contexto, puesto que eso
+	estaría en conflicto con la redirección automática de la salida, hacia
+	el 'array' de <repl>plotspecs</repl>. Una excepción a esta regla se
+	permite para <lit>--output=display</lit> (que es bastante habitual
+	como opción predeterminada en los paquetes de funciones relacionadas
+	con representaciones gráficas); esta directiva se ignora de modo
+	silencioso en favor del tratamiento automático.
+      </para>
+    </li>
+    <li>
+      <para>
+	Los gráficos que invoquen la directiva
+	<quote><lit>multiplot</lit></quote> de GNUPLOT no son adecuados
+	para ser incluidos en un bloque <lit>gpbuild</lit>. Esto es porque
+	<lit>gridplot</lit> utiliza internamente <lit>multiplot</lit>,
+	y esas construcciones no se pueden
+	anidar.
+      </para>
+    </li>
+      </ilist>
       <subhead>Alternativa manual</subhead>
       <para>
 	Se puede preparar un 'array' de especificaciones de gráficos para utilizar
@@ -12815,16 +12831,16 @@
 	<option>
 	  <flag>--z-scores</flag>
 	  <effect>Mira abajo</effect>
-        </option>
-        <option>
+  </option>
+  <option>
 	  <flag>--raw</flag>
 	  <effect>Mira abajo</effect>
-        </option>
-        <option>
+  </option>
+  <option>
 	  <flag>--output</flag>
 	  <optparm>nombrearchivo</optparm>
 	  <effect>Envía el gráfico al archivo especificado</effect>
-        </option>
+  </option>
       </options>
     </usage>
 
@@ -12886,20 +12902,20 @@
 	<option>
 	  <flag>--robust</flag>
 	  <effect>Desviaciones típicas robustas</effect>
-        </option>
-        <option>
+  </option>
+  <option>
 	  <flag>--intervals</flag>
 	  <optparm optional="true">nivelconf</optparm>
 	  <effect>Calcula los intervalos de confianza</effect>
-        </option>
-        <option>
+  </option>
+  <option>
 	  <flag>--vcv</flag>
 	  <effect>Presenta la matriz de covarianzas</effect>
-        </option>
-        <option>
+  </option>
+  <option>
 	  <flag>--quiet</flag>
 	  <effect>No presenta los resultados</effect>
-        </option>
+  </option>
       </options>
       <examples>
 	<example>quantreg 0.25 y 0 xlista</example>
@@ -13008,22 +13024,22 @@
       <ilist>
 	<li>
 	  <para>
-	    Cuando esta instrucción se invoca desde un guion, finaliza la
-	    ejecución de ese guion. En el contexto de gretlcli en modo de
-	    procesamiento por lotes, el propio gretlcli finaliza; en caso
-	    contrario, el programa retrocede a modo interactivo.
+	Cuando esta instrucción se invoca desde un guion, finaliza la
+	ejecución de ese guion. En el contexto de gretlcli en modo de
+	procesamiento por lotes, el propio gretlcli finaliza; en caso
+	contrario, el programa retrocede a modo interactivo.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Cuando se invoca desde la consola del programa de Interfaz Gráfica
-	    de Usuario (GUI), se cierra la ventana de la consola.
+	Cuando se invoca desde la consola del programa de Interfaz Gráfica
+	de Usuario (GUI), se cierra la ventana de la consola.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Cuando se invoca desde gretlcli en modo interactivo, este programa
-	    finaliza.
+	Cuando se invoca desde gretlcli en modo interactivo, este programa
+	finaliza.
 	  </para>
 	</li>
       </ilist>
@@ -13093,76 +13109,117 @@
       <ilist>
 	<li>
 	  <para>
-	    Elección de algoritmo: Puedes elegir el método Descenso de Coordenada
-	    Cíclico (CCD) tanto para el LASSO como para la regresión Ridge (cresta),
-	    en contraste con el método por defecto; es decir, el Método de
-	    Multiplicadores de Dirección Alterna (ADMM) para el LASSO y la
-	    Descomposición del Valor Singular (SVD) para el Ridge.
+	Elección de algoritmo: Puedes elegir el método Descenso de Coordenada
+	Cíclico (CCD) tanto para el LASSO como para la regresión Ridge (cresta),
+	en contraste con el método por defecto; es decir, el Método de
+	Multiplicadores de Dirección Alterna (ADMM) para el LASSO y la
+	Descomposición del Valor Singular (SVD) para el Ridge.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    El criterio por defecto para que rinda <quote>mejor</quote>
-	    la validación cruzada es minimizar el Error Cuadrático Medio
-	    (MSE), pero puedes seleccionar la regla alternativa
-	    <quote>una desviación típica</quote>. Esta alternativa, que
-	    favorece la sobriedad, escoge el mayor factor de penalización
-	    cuyo MSE está a menos de una desviación típica del mínimo.
+	El criterio por defecto para que rinda <quote>mejor</quote>
+	la validación cruzada es minimizar el Error Cuadrático Medio
+	(MSE), pero puedes seleccionar la regla alternativa
+	<quote>una desviación típica</quote>. Esta alternativa, que
+	favorece la sobriedad, escoge el mayor factor de penalización
+	cuyo MSE está a menos de una desviación típica del mínimo.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Semilla para los pliegues aleatorios: Si quieres obtener resultados
-	    replicables en la validación cruzada con pliegues aleatorios, es
-	    necesario especificar una semilla para el generador de números
-	    aleatorios.
+	Semilla para los pliegues aleatorios: Si quieres obtener resultados
+	replicables en la validación cruzada con pliegues aleatorios, es
+	necesario especificar una semilla para el generador de números
+	aleatorios.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Por defecto, regls utilizará MPI (si está disponible) en un esfuerzo por
-	    acelerar la validación cruzada. El recuadro para MPI (que se muestra solo
-	    cuando se compila GRETL con soporte MPI) te permite desactivar esto,
-	    lo que puede producir una aceleración para bases pequeñas de datos.
+	Por defecto, regls utilizará MPI (si está disponible) en un esfuerzo por
+	acelerar la validación cruzada. El recuadro para MPI (que se muestra solo
+	cuando se compila GRETL con soporte MPI) te permite desactivar esto,
+	lo que puede producir una aceleración para bases pequeñas de datos.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    La opción de mostrar el tiempo de ejecución te puede ser útil si
-	    quieres comparar el comportamiento de diferentes algoritmos, o
-	    comprobar si vale la pena usar el MPI. El tiempo que se muestra en
-	    el resultado corresponde a la ejecución del código C subyacente.
+	La opción de mostrar el tiempo de ejecución te puede ser útil si
+	quieres comparar el comportamiento de diferentes algoritmos, o
+	comprobar si vale la pena usar el MPI. El tiempo que se muestra en
+	el resultado corresponde a la ejecución del código C subyacente.
 	  </para>
 	</li>
       </ilist>
     </description>
   </command>
 
-  <command name="rename" section="Dataset"
-    label="Cambiar el nombre de una variable" context="cli">
-
+  <command name="rename" section="Dataset" label="Cambiar el nombre de una variable" context="cli">
     <usage>
       <arguments>
 	      <argument>serie</argument>
 	      <argument>nuevonombre</argument>
       </arguments>
       <options>
-        <option>
-	      <flag>--quiet</flag>
-	      <effect>Suprime la presentación de resultados</effect>
-        </option>
+  <option>
+	  <flag>--quiet</flag>
+	  <effect>Suprime la presentación de resultados</effect>
+  </option>
+  <option>
+    <flag>--case</flag>
+    <effect>Cambia el formato de los nombres de todas las series; mira abajo</effect>
+  </option>
       </options>
+      <examples>
+        <example>rename x2 ingreso</example>
+        <example>rename --case=lower</example>
+      </examples>
     </usage>
 
     <description>
       <para>
-	Cambia el nombre de <repl>serie</repl> (identificada por su
-	nombre o su número ID) a <repl>nuevonombre</repl>. El nuevo nombre
-	debe tener 31 caracteres como máximo, comenzar con una letra
-	y estar formado solo por letras, dígitos y el carácter de barra
-	baja. Además, no debe ser el nombre de un objeto de cualquier
-	tipo que ya exista.
+        Sin la opción <opt>--case</opt>, esta instrucción cambia el nombre
+        de <repl>serie</repl> (identificada por su nombre o su número ID) a
+        <repl>nuevonombre</repl>. El nuevo nombre debe tener 31 caracteres
+        como máximo, comenzar con una letra y estar formado solo por letras,
+        dígitos y/o el carácter de barra baja. Además, no debe ser el nombre
+        de un objeto de cualquier tipo que ya exista.
       </para>
+      <para>
+        La opción <opt>--case</opt> permite cambiar el formato de
+        <emphasis>todos</emphasis> los nombres de las series en el conjunto
+        de datos abierto vigente. Cuando se utiliza esta opción, no se debe
+        indicar ningún nombre para <repl>serie</repl> ni para
+        <repl>nuevonombre</repl>. Se admiten los siguientes tipos de formato:
+      </para>
+      <ilist>
+        <li>
+          <para>
+      <repl>lower</repl>: Convierte todos los nombres de las series a minúsculas.
+          </para>
+        </li>
+        <li>
+          <para>
+      <repl>upper</repl>: Convierte todos los nombres de las series a mayúsculas.
+          </para>
+        </li>
+        <li>
+          <para>
+      <repl>camel</repl>: Convierte todos los nombres de las series a formato
+      camello; lo que significa que se eliminan los guiones bajos y el carácter
+      siguiente a los mismos (si hai alguno) se pone en mayúsculas. Por
+      ejemplo, <lit>alguna_cosa</lit> se vuelve <lit>algunaCosa</lit>.
+          </para>
+        </li>
+        <li>
+          <para>
+      <repl>snake</repl>: Convierte todos los nombres de las series a formato
+      serpiente; lo que significa que cualquier letra mayúscula (excepto la
+      primera del nombre) se convierte a minúscula, precedida por un guión
+      bajo. Por ejemplo, <lit>algunaCosa</lit> se vuelve <lit>alguna_cosa</lit>.
+          </para>
+        </li>
+      </ilist>
     </description>
 
     <gui-access>
