@@ -2182,42 +2182,42 @@ static NODE *discrete_rand_node (NODE *n, NODE *args, parser *p)
 {
     NODE *ret = NULL;
     gretl_matrix *probs = NULL;
-    int r = 0, c = 0;
+    int vsize = 0;
 
     if (args->v.bn.n[1]->t == MAT) {
         probs = args->v.bn.n[1]->v.m;
         if (gretl_vector_get_length(probs) == 0) {
             p->err = E_INVARG;
+            return NULL;
         }
     }
 
-    if (!p->err && n->t == F_RANDGEN) {
+    if (n->t == F_RANDGEN1) {
+        ret = aux_scalar_node(p);
+    } else if (n->t == F_RANDGEN) {
         ret = aux_series_node(p);
-        p->err = gretl_rand_discrete(ret->v.xvec,
-                                     p->dset->t1, p->dset->t2,
-                                     probs);
+    } else {
+        /* F_MRANDGEN */
+        int r = node_get_int(args->v.bn.n[2], p);
+        int c = node_get_int(args->v.bn.n[3], p);
+
+        if (!p->err && (r <= 0 || c <= 0)) {
+            p->err = E_INVARG;
+        } else {
+            ret = aux_sized_matrix_node(p, r, c, 0);
+            vsize = r * c;
+        }
     }
 
     if (!p->err && n->t == F_RANDGEN1) {
-	double x;
-        ret = aux_scalar_node(p);
-        p->err = gretl_rand_discrete(&x, 0, 0, probs);
-	ret->v.xval = x;
-    }
-
-    if (!p->err && n->t == F_MRANDGEN) {
-        r = node_get_int(args->v.bn.n[2], p);
-        c = node_get_int(args->v.bn.n[3], p);
-        if (!p->err && (r <= 0 || c <= 0)) {
-            p->err = E_INVARG;
-        }
-        int n = r * c;
-
-        ret = aux_sized_matrix_node(p, r, c, 0);
-        if (!p->err) {
-            p->err = gretl_rand_discrete(ret->v.m->val,
-                                         0, n-1, probs);
-        }
+        p->err = gretl_rand_discrete(&ret->v.xval, 0, 0, probs);
+    } else if (!p->err && n->t == F_RANDGEN) {
+        p->err = gretl_rand_discrete(ret->v.xvec,
+                                     p->dset->t1, p->dset->t2,
+                                     probs);
+    } else if (!p->err) {
+        /* F_MRANDGEN */
+        p->err = gretl_rand_discrete(ret->v.m->val, 0, vsize-1, probs);
     }
 
     return ret;
