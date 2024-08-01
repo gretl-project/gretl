@@ -22,7 +22,6 @@ endif
 
 SUBDIRS = gig ivpanel SVAR HIP dbnomics extra geoplot regls logging KFgui
 XMLSUBDIRS = gig ivpanel SVAR HIP
-ALLSUBDIRS = gig ivpanel SVAR HIP dbnomics extra geoplot regls logging KFgui
 
 .PHONY : subdirs $(SUBDIRS) clean installdirs install install-private
 
@@ -44,7 +43,7 @@ gfnstrings: gfnstrings.c
 	$(CC) -o $@ $<
 
 clean:
-	for d in $(ALLSUBDIRS) ; do $(MAKE) -C $$d clean; done
+	for d in $(SUBDIRS) ; do $(MAKE) -C $$d clean; done
 	@rm -f gfnindex addons.xml gfnstrings addons-i18n.c
 
 installdirs:
@@ -70,7 +69,16 @@ install: $(SUBDIRS) installdirs
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install; done
 
 install-private: addons-i18n.c
-	$(INSTALL_DATA) $< $(topsrc)/plugin	
+	$(INSTALL_DATA) $< $(topsrc)/plugin
+
+addons.tar.gz: $(SUBDIRS)
+	rm -rf tgztmp && mkdir tgztmp && \
+	for d in $(SUBDIRS) ; do \
+	make -C $$d $$d.zip || { echo "making zip-files failed" ; exit 1; } && \
+	cp $$d/$$d.zip ./tgztmp/ ; done && cd tgztmp && \
+	for d in $(SUBDIRS) ; do \
+	unzip $$d.zip && rm $$d.zip ; done && \
+	tar cvfz ../addons.tar.gz * && cd .. && rm -rf tgztmp
 
 check: $(SUBDIRS)
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d check; done
