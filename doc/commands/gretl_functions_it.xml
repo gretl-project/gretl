@@ -9456,6 +9456,7 @@
       <examples>
 	<example>matrix mx = mrandgen(u, 0, 100, 50, 1)</example>
 	<example>matrix mt14 = mrandgen(t, 14, 20, 20)</example>
+        <example>matrix D = mrandgen(dir, {0.5,1,2,4}, 30)</example>
       </examples>
       <description>
 	<para>
@@ -9487,7 +9488,10 @@
 	  Il primo esempio fornito sopra calcola un vettore colonna
 	  casuale uniforme di 50 elementi, mentre il secondo specifica
 	  una matrice casuale <by r="20" c="20"/> con elementi tratti
-	  dalla distribuzione <math>t</math> con 14 gradi di libertà.
+	  dalla distribuzione <math>t</math> con 14 gradi di
+	  libertà. Il terzo restituisce una matrice <by r="30" c="4"/>
+	  in cui ogni riga è estratta dalla distribuzione di Dirichlet
+	  specificata.
 	</para>
 	<para>
 	  <seelist>
@@ -11672,16 +11676,36 @@
 	  generati. Gli argomenti da <argname>p1</argname> a
 	  <argname>p3</argname> specificano i parametri della
 	  distribuzione selezionata. Il numero di tali parametri
-	  dipende dalla distribuzione. Per le distribuzioni diverse
-	  dalla beta-binomiale, i parametri <argname>p1</argname> e
-	  (se applicabile) <argname>p2</argname> devono essere scalari
-	  o variabili: se sono scalari, la serie generata è identicamente
-	  distribuita; se al contrario almeno uno dei due parametri in
-	  ingresso è una serie, per ciascuna osservazione la
-	  distribuzione è condizionata al valore dei parametri
-	  corrispondenti. Nel caso della beta-binomiale tutti i
-	  parametri devono essere scalari.
+	  dipende dalla distribuzione.
 	</para>
+	<para>
+	  Per le distribuzioni diverse dalla beta-binomiale e della
+	  discreta generica, i parametri <argname>p1</argname> e (se
+	  applicabile) <argname>p2</argname> devono essere scalari o
+	  variabili: se sono scalari, la serie generata è
+	  identicamente distribuita; se al contrario almeno uno dei
+	  due parametri in ingresso è una serie, per ciascuna
+	  osservazione la distribuzione è condizionata al valore dei
+	  parametri corrispondenti.
+	</para>
+	<para>
+	  Per i due casi speciali, le specifiche sono le seguenti: 
+	</para>
+        <ilist>
+          <li>
+            <para>
+              beta-binomiale: tutti e tre i parametri devono essere scalari.
+            </para>
+          </li>
+          <li>
+            <para>
+              discreta generica: è richiesto un solo parametro, cioè
+              un vettore a <math>k</math> elementi contentente le
+              probabilità per una variabile casuale il cui supporto
+              siano gli interi da 1 to <math>k</math>.
+            </para>
+          </li>
+        </ilist>
 	<para>
 	  Le specifiche sono fornite sotto: il codice stringa per ogni
 	  distribuzione è mostrato fra parentesi, seguito
@@ -11771,6 +11795,11 @@
 	      Beta-Binomiale (bb): prove, forma1, forma2
 	    </para>
 	  </li>
+	  <li>
+            <para>
+              Discreta generica (disc): probabilità
+            </para>
+	  </li>
 	</ilist>
 	<tabular colspec="lllll">
 	  \textbf{Distribuzione} &amp; \textsl{d} &amp; \textsl{p1} &amp; \textsl{p2} &amp; \textsl{p3}\\[4pt]
@@ -11790,6 +11819,7 @@
 	  Generalized Error &amp; \texttt{e} o \texttt{E} &amp; forma &amp; -- &amp; --\\
 	  Beta &amp; \texttt{beta} &amp; forma1 &amp; forma1 &amp; --\\
 	  Beta-Binomiale &amp; \texttt{bb} &amp; $n$ &amp; forma1 &amp; forma1
+	  Generic discrete &amp; \texttt{disc} &amp; $\mathbf{p}$ &amp; -- &amp; --
 	</tabular>
 	<para>
 	  <seelist>
