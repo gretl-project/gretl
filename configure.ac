@@ -541,7 +541,7 @@ if test "$darwin_build" = "yes" ; then
       ;;    
   esac
   if test "$pkg_build" = "yes" ; then
-    DARWIN_RPATH="@executable_path/../lib"
+    DARWIN_RPATH="/Applications/Gretl.app/Contents/Resources/lib"
     AC_SUBST(DARWIN_RPATH)
   fi
 fi
