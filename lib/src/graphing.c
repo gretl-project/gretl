@@ -275,6 +275,10 @@ static int get_gp_version_info (void)
 	strcpy(gnuplot_path, gretl_gnuplot_path());
     }
 
+    if (*gnuplot_path == '\0') {
+        return 0;
+    }
+
     qname = gretl_make_dotpath("gpver_query");
     fname = gretl_make_dotpath("gpver.txt");
 #ifdef WIN32
