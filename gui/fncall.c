@@ -748,26 +748,45 @@ static GList *add_series_names (GList *list)
     return list;
 }
 
-static int allow_singleton_list (gretl_bundle *ui)
+static int list_exclude_singleton (gretl_bundle *ui)
 {
-    int ret = 1; /* allow by default */
+    int ret = 0; /* allow by default */
 
     if (ui != NULL) {
-	if (gretl_bundle_has_key(ui, "singleton")) {
-	    /* backward compatibility */
-	    ret = gretl_bundle_get_bool(ui, "singleton", 1);
-	    if (ret == 0) {
-		gretl_bundle_set_int(ui, "no_singleton", 1);
-	    }
-	} else {
-	    /* revised version, 2024-03-21 */
-	    int ns = gretl_bundle_get_bool(ui, "no_singleton", 0);
-
-	    ret = ns == 0;
-	}
+        if (gretl_bundle_has_key(ui, "list_no_singleton")) {
+            ret = gretl_bundle_get_bool(ui, "list_no_singleton", 0);
+        } else if (gretl_bundle_has_key(ui, "no_singleton")) {
+            ret = gretl_bundle_get_bool(ui, "no_singleton", 0);
+        }
     }
 
     return ret;
+}
+
+static int list_exclude_const (gretl_bundle *ui)
+{
+    int ret = 0; /* allow by default */
+
+    if (ui != NULL) {
+        if (gretl_bundle_has_key(ui, "list_no_const")) {
+            ret = gretl_bundle_get_bool(ui, "list_no_const", 0);
+        } else if (gretl_bundle_has_key(ui, "no_const")) {
+            ret = gretl_bundle_get_bool(ui, "no_const", 0);
+        }
+    }
+
+    return ret;
+}
+
+static const char *list_exclude_other (gretl_bundle *ui)
+{
+    if (gretl_bundle_has_key(ui, "list_exclude")) {
+        return gretl_bundle_get_string(ui, "list_exclude", NULL);
+    } else if (gretl_bundle_has_key(ui, "exclude")) {
+        return gretl_bundle_get_string(ui, "exclude", NULL);
+    } else {
+        return NULL;
+    }
 }
 
 static GList *get_selection_list (int type, gretl_bundle *ui)
@@ -780,7 +799,7 @@ static GList *get_selection_list (int type, gretl_bundle *ui)
 	list = add_names_for_type(list, GRETL_TYPE_DOUBLE);
     } else if (type == GRETL_TYPE_LIST) {
 	list = add_names_for_type(list, GRETL_TYPE_LIST);
-	if (allow_singleton_list(ui)) {
+	if (!list_exclude_singleton(ui)) {
 	    list = add_series_names(list);
 	}
     } else if (matrix_arg(type)) {
@@ -1095,26 +1114,6 @@ static int do_make_list (selector *sr)
     return err;
 }
 
-static gboolean ui_bundle_get_bool (gretl_bundle *b,
-				    const char *key,
-				    gboolean deflt)
-{
-    gboolean ret = deflt;
-
-    if (gretl_bundle_has_key(b, key)) {
-	ret = gretl_bundle_get_bool(b, "key", deflt);
-    } else {
-	gchar *tmp = g_strdup_printf("list_%s", key);
-
-	if (gretl_bundle_has_key(b, tmp)) {
-	    ret = gretl_bundle_get_bool(b, tmp, deflt);
-	}
-	g_free(tmp);
-    }
-
-    return ret;
-}
-
 gchar **get_listdef_exclude (gpointer p, int *listmin)
 {
     gchar **S = NULL;
@@ -1133,12 +1132,9 @@ gchar **get_listdef_exclude (gpointer p, int *listmin)
 	    ui = g_object_get_data(G_OBJECT(sel), "ui");
 	}
 	if (cinfo != NULL && ui != NULL) {
-	    s = gretl_bundle_get_string(ui, "exclude", NULL);
-	    if (s == NULL) {
-		s = gretl_bundle_get_string(ui, "list_exclude", NULL);
-	    }
-	    no_const = ui_bundle_get_bool(ui, "no_const", 0);
-	    if (ui_bundle_get_bool(ui, "no_singleton", 0)) {
+            s = list_exclude_other(ui);
+	    no_const = list_exclude_const(ui);
+            if (list_exclude_singleton(ui)) {
 		*listmin = 2;
 	    }
 	}
