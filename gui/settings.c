@@ -1489,7 +1489,7 @@ static const char **get_list_setting_strings (void *var, int *n)
 #elif defined(G_OS_WIN32) && GTK_MAJOR_VERSION == 3
     else if (var == themepref) {
 	static const char *theme_strs[] = {
-            "Windows 10", "Windows 7", "Adwaita"
+            "Windows-10", "Windows-10-Dark", "Adwaita"
 	};
 
 	strs = theme_strs;
@@ -3586,17 +3586,8 @@ void set_wimp_preferred (int s)
 void set_up_windows_look (void)
 {
     GtkSettings *settings = gtk_settings_get_default();
-    char theme_name[16];
 
-    if (!strcmp(themepref, "Windows 10")) {
-	strcpy(theme_name, "Windows-10");
-    } else if (!strcmp(themepref, "Windows 7")) {
-	strcpy(theme_name, "win32");
-    } else {
-	strcpy(theme_name, themepref);
-    }
-
-    g_object_set(G_OBJECT(settings), "gtk-theme-name", theme_name, NULL);
+    g_object_set(G_OBJECT(settings), "gtk-theme-name", themepref, NULL);
 }
 
 #endif
