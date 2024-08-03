@@ -757,6 +757,9 @@ static int list_exclude_singleton (gretl_bundle *ui)
             ret = gretl_bundle_get_bool(ui, "list_no_singleton", 0);
         } else if (gretl_bundle_has_key(ui, "no_singleton")) {
             ret = gretl_bundle_get_bool(ui, "no_singleton", 0);
+        } else if (gretl_bundle_get_bool(ui, "singleton", 1) == 0) {
+            /* backward compatibility: "singleton = 0" */
+            ret = 1;
         }
     }
 
