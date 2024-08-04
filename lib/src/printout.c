@@ -155,7 +155,7 @@ void gui_logo (PRN *prn)
 
 void lib_logo (void)
 {
-    printf("\nLibgretl-1.0, revision %d\n", LIBGRETL_REVISION);
+    printf("\nLibgretl-1.0, version %d\n", LIBGRETL_CURRENT);
 }
 
 /**
