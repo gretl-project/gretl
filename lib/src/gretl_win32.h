@@ -20,6 +20,10 @@
 #ifndef GRETL_WIN32_H
 #define GRETL_WIN32_H
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 #ifdef WIN32
 
 #include <windows.h>
@@ -112,5 +116,9 @@ int win32_get_core_count (void);
 int win32_get_stack_size (void);
 
 #endif /* WIN32 */
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif /* GRETL_WIN32_H */
