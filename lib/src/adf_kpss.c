@@ -2029,7 +2029,7 @@ int adf_test (int order, const int *list, DATASET *dset,
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
     int panelmode;
-    int err;
+    int err = 0;
 
     if (opt & OPT_G) {
 	/* GLS is incompatible with no const (OPT_N), quadratic
