@@ -137,7 +137,7 @@ int ijton (int i, int j, int nrows)
 
 /**
  * transcribe_array:
- * @targ: arrat to which to write.
+ * @targ: array to which to write.
  * @src: array from which to read.
  * @dset: data information struct.
  *
@@ -1524,42 +1524,6 @@ int positive_int_from_string (const char *s)
     return ret;
 }
 
-#if 0 /* not yet */
-
-/**
- * natural_number_from_string:
- * @s: string to examine.
- *
- * If @s is a valid string representation of a natural number that
- * can be represented as a 32-bit signed integer return that number,
- * otherwise return -1.
- *
- * Returns: integer value.
- */
-
-int natural_number_from_string (const char *s)
-{
-    int ret = -1;
-
-    if (s != NULL && *s != '\0') {
-	long lval;
-        char *test;
-
-        errno = 0;
-
-        lval = strtol(s, &test, 10);
-        if (*test != '\0' || !strcmp(s, test) || errno == ERANGE ||
-	    lval < 0 || lval > INT_MAX) {
-            ret = -1;
-        } else {
-	    ret = (int) lval;
-    }
-
-    return ret;
-}
-
-#endif
-
 static int letter_to_int (char c)
 {
     const char *s = "abcdefghij";
@@ -1574,6 +1538,17 @@ static int letter_to_int (char c)
     }
 
     return 0;
+}
+
+/**
+ * libgretl_version:
+ *
+ * Returns: the integer version of libgretl.
+ */
+
+int libgretl_version (void)
+{
+    return LIBGRETL_CURRENT;
 }
 
 /**

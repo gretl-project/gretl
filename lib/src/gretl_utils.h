@@ -124,6 +124,8 @@ int gretl_compare_strings (const void *a, const void *b);
 
 /* miscellaneous */
 
+int libgretl_version (void);
+
 int gretl_version_number (const char *version);
 
 char *gretl_version_string (char *targ, int vnum);
