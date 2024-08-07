@@ -283,7 +283,8 @@ static int load_function_package (const char *fname,
                                   gretlopt opt,
                                   GArray *pstack,
                                   PRN *prn,
-                                  fnpkg **ppkg);
+                                  fnpkg **ppkg,
+                                  int level);
 static int ufunc_get_structure (ufunc *u);
 #if CALL_DEBUG
 static void print_callstack (ufunc *fun);
@@ -5806,44 +5807,17 @@ static int pkg_in_stack (const char *name, GArray *pstack)
 
 #define TS_REQUIRED(d) (d == FN_NEEDS_TS || d == FN_NEEDS_QM)
 
-static int data_requirements_conflict (DataReq ref, DataReq cmp)
+static int data_requirements_conflict (fnpkg *a, fnpkg *b)
 {
-    if (ref == FN_NEEDS_PANEL && TS_REQUIRED(cmp)) {
+    if (a->dreq == FN_NEEDS_PANEL && TS_REQUIRED(b->dreq)) {
         return 1;
-    } else if (cmp == FN_NEEDS_PANEL && TS_REQUIRED(ref)) {
+    } else if (b->dreq == FN_NEEDS_PANEL && TS_REQUIRED(a->dreq)) {
         return 1;
     }
     return 0;
 }
 
-static int merge_data_requirements (fnpkg *pa, fnpkg *pb)
-{
-    int err = 0;
-
-    /* "merging" means that if the dependency @pb has a stronger
-       data requirement than @pa, this should be imposed on @pa
-       by inheritance. It's an error if the data requirements
-       of @pa and @pb are incompatible (time-series vs panel).
-    */
-    if (pa->dreq == pb->dreq || pb->dreq == FN_NODATA_OK) {
-        return 0;
-    } else if (pa->dreq == FN_NODATA_OK && pb->dreq != FN_NODATA_OK) {
-        pa->dreq = pb->dreq;
-    } else if (pa->dreq == FN_NEEDS_DATA &&
-               (pb->dreq == FN_NEEDS_TS || pb->dreq == FN_NEEDS_QM ||
-                pb->dreq == FN_NEEDS_PANEL)) {
-        pa->dreq = pb->dreq;
-    } else if (pa->dreq == FN_NEEDS_TS && pb->dreq == FN_NEEDS_QM) {
-        pa->dreq = pb->dreq;
-    } else if (data_requirements_conflict(pa->dreq, pb->dreq)) {
-        gretl_errmsg_set(_("dependency has incompatible data requirement"));
-        err = 1;
-    }
-
-    return err;
-}
-
-static int load_gfn_dependencies (fnpkg *pkg, GArray *pstack)
+static int load_gfn_dependencies (fnpkg *pkg, GArray *pstack, int level)
 {
     int err = 0;
 
@@ -5851,8 +5825,8 @@ static int load_gfn_dependencies (fnpkg *pkg, GArray *pstack)
         char *pkgpath;
         int i;
 
-        fprintf(stderr, "*** load_gfn_dependencies (%d) for %s ***\n",
-                pkg->n_depends, pkg->name);
+        fprintf(stderr, "*** load_gfn_dependencies (%d) for %s (level %d) ***\n",
+                pkg->n_depends, pkg->name, level);
 
         for (i=0; i<pkg->n_depends && !err; i++) {
             const char *depname = pkg->depends[i];
@@ -5862,7 +5836,7 @@ static int load_gfn_dependencies (fnpkg *pkg, GArray *pstack)
                 fprintf(stderr, " %s: already loaded\n", depname);
                 ; /* OK, already loaded */
             } else if (pkg_in_stack(depname, pstack)) {
-                fprintf(stderr, " found %s in pstack\n", depname);
+                fprintf(stderr, " %s: found in stack\n", depname);
                 ; /* don't go into infinite loop! */
             } else {
                 fprintf(stderr, " trying for %s\n", depname);
@@ -5873,10 +5847,11 @@ static int load_gfn_dependencies (fnpkg *pkg, GArray *pstack)
                                          pkg->name, depname);
                 } else {
                     err = load_function_package(pkgpath, OPT_NONE,
-                                                pstack, NULL, &dep);
+                                                pstack, NULL, &dep,
+                                                level + 1);
                     free(pkgpath);
-                    if (!err) {
-                        err = merge_data_requirements(pkg, dep);
+                    if (!err && level == 0) {
+                        err = data_requirements_conflict(pkg, dep);
                     }
                     if (!err) {
                         g_array_append_val(pstack, depname);
@@ -5896,7 +5871,8 @@ static int load_gfn_dependencies (fnpkg *pkg, GArray *pstack)
    packages.
 */
 
-static int real_load_package (fnpkg *pkg, GArray *pstack, PRN *prn)
+static int real_load_package (fnpkg *pkg, GArray *pstack, PRN *prn,
+                              int level)
 {
     int i, err = 0;
 
@@ -5907,7 +5883,7 @@ static int real_load_package (fnpkg *pkg, GArray *pstack, PRN *prn)
     gretl_error_clear();
 
     if (pstack != NULL) {
-        err = load_gfn_dependencies(pkg, pstack);
+        err = load_gfn_dependencies(pkg, pstack, level);
     }
 
     if (!err && pkg->pub != NULL) {
@@ -6673,7 +6649,7 @@ int read_session_functions_file (const char *fname)
         if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
             pkg = real_read_package(doc, cur, fname, 1, &err);
             if (!err) {
-                err = real_load_package(pkg, NULL, NULL);
+                err = real_load_package(pkg, NULL, NULL, 0);
             }
         }
 #ifdef HAVE_MPI
@@ -6869,7 +6845,8 @@ static int load_function_package (const char *fname,
                                   gretlopt opt,
                                   GArray *pstack,
                                   PRN *prn,
-                                  fnpkg **ppkg)
+                                  fnpkg **ppkg,
+                                  int level)
 {
     fnpkg *pkg;
     int err = 0;
@@ -6901,7 +6878,7 @@ static int load_function_package (const char *fname,
         if (oldpkg != NULL) {
             real_function_package_unload(oldpkg, 1);
         }
-        err = real_load_package(pkg, pstack, prn);
+        err = real_load_package(pkg, pstack, prn, level);
     }
 
     if (err) {
@@ -6945,7 +6922,7 @@ int include_gfn (const char *fname, gretlopt opt, PRN *prn)
 
     pstack = g_array_new(FALSE, FALSE, sizeof(char *));
     g_array_append_val(pstack, pkgname);
-    err = load_function_package(fname, opt, pstack, prn, NULL);
+    err = load_function_package(fname, opt, pstack, prn, NULL, 0);
     g_array_free(pstack, TRUE);
     g_free(pkgname);
 
