@@ -5804,6 +5804,18 @@ static int pkg_in_stack (const char *name, GArray *pstack)
     return 0;
 }
 
+#define TS_REQUIRED(d) (d == FN_NEEDS_TS || d == FN_NEEDS_QM)
+
+static int data_requirements_conflict (DataReq ref, DataReq cmp)
+{
+    if (ref == FN_NEEDS_PANEL && TS_REQUIRED(cmp)) {
+        return 1;
+    } else if (cmp == FN_NEEDS_PANEL && TS_REQUIRED(ref)) {
+        return 1;
+    }
+    return 0;
+}
+
 static int merge_data_requirements (fnpkg *pa, fnpkg *pb)
 {
     int err = 0;
@@ -5823,7 +5835,7 @@ static int merge_data_requirements (fnpkg *pa, fnpkg *pb)
         pa->dreq = pb->dreq;
     } else if (pa->dreq == FN_NEEDS_TS && pb->dreq == FN_NEEDS_QM) {
         pa->dreq = pb->dreq;
-    } else {
+    } else if (data_requirements_conflict(pa->dreq, pb->dreq)) {
         gretl_errmsg_set(_("dependency has incompatible data requirement"));
         err = 1;
     }
@@ -5839,13 +5851,15 @@ static int load_gfn_dependencies (fnpkg *pkg, GArray *pstack)
         char *pkgpath;
         int i;
 
-        fprintf(stderr, "*** load_gfn_dependencies for %s ***\n", pkg->name);
+        fprintf(stderr, "*** load_gfn_dependencies (%d) for %s ***\n",
+                pkg->n_depends, pkg->name);
 
         for (i=0; i<pkg->n_depends && !err; i++) {
             const char *depname = pkg->depends[i];
             fnpkg *dep = NULL;
 
             if (get_function_package_by_name(depname) != NULL) {
+                fprintf(stderr, " %s: already loaded\n", depname);
                 ; /* OK, already loaded */
             } else if (pkg_in_stack(depname, pstack)) {
                 fprintf(stderr, " found %s in pstack\n", depname);
