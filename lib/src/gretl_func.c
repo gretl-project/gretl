@@ -9052,6 +9052,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
  * @dset: pointer to dataset info.
  * @dreq: function data requirements flag.
  * @minver: function minimum program version requirement.
+ * @pkg: the package to which the function belongs.
  *
  * Checks whether the requirements in @dreq and @minver
  * are jointly satisfied by the current dataset and gretl
@@ -9062,7 +9063,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
  */
 
 int check_function_needs (const DATASET *dset, DataReq dreq,
-                          int minver)
+                          int minver, fnpkg *pkg)
 {
     static int thisver = 0;
 
@@ -9148,7 +9149,7 @@ static int maybe_check_function_needs (const DATASET *dset,
 #endif
 
     return check_function_needs(dset, fun->pkg->dreq,
-                                fun->pkg->minver);
+                                fun->pkg->minver, fun->pkg);
 }
 
 /* next block: handling function return values */

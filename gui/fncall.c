@@ -2900,7 +2900,7 @@ static int call_function_package (call_info *cinfo,
 	/* Do we have suitable data in place? (This is already
 	   checked if @from_browser is non-zero).
 	*/
-	err = check_function_needs(dataset, cinfo->dreq, cinfo->minver);
+	err = check_function_needs(dataset, cinfo->dreq, cinfo->minver, cinfo->pkg);
 	if (err) {
 	    gui_errmsg(err);
 	}
@@ -3026,7 +3026,7 @@ int open_function_package (const char *pkgname,
     }
 
     /* do we have suitable data in place? */
-    err = check_function_needs(dataset, cinfo->dreq, cinfo->minver);
+    err = check_function_needs(dataset, cinfo->dreq, cinfo->minver, NULL);
 
     if (err == E_DATA) {
 	/* we might still run the sample script */
@@ -4303,7 +4303,7 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
 	    skip = ci != modelreq;
 	}
 	if (!skip) {
-	    skip = check_function_needs(dataset, dreq, minver);
+	    skip = check_function_needs(dataset, dreq, minver, NULL);
 	    if (skip) {
 		gretl_error_clear();
 	    }

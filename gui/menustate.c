@@ -115,7 +115,7 @@ static void gfn_menuitems_state (void)
         ag = aglist->data;
         if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(ag), "datachk"))) {
             dreq = pkg_get_data_requirement(ag);
-            err = check_function_needs(dataset, dreq, 0);
+            err = check_function_needs(dataset, dreq, 0, NULL);
             gtk_action_group_set_sensitive(ag, !err);
 	    if (err) {
 		gretl_error_clear();
