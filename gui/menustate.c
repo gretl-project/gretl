@@ -1206,13 +1206,14 @@ void set_workdir_label (void)
 
     if (wlabel != NULL) {
         gchar *fmt, *wdir, *buf;
+        int maxlen = swallow ? 32 : 56;
 
         fmt = g_strdup_printf("<span color=\"%s\">%%s</span>",
                               blue_for_text());
         wdir = g_strdup(gretl_workdir());
         trim_slash(wdir);
-        if (g_utf8_strlen(wdir, -1) > 56) {
-            gretl_utf8_truncate(wdir, 53);
+        if (g_utf8_strlen(wdir, -1) > maxlen) {
+            gretl_utf8_truncate(wdir, maxlen - 3);
             strcat(wdir, "...");
         }
         buf = g_markup_printf_escaped(fmt, wdir);

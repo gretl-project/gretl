@@ -57,8 +57,8 @@
    is supported for Linux and Windows only. Note that on Mac the OS
    preserves uniqueness of GUI application instances by default -- so
    the situation is the opposite of that on Linux and Windows. In the
-   GTK-quartz version of gretl we offer a top-level menu item to
-   override this and launch a second (or third, etc.) gretl instance.
+   macOS versions of gretl we offer a top-level menu item to override
+   this and launch a second (or third, etc.) gretl instance.
 
    GRETL_OPEN_HANDLER depends on GRETL_PID_FILE for its mechanism but
    not vice versa.

@@ -1652,7 +1652,7 @@ static void make_main_window (void)
 	mainwin_width = 650 * gui_scale;
 	mainwin_height = 460 * gui_scale;
 	if (swallow) {
-	    mainwin_width *= 1.6;
+	    mainwin_width *= 1.75; /* 1.6 was a bit small? */
 	}
 	set_main_window_scale();
     }
