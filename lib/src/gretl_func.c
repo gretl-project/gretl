@@ -9075,29 +9075,44 @@ int check_function_needs (const DATASET *dset, DataReq dreq,
         char vstr[8];
 
         gretl_version_string(vstr, minver);
-        gretl_errmsg_sprintf(_("This function needs gretl version %s"), vstr);
+        if (pkg != NULL) {
+            gretl_errmsg_sprintf(_("The package %s needs gretl version %s"),
+                                 pkg->name, vstr);
+        }
         return 1;
     }
 
     if ((dset == NULL || dset->v == 0) && dreq != FN_NODATA_OK) {
-        gretl_errmsg_set(_("This function needs a dataset in place"));
+        if (pkg != NULL) {
+            gretl_errmsg_sprintf(_("The package %s needs a dataset in place"),
+                                 pkg->name);
+        }
         return E_DATA;
     }
 
     if (dreq == FN_NEEDS_TS && !dataset_is_time_series(dset)) {
-        gretl_errmsg_set(_("This function needs time-series data"));
+        if (pkg != NULL) {
+            gretl_errmsg_sprintf(_("The package %s needs time-series data"),
+                                 pkg->name);
+        }
         return E_DATA;
     }
 
     if (dreq == FN_NEEDS_PANEL && !dataset_is_panel(dset)) {
-        gretl_errmsg_set(_("This function needs panel data"));
+        if (pkg != NULL) {
+            gretl_errmsg_sprintf(_("The package %s needs panel data"),
+                                 pkg->name);
+        }
         return E_DATA;
     }
 
     if (dreq == FN_NEEDS_QM &&
         (!dataset_is_time_series(dset) ||
          (dset->pd != 4 && dset->pd != 12))) {
-        gretl_errmsg_set(_("This function needs quarterly or monthly data"));
+        if (pkg != NULL) {
+            gretl_errmsg_sprintf(_("The package %s needs quarterly or monthly data"),
+                                 pkg->name);
+        }
         return E_DATA;
     }
 
