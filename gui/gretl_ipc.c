@@ -36,7 +36,9 @@
 # define N_PIDS 8
 #endif
 
-#define IPC_DEBUG 0
+#if IPC_DEBUG
+FILE *fipc;
+#endif
 
 /* gretl_ipc: inter-process communication
 
@@ -470,8 +472,8 @@ long gretl_prior_instance (void)
     fp = gretl_fopen(pidfile, "rb");
 
 #if IPC_DEBUG
-    fprintf(stderr, "*** gretl_prior_instance: pidfile='%s', fp=%p\n",
-	    pidfile, (void *) fp);
+    fprintf(fipc, "gretl_prior_instance? pidfile %s\n",
+	    fp == NULL ? "not found" : "opened OK");
 #endif
 
     if (fp != NULL) {
@@ -484,7 +486,8 @@ long gretl_prior_instance (void)
 	    sscanf(buf, "%ld", &tmp);
 	    ok = pid_is_valid(tmp, mypid);
 #if IPC_DEBUG
-	    fprintf(stderr, " got prior PID %d, ok = %d\n", (int) tmp, ok);
+	    fprintf(fipc, " got prior PID %d, %s\n", (int) tmp,
+                    ok ? "valid" : "not valid");
 #endif
 	    if (ok) {
 		ret = tmp;
@@ -540,7 +543,7 @@ static void process_handoff_message (void)
     fp = gretl_fopen(fname, "rb");
 
 #if IPC_DEBUG
-    fprintf(stderr, "*** process_handoff_message\n"
+    fprintf(fipc, "*** process_handoff_message\n"
 	    " fname='%s', fp = %p\n", fname, (void *) fp);
 #endif
 
@@ -551,6 +554,9 @@ static void process_handoff_message (void)
 	    tailstrip(path);
 	    if (strcmp(path, "none")) {
 		set_tryfile(path);
+#if IPC_DEBUG
+                fprintf(fipc, " got path '%s'\n", path);
+#endif
 		try_open = 1;
 	    }
 	}
@@ -628,7 +634,7 @@ gboolean forward_open_request (long gpid, const char *fname)
     gboolean ok = write_request_file(gpid, fname);
 
 #if IPC_DEBUG
-    fprintf(stderr, "*** forward_open_request\n");
+    fprintf(fipc, "forward_open_request (linux)\n");
 #endif
 
     if (ok) {
@@ -663,7 +669,9 @@ static GdkFilterReturn mdata_filter (GdkXEvent *xevent,
     MSG *msg = (MSG *) xevent;
 
     if (msg->message == WM_GRETL && msg->wParam == 0xf0) {
-	fprintf(stderr, "mdata_filter: got WM_GRETL + 0xf0\n");
+#if IPC_DEBUG
+	fprintf(fipc, "mdata_filter: got WM_GRETL + 0xf0\n");
+#endif
 	process_handoff_message();
 	return GDK_FILTER_REMOVE;
     }
@@ -688,23 +696,35 @@ int install_open_handler (void)
 static int plausible_target (HWND hw)
 {
     WINDOWINFO wi = {0};
-    char s[64];
-    int ret = 0;
+    int ok;
 
     wi.cbSize = sizeof(WINDOWINFO);
+    ok = GetWindowInfo(hw, &wi);
+#if IPC_DEBUG
+    fprintf(fipc, " GetWindowInfo: ok = %d\n", ok);
+#endif
 
-    if (GetWindowInfo(hw, &wi) != 0) {
-	if ((wi.dwStyle & WS_CAPTION) &&
-	    (wi.dwExStyle & WS_EX_ACCEPTFILES)) {
-	    s[0] = '\0';
-	    GetWindowTextA(hw, s, 63);
-	    if (!strcmp(s, "gretl") || !strncmp(s, "gretl: session ", 15)) {
-		return 1;
-	    }
-	}
+    if (ok) {
+        int not_child = !(wi.dwStyle & WS_CHILD);
+        int dnd = (wi.dwExStyle & WS_EX_ACCEPTFILES)? 1 : 0;
+
+        ok = not_child && dnd;
+#if IPC_DEBUG
+        fprintf(fipc, " wi style: not_child %d, dnd %d\n", not_child, dnd);
+#endif
     }
 
-    return 0;
+    if (ok) {
+        char s[64] = {0};
+
+        GetWindowTextA(hw, s, 63);
+        ok = !strcmp(s, "gretl") || !strncmp(s, "gretl: session ", 15);
+#if IPC_DEBUG
+        fprintf(fipc, " GetWindowText: ok = %d\n", ok);
+#endif
+    }
+
+    return ok;
 }
 
 /* Find the window handle associated with a given PID:
@@ -725,8 +745,12 @@ static HWND get_hwnd_for_pid (long gpid)
 	}
         GetWindowThreadProcessId(hw, &pid);
 	if ((long) pid == gpid) {
-	    /* PID matched */
-	    if (plausible_target(hw)) {
+            int ok = plausible_target(hw);
+
+#if IPC_DEBUG
+            fprintf(fipc, " matched by pid, plausible %d\n", ok);
+#endif
+	    if (ok) {
 		/* looks like main gretl window */
 		ret = hw;
 	    }
@@ -747,12 +771,17 @@ gboolean forward_open_request (long gpid, const char *fname)
     HWND hw = get_hwnd_for_pid(gpid);
     gboolean ok = FALSE;
 
+#if IPC_DEBUG
+    fprintf(fipc, "forward_open_request: hwnd for pid %d is %s\n",
+            (int) gpid, hw == NULL ? "null" : "ok");
+#endif
+
     if (hw != NULL) {
 	long mypid = (long) GetCurrentProcessId();
 
 	ok = write_request_file(gpid, fname);
 #if IPC_DEBUG
-	fprintf(stderr, "forward_open_request: mypid=%d, ok=%d\n", (int) mypid, ok);
+	fprintf(fipc, " write_request_file: %s\n", ok ? "OK" : "Fail");
 #endif
 	if (ok) {
 	    SendMessage(hw, WM_GRETL, 0xf0, mypid);

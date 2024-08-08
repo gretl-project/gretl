@@ -637,6 +637,56 @@ static gchar *absolutize_path (const char *fname)
     return ret;
 }
 
+#if IPC_DEBUG
+
+static gboolean maybe_hand_off (char *filearg, char *auxname)
+{
+    long gpid = gretl_prior_instance();
+    gboolean ret = FALSE;
+
+    /* Is there an already-running gretl instance? If so
+       we'll ask whether or not to start a new instance,
+       unless we got @optsingle, which says to reuse the
+       existing one.
+    */
+
+    if (gpid > 0) {
+	gint resp = GRETL_NO;
+
+        fprintf(fipc, "hand_off to PID %d?\n", (int) gpid);
+
+	if (!optsingle) {
+	    resp = no_yes_dialog("gretl", _("Start a new gretl instance?"));
+	    fprintf(fipc, "new instance dialog: response = %s\n",
+                    resp == GRETL_YES? "yes" : "no");
+	}
+
+	if (resp != GRETL_YES) {
+	    /* try hand-off to prior gretl instance */
+	    char *fname = filearg;
+	    gchar *abspath;
+
+	    if (*fname == '\0') {
+		fname = tryfile_is_set() ? tryfile : auxname;
+	    }
+            fprintf(fipc, " fname '%s'\n", fname ? fname : "null");
+	    abspath = absolutize_path(fname);
+            fprintf(fipc, " abspath '%s'\n", abspath ? abspath : "null");
+	    ret = forward_open_request(gpid, abspath);
+	    g_free(abspath);
+	}
+    } else {
+        fprintf(fipc, "maybe_hand_off: no prior instance\n");
+        return 0;
+    }
+
+    fprintf(fipc, "maybe_hand_off: returning %d\n", ret);
+
+    return ret;
+}
+
+#else /* without debugging */
+
 static gboolean maybe_hand_off (char *filearg, char *auxname)
 {
     long gpid = gretl_prior_instance();
@@ -653,9 +703,6 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
 
 	if (!optsingle) {
 	    resp = no_yes_dialog("gretl", _("Start a new gretl instance?"));
-#ifdef G_OS_WIN32
-	    fprintf(stderr, "hand_off dialog: resp = %d\n", resp);
-#endif
 	}
 
 	if (resp != GRETL_YES) {
@@ -672,12 +719,10 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
 	}
     }
 
-#ifdef G_OS_WIN32
-    fprintf(stderr, "maybe_hand_off: returning %d\n", ret);
-#endif
-
     return ret;
 }
+
+#endif /* debugging or not */
 
 #endif /* GRETL_OPEN_HANDLER */
 
@@ -868,6 +913,20 @@ int main (int argc, char **argv)
     session_init();
     init_fileptrs();
 
+#if IPC_DEBUG
+    if (1) {
+        pid_t my_pid = getpid();
+        const char *home = g_get_home_dir();
+        gchar *ipcname = g_strdup_printf("ipc%d.txt", (int) my_pid);
+        gchar *ipcpath = g_build_filename(home, ipcname, NULL);
+
+        fipc = gretl_fopen(ipcpath, "w");
+        fprintf(fipc, "Starting gretl, pid %d\n", (int) my_pid);
+        g_free(ipcpath);
+        g_free(ipcname);
+    }
+#endif
+
     if (argc > 1 && *filearg == '\0') {
 	/* If we have a residual unhandled command-line argument,
 	   it should be the name of a file to be opened.
@@ -878,6 +937,11 @@ int main (int argc, char **argv)
 #ifdef GRETL_OPEN_HANDLER
     if (!optnew && maybe_hand_off(filearg, auxname)) {
 	fflush(stderr);
+# if IPC_DEBUG
+        fprintf(fipc, "IPC: exit now\n");
+        fflush(fipc);
+        fclose(fipc);
+# endif
 	exit(EXIT_SUCCESS);
     }
 #endif
@@ -1652,7 +1716,8 @@ static void make_main_window (void)
 	mainwin_width = 650 * gui_scale;
 	mainwin_height = 460 * gui_scale;
 	if (swallow) {
-	    mainwin_width *= 1.75; /* 1.6 was a bit small? */
+            /* 1.6 was a bit small? */
+	    mainwin_width *= 1.7;
 	}
 	set_main_window_scale();
     }
