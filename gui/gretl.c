@@ -637,70 +637,23 @@ static gchar *absolutize_path (const char *fname)
     return ret;
 }
 
+static gboolean maybe_hand_off (char *filearg, char *auxname)
+{
+    long gpid = gretl_prior_instance();
+    gboolean ret = FALSE;
+
+    /* Is there an already-running gretl instance? If so
+       we'll ask whether or not to start a new instance,
+       unless we got @optsingle, which says to reuse the
+       existing one.
+    */
+
+    if (gpid > 0) {
+	gint resp = GRETL_NO;
+
 #if IPC_DEBUG
-
-static gboolean maybe_hand_off (char *filearg, char *auxname)
-{
-    long gpid = gretl_prior_instance();
-    gboolean ret = FALSE;
-
-    /* Is there an already-running gretl instance? If so
-       we'll ask whether or not to start a new instance,
-       unless we got @optsingle, which says to reuse the
-       existing one.
-    */
-
-    if (gpid > 0) {
-	gint resp = GRETL_NO;
-
-        fprintf(fipc, "hand_off to PID %d?\n", (int) gpid);
-
-	if (!optsingle) {
-	    resp = no_yes_dialog("gretl", _("Start a new gretl instance?"));
-	    fprintf(fipc, "new instance dialog: response = %s\n",
-                    resp == GRETL_YES? "yes" : "no");
-	}
-
-	if (resp != GRETL_YES) {
-	    /* try hand-off to prior gretl instance */
-	    char *fname = filearg;
-	    gchar *abspath;
-
-	    if (*fname == '\0') {
-		fname = tryfile_is_set() ? tryfile : auxname;
-	    }
-            fprintf(fipc, " fname '%s'\n", fname ? fname : "null");
-	    abspath = absolutize_path(fname);
-            fprintf(fipc, " abspath '%s'\n", abspath ? abspath : "null");
-	    ret = forward_open_request(gpid, abspath);
-	    g_free(abspath);
-	}
-    } else {
-        fprintf(fipc, "maybe_hand_off: no prior instance\n");
-        return 0;
-    }
-
-    fprintf(fipc, "maybe_hand_off: returning %d\n", ret);
-
-    return ret;
-}
-
-#else /* without debugging */
-
-static gboolean maybe_hand_off (char *filearg, char *auxname)
-{
-    long gpid = gretl_prior_instance();
-    gboolean ret = FALSE;
-
-    /* Is there an already-running gretl instance? If so
-       we'll ask whether or not to start a new instance,
-       unless we got @optsingle, which says to reuse the
-       existing one.
-    */
-
-    if (gpid > 0) {
-	gint resp = GRETL_NO;
-
+        fprintf(fipc, "maybe_hand_off: prior PID %d\n", (int) gpid);
+#endif
 	if (!optsingle) {
 	    resp = no_yes_dialog("gretl", _("Start a new gretl instance?"));
 	}
@@ -717,12 +670,13 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
 	    ret = forward_open_request(gpid, abspath);
 	    g_free(abspath);
 	}
+#if IPC_DEBUG
+        fprintf(fipc, "maybe_hand_off: returning %d\n", ret);
+#endif
     }
 
     return ret;
 }
-
-#endif /* debugging or not */
 
 #endif /* GRETL_OPEN_HANDLER */
 
@@ -936,7 +890,6 @@ int main (int argc, char **argv)
 
 #ifdef GRETL_OPEN_HANDLER
     if (!optnew && maybe_hand_off(filearg, auxname)) {
-	fflush(stderr);
 # if IPC_DEBUG
         fprintf(fipc, "IPC: exit now\n");
         fflush(fipc);
