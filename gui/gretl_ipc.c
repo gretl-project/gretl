@@ -706,11 +706,17 @@ static int plausible_target (HWND hw)
 
     if (ok) {
         int not_child = !(wi.dwStyle & WS_CHILD);
+        int caption = wi.dwStyle & WS_CAPTION;
         int dnd = (wi.dwExStyle & WS_EX_ACCEPTFILES)? 1 : 0;
 
-        ok = not_child && dnd;
+        /* 2024-08-09: with GTK2 we were checking for WS_CAPTION in
+           wi.dwStyle, which doesn't work with GTK3: do we still
+           need the caption check?
+        */
+        ok = dnd && (not_child || caption);
 #if IPC_DEBUG
-        fprintf(fipc, " wi style: not_child %d, dnd %d\n", not_child, dnd);
+        fprintf(fipc, " wi style: not_child %d, caption %d, dnd %d\n",
+                not_child, caption, dnd);
 #endif
     }
 
