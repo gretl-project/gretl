@@ -1489,7 +1489,7 @@ static const char **get_list_setting_strings (void *var, int *n)
 #elif defined(G_OS_WIN32) && GTK_MAJOR_VERSION == 3
     else if (var == themepref) {
 	static const char *theme_strs[] = {
-            "Windows-10", "Windows-10-Dark", "Windows 7", "Adwaita"
+            "Windows-10", "Windows-10-Dark", "Adwaita", "Windows 7"
 	};
 
 	strs = theme_strs;
