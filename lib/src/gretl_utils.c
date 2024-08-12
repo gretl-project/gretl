@@ -2457,6 +2457,8 @@ static char blas_version[32];
 
 static int blas_variant;
 
+#if !defined(WIN32)
+
 static int parse_ldd_output (const char *s)
 {
     char found[6] = {0};
@@ -2509,8 +2511,6 @@ static int parse_ldd_output (const char *s)
 
     return ret;
 }
-
-#if !defined(WIN32)
 
 static int detect_blas_via_ldd (void)
 {

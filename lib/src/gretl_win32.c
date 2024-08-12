@@ -454,7 +454,6 @@ static int real_win_run_sync (const char *cmdline,
 {
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
-    DWORD exitcode;
     DWORD flags;
     gunichar2 *cl16 = NULL;
     gunichar2 *cd16 = NULL;
@@ -2304,6 +2303,8 @@ static int win7_get_stack_size (void)
     return (int) (tib->StackLimit - tib->StackBase);
 }
 #endif
+
+/* requres _WIN32_WINNT >= 0x0602 (Windows 8) */
 
 int win32_get_stack_size (void)
 {
