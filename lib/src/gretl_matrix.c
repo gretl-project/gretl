@@ -6231,7 +6231,7 @@ int gretl_matrix_multiply_mod_single (const gretl_matrix *a,
  * @K: target matrix, (p * r) x (p * s).
  *
  * Writes the Kronecker product of the identity matrix
- * of order @r and @B into @K.
+ * of order @p and @B into @K.
  *
  * Returns: 0 on success, %E_NONCONF if matrix @K is
  * not correctly dimensioned for the operation.
@@ -6241,8 +6241,8 @@ int
 gretl_matrix_I_kronecker (int p, const gretl_matrix *B,
                           gretl_matrix *K)
 {
-    double x, aij, bkl;
-    int r, s;
+    double bkl;
+    int r, s, d;
     int i, j, k, l;
     int ioff, joff;
     int Ki, Kj;
@@ -6262,18 +6262,18 @@ gretl_matrix_I_kronecker (int p, const gretl_matrix *B,
         ioff = i * r;
         for (j=0; j<p; j++) {
             /* block ij is an r * s matrix, I_{ij} * B */
-            aij = (i == j)? 1 : 0;
+            d = (i == j);
             joff = j * s;
             for (k=0; k<r; k++) {
                 Ki = ioff + k;
                 for (l=0; l<s; l++) {
-                    bkl = gretl_matrix_get(B, k, l);
                     Kj = joff + l;
-                    x = aij * bkl;
-                    if (x == -0.0) {
-                        x = 0.0;
+                    if (d) {
+                        bkl = gretl_matrix_get(B, k, l);
+                        gretl_matrix_set(K, Ki, Kj, bkl);
+                    } else {
+                        gretl_matrix_set(K, Ki, Kj, 0.0);
                     }
-                    gretl_matrix_set(K, Ki, Kj, x);
                 }
             }
         }
@@ -6332,7 +6332,7 @@ int
 gretl_matrix_kronecker_I (const gretl_matrix *A, int r,
                           gretl_matrix *K)
 {
-    double x, aij, bkl;
+    double aij;
     int p, q;
     int i, j, k, l;
     int ioff, joff;
@@ -6358,13 +6358,12 @@ gretl_matrix_kronecker_I (const gretl_matrix *A, int r,
             for (k=0; k<r; k++) {
                 Ki = ioff + k;
                 for (l=0; l<r; l++) {
-                    bkl = (k == l)? 1 : 0;
                     Kj = joff + l;
-                    x = aij * bkl;
-                    if (x == -0.0) {
-                        x = 0.0;
+                    if (k == l) {
+                        gretl_matrix_set(K, Ki, Kj, aij);
+                    } else {
+                        gretl_matrix_set(K, Ki, Kj, 0.0);
                     }
-                    gretl_matrix_set(K, Ki, Kj, x);
                 }
             }
         }
@@ -6422,7 +6421,7 @@ int
 gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B,
                                 gretl_matrix *K)
 {
-    double x, aij, bkl;
+    double aij, bkl;
     int p, q, r, s;
     int i, j, k, l;
     int ioff, joff;
@@ -6454,11 +6453,7 @@ gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B,
                 for (l=0; l<s; l++) {
                     bkl = gretl_matrix_get(B, k, l);
                     Kj = joff + l;
-                    x = aij * bkl;
-                    if (x == -0.0) {
-                        x = 0.0;
-                    }
-                    gretl_matrix_set(K, Ki, Kj, x);
+                    gretl_matrix_set(K, Ki, Kj, aij * bkl);
                 }
             }
         }
