@@ -136,7 +136,7 @@ int reset_local_decpoint (void)
 
     set_atof_point(decpoint);
 
-#if 0 // was ifdef OS_OSX
+#if 0
     fprintf(stderr, "via localeconv, decimal = '%c'\n", decpoint);
 #endif
 
@@ -387,10 +387,20 @@ static char *other_set_numeric (const char *lang)
 
 #ifdef ENABLE_NLS
 
+static int decimal_use_locale;
+
+int prefer_locale_decimal (void)
+{
+    return decimal_use_locale;
+}
+
 /* more functions conditional on NLS enabled */
 
 void set_lcnumeric (int langid, int lcnumeric)
 {
+    /* record the user's preference */
+    decimal_use_locale = lcnumeric;
+
     if (!lcnumeric || langid == LANG_C) {
         setlocale(LC_NUMERIC, "C");
         gretl_setenv("LC_NUMERIC", "C");
@@ -418,6 +428,7 @@ void set_lcnumeric (int langid, int lcnumeric)
             setlocale(LC_NUMERIC, "");
             gretl_setenv("LC_NUMERIC", "");
         }
+
     }
 
     reset_local_decpoint();
@@ -657,6 +668,11 @@ int force_language (int langid)
 void set_lcnumeric (int langid, int lcnumeric)
 {
     return;
+}
+
+int prefer_locale_decimal (void)
+{
+    return 0;
 }
 
 int test_locale (const char *langstr)

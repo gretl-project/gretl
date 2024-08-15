@@ -2116,10 +2116,37 @@ int libset_get_bool (SetKey key)
 static void libset_set_decpoint (int on)
 {
 #ifdef ENABLE_NLS
+    static int forced;
+    int dp = get_local_decpoint();
+
+#if 0
+    fprintf(stderr, "*** libset_set_decpoint: arg = %d, dp = '%c',forced = %d\n",
+            on, dp, forced);
+#endif
+
     if (on) {
-	/* force use of the decimal dot */
-	setlocale(LC_NUMERIC, "C");
+        if (dp == ',') {
+            setlocale(LC_NUMERIC, "C");
+            forced++;
+        } else {
+            /* no-op */
+            return;
+        }
     } else {
+        /* not-on = off */
+        if (dp == ',') {
+            /* no-op */
+            return;
+        } else {
+            if (forced > 0) forced--;
+            if (!prefer_locale_decimal()) {
+                /* no-op */
+                return;
+            }
+        }
+    }
+
+    if (!on && forced == 0) {
 	/* revert to whatever is the local default */
 	char *current = get_built_in_string_by_name("lang");
 
