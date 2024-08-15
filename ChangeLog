@@ -28,6 +28,10 @@ version 2024c, in progress
   font
 - Added --case option to the "rename" command, allowing bulk
   case conversion of all series names in the dataset.
+- Fix bad behavior from "set force_decpoint off" for users in
+  a locale that normally uses decimal comma but who choose not
+  to use it.
+- Fix GUI language selection on recent macOS.
 
 2024-05-21 version 2024b
 - "gridplot" command: add a --title option
