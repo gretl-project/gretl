@@ -428,7 +428,7 @@ static void macos_check_locale (void)
     const char *s;
 
     cfprop = (CFStringRef) CFLocaleGetValue(cfloc, kCFLocaleIdentifier);
-    s = CFStringGetCStringPtr(cfprop, kCFStringEncodingASCII);
+    s = CFStringGetCStringPtr(cfprop, kCFStringEncodingUTF8);
     if (s != NULL) {
 	fprintf(stderr, "macos_check_locale: CF gave ID '%s'\n", s);
     }
