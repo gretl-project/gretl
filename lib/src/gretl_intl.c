@@ -434,71 +434,36 @@ void set_lcnumeric (int langid, int lcnumeric)
     reset_local_decpoint();
 }
 
-static char *setlocale_with_u8_suffix (const char *lcode)
-{
-    char lfix[32];
-
-    sprintf(lfix, "%s.UTF-8", lcode);
-    return setlocale(LC_ALL, lfix);
-}
-
 static int
 set_locale_with_workaround (int langid, const char *lcode,
 			    char **locp)
 {
     char *orig = gretl_strdup(setlocale(LC_COLLATE, NULL));
-    int orig_u8 = g_get_charset(NULL);
-    char *test = setlocale(LC_ALL, lcode);
+    char lcopy[32] = {0};
+    char *test;
     int err = 0;
 
-#if 1
+    if (lcode != NULL) {
+#ifndef WIN32
+        sprintf(lcopy, "%s.UTF-8", lcode);
+#else
+        strcpy(lcopy, lcode);
+#endif
+        test = setlocale(LC_ALL, lcopy);
+    } else {
+        test = setlocale(LC_ALL, lcode);
+    }
+
+#if 0
     fprintf(stderr, "original locale '%s', utf8 = %d\n", orig, orig_u8);
-    fprintf(stderr, "lcode = '%s', test = '%s'\n", lcode, test);
+    fprintf(stderr, "lcode = '%s', lcopy '%s', test '%s'\n", lcode, lcopy, test);
 #endif
 
-# ifndef WIN32
-    int lfix_tried = 0;
-
-    if (test == NULL && lcode != NULL) {
-	/* try a fix for no locale obtained */
-	test = setlocale_with_u8_suffix(lcode);
-	lfix_tried = 1;
-    }
-    if (orig != NULL && test != NULL) {
-	/* check for broken locale setup */
-	const char *cset = NULL;
-	int u8 = g_get_charset(&cset);
-
-	fprintf(stderr, "original locale '%s', utf8 = %d\n",
-		orig, orig_u8);
-	fprintf(stderr, "revised locale '%s', utf8 = %d\n",
-		test, u8);
-	if (!u8 && lcode != NULL) {
-	    /* got a legacy charset */
-	    err = 1;
-	    if (orig_u8 && !lfix_tried) {
-		test = setlocale_with_u8_suffix(lcode);
-		if (test != NULL && g_get_charset(NULL)) {
-		    fprintf(stderr, "Applied fix for broken locale\n");
-		    err = 0;
-		}
-	    }
-	    if (err) {
-		fprintf(stderr, "Unsupported locale %s.%s\n", lcode, cset);
-		/* try walking this back */
-		setlocale(LC_ALL, orig);
-	    }
-	}
-    }
-#endif
-
-    if (!err) {
-	if (test == NULL) {
-	    err = E_DATA;
-	} else if (lcode != NULL && strcmp("_File", _("_File")) == 0) {
-            fprintf(stderr, "translation not activated: try setenv workaround\n");
-            gretl_setenv("LANGUAGE", lcode);
-        }
+    if (test == NULL) {
+        err = E_DATA;
+    } else {
+        /* belt and braces */
+        gretl_setenv("LANG", lcopy);
     }
 
     free(orig);
