@@ -275,7 +275,7 @@ struct langinfo {
 
 static struct langinfo langs[] = {
     { LANG_AUTO,  "Automatic",            NULL    },
-    { LANG_C,     "English",              "C"     },
+    { LANG_C,     "English",              "en_US" }, /* was "C" */
     { LANG_SQ,    "Albanian",             "sq_AL" },
     { LANG_EU,    "Basque",               "eu_ES" },
     { LANG_BG,    "Bulgarian",            "bg_BG" },
@@ -450,6 +450,11 @@ set_locale_with_workaround (int langid, const char *lcode,
     int orig_u8 = g_get_charset(NULL);
     char *test = setlocale(LC_ALL, lcode);
     int err = 0;
+
+#if 1
+    fprintf(stderr, "original locale '%s', utf8 = %d\n", orig, orig_u8);
+    fprintf(stderr, "lcode = '%s', test = '%s'\n", lcode, test);
+#endif
 
 # ifndef WIN32
     int lfix_tried = 0;
