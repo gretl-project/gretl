@@ -413,7 +413,7 @@ static void real_nls_init (void)
 
 #elif defined(OS_OSX)
 
-#define LOCALE_CHECK 1
+#define LOCALE_CHECK 0
 
 #if LOCALE_CHECK
 
@@ -421,16 +421,17 @@ static void real_nls_init (void)
 
 /* Use this to check what we get from setlocale() ? */
 
-static void macos_check_locale (void)
+static void macos_check_locale (FILE *fp)
 {
+    char buf[1024];
     CFLocaleRef cfloc = CFLocaleCopyCurrent();
     CFStringRef cfprop;
-    const char *s;
 
     cfprop = (CFStringRef) CFLocaleGetValue(cfloc, kCFLocaleIdentifier);
-    s = CFStringGetCStringPtr(cfprop, kCFStringEncodingUTF8);
-    if (s != NULL) {
-	fprintf(stderr, "macos_check_locale: CF gave ID '%s'\n", s);
+    if (CFStringGetCString(cfprop, buf, sizeof buf, kCFStringEncodingUTF8)) {
+        fprintf(fp, " CFStringGetCString: ID = '%s'\n", buf);
+    } else {
+        fprintf(fp, " CFStringGetCString: failed\n");
     }
 
     CFRelease(cfloc);
@@ -455,9 +456,14 @@ static void real_nls_init (void)
     }
 
     p = setlocale(LC_ALL, "");
-    fprintf(stderr, "NLS init: setlocale() gave '%s'\n", p);
+    fprintf(stderr, "NLS init: setlocale(LC_ALL, \"\") gave '%s'\n", p);
 #if LOCALE_CHECK
-    macos_check_locale();
+    FILE *fp = fopen("/Users/allincottrell/setlocale.txt", "w");
+    if (fp != NULL) {
+        fprintf(fp, "NLS init: setlocale(LC_ALL, "") gave '%s'\n", p);
+        macos_check_locale(fp);
+        fclose(fp);
+    }
 #endif
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);
