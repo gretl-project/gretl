@@ -427,14 +427,18 @@ int win32_ensure_path (void)
 	gchar **newenv = NULL;
 
 	if (path != NULL) {
+#if 0
 	    printf("old path:\n%s\n", path);
+#endif
 	    setpath = g_strdup_printf("%s;%s", path, bindir);
 	} else {
 	    setpath = g_strdup(bindir);
 	}
 	newenv = g_environ_setenv(envp, "PATH", setpath, TRUE);
+#if 0
 	path = g_environ_getenv(newenv, "PATH");
 	printf("new path:\n%s\n", path);
+#endif
 	if (newenv != envp) {
 	    g_strfreev(newenv);
 	}
