@@ -430,6 +430,15 @@ static void real_nls_init (void)
     }
 
     p = setlocale(LC_ALL, "");
+#if 0
+    FILE *fp = fopen("/Users/allincottrell/lang.txt", "w");
+    if (fp != NULL) {
+        fprintf(fp, "real_nls_init: setlocale(LC_ALL, \"\") gave '%s'\n", p);
+        fprintf(fp, " env: LANG='%s'\n", getenv("LANG"));
+        fprintf(fp, " env: LANGUAGE='%s'\n", getenv("LANGUAGE"));
+        fclose(fp);
+    }
+#endif
     if (p != NULL) {
         /* for the benefit of gettext */
         gretl_setenv("LANGUAGE", p);
