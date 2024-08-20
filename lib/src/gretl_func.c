@@ -9106,10 +9106,8 @@ int check_function_needs (const DATASET *dset, DataReq dreq,
         return E_DATA;
     }
 
-    if (dreq == FN_NEEDS_QM &&
-        (!dataset_is_time_series(dset) ||
-         (dset->pd != 4 && dset->pd != 12))) {
-        if (pkg != NULL) {
+    if (dreq == FN_NEEDS_QM && !quarterly_or_monthly(dset)) {
+         if (pkg != NULL) {
             gretl_errmsg_sprintf(_("The package %s needs quarterly or monthly data"),
                                  pkg->name);
         }
