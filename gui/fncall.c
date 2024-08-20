@@ -2229,19 +2229,16 @@ static int function_data_check (call_info *cinfo,
     if (dataset != NULL && dataset->v > 0) {
 	; /* OK, we have data */
     } else if (cinfo->dreq != FN_NODATA_OK) {
-	/* The package requires a dataset but no dataset
-	   is loaded: this error should have been caught
-	   earlier?
+	/* The package requires a dataset but no dataset is loaded: this
+	   error should have been caught earlier?
 	*/
 	err = 1;
     } else {
-	/* check the particular function being called:
-	   this is potentially relevant if we're coming
-	   from the gfn browser, trying to execute the
-	   default function of a package. It's possible
-	   that the package as such does not require a
-	   dataset but its default function does --
-	   though that is arguably somewhat anomalous.
+	/* Check the particular function being called: this is potentially
+	   relevant if we're coming from the gfn browser, trying to execute
+	   the default function of a package. It's possible that the package
+	   as such does not require a dataset but its default function does
+	   -- though that is arguably somewhat anomalous.
 	*/
 	int i;
 
