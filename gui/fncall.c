@@ -728,20 +728,21 @@ static GList *add_names_for_type (GList *list, GretlType type)
     return list;
 }
 
-static GList *add_series_names (GList *list)
+static GList *add_series_names (GList *list, int no_const)
 {
-    int i, imin = 1;
+    int i, imin = no_const ? 1 : 0;
+    int vmin = 1;
 
     if (!strcmp(dataset->varname[1], "index")) {
 	/* don't show this first */
-	imin = 2;
+	vmin = 2;
     }
-    for (i=imin; i<dataset->v; i++) {
+    for (i=vmin; i<dataset->v; i++) {
 	if (!series_is_hidden(dataset, i)) {
 	    list = g_list_append(list, (gpointer) dataset->varname[i]);
 	}
     }
-    for (i=0; i<imin; i++) {
+    for (i=imin; i<vmin; i++) {
 	list = g_list_append(list, (gpointer) dataset->varname[i]);
     }
 
@@ -797,13 +798,15 @@ static GList *get_selection_list (int type, gretl_bundle *ui)
     GList *list = NULL;
 
     if (series_arg(type)) {
-	list = add_series_names(list);
+	list = add_series_names(list, 0); /* fixme? */
     } else if (scalar_arg(type)) {
 	list = add_names_for_type(list, GRETL_TYPE_DOUBLE);
     } else if (type == GRETL_TYPE_LIST) {
+        int no_const = list_exclude_const(ui);
+
 	list = add_names_for_type(list, GRETL_TYPE_LIST);
 	if (!list_exclude_singleton(ui)) {
-	    list = add_series_names(list);
+	    list = add_series_names(list, no_const);
 	}
     } else if (matrix_arg(type)) {
 	list = add_names_for_type(list, GRETL_TYPE_MATRIX);
