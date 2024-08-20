@@ -406,7 +406,7 @@ static gchar *win32_read_log_file (HANDLE h, const gchar *fname)
 #endif
 
 /* Try to ensure that the gretl installation directory is in
-   the PATH, so that DLLs need by x13as and/or tramo/seats
+   the PATH, so that DLLs needed by x13as and/or tramo/seats
    can be found at runtime.
 */
 
