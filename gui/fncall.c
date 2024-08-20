@@ -713,11 +713,34 @@ static GList *add_names_for_type (GList *list, GretlType type)
     GList *tail = tlist;
 
     while (tail != NULL) {
-	list = g_list_append(list, tail->data);
+        list = g_list_append(list, tail->data);
 	tail = tail->next;
     }
 
-    if (type == GRETL_TYPE_LIST && mdata_selection_count() > 1) {
+    g_list_free(tlist);
+
+    return list;
+}
+
+static GList *add_list_names (GList *list, int no_single)
+{
+    GList *tlist = user_var_names_for_type(GRETL_TYPE_LIST);
+    GList *tail = tlist;
+
+    while (tail != NULL) {
+        if (no_single) {
+            const int *L = get_list_by_name((const char *) tail->data);
+
+            if (L != NULL && L[0] > 1) {
+                list = g_list_append(list, tail->data);
+            }
+        } else {
+            list = g_list_append(list, tail->data);
+        }
+	tail = tail->next;
+    }
+
+    if (mdata_selection_count() > 1) {
 	/* add the (unnamed) 'list' of series selected in the
 	   main gretl window */
 	list = g_list_append(list, SELNAME);
@@ -802,10 +825,11 @@ static GList *get_selection_list (int type, gretl_bundle *ui)
     } else if (scalar_arg(type)) {
 	list = add_names_for_type(list, GRETL_TYPE_DOUBLE);
     } else if (type == GRETL_TYPE_LIST) {
+        int no_single = list_exclude_singleton(ui);
         int no_const = list_exclude_const(ui);
 
-	list = add_names_for_type(list, GRETL_TYPE_LIST);
-	if (!list_exclude_singleton(ui)) {
+	list = add_list_names(list, no_single);
+	if (!no_single) {
 	    list = add_series_names(list, no_const);
 	}
     } else if (matrix_arg(type)) {
