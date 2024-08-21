@@ -411,7 +411,9 @@ void *gretl_dlopen (const char *path, int now)
 
     if (handle == NULL) {
         gretl_errmsg_sprintf(_("Failed to load plugin: %s"), path);
-#if !defined(WIN32)
+#ifdef WIN32
+        win_show_last_error();
+#else
 	fprintf(stderr, "%s\n", dlerror());
 #endif
     }
