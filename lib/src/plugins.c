@@ -20,7 +20,7 @@
 #include "libgretl.h"
 
 #ifdef WIN32
-# include <windows.h>
+# include <gretl_win32.h>
 #else
 # include <dlfcn.h>
 #endif
