@@ -10,8 +10,10 @@ elif [ "a${ARCH}" = "ax86_64" ] ; then
   ISSTOP="${topsrc}/win32/windist/isstop.64"
 elif [ "a${ARCH}" = "agtk3" ] ; then
   ISSTOP="${topsrc}/win32/windist/isstop.gtk3"
+ elif [ "a${ARCH}" = "aucrt" ] ; then
+  ISSTOP="${topsrc}/win32/windist/isstop.ucrt"
 else
-  echo "Please specify i686, x86_64 or gtk3"
+  echo "Please specify i686, x86_64, gtk3 or ucrt"
   exit 1
 fi
 
