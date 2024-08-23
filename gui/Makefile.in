@@ -325,7 +325,7 @@ install-strip: $(PROG) install-data
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(PROG) $(DESTDIR)$(bindir)/$(PROG)
 
 install-data: installdirs
-	$(INSTALL_DATA) $(topsrc)/pixmaps/gretl-logo.xpm $(DESTDIR)$(gretldir)
+	$(INSTALL_DATA) $(topsrc)/pixmaps/gretl-logo.png $(DESTDIR)$(gretldir)
 	$(INSTALL_DATA) $(topsrc)/gretl.appdata.xml $(DESTDIR)$(appdatadir)
 
 install-ui: installdirs
