@@ -87,7 +87,7 @@ void redirect_io_to_console (void)
     conhandle = _open_osfhandle((intptr_t) stdhandle, _O_TEXT);
     fp = _fdopen(conhandle, "w");
 #if CONSDEBUG
-    ret1 = dup2(conhandle, fileno(stdout));
+    ret1 = dup2(fileno(fp), fileno(stdout));
     ret2 = setvbuf(stdout, NULL, _IONBF, 0);
     fprintf(wchk, "stdout: stdhandle %p, conhandle %d, dup2 %d, setvbuf %d\n",
             (void *) stdhandle, conhandle, ret1, ret2);
@@ -104,7 +104,7 @@ void redirect_io_to_console (void)
     conhandle = _open_osfhandle((intptr_t) stdhandle, _O_TEXT);
     fp = _fdopen(conhandle, "w");
 #if CONSDEBUG
-    ret1 = dup2(conhandle, fileno(stderr));
+    ret1 = dup2(fileno(fp), fileno(stderr));
     ret2 = setvbuf(stderr, NULL, _IONBF, 0);
     fprintf(wchk, "stderr: stdhandle %p, conhandle %d, dup2 %d, setvbuf %d\n",
             (void *) stdhandle, conhandle, ret1, ret2);
