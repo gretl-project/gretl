@@ -42,6 +42,12 @@
 
 #define SET_FONT 0
 
+#define CONSDEBUG 0 /* maybe come back to this */
+
+#if CONSDEBUG
+static FILE *wchk;
+#endif
+
 void redirect_io_to_console (void)
 {
 #if SET_FONT
@@ -52,6 +58,11 @@ void redirect_io_to_console (void)
     int conhandle;
     HANDLE stdhandle;
     FILE *fp;
+
+#if CONSDEBUG
+    int ret1, ret2;
+    wchk = fopen("c:/users/cottrell/console.txt", "w");
+#endif
 
     AllocConsole();
 
@@ -75,8 +86,15 @@ void redirect_io_to_console (void)
 #endif
     conhandle = _open_osfhandle((intptr_t) stdhandle, _O_TEXT);
     fp = _fdopen(conhandle, "w");
+#if CONSDEBUG
+    ret1 = dup2(conhandle, fileno(stdout));
+    ret2 = setvbuf(stdout, NULL, _IONBF, 0);
+    fprintf(wchk, "stdout: stdhandle %p, conhandle %d, dup2 %d, setvbuf %d\n",
+            (void *) stdhandle, conhandle, ret1, ret2);
+#else
     *stdout = *fp;
     setvbuf(stdout, NULL, _IONBF, 0);
+#endif
 
     /* redirect unbuffered STDERR to the console */
     stdhandle = GetStdHandle(STD_ERROR_HANDLE);
@@ -85,12 +103,28 @@ void redirect_io_to_console (void)
 #endif
     conhandle = _open_osfhandle((intptr_t) stdhandle, _O_TEXT);
     fp = _fdopen(conhandle, "w");
+#if CONSDEBUG
+    ret1 = dup2(conhandle, fileno(stderr));
+    ret2 = setvbuf(stderr, NULL, _IONBF, 0);
+    fprintf(wchk, "stderr: stdhandle %p, conhandle %d, dup2 %d, setvbuf %d\n",
+            (void *) stdhandle, conhandle, ret1, ret2);
+#else
     *stderr = *fp;
     setvbuf(stderr, NULL, _IONBF, 0);
+#endif
 
+#if CONSDEBUG
+    if (IsValidCodePage(65001)) {
+        fprintf(wchk, " CP: 65001 is valid\n");
+        ret2 = SetConsoleOutputCP(65001);
+        fprintf(wchk, " SetConsoleOutputCP: %d\n", ret2);
+    }
+    fclose(wchk);
+#else
     if (IsValidCodePage(65001) && SetConsoleOutputCP(65001)) {
 	; /* OK */
     }
+#endif
 }
 
 /* asynchronous execution of child process */
