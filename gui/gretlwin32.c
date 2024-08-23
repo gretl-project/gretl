@@ -42,9 +42,8 @@
 
 #define SET_FONT 0
 
-#define CONSDEBUG 0 /* maybe come back to this */
-
-#if CONSDEBUG
+#ifdef _UCRT /* does this work? */
+#define CONSDEBUG 1
 static FILE *wchk;
 #endif
 
