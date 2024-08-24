@@ -40,91 +40,129 @@
 
 #define MAX_CONSOLE_LINES 500
 
-#define SET_FONT 0
+#define SET_CONSOLE_FONT 0
 
-#ifdef _UCRT /* does this work? */
-#define CONSDEBUG 1
-static FILE *wchk;
+#if SET_CONSOLE_FONT
+
+/* This code could be called from redirect_io_to_console() */
+
+static void try_set_console_font (HANDLE stdout_handle,
+                                  HANDLE stderr_handle)
+{
+    CONSOLE_FONT_INFOEX cfie = {0};
+    int ok[2];
+
+    /* try to ensure TrueType font */
+    cfie.cbSize = sizeof(cfie);
+    lstrcpyW(cfie.FaceName, L"Lucida Console"); /* or maybe Consolas? */
+
+    ok[0] = SetCurrentConsoleFontEx(stdout_handle, 0, &cfie);
+    ok[1] = SetCurrentConsoleFontEx(stderr_handle, 0, &cfie);
+
+    fprintf(stderr, "try_set_console_font: ok = %d, %d\n", ok[0], ok[1]);
+}
+
 #endif
+
+#ifdef _UCRT
+# define CONSDEBUG 0
 
 void redirect_io_to_console (void)
 {
-#if SET_FONT
-    CONSOLE_FONT_INFOEX cfie = {0};
-    int font_ok;
-#endif
     CONSOLE_SCREEN_BUFFER_INFO coninfo;
     int conhandle;
-    HANDLE stdhandle;
+    HANDLE stdout_handle;
+    HANDLE stderr_handle;
+    FILE *wchk = NULL;
     FILE *fp;
+    int ret1, ret2;
 
 #if CONSDEBUG
-    int ret1, ret2;
     wchk = fopen("c:/users/cottrell/console.txt", "w");
 #endif
 
     AllocConsole();
 
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE),
-			       &coninfo);
+    stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    stderr_handle = GetStdHandle(STD_ERROR_HANDLE);
 
+    ret1 = GetConsoleScreenBufferInfo(stdout_handle, &coninfo);
     coninfo.dwSize.Y = MAX_CONSOLE_LINES;
-    SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE),
-			       coninfo.dwSize);
-
-#if SET_FONT
-    /* try to ensure TrueType font */
-    cfie.cbSize = sizeof(cfie);
-    lstrcpyW(cfie.FaceName, L"Lucida Console"); /* maybe Consolas? */
-#endif
+    ret2 = SetConsoleScreenBufferSize(stdout_handle, coninfo.dwSize);
+    if (wchk != NULL) {
+        fprintf(wchk, "GetConsoleScreenBufferInfo gave %d\n", ret1);
+        fprintf(wchk, "SetConsoleScreenBufferSize gave %d\n", ret2);
+    }
 
     /* redirect unbuffered STDOUT to the console */
-    stdhandle = GetStdHandle(STD_OUTPUT_HANDLE);
-#if SET_FONT
-    font_ok = SetCurrentConsoleFontEx(stdhandle, 0, &cfie);
-#endif
-    conhandle = _open_osfhandle((intptr_t) stdhandle, _O_TEXT);
+    conhandle = _open_osfhandle((intptr_t) stdout_handle, _O_TEXT);
     fp = _fdopen(conhandle, "w");
-#if CONSDEBUG
     ret2 = setvbuf(fp, NULL, _IONBF, 0);
     ret1 = _dup2(_fileno(fp), _fileno(stdout));
-    fprintf(wchk, "stdout: stdhandle %p, conhandle %d, dup2 %d, setvbuf %d\n",
-            (void *) stdhandle, conhandle, ret1, ret2);
-#else
-    *stdout = *fp;
-    setvbuf(stdout, NULL, _IONBF, 0);
-#endif
+    if (wchk != NULL) {
+        fprintf(wchk, "stdout: handle %p, conhandle %d, fp %p, dup2 %d, setvbuf %d\n",
+                (void *) stdout_handle, conhandle, (void *) fp, ret1, ret2);
+    }
 
     /* redirect unbuffered STDERR to the console */
-    stdhandle = GetStdHandle(STD_ERROR_HANDLE);
-#if SET_FONT
-    font_ok = SetCurrentConsoleFontEx(stdhandle, 0, &cfie);
-#endif
-    conhandle = _open_osfhandle((intptr_t) stdhandle, _O_TEXT);
+    conhandle = _open_osfhandle((intptr_t) stderr_handle, _O_TEXT);
     fp = _fdopen(conhandle, "w");
-#if CONSDEBUG
     ret2 = setvbuf(fp, NULL, _IONBF, 0);
     ret1 = _dup2(_fileno(fp), _fileno(stderr));
-    fprintf(wchk, "stderr: stdhandle %p, conhandle %d, dup2 %d, setvbuf %d\n",
-            (void *) stdhandle, conhandle, ret1, ret2);
-#else
+    if (wchk != NULL) {
+        fprintf(wchk, "stderr: stdhandle %p, conhandle %d, fp %p, dup2 %d, setvbuf %d\n",
+                (void *) stderr_handle, conhandle, (void *) fp, ret1, ret2);
+    }
+
+    if (IsValidCodePage(65001)) {
+        ret2 = SetConsoleOutputCP(65001);
+        if (wchk != NULL) {
+            fprintf(wchk, " SetConsoleOutputCP: %d\n", ret2);
+        }
+    }
+
+    if (wchk != NULL) {
+        fclose(wchk);
+    }
+}
+
+#else /* not UCRT */
+
+void redirect_io_to_console (void)
+{
+    CONSOLE_SCREEN_BUFFER_INFO coninfo;
+    int conhandle;
+    HANDLE stdout_handle;
+    HANDLE stderr_handle;
+    FILE *fp;
+
+    AllocConsole();
+
+    stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    stderr_handle = GetStdHandle(STD_ERROR_HANDLE);
+
+    GetConsoleScreenBufferInfo(stdout_handle, &coninfo);
+    coninfo.dwSize.Y = MAX_CONSOLE_LINES;
+    SetConsoleScreenBufferSize(stdout_handle, coninfo.dwSize);
+
+    /* redirect unbuffered STDOUT to the console */
+    conhandle = _open_osfhandle((intptr_t) stdout_handle, _O_TEXT);
+    fp = _fdopen(conhandle, "w");
+    *stdout = *fp;
+    setvbuf(stdout, NULL, _IONBF, 0);
+
+    /* redirect unbuffered STDERR to the console */
+    conhandle = _open_osfhandle((intptr_t) stderr_handle, _O_TEXT);
+    fp = _fdopen(conhandle, "w");
     *stderr = *fp;
     setvbuf(stderr, NULL, _IONBF, 0);
-#endif
 
-#if CONSDEBUG
-    if (IsValidCodePage(65001)) {
-        fprintf(wchk, " CP: 65001 is valid\n");
-        ret2 = SetConsoleOutputCP(65001);
-        fprintf(wchk, " SetConsoleOutputCP: %d\n", ret2);
-    }
-    fclose(wchk);
-#else
     if (IsValidCodePage(65001) && SetConsoleOutputCP(65001)) {
 	; /* OK */
     }
-#endif
 }
+
+#endif /* UCRT or not */
 
 /* asynchronous execution of child process */
 
