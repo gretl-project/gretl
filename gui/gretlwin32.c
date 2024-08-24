@@ -65,68 +65,35 @@ static void try_set_console_font (HANDLE stdout_handle,
 #endif
 
 #ifdef _UCRT
-# define CONSDEBUG 0
+
+/* This following may work for older msvcrt too, but that remains
+   to be determined.
+*/
 
 void redirect_io_to_console (void)
 {
     CONSOLE_SCREEN_BUFFER_INFO coninfo;
-    int conhandle;
     HANDLE stdout_handle;
-    HANDLE stderr_handle;
-    FILE *wchk = NULL;
-    FILE *fp;
-    int ret1, ret2;
+    int ok1, ok2;
 
-#if CONSDEBUG
-    wchk = fopen("c:/users/cottrell/console.txt", "w");
-#endif
-
-    AllocConsole();
+    if (!AllocConsole()) {
+        return;
+    }
 
     stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    stderr_handle = GetStdHandle(STD_ERROR_HANDLE);
-
-    ret1 = GetConsoleScreenBufferInfo(stdout_handle, &coninfo);
+    GetConsoleScreenBufferInfo(stdout_handle, &coninfo);
     coninfo.dwSize.Y = MAX_CONSOLE_LINES;
-    ret2 = SetConsoleScreenBufferSize(stdout_handle, coninfo.dwSize);
-    if (wchk != NULL) {
-        fprintf(wchk, "GetConsoleScreenBufferInfo gave %d\n", ret1);
-        fprintf(wchk, "SetConsoleScreenBufferSize gave %d\n", ret2);
-    }
+    SetConsoleScreenBufferSize(stdout_handle, coninfo.dwSize);
 
-    /* redirect unbuffered STDOUT to the console */
-    conhandle = _open_osfhandle((intptr_t) stdout_handle, _O_TEXT);
-    fp = _fdopen(conhandle, "w");
-    ret2 = setvbuf(fp, NULL, _IONBF, 0);
-    ret1 = _dup2(_fileno(fp), _fileno(stdout));
-    if (wchk != NULL) {
-        fprintf(wchk, "stdout: handle %p, conhandle %d, fp %p, dup2 %d, setvbuf %d\n",
-                (void *) stdout_handle, conhandle, (void *) fp, ret1, ret2);
-    }
+    ok1 = freopen("CONOUT$", "w", stdout) != NULL;
+    ok2 = freopen("CONOUT$", "w", stderr) != NULL;
 
-    /* redirect unbuffered STDERR to the console */
-    conhandle = _open_osfhandle((intptr_t) stderr_handle, _O_TEXT);
-    fp = _fdopen(conhandle, "w");
-    ret2 = setvbuf(fp, NULL, _IONBF, 0);
-    ret1 = _dup2(_fileno(fp), _fileno(stderr));
-    if (wchk != NULL) {
-        fprintf(wchk, "stderr: stdhandle %p, conhandle %d, fp %p, dup2 %d, setvbuf %d\n",
-                (void *) stderr_handle, conhandle, (void *) fp, ret1, ret2);
-    }
-
-    if (IsValidCodePage(65001)) {
-        ret2 = SetConsoleOutputCP(65001);
-        if (wchk != NULL) {
-            fprintf(wchk, " SetConsoleOutputCP: %d\n", ret2);
-        }
-    }
-
-    if (wchk != NULL) {
-        fclose(wchk);
+    if (ok1 && ok2 && IsValidCodePage(65001)) {
+        SetConsoleOutputCP(65001);
     }
 }
 
-#else /* not UCRT */
+#else /* not UCRT, known to work with older msvcrt */
 
 void redirect_io_to_console (void)
 {
@@ -136,7 +103,9 @@ void redirect_io_to_console (void)
     HANDLE stderr_handle;
     FILE *fp;
 
-    AllocConsole();
+    if (!AllocConsole()) {
+        return;
+    }
 
     stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
     stderr_handle = GetStdHandle(STD_ERROR_HANDLE);
