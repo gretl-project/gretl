@@ -1490,7 +1490,7 @@ static const char **get_list_setting_strings (void *var, int *n)
     else if (var == themepref) {
 	static const char *theme_strs[] = {
             "Windows-10", "Windows-10-Dark", "Adwaita",
-            "Windows 7", "Windows-11"
+            "Windows 7"
 	};
 
 	strs = theme_strs;
@@ -3588,6 +3588,12 @@ void set_up_windows_look (void)
 {
     GtkSettings *settings = gtk_settings_get_default();
     const char *theme_name;
+
+    if (!strncmp(themepref, "Windows-10", 10)) {
+        g_setenv("GTK_CSD", "0", 1);
+    } else {
+        g_setenv("GTK_CSD", "1", 1);
+    }
 
     if (!strcmp(themepref, "Windows 7")) {
         theme_name = "win32";
