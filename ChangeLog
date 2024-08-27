@@ -10,7 +10,7 @@ version 2024c, in progress
   main gretl window
 - Fix bug: console command-line broken following use of "printf"
   with no newline in the format
-- Fix bug in "corrgm" command: spurious signifiance stars shown
+- Fix bug in "corrgm" command: spurious significance stars shown
   for the PACF when the --bartlett option is given
 - Fix bug in "adf" command (without the --gls option): error if
   all of --c, --nc, --ct and --ctt were given
