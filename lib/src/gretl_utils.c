@@ -2921,11 +2921,8 @@ static void blas_init (void)
         OB_set_num_threads = dlsym(ptr, "openblas_set_num_threads");
         OB_get_num_threads = dlsym(ptr, "openblas_get_num_threads");
         if (OB_set_num_threads != NULL) {
-            fprintf(stderr, "HERE openblas_set_num_threads is non-NULL\n");
             blas_variant = BLAS_OPENBLAS;
             register_openblas_details(ptr);
-        } else {
-            fprintf(stderr, "HERE openblas_set_num_threads is NULL\n");
         }
     }
 
