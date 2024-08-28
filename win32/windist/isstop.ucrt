@@ -2,7 +2,7 @@
 
 [Setup]
 AppName=gretl
-AppVerName=gretl version VERSION (x86_64)
+AppVerName=gretl version VERSION (x86_64, UCRT)
 AppVersion=VERSION
 MinVersion=10.0
 ArchitecturesAllowed=x64
@@ -18,7 +18,7 @@ ChangesAssociations=yes
 ChangesEnvironment=yes
 DirExistsWarning=no
 UsedUserAreasWarning=no
-OutputBaseFilename=gretl_install-ucrt
+OutputBaseFilename=gretl_install-win64-ucrt
 WizardStyle=modern
 
 [InstallDelete]
