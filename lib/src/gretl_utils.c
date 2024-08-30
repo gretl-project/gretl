@@ -57,6 +57,7 @@
 #endif
 
 #include <errno.h>
+#include <dlfcn.h>
 
 #if defined(_OPENMP) || defined(HAVE_MPI) || defined(WIN32)
 # define WANT_XTIMER
@@ -2459,6 +2460,34 @@ static int blas_variant;
 
 #if !defined(WIN32)
 
+static void register_openblas_details (void *handle);
+
+static void retry_for_openblas_details (char *ldd_line)
+{
+    char *s = strchr(ldd_line, '/');
+    char *ob_path = NULL;
+
+    if (s != NULL) {
+        char *p;
+
+        s += strspn(s, " ");
+        p = strchr(s, ' ');
+        if (p != NULL) {
+            ob_path = gretl_strndup(s, p-s);
+        }
+    }
+
+    if (ob_path != NULL) {
+        void *ptr = dlopen(ob_path, RTLD_NOW);
+
+        if (ptr != NULL) {
+            register_openblas_details(ptr);
+        }
+        free(ob_path);
+        /* dlclose(ptr); ?? */
+    }
+}
+
 static int parse_ldd_output (const char *s)
 {
     char found[6] = {0};
@@ -2473,6 +2502,7 @@ static int parse_ldd_output (const char *s)
             /* got to the end of a line */
             line[i] = '\0';
 	    if (strstr(line, "libopenblas")) {
+                retry_for_openblas_details(line);
 		found[5] = 5;
 	    } else if (strstr(line, "libblis")) {
 		found[4] = 1;
@@ -2560,8 +2590,6 @@ static int detect_blas_via_ldd (void)
 
 #endif /* neither Windows nor Mac */
 
-#include <dlfcn.h>
-
 static void (*OB_set_num_threads) (int);
 static int (*OB_get_num_threads) (void);
 static void (*BLIS_set_num_threads) (int);
@@ -2628,7 +2656,7 @@ static void register_blis_details (void *handle)
        => must be updated whenever new architecture/cpu model appears*/
     /* Shouldn't this come from a header? (Allin) */
     /* -> Well, this enum is defined in blis.h which we do not include.
-       And we can't retrive it via dlopen(), can we? (Marcin) */
+       And we can't retrieve it via dlopen(), can we? (Marcin) */
     const int BLIS_NUM_ARCHS = 26;
     char *buf = NULL;
     int id;
@@ -2915,7 +2943,6 @@ static void blas_init (void)
 #endif
 
     ptr = dlopen(NULL, RTLD_NOW);
-    fprintf(stderr, "blas_init: ptr = %p\n", ptr);
 
     if (ptr != NULL) {
         OB_set_num_threads = dlsym(ptr, "openblas_set_num_threads");
@@ -2960,9 +2987,7 @@ static void blas_init (void)
         blas_variant != BLAS_OPENBLAS &&
         blas_variant != BLAS_BLIS &&
         blas_variant != BLAS_MKL) {
-#ifdef WIN32
-        blas_variant = BLAS_NETLIB; /* ?? */
-#else
+#ifndef WIN32
         blas_variant = detect_blas_via_ldd();
 #endif
     }
