@@ -40,7 +40,7 @@
 # include "gretl_foreign.h"
 #endif
 
-#if defined(USE_AVX)
+#if 0 // defined(USE_AVX)
 # define USE_SIMD
 # if defined(HAVE_IMMINTRIN_H)
 #  include <immintrin.h>
@@ -425,13 +425,10 @@ static inline double hsum_double_avx (__m256d v)
     return  _mm_cvtsd_f64(_mm_add_sd(vlow, high64));
 }
 
-static void vector_add_into (const gretl_vector *a,
-			     const gretl_vector *b,
-			     gretl_vector *c, int n)
+static void vector_add_into (const double * __restrict a,
+			     const double * __restrict b,
+			     double *c, int n)
 {
-    const double *ax = a->val;
-    const double *bx = b->val;
-    double *cx = c->val;
     int imax = n / 4;
     int rem = n % 4;
     int i;
@@ -439,25 +436,23 @@ static void vector_add_into (const gretl_vector *a,
     __m256d a256, b256, c256;
 
     for (i=0; i<imax; i++) {
-	a256 = _mm256_loadu_pd(ax);
-	b256 = _mm256_loadu_pd(bx);
+	a256 = _mm256_loadu_pd(a);
+	b256 = _mm256_loadu_pd(b);
 	c256 = _mm256_add_pd(a256, b256);
-	_mm256_storeu_pd(cx, c256);
-	ax += 4;
-	bx += 4;
-	cx += 4;
+	_mm256_storeu_pd(c, c256);
+	a += 4;
+	b += 4;
+	c += 4;
     }
     for (i=0; i<rem; i++) {
-	cx[i] = ax[i] + bx[i];
+	c[i] = a[i] + b[i];
     }
 }
 
-static void vector_add_to (gretl_vector *a,
-			   const gretl_vector *b,
+static void vector_add_to (double *a,
+			   const double * __restrict b,
 			   int n)
 {
-    double *ax = a->val;
-    const double *bx = b->val;
     int imax = n / 4;
     int rem = n % 4;
     int i;
@@ -465,26 +460,24 @@ static void vector_add_to (gretl_vector *a,
     __m256d a256, b256, sum;
 
     for (i=0; i<imax; i++) {
-	a256 = _mm256_loadu_pd(ax);
-	b256 = _mm256_loadu_pd(bx);
+	a256 = _mm256_loadu_pd(a);
+	b256 = _mm256_loadu_pd(b);
 	sum = _mm256_add_pd(a256, b256);
-	_mm256_storeu_pd(ax, sum);
-	ax += 4;
-	bx += 4;
+	_mm256_storeu_pd(a, sum);
+	a += 4;
+	b += 4;
     }
     for (i=0; i<rem; i++) {
-	ax[i] += bx[i];
+	a[i] += b[i];
     }
 }
 
 /* a = a - b */
 
-static void vector_subtract_from (gretl_vector *a,
-				  const gretl_vector *b,
+static void vector_subtract_from (double *a,
+				  const double * __restrict b,
 				  int n)
 {
-    double *ax = a->val;
-    const double *bx = b->val;
     int imax = n / 4;
     int rem = n % 4;
     int i;
@@ -492,28 +485,25 @@ static void vector_subtract_from (gretl_vector *a,
     __m256d a256, b256, dif;
 
     for (i=0; i<imax; i++) {
-	a256 = _mm256_loadu_pd(ax);
-	b256 = _mm256_loadu_pd(bx);
+	a256 = _mm256_loadu_pd(a);
+	b256 = _mm256_loadu_pd(b);
 	dif = _mm256_sub_pd(a256, b256);
-	_mm256_storeu_pd(ax, dif);
-	ax += 4;
-	bx += 4;
+	_mm256_storeu_pd(a, dif);
+	a += 4;
+	b += 4;
     }
     for (i=0; i<rem; i++) {
-	ax[i] -= bx[i];
+	a[i] -= b[i];
     }
 }
 
 /* c = a - b */
 
-static void vector_subtract_into (const gretl_vector *a,
-				  const gretl_vector *b,
-				  gretl_vector *c, int n,
+static void vector_subtract_into (const double * __restrict a,
+				  const double * __restrict b,
+				  double *c, int n,
 				  int cumulate)
 {
-    const double *ax = a->val;
-    const double *bx = b->val;
-    double *cx = c->val;
     int imax = n / 4;
     int rem = n % 4;
     int i;
@@ -521,27 +511,27 @@ static void vector_subtract_into (const gretl_vector *a,
     __m256d a256, b256, c256;
 
     for (i=0; i<imax; i++) {
-	a256 = _mm256_loadu_pd(ax);
-	b256 = _mm256_loadu_pd(bx);
+	a256 = _mm256_loadu_pd(a);
+	b256 = _mm256_loadu_pd(b);
 	if (cumulate) {
 	    __m256d d256 = _mm256_sub_pd(a256, b256);
 
-	    c256 = _mm256_loadu_pd(cx);
+	    c256 = _mm256_loadu_pd(c);
 	    d256 = _mm256_add_pd(c256, d256);
-	    _mm256_storeu_pd(cx, d256);
+	    _mm256_storeu_pd(c, d256);
 	} else {
 	    c256 = _mm256_sub_pd(a256, b256);
-	    _mm256_storeu_pd(cx, c256);
+	    _mm256_storeu_pd(c, c256);
 	}
-	ax += 4;
-	bx += 4;
-	cx += 4;
+	a += 4;
+	b += 4;
+	c += 4;
     }
     for (i=0; i<rem; i++) {
 	if (cumulate) {
-	    cx[i] += ax[i] - bx[i];
+	    c[i] += a[i] - b[i];
 	} else {
-	    cx[i] = ax[i] - bx[i];
+	    c[i] = a[i] - b[i];
 	}
     }
 }
@@ -599,7 +589,8 @@ static inline void compute_q (gretl_vector *q,
     }
 }
 
-static double dot_product (const double *x, const double *y, int n)
+static double dot_product (const double * __restrict x,
+                           const double * __restrict y, int n)
 {
     double ret = 0.0;
     int i, imax = n / 4;
@@ -625,56 +616,63 @@ static double dot_product (const double *x, const double *y, int n)
 
 #else
 
-static void vector_add_into (const gretl_vector *a,
-			     const gretl_vector *b,
-			     gretl_vector *c, int n)
+__attribute__((target_clones("avx512f","avx2","avx","default")))
+static void vector_add_into (const double * __restrict a,
+			     const double * __restrict b,
+			     double *c, int n)
 {
     int i;
 
     for (i=0; i<n; i++) {
-	c->val[i] = a->val[i] + b->val[i];
+	c[i] = a[i] + b[i];
     }
 }
 
-static void vector_add_to (gretl_vector *a,
-			   const gretl_vector *b,
+__attribute__((target_clones("avx512f","avx2","avx","default")))
+static void vector_add_to (double *a,
+                           const double * __restrict b,
 			   int n)
 {
     int i;
 
     for (i=0; i<n; i++) {
-	a->val[i] += b->val[i];
+	a[i] += b[i];
     }
 }
 
-static void vector_subtract_from (gretl_vector *a,
-				  const gretl_vector *b,
+__attribute__((target_clones("avx512f","avx2","avx","default")))
+static void vector_subtract_from (double *a,
+				  const double * __restrict b,
 				  int n)
 {
     int i;
 
     for (i=0; i<n; i++) {
-	a->val[i] -= b->val[i];
+	a[i] -= b[i];
     }
 }
 
-static void vector_subtract_into (const gretl_vector *a,
-				  const gretl_vector *b,
-				  gretl_vector *c, int n,
+__attribute__((target_clones("avx512f","avx2","avx","default")))
+static void vector_subtract_into (const double * __restrict a,
+				  const double * __restrict b,
+				  double *c, int n,
 				  int cumulate)
 {
     int i;
 
     for (i=0; i<n; i++) {
 	if (cumulate) {
-	    c->val[i] += a->val[i] - b->val[i];
+	    c[i] += a[i] - b[i];
 	} else {
-	    c->val[i] = a->val[i] - b->val[i];
+	    c[i] = a[i] - b[i];
 	}
     }
 }
 
-static double dot_product (const double *x, const double *y, int n)
+__attribute__((target_clones("avx512f","avx2","avx","default")))
+static double dot_product (const double * __restrict x,
+                           const double * __restrict y,
+                           int n)
 {
     double ret = 0.0;
     int i;
@@ -685,6 +683,7 @@ static double dot_product (const double *x, const double *y, int n)
     return ret;
 }
 
+__attribute__((target_clones("avx512f","avx2","avx","default")))
 static inline void compute_q (gretl_vector *q,
 			      const gretl_vector *b,
 			      const gretl_vector *u,
@@ -707,9 +706,14 @@ static inline void compute_q (gretl_vector *q,
 
 static double own_dot_product (const gretl_vector *x)
 {
-    int n = gretl_vector_get_length(x);
+    int i, n = gretl_vector_get_length(x);
+    double ret = 0.0;
 
-    return dot_product(x->val, x->val, n);
+    for (i=0; i<n; i++) {
+        ret += x->val[i] * x->val[i];
+    }
+
+    return ret;
 }
 
 /* fortran: dot_product(X(:,j), X(:,k)) for @X with @n rows */
@@ -1307,7 +1311,7 @@ static double lasso_objective (const gretl_matrix *X,
 
     TSS = own_dot_product(y);
     gretl_matrix_multiply(X, b, u);
-    vector_subtract_from(u, y, y->rows);
+    vector_subtract_from(u->val, y->val, y->rows);
     SSR = own_dot_product(u);
     obj = 0.5 * SSR + lambda * abs_sum(b);
     *pR2 = 1.0 - SSR/TSS;
@@ -1330,7 +1334,7 @@ static double xv_score (const gretl_matrix *X,
     /* get fitted values */
     gretl_matrix_multiply(X, b, Xb);
     /* compute and process residuals */
-    vector_subtract_from(Xb, y, X->rows);
+    vector_subtract_from(Xb->val, y->val, X->rows);
     sum = own_dot_product(Xb);
 
     return sum / X->rows;
@@ -1411,7 +1415,7 @@ static int admm_iteration (const gretl_matrix *X,
 
     while (iter < ADMM_MAX_ITER && !err) {
 	/* u-update: u = u + r */
-	vector_add_to(u, r, n);
+	vector_add_to(u->val, r->val, n);
 
 	/* v-update: v = (X^T X + rho I) \ (X^T y + rho b - u) */
 
@@ -1429,7 +1433,7 @@ static int admm_iteration (const gretl_matrix *X,
 				      v, GRETL_MOD_NONE);
 	    gretl_matrix_multiply_by_scalar(v, -1/rho2);
 	    gretl_matrix_multiply_by_scalar(q, 1/rho);
-	    vector_add_to(v, q, n);
+	    vector_add_to(v->val, q->val, n);
 	}
 
 	/* sqrt(sum ||r_i||_2^2) */
@@ -1441,13 +1445,13 @@ static int admm_iteration (const gretl_matrix *X,
 	nystack = sqrt(nystack);
 
 	vector_copy_values(bprev, b, n);
-	vector_add_into(v, u, b, n);
+	vector_add_into(v->val, u->val, b->val, n);
 	soft_threshold(b, lambda, rho);
 
 	/* Termination checks */
 
 	/* dual residual */
-	vector_subtract_into(b, bprev, bdiff, n, 0); /* bdiff = b - bprev */
+	vector_subtract_into(b->val, bprev->val, bdiff->val, n, 0); /* bdiff = b - bprev */
 	/* ||s^k||_2^2 = N rho^2 ||b - bprev||_2^2 */
 	nrm2 = sqrt(own_dot_product(bdiff));
 	dualres = rho * nrm2;
@@ -1463,7 +1467,7 @@ static int admm_iteration (const gretl_matrix *X,
 	}
 
 	/* Compute residual: r = v - b */
-	vector_subtract_into(v, b, r, n, 0);
+	vector_subtract_into(v->val, b->val, r->val, n, 0);
 
 	if (tune_rho && iter > 0 && (iter == 32 || iter % 200 == 0)) {
 	    double mult = 10;
