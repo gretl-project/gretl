@@ -9402,6 +9402,16 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
 
 #define INV_DEBUG 0
 
+
+/* IVPD_SINGLE: an experiment which prevents multi-threading on
+   calls to dpotrf/dpotri on inversion of a symmetric matrix
+   (August 2024). In testing, multi-threading slows down this
+   operation, at least for matrices of a size that's common in
+   in econometrics -- most particularly with OpenBLAS on MS
+   Windows, where the slowdown is extreme.
+*/
+#define IVPD_SINGLE 1
+
 static int real_invert_symmetric_matrix (gretl_matrix *a,
                                          int symmcheck,
 					 int preserve,
@@ -9449,6 +9459,14 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
 	}
     }
 
+#if IVPD_SINGLE
+    int save_nt = blas_get_num_threads();
+
+    if (save_nt > 1) {
+        blas_set_num_threads(1);
+    }
+#endif
+
     dpotrf_(&uplo, &n, a->val, &n, &info);
 
     if (info != 0) {
@@ -9482,6 +9500,12 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
             gretl_matrix_mirror(a, uplo);
         }
     }
+
+#if IVPD_SINGLE
+    if (save_nt > 1) {
+        blas_set_num_threads(save_nt);
+    }
+#endif
 
     if (err && preserve) {
         memcpy(a->val, aval, n * n * sizeof *aval);
