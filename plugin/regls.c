@@ -40,7 +40,7 @@
 # include "gretl_foreign.h"
 #endif
 
-#if 0 // defined(USE_AVX)
+#if defined(USE_AVX)
 # define USE_SIMD
 # if defined(HAVE_IMMINTRIN_H)
 #  include <immintrin.h>
@@ -616,7 +616,6 @@ static double dot_product (const double * __restrict x,
 
 #else
 
-__attribute__((target_clones("avx512f","avx2","avx","default")))
 static void vector_add_into (const double * __restrict a,
 			     const double * __restrict b,
 			     double *c, int n)
@@ -628,7 +627,6 @@ static void vector_add_into (const double * __restrict a,
     }
 }
 
-__attribute__((target_clones("avx512f","avx2","avx","default")))
 static void vector_add_to (double *a,
                            const double * __restrict b,
 			   int n)
@@ -640,7 +638,6 @@ static void vector_add_to (double *a,
     }
 }
 
-__attribute__((target_clones("avx512f","avx2","avx","default")))
 static void vector_subtract_from (double *a,
 				  const double * __restrict b,
 				  int n)
@@ -652,7 +649,6 @@ static void vector_subtract_from (double *a,
     }
 }
 
-__attribute__((target_clones("avx512f","avx2","avx","default")))
 static void vector_subtract_into (const double * __restrict a,
 				  const double * __restrict b,
 				  double *c, int n,
@@ -669,7 +665,6 @@ static void vector_subtract_into (const double * __restrict a,
     }
 }
 
-__attribute__((target_clones("avx512f","avx2","avx","default")))
 static double dot_product (const double * __restrict x,
                            const double * __restrict y,
                            int n)
@@ -683,7 +678,6 @@ static double dot_product (const double * __restrict x,
     return ret;
 }
 
-__attribute__((target_clones("avx512f","avx2","avx","default")))
 static inline void compute_q (gretl_vector *q,
 			      const gretl_vector *b,
 			      const gretl_vector *u,
