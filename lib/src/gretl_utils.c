@@ -2461,11 +2461,14 @@ static int blas_variant;
 #if !defined(WIN32)
 
 static void register_openblas_details (void *handle);
+static void register_mkl_details (void *handle);
+static void register_blis_details (void *handle);
 
-static void retry_for_openblas_details (char *ldd_line)
+static void retry_for_blas_details (char *ldd_line,
+                                    int blastype)
 {
     char *s = strchr(ldd_line, '/');
-    char *ob_path = NULL;
+    char *libpath = NULL;
 
     if (s != NULL) {
         char *p;
@@ -2473,17 +2476,23 @@ static void retry_for_openblas_details (char *ldd_line)
         s += strspn(s, " ");
         p = strchr(s, ' ');
         if (p != NULL) {
-            ob_path = gretl_strndup(s, p-s);
+            libpath = gretl_strndup(s, p-s);
         }
     }
 
-    if (ob_path != NULL) {
-        void *ptr = dlopen(ob_path, RTLD_NOW);
+    if (libpath != NULL) {
+        void *ptr = dlopen(libpath, RTLD_NOW);
 
         if (ptr != NULL) {
-            register_openblas_details(ptr);
+            if (blastype == BLAS_OPENBLAS) {
+                register_openblas_details(ptr);
+            } else if (blastype == BLAS_MKL) {
+                register_mkl_details(ptr);
+            } else if (blastype == BLAS_BLIS) {
+                register_blis_details(ptr);
+            }
         }
-        free(ob_path);
+        free(libpath);
         /* dlclose(ptr); ?? */
     }
 }
@@ -2502,13 +2511,15 @@ static int parse_ldd_output (const char *s)
             /* got to the end of a line */
             line[i] = '\0';
 	    if (strstr(line, "libopenblas")) {
-                retry_for_openblas_details(line);
+                retry_for_blas_details(line, BLAS_OPENBLAS);
 		found[5] = 5;
 	    } else if (strstr(line, "libblis")) {
+                retry_for_blas_details(line, BLAS_BLIS);
 		found[4] = 1;
 	    } else if (strstr(line, "Accelerate.frame")) {
 		found[3] = 1;
 	    } else if (strstr(line, "libmkl")) {
+                retry_for_blas_details(line, BLAS_MKL);
 		found[2] = 1;
 	    } else if (strstr(line, "atlas")) {
 		found[1] = 1;
