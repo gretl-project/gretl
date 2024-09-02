@@ -418,7 +418,7 @@ static void bkbp_frequencies_table (GtkWidget *dlg, filter_info *finfo)
     s1 = gtk_spin_button_new_with_range(1, 64, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s1), finfo->bkl);
     g_signal_connect(G_OBJECT(s1), "value-changed",
-		     G_CALLBACK(set_int_from_spinner), &finfo->bkl);
+		     G_CALLBACK(set_int_from_spin), &finfo->bkl);
     gtk_table_attach_defaults(GTK_TABLE(tab), s1, 1, 2, 0, 1);
 
     /* upper limit */
@@ -427,10 +427,10 @@ static void bkbp_frequencies_table (GtkWidget *dlg, filter_info *finfo)
     s2 = gtk_spin_button_new_with_range(2, (double) T, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s2), finfo->bku);
     g_signal_connect(G_OBJECT(s2), "value-changed",
-		     G_CALLBACK(set_int_from_spinner), &finfo->bku);
+		     G_CALLBACK(set_int_from_spin), &finfo->bku);
     gtk_table_attach_defaults(GTK_TABLE(tab), s2, 1, 2, 1, 2);
 
-    /* inter-connect the lower and upper spinners */
+    /* inter-connect the lower and upper spin buttons */
     g_signal_connect(G_OBJECT(s1), "value-changed",
 		     G_CALLBACK(check_bk_limits1), s2);
     g_signal_connect(G_OBJECT(s2), "value-changed",
@@ -712,7 +712,7 @@ static void filter_dialog (filter_info *finfo)
 	kspin = gtk_spin_button_new_with_range(2, (gdouble) nmax, 1);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(kspin), (gdouble) finfo->k);
 	g_signal_connect(G_OBJECT(kspin), "value-changed",
-			 G_CALLBACK(set_int_from_spinner), &finfo->k);
+			 G_CALLBACK(set_int_from_spin), &finfo->k);
 	gtk_box_pack_start(GTK_BOX(hbox), kspin, TRUE, TRUE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
@@ -734,7 +734,7 @@ static void filter_dialog (filter_info *finfo)
 	w = gtk_spin_button_new_with_range(0.001, 0.999, 0.001);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->lambda);
 	g_signal_connect(G_OBJECT(w), "value-changed",
-			 G_CALLBACK(set_double_from_spinner), &finfo->lambda);
+			 G_CALLBACK(set_double_from_spin), &finfo->lambda);
 	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 	/* set calculation of initial EMA value */
@@ -747,7 +747,7 @@ static void filter_dialog (filter_info *finfo)
 	w = gtk_spin_button_new_with_range(1.0, 999999, 1);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->lambda);
 	g_signal_connect(G_OBJECT(w), "value-changed",
-			 G_CALLBACK(set_double_from_spinner), &finfo->lambda);
+			 G_CALLBACK(set_double_from_spin), &finfo->lambda);
 	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
@@ -769,7 +769,7 @@ static void filter_dialog (filter_info *finfo)
 	w = gtk_spin_button_new_with_range(1.0, 4 * finfo->bkk, 1);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->bkk);
 	g_signal_connect(G_OBJECT(w), "value-changed",
-			 G_CALLBACK(set_int_from_spinner), &finfo->bkk);
+			 G_CALLBACK(set_int_from_spin), &finfo->bkk);
 	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 	/* set periods */
@@ -782,7 +782,7 @@ static void filter_dialog (filter_info *finfo)
 	finfo->spin1 = w = gtk_spin_button_new_with_range(1.0, 16, 1);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->order);
 	g_signal_connect(G_OBJECT(w), "value-changed",
-			 G_CALLBACK(set_int_from_spinner), &finfo->order);
+			 G_CALLBACK(set_int_from_spin), &finfo->order);
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(check_bw_feasibility), finfo);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
@@ -794,7 +794,7 @@ static void filter_dialog (filter_info *finfo)
         finfo->spin2 = w = gtk_spin_button_new_with_range(1, 179, 1);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->cutoff);
 	g_signal_connect(G_OBJECT(w), "value-changed",
-			 G_CALLBACK(set_int_from_spinner), &finfo->cutoff);
+			 G_CALLBACK(set_int_from_spin), &finfo->cutoff);
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(check_bw_feasibility), finfo);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
@@ -816,7 +816,7 @@ static void filter_dialog (filter_info *finfo)
 	w = gtk_spin_button_new_with_range(1.0, 15, 1);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->order);
 	g_signal_connect(G_OBJECT(w), "value-changed",
-			 G_CALLBACK(set_int_from_spinner), &finfo->order);
+			 G_CALLBACK(set_int_from_spin), &finfo->order);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 	/* weights settings (optional) */
@@ -830,7 +830,7 @@ static void filter_dialog (filter_info *finfo)
 	w = gtk_spin_button_new_with_range(-10, 10, 0.001);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->lambda);
 	g_signal_connect(G_OBJECT(w), "value-changed",
-			 G_CALLBACK(set_double_from_spinner), &finfo->lambda);
+			 G_CALLBACK(set_double_from_spin), &finfo->lambda);
 	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     }

@@ -785,7 +785,7 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
 			 &x);
     }
 
-    /* radio button for "other" confidence level, plus spinner */
+    /* radio button for "other" confidence level, plus spin button */
 
     hb2 = gtk_hbox_new(FALSE, 0);
     b = gtk_radio_button_new_with_label(group, _("Other"));
@@ -794,7 +794,7 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
     adj = (GtkAdjustment *) gtk_adjustment_new(x, 0.60, 0.99, 0.01, 0, 0);
     tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.01, 2);
     g_signal_connect(G_OBJECT(tmp), "value-changed",
-		     G_CALLBACK(set_double_from_spinner), &x);
+		     G_CALLBACK(set_double_from_spin), &x);
     gtk_widget_set_sensitive(tmp, !defset);
     g_signal_connect(G_OBJECT(b), "toggled",
 		     G_CALLBACK(toggle_alpha_spin),

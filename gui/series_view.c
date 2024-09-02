@@ -757,7 +757,7 @@ static void real_view_format_dialog (windata_t *vwin, series_view *sview)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), !std);
     gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 5);
 
-    /* with spinner for number of digits */
+    /* with spin button for number of digits */
     vt.spin = gtk_spin_button_new_with_range(1, 15, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(vt.spin), sview->digits);
     g_signal_connect(G_OBJECT(vt.spin), "value-changed",

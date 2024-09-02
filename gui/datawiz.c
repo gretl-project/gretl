@@ -1682,13 +1682,13 @@ static void dw_set_custom_frequency (GtkWidget *w, DATASET *dinfo)
 #endif
 }
 
-/* spinner for time-series starting observation */
+/* spin button for time-series starting observation */
 
-static int add_startobs_spinner (GtkWidget *vbox,
-                                 DATASET *dwinfo,
-                                 dw_opts *opts,
-                                 int direction,
-                                 int step)
+static int add_startobs_spin (GtkWidget *vbox,
+                              DATASET *dwinfo,
+                              dw_opts *opts,
+                              int direction,
+                              int step)
 {
     DATASET *tsinfo = dwinfo;
     GtkWidget *hbox, *label, *spin;
@@ -1732,9 +1732,9 @@ static int add_startobs_spinner (GtkWidget *vbox,
     return 0;
 }
 
-/* spinner for selecting custom time-series frequency */
+/* spin button for selecting custom time-series frequency */
 
-static GtkWidget *frequency_spinner (GtkWidget *hbox, DATASET *dwinfo)
+static GtkWidget *frequency_spin (GtkWidget *hbox, DATASET *dwinfo)
 {
     GtkAdjustment *adj;
     GtkWidget *spin;
@@ -1868,9 +1868,9 @@ static void add_panel_stack_comment (GtkWidget *vbox, int i)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 }
 
-static void dwiz_make_panel_spinners (dw_opts *opts,
-                                      DATASET *dwinfo,
-                                      GtkWidget *vbox)
+static void dwiz_make_panel_spin_buttons (dw_opts *opts,
+                                          DATASET *dwinfo,
+                                          GtkWidget *vbox)
 {
     const char *labels[2];
     GtkWidget *label;
@@ -1911,7 +1911,7 @@ static void dwiz_make_panel_spinners (dw_opts *opts,
         gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
         gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, i, i+1);
         if (i == 1) {
-	    /* second spinner: conditionalize on first */
+	    /* second spin button: conditionalize on first */
             spinstart = given / spinstart;
 	    if (step == DW_PANEL_SIZE_2) {
 		/* must have at least 2 cross-sectional units */
@@ -2061,8 +2061,8 @@ static void get_dimensions (int s, dw_opts *opts,
     }
 }
 
-static void sensitize_obs_spinners (GtkToggleButton *button,
-                                    dw_opts *opts)
+static void sensitize_obs_spin_buttons (GtkToggleButton *button,
+                                        dw_opts *opts)
 {
     if (button_is_active(button)) {
         int i, s, sv = widget_get_int(button, "setval");
@@ -2164,9 +2164,9 @@ static void dwiz_new_dataset_combo (DATASET *dwinfo,
     }
 
     for (i=0; i<3; i++) {
-        /* we defer this hook-up until all the spinners are created */
+        /* we defer this hook-up until all the spin buttons are created */
         g_signal_connect(G_OBJECT(buttons[i]), "toggled",
-                         G_CALLBACK(sensitize_obs_spinners), opts);
+                         G_CALLBACK(sensitize_obs_spin_buttons), opts);
     }
 
     set_initial_obs_sensitivities(dwinfo, opts);
@@ -2207,8 +2207,8 @@ static void dwiz_build_radios (int step, DATASET *dwinfo,
         gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
 
         if (step == DW_TS_FREQUENCY && i == opts->n_radios - 1) {
-            /* time series, "other" (custom) frequency: need spinner */
-            opts->pdspin = frequency_spinner(hbox, dwinfo);
+            /* time series, "other" (custom) frequency: need spin button */
+            opts->pdspin = frequency_spin(hbox, dwinfo);
             gtk_widget_set_sensitive(opts->pdspin, FALSE);
         }
 
@@ -2569,13 +2569,13 @@ static void dwiz_prepare_page (GtkNotebook *nb,
             }
         }
         if (step == DW_STARTING_OBS || step == DW_PANEL_STOBS) {
-            add_startobs_spinner(page, dwinfo, opts, direction, step);
+            add_startobs_spin(page, dwinfo, opts, direction, step);
             if (dataset != NULL && dataset->Z != NULL &&
                 dataset_is_daily(dwinfo)) {
                 maybe_add_missobs_purger(page, &opts->flags);
             }
         } else if (step == DW_PANEL_SIZE || step == DW_PANEL_SIZE_2) {
-            dwiz_make_panel_spinners(opts, dwinfo, page);
+            dwiz_make_panel_spin_buttons(opts, dwinfo, page);
         } else if (step == DW_PANEL_VARS) {
             dwiz_panelvars_selector(opts, dwinfo, page);
         } else if (step == DW_PANEL_VARNAME) {
@@ -2657,7 +2657,7 @@ static void dwiz_forward (GtkWidget *b, GtkWidget *dlg)
         }
         if (opts->flags & DW_CREATE) {
             for (i=0; i<4; i++) {
-                opts->dvals[i] = spinner_get_int(opts->dspin[i]);
+                opts->dvals[i] = spin_get_int(opts->dspin[i]);
             }
         }
     }

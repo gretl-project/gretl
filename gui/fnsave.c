@@ -2159,7 +2159,7 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     /* to align things below */
     hbox = gtk_hbox_new(FALSE, 0);
 
-    /* new-style version spinner */
+    /* new-style version spin button */
     spin = gtk_spin_button_new_with_range(minminver, maxminver, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), finfo->minver);
     gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin), 5);

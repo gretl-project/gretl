@@ -152,8 +152,8 @@ enum {
 
 /* single-equation estimation commands plus some GUI extensions */
 #define MODEL_CODE(c) (MODEL_COMMAND(c) || c == PANEL_WLS || c == PANEL_B || \
-                       c == OLOGIT || c == OPROBIT || c == REPROBIT || \
-                       c == MLOGIT || c == IV_LIML || c == IV_GMM || \
+                       c == OLOGIT || c == OPROBIT || c == REPROBIT ||  \
+                       c == MLOGIT || c == IV_LIML || c == IV_GMM ||    \
                        c == COUNTMOD || c == REGLS || c == FE_LOGISTIC || \
                        c == ALAGSEL)
 
@@ -167,19 +167,19 @@ enum {
 
 #define COINT_CODE(c) (c == COINT || c == COINT2)
 
-#define VEC_CODE(c) (c == COINT || c == COINT2 || c == VAR || \
+#define VEC_CODE(c) (c == COINT || c == COINT2 || c == VAR ||   \
                      c == VECM || c == VLAGSEL)
 
 #define VEC_MODEL_CODE(c) (c == VAR || c == VECM || c == VLAGSEL)
 
 #define VECLAGS_CODE(c) (c == VAR || c == VECM)
 
-#define ADDVAR_CODE(c) (c == LOGS || c == LAGS || c == SQUARE || \
+#define ADDVAR_CODE(c) (c == LOGS || c == LAGS || c == SQUARE ||        \
                         c == DIFF || c == LDIFF)
 
 #define TWO_VARS_CODE(c) (c == ELLIPSE || c == XCORRGM || c == QQPLOT)
 
-#define THREE_VARS_CODE(c) (c == GR_DUMMY || c == GR_XYZ || \
+#define THREE_VARS_CODE(c) (c == GR_DUMMY || c == GR_XYZ ||     \
                             c == GR_3D || c == ANOVA)
 
 #define FNPKG_CODE(c) (c == SAVE_FUNCTIONS || c == EDIT_FUNCTIONS)
@@ -188,85 +188,85 @@ enum {
 
 #define LIST_USE_INTS(c) (c == ELLIPSE || c == SAVE_FUNCTIONS || c == REGLS_PLOTSEL)
 
-#define WANT_TOGGLES(c) (c == DPANEL || \
-                         c == ARMA || \
-                         c == COINT || \
-                         c == COINT2 || \
-                         c == CORR || \
-                         c == GARCH || \
-                         c == HECKIT || \
-                         c == HSK || \
-                         c == BIPROBIT || \
-                         c == INTREG || \
-                         c == IVREG || \
-                         c == LOGIT || \
-                         c == OLOGIT || \
-                         c == MLOGIT || \
-                         c == LOGISTIC || \
-                         c == MPOLS || \
-                         c == OLS || \
-                         c == PANEL || \
-                         c == PANEL_WLS || \
-                         c == PANEL_B || \
-                         c == FE_LOGISTIC || \
-                         c == COUNTMOD || \
-                         c == DURATION || \
-                         c == PROBIT || \
-                         c == OPROBIT || \
-                         c == REPROBIT || \
-                         c == QUANTREG || \
-                         c == MIDASREG || \
-                         c == TOBIT || \
-                         c == VAR || \
-                         c == VECM || \
-                         c == VLAGSEL || \
-                         c == ALAGSEL || \
-                         c == WLS || \
-                         c == GR_BOX || \
-			 c == SUMMARY || \
-			 c == FSUMMARY || \
+#define WANT_TOGGLES(c) (c == DPANEL ||         \
+                         c == ARMA ||           \
+                         c == COINT ||          \
+                         c == COINT2 ||         \
+                         c == CORR ||           \
+                         c == GARCH ||          \
+                         c == HECKIT ||         \
+                         c == HSK ||            \
+                         c == BIPROBIT ||       \
+                         c == INTREG ||         \
+                         c == IVREG ||          \
+                         c == LOGIT ||          \
+                         c == OLOGIT ||         \
+                         c == MLOGIT ||         \
+                         c == LOGISTIC ||       \
+                         c == MPOLS ||          \
+                         c == OLS ||            \
+                         c == PANEL ||          \
+                         c == PANEL_WLS ||      \
+                         c == PANEL_B ||        \
+                         c == FE_LOGISTIC ||    \
+                         c == COUNTMOD ||       \
+                         c == DURATION ||       \
+                         c == PROBIT ||         \
+                         c == OPROBIT ||        \
+                         c == REPROBIT ||       \
+                         c == QUANTREG ||       \
+                         c == MIDASREG ||       \
+                         c == TOBIT ||          \
+                         c == VAR ||            \
+                         c == VECM ||           \
+                         c == VLAGSEL ||        \
+                         c == ALAGSEL ||        \
+                         c == WLS ||            \
+                         c == GR_BOX ||         \
+			 c == SUMMARY ||        \
+			 c == FSUMMARY ||       \
                          c == XTAB)
 
-#define USE_VECXLIST(c) (c == VAR || c == VLAGSEL || c == VECM || \
+#define USE_VECXLIST(c) (c == VAR || c == VLAGSEL || c == VECM ||       \
                          c == COINT2)
 
 #define USE_RXLIST(c) (c == VECM || c == COINT2)
 
-#define AUX_LAST(c) (c == IVREG || \
-                     c == IV_LIML || \
-                     c == IV_GMM || \
-                     c == HECKIT || \
-                     c == BIPROBIT || \
-                     c == VAR || \
-                     c == VLAGSEL || \
-                     c == VECM || \
-                     c == COINT2 || \
-                     c == MIDASREG || \
-                     c == SAVE_FUNCTIONS || \
+#define AUX_LAST(c) (c == IVREG ||              \
+                     c == IV_LIML ||            \
+                     c == IV_GMM ||             \
+                     c == HECKIT ||             \
+                     c == BIPROBIT ||           \
+                     c == VAR ||                \
+                     c == VLAGSEL ||            \
+                     c == VECM ||               \
+                     c == COINT2 ||             \
+                     c == MIDASREG ||           \
+                     c == SAVE_FUNCTIONS ||     \
                      c == EDIT_FUNCTIONS)
 
-#define USE_ZLIST(c) (c == IVREG || c == IV_LIML || c == IV_GMM || \
+#define USE_ZLIST(c) (c == IVREG || c == IV_LIML || c == IV_GMM ||      \
                       c == HECKIT || c == BIPROBIT)
 
-#define RHS_PREFILL(c) (c == CORR || \
-                        c == MAHAL || \
-                        c == PCA || \
-                        c == SUMMARY || \
+#define RHS_PREFILL(c) (c == CORR ||            \
+                        c == MAHAL ||           \
+                        c == PCA ||             \
+                        c == SUMMARY ||         \
                         c == XTAB)
 
-#define dataset_lags_ok(d) ((d)->structure == TIME_SERIES || \
-                            (d)->structure == SPECIAL_TIME_SERIES || \
+#define dataset_lags_ok(d) ((d)->structure == TIME_SERIES ||            \
+                            (d)->structure == SPECIAL_TIME_SERIES ||    \
                             (d)->structure == STACKED_TIME_SERIES)
 
 #define select_lags_primary(c) (MODEL_CODE(c))
 
-#define select_lags_depvar(c) (MODEL_CODE(c) && c != ARMA && \
+#define select_lags_depvar(c) (MODEL_CODE(c) && c != ARMA &&    \
                                c != DPANEL && c != MIDASREG)
 
 /* Should we have a lags button associated with auxiliary
    variable selector? */
 
-#define select_lags_aux(c) (c == VAR || c == VLAGSEL || c == VECM || \
+#define select_lags_aux(c) (c == VAR || c == VLAGSEL || c == VECM ||    \
                             c == IVREG || c == IV_LIML || c == IV_GMM || \
                             c == HECKIT || c == BIPROBIT)
 
@@ -352,7 +352,7 @@ static void available_functions_list (selector *sr);
 static void primary_rhs_varlist (selector *sr);
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
 static void call_iters_dialog (GtkWidget *w, GtkWidget *combo);
-static void reset_arma_spinners (selector *sr);
+static void reset_arma_spins (selector *sr);
 static void clear_midas_spec (void);
 static int check_midas_rvars2 (GtkTreeModel *model, gboolean *have_beta1);
 
@@ -576,7 +576,7 @@ void clear_selector (void)
         selector *sr = open_selector;
 
         if (sr->ci == ARMA) {
-            reset_arma_spinners(sr);
+            reset_arma_spins(sr);
         }
     }
 }
@@ -1908,13 +1908,13 @@ static int arima_selected (selector *sr)
     int ret = 0;
 
     if (sr->extra[ARIMA_d] != NULL) {
-        /* the arima_d spinner */
-        ret = spinner_get_int(sr->extra[ARIMA_d]);
+        /* the arima_d spin button */
+        ret = spin_get_int(sr->extra[ARIMA_d]);
     }
 
     if (!ret && sr->extra[ARIMA_D] != NULL) {
-        /* the seasonal arima_D spinner */
-        ret = spinner_get_int(sr->extra[ARIMA_D]);
+        /* the seasonal arima_D spin button */
+        ret = spin_get_int(sr->extra[ARIMA_D]);
     }
 
     return ret;
@@ -2970,12 +2970,12 @@ static void arma_spec_to_cmdlist (selector *sr)
         arlags = gretl_strdup(txt);
     } else {
         /* regular max AR lag */
-        arma_p = spinner_get_int(sr->extra[ARMA_p]);
+        arma_p = spin_get_int(sr->extra[ARMA_p]);
         sprintf(s, "%d ", arma_p);
         add_to_cmdlist(sr, s);
     }
 
-    arima_d = spinner_get_int(sr->extra[ARIMA_d]);
+    arima_d = spin_get_int(sr->extra[ARIMA_d]);
     sprintf(s, "%d ", arima_d);
     add_to_cmdlist(sr, s);
 
@@ -2987,15 +2987,15 @@ static void arma_spec_to_cmdlist (selector *sr)
         malags = gretl_strdup(txt);
     } else {
         /* regular max MA lag */
-        arma_q = spinner_get_int(sr->extra[ARMA_q]);
+        arma_q = spin_get_int(sr->extra[ARMA_q]);
         sprintf(s, "%d ; ", arma_q);
         add_to_cmdlist(sr, s);
     }
 
     if (sr->extra[ARMA_P] != NULL) {
-        arma_P = spinner_get_int(sr->extra[ARMA_P]);
-        arima_D = spinner_get_int(sr->extra[ARIMA_D]);
-        arma_Q = spinner_get_int(sr->extra[ARMA_Q]);
+        arma_P = spin_get_int(sr->extra[ARMA_P]);
+        arima_D = spin_get_int(sr->extra[ARIMA_D]);
+        arma_Q = spin_get_int(sr->extra[ARMA_Q]);
 
         if (arma_P > 0 || arima_D > 0 || arma_Q > 0) {
             sprintf(s, "%d %d %d ; ", arma_P, arima_D, arma_Q);
@@ -3009,14 +3009,14 @@ static void add_pdq_vals_to_cmdlist (selector *sr)
     char s[32] = {0};
 
     if (sr->ci == GARCH) {
-        garch_p = spinner_get_int(sr->extra[0]);
-        garch_q = spinner_get_int(sr->extra[1]);
+        garch_p = spin_get_int(sr->extra[0]);
+        garch_q = spin_get_int(sr->extra[1]);
         sprintf(s, "%d %d ; ", garch_p, garch_q);
     } else if (sr->ci == DPANEL) {
-        dpd_p = spinner_get_int(sr->extra[0]);
+        dpd_p = spin_get_int(sr->extra[0]);
         sprintf(s, "%d ; ", dpd_p);
     } else if (sr->ci == ARCH) {
-        int p = spinner_get_int(sr->extra[0]);
+        int p = spin_get_int(sr->extra[0]);
 
         sprintf(s, "%d ", p);
     }
@@ -3089,7 +3089,7 @@ discrete_lags_string (const char *vname, const int *laglist,
 
 int selector_get_VAR_order (const selector *sr)
 {
-    return spinner_get_int(sr->extra[0]);
+    return spin_get_int(sr->extra[0]);
 }
 
 /* for use in constructing command list, possibly with
@@ -3582,13 +3582,13 @@ static void read_regls_extras (selector *sr)
 
         gretl_bundle_set_scalar(rb, "lfrac", lf);
     } else {
-        int nlam = spinner_get_int(sr->extra[REGLS_NLAM]);
+        int nlam = spin_get_int(sr->extra[REGLS_NLAM]);
 
         gretl_bundle_set_int(rb, "nlambda", nlam);
     }
 
     if (gtk_widget_is_sensitive(sr->extra[REGLS_NFOLDS])) {
-        int nfolds = spinner_get_int(sr->extra[REGLS_NFOLDS]);
+        int nfolds = spin_get_int(sr->extra[REGLS_NFOLDS]);
         gchar *ft = combo_box_get_active_text(sr->extra[REGLS_FTYPE]);
 
         gretl_bundle_set_int(rb, "xvalidate", 1);
@@ -3672,7 +3672,7 @@ static void read_omit_cutoff (selector *sr)
 static void read_reprobit_quadpoints (selector *sr)
 {
     if (sr->extra[0] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[0])) {
-        int qp = spinner_get_int(sr->extra[0]);
+        int qp = spin_get_int(sr->extra[0]);
 
         set_optval_int(PROBIT, OPT_G, qp);
     }
@@ -3737,7 +3737,7 @@ static void read_np_extras (selector *sr)
     char s[32];
 
     if (sr->ci == LOESS) {
-        int d = spinner_get_int(sr->extra[1]);
+        int d = spin_get_int(sr->extra[1]);
         double q;
 
         q = gtk_spin_button_get_value(GTK_SPIN_BUTTON(sr->extra[2]));
@@ -3806,7 +3806,7 @@ static void maybe_read_var_hac_option (selector *sr)
                                  THREE_VARS_CODE(c) ||  \
                                  NONPARAM_CODE(c))
 
-#define offer_cluster_option(c) (dataset_is_cross_section(dataset) && \
+#define offer_cluster_option(c) (dataset_is_cross_section(dataset) &&   \
                                  cluster_option_ok(c))
 
 static void parse_extra_widgets (selector *sr, char *endbit)
@@ -3938,7 +3938,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     }
 }
 
-static void vec_get_spinner_data (selector *sr, int *order)
+static void vec_get_spin_data (selector *sr, int *order)
 {
     const int *llist;
     char numstr[16];
@@ -3956,14 +3956,14 @@ static void vec_get_spinner_data (selector *sr, int *order)
             free(dvlags);
         }
     } else {
-        *order = spinner_get_int(sr->extra[0]);
+        *order = spin_get_int(sr->extra[0]);
         sprintf(numstr, "%d", *order);
         add_to_cmdlist(sr, numstr);
     }
 
     if (sr->ci == VECM) {
         /* cointegration rank */
-        jrank = spinner_get_int(sr->extra[1]);
+        jrank = spin_get_int(sr->extra[1]);
         sprintf(numstr, " %d", jrank);
         add_to_cmdlist(sr, numstr);
     }
@@ -4040,7 +4040,7 @@ static void midas_process_AR_spin (selector *sr)
 
     if (sr->extra[0] != NULL && yno > 0 && yno < dataset->v) {
         const char *yname = dataset->varname[yno];
-        int p = spinner_get_int(sr->extra[0]);
+        int p = spin_get_int(sr->extra[0]);
         gchar *bit = NULL;
 
         if (p == 1) {
@@ -4132,7 +4132,7 @@ static void compose_cmdlist (selector *sr)
                sr->ci == DPANEL) {
         add_pdq_vals_to_cmdlist(sr);
     } else if (VEC_CODE(sr->ci)) {
-        vec_get_spinner_data(sr, &order);
+        vec_get_spin_data(sr, &order);
         if (!sr->error) {
             if (sr->ci == VAR) {
                 maybe_read_var_hac_option(sr);
@@ -4879,7 +4879,7 @@ static int build_depvar_section (selector *sr, int preselect)
 
 /* In case we have a saved preference for the max lag of the
    endogenous vars in a VAR, set via the lags dialog, update this
-   value from the global spinner
+   value from the global spin button
 */
 
 static void lag_order_sync (GtkSpinButton *b, selector *sr)
@@ -5318,7 +5318,7 @@ static void add_np_controls (selector *sr)
         group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
         hbox = gtk_hbox_new(FALSE, 5);
         b2 = gtk_radio_button_new_with_label(group,
-                                         _("User-specified"));
+                                             _("User-specified"));
         adj = (GtkAdjustment *) gtk_adjustment_new(b0, bmin, bmax, 0.01, 0.1, 0);
         w = sr->extra[i] = gtk_spin_button_new(adj, 0.01, 2);
         gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 5);
@@ -5525,7 +5525,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     }
 
     if (ci == ARMA && dataset->pd > 1) {
-        /* seasonal spinners */
+        /* seasonal spins */
         dlgy += 60;
     }
 
@@ -5664,7 +5664,7 @@ static void garch_spin_check (GtkSpinButton *b, selector *sr)
     }
 }
 
-static void build_garch_spinners (selector *sr)
+static void build_garch_spins (selector *sr)
 {
     GtkWidget *tmp, *hbox;
     GtkAdjustment *adj;
@@ -5734,7 +5734,7 @@ static void arima_callback (GtkWidget *w, selector *sr)
                              rvars1_n_vars(sr) > 0);
 }
 
-static void build_arma_spinners (selector *sr)
+static void build_arma_spins (selector *sr)
 {
     GtkWidget *lbl, *chk, *tab;
     GtkAdjustment *adj;
@@ -5831,7 +5831,7 @@ static void build_arma_spinners (selector *sr)
     }
 }
 
-static void reset_arma_spinners (selector *sr)
+static void reset_arma_spins (selector *sr)
 {
     if (sr->extra[ARMA_p] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[ARMA_p])) {
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[ARMA_p]),
@@ -6256,9 +6256,9 @@ static void build_selector_switches (selector *sr)
         }
         gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
     } else if (sr->ci == TOBIT || sr->ci == GARCH ||
-        sr->ci == LOGIT || sr->ci == PROBIT || sr->ci == HECKIT ||
-        sr->ci == OLOGIT || sr->ci == OPROBIT || sr->ci == MLOGIT ||
-        sr->ci == BIPROBIT || sr->ci == REPROBIT) {
+               sr->ci == LOGIT || sr->ci == PROBIT || sr->ci == HECKIT ||
+               sr->ci == OLOGIT || sr->ci == OPROBIT || sr->ci == MLOGIT ||
+               sr->ci == BIPROBIT || sr->ci == REPROBIT) {
         if (sr->ci == GARCH) {
             tmp = gtk_check_button_new_with_label(_("Include a constant"));
             pack_switch(tmp, sr, garch_const, TRUE, OPT_N, 0);
@@ -6461,7 +6461,7 @@ static void pack_switch_with_extra (GtkWidget *b, selector *sr,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), checked);
 }
 
-static GtkWidget *alpha_spinner (double deflt, double minval)
+static GtkWidget *alpha_spin (double deflt, double minval)
 {
     GtkAdjustment *adj;
 
@@ -6481,13 +6481,13 @@ static void build_quantreg_radios (selector *sr)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group,
                                          _("Compute confidence intervals"));
-    sr->extra[1] = alpha_spinner(0.90, 0.70);
+    sr->extra[1] = alpha_spin(0.90, 0.70);
     pack_switch_with_extra(b2, sr, FALSE, OPT_I, 0, sr->extra[1], "1 - α =");
     gtk_widget_set_sensitive(sr->extra[1], FALSE);
     sensitize_conditional_on(sr->extra[1], b2);
 }
 
-static GtkWidget *ymax_spinner (void)
+static GtkWidget *ymax_spin (void)
 {
     GtkAdjustment *adj;
 
@@ -6495,7 +6495,7 @@ static GtkWidget *ymax_spinner (void)
     return gtk_spin_button_new(adj, 1, 1);
 }
 
-static GtkWidget *single_lambda_spinner (double lam)
+static GtkWidget *single_lambda_spin (double lam)
 {
     GtkAdjustment *adj;
 
@@ -6503,7 +6503,7 @@ static GtkWidget *single_lambda_spinner (double lam)
     return gtk_spin_button_new(adj, 1, 3);
 }
 
-static GtkWidget *multi_lambda_spinner (int nlam)
+static GtkWidget *multi_lambda_spin (int nlam)
 {
     GtkAdjustment *adj;
 
@@ -6511,7 +6511,7 @@ static GtkWidget *multi_lambda_spinner (int nlam)
     return gtk_spin_button_new(adj, 1, 0);
 }
 
-static GtkWidget *regls_alpha_spinner (double alpha)
+static GtkWidget *regls_alpha_spin (double alpha)
 {
     GtkAdjustment *adj;
 
@@ -6532,7 +6532,7 @@ static void build_logistic_radios (selector *sr)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group,
                                          _("Specified maximum"));
-    sr->extra[1] = ymax_spinner();
+    sr->extra[1] = ymax_spin();
     pack_switch_with_extra(b2, sr, FALSE, OPT_M, 0, sr->extra[1], NULL);
     gtk_widget_set_sensitive(sr->extra[1], FALSE);
     sensitize_conditional_on(sr->extra[1], b2);
@@ -6685,7 +6685,7 @@ static void build_regls_controls (selector *sr)
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     w = gtk_label_new("α =");
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-    sr->extra[REGLS_ALPHA] = w = regls_alpha_spinner(alpha);
+    sr->extra[REGLS_ALPHA] = w = regls_alpha_spin(alpha);
     gtk_widget_set_sensitive(w, (eid == 2));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
@@ -6698,7 +6698,7 @@ static void build_regls_controls (selector *sr)
     hbox = gtk_hbox_new(FALSE, 5);
     b1 = gtk_radio_button_new_with_label(NULL, _("Single λ-fraction"));
     gtk_box_pack_start(GTK_BOX(hbox), b1, FALSE, FALSE, 5);
-    w = sr->extra[REGLS_LAMVAL] = single_lambda_spinner(lfrac);
+    w = sr->extra[REGLS_LAMVAL] = single_lambda_spin(lfrac);
     sensitize_conditional_on(w, b1);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
@@ -6709,7 +6709,7 @@ static void build_regls_controls (selector *sr)
     b2 = gtk_radio_button_new_with_label(group, _("Multiple λ values"));
     gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 5);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), multi);
-    w = sr->extra[REGLS_NLAM] = multi_lambda_spinner(nlambda);
+    w = sr->extra[REGLS_NLAM] = multi_lambda_spin(nlambda);
     gtk_widget_set_sensitive(w, multi);
     sensitize_conditional_on(w, b2);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
@@ -6740,7 +6740,7 @@ static void build_regls_controls (selector *sr)
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
 }
 
-static void build_ellipse_spinner (selector *sr)
+static void build_ellipse_spin (selector *sr)
 {
     GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
     GtkWidget *label;
@@ -6756,7 +6756,7 @@ static void build_ellipse_spinner (selector *sr)
     label = gtk_label_new("1 - α =");
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 
-    sr->extra[0] = alpha_spinner(0.95, 0.70);
+    sr->extra[0] = alpha_spin(0.95, 0.70);
     gtk_box_pack_start(GTK_BOX(hbox), sr->extra[0], FALSE, FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
@@ -6897,7 +6897,7 @@ static void build_omit_test_radios (selector *sr)
         g_signal_connect(G_OBJECT(b3), "toggled",
                          G_CALLBACK(auto_omit_callback), sr);
 
-        sr->extra[0] = alpha_spinner(0.10, 0.01);
+        sr->extra[0] = alpha_spin(0.10, 0.01);
         pack_switch_with_extra(b3, sr, FALSE, OPT_A, 0, sr->extra[0], NULL);
         gtk_widget_set_sensitive(sr->extra[0], FALSE);
 
@@ -7164,7 +7164,7 @@ static void build_vecm_combo (selector *sr)
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
 }
 
-#define DSET_DB_OK(d) (d->pd == 1 || (d->structure == TIME_SERIES && \
+#define DSET_DB_OK(d) (d->pd == 1 || (d->structure == TIME_SERIES &&    \
                                       (d->pd == 4 || d->pd == 12)))
 
 static void build_data_export_combo (selector *sr)
@@ -7850,10 +7850,10 @@ selector *selection_dialog (int ci, const char *title,
 
     if (ARMA_RELATED(ci)) {
         /* AR, D, MA for ARIMA */
-        build_arma_spinners(sr);
+        build_arma_spins(sr);
     } else if (ci == GARCH) {
         /* P and Q for GARCH */
-        build_garch_spinners(sr);
+        build_garch_spins(sr);
     }
 
     /* toggle switches for some cases */
@@ -8409,7 +8409,7 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     }
 
     if (ci == ELLIPSE) {
-        build_ellipse_spinner(sr);
+        build_ellipse_spin(sr);
     }
 
 #if 0 /* not ready */
@@ -9019,10 +9019,10 @@ struct var_lag_info_ {
     int lmax;           /* maximum lag */
     char context;       /* LAG_X, LAG_W, ... */
     char *lspec;        /* string specification of particular lags */
-    GtkWidget *spin1;   /* spinner for minimum lag */
-    GtkWidget *spin2;   /* spinner for maximum lag */
+    GtkWidget *spin1;   /* spin button for minimum lag */
+    GtkWidget *spin2;   /* spin button for maximum lag */
     GtkWidget *entry;   /* text entry for specific lags */
-    GtkWidget *toggle;  /* button to switch between spinners and entry */
+    GtkWidget *toggle;  /* button to switch between spin buttons and entry */
     var_lag_info *vlp;  /* parent array */
 };
 
@@ -9051,7 +9051,7 @@ static void lag_entry_callback (GtkWidget *w, gpointer p)
     }
 }
 
-/* retrieve the min or max lag from a spinner and process
+/* retrieve the min or max lag from a spin button and process
    the result */
 
 static void lag_set_callback (GtkWidget *w, gpointer p)
@@ -9062,16 +9062,16 @@ static void lag_set_callback (GtkWidget *w, gpointer p)
     vlinfo = (var_lag_info *) g_object_get_data(G_OBJECT(w), "vlinfo");
 
     plag = (w == vlinfo->spin1)? &vlinfo->lmin : &vlinfo->lmax;
-    lag = *plag = spinner_get_int(w);
+    lag = *plag = spin_get_int(w);
 
     /* force consistency if need be */
 
     if (w == vlinfo->spin1 && vlinfo->spin2 != NULL) {
-        if (spinner_get_int(vlinfo->spin2) < lag) {
+        if (spin_get_int(vlinfo->spin2) < lag) {
             gtk_spin_button_set_value(GTK_SPIN_BUTTON(vlinfo->spin2), lag);
         }
     } else if (w == vlinfo->spin2 && vlinfo->spin1 != NULL) {
-        if (spinner_get_int(vlinfo->spin1) > lag) {
+        if (spin_get_int(vlinfo->spin1) > lag) {
             gtk_spin_button_set_value(GTK_SPIN_BUTTON(vlinfo->spin1), lag);
         }
     }
@@ -9093,7 +9093,7 @@ static void lag_set_callback (GtkWidget *w, gpointer p)
     }
 }
 
-/* switch from using min/max spinners to using the "specific lags"
+/* switch from using min/max spins to using the "specific lags"
    text entry, or vice versa */
 
 static void activate_specific_lags (GtkWidget *w, var_lag_info *vlinfo)
@@ -9166,8 +9166,8 @@ static void activate_y_lags (GtkWidget *w, var_lag_info *vlinfo)
     gtk_widget_set_sensitive(vlinfo->toggle, active);
 
     if (active) {
-        vlinfo->lmin = spinner_get_int(vlinfo->spin1);
-        vlinfo->lmax = spinner_get_int(vlinfo->spin2);
+        vlinfo->lmin = spin_get_int(vlinfo->spin1);
+        vlinfo->lmax = spin_get_int(vlinfo->spin2);
     }
 
     if (vlinfo->context == LAG_Y_X) {
@@ -9191,7 +9191,7 @@ static void resensitize_selector (GtkWidget *w, gpointer p)
     }
 }
 
-/* The actual lag selection dialog: we provide spinners for a lag
+/* The actual lag selection dialog: we provide spins for a lag
    range and also a free-form entry field for non-contiguous lags.  In
    some circumstances we allow specification of lags for the dependent
    variable as well as the independent vars.
@@ -9293,7 +9293,7 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
             lmin = 1;
         }
 
-        /* min. lag spinner */
+        /* min. lag spin button */
         vlj->spin1 = gtk_spin_button_new_with_range(lmin, lmax, 1);
         gtk_table_attach_defaults(GTK_TABLE(tbl), vlj->spin1, 1, 2, i, i+1);
         g_object_set_data(G_OBJECT(vlj->spin1), "vlinfo", vlj);
@@ -9303,7 +9303,7 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
         lbl = gtk_label_new(_("to"));
         gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 2, 3, i, i+1);
 
-        /* max. lag spinner */
+        /* max. lag spin button */
         vlj->spin2 = gtk_spin_button_new_with_range(lmin, lmax, 1);
         gtk_table_attach_defaults(GTK_TABLE(tbl), vlj->spin2, 3, 4, i, i+1);
         g_object_set_data(G_OBJECT(vlj->spin2), "vlinfo", vlj);
@@ -9692,15 +9692,15 @@ static int set_lags_for_var (var_lag_info *vlinfo, int yxlags, int ywlags)
     return changed;
 }
 
-/* Keep the global "lag order" spinner in sync with lag specifications
-   entered via the the (more complex) lags dialog.  We set the value
-   shown in the spinner to the maximum lag; in addition we desensitize
-   the global spinner if the user has specified gaps in the lag
-   structure.
+/* Keep the global "lag order" spin button in sync with lag
+   specifications entered via the the (more complex) lags dialog.  We
+   set the value shown in the spin button to the maximum lag; in
+   addition we desensitize the global spin button if the user has
+   specified gaps in the lag structure.
 */
 
-static void sync_lag_order_spinner (var_lag_info *vlinfo,
-                                    selector *sr)
+static void sync_lag_order_spin (var_lag_info *vlinfo,
+                                 selector *sr)
 {
     const int *list = NULL;
     int lmin = 0, lmax = 0;
@@ -9713,14 +9713,14 @@ static void sync_lag_order_spinner (var_lag_info *vlinfo,
         lmax = list[list[0]];
     }
 
-    if (lmax != 0 && lmax != spinner_get_int(sr->extra[0])) {
-        /* update max lag as shown by spinner */
+    if (lmax != 0 && lmax != spin_get_int(sr->extra[0])) {
+        /* update max lag as shown by spin */
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[0]),
                                   lmax);
     }
 
     if (lmin > 1 || list != NULL) {
-        /* not 1-based consecutive lags: so disable spinner */
+        /* not 1-based consecutive lags: so disable spin */
         gtk_widget_set_sensitive(sr->extra[0], FALSE);
     } else {
         gtk_widget_set_sensitive(sr->extra[0], TRUE);
@@ -9751,7 +9751,7 @@ static void print_vlinfo (var_lag_info *vlj)
 /* Respond to the user clicking the "Lags..." button: here we build
    the information needed to make the lag selection dialog, run
    the dialog, then implement any changes made via the GUI.
- */
+*/
 
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
 {
@@ -9853,7 +9853,7 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
             }
         }
         if (context == LAG_Y_V) {
-            sync_lag_order_spinner(&vlinfo[0], sr);
+            sync_lag_order_spin(&vlinfo[0], sr);
         }
     }
 

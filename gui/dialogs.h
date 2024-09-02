@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef DIALOGS_H
@@ -83,7 +83,7 @@ int select_list_dialog (char *listname);
 
 void database_description_dialog (const char *binname);
 
-int select_var_from_list_with_opt (const int *list, 
+int select_var_from_list_with_opt (const int *list,
 				   const char *query,
 				   dialog_opts *opts,
 				   int hcode,
@@ -101,7 +101,7 @@ void sample_restrict_dialog (GtkAction *action, gpointer p);
 int panel_graph_dialog (int *t1, int *t2);
 
 void data_compact_dialog (int spd, int *target_pd, int *mon_start,
-			  CompactMethod *method, int *repday, 
+			  CompactMethod *method, int *repday,
 			  GtkWidget *parent);
 
 void data_expand_dialog (int *newpd, GtkWidget *parent);
@@ -111,16 +111,16 @@ int pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
 
 int density_dialog (int vnum, double *bw);
 
-int radio_dialog (const char *title, const char *label, const char **opts, 
+int radio_dialog (const char *title, const char *label, const char **opts,
 		  int nopts, int deflt, int helpcode, GtkWidget *parent);
 
-int radio_dialog_with_spinner (const char *title, const char **opts, 
-			       int nopts, int deflt, int helpcode,
-			       int *spinvar, const char *spintxt,
-			       int spinmin, int spinmax,
-			       GtkWidget *parent);
+int radio_dialog_with_spin_button (const char *title, const char **opts,
+                                   int nopts, int deflt, int helpcode,
+                                   int *spinvar, const char *spintxt,
+                                   int spinmin, int spinmax,
+                                   GtkWidget *parent);
 
-int radio_dialog_with_check (const char *title, const char *label, 
+int radio_dialog_with_check (const char *title, const char *label,
 			     const char **opts, int nopts, int deflt, int hcode,
 			     int *checkvar, const char *checktxt,
 			     GtkWidget *parent);
@@ -129,12 +129,12 @@ void set_checks_dialog_extra (int i, GtkWidget *extra);
 
 GtkWidget *
 build_checks_dialog (const char *title, const char *blurb,
-		     const char **opts, 
-		     int nopts, int *active, 
+		     const char **opts,
+		     int nopts, int *active,
 		     int check_min, int check_max,
-		     int nradios, int *rvar, 
-		     int *spinvar, const char *spintxt, 
-		     int spinmin, int spinmax, 
+		     int nradios, int *rvar,
+		     int *spinvar, const char *spintxt,
+		     int spinmin, int spinmax,
 		     int hcode, GtkWidget *parent, int *ret);
 
 int checks_dialog (const char *title, const char *blurb,
@@ -152,7 +152,7 @@ int checks_only_dialog (const char *title, const char *blurb,
 			GtkWidget *parent);
 
 int spin_dialog (const char *title, const char *blurb,
-		 int *spinvar, const char *spintxt, 
+		 int *spinvar, const char *spintxt,
 		 int spinmin, int spinmax, int helpcode,
 		 GtkWidget *parent);
 
@@ -164,7 +164,7 @@ int yes_no_help_dialog (const char *msg, int hcode, int deflt);
 int add_obs_dialog (const char *blurb, int addmin,
 		    gretlopt opt, GtkWidget *parent);
 
-int forecast_dialog (int t1min, int t1max, int *t1, 
+int forecast_dialog (int t1min, int t1max, int *t1,
 		     int t2min, int t2max, int *t2,
 		     int *k, int pmin, int pmax, int *p,
 		     int dyn, gretlopt *optp,
@@ -176,7 +176,7 @@ int simple_forecast_dialog (int *t1, int *t2, GtkWidget *parent);
 void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
 				     int *error_bars);
 
-void dialog_add_iters_spinner (GtkWidget *dlg, int *iters);
+void dialog_add_iters_spin (GtkWidget *dlg, int *iters);
 
 int freq_dialog (const char *title, const char *blurb,
 		 int *nbins, int nbmax, double *f0, double *fwid,
@@ -192,7 +192,7 @@ int bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 int chow_dialog (int tmin, int tmax, int *t, int *dumv,
 		 gretlopt *popt, GtkWidget *parent);
 
-int iter_control_dialog (int *optim, int *pmaxit, double *ptol, 
+int iter_control_dialog (int *optim, int *pmaxit, double *ptol,
 			 int *plmem, GtkWidget *parent);
 
 void tex_format_dialog (GtkAction *action, gpointer data);
@@ -203,7 +203,7 @@ int object_name_entry_dialog (char *name, GretlType type,
 			      const char *labeltxt, int *show,
 			      GtkWidget *parent);
 
-int hc_config_dialog (char *vname, gretlopt opt, gboolean robust_conf, 
+int hc_config_dialog (char *vname, gretlopt opt, gboolean robust_conf,
 		      GtkWidget *parent);
 
 int output_policy_dialog (windata_t *source, windata_t *target,

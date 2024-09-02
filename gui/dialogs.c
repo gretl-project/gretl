@@ -1487,7 +1487,7 @@ int iter_control_dialog (int *optim, int *pmaxit, double *ptol,
     tmp = gtk_spin_button_new_with_range(100, 100000, 100);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), *pmaxit);
     g_signal_connect(G_OBJECT(tmp), "value-changed",
-                     G_CALLBACK(set_int_from_spinner), pmaxit);
+                     G_CALLBACK(set_int_from_spin), pmaxit);
     gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
@@ -1498,7 +1498,7 @@ int iter_control_dialog (int *optim, int *pmaxit, double *ptol,
     tmp = gtk_spin_button_new_with_range(1.00, 9.99, 0.01);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), ic.v1);
     g_signal_connect(G_OBJECT(tmp), "value-changed",
-                     G_CALLBACK(set_double_from_spinner), &ic.v1);
+                     G_CALLBACK(set_double_from_spin), &ic.v1);
     gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 0);
 
@@ -1507,7 +1507,7 @@ int iter_control_dialog (int *optim, int *pmaxit, double *ptol,
     tmp = gtk_spin_button_new_with_range(2, 14, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), ic.v2);
     g_signal_connect(G_OBJECT(tmp), "value-changed",
-                     G_CALLBACK(set_int_from_spinner), &ic.v2);
+                     G_CALLBACK(set_int_from_spin), &ic.v2);
     gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
@@ -1525,7 +1525,7 @@ int iter_control_dialog (int *optim, int *pmaxit, double *ptol,
         tmp = gtk_spin_button_new_with_range(3, 20, 1);
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), *plmem);
         g_signal_connect(G_OBJECT(tmp), "value-changed",
-                         G_CALLBACK(set_int_from_spinner), plmem);
+                         G_CALLBACK(set_int_from_spin), plmem);
         gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
         gtk_widget_set_sensitive(tmp, (*optim == LBFGS_MAX));
         sensitize_conditional_on(tmp, lb);
@@ -1559,10 +1559,10 @@ struct range_setting {
     DATASET dinfo;        /* auxiliary data info structure */
     GtkWidget *dlg;       /* dialog box */
     GtkWidget *obslabel;  /* label for showing number of selected obs */
-    GtkAdjustment *adj1;  /* adjustment for start spinner */
-    GtkAdjustment *adj2;  /* adjustment for end spinner */
-    GtkWidget *spin1;     /* start-of-range spinner */
-    GtkWidget *spin2;     /* end-of-range spinner */
+    GtkAdjustment *adj1;  /* adjustment for start spin button */
+    GtkAdjustment *adj2;  /* adjustment for end spin button */
+    GtkWidget *spin1;     /* start-of-range spin button */
+    GtkWidget *spin2;     /* end-of-range spin button */
     GtkWidget *combo;     /* multi-purpose selector */
     GtkWidget *entry;
     gboolean markers;
@@ -1856,7 +1856,7 @@ static GtkWidget *panel_unit_sample_spinbox (struct range_setting *rset,
         hbox = gtk_hbox_new(TRUE, 5);
     }
 
-    /* spinner for u1 */
+    /* spin button for u1 */
     lbl = gtk_label_new(_("Start:"));
     rset->adj1 = (GtkAdjustment *) gtk_adjustment_new(rset->dinfo.t1, 0,
                                                       rset->dinfo.n - 1,
@@ -1875,7 +1875,7 @@ static GtkWidget *panel_unit_sample_spinbox (struct range_setting *rset,
         gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
     }
 
-    /* spinner for u2 */
+    /* spin button for u2 */
     lbl = gtk_label_new(_("End:"));
     rset->adj2 = (GtkAdjustment *) gtk_adjustment_new(rset->dinfo.t2, 0,
                                                       rset->dinfo.n - 1,
@@ -1893,7 +1893,7 @@ static GtkWidget *panel_unit_sample_spinbox (struct range_setting *rset,
         gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
     }
 
-    /* inter-connect the two spinners */
+    /* inter-connect the two spin buttons */
     obs_button_set_partner(rset->spin1, rset->spin2);
     obs_button_set_partner(rset->spin2, rset->spin1);
 
@@ -2097,7 +2097,7 @@ static void panel_new_spinbox (panel_setting *pset,
     gtk_box_pack_start(GTK_BOX(hbox), tbl, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    /* panel unit spinners */
+    /* panel unit spin buttons */
     lbl = gtk_label_new(_("Units"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 0, 1, 0, 1);
     /* first unit */
@@ -2111,7 +2111,7 @@ static void panel_new_spinbox (panel_setting *pset,
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(pset->spin[1]), pset->u2);
     gtk_table_attach_defaults(GTK_TABLE(tbl), pset->spin[1], 3, 4, 0, 1);
 
-    /* panel time spinners */
+    /* panel time spin buttons */
     lbl = gtk_label_new(_("Periods"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 0, 1, 1, 2);
     /* first period */
@@ -2240,7 +2240,7 @@ obs_spinbox (struct range_setting *rset, const char *label,
         hbox = gtk_hbox_new(TRUE, 5);
     }
 
-    /* spinner for t1 */
+    /* spin button for t1 */
     vbox = gtk_vbox_new(FALSE, 5);
     if (t1str != NULL) {
         lbl = gtk_label_new(t1str);
@@ -2253,7 +2253,7 @@ obs_spinbox (struct range_setting *rset, const char *label,
     gtk_box_pack_start(GTK_BOX(vbox), rset->spin1, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
 
-    /* spinner for t2, if wanted */
+    /* spin button for t2, if wanted */
     if (!(t2min == 0 && t2max == 0)) {
         vbox = gtk_vbox_new(FALSE, 5);
         if (t2str != NULL) {
@@ -2267,7 +2267,7 @@ obs_spinbox (struct range_setting *rset, const char *label,
         gtk_box_pack_start(GTK_BOX(vbox), rset->spin2, FALSE, FALSE, 0);
         gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
 
-        /* inter-connect the two spinners */
+        /* inter-connect the two spin buttons */
         obs_button_set_partner(rset->spin1, rset->spin2);
         obs_button_set_partner(rset->spin2, rset->spin1);
     }
@@ -2401,7 +2401,7 @@ void sample_range_dialog (GtkAction *action, gpointer p)
         labtxt = g_strdup_printf(_("Number of observations to select (max %d)"),
                                  T - 1);
 
-        /* spinner for number of obs */
+        /* spin button for number of obs */
         w = gtk_label_new(labtxt);
         gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
         adj = (GtkAdjustment *) gtk_adjustment_new(default_randsize(),
@@ -2576,8 +2576,8 @@ void range_dummy_dialog (GtkAction *action, gpointer p)
 
 static void panel_units_finalize (GtkButton *b, struct range_setting *rset)
 {
-    *rset->t1 = spinner_get_int(rset->spin1);
-    *rset->t2 = spinner_get_int(rset->spin2);
+    *rset->t1 = spin_get_int(rset->spin1);
+    *rset->t2 = spin_get_int(rset->spin2);
 
     gtk_widget_destroy(rset->dlg);
 }
@@ -2594,8 +2594,8 @@ static void sensitize_panel_options (GtkSpinButton *spin,
     int i, j, t1, t2, N;
     int fixit = 0;
 
-    t1 = spinner_get_int(rset->spin1);
-    t2 = spinner_get_int(rset->spin2);
+    t1 = spin_get_int(rset->spin1);
+    t2 = spin_get_int(rset->spin2);
     N = t2 - t1 + 1;
 
     for (i=0; i<ng; i++) {
@@ -3055,7 +3055,7 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
                                                0.01, 0.1, 0);
     spin = gtk_spin_button_new(adj, 1, 2);
     g_signal_connect(GTK_SPIN_BUTTON(spin), "value-changed",
-                     G_CALLBACK(set_double_from_spinner), conf);
+                     G_CALLBACK(set_double_from_spin), conf);
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
@@ -3103,7 +3103,7 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
 
 /* at present this is specific to the IRF dialog box */
 
-void dialog_add_iters_spinner (GtkWidget *dlg, int *iters)
+void dialog_add_iters_spin (GtkWidget *dlg, int *iters)
 {
     GtkWidget *spin, *lbl, *cb;
     GtkWidget *vbox, *hbox;
@@ -3116,7 +3116,7 @@ void dialog_add_iters_spinner (GtkWidget *dlg, int *iters)
                                                500, 500, 0);
     spin = gtk_spin_button_new(adj, 1, 0);
     g_signal_connect(GTK_SPIN_BUTTON(spin), "value-changed",
-                     G_CALLBACK(set_int_from_spinner), iters);
+                     G_CALLBACK(set_int_from_spin), iters);
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
@@ -3338,7 +3338,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
             GtkWidget *spin = gtk_spin_button_new_with_range(1, 50, 1);
 
             g_signal_connect(G_OBJECT(spin), "value-changed",
-                             G_CALLBACK(set_int_from_spinner), k);
+                             G_CALLBACK(set_int_from_spin), k);
             gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 0);
             gtk_widget_set_sensitive(spin, deflt == 3);
             sensitize_conditional_on(spin, button);
@@ -3385,7 +3385,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 
  skip_ts_options:
 
-     /* pre-forecast obs spinner */
+     /* pre-forecast obs spin button */
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     hbox = gtk_hbox_new(FALSE, 5);
@@ -3535,9 +3535,9 @@ int simple_forecast_dialog (int *t1, int *t2, GtkWidget *parent)
 
 static void set_add_obs (GtkButton *b, int *n_add)
 {
-    GtkWidget *spin = g_object_get_data(G_OBJECT(b), "spinner");
+    GtkWidget *spin = g_object_get_data(G_OBJECT(b), "spin");
 
-    *n_add = spinner_get_int(spin);
+    *n_add = spin_get_int(spin);
 }
 
 int add_obs_dialog (const char *blurb, int addmin,
@@ -3581,7 +3581,7 @@ int add_obs_dialog (const char *blurb, int addmin,
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
     cancel_delete_button(hbox, dlg);
     tmp = ok_button(hbox);
-    g_object_set_data(G_OBJECT(tmp), "spinner", spin);
+    g_object_set_data(G_OBJECT(tmp), "spin", spin);
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(set_add_obs), &n_add);
     g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
@@ -4285,7 +4285,7 @@ int real_radio_dialog (const char *title, const char *label,
             vbox_add_hsep(vbox);
             tmp = option_checkbox(extravar, extratxt);
         } else {
-            /* create spinner */
+            /* create spin button */
             tmp = option_spinbox(extravar, extratxt, spinmin, spinmax, 0, NULL);
         }
         gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
@@ -4443,7 +4443,7 @@ int radio_dialog (const char *title, const char *label, const char **opts,
                              NULL, NULL, 0, 0, parent);
 }
 
-int radio_dialog_with_spinner (const char *title, const char **opts,
+int radio_dialog_with_spin (const char *title, const char **opts,
                                int nopts, int deflt, int hcode,
                                int *spinvar, const char *spintxt,
                                int spinmin, int spinmax,
@@ -4605,7 +4605,7 @@ int paste_data_dialog (int *append)
 
 static void option_spin_set (GtkWidget *w, int *ivar)
 {
-    *ivar = spinner_get_int(w);
+    *ivar = spin_get_int(w);
 }
 
 static GtkWidget *dialog_blurb_box (const char *text)
@@ -4886,7 +4886,7 @@ build_checks_dialog (const char *title, const char *blurb,
         gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
     }
 
-    /* create spinner if wanted */
+    /* create spin button if wanted */
     if (spinvar != NULL) {
         tmp = option_spinbox(spinvar, spintxt, spinmin, spinmax, hcode, NULL);
         gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
@@ -4939,7 +4939,7 @@ build_checks_dialog (const char *title, const char *blurb,
 }
 
 /* general purpose dialog offering check-button options and/or
-   a spinner with numerical values */
+   a spin button with numerical values */
 
 int checks_dialog (const char *title, const char *blurb,
                    const char **opts,
@@ -4978,7 +4978,7 @@ int checks_only_dialog (const char *title, const char *blurb,
     dlg = build_checks_dialog(title, blurb,
                               opts, nopts, active, 0, 0,
                               0, NULL,    /* no radios */
-                              NULL, NULL, /* no spinners */
+                              NULL, NULL, /* no spin buttons */
                               0, 0, hcode, parent, &ret);
 
     if (dlg != NULL) {
@@ -5055,7 +5055,7 @@ int pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
                               GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
-    /* sample vs Bartlett radios, with Bartlett spinner */
+    /* sample vs Bartlett radios, with Bartlett spin button */
 
     button = gtk_radio_button_new_with_label(NULL, _("Sample periodogram"));
     hboxit(button, vbox);
@@ -5419,7 +5419,7 @@ struct mtab_info {
     GtkWidget *se0; /* stderr (vs t-stat) selector */
     GtkWidget *pv0; /* p-values checkbox */
     GtkWidget *as0; /* asterisks checkbox */
-    GtkWidget *fig; /* figures spinner */
+    GtkWidget *fig; /* figures spin button */
     GtkWidget *dec; /* decimal places option */
 };
 
@@ -5564,7 +5564,7 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     vbox_add_hsep(vbox);
 
-    /* spinner for number of digits */
+    /* spin button for number of digits */
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Show"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
@@ -6080,7 +6080,7 @@ void tex_format_dialog (GtkAction *action, gpointer data)
             gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), shown);
         }
 
-        /* spinner for precision */
+        /* spin button for precision */
         hbox = gtk_hbox_new(FALSE, 5);
         tmp = gtk_label_new(_("Show"));
         tf.adj[i] = (GtkAdjustment *) gtk_adjustment_new(p, 0, 15, 1, 1, 0);
@@ -6530,7 +6530,7 @@ static void index_values_callback (GtkWidget *w,
         char obsstr[OBSLEN];
         int i, t1;
 
-        t1 = spinner_get_int(ixi->spin);
+        t1 = spin_get_int(ixi->spin);
         ntolabel(obsstr, t1, dataset);
 
         for (i=1; i<=ixi->varlist[0] && !err; i++) {
@@ -6789,8 +6789,8 @@ static void set_midas_ptype (GtkComboBox *w, struct midas_sync *msync)
     } else if (pt == MIDAS_BETAN) {
         fixval = 3;
     } else if (pt == MIDAS_U) {
-        int l0 = spinner_get_int(msync->l0spin);
-        int l1 = spinner_get_int(msync->l1spin);
+        int l0 = spin_get_int(msync->l0spin);
+        int l1 = spin_get_int(msync->l1spin);
         int k = l1 - l0 + 1;
 
         fixval = k;
@@ -6810,13 +6810,13 @@ static void set_midas_lag (GtkSpinButton *w, struct midas_sync *msync)
 
     if (GTK_WIDGET(w) == msync->l0spin) {
         l0 = val;
-        if (spinner_get_int(msync->l1spin) < l0) {
+        if (spin_get_int(msync->l1spin) < l0) {
             gtk_spin_button_set_value(GTK_SPIN_BUTTON(msync->l1spin), l0);
         }
         *msync->minlag = l0;
     } else {
         l1 = val;
-        if (spinner_get_int(msync->l0spin) > l1) {
+        if (spin_get_int(msync->l0spin) > l1) {
             gtk_spin_button_set_value(GTK_SPIN_BUTTON(msync->l0spin), l1);
         }
         *msync->maxlag = l1;
@@ -6888,7 +6888,7 @@ int midas_term_dialog (const char *name, int m,
     msync.kspin = tmp = gtk_spin_button_new_with_range(1, 10, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), *ncoef);
     g_signal_connect(G_OBJECT(tmp), "value-changed",
-                     G_CALLBACK(set_int_from_spinner), ncoef);
+                     G_CALLBACK(set_int_from_spin), ncoef);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
     /* minimum and maximum lags */
@@ -7645,7 +7645,7 @@ static void record_bdstest (int m, int v, gretlopt opt, double dval,
 static void do_bdstest (GtkWidget *w, struct bds_info *bi)
 {
     gretlopt dopt, opt = OPT_B;
-    int m = spinner_get_int(bi->mspin);
+    int m = spin_get_int(bi->mspin);
     int sdcrit = button_is_active(bi->sdb);
     int boot = button_is_active(bi->boot);
     double dval;

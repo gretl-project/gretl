@@ -2049,7 +2049,7 @@ static int function_call_dialog (call_info *cinfo)
 
 	/* hook up signals and "+" add buttons for the
 	   selectors for most types of arguments (though
-	   not for bool and spinner-type args)
+	   not for bool and spin-type args)
 	*/
 
 	if (series_arg(ptype)) {

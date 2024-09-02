@@ -2440,7 +2440,7 @@ impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon,
     if (iters == 0) {
 	iters = libset_get_int(BOOT_ITERS);
     }
-    dialog_add_iters_spinner(dlg, &iters);
+    dialog_add_iters_spin(dlg, &iters);
 
     if (ordvec != NULL) {
 	dialog_add_order_selector(dlg, var, ordvec);

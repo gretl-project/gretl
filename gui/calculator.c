@@ -3340,14 +3340,14 @@ static void plot_a_curve (void)
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    /* x-axis spinners (min and range) */
+    /* x-axis spin buttons (min and range) */
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("x minimum"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     adj = (GtkAdjustment *) gtk_adjustment_new(plotter.xmin, -100, 100, 1, 0, 0);
     tmp = gtk_spin_button_new(adj, 1, 0);
     g_signal_connect(tmp, "value-changed",
-		     G_CALLBACK(set_double_from_spinner), &plotter.xmin);
+		     G_CALLBACK(set_double_from_spin), &plotter.xmin);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
     tmp = gtk_label_new("  ");
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
@@ -3356,7 +3356,7 @@ static void plot_a_curve (void)
     adj = (GtkAdjustment *) gtk_adjustment_new(plotter.xmax, -100, 1000, 1, 0, 0);
     tmp = gtk_spin_button_new(adj, 1, 0);
     g_signal_connect(tmp, "value-changed",
-		     G_CALLBACK(set_double_from_spinner), &plotter.xmax);
+		     G_CALLBACK(set_double_from_spin), &plotter.xmax);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
