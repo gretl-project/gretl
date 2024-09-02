@@ -3535,7 +3535,7 @@ int simple_forecast_dialog (int *t1, int *t2, GtkWidget *parent)
 
 static void set_add_obs (GtkButton *b, int *n_add)
 {
-    GtkWidget *spin = g_object_get_data(G_OBJECT(b), "spin");
+    GtkWidget *spin = g_object_get_data(G_OBJECT(b), "add-spin");
 
     *n_add = spin_get_int(spin);
 }
@@ -3545,7 +3545,7 @@ int add_obs_dialog (const char *blurb, int addmin,
 {
     int step, panel = dataset_is_panel(dataset);
     GtkWidget *dlg, *vbox, *hbox;
-    GtkWidget *spin, *tmp;
+    GtkWidget *addspin, *tmp;
     int n_add = -1;
 
     if (panel && !(opt & OPT_T)) {
@@ -3571,9 +3571,9 @@ int add_obs_dialog (const char *blurb, int addmin,
     tmp = gtk_label_new(_("Number of observations to add:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 
-    spin = gtk_spin_button_new_with_range(addmin, 10000, step);
-    gtk_entry_set_activates_default(GTK_ENTRY(spin), TRUE);
-    gtk_box_pack_start(GTK_BOX(hbox), spin, TRUE, TRUE, 5);
+    addspin = gtk_spin_button_new_with_range(addmin, 10000, step);
+    gtk_entry_set_activates_default(GTK_ENTRY(addspin), TRUE);
+    gtk_box_pack_start(GTK_BOX(hbox), addspin, TRUE, TRUE, 5);
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 
@@ -3581,7 +3581,7 @@ int add_obs_dialog (const char *blurb, int addmin,
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
     cancel_delete_button(hbox, dlg);
     tmp = ok_button(hbox);
-    g_object_set_data(G_OBJECT(tmp), "spin", spin);
+    g_object_set_data(G_OBJECT(tmp), "add-spin", addspin);
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(set_add_obs), &n_add);
     g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
@@ -4621,6 +4621,12 @@ static GtkWidget *dialog_blurb_box (const char *text)
     return hbox;
 }
 
+/* Returns an hbox containing a spin button with range @spinmin to
+   @spinmax. The button is configured such that on a change in its
+   value the function option_spin_set() is called to update the
+   integer value referenced by @spinvar.
+*/
+
 static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
                                   int spinmin, int spinmax,
                                   int ci, gpointer p)
@@ -4655,6 +4661,7 @@ static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
         *pobj = adj;
     }
 
+    /* in the caller wants access to the spin button itself */
     g_object_set_data(G_OBJECT(hbox), "spin-button", button);
 
     return hbox;
