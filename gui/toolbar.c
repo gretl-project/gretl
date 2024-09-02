@@ -202,7 +202,8 @@ void gretl_stock_icons_init (void)
     if (gretl_factory == NULL) {
 	int bigger = (get_icon_sizing() == ICON_SIZE_MEDIUM);
 	char pngname[16], icon_path[48], menu_path[48];
-	gchar *p, *pm, *respath;
+	gchar *p, *respath;
+        gchar *pm = NULL;
 	GResource *icons;
 	GtkIconSource *isrc;
 	GtkIconSet *iset;
@@ -278,7 +279,9 @@ void gretl_stock_icons_init (void)
 		gtk_icon_source_set_size_wildcarded(isrc, FALSE);
 		gtk_icon_set_add_source(iset, isrc);
 		g_object_unref(pbuf);
-		*pm = '\0';
+                if (pm != NULL) {
+                    *pm = '\0';
+                }
 	    } else {
 		/* we just need a single icon */
 		iset = gtk_icon_set_new_from_pixbuf(pbuf);
