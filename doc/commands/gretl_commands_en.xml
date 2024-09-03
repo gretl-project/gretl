@@ -6255,8 +6255,8 @@
 	<lit>gender</lit> that equals 1 for males and 0 for females
 	(or vice versa). Then, in the test for the difference of two
 	means, you could select <lit>wage</lit> in both slots, but add
-	to the top slot <lit>(gender=0)</lit> and to the bottom
-	<lit>(gender=1)</lit>.  This would then give you a test for
+	to the top slot <lit>(gender==0)</lit> and to the bottom
+	<lit>(gender==1)</lit>.  This would then give you a test for
 	the difference between mean male income and mean female
 	income.  Note that when you type a restriction in this way,
 	you must then press the Enter key to have the sample

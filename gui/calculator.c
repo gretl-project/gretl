@@ -2162,6 +2162,9 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
 	    } else if (!strncmp(q, "<=", 2)) {
 		*yop = OP_LTE;
 		len = 2;
+            } else if (!strncmp(q, "==", 2)) {
+                *yop = OP_EQ;
+                len = 2;
 	    } else if (*q == '=') {
 		*yop = OP_EQ;
 	    } else if (*q == '>') {
