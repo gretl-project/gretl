@@ -40,15 +40,9 @@
 # include "gretl_foreign.h"
 #endif
 
-#if defined(USE_AVX)
+#if defined(HAVE_IMMINTRIN_H) && defined(USE_AVX)
 # define USE_SIMD
-# if defined(HAVE_IMMINTRIN_H)
-#  include <immintrin.h>
-# else
-#  include <mmintrin.h>
-#  include <xmmintrin.h>
-#  include <emmintrin.h>
-# endif
+# include <immintrin.h>
 #endif
 
 #define ADMM_MAX_ITER 20000
