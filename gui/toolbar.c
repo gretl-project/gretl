@@ -1873,6 +1873,7 @@ void vwin_add_tmpbar (windata_t *vwin)
 	0
     };
     GtkWidget *hbox, *tmp;
+    GtkWidget *spinner;
 
     hbox = g_object_get_data(G_OBJECT(vwin->main), "top-hbox");
 
@@ -1904,6 +1905,13 @@ void vwin_add_tmpbar (windata_t *vwin)
     gretl_toolbar_insert(tmp, &stop_item, stop_item.func, NULL, 0);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
-    start_wait_for_output(vwin, hbox);
+    spinner = vwin_start_wait(vwin);
+    gtk_box_pack_end(GTK_BOX(hbox), spinner, FALSE, FALSE, 5);
+
     gtk_widget_show_all(hbox);
+    gtk_spinner_start(GTK_SPINNER(spinner));
+
+    while (gtk_events_pending()) {
+        gtk_main_iteration();
+    }
 }

@@ -8298,23 +8298,15 @@ static void stop_wait_for_output (GtkWidget *w, gpointer p)
     maybe_sensitize_iconview();
 }
 
-/* Start a spinner as visual indication that there's
-   something going on: the argument @w should be of
-   type GTK_BOX, into which a spinner may be packed.
+/* Create a spinner to give a visual indication that there's something going
+   on: The only caller for this function is vwin_add_tmpbar(), in toolbar.c.
 */
 
-void start_wait_for_output (windata_t *vwin, GtkWidget *w)
+GtkWidget *vwin_start_wait (windata_t *vwin)
 {
-    GtkWidget *spinner;
+    GtkWidget *spinner = gtk_spinner_new();
 
-    g_return_if_fail(GTK_IS_BOX(w));
-
-    spinner = gtk_spinner_new();
     gtk_widget_set_size_request(spinner, 24, 24);
-    gtk_box_pack_end(GTK_BOX(w), spinner, FALSE, FALSE, 5);
-    gtk_widget_show(spinner);
-    gtk_spinner_start(GTK_SPINNER(spinner));
-    script_wait = 1;
 
     if (GTK_IS_TEXT_VIEW(vwin->text)) {
         /* @vwin is a reusable output window */
@@ -8327,10 +8319,9 @@ void start_wait_for_output (windata_t *vwin, GtkWidget *w)
     g_signal_connect(G_OBJECT(spinner), "destroy",
                      G_CALLBACK(stop_wait_for_output),
                      NULL);
+    script_wait = 1;
 
-    while (gtk_events_pending()) {
-        gtk_main_iteration();
-    }
+    return spinner;
 }
 
 static void clear_output_handler (void)
