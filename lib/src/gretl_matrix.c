@@ -5609,11 +5609,13 @@ gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X)
         XTX = gretl_matrix_alloc(X->cols, X->cols);
     }
 
-    if (XTX != NULL) {
+    if (XTX == NULL) {
+        fprintf(stderr, "gretl_matrix_XTX_new: %d x %d is too big\n",
+                X->cols, X->cols);
+    } else {
         matrix_multiply_self_transpose(X, 1, XTX, GRETL_MOD_NONE);
+        maybe_preserve_names(XTX, X, COLNAMES, NULL);
     }
-
-    maybe_preserve_names(XTX, X, COLNAMES, NULL);
 
     return XTX;
 }
