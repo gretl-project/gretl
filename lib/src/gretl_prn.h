@@ -81,6 +81,8 @@ void gretl_print_detach_stream (PRN *prn);
 
 int gretl_print_reset_buffer (PRN *prn);
 
+int gretl_print_carriage_return (PRN *prn);
+
 int gretl_print_rename_file (PRN *prn, const char *oldpath, 
 			     const char *newpath);
 

@@ -599,6 +599,40 @@ int gretl_print_reset_buffer (PRN *prn)
 }
 
 /**
+ * gretl_print_carriage_return:
+ * @prn: printing struct to operate on.
+ *
+ * If @prn has an attached buffer, backtracks to the first
+ * byte that follows a newline, or to the start of the
+ * buffer if no newline is found, writes a NUL byte, and
+ * resets the count of bytes appropriately, thus mimicking
+ * a carriage return.
+ *
+ * Returns: 0 on success, 1 if @prn has no buffer.
+ */
+
+int gretl_print_carriage_return (PRN *prn)
+{
+    int err = 0;
+
+    if (prn != NULL && prn->buf != NULL) {
+        int i;
+
+        for (i=prn->blen; i>=0; i--) {
+            if (i == 0 || prn->buf[i-1] == '\n') {
+                prn->buf[i] = '\0';
+                prn->blen = i;
+                break;
+            }
+        }
+    } else {
+	err = 1;
+    }
+
+    return err;
+}
+
+/**
  * gretl_print_get_buffer:
  * @prn: printing struct.
  *

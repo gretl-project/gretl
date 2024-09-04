@@ -72,7 +72,8 @@ static int printf_escape (int c, PRN *prn)
 	pputc(prn, '\n');
 	break;
     case 'r':
-	pputc(prn, '\r');
+	/* 2024-09-04: was pputc(prn, '\r') */
+        gretl_print_carriage_return(prn);
 	break;
     case 't':
 	pputc(prn, '\t');
