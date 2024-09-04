@@ -656,12 +656,10 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
         return 0;
     }
 
-    if (m != NULL) {
-        if (m->rows == m->cols) {
-            ret = GRETL_MATRIX_SQUARE;
-            if (m->rows == 1) {
-                ret = GRETL_MATRIX_SCALAR;
-            }
+    if (m->rows == m->cols) {
+        ret = GRETL_MATRIX_SQUARE;
+        if (m->rows == 1) {
+            ret = GRETL_MATRIX_SCALAR;
         }
     }
 
@@ -672,10 +670,11 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
         int symm = 1;
         int udiag = 1;
         int i, j;
+        int k = 0;
 
-        for (i=0; i<m->rows; i++) {
-            for (j=0; j<m->cols; j++) {
-                x = gretl_matrix_get(m,i,j);
+        for (j=0; j<m->cols; j++) {
+            for (i=0; i<m->rows; i++) {
+                x = m->val[k++];
                 if (j > i) {
                     if (x != 0.0) {
                         uzero = 0;
@@ -4822,6 +4821,67 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
     return err;
 }
 
+static int matrix_is_triangular (const gretl_matrix *m)
+{
+    double x;
+    int uzero = 1;
+    int lzero = 1;
+    int i, j;
+    int k = 0;
+
+    for (j=0; j<m->cols; j++) {
+        for (i=0; i<m->rows; i++) {
+            x = m->val[k++];
+            if (j > i) {
+                if (x != 0.0) {
+                    uzero = 0;
+                }
+            } else if (i > j) {
+                if (x != 0.0) {
+                    lzero = 0;
+                }
+            }
+            if (!uzero && !lzero) {
+                break;
+            }
+        }
+        if (!uzero && !lzero) {
+            break;
+        }
+    }
+
+    if (uzero) {
+        return GRETL_MATRIX_LOWER_TRIANGULAR;
+    } else if (lzero) {
+        return GRETL_MATRIX_UPPER_TRIANGULAR;
+    }
+
+    return 0;
+}
+
+/* Solves a*x = b for triangular @a: on exit @b is overwritten
+   by @x
+*/
+
+static int gretl_triangular_solve (const gretl_matrix *a,
+                                   gretl_matrix *b,
+                                   GretlMatrixStructure t)
+{
+    char uplo, side = 'L';
+    char transa = 'N';
+    char diag = 'N';
+    double alpha = 1.0;
+    integer m = b->rows;
+    integer n = b->cols;
+
+    uplo = (t == GRETL_MATRIX_LOWER_TRIANGULAR)? 'L' : 'U';
+
+    dtrsm_(&side, &uplo, &transa, &diag, &m, &n, &alpha,
+           a->val, &m, b->val, &m);
+
+    return 0;
+}
+
 /*
  * gretl_matrix_solve:
  * @a: m x n matrix, with m >= n.
@@ -4845,7 +4905,17 @@ static int gretl_matrix_solve (gretl_matrix *a, gretl_matrix *b)
     }
 
     if (a->rows == a->cols) {
+#if 0 /* the status quo ante */
         return gretl_LU_solve(a, b);
+#else /* as of 2024-09-04 */
+        GretlMatrixStructure tri = matrix_is_triangular(a);
+
+        if (tri) {
+            return gretl_triangular_solve(a, b, tri);
+        } else {
+            return gretl_LU_solve(a, b);
+        }
+#endif
     } else if (a->rows > a->cols) {
         return QR_solve(a, b);
     } else {
@@ -5031,12 +5101,11 @@ int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
 
 /**
  * gretl_cholesky_solve:
- * @a: Cholesky-decomposed symmetric positive-definite matrix.
- * @b: vector 'x'.
+ * @a: Lower triangular Cholesky factor of symmetric p.d. matrix
+ * @b: right-hand side vector.
  *
- * Solves ax = b for the unknown vector x, using the pre-computed
- * Cholesky decomposition of @a. On exit, @b is replaced by the
- * solution.
+ * Solves ax = b for the unknown vector x, using the precomputed
+ * Cholesky factor in @a. On exit, @b is replaced by the solution.
  *
  * Returns: 0 on successful completion, or non-zero code on error.
  */

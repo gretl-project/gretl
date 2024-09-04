@@ -1404,6 +1404,10 @@ int dtzrzf_(integer *m, integer *n, double *a, integer *lda, double *tau,
 int dpstrf_(char *uplo, integer *n, double *a, integer *lda, integer *piv,
 	    integer *rank, double *tol, double *work, integer *info);
 
+int dtrsm_(char *side, char *uplo, char *transa, char *diag,
+           integer *m, integer *n, double *alpha, double *a,
+           integer *lda, double *b, integer *ldb);
+
 integer ieeeck_(integer *ispec, float *zero, float *one);
 
 integer ilaenv_(integer *ispec, char *name__, char *opts, integer *n1,
