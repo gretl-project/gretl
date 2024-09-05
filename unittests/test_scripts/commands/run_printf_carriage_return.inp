@@ -1,10 +1,27 @@
 /*
-Test script for the bug reported: https://sourceforge.net/p/gretl/bugs/309/
+   Test script for the bug reported: https://sourceforge.net/p/gretl/bugs/309/
 */
 
 set verbose off
 clear
 set assert stop
+
+function string unctrlr (const string s)
+    # extract the printable portion of a string containing '\r'
+    cr = sprintf("\r")
+    start = 1
+    stop = strlen(s)
+    if s[stop] == cr
+        stop--
+    endif
+    loop i=stop..1 --decr
+        if s[i:i] == cr
+            start = i+1
+            break
+        endif
+    endloop
+    return s[start:stop]
+end function
 
 function void test_single_line (void)
     print "Start testing single line case."
@@ -19,38 +36,28 @@ function void test_single_line (void)
     end outfile
 
     # Then
-    assert(actual == expected)
+    assert(unctrlr(actual) == expected)
 end function
 test_single_line()
-
-
 
 function void test_loop (void)
     print "Start testing loop case"
 
     # Given
-    scalar start = 1
-    scalar ende = 3
+    string expected = "3"
     string actual
 
     # When
-print "a"
     outfile --buffer=actual
-        loop i=start..ende          # NOTHING IS SHOWN
+        loop i=1..3
             printf "%g\r", i
-            #flush
         endloop
     end outfile
-print "b"
 
-    print actual         # just empty
-    print atof(actual)   # returns "NA"
-    print nelem(actual)  # returns 0
-
-    assert(actual == ende)  # FAILS
+    # Then
+    assert(unctrlr(actual) == expected)
 end function
 test_loop()
 
-
-print "Succesfully finished tests."
+print "Successfully finished tests."
 quit
