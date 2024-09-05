@@ -1,3 +1,7 @@
+/*
+Test script for the bug reported: https://sourceforge.net/p/gretl/bugs/309/
+*/
+
 set verbose off
 clear
 set assert stop
