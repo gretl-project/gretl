@@ -72,8 +72,7 @@ static int printf_escape (int c, PRN *prn)
 	pputc(prn, '\n');
 	break;
     case 'r':
-	/* 2024-09-04: was pputc(prn, '\r') */
-        gretl_print_carriage_return(prn);
+        pputc(prn, '\r');
 	break;
     case 't':
 	pputc(prn, '\t');
@@ -774,7 +773,7 @@ static int real_do_printf (const char *format,
     */
     prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
     if (err) {
-	return err;
+        return err;
     }
 
     if (format != NULL) {
