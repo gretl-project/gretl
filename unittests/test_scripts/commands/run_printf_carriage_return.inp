@@ -1,0 +1,52 @@
+set verbose off
+clear
+set assert stop
+
+function void test_single_line (void)
+    print "Start testing single line case."
+
+    # Given
+    string expected = " Hello"
+    string actual
+
+    # When
+    outfile --buffer=actual
+        printf "   \r hello \r Hello"
+    end outfile
+
+    # Then
+    assert(actual == expected)
+end function
+test_single_line()
+
+
+
+function void test_loop (void)
+    print "Start testing loop case"
+
+    # Given
+    scalar start = 1
+    scalar ende = 3
+    string actual
+
+    # When
+print "a"
+    outfile --buffer=actual
+        loop i=start..ende          # NOTHING IS SHOWN
+            printf "%g\r", i
+            #flush
+        endloop
+    end outfile
+print "b"
+
+    print actual         # just empty
+    print atof(actual)   # returns "NA"
+    print nelem(actual)  # returns 0
+
+    assert(actual == ende)  # FAILS
+end function
+test_loop()
+
+
+print "Succesfully finished tests."
+quit
