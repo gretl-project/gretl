@@ -3211,7 +3211,7 @@ static int real_matrix_calc (const gretl_matrix *A,
         break;
     case B_LDIV:
     case B_DIV:
-        /* Matrix left (A\B) or right (A/B) "division": note that
+        /* Matrix left (A\B) or right (A/B) "division". Note that
            A/B = (B'\A')', which we handle by passing the transpose
            flag to gretl_{c}matrix_divide.
         */

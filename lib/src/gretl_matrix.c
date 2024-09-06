@@ -4865,9 +4865,10 @@ static int matrix_is_triangular (const gretl_matrix *m)
 
 static int gretl_triangular_solve (const gretl_matrix *a,
                                    gretl_matrix *b,
+                                   char side,
                                    GretlMatrixStructure t)
 {
-    char uplo, side = 'L';
+    char uplo;
     char transa = 'N';
     char diag = 'N';
     double alpha = 1.0;
@@ -4905,17 +4906,7 @@ static int gretl_matrix_solve (gretl_matrix *a, gretl_matrix *b)
     }
 
     if (a->rows == a->cols) {
-#if 0 /* the status quo ante */
         return gretl_LU_solve(a, b);
-#else /* as of 2024-09-04 */
-        GretlMatrixStructure tri = matrix_is_triangular(a);
-
-        if (tri) {
-            return gretl_triangular_solve(a, b, tri);
-        } else {
-            return gretl_LU_solve(a, b);
-        }
-#endif
     } else if (a->rows > a->cols) {
         return QR_solve(a, b);
     } else {
@@ -8198,9 +8189,9 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
                                    GretlMatrixMod mod,
                                    int *err)
 {
-    gretl_matrix *Q = NULL;
+    gretl_matrix *Tmp, *Q = NULL;
     gretl_matrix *AT = NULL, *BT = NULL;
-    gretl_matrix *Tmp;
+    int tri = 0;
 
     if (gretl_is_null_matrix(a) ||
         gretl_is_null_matrix(b)) {
@@ -8236,6 +8227,22 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
     if (*err) {
         return Q;
     }
+
+#if 1
+    /* 2024-09-06 */
+    if (mod == GRETL_MOD_NONE) {
+        tri = matrix_is_triangular(a);
+        if (tri) {
+            Q = gretl_matrix_copy(b);
+            if (Q == NULL) {
+                *err = E_ALLOC;
+            } else {
+                gretl_triangular_solve(a, Q, 'L', tri);
+            }
+            return Q;
+        }
+    }
+#endif
 
     if (mod == GRETL_MOD_TRANSPOSE) {
         AT = gretl_matrix_copy_transpose(b);
