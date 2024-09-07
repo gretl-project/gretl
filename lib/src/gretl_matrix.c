@@ -2040,7 +2040,7 @@ int correlated_normal_fill (gretl_matrix *targ,
     } else {
         /* do left division, @targ \ L_p' */
         err = gretl_triangular_solve(src, targ, GRETL_MOD_TRANSPOSE,
-                                     GRETL_MATRIX_UPPER_TRIANGULAR);
+                                     GRETL_MATRIX_LOWER_TRIANGULAR);
     }
 
     /* put back the original content of @src */
