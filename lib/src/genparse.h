@@ -288,7 +288,6 @@ enum {
     F_ZEROS,
     F_ONES,
     F_MUNIF,
-    F_MNORM,
     F_QFORM,
     F_EIGSYM,
     F_QUANTILE,
@@ -400,6 +399,7 @@ enum {
     F_BINPERMS,
     HF_GLASSO,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
+    F_MNORM,
     F_WMEAN,
     F_WVAR,
     F_WSD,

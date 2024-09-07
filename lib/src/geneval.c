@@ -5224,9 +5224,10 @@ static int ok_matrix_dim (int r, int c, int f)
     }
 }
 
-static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
+static NODE *matrix_fill_func (NODE *l, NODE *r, NODE *c, int f, parser *p)
 {
     int n = 0, cols = 0, rows = node_get_int(l, p);
+    gretl_matrix *v = NULL;
     NODE *ret = NULL;
 
     if (!p->err) {
@@ -5254,6 +5255,13 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
         matrix_error(p);
     }
 
+    if (!p->err && c != NULL) {
+        v = c->v.m;
+        if (v->cols != v->rows || v->rows != MIN(rows, cols)) {
+            p->err = E_NONCONF;
+        }
+    }
+
     if (!p->err) {
         ret = aux_sized_matrix_node(p, rows, cols, 0);
     }
@@ -5279,7 +5287,11 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
         gretl_matrix_random_fill(ret->v.m, D_UNIFORM);
         break;
     case F_MNORM:
-        gretl_matrix_random_fill(ret->v.m, D_NORMAL);
+        if (v != NULL) {
+            correlated_normal_fill(ret->v.m, v);
+        } else {
+            gretl_matrix_random_fill(ret->v.m, D_NORMAL);
+        }
         break;
     case F_RANDPERM:
         p->err = fill_permutation_vector(ret->v.m, n);
@@ -18791,11 +18803,25 @@ static NODE *eval (NODE *t, parser *p)
     case F_ZEROS:
     case F_ONES:
     case F_MUNIF:
-    case F_MNORM:
     case F_RANDPERM:
         /* matrix-creation functions */
         if (scalar_node(l) && null_or_scalar(r)) {
-            ret = matrix_fill_func(l, r, t->t, p);
+            ret = matrix_fill_func(l, r, NULL, t->t, p);
+        } else if (!scalar_node(l)) {
+            node_type_error(t->t, 1, NUM, l, p);
+        } else {
+            node_type_error(t->t, 2, NUM, r, p);
+        }
+        break;
+    case F_MNORM:
+        if (scalar_node(l) && null_or_scalar(m)) {
+            if (null_node(r)) {
+                ret = matrix_fill_func(l, m, NULL, t->t, p);
+            } else if (r->t == MAT) {
+                ret = matrix_fill_func(l, m, r, t->t, p);
+            } else {
+                node_type_error(t->t, 3, MAT, r, p);
+            }
         } else if (!scalar_node(l)) {
             node_type_error(t->t, 1, NUM, l, p);
         } else {

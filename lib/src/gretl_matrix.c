@@ -665,10 +665,10 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
 
     if (ret == GRETL_MATRIX_SQUARE) {
         double x;
-        int uzero = 1;
-        int lzero = 1;
-        int symm = 1;
-        int udiag = 1;
+        guint8 uzero = 1;
+        guint8 lzero = 1;
+        guint8 symm = 1;
+        guint8 udiag = 1;
         int i, j;
         int k = 0;
 
@@ -676,20 +676,22 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
             for (i=0; i<m->rows; i++) {
                 x = m->val[k++];
                 if (j > i) {
-                    if (x != 0.0) {
+                    if (uzero && x != 0.0) {
                         uzero = 0;
                     }
                 } else if (i > j) {
-                    if (x != 0.0) {
+                    if (lzero && x != 0.0) {
                         lzero = 0;
                     }
                 } else if (i == j) {
-                    if (x != 1.0) {
+                    if (udiag && x != 1.0) {
                         udiag = 0;
                     }
                 }
-                if (j != i && x != gretl_matrix_get(m,j,i)) {
-                    symm = 0;
+                if (j != i && symm) {
+                    if (x != gretl_matrix_get(m,j,i)) {
+                        symm = 0;
+                    }
                 }
                 if (!uzero && !lzero && !symm) {
                     break;
@@ -714,6 +716,44 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
     }
 
     return ret;
+}
+
+static int matrix_is_triangular (const gretl_matrix *m)
+{
+    double x;
+    guint8 uzero = 1;
+    guint8 lzero = 1;
+    int i, j;
+    int k = 0;
+
+    for (j=0; j<m->cols; j++) {
+        for (i=0; i<m->rows; i++) {
+            x = m->val[k++];
+            if (j > i) {
+                if (uzero && x != 0.0) {
+                    uzero = 0;
+                }
+            } else if (i > j) {
+                if (lzero && x != 0.0) {
+                    lzero = 0;
+                }
+            }
+            if (!uzero && !lzero) {
+                break;
+            }
+        }
+        if (!uzero && !lzero) {
+            break;
+        }
+    }
+
+    if (uzero) {
+        return GRETL_MATRIX_LOWER_TRIANGULAR;
+    } else if (lzero) {
+        return GRETL_MATRIX_UPPER_TRIANGULAR;
+    }
+
+    return 0;
 }
 
 /**
@@ -1202,12 +1242,9 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
                 }
             }
         } else {
-            double mij;
-
             for (j=0; j<m->cols; j++) {
                 for (i=0; i<m->rows; i++) {
-                    mij = m->val[k++];
-                    gretl_matrix_set(c, j, i, mij);
+                    gretl_matrix_set(c, j, i, m->val[k++]);
                 }
             }
         }
@@ -1949,13 +1986,77 @@ int gretl_matrix_random_fill (gretl_matrix *m, int dist)
     return 0;
 }
 
+/* Solves a*x = b for triangular @a: on exit @b is overwritten
+   by @x
+*/
+
+static int gretl_triangular_solve (const gretl_matrix *a,
+                                   gretl_matrix *b,
+                                   GretlMatrixMod mod,
+                                   GretlMatrixStructure t)
+{
+    char uplo, transa;
+    char side = 'L';
+    char diag = 'N';
+    double alpha = 1.0;
+    integer m = b->rows;
+    integer n = b->cols;
+
+    uplo = (t == GRETL_MATRIX_LOWER_TRIANGULAR)? 'L' : 'U';
+    transa = (mod == GRETL_MOD_TRANSPOSE)? 'T' : 'N';
+
+    dtrsm_(&side, &uplo, &transa, &diag, &m, &n, &alpha,
+           a->val, &m, b->val, &m);
+
+    return 0;
+}
+
+int correlated_normal_fill (gretl_matrix *targ,
+                            gretl_matrix *src)
+{
+    int tall = targ->rows > targ->cols;
+    int k = src->rows;
+    double *save_val;
+    double *tmp_val;
+    size_t sz;
+    int err = 0;
+
+    gretl_matrix_random_fill(targ, D_NORMAL);
+
+    sz = k * k * sizeof *tmp_val;
+    tmp_val = lapack_malloc(sz);
+    if (tmp_val == NULL) {
+        return E_ALLOC;
+    }
+
+    save_val = src->val;
+    memcpy(tmp_val, src->val, sz);
+    src->val = tmp_val;
+    gretl_matrix_cholesky_decomp(src);
+
+    if (tall) {
+        /* post-multiply @targ by L_v' */
+        gretl_blas_dtrmm(src, targ, "RLT");
+    } else {
+        /* do left division, @targ \ L_p' */
+        err = gretl_triangular_solve(src, targ, GRETL_MOD_TRANSPOSE,
+                                     GRETL_MATRIX_UPPER_TRIANGULAR);
+    }
+
+    /* put back the original content of @src */
+    src->val = save_val;
+    lapack_free(tmp_val);
+
+    return err;
+}
+
 /**
  * gretl_random_matrix_new:
  * @r: number of rows.
  * @c: number of columns.
  * @dist: either %D_UNIFORM or %D_NORMAL.
  *
- * Creates a new $r x @c matrix and filles it with pseudo-random
+ * Creates a new @r x @c matrix and filles it with pseudo-random
  * values from either the uniform or the standard normal
  * distribution.
  *
@@ -3264,19 +3365,16 @@ int gretl_matrix_transpose_in_place (gretl_matrix *m)
         }
     } else {
         size_t sz = r * c * sizeof(double);
-        double *val;
+        double *val = mval_malloc(sz);
         int k = 0;
 
-        val = mval_malloc(sz);
         if (val == NULL) {
             return E_ALLOC;
         }
 
         memcpy(val, m->val, sz);
-
         m->rows = c;
         m->cols = r;
-
         for (j=0; j<c; j++) {
             for (i=0; i<r; i++) {
                 gretl_matrix_set(m, j, i, val[k++]);
@@ -4821,67 +4919,6 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
     return err;
 }
 
-static int matrix_is_triangular (const gretl_matrix *m)
-{
-    double x;
-    int uzero = 1;
-    int lzero = 1;
-    int i, j;
-    int k = 0;
-
-    for (j=0; j<m->cols; j++) {
-        for (i=0; i<m->rows; i++) {
-            x = m->val[k++];
-            if (j > i) {
-                if (x != 0.0) {
-                    uzero = 0;
-                }
-            } else if (i > j) {
-                if (x != 0.0) {
-                    lzero = 0;
-                }
-            }
-            if (!uzero && !lzero) {
-                break;
-            }
-        }
-        if (!uzero && !lzero) {
-            break;
-        }
-    }
-
-    if (uzero) {
-        return GRETL_MATRIX_LOWER_TRIANGULAR;
-    } else if (lzero) {
-        return GRETL_MATRIX_UPPER_TRIANGULAR;
-    }
-
-    return 0;
-}
-
-/* Solves a*x = b for triangular @a: on exit @b is overwritten
-   by @x
-*/
-
-static int gretl_triangular_solve (const gretl_matrix *a,
-                                   gretl_matrix *b,
-                                   char side,
-                                   GretlMatrixStructure t)
-{
-    char uplo;
-    char transa = 'N';
-    char diag = 'N';
-    double alpha = 1.0;
-    integer m = b->rows;
-    integer n = b->cols;
-
-    uplo = (t == GRETL_MATRIX_LOWER_TRIANGULAR)? 'L' : 'U';
-
-    dtrsm_(&side, &uplo, &transa, &diag, &m, &n, &alpha,
-           a->val, &m, b->val, &m);
-
-    return 0;
-}
 
 /*
  * gretl_matrix_solve:
@@ -5799,9 +5836,27 @@ void gretl_blas_dsymm (const gretl_matrix *a, int asecond,
            b->val, &b->rows, &beta, c->val, &c->rows);
 }
 
+void gretl_blas_dtrmm (const gretl_matrix *a,
+                       gretl_matrix *b,
+                       const char *flags)
+{
+    char side = flags[0];
+    char uplo = flags[1];
+    char transa = flags[2];
+    char diag = 'N';
+    double alpha = 1.0;
+    integer m = b->rows;
+    integer n = b->cols;
+    integer lda = a->rows;
+
+    dtrmm_(&side, &uplo, &transa, &diag, &m, &n,
+           &alpha, a->val, &lda, b->val, &m);
+}
+
 /* below: a native C re-write of netlib BLAS dgemm.f: note that
    for gretl's purposes we do not support values of 'beta'
-   other than 0 or 1 */
+   other than 0 or 1
+*/
 
 static void gretl_dgemm (const gretl_matrix *a, int atr,
                          const gretl_matrix *b, int btr,
@@ -8237,7 +8292,20 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
             if (Q == NULL) {
                 *err = E_ALLOC;
             } else {
-                gretl_triangular_solve(a, Q, 'L', tri);
+                gretl_triangular_solve(a, Q, mod, tri);
+            }
+            return Q;
+        }
+    } else {
+        /* ths following may not be worth doing */
+        tri = matrix_is_triangular(b);
+        if (tri) {
+            Q = gretl_matrix_copy_transpose(a);
+            if (Q == NULL) {
+                *err = E_ALLOC;
+            } else {
+                gretl_triangular_solve(b, Q, mod, tri);
+                gretl_matrix_transpose_in_place(Q);
             }
             return Q;
         }
@@ -8514,22 +8582,8 @@ double gretl_matrix_cond_index (const gretl_matrix *m, int *err)
     return cidx;
 }
 
-/**
- * gretl_matrix_cholesky_decomp:
- * @a: matrix to operate on.
- *
- * Computes the Cholesky factorization of the symmetric,
- * positive definite matrix @a.  On exit the lower triangle of
- * @a is replaced by the factor L, as in a = LL', and the
- * upper triangle is set to zero.  Uses the lapack function
- * dpotrf.
- *
- * Returns: 0 on success; 1 on failure.
- */
-
-int gretl_matrix_cholesky_decomp (gretl_matrix *a)
+static int real_cholesky_decomp (gretl_matrix *a, char uplo)
 {
-    char uplo = 'L';
     integer n, lda;
     integer info;
     int err = 0;
@@ -8555,6 +8609,24 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
     }
 
     return err;
+}
+
+/**
+ * gretl_matrix_cholesky_decomp:
+ * @a: matrix to operate on.
+ *
+ * Computes the Cholesky factorization of the symmetric,
+ * positive definite matrix @a.  On exit the lower triangle of
+ * @a is replaced by the factor L, as in a = LL', and the
+ * upper triangle is set to zero.  Uses the lapack function
+ * dpotrf.
+ *
+ * Returns: 0 on success; 1 on failure.
+ */
+
+int gretl_matrix_cholesky_decomp (gretl_matrix *a)
+{
+    return real_cholesky_decomp(a, 'L');
 }
 
 static int process_psd_root (gretl_matrix *L,

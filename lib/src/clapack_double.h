@@ -1408,6 +1408,10 @@ int dtrsm_(char *side, char *uplo, char *transa, char *diag,
            integer *m, integer *n, double *alpha, double *a,
            integer *lda, double *b, integer *ldb);
 
+int dtrmm_(char *side, char *uplo, char *transa, char *diag,
+           integer *m, integer *n, double *alpha, double *a,
+           integer *lda, double *b, integer *ldb);
+
 integer ieeeck_(integer *ispec, float *zero, float *one);
 
 integer ilaenv_(integer *ispec, char *name__, char *opts, integer *n1,

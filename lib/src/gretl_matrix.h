@@ -327,6 +327,9 @@ double gretl_matrix_trace (const gretl_matrix *m);
 
 int gretl_matrix_random_fill (gretl_matrix *m, int dist);
 
+int correlated_normal_fill (gretl_matrix *targ,
+                            gretl_matrix *src);
+
 gretl_matrix *gretl_random_matrix_new (int r, int c, int dist);
 
 gretl_matrix *gretl_matrix_resample (const gretl_matrix *m,
@@ -502,6 +505,10 @@ void gretl_blas_dsymm (const gretl_matrix *a, int asecond,
 		       const gretl_matrix *b, int upper,
 		       gretl_matrix *c, GretlMatrixMod cmod,
 		       int m, int n);
+
+void gretl_blas_dtrmm (const gretl_matrix *a,
+                       gretl_matrix *b,
+                       const char *flags);
 
 int
 gretl_matrix_kronecker_product (const gretl_matrix *A,
