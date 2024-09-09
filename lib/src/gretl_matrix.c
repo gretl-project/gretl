@@ -2011,46 +2011,21 @@ static int gretl_triangular_solve (const gretl_matrix *a,
     return 0;
 }
 
-int correlated_normal_fill (gretl_matrix *targ,
-                            gretl_matrix *src)
+int correlated_normal_fill (gretl_matrix *X, const gretl_matrix *L)
 {
-    int use_solver = 1; /* debatable? */
-    int tall = targ->rows > targ->cols;
-    int k = src->rows;
-    double *save_val;
-    double *tmp_val;
-    size_t sz;
+    int tall = X->rows > X->cols;
     int err = 0;
 
-    gretl_matrix_random_fill(targ, D_NORMAL);
-
-    sz = k * k * sizeof *tmp_val;
-    tmp_val = lapack_malloc(sz);
-    if (tmp_val == NULL) {
-        return E_ALLOC;
-    }
-
-    save_val = src->val;
-    memcpy(tmp_val, src->val, sz);
-    src->val = tmp_val;
-    gretl_matrix_cholesky_decomp(src);
+    gretl_matrix_random_fill(X, D_NORMAL);
 
     if (tall) {
-        /* post-multiply @targ by L_v' */
-        gretl_blas_dtrmm(src, targ, "RLT");
-    } else if (use_solver) {
-        /* do left division, @targ \ L_p' */
-        err = gretl_triangular_solve(src, targ, GRETL_MOD_TRANSPOSE,
-                                     GRETL_MATRIX_LOWER_TRIANGULAR);
+        /* post-multiply @X by L_v' */
+        gretl_blas_dtrmm(L, X, "RLT");
     } else {
-        /* pre-multiply @targ by L_p' inverse */
-        gretl_invert_triangular_matrix(src, 'L');
-        gretl_blas_dtrmm(src, targ, "LLT");
+        /* do left division, @X \ L_p' */
+        err = gretl_triangular_solve(L, X, GRETL_MOD_TRANSPOSE,
+                                     GRETL_MATRIX_LOWER_TRIANGULAR);
     }
-
-    /* put back the original content of @src */
-    src->val = save_val;
-    lapack_free(tmp_val);
 
     return err;
 }

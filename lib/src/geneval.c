@@ -5227,7 +5227,7 @@ static int ok_matrix_dim (int r, int c, int f)
 static NODE *matrix_fill_func (NODE *l, NODE *r, NODE *c, int f, parser *p)
 {
     int n = 0, cols = 0, rows = node_get_int(l, p);
-    gretl_matrix *v = NULL;
+    gretl_matrix *L = NULL;
     NODE *ret = NULL;
 
     if (!p->err) {
@@ -5256,8 +5256,8 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, NODE *c, int f, parser *p)
     }
 
     if (!p->err && c != NULL) {
-        v = c->v.m;
-        if (v->cols != v->rows || v->rows != MIN(rows, cols)) {
+        L = c->v.m;
+        if (L->cols != L->rows || L->rows != MIN(rows, cols)) {
             p->err = E_NONCONF;
         }
     }
@@ -5287,8 +5287,8 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, NODE *c, int f, parser *p)
         gretl_matrix_random_fill(ret->v.m, D_UNIFORM);
         break;
     case F_MNORM:
-        if (v != NULL) {
-            correlated_normal_fill(ret->v.m, v);
+        if (L != NULL) {
+            correlated_normal_fill(ret->v.m, L);
         } else {
             gretl_matrix_random_fill(ret->v.m, D_NORMAL);
         }
