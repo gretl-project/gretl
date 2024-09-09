@@ -2014,7 +2014,7 @@ static int gretl_triangular_solve (const gretl_matrix *a,
 int correlated_normal_fill (gretl_matrix *targ,
                             gretl_matrix *src)
 {
-    int use_solver = 0;
+    int use_solver = 1; /* debatable? */
     int tall = targ->rows > targ->cols;
     int k = src->rows;
     double *save_val;
