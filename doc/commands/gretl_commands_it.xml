@@ -6393,12 +6393,12 @@
 	Oltre che selezionare semplicemente una variabile, è possibile
 	specificare un sotto-campione. Ad esempio, si ipotizzi di avere
 	dei dati sui salari in una variabile chiamata <lit>wage</lit> e
-	una variabile dummy chiamata <lit>gender</lit>, pari a 1 per gli
-	uomini e 0 per le donne (o viceversa). Quindi, nel test per la
+	una variabile dummy chiamata <lit>gender</lit>, pari a 1 per i
+	maschi e 0 per le femmine (o viceversa). Quindi, nel test per la
 	differenza fra le medie, è possibile selezionare <lit>wage</lit>
 	in entrambi i campi, ma aggiungendo nel campo superiore
-	<lit>(gender=0)</lit> e nel campo inferiore
-	<lit>(gender=1)</lit> si otterrà un test per la differenza tra
+	<lit>(gender==0)</lit> e nel campo inferiore
+	<lit>(gender==1)</lit> si otterrà un test per la differenza tra
 	il reddito medio degli uomini e delle donne. Quando si specifica
 	un vincolo che identifica un sotto-campione, occorre premere il
 	tasto Invio perché le statistiche campionarie siano calcolate.
