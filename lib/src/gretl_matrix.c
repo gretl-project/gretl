@@ -2014,6 +2014,7 @@ static int gretl_triangular_solve (const gretl_matrix *a,
 int correlated_normal_fill (gretl_matrix *targ,
                             gretl_matrix *src)
 {
+    int use_solver = 0;
     int tall = targ->rows > targ->cols;
     int k = src->rows;
     double *save_val;
@@ -2037,10 +2038,14 @@ int correlated_normal_fill (gretl_matrix *targ,
     if (tall) {
         /* post-multiply @targ by L_v' */
         gretl_blas_dtrmm(src, targ, "RLT");
-    } else {
+    } else if (use_solver) {
         /* do left division, @targ \ L_p' */
         err = gretl_triangular_solve(src, targ, GRETL_MOD_TRANSPOSE,
                                      GRETL_MATRIX_LOWER_TRIANGULAR);
+    } else {
+        /* pre-multiply @targ by L_p' inverse */
+        gretl_invert_triangular_matrix(src, 'L');
+        gretl_blas_dtrmm(src, targ, "LLT");
     }
 
     /* put back the original content of @src */
