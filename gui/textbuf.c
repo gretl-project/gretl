@@ -1492,6 +1492,27 @@ static GtkTextBuffer *gretl_text_buf_new (int role)
     return tbuf;
 }
 
+/* net out the effect of one or more instances of '\r' in @buf */
+
+static char *unctrlr (const char *buf)
+{
+    char *ret = calloc(strlen(buf) + 1, 1);
+    int i, j = 0, k = 0;
+
+    for (i=0; buf[i]; i++) {
+        if (buf[i] == '\r') {
+            j = k;
+        } else if (buf[i] == '\n') {
+            strcat(ret, "\n");
+            k = j = strlen(ret);
+        } else {
+            ret[j++] = buf[i];
+        }
+    }
+
+    return ret;
+}
+
 static void
 real_textview_add_colorized (GtkWidget *view, const char *buf,
 			     int append, int trim)
@@ -1513,6 +1534,14 @@ real_textview_add_colorized (GtkWidget *view, const char *buf,
 	gtk_text_buffer_get_end_iter(tbuf, &iter);
     } else {
 	gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
+    }
+
+    if (strchr(buf, '\r')) {
+        char *ubuf = unctrlr(buf);
+
+        gtk_text_buffer_insert(tbuf, &iter, ubuf, -1);
+        free(ubuf);
+        return;
     }
 
     console = widget_get_int(view, "console");
