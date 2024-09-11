@@ -356,7 +356,6 @@ struct str_table funcs[] = {
     { F_INSTRINGS, "instrings" },
     { F_INV,      "inv" },
     { F_INVPD,    "invpd" },
-    { F_INVTRI,   "invtri" },
     { F_GINV,     "ginv" },
     { F_DIAG,     "diag" },
     { F_TRANSP,   "transp" },

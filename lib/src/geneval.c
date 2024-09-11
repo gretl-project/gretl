@@ -5130,49 +5130,6 @@ static NODE *invpd_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *invtri_node (NODE *l, NODE *r, parser *p)
-{
-    NODE *ret = aux_matrix_node(p);
-
-    if (ret != NULL && starting(p)) {
-        gretl_matrix *m = node_get_matrix(l, p, 0, 0);
-        char uplo = '\0';
-
-        if (!p->err && gretl_is_null_matrix(m)) {
-            p->err = E_DATA;
-        }
-        if (!p->err) {
-            if (!strcmp(r->v.str, "L") || !strcmp(r->v.str, "U")) {
-                uplo = r->v.str[0];
-            } else {
-                p->err = E_INVARG;
-            }
-        }
-        if (!p->err) {
-            if (l->t == MAT && is_tmp_node(l)) {
-                /* OK to overwrite @m */
-                ret->v.m = l->v.m;
-		l->v.m = NULL;
-            } else {
-                /* don't destroy @m */
-                ret->v.m = gretl_matrix_copy(m);
-                if (ret->v.m == NULL) {
-                    p->err = E_ALLOC;
-                }
-            }
-        }
-        if (!p->err) {
-            p->err = gretl_invert_triangular_matrix(ret->v.m, uplo);
-        }
-        if (p->err && ret->v.m != NULL) {
-            gretl_matrix_free(ret->v.m);
-            ret->v.m = NULL;
-        }
-    }
-
-    return ret;
-}
-
 static NODE *
 matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 {
@@ -18885,16 +18842,6 @@ static NODE *eval (NODE *t, parser *p)
             ret = invpd_node(l, r, p);
         } else {
             node_type_error(t->t, 1, MAT, l, p);
-        }
-        break;
-    case F_INVTRI:
-        /* matrix -> matrix with string arg */
-        if (l->t != MAT) {
-            node_type_error(t->t, 0, MAT, l, p);
-        } else if (r->t != STR) {
-            node_type_error(t->t, 1, STR, r, p);
-        } else {
-            ret = invtri_node(l, r, p);
         }
         break;
     case F_ROWS:
