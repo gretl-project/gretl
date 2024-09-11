@@ -289,24 +289,32 @@ int console_sample_changed (const DATASET *pdinfo)
     return console_sample_handler(pdinfo, SAMPLE_CHECK);
 }
 
-static void print_result_to_console (GtkTextBuffer *buf,
+static void print_result_to_console (GtkTextBuffer *tb,
                                      GtkTextIter *iter,
                                      ExecState *state)
 {
-    const char *prnbuf = gretl_print_get_buffer(state->prn);
+    const char *buf = gretl_print_get_buffer(state->prn);
+    gchar *u8buf = NULL;
+    gchar *urbuf = NULL;
 
-    if (g_utf8_validate(prnbuf, -1, NULL)) {
-        gtk_text_buffer_insert_with_tags_by_name(buf, iter, prnbuf, -1,
-                                                 "output", NULL);
+    if (g_utf8_validate(buf, -1, NULL)) {
+        u8buf = (gchar *) buf;
     } else {
-        gchar *trbuf = my_locale_to_utf8(prnbuf);
-
         fprintf(stderr, "console text did not validate as utf8\n");
-        if (trbuf != NULL) {
-            gtk_text_buffer_insert_with_tags_by_name(buf, iter, trbuf, -1,
-                                                     "output", NULL);
-            g_free(trbuf);
-        }
+        u8buf = my_locale_to_utf8(buf);
+    }
+    if (u8buf != NULL && strchr(u8buf, '\r')) {
+        urbuf = unctrlr(u8buf);
+    }
+    if (u8buf != NULL || urbuf != NULL) {
+        gtk_text_buffer_insert_with_tags_by_name(tb, iter,
+                                                 urbuf ? urbuf : u8buf,
+                                                 -1, "output", NULL);
+    }
+
+    g_free(urbuf);
+    if (u8buf != buf) {
+        g_free(u8buf);
     }
 
     gretl_print_reset_buffer(state->prn);
