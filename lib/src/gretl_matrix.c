@@ -1131,7 +1131,7 @@ gretl_matrix *gretl_matrix_seq (double start, double end,
     }
 
     if (step == 1.0) {
-        if(reverse) {
+        if (reverse) {
             n = start - end + 1;
             step = -step;
         } else {
@@ -3244,20 +3244,16 @@ gretl_matrix_subtract_reversed (const gretl_matrix *a, gretl_matrix *b)
 int gretl_matrix_I_minus (gretl_matrix *m)
 {
     double x;
-    int i, j;
+    int i, j, k = 0;
 
     if (m->rows != m->cols) {
         return E_NONCONF;
     }
 
-    for (i=0; i<m->rows; i++) {
-        for (j=0; j<m->cols; j++) {
-            x = gretl_matrix_get(m, i, j);
-            if (i == j) {
-                gretl_matrix_set(m, i, j, 1.0 - x);
-            } else if (x != 0.0) {
-                gretl_matrix_set(m, i, j, -x);
-            }
+    for (j=0; j<m->cols; j++) {
+        for (i=0; i<m->rows; i++) {
+            x = m->val[k];
+            m->val[k++] = (i == j)? 1.0 - x : -x;
         }
     }
 
@@ -3282,25 +3278,25 @@ int gretl_matrix_I_minus (gretl_matrix *m)
 
 int gretl_matrix_inscribe_I (gretl_matrix *m, int row, int col, int n)
 {
-    int i, j, mi, mj;
+    int i, j, cj, ri;
 
-    if (n <= 0) {
+    if (n < 0) {
+        return E_INVARG;
+    } else if (n == 0) {
+        /* no-op */
+        return 0;
+    }
+
+    if (row < 0 || row + n > m->rows ||
+        col < 0 || col + n > m->cols) {
         return E_NONCONF;
     }
 
-    if (row < 0 || row + n > m->rows) {
-        return E_NONCONF;
-    }
-
-    if (col < 0 || col + n > m->cols) {
-        return E_NONCONF;
-    }
-
-    for (i=0; i<n; i++) {
-        mi = row + i;
-        for (j=0; j<n; j++) {
-            mj = col + j;
-            gretl_matrix_set(m, mi, mj, (i == j)? 1.0 : 0.0);
+    for (j=0; j<n; j++) {
+        cj = col + j;
+        for (i=0; i<n; i++) {
+            ri = row + i;
+            gretl_matrix_set(m, ri, cj, (i == j)? 1.0 : 0.0);
         }
     }
 
@@ -3388,27 +3384,11 @@ int gretl_matrix_transpose (gretl_matrix *targ, const gretl_matrix *src)
         return E_NONCONF;
     }
 
-#if 0
-    /* 2024-06-12: potentially faster variant using pointer arithmetic */
-    const double *p;
-
-    for (i=0; i<r; i++) {
-	p = src->val + i;
-	for (j=0; j<c; j++) {
-	    targ->val[k++] = *p;
-	    p += r;
-	}
-    }
-#else
-    double x;
-
     for (j=0; j<c; j++) {
         for (i=0; i<r; i++) {
-            x = src->val[k++];
-            gretl_matrix_set(targ, j, i, x);
+            gretl_matrix_set(targ, j, i, src->val[k++]);
         }
     }
-#endif
 
     return 0;
 }
@@ -3880,8 +3860,8 @@ int gretl_matrix_inscribe_matrix (gretl_matrix *targ,
  * @mod: either %GRETL_MOD_TRANSPOSE or %GRETL_MOD_NONE.
  *
  * Writes into @targ a sub-matrix of @src, taken from the
- * offset @row, @col.  The @targ matrix must be large enough
- * to provide a sub-matrix of the dimensions of @src.
+ * offset @row, @col.  The @src matrix must be large enough
+ * to provide a sub-matrix of the dimensions of @targ.
  * If @mod is %GRETL_MOD_TRANSPOSE it is in fact the transpose
  * of the sub-matrix that that is written into @targ.
  *
@@ -4331,17 +4311,15 @@ double gretl_vcv_log_determinant (const gretl_matrix *m, int *err)
     return det;
 }
 
-/* This is really only necessary when using OpenBLAS:
-   when the matrix under analysis contains NaN values
-   the pivot values calculated by dgetrf() can go out
-   of bounds. We could flag an error here if we find
-   an out-of-bounds value, but the downside of that is
-   that we'd get different results when using OpenBLAS
-   versus netlib lapack/blas (since netlib returns a
-   NaN matrix rather than erroring out).
+/* This is really only necessary when using OpenBLAS: when the matrix
+   under analysis contains NaN values the pivot values calculated by
+   dgetrf() can go out of bounds. We could flag an error here if we
+   find an out-of-bounds value, but the downside of that is that we'd
+   get different results when using OpenBLAS versus netlib lapack/blas
+   (since netlib returns a NaN matrix rather than erroring out).
 
-   This check added 2015-12-24, required for OpenBLAS
-   0.2.16.dev and earlier.
+   This check added 2015-12-24, required for OpenBLAS 0.2.16.dev and
+   earlier.
 */
 
 static void pivot_check (integer *ipiv, int n)
@@ -4358,12 +4336,11 @@ static void pivot_check (integer *ipiv, int n)
     }
 }
 
-/* Calculate the determinant of @a using LU factorization.
-   If logdet != 0 and absval == 0, return the log of the
-   determinant, or NA if the determinant is non-positive.
-   if logdet != 0 and absval != 0, return the log of the
-   absolute value of the determinant. Otherwise return the
-   determinant itself.
+/* Calculate the determinant of @a using LU factorization.  If logdet
+   != 0 and absval == 0, return the log of the determinant, or NA if
+   the determinant is non-positive.  if logdet != 0 and absval != 0,
+   return the log of the absolute value of the determinant. Otherwise
+   return the determinant itself.
 */
 
 static double gretl_LU_determinant (gretl_matrix *a, int logdet,
@@ -4576,8 +4553,9 @@ static void matrix_grab_content (gretl_matrix *targ, gretl_matrix *src)
     src->info = NULL;
 }
 
-/* least squares solution using QR, with column pivoting and
-   detection of rank deficiency, using lapack dgelsy
+/* Least squares solution using QR, with column pivoting and detection
+   of rank deficiency, using lapack dgelsy, or zgelsy if the arguments
+   are complex.
 */
 
 static int QR_solve (gretl_matrix *A, gretl_matrix *B)
@@ -5177,26 +5155,18 @@ int gretl_cholesky_invert (gretl_matrix *a)
    A * x = b for Toeplitz matrix A
 
    on entry:
-
      a1     double precision(m), the first row of A
-
      a2     double precision(m - 1), the first column of A
             beginning with the second element
-
       b     double precision(m), the right hand side vector
-
      c1     double precision(m - 1), workspace
-
      c2     double precision(m - 1), workspace
-
       m     integer, order of the matrix A
 
      (c1 and c2 are internalized below)
 
    on exit:
-
       x     double precision(m), the solution vector
-
       dt    pointer to double, determinant
 
 */
@@ -5243,7 +5213,6 @@ static int tsld1 (const double *a1, const double *a2,
        order = 2 to m */
 
     for (n=1; n<m; n++) {
-
         /* compute multiples of the first and last columns of
            the inverse of the principal minor of order n + 1
         */
@@ -5288,7 +5257,8 @@ static int tsld1 (const double *a1, const double *a2,
         c2[0] = r3;
 
         /* compute the solution of the system with
-           principal minor of order n + 1 */
+           principal minor of order n + 1
+        */
         r5 = 0.0;
         for (i=0; i<n; i++) {
             r5 += a2[i] * x[n1-i];
@@ -5398,14 +5368,7 @@ static int blas_mnk_min = -1;
  * libgretl finds the product of the dimensions, m*n*k,
  * and compares this with an internal threshhold variable,
  * blas_mnk_min. If and only if blas_mnk_min >= 0 and
- * n*m*k >= blas_mnk_min, then we use the BLAS. By default
- * blas_mnk_min is set to -1 (BLAS never used).
- *
- * If you have an optimized version of the BLAS you may want
- * to set blas_mnk_min to some suitable positive value. (Setting
- * it to 0 would result in external calls to the BLAS for all
- * matrix multiplications, however small, which is unlikely
- * to be optimal.)
+ * n*m*k >= blas_mnk_min, then we use the BLAS.
  */
 
 void set_blas_mnk_min (int mnk)
@@ -6730,9 +6693,7 @@ gretl_matrix * gretl_matrix_hdproduct_new (const gretl_matrix *A,
     return K;
 }
 
-/*
-   returns the sequence of bits in the binary expansion of s
-*/
+/* returns the sequence of bits in the binary expansion of @s */
 
 static char *binary_expansion (int s, int *t, int *pow2)
 {
