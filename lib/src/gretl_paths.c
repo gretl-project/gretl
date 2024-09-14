@@ -2306,19 +2306,6 @@ static char getsep (const char *s)
     return fwd > bak ? '/' : '\\';
 }
 
-static char *rslashpos (const char *s)
-{
-    char *p1 = strrchr(s, '\\');
-    char *p2 = strrchr(s, '/');
-
-    return rightmost(p1, p2);
-}
-
-static int slash_terminated (const char *s, int n)
-{
-    return s[n-1] == '\\' || s[n-1] == '/';
-}
-
 void win32_set_gretldir (void)
 {
     gchar *pkgdir;
