@@ -968,6 +968,15 @@ static int libset_get_scalar (SetKey key, const char *arg,
 	return E_ARGS;
     }
 
+    if (key == OMP_N_THREADS && !strcmp(arg, "default")) {
+#ifdef OPENMP_BUILD
+        *pi = gretl_n_physical_cores();
+#else
+        *pi = 0;
+#endif
+        return 0;
+    }
+
     nstatus = libset_numeric_test(arg, pi, px);
 
     if (nstatus == NUMERIC_BAD) {
