@@ -9493,16 +9493,15 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
 
 #define INV_DEBUG 0
 
-/* INVPD_SINGLE (added in August 2024): this symbol has the effect of
-   blocking OpenMP threading in calls to dpotrf/dpotri on inversion of a
-   symmetric matrix. With OpenMP-enabled OpenBLAS on Windows, as in the
-   gretl packages for Windows, this produces an extreme slowdown.
-   Since inverting a p.d. matrix is a common operation in econometric
-   calculation, it's probably a good idea to ban it here.
+/* INV_LIMIT_THREADS (dates from September 2024): this symbol has the
+   effect of blocking multi-threading in calls to dpotrf/dpotri on
+   inversion of a symmetric matrix. With OpenBLAS on Windows, as in
+   the gretl packages for Windows, this produces an extreme slowdown,
+   and on Linux it also slows things down quite substantially unless
+   the matrix is quite large.
 */
-#ifdef WIN32
-# define INVPD_SINGLE
-#endif
+
+#define INV_LIMIT_THREADS 1
 
 static int real_invert_symmetric_matrix (gretl_matrix *a,
                                          int symmcheck,
@@ -9551,12 +9550,18 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
 	}
     }
 
-#ifdef INVPD_SINGLE
+#ifdef INV_LIMIT_THREADS
+    /* condition on blas_is_openblas() ? */
     int save_nt = libset_get_int(OMP_N_THREADS);
-
+# ifdef WIN32
     if (save_nt > 1) {
         omp_set_num_threads(1);
     }
+# else
+    if (save_nt > 1 && n < 125) {
+        omp_set_num_threads(1);
+    }
+# endif
 #endif
 
     dpotrf_(&uplo, &n, a->val, &n, &info);
@@ -9593,7 +9598,7 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
         }
     }
 
-#ifdef INVPD_SINGLE
+#if INV_LIMIT_THREADS
     if (save_nt > 1) {
         omp_set_num_threads(save_nt);
     }

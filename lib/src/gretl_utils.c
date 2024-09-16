@@ -2909,6 +2909,11 @@ const char *blas_variant_string (void)
     }
 }
 
+int blas_is_openblas (void)
+{
+    return blas_variant == BLAS_OPENBLAS;
+}
+
 /* for gretl_matrix.c, gretl_mt.c */
 
 int blas_is_threaded (void)

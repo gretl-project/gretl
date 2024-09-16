@@ -239,6 +239,8 @@ int check_for_program (const char *prog);
 
 const char *blas_variant_string (void);
 
+int blas_is_openblas (void);
+
 int get_blas_details (char **s1, char **s2, char **s3);
 
 char *get_cpu_details (void);
