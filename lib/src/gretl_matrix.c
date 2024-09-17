@@ -340,11 +340,11 @@ static void maybe_force_single (int n, int thresh, int *save_nt)
     *save_nt = libset_get_int(OMP_N_THREADS);
 # ifdef WIN32
     if (*save_nt > 1) {
-        omp_set_num_threads(1);
+        set_omp_n_threads(1);
     }
 # else
     if (*save_nt > 1 && n < thresh) {
-        omp_set_num_threads(1);
+        set_omp_n_threads(1);
     }
 # endif
 }
