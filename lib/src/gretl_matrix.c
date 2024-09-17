@@ -320,6 +320,37 @@ static int matrix_block_error (const char *f)
     return E_DATA;
 }
 
+/* INV_LIMIT_THREADS (dates from September 2024): this symbol has the
+   effect of preventing multi-threading in calls to dpotrf and dgetrf
+   on inversion of small to moderate sized matrices via openblas.
+   Experimentation has shown that using a single thread is a good deal
+   faster, particularly on Windows.
+*/
+
+#define INV_LIMIT_THREADS 1
+
+#if INV_LIMIT_THREADS
+
+/* minimum sizes for which we'll allow multi-threading */
+# define POTRF_MT_MIN 125
+# define GETRF_MT_MIN 80
+
+static void maybe_force_single (int n, int thresh, int *save_nt)
+{
+    *save_nt = libset_get_int(OMP_N_THREADS);
+# ifdef WIN32
+    if (*save_nt > 1) {
+        omp_set_num_threads(1);
+    }
+# else
+    if (*save_nt > 1 && n < thresh) {
+        omp_set_num_threads(1);
+    }
+# endif
+}
+
+#endif /* INV_LIMIT_THREADS */
+
 /**
  * gretl_matrix_alloc:
  * @rows: desired number of rows in matrix.
@@ -9180,6 +9211,9 @@ int gretl_invert_triangular_matrix (gretl_matrix *a, char uplo)
 
 int gretl_invert_general_matrix (gretl_matrix *a)
 {
+#if INV_LIMIT_THREADS
+    int save_nt = 0;
+#endif
     integer n;
     integer info;
     integer lwork;
@@ -9204,6 +9238,12 @@ int gretl_invert_general_matrix (gretl_matrix *a)
         return E_ALLOC;
     }
 
+#if INV_LIMIT_THREADS
+    if (blas_is_openblas()) {
+        maybe_force_single(n, GETRF_MT_MIN, &save_nt);
+    }
+#endif
+
     dgetrf_(&n, &n, a->val, &n, ipiv, &info);
 
     if (info != 0) {
@@ -9218,8 +9258,8 @@ int gretl_invert_general_matrix (gretl_matrix *a)
     dgetri_(&n, a->val, &n, ipiv, work, &lwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
-        free(ipiv);
-        return wspace_fail(info, work[0]);
+        err = wspace_fail(info, work[0]);
+        goto bailout;
     }
 
     lwork = (integer) work[0];
@@ -9230,14 +9270,22 @@ int gretl_invert_general_matrix (gretl_matrix *a)
 
     work = lapack_realloc(work, lwork * sizeof *work);
     if (work == NULL) {
-        free(ipiv);
-        return E_ALLOC;
+        err = E_ALLOC;
+        goto bailout;
     }
 
     dgetri_(&n, a->val, &n, ipiv, work, &lwork, &info);
 
 #ifdef LAPACK_DEBUG
     printf("dgetri: info = %d\n", (int) info);
+#endif
+
+ bailout:
+
+#if INV_LIMIT_THREADS
+    if (save_nt > 1) {
+        omp_set_num_threads(save_nt);
+    }
 #endif
 
     lapack_free(work);
@@ -9491,23 +9539,14 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
     return err;
 }
 
-#define INV_DEBUG 0
-
-/* INV_LIMIT_THREADS (dates from September 2024): this symbol has the
-   effect of blocking multi-threading in calls to dpotrf/dpotri on
-   inversion of a symmetric matrix. With OpenBLAS on Windows, as in
-   the gretl packages for Windows, this produces an extreme slowdown,
-   and on Linux it also slows things down quite substantially unless
-   the matrix is quite large.
-*/
-
-#define INV_LIMIT_THREADS 1
-
 static int real_invert_symmetric_matrix (gretl_matrix *a,
                                          int symmcheck,
 					 int preserve,
 					 double *ldet)
 {
+#ifdef INV_LIMIT_THREADS
+    int save_nt = 0;
+#endif
     integer n, info;
     double *aval = NULL;
     char uplo = 'L';
@@ -9550,18 +9589,10 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
 	}
     }
 
-#ifdef INV_LIMIT_THREADS
-    /* condition on blas_is_openblas() ? */
-    int save_nt = libset_get_int(OMP_N_THREADS);
-# ifdef WIN32
-    if (save_nt > 1) {
-        omp_set_num_threads(1);
+#if INV_LIMIT_THREADS
+    if (blas_is_openblas()) {
+        maybe_force_single(n, POTRF_MT_MIN, &save_nt);
     }
-# else
-    if (save_nt > 1 && n < 125) {
-        omp_set_num_threads(1);
-    }
-# endif
 #endif
 
     dpotrf_(&uplo, &n, a->val, &n, &info);
@@ -9589,10 +9620,6 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
         dpotri_(&uplo, &n, a->val, &n, &info);
         if (info != 0) {
             err = E_NOTPD;
-#if INV_DEBUG
-	    fprintf(stderr, "invert_symmetric_matrix:\n"
-		    " dpotri failed with info = %d\n", (int) info);
-#endif
         } else {
             gretl_matrix_mirror(a, uplo);
         }
