@@ -1273,11 +1273,16 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
                 }
             }
         } else {
-            for (j=0; j<m->cols; j++) {
-                for (i=0; i<m->rows; i++) {
-                    gretl_matrix_set(c, j, i, m->val[k++]);
-                }
-            }
+	    if (MIN(m->cols, m->rows) > 1) {
+		for (j=0; j<m->cols; j++) {
+		    for (i=0; i<m->rows; i++) {
+			gretl_matrix_set(c, j, i, m->val[k++]);
+		    }
+		}
+	    } else {
+		int n = rows * cols;
+		memcpy(c->val, m->val, n * sizeof *m->val);
+	    }
         }
     } else {
         /* not transposing */
