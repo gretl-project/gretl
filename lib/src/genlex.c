@@ -327,6 +327,7 @@ struct str_table funcs[] = {
     { F_REPLACE,  "replace" },
     { F_MUNIF,    "muniform" },
     { F_MNORM,    "mnormal" },
+    { F_MCNORM,   "mcnormal" },
     { F_SUMC,     "sumc" },
     { F_SUMR,     "sumr" },
     { F_PRODC,    "prodc" },

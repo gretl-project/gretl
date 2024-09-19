@@ -327,7 +327,8 @@ double gretl_matrix_trace (const gretl_matrix *m);
 
 int gretl_matrix_random_fill (gretl_matrix *m, int dist);
 
-int correlated_normal_fill (gretl_matrix *X, const gretl_matrix *L);
+int correlated_normal_fill (gretl_matrix *X, const gretl_matrix *L,
+                            int rows, int prec);
 
 gretl_matrix *gretl_random_matrix_new (int r, int c, int dist);
 

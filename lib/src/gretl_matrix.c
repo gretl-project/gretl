@@ -1273,6 +1273,7 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
                 }
             }
         } else {
+            /* a real matrix */
 	    if (MIN(m->cols, m->rows) > 1) {
 		for (j=0; j<m->cols; j++) {
 		    for (i=0; i<m->rows; i++) {
@@ -1280,8 +1281,7 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
 		    }
 		}
 	    } else {
-		int n = rows * cols;
-		memcpy(c->val, m->val, n * sizeof *m->val);
+		memcpy(c->val, m->val, rows * cols * sizeof *m->val);
 	    }
         }
     } else {
@@ -2047,20 +2047,33 @@ static int gretl_triangular_solve (const gretl_matrix *a,
     return 0;
 }
 
-int correlated_normal_fill (gretl_matrix *X, const gretl_matrix *L)
+int correlated_normal_fill (gretl_matrix *X, const gretl_matrix *L,
+                            int rows, int prec)
 {
-    int tall = X->rows > X->cols;
     int err = 0;
 
     gretl_matrix_random_fill(X, D_NORMAL);
 
-    if (tall) {
-        /* post-multiply @X by L_v' */
+    if (prec == 0) {
+        /* covariance matrix: post-multiply X by L_v' */
         gretl_blas_dtrmm(L, X, "RLT");
+    } else if (prec == 1) {
+        /* precision matrix: do right division, X / L_p' */
+        gretl_matrix *R;
+
+        R = gretl_matrix_divide(X, L, GRETL_MOD_TRANSPOSE, &err);
+        gretl_matrix_copy_values(X, R);
+        gretl_matrix_free(R);
+    } else if (prec == 2) {
+        /* precision matrix: inverting L_p */
+        gretl_matrix *Linv = gretl_matrix_copy(L);
+
+        gretl_invert_triangular_matrix(Linv, 'L');
+        gretl_blas_dtrmm(Linv, X, "RLN");
+        gretl_matrix_free(Linv);
     } else {
-        /* do left division, @X \ L_p' */
-        err = gretl_triangular_solve(L, X, GRETL_MOD_TRANSPOSE,
-                                     GRETL_MATRIX_LOWER_TRIANGULAR);
+        /* precision matrix: L_p precomputed */
+        gretl_blas_dtrmm(L, X, "RLN");
     }
 
     return err;
@@ -5815,6 +5828,19 @@ void gretl_blas_dsymm (const gretl_matrix *a, int asecond,
            b->val, &b->rows, &beta, c->val, &c->rows);
 }
 
+/*
+  BLAS dtrmm performs one of the matrix-matrix operations
+
+    B <- alpha * op(A) * B (if side = 'L') or
+    B <- alpha * B * op(A) (if side = 'R')
+
+  where alpha is a scalar, B is an m x n matrix, A is an upper
+  (if uplo = 'U') or lower (if uplo = 'L') triangular matrix,
+  and op(A) is either A (if transa = 'N') or A' (transa = 'T').
+
+  The @flags argument here must contain side, uplo and transa.
+*/
+
 void gretl_blas_dtrmm (const gretl_matrix *a,
                        gretl_matrix *b,
                        const char *flags)
@@ -5861,6 +5887,13 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
         alpha = -1.0;
         beta = 1;
     }
+
+#if defined(USE_SIMD)
+    if (k <= simd_k_max && !atr && !btr && !cmod) {
+        gretl_matrix_simd_mul(a, b, c);
+        return;
+    }
+#endif
 
 #if defined(_OPENMP)
     fpm = (guint64) m * n * k;
@@ -5947,13 +5980,6 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
  st_mode:
 
 #endif /* _OPENMP */
-
-#if defined(USE_SIMD)
-    if (k <= simd_k_max && !atr && !btr && !cmod) {
-        gretl_matrix_simd_mul(a, b, c);
-        return;
-    }
-#endif
 
     if (!btr) {
         if (!atr) {
@@ -8274,7 +8300,7 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
             return Q;
         }
     } else {
-        /* ths following may not be worth doing */
+        /* the following may not be worth doing? */
         tri = matrix_is_triangular(b);
         if (tri) {
             Q = gretl_matrix_copy_transpose(a);
