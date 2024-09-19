@@ -9272,33 +9272,42 @@ static NODE *array_func_node (NODE *l, NODE *r, NODE *b, int f, parser *p)
 	    ret->v.xval = p->err = gretl_array_qsort(a, r->v.str,
 						     p->dset, p->prn);
         }
-    } else if (t == GRETL_TYPE_MATRICES) {
-        int vcat = node_get_bool(r, p, 0);
+    } else if (f == F_FLATTEN) {
+	if (t == GRETL_TYPE_MATRICES) {
+	    int mode = 0;
+	    if (!null_node(r)) {
+		mode = node_get_int(r, p);
+	    }
 
-        if (!p->err) {
-            ret = aux_matrix_node(p);
-        }
-        if (!p->err) {
-            ret->v.m = gretl_matrix_array_flatten(l->v.a, vcat, &p->err);
-        }
-    } else if (t == GRETL_TYPE_STRINGS) {
-        const char *sep = NULL;
+	    if ((mode < 0) || (mode > 2)) {
+		p->err = E_INVARG;
+	    }
 
-        if (r->t == STR) {
-            sep = r->v.str;
-        } else {
-            int space = node_get_bool(r, p, 0);
+	    if (!p->err) {
+		ret = aux_matrix_node(p);
+	    }
+	    if (!p->err) {
+		ret->v.m = gretl_matrix_array_flatten(l->v.a, mode, &p->err);
+	    }
+	} else if (t == GRETL_TYPE_STRINGS) {
+	    const char *sep = NULL;
 
-            if (!p->err) {
-                sep = space ? " " : "\n";
-            }
-        }
-        if (!p->err) {
-            ret = aux_string_node(p);
-        }
-        if (!p->err) {
-            ret->v.str = gretl_strings_array_flatten(l->v.a, sep, &p->err);
-        }
+	    if (r->t == STR) {
+		sep = r->v.str;
+	    } else {
+		int space = node_get_bool(r, p, 0);
+
+		if (!p->err) {
+		    sep = space ? " " : "\n";
+		}
+	    }
+	    if (!p->err) {
+		ret = aux_string_node(p);
+	    }
+	    if (!p->err) {
+		ret->v.str = gretl_strings_array_flatten(l->v.a, sep, &p->err);
+	    }
+	}
     } else {
         p->err = E_TYPES;
     }
