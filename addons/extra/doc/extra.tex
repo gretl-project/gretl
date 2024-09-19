@@ -44,7 +44,7 @@
 \title{The extra package\\
 (a collection of various convenience functions for hansl programming) }
 
-\date{March 2024}
+\date{September 2024}
 
 \author{The \noun{gretl} team\thanks{Currently coordinated by Sven
 Schreiber.}}
@@ -145,11 +145,19 @@ another separate addon in the future.
   \texttt{matrix colspec} (optional)}{matrix}
 
 This function ``drills through'' a matrix array and returns a matrix;
+if one sees a matrix array whose elements are equally sized as a 3-way
+tensor, this function can be used for extracting what are known as
+\emph{fibers} and/or \emph{slices} in tensor algebra, that is matrices with
+subsets of the tensor entries.\footnote{See eg Kolda, T. G., and
+  Bader, B. W. (2009). Tensor decompositions and applications. SIAM
+  review, 51(3), 455--500.}
+
 for example, \cmd{drill(x, 2, 3)} returns a vector with the
-\texttt{[2,3]} elements of all matrices in the \texttt{x}
-array. Omitting one of rowspec, colspec or entering ``0'' means to
-select all rows or columns respectively.  (Of course at least one of
-rowspec, colspec must be specified.)
+\texttt{[2,3]} elements of all matrices in the \texttt{x} array (a
+``fiber''). Omitting one of rowspec, colspec or entering ``0'' means
+to select all rows or columns respectively; the matrix thus obtained
+is a ``slice''. Of course, at least one of \texttt{rowspec}a and
+\texttt{colspec} must be specified.
 
 \emph{Nota bene}: all matrices in the array must be of the same
 dimensions.
