@@ -2052,6 +2052,14 @@ int correlated_normal_fill (gretl_matrix *X, const gretl_matrix *L,
 {
     int err = 0;
 
+    if (prec == 4) {
+        /* if this is wanted, it could be factored into generval.c */
+        int tmp = X->cols;
+
+        X->cols = X->rows;
+        X->rows = tmp;
+    }
+
     gretl_matrix_random_fill(X, D_NORMAL);
 
     if (prec == 0) {
@@ -2071,9 +2079,13 @@ int correlated_normal_fill (gretl_matrix *X, const gretl_matrix *L,
         gretl_invert_triangular_matrix(Linv, 'L');
         gretl_blas_dtrmm(Linv, X, "RLN");
         gretl_matrix_free(Linv);
-    } else {
+    } else if (prec == 3) {
         /* precision matrix: L_p precomputed */
         gretl_blas_dtrmm(L, X, "RLN");
+    } else {
+        /* precision matrix: left division */
+        gretl_triangular_solve(L, X, GRETL_MOD_TRANSPOSE,
+                               GRETL_MATRIX_LOWER_TRIANGULAR);
     }
 
     return err;
@@ -5139,7 +5151,7 @@ int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
  * @a: Lower triangular Cholesky factor of symmetric p.d. matrix
  * @b: right-hand side vector.
  *
- * Solves ax = b for the unknown vector x, using the precomputed
+ * Solves ax = b for the unknown x, using the precomputed
  * Cholesky factor in @a. On exit, @b is replaced by the solution.
  *
  * Returns: 0 on successful completion, or non-zero code on error.
@@ -8585,35 +8597,6 @@ double gretl_matrix_cond_index (const gretl_matrix *m, int *err)
     return cidx;
 }
 
-static int real_cholesky_decomp (gretl_matrix *a, char uplo)
-{
-    integer n, lda;
-    integer info;
-    int err = 0;
-
-    if (gretl_is_null_matrix(a)) {
-        return E_DATA;
-    }
-
-    n = lda = a->rows;
-
-    if (a->cols != n) {
-        return E_NONCONF;
-    }
-
-    dpotrf_(&uplo, &n, a->val, &lda, &info);
-
-    if (info != 0) {
-        fprintf(stderr, "gretl_matrix_cholesky_decomp: info = %d\n",
-                (int) info);
-        err = (info > 0)? E_NOTPD : E_DATA;
-    } else {
-        gretl_matrix_zero_upper(a);
-    }
-
-    return err;
-}
-
 /**
  * gretl_matrix_cholesky_decomp:
  * @a: matrix to operate on.
@@ -8629,7 +8612,100 @@ static int real_cholesky_decomp (gretl_matrix *a, char uplo)
 
 int gretl_matrix_cholesky_decomp (gretl_matrix *a)
 {
-    return real_cholesky_decomp(a, 'L');
+    char uplo = 'L';
+    integer n;
+    integer info;
+    int err = 0;
+
+    if (gretl_is_null_matrix(a)) {
+        return E_DATA;
+    }
+
+    n = a->rows;
+    if (a->cols != n) {
+        return E_NONCONF;
+    }
+
+    dpotrf_(&uplo, &n, a->val, &n, &info);
+
+    if (info != 0) {
+        fprintf(stderr, "gretl_matrix_cholesky_decomp: info = %d\n",
+                (int) info);
+        err = (info > 0)? E_NOTPD : E_DATA;
+    } else {
+        gretl_matrix_zero_upper(a);
+    }
+
+    return err;
+}
+
+/**
+ * cholesky_factor_of_inverse:
+ * @a: matrix to operate on.
+ *
+ * Computes the lower-triangular Cholesky factorization of
+ * the inverse of a symmetric, positive definite matrix @A.
+ * On exit the lower triangle of @A is replaced by the factor
+ * L, as in LL' = A^{-1}, and the upper triangle is set to zero.
+ * Uses the lapack functions dpotrf and dpotri.
+ *
+ * Returns: 0 on success; non-zero on failure.
+ */
+
+int cholesky_factor_of_inverse (gretl_matrix *a)
+{
+#ifdef INV_LIMIT_THREADS
+    int save_nt = 0;
+#endif
+    integer n, info;
+    char uplo = 'L';
+    int err = 0;
+
+    n = a->cols;
+    if (n == 1) {
+        a->val[0] = 1.0 / a->val[0];
+        return 0;
+    }
+
+#if INV_LIMIT_THREADS
+    if (blas_is_openblas()) {
+        maybe_force_single(n, POTRF_MT_MIN, &save_nt);
+    }
+#endif
+
+    /* obtain Cholesky factor of @a */
+    dpotrf_(&uplo, &n, a->val, &n, &info);
+
+    if (info == 0) {
+        /* obtain inverse of @a */
+        dpotri_(&uplo, &n, a->val, &n, &info);
+    }
+
+    if (info == 0) {
+        /* obtain Cholesky factor of inverse */
+        dpotrf_(&uplo, &n, a->val, &n, &info);
+    }
+
+    if (info == 0) {
+        /* zero the upper triangle of @a */
+        int i, j;
+
+        for (j=1; j<n; j++) {
+            for (i=0; i<j; i++) {
+                gretl_matrix_set(a, i, j, 0.0);
+            }
+        }
+    } else {
+        err = (info > 0)? E_NOTPD : E_DATA;
+    }
+
+#if INV_LIMIT_THREADS
+    if (save_nt > 1) {
+        omp_set_num_threads(save_nt);
+    }
+#endif
+
+    return err;
 }
 
 static int process_psd_root (gretl_matrix *L,

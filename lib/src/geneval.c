@@ -5271,7 +5271,7 @@ static NODE *mcnormal_node (NODE *l, NODE *m, NODE *r, parser *p)
     }
     if (!p->err && !null_node(r)) {
         prec = node_get_int(r, p);
-        if (!p->err && (prec < 0 || prec > 3)) {
+        if (!p->err && (prec < 0 || prec > 4)) {
             p->err = E_INVARG;
         }
     }
