@@ -5271,7 +5271,7 @@ static NODE *mcnormal_node (NODE *l, NODE *m, NODE *r, parser *p)
     }
     if (!p->err && !null_node(r)) {
         prec = node_get_int(r, p);
-        if (!p->err && (prec < 0 || prec > 4)) {
+        if (!p->err && (prec < 0 || prec > 3)) {
             p->err = E_INVARG;
         }
     }
@@ -5286,6 +5286,27 @@ static NODE *mcnormal_node (NODE *l, NODE *m, NODE *r, parser *p)
     }
     if (!p->err && rows * cols > 0) {
         p->err = correlated_normal_fill(ret->v.m, L, rows, prec);
+    }
+
+    return ret;
+}
+
+static NODE *mvnormal_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+    gretl_matrix *L = l->v.m;
+    int prec;
+
+    if (L == NULL || L->rows != L->cols) {
+        p->err = E_INVARG;
+    } else {
+        prec = node_get_bool(r, p, -1);
+    }
+    if (!p->err) {
+        ret = aux_sized_matrix_node(p, L->rows, 1, 0);
+    }
+    if (!p->err && L->rows > 0) {
+        p->err = correlated_normal_vec(ret->v.m, L, prec);
     }
 
     return ret;
@@ -18809,6 +18830,15 @@ static NODE *eval (NODE *t, parser *p)
             node_type_error(t->t, 1, MAT, l, p);
         } else {
             node_type_error(t->t, 2, NUM, m, p);
+        }
+        break;
+    case HF_VCNORM:
+        if (l->t == MAT && scalar_node(r)) {
+            ret = mvnormal_node(l, r, p);
+        } else if (l->t != MAT) {
+            node_type_error(t->t, 1, MAT, l, p);
+        } else {
+            node_type_error(t->t, 2, NUM, r, p);
         }
         break;
     case F_SUMC:

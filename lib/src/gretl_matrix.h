@@ -330,6 +330,9 @@ int gretl_matrix_random_fill (gretl_matrix *m, int dist);
 int correlated_normal_fill (gretl_matrix *X, const gretl_matrix *L,
                             int rows, int prec);
 
+int correlated_normal_vec (gretl_vector *X, const gretl_matrix *L,
+                           int prec);
+
 gretl_matrix *gretl_random_matrix_new (int r, int c, int dist);
 
 gretl_matrix *gretl_matrix_resample (const gretl_matrix *m,

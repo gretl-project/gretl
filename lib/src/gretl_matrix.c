@@ -2047,18 +2047,16 @@ static int gretl_triangular_solve (const gretl_matrix *a,
     return 0;
 }
 
+/* Fills the n x k matrix @X with n realizations of k normal variates with a
+   covariance structure specified by the lower-triangular k x k matrix L. If
+   prec = 0, L is assumed to pertain to a covariance matrix, otherwise it is
+   assumed to pertain to a precision matrix.
+*/
+
 int correlated_normal_fill (gretl_matrix *X, const gretl_matrix *L,
                             int rows, int prec)
 {
     int err = 0;
-
-    if (prec == 4) {
-        /* if this is wanted, it could be factored into generval.c */
-        int tmp = X->cols;
-
-        X->cols = X->rows;
-        X->rows = tmp;
-    }
 
     gretl_matrix_random_fill(X, D_NORMAL);
 
@@ -2079,16 +2077,35 @@ int correlated_normal_fill (gretl_matrix *X, const gretl_matrix *L,
         gretl_invert_triangular_matrix(Linv, 'L');
         gretl_blas_dtrmm(Linv, X, "RLN");
         gretl_matrix_free(Linv);
-    } else if (prec == 3) {
+    } else {
         /* precision matrix: L_p precomputed */
         gretl_blas_dtrmm(L, X, "RLN");
+    }
+
+    return err;
+}
+
+/* Fills the (column) k-vector @X with a single realization of k normal
+   variates with a covariance structure specified by the lower-triangular
+   k x k matrix L. If prec = 0, L is assumed to pertain to a covariance
+   matrix, otherwise it is assumed to pertain to a precision matrix.
+*/
+
+int correlated_normal_vec (gretl_vector *X, const gretl_matrix *L,
+                           int prec)
+{
+    gretl_matrix_random_fill(X, D_NORMAL);
+
+    if (prec == 0) {
+        /* covariance matrix: pre-multiply X by L */
+        gretl_blas_dtrmm(L, X, "LLN");
     } else {
-        /* precision matrix: left division */
+        /* precision matrix: do left division, L' \ X */
         gretl_triangular_solve(L, X, GRETL_MOD_TRANSPOSE,
                                GRETL_MATRIX_LOWER_TRIANGULAR);
     }
 
-    return err;
+    return 0;
 }
 
 /**
