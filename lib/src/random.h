@@ -105,8 +105,7 @@ gretl_matrix *inverse_wishart_matrix (const gretl_matrix *S,
 				      int v, int *err);
 
 gretl_matrix *inverse_wishart_sequence (const gretl_matrix *S,
-					int v, int replics, 
-					int *err);
+					int v, int n, int *err);
 
 unsigned int gretl_rand_get_seed (void);
 
