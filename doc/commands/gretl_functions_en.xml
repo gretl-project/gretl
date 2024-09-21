@@ -7275,9 +7275,11 @@
 	  Given <argname>S</argname> (a positive definite <by r="p"
 	  c="p"/> scale matrix), returns a drawing from the Inverse
 	  Wishart distribution with <argname>v</argname> degrees of
-	  freedom. The returned matrix is also <by r="p" c="p"/>.  The
-	  algorithm of <cite key="odell-feiveson66">Odell and Feiveson
-	  (1966)</cite> is used.
+	  freedom, where <argname>v</argname> must not be smaller than
+	  <math>p</math>. The returned matrix is also <by r="p"
+	  c="p"/>.  The algorithm of <cite
+	  key="odell-feiveson66">Odell and Feiveson (1966)</cite> is
+	  used.
 	</para>
       </description>
     </function>
