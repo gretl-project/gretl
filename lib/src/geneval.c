@@ -5285,7 +5285,7 @@ static NODE *mcnormal_node (NODE *l, NODE *m, NODE *r, parser *p)
         ret = aux_sized_matrix_node(p, rows, cols, 0);
     }
     if (!p->err && rows * cols > 0) {
-        p->err = correlated_normal_fill(ret->v.m, L, rows, prec);
+        p->err = correlated_normal_fill(ret->v.m, L, prec);
     }
 
     return ret;

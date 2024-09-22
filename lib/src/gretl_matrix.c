@@ -2054,7 +2054,7 @@ static int gretl_triangular_solve (const gretl_matrix *a,
 */
 
 int correlated_normal_fill (gretl_matrix *X, const gretl_matrix *L,
-                            int rows, int prec)
+                            int prec)
 {
     int err = 0;
 
@@ -2078,7 +2078,7 @@ int correlated_normal_fill (gretl_matrix *X, const gretl_matrix *L,
         gretl_blas_dtrmm(Linv, X, "RLN");
         gretl_matrix_free(Linv);
     } else {
-        /* precision matrix: L_p precomputed */
+        /* precision matrix: inv(L_p) precomputed */
         gretl_blas_dtrmm(L, X, "RLN");
     }
 
