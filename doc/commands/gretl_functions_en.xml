@@ -5502,7 +5502,7 @@
     <function name="flatten" section="data-utils" output="seebelow">
       <fnargs>
 	<fnarg type="matrices-or-strings">A</fnarg>
-	<fnarg optional="true" type="bool">alt</fnarg>
+	<fnarg optional="true" type="int-or-string">alt</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -5510,13 +5510,50 @@
 	  single matrix or an array of strings into a single string.
 	</para>
 	<para>
-	  In the matrix case the matrices in <argname>A</argname> are
-	  by default concatented horizontally, but if a non-zero
-	  value is supplied for <argname>alt</argname> the
-	  concatenation is vertical. In either case an error is
-	  flagged if the matrices are not conformable for the
-	  operation. See <fncref targ="msplitby"/> for the inverse
-	  operation.
+	  In the matrix case, the way the matrices in
+	  <argname>A</argname> are joined together depends on the
+	  value of the <argname>alt</argname> argument, which should
+	  be between 0 and 2, corresponding to horizontal, vertical or
+	  <quote>vec-wise</quote>, respectively. The best way to
+	  explain the difference between the three alternatives is an
+	  example: the code
+	</para>
+	<code>
+	  X = {1,3,5; 2,4,6}
+	  A = defarray(X, X+6)
+	  U = flatten(A,0)
+	  V = flatten(A,1)
+	  W = flatten(A,2)
+	</code>
+	<para>
+	  produces the following three matrices:
+	</para>
+	<code>
+	  U (2 x 6)
+
+	  1    3    5    7    9   11 
+	  2    4    6    8   10   12 
+
+	  V (4 x 3)
+
+	  1    3    5 
+	  2    4    6 
+	  7    9   11 
+	  8   10   12 
+
+	  W (6 x 2)
+
+	  1    7 
+	  2    8 
+	  3    9 
+	  4   10 
+	  5   11 
+	  6   12 
+	</code>
+	<para>
+	  An error is flagged if the matrices in the array are not
+	  conformable for the operation. See <fncref targ="msplitby"/>
+	  for the inverse operation.
 	</para>
 	<para>
 	  In the string case the result holds the strings in
@@ -5525,7 +5562,8 @@
 	  the strings are separated by spaces rather than newlines,
 	  but an alternative usage of <argname>alt</argname> is
 	  supported: you may give a specific string to use as the
-	  separator.
+	  separator. The inverse function for the string case is
+	  <fncref targ="strsplit"/>.
 	</para>
       </description>
     </function>

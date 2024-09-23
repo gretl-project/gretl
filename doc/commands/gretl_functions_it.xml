@@ -5539,7 +5539,7 @@
     <function name="flatten" section="data-utils" output="seebelow">
       <fnargs>
 	<fnarg type="matrices-or-strings">A</fnarg>
-	<fnarg optional="true" type="bool">alt</fnarg>
+	<fnarg optional="true" type="int-or-string">alt</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -5547,23 +5547,61 @@
 	  un array di stringhe in una singola stringa.
 	</para>
 	<para>
-	  Nel caso matriciale, le matrici contenute in
-	  <argname>A</argname> sono, di default, concatenate
-	  orizzontalmente, ma se un valore diverso da zero è inserito
-	  in <argname>alt</argname> la concatenazione è verticale. In
-	  entrambi i casi viene prodotto un errore.  qualora le
-	  matrici non siano conformabili per l'operazione.  Si veda
-	  <fncref targ="msplitby"/> per l'operazione inversa.
+	  Nel caso matriciale, il modo in cui le matrici in
+	  <argname>A</argname> sono accostate dipende dal valore
+	  dell'argomento <argname>alt</argname>, che deve essere
+	  compreso tra 0 e 2, corrispondenti rispettivamente a
+	  orizzontale, verticale o <quote>vettorizzato</quote>. Il
+	  modo migliore di spiegare la differenza tra le tre
+	  alternative è un esempio: il codice
+	</para>
+	<code>
+	  X = {1,3,5; 2,4,6}
+	  A = defarray(X, X+6)
+	  U = flatten(A,0)
+	  V = flatten(A,1)
+	  W = flatten(A,2)
+	</code>
+	<para>
+	  produce le tre matrici seguenti:
+	</para>
+	<code>
+	  U (2 x 6)
+
+	  1    3    5    7    9   11 
+	  2    4    6    8   10   12 
+
+	  V (4 x 3)
+
+	  1    3    5 
+	  2    4    6 
+	  7    9   11 
+	  8   10   12 
+
+	  W (6 x 2)
+
+	  1    7 
+	  2    8 
+	  3    9 
+	  4   10 
+	  5   11 
+	  6   12 
+	</code>
+	<para>
+	  Qualora le matrici nell'array non siano conformabili per
+	  l'operazione, viene prodotto un errore.  Si veda <fncref
+	  targ="msplitby"/> per l'operazione inversa.
 	</para>
 	<para>
-	  Nel caso di un array di stringhe, esse sono contenute in
-	  <argname>A</argname>, e sono sistemate una per riga di default.
-	  Se un valore diverso da 0 è inserito in <argname>alt</argname> le
+	  Nel caso in cui <argname>A</argname> sia un array di
+	  stringhe l'output le conterrà una per riga di default. Se un
+	  valore diverso da 0 è inserito in <argname>alt</argname> le
 	  stringhe verranno separate da spazi anziché da interruzioni
 	  di riga, ma è anche supportata una sintassi alternativa, in
 	  cui <argname>alt</argname> è una specifica stringa da usare
-	  come separatore.
-	</para>
+	  come separatore. La funzione inversa è, in questo caso,
+	  <fncref targ="strsplit"/>.
+	</para> 
       </description>
     </function>
 
