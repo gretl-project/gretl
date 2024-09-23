@@ -327,6 +327,7 @@ struct str_table funcs[] = {
     { F_REPLACE,  "replace" },
     { F_MUNIF,    "muniform" },
     { F_MNORM,    "mnormal" },
+    { F_MCNORM,   "mcnormal" },
     { F_SUMC,     "sumc" },
     { F_SUMR,     "sumr" },
     { F_PRODC,    "prodc" },
@@ -636,6 +637,7 @@ struct str_table hidden_funcs[] = {
     { HF_FELOGITR, "_felogit_rec" },
     { HF_FDEPTH,   "_fdepth" },
     { HF_GLASSO,   "_glasso" },
+    { HF_VCNORM,   "_vcnorm" },
     { 0,           NULL }
 };
 

@@ -7275,9 +7275,11 @@
 	  Given <argname>S</argname> (a positive definite <by r="p"
 	  c="p"/> scale matrix), returns a drawing from the Inverse
 	  Wishart distribution with <argname>v</argname> degrees of
-	  freedom. The returned matrix is also <by r="p" c="p"/>.  The
-	  algorithm of <cite key="odell-feiveson66">Odell and Feiveson
-	  (1966)</cite> is used.
+	  freedom, where <argname>v</argname> must not be smaller than
+	  <math>p</math>. The returned matrix is also <by r="p"
+	  c="p"/>.  The algorithm of <cite
+	  key="odell-feiveson66">Odell and Feiveson (1966)</cite> is
+	  used.
 	</para>
       </description>
     </function>
@@ -8180,11 +8182,11 @@
     <function name="Lsolve" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">L</fnarg>
-	<fnarg type="matrix">b</fnarg>
+	<fnarg type="matrix">B</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Solves for <math>x</math> in <math>Ax = b</math>, where
+	  Solves for <math>x</math> in <math>AX = B</math>, where
 	  <argname>L</argname> is the lower triangular Cholesky factor
 	  of the positive definite matrix <math>A</math>, satisfying
 	  <math>LL' = A</math>. Suitable <argname>L</argname> can be
@@ -8197,15 +8199,15 @@
 	  allows for reuse of a precomputed Cholesky factor and so
 	  should be substantially faster if you are solving repeatedly
 	  for given <math>A</math> and several values of
-	  <math>b</math>. The speed-up will be greater, the greater
-	  the column dimension of <math>A</math>.
+	  <math>B</math>. The speed-up will be greater, the greater
+	  the dimension of <math>A</math>.
 	</para>
 	<code>
 	  # variant 1
 	  matrix L = cholesky(A)
-	  matrix x = Lsolve(L, b)
+	  matrix X = Lsolve(L, B)
 	  # variant 2
-	  matrix x = A \ b
+	  matrix X = A \ B
 	</code>
       </description>
     </function>

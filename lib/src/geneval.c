@@ -5169,7 +5169,7 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 static int ok_matrix_dim (int r, int c, int f)
 {
     if (f == F_IMAT || f == F_ZEROS || f == F_ONES ||
-        f == F_MUNIF || f == F_MNORM) {
+        f == F_MUNIF || f == F_MNORM || f == F_MCNORM) {
         /* zero is OK for matrix creation functions, which then
            return an empty matrix
         */
@@ -5181,10 +5181,10 @@ static int ok_matrix_dim (int r, int c, int f)
     }
 }
 
-static NODE *matrix_fill_func (NODE *l, NODE *r, NODE *c, int f, parser *p)
+static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 {
-    int n = 0, cols = 0, rows = node_get_int(l, p);
-    gretl_matrix *L = NULL;
+    int rows = node_get_int(l, p);
+    int n = 0, cols = 0;
     NODE *ret = NULL;
 
     if (!p->err) {
@@ -5212,13 +5212,6 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, NODE *c, int f, parser *p)
         matrix_error(p);
     }
 
-    if (!p->err && c != NULL) {
-        L = c->v.m;
-        if (L->cols != L->rows || L->rows != MIN(rows, cols)) {
-            p->err = E_NONCONF;
-        }
-    }
-
     if (!p->err) {
         ret = aux_sized_matrix_node(p, rows, cols, 0);
     }
@@ -5244,17 +5237,76 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, NODE *c, int f, parser *p)
         gretl_matrix_random_fill(ret->v.m, D_UNIFORM);
         break;
     case F_MNORM:
-        if (L != NULL) {
-            correlated_normal_fill(ret->v.m, L);
-        } else {
-            gretl_matrix_random_fill(ret->v.m, D_NORMAL);
-        }
+        gretl_matrix_random_fill(ret->v.m, D_NORMAL);
         break;
     case F_RANDPERM:
         p->err = fill_permutation_vector(ret->v.m, n);
         break;
     default:
         break;
+    }
+
+    return ret;
+}
+
+/* mcnormal_node: produce a matrix of correlated normals:
+
+   @l: holds lower-triangular Cholesky factor, L
+   @m: holds the number of realizations = rows of return matrix
+   @r: if non-NULL, a positive value indicates that L is associated with
+     a precision matrix rather than a covariance matrix
+*/
+
+static NODE *mcnormal_node (NODE *l, NODE *m, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+    gretl_matrix *L;
+    int rows, cols;
+    int prec = 0;
+
+    L = l->v.m;
+    rows = node_get_int(m, p);
+    if (!p->err && rows < 0) {
+        p->err = E_INVARG;
+    }
+    if (!p->err && !null_node(r)) {
+        prec = node_get_int(r, p);
+        if (!p->err && (prec < 0 || prec > 3)) {
+            p->err = E_INVARG;
+        }
+    }
+    if (!p->err) {
+        cols = L->cols;
+        if (L->rows != L->cols) {
+            p->err = E_INVARG;
+        }
+    }
+    if (!p->err) {
+        ret = aux_sized_matrix_node(p, rows, cols, 0);
+    }
+    if (!p->err && rows * cols > 0) {
+        p->err = correlated_normal_fill(ret->v.m, L, prec);
+    }
+
+    return ret;
+}
+
+static NODE *mvnormal_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+    gretl_matrix *L = l->v.m;
+    int prec;
+
+    if (L == NULL || L->rows != L->cols) {
+        p->err = E_INVARG;
+    } else {
+        prec = node_get_bool(r, p, -1);
+    }
+    if (!p->err) {
+        ret = aux_sized_matrix_node(p, L->rows, 1, 0);
+    }
+    if (!p->err && L->rows > 0) {
+        p->err = correlated_normal_vec(ret->v.m, L, prec);
     }
 
     return ret;
@@ -18769,27 +18821,31 @@ static NODE *eval (NODE *t, parser *p)
     case F_ZEROS:
     case F_ONES:
     case F_MUNIF:
+    case F_MNORM:
     case F_RANDPERM:
         /* matrix-creation functions */
         if (scalar_node(l) && null_or_scalar(r)) {
-            ret = matrix_fill_func(l, r, NULL, t->t, p);
+            ret = matrix_fill_func(l, r, t->t, p);
         } else if (!scalar_node(l)) {
             node_type_error(t->t, 1, NUM, l, p);
         } else {
             node_type_error(t->t, 2, NUM, r, p);
         }
         break;
-    case F_MNORM:
-        if (scalar_node(l) && null_or_scalar(m)) {
-            if (null_node(r)) {
-                ret = matrix_fill_func(l, m, NULL, t->t, p);
-            } else if (r->t == MAT) {
-                ret = matrix_fill_func(l, m, r, t->t, p);
-            } else {
-                node_type_error(t->t, 3, MAT, r, p);
-            }
-        } else if (!scalar_node(l)) {
-            node_type_error(t->t, 1, NUM, l, p);
+    case F_MCNORM:
+        if (l->t == MAT && scalar_node(m)) {
+            ret = mcnormal_node(l, m, r, p);
+        } else if (l->t != MAT) {
+            node_type_error(t->t, 1, MAT, l, p);
+        } else {
+            node_type_error(t->t, 2, NUM, m, p);
+        }
+        break;
+    case HF_VCNORM:
+        if (l->t == MAT && scalar_node(r)) {
+            ret = mvnormal_node(l, r, p);
+        } else if (l->t != MAT) {
+            node_type_error(t->t, 1, MAT, l, p);
         } else {
             node_type_error(t->t, 2, NUM, r, p);
         }

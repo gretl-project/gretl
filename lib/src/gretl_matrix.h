@@ -327,7 +327,11 @@ double gretl_matrix_trace (const gretl_matrix *m);
 
 int gretl_matrix_random_fill (gretl_matrix *m, int dist);
 
-int correlated_normal_fill (gretl_matrix *X, const gretl_matrix *L);
+int correlated_normal_fill (gretl_matrix *X, const gretl_matrix *L,
+                            int prec);
+
+int correlated_normal_vec (gretl_vector *X, const gretl_matrix *L,
+                           int prec);
 
 gretl_matrix *gretl_random_matrix_new (int r, int c, int dist);
 
@@ -592,6 +596,8 @@ int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b);
 int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b);
 
 int gretl_cholesky_invert (gretl_matrix *a);
+
+int cholesky_factor_of_inverse (gretl_matrix *a);
 
 gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
 				    const gretl_vector *r,
