@@ -9327,14 +9327,13 @@ static NODE *array_func_node (NODE *l, NODE *r, NODE *b, int f, parser *p)
     } else if (f == F_FLATTEN) {
 	if (t == GRETL_TYPE_MATRICES) {
 	    int mode = 0;
+
 	    if (!null_node(r)) {
 		mode = node_get_int(r, p);
-	    }
-
-	    if ((mode < 0) || (mode > 2)) {
-		p->err = E_INVARG;
-	    }
-
+                if (mode < 0 || mode > 2) {
+                    p->err = E_INVARG;
+                }
+            }
 	    if (!p->err) {
 		ret = aux_matrix_node(p);
 	    }

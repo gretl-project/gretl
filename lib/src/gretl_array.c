@@ -708,16 +708,17 @@ gretl_bundle *gretl_array_get_bundle (gretl_array *A, int i)
 }
 
 /* "flatten" an array of matrices, yielding a single matrix.
-   Concatenation may be horizontal (@vcat = 0, default), vertical
-   (@vcat = 1) or (for lack of a better term) "vec-wise" (@vcat =
+   Concatenation may be horizontal (@mode = 0, default), vertical
+   (@mode = 1) or (for lack of a better term) "vec-wise" (@mode =
    2). An error is flagged if the matrices are not conformable for the
    operation.
 */
 
 gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
-					  int vcat,
+					  int mode,
 					  int *err)
 {
+    enum {HORIZ, VERT, VECWISE};
     gretl_matrix *ret = NULL;
     gretl_matrix *m;
     int common_r = 1;
@@ -725,123 +726,125 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
     int sum_r = 0;
     int sum_c = 0;
     int r0 = 0, c0 = 0;
+    int nvals0 = 0;
     int cmplx = 0;
     int real = 0;
-    int i, tot_elem;
+    int nmats = 0;
+    int i, nvals = 0;
 
     if (A->type != GRETL_TYPE_MATRICES) {
 	*err = E_TYPES;
 	return NULL;
     }
 
-    for (i=0; i<A->n; i++) {
+    for (i=0; i<A->n && !*err; i++) {
 	m = A->data[i];
-	if (!gretl_is_null_matrix(m)) {
-	    if (m->is_complex) {
-		cmplx = 1;
-	    } else {
-		real = 1;
-	    }
-	}
+	if (gretl_is_null_matrix(m)) {
+            continue;
+        }
+        nmats++;
+        if (m->is_complex) {
+            cmplx = 1;
+        } else {
+            real = 1;
+        }
+        if (c0 == 0) {
+            /* initialize */
+            r0 = m->rows;
+            c0 = m->cols;
+            nvals0 = r0 * c0;
+        } else {
+            /* check commonality */
+            if (m->rows != r0) {
+                common_r = 0;
+                if (mode == HORIZ) {
+                    *err = E_NONCONF;
+                }
+            }
+            if (m->cols != c0) {
+                common_c = 0;
+                if (mode == VERT) {
+                    *err = E_NONCONF;
+                }
+            }
+            if (mode == VECWISE) {
+                nvals = m->rows * m->cols;
+                if (nvals != nvals0) {
+                    *err = E_NONCONF;
+                }
+            } else if (!common_r && !common_c) {
+                *err = E_NONCONF;
+            }
+        }
+        sum_r += m->rows;
+        sum_c += m->cols;
     }
 
-    for (i=0; i<A->n; i++) {
-	m = A->data[i];
-	if (!gretl_is_null_matrix(m)) {
-	    if (c0 == 0) {
-		r0 = m->rows;
-		c0 = m->cols;
-	    } else {
-		if (m->rows != r0) {
-		    common_r = 0;
-		}
-		if (m->cols != c0) {
-		    common_c = 0;
-		}
-		if (!common_r && !common_c) {
-		    *err = E_NONCONF;
-		    break;
-		}
-	    }
-	    sum_r += m->rows;
-	    sum_c += m->cols;
-	}
+    if (*err) {
+        return NULL;
     }
 
-    tot_elem = m->rows * m->cols;
-
-    if (!*err) {
-	if ((vcat && !common_c) || (!vcat && !common_r)) {
-	    *err = E_NONCONF;
-	}
-    }
-
-    if (!*err && sum_r == 0) {
-	ret = gretl_null_matrix_new();
-	if (ret == NULL) {
-	    *err = E_ALLOC;
-	}
-    }
-
-    if (*err || ret != NULL) {
-	return ret;
-    }
-
-    if (vcat == 0) {
+    if (mode == HORIZ) {
 	if (cmplx) {
 	    ret = gretl_cmatrix_new(r0, sum_c);
 	} else {
 	    ret = gretl_matrix_alloc(r0, sum_c);
 	}
-    } else if (vcat == 1) {
+    } else if (mode == VERT) {
 	if (cmplx) {
 	    ret = gretl_cmatrix_new(sum_r, c0);
 	} else {
 	    ret = gretl_matrix_alloc(sum_r, c0);
 	}
-    } else if (vcat == 2) {
+    } else if (mode == VECWISE) {
 	if (cmplx) {
-	    ret = gretl_cmatrix_new(tot_elem, A->n);
+	    ret = gretl_cmatrix_new(nvals, nmats);
 	} else {
-	    ret = gretl_matrix_alloc(tot_elem, A->n);
+	    ret = gretl_matrix_alloc(nvals, nmats);
 	}
     }
 
     if (ret == NULL) {
-	*err = E_ALLOC;
-    } else if (vcat == 0) {
-	if (cmplx && real) {
-	    /* horizontal concatenation: mixed matrices */
-	    double complex *dest = ret->z;
-	    int n, k = 0;
+        *err = E_ALLOC;
+        return ret;
+    } else if (gretl_is_null_matrix(ret)) {
+        return ret;
+    }
 
-	    for (i=0; i<A->n; i++) {
-		m = A->data[i];
-		if (!gretl_is_null_matrix(m)) {
-		    if (m->is_complex) {
-			memcpy(dest, m->z, tot_elem * sizeof *dest);
-		    } else {
-			real_to_complex_fill(ret, m, 0, k);
-		    }
-		    dest += tot_elem;
-		    k += m->cols;
-		}
-	    }
-	} else {
-	    /* horizontal concatenation: the easy case */
-	    double *dest = ret->val;
-	    int n, p = cmplx ? 2 : 1;
+    if (mode == HORIZ) {
+        if (cmplx && real) {
+            /* horizontal: mixed matrices */
+            double complex *dest = ret->z;
+            int n, k = 0;
 
-	    for (i=0; i<A->n; i++) {
-		m = A->data[i];
-		if (!gretl_is_null_matrix(m)) {
-		    n = p * tot_elem;
-		    memcpy(dest, m->val, n * sizeof *dest);
-		    dest += n;
-		}
-	    }
-	}
-    } else if (vcat == 1) {
+            for (i=0; i<A->n; i++) {
+                m = A->data[i];
+                if (!gretl_is_null_matrix(m)) {
+                    n = m->rows * m->cols;
+                    if (m->is_complex) {
+                        memcpy(dest, m->z, n * sizeof *dest);
+                    } else {
+                        real_to_complex_fill(ret, m, 0, k);
+                    }
+                    dest += n;
+                    k += m->cols;
+                }
+            }
+        } else {
+            /* horizontal: the easy case */
+            double *dest = ret->val;
+            int n, p = cmplx ? 2 : 1;
+
+            for (i=0; i<A->n; i++) {
+                m = A->data[i];
+                if (!gretl_is_null_matrix(m)) {
+                    n = p * m->rows * m->cols;
+                    memcpy(dest, m->val, n * sizeof *dest);
+                    dest += n;
+                }
+            }
+        }
+    } else if (mode == VERT) {
 	/* vertical concatenation */
 	int ii, j, k, rpos = 0;
 	double complex z;
@@ -867,26 +870,25 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
 		rpos += m->rows;
 	    }
 	}
-    } else if (vcat == 2) {
-	/* vec-wise */
+    } else if (mode == VECWISE) {
 	if (cmplx && real) {
-	    /* vec-wise concatenation: mixed matrices */
+	    /* mixed matrices */
 	    double complex *dest = ret->z;
-	    int k = 0;
 	    double complex z;
+            int k = 0;
 
 	    for (i=0; i<A->n; i++) {
 		m = A->data[i];
 		if (!gretl_is_null_matrix(m)) {
 		    if (m->is_complex) {
-			memcpy(dest, m->z, tot_elem * sizeof *dest);
+			memcpy(dest, m->z, nvals * sizeof *dest);
 		    } else {
-			for (k=0; k<tot_elem; k++) {
+			for (k=0; k<nvals; k++) {
 			    z = m->val[k];
 			    gretl_cmatrix_set(ret, k, i, z);
 			}
 		    }
-		    dest += tot_elem;
+		    dest += nvals;
 		}
 	    }
 	} else {
@@ -897,7 +899,7 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
 	    for (i=0; i<A->n; i++) {
 		m = A->data[i];
 		if (!gretl_is_null_matrix(m)) {
-		    n = p * tot_elem;
+		    n = p * nvals;
 		    memcpy(dest, m->val, n * sizeof *dest);
 		    dest += n;
 		}

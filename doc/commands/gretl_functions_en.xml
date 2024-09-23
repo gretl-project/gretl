@@ -5509,21 +5509,21 @@
 	  <quote>Flattens</quote> either an array of matrices into a
 	  single matrix or an array of strings into a single string.
 	</para>
+        <subhead>Matrices</subhead>
 	<para>
 	  In the matrix case, the way the matrices in
-	  <argname>A</argname> are joined together depends on the
-	  value of the <argname>alt</argname> argument, which should
-	  be between 0 and 2, corresponding to horizontal, vertical or
-	  <quote>vec-wise</quote>, respectively. The best way to
-	  explain the difference between the three alternatives is an
-	  example: the code
+	  <argname>A</argname> are joined together depends on the the
+	  <argname>alt</argname> argument, which should have value 0
+	  (horizontal), 1 (vertical) or 2 (<quote>vec-wise</quote>).
+	  The best way to explain the difference between the three
+	  alternatives is by example: the code
 	</para>
 	<code>
 	  X = {1,3,5; 2,4,6}
 	  A = defarray(X, X+6)
-	  U = flatten(A,0)
-	  V = flatten(A,1)
-	  W = flatten(A,2)
+	  U = flatten(A,0) # = A[1] ~ A[2]
+	  V = flatten(A,1) # = A[1] | A[2]
+	  W = flatten(A,2) # = vec(A[1]) ~ vec(A[2])
 	</code>
 	<para>
 	  produces the following three matrices:
@@ -5555,6 +5555,7 @@
 	  conformable for the operation. See <fncref targ="msplitby"/>
 	  for the inverse operation.
 	</para>
+        <subhead>Strings</subhead>
 	<para>
 	  In the string case the result holds the strings in
 	  <argname>A</argname>, arranged one per line by default. If a
