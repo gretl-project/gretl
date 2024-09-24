@@ -2047,10 +2047,10 @@ static int gretl_triangular_solve (const gretl_matrix *a,
     return 0;
 }
 
-/* Fills the (column) k-vector @X with a single realization of k normal
+/* Fills the (column) p-vector @X with a single realization of p normal
    variates with a covariance structure specified by the lower-triangular
-   k x k matrix L. If prec = 0, L is assumed to pertain to a covariance
-   matrix, otherwise it is assumed to pertain to a precision matrix.
+   p x p matrix L. If prec = 0, L is assumed to pertain to a covariance
+   matrix, otherwise it's assumed to pertain to a precision matrix.
 */
 
 int correlated_normal_vec (gretl_vector *X, const gretl_matrix *L,
