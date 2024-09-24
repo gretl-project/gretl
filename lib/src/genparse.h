@@ -400,7 +400,6 @@ enum {
     HF_VCNORM,
     HF_GLASSO,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
-    F_MCNORM,
     F_WMEAN,
     F_WVAR,
     F_WSD,

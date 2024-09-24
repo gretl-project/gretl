@@ -5169,7 +5169,7 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 static int ok_matrix_dim (int r, int c, int f)
 {
     if (f == F_IMAT || f == F_ZEROS || f == F_ONES ||
-        f == F_MUNIF || f == F_MNORM || f == F_MCNORM) {
+        f == F_MUNIF || f == F_MNORM) {
         /* zero is OK for matrix creation functions, which then
            return an empty matrix
         */
@@ -5244,48 +5244,6 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
         break;
     default:
         break;
-    }
-
-    return ret;
-}
-
-/* mcnormal_node: produce a matrix of correlated normals:
-
-   @l: holds lower-triangular Cholesky factor, L
-   @m: holds the number of realizations = rows of return matrix
-   @r: if non-NULL, a positive value indicates that L is associated with
-     a precision matrix rather than a covariance matrix
-*/
-
-static NODE *mcnormal_node (NODE *l, NODE *m, NODE *r, parser *p)
-{
-    NODE *ret = NULL;
-    gretl_matrix *L;
-    int rows, cols;
-    int prec = 0;
-
-    L = l->v.m;
-    rows = node_get_int(m, p);
-    if (!p->err && rows < 0) {
-        p->err = E_INVARG;
-    }
-    if (!p->err && !null_node(r)) {
-        prec = node_get_int(r, p);
-        if (!p->err && (prec < 0 || prec > 3)) {
-            p->err = E_INVARG;
-        }
-    }
-    if (!p->err) {
-        cols = L->cols;
-        if (L->rows != L->cols) {
-            p->err = E_INVARG;
-        }
-    }
-    if (!p->err) {
-        ret = aux_sized_matrix_node(p, rows, cols, 0);
-    }
-    if (!p->err && rows * cols > 0) {
-        p->err = correlated_normal_fill(ret->v.m, L, prec);
     }
 
     return ret;
@@ -18821,15 +18779,6 @@ static NODE *eval (NODE *t, parser *p)
             node_type_error(t->t, 1, NUM, l, p);
         } else {
             node_type_error(t->t, 2, NUM, r, p);
-        }
-        break;
-    case F_MCNORM:
-        if (l->t == MAT && scalar_node(m)) {
-            ret = mcnormal_node(l, m, r, p);
-        } else if (l->t != MAT) {
-            node_type_error(t->t, 1, MAT, l, p);
-        } else {
-            node_type_error(t->t, 2, NUM, m, p);
         }
         break;
     case HF_VCNORM:
