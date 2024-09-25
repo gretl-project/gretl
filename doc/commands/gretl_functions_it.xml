@@ -5550,17 +5550,17 @@
 	  Nel caso matriciale, il modo in cui le matrici in
 	  <argname>A</argname> sono accostate dipende dal valore
 	  dell'argomento <argname>alt</argname>, che deve essere
-	  compreso tra 0 e 2, corrispondenti rispettivamente a
-	  orizzontale, verticale o <quote>vettorizzato</quote>. Il
+	  compreso 0 per l'accortamento orizzontale, 1 per quello
+	  verticale o 2 per quello <quote>vettorizzato</quote>. Il
 	  modo migliore di spiegare la differenza tra le tre
 	  alternative è un esempio: il codice
 	</para>
 	<code>
 	  X = {1,3,5; 2,4,6}
 	  A = defarray(X, X+6)
-	  U = flatten(A,0)
-	  V = flatten(A,1)
-	  W = flatten(A,2)
+	  U = flatten(A,0) # = A[1] ~ A[2]
+	  V = flatten(A,1) # = A[1] | A[2]
+	  W = flatten(A,2) # = vec(A[1]) ~ vec(A[2])
 	</code>
 	<para>
 	  produce le tre matrici seguenti:

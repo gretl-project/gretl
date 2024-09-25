@@ -7,6 +7,7 @@ version 2024c, in progress
 - "corr" command: be more explicit about the sample(s) used
 - "rename" command: add a --case option to support case
   conversion of all series names in the dataset
+- flatten() function: add an extra (vec-wise) mode for matrices	
 - matrix "left division" operator: improve efficiency when the
   left-hand operand is triangular
 - Fix bug: append via console not updating series list in the
