@@ -34,6 +34,7 @@ lib/src/gretl_cmatrix.c
 lib/src/gretl_color.c
 lib/src/gretl_commands.c
 lib/src/gretl_data_io.c
+lib/src/gretl_drivers.c
 lib/src/gretl_errors.c
 lib/src/gretl_foreign.c
 lib/src/gretl_func.c
@@ -68,7 +69,6 @@ lib/src/irfboot.c
 lib/src/kalman.c
 lib/src/kalman_legacy.c
 lib/src/laginfo.c
-lib/src/libglue.c
 lib/src/libset.c
 lib/src/mapinfo.c
 lib/src/matrix_extra.c
@@ -109,6 +109,7 @@ cli/gretlcli.c
 cli/gretlcli-mpi.c
 gui/about.c
 gui/base_utils.c
+gui/bundle_menus.c
 gui/calculator.c
 gui/callbacks.c
 gui/clipboard.c
@@ -170,7 +171,6 @@ gui/update.c
 gui/varinfo.c
 gui/viewers.c
 gui/winstack.c
-plugin/addons-i18n.c
 plugin/anova.c
 plugin/arma.c
 plugin/arma_cml.c
@@ -248,3 +248,4 @@ doc/commands/topiclist.c
 doc/commands/us2a4.c
 doc/commands/validate.c
 doc/commands/xsltrans.c
+addons/addons-i18n.c

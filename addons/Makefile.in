@@ -21,7 +21,6 @@ else
 endif
 
 SUBDIRS = gig ivpanel SVAR HIP dbnomics extra geoplot regls logging KFgui
-XMLSUBDIRS = gig ivpanel SVAR HIP
 
 .PHONY : subdirs $(SUBDIRS) clean installdirs install install-private
 
@@ -33,8 +32,8 @@ $(SUBDIRS):
 addons.xml: gfnindex $(SUBDIRS)
 	./gfnindex $(topsrc) $(SUBDIRS) > $@
 
-addons-i18n.c: gfnstrings $(XMLSUBDIRS)
-	./gfnstrings $(XMLSUBDIRS) > $@
+addons-i18n.c: gfnstrings $(SUBDIRS)
+	./gfnstrings $(SUBDIRS) > $@
 
 gfnindex: gfnindex.c
 	$(CC) -o $@ $<
@@ -69,7 +68,7 @@ install: $(SUBDIRS) installdirs
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install; done
 
 install-private: addons-i18n.c
-	$(INSTALL_DATA) $< $(topsrc)/plugin
+	$(INSTALL_DATA) $< $(topsrc)/addons
 
 addons.tar.gz: $(SUBDIRS)
 	rm -rf tgztmp && mkdir tgztmp && \
