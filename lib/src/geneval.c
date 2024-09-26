@@ -8923,7 +8923,7 @@ static NODE *strseq_node (NODE *l, NODE *r, int rstr, parser *p)
                 } else {
                     tmp = g_strdup_printf("%s%s", s, ds);
                 }
-                gretl_array_set_string (S, i, tmp, 1);
+                gretl_array_set_string(S, i, tmp, 1);
                 g_free(tmp);
             }
             g_free(ds);
