@@ -58,7 +58,8 @@
 enum {
     SHOW_GUI_MAIN = 1 << 0,
     MODEL_CALL    = 1 << 1,
-    DATA_ACCESS   = 1 << 2
+    DATA_ACCESS   = 1 << 2,
+    FOR_ADDON     = 1 << 3
 };
 
 typedef struct call_info_ call_info;
@@ -92,6 +93,8 @@ struct call_info_ {
 #define matrix_arg(t) (t == GRETL_TYPE_MATRIX || t == GRETL_TYPE_MATRIX_REF)
 #define bundle_arg(t) (t == GRETL_TYPE_BUNDLE || t == GRETL_TYPE_BUNDLE_REF)
 #define array_arg(t)  (t == GRETL_TYPE_ARRAY  || t == GRETL_TYPE_ARRAY_REF)
+
+#define for_addon(c) (c->flags & FOR_ADDON)
 
 #define SELNAME "selected_series"
 
@@ -138,7 +141,7 @@ static int caller_is_model_window (windata_t *vwin)
     return 0;
 }
 
-static call_info *cinfo_new (fnpkg *pkg, windata_t *vwin)
+static call_info *cinfo_new (fnpkg *pkg, int is_addon, windata_t *vwin)
 {
     call_info *cinfo = calloc(1, sizeof *cinfo);
 
@@ -161,6 +164,9 @@ static call_info *cinfo_new (fnpkg *pkg, windata_t *vwin)
 
     if (vwin != NULL && caller_is_model_window(vwin)) {
 	cinfo->flags |= MODEL_CALL;
+    }
+    if (is_addon) {
+        cinfo->flags |= FOR_ADDON;
     }
 
     cinfo->sels = NULL;
@@ -1434,7 +1440,11 @@ static GtkWidget *enum_arg_selector (call_info *cinfo, int i,
     g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(update_enum_arg), cinfo);
     for (j=0; j<jmax; j++) {
-	combo_box_append_text(combo, (const char *) S[j]);
+        if (for_addon(cinfo)) {
+            combo_box_append_text(combo, (const char *) _(S[j]));
+        } else {
+            combo_box_append_text(combo, (const char *) S[j]);
+        }
     }
     jactive = MIN(initv - minv, jmax - 1);
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), jactive);
@@ -1960,11 +1970,16 @@ static int function_call_dialog (call_info *cinfo)
     for (i=0; i<cinfo->n_params; i++) {
 	const char *parname = fn_param_name(cinfo->func, i);
 	const char *desc = fn_param_descrip(cinfo->func, i);
+        const char *trdesc = NULL;
 	GretlType ptype = fn_param_type(cinfo->func, i);
 	const char *prior_val = NULL;
 	gretl_bundle *ui = NULL;
 	int spinnable = 0;
 	gchar *argtxt;
+
+        if (desc != NULL && for_addon(cinfo)) {
+            trdesc = _(desc);
+        }
 
 	if (i == 0 && cinfo->n_params > 1) {
 	    add_table_header(tbl, _("Select arguments:"), tcols, row, 5);
@@ -1994,19 +2009,18 @@ static int function_call_dialog (call_info *cinfo)
 	    ptype == GRETL_TYPE_BOOL ||
 	    ptype == GRETL_TYPE_OBS ||
 	    spinnable) {
-	    argtxt = g_strdup_printf("%s",
-				     (desc != NULL)? _(desc) :
-				     parname);
+	    argtxt = g_strdup_printf("%s", trdesc != NULL ? trdesc :
+                                     desc != NULL ? desc : parname);
 	} else {
 	    const char *astr = gretl_type_get_name(ptype);
 
 	    if (desc != NULL && strstr(desc, astr)) {
-		argtxt = g_strdup_printf("%s", _(desc));
+		argtxt = g_strdup_printf("%s", trdesc != NULL ? trdesc : desc);
 	    } else if (desc != NULL && strstr(desc, "level")) {
-		argtxt = g_strdup_printf("%s", _(desc));
+		argtxt = g_strdup_printf("%s", trdesc != NULL ? trdesc : desc);
 	    } else {
-		argtxt = g_strdup_printf("%s (%s)",
-					 (desc != NULL)? _(desc) :
+		argtxt = g_strdup_printf("%s (%s)", trdesc != NULL ? trdesc :
+					 desc != NULL ? _(desc) :
 					 parname, astr);
 	    }
 	}
@@ -2840,6 +2854,7 @@ static int need_model_check (call_info *cinfo)
 }
 
 static call_info *start_cinfo_for_package (const char *pkgname,
+                                           gboolean is_addon,
 					   const char *fname,
 					   windata_t *vwin,
 					   int *err)
@@ -2860,7 +2875,7 @@ static call_info *start_cinfo_for_package (const char *pkgname,
 	}
     }
 
-    cinfo = cinfo_new(pkg, vwin);
+    cinfo = cinfo_new(pkg, is_addon, vwin);
     if (cinfo == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -3018,9 +3033,8 @@ static void maybe_open_sample_script (call_info *cinfo,
     g_free(msg);
 }
 
-/* Called (mostly) from the function-package browser: unless the
-   package can't be loaded we should return 0 to signal that loading
-   happened OK.
+/* Called from the function-package browser: unless the package can't be
+   loaded we should return 0 to signal that loading happened OK.
 */
 
 int open_function_package (const char *pkgname,
@@ -3028,22 +3042,15 @@ int open_function_package (const char *pkgname,
 			   windata_t *vwin)
 {
     call_info *cinfo = NULL;
-    char *fname2 = NULL;
     int can_call = 1;
     int free_cinfo = 1;
+    gboolean is_addon;
     int err = 0;
 
-    if (fname == NULL) {
-	fname2 = gretl_addon_get_path(pkgname);
-	if (fname2 == NULL) {
-	    return E_FOPEN;
-	} else {
-	    fname = fname2;
-	}
-    }
+    is_addon = is_gretl_addon(pkgname);
 
     /* note: this ensures the package gets loaded */
-    cinfo = start_cinfo_for_package(pkgname, fname, vwin, &err);
+    cinfo = start_cinfo_for_package(pkgname, is_addon, fname, vwin, &err);
 
     if (err) {
 	goto bailout;
@@ -3073,10 +3080,6 @@ int open_function_package (const char *pkgname,
     }
 
  bailout:
-
-    if (fname2 != NULL) {
-	free(fname2);
-    }
 
     if (cinfo != NULL && free_cinfo) {
 	cinfo_free(cinfo);
@@ -3702,7 +3705,11 @@ void gfn_menu_callback (GtkAction *action, windata_t *vwin)
     const gchar *pkgname = gtk_action_get_name(action);
     gui_package_info *gpi = NULL;
     char *filepath = NULL;
-    int is_addon = 0;
+    gboolean is_addon = 0;
+
+    /* Coming from a menu item we don't have the path to a package
+       immediately available.
+    */
 
     if (is_gretl_addon(pkgname)) {
 	is_addon = 1;
@@ -3728,7 +3735,7 @@ void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 	call_info *cinfo;
 	int err = 0;
 
-	cinfo = start_cinfo_for_package(pkgname, filepath, vwin, &err);
+	cinfo = start_cinfo_for_package(pkgname, is_addon, filepath, vwin, &err);
 	if (cinfo != NULL) {
 	    call_function_package(cinfo, vwin, filepath, 0);
 	}
