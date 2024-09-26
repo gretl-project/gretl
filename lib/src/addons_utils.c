@@ -467,15 +467,14 @@ int get_addon_basic_info (const char *addon,
     } else {
         char line[1024];
         char name[16];
-        char vstr[16];
         char dstr[16];
         char desc[64];
         char path[MAXLEN];
         int got = 0;
 
         while (fgets(line, sizeof line, fp) && !got) {
-            if (sscanf(line, "%s %s %s \"%63[^\"]\" \"%511[^\"]",
-                       name, vstr, dstr, desc, path) == 5) {
+            if (sscanf(line, "%s %*s %s \"%63[^\"]\" \"%511[^\"]",
+                       name, dstr, desc, path) == 4) {
                 if (!strcmp(name, addon) &&
                     gretl_test_fopen(path, "r") == 0) {
                     got = 1;
