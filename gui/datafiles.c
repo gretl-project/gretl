@@ -1200,7 +1200,7 @@ static void show_addon_info (GtkWidget *w, gpointer data)
     gchar *pkgpath = NULL;
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), v, 0, &pkgname);
-    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), v, 4, &pkgpath);
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), v, 3, &pkgpath);
 
     if (pkgname != NULL && pkgpath != NULL) {
 	display_function_package_data(pkgname, pkgpath, VIEW_PKG_INFO);
@@ -2938,7 +2938,6 @@ static GtkWidget *files_vbox (windata_t *vwin)
     const char *addons_titles[] = {
 	N_("Addon"),
 	N_("Summary"),
-	N_("Version"),
 	N_("Date")
     };
     const char *registry_titles[] = {
@@ -2957,7 +2956,6 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	G_TYPE_STRING
     };
     GType addons_types[] = {
-	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_STRING,
@@ -3049,7 +3047,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	types = addons_types;
 	cols = G_N_ELEMENTS(addons_types);
 	hidden_cols = 1;
-	full_width = 600;
+	full_width = 520;
 	break;
     case PKG_REGISTRY:
 	titles = registry_titles;

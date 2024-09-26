@@ -3706,20 +3706,18 @@ gint populate_addons_list (windata_t *vwin)
 
     for (i=0; i<n_addons; i++) {
 	const char *addon = anames[i];
-	char *version = NULL;
 	char *date = NULL;
 	char *descrip = NULL;
 	char *path = NULL;
 
-	err = get_addon_basic_info(addon, &version, &date, &descrip, &path);
+	err = get_addon_basic_info(addon, &date, &descrip, &path);
 	if (err) {
 	    break;
 	} else {
 	    gtk_list_store_append(store, &iter);
 	    gtk_list_store_set(store, &iter, 0, addon,
-			       1, descrip, 2, version,
-			       3, date, 4, path, -1);
-	    free(version);
+			       1, descrip, 2, date,
+			       3, path, -1);
 	    free(date);
 	    free(descrip);
 	    free(path);

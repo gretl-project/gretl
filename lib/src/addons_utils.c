@@ -444,8 +444,9 @@ char *get_addon_pdf_path (const char *addon)
     return ret;
 }
 
+/* called from gui/database.c only */
+
 int get_addon_basic_info (const char *addon,
-                          char **version,
                           char **date,
                           char **descrip,
                           char **fname)
@@ -478,7 +479,6 @@ int get_addon_basic_info (const char *addon,
                 if (!strcmp(name, addon) &&
                     gretl_test_fopen(path, "r") == 0) {
                     got = 1;
-                    *version = gretl_strdup(vstr);
                     *date = gretl_strdup(dstr);
                     *descrip = gretl_strdup(desc);
                     *fname = gretl_strdup(path);
