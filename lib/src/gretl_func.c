@@ -3226,10 +3226,11 @@ static int package_write_translatable_strings (fnpkg *pkg, PRN *prn)
     FILE *fp;
     gchar *trname;
     char **S = NULL;
+    int trans = 0;
     int i, n = 0;
 
+    /* open a file to contain the results */
     trname = g_strdup_printf("%s-i18n.c", pkg->name);
-
     fp = gretl_fopen(trname, "wb");
     if (fp == NULL) {
         gretl_errmsg_sprintf(_("Couldn't open %s"), trname);
@@ -3238,6 +3239,9 @@ static int package_write_translatable_strings (fnpkg *pkg, PRN *prn)
     }
 
     if (pkg->pub != NULL) {
+        /* pick up any parameter descriptions and/or parameter-value
+           enumeration strings
+        */
         int j, k;
 
         for (i=0; i<pkg->n_pub; i++) {
@@ -3257,6 +3261,7 @@ static int package_write_translatable_strings (fnpkg *pkg, PRN *prn)
     }
 
     if (pkg->label != NULL || S != NULL) {
+        /* we got some relevant content */
         fprintf(fp, "const char *%s_translations[] = {\n", pkg->name);
         if (pkg->label != NULL) {
             fprintf(fp, "    N_(\"%s\"),\n", pkg->label);
@@ -3273,11 +3278,17 @@ static int package_write_translatable_strings (fnpkg *pkg, PRN *prn)
             strings_array_free(S, n);
         }
         fputs("};\n", fp);
+        trans = 1;
     }
 
     fclose(fp);
 
-    pprintf(prn, "Wrote translations file %s\n", trname);
+    if (!trans) {
+        gretl_remove(trname);
+    } else {
+        pprintf(prn, "Wrote translations file %s\n", trname);
+    }
+
     g_free(trname);
 
     return 0;
@@ -4678,7 +4689,7 @@ static int should_rebuild_gfn (const char *gfnname)
  * create_and_write_function_package:
  * @fname: filename for function package.
  * @opt: may include OPT_I to write a package-index entry,
- * OPT_T to write translatable strings.
+ * OPT_T to write translatable strings (for addons).
  * @prn: printer struct for feedback.
  *
  * Create a package based on the functions currently loaded, and
