@@ -108,6 +108,10 @@ const char *HIP_translations[] = {
     N_("Verbosity level")
 };
 
+const char *dbnomics_translations[] = {
+    N_("dbnomics"),
+};
+
 const char *extra_translations[] = {
     N_("Don't"),
     N_("Fill method"),
@@ -135,10 +139,25 @@ const char *extra_translations[] = {
     N_("wildR")
 };
 
-
 const char *regls_translations[] = {
     N_("Coefficient paths"),
     N_("Criterion plot")
 };
 
+const char *KFgui_translations[] = {
+    N_("Absolute value"),
+    N_("Disturbance in obs. equation?"),
+    N_("Exponential"),
+    N_("Normal"),
+    N_("Observation matrix (Z)"),
+    N_("Parametrization"),
+    N_("Quiet"),
+    N_("Square"),
+    N_("State transition matrix (T)"),
+    N_("State variance factor matrix (R)"),
+    N_("Verbose"),
+    N_("do smoothing"),
+    N_("observables"),
+    N_("verbosity")
+};
 

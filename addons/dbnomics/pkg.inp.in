@@ -7,4 +7,5 @@ string pkgdir = topsrc ~ "/addons/dbnomics"
 
 include @pkgdir/dbnomics_public.inp
 
+# required translations are provided via C code
 makepkg dbnomics.gfn --index --quiet --dtd="@dtd"

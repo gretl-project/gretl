@@ -29,9 +29,11 @@ subdirs: $(SUBDIRS)
 $(SUBDIRS):
 	$(MAKE) -C $@
 
+# for use at sourceforge
 addons.xml: gfnindex $(SUBDIRS)
 	./gfnindex $(topsrc) $(SUBDIRS) > $@
 
+# for translations of addons elements
 addons-i18n.c: gfnstrings $(SUBDIRS)
 	./gfnstrings $(SUBDIRS) > $@
 
@@ -67,7 +69,7 @@ installdirs:
 install: $(SUBDIRS) installdirs
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install; done
 
-install-private: addons-i18n.c
+install-priv: addons-i18n.c
 	$(INSTALL_DATA) $< $(topsrc)/addons
 
 addons.tar.gz: $(SUBDIRS)
