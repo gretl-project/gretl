@@ -3098,13 +3098,13 @@ static gchar *compose_pkg_title (ufunc *func,
 					const char *id)
 {
     fnpkg *pkg = gretl_function_get_package(func);
-    const char *pname = function_package_get_name(pkg);
+    const char *pkgname = function_package_get_name(pkg);
     gchar *title;
 
     if (!strcmp(id, BUNDLE_FCAST)) {
-	title = g_strdup_printf("gretl: %s %s", pname, _("forecast"));
+	title = g_strdup_printf("gretl: %s %s", pkgname, _("forecast"));
     } else {
-	title = g_strdup_printf("gretl: %s bundle", pname);
+	title = g_strdup_printf("gretl: %s bundle", pkgname);
     }
 
     return title;
