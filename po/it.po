@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-09-26 10:22-0400\n"
-"PO-Revision-Date: 2024-07-17 17:36+0200\n"
+"PO-Revision-Date: 2024-09-27 10:24+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -486,9 +486,9 @@ msgstr ""
 "Riassunto numerico con intervallo di confidenza bootstrap per la mediana"
 
 #: lib/src/boxplots.c:343
-#, fuzzy, c-format
+#, c-format
 msgid "Numerical summary for %s by %s"
-msgstr "Riassunto numerico per %s"
+msgstr "Riassunto numerico di %s per valori di %s"
 
 #: lib/src/boxplots.c:346
 #, c-format
@@ -710,9 +710,8 @@ msgid "squares and cubes"
 msgstr "quadrati e cubi"
 
 #: lib/src/compare.c:2000
-#, fuzzy
 msgid "Robust RESET test for specification"
-msgstr "Test RESET di specificazione"
+msgstr "Test RESET di specificazione robusto"
 
 #: lib/src/compare.c:2002 lib/src/gretl_model.c:4299
 msgid "RESET test for specification"
@@ -2019,9 +2018,8 @@ msgid "Compacted dataset would be empty"
 msgstr "Il dataset compattato sarebbe vuoto"
 
 #: lib/src/dbread.c:4797 lib/src/dbread.c:4906
-#, fuzzy
 msgid "Error expanding daily data with missing observations"
-msgstr "Attenzione: la serie ha osservazioni mancanti"
+msgstr "Errore nell'espansione di dati giornalieri con osservazioni mancanti"
 
 #: lib/src/dbwrite.c:510 lib/src/dbwrite.c:519 lib/src/gretl_xml.c:1781
 #: plugin/geoplot.c:1065
@@ -2400,25 +2398,23 @@ msgid "Two-tailed critical values for n = %d"
 msgstr "Valore critico a due code per n = %d"
 
 #: lib/src/describe.c:6869
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using the %d observations %s - %s"
-msgstr "%s, usando le osservazioni %s - %s"
+msgstr "%s, usando le %d osservazioni %s - %s"
 
 #: lib/src/describe.c:6870 lib/src/describe.c:6874 lib/src/describe.c:6878
 msgid "Correlation Coefficients"
 msgstr "Coefficienti di correlazione"
 
 #: lib/src/describe.c:6873
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using %d observations from %s - %s"
-msgstr "%s, usando le osservazioni %s - %s"
+msgstr "%s, usando %d osservazioni da %s - %s"
 
 #: lib/src/describe.c:6877
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using samples of size %d to %d"
-msgstr ""
-"Usati %d sotto-campioni di dimensione %d\n"
-"\n"
+msgstr "%s, usando sotto-campioni di dimensione %d fino a %d"
 
 #: lib/src/describe.c:7046 lib/src/describe.c:7139
 msgid "Sample range has no valid observations."
@@ -2581,9 +2577,8 @@ msgid "Dropping %s\n"
 msgstr "Variabile %s eliminata\n"
 
 #: lib/src/discrete.c:2321
-#, fuzzy
 msgid "logit: the dependent variable must form a sequence of integers"
-msgstr "%s: la variabile dipendente deve rappresentare dati di conteggio"
+msgstr "logit: la variabile dipendente deve essere una sequenza di interi"
 
 #: lib/src/discrete.c:3205
 #, c-format
@@ -2611,19 +2606,19 @@ msgid "Fisher's Exact Test"
 msgstr "Test esatto di Fisher"
 
 #: lib/src/discrete.c:3812
-#, fuzzy, c-format
+#, c-format
 msgid "  Left:   P-value = %g\n"
-msgstr "con p-value = %g\n"
+msgstr "  Sinistra: P-value = %g\n"
 
 #: lib/src/discrete.c:3813
-#, fuzzy, c-format
+#, c-format
 msgid "  Right:  P-value = %g\n"
-msgstr "con p-value = %g\n"
+msgstr "  Destra:   P-value = %g\n"
 
 #: lib/src/discrete.c:3814
-#, fuzzy, c-format
+#, c-format
 msgid "  2-Tail: P-value = %g\n"
-msgstr "con p-value = %g\n"
+msgstr "  A 2 code: P-value = %g\n"
 
 #: lib/src/discrete.c:3927 gui/selector.c:1474
 #, c-format
@@ -2826,9 +2821,8 @@ msgid "Generated series %s (ID %d)"
 msgstr "Generata la serie %s (ID %d)"
 
 #: lib/src/forecast.c:3621
-#, fuzzy
 msgid "Estimated outcome probabilities"
-msgstr "Probabilità del risultato"
+msgstr "Probabilità stimata del risultato"
 
 #: lib/src/forecast.c:3956
 msgid "Forecast plot not implemented for panel data"
@@ -2946,9 +2940,8 @@ msgid "The constant cannot be lagged"
 msgstr "Non si può ritardare la costante"
 
 #: lib/src/geneval.c:10587 lib/src/geneval.c:14616 lib/src/genfuncs.c:2724
-#, fuzzy
 msgid "This function requires time-series data"
-msgstr "Questo stimatore richiede dati in serie storiche o panel"
+msgstr "Questa funzione richiede dati in serie storiche"
 
 #: lib/src/geneval.c:10945
 msgid "Matrix specification is not coherent"
@@ -3006,9 +2999,9 @@ msgid "%s: requires an even number of arguments"
 msgstr "%s: richiede un numero pari di argomenti"
 
 #: lib/src/geneval.c:15852
-#, fuzzy, c-format
+#, c-format
 msgid "%s: function not found"
-msgstr "gretl: pacchetti di funzioni su %s"
+msgstr "%s: funzione non trovata"
 
 #: lib/src/geneval.c:16404
 msgid "array: no type was specified"
@@ -3138,14 +3131,12 @@ msgstr ""
 "Selezionare un campione più piccolo."
 
 #: lib/src/genfuncs.c:2093
-#, fuzzy
 msgid "Error in Baxter-King frequencies"
-msgstr "Errore nell'esecuzione della funzione"
+msgstr "Errore nelle frequenze Baxter-King"
 
 #: lib/src/genfuncs.c:2103 lib/src/genfuncs.c:2734
-#, fuzzy
 msgid "Insufficient observations"
-msgstr "LEVERAGE - _Osservazioni influenti"
+msgstr "Osservazioni insufficienti"
 
 #: lib/src/genfuncs.c:2756 lib/src/genfuncs.c:2763
 msgid "Butterworth: infeasible lambda value"
@@ -3323,14 +3314,12 @@ msgid "Failed to calculate MIDAS gradient: %s"
 msgstr "Impossibile calcolare il gradiente MIDAS: %s"
 
 #: lib/src/genfuncs.c:5095
-#, fuzzy
 msgid "Invalid MIDAS term index"
-msgstr "Rango MPI non valido %d"
+msgstr "Indice non valido per termine MIDAS"
 
 #: lib/src/genfuncs.c:5175
-#, fuzzy
 msgid "Not a valid midasreg bundle"
-msgstr "Non è stata trovata alcuna serie valida"
+msgstr "Bundle midasreg non valido"
 
 #: lib/src/genfuncs.c:5335
 msgid ""
@@ -3580,9 +3569,8 @@ msgstr ""
 "varabile dummy discreta"
 
 #: lib/src/graphing.c:2244
-#, fuzzy
 msgid "incompatible output specification"
-msgstr "Specificazione di colonna non valida"
+msgstr "Specificazione di output non compatibile"
 
 #: lib/src/graphing.c:2678 gui/gpt_dialog.c:665
 #, c-format
@@ -3940,9 +3928,9 @@ msgid "Evaluations of gradient: %d\n"
 msgstr "Valutazioni del gradiente: %d\n"
 
 #: lib/src/gretl_bfgs.c:2401
-#, fuzzy, c-format
+#, c-format
 msgid "fdjac: got %d non-finite value(s) on input"
-msgstr "valori non finiti generati"
+msgstr "fdjac: %d valori non finiti in input"
 
 #: lib/src/gretl_bfgs.c:2540
 #, c-format
@@ -3979,11 +3967,11 @@ msgstr ""
 msgid ""
 "No improvement found in %d iterations\n"
 "\n"
-msgstr "   Trovate %d osservazioni\n"
+msgstr "\nNessun miglioramento in %d iterazioni\n"
 
 #: lib/src/gretl_bfgs.c:2990
 msgid "*** warning: surface seems to be flat\n"
-msgstr ""
+msgstr "*** attenzione: la superficie sembra essere piatta\n"
 
 #: lib/src/gretl_bfgs.c:3089
 #, c-format
@@ -4027,19 +4015,19 @@ msgid "%s: should be scalar\n"
 msgstr "%s: dovrebbe essere uno scalare\n"
 
 #: lib/src/gretl_bundle.c:1917
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid (missing) value\n"
-msgstr "%d valori mancanti"
+msgstr "%s: valore mancante o non valido\n"
 
 #: lib/src/gretl_bundle.c:1923
-#, fuzzy, c-format
+#, c-format
 msgid "%s: value %g is out of bounds (lower limit %g)\n"
-msgstr "%s: il valore dell'argomento (%g) è fuori dai limiti"
+msgstr "%s: il valore %g è fuori dai limiti (limite inferiore %g)\n"
 
 #: lib/src/gretl_bundle.c:1927
-#, fuzzy, c-format
+#, c-format
 msgid "%s: value %g is out of bounds (upper limit %g)\n"
-msgstr "%s: il valore dell'argomento (%g) è fuori dai limiti"
+msgstr "%s: il valore %g è fuori dai limiti (limite superiore %g)\n"
 
 #: lib/src/gretl_bundle.c:3089 lib/src/gretl_xml.c:124
 msgid "xmlReadMemory failed"
@@ -4070,9 +4058,8 @@ msgid "qrdecomp: the input must have rows >= columns"
 msgstr "qrdecomp: l'argomento deve avere più righe che colonne"
 
 #: lib/src/gretl_data_io.c:179
-#, fuzzy
 msgid "Unknown data import type"
-msgstr "tipo di dati sconosciuto"
+msgstr "Tipo di dati in importazione sconosciuto"
 
 #: lib/src/gretl_drivers.c:62
 msgid "modtest: no options selected\n"
@@ -4306,9 +4293,8 @@ msgid "You cannot define a function within a function"
 msgstr "Non si può definire una funzione dentro una funzione"
 
 #: lib/src/gretl_errors.c:85
-#, fuzzy
 msgid "Out of bounds error"
-msgstr "Errore di memoria esaurita"
+msgstr "Errore: fuori dai limiti"
 
 #: lib/src/gretl_errors.c:86
 msgid "Error executing function"
@@ -4331,9 +4317,8 @@ msgid "mixed complex/real arguments not supported"
 msgstr "argomenti misti (reale/complesso) non supportati"
 
 #: lib/src/gretl_errors.c:91
-#, fuzzy
 msgid "Dependencies not met"
-msgstr "Dipendenze"
+msgstr "Dipendenze non soddisfatte"
 
 #: lib/src/gretl_errors.c:99
 msgid "gradient is not close to zero"
@@ -4401,7 +4386,7 @@ msgstr ""
 #: lib/src/gretl_foreign.c:3170
 #, fuzzy, c-format
 msgid "%s: not handled\n"
-msgstr "la cancellazione di %s non è consentita\n"
+msgstr "%s: non gestito\n"
 
 #: lib/src/gretl_foreign.c:3194
 #, c-format
