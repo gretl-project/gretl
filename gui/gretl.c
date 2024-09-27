@@ -1527,6 +1527,16 @@ static void set_main_window_scale (void)
 	double aspect = 1.25;
 	double hfac = 2.10;
 
+#if 0
+        double w_in = gdk_screen_width_mm() / 25.4;
+        double h_in = gdk_screen_height_mm() / 25.4;
+        fprintf(stderr, "screen pixels: %d x %d\n", w, h);
+        fprintf(stderr, "screen inches (gdk): %g x %g\n", w_in, h_in);
+        fprintf(stderr, "nominal dpi %g, %g\n", gretl_round(w/w_in),
+                gretl_round(h/h_in));
+        fprintf(stderr, "inches @ 170 dpi: %g x %g\n", w/170.0, h/170.0);
+#endif
+
 	if (mainwin_height < h / hfac) {
 	    mainwin_height = h / hfac;
 	    if ((double) w / h > 1.35) {
