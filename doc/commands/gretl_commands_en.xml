@@ -13313,6 +13313,10 @@
 	  <flag>--cubes-only</flag>
 	  <effect>compute the test using only the cubes</effect>
 	</option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>use robust standard errors in auxiliary regression</effect>
+	</option>
       </options>
     </usage>
 
@@ -13334,6 +13338,10 @@
 	The <opt>silent</opt> option may be used if one plans to
 	make use of the <fncref targ="$test"/> and/or <fncref
 	targ="$pvalue"/> accessors to grab the results of the test.
+      </para>
+      <para context="cli">
+	The <opt>robust</opt> option is implicit if the regression to
+	be tested employed robust standard errors.
       </para>
     </description>
 
