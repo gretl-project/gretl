@@ -1943,13 +1943,16 @@ int reset_test (MODEL *pmod, DATASET *dset,
     }
 
     if (!err) {
-	/* add yhat^2 and/or yhat^3 to data set */
+	/* add scaled yhat^2 and/or yhat^3 to data set */
 	int vs = orig_v;
 	int vc = (opt & OPT_C)? orig_v : orig_v + 1;
 	int k = pmod->list[0] + 1;
+        double s;
+
+        s = gretl_stddev(pmod->t1, pmod->t2, pmod->yhat);
 
 	for (t = pmod->t1; t<=pmod->t2; t++) {
-	    double x = pmod->yhat[t];
+	    double x = pmod->yhat[t] / s;
 
 	    if (use_square) {
 		dset->Z[vs][t] = x * x;
