@@ -13852,7 +13852,7 @@ static int alt_qform (const gretl_matrix *A, GretlMatrixMod amod,
  * Returns: 0 on success; non-zero error code on failure.
  */
 
-#define QFORM_SMALL 1.0e-20
+#define QFORM_SMALL 1.0e-21 /* 2024-10-01: was 1.0e-20 */
 
 int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
                         const gretl_matrix *X, gretl_matrix *C,
