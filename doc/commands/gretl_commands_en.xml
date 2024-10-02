@@ -13327,7 +13327,8 @@
 	adding the squares and/or the cubes of the fitted values to the
 	regression and calculating the <math>F</math> statistic for
 	the null hypothesis that the coefficients on the added terms
-	are zero.
+	are zero. For numerical reasons, the squares and cubes are
+	rescaled using the standard deviation of the fitted values. 
       </para>
       <para context="cli">
 	Both the squares and the cubes are added unless one of the

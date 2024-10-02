@@ -13512,6 +13512,10 @@ del comando <cmdref targ="set"/>.
 	<flag>--cubes-only</flag>
 	<effect>calcola il test coi soli cubi</effect>
       </option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>usa standard errors robusti nella regressione ausiliaria</effect>
+	</option>
     </options>
   </usage>
 
@@ -13522,7 +13526,9 @@ del comando <cmdref targ="set"/>.
       aggiungendo alla regressione i quadrati e/o cubi dei valori
       stimati, e calcola la statistica <math>F</math> per l'ipotesi
       nulla sotto la quale i coefficienti &bgr; delle variabili
-      aggiunte siano uguali a zero.
+      aggiunte siano uguali a zero. Per ragioni numeriche, i quadrati
+      e i cubi vengono riscalati usando lo scarto quadratico medio dei
+      valori stimati.
     </para>
     <para context="cli">
       Sia i quadrati che i cubi vengono aggiunti al modello in
@@ -13532,9 +13538,14 @@ del comando <cmdref targ="set"/>.
     <para context="cli">
       L'opzione <opt>silent</opt> può essere usata se si intendono
       utilizzare solo gli accessori <fncref targ="$test"/> o <fncref
-							       targ="$pvalue"/> per disporre direttamente dei risultati del
+      targ="$pvalue"/> per disporre direttamente dei risultati del
       test.
     </para>
+      <para context="cli">
+	L'opzione <opt>robust</opt> è implicita se la il modello su
+	cui effettuare il test è stato stimato usando a sua volta
+	errori robusti.
+      </para>
   </description>
 
   <gui-access>
