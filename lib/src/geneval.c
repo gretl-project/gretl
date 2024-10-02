@@ -1636,9 +1636,16 @@ static int check_dist_count (int d, int f, int *np, int *argc)
             err = E_INVARG;
         }
     } else if (d == D_DIRICHLET) {
-        /* randgen only */
+        /* mrandgen only */
         if (randgen(f)) {
             *np = 1; /* alpha vector */
+        } else {
+            err = E_INVARG;
+        }
+    } else if (d == D_DISCRETE) {
+        /* randgen and mrandgen only */
+        if (randgen(f)) {
+            *np = 1; /* prob vector */
         } else {
             err = E_INVARG;
         }
@@ -2171,8 +2178,56 @@ static NODE *dirichlet_node (NODE *args, parser *p)
     return ret;
 }
 
-/* return a node containing the evaluated result of a
-   probability distribution function */
+static NODE *discrete_rand_node (NODE *n, NODE *args, parser *p)
+{
+    NODE *ret = NULL;
+    gretl_matrix *probs = NULL;
+    int vsize = 0;
+
+    if (args->v.bn.n[1]->t == MAT) {
+        probs = args->v.bn.n[1]->v.m;
+        if (gretl_vector_get_length(probs) == 0) {
+            p->err = E_INVARG;
+            return NULL;
+        }
+    }
+
+    if (n->t == F_RANDGEN1) {
+        ret = aux_scalar_node(p);
+    } else if (n->t == F_RANDGEN) {
+        ret = aux_series_node(p);
+    } else {
+        /* F_MRANDGEN */
+        int r = node_get_int(args->v.bn.n[2], p);
+        int c = node_get_int(args->v.bn.n[3], p);
+
+        if (!p->err && (r <= 0 || c <= 0)) {
+            p->err = E_INVARG;
+        } else {
+            ret = aux_sized_matrix_node(p, r, c, 0);
+            vsize = r * c;
+        }
+    }
+
+    if (!p->err && n->t == F_RANDGEN1) {
+        p->err = gretl_rand_discrete(&ret->v.xval, 0, 0, probs);
+    } else if (!p->err && n->t == F_RANDGEN) {
+        p->err = gretl_rand_discrete(ret->v.xvec,
+                                     p->dset->t1, p->dset->t2,
+                                     probs);
+    } else if (!p->err) {
+        /* F_MRANDGEN */
+        p->err = gretl_rand_discrete(ret->v.m->val, 0, vsize-1, probs);
+    }
+
+    return ret;
+}
+
+/* Return a node containing the evaluated result of a probability
+   distribution function. Here, node @n is the function node and node
+   @r holds the arguments, the number of which ir not known in
+   advance.
+*/
 
 static NODE *eval_pdist (NODE *n, NODE *r, parser *p)
 {
@@ -2180,7 +2235,7 @@ static NODE *eval_pdist (NODE *n, NODE *r, parser *p)
 
     if (starting(p)) {
         NODE *e, *s;
-        int i, k, m = r->v.bn.n_nodes;
+        int i, k, nr = r->v.bn.n_nodes;
         int rgen = (n->t == F_RANDGEN);
         int mrgen = (n->t == F_MRANDGEN);
         int rgen1 = (n->t == F_RANDGEN1);
@@ -2193,11 +2248,14 @@ static NODE *eval_pdist (NODE *n, NODE *r, parser *p)
         int rows = 0, cols = 0;
         int np, argc, bb, d = 0;
 
-        if (m < 2) {
+        if (nr < 2) {
             p->err = E_ARGS;
             goto disterr;
         }
 
+        /* the first argument must hold a string identifying
+           the distribution to be employed
+        */
         s = r->v.bn.n[0];
         if (s->t == STR) {
             char *dstr = s->v.str;
@@ -2218,15 +2276,24 @@ static NODE *eval_pdist (NODE *n, NODE *r, parser *p)
 
         if (mrgen) {
             if (d == D_DIRICHLET) {
-                if (m != 3) {
-                    n_args_error(m, 3, 3, n->t, p);
+                if (nr != 3) {
+                    n_args_error(nr, 3, 3, n->t, p);
                 }
-            } else if (m < 4 || m > 7) {
-                n_args_error(m, 4, 7, n->t, p);
+            } else if (d == D_DISCRETE) {
+                if (nr != 4) {
+                    n_args_error(nr, 4, 4, n->t, p);
+                }
+            } else if (nr < 4 || nr > 7) {
+                n_args_error(nr, 4, 7, n->t, p);
             }
-        } else if (m > 5) {
-            n_args_error(m, 2, 5, n->t, p);
-        }
+        } else if (nr > 5) {
+            n_args_error(nr, 2, 5, n->t, p);
+        } else {
+            if (d == D_DIRICHLET) {
+                /* mrandgen only */
+		p->err = E_INVARG;
+            }
+	}
 
         if (p->err) {
             goto disterr;
@@ -2235,7 +2302,7 @@ static NODE *eval_pdist (NODE *n, NODE *r, parser *p)
         }
         if (!p->err && d != D_DIRICHLET) {
             k = np + argc + 2 * mrgen;
-            if (k != m - 1) {
+            if (k != nr - 1) {
                 p->err = E_INVARG;
             }
         }
@@ -2252,7 +2319,10 @@ static NODE *eval_pdist (NODE *n, NODE *r, parser *p)
             /* special: bivariate normal */
             return bvnorm_node(r, p);
         } else if (d == D_DIRICHLET) {
+            /* special: dirichlet */
             return dirichlet_node(r, p);
+        } else if (d == D_DISCRETE) {
+            return discrete_rand_node(n, r, p);
         }
 
         for (i=1; i<=k && !p->err; i++) {
@@ -3141,7 +3211,7 @@ static int real_matrix_calc (const gretl_matrix *A,
         break;
     case B_LDIV:
     case B_DIV:
-        /* Matrix left (A\B) or right (A/B) "division": note that
+        /* Matrix left (A\B) or right (A/B) "division". Note that
            A/B = (B'\A')', which we handle by passing the transpose
            flag to gretl_{c}matrix_divide.
         */
@@ -5113,7 +5183,8 @@ static int ok_matrix_dim (int r, int c, int f)
 
 static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 {
-    int n = 0, cols = 0, rows = node_get_int(l, p);
+    int rows = node_get_int(l, p);
+    int n = 0, cols = 0;
     NODE *ret = NULL;
 
     if (!p->err) {
@@ -5173,6 +5244,27 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
         break;
     default:
         break;
+    }
+
+    return ret;
+}
+
+static NODE *mvnormal_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+    gretl_matrix *L = l->v.m;
+    int prec;
+
+    if (L == NULL || L->rows != L->cols) {
+        p->err = E_INVARG;
+    } else {
+        prec = node_get_bool(r, p, -1);
+    }
+    if (!p->err) {
+        ret = aux_sized_matrix_node(p, L->rows, 1, 0);
+    }
+    if (!p->err && L->rows > 0) {
+        p->err = correlated_normal_vec(ret->v.m, L, prec);
     }
 
     return ret;
@@ -8796,7 +8888,7 @@ static NODE *strseq_node (NODE *l, NODE *r, int rstr, parser *p)
     NODE *sn = rstr ? r : l; /* the string node */
     const char *s = sn->v.str;
     int dim;
-    
+
     if (mn->t == ARRAY) {
 	dim = gretl_array_get_length(mn->v.a);
     } else {
@@ -8831,7 +8923,7 @@ static NODE *strseq_node (NODE *l, NODE *r, int rstr, parser *p)
                 } else {
                     tmp = g_strdup_printf("%s%s", s, ds);
                 }
-                gretl_array_set_string (S, i, tmp, 1);
+                gretl_array_set_string(S, i, tmp, 1);
                 g_free(tmp);
             }
             g_free(ds);
@@ -9190,33 +9282,41 @@ static NODE *array_func_node (NODE *l, NODE *r, NODE *b, int f, parser *p)
 	    ret->v.xval = p->err = gretl_array_qsort(a, r->v.str,
 						     p->dset, p->prn);
         }
-    } else if (t == GRETL_TYPE_MATRICES) {
-        int vcat = node_get_bool(r, p, 0);
+    } else if (f == F_FLATTEN) {
+	if (t == GRETL_TYPE_MATRICES) {
+	    int mode = 0;
 
-        if (!p->err) {
-            ret = aux_matrix_node(p);
-        }
-        if (!p->err) {
-            ret->v.m = gretl_matrix_array_flatten(l->v.a, vcat, &p->err);
-        }
-    } else if (t == GRETL_TYPE_STRINGS) {
-        const char *sep = NULL;
-
-        if (r->t == STR) {
-            sep = r->v.str;
-        } else {
-            int space = node_get_bool(r, p, 0);
-
-            if (!p->err) {
-                sep = space ? " " : "\n";
+	    if (!null_node(r)) {
+		mode = node_get_int(r, p);
+                if (mode < 0 || mode > 2) {
+                    p->err = E_INVARG;
+                }
             }
-        }
-        if (!p->err) {
-            ret = aux_string_node(p);
-        }
-        if (!p->err) {
-            ret->v.str = gretl_strings_array_flatten(l->v.a, sep, &p->err);
-        }
+	    if (!p->err) {
+		ret = aux_matrix_node(p);
+	    }
+	    if (!p->err) {
+		ret->v.m = gretl_matrix_array_flatten(l->v.a, mode, &p->err);
+	    }
+	} else if (t == GRETL_TYPE_STRINGS) {
+	    const char *sep = NULL;
+
+	    if (r->t == STR) {
+		sep = r->v.str;
+	    } else {
+		int space = node_get_bool(r, p, 0);
+
+		if (!p->err) {
+		    sep = space ? " " : "\n";
+		}
+	    }
+	    if (!p->err) {
+		ret = aux_string_node(p);
+	    }
+	    if (!p->err) {
+		ret->v.str = gretl_strings_array_flatten(l->v.a, sep, &p->err);
+	    }
+	}
     } else {
         p->err = E_TYPES;
     }
@@ -18685,6 +18785,15 @@ static NODE *eval (NODE *t, parser *p)
             ret = matrix_fill_func(l, r, t->t, p);
         } else if (!scalar_node(l)) {
             node_type_error(t->t, 1, NUM, l, p);
+        } else {
+            node_type_error(t->t, 2, NUM, r, p);
+        }
+        break;
+    case HF_VCNORM:
+        if (l->t == MAT && scalar_node(r)) {
+            ret = mvnormal_node(l, r, p);
+        } else if (l->t != MAT) {
+            node_type_error(t->t, 1, MAT, l, p);
         } else {
             node_type_error(t->t, 2, NUM, r, p);
         }

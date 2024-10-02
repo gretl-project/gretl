@@ -166,8 +166,6 @@ int libset_set_int (SetKey key, int val);
 
 int libset_help_available (const char *s);
 
-SetKey get_libset_key (const char *s);
-
 /* GUI setter functions */
 void set_xsect_hccme (const char *s);
 void set_tseries_hccme (const char *s);

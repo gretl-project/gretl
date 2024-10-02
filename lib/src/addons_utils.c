@@ -24,7 +24,7 @@
 #include "build.h"
 #include "gretl_xml.h"
 
-#define A_DEBUG 0
+#define AU_DEBUG 0
 
 /* Note: here's the canonical listing of gretl addons. If a new addon
    is added this must be updated
@@ -65,13 +65,13 @@ int is_gretl_addon (const char *pkgname)
     int i, n = strlen(pkgname);
 
     if (has_suffix(pkgname, ".gfn")) {
-	n -= 4;
+        n -= 4;
     }
 
     for (i=0; i<n_addons; i++) {
-	if (!strncmp(pkgname, addon_names[i], n)) {
-	    return 1;
-	}
+        if (!strncmp(pkgname, addon_names[i], n)) {
+            return 1;
+        }
     }
 
     return 0;
@@ -84,7 +84,7 @@ int is_gretl_addon (const char *pkgname)
 const char **get_addon_names (int *n)
 {
     if (n != NULL) {
-	*n = n_addons;
+        *n = n_addons;
     }
     return addon_names;
 }
@@ -102,93 +102,93 @@ static int addon_basics_from_gfn (addon_basics *ab)
     int got = 0;
 
     if (gretl_stat(ab->path, NULL) != 0) {
-	return E_FOPEN;
+        return E_FOPEN;
     }
 
     gretl_xml_open_doc_root(ab->path, "gretl-functions", &doc, &node);
     if (doc == NULL || node == NULL) {
-	return E_FOPEN;
+        return E_FOPEN;
     }
 
     n1 = node->xmlChildrenNode;
 
     while (n1 != NULL && got < targ) {
-	if (!xmlStrcmp(n1->name, (XUC) "gretl-function-package")) {
-	    n2 = n1->xmlChildrenNode;
-	    while (n2 != NULL && got < targ) {
-		if (!xmlStrcmp(n2->name, (XUC) "version")) {
-		    gretl_xml_node_get_trimmed_string(n2, doc, &ab->version);
-		    got++;
-		} else if (!xmlStrcmp(n2->name, (XUC) "date")) {
-		    gretl_xml_node_get_trimmed_string(n2, doc, &ab->date);
-		    got++;
-		} else if (!xmlStrcmp(n2->name, (XUC) "description")) {
-		    gretl_xml_node_get_trimmed_string(n2, doc, &ab->descrip);
-		    got++;
-		}
-		n2 = n2->next;
-	    }
-	}
-	n1 = n1->next;
+        if (!xmlStrcmp(n1->name, (XUC) "gretl-function-package")) {
+            n2 = n1->xmlChildrenNode;
+            while (n2 != NULL && got < targ) {
+                if (!xmlStrcmp(n2->name, (XUC) "version")) {
+                    gretl_xml_node_get_trimmed_string(n2, doc, &ab->version);
+                    got++;
+                } else if (!xmlStrcmp(n2->name, (XUC) "date")) {
+                    gretl_xml_node_get_trimmed_string(n2, doc, &ab->date);
+                    got++;
+                } else if (!xmlStrcmp(n2->name, (XUC) "description")) {
+                    gretl_xml_node_get_trimmed_string(n2, doc, &ab->descrip);
+                    got++;
+                }
+                n2 = n2->next;
+            }
+        }
+        n1 = n1->next;
     }
 
     if (doc != NULL) {
-	xmlFreeDoc(doc);
+        xmlFreeDoc(doc);
     }
 
     return (got < targ)? E_DATA: 0;
 }
 
 static char *get_user_path (char *targ, const char *pgkname,
-			    const char *gfnname)
+                            const char *gfnname)
 {
 #ifdef OS_OSX
     return gretl_build_path(targ, gretl_app_support_dir(),
-			    "functions", pgkname, gfnname, NULL);
+                            "functions", pgkname, gfnname, NULL);
 #else
     return gretl_build_path(targ, gretl_dotdir(), "functions",
-			    pgkname, gfnname, NULL);
+                            pgkname, gfnname, NULL);
 #endif
 }
 
 static int select_addon_file (addon_basics *sys_ab,
-			      addon_basics *usr_ab)
+                              addon_basics *usr_ab)
 {
     int err = 0;
 
     if (sys_ab->ok) {
-	sys_ab->ok = !strcmp(sys_ab->version, GRETL_VERSION);
+        sys_ab->ok = !strcmp(sys_ab->version, GRETL_VERSION);
     }
     if (usr_ab->ok) {
-	usr_ab->ok = !strcmp(usr_ab->version, GRETL_VERSION);
+        usr_ab->ok = !strcmp(usr_ab->version, GRETL_VERSION);
     }
 
     if (sys_ab->ok && usr_ab->ok) {
-	/* both match gretl version, compare dates */
-	guint32 sed = get_epoch_day(sys_ab->date);
-	guint32 ued = get_epoch_day(usr_ab->date);
+        /* both match gretl version, compare dates */
+        guint32 sed = get_epoch_day(sys_ab->date);
+        guint32 ued = get_epoch_day(usr_ab->date);
 
-	if (sed >= ued) {
-	    usr_ab->ok = 0;
-	} else {
-	    sys_ab->ok = 0;
-	}
+        if (sed >= ued) {
+            usr_ab->ok = 0;
+        } else {
+            sys_ab->ok = 0;
+        }
     } else if (sys_ab->ok == 0 && usr_ab->ok == 0) {
-	err = E_DATA;
+        err = E_DATA;
     }
 
     return err;
 }
 
 static void report_addon_result (addon_basics *ab,
-				 int err, PRN *prn)
+                                 int err, PRN *prn)
 {
     pprintf(prn, " %s '%s'\n", _("try"), ab->path);
     if (!err) {
-	pprintf(prn, "  %s %s (%s)\n", _("found version"),
-		ab->version, ab->date);
+        pprintf(prn, "  %s %s (%s)\n", _("found version"),
+                ab->version, ab->date);
     } else {
-	pprintf(prn, "  %s\n", _("not found"));
+        pprintf(prn, "  %s\n", _("not found"));
     }
 }
 
@@ -224,67 +224,67 @@ int update_addons_index (PRN *prn)
 
     fp = gretl_fopen(idxname, "wb");
     if (fp == NULL) {
-	g_free(idxname);
-	return E_FOPEN;
+        g_free(idxname);
+        return E_FOPEN;
     }
 
     for (i=0; i<n_addons; i++) {
-	int err = 0;
+        int err = 0;
 
-	/* construct the gfn name */
-	sprintf(gfnname, "%s.gfn", addon_names[i]);
-	if (verbose) {
-	    pprintf(prn, _("check for %s\n"), addon_names[i]);
-	}
+        /* construct the gfn name */
+        sprintf(gfnname, "%s.gfn", addon_names[i]);
+        if (verbose) {
+            pprintf(prn, _("check for %s\n"), addon_names[i]);
+        }
 
-	/* (1) build and check the system path */
-	gretl_build_path(sys_ab.path, gretl_home(), "functions",
-			 addon_names[i], gfnname, NULL);
-	err = addon_basics_from_gfn(&sys_ab);
-	if (!err) {
-	    sys_ab.ok = 1;
-	}
-	if (verbose) {
-	    report_addon_result(&sys_ab, err, prn);
-	}
+        /* (1) build and check the system path */
+        gretl_build_path(sys_ab.path, gretl_home(), "functions",
+                         addon_names[i], gfnname, NULL);
+        err = addon_basics_from_gfn(&sys_ab);
+        if (!err) {
+            sys_ab.ok = 1;
+        }
+        if (verbose) {
+            report_addon_result(&sys_ab, err, prn);
+        }
 
-	/* (2) build and check the userspace path */
-	get_user_path(usr_ab.path, addon_names[i], gfnname);
-	err = addon_basics_from_gfn(&usr_ab);
-	if (!err) {
-	    usr_ab.ok = 1;
-	}
-	if (verbose) {
-	    report_addon_result(&usr_ab, err, prn);
-	}
+        /* (2) build and check the userspace path */
+        get_user_path(usr_ab.path, addon_names[i], gfnname);
+        err = addon_basics_from_gfn(&usr_ab);
+        if (!err) {
+            usr_ab.ok = 1;
+        }
+        if (verbose) {
+            report_addon_result(&usr_ab, err, prn);
+        }
 
-	if (sys_ab.ok || usr_ab.ok) {
-	    /* carry out further checks */
-	    err = select_addon_file(&sys_ab, &usr_ab);
-	} else {
-	    err = E_DATA;
-	}
+        if (sys_ab.ok || usr_ab.ok) {
+            /* carry out further checks */
+            err = select_addon_file(&sys_ab, &usr_ab);
+        } else {
+            err = E_DATA;
+        }
 
-	if (!err) {
-	    /* write line to addons.idx */
-	    addon_basics *ab = sys_ab.ok ? &sys_ab : &usr_ab;
+        if (!err) {
+            /* write line to addons.idx */
+            addon_basics *ab = sys_ab.ok ? &sys_ab : &usr_ab;
 
-	    fprintf(fp, "%s %s %s \"%s\" \"%s\"\n", addon_names[i],
-		    ab->version, ab->date, ab->descrip, ab->path);
-	}
-	if (verbose) {
-	    if (err) {
-		pprintf(prn, " %s\n", _("no valid version found"));
-	    } else {
-		pprintf(prn, " %s %s (%s)\n", _("indexed version"),
-			sys_ab.ok ? sys_ab.version : usr_ab.version,
-			sys_ab.ok ? sys_ab.date : usr_ab.date);
-	    }
-	}
+            fprintf(fp, "%s %s %s \"%s\" \"%s\"\n", addon_names[i],
+                    ab->version, ab->date, ab->descrip, ab->path);
+        }
+        if (verbose) {
+            if (err) {
+                pprintf(prn, " %s\n", _("no valid version found"));
+            } else {
+                pprintf(prn, " %s %s (%s)\n", _("indexed version"),
+                        sys_ab.ok ? sys_ab.version : usr_ab.version,
+                        sys_ab.ok ? sys_ab.date : usr_ab.date);
+            }
+        }
 
-	/* clear for next addon */
-	clear_addon_basics(&sys_ab);
-	clear_addon_basics(&usr_ab);
+        /* clear for next addon */
+        clear_addon_basics(&sys_ab);
+        clear_addon_basics(&usr_ab);
     }
 
     fclose(fp);
@@ -326,48 +326,54 @@ char *gretl_addon_get_path (const char *addon)
     FILE *fp = gretl_fopen(idxname, "rb");
     char *ret = NULL;
     int err = 0;
-
+    PRN *auxprn;
+    
 #if AU_DEBUG
     fprintf(stderr, "gretl_addon_get_path: '%s'\n", addon);
+    auxprn = gretl_print_new(GRETL_PRINT_STDERR, &err);
+#else
+    auxprn = NULL;
 #endif
 
     if (fp == NULL) {
-	err = update_addons_index(NULL);
-	if (!err) {
-	    fp = gretl_fopen(idxname, "rb");
-	}
+        err = update_addons_index(auxprn);
+        if (!err) {
+            fp = gretl_fopen(idxname, "rb");
+        }
     }
 
+    gretl_print_destroy(auxprn);
+    
     if (fp == NULL) {
-	fprintf(stderr, "failed to read addons.idx\n");
+        fprintf(stderr, "failed to read addons.idx\n");
     } else {
-	char *s, line[1024];
-	int n = strlen(addon);
-	int nq = 0;
+        char *s, line[1024];
+        int n = strlen(addon);
+        int nq = 0;
 
-	while (fgets(line, sizeof line, fp)) {
-	    if (!strncmp(addon, line, n)) {
-		char *p = NULL;
-		char *q = NULL;
+        while (fgets(line, sizeof line, fp)) {
+            if (!strncmp(addon, line, n)) {
+                char *p = NULL;
+                char *q = NULL;
 
-		s = line + n;
-		while (*s) {
-		    if (*s == '"') {
-			nq++;
-			if (nq == 3) {
-			    p = s + 1;
-			} else if (nq == 4) {
-			    q = s;
-			}
-		    }
-		    s++;
-		}
-		if (p != NULL && q != NULL) {
-		    ret = gretl_strndup(p, q - p);
-		}
-	    }
-	}
-	fclose(fp);
+                s = line + n;
+                while (*s) {
+                    if (*s == '"') {
+                        nq++;
+                        if (nq == 3) {
+                            p = s + 1;
+                        } else if (nq == 4) {
+                            q = s;
+                        }
+                    }
+                    s++;
+                }
+                if (p != NULL && q != NULL) {
+                    ret = gretl_strndup(p, q - p);
+                }
+            }
+        }
+        fclose(fp);
     }
 
     g_free(idxname);
@@ -386,15 +392,15 @@ char *get_addon_examples_dir (const char *addon)
     char *ret = NULL;
 
     if (path != NULL) {
-	s = strrslash(path);
-	if (s != NULL) {
-	    *s = '\0';
-	}
-	gretl_build_path(epath, path, "examples", NULL);
-	if (g_file_test(epath, G_FILE_TEST_IS_DIR)) {
-	    ret = gretl_strdup(epath);
-	}
-	free(path);
+        s = strrslash(path);
+        if (s != NULL) {
+            *s = '\0';
+        }
+        gretl_build_path(epath, path, "examples", NULL);
+        if (g_file_test(epath, G_FILE_TEST_IS_DIR)) {
+            ret = gretl_strdup(epath);
+        }
+        free(path);
     }
 
     return ret;
@@ -411,26 +417,26 @@ char *get_addon_pdf_path (const char *addon)
     char *ret = NULL;
 
     if (has_suffix(addon, ".pdf")) {
-	/* strip off the suffix */
-	gchar *tmp = g_strndup(addon, strlen(addon) - 4);
+        /* strip off the suffix */
+        gchar *tmp = g_strndup(addon, strlen(addon) - 4);
 
-	path = gretl_addon_get_path(tmp);
-	g_free(tmp);
+        path = gretl_addon_get_path(tmp);
+        g_free(tmp);
     } else {
-	path = gretl_addon_get_path(addon);
+        path = gretl_addon_get_path(addon);
     }
 
     if (path != NULL && has_suffix(path, ".gfn")) {
-	/* should be the case */
-	s = strrchr(path, '.');
-	*s = '\0';
-	strcpy(s, ".pdf");
+        /* should be the case */
+        s = strrchr(path, '.');
+        *s = '\0';
+        strcpy(s, ".pdf");
     }
 
     if (path != NULL && gretl_stat(path, NULL) == 0) {
-	/* success */
-	ret = path;
-	path = NULL;
+        /* success */
+        ret = path;
+        path = NULL;
     }
 
     free(path);
@@ -438,52 +444,51 @@ char *get_addon_pdf_path (const char *addon)
     return ret;
 }
 
+/* called from gui/database.c only */
+
 int get_addon_basic_info (const char *addon,
-			  char **version,
-			  char **date,
-			  char **descrip,
-			  char **fname)
+                          char **date,
+                          char **descrip,
+                          char **fname)
 {
     gchar *idxname = gretl_make_dotpath("addons.idx");
     FILE *fp = gretl_fopen(idxname, "rb");
     int err = 0;
 
     if (fp == NULL) {
-	err = update_addons_index(NULL);
-	if (!err) {
-	    fp = gretl_fopen(idxname, "rb");
-	}
+        err = update_addons_index(NULL);
+        if (!err) {
+            fp = gretl_fopen(idxname, "rb");
+        }
     }
 
     if (fp == NULL) {
-	err = E_FOPEN;
+        err = E_FOPEN;
     } else {
-	char line[1024];
-	char name[16];
-	char vstr[16];
-	char dstr[16];
-	char desc[64];
-	char path[MAXLEN];
-	int got = 0;
+        char line[1024];
+        char name[16];
+        char dstr[16];
+        char desc[64];
+        char path[MAXLEN];
+        int got = 0;
 
-	while (fgets(line, sizeof line, fp) && !got) {
-	    if (sscanf(line, "%s %s %s \"%63[^\"]\" \"%511[^\"]",
-		       name, vstr, dstr, desc, path) == 5) {
-		if (!strcmp(name, addon) &&
-		    gretl_test_fopen(path, "r") == 0) {
-		    got = 1;
-		    *version = gretl_strdup(vstr);
-		    *date = gretl_strdup(dstr);
-		    *descrip = gretl_strdup(desc);
-		    *fname = gretl_strdup(path);
-		}
-	    }
-	}
-	fclose(fp);
-	if (!got) {
-	    fprintf(stderr, "addons.idx: couldn't find '%s'\n", addon);
-	    err = E_DATA;
-	}
+        while (fgets(line, sizeof line, fp) && !got) {
+            if (sscanf(line, "%s %*s %s \"%63[^\"]\" \"%511[^\"]",
+                       name, dstr, desc, path) == 4) {
+                if (!strcmp(name, addon) &&
+                    gretl_test_fopen(path, "r") == 0) {
+                    got = 1;
+                    *date = gretl_strdup(dstr);
+                    *descrip = gretl_strdup(desc);
+                    *fname = gretl_strdup(path);
+                }
+            }
+        }
+        fclose(fp);
+        if (!got) {
+            fprintf(stderr, "addons.idx: couldn't find '%s'\n", addon);
+            err = E_DATA;
+        }
     }
 
     g_free(idxname);

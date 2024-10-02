@@ -123,7 +123,7 @@ gretl_bundle *gretl_array_get_bundle (gretl_array *A,
 				      int i);
 
 gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
-					  int vcat,
+					  int mode,
 					  int *err);
 
 gretl_array *gretl_matrix_split_by (const gretl_matrix *X,

@@ -305,7 +305,7 @@
       <menuitem action="mle"/>
       <menuitem action="gmm"/>
       <menuitem action="system"/>
-      <menuitem action="kalman"/>
+      <menuitem action="KFgui"/>
     </menu>
     <menu action="Help">
       <menuitem action="TextCmdRef"/>

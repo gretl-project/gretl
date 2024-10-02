@@ -412,6 +412,10 @@ typedef struct MODEL_ {
     model_data_item **data_items; /* pointer to additional data */
 } MODEL;
 
+#ifdef __ARM_ARCH_ISA_A64
+# include <complex.h>
+#endif
+
 #include "gretl_commands.h"
 #include "gretl_prn.h"
 #include "gretl_errors.h"

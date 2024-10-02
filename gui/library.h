@@ -343,7 +343,7 @@ int exec_line_with_output_handler (ExecState *s,
 
 void finalize_script_output_window (int role, gpointer data);
 
-void start_wait_for_output (windata_t *vwin, GtkWidget *w);
+GtkWidget *vwin_start_wait (windata_t *vwin);
 
 int waiting_for_output (void);
 

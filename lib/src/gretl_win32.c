@@ -406,7 +406,7 @@ static gchar *win32_read_log_file (HANDLE h, const gchar *fname)
 #endif
 
 /* Try to ensure that the gretl installation directory is in
-   the PATH, so that DLLs need by x13as and/or tramo/seats
+   the PATH, so that DLLs needed by x13as and/or tramo/seats
    can be found at runtime.
 */
 
@@ -427,14 +427,18 @@ int win32_ensure_path (void)
 	gchar **newenv = NULL;
 
 	if (path != NULL) {
+#if 0
 	    printf("old path:\n%s\n", path);
+#endif
 	    setpath = g_strdup_printf("%s;%s", path, bindir);
 	} else {
 	    setpath = g_strdup(bindir);
 	}
 	newenv = g_environ_setenv(envp, "PATH", setpath, TRUE);
+#if 0
 	path = g_environ_getenv(newenv, "PATH");
 	printf("new path:\n%s\n", path);
+#endif
 	if (newenv != envp) {
 	    g_strfreev(newenv);
 	}
@@ -454,7 +458,6 @@ static int real_win_run_sync (const char *cmdline,
 {
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
-    DWORD exitcode;
     DWORD flags;
     gunichar2 *cl16 = NULL;
     gunichar2 *cd16 = NULL;
@@ -2304,6 +2307,8 @@ static int win7_get_stack_size (void)
     return (int) (tib->StackLimit - tib->StackBase);
 }
 #endif
+
+/* requres _WIN32_WINNT >= 0x0602 (Windows 8) */
 
 int win32_get_stack_size (void)
 {

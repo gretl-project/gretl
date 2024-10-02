@@ -76,6 +76,8 @@ int gretl_lang_id_from_name (const char *s);
 
 void set_lcnumeric (int langid, int lcnumeric);
 
+int prefer_locale_decimal (void);
+
 int gretl_is_ascii (const char *buf);
 
 int force_language (int langid);

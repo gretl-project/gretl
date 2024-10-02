@@ -968,6 +968,15 @@ static int libset_get_scalar (SetKey key, const char *arg,
 	return E_ARGS;
     }
 
+    if (key == OMP_N_THREADS && !strcmp(arg, "default")) {
+#ifdef OPENMP_BUILD
+        *pi = gretl_n_physical_cores();
+#else
+        *pi = 0;
+#endif
+        return 0;
+    }
+
     nstatus = libset_numeric_test(arg, pi, px);
 
     if (nstatus == NUMERIC_BAD) {
@@ -1633,17 +1642,6 @@ int libset_help_available (const char *s)
     return (err == 0);
 }
 
-/* return the enumeration value corresponding to the putative
-   libset variable @s, or 0 on failure
-*/
-
-SetKey get_libset_key (const char *s)
-{
-    setvar *sv = get_setvar_by_name(s);
-
-    return sv != NULL ? sv->key : 0;
-}
-
 #define default_ok(k) (k == BFGS_TOLER || k == BHHH_TOLER || k == NLS_TOLER)
 
 #define default_str(s) (!strcmp(s, "auto") || !strcmp(s, "default"))
@@ -2127,10 +2125,37 @@ int libset_get_bool (SetKey key)
 static void libset_set_decpoint (int on)
 {
 #ifdef ENABLE_NLS
+    static int forced;
+    int dp = get_local_decpoint();
+
+#if 0
+    fprintf(stderr, "*** libset_set_decpoint: arg = %d, dp = '%c',forced = %d\n",
+            on, dp, forced);
+#endif
+
     if (on) {
-	/* force use of the decimal dot */
-	setlocale(LC_NUMERIC, "C");
+        if (dp == ',') {
+            setlocale(LC_NUMERIC, "C");
+            forced++;
+        } else {
+            /* no-op */
+            return;
+        }
     } else {
+        /* not-on = off */
+        if (dp == ',') {
+            /* no-op */
+            return;
+        } else {
+            if (forced > 0) forced--;
+            if (!prefer_locale_decimal()) {
+                /* no-op */
+                return;
+            }
+        }
+    }
+
+    if (!on && forced == 0) {
 	/* revert to whatever is the local default */
 	char *current = get_built_in_string_by_name("lang");
 

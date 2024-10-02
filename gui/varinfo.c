@@ -334,7 +334,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 
     if (!err) {
 	if (vset->changed[VSET_IDNUM]) {
-	    ival = spinner_get_int(vset->id_spin);
+	    ival = spin_get_int(vset->id_spin);
 	    dataset_renumber_variable(v, ival, dataset);
 	    populate_varlist();
 	    vset->varnum = ival;

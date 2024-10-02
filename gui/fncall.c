@@ -58,7 +58,8 @@
 enum {
     SHOW_GUI_MAIN = 1 << 0,
     MODEL_CALL    = 1 << 1,
-    DATA_ACCESS   = 1 << 2
+    DATA_ACCESS   = 1 << 2,
+    FOR_ADDON     = 1 << 3
 };
 
 typedef struct call_info_ call_info;
@@ -92,6 +93,8 @@ struct call_info_ {
 #define matrix_arg(t) (t == GRETL_TYPE_MATRIX || t == GRETL_TYPE_MATRIX_REF)
 #define bundle_arg(t) (t == GRETL_TYPE_BUNDLE || t == GRETL_TYPE_BUNDLE_REF)
 #define array_arg(t)  (t == GRETL_TYPE_ARRAY  || t == GRETL_TYPE_ARRAY_REF)
+
+#define for_addon(c) (c->flags & FOR_ADDON)
 
 #define SELNAME "selected_series"
 
@@ -138,7 +141,7 @@ static int caller_is_model_window (windata_t *vwin)
     return 0;
 }
 
-static call_info *cinfo_new (fnpkg *pkg, windata_t *vwin)
+static call_info *cinfo_new (fnpkg *pkg, int is_addon, windata_t *vwin)
 {
     call_info *cinfo = calloc(1, sizeof *cinfo);
 
@@ -161,6 +164,9 @@ static call_info *cinfo_new (fnpkg *pkg, windata_t *vwin)
 
     if (vwin != NULL && caller_is_model_window(vwin)) {
 	cinfo->flags |= MODEL_CALL;
+    }
+    if (is_addon) {
+        cinfo->flags |= FOR_ADDON;
     }
 
     cinfo->sels = NULL;
@@ -713,11 +719,34 @@ static GList *add_names_for_type (GList *list, GretlType type)
     GList *tail = tlist;
 
     while (tail != NULL) {
-	list = g_list_append(list, tail->data);
+        list = g_list_append(list, tail->data);
 	tail = tail->next;
     }
 
-    if (type == GRETL_TYPE_LIST && mdata_selection_count() > 1) {
+    g_list_free(tlist);
+
+    return list;
+}
+
+static GList *add_list_names (GList *list, int no_single)
+{
+    GList *tlist = user_var_names_for_type(GRETL_TYPE_LIST);
+    GList *tail = tlist;
+
+    while (tail != NULL) {
+        if (no_single) {
+            const int *L = get_list_by_name((const char *) tail->data);
+
+            if (L != NULL && L[0] > 1) {
+                list = g_list_append(list, tail->data);
+            }
+        } else {
+            list = g_list_append(list, tail->data);
+        }
+	tail = tail->next;
+    }
+
+    if (mdata_selection_count() > 1) {
 	/* add the (unnamed) 'list' of series selected in the
 	   main gretl window */
 	list = g_list_append(list, SELNAME);
@@ -728,46 +757,69 @@ static GList *add_names_for_type (GList *list, GretlType type)
     return list;
 }
 
-static GList *add_series_names (GList *list)
+static GList *add_series_names (GList *list, int no_const)
 {
-    int i, imin = 1;
+    int i, imin = no_const ? 1 : 0;
+    int vmin = 1;
 
     if (!strcmp(dataset->varname[1], "index")) {
 	/* don't show this first */
-	imin = 2;
+	vmin = 2;
     }
-    for (i=imin; i<dataset->v; i++) {
+    for (i=vmin; i<dataset->v; i++) {
 	if (!series_is_hidden(dataset, i)) {
 	    list = g_list_append(list, (gpointer) dataset->varname[i]);
 	}
     }
-    for (i=0; i<imin; i++) {
+    for (i=imin; i<vmin; i++) {
 	list = g_list_append(list, (gpointer) dataset->varname[i]);
     }
 
     return list;
 }
 
-static int allow_singleton_list (gretl_bundle *ui)
+static int list_exclude_singleton (gretl_bundle *ui)
 {
-    int ret = 1; /* allow by default */
+    int ret = 0; /* allow by default */
 
     if (ui != NULL) {
-	if (gretl_bundle_has_key(ui, "singleton")) {
-	    /* backward compatibility */
-	    ret = gretl_bundle_get_bool(ui, "singleton", 1);
-	    if (ret == 0) {
-		gretl_bundle_set_int(ui, "no_singleton", 1);
-	    }
-	} else {
-	    /* revised version, 2024-03-21 */
-	    int ns = gretl_bundle_get_bool(ui, "no_singleton", 0);
-
-	    ret = ns == 0;
-	}
+        if (gretl_bundle_has_key(ui, "list_no_singleton")) {
+            ret = gretl_bundle_get_bool(ui, "list_no_singleton", 0);
+        } else if (gretl_bundle_has_key(ui, "no_singleton")) {
+            ret = gretl_bundle_get_bool(ui, "no_singleton", 0);
+        } else if (gretl_bundle_get_bool(ui, "singleton", 1) == 0) {
+            /* backward compatibility: "singleton = 0" */
+            ret = 1;
+        }
     }
 
     return ret;
+}
+
+static int list_exclude_const (gretl_bundle *ui)
+{
+    int ret = 0; /* allow by default */
+
+    if (ui != NULL) {
+        if (gretl_bundle_has_key(ui, "list_no_const")) {
+            ret = gretl_bundle_get_bool(ui, "list_no_const", 0);
+        } else if (gretl_bundle_has_key(ui, "no_const")) {
+            ret = gretl_bundle_get_bool(ui, "no_const", 0);
+        }
+    }
+
+    return ret;
+}
+
+static const char *list_exclude_other (gretl_bundle *ui)
+{
+    if (gretl_bundle_has_key(ui, "list_exclude")) {
+        return gretl_bundle_get_string(ui, "list_exclude", NULL);
+    } else if (gretl_bundle_has_key(ui, "exclude")) {
+        return gretl_bundle_get_string(ui, "exclude", NULL);
+    } else {
+        return NULL;
+    }
 }
 
 static GList *get_selection_list (int type, gretl_bundle *ui)
@@ -775,13 +827,16 @@ static GList *get_selection_list (int type, gretl_bundle *ui)
     GList *list = NULL;
 
     if (series_arg(type)) {
-	list = add_series_names(list);
+	list = add_series_names(list, 0); /* fixme? */
     } else if (scalar_arg(type)) {
 	list = add_names_for_type(list, GRETL_TYPE_DOUBLE);
     } else if (type == GRETL_TYPE_LIST) {
-	list = add_names_for_type(list, GRETL_TYPE_LIST);
-	if (allow_singleton_list(ui)) {
-	    list = add_series_names(list);
+        int no_single = list_exclude_singleton(ui);
+        int no_const = list_exclude_const(ui);
+
+	list = add_list_names(list, no_single);
+	if (!no_single) {
+	    list = add_series_names(list, no_const);
 	}
     } else if (matrix_arg(type)) {
 	list = add_names_for_type(list, GRETL_TYPE_MATRIX);
@@ -1095,26 +1150,6 @@ static int do_make_list (selector *sr)
     return err;
 }
 
-static gboolean ui_bundle_get_bool (gretl_bundle *b,
-				    const char *key,
-				    gboolean deflt)
-{
-    gboolean ret = deflt;
-
-    if (gretl_bundle_has_key(b, key)) {
-	ret = gretl_bundle_get_bool(b, "key", deflt);
-    } else {
-	gchar *tmp = g_strdup_printf("list_%s", key);
-
-	if (gretl_bundle_has_key(b, tmp)) {
-	    ret = gretl_bundle_get_bool(b, tmp, deflt);
-	}
-	g_free(tmp);
-    }
-
-    return ret;
-}
-
 gchar **get_listdef_exclude (gpointer p, int *listmin)
 {
     gchar **S = NULL;
@@ -1133,12 +1168,9 @@ gchar **get_listdef_exclude (gpointer p, int *listmin)
 	    ui = g_object_get_data(G_OBJECT(sel), "ui");
 	}
 	if (cinfo != NULL && ui != NULL) {
-	    s = gretl_bundle_get_string(ui, "exclude", NULL);
-	    if (s == NULL) {
-		s = gretl_bundle_get_string(ui, "list_exclude", NULL);
-	    }
-	    no_const = ui_bundle_get_bool(ui, "no_const", 0);
-	    if (ui_bundle_get_bool(ui, "no_singleton", 0)) {
+            s = list_exclude_other(ui);
+	    no_const = list_exclude_const(ui);
+            if (list_exclude_singleton(ui)) {
 		*listmin = 2;
 	    }
 	}
@@ -1408,7 +1440,11 @@ static GtkWidget *enum_arg_selector (call_info *cinfo, int i,
     g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(update_enum_arg), cinfo);
     for (j=0; j<jmax; j++) {
-	combo_box_append_text(combo, (const char *) S[j]);
+        if (for_addon(cinfo)) {
+            combo_box_append_text(combo, (const char *) _(S[j]));
+        } else {
+            combo_box_append_text(combo, (const char *) S[j]);
+        }
     }
     jactive = MIN(initv - minv, jmax - 1);
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), jactive);
@@ -1934,11 +1970,16 @@ static int function_call_dialog (call_info *cinfo)
     for (i=0; i<cinfo->n_params; i++) {
 	const char *parname = fn_param_name(cinfo->func, i);
 	const char *desc = fn_param_descrip(cinfo->func, i);
+        const char *trdesc = NULL;
 	GretlType ptype = fn_param_type(cinfo->func, i);
 	const char *prior_val = NULL;
 	gretl_bundle *ui = NULL;
 	int spinnable = 0;
 	gchar *argtxt;
+
+        if (desc != NULL && for_addon(cinfo)) {
+            trdesc = _(desc);
+        }
 
 	if (i == 0 && cinfo->n_params > 1) {
 	    add_table_header(tbl, _("Select arguments:"), tcols, row, 5);
@@ -1968,19 +2009,18 @@ static int function_call_dialog (call_info *cinfo)
 	    ptype == GRETL_TYPE_BOOL ||
 	    ptype == GRETL_TYPE_OBS ||
 	    spinnable) {
-	    argtxt = g_strdup_printf("%s",
-				     (desc != NULL)? _(desc) :
-				     parname);
+	    argtxt = g_strdup_printf("%s", trdesc != NULL ? trdesc :
+                                     desc != NULL ? desc : parname);
 	} else {
 	    const char *astr = gretl_type_get_name(ptype);
 
 	    if (desc != NULL && strstr(desc, astr)) {
-		argtxt = g_strdup_printf("%s", _(desc));
+		argtxt = g_strdup_printf("%s", trdesc != NULL ? trdesc : desc);
 	    } else if (desc != NULL && strstr(desc, "level")) {
-		argtxt = g_strdup_printf("%s", _(desc));
+		argtxt = g_strdup_printf("%s", trdesc != NULL ? trdesc : desc);
 	    } else {
-		argtxt = g_strdup_printf("%s (%s)",
-					 (desc != NULL)? _(desc) :
+		argtxt = g_strdup_printf("%s (%s)", trdesc != NULL ? trdesc :
+					 desc != NULL ? _(desc) :
 					 parname, astr);
 	    }
 	}
@@ -2023,7 +2063,7 @@ static int function_call_dialog (call_info *cinfo)
 
 	/* hook up signals and "+" add buttons for the
 	   selectors for most types of arguments (though
-	   not for bool and spinner-type args)
+	   not for bool and spin-type args)
 	*/
 
 	if (series_arg(ptype)) {
@@ -2203,19 +2243,16 @@ static int function_data_check (call_info *cinfo,
     if (dataset != NULL && dataset->v > 0) {
 	; /* OK, we have data */
     } else if (cinfo->dreq != FN_NODATA_OK) {
-	/* The package requires a dataset but no dataset
-	   is loaded: this error should have been caught
-	   earlier?
+	/* The package requires a dataset but no dataset is loaded: this
+	   error should have been caught earlier?
 	*/
 	err = 1;
     } else {
-	/* check the particular function being called:
-	   this is potentially relevant if we're coming
-	   from the gfn browser, trying to execute the
-	   default function of a package. It's possible
-	   that the package as such does not require a
-	   dataset but its default function does --
-	   though that is arguably somewhat anomalous.
+	/* Check the particular function being called: this is potentially
+	   relevant if we're coming from the gfn browser, trying to execute
+	   the default function of a package. It's possible that the package
+	   as such does not require a dataset but its default function does
+	   -- though that is arguably somewhat anomalous.
 	*/
 	int i;
 
@@ -2817,6 +2854,7 @@ static int need_model_check (call_info *cinfo)
 }
 
 static call_info *start_cinfo_for_package (const char *pkgname,
+                                           gboolean is_addon,
 					   const char *fname,
 					   windata_t *vwin,
 					   int *err)
@@ -2837,7 +2875,7 @@ static call_info *start_cinfo_for_package (const char *pkgname,
 	}
     }
 
-    cinfo = cinfo_new(pkg, vwin);
+    cinfo = cinfo_new(pkg, is_addon, vwin);
     if (cinfo == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -2901,7 +2939,7 @@ static int call_function_package (call_info *cinfo,
 	/* Do we have suitable data in place? (This is already
 	   checked if @from_browser is non-zero).
 	*/
-	err = check_function_needs(dataset, cinfo->dreq, cinfo->minver);
+	err = check_function_needs(dataset, cinfo->dreq, cinfo->minver, cinfo->pkg);
 	if (err) {
 	    gui_errmsg(err);
 	}
@@ -2995,9 +3033,8 @@ static void maybe_open_sample_script (call_info *cinfo,
     g_free(msg);
 }
 
-/* Called (mostly) from the function-package browser: unless the
-   package can't be loaded we should return 0 to signal that loading
-   happened OK.
+/* Called from the function-package browser: unless the package can't be
+   loaded we should return 0 to signal that loading happened OK.
 */
 
 int open_function_package (const char *pkgname,
@@ -3005,29 +3042,22 @@ int open_function_package (const char *pkgname,
 			   windata_t *vwin)
 {
     call_info *cinfo = NULL;
-    char *fname2 = NULL;
     int can_call = 1;
     int free_cinfo = 1;
+    gboolean is_addon;
     int err = 0;
 
-    if (fname == NULL) {
-	fname2 = gretl_addon_get_path(pkgname);
-	if (fname2 == NULL) {
-	    return E_FOPEN;
-	} else {
-	    fname = fname2;
-	}
-    }
+    is_addon = is_gretl_addon(pkgname);
 
     /* note: this ensures the package gets loaded */
-    cinfo = start_cinfo_for_package(pkgname, fname, vwin, &err);
+    cinfo = start_cinfo_for_package(pkgname, is_addon, fname, vwin, &err);
 
     if (err) {
 	goto bailout;
     }
 
     /* do we have suitable data in place? */
-    err = check_function_needs(dataset, cinfo->dreq, cinfo->minver);
+    err = check_function_needs(dataset, cinfo->dreq, cinfo->minver, NULL);
 
     if (err == E_DATA) {
 	/* we might still run the sample script */
@@ -3051,10 +3081,6 @@ int open_function_package (const char *pkgname,
 
  bailout:
 
-    if (fname2 != NULL) {
-	free(fname2);
-    }
-
     if (cinfo != NULL && free_cinfo) {
 	cinfo_free(cinfo);
     }
@@ -3075,13 +3101,13 @@ static gchar *compose_pkg_title (ufunc *func,
 					const char *id)
 {
     fnpkg *pkg = gretl_function_get_package(func);
-    const char *pname = function_package_get_name(pkg);
+    const char *pkgname = function_package_get_name(pkg);
     gchar *title;
 
     if (!strcmp(id, BUNDLE_FCAST)) {
-	title = g_strdup_printf("gretl: %s %s", pname, _("forecast"));
+	title = g_strdup_printf("gretl: %s %s", pkgname, _("forecast"));
     } else {
-	title = g_strdup_printf("gretl: %s bundle", pname);
+	title = g_strdup_printf("gretl: %s bundle", pkgname);
     }
 
     return title;
@@ -3679,7 +3705,11 @@ void gfn_menu_callback (GtkAction *action, windata_t *vwin)
     const gchar *pkgname = gtk_action_get_name(action);
     gui_package_info *gpi = NULL;
     char *filepath = NULL;
-    int is_addon = 0;
+    gboolean is_addon = 0;
+
+    /* Coming from a menu item we don't have the path to a package
+       immediately available.
+    */
 
     if (is_gretl_addon(pkgname)) {
 	is_addon = 1;
@@ -3705,7 +3735,7 @@ void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 	call_info *cinfo;
 	int err = 0;
 
-	cinfo = start_cinfo_for_package(pkgname, filepath, vwin, &err);
+	cinfo = start_cinfo_for_package(pkgname, is_addon, filepath, vwin, &err);
 	if (cinfo != NULL) {
 	    call_function_package(cinfo, vwin, filepath, 0);
 	}
@@ -4304,7 +4334,7 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
 	    skip = ci != modelreq;
 	}
 	if (!skip) {
-	    skip = check_function_needs(dataset, dreq, minver);
+	    skip = check_function_needs(dataset, dreq, minver, NULL);
 	    if (skip) {
 		gretl_error_clear();
 	    }

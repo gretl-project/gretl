@@ -256,7 +256,7 @@ int function_ok_for_package_role (const char *name,
 const char *package_role_get_key (int flag);
 
 int check_function_needs (const DATASET *dset, DataReq dreq,
-			  int minver);
+			  int minver, fnpkg *pkg);
 
 int package_version_ok (int minver, char *reqstr);
 

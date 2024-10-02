@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* We pick up auto-generated *-i18n.c files from each of the addons
+   directories, if present, and concatenate them to stdout. The
+   Makefile directs this output to addons-i18n.c.
+*/
+
 int process_strings (const char *pkg)
 {
     char fname[128], line[1024];
@@ -24,6 +29,8 @@ int process_strings (const char *pkg)
 int main (int argc, char **argv)
 {
     int i, err = 0;
+
+    /* @argv should be an array of directory names */
 
     fputs("/* translatable strings for gretl addons */\n\n", stdout);
 

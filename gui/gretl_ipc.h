@@ -32,6 +32,12 @@
 # define GRETL_OPEN_HANDLER
 #endif
 
+#define IPC_DEBUG 0
+
+#if IPC_DEBUG
+extern FILE *fipc;
+#endif
+
 #ifdef GRETL_PID_FILE
 
 int write_pid_to_file (void);

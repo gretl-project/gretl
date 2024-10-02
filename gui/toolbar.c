@@ -202,7 +202,8 @@ void gretl_stock_icons_init (void)
     if (gretl_factory == NULL) {
 	int bigger = (get_icon_sizing() == ICON_SIZE_MEDIUM);
 	char pngname[16], icon_path[48], menu_path[48];
-	gchar *p, *pm, *respath;
+	gchar *p, *respath;
+        gchar *pm = NULL;
 	GResource *icons;
 	GtkIconSource *isrc;
 	GtkIconSet *iset;
@@ -278,7 +279,9 @@ void gretl_stock_icons_init (void)
 		gtk_icon_source_set_size_wildcarded(isrc, FALSE);
 		gtk_icon_set_add_source(iset, isrc);
 		g_object_unref(pbuf);
-		*pm = '\0';
+                if (pm != NULL) {
+                    *pm = '\0';
+                }
 	    } else {
 		/* we just need a single icon */
 		iset = gtk_icon_set_new_from_pixbuf(pbuf);
@@ -785,7 +788,7 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
 			 &x);
     }
 
-    /* radio button for "other" confidence level, plus spinner */
+    /* radio button for "other" confidence level, plus spin button */
 
     hb2 = gtk_hbox_new(FALSE, 0);
     b = gtk_radio_button_new_with_label(group, _("Other"));
@@ -794,7 +797,7 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
     adj = (GtkAdjustment *) gtk_adjustment_new(x, 0.60, 0.99, 0.01, 0, 0);
     tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.01, 2);
     g_signal_connect(G_OBJECT(tmp), "value-changed",
-		     G_CALLBACK(set_double_from_spinner), &x);
+		     G_CALLBACK(set_double_from_spin), &x);
     gtk_widget_set_sensitive(tmp, !defset);
     g_signal_connect(G_OBJECT(b), "toggled",
 		     G_CALLBACK(toggle_alpha_spin),
@@ -1870,6 +1873,7 @@ void vwin_add_tmpbar (windata_t *vwin)
 	0
     };
     GtkWidget *hbox, *tmp;
+    GtkWidget *spinner;
 
     hbox = g_object_get_data(G_OBJECT(vwin->main), "top-hbox");
 
@@ -1901,6 +1905,13 @@ void vwin_add_tmpbar (windata_t *vwin)
     gretl_toolbar_insert(tmp, &stop_item, stop_item.func, NULL, 0);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
-    start_wait_for_output(vwin, hbox);
+    spinner = vwin_start_wait(vwin);
+    gtk_box_pack_end(GTK_BOX(hbox), spinner, FALSE, FALSE, 5);
+
     gtk_widget_show_all(hbox);
+    gtk_spinner_start(GTK_SPINNER(spinner));
+
+    while (gtk_events_pending()) {
+        gtk_main_iteration();
+    }
 }

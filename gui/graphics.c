@@ -159,7 +159,7 @@ static void set_lw_callback (GtkSpinButton *b, struct pdf_ps_saver *s)
     s->lw_factor = gtk_spin_button_get_value(b);
 }
 
-static GtkWidget *pdf_ps_size_spinners (struct pdf_ps_saver *s)
+static GtkWidget *pdf_ps_size_spin_buttons (struct pdf_ps_saver *s)
 {
     GtkWidget *tbl, *label, *b;
     GtkWidget *vbox, *hbox;
@@ -379,7 +379,7 @@ void pdf_ps_dialog (GPT_SPEC *spec, GtkWidget *parent)
     label = label_in_hbox(_("Plot dimensions:"), 0);
     gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
     
-    gtk_container_add(GTK_CONTAINER(vbox), pdf_ps_size_spinners(&saver));
+    gtk_container_add(GTK_CONTAINER(vbox), pdf_ps_size_spin_buttons(&saver));
 
     vbox_add_hsep(vbox);
 

@@ -50,7 +50,7 @@ struct combo_opts_ {
 /* convenience abbreviations */
 
 #define button_is_active(b) gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b))
-#define spinner_get_int(b) gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(b))
+#define spin_get_int(b) gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(b))
 
 /* variant functions for incompatible GTK versions */
 
@@ -114,9 +114,9 @@ void sensitize_conditional_on (GtkWidget *w, GtkWidget *b);
 
 void desensitize_conditional_on (GtkWidget *w, GtkWidget *b);
 
-void set_double_from_spinner (GtkSpinButton *b, double *x);
+void set_double_from_spin (GtkSpinButton *b, double *x);
 
-void set_int_from_spinner (GtkSpinButton *b, int *k);
+void set_int_from_spin (GtkSpinButton *b, int *k);
 
 GtkWidget *gretl_option_check_button (const char *label,
 				      gretlopt *popt,

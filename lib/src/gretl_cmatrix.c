@@ -3078,21 +3078,8 @@ double complex arm_complex_divide (double complex zn,
     double b = cimag(zn);
     double c = creal(zd);
     double d = cimag(zd);
-    double r, den, e, f;
 
-    if (fabs(c) < fabs(d)) {
-	r = c/d;
-	den = (c*r) + d;
-	e = (a*r + b) / den;
-	f = (b*r - a) / den;
-    } else {
-	r = d/c;
-	den = c + (d*r);
-	e = (a + b*r) / den;
-	f = (b - a*r) / den;
-    }
-
-    return e + f*I;
+    return __divdc3(a, b, c, d);
 }
 
 #endif

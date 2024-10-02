@@ -6072,15 +6072,31 @@
 	Dentro dun bloque <lit>gpbuild</lit> só teñen un tratamento especial as
 	instrucións para representación gráfica; tódalas outras instrucións se
 	executan normalmente. Unicamente hai dúas restricións que advertir.
-	Primeiro: as instrucións de representación <emphasis>non</emphasis> deben
-	incluír unha especificación de saída neste contexto, posto que iso estaría
-	en conflito co cambio de dirección automático da saída, cara ao arranxo
-	de <repl>plotspecs</repl>. Segundo: as gráficas que invoquen a directiva
-	<quote><lit>multiplot</lit></quote> de GNUPLOT non son axeitadas para
-	incluírse nun bloque <lit>gpbuild</lit>. Isto é porque <lit>gridplot</lit>
-	utiliza internamente <lit>multiplot</lit>, e esas construcións non se
-	poden aniñar.
       </para>
+      <ilist>
+   <li>
+      <para>
+	As instrucións de representación <emphasis>non</emphasis> deben
+	incluír unha especificación de saída neste contexto, posto que iso
+	estaría en conflito co cambio de dirección automático da saída,
+	cara ao arranxo de <repl>plotspecs</repl>. Unha excepción a esta
+	regra permítese para <lit>--output=display</lit> (que é habitual
+	dabondo como opción predeterminada nos paquetes de funcións
+	relacionadas con representacións gráficas); esta directiva ignórase
+	silandeiramente en beneficio do tratamento automático.
+      </para>
+    </li>
+    <li>
+      <para>
+  As gráficas que invoquen a directiva
+  <quote><lit>multiplot</lit></quote> de GNUPLOT non son axeitadas
+	para incluírse nun bloque <lit>gpbuild</lit>. Isto é porque
+	<lit>gridplot</lit> utiliza internamente <lit>multiplot</lit>,
+	e esas construcións non se poden
+	aniñar.
+      </para>
+    </li>
+      </ilist>
       <subhead>Alternativa manual</subhead>
       <para>
 	Pódese preparar un arranxo de especificacións de gráficas para utilizar
@@ -12815,16 +12831,16 @@
 	<option>
 	  <flag>--z-scores</flag>
 	  <effect>Mira abaixo</effect>
-        </option>
-        <option>
+  </option>
+  <option>
 	  <flag>--raw</flag>
 	  <effect>Mira abaixo</effect>
-        </option>
-        <option>
+  </option>
+  <option>
 	  <flag>--output</flag>
 	  <optparm>nomeficheiro</optparm>
 	  <effect>Envía a gráfica ao ficheiro especificado</effect>
-        </option>
+  </option>
       </options>
     </usage>
 
@@ -12886,20 +12902,20 @@
 	<option>
 	  <flag>--robust</flag>
 	  <effect>Desvíos padrón robustos</effect>
-        </option>
-        <option>
+  </option>
+  <option>
 	  <flag>--intervals</flag>
 	  <optparm optional="true">nivelconf</optparm>
 	  <effect>Calcula os intervalos de confianza</effect>
-        </option>
-        <option>
+  </option>
+  <option>
 	  <flag>--vcv</flag>
 	  <effect>Presenta a matriz de covarianzas</effect>
-        </option>
-        <option>
+  </option>
+  <option>
 	  <flag>--quiet</flag>
 	  <effect>Non presenta os resultados</effect>
-        </option>
+  </option>
       </options>
       <examples>
 	<example>quantreg 0.25 y 0 xlista</example>
@@ -13008,22 +13024,22 @@
       <ilist>
 	<li>
 	  <para>
-	    Cando esta instrución se invoca desde un guión, remátase a execución
-	    de ese guión. No contexto de gretlcli en modo de procesamento por
-	    lotes, o propio gretlcli remata; noutro caso, o programa recúa a
-	    modo interactivo.
+	Cando esta instrución se invoca desde un guión, remátase a execución
+	de ese guión. No contexto de gretlcli en modo de procesamento por
+	lotes, o propio gretlcli remata; noutro caso, o programa recúa a
+	modo interactivo.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Cando se invoca desde a consola do programa de Interface Gráfica
-	    de Usuario (GUI), péchase a xanela da consola.
+  Cando se invoca desde a consola do programa de Interface Gráfica
+  de Usuario (GUI), péchase a xanela da consola.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Cando se invoca desde gretlcli en modo interactivo, este programa
-	    remata.
+	Cando se invoca desde gretlcli en modo interactivo, este programa
+	remata.
 	  </para>
 	</li>
       </ilist>
@@ -13093,76 +13109,117 @@
       <ilist>
 	<li>
 	  <para>
-	    Elección de algoritmo: Podes escoller o método Descenso de Coordenada
-	    Cíclico (CCD) tanto para o LASSO como para a regresión Ridge (crista),
-	    en contraste co método por defecto; é dicir, o Método de Multiplicadores
-	    de Dirección Alterna (ADMM) para o LASSO e a Descomposición
-	    do Valor Singular (SVD) para o Ridge.
+	Elección de algoritmo: Podes escoller o método Descenso de Coordenada
+	Cíclico (CCD) tanto para o LASSO como para a regresión Ridge (crista),
+	en contraste co método por defecto; é dicir, o Método de Multiplicadores
+	de Dirección Alterna (ADMM) para o LASSO e a Descomposición
+	do Valor Singular (SVD) para o Ridge.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    O criterio por defecto para que renda <quote>mellor</quote>
-	    a validación cruzada é minimizar o Erro Cadrado Medio (MSE),
-	    pero podes seleccionar a regra alternativa
-	    <quote>un desvío padrón</quote>. Esta alternativa, que
-	    favorece a sobriedade, escolle o maior factor de penalización
-	    cuxo MSE está a menos dun desvío padrón do mínimo.
+	O criterio por defecto para que renda <quote>mellor</quote>
+	a validación cruzada é minimizar o Erro Cadrado Medio (MSE),
+	pero podes seleccionar a regra alternativa
+	<quote>un desvío padrón</quote>. Esta alternativa, que
+	favorece a sobriedade, escolle o maior factor de penalización
+	cuxo MSE está a menos dun desvío padrón do mínimo.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Semente para os pregos aleatorios: Se queres obter resultados
-	    replicables na validación cruzada con pregos aleatorios, é
-	    necesario especificar unha semente para o xerador de números
-	    aleatorios.
+	Semente para os pregos aleatorios: Se queres obter resultados
+	replicables na validación cruzada con pregos aleatorios, é
+	necesario especificar unha semente para o xerador de números
+	aleatorios.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Por defecto, regls utilizará MPI (se está dispoñible) nun esforzo por
-	    acelerar a validación cruzada. O recadro para MPI (que se amosa só
-	    cando se compila GRETL con soporte MPI) te permite desactivar isto,
-	    o que pode producir unha aceleración para bancos pequenos de datos.
+	Por defecto, regls utilizará MPI (se está dispoñible) nun esforzo por
+	acelerar a validación cruzada. O recadro para MPI (que se amosa só
+	cando se compila GRETL con soporte MPI) te permite desactivar isto,
+	o que pode producir unha aceleración para bancos pequenos de datos.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    A opción de amosar o tempo de execución pode serte útil se queres
-	    comparar o comportamento de diferentes algoritmos, ou comprobar
-	    se paga a pena usar o MPI. O tempo que se amosa no resultado
-	    corresponde á execución do código C subxacente.
+	A opción de amosar o tempo de execución pode serte útil se queres
+	comparar o comportamento de diferentes algoritmos, ou comprobar
+	se paga a pena usar o MPI. O tempo que se amosa no resultado
+	corresponde á execución do código C subxacente.
 	  </para>
 	</li>
       </ilist>
     </description>
   </command>
 
-  <command name="rename" section="Dataset"
-    label="Cambiar o nome dunha variable" context="cli">
-
+  <command name="rename" section="Dataset" label="Cambiar o nome dunha variable" context="cli">
     <usage>
       <arguments>
 	      <argument>serie</argument>
 	      <argument>novonome</argument>
       </arguments>
       <options>
-        <option>
-	      <flag>--quiet</flag>
-	      <effect>Suprime a presentación de resultados</effect>
-        </option>
+  <option>
+	  <flag>--quiet</flag>
+	  <effect>Suprime a presentación de resultados</effect>
+  </option>
+  <option>
+    <flag>--case</flag>
+    <effect>Troca o formato dos nomes de tódalas series; mira abaixo</effect>
+  </option>
       </options>
+      <examples>
+        <example>rename x2 ingreso</example>
+        <example>rename --case=lower</example>
+      </examples>
     </usage>
 
     <description>
       <para>
-	Cambia o nome de <repl>serie</repl> (identificada polo seu
-	nome ou seu número ID) a <repl>novonome</repl>. O novo nome
-	debe de ter 31 caracteres como máximo, comezar cunha letra
-	e estar formado só por letras, díxitos e o carácter de barra
-	baixa. Ademais, non debe de ser o nome dun obxecto de calquera
-	tipo que xa exista.
+        Sen a opción <opt>--case</opt>, esta instrución troca o nome de
+        <repl>serie</repl> (identificada polo seu nome ou seu número ID) a
+        <repl>novonome</repl>. O novo nome debe ter 31 caracteres como
+        máximo, comezar cunha letra e estar formado só por letras, díxitos
+        e/ou o carácter de barra baixa. Ademais, non debe ser o nome dun
+        obxecto de calquera tipo que xa exista.
       </para>
+      <para>
+        A opción <opt>--case</opt> permite trocar o formato de
+        <emphasis>tódolos</emphasis> nomes das series no conxunto de datos
+        aberto vixente. Cando se utiliza esta opción, non se debe indicar
+        ningún nome para <repl>serie</repl> nin para <repl>novonome</repl>.
+        Admítense os seguintes tipos de formato:
+      </para>
+      <ilist>
+        <li>
+          <para>
+      <repl>lower</repl>: Converte tódolos nomes das series a minúsculas.
+          </para>
+        </li>
+        <li>
+          <para>
+      <repl>upper</repl>: Converte tódolos nomes das series a versais.
+          </para>
+        </li>
+        <li>
+          <para>
+      <repl>camel</repl>: Converte tódolos nomes das series a formato
+      camelo; o que significa que se eliminan as barras baixas e o carácter
+      seguinte ás mesmas (se hai algún) pónse en versais. Por exemplo,
+	    <lit>algunha_cousa</lit> vólvese <lit>algunhaCousa</lit>.
+          </para>
+        </li>
+        <li>
+          <para>
+      <repl>snake</repl>: Converte tódolos nomes das series a formato
+      serpe; o que significa que calquera letra versal (agás a primeira do
+      nome) convértense a minúsculas, precedida por unha barra baixa.
+      Por exemplo, <lit>algunhaCousa</lit> vólvese <lit>algunha_cousa</lit>.
+          </para>
+        </li>
+      </ilist>
     </description>
 
     <gui-access>

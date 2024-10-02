@@ -3811,13 +3811,15 @@
       <description>
 	<para context="notex">
 	  Calcola la somma cumulata di <argname>x</argname>. Se
-	  <argname>x</argname> è una variabile, restituisce una variabile
+	  <argname>x</argname> è una serie, restituisce una serie
 	  <math>y</math> in cui ciascuno degli elementi è la somma dei
 	  valori di <argname>x</argname> fino a quel punto; il primo
 	  termine della somma è la prima osservazione non mancante
-	  (non-missing) nel campione corrente. Se <argname>x</argname>
-	  è una matrice, la somma cumulata viene calcolata per
-	  ciascuna delle colonne.
+	  (non-missing) nel campione corrente. Se ci sono valori
+	  mancanti successivi in <math>x</math>, anche i valori di
+	  <math>y</math> corrispondenti saranno mancanti. Se
+	  <argname>x</argname> è una matrice, la somma cumulata viene
+	  calcolata per ciascuna delle colonne.
 	</para>
 	<para context="tex">
 	  Calcola la somma cumulata di <argname>x</argname>. Se
@@ -3830,6 +3832,18 @@
 	  <argname>x</argname> è una matrice, gli elementi vengono
 	  sommati per colonna.
 	</para>
+	<para>
+	  Nel caso di dati panel la cumulazione avviene lungo la
+	  dimensione temporale, separatamente per ogni unità.
+	</para>
+	<para>
+	  Per far sì che i valori mancanti vengano ignorati nella
+	  cumulazione, basta trattarli come zeri e applicare la
+	  funzione <fncref targ="misszero"/>. Per esempio:
+	</para>
+	<code>
+	  series cx = cum(misszero(x))
+	</code>
 	<para>
 	  <seelist>
             <fncref targ="diff"/>
@@ -4974,10 +4988,25 @@
       </fnargs>
       <description>
 	<para>
-	  Ritorna 1 se <argname>name</argname> è l'identificativo di
+	  Ritorna non-zero se <argname>name</argname> è l'identificativo di
 	  un oggetto definito, che sia uno scalare, una serie, una
 	  matrice, lista, stringa, bundle o array; altrimenti, ritorna
 	  0.  Vedi anche <fncref targ="typeof"/>.
+	</para>
+	<para>
+	  L'uso tipico riguarda il caso in cui una funzione definita
+	  dall'utente ha un parametro facoltativo con un valore
+	  predefinito <lit>null</lit>. In questo caso si può usare
+	  <lit>exists()</lit>, passando il nome del parametro, per
+	  verificare se il chiamante ha fornito o meno un
+	  argomento. Si tenga presente che a questo riguardo gli
+	  argomenti di tipo lista sono un'eccezione: se un parametro
+	  lista ha un valore predefinito <lit>null</lit> e il
+	  chiamante non fornisce un argomento, la funzione ottiene una
+	  lista vuota anziché nessuna lista; quindi <lit>exists</lit>
+	  restituirà sempre un valore diverso da zero. Per verificare
+	  se un argomento lista è vuoto, si usi <fncref
+	  targ="nelem"/>.
 	</para>
       </description>
     </function>
@@ -5510,7 +5539,7 @@
     <function name="flatten" section="data-utils" output="seebelow">
       <fnargs>
 	<fnarg type="matrices-or-strings">A</fnarg>
-	<fnarg optional="true" type="bool">alt</fnarg>
+	<fnarg optional="true" type="int-or-string">alt</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -5518,23 +5547,61 @@
 	  un array di stringhe in una singola stringa.
 	</para>
 	<para>
-	  Nel caso matriciale, le matrici contenute in
-	  <argname>A</argname> sono, di default, concatenate
-	  orizzontalmente, ma se un valore diverso da zero è inserito
-	  in <argname>alt</argname> la concatenazione è verticale. In
-	  entrambi i casi viene prodotto un errore.  qualora le
-	  matrici non siano conformabili per l'operazione.  Si veda
-	  <fncref targ="msplitby"/> per l'operazione inversa.
+	  Nel caso matriciale, il modo in cui le matrici in
+	  <argname>A</argname> sono accostate dipende dal valore
+	  dell'argomento <argname>alt</argname>, che deve essere
+	  compreso 0 per l'accortamento orizzontale, 1 per quello
+	  verticale o 2 per quello <quote>vettorizzato</quote>. Il
+	  modo migliore di spiegare la differenza tra le tre
+	  alternative è un esempio: il codice
+	</para>
+	<code>
+	  X = {1,3,5; 2,4,6}
+	  A = defarray(X, X+6)
+	  U = flatten(A,0) # = A[1] ~ A[2]
+	  V = flatten(A,1) # = A[1] | A[2]
+	  W = flatten(A,2) # = vec(A[1]) ~ vec(A[2])
+	</code>
+	<para>
+	  produce le tre matrici seguenti:
+	</para>
+	<code>
+	  U (2 x 6)
+
+	  1    3    5    7    9   11 
+	  2    4    6    8   10   12 
+
+	  V (4 x 3)
+
+	  1    3    5 
+	  2    4    6 
+	  7    9   11 
+	  8   10   12 
+
+	  W (6 x 2)
+
+	  1    7 
+	  2    8 
+	  3    9 
+	  4   10 
+	  5   11 
+	  6   12 
+	</code>
+	<para>
+	  Qualora le matrici nell'array non siano conformabili per
+	  l'operazione, viene prodotto un errore.  Si veda <fncref
+	  targ="msplitby"/> per l'operazione inversa.
 	</para>
 	<para>
-	  Nel caso di un array di stringhe, esse sono contenute in
-	  <argname>A</argname>, e sono sistemate una per riga di default.
-	  Se un valore diverso da 0 è inserito in <argname>alt</argname> le
+	  Nel caso in cui <argname>A</argname> sia un array di
+	  stringhe l'output le conterrà una per riga di default. Se un
+	  valore diverso da 0 è inserito in <argname>alt</argname> le
 	  stringhe verranno separate da spazi anziché da interruzioni
 	  di riga, ma è anche supportata una sintassi alternativa, in
 	  cui <argname>alt</argname> è una specifica stringa da usare
-	  come separatore.
-	</para>
+	  come separatore. La funzione inversa è, in questo caso,
+	  <fncref targ="strsplit"/>.
+	</para> 
       </description>
     </function>
 
@@ -9427,13 +9494,15 @@
       <examples>
 	<example>matrix mx = mrandgen(u, 0, 100, 50, 1)</example>
 	<example>matrix mt14 = mrandgen(t, 14, 20, 20)</example>
+        <example>matrix D = mrandgen(dir, {0.5,1,2,4}, 30)</example>
       </examples>
       <description>
 	<para>
-	  Funziona come <fncref targ="randgen"/> tranne che il valore
-	  calcolato è una matrice anziché una variabile. Gli argomenti
-	  iniziali di questa funzione (il cui numero dipende dalla
-	  distribuzione specificata) sono come quelli descritti per
+	  Con una eccezione (vedi sotto), funziona come <fncref
+	  targ="randgen"/> tranne che il valore calcolato è una
+	  matrice anziché una variabile. Gli argomenti iniziali di
+	  questa funzione (il cui numero dipende dalla distribuzione
+	  specificata) sono come quelli descritti per
 	  <lit>randgen</lit>, ma devono essere seguiti da due interi
 	  per specificare il numero di righe (<argname>r</argname>) e
 	  colonne (<argname>c</argname>) della matrice casuale
@@ -9443,10 +9512,24 @@
 	  <argname>colonne</argname>.
 	</para>
 	<para>
+	  L'unica eccezione a quanto sopra è la distribuzione di
+	  Dirichlet; poiché questa è una distribuzione multivariata,
+	  invocando <lit>mrandgen</lit> con <quote>dir</quote> come primo
+	  parametro si attiva una sintassi speciale: l'argomento 2
+	  deve essere un vettore positivo di <math>k</math> elementi
+	  <lit>a</lit> e l'argomento 3 deve essere uno scalare
+	  <lit>r</lit>. La funzione restituirà una matrice <by r="r"
+	  c="k"/> in cui ogni riga è un'estrazione indipendente da una
+	  distribuzione di Dirichlet con parametro <lit>a</lit>.
+	</para>
+	<para>
 	  Il primo esempio fornito sopra calcola un vettore colonna
 	  casuale uniforme di 50 elementi, mentre il secondo specifica
 	  una matrice casuale <by r="20" c="20"/> con elementi tratti
-	  dalla distribuzione <math>t</math> con 14 gradi di libertà.
+	  dalla distribuzione <math>t</math> con 14 gradi di
+	  libertà. Il terzo restituisce una matrice <by r="30" c="4"/>
+	  in cui ogni riga è estratta dalla distribuzione di Dirichlet
+	  specificata.
 	</para>
 	<para>
 	  <seelist>
@@ -9698,20 +9781,32 @@
 	</para>
 	<para>
 	  L'argomento <argname>v</argname> deve essere un vettore o
-	  uno scalare. Nel primo caso, il vettore deve essere di
-	  lunghezza uguale alla dimensione rilevante (righe o colonne)
-	  di <argname>X</argname>, e dovrà contenere valori interi
-	  pari minimo ad 1 e un massimo pari al numero di matrici nel
-	  vettore desiderato.  Ogni elemento di <argname>v</argname>
-	  indica l'indice vettoriale della matrice al quale la
-	  corrispondente riga di <argname>X</argname> dovrà essere
-	  assegnata. Nel secondo caso, in cui <argname>v</argname> è
-	  uno scalare, <argname>X</argname> verrà divisa in blocchi di
-	  <argname>v</argname> righe/colonne (a seconda del valore di
-	  <argname>bycol</argname>); se la dimensione rilevante delle
-	  matrice (righe o colonne) non è un multiplo esatto di
-	  <argname>v</argname>, si verificherà un errore.
+	  uno scalare.
 	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      Nel primo caso, il vettore deve essere di lunghezza
+	      uguale alla dimensione rilevante (righe o colonne) di
+	      <argname>X</argname>, e dovrà contenere valori interi
+	      positivi, Il massimo indica il numero di elementi
+	      dell'array risultato. Ogni elemento di
+	      <argname>v</argname> indica l'indice della matrice al
+	      quale la corrispondente riga di <argname>X</argname>
+	      dovrà essere assegnata.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Nel secondo caso, in cui <argname>v</argname> è uno
+	      scalare, la dimensione rilevante (righe o colonne) di
+	      deve essere un multiplo esatto di <argname>v</argname>.
+	      <argname>X</argname> verrà divisa in blocchi di
+	      <argname>v</argname> righe/colonne (a seconda del valore
+	      di <argname>bycol</argname>).
+	    </para>
+	  </li>
+	</ilist>
 	<para>
 	  Nel seguente esempio si divide una matrice <by r="4" c="3"/>
 	  in tre matrici: le prime due righe sono assegnate alla prima
@@ -9735,7 +9830,7 @@
 	  [4] 1 x 3
 	</code>
 	<para>
-	  In questo esempio, inveced, la matrice <argname>X</argname>
+	  In questo esempio, invece, la matrice <argname>X</argname>
 	  è divisa in blocchi di dimensione uguale:
 	</para>
 	<code>
@@ -11377,6 +11472,7 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;R</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;P</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -11387,6 +11483,15 @@
 	  <by r="n" c="n"/>. La matrice <math>Q</math> viene
 	  restituita direttamente, mentre <math>R</math> può essere
 	  recuperata usando il secondo argomento opzionale.
+	</para>
+	<para>
+	  Se viene fornito il terzo argomento facoltativo, la
+	  scomposizione impiega il pivoting delle colonne e, se tutto
+	  va a buon fine, <argname>P</argname> contiene l'ordinamento
+	  finale delle colonne sotto forma di vettore riga. Se le
+	  colonne non vengono effettivamente riordinate,
+	  <argname>P</argname> sarà uguale a <fncref
+	  targ="seq"/><lit>(1, n)</lit>.
 	</para>
 	<para>
 	  <seelist>
@@ -11609,16 +11714,36 @@
 	  generati. Gli argomenti da <argname>p1</argname> a
 	  <argname>p3</argname> specificano i parametri della
 	  distribuzione selezionata. Il numero di tali parametri
-	  dipende dalla distribuzione. Per le distribuzioni diverse
-	  dalla beta-binomiale, i parametri <argname>p1</argname> e
-	  (se applicabile) <argname>p2</argname> devono essere scalari
-	  o variabili: se sono scalari, la serie generata è identicamente
-	  distribuita; se al contrario almeno uno dei due parametri in
-	  ingresso è una serie, per ciascuna osservazione la
-	  distribuzione è condizionata al valore dei parametri
-	  corrispondenti. Nel caso della beta-binomiale tutti i
-	  parametri devono essere scalari.
+	  dipende dalla distribuzione.
 	</para>
+	<para>
+	  Per le distribuzioni diverse dalla beta-binomiale e della
+	  discreta generica, i parametri <argname>p1</argname> e (se
+	  applicabile) <argname>p2</argname> devono essere scalari o
+	  variabili: se sono scalari, la serie generata è
+	  identicamente distribuita; se al contrario almeno uno dei
+	  due parametri in ingresso è una serie, per ciascuna
+	  osservazione la distribuzione è condizionata al valore dei
+	  parametri corrispondenti.
+	</para>
+	<para>
+	  Per i due casi speciali, le specifiche sono le seguenti: 
+	</para>
+        <ilist>
+          <li>
+            <para>
+              beta-binomiale: tutti e tre i parametri devono essere scalari.
+            </para>
+          </li>
+          <li>
+            <para>
+              discreta generica: è richiesto un solo parametro, cioè
+              un vettore a <math>k</math> elementi contentente le
+              probabilità per una variabile casuale il cui supporto
+              siano gli interi da 1 to <math>k</math>.
+            </para>
+          </li>
+        </ilist>
 	<para>
 	  Le specifiche sono fornite sotto: il codice stringa per ogni
 	  distribuzione è mostrato fra parentesi, seguito
@@ -11679,9 +11804,19 @@
 	    </para>
 	  </li>
 	  <li>
+            <para>
+              Logistica (lgt o s): posizione, scala
+            </para>
+	  </li>
+	  <li>
 	    <para>
 	      Weibull (w o W): forma, scala
 	    </para>
+	  </li>
+	  <li>
+            <para>
+              Laplace (l o L): media, scala
+            </para>
 	  </li>
 	  <li>
 	    <para>
@@ -11698,6 +11833,11 @@
 	      Beta-Binomiale (bb): prove, forma1, forma2
 	    </para>
 	  </li>
+	  <li>
+            <para>
+              Discreta generica (disc): probabilità
+            </para>
+	  </li>
 	</ilist>
 	<tabular colspec="lllll">
 	  \textbf{Distribuzione} &amp; \textsl{d} &amp; \textsl{p1} &amp; \textsl{p2} &amp; \textsl{p3}\\[4pt]
@@ -11709,11 +11849,15 @@
 	  $F$ di Snedecor &amp; \texttt{f} o \texttt{F} &amp; gradi di libertà (num.) &amp; gradi di libertà (den.) &amp; --\\
 	  Gamma &amp; \texttt{g} o \texttt{G} &amp; forma &amp; scala &amp; --\\
 	  Binomiale &amp; \texttt{b} o \texttt{B} &amp; $p$ &amp; $n$  &amp; --\\
+	  Esponenziale &amp; \texttt{exp} &amp; scala &amp; -- &amp; --\\
+	  Logistica &amp; \texttt{s} &amp; posizione &amp; scala &amp; --\\
 	  Poisson &amp; \texttt{p} o \texttt{P} &amp; media &amp; --  &amp; --\\
 	  Weibull &amp; \texttt{w} o \texttt{W} &amp; forma &amp; scala &amp; --\\
+	  Laplace &amp; \texttt{l} o \texttt{L} &amp; media &amp; scala &amp; --\\
 	  Generalized Error &amp; \texttt{e} o \texttt{E} &amp; forma &amp; -- &amp; --\\
 	  Beta &amp; \texttt{beta} &amp; forma1 &amp; forma1 &amp; --\\
 	  Beta-Binomiale &amp; \texttt{bb} &amp; $n$ &amp; forma1 &amp; forma1
+	  Generic discrete &amp; \texttt{disc} &amp; $\mathbf{p}$ &amp; -- &amp; --
 	</tabular>
 	<para>
 	  <seelist>

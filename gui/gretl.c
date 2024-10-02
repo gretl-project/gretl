@@ -413,31 +413,6 @@ static void real_nls_init (void)
 
 #elif defined(OS_OSX)
 
-#define LOCALE_CHECK 1
-
-#if LOCALE_CHECK
-
-#include <CoreFoundation/CoreFoundation.h>
-
-/* Use this to check what we get from setlocale() ? */
-
-static void macos_check_locale (void)
-{
-    CFLocaleRef cfloc = CFLocaleCopyCurrent();
-    CFStringRef cfprop;
-    const char *s;
-
-    cfprop = (CFStringRef) CFLocaleGetValue(cfloc, kCFLocaleIdentifier);
-    s = CFStringGetCStringPtr(cfprop, kCFStringEncodingASCII);
-    if (s != NULL) {
-	fprintf(stderr, "macos_check_locale: CF gave ID '%s'\n", s);
-    }
-
-    CFRelease(cfloc);
-}
-
-#endif /* LOCALE_CHECK */
-
 static void real_nls_init (void)
 {
     char *gretlhome = getenv("GRETL_HOME");
@@ -455,10 +430,19 @@ static void real_nls_init (void)
     }
 
     p = setlocale(LC_ALL, "");
-    fprintf(stderr, "NLS init: setlocale() gave '%s'\n", p);
-#if LOCALE_CHECK
-    macos_check_locale();
+#if 0
+    FILE *fp = fopen("/Users/allincottrell/lang.txt", "w");
+    if (fp != NULL) {
+        fprintf(fp, "real_nls_init: setlocale(LC_ALL, \"\") gave '%s'\n", p);
+        fprintf(fp, " env: LANG='%s'\n", getenv("LANG"));
+        fprintf(fp, " env: LANGUAGE='%s'\n", getenv("LANGUAGE"));
+        fclose(fp);
+    }
 #endif
+    if (p != NULL) {
+        /* for the benefit of gettext */
+        gretl_setenv("LANGUAGE", p);
+    }
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);
     bind_textdomain_codeset(PACKAGE, "UTF-8");
@@ -651,11 +635,11 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
     if (gpid > 0) {
 	gint resp = GRETL_NO;
 
+#if IPC_DEBUG
+        fprintf(fipc, "maybe_hand_off: prior PID %d\n", (int) gpid);
+#endif
 	if (!optsingle) {
 	    resp = no_yes_dialog("gretl", _("Start a new gretl instance?"));
-#ifdef G_OS_WIN32
-	    fprintf(stderr, "hand_off dialog: resp = %d\n", resp);
-#endif
 	}
 
 	if (resp != GRETL_YES) {
@@ -670,11 +654,10 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
 	    ret = forward_open_request(gpid, abspath);
 	    g_free(abspath);
 	}
-    }
-
-#ifdef G_OS_WIN32
-    fprintf(stderr, "maybe_hand_off: returning %d\n", ret);
+#if IPC_DEBUG
+        fprintf(fipc, "maybe_hand_off: returning %d\n", ret);
 #endif
+    }
 
     return ret;
 }
@@ -868,6 +851,20 @@ int main (int argc, char **argv)
     session_init();
     init_fileptrs();
 
+#if IPC_DEBUG
+    if (1) {
+        pid_t my_pid = getpid();
+        const char *home = g_get_home_dir();
+        gchar *ipcname = g_strdup_printf("ipc%d.txt", (int) my_pid);
+        gchar *ipcpath = g_build_filename(home, ipcname, NULL);
+
+        fipc = gretl_fopen(ipcpath, "w");
+        fprintf(fipc, "Starting gretl, pid %d\n", (int) my_pid);
+        g_free(ipcpath);
+        g_free(ipcname);
+    }
+#endif
+
     if (argc > 1 && *filearg == '\0') {
 	/* If we have a residual unhandled command-line argument,
 	   it should be the name of a file to be opened.
@@ -877,7 +874,11 @@ int main (int argc, char **argv)
 
 #ifdef GRETL_OPEN_HANDLER
     if (!optnew && maybe_hand_off(filearg, auxname)) {
-	fflush(stderr);
+# if IPC_DEBUG
+        fprintf(fipc, "IPC: exit now\n");
+        fflush(fipc);
+        fclose(fipc);
+# endif
 	exit(EXIT_SUCCESS);
     }
 #endif
@@ -1526,6 +1527,16 @@ static void set_main_window_scale (void)
 	double aspect = 1.25;
 	double hfac = 2.10;
 
+#if 0
+        double w_in = gdk_screen_width_mm() / 25.4;
+        double h_in = gdk_screen_height_mm() / 25.4;
+        fprintf(stderr, "screen pixels: %d x %d\n", w, h);
+        fprintf(stderr, "screen inches (gdk): %g x %g\n", w_in, h_in);
+        fprintf(stderr, "nominal dpi %g, %g\n", gretl_round(w/w_in),
+                gretl_round(h/h_in));
+        fprintf(stderr, "inches @ 170 dpi: %g x %g\n", w/170.0, h/170.0);
+#endif
+
 	if (mainwin_height < h / hfac) {
 	    mainwin_height = h / hfac;
 	    if ((double) w / h > 1.35) {
@@ -1652,7 +1663,8 @@ static void make_main_window (void)
 	mainwin_width = 650 * gui_scale;
 	mainwin_height = 460 * gui_scale;
 	if (swallow) {
-	    mainwin_width *= 1.6;
+            /* 1.6 was a bit small? */
+	    mainwin_width *= 1.7;
 	}
 	set_main_window_scale();
     }
@@ -2054,7 +2066,7 @@ GtkActionEntry main_entries[] = {
     { "mle", NULL, N_("_Maximum likelihood"), NULL, NULL, G_CALLBACK(gretl_callback) },
     { "gmm", NULL, N_("_GMM"), NULL, NULL, G_CALLBACK(gretl_callback) },
     { "system", NULL, N_("_Simultaneous equations"), NULL, NULL, G_CALLBACK(gretl_callback) },
-    { "kalman", NULL, N_("State space model"), NULL, NULL, G_CALLBACK(kalman_callback) },
+    { "KFgui", NULL, N_("State space model"), NULL, NULL, G_CALLBACK(gfn_menu_callback) },
 
     /* Help */
     { "Help", NULL, N_("_Help"), NULL, NULL, NULL },

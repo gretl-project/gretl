@@ -5502,22 +5502,60 @@
     <function name="flatten" section="data-utils" output="seebelow">
       <fnargs>
 	<fnarg type="matrices-or-strings">A</fnarg>
-	<fnarg optional="true" type="bool">alt</fnarg>
+	<fnarg optional="true" type="int-or-string">alt</fnarg>
       </fnargs>
       <description>
 	<para>
 	  <quote>Flattens</quote> either an array of matrices into a
 	  single matrix or an array of strings into a single string.
 	</para>
+        <subhead>Matrices</subhead>
 	<para>
-	  In the matrix case the matrices in <argname>A</argname> are
-	  by default concatented horizontally, but if a non-zero
-	  value is supplied for <argname>alt</argname> the
-	  concatenation is vertical. In either case an error is
-	  flagged if the matrices are not conformable for the
-	  operation. See <fncref targ="msplitby"/> for the inverse
-	  operation.
+	  In the matrix case, the way the matrices in
+	  <argname>A</argname> are joined together depends on the the
+	  <argname>alt</argname> argument, which should have value 0
+	  (horizontal), 1 (vertical) or 2 (<quote>vec-wise</quote>).
+	  The best way to explain the difference between the three
+	  alternatives is by example: the code
 	</para>
+	<code>
+	  X = {1,3,5; 2,4,6}
+	  A = defarray(X, X+6)
+	  U = flatten(A,0) # = A[1] ~ A[2]
+	  V = flatten(A,1) # = A[1] | A[2]
+	  W = flatten(A,2) # = vec(A[1]) ~ vec(A[2])
+	</code>
+	<para>
+	  produces the following three matrices:
+	</para>
+	<code>
+	  U (2 x 6)
+
+	  1    3    5    7    9   11 
+	  2    4    6    8   10   12 
+
+	  V (4 x 3)
+
+	  1    3    5 
+	  2    4    6 
+	  7    9   11 
+	  8   10   12 
+
+	  W (6 x 2)
+
+	  1    7 
+	  2    8 
+	  3    9 
+	  4   10 
+	  5   11 
+	  6   12 
+	</code>
+	<para>
+	  An error is flagged if the matrices in the array are not
+	  conformable for the operation. See <fncref targ="msplitby"/>
+	  for the inverse operation.
+	</para>
+        <subhead>Strings</subhead>
 	<para>
 	  In the string case the result holds the strings in
 	  <argname>A</argname>, arranged one per line by default. If a
@@ -5525,7 +5563,8 @@
 	  the strings are separated by spaces rather than newlines,
 	  but an alternative usage of <argname>alt</argname> is
 	  supported: you may give a specific string to use as the
-	  separator.
+	  separator. The inverse function for the string case is
+	  <fncref targ="strsplit"/>.
 	</para>
       </description>
     </function>
@@ -7275,9 +7314,11 @@
 	  Given <argname>S</argname> (a positive definite <by r="p"
 	  c="p"/> scale matrix), returns a drawing from the Inverse
 	  Wishart distribution with <argname>v</argname> degrees of
-	  freedom. The returned matrix is also <by r="p" c="p"/>.  The
-	  algorithm of <cite key="odell-feiveson66">Odell and Feiveson
-	  (1966)</cite> is used.
+	  freedom, where <argname>v</argname> must not be smaller than
+	  <math>p</math>. The returned matrix is also <by r="p"
+	  c="p"/>.  The algorithm of <cite
+	  key="odell-feiveson66">Odell and Feiveson (1966)</cite> is
+	  used.
 	</para>
       </description>
     </function>
@@ -8180,11 +8221,11 @@
     <function name="Lsolve" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">L</fnarg>
-	<fnarg type="matrix">b</fnarg>
+	<fnarg type="matrix">B</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Solves for <math>x</math> in <math>Ax = b</math>, where
+	  Solves for <math>x</math> in <math>AX = B</math>, where
 	  <argname>L</argname> is the lower triangular Cholesky factor
 	  of the positive definite matrix <math>A</math>, satisfying
 	  <math>LL' = A</math>. Suitable <argname>L</argname> can be
@@ -8197,15 +8238,15 @@
 	  allows for reuse of a precomputed Cholesky factor and so
 	  should be substantially faster if you are solving repeatedly
 	  for given <math>A</math> and several values of
-	  <math>b</math>. The speed-up will be greater, the greater
-	  the column dimension of <math>A</math>.
+	  <math>B</math>. The speed-up will be greater, the greater
+	  the dimension of <math>A</math>.
 	</para>
 	<code>
 	  # variant 1
 	  matrix L = cholesky(A)
-	  matrix x = Lsolve(L, b)
+	  matrix X = Lsolve(L, B)
 	  # variant 2
-	  matrix x = A \ b
+	  matrix X = A \ B
 	</code>
       </description>
     </function>
@@ -9406,25 +9447,41 @@
       <examples>
 	<example>matrix mx = mrandgen(u, 0, 100, 50, 1)</example>
 	<example>matrix mt14 = mrandgen(t, 14, 20, 20)</example>
+        <example>matrix D = mrandgen(dir, {0.5,1,2,4}, 30)</example>
       </examples>
       <description>
 	<para>
-	  Works like <fncref targ="randgen"/> except that the return
-	  value is a matrix rather than a series. The initial
-	  arguments to this function (the number of which depends on
-	  the selected distribution) are as described for
-	  <lit>randgen</lit>, but they must be followed by two
-	  integers to specify the number of rows and columns of the
-	  desired random matrix. If <argname>p1</argname> or
-	  <argname>p2</argname> are given in matrix form they must
-	  have a number of elements equal to the product of
-	  <argname>rows</argname> and <argname>cols</argname>.
+	  With one exception (see below), this function works like
+	  <fncref targ="randgen"/> except that the return value is a
+	  matrix rather than a series. The initial arguments to this
+	  function (the number of which depends on the selected
+	  distribution) are as described for <lit>randgen</lit>, but
+	  they must be followed by two integers to specify the row and
+	  column dimensions of the desired random matrix. If
+	  <argname>p1</argname> or <argname>p2</argname> are given in
+	  matrix form they must have a number of elements equal to the
+	  product of <argname>rows</argname> and
+	  <argname>cols</argname>.
 	</para>
 	<para>
-	  The first example above calls for a uniform random column
-	  vector of length 50, while the second example specifies a
-	  <by r="20" c="20"/> random matrix with drawings from the
-	  <math>t</math> distribution with 14 degrees of freedom.
+	  The exceptional case is the Dirichlet distribution. This is
+	  a multivariate distribution, and invoking
+	  <lit>mrandgen</lit> with <quote>dir</quote> as first
+	  parameter triggers special syntax: the second argument must
+	  be a <math>k</math>-element positive vector <math>a</math>,
+	  and the third a scalar <math>r</math>. The function will
+	  return an <by r="r" c="k"/> matrix where each row is an
+	  independent draw from a Dirichlet distribution with
+	  parameter <math>a</math>.
+	</para>
+	<para>
+	  The first example above calls for a column vector of length
+	  50 holding draws from a continuous uniform distribution on
+	  [0,100]. The second example specifies a <by r="20" c="20"/>
+	  random matrix with draws from the <math>t</math>
+	  distribution with 14 degrees of freedom; and the third
+	  returns a <by r="30" c="4"/> matrix holding 30 draws from a
+	  specified Dirichlet distribution.
 	</para>
 	<para>
 	  <seelist>
@@ -11561,7 +11618,7 @@
     <function name="randgen" section="probdist" output="series">
       <fnargs>
 	<fnarg type="string">d</fnarg>
-	<fnarg type="scalar-or-series">p1</fnarg>
+	<fnarg type="seebelow">p1</fnarg>
 	<fnarg type="scalar-or-series" conditional="true">p2</fnarg>
 	<fnarg type="scalar" conditional="true">p3</fnarg>
       </fnargs>
@@ -11580,21 +11637,41 @@
 	  which the pseudo-random numbers should be drawn. The
 	  arguments <argname>p1</argname> to <argname>p3</argname>
 	  specify the parameters of the selected distribution; the
-	  number of such parameters depends on the distribution.  For
-	  distributions other than the beta-binomial, the parameters
-	  <argname>p1</argname> and (if applicable)
-	  <argname>p2</argname> may be given as either scalars or
-	  series: if they are given as scalars the output series is
-	  identically distributed, while if a series is given for
-	  <argname>p1</argname> or <argname>p2</argname> the
-	  distribution is conditional on the parameter value at each
-	  observation. In the case of the beta-binomial all the
-	  parameters must be scalars.
+	  number of such parameters (and, in some cases, their nature)
+	  depends on the distribution.
 	</para>
+	<para>
+	  For distributions other than the beta-binomial and the
+	  generic discrete, the parameters <argname>p1</argname> and
+	  (if applicable) <argname>p2</argname> may be given as either
+	  scalars or series: if they are given as scalars the output
+	  series is identically distributed, while if a series is
+	  given for <argname>p1</argname> or <argname>p2</argname> the
+	  distribution is conditional on the parameter value at each
+	  observation.
+	</para>
+	<para>
+          The two special cases have the following requirements:
+        </para>
+        <ilist>
+          <li>
+            <para>
+              beta-binomial: all three parameters must be scalar.
+            </para>
+          </li>
+          <li>
+            <para>
+              generic discrete: a single parameter is wanted, namely a
+              <math>k</math>-vector whose elements represent the
+              probabilities for an integer-valued random variable with
+              support from 1 to <math>k</math>.
+            </para>
+          </li>
+        </ilist>
 	<para>
 	  Specifics are given below: the string code for each
 	  distribution is shown in parentheses, followed by the
-	  interpretation of the argument <argname>p1</argname> and,
+	  interpretation of the arguments <argname>p1</argname> and,
 	  where applicable, <argname>p2</argname> and
 	  <argname>p3</argname>.
 	</para>
@@ -11680,6 +11757,11 @@
               Beta-Binomial (bb): trials, shape1, shape2
             </para>
 	  </li>
+	  <li>
+            <para>
+              Generic discrete (disc): probabilities
+            </para>
+	  </li>
 	</ilist>
 	<tabular colspec="lllll">
 	  \textbf{Distribution} &amp; \textsl{d} &amp; \textsl{p1} &amp; \textsl{p2} &amp; \textsl{p3}\\[4pt]
@@ -11698,7 +11780,8 @@
 	  Laplace &amp; \texttt{l} or \texttt{L} &amp; mean &amp; scale &amp; --\\
 	  Generalized Error &amp; \texttt{e} or \texttt{E} &amp; shape &amp; -- &amp; --\\
 	  Beta &amp; \texttt{beta} &amp; shape1 &amp; shape2 &amp; --\\
-	  Beta-Binomial &amp; \texttt{bb} &amp; $n$ &amp; shape1 &amp; shape2
+	  Beta-Binomial &amp; \texttt{bb} &amp; $n$ &amp; shape1 &amp; shape2 \\
+	  Generic discrete &amp; \texttt{disc} &amp; $\mathbf{p}$ &amp; -- &amp; --
 	</tabular>
 	<para>
 	  <seelist>

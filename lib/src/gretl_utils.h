@@ -124,6 +124,8 @@ int gretl_compare_strings (const void *a, const void *b);
 
 /* miscellaneous */
 
+int libgretl_version (void);
+
 int gretl_version_number (const char *version);
 
 char *gretl_version_string (char *targ, int vnum);
@@ -237,6 +239,8 @@ int check_for_program (const char *prog);
 
 const char *blas_variant_string (void);
 
+int blas_is_openblas (void);
+
 int get_blas_details (char **s1, char **s2, char **s3);
 
 char *get_cpu_details (void);
@@ -258,3 +262,9 @@ gretl_matrix *dec2bin (double x, const gretl_matrix *v, int *err);
 gretl_matrix *bin2dec (const gretl_matrix *m, int *err);
 
 #endif /* GRETL_UTILS_H */
+
+#ifdef __ARM_ARCH_ISA_A64
+
+double _Complex __divdc3 (double a, double b, double c, double d);
+
+#endif

@@ -712,7 +712,7 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
     return FALSE;
 }
 
-static float spinner_get_float (GtkWidget *b)
+static float spin_get_float (GtkWidget *b)
 {
     return (float) gtk_spin_button_get_value(GTK_SPIN_BUTTON(b));
 }
@@ -1107,7 +1107,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	    entry_to_gp_string(ed->lineformula[i], &line->formula);
 	}
 	if (should_apply_changes(ed->linewidth[i])) {
-	    line->width = spinner_get_float(ed->linewidth[i]);
+	    line->width = spin_get_float(ed->linewidth[i]);
 	}
 	if (should_apply_changes(ed->colorsel[i])) {
 	    apply_line_color(ed->colorsel[i], spec, i);
@@ -1117,7 +1117,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 		gtk_combo_box_get_active(GTK_COMBO_BOX(ed->dtcombo[i])) + 1;
 	}
 	if (should_apply_changes(ed->pointsize[i])) {
-	    line->pscale = spinner_get_float(ed->pointsize[i]);
+	    line->pscale = spin_get_float(ed->pointsize[i]);
 	}
     }
 

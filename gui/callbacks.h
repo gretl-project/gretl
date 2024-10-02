@@ -59,6 +59,4 @@ void boxplot_callback (void);
 
 void send_attachment (const char *filename);
 
-void kalman_callback (GtkAction *action, gpointer data);
-
 #endif /* CALLBACKS_H */

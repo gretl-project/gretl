@@ -21,8 +21,6 @@ else
 endif
 
 SUBDIRS = gig ivpanel SVAR HIP dbnomics extra geoplot regls logging KFgui
-XMLSUBDIRS = gig ivpanel SVAR HIP
-ALLSUBDIRS = gig ivpanel SVAR HIP dbnomics extra geoplot regls logging KFgui
 
 .PHONY : subdirs $(SUBDIRS) clean installdirs install install-private
 
@@ -31,11 +29,13 @@ subdirs: $(SUBDIRS)
 $(SUBDIRS):
 	$(MAKE) -C $@
 
+# for use at sourceforge
 addons.xml: gfnindex $(SUBDIRS)
 	./gfnindex $(topsrc) $(SUBDIRS) > $@
 
-addons-i18n.c: gfnstrings $(XMLSUBDIRS)
-	./gfnstrings $(XMLSUBDIRS) > $@
+# for translations of addons elements
+addons-i18n.c: gfnstrings $(SUBDIRS)
+	./gfnstrings $(SUBDIRS) > $@
 
 gfnindex: gfnindex.c
 	$(CC) -o $@ $<
@@ -44,7 +44,7 @@ gfnstrings: gfnstrings.c
 	$(CC) -o $@ $<
 
 clean:
-	for d in $(ALLSUBDIRS) ; do $(MAKE) -C $$d clean; done
+	for d in $(SUBDIRS) ; do $(MAKE) -C $$d clean; done
 	@rm -f gfnindex addons.xml gfnstrings addons-i18n.c
 
 installdirs:
@@ -52,6 +52,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/gig/examples 
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/ivpanel
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/SVAR
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/SVAR/examples
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/HIP
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/HIP/examples
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/dbnomics
@@ -63,12 +64,22 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/regls/examples
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/logging
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/KFgui
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/KFgui/examples
 
 install: $(SUBDIRS) installdirs
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install; done
 
-install-private: addons-i18n.c
-	$(INSTALL_DATA) $< $(topsrc)/plugin	
+install-priv: addons-i18n.c
+	$(INSTALL_DATA) $< $(topsrc)/addons
+
+addons.tar.gz: $(SUBDIRS)
+	rm -rf tgztmp && mkdir tgztmp && \
+	for d in $(SUBDIRS) ; do \
+	make -C $$d $$d.zip || { echo "making zip-files failed" ; exit 1; } && \
+	cp $$d/$$d.zip ./tgztmp/ ; done && cd tgztmp && \
+	for d in $(SUBDIRS) ; do \
+	unzip $$d.zip && rm $$d.zip ; done && \
+	tar cvfz ../addons.tar.gz * && cd .. && rm -rf tgztmp
 
 check: $(SUBDIRS)
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d check; done

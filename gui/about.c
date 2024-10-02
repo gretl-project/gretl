@@ -63,7 +63,7 @@ static GtkWidget *get_logo (void)
     GError *error = NULL;
     GtkWidget *image = NULL;
 
-    fname = g_strdup_printf("%sgretl-logo.xpm", gretl_home());
+    fname = g_strdup_printf("%sgretl-logo.png", gretl_home());
     pbuf = gdk_pixbuf_new_from_file(fname, &error);
 
     if (pbuf == NULL) {

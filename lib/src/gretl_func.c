@@ -282,7 +282,9 @@ static void function_package_free (fnpkg *pkg);
 static int load_function_package (const char *fname,
                                   gretlopt opt,
                                   GArray *pstack,
-                                  PRN *prn);
+                                  PRN *prn,
+                                  fnpkg **ppkg,
+                                  int level);
 static int ufunc_get_structure (ufunc *u);
 #if CALL_DEBUG
 static void print_callstack (ufunc *fun);
@@ -3224,10 +3226,11 @@ static int package_write_translatable_strings (fnpkg *pkg, PRN *prn)
     FILE *fp;
     gchar *trname;
     char **S = NULL;
+    int trans = 0;
     int i, n = 0;
 
+    /* open a file to contain the results */
     trname = g_strdup_printf("%s-i18n.c", pkg->name);
-
     fp = gretl_fopen(trname, "wb");
     if (fp == NULL) {
         gretl_errmsg_sprintf(_("Couldn't open %s"), trname);
@@ -3236,6 +3239,9 @@ static int package_write_translatable_strings (fnpkg *pkg, PRN *prn)
     }
 
     if (pkg->pub != NULL) {
+        /* pick up any parameter descriptions and/or parameter-value
+           enumeration strings
+        */
         int j, k;
 
         for (i=0; i<pkg->n_pub; i++) {
@@ -3255,6 +3261,7 @@ static int package_write_translatable_strings (fnpkg *pkg, PRN *prn)
     }
 
     if (pkg->label != NULL || S != NULL) {
+        /* we got some relevant content */
         fprintf(fp, "const char *%s_translations[] = {\n", pkg->name);
         if (pkg->label != NULL) {
             fprintf(fp, "    N_(\"%s\"),\n", pkg->label);
@@ -3271,11 +3278,17 @@ static int package_write_translatable_strings (fnpkg *pkg, PRN *prn)
             strings_array_free(S, n);
         }
         fputs("};\n", fp);
+        trans = 1;
     }
 
     fclose(fp);
 
-    pprintf(prn, "Wrote translations file %s\n", trname);
+    if (!trans) {
+        gretl_remove(trname);
+    } else {
+        pprintf(prn, "Wrote translations file %s\n", trname);
+    }
+
     g_free(trname);
 
     return 0;
@@ -4676,7 +4689,7 @@ static int should_rebuild_gfn (const char *gfnname)
  * create_and_write_function_package:
  * @fname: filename for function package.
  * @opt: may include OPT_I to write a package-index entry,
- * OPT_T to write translatable strings.
+ * OPT_T to write translatable strings (for addons).
  * @prn: printer struct for feedback.
  *
  * Create a package based on the functions currently loaded, and
@@ -5803,7 +5816,19 @@ static int pkg_in_stack (const char *name, GArray *pstack)
     return 0;
 }
 
-static int load_gfn_dependencies (fnpkg *pkg, GArray *pstack)
+#define TS_REQUIRED(d) (d == FN_NEEDS_TS || d == FN_NEEDS_QM)
+
+static int data_requirements_conflict (fnpkg *a, fnpkg *b)
+{
+    if (a->dreq == FN_NEEDS_PANEL && TS_REQUIRED(b->dreq)) {
+        return 1;
+    } else if (b->dreq == FN_NEEDS_PANEL && TS_REQUIRED(a->dreq)) {
+        return 1;
+    }
+    return 0;
+}
+
+static int load_gfn_dependencies (fnpkg *pkg, GArray *pstack, int level)
 {
     int err = 0;
 
@@ -5811,29 +5836,36 @@ static int load_gfn_dependencies (fnpkg *pkg, GArray *pstack)
         char *pkgpath;
         int i;
 
-        fprintf(stderr, "*** load_gfn_dependencies for %s ***\n", pkg->name);
+        fprintf(stderr, "*** load_gfn_dependencies (%d) for %s (level %d) ***\n",
+                pkg->n_depends, pkg->name, level);
 
         for (i=0; i<pkg->n_depends && !err; i++) {
-            const char *dep = pkg->depends[i];
+            const char *depname = pkg->depends[i];
+            fnpkg *dep = NULL;
 
-            if (get_function_package_by_name(dep) != NULL) {
+            if (get_function_package_by_name(depname) != NULL) {
+                fprintf(stderr, " %s: already loaded\n", depname);
                 ; /* OK, already loaded */
-            } else if (pkg_in_stack(dep, pstack)) {
-                fprintf(stderr, " found %s in pstack\n", dep);
+            } else if (pkg_in_stack(depname, pstack)) {
+                fprintf(stderr, " %s: found in stack\n", depname);
                 ; /* don't go into infinite loop! */
             } else {
-                fprintf(stderr, " trying for %s\n", dep);
-                pkgpath = gretl_function_package_get_path(dep, PKG_ALL);
+                fprintf(stderr, " trying for %s\n", depname);
+                pkgpath = gretl_function_package_get_path(depname, PKG_ALL);
                 if (pkgpath == NULL) {
                     err = E_DATA;
                     gretl_errmsg_sprintf(_("%s: dependency %s was not found"),
-                                         pkg->name, dep);
+                                         pkg->name, depname);
                 } else {
                     err = load_function_package(pkgpath, OPT_NONE,
-                                                pstack, NULL);
+                                                pstack, NULL, &dep,
+                                                level + 1);
                     free(pkgpath);
+                    if (!err && level == 0) {
+                        err = data_requirements_conflict(pkg, dep);
+                    }
                     if (!err) {
-                        g_array_append_val(pstack, dep);
+                        g_array_append_val(pstack, depname);
                     }
                 }
             }
@@ -5850,7 +5882,8 @@ static int load_gfn_dependencies (fnpkg *pkg, GArray *pstack)
    packages.
 */
 
-static int real_load_package (fnpkg *pkg, GArray *pstack, PRN *prn)
+static int real_load_package (fnpkg *pkg, GArray *pstack, PRN *prn,
+                              int level)
 {
     int i, err = 0;
 
@@ -5861,7 +5894,7 @@ static int real_load_package (fnpkg *pkg, GArray *pstack, PRN *prn)
     gretl_error_clear();
 
     if (pstack != NULL) {
-        err = load_gfn_dependencies(pkg, pstack);
+        err = load_gfn_dependencies(pkg, pstack, level);
     }
 
     if (!err && pkg->pub != NULL) {
@@ -6627,7 +6660,7 @@ int read_session_functions_file (const char *fname)
         if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
             pkg = real_read_package(doc, cur, fname, 1, &err);
             if (!err) {
-                err = real_load_package(pkg, NULL, NULL);
+                err = real_load_package(pkg, NULL, NULL, 0);
             }
         }
 #ifdef HAVE_MPI
@@ -6810,6 +6843,7 @@ static fnpkg *check_for_loaded (const char *fname, gretlopt opt)
  * @opt: may include OPT_F to force loading even when
  * the package is already loaded.
  * @prn: gretl printer.
+ * @ppkg: optional pointer to receive fnpkg pointer.
  *
  * Loads the function package located by @fname into
  * memory, if possible. Supports gretl's "include" command
@@ -6821,7 +6855,9 @@ static fnpkg *check_for_loaded (const char *fname, gretlopt opt)
 static int load_function_package (const char *fname,
                                   gretlopt opt,
                                   GArray *pstack,
-                                  PRN *prn)
+                                  PRN *prn,
+                                  fnpkg **ppkg,
+                                  int level)
 {
     fnpkg *pkg;
     int err = 0;
@@ -6833,8 +6869,13 @@ static int load_function_package (const char *fname,
 
     pkg = read_package_file(fname, 1, &err);
 
-    if (!err && pkg->Rdeps != NULL) {
-        err = check_R_depends(pkg->name, pkg->Rdeps, prn);
+    if (!err) {
+        if (ppkg != NULL) {
+            *ppkg = pkg;
+        }
+        if (pkg->Rdeps != NULL) {
+            err = check_R_depends(pkg->name, pkg->Rdeps, prn);
+        }
     }
 
     if (!err) {
@@ -6848,7 +6889,7 @@ static int load_function_package (const char *fname,
         if (oldpkg != NULL) {
             real_function_package_unload(oldpkg, 1);
         }
-        err = real_load_package(pkg, pstack, prn);
+        err = real_load_package(pkg, pstack, prn, level);
     }
 
     if (err) {
@@ -6892,7 +6933,7 @@ int include_gfn (const char *fname, gretlopt opt, PRN *prn)
 
     pstack = g_array_new(FALSE, FALSE, sizeof(char *));
     g_array_append_val(pstack, pkgname);
-    err = load_function_package(fname, opt, pstack, prn);
+    err = load_function_package(fname, opt, pstack, prn, NULL, 0);
     g_array_free(pstack, TRUE);
     g_free(pkgname);
 
@@ -9022,6 +9063,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
  * @dset: pointer to dataset info.
  * @dreq: function data requirements flag.
  * @minver: function minimum program version requirement.
+ * @pkg: the package to which the function belongs.
  *
  * Checks whether the requirements in @dreq and @minver
  * are jointly satisfied by the current dataset and gretl
@@ -9032,7 +9074,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
  */
 
 int check_function_needs (const DATASET *dset, DataReq dreq,
-                          int minver)
+                          int minver, fnpkg *pkg)
 {
     static int thisver = 0;
 
@@ -9044,29 +9086,42 @@ int check_function_needs (const DATASET *dset, DataReq dreq,
         char vstr[8];
 
         gretl_version_string(vstr, minver);
-        gretl_errmsg_sprintf(_("This function needs gretl version %s"), vstr);
+        if (pkg != NULL) {
+            gretl_errmsg_sprintf(_("The package %s needs gretl version %s"),
+                                 pkg->name, vstr);
+        }
         return 1;
     }
 
     if ((dset == NULL || dset->v == 0) && dreq != FN_NODATA_OK) {
-        gretl_errmsg_set(_("This function needs a dataset in place"));
+        if (pkg != NULL) {
+            gretl_errmsg_sprintf(_("The package %s needs a dataset in place"),
+                                 pkg->name);
+        }
         return E_DATA;
     }
 
     if (dreq == FN_NEEDS_TS && !dataset_is_time_series(dset)) {
-        gretl_errmsg_set(_("This function needs time-series data"));
+        if (pkg != NULL) {
+            gretl_errmsg_sprintf(_("The package %s needs time-series data"),
+                                 pkg->name);
+        }
         return E_DATA;
     }
 
     if (dreq == FN_NEEDS_PANEL && !dataset_is_panel(dset)) {
-        gretl_errmsg_set(_("This function needs panel data"));
+        if (pkg != NULL) {
+            gretl_errmsg_sprintf(_("The package %s needs panel data"),
+                                 pkg->name);
+        }
         return E_DATA;
     }
 
-    if (dreq == FN_NEEDS_QM &&
-        (!dataset_is_time_series(dset) ||
-         (dset->pd != 4 && dset->pd != 12))) {
-        gretl_errmsg_set(_("This function needs quarterly or monthly data"));
+    if (dreq == FN_NEEDS_QM && !quarterly_or_monthly(dset)) {
+         if (pkg != NULL) {
+            gretl_errmsg_sprintf(_("The package %s needs quarterly or monthly data"),
+                                 pkg->name);
+        }
         return E_DATA;
     }
 
@@ -9118,7 +9173,7 @@ static int maybe_check_function_needs (const DATASET *dset,
 #endif
 
     return check_function_needs(dset, fun->pkg->dreq,
-                                fun->pkg->minver);
+                                fun->pkg->minver, fun->pkg);
 }
 
 /* next block: handling function return values */

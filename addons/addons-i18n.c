@@ -108,3 +108,56 @@ const char *HIP_translations[] = {
     N_("Verbosity level")
 };
 
+const char *dbnomics_translations[] = {
+    N_("dbnomics"),
+};
+
+const char *extra_translations[] = {
+    N_("Don't"),
+    N_("Fill method"),
+    N_("Linear interpolation"),
+    N_("Mean value"),
+    N_("Number of random variables"),
+    N_("Number of selected choices"),
+    N_("Repetition"),
+    N_("Series to fill"),
+    N_("Set of all choices"),
+    N_("Std. deviation"),
+    N_("Vector of values"),
+    N_("W test stat"),
+    N_("always use normal approx"),
+    N_("bootstrap type code"),
+    N_("left truncation value"),
+    N_("moving blocks"),
+    N_("number of trials"),
+    N_("options"),
+    N_("resampling"),
+    N_("right truncation value"),
+    N_("two-sided prob mass"),
+    N_("wildM"),
+    N_("wildN"),
+    N_("wildR")
+};
+
+const char *regls_translations[] = {
+    N_("Coefficient paths"),
+    N_("Criterion plot")
+};
+
+const char *KFgui_translations[] = {
+    N_("Absolute value"),
+    N_("Disturbance in obs. equation?"),
+    N_("Exponential"),
+    N_("Normal"),
+    N_("Observation matrix (Z)"),
+    N_("Parametrization"),
+    N_("Quiet"),
+    N_("Square"),
+    N_("State transition matrix (T)"),
+    N_("State variance factor matrix (R)"),
+    N_("Verbose"),
+    N_("do smoothing"),
+    N_("observables"),
+    N_("verbosity")
+};
+

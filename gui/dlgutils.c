@@ -334,12 +334,12 @@ void desensitize_conditional_on (GtkWidget *w, GtkWidget *b)
 		     G_CALLBACK(desensitize_widget), w);
 }
 
-void set_double_from_spinner (GtkSpinButton *b, double *x)
+void set_double_from_spin (GtkSpinButton *b, double *x)
 {
     *x = gtk_spin_button_get_value(b);
 }
 
-void set_int_from_spinner (GtkSpinButton *b, int *k)
+void set_int_from_spin (GtkSpinButton *b, int *k)
 {
     *k = gtk_spin_button_get_value_as_int(b);
 }

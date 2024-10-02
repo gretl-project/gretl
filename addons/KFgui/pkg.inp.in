@@ -7,4 +7,4 @@ string pkgdir = topsrc ~ "/addons/KFgui"
 
 include @pkgdir/KFgui.inp
 
-makepkg KFgui.gfn --index --quiet --dtd="@dtd"
+makepkg KFgui.gfn --index --translations --quiet --dtd="@dtd"

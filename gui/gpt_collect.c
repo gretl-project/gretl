@@ -181,8 +181,7 @@ static int plot_collection_add_plot (png_plot *coll,
     add->cursor_label = coll->cursor_label;
     add->statusbar = coll->statusbar;
     add->toolbar = coll->toolbar;
-    add->up_icon = coll->up_icon;
-    add->down_icon = coll->down_icon;
+    add->scaler = coll->scaler;
     add->cid = coll->cid;
 
     /* shared drawing apparatus */

@@ -1433,6 +1433,120 @@ int gretl_rand_beta_binomial (double *x, int t1, int t2,
     return err;
 }
 
+#define DEBUG 0
+
+/**
+ * gretl_rand_discrete:
+ * @x: target vector.
+ * @t1: start of the fill range.
+ * @t2: end of the fill range.
+ * @p: probabilities vector.
+ *
+ * Fill the selected range of array @x with pseudo-random drawings
+ * from the discrete distribution defined by @p, with support from 1
+ * to @n.
+ *
+ * Returns: 0 on success, non-zero if @p is not a proper probability vector.
+ */
+
+int gretl_rand_discrete (double *x, int t1, int t2,
+                         const gretl_vector *p)
+{
+    gretl_matrix *S = NULL;
+    gretl_matrix *sS = NULL;
+    double *cp;
+    double u;
+    int n, nr = t2 - t1 + 1;
+    int i, j, t, pos;
+    int err = 0;
+
+    n = gretl_vector_get_length(p);
+
+    /* sanity check on @p */
+    for (i=0; i<n; i++) {
+        if (p->val[i] < 0.0 || p->val[i] > 1.0) {
+            fprintf(stderr, "gretl_rand_discrete: p is outside[0,1]\n");
+            return E_INVARG;
+        }
+    }
+
+    cp = malloc(n * sizeof *cp);
+
+    if (cp == NULL) {
+        err = E_ALLOC;
+    } else {
+        cp[0] = p->val[0];
+        for (i=1; i<n; i++) {
+            cp[i] = cp[i-1] + p->val[i];
+        }
+        if (fabs(1.0 - cp[n-1]) > 1.0e-7) {
+            free(cp);
+            err = E_INVARG;
+        }
+    }
+
+    if (err) {
+        goto bailout;
+    }
+
+    /* force cp[n-1] to 1 to avoid numerical issues */
+    cp[n-1] = 1.0;
+#if DEBUG
+    for (i=0; i<n; i++) {
+        printf("cp[%d] = %11.7f\n", i, cp[i]);
+    }
+#endif
+
+    /* build a matrix with @nr uniform rvs sorted ascendingly
+       in column 2 and the corresponding row index in column 1
+    */
+    S = gretl_random_matrix_new(nr, 2, D_UNIFORM);
+    if (S == NULL) {
+        err = E_ALLOC;
+        goto bailout;
+    } else {
+        for (i=0; i<nr; i++) {
+            S->val[i] = i;
+        }
+#if DEBUG
+        gretl_matrix_print(S, "S");
+#endif
+    }
+
+    sS = gretl_matrix_sort_by_column(S, 1, &err);
+    gretl_matrix_free(S);
+    if (err) {
+        goto bailout;
+    }
+
+#if DEBUG
+    gretl_matrix_print(sS, "sS");
+#endif
+
+    /* go through the rows of @sS and assign the proper value
+       to the elements of @x
+    */
+    i = pos = 0;
+    for (t=t1; t<=t2; t++) {
+        j = (int)(sS->val[i]);
+        u = gretl_matrix_get(sS, i++, 1);
+        while (u > cp[pos]) {
+            pos++;
+        }
+#if DEBUG
+        fprintf(stderr, "u = %8.4f, j = %d, pos = %d\n", u, j, pos);
+#endif
+        x[t1+j] = pos+1;
+    }
+
+ bailout:
+
+    free(cp);
+    gretl_matrix_free(sS);
+
+    return err;
+}
+
 /**
  * gretl_rand_dirichlet:
  * @a: parameter vector, length k.
@@ -1634,23 +1748,6 @@ gretl_matrix *halton_matrix (int m, int r, int offset, int *err)
     return H;
 }
 
-static gretl_matrix *
-cholesky_factor_of_inverse (const gretl_matrix *S, int *err)
-{
-    gretl_matrix *C = gretl_matrix_copy(S);
-
-    if (C == NULL) {
-	*err = E_ALLOC;
-    } else {
-	*err = gretl_invert_symmetric_matrix(C);
-	if (!*err) {
-	    *err = gretl_matrix_cholesky_decomp(C);
-	}
-    }
-
-    return C;
-}
-
 static int wishart_workspace (gretl_matrix **pW,
 			      gretl_matrix **pB,
 			      double **pZ,
@@ -1659,15 +1756,10 @@ static int wishart_workspace (gretl_matrix **pW,
     int err = 0;
 
     *pW = gretl_matrix_alloc(p, p);
-
-    if (*pW == NULL) {
-	return E_ALLOC;
-    }
-
     *pB = gretl_matrix_alloc(p, p);
 
-    if (*pB == NULL) {
-	err = E_ALLOC;
+    if (*pW == NULL || *pB == NULL) {
+        err = E_ALLOC;
     } else {
 	int n = p * (p + 1) / 2;
 
@@ -1692,19 +1784,17 @@ static int wishart_inverse_finalize (const gretl_matrix *C,
 				     gretl_matrix *W)
 {
     gretl_matrix_qform(C, GRETL_MOD_NONE,
-		       W, B, GRETL_MOD_NONE);
-    gretl_matrix_copy_values(W, B);
-
-    return gretl_invert_symmetric_matrix(W);
+		       B, W, GRETL_MOD_NONE);
+    return gretl_invpd(W);
 }
 
-static void odell_feiveson_compute (gretl_matrix *W,
+static void odell_feiveson_compute (gretl_matrix *B,
 				    double *Z,
 				    int v)
 {
     double Xi, Zri, Zrj;
     double wii, wij;
-    int p = W->rows;
+    int p = B->rows;
     int i, j, r;
 
     for (i=0; i<p; i++) {
@@ -1714,7 +1804,7 @@ static void odell_feiveson_compute (gretl_matrix *W,
 	    Zri = Z[ijton(r, i, p)];
 	    wii += Zri * Zri;
 	}
-	gretl_matrix_set(W, i, i, wii);
+	gretl_matrix_set(B, i, i, wii);
 	for (j=i+1; j<p; j++) {
 	    wij = Z[ijton(i, j, p)] * sqrt(Xi);
 	    for (r=0; r<i; r++) {
@@ -1722,8 +1812,8 @@ static void odell_feiveson_compute (gretl_matrix *W,
 		Zrj = Z[ijton(r, j, p)];
 		wij += Zri * Zrj;
 	    }
-	    gretl_matrix_set(W, i, j, wij);
-	    gretl_matrix_set(W, j, i, wij);
+	    gretl_matrix_set(B, i, j, wij);
+	    gretl_matrix_set(B, j, i, wij);
 	}
     }
 }
@@ -1731,7 +1821,7 @@ static void odell_feiveson_compute (gretl_matrix *W,
 /**
  * inverse_wishart_matrix:
  * @S: p x p positive definite scale matrix.
- * @v: degrees of freedom.
+ * @v: degrees of freedom: v >= p.
  * @err: location to receive error code.
  *
  * Computes a draw from the Inverse Wishart distribution
@@ -1753,10 +1843,14 @@ gretl_matrix *inverse_wishart_matrix (const gretl_matrix *S,
 	return NULL;
     }
 
-    *err = 0;
+    C = gretl_matrix_copy(S);
+    if (C == NULL) {
+        *err = E_ALLOC;
+        return NULL;
+    }
 
-    /* copy, invert and decompose S */
-    C = cholesky_factor_of_inverse(S, err);
+    /* invert and decompose C */
+    *err = cholesky_factor_of_inverse(C);
 
     if (!*err) {
 	*err = wishart_workspace(&W, &B, &Z, S->rows);
@@ -1767,7 +1861,7 @@ gretl_matrix *inverse_wishart_matrix (const gretl_matrix *S,
 	return NULL;
     }
 
-    odell_feiveson_compute(W, Z, v);
+    odell_feiveson_compute(B, Z, v);
     *err = wishart_inverse_finalize(C, B, W);
 
     if (*err) {
@@ -1797,53 +1891,70 @@ static void vech_into_row (gretl_matrix *targ, int row,
     }
 }
 
+/**
+ * inverse_wishart_sequence:
+ * @S: p x p positive definite scale matrix.
+ * @v: degrees of freedom: v >= p.
+ * @n: number of replications.
+ * @err: location to receive error code.
+ *
+ * Computes @n draws from the Inverse Wishart distribution
+ * with @v degrees of freedom, using the method of Odell and
+ * Feiveson, "A numerical procedure to generate a sample
+ * covariance matrix", JASA 61, pp. 199­203, 1966.
+ *
+ * Returns: an n x k matrix, where k = p*(p+1)/2, each row
+ * being the vech of an Inverse Wishart matrix, or NULL on error.
+ */
+
 gretl_matrix *inverse_wishart_sequence (const gretl_matrix *S,
-					int v, int replics,
-					int *err)
+					int v, int n, int *err)
 {
     gretl_matrix *C, *B = NULL, *W = NULL;
     gretl_matrix *Seq = NULL;
     double *Z = NULL;
-    int k, np = 0;
+    int i, k = 0;
 
     if (S == NULL || S->cols != S->rows || v < S->rows) {
 	*err = E_INVARG;
 	return NULL;
     }
 
-    if (replics < 1) {
+    if (n < 1) {
 	*err = E_INVARG;
 	return NULL;
     }
 
-    *err = 0;
+    C = gretl_matrix_copy(S);
+    if (C == NULL) {
+        *err = E_ALLOC;
+        return NULL;
+    }
 
-    /* copy, invert and decompose S */
-    C = cholesky_factor_of_inverse(S, err);
+    /* invert and decompose C */
+    *err = cholesky_factor_of_inverse(C);
 
     if (!*err) {
 	*err = wishart_workspace(&W, &B, &Z, S->rows);
     }
 
     if (!*err) {
-	int p = S->rows;
-
-	np = p * (p + 1) / 2;
-	Seq = gretl_matrix_alloc(replics, np);
+	k = C->rows * (C->rows + 1) / 2;
+	Seq = gretl_matrix_alloc(n, k);
 	if (Seq == NULL) {
 	    *err = E_ALLOC;
 	}
     }
 
-    for (k=0; k<replics && !*err; k++) {
-	odell_feiveson_compute(W, Z, v);
+    for (i=0; i<n && !*err; i++) {
+	odell_feiveson_compute(B, Z, v);
 	*err = wishart_inverse_finalize(C, B, W);
         if (!*err) {
-	    /* write vech of W into row k of Seq */
-	    vech_into_row(Seq, k, W);
-	    if (k < replics - 1) {
+	    /* write vech of W into row i of Seq */
+	    vech_into_row(Seq, i, W);
+	    if (i < n - 1) {
 		/* refresh Normal draws */
-		gretl_rand_normal(Z, 0, np - 1);
+		gretl_rand_normal(Z, 0, k - 1);
 	    }
 	}
     }

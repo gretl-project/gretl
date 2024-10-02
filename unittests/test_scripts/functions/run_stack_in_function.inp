@@ -1,0 +1,48 @@
+clear
+set verbose off
+set assert stop
+nulldata 5
+
+function series test_call_stack_in_function (void)
+    /* Gretl's behavior is as follows:
+    * 1. If the built-in function stack() is called within a function foo(), the
+    number of observations is updated only for the state within the function but
+    not outside.
+    * 2. Once the process exits the function foo(), the dataset returns to its
+    original state outside the function foo(). */
+
+    print "Start test calling Gretl's built-in stack() within a function"
+
+    # Given
+    series s1 = seq(1, 5)'
+    series s2 = seq(6, 10)'
+    list L = s1 s2
+
+    scalar T_before = $nobs
+    matrix expected = {s1} | {s2}
+
+    # When
+    series out = stack(L, $nobs)
+    scalar T_past = $nobs
+
+    # Then
+    assert(T_past == T_before * nelem(L))
+
+    loop i=1..$nobs
+        assert(out[i] == expected[i])
+    endloop
+
+    return out
+end function
+
+# Given
+scalar expected_nobs_outside_function = $nobs
+# When
+series out = test_call_stack_in_function()
+scalar actual_nobs_after_stack = $nobs
+# Then
+assert(actual_nobs_after_stack == expected_nobs_outside_function)
+
+
+print "Succesfully finished tests."
+quit

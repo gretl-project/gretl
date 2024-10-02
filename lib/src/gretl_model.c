@@ -5290,6 +5290,8 @@ int bundlize_model_data_items (const MODEL *pmod, gretl_bundle *b)
 	gretl_bundle_set_scalar(b, "dw", pmod->dw);
     }
 
+    gretl_bundle_set_int(b, "asymptotic", ASYMPTOTIC_MODEL(pmod->ci));
+
     return err;
 }
 

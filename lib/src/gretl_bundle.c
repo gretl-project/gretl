@@ -2893,9 +2893,10 @@ gretl_bundle *gretl_bundle_deserialize (void *p1, void *p2,
 
 static int call_bundle_to_json (gretl_bundle *b,
                                 const char *fname,
-                                int control)
+                                int control,
+                                gchar **buf)
 {
-    int (*jfunc) (gretl_bundle *, const char *, gretlopt);
+    int (*jfunc) (gretl_bundle *, const char *, gretlopt, gchar **);
 
     jfunc = get_plugin_function("bundle_to_json");
     if (jfunc == NULL) {
@@ -2909,7 +2910,7 @@ static int call_bundle_to_json (gretl_bundle *b,
         if (control & 4) {
             opt |= OPT_P;
         }
-        return jfunc(b, fname, opt);
+        return jfunc(b, fname, opt, buf);
     }
 }
 
@@ -2929,7 +2930,7 @@ int gretl_bundle_write_to_file (gretl_bundle *b,
     }
 
     if (has_suffix(fname, ".json") || has_suffix(fname, ".geojson")) {
-        return call_bundle_to_json(b, fullname, control);
+        return call_bundle_to_json(b, fullname, control, NULL);
     }
 
     if (has_suffix(fname, ".gz")) {
@@ -2949,10 +2950,11 @@ int gretl_bundle_write_to_file (gretl_bundle *b,
     return err;
 }
 
-char *gretl_bundle_write_to_buffer (gretl_bundle *b,
-                                    int rank,
-                                    int *bytes,
-                                    int *err)
+#if 0 /* write to XML buffer: unused at present */
+
+char *gretl_bundle_write_to_xml_buffer (gretl_bundle *b,
+                                        int *bytes,
+                                        int *err)
 {
     char *buf = NULL;
     PRN *prn;
@@ -2969,6 +2971,17 @@ char *gretl_bundle_write_to_buffer (gretl_bundle *b,
         gretl_print_destroy(prn);
     }
 
+    return buf;
+}
+
+#endif
+
+gchar *gretl_bundle_write_to_json_buffer (gretl_bundle *b,
+                                          int *err)
+{
+    gchar *buf = NULL;
+
+    *err = call_bundle_to_json(b, NULL, 0, &buf);
     return buf;
 }
 

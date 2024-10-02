@@ -61,39 +61,39 @@ static gboolean obs_button_output (GtkSpinButton *spin, gpointer p)
 GtkWidget *obs_button_new (GtkAdjustment *adj, DATASET *dset,
 			   ObsButtonRole role)
 {
-    GtkWidget *spinner;
+    GtkWidget *spin;
     int n = strlen(dset->endobs);
 
-    spinner = gtk_spin_button_new(adj, 1, 0);
-    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spinner), FALSE);
-    gtk_entry_set_width_chars(GTK_ENTRY(spinner), (n < 2)? 2 : n);
-    gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spinner), TRUE);
-    gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spinner),
+    spin = gtk_spin_button_new(adj, 1, 0);
+    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin), FALSE);
+    gtk_entry_set_width_chars(GTK_ENTRY(spin), (n < 2)? 2 : n);
+    gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin), TRUE);
+    gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin),
 				      GTK_UPDATE_IF_VALID);
 #if GTK_MAJOR_VERSION == 3
     /* remedy required for gtk3 */
-    gtk_entry_set_max_width_chars(GTK_ENTRY(spinner), (n < 2)? 2 : n);
+    gtk_entry_set_max_width_chars(GTK_ENTRY(spin), (n < 2)? 2 : n);
 #endif
 
-    g_signal_connect(G_OBJECT(spinner), "input",
+    g_signal_connect(G_OBJECT(spin), "input",
 		     G_CALLBACK(obs_button_input), dset);
-    g_signal_connect(G_OBJECT(spinner), "output",
+    g_signal_connect(G_OBJECT(spin), "output",
 		     G_CALLBACK(obs_button_output), dset);
 
     if (role) {
-	g_object_set_data(G_OBJECT(spinner), "role", GINT_TO_POINTER(role));
+	g_object_set_data(G_OBJECT(spin), "role", GINT_TO_POINTER(role));
     }
 
-    return spinner;
+    return spin;
 }
 
 GtkWidget *data_start_button (GtkAdjustment *adj, DATASET *dset)
 {
-    GtkWidget *spinner = obs_button_new(adj, dset, 0);
+    GtkWidget *spin = obs_button_new(adj, dset, 0);
 
-    g_object_set_data(G_OBJECT(spinner), "newdata", GINT_TO_POINTER(1));
+    g_object_set_data(G_OBJECT(spin), "newdata", GINT_TO_POINTER(1));
 
-    return spinner;
+    return spin;
 }
 
 int obs_button_get_value (GtkWidget *button)

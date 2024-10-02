@@ -115,7 +115,7 @@ static void gfn_menuitems_state (void)
         ag = aglist->data;
         if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(ag), "datachk"))) {
             dreq = pkg_get_data_requirement(ag);
-            err = check_function_needs(dataset, dreq, 0);
+            err = check_function_needs(dataset, dreq, 0, NULL);
             gtk_action_group_set_sensitive(ag, !err);
 	    if (err) {
 		gretl_error_clear();
@@ -1206,13 +1206,14 @@ void set_workdir_label (void)
 
     if (wlabel != NULL) {
         gchar *fmt, *wdir, *buf;
+        int maxlen = swallow ? 32 : 56;
 
         fmt = g_strdup_printf("<span color=\"%s\">%%s</span>",
                               blue_for_text());
         wdir = g_strdup(gretl_workdir());
         trim_slash(wdir);
-        if (g_utf8_strlen(wdir, -1) > 56) {
-            gretl_utf8_truncate(wdir, 53);
+        if (g_utf8_strlen(wdir, -1) > maxlen) {
+            gretl_utf8_truncate(wdir, maxlen - 3);
             strcat(wdir, "...");
         }
         buf = g_markup_printf_escaped(fmt, wdir);

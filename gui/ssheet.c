@@ -4288,7 +4288,7 @@ static void sheet_number_format_dialog (Spreadsheet *sheet)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), !std);
     gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 5);
 
-    /* with spinner for number of digits */
+    /* with spin button for number of digits */
     fa.spin = gtk_spin_button_new_with_range(1, 16, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(fa.spin), sheet->digits);
     gtk_widget_set_sensitive(fa.spin, !std);

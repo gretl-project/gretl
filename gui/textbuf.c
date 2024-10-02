@@ -1492,11 +1492,32 @@ static GtkTextBuffer *gretl_text_buf_new (int role)
     return tbuf;
 }
 
+/* net out the effect of one or more instances of '\r' in @buf */
+
+gchar *unctrlr (const char *buf)
+{
+    gchar *ret = g_malloc0(strlen(buf) + 1);
+    int i, j = 0, k = 0;
+
+    for (i=0; buf[i]; i++) {
+        if (buf[i] == '\r') {
+            j = k;
+        } else if (buf[i] == '\n') {
+            strcat(ret, "\n");
+            k = j = strlen(ret);
+        } else {
+            ret[j++] = buf[i];
+        }
+    }
+
+    return ret;
+}
+
 static void
 real_textview_add_colorized (GtkWidget *view, const char *buf,
 			     int append, int trim)
 {
-    GtkTextBuffer *tbuf;
+    GtkTextBuffer *tb;
     GtkTextIter iter;
     int nextcolor, thiscolor = PLAIN_TEXT;
     int in_comment = 0;
@@ -1507,12 +1528,20 @@ real_textview_add_colorized (GtkWidget *view, const char *buf,
 
     g_return_if_fail(GTK_IS_TEXT_VIEW(view));
 
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+    tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
 
     if (append) {
-	gtk_text_buffer_get_end_iter(tbuf, &iter);
+	gtk_text_buffer_get_end_iter(tb, &iter);
     } else {
-	gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
+	gtk_text_buffer_get_iter_at_offset(tb, &iter, 0);
+    }
+
+    if (strchr(buf, '\r')) {
+        gchar *ubuf = unctrlr(buf);
+
+        gtk_text_buffer_insert(tb, &iter, ubuf, -1);
+        g_free(ubuf);
+        return;
     }
 
     console = widget_get_int(view, "console");
@@ -1552,15 +1581,15 @@ real_textview_add_colorized (GtkWidget *view, const char *buf,
 	}
 
 	if (thiscolor == BLUE_TEXT) {
-	    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+	    gtk_text_buffer_insert_with_tags_by_name(tb, &iter,
 						     readbuf, -1,
 						     "bluetext", NULL);
 	} else if (console) {
-	    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+	    gtk_text_buffer_insert_with_tags_by_name(tb, &iter,
 						     readbuf, -1,
 						     "output", NULL);
 	} else {
-	    gtk_text_buffer_insert(tbuf, &iter, readbuf, -1);
+	    gtk_text_buffer_insert(tb, &iter, readbuf, -1);
 	}
 
 	thiscolor = nextcolor;

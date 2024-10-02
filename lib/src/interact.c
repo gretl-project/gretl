@@ -2127,7 +2127,12 @@ static int open_append_stage_1 (CMD *cmd,
 
     if (!op->dbdata) {
         if (op->http) {
+#ifdef USE_CURL
             err = try_http(cmd->param, op->fname, NULL);
+#else
+            gretl_errmsg_set("http resource: cURL is not available");
+            err = E_DATA;
+#endif
         } else if (pkgdata) {
             err = get_package_data_path(cmd->ci, cmd->param, op->fname);
         } else {
@@ -2306,7 +2311,7 @@ static int lib_open_append (ExecState *s,
     } else if (op.dbdata) {
         err = set_db_name(op.fname, op.ftype, vprn);
     } else {
-        err = gretl_get_data(op.fname, dset, opt, vprn);
+        err = gretl_seek_data(op.fname, dset, opt, vprn);
     }
 
     if (vprn != NULL && vprn != prn) {
@@ -3792,11 +3797,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         } else if (cmd->ci == AR1) {
             *model = ar1_model(cmd->list, dset, cmd->opt, prn);
         } else if (cmd->ci == ARMA) {
-            *model = arma(cmd->list, cmd->auxlist, dset,
-                          cmd->opt, prn);
+            *model = arma(cmd->list, cmd->auxlist, dset, cmd->opt, prn);
         } else {
-            *model = arch_model(cmd->list, cmd->order, dset,
-                                cmd->opt);
+            *model = arch_model(cmd->list, cmd->order, dset, cmd->opt);
         }
         if (cmd->ci == ARMA && (cmd->opt & OPT_Z)) {
             ; /* no real MODEL is returned */
@@ -3847,8 +3850,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         } else if (cmd->ci == LAD) {
             *model = lad_model(cmd->list, dset, cmd->opt);
         } else if (cmd->ci == QUANTREG) {
-            *model = quantreg_driver(cmd->param, cmd->list, dset,
-                                     cmd->opt, prn);
+            *model = quantreg_driver(cmd->param, cmd->list, dset, cmd->opt, prn);
         } else if (cmd->ci == DURATION) {
             *model = duration_model(cmd->list, dset, cmd->opt, prn);
         } else if (cmd->ci == GARCH) {
@@ -3856,15 +3858,13 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         } else if (cmd->ci == PANEL) {
             *model = panel_model(cmd->list, dset, cmd->opt, prn);
         } else if (cmd->ci == DPANEL) {
-            *model = dpd_model(cmd->list, cmd->auxlist, cmd->param,
-                               dset, cmd->opt, prn);
+            *model = dpd_model(cmd->list, cmd->auxlist, cmd->param, dset, cmd->opt, prn);
         } else if (cmd->ci == INTREG) {
             *model = interval_model(cmd->list, dset, cmd->opt, prn);
         } else if (cmd->ci == BIPROBIT) {
             *model = biprobit_model(cmd->list, dset, cmd->opt, prn);
         } else if (cmd->ci == MIDASREG) {
-            *model = midas_model(cmd->list, cmd->param, dset,
-                                 cmd->opt, prn);
+            *model = midas_model(cmd->list, cmd->param, dset, cmd->opt, prn);
         } else {
             /* can't happen */
             err = 1;

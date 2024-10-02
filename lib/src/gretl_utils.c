@@ -57,6 +57,7 @@
 #endif
 
 #include <errno.h>
+#include <dlfcn.h>
 
 #if defined(_OPENMP) || defined(HAVE_MPI) || defined(WIN32)
 # define WANT_XTIMER
@@ -137,7 +138,7 @@ int ijton (int i, int j, int nrows)
 
 /**
  * transcribe_array:
- * @targ: arrat to which to write.
+ * @targ: array to which to write.
  * @src: array from which to read.
  * @dset: data information struct.
  *
@@ -1524,42 +1525,6 @@ int positive_int_from_string (const char *s)
     return ret;
 }
 
-#if 0 /* not yet */
-
-/**
- * natural_number_from_string:
- * @s: string to examine.
- *
- * If @s is a valid string representation of a natural number that
- * can be represented as a 32-bit signed integer return that number,
- * otherwise return -1.
- *
- * Returns: integer value.
- */
-
-int natural_number_from_string (const char *s)
-{
-    int ret = -1;
-
-    if (s != NULL && *s != '\0') {
-	long lval;
-        char *test;
-
-        errno = 0;
-
-        lval = strtol(s, &test, 10);
-        if (*test != '\0' || !strcmp(s, test) || errno == ERANGE ||
-	    lval < 0 || lval > INT_MAX) {
-            ret = -1;
-        } else {
-	    ret = (int) lval;
-    }
-
-    return ret;
-}
-
-#endif
-
 static int letter_to_int (char c)
 {
     const char *s = "abcdefghij";
@@ -1574,6 +1539,17 @@ static int letter_to_int (char c)
     }
 
     return 0;
+}
+
+/**
+ * libgretl_version:
+ *
+ * Returns: the integer version of libgretl.
+ */
+
+int libgretl_version (void)
+{
+    return LIBGRETL_CURRENT;
 }
 
 /**
@@ -2482,6 +2458,45 @@ static char blas_version[32];
 
 static int blas_variant;
 
+#if !defined(WIN32)
+
+static void register_openblas_details (void *handle);
+static void register_mkl_details (void *handle);
+static void register_blis_details (void *handle);
+
+static void retry_for_blas_details (char *ldd_line,
+                                    int blastype)
+{
+    char *s = strchr(ldd_line, '/');
+    char *libpath = NULL;
+
+    if (s != NULL) {
+        char *p;
+
+        s += strspn(s, " ");
+        p = strchr(s, ' ');
+        if (p != NULL) {
+            libpath = gretl_strndup(s, p-s);
+        }
+    }
+
+    if (libpath != NULL) {
+        void *ptr = dlopen(libpath, RTLD_NOW);
+
+        if (ptr != NULL) {
+            if (blastype == BLAS_OPENBLAS) {
+                register_openblas_details(ptr);
+            } else if (blastype == BLAS_MKL) {
+                register_mkl_details(ptr);
+            } else if (blastype == BLAS_BLIS) {
+                register_blis_details(ptr);
+            }
+        }
+        free(libpath);
+        /* dlclose(ptr); ?? */
+    }
+}
+
 static int parse_ldd_output (const char *s)
 {
     char found[6] = {0};
@@ -2496,12 +2511,15 @@ static int parse_ldd_output (const char *s)
             /* got to the end of a line */
             line[i] = '\0';
 	    if (strstr(line, "libopenblas")) {
+                retry_for_blas_details(line, BLAS_OPENBLAS);
 		found[5] = 5;
 	    } else if (strstr(line, "libblis")) {
+                retry_for_blas_details(line, BLAS_BLIS);
 		found[4] = 1;
 	    } else if (strstr(line, "Accelerate.frame")) {
 		found[3] = 1;
 	    } else if (strstr(line, "libmkl")) {
+                retry_for_blas_details(line, BLAS_MKL);
 		found[2] = 1;
 	    } else if (strstr(line, "atlas")) {
 		found[1] = 1;
@@ -2534,8 +2552,6 @@ static int parse_ldd_output (const char *s)
 
     return ret;
 }
-
-#if !defined(WIN32)
 
 static int detect_blas_via_ldd (void)
 {
@@ -2584,8 +2600,6 @@ static int detect_blas_via_ldd (void)
 }
 
 #endif /* neither Windows nor Mac */
-
-#include <dlfcn.h>
 
 static void (*OB_set_num_threads) (int);
 static int (*OB_get_num_threads) (void);
@@ -2653,7 +2667,7 @@ static void register_blis_details (void *handle)
        => must be updated whenever new architecture/cpu model appears*/
     /* Shouldn't this come from a header? (Allin) */
     /* -> Well, this enum is defined in blis.h which we do not include.
-       And we can't retrive it via dlopen(), can we? (Marcin) */
+       And we can't retrieve it via dlopen(), can we? (Marcin) */
     const int BLIS_NUM_ARCHS = 26;
     char *buf = NULL;
     int id;
@@ -2895,6 +2909,11 @@ const char *blas_variant_string (void)
     }
 }
 
+int blas_is_openblas (void)
+{
+    return blas_variant == BLAS_OPENBLAS;
+}
+
 /* for gretl_matrix.c, gretl_mt.c */
 
 int blas_is_threaded (void)
@@ -2984,9 +3003,7 @@ static void blas_init (void)
         blas_variant != BLAS_OPENBLAS &&
         blas_variant != BLAS_BLIS &&
         blas_variant != BLAS_MKL) {
-#ifdef WIN32
-        blas_variant = BLAS_NETLIB; /* ?? */
-#else
+#ifndef WIN32
         blas_variant = detect_blas_via_ldd();
 #endif
     }
@@ -3963,3 +3980,26 @@ int combine_categories (DATASET *dset, int v0, int v1, int v2)
 
     return 0;
 }
+
+#ifdef __ARM_ARCH_ISA_A64
+
+double _Complex __divdc3 (double a, double b, double c, double d)
+{
+    double r, den, e, f;
+
+    if (fabs(c) < fabs(d)) {
+	r = c/d;
+	den = (c*r) + d;
+	e = (a*r + b) / den;
+	f = (b*r - a) / den;
+    } else {
+	r = d/c;
+	den = c + (d*r);
+	e = (a + b*r) / den;
+	f = (b - a*r) / den;
+    }
+
+    return e + f*I;
+}
+
+#endif

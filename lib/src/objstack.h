@@ -1,24 +1,28 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef OBJSTACK_H
 #define OBJSTACK_H
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 /* Note: the following enumeration may be added to, but the
    existing entries up to GRETL_OBJ_SCALARS must not be
@@ -123,18 +127,18 @@ double saved_object_get_scalar (const char *oname, int idx,
 
 int saved_object_print_scalar (const char *oname, const char *key, PRN *prn);
 
-int saved_object_get_series (double *x, const char *oname, 
+int saved_object_get_series (double *x, const char *oname,
 			     int idx, const DATASET *dset);
 
 gretl_matrix *
 saved_object_get_matrix (const char *oname, int idx, int *err);
 
 gretl_matrix *
-saved_object_build_matrix (const char *oname, int idx, 
+saved_object_build_matrix (const char *oname, int idx,
 			   const DATASET *dset, int *err);
 
 gretl_matrix *
-last_model_get_irf_matrix (int targ, int shock, double alpha, 
+last_model_get_irf_matrix (int targ, int shock, double alpha,
 			   const DATASET *dset, int *err);
 
 void *saved_object_get_array (const char *oname, int idx,
@@ -151,14 +155,14 @@ double last_model_get_boot_pval (int cnum,
 				 int B, int method,
 				 int *err);
 
-void *last_model_get_data (const char *key, GretlType *type, 
+void *last_model_get_data (const char *key, GretlType *type,
 			   int *size, int *copied, int *err);
 
 char *last_model_get_vcv_type (void);
 
 int *saved_object_get_list (const char *oname, int idx, int *err);
 
-char *saved_object_get_string (const char *oname, int idx, 
+char *saved_object_get_string (const char *oname, int idx,
 			       const DATASET *dset, int *err);
 
 int gretl_object_rename (void *p, GretlObjType type, const char *oname);
@@ -173,7 +177,7 @@ int parse_object_command (const char *s, char *name, char **cmd);
 
 int match_object_command (const char *s);
 
-int last_model_test_ok (int ci, gretlopt opt, const DATASET *dset, 
+int last_model_test_ok (int ci, gretlopt opt, const DATASET *dset,
 			PRN *prn);
 
 int last_model_test_uhat (DATASET *dset, gretlopt opt, PRN *prn);
@@ -194,5 +198,8 @@ void set_gui_model_list_callback (GList *(*callback)());
 
 void gretl_saved_objects_cleanup (void);
 
+#ifdef  __cplusplus
+}
 #endif
 
+#endif
