@@ -599,10 +599,11 @@ function bundle IRF_plotdata(bundles bs, scalar coveralpha[0.9])
     return ret
 end function
 
-function strings SVAR_SRirf(const bundle mod "the model bundle",
+function void SVAR_SRirf(const bundle mod "the model bundle",
                          strings whichvars[null] "which variables",
                          strings whichshocks[null] "which shocks",
-                         bool meanormed[FALSE] "choose TRUE for medians")
+                         bool meanormed[FALSE] "choose TRUE for medians",
+                         strings *plotcodes[null])
 
     # The function now also returns all the plotting codes as strings array
     # for further use. (return value was void before)
@@ -616,6 +617,8 @@ function strings SVAR_SRirf(const bundle mod "the model bundle",
 
     errorif( !inbundle(mod, "SRid_snames"), "No SR (set restriction) specs found")
     errorif( !inbundle(mod, "SRirfmeans"),  "No SR IRF results found - did you run SVAR_SRdraw?")
+
+    STORE = exists(plotcodes)
 
     # Which variables:
     # default induces "all"
@@ -634,9 +637,15 @@ function strings SVAR_SRirf(const bundle mod "the model bundle",
     endif
     errorif( !nelem(wshoix), "No matching shock names found")
 
+    if STORE
     # initialize containers for the plotting codes
     string tempplotcode
     strings plotcodes = array(nelem(wshoix) * nelem(wvarix))
+        gpopts = "--outbuf=tempplotcode"
+    else
+        gpopts = "--output=display"
+    endif
+    
     count = 1
     
     ## The actual plotting
@@ -659,18 +668,15 @@ function strings SVAR_SRirf(const bundle mod "the model bundle",
                 options band=band,1 band-style=fill
                 printf "set title '%s shock -> %s'", mod.SRid_snames[j], \
                   mod.Ynames[i]
-            end plot --outbuf=tempplotcode
+            end plot @gpopts
             
-            # directly re-route this to be displayed as before
-            gnuplot --inbuf=tempplotcode --output=display
-            
+            if STORE
             # and store
-            string plotcodes[count] = tempplotcode
-            count++
+                string plotcodes[count++] = tempplotcode
+            endif
         endloop
     endloop
 
-    return plotcodes
 end function
 
 ##############################
@@ -702,9 +708,10 @@ function scalar SVAR_SRgetbest(bundle *mod,
         loss = tolower(loss)
     endif
 
-    errorif( ini + length > mod.horizon, "ini + length too large (increase horizon)")
     errorif( !inbundle(mod, "SRacc"), "No info on accepted draws found")
     errorif( !inbundle(mod, "acc_draws"), "Model must be set up to store accepted draws in its bundle")
+    errorif( ini + length > mod.horizon, "ini + length too large (increase horizon)")
+
 
     startix = ini + 1	# offset for 1-based
     finix = startix + length
