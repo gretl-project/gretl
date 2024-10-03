@@ -1571,6 +1571,7 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
 
     /* by default, apply a df correction for single-equation methods */
     if (sys->method == SYS_METHOD_OLS ||
+        sys->method == SYS_METHOD_WLS ||
         sys->method == SYS_METHOD_TSLS) {
         if (!(opt & OPT_N)) {
             sys->flags |= SYSTEM_DFCORR;
@@ -2628,8 +2629,7 @@ static int sys_eqn_indep_coeffs (const equation_system *sys, int eq)
     return nc;
 }
 
-double
-system_vcv_denom (const equation_system *sys, int i, int j)
+double system_vcv_denom (const equation_system *sys, int i, int j)
 {
     double den = sys->T;
 
