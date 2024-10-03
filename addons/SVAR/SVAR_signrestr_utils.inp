@@ -235,6 +235,23 @@ function matrices prepAis(const bundle mod, const matrix shocks)
     return Ais
 end function
 
+# -----------------------------------
+
+function matrix get_all_eshocks(const bundle mod)
+    # Returns a vector with all numbers of those shocks
+    # that are also subject to exotic restrictions.
+    # Can be empty.
+    # (Notice the difference with get_n_exotic: There only the number
+    # of exotic restrictions is counted, irrespective of which or how
+    # many shocks are involved.)
+
+    matrix all_eshocks = {}
+    if inbundle(mod, "exoticSR") && nelem(mod.exoticSR.checks)
+        matrix all_eshocks = values(flatten(mod.exoticSR.eshocks, TRUE))
+    endif
+    return all_eshocks
+end function
+
 
 # -----------------------------------
 

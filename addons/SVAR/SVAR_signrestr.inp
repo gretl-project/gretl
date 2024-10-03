@@ -408,7 +408,9 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
         rot_redraw(&b, mod, DO_BAYES, B, chol_iXX, rot_only) 	# b.rot, b.B, b.Sigma
 
         matrices irfs = gen_SRirfs(b, numh, to_cum)
-        matrix id_matrix = get_id_mat(mod, shocks, irfs, Ais, DO_NORM)
+        # analyzing how the drawn potential C columns can be shuffled around
+        # and sign-flipped to fulfill the defined restrictions
+        matrix id_matrix = get_id_mat(mod, shocks, irfs) # DO_NORM now optional
 	
         if 0
             printf "iter = %d (good = %d)\n", iter, good
