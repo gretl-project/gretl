@@ -85,6 +85,8 @@ end function
 function matrix FEVD(bundle *SVARobj, int drawix[0::0])
     # (drawix only meant for the set id case (type 10))
 
+    errorif(!inbundle(SVARobj, "type"), "Missing info, not a valid SVAR bundle")
+
     n = SVARobj.n
     h = SVARobj.horizon + 1
 
@@ -94,6 +96,8 @@ function matrix FEVD(bundle *SVARobj, int drawix[0::0])
         # there is an array of matrices.
 
         errchkSRhisto(&SVARobj, drawix)
+
+        errorif(!inbundle(SVARobj, "acc_draws"), "Missing input for set-ID SVAR")
 
         # allow drawix to override the setting in the bundle
         whichdraw = drawix ? drawix : SVARobj.bestdraw
@@ -108,6 +112,7 @@ function matrix FEVD(bundle *SVARobj, int drawix[0::0])
         matrix IRFs = SVARobj.acc_draws[whichdraw].IRFs
 
     else # standard non-SR model
+        errorif(!inbundle(SVARobj, "IRFs"), "Missing IRFs, did you run SVAR_estimate?")
         if drawix > 0
             print "Warning: 'drawix' arg meaningless for standard SVAR, ignoring"
         endif
@@ -136,6 +141,8 @@ function series SVAR_getshock(bundle *mod, string sname[null],
     # name of the shock instead of the number.
     # Default (as in GetShock) is to use the first shock.
 
+    errorif(exists(sname) && !inbundle(mod, "snames"), \
+      "Missing info, not a valid SVAR bundle for shocks")
     s_ix = !exists(sname) ? 1 : instrings(mod.snames, sname)
 
     return GetShock(&mod, s_ix, drawix)
@@ -155,6 +162,7 @@ function series GetShock(bundle *SVARobj, int i[1::1], int drawix[0::0])
    # (drawix only meant for the set id case (type 10))
     */
 
+    errorif(!inbundle(SVARobj, "type"), "Missing info, not a valid SVAR bundle")
     series ret = NA
     type = SVARobj.type
     matrix B10 = {}	# to be filled in type 10
@@ -217,21 +225,24 @@ function list SVAR_HD(bundle *mod, string vname[null],
                       int drawix[0::0])
     # wrapper around SVAR_hd to use a string interface for the
     # variable
+    errorif(exists(vname) && !inbundle(mod, "Ynames"), \ 
+      "Missing info, not a valid SVAR bundle for var names")
     v_ix = !exists(vname) ? 1 : instrings(mod.Ynames, vname)
     return SVAR_hd(&mod, v_ix, drawix)
 end function
 
 
-function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
+function list SVAR_hd(bundle *mod, int nv[1::1], int drawix[0::0])
     # historical decomposition
     # (drawix only meant for the set id case (type 10))
 
+    errorif(!inbundle(mod, "type"), "Missing info, not a valid SVAR bundle")
     list ret = empty
     loop foreach i n p type T k
-        scalar $i = Mod.$i
+        scalar $i = mod.$i
     endloop
-    scalar t1 = Mod.calinfo.t1
-    scalar t2 = Mod.calinfo.t2
+    scalar t1 = mod.calinfo.t1
+    scalar t2 = mod.calinfo.t2
     
     matrix B10 = {} # to be filled for type 10
 
@@ -244,58 +255,58 @@ function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
 
     # Prepare the set id case
     if type == 10
-        errchkSRhisto(&Mod, drawix)
+        errchkSRhisto(&mod, drawix)
         # allow drawix to override the setting in the bundle
-        whichdraw = drawix ? drawix : Mod.bestdraw
-        bundle pickdraw = Mod.acc_draws[whichdraw]
+        whichdraw = drawix ? drawix : mod.bestdraw
+        bundle pickdraw = mod.acc_draws[whichdraw]
         matrix B10 = pickdraw.B
     endif
 
     # The following might be redrawn in type10/Bayesian
-    matrices muVARparU = muVARparU_mayberedr(Mod, B10)
+    matrices muVARparU = muVARparU_mayberedr(mod, B10)
 
     # compute the exogenous part
     if type < 4
-        matrix m = Mod.X * Mod.mu
+        matrix m = mod.X * mod.mu
 
     elif type == 4
         # here we have to take into account the "5 cases"
-        dcase = Mod.jcase
-        # T     = Mod.T
+        dcase = mod.jcase
+        # T     = mod.T
         matrix mreg = (dcase == 1) ? {} : ones(T,1)
         if dcase > 3
             mreg ~= seq(1,T)'
         endif
 
-        matrix m = (mreg ~ Mod.X) * Mod.mu
+        matrix m = (mreg ~ mod.X) * mod.mu
 
     elif type == 10
-        matrix m = Mod.X * muVARparU[1]
+        matrix m = mod.X * muVARparU[1]
     endif
 
     # grab the C matrix
     matrix C
     if type==1 || type==2 || type==4
-        C = Mod.C
+        C = mod.C
 
     elif type == 3
-        C = inbundle(Mod, "C") ? Mod.C : Mod.S1 \ Mod.S2
+        C = inbundle(mod, "C") ? mod.C : mod.S1 \ mod.S2
 
     elif type == 10
         C = pickdraw.irfs[1] # impact effect is C
-        errorif( cols(C) < Mod.n, "partial id not supported for historical decomp")
+        errorif( cols(C) < mod.n, "partial id not supported for historical decomp")
     endif
 
     matrix iC = inv(C)
-    strings Ynames = Mod.Ynames
-    strings snames = Mod.snames
+    strings Ynames = mod.Ynames
+    strings snames = mod.snames
     string yn = Ynames[nv]
 
     smpl t1 t2
     if cols(m)>0
-        Xdet = varsimul(muVARparU[2], m[p+1:,], Mod.Y[1:p,]) # was VARpar
+        Xdet = varsimul(muVARparU[2], m[p+1:,], mod.Y[1:p,]) # was VARpar
     else
-        Xdet = varsimul(muVARparU[2], zeros(T-p, n), Mod.Y[1:p,]) # was Mod.T
+        Xdet = varsimul(muVARparU[2], zeros(T-p, n), mod.Y[1:p,]) # was mod.T
     endif
 
     ret += genseries( sprintf("hd_%s_det", yn), Xdet[,nv])
