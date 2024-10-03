@@ -47,8 +47,12 @@ rep = 128
 # do the rotations (this is the computationally intensive part)
 SVAR_SRdraw(&mod, rep)
 
-# draw the irfs
-SVAR_spagplot(mod, "p", "Supply") # 1, 1)
-SVAR_spagplot(mod, "p", "Demand") # 1, 2)
-SVAR_spagplot(mod, "q", "Supply") # 2, 1)
-SVAR_spagplot(mod, "q", "Demand") # 2, 2)
+# draw the irfs on a 2x2 grid
+gpbuild Plots
+    SVAR_spagplot(mod, "p", "Supply") # 1, 1)
+    SVAR_spagplot(mod, "p", "Demand") # 1, 2)
+    SVAR_spagplot(mod, "q", "Supply") # 2, 1)
+    SVAR_spagplot(mod, "q", "Demand") # 2, 2)
+end gpbuild
+
+gridplot Plots --output=display

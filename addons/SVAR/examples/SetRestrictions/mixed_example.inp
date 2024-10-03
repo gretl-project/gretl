@@ -89,6 +89,8 @@ gpbuild IRFPlots
     SVAR_SRirf(mod, mod.Ynames, defarray("foo", "bar", "baz"))
 end gpbuild
 
+strings IRFPlots
+SVAR_SRirf(mod, mod.Ynames, defarray("foo", "bar", "baz"), 0, &IRFPlots)
 gridplot IRFPlots --output=display 
 
 # draw the spaghetti plots for the point restrictions

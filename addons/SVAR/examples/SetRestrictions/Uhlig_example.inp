@@ -67,6 +67,8 @@ gpbuild IRFPlots
     SVAR_SRirf(mod, mod.Ynames, defarray("Monetary"))
 end gpbuild
 
-gridplot IRFPlots --output=display
+strings IRFPlots = array(0)                                    # array for storing the plots
+SVAR_SRirf(mod, mod.Ynames, defarray("Monetary"),, &IRFPlots)  # create the plots
+gridplot IRFPlots --output=display                             # display in a grid
 
 
