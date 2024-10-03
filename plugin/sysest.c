@@ -923,7 +923,8 @@ static gretlopt sys_ols_opt (const equation_system *sys,
 {
     gretlopt opt = OPT_S; /* flag as part of system */
 
-    if (sys->method == SYS_METHOD_OLS) {
+    if (sys->method == SYS_METHOD_OLS ||
+        sys->method == SYS_METHOD_WLS) {
 	if (!(sys->flags & SYSTEM_DFCORR)) {
 	    opt |= OPT_N; /* suppress df correction */
 	}
@@ -1209,6 +1210,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 
 #if SDEBUG
     fprintf(stderr, "system_estimate: on invert, err=%d\n", err);
+    gretl_matrix_print(sys->S, "sys->S");
 #endif
 
     if (!err && Xi == NULL) {
@@ -1309,7 +1311,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 		/* loop over the components that must be
 		   added to form each element */
 		const double *yl = NULL;
-		double sil, xx = 0.0;
+		double xx = 0.0;
 
 		if (method == SYS_METHOD_LIML) {
 		    yl = gretl_model_get_data(models[l], "liml_y");
@@ -1322,13 +1324,15 @@ int system_estimate (equation_system *sys, DATASET *dset,
 		    xx += gretl_matrix_get(Xi, t, j) * yl[t + sys->t1];
 		}
 
-		if (rsingle || (single_equation && method != SYS_METHOD_WLS)) {
-		    sil = 1.0;
+                if (method == SYS_METHOD_WLS && i == l) {
+                    xx *= gretl_matrix_get(sys->S, i, i);
+ 		} else if (rsingle || (single_equation && method != SYS_METHOD_WLS)) {
+		    ;
 		} else {
-		    sil = gretl_matrix_get(sys->S, i, l);
+		    xx *= gretl_matrix_get(sys->S, i, l);
 		}
 
-		yv += xx * sil;
+		yv += xx;
 	    }
 	    gretl_vector_set(y, v++, yv);
 	}
