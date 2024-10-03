@@ -106,7 +106,7 @@ function matrices avg_VARpar_boot(const bundle b, const bundle stuff)
     # (This is a requirement there.)
     # Of course in essence it's still just a single matrix. 
     
-    bundle bparams = inbundle(stuff, "bparams") ? stuff.bparams : empty
+    bundle bparams = inbundle(stuff, "bparams") ? stuff.bparams : _() # workaround for 'empty'
       
     # simulate the average reduced-form coeffs
     matrix Absum = zeros(b.n, b.n*b.p) 
@@ -450,7 +450,7 @@ function matrices SVAR_boot_innerloop(bundle *bobj, const bundle obj, const bund
                 matrix fullRd = bobj.fullRd
             endif
 
-            matrix K = estC(&theta, bSigma, fullRd, d, &errcode, obj.optmeth, 0)
+            matrix K = estC(&theta, bSigma, fullRd, null, &errcode, obj.optmeth, 0)
 
         elif type == 3 # "AB"
             matrices transferAB = array(0)

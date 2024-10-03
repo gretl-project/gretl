@@ -146,6 +146,7 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
 
     # negative snum is allowed and means to flip the shock
 
+    errorif(!inbundle(obj, "type"), "Missing info, not a valid SVAR bundle")
     # copy and prepare some input
     string tmpfile, tmpout
     n = obj.n
@@ -325,6 +326,7 @@ end function
 function void FEVDsave(string outfilename, bundle *obj, int vnum[0], \
                        int keypos[0:2:1], int drawix[0::0])
 
+    errorif(!inbundle(obj, "type"), "Missing info, not a valid SVAR bundle")
     scalar n = obj.n
     scalar vfrom vto
     is_vrange = range(vnum, n, &vfrom, &vto)
@@ -431,6 +433,8 @@ end function
 
 function void HDsave(string outfilename, bundle *obj, int vnum[0],
                      int drawix[0::0])
+
+    errorif(!inbundle(obj, "type"), "Missing info, not a valid SVAR bundle")
 
     # Interpret vnum==0 as meaning "all 1..n"
     scalar n = obj.n

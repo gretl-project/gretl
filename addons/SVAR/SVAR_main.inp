@@ -7,6 +7,7 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
    the bundle
     */
 
+    errorif(!inbundle(obj, "type"), "Missing info, did you run SVAR_setup?")
     scalar type = obj.type
     scalar meth = obj.optmeth
     scalar n = obj.n
@@ -309,6 +310,7 @@ function void SVAR_bundle_print(bundle *b)
     # Some specification echoing (sven 1.0.2)
     # (not sure whether this should go into SVAR_est_printout() instead...)
 
+    errorif(!inbundle(b, "type"), "Missing info, not a valid SVAR bundle!")
     loop foreach i type n k p 
         scalar $i = b.$i
     endloop
