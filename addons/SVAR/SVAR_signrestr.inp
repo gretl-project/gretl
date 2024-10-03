@@ -2,7 +2,7 @@
 #
 # And the following functions come from include SVAR_signrestr_utils.inp:
 #  correspondence, check_one_irf, check_irfs, check_id;
-#  safetycheck1, get_n_exotic, rot_redraw, prepAis, get_id_mat
+#  safetycheck1, get_n_exotic, rot_redraw, get_id_mat
 
 ###
 ### functions for setting the set constraints
@@ -34,11 +34,20 @@ function void SVAR_SRfull(bundle *mod,
     # SVAR_SRfull(&mod, "p", "mon_pol", NA, 0, 0, 4)
     #
     # assuming the series for prices is called "p".
+    # The output is then (adding) the row with elements:
+    # 1) kpos  - variable number in system,
+    # 2) lo    - lower interval bound,
+    # 3) hi    - upper ...,
+    # 4) ini+1 - period/lag start (1-based, not the actual horizon meaning!,
+    #            i.e. impact is at 1)
+    # 5) fin+1 - ... end (1-based)
+    # 6) snum  - shock number
     # 
     # This function only covers "ordinary", i.e. non-exotic, set restrictions.
 
     # (Switched the yname/sname ordering to match SVAR_SRplain; Sven)
 
+    errorif(!inbundle(mod, "type"), "Missing info, not a valid SVAR bundle")
     errorif( mod.type != 10, "Wrong model type for set identification restrictions")
     if !inbundle(mod, "SRest")
         matrix mod.SRest = {}
@@ -112,17 +121,19 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
        of two IRFs. But the format is necessarily more free-floating here,
        see the documentation.
 
-       chkstr: a string with a valid numerical evaluation of some function
+       - chkstr: a string with a valid numerical evaluation of some function
        of the IRFs at a given horizon tau. The IRF_tau matrix must be
        hardcoded as "M". Cross-horizon restrictions are impossible.
+       (So this rules out things like shape restrictions, might be something
+       for the future...)
 
-       length: length of the horizon span over which the restriction should
+       - length: length of the horizon span over which the restriction should
        hold
-       ini: first horizon after shock impact to consider
+       - ini: first horizon after shock impact to consider
        (the span is then from ini to ini+length, where impact timing is 0;
        so the default settings just concern the impact effect)
 
-       shocks: strings array with the names of the shocks that enter this
+       - involved_shocks: strings array with the names of the shocks that enter this
        restriction (it's the user's responsibility to get this right;
        in the future maybe we can verify or check this, TODO)
 
@@ -130,8 +141,17 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
        because it needs more input than just the boundaries; for example
        an estimated coefficient (or just the observed variables).
 
+       * Output:
+       Representations of the restrictions are stored in the sub-bundle
+       mod.exoticSR.
+       - checks (strings array): i-th string is a verbatim copy of the restriction formula
+       - spans (2-col matrix): i-th row holds the start and end horizons (1-based)
+       - super (col vector): i-th row indicates whether it's super-exotic (needs model)
+       - eshocks (matrices array): i-th vector holds affected shock numbers
+       (so if nelem(eshocks[i])==1, then it's only semi-exotic)
     */
 
+    errorif(!inbundle(mod, "type"), "Missing info, not a valid SVAR bundle")
     errorif( mod.type != 10, "Wrong model type for set identification restrictions")
 
     if !inbundle(mod, "exoticSR")
@@ -300,7 +320,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     if DO_BAYES     # this is only needed for sampling from the posterior
         matrix Data = (mod.X ~ lags(mod.p, mod.Y, 1))[mod.p + 1 : ,]
         chol_iXX = cholesky(invpd(Data'Data))
-        matrix mod.mreg = Data # needed to re-calc the residuals E later
+        matrix mod.mreg = Data # needed to re-calc the residuals E (now U?) later
     endif
 
     if 0
@@ -396,11 +416,14 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
             printf "id_matrix =\n%8.3f\n", id_matrix
         endif
 	
-        chk = DO_NORM ? (rows(id_matrix) == rows(shocks)) : 0 # this check 1st!
-        # ?? But what does DO_NORM really mean? If it were set to zero,
-        #   the check always fails and no draw would be kept down the road - why?? (sven) 
+        # Start checking the results
+        chk = rows(id_matrix) == rows(shocks)
         
-        # a "coherency" check
+        # For the standard set-ID'ed case, a check on whether
+        # all defined shock restrictions can be properly and uniquely
+        # matched; for the mixed-zero case, fail the check for those draws
+        # that would imply swapping the columns associated with the point
+        # restrictions.
         chk = chk && check_id(id_matrix, zc_shocks)
 
         if chk
@@ -416,8 +439,14 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
                 # for making the system "complete"? 
             endif
 
-            # perform the "reflection-permutation" step
-            if nelem(id_matrix) # could be empty if only exotic restrictions
+            # Perform the "reflection-permutation" step --
+            # so the IRFs are adapted to the findings of the previous
+            # id analysis that passed the checks.
+            # (basically, swapping and sign flips)
+
+            if nelem(id_matrix) 
+                # (this id_matrix check should be redundant because could only 
+                #  happen for purely exotic restrictions, which is disallowed)
                 loop i = 1..nelem(irfs)
                     irfs[i] = irfs[i] * id_matrix'
                 endloop

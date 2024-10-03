@@ -105,6 +105,7 @@ function void errchkSRhisto(bundle *Smod, int drawix)
 
 end function
 
+# ------------------------------
 function void errmsgshockmatch(const matrix pos, string sname)
     #  pos is the result of an instrings() search, 0 to n-element vector
     
@@ -138,6 +139,18 @@ function scalar get_n_exotic(const bundle mod)
     return n_exotic
 end function
 
+# -------------------------------
+
+function matrix gen_haar(scalar dim)
+    # this function generates a matrix that is uniformly distributed
+    # over the space of orthogonal matrices under the Haar measure
+    # (this is what the sign-normalisation is essential for)
+
+    matrix R
+    matrix ret = qrdecomp(mnormal(dim, dim), &R)
+    return ret .* sgn(diag(R))'
+end function
+
 # ----------------------------------
 function matrix rand_rotation(scalar n, const matrix sel)
 
@@ -146,10 +159,11 @@ function matrix rand_rotation(scalar n, const matrix sel)
     
     scalar nk = cols(sel)
     if nk == 0
-        matrix ret = qrdecomp(mnormal(n, n))
+        matrix ret = gen_haar(n)
     else
         matrix ret = I(n)
-        ret[sel, sel] = qrdecomp(mnormal(nk, nk))
+        matrix Q = gen_haar(nk)
+        ret[sel, sel] = Q
     endif
 
     return ret
@@ -183,7 +197,11 @@ function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
         matrix b.rot = const_orth(b.zc, C)
     endif
 
-    if strlen(getenv("NO_AUTONORM")) == 0	# FIXME: let's add an option for this
+    # don't normalize by default, can be overriden by the user
+    # by setting mod.AUTONORM==TRUE
+    # (seems to have no effect since it's undone later on)
+
+    if inbundle(mod, "AUTONORM") && mod.AUTONORM == TRUE
         # identification: set main diagonal of instantaneous IRF
         # to positive numbers
         C = C * b.rot
@@ -193,31 +211,56 @@ function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
 end function
 
 # -----------------------------------
-# unneeded any more?
 
-# function matrices prepAis(const bundle mod, const matrix shocks)
+function matrices prepAis(const bundle mod, const matrix shocks)
 
-#     nshocks = rows(shocks)
-#     matrices Ais = array(nshocks)
-#     loop i = 1..nshocks
-#         matrix Ais[i] = selifr(mod.SRest, mod.SRest[,6] .= shocks[i])
-#     endloop
-#     return Ais
-# end function
+    # The return array contains as many elements as set-identified shocks;
+    # (only non-exotic setID'd shocks so far, because mod.SRest only holds those)
+    # Basically, it's a per-shock split of the SRest bundle element,
+    #  where a member matrix can have several rows if a shock is restricted
+    #  to fulfill several setID restrictions.
+    # (It has to be 'shocks', not 'allshocks', to match the content of mod.SRest.)
+    # The name 'Ais' is purely internal/path-dependent/arbitrary.
+
+    matrices Ais = array(0)
+    # was: stays empty if only exotic shocks exist
+    # (but this should now be impossible by requirement)
+
+    if rows(mod.SRest) == 1	# work around an msplitby problem with 1-element vector in 2024b
+        Ais = defarray(mod.SRest)
+
+    elif rows(mod.SRest) > 1
+        Ais = msplitby(mod.SRest, mod.SRest[,6])[shocks]
+    endif
+    return Ais
+end function
+
 
 # -----------------------------------
 
 function matrix get_id_mat (const bundle mod, const matrix shocks,
-                            const matrices irfs, const matrices Ais,
-                            bool DO_NORM)
+                            const matrices irfs, bool DO_NORM[TRUE])
 
     # this function constructs a matrix that lists the potential compatibility
     # of each column of the rotated C matrix with the restrictions
     # on each shock (one per row)                  
+    # The default DO_NORM switch invokes a "normalization" of that list that
+    # excludes (for example) the cases where there arises an ambiguity about
+    # the mapping from shocks (defined by given restrictions) to the C columns.
+    # Further thought is needed about whether it might make sense to use
+    # the ambiguous cases somehow, instead of simply removing them.
 
     VERB = 0
     nshocks = rows(shocks)
     matrix id_matrix = zeros(nshocks, mod.n)
+    # -- Ais, moved here from the calling function SVAR_SRdraw,
+    #   because it isn't used anywhere else --
+    matrices Ais = prepAis(mod, shocks)
+
+    # Which shocks also have exotic (semi- or more) restrictions
+    # (only needed for the special semi-exotic way)
+    matrix all_eshocks = get_all_eshocks(mod)
+
     loop i = 1..nshocks
         if VERB
             printf "=========================================\n"
@@ -249,8 +292,9 @@ end function
 function matrix sr_correspondence(const matrix A)
     # Tag: sign restriction apparatus
 
-    # this function checks for a possible way to couple
-    # shocks with observables, given the "candidate" matrix A
+    # This recursive function checks for a possible way to couple
+    # shocks with observables (or rather VAR equations?),
+    # given the "candidate" matrix A.
 
     nr = rows(A)
     nc = cols(A)
@@ -289,15 +333,18 @@ end function
 function matrix normlizA(const matrix A)
     # Tag: sign restriction apparatus
     # this function is for normalizing the "candidate" matrix A
-    # (was normalize, but could be confused with the user option)
+    # (the "A" doesn't correspond to any notation, just internal)
+    # (was "normalize", but could be confused with the user option)
+    # (normalizing [apparently] means to keep only those candidates
+    #  where there is a unique correspondence, e.g. no ambiguity)
 
-    matrix U = sr_correspondence(A) # not to confuse U with the residuals...
+    matrix Uc = sr_correspondence(A) # U->Uc to avoid name of residuals
     matrix tmp = zeros(rows(A), cols(A))
-    loop i = 1..rows(U)
-        r = U[i,1]
-        c = U[i,2]
-        if c != 0
-            x = U[i,3]
+    loop i = 1..rows(Uc)
+        r = Uc[i,1]
+        c = Uc[i,2]
+        if c != 0	# this check possibly redundant? but better be safe
+            x = Uc[i,3]
             tmp[r,c] = x
         endif
     endloop
@@ -349,9 +396,10 @@ end function
 function matrix check_irfs(matrices M, matrix A, int verbose[0])
     # Tag: sign restriction apparatus
 
-    # Here we examine the constraints on the IRFs
-    # We return a vector indicating if all the constraints 
-    # contained in the matrix A are satisfied; each row of A contains
+    # Here we examine the constraints on the IRFs.
+    # We return a (row) vector indicating for each column if all
+    # the constraints contained in the matrix A are satisfied;
+    # Each row of A contains:
     #
     # 1    : ordinal no of variable to check
     # 2, 3 : bounds (NA for +-infty)
@@ -361,7 +409,7 @@ function matrix check_irfs(matrices M, matrix A, int verbose[0])
     # case by setting the corresponding column of the return vector to -1
 
     n = cols(M[1])
-    rA = rows(A)
+    rA = rows(A)	# num of (non-exotic) constraints for the current shock
     # check consistency
 
     matrix chks = zeros(rA, n)
@@ -647,8 +695,7 @@ function matrix const_orth(const matrices constraints, const matrix C)
     if cols(H) == 1
         H = H ./ sqrt(H'H)
     endif
-    matrix Qq = qrdecomp(mnormal(n-k,n-k))
-    # print Q H Qq
+    matrix Qq = gen_haar(n-k)
 
     Q[,-done] = H*Qq
     return Q
