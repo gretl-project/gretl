@@ -84,10 +84,6 @@ DO_BAYES = 1
 SVAR_SRdraw(&mod, 192, DO_BAYES)
 
 # draw the IRFs
-# draw the irfs
-gpbuild IRFPlots
-    SVAR_SRirf(mod, mod.Ynames, defarray("foo", "bar", "baz"))
-end gpbuild
 
 strings IRFPlots
 SVAR_SRirf(mod, mod.Ynames, defarray("foo", "bar", "baz"), 0, &IRFPlots)

@@ -1,8 +1,0 @@
-July / August 2023: 
-
-Leaving out the SVAR_estimate() call (which is a user error, of course) causes
-a cryptic and thus "nasty" error message from gretl about unknown objects.
-So we probably need to re-insert some checks at the bootstrapping or similar 
-stages whether estimation has taken place, and print out meaningful messages.
-
-(We decided to postpone this to after 2023b.) 
