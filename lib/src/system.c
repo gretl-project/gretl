@@ -1605,9 +1605,8 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
  * Returns: 0 on success, non-zero on error.
  */
 
-int
-equation_system_estimate (equation_system *sys, DATASET *dset,
-                          gretlopt opt, PRN *prn)
+int equation_system_estimate (equation_system *sys, DATASET *dset,
+                              gretlopt opt, PRN *prn)
 {
     int (*system_est) (equation_system *, DATASET *,
                        gretlopt, PRN *);
