@@ -1196,7 +1196,8 @@ static GtkWidget *system_estimator_list (GtkWidget *vbox, dialog_t *d)
     w = gtk_combo_box_text_new();
 
     j = 0;
-    for (i=SYS_METHOD_SUR; i<SYS_METHOD_MAX; i++) {
+    for (i=SYS_METHOD_SUR; i<SYS_METHOD_WLS; i++) {
+        /* 2024-10-05: we're excluding WLS in the GUI */
 	if (system_supports_method(sys, i)) {
 	    str = g_strdup_printf("%s (%s)", _(system_method_full_string(i)),
 				  system_method_short_string(i));
