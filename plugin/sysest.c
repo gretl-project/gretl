@@ -897,48 +897,54 @@ static int drop_redundant_variables (equation_system *sys,
 
 /* options to be passed in running initial 2SLS */
 
-static gretlopt sys_tsls_opt (const equation_system *sys)
+static gretlopt sys_tsls_opt (const equation_system *sys,
+                              gretlopt opt)
 {
-    gretlopt opt = (OPT_E | OPT_A);
+    gretlopt tsls_opt = (OPT_E | OPT_A);
 
     if (!(sys->flags & SYSTEM_DFCORR)) {
-        opt |= OPT_N; /* suppress df correction */
+        tsls_opt |= OPT_N; /* suppress df correction */
     }
 
     if (sys->flags & SYSTEM_LIML1) {
-        opt |= OPT_H; /* add "hatlist" of instrumented vars */
+        tsls_opt |= OPT_H; /* add "hatlist" of instrumented vars */
     }
 
-    return opt;
+    return tsls_opt;
 }
 
 /* options to be passed in running initial OLS; @nr is
    the number of restrictions imposed
 */
 
-static gretlopt sys_ols_opt (const equation_system *sys,
-                             int nr)
+static gretlopt sys_ols_opt (equation_system *sys,
+                             int nr, gretlopt opt)
 {
-    gretlopt opt = OPT_S; /* flag as part of system */
+    gretlopt ols_opt = OPT_S; /* flag as part of system */
 
-    if (sys->method == SYS_METHOD_OLS ||
-        sys->method == SYS_METHOD_WLS) {
-        if (!(sys->flags & SYSTEM_DFCORR)) {
-            opt |= OPT_N; /* suppress df correction */
+    if (sys->method == SYS_METHOD_OLS && !(sys->flags & SYSTEM_DFCORR)) {
+        /* suppress df correction */
+        ols_opt |= OPT_N;
+    } else if (sys->method == SYS_METHOD_WLS) {
+        if (sys->R == NULL && !(opt & OPT_N)) {
+            /* equivalent to OLS */
+            sys->flags |= SYSTEM_DFCORR;
+        } else {
+            ols_opt |= OPT_N;
         }
     }
 
     if (sys->method == SYS_METHOD_OLS && nr == 0) {
         /* initial OLS will supply the estimates */
         if (sys->flags & SYSTEM_ROBUST) {
-            opt |= OPT_R;
+             ols_opt |= OPT_R;
         }
     } else {
         /* treat initial OLS as auxiliary */
-        opt |= OPT_A;
+         ols_opt |= OPT_A;
     }
 
-    return opt;
+    return  ols_opt;
 }
 
 static int allocate_Xi_etc (gretl_matrix **Xi,
@@ -1128,10 +1134,10 @@ int system_estimate (equation_system *sys, DATASET *dset,
         }
 
         if (sys_ols_ok(sys)) {
-            eq_opt = sys_ols_opt(sys, nr);
+            eq_opt = sys_ols_opt(sys, nr, opt);
             *pmod = lsq(list, dset, OLS, eq_opt);
         } else {
-            eq_opt = sys_tsls_opt(sys);
+            eq_opt = sys_tsls_opt(sys, opt);
             *pmod = tsls(list, dset, eq_opt);
         }
 

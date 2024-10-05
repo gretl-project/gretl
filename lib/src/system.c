@@ -1531,7 +1531,6 @@ adjust_sys_flags_for_method (equation_system *sys, int method)
 
     /* by default, apply df correction for single-equation methods */
     if (sys->method == SYS_METHOD_OLS ||
-        sys->method == SYS_METHOD_WLS ||
         sys->method == SYS_METHOD_TSLS ||
         sys->method == SYS_METHOD_LIML) {
         if (oldflags & SYSTEM_DFCORR) {
@@ -1571,8 +1570,8 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
 
     /* by default, apply a df correction for single-equation methods */
     if (sys->method == SYS_METHOD_OLS ||
-        sys->method == SYS_METHOD_WLS ||
-        sys->method == SYS_METHOD_TSLS) {
+        sys->method == SYS_METHOD_TSLS ||
+        sys->method == SYS_METHOD_LIML) {
         if (!(opt & OPT_N)) {
             sys->flags |= SYSTEM_DFCORR;
         }
