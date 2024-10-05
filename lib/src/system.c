@@ -1500,8 +1500,8 @@ static int estimate_with_test (equation_system *sys, DATASET *dset,
 
  bailout:
 
-    if (b != NULL) gretl_matrix_free(b);
-    if (vcv != NULL) gretl_matrix_free(vcv);
+    gretl_matrix_free(b);
+    gretl_matrix_free(vcv);
 
     return err;
 }

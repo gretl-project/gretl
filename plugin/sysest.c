@@ -209,7 +209,6 @@ gls_sigma_from_uhat (equation_system *sys, gretl_matrix *S,
             }
         }
     }
-
     if (do_diag) {
         /* compute B-P test statistic */
         double sii, sjj;
@@ -1046,15 +1045,15 @@ int system_estimate (equation_system *sys, DATASET *dset,
         single_equation = 1;
     }
 
-    if (method == SYS_METHOD_OLS && nr == 0) {
+    if ((method == SYS_METHOD_OLS || method == SYS_METHOD_WLS) &&
+        sys->R == NULL) {
         plain_ols = 1;
     } else {
         pX = &X;
         py = &y;
     }
 
-    if (nr > 0 && !(opt & OPT_U)) {
-        /* OPT_U means --unrestrict-init: is it ever wanted? */
+    if (nr > 0) {
         if (method == SYS_METHOD_3SLS) {
             /* doing 3SLS with restrictions: we need to obtain
                restricted TSLS estimates as a starting point
@@ -1121,6 +1120,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
         int freeit = 0;
         int *list = system_model_list(sys, i, &freeit);
         MODEL *pmod = models[i];
+        gretlopt eq_opt;
 
         if (list == NULL) {
             err = 1;
@@ -1128,9 +1128,11 @@ int system_estimate (equation_system *sys, DATASET *dset,
         }
 
         if (sys_ols_ok(sys)) {
-            *pmod = lsq(list, dset, OLS, sys_ols_opt(sys, nr));
+            eq_opt = sys_ols_opt(sys, nr);
+            *pmod = lsq(list, dset, OLS, eq_opt);
         } else {
-            *pmod = tsls(list, dset, sys_tsls_opt(sys));
+            eq_opt = sys_tsls_opt(sys);
+            *pmod = tsls(list, dset, eq_opt);
         }
 
         if (freeit) {
@@ -1160,6 +1162,9 @@ int system_estimate (equation_system *sys, DATASET *dset,
         pmod->ID = i;
         pmod->aux = AUX_SYS;
         gretl_model_set_int(pmod, "method", method);
+        if (eq_opt & OPT_N) {
+            gretl_model_set_int(pmod, "asy", 1);
+        }
 
         /* save sigma-squared for an LR test for diagonal
            covariance matrix */

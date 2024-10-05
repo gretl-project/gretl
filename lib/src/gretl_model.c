@@ -6651,6 +6651,8 @@ int model_use_zscore (const MODEL *pmod)
 	return 1;
     } else if ((pmod->opt & OPT_R) && libset_get_bool(ROBUST_Z)) {
 	return 1;
+    } else if (gretl_model_get_int(pmod, "asy")) {
+        return 1;
     } else {
 	return 0;
     }

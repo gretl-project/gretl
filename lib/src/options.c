@@ -273,7 +273,6 @@ struct gretl_option gretl_opts[] = {
     { ESTIMATE, OPT_I, "iterate", 0 },
     { ESTIMATE, OPT_M, "geomean", 0 },
     { ESTIMATE, OPT_N, "no-df-corr", 0 },
-    { ESTIMATE, OPT_U, "unrestrict-init", 0 },
     { ESTIMATE, OPT_V, "verbose", 0 },
     { ESTIMATE, OPT_W, "window", 0 },
     { FCAST,    OPT_L, "all-probs", 0 },
