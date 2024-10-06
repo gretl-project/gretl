@@ -597,7 +597,6 @@ static int read_file_descriptions (windata_t *win, gpointer p)
     int err = 0;
 
     index = full_path(collection->path, collection->descfile);
-
     fp = gretl_fopen(index, "r");
     if (fp == NULL) {
         return E_FOPEN;
