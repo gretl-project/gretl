@@ -921,46 +921,56 @@ directory.
 
 If you are adding your own collection, data catalogs should be named
 \verb+descriptions+ and script catalogs should be be named
-\verb+ps_descriptions+.  In each case the catalog should be placed
-(along with the associated data or script files) in its own specific
-sub-directory (e.g.\ \url{/usr/share/gretl/data/mydata} or
-\verb+c:\userdata\gretl\data\mydata+).
+\verb+ps_descriptions+ (in each case, with no suffix).  The catalog
+file should be placed (along with the associated data or script files)
+in its own sub-directory (e.g.\ \url{/usr/share/gretl/data/mydata} or
+\verb+c:\Program Files\gretl\data\mydata+).
 
-The catalog files are plain text; if they contain non-ASCII characters
-they must be encoded as UTF-8. The syntax of such files is
-straightforward.  Here, for example, are the first few lines of
-gretl's ``misc'' data catalog:
+The catalog files are plain text (encoded as UTF-8 if they contain any
+non-ASCII characters). The syntax of such files is straightforward.
+Here, for example, are the first few lines of gretl's ``misc'' data
+catalog:
 
 \begin{code}
 # Gretl: various illustrative datafiles
-"arma","artificial data for ARMA script example"
-"ects_nls","Nonlinear least squares example"
-"hamilton","Prices and exchange rate, U.S. and Italy"
+"abdata","Arellano and Bond (1991) panel data","panel, T=9 N=140"
+"anscombe","Anscombe's Quartet (artificial data)","cross section, n=11"
+"arma","Artificial data for ARMA script example","time series, T=624"
+"australia","Johansen's Australian macroeconomic data","time series, T=77"
 \end{code}
 
-The first line, which must start with a hash mark, contains a short
-name, here ``Gretl'', which will appear as the label for this
-collection's tab in the data browser window, followed by a colon,
-followed by an optional short description of the collection.
+The first line, which must start with a hash mark followed by a space,
+contains a short name (not to exceed 23 bytes)---here
+\texttt{Gretl}---which will appear as the label for this collection's
+tab in the data browser window, terminated by a colon and optionally
+followed by a brief description of the collection as a whole.
 
-Subsequent lines contain two elements, separated by a comma and
-wrapped in double quotation marks.  The first is a datafile name
-(leave off the \verb+.gdt+ suffix here) and the second is a short
-description of the content of that datafile.  There should be one such
-line for each datafile in the collection.
+Each subsequent line should contain three elements, wrapped in upright
+double quotes and separated by commas, as follows:
+\begin{enumerate}
+\item The name of a data file, not to exceed 23 characters (leave off
+  the \verb+.gdt+ suffix here).
+\item A short description of the content of the datafile, not to
+  exceed 79 bytes.
+\item A stylized record of the structure (cross section, time series
+  or panel) and length of the dataset (see the examples from the
+  \textsf{Gretl} collection above).
+\end{enumerate}
+There should be one such line for each data file in the collection.
 
-A script catalog file looks very similar, except that there are three
-fields in the file lines: a filename (without its \verb+.inp+ suffix),
-a brief description of the econometric point illustrated in the
-script, and a brief indication of the nature of the data used.  Again,
+A script catalog file looks very similar. Again there are three
+fields in the per-file lines: a filename (without its \verb+.inp+ suffix);
+a brief account of the econometric point illustrated in the
+script; and a brief indication of the nature of the data used.  Again,
 here are the first few lines of the supplied ``misc'' script catalog:
 
 \begin{code}
 # Gretl: various sample scripts
-"arma","ARMA modeling","artificial data"
-"ects_nls","Nonlinear least squares (Davidson)","artificial data"
-"leverage","Influential observations","artificial data"
-"longley","Multicollinearity","US employment"
+"arbond91","Dynamic panel model (GMM-DIF)","UK employment data"
+"armaloop","ARMA using command loop","artificial data"
+"auto_arima","Automatic ARIMA model selection","artificial data"
+"bbond98","Dynamic panel model (GMM-SYS)","UK employment data"
+"biprobit","Bivariate probit (William Greene)","credit rating"
 \end{code}
 
 If you want to make your own data collection available to users, these
@@ -974,11 +984,10 @@ are the steps:
   Excel or Gnumeric) then saving them. You may wish to add
   descriptions of the individual variables (the ``Variable, Edit
   attributes'' menu item), and add information on the source of the
-  data (the ``Data, Edit info'' menu item).
-\item Write a descriptions file for the collection using a text
-  editor.
-\item Put the datafiles plus the descriptions file in a subdirectory
-  of the gretl data directory (or user directory).
+  data (the ``Data, Dataset info'' menu item).
+\item Write a catalog file for the collection using a text editor.
+\item Put the data files plus the catalog file in a subdirectory of
+  the gretl data directory (or per-user directory).
 \item If the collection is to be distributed to other people, package
   the data files and catalog in some suitable manner, e.g.\ as a
   zipfile.
