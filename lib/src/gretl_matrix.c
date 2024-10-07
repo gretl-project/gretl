@@ -310,8 +310,8 @@ static int matrix_block_error (const char *f)
 }
 
 /* LIMIT_THREADS (dates from October 2024): this symbol has the effect of
-   preventing multi-threading in calls to dpotr* and dgetr* on small to
-   moderate sized matrices via openblas.  Experimentation has shown that
+   preventing multi-threading in calls to dpotr* and dgetr* on small- to
+   moderate-sized matrices via openblas.  Experimentation has shown that
    using a single thread in this case is a good deal faster, particularly
    on Windows.
 */
@@ -320,8 +320,9 @@ static int matrix_block_error (const char *f)
 
 #if LIMIT_THREADS
 
-/* minimum sizes for which we'll allow multi-threading,
-   when not on MS Windows
+/* Minimum matrix sizes for which we'll allow multi-threading, when
+   not on MS Windows; as things stand we'll disallow multi-threading
+   on Windows unconditionally.
 */
 # define POTRF_MT_MIN 125
 # define GETRF_MT_MIN 80
