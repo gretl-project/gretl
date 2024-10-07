@@ -1470,6 +1470,8 @@ static void gretl_tool_item_set_tip (GtkToolItem *item,
 	accel = "Ctrl+F";
     } else if (!strcmp(tool->icon, GTK_STOCK_FIND_AND_REPLACE)) {
 	accel = "Ctrl+H";
+    } else if (tool->flag == CLEAR_ITEM) {
+        accel = "Ctrl+L";
     }
 
     if (accel != NULL) {
