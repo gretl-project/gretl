@@ -629,11 +629,14 @@ static gint console_key_handler (GtkWidget *cview,
 #endif
 
     if (kevent->state & GDK_CONTROL_MASK) {
-        if (keyval == GDK_Control_L || keyval == GDK_Control_R) {
+        if (keyval == GDK_Control_R) {
             return FALSE;
         } else if (upkey == GDK_C || upkey == GDK_X) {
             /* allow regular copy/cut behavior */
             return FALSE;
+        } else if (upkey == GDK_L) {
+            clear_console(NULL, cvwin);
+            return TRUE;
         } else if (swallow && (upkey == GDK_Page_Up || upkey == GDK_Tab)) {
             gtk_widget_grab_focus(mdata->listbox);
             return TRUE;
