@@ -320,37 +320,6 @@ static int matrix_block_error (const char *f)
     return E_DATA;
 }
 
-/* INV_LIMIT_THREADS (dates from September 2024): this symbol has the
-   effect of preventing multi-threading in calls to dpotrf and dgetrf
-   on inversion of small to moderate sized matrices via openblas.
-   Experimentation has shown that using a single thread is a good deal
-   faster, particularly on Windows.
-*/
-
-#define INV_LIMIT_THREADS 1
-
-#if INV_LIMIT_THREADS
-
-/* minimum sizes for which we'll allow multi-threading */
-# define POTRF_MT_MIN 125
-# define GETRF_MT_MIN 80
-
-static void maybe_force_single (int n, int thresh, int *save_nt)
-{
-    *save_nt = libset_get_int(OMP_N_THREADS);
-# ifdef WIN32
-    if (*save_nt > 1) {
-        set_omp_n_threads(1);
-    }
-# else
-    if (*save_nt > 1 && n < thresh) {
-        set_omp_n_threads(1);
-    }
-# endif
-}
-
-#endif /* INV_LIMIT_THREADS */
-
 /**
  * gretl_matrix_alloc:
  * @rows: desired number of rows in matrix.
@@ -1162,7 +1131,7 @@ gretl_matrix *gretl_matrix_seq (double start, double end,
     }
 
     if (step == 1.0) {
-        if (reverse) {
+        if(reverse) {
             n = start - end + 1;
             step = -step;
         } else {
@@ -1273,16 +1242,14 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
                 }
             }
         } else {
-            /* a real matrix */
-	    if (MIN(m->cols, m->rows) > 1) {
-		for (j=0; j<m->cols; j++) {
-		    for (i=0; i<m->rows; i++) {
-			gretl_matrix_set(c, j, i, m->val[k++]);
-		    }
-		}
-	    } else {
-		memcpy(c->val, m->val, rows * cols * sizeof *m->val);
-	    }
+            double mij;
+
+            for (j=0; j<m->cols; j++) {
+                for (i=0; i<m->rows; i++) {
+                    mij = m->val[k++];
+                    gretl_matrix_set(c, j, i, mij);
+                }
+            }
         }
     } else {
         /* not transposing */
@@ -2076,7 +2043,7 @@ int correlated_normal_vec (gretl_vector *X, const gretl_matrix *L,
  * @c: number of columns.
  * @dist: either %D_UNIFORM or %D_NORMAL.
  *
- * Creates a new @r x @c matrix and filles it with pseudo-random
+ * Creates a new @r x @c matrix and fills it with pseudo-random
  * values from either the uniform or the standard normal
  * distribution.
  *
@@ -3284,16 +3251,22 @@ gretl_matrix_subtract_reversed (const gretl_matrix *a, gretl_matrix *b)
 int gretl_matrix_I_minus (gretl_matrix *m)
 {
     double x;
+    int n = m->rows;
     int i, j, k = 0;
 
-    if (m->rows != m->cols) {
+    if (m->cols != n) {
         return E_NONCONF;
     }
 
-    for (j=0; j<m->cols; j++) {
-        for (i=0; i<m->rows; i++) {
+    for (j=0; j<n; j++) {
+        for (i=0; i<n; i++) {
             x = m->val[k];
-            m->val[k++] = (i == j)? 1.0 - x : -x;
+            if (i == j) {
+                m->val[k] = 1.0 - x;
+            } else if (x != 0.0) {
+                m->val[k] = -x;
+            }
+            k++;
         }
     }
 
@@ -3318,25 +3291,25 @@ int gretl_matrix_I_minus (gretl_matrix *m)
 
 int gretl_matrix_inscribe_I (gretl_matrix *m, int row, int col, int n)
 {
-    int i, j, cj, ri;
+    int i, j, mi, mj;
 
-    if (n < 0) {
-        return E_INVARG;
-    } else if (n == 0) {
-        /* no-op */
-        return 0;
-    }
-
-    if (row < 0 || row + n > m->rows ||
-        col < 0 || col + n > m->cols) {
+    if (n <= 0) {
         return E_NONCONF;
     }
 
-    for (j=0; j<n; j++) {
-        cj = col + j;
-        for (i=0; i<n; i++) {
-            ri = row + i;
-            gretl_matrix_set(m, ri, cj, (i == j)? 1.0 : 0.0);
+    if (row < 0 || row + n > m->rows) {
+        return E_NONCONF;
+    }
+
+    if (col < 0 || col + n > m->cols) {
+        return E_NONCONF;
+    }
+
+    for (i=0; i<n; i++) {
+        mi = row + i;
+        for (j=0; j<n; j++) {
+            mj = col + j;
+            gretl_matrix_set(m, mi, mj, (i == j)? 1.0 : 0.0);
         }
     }
 
@@ -3381,16 +3354,19 @@ int gretl_matrix_transpose_in_place (gretl_matrix *m)
         }
     } else {
         size_t sz = r * c * sizeof(double);
-        double *val = mval_malloc(sz);
+        double *val;
         int k = 0;
 
+        val = mval_malloc(sz);
         if (val == NULL) {
             return E_ALLOC;
         }
 
         memcpy(val, m->val, sz);
+
         m->rows = c;
         m->cols = r;
+
         for (j=0; j<c; j++) {
             for (i=0; i<r; i++) {
                 gretl_matrix_set(m, j, i, val[k++]);
@@ -3426,7 +3402,7 @@ int gretl_matrix_transpose (gretl_matrix *targ, const gretl_matrix *src)
 
     for (j=0; j<c; j++) {
         for (i=0; i<r; i++) {
-            gretl_matrix_set(targ, j, i, src->val[k++]);
+            gretl_matrix_set(targ, j, i, x = src->val[k++]);
         }
     }
 
@@ -3900,8 +3876,8 @@ int gretl_matrix_inscribe_matrix (gretl_matrix *targ,
  * @mod: either %GRETL_MOD_TRANSPOSE or %GRETL_MOD_NONE.
  *
  * Writes into @targ a sub-matrix of @src, taken from the
- * offset @row, @col.  The @src matrix must be large enough
- * to provide a sub-matrix of the dimensions of @targ.
+ * offset @row, @col.  The @targ matrix must be large enough
+ * to provide a sub-matrix of the dimensions of @src.
  * If @mod is %GRETL_MOD_TRANSPOSE it is in fact the transpose
  * of the sub-matrix that that is written into @targ.
  *
@@ -4917,7 +4893,6 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
     return err;
 }
 
-
 /*
  * gretl_matrix_solve:
  * @a: m x n matrix, with m >= n.
@@ -5208,7 +5183,6 @@ int gretl_cholesky_invert (gretl_matrix *a)
    on exit:
       x     double precision(m), the solution vector
       dt    pointer to double, determinant
-
 */
 
 #define TOEPLITZ_SMALL 1.0e-20
@@ -5297,8 +5271,7 @@ static int tsld1 (const double *a1, const double *a2,
         c2[0] = r3;
 
         /* compute the solution of the system with
-           principal minor of order n + 1
-        */
+           principal minor of order n + 1 */
         r5 = 0.0;
         for (i=0; i<n; i++) {
             r5 += a2[i] * x[n1-i];
@@ -5689,13 +5662,11 @@ gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X)
         XTX = gretl_matrix_alloc(X->cols, X->cols);
     }
 
-    if (XTX == NULL) {
-        fprintf(stderr, "gretl_matrix_XTX_new: %d x %d is too big\n",
-                X->cols, X->cols);
-    } else {
+    if (XTX != NULL) {
         matrix_multiply_self_transpose(X, 1, XTX, GRETL_MOD_NONE);
-        maybe_preserve_names(XTX, X, COLNAMES, NULL);
     }
+
+    maybe_preserve_names(XTX, X, COLNAMES, NULL);
 
     return XTX;
 }
@@ -5851,8 +5822,7 @@ void gretl_blas_dtrmm (const gretl_matrix *a,
 
 /* below: a native C re-write of netlib BLAS dgemm.f: note that
    for gretl's purposes we do not support values of 'beta'
-   other than 0 or 1
-*/
+   other than 0 or 1 */
 
 static void gretl_dgemm (const gretl_matrix *a, int atr,
                          const gretl_matrix *b, int btr,
@@ -5878,13 +5848,6 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
         alpha = -1.0;
         beta = 1;
     }
-
-#if defined(USE_SIMD)
-    if (k <= simd_k_max && !atr && !btr && !cmod) {
-        gretl_matrix_simd_mul(a, b, c);
-        return;
-    }
-#endif
 
 #if defined(_OPENMP)
     fpm = (guint64) m * n * k;
@@ -5971,6 +5934,13 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
  st_mode:
 
 #endif /* _OPENMP */
+
+#if defined(USE_SIMD)
+    if (k <= simd_k_max && !atr && !btr && !cmod) {
+        gretl_matrix_simd_mul(a, b, c);
+        return;
+    }
+#endif
 
     if (!btr) {
         if (!atr) {
@@ -8238,9 +8208,9 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
                                    GretlMatrixMod mod,
                                    int *err)
 {
-    gretl_matrix *Tmp, *Q = NULL;
+    gretl_matrix *Q = NULL;
     gretl_matrix *AT = NULL, *BT = NULL;
-    int tri = 0;
+    gretl_matrix *Tmp;
 
     if (gretl_is_null_matrix(a) ||
         gretl_is_null_matrix(b)) {
@@ -8276,35 +8246,6 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
     if (*err) {
         return Q;
     }
-
-#if 1
-    /* 2024-09-06 */
-    if (mod == GRETL_MOD_NONE) {
-        tri = matrix_is_triangular(a);
-        if (tri) {
-            Q = gretl_matrix_copy(b);
-            if (Q == NULL) {
-                *err = E_ALLOC;
-            } else {
-                gretl_triangular_solve(a, Q, mod, tri);
-            }
-            return Q;
-        }
-    } else {
-        /* the following may not be worth doing? */
-        tri = matrix_is_triangular(b);
-        if (tri) {
-            Q = gretl_matrix_copy_transpose(a);
-            if (Q == NULL) {
-                *err = E_ALLOC;
-            } else {
-                gretl_triangular_solve(b, Q, mod, tri);
-                gretl_matrix_transpose_in_place(Q);
-            }
-            return Q;
-        }
-    }
-#endif
 
     if (mod == GRETL_MOD_TRANSPOSE) {
         AT = gretl_matrix_copy_transpose(b);
@@ -8633,9 +8574,6 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
 
 int cholesky_factor_of_inverse (gretl_matrix *a)
 {
-#ifdef INV_LIMIT_THREADS
-    int save_nt = 0;
-#endif
     integer n, info;
     char uplo = 'L';
     int err = 0;
@@ -8645,12 +8583,6 @@ int cholesky_factor_of_inverse (gretl_matrix *a)
         a->val[0] = 1.0 / a->val[0];
         return 0;
     }
-
-#if INV_LIMIT_THREADS
-    if (blas_is_openblas()) {
-        maybe_force_single(n, POTRF_MT_MIN, &save_nt);
-    }
-#endif
 
     /* obtain Cholesky factor of @a */
     dpotrf_(&uplo, &n, a->val, &n, &info);
@@ -8677,12 +8609,6 @@ int cholesky_factor_of_inverse (gretl_matrix *a)
     } else {
         err = (info > 0)? E_NOTPD : E_DATA;
     }
-
-#if INV_LIMIT_THREADS
-    if (save_nt > 1) {
-        omp_set_num_threads(save_nt);
-    }
-#endif
 
     return err;
 }
@@ -9297,9 +9223,6 @@ int gretl_invert_triangular_matrix (gretl_matrix *a, char uplo)
 
 int gretl_invert_general_matrix (gretl_matrix *a)
 {
-#if INV_LIMIT_THREADS
-    int save_nt = 0;
-#endif
     integer n;
     integer info;
     integer lwork;
@@ -9324,12 +9247,6 @@ int gretl_invert_general_matrix (gretl_matrix *a)
         return E_ALLOC;
     }
 
-#if INV_LIMIT_THREADS
-    if (blas_is_openblas()) {
-        maybe_force_single(n, GETRF_MT_MIN, &save_nt);
-    }
-#endif
-
     dgetrf_(&n, &n, a->val, &n, ipiv, &info);
 
     if (info != 0) {
@@ -9344,8 +9261,8 @@ int gretl_invert_general_matrix (gretl_matrix *a)
     dgetri_(&n, a->val, &n, ipiv, work, &lwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
-        err = wspace_fail(info, work[0]);
-        goto bailout;
+        free(ipiv);
+        return wspace_fail(info, work[0]);
     }
 
     lwork = (integer) work[0];
@@ -9356,22 +9273,14 @@ int gretl_invert_general_matrix (gretl_matrix *a)
 
     work = lapack_realloc(work, lwork * sizeof *work);
     if (work == NULL) {
-        err = E_ALLOC;
-        goto bailout;
+        free(ipiv);
+        return E_ALLOC;
     }
 
     dgetri_(&n, a->val, &n, ipiv, work, &lwork, &info);
 
 #ifdef LAPACK_DEBUG
     printf("dgetri: info = %d\n", (int) info);
-#endif
-
- bailout:
-
-#if INV_LIMIT_THREADS
-    if (save_nt > 1) {
-        omp_set_num_threads(save_nt);
-    }
 #endif
 
     lapack_free(work);
@@ -9625,14 +9534,24 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
     return err;
 }
 
+#define INV_DEBUG 0
+
+/* INVPD_SINGLE (added in August 2024): this symbol has the effect of
+   blocking OpenMP threading in calls to dpotrf/dpotri on inversion of a
+   symmetric matrix. With OpenMP-enabled OpenBLAS on Windows, as in the
+   gretl packages for Windows, this produces an extreme slowdown.
+   Since inverting a p.d. matrix is a common operation in econometric
+   calculation, it's probably a good idea to ban it here.
+*/
+#ifdef WIN32
+# define INVPD_SINGLE
+#endif
+
 static int real_invert_symmetric_matrix (gretl_matrix *a,
                                          int symmcheck,
 					 int preserve,
 					 double *ldet)
 {
-#ifdef INV_LIMIT_THREADS
-    int save_nt = 0;
-#endif
     integer n, info;
     double *aval = NULL;
     char uplo = 'L';
@@ -9675,9 +9594,11 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
 	}
     }
 
-#if INV_LIMIT_THREADS
-    if (blas_is_openblas()) {
-        maybe_force_single(n, POTRF_MT_MIN, &save_nt);
+#ifdef INVPD_SINGLE
+    int save_nt = libset_get_int(OMP_N_THREADS);
+
+    if (save_nt > 1) {
+        omp_set_num_threads(1);
     }
 #endif
 
@@ -9706,12 +9627,16 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
         dpotri_(&uplo, &n, a->val, &n, &info);
         if (info != 0) {
             err = E_NOTPD;
+#if INV_DEBUG
+	    fprintf(stderr, "invert_symmetric_matrix:\n"
+		    " dpotri failed with info = %d\n", (int) info);
+#endif
         } else {
             gretl_matrix_mirror(a, uplo);
         }
     }
 
-#if INV_LIMIT_THREADS
+#ifdef INVPD_SINGLE
     if (save_nt > 1) {
         omp_set_num_threads(save_nt);
     }
@@ -13852,7 +13777,7 @@ static int alt_qform (const gretl_matrix *A, GretlMatrixMod amod,
  * Returns: 0 on success; non-zero error code on failure.
  */
 
-#define QFORM_SMALL 1.0e-21 /* 2024-10-01: was 1.0e-20 */
+#define QFORM_SMALL 1.0e-21
 
 int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
                         const gretl_matrix *X, gretl_matrix *C,
