@@ -98,19 +98,8 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
 
 static inline void *mval_malloc (size_t sz)
 {
-#if 0 /* ifdef USE_SIMD */
-    void *mem = NULL;
-    int err;
-
-    err = posix_memalign(&mem, 32, sz);
-    if (err) {
-        fprintf(stderr, "posix_memalign: failed\n");
-    }
-    return mem;
-#else
     /* forestall "invalid reads" by OpenBLAS */
     return malloc(sz % 16 ? sz + 8 : sz);
-#endif
 }
 
 static inline void *mval_realloc (void *ptr, size_t sz)
@@ -2988,6 +2977,12 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
 
     n = src->rows * src->cols;
 
+#if defined(USE_SIMD)
+    if (simd_add_sub(n)) {
+        return gretl_matrix_simd_add_to(targ, src, n);
+    }
+#endif
+
 #if defined(_OPENMP)
     if (!gretl_use_openmp(n)) {
         goto st_mode;
@@ -2999,12 +2994,6 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
     return 0;
 
  st_mode:
-#endif
-
-#if defined(USE_SIMD)
-    if (simd_add_sub(n)) {
-        return gretl_matrix_simd_add_to(targ, src, n);
-    }
 #endif
 
     for (i=0; i<n; i++) {
@@ -3127,6 +3116,12 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
 
     n = src->rows * src->cols;
 
+#if defined(USE_SIMD)
+    if (simd_add_sub(n)) {
+        return gretl_matrix_simd_subt_from(targ, src, n);
+    }
+#endif
+
 #if defined(_OPENMP)
     if (!gretl_use_openmp(n)) {
         goto st_mode;
@@ -3138,12 +3133,6 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
     return 0;
 
  st_mode:
-#endif
-
-#if defined(USE_SIMD)
-    if (simd_add_sub(n)) {
-        return gretl_matrix_simd_subt_from(targ, src, n);
-    }
 #endif
 
     for (i=0; i<n; i++) {
@@ -5851,6 +5840,13 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
         beta = 1;
     }
 
+#if defined(USE_SIMD)
+    if (k <= simd_k_max && !atr && !btr && !cmod) {
+        gretl_matrix_simd_mul(a, b, c);
+        return;
+    }
+#endif
+
 #if defined(_OPENMP)
     fpm = (guint64) m * n * k;
     if (!gretl_use_openmp(fpm)) {
@@ -5936,13 +5932,6 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
  st_mode:
 
 #endif /* _OPENMP */
-
-#if defined(USE_SIMD)
-    if (k <= simd_k_max && !atr && !btr && !cmod) {
-        gretl_matrix_simd_mul(a, b, c);
-        return;
-    }
-#endif
 
     if (!btr) {
         if (!atr) {
@@ -9572,15 +9561,13 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
 
 #define INV_DEBUG 0
 
-/* INVPD_SINGLE (added in August 2024): this symbol has the effect of
-   blocking OpenMP threading in calls to dpotrf/dpotri on inversion of a
-   symmetric matrix. With OpenMP-enabled OpenBLAS on Windows, as in the
-   gretl packages for Windows, this produces an extreme slowdown.
-   Since inverting a p.d. matrix is a common operation in econometric
-   calculation, it's probably a good idea to ban it here.
+/* LIMIT_THREADS: this symbol has the effect of blocking OpenMP threading in
+   calls to dpotrf/dpotri on inversion of a symmetric matrix. With
+   OpenMP-enabled OpenBLAS on Windows, as in the gretl packages for Windows,
+   this produces an extreme slowdown.
 */
 #ifdef WIN32
-# define INVPD_SINGLE
+# define LIMIT_THREADS
 #endif
 
 static int real_invert_symmetric_matrix (gretl_matrix *a,
@@ -9588,6 +9575,9 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
 					 int preserve,
 					 double *ldet)
 {
+#ifdef LIMIT_THREADS
+    int save_nt = 0;
+#endif
     integer n, info;
     double *aval = NULL;
     char uplo = 'L';
@@ -9630,9 +9620,8 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
 	}
     }
 
-#ifdef INVPD_SINGLE
-    int save_nt = libset_get_int(OMP_N_THREADS);
-
+#ifdef LIMIT_THREADS
+    save_nt = libset_get_int(OMP_N_THREADS);
     if (save_nt > 1) {
         omp_set_num_threads(1);
     }
@@ -9672,7 +9661,7 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
         }
     }
 
-#ifdef INVPD_SINGLE
+#ifdef LIMIT_THREADS
     if (save_nt > 1) {
         omp_set_num_threads(save_nt);
     }
