@@ -1131,7 +1131,7 @@ gretl_matrix *gretl_matrix_seq (double start, double end,
     }
 
     if (step == 1.0) {
-        if(reverse) {
+        if (reverse) {
             n = start - end + 1;
             step = -step;
         } else {
@@ -1242,14 +1242,16 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
                 }
             }
         } else {
-            double mij;
-
-            for (j=0; j<m->cols; j++) {
-                for (i=0; i<m->rows; i++) {
-                    mij = m->val[k++];
-                    gretl_matrix_set(c, j, i, mij);
-                }
-            }
+            /* a real matrix */
+	    if (MIN(m->cols, m->rows) > 1) {
+		for (j=0; j<m->cols; j++) {
+		    for (i=0; i<m->rows; i++) {
+			gretl_matrix_set(c, j, i, m->val[k++]);
+		    }
+		}
+	    } else {
+		memcpy(c->val, m->val, rows * cols * sizeof *m->val);
+	    }
         }
     } else {
         /* not transposing */
@@ -3291,31 +3293,30 @@ int gretl_matrix_I_minus (gretl_matrix *m)
 
 int gretl_matrix_inscribe_I (gretl_matrix *m, int row, int col, int n)
 {
-    int i, j, mi, mj;
+    int i, j, cj, ri;
 
-    if (n <= 0) {
+    if (n < 0) {
+        return E_INVARG;
+    } else if (n == 0) {
+        /* no-op */
+        return 0;
+    }
+
+    if (row < 0 || row + n > m->rows ||
+        col < 0 || col + n > m->cols) {
         return E_NONCONF;
     }
 
-    if (row < 0 || row + n > m->rows) {
-        return E_NONCONF;
-    }
-
-    if (col < 0 || col + n > m->cols) {
-        return E_NONCONF;
-    }
-
-    for (i=0; i<n; i++) {
-        mi = row + i;
-        for (j=0; j<n; j++) {
-            mj = col + j;
-            gretl_matrix_set(m, mi, mj, (i == j)? 1.0 : 0.0);
+    for (j=0; j<n; j++) {
+        cj = col + j;
+        for (i=0; i<n; i++) {
+            ri = row + i;
+            gretl_matrix_set(m, ri, cj, (i == j)? 1.0 : 0.0);
         }
     }
 
     return 0;
 }
-
 
 /**
  * gretl_matrix_transpose_in_place:
@@ -3354,19 +3355,16 @@ int gretl_matrix_transpose_in_place (gretl_matrix *m)
         }
     } else {
         size_t sz = r * c * sizeof(double);
-        double *val;
+        double *val = mval_malloc(sz);
         int k = 0;
 
-        val = mval_malloc(sz);
         if (val == NULL) {
             return E_ALLOC;
         }
 
         memcpy(val, m->val, sz);
-
         m->rows = c;
         m->cols = r;
-
         for (j=0; j<c; j++) {
             for (i=0; i<r; i++) {
                 gretl_matrix_set(m, j, i, val[k++]);
@@ -3402,7 +3400,7 @@ int gretl_matrix_transpose (gretl_matrix *targ, const gretl_matrix *src)
 
     for (j=0; j<c; j++) {
         for (i=0; i<r; i++) {
-            gretl_matrix_set(targ, j, i, x = src->val[k++]);
+            gretl_matrix_set(targ, j, i, src->val[k++]);
         }
     }
 
@@ -3876,8 +3874,8 @@ int gretl_matrix_inscribe_matrix (gretl_matrix *targ,
  * @mod: either %GRETL_MOD_TRANSPOSE or %GRETL_MOD_NONE.
  *
  * Writes into @targ a sub-matrix of @src, taken from the
- * offset @row, @col.  The @targ matrix must be large enough
- * to provide a sub-matrix of the dimensions of @src.
+ * offset @row, @col.  The @src matrix must be large enough
+ * to provide a sub-matrix of the dimensions of @targ.
  * If @mod is %GRETL_MOD_TRANSPOSE it is in fact the transpose
  * of the sub-matrix that that is written into @targ.
  *
@@ -5271,7 +5269,8 @@ static int tsld1 (const double *a1, const double *a2,
         c2[0] = r3;
 
         /* compute the solution of the system with
-           principal minor of order n + 1 */
+           principal minor of order n + 1
+        */
         r5 = 0.0;
         for (i=0; i<n; i++) {
             r5 += a2[i] * x[n1-i];
@@ -5662,11 +5661,13 @@ gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X)
         XTX = gretl_matrix_alloc(X->cols, X->cols);
     }
 
-    if (XTX != NULL) {
+    if (XTX == NULL) {
+        fprintf(stderr, "gretl_matrix_XTX_new: %d x %d is too big\n",
+                X->cols, X->cols);
+    } else {
         matrix_multiply_self_transpose(X, 1, XTX, GRETL_MOD_NONE);
+        maybe_preserve_names(XTX, X, COLNAMES, NULL);
     }
-
-    maybe_preserve_names(XTX, X, COLNAMES, NULL);
 
     return XTX;
 }
@@ -5822,7 +5823,8 @@ void gretl_blas_dtrmm (const gretl_matrix *a,
 
 /* below: a native C re-write of netlib BLAS dgemm.f: note that
    for gretl's purposes we do not support values of 'beta'
-   other than 0 or 1 */
+   other than 0 or 1
+*/
 
 static void gretl_dgemm (const gretl_matrix *a, int atr,
                          const gretl_matrix *b, int btr,
@@ -8182,6 +8184,8 @@ static int matrix_divide_by_scalmat (gretl_matrix *num,
     return 0;
 }
 
+#define USE_TRISOLVE 1
+
 /**
  * gretl_matrix_divide:
  * @a: left-hand matrix.
@@ -8209,7 +8213,8 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
                                    int *err)
 {
     gretl_matrix *Q = NULL;
-    gretl_matrix *AT = NULL, *BT = NULL;
+    gretl_matrix *AT = NULL;
+    gretl_matrix *BT = NULL;
     gretl_matrix *Tmp;
 
     if (gretl_is_null_matrix(a) ||
@@ -8246,6 +8251,37 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
     if (*err) {
         return Q;
     }
+
+#if USE_TRISOLVE
+    /* 2024-09-06 */
+    if (mod == GRETL_MOD_NONE) {
+        int tri = matrix_is_triangular(a);
+
+        if (tri) {
+            Q = gretl_matrix_copy(b);
+            if (Q == NULL) {
+                *err = E_ALLOC;
+            } else {
+                gretl_triangular_solve(a, Q, mod, tri);
+            }
+            return Q;
+        }
+    } else {
+        /* the following may not be worth doing? */
+        int tri = matrix_is_triangular(b);
+
+        if (tri) {
+            Q = gretl_matrix_copy_transpose(a);
+            if (Q == NULL) {
+                *err = E_ALLOC;
+            } else {
+                gretl_triangular_solve(b, Q, mod, tri);
+                gretl_matrix_transpose_in_place(Q);
+            }
+            return Q;
+        }
+    }
+#endif /* USE_TRISOLVE */
 
     if (mod == GRETL_MOD_TRANSPOSE) {
         AT = gretl_matrix_copy_transpose(b);
