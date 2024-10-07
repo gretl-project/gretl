@@ -309,6 +309,39 @@ static int matrix_block_error (const char *f)
     return E_DATA;
 }
 
+/* LIMIT_THREADS (dates from October 2024): this symbol has the effect of
+   preventing multi-threading in calls to dpotr* and dgetr* on small to
+   moderate sized matrices via openblas.  Experimentation has shown that
+   using a single thread in this case is a good deal faster, particularly
+   on Windows.
+*/
+
+#define LIMIT_THREADS 1
+
+#if LIMIT_THREADS
+
+/* minimum sizes for which we'll allow multi-threading,
+   when not on MS Windows
+*/
+# define POTRF_MT_MIN 125
+# define GETRF_MT_MIN 80
+
+static void maybe_force_single (int n, int thresh, int *save_nt)
+{
+    *save_nt = libset_get_int(OMP_N_THREADS);
+# ifdef WIN32
+    if (*save_nt > 1) {
+        omp_set_num_threads(1);
+    }
+# else
+    if (*save_nt > 1 && n < thresh) {
+        set_omp_n_threads(1);
+    }
+# endif
+}
+
+#endif /* LIMIT_THREADS */
+
 /**
  * gretl_matrix_alloc:
  * @rows: desired number of rows in matrix.
@@ -8599,6 +8632,9 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
 
 int cholesky_factor_of_inverse (gretl_matrix *a)
 {
+#if LIMIT_THREADS
+    int save_nt = 0;
+#endif
     integer n, info;
     char uplo = 'L';
     int err = 0;
@@ -8608,6 +8644,12 @@ int cholesky_factor_of_inverse (gretl_matrix *a)
         a->val[0] = 1.0 / a->val[0];
         return 0;
     }
+
+#if LIMIT_THREADS
+    if (blas_is_openblas()) {
+        maybe_force_single(n, POTRF_MT_MIN, &save_nt);
+    }
+#endif
 
     /* obtain Cholesky factor of @a */
     dpotrf_(&uplo, &n, a->val, &n, &info);
@@ -8634,6 +8676,12 @@ int cholesky_factor_of_inverse (gretl_matrix *a)
     } else {
         err = (info > 0)? E_NOTPD : E_DATA;
     }
+
+#if LIMIT_THREADS
+    if (save_nt > 1) {
+        omp_set_num_threads(save_nt);
+    }
+#endif
 
     return err;
 }
@@ -9248,6 +9296,9 @@ int gretl_invert_triangular_matrix (gretl_matrix *a, char uplo)
 
 int gretl_invert_general_matrix (gretl_matrix *a)
 {
+#if LIMIT_THREADS
+    int save_nt = 0;
+#endif
     integer n;
     integer info;
     integer lwork;
@@ -9272,12 +9323,18 @@ int gretl_invert_general_matrix (gretl_matrix *a)
         return E_ALLOC;
     }
 
+#if LIMIT_THREADS
+    if (blas_is_openblas()) {
+        maybe_force_single(n, GETRF_MT_MIN, &save_nt);
+    }
+#endif
+
     dgetrf_(&n, &n, a->val, &n, ipiv, &info);
 
     if (info != 0) {
-        free(ipiv);
         fprintf(stderr, "dgetrf: matrix is singular (info=%d)\n", info);
-        return E_SINGULAR;
+        err = E_SINGULAR;
+        goto bailout;
     } else {
         pivot_check(ipiv, n);
     }
@@ -9286,35 +9343,33 @@ int gretl_invert_general_matrix (gretl_matrix *a)
     dgetri_(&n, a->val, &n, ipiv, work, &lwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
-        free(ipiv);
-        return wspace_fail(info, work[0]);
+        err = wspace_fail(info, work[0]);
+        goto bailout;
     }
 
     lwork = (integer) work[0];
-
-#ifdef LAPACK_DEBUG
-    printf("dgetri: workspace = %d\n", (int) lwork);
-#endif
-
     work = lapack_realloc(work, lwork * sizeof *work);
     if (work == NULL) {
-        free(ipiv);
-        return E_ALLOC;
+        err = E_ALLOC;
+        goto bailout;
     }
 
     dgetri_(&n, a->val, &n, ipiv, work, &lwork, &info);
+    if (info != 0) {
+        fprintf(stderr, "dgetri: matrix is singular (info = %d)\n", info);
+        err = E_SINGULAR;
+    }
 
-#ifdef LAPACK_DEBUG
-    printf("dgetri: info = %d\n", (int) info);
+ bailout:
+
+#if LIMIT_THREADS
+    if (save_nt > 1) {
+        omp_set_num_threads(save_nt);
+    }
 #endif
 
     lapack_free(work);
     free(ipiv);
-
-    if (info != 0) {
-        fprintf(stderr, "dgetri: matrix is singular\n");
-        err = E_SINGULAR;
-    }
 
     return err;
 }
@@ -9561,21 +9616,12 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
 
 #define INV_DEBUG 0
 
-/* LIMIT_THREADS: this symbol has the effect of blocking OpenMP threading in
-   calls to dpotrf/dpotri on inversion of a symmetric matrix. With
-   OpenMP-enabled OpenBLAS on Windows, as in the gretl packages for Windows,
-   this produces an extreme slowdown.
-*/
-#ifdef WIN32
-# define LIMIT_THREADS
-#endif
-
 static int real_invert_symmetric_matrix (gretl_matrix *a,
                                          int symmcheck,
 					 int preserve,
 					 double *ldet)
 {
-#ifdef LIMIT_THREADS
+#if LIMIT_THREADS
     int save_nt = 0;
 #endif
     integer n, info;
@@ -9620,10 +9666,9 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
 	}
     }
 
-#ifdef LIMIT_THREADS
-    save_nt = libset_get_int(OMP_N_THREADS);
-    if (save_nt > 1) {
-        omp_set_num_threads(1);
+#if LIMIT_THREADS
+    if (blas_is_openblas()) {
+        maybe_force_single(n, POTRF_MT_MIN, &save_nt);
     }
 #endif
 
@@ -9661,7 +9706,7 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
         }
     }
 
-#ifdef LIMIT_THREADS
+#if LIMIT_THREADS
     if (save_nt > 1) {
         omp_set_num_threads(save_nt);
     }
