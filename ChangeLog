@@ -6,6 +6,8 @@ version 2024c, in progress
   the format of the printout
 - "corr" command: be more explicit about the sample(s) used
 - "rename" command: add a --case option to support case
+- "reset" command: add a --robust option and scale the squares
+  and cubes of the fitted values to avoid numerical instability
   conversion of all series names in the dataset
 - flatten() function: add an extra (vec-wise) mode for matrices	
 - matrix "left division" operator: improve efficiency when the
@@ -28,6 +30,7 @@ version 2024c, in progress
   a factorized boxplot (was broken for a string-valued factor)
 - GUI: ensure that the "Compact data" and "Expand data" menu
   items are disabled when the dataset is cross-sectional
+- GUI: support Ctrl+L to clear the console
 - Windows 64-bit build: make Consolas the default monospace
   font
 - Fix bad behavior from "set force_decpoint off" for users in
@@ -36,6 +39,9 @@ version 2024c, in progress
 - Fix incorrect handling of ctrl-r (carriage return) in some
   cases of script output
 - Fix GUI language selection on recent macOS
+- Fix relatively slow matrix inversion on Windows; speed-up
+  should be apparent for symmetric positive definite matrices
+  in particular
 
 2024-05-21 version 2024b
 - "gridplot" command: add a --title option
