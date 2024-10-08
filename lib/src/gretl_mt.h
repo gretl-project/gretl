@@ -26,9 +26,9 @@ int gretl_n_physical_cores (void);
 
 void num_threads_init (int blas_type);
 
-int get_omp_n_threads (void);
+int gretl_get_omp_threads (void);
 
-int set_omp_n_threads (int n);
+int gretl_set_omp_threads (int n);
 
 int set_omp_mnk_min (int n);
 
