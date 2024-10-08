@@ -291,7 +291,7 @@ static int rep_container_fill (reprob_container *C,
     }
 
 #if defined(_OPENMP)
-    if (C->nobs * C->qp > 900 && get_omp_n_threads() > 1) {
+    if (C->nobs * C->qp > 900 && gretl_get_omp_threads() > 1) {
 	/* FIXME threshold? */
 	C->parallel = 1;
     }

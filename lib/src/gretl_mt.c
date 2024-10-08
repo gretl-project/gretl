@@ -38,7 +38,7 @@
 # include <unistd.h> /* for sysconf() */
 #endif
 
-static int omp_n_threads;
+static int gretl_omp_threads;
 
 #if defined(_OPENMP) && !defined(OS_OSX)
 static int omp_mnk_min = 80000;
@@ -136,7 +136,7 @@ int gretl_n_physical_cores (void)
 
 int gretl_use_openmp (guint64 n)
 {
-    if (omp_n_threads < 2) {
+    if (gretl_omp_threads < 2) {
 	return 0;
     } else if (omp_mnk_min >= 0 && n >= (guint64) omp_mnk_min) {
 	return 1;
@@ -170,22 +170,22 @@ int get_omp_mnk_min (void)
    enforce the advertised default of one thread per process.
 */
 
-int set_omp_n_threads (int n)
+int gretl_set_omp_threads (int n)
 {
 #if defined(_OPENMP)
     if (n < 1 || n > gretl_n_processors()) {
-	gretl_errmsg_sprintf(_("omp_num_threads: must be >= 1 and <= %d"),
+	gretl_errmsg_sprintf(_("gretl_omp_threads: must be >= 1 and <= %d"),
 			     gretl_n_processors());
 	return E_DATA;
     } else {
-	omp_n_threads = n;
+	gretl_omp_threads = n;
 	omp_set_num_threads(n); /* note: overrides env */
 	if (blas_is_threaded()) {
 	    blas_set_num_threads(n);
 	}
     }
 #else
-    gretl_warnmsg_set(_("set_omp_n_threads: OpenMP is not enabled"));
+    gretl_warnmsg_set(_("gretl_set_omp_threads: OpenMP is not enabled"));
 #endif
 
     return 0;
@@ -196,7 +196,7 @@ void num_threads_init (int blas_type)
     int nc = gretl_n_physical_cores();
 
 #if defined(_OPENMP)
-    omp_n_threads = nc;
+    gretl_omp_threads = nc;
     omp_set_num_threads(nc);
 #endif
     if (blas_is_threaded()) {
@@ -205,12 +205,12 @@ void num_threads_init (int blas_type)
     }
 }
 
-int get_omp_n_threads (void)
+int gretl_get_omp_threads (void)
 {
 #if defined(_OPENMP)
-    return omp_n_threads;
+    return gretl_omp_threads;
 #else
-    gretl_warnmsg_set(_("set_omp_n_threads: OpenMP is not enabled"));
+    gretl_warnmsg_set(_("gretl_get_omp_threads: OpenMP is not enabled"));
     return 0;
 #endif
 }
@@ -238,9 +238,9 @@ int openmp_by_default (void)
 	char *s = getenv("OMP_NUM_THREADS");
 
 	if (s != NULL && *s != '\0') {
-	    omp_n_threads = atoi(s);
+	    gretl_omp_threads = atoi(s);
 	} else {
-	    omp_n_threads = num_cores;
+	    gretl_omp_threads = num_cores;
 	}
 	called = 1;
     }
@@ -249,7 +249,7 @@ int openmp_by_default (void)
     if (1) {
 	fprintf(stderr, "number of cores detected = %d\n", num_cores);
 	fprintf(stderr, "use OpenMP by default? %s\n", ret ? "yes" : "no");
-	fprintf(stderr, "omp_num_threads = %d\n", omp_n_threads);
+	fprintf(stderr, "omp_num_threads = %d\n", gretl_omp_threads);
     }
 # endif
 

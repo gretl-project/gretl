@@ -1958,7 +1958,7 @@ int libset_get_int (SetKey key)
     } else if (key == BLAS_MNK_MIN) {
 	return get_blas_mnk_min();
     } else if (key == OMP_N_THREADS) {
-	return get_omp_n_threads();
+	return gretl_get_omp_threads();
     } else if (key == OMP_MNK_MIN) {
 	return get_omp_mnk_min();
     } else if (key == SIMD_K_MAX) {
@@ -2041,7 +2041,7 @@ int libset_set_int (SetKey key, int val)
     } else if (key == SIMD_MN_MIN) {
 	set_simd_mn_min(val);
     } else if (key == OMP_N_THREADS) {
-	err = set_omp_n_threads(val);
+	err = gretl_set_omp_threads(val);
     } else {
 	int min = 1, max = 100000;
 	void *valp;
