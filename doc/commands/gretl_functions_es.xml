@@ -5502,22 +5502,60 @@
     <function name="flatten" section="data-utils" output="seebelow">
       <fnargs>
 	<fnarg type="matrices-or-strings">A</fnarg>
-	<fnarg optional="true" type="bool">alt</fnarg>
+	<fnarg optional="true" type="int-or-string">alt</fnarg>
       </fnargs>
       <description>
 	<para>
 	  <quote>Allana</quote> bien una formación de matrices en una única
 	  matriz, o bien una formación de cadenas de texto en una única cadena.
 	</para>
+        <subhead>Matrices</subhead>
 	<para>
-	  Los argumentos se indican entre paréntesis. Con matrices, por defecto,
-	  se concatenan horizontalmente las matrices de <argname>A</argname>;
-	  pero cuando indicas un valor no nulo para <argname>alt</argname>,
-	  la concatenación se hace verticalmente. En cualquier caso, se muestra
-	  un fallo si las matrices no son conformables para realizar esta
-	  operación. Consulta <fncref targ="msplitby"/> para la operación
-	  inversa.
+	  En el caso de las matrices, el modo en que se juntan las matrices de
+	  <argname>A</argname> depende del argumento <argname>alt</argname>,
+	  que debe tener un valor de 0 (horizontalmente), 1 (verticalmente)
+	  o 2 (<quote>tipo vector</quote>). La mejor manera de explicar la
+	  diferencia entre las tres alternativas es, por ejemplo,
+	  el código:
 	</para>
+	<code>
+	  X = {1,3,5; 2,4,6}
+	  A = defarray(X, X+6)
+	  U = flatten(A,0) # = A[1] ~ A[2]
+	  V = flatten(A,1) # = A[1] | A[2]
+	  W = flatten(A,2) # = vec(A[1]) ~ vec(A[2])
+	</code>
+	<para>
+	  que produce las siguientes tres matrices:
+	</para>
+	<code>
+	  U (2 x 6)
+
+	  1    3    5    7    9   11 
+	  2    4    6    8   10   12 
+
+	  V (4 x 3)
+
+	  1    3    5 
+	  2    4    6 
+	  7    9   11 
+	  8   10   12 
+
+	  W (6 x 2)
+
+	  1    7 
+	  2    8 
+	  3    9 
+	  4   10 
+	  5   11 
+	  6   12 
+	</code>
+	<para>
+	  Se muestra un fallo cuando las matrices del 'array' no sean convenientes
+	  para la operación. Consulta la función <fncref targ="msplitby"/> para
+	  la operación inversa.
+	</para>
+        <subhead>Cadenas de texto</subhead>
 	<para>
 	  En caso de cadenas de texto, el resultado por defecto mantiene las
 	  cadenas de <argname>A</argname>, ordenadas una en cada línea.
@@ -5525,7 +5563,8 @@
 	  las cadenas se separan mediante espacios en lugar de líneas nuevas,
 	  pero también se admite un uso alternativo de <argname>alt</argname>:
 	  puedes indicar una cadena de texto específica para utilizar como
-	  separador.
+	  separador. La función inversa para el caso de las cadenas de texto es
+	  <fncref targ="strsplit"/>.
 	</para>
       </description>
     </function>
@@ -7273,10 +7312,12 @@
       <description>
 	<para>
 	  Dada <argname>S</argname> (una matriz de orden <by r="p" c="p"/>
-	  definida positiva), esta función devuelve una matriz generada a partir
-	  de una realización de la distribución Inversa de Wishart con
-	  <argname>v</argname> grados de libertad. El resultado que se devuelve
-	  también es una matriz <by r="p" c="p"/>. Se utiliza el algoritmo de
+	  definida positiva), esta función devuelve una matriz generada a
+	  partir de una realización de la distribución Inversa de Wishart con
+	  <argname>v</argname> grados de libertad, donde <argname>v</argname>
+	  no debe ser menor que <math>p</math>.
+	  El resultado que se devuelve también es una matriz <by r="p" c="p"/>.
+	  Se utiliza el algoritmo de
 	  <cite key="odell-feiveson66">Odell y Feiveson (1966)</cite>.
 	</para>
       </description>
@@ -8198,7 +8239,7 @@
 	  y por lo tanto debería ser substancialmente más rápido si estás
 	  solucionando de forma repetida para una misma <math>A</math>,
 	  y distintos valores de <math>b</math>. El aumento de velocidad será
-	  mayor, cuanto mayor sea la dimensión de columnas de <math>A</math>.
+	  mayor, cuanto mayor sea la dimensión de <math>A</math>.
 	</para>
 	<code>
 	  # Variante 1
