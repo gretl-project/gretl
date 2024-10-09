@@ -2,7 +2,7 @@
 
 prefix=@prefix@
 
-# delete stuff that's not needed in a run-only Windows package
+# delete stuff that's not needed in a runtime-only Windows package
 rm -rf ${prefix}/include
 rm -rf ${prefix}/appdata
 rm -rf ${prefix}/pkgconfig
