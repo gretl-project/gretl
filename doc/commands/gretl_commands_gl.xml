@@ -6255,8 +6255,8 @@
 	que é igual a 1 para homes e a 0 para mulleres (ou viceversa).
 	Entón, na proba da diferenza entre as dúas medias, podes
 	escoller <lit>salario</lit> en ambas caixas pero engade á
-	mesma caixa de arriba <lit>(xénero=0)</lit> e á de abaixo
-	<lit>(xénero=1)</lit>. Así, isto ofréceche unha proba da
+	mesma caixa de arriba <lit>(xenero==0)</lit> e á de abaixo
+	<lit>(xenero==1)</lit>. Así, isto ofréceche unha proba da
 	diferenza entre o ingreso medio masculino e o ingreso medio
 	feminino. Cae na conta de que cando tecleas unha restrición
 	deste xeito, entón debes de premer a tecla Intro para obter
@@ -13313,6 +13313,10 @@
 	  <flag>--cubes-only</flag>
 	  <effect>Calcula a proba usando só os cubos</effect>
 	</option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>Usa erros padrón robustos na regresión auxiliar</effect>
+	</option>
       </options>
     </usage>
 
@@ -13323,7 +13327,8 @@
 	dun modelo, engadíndolle á regresión os cadrados e/ou os cubos
 	dos valores axustados, e calculando o estatístico <math>F</math>
 	para probar a hipótese nula de que os parámetros dos termos
-	engadidos son cero.
+	engadidos son cero. Por razóns numéricas, os cadrados e os cubos
+	se reescalan utilizando o desvío padrón dos valores axustados.
       </para>
       <para context="cli">
 	Vanse engadir tanto os cadrados como os cubos, agás que
@@ -13334,6 +13339,10 @@
 	Podes utilizar a opción <opt>silent</opt> se tes intención de facer
 	uso dos accesorios <fncref targ="$test"/> e/ou <fncref targ="$pvalue"/>
 	para gardar os resultados da proba.
+      </para>
+      <para context="cli">
+	A opción <opt>robust</opt> está implícita cando na regresión que se
+	vai comprobar se utilizaron erros padrón robustos.
       </para>
     </description>
 

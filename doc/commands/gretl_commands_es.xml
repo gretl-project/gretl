@@ -6255,8 +6255,8 @@
 	que es igual a 1 para hombres y a 0 para mujeres (o viceversa).
 	Entonces, en el contraste de la diferencia entre las dos medias, puedes
 	escoger <lit>salario</lit> en ambas cajas pero añade a la
-	misma caja de arriba <lit>(género=0)</lit> y a la de abajo
-	<lit>(género=1)</lit>. Así, esto te ofrece un contraste de la
+	misma caja de arriba <lit>(genero==0)</lit> y a la de abajo
+	<lit>(genero==1)</lit>. Así, esto te ofrece un contraste de la
 	diferencia entre el ingreso medio masculino y el ingreso medio
 	femenino. Ten en cuenta que cuando tecleas una restricción
 	de este modo, entonces debes pulsar la tecla Intro para obtener
@@ -13313,6 +13313,10 @@
 	  <flag>--cubes-only</flag>
 	  <effect>Calcula el contraste usando solo los cubos</effect>
 	</option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>Usa errores típicos robustos en la regresión auxiliar</effect>
+	</option>
       </options>
     </usage>
 
@@ -13323,7 +13327,8 @@
 	de un modelo, añadiéndole a la regresión los cuadrados y/o los cubos
 	de los valores ajustados, y calculando el estadístico <math>F</math>
 	para contrastar la hipótesis nula de que los parámetros de los términos
-	añadidos son cero.
+	añadidos son cero. Por razones numéricas, los cuadrados y los cubos
+	se reescalan utilizando la desviación típica de los valores ajustados.
       </para>
       <para context="cli">
 	Se van a añadir tanto los cuadrados como los cubos, excepto que
@@ -13334,6 +13339,10 @@
 	Puedes utilizar la opción <opt>silent</opt> si tienes intención de hacer
 	uso de los accesores <fncref targ="$test"/> y/o <fncref targ="$pvalue"/>
 	para guardar los resultados del contraste.
+      </para>
+      <para context="cli">
+	La opción <opt>robust</opt> está implícita cuando en la regresión que se
+	va a comprobar se utilizaron errores típicos robustos.
       </para>
     </description>
 
