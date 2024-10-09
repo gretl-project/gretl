@@ -19,7 +19,9 @@
 2554217 Foo Nov 17 00:00:00 2022 wooldridge.tar.gz
 # Jeffrey Wooldridge, Introductory Econometrics
 138812 Foo Dec 18 00:00:00 2023 luetkepohl.tar.gz
-# Helmut Lütkepohl, Applied Time Series Econometrics & New Intro...
+# Lütkepohl, Applied Time Series Econometrics & New Intro...
 1704458 Foo Jan 26 00:00:00 2024 isl.tar.gz
 # James et al, Introduction to Statistical Learning
+18436 Foo Oct 09 00:00:00 2024 hassler.tar.gz
+# Kirchgässner et al, Intro. to Modern Time Series Analysis
 

@@ -1008,6 +1008,10 @@ int query_sourceforge (const char *query, char **getbuf)
                         NULL, 0, getbuf);
 }
 
+/* Called from the GUI, by the function populate_remote_data_pkg_list
+   in database.c, to grab a list of data file packages.
+*/
+
 int list_remote_data_packages (char **getbuf)
 {
     return retrieve_url(sfweb, LIST_PKGS, NULL, NULL,
