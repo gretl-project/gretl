@@ -3884,7 +3884,7 @@ gint populate_remote_func_list (windata_t *vwin, int filter)
 }
 
 /* Fill a list box with names and short descriptions
-   of data file packages, retrieved from server.
+   of data file packages, retrieved from sourceforge.
 */
 
 gint populate_remote_data_pkg_list (windata_t *vwin)
