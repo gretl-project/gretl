@@ -1,6 +1,6 @@
 # St Louis Fed (various series, large)
 isratio  Total Business: Inventories to Sales Ratio, Ratio, SA
-M  1992.01 - 2024.01  n = 385
+M  1992.01 - 2024.07  n = 391
 ushown  Homeownership Rate for the United States, %, NSA
 A  1984 - 2023  n = 40
 ushvac  Home Vacancy Rate for the United States, %, NSA
@@ -8,335 +8,335 @@ A  1986 - 2023  n = 38
 usrvac  Rental Vacancy Rate for the United States, %, NSA
 A  1986 - 2023  n = 38
 houst  New Privately-Owned Housing Units Started: Total Units, Thous. of Units, SAAR
-M  1959.01 - 2024.02  n = 782
+M  1959.01 - 2024.08  n = 788
 houstnsa  New Privately-Owned Housing Units Started: Total Units, Thous. of Units, NSA
-M  1959.01 - 2024.02  n = 782
-cumfn  Capacity Utilization: Manufacturing (NAICS), % of Capacity, SA
-Q  1972.1 - 2023.4  n = 208
+M  1959.01 - 2024.08  n = 788
+cumfn  Capacity Utilization: Manufacturing (NAICS), %, SA
+Q  1972.1 - 2024.2  n = 210
 indpro  Industrial Production: Total Index, 2017=100, SA
-M  1919.01 - 2024.02  n = 1262
+M  1919.01 - 2024.08  n = 1268
 ipbuseq  Industrial Production: Equipment: Business Equipment, 2017=100, SA
-M  1947.01 - 2024.02  n = 926
+M  1947.01 - 2024.08  n = 932
 ipcongd  Industrial Production: Consumer Goods, 2017=100, SA
-M  1939.01 - 2024.02  n = 1022
-ipdcongd  Industrial Production: Durable Consumer Goods, 2017=100, SA
-M  1947.01 - 2024.02  n = 926
+M  1939.01 - 2024.08  n = 1028
+ipdcongd  Industrial Production: Durable Consumer Goods: Durable Consumer Goods, 2017=100, SA
+M  1947.01 - 2024.08  n = 932
 ipdman  Industrial Production: Durable Manufacturing (NAICS), 2017=100, SA
-M  1972.01 - 2024.02  n = 626
-ipdmat  Industrial Production: Durable Goods Materials, 2017=100, SA
-M  1947.01 - 2024.02  n = 926
+M  1972.01 - 2024.08  n = 632
+ipdmat  Industrial Production: Durable Goods Materials: Durable Goods Materials, 2017=100, SA
+M  1947.01 - 2024.08  n = 932
 ipfinal  Industrial Production: Final Products, 2017=100, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.08  n = 1028
 ecomnsa  E-Commerce Retail Sales, Mil. of $, NSA
-Q  1999.4 - 2023.4  n = 97
+Q  1999.4 - 2024.2  n = 99
 ecomsa  E-Commerce Retail Sales, Mil. of $, SA
-Q  1999.4 - 2023.4  n = 97
+Q  1999.4 - 2024.2  n = 99
 cpiaucns  Consumer Price Index for All Urban Consumers: All Items in U.S. City Average, 1982-1984=100, NSA
-M  1913.01 - 2024.02  n = 1334
+M  1913.01 - 2024.09  n = 1341
 cpiaucsl  Consumer Price Index for All Urban Consumers: All Items in U.S. City Average, 1982-1984=100, SA
-M  1947.01 - 2024.02  n = 926
+M  1947.01 - 2024.09  n = 933
 jcxfe  Personal Consumption Expenditures: Chain-type Price Index Less Food and Energy, 2017=100, SA
-Q  1959.1 - 2023.4  n = 260
+Q  1959.1 - 2024.2  n = 262
 pcectpi  Personal Consumption Expenditures: Chain-type Price Index, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 pcepi  Personal Consumption Expenditures: Chain-type Price Index, 2017=100, SA
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 pcepilfe  Personal Consumption Expenditures Excluding Food and Energy (Chain-Type Price Index), 2017=100, SA
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 cnp16ov  Population Level, Thous. of Persons, NSA
-M  1948.01 - 2024.02  n = 914
+M  1948.01 - 2024.09  n = 921
 u1rate  Percent of Civilian Labor Force Unemployed 15 Weeks and over (U-1), %, SA
-M  1948.01 - 2024.02  n = 914
+M  1948.01 - 2024.09  n = 921
 u1ratensa  Percent of Civilian Labor Force Unemployed 15 Weeks and over (U-1), %, NSA
-M  1948.01 - 2024.02  n = 914
+M  1948.01 - 2024.09  n = 921
 u2rate  Unemployment Rate - Job Losers (U-2), %, SA
-M  1967.01 - 2024.02  n = 686
+M  1967.01 - 2024.09  n = 693
 u2ratensa  Unemployment Rate - Job Losers (U-2), %, NSA
-M  1967.01 - 2024.02  n = 686
+M  1967.01 - 2024.09  n = 693
 u4rate  Total Unemployed Plus Discouraged Workers, as a Percent of the Civilian Labor Force Plus Discouraged Workers (U-4), %, SA
-M  1994.01 - 2024.02  n = 362
+M  1994.01 - 2024.09  n = 369
 u4ratensa  Total Unemployed Plus Discouraged Workers, as a Percent of the Civilian Labor Force Plus Discouraged Workers (U-4), %, NSA
-M  1994.01 - 2024.02  n = 362
+M  1994.01 - 2024.09  n = 369
 u5rate  Unemployed + Discouraged Workers + Marginally Attached to Labor Force, % of Lab Force + Marginally Attached (U-5), SA
-M  1994.01 - 2024.02  n = 362
+M  1994.01 - 2024.09  n = 369
 u5ratensa  Unemployed + Discouraged Workers + Marginally Attached to Labor Force, % of Lab Force + Marginally Attached (U-5), NSA
-M  1994.01 - 2024.02  n = 362
+M  1994.01 - 2024.09  n = 369
 u6rate  Unemployed + Marginally Attached to Labor Force + Part Time for Economic Reasons, % of Lab Force + Marginally Attached (U-6), SA
-M  1994.01 - 2024.02  n = 362
+M  1994.01 - 2024.09  n = 369
 u6ratensa  Unemployed + Marginally Attached to Labor Force + Part Time for Economic Reasons, % of Lab Force + Marginally Attached (U-6), NSA
-M  1994.01 - 2024.02  n = 362
+M  1994.01 - 2024.09  n = 369
 uemp15ov  Number Unemployed for 15 Weeks & over, Thous. of Persons, SA
-M  1948.01 - 2024.02  n = 914
+M  1948.01 - 2024.09  n = 921
 uemp15t26  Number Unemployed for 15-26 Weeks, Thous. of Persons, SA
-M  1948.01 - 2024.02  n = 914
+M  1948.01 - 2024.09  n = 921
 uemp27ov  Number Unemployed for 27 Weeks & over, Thous. of Persons, SA
-M  1948.01 - 2024.02  n = 914
+M  1948.01 - 2024.09  n = 921
 uemp5to14  Number Unemployed for 5-14 Weeks, Thous. of Persons, SA
-M  1948.01 - 2024.02  n = 914
+M  1948.01 - 2024.09  n = 921
 uemplt5  Number Unemployed for Less Than 5 Weeks, Thous. of Persons, SA
-M  1948.01 - 2024.02  n = 914
+M  1948.01 - 2024.09  n = 921
 uempmed  Median Weeks Unemployed, Weeks, SA
-M  1967.07 - 2024.02  n = 680
+M  1967.07 - 2024.09  n = 687
 clf16ov  Civilian Labor Force Level, Thous. of Persons, SA
-M  1948.01 - 2024.02  n = 914
+M  1948.01 - 2024.09  n = 921
 civpart  Labor Force Participation Rate, %, SA
-M  1948.01 - 2024.02  n = 914
+M  1948.01 - 2024.09  n = 921
 ce16ov  Employment Level, Thous. of Persons, SA
-M  1948.01 - 2024.02  n = 914
+M  1948.01 - 2024.09  n = 921
 emratio  Employment-Population Ratio, %, SA
-M  1948.01 - 2024.02  n = 914
+M  1948.01 - 2024.09  n = 921
 lns12300060  Employment-Population Ratio - 25-54 Yrs., %, SA
-M  1948.01 - 2024.02  n = 914
+M  1948.01 - 2024.09  n = 921
 unemploy  Unemployment Level, Thous. of Persons, SA
-M  1948.01 - 2024.02  n = 914
+M  1948.01 - 2024.09  n = 921
 unrate  Unemployment Rate, %, SA
-M  1948.01 - 2024.02  n = 914
+M  1948.01 - 2024.09  n = 921
 unratensa  Unemployment Rate, %, NSA
-M  1948.01 - 2024.02  n = 914
+M  1948.01 - 2024.09  n = 921
 uempmean  Average Weeks Unemployed, Weeks, SA
-M  1948.01 - 2024.02  n = 914
+M  1948.01 - 2024.09  n = 921
 payems  All Employees, Total Nonfarm, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 paynsa  All Employees, Total Nonfarm, Thous. of Persons, NSA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 ahetpi  Average Hourly Earnings of Production and Nonsupervisory Employees, Total Private, $ per Hour, SA
-M  1964.01 - 2024.02  n = 722
+M  1964.01 - 2024.09  n = 729
 awhae  Indexes of Aggregate Weekly Hours of All Employees, Total Private, 2007=100, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 awhaetp  Average Weekly Hours of All Employees, Total Private, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 awhi  Indexes of Aggregate Weekly Hours of Production and Nonsupervisory Employees, Total Private, 2002=100, SA
-M  1964.01 - 2024.02  n = 722
+M  1964.01 - 2024.09  n = 729
 awhnonag  Average Weekly Hours of Production and Nonsupervisory Employees, Total Private, Hours, SA
-M  1964.01 - 2024.02  n = 722
+M  1964.01 - 2024.09  n = 729
 uspriv  All Employees, Total Private, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 awhaegp  Average Weekly Hours of All Employees, Goods-Producing, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 usgood  All Employees, Goods-Producing, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 srvprd  All Employees, Service-Providing, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 awhaepsp  Average Weekly Hours of All Employees, Private Service-Providing, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 awhaemal  Average Weekly Hours of All Employees, Mining and Logging, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 usmine  All Employees, Mining and Logging, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 ahecons  Average Hourly Earnings of Production and Nonsupervisory Employees, Construction, $ per Hour, NSA
-M  1947.01 - 2024.02  n = 926
+M  1947.01 - 2024.09  n = 933
 awhaecon  Average Weekly Hours of All Employees, Construction, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 uscons  All Employees, Construction, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 aheman  Average Hourly Earnings of Production and Nonsupervisory Employees, Manufacturing, $ per Hour, NSA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 awhaeman  Average Weekly Hours of All Employees, Manufacturing, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 awhman  Average Weekly Hours of Production and Nonsupervisory Employees, Manufacturing, Hours, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 awotman  Average Weekly Overtime Hours of Production and Nonsupervisory Employees, Manufacturing, Hours, SA
-M  1956.01 - 2024.02  n = 818
+M  1956.01 - 2024.09  n = 825
 manemp  All Employees, Manufacturing, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 awhaedg  Average Weekly Hours of All Employees, Durable Goods, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 dmanemp  All Employees, Durable Goods, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 awhaendg  Average Weekly Hours of All Employees, Nondurable Goods, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 ndmanemp  All Employees, Nondurable Goods, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 awhaettu  Average Weekly Hours of All Employees, Trade, Transportation, and Utilities, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 ustpu  All Employees, Trade, Transportation, and Utilities, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 awhaewt  Average Weekly Hours of All Employees, Wholesale Trade, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 uswtrade  All Employees, Wholesale Trade, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 awhaert  Average Weekly Hours of All Employees, Retail Trade, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 ustrade  All Employees, Retail Trade, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 awhaetaw  Average Weekly Hours of All Employees, Transportation and Warehousing, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 awhaeutil  Average Weekly Hours of All Employees, Utilities, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 awhaeinfo  Average Weekly Hours of All Employees, Information, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 usinfo  All Employees, Information, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 awhaefa  Average Weekly Hours of All Employees, Financial Activities, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 usfire  All Employees, Financial Activities, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 awhaepbs  Average Weekly Hours of All Employees, Professional and Business Services, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 temphelps  All Employees, Temporary Help Services, Thous. of Persons, SA
-M  1990.01 - 2024.02  n = 410
+M  1990.01 - 2024.09  n = 417
 uspbs  All Employees, Professional and Business Services, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 awhaeehs  Average Weekly Hours of All Employees, Private Education and Health Services, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 usehs  All Employees, Private Education and Health Services, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 awhaelah  Average Weekly Hours of All Employees, Leisure and Hospitality, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 uslah  All Employees, Leisure and Hospitality, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 awhaeos  Average Weekly Hours of All Employees, Other Services, Hours, SA
-M  2006.03 - 2024.02  n = 216
+M  2006.03 - 2024.09  n = 223
 usserv  All Employees, Other Services, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
+M  1939.01 - 2024.09  n = 1029
 usgovt  All Employees, Government, Thous. of Persons, SA
-M  1939.01 - 2024.02  n = 1022
-nppttl  Total Nonfarm Private Payroll Employment, Thous., SA
+M  1939.01 - 2024.09  n = 1029
+nppttl  Total Nonfarm Private Payroll Employment (DISCONTINUED), Thous., SA
 M  2002.04 - 2022.05  n = 242
 pop  Total Population: All Ages including Armed Forces Overseas, Thous., NSA
 M  1952.01 - 2024.12  n = 876
 popthm  Population, Thous., NSA
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 prs31006013  Manufacturing, Durable Goods Sector: Employment for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs31006023  Manufacturing, Durable Goods Sector: Average Weekly Hours for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs31006033  Manufacturing, Durable Goods Sector: Hours Worked for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs31006043  Manufacturing, Durable Goods Sector: Real Sectoral Output for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs31006063  Manufacturing, Durable Goods Sector: Labor Compensation for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs31006093  Manufacturing, Durable Goods Sector: Labor Productivity (Output per Hour) for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs31006103  Manufacturing, Durable Goods Sector: Hourly Compensation for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs31006113  Manufacturing, Durable Goods Sector: Unit Labor Costs for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs31006153  Manufacturing, Durable Goods Sector: Real Hourly Compensation for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs31006163  Manufacturing, Durable Goods Sector: Output per Worker for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs32006013  Manufacturing, Nondurable Goods Sector: Employment for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs32006023  Manufacturing, Nondurable Goods Sector: Average Weekly Hours for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs32006033  Manufacturing, Nondurable Goods Sector: Hours Worked for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs32006043  Manufacturing, Nondurable Goods Sector: Real Sectoral Output for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs32006063  Manufacturing, Nondurable Goods Sector: Labor Compensation for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs32006093  Manufacturing, Nondurable Goods Sector: Labor Productivity (Output per Hour) for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs32006103  Manufacturing, Nondurable Goods Sector: Hourly Compensation for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs32006113  Manufacturing, Nondurable Goods Sector: Unit Labor Costs for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs32006153  Manufacturing, Nondurable Goods Sector: Real Hourly Compensation for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 prs32006163  Manufacturing, Nondurable Goods Sector: Output per Worker for All Workers, 2017=100, SA
-Q  1987.1 - 2023.4  n = 148
+Q  1987.1 - 2024.2  n = 150
 hcompbs  Business Sector: Hourly Compensation for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 hoabs  Business Sector: Hours Worked for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 ipdbs  Business Sector: Value-Added Output Price Deflator for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 ophpbs  Business Sector: Labor Productivity (Output per Hour) for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 outbs  Business Sector: Real Value-Added Output for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 prs84006013  Business Sector: Employment for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 prs84006023  Business Sector: Average Weekly Hours for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 prs84006053  Business Sector: Value-Added Output for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 prs84006063  Business Sector: Labor Compensation for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 prs84006083  Business Sector: Nonlabor Payments for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 prs84006163  Business Sector: Output per Worker for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 prs84006173  Business Sector: Labor Share for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 rcphbs  Business Sector: Real Hourly Compensation for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 ulcbs  Business Sector: Unit Labor Costs for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 unlpbs  Business Sector: Unit Nonlabor Payments for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 compnfb  Nonfarm Business Sector: Hourly Compensation for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 comprnfb  Nonfarm Business Sector: Real Hourly Compensation for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 hoanbs  Nonfarm Business Sector: Hours Worked for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 ipdnbs  Nonfarm Business Sector: Value-Added Output Price Deflator for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 ophnfb  Nonfarm Business Sector: Labor Productivity (Output per Hour) for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 outnfb  Nonfarm Business Sector: Real Value-Added Output for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 prs85006013  Nonfarm Business Sector: Employment for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 prs85006023  Nonfarm Business Sector: Average Weekly Hours for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 prs85006053  Nonfarm Business Sector: Value-Added Output for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 prs85006063  Nonfarm Business Sector: Labor Compensation for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 prs85006083  Nonfarm Business Sector: Nonlabor Payments for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 prs85006163  Nonfarm Business Sector: Output per Worker for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 prs85006173  Nonfarm Business Sector: Labor Share for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 ulcnfb  Nonfarm Business Sector: Unit Labor Costs for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 unlpnbs  Nonfarm Business Sector: Unit Nonlabor Payments for All Workers, 2017=100, SA
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 prs88003013  Nonfinancial Corporations Sector: Employment for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 prs88003023  Nonfinancial Corporations Sector: Average Weekly Hours for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 prs88003033  Nonfinancial Corporations Sector: Hours Worked for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 prs88003043  Nonfinancial Corporations Sector: Real Value-Added Output for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 prs88003053  Nonfinancial Corporations Sector: Value-Added Output for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 prs88003063  Nonfinancial Corporations Sector: Labor Compensation for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 prs88003083  Nonfinancial Corporations Sector: Nonlabor Payments for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 prs88003093  Nonfinancial Corporations Sector: Labor Productivity (Output per Hour) for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 prs88003103  Nonfinancial Corporations Sector: Hourly Compensation for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 prs88003113  Nonfinancial Corporations Sector: Unit Labor Costs for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 prs88003123  Nonfinancial Corporations Sector: Unit Nonlabor Costs for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 prs88003133  Nonfinancial Corporations Sector: Unit Nonlabor Payments for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 prs88003143  Nonfinancial Corporations Sector: Value-Added Output Price Deflator for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 prs88003153  Nonfinancial Corporations Sector: Real Hourly Compensation for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 prs88003163  Nonfinancial Corporations Sector: Output per Worker for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 prs88003173  Nonfinancial Corporations Sector: Labor Share for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 prs88003183  Nonfinancial Corporations Sector: Profits for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 prs88003193  Nonfinancial Corporations Sector: Unit Profits for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 prs88003203  Nonfinancial Corporations Sector: Unit Combined Input Costs for Employees, 2017=100, SA
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 mich  University of Michigan: Inflation Expectation, %, NSA
-M  1978.01 - 2024.01  n = 553
+M  1978.01 - 2024.08  n = 560
 acoilbrenteu  Crude Oil Prices: Brent - Europe, $ per Barrel, NSA
 A  1987 - 2023  n = 37
 acoilwtico  Crude Oil Prices: West Texas Intermediate (WTI) - Cushing, Oklahoma, $ per Barrel, NSA
@@ -360,398 +360,398 @@ A  1992 - 2023  n = 32
 argasla  Reformulated Gasoline Blendstock for Oxygenate Blending (RBOB) Prices: Regular Gasoline: Los Angeles, $ per Gallon, NSA
 A  2003 - 2023  n = 21
 gasallecm  PADD I (East Coast District) All Grades All Formulations Gas Price, $ per Gallon, NSA
-M  1993.04 - 2024.03  n = 372
+M  1993.04 - 2024.09  n = 378
 gasallgcm  PADD III (Gulf Coast District) All Grades All Formulations Gas Price, $ per Gallon, NSA
-M  1993.04 - 2024.03  n = 372
+M  1993.04 - 2024.09  n = 378
 gasallm  US All Grades All Formulations Gas Price, $ per Gallon, NSA
-M  1993.04 - 2024.03  n = 372
+M  1993.04 - 2024.09  n = 378
 gasallmwm  PADD II (Midwest District) All Grades All Formulations Gas Price, $ per Gallon, NSA
-M  1993.04 - 2024.03  n = 372
+M  1993.04 - 2024.09  n = 378
 gasallrmm  PADD IV (Rocky Mountain District) All Grades All Formulations Gas Price, $ per Gallon, NSA
-M  1993.04 - 2024.03  n = 372
+M  1993.04 - 2024.09  n = 378
 gasallwcm  PADD V (West Coast District) All Grades All Formulations Gas Price, $ per Gallon, NSA
-M  1993.04 - 2024.03  n = 372
+M  1993.04 - 2024.09  n = 378
 gasdesecm  PADD I (East Coast District) Diesel Sales Price, $ per Gallon, NSA
-M  1994.04 - 2024.03  n = 360
+M  1994.04 - 2024.09  n = 366
 gasdesgcm  PADD III (Gulf Coast District) Diesel Sales Price, $ per Gallon, NSA
-M  1994.04 - 2024.03  n = 360
+M  1994.04 - 2024.09  n = 366
 gasdesm  US Diesel Sales Price, $ per Gallon, NSA
-M  1994.04 - 2024.03  n = 360
+M  1994.04 - 2024.09  n = 366
 gasdesmwm  PADD II (Midwest District) Diesel Sales Price, $ per Gallon, NSA
-M  1994.04 - 2024.03  n = 360
+M  1994.04 - 2024.09  n = 366
 gasdesrmm  PADD IV (Rocky Mountain District) Diesel Sales Price, $ per Gallon, NSA
-M  1994.04 - 2024.03  n = 360
+M  1994.04 - 2024.09  n = 366
 gasdeswcm  PADD V (West Coast District) Diesel Sales Price, $ per Gallon, NSA
-M  1994.04 - 2024.03  n = 360
+M  1994.04 - 2024.09  n = 366
 gasmidecm  PADD I (East Coast District) Midgrade All Formulations Gas Price, $ per Gallon, NSA
-M  1994.12 - 2024.03  n = 352
+M  1994.12 - 2024.09  n = 358
 gasmidgcm  PADD III (Gulf Coast District) Midgrade All Formulations Gas Price, $ per Gallon, NSA
-M  1994.12 - 2024.03  n = 352
+M  1994.12 - 2024.09  n = 358
 gasmidm  US Midgrade All Formulations Gas Price, $ per Gallon, NSA
-M  1994.12 - 2024.03  n = 352
+M  1994.12 - 2024.09  n = 358
 gasmidmwm  PADD II (Midwest District) Midgrade All Formulations Gas Price, $ per Gallon, NSA
-M  1994.12 - 2024.03  n = 352
+M  1994.12 - 2024.09  n = 358
 gasmidrmm  PADD IV (Rocky Mountain District) Midgrade All Formulations Gas Price, $ per Gallon, NSA
-M  1994.12 - 2024.03  n = 352
+M  1994.12 - 2024.09  n = 358
 gasmidwcm  PADD V (West Coast District) Midgrade All Formulations Gas Price, $ per Gallon, NSA
-M  1994.12 - 2024.03  n = 352
+M  1994.12 - 2024.09  n = 358
 gasprmecm  PADD I (East Coast District) Premium All Formulations Gas Price, $ per Gallon, NSA
-M  1994.12 - 2024.03  n = 352
+M  1994.12 - 2024.09  n = 358
 gasprmgcm  PADD III (Gulf Coast District) Premium All Formulations Gas Price, $ per Gallon, NSA
-M  1994.12 - 2024.03  n = 352
+M  1994.12 - 2024.09  n = 358
 gasprmm  US Premium All Formulations Gas Price, $ per Gallon, NSA
-M  1994.12 - 2024.03  n = 352
+M  1994.12 - 2024.09  n = 358
 gasprmmwm  PADD II (Midwest District) Premium All Formulations Gas Price, $ per Gallon, NSA
-M  1994.12 - 2024.03  n = 352
+M  1994.12 - 2024.09  n = 358
 gasprmrmm  PADD IV (Rocky Mountain District) Premium All Formulations Gas Price, $ per Gallon, NSA
-M  1994.12 - 2024.03  n = 352
+M  1994.12 - 2024.09  n = 358
 gasprmwcm  PADD V (West Coast District) Premium All Formulations Gas Price, $ per Gallon, NSA
-M  1994.12 - 2024.03  n = 352
+M  1994.12 - 2024.09  n = 358
 gasregecm  PADD I (East Coast District) Regular All Formulations Gas Price, $ per Gallon, NSA
-M  1992.06 - 2024.03  n = 382
+M  1992.06 - 2024.09  n = 388
 gasreggcm  PADD III (Gulf Coast District) Regular All Formulations Gas Price, $ per Gallon, NSA
-M  1992.06 - 2024.03  n = 382
+M  1992.06 - 2024.09  n = 388
 gasregm  US Regular All Formulations Gas Price, $ per Gallon, NSA
-M  1990.09 - 2024.03  n = 403
+M  1990.09 - 2024.09  n = 409
 gasregmwm  PADD II (Midwest District) Regular All Formulations Gas Price, $ per Gallon, NSA
-M  1992.06 - 2024.03  n = 382
+M  1992.06 - 2024.09  n = 388
 gasregrmm  PADD IV (Rocky Mountain District) Regular All Formulations Gas Price, $ per Gallon, NSA
-M  1992.06 - 2024.03  n = 382
+M  1992.06 - 2024.09  n = 388
 gasregwcm  PADD V (West Coast District) Regular All Formulations Gas Price, $ per Gallon, NSA
-M  1992.06 - 2024.03  n = 382
+M  1992.06 - 2024.09  n = 388
 mcoilbrenteu  Crude Oil Prices: Brent - Europe, $ per Barrel, NSA
-M  1987.05 - 2024.02  n = 442
+M  1987.05 - 2024.09  n = 449
 mcoilwtico  Crude Oil Prices: West Texas Intermediate (WTI) - Cushing, Oklahoma, $ per Barrel, NSA
-M  1986.01 - 2024.02  n = 458
+M  1986.01 - 2024.09  n = 465
 mdfuella  Ultra-Low-Sulfur No. 2 Diesel Fuel Prices: Los Angeles, $ per Gallon, NSA
-M  1996.04 - 2024.02  n = 335
+M  1996.04 - 2024.09  n = 342
 mdfuelnyh  Ultra-Low-Sulfur No. 2 Diesel Fuel Prices: New York Harbor, $ per Gallon, NSA
-M  2006.06 - 2024.02  n = 213
+M  2006.06 - 2024.09  n = 220
 mdfuelusgulf  Ultra-Low-Sulfur No. 2 Diesel Fuel Prices: U.S. Gulf Coast, $ per Gallon, NSA
-M  2006.06 - 2024.02  n = 213
+M  2006.06 - 2024.09  n = 220
 mgasnyh  Conventional Gasoline Prices: New York Harbor, Regular, $ per Gallon, NSA
-M  1986.06 - 2024.02  n = 453
+M  1986.06 - 2024.09  n = 460
 mgasusgulf  Conventional Gasoline Prices: U.S. Gulf Coast, Regular, $ per Gallon, NSA
-M  1986.06 - 2024.02  n = 453
+M  1986.06 - 2024.09  n = 460
 mhoilnyh  No. 2 Heating Oil Prices: New York Harbor, $ per Gallon, NSA
-M  1986.06 - 2024.02  n = 453
+M  1986.06 - 2024.09  n = 460
 mjfuelusgulf  Kerosene-Type Jet Fuel Prices: U.S. Gulf Coast, $ per Gallon, NSA
-M  1990.04 - 2024.02  n = 407
+M  1990.04 - 2024.09  n = 414
 mpropanembtx  Propane Prices: Mont Belvieu, Texas, $ per Gallon, NSA
-M  1992.06 - 2024.02  n = 381
+M  1992.06 - 2024.09  n = 388
 mrgasla  Reformulated Gasoline Blendstock for Oxygenate Blending (RBOB) Prices: Regular Gasoline: Los Angeles, $ per Gallon, NSA
-M  2003.06 - 2024.02  n = 249
-oilprice  Spot Oil Price: West Texas Intermediate, $ per Barrel, NSA
+M  2003.06 - 2024.09  n = 256
+oilprice  Spot Oil Price: West Texas Intermediate (DISCONTINUED), $ per Barrel, NSA
 M  1946.01 - 2013.07  n = 811
 cpifabns  Consumer Price Index for All Urban Consumers: Food and Beverages in U.S. City Average, 1982-1984=100, NSA
-M  1967.01 - 2024.02  n = 686
+M  1967.01 - 2024.09  n = 693
 cpifabsl  Consumer Price Index for All Urban Consumers: Food and Beverages in U.S. City Average, 1982-1984=100, SA
-M  1967.01 - 2024.02  n = 686
+M  1967.01 - 2024.09  n = 693
 cpiufdns  Consumer Price Index for All Urban Consumers: Food in U.S. City Average, 1982-1984=100, NSA
-M  1913.01 - 2024.02  n = 1334
+M  1913.01 - 2024.09  n = 1341
 cpiufdsl  Consumer Price Index for All Urban Consumers: Food in U.S. City Average, 1982-1984=100, SA
-M  1947.01 - 2024.02  n = 926
+M  1947.01 - 2024.09  n = 933
 cpihosns  Consumer Price Index for All Urban Consumers: Housing in U.S. City Average, 1982-1984=100, NSA
-M  1967.01 - 2024.02  n = 686
+M  1967.01 - 2024.09  n = 693
 cpihossl  Consumer Price Index for All Urban Consumers: Housing in U.S. City Average, 1982-1984=100, SA
-M  1967.01 - 2024.02  n = 686
+M  1967.01 - 2024.09  n = 693
 cpiappns  Consumer Price Index for All Urban Consumers: Apparel in U.S. City Average, 1982-1984=100, NSA
-M  1914.12 - 2024.02  n = 1311
+M  1914.12 - 2024.09  n = 1318
 cpiappsl  Consumer Price Index for All Urban Consumers: Apparel in U.S. City Average, 1982-1984=100, SA
-M  1947.01 - 2024.02  n = 926
+M  1947.01 - 2024.09  n = 933
 cpitrnns  Consumer Price Index for All Urban Consumers: Transportation in U.S. City Average, 1982-1984=100, NSA
-M  1935.03 - 2024.02  n = 1068
+M  1935.03 - 2024.09  n = 1075
 cpitrnsl  Consumer Price Index for All Urban Consumers: Transportation in U.S. City Average, 1982-1984=100, SA
-M  1947.01 - 2024.02  n = 926
+M  1947.01 - 2024.09  n = 933
 cpimedns  Consumer Price Index for All Urban Consumers: Medical Care in U.S. City Average, 1982-1984=100, NSA
-M  1935.03 - 2024.02  n = 1068
+M  1935.03 - 2024.09  n = 1075
 cpimedsl  Consumer Price Index for All Urban Consumers: Medical Care in U.S. City Average, 1982-1984=100, SA
-M  1947.01 - 2024.02  n = 926
+M  1947.01 - 2024.09  n = 933
 cpirecns  Consumer Price Index for All Urban Consumers: Recreation in U.S. City Average, Dec 1997=100, NSA
-M  1993.01 - 2024.02  n = 374
+M  1993.01 - 2024.09  n = 381
 cpirecsl  Consumer Price Index for All Urban Consumers: Recreation in U.S. City Average, Dec 1997=100, SA
-M  1993.01 - 2024.02  n = 374
+M  1993.01 - 2024.09  n = 381
 cpieduns  Consumer Price Index for All Urban Consumers: Education and Communication in U.S. City Average, Dec 1997=100, NSA
-M  1993.01 - 2024.02  n = 374
+M  1993.01 - 2024.09  n = 381
 cpiedusl  Consumer Price Index for All Urban Consumers: Education and Communication in U.S. City Average, Dec 1997=100, SA
-M  1993.01 - 2024.02  n = 374
+M  1993.01 - 2024.09  n = 381
 cpiogsns  Consumer Price Index for All Urban Consumers: Other Goods and Services in U.S. City Average, 1982-1984=100, NSA
-M  1967.01 - 2024.02  n = 686
+M  1967.01 - 2024.09  n = 693
 cpiogssl  Consumer Price Index for All Urban Consumers: Other Goods and Services in U.S. City Average, 1982-1984=100, SA
-M  1967.01 - 2024.02  n = 686
+M  1967.01 - 2024.09  n = 693
 cpiengns  Consumer Price Index for All Urban Consumers: Energy in U.S. City Average, 1982-1984=100, NSA
-M  1957.01 - 2024.02  n = 806
+M  1957.01 - 2024.09  n = 813
 cpiengsl  Consumer Price Index for All Urban Consumers: Energy in U.S. City Average, 1982-1984=100, SA
-M  1957.01 - 2024.02  n = 806
+M  1957.01 - 2024.09  n = 813
 cpilegns  Consumer Price Index for All Urban Consumers: All Items Less Energy in U.S. City Average, 1982-1984=100, NSA
-M  1957.01 - 2024.02  n = 806
+M  1957.01 - 2024.09  n = 813
 cpilegsl  Consumer Price Index for All Urban Consumers: All Items Less Energy in U.S. City Average, 1982-1984=100, SA
-M  1957.01 - 2024.02  n = 806
+M  1957.01 - 2024.09  n = 813
 cpilfens  Consumer Price Index for All Urban Consumers: All Items Less Food and Energy in U.S. City Average, 1982-1984=100, NSA
-M  1957.01 - 2024.02  n = 806
+M  1957.01 - 2024.09  n = 813
 cpilfesl  Consumer Price Index for All Urban Consumers: All Items Less Food and Energy in U.S. City Average, 1982-1984=100, SA
-M  1957.01 - 2024.02  n = 806
+M  1957.01 - 2024.09  n = 813
 cpiulfns  Consumer Price Index for All Urban Consumers: All Items Less Food in U.S. City Average, 1982-1984=100, NSA
-M  1935.03 - 2024.02  n = 1068
+M  1935.03 - 2024.09  n = 1075
 cpiulfsl  Consumer Price Index for All Urban Consumers: All Items Less Food in U.S. City Average, 1982-1984=100, SA
-M  1947.01 - 2024.02  n = 926
+M  1947.01 - 2024.09  n = 933
 eciben  Employment Cost Index: Benefits: Private Industry Workers, Dec 2005=100, SA
-Q  2001.1 - 2023.4  n = 92
+Q  2001.1 - 2024.2  n = 94
 ecicom  Employment Cost Index: Compensation: Private Industry Workers, Dec 2005=100, SA
-Q  2001.1 - 2023.4  n = 92
+Q  2001.1 - 2024.2  n = 94
 eciconcom  Employment Cost Index: Compensation: Private Industry Workers: Construction, Index: Dec 2005=100, SA
-Q  2001.1 - 2023.4  n = 92
+Q  2001.1 - 2024.2  n = 94
 eciconwag  Employment Cost Index: Wages and Salaries: Private Industry Workers: Construction, Index: Dec 2005=100, SA
-Q  2001.1 - 2023.4  n = 92
+Q  2001.1 - 2024.2  n = 94
 ecigvtben  Employment Cost Index: Benefits: State and Local Government: All Workers, Index: Dec 2005=100, SA
-Q  2001.1 - 2023.4  n = 92
+Q  2001.1 - 2024.2  n = 94
 ecigvtcom  Employment Cost Index: Compensation: State and Local Government: All Workers, Index: Dec 2005=100, SA
-Q  2001.1 - 2023.4  n = 92
+Q  2001.1 - 2024.2  n = 94
 ecigvtwag  Employment Cost Index: Wages and Salaries: State and Local Government: All Workers, Index: Dec 2005=100, SA
-Q  2001.1 - 2023.4  n = 92
+Q  2001.1 - 2024.2  n = 94
 ecimanben  Employment Cost Index: Benefits: Private Industry Workers: Manufacturing, Index: Dec 2005=100, SA
-Q  2001.1 - 2023.4  n = 92
+Q  2001.1 - 2024.2  n = 94
 ecimancom  Employment Cost Index: Compensation: Private Industry Workers: Manufacturing, Index: Dec 2005=100, SA
-Q  2001.1 - 2023.4  n = 92
+Q  2001.1 - 2024.2  n = 94
 ecimanwag  Employment Cost Index: Wages and Salaries: Private Industry Workers: Manufacturing, Index: Dec 2005=100, SA
-Q  2001.1 - 2023.4  n = 92
+Q  2001.1 - 2024.2  n = 94
 ecisrvben  Employment Cost Index: Benefits: Private Industry Workers: Service Occupations, Index: Dec 2005=100, SA
-Q  2002.1 - 2023.4  n = 88
+Q  2002.1 - 2024.2  n = 90
 ecisrvcom  Employment Cost Index: Compensation: Private Industry Workers: Service Occupations, Index: Dec 2005=100, SA
-Q  2002.1 - 2023.4  n = 88
+Q  2002.1 - 2024.2  n = 90
 ecisrvwag  Employment Cost Index: Wages and Salaries: Private Industry Workers: Service Occupations, Index: Dec 2005=100, NSA
-Q  2001.1 - 2023.4  n = 92
+Q  2001.1 - 2024.2  n = 94
 eciwag  Employment Cost Index: Wages and Salaries: Private Industry Workers, Dec 2005=100, SA
-Q  2001.1 - 2023.4  n = 92
+Q  2001.1 - 2024.2  n = 94
 atxrnsa  S&P CoreLogic Case-Shiller GA-Atlanta Home Price Index, Jan 2000=100, NSA
-M  1991.01 - 2024.01  n = 397
+M  1991.01 - 2024.07  n = 403
 atxrsa  S&P CoreLogic Case-Shiller GA-Atlanta Home Price Index, Jan 2000=100, SA
-M  1991.01 - 2024.01  n = 397
+M  1991.01 - 2024.07  n = 403
 boxrnsa  S&P CoreLogic Case-Shiller MA-Boston Home Price Index, Jan 2000=100, NSA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 boxrsa  S&P CoreLogic Case-Shiller MA-Boston Home Price Index, Jan 2000=100, SA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 cexrnsa  S&P CoreLogic Case-Shiller OH-Cleveland Home Price Index, Jan 2000=100, NSA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 cexrsa  S&P CoreLogic Case-Shiller OH-Cleveland Home Price Index, Jan 2000=100, SA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 chxrnsa  S&P CoreLogic Case-Shiller IL-Chicago Home Price Index, Jan 2000=100, NSA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 chxrsa  S&P CoreLogic Case-Shiller IL-Chicago Home Price Index, Jan 2000=100, SA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 crxrnsa  S&P CoreLogic Case-Shiller NC-Charlotte Home Price Index, Jan 2000=100, NSA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 crxrsa  S&P CoreLogic Case-Shiller NC-Charlotte Home Price Index, Jan 2000=100, SA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 daxrnsa  S&P CoreLogic Case-Shiller TX-Dallas Home Price Index, Jan 2000=100, NSA
-M  2000.01 - 2024.01  n = 289
+M  2000.01 - 2024.07  n = 295
 daxrsa  S&P CoreLogic Case-Shiller TX-Dallas Home Price Index, Jan 2000=100, SA
-M  2000.01 - 2024.01  n = 289
+M  2000.01 - 2024.07  n = 295
 dexrnsa  S&P CoreLogic Case-Shiller MI-Detroit Home Price Index, Jan 2000=100, NSA
-M  1991.01 - 2024.01  n = 397
+M  1991.01 - 2024.07  n = 403
 dexrsa  S&P CoreLogic Case-Shiller MI-Detroit Home Price Index, Jan 2000=100, SA
-M  1991.01 - 2024.01  n = 397
+M  1991.01 - 2024.07  n = 403
 dnxrnsa  S&P CoreLogic Case-Shiller CO-Denver Home Price Index, Jan 2000=100, NSA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 dnxrsa  S&P CoreLogic Case-Shiller CO-Denver Home Price Index, Jan 2000=100, SA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 lvxrnsa  S&P CoreLogic Case-Shiller NV-Las Vegas Home Price Index, Jan 2000=100, NSA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 lvxrsa  S&P CoreLogic Case-Shiller NV-Las Vegas Home Price Index, Jan 2000=100, SA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 lxxrnsa  S&P CoreLogic Case-Shiller CA-Los Angeles Home Price Index, Jan 2000=100, NSA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 lxxrsa  S&P CoreLogic Case-Shiller CA-Los Angeles Home Price Index, Jan 2000=100, SA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 mixrnsa  S&P CoreLogic Case-Shiller FL-Miami Home Price Index, Jan 2000=100, NSA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 mixrsa  S&P CoreLogic Case-Shiller FL-Miami Home Price Index, Jan 2000=100, SA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 mnxrnsa  S&P CoreLogic Case-Shiller MN-Minneapolis Home Price Index, Jan 2000=100, NSA
-M  1989.01 - 2024.01  n = 421
+M  1989.01 - 2024.07  n = 427
 mnxrsa  S&P CoreLogic Case-Shiller MN-Minneapolis Home Price Index, Jan 2000=100, SA
-M  1989.01 - 2024.01  n = 421
+M  1989.01 - 2024.07  n = 427
 nyxrnsa  S&P CoreLogic Case-Shiller NY-New York Home Price Index, Jan 2000=100, NSA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 nyxrsa  S&P CoreLogic Case-Shiller NY-New York Home Price Index, Jan 2000=100, SA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 phxrnsa  S&P CoreLogic Case-Shiller AZ-Phoenix Home Price Index, Jan 2000=100, NSA
-M  1989.01 - 2024.01  n = 421
+M  1989.01 - 2024.07  n = 427
 phxrsa  S&P CoreLogic Case-Shiller AZ-Phoenix Home Price Index, Jan 2000=100, SA
-M  1989.01 - 2024.01  n = 421
+M  1989.01 - 2024.07  n = 427
 poxrnsa  S&P CoreLogic Case-Shiller OR-Portland Home Price Index, Jan 2000=100, NSA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 poxrsa  S&P CoreLogic Case-Shiller OR-Portland Home Price Index, Jan 2000=100, SA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 sdxrnsa  S&P CoreLogic Case-Shiller CA-San Diego Home Price Index, Jan 2000=100, NSA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 sdxrsa  S&P CoreLogic Case-Shiller CA-San Diego Home Price Index, Jan 2000=100, SA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 sexrnsa  S&P CoreLogic Case-Shiller WA-Seattle Home Price Index, Jan 2000=100, NSA
-M  1990.01 - 2024.01  n = 409
+M  1990.01 - 2024.07  n = 415
 sexrsa  S&P CoreLogic Case-Shiller WA-Seattle Home Price Index, Jan 2000=100, SA
-M  1990.01 - 2024.01  n = 409
+M  1990.01 - 2024.07  n = 415
 sfxrnsa  S&P CoreLogic Case-Shiller CA-San Francisco Home Price Index, Jan 2000=100, NSA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 sfxrsa  S&P CoreLogic Case-Shiller CA-San Francisco Home Price Index, Jan 2000=100, SA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 spcs10rnsa  S&P CoreLogic Case-Shiller 10-City Composite Home Price Index, Jan 2000=100, NSA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 spcs10rsa  S&P CoreLogic Case-Shiller 10-City Composite Home Price Index, Jan 2000=100, SA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 spcs20rnsa  S&P CoreLogic Case-Shiller 20-City Composite Home Price Index, Jan 2000=100, NSA
-M  2000.01 - 2024.01  n = 289
+M  2000.01 - 2024.07  n = 295
 spcs20rsa  S&P CoreLogic Case-Shiller 20-City Composite Home Price Index, Jan 2000=100, SA
-M  2000.01 - 2024.01  n = 289
+M  2000.01 - 2024.07  n = 295
 tpxrnsa  S&P CoreLogic Case-Shiller FL-Tampa Home Price Index, Jan 2000=100, NSA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 tpxrsa  S&P CoreLogic Case-Shiller FL-Tampa Home Price Index, Jan 2000=100, SA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 wdxrnsa  S&P CoreLogic Case-Shiller DC-Washington Home Price Index, Jan 2000=100, NSA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 wdxrsa  S&P CoreLogic Case-Shiller DC-Washington Home Price Index, Jan 2000=100, SA
-M  1987.01 - 2024.01  n = 445
+M  1987.01 - 2024.07  n = 451
 ppiaco  Producer Price Index by Commodity: All Commodities, 1982=100, NSA
-M  1913.01 - 2024.02  n = 1334
+M  1913.01 - 2024.08  n = 1340
 ppieng  Producer Price Index by Commodity: Fuels and Related Products and Power, 1982=100, NSA
-M  1926.01 - 2024.02  n = 1178
+M  1926.01 - 2024.08  n = 1184
 ppiidc  Producer Price Index by Commodity: Industrial Commodities, 1982=100, NSA
-M  1913.01 - 2024.02  n = 1334
+M  1913.01 - 2024.08  n = 1340
 cpf1m  30-Day AA Financial Commercial Paper Interest Rate, %, NSA
-M  1997.01 - 2024.02  n = 326
+M  1997.01 - 2024.09  n = 333
 cpf2m  60-Day AA Financial Commercial Paper Interest Rate, %, NSA
-M  1997.01 - 2024.02  n = 326
+M  1997.01 - 2024.09  n = 333
 cpf3m  90-Day AA Financial Commercial Paper Interest Rate, %, NSA
-M  1997.01 - 2024.02  n = 326
+M  1997.01 - 2024.09  n = 333
 cpn1m  30-Day AA Nonfinancial Commercial Paper Interest Rate, %, NSA
-M  1997.01 - 2024.02  n = 326
+M  1997.01 - 2024.09  n = 333
 cpn2m  60-Day AA Nonfinancial Commercial Paper Interest Rate, %, NSA
-M  1997.01 - 2024.02  n = 326
+M  1997.01 - 2024.09  n = 333
 cpn3m  90-Day AA Nonfinancial Commercial Paper Interest Rate, %, NSA
-M  1997.01 - 2024.01  n = 325
+M  1997.01 - 2024.09  n = 333
 aaa  Moody's Seasoned Aaa Corporate Bond Yield, %, NSA
-M  1919.01 - 2024.02  n = 1262
+M  1919.01 - 2024.09  n = 1269
 baa  Moody's Seasoned Baa Corporate Bond Yield, %, NSA
-M  1919.01 - 2024.02  n = 1262
+M  1919.01 - 2024.09  n = 1269
 fedfunds  Federal Funds Effective Rate, %, NSA
-M  1954.07 - 2024.02  n = 836
+M  1954.07 - 2024.09  n = 843
 mpcredit  Discount Window Primary Credit Rate, %, NSA
-M  2003.02 - 2024.02  n = 253
-mslb20  Bond Buyer Go 20-Bond Municipal Bond Index, %, NSA
+M  2003.02 - 2024.09  n = 260
+mslb20  Bond Buyer Go 20-Bond Municipal Bond Index (DISCONTINUED), %, NSA
 M  1953.01 - 2016.09  n = 765
-mortg  Contract Rate on 30-Year, Fixed-Rate Conventional Home Mortgage Commitments, %, NSA
+mortg  Contract Rate on 30-Year, Fixed-Rate Conventional Home Mortgage Commitments (DISCONTINUED), %, NSA
 M  1971.04 - 2016.09  n = 546
 mprime  Bank Prime Loan Rate, %, NSA
-M  1949.01 - 2024.02  n = 902
+M  1949.01 - 2024.09  n = 909
 tb1yr  1-Year Treasury Bill Secondary Market Rate, Discount Basis, %, NSA
-M  1959.07 - 2024.02  n = 776
+M  1959.07 - 2024.09  n = 783
 tb3ms  3-Month Treasury Bill Secondary Market Rate, Discount Basis, %, NSA
-M  1934.01 - 2024.02  n = 1082
+M  1934.01 - 2024.09  n = 1089
 tb4wk  4-Week Treasury Bill Secondary Market Rate, Discount Basis, %, NSA
-M  2001.07 - 2024.02  n = 272
+M  2001.07 - 2024.09  n = 279
 tb6ms  6-Month Treasury Bill Secondary Market Rate, Discount Basis, %, NSA
-M  1958.12 - 2024.02  n = 783
+M  1958.12 - 2024.09  n = 790
 fii10  Market Yield on U.S. Treasury Securities at 10-Year Constant Maturity, Quoted on an Investment Basis, Inflation-Indexed, %, NSA
-M  2003.01 - 2024.02  n = 254
+M  2003.01 - 2024.09  n = 261
 fii20  Market Yield on U.S. Treasury Securities at 20-Year Constant Maturity, Quoted on an Investment Basis, Inflation-Indexed, %, NSA
-M  2004.07 - 2024.02  n = 236
+M  2004.07 - 2024.09  n = 243
 fii30  Market Yield on U.S. Treasury Securities at 30-Year Constant Maturity, Quoted on an Investment Basis, Inflation-Indexed, %, NSA
-M  2010.02 - 2024.02  n = 169
+M  2010.02 - 2024.09  n = 176
 fii5  Market Yield on U.S. Treasury Securities at 5-Year Constant Maturity, Quoted on an Investment Basis, Inflation-Indexed, %, NSA
-M  2003.01 - 2024.02  n = 254
+M  2003.01 - 2024.09  n = 261
 fii7  Market Yield on U.S. Treasury Securities at 7-Year Constant Maturity, Quoted on an Investment Basis, Inflation-Indexed, %, NSA
-M  2003.01 - 2024.02  n = 254
+M  2003.01 - 2024.09  n = 261
 gs1  Market Yield on U.S. Treasury Securities at 1-Year Constant Maturity, Quoted on an Investment Basis, %, NSA
-M  1953.04 - 2024.02  n = 851
+M  1953.04 - 2024.09  n = 858
 gs10  Market Yield on U.S. Treasury Securities at 10-Year Constant Maturity, Quoted on an Investment Basis, %, NSA
-M  1953.04 - 2024.02  n = 851
+M  1953.04 - 2024.09  n = 858
 gs1m  Market Yield on U.S. Treasury Securities at 1-Month Constant Maturity, Quoted on an Investment Basis, %, NSA
-M  2001.07 - 2024.02  n = 272
+M  2001.07 - 2024.09  n = 279
 gs2  Market Yield on U.S. Treasury Securities at 2-Year Constant Maturity, Quoted on an Investment Basis, %, NSA
-M  1976.06 - 2024.02  n = 573
+M  1976.06 - 2024.09  n = 580
 gs20  Market Yield on U.S. Treasury Securities at 20-Year Constant Maturity, Quoted on an Investment Basis, %, NSA
-M  1953.04 - 2024.02  n = 851
+M  1953.04 - 2024.09  n = 858
 gs3  Market Yield on U.S. Treasury Securities at 3-Year Constant Maturity, Quoted on an Investment Basis, %, NSA
-M  1953.04 - 2024.02  n = 851
+M  1953.04 - 2024.09  n = 858
 gs30  Market Yield on U.S. Treasury Securities at 30-Year Constant Maturity, Quoted on an Investment Basis, %, NSA
-M  1977.02 - 2024.02  n = 565
+M  1977.02 - 2024.09  n = 572
 gs3m  Market Yield on U.S. Treasury Securities at 3-Month Constant Maturity, Quoted on an Investment Basis, %, NSA
-M  1981.09 - 2024.02  n = 510
+M  1981.09 - 2024.09  n = 517
 gs5  Market Yield on U.S. Treasury Securities at 5-Year Constant Maturity, Quoted on an Investment Basis, %, NSA
-M  1953.04 - 2024.02  n = 851
+M  1953.04 - 2024.09  n = 858
 gs6m  Market Yield on U.S. Treasury Securities at 6-Month Constant Maturity, Quoted on an Investment Basis, %, NSA
-M  1981.09 - 2024.02  n = 510
+M  1981.09 - 2024.09  n = 517
 gs7  Market Yield on U.S. Treasury Securities at 7-Year Constant Maturity, Quoted on an Investment Basis, %, NSA
-M  1969.07 - 2024.02  n = 656
+M  1969.07 - 2024.09  n = 663
 ltiit  Treasury Long-Term Average (Over 10 Years), Inflation-Indexed, %, NSA
-M  2000.01 - 2024.02  n = 290
-tp10j20  10-Year 1-3/8% Treasury Inflation-Indexed Note, Due 1/15/2020, %, NSA
+M  2000.01 - 2024.09  n = 297
+tp10j20  10-Year 1-3/8% Treasury Inflation-Indexed Note, Due 1/15/2020 (DISCONTINUED), %, NSA
 M  2010.01 - 2019.12  n = 120
-tp10j21  10-Year 1-1/8% Treasury Inflation-Indexed Note, Due 1/15/2021, %, NSA
+tp10j21  10-Year 1-1/8% Treasury Inflation-Indexed Note, Due 1/15/2021 (DISCONTINUED), %, NSA
 M  2011.01 - 2020.07  n = 115
-tp10l19  10-Year 1-7/8% Treasury Inflation-Indexed Note, Due 7/15/2019, %, NSA
+tp10l19  10-Year 1-7/8% Treasury Inflation-Indexed Note, Due 7/15/2019 (DISCONTINUED), %, NSA
 M  2009.07 - 2019.06  n = 120
-tp10l20  10-Year 1-1/4% Treasury Inflation-Indexed Note, Due 7/15/2020, %, NSA
+tp10l20  10-Year 1-1/4% Treasury Inflation-Indexed Note, Due 7/15/2020 (DISCONTINUED), %, NSA
 M  2010.07 - 2020.06  n = 120
-tp30a28  30-Year 3-5/8% Treasury Inflation-Indexed Bond, Due 4/15/2028, %, NSA
+tp30a28  30-Year 3-5/8% Treasury Inflation-Indexed Bond, Due 4/15/2028 (DISCONTINUED), %, NSA
 M  1998.04 - 2020.07  n = 268
-tp30a29  30-Year 3-7/8% Treasury Inflation-Indexed Bond, Due 4/15/2029, %, NSA
+tp30a29  30-Year 3-7/8% Treasury Inflation-Indexed Bond, Due 4/15/2029 (DISCONTINUED), %, NSA
 M  1999.04 - 2020.07  n = 256
-tp30f41  30-Year 2-1/8% Treasury Inflation-Indexed Bond, Due 2/15/2041, %, NSA
+tp30f41  30-Year 2-1/8% Treasury Inflation-Indexed Bond, Due 2/15/2041 (DISCONTINUED), %, NSA
 M  2011.02 - 2020.07  n = 114
-tp3ha32  30-1/2-Year 3-3/8% Treasury Inflation-Indexed Bond, Due 4/15/2032, %, NSA
+tp3ha32  30-1/2-Year 3-3/8% Treasury Inflation-Indexed Bond, Due 4/15/2032 (DISCONTINUED), %, NSA
 M  2001.10 - 2020.07  n = 226
 exbzus  Brazilian Reals to U.S. Dollar Spot Exchange Rate, Brazilian Reals to  1 U.S. $, NSA
-M  1995.01 - 2024.02  n = 350
+M  1995.01 - 2024.09  n = 357
 excaus  Canadian Dollars to U.S. Dollar Spot Exchange Rate, Canadian $ to  1 U.S. $, NSA
-M  1971.01 - 2024.02  n = 638
+M  1971.01 - 2024.09  n = 645
 exchus  Chinese Yuan Renminbi to U.S. Dollar Spot Exchange Rate, Chinese Yuan Renminbi to  1 U.S. $, NSA
-M  1981.01 - 2024.02  n = 518
+M  1981.01 - 2024.09  n = 525
 exdnus  Danish Kroner to U.S. Dollar Spot Exchange Rate, Danish Kroner to  1 U.S. $, NSA
-M  1971.01 - 2024.02  n = 638
+M  1971.01 - 2024.09  n = 645
 exhkus  Hong Kong Dollars to U.S. Dollar Spot Exchange Rate, Hong Kong $ to  1 U.S. $, NSA
-M  1981.01 - 2024.02  n = 518
+M  1981.01 - 2024.09  n = 525
 exinus  Indian Rupees to U.S. Dollar Spot Exchange Rate, Indian Rupees to  1 U.S. $, NSA
-M  1973.01 - 2024.02  n = 614
+M  1973.01 - 2024.09  n = 621
 exjpus  Japanese Yen to U.S. Dollar Spot Exchange Rate, Japanese Yen to  1 U.S. $, NSA
-M  1971.01 - 2024.02  n = 638
+M  1971.01 - 2024.09  n = 645
 exkous  South Korean Won to U.S. Dollar Spot Exchange Rate, South Korean Won to  1 U.S. $, NSA
-M  1981.04 - 2024.02  n = 515
+M  1981.04 - 2024.09  n = 522
 exmaus  Malaysian Ringgit to U.S. Dollar Spot Exchange Rate, Malaysian Ringgit to  1 U.S. $, NSA
-M  1971.01 - 2024.02  n = 638
+M  1971.01 - 2024.09  n = 645
 exmxus  Mexican Pesos to U.S. Dollar Spot Exchange Rate, Mexican Pesos to  1 U.S. $, NSA
-M  1993.11 - 2024.02  n = 364
+M  1993.11 - 2024.09  n = 371
 exnous  Norwegian Kroner to U.S. Dollar Spot Exchange Rate, Norwegian Kroner to  1 U.S. $, NSA
-M  1971.01 - 2024.02  n = 638
+M  1971.01 - 2024.09  n = 645
 exsdus  Swedish Kronor to U.S. Dollar Spot Exchange Rate, Swedish Kronor to  1 U.S. $, NSA
-M  1971.01 - 2024.02  n = 638
+M  1971.01 - 2024.09  n = 645
 exsfus  South African Rand to U.S. Dollar Spot Exchange Rate, South African Rand to  1 U.S. $, NSA
-M  1971.01 - 2024.02  n = 638
+M  1971.01 - 2024.09  n = 645
 exsius  Singapore Dollars to U.S. Dollar Spot Exchange Rate, Singapore $ to  1 U.S. $, NSA
-M  1981.01 - 2024.02  n = 518
+M  1981.01 - 2024.09  n = 525
 exslus  Sri Lankan Rupees to U.S. Dollar Spot Exchange Rate, Sri Lankan Rupees to  1 U.S. $, NSA
-M  1973.01 - 2024.02  n = 614
+M  1973.01 - 2024.09  n = 621
 exszus  Swiss Francs to U.S. Dollar Spot Exchange Rate, Swiss Francs to  1 U.S. $, NSA
-M  1971.01 - 2024.02  n = 638
+M  1971.01 - 2024.09  n = 645
 extaus  Taiwan Dollars to U.S. Dollar Spot Exchange Rate, Taiwan $ to  1 U.S. $, NSA
-M  1983.10 - 2024.02  n = 485
+M  1983.10 - 2024.09  n = 492
 exthus  Thai Baht to U.S. Dollar Spot Exchange Rate, Thai Baht to  1 U.S. $, NSA
-M  1981.01 - 2024.02  n = 518
+M  1981.01 - 2024.09  n = 525
 exusal  U.S. Dollars to Australian Dollar Spot Exchange Rate, U.S. $ to  1 Australian $, NSA
-M  1971.01 - 2024.02  n = 638
+M  1971.01 - 2024.09  n = 645
 exuseu  U.S. Dollars to Euro Spot Exchange Rate, U.S. $ to  1 Euro, NSA
-M  1999.01 - 2024.02  n = 302
+M  1999.01 - 2024.09  n = 309
 exusnz  U.S. Dollars to New Zealand Dollar Spot Exchange Rate, U.S. $ to  1 New Zealand $, NSA
-M  1971.01 - 2024.02  n = 638
+M  1971.01 - 2024.09  n = 645
 exusuk  U.S. Dollars to U.K. Pound Sterling Spot Exchange Rate, U.S. $ to  1 U.K. Pound Sterling, NSA
-M  1971.01 - 2024.02  n = 638
+M  1971.01 - 2024.09  n = 645
 exvzus  Venezuelan Bolivares to U.S. Dollar Spot Exchange Rate, Venezuelan Bolivares to  1 U.S. $, NSA
-M  1995.01 - 2024.02  n = 350
-twexbmth  Nominal Broad U.S. Dollar Index (Goods Only), Jan 1997=100, NSA
+M  1995.01 - 2024.09  n = 357
+twexbmth  Nominal Broad U.S. Dollar Index (Goods Only) (DISCONTINUED), Jan 1997=100, NSA
 M  1973.01 - 2019.12  n = 564
-twexmmth  Nominal Major Currencies U.S. Dollar Index (Goods Only), Mar 1973=100, NSA
+twexmmth  Nominal Major Currencies U.S. Dollar Index (Goods Only) (DISCONTINUED), Mar 1973=100, NSA
 M  1973.01 - 2019.12  n = 564
-twexomth  Nominal Other Important Trading Partners U.S. Dollar Index (Goods Only), Jan 1997=100, NSA
+twexomth  Nominal Other Important Trading Partners U.S. Dollar Index (Goods Only) (DISCONTINUED), Jan 1997=100, NSA
 M  1973.01 - 2019.12  n = 564
 aexbzus  Brazilian Reals to U.S. Dollar Spot Exchange Rate, Brazilian Reals to  1 U.S. $, NSA
 A  1995 - 2023  n = 29
@@ -799,368 +799,368 @@ aexusuk  U.S. Dollars to U.K. Pound Sterling Spot Exchange Rate, U.S. $ to  1 U.
 A  1971 - 2023  n = 53
 aexvzus  Venezuelan Bolivares to U.S. Dollar Spot Exchange Rate, Venezuelan Bolivares to  1 U.S. $, NSA
 A  1995 - 2023  n = 29
-twexbanl  Nominal Broad U.S. Dollar Index (Goods Only), 1997=100, NSA
+twexbanl  Nominal Broad U.S. Dollar Index (Goods Only) (DISCONTINUED), 1997=100, NSA
 A  1995 - 2019  n = 25
-twexmanl  Nominal Major Currencies U.S. Dollar Index (Goods Only), Mar 1973=100, NSA
+twexmanl  Nominal Major Currencies U.S. Dollar Index (Goods Only) (DISCONTINUED), Mar 1973=100, NSA
 A  1973 - 2019  n = 47
-twexoanl  Nominal Other Important Trading Partners U.S. Dollar Index (Goods Only), Jan 1997=100, NSA
+twexoanl  Nominal Other Important Trading Partners U.S. Dollar Index (Goods Only) (DISCONTINUED), Jan 1997=100, NSA
 A  1995 - 2019  n = 25
-ambns  St. Louis Adjusted Monetary Base, Bil. of $, NSA
+ambns  St. Louis Adjusted Monetary Base (DISCONTINUED), Bil. of $, NSA
 M  1918.01 - 2019.11  n = 1223
-ambsl  St. Louis Adjusted Monetary Base, Bil. of $, SA
+ambsl  St. Louis Adjusted Monetary Base (DISCONTINUED), Bil. of $, SA
 M  1918.01 - 2019.11  n = 1223
-ram  Reserve Adjustment Magnitude (RAM), Bil. of $, NSA
+ram  Reserve Adjustment Magnitude (RAM) (DISCONTINUED), Bil. of $, NSA
 M  1980.10 - 2019.12  n = 471
-sbasens  St. Louis Source Base, Bil. of $, NSA
+sbasens  St. Louis Source Base (DISCONTINUED), Bil. of $, NSA
 M  1918.01 - 2019.11  n = 1223
-adjresns  St. Louis Adjusted Reserves, Bil. of $, NSA
+adjresns  St. Louis Adjusted Reserves (DISCONTINUED), Bil. of $, NSA
 M  1918.01 - 2019.11  n = 1223
-adjressl  St. Louis Adjusted Reserves, Bil. of $, SA
+adjressl  St. Louis Adjusted Reserves (DISCONTINUED), Bil. of $, SA
 M  1918.01 - 2019.11  n = 1223
-reqresns  Required Reserves of Depository Institutions, Bil. of $, NSA
+reqresns  Required Reserves of Depository Institutions (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2020.08  n = 740
-resbalns  Total Reserve Balances Maintained with Federal Reserve Banks, Bil. of $, NSA
+resbalns  Total Reserve Balances Maintained with Federal Reserve Banks (DISCONTINUED), Bil. of $, NSA
 M  1950.01 - 2020.08  n = 848
 totresns  Reserves of Depository Institutions: Total, Bil. of $, NSA
-M  1959.01 - 2024.02  n = 782
-vault  Vault Cash Used to Satisfy Required Reserves, Bil. of $, NSA
+M  1959.01 - 2024.08  n = 788
+vault  Vault Cash Used to Satisfy Required Reserves (DISCONTINUED), Bil. of $, NSA
 M  1959.11 - 2020.08  n = 730
 currdd  Currency Component of M1 Plus Demand Deposits, Bil. of $, SA
-M  1959.01 - 2024.02  n = 782
+M  1959.01 - 2024.07  n = 787
 currns  Currency Component of M1, Bil. of $, NSA
-M  1947.01 - 2024.02  n = 926
+M  1947.01 - 2024.08  n = 932
 currsl  Currency Component of M1, Bil. of $, SA
-M  1947.01 - 2024.02  n = 926
+M  1947.01 - 2024.08  n = 932
 demdepns  Demand Deposits, Bil. of $, NSA
-M  1959.01 - 2024.02  n = 782
+M  1959.01 - 2024.08  n = 788
 demdepsl  Demand Deposits, Bil. of $, SA
-M  1959.01 - 2024.02  n = 782
+M  1959.01 - 2024.08  n = 788
 m1ns  M1, Bil. of $, NSA
-M  1959.01 - 2024.02  n = 782
+M  1959.01 - 2024.08  n = 788
 m1sl  M1, Bil. of $, SA
-M  1959.01 - 2024.02  n = 782
-ocdcbn  Other Checkable Deposits at Commercial Banks, Bil. of $, NSA
+M  1959.01 - 2024.08  n = 788
+ocdcbn  Other Checkable Deposits at Commercial Banks (DISCONTINUED), Bil. of $, NSA
+M  1959.01 - 2020.04  n = 745
+ocdcbs  Other Checkable Deposits at Commercial Banks (DISCONTINUED), Bil. of $, SA
+M  1959.01 - 2020.04  n = 745
+ocdns  Other Checkable Deposits: Total (DISCONTINUED), Bil. of $, NSA
+M  1959.01 - 2020.04  n = 745
+ocdsl  Other Checkable Deposits: Total (DISCONTINUED), Bil. of $, SA
+M  1959.01 - 2020.04  n = 745
+ocdtin  Other Checkable Deposits at Thrift Institutions (DISCONTINUED), Bil. of $, NSA
+M  1959.01 - 2020.04  n = 745
+ocdtis  Other Checkable Deposits at Thrift Institutions (DISCONTINUED), Bil. of $, SA
+M  1959.01 - 2020.04  n = 745
+tcdns  Total Checkable Deposits (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2021.01  n = 745
-ocdcbs  Other Checkable Deposits at Commercial Banks, Bil. of $, SA
+tcdsl  Total Checkable Deposits (DISCONTINUED), Bil. of $, SA
 M  1959.01 - 2021.01  n = 745
-ocdns  Other Checkable Deposits: Total, Bil. of $, NSA
-M  1959.01 - 2021.01  n = 745
-ocdsl  Other Checkable Deposits: Total, Bil. of $, SA
-M  1959.01 - 2021.01  n = 745
-ocdtin  Other Checkable Deposits at Thrift Institutions, Bil. of $, NSA
-M  1959.01 - 2021.01  n = 745
-ocdtis  Other Checkable Deposits at Thrift Institutions, Bil. of $, SA
-M  1959.01 - 2021.01  n = 745
-tcdns  Total Checkable Deposits, Bil. of $, NSA
-M  1959.01 - 2021.01  n = 745
-tcdsl  Total Checkable Deposits, Bil. of $, SA
-M  1959.01 - 2021.01  n = 745
-tvcksns  Travelers Checks, Bil. of $, NSA
+tvcksns  Travelers Checks (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2018.12  n = 720
-tvckssl  Travelers Checks, Bil. of $, SA
+tvckssl  Travelers Checks (DISCONTINUED), Bil. of $, SA
 M  1959.01 - 2018.12  n = 720
 m2ns  M2, Bil. of $, NSA
-M  1959.01 - 2024.02  n = 782
-m2own  M2 Own Rate, %, NSA
+M  1959.01 - 2024.08  n = 788
+m2own  M2 Own Rate (DISCONTINUED), %, NSA
 M  1959.02 - 2019.06  n = 725
 m2sl  M2, Bil. of $, SA
-M  1959.01 - 2024.02  n = 782
+M  1959.01 - 2024.08  n = 788
 msim2  Monetary Services Index: M2 (preferred), Bil. of $, SA
 M  1967.01 - 2013.12  n = 564
-nom1m2  Total Non-M1 M2, Bil. of $, SA
+nom1m2  Total Non-M1 M2 (DISCONTINUED), Bil. of $, SA
 M  1959.01 - 2021.01  n = 745
-nom1m2n  Total Non-M1 M2, Bil. of $, NSA
+nom1m2n  Total Non-M1 M2 (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2021.01  n = 745
 rmfns  Retail Money Market Funds, Bil. of $, NSA
-M  1973.01 - 2024.02  n = 614
+M  1973.01 - 2024.08  n = 620
 rmfsl  Retail Money Market Funds, Bil. of $, SA
-M  1973.01 - 2024.02  n = 614
-savingns  Savings Deposits: Total, Bil. of $, NSA
+M  1973.01 - 2024.08  n = 620
+savingns  Savings Deposits: Total (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2020.04  n = 745
-savingsl  Savings Deposits: Total, Bil. of $, SA
+savingsl  Savings Deposits: Total (DISCONTINUED), Bil. of $, SA
 M  1959.01 - 2020.04  n = 745
-stdcbns  Small-Denomination Time Deposits at Commercial Banks, Bil. of $, NSA
+stdcbns  Small-Denomination Time Deposits at Commercial Banks (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2021.01  n = 745
-stdcbsl  Small-Denomination Time Deposits at Commercial Banks, Bil. of $, SA
+stdcbsl  Small-Denomination Time Deposits at Commercial Banks (DISCONTINUED), Bil. of $, SA
 M  1959.01 - 2021.01  n = 745
 stdns  Small-Denomination Time Deposits: Total, Bil. of $, NSA
-M  1959.01 - 2024.02  n = 782
+M  1959.01 - 2024.08  n = 788
 stdsl  Small-Denomination Time Deposits: Total, Bil. of $, SA
-M  1959.01 - 2024.02  n = 782
-stdti  Small-Denomination Time Deposits at Thrift Institutions, Bil. of $, SA
+M  1959.01 - 2024.08  n = 788
+stdti  Small-Denomination Time Deposits at Thrift Institutions (DISCONTINUED), Bil. of $, SA
 M  1959.01 - 2021.01  n = 745
-stdtns  Small-Denomination Time Deposits at Thrift Institutions, Bil. of $, NSA
+stdtns  Small-Denomination Time Deposits at Thrift Institutions (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2021.01  n = 745
-svgcbns  Savings Deposits at Commercial Banks, Bil. of $, NSA
+svgcbns  Savings Deposits at Commercial Banks (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2020.04  n = 745
-svgcbsl  Savings Deposits at Commercial Banks, Bil. of $, SA
+svgcbsl  Savings Deposits at Commercial Banks (DISCONTINUED), Bil. of $, SA
 M  1959.01 - 2020.04  n = 745
-svgti  Savings Deposits at Thrift Institutions, Bil. of $, SA
+svgti  Savings Deposits at Thrift Institutions (DISCONTINUED), Bil. of $, SA
 M  1959.01 - 2020.04  n = 745
-svgtns  Savings Deposits at Thrift Institutions, Bil. of $, NSA
+svgtns  Savings Deposits at Thrift Institutions (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2020.04  n = 745
-svstcbns  Savings and Small Time Deposits at Commercial Banks, Bil. of $, NSA
+svstcbns  Savings and Small Time Deposits at Commercial Banks (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2021.01  n = 745
-svstcbsl  Savings and Small Time Deposits at Commercial Banks, Bil. of $, SA
+svstcbsl  Savings and Small Time Deposits at Commercial Banks (DISCONTINUED), Bil. of $, SA
 M  1959.01 - 2021.01  n = 745
-svstns  Savings and Small Time Deposits - Total, Bil. of $, NSA
+svstns  Savings and Small Time Deposits - Total (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2021.01  n = 745
-svstsl  Savings and Small Time Deposits - Total, Bil. of $, SA
+svstsl  Savings and Small Time Deposits - Total (DISCONTINUED), Bil. of $, SA
 M  1959.01 - 2021.01  n = 745
 m2mns  M2 Less Small Time Deposits, Bil. of $, NSA
-M  1959.01 - 2024.02  n = 782
-m2mown  M2 Minus Own Rate, %, NSA
+M  1959.01 - 2024.08  n = 788
+m2mown  M2 Minus Own Rate (DISCONTINUED), %, NSA
 M  1959.01 - 2019.05  n = 725
 m2msl  M2 Less Small Time Deposits, Bil. of $, SA
-M  1959.01 - 2024.02  n = 782
-imfns  Institutional Money Market Funds, Bil. of $, NSA
+M  1959.01 - 2024.08  n = 788
+imfns  Institutional Money Market Funds (DISCONTINUED), Bil. of $, NSA
 M  1974.01 - 2021.01  n = 565
-imfsl  Institutional Money Market Funds, Bil. of $, SA
+imfsl  Institutional Money Market Funds (DISCONTINUED), Bil. of $, SA
 M  1974.01 - 2021.01  n = 565
-mzmns  MZM Money Stock, Bil. of $, NSA
+mzmns  MZM Money Stock (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2021.01  n = 745
-mzmown  MZM Own Rate, %, NSA
+mzmown  MZM Own Rate (DISCONTINUED), %, NSA
 M  1974.01 - 2019.06  n = 546
-mzmsl  MZM Money Stock, Bil. of $, SA
+mzmsl  MZM Money Stock (DISCONTINUED), Bil. of $, SA
 M  1959.01 - 2021.01  n = 745
-dddfcbns  Demand Deposits at Banks Due to Foreign Commercial Banks, Bil. of $, NSA
+dddfcbns  Demand Deposits at Banks Due to Foreign Commercial Banks (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2021.01  n = 745
-dddfoins  Demand Deposits at Banks Due to Foreign Official Institutions, Bil. of $, NSA
+dddfoins  Demand Deposits at Banks Due to Foreign Official Institutions (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2021.01  n = 745
 ira  IRA and Keogh Accounts: Total, Bil. of $, NSA
-M  1959.01 - 2024.02  n = 782
-iracb  IRA and Keogh Accounts at Commercial Banks, Bil. of $, NSA
+M  1959.01 - 2024.08  n = 788
+iracb  IRA and Keogh Accounts at Commercial Banks (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2021.01  n = 745
-nbcb  U.S. Government Deposits: Note Balances at Depository Institutions, Bil. of $, NSA
+nbcb  U.S. Government Deposits: Note Balances at Depository Institutions (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2021.01  n = 745
-usgdcb  U.S. Government Deposits: Demand Deposits at Commercial Banks, Bil. of $, NSA
+usgdcb  U.S. Government Deposits: Demand Deposits at Commercial Banks (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2021.01  n = 745
-usgvddns  U.S. Government Demand Deposits and Note Balances - Total, Bil. of $, NSA
+usgvddns  U.S. Government Demand Deposits and Note Balances - Total (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2021.01  n = 745
 m1v  Velocity of M1 Money Stock, Ratio, SA
-Q  1959.1 - 2023.4  n = 260
+Q  1959.1 - 2024.2  n = 262
 m2v  Velocity of M2 Money Stock, Ratio, SA
-Q  1959.1 - 2023.4  n = 260
-mzmv  Velocity of MZM Money Stock, Ratio, SA
+Q  1959.1 - 2024.2  n = 262
+mzmv  Velocity of MZM Money Stock (DISCONTINUED), Ratio, SA
 Q  1959.1 - 2020.4  n = 248
-borrow  Total Borrowings from the Federal Reserve, Bil. of $, NSA
-M  1919.01 - 2024.02  n = 1262
-discborr  Total Borrowings of Depository Institutions from the Federal Reserve excluding Term Auction Credit, Bil. of $, NSA
+borrow  Total Borrowings from the Federal Reserve, Mil. of $, NSA
+M  1919.01 - 2024.08  n = 1268
+discborr  Total Borrowings of Depository Institutions from the Federal Reserve excluding Term Auction Credit (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2020.08  n = 740
-seaborr  Seasonal Borrowings of Depository Institutions from the Federal Reserve, Bil. of $, NSA
+seaborr  Seasonal Borrowings of Depository Institutions from the Federal Reserve (DISCONTINUED), Bil. of $, NSA
 M  1959.01 - 2020.08  n = 740
 currcir  Currency in Circulation, Bil. of $, NSA
-M  1917.08 - 2024.02  n = 1279
+M  1917.08 - 2024.09  n = 1286
 rsbkcrns  Reserve Bank Credit, Bil. of $, NSA
-M  1988.11 - 2024.02  n = 424
+M  1988.11 - 2024.09  n = 431
 treasury  Treasury Deposits with Federal Reserve Banks, Bil. of $, NSA
-M  1986.01 - 2024.02  n = 458
+M  1986.01 - 2024.09  n = 465
 kcfsi  Kansas City Financial Stress Index, Index, NSA
-M  1990.02 - 2024.02  n = 409
+M  1990.02 - 2024.09  n = 416
 busloans  Commercial and Industrial Loans, All Commercial Banks, Bil. of U.S. $, SA
-M  1947.01 - 2024.02  n = 926
+M  1947.01 - 2024.08  n = 932
 consumer  Consumer Loans, All Commercial Banks, Bil. of U.S. $, SA
-M  1947.01 - 2024.02  n = 926
+M  1947.01 - 2024.08  n = 932
 invest  Securities in Bank Credit, All Commercial Banks, Bil. of U.S. $, SA
-M  1947.01 - 2024.02  n = 926
+M  1947.01 - 2024.08  n = 932
 loaninv  Bank Credit, All Commercial Banks, Bil. of U.S. $, SA
-M  1947.01 - 2024.02  n = 926
+M  1947.01 - 2024.08  n = 932
 loans  Loans and Leases in Bank Credit, All Commercial Banks, Bil. of U.S. $, SA
-M  1947.01 - 2024.02  n = 926
+M  1947.01 - 2024.08  n = 932
 othsec  Other Securities, All Commercial Banks, Bil. of U.S. $, SA
-M  1947.01 - 2024.02  n = 926
+M  1947.01 - 2024.08  n = 932
 realln  Real Estate Loans, All Commercial Banks, Bil. of U.S. $, SA
-M  1947.01 - 2024.02  n = 926
+M  1947.01 - 2024.08  n = 932
 usgsec  Treasury and Agency Securities, All Commercial Banks, Bil. of U.S. $, SA
-M  1947.01 - 2024.02  n = 926
-eqta  Total Equity to Total Assets for Banks, %, NSA
+M  1947.01 - 2024.08  n = 932
+eqta  Total Equity to Total Assets for Banks (DISCONTINUED), %, NSA
 Q  1988.1 - 2020.3  n = 131
-freq  Banks, Number, NSA
+freq  Banks (DISCONTINUED), Number, NSA
 Q  1988.1 - 2020.3  n = 131
-freq1  Banks with Total Assets up to $300M, Number, NSA
+freq1  Banks with Total Assets up to $300M (DISCONTINUED), Number, NSA
 Q  1988.1 - 2020.3  n = 131
-freq2  Banks with Total Assets from $300M to $1B, Number, NSA
+freq2  Banks with Total Assets from $300M to $1B (DISCONTINUED), Number, NSA
 Q  1988.1 - 2020.3  n = 131
-freq3  Banks with Total Assets from $1B to $10B, Number, NSA
+freq3  Banks with Total Assets from $1B to $10B (DISCONTINUED), Number, NSA
 Q  1988.1 - 2020.3  n = 131
-freq4  Banks with Total Assets from $10B to $20B, Number, NSA
+freq4  Banks with Total Assets from $10B to $20B (DISCONTINUED), Number, NSA
 Q  1988.1 - 2020.3  n = 131
-freq5  Banks with Total Assets over $20B, Number, NSA
+freq5  Banks with Total Assets over $20B (DISCONTINUED), Number, NSA
 Q  1988.1 - 2020.3  n = 131
-ncotot  Total Net Loan Charge-offs to Total Loans for Banks, %, NSA
+ncotot  Total Net Loan Charge-offs to Total Loans for Banks (DISCONTINUED), %, NSA
 Q  1988.1 - 2020.3  n = 131
-nptltl  Nonperforming Total Loans (past due 90+ days plus nonaccrual) to Total Loans, %, NSA
+nptltl  Nonperforming Total Loans (past due 90+ days plus nonaccrual) to Total Loans (DISCONTINUED), %, NSA
 Q  1988.1 - 2020.3  n = 131
-usllrtl  Loan Loss Reserve to Total Loans for all U.S. Banks, %, NSA
+usllrtl  Loan Loss Reserve to Total Loans for all U.S. Banks (DISCONTINUED), %, NSA
 Q  1984.1 - 2020.3  n = 147
-uslstl  Net Loan Losses to Average Total Loans for all U.S. Banks, %, NSA
+uslstl  Net Loan Losses to Average Total Loans for all U.S. Banks (DISCONTINUED), %, NSA
 Q  1984.1 - 2020.3  n = 147
-usnim  Net Interest Margin for all U.S. Banks, %, NSA
+usnim  Net Interest Margin for all U.S. Banks (DISCONTINUED), %, NSA
 Q  1984.1 - 2020.3  n = 147
-usnptl  Nonperforming Loans (past due 90+ days plus nonaccrual) to Total Loans for all U.S. Banks, %, NSA
+usnptl  Nonperforming Loans (past due 90+ days plus nonaccrual) to Total Loans for all U.S. Banks (DISCONTINUED), %, NSA
 Q  1984.1 - 2020.3  n = 147
-usnum  Commercial Banks in the U.S., Number, NSA
+usnum  Commercial Banks in the U.S. (DISCONTINUED), Number, NSA
 Q  1984.1 - 2020.3  n = 147
-usroa  Return on Average Assets for all U.S. Banks, %, NSA
+usroa  Return on Average Assets for all U.S. Banks (DISCONTINUED), %, NSA
 Q  1984.1 - 2020.3  n = 147
-usroe  Return on Average Equity for all U.S. Banks, %, NSA
+usroe  Return on Average Equity for all U.S. Banks (DISCONTINUED), %, NSA
 Q  1984.1 - 2020.3  n = 147
 nonrevns  Nonrevolving Consumer Credit Owned and Securitized, Bil. of $, NSA
-M  1943.01 - 2024.01  n = 973
+M  1943.01 - 2024.08  n = 980
 nonrevsl  Nonrevolving Consumer Credit Owned and Securitized, Bil. of $, SA
-M  1943.01 - 2024.01  n = 973
+M  1943.01 - 2024.08  n = 980
 nrevncu  Nonrevolving Consumer Credit Owned by Credit Unions, Bil. of $, NSA
-M  1943.01 - 2024.01  n = 973
+M  1943.01 - 2024.08  n = 980
 nrevnfc  Nonrevolving Consumer Credit Owned by Finance Companies, Bil. of $, NSA
-M  1943.01 - 2024.01  n = 973
+M  1943.01 - 2024.08  n = 980
 nrevngov  Nonrevolving Consumer Credit Owned by Federal Government, Bil. of $, NSA
-M  1977.01 - 2024.01  n = 565
+M  1977.01 - 2024.08  n = 572
 nrevnnfc  Nonrevolving Consumer Credit Owned by Nonfinancial Business, Bil. of $, NSA
-M  1943.01 - 2024.01  n = 973
+M  1943.01 - 2024.08  n = 980
 nrevnsec  Nonrevolving Securitized Consumer Credit, Bil. of $, NSA
-M  1989.01 - 2024.01  n = 421
+M  1989.01 - 2024.08  n = 428
 revolncu  Revolving Consumer Credit Owned by Credit Unions, Bil. of $, NSA
-M  1984.01 - 2024.01  n = 481
+M  1984.01 - 2024.08  n = 488
 revolnfc  Revolving Consumer Credit Owned by Finance Companies, Bil. of $, NSA
-M  1984.12 - 2024.01  n = 470
+M  1984.12 - 2024.08  n = 477
 revolnnfc  Revolving Consumer Credit Owned by Nonfinancial Business, Bil. of $, NSA
-M  1970.01 - 2024.01  n = 649
+M  1970.01 - 2024.08  n = 656
 revolns  Revolving Consumer Credit Owned and Securitized, Bil. of $, NSA
-M  1968.01 - 2024.01  n = 673
+M  1968.01 - 2024.08  n = 680
 revolnsec  Revolving Securitized Consumer Credit, Bil. of $, NSA
-M  1989.01 - 2024.01  n = 421
+M  1989.01 - 2024.08  n = 428
 revolsl  Revolving Consumer Credit Owned and Securitized, Bil. of $, SA
-M  1968.01 - 2024.01  n = 673
+M  1968.01 - 2024.08  n = 680
 totalfc  Total Consumer Credit Owned by Finance Companies, Bil. of $, NSA
-M  1943.01 - 2024.01  n = 973
+M  1943.01 - 2024.08  n = 980
 totalgov  Total Consumer Credit Owned by Federal Government, Bil. of $, NSA
-M  1977.01 - 2024.01  n = 565
+M  1977.01 - 2024.08  n = 572
 totalnfc  Total Consumer Credit Owned by Nonfinancial Business, Bil. of $, NSA
-M  1943.01 - 2024.01  n = 973
+M  1943.01 - 2024.08  n = 980
 totalns  Total Consumer Credit Owned and Securitized, Bil. of $, NSA
-M  1943.01 - 2024.01  n = 973
+M  1943.01 - 2024.08  n = 980
 totalsec  Total Securitized Consumer Credit, Bil. of $, NSA
-M  1989.01 - 2024.01  n = 421
+M  1989.01 - 2024.08  n = 428
 totalsl  Total Consumer Credit Owned and Securitized, Bil. of $, SA
-M  1943.01 - 2024.01  n = 973
+M  1943.01 - 2024.08  n = 980
 totaltcu  Total Consumer Credit Owned by Credit Unions, Bil. of $, NSA
-M  1943.01 - 2024.01  n = 973
+M  1943.01 - 2024.08  n = 980
 fpi  Fixed Private Investment, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 fpia  Gross private domestic investment: Fixed investment, Bil. of $, NSA
 A  1929 - 2023  n = 95
 fpic1  Real Private Fixed Investment, Bil. of Chn. 2017 $, SAAR
-Q  2007.1 - 2023.4  n = 68
-fpic96  Real Private Fixed Investment, Bil. of Chn. 2009 $, SAAR
+Q  2007.1 - 2024.2  n = 70
+fpic96  Real Private Fixed Investment (DISCONTINUED), Bil. of Chn. 2009 $, SAAR
 Q  1999.1 - 2017.2  n = 74
 fpica  Real Private Fixed Investment, Bil. of Chn. 2017 $, NSA
 A  1967 - 2023  n = 57
 ggsave  Gross Government Saving, Bil. of $, SAAR
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 gpdi  Gross Private Domestic Investment, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 gpdia  Gross Private Domestic Investment, Bil. of $, NSA
 A  1929 - 2023  n = 95
 gpdic1  Real Gross Private Domestic Investment, Bil. of Chn. 2017 $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 gpdica  Real Gross Private Domestic Investment, Bil. of Chn. 2017 $, NSA
 A  1929 - 2023  n = 95
 gpsave  Gross Private Saving, Bil. of $, SAAR
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 gsave  Gross Saving, Bil. of $, SAAR
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 pmsave  Personal Saving, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 pnfi  Private Nonresidential Fixed Investment, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 pnfia  Private Nonresidential Fixed Investment, Bil. of $, NSA
 A  1929 - 2023  n = 95
 pnfic1  Real Private Nonresidential Fixed Investment, Bil. of Chn. 2017 $, SAAR
-Q  2007.1 - 2023.4  n = 68
+Q  2007.1 - 2024.2  n = 70
 pnfica  Real Private Nonresidential Fixed Investment, Bil. of Chn. 2017 $, NSA
 A  1967 - 2023  n = 57
 prfi  Private Residential Fixed Investment, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 prfia  Private Residential Fixed Investment, Bil. of $, NSA
 A  1929 - 2023  n = 95
 prfic1  Real Private Residential Fixed Investment, Bil. of Chn. 2017 $, SAAR
-Q  2007.1 - 2023.4  n = 68
+Q  2007.1 - 2024.2  n = 70
 prfica  Real Private Residential Fixed Investment, Bil. of Chn. 2017 $, NSA
 A  1967 - 2023  n = 57
 psave  Personal Saving, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 psavert  Personal Saving Rate, %, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 netfi  Balance on Current Account, NIPA's, Bil. of $, SAAR
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 expgs  Exports of Goods and Services, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 expgsa  Exports of Goods and Services, Bil. of $, NSA
 A  1929 - 2023  n = 95
 expgsc1  Real Exports of Goods and Services, Bil. of Chn. 2017 $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 expgsca  Real Exports of Goods and Services, Bil. of Chn. 2017 $, NSA
 A  1929 - 2023  n = 95
 netexc  Real Net Exports of Goods and Services, Bil. of Chn. 2017 $, SAAR
-Q  1970.1 - 2023.4  n = 216
+Q  1970.1 - 2024.2  n = 218
 netexp  Net Exports of Goods and Services, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 impgs  Imports of Goods and Services, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 impgsa  Imports of Goods and Services, Bil. of $, NSA
 A  1929 - 2023  n = 95
 impgsc1  Real imports of goods and services, Bil. of Chn. 2017 $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 impgsca  Real Imports of Goods and Services, Bil. of Chn. 2017 $, NSA
 A  1929 - 2023  n = 95
 cofc  Consumption of Fixed Capital, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 cbi  Change in Private Inventories, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 cbia  Change in Private Inventories, Bil. of $, NSA
 A  1929 - 2023  n = 95
 cbic1  Change in Real Private Inventories, Bil. of Chn. 2017 $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 cbica  Real Change in Private Inventories, Bil. of Chn. 2017 $, NSA
 A  1929 - 2023  n = 95
 finsal  Final Sales of Domestic Product, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 finslc1  Real Final Sales of Domestic Product, Bil. of Chn. 2017 $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 finslca  Real Final Sales of Domestic Product, Bil. of Chn. 2017 $, NSA
 A  1929 - 2023  n = 95
 fsdp  Final Sales to Domestic Purchasers, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 gdb  Gross Domestic Purchases, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 gdp  Gross Domestic Product, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 gdpa  Gross Domestic Product, Bil. of $, NSA
 A  1929 - 2023  n = 95
 gdpc1  Real Gross Domestic Product, Bil. of Chn. 2017 $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 gdpca  Real Gross Domestic Product, Bil. of Chn. 2017 $, NSA
 A  1929 - 2023  n = 95
 gdppot  Real Potential Gross Domestic Product, Bil. of Chn. 2017 $, NSA
 Q  1949.1 - 2034.4  n = 344
 gnp  Gross National Product, Bil. of $, SAAR
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 gnpa  Gross National Product, Bil. of $, NSA
-A  1929 - 2022  n = 94
+A  1929 - 2023  n = 95
 gnpc96  Real Gross National Product, Bil. of Chn. 2017 $, SAAR
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 gnpca  Real Gross National Product, Bil. of Chn. 2017 $, NSA
-A  1929 - 2022  n = 94
+A  1929 - 2023  n = 95
 afdef  Net Federal Government Saving, Bil. of $, NSA
-A  1929 - 2022  n = 94
+A  1929 - 2023  n = 95
 afexpnd  Federal Government Current Expenditures, Bil. of $, NSA
 A  1929 - 2023  n = 95
 afgsl  Federal government current transfer payments: Other current transfer payments: Grants-in-aid to state and local governments, Bil. of $, NSA
 A  1929 - 2023  n = 95
 afrecpt  Federal Government: Current Receipts, Bil. of $, NSA
-A  1929 - 2022  n = 94
+A  1929 - 2023  n = 95
 aslctax  State and Local Government: Tax Receipts on Corporate Income, Bil. of $, NSA
-A  1929 - 2022  n = 94
+A  1929 - 2023  n = 95
 aslexpnd  State and Local Government Current Expenditures, Bil. of $, NSA
 A  1929 - 2023  n = 95
 aslpitax  State and local government current tax receipts: Personal current taxes: Income taxes, Bil. of $, NSA
@@ -1168,225 +1168,225 @@ A  1929 - 2023  n = 95
 aslptax  State and Local Government: Taxes on production and imports: Property Taxes, Bil. of $, NSA
 A  1929 - 2017  n = 89
 aslrecpt  State and Local Government: Current Receipts, Bil. of $, NSA
-A  1929 - 2022  n = 94
+A  1929 - 2023  n = 95
 aslrsi  State and Local Government Receipts: Contributions for Social Insurance, Bil. of $, NSA
 A  1929 - 2023  n = 95
 aslstax  State and Local Government: Taxes on production and imports: Sales Taxes, Bil. of $, NSA
 A  1931 - 2023  n = 93
 dgi  Federal Government: National Defense Gross Investment, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 dgic96  Federal Government: Real National Defense Gross Investment, Bil. of Chn. 2017 $, SAAR
-Q  2007.1 - 2023.4  n = 68
+Q  2007.1 - 2024.2  n = 70
 fctax  Federal Government: Tax Receipts on Corporate Income, Bil. of $, NSA
-A  1929 - 2022  n = 94
+A  1929 - 2023  n = 95
 fdefx  Federal Government: National Defense Consumption Expenditures and Gross Investment, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 fgce  Federal Consumption Expenditures and Gross Investment, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 fgcea  Federal Government Consumption Expenditures and Gross Investment, Bil. of $, NSA
 A  1929 - 2023  n = 95
 fgcec1  Real Federal Consumption Expenditures and Gross Investment, Bil. of Chn. 2017 $, SAAR
-Q  2007.1 - 2023.4  n = 68
-fgcec96  Real Federal Consumption Expenditures and Gross Investment, Bil. of Chn. 2009 $, SAAR
+Q  2007.1 - 2024.2  n = 70
+fgcec96  Real Federal Consumption Expenditures and Gross Investment (DISCONTINUED), Bil. of Chn. 2009 $, SAAR
 Q  1999.1 - 2017.2  n = 74
 fgceca  Real Federal Consumption Expenditures and Gross Investment, Bil. of Chn. 2017 $, NSA
 A  2007 - 2023  n = 17
 fgdef  Net Federal Government Saving, Bil. of $, SAAR
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 fgexpnd  Federal Government: Current Expenditures, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 fgrecpt  Federal Government Current Receipts, Bil. of $, SAAR
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 fgsl  Federal government current transfer payments: Other current transfer payments: Grants-in-aid to state and local governments, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 fndefx  Federal Government: Nondefense Consumption Expenditures and Gross Investment, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 frsi  Federal Government Receipts: Contributions for Social Insurance, Bil. of $, NSA
 A  1929 - 2023  n = 95
 gce  Government Consumption Expenditures and Gross Investment, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 gcea  Government Consumption Expenditures and Gross Investment, Bil. of $, NSA
 A  1929 - 2023  n = 95
 gcec1  Real Government Consumption Expenditures and Gross Investment, Bil. of Chn. 2017 $, SAAR
-Q  1947.1 - 2023.4  n = 308
-gcec96  Real Government Consumption Expenditures and Gross Investment, Bil. of Chn. 2009 $, SAAR
+Q  1947.1 - 2024.2  n = 310
+gcec96  Real Government Consumption Expenditures and Gross Investment (DISCONTINUED), Bil. of Chn. 2009 $, SAAR
 Q  1947.1 - 2017.2  n = 282
 gceca  Real Government Consumption Expenditures and Gross Investment, Bil. of Chn. 2017 $, NSA
 A  1929 - 2023  n = 95
 gexpnd  Government Current Expenditures, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 grecpt  Government Current Receipts, Bil. of $, SAAR
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 ndgi  Federal Nondefense Gross Investment, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 ndgic96  Real Federal Nondefense Gross Investment, Bil. of Chn. 2017 $, SAAR
-Q  2007.1 - 2023.4  n = 68
+Q  2007.1 - 2024.2  n = 70
 slce  State and Local Consumption Expenditures & Gross Investment, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 slcea  State and Local Government Consumption Expenditures and Gross Investment, Bil. of $, NSA
 A  1929 - 2023  n = 95
 slcec1  Real State and Local Consumption Expenditures & Gross Investment, 1 Decimal, Bil. of Chn. 2017 $, SAAR
-Q  2007.1 - 2023.4  n = 68
-slcec96  Real State and Local Consumption Expenditures & Gross Investment, 1 Decimal, Bil. of Chn. 2009 $, SAAR
+Q  2007.1 - 2024.2  n = 70
+slcec96  Real State and Local Consumption Expenditures & Gross Investment, 1 Decimal (DISCONTINUED), Bil. of Chn. 2009 $, SAAR
 Q  1999.1 - 2017.2  n = 74
 slceca  Real State and Local Consumption Expenditures & Gross Investment, Bil. of Chn. 2017 $, NSA
 A  2007 - 2023  n = 17
 sldef  Net State and Local Government Saving, Bil. of $, SAAR
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 slexpnd  State and Local Government Current Expenditures, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 slinv  State and Local Government Gross Investment, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 slinvc96  Real State and Local Government: Gross Investment, Bil. of Chn. 2017 $, SAAR
-Q  2007.1 - 2023.4  n = 68
+Q  2007.1 - 2024.2  n = 70
 tgdef  Net Government Saving, Bil. of $, SAAR
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 a038rc1  Compensation of Employees, Received: Supplements to Wages and Salaries, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 a041rc1  Proprietors' income with inventory valuation and capital consumption adjustments, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 a045rc1  Proprietors' income with inventory valuation and capital consumption adjustments: Nonfarm, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 a048rc1  Rental income of persons with capital consumption adjustment, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 a061rc1  Contributions for government social insurance, domestic, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 a063rc1  Personal current transfer receipts: Government social benefits to persons, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 a068rc1  Personal outlays, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 a132rc1  Compensation of Employees, Received: Wage and Salary Disbursements: Private Industries, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 a229rc0  Disposable Personal Income: Per capita: Current dollars, $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 a229rx0  Real Disposable Personal Income: Per Capita, Chn. 2017 $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 a576rc1  Compensation of Employees, Received: Wage and Salary Disbursements, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 b042rc1  Proprietors' income with inventory valuation and capital consumption adjustments: Farm, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 b069rc1  Personal interest payments, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 b202rc1  Compensation of employees, received: Wage and salary disbursements: Government, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 b931rc1  Personal current transfer receipts: Other current transfer receipts, from business (net), Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 dgdsrc1  Personal Consumption Expenditures: Goods, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 dgdsrx1  Real Personal Consumption Expenditures: Goods, Bil. of Chn. 2017 $, SAAR
-M  2007.01 - 2024.01  n = 205
+M  2007.01 - 2024.08  n = 212
 dpi  Disposable Personal Income, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 dpic96  Real Disposable Personal Income, Bil. of Chn. 2017 $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 dspi  Disposable Personal Income, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 dspic96  Real Disposable Personal Income, Bil. of Chn. 2017 $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 pcdg  Personal Consumption Expenditures: Durable Goods, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 pcdga  Personal Consumption Expenditures: Durable Goods, Bil. of $, NSA
 A  1929 - 2023  n = 95
 pcdgcc96  Real Personal Consumption Expenditures: Durable Goods, Bil. of Chn. 2017 $, SAAR
-Q  2007.1 - 2023.4  n = 68
+Q  2007.1 - 2024.2  n = 70
 pcdgcca  Real Personal Consumption Expenditures: Durable Goods, Bil. of Chn. 2017 $, NSA
 A  2007 - 2023  n = 17
 pce  Personal Consumption Expenditures, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 pcec  Personal Consumption Expenditures, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 pcec96  Real Personal Consumption Expenditures, Bil. of Chn. 2017 $, SAAR
-M  2007.01 - 2024.01  n = 205
+M  2007.01 - 2024.08  n = 212
 pceca  Personal Consumption Expenditures, Bil. of $, NSA
 A  1929 - 2023  n = 95
 pcecc96  Real Personal Consumption Expenditures, Bil. of Chn. 2017 $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 pcecca  Real Personal Consumption Expenditures, Bil. of Chn. 2017 $, NSA
 A  1929 - 2023  n = 95
 pcedg  Personal Consumption Expenditures: Durable Goods, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 pcedgc96  Real Personal Consumption Expenditures: Durable Goods, Bil. of Chn. 2017 $, SAAR
-M  2007.01 - 2024.01  n = 205
+M  2007.01 - 2024.08  n = 212
 pcend  Personal Consumption Expenditures: Nondurable Goods, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 pcendc96  Real Personal Consumption Expenditures: Nondurable Goods, Bil. of Chn. 2017 $, SAAR
-M  2007.01 - 2024.01  n = 205
+M  2007.01 - 2024.08  n = 212
 pces  Personal Consumption Expenditures: Services, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 pcesc96  Real Personal Consumption Expenditures: Services, Bil. of Chn. 2017 $, SAAR
-M  2007.01 - 2024.01  n = 205
+M  2007.01 - 2024.08  n = 212
 pcesv  Personal Consumption Expenditures: Services, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 pcesva  Personal Consumption Expenditures: Services, Bil. of $, NSA
 A  1929 - 2023  n = 95
 pcesvc96  Real Personal Consumption Expenditures: Services, Bil. of Chn. 2017 $, SAAR
-Q  2007.1 - 2023.4  n = 68
+Q  2007.1 - 2024.2  n = 70
 pcesvca  Real Personal Consumption Expenditures: Services, Bil. of Chn. 2017 $, NSA
 A  2007 - 2023  n = 17
 pcnd  Personal Consumption Expenditures: Nondurable Goods, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 pcnda  Personal Consumption Expenditures: Nondurable Goods, Bil. of $, NSA
 A  1929 - 2023  n = 95
 pcndgc96  Real Personal Consumption Expenditures: Nondurable Goods, Bil. of Chn. 2017 $, SAAR
-Q  2007.1 - 2023.4  n = 68
+Q  2007.1 - 2024.2  n = 70
 pcndgca  Real Personal Consumption Expenditures: Nondurable Goods, Bil. of Chn. 2017 $, NSA
 A  2007 - 2023  n = 17
 pctr  Personal Current Transfer Receipts, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 pdi  Personal Income Receipts on Assets: Personal Dividend Income, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 pi  Personal Income, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 pii  Personal Income Receipts on Assets: Personal Interest Income, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 pincome  Personal Income, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 piroa  Personal Income Receipts on Assets, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 rpi  Real Personal Income, Bil. of Chn. 2017 $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 w055rc1  Personal current taxes, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 w209rc1  Compensation of employees, received, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 w211rc1  Personal current transfer payments, Bil. of $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 w875rx1  Real personal income excluding current transfer receipts, Bil. of Chn. 2017 $, SAAR
-M  1959.01 - 2024.01  n = 781
+M  1959.01 - 2024.08  n = 788
 gdpdef  Gross domestic product (implicit price deflator), 2017=100, NSA
 A  1929 - 2023  n = 95
 gdppidxca  Gross domestic product (chain-type price index), 2017=100, NSA
 A  1929 - 2023  n = 95
-gdppidxq  Gross Domestic Product: Chain-type Price Index, 2009=100, SA
+gdppidxq  Gross Domestic Product: Chain-type Price Index (DISCONTINUED), 2009=100, SA
 Q  1947.1 - 2017.2  n = 282
 ccfc  Corporate: Consumption of Fixed Capital, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 civa  Corporate Inventory Valuation Adjustment, Bil. of $, SAAR
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 cncf  Corporate Net Cash Flow with IVA, Bil. of $, SAAR
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 coe  National Income: Compensation of Employees, Paid, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 cp  Corporate Profits After Tax (without IVA and CCAdj), Bil. of $, SAAR
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 cpatax  Corporate Profits After Tax with Inventory Valuation Adjustment (IVA) and Capital Consumption Adjustment (CCAdj), Bil. of $, SAAR
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 cprofit  Corporate Profits with Inventory Valuation Adjustment (IVA) and Capital Consumption Adjustment (CCAdj), Bil. of $, SAAR
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 dcbcca  Net private saving: Domestic business: Capital consumption adjustment, corporate, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 dividend  Corporate Profits after tax with IVA and CCAdj: Net Dividends, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 nfcpatax  Nonfinancial Corporate Business: Profits After Tax (without IVA and CCAdj), Bil. of $, SAAR
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 nicur  National Income, Bil. of $, SAAR
-Q  1947.1 - 2023.3  n = 307
+Q  1947.1 - 2024.2  n = 310
 propinc  Proprietors' Income with Inventory Valuation Adjustment(IVA) and Capital Consumption Adjustment (CCAdj), Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 rentin  Rental Income of Persons with Capital Consumption Adjustment (CCAdj), Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 wascur  Compensation of Employees: Wages and Salary Accruals, Bil. of $, SAAR
-Q  1947.1 - 2023.4  n = 308
+Q  1947.1 - 2024.2  n = 310
 fyfr  Federal Receipts, Mil. of $, NSA
 A  1901 - 2023  n = 123
 fyfsd  Federal Surplus or Deficit [-], Mil. of $, NSA
@@ -1400,66 +1400,66 @@ A  1940 - 2023  n = 84
 fyonet  Federal Net Outlays, Mil. of $, NSA
 A  1901 - 2023  n = 123
 bopgexp  Exports of Goods, Balance of Payments Basis, Mil. of $, SA
-M  1992.01 - 2024.01  n = 385
+M  1992.01 - 2024.08  n = 392
 bopsexp  Exports of Services, Balance of Payments Basis, Mil. of $, SA
-M  1992.01 - 2024.01  n = 385
+M  1992.01 - 2024.08  n = 392
 boptexp  Exports of Goods and Services, Balance of Payments Basis, Mil. of $, SA
-M  1992.01 - 2024.01  n = 385
+M  1992.01 - 2024.08  n = 392
 expca  U.S. Exports of Goods by F.A.S. Basis to Canada, Mil. of $, NSA
-M  1985.01 - 2024.01  n = 469
+M  1985.01 - 2024.08  n = 476
 expch  U.S. Exports of Goods by F.A.S. Basis to Mainland China, Mil. of $, NSA
-M  1985.01 - 2024.01  n = 469
+M  1985.01 - 2024.08  n = 476
 expfr  U.S. Exports of Goods by F.A.S. Basis to France, Mil. of $, NSA
-M  1985.01 - 2024.01  n = 469
+M  1985.01 - 2024.08  n = 476
 expge  U.S. Exports of Goods by F.A.S. Basis to Germany, Mil. of $, NSA
-M  1985.01 - 2024.01  n = 469
+M  1985.01 - 2024.08  n = 476
 expjp  U.S. Exports of Goods by F.A.S. Basis to Japan, Mil. of $, NSA
-M  1985.01 - 2024.01  n = 469
+M  1985.01 - 2024.08  n = 476
 expmx  U.S. Exports of Goods by F.A.S. Basis to Mexico, Mil. of $, NSA
-M  1985.01 - 2024.01  n = 469
+M  1985.01 - 2024.08  n = 476
 expuk  U.S. Exports of Goods by F.A.S. Basis to the United Kingdom, Mil. of $, NSA
-M  1985.01 - 2024.01  n = 469
+M  1985.01 - 2024.08  n = 476
 bopgimp  Imports of Goods: Balance of Payments Basis, Mil. of $, SA
-M  1992.01 - 2024.01  n = 385
+M  1992.01 - 2024.08  n = 392
 bopsimp  Imports of Services, Balance of Payments Basis, Mil. of $, SA
-M  1992.01 - 2024.01  n = 385
+M  1992.01 - 2024.08  n = 392
 boptimp  Imports of Goods and Services: Balance of Payments Basis, Mil. of $, SA
-M  1992.01 - 2024.01  n = 385
+M  1992.01 - 2024.08  n = 392
 impca  U.S. Imports of Goods by Customs Basis from Canada, Mil. of $, NSA
-M  1985.01 - 2024.01  n = 469
+M  1985.01 - 2024.08  n = 476
 impch  U.S. Imports of Goods by Customs Basis from China, Mil. of $, NSA
-M  1985.01 - 2024.01  n = 469
+M  1985.01 - 2024.08  n = 476
 impfr  U.S. Imports of Goods by Customs Basis from France, Mil. of $, NSA
-M  1985.01 - 2024.01  n = 469
+M  1985.01 - 2024.08  n = 476
 impge  U.S. Imports of Goods by Customs Basis from Germany, Mil. of $, NSA
-M  1985.01 - 2024.01  n = 469
+M  1985.01 - 2024.08  n = 476
 impjp  U.S. Imports of Goods by Customs Basis from Japan, Mil. of $, NSA
-M  1985.01 - 2024.01  n = 469
+M  1985.01 - 2024.08  n = 476
 impmx  U.S. Imports of Goods by Customs Basis from Mexico, Mil. of $, NSA
-M  1985.01 - 2024.01  n = 469
+M  1985.01 - 2024.08  n = 476
 impuk  U.S. Imports of Goods by Customs Basis from the United Kingdom, Mil. of $, NSA
-M  1985.01 - 2024.01  n = 469
+M  1985.01 - 2024.08  n = 476
 bopgstb  Trade Balance: Goods and Services, Balance of Payments Basis, Mil. of $, SA
-M  1992.01 - 2024.01  n = 385
+M  1992.01 - 2024.08  n = 392
 bopgtb  Trade Balance: Goods, Balance of Payments Basis, Mil. of $, SA
-M  1992.01 - 2024.01  n = 385
+M  1992.01 - 2024.08  n = 392
 bopstb  Trade Balance: Services, Balance of Payments Basis, Mil. of $, SA
-M  1992.01 - 2024.01  n = 385
-gpdic96  Real Gross Private Domestic Investment, Bil. of Chn. 2009 $, SAAR
+M  1992.01 - 2024.08  n = 392
+gpdic96  Real Gross Private Domestic Investment (DISCONTINUED), Bil. of Chn. 2009 $, SAAR
 Q  1947.1 - 2017.2  n = 282
-nripdc96  Real Nonresidential Investment: Equipment and Software, 3 Decimal, Bil. of Chn. 2005 $, SAAR
+nripdc96  Real Nonresidential Investment: Equipment and Software, 3 Decimal (DISCONTINUED), Bil. of Chn. 2005 $, SAAR
 Q  1995.1 - 2013.1  n = 73
-prfic96  Real Private Residential Fixed Investment, Bil. of Chn. 2009 $, SAAR
+prfic96  Real Private Residential Fixed Investment (DISCONTINUED), Bil. of Chn. 2009 $, SAAR
 Q  1999.1 - 2017.2  n = 74
-expgsc96  Real Exports of Goods and Services, Bil. of Chn. 2009 $, SAAR
+expgsc96  Real Exports of Goods and Services (DISCONTINUED), Bil. of Chn. 2009 $, SAAR
 Q  1947.1 - 2017.2  n = 282
-netexc96  Real Net Exports of Goods and Services, Bil. of Chn. 2009 $, SAAR
+netexc96  Real Net Exports of Goods and Services (DISCONTINUED), Bil. of Chn. 2009 $, SAAR
 Q  1999.1 - 2017.2  n = 74
-impgsc96  Real imports of goods and services, Bil. of Chn. 2009 $, SAAR
+impgsc96  Real imports of goods and services (DISCONTINUED), Bil. of Chn. 2009 $, SAAR
 Q  1947.1 - 2017.2  n = 282
-cbic96  Change in Real Private Inventories, Bil. of Chn. 2009 $, SAAR
+cbic96  Change in Real Private Inventories (DISCONTINUED), Bil. of Chn. 2009 $, SAAR
 Q  1947.1 - 2017.2  n = 282
-finslc96  Real Final Sales of Domestic Product, Bil. of Chn. 2009 $, SAAR
+finslc96  Real Final Sales of Domestic Product (DISCONTINUED), Bil. of Chn. 2009 $, SAAR
 Q  1947.1 - 2017.2  n = 282
-gdpc96  Real Gross Domestic Product, Bil. of Chn. 2009 $, SAAR
+gdpc96  Real Gross Domestic Product (DISCONTINUED), Bil. of Chn. 2009 $, SAAR
 Q  1947.1 - 2017.2  n = 282
