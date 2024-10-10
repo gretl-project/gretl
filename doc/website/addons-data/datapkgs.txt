@@ -1,5 +1,5 @@
 4879789 Foo May 06 00:00:00 2009 ashenfelter.tar.gz
-# Ashenfelter, Levine and Zimmerman, Statistics and Econometrics
+# Ashenfelter et al, Statistics and Econometrics
 2045408 Foo Oct 14 00:00:00 2008 dougherty.tar.gz 
 # Christopher Dougherty, Introduction to Econometrics
 106062 Foo Dec 14 00:00:00 2003 ETM.tar.gz
