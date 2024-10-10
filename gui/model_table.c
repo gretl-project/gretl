@@ -935,13 +935,13 @@ static void print_equation_stats (int width0, int colwidth, PRN *prn,
     if (any_R2) {
 	/* print R^2 values */
 	if (tex) {
-	    pputs(prn, (same_df)? "$R^2$" : "$\\bar R^2$ ");
+	    pputs(prn, same_df ? "$R^2$" : "$\\bar R^2$ ");
 	} else if (rtf) {
 	    pprintf(prn, "\\qc %s\\cell ",
 		    (same_df)? "R{\\super 2}" : _("Adj. R{\\super 2}"));
 	} else {
-	    pprintf(prn, "%*s", width0, (same_df)? _("R-squared") :
-		    _("Adj. R**2"));
+	    pprintf(prn, "%*s", width0, same_df ? _("R-squared") :
+		    _("Adj. R^2"));
 	}
 
 	for (j=0; j<n_models; j++) {
