@@ -6,9 +6,9 @@ version 2024c, in progress
   the format of the printout
 - "corr" command: be more explicit about the sample(s) used
 - "rename" command: add a --case option to support case
+  conversion of all series names in the dataset
 - "reset" command: add a --robust option and scale the squares
   and cubes of the fitted values to avoid numerical instability
-  conversion of all series names in the dataset
 - "reset" command: add a --robust option and scale the squares
   and cubes of the fitted values to avoid numerical instability
 - flatten() function: add an extra (vec-wise) mode for matrices
