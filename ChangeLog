@@ -9,8 +9,6 @@ version 2024c, in progress
   conversion of all series names in the dataset
 - "reset" command: add a --robust option and scale the squares
   and cubes of the fitted values to avoid numerical instability
-- "reset" command: add a --robust option and scale the squares
-  and cubes of the fitted values to avoid numerical instability
 - flatten() function: add an extra (vec-wise) mode for matrices
 - matrix "left division" operator: improve efficiency when the
   left-hand operand is triangular
