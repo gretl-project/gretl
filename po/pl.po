@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 2024a\n"
+"Project-Id-Version: gretl 2024c\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-09-26 10:22-0400\n"
-"PO-Revision-Date: 2024-04-02 10:25-0400\n"
+"PO-Revision-Date: 2024-10-11 12:27-0400\n"
 "Last-Translator: Pawel Kufel <pawel.kufel@torun.merito.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -481,9 +481,9 @@ msgid "Numerical summary with bootstrapped confidence interval for median"
 msgstr "Wyniki numeryczne bootstrapowego przedziału ufności dla mediany"
 
 #: lib/src/boxplots.c:343
-#, fuzzy, c-format
+#, c-format
 msgid "Numerical summary for %s by %s"
-msgstr "Pozycyjne miary opisu statystycznego dla: %s"
+msgstr "Pozycyjne miary opisu statystycznego dla: %s według %s"
 
 #: lib/src/boxplots.c:346
 #, c-format
@@ -708,9 +708,8 @@ msgid "squares and cubes"
 msgstr "kwadrat i sześcian zmiennej zależnej ^y"
 
 #: lib/src/compare.c:2000
-#, fuzzy
 msgid "Robust RESET test for specification"
-msgstr "Test RESET na specyfikację"
+msgstr "Test Robust RESET na specyfikację"
 
 #: lib/src/compare.c:2002 lib/src/gretl_model.c:4299
 msgid "RESET test for specification"
@@ -726,7 +725,7 @@ msgstr "Test Breuscha-Godfreya na"
 
 #: lib/src/compare.c:2074
 msgid "autocorrelation up to order"
-msgstr "autokorelację rzędu"
+msgstr "autokorelacja do rzędu"
 
 #: lib/src/compare.c:2077
 msgid "first-order autocorrelation"
@@ -780,7 +779,7 @@ msgid ""
 "with 15 percent trimming"
 msgstr ""
 "Test ilorazu wiarygodności Quandta na występowanie załamania strukturalnego\n"
-"w nieokreślonym momencie, z 15 procentowym błędem oceny"
+"w nieokreślonym momencie, z 15 procentowym przycięciem"
 
 #: lib/src/compare.c:2870
 #, c-format
@@ -2095,14 +2094,12 @@ msgid "using standard error 1/T^%.1f"
 msgstr "z wykorzystaniem błędu standardowego 1/T^%.1f"
 
 #: lib/src/describe.c:3639
-#, fuzzy
 msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
-msgstr "Opóźnienia  ACF         PACF      Ljung-Box Q [wartość p]"
+msgstr "Opóźnienia  ACF         PACF         Q-stat. [wartość p]"
 
 #: lib/src/describe.c:3641
-#, fuzzy
 msgid "  LAG      ACF          Q-stat. [p-value]"
-msgstr "Opóźnienia  ACF          Q-stat. [wartość p]"
+msgstr "Opóźnienia  ACF         Q-stat. [wartość p]"
 
 #: lib/src/describe.c:3926
 msgid "Argument is a constant"
@@ -2341,7 +2338,7 @@ msgstr "Usunięcie %s: szereg o wartościach łańcuchowych\n"
 
 #: lib/src/describe.c:5987 lib/src/describe.c:5992
 msgid "Byval"
-msgstr ""
+msgstr "Byval"
 
 #: lib/src/describe.c:6271 lib/src/discrete.c:1435 lib/src/geneval.c:13031
 #: lib/src/gretl_list.c:1752
@@ -2394,25 +2391,23 @@ msgid "Two-tailed critical values for n = %d"
 msgstr "Dwustronna wartość krytyczna dla n = %d"
 
 #: lib/src/describe.c:6869
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using the %d observations %s - %s"
-msgstr "%s, wykorzystane obserwacje %s - %s"
+msgstr "%s, wykorzystano %d obserwacji %s - %s"
 
 #: lib/src/describe.c:6870 lib/src/describe.c:6874 lib/src/describe.c:6878
 msgid "Correlation Coefficients"
 msgstr "Współczynniki korelacji"
 
 #: lib/src/describe.c:6873
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using %d observations from %s - %s"
-msgstr "%s, wykorzystane obserwacje %s - %s"
+msgstr "%s, wykorzystano %d obserwacji z %s - %s"
 
 #: lib/src/describe.c:6877
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using samples of size %d to %d"
-msgstr ""
-"dla utworzonych %d podprób o liczebności %d\n"
-"\n"
+msgstr "%s, używając próbek o rozmiarze %d do %d"
 
 #: lib/src/describe.c:7046 lib/src/describe.c:7139
 msgid "Sample range has no valid observations."
@@ -2634,11 +2629,11 @@ msgstr "%s: zmienna zależna musi być licznikiem zdarzeń (liczba naturalna)"
 
 #: lib/src/discrete.c:4233
 msgid "binperms: n must be <= 64"
-msgstr ""
+msgstr "binperms: n musi być <= 64"
 
 #: lib/src/discrete.c:4239
 msgid "binperms: we need n >= k >= 0"
-msgstr ""
+msgstr "binperms: potrzebujemy n >= k >= 0"
 
 #: lib/src/estimate.c:192
 #, c-format
@@ -4294,9 +4289,8 @@ msgid "You cannot define a function within a function"
 msgstr "Nie można zdefiniować funkcji w ramach tej funkcji"
 
 #: lib/src/gretl_errors.c:85
-#, fuzzy
 msgid "Out of bounds error"
-msgstr "Brak pamięci\n"
+msgstr "Błąd spoza przedziału"
 
 #: lib/src/gretl_errors.c:86
 msgid "Error executing function"
@@ -4723,29 +4717,29 @@ msgstr ""
 "const guarantee\n"
 
 #: lib/src/gretl_func.c:9090
-#, fuzzy, c-format
+#, c-format
 msgid "The package %s needs gretl version %s"
-msgstr "Ta funkcja wymaga wersji gretla %s"
+msgstr "Pakiet %s wymaga wersji gretla %s"
 
 #: lib/src/gretl_func.c:9098
-#, fuzzy, c-format
+#, c-format
 msgid "The package %s needs a dataset in place"
-msgstr "Ten pakiet wymaga odpowiedniego zestawu danych."
+msgstr "Pakiet %s wymaga zestawu danych."
 
 #: lib/src/gretl_func.c:9106
-#, fuzzy, c-format
+#, c-format
 msgid "The package %s needs time-series data"
-msgstr "Ten pakiet wymaga szeregów czasowych."
+msgstr "Pakiet %s wymaga szeregów czasowych."
 
 #: lib/src/gretl_func.c:9114
-#, fuzzy, c-format
+#, c-format
 msgid "The package %s needs panel data"
-msgstr "Ten pakiet wymaga danych panelowych."
+msgstr "Pakiet %s wymaga danych panelowych."
 
 #: lib/src/gretl_func.c:9122
-#, fuzzy, c-format
+#, c-format
 msgid "The package %s needs quarterly or monthly data"
-msgstr "Ten pakiet wymaga danych kwartalnych lub miesięcznych."
+msgstr "Pakiet %s wymaga danych kwartalnych lub miesięcznych."
 
 #: lib/src/gretl_func.c:9198
 #, c-format
@@ -6179,9 +6173,9 @@ msgid "Output redirection: maximum depth reached"
 msgstr "Przekierowanie wyjścia: osiągnięto maksymalną głębokość"
 
 #: lib/src/interact.c:1084
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is of type %s"
-msgstr "Zmienne typu %s:"
+msgstr "'%s' jest typu %s"
 
 #: lib/src/interact.c:1096
 #, c-format
@@ -6189,9 +6183,8 @@ msgid "'%s' : not a string variable"
 msgstr "'%s' : nie jest nazwą zmiennej"
 
 #: lib/src/interact.c:1193
-#, fuzzy
 msgid "output cannot be redirected in this context"
-msgstr "'catch' nie może być użyte w tym kontekście"
+msgstr "wyjście nie może być użyte w tym kontekście"
 
 #: lib/src/interact.c:1240
 msgid "Now discarding output\n"
@@ -8990,6 +8983,7 @@ msgstr "Błąd pamięci w kodowaniu XML"
 #: lib/src/subsample.c:733
 msgid "You cannot subsample a resampled dataset"
 msgstr ""
+"Nie można wykonać podpróbkowania ponownie dla próbkowanego zestawu danych"
 
 #: lib/src/subsample.c:843
 msgid "Missing sub-sample information; can't merge data\n"
@@ -10114,9 +10108,9 @@ msgid "Weibull(%g, %g)"
 msgstr "Weibull(%g, %g)"
 
 #: gui/calculator.c:223
-#, fuzzy, c-format
+#, c-format
 msgid "Gamma(%g, %g)"
-msgstr "N(%g, %g)"
+msgstr "Gamma(%g, %g)"
 
 #: gui/calculator.c:430 gui/dlgutils.c:1168
 msgid "Standard errors"
@@ -10694,9 +10688,8 @@ msgid "gretl: ARIMA lag selection"
 msgstr "gretl: Wybór opóźnień p, q, P, Q dla modelu ARIMA"
 
 #: gui/callbacks.c:516
-#, fuzzy
 msgid "gretl: factorized statistics"
-msgstr "gretl: statystyki dla średnich-przedziałowych"
+msgstr "gretl: statystyki dla czynników"
 
 #: gui/callbacks.c:518 gui/callbacks.c:533 gui/callbacks.c:536
 #: gui/callbacks.c:538 gui/callbacks.c:540 gui/callbacks.c:685
@@ -10711,7 +10704,7 @@ msgstr "gretl: testy porównawcze modeli"
 
 #: gui/callbacks.c:542 gui/selector.c:4417
 msgid "Loess"
-msgstr "Lokalna wielomianowa regresja - metoda loess"
+msgstr "Lokalna wielomianowa regresja - metoda Loess"
 
 #: gui/callbacks.c:542 gui/library.c:4569 gui/selector.c:4419
 msgid "Nadaraya-Watson"
@@ -11947,9 +11940,8 @@ msgid "Make this restriction permanent"
 msgstr "Wykonaj jako stałą restrykcje"
 
 #: gui/dialogs.c:2365
-#, fuzzy
 msgid "Preserve panel structure"
-msgstr "_Struktura panelu"
+msgstr "Zachowaj strukturę panelu"
 
 #: gui/dialogs.c:2386
 msgid "The current data range is too small for this option"
@@ -12727,9 +12719,8 @@ msgid "Add equation"
 msgstr "Dołącz równanie"
 
 #: gui/dlgutils.c:817
-#, fuzzy
 msgid "New equation"
-msgstr "Równanie"
+msgstr "Nowe równanie"
 
 #: gui/dlgutils.c:821
 msgid "Add derivative"
@@ -13305,9 +13296,8 @@ msgid "Enter name=formula for new scalar"
 msgstr "Wprowadź nazwę i formułę wyliczania nowego skalara"
 
 #: gui/fncall.c:1843
-#, fuzzy
 msgid "Define series"
-msgstr "znajdź szereg"
+msgstr "Zdefiniuj szereg"
 
 #: gui/fncall.c:1845 gui/ssheet.c:3987
 msgid "Define matrix"
@@ -13319,7 +13309,7 @@ msgstr "Wybór argumentów:"
 
 #: gui/fncall.c:2105
 msgid "Save return value (optional, clear box for no assigment):"
-msgstr ""
+msgstr "Zapisz wartość (opcjonalne, wyczyść pole, aby nie przypisywać):"
 
 #: gui/fncall.c:2108
 msgid "Assign return value (optional):"
@@ -14826,14 +14816,12 @@ msgid "_Summary statistics"
 msgstr "_Statystyki opisowe"
 
 #: gui/gretl.c:1903
-#, fuzzy
 msgid "plain"
-msgstr "prosty tekst ASCII"
+msgstr "zwykły"
 
 #: gui/gretl.c:1904
-#, fuzzy
 msgid "factorized"
-msgstr "w podziale według zmiennej 0-1"
+msgstr "rozłożony na czynniki"
 
 #: gui/gretl.c:1905
 msgid "_Correlation matrix"
@@ -14881,7 +14869,7 @@ msgstr "_Generowanie zmiennych losowych..."
 
 #: gui/gretl.c:1918
 msgid "_Lags of selected variables"
-msgstr "_opóźnienia dla wybranych zmiennych..."
+msgstr "_opóźnienia dla wybranych zmiennych"
 
 #: gui/gretl.c:1919
 msgid "_First differences of selected variables"
@@ -15172,9 +15160,8 @@ msgid "_GARCH"
 msgstr "model _GARCH"
 
 #: gui/gretl.c:2014
-#, fuzzy
 msgid "GARCH variants"
-msgstr "wszystkie warianty"
+msgstr "model GARCH _warianty"
 
 #: gui/gretl.c:2016
 msgid "_AR errors (GLS)"
@@ -15186,7 +15173,7 @@ msgstr "Korekta przez _AR(1)"
 
 #: gui/gretl.c:2018
 msgid "_AR (general)"
-msgstr "Korekta przez AR(general)"
+msgstr "Korekta przez AR (general)"
 
 #: gui/gretl.c:2019
 msgid "_Multivariate time series"
@@ -15198,7 +15185,7 @@ msgstr "model _wektorowej autoregresji (VAR)"
 
 #: gui/gretl.c:2021
 msgid "VAR _lag selection"
-msgstr "Wybór rzędu opóźnienia modelu VAR"
+msgstr "wybór rzędu opóźnienia modelu VAR"
 
 #: gui/gretl.c:2022
 msgid "V_ECM"
@@ -15241,9 +15228,8 @@ msgid "FE logistic"
 msgstr "Logistic model dla ustalonych efektów"
 
 #: gui/gretl.c:2032
-#, fuzzy
 msgid "Panel IV model"
-msgstr "Model panelowy"
+msgstr "Model panelowy ze zm. instrumentalnymi"
 
 #: gui/gretl.c:2033
 msgid "_Limited dependent variable"
@@ -15984,9 +15970,8 @@ msgid "simple append"
 msgstr "proste dołączenie"
 
 #: gui/gui_utils.c:874
-#, fuzzy
 msgid "append with fixed sample range"
-msgstr "Zakres próby"
+msgstr "dołączanie z ustalonym zakresem próby"
 
 #: gui/gui_utils.c:875
 msgid "\"join\" (advanced)"
@@ -17003,9 +16988,8 @@ msgid "linear restrictions"
 msgstr "Test liniowych restrykcji"
 
 #: gui/library.c:3658
-#, fuzzy
 msgid "No system was specified"
-msgstr "%s: niewyspecyfikowany system"
+msgstr "Niewyspecyfikowano żadnego system"
 
 #: gui/library.c:3738
 msgid ""
@@ -18184,9 +18168,8 @@ msgid "Variable to plot"
 msgstr "Zmienna dla wykresu"
 
 #: gui/selector.c:4802
-#, fuzzy
 msgid "Primary variable"
-msgstr "zmienna czasowa t"
+msgstr "Zmienna podstawowa"
 
 #: gui/selector.c:4842
 msgid "Lower bound variable"
@@ -18433,9 +18416,8 @@ msgid "Prefer NLS via Levenberg-Marquardt"
 msgstr "Preferuje NLS z Levenberg-Marquardt"
 
 #: gui/selector.c:6363
-#, fuzzy
 msgid "Show all statistics"
-msgstr "Pokaż rozszerzone statystyki opisowe"
+msgstr "Pokaż wszystkie statystyki opisowe"
 
 #: gui/selector.c:6395
 msgid "Show lagged variables"
@@ -18662,9 +18644,8 @@ msgid "Select format"
 msgstr "Wybór formatu"
 
 #: gui/selector.c:7322
-#, fuzzy
 msgid "At least two series are needed"
-msgstr "Niezdefiniowane serie\n"
+msgstr "Potrzebne są co najmniej dwie serie"
 
 #: gui/selector.c:7480
 msgid "New variable"
@@ -18695,9 +18676,8 @@ msgid "factorized boxplot"
 msgstr "Wykres pudełkowy z dyskretnym separatorem"
 
 #: gui/selector.c:7533
-#, fuzzy
 msgid "factorized statistics"
-msgstr "Statystyka testu"
+msgstr "Statystyka z dyskretnym separatorem"
 
 #: gui/selector.c:7535
 msgid "scatterplot with control"
@@ -18761,7 +18741,7 @@ msgstr "Wykres Q-Q: wybierz jedną lub dwie zmienne"
 
 #: gui/selector.c:7927
 msgid "Confidence region: select two variables"
-msgstr "Confidence region: wybierz dwie zmienne"
+msgstr "Obszar ufności: wybierz dwie zmienne"
 
 #: gui/selector.c:7929
 msgid "Select variables to display"
@@ -18792,9 +18772,8 @@ msgid "Define named list"
 msgstr "Definiowanie listy zmiennych"
 
 #: gui/selector.c:7951
-#, fuzzy
 msgid "Select coefficients to track (max 25)"
-msgstr "Wybór współczynników do śledzenia"
+msgstr "Wybór współczynników do śledzenia (maks. 25)"
 
 #: gui/selector.c:8211
 msgid "Name of list"
@@ -21464,7 +21443,7 @@ msgstr "using %d consecutive blocks"
 #: plugin/svm.c:2405
 #, c-format
 msgid "using %d values of %s"
-msgstr ""
+msgstr "wykorzystano %d wartości %s"
 
 #: plugin/svm.c:2407
 #, c-format
@@ -22332,136 +22311,101 @@ msgstr "Pokaż detale"
 
 #: addons/addons-i18n.c:112
 msgid "Don't"
-msgstr ""
+msgstr "Nie"
 
 #: addons/addons-i18n.c:113
-#, fuzzy
 msgid "Fill method"
-msgstr "Metody numeryczne"
+msgstr "Metoda Fill"
 
 #: addons/addons-i18n.c:114
-#, fuzzy
 msgid "Linear interpolation"
-msgstr "Test liniowych restrykcji"
+msgstr "Interpolacja liniowa"
 
 #: addons/addons-i18n.c:115
-#, fuzzy
 msgid "Mean value"
-msgstr "Wartość własna"
+msgstr "Wartość średnia"
 
 #: addons/addons-i18n.c:116
-#, fuzzy
 msgid "Number of random variables"
-msgstr "Nazwa zmiennej:"
+msgstr "Liczba zmiennych losowych"
 
 #: addons/addons-i18n.c:117
-#, fuzzy
 msgid "Number of selected choices"
-msgstr "Liczba replikacji:"
+msgstr "Liczba wybranych opcji"
 
 #: addons/addons-i18n.c:118
-#, fuzzy
 msgid "Repetition"
-msgstr "Restrykcje"
+msgstr "Powtórzenia"
 
 #: addons/addons-i18n.c:119
-#, fuzzy
 msgid "Series to fill"
-msgstr "Zapisz jako plik tekstowy"
+msgstr "Seria do wypełnienia"
 
 #: addons/addons-i18n.c:120
-#, fuzzy
 msgid "Set of all choices"
-msgstr "Suma współczynników AR"
+msgstr "Zestaw wszystkich wyborów"
 
 #: addons/addons-i18n.c:121
-#, fuzzy
 msgid "Std. deviation"
 msgstr "odchylenie std."
 
 #: addons/addons-i18n.c:122
-#, fuzzy
 msgid "Vector of values"
-msgstr "wartości predyktora"
+msgstr "Wektor wartości"
 
 #: addons/addons-i18n.c:123
-#, fuzzy
 msgid "W test stat"
-msgstr "Statystyka testu"
+msgstr "Statystyka testu W"
 
 #: addons/addons-i18n.c:124
 msgid "always use normal approx"
-msgstr ""
+msgstr "wykorzystano aproksymacji normalnej"
 
 #: addons/addons-i18n.c:125
-#, fuzzy
 msgid "bootstrap type code"
-msgstr "bootstrap type"
+msgstr "kod typu bootstrap"
 
 #: addons/addons-i18n.c:126
-#, fuzzy
 msgid "left truncation value"
-msgstr "Parametr \"Bartlett truncation\" dla opóźnienia rzędu = %d\n"
+msgstr "lewa wartość obcięcia"
 
 #: addons/addons-i18n.c:128
-#, fuzzy
 msgid "number of trials"
-msgstr "Liczba przedziałów:"
+msgstr "liczba prób"
 
 #: addons/addons-i18n.c:129
-#, fuzzy
 msgid "options"
-msgstr "proporcja"
+msgstr "opcje"
 
 #: addons/addons-i18n.c:130
-#, fuzzy
 msgid "resampling"
-msgstr "residual resampling"
+msgstr "ponowne próbkowanie"
 
 #: addons/addons-i18n.c:131
-#, fuzzy
 msgid "right truncation value"
-msgstr "Automatyczny parametr rzędu opóźnienia (lag truncation)\n"
+msgstr "prawa wartość obcięcia"
 
 #: addons/addons-i18n.c:132
 msgid "two-sided prob mass"
-msgstr ""
+msgstr "dwustronna masa probabilistyczna"
 
 #: addons/addons-i18n.c:133
-#, fuzzy
 msgid "wildM"
-msgstr "wild/Mammen"
+msgstr "wildM"
 
 #: addons/addons-i18n.c:134
-#, fuzzy
 msgid "wildN"
-msgstr "wild/Normal"
+msgstr "wildN"
 
 #: addons/addons-i18n.c:135
 msgid "wildR"
-msgstr ""
+msgstr "wildR"
 
 #: addons/addons-i18n.c:140
-#, fuzzy
 msgid "Coefficient paths"
-msgstr "Współczynnik"
+msgstr "Ścieżka współczynnika"
 
 #: addons/addons-i18n.c:141
-#, fuzzy
 msgid "Criterion plot"
 msgstr "Pokaż wykres kryterium"
 
-#~ msgid "obsolete function isnull(): please use !exists() instead"
-#~ msgstr "przestarzała funkcja isnull(): użyj funkcji exist()"
-
-#~ msgid "This function needs a dataset in place"
-#~ msgstr "Ta funkcja wymaga posiadania zestawu danych"
-
-#~ msgid "This function needs time-series data"
-#~ msgstr "Ta funkcja wymaga szeregów czasowych"
-
-#~ msgid "This function needs panel data"
-#~ msgstr "Ta funkcja wymaga danych panelowych"
-
-#~ msgid "This function needs quarterly or monthly data"
-#~ msgstr "Ta funkcja wymaga danych kwartalnych lub miesięcznych"
