@@ -2559,7 +2559,7 @@ static gchar *make_gfn_path (const char *pkgname,
 			     const char *fpath)
 {
     if (fpath == NULL) {
-	fpath = gretl_function_package_path();
+	fpath = gretl_package_install_path("functions");
     }
     return g_strdup_printf("%s%s%c%s.gfn", fpath,
 			   pkgname, SLASH, pkgname);
@@ -2788,7 +2788,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
     if (role == REMOTE_DB) {
 	err = retrieve_remote_db(objname, target);
     } else if (role == REMOTE_DATA_PKGS) {
-	err = retrieve_remote_datafiles_package(dlname, target);
+	err = retrieve_remote_files_package(dlname, target);
     } else if (role == REMOTE_FUNC_FILES) {
 	/* note: includes pre- and post-processing */
 	err = gui_install_gfn(objname, dlname, target, zipfile, depends, vwin);

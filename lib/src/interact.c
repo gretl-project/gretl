@@ -2772,7 +2772,8 @@ static int handle_binary_package (const char *fname,
             topdir = g_strdup(gretl_bindir());
             s = strstr(topdir, "/bin/");
         } else {
-            topdir = g_strdup(gretl_function_package_path());
+            /* in case "/bin/" didn't work */
+            topdir = g_strdup(gretl_package_install_path("functions"));
             s = strstr(topdir, "/functions");
         }
 
@@ -2859,6 +2860,11 @@ static void pkg_install_invoke_callback (ExecState *s,
     if (strstr(basename, ".tar.gz")) {
 	/* a data-file collection */
 	gretl_bundle_set_string(b, "pkgname", basename);
+    } else if (strstr(basename, "scripts")) {
+        /* a script-file collection */
+        gretl_bundle_set_string(b, "pkgname", basename);
+        gretl_bundle_set_int(b, "zipfile", filetype == 2);
+        gretl_bundle_set_int(b, "scripts", 1);
     } else {
 	/* a function package */
 	char *nosfx = g_strdup(basename);
@@ -2871,6 +2877,7 @@ static void pkg_install_invoke_callback (ExecState *s,
 	gretl_bundle_set_int(b, "zipfile", filetype == 2);
 	g_free(nosfx);
     }
+
     gretl_bundle_set_string(b, "filename", fullname);
     gui_callback(s, b, GRETL_OBJ_BUNDLE);
 }
@@ -2884,6 +2891,7 @@ static int install_package (const char *pkgname,
     int filetype = 0;
     int local = 0;
     int staging = 0;
+    int scripts = 0;
     int addons = 0;
     int http = 0;
     int err;
@@ -2923,6 +2931,9 @@ static int install_package (const char *pkgname,
         filetype = 1;
     } else if (has_suffix(pkgname, ".zip")) {
         filetype = 2;
+        if (strstr(pkgname, "scripts")) {
+            scripts = 1;
+        }
     } else if (has_suffix(pkgname, ".tar.gz")) {
 	filetype = 3;
 	if (local) {
@@ -2952,7 +2963,7 @@ static int install_package (const char *pkgname,
 	    if (!err && addons) {
 		err = retrieve_addons_package(dlpath);
 	    } else if (!err) {
-		err = retrieve_remote_datafiles_package(pkgname, dlpath);
+		err = retrieve_remote_files_package(pkgname, dlpath);
 	    }
 	    if (!err) {
 		err = unpack_files_collection(dlpath);
@@ -2990,9 +3001,10 @@ static int install_package (const char *pkgname,
 
     if (!err && filetype) {
         const char *basename = fname != NULL ? fname : pkgname;
-        const char *instpath = gretl_function_package_path();
+        const char *instpath;
         gchar *fullname;
 
+        instpath = gretl_package_install_path(scripts ? "scripts" : "functions");
         fullname = g_strdup_printf("%s%s", instpath, basename);
 
         if (local) {
@@ -3000,8 +3012,11 @@ static int install_package (const char *pkgname,
         } else if (http) {
             /* get file from a specified server */
             err = retrieve_public_file(pkgname, fullname);
+        } else if (scripts) {
+            /* get scripts collection from sourceforge */
+            err = retrieve_remote_files_package(basename, fullname);
         } else {
-            /* get file from default gretl server */
+            /* get function package from sourceforge */
             err = retrieve_remote_function_package(basename,
 						   fullname,
 						   staging);
@@ -3015,7 +3030,7 @@ static int install_package (const char *pkgname,
             }
         }
 
-        if (!err) {
+        if (!err && !scripts) {
 	    package_check_dependencies(fullname, s, prn);
         }
 
@@ -3051,6 +3066,7 @@ static int install_package (const char *pkgname,
 {
     char *fname = NULL;
     int filetype = 0;
+    int scripts = 0;
     int err = 0;
 
     if (!strncmp(pkgname, "http://", 7) ||
@@ -3063,6 +3079,9 @@ static int install_package (const char *pkgname,
         filetype = 1;
     } else if (strstr(pkgname, ".zip")) {
         filetype = 2;
+        if (strstr(pkgname, "scripts")) {
+            scripts = 1;
+        }
     } else {
         /* must have suitable suffix */
         err = E_DATA;
@@ -3081,9 +3100,10 @@ static int install_package (const char *pkgname,
 
     if (!err && filetype) {
         const char *basename = fname != NULL ? fname : pkgname;
-        const char *instpath = gretl_function_package_path();
+        const char *instpath;
         gchar *fullname;
 
+        instpath = gretl_package_install_path(scripts ? "scripts" : "functions");
         fullname = g_strdup_printf("%s%s", instpath, basename);
 
         /* copy file into place */
