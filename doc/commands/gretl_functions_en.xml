@@ -2248,6 +2248,7 @@
 	  <argname>bounds</argname>, and <argname>b</argname> holds
 	  the parameter values which produce the maximum.
 	</para>
+        <subhead>Bounds on parameters</subhead>
 	<para>
 	  The <argname>bounds</argname> matrix must have 3 columns and
 	  as many rows as there are constrained elements in the
@@ -2263,6 +2264,7 @@
 	<code>
 	  matrix bounds = {2, 0, $huge}
 	</code>
+        <subhead>Analytical derivatives</subhead>
 	<para>
 	  The optional fourth argument provides a means of supplying
 	  analytical derivatives (otherwise the gradient is computed
