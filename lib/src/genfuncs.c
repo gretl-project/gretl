@@ -1427,6 +1427,44 @@ int tramo_linearize_series (const double *x, double *y,
 
 #define PXSUM_SKIP_NA 1
 
+/* Run a check for time-invariance of a panel series. If it isn't
+   time-invariant that should become apparent quickly, but if it is
+   we get a substantial shortcut for standard deviation.
+*/
+
+static int time_invariant (const double *x,
+                           int u1, int u2, int T,
+                           const double *mask)
+{
+    double xmin, xmax;
+    int i, t, s;
+    int ret = 1;
+
+    for (i=u1; i<=u2 && ret; i++) {
+        xmin = xmax = NADBL;
+        for (t=0; t<T && ret; t++) {
+            s = i*T + t;
+            if (panel_obs_ok(x, s, mask)) {
+                if (na(xmax)) {
+                    xmin = xmax = x[s];
+                } else if (x[s] < xmin) {
+                    xmin = x[s];
+                } else if (x[s] > xmax) {
+                    xmax = x[s];
+                }
+            }
+            if (xmax > xmin) {
+                ret = 0;
+            }
+        }
+        if (ret && na(xmax)) {
+            ret = 0;
+        }
+    }
+
+    return ret;
+}
+
 /**
  * panel_statistic:
  * @x: source data.
@@ -1459,6 +1497,15 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
     T = dset->pd;
     u1 = dset->t1 / T;
     u2 = dset->t2 / T;
+
+    if (k == F_PSD && time_invariant(x, u1, u2, T, mask)) {
+        for (i=u1; i<=u2; i++) {
+            for (t=0; t<T; t++) {
+                y[i*T + t] = 0.0;
+            }
+        }
+        return 0;
+    }
 
     if (k == F_PNOBS) {
 	/* the number of valid observations */
