@@ -1444,6 +1444,8 @@ static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R,
     return err;
 }
 
+#define PRINT_DROPS 0
+
 /* variant of drop_redundant_vars used in association with
    column pivoting */
 
@@ -1459,8 +1461,10 @@ pivot_drop_redundant (MODEL *pmod, DATASET *dset, const int *D)
     for (i=1; i<=ndrop; i++) {
         vi = pmod->list[D[i] + 1];
         droplist[i] = vi;
+#if PRINT_DROPS
         fprintf(stderr, "dropping redundant variable %d (%s)\n",
                 vi, dset->varname[vi]);
+#endif
     }
 
     newlist = gretl_list_drop(pmod->list, droplist, &err);
@@ -1491,8 +1495,10 @@ drop_redundant_vars (MODEL *pmod, DATASET *dset, gretl_matrix *R,
         if (fabs(d) < R_DIAG_MIN) {
             vi = pmod->list[pos];
             gretl_list_append_term(&droplist, vi);
+#if PRINT_DROPS
             fprintf(stderr, "dropping redundant variable %d (%s): d = %g\n",
                     vi, dset->varname[vi], d);
+#endif
             gretl_list_delete_at_pos(pmod->list, pos--);
             nd++;
         }
