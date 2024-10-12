@@ -9150,14 +9150,11 @@ int gretl_check_QR_rank (const gretl_matrix *R, int *err, double *rcnd)
     }
 
     if (rcond < QR_RCOND_MIN) {
+#if 0
         fprintf(stderr, "gretl_matrix_QR_rank: rcond = %g\n", rcond);
+#endif
         rank = get_R_rank(R);
     }
-#if 0
-    else if (rcond < QR_RCOND_WARN) {
-        fprintf(stderr, "QR warning: rcond = %g\n", rcond);
-    }
-#endif
 
     if (rcnd != NULL) {
         *rcnd = rcond;
