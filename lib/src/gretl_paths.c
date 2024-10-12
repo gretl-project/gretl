@@ -3562,10 +3562,10 @@ static int get_system_install_path (char *path, const char *subdir)
 }
 
 /* get a path that's suitable for writing a function
-   package on installation
+   package or scripts package on installation
 */
 
-const char *gretl_function_package_path (void)
+const char *gretl_package_install_path (const char *payload)
 {
     static char path[FILENAME_MAX];
 
@@ -3581,10 +3581,10 @@ const char *gretl_function_package_path (void)
         sys_first = 0;
 #endif
         if (sys_first) {
-            err = get_system_install_path(path, "functions");
+            err = get_system_install_path(path, payload);
 	}
 	if (err || !sys_first) {
-            err = get_user_install_path(path, "functions");
+            err = get_user_install_path(path, payload);
         }
         if (err) {
             *path = '\0';

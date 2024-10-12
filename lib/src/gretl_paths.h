@@ -203,7 +203,7 @@ const char *gretl_mpi_hosts (void);
 
 const char *gretl_mpiexec (void);
 
-const char *gretl_function_package_path (void);
+const char *gretl_package_install_path (const char *payload);
 
 void gretl_set_script_dir (const char *s);
 

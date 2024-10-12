@@ -9676,6 +9676,9 @@ static void handle_gui_pkg_install (gretl_bundle *b)
 	if (!err && strstr(filename, ".tar.gz")) {
 	    /* installed a data-file collection: clear the cache, if any */
 	    destroy_file_collections();
+        } else if (!err && gretl_bundle_get_bool(b, "scripts", 0)) {
+            /* installed a script-file collection: ditto */
+            destroy_file_collections();
         } else if (!err) {
 	    /* installed a function package */
             maybe_update_pkgview(filename, pkgname, zipfile,

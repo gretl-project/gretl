@@ -1211,8 +1211,8 @@ int retrieve_addons_package (const char *localname)
 }
 
 /**
- * retrieve_remote_datafiles_package:
- * @pkgname: name of data files package to retrieve, e.g.
+ * retrieve_remote_files_package:
+ * @pkgname: name of data or script files package to retrieve, e.g.
  * "wooldridge.tar.gz".
  * @localname: full path to which the package file should be
  * written on the local machine.
@@ -1222,8 +1222,8 @@ int retrieve_addons_package (const char *localname)
  * Returns: 0 on success, non-zero on failure.
  */
 
-int retrieve_remote_datafiles_package (const char *pkgname,
-                                       const char *localname)
+int retrieve_remote_files_package (const char *pkgname,
+                                   const char *localname)
 {
     return retrieve_url(sffiles, GRAB_PKG, pkgname, NULL,
                         localname, 0, NULL);
