@@ -31,8 +31,8 @@ version 2024c, in progress
 - GUI: ensure that the "Compact data" and "Expand data" menu
   items are disabled when the dataset is cross-sectional
 - GUI: support Ctrl+L to clear the console
-- Windows 64-bit build: make Consolas the default monospace
-  font
+- GUI specification dialogs for calling packaged functions:
+  avoid mixture of languages so far as possible
 - Fix bad behavior from "set force_decpoint off" for users in
   a locale that normally uses decimal comma but who choose not
   to use it
@@ -42,6 +42,10 @@ version 2024c, in progress
 - Fix relatively slow matrix inversion on Windows; speed-up
   should be apparent for symmetric positive definite matrices
   in particular
+- Windows 64-bit build: link against MS UCRT; use GTK3; update
+  dependency DLLs and cross-compiler; make Consolas the default
+  monospace font
+- Update translations: Galician, Italian and Polish
 
 2024-05-21 version 2024b
 - "gridplot" command: add a --title option
