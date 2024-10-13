@@ -1071,6 +1071,7 @@ static int gmm_multiply_ocs (nlspec *s)
 #if GMM_DEBUG > 1
     gretl_matrix_print(s->oc->e, "gmm_multiply_ocs: s->oc->e");
     gretl_matrix_print(s->oc->Z, "gmm_multiply_ocs: s->oc->Z");
+    gretl_matrix_print(s->oc->S, "gmm_multiply_ocs: s->oc->S");
     gretl_matrix_print(s->oc->tmp, "gmm_multiply_ocs: s->oc->tmp");
     fprintf(stderr, "err = %d\n", err);
 #endif
@@ -1082,7 +1083,6 @@ static double gmm_criterion (nlspec *s)
 {
     double crit = 0.0;
     gretl_matrix *sum = s->oc->sum;
-    gretl_matrix *W = s->oc->W;
     int k = s->oc->noc;
     int i, j, err;
 
@@ -1092,14 +1092,14 @@ static double gmm_criterion (nlspec *s)
     }
 
     /* compute column sums */
-    for (i=0; i<k; i++) {
-	sum->val[i] = 0.0;
-	for (j=0; j<s->nobs; j++) {
-	    sum->val[i] += gretl_matrix_get(s->oc->tmp, j, i);
+    for (j=0; j<k; j++) {
+	sum->val[j] = 0.0;
+	for (i=0; i<s->nobs; i++) {
+	    sum->val[j] += gretl_matrix_get(s->oc->tmp, i, j);
 	}
     }
 
-    crit = gretl_scalar_qform(sum, W, &err);
+    crit = gretl_scalar_qform(sum, s->oc->W, &err);
     if (!err) {
 	crit = -crit;
     }
