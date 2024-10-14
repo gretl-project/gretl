@@ -106,6 +106,7 @@ function void errchkSRhisto(bundle *Smod, int drawix)
 end function
 
 # ------------------------------
+
 function void errmsgshockmatch(const matrix pos, string sname)
     #  pos is the result of an instrings() search, 0 to n-element vector
     
@@ -252,6 +253,67 @@ function matrix get_all_eshocks(const bundle mod)
     return all_eshocks
 end function
 
+# -----------------------------------
+
+function matrix semi_exotic_check(int s[1::], const bundle mod, const matrices irfs)
+
+    # Checks whether for shock number s the possible semi-exotic restrictions
+    # can be fulfilled.
+    # We do not attempt sign-flipping of the IRF here, this wouldn't
+    # really be helpful for such exotic restrictions.
+    # So we return a row vector (with n columns) that can only have zeros or ones.
+    # (1 for a successful check, of course.)
+
+    n = cols(irfs[1])
+    matrix results = zeros(0,n)
+
+    # check all exotic restrictions whether they're semi-exotic and whether
+    # they actually involve shock s
+    loop i = 1..nelem(mod.exoticSR.eshocks)
+
+        # just one shock involved, semi-exotic; and not super-exotic
+        if nelem(mod.exoticSR.eshocks[i]) == 1 && mod.exoticSR.super[i] == FALSE
+            # debug
+            # print "here only with a single shock, and not super"
+
+            # and it affects the current shock
+            if contains(s, mod.exoticSR.eshocks[i])
+                # debug
+#                 print "second contains, only if current shock relevant"
+#                 print i
+#                 eval mod.snames[i]
+
+                # As per the spec, we have hardcoding like "M[2,3]" in the restriction.
+                # But we want to check different potential columns for swapping,
+                # not just the nominal one (in this example: 3).
+
+                string restr = mod.exoticSR.checks[i]
+                restr = strsub(restr, " ", "") # (remove all blanks)
+
+                matrix mtemp = zeros(1,n)
+                loop j = 1..n
+                    # use a regexp to do like: "M[2,3]" -> "M[2,<j>]"
+                    string temprestr = regsub(restr, "M\[(\d+),\d+\]", sprintf("M[\1,%d]", j))
+
+                    # debug 
+                    # print temprestr 
+                    
+                    chk = 1 # will be switched off if the check fails
+                    # the inner function applies this to all specified horizons
+                    exotic_inner_check(&chk, i, mod, irfs, temprestr)
+                    mtemp[j] = chk
+                endloop
+                # debug 
+                # print mtemp 
+                
+                results |= mtemp
+
+            endif
+        endif
+    endloop
+
+    return nelem(results) ? minc(results) .= 1 : results
+end function
 
 # -----------------------------------
 
@@ -268,8 +330,10 @@ function matrix get_id_mat (const bundle mod, const matrix shocks,
     # the ambiguous cases somehow, instead of simply removing them.
 
     VERB = 0
+
     nshocks = rows(shocks)
     matrix id_matrix = zeros(nshocks, mod.n)
+
     # -- Ais, moved here from the calling function SVAR_SRdraw,
     #   because it isn't used anywhere else --
     matrices Ais = prepAis(mod, shocks)
@@ -285,6 +349,22 @@ function matrix get_id_mat (const bundle mod, const matrix shocks,
             printf "=========================================\n"
         endif
         id_matrix[i,] = check_irfs(irfs, Ais[i], VERB)
+
+        # The special SEMI_EXOT algorithm isn't used by default yet...
+        if inbundle(mod, "SEMI_EXOT") && mod.SEMI_EXOT == TRUE
+            if contains(i, all_eshocks)	# shock i has one or more exotic restrictions
+                # debug
+                # print "after first contains check" 
+                
+                matrix semi_exotic_result = semi_exotic_check(i, mod, irfs)
+                
+                # combine with id_matrix row; we cannot preserve the 
+                # -1s (sign flips) there for this shock
+                if nelem(semi_exotic_result)	# otherwise not really semi-exotic
+                    id_matrix[i,] = id_matrix[i,] .= 1 && semi_exotic_result .= 1
+                endif
+            endif
+        endif
     endloop
 
     if VERB
@@ -377,7 +457,7 @@ function matrix check_one_irf(matrices M, matrix spec,
     # -1 if column satifies the bounds after a sign change
     #  0 if the bounds condition isn't met
 
-    scalar n = cols(M[1])
+    scalar n = cols(M[1])	# is n supposed to count the shocks or the targets??
     scalar h = nelem(M)
     scalar vndx = spec[1] # always matrix?
 
@@ -427,8 +507,8 @@ function matrix check_irfs(matrices M, matrix A, int verbose[0])
 
     n = cols(M[1])
     rA = rows(A)	# num of (non-exotic) constraints for the current shock
-    # check consistency
 
+    # check consistency
     matrix chks = zeros(rA, n)
     loop i = 1 .. rA
         if verbose
