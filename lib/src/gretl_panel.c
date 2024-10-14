@@ -6259,30 +6259,28 @@ static int varying_vars_list (const DATASET *dset, panelmod_t *pan)
     for (j=2; j<=pan->pooled->list[0]; j++) {
         int vj = pan->pooled->list[j];
         int varies = 0;
+        double x0;
 
         if (vj == 0) {
+            /* const */
             pan->vlist[k++] = 0;
             pan->vlist[0] += 1;
             continue;
         }
 
         for (i=0; i<pan->nunits && !varies; i++) {
-            int started = 0;
-            double xval = NADBL;
-
             if (pan->unit_obs[i] == 0) {
                 continue;
             }
-
+            x0 = NADBL;
             for (t=0; t<pan->T && !varies; t++) {
                 bigt = panel_index(i, t);
                 if (panel_missing(pan, bigt)) {
                     continue;
                 }
-                if (!started) {
-                    xval = dset->Z[vj][bigt];
-                    started = 1;
-                } else if (dset->Z[vj][bigt] != xval) {
+                if (na(x0)) {
+                    x0 = dset->Z[vj][bigt];
+                } else if (dset->Z[vj][bigt] != x0) {
                     varies = 1;
                 }
             }
