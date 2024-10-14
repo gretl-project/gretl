@@ -76,6 +76,7 @@ struct nlspec_ {
     double *coeff;      /* coefficient estimates */
     gretl_matrix *J;    /* Jacobian matrix */
     gretl_matrix *Hinv; /* negative inverse of Hessian */
+    gretl_matrix *bounds; /* param bounds, specific to GMM with --lbfgs */
     char **aux;         /* auxiliary commands */
     char *hesscall;     /* function call for Hessian */
     GENERATOR **genrs;  /* variable-generation pointers */

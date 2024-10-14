@@ -3440,6 +3440,25 @@ static void nls_run_GNR (MODEL *pmod, nlspec *spec, PRN *prn)
     }
 }
 
+static int check_lbfgs_option (nlspec *spec)
+{
+    const char *s = get_optval_string(GMM, OPT_L);
+    int err = 0;
+
+    if (s != NULL) {
+        gretl_matrix *bounds = get_matrix_by_name(s);
+
+        if (bounds == NULL) {
+            gretl_errmsg_sprintf(_("Unknown matrix '%s'"), s);
+            err = E_UNKVAR;
+        } else {
+            spec->bounds = bounds;
+        }
+    }
+
+    return err;
+}
+
 /* static function providing the real content for the two public
    wrapper functions below: does NLS, MLE or GMM */
 
@@ -3462,7 +3481,11 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
     }
 
     if (spec->ci == GMM) {
+        /* can't have both --iterate and --two-step */
 	nlmod.errcode = incompatible_options(opt, OPT_I | OPT_T);
+        if (!nlmod.errcode && (opt & OPT_L)) {
+            nlmod.errcode = check_lbfgs_option(spec);
+        }
     } else if (spec->nlfunc == NULL) {
 	gretl_errmsg_set(_("No function has been specified"));
 	nlmod.errcode = E_PARSE;
@@ -3723,6 +3746,7 @@ nlspec *nlspec_new (int ci, const DATASET *dset)
     spec->nmat = 0;
 
     spec->Hinv = NULL;
+    spec->bounds = NULL;
 
     spec->ci = ci;
     spec->flags = 0;

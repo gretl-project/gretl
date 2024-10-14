@@ -1468,6 +1468,15 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 
     if (!err) {
 	err = gretl_invert_symmetric_matrix(m2);
+        if (err) {
+            gretl_model_set_int(pmod, "JWJ_fail", 1);
+            err = 0;
+            for (i=0; i<k; i++) {
+                pmod->sderr[i] = NADBL;
+            }
+            gretl_matrix_fill(V, NADBL);
+            goto next_step;
+        }
     }
 
     if (!err) {
@@ -1495,6 +1504,8 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 					 NADBL);
 	}
     }
+
+ next_step:
 
     if (!err) {
 	/* set additional GMM info */
@@ -1803,10 +1814,17 @@ int gmm_calculate (nlspec *s, PRN *prn)
 #endif
 	s->crit = 0.0;
 
-	err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol,
-		       &s->fncount, &s->grcount,
-		       get_gmm_crit, C_GMM, NULL, s,
-		       NULL, iopt, s->prn);
+        if (s->opt & OPT_L) {
+            err = LBFGS_max(s->coeff, s->ncoeff, maxit, s->tol,
+                            &s->fncount, &s->grcount,
+                            get_gmm_crit, C_GMM, NULL, NULL,
+                            s, s->bounds, iopt, s->prn);
+        } else {
+            err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol,
+                           &s->fncount, &s->grcount,
+                           get_gmm_crit, C_GMM, NULL, s,
+                           NULL, iopt, s->prn);
+        }
 
 #if GMM_DEBUG
 	fprintf(stderr, "GMM BFGS: err = %d\n", err);

@@ -2140,6 +2140,10 @@ static void print_model_heading (const MODEL *pmod,
 	    }
 	}
 
+        if (gretl_model_get_int(pmod, "JWJ_fail")) {
+            gretl_prn_newline(prn);
+            pprintf(prn, _("J'WJ is not positive definite, std. errors not available"));
+        }
 	if (mc > 0) {
 	    gretl_prn_newline(prn);
 	    pprintf(prn, "%s: %d", _("Missing or incomplete observations dropped"),

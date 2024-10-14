@@ -308,7 +308,7 @@ struct gretl_option gretl_opts[] = {
     { GARCH,    OPT_V, "verbose", 0 },
     { GARCH,    OPT_Z, "stdresid", 0 },
     { GMM,      OPT_I, "iterate", 0 },
-    { GMM,      OPT_L, "lbfgs", 0 },
+    { GMM,      OPT_L, "lbfgs", 1 },
     { GMM,      OPT_T, "two-step", 0 },
     { GMM,      OPT_V, "verbose", 0 },
     { GNUPLOT,  OPT_I, "input", 2 },
