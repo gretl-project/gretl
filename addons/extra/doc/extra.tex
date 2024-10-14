@@ -208,7 +208,7 @@ tweaked by setting appropriate keys in the \texttt{opts} bundle:
 \begin{description}
 \item[format]: a string, to be used for aligning columns. The default
   is to have the first column left-aligned, and the subsequent ones
-  centered, as in ``texttt{lccc}''.
+  centered, as in ``\texttt{lccc}''.
 \item[decimals] The number of decimals to use (default=3).
 \item[nacode] The string to use for missing entries (default: empty).
 \item[rnames] A string array for row headings.
@@ -316,11 +316,11 @@ in `tofind' then the output may also contain duplicate indices. Use
 \ArgRet{\texttt{matrix v}}{matrix}
 
 Finds the mode of the empirical distribution of the input data.  If
-that is multi-modal, details of internal computer arithmetic can
+the data are multi-modal, details of internal computer arithmetic can
 influence which of the modes is actually found. Returns a 2-element
-column vector with the modal value and its absolute frequency. If v is
-an empty matrix (comprises only nan values) a 1x1 matrix with nan is
-returned.
+column vector with the modal value and its absolute frequency. If
+\texttt{v} is an empty matrix (comprises only nan values) a
+$1\times 1$ matrix with nan is returned.
 
 \subsection{powerset}
 
@@ -470,9 +470,9 @@ See also the sister function \cmd{WSRcritical}.
 
 \ArgRet{\texttt{series a, series b}}{series}
 
-This function takes as arguments two discrete series computes all the
-combinations of their values that occur in the selected sample of the
-currently open dataset. These are stored in the resulting series.
+This function takes as arguments two discrete series and computes all
+the combinations of their values that occur in the selected sample of
+the currently open dataset. These are stored in the resulting series.
 
 For example, suppose you have a dataset of trade flows, with two
 series \texttt{ic} and \texttt{ec} for the importing and exporting
