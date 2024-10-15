@@ -1470,6 +1470,11 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 	err = gretl_invert_symmetric_matrix(m2);
         if (err) {
             gretl_model_set_int(pmod, "JWJ_fail", 1);
+#if 0
+            gretl_matrix_print(J, "J");
+            gretl_matrix_print(s->oc->W, "W");
+            gretl_matrix_print(m2, "m2");
+#endif
             err = 0;
             for (i=0; i<k; i++) {
                 pmod->sderr[i] = NADBL;
