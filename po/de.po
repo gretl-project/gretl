@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-09-26 10:22-0400\n"
-"PO-Revision-Date: 2024-04-04 18:21+0200\n"
+"PO-Revision-Date: 2024-10-15 18:48+0200\n"
 "Last-Translator: Sven Schreiber <svetosch (at) gmx (dot) net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.4.2\n"
+"X-Generator: Poedit 3.5\n"
 
 #: lib/src/addons_utils.c:186
 msgid "try"
@@ -489,9 +489,9 @@ msgstr ""
 "Numerische Zsfssg. mit gebootstraptem Konfidenzintervall für den Median"
 
 #: lib/src/boxplots.c:343
-#, fuzzy, c-format
+#, c-format
 msgid "Numerical summary for %s by %s"
-msgstr "Numerische Zsfssg. für %s"
+msgstr "Numerische Zsfssg. für %s je nach %s"
 
 #: lib/src/boxplots.c:346
 #, c-format
@@ -709,9 +709,8 @@ msgid "squares and cubes"
 msgstr "Quadrate und Kuben"
 
 #: lib/src/compare.c:2000
-#, fuzzy
 msgid "Robust RESET test for specification"
-msgstr "RESET-Spezifikationstest"
+msgstr "Robuster RESET-Spezifikationstest"
 
 #: lib/src/compare.c:2002 lib/src/gretl_model.c:4299
 msgid "RESET test for specification"
@@ -1848,7 +1847,7 @@ msgstr "Keine Kartendatei liegt vor"
 
 #: lib/src/dataset.c:6802
 msgid "dataset is resampled!"
-msgstr "Datensatz ist neu unterteilt!"
+msgstr "Datensatz ist neu gezogen!"
 
 #: lib/src/dataset.c:6827
 msgid "map and dataset are out of sync!"
@@ -2391,25 +2390,23 @@ msgid "Two-tailed critical values for n = %d"
 msgstr "Zweiseitige kritische Werte für n = %d"
 
 #: lib/src/describe.c:6869
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using the %d observations %s - %s"
-msgstr "%s, benutze die Beobachtungen %s - %s"
+msgstr "%s, mit den %d Beobachtungen %s - %s"
 
 #: lib/src/describe.c:6870 lib/src/describe.c:6874 lib/src/describe.c:6878
 msgid "Correlation Coefficients"
 msgstr "Korrelationskoeffizienten"
 
 #: lib/src/describe.c:6873
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using %d observations from %s - %s"
-msgstr "%s, benutze die Beobachtungen %s - %s"
+msgstr "%s, mit den %d Beobachtungen von %s - %s"
 
 #: lib/src/describe.c:6877
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using samples of size %d to %d"
-msgstr ""
-"bei %d Teilstichproben der Größe %d\n"
-"\n"
+msgstr "%s, mit Teilstichproben der Größen %d bis %d"
 
 #: lib/src/describe.c:7046 lib/src/describe.c:7139
 msgid "Sample range has no valid observations."
@@ -2633,11 +2630,11 @@ msgstr "%s: abhängige Variable muss Zähldatentyp sein"
 
 #: lib/src/discrete.c:4233
 msgid "binperms: n must be <= 64"
-msgstr ""
+msgstr "binperms: n muss <= 64 sein"
 
 #: lib/src/discrete.c:4239
 msgid "binperms: we need n >= k >= 0"
-msgstr ""
+msgstr "binperms: es muss n >= k >= 0 sein"
 
 #: lib/src/estimate.c:192
 #, c-format
@@ -4294,9 +4291,8 @@ msgid "You cannot define a function within a function"
 msgstr "Sie können keine Funktion in einer Funktion definieren"
 
 #: lib/src/gretl_errors.c:85
-#, fuzzy
 msgid "Out of bounds error"
-msgstr "Zu wenig Speicher - Fehler"
+msgstr "Fehler, außerhalb der Grenzen"
 
 #: lib/src/gretl_errors.c:86
 msgid "Error executing function"
@@ -4724,29 +4720,29 @@ msgstr ""
 "ohne const-Garantie\n"
 
 #: lib/src/gretl_func.c:9090
-#, fuzzy, c-format
+#, c-format
 msgid "The package %s needs gretl version %s"
-msgstr "Diese Funktion setzt gretl-Version %s voraus."
+msgstr "Das Paket %s erfordert gretl-Version %s."
 
 #: lib/src/gretl_func.c:9098
-#, fuzzy, c-format
+#, c-format
 msgid "The package %s needs a dataset in place"
-msgstr "Dieses Paket erfordert einen aktiven Datensatz."
+msgstr "Das Paket %s erfordert einen aktiven Datensatz."
 
 #: lib/src/gretl_func.c:9106
-#, fuzzy, c-format
+#, c-format
 msgid "The package %s needs time-series data"
-msgstr "Dieses Paket erfordert Zeitreihendaten."
+msgstr "Das Paket %s erfordert Zeitreihendaten."
 
 #: lib/src/gretl_func.c:9114
-#, fuzzy, c-format
+#, c-format
 msgid "The package %s needs panel data"
-msgstr "Dieses Paket erfordert Paneldaten."
+msgstr "Das Paket %s erfordert Paneldaten."
 
 #: lib/src/gretl_func.c:9122
-#, fuzzy, c-format
+#, c-format
 msgid "The package %s needs quarterly or monthly data"
-msgstr "Dieses Paket erfordert quartalsweise oder monatliche Daten."
+msgstr "Das Paket %s erfordert quartalsweise oder monatliche Daten."
 
 #: lib/src/gretl_func.c:9198
 #, c-format
@@ -6183,9 +6179,9 @@ msgid "Output redirection: maximum depth reached"
 msgstr "Output-Umleitung: maximale Tiefe erreicht"
 
 #: lib/src/interact.c:1084
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is of type %s"
-msgstr "Variablen vom Typ %s:"
+msgstr "'%s' ist vom Typ %s"
 
 #: lib/src/interact.c:1096
 #, c-format
@@ -6193,9 +6189,8 @@ msgid "'%s' : not a string variable"
 msgstr "'%s': keine Zeichenkettenvariable"
 
 #: lib/src/interact.c:1193
-#, fuzzy
 msgid "output cannot be redirected in this context"
-msgstr "'catch' in diesem Kontext nicht benutzbar"
+msgstr "Ausgabe in diesem Kontext nicht umleitbar"
 
 #: lib/src/interact.c:1240
 msgid "Now discarding output\n"
@@ -8274,7 +8269,7 @@ msgstr "Varianz"
 #: lib/src/nonparam.c:1176
 #, c-format
 msgid "  5%% %s: %d (%s), %d (%s)\n"
-msgstr ""
+msgstr "  5%% %s: %d (%s), %d (%s)\n"
 
 #: lib/src/nonparam.c:1177
 msgid "critical values"
@@ -8992,6 +8987,7 @@ msgstr "Zu wenig Speicher beim XML-Kodieren"
 #: lib/src/subsample.c:733
 msgid "You cannot subsample a resampled dataset"
 msgstr ""
+"Sie können keine Teilstichprobe eines neu gezogenen Datensatzes bilden."
 
 #: lib/src/subsample.c:843
 msgid "Missing sub-sample information; can't merge data\n"
@@ -10114,9 +10110,9 @@ msgid "Weibull(%g, %g)"
 msgstr "Weibull(%g, %g)"
 
 #: gui/calculator.c:223
-#, fuzzy, c-format
+#, c-format
 msgid "Gamma(%g, %g)"
-msgstr "N(%g, %g)"
+msgstr "Gamma(%g, %g)"
 
 #: gui/calculator.c:430 gui/dlgutils.c:1168
 msgid "Standard errors"
@@ -10694,9 +10690,8 @@ msgid "gretl: ARIMA lag selection"
 msgstr "gretl: ARIMA-Lagwahl"
 
 #: gui/callbacks.c:516
-#, fuzzy
 msgid "gretl: factorized statistics"
-msgstr "gretl: Spanne-vs.-Mittel-Statistiken"
+msgstr "gretl: faktorisierte Statistiken"
 
 #: gui/callbacks.c:518 gui/callbacks.c:533 gui/callbacks.c:536
 #: gui/callbacks.c:538 gui/callbacks.c:540 gui/callbacks.c:685
@@ -11398,7 +11393,7 @@ msgstr "Autor"
 
 #: gui/datafiles.c:2939
 msgid "Addon"
-msgstr ""
+msgstr "Erweiterung"
 
 #: gui/datafiles.c:2945 gui/fnsave.c:2910 gui/textutil.c:395
 msgid "Window"
@@ -11946,9 +11941,8 @@ msgid "Make this restriction permanent"
 msgstr "Restringiere dauerhaft"
 
 #: gui/dialogs.c:2365
-#, fuzzy
 msgid "Preserve panel structure"
-msgstr "Panelstruktur"
+msgstr "Panelstruktur erhalten"
 
 #: gui/dialogs.c:2386
 msgid "The current data range is too small for this option"
@@ -12727,9 +12721,8 @@ msgid "Add equation"
 msgstr "Gleichung hinzufügen"
 
 #: gui/dlgutils.c:817
-#, fuzzy
 msgid "New equation"
-msgstr "Gleichung"
+msgstr "Neue Gleichung"
 
 #: gui/dlgutils.c:821
 msgid "Add derivative"
@@ -13303,9 +13296,8 @@ msgid "Enter name=formula for new scalar"
 msgstr "Geben Sie Name=Formel für einen neuen Skalar ein"
 
 #: gui/fncall.c:1843
-#, fuzzy
 msgid "Define series"
-msgstr "Reihe finden"
+msgstr "Reihe definieren"
 
 #: gui/fncall.c:1845 gui/ssheet.c:3987
 msgid "Define matrix"
@@ -13317,7 +13309,7 @@ msgstr "Argumente auswählen:"
 
 #: gui/fncall.c:2105
 msgid "Save return value (optional, clear box for no assigment):"
-msgstr ""
+msgstr "Rückgabewert speichern (optional, keine Zuweisung bei freier Box)"
 
 #: gui/fncall.c:2108
 msgid "Assign return value (optional):"
@@ -14830,7 +14822,6 @@ msgid "plain"
 msgstr "einfach"
 
 #: gui/gretl.c:1904
-#, fuzzy
 msgid "factorized"
 msgstr "Faktorisiert"
 
@@ -15977,9 +15968,8 @@ msgid "simple append"
 msgstr "einfaches Anhängen"
 
 #: gui/gui_utils.c:874
-#, fuzzy
 msgid "append with fixed sample range"
-msgstr "Wähle Stichprobenbereich"
+msgstr "Anhängen mit festem Stichprobenbereich"
 
 #: gui/gui_utils.c:875
 msgid "\"join\" (advanced)"
@@ -16999,9 +16989,8 @@ msgid "linear restrictions"
 msgstr "lineare Restriktionen"
 
 #: gui/library.c:3658
-#, fuzzy
 msgid "No system was specified"
-msgstr "%s: es wurde kein System spezifiziert"
+msgstr "Es wurde kein System spezifiziert."
 
 #: gui/library.c:3738
 msgid ""
@@ -18176,9 +18165,8 @@ msgid "Variable to plot"
 msgstr "Zu plottende Variable"
 
 #: gui/selector.c:4802
-#, fuzzy
 msgid "Primary variable"
-msgstr "Zeittrendvariable"
+msgstr "Primäre Variable"
 
 #: gui/selector.c:4842
 msgid "Lower bound variable"
@@ -18425,7 +18413,6 @@ msgid "Prefer NLS via Levenberg-Marquardt"
 msgstr "Bevorzuge NKQ durch Levenberg-Marquardt"
 
 #: gui/selector.c:6363
-#, fuzzy
 msgid "Show all statistics"
 msgstr "Zeige komplette Statistiken"
 
@@ -18654,9 +18641,8 @@ msgid "Select format"
 msgstr "Format wählen"
 
 #: gui/selector.c:7322
-#, fuzzy
 msgid "At least two series are needed"
-msgstr "Keine Reihen definiert\n"
+msgstr "Erfordert mindestens zwei Reihen"
 
 #: gui/selector.c:7480
 msgid "New variable"
@@ -18687,9 +18673,8 @@ msgid "factorized boxplot"
 msgstr "faktorisierter Boxplot"
 
 #: gui/selector.c:7533
-#, fuzzy
 msgid "factorized statistics"
-msgstr "Deskriptive Statistiken"
+msgstr "faktorisierte Statistiken"
 
 #: gui/selector.c:7535
 msgid "scatterplot with control"
@@ -18784,9 +18769,8 @@ msgid "Define named list"
 msgstr "Definiere benannte Liste"
 
 #: gui/selector.c:7951
-#, fuzzy
 msgid "Select coefficients to track (max 25)"
-msgstr "Wähle zu verfolgende Koeffizienten"
+msgstr "Wähle zu verfolgende Koeffizienten (max. 25)"
 
 #: gui/selector.c:8211
 msgid "Name of list"
@@ -20408,7 +20392,7 @@ msgstr "GMM-artige Instrumente, Differenzengleichung:\n"
 #: plugin/dpanel.c:3452 plugin/dpanel.c:3459
 #, c-format
 msgid "  %s: %s %d %s %s\n"
-msgstr ""
+msgstr "  %s: %s %d %s %s\n"
 
 #: plugin/dpanel.c:3457
 msgid "GMM-style instruments, levels equation:\n"
@@ -22329,124 +22313,103 @@ msgstr "Grad an Ausführlichkeit"
 
 #: addons/addons-i18n.c:112
 msgid "Don't"
-msgstr ""
+msgstr "Nichts tun"
 
 #: addons/addons-i18n.c:113
-#, fuzzy
 msgid "Fill method"
-msgstr "Numerische Methoden"
+msgstr "Füllmethode"
 
 #: addons/addons-i18n.c:114
-#, fuzzy
 msgid "Linear interpolation"
-msgstr "_Lineare Restriktionen"
+msgstr "Lineare Interpolation"
 
 #: addons/addons-i18n.c:115
-#, fuzzy
 msgid "Mean value"
-msgstr "Eigenwert"
+msgstr "Mittelwert"
 
 #: addons/addons-i18n.c:116
-#, fuzzy
 msgid "Number of random variables"
-msgstr "Name der Variable:"
+msgstr "Anzahl der Zufallsvariablen"
 
 #: addons/addons-i18n.c:117
-#, fuzzy
 msgid "Number of selected choices"
-msgstr "Anzahl Wiederholungen:"
+msgstr "Gewählte Anzahl der Elemente"
 
 #: addons/addons-i18n.c:118
-#, fuzzy
 msgid "Repetition"
-msgstr "Restriktion"
+msgstr "Wiederholung"
 
 #: addons/addons-i18n.c:119
-#, fuzzy
 msgid "Series to fill"
-msgstr "In Datei speichern"
+msgstr "Zu füllende Reihe"
 
 #: addons/addons-i18n.c:120
-#, fuzzy
 msgid "Set of all choices"
-msgstr "Summe der AR-Koeffizienten"
+msgstr "Menge aller Elemente"
 
 #: addons/addons-i18n.c:121
-#, fuzzy
 msgid "Std. deviation"
 msgstr "Std'abweichung"
 
 #: addons/addons-i18n.c:122
-#, fuzzy
 msgid "Vector of values"
-msgstr "geschätzte Werte"
+msgstr "Wertevektor"
 
 #: addons/addons-i18n.c:123
-#, fuzzy
 msgid "W test stat"
-msgstr "Teststatistik"
+msgstr "W-Teststatistik"
 
 #: addons/addons-i18n.c:124
 msgid "always use normal approx"
-msgstr ""
+msgstr "immer Normal-Approximation benutzen"
 
 #: addons/addons-i18n.c:125
-#, fuzzy
 msgid "bootstrap type code"
-msgstr "Bootstrap-Art"
+msgstr "Code für Bootstrap-Art"
 
 #: addons/addons-i18n.c:126
-#, fuzzy
 msgid "left truncation value"
-msgstr "Bartlett-Berücksichtigungsschwelle bei %d Lags\n"
+msgstr "Linker Trunkierungswert"
 
 #: addons/addons-i18n.c:128
-#, fuzzy
 msgid "number of trials"
-msgstr "Anzahl Klassen:"
+msgstr "Anzahl der Versuche"
 
 #: addons/addons-i18n.c:129
-#, fuzzy
 msgid "options"
 msgstr "Optionen"
 
 #: addons/addons-i18n.c:130
-#, fuzzy
 msgid "resampling"
-msgstr "Residuen-Neuziehung"
+msgstr "Neuziehung"
 
 #: addons/addons-i18n.c:131
-#, fuzzy
 msgid "right truncation value"
-msgstr "Lag-Trunkierung automatisch\n"
+msgstr "rechter Trunkierungswert"
 
 #: addons/addons-i18n.c:132
 msgid "two-sided prob mass"
-msgstr ""
+msgstr "zweiseitige Wahrschkt.-masse"
 
 #: addons/addons-i18n.c:133
-#, fuzzy
 msgid "wildM"
-msgstr "wild/Mammen"
+msgstr "wildM"
 
 #: addons/addons-i18n.c:134
-#, fuzzy
 msgid "wildN"
-msgstr "wild/Normal"
+msgstr "wildN"
 
 #: addons/addons-i18n.c:135
 msgid "wildR"
-msgstr ""
+msgstr "wildR"
 
 #: addons/addons-i18n.c:140
-#, fuzzy
 msgid "Coefficient paths"
-msgstr "Koeffizient"
+msgstr "Koeffizientenpfade"
 
 #: addons/addons-i18n.c:141
-#, fuzzy
 msgid "Criterion plot"
-msgstr "Zeige Kriteriumsgraph"
+msgstr "Kriteriumsgraph"
 
 #~ msgid "obsolete function isnull(): please use !exists() instead"
 #~ msgstr "obsolete Funktion isnull(): bitte stattdessen !exists() verwenden"
