@@ -2289,6 +2289,7 @@
 	  <argname>bounds</argname>, mentre <argname>b</argname>
 	  conterrà i parametri che producono tale valore.
 	</para>
+        <subhead>Vincoli sui parametri</subhead>
 	<para>
 	  La matrice <argname>bounds</argname> dovrà avere 3 colonne e
 	  tante righe quanti sono gli elementi vincolati del vettore
@@ -2304,6 +2305,7 @@
 	<code>
 	  matrix bounds = {2, 0, $huge}
 	</code>
+        <subhead>Derivate analitiche</subhead>
 	<para>
 	  Il terzo argomento (opzionale) permette di fornire il
 	  gradiente analitico (se assente, il gradiente sarà calcolato
