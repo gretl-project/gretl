@@ -100,7 +100,7 @@
 
 \title{The SVAR addon for \app{gretl}}
 \author{Jack Lucchetti and Sven Schreiber}
-\date{May 2024}
+\date{October 2024}
 
 \begin{document}
 
@@ -126,8 +126,8 @@ and is looking for a step-by-step guide on how to get her work done
 quickly via point-and click methods, can consult section \ref{sec:GUI}
 in the Appendix.
 
-In order to establish notation\footnote{Attention: As part of the preparations
-for version 2.0, starting in v1.95 we have changed the notation in an important
+In order to establish notation\footnote{Attention: Starting in v1.95 we have
+changed the notation in an important
 way, by swapping the symbols for the structural shocks and the reduced-form
 residuals (forecast errors). The reason is that most of the recent literature
 uses $u$ for the reduced-form errors, and now we do so, too, which hopefully
@@ -2686,7 +2686,8 @@ in this example).  When you're done, you return to the main SVAR
 window (be sure to select C-model as the model type). After clicking
 ``OK'', the results window will appear, as in
 Figure~\ref{fig:GUI-output}. Note that the estimated $C$ matrix is now
-upper triangular.
+upper triangular.\footnote{The same pattern matrix can also be used 
+in scripting for the \texttt{SVAR\_restrict()} function, since gretl 2024c.}
 
 From the output window, you can save the model bundle to the Icon view
 by clicking on the leftmost icon\footnote{The visual appearance of the
@@ -3056,7 +3057,7 @@ list of endogenous variables must be given in \texttt{nv}.
   model bundle to facilitate further estimation.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_restrict (bundle *Smod, string code, int r, int c[0], scalar d[0])}
+\begin{funcdoc}{SVAR\_restrict (bundle *Smod, string code, numeric r, int c[0], scalar d[0])}
   \noindent Sets up point constraints for an existing model. The function
   takes at most five arguments:
 \begin{enumerate}
@@ -3077,11 +3078,20 @@ list of endogenous variables must be given in \texttt{nv}.
   \item[\texttt{"Bdiag"}] Applicable to AB models. Used for constraints on
     the whole diagonal of the $B$ matrix (see below).
   \end{description}
-\item An integer whose interpretation depends on the restriction type:
+\item A numeric input, namely a matrix or an integer, whose interpretation depends
+ on the restriction type:
   \begin{description}
-  \item[Case 1] applies to codes \texttt{"C"}, \texttt{"lrC"},
-    \texttt{"A"} and \texttt{"B"}. The argument indicates the row of
-    the restricted element.
+  \item[Case 1a] applies to codes \texttt{"C"}, \texttt{"lrC"},
+    \texttt{"A"} and \texttt{"B"}, and \texttt{r} is a scalar integer: Then the
+    argument indicates the row of the restricted element. This input can be combined
+    with the remaining two optional arguments.
+  \item[Case 1b] applies to the same model codes as before, but \texttt{r} is an
+    n-by-n matrix: Then the input is taken to be a full restriction pattern matrix,
+    i.e. any valid number in that matrix is taken directly as a restricted value, 
+    while unrestricted elements must be given as NAs. Typically, a previously created
+    named matrix argument will be used, but an anonymous matrix literal for on-the-fly
+    use is also valid, as per standard hansl syntax. In this matrix usage case, the 
+    remaining arguments \texttt{c} and \texttt{d} are redundant and unused.  
   \item[Case 2] applies to codes \texttt{"Adiag"} and
     \texttt{"Bdiag"}. The argument specifies what kind of restriction
     is to be placed on the diagonal: any valid scalar indicates that
@@ -3111,6 +3121,9 @@ A few examples:
   called \texttt{MyMod}, restricts $C$ such that the long-run impact
   of shock number 3 on variable number 5 is 0. This implies that the
   cumulated IRF for variable 5 with respect to shock 3 tends to zero.
+\item \texttt{SVAR\_restrict(\&Mod2, "B", \{NA, 0; NA, NA\})} specifies a 
+  pattern matrix in a 2-dimensional system to restrict the 1,2-element of
+  the B matrix to zero. 
 \item \texttt{SVAR\_restrict(\&bar, "Adiag", 1)}; in an AB model called
   \texttt{bar}, sets $A_{i,i} = 1$ for $1 \le i \le n$.
 \item \texttt{SVAR\_restrict(\&baz, "Bdiag", NA)}; in an AB model called
@@ -3278,6 +3291,10 @@ context of set-identified models. See section \ref{sec:mixed} for more details.
 % hi\_cb $\rightarrow$ SRhi\_cb, irfSRmeds $\rightarrow$ SRirfmeds.}
 % This hack is not
 % guaranteed to work in the future. (We should probably add a helper function to automate this.) }
+
+\emph{Returns}: \texttt{array of strings}, where each string array element holds the created
+ gnuplot plotting code for one of the chosen set of sign-restricted / set-identified IRF plots,
+ for potential further use. Simply ignore or discard the return value if it is not needed.
 
 \noindent Arguments:
 
@@ -3491,11 +3508,21 @@ typically be called before \texttt{SVAR\_SRirf}.
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
 
-\subsection*{for gretl version 2024c, May 2024}
+\subsection*{for gretl version 2024c, October 2024}
 \begin{itemize}
   \item Get rid of version number since SVAR is a gretl addon, and starting
    with gretl 2024b such official addons inherit the version number directly
    from gretl itself.
+  \item Extend the \cmd{SVAR\_restrict} function to accept full restriction pattern matrices.
+  \item Extend the \cmd{SVAR\_SRirf} function to return the created plotting codes
+   in a strings array (returned nothing before, just ran the plots).
+  \item Use a more efficient normal-inverse-Wishart generation algorithm.
+  \item Properly generate the uniformly distributed rotation matrices (internally 
+   with the new \cmd{gen\_haar} function). 
+  \item Fix a bug with the spaghetti plot (for set-id models) in case of partial
+   identification.
+  \item Try to fix more sub-cases with only ``exotic'' restrictions (and no standard 
+   set-id restrictions); but probably more work needed. 
   \item Fix minor bug (not noticeable with standard usage): do not internally
    require the bundle member E from the old-style (pre 1.95) notation anymore.
    While we're at it, do not carry this compatiblity copy around anymore at
