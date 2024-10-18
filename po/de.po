@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-09-26 10:22-0400\n"
-"PO-Revision-Date: 2024-10-15 18:48+0200\n"
+"PO-Revision-Date: 2024-10-18 16:56+0200\n"
 "Last-Translator: Sven Schreiber <svetosch (at) gmx (dot) net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -2203,7 +2203,7 @@ msgstr "(Fehlwerte wurden ausgelassen)"
 #: lib/src/describe.c:5987 lib/src/describe.c:5992 gui/guiprint.c:235
 #: gui/guiprint.c:293 gui/guiprint.c:651 gui/guiprint.c:715
 msgid "Mean"
-msgstr "Arith. Mittel"
+msgstr "Mittelw."
 
 #: lib/src/describe.c:5091 lib/src/describe.c:5272 lib/src/describe.c:5309
 #: lib/src/describe.c:5987 lib/src/describe.c:5992 gui/guiprint.c:235
@@ -2257,7 +2257,7 @@ msgstr "Interquartilsabstand"
 #: lib/src/describe.c:5103 lib/src/describe.c:5325 lib/src/describe.c:5999
 #: gui/guiprint.c:337 gui/guiprint.c:774
 msgid "Missing obs."
-msgstr "Fehlende Beob."
+msgstr "Fehl-Beob."
 
 #: lib/src/describe.c:5105
 msgid "Within s.d."
@@ -2337,7 +2337,7 @@ msgstr "%s entfernt: Zeichenketten-Reihe\n"
 
 #: lib/src/describe.c:5987 lib/src/describe.c:5992
 msgid "Byval"
-msgstr ""
+msgstr "Auspräg."
 
 #: lib/src/describe.c:6271 lib/src/discrete.c:1435 lib/src/geneval.c:13031
 #: lib/src/gretl_list.c:1752
@@ -14823,7 +14823,7 @@ msgstr "einfach"
 
 #: gui/gretl.c:1904
 msgid "factorized"
-msgstr "Faktorisiert"
+msgstr "faktorisiert"
 
 #: gui/gretl.c:1905
 msgid "_Correlation matrix"
