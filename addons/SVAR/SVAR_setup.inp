@@ -369,10 +369,10 @@ end function
 
 #####################################
 
-function scalar SVAR_restrict(bundle *b, string code, const numeric r, int c[0], scalar d[0])
+function scalar SVAR_restrict(bundle *b, string code, const numeric rR, int c[0], scalar d[0])
 
     # This function specifies/applies short-run (impact) or long-run restrictions
-    # New in 2024: overload the r argument, so that it can also work with a full
+    # New in 2024: overload the rR (old: r) argument, so that it can also work with a full
     # pattern matrix.
     
     # c gets a default so that it can be omitted with Adiag, Bdiag (?)
@@ -381,11 +381,12 @@ function scalar SVAR_restrict(bundle *b, string code, const numeric r, int c[0],
     # (maybe it would make sense to throw hard errors here instead of 
     #  returning codes and doing nothing... (Sven))
 
-    if typename(r) == "matrix"
-        # FIXME: catch the case where it's a 1x1-matrix and treat that as a scalar
-        # the case of a full restriction pattern matrix
-        errorif(c != 0 || d != 0, "c and d arguments incompatible with pattern matrix r")
-        return apply_patternrestr(&b, code, r) 
+    if typename(rR) == "matrix" && nelem(rR) != 1
+        errorif(c != 0 || d != 0, "c and d arguments incompatible with pattern matrix R")
+        return apply_patternrestr(&b, code, rR) 
+    else
+        # explicitly cast the 1x1 case
+        scalar r = rR
     endif
         
     # The following is the old function path where r is the int row index.
@@ -394,9 +395,7 @@ function scalar SVAR_restrict(bundle *b, string code, const numeric r, int c[0],
 
     # check input for implemented restriction code
     if !instring("C lrC A B Adiag Bdiag", code) # code unknown
-        print "Unknown code in SVAR_restrict."
-        # Better message would be:
-        # printf "Unknown code '%s' in SVAR_restrict.\n", code
+        printf "Unknown code '%s' in SVAR_restrict.\n", code
         return 2
         
         # check for unsupported case
