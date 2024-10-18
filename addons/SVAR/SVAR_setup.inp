@@ -382,6 +382,7 @@ function scalar SVAR_restrict(bundle *b, string code, const numeric r, int c[0],
     #  returning codes and doing nothing... (Sven))
 
     if typename(r) == "matrix"
+        # FIXME: catch the case where it's a 1x1-matrix and treat that as a scalar
         # the case of a full restriction pattern matrix
         errorif(c != 0 || d != 0, "c and d arguments incompatible with pattern matrix r")
         return apply_patternrestr(&b, code, r) 
@@ -394,6 +395,8 @@ function scalar SVAR_restrict(bundle *b, string code, const numeric r, int c[0],
     # check input for implemented restriction code
     if !instring("C lrC A B Adiag Bdiag", code) # code unknown
         print "Unknown code in SVAR_restrict."
+        # Better message would be:
+        # printf "Unknown code '%s' in SVAR_restrict.\n", code
         return 2
         
         # check for unsupported case
@@ -501,6 +504,34 @@ function scalar SVAR_restrict(bundle *b, string code, const numeric r, int c[0],
 
     return err	# 0, -1, 10, or 20
 end function
+
+#-----------------------------------
+## --- will be SVAR_namedrestrict
+function void SVAR_namedrestrict(bundle *b, string code "model type code",
+                                 string yname "variable name", string sname "shock name",
+                                 scalar d[0] "restriction value")
+    
+    # compare also the signature of the associated function for set-id restrictions:
+    # SVAR_SRfull(bundle *mod, string yname, string sname, scalar lo[NA], scalar hi[NA]...
+
+    # error checking for 'code' and some other stuff happens downstream in SVAR_restrict
+
+    matrix col = instrings(mod.snames, sname)
+    errmsgnamematch(col, sname, "shock")
+
+    matrix row = instrings(mod.Ynames, yname)
+    errmsgnamematch(row, yname, "variable")
+
+    # At this point row, col should be 1x1-matrices, but need to make sure scalar args
+    # for SVAR_restrict, especially for the overloaded arg there.
+    scalar r = row
+    scalar c = col
+    err = SVAR_restrict(&b, code, r, c, d)
+    errorif(err, "applying restriction failed")
+end function
+
+
+####################################
 
 function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
                            matrix jbeta, matrix jalpha[null],

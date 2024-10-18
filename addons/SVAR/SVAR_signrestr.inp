@@ -55,14 +55,10 @@ function void SVAR_SRfull(bundle *mod,
 
     # This determines the position among _all_ shocks, not just set-ID'd:
     matrix snum = instrings(mod.snames, sname) 
-    errmsgshockmatch(snum, sname)
+    errmsgnamematch(snum, sname, "shock")
 
-    matrix kpos = instrings(mod.Ynames, yname) 
-    if nelem(kpos) != 1
-        printf "Variable %s is not in the model\n", yname
-        print " (or several ones with that name)"
-        funcerr "Specify correct and unique variable names"
-    endif
+    matrix kpos = instrings(mod.Ynames, yname)
+    errmsgnamematch(kpos, yname, "variable")
 
     errorif( missing(lo) && missing(hi), "No bounds specified!")
 
@@ -566,7 +562,6 @@ function void SVAR_spagplot(const bundle mod,
     # get shock number
     matrix snum = instrings(mod.SRid_snames, sname)
     errorif( !nelem(snum), sprintf("The given shock %s is not set-identified, not allowed", sname)) 
-    # was: errmsgshockmatch(snum, sname)
     
     # get var number
     matrix vnum = instrings(mod.Ynames, vname)

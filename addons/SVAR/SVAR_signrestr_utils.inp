@@ -106,7 +106,7 @@ function void errchkSRhisto(bundle *Smod, int drawix)
 end function
 
 # ------------------------------
-
+/*
 function void errmsgshockmatch(const matrix pos, string sname)
     #  pos is the result of an instrings() search, 0 to n-element vector
     
@@ -116,7 +116,7 @@ function void errmsgshockmatch(const matrix pos, string sname)
         funcerr "Specify correct and unique shock names"
     endif
 end function
-
+*/
 # ------------------------------
 
 function void safetycheck1(const matrix Sigma, const matrix chol_iXX, const matrix B)
