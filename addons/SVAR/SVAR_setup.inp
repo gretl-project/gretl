@@ -515,10 +515,10 @@ function void SVAR_namedrestrict(bundle *b, string code "model type code",
 
     # error checking for 'code' and some other stuff happens downstream in SVAR_restrict
 
-    matrix col = instrings(mod.snames, sname)
+    matrix col = instrings(b.snames, sname)
     errmsgnamematch(col, sname, "shock")
 
-    matrix row = instrings(mod.Ynames, yname)
+    matrix row = instrings(b.Ynames, yname)
     errmsgnamematch(row, yname, "variable")
 
     # At this point row, col should be 1x1-matrices, but need to make sure scalar args
