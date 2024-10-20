@@ -10178,7 +10178,9 @@ static int gui_do_smpl (CMD *cmd, DATASET *dset, PRN *prn)
     int cancel = 0;
     int err = 0;
 
-    if (cmd->opt == OPT_F) {
+    if (dset == NULL || dset->n == 0) {
+        err = E_NODATA;
+    } else if (cmd->opt == OPT_F) {
         gui_restore_sample(dset);
     } else if (cmd->opt == OPT_T && cmd->param == NULL) {
         /* --permanent, by itself */

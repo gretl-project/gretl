@@ -3740,7 +3740,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case SMPL:
-        if (cmd->opt & OPT_F) {
+        if (dset == NULL || dset->n == 0) {
+            err = E_NODATA;
+        } else if (cmd->opt & OPT_F) {
             err = check_smpl_full(cmd->opt);
             if (!err) {
                 err = restore_full_sample(dset, s);
