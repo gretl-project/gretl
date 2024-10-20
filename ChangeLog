@@ -47,7 +47,7 @@ version 2024c, in progress
 - Windows 64-bit build: link against MS UCRT; use GTK3; update
   dependency DLLs and cross-compiler; make Consolas the default
   monospace font
-- Update translations: Galician, Italian and Polish
+- Update translations: Galician, German, Italian and Polish
 
 2024-05-21 version 2024b
 - "gridplot" command: add a --title option
