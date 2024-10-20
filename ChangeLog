@@ -21,6 +21,8 @@ version 2024c, in progress
 - Fix bug in "adf" command (without the --gls option): error if
   all of --c, --nc, --ct and --ctt were given
 - Fix a lacuna in type-checking of hansl statements
+- Fix: ensure that attempted use of the "smpl" command produces
+  an error if there's no dataset in place
 - GUI: support the fixed-sample option when appending data
 - GUI: random effects panel model: fix breakage in selecting
   the --nerlove option
