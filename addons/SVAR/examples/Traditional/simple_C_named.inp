@@ -1,0 +1,32 @@
+# variation of the sample script with named shocks
+
+set verbose off
+include SVAR.gfn
+open sw_ch14.gdt
+
+series infl = 400*ldiff(PUNEW)
+rename LHUR unemp
+
+list X = unemp infl
+list Z = const
+
+Mod = SVAR_setup("C", X, Z, 3)
+
+# we're calling the two shocks "demand" and "supply"
+# after the assumption that a supply shock doesn't
+# affect unemployment instantaneously
+
+Mod.snames = defarray("demand", "supply")
+SVAR_namedrestrict(&Mod, "C", "unemp", "supply")
+
+Mod.horizon = 36
+SVAR_estimate(&Mod)
+printf "Time (Cmodel) = %g\n", $stopwatch
+bfail = SVAR_boot(&Mod, 1024, 0.90)
+
+gpbuild Plots
+    IRFplot(&Mod, 0, 0)
+end gpbuild
+
+gridplot Plots --output=display --width=1200
+IRFsave("simpleC.pdf", &Mod, 0, 0)	# 0 means "all"
