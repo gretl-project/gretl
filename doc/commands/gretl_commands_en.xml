@@ -15405,8 +15405,9 @@
 
     <description>
       <para>
-	When no arguments are given, displays the current sample
-	range, otherwise sets the sample range.  The range can be
+        This command can be used only when a dataset is in place.
+	When no arguments are given, it displays the current sample
+	range, otherwise it sets the sample range.  The range can be
 	defined in several ways.  In the first alternate form (and the
 	first two examples) above, <repl>startobs</repl> and
 	<repl>endobs</repl> must be consistent with the periodicity of
