@@ -3057,6 +3057,29 @@ list of endogenous variables must be given in \texttt{nv}.
   model bundle to facilitate further estimation.
 \end{funcdoc}
 
+\begin{funcdoc}{SVAR\_namedrestrict (bundle *Smod, string code, 
+  string yname, string sname, scalar d[0])}
+  \noindent An alternative interface for point restrictions, requiring the 
+  names of the respective shock and variable pair instead of the index numbers 
+  used in \texttt{SVAR\_restrict}. An example based on the main sample script 
+  is given in the included script file \texttt{simple\_C\_named.inp}.
+  
+  For the first two arguments \texttt{Smod} and \texttt{code}, see the explanation
+  for \texttt{SVAR\_restrict}. However, the type codes \texttt{"Adiag"} and 
+  \texttt{"Bdiag"} make no sense here and are not allowed.
+  
+  The next two string arguments \texttt{yname} and 
+  \texttt{sname} refer to the variable and shock names in the model; while the shock 
+  names have to be user-defined before calling this function, the variable names 
+  are automatically taken from the model setup. Using unrecognized names will cause 
+  an error. Notice that for the A-matrix in an AB model no shock is directly 
+  involved, and thus it may be more natural to use the indexation form in 
+  \texttt{SVAR\_restrict}.
+  
+  Finally, the scalar restriction value \texttt{d} works again as in 
+  \texttt{SVAR\_restrict}, with the same default value of zero.
+\end{funcdoc}
+
 \begin{funcdoc}{SVAR\_restrict (bundle *Smod, string code, numeric r, int c[0], scalar d[0])}
   \noindent Sets up point constraints for an existing model. The function
   takes at most five arguments:

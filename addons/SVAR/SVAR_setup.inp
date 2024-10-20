@@ -505,7 +505,6 @@ function scalar SVAR_restrict(bundle *b, string code, const numeric rR, int c[0]
 end function
 
 #-----------------------------------
-## --- will be SVAR_namedrestrict
 function void SVAR_namedrestrict(bundle *b, string code "model type code",
                                  string yname "variable name", string sname "shock name",
                                  scalar d[0] "restriction value")
@@ -514,7 +513,12 @@ function void SVAR_namedrestrict(bundle *b, string code "model type code",
     # SVAR_SRfull(bundle *mod, string yname, string sname, scalar lo[NA], scalar hi[NA]...
 
     # error checking for 'code' and some other stuff happens downstream in SVAR_restrict
-
+    # (We could also consider banning the "A" type code here, since the A matrix specifies 
+    #  relationships between variable pairs, not really involving a shock.)  
+    
+    errorif(code == "Adiag" || code == "Bdiag", \
+      "'Adiag' or 'Bdiag' not possible with SVAR_namedrestrict")
+    
     matrix col = instrings(b.snames, sname)
     errmsgnamematch(col, sname, "shock")
 

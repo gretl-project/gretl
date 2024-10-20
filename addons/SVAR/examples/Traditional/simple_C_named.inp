@@ -4,7 +4,7 @@ set verbose off
 include SVAR.gfn
 open sw_ch14.gdt
 
-series infl = 400*ldiff(PUNEW)
+series infl = 400 * ldiff(PUNEW)
 rename LHUR unemp
 
 list X = unemp infl
@@ -29,4 +29,4 @@ gpbuild Plots
 end gpbuild
 
 gridplot Plots --output=display --width=1200
-IRFsave("simpleC.pdf", &Mod, 0, 0)	# 0 means "all"
+IRFsave("simpleCnamed.pdf", &Mod, 0, 0)	# 0 means "all"
