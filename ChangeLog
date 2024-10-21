@@ -47,6 +47,9 @@ version 2024c, in progress
 - Windows 64-bit build: link against MS UCRT; use GTK3; update
   dependency DLLs and cross-compiler; make Consolas the default
   monospace font
+- SVAR addon: computational and graphical enhancements for
+  sign-restricted models; add more user-friendly methods for
+  specifying restrictions;
 - Update translations: Galician, German, Italian and Polish
 
 2024-05-21 version 2024b
