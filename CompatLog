@@ -1,3 +1,9 @@
+2024-10-21 version 2024c
+
+No known incompatible changes. But output from the "reset"
+command differs in regard to the auxiliary regression since
+squares and cubes of the fitted values are now scaled.
+
 2024-05-21 version 2024b
 
 The long-deprecated function isnull() has now been removed.

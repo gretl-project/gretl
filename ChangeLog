@@ -1,4 +1,4 @@
-version 2024c, in progress
+2024-10-21 version 2024c
 - Random number generation: add Dirichlet and generic discrete
   distributions
 - "summary" command with --by option: provide a $result matrix
