@@ -749,6 +749,11 @@ static int matrix_is_triangular (const gretl_matrix *m)
     int i, j;
     int k = 0;
 
+    if (m->cols != m->rows) {
+        /* m must be square */
+        return 0;
+    }
+
     for (j=0; j<m->cols; j++) {
         for (i=0; i<m->rows; i++) {
             x = m->val[k++];
