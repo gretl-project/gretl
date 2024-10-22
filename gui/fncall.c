@@ -2116,7 +2116,7 @@ static int function_call_dialog (call_info *cinfo)
 
 	if (cinfo->rettype == GRETL_TYPE_LIST) {
 	    auto_sel = 1;
-	    add_table_header(tbl, _("Save return value (optional, clear box for no assigment):"),
+	    add_table_header(tbl, _("Save return value (optional, clear box for no assignment):"),
 			     tcols, ++row, 5);
 	} else {
 	    add_table_header(tbl, _("Assign return value (optional):"),
