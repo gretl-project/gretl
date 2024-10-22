@@ -24,6 +24,6 @@
 #define LIBGRETL_REVISION  0
 #define LIBGRETL_AGE       0
 
-#define GRETL_VERSION "2024c"
+#define GRETL_VERSION "2024d-git"
 
 #endif /* GRETL__VERSION_H */

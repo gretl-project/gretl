@@ -1,9 +1,14 @@
-#!/bin/sh
+#!/bin/bash
 
-# the directory above the source tree
-parent=/home/cottrell/stats/esl
+# find the directory above the gretl source tree
+thisdir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+parent="$(dirname "$thisdir")"
+srcdir="$(realpath "$parent")"
+target="$(dirname "$srcdir")"
+echo "gretl source directory: $srcdir"
+echo "target dir for tarfile: $target"
 
-version=$(grep GRETL_VERSION[^_] ${parent}/gretl-git/lib/src/version.h | \
+version=$(grep GRETL_VERSION[^_] ${srcdir}/lib/src/version.h | \
           awk '{ print $NF}' | sed s/[\"\;]//g)
 versiondir=gretl-${version}	  
 tarfile="${versiondir}.tar.xz"
@@ -11,18 +16,19 @@ tarfile="${versiondir}.tar.xz"
 echo "making dist file for gretl $version using filename $tarfile"
 
 # make the distribution archive
-cd $parent 
+cd $target
 echo "making archive..."
+
 # copy across pre-built helpfiles
 cp gretl-git/build/doc/commands/gretl_*ref.* gretl-git/share
 cp gretl-git/build/doc/commands/gretlhelp.refs gretl-git/share
 mv gretl-git ${versiondir}
-rm -f $tarfile
+rm -f ${tarfile}
 tar cvJfX $tarfile tar_exclude ${versiondir}
 
-# restore local tree
+# restore local git tree
 mv ${versiondir} gretl-git
 # remove pre-built helpfiles from git area
-rm -f gretl-git/share/gretl_*ref.*
-rm -f gretl-git/share/gretlhelp.refs
+rm -f ${srcdir}/share/gretl_*ref.*
+rm -f ${srcdir}/share/gretlhelp.refs
 
