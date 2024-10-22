@@ -8298,23 +8298,49 @@
       </description>
     </function>
 
-    <function name="max" section="stats" output="scalar-or-series">
+    <function name="max" section="stats" output="depends">
       <fnargs>
-	<fnarg type="series-or-list">y</fnarg>
+	<fnarg type="anyfloat">x</fnarg>
+        <fnarg optional="true" type="anyfloat">y</fnarg>
       </fnargs>
       <description>
 	<para>
-	  If the argument <argname>y</argname> is a series, returns the
-	  (scalar) maximum of the non-missing observations in the series.
-	  If the argument is a list, returns a series each of whose
-	  elements is the maximum of the values of the listed variables at
-	  the given observation.
-	</para>
+          This function has two primary modes plus a special case.
+        </para>
+        <para>
+          The first mode is activated if a single argument of type
+          scalar, series or matrix is given: the return value is a
+          scalar, the maximum value <quote>within</quote> the
+          argument: if <argname>x</argname> is a series, its maximum
+          value within the current sample range, or if
+          <argname>x</argname> is a matrix, its greatest element. The
+          case of a scalar argument is supported for the sake of
+          completeness; you just get its value back.
+        </para>
+        <para>
+          The second mode is activated if two arguments are given. The
+          arguments <argname>x</argname> and <argname>y</argname> must
+          be of the same type, and must be scalars, series or matrices
+          (and if they are matrices, they must be of the same
+          dimensions). The return value is an object of the same type
+          as the arguments, holding the <quote>between</quote> or
+          <quote>cross</quote> maximum or maxima. If the arguments are
+          scalars you get the greater of the two; if they're series
+          you get a series holding the greater of the values of the
+          two series at each observation in the current sample range;
+          if they're matrices you get a matrix holding the greater of
+          their elements in each row and column.
+        </para>
+        <subhead>The special case</subhead>
+        <para>
+          This arises if a single list argument is given. The return
+          value is a series, containing at each observation in the
+          current sample range the greatest of the values of the
+          series in the list at that observation.
+        </para>
 	<para>
 	  <seelist>
             <fncref targ="min"/>
-            <fncref targ="xmax"/>
-            <fncref targ="xmin"/>
 	  </seelist>
 	</para>
       </description>
@@ -8782,24 +8808,16 @@
       </description>
     </function>
 
-    <function name="min" section="stats" output="scalar-or-series">
+    <function name="min" section="stats" output="depends">
       <fnargs>
-	<fnarg type="series-or-list">y</fnarg>
+        <fnarg type="anyfloat">x</fnarg>
+        <fnarg type="anyfloat">y</fnarg>
       </fnargs>
       <description>
 	<para>
-	  If the argument <argname>y</argname> is a series, returns the
-	  (scalar) minimum of the non-missing observations in the series.
-	  If the argument is a list, returns a series each of whose
-	  elements is the minimum of the values of the listed variables at
-	  the given observation.
-	</para>
-	<para>
-	  <seelist>
-            <fncref targ="max"/>
-            <fncref targ="xmax"/>
-            <fncref targ="xmin"/>
-	  </seelist>
+          Please see the help for <fncref targ="max"/>; this function
+          works in exactly the same way except that it returns a
+          minimum or minima.
 	</para>
       </description>
     </function>
@@ -14810,48 +14828,6 @@ d =  8.0000000
 	  <seelist>
             <fncref targ="wmean"/>
             <fncref targ="wsd"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="xmax" section="math" output="scalar">
-      <fnargs>
-	<fnarg type="scalar">x</fnarg>
-	<fnarg type="scalar">y</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the greater of <argname>x</argname> and
-	  <argname>y</argname>, or <lit>NA</lit> if either value
-	  is missing.
-	</para>
-	<para>
-	  <seelist>
-            <fncref targ="xmin"/>
-            <fncref targ="max"/>
-            <fncref targ="min"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="xmin" section="math" output="scalar">
-      <fnargs>
-	<fnarg type="scalar">x</fnarg>
-	<fnarg type="scalar">y</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the lesser of <argname>x</argname> and
-	  <argname>y</argname>, or <lit>NA</lit> if either value
-	  is missing.
-	</para>
-	<para>
-	  <seelist>
-            <fncref targ="xmax"/>
-            <fncref targ="max"/>
-            <fncref targ="min"/>
 	  </seelist>
 	</para>
       </description>
