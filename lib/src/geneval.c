@@ -7431,7 +7431,7 @@ static NODE *list_list_comp (NODE *l, NODE *r, int f, parser *p)
 
 /* argument is list; value returned is series */
 
-static NODE *list_to_series_func (NODE *n, int f, NODE *o, parser *p)
+static NODE *list_to_series_func (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_series_node(p);
 
@@ -7439,16 +7439,11 @@ static NODE *list_to_series_func (NODE *n, int f, NODE *o, parser *p)
         int partial_ok = 0;
         int *list = NULL;
 
-	if (f != F_NOBS) {
-	    /* can we accept partial observations? */
-	    int deflt = (f == F_MIN || f == F_MAX);
-
-	    partial_ok = node_get_bool(o, p, deflt);
+	if (f == F_MIN || f == F_MAX) {
+	    /* Accept partial observations? This is debatable */
+	    partial_ok = 1;
 	}
-
-        if (!p->err) {
-            list = node_get_list(n, p);
-        }
+        list = node_get_list(n, p);
         if (list != NULL) {
             p->err = cross_sectional_stat(ret->v.xvec, list,
                                           p->dset, f, partial_ok);
@@ -17398,9 +17393,9 @@ static NODE *two_scalars_func (NODE *l, NODE *r, int t, parser *p)
         double xr = node_get_scalar(r, p);
 
         if (!na(xl) && !na(xr)) {
-            if (t == F_XMIN) {
+            if (t == F_MIN) {
                 ret->v.xval = (xl < xr)? xl : xr;
-            } else if (t == F_XMAX) {
+            } else if (t == F_MAX) {
                 ret->v.xval = (xl > xr)? xl : xr;
             } else if (t == F_RANDINT) {
                 int k;
@@ -17411,6 +17406,58 @@ static NODE *two_scalars_func (NODE *l, NODE *r, int t, parser *p)
                 }
             }
         }
+    }
+
+    return ret;
+}
+
+/* Return the main or max value "within" the argument attached
+   to the node @n.
+*/
+
+static NODE *within_minmax_node (NODE *n, int f, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (n->t == NUM) {
+        ret = pretend_matrix_scalar_func(n, f, p);
+    } else if (n->t == SERIES || n->t == MAT) {
+        ret = series_scalar_func(n, f, NULL, p);
+    } else if (ok_list_node(n, p)) {
+        ret = list_to_series_func(n, f, p);
+    } else {
+        p->err = E_INVARG;
+    }
+
+    return ret;
+}
+
+/* Return the main or max value "between" the arguments attached
+   to the nodes @l and @r.
+*/
+
+static NODE *between_minmax_node (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (r->t != l->t) {
+        p->err = E_TYPES;
+    } else if (l->t == NUM) {
+        ret = two_scalars_func(l, r, f, p); 
+    } else if (l->t == SERIES) {
+        ret = aux_series_node(p);
+        if (ret != NULL) {
+            p->err = two_series_minmax(l->v.xvec, r->v.xvec,
+                                       ret->v.xvec, f, p->dset);
+        }
+    } else if (l->t == MAT) {
+        ret = aux_matrix_node(p);
+        if (ret != NULL) {
+            ret->v.m = two_matrices_minmax(l->v.m, r->v.m,
+                                           f, &p->err);
+        }
+    } else {
+        p->err = E_INVARG;
     }
 
     return ret;
@@ -18631,8 +18678,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_SST:
     case F_SKEWNESS:
     case F_KURTOSIS:
-    case F_MIN:
-    case F_MAX:
     case F_MEDIAN:
     case F_GINI:
     case F_NOBS:
@@ -18642,16 +18687,25 @@ static NODE *eval (NODE *t, parser *p)
         if (l->t == SERIES || l->t == MAT) {
             ret = series_scalar_func(l, t->t, r, p);
         } else if ((t->t == F_MEAN || t->t == F_SD ||
-                    t->t == F_VCE || t->t == F_MIN ||
-                    t->t == F_MAX || t->t == F_SUM ||
+                    t->t == F_VCE || t->t == F_SUM ||
                     t->t == F_MEDIAN || t->t == F_NOBS)
                    && ok_list_node(l, p)) {
             /* list -> series also acceptable for these cases */
-            ret = list_to_series_func(l, t->t, r, p);
+            ret = list_to_series_func(l, t->t, p);
         } else if (l->t == NUM) {
             ret = pretend_matrix_scalar_func(l, t->t, p);
         } else {
             node_type_error(t->t, 0, SERIES, l, p);
+        }
+        break;
+    case F_MIN:
+    case F_MAX:
+        if (null_node(r)) {
+            /* "within arg" min or max */
+            ret = within_minmax_node(l, t->t, p);
+        } else {
+            /* "between args" min or max */
+            ret = between_minmax_node(l, r, t->t, p);
         }
         break;
     case F_ECDF:
@@ -19003,8 +19057,6 @@ static NODE *eval (NODE *t, parser *p)
             p->err = E_TYPES;
         }
         break;
-    case F_XMIN:
-    case F_XMAX:
     case F_RANDINT:
     case F_KPSSCRIT:
         /* two scalars */

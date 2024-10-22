@@ -464,8 +464,6 @@ struct str_table funcs[] = {
     { F_TOEPSOLV, "toepsolv" },
     { F_RGBMIX,   "rgbmix" },
     { F_DSUM,     "diagcat" },
-    { F_XMIN,     "xmin" },
-    { F_XMAX,     "xmax" },
     { F_CORRGM,   "corrgm" },
     { F_MCOVG,    "mcovg" },
     { F_FCSTATS,  "fcstats" },
@@ -626,6 +624,8 @@ struct str_table func_alias[] = {
     { F_RNAMESET, "rownames" },
     { F_CNAMEGET, "colname" },
     { F_RNAMEGET, "rowname" },
+    { F_MAX,      "xmax" },
+    { F_MIN,      "xmin" },
     { 0,          NULL }
 };
 

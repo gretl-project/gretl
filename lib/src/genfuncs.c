@@ -291,6 +291,60 @@ int diff_series (const double *x, double *y, int f,
     return 0;
 }
 
+int two_series_minmax (const double *x, const double *y,
+                       double *z, int f, const DATASET *dset)
+{
+    int t;
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+        if (na(x[t]) || na(y[t])) {
+            continue;
+        }
+        if (f == F_MIN) {
+            z[t] = MIN(x[t], y[t]);
+        } else {
+            z[t] = MAX(x[t], y[t]);
+        }
+    }
+
+    return 0;
+}
+
+gretl_matrix *two_matrices_minmax (const gretl_matrix *a,
+                                   const gretl_matrix *b,
+                                   int f, int *err)
+{
+    gretl_matrix *ret = NULL;
+
+    if (a->rows != b->rows || a->cols != b->cols) {
+        *err = E_NONCONF;
+        return NULL;
+    }
+
+    ret = gretl_matrix_alloc(a->rows, a->cols);
+
+    if (ret == NULL) {
+        *err = E_ALLOC;
+    } else {
+        int i, n = a->rows * a->cols;
+        double ai, bi;
+
+        for (i=0; i<n; i++) {
+            ai = a->val[i];
+            bi = b->val[i];
+            if (na(ai) || na(bi)) {
+                ret->val[i] = NADBL;
+            } else if (f == F_MIN) {
+                ret->val[i] = MIN(ai, bi);
+            } else {
+                ret->val[i] = MAX(ai, bi);
+            }
+        }
+    }
+
+    return ret;
+}
+
 /* Special case of interpolate_series() for panel data. */
 
 static int panel_interpolate (const double *x, double *y,
