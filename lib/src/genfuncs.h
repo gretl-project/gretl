@@ -34,6 +34,13 @@ gretl_matrix *rank_vector (const gretl_matrix *x, int f, int *err);
 int diff_series (const double *x, double *y, int f,
 		 const DATASET *dset);
 
+int two_series_minmax (const double *x, const double *y,
+                       double *z, int f, const DATASET *dset);
+
+gretl_matrix *two_matrices_minmax (const gretl_matrix *a,
+                                   const gretl_matrix *b,
+                                   int f, int *err);
+
 int interpolate_series (const double *x, double *y,
 			const DATASET *dset);
 
