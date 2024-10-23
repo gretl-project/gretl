@@ -721,16 +721,14 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
     enum {HORIZ, VERT, VECWISE};
     gretl_matrix *ret = NULL;
     gretl_matrix *m;
-    int common_r = 1;
-    int common_c = 1;
     int sum_r = 0;
     int sum_c = 0;
-    int r0 = 0, c0 = 0;
-    int nvals0 = 0;
+    int r = 0, c = 0;
+    int nvals = 0;
     int cmplx = 0;
     int real = 0;
     int nmats = 0;
-    int i, nvals = 0;
+    int i;
 
     if (A->type != GRETL_TYPE_MATRICES) {
 	*err = E_TYPES;
@@ -748,31 +746,18 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
         } else {
             real = 1;
         }
-        if (c0 == 0) {
+        if (c == 0) {
             /* initialize */
-            r0 = m->rows;
-            c0 = m->cols;
-            nvals0 = r0 * c0;
+            r = m->rows;
+            c = m->cols;
+            nvals = r * c;
         } else {
-            /* check commonality */
-            if (m->rows != r0) {
-                common_r = 0;
-                if (mode == HORIZ) {
-                    *err = E_NONCONF;
-                }
-            }
-            if (m->cols != c0) {
-                common_c = 0;
-                if (mode == VERT) {
-                    *err = E_NONCONF;
-                }
-            }
-            if (mode == VECWISE) {
-                nvals = m->rows * m->cols;
-                if (nvals != nvals0) {
-                    *err = E_NONCONF;
-                }
-            } else if (!common_r && !common_c) {
+            /* check conformability */
+            if (mode == HORIZ && m->rows != r) {
+                *err = E_NONCONF;
+            } else if (mode == VERT && m->cols != c) {
+                *err = E_NONCONF;
+            } else if (mode == VECWISE && m->rows * m->cols != nvals) {
                 *err = E_NONCONF;
             }
         }
@@ -785,23 +770,21 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
     }
 
     if (mode == HORIZ) {
-	if (cmplx) {
-	    ret = gretl_cmatrix_new(r0, sum_c);
-	} else {
-	    ret = gretl_matrix_alloc(r0, sum_c);
-	}
+        c = sum_c;
     } else if (mode == VERT) {
-	if (cmplx) {
-	    ret = gretl_cmatrix_new(sum_r, c0);
-	} else {
-	    ret = gretl_matrix_alloc(sum_r, c0);
-	}
-    } else if (mode == VECWISE) {
+        r = sum_r;
+    }
+
+    if (mode == VECWISE) {
 	if (cmplx) {
 	    ret = gretl_cmatrix_new(nvals, nmats);
 	} else {
 	    ret = gretl_matrix_alloc(nvals, nmats);
 	}
+    } else if (cmplx) {
+        ret = gretl_cmatrix_new(r, c);
+    } else {
+        ret = gretl_matrix_alloc(r, c);
     }
 
     if (ret == NULL) {
@@ -872,7 +855,7 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
 	}
     } else if (mode == VECWISE) {
 	if (cmplx && real) {
-	    /* mixed matrices */
+	    /* vecwise: mixed matrices */
 	    double complex *dest = ret->z;
 	    double complex z;
             int k = 0;
@@ -892,7 +875,7 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
 		}
 	    }
 	} else {
-	    /* the easy case */
+	    /* vecwise: the easy case */
 	    double *dest = ret->val;
 	    int n, p = cmplx ? 2 : 1;
 
