@@ -8741,7 +8741,6 @@ static int localize_series_ref (fncall *call, fn_arg *arg,
     strcpy(dset->varname[v], fp->name);
 
     if (!in_gretl_list(call->ptrvars, v)) {
-        // fprintf(stderr, " HERE add to ptrvars\n");
         gretl_list_append_term(&call->ptrvars, v);
     }
 
