@@ -8734,12 +8734,14 @@ static int localize_const_object (fncall *call, int i, fn_param *fp)
 static int localize_series_ref (fncall *call, fn_arg *arg,
                                 fn_param *fp, DATASET *dset)
 {
+    int level = fn_executing + 1;
     int v = arg->val.idnum;
 
-    series_increment_stack_level(dset, v);
+    series_set_stack_level(dset, v, level);
     strcpy(dset->varname[v], fp->name);
 
     if (!in_gretl_list(call->ptrvars, v)) {
+        // fprintf(stderr, " HERE add to ptrvars\n");
         gretl_list_append_term(&call->ptrvars, v);
     }
 
@@ -8858,16 +8860,15 @@ static int upnames_match (fn_arg *ai, fn_arg *aj)
         strcmp(ai->upname, aj->upname) == 0;
 }
 
+/* Note: a caller cannot be allowed to supply a given variable in
+   pointer form for more than one argument slot in a function call
+   (although ordinary arguments may be repeated).
+*/
+
 static int duplicated_pointer_arg_check (fncall *call)
 {
     fn_arg *ai, *aj;
     int i, j, err = 0;
-
-    /* Note: a caller cannot be allowed to supply a given
-       variable in pointer form for more than one argument
-       slot in a function call (although ordinary arguments
-       may be repeated).
-    */
 
     for (i=0; i<call->argc && !err; i++) {
         ai = &call->args[i];
@@ -8935,10 +8936,9 @@ static int process_object_ref_arg (fn_arg *arg, fn_param *fp)
     }
 }
 
-/* Note that if we reach here we've already successfully
-   negotiated check_function_args(): now we're actually
-   making the argument objects (if any) available within
-   the function.
+/* Note that if we reach here we've already successfully negotiated
+   check_function_args(): now we're actually making the argument
+   objects (if any) available within the function.
 */
 
 static int allocate_function_args (fncall *call, DATASET *dset)
