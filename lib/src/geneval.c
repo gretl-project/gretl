@@ -3055,7 +3055,8 @@ static gretl_matrix *calc_get_matrix (gretl_matrix **pM,
 
 #define fn_no_complex(f) (f == F_QFORM || f == F_LSOLVE || \
                           f == F_CMULT || f == F_CDIV ||   \
-                          f == F_CONV2D || f == F_SGN)
+                          f == F_CONV2D || f == F_SGN ||   \
+                          f == F_MAX || f == F_MIN)
 
 /* return allocated result of binary operation performed on
    two matrices */
@@ -9933,9 +9934,9 @@ static void cast_to_series (NODE *n, int f, gretl_matrix **tmp,
     }
 }
 
-/* Functions taking a series or vector as argument and returning
-   a scalar; allowance is made for an additional boolean arg
-   in some cases.
+/* Functions taking a series (or matrix) as argument and returning a
+   scalar; allowance is made for an additional boolean arg in some
+   cases.
 */
 
 static NODE *series_scalar_func (NODE *n, int f,
@@ -17421,8 +17422,14 @@ static NODE *within_minmax_node (NODE *n, int f, parser *p)
 
     if (n->t == NUM) {
         ret = pretend_matrix_scalar_func(n, f, p);
-    } else if (n->t == SERIES || n->t == MAT) {
+    } else if (n->t == SERIES) {
         ret = series_scalar_func(n, f, NULL, p);
+    } else if (n->t == MAT) {
+        if (n->v.m->is_complex) {
+            p->err = E_CMPLX;
+        } else {
+            ret = series_scalar_func(n, f, NULL, p);
+        }
     } else if (ok_list_node(n, p)) {
         ret = list_to_series_func(n, f, p);
     } else {
@@ -17451,7 +17458,11 @@ static NODE *between_minmax_node (NODE *l, NODE *r, int f, parser *p)
                                        ret->v.xvec, f, p->dset);
         }
     } else if (l->t == MAT) {
-        ret = aux_matrix_node(p);
+        if (l->v.m->is_complex || r->v.m->is_complex) {
+            p->err = E_CMPLX;
+        } else {
+            ret = aux_matrix_node(p);
+        }
         if (ret != NULL) {
             ret->v.m = two_matrices_minmax(l->v.m, r->v.m,
                                            f, &p->err);
