@@ -836,7 +836,7 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
 	for (k=0; k<A->n; k++) {
 	    m = A->data[k];
 	    if (!gretl_is_null_matrix(m)) {
-		for (j=0; j<c0; j++) {
+		for (j=0; j<c; j++) {
 		    for (i=0, ii=rpos; i<m->rows; i++, ii++) {
 			if (cmplx && !m->is_complex) {
 			    z = gretl_matrix_get(m, i, j);
