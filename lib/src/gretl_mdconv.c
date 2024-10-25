@@ -346,19 +346,26 @@ int md_to_gretl (const char *buf, PRN *prn)
     return handle_conv_error();
 }
 
-/* heuristic to determine whether the help text for a gretl
+/* simple heuristic to determine whether the help text for a gretl
    function package (probably) employs markdown
 */
 
-int help_text_is_markdown (const char *buf)
+int simple_markdown_detect (const char *buf)
 {
+    const char *p;
+
     if (buf == NULL) {
 	return 0;
-    } else if (strchr(buf, '#') || strchr(buf, '`')) {
-	/* these bytes are unlikely to occur in non-markdown text */
+    } else if ((p = strchr(buf, '#')) != NULL) {
+        /* '#' at the start of a line suggests markdown */
+        if (p == buf || *(p-1) == '\n') {
+            return 1;
+        }
+    } else if (strchr(buf, '`') != NULL) {
+        /* "genuine" plain text should up upright quotes */
 	return 1;
     } else {
-	/* look for "*word*" */
+	/* try for "*word*" */
 	const char *s = buf;
 	int i;
 

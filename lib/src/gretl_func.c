@@ -5957,10 +5957,47 @@ static void pkg_print_depends (const fnpkg *pkg,  PRN *prn)
     }
 }
 
+int help_text_is_markdown (const fnpkg *pkg, int gui_help)
+{
+    const char *fname;
+    const char *text;
+
+    text = gui_help ? pkg->gui_help : pkg->help;
+    if (text == NULL) {
+        return 0;
+    }
+
+    fname = gui_help ? pkg->gui_help_fname : pkg->help_fname;
+    if (fname != NULL && has_suffix(fname, ".md")) {
+        /* A filename matching "*.md" should clinch it. */
+        return 1;
+    }
+
+    if (pkg->date != NULL) {
+        /* Use of markdown in gfn help text was first supported in
+           gretl 2023b (2023-07-21); we assume that packages with
+           an earlier last-modified date can't be using it.
+        */
+        int y, m, d;
+
+        if (sscanf(pkg->date, "%4d-%02d-%02d", &y, &m, &d) == 3) {
+            if (10000*y + 100*m + d < 20230721) {
+                return 0;
+            }
+        }
+    }
+
+    /* We might have anonymous help text (no filename specified),
+       in which case we fall back on a simple heuristic.
+    */
+    return simple_markdown_detect(text);
+}
+
 static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
 {
     char vstr[8];
     int remote, pdfdoc;
+    int md = 0;
     int i;
 
     remote = (strstr(fname, "dltmp.") != NULL);
@@ -6033,14 +6070,18 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
         }
     }
 
-    if (!pdfdoc && help_text_is_markdown(pkg->help)) {
-        md_to_gretl(pkg->help, prn);
-    } else if (!pdfdoc) {
-        pputs(prn, "<@itl=\"Help text\">:\n\n");
-        pputs(prn, "<mono>\n");
-        pputs(prn, pkg->help);
-        pputs(prn, "\n\n");
-        pputs(prn, "</mono>\n");
+    md = help_text_is_markdown(pkg, 0);
+
+    if (!pdfdoc) {
+        if (md) {
+            md_to_gretl(pkg->help, prn);
+        } else {
+            pputs(prn, "<@itl=\"Help text\">:\n\n");
+            pputs(prn, "<mono>\n");
+            pputs(prn, pkg->help);
+            pputs(prn, "\n\n");
+            pputs(prn, "</mono>\n");
+        }
     }
 
     if (remote && pkg->sample != NULL) {
@@ -6453,10 +6494,9 @@ static void reflow_package_help (const char *help, PRN *prn)
     pputs(prn, "\n\n");
 }
 
-/* Simple plain-text help output, or converted markdown if
-   applicable -- that is, we're in GUI mode and @pkg has
-   help text in markdown. Being in GUI mode is signalled
-   by @pbuf being non-NULL.
+/* Simple plain-text help output, or converted markdown if applicable
+   -- that is, we're in GUI mode and @pkg has help text in
+   markdown. Being in GUI mode is signalled by @pbuf being non-NULL.
 */
 
 static void print_package_help (const fnpkg *pkg,
@@ -6469,16 +6509,16 @@ static void print_package_help (const fnpkg *pkg,
     pputs(prn, gretl_strstrip(pkg->descrip));
     pputs(prn, "\n\n");
 
-    if (pbuf != NULL && help_text_is_markdown(pkg->help)) {
+    if (pbuf != NULL && help_text_is_markdown(pkg, 0)) {
         PRN *myprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
 
-        /* FIXME should the next line really be needed? */
+         /* FIXME should the next line really be needed? */
         pprintf(myprn, "<@bld=\"%s\">\n\n", pkg->name);
         md_to_gretl(pkg->help, myprn);
         *pbuf = gretl_print_steal_buffer(myprn);
         gretl_print_destroy(myprn);
     } else {
-        reflow_package_help(pkg->help, prn);
+         reflow_package_help(pkg->help, prn);
     }
 }
 
@@ -10983,7 +11023,7 @@ static void show_gfn_help (fnpkg *pkg, int gui_help,
     int mdconv;
 
     text = gui_help ? pkg->gui_help : pkg->help;
-    mdconv = help_text_is_markdown(text);
+    mdconv = help_text_is_markdown(pkg, gui_help);
 
     if (mdconv) {
         /* help is in markdown */

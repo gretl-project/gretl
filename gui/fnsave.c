@@ -1938,7 +1938,7 @@ static void select_pdf_callback (GtkButton *b, function_info *finfo)
 
 static char *text_help_label (function_info *finfo)
 {
-    if (help_text_is_markdown(finfo->help)) {
+    if (simple_markdown_detect(finfo->help)) {
 	return _("Markdown");
     } else {
 	return _("Plain text");

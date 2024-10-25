@@ -24,6 +24,6 @@ int md_to_gretl (const char *buf, PRN *prn);
 
 void mdconv_cleanup (void);
 
-int help_text_is_markdown (const char *buf);
+int simple_markdown_detect (const char *buf);
 
 #endif /* GRETL_MDCONV_H */
