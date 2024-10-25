@@ -371,20 +371,20 @@ char *comma_separate_numbers (char *s)
  * comparison), 0 otherwise.
  */
 
- int has_suffix (const char *str, const char *sfx)
- {
-     int offset;
+int has_suffix (const char *str, const char *sfx)
+{
+    int offset;
 
-     if (str == NULL || sfx == NULL) {
-	 return 0;
-     }
+    if (str == NULL || sfx == NULL) {
+        return 0;
+    }
 
-     offset = strlen(str) - strlen(sfx);
-     if (offset < 0) {
-	 return 0;
-     }
+    offset = strlen(str) - strlen(sfx);
+    if (offset < 0) {
+        return 0;
+    }
 
-     return g_ascii_strcasecmp(str + offset, sfx) == 0;
+    return g_ascii_strcasecmp(str + offset, sfx) == 0;
 }
 
 /**
