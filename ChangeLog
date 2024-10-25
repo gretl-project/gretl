@@ -1,3 +1,10 @@
+version 2024d, in progress
+- Avoid false positives in detecting markdown in help text for
+  function packages
+- max() and min() functions: augment their functionality
+- xmax() and xmin() functions; consolidate with max, min but
+  retain the "x" variants as aliases until further notice
+
 2024-10-21 version 2024c
 - Random number generation: add Dirichlet and generic discrete
   distributions
