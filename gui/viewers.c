@@ -1241,7 +1241,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	/* editable text */
 	create_text(vwin, hsize, vsize, nlines, TRUE);
 	if (prn != NULL) {
-	    if (help_text_is_markdown(gretl_print_get_buffer(prn))) {
+	    if (simple_markdown_detect(gretl_print_get_buffer(prn))) {
 		widget_set_int(vwin->text, "md", 1);
 	    }
 	}
