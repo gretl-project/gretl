@@ -403,7 +403,7 @@ entry {
     background-color: #0078D7; }
   entry:disabled {
     color: gray;
-    border-color: #f7f7f7;
+    border-color: #d6d6d6;
     background-color: #fefefe; }
     entry:disabled:backdrop {
       color: #bfbfbf;
@@ -678,7 +678,9 @@ image {
   border-color: #c6c6c6; }
 
 scrolledwindow.frame, scrolledwindow viewport.frame {
-  border: none; }
+  border-width: 1px;
+  border-style: solid;
+  border-color: #c6c6c6; }
 
 arrow, combobox arrow {
   color: alpha(currentColor, 0.75);
