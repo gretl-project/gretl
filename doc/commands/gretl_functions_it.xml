@@ -8351,24 +8351,51 @@
       </description>
     </function>
 
-    <function name="max" section="stats" output="scalar-or-series">
+    <function name="max" section="stats" output="depends">
       <fnargs>
-	<fnarg type="series-or-list">y</fnarg>
+	<fnarg type="anyfloat">x</fnarg>
+        <fnarg optional="true" type="anyfloat">y</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Se l'argomento <argname>y</argname> è una variabile,
-	  restituisce il massimo valore (scalare) tra le osservazioni
-	  non-mancanti della serie.  Se l'argomento è una lista,
-	  restituisce una variabile i cui elementi corrispondono al
-	  massimo dei valori delle variabili nella lista per ciascuna
-	  osservazione.
+	  Questa funzione ha due modalità principali più un caso particolare.
+	</para>
+	<para>
+	  La prima modalità è relativa al caso in cui ci sia un solo
+	  argomento, di tipo scalare, serie o matrice: il valore
+	  restituito è uno scalare, il valore massimo
+	  <quote>all'interno</quote> dell'argomento: se
+	  <argname>x</argname> è una serie, il suo valore massimo
+	  all'interno dell'intervallo di campionamento corrente, o se
+	  <argname>x</argname> è una matrice, il suo elemento più
+	  grande. Il caso di un argomento scalare è supportato per
+	  completezza; si ottiene solo il suo valore.
+	</para>
+	<para>
+	  La seconda modalità viene attivata se gli argomenti sono
+	  due. Gli argomenti <argname>x</argname> e
+	  <argname>y</argname> devono essere dello stesso tipo e
+	  devono essere scalari, serie o matrici (e se sono matrici,
+	  devono avere le stesse dimensioni). Il valore restituito è
+	  un oggetto dello stesso tipo degli argomenti, contenente il
+	  massimo o i massimi <quote>intra</quote>. Se gli argomenti
+	  sono scalari, ritorna il maggiore dei due; se sono serie,
+	  ritorna una serie contenente il maggiore dei valori delle
+	  due serie a ogni osservazione nell'intervallo di
+	  campionamento corrente; se sono matrici, ritorna una matrice
+	  contenente il maggiore dei loro elementi in ogni riga e
+	  colonna.
+	</para>
+	<subhead>Il caso particolare</subhead>
+	<para>
+	  Il caso particolare si dà quando l'unico argomento è una
+	  lista. Il valore restituito è una serie, contenente a ogni
+	  osservazione nell'intervallo di campionamento corrente il
+	  maggiore dei valori nella lista a quell'osservazione.
 	</para>
 	<para>
 	  <seelist>
 	    <fncref targ="min"/>
-	    <fncref targ="xmax"/>
-	    <fncref targ="xmin"/>
 	  </seelist>
 	</para>
       </description>
@@ -8825,24 +8852,16 @@
       </description>
     </function>
 
-    <function name="min" section="stats" output="scalar-or-series">
+    <function name="min" section="stats" output="depends">
       <fnargs>
-	<fnarg type="series-or-list">y</fnarg>
+        <fnarg type="anyfloat">x</fnarg>
+        <fnarg type="anyfloat">y</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Se l'argomento <argname>y</argname> è una variabile calcola
-	  il minimo (scalare) delle osservazioni non mancanti della variabile.
-	  Se l'argomento è una lista, restituisce una variabile i cui elementi
-	  sono il minimo dei valori delle variabili incluse nella lista
-	  in corrispondenza di ciascuna osservazione.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="max"/>
-	    <fncref targ="xmax"/>
-	    <fncref targ="xmin"/>
-	  </seelist>
+          Vedi la pagina di aiuto per <fncref targ="max"/>; questa
+          funzione fa esattamente la stessa cosa, a parte che ritorna
+          i minimi anziché i massimi.
 	</para>
       </description>
     </function>
@@ -14883,48 +14902,6 @@ d =  8.0000000
 	  <seelist>
 	    <fncref targ="wmean"/>
 	    <fncref targ="wsd"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="xmax" section="math" output="scalar">
-      <fnargs>
-	<fnarg type="scalar">x</fnarg>
-	<fnarg type="scalar">y</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Fornisce il maggiore fra <argname>x</argname> e
-	  <argname>y</argname>, o <lit>NA</lit> se uno dei due valori
-	  è mancante.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="xmin"/>
-	    <fncref targ="max"/>
-	    <fncref targ="min"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="xmin" section="math" output="scalar">
-      <fnargs>
-	<fnarg type="scalar">x</fnarg>
-	<fnarg type="scalar">y</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Fornisce il minore fra <argname>x</argname> e
-	  <argname>y</argname>, o <lit>NA</lit> se uno dei due valori
-	  è mancante.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="xmax"/>
-	    <fncref targ="max"/>
-	    <fncref targ="min"/>
 	  </seelist>
 	</para>
       </description>
