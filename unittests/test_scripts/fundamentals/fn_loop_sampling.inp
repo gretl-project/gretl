@@ -1,0 +1,28 @@
+set verbose off
+set assert stop
+
+function void foo (const series s, bool contig)
+   loop i=1..2
+      smpl full
+      if contig
+         smpl s < i * 3 --restrict
+         assert($nobs == i==1 ? 1 : 2)
+      else
+         smpl s < i * 4 || s > i * 5 --restrict
+         assert($nobs == i==1 ? 7 : 6)
+      endif  
+   endloop
+end function
+
+nulldata 16
+full_n = $nobs
+series s = index
+smpl s % 2 == 0 --restrict
+even_n = $nobs
+foo(s, 1)
+assert($nobs == even_n)
+foo(s, 0)
+assert($nobs == even_n)
+smpl full
+assert($nobs == full_n)
+assert(max(abs(s - index)) == 0)
