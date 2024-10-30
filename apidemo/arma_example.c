@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* Sample program to estimate an ARMA model via libgretl */
@@ -40,9 +40,9 @@ int arma_estimate (DATASET *dset, PRN *prn)
     err = model->errcode;
 
     if (err) {
-	errmsg(err, prn);
+        errmsg(err, prn);
     } else {
-	printmodel(model, dset, OPT_NONE, prn);
+        printmodel(model, dset, OPT_NONE, prn);
     }
 
     gretl_model_free(model);
@@ -62,19 +62,23 @@ int main (void)
     dset = datainfo_new();
     prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
 
-    /* Give the full path to the gretl datafile unless it's 
+    /* Give the full path to the gretl datafile unless it's
        in the current working directory. Note that PREFIX is
-       defined in the Makefile 
+       defined in the Makefile
     */
-    err = gretl_read_native_data(PREFIX "/share/gretl/data/ramanathan/data9-7.gdt", dset);
+#if defined(_WIN32)
+	err = gretl_read_native_data(PREFIX "\\data\\ramanathan\\data9-7.gdt", dset);
+#else
+	err = gretl_read_native_data(PREFIX "/share/gretl/data/ramanathan/data9-7.gdt", dset);
+#endif
 
     if (err) {
-	errmsg(err, prn);
-	exit(EXIT_FAILURE);
+        errmsg(err, prn);
+        exit(EXIT_FAILURE);
     }
 
     err = arma_estimate(dset, prn);
-    
+
     destroy_dataset(dset);
     gretl_print_destroy(prn);
 
