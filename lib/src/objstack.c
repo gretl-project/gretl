@@ -1818,19 +1818,18 @@ void set_gui_model_list_callback (GList *(*callback)())
     get_or_send_gui_models = callback;
 }
 
-/* The following function is called from subsample.c when
-   the user has called for a permanent subsampling (represented
-   by @newmask) of the original dataset.
+/* The following function is called from subsample.c when the user has
+   called for a permanent subsampling (represented by @newmask) of the
+   original dataset.
 
-   If @ndropped is non-NULL that means we're just checking
-   whether the proposed subsampling is inconsistent with
-   preservation of any saved models -- and this argument gets
-   filled out with the number of such models. This variant
-   call is issued only in gui mode.
+   If @ndropped is non-NULL that means we're just checking whether the
+   proposed subsampling is inconsistent with preservation of any saved
+   models -- and this argument gets filled out with the number of such
+   models. This variant is only activated in gui mode.
 
-   Otherwise, for each saved model, we either mark it for
-   deletion (via the GUI) or revise its sample information
-   appropriately in light of the shrinkage of the dataset.
+   Otherwise, for each saved model, we either mark it for deletion
+   (via the GUI) or revise its sample information appropriately in
+   light of the shrinkage of the dataset.
 */
 
 int check_models_for_subsample (char *newmask, int *ndropped)
