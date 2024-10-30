@@ -325,6 +325,12 @@ static void relink_to_full_dataset (DATASET *dset)
     fprintf(stderr, "relink_to_full_dataset: fullset = %p (freeing and nulling)\n",
 	    (void *) fullset);
     fprintf(stderr, "fullset: v = %d, n = %d\n", fullset->v, fullset->n);
+    if (fullset->n < 33) {
+        int i;
+        for (i=0; i<fullset->n; i++) {
+            fprintf(stderr, "fullset->Z[1][%d] = %g\n", i, fullset->Z[1][i]);
+        }
+    }
 #endif
 
     *dset = *fullset;
@@ -672,6 +678,7 @@ static int sync_data_to_full (DATASET *dset)
 }
 
 #if SUBDEBUG
+
 static void print_mask (const char *mask, const char *s)
 {
     if (s != NULL) {
@@ -687,6 +694,7 @@ static void print_mask (const char *mask, const char *s)
 	fputc('\n', stderr);
     }
 }
+
 #endif
 
 /* Here we make a mask representing the "complete" sample restriction
@@ -805,9 +813,17 @@ int restore_full_sample (DATASET *dset, ExecState *state)
 {
     int err = 0;
 
+#if FULLDEBUG || SUBDEBUG
+    fprintf(stderr, "\nrestore_full_sample: dset=%p, state=%p, fullset=%p\n",
+	    (void *) dset, (void *) state, (void *) fullset);
+#endif
+
     if (dset == NULL) {
 	return E_NODATA;
     } else if (!complex_subsampled()) {
+#if SUBDEBUG
+        fprintf(stderr, "restore_full_sample: non-complex\n");
+#endif
 	return restore_full_easy(dset, state);
     }
 
@@ -815,11 +831,6 @@ int restore_full_sample (DATASET *dset, ExecState *state)
 	fprintf(stderr, "restore_full_sample: dset is not peerset!\n");
 	return E_DATA;
     }
-
-#if FULLDEBUG || SUBDEBUG
-    fprintf(stderr, "\nrestore_full_sample: dset=%p, state=%p, fullset=%p\n",
-	    (void *) dset, (void *) state, (void *) fullset);
-#endif
 
     /* Beyond this point we are doing a non-trivial restoration
        of a stored "full" dataset which has previously been
@@ -848,7 +859,7 @@ int restore_full_sample (DATASET *dset, ExecState *state)
     }
 
     /* destroy sub-sampled data array */
-#if PANDEBUG || SUBDEBUG
+#if PANDEBUG || SUBDEBUG || FULLDEBUG
     fprintf(stderr, "restore_full_sample: freeing sub-sampled Z at %p (v = %d, n = %d)\n"
 	    " and clearing dset at %p\n", (void *) dset->Z, dset->v, dset->n,
 	    (void *) dset);
@@ -1030,8 +1041,71 @@ static int copy_dummy_to_mask (char *mask, const double *x, int n)
     return err;
 }
 
-static int mask_from_temp_dummy (const char *s, DATASET *dset,
-				 char *mask, PRN *prn)
+/* When sub-sampling on some boolean criterion, check to see if we can
+   meet the criterion by simply adjusting the endpoints of the sample
+   range: life will be simpler if that is so.
+*/
+
+static int mask_get_t1_t2 (const char *mask,
+                           const DATASET *dset,
+                           int *pt1, int *pt2)
+{
+    const char *s = mask;
+    int contig = 0;
+    int nseq = 0; /* number of sequences of 1s */
+    int t1 = -1;
+    int t2 = -1;
+    int t, n = 0;
+
+    for (t=0; s[t] != SUBMASK_SENTINEL; t++) {
+        if (s[t] == 1) {
+            n++;
+            if (t == 0 || s[t-1] == 0) {
+                nseq++;
+            }
+            if (t1 < 0) {
+                t1 = t;
+            }
+            if (t > t2) {
+                t2 = t;
+            }
+        }
+    }
+
+    /* did we get a single sequence of 1s? */
+    contig = (nseq == 1);
+
+    if (contig && dataset_is_panel(dset)) {
+	int n = t2 - t1 + 1;
+
+	/* sample must leave a whole number of panel units; moreover,
+	   to retain "panelness" this number must be greater than 1
+	*/
+	if (t1 % dset->pd != 0 || n % dset->pd != 0) {
+	    contig = 0;
+	} else if (n == dset->pd) {
+	    contig = 0;
+	}
+    }
+
+    if (contig) {
+        *pt1 = t1;
+        *pt2 = t2;
+    } else {
+        *pt1 = *pt2 = -1;
+    }
+
+#if SUBDEBUG
+    fprintf(stderr, "mask_get_t1_t2: n=%d, t1=%d, t2=%d\n",
+            n, *pt1, *pt2);
+#endif
+
+    return contig;
+}
+
+static int mask_from_temp_dummy_full (const char *s, DATASET *dset,
+                                      char *mask, PRN *prn,
+                                      int *new_t1, int *new_t2)
 {
     char formula[MAXLINE];
     double *x;
@@ -1053,12 +1127,20 @@ static int mask_from_temp_dummy (const char *s, DATASET *dset,
 	    gretl_errmsg_set(_("No observations would be left!"));
 	} else if (err) {
 	    gretl_errmsg_sprintf(_("'%s' is not a dummy variable"), "mask");
-	}
+	} else if (new_t1 != NULL && new_t2 != NULL) {
+            mask_get_t1_t2(mask, dset, new_t1, new_t2);
+        }
     }
 
     free(x);
 
     return err;
+}
+
+static int mask_from_temp_dummy (const char *s, DATASET *dset,
+				 char *mask, PRN *prn)
+{
+    return mask_from_temp_dummy_full(s, dset, mask, prn, NULL, NULL);
 }
 
 static int mask_from_dummy (const char *s, const DATASET *dset,
@@ -1314,63 +1396,6 @@ int dataset_is_subsampled (const DATASET *dset)
     } else {
 	return 0;
     }
-}
-
-/* When sub-sampling on some boolean criterion, check to see if we can
-   meet the criterion by simply adjusting the endpoints of the sample
-   range: life will be simpler if that is so.
-*/
-
-static int mask_contiguous (const char *mask,
-			    const DATASET *dset,
-			    int *pt1, int *pt2)
-{
-    int t, t1 = 0, t2 = dset->n - 1;
-    int contig = 1;
-
-    for (t=0; t<dset->n; t++) {
-	if (mask[t] == 0) {
-	    t1++;
-	} else {
-	    break;
-	}
-    }
-
-    for (t=dset->n - 1; t>=0; t--) {
-	if (mask[t] == 0) {
-	    t2--;
-	} else {
-	    break;
-	}
-    }
-
-    for (t=t1; t<=t2; t++) {
-	if (mask[t] == 0) {
-	    /* there's a hole inside the range */
-	    contig = 0;
-	    break;
-	}
-    }
-
-    if (contig && dataset_is_panel(dset)) {
-	int n = t2 - t1 + 1;
-
-	/* sample must leave a whole number of panel units; moreover,
-	   to retain "panelness" this number must be greater than 1
-	*/
-	if (t1 % dset->pd != 0 || n % dset->pd != 0) {
-	    contig = 0;
-	} else if (n == dset->pd) {
-	    contig = 0;
-	}
-    }
-
-    if (contig) {
-	*pt1 = t1;
-	*pt2 = t2;
-    }
-
-    return contig;
 }
 
 static void
@@ -1659,11 +1684,10 @@ static int try_for_daily_subset (char *selected,
 	}
     }
 
-    /* Now, we should probably restrict the proportion of
-       missing days for this treatment: for exclusion of
-       non-trading days 10 percent should be generous.
-       But we'll also require that the maximum "daily
-       delta" be less than 10.
+    /* Now, we should probably restrict the proportion of missing days
+       for this treatment: for exclusion of non-trading days 10
+       percent should be generous.  But we'll also require that the
+       maximum "daily delta" be less than 10.
     */
 
     if (delta_max < 10) {
@@ -1999,6 +2023,8 @@ static char *precompute_mask (const char *s,
 			      const char *panmask,
 			      const char *oldmask,
 			      DATASET *dset,
+                              int *new_t1,
+                              int *new_t2,
 			      PRN *prn,
 			      int *err)
 {
@@ -2006,7 +2032,7 @@ static char *precompute_mask (const char *s,
     char *newmask = NULL;
 
 #if SUBDEBUG
-    fprintf(stderr, "restrict_sample: precomputing new mask\n");
+    fprintf(stderr, "precompute_mask\n");
 #endif
 
     if (panmask == NULL) {
@@ -2014,15 +2040,12 @@ static char *precompute_mask (const char *s,
 	if (tmpmask == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    /* fill out mask relative to current, restricted dataset */
-	    *err = mask_from_temp_dummy(s, dset, tmpmask, prn);
+	    /* fill out mask relative to the current, restricted dataset */
+	    *err = mask_from_temp_dummy_full(s, dset, tmpmask, prn,
+                                             new_t1, new_t2);
 	}
 	if (!*err) {
-	    if (fullset != NULL) {
-#if 0
-		fprintf(stderr, " expand_mask: oldmask=%p, fullset->n=%d\n",
-			(void *) oldmask, fullset->n);
-#endif
+	    if (fullset != NULL && *new_t1 < 0) {
 		newmask = expand_mask(tmpmask, oldmask, err);
 	    } else {
 		newmask = tmpmask;
@@ -2158,8 +2181,8 @@ static int full_sample (const DATASET *dset)
     }
 }
 
-static int handle_ts_restrict (char *mask, DATASET *dset,
-			       gretlopt opt, int t1)
+static int handle_ts_perma_restrict (char *mask, DATASET *dset,
+                                     gretlopt opt, int t1)
 {
     char stobs[OBSLEN];
     int pd = dset->pd;
@@ -2283,10 +2306,37 @@ static int do_precompute (int mode,
 #endif
 }
 
-/* Internal version of restrict_sample(), with the extra
-   argument @panmask, to represent a time-based sample
-   specification for panel data. The latter comes from
-   the "upstream" function panel_time_sample().
+static int handle_contiguous_sample (DATASET *dset,
+                                     int t1, int t2,
+                                     char *mask,
+                                     int permanent,
+                                     gretlopt opt)
+{
+    int err = 0;
+
+    if (permanent && dataset_is_time_series(dset)) {
+        /* apply the restriction, but then re-establish the
+           time-series character of the dataset
+        */
+        err = handle_ts_perma_restrict(mask, dset, opt, t1);
+    } else if (!permanent) {
+        /* just move the sample range pointers, avoiding
+           the overhead of creating a parallel dataset
+        */
+        dset->t1 = t1;
+        dset->t2 = t2;
+        /* but maybe record mask? */
+    } else {
+        err = restrict_sample_from_mask(mask, dset, opt);
+    }
+
+    return err;
+}
+
+/* Internal version of restrict_sample(), with the extra argument
+   @panmask, to represent a time-based sample specification for panel
+   data. The latter comes from the "upstream" function
+   panel_time_sample().
 */
 
 static int real_restrict_sample (const char *param,
@@ -2306,6 +2356,9 @@ static int real_restrict_sample (const char *param,
     int n_models = 0;
     int n_orig = 0;
     int replace = 0;
+    int new_t1 = -1;
+    int new_t2 = -1;
+    int contig = 0;
     int mode, err = 0;
 
     if (dset == NULL || dset->Z == NULL) {
@@ -2386,7 +2439,13 @@ static int real_restrict_sample (const char *param,
 
     if (!replace && do_precompute(mode, panmask, oldmask, dset)) {
 	/* we come here only if cumulating restrictions */
-	mask = precompute_mask(param, panmask, oldmask, dset, prn, &err);
+	mask = precompute_mask(param, panmask, oldmask, dset,
+                               &new_t1, &new_t2, prn, &err);
+        if (new_t1 >= 0 && new_t2 >= 0) {
+            err = handle_contiguous_sample(dset, new_t1, new_t2,
+                                           mask, permanent, opt);
+            goto last_stage;
+        }
     } else if (panmask != NULL) {
 	/* got a panel time-sample mask */
 	mask = copy_subsample_mask(panmask, &err);
@@ -2394,7 +2453,7 @@ static int real_restrict_sample (const char *param,
 
     if (!err && !full_sample(dset)) {
 	/* restore the full data range, for housekeeping purposes */
-	err = restore_full_sample(dset, NULL);
+	err = restore_full_sample(dset, NULL); /* or pass state? */
     }
 
     if (err) {
@@ -2428,37 +2487,23 @@ static int real_restrict_sample (const char *param,
     }
 
     if (!err && mask != NULL) {
-	int contiguous = 0;
-	int t1 = 0, t2 = 0;
-
 	if (!(opt & OPT_N)) {
 	    /* don't bother with this for the --random case */
-	    contiguous = mask_contiguous(mask, dset, &t1, &t2);
+	    contig = mask_get_t1_t2(mask, dset, &new_t1, &new_t2);
 	}
 #if SUBDEBUG
 	fprintf(stderr, "restrict sample: contiguous range? %s\n",
 		contiguous ? "yes" : "no");
 #endif
-	if (contiguous) {
-	    if (permanent && dataset_is_time_series(dset)) {
-		/* apply the restriction, but then re-establish the
-		   time-series character of the dataset
-		*/
-		err = handle_ts_restrict(mask, dset, opt, t1);
-	    } else if (!permanent) {
-		/* just move the sample range pointers, avoiding
-		   the overhead of creating a parallel dataset
-		*/
-		dset->t1 = t1;
-		dset->t2 = t2;
-		/* but record mask? */
-	    } else {
-		err = restrict_sample_from_mask(mask, dset, opt);
-	    }
+	if (contig) {
+            err = handle_contiguous_sample(dset, new_t1, new_t2,
+                                           mask, permanent, opt);
 	} else {
 	    err = restrict_sample_from_mask(mask, dset, opt);
 	}
     }
+
+ last_stage:
 
     free(mask);
 
