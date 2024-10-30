@@ -1751,7 +1751,7 @@ static int
 make_restriction_mask (int mode, const char *s,
 		       const int *list, DATASET *dset,
 		       const char *oldmask, char **pmask,
-		       PRN *prn)
+                       int *pt1, int *pt2, PRN *prn)
 {
     char *mask = NULL;
     int sn = 0, err = 0;
@@ -1792,6 +1792,12 @@ make_restriction_mask (int mode, const char *s,
 	/* exit now on unrecoverable error */
 	free(mask);
 	return err;
+    } else if (mode != SUBSAMPLE_RANDOM) {
+        /* try for contiguous sample */
+        if (mask_get_t1_t2(mask, dset, pt1, pt2)) {
+            *pmask = mask;
+            return 0;
+        }
     }
 
     /* cumulate sample restrictions, if appropriate */
@@ -2442,18 +2448,25 @@ static int real_restrict_sample (const char *param,
 	mask = precompute_mask(param, panmask, oldmask, dset,
                                &new_t1, &new_t2, prn, &err);
         if (new_t1 >= 0 && new_t2 >= 0) {
-            err = handle_contiguous_sample(dset, new_t1, new_t2,
-                                           mask, permanent, opt);
-            goto last_stage;
+            contig = 1;
+            goto contig_next;
         }
     } else if (panmask != NULL) {
 	/* got a panel time-sample mask */
 	mask = copy_subsample_mask(panmask, &err);
+    } else {
+	/* no @panmask, and not already handled by "precompute" above */
+	err = make_restriction_mask(mode, param, list, dset, oldmask,
+				    &mask, &new_t1, &new_t2, prn);
+        if (new_t1 >= 0 && new_t2 >= 0) {
+            contig = 1;
+            goto contig_next;
+        }
     }
 
     if (!err && !full_sample(dset)) {
 	/* restore the full data range, for housekeeping purposes */
-	err = restore_full_sample(dset, NULL); /* or pass state? */
+	err = restore_full_sample(dset, NULL);
     }
 
     if (err) {
@@ -2463,12 +2476,6 @@ static int real_restrict_sample (const char *param,
 	    free(oldmask);
 	}
 	return err;
-    }
-
-    if (mask == NULL) {
-	/* no @panmask, and not already handled by "precompute" above */
-	err = make_restriction_mask(mode, param, list, dset,
-				    oldmask, &mask, prn);
     }
 
     if (err && state != NULL && state->submask != NULL) {
@@ -2482,18 +2489,20 @@ static int real_restrict_sample (const char *param,
 	}
     }
 
+ contig_next:
+
     if (!err && n_models > 0) {
 	err = check_models_for_subsample(mask, n_dropped);
     }
 
     if (!err && mask != NULL) {
-	if (!(opt & OPT_N)) {
+	if (!contig && !(opt & OPT_N)) {
 	    /* don't bother with this for the --random case */
 	    contig = mask_get_t1_t2(mask, dset, &new_t1, &new_t2);
 	}
 #if SUBDEBUG
 	fprintf(stderr, "restrict sample: contiguous range? %s\n",
-		contiguous ? "yes" : "no");
+		contig ? "yes" : "no");
 #endif
 	if (contig) {
             err = handle_contiguous_sample(dset, new_t1, new_t2,
@@ -2502,8 +2511,6 @@ static int real_restrict_sample (const char *param,
 	    err = restrict_sample_from_mask(mask, dset, opt);
 	}
     }
-
- last_stage:
 
     free(mask);
 
