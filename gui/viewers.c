@@ -1196,7 +1196,9 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     }
 
 #ifdef GRETL_EDIT
-    vwin_add_editbar(vwin, EDITBAR_HAS_TEXT);
+    if (role != VIEW_STDERR) {
+        vwin_add_editbar(vwin, EDITBAR_HAS_TEXT);
+    }
 #else
     if (role == VAR || role == VECM || role == SYSTEM) {
 	/* special case: use a text-based menu bar */
@@ -1225,7 +1227,8 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	role != VIEW_LOG &&
 	role != EDIT_PKG_HELP &&
 	role != EDIT_PKG_GHLP &&
-	role != SCRIPT_OUT) {
+	role != SCRIPT_OUT &&
+        role != VIEW_STDERR) {
 	gretl_print_get_size(prn, &width, &nlines);
 	if (width > 0 && width + 2 < hsize) {
 	    hsize = width + 2;

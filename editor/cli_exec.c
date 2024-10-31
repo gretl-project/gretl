@@ -126,36 +126,24 @@ gboolean viewer_has_stderr (windata_t *vwin)
 {
     gboolean ret = FALSE;
 
-    fprintf(stderr, "HERE viewer_has_stderr\n");
     if (vwin != NULL && vwin->data != NULL) {
 	exec_info *ei = vwin->data;
 
-	fprintf(stderr, " HERE ei->errout = %p\n", (void *) ei->errout);
 	ret = (ei->errout != NULL);
     }
-
-    fprintf(stderr, " HERE ret = %d\n", ret);
 
     return ret;
 }
 
 void viewer_show_stderr (windata_t *vwin)
 {
-    GtkWidget *parent = vwin_toplevel(vwin);
-    GtkWidget *dialog;
-    exec_info *ei = vwin->data;
     const gchar *title = "gretl: stderr";
+    exec_info *ei = vwin->data;
+    PRN *prn;
 
-    dialog = gtk_message_dialog_new(GTK_WINDOW(parent),
-                                    GTK_DIALOG_DESTROY_WITH_PARENT,
-                                    GTK_MESSAGE_INFO,
-                                    GTK_BUTTONS_CLOSE,
-                                    "%s", ei->errout);
-
-    gtk_window_set_title(GTK_WINDOW(dialog), title);
-    gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
-    gtk_dialog_run(GTK_DIALOG(dialog));
-    gtk_widget_destroy(dialog);
+    prn = gretl_print_new_with_gchar_buffer(ei->errout);
+    ei->errout = NULL;
+    view_buffer(prn, 84, 480, title, VIEW_STDERR, NULL);
 }
 
 static void reuse_editor_output_viewer (windata_t *vwin, PRN *prn)
