@@ -77,7 +77,7 @@ int recode_strvals (DATASET *dset, gretlopt opt)
 static DATASET *fullset;
 static DATASET *peerset;
 
-#define SUBMASK_SENTINEL 127
+#define SUBMASK_SENTINEL 0x0f
 
 static int smpl_get_int (const char *s, DATASET *dset, int *err);
 
@@ -88,7 +88,7 @@ DATASET *fetch_full_dataset (void)
     return fullset;
 }
 
-static int get_submask_length (const char *s)
+static int submask_length (const char *s)
 {
     int n = 1;
 
@@ -109,7 +109,7 @@ int get_dataset_submask_size (const DATASET *dset)
     int n = 0;
 
     if (dset != NULL) {
-	n = get_submask_length(dset->submask);
+	n = submask_length(dset->submask);
 	if (n > 0) n--; /* omit the sentinel */
     }
 
@@ -121,7 +121,7 @@ int get_model_submask_size (const MODEL *pmod)
     int n = 0;
 
     if (pmod != NULL) {
-	n = get_submask_length(pmod->submask);
+	n = submask_length(pmod->submask);
 	if (n > 0) n--; /* omit the sentinel */
     }
 
@@ -142,7 +142,7 @@ char *copy_subsample_mask (const char *src, int *err)
     if (src == RESAMPLED) {
 	ret = RESAMPLED;
     } else if (src != NULL) {
-	int n = get_submask_length(src);
+	int n = submask_length(src);
 
 	ret = malloc(n * sizeof *ret);
 	if (ret != NULL) {
@@ -174,7 +174,7 @@ int write_model_submask (const MODEL *pmod, PRN *prn)
 	pputs(prn, "<submask length=\"0\"></submask>\n");
 	ret = 1;
     } else if (pmod->submask != NULL) {
-	int i, n = get_submask_length(pmod->submask);
+	int i, n = submask_length(pmod->submask);
 
 	pprintf(prn, "<submask length=\"%d\">", n);
 	for (i=0; i<n; i++) {
@@ -197,7 +197,7 @@ int write_dataset_submask (const DATASET *dset, PRN *prn)
 	pprintf(prn, "<resample seed=\"%u\" n=\"%d\"/>\n", seed, dset->n);
 	ret = 1;
     } else if (complex_subsampled()) {
-	int i, n = get_submask_length(dset->submask);
+	int i, n = submask_length(dset->submask);
 
 	pprintf(prn, "<submask length=\"%d\">", n);
 	for (i=0; i<n; i++) {
@@ -239,13 +239,13 @@ int submask_cmp (const char *m1, const char *m2)
 }
 
 /* All values apart from the sentinel are initialized to zero; once
-   the mask is used, 1s will indicate included observations and
-   0s excluded observations.
+   the mask is actually used, 1s will indicate included observations
+   and 0s excluded observations.
 */
 
 static char *make_submask (int n)
 {
-    char *mask = calloc(n + 1, 1);
+    char *mask = calloc(n + 2, 1);
 
     if (mask != NULL) {
 	mask[n] = SUBMASK_SENTINEL;
@@ -476,7 +476,7 @@ static int is_panel_time_sample (const char *mask,
 
     if (dset == NULL || !dataset_is_panel(dset)) {
 	return 0;
-    } else if (get_submask_length(mask) != dset->n + 1) {
+    } else if (submask_length(mask) != dset->n + 1) {
 	return 0;
     }
 
@@ -895,16 +895,49 @@ int restore_full_sample (DATASET *dset, ExecState *state)
     return err;
 }
 
-static int overlay_masks (char *targ, const char *src, int n)
+static char *expand_mask (const char *tmpmask,
+			  const char *oldmask,
+			  int *err)
 {
+    int oldlen = submask_length(oldmask) - 1;
+    char *expanded = make_submask(oldlen);
+
+    if (expanded == NULL) {
+	*err = E_ALLOC;
+    } else {
+	/* map @tmpmask onto the full data range */
+	int t, i = 0;
+
+	for (t=0; t<oldlen; t++) {
+	    if (oldmask[t] == 1 && tmpmask[i] != SUBMASK_SENTINEL) {
+                expanded[t] = tmpmask[i++];
+	    }
+	}
+    }
+
+    return expanded;
+}
+
+static int and_masks (char **pmask, const char *orig, int *err)
+{
+    char *mask = *pmask;
+    int origlen = submask_length(orig) - 1;
+    int masklen = submask_length(mask) - 1;
+    char *alt = NULL;
     int i, sn = 0;
 
-    for (i=0; i<n; i++) {
-	if (targ[i] == 1 && src[i] == 1) {
-	    targ[i] = 1;
+    if (masklen < origlen) {
+        alt = expand_mask(mask, orig, err);
+        if (*err == 0) {
+            *pmask = mask = alt;
+        }
+    }
+
+    for (i=0; i<origlen && !*err; i++) {
+	if (mask[i] == 1 && orig[i] == 1) {
 	    sn++;
 	} else {
-	    targ[i] = 0;
+	    mask[i] = 0;
 	}
     }
 
@@ -1195,8 +1228,7 @@ static int mask_from_dummy (const char *s, const DATASET *dset,
     return err;
 }
 
-/* how many observations are selected by the given
-   subsample mask? */
+/* how many observations are selected by @mask relative to @dset? */
 
 static int
 count_selected_cases (const char *mask, const DATASET *dset)
@@ -1204,7 +1236,7 @@ count_selected_cases (const char *mask, const DATASET *dset)
     int i, n = 0;
 
     for (i=0; i<dset->n; i++) {
-	if (mask[i]) {
+	if (mask[i] == 1) {
 	    n++;
 	}
     }
@@ -1750,9 +1782,11 @@ static int check_subsample_n (int n, DATASET *dset,
 static int
 make_restriction_mask (int mode, const char *s,
 		       const int *list, DATASET *dset,
-		       const char *oldmask, char **pmask,
-                       int *pt1, int *pt2, PRN *prn)
+		       const char *oldmask, int replace,
+                       char **pmask, int *pt1, int *pt2,
+                       PRN *prn)
 {
+    DATASET *refset = dset;
     char *mask = NULL;
     int sn = 0, err = 0;
 
@@ -1769,20 +1803,24 @@ make_restriction_mask (int mode, const char *s,
     fprintf(stderr, "make_restriction_mask: oldmask = %p\n", (void *) oldmask);
 #endif
 
+    if (fullset != NULL && oldmask == NULL && replace) {
+        refset = fullset;
+    }
+
     /* construct subsample mask in one of several possible ways */
 
     if (mode == SUBSAMPLE_DROP_MISSING) {
-	err = make_missing_mask(list, dset, mask);
+	err = make_missing_mask(list, refset, mask);
     } else if (mode == SUBSAMPLE_DROP_EMPTY) {
-	err = make_empty_mask(list, dset, mask);
+	err = make_empty_mask(list, refset, mask);
     } else if (mode == SUBSAMPLE_DROP_WKENDS) {
-	err = make_weekday_mask(dset, mask);
+	err = make_weekday_mask(refset, mask);
     } else if (mode == SUBSAMPLE_RANDOM) {
-	err = make_random_mask(s, oldmask, dset, mask);
+	err = make_random_mask(s, oldmask, refset, mask);
     } else if (mode == SUBSAMPLE_USE_DUMMY) {
-	err = mask_from_dummy(s, dset, mask);
+	err = mask_from_dummy(s, refset, mask);
     } else if (mode == SUBSAMPLE_BOOLEAN) {
-	err = mask_from_temp_dummy(s, dset, mask, prn);
+	err = mask_from_temp_dummy(s, refset, mask, prn);
     } else {
 	gretl_errmsg_set(_("Sub-sample command failed mysteriously"));
 	err = 1;
@@ -1802,12 +1840,14 @@ make_restriction_mask (int mode, const char *s,
 
     /* cumulate sample restrictions, if appropriate */
     if (oldmask != NULL && mode != SUBSAMPLE_RANDOM) {
-	sn = overlay_masks(mask, oldmask, dset->n);
+	sn = and_masks(&mask, oldmask, &err);
     } else {
-	sn = count_selected_cases(mask, dset);
+	sn = count_selected_cases(mask, refset);
     }
 
-    err = check_subsample_n(sn, dset, &mask, prn);
+    if (!err) {
+        err = check_subsample_n(sn, refset, &mask, prn);
+    }
 
     if (err) {
 	free(mask);
@@ -1992,28 +2032,6 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
     return err;
 }
 
-static char *expand_mask (const char *tmpmask,
-			  const char *oldmask,
-			  int *err)
-{
-    char *newmask = make_submask(fullset->n);
-
-    if (newmask == NULL) {
-	*err = E_ALLOC;
-    } else {
-	/* map @tmpmask onto the full data range */
-	int t, i = 0;
-
-	for (t=0; t<fullset->n; t++) {
-	    if (oldmask[t]) {
-		newmask[t] = tmpmask[i++];
-	    }
-	}
-    }
-
-    return newmask;
-}
-
 /* Below: we do this "precompute" thing if the dataset is already
    subsampled and the user wants to compound the restriction with a
    boolean restriction. One reason for this is that any "obs"
@@ -2068,6 +2086,7 @@ static char *precompute_mask (const char *s,
 
 #if 0 /* 2022-05-19: it seems this can trigger a spurious error, why? */
     if (!*err && newmask != NULL) {
+        /* below: s/dset/fullset in some cases! */
 	if (count_selected_cases(newmask, dset) == 0) {
 	    gretl_errmsg_set(_("No observations would be left!"));
 	    *err = E_DATA;
@@ -2456,8 +2475,12 @@ static int real_restrict_sample (const char *param,
 	mask = copy_subsample_mask(panmask, &err);
     } else {
 	/* no @panmask, and not already handled by "precompute" above */
+        if (replace && state != NULL && state->submask != NULL) {
+            err = restore_full_sample(dset, state);
+        }
 	err = make_restriction_mask(mode, param, list, dset, oldmask,
-				    &mask, &new_t1, &new_t2, prn);
+				    replace, &mask, &new_t1, &new_t2,
+                                    prn);
         if (new_t1 >= 0 && new_t2 >= 0) {
             contig = 1;
             goto contig_next;

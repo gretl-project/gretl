@@ -1047,13 +1047,13 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
     double *yhat = NULL;
     char *mask = dset->submask;
     char **Sr = NULL;
-    int vi, s;
+    int vi, sn;
     int err = 0;
 
-    s = get_dataset_submask_size(dset);
-    if (s != fset->n) {
+    sn = get_dataset_submask_size(dset);
+    if (sn != fset->n) {
 	fprintf(stderr, "fullset->n = %d but submask size = %d\n",
-		fset->n, s);
+		fset->n, sn);
 	return E_DATA;
     }
 
