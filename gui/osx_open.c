@@ -124,16 +124,16 @@ int osx_open_pdf (const char *path, const char *dest)
 
 int osx_open_file (const char *path)
 {
-    CFURLRef u;
+    CFURLRef ref;
     int err = 0;
 
-    u = CFURLCreateFromFileSystemRepresentation(NULL,
-                                                (const UInt8 *) path,
-                                                strlen(path),
-                                                false);
-    if (u != NULL) {
-        err = LSOpenCFURLRef(u, NULL);
-        CFRelease(u);
+    ref = CFURLCreateFromFileSystemRepresentation(NULL,
+                                                  (const UInt8 *) path,
+                                                  strlen(path),
+                                                  false);
+    if (ref != NULL) {
+        err = LSOpenCFURLRef(ref, NULL);
+        CFRelease(ref);
     } else {
         err = 1;
     }
@@ -144,98 +144,98 @@ int osx_open_file (const char *path)
 int osx_open_pdf (const char *path, const char *dest)
 {
     CFURLRef ref;
+    CFURLRef appref;
+    int viewer = 0;
     int done = 0;
-    int err;
+    int err = 0;
 
     ref = CFURLCreateFromFileSystemRepresentation(NULL,
 						  (const UInt8 *) path,
 						  strlen(path),
 						  false);
+    if (ref == NULL) {
+        return 1;
+    }
 
-    if (!err) {
-        CFURLRef appref;
-	int viewer = 0;
+    appref = LSCopyDefaultApplicationURLForURL(ref, kLSRolesAll, NULL);
 
-	appref = LSCopyDefaultApplicationURLForURL(ref, kLSRolesAll, NULL);
+    if (appref == NULL) {
+        err = 1;
+    } else {
+        CFStringRef exe = CFURLGetString(appref);
+        const char *s[] = {"Adobe", "Preview"};
+        CFStringRef v[2];
+        CFRange cfr;
+        int i;
 
-	if (appref == NULL) {
-	    err = 1;
-	} else {
-	    CFStringRef exe = CFURLGetString(appref);
-	    const char *s[] = {"Adobe", "Preview"};
-	    CFStringRef v[2];
-	    CFRange cfr;
-	    int i;
+        v[0] = CFStringCreateWithCString(NULL, s[0], kCFStringEncodingASCII);
+        v[1] = CFStringCreateWithCString(NULL, s[1], kCFStringEncodingASCII);
 
-	    v[0] = CFStringCreateWithCString(NULL, s[0], kCFStringEncodingASCII);
-	    v[1] = CFStringCreateWithCString(NULL, s[1], kCFStringEncodingASCII);
-
-	    for (i=0; i<2; i++) {
-		cfr = CFStringFind(exe, v[i], 0);
-		if (cfr.length > 0) {
-		    viewer = i+1;
-		}
-	    }
-
-	    CFRelease(v[0]);
-	    CFRelease(v[1]);
+        for (i=0; i<2; i++) {
+            cfr = CFStringFind(exe, v[i], 0);
+            if (cfr.length > 0) {
+                viewer = i+1;
+            }
         }
 
-        if (!err && viewer == 1) {
-            /* Adobe Acrobat or Acrobat Reader: try passing an
-               option to open at the specified chapter.
-            */
-	    const void *vals = {ref};
-	    CFArrayRef refs;
-            LSLaunchURLSpec uspec;
-            AEDesc desc;
-            gchar *opt;
-            int lserr;
+        CFRelease(v[0]);
+        CFRelease(v[1]);
+    }
 
-            opt = g_strdup_printf("nameddest=%s", dest);
-            AECreateDesc(typeChar, opt, strlen(opt), &desc);
-	    refs = CFArrayCreate(NULL, &vals, 1, &kCFTypeArrayCallBacks);
+    if (!err && viewer == 1) {
+        /* Adobe Acrobat or Acrobat Reader: try passing an
+           option to open at the specified chapter.
+        */
+        const void *vals = {ref};
+        CFArrayRef refs;
+        LSLaunchURLSpec uspec;
+        AEDesc desc;
+        gchar *opt;
+        int lserr;
 
-            uspec.appURL = appref;
-            uspec.itemURLs = refs;
-            uspec.passThruParams = &desc;
-            uspec.launchFlags = kLSLaunchAsync;
-            uspec.asyncRefCon = NULL;
+        opt = g_strdup_printf("nameddest=%s", dest);
+        AECreateDesc(typeChar, opt, strlen(opt), &desc);
+        refs = CFArrayCreate(NULL, &vals, 1, &kCFTypeArrayCallBacks);
 
-            lserr = LSOpenFromURLSpec(&uspec, NULL);
-            if (lserr) {
-                fprintf(stderr, "LSOpenFromURLSpec, err = %d\n", lserr);
-            } else {
-                done = 1;
+        uspec.appURL = appref;
+        uspec.itemURLs = refs;
+        uspec.passThruParams = &desc;
+        uspec.launchFlags = kLSLaunchAsync;
+        uspec.asyncRefCon = NULL;
+
+        lserr = LSOpenFromURLSpec(&uspec, NULL);
+        if (lserr) {
+            fprintf(stderr, "LSOpenFromURLSpec, err = %d\n", lserr);
+        } else {
+            done = 1;
+        }
+        AEDisposeDesc(&desc);
+        g_free(opt);
+    } else if (!err && viewer == 2) {
+        /* The default Apple Preview.app: there's no option
+           as per Adobe, but we can at least try to open the
+           Table-of-Contents pane (Option-Control-3).
+        */
+        err = LSOpenCFURLRef(ref, NULL);
+        if (!err) {
+            FILE *fp = popen("/usr/bin/osascript", "w");
+
+            if (fp != NULL) {
+                /* try to get the table of contents shown */
+                fputs("activate application \"Preview\"\n", fp);
+                fputs("tell application \"System Events\"\n", fp);
+                fputs(" keystroke \"3\" using {option down, command down}\n", fp);
+                fputs("end tell\n", fp);
+                pclose(fp);
             }
-            AEDisposeDesc(&desc);
-            g_free(opt);
-        } else if (!err && viewer == 2) {
-            /* The default Apple Preview.app: there's no option
-               as per Adobe, but we can at least try to open the
-               Table-of-Contents pane (Option-Control-3).
-            */
-            err = LSOpenCFURLRef(ref, NULL);
-            if (!err) {
-                FILE *fp = popen("/usr/bin/osascript", "w");
-
-                if (fp != NULL) {
-                    /* try to get the table of contents shown */
-                    fputs("activate application \"Preview\"\n", fp);
-                    fputs("tell application \"System Events\"\n", fp);
-                    fputs(" keystroke \"3\" using {option down, command down}\n", fp);
-                    fputs("end tell\n", fp);
-                    pclose(fp);
-                }
-                done = 1;
-            }
+            done = 1;
         }
     }
 
-    if (!err && !done) {
+    if (!done) {
+        /* try just opening the document */
         err = LSOpenCFURLRef(ref, NULL);
     }
-
     CFRelease(ref);
 
     return err;
