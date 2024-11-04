@@ -4,7 +4,12 @@ version 2024d, in progress
 - max() and min() functions: augment their functionality
 - xmax() and xmin() functions; consolidate with max, min but
   retain the "x" variants as aliases until further notice
+- Fix possible incorrect behavior of "smpl" in some special
+  cases (inside a function, when the dataset is sub-sampled at
+  the caller level)
 - Windows10 theme: fix invisibility of some GUI elements
+- recent macOS: fix crash on trying to open PDF viewer to a
+  specific chapter of the User's Guide
 
 2024-10-21 version 2024c
 - Random number generation: add Dirichlet and generic discrete
