@@ -10,6 +10,12 @@ version 2024d, in progress
 - Windows10 theme: fix invisibility of some GUI elements
 - recent macOS: fix crash on trying to open PDF viewer to a
   specific chapter of the User's Guide
+- dbnomics addon: don't fail on database IDs that contain '@'
+  (as some OECD identifiers now do)
+- gretl_edit: use a scrollable window when displaying stderr
+  output, so it doesn't get truncated
+- When adding a 1x1 matrix to a bundle via defbundle() or _()
+  don't automatically convert it to a scalar
 
 2024-10-21 version 2024c
 - Random number generation: add Dirichlet and generic discrete
