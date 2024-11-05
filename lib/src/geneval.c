@@ -14485,6 +14485,14 @@ static void node_nullify_ptr (NODE *n)
     else if (n->t == SERIES) n->v.xvec = NULL;
 }
 
+/* 2024-11-05: in defbundle() and _() we've been turning a
+   1 x 1 matrix argument into a scalar bundle member. It
+   seems this is actually not a good idea so now we don't
+   do it -- but to re-establish that behavior, define
+   BUNDLED_MATRIX_SPECIAL to non-zero.
+*/
+#define BUNDLED_MATRIX_SPECIAL 0
+
 /* supports retrieval of data for candidate array elements
    or bundle members
 */
@@ -14505,10 +14513,13 @@ static void *node_get_ptr (NODE *n, int f, parser *p, int *donate)
             ptr = n->v.xvec;
         } else if (t == NUM) {
             ptr = &n->v.xval;
-        } else if (scalar_matrix_node(n)) {
+        }
+#if BUNDLED_MATRIX_SPECIAL
+        else if (scalar_matrix_node(n)) {
             ptr = n->v.m->val;
             t = NUM;
         }
+#endif
     }
 
     if (ptr == NULL) {
@@ -15541,9 +15552,12 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
 
                     if (e->t == SERIES) {
                         size = p->dset->n;
-                    } else if (scalar_matrix_node(e)) {
+                    }
+#if BUNDLED_MATRIX_SPECIAL
+                    else if (scalar_matrix_node(e)) {
                         gtype = GRETL_TYPE_DOUBLE;
                     }
+#endif
                     ptr = node_get_ptr(e, t->t, p, &donate);
                     if (donate) {
                         gretl_bundle_donate_data(b, key, ptr, gtype, size);
@@ -17450,7 +17464,7 @@ static NODE *between_minmax_node (NODE *l, NODE *r, int f, parser *p)
     if (r->t != l->t) {
         p->err = E_TYPES;
     } else if (l->t == NUM) {
-        ret = two_scalars_func(l, r, f, p); 
+        ret = two_scalars_func(l, r, f, p);
     } else if (l->t == SERIES) {
         ret = aux_series_node(p);
         if (ret != NULL) {
