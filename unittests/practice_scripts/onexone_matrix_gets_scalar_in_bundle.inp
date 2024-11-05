@@ -1,8 +1,6 @@
 set verbose off
 set assert stop
 
-
-
 function void test_matrix_directly (void)
     print "Start testing 1-by-1 matrix directly."
 
@@ -22,15 +20,15 @@ function void test_matrix_directly (void)
     assert(actual_rows == expected_rows)
     assert(actual_value == expected_value)
 end function
-test_matrix_directly()
 
+test_matrix_directly()
 
 function void test_matrix_bundle (void)
     print "Start testing 1-by-1 matrix exported to bundle."
 
     # Given
     matrix m = {3.14}
-    expected_type = "scalar"
+    expected_type = "matrix"
     expected_rows = 1
     expected_value = 3.14
 
@@ -45,7 +43,7 @@ function void test_matrix_bundle (void)
     assert(actual_rows == expected_rows)
     assert(actual_value == expected_value)
 end function
-test_matrix_bundle()
 
+test_matrix_bundle()
 
 quit
