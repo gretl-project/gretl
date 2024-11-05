@@ -3508,15 +3508,19 @@ static int is_ascii_alpha (int c)
 	(c >= 0x61 && c <= 0x7A);
 }
 
+static int at_ok (int compmode, int ci)
+{
+    return compmode || (ci == DATA && dbnomics_is_open());
+}
+
 #define MAY_START_NUMBER(c) (c == '.' || c == '-' || c == '+')
 
-/* tokenize_line: parse @line into a set of tokens on a
-   lexical basis. In some cases constitution of command
-   arguments will require compositing tokens. We get a
-   little semantic help from the CI_FNAME flag: if this
-   is present for a given command, that tells us to
-   consider a filename containing directory separators
-   as a unitary token.
+/* tokenize_line: parse @line into a set of tokens on a lexical
+   basis. In some cases constitution of command arguments will require
+   compositing tokens. We get a little semantic help from the CI_FNAME
+   flag: if this is present for a given command, that tells us to
+   consider a filename containing directory separators as a unitary
+   token.
 */
 
 static int tokenize_line (ExecState *state, DATASET *dset,
@@ -3528,7 +3532,6 @@ static int tokenize_line (ExecState *state, DATASET *dset,
     char *vtok;
     int n, m, pos = 0;
     int wild_ok = 0;
-    int at_ok = compmode;
     int want_fname = 0;
     int err = 0;
 
@@ -3581,11 +3584,9 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 	    m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
 	    strncat(tok, s, m);
 	    err = push_string_token(cmd, tok, s, pos);
-	} else if (is_ascii_alpha((int) *s) || *s == '$' || (at_ok && *s == '@')) {
+	} else if (is_ascii_alpha((int) *s) || *s == '$' ||
+                   (*s == '@' && at_ok(compmode, cmd->ci))) {
 	    /* regular or accessor identifier */
-	    if (*s == '@' && !compmode) {
-		fprintf(stderr, "tokenize: found '@':\n '%s'\n", state->line);
-	    }
 	    n = 1 + namechar_spn(s+1);
 	    m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
 	    strncat(tok, s, m);
@@ -3660,7 +3661,7 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 	    m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
 	    strncat(tok, s, m);
 	    err = push_string_token(cmd, tok, s, pos);
-	} else {
+        } else {
 	    err = unexpected_symbol_error(*s);
 	}
 
