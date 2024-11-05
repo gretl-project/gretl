@@ -1747,6 +1747,11 @@ const char *get_db_name (void)
     return saved_db_name;
 }
 
+int dbnomics_is_open (void)
+{
+    return !strcmp(saved_db_name, "dbnomics");
+}
+
 /* Handling of DSN setup for ODBC: grab the dsn, username
    and password strings.
 */

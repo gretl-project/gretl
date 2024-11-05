@@ -112,6 +112,8 @@ int set_db_name (const char *fname, int filetype, PRN *prn);
 
 const char *get_db_name (void);
 
+int dbnomics_is_open (void);
+
 int set_odbc_dsn (const char *line, PRN *prn);
 
 int db_set_sample (const char *star, const char *stop, DATASET *dset);
