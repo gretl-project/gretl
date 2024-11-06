@@ -2339,6 +2339,18 @@ static int handle_contiguous_sample (DATASET *dset,
 {
     int err = 0;
 
+    if (opt & (OPT_M | OPT_A)) {
+        /* sampling to skip missing values: this works relative
+           to the current sample range
+        */
+        if (t1 < dset->t1) {
+            t1 = dset->t1;
+        }
+        if (t2 > dset->t2) {
+            t2 = dset->t2;
+        }
+    }
+
     if (permanent && dataset_is_time_series(dset)) {
         /* apply the restriction, but then re-establish the
            time-series character of the dataset
