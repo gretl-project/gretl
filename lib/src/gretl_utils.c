@@ -3151,7 +3151,7 @@ void libgretl_init (void)
     mpf_set_default_prec(get_mp_bits());
 #endif
 #ifdef WIN32
-    win32_ensure_path();
+    win32_ensure_dll_path();
 #endif
 }
 

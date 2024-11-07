@@ -410,7 +410,7 @@ static gchar *win32_read_log_file (HANDLE h, const gchar *fname)
    can be found at runtime.
 */
 
-int win32_ensure_path (void)
+int win32_ensure_dll_path (void)
 {
     const char *bindir = gretl_bindir();
     gchar **envp = g_get_environ();
@@ -418,8 +418,13 @@ int win32_ensure_path (void)
     int in_path = 0;
 
     path = g_environ_getenv(envp, "PATH");
-    if (path != NULL && strstr(path, "gretl")) {
-	in_path = 1;
+    if (path != NULL) {
+#if 1
+        fprintf(stderr, "win32_ensure_path, before:\n%s\n", path);
+#endif
+        if (strstr(path, "gretl")) {
+            in_path = 1;
+        }
     }
 
     if (!in_path) {
@@ -427,17 +432,14 @@ int win32_ensure_path (void)
 	gchar **newenv = NULL;
 
 	if (path != NULL) {
-#if 0
-	    printf("old path:\n%s\n", path);
-#endif
 	    setpath = g_strdup_printf("%s;%s", path, bindir);
 	} else {
 	    setpath = g_strdup(bindir);
 	}
 	newenv = g_environ_setenv(envp, "PATH", setpath, TRUE);
-#if 0
+#if 1
 	path = g_environ_getenv(newenv, "PATH");
-	printf("new path:\n%s\n", path);
+	fprintf(stderr, "win32_ensure_path, after:\n%s\n", path);
 #endif
 	if (newenv != envp) {
 	    g_strfreev(newenv);
@@ -1375,7 +1377,6 @@ static int try_for_R_path (HKEY tree, char *s)
     int err = 0;
 
     err = read_reg_val(tree, "R-core\\R", "InstallPath", s);
-    fprintf(stderr, "try_for_R_path(1), err %d\n", err);
 
     if (err) {
 	char version[8], path[32];
@@ -1383,18 +1384,15 @@ static int try_for_R_path (HKEY tree, char *s)
 	/* new-style: path contains R version number */
 	err = read_reg_val(tree, "R-core\\R", "Current Version",
 			   version);
-	fprintf(stderr, "try_for_R_path(2), err %d\n", err);
 	if (!err) {
 	    sprintf(path, "R-core\\R\\%s", version);
 	    err = read_reg_val(tree, path, "InstallPath", s);
-	    fprintf(stderr, "try_for_R_path(3), err %d\n", err);
 	}
     }
 
     if (err) {
 	/* did this variant work at one time? */
 	err = read_reg_val(tree, "R", "InstallPath", s);
-	fprintf(stderr, "try_for_R_path(4), err %d\n", err);
     }
 
     return err;

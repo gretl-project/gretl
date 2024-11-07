@@ -54,7 +54,7 @@ void win32_cli_read_rc (void);
 
 void win_show_last_error (void);
 
-int win32_ensure_path (void);
+int win32_ensure_dll_path (void);
 
 int win_run_sync (const char *cmdline, const char *currdir);
 
