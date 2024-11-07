@@ -1638,6 +1638,7 @@ static GretlToolItem files_items[] = {
     { N_("Open"),           GTK_STOCK_OPEN, NULL, BTN_OPEN },
     { N_("Select directory"), GTK_STOCK_DIRECTORY, NULL, BTN_DIR },
     { N_("Info"),           GTK_STOCK_INFO,       NULL, BTN_INFO },
+    { N_("Help"),           GRETL_STOCK_PDF,      G_CALLBACK(show_package_doc),  BTN_DOC },
     { N_("Details"),        GTK_STOCK_PROPERTIES, G_CALLBACK(open_dbnomics_series), BTN_PROP },
     { N_("Sample script"),  GTK_STOCK_JUSTIFY_LEFT, G_CALLBACK(show_function_sample), BTN_CODE },
     { N_("View code"),      GTK_STOCK_PROPERTIES, G_CALLBACK(show_function_code), BTN_CODE },
@@ -1646,9 +1647,8 @@ static GretlToolItem files_items[] = {
     { N_("Install"),        GTK_STOCK_SAVE,       NULL,                           BTN_INST },
     { N_("Resources..."),   GTK_STOCK_OPEN,       G_CALLBACK(show_package_resources), BTN_RES },
     { N_("Add to menu"),    GTK_STOCK_ADD,        G_CALLBACK(add_func_to_menu),  BTN_ADD },
-    { N_("Package registry"), GTK_STOCK_PREFERENCES, G_CALLBACK(show_gfn_registry), BTN_REG },
-    { N_("Help"),           GRETL_STOCK_PDF,      G_CALLBACK(show_package_doc),  BTN_DOC },
     { N_("Unload/delete..."), GTK_STOCK_DELETE,   G_CALLBACK(browser_del_func),  BTN_DEL },
+    { N_("Package registry"), GTK_STOCK_PREFERENCES, G_CALLBACK(show_gfn_registry), BTN_REG },
     { N_("Look on server"), GTK_STOCK_NETWORK,    NULL,                          BTN_WWW },
     { N_("Local machine"),  GTK_STOCK_HOME,       NULL,                          BTN_HOME },
     { "DB.NOMICS",          GRETL_STOCK_DBN,      NULL,                          BTN_DBN }
