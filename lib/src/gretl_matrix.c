@@ -14832,6 +14832,8 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
     return B;
 }
 
+#define MINMAX_IGNORE_NAN 1
+
 /**
  * gretl_matrix_global_minmax:
  * @A: matrix to examine.
@@ -14859,15 +14861,17 @@ double gretl_matrix_global_minmax (const gretl_matrix *A,
     for (i=0; i<n; i++) {
         x = A->val[i];
         if (isnan(x)) {
-            ; /* skip? */
-        } else {
-            if (!started) {
-                ret = x;
-                started = 1;
-            } else if ((mm == 0 && x < ret) ||
-                       (mm == 1 && x > ret)) {
-                ret = x;
-            }
+#if MINMAX_IGNORE_NAN
+            continue;
+#else
+            return NADBL;
+#endif
+        } else if (!started) {
+            ret = x;
+            started = 1;
+        } else if ((mm == 0 && x < ret) ||
+                   (mm == 1 && x > ret)) {
+            ret = x;
         }
     }
 
