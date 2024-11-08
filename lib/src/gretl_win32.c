@@ -419,7 +419,7 @@ int win32_ensure_dll_path (void)
 
     path = g_environ_getenv(envp, "PATH");
     if (path != NULL) {
-#if 1
+#if 0
         fprintf(stderr, "win32_ensure_path, before:\n%s\n", path);
 #endif
         if (strstr(path, "gretl")) {
@@ -437,7 +437,7 @@ int win32_ensure_dll_path (void)
 	    setpath = g_strdup(bindir);
 	}
 	newenv = g_environ_setenv(envp, "PATH", setpath, TRUE);
-#if 1
+#if 0
 	path = g_environ_getenv(newenv, "PATH");
 	fprintf(stderr, "win32_ensure_path, after:\n%s\n", path);
 #endif
@@ -450,6 +450,30 @@ int win32_ensure_dll_path (void)
     g_strfreev(envp);
 
     return 0;
+}
+
+static int needs_dll_path (const char *cmdline)
+{
+    return strstr(cmdline, "x13as") ||
+        strstr(cmdline, "tramo");
+}
+
+static char *make_env (void)
+{
+    const char *bindir = gretl_bindir();
+    const char *dotdir = gretl_dotdir();
+    int n = strlen(bindir) + strlen(dotdir);
+    char *env;
+
+    n += 5 + 7 + 3;
+    env = calloc(n, 1);
+    /* to enable finding of DLLs */
+    sprintf(env, "PATH=%s", bindir);
+    n = 5 + strlen(bindir) + 1;
+    /* for gfortran tmp files */
+    sprintf(env + n, "TMPDIR=%s", dotdir);
+
+    return env;
 }
 
 /* Run @cmdline synchronously */
@@ -484,11 +508,8 @@ static int real_win_run_sync (const char *cmdline,
 	return err;
     }
 
-    if (strstr(cmdline, "x13")) {
-        const char *bindir = gretl_bindir();
-
-        env = calloc(7 + strlen(bindir));
-        sprintf(env, "path=%s", bindir);
+    if (needs_dll_path(cmdline)) {
+        env = make_env();
     }
 
     ZeroMemory(&si, sizeof si);
