@@ -463,6 +463,7 @@ static int real_win_run_sync (const char *cmdline,
     DWORD flags;
     gunichar2 *cl16 = NULL;
     gunichar2 *cd16 = NULL;
+    char *env = NULL;
     int inherit = FALSE;
     int ok, err = 0;
 
@@ -481,6 +482,13 @@ static int real_win_run_sync (const char *cmdline,
     err = ensure_utf16(cmdline, &cl16, currdir, &cd16);
     if (err) {
 	return err;
+    }
+
+    if (strstr(cmdline, "x13")) {
+        const char *bindir = gretl_bindir();
+
+        env = calloc(7 + strlen(bindir));
+        sprintf(env, "path=%s", bindir);
     }
 
     ZeroMemory(&si, sizeof si);
@@ -510,7 +518,7 @@ static int real_win_run_sync (const char *cmdline,
 			NULL,    /* thread attributes */
 			inherit, /* inherit handles */
 			flags,   /* creation flags */
-			NULL,    /* environment */
+			env,     /* environment */
 			cd16,    /* current directory */
 			&si,     /* startup info */
 			&pi);    /* process info */
@@ -542,6 +550,7 @@ static int real_win_run_sync (const char *cmdline,
 
     g_free(cl16);
     g_free(cd16);
+    free(env);
 
 #if CPDEBUG
     fprintf(stderr, "real_win_run_sync: return err = %d\n", err);
