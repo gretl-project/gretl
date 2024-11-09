@@ -8310,33 +8310,36 @@
         <para>
           The first mode is activated if a single argument of type
           scalar, series or matrix is given: the return value is a
-          scalar, the maximum value <quote>within</quote> the
+          scalar, the maximum valid value <quote>within</quote> the
           argument: if <argname>x</argname> is a series, its maximum
           value within the current sample range, or if
-          <argname>x</argname> is a matrix, its greatest element. The
-          case of a scalar argument is supported for the sake of
-          completeness; you just get its value back.
+          <argname>x</argname> is a matrix, its greatest element,
+          missing values being ignored. The case of a scalar argument is
+          supported for the sake of completeness; you just get its value
+          back.
         </para>
         <para>
           The second mode is activated if two arguments are given. The
           arguments <argname>x</argname> and <argname>y</argname> must
           be of the same type, and must be scalars, series or matrices
           (and if they are matrices, they must be of the same
-          dimensions). The return value is an object of the same type
-          as the arguments, holding the <quote>between</quote> or
+          dimensions). The return value is an object of the same type as
+          the arguments, holding the <quote>between</quote> or
           <quote>cross</quote> maximum or maxima. If the arguments are
-          scalars you get the greater of the two; if they're series
-          you get a series holding the greater of the values of the
-          two series at each observation in the current sample range;
-          if they're matrices you get a matrix holding the greater of
-          their elements in each row and column.
+          scalars you get the greater of the two; if they're series you
+          get a series holding the greater of the values of the two
+          series at each observation in the current sample range; if
+          they're matrices you get a matrix holding the greater of their
+          elements in each row and column. For each of the pairwise
+          comparisons if either term is missing the result is also a
+          missing value.
         </para>
         <subhead>The special case</subhead>
         <para>
           This arises if a single list argument is given. The return
           value is a series, containing at each observation in the
-          current sample range the greatest of the values of the
-          series in the list at that observation.
+          current sample range the greatest of the values of the series
+          in the list at that observation.
         </para>
 	<para>
 	  <seelist>
