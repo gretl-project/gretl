@@ -407,17 +407,18 @@ static gchar *win32_read_log_file (HANDLE h, const gchar *fname)
 
 /* Try to ensure that the gretl installation directory is in
    the PATH, so that DLLs needed by x13as and/or tramo/seats
-   can be found at runtime.
+   can be found at runtime. While we're at it, also ensure
+   that TMPDIR is defined so that gfortran tmpfiles will
+   work (this is needed by tramo/seats).
 */
 
 int win32_ensure_dll_path (void)
 {
     const char *bindir = gretl_bindir();
-    gchar **envp = g_get_environ();
-    const gchar *path = NULL;
+    const gchar *path = g_getenv("PATH");
+    const gchar *tmpd = g_getenv("TMPDIR");
     int in_path = 0;
 
-    path = g_environ_getenv(envp, "PATH");
     if (path != NULL) {
 #if 0
         fprintf(stderr, "win32_ensure_path, before:\n%s\n", path);
@@ -428,52 +429,24 @@ int win32_ensure_dll_path (void)
     }
 
     if (!in_path) {
-	gchar *setpath = NULL;
-	gchar **newenv = NULL;
+	gchar *newpath;
 
 	if (path != NULL) {
-	    setpath = g_strdup_printf("%s;%s", path, bindir);
+            if (path[strlen(path) - 1] == ';') {
+                newpath = g_strdup_printf("%s%s", path, bindir);
+            } else {
+                newpath = g_strdup_printf("%s;%s", path, bindir);
+            }
 	} else {
-	    setpath = g_strdup(bindir);
+	    newpath = g_strdup(bindir);
 	}
-	newenv = g_environ_setenv(envp, "PATH", setpath, TRUE);
-#if 0
-	path = g_environ_getenv(newenv, "PATH");
-	fprintf(stderr, "win32_ensure_path, after:\n%s\n", path);
-#endif
-	if (newenv != envp) {
-	    g_strfreev(newenv);
-	}
-	g_free(setpath);
+        g_setenv("PATH", newpath, TRUE);
+	g_free(newpath);
     }
 
-    g_strfreev(envp);
+    g_setenv("TMPDIR", gretl_dotdir(), FALSE);
 
     return 0;
-}
-
-static int needs_dll_path (const char *cmdline)
-{
-    return strstr(cmdline, "x13as") ||
-        strstr(cmdline, "tramo");
-}
-
-static char *make_env (void)
-{
-    const char *bindir = gretl_bindir();
-    const char *dotdir = gretl_dotdir();
-    int n = strlen(bindir) + strlen(dotdir);
-    char *env;
-
-    n += 5 + 7 + 3;
-    env = calloc(n, 1);
-    /* to enable finding of DLLs */
-    sprintf(env, "PATH=%s", bindir);
-    n = 5 + strlen(bindir) + 1;
-    /* for gfortran tmp files */
-    sprintf(env + n, "TMPDIR=%s", dotdir);
-
-    return env;
 }
 
 /* Run @cmdline synchronously */
@@ -487,7 +460,6 @@ static int real_win_run_sync (const char *cmdline,
     DWORD flags;
     gunichar2 *cl16 = NULL;
     gunichar2 *cd16 = NULL;
-    char *env = NULL;
     int inherit = FALSE;
     int ok, err = 0;
 
@@ -506,10 +478,6 @@ static int real_win_run_sync (const char *cmdline,
     err = ensure_utf16(cmdline, &cl16, currdir, &cd16);
     if (err) {
 	return err;
-    }
-
-    if (needs_dll_path(cmdline)) {
-        env = make_env();
     }
 
     ZeroMemory(&si, sizeof si);
@@ -539,7 +507,7 @@ static int real_win_run_sync (const char *cmdline,
 			NULL,    /* thread attributes */
 			inherit, /* inherit handles */
 			flags,   /* creation flags */
-			env,     /* environment */
+			NULL,    /* inherit environment */
 			cd16,    /* current directory */
 			&si,     /* startup info */
 			&pi);    /* process info */
@@ -571,7 +539,6 @@ static int real_win_run_sync (const char *cmdline,
 
     g_free(cl16);
     g_free(cd16);
-    free(env);
 
 #if CPDEBUG
     fprintf(stderr, "real_win_run_sync: return err = %d\n", err);
