@@ -2078,41 +2078,92 @@ static int deseas_select_output (x13a_opts *xopt,
     return 0;
 }
 
+static int max_label_length (const char *labels[], int nlabels)
+{
+    int ret = 0;
+    int i, ni;
+
+    for (i=0; i<nlabels; i++) {
+        ni = g_utf8_strlen(labels[i], -1);
+        if (ni > ret) {
+            ret = ni;
+        }
+    }
+
+    return ret;
+}
+
+static void set_pad (char *pad, int maxlen, const char *s)
+{
+    int i, np = 1 + maxlen - g_utf8_strlen(s, -1);
+
+    for (i=0; i<np; i++) {
+        pad[i] = ' ';
+    }
+    pad[np] = '\0';
+}
+
 static void deseas_options_report (x13a_opts *xopt, PRN *prn)
 {
-    const char *trival_strs[] = {
-        "no", "yes", "auto"
+    const char *labels[] = {
+        N_("x13as options"),
+        N_("adjustment algorithm"),
+        N_("outlier correction"),
+        N_("trading days correction"),
+        N_("working days correction"),
+        N_("easter effect"),
+        N_("log transformation"),
+        N_("arima specification"),
+        N_("output series"),
+        N_("save spc content"),
     };
+    const char *nya[] = {
+        N_("no"), N_("yes"), N_("auto")
+    };
+    int nlabels = G_N_ELEMENTS(labels);
     char tmp[32];
+    char pad[32];
+    int maxlen;
+    int i;
 
-    /* FIXME translations */
+    maxlen = max_label_length(labels, nlabels);
+    i = 0;
 
-    pprintf(prn, "x13as options:\n");
-    pprintf(prn, "  adjustment algorithm:    %s\n", xopt->seats ? "SEATS" : "X11");
+    pprintf(prn, "%s:\n", _(labels[i++]));
+    set_pad(pad, maxlen, _(labels[i]));
+    pprintf(prn, "  %s:%s%s\n", _(labels[i++]), pad, xopt->seats ? "SEATS" : "X11");
+    set_pad(pad, maxlen, _(labels[i]));
     if (xopt->outliers) {
 	x13_outlier_type_string(tmp, xopt->outliers);
-	pprintf(prn, "  outlier correction:      %s", tmp);
+	pprintf(prn, "  %s:%s%s", _(labels[i++]), pad, tmp);
 	if (!na(xopt->critical)) {
-	    pprintf(prn, ", critical = %g", xopt->critical);
+	    pprintf(prn, ", %s = %g", _("critical"), xopt->critical);
 	}
 	pputc(prn, '\n');
     } else {
-	pprintf(prn, "  outlier correction:      %s\n", "no");
+	pprintf(prn, "  %s:%s%s\n", _(labels[i++]), pad, nya[0]);
     }
-    pprintf(prn, "  trading days correction: %s\n", trival_strs[xopt->trdays]);
-    pprintf(prn, "  working days correction: %s\n", trival_strs[xopt->wdays]);
-    pprintf(prn, "  easter effect:           %s\n", xopt->easter ? "yes" : "no");
-    pprintf(prn, "  log transformation:      %s\n", trival_strs[xopt->logtrans]);
+    set_pad(pad, maxlen, _(labels[i]));
+    pprintf(prn, "  %s:%s%s\n", _(labels[i++]), pad, nya[xopt->trdays]);
+    set_pad(pad, maxlen, _(labels[i]));
+    pprintf(prn, "  %s:%s%s\n", _(labels[i++]), pad, nya[xopt->wdays]);
+    set_pad(pad, maxlen, _(labels[i]));
+    pprintf(prn, "  %s:%s%s\n", _(labels[i++]), pad, xopt->easter ? nya[1] : nya[0]);
+    set_pad(pad, maxlen, _(labels[i]));
+    pprintf(prn, "  %s:%s%s\n", _(labels[i++]), pad, nya[xopt->logtrans]);
+    set_pad(pad, maxlen, _(labels[i]));
     if (xopt->aspec != NULL) {
 	arima_spec_string(tmp, xopt->aspec);
-	pprintf(prn, "  arima specification:     %s\n", tmp);
+	pprintf(prn, "  %s:%s%s\n", _(labels[i++]), pad, tmp);
     } else if (xopt->airline) {
-	pprintf(prn, "  arima specification:     %s\n", "airline");
+	pprintf(prn, "  %s:%s%s\n", _(labels[i++]), pad, "airline");
     } else {
-	pprintf(prn, "  arima specification:     %s\n", "auto");
+	pprintf(prn, "  %s:%s%s\n", _(labels[i++]), pad, nya[2]);
     }
-    pprintf(prn, "  output series:           %s\n", output_strs[xopt->output]);
-    pprintf(prn, "  save spc content:        %s\n", xopt->save_spc ? "yes" : "no");
+    set_pad(pad, maxlen, _(labels[i]));
+    pprintf(prn, "  %s:%s%s\n", _(labels[i++]), pad, output_strs[xopt->output]);
+    set_pad(pad, maxlen, _(labels[i]));
+    pprintf(prn, "  %s:%s%s\n", _(labels[i]), pad, xopt->save_spc ? "yes" : "no");
     pputc(prn, '\n');
 }
 
