@@ -309,7 +309,7 @@ and the two datafiles will contain a comparable string-valued
 
 \subsection{Generating a dummy variable for a specific observation}
 
-\emph{Problem:} Generate $d_t = 0$ for all observation but one, for
+\emph{Problem:} Generate $d_t = 0$ for all observations but one, for
 which $d_t = 1$.
 
 \emph{Solution:}
@@ -320,16 +320,17 @@ which $d_t = 1$.
 \emph{Comment:} The internal variable \texttt{t} is used to refer to
 observations in string form, so if you have a cross-section sample you
 may just use \texttt{d = (t=="123")}. If the dataset has observation
-labels you can use the corresponding label. For example, if you open the
-dataset \texttt{mrw.gdt}, supplied with gretl among the
+labels you can use the corresponding label, in which case it's more
+idiomatic to use \texttt{obs} rather than \texttt{t}. For example, if
+you open the dataset \texttt{mrw.gdt}, supplied with gretl among the
 examples, a dummy variable for Italy could be generated via
 \begin{code}
-  series DIta = (t=="Italy")
+  series DIta = (obs=="Italy")
 \end{code}
 
-Note that this method does not require scripting at all. In fact, you
-might as well use the GUI Menu ``Add/Define new variable'' for the
-same purpose, with the same syntax.
+Note that this method does not require scripting. You can use the GUI
+menu itrm ``Add/Define new variable'' for the same purpose, with the
+same syntax.
 
 \subsection{Generating a discrete variable out of a set of dummies}
 
@@ -367,8 +368,10 @@ series x = lincomb(D, seq(0, nelem(D)-1))
 ``Easter'' dummy?
 
 \emph{Solution:} We have the \cmd{easterday()} function, which returns
-month and day of Easter given the year. The following is an example
-script which uses this function and a few string magic tricks:
+the month and day of Easter (in the form of a single scalar that must
+be unpacked) given the year. The following example script uses this
+function and a few string magic tricks. It assumes a 7-day dataset
+that spans at least 2011 to 2016.
 
 \begin{code}
 series Easter = 0
@@ -627,7 +630,7 @@ x y const z
 const x y
 \end{code}
 
-Besides: it has been brought to our attention that some mischievous
+Aside: it has been brought to our attention that some mischievous
 programs out there put the constant \emph{last}, instead of first,
 like God intended. We are not amused by this utter disrespect of
 econometric tradition, but if you want to pursue the way of evil, it
@@ -861,40 +864,16 @@ datafile \texttt{foo.gdt} the series \texttt{rv}'').
 
 \emph{Problem:} Suppose you have two lists with the same number of
 elements, and you want to apply some command to corresponding elements
-over a loop.
+over a loop. For example you want to regress each element of one
+list on the corresponding element of the other.
 
 \emph{Solution:}
 \begin{code}
-list L1 = a b c
-list L2 = x y z
-
-k1 = 1
-loop foreach i L1
-    k2 = 1
-    loop foreach j L2
-        if k1 == k2
-            ols $i 0 $j
-        endif
-        k2++
-    endloop
-    k1++
+list Y = y1 y2 y3
+list X = x1 x2 x3
+loop i=1..nelem(Y)
+   ols Y[i] 0 X[i]
 endloop
-\end{code}
-
-\emph{Comment:} The simplest way to achieve the result is to loop over
-all possible combinations and filter out the unneeded ones via an
-\texttt{if} condition, as above. That said, in some cases variable
-names can help. For example, if
-\begin{code}
-  list Lx = x1 x2 x3
-  list Ly = y1 y2 y3
-\end{code}
-then we could just loop over the integers---quite intuitive and certainly
-more elegant:
-\begin{code}
-  loop i=1..3
-    ols y$i const x$i
-  endloop
 \end{code}
 
 \subsection{Convolution / polynomial multiplication}
@@ -959,16 +938,14 @@ defined as
 A\,\triangle\,B = (A \setminus B) \cup (B \setminus A)
 \]
 where in this context backslash represents the relative complement
-operator, such that
+operator, which gives the elements of set $A$ than are not in set $B$:
 \[
-A \setminus B = \left\{ x \in A \,|\, x \not \in B \right\}
+A \setminus B = \left\{ x \in A : x \not \in B \right\}
 \]
-
-In practice we first check if there are any series in $A$ but not in
-$B$, then we perform the reverse check. If the union of the two
-results is an empty set, then the lists must contain the same
-variables. The hansl syntax for this would be something like
-
+So we first check if there are any series in $A$ but not in $B$, then
+we perform the reverse check. If the union of the two results is an
+empty set, then the lists must contain the same variables. The hansl
+syntax for this would be something like
 \begin{code}
 scalar NotTheSame = nelem((A-B) || (B-A)) > 0
 \end{code}
@@ -1070,24 +1047,24 @@ printf "CV = %g\n", $test
 \subsection{Is my matrix result broken?}
 \label{sec:brokenmat}
 
-\emph{Problem:} ``Most of the matrix manipulation functions available
+\emph{Problem:} Most of the matrix manipulation functions available
 in gretl flag an error if something goes wrong, but there's no
 guarantee that every matrix computation will return an entirely finite
 matrix, containing no infinities or \texttt{NaN}s. So how do I tell if
-I've got a fully valid matrix?''
+I've got a fully valid matrix?
 
-\emph{Solution}: Given a matrix \texttt{m}, the call
-``\texttt{ok(m)}'' returns a matrix with the same dimensions as
-\texttt{m}, with elements 1 for finite values and 0 for infinities or
-\texttt{NaN}s. A matrix as a whole is OK if it has no elements which
-fail this test, so here's a suitable check for a ``broken'' matrix,
-using the logical NOT operator, ``\texttt{!}'':
+\emph{Solution}: The \texttt{sum} function applied to a matrix
+\texttt{m} returns the sum of all of its elements or \texttt{NA} if
+any elements are non-finite. So ``\texttt{eval sum(m)}'' can be used
+as a check---or more explicitly,
 \begin{code}
-sumc(sumr(!ok(m))) > 0
+if !ok(sum(m))
+    print "m is broken"
+endif
 \end{code}
-If this gives a non-zero return value you know that \texttt{m}
-contains at least one non-finite element.
-
+Also note that the call ``\texttt{ok(m)}'' returns a matrix with the
+same dimensions as \texttt{m}, with elements 1 for finite values and 0
+for infinities or \texttt{NaN}s.
 
 %%% Local Variables:
 %%% mode: latex
