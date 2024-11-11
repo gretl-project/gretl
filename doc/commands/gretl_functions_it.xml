@@ -8363,13 +8363,14 @@
 	<para>
 	  La prima modalità è relativa al caso in cui ci sia un solo
 	  argomento, di tipo scalare, serie o matrice: il valore
-	  restituito è uno scalare, il valore massimo
+	  restituito è uno scalare, il massimo valore valido
 	  <quote>all'interno</quote> dell'argomento: se
 	  <argname>x</argname> è una serie, il suo valore massimo
 	  all'interno dell'intervallo di campionamento corrente, o se
 	  <argname>x</argname> è una matrice, il suo elemento più
-	  grande. Il caso di un argomento scalare è supportato per
-	  completezza; si ottiene solo il suo valore.
+	  grande (i valori mancanti vengono ignorati). Il caso di un
+	  argomento scalare è supportato per completezza; si ottiene
+	  solo il suo valore.
 	</para>
 	<para>
 	  La seconda modalità viene attivata se gli argomenti sono
@@ -8378,13 +8379,14 @@
 	  devono essere scalari, serie o matrici (e se sono matrici,
 	  devono avere le stesse dimensioni). Il valore restituito è
 	  un oggetto dello stesso tipo degli argomenti, contenente il
-	  massimo o i massimi <quote>intra</quote>. Se gli argomenti
+	  massimo o i massimi <quote>tra le due</quote>. Se gli argomenti
 	  sono scalari, ritorna il maggiore dei due; se sono serie,
 	  ritorna una serie contenente il maggiore dei valori delle
 	  due serie a ogni osservazione nell'intervallo di
 	  campionamento corrente; se sono matrici, ritorna una matrice
 	  contenente il maggiore dei loro elementi in ogni riga e
-	  colonna.
+	  colonna. In ambo i casi, se uno dei valori è mancante, il
+	  risultato sarà anch'esso mancante.
 	</para>
 	<subhead>Il caso particolare</subhead>
 	<para>
