@@ -4,4 +4,5 @@ series istrue = randgen(i,0,1)
 series y = normal()
 
 smpl istrue == 0 --restrict
-smpl istrue == 1 --restrict --replace  # CRASH!
+# the next line was causing a crash: fixed 2024-11-11
+smpl istrue == 1 --restrict --replace
