@@ -15405,10 +15405,11 @@
 
     <description>
       <para>
-	Cando non indicas ningún argumento, presenta o rango mostral vixente;
-	noutro caso, establece o rango mostral. Podes definir o rango de varios
-	xeitos. Na primeira alternativa (e nos dous primeiros exemplos) de
-	arriba, <repl>obsinicio</repl> e <repl>obsfin</repl> deben de ser
+	Esta instrución só pode utilizarse cando está preparado un conxunto
+	de datos. Cando non indicas ningún argumento, presenta o rango mostral
+	vixente; noutro caso, establece o rango mostral. Podes definir o rango
+	de varios xeitos. Na primeira alternativa (e nos dous primeiros exemplos)
+	de arriba, <repl>obsinicio</repl> e <repl>obsfin</repl> deben ser
 	consistentes coa periodicidade dos datos. Podes substituír calquera
 	dos dous mediante un punto e coma para deixar ese valor sen cambiar.
 	(Para máis detalles sobre <repl>obsinicio</repl> e <repl>obsfin</repl>,

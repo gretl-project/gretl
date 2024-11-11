@@ -15405,12 +15405,13 @@
 
     <description>
       <para>
-	Cuando no indicas ningún argumento, presenta el rango muestral vigente;
-	de outro modo, establece el rango muestral. Puedes definir el rango de varias
-	formas. En la primera alternativa (y en los dos primeros ejemplos) de
-	arriba, <repl>obsinicio</repl> y <repl>obsfin</repl> deben ser consistentes
-	con la periodicidad de los datos. Puedes substituir cualquiera de los
-	dos mediante un punto y coma para dejar ese valor sin cambiar. (Para
+	Esta instrución solo puede utilizarse cuando está preparado un conjunto
+	de datos. Cuando no indicas ningún argumento, presenta el rango muestral
+	vigente; de outro modo, establece el rango muestral. Puedes definir el
+	rango de varias formas. En la primera alternativa (y en los dos primeros
+	ejemplos) de arriba, <repl>obsinicio</repl> y <repl>obsfin</repl> deben ser
+	consistentes con la periodicidad de los datos. Puedes substituir cualquiera
+	de los dos mediante un punto y coma para dejar ese valor sin cambiar. (Para
 	más detalles sobre <repl>obsinicio</repl> y <repl>obsfin</repl>, consulta
 	la sección titulada <quote>Fechas versus Índices secuenciales</quote>
 	más abajo.) En la segunda forma, los números enteros <repl>i</repl> y

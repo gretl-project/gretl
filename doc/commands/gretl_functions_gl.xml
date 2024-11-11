@@ -2248,6 +2248,7 @@
 	  as restricións de <argname>limites</argname>, e <argname>b</argname>
 	  contén finalmente os valores dos parámetros que maximizan o criterio.
 	</para>
+        <subhead>Límites dos parámetros</subhead>
 	<para>
 	  A matriz <argname>limites</argname> debe de ter 3 columnas, e un
 	  número de filas igual ao número de elementos restrinxidos no vector de
@@ -2263,6 +2264,7 @@
 	<code>
 	  matrix limites = {2, 0, $huge}
 	</code>
+        <subhead>Derivadas analíticas</subhead>
 	<para>
 	  O cuarto argumento (opcional) establece unha maneira de proporcionar
 	  derivadas analíticas (noutro caso, o gradiente calcúlase numericamente).
@@ -8296,23 +8298,52 @@
       </description>
     </function>
 
-    <function name="max" section="stats" output="scalar-or-series">
+    <function name="max" section="stats" output="depends">
       <fnargs>
-	<fnarg type="series-or-list">y</fnarg>
+	<fnarg type="anyfloat">x</fnarg>
+        <fnarg optional="true" type="anyfloat">y</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Se o argumento <argname>y</argname> é unha serie, a función devolve
-	  un escalar co valor máximo desa serie (nas observacións non ausentes).
-	  Se o argumento é unha lista, devolve unha serie na que cada un dos seus
-	  valores indica o máximo de entre as series listadas, para cada
-	  observación.
+	  Esta función ten dous modos básicos, máis un caso especial.
 	</para>
+	<para>
+	  O primeiro modo se activa cando se indica un único argumento de tipo
+	  escalar, de tipo serie ou de tipo matriz. O valor que se vai devolver
+	  é un escalar, que expresa o valor válido máximo <quote>dentro</quote>
+	  do argumento: se <argname>x</argname> é unha serie, expresa o
+	  seu valor máximo dentro do rango vixente da mostra; ou, se
+	  <argname>x</argname> é unha matriz, o seu maior elemento (ignorándose
+	  os valores ausentes). No caso de que o argumento sexa escalar se
+	  admite por razóns de completude; simplemente vas obter de volta
+	  o seu mesmo valor.
+	</para>
+	<para>
+	  O segundo modo se activa cando se indican dous argumentos. Os
+	  argumentos <argname>x</argname> e <argname>y</argname> deben
+	  ser do mesmo tipo; e deben ser escalares, series ou matrices (de ser
+	  matrices, deben ter a mesma dimensión). O valor que se devolve é
+	  un obxecto do mesmo tipo que os argumentos, que contén o máximo
+	  (ou máximos) <quote>entre</quote> ou <quote>transversais</quote>.
+	  Cando os argumentos son escalares, obtés o maior dos dous;
+	  se son series, obtés unha serie constituída polos valores que resultan
+	  ser os maiores ao comparar os dous valores das series para cada
+	  observación, no rango vixente da mostra; se son matrices, obtés
+	  unha matriz que contén os valores que resultan ser os maiores ao
+	  comparar os dous valores das matrices para cada fila e columna.
+	  Para cada unha das comparacións por parellas, se algún dos termos
+	  está ausente, o resultado é tamén un valor ausente.
+	</para>
+	  <subhead>O caso especial</subhead>
+	<para>
+	  Este xurde cando se indica un argumento con unha única lista.
+	  O valor que se devolve é unha serie que contén, en cada observación
+	  do rango vixente da mostra, o maior dos valores que teñen as series
+	  da lista, en cada observación.
+        </para>
 	<para>
 	  <seelist>
             <fncref targ="min"/>
-            <fncref targ="xmax"/>
-            <fncref targ="xmin"/>
 	  </seelist>
 	</para>
       </description>
@@ -8780,24 +8811,16 @@
       </description>
     </function>
 
-    <function name="min" section="stats" output="scalar-or-series">
+    <function name="min" section="stats" output="depends">
       <fnargs>
-	<fnarg type="series-or-list">y</fnarg>
+        <fnarg type="anyfloat">x</fnarg>
+        <fnarg type="anyfloat">y</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Cando o argumento <argname>y</argname> é unha serie, devolve un
-	  escalar co valor mínimo das observacións non ausentes da serie.
-	  Cando o argumento é unha lista, devolve unha serie na que cada
-	  elemento é o valor mínimo de entre as series listadas, en cada
-	  observación.
-	</para>
-	<para>
-	  <seelist>
-            <fncref targ="max"/>
-            <fncref targ="xmax"/>
-            <fncref targ="xmin"/>
-	  </seelist>
+	  Por favor, consulta a axuda para <fncref targ="max"/>; esta función
+	  opera exactamente do mesmo xeito, agás polo feito de que devolve
+	  o mínimo ou mínimos.
 	</para>
       </description>
     </function>
@@ -14808,48 +14831,6 @@ d =  8,0000000
 	  <seelist>
             <fncref targ="wmean"/>
             <fncref targ="wsd"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="xmax" section="math" output="scalar">
-      <fnargs>
-	<fnarg type="scalar">x</fnarg>
-	<fnarg type="scalar">y</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Devolve un escalar co maior valor que resulta de comparar
-	  <argname>x</argname> e <argname>y</argname>. Se algún dos
-	  valores está ausente, devólvese <lit>NA</lit>.
-	</para>
-	<para>
-	  <seelist>
-            <fncref targ="xmin"/>
-            <fncref targ="max"/>
-            <fncref targ="min"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="xmin" section="math" output="scalar">
-      <fnargs>
-	<fnarg type="scalar">x</fnarg>
-	<fnarg type="scalar">y</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Devolve un escalar co menor valor que resulta de comparar
-	  <argname>x</argname> e <argname>y</argname>. Se algún dos
-	  valores está ausente, devólvese <lit>NA</lit>.
-	</para>
-	<para>
-	  <seelist>
-            <fncref targ="xmax"/>
-            <fncref targ="max"/>
-            <fncref targ="min"/>
 	  </seelist>
 	</para>
       </description>
