@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-11-10 12:49-0500\n"
-"PO-Revision-Date: 2024-09-27 10:24+0200\n"
+"PO-Revision-Date: 2024-11-11 11:39+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -1844,7 +1844,7 @@ msgstr "La strings %d non è UTF-8"
 #: lib/src/dataset.c:6072
 #, c-format
 msgid "Dataset is already complete for %d-day calendar"
-msgstr ""
+msgstr "Il dataset è già completo su %d giorni alla settimana"
 
 #: lib/src/dataset.c:6798
 msgid "no mapfile is present"
@@ -1984,7 +1984,7 @@ msgstr "Serie importata con successo"
 
 #: lib/src/dbread.c:2839
 msgid "This only works for gretl databases"
-msgstr ""
+msgstr "Questo funziona solo su database gretl"
 
 #: lib/src/dbread.c:2968
 #, c-format
@@ -2345,7 +2345,7 @@ msgstr "Scartata %s: serie a valori stringa\n"
 
 #: lib/src/describe.c:5987 lib/src/describe.c:5992
 msgid "Byval"
-msgstr ""
+msgstr "Valore"
 
 #: lib/src/describe.c:6271 lib/src/discrete.c:1435 lib/src/geneval.c:13027
 #: lib/src/gretl_list.c:1752
@@ -2636,11 +2636,11 @@ msgstr "%s: la variabile dipendente deve rappresentare dati di conteggio"
 
 #: lib/src/discrete.c:4233
 msgid "binperms: n must be <= 64"
-msgstr ""
+msgstr "binperms: n dev'essere <=64"
 
 #: lib/src/discrete.c:4239
 msgid "binperms: we need n >= k >= 0"
-msgstr ""
+msgstr "binperms: bisogna che n >= k >= 0"
 
 #: lib/src/estimate.c:192
 #, c-format
@@ -2872,7 +2872,7 @@ msgstr "Campo non valido '%s'"
 #: lib/src/geneval.c:2825
 #, c-format
 msgid "%s: series usage is valid only in direct assignment"
-msgstr ""
+msgstr "%s: uso con la serie è valido solo in sede di assegnazione"
 
 #: lib/src/geneval.c:2831 lib/src/gretl_panel.c:6910
 msgid "Sorry, can't do this with a sub-sampled dataset"
@@ -2928,7 +2928,7 @@ msgstr "L'asserzione '%s' è falsa"
 
 #: lib/src/geneval.c:9812
 msgid "comma(s) found in atof() input"
-msgstr ""
+msgstr "trovata virgola nell'imput di atof()"
 
 #: lib/src/geneval.c:10309
 #, c-format
@@ -3201,7 +3201,7 @@ msgstr "%s = 1 se periodo è %d, altrimenti 0"
 #: lib/src/genfuncs.c:3558
 #, c-format
 msgid "warning: requested %gMb of storage\n"
-msgstr ""
+msgstr "attenzione: sono necessari %gMb di memoria\n"
 
 #: lib/src/genfuncs.c:3591 lib/src/genfuncs.c:3622
 #, c-format
@@ -3219,7 +3219,7 @@ msgstr "unità"
 
 #: lib/src/genfuncs.c:3651
 msgid "'genr unit' can be used only with panel data"
-msgstr ""
+msgstr "'genr unit' funziona soltanto con dati panel"
 
 #: lib/src/genfuncs.c:3663
 msgid "cross-sectional unit index"
@@ -3284,7 +3284,7 @@ msgstr "Dichiarazione non valida"
 #: lib/src/genfuncs.c:4581
 #, c-format
 msgid "Weighted stats: data list has %d members but weight list has %d"
-msgstr ""
+msgstr "Statistiche ponderate: la lista ha %d membri ma la lista dei pesi ne ha %d"
 
 #: lib/src/genfuncs.c:4652
 #, c-format
@@ -3324,7 +3324,7 @@ msgstr "Bundle midasreg non valido"
 #: lib/src/genfuncs.c:5436
 msgid ""
 "The constructed series names would collide with those of existing objects"
-msgstr ""
+msgstr "I nomi delle serie risultato si sovrappongono a oggetti esistenti"
 
 #: lib/src/genfuncs.c:6739
 msgid "model-related"
@@ -3355,7 +3355,7 @@ msgstr "Numero di estrazioni non valido: %d"
 
 #: lib/src/genlex.c:811
 msgid "deprecated alias 'fft2': please call fft()"
-msgstr ""
+msgstr "fft2() è deprecato: usare fft()"
 
 #: lib/src/genlex.c:1222
 #, c-format
@@ -3963,13 +3963,11 @@ msgid ""
 msgstr ""
 
 #: lib/src/gretl_bfgs.c:2986
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "No improvement found in %d iterations\n"
 "\n"
-msgstr ""
-"\n"
-"Nessun miglioramento in %d iterazioni\n"
+msgstr "Nessun miglioramento in %d iterazioni\n"
 
 #: lib/src/gretl_bfgs.c:2990
 msgid "*** warning: surface seems to be flat\n"
@@ -3983,12 +3981,9 @@ msgid ""
 msgstr ""
 
 #: lib/src/gretl_bfgs.c:3092
-#, fuzzy, c-format
+#, c-format
 msgid "Outer iteration %d (reset)\n"
-msgstr ""
-"\n"
-"Numero di iterazioni: %d\n"
-"\n"
+msgstr "Iterazione esterna %d: reset\n"
 
 #: lib/src/gretl_bfgs.c:3144
 #, c-format
@@ -4386,7 +4381,7 @@ msgid "Only strings arrays are accepted as R-function arguments"
 msgstr ""
 
 #: lib/src/gretl_foreign.c:3170
-#, fuzzy, c-format
+#, c-format
 msgid "%s: not handled\n"
 msgstr "%s: non gestito\n"
 
@@ -4396,7 +4391,7 @@ msgid "%s: not handled as R-function argument\n"
 msgstr "%s: argomento non valido per una funzione R\n"
 
 #: lib/src/gretl_foreign.c:3338
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid matrix dimensions, %d x %d"
 msgstr "%s: le dimensioni della matrice non sono valide (%d x %d)"
 
