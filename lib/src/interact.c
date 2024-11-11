@@ -3269,6 +3269,17 @@ static int panel_smpl_special (gretlopt opt)
     return opt & (OPT_U | OPT_X);
 }
 
+static int cant_do_smpl (DATASET *dset)
+{
+    if (dset != NULL && dset->n > 0) {
+        return 0; /* OK */
+    } else {
+        const char *db = get_db_name();
+
+        return *db == '\0';
+    }
+}
+
 static void maybe_print_error_message (CMD *cmd, int err, PRN *prn)
 {
     if (gretl_function_depth() > 0) {
@@ -3740,7 +3751,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case SMPL:
-        if (dset == NULL || dset->n == 0) {
+        if (cant_do_smpl(dset)) {
             err = E_NODATA;
         } else if (cmd->opt & OPT_F) {
             err = check_smpl_full(cmd->opt);
