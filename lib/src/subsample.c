@@ -2487,7 +2487,7 @@ static int real_restrict_sample (const char *param,
 	mask = copy_subsample_mask(panmask, &err);
     } else {
 	/* no @panmask, and not already handled by "precompute" above */
-        if (replace && state != NULL && state->submask != NULL) {
+        if (replace) {
             err = restore_full_sample(dset, state);
         }
 	err = make_restriction_mask(mode, param, list, dset, oldmask,
