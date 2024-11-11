@@ -3172,7 +3172,7 @@ void do_reset (GtkAction *action, gpointer p)
     lib_command_strcpy("reset");
 
     if (resp == 1) {
-        opt |= OPT_R;
+        opt |= OPT_U;
         lib_command_strcat(" --squares-only");
     } else if (resp == 2) {
         lib_command_strcat(" --cubes-only");
