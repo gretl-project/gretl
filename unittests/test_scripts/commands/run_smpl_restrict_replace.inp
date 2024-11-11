@@ -1,0 +1,7 @@
+set verbose off
+nulldata 100
+series istrue = randgen(i,0,1)
+series y = normal()
+
+smpl istrue == 0 --restrict
+smpl istrue == 1 --restrict --replace  # CRASH!
