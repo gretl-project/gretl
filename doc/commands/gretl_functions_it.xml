@@ -13073,6 +13073,13 @@
 	  delle serie risultato potrebbero venir troncati se troppo
 	  lunghi, e aggiustati per evitare duplicazioni.
 	</para>
+	<para>
+	  Si noti che le variabili dummy verranno saltate durante il
+	  calcolo dei quadrati per evitare di produrre una serie
+	  identica, ma verrà calcolato il loro prodotto (anche noto
+	  come <quote>interazione</quote>) con le altre serie nella lista
+	  di input <argname>L</argname>.
+	</para>
       </description>
     </function>
 

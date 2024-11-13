@@ -12999,6 +12999,12 @@
 	  and the output names may be adjusted in case of duplication
 	  of names in the returned list.
 	</para>
+	<para>
+	  Note that dummy variables will be skipped when computing
+	  squares to avoid producing an identical series, but their
+	  product (aka <quote>interaction</quote>) with other series
+	  in the input list <argname>L</argname> will be computed.
+	</para>
       </description>
     </function>
 
