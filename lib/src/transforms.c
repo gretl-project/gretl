@@ -1200,8 +1200,10 @@ static int make_mangled_name (int v, const char *s, int nc)
     return err;
 }
 
+#define XPROD (NC + 1)
+
 static int
-transform_preprocess_list (int *list, const DATASET *dset, int f, gretlopt opt)
+transform_preprocess_list (int *list, const DATASET *dset, int f)
 {
     int maxc = VNAMELEN - 3;
     int longnames = 0;
@@ -1222,7 +1224,7 @@ transform_preprocess_list (int *list, const DATASET *dset, int f, gretlopt opt)
 	ok = 1;
 
 	if (f == LOGS) {
-	    if (v == 0) { /* FIXME?? */
+	    if (v == 0) { /* 1 -> 0: FIXME?? */
 		ok = 1;
 	    }
 	    if (gretl_isdummy(dset->t1, dset->t2, dset->Z[v])) {
@@ -1230,7 +1232,7 @@ transform_preprocess_list (int *list, const DATASET *dset, int f, gretlopt opt)
 	    }
 	} else if (f == SQUARE) {
 	    if (gretl_isdummy(dset->t1, dset->t2, dset->Z[v])) {
-		ok = opt & OPT_O;
+		ok = 0;
 	    }
 	} else if (f == LAGS) {
 	    if (v == 0) {
@@ -1240,7 +1242,6 @@ transform_preprocess_list (int *list, const DATASET *dset, int f, gretlopt opt)
 	} else if (f == DUMMIFY) {
 	    ok = v > 0 && accept_as_discrete(dset, v, 0);
 	}
-
 	if (!ok) {
 	    gretl_list_delete_at_pos(list, i--);
 	} else if (strlen(dset->varname[v]) > maxc) {
@@ -1294,7 +1295,7 @@ int list_loggenr (int *list, DATASET *dset)
     int l0 = 0;
     int err;
 
-    err = transform_preprocess_list(list, dset, LOGS, OPT_NONE);
+    err = transform_preprocess_list(list, dset, LOGS);
     if (err) {
 	return err;
     }
@@ -1340,7 +1341,7 @@ int list_stdgenr (int *list, DATASET *dset, gretlopt opt)
     int l0 = 0;
     int err;
 
-    err = transform_preprocess_list(list, dset, STDIZE, OPT_NONE);
+    err = transform_preprocess_list(list, dset, STDIZE);
     if (err) {
 	return err;
     }
@@ -1524,7 +1525,7 @@ int list_laggenr (int **plist, int lmin, int lmax,
        the input @list actually represents a single series).
     */
 
-    err = transform_preprocess_list(list, dset, LAGS, OPT_NONE);
+    err = transform_preprocess_list(list, dset, LAGS);
     if (err) {
 	return err;
     }
@@ -1667,7 +1668,7 @@ int list_diffgenr (int *list, int ci, DATASET *dset)
 	return E_PDWRONG;
     }
 
-    err = transform_preprocess_list(list, dset, ci, OPT_NONE);
+    err = transform_preprocess_list(list, dset, ci);
     if (err) {
 	return err;
     }
@@ -1843,7 +1844,7 @@ int list_orthdev (int *list, DATASET *dset)
 	return E_PDWRONG;
     }
 
-    err = transform_preprocess_list(list, dset, ORTHDEV, OPT_NONE);
+    err = transform_preprocess_list(list, dset, ORTHDEV);
     if (err) {
 	return err;
     }
@@ -1892,9 +1893,11 @@ int list_xpxgenr (int **plist, DATASET *dset, gretlopt opt)
     int *xpxlist = NULL;
     int tnum, i, j, k, vi, vj;
     int startlen, l0;
-    int err;
+    int f, err;
 
-    err = transform_preprocess_list(list, dset, SQUARE, opt);
+    f = opt & OPT_O ? XPROD : SQUARE;
+
+    err = transform_preprocess_list(list, dset, f);
     if (err) {
 	return err;
     }
@@ -1962,7 +1965,7 @@ int list_resample (int *list, DATASET *dset)
     int k1, k2;
     int err;
 
-    err = transform_preprocess_list(list, dset, RESAMPLE, OPT_NONE);
+    err = transform_preprocess_list(list, dset, RESAMPLE);
     if (err) {
 	return err;
     }
@@ -2097,7 +2100,7 @@ static int real_list_dumgenr (int **plist, DATASET *dset,
     int startlen;
     int err;
 
-    err = transform_preprocess_list(list, dset, DUMMIFY, OPT_NONE);
+    err = transform_preprocess_list(list, dset, DUMMIFY);
     if (err) {
 	return err;
     }
