@@ -1,7 +1,8 @@
 version 2024d, in progress
 - Avoid false positives in detecting markdown in help text for
   function packages
-- max() and min() functions: augment their functionality
+- "square" command and square() function: don't skip dummy
+  variables when computing cross-products
 - xmax() and xmin() functions; consolidate with max, min but
   retain the "x" variants as aliases until further notice
 - Fix possible incorrect behavior of "smpl" in some special
