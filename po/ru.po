@@ -8,23 +8,23 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-11-10 12:49-0500\n"
-"PO-Revision-Date: 2024-07-12 19:07+0200\n"
+"PO-Revision-Date: 2024-11-17 12:06+0100\n"
 "Last-Translator: Olesya Petrenko <petrenko@gapps.zcu.cz>\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-SourceCharset: utf-8\n"
-"X-Generator: Poedit 2.4.3\n"
-"X-Poedit-SourceCharset: utf-8\n"
-"X-Generator: KBabel 1.11.4\n"
-"X-Poedit-SourceCharset: utf-8\n"
-"X-Generator: KBabel 1.11.4\n"
-"X-Poedit-SourceCharset: utf-8\n"
-"X-Generator: KBabel 1.11.4\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Generator: Poedit 3.4.4\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Generator: KBabel 1.11.4\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Generator: KBabel 1.11.4\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Generator: KBabel 1.11.4\n"
 
 #: lib/src/addons_utils.c:186
 msgid "try"
@@ -128,7 +128,7 @@ msgstr "Расширенный тест Дики-Фуллера для %s\n"
 #: lib/src/adf_kpss.c:647
 #, c-format
 msgid "testing down from %d lags, criterion %s"
-msgstr "тест. начиная с % d лагов, критерий %s"
+msgstr "тест. начиная с %d лагов, критерий %s"
 
 #: lib/src/adf_kpss.c:651 lib/src/adf_kpss.c:754 lib/src/adf_kpss.c:773
 #: plugin/panurc.c:568
@@ -502,9 +502,9 @@ msgid "Numerical summary with bootstrapped confidence interval for median"
 msgstr "Числовая статистика для бутстреп доверительного интервала для медианы"
 
 #: lib/src/boxplots.c:343
-#, fuzzy, c-format
+#, c-format
 msgid "Numerical summary for %s by %s"
-msgstr "Числовая статистика для %s"
+msgstr "Числовая статистика для %s на %s"
 
 #: lib/src/boxplots.c:346
 #, c-format
@@ -723,9 +723,8 @@ msgid "squares and cubes"
 msgstr "квадраты и кубы"
 
 #: lib/src/compare.c:2003
-#, fuzzy
 msgid "Robust RESET test for specification"
-msgstr "Тест Рамсея (RESET)"
+msgstr "Робастный тест (RESET)"
 
 #: lib/src/compare.c:2005 lib/src/gretl_model.c:4299
 msgid "RESET test for specification"
@@ -886,7 +885,7 @@ msgid ""
 "sigmahat                 = %g\n"
 "\n"
 msgstr ""
-"стандартное отклонение для масштабированных остатков = %g\n"
+"ст. отклонение для масштабированных остатков = %g\n"
 "\n"
 
 #: lib/src/compare.c:3550
@@ -2251,7 +2250,7 @@ msgstr "Максимум"
 
 #: lib/src/describe.c:5094
 msgid "Standard deviation"
-msgstr "Стандартное отклонение"
+msgstr "Ст. отклонение"
 
 #: lib/src/describe.c:5095 lib/src/describe.c:5315 lib/src/describe.c:5993
 #: gui/guiprint.c:315 gui/guiprint.c:742
@@ -2280,12 +2279,12 @@ msgstr "95%-перцентиль"
 
 #: lib/src/describe.c:5102
 msgid "Interquartile range"
-msgstr "Межквартильный размах"
+msgstr "Межкв-й размах"
 
 #: lib/src/describe.c:5103 lib/src/describe.c:5325 lib/src/describe.c:5999
 #: gui/guiprint.c:337 gui/guiprint.c:774
 msgid "Missing obs."
-msgstr "Пропущенные набл."
+msgstr "Пропущ. набл."
 
 #: lib/src/describe.c:5105
 msgid "Within s.d."
@@ -2351,7 +2350,7 @@ msgstr "95% пер-ль"
 
 #: lib/src/describe.c:5324 lib/src/describe.c:5998 gui/guiprint.c:337
 msgid "IQ range"
-msgstr "Межквартильный размах"
+msgstr "Межкв-й размах"
 
 #: lib/src/describe.c:5681 lib/src/describe.c:5848 lib/src/describe.c:5938
 #, c-format
@@ -2365,7 +2364,7 @@ msgstr "Исключение %s: ряд со строковыми значени
 
 #: lib/src/describe.c:5987 lib/src/describe.c:5992
 msgid "Byval"
-msgstr ""
+msgstr "Byval"
 
 #: lib/src/describe.c:6271 lib/src/discrete.c:1435 lib/src/geneval.c:13027
 #: lib/src/gretl_list.c:1752
@@ -2419,25 +2418,23 @@ msgid "Two-tailed critical values for n = %d"
 msgstr "Двухсторонние критические значения для n = %d"
 
 #: lib/src/describe.c:6869
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using the %d observations %s - %s"
-msgstr "%s, наблюдения %s - %s"
+msgstr "%s, исп. %d наблюдения %s - %s"
 
 #: lib/src/describe.c:6870 lib/src/describe.c:6874 lib/src/describe.c:6878
 msgid "Correlation Coefficients"
 msgstr "Коэффициенты корреляции"
 
 #: lib/src/describe.c:6873
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using %d observations from %s - %s"
-msgstr "%s, наблюдения %s - %s"
+msgstr "%s, исп. %d наблюдения %s - %s"
 
 #: lib/src/describe.c:6877
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using samples of size %d to %d"
-msgstr ""
-"Использовано %d подвыборок размера %d\n"
-"\n"
+msgstr "%s, использованы выборки размера от %d до %d"
 
 #: lib/src/describe.c:7046 lib/src/describe.c:7139
 msgid "Sample range has no valid observations."
@@ -2643,7 +2640,7 @@ msgstr " Правая сторона: значение p = %g\n"
 #: lib/src/discrete.c:3814
 #, c-format
 msgid "  2-Tail: P-value = %g\n"
-msgstr "Двухсторонние: значение p = %g\n"
+msgstr " Двухсторонние: значение p = %g\n"
 
 #: lib/src/discrete.c:3927 gui/selector.c:1474
 #, c-format
@@ -2661,11 +2658,11 @@ msgstr "%s: зависимая переменная должна быть сче
 
 #: lib/src/discrete.c:4233
 msgid "binperms: n must be <= 64"
-msgstr ""
+msgstr "binperms: n должно быть <= 64"
 
 #: lib/src/discrete.c:4239
 msgid "binperms: we need n >= k >= 0"
-msgstr ""
+msgstr "binperms: нам нужно n >= k >= 0"
 
 #: lib/src/estimate.c:192
 #, c-format
@@ -3589,7 +3586,7 @@ msgstr "УслОрт"
 #: lib/src/gmm.c:1611 lib/src/prog_loop.c:713 lib/src/prog_loop.c:714
 #: plugin/anova.c:196 plugin/anova.c:204
 msgid "std. dev"
-msgstr "стандартное отклонение"
+msgstr "ст. отклонение"
 
 #: lib/src/graphing.c:790 gui/library.c:7846
 msgid "You must supply three variables, the last of which is discrete"
@@ -3599,7 +3596,7 @@ msgstr ""
 
 #: lib/src/graphing.c:2244
 msgid "incompatible output specification"
-msgstr "Несовместимая спецификация для вывода результата"
+msgstr "несовместимая спецификация для вывода результата"
 
 #: lib/src/graphing.c:2678 gui/gpt_dialog.c:665
 #, c-format
@@ -4021,7 +4018,7 @@ msgstr "Внешняя итерация %d (сбросить)\n"
 #: lib/src/gretl_bfgs.c:3144
 #, c-format
 msgid " inner iter %3d: function value %#g\n"
-msgstr "внут итерация %3d: знач функции %#g\n"
+msgstr " внутр. итерация %3d: знач. функции %#g\n"
 
 #: lib/src/gretl_bfgs.c:3292
 #, c-format
@@ -4328,9 +4325,8 @@ msgid "You cannot define a function within a function"
 msgstr "Невозможно определить функцию внутри функции"
 
 #: lib/src/gretl_errors.c:85
-#, fuzzy
 msgid "Out of bounds error"
-msgstr "Недостаточно памяти\n"
+msgstr "Ошибка границ"
 
 #: lib/src/gretl_errors.c:86
 msgid "Error executing function"
@@ -4760,30 +4756,30 @@ msgstr ""
 "без гарантии на его неизменяемость (const)\n"
 
 #: lib/src/gretl_func.c:9129
-#, fuzzy, c-format
+#, c-format
 msgid "The package %s needs gretl version %s"
-msgstr "Эта функция требует версии gretl %s"
+msgstr "Пакет %s требует версии gretl %s"
 
 #: lib/src/gretl_func.c:9137
-#, fuzzy, c-format
+#, c-format
 msgid "The package %s needs a dataset in place"
-msgstr "Для работы с этим пакетом требуется набор данных."
+msgstr "Для работы с пакетом %s требуется набор данных"
 
 #: lib/src/gretl_func.c:9145
-#, fuzzy, c-format
+#, c-format
 msgid "The package %s needs time-series data"
-msgstr "Для работы с этим пакетом требуются данные временных рядов."
+msgstr "Для работы с пакетом %s требуются данные временных рядов"
 
 #: lib/src/gretl_func.c:9153
-#, fuzzy, c-format
+#, c-format
 msgid "The package %s needs panel data"
-msgstr "Для работы с этим пакетом требуются панельные данные."
+msgstr "Для работы с пакетом %s требуются панельные данные"
 
 #: lib/src/gretl_func.c:9161
-#, fuzzy, c-format
+#, c-format
 msgid "The package %s needs quarterly or monthly data"
 msgstr ""
-"Для работы с этим пакетом требуются ежеквартальные или ежемесячные данные."
+"Для работы с пакетом %s требуются ежеквартальные или ежемесячные данные"
 
 #: lib/src/gretl_func.c:9237
 #, c-format
@@ -5386,7 +5382,7 @@ msgstr "Степени свободы 2"
 #: lib/src/varprint.c:946 lib/src/varprint.c:950 gui/calculator.c:2077
 #: gui/calculator.c:2080 plugin/anova.c:85 plugin/anova.c:96 plugin/anova.c:98
 msgid "df"
-msgstr "     Ст. свободы"
+msgstr "Ст. свободы"
 
 #: lib/src/gretl_model.c:4773 lib/src/gretl_model.c:4837
 #: lib/src/gretl_model.c:4840 lib/src/gretl_model.c:4843
@@ -5432,19 +5428,17 @@ msgid "Invalid MPI rank %d"
 msgstr "Неверный порядок лага MPI %d"
 
 #: lib/src/gretl_mt.c:177
-#, fuzzy, c-format
+#, c-format
 msgid "gretl_omp_threads: must be >= 1 and <= %d"
-msgstr "omp_num_threads: должно быть >= 1 и <= %d"
+msgstr "gretl_omp_threads: должно быть >= 1 и <= %d"
 
 #: lib/src/gretl_mt.c:188
-#, fuzzy
 msgid "gretl_set_omp_threads: OpenMP is not enabled"
-msgstr "set_omp_n_threads: OpenMP не включен"
+msgstr "gretl_set_omp_threads: OpenMP не включен"
 
 #: lib/src/gretl_mt.c:213
-#, fuzzy
 msgid "gretl_get_omp_threads: OpenMP is not enabled"
-msgstr "set_omp_n_threads: OpenMP не включен"
+msgstr "gretl_get_omp_threads: OpenMP не включен"
 
 #: lib/src/gretl_panel.c:2572
 msgid "Variance estimators:"
@@ -5458,7 +5452,7 @@ msgstr " внутригруп = %g"
 #: lib/src/gretl_panel.c:2576
 #, c-format
 msgid " within = %g"
-msgstr "внешнегруп = %g"
+msgstr "внутригруп = %g"
 
 #: lib/src/gretl_panel.c:2580
 #, c-format
@@ -6234,9 +6228,9 @@ msgid "Output redirection: maximum depth reached"
 msgstr "Перенаправление вывода: достигнута максимальная глубина"
 
 #: lib/src/interact.c:1084
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is of type %s"
-msgstr "переменные типа %s:"
+msgstr "переменная '%s' типа %s"
 
 #: lib/src/interact.c:1096
 #, c-format
@@ -6244,9 +6238,8 @@ msgid "'%s' : not a string variable"
 msgstr "%s: не является строковой переменной"
 
 #: lib/src/interact.c:1193
-#, fuzzy
 msgid "output cannot be redirected in this context"
-msgstr "Команда 'catch' недопустима в данном контексте"
+msgstr "выход. данные не могут быть сформированы в данном контексте"
 
 #: lib/src/interact.c:1240
 msgid "Now discarding output\n"
@@ -7483,6 +7476,8 @@ msgstr "%s, набл. %s%s%s"
 #: lib/src/modelprint.c:2145
 msgid "J'WJ is not positive definite, std. errors not available"
 msgstr ""
+"J'WJ не является положительно определённой матрицей, стандартные ошибки "
+"недоступны."
 
 #: lib/src/modelprint.c:2149
 msgid "Missing or incomplete observations dropped"
@@ -8036,7 +8031,7 @@ msgid ""
 "Using the same index variable (%s) for nested loops:\n"
 "this is acceptable only with \"for\" loops."
 msgstr ""
-"Использование той же индексной переменной (% s) для вложенных циклов:\n"
+"Использование той же индексной переменной (%s) для вложенных циклов:\n"
 "это допустимо только с циклами \"for\"."
 
 #: lib/src/monte_carlo.c:1656 lib/src/monte_carlo.c:1664
@@ -8187,7 +8182,7 @@ msgid "No parameters have been specified"
 msgstr "Не был указан ни один параметр"
 
 #: lib/src/nls.c:3452
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown matrix '%s'"
 msgstr "Неизвестная переменная '%s'"
 
@@ -8737,7 +8732,7 @@ msgid ""
 "regressors evaluated at time t."
 msgstr ""
 "Прогноз для времени t основан на (а) коэффициентах, полученных с помощью\n"
-"оценки модели по выборке от %s до t-% d, и \n"
+"оценки модели по выборке от %s до t-%d, и \n"
 "(б) регрессорах, оцененных в момент времени t."
 
 #: lib/src/printout.c:1516
@@ -8925,7 +8920,7 @@ msgstr "сохранение: имя файла %s\n"
 
 #: lib/src/prog_loop.c:763
 msgid "write of data file failed\n"
-msgstr "Не удалось записать файл с данными\n"
+msgstr "не удалось записать файл с данными\n"
 
 #: lib/src/prog_loop.c:935
 #, c-format
@@ -9060,7 +9055,7 @@ msgstr "Вейбулл (форма = %g, масштаб = %g): "
 #: lib/src/pvalues.c:3924
 #, c-format
 msgid "GED (shape = %g): "
-msgstr "GED (форма = %g):"
+msgstr "GED (форма = %g): "
 
 #: lib/src/pvalues.c:3932
 #, c-format
@@ -9078,7 +9073,7 @@ msgstr "недостаточно памяти для декодирования 
 
 #: lib/src/subsample.c:741
 msgid "You cannot subsample a resampled dataset"
-msgstr ""
+msgstr "Невозможно выполнить подвыборку на повторно выбран. наборе данных"
 
 #: lib/src/subsample.c:854
 msgid "Missing sub-sample information; can't merge data\n"
@@ -10214,9 +10209,9 @@ msgid "Weibull(%g, %g)"
 msgstr "Вейбулл(%g, %g)"
 
 #: gui/calculator.c:223
-#, fuzzy, c-format
+#, c-format
 msgid "Gamma(%g, %g)"
-msgstr "N(%g, %g)"
+msgstr "Гамма (%g, %g)"
 
 #: gui/calculator.c:430 gui/dlgutils.c:1168
 msgid "Standard errors"
@@ -10795,9 +10790,8 @@ msgid "gretl: ARIMA lag selection"
 msgstr "gretl: выбор лагов для ARIMA"
 
 #: gui/callbacks.c:516
-#, fuzzy
 msgid "gretl: factorized statistics"
-msgstr "gretl: статистика разброс-среднее"
+msgstr "gretl: факториз. статистика"
 
 #: gui/callbacks.c:518 gui/callbacks.c:533 gui/callbacks.c:536
 #: gui/callbacks.c:538 gui/callbacks.c:540 gui/callbacks.c:685
@@ -11695,7 +11689,7 @@ msgstr "объединенные перекрестные данные"
 
 #: gui/datawiz.c:849
 msgid "Time dimension: "
-msgstr "Временное измерение:"
+msgstr "Временное измерение: "
 
 #: gui/datawiz.c:883
 #, c-format
@@ -12050,9 +12044,8 @@ msgid "Make this restriction permanent"
 msgstr "Сделать это ограничение постоянным"
 
 #: gui/dialogs.c:2365
-#, fuzzy
 msgid "Preserve panel structure"
-msgstr "Панельная структура"
+msgstr "Сохранить панельн. структуру"
 
 #: gui/dialogs.c:2386
 msgid "The current data range is too small for this option"
@@ -12557,7 +12550,7 @@ msgstr "gretl: новый вывод скриптов"
 
 #: gui/dialogs.c:6290
 msgid "New script output should:"
-msgstr "gretl: новый вывод скриптов должен:"
+msgstr "Gretl: новый вывод скриптов должен"
 
 #: gui/dialogs.c:6348
 msgid "Replace previous output"
@@ -12833,9 +12826,8 @@ msgid "Add equation"
 msgstr "Добавить уравнение"
 
 #: gui/dlgutils.c:817
-#, fuzzy
 msgid "New equation"
-msgstr "Уравнение"
+msgstr "Новое уравнение"
 
 #: gui/dlgutils.c:821
 msgid "Add derivative"
@@ -13420,9 +13412,8 @@ msgid "Enter name=formula for new scalar"
 msgstr "Введите формулу для новой скалярной переменной (имя=формула)"
 
 #: gui/fncall.c:1853
-#, fuzzy
 msgid "Define series"
-msgstr "найти ряды данных"
+msgstr "Определить ряды данных"
 
 #: gui/fncall.c:1855 gui/ssheet.c:3987
 msgid "Define matrix"
@@ -13435,6 +13426,8 @@ msgstr "Выбрать аргументы:"
 #: gui/fncall.c:2119
 msgid "Save return value (optional, clear box for no assignment):"
 msgstr ""
+"Сохранить возвращаемое значение (необязательно, оставьте поле пустым, если "
+"назначение не требуется):"
 
 #: gui/fncall.c:2122
 msgid "Assign return value (optional):"
@@ -14337,7 +14330,7 @@ msgstr "Положение (X Y)"
 
 #: gui/gpt_dialog.c:3117
 msgid "justification"
-msgstr "Выравнивание"
+msgstr "выравнивание"
 
 #: gui/gpt_dialog.c:3145 gui/gpt_dialog.c:3280 gui/ssheet.c:140
 #: gui/ssheet.c:147
@@ -14350,11 +14343,11 @@ msgstr "Стрелки"
 
 #: gui/gpt_dialog.c:3215
 msgid "from (X Y)"
-msgstr "От (X Y)"
+msgstr "от (X Y)"
 
 #: gui/gpt_dialog.c:3217
 msgid "to (X Y)"
-msgstr "До (X Y)"
+msgstr "до (X Y)"
 
 #: gui/gpt_dialog.c:3253
 msgid "arrow has head"
@@ -14530,7 +14523,7 @@ msgstr "Описание"
 
 #: gui/gretl.c:1705 gui/menustate.c:967
 msgid " No datafile loaded "
-msgstr "Данные не загружены"
+msgstr " Данные не загружены "
 
 #: gui/gretl.c:1714
 msgid "Working directory: click to configure"
@@ -14941,9 +14934,8 @@ msgid "plain"
 msgstr "Простой текст"
 
 #: gui/gretl.c:1914
-#, fuzzy
 msgid "factorized"
-msgstr "Факторизированные"
+msgstr "факторизированные"
 
 #: gui/gretl.c:1915
 msgid "_Correlation matrix"
@@ -15735,7 +15727,7 @@ msgid ""
 "\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
 "\n"
 msgstr ""
-"\\textit{Замечание}: * означают, что остаток выходит за 2.5 стандартные "
+"\\textit{Замечание}: * означает, что остаток выходит за 2.5 стандартные "
 "ошибки\n"
 "\n"
 
@@ -16086,9 +16078,8 @@ msgid "simple append"
 msgstr "простое добавление"
 
 #: gui/gui_utils.c:874
-#, fuzzy
 msgid "append with fixed sample range"
-msgstr "Установить диапазон выборки"
+msgstr "добавить с фиксир. диапазоном выборки"
 
 #: gui/gui_utils.c:875
 msgid "\"join\" (advanced)"
@@ -16614,7 +16605,7 @@ msgstr "Все DB.NOMICS"
 
 #: gui/helpfiles.c:1031
 msgid "this window"
-msgstr "Данное окно"
+msgstr "данное окно"
 
 #: gui/helpfiles.c:1244
 msgid "Sorry, no help is available"
@@ -17112,9 +17103,8 @@ msgid "linear restrictions"
 msgstr "линейные ограничения"
 
 #: gui/library.c:3658
-#, fuzzy
 msgid "No system was specified"
-msgstr "%s: система не указана"
+msgstr "Cистема не указана"
 
 #: gui/library.c:3738
 msgid ""
@@ -17893,9 +17883,8 @@ msgid "Adj. R{\\super 2}"
 msgstr "Испр. R{\\super 2}"
 
 #: gui/model_table.c:944
-#, fuzzy
 msgid "Adj. R^2"
-msgstr "Испр. R**2"
+msgstr "Испр. R^2"
 
 #: gui/model_table.c:1091 gui/model_table.c:1155 gui/model_table.c:1162
 #: gui/model_table.c:1169
@@ -18294,9 +18283,8 @@ msgid "Variable to plot"
 msgstr "Переменная для графика"
 
 #: gui/selector.c:4802
-#, fuzzy
 msgid "Primary variable"
-msgstr "переменная временного тренда"
+msgstr "Первичная переменная"
 
 #: gui/selector.c:4842
 msgid "Lower bound variable"
@@ -18546,7 +18534,6 @@ msgstr ""
 "(Levenberg-Marquardt)"
 
 #: gui/selector.c:6363
-#, fuzzy
 msgid "Show all statistics"
 msgstr "Показать полную описательную статистику"
 
@@ -18777,9 +18764,8 @@ msgid "Select format"
 msgstr "Формат данных"
 
 #: gui/selector.c:7322
-#, fuzzy
 msgid "At least two series are needed"
-msgstr "Ряды не определены\n"
+msgstr "Необходимо использовать мин. два ряда данных"
 
 #: gui/selector.c:7480
 msgid "New variable"
@@ -18810,9 +18796,8 @@ msgid "factorized boxplot"
 msgstr "Факторная коробчатая диаграмма"
 
 #: gui/selector.c:7533
-#, fuzzy
 msgid "factorized statistics"
-msgstr "Описательная статистика"
+msgstr "факториз. статистика"
 
 #: gui/selector.c:7535
 msgid "scatterplot with control"
@@ -18907,9 +18892,8 @@ msgid "Define named list"
 msgstr "Создать новый список"
 
 #: gui/selector.c:7951
-#, fuzzy
 msgid "Select coefficients to track (max 25)"
-msgstr "Выберите коэффициенты для отслеживания"
+msgstr "Выберите коэффициенты для отслеживания (max 25)"
 
 #: gui/selector.c:8211
 msgid "Name of list"
@@ -20784,7 +20768,7 @@ msgstr ""
 
 #: plugin/geoplot.c:1556
 msgid "unrecognized geoplot option(s): "
-msgstr "нераспознанные опции geoplot:"
+msgstr "нераспознанные опции geoplot: "
 
 #: plugin/gnumeric_import.c:415
 #, c-format
@@ -21204,7 +21188,7 @@ msgstr ""
 #: plugin/odbc_import.c:700
 #, c-format
 msgid "Number of columns = %d\n"
-msgstr "количество столбцов данных = %d\n"
+msgstr "Количество столбцов данных = %d\n"
 
 #: plugin/odbc_import.c:702
 #, c-format
@@ -21286,7 +21270,7 @@ msgstr "N наиболее важных компонентов"
 #: plugin/pca.c:203
 #, c-format
 msgid " (dropped %d incomplete observations)"
-msgstr "(отброшено %d неполных наблюдений)"
+msgstr " (отброшено %d неполных наблюдений)"
 
 #: plugin/pca.c:209
 msgid "Eigenanalysis of the Correlation Matrix"
@@ -21977,73 +21961,60 @@ msgid "no seasonality was detected"
 msgstr "не обнаружено сезонных эффектов"
 
 #: plugin/tramo-x12a.c:2109
-#, fuzzy
 msgid "x13as options"
-msgstr "доля признака"
+msgstr "опции x13as"
 
 #: plugin/tramo-x12a.c:2110
-#, fuzzy
 msgid "adjustment algorithm"
-msgstr "Скорректированный на сезонность алгоритм:"
+msgstr "скорректированный алгоритм"
 
 #: plugin/tramo-x12a.c:2111
-#, fuzzy
 msgid "outlier correction"
-msgstr "Коррекция среднего"
+msgstr "коррекция выбросов"
 
 #: plugin/tramo-x12a.c:2112
-#, fuzzy
 msgid "trading days correction"
-msgstr "Коррекция смещения"
+msgstr "коррекция торговых дней"
 
 #: plugin/tramo-x12a.c:2113
-#, fuzzy
 msgid "working days correction"
-msgstr "Коррекция смещения"
+msgstr "коррекция рабочих дней"
 
 #: plugin/tramo-x12a.c:2114
-#, fuzzy
 msgid "easter effect"
-msgstr "Временные эффекты отсутствуют"
+msgstr "эффект Пасхи (великодний эффект)"
 
 #: plugin/tramo-x12a.c:2115
-#, fuzzy
 msgid "log transformation"
-msgstr "Логарифмирование"
+msgstr "Логариф. преобразование"
 
 #: plugin/tramo-x12a.c:2116
-#, fuzzy
 msgid "arima specification"
-msgstr "Спецификация панели"
+msgstr "спецификация arima"
 
 #: plugin/tramo-x12a.c:2117
-#, fuzzy
 msgid "output series"
-msgstr "Отобразить временные ряды"
+msgstr "отобразить вых. временные ряды"
 
 #: plugin/tramo-x12a.c:2118
-#, fuzzy
 msgid "save spc content"
-msgstr "Сохранить содержимое пакета ..."
+msgstr "cохранить содержимое пакета spc"
 
 #: plugin/tramo-x12a.c:2121
-#, fuzzy
 msgid "no"
-msgstr "n"
+msgstr "нет"
 
 #: plugin/tramo-x12a.c:2121
-#, fuzzy
 msgid "yes"
-msgstr "годы"
+msgstr "да"
 
 #: plugin/tramo-x12a.c:2121
 msgid "auto"
-msgstr ""
+msgstr "автоматич."
 
 #: plugin/tramo-x12a.c:2140
-#, fuzzy
 msgid "critical"
-msgstr "вертикальный"
+msgstr "порог. знач"
 
 #: plugin/vif.c:359
 msgid "Count of condition indices >= 30"
@@ -22540,185 +22511,152 @@ msgid "Verbosity level"
 msgstr "Уровень детализации отчета"
 
 #: addons/addons-i18n.c:112
-#, fuzzy
 msgid "dbnomics"
-msgstr "Биномиальное"
+msgstr "база dbnomics"
 
 #: addons/addons-i18n.c:116
 msgid "Don't"
-msgstr ""
+msgstr "Не"
 
 #: addons/addons-i18n.c:117
-#, fuzzy
 msgid "Fill method"
-msgstr "Численные методы"
+msgstr "Заполните метод"
 
 #: addons/addons-i18n.c:118
-#, fuzzy
 msgid "Linear interpolation"
-msgstr "Линейные ограничения"
+msgstr "Линейн. интерполяция"
 
 #: addons/addons-i18n.c:119
-#, fuzzy
 msgid "Mean value"
-msgstr "собственное значение"
+msgstr "Сред. значение"
 
 #: addons/addons-i18n.c:120
-#, fuzzy
 msgid "Number of random variables"
-msgstr "Название переменной:"
+msgstr "Количество случ. переменных"
 
 #: addons/addons-i18n.c:121
-#, fuzzy
 msgid "Number of selected choices"
-msgstr "Количество повторений:"
+msgstr "Количество выбранных опций"
 
 #: addons/addons-i18n.c:122
-#, fuzzy
 msgid "Repetition"
-msgstr "Ограничения"
+msgstr "Повтор"
 
 #: addons/addons-i18n.c:123
-#, fuzzy
 msgid "Series to fill"
-msgstr "Сохранить в файл"
+msgstr "Заполнить серии данных"
 
 #: addons/addons-i18n.c:124
-#, fuzzy
 msgid "Set of all choices"
-msgstr "Сумма AR-коэффициентов"
+msgstr "Сумма всех опций"
 
 #: addons/addons-i18n.c:125
-#, fuzzy
 msgid "Std. deviation"
 msgstr "Ст. отклонение"
 
 #: addons/addons-i18n.c:126
-#, fuzzy
 msgid "Vector of values"
-msgstr "прогнозируемые значения"
+msgstr "Вектор значений"
 
 #: addons/addons-i18n.c:127
-#, fuzzy
 msgid "W test stat"
-msgstr "тестовая статистика"
+msgstr "тестовая статистика W"
 
 #: addons/addons-i18n.c:128
 msgid "always use normal approx"
-msgstr ""
+msgstr "всегда использовать норм.аппроксимации"
 
 #: addons/addons-i18n.c:129
-#, fuzzy
 msgid "bootstrap type code"
-msgstr "Тип бутстрепа"
+msgstr "тип бутстрепа"
 
 #: addons/addons-i18n.c:130
-#, fuzzy
 msgid "left truncation value"
-msgstr "Усечение Бартлетта для %d лагов\n"
+msgstr "значение левого усечения"
 
 #: addons/addons-i18n.c:132
-#, fuzzy
 msgid "number of trials"
-msgstr "Количество столбцов:"
+msgstr "Количество попыток"
 
 #: addons/addons-i18n.c:133
-#, fuzzy
 msgid "options"
-msgstr "доля признака"
+msgstr "опции"
 
 #: addons/addons-i18n.c:134
-#, fuzzy
 msgid "resampling"
-msgstr "передискретизация остатков"
+msgstr "повторное взятие выборки"
 
 #: addons/addons-i18n.c:135
-#, fuzzy
 msgid "right truncation value"
-msgstr ""
-"Параметр для усечения лагов автовыбор\n"
-"\n"
+msgstr "значение правого усечения"
 
 #: addons/addons-i18n.c:136
 msgid "two-sided prob mass"
-msgstr ""
+msgstr "двустор. масса вероятности"
 
 #: addons/addons-i18n.c:137
-#, fuzzy
 msgid "wildM"
 msgstr "\"дикий\" бутстреп/тип (Mammen)"
 
 #: addons/addons-i18n.c:138
-#, fuzzy
 msgid "wildN"
 msgstr "\"дикий\" бутстреп/тип: нормальный"
 
 #: addons/addons-i18n.c:139
 msgid "wildR"
-msgstr ""
+msgstr "\"дикий\" бутстреп/тип: Rademacher"
 
 #: addons/addons-i18n.c:143
-#, fuzzy
 msgid "Coefficient paths"
-msgstr "Коэффициент"
+msgstr "траектории коэф."
 
 #: addons/addons-i18n.c:144
-#, fuzzy
 msgid "Criterion plot"
 msgstr "Показать график крит."
 
 #: addons/addons-i18n.c:148
-#, fuzzy
 msgid "Absolute value"
-msgstr "Асимпт. р-значения"
+msgstr "Абсолют. значения"
 
 #: addons/addons-i18n.c:149
-#, fuzzy
 msgid "Disturbance in obs. equation?"
-msgstr "Пропорция возмущений, UD"
+msgstr "Возмущение в наблюд. уравнении?"
 
 #: addons/addons-i18n.c:152
-#, fuzzy
 msgid "Observation matrix (Z)"
-msgstr "Использовать матрицу корреляций"
+msgstr "Использовать матрицу наблюдений (Z)"
 
 #: addons/addons-i18n.c:153
-#, fuzzy
 msgid "Parametrization"
 msgstr "Параметризация"
 
 #: addons/addons-i18n.c:154
 msgid "Quiet"
-msgstr ""
+msgstr "Без подробностей"
 
 #: addons/addons-i18n.c:156
-#, fuzzy
 msgid "State transition matrix (T)"
-msgstr "Использовать матрицу корреляций"
+msgstr "Определить матрицу переходов состояний (T)"
 
 #: addons/addons-i18n.c:157
-#, fuzzy
 msgid "State variance factor matrix (R)"
-msgstr "Использовать матрицу ковариаций"
+msgstr "Определить матрицу факторов дисперсии состояния (R)"
 
 #: addons/addons-i18n.c:158
-#, fuzzy
 msgid "Verbose"
-msgstr "_Подробные"
+msgstr "Подробное описание"
 
 #: addons/addons-i18n.c:159
 msgid "do smoothing"
-msgstr ""
+msgstr "применить сглаживание"
 
 #: addons/addons-i18n.c:160
-#, fuzzy
 msgid "observables"
-msgstr "Наблюдения"
+msgstr "наблюдения"
 
 #: addons/addons-i18n.c:161
-#, fuzzy
 msgid "verbosity"
-msgstr "Подробно"
+msgstr "подробное описание"
 
 #~ msgid "Bigger"
 #~ msgstr "Больше"
