@@ -29,12 +29,9 @@
 #include "csvdata.h"
 #include "usermat.h"
 
-#include <ctype.h>
 #include <time.h>
 #include <errno.h>
 #include <unistd.h>
-
-#include <glib.h>
 
 #define MERGE_DEBUG 0
 #define DATES_DEBUG 0
@@ -1623,7 +1620,19 @@ static void merge_error (const char *msg, PRN *prn)
 {
     pputs(prn, msg);
     if (!printing_to_standard_stream(prn)) {
-	gretl_errmsg_set(msg);
+        /* hack to avoid revising translations */
+        gchar *s = g_strndup(msg, strlen(msg) - 1);
+
+	gretl_errmsg_set(s);
+        g_free(s);
+    }
+}
+
+static void merge_warning (const char *msg, PRN *prn)
+{
+    pprintf(prn, "%s\n", msg);
+    if (!printing_to_standard_stream(prn)) {
+	gretl_warnmsg_set(msg);
     }
 }
 
@@ -2026,7 +2035,7 @@ just_append_rows (const DATASET *targ, DATASET *src, int *offset)
 	if (ok) {
 	    /* note: we do this only if we're not adding any new
 	       series: we'll append to existing series lengthwise
-	       (or perhaps write data into existing existing rows)
+	       (or perhaps write data into existing rows)
 	    */
 	    *offset = test_offset;
 	    ret = src->n - (targ->n - *offset);
@@ -2101,7 +2110,7 @@ static int merge_lengthen_series (DATASET *dset,
     return err;
 }
 
-#if 0 /* not yet (maybe usable with DND */
+#if 0 /* not yet (maybe usable with DND) */
 
 int basic_data_merge_check (const DATASET *dset,
 			    DATASET *addset)
@@ -2288,6 +2297,9 @@ static int merge_data (DATASET *dset, DATASET *addset,
     if (!err && (addobs < 0 || addvars < 0)) {
 	merge_error(_("New data not conformable for appending\n"), prn);
 	err = E_DATA;
+    } else if (!err && addobs == 0 && addvars == 0) {
+	merge_warning(_("No data were found for appending"), prn);
+	return 0;
     }
 
     if (!err && !addpanel && dset->markers != addset->markers) {
