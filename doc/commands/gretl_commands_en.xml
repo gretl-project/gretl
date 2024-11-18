@@ -525,7 +525,13 @@
 	requires either (a) that the number of observations for the
 	new data equals that for the current data, or (b) that the new
 	data carries clear observation information so that gretl can
-	work out how to place the values.
+	work out how to place the values. Note that if there's a
+	<quote>perfect match</quote> of observation information (that
+	is, conditions (a) and (b) are both satisfied), it is assumed
+	that series, rather than observations, are to be added. And if
+	it happens that there are no series names in the file whose
+	data are to be appended that are not already present in the
+	current dataset then nothing is done, and a warning is shown.
       </para>
       <para>
 	One case that is not supported is where the new data start
