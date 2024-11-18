@@ -299,8 +299,33 @@ static int standardize (double *sy, const double *y,
     return 0;
 }
 
+static int auto_nsave (VMatrix *cmat, const gretl_matrix *E)
+{
+    int ret = 0;
+    int i = 0;
+
+    if (cmat->ci == CORR) {
+        for (i=0; E->val[i] > 1.0; i++) {
+            ret++;
+        }
+    } else {
+        int n = gretl_vector_get_length(E);
+        double ebar = 0;
+
+        for (i=0; i<n; i++) {
+            ebar += E->val[i];
+        }
+        ebar /= n;
+        for (i=0; E->val[i] > ebar; i++) {
+            ret++;
+        }
+    }
+
+    return ret;
+}
+
 /* Add components to the dataset, either "major" ones (eigenvalues
-   greater than 1.0), or a specified number (if @nsave > 0), or
+   greater than the mean), or a specified number (if @nsave > 0), or
    all of them.
 */
 
@@ -324,9 +349,7 @@ static int pca_save_components (VMatrix *cmat,
     } else if (nsave > 0) {
 	m = nsave > k ? k : nsave;
     } else {
-	for (i=0; E->val[i] > 1.0; i++) {
-	    m++;
-	}
+        m = auto_nsave(cmat, E);
     }
 
     if (cmat->missing > 0) {
