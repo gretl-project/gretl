@@ -549,7 +549,15 @@
 	nuove osservazioni sia pari a quello delle osservazioni
 	presenti nel dataset, oppure che i nuovi dati includano
 	informazioni precise sulle osservazioni in modo che gretl
-	possa capire come aggiungere i valori.
+	possa capire come aggiungere i valori. Si noti che se c'è una
+	<quote>corrispondenza perfetta</quote> delle informazioni
+	sulle osservazioni (ovvero, se le condizioni (a) e (b) sono
+	entrambe soddisfatte), si presume che le serie, piuttosto che
+	le osservazioni, debbano essere aggiunte. E se capita che non
+	ci siano nomi di serie nel file i cui dati devono essere
+	aggiunti che non siano già presenti nel dataset corrente,
+	allora l'intera operazione è annullata viene visualizzato un
+	avviso.
       </para>
       <para>
 	Attenzione: non è supportato il caso i nuovo dati inizino
