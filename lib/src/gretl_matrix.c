@@ -14913,24 +14913,9 @@ double gretl_matrix_global_sum (const gretl_matrix *A,
     return ret;
 }
 
-/**
- * gretl_matrix_pca:
- * @X: T x m data matrix.
- * @p: number of principal components to return: 0 < p <= m.
- * @opt: if OPT_V, use the covariance matrix rather than the
- * correlation matrix as basis.
- * @err: location to receive error code.
- *
- * Carries out a Principal Components analysis of @X and
- * returns the first @p components: the component corresponding
- * to the largest eigenvalue of the correlation matrix of @X
- * is placed in column 1, and so on.
- *
- * Returns: the generated matrix, or NULL on failure.
- */
-
-gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
-                                gretlopt opt, int *err)
+static gretl_matrix *real_gretl_matrix_pca (const gretl_matrix *X,
+                                            int p, gretlopt opt,
+                                            int *err)
 {
     gretl_matrix *D = NULL;
     gretl_matrix *V = NULL;
@@ -14987,6 +14972,34 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
     gretl_matrix_free(V);
 
     return P;
+}
+
+#include "princomp_extra.c"
+
+/**
+ * gretl_matrix_pca:
+ * @X: T x k data matrix.
+ * @p: number of principal components to return: 0 < p <= k.
+ * @opt: if OPT_V, use the covariance matrix rather than the
+ * correlation matrix as basis.
+ * @err: location to receive error code.
+ *
+ * Carries out a Principal Components analysis of @X and
+ * returns the first @p components: the component corresponding
+ * to the largest eigenvalue of the correlation matrix of @X
+ * is placed in column 1, and so on.
+ *
+ * Returns: the generated matrix, or NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
+                                gretlopt opt, int *err)
+{
+    if (matrix_is_incomplete(X)) {
+        return princomp_with_NAs(X, p, opt, err);
+    } else {
+        return real_gretl_matrix_pca(X, p, opt, err);
+    }
 }
 
 #define complete_obs(x,y,i) (!na(x[i]) && !na(y[i]))
