@@ -185,6 +185,88 @@ static gretlopt pca_flag_dialog (VMatrix *cmat, int *nsave)
     }
 }
 
+static double eigen_sum (VMatrix *cmat,
+                         const gretl_matrix *E,
+                         int n)
+{
+    double esum = 0;
+    int i;
+
+    if (cmat->ci == CORR) {
+	esum = cmat->dim;
+    } else {
+	for (i=0; i<n; i++) {
+	    esum += E->val[i];
+	}
+    }
+
+    return esum;
+}
+
+static int pca_save_bundle (VMatrix *cmat,
+                            const gretl_matrix *E,
+                            gretl_matrix **pC)
+{
+    gretl_bundle *b;
+    gretl_matrix *m;
+    gretl_matrix *C;
+    double cum, esum;
+    char **cnames = NULL;
+    char **rnames = NULL;
+    char pcname[16];
+    int n = cmat->dim;
+    int i;
+
+    b = gretl_bundle_new();
+    if (b == NULL) {
+        return E_ALLOC;
+    }
+
+    C = *pC;
+
+    /* basic info */
+    gretl_bundle_set_int(b, "n", cmat->nmax);
+    gretl_bundle_set_int(b, "n_dropped", cmat->missing);
+    gretl_bundle_set_string(b, "matrix_type",
+                            cmat->ci == CORR ? "correlation" :
+                            "covariance");
+
+    /* eigenvalues, etc. matrix */
+    m = gretl_matrix_alloc(n, 3);
+    esum = eigen_sum(cmat, E, n);
+    cum = 0;
+    for (i=0; i<n; i++) {
+        cum += E->val[i] / esum;
+        gretl_matrix_set(m, i, 0, E->val[i]);
+        gretl_matrix_set(m, i, 1, E->val[i] / esum);
+        gretl_matrix_set(m, i, 2, cum);
+    }
+    cnames = strings_array_new(3);
+    cnames[0] = gretl_strdup("lambda");
+    cnames[1] = gretl_strdup("percent");
+    cnames[2] = gretl_strdup("cum.");
+    gretl_matrix_set_colnames(m, cnames);
+    gretl_bundle_donate_data(b, "eigenvals", m, GRETL_TYPE_MATRIX, 0);
+    cnames = NULL;
+
+    /* loadings */
+    cnames = strings_array_new(n);
+    rnames = strings_array_new(n);
+    for (i=0; i<n; i++) {
+        sprintf(pcname, "PC%d", i + 1);
+        cnames[i] = gretl_strdup(pcname);
+        rnames[i] = gretl_strdup(cmat->names[i]);
+    }
+    gretl_matrix_set_colnames(C, cnames);
+    gretl_matrix_set_rownames(C, rnames);
+    gretl_bundle_donate_data(b, "loadings", C, GRETL_TYPE_MATRIX, 0);
+    *pC = NULL;
+
+    set_last_result_data(b, GRETL_TYPE_BUNDLE);
+
+    return 0;
+}
+
 #define PCA_COLS 7
 
 static void pca_print (VMatrix *cmat, gretl_matrix *E,
@@ -213,15 +295,7 @@ static void pca_print (VMatrix *cmat, gretl_matrix *E,
 
     pputs(prn, _("Component  Eigenvalue  Proportion   Cumulative\n"));
 
-    if (cmat->ci == CORR) {
-	esum = n;
-    } else {
-	esum = 0.0;
-	for (i=0; i<n; i++) {
-	    esum += E->val[i];
-	}
-    }
-
+    esum = eigen_sum(cmat, E, n);
     cum = 0.0;
     for (i=0; i<n; i++) {
 	cum += E->val[i] / esum;
@@ -499,13 +573,15 @@ int pca_from_cmatrix (VMatrix *cmat, DATASET *dset,
     gretl_matrix_print(evals, "eigenvalues");
 #endif
 
+    if (!err && saveopt) {
+        err = pca_save_components(cmat, evals, C, dset, nsave,
+				  saveopt);
+    }
     if (!err && !(opt & OPT_Q) && prn != NULL) {
 	pca_print(cmat, evals, C, prn);
     }
-
-    if (!err && saveopt) {
-	err = pca_save_components(cmat, evals, C, dset, nsave,
-				  saveopt);
+    if (!err) {
+	pca_save_bundle(cmat, evals, &C);
     }
 
     gretl_matrix_free(evals);
