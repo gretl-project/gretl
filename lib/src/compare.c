@@ -2283,11 +2283,13 @@ static int lb_autocorr_test (MODEL *pmod, int order,
 			     gretlopt opt, PRN *prn)
 {
     double lb, pval = NADBL;
-    int df, err = 0;
+    int df, k;
+    int err = 0;
 
-    df = order - arma_model_get_n_arma_coeffs(pmod);
+    k = arma_model_get_n_arma_coeffs(pmod);
+    df = order - k;
 
-    if (df < 0) {
+    if (df <= 0) {
 	gretl_errmsg_set(_("Insufficient degrees of freedom for test"));
 	return E_DATA;
     }
