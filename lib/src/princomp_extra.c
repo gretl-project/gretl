@@ -173,10 +173,10 @@ static gretl_matrix *princomp_with_NAs (const gretl_matrix *M,
     gretl_matrix *F0 = NULL;
     gretl_matrix *E = NULL;
     gretlopt pca_opt = 0;
-    double tol = 1.0e-8;
+    double tol = libset_get_user_tolerance(BHHH_TOLER);
     double crit;
     gint8 *mask = NULL;
-    int maxiter = 1024;
+    int maxiter = 2048;
     int stdize = 1;
     int conv = 0;
     int nfull = 0;
@@ -249,6 +249,9 @@ static gretl_matrix *princomp_with_NAs (const gretl_matrix *M,
             break;
         }
         crit = max_abs_value(E);
+#if 0
+	  fprintf(stderr, "iter %04d: crit = %g, tol = %g\n", iter, crit, tol);
+#endif
         if (crit < tol) {
             conv = 1;
         }
@@ -257,6 +260,7 @@ static gretl_matrix *princomp_with_NAs (const gretl_matrix *M,
     }
 
     if (!*err && !conv) {
+	fprintf(stderr, "PC EM algo didn't converge: crit = %g\n");
         *err = E_NOCONV;
     }
     if (*err && F != NULL) {
