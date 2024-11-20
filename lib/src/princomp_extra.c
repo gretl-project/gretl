@@ -174,7 +174,7 @@ static gretl_matrix *princomp_with_NAs (const gretl_matrix *M,
     gretl_matrix *E = NULL;
     gretlopt pca_opt = 0;
     double tol = libset_get_user_tolerance(BHHH_TOLER);
-    double crit;
+    double crit = NADBL;
     gint8 *mask = NULL;
     int maxiter = 2048;
     int stdize = 1;
