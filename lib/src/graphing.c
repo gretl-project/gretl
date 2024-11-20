@@ -7905,12 +7905,11 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
     return finalize_plot_input_file(fp);
 }
 
-static void write_xrange(FILE *fp, const double *obs, int t1, int nobs)
+static void write_xrange (FILE *fp, const double *obs, int t1, int nobs)
 {
     /* for use in gretl_system_residual_plot() and
        gretl_VECM_combined_EC_plot()
     */
-
     double x0, x1, z;
 
     x0 = obs[t1];
@@ -7919,7 +7918,7 @@ static void write_xrange(FILE *fp, const double *obs, int t1, int nobs)
 
     x1 = obs[t1+nobs-1];
     z = ceil(x1);
-    x1 = (f1 - z) > 0.333 ? z : z + 0.5;
+    x1 = (x1 - z) > 0.333 ? z : z + 0.5;
 
     fprintf(fp, "set xrange [%g:%g]\n", x0, x1);
 }
@@ -7931,7 +7930,6 @@ int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset)
     const gretl_matrix *E = NULL;
     FILE *fp = NULL;
     const double *obs;
-    int xmin, xmax;
     char lwstr[8];
     int single = 0;
     int nvars, nobs;
@@ -7982,6 +7980,8 @@ int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset)
 
     fputs("set key left top\n", fp);
     fputs("set xzeroaxis\n", fp);
+
+    gretl_push_c_numeric_locale();
     write_xrange(fp, obs, t1, nobs);
 
     if (ci == VAR) {
@@ -8013,8 +8013,6 @@ int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset)
 	}
     }
 
-    gretl_push_c_numeric_locale();
-
     for (i=imin; i<imax; i++) {
 	for (t=0; t<nobs; t++) {
 	    double eti = gretl_matrix_get(E, t, i);
@@ -8040,7 +8038,6 @@ int gretl_VECM_combined_EC_plot (GRETL_VAR *var,
     FILE *fp = NULL;
     const double *obs;
     int nvars, nobs;
-    int xmin, xmax;
     int i, t, t1;
     int err = 0;
 
@@ -8064,6 +8061,8 @@ int gretl_VECM_combined_EC_plot (GRETL_VAR *var,
     fputs("# VECM EC plot\n", fp);
     fputs("set key left top\n", fp);
     fputs("set xzeroaxis\n", fp);
+
+    gretl_push_c_numeric_locale();
     write_xrange(fp, obs, t1, nobs);
 
     if (nvars > 1) {
@@ -8085,8 +8084,6 @@ int gretl_VECM_combined_EC_plot (GRETL_VAR *var,
 	    fputs(", \\\n", fp);
 	}
     }
-
-    gretl_push_c_numeric_locale();
 
     for (i=0; i<nvars; i++) {
 	for (t=0; t<nobs; t++) {
