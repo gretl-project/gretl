@@ -260,7 +260,7 @@ static gretl_matrix *princomp_with_NAs (const gretl_matrix *M,
     }
 
     if (!*err && !conv) {
-	fprintf(stderr, "PC EM algo didn't converge: crit = %g\n");
+	fprintf(stderr, "PC EM algo didn't converge: crit = %g\n", crit);
         *err = E_NOCONV;
     }
     if (*err && F != NULL) {
