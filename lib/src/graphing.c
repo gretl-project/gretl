@@ -7912,6 +7912,7 @@ int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset)
     const gretl_matrix *E = NULL;
     FILE *fp = NULL;
     const double *obs;
+    int xmin, xmax;
     char lwstr[8];
     int single = 0;
     int nvars, nobs;
@@ -7962,6 +7963,11 @@ int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset)
 
     fputs("set key left top\n", fp);
     fputs("set xzeroaxis\n", fp);
+
+    xmin = (int) obs[t1] - 1;
+    xmax = (int) obs[t1+nobs-1] + 1;
+    fprintf(fp, "set xrange [%d:%d]\n", xmin, xmax);
+
     if (ci == VAR) {
 	fprintf(fp, "set title '%s'\n", _("VAR residuals"));
     } else {
@@ -8018,6 +8024,7 @@ int gretl_VECM_combined_EC_plot (GRETL_VAR *var,
     FILE *fp = NULL;
     const double *obs;
     int nvars, nobs;
+    int xmin, xmax;
     int i, t, t1;
     int err = 0;
 
@@ -8041,6 +8048,11 @@ int gretl_VECM_combined_EC_plot (GRETL_VAR *var,
     fputs("# VECM EC plot\n", fp);
     fputs("set key left top\n", fp);
     fputs("set xzeroaxis\n", fp);
+
+    xmin = (int) obs[t1] - 1;
+    xmax = (int) obs[t1+nobs-1] + 1;
+    fprintf(fp, "set xrange [%d:%d]\n", xmin, xmax);
+
     if (nvars > 1) {
 	fprintf(fp, "set title '%s'\n", _("EC terms"));
     } else {
