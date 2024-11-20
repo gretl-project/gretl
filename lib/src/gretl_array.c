@@ -2447,7 +2447,12 @@ int is_strings_array_element (const char *str,
 	    A = get_strings_array_by_name(aname);
 	}
 	if (A != NULL) {
-	    i = generate_int(idx, NULL, &err);
+            if (!strcmp(idx, "end")) {
+                i = A->n;
+                sprintf(idx, "%d", i);
+            } else {
+                i = generate_int(idx, NULL, &err);
+            }
 	    if (!err && i > 0 && i <= A->n) {
 		ret = 1;
 	    }
