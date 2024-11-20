@@ -1,0 +1,19 @@
+set verbose off
+set assert stop
+/*
+https://sourceforge.net/p/gretl/bugs/314/
+*/
+
+clear
+set verbose off
+open denmark --quiet
+
+strings S = array(1)
+
+catch gnuplot LRM LRY --with-lines --time-series --outbuf=S[1]    # WORKS
+assert($error == FALSE)
+
+catch gnuplot LRM LRY --with-lines --time-series --outbuf=S[end]   # has failed until 2024-11-20
+assert($error == FALSE)
+
+quit
