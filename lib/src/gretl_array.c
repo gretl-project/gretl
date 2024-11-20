@@ -2542,10 +2542,12 @@ static int compare_array_elements (const void *a, const void *b)
     asort.err = gretl_function_exec(asort.call, GRETL_TYPE_DOUBLE,
 				    asort.dset, &pd, asort.prn);
     if (asort.err) {
-	fprintf(stderr, " compare_bundles: err=%d, d=%g\n", asort.err, *pd);
+	fprintf(stderr, " compare_array_elements: err=%d, d=%g\n", asort.err, *pd);
+        return 0;
+    } else {
+        d = *pd;
+        return d > 0 ? 1 : d < 0 ? -1 : 0;
     }
-
-    return (int) *pd;
 }
 
 int gretl_array_qsort (gretl_array *a, const char *fname,
