@@ -7918,7 +7918,7 @@ static void write_xrange (FILE *fp, const double *obs, int t1, int nobs)
 
     x1 = obs[t1+nobs-1];
     z = ceil(x1);
-    x1 = (x1 - z) > 0.333 ? z : z + 0.5;
+    x1 = (z - x1) > 0.333 ? z : z + 0.5;
 
     fprintf(fp, "set xrange [%g:%g]\n", x0, x1);
 }
