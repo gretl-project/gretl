@@ -1869,13 +1869,13 @@
 	</para>
 	<code>
 	  function scalar my_bsort (const bundle b1, const bundle b2)
-	    return b1.crit - b2.crit
+	    return sgn(b1.crit - b2.crit)
 	  end function
 	</code>
 	<para>
-	  Se si desidera preservare l'array non ordinato, bisogna crearne una copia
-	  prima di passarlo a <lit>asort</lit>. Il valore restituito
-	  dalla funzione è 0 in caso di successo.
+	  Se si desidera preservare l'array non ordinato, bisogna
+	  crearne una copia prima di passarlo a <lit>asort</lit>. Il
+	  valore restituito dalla funzione è 0 in caso di successo.
 	</para>
 	<para>
 	  Vedi anche <fncref targ="sort"/> per l'ordinamento semplice di un
