@@ -5516,7 +5516,7 @@
       <ilist>
 	<li>
 	  <para>Under the key <lit>factor</lit>, a scalar giving a
-	  factor by which width should be multplied (the default value
+	  factor by which width should be multiplied (the default value
 	  being 1).
 	  </para>
 	</li>
