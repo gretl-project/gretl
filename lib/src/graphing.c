@@ -8254,7 +8254,7 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
     fputs("unset ytics\n", fp);
     fputs("set size square\n", fp);
     fputs("set polar\n", fp);
-    fputs("plot 1 w lines, \\\n'-' using 1:2 w points pt 7\n", fp);
+    fputs("plot 1 notitle w lines, \\\n'-' using 1:2 w points pt 7\n", fp);
 
     gretl_push_c_numeric_locale();
 
