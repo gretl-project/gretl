@@ -2157,9 +2157,11 @@ static int verify_rgb (char *cstr)
                     print_rgb_hash(cstr, rgb);
                 }
             } else {
+                /* too short or too long */
                 err = E_DATA;
             }
         } else {
+            /* unmatched delimiter */
             err = E_DATA;
         }
     }
@@ -2167,8 +2169,26 @@ static int verify_rgb (char *cstr)
     return err;
 }
 
-/* e.g. set linetype 1 pt 6  lc rgb "#1B9E77" # dark teal
-        set linetype 2 pt 7  lc rgb "#D95F02" # dark orange
+static int grab_rgb_spec (char *targ, const char *src)
+{
+    char tmp[20];
+    int err = 0;
+
+    if (sscanf(src, "%19s", tmp)) {
+        /* validate and convert to hex if needed */
+        err = verify_rgb(tmp);
+        if (!err) {
+            strcpy(targ, tmp);
+        }
+    } else {
+        err = 1;
+    }
+
+    return err;
+}
+
+/* e.g. set linetype 1 pt 6 lc rgb "#1B9E77" # dark teal
+        set linetype 2 pt 7 lc rgb "#D95F02" # dark orange
 */
 
 static int parse_linetype (const char *s, linestyle *styles)
@@ -2192,22 +2212,12 @@ static int parse_linetype (const char *s, linestyle *styles)
         /* check for a color specification (20 bytes
            allows for quoted named colors)
         */
-        char lc[20];
-
         p += 4;
         if (!strncmp(p, "rgb ", 4)) {
             p += 4;
         }
         p += strspn(p, " ");
-        if (sscanf(p, "%19s", lc)) {
-            /* validate and convert to hex if needed */
-            err = verify_rgb(lc);
-            if (!err) {
-                strcpy(styles[i].lc, lc);
-            }
-        } else {
-            err = 1;
-        }
+        err = grab_rgb_spec(styles[i].lc, p);
     }
     if (!err && (p = strstr(s, " lw ")) != NULL) {
         /* check line-width specification */
@@ -2696,13 +2706,6 @@ static void grab_line_title (GPT_LINE *line, const char *src)
     }
 }
 
-static void grab_line_rgb (char *targ, const char *src)
-{
-    if (*src == '"') {
-        sscanf(src + 1, "%7s", targ);
-    }
-}
-
 /* Examples:
 
    using 1:2
@@ -2824,10 +2827,11 @@ static int process_using_spec (const char **ps,
     return err;
 }
 
-/* parse the "using..." portion of plot specification for a
-   given plot line: full form is like:
+/* Parse the "using..." portion of plot specification for a
+   given plot element. The full form is like:
 
-     using XX axes XX title XX w XX lt XX lw XX
+     using <cols> axes <axes> title <title> w XX lt XX lw XX
+     using <cols> title <title> lc rgb <rgb> w <style>
 */
 
 static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
@@ -2860,7 +2864,7 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
         /* data column spec */
         p += 7;
         err = process_using_spec(&p, spec, i);
-        s = p; /* remainder of line */
+        s = p; /* pointer to remainder of line */
     } else if (*s == '\'' || *s == '"') {
         /* name of data file, without 'using': implicitly
            using cols 1 and 2
@@ -2913,7 +2917,7 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
     if ((p = strstr(s, " lt "))) {
         sscanf(p + 4, "%d", &line->type);
     } else if ((p = strstr(s, " lc rgb "))) {
-        grab_line_rgb(line->rgb, p + 8);
+        grab_rgb_spec(line->rgb, p + 8);
     }
     if ((p = strstr(s, " ps "))) {
         sscanf(p + 4, "%f", &line->pscale);
