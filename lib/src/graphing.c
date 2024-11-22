@@ -878,14 +878,16 @@ static gretlRGB user_color[N_GP_LINETYPES] = {
 
 /* apparatus for handling plot "extra" colors */
 
-static gretlRGB extra_color[2] = {
+static gretlRGB extra_color[3] = {
     0x5f6b84,
-    0xdddddd
+    0xdddddd,
+    0x66aaaaaa
 };
 
-static gretlRGB user_extra_color[2] = {
+static gretlRGB user_extra_color[3] = {
     0x5f6b84,
-    0xdddddd
+    0xdddddd,
+    0x66aaaaaa
 };
 
 gretlRGB get_boxcolor (void)
@@ -900,6 +902,11 @@ void set_boxcolor (gretlRGB color) {
 gretlRGB get_shadecolor (void)
 {
     return user_extra_color[1];
+}
+
+gretlRGB get_alpha_shadecolor (void)
+{
+    return user_extra_color[2];
 }
 
 void set_shadecolor (gretlRGB color) {
@@ -6117,6 +6124,7 @@ static int compare_fs (const void *a, const void *b)
 
 static void print_filledcurve_line (const char *title,
 				    const char *rgb,
+                                    int use_alpha,
 				    FILE *fp)
 {
     char cstr[10];
@@ -6124,6 +6132,10 @@ static void print_filledcurve_line (const char *title,
     if (rgb != NULL && *rgb != '\0') {
 	*cstr = '\0';
 	strncat(cstr, rgb, 9);
+    } else if (use_alpha) {
+        print_rgb_hash(cstr, get_alpha_shadecolor());
+        /* mark this line as continuation */
+        fputs(", \\\n", fp);
     } else {
 	print_rgb_hash(cstr, get_shadecolor());
     }
@@ -6135,6 +6147,7 @@ static void print_filledcurve_line (const char *title,
 	fprintf(fp, "'-' using 1:2:3 title '%s' lc rgb \"%s\" w filledcurve, \\\n",
 		title, cstr);
     }
+    fputs(use_alpha ? "\n" : ", \\\n", fp);
 }
 
 /* note: if @opt includes OPT_H, that says to show fitted
@@ -6149,7 +6162,9 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     GptFlags flags = 0;
     double xmin, xmax, xrange;
     int depvar_present = 0;
-    int use_fill = 0, use_lines = 0;
+    int use_fill = 0;
+    int use_lines = 0;
+    int use_alpha = 0;
     int do_errs = (maxerr != NULL);
     gchar *cistr = NULL;
     int t2 = fr->t2;
@@ -6207,6 +6222,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     if (do_errs) {
 	if (opt & OPT_F) {
 	    use_fill = 1;
+            use_alpha = 1; /* experimental */
 	} else if (opt & OPT_L) {
 	    use_lines = 1;
 	}
@@ -6239,11 +6255,11 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	cistr = g_strdup_printf(_("%g percent interval"), 100 * (1 - fr->alpha));
     }
 
-    if (use_fill) {
+    if (use_fill && !use_alpha) {
 	/* plot the confidence band first so the other lines
 	   come out on top */
 	if (do_errs) {
-	    print_filledcurve_line(cistr, NULL, fp);
+	    print_filledcurve_line(cistr, NULL, 0, fp);
 	}
 	if (depvar_present) {
 	    fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1, \\\n",
@@ -6258,7 +6274,9 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	}
 	fprintf(fp, "'-' using 1:2 title '%s' w lines", _("forecast"));
 	if (do_errs) {
-	    if (use_lines) {
+            if (use_fill && use_alpha) {
+                print_filledcurve_line(cistr, NULL, 1, fp);
+	    } else if (use_lines) {
 		fprintf(fp, ", \\\n'-' using 1:2 title '%s' w lines, \\\n",
 			cistr);
 		fputs("'-' using 1:2 notitle '%s' w lines lt 3\n", fp);
@@ -6279,7 +6297,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
        or not we're using fill style for the confidence bands
     */
 
-    if (use_fill) {
+    if (use_fill && !use_alpha) {
 	if (do_errs) {
 	    print_confband_data(obs, fr->fitted, maxerr,
 				t1, yhmin, t2, dset, CONF_FILL, fp);
@@ -6294,7 +6312,10 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	}
 	fcast_print_y_data(obs, fr->fitted, t1, yhmin, t2, dset, fp);
 	if (do_errs) {
-	    if (use_lines) {
+            if (use_fill && use_alpha) {
+                print_confband_data(obs, fr->fitted, maxerr,
+                                    t1, yhmin, t2, dset, CONF_FILL, fp);
+	    } else if (use_lines) {
 		print_confband_data(obs, fr->fitted, maxerr,
 				    t1, yhmin, t2, dset, CONF_LOW, fp);
 		print_confband_data(obs, fr->fitted, maxerr,
@@ -6645,7 +6666,7 @@ int plot_tau_sequence (const MODEL *pmod, const DATASET *dset,
 
     /* plot the rq confidence band first so the other lines
        come out on top */
-    print_filledcurve_line(NULL, NULL, fp);
+    print_filledcurve_line(NULL, NULL, 0, fp);
 
     /* rq estimates */
     tmp = g_strdup_printf(_("Quantile estimates with %g%% band"), cval);
@@ -7617,7 +7638,7 @@ static void real_irf_print_plot (const gretl_matrix *resp,
 	fputs("plot \\\n", fp);
 	if (use_fill) {
 	    title = g_strdup_printf(_("%g percent confidence band"), 100 * (1 - alpha));
-	    print_filledcurve_line(title, NULL, fp);
+	    print_filledcurve_line(title, NULL, 0, fp);
 	    g_free(title);
 	    if (data_straddle_zero(resp)) {
 		fputs("0 notitle w lines lt 0, \\\n", fp);
@@ -7856,7 +7877,7 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 
 	    fputs("plot \\\n", fp);
 	    if (confint && use_fill) {
-		print_filledcurve_line(NULL, NULL, fp);
+		print_filledcurve_line(NULL, NULL, 0, fp);
 		fputs("'-' using 1:2 notitle w lines lt 1\n", fp);
 	    } else if (confint) {
 		fputs("'-' using 1:2 notitle w lines, \\\n", fp);
