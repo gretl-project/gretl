@@ -197,6 +197,8 @@ static gint console_mouse_handler (GtkWidget *cview,
     return FALSE;
 }
 
+/* FIXME delete zero-width characters */
+
 static gint console_paste_text (GtkWidget *cview, GdkAtom atom)
 {
     GtkClipboard *cb = gtk_clipboard_get(atom);

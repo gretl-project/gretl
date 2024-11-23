@@ -124,6 +124,55 @@ static void object_set_int (gpointer p, const char *key, int k)
     g_object_set_data(G_OBJECT(p), key, GINT_TO_POINTER(k));
 }
 
+#define DELETE_INVISIBLES 0 /* not yet */
+
+#if DELETE_INVISIBLES
+
+static void delete_invisibles (gchar *s)
+{
+    gchar *p = s;
+    gunichar gu;
+    int n, m;
+
+    while (*p != '\0') {
+        p = g_utf8_find_next_char(p, NULL);
+        gu = g_utf8_get_char(p);
+        if (g_unichar_iszerowidth(gu)) {
+            /* delete bytes representing a zero-width character */
+            n = g_utf8_find_next_char(p, NULL) - p;
+            m = strlen(p+n) + 1;
+            memmove(p, p+n, m);
+        }
+    }
+}
+
+void text_paste (GtkWidget *w, windata_t *vwin)
+{
+    GtkClipboard *cb = gtk_clipboard_get(GDK_NONE);
+    gchar *text;
+
+    text = gtk_clipboard_wait_for_text(cb);
+
+    if (text != NULL) {
+        fprintf(stderr, "text_paste() 1 len %ld\n", strlen(text));
+        delete_invisibles(text);
+        fprintf(stderr, "text_paste() 2 len %ld\n", strlen(text));
+        textview_insert_text(vwin->text, text);
+        g_free(text);
+    }
+}
+
+#else
+
+void text_paste (GtkWidget *w, windata_t *vwin)
+{
+    gtk_text_buffer_paste_clipboard(gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)),
+				    gtk_clipboard_get(GDK_NONE),
+				    NULL, TRUE);
+}
+
+#endif
+
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
     static GdkCursor *question_cursor;
@@ -504,13 +553,6 @@ int viewer_char_count (windata_t *vwin)
     return gtk_text_buffer_get_char_count(tbuf);
 }
 
-void text_paste (GtkWidget *w, windata_t *vwin)
-{
-    gtk_text_buffer_paste_clipboard(gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)),
-				    gtk_clipboard_get(GDK_NONE),
-				    NULL, TRUE);
-}
-
 void text_redo (GtkWidget *w, windata_t *vwin)
 {
     if (vwin->sbuf != NULL && gtk_source_buffer_can_redo(vwin->sbuf)) {
@@ -839,7 +881,13 @@ static gint script_key_handler (GtkWidget *w,
 	    /* plain Ctrl-r */
 	    do_run_script(w, vwin);
 	    ret = TRUE;
-	}
+        }
+#if DELETE_INVISIBLES
+	else if (keyval == GDK_v) {
+            text_paste(w, vwin);
+            ret = TRUE;
+        }
+#endif
 #ifndef GRETL_EDIT
 	else if (keyval == GDK_Return) {
 	    gchar *str = textview_get_current_line_with_newline(w);
