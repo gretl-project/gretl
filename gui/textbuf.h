@@ -93,6 +93,8 @@ int textview_set_cursor_at_line (GtkWidget *view, int line);
 
 int viewer_char_count (windata_t *vwin);
 
+void text_delete_invisibles (gchar *s);
+
 void text_paste (GtkWidget *w, windata_t *vwin);
 
 void text_redo (GtkWidget *w, windata_t *vwin);

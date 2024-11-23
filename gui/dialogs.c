@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "obsbutton.h"
 #include "textutil.h"
+#include "textbuf.h"
 #include "dlgutils.h"
 #include "winstack.h"
 #include "base_utils.h"
@@ -6961,6 +6962,27 @@ static void dbn_callback (GtkWidget *w, struct dbnomics_info *di)
     }
 }
 
+static void dbnomics_paste_text (GtkWidget *w, GdkAtom atom)
+{
+    GtkClipboard *cb = gtk_clipboard_get(atom);
+    gchar *src = gtk_clipboard_wait_for_text(cb);
+
+    if (src != NULL) {
+        gint pos = gtk_editable_get_position(GTK_EDITABLE(w));
+
+        text_delete_invisibles(src);
+        gtk_editable_insert_text(GTK_EDITABLE(w), src, -1, &pos);
+        g_free(src);
+    }
+}
+
+static gint dbnomics_paste_handler (GtkWidget *w, gpointer p)
+{
+    g_signal_stop_emission_by_name(G_OBJECT(w), "paste-clipboard");
+    dbnomics_paste_text(w, GDK_SELECTION_PRIMARY);
+    return TRUE;
+}
+
 int dbnomics_dialog (char **dbcode, GtkWidget *parent)
 {
     struct dbnomics_info di = {0};
@@ -6987,6 +7009,8 @@ int dbnomics_dialog (char **dbcode, GtkWidget *parent)
     di.entry = entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(entry), 128);
     gtk_entry_set_width_chars(GTK_ENTRY(entry), 48);
+    g_signal_connect(G_OBJECT(entry), "paste-clipboard",
+                     G_CALLBACK(dbnomics_paste_handler), NULL);
 
     gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
