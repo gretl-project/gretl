@@ -4233,6 +4233,10 @@ static int y_lag (int v, int parent_id, const DATASET *dset)
     return 0;
 }
 
+#define KSTEP_DEBUG 0
+
+/* initialize for recursive k-step-ahead forecast */
+
 static int k_step_init (MODEL *pmod, const DATASET *dset,
 			double **py, int **pllist)
 {
@@ -4247,13 +4251,16 @@ static int k_step_init (MODEL *pmod, const DATASET *dset,
 	}
     }
 
+#if KSTEP_DEBUG
+    fprintf(stderr, "k_step_init: found %d y-lags\n", nl);
+#endif
+
     if (nl == 0) {
 	return 0;
     }
 
     y = malloc(dset->n * sizeof *y);
     llist = gretl_list_new(pmod->list[0] - 1);
-
     if (y == NULL || llist == NULL) {
 	free(y);
 	free(llist);
@@ -4263,7 +4270,6 @@ static int k_step_init (MODEL *pmod, const DATASET *dset,
     for (i=0; i<dset->n; i++) {
 	y[i] = dset->Z[vy][i];
     }
-
     for (i=2; i<=pmod->list[0]; i++) {
 	llist[i-1] = y_lag(pmod->list[i], vy, dset);
     }
@@ -4288,6 +4294,10 @@ static int recursive_fcast_adjust_obs (MODEL *pmod, int *t1, int t2, int k)
     if (t2 < *t1) {
 	err = E_OBS;
     }
+
+#if KSTEP_DEBUG
+    fprintf(stderr, "k-step: set t1 = %d\n", *t1);
+#endif
 
     return err;
 }
@@ -4350,13 +4360,19 @@ recursive_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
     /* number of forecasts */
     nf = t2 - t1 + 1;
 
-    fprintf(stderr, "recursive fcast: dset->t1=%d, dset->t2=%d, t1=%d, "
-	    "t2=%d, k=%d, nf=%d\n", dset->t1, dset->t2, t1, t2, k, nf);
+#if KSTEP_DEBUG
+    fprintf(stderr, "recursive fcast:\n"
+            "  initial sample range: %d to %d\n"
+            "  forecast range: %d to %d\n"
+            "  steps-ahead %d, number of forecasts %d\n",
+            dset->t1, dset->t2, t1, t2, k, nf);
+#endif
 
     for (t=0; t<dset->n; t++) {
 	fr->actual[t] = dset->Z[pmod->list[1]][t];
     }
 
+    /* estimate over successive sample ranges */
     for (s=0; s<nf; s++) {
 	mod = lsq(pmod->list, dset, OLS, OPT_A | OPT_Z);
 	if (mod.errcode) {
@@ -4364,13 +4380,11 @@ recursive_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
 	    clear_model(&mod);
 	    break;
 	}
-
 	/* the first obs following the estimation sample */
 	t = dset->t2 + 1;
-
+        /* iterate over steps */
 	for (j=0; j<k; j++) {
 	    yf = 0.0;
-	    /* steps ahead */
 	    for (i=0; i<mod.ncoeff; i++) {
 		vi = mod.list[i+2];
 		p = (llist != NULL)? llist[i+1] : 0;
@@ -4390,13 +4404,10 @@ recursive_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
 		y[t++] = yf;
 	    }
 	}
-
 	fr->fitted[t] = yf;
-
 	if (!na(fr->actual[t]) && !na(fr->fitted[t])) {
 	    fr->resid[t] = fr->actual[t] - fr->fitted[t];
 	}
-
 	clear_model(&mod);
 	dset->t2 += 1;
     }
