@@ -4252,7 +4252,7 @@ static int k_step_init (MODEL *pmod, const DATASET *dset,
     }
 
 #if KSTEP_DEBUG
-    fprintf(stderr, "k_step_init: found %d y-lags\n", nl);
+    fprintf(stderr, "k_step_init: found %d y-lag terms\n", nl);
 #endif
 
     if (nl == 0) {
