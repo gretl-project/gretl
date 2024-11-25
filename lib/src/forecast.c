@@ -4279,7 +4279,7 @@ static int k_step_init (MODEL *pmod, const DATASET *dset,
 {
     int *llist = NULL;
     int vy = pmod->list[1];
-    int i, vi, p;
+    int i, p;
     int nl = 0;
     int err = 0;
 
@@ -4289,26 +4289,13 @@ static int k_step_init (MODEL *pmod, const DATASET *dset,
     }
 
     for (i=2; i<=pmod->list[0]; i++) {
-        vi = pmod->list[i];
-        if (vi == 0) {
-            continue;
-        }
-        p = y_lag(vi, vy, dset);
-	if (p > 0) {
-            /* vi is lagged dependent variable */
-            llist[i-1] = p;
-	    nl++;
-	} else if (is_trend_variable(dset->Z[vi], dset->n)) {
-            ; /* OK */
-        } else if (is_periodic_dummy(dset->Z[vi], dset)) {
-            ; /* OK */
-        } else if (series_get_lag(dset, vi) >= k) {
-            ; /* OK */
-        } else {
-            gretl_errmsg_sprintf(_("The regressor %s precludes generating"
-                                   " %d-step ahead forecasts"),
-                                 dset->varname[vi], k);
-            err = E_DATA;
+        if (pmod->list[i] > 0) {
+            p = y_lag(pmod->list[i], vy, dset);
+            if (p > 0) {
+                /* vi is lagged dependent variable */
+                llist[i-1] = p;
+                nl++;
+            }
         }
     }
 
@@ -4316,22 +4303,22 @@ static int k_step_init (MODEL *pmod, const DATASET *dset,
     fprintf(stderr, "k_step_init: found %d y-lag terms\n", nl);
 #endif
 
-    if (err || nl == 0) {
-        free(llist);
-    } else {
+    if (nl > 0) {
         double *y = malloc(dset->n * sizeof *y);
 
         if (y == NULL) {
             err = E_ALLOC;
-            free(llist);
         } else {
             for (i=0; i<dset->n; i++) {
                 y[i] = dset->Z[vy][i];
             }
             *py = y;
             *pllist = llist;
+            llist = NULL;
         }
     }
+
+    free(llist);
 
     return err;
 }
