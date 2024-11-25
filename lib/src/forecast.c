@@ -4306,7 +4306,7 @@ static int k_step_init (MODEL *pmod, const DATASET *dset,
             ; /* OK */
         } else {
             gretl_errmsg_sprintf(_("The regressor %s precludes generating"
-                                   "%d-step ahead forecasts"),
+                                   " %d-step ahead forecasts"),
                                  dset->varname[vi], k);
             err = E_DATA;
         }
@@ -4392,11 +4392,10 @@ recursive_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
 	return NULL;
     }
 
-    if (k > 1) {
-	*err = k_step_init(pmod, dset, k, &y, &llist);
-	if (*err) {
-	    return NULL;
-	}
+    /* check the regressors */
+    *err = k_step_init(pmod, dset, k, &y, &llist);
+    if (*err) {
+        return NULL;
     }
 
     fr = fit_resid_new_for_model(pmod, dset, t1, t2, pre_n, err);
