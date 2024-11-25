@@ -1,0 +1,12 @@
+set verbose off
+clear
+set assert stop
+
+print "Start testing strlen() vs nelem()"
+
+string s = "¡Olé!"
+assert(strlen(s) == 5)
+assert(nelem(s) == 7)
+
+print "Successfully finished test."
+quit
