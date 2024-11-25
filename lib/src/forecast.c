@@ -4379,10 +4379,12 @@ recursive_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
 	return NULL;
     }
 
-    /* check the regressors */
-    *err = k_step_init(pmod, dset, k, &y, &llist);
-    if (*err) {
-        return NULL;
+    if (k > 1) {
+        /* check the regressors for y-lags */
+        *err = k_step_init(pmod, dset, k, &y, &llist);
+        if (*err) {
+            return NULL;
+        }
     }
 
     fr = fit_resid_new_for_model(pmod, dset, t1, t2, pre_n, err);
