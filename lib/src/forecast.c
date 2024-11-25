@@ -57,7 +57,7 @@ struct Forecast_ {
     double *yhat;     /* array of forecast values */
     double *sderr;    /* array of forecast standard errors */
     double *eps;      /* array of estimated forecast errors */
-    int *dvlags;      /* info on lagged dependent variable */
+    int *dvlags;      /* info on lags of dependent variable */
     int t1;           /* start of forecast range */
     int t2;           /* end of forecast range */
     int model_t2;     /* end of period over which model was estimated */
@@ -431,34 +431,34 @@ static const int *model_xlist (MODEL *pmod)
     return xlist;
 }
 
-/* try to figure out if a model has any lags of the dependent
-   variable among the regressors: return 1 if so, 0 if not
-*/
-
-static int has_depvar_lags (MODEL *pmod, const DATASET *dset)
+static inline int xy_equal(double x, double y)
 {
-    const char *yname, *parent;
-    const int *xlist;
-    int i, vi;
+    return x == y || (na(x) && na(y));
+}
 
-    xlist = model_xlist(pmod);
-    if (xlist == NULL) {
-	return 0;
+static int detect_lag (int vy, int vx, int t1, int t2,
+                       int pmax, const DATASET *dset)
+{
+    const double *y = dset->Z[vy];
+    const double *x = dset->Z[vx];
+    int p, t, ok;
+    int ret = 0;
+
+    for (p=1; p<=pmax; p++) {
+        ok = 1;
+        for (t=t1+p; t<=t2; t++) {
+            if (!xy_equal(x[t], y[t-p])) {
+                ok = 0;
+                break;
+            }
+        }
+        if (ok) {
+            ret = p;
+            break;
+        }
     }
 
-    yname = gretl_model_get_depvar_name(pmod, dset);
-
-    for (i=1; i<=xlist[0]; i++) {
-        vi = xlist[i];
-	if (series_get_lag(dset, vi) > 0) {
-	    parent = series_get_parent_name(dset, vi);
-	    if (parent != NULL && !strcmp(yname, parent)) {
-		return 1;
-	    }
-	}
-    }
-
-    return 0;
+    return ret;
 }
 
 /* Makes a list to keep track of any "independent variables" that are
@@ -475,30 +475,39 @@ static int *process_lagged_depvar (MODEL *pmod, const DATASET *dset)
 {
     const int *xlist = NULL;
     int *dvlags = NULL;
-
-    if (!has_depvar_lags(pmod, dset)) {
-	return NULL;
-    }
+    int nl = 0;
 
     xlist = model_xlist(pmod);
     dvlags = malloc(xlist[0] * sizeof *dvlags);
 
     if (dvlags != NULL) {
-	const char *yname, *parent;
+        int yv = gretl_model_get_depvar(pmod);
 	int i, vi, lag;
 
-	yname = gretl_model_get_depvar_name(pmod, dset);
-
 	for (i=1; i<=xlist[0]; i++) {
+            lag = 0;
             vi = xlist[i];
-	    lag = series_get_lag(dset, vi);
-	    parent = series_get_parent_name(dset, vi);
-	    if (lag > 0 && parent != NULL && !strcmp(yname, parent)) {
-		dvlags[i-1] = lag;
-	    } else {
-		dvlags[i-1] = 0;
-	    }
-	}
+            if (series_get_transform(dset, vi) == LAGS) {
+                if (series_get_parent_id(dset, vi) == yv) {
+                    lag = series_get_lag(dset, vi);
+                }
+            } else if (vi > 0) {
+                int pmax = dset->pd < 4 ? 4 : dset->pd;
+
+                lag = detect_lag(yv, vi, dset->t1, dset->t2,
+                                 pmax, dset);
+            }
+            dvlags[i-1] = lag;
+            if (lag > 0) {
+                nl++;
+            }
+        }
+    }
+
+    if (nl == 0) {
+        /* didn't find any */
+        free(dvlags);
+        dvlags = NULL;
     }
 
     return dvlags;
@@ -4172,10 +4181,10 @@ void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
 {
     const int *xlist;
     int *dvlags = NULL;
+    int dvcheck = 0;
     int dv;
 
     *flags = 0;
-
     dv = gretl_model_get_depvar(pmod);
 
     if (pmod->ci == OLS) {
@@ -4198,13 +4207,18 @@ void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
 	*flags |= FC_DYNAMIC_OK;
     } else if (AR_MODEL(pmod->ci)) {
 	*flags |= FC_DYNAMIC_OK;
-    } else if (dataset_is_time_series(dset) &&
-	       has_depvar_lags(pmod, dset)) {
+    } else if (dataset_is_time_series(dset)) {
+        /* assume OK until shown otherwise */
 	*flags |= FC_DYNAMIC_OK;
+        dvcheck = 1;
     }
 
     if (*flags & FC_DYNAMIC_OK) {
 	dvlags = process_lagged_depvar(pmod, dset);
+        if (dvcheck && dvlags == NULL) {
+            /* plain time-series, no dvlags found */
+            *flags ^= FC_DYNAMIC_OK;
+        }
     }
 
     if (addobs_can_help(pmod, dvlags, dset)) {
@@ -4220,37 +4234,7 @@ void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
     }
 }
 
-static inline int xy_equal(double x, double y)
-{
-    return x == y || (na(x) && na(y));
-}
-
-static int detect_lag (int vy, int vx, int t1, int t2,
-                       int pmax, const DATASET *dset)
-{
-    const double *y = dset->Z[vy];
-    const double *x = dset->Z[vx];
-    int p, t, ok;
-    int ret = 0;
-
-    for (p=1; p<=pmax; p++) {
-        ok = 1;
-        for (t=t1+p; t<=t2; t++) {
-            if (!xy_equal(x[t], y[t-p])) {
-                ok = 0;
-                break;
-            }
-        }
-        if (ok) {
-            ret = p;
-            break;
-        }
-    }
-
-    return ret;
-}
-
-static int y_lag (int v, int parent_id, const DATASET *dset)
+static int ols_y_lag (int v, int parent_id, const DATASET *dset)
 {
     int lag = 0;
 
@@ -4290,7 +4274,7 @@ static int k_step_init (MODEL *pmod, const DATASET *dset,
 
     for (i=2; i<=pmod->list[0]; i++) {
         if (pmod->list[i] > 0) {
-            p = y_lag(pmod->list[i], vy, dset);
+            p = ols_y_lag(pmod->list[i], vy, dset);
             if (p > 0) {
                 /* vi is lagged dependent variable */
                 llist[i-1] = p;
