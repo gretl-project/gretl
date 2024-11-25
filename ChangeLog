@@ -8,6 +8,8 @@ version 2024d, in progress
 - Fix possible incorrect behavior of "smpl" in some special
   cases (inside a function, when the dataset is sub-sampled at
   the caller level)
+- nelem() function: ensure that it returns the number of bytes
+  in a string argument, as per the documentation
 - Avoid false positives in detecting markdown in help text for
   function packages
 - Windows10 theme: fix invisibility of some GUI elements

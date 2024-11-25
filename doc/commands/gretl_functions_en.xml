@@ -10144,9 +10144,10 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the number of elements in the argument, which
-	  may be a list, a matrix, a bundle, or an array (but not a
-	  series).
+	  Returns the number of elements in the argument, which may be
+	  a list, a matrix, a bundle, an array or a string (but not a
+	  series). In the case of a string argument the number of
+	  bytes is returned; see also <fncref targ="strlen"/>.
 	</para>
       </description>
     </function>
@@ -13343,10 +13344,11 @@
       <description>
 	<para>
 	  If <argname>s</argname> is a single string, returns the
-	  number of UTF-8 characters it contains.  Note that this does
-	  not equal the number of bytes if some characters are outside
-	  of the printable-ASCII range; if you want the number of
-	  bytes, you can use the <fncref targ="nelem"/> function. For example:
+	  number of UTF-8 characters it contains.  Note that this will
+	  be less than the number of bytes if the string contains any
+	  multi-byte (non-ASCII) characters. If you want the number of
+	  bytes you can use the <fncref targ="nelem"/> function. For
+	  example:
 	</para>
 	<code>
 	  string s = "¡Olé!"
