@@ -6833,7 +6833,7 @@ static NODE *trend_node (parser *p)
     return ret;
 }
 
-static int object_get_size (NODE *n, parser *p)
+static int object_get_size (NODE *n, int context, parser *p)
 {
     int ret = 0;
 
@@ -6848,7 +6848,11 @@ static int object_get_size (NODE *n, parser *p)
     } else if (n->t == LIST) {
         ret = n->v.ivec[0];
     } else if (n->t == STR) {
-        ret = strlen(n->v.str);
+        if (context == DUM_END) {
+            ret = g_utf8_strlen(n->v.str, -1);
+        } else {
+            ret = strlen(n->v.str);
+        }
     } else {
         p->err = e_types(n);
     }
@@ -6921,7 +6925,7 @@ static int object_end_index (NODE *t, parser *p)
             }
         }
     } else if (obj->t == ARRAY || obj->t == LIST || obj->t == STR) {
-        ret = object_get_size(obj, p);
+        ret = object_get_size(obj, DUM_END, p);
     } else {
         p->err = E_INVARG;
     }
@@ -8112,7 +8116,7 @@ static NODE *n_elements_node (NODE *n, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-        ret->v.xval = object_get_size(n, p);
+        ret->v.xval = object_get_size(n, 0, p);
     }
 
     return ret;
