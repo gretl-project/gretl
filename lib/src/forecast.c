@@ -4220,17 +4220,54 @@ void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
     }
 }
 
+static inline int xy_equal(double x, double y)
+{
+    return x == y || (na(x) && na(y));
+}
+
+static int detect_lag (int vy, int vx, int t1, int t2,
+                       int pmax, const DATASET *dset)
+{
+    const double *y = dset->Z[vy];
+    const double *x = dset->Z[vx];
+    int p, t, ok;
+    int ret = 0;
+
+    for (p=1; p<=pmax; p++) {
+        ok = 1;
+        for (t=t1+p; t<=t2; t++) {
+            if (!xy_equal(x[t], y[t-p])) {
+                ok = 0;
+                break;
+            }
+        }
+        if (ok) {
+            ret = p;
+            break;
+        }
+    }
+
+    return ret;
+}
+
 static int y_lag (int v, int parent_id, const DATASET *dset)
 {
+    int lag = 0;
+
     if (series_get_transform(dset, v) == LAGS) {
 	int pv = series_get_parent_id(dset, v);
 
 	if (pv == parent_id) {
-	    return series_get_lag(dset, v);
+	    lag = series_get_lag(dset, v);
 	}
+    } else {
+        int pmax = dset->pd < 4 ? 4 : dset->pd;
+
+        lag = detect_lag(parent_id, v, dset->t1, dset->t2,
+                         pmax, dset);
     }
 
-    return 0;
+    return lag;
 }
 
 #define KSTEP_DEBUG 0
@@ -4238,46 +4275,65 @@ static int y_lag (int v, int parent_id, const DATASET *dset)
 /* initialize for recursive k-step-ahead forecast */
 
 static int k_step_init (MODEL *pmod, const DATASET *dset,
-			double **py, int **pllist)
+			int k, double **py, int **pllist)
 {
-    double *y = NULL;
     int *llist = NULL;
     int vy = pmod->list[1];
-    int i, nl = 0;
+    int i, vi, p;
+    int nl = 0;
+    int err = 0;
+
+    llist = gretl_list_new(pmod->list[0] - 1);
+    if (llist == NULL) {
+        return E_ALLOC;
+    }
 
     for (i=2; i<=pmod->list[0]; i++) {
-	if (y_lag(pmod->list[i], vy, dset)) {
+        vi = pmod->list[i];
+        if (vi == 0) {
+            continue;
+        }
+        p = y_lag(vi, vy, dset);
+	if (p > 0) {
+            /* vi is lagged dependent variable */
+            llist[i-1] = p;
 	    nl++;
-	}
+	} else if (is_trend_variable(dset->Z[vi], dset->n)) {
+            ; /* OK */
+        } else if (is_periodic_dummy(dset->Z[vi], dset)) {
+            ; /* OK */
+        } else if (series_get_lag(dset, vi) >= k) {
+            ; /* OK */
+        } else {
+            gretl_errmsg_sprintf(_("The regressor %s precludes generating"
+                                   "%d-step ahead forecasts"),
+                                 dset->varname[vi], k);
+            err = E_DATA;
+        }
     }
 
 #if KSTEP_DEBUG
     fprintf(stderr, "k_step_init: found %d y-lag terms\n", nl);
 #endif
 
-    if (nl == 0) {
-	return 0;
+    if (err || nl == 0) {
+        free(llist);
+    } else {
+        double *y = malloc(dset->n * sizeof *y);
+
+        if (y == NULL) {
+            err = E_ALLOC;
+            free(llist);
+        } else {
+            for (i=0; i<dset->n; i++) {
+                y[i] = dset->Z[vy][i];
+            }
+            *py = y;
+            *pllist = llist;
+        }
     }
 
-    y = malloc(dset->n * sizeof *y);
-    llist = gretl_list_new(pmod->list[0] - 1);
-    if (y == NULL || llist == NULL) {
-	free(y);
-	free(llist);
-	return E_ALLOC;
-    }
-
-    for (i=0; i<dset->n; i++) {
-	y[i] = dset->Z[vy][i];
-    }
-    for (i=2; i<=pmod->list[0]; i++) {
-	llist[i-1] = y_lag(pmod->list[i], vy, dset);
-    }
-
-    *py = y;
-    *pllist = llist;
-
-    return 0;
+    return err;
 }
 
 static int recursive_fcast_adjust_obs (MODEL *pmod, int *t1, int t2, int k)
@@ -4337,7 +4393,7 @@ recursive_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
     }
 
     if (k > 1) {
-	*err = k_step_init(pmod, dset, &y, &llist);
+	*err = k_step_init(pmod, dset, k, &y, &llist);
 	if (*err) {
 	    return NULL;
 	}
