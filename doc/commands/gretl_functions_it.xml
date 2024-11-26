@@ -10202,8 +10202,12 @@
       </fnargs>
       <description>
 	<para>
-	  Restituisce il numero di elementi nella lista
-	  <argname>L</argname>.
+	  Restituisce il numero di elementi nell'argomento, che può
+	  essewre una lista, una matrice, un bundle, una array o una
+	  stringa, ma non una serie. Se l'argomento è una stringa, il
+	  risultato è dato dal numero di byte, che può essere maggiore
+	  del numero di caratteri (vedi anche <fncref
+	  targ="strlen"/>).
 	</para>
       </description>
     </function>
@@ -11637,7 +11641,7 @@
     <function name="quantile" section="stats" output="scalar" altout="matrix">
       <fnargs>
 	<fnarg type="series-or-mat">y</fnarg>
-	<fnarg type="pscalar">p</fnarg>
+	<fnarg type="scalar-or-vec">p</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -13381,14 +13385,8 @@
 	  contenere almeno <math>n</math> elementi, dove
 	  <math>n</math> è il massimo valore in <argname>y</argname>.
 	  In più, ogni elemento di <argname>S</argname> deve contenere
-	  caratteri validi secondo la codifica UTF-8.
-	  <seelist>
-	    <fncref targ="strvals"/>
-	  </seelist>
-	</para>
-	<para>
-	  Ritorna 0 se l'operazione ha avuto successo, o un codice di errore
-	  positivo.
+	  caratteri validi secondo la codifica UTF-8. Se la funzione
+	  bva a uon fine, ritorna 0.
 	</para>
        <para>
 	 In certi contesti può essere utile un'alternativa a
@@ -13399,7 +13397,10 @@
 	 dimensione complessiva del dataset o al numero di
 	 osservazioni del sottocampione corrente.
        </para>
-
+	  <seelist>
+	    <fncref targ="strvals"/>
+	    <fncref targ="strvsort"/>
+	  </seelist>
       </description>
     </function>
 

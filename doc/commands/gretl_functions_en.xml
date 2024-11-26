@@ -10145,9 +10145,10 @@
       <description>
 	<para>
 	  Returns the number of elements in the argument, which may be
-	  a list, a matrix, a bundle, an array or a string (but not a
-	  series). In the case of a string argument the number of
-	  bytes is returned; see also <fncref targ="strlen"/>.
+	  a list, a matrix, a bundle, an array or a string, but not a
+	  series. In the case of a string argument the number of
+	  bytes (which may not be equal to the number of characters in
+	  the string) is returned; see also <fncref targ="strlen"/>.
 	</para>
       </description>
     </function>
@@ -11570,7 +11571,7 @@
     <function name="quantile" section="stats" output="scalar" altout="matrix">
       <fnargs>
 	<fnarg type="series-or-mat">y</fnarg>
-	<fnarg type="pscalar">p</fnarg>
+	<fnarg type="scalar-or-vec">p</fnarg>
       </fnargs>
       <description>
 	<para>
