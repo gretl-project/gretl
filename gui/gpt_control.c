@@ -5544,8 +5544,6 @@ static int render_png (png_plot *plot, viewcode view)
     gtk_window_present(GTK_WINDOW(plot->shell));
 #endif
 
-    fprintf(stderr, "plot_shown: %gs\n", gretl_stopwatch()); /* HERE */
-
     return 0;
 }
 
@@ -6153,8 +6151,6 @@ void register_graph (void)
             }
         }
     }
-
-    fprintf(stderr, "calling gretl_show_png: %gs\n", gretl_stopwatch()); /* HERE */
 
     gnuplot_show_png(gretl_plotfile(), NULL, NULL, pp);
 }
