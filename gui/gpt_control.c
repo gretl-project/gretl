@@ -5544,6 +5544,8 @@ static int render_png (png_plot *plot, viewcode view)
     gtk_window_present(GTK_WINDOW(plot->shell));
 #endif
 
+    fprintf(stderr, "plot_show_time %gs\n", gretl_stopwatch());
+
     return 0;
 }
 

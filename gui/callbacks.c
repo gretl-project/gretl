@@ -530,8 +530,7 @@ void selector_callback (GtkAction *action, gpointer data)
         simple_selection_for_viewer(ci, _("gretl: model tests"),
                                     do_confidence_region, vwin);
     } else if (ci == GR_PLOT) {
-        simple_selection(ci, _("gretl: define graph"), do_graph_from_selector,
-                         NULL);
+        simple_selection(ci, _("gretl: define graph"), do_graph_from_selector, NULL);
     } else if (ci == TSPLOTS) {
         simple_selection(ci, _("gretl: define graph"), do_multi_plots, NULL);
     } else if (ci == GR_BOX) {

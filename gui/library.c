@@ -7915,6 +7915,8 @@ int do_graph_from_selector (selector *sr)
 
     if (buf == NULL) return 1;
 
+    gretl_stopwatch(); /* HERE */
+
     lib_command_sprintf("gnuplot %s", buf);
 
     if (code == GR_IMP) {
@@ -8108,6 +8110,8 @@ void plot_from_selection (int code)
             opt |= (OPT_T | OPT_O);
         }
     }
+
+    gretl_stopwatch(); /* HERE */
 
     if (!cancel) {
         int err;
