@@ -1208,6 +1208,20 @@ static void plotspec_print_data (GPT_SPEC *spec,
     }
 }
 
+static void handle_line_width (GPT_LINE *line,
+                               GPT_SPEC *spec,
+                               FILE *fp)
+{
+    if (line->width == 1.0) {
+        if (spec->scale >= 1.4) {
+            line->width = 2.0;
+        } else if (spec->scale > 1.0) {
+            line->width = 1.5;
+        }
+    }
+    fprintf(fp, " lw %g", (double) line->width);
+}
+
 static void plotspec_print_heredata (GPT_SPEC *spec,
 				     int *miss,
 				     FILE *fp)
@@ -1547,7 +1561,6 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 		break;
 	    }
 	}
-
 	if (!string_is_blank(line->formula)) {
 	    fprintf(fp, "%s ", line->formula);
 	} else if (line->ustr != NULL) {
@@ -1621,25 +1634,17 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	maybe_print_point_info(line, fp);
 
 	if (line->style != GP_STYLE_FILLEDCURVE) {
-	    if (line->width == 1.0 && spec->scale > 1.0) {
-		fprintf(fp, " lw 2");
-	    } else if (line->width != 1) {
-		fprintf(fp, " lw %g", (double) line->width);
-	    }
-	}
-
+            handle_line_width(line, spec, fp);
+        }
 	if (line->whiskwidth > 0) {
 	    fprintf(fp, " whiskerbars %g", (double) line->whiskwidth);
 	}
-
 	if (spec->heredata) {
 	    ycol += line->ncols - 1;
 	}
-
 	if (more_lines(spec, i, skipline)) {
 	    fputs(", \\", fp);
 	}
-
 	fputc('\n', fp);
     }
 

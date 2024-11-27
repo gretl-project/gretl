@@ -6141,10 +6141,10 @@ static void print_filledcurve_line (const char *title,
     }
 
     if (title == NULL) {
-	fprintf(fp, "'-' using 1:2:3 notitle lc rgb \"%s\" w filledcurve, \\\n",
+	fprintf(fp, "'-' using 1:2:3 notitle lc rgb \"%s\" w filledcurve",
 		cstr);
     } else {
-	fprintf(fp, "'-' using 1:2:3 title '%s' lc rgb \"%s\" w filledcurve, \\\n",
+	fprintf(fp, "'-' using 1:2:3 title '%s' lc rgb \"%s\" w filledcurve",
 		title, cstr);
     }
     fputs(use_alpha ? "\n" : ", \\\n", fp);
@@ -6160,6 +6160,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     FILE *fp = NULL;
     const double *obs = NULL;
     GptFlags flags = 0;
+    PlotType ptype = PLOT_FORECAST;
     double xmin, xmax, xrange;
     int depvar_present = 0;
     int use_fill = 0;
@@ -6191,10 +6192,25 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     }
 
     n = t2 - t1 + 1;
-
     if (n < 3) {
 	/* we won't draw a graph for 2 data points or less */
 	return 1;
+    }
+
+    if (do_errs) {
+        /* handle style options */
+	if (opt & OPT_F) {
+	    use_fill = 1;
+#if 0 /* not just yet */
+            use_alpha = 1;
+#else
+            ptype = PLOT_BAND;
+#endif
+	} else if (opt & OPT_L) {
+	    use_lines = 1;
+	} else if (n > 150) {
+            use_fill = 1;
+        }
     }
 
     obs = gretl_plotx(dset, OPT_NONE);
@@ -6206,7 +6222,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	flags |= GPT_LETTERBOX;
     }
 
-    fp = open_plot_input_file(PLOT_FORECAST, flags, &err);
+    fp = open_plot_input_file(ptype, flags, &err);
     if (err) {
 	return err;
     }
@@ -6216,15 +6232,6 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	if (!na(fr->actual[t])) {
 	    depvar_present = 1;
 	    break;
-	}
-    }
-
-    if (do_errs) {
-	if (opt & OPT_F) {
-	    use_fill = 1;
-            use_alpha = 1; /* experimental */
-	} else if (opt & OPT_L) {
-	    use_lines = 1;
 	}
     }
 
@@ -6241,10 +6248,6 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 
     if (dataset_is_time_series(dset)) {
 	fprintf(fp, "# timeseries %d (letterbox)\n", dset->pd);
-    }
-
-    if (do_errs && !use_fill && !use_lines && n > 150) {
-	use_fill = 1;
     }
 
     fputs("set key left top\n", fp);
