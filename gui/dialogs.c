@@ -6979,7 +6979,11 @@ static void dbnomics_paste_text (GtkWidget *w, GdkAtom atom)
 static gint dbnomics_paste_handler (GtkWidget *w, gpointer p)
 {
     g_signal_stop_emission_by_name(G_OBJECT(w), "paste-clipboard");
+#if defined(__linux) || defined(linux)
     dbnomics_paste_text(w, GDK_SELECTION_PRIMARY);
+#else
+    dbnomics_paste_text(w, GDK_NONE);
+#endif
     return TRUE;
 }
 

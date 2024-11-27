@@ -230,7 +230,7 @@ static gint console_paste_handler (GtkWidget *w, gpointer p)
 {
     /* we'll handle this ourselves */
     g_signal_stop_emission_by_name(G_OBJECT(w), "paste-clipboard");
-    return console_paste_text(w, GDK_SELECTION_PRIMARY);
+    return console_paste_text(w, GDK_NONE);
 }
 
 /* paste from X selection onto the command line */
@@ -520,8 +520,10 @@ windata_t *gretl_console (void)
 
     g_signal_connect(G_OBJECT(cvwin->text), "paste-clipboard",
                      G_CALLBACK(console_paste_handler), NULL);
+#if defined(__linux) || defined(linux)
     g_signal_connect(G_OBJECT(cvwin->text), "button-press-event",
                      G_CALLBACK(console_click_handler), NULL);
+#endif
     g_signal_connect(G_OBJECT(cvwin->text), "button-release-event",
                      G_CALLBACK(console_mouse_handler), cvwin);
     g_signal_connect(G_OBJECT(cvwin->text), "key-press-event",
