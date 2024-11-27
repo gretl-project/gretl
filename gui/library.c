@@ -7915,7 +7915,7 @@ int do_graph_from_selector (selector *sr)
 
     if (buf == NULL) return 1;
 
-    gretl_stopwatch(); /* HERE */
+    gretl_stopwatch(); /* HERE start timer */
 
     lib_command_sprintf("gnuplot %s", buf);
 
@@ -8111,7 +8111,7 @@ void plot_from_selection (int code)
         }
     }
 
-    gretl_stopwatch(); /* HERE */
+    gretl_stopwatch(); /* HERE start timer */
 
     if (!cancel) {
         int err;
