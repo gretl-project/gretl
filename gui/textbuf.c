@@ -155,9 +155,7 @@ void text_delete_invisibles (gchar *s)
 void text_paste (GtkWidget *w, windata_t *vwin)
 {
     GtkClipboard *cb = gtk_clipboard_get(GDK_NONE);
-    gchar *src;
-
-    src = gtk_clipboard_wait_for_text(cb);
+    gchar *src = gtk_clipboard_wait_for_text(cb);
 
     if (src != NULL) {
         text_delete_invisibles(src);
