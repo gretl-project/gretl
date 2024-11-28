@@ -1616,6 +1616,8 @@ windata_t *view_help_file (const char *filename, int role)
 			 G_CALLBACK(text_popup_handler), vwin);
     }
 
+    connect_text_sizer(vwin);
+
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->main);
 
