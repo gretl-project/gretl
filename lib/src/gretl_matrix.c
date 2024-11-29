@@ -11518,11 +11518,13 @@ gretl_matrix_row_concat (const gretl_matrix *a, const gretl_matrix *b,
         int cr, cc;
         int i, j, k;
 
-        if (matrix_is_scalar(a) && b->cols != 1) {
+        if (matrix_is_scalar(a) && b->cols > 1) {
+            /* 2024-11-29: was b->cols != 1 above */
             scalar_a = 1;
             cr = b->rows + 1;
             cc = b->cols;
-        } else if (matrix_is_scalar(b) && a->cols != 1) {
+        } else if (matrix_is_scalar(b) && a->cols > 1) {
+            /* 2024-11-29: was a->cols != 1 above */
             scalar_b = 1;
             cr = a->rows + 1;
             cc = a->cols;
