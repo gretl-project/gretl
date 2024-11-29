@@ -325,6 +325,53 @@ static band_info *band_info_from_bundle (int matrix_mode,
     return bi;
 }
 
+static int swap_bands_order (gretl_array *a)
+{
+    gretl_bundle *b0 = gretl_array_get_data(a, 0);
+    gretl_bundle *b1 = gretl_array_get_data(a, 1);
+    const char *tmp0;
+    const char *tmp1;
+    double fac0, fac1;
+    int ret = 0;
+
+    fac0 = gretl_bundle_get_scalar(b0, "factor", NULL);
+    fac1 = gretl_bundle_get_scalar(b1, "factor", NULL);
+    if (na(fac0) || na(fac1)) {
+        return 0;
+    }
+
+    tmp0 = gretl_bundle_get_string(b0, "style", NULL);
+    tmp1 = gretl_bundle_get_string(b1, "style", NULL);
+    if (tmp0 == NULL || tmp1 == NULL) {
+        return 0;
+    } else if (strcmp(tmp0, "fill") || strcmp(tmp1, "fill")) {
+        /* condition on "fill" for both bands? */
+        return 0;
+    }
+
+    /* matrix version */
+    tmp0 = gretl_bundle_get_string(b0, "bandmat", NULL);
+    tmp1 = gretl_bundle_get_string(b1, "bandmat", NULL);
+    if (tmp0 != NULL || tmp1 != NULL || !strcmp(tmp0, tmp1)) {
+        ret = fac1 > fac0;
+    } else if (tmp0 == NULL && tmp1 == NULL) {
+        /* series data version */
+        tmp0 = gretl_bundle_get_string(b0, "center", NULL);
+        tmp1 = gretl_bundle_get_string(b1, "center", NULL);
+        if (tmp0 == NULL || tmp1 == NULL || strcmp(tmp0, tmp1)) {
+            return 0;
+        }
+        tmp0 = gretl_bundle_get_string(b0, "width", NULL);
+        tmp1 = gretl_bundle_get_string(b1, "width", NULL);
+        if (tmp0 == NULL || tmp1 == NULL || strcmp(tmp0, tmp1)) {
+            return 0;
+        }
+        ret = fac1 > fac0;
+    }
+
+    return ret;
+}
+
 /* Here we're supposing we got --bands=@aname. We try to retrieve an
    array of bundles, and if that succeeds we build and return an array
    of band_info structs.
@@ -339,7 +386,8 @@ static band_info **get_band_info_array (int matrix_mode,
     const char *s = get_optval_string(GNUPLOT, OPT_a);
     gretl_array *a = get_array_by_name(s);
     band_info **pbi = NULL;
-    int i, j, n = 0;
+    int n = 0;
+    int swap = 0;
 
     if ((n = gretl_array_get_length(a)) < 1) {
 	fprintf(stderr, "get_band_info_array: array has no content\n");
@@ -351,14 +399,19 @@ static band_info **get_band_info_array (int matrix_mode,
         return NULL;
     }
 
+    if (n == 2) {
+        swap = swap_bands_order(a);
+    }
+
     pbi = calloc(n, sizeof *pbi);
     if (pbi == NULL) {
         *err = E_ALLOC;
     } else {
 	gretl_bundle *b;
+        int i, j;
 
         for (i=0; i<n && !*err; i++) {
-            b = gretl_array_get_data(a, i);
+            b = gretl_array_get_data(a, swap ? 1 - i : i);
             pbi[i] = band_info_from_bundle(matrix_mode, b, gi, dset, err);
         }
         if (*err) {

@@ -102,7 +102,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_REGULAR,        NULL },
     { PLOT_CORRELOGRAM,    "correlogram" },
     { PLOT_CUSUM,          "CUSUM test" },
-    { PLOT_FORECAST,       "forecasts with 95 pc conf. interval" },
+    { PLOT_FORECAST,       "forecast plot" },
     { PLOT_FREQ_SIMPLE,    "frequency plot (simple)" },
     { PLOT_FREQ_NORMAL,    "frequency plot (against normal)" },
     { PLOT_FREQ_GAMMA,     "frequency plot (against gamma)" },
@@ -6201,16 +6201,19 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
         /* handle style options */
 	if (opt & OPT_F) {
 	    use_fill = 1;
-#if 0 /* not just yet */
-            use_alpha = 1;
-#else
-            ptype = PLOT_BAND;
-#endif
 	} else if (opt & OPT_L) {
 	    use_lines = 1;
 	} else if (n > 150) {
             use_fill = 1;
         }
+    }
+
+    if (use_fill) {
+#if 0 /* not just yet */
+        use_alpha = 1;
+#else
+        ptype = PLOT_BAND;
+#endif
     }
 
     obs = gretl_plotx(dset, OPT_NONE);
@@ -6571,14 +6574,6 @@ int plot_simple_fcast_bands (const MODEL *pmod,
     return finalize_plot_input_file(fp);
 }
 
-#ifndef min
-# define min(x,y) (((x)<(y))? (x):(y))
-#endif
-
-#ifndef max
-# define max(x,y) (((x)>(y))? (x):(y))
-#endif
-
 int plot_tau_sequence (const MODEL *pmod, const DATASET *dset,
 		       int k)
 {
@@ -6629,8 +6624,8 @@ int plot_tau_sequence (const MODEL *pmod, const DATASET *dset,
 	blo = bi - tcrit * se;
 	bhi = bi + tcrit * se;
     }
-    ymin[0] = min(blo, pmod->coeff[k] - olsband);
-    ymax[0] = max(bhi, pmod->coeff[k] + olsband);
+    ymin[0] = MIN(blo, pmod->coeff[k] - olsband);
+    ymax[0] = MAX(bhi, pmod->coeff[k] + olsband);
 
     j += ntau - 1;
     if (bcols == 3) {
@@ -6642,8 +6637,8 @@ int plot_tau_sequence (const MODEL *pmod, const DATASET *dset,
 	blo = bi - tcrit * se;
 	bhi = bi + tcrit * se;
     }
-    ymin[1] = min(blo, pmod->coeff[k] - olsband);
-    ymax[1] = max(bhi, pmod->coeff[k] + olsband);
+    ymin[1] = MIN(blo, pmod->coeff[k] - olsband);
+    ymax[1] = MAX(bhi, pmod->coeff[k] + olsband);
 
     fputs("set xrange [0.0:1.0]\n", fp);
     fputs("set xlabel 'tau'\n", fp);
