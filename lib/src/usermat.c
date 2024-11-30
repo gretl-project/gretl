@@ -1034,6 +1034,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     if (S == NULL) {
 	*err = E_ALLOC;
     } else if (r == 0 && c == 0) {
+        /* nothing more to be done */
         return S;
     } else {
 	int j, mj;
