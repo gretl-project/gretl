@@ -50,22 +50,22 @@ for example,
 matrix A = {x1, x2, x3}
 \end{code}
 %
-where the names of the variables are separated by commas.  Besides
-names of existing variables, you can use expressions that evaluate to
-a series.  For example, given a series \texttt{x} you could do
+where the names of the series are separated by commas.  Besides names
+of existing series, you can use expressions that yield a series
+result.  For example, given a series \texttt{x} you could do
 %
 \begin{code}
 matrix A = {x, x^2}
 \end{code}
 %
-Each variable occupies a column (and there can only be one variable
-per column).  You cannot use the semicolon as a row separator in this
+Each series occupies a column (and there can only be one series per
+column).  The semicolon cannot be used as a row separator in this
 case: if you want the series arranged in rows, append the transpose
 symbol.  The range of data values included in the matrix depends on
 the current setting of the sample range.
 
-Instead of giving an explicit list of variables, you may instead
-provide the \textit{name of a saved list} (see
+Instead of giving an explicit list of series, you may instead provide
+the \textit{name of a saved list} (see
 Chapter~\ref{chap:lists-strings}), as in
 %
 \begin{code}
@@ -77,7 +77,7 @@ When you provide a named list, the data series are by default placed
 in columns, as is natural in an econometric context: if you want them
 in rows, append the transpose symbol.
 
-As a special case of constructing a matrix from a list of variables,
+As a special case of constructing a matrix from a list of series,
 you can say
 %
 \begin{code}
@@ -85,10 +85,10 @@ matrix A = {dataset}
 \end{code}
 %
 This builds a matrix using all the series in the current dataset,
-apart from the constant (variable 0).  When this dummy list is used, it
+apart from the constant (series 0).  When this dummy list is used, it
 must be the sole element in the matrix definition \texttt{\{...\}}.  You
 can, however, create a matrix that includes the constant along with
-all other variables using horizontal concatenation (see below), as in
+all other series using horizontal concatenation (see below), as in
 %
 \begin{code}
 matrix A = {const}~{dataset}
@@ -96,13 +96,14 @@ matrix A = {const}~{dataset}
 %
 
 By default, when you build a matrix from series that include missing
-values the data rows that contain \texttt{NA}s are skipped.  But you
-can modify this behavior via the command \texttt{set skip\_missing
-  off}.  In that case \texttt{NA}s are converted to NaN (``Not a
-Number'').  In the IEEE floating-point standard, arithmetic operations
-involving NaN always produce NaN. Alternatively, you can take greater
-control over the observations (data rows) that are included in 
-the matrix using the ``set'' variable \texttt{matrix\_mask}, as in
+values any observations (rows) that contain \texttt{NA}s are skipped.
+This behavior can be modified via the command \texttt{set
+  skip\_missing off}.  In that case missing values are represented in
+the matrix as NaN (``Not a Number'').  Note that as per the IEEE
+standard, arithmetic operations involving one or more NaNs always
+produce a NaN result. Alternatively, you can take greater control over
+the observations (data rows) that are included in the matrix using the
+``set'' variable \texttt{matrix\_mask}, as in
 %
 \begin{code}
 set matrix_mask msk
@@ -129,24 +130,22 @@ matrix A = {}
 %
 creates an empty matrix---a matrix with zero rows and zero columns.
 
-The main purpose of the concept of an empty matrix is to enable the
-user to define a starting point for subsequent concatenation
-operations.  For instance, if \texttt{X} is an already defined
-matrix of any size, the commands
+The main purpose of this construct is to allow the user to define a
+starting point for subsequent concatenation operations.  For instance,
+if \texttt{X} is an already defined matrix of any size, the commands
 %
 \begin{code}
   matrix A = {}
   matrix B = A ~ X
 \end{code}
 %
-result in a matrix \texttt{B} identical to \texttt{X}.
-
+produce a matrix \texttt{B} that is identical to \texttt{X}.
 
 \begin{table}[htbp]
 \centering
 \begin{tabular}{lc@{\hspace{5em}}lc}
 \textit{Function} & \textit{Return value} & \textit{Function} & \textit{Return value} \\ [4pt]
-  \texttt{A', transp(A)} & \texttt{A} &  \texttt{rows(A)} & 0 \\
+  \texttt{A', transp(A)} & \texttt{A} & \texttt{rows(A)} & 0 \\
   \texttt{cols(A)} & 0 &
   \texttt{rank(A)} & 0 \\
   \texttt{det(A)} & \texttt{NA} &
@@ -155,6 +154,10 @@ result in a matrix \texttt{B} identical to \texttt{X}.
   \texttt{onenorm(A)} & \texttt{NA} \\
   \texttt{infnorm(A)} & \texttt{NA} &
   \texttt{rcond(A)} & \texttt{NA} \\
+  \texttt{diag(A)} & \verb|{}| &
+  \texttt{vec(A)} & \verb|{}| \\
+  \texttt{vech(A)} & \verb|{}| &
+  \texttt{unvech(A)} & \verb|{}| \\
 \end{tabular}
 \caption{Valid functions on an empty matrix, \texttt{A}}
 \label{tab:empty-matrix-funcs}
@@ -168,15 +171,13 @@ meaning (arguably, they have none at all), but operations involving
 the cardinality of this set (that is, the dimension of the space
 spanned by \texttt{A}) are meaningful.
 
-Legal operations on empty matrices are listed in Table
-\ref{tab:empty-matrix-funcs}.  (All other matrix operations generate
-an error when an empty matrix is given as an argument.)  In line with
-the above interpretation, some matrix functions return an empty matrix
-under certain conditions: the functions \texttt{diag, vec, vech,
-  unvech} when the arguments is an empty matrix; the functions
-\texttt{I, ones, zeros, mnormal, muniform} when one or more of the
-arguments is 0; and the function \texttt{nullspace} when its argument
-has full column rank.
+Legal function calls with an empty matrix argument are listed in Table
+\ref{tab:empty-matrix-funcs}---other functions generate an error if an
+empty matrix is given as an argument.  In line with the above
+interpretation, the functions \texttt{I}, \texttt{ones},
+\texttt{zeros}, \texttt{mnormal} and \texttt{muniform} return an empty
+matrix when or more of the arguments is 0, as well as the function
+\texttt{nullspace} when its argument is of full column rank.
 
 \section{Selecting submatrices}
 \label{sec:matrix-sub}
@@ -242,7 +243,7 @@ any additional, comma-separated term.
   \texttt{end-1} accesses the second-last element in a row or column.
 \end{itemize}
 
-You can use submatrix selections on either the right-hand side of a
+Submatrix selections cane be used on either the right-hand side of a
 matrix-generating formula or the left.  Here is an example of use of a
 selection on the right, to extract a $2\times 2$ submatrix $B$ from a
 $3\times 3$ matrix $A$, then the lower triangle of $A$:
@@ -480,6 +481,8 @@ matrix Y = X .* v
 %
 where \texttt{v} is a row vector containing the diagonal of $V$.
 
+\subsection{Concatenation}
+
 In \textit{column-wise concatenation} of an $m\times n$ matrix $A$ and
 an $m\times p$ matrix $B$, the result is an $m\times (n+p)$ matrix.
 That is,
@@ -499,6 +502,21 @@ matrix C = A | B
 \end{code}
 % 
 produces $C = \left[ \begin{array}{cc} A \\ B \end{array} \right]$.
+
+In general the two matrix operands must be conformable, as indicated
+above. But as a special case for convenience, a scalar or $1 \times 1$
+matrix can be concatenated with a matrix of any size; the single value
+is automatically repeated, if necessary, to form a row or column
+vector of length conformable with the matrix in question. So for
+example
+%
+\begin{code}
+matrix A = {1, 2, 3}
+matrix B = A | 1
+\end{code}
+%
+produces $B = \left[ \begin{array}{ccc} 1 & 2 & 3 \\
+  1 & 1 & 1 \end{array} \right]$.
 
 \section{Matrix--scalar operators}
 \label{matrix-scalar-op}
@@ -622,8 +640,8 @@ b
 \subsection{Multiple returns and the \texttt{null} keyword}
 \label{matrix-multiples}
 
-Some functions take one or more matrices as arguments and compute one
-or more matrices; these are:
+The functions listed below take one or more matrices as arguments and
+compute one or more matrices.
 
 \begin{center}
 \begin{tabular}{ll}
@@ -635,11 +653,11 @@ or more matrices; these are:
 \end{tabular}
 \end{center}
 
-The general rule is: the ``main'' result of the function is always
-returned as the result proper. Auxiliary returns, if needed, are
-retrieved using pre-existing matrices, which are passed to the
-function as pointers (see \ref{sec:funscope}). If such values are not
-needed, the pointer may be substituted with the keyword \texttt{null}.
+The ``main'' result of the function is always returned as the result
+proper. Auxiliary returns, if wanted, are retrieved using pre-existing
+matrices, passed to the function in ``pointer'' form
+\ref{sec:funscope}). If such values are not needed, the pointer may be
+substituted with the keyword \texttt{null}.
 
 The syntax for \texttt{qrdecomp} and \texttt{eigensym} is of the form
 %
@@ -677,12 +695,10 @@ the eigenvalues but the eigenvectors are not computed.
 
 The function \texttt{eigen} computes the eigenvalues, and optionally
 the right and/or left eigenvectors, of a general $n \times n$
-matrix.\footnote{The ``legacy'' function \texttt{eigengen} used to be
-  the way to do this prior to gretl 2019d.} Following the input matrix
-argument there are two slots for matrix-addresses, the first to
-retrieve the right eigenvectors and the second for the left.  Calls to
-this function should therefore conform to one of the following
-patterns.
+matrix. Following the input matrix argument there are two slots for
+matrix-addresses, the first to retrieve the right eigenvectors and the
+second for the left.  Calls to this function should therefore conform
+to one of the following patterns.
 \begin{code}
 # get the eigenvalues only
 matrix E = eigen(M)
@@ -719,10 +735,10 @@ matrix Q = qrdecomp(M, null)
 %
 In the first example, the triangular $R$ is saved as \texttt{R}; in
 the second, $R$ is discarded.  The first line above shows an example
-of a ``simple declaration'' of a matrix: \texttt{R} is
-declared to be a matrix variable but is not given any explicit value.
-In this case the variable is initialized as a $1\times 1$ matrix whose
-single element equals zero.
+of a ``simple declaration'' of a matrix: \texttt{R} is declared to be
+a matrix but is not given any explicit value. The result is that it is
+automatically initialized as an empty matrix (see
+Section~\ref{sec:emptymatrix}).
 
 The syntax for \texttt{svd} is
 %
@@ -1027,7 +1043,7 @@ missing code.
 \section{Matrices and lists}
 \label{matrix-and-list}
 
-To facilitate the manipulation of named lists of variables (see
+To facilitate the manipulation of named lists of series (see
 Chapter~\ref{chap:lists-strings}), it is possible to convert between
 matrices and lists.  In section~\ref{sec:matrix-create} above we mentioned
 the facility for creating a matrix from a list of variables, as in
@@ -1037,7 +1053,7 @@ matrix M = { listname }
 \end{code}
 %
 That formulation, with the name of the list enclosed in braces, builds
-a matrix whose columns hold the variables referenced in the list.
+a matrix whose columns hold the series referenced in the list.
 What we are now describing is a different matter: if we say
 %
 \begin{code}
@@ -1045,7 +1061,7 @@ matrix M = listname
 \end{code}
 %
 (without the braces), we get a row vector whose elements are
-the ID numbers of the variables in the list.  This special case
+the ID numbers of the series in the list.  This special case
 of matrix generation cannot be embedded in a compound
 expression.  The syntax must be as shown above, namely simple
 assignment of a list to a matrix.
@@ -1137,10 +1153,12 @@ Id (2 x 2)
 \end{code}
 
 For presentation purposes you may wish to give titles to the columns
-of a matrix.  For this you can use the \cmd{cnameset} function: the first
-argument is a matrix and the second is either a named list of variables,
-whose names will be used as headings, or a string that contains as many
-space-separated substrings as the matrix has columns.  For example,
+of a matrix.  For this you can use the function \cmd{cnameset}. The
+first argument to this function is a matrix and the second can take
+any of three forms: a string that contains as many space-separated
+substrings as the matrix has columns; an array of strings (see
+Section~\ref{sec:arrays}) of the right length; or a named list of
+series, whose names will be used as headings.  For example,
 %
 \begin{code}
 ? matrix M = mnormal(3,3)
@@ -1153,7 +1171,9 @@ M (3 x 3)
     -0.99780      -1.9003     -0.25123 
     -0.91762     -0.39237      -1.6114
 \end{code}
-
+%
+Row names may be added via the function \cmd{rnameset}, which works in
+the same way.
 
 \section{Example: OLS using matrices}
 \label{matrix-example}
