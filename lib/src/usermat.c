@@ -1017,13 +1017,24 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     fprintf(stderr, "M = %d x %d\n", M->rows, M->cols);
 #endif
 
-    r = (spec->rslice == NULL)? M->rows : spec->rslice[0];
-    c = (spec->cslice == NULL)? M->cols : spec->cslice[0];
+    if (M->rows == 1 && M->cols == 1 &&
+        ((spec->cslice != NULL && spec->cslice[0] == 0 &&
+         spec->rslice == NULL) ||
+        (spec->rslice != NULL && spec->rslice[0] == 0 &&
+         spec->cslice == NULL))) {
+        /* added 2024-11-30 */
+        r = c = 0;
+    } else {
+        r = (spec->rslice == NULL)? M->rows : spec->rslice[0];
+        c = (spec->cslice == NULL)? M->cols : spec->cslice[0];
+    }
 
     S = gretl_matching_matrix_new(r, c, M);
 
     if (S == NULL) {
 	*err = E_ALLOC;
+    } else if (r == 0 && c == 0) {
+        return S;
     } else {
 	int j, mj;
 
