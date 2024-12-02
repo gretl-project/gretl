@@ -2,6 +2,10 @@ Some examples of use of libgretl via third-party code. You should
 install the gretl library and headers (i.e. "make install" in the 
 parent to this directory) before trying to build the examples.
 
+**Note:** If you want to perform a native MS Windows compilation,
+execute the `mscompile.bat` script. For more details, refer to the
+following link: https://sourceforge.net/projects/gretl/files/mscompile/.
+
 simple_client.c: code for a trivial illustrative client program for
 libgretl.  By looking at this code you should be able to get the basic
 idea of how to send information to libgretl, and how one might deal with
