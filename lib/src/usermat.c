@@ -551,7 +551,7 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
     subspec_debug_print(spec, m);
 #endif
 
-    if (spec->rtype == SEL_NULL && m->rows == 1) {
+    if (spec->rtype == SEL_NULL && m->rows == 1 && m->cols > 1) {
 	/* row vector: transfer spec to column dimension */
 	commute_selectors(spec);
     }
@@ -964,12 +964,19 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 				    int *err)
 {
     gretl_matrix *S = NULL;
-    int r, c;
+    int r = -1;
+    int c = -1;
 
     if (M == NULL || spec == NULL) {
 	*err = E_DATA;
 	return NULL;
     }
+
+#if MDEBUG
+    fprintf(stderr, "matrix_get_submatrix, M = %d x %d\n", M->rows, M->cols);
+    fprintf(stderr, " ltype: %d, rtype %d, prechecked %d\n", spec->ltype,
+            spec->rtype, prechecked);
+#endif
 
     if (!prechecked) {
 	*err = check_matrix_subspec(spec, M);
@@ -1014,17 +1021,19 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 #if MDEBUG
     printlist(spec->rslice, "rslice");
     printlist(spec->cslice, "cslice");
-    fprintf(stderr, "M = %d x %d\n", M->rows, M->cols);
 #endif
 
-    if (M->rows == 1 && M->cols == 1 &&
-        ((spec->cslice != NULL && spec->cslice[0] == 0 &&
-         spec->rslice == NULL) ||
-        (spec->rslice != NULL && spec->rslice[0] == 0 &&
-         spec->cslice == NULL))) {
-        /* added 2024-11-30 */
-        r = c = 0;
-    } else {
+    if (M->rows == 1 && M->cols == 1) {
+        if (spec->ltype == SEL_EXCL && spec->rtype == SEL_NULL) {
+            r = c = 0;
+        } else if (spec->ltype == SEL_EXCL && spec->rtype == SEL_ALL) {
+            r = 0; c = 1;
+        } else if (spec->ltype == SEL_ALL && spec->rtype == SEL_EXCL) {
+            r = 1; c = 0;
+        }
+    }
+    if (r < 0 && c < 0) {
+        /* dimensions not yet determined */
         r = (spec->rslice == NULL)? M->rows : spec->rslice[0];
         c = (spec->cslice == NULL)? M->cols : spec->cslice[0];
     }
