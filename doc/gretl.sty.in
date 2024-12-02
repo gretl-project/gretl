@@ -138,11 +138,19 @@
 \newenvironment{script*}
                {\@dblfloat{script}}
                {\end@dblfloat}
-\ifcsname c@chapter\endcsname
- \renewcommand\theHscript{\thechapter.\arabic{script}}
-\else
- \renewcommand\theHscript{\arabic{script}}
-\fi
+\ifcsname theHscript\endcsname%
+   \ifcsname c@chapter\endcsname
+   \renewcommand\theHscript{\thechapter.\arabic{script}}
+   \else
+   \renewcommand\theHscript{\arabic{script}}
+   \fi
+\else%
+   \ifcsname c@chapter\endcsname
+   \newcommand\theHscript{\thechapter.\arabic{script}}
+   \else
+   \newcommand\theHscript{\arabic{script}}
+   \fi
+\fi%
 
 %% section headings
 
