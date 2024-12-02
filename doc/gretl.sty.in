@@ -139,9 +139,9 @@
                {\@dblfloat{script}}
                {\end@dblfloat}
 \ifcsname c@chapter\endcsname
- \newcommand\theHscript{\thechapter.\arabic{script}}
+ \renewcommand\theHscript{\thechapter.\arabic{script}}
 \else
- \newcommand\theHscript{\arabic{script}}
+ \renewcommand\theHscript{\arabic{script}}
 \fi
 
 %% section headings

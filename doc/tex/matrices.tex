@@ -496,7 +496,7 @@ produces $C = \left[ \begin{array}{cc} A & B \end{array} \right]$.
 \textit{Row-wise concatenation} of an $m\times n$ matrix $A$ and
 an $p\times n$ matrix $B$ produces an $(m+p) \times n$ matrix.
 That is,
-%
+
 \begin{code}
 matrix C = A | B
 \end{code}
@@ -656,8 +656,8 @@ compute one or more matrices.
 The ``main'' result of the function is always returned as the result
 proper. Auxiliary returns, if wanted, are retrieved using pre-existing
 matrices, passed to the function in ``pointer'' form
-\ref{sec:funscope}). If such values are not needed, the pointer may be
-substituted with the keyword \texttt{null}.
+(Section~\ref{sec:funscope}). If such values are not needed, the
+pointer may be substituted with the keyword \texttt{null}.
 
 The syntax for \texttt{qrdecomp} and \texttt{eigensym} is of the form
 %
@@ -827,10 +827,10 @@ returned.
 The complementary function \texttt{mwrite} produces text files
 formatted as described above.  The column separator is the tab
 character, so import into spreadsheets should be straightforward.
-Usage is illustrated in example \ref{ex:matrix-files}.  Matrices stored via
-the \texttt{mwrite} command can be easily read by other programs; the
-following table summarizes the appropriate commands for reading a
-matrix \texttt{A} from a file called \texttt{a.mat} in some
+Usage is illustrated in Listing~\ref{ex:matrix-files}.  Matrices
+stored via the \texttt{mwrite} command can be easily read by other
+programs; the following table summarizes the appropriate commands for
+reading a matrix \texttt{A} from a file called \texttt{a.mat} in some
 widely-used programs.\footnote{Matlab users may find the Octave
   example helpful, since the two programs are mostly compatible with
   one another.} Note that the Python example requires that the
