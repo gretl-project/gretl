@@ -1026,6 +1026,8 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     if (M->rows == 1 && M->cols == 1) {
         if (spec->ltype == SEL_EXCL && spec->rtype == SEL_NULL) {
             r = c = 0;
+        } else if (spec->ltype == SEL_EXCL && spec->rtype == SEL_EXCL) {
+            r = c = 0;
         } else if (spec->ltype == SEL_EXCL && spec->rtype == SEL_ALL) {
             r = 0; c = 1;
         } else if (spec->ltype == SEL_ALL && spec->rtype == SEL_EXCL) {
@@ -1042,8 +1044,8 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 
     if (S == NULL) {
 	*err = E_ALLOC;
-    } else if (r == 0 && c == 0) {
-        /* nothing more to be done */
+    } else if (r * c == 0) {
+        /* empty matrix: nothing more to be done */
         return S;
     } else {
 	int j, mj;
