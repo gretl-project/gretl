@@ -558,7 +558,7 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 
     veclen = gretl_vector_get_length(m);
 
-    if (spec->rtype == SEL_NULL && m->rows > 1 && m->cols > 1) {
+    if (spec->rtype == SEL_NULL && m->rows != 1 && m->cols != 1) {
 	gretl_errmsg_set(_("Ambiguous matrix index"));
 	return E_DATA;
     }
