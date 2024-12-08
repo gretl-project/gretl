@@ -154,17 +154,31 @@ void text_delete_invisibles (gchar *s)
 
 void text_paste (GtkWidget *w, windata_t *vwin)
 {
-    GtkClipboard *cb = gtk_clipboard_get(GDK_NONE);
-    gchar *src = gtk_clipboard_wait_for_text(cb);
+    GtkClipboard *cb;
+    GtkTextBuffer *tbuf;
+    gchar *src;
+
+    g_return_if_fail(GTK_IS_TEXT_VIEW(vwin->text));
+
+    cb = gtk_clipboard_get(GDK_NONE);
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    src = gtk_clipboard_wait_for_text(cb);
 
     if (src != NULL) {
+        GtkTextIter sel0, sel1;
+
         text_delete_invisibles(src);
-        textview_insert_text(vwin->text, src);
+        if (gtk_text_buffer_get_selection_bounds(tbuf, &sel0, &sel1)) {
+            gtk_text_buffer_delete(tbuf, &sel0, &sel1);
+            gtk_text_buffer_insert(tbuf, &sel0, src, -1);
+        } else {
+            gtk_text_buffer_insert_at_cursor(tbuf, src, -1);
+        }
         g_free(src);
     }
 }
 
-/* replaced by the above, 2024-11-23
+/* previous code replaced by the above, 2024-11-23
 
 void text_paste (GtkWidget *w, windata_t *vwin)
 {
