@@ -6968,10 +6968,15 @@ static void dbnomics_paste_text (GtkWidget *w, GdkAtom atom)
     gchar *src = gtk_clipboard_wait_for_text(cb);
 
     if (src != NULL) {
-        gint pos = gtk_editable_get_position(GTK_EDITABLE(w));
+        gint p0, p1;
 
         text_delete_invisibles(src);
-        gtk_editable_insert_text(GTK_EDITABLE(w), src, -1, &pos);
+        if (gtk_editable_get_selection_bounds(GTK_EDITABLE(w), &p0, &p1)) {
+            gtk_editable_delete_text(GTK_EDITABLE(w), p0, p1);
+        } else {
+            p0 = gtk_editable_get_position(GTK_EDITABLE(w));
+        }
+        gtk_editable_insert_text(GTK_EDITABLE(w), src, -1, &p0);
         g_free(src);
     }
 }
