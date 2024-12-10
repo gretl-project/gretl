@@ -1921,8 +1921,9 @@ static void word_check_next_char (parser *p)
 	} else if (p->sym == DVAR && dollar_series(p->idnum)) {
 	    /* observation from "dollar" series */
 	    p->sym = OBS;
-	} else if (p->sym == MVAR && model_data_list(p->idnum)) {
-	    /* element/range of accessor list */
+	} else if (p->sym == MVAR && (model_data_list(p->idnum) ||
+                                      model_data_array(p->idnum))) {
+	    /* element/range of accessor list or array */
 	    p->sym = OSL;
 	} else if (p->sym == BUNDLE) {
 	    /* member from bundle */

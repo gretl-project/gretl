@@ -107,7 +107,7 @@ enum {
 	      SUBSL,	  /* row or column component of MSPEC */
               LAG,        /* variable plus lag length */
 	      DVAR,	  /* $ "dataset" variable (mostly scalar or series) */
-	      MVAR,	  /* $ model var (scalar, series, or matrix) */
+	      MVAR,	  /* $ model var (scalar, series, matrix, or array) */
 	      LISTVAR,    /* variable in list, dot syntax */
 	      DBUNDLE,    /* $ bundle accessor */
 	      BMEMB,      /* member of bundle */
