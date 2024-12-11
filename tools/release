@@ -1,7 +1,7 @@
 Checklist for making a gretl release
 
 Local:
-* Update the fedstl database if it needs it
+* Update the fedstl database if needed
 * Ensure the addon zipfiles are up to date with git
 * Update lib/src/version.h
 * Re-run the configure script in all build directories
@@ -9,7 +9,7 @@ Local:
 * Commit the above changes to git
 * Rebuild and publish the PDF docs
 * Rebuild and publish the HMTL docs
-* "make dist" to create the new gretl-YYYYx.tar.xz
+* Do "make dist" to create the new gretl-YYYYx.tar.xz
 * Create a new versioned directory in the sourceforge files area
 * Make and upload the MS Windows installers (32- and 64-bit)
 * Make and upload the macOS installers (intel and arm64)
@@ -31,4 +31,4 @@ Local:
 * Send a message to gretl-announce
 
 Allin Cottrell
-last revised, Dec 2023
+last revised, Dec 2024
