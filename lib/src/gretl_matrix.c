@@ -11531,8 +11531,6 @@ gretl_matrix_row_concat (const gretl_matrix *a, const gretl_matrix *b,
         } else if (a->cols != b->cols) {
             *err = E_NONCONF;
             return NULL;
-        } else if (a->rows + b->rows == 0 || a->cols == 0) {
-            cr = cc = 0;
         } else {
             cr = a->rows + b->rows;
             cc = a->cols;
@@ -11656,19 +11654,17 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
         double complex z;
         int i, cr, cc;
 
-        if (matrix_is_scalar(a) && b->rows != 1) {
+        if (matrix_is_scalar(a) && b->rows > 1) {
             scalar_a = 1;
             cr = b->rows;
             cc = b->cols + 1;
-        } else if (matrix_is_scalar(b) && a->rows != 1) {
+        } else if (matrix_is_scalar(b) && a->rows > 1) {
             scalar_b = 1;
             cr = a->rows;
             cc = a->cols + 1;
         } else if (a->rows != b->rows) {
             *err = E_NONCONF;
             return NULL;
-        } else if (a->rows == 0 || a->cols + b->cols == 0) {
-            cr = cc = 0;
         } else {
             cr = a->rows;
             cc = a->cols + b->cols;
