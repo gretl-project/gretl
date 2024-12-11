@@ -171,13 +171,27 @@ meaning (arguably, they have none at all), but operations involving
 the cardinality of this set (that is, the dimension of the space
 spanned by \texttt{A}) are meaningful.
 
-Legal function calls with an empty matrix argument are listed in Table
-\ref{tab:empty-matrix-funcs}---other functions generate an error if an
-empty matrix is given as an argument.  In line with the above
+Legal function calls with an empty matrix argument are listed in
+Table~\ref{tab:empty-matrix-funcs}; other matrix functions generate an
+error if given an empty argument.  In line with the above
 interpretation, the functions \texttt{I}, \texttt{ones},
 \texttt{zeros}, \texttt{mnormal} and \texttt{muniform} return an empty
 matrix when or more of the arguments is 0, as well as the function
 \texttt{nullspace} when its argument is of full column rank.
+
+While the $0 \times 0$ matrix produced by \verb|{}| is the most common
+sort of empty matrix, matrices with one zero and one positive
+dimension are also supported. For example, the call
+\begin{code}
+  matrix A = zeros(3,0)
+\end{code}
+produces a $3 \times 0$ matrix, as does
+\begin{code}
+matrix A = zeros(3,1)
+A = A[,-1] # delete column 1 (see below)
+\end{code}
+The handling of such matrices by gretl is very similar to that in
+\textsf{Matlab}.
 
 \section{Selecting submatrices}
 \label{sec:matrix-sub}
