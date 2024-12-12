@@ -1,3 +1,8 @@
+2024-12-12 version 2024d
+
+The functions xmax() and xmin() are now deprecated in favor
+of max() and min().
+
 2024-10-21 version 2024c
 
 No known incompatible changes. But output from the "reset"

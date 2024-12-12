@@ -1,4 +1,4 @@
-version 2024d, in progress
+2024-12-12 version 2024d
 - "append" command: make the help text more explicit
 - "pca" command: make a $result bundle available
 - "square" command and square() function: don't skip dummy
@@ -21,6 +21,11 @@ version 2024d, in progress
   output, so it doesn't get truncated
 - When adding a 1x1 matrix to a bundle via defbundle() or _()
   don't automatically convert it to a scalar
+- Tweaks for handling of empty matrices plus a little more
+  documentation
+- GUI: support Ctrl + mouse-wheel to resize text
+- GUI: fixes for breakage when resizing plots in some cases
+- Documentation for addons: avoid collision with hyperref
 
 2024-10-21 version 2024c
 - Random number generation: add Dirichlet and generic discrete
