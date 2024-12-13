@@ -7014,18 +7014,20 @@ static int test_data_from_dummy (int v1, int v2,
     int n2 = 0;
     int t, ix, iy;
 
-    /* count the 1s in series v2 */
-    n2 = gretl_isdummy(dset->t1, dset->t2, dset->Z[v2]);
-    if (n2 < 2) {
+    if (!gretl_isdummy(dset->t1, dset->t2, dset->Z[v2])) {
         return E_INVARG;
     }
 
     for (t=dset->t1; t<=dset->t2; t++) {
-        if (dset->Z[v2][t] == 0.0) {
+        if (na(dset->Z[v1][t])) {
+            continue;
+        } else if (dset->Z[v2][t] == 0.0) {
             n1++;
+        } else if (dset->Z[v2][t] == 1.0) {
+            n2++;
         }
     }
-    if (n1 < 2) {
+    if (n1 < 2 || n2 < 2) {
         return E_TOOFEW;
     }
 
@@ -7038,7 +7040,9 @@ static int test_data_from_dummy (int v1, int v2,
 
     ix = iy = 0;
     for (t=dset->t1; t<=dset->t2; t++) {
-        if (dset->Z[v2][t] == 0.0) {
+        if (na(dset->Z[v1][t])) {
+            continue;
+        } else if (dset->Z[v2][t] == 0.0) {
             x[ix++] = dset->Z[v1][t];
         } else if (dset->Z[v2][t] == 1.0) {
             y[iy++] = dset->Z[v1][t];
