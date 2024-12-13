@@ -3710,7 +3710,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case VARTEST:
-        err = vars_test(cmd->list, dset, prn);
+        err = vars_test(cmd->list, dset, cmd->opt, prn);
         break;
 
     case RUNS:

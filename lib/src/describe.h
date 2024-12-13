@@ -266,7 +266,7 @@ int means_test (const int *list, const DATASET *dset,
 		gretlopt opt, PRN *prn);
 
 int vars_test (const int *list, const DATASET *dset,
-	       PRN *prn);
+	       gretlopt opt, PRN *prn);
 
 void print_corrmat (VMatrix *corr, const DATASET *dset, PRN *prn);
 

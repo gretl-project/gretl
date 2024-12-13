@@ -7002,6 +7002,85 @@ int satterthwaite_df (double v1, int n1,
     return (int) floor(v);
 }
 
+static int test_data_from_dummy (int v1, int v2,
+                                 const DATASET *dset,
+                                 double **px,
+                                 double **py,
+                                 int *pn1, int *pn2)
+{
+    double *x = NULL;
+    double *y = NULL;
+    int n1 = 0;
+    int n2 = 0;
+    int t, ix, iy;
+
+    /* count the 1s in series v2 */
+    n2 = gretl_isdummy(dset->t1, dset->t2, dset->Z[v2]);
+    if (n2 < 2) {
+        return E_INVARG;
+    }
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+        if (dset->Z[v2][t] == 0.0) {
+            n1++;
+        }
+    }
+    if (n1 < 2) {
+        return E_TOOFEW;
+    }
+
+    x = malloc(n1 * sizeof *x);
+    y = malloc(n2 * sizeof *y);
+    if (x == NULL || y == NULL) {
+        free(x); free(y);
+        return E_ALLOC;
+    }
+
+    ix = iy = 0;
+    for (t=dset->t1; t<=dset->t2; t++) {
+        if (dset->Z[v2][t] == 0.0) {
+            x[ix++] = dset->Z[v1][t];
+        } else if (dset->Z[v2][t] == 1.0) {
+            y[iy++] = dset->Z[v1][t];
+        }
+    }
+
+    *px = x;
+    *py = y;
+    *pn1 = n1;
+    *pn2 = n2;
+
+    return 0;
+}
+
+static int test_data_from_list (int v1, int v2,
+                                const DATASET *dset,
+                                double **px,
+                                double **py,
+                                int *pn1, int *pn2)
+{
+    int n = sample_size(dset);
+    double *x = malloc(n * sizeof *x);
+    double *y = malloc(n * sizeof *y);
+    int err = 0;
+
+    if (x == NULL || y == NULL) {
+        err = E_ALLOC;
+    } else {
+        *pn1 = transcribe_array(x, dset->Z[v1], dset);
+        *pn2 = transcribe_array(y, dset->Z[v2], dset);
+        if (*pn1 < 2 || *pn2 < 2) {
+            free(x); free(y);
+            err = E_TOOFEW;
+        } else {
+            *px = x;
+            *py = y;
+        }
+    }
+
+    return err;
+}
+
 /**
  * means_test:
  * @list: gives the ID numbers of the variables to compare.
@@ -7019,39 +7098,33 @@ int means_test (const int *list, const DATASET *dset,
 		gretlopt opt, PRN *prn)
 {
     double m1, m2, s1, s2, skew, kurt, se, mdiff, t, pval;
-    double v1, v2;
+    double var1, var2;
     double *x = NULL, *y = NULL;
-    int vardiff = (opt & OPT_O);
-    int df, n1, n2, n = dset->n;
+    int vardiff = (opt & OPT_O)? 1 : 0;
+    int usedum = (opt & OPT_D)? 1 : 0;
+    int v1, v2;
+    int n1 = 0;
+    int n2 = 0;
+    int df, err = 0;
 
     if (list[0] < 2) {
 	return E_ARGS;
     }
 
-    x = malloc(n * sizeof *x);
-    if (x == NULL) {
-	return E_ALLOC;
+    v1 = list[1];
+    v2 = list[2];
+
+    if (usedum) {
+        /* get @x and @y as portions of dset->Z[v1] */
+        err = test_data_from_dummy(v1, v2, dset, &x, &y, &n1, &n2);
+    } else {
+        /* get @x and @y as dset->Z[v1], dset->Z[v2] */
+        err = test_data_from_list(v1, v2, dset, &x, &y, &n1, &n2);
     }
 
-    y = malloc(n * sizeof *y);
-    if (y == NULL) {
-	free(x);
-	return E_ALLOC;
-    }
-
-    n1 = transcribe_array(x, dset->Z[list[1]], dset);
-    n2 = transcribe_array(y, dset->Z[list[2]], dset);
-
-    if (n1 == 0 || n2 == 0) {
-	pputs(prn, _("Sample range has no valid observations."));
-	free(x); free(y);
-	return 1;
-    }
-
-    if (n1 == 1 || n2 == 1) {
-	pputs(prn, _("Sample range has only one observation."));
-	free(x); free(y);
-	return 1;
+    if (err) {
+        free(x); free(y);
+        return err;
     }
 
     df = n1 + n2 - 2;
@@ -7060,18 +7133,18 @@ int means_test (const int *list, const DATASET *dset,
     gretl_moments(0, n2-1, y, NULL, &m2, &s2, &skew, &kurt, 1);
     mdiff = m1 - m2;
 
-    v1 = s1 * s1;
-    v2 = s2 * s2;
+    var1 = s1 * s1;
+    var2 = s2 * s2;
 
     if (vardiff) {
 	/* do not assume the variances are equal */
-	se = sqrt((v1 / n1) + (v2 / n2));
-	df = satterthwaite_df(v1, n1, v2, n2);
+	se = sqrt((var1 / n1) + (var2 / n2));
+	df = satterthwaite_df(var1, n1, var2, n2);
     } else {
 	/* form pooled estimate of variance */
 	double s2p;
 
-	s2p = ((n1-1) * v1 + (n2-1) * v2) / df;
+	s2p = ((n1-1) * var1 + (n2-1) * var2) / df;
 	se = sqrt(s2p / n1 + s2p / n2);
 	df = n1 + n2 - 2;
     }
@@ -7081,10 +7154,17 @@ int means_test (const int *list, const DATASET *dset,
 
     pprintf(prn, _("\nEquality of means test "
 	    "(assuming %s variances)\n\n"), (vardiff)? _("unequal") : _("equal"));
-    pprintf(prn, "   %s: ", dset->varname[list[1]]);
-    pprintf(prn, _("Number of observations = %d\n"), n1);
-    pprintf(prn, "   %s: ", dset->varname[list[2]]);
-    pprintf(prn, _("Number of observations = %d\n"), n2);
+    if (usedum) {
+        pprintf(prn, "   %s (%s==0): ", dset->varname[v1], dset->varname[v2]);
+        pprintf(prn, _("Number of observations = %d\n"), n1);
+        pprintf(prn, "   %s (%s==1): ", dset->varname[v1], dset->varname[v2]);
+        pprintf(prn, _("Number of observations = %d\n"), n2);
+    } else {
+        pprintf(prn, "   %s: ", dset->varname[v1]);
+        pprintf(prn, _("Number of observations = %d\n"), n1);
+        pprintf(prn, "   %s: ", dset->varname[v2]);
+        pprintf(prn, _("Number of observations = %d\n"), n2);
+    }
     pprintf(prn, _("   Difference between sample means = %g - %g = %g\n"),
 	    m1, m2, mdiff);
     pputs(prn, _("   Null hypothesis: The two population means are the same.\n"));
@@ -7114,44 +7194,44 @@ int means_test (const int *list, const DATASET *dset,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int vars_test (const int *list, const DATASET *dset, PRN *prn)
+int vars_test (const int *list, const DATASET *dset,
+               gretlopt opt, PRN *prn)
 {
     double m, s1, s2, var1, var2;
     double F, pval;
     double *x = NULL, *y = NULL;
-    int dfn, dfd, n1, n2, n = dset->n;
+    int usedum = (opt & OPT_D)? 1 : 0;
+    int dfn, dfd;
+    int v1, v2;
+    int n1 = 0;
+    int n2 = 0;
+    int err = 0;
 
-    if (list[0] < 2) return E_ARGS;
-
-    x = malloc(n * sizeof *x);
-    y = malloc(n * sizeof *y);
-
-    if (x == NULL || y == NULL) {
-	free(x);
-	free(y);
-	return E_ALLOC;
+    if (list[0] < 2) {
+        return E_ARGS;
     }
 
-    n1 = transcribe_array(x, dset->Z[list[1]], dset);
-    n2 = transcribe_array(y, dset->Z[list[2]], dset);
+    v1 = list[1];
+    v2 = list[2];
 
-    if (n1 == 0 || n2 == 0) {
-	pputs(prn, _("Sample range has no valid observations."));
-	free(x); free(y);
-	return 1;
+    if (usedum) {
+        /* get @x and @y as portions of dset->Z[v1] */
+        err = test_data_from_dummy(v1, v2, dset, &x, &y, &n1, &n2);
+    } else {
+        /* get @x and @y as dset->Z[v1], dset->Z[v2] */
+        err = test_data_from_list(v1, v2, dset, &x, &y, &n1, &n2);
     }
 
-    if (n1 == 1 || n2 == 1) {
-	pputs(prn, _("Sample range has only one observation."));
-	free(x); free(y);
-	return 1;
+    if (err) {
+        free(x); free(y);
+        return err;
     }
 
     gretl_moments(0, n1-1, x, NULL, &m, &s1, NULL, NULL, 1);
     gretl_moments(0, n2-1, y, NULL, &m, &s2, NULL, NULL, 1);
 
-    var1 = s1*s1;
-    var2 = s2*s2;
+    var1 = s1 * s1;
+    var2 = s2 * s2;
     if (var1 > var2) {
 	F = var1 / var2;
 	dfn = n1 - 1;
@@ -7165,10 +7245,17 @@ int vars_test (const int *list, const DATASET *dset, PRN *prn)
     pval = snedecor_cdf_comp(dfn, dfd, F);
 
     pputs(prn, _("\nEquality of variances test\n\n"));
-    pprintf(prn, "   %s: ", dset->varname[list[1]]);
-    pprintf(prn, _("Number of observations = %d\n"), n1);
-    pprintf(prn, "   %s: ", dset->varname[list[2]]);
-    pprintf(prn, _("Number of observations = %d\n"), n2);
+    if (usedum) {
+        pprintf(prn, "   %s (%s==0): ", dset->varname[v1], dset->varname[v2]);
+        pprintf(prn, _("Number of observations = %d\n"), n1);
+        pprintf(prn, "   %s (%s==1): ", dset->varname[v1], dset->varname[v2]);
+        pprintf(prn, _("Number of observations = %d\n"), n2);
+    } else {
+        pprintf(prn, "   %s: ", dset->varname[v1]);
+        pprintf(prn, _("Number of observations = %d\n"), n1);
+        pprintf(prn, "   %s: ", dset->varname[v2]);
+        pprintf(prn, _("Number of observations = %d\n"), n2);
+    }
     pprintf(prn, _("   Ratio of sample variances = %g\n"), F);
     pprintf(prn, "   %s: %s\n", _("Null hypothesis"),
 	    _("The two population variances are equal"));
