@@ -1,3 +1,8 @@
+version 2025a, in progress
+- "meantest" and "vartest" commands: support a variant where
+  the second series is a dummy with which to split the first
+  into two samples
+
 2024-12-12 version 2024d
 - "append" command: make the help text more explicit
 - "pca" command: make a $result bundle available
