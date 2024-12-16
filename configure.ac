@@ -792,7 +792,7 @@ dnl Mac: if using Quartz GTK, require mac-integration
 dnl
 if test "$mac_native" = "yes" ; then
    if test "$gtk_version" = "2.0" ; then
-      PKG_CHECK_MODULES(GTKMAC, gtk-mac-integration >= 2.0.5,
+      PKG_CHECK_MODULES(GTKMAC, gtk-mac-integration-gtk2 >= 2.0.5,
       mac_integration="yes",
       mac_integration="no",
     )
