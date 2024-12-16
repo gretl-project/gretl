@@ -779,22 +779,29 @@ if test "$darwin_build" = "yes" ; then
 fi
 
 dnl
-dnl Mac: if using Quartz GTK, require mac-integration
-dnl
-if test "$mac_native" = "yes" ; then
-    PKG_CHECK_MODULES(GTKMAC, gtk-mac-integration >= 2.0.5,
-      mac_integration="yes",
-      mac_integration="no",
-    )
-fi
-
-dnl
 dnl Determine the gtk prefix
 dnl
 if test "$gtk_version" = "2.0" ; then
     GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-2.0`
 else
     GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-3.0`
+fi
+
+dnl
+dnl Mac: if using Quartz GTK, require mac-integration
+dnl
+if test "$mac_native" = "yes" ; then
+   if test "$gtk_version" = "2.0" ; then
+      PKG_CHECK_MODULES(GTKMAC, gtk-mac-integration >= 2.0.5,
+      mac_integration="yes",
+      mac_integration="no",
+    )
+   else
+      PKG_CHECK_MODULES(GTKMAC, gtk-mac-integration-gtk3 >= 3.0.1,
+      mac_integration="yes",
+      mac_integration="no",
+    )
+   fi
 fi
 
 dnl

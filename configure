@@ -24681,7 +24681,14 @@ fi
   fi
 fi
 
+if test "$gtk_version" = "2.0" ; then
+    GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-2.0`
+else
+    GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-3.0`
+fi
+
 if test "$mac_native" = "yes" ; then
+   if test "$gtk_version" = "2.0" ; then
 
 pkg_failed=no
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for GTKMAC" >&5
@@ -24753,12 +24760,79 @@ else
 printf "%s\n" "yes" >&6; }
 	mac_integration="yes"
 fi
+   else
+
+pkg_failed=no
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for GTKMAC" >&5
+printf %s "checking for GTKMAC... " >&6; }
+
+if test -n "$GTKMAC_CFLAGS"; then
+    pkg_cv_GTKMAC_CFLAGS="$GTKMAC_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk-mac-integration-gtk3 >= 3.0.1\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk-mac-integration-gtk3 >= 3.0.1") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTKMAC_CFLAGS=`$PKG_CONFIG --cflags "gtk-mac-integration-gtk3 >= 3.0.1" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$GTKMAC_LIBS"; then
+    pkg_cv_GTKMAC_LIBS="$GTKMAC_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk-mac-integration-gtk3 >= 3.0.1\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk-mac-integration-gtk3 >= 3.0.1") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTKMAC_LIBS=`$PKG_CONFIG --libs "gtk-mac-integration-gtk3 >= 3.0.1" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
 fi
 
-if test "$gtk_version" = "2.0" ; then
-    GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-2.0`
+
+
+if test $pkg_failed = yes; then
+   	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
 else
-    GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-3.0`
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        GTKMAC_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk-mac-integration-gtk3 >= 3.0.1" 2>&1`
+        else
+	        GTKMAC_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk-mac-integration-gtk3 >= 3.0.1" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$GTKMAC_PKG_ERRORS" >&5
+
+	mac_integration="no"
+elif test $pkg_failed = untried; then
+     	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+	mac_integration="no"
+else
+	GTKMAC_CFLAGS=$pkg_cv_GTKMAC_CFLAGS
+	GTKMAC_LIBS=$pkg_cv_GTKMAC_LIBS
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+	mac_integration="yes"
+fi
+   fi
 fi
 
 if test "$gtk_version" = "2.0" ; then
