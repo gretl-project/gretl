@@ -1174,8 +1174,9 @@ signed_rank_test (const double *x, const double *y,
 	}
     } else if (n > 5) {
 	pprintf(prn, _("  5%% %s: %d (%s), %d (%s)\n"),
-		_("critical values"), rank5[n-6][0], _("two-tailed"), rank5[n-6][1]),
-	    _("one-tailed");
+		_("critical values"),
+                rank5[n-6][0], _("two-tailed"),
+                rank5[n-6][1], _("one-tailed"));
     } else {
 	pprintf(prn, "  %s\n",
 		_("Sample too small for statistical significance"));
