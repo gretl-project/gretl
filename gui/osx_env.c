@@ -37,9 +37,15 @@ void osx_setup_paths (void)
     setenv("GTK_EXE_PREFIX", respath, 1);
     setenv("G_FILENAME_ENCODING", "UTF-8", 1);
 
+#if GTK_MAJOR_VERSION == 3
+    tmp = g_strdup_printf("%s/share/glib-2.0/schemas", respath);
+    setenv("GSETTINGS_SCHEMA_DIR", tmp, 1);
+    g_free(tmp);
+#else
     tmp = g_strdup_printf("%s/etc/gtk-2.0/gtkrc", respath);
     setenv("GTK2_RC_FILES", tmp, 1);
     g_free(tmp);
+#endif
     tmp = g_strdup_printf("%s/etc/gtk-2.0/gtk.immodules", respath);
     setenv("GTK_IM_MODULE_FILE", tmp, 1);
     g_free(tmp);
