@@ -10,25 +10,26 @@ Local:
 * Rebuild and publish the PDF docs
 * Rebuild and publish the HMTL docs
 * Do "make dist" to create the new gretl-YYYYx.tar.xz
-* Create a new versioned directory in the sourceforge files area
+* Rebuild the gretl library and gretlci to the new version
+* Do "make addons.tar.gz" in the addons directory
+* Create a new versioned gretl directory in the sourceforge files area
 * Make and upload the MS Windows installers (32- and 64-bit)
 * Make and upload the macOS installers (intel and arm64)
 
 Remote:
 * On sourceforge, make a new versioned subdirectory for gretl,
   and upload the source package as well as the per-platform
-  binary packages. Upload a README. Use the SF File
-  Manager to mark the new files as the default downloads.
-* Also make a new versioned subdirectory of "addons" and
-  upload the .zip addon files, if need be.
+  binary packages and the current addons.tar.gz. Upload a README.
+  Use the SF File Manager to mark the new files as the default
+  downloads.
 * Upload to the SF cgi-bin directory a text file named RELEASE
-  containing the new version ID, e.g. "gretl-2021d"
+  containing the new version ID, e.g. "gretl-2024d"
 
 Local:
 * Update all the web docs (this is automated: ./update_html auto)
   and upload them to sourceforge
 * Update the libgretl API docs and upload ("apipack")
-* Send a message to gretl-announce
+* Send a message to (at least) gretl-announce
 
 Allin Cottrell
 last revised, Dec 2024
