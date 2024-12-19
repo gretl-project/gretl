@@ -4114,6 +4114,7 @@ static int function_package_set_version (fnpkg *pkg, const char *vstr)
 	pkg->version = NULL;
     }
     if (!strcmp(vstr, "@VERSION@")) {
+        /* auto-versioning for gretl addons */
 	if (is_gretl_addon(pkg->name)) {
 	    pkg->version = gretl_strdup(GRETL_VERSION);
 	} else {
