@@ -1470,7 +1470,7 @@ static const char **get_list_setting_strings (void *var, int *n)
 #if defined(MAC_THEMING)
     else if (var == themepref) {
 	static const char *theme_strs[] = {
-	    "Adwaita", "Adwaita-dark", "Clearlooks", "Lion-like", "Raleigh"
+	    "Adwaita", "Adwaita-dark", "Clearlooks", "Raleigh"
 	};
 
 	strs = theme_strs;
@@ -3509,9 +3509,13 @@ void workdir_dialog1 (void)
 
 void set_up_mac_look (void)
 {
+    if (!strcmp(themepref, "Lion-like")) {
+        /* 2024-12-19: fallback for broken theme */
+        strcpy(themepref, "Adwaita");
+    }
+
     if (!strncmp(themepref, "Adwaita", 7) ||
-	!strcmp(themepref, "Clearlooks") ||
-	!strcmp(themepref, "Lion-like")) {
+	!strcmp(themepref, "Clearlooks")) {
 	char *topdir = getenv("GTK_DATA_PREFIX");
 	gchar *gtkrc;
 
