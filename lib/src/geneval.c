@@ -20022,17 +20022,11 @@ static int get_op (char *s)
     if (s[0] == '=') {
         s[1] = '\0';
         return B_ASN;
-    }
-
-    if (!strcmp(s, "++")) {
+    } else if (!strcmp(s, "++")) {
         return INC;
-    }
-
-    if (!strcmp(s, "--")) {
+    } else if (!strcmp(s, "--")) {
         return DEC;
-    }
-
-    if (s[1] == '=') {
+    } else if (s[1] == '=') {
         int i;
 
         for (i=0; m_assign[i].c; i++) {
