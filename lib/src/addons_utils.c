@@ -91,10 +91,10 @@ const char **get_addon_names (int *n)
 
 /* Given the full path to an addon gfn file, supply its version, date
    and description. The strings are newly allocated and belong to the
-   caller. Return non-zero on error.
+   caller. Set the "ok" member of @ab to 1 if successful.
 */
 
-static int addon_basics_from_gfn (addon_basics *ab)
+static void get_addon_basics_from_gfn (addon_basics *ab)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node, n1, n2;
@@ -102,12 +102,12 @@ static int addon_basics_from_gfn (addon_basics *ab)
     int got = 0;
 
     if (gretl_stat(ab->path, NULL) != 0) {
-        return E_FOPEN;
+        return;
     }
 
     gretl_xml_open_doc_root(ab->path, "gretl-functions", &doc, &node);
     if (doc == NULL || node == NULL) {
-        return E_FOPEN;
+        return;
     }
 
     n1 = node->xmlChildrenNode;
@@ -136,7 +136,7 @@ static int addon_basics_from_gfn (addon_basics *ab)
         xmlFreeDoc(doc);
     }
 
-    return (got < targ)? E_DATA: 0;
+    ab->ok = (got == targ);
 }
 
 static char *get_user_path (char *targ, const char *pgkname,
@@ -163,28 +163,29 @@ static int select_addon_file (addon_basics *sys_ab,
         usr_ab->ok = !strcmp(usr_ab->version, GRETL_VERSION);
     }
 
-    if (sys_ab->ok && usr_ab->ok) {
+    if (sys_ab->ok == 0 && usr_ab->ok == 0) {
+        err = E_DATA;
+    } else if (sys_ab->ok && usr_ab->ok) {
         /* both match gretl version, compare dates */
         guint32 sed = get_epoch_day(sys_ab->date);
         guint32 ued = get_epoch_day(usr_ab->date);
 
         if (sed >= ued) {
+            /* sys more recent: invalidate usr */
             usr_ab->ok = 0;
         } else {
+            /* usr more recent: invalidate sys */
             sys_ab->ok = 0;
         }
-    } else if (sys_ab->ok == 0 && usr_ab->ok == 0) {
-        err = E_DATA;
     }
 
     return err;
 }
 
-static void report_addon_result (addon_basics *ab,
-                                 int err, PRN *prn)
+static void report_addon_result (addon_basics *ab, PRN *prn)
 {
     pprintf(prn, " %s '%s'\n", _("try"), ab->path);
-    if (!err) {
+    if (ab->ok) {
         pprintf(prn, "  %s %s (%s)\n", _("found version"),
                 ab->version, ab->date);
     } else {
@@ -240,22 +241,16 @@ int update_addons_index (PRN *prn)
         /* (1) build and check the system path */
         gretl_build_path(sys_ab.path, gretl_home(), "functions",
                          addon_names[i], gfnname, NULL);
-        err = addon_basics_from_gfn(&sys_ab);
-        if (!err) {
-            sys_ab.ok = 1;
-        }
+        get_addon_basics_from_gfn(&sys_ab);
         if (verbose) {
-            report_addon_result(&sys_ab, err, prn);
+            report_addon_result(&sys_ab, prn);
         }
 
         /* (2) build and check the userspace path */
         get_user_path(usr_ab.path, addon_names[i], gfnname);
-        err = addon_basics_from_gfn(&usr_ab);
-        if (!err) {
-            usr_ab.ok = 1;
-        }
+        get_addon_basics_from_gfn(&usr_ab);
         if (verbose) {
-            report_addon_result(&usr_ab, err, prn);
+            report_addon_result(&usr_ab, prn);
         }
 
         if (sys_ab.ok || usr_ab.ok) {
