@@ -5451,7 +5451,7 @@ static int maybe_increase_vsize (selector *sr, float vsize)
     float try = (ch / 18.0) * vsize;
     float adj = 0.5;
     int sh = get_screen_height();
-    int ret = vsize;
+    int ret = (int) vsize;
 
     if (try > vsize) {
         ret = (try <= adj * sh)? (int) try : (int) (adj * sh);
@@ -5477,14 +5477,14 @@ static void selector_init (selector *sr, guint ci, const char *title,
     sr->data = data;
     sr->extra_data = NULL;
 
-    if (MODEL_CODE(ci)) {
-        if (dataset->v > 9) {
-            dlgy += 80;
-        }
+    if (MODEL_CODE(ci) && dataset->v > 9) {
+        dlgy += 80;
     }
 
     if (ci == ARMA) {
-        dlgy += 80;
+        dlgy += dataset->pd > 1 ? 140 : 80;
+    } else if (ci == GARCH) {
+        dlgy += 50;
     } else if (ci == WLS || ci == INTREG || ci == COUNTMOD ||
                ci == DURATION || ci == AR) {
         dlgy += 30;
@@ -5522,16 +5522,6 @@ static void selector_init (selector *sr, guint ci, const char *title,
 
     if (want_combo(sr)) {
         dlgy += 20;
-    }
-
-    if (ci == ARMA && dataset->pd > 1) {
-        /* seasonal spins */
-        dlgy += 60;
-    }
-
-    if (ci == GARCH) {
-        /* extra check boxes */
-        dlgy += 50;
     }
 
     if (dataset_lags_ok(dataset)) {
