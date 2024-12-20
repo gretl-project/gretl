@@ -1467,10 +1467,19 @@ static const char **get_list_setting_strings (void *var, int *n)
     }
 #endif
 
-#if defined(MAC_THEMING)
+#if defined(MAC_THEMING) && GTK_MAJOR_VERSION < 3
     else if (var == themepref) {
 	static const char *theme_strs[] = {
 	    "Adwaita", "Adwaita-dark", "Clearlooks", "Raleigh"
+	};
+
+	strs = theme_strs;
+	*n = sizeof theme_strs / sizeof theme_strs[0];
+    }
+#elif defined(MAC_THEMING) && GTK_MAJOR_VERSION == 3
+    else if (var == themepref) {
+	static const char *theme_strs[] = {
+	    "Adwaita", "Adwaita-dark"
 	};
 
 	strs = theme_strs;
@@ -3505,12 +3514,12 @@ void workdir_dialog1 (void)
 
 #endif /* not GRETL_EDIT */
 
-#if defined(MAC_THEMING)
+#if defined(MAC_THEMING) && GTK_MAJOR_VERSION < 3
 
 void set_up_mac_look (void)
 {
     if (!strcmp(themepref, "Lion-like")) {
-        /* 2024-12-19: fallback for broken theme */
+        /* 2024-12-19: fallback for broken GTK2 theme */
         strcpy(themepref, "Adwaita");
     }
 
@@ -3539,6 +3548,18 @@ void set_up_mac_look (void)
 	    gtk_rc_parse(gtkrc);
 	    g_free(gtkrc);
 	}
+    }
+}
+
+#elif defined(MAC_THEMING) && GTK_MAJOR_VERSION == 3
+
+void set_up_mac_look (void)
+{
+    GtkSettings *settings = gtk_settings_get_default();
+
+    if (strstr(themepref, "dark") != NULL) {
+        g_object_set(G_OBJECT(settings), "gtk-application-prefer-dark-theme",
+                     TRUE, NULL);
     }
 }
 
