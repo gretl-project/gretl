@@ -763,13 +763,14 @@ dnl
 if test "$darwin_build" = "yes" ; then
   if test "$gtk_version" = "3.0" ; then
     PKG_CHECK_EXISTS(gtk+-quartz-3.0,
-     echo "Found quartz-based GTK"
+     echo "Found quartz-based GTK3"
      AC_DEFINE(MAC_NATIVE)
+     AC_DEFINE(HAVE_MAC_THEMES)
      mac_native="yes",
      mac_native="no")
   elif test "$gtk_version" = "2.0" ; then
     PKG_CHECK_EXISTS(gtk+-quartz-2.0,
-     echo "Found quartz-based GTK"
+     echo "Found quartz-based GTK2"
      AC_DEFINE(MAC_NATIVE)
      mac_native="yes",
      mac_native="no")

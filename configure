@@ -24648,8 +24648,10 @@ if test "$darwin_build" = "yes" ; then
   ac_status=$?
   printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  echo "Found quartz-based GTK"
+  echo "Found quartz-based GTK3"
      printf "%s\n" "#define MAC_NATIVE 1" >>confdefs.h
+
+     printf "%s\n" "#define HAVE_MAC_THEMES 1" >>confdefs.h
 
      mac_native="yes"
 else
@@ -24662,7 +24664,7 @@ fi
   ac_status=$?
   printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  echo "Found quartz-based GTK"
+  echo "Found quartz-based GTK2"
      printf "%s\n" "#define MAC_NATIVE 1" >>confdefs.h
 
      mac_native="yes"
