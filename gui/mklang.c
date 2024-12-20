@@ -9,6 +9,7 @@
 #include "gen_public.h"
 
 const char *special_keyword[] = {
+    "arma", /* widely used command alias */
     "for",
     "foreach",
     "funcerr",
