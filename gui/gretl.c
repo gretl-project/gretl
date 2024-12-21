@@ -1464,16 +1464,22 @@ void clear_varlist (GtkWidget *widget)
 static float scale_from_font (const char *font)
 {
     const char *numstr = strrchr(font, ' ');
+    float fscale = 1.0;
+#ifdef OS_OSX
+    double fbase = 13.0;
+#else
+    double fbase = 10.0;
+#endif
 
     if (numstr != NULL) {
         double fsize = atof(numstr + 1);
 
         if (fsize > 10 && fsize < 50) {
-            return (float) fsize / 10.0;
+            fscale = (float) fsize / fbase;
         }
     }
 
-    return 1.0;
+    return fscale;
 }
 
 static float get_gui_scale (void)
