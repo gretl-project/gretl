@@ -3319,7 +3319,8 @@ static int glasso_converged (const gretl_matrix *W0,
 static int handle_glasso_options (gretl_bundle *b,
 				  double *prho,
 				  double *ptol,
-				  int *pmaxit)
+				  int *pmaxit,
+                                  int *verbose)
 {
     double rho, tol = 1.0e-4;
     int maxit = 1.0e4;
@@ -3352,6 +3353,7 @@ static int handle_glasso_options (gretl_bundle *b,
 	*prho = rho;
 	*ptol = tol;
 	*pmaxit = maxit;
+        *verbose = gretl_bundle_get_bool(b, "verbose", 0);
     }
 
     return err;
@@ -3365,6 +3367,7 @@ gretl_matrix *gretl_glasso (const gretl_matrix *S,
     gretl_matrix *W = NULL;
     gretl_matrix *dsqrt;
     double rho, tol;
+    int verbose = 0;
     int maxit;
     double wij;
     int p = S->rows;
@@ -3376,7 +3379,7 @@ gretl_matrix *gretl_glasso (const gretl_matrix *S,
     } else if (any_missing(S)) {
         *err = E_MISSDATA;
     } else {
-	*err = handle_glasso_options(b, &rho, &tol, &maxit);
+	*err = handle_glasso_options(b, &rho, &tol, &maxit, &verbose);
     }
     if (*err) {
         return NULL;
@@ -3432,7 +3435,7 @@ gretl_matrix *gretl_glasso (const gretl_matrix *S,
     if (*err) {
         gretl_matrix_free(W);
         W = NULL;
-    } else {
+    } else if (verbose) {
 	pprintf(prn, "glasso iterations: %d\n", i + 1);
     }
 
