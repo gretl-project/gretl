@@ -14,6 +14,12 @@ void osx_setup_paths (void)
     gchar *tmp, *respath = NULL;
     char *c, *rhome;
 
+#if GTK_MAJOR_VERSION == 3
+    const char *gpshare = "6.0";
+#else
+    const char *gpshare = "5.4";
+#endif
+
     /* record the initial working directory */
     getcwd(userpath, sizeof userpath);
     setenv("GRETL_STARTDIR", userpath, 1);
@@ -41,15 +47,13 @@ void osx_setup_paths (void)
     tmp = g_strdup_printf("%s/share/glib-2.0/schemas", respath);
     setenv("GSETTINGS_SCHEMA_DIR", tmp, 1);
     g_free(tmp);
-#else
-    tmp = g_strdup_printf("%s/etc/gtk-2.0/gtkrc", respath);
-    setenv("GTK2_RC_FILES", tmp, 1);
-    g_free(tmp);
-#endif
+#else /* GTK2 */
     tmp = g_strdup_printf("%s/etc/gtk-2.0/gtk.immodules", respath);
     setenv("GTK_IM_MODULE_FILE", tmp, 1);
     g_free(tmp);
-
+    tmp = g_strdup_printf("%s/etc/gtk-2.0/gtkrc", respath);
+    setenv("GTK2_RC_FILES", tmp, 1);
+    g_free(tmp);
     /* pango stuff */
     tmp = g_strdup_printf("%s/etc", respath);
     setenv("PANGO_SYSCONFDIR", tmp, 1);
@@ -60,12 +64,13 @@ void osx_setup_paths (void)
     tmp = g_strdup_printf("%s/lib", respath);
     setenv("PANGO_LIBDIR", tmp, 1);
     g_free(tmp);
+#endif
 
     /* gnuplot variables */
-    tmp = g_strdup_printf("%s/share/gnuplot/5.4/gnuplot.gih", respath);
+    tmp = g_strdup_printf("%s/share/gnuplot/%s/gnuplot.gih", respath, gpshare);
     setenv("GNUHELP", tmp, 1);
     g_free(tmp);
-    tmp = g_strdup_printf("%s/share/gnuplot/5.4/PostScript", respath);
+    tmp = g_strdup_printf("%s/share/gnuplot/%s/PostScript", respath, gpshare);
     setenv("GNUPLOT_PS_DIR", tmp, 1);
     g_free(tmp);
     setenv("GNUTERM", "wxt", 1);
