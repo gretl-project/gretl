@@ -1705,7 +1705,7 @@ gretl_matrix *halton_matrix (int m, int r, int offset, int *err)
     };
     gretl_matrix *H;
     double hij;
-    int i, j, k, n, p;
+    int i, j, k, n, p = 0;
 
     if (offset < 0 || m <= 0 || r <= 0) {
 	*err = E_INVARG;
