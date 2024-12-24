@@ -613,7 +613,7 @@ int force_language (int langid)
             gretl_setenv("LANG", lcode);
         }
     }
-# else /* elif defined(OS_OSX) */
+# else /* elif defined(__APPLE__) */
     if (langid != LANG_C) {
         lcode = lang_code_from_id(langid);
         if (lcode != NULL) {

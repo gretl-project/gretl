@@ -788,7 +788,7 @@ void edit_gfn_callback (void)
         n_opts++;
     }
 
-#ifdef OS_OSX
+#ifdef __APPLE__
     dotpath = g_strdup_printf("%sfunctions", gretl_app_support_dir());
     if (gretl_write_access(dotpath) == 0) {
         edit_dot_ok = 1;

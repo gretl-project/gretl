@@ -27,7 +27,7 @@
 #define FULL_XML_HEADERS
 #include "libgretl.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 # include "gretl_win32.h"
 #endif
 
@@ -55,7 +55,7 @@
 #define widget_set_int(w,s,i) g_object_set_data(G_OBJECT(w), s, GINT_TO_POINTER(i))
 
 /* remedial macro for Mac */
-#ifdef OS_OSX
+#ifdef __APPLE__
 # define right_click(e) (e->button == 3 || \
 			 (e->button == 1 && \
 			  (e->state & GDK_CONTROL_MASK)))
@@ -117,7 +117,7 @@ extern int mainwin_width;
 extern int mainwin_height;
 extern int swallow;
 
-#if !defined(G_OS_WIN32) && !defined(OS_OSX)
+#if !defined(_WIN32) && !defined(__APPLE__)
 extern char viewps[MAXSTR];
 extern char viewpdf[MAXSTR];
 extern char Browser[MAXSTR];
@@ -140,7 +140,7 @@ extern GtkWidget *editor;
 
 /* functions follow */
 
-#ifndef WIN32
+#ifndef _WIN32
 void set_wm_icon (GtkWidget *w);
 #endif
 

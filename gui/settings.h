@@ -34,7 +34,7 @@ int get_tramo_ok (void);
 int get_x12a_ok (void);
 #endif
 
-#if defined(OS_OSX) && defined(HAVE_MAC_THEMES)
+#if defined(__APPLE__) && defined(HAVE_MAC_THEMES)
 void set_up_mac_look (void);
 #endif
 

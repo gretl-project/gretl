@@ -1237,7 +1237,7 @@ void set_gretl_tex_preamble (void)
     }
 
     if (!gotit) {
-#ifdef OS_OSX
+#ifdef __APPLE__
 	path = gretl_app_support_dir();
 #else
 	path = gretl_dotdir();

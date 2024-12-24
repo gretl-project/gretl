@@ -25,7 +25,7 @@
 #include "libset.h"
 #include "../../cephes/libprob.h"
 
-#if defined(_OPENMP) && !defined(OS_OSX)
+#if defined(_OPENMP) && !defined(__APPLE__)
 # include <omp.h>
 #endif
 
@@ -560,7 +560,7 @@ static double GHK_1 (const gretl_matrix *C,
    what's the threshold problem size that makes use of
    OMP worthwhile?
 */
-#if defined(_OPENMP) && !defined(OS_OSX)
+#if defined(_OPENMP) && !defined(__APPLE__)
 # define GHK_OMP 1
 # define OMP_GHK_MIN 59
 #endif

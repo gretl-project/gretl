@@ -624,7 +624,7 @@ static gint console_key_handler (GtkWidget *cview,
             keyval, gdk_keyval_name(keyval));
 #endif
 
-#ifdef OS_OSX
+#ifdef __APPLE__
     if (cmd_key(kevent)) {
         if (upkey == GDK_C || upkey == GDK_X) {
             /* allow regular copy/cut behavior */

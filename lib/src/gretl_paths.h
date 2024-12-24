@@ -241,7 +241,7 @@ int cli_read_rc (void);
 
 #endif
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 
 const char *gretl_app_support_dir (void);
 

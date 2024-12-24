@@ -41,7 +41,7 @@
 # include "gretlwin32.h"
 #endif
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 # include "osx_open.h"
 #endif
 
@@ -958,7 +958,7 @@ static void graph_display_pdf (png_plot *plot)
 
 #if defined(G_OS_WIN32)
     win32_open_file(pdfname);
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
     osx_open_file(pdfname);
 #else
     gretl_fork("viewpdf", pdfname, NULL);
@@ -994,7 +994,7 @@ void saver_preview_graph (GPT_SPEC *spec, char *termstr)
 
 #if defined(G_OS_WIN32)
     win32_open_file(grfname);
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
     osx_open_file(grfname);
 #else
     if (spec->termtype == GP_TERM_EPS) {
@@ -5257,7 +5257,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *event, png_plot *plot)
     int Ctrl = (event->state & GDK_CONTROL_MASK);
     guint k = event->keyval;
 
-#ifdef OS_OSX
+#ifdef __APPLE__
     if (!Ctrl && cmd_key(event)) {
         /* treat Command as Ctrl */
         Ctrl = 1;
@@ -5295,7 +5295,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *event, png_plot *plot)
     switch (k) {
     case GDK_q:
     case GDK_Q:
-#ifdef OS_OSX
+#ifdef __APPLE__
     case GDK_w:
     case GDK_W:
 #endif
@@ -6389,7 +6389,7 @@ static int get_terminal (char *s)
         }
     }
 
-#ifdef OS_OSX
+#ifdef __APPLE__
     /* fallback for XQuartz: may not be in PATH */
     strcpy(s, "/opt/X11/bin/xterm");
     if (gretl_file_exists(s)) {
@@ -6406,7 +6406,7 @@ static int get_terminal (char *s)
 
 #endif /* !G_OS_WIN32 */
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 
 static void mac_do_gp_script (const char *plotfile)
 {
@@ -6431,7 +6431,7 @@ void launch_gnuplot_interactive (void)
 {
 #if defined(G_OS_WIN32)
     win32_run_async(gretl_gnuplot_path(), NULL);
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
     const char *gppath = gretl_gnuplot_path();
     gchar *gpline;
 
@@ -6462,7 +6462,7 @@ void launch_gnuplot_interactive (void)
         GError *error = NULL;
         gchar *argv[6];
 
-# ifdef OS_OSX
+# ifdef __APPLE__
         char *altgp = g_strdup_printf("%s.sh", gp);
 
         if (gretl_file_exists(altgp)) {
@@ -6504,7 +6504,7 @@ void launch_gnuplot_interactive (void)
             g_error_free(error);
         }
 
-# ifdef OS_OSX
+# ifdef __APPLE__
         g_free(altgp);
 # endif
     }
@@ -6515,7 +6515,7 @@ void gnuplot_view_3d (const char *plotfile)
 {
 #if defined(G_OS_WIN32)
     win32_run_async(gretl_gnuplot_path(), plotfile);
-#elif defined(OS_OSX) && !defined(GNUPLOT3D)
+#elif defined(__APPLE__) && !defined(GNUPLOT3D)
     mac_do_gp_script(plotfile);
 #else
     real_send_to_gp(plotfile, 0);

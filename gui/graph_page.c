@@ -32,7 +32,7 @@
 # include <sys/stat.h>
 #endif
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 # include "osx_open.h"
 #endif
 
@@ -638,7 +638,7 @@ static int real_display_gpage (void)
 
 #if defined(G_OS_WIN32)
     err = win32_open_file(fname);
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
     err = osx_open_file(fname);
 #else
     if (gpage.term == GP_TERM_PDF) {

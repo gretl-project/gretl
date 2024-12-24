@@ -45,7 +45,7 @@
 # include <dirent.h>
 #endif
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 # include "osx_open.h"
 #endif
 
@@ -771,7 +771,7 @@ static gboolean finder_key_handler (GtkEntry *entry, GdkEventKey *event,
 {
     guint keyval = event->keyval;
 
-#ifdef OS_OSX
+#ifdef __APPLE__
     if (keyval == GDK_g && cmd_key(event)) {
 	/* Command-G: repeat search */
 	vwin_finder_callback(entry, vwin);
@@ -2241,7 +2241,7 @@ static int get_x12a_doc_path (char *path, const char *fname)
 	    *path = '\0';
 	}
 
-#if !defined(G_OS_WIN32) && !defined(OS_OSX)
+#if !defined(G_OS_WIN32) && !defined(__APPLE__)
 	if (!ret) {
 	    /* using gretl x12a package? */
 	    if (gretl_x12_is_x13()) {
@@ -2559,7 +2559,7 @@ void gretl_show_pdf (const char *fname, const char *option)
     } else {
 	win32_open_file(fname);
     }
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
     if (option != NULL) {
 	osx_open_pdf(fname, option);
     } else {
@@ -2617,7 +2617,7 @@ void display_guide_chapter (const char *dest)
     if (!err) {
 	gretl_show_pdf(fname, dest);
     }
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
     if (!err) {
 	gretl_show_pdf(fname, dest);
     }

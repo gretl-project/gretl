@@ -156,9 +156,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Location of R shared library */
 #undef RLIBPATH
 
-/* Building for Mac OS X? */
-#undef OS_OSX
-
 /* On Mac, using GTK themes? */
 #undef HAVE_MAC_THEMES
 

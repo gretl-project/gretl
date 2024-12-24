@@ -3275,7 +3275,7 @@ static void rearrange_icons (void)
 static gint catch_iconview_key (GtkWidget *w, GdkEventKey *key,
 				gpointer p)
 {
-#ifdef OS_OSX
+#ifdef __APPLE__
     if (key->keyval == GDK_w && cmd_key(key)) {
 	gtk_widget_destroy(w);
     }

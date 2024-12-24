@@ -481,7 +481,7 @@ static int build_file_collections (int role)
 
         nd += seek_file_collections(gretl_home(), DATA_SEARCH, &derr[0]);
         ns += seek_file_collections(gretl_home(), SCRIPT_SEARCH, &serr[0]);
-#ifdef OS_OSX
+#ifdef __APPLE__
         nd += seek_file_collections(gretl_app_support_dir(), DATA_SEARCH, &derr[1]);
         ns += seek_file_collections(gretl_app_support_dir(), SCRIPT_SEARCH, &serr[1]);
 #else

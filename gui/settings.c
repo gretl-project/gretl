@@ -65,7 +65,7 @@
 # include "gretlwin32.h"
 #endif
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 # include "osx_open.h"
 #endif
 
@@ -75,7 +75,7 @@
 # include "gtkfontselhack.h"
 #endif
 
-#if defined(OS_OSX) && defined(HAVE_MAC_THEMES)
+#if defined(__APPLE__) && defined(HAVE_MAC_THEMES)
 # define MAC_THEMING
 #endif
 
@@ -106,7 +106,7 @@ static char default_fixedfont[64] = "Consolas 10";
 static char fixedfontname[MAXLEN] = "Courier New 10";
 static char default_fixedfont[64] = "Courier New 10";
 # endif
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
 static char fixedfontname[MAXLEN] = "Menlo 13";
 static char default_fixedfont[64] = "Menlo 13";
 #else
@@ -116,7 +116,7 @@ static char default_fixedfont[64] = "monospace 10";
 
 #if defined(G_OS_WIN32)
 static char appfontname[MAXLEN] = "";
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
 static char appfontname[MAXLEN] = "Lucida Grande 13";
 #else
 static char appfontname[MAXLEN] = "sans 10";
@@ -240,7 +240,7 @@ RCVAR rc_vars[] = {
     { "themepref", N_("Theme preference"), NULL, themepref,
       LISTSET | RESTART, 16, TAB_MAIN, NULL },
 #endif
-#if !defined(G_OS_WIN32) && !defined(OS_OSX)
+#if !defined(G_OS_WIN32) && !defined(__APPLE__)
     { "browser", N_("Web browser"), NULL, Browser,
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
@@ -282,7 +282,7 @@ RCVAR rc_vars[] = {
 #endif
     { "latex", N_("Command to compile TeX files"), NULL, latex,
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
-#if !defined(G_OS_WIN32) && !defined(OS_OSX)
+#if !defined(G_OS_WIN32) && !defined(__APPLE__)
     { "viewps", N_("Command to view postscript files"), NULL, viewps,
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
     { "viewpdf", N_("Command to view PDF files"), NULL, viewpdf,
@@ -677,7 +677,7 @@ static void record_system_appfont (GtkSettings *settings,
     if (*pfont != NULL) {
 	strcpy(system_appfont, *pfont);
     } else {
-# if defined(OS_OSX)
+# if defined(__APPLE__)
 	strcpy(system_appfont, "Lucida Grande 13");
 # else
 	strcpy(system_appfont, "sans 10");
@@ -901,7 +901,7 @@ static const char *get_reg_base (const char *key)
 }
 #endif
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 
 static int alt_ok (const char *prog)
 {
@@ -958,7 +958,7 @@ static void set_tramo_status (void)
 	const char *tramo = gretl_tramo();
 
 	ok = check_for_program(tramo);
-# ifdef OS_OSX
+# ifdef __APPLE__
 	if (!ok) {
 	    ok = alt_ok(tramo);
 	}
@@ -1002,7 +1002,7 @@ static void set_x12a_status (void)
 	const char *x12a = gretl_x12_arima();
 
 	ok = check_for_program(x12a);
-# ifdef OS_OSX
+# ifdef __APPLE__
 	if (!ok) {
 	    ok = alt_ok(x12a);
 	}
@@ -2450,7 +2450,7 @@ static void str_to_double (const char *s, void *b)
     }
 }
 
-#if !defined(G_OS_WIN32) && !defined(OS_OSX)
+#if !defined(G_OS_WIN32) && !defined(__APPLE__)
 
 static void maybe_fix_viewpdf (void)
 {
@@ -2519,7 +2519,7 @@ static int common_read_rc_setup (int updated)
     set_tex_use_pdf(latex);
     set_gp_theme();
 
-#if !defined(G_OS_WIN32) && !defined(OS_OSX)
+#if !defined(G_OS_WIN32) && !defined(__APPLE__)
     maybe_fix_viewpdf();
 #endif
 
@@ -3318,7 +3318,7 @@ static void open_wdir (GtkButton *b, gpointer p)
 {
 #if defined(G_OS_WIN32)
     win32_open_file(gretl_workdir());
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
     osx_open_file(gretl_workdir());
 #else
     gretl_fork("xdg-open", gretl_workdir(), NULL);

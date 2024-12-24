@@ -187,7 +187,7 @@ static void usage (int err)
     }
 }
 
-#if defined(OPENMP_BUILD) && !defined(WIN32) && !defined(OS_OSX)
+#if defined(OPENMP_BUILD) && !defined(WIN32) && !defined(__APPLE__)
 
 static void check_blas_threading (int tool, int quiet)
 {
@@ -770,7 +770,7 @@ int main (int argc, char *argv[])
         }
     }
 
-#if defined(OPENMP_BUILD) && !defined(WIN32) && !defined(OS_OSX)
+#if defined(OPENMP_BUILD) && !defined(WIN32) && !defined(__APPLE__)
     check_blas_threading(tool, quiet);
 #endif
 

@@ -31,7 +31,7 @@
 #if defined(WIN32)
 # include <windows.h>
 # include "gretl_win32.h"
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
 # include <sys/param.h>
 # include <sys/sysctl.h>
 #else
@@ -40,7 +40,7 @@
 
 static int gretl_omp_threads;
 
-#if defined(_OPENMP) && !defined(OS_OSX)
+#if defined(_OPENMP) && !defined(__APPLE__)
 static int omp_mnk_min = 80000;
 #else
 static int omp_mnk_min = -1; /* ? */
@@ -61,7 +61,7 @@ int gretl_n_processors (void)
 
     GetSystemInfo(&sysinfo);
     n_proc = sysinfo.dwNumberOfProcessors;
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
     int mib[2] = {CTL_HW, HW_NCPU};
     size_t len = sizeof n_proc;
 
@@ -95,7 +95,7 @@ int gretl_n_physical_cores (void)
     if (nc > 0) {
 	n_cores = nc;
     }
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
     if (n_cores > 1) {
 	int nc = 0;
 	size_t len = sizeof nc;
@@ -282,7 +282,7 @@ int memory_stats (double vals[])
     return err;
 }
 
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
 
 #include <mach/host_info.h>
 #include <mach/mach_host.h>

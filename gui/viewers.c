@@ -312,7 +312,7 @@ static struct greek_map greek_keys[] = {
     { GDK_Z, 0x96 }  /* zeta */
 };
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 
 /* The keysyms you get on macOS by typing "option" + a..z */
 
@@ -358,7 +358,7 @@ static uint uc_key_from_mac (guint k)
     return 0;
 }
 
-#endif /* OS_OSX */
+#endif /* __APPLE__ */
 
 /* Note: exclude Greek capital letters that are indistinguishable from
    Latin caps.
@@ -372,7 +372,7 @@ static uint uc_key_from_mac (guint k)
 static int maybe_insert_greek (guint key, windata_t *vwin)
 {
     guint lc = 0, ukey = 0;
-#ifdef OS_OSX
+#ifdef __APPLE__
     guint mac_key = key;
 
     key = lc_key_from_mac(mac_key);
@@ -529,7 +529,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	upkey = gdk_keyval_to_upper(key);
     }
 
-#ifdef OS_OSX
+#ifdef __APPLE__
     if (!Ctrl && cmd_key(event)) {
 	/* treat Command as Ctrl */
 	Ctrl = 1;

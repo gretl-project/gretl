@@ -58,7 +58,7 @@
 # include <libxml/parser.h>
 #endif
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 # include <TargetConditionals.h>
 #endif
 

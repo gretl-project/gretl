@@ -273,7 +273,7 @@ static void update_dialogs_from_varclick (int active_var)
     }
 }
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 
 /* Support for command-click as replacement for Ctrl-click
    on OS X */
@@ -390,7 +390,7 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 		ret = TRUE;
 	    } else {
 		update_dialogs_from_varclick(vwin->active_var);
-#ifdef OS_OSX
+#ifdef __APPLE__
 		ret = maybe_do_meta_click(event, view, path);
 #endif
 	    }
@@ -433,7 +433,7 @@ static gint catch_listbox_key (GtkWidget *w, GdkEventKey *event,
 {
     int key = event->keyval;
 
-#ifdef OS_OSX
+#ifdef __APPLE__
     if (key == GDK_w && cmd_key(event)) {
 	if (vwin != mdata) {
 	    gtk_widget_destroy(vwin->main);

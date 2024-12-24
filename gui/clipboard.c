@@ -47,7 +47,7 @@ GtkTargetEntry rtf_targets[] = {
     { "TEXT",              0, TARGET_TEXT }
 };
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 
 /* try using Apple UTIs where available */
 
@@ -83,7 +83,7 @@ GtkTargetEntry image_targets[] = {
     { "text/html",         0, TARGET_HTM }
 };
 
-#endif /* OS_OSX */
+#endif /* __APPLE__ */
 
 #define image_type(t) (t == TARGET_SVG || t == TARGET_EMF || \
 		       t == TARGET_EPS || t == TARGET_PDF || \
@@ -202,7 +202,7 @@ static void gretl_clipboard_clear (GtkClipboard *clip, gpointer p)
     gretl_clipboard_free();
 }
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 
 static void pasteboard_set (int fmt)
 {
@@ -216,7 +216,7 @@ static void pasteboard_set (int fmt)
     }
 }
 
-#endif /* OS_OSX */
+#endif /* __APPLE__ */
 
 static void gretl_clipboard_set (int fmt, int imgtype)
 {
@@ -225,7 +225,7 @@ static void gretl_clipboard_set (int fmt, int imgtype)
     GtkWidget *main;
     gint n_targs;
 
-#ifdef OS_OSX
+#ifdef __APPLE__
     if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
 	pasteboard_set(fmt);
 	return;

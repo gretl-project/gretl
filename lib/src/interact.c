@@ -2736,7 +2736,7 @@ static int package_check_dependencies (const char *fname,
    could in principle be extended to other OSes.
 */
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 # define DO_BINPKG 1
 #else
 # define DO_BINPKG 0

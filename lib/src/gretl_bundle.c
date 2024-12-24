@@ -3226,7 +3226,7 @@ gretl_bundle *get_sysinfo_bundle (int *err)
             gretl_bundle_set_scalar(b, "wordlen", (double) ival);
 #if defined(G_OS_WIN32)
             gretl_bundle_set_string(b, "os", "windows");
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
             gretl_bundle_set_string(b, "os", "macos");
 #elif defined(linux)
             gretl_bundle_set_string(b, "os", "linux");

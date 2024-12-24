@@ -7317,7 +7317,7 @@ static void selector_doit (GtkWidget *w, selector *sr)
     if (sr->error == 0) {
         int err = 0;
 
-#ifdef OS_OSX
+#ifdef __APPLE__
         /* Hiding the selector window prevents the "next" window
            (i.e. the one opened by sr->callback) from being hidden
            behind gretl's main window, on Apple's X11
@@ -7333,7 +7333,7 @@ static void selector_doit (GtkWidget *w, selector *sr)
             gtk_widget_destroy(sr->dlg);
         }
 
-#ifdef OS_OSX
+#ifdef __APPLE__
         if (err && open_selector != NULL) {
             gtk_widget_show(sr->dlg);
         }

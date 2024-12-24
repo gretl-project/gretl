@@ -34,7 +34,7 @@
 # include "gretlwin32.h"
 #endif
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 # include "osx_open.h"
 #endif
 
@@ -700,7 +700,7 @@ int gretl_fork (const char *progvar, const char *arg,
     }
 #endif
 
-#ifndef OS_OSX
+#ifndef __APPLE__
     if (!strcmp(progvar, "Browser")) {
 	prog = Browser;
     } else if (!strcmp(progvar, "viewpdf")) {
@@ -750,7 +750,7 @@ int gretl_fork (const char *progvar, const char *arg,
 
 int browser_open (const char *url)
 {
-# if defined(OS_OSX)
+# if defined(__APPLE__)
     return osx_open_url(url);
 # else
     return gretl_fork("Browser", url, NULL);

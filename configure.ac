@@ -506,7 +506,6 @@ case $host_os in
     if test $pkg_build = yes ; then
        macpkg="yes"
     fi
-    AC_DEFINE(OS_OSX)
   ;;
   *mingw*)
     have_lapack="yes"

@@ -73,7 +73,7 @@
 # include "build.h"
 #endif
 
-#if defined(OS_OSX) && defined(PKGBUILD)
+#if defined(__APPLE__) && defined(PKGBUILD)
 # define ALT_MAC_STARTUP
 #endif
 
@@ -184,7 +184,7 @@ int mainwin_height = 420;
 char calculator[MAXSTR] = "calc.exe";
 char latex[MAXSTR] = "pdflatex.exe";
 char Rcommand[MAXSTR] = "Rgui.exe";
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
 char calculator[MAXSTR] = "/System/Applications/Calculator.app/Contents/MacOS/Calculator";
 char latex[MAXSTR] = "pdflatex";
 char Rcommand[MAXSTR] = "/Applications/R.app/Contents/MacOS/R";
@@ -411,7 +411,7 @@ static void real_nls_init (void)
     bind_textdomain_codeset(PACKAGE, "UTF-8");
 }
 
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
 
 static void real_nls_init (void)
 {
@@ -559,7 +559,7 @@ static void install_mac_signals (GtkosxApplication *App)
 
 #endif /* MAC_INTEGRATION */
 
-#if !defined(G_OS_WIN32) && !defined(OS_OSX)
+#if !defined(G_OS_WIN32) && !defined(__APPLE__)
 
 static void protect_against_ubuntu (void)
 {
@@ -748,7 +748,7 @@ int main (int argc, char **argv)
     win32_set_gretldir();
 #elif defined(ALT_MAC_STARTUP)
     osx_setup_paths();
-#elif !defined(OS_OSX)
+#elif !defined(__APPLE__)
     /* Linux-specific */
     protect_against_ubuntu();
 #endif
@@ -900,7 +900,7 @@ int main (int argc, char **argv)
 
 #if defined(G_OS_WIN32)
     set_up_windows_look();
-#elif defined(OS_OSX) && defined(HAVE_MAC_THEMES)
+#elif defined(__APPLE__) && defined(HAVE_MAC_THEMES)
     set_up_mac_look();
 #endif
 
@@ -1055,7 +1055,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	return TRUE;
     }
 
-#ifdef OS_OSX
+#ifdef __APPLE__
     if (Ctrl && k == GDK_F2) {
 	/* Ctrl-F2 for menubar */
 	GtkWidget *menu;
@@ -1465,7 +1465,7 @@ static float scale_from_font (const char *font)
 {
     const char *numstr = strrchr(font, ' ');
     float fscale = 1.0;
-#ifdef OS_OSX
+#ifdef __APPLE__
     double fbase = 13.0;
 #else
     double fbase = 10.0;
@@ -1782,7 +1782,7 @@ static void make_main_window (void)
     }
 }
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 # define CTRL_ALL "<meta>A"
 # define HELPKEY "<meta>question"
 #else

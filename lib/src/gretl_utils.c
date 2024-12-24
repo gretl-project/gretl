@@ -2562,7 +2562,7 @@ static int detect_blas_via_ldd (void)
     GError *gerr = NULL;
     int variant = 0;
 
-#ifdef OS_OSX
+#ifdef __APPLE__
     gchar *argv[4];
     targ = g_strdup_printf("%sgretlcli", gretl_bindir());
     argv[0] = "otool";
@@ -2951,7 +2951,7 @@ static void blas_init (void)
 {
     void *ptr = NULL;
 
-#if defined(OS_OSX) && defined(PKGBUILD)
+#if defined(__APPLE__) && defined(PKGBUILD)
     blas_variant = BLAS_VECLIB; /* the default */
     return;
 #else
@@ -3026,7 +3026,7 @@ void blas_cleanup (void)
 
 /* CPUID detection and analysis (for $sysinfo bundle) */
 
-#if defined(OS_OSX)
+#if defined(__APPLE__)
 # include <sys/types.h>
 # include <sys/sysctl.h>
 # define CPU_IDENT
@@ -3044,7 +3044,7 @@ char *get_cpu_details (void)
     char vendor_buf[16] = {0};
     char brand_buf[64] = {0};
 
-#if defined(OS_OSX)
+#if defined(__APPLE__)
     size_t bsz = sizeof brand_buf;
 
     sysctlbyname("machdep.cpu.brand_string", &brand_buf, &bsz, NULL, 0);

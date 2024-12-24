@@ -222,7 +222,7 @@ static size_t lapack_mem_sz;
    context, on OS X.
 */
 
-#if defined(_OPENMP) && !defined(OS_OSX)
+#if defined(_OPENMP) && !defined(__APPLE__)
 #pragma omp threadprivate(lapack_mem_chunk, lapack_mem_sz)
 #endif
 

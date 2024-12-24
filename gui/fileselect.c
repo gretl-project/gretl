@@ -46,7 +46,7 @@
 # include "gretlwin32.h"
 #endif
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 # include "osx_open.h"
 #endif
 
@@ -638,7 +638,7 @@ static void os_open_other (const char *fname)
 {
 #if defined(G_OS_WIN32)
     win32_open_file(fname);
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
     osx_open_file(fname);
 #else
     gretl_fork("xdg-open", fname, NULL);

@@ -42,7 +42,7 @@
 # include "clipboard.h"
 #endif
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 # include "osx_open.h"
 #endif
 
@@ -2206,7 +2206,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 #if defined(G_OS_WIN32)
 	sprintf(tmp, "%s.pdf", texbase);
 	win32_open_file(tmp);
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
 	sprintf(tmp, "%s.pdf", texbase);
 	if (osx_open_file(tmp)) {
 	    file_read_errbox(tmp);

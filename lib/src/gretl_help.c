@@ -25,7 +25,7 @@
 /* for PDF opening */
 #if defined(G_OS_WIN32)
 # include <windows.h>
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
 # if defined(USE_CARBON)
 #  include <Carbon/Carbon.h>
 # else
@@ -308,7 +308,7 @@ static int show_pkg_pdf (const char *fname)
     if ((int) ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) <= 32) {
 	err = E_FOPEN;
     }
-#elif defined(OS_OSX)
+#elif defined(__APPLE__)
     CFURLRef u;
 
     u = CFURLCreateFromFileSystemRepresentation(NULL,

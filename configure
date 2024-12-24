@@ -22904,8 +22904,6 @@ case $host_os in
     if test $pkg_build = yes ; then
        macpkg="yes"
     fi
-    printf "%s\n" "#define OS_OSX 1" >>confdefs.h
-
   ;;
   *mingw*)
     have_lapack="yes"

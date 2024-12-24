@@ -142,7 +142,7 @@ static void get_addon_basics_from_gfn (addon_basics *ab)
 static char *get_user_path (char *targ, const char *pgkname,
                             const char *gfnname)
 {
-#ifdef OS_OSX
+#ifdef __APPLE__
     return gretl_build_path(targ, gretl_app_support_dir(),
                             "functions", pgkname, gfnname, NULL);
 #else

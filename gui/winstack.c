@@ -247,7 +247,7 @@ static void window_list_remove (GtkWidget *w, GtkActionGroup *group)
 static gint maybe_select_other_window (GdkEventKey *event,
 				       gpointer data)
 {
-#ifdef OS_OSX
+#ifdef __APPLE__
     if (cmd_key(event)) {
 	if (event->keyval == GDK_asciitilde) {
 	    return select_other_window(data, WINDOW_PREV);
@@ -273,7 +273,7 @@ static gint maybe_select_other_window (GdkEventKey *event,
 static gint catch_winlist_key (GtkWidget *w, GdkEventKey *event,
 			       gpointer data)
 {
-#ifdef OS_OSX
+#ifdef __APPLE__
     if ((event->state & GDK_MOD1_MASK) && event->keyval == alt_w_key) {
 	/* alt-w -> Sigma */
 	window_list_popup(w, (GdkEvent *) event, data);

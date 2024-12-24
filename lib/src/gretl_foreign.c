@@ -901,7 +901,7 @@ static int win32_lib_run_other_sync (gretlopt opt, PRN *prn)
 
 #else /* non-Windows code follows */
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
@@ -2698,7 +2698,7 @@ int check_set_R_home (void)
 	do_setenv = 1;
     } else {
 	/* verify R_HOME */
-#ifdef OS_OSX
+#ifdef __APPLE__
         const char *libname = "libR.dylib";
 #else
         const char *libname = "libR.so";

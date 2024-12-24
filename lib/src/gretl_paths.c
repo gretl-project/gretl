@@ -1037,7 +1037,7 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
         return NULL;
     }
 
-#ifdef OS_OSX
+#ifdef __APPLE__
     /* the user's ~/Library */
     gretl_build_path(dirname, gretl_app_support_dir(), subdir, NULL);
     strings_array_add(&dirs, n_dirs, dirname);
@@ -1454,7 +1454,7 @@ char *gretl_addpath (char *fname, int script)
         strcpy(fname, orig);
 
         /* now try user's personal filespace */
-#ifdef OS_OSX
+#ifdef __APPLE__
         gpath = gretl_app_support_dir();
 #else
         gpath = gretl_dotdir();
@@ -2801,7 +2801,7 @@ static void load_default_workdir (char *targ)
 
 static void load_default_path (char *targ)
 {
-#ifdef OS_OSX
+#ifdef __APPLE__
     const char *app_paths[] = {
 	"/Library/Frameworks/R.framework/Resources/bin/R",
 	"/Applications/Octave.app/Contents/Resources/bin/octave",
@@ -2820,7 +2820,7 @@ static void load_default_path (char *targ)
     if (targ == paths.workdir) {
         load_default_workdir(targ);
     } else if (targ == paths.gnuplot) {
-#if defined(OS_OSX) && defined(PKGBUILD)
+#if defined(__APPLE__) && defined(PKGBUILD)
         sprintf(targ, "%sgnuplot", gretl_bindir());
 #else
         strcpy(targ, "gnuplot");
@@ -2856,13 +2856,13 @@ static void load_default_path (char *targ)
     } else if (targ == paths.jlpath) {
         strcpy(paths.jlpath, "julia");
     } else if (targ == paths.lppath) {
-#if defined(OS_OSX)
+#if defined(__APPLE__)
         strcpy(paths.lppath, "liblpsolve55.dylib");
 #else
         strcpy(paths.lppath, "liblpsolve55.so");
 #endif
     } else if (targ == paths.mpiexec) {
-#if defined(OS_OSX)
+#if defined(__APPLE__)
         strcpy(paths.mpiexec, "/opt/openmpi/bin/mpiexec");
 #else
         strcpy(paths.mpiexec, "mpiexec");
@@ -2870,7 +2870,7 @@ static void load_default_path (char *targ)
     } else if (targ == paths.mpi_hosts) {
         *paths.mpi_hosts = '\0';
     } else if (targ == paths.pngfont) {
-#if defined(OS_OSX)
+#if defined(__APPLE__)
         strcpy(targ, "Sans 10"); /* was 13, why? */
 #else
         if (chinese_locale()) {
@@ -3469,7 +3469,7 @@ int cli_read_rc (void)
 
 #endif /* !WIN32 */
 
-#ifdef OS_OSX
+#ifdef __APPLE__
 
 const char *gretl_app_support_dir (void)
 {
@@ -3533,7 +3533,7 @@ static int dir_is_writable (const char *dirname)
 
 static int get_user_install_path (char *path, const char *subdir)
 {
-#ifdef OS_OSX
+#ifdef __APPLE__
     const char *dirname = gretl_app_support_dir();
 #else
     const char *dirname = gretl_dotdir();
@@ -3573,7 +3573,7 @@ const char *gretl_package_install_path (const char *payload)
         int sys_first = 1;
         int err = 0;
 
-#if defined(OS_OSX)
+#if defined(__APPLE__)
         /* we prefer writing to ~/Library/Application Support */
         sys_first = 0;
 #elif defined(WIN32)
@@ -3874,7 +3874,7 @@ gretl_bundle *foreign_info (void)
 
 static int get_target_in_home (GString *gs, const char *dlname)
 {
-#ifdef OS_OSX
+#ifdef __APPLE__
     const char *savedir = gretl_app_support_dir();
 #else
     const char *savedir = gretl_dotdir();
@@ -3912,7 +3912,7 @@ static int get_target_in_home (GString *gs, const char *dlname)
     return err;
 }
 
-#if !defined(G_OS_WIN32) && !defined(OS_OSX)
+#if !defined(G_OS_WIN32) && !defined(__APPLE__)
 
 static void get_system_target (GString *gs, const char *dlname)
 {
@@ -3945,7 +3945,7 @@ gchar *get_download_path (const char *dlname, int *err)
     gchar *targ = NULL;
     int done_home = 0;
 
-#if defined(G_OS_WIN32) || defined(OS_OSX)
+#if defined(G_OS_WIN32) || defined(__APPLE__)
     /* On macOS we prefer writing to ~/Library/Application Support
        rather than /Applications/Gretl.app, and on Windows let's
        steer clear of Program Files.
