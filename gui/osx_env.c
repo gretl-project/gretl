@@ -10,15 +10,10 @@ void osx_setup_paths (void)
 {
     char userpath[MAXPATHLEN + 1];
     char execpath[MAXPATHLEN + 1];
+    const char *gpshare = "6.0";
     uint32_t pathsz = sizeof execpath;
     gchar *tmp, *respath = NULL;
     char *c, *rhome;
-
-#if GTK_MAJOR_VERSION == 3
-    const char *gpshare = "6.0";
-#else
-    const char *gpshare = "5.4";
-#endif
 
     /* record the initial working directory */
     getcwd(userpath, sizeof userpath);
