@@ -503,7 +503,10 @@ static void logtrap (const gchar *domain,
        the GLib-GObject domain, but allow non-deprecation
        messages from the latter.
     */
-    if (strcmp(domain, "Gtk") && strstr(msg, "deprecat") == NULL) {
+    if (strcmp(domain, "Gtk") == 0 ||
+        strstr(msg, "deprecat") != NULL) {
+        return;
+    } else {
 	g_log_default_handler(domain, level, msg, p);
     }
 }
