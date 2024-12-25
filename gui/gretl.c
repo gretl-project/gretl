@@ -494,23 +494,25 @@ static void record_filearg (char *targ, const char *src)
 
 #if !defined(G_OS_WIN32) && GTK_MAJOR_VERSION == 3
 
-/* cut out annoying runtime spew from GLib-GObject
-   warning about deprecated stuff
-*/
-
 static void logtrap (const gchar *domain,
 		     GLogLevelFlags level,
 		     const gchar *msg,
 		     gpointer p)
 {
-    if (strstr(msg, "deprecat") == NULL) {
+    /* Suppress Gtk warnings and deprecation warnings from
+       the GLib-GObject domain, but allow non-deprecation
+       messages from the latter.
+    */
+    if (strcmp(domain, "Gtk") && strstr(msg, "deprecat") == NULL) {
 	g_log_default_handler(domain, level, msg, p);
     }
 }
 
-static void quell_glib_spew (void)
+static void quell_gtk3_spew (void)
 {
     g_log_set_handler("GLib-GObject", G_LOG_LEVEL_WARNING,
+		      (GLogFunc) logtrap, NULL);
+    g_log_set_handler("Gtk", G_LOG_LEVEL_WARNING,
 		      (GLogFunc) logtrap, NULL);
 }
 
@@ -790,7 +792,7 @@ int main (int argc, char **argv)
     gretl_win32_debug_init(optdebug);
 # endif
 #elif GTK_MAJOR_VERSION == 3
-    quell_glib_spew();
+    quell_gtk3_spew();
 #endif
 
     libgretl_init();

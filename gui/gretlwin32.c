@@ -320,7 +320,7 @@ void gretl_win32_debug_init (int debug)
 	}
 	set_windebug(1);
         /* @winlocale is probably something like
-             "English_United States.1252"
+           "English_United States.1252"
         */
 	fprintf(stderr, "Windows locale = %s\n",
 		winlocale == NULL ? "NULL" : winlocale);
