@@ -3980,26 +3980,3 @@ int combine_categories (DATASET *dset, int v0, int v1, int v2)
 
     return 0;
 }
-
-#ifdef __ARM_ARCH_ISA_A64
-
-double _Complex __divdc3 (double a, double b, double c, double d)
-{
-    double r, den, e, f;
-
-    if (fabs(c) < fabs(d)) {
-	r = c/d;
-	den = (c*r) + d;
-	e = (a*r + b) / den;
-	f = (b*r - a) / den;
-    } else {
-	r = d/c;
-	den = c + (d*r);
-	e = (a + b*r) / den;
-	f = (b - a*r) / den;
-    }
-
-    return e + f*I;
-}
-
-#endif

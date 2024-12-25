@@ -2199,11 +2199,7 @@ static void vec_x_op_y (double complex *z,
         break;
     case '/':
         for (i=0; i<n; i++) {
-#ifdef __ARM_ARCH_ISA_A64
-            z[i] = arm_complex_divide(x[i], y);
-#else
             z[i] = x[i] / y;
-#endif
         }
         break;
     case '+':
@@ -2251,11 +2247,7 @@ static void x_op_vec_y (double complex *z,
         break;
     case '/':
         for (i=0; i<n; i++) {
-#ifdef __ARM_ARCH_ISA_A64
-            z[i] = arm_complex_divide(x, y[i]);
-#else
             z[i] = x / y[i];
-#endif
         }
         break;
     case '+':
@@ -2296,11 +2288,7 @@ static double complex x_op_y (double complex x,
     case '*':
         return x * y;
     case '/':
-#ifdef __ARM_ARCH_ISA_A64
-        return arm_complex_divide(x, y);
-#else
         return x / y;
-#endif
     case '+':
         return x + y;
     case '-':
@@ -3066,20 +3054,3 @@ int matrix_is_complex (const gretl_matrix *M)
         return ret;
     }
 }
-
-#ifdef __ARM_ARCH_ISA_A64
-
-/* work around missing divdc3 */
-
-double complex arm_complex_divide (double complex zn,
-                                   double complex zd)
-{
-    double a = creal(zn);
-    double b = cimag(zn);
-    double c = creal(zd);
-    double d = cimag(zd);
-
-    return __divdc3(a, b, c, d);
-}
-
-#endif

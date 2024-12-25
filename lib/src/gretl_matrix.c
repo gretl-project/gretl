@@ -7572,11 +7572,7 @@ gretl_matrix_complex_muldiv (const gretl_matrix *a,
         if (multiply) {
             cz = az * bz;
         } else {
-#ifdef __ARM_ARCH_ISA_A64
-            cz = arm_complex_divide(az, bz);
-#else
             cz = az / bz;
-#endif
         }
         cr[i] = creal(cz);
         if (ci != NULL) {
@@ -8193,11 +8189,7 @@ static int matrix_divide_by_scalmat (gretl_matrix *num,
 
         zden = den->is_complex ? den->z[0] : den->val[0];
         for (i=0; i<n; i++) {
-#ifdef __ARM_ARCH_ISA_A64
-	    num->z[i] = arm_complex_divide(num->z[i], zden);
-#else
 	    num->z[i] /= zden;
-#endif
         }
     } else {
         if (den->is_complex) {

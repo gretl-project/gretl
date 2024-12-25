@@ -262,9 +262,3 @@ gretl_matrix *dec2bin (double x, const gretl_matrix *v, int *err);
 gretl_matrix *bin2dec (const gretl_matrix *m, int *err);
 
 #endif /* GRETL_UTILS_H */
-
-#ifdef __ARM_ARCH_ISA_A64
-
-double _Complex __divdc3 (double a, double b, double c, double d);
-
-#endif
