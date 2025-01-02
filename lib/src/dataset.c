@@ -952,6 +952,20 @@ static void maybe_extend_trends (DATASET *dset, int oldn)
     }
 }
 
+static void maybe_extend_index (DATASET *dset, int oldn)
+{
+    int i, t;
+
+    for (i=1; i<dset->v; i++) {
+	if (!strcmp(dset->varname[i], "index") &&
+            is_linear_trend(dset->Z[i], oldn)) {
+	    for (t=oldn; t<dset->n; t++) {
+		dset->Z[i][t] = dset->Z[i][t-1] + 1.0;
+	    }
+	}
+    }
+}
+
 static void maybe_extend_dummies (DATASET *dset, int oldn)
 {
     int pd = dset->pd;
@@ -1117,11 +1131,15 @@ static int real_dataset_add_observations (DATASET *dset, int n,
     dataset_set_nobs(dset, bign);
 
     if (opt & OPT_A) {
-	maybe_extend_trends(dset, oldn);
-	maybe_extend_dummies(dset, oldn);
-	if (dataset_is_time_series(dset)) {
-	    maybe_extend_lags(dset, oldn, dset->n - 1);
-	}
+        if (dataset_is_time_series(dset)) {
+            maybe_extend_trends(dset, oldn);
+            if (dset->pd > 1) {
+                maybe_extend_dummies(dset, oldn);
+            }
+            maybe_extend_lags(dset, oldn, dset->n - 1);
+        } else {
+            maybe_extend_index(dset, oldn);
+        }
     }
 
     /* does irregular daily data need special handling? */
@@ -1896,7 +1914,7 @@ static int real_rename_series (DATASET *dset, int v, const char *name, int *fata
 {
     int err = 0;
     *fatal = 1;
-    
+
     if (v <= 0 || v >= dset->v || name == NULL) {
 	err = E_DATA;
     } else {
