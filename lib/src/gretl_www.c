@@ -94,7 +94,7 @@ static const char *datacgi   = "/cgi-bin/gretldata.cgi";
 static int wproxy = 0;
 static char proxyhost[128] = {0};
 
-#ifdef WIN32
+#ifdef _WIN32
 static char certs_path[MAXLEN];
 #endif
 
@@ -164,7 +164,7 @@ static void urlinfo_init (urlinfo *u,
     sprintf(u->agent, "gretl-%s", GRETL_VERSION);
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
     strcat(u->agent, "w");
 #endif
 }
@@ -431,7 +431,7 @@ static void urlinfo_set_params (urlinfo *u, CGIOpt opt,
     }
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 
 static void certs_path_init (void)
 {
@@ -470,7 +470,7 @@ static void certs_path_init (void)
     }
 }
 
-#endif /* WIN32 */
+#endif /* _WIN32 */
 
 static int gretl_curl_toggle (int on)
 {
@@ -484,7 +484,7 @@ static int gretl_curl_toggle (int on)
                 gretl_errmsg_set("Failed to initialize libcurl");
                 return 1;
             } else {
-#ifdef WIN32
+#ifdef _WIN32
                 certs_path_init();
 #endif
                 init_done = 1;
@@ -532,7 +532,7 @@ static int common_curl_setup (CURL **pcurl)
         curl_easy_setopt(*pcurl, CURLOPT_VERBOSE,
                          getenv("GRETL_WWW_VERBOSE") != NULL);
 #endif
-#ifdef WIN32
+#ifdef _WIN32
         /* be on the safe side: 'http' can turn into 'https'
            at the server */
         curl_easy_setopt(*pcurl, CURLOPT_CAINFO, certs_path);
@@ -590,7 +590,7 @@ static int curl_get (urlinfo *u)
         fprintf(stderr, "Error CURLE_SSL_CACERT from curl_easy_perform()\n");
     }
 
-#if 0 // def WIN32
+#if 0 // def _WIN32
     if (res == CURLE_SSL_CACERT) {
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, FALSE);
         /* does this re-run provoke a crash? */
