@@ -11,4 +11,3 @@ rm -rf ${prefix}/*.a
 rm -rf ${prefix}/*.la
 rm -rf ${prefix}/plugins/*.a
 rm -rf ${prefix}/plugins/*.la
-
