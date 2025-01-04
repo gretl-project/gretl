@@ -66,7 +66,6 @@
 #endif
 
 #define GUI_DEBUG 0
-#define WIN32_DEBUG 0
 
 #if GUI_DEBUG
 # include "version.h"
@@ -461,7 +460,7 @@ static void real_nls_init (void)
     bind_textdomain_codeset(PACKAGE, "UTF-8");
 }
 
-#endif /* NLS init variants */
+#endif /* end of NLS init variants */
 
 void gui_nls_init (void)
 {
@@ -494,29 +493,37 @@ static void record_filearg (char *targ, const char *src)
 
 #if !defined(G_OS_WIN32) && GTK_MAJOR_VERSION == 3
 
+# if 0
 static void logtrap (const gchar *domain,
 		     GLogLevelFlags level,
 		     const gchar *msg,
 		     gpointer p)
 {
-    /* Suppress Gtk warnings and deprecation warnings from
-       the GLib-GObject domain, but allow non-deprecation
-       messages from the latter.
-    */
-    if (strcmp(domain, "Gtk") == 0 ||
-        strstr(msg, "deprecat") != NULL) {
-        return;
+    return;
+}
+# endif
+
+static GLogWriterOutput no_write (GLogLevelFlags log_level,
+                                  const GLogField *fields,
+                                  gsize n_fields,
+                                  gpointer user_data)
+{
+    if (log_level < G_LOG_LEVEL_WARNING) {
+        return g_log_writer_standard_streams(log_level, fields, n_fields, user_data);
     } else {
-	g_log_default_handler(domain, level, msg, p);
+        return G_LOG_WRITER_HANDLED;
     }
 }
 
 static void quell_gtk3_spew (void)
 {
-    g_log_set_handler("GLib-GObject", G_LOG_LEVEL_WARNING,
-		      (GLogFunc) logtrap, NULL);
+    g_log_set_writer_func(no_write, NULL, NULL);
+# if 0
     g_log_set_handler("Gtk", G_LOG_LEVEL_WARNING,
-		      (GLogFunc) logtrap, NULL);
+                      (GLogFunc) logtrap, NULL);
+    g_log_set_handler("Glib", G_LOG_LEVEL_WARNING,
+                      (GLogFunc) logtrap, NULL);
+# endif
 }
 
 #endif
@@ -789,12 +796,9 @@ int main (int argc, char **argv)
 
 #ifdef G_OS_WIN32
     /* let's call this before doing libgretl_init */
-# if WIN32_DEBUG
-    gretl_win32_debug_init(1);
-# else
     gretl_win32_debug_init(optdebug);
-# endif
-#elif GTK_MAJOR_VERSION == 3
+#endif
+#if !defined(G_OS_WIN32) && GTK_MAJOR_VERSION == 3
     quell_gtk3_spew();
 #endif
 
