@@ -2533,7 +2533,7 @@ static int common_read_rc_setup (int updated)
 #endif
 
     langid = gretl_lang_id_from_name(langpref);
-#ifdef G_OS_WIN32
+#if 1 //def G_OS_WIN32
     fprintf(stderr, "rc_setup: langpref='%s', langid=%d, lcnumeric=%d\n",
 	    langpref, langid, lcnumeric);
 #endif

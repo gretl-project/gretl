@@ -438,35 +438,40 @@ static int
 set_locale_with_workaround (int langid, const char *lcode,
 			    char **locp)
 {
-    char *orig = gretl_strdup(setlocale(LC_COLLATE, NULL));
-    char lcopy[32] = {0};
+    gchar *orig = g_strdup(setlocale(LC_COLLATE, NULL));
+    gchar *lcopy = NULL;
     char *test;
     int err = 0;
 
     if (lcode != NULL) {
 #ifndef WIN32
-        sprintf(lcopy, "%s.UTF-8", lcode);
+        lcopy = g_strdup_printf("%s.UTF-8", lcode);
 #else
-        strcpy(lcopy, lcode);
+        lcopy = g_strdup(lcode);
 #endif
         test = setlocale(LC_ALL, lcopy);
     } else {
-        test = setlocale(LC_ALL, lcode);
+        test = setlocale(LC_ALL, NULL);
     }
 
-#if 0
-    fprintf(stderr, "original locale '%s', utf8 = %d\n", orig, orig_u8);
-    fprintf(stderr, "lcode = '%s', lcopy '%s', test '%s'\n", lcode, lcopy, test);
+#if 1
+    fprintf(stderr, "original locale '%s'\n", orig == NULL ? "null" : orig);
+    fprintf(stderr, "lcode '%s', lcopy '%s', test '%s'\n",
+            lcode == NULL ? "null" : lcode,
+            lcopy == NULL ? "null" : lcopy,
+            test  == NULL ? "null" : test);
 #endif
 
     if (test == NULL) {
+        /* setlocale() failed */
         err = E_DATA;
-    } else {
+    } else if (lcopy != NULL) {
         /* belt and braces */
         gretl_setenv("LANG", lcopy);
     }
 
-    free(orig);
+    g_free(orig);
+    g_free(lcopy);
 
     if (!err && locp != NULL && test != NULL) {
         *locp = gretl_strdup(test);
@@ -481,32 +486,37 @@ set_locale_with_workaround (int langid, const char *lcode,
 # define get_setlocale_string(i) (lang_code_from_id(i))
 # endif
 
-/* @langstr should be the English name of the selected language
-   as displayed in the GUI (e.g. "German", "French")
+/* Here we're testing the validity, on the current system, of a request
+   to use a particular locale as specified by @langstr, the English name
+   of the selected language as displayed in the GUI Preferences dialog
+   (e.g. "German", "French").
 */
 
 int test_locale (const char *langstr)
 {
     const char *lcode;
-    char *orig, ocpy[64];
+    gchar *ocpy = NULL;
+    char *orig;
     int langid, err = 0;
 
     langid = gretl_lang_id_from_name(langstr);
     lcode = get_setlocale_string(langid);
     orig = setlocale(LC_ALL, NULL);
+    if (orig != NULL) {
+        ocpy = g_strdup(orig);
+    }
 
     gretl_error_clear();
-
-    *ocpy = '\0';
-    strncat(ocpy, orig, 63);
-
     err = set_locale_with_workaround(langid, lcode, NULL);
 
     if (err) {
         gretl_errmsg_sprintf(_("%s: locale is not supported "
                                "on this system"), lcode);
-    } else {
-        setlocale(LC_ALL, ocpy); /* restore the original locale */
+    }
+    if (ocpy != NULL) {
+        /* restore the original locale */
+        setlocale(LC_ALL, ocpy);
+        g_free(ocpy);
     }
 
     return err;
