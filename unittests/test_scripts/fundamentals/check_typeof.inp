@@ -64,4 +64,18 @@ assert(s == "null")
 s = typename(A[1][1])
 assert(s == "string")
 
+delete A
+matrix A = {1, 2}
+loop i=1..nelem(A)
+    string actual = typename(A[i])
+    string expected = "matrix"
+    assert(actual == expected)
+
+    # Now assign a scalar
+    scalar ai = A[i]
+    string actual = typename(ai)
+    string expected = "scalar"
+    assert(actual == expected)
+endloop
+
 print "Successfully finished tests."
