@@ -2959,17 +2959,18 @@ static void blas_init (void)
 #endif
 
     ptr = dlopen(NULL, RTLD_NOW);
-
-    if (ptr != NULL) {
-        OB_set_num_threads = dlsym(ptr, "openblas_set_num_threads");
-        OB_get_num_threads = dlsym(ptr, "openblas_get_num_threads");
-        if (OB_set_num_threads != NULL) {
-            blas_variant = BLAS_OPENBLAS;
-            register_openblas_details(ptr);
-        }
+    if (ptr == NULL) {
+        goto getout;
     }
 
-    if (ptr != NULL && blas_variant == BLAS_UNKNOWN) {
+    OB_set_num_threads = dlsym(ptr, "openblas_set_num_threads");
+    OB_get_num_threads = dlsym(ptr, "openblas_get_num_threads");
+    if (OB_set_num_threads != NULL) {
+        blas_variant = BLAS_OPENBLAS;
+        register_openblas_details(ptr);
+    }
+
+    if (blas_variant == BLAS_UNKNOWN) {
         BLIS_init = dlsym(ptr, "bli_init");
         BLIS_finalize = dlsym(ptr, "bli_finalize");
         BLIS_set_num_threads = dlsym(ptr, "bli_thread_set_num_threads");
@@ -2981,7 +2982,7 @@ static void blas_init (void)
         }
     }
 
-    if (ptr != NULL && blas_variant == BLAS_UNKNOWN) {
+    if (blas_variant == BLAS_UNKNOWN) {
         MKL_finalize = dlsym(ptr, "mkl_finalize");
         MKL_domain_get_max_threads = dlsym(ptr, "MKL_Domain_Get_Max_Threads");
         MKL_domain_set_num_threads = dlsym(ptr, "MKL_Domain_Set_Num_Threads");
@@ -2991,7 +2992,7 @@ static void blas_init (void)
         }
     }
 
-    if (ptr != NULL && FLAME_init == NULL) {
+    if (FLAME_init == NULL) {
         FLAME_init = dlsym(ptr, "FLA_Init");
         if (FLAME_init != NULL) {
             FLAME_init();
@@ -2999,14 +3000,13 @@ static void blas_init (void)
         }
     }
 
-    if (blas_variant != BLAS_VECLIB &&
-        blas_variant != BLAS_OPENBLAS &&
-        blas_variant != BLAS_BLIS &&
-        blas_variant != BLAS_MKL) {
+ getout:
+
 #ifndef WIN32
+    if (blas_variant == BLAS_UNKNOWN) {
         blas_variant = detect_blas_via_ldd();
-#endif
     }
+#endif
 }
 
 void blas_cleanup (void)
