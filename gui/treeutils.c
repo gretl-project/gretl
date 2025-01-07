@@ -647,7 +647,9 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 		g_object_set(G_OBJECT(column), "resizable", TRUE, NULL);
 	    } else if (i == 1 || i == 2) {
 		/* try to signal sortability to the user */
+#if 0 /* 2025-01-07 */
 		gtk_tree_view_column_set_sort_order(column, GTK_SORT_DESCENDING);
+#endif
 		gtk_tree_view_column_set_sort_indicator(column, TRUE);
 	    }
 	    /* first column specials */
