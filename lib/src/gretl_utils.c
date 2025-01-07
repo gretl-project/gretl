@@ -2960,7 +2960,11 @@ static void blas_init (void)
 
     ptr = dlopen(NULL, RTLD_NOW);
     if (ptr == NULL) {
+#ifdef WIN32
+        return;
+#else
         goto getout;
+#endif
     }
 
     OB_set_num_threads = dlsym(ptr, "openblas_set_num_threads");
@@ -3000,9 +3004,9 @@ static void blas_init (void)
         }
     }
 
+#ifndef WIN32
  getout:
 
-#ifndef WIN32
     if (blas_variant == BLAS_UNKNOWN) {
         blas_variant = detect_blas_via_ldd();
     }
