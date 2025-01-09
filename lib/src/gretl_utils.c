@@ -2560,9 +2560,9 @@ static int detect_blas_via_ldd (void)
     gchar *errout = NULL;
     gint status = 0;
     GError *gerr = NULL;
-    int variant = 0;
 
 #ifdef __APPLE__
+    int variant = BLAS_VECLIB;
     gchar *argv[4];
     targ = g_strdup_printf("%sgretlcli", gretl_bindir());
     argv[0] = "otool";
@@ -2570,6 +2570,7 @@ static int detect_blas_via_ldd (void)
     argv[2] = targ;
     argv[3] = NULL;
 #else
+    int variant = BLAS_UNKNOWN;
     gchar *argv[3];
     targ = g_strdup(GRETL_PREFIX "/lib/libgretl-1.0.so");
     argv[0] = "ldd";
@@ -2951,19 +2952,13 @@ static void blas_init (void)
 {
     void *ptr = NULL;
 
-#if defined(__APPLE__) && defined(PKGBUILD)
-    blas_variant = BLAS_VECLIB; /* the default */
-    return;
-#else
     blas_variant = BLAS_UNKNOWN;
-#endif
-
     ptr = dlopen(NULL, RTLD_NOW);
     if (ptr == NULL) {
 #ifdef WIN32
         return;
 #else
-        goto getout;
+        goto try_ldd;
 #endif
     }
 
@@ -3005,7 +3000,7 @@ static void blas_init (void)
     }
 
 #ifndef WIN32
- getout:
+ try_ldd:
 
     if (blas_variant == BLAS_UNKNOWN) {
         blas_variant = detect_blas_via_ldd();
