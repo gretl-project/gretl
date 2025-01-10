@@ -454,7 +454,7 @@ set_locale_with_workaround (int langid, const char *lcode,
         test = setlocale(LC_ALL, NULL);
     }
 
-#if 1
+#if 0
     fprintf(stderr, "original locale '%s'\n", orig == NULL ? "null" : orig);
     fprintf(stderr, "lcode '%s', lcopy '%s', test '%s'\n",
             lcode == NULL ? "null" : lcode,

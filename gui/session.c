@@ -76,7 +76,7 @@
 #include "../pixmaps/bundle.xpm"
 
 #define SESSION_DEBUG 0
-#define GRAPH_DEBUG 1
+#define GRAPH_DEBUG 0
 #define SESSION_BUNDLE 1
 
 #define SHOWNAMELEN 15
