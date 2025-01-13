@@ -1243,11 +1243,12 @@ static int set_common_sample (arma_sel *asel, MODEL *amod,
 
 /* Provides built-in means of selecting the AR and MA orders of
    an AR(I)MA model via Information Criteria. We accept a general
+   specification of the form
 
    (p d q)(P D Q)
 
-   specification and search over p, q, P and Q, taking their values
-   on input as maxima; d and D remain clamped at their input values.
+   and search over p, q, P and Q, taking their values on input as
+   maxima; d and D remain clamped at their input values.
 */
 
 static int real_arma_select (const int *list, DATASET *dset,

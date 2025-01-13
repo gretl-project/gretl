@@ -4213,8 +4213,12 @@ MODEL arma (const int *list, const int *pqlags,
 
     gretl_model_init(&armod, dset);
 
+    /* --opg and --hessian cannot be combined */
     err = incompatible_options(opt, OPT_G | OPT_H);
     if (!err) {
+        /* --x-13arima cannot be combined with --robust, --stdx or
+           --lagselect. (Note that --stdx is not documented.)
+        */
 	err = options_incompatible_with(opt, OPT_X, OPT_R | OPT_S | OPT_Z);
     }
     if (err) {
