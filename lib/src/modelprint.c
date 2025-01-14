@@ -167,7 +167,7 @@ static void print_model_stats_table (const double *stats,
 		} else if (i == ns-1) {
 		    pprintf(prn, "%c %s = %s\n", delim, names[i], tmp1);
 		} else {
-		    pprintf(prn, "%c %s = %s", delim, names[i], tmp1);;
+		    pprintf(prn, "%c %s = %s", delim, names[i], tmp1);
 		}
 	    } else {
 		pprintf(prn, "  %s = %s\n", names[i], tmp1);
@@ -505,7 +505,6 @@ print_model_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
     }
 
     pv = chisq_cdf_comp(df, x);
-
     if (na(pv)) {
 	return;
     }
@@ -3550,12 +3549,23 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 
     if ((pmod->ci == OLS || pmod->ci == MPOLS) && (opt & OPT_S)) {
 	/* --simple-print */
-	if (pmod->ci == OLS && !na(pmod->rsq) && plain_format(prn)) {
+	if (!na(pmod->ess) && !na(pmod->rsq) && plain_format(prn)) {
 	    int uc = gretl_model_get_int(pmod, "uncentered");
 
-	    pprintf(prn, "%s = %g, %s = %f\n\n", _("SSR"), pmod->ess,
-		    uc ? _("Uncentered R-squared") : _("R-squared"),
-		    pmod->rsq);
+            if (pmod->ci == MPOLS) {
+                int n = 1 + strlen(_("Sum squared resid"));
+                char tmp[32];
+
+                pprintf(prn, "  %-*s %s\n", n, _("Sum squared resid"),
+                        print_fifteen(tmp, pmod->ess, 0));
+                pprintf(prn, "  %-*s %s\n\n", n,
+                        uc ? _("Uncentered R-squared") : _("R-squared"),
+                        print_fifteen(tmp, pmod->rsq, 0));
+            } else {
+                pprintf(prn, "%s = %g, %s = %f\n\n", _("SSR"), pmod->ess,
+                        uc ? _("Uncentered R-squared") : _("R-squared"),
+                        pmod->rsq);
+            }
 	}
 	goto close_format;
     }
