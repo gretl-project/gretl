@@ -3551,20 +3551,22 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 	/* --simple-print */
 	if (!na(pmod->ess) && !na(pmod->rsq) && plain_format(prn)) {
 	    int uc = gretl_model_get_int(pmod, "uncentered");
+            char *s2 = uc ? _("Uncentered R-squared") : _("R-squared");
 
             if (pmod->ci == MPOLS) {
-                int n = 1 + strlen(_("Sum squared resid"));
+                char *s1 = _("Sum squared resid");
+                int n1 = strlen(s1);
+                int n2 = strlen(s2);
+                int n = 1 + MAX(n1, n2);
                 char tmp[32];
 
-                pprintf(prn, "  %-*s %s\n", n, _("Sum squared resid"),
+                pprintf(prn, "  %-*s %s\n", n, s1,
                         print_fifteen(tmp, pmod->ess, 0));
-                pprintf(prn, "  %-*s %s\n\n", n,
-                        uc ? _("Uncentered R-squared") : _("R-squared"),
+                pprintf(prn, "  %-*s %s\n\n", n, s2,
                         print_fifteen(tmp, pmod->rsq, 0));
             } else {
                 pprintf(prn, "%s = %g, %s = %f\n\n", _("SSR"), pmod->ess,
-                        uc ? _("Uncentered R-squared") : _("R-squared"),
-                        pmod->rsq);
+                        s2, pmod->rsq);
             }
 	}
 	goto close_format;
