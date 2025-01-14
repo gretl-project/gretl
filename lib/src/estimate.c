@@ -4317,20 +4317,20 @@ MODEL garch (const int *list, DATASET *dset, gretlopt opt,
 /**
  * mp_ols:
  * @list: specification of variables to use.
- * @dset: dataset struct.
- * @opt: maye include OPT_Q for quiet operation.
+ * @dset: pointer to dataset struct.
+ * @opt: may include OPT_Q for quiet operation, OPT_S for
+ * simple output.
  *
  * Estimate an OLS model using multiple-precision arithmetic
  * via the GMP library.
  *
- * Returns: a #MODEL struct, containing the estimates.
+ * Returns: a #MODEL struct containing the estimates.
  */
 
 MODEL mp_ols (const int *list, DATASET *dset, gretlopt opt)
 {
     int (*mplsq)(const int *, const int *, const int *,
-		 DATASET *, MODEL *,
-		 gretlopt);
+		 DATASET *, MODEL *, gretlopt);
     MODEL mpmod;
 
     gretl_model_init(&mpmod, dset);
@@ -4350,13 +4350,13 @@ MODEL mp_ols (const int *list, DATASET *dset, gretlopt opt)
 	    mpmod.errcode = E_ARGS;
 	} else {
 	    mpmod.errcode = (*mplsq)(base, poly, NULL, dset,
-				     &mpmod, OPT_S);
+				     &mpmod, OPT_X);
 	}
 	free(base);
 	free(poly);
     } else {
 	mpmod.errcode = (*mplsq)(list, NULL, NULL, dset,
-				 &mpmod, OPT_S);
+				 &mpmod, OPT_X);
     }
 
     set_model_id(&mpmod, opt);

@@ -1007,8 +1007,8 @@ static int copy_mp_results (MPMODEL *mpmod, MODEL *pmod,
     pmod->fstt = mpf_get_d(mpmod->fstt);
     pmod->chisq = NADBL;
 
-    if (opt & OPT_S) {
-	/* saving additional results */
+    if (opt & OPT_X) {
+	/* saving extra results */
 	pmod->t1 = mpmod->t1;
 	pmod->t2 = mpmod->t2;
 	pmod->nobs = mpmod->nobs;
@@ -1579,7 +1579,7 @@ static int add_missvals_mask (MPMODEL *mpmod, const int *list,
  * (or %NULL).
  * @dset: dataset struct.
  * @pmod: MODEL pointer to hold results.
- * @opt: if contains %OPT_S, save additional model
+ * @opt: if contains %OPT_X, save extra model
  * information (including the names of parameters in
  * @pmod, if required).
  *
@@ -1662,7 +1662,7 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
     }
 
     /* enable names for polynomial terms? */
-    if (polylist != NULL && (opt & OPT_S)) {
+    if (polylist != NULL && (opt & OPT_X)) {
 	xnames = allocate_xnames(mpmod.list);
 	if (xnames == NULL) {
 	    err = E_ALLOC;
