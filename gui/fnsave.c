@@ -4040,7 +4040,7 @@ static void finfo_dialog (function_info *finfo)
 
 static void web_get_login (GtkWidget *w, gpointer p)
 {
-    browser_open("http://gretl.sourceforge.net/apply/");
+    browser_open("https://gretl.sourceforge.net/apply/");
 }
 
 static void login_dialog (login_info *linfo, GtkWidget *parent)
@@ -4094,7 +4094,7 @@ static void login_dialog (login_info *linfo, GtkWidget *parent)
 
     label_hbox(vbox,
 	       _("If you don't have a login to the gretl server\n"
-		 "please see http://gretl.sourceforge.net/apply/.\n"
+		 "please see https://gretl.sourceforge.net/apply/.\n"
 		 "The 'Website' button below should open this page\n"
 		 "in your web browser."));
 
