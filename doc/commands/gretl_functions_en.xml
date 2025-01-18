@@ -1480,7 +1480,7 @@
         <para>
 	  Yields the full path of the directory gretl uses for
 	  temporary files. To use it in string-substitution mode,
-	  prepend the at-sign (@dotdir).
+	  prepend the at-sign (<lit>@dotdir</lit>).
         </para>
         </description>
     </function>
@@ -1488,8 +1488,9 @@
     <function name="$gnuplot" section="straccess" output="string">
         <description>
         <para>
-          Yields the path to the gnuplot executable. To use it in
-          string-substitution mode, prepend the at-sign (@gnuplot).
+          Yields the path to the <lit>gnuplot</lit> executable. To use
+          it in string-substitution mode, prepend the at-sign
+          (<lit>@gnuplot</lit>).
         </para>
         </description>
     </function>
@@ -1499,7 +1500,26 @@
         <para>
           Yields the full path of the gretl installation directory. To
           use it in string-substitution mode, prepend the at-sign
-          (@gretldir).
+          (<lit>@gretldir</lit>).
+        </para>
+        </description>
+    </function>
+
+    <function name="$lang" section="straccess" output="string">
+        <description>
+        <para>
+          Yields the identifier for the currently specified language.
+        </para>
+        </description>
+    </function>
+
+    <function name="$seats" section="straccess" output="string">
+        <description>
+        <para>
+          Yields the path to the <lit>seats</lit> executable, which
+          accompanies <lit>tramo</lit>. To use it in
+          string-substitution mode, prepend the at-sign
+          (<lit>@seats</lit>).
         </para>
         </description>
     </function>
@@ -1507,8 +1527,9 @@
     <function name="$tramo" section="straccess" output="string">
         <description>
         <para>
-          Yields the path to the tramo executable. To use it in
-          string-substitution mode, prepend the at-sign (@tramo)
+          Yields the path to the <lit>tramo</lit> executable. To use
+          it in string-substitution mode, prepend the at-sign
+          (<lit>@tramo</lit>).
         </para>
         </description>
     </function>
@@ -1516,8 +1537,19 @@
     <function name="$tramodir" section="straccess" output="string">
         <description>
         <para>
-         Yields the path string of the tramo data directory. To use it
-         in string-substitution mode, prepend the at-sign (@tramodir).
+         Yields the path string of the <lit>tramo</lit> data
+         directory. To use it in string-substitution mode, prepend the
+         at-sign (<lit>@tramodir</lit>).
+        </para>
+        </description>
+    </function>
+
+    <function name="$workdir" section="straccess" output="string">
+        <description>
+        <para>
+         Yields the path string of gretl's current working directory.
+         To use it in string-substitution mode, prepend the at-sign
+         (<lit>@workdir</lit>).
         </para>
         </description>
     </function>
@@ -1525,8 +1557,10 @@
     <function name="$x12a" section="straccess" output="string">
         <description>
         <para>
-          Yields the path to the x-12-arima executable. To use it in
-          string-substitution mode, prepend the at-sign (@x12a).
+          Yields the path to the <lit>x-12-arima</lit> (or
+          <lit>x-13arima</lit>) executable. To use it in
+          string-substitution mode, prepend the at-sign
+          (<lit>@x12a</lit>).
         </para>
         </description>
     </function>
@@ -1534,8 +1568,10 @@
     <function name="$x12adir" section="straccess" output="string">
         <description>
         <para>
-          Yields the path of the x-12-arima data directory. To use it
-          in string-substitution mode, prepend the at-sign (@x12adir).
+          Yields the path of the <lit>x-12-arima</lit> (or
+          <lit>x-13arima</lit>) data directory. To use it in
+          string-substitution mode, prepend the at-sign
+          (<lit>@x12adir</lit>).
         </para>
         </description>
     </function>
