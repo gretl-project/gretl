@@ -519,13 +519,19 @@
 	la sección titulada <quote>Datos de panel</quote>.
       </para>
       <para>
-	Los datos añadidos pueden tener el formato de observaciones
-	adicionales sobre series ya presentes en el conjunto de datos,
-	y/o el formato de nuevas series. En caso de añadir series, la
-	compatibilidad requiere (a) que el número de observaciones de los
-	nuevos datos sea igual al número de datos actuales, o (b) que
-	los nuevos datos conlleven clara información de las observaciones de
-	modo que GRETL pueda deducir como colocar los valores.
+	Los datos añadidos pueden tener el formato de observaciones adicionales
+	sobre series ya presentes en el conjunto de datos, y/o el formato de
+	nuevas series. En caso de añadir series, la compatibilidad requiere
+	(a) que el número de observaciones de los nuevos datos sea igual al
+	número de datos actuales, o (b) que los nuevos datos conlleven una
+	clara información de las observaciones de modo que GRETL pueda
+	deducir como colocar los valores. Ten en cuenta que si hay una
+	<quote>coincidencia perfecta</quote> de la información de las observaciones
+	(es decir, cando ambas condiciones (a) y (b) se satisfacen), se asume
+	que se van a añadir las series, más que las observaciones. Y si sucede
+	que no hay nombres de las series en el archivo cuyos datos se van a
+	añadir y que aún no están presentes en el conjunto de datos vigente,
+	entonces no se hace nada y se muestra una advertencia.
       </para>
       <para>
 	Un caso que no se admite es aquel en el que los nuevos datos comienzan

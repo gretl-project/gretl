@@ -519,13 +519,19 @@
 	<quote>Datos de panel</quote>.
       </para>
       <para>
-	Os datos engadidos poden ter ben o formato de observacións
-	adicionais sobre series xa presentes no conxunto de datos,
-	e/ou ben o formato de novas series. No caso de engadir series, a
-	compatibilidade require (a) que o número de observacións dos
-	novos datos sexa igual ao número de datos actuais, ou (b) que
-	os novos datos carrexen clara información das observacións de
-	xeito que GRETL poda deducir como colocar os valores.
+	Os datos engadidos poden ter ben o formato de observacións adicionais
+	sobre series xa presentes no conxunto de datos, e/ou ben o formato
+	de novas series. No caso de engadir series, a compatibilidade require
+	(a) que o número de observacións dos novos datos sexa igual ao
+	número de datos actuais, ou (b) que os novos datos carrexen unha
+	clara información das observacións de xeito que GRETL poda deducir
+	como colocar os valores. Cae na conta de que se hai unha
+	<quote>coincidencia perfecta</quote> da información das observacións
+	(é dicir, cando ambas condicións (a) e (b) se satisfán), asúmese que
+	se van engadir as series, máis que as observacións. E se acontece que
+	non hai nomes das series no ficheiro cuxos datos se van engadir e que
+	aínda non están presentes no conxunto de datos vixente, entón non se
+	fai nada e amósase un aviso.
       </para>
       <para>
 	Un caso que non se admite é aquel no que os novos datos comezan
@@ -7632,7 +7638,7 @@
 	advertencia se a solución non é única.
       </para>
       <para>
-	os desvíos padrón dedúcense utilizando o procedemento 'bootstrap'
+	Os desvíos padrón dedúcense utilizando o procedemento 'bootstrap'
 	con 500 extraccións. A matriz de covarianzas dos estimadores dos
 	parámetros, que se presenta cando indicas <opt>vcv</opt>, baséase
 	no mesmo 'bootstrap'. Dado que esta é unha operación custosa dabondo,

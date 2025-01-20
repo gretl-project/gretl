@@ -1480,7 +1480,7 @@
         <para>
           Proporciona unha cadea de texto coa ruta completa ao directorio que usa
           GRETL para os ficheiros temporais. Para usala en modo de substitución
-          para cadeas de texto, antepón o símbolo arroba (@dotdir).
+          para cadeas de texto, antepón o símbolo arroba (<lit>@dotdir</lit>).
         </para>
         </description>
     </function>
@@ -1488,8 +1488,9 @@
     <function name="$gnuplot" section="straccess" output="string">
         <description>
         <para>
-          Proporciona unha cadea de texto coa ruta ata o executable 'gnuplot'. Para usala
-          en modo de substitución para cadeas, antepón o símbolo arroba (@gnuplot).
+          Proporciona unha cadea de texto coa ruta ata o executable
+          <lit>gnuplot</lit>. Para usala en modo de substitución para
+          cadeas de texto, antepón o símbolo arroba (<lit>@gnuplot</lit>).
         </para>
         </description>
     </function>
@@ -1499,7 +1500,26 @@
         <para>
           Proporciona unha cadea de texto coa ruta completa ao directorio
           de instalación de GRETL. Para usala en modo de substitución para
-          cadeas de texto, antepón o símbolo arroba (@gretldir).
+          cadeas de texto, antepón o símbolo arroba (<lit>@gretldir</lit>).
+        </para>
+        </description>
+    </function>
+
+    <function name="$lang" section="straccess" output="string">
+        <description>
+        <para>
+          Proporciona unha cadea de texto co identificador do idioma vixente especificado.
+        </para>
+        </description>
+    </function>
+
+    <function name="$seats" section="straccess" output="string">
+        <description>
+        <para>
+          Proporciona unha cadea de texto coa ruta ata o executable
+          <lit>seats</lit>, que acompaña a <lit>tramo</lit>. Para usala
+          en modo de substitución para cadeas de texto, antepón o
+          símbolo arroba (<lit>@seats</lit>).
         </para>
         </description>
     </function>
@@ -1507,8 +1527,9 @@
     <function name="$tramo" section="straccess" output="string">
         <description>
         <para>
-          Proporciona unha cadea de texto coa ruta ata o executable 'tramo'. Para usala
-          en modo de substitución para cadeas, antepón o símbolo arroba (@tramo).
+          Proporciona unha cadea de texto coa ruta ata o executable
+          <lit>tramo</lit>. Para usala en modo de substitución para cadeas
+          de texto, antepón o símbolo arroba (<lit>@tramo</lit>).
         </para>
         </description>
     </function>
@@ -1516,8 +1537,19 @@
     <function name="$tramodir" section="straccess" output="string">
         <description>
         <para>
-          Proporciona unha cadea de texto coa ruta ata o directorio de datos de 'tramo'. Para
-          usala en modo de substitución para cadeas, antepón o símbolo arroba (@tramodir).
+          Proporciona unha cadea de texto coa ruta ata o directorio de datos
+          de <lit>tramo</lit>. Para usala en modo de substitución para
+          cadeas de texto, antepón o símbolo arroba (<lit>@tramodir</lit>).
+        </para>
+        </description>
+    </function>
+
+    <function name="$workdir" section="straccess" output="string">
+        <description>
+        <para>
+         Proporciona unha cadea de texto coa ruta do directorio de traballo
+         vixente de GRETL. Para usala en modo de substitución para
+         cadeas de texto, antepón o símbolo arroba (<lit>@workdir</lit>).
         </para>
         </description>
     </function>
@@ -1525,8 +1557,10 @@
     <function name="$x12a" section="straccess" output="string">
         <description>
         <para>
-          Proporciona unha cadea de texto coa ruta ata o executable 'x-12-arima'. Para usala
-          en modo de substitución para cadeas, antepón o símbolo arroba (@x12a).
+          Proporciona unha cadea de texto coa ruta ata o executable
+          <lit>x-12-arima</lit> (ou <lit>x-13arima</lit>). Para usala en
+          modo de substitución para cadeas de texto, antepón o símbolo
+          arroba (<lit>@x12a</lit>).
         </para>
         </description>
     </function>
@@ -1534,8 +1568,10 @@
     <function name="$x12adir" section="straccess" output="string">
         <description>
         <para>
-          Proporciona unha cadea de texto coa ruta ata o directorio de datos de 'x-12-arima'. Para
-          usala en modo de substitución para cadeas, antepón o símbolo arroba (@x12adir).
+          Proporciona unha cadea de texto coa ruta ata o directorio de
+          datos de <lit>x-12-arima</lit> (ou <lit>x-13arima</lit>). Para
+          usala en modo de substitución para cadeas de texto, antepón
+          o símbolo arroba (<lit>@x12adir</lit>).
         </para>
         </description>
     </function>
@@ -1839,7 +1875,7 @@
 	</para>
 	<code>
 	  function scalar my_bsort (const bundle b1, const bundle b2)
-	     return b1.crit - b2.crit
+	     return sgn(b1.crit - b2.crit)
 	  end function
 	</code>
 	<para>
@@ -10144,9 +10180,11 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve un enteiro co número de elementos que hai no argumento;
-	  este pode ser unha lista, unha matriz, un feixe ou un arranxo
-	  (pero non unha serie).
+	  Devolve un enteiro co número de elementos que hai no argumento; este
+	  pode ser unha lista, unha matriz, un feixe, un arranxo ou unha cadea
+	  de texto, pero non unha serie. No caso dun argumento de cadea de texto
+	  devólvese o número de bytes (que pode non ser igual ao número de
+	  caracteres na cadea); consulta tamén <fncref targ="strlen"/>.
 	</para>
       </description>
     </function>
@@ -11569,7 +11607,7 @@
     <function name="quantile" section="stats" output="scalar" altout="matrix">
       <fnargs>
 	<fnarg type="series-or-mat">y</fnarg>
-	<fnarg type="pscalar">p</fnarg>
+	<fnarg type="scalar-or-vec">p</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12999,6 +13037,12 @@
 	  axustarse o nome do resultado final, para evitar a duplicación de
 	  nomes na lista que se devolve.
 	</para>
+	<para>
+	  Cae na conta de que as variables ficticias serán eliminadas cando
+	  se calculen os cadrados para evitar que se xeren series idénticas,
+	  pero vaise calcular o seu produto (<quote>interacción</quote>) con
+	  outras series da lista <argname>L</argname> de entrada.
+	</para>
       </description>
     </function>
 
@@ -13337,10 +13381,11 @@
       <description>
 	<para>
 	  Se <argname>s</argname> é unha cadea de texto simple, devolve
-	  a cantidade de caracteres UTF-8 que contén. Ten en conta que
-	  iso non é igual ao número de bytes, se algúns caracteres están
-	  fóra do intervalo de impresión ASCII. Cando desexes obter o número
-	  de bytes, podes usar a función <fncref targ="nelem"/>. Por exemplo:
+	  a cantidade de caracteres UTF-8 que contén. Ten en conta que esta
+	  vai ser menor que o número de bytes, se a cadea de texto contén
+	  calquera carácter de tipo muti-byte (non ASCII). Cando desexes
+	  obter o número de bytes, podes usar a función <fncref targ="nelem"/>.
+	  Por exemplo:
 	</para>
 	<code>
 	  string s = "Olé!"
