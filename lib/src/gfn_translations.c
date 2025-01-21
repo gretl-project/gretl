@@ -35,7 +35,8 @@ struct Translations_ {
     int n_msgs;   /* number of messages handled */
     int n_langs;  /* number of languages (other than English) */
     msg *msgs;    /* array of structs */
-    char **langs; /* array of labuage IDs */
+    char **langs; /* array of language IDs */
+    int active;
 };
 
 void destroy_translations (Translations *T)
@@ -73,6 +74,7 @@ static Translations *allocate_translations (int n_msgs, int n_langs)
             T->msgs[i].strs = NULL;
         }
         T->langs = NULL;
+        T->active = -1;
     }
 
     return T;
@@ -81,21 +83,25 @@ static Translations *allocate_translations (int n_msgs, int n_langs)
 const char *get_gfn_translation (Translations *T,
                                  const char *id)
 {
-    char *lang = get_built_in_string_by_name("lang");
-    int i, L = -1;
+    int i, a = T->active;
 
-    for (i=0; i<T->n_langs && L < 0; i++) {
-        /* FIXME? */
-        if (!strcmp(lang, T->langs[i]) ||
-            !strncmp(lang, T->langs[i], 2)) {
-            L = i;
+    if (a < 0) {
+        char *lang = get_built_in_string_by_name("lang");
+
+        for (i=0; i<T->n_langs && a < 0; i++) {
+            /* FIXME comparison? */
+            if (!strcmp(lang, T->langs[i]) ||
+                !strncmp(lang, T->langs[i], 2)) {
+                a = i;
+            }
         }
+        T->active = a;
     }
 
-    if (L >= 0) {
+    if (a >= 0) {
         for (i=0; i<T->n_msgs; i++) {
             if (!strcmp(id, T->msgs[i].id)) {
-                return T->msgs[i].strs[L];
+                return T->msgs[i].strs[a];
             }
         }
     }
