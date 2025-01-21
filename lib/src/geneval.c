@@ -2558,6 +2558,19 @@ static NODE *scalar_calc (NODE *x, NODE *y, int f, parser *p)
     return ret;
 }
 
+static NODE *gfn_translate (NODE *n, parser *p)
+{
+    NODE *ret = aux_string_node(p);
+
+    if (ret != NULL && starting(p)) {
+        const char *s = function_package_translate(n->v.str);
+
+        ret->v.str = gretl_strdup(s);
+    }
+
+    return ret;
+}
+
 /* support addition of integer meaning subset of string */
 
 static NODE *string_offset (NODE *l, NODE *r, parser *p)
@@ -19039,6 +19052,13 @@ static NODE *eval (NODE *t, parser *p)
     case F_FZERO:
         if (l->t == STR) {
             ret = fzero_node(l, m, r, p);
+        } else {
+            p->err = e_types(l);
+        }
+        break;
+    case F_GFNTRANS:
+        if (l->t == STR) {
+            ret = gfn_translate(l, p);
         } else {
             p->err = e_types(l);
         }

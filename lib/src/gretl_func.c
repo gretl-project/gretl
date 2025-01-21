@@ -38,6 +38,7 @@
 #include "gretl_mdconv.h"
 #include "gen_public.h"
 #include "addons_utils.h"
+#include "gfn_translations.h"
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
@@ -220,6 +221,7 @@ struct fnpkg_ {
     int n_files;      /* number of data files */
     int n_depends;    /* number of dependencies */
     void *editor;     /* for GUI use */
+    void *trans;      /* translations */
 };
 
 /* acceptable types for parameters of user-defined functions */
@@ -906,6 +908,7 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->n_depends = 0;
     pkg->provider = NULL;
     pkg->editor = NULL;
+    pkg->trans = NULL;
 
     return pkg;
 }
@@ -1536,6 +1539,19 @@ fnpkg *get_active_function_package (gretlopt opt)
     }
 
     return NULL;
+}
+
+const char *function_package_translate (const char *id)
+{
+    fnpkg *pkg = get_active_function_package(OPT_NONE);
+
+    if (pkg != NULL && pkg->trans != NULL) {
+        char *lang = get_built_in_string_by_name("lang");
+
+        return get_gfn_translation(pkg->trans, id, lang);
+    } else {
+        return id;
+    }
 }
 
 fnpkg *gretl_function_get_package (const ufunc *fun)
@@ -3522,6 +3538,10 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn, int mpi)
         pputs(prn, "\n</sample-script>\n");
     }
 
+    if (pkg->trans != NULL) {
+        write_translations(pkg->trans, prn);
+    }
+
     pputs(prn, "</gretl-function-package>\n");
 
     if (standalone) {
@@ -4271,6 +4291,16 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
                     }
                 }
                 g_free(script);
+            } else if (!strncmp(line, "translations", 12)) {
+                if (!quiet) {
+                    pprintf(prn, "Looking for translations in %s... ", p);
+                }
+                pkg->trans = read_translations_file(p, &err);
+                if (err) {
+                    pputs(prn, failed);
+                } else {
+                    pputs(prn, okstr);
+                }
             } else if (!strncmp(line, "data-files", 10)) {
                 if (!quiet) {
                     pprintf(prn, "Recording data-file list: %s\n", p);
@@ -6644,6 +6674,8 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node,
             pkg->depends =
                 gretl_xml_get_strings_array(cur, doc, &pkg->n_depends,
                                             0, err);
+        } else if (!xmlStrcmp(cur->name, (XUC) "translations")) {
+            pkg->trans = read_translations_element(cur, doc);
         }
 
         cur = cur->next;

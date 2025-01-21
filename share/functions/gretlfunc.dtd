@@ -12,7 +12,7 @@
 <!ELEMENT gretl-function-package (author, version, date, description, tags, 
                                   label?, menu-attachment?, help, gui-help?, 
                                   data-files?, depends?, provider?, R-depends?,
-				  gretl-function+, sample-script)>
+				  gretl-function+, sample-script, translations?)>
 <!ATTLIST gretl-function-package
    name CDATA #REQUIRED
    ID CDATA #IMPLIED
@@ -55,6 +55,16 @@
    pkg-role (bundle-print | bundle-plot | bundle-test | bundle-fcast |
              bundle-extra | gui-main | gui-precheck | plot-precheck |
 	     list-maker | R-setup | ui-maker | none) 'none'
+>
+
+<!ELEMENT translations (msg+)>
+<!ELEMENT msg (s+)>
+<!ATTLIST msg
+   id CDATA #REQUIRED
+>
+<!ELEMENT s (#PCDATA)>
+<!ATTLIST s
+   lang CDATA #REQUIRED
 >
 
 <!ATTLIST help

@@ -128,6 +128,7 @@ PUBLIC_HDRS = \
 	forecast.h \
 	genmain.h \
 	genfuncs.h \
+	gfn_translations.h \
 	graphing.h \
 	gretl_array.h \
 	gretl_bfgs.h \
@@ -215,6 +216,7 @@ SRCS = adf_kpss.c \
 	genlex.c \
 	genmain.c \
 	gensyntax.c \
+	gfn_translations.c \
 	gmm.c \
 	graphing.c \
 	gretl_array.c \
