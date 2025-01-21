@@ -599,6 +599,7 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin, int *insensitive)
 		}
 		g_free(aname);
 	    }
+            free(S);
 	}
 	gretl_matrix_free(chk);
 	g_free(plotfunc);

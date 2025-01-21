@@ -1540,7 +1540,8 @@ static GtkWidget *int_arg_selector (call_info *cinfo,
 
     if (type == GRETL_TYPE_INT && !na(dminv) && !na(dmaxv)) {
 	int nvals, ns = 0;
-	const char **S;
+        int altS = 0;
+	char **S;
 
 	S = fn_param_value_labels(cinfo->func, i, &nvals);
 	if (S == NULL) {
@@ -1551,11 +1552,18 @@ static GtkWidget *int_arg_selector (call_info *cinfo,
 		nvals = maxv - minv + 1;
 		if (ns != nvals) {
 		    S = NULL;
-		}
+		} else {
+                    altS = 1;
+                }
 	    }
 	}
 	if (S != NULL) {
-	    return enum_arg_selector(cinfo, i, S, nvals, minv, initv);
+	    GtkWidget *ret = enum_arg_selector(cinfo, i, S, nvals, minv, initv);
+
+            if (!altS) {
+                free(S);
+            }
+            return ret;
 	}
     }
 

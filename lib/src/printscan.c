@@ -1404,7 +1404,7 @@ int do_printf_command (const char *parm, const char *args,
     if (quoted) {
 	format = parm;
     } else if (!strncmp(parm, "T_(", 3)) {
-        gretl_errmsg_set("A 'T_()' format string requires the function "
+        gretl_errmsg_set("A 'T_()' format-string requires the function "
                          "form of printf()");
     } else {
 	/* @parm should be a string variable */

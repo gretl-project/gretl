@@ -77,7 +77,9 @@ typedef struct stmt_ fn_line;
 enum {
     FP_CONST    = 1 << 0, /* explicitly marked as "const" */
     FP_OPTIONAL = 1 << 1, /* marked as optional (null is OK) */
-    FP_AUTO     = 1 << 2  /* marked as automatic (has a default value) */
+    FP_AUTO     = 1 << 2, /* marked as automatic (has a default value) */
+    FP_DTRANS   = 1 << 3, /* description is translatable */
+    FP_LTRANS   = 1 << 4  /* value-labels are translatable */
 };
 
 /* structure representing a parameter of a user-defined function */
@@ -98,9 +100,13 @@ struct fn_param_ {
 #define param_is_const(p) (p->flags & FP_CONST)
 #define param_is_optional(p) (p->flags & FP_OPTIONAL)
 #define param_is_auto(p) (p->flags & FP_AUTO)
+#define param_translatable(p) (p->flags & FP_DTRANS)
+#define labels_translatable(p) (p->flags & FP_LTRANS)
 
 #define set_param_optional(p) (p->flags |= FP_OPTIONAL)
 #define set_param_auto(p) (p->flags |= (FP_OPTIONAL | FP_AUTO))
+#define set_param_translatable(p) (p->flags |= FP_DTRANS)
+#define set_labels_translatable(p) (p->flags |= FP_LTRANS)
 
 typedef enum {
     LINE_IGNORE = 1 << 0,
@@ -1128,8 +1134,23 @@ const char *fn_param_name (const ufunc *fun, int i)
 
 const char *fn_param_descrip (const ufunc *fun, int i)
 {
-    return (i < 0 || i >= fun->n_params)? NULL :
-        fun->params[i].descrip;
+    if (i >= 0 && i < fun->n_params) {
+        fn_param *fp = &fun->params[i];
+
+        if (fp->descrip != NULL) {
+            if (fun->pkg != NULL && fun->pkg->trans != NULL &&
+                param_translatable(fp)) {
+                char *lang = get_built_in_string_by_name("lang");
+
+                return get_gfn_translation(fun->pkg->trans,
+                                           fp->descrip, lang);
+            } else {
+                return fp->descrip;
+            }
+        }
+    }
+
+    return NULL;
 }
 
 /**
@@ -1146,12 +1167,32 @@ const char **fn_param_value_labels (const ufunc *fun, int i,
                                     int *n)
 {
     if (i >= 0 && i < fun->n_params) {
-        *n = fun->params[i].nlabels;
-        return (const char **) fun->params[i].labels;
-    } else {
-        *n = 0;
-        return NULL;
+        fn_param *fp = &fun->params[i];
+
+        if (fp->labels != NULL) {
+            void *trans = fun->pkg == NULL ? NULL : fun->pkg->trans;
+            char **S = calloc(fp->nlabels, sizeof *S);
+            int try_trans;
+
+            if (S == NULL) {
+                return NULL;
+            }
+            try_trans = trans != NULL && labels_translatable(fp);
+            for (j=0; j<fp->nlabels; j++) {
+                if (try_trans) {
+                    S[i] = get_gfn_translation(fun->pkg->trans,
+                                               fp->labels[i]);
+                } else {
+                    S[i] = fp->labels[i];
+                }
+            }
+            *n = fp->nlabels;
+            return S;
+        }
     }
+
+    *n = 0;
+    return NULL;
 }
 
 /**
@@ -2133,6 +2174,12 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
                 if (gretl_xml_get_prop_as_bool(cur, "const")) {
                     maybe_set_param_const(param);
                 }
+                if (gretl_xml_get_prop_as_bool(cur, "dtrans")) {
+                    set_param_translatable(param);
+                }
+                if (gretl_xml_get_prop_as_bool(cur, "ltrans")) {
+                    set_labels_translatable(param);
+                }
             } else {
                 err = E_DATA;
                 break;
@@ -2750,6 +2797,12 @@ static int write_function_xml (ufunc *fun, PRN *prn, int mpi)
             }
             if (param_is_const(param)) {
                 pputs(prn, " const=\"true\"");
+            }
+            if (param_translatable(param)) {
+                pputs(prn, " dtrans=\"true\"");
+            }
+            if (labels_translatable(param)) {
+                pputs(prn, " ltrans=\"true\"");
             }
             if (parm_has_children(param)) {
                 pputs(prn, ">\n"); /* terminate opening tag */
@@ -5465,6 +5518,9 @@ static void real_function_package_free (fnpkg *pkg, int full)
         if (pkg->depends != NULL && pkg->n_depends > 0) {
             strings_array_free(pkg->depends, pkg->n_depends);
         }
+        if (pkg->trans != NULL) {
+            destroy_translations(pkg->trans);
+        }
 
         free(pkg->pub);
         free(pkg->priv);
@@ -7934,29 +7990,39 @@ static int read_param_option (char **ps, fn_param *param)
 
 /* get the descriptive string for a function parameter */
 
-static int read_param_descrip (char **ps, fn_param *param)
+static int read_param_descrip (char **ps, int trans, fn_param *param)
 {
-    char *p = *ps + 1; /* skip opening quote */
+    int offset = trans ? 4 : 1;
+    char *p = *ps + offset;
     int len = 0;
     int err = E_PARSE;
 
     while (*p) {
         if (*p == '"') {
-            /* OK, found closing quote */
-            err = 0;
-            break;
+            /* found closing quote */
+            if (!trans) {
+                err = 0;
+                break;
+            } else if (*(p+1) == ')') {
+                /* found closing paren */
+                err = 0;
+                break;
+            }
         }
         len++;
         p++;
     }
 
     if (!err && len > 0) {
-        p = *ps + 1;
+        p = *ps + offset;
         param->descrip = gretl_strndup(p, len);
         if (param->descrip == NULL) {
             err = E_ALLOC;
         } else {
-            *ps = p + len + 1;
+            *ps = p + len + trans + 1;
+            if (trans) {
+                set_param_translatable(param);
+            }
         }
     }
 
@@ -8122,8 +8188,11 @@ static int parse_function_param (char *s, fn_param *param, int i)
        for the parameter */
 
     if (!err && *s == '"') {
-        err = read_param_descrip(&s, param);
+        err = read_param_descrip(&s, 0, param);
         s += strspn(s, " ");
+    } else if (!strncmp(s, "T_(\"", 4)) {
+        err = read_param_descrip(&s, 1, param);
+        s += strspn(s, " "); /* FIXME */
     }
 
     /* and finally we may have a set of value-labels enclosed

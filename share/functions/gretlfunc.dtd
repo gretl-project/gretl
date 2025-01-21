@@ -108,6 +108,7 @@
    auto (true|false) 'false'
    optional (true|false) 'false'
    const (true|false) 'false'
+   dtrans (true|false) 'false'
    type (bool | boolean | int | obs | scalar | series | list |
          matrix | bundle | scalarref | seriesref | matrixref |
          bundleref | string | stringref | strings | matrices |

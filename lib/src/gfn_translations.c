@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "gretl_xml.h"
 #include "gfn_translations.h"
+#include "gretl_string_table.h"
 
 static int verbose = 0;
 
@@ -78,13 +79,13 @@ static Translations *allocate_translations (int n_msgs, int n_langs)
 }
 
 const char *get_gfn_translation (Translations *T,
-                                 const char *id,
-                                 const char *lang)
+                                 const char *id)
 {
+    char *lang = get_built_in_string_by_name("lang");
     int i, L = -1;
 
     for (i=0; i<T->n_langs && L < 0; i++) {
-        /* FIXME */
+        /* FIXME? */
         if (!strcmp(lang, T->langs[i]) ||
             !strncmp(lang, T->langs[i], 2)) {
             L = i;

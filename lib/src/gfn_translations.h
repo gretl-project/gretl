@@ -25,8 +25,7 @@ typedef struct Translations_ Translations;
 void destroy_translations (Translations *T);
 
 const char *get_gfn_translation (Translations *T,
-                                 const char *id,
-                                 const char *lang);
+                                 const char *id);
 
 Translations *read_translations_file (const char *fname,
                                       int *err);
