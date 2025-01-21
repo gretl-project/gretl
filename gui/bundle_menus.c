@@ -547,7 +547,7 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin, int *insensitive)
 
     if (plotfunc != NULL) {
 	ufunc *fun = NULL;
-	const char **S = NULL;
+	char **S = NULL;
 	gretl_matrix *chk = NULL;
 	int chklen = 0;
 	int zeros = 0;

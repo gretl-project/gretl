@@ -1134,23 +1134,22 @@ const char *fn_param_name (const ufunc *fun, int i)
 
 const char *fn_param_descrip (const ufunc *fun, int i)
 {
+    const char *ret = NULL;
+
     if (i >= 0 && i < fun->n_params) {
         fn_param *fp = &fun->params[i];
 
         if (fp->descrip != NULL) {
             if (fun->pkg != NULL && fun->pkg->trans != NULL &&
                 param_translatable(fp)) {
-                char *lang = get_built_in_string_by_name("lang");
-
-                return get_gfn_translation(fun->pkg->trans,
-                                           fp->descrip, lang);
+                ret = get_gfn_translation(fun->pkg->trans, fp->descrip);
             } else {
-                return fp->descrip;
+                ret = fp->descrip;
             }
         }
     }
 
-    return NULL;
+    return ret;
 }
 
 /**
@@ -1163,8 +1162,7 @@ const char *fn_param_descrip (const ufunc *fun, int i)
  * of function @fun (if any), otherwise %NULL.
  */
 
-const char **fn_param_value_labels (const ufunc *fun, int i,
-                                    int *n)
+char **fn_param_value_labels (const ufunc *fun, int i, int *n)
 {
     if (i >= 0 && i < fun->n_params) {
         fn_param *fp = &fun->params[i];
@@ -1172,7 +1170,7 @@ const char **fn_param_value_labels (const ufunc *fun, int i,
         if (fp->labels != NULL) {
             void *trans = fun->pkg == NULL ? NULL : fun->pkg->trans;
             char **S = calloc(fp->nlabels, sizeof *S);
-            int try_trans;
+            int j, try_trans;
 
             if (S == NULL) {
                 return NULL;
@@ -1180,10 +1178,10 @@ const char **fn_param_value_labels (const ufunc *fun, int i,
             try_trans = trans != NULL && labels_translatable(fp);
             for (j=0; j<fp->nlabels; j++) {
                 if (try_trans) {
-                    S[i] = get_gfn_translation(fun->pkg->trans,
-                                               fp->labels[i]);
+                    S[j] = (char *) get_gfn_translation(fun->pkg->trans,
+                                                        fp->labels[j]);
                 } else {
-                    S[i] = fp->labels[i];
+                    S[j] = fp->labels[j];
                 }
             }
             *n = fp->nlabels;
@@ -1587,9 +1585,7 @@ const char *function_package_translate (const char *id)
     fnpkg *pkg = get_active_function_package(OPT_NONE);
 
     if (pkg != NULL && pkg->trans != NULL) {
-        char *lang = get_built_in_string_by_name("lang");
-
-        return get_gfn_translation(pkg->trans, id, lang);
+        return get_gfn_translation(pkg->trans, id);
     } else {
         return id;
     }
@@ -2397,7 +2393,11 @@ static void print_param_labels (fn_param *param, PRN *prn)
 {
     int i;
 
-    pputs(prn, " {");
+    if (labels_translatable(param)) {
+        pputs(prn, " T_{");
+    } else {
+        pputs(prn, " {");
+    }
 
     for (i=0; i<param->nlabels; i++) {
         pprintf(prn, "\"%s\"", param->labels[i]);
@@ -8029,14 +8029,20 @@ static int read_param_descrip (char **ps, int trans, fn_param *param)
     return err;
 }
 
-/* get the value labels for a function parameter */
+/* Get the value labels for a function parameter. The syntactic
+   element we're looking at starts with "{", or "T_{" if the
+   labels are translatable.
+*/
 
 static int read_param_labels (char **ps, fn_param *param,
                               const char *name, int nvals)
 {
-    char *p = *ps + 1; /* skip opening '{' */
+    char *p = *ps;
+    int offset = *p == 'T' ? 3 : 1;
     int len = 0;
     int err = E_PARSE;
+
+    p += offset;
 
     while (*p) {
         if (*p == '}') {
@@ -8051,7 +8057,7 @@ static int read_param_labels (char **ps, fn_param *param,
     if (!err && len > 0) {
         char *tmp;
 
-        p = *ps + 1;
+        p = *ps + offset;
         tmp = gretl_strndup(p, len);
 
         if (tmp == NULL) {
@@ -8065,6 +8071,9 @@ static int read_param_labels (char **ps, fn_param *param,
                 gretl_errmsg_sprintf(_("%s: found %d values but %d value-labels"),
                                      name, nvals, param->nlabels);
                 err = E_DATA;
+            }
+            if (!err && offset == 3) {
+                set_labels_translatable(param);
             }
         }
     }
@@ -8201,7 +8210,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
        for the parameter
     */
 
-    if (!err && *s == '{') {
+    if (!err && (*s == '{' || !strncmp(s, "T_{", 3))) {
         if (nvals == 0) {
             err = E_PARSE;
         } else {

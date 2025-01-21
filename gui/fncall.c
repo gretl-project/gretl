@@ -1426,7 +1426,7 @@ static int maybe_limit_enum (call_info *cinfo, int nvals)
 }
 
 static GtkWidget *enum_arg_selector (call_info *cinfo, int i,
-				     const char **S, int nvals,
+				     char **S, int nvals,
 				     int minv, int initv)
 {
     GtkWidget *combo;
@@ -1546,7 +1546,7 @@ static GtkWidget *int_arg_selector (call_info *cinfo,
 	S = fn_param_value_labels(cinfo->func, i, &nvals);
 	if (S == NULL) {
 	    /* try for alternative value-labels */
-	    S = gretl_bundle_get_strings(ui, "value_labels", &ns);
+	    S = (char **) gretl_bundle_get_strings(ui, "value_labels", &ns);
 	    if (S != NULL) {
 		/* check for right number of labels */
 		nvals = maxv - minv + 1;
