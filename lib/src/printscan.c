@@ -1394,7 +1394,7 @@ int do_sscanf (const char *src, const char *format, const char *args,
 int do_printf_command (const char *parm, const char *args,
 		       DATASET *dset, PRN *prn, int quoted)
 {
-    const char *format;
+    const char *format = NULL;
 
 #if PSDEBUG
     fprintf(stderr, "do_printf_command:\n"
@@ -1403,6 +1403,9 @@ int do_printf_command (const char *parm, const char *args,
 
     if (quoted) {
 	format = parm;
+    } else if (!strncmp(parm, "T_(", 3)) {
+        gretl_errmsg_set("A 'T_()' format string requires the function "
+                         "form of printf()");
     } else {
 	/* @parm should be a string variable */
 	format = get_string_by_name(parm);
