@@ -2020,8 +2020,7 @@ static int function_call_dialog (call_info *cinfo)
 		argtxt = g_strdup_printf("%s", trdesc != NULL ? trdesc : desc);
 	    } else {
 		argtxt = g_strdup_printf("%s (%s)", trdesc != NULL ? trdesc :
-					 desc != NULL ? _(desc) :
-					 parname, astr);
+					 desc != NULL ? desc : parname, astr);
 	    }
 	}
 
