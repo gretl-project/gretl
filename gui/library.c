@@ -6465,34 +6465,24 @@ void add_index (GtkAction *action)
 
 void do_add_obs (void)
 {
-    gretlopt opt = OPT_A;
+    int timedim = 0;
     int n, err = 0;
 
     if (dataset_is_panel(dataset)) {
-        const char *opts[] = {
-            _("in the cross-sectional dimension"),
-            _("in the time dimension")
-        };
-        int resp;
-
-        resp = radio_dialog(NULL, _("Add observations"),
-                            opts, 2, 0, 0, NULL);
-        if (resp == GRETL_CANCEL) {
-            return;
-        }
-        if (resp == 1) {
-            opt |= OPT_T;
-        }
+        n = add_obs_dialog(NULL, 1, &timedim, NULL);
+    } else {
+        n = add_obs_dialog(NULL, 1, NULL, NULL);
     }
 
-    n = add_obs_dialog(NULL, 1, opt, NULL);
-
     if (n > 0) {
+        gretlopt opt = timedim ? OPT_T : OPT_A;
+
         err = dataset_add_observations(dataset, n, opt);
         if (err) {
             gui_errmsg(err);
         } else {
             mark_dataset_as_modified();
+            /* FIXME record command */
         }
     }
 }

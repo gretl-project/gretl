@@ -3542,26 +3542,38 @@ static void set_add_obs (GtkButton *b, int *n_add)
 }
 
 int add_obs_dialog (const char *blurb, int addmin,
-                    gretlopt opt, GtkWidget *parent)
+                    int *optval, GtkWidget *parent)
 {
-    int step, panel = dataset_is_panel(dataset);
     GtkWidget *dlg, *vbox, *hbox;
     GtkWidget *addspin, *tmp;
     int n_add = -1;
-
-    if (panel && !(opt & OPT_T)) {
-        addmin = dataset->pd;
-        step = dataset->pd;
-    } else {
-        step = 1;
-    }
 
     dlg = gretl_dialog_new(_("Add observations"), parent,
                            GRETL_DLG_MODAL | GRETL_DLG_BLOCK);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 
-    if (blurb != NULL) {
+    if (dataset_is_panel(dataset) && addmin > 0) {
+        const char *opts[] = {
+            _("in the cross-sectional dimension"),
+            _("in the time dimension")
+        };
+        GSList *group = NULL;
+        GtkWidget *b;
+        int i;
+
+        for (i=0; i<2; i++) {
+            b = gtk_radio_button_new_with_label(group, _(opts[i]));
+            gtk_box_pack_start(GTK_BOX(vbox), b, TRUE, TRUE, 0);
+            g_object_set_data(G_OBJECT(b), "action", GINT_TO_POINTER(i));
+            g_signal_connect(G_OBJECT(b), "clicked",
+                             G_CALLBACK(set_radio_opt), optval);
+            if (i == 0) {
+                gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRUE);
+            }
+            group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b));
+        }
+    } else if (blurb != NULL) {
         hbox = gtk_hbox_new(FALSE, 5);
         tmp = gtk_label_new(blurb);
         gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
@@ -3572,7 +3584,7 @@ int add_obs_dialog (const char *blurb, int addmin,
     tmp = gtk_label_new(_("Number of observations to add:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 
-    addspin = gtk_spin_button_new_with_range(addmin, 10000, step);
+    addspin = gtk_spin_button_new_with_range(1, 10000, 1);
     gtk_entry_set_activates_default(GTK_ENTRY(addspin), TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), addspin, TRUE, TRUE, 5);
 

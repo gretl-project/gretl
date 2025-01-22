@@ -982,6 +982,25 @@ static void maybe_extend_dummies (DATASET *dset, int oldn)
     }
 }
 
+static void maybe_extend_indices (DATASET *dset, int oldn)
+{
+    int minval, incr;
+    int i, t;
+
+    for (i=1; i<dset->v; i++) {
+	if (is_panel_time_var(dset, i, oldn, &minval, &incr)) {
+	    for (t=oldn; t<dset->n; t++) {
+                if (t % dset->pd == 0) {
+                    dset->Z[i][t] = minval;
+                } else {
+                    dset->Z[i][t] = dset->Z[i][t-1] + incr;
+                }
+	    }
+        }
+        /* FIXME unit index */
+    }
+}
+
 static void maybe_extend_lags (DATASET *dset, int t1, int t2)
 {
     int i, j, t, p;
@@ -1087,10 +1106,6 @@ static int real_dataset_add_observations (DATASET *dset, int n,
 	return 0;
     }
 
-    if (dataset_is_panel(dset) && n % dset->pd != 0) {
-	return E_PDWRONG;
-    }
-
     bign = oldn + n;
 
     for (i=0; i<dset->v; i++) {
@@ -1137,6 +1152,9 @@ static int real_dataset_add_observations (DATASET *dset, int n,
                 maybe_extend_dummies(dset, oldn);
             }
             maybe_extend_lags(dset, oldn, dset->n - 1);
+        } else if (dataset_is_panel(dset)) {
+            maybe_extend_dummies(dset, oldn);
+            maybe_extend_indices(dset, oldn);
         } else {
             maybe_extend_index(dset, oldn);
         }
@@ -1321,6 +1339,9 @@ int dataset_add_observations (DATASET *dset, int n, gretlopt opt)
     if (opt & OPT_T) {
 	return panel_dataset_extend_time(dset, n, opt);
     } else {
+        if (dataset_is_panel(dset)) {
+            n *= dset->pd;
+        }
 	return real_dataset_add_observations(dset, n, opt);
     }
 }
@@ -3310,7 +3331,11 @@ int series_record_display_name (DATASET *dset, int i,
     return 0;
 }
 
-static int add_obs (int n, DATASET *dset, gretlopt opt, PRN *prn)
+/* called by modify_dataset(), below, in response to the command
+   "dataset addobs n"
+*/
+
+static int add_obs (DATASET *dset, int n, gretlopt opt, PRN *prn)
 {
     int err = 0;
 
@@ -3319,15 +3344,24 @@ static int add_obs (int n, DATASET *dset, gretlopt opt, PRN *prn)
 	err = E_DATA;
     } else if (n <= 0) {
 	err = E_PARSE;
-    } else if (opt & OPT_T) {
-	/* extending panel time */
-	err = panel_dataset_extend_time(dset, n, opt | OPT_A);
-	if (!err) {
-	    pprintf(prn, _("Panel time extended by %d observations"), n);
-	    pputc(prn, '\n');
-	}
+    } else if (dataset_is_panel(dset)) {
+        if (opt & OPT_T) {
+            /* extending the time dimension */
+            err = panel_dataset_extend_time(dset, n, opt | OPT_A);
+            if (!err) {
+                pprintf(prn, _("Panel time extended by %d observations"), n);
+                pputc(prn, '\n');
+            }
+        } else {
+            err = real_dataset_add_observations(dset, n * dset->pd, OPT_A);
+            if (!err) {
+                pprintf(prn, _("Dataset extended by %d units"), n);
+                pputc(prn, '\n');
+                extend_function_sample_range(n * dset->pd);
+            }
+        }
     } else {
-	err = dataset_add_observations(dset, n, OPT_A);
+	err = real_dataset_add_observations(dset, n, OPT_A);
 	if (!err) {
 	    pprintf(prn, _("Dataset extended by %d observations"), n);
 	    pputc(prn, '\n');
@@ -3338,7 +3372,7 @@ static int add_obs (int n, DATASET *dset, gretlopt opt, PRN *prn)
     return err;
 }
 
-static int insert_obs (int n, DATASET *dset, PRN *prn)
+static int insert_obs (DATASET *dset, int i, PRN *prn)
 {
     int err = 0;
 
@@ -3347,10 +3381,11 @@ static int insert_obs (int n, DATASET *dset, PRN *prn)
 	err = E_DATA;
     } else if (dataset_is_panel(dset)) {
 	err = E_PDWRONG;
-    } else if (n <= 0 || n > dset->n) {
+    } else if (i <= 0 || i > dset->n) {
 	err = E_DATA;
     } else {
-	err = real_insert_observation(n - 1, dset);
+        /* convert to 0-based */
+	err = real_insert_observation(i - 1, dset);
     }
 
     return err;
@@ -3824,9 +3859,9 @@ int modify_dataset (DATASET *dset, int op, const int *list,
     }
 
     if (op == DS_ADDOBS) {
-	err = add_obs(k, dset, opt, prn);
+	err = add_obs(dset, k, opt, prn);
     } else if (op == DS_INSOBS) {
-	err = insert_obs(k, dset, prn);
+	err = insert_obs(dset, k, prn);
     } else if (op == DS_COMPACT) {
 	err = compact_dataset_wrapper(param, dset, k, opt);
     } else if (op == DS_EXPAND) {

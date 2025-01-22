@@ -13994,12 +13994,11 @@ static int scan_to_vector (NODE *n, const char *fmt,
     return nmax;
 }
 
-/* Common code to handle printf(), sprintf() and sscanf(). The @l node
-   is non-NULL only in the case of sscanf(). The @m node is a format
-   string in all cases, and the @r node holds args or NULL.
+/* Code to handle printf() and sprintf(). The @l node is a
+   format string; the @r node holds varargs or may be NULL.
 */
 
-static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
+static NODE *print_func_node (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret;
 
@@ -14010,41 +14009,48 @@ static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
     }
 
     if (ret != NULL) {
-        const char *fmt = m->v.str;
-        const char *lstr = NULL;
+        const char *fmt = l->v.str;
+        const char *args = NULL;
         int n = 0;
 
-        if (l != NULL && l->t == ARRAY) {
+        if (!null_node(r)) {
+            args = r->v.str;
+        }
+        if (f == F_SPRINTF) {
+            ret->v.str = do_sprintf_function(fmt, args, p->dset, &p->err);
+        } else {
+            p->err = do_printf(fmt, args, p->dset, p->prn, &n);
+        }
+        if (!p->err && f == F_PRINTF) {
+            ret->v.xval = n;
+        }
+    }
+
+    return ret;
+}
+
+/* Code to handle sscanf(). The @l node must be a string, or array of
+   strings; @m holds a format string; and @r holds varargs.
+*/
+
+static NODE *sscanf_node (NODE *l, NODE *m, NODE *r, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL) {
+        const char *fmt = m->v.str;
+        const char *args = r->v.str;
+        const char *src = NULL;
+        int n = 0;
+
+        if (l->t == ARRAY) {
             /* scanning array of strings to vector */
             n = scan_to_vector(l, fmt, r->v.str, &p->err);
-            goto finish;
-        } else if (l != NULL) {
-            /* sscanf() only */
-            if (l->t == STR) {
-                lstr = l->v.str;
-            } else {
-                p->err = E_INVARG;
-            }
+        } else {
+            src = l->v.str;
+            p->err = do_sscanf(src, fmt, args, p->dset, &n);
         }
-
         if (!p->err) {
-            const char *args = NULL;
-
-            if (!null_node(r)) {
-                args = r->v.str;
-            }
-            if (f == F_SSCANF) {
-                p->err = do_sscanf(lstr, fmt, args, p->dset, &n);
-            } else if (f == F_SPRINTF) {
-                ret->v.str = do_sprintf_function(fmt, args, p->dset, &p->err);
-            } else {
-                p->err = do_printf(fmt, args, p->dset, p->prn, &n);
-            }
-        }
-
-    finish:
-
-        if (!p->err && f != F_SPRINTF) {
             ret->v.xval = n;
         }
     }
@@ -19152,18 +19158,17 @@ static NODE *eval (NODE *t, parser *p)
     case F_PRINTF:
     case F_SPRINTF:
         if (l->t == STR && null_or_string(r)) {
-            ret = eval_print_scan(NULL, l, r, t->t, p);
+            ret = print_func_node(l, r, t->t, p);
         } else {
-            node_type_error(t->t, 0, STR, NULL, p);
+            p->err = E_INVARG;
         }
         break;
     case F_SSCANF:
-        if (l->t == STR && m->t == STR && r->t == STR) {
-            ret = eval_print_scan(l, m, r, t->t, p);
-        } else if (l->t == ARRAY && m->t == STR && r->t == STR) {
-            ret = eval_print_scan(l, m, r, t->t, p);
+        if ((l->t == STR || l->t == ARRAY) &&
+            (m->t == STR && r->t == STR)) {
+            ret = sscanf_node(l, m, r, p);
         } else {
-            node_type_error(t->t, 0, STR, NULL, p);
+            p->err = E_INVARG;
         }
         break;
     case F_BESSEL:

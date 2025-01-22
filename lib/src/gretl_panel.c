@@ -7335,6 +7335,44 @@ int plausible_panel_time_var (const DATASET *dset)
     return ret;
 }
 
+int is_panel_time_var (const DATASET *dset, int v,
+                       int tmax, int *minval,
+                       int *incr)
+{
+    int t, ret = 0;
+
+    *minval = 0;
+    *incr = 0;
+
+    if (may_be_time_name(dset->varname[v])) {
+        const double *x = dset->Z[v];
+        int val0 = (int) x[0];
+        int incr0 = (int) x[1] - (int) x[0];
+        int ok = 1;
+
+        for (t=0; t<tmax && ok; t++) {
+            if (na(x[t]) || x[t] < 0 || x[t] != floor(x[t])) {
+                ok = 0;
+            } else if (t > 0 && t % dset->pd == 0) {
+                if (x[t] != val0) {
+                    ok = 0;
+                }
+            } else if (t > 1 && x[t] - x[t-1] != incr0) {
+                ok = 0;
+            }
+        }
+        if (ok) {
+            *minval = val0;
+            *incr = incr0;
+            ret = 1;
+        }
+    }
+
+    return ret;
+}
+
+
+
 /* FIXME: this does not yet handle the dropping of instruments */
 
 static int *dpanel_list_omit (const MODEL *orig, const int *drop, int *err)
