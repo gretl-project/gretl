@@ -463,26 +463,6 @@
       </description>
     </function>
 
-    <function name="$lang" section="access" output="string">
-      <description>
-	<para>
-	  Restituisce una stringa indicante la lingua attualmente
-	  usata da gretl, se può essere determinata. La stringa è data
-	  da un codice a due lettere ISO 639-1 (per esempio,
-	  <lit>en</lit> per l'inglese, <lit>jp</lit> per il
-	  giapponese, <lit>el</lit> per il greco) seguito da un
-	  trattino basso e un codice a due lettere ISO 3166-1 per il
-	  paese.  Quindi, ad esempio, il portoghese europeo è
-	  <lit>pt_PT</lit>, mentre quello brasiliano è
-	  <lit>pt_BR</lit>.
-	</para>
-	<para>
-	  Se la lingua di sistema non si può determinare, il risultato
-	  è la stringa <quote><lit>unknown</lit></quote>.
-	</para>
-      </description>
-    </function>
-
     <function name="$llt" section="access" output="series">
       <description>
 	<para>
@@ -1421,20 +1401,6 @@
       </description>
     </function>
 
-    <function name="$workdir" section="access" output="string">
-      <description>
-	<para>
-	  Questo accessore restituisce il percorso di default dove
-	  gretl legge e scrive file. Una descrizione più ampia si
-	  trova nella Command Reference sotto <cmdref
-	  targ="workdir"/>. Si noti che questa stringa può essere
-	  impostata tramite il comando <cmdref targ="set"/>. Per usare
-	  questa stringa in modalità sostituzione, si usi la
-	  chiocciola (@tramodir).
-        </para>
-      </description>
-    </function>
-
     <function name="$xlist" section="access" output="list">
       <description>
 	<para>
@@ -1487,14 +1453,14 @@
 
   </funclist>
 
-  <funclist name="Built-in strings" ref="string_constants">
+  <funclist name="Stringhe predefinite" ref="string_constants">
 
     <function name="$dotdir" section="access" output="string">
       <description>
 	<para>
 	  Questo accessore restituisce il percorso dove gretl salva i
 	  file temporanei. Per usare questa stringa in modalità
-	  sostituzione, si usi la chiocciola (@dotdir).
+	  sostituzione, si usi la chiocciola (<lit>@dotdir</lit>).
 	</para>
       </description>
     </function>
@@ -1503,8 +1469,8 @@
       <description>
         <para>
 	  Restituisce il percorso completo all'eseguibile di
-	  gnuplot. Per usare questa stringa in modalità sostituzione,
-	  si usi la chiocciola (@gnuplot).
+	  <lit>gnuplot</lit>. Per usare questa stringa in modalità sostituzione,
+	  si usi la chiocciola (<lit>@gnuplot</lit>).
         </para>
       </description>
     </function>
@@ -1514,7 +1480,37 @@
         <para>
 	  Restituisce il percorso completo dell'installazione di
 	  gretl. Per usare questa stringa in modalità sostituzione, si
-	  usi la chiocciola (@gretldir).
+	  usi la chiocciola (<lit>@gretldir</lit>).
+        </para>
+        </description>
+    </function>
+
+    <function name="$lang" section="access" output="string">
+      <description>
+	<para>
+	  Restituisce una stringa indicante la lingua attualmente
+	  usata da gretl, se può essere determinata. La stringa è data
+	  da un codice a due lettere ISO 639-1 (per esempio,
+	  <lit>en</lit> per l'inglese, <lit>jp</lit> per il
+	  giapponese, <lit>el</lit> per il greco) seguito da un
+	  trattino basso e un codice a due lettere ISO 3166-1 per il
+	  paese.  Quindi, ad esempio, il portoghese europeo è
+	  <lit>pt_PT</lit>, mentre quello brasiliano è
+	  <lit>pt_BR</lit>.
+	</para>
+	<para>
+	  Se la lingua di sistema non si può determinare, il risultato
+	  è la stringa <quote><lit>unknown</lit></quote>.
+	</para>
+      </description>
+    </function>
+
+    <function name="$seats" section="straccess" output="string">
+        <description>
+        <para>
+	  Restituisce il percorso completo all'eseguibile di
+	  <lit>seats</lit>. Per usare questa stringa in modalità
+	  sostituzione, si usi la chiocciola (<lit>@seats</lit>).
         </para>
         </description>
     </function>
@@ -1523,8 +1519,8 @@
         <description>
         <para>
 	  Restituisce il percorso completo all'eseguibile di
-	  TRAMO. Per usare questa stringa in modalità sostituzione,
-	  si usi la chiocciola (@tramo).
+	  <lit>tramo</lit>. Per usare questa stringa in modalità
+	  sostituzione, si usi la chiocciola (<lit>@tramo</lit>).
         </para>
         </description>
     </function>
@@ -1533,18 +1529,33 @@
         <description>
         <para>
 	  Restituisce il percorso completo dell'installazione di
-	  TRAMO. Per usare questa stringa in modalità sostituzione, si
-	  usi la chiocciola (@tramodir).
+	  <lit>tramo</lit>. Per usare questa stringa in modalità
+	  sostituzione, si usi la chiocciola (<lit>@tramodir</lit>).
         </para>
         </description>
+    </function>
+
+    <function name="$workdir" section="access" output="string">
+      <description>
+	<para>
+	  Questo accessore restituisce il percorso di default dove
+	  gretl legge e scrive file. Una descrizione più ampia si
+	  trova nella Command Reference sotto <cmdref
+	  targ="workdir"/>. Si noti che questa stringa può essere
+	  impostata tramite il comando <cmdref targ="set"/>. Per usare
+	  questa stringa in modalità sostituzione, si usi la
+	  chiocciola (<lit>@tramodir</lit>).
+        </para>
+      </description>
     </function>
 
     <function name="$x12a" section="straccess" output="string">
         <description>
         <para>
 	  Restituisce il percorso completo all'eseguibile di
-	  X-12. Per usare questa stringa in modalità sostituzione,
-	  si usi la chiocciola (@x12a).
+	  <lit>x-12-arima</lit> (o <lit>x-13-arima</lit>). Per usare
+	  questa stringa in modalità sostituzione, si usi la
+	  chiocciola (<lit>@x12a</lit>).
         </para>
         </description>
     </function>
@@ -1553,15 +1564,16 @@
         <description>
         <para>
 	  Restituisce il percorso completo dell'installazione di
-	  X-12. Per usare questa stringa in modalità sostituzione, si
-	  usi la chiocciola (@x12adir).
+	  <lit>x-12-arima</lit> (o <lit>x-13-arima</lit>). Per usare
+	  questa stringa in modalità sostituzione, si usi la
+	  chiocciola (<lit>@x12adir</lit>).
         </para>
         </description>
     </function>
 
   </funclist>
 
-  <funclist name="Functions proper" ref="functions">
+  <funclist name="Funzioni vere e proprie" ref="functions">
 
     <function name="abs" section="math" output="asinput">
       <fnargs>

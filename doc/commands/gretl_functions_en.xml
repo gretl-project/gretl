@@ -456,25 +456,6 @@
       </description>
     </function>
 
-    <function name="$lang" section="access" output="string">
-      <description>
-	<para>
-	  Returns a string representing the national language in force
-	  currently, if this can be determined. The string is composed
-	  of a two-letter ISO 639-1 language code (for example,
-	  <lit>en</lit> for English, <lit>jp</lit> for Japanese,
-	  <lit>el</lit> for Greek) followed by an underscore plus a
-	  two-letter ISO 3166-1 country code.  Thus for example
-	  Portuguese in Portugal gives <lit>pt_PT</lit> while
-	  Portuguese in Brazil gives <lit>pt_BR</lit>.
-	</para>
-	<para>
-	  If the national language cannot be determined, the string
-	  <quote><lit>unknown</lit></quote> is returned.
-	</para>
-      </description>
-    </function>
-
     <function name="$llt" section="access" output="series">
       <description>
 	<para>
@@ -1409,18 +1390,6 @@
       </description>
     </function>
 
-    <function name="$workdir" section="access" output="string">
-      <description>
-	<para>
-	  This accessor returns the path which gretl reads from and
-	  writes to by default. A fuller discussion is provided in the
-	  Command Reference under <cmdref targ="workdir"/>. Note that
-	  this string can be set by the user via the <cmdref
-	  targ="set"/> command.
-        </para>
-      </description>
-    </function>
-
     <function name="$xlist" section="access" output="list">
       <description>
 	<para>
@@ -1505,12 +1474,23 @@
         </description>
     </function>
 
-    <function name="$lang" section="straccess" output="string">
-        <description>
-        <para>
-          Yields the identifier for the currently specified language.
-        </para>
-        </description>
+    <function name="$lang" section="access" output="string">
+      <description>
+	<para>
+	  Returns a string representing the national language in force
+	  currently, if this can be determined. The string is composed
+	  of a two-letter ISO 639-1 language code (for example,
+	  <lit>en</lit> for English, <lit>jp</lit> for Japanese,
+	  <lit>el</lit> for Greek) followed by an underscore plus a
+	  two-letter ISO 3166-1 country code.  Thus for example
+	  Portuguese in Portugal gives <lit>pt_PT</lit> while
+	  Portuguese in Brazil gives <lit>pt_BR</lit>.
+	</para>
+	<para>
+	  If the national language cannot be determined, the string
+	  <quote><lit>unknown</lit></quote> is returned.
+	</para>
+      </description>
     </function>
 
     <function name="$seats" section="straccess" output="string">
@@ -1544,14 +1524,17 @@
         </description>
     </function>
 
-    <function name="$workdir" section="straccess" output="string">
-        <description>
-        <para>
-         Yields the path string of gretl's current working directory.
-         To use it in string-substitution mode, prepend the at-sign
-         (<lit>@workdir</lit>).
+    <function name="$workdir" section="access" output="string">
+      <description>
+	<para>
+	  Yields the path which gretl reads from and writes to by
+	  default. A fuller discussion is provided in the Command
+	  Reference under <cmdref targ="workdir"/>. Note that this
+	  string can be set by the user via the <cmdref targ="set"/>
+	  command.  To use it in string-substitution mode, prepend the
+	  at-sign (<lit>@workdir</lit>).
         </para>
-        </description>
+      </description>
     </function>
 
     <function name="$x12a" section="straccess" output="string">
