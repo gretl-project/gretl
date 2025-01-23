@@ -941,8 +941,7 @@ static int binsearch (keynum targ, const keynum *vals, int n, int offset)
    not, return 0.
 */
 
-static int aggr_val_determined (joiner *jr, int n, int ntotal,
-                                double *x, int *err)
+static int aggr_val_determined (joiner *jr, int n, double *x, int *err)
 {
     if (jr->aggr == AGGR_COUNT) {
         /* just return the number of matches */
@@ -960,10 +959,6 @@ static int aggr_val_determined (joiner *jr, int n, int ntotal,
         *err = E_DATA;
         gretl_errmsg_set(_("You need to specify an aggregation "
                            "method for a 1:n join"));
-        *x = NADBL;
-        return 1;
-    } else if (ntotal == 0 && jr->aggr == AGGR_NONE) {
-        fprintf(stderr, "aggr_val_determined ? ntotal = 0\n");
         *x = NADBL;
         return 1;
     } else {
@@ -1049,7 +1044,7 @@ static double aggr_value (joiner *jr,
     if (jr->n_keys == 1) {
         /* if there's just a single key, we can figure some
            cases out already */
-        if (aggr_val_determined(jr, n, -1, &x, err)) {
+        if (aggr_val_determined(jr, n, &x, err)) {
             return x;
         }
     }
@@ -1153,7 +1148,7 @@ static double aggr_value (joiner *jr,
             return NADBL;
         }
         /* we've already checked this for the 1-key case */
-        if (aggr_val_determined(jr, n, ntotal, &x, err)) {
+        if (aggr_val_determined(jr, n, &x, err)) {
             return x;
         }
     }
