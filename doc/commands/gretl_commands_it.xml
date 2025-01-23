@@ -1816,6 +1816,12 @@
 	e scalari salvati in precedenza, vengono conservati.
       </para>
       <para>
+	Con l'opzione <opt>functions</opt>, tutte le funzioni definite
+	dall'utente e tutte le funzioni definite dai pacchetti che
+	sono stati caricati vengono cancellate dalla memoria. Il
+	datasete le altre variabili non vengono toccati.
+      </para>
+      <para>
 	Con l'opzione <opt>all</opt>, la cancellazione è totale, e
 	riguarda il dataset, variabili di tutti i tipi, e tutte le
 	funzioni, sia definite dall'utente che provenienti da pacchetti.
@@ -8529,12 +8535,15 @@ contenga un percorso completo.
         <flag>--verbose</flag>
         <effect>mostra i dettagli dei comandi genr</effect>
       </option>
+        <option>
+          <flag>--decr</flag>
+          <effect>vedi sotto</effect>
+        </option>
     </options>
     <examples>
       <example>loop 1000</example>
-      <example>loop 1000 --progressive</example>
-      <example>loop while essdiff > .00001</example>
-      <example>loop i=1991..2000 --verbose</example>
+      <example>loop i=1..10</example>
+      <example>loop while essdiff &gt; .00001</example>
       <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
       <example>loop foreach i xlist</example>
       <demos>
@@ -8561,6 +8570,14 @@ contenga un percorso completo.
       linguaggio di programmazione C); infine, <quote><lit>foreach</lit></quote>
       seguito da una variabile indice e una lista.
     </para>
+      <para>
+        L'opzione <opt>decr</opt> è specifica della forma di ciclo
+        <quote>intervallo di valori interi</quote>. Per default,
+        l'indice viene incrementato di 1 a ogni iterazione e, se il
+        valore iniziale è inferiore al valore finale, il ciclo non
+        verrà eseguito. Quando viene specificato <opt>decr</opt>,
+        l'indice viene invece decrementato di 1 a ogni iterazione.
+      </para>
     <para>
       Si veda <guideref targ="chap:looping"/> per altri dettagli ed esempi,
       oltre che per la spiegazione dell'opzione <opt>progressive</opt> (che
@@ -8578,8 +8595,7 @@ contenga un percorso completo.
 
 </command>
 
-<command name="mahal" section="Statistics"
-	 label="Distanze di Mahalanobis">
+<command name="mahal" section="Statistics" label="Distanze di Mahalanobis">
 
   <usage>
     <arguments>
@@ -8849,7 +8865,7 @@ contenga un percorso completo.
     <ilist>
       <li>
 	<para>
-	  payload: questa è l'eventuale serie in base alla
+	  serie da plottare: questa è l'eventuale serie in base alla
 	  quale la mappa verrà colorata. senza un
 	  <quote>contenuto</quote> verranno mostrati solo i
 	  confini. Se il dataset attualmente aperto contiene una o
@@ -8860,26 +8876,35 @@ contenga un percorso completo.
       </li>
       <li>
 	<para>
-	  palette: questo elemento permette di scegliere fra diverse
+	  paletta: questo elemento permette di scegliere fra diverse
 	  tavolozze di colori, cosicché è rilevante solo se è stata
 	  selezionata una serie contenuto.
 	</para>
       </li>
       <li>
 	<para>
-	  log scale: Se esite una serie contenuto, va rappresentata
+	  Scala logaritmica: Se esite una serie contenuto, va rappresentata
 	  in scala logaritmica? Di default, no.
 	</para>
       </li>
       <li>
 	<para>
-	  border: si vuole disegnare un bordo rettangolare intorno
+	  disegna il bordo: si vuole disegnare un bordo rettangolare intorno
 	  alla mappa? Di default, sì, ma lo si può rimuovere.
 	</para>
       </li>
+	<li>
+	  <para>
+	    Spessore dei confini: controlla la larghezza del bordo o
+	    del contorno disegnato attorno alle distinte aree nella
+	    mappa (ad esempio, paesi o regioni). Se il tuo grafico
+	    include un a serie da plottare, la larghezza può essere
+	    ridotta a zero così da eliminare tali bordi.
+	  </para>
+	</li>
       <li>
 	<para>
-	  height: questo parametro controlla l'altezza
+	  altezza in pixel: questo parametro controlla l'altezza
 	  dell'immagine. Data quest'ultima, la larghezza viene
 	  calcolata in base all'ampiezza in longitudine della mappa.
 	</para>
@@ -8887,7 +8912,7 @@ contenga un percorso completo.
     </ilist>
     <para>
       Si noti che si usando la funzione <fncref targ="geoplot"/> da
-      script ci sono <i>molte</i> più possibilità di personalizzare
+      script ci sono <i>molte</i> più possibilità per personalizzare
       l'aspetto e il contenuto della mappa.
     </para>
   </description>
@@ -13285,11 +13310,20 @@ del comando <cmdref targ="set"/>.
       scalati automaticamente.
     </para>
     <para>
-      È possibile esercitare un controllo molto più puntuale su
-      questa procedura usando la funzione <lit>regls</lit> da
-      script. In particolare, è possibile specificare le opzioni di
-      validazione incrociata (cross validation); si veda
-      <doc>regls.pdf</doc> per ulteriori dettagli.
+      Selezionandi più valori &lgr; diventa disponibile l'opzione di
+      cross-validation. In tal caso si può scegliere il numero di
+      <quote>fold</quote> per i dati di training (predefinito 10) e se
+      questi fold devono essere sottoinsiemi casuali o contigui delle
+      osservazioni. Si può anche scegliere di mostrare un grafico
+      dell'errore quadratico medio (MSE) rispetto alla frazione &lgr;.
+    </para>
+    <para>
+      	Il pulsante <quote>Opzioni avanzate</quote> porta a una nuova
+      	finestra che permette un controllo più fine sulla procedura di
+      	regolarizzazione. Tuttavia, si noti che è possibile esercitare
+      	un controllo molto più puntuale su questa procedura usando la
+      	funzione <lit>regls</lit> da script. Si veda
+      	<doc>regls.pdf</doc> per ulteriori dettagli.
     </para>
   </description>
 </command>
