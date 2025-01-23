@@ -689,6 +689,10 @@
 	  alta, come il mese).
 	</para>
 	<para>
+	  Per dati giornalieri, <lit>$obsminor</lit> ritorna il mese
+	  dell'osservazione corrispondente.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="$obsmajor"/>
             <fncref targ="$obsmicro"/>
@@ -2788,6 +2792,13 @@
 	  standard aggiustata per gradi di libertà (ossia <math>n</math>
 	  &minus; 1, dove <math>n</math> è il numero di righe di
 	  <argname>X</argname>).
+	</para>
+	<para>
+	  Se viene fornito un valore nonzero per
+	  <argname>skip_na</argname>, i valori mancanti vengono
+	  ignorati; altrimenti, se una colonna di <argname>X</argname>
+	  contiene valori mancanti, la colonna corrispondente
+	  nell'output conterrà solo valori mancanti.
 	</para>
 	<para>
 	  Si noti che la funzione <fncref targ="stdize"/> è più
@@ -6710,6 +6721,7 @@
       <fnargs>
 	<fnarg type="strings">S</fnarg>
 	<fnarg type="string">test</fnarg>
+	<fnarg type="bool" optional="true">simple</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6729,6 +6741,14 @@
 	  2
 	  4
 	</code>
+	<para>
+	  Se viene fornito un valore nonzero per l'argomento opzionale
+	  <argname>simple</argname>, il valore restituito è uno
+	  scalare: 1 se <argname>test</argname> si trova in
+	  <argname>S</argname>, 0 altrimenti. In questo caso la
+	  funzione usa un algoritmo semplificato e quindi è più
+	  efficiente se si desidera solo una risposta vero/falso.
+	</para>
       </description>
     </function>
 
@@ -7810,11 +7830,20 @@
     <function name="ksimul" section="sspace" output="scalar">
       <fnargs>
 	<fnarg type="bundleref">&amp;Mod</fnarg>
+	<fnarg type="matrix">U</fnarg>
+	<fnarg type="bool" optional="true">extra</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Usa un bundle di tipo Kalman, creato in precedenza con
-	  <fncref targ="ksetup"/> per simulare dei dati.
+	  <fncref targ="ksetup"/> per simulare dei dati, prendendo i
+	  disturbi dalla matrice <argname>U</argname>. Per default, la
+	  matrice restituita (che avrà tante righe quante
+	  <argname>U</argname>) contiene valori simulati delle
+	  osservabili, ma se viene specificato un valore diverso da
+	  zero per <argname>extra</argname> viene inclusa anche la
+	  simulazione degli stati. In quest'ultimo caso, ogni riga
+	  contiene prima gli stati, poi le osservabili.
 	</para>
 	<para>
 	  Per maggiori dettagli, vedi <guideref targ="chap:kalman"/>.
@@ -8648,11 +8677,16 @@
     <function name="meanc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Calcola le medie per colonna di <argname>X</argname>, senza
-	  saltare osservazioni mancanti.
+	  saltare osservazioni mancanti. Se viene
+	  specificato un valore non-zero per il secondo argomento
+	  (opzionale), i valori mancanti vengono ignorati, altrimenti
+	  il ​​risultato è <lit>NA</lit> per tutte le colonne che
+	  contengono valori mancanti.
 	</para>
 	<para>
 	  Ad esempio, il codice seguente
@@ -8695,10 +8729,15 @@
     <function name="meanr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Calcola le medie per riga di <argname>X</argname>.
+	  Calcola le medie per riga di <argname>X</argname>. Se viene
+	  specificato un valore non-zero per il secondo argomento
+	  (opzionale), i valori mancanti vengono ignorati, altrimenti
+	  il ​​risultato è <lit>NA</lit> per tutte le righe che
+	  contengono valori mancanti.
 	  <seelist>
 	    <fncref targ="meanc"/>
 	    <fncref targ="sumr"/>
@@ -11134,11 +11173,17 @@
     <function name="prodc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Restituisce il prodotto degli elementi di <argname>X</argname>,
-	  per colonna.
+	  per colonna. Se viene specificato un
+	  valore diverso da zero per il secondo argomento opzionale, i
+	  valori mancanti vengono ignorati, altrimenti il ​​risultato è
+	  <lit>NA</lit> per tutte le colonne che contengono valori
+	  mancanti. Quindi, specificare <argname>skip_na</argname>
+	  equivale a trattare i valori mancanti come se fossero 1.
 	  <seelist>
 	    <fncref targ="prodr"/>
 	    <fncref targ="meanc"/>
@@ -11152,11 +11197,17 @@
     <function name="prodr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce il prodotto degli elementi di <argname>X</argname>,
-	  per riga.
+	  Restituisce il prodotto degli elementi di
+	  <argname>X</argname>, per riga. Se viene specificato un
+	  valore diverso da zero per il secondo argomento opzionale, i
+	  valori mancanti vengono ignorati, altrimenti il ​​risultato è
+	  <lit>NA</lit> per tutte le righe che contengono valori
+	  mancanti. Quindi, specificare <argname>skip_na</argname>
+	  equivale a trattare i valori mancanti come se fossero 1.
 	  <seelist>
 	    <fncref targ="prodc"/>
 	    <fncref targ="meanr"/>
@@ -13299,6 +13350,13 @@
 	  <argname>v</argname> è uguale a &minus;1 è eseguita solo
 	  la centratura.
 	</para>
+	<para>
+	  Per default, i valori mancanti vengono automaticamente
+	  saltati se l'input è una serie o una lista, ma non se è una
+	  matrice. Per ignorare i valori mancanti in questo ultimo
+	  caso, va fornito un valore non-zero per
+	  <argname>skip_na</argname>.
+	</para>
       </description>
     </function>
 
@@ -13915,10 +13973,15 @@
     <function name="sumc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce le somme per colonna di <argname>X</argname>.
+	  Restituisce le somme per colonna di <argname>X</argname>. Se
+	  viene specificato un valore non-zero per il secondo
+	  argomento facoltativo, i valori mancanti vengono ignorati,
+	  altrimenti il ​​risultato è <lit>NA</lit> per tutte le colonne
+	  che contengono valori mancanti.
 	  <seelist>
 	    <fncref targ="meanc"/>
 	    <fncref targ="sumr"/>
@@ -13930,10 +13993,15 @@
     <function name="sumr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce le somme per riga di <argname>X</argname>.
+	  Restituisce le somme per riga di <argname>X</argname>. Se
+	  viene specificato un valore non-zero per il secondo
+	  argomento facoltativo, i valori mancanti vengono ignorati,
+	  altrimenti il ​​risultato è <lit>NA</lit> per tutte le righe
+	  che contengono valori mancanti.
 	  <seelist>
 	    <fncref targ="meanr"/>
 	    <fncref targ="sumc"/>
@@ -14308,32 +14376,38 @@ d =  8.0000000
     
     <function name="typeof" section="data-utils" output="int">
       <fnargs>
-	<fnarg type="string">nome</fnarg>
+	<fnarg type="string">espressione</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Funzione obsoleta: vedi <fncref targ="typename"/> per
-	  un'alternativa migliore.  Restituisce un codice di tipo per
-	  <argname>nome</argname>, che è l'identificativo di un
+	  Restituisce un codice numerico di tipo per
+	  <argname>espressione</argname>, che è l'identificativo di un
 	  qualche oggetto. I codici sono: 1 = scalare, 2 = serie, 3 =
-	  matrice, 4 = stringa, 5 = bundle, 6 = array e 7 = lista. Se
-	  l'oggetto non è definito, ritorna 0.  Per avere la stringa
-	  corrispondente al codice, si può usare la funzione <fncref
-	  targ="typestr"/>.
+	  matrice, 4 = stringa, 5 = bundle, 6 = array e 7 = lista.
+	  Per avere la stringa corrispondente al codice, si può usare
+	  la funzione <fncref targ="typestr"/>. Se l'oggetto non è
+	  definito (o più in generale se un'assegnazione con
+	  <argname>espressione</argname> produce un errore), ritorna
+	  0.
 	</para>
 	<para>
-	  Questa funzione si può anche usare per stabilire il tipo di
-	  un elemento di un bundle o di un array. Ad esempio:
+	  Qui di seguito, qualche esempio:
 	</para>
 	<code>
-	  matrices M = array(1)
-	  eval typestr(typeof(M))
-	  eval typestr(typeof(M[1]))
+	  strings S = defarray("foo", "bar")
+	  eval typeof(S)            # ritorna 6 (array)
+	  eval typeof(S[1])	    # ritorna 4 (stringa)
+	  eval typeof(S[7])	    # ritorna 0 (indice non valido)
+	  eval typeof(S[x])	    # ritorna 0 (indice non valido)
+	  eval typeof(1+1)	    # ritorna 1 (scalare)
+	  eval typeof(sqrt("foo"))  # ritorna 0 (non valido)
 	</code>
 	<para>
-	  Il risultato della prima <lit>eval</lit> è
-	  <quote>array</quote> e quello della seconda è
-	  <quote>matrice</quote>.
+	  La funzione <fncref targ="typestr"/> può essere utilizzata
+	  per ottenere la stringa corrispondente al valore restituito
+	  da <lit>typeof</lit>, ma se si desidera solo il risultato
+	  della stringa <fncref targ="typename"/> potrebbe essere
+	  preferibile.
 	</para>
       </description>
     </function>
