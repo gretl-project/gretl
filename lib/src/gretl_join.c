@@ -1106,14 +1106,14 @@ static double aggr_value (joiner *jr,
 
         /* and we're done */
         return x;
-    }
+    } /* end of special MIDAS case */
 
     /* We now fill out the array @xmatch with non-missing values
        from the matching outer rows. If we have a secondary key
        we screen for matches on that as we go.
     */
 
-    n = 0;      /* will now hold count of non-NA matches */
+    n = 0;      /* will hold count of non-NA matches */
     ntotal = 0; /* will ignore the OK/NA distinction */
 
     for (i=imin; i<imax; i++) {
@@ -1451,7 +1451,8 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
             double zt;
 
 #if AGGDEBUG
-            fprintf(stderr, " working on obs %d\n", t);
+            fprintf(stderr, " working on LHS obs %d (v=%d, value %g)\n",
+                    t, lv, dset->Z[lv][t]);
 #endif
             if (matcher.pos[s] == KEYMISS) {
                 dset->Z[lv][t] = NADBL;
@@ -1465,10 +1466,10 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
 	    }
 #if AGGDEBUG
             if (na(zt)) {
-                fprintf(stderr, " aggr_value: got NA (keys=%g,%g, err=%d)\n",
+                fprintf(stderr, " aggregate_data: got NA (keys=%g,%g, err=%d)\n",
                         matcher.k1[s], matcher_get_k2(&matcher, s), err);
             } else {
-                fprintf(stderr, " aggr_value: got %.12g (keys=%g,%g, err=%d)\n",
+                fprintf(stderr, " aggregate_data: got %.12g (keys=%g,%g, err=%d)\n",
                         zt, matcher.k1[s], matcher_get_k2(&matcher, s), err);
             }
 #endif
