@@ -139,15 +139,15 @@ described above.
 \section{Filtering}
 \label{sec:join-filter}
 
-Rows from the outer dataset can be filtered using the \option{filter}
-option. The required parameter for this option is a Boolean condition,
-that is, an expression which evaluates to non-zero (true, include the
-row) or zero (false, skip the row) for each of the outer rows. The
-filter expression may include any of the following terms: up to three
-``right-hand'' series (under their converted names as explained
-above); scalar or string variables defined ``on the left''; any of the
-operators and functions available in gretl (including user-defined
-functions); and numeric or string constants.
+Rows from the \textit{outer} dataset can be filtered using the
+\option{filter} option. The required parameter for this option is a
+Boolean condition, that is, an expression which evaluates to non-zero
+(true, include the row) or zero (false, skip the row) for each of the
+outer rows. The filter expression may include any of the following
+terms: up to three ``right-hand'' series (under their converted names as
+explained above); scalar or string variables defined ``on the left'';
+any of the operators and functions available in gretl (including
+user-defined functions); and numeric or string constants.
 
 Here are a few simple examples of potentially valid filter options
 (assuming that the specified right-hand side columns are found):
@@ -179,15 +179,14 @@ It is safest to enclose the whole filter expression in double quotes,
 however this is not strictly required unless the expression contains
 spaces or the equals sign.
 
-In general, an error is flagged if a missing value is encountered in
-a series referenced in a filter expression. This is because the
-condition then becomes indeterminate; taking example 2 above, if the
-\texttt{nkids} value is \texttt{NA} on any given row we are not in a
-position to evaluate the condition \texttt{nkids>2}. However, you can
-use the \texttt{missing()} function---or \texttt{ok()}, which is a
-shorthand for \texttt{!missing()}---if you need a filter that keys off
-the missing or non-missing status of a variable.
-
+In general, an error is flagged if a missing value is encountered in a
+series referenced in a filter expression, because the condition then
+becomes indeterminate. In example 2 above, if the \texttt{nkids} value
+is \texttt{NA} on any given row we are not in a position to evaluate the
+condition \texttt{nkids>2}. However, you can use the \texttt{missing()}
+function---or \texttt{ok()}, which is a shorthand for
+\texttt{!missing()}---if you need a filter that keys off the missing or
+non-missing status of a variable.
 
 \section{Matching with keys}
 \label{sec:join-keys}
@@ -316,7 +315,7 @@ dataset. Three other possibilities arise:
 \item Some rows in the inner dataset have no match on the right.
   
 \end{itemize}
-The first case is addressed in detail in the next section; here we
+The 1-to-$n$ case is addressed in detail in the next section; here we
 discuss the others.
 
 The $n$ to 1 case is straightforward. If a particular key value
@@ -325,31 +324,32 @@ observations on the left but at a single observation on the right,
 then the right-hand value is entered at each of the matching slots on
 the left.
 
-The handling of the case where there's \textit{no} match on the right
+Treatment of the case where there's \textit{no} match on the right
 depends on whether the join operation is adding a new series to the
-inner dataset or modifying an existing one. If it's a new series, then
+inner dataset or modifying an existing one. When adding a new series,
 unmatched rows automatically get \texttt{NA} for the imported
-data. However, if join is pulling in values for a series already
-present on the left only matched rows will be updated. In other words
-we do \textit{not} overwite an existing value on the left with
-\texttt{NA} when there's no match on the right.
+data. However, if join is pulling in values for a series already present
+on the left only matched rows will be updated. In other words we do
+\textit{not} overwite an existing value on the left with \texttt{NA}
+when there's no match on the right.
 
-These defaults may not produce the desired results in every case but
-gretl provides the means to modify the effect if need be.  We will
+These default policies may not produce the desired results in every case
+but gretl provides the means to modify the effect if need be.  We will
 illustrate with two scenarios.
 
-First consider adding a new series recording ``number of hours
-worked'' when the inner dataset contains individuals and the outer
-file contains data on jobs. If an individual does not appear in the
-jobs file, we may want to take her hours worked as implicitly zero
-rather than \texttt{NA}. In this case gretl's \texttt{misszero()}
-function can be used to turn \texttt{NA} into 0 in the imported
-series.
+First consider adding a new series recording ``number of hours worked''
+when the inner dataset contains individuals and the outer file contains
+data on jobs. If an individual does not appear in the jobs file (no
+match on the right) the default policy means that her hours worked will
+be recorded as \texttt{NA}. If in context you wish to set hours worked
+to zero rather than \texttt{NA} for such individuals, gretl's
+\texttt{misszero()} function can be used to turn \texttt{NA} into 0 in
+the imported series.
 
-Second, consider updating a series via join when the outer file is
-presumed to contain all available updated values, such that ``no
-match'' should be taken as an implicit \texttt{NA}. In that case we
-want the (presumably out-of-date) values on any unmatched rows to be
+Second, consider updating an existing series via join when the outer
+file is presumed to contain all available updated values, such that ``no
+match'' should be taken as an implicit \texttt{NA}. In that case we want
+the (presumably out-of-date) values on any unmatched rows to be
 overwritten with \texttt{NA}. Let the series in question be called
 \texttt{x} (both on the left and the right) and let the common key be
 called \texttt{pid}. The solution is then
@@ -357,11 +357,12 @@ called \texttt{pid}. The solution is then
 join update.csv tmpvar --data=x --ikey=pid
 x = tmpvar
 \end{code}
-As a new variable, \texttt{tmpvar} will get \texttt{NA} for all
-unmatched rows; we then transcribe its values into \texttt{x}.  In a
-more complicated case one might use the \texttt{smpl} command to limit
-the sample range before assigning \texttt{tmpvar} to \texttt{x}, or
-use the conditional assignment operator \texttt{?:}.
+where \texttt{tmpvar} does not already exist in the inner dataset. As a
+new series, \texttt{tmpvar} will get \texttt{NA} for all unmatched rows;
+we then transcribe its values into \texttt{x}.  In a more complicated
+case one might use the \texttt{smpl} command to limit the sample range
+before assigning \texttt{tmpvar} to \texttt{x}, or use the conditional
+assignment operator \texttt{?:}.
 
 One further point: given some missing values in an imported series you
 may want to know whether (a) the \texttt{NA}s were explicitly

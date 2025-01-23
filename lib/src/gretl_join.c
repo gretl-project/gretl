@@ -55,7 +55,7 @@ typedef double keynum;
 struct jr_row_ {
     int n_keys;     /* number of keys (needed for qsort callback) */
     keynum keyval;  /* primary key value */
-    keynum keyval2; /* secondary key value, if applicable */
+    keynum keyval2; /* secondary key value, if present */
     int micro;      /* high-frequency "key", if any */
     int dset_row;   /* associated row in the RHS or outer dataset */
     double aux;     /* auxiliary value */
@@ -78,7 +78,7 @@ struct joiner_ {
     int n_keys;     /* number of keys used (0, 1 or 2) */
     int n_unique;   /* number of unique primary key values on right */
     jr_row *rows;   /* array of table rows */
-    keynum *keys;   /* array of unique (primary) key values as 64-bit ints */
+    keynum *keys;   /* array of unique (primary) key values as doubles */
     int *key_freq;  /* counts of occurrences of (primary) key values */
     int *key_row;   /* record of starting row in joiner table for primary keys */
     int *str_keys;  /* flags for string comparison of key(s) */
@@ -941,7 +941,8 @@ static int binsearch (keynum targ, const keynum *vals, int n, int offset)
    not, return 0.
 */
 
-static int aggr_val_determined (joiner *jr, int n, double *x, int *err)
+static int aggr_val_determined (joiner *jr, int n, int ntotal,
+                                double *x, int *err)
 {
     if (jr->aggr == AGGR_COUNT) {
         /* just return the number of matches */
@@ -959,6 +960,10 @@ static int aggr_val_determined (joiner *jr, int n, double *x, int *err)
         *err = E_DATA;
         gretl_errmsg_set(_("You need to specify an aggregation "
                            "method for a 1:n join"));
+        *x = NADBL;
+        return 1;
+    } else if (ntotal == 0 && jr->aggr == AGGR_NONE) {
+        fprintf(stderr, "aggr_val_determined ? ntotal = 0\n");
         *x = NADBL;
         return 1;
     } else {
@@ -1018,6 +1023,7 @@ static double aggr_value (joiner *jr,
                           int revseq,
                           double *xmatch,
                           double *auxmatch,
+                          int *nomatch,
                           int *err)
 {
     keynum key1 = matcher->k1[s];
@@ -1028,7 +1034,8 @@ static double aggr_value (joiner *jr,
     int i, n, ntotal;
 
 #if AGGDEBUG
-    fprintf(stderr, " key1 = %g: matched at position %d\n", key1, pos);
+    fprintf(stderr, " key1 = %g, key2 = %g\n", key1, key2);
+    fprintf(stderr, " key1 matched at position %d\n", pos);
 #endif
 
     /* how many matches at @pos? */
@@ -1042,7 +1049,7 @@ static double aggr_value (joiner *jr,
     if (jr->n_keys == 1) {
         /* if there's just a single key, we can figure some
            cases out already */
-        if (aggr_val_determined(jr, n, &x, err)) {
+        if (aggr_val_determined(jr, n, -1, &x, err)) {
             return x;
         }
     }
@@ -1140,8 +1147,13 @@ static double aggr_value (joiner *jr,
     }
 
     if (jr->n_keys > 1) {
+        /* handle case of no match on secondary key */
+        if (ntotal == 0 && jr->aggr != AGGR_COUNT) {
+            *nomatch = 1;
+            return NADBL;
+        }
         /* we've already checked this for the 1-key case */
-        if (aggr_val_determined(jr, n, &x, err)) {
+        if (aggr_val_determined(jr, n, ntotal, &x, err)) {
             return x;
         }
     }
@@ -1451,8 +1463,8 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
             double zt;
 
 #if AGGDEBUG
-            fprintf(stderr, " working on LHS obs %d (v=%d, value %g)\n",
-                    t, lv, dset->Z[lv][t]);
+            fprintf(stderr, " working on LHS obs %d (v=%d, value %g), s=%d\n",
+                    t, lv, dset->Z[lv][t], s);
 #endif
             if (matcher.pos[s] == KEYMISS) {
                 dset->Z[lv][t] = NADBL;
@@ -1460,9 +1472,10 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
             } else if (matcher.pos[s] < 0) {
 		nomatch = 1;
 		zt = (jr->aggr == AGGR_COUNT)? 0 : NADBL;
+                continue;
 	    } else {
 		zt = aggr_value(jr, &matcher, s, rv, revseq, xmatch,
-				auxmatch, &err);
+				auxmatch, &nomatch, &err);
 	    }
 #if AGGDEBUG
             if (na(zt)) {
@@ -1482,7 +1495,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
                     dset->Z[lv][t] = zt;
                 } else if (zt != dset->Z[lv][t]) {
                     if (nomatch && !na(dset->Z[lv][t])) {
-                        ; /* leave existing data alone (?) */
+                        ; /* leave existing data alone */
                     } else {
                         dset->Z[lv][t] = zt;
                         *modified += 1;
