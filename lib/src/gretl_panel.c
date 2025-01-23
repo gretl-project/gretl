@@ -7335,6 +7335,12 @@ int plausible_panel_time_var (const DATASET *dset)
     return ret;
 }
 
+/* Tests whether the series with index number @v codes for the
+   time dimension of a panel dataset. If so, returns 1 and
+   records the minimum value and (constant) increment of the
+   index; otherwise returns 0.
+*/
+
 int is_panel_time_var (const DATASET *dset, int v,
                        int tmax, int *minval,
                        int *incr)
@@ -7371,7 +7377,29 @@ int is_panel_time_var (const DATASET *dset, int v,
     return ret;
 }
 
+int is_panel_unit_var (const DATASET *dset, int v, int tmax)
+{
+    const double *x = dset->Z[v];
+    int t, ret = 1;
 
+    if (x[0] != 1) {
+        return 0;
+    }
+
+    for (t=1; t<tmax && ret; t++) {
+        if (na(x[t]) || x[t] < 0 || x[t] != floor(x[t])) {
+            ret = 0;
+        } else if (t % dset->pd == 0) {
+            if (x[t] != x[t-1] + 1) {
+                ret = 0;
+            }
+        } else if (x[t] != x[t-1]) {
+            ret = 0;
+        }
+    }
+
+    return ret;
+}
 
 /* FIXME: this does not yet handle the dropping of instruments */
 

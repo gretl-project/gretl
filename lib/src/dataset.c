@@ -985,6 +985,7 @@ static void maybe_extend_dummies (DATASET *dset, int oldn)
 static void maybe_extend_indices (DATASET *dset, int oldn)
 {
     int minval, incr;
+    int udone = 0;
     int i, t;
 
     for (i=1; i<dset->v; i++) {
@@ -996,8 +997,16 @@ static void maybe_extend_indices (DATASET *dset, int oldn)
                     dset->Z[i][t] = dset->Z[i][t-1] + incr;
                 }
 	    }
+        } else if (!udone && is_panel_unit_var(dset, i, oldn)) {
+	    for (t=oldn; t<dset->n; t++) {
+                if (t % dset->pd == 0) {
+                    dset->Z[i][t] = dset->Z[i][t-1] + 1;
+                } else {
+                    dset->Z[i][t] = dset->Z[i][t-1];
+                }
+	    }
+            udone = 1;
         }
-        /* FIXME unit index */
     }
 }
 
@@ -3348,23 +3357,27 @@ static int add_obs (DATASET *dset, int n, gretlopt opt, PRN *prn)
         if (opt & OPT_T) {
             /* extending the time dimension */
             err = panel_dataset_extend_time(dset, n, opt | OPT_A);
-            if (!err) {
+            if (!err && gretl_messages_on()) {
                 pprintf(prn, _("Panel time extended by %d observations"), n);
                 pputc(prn, '\n');
             }
         } else {
             err = real_dataset_add_observations(dset, n * dset->pd, OPT_A);
             if (!err) {
-                pprintf(prn, _("Dataset extended by %d units"), n);
-                pputc(prn, '\n');
+                if (gretl_messages_on()) {
+                    pprintf(prn, _("Dataset extended by %d units"), n);
+                    pputc(prn, '\n');
+                }
                 extend_function_sample_range(n * dset->pd);
             }
         }
     } else {
 	err = real_dataset_add_observations(dset, n, OPT_A);
 	if (!err) {
-	    pprintf(prn, _("Dataset extended by %d observations"), n);
-	    pputc(prn, '\n');
+            if (gretl_messages_on()) {
+                pprintf(prn, _("Dataset extended by %d observations"), n);
+                pputc(prn, '\n');
+            }
 	    extend_function_sample_range(n);
 	}
     }

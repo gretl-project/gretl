@@ -73,6 +73,8 @@ int is_panel_time_var (const DATASET *dset, int v,
                        int tnax, int *minval,
                        int *incr);
 
+int is_panel_unit_var (const DATASET *dset, int v, int tmax);
+
 int panel_isconst (int t1, int t2, int pd, const double *x,
 		   int bygroup);
 
