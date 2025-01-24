@@ -226,7 +226,12 @@ static void stderr_output_handler (const gchar *log_domain,
 				   const gchar *message,
 				   gpointer user_data)
 {
-    fprintf(stderr, "%s : %s\n", log_domain, message);
+    if (!strcmp(log_domain, "Gtk") && (flags & G_LOG_LEVEL_WARNING)) {
+        /* suppress Gtk warning */
+        return;
+    } else {
+        fprintf(stderr, "%s : %s\n", log_domain, message);
+    }
 }
 
 static void set_g_logging (int debug)

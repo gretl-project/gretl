@@ -493,16 +493,6 @@ static void record_filearg (char *targ, const char *src)
 
 #if !defined(G_OS_WIN32) && GTK_MAJOR_VERSION == 3
 
-# if 0
-static void logtrap (const gchar *domain,
-		     GLogLevelFlags level,
-		     const gchar *msg,
-		     gpointer p)
-{
-    return;
-}
-# endif
-
 static GLogWriterOutput no_write (GLogLevelFlags log_level,
                                   const GLogField *fields,
                                   gsize n_fields,
@@ -518,15 +508,9 @@ static GLogWriterOutput no_write (GLogLevelFlags log_level,
 static void quell_gtk3_spew (void)
 {
     g_log_set_writer_func(no_write, NULL, NULL);
-# if 0
-    g_log_set_handler("Gtk", G_LOG_LEVEL_WARNING,
-                      (GLogFunc) logtrap, NULL);
-    g_log_set_handler("Glib", G_LOG_LEVEL_WARNING,
-                      (GLogFunc) logtrap, NULL);
-# endif
 }
 
-#endif
+#endif /* GTK3, not Windows */
 
 #ifdef MAC_INTEGRATION
 
