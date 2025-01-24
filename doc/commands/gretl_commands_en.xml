@@ -14633,7 +14633,8 @@
 	<li>
 	  <para><lit>bootrep</lit>: an integer. Sets the number of
 	  replications for the <cmdref targ="restrict"/> command with
-	  the <opt>bootstrap</opt> option.</para>
+	  the <opt>bootstrap</opt> option.
+	  </para>
 	</li>
 	<li>
 	  <para><lit>garch_vcv</lit>: <lit>unset</lit>,

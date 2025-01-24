@@ -2990,6 +2990,11 @@
       </fnargs>
       <description>
 	<para>
+	  Questa funzione è obsoleta: risale a prima che gretl
+	  supportasse i numeri complessi e viene mantenuta solo per
+	  motivi di compatibilità.
+	</para>
+	<para>
 	  Divisione complessa. I due argomenti devono avere lo stesso
 	  numero di righe, <math>n</math>, e una o due colonne.  La
 	  prima colonna contiene la parte reale e l'eventuale seconda
@@ -3153,6 +3158,11 @@
 	<fnarg type="matrix">Y</fnarg>
       </fnargs>
       <description>
+	<para>
+	  Questa funzione è obsoleta: risale a prima che gretl
+	  supportasse i numeri complessi e viene mantenuta solo per
+	  motivi di compatibilità.
+	</para>
 	<para>
 	  Moltiplicazione complessa. I due argomenti devono avere lo
 	  stesso numero di righe, <math>n</math>, e una o due colonne.
@@ -7616,8 +7626,14 @@
 	<para>
 	  Il parametro opzionale <argname>scale</argname> può essere
 	  utilizzato per adattare il grado di lisciaggio rispetto al
-	  valore di default di 1.0 (valori più elevati producono un
-	  risultato più liscio). Il parametro
+	  valore di default di 1.0, che usa la regola proposta da
+	  <cite key="silverman86">Silverman (1986)</cite>, e cioè
+	  <equation status="display"
+	     tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{-1/5}\]"
+	     ascii="h = 0.9 min(s, IQR/1.349) n^{-1/5}"
+	     graphic="kernel2"/>
+	  dove <math>s</math> è lo scarto quadratico medio dei dati e
+	  IQR è il range interquartile. Il parametro
 	  <argname>control</argname> è booleano: si utilizza il kernel
 	  Gaussiano quando <argname>control</argname> è pari 0 (il
 	  valore di default); altrimenti, si utilizza il kernel di
@@ -13385,60 +13401,73 @@
 
     <function name="strftime" section="calendar" output="string">
       <fnargs>
-	<fnarg type="scalar">t</fnarg>
+	<fnarg type="scalar">tm</fnarg>
 	<fnarg optional="true" type="string">formato</fnarg>
+	<fnarg optional="true" type="scalar">offset</fnarg>
       </fnargs>
       <description>
 	<para>
-	  L'argomento <argname>t</argname> viene interpretato come il
-	  numero di secondi trascorsi dall'inizio dell'anno 1970 nel
-	  fuso orario UTC (un tempo noto come ora di Greenwich);
-	  produce una stringa con la data e l'ora corrispondenti.  Il
-	  formato di default è quello standard di sistema, ma può
-	  essere modificato se il secondo argomento (opzionale) è una
-	  stringa appropriata.
+	  L'argomento <argname>tm</argname> viene utilizzato per
+	  fornire lo <quote>Unix time</quote>, il numero di secondi
+	  dall'inizio dell'anno 1970 secondo UTC, e il valore
+	  restituito è una stringa che fornisce la data e/o l'ora
+	  corrispondente, in un formato specificato tramite il secondo
+	  argomento facoltativo o, per default, la
+	  <quote>rappresentazione di data e ora preferita per le
+	  impostazioni locali correnti</quote> come determinato dalla
+	  libreria C di sistema. Si veda sotto per più dettagli
+	  sul formato.
 	</para>
 	<para>
-	  Nota bene: in certi casi, l'output di questa funzione
-	  potrebbe dover essere aggiustato a seconda dei fusi
-	  orari. Se, ad esempio, l'orologio del sistema su cui si sta
-	  lavorando è impostato a un fuso orario ad est di UTC (per
-	  esempio, l'Europa centrale), la chiamata
-	</para>
-	<code>
-	  strftime(1234567890, "%d-%m-%Y")
-	</code>
+	L'argomento facoltativo <argname>offset</argname> può essere
+	utilizzato per specificare un divario in secondi rispetto a
+	UTC, selezionando così un fuso orario diverso da quello
+	predefinito, che è sempre l'ora locale. Ad esempio, un offset
+	di 3600 seleziona il fuso orario dell'Europa centrale, mentre
+	0 seleziona GMT. Il valore assoluto di
+	<argname>offset</argname> non deve superare 86400 (24
+	ore). </para>
 	<para>
-	produrrà la stringa <quote>14-02-2009</quote>. Se invece il
-	sistema è impostato come UTC o ancora più a ovest (per
-	esempio, gli Stati Uniti), la stessa chiamata darà come
-	risultato <quote>13-02-2009</quote>. Il motivo è che il numero
-	1234567890 corrisponde precisamente al 13 febbraio 2009, alle
-	23:31:30 UTC.
+	  Il tipo dell'output dipende da quello di
+	  <argname>tm</argname>: se <argname>tm</argname> è uno
+	  scalare, un vettore o una serie, l'output è,
+	  rispettivamente, una singola stringa, un array di stringhe o
+	  una serie con valori stringa.
 	</para>
 	<para>
-	  Attenzione: a causa di differenze nell'implementazione,
-	  questa funzione si comporta in modo diverso su sistemi
-	  Windows e Unix-like per date precedenti al 1 gennaio
-	  1970. Su sistemi Unix-like (Linux, Mac) queste date sono
-	  rappresentati con numeri negativi, cosicché se
-	  <argname>t</argname> è negativo l'output sarà comunque una
-	  stringa contenente una data; su windows, questa convenzione
-	  non è supportata e il risultato sarà una stringa vuota.
+	  I valori di <argname>tm</argname> adatti all'uso con questa
+	  funzione possono essere ottenuti tramite l'accessore <fncref
+	  targ="$now"/> o la funzione <fncref targ="strptime"/>.
 	</para>
 	<para>
-	  Valori di <argname>tm</argname> adatti per questa funzione
-	  possono venir prodotti tramite l'accessore <fncref targ="$now"/>
-	  o la funzione <fncref targ="strptime"/>.
+	  Nota che mentre <argname>tm</argname> è preso come relativo
+	  a UTC, l'output di questa funzione è per impostazione
+	  predefinita <quote>locale</quote>, relativo all'impostazione
+	  del fuso orario sul computer host. Un dato
+	  <argname>tm</argname> mostrerà quindi un orario diverso e
+	  forse una data diversa, in fusi orari diversi. Se si
+	  desidera una stringa che rappresenti l'UTC anziché l'ora
+	  locale, vedi sotto.
 	</para>
+	<subhead>Opzioni di formato</subhead>
 	<para>
-	  Le opzioni di formato disponibili sono elencate sulla
-	  pagina di manuale per <lit>strftime</lit>, sui sistemi che
-	  la offrono, oppure su uno dei tanti siti che contengono tale
-	  informazione, come ad esempio
-	  <url>https://devhints.io/strftime</url>.
+	  Le opzioni di formattazione standard possono essere trovate
+	  consultando la pagina di manuale <lit>strftime</lit>, sui
+	  sistemi che hanno tali pagine, o tramite uno dei tanti siti
+	  web che presentano informazioni rilevanti, come
+	  <url>https://devhints.io/strftime</url>. Oltre ai formati
+	  standard, gretl riconosce un'opzione speciale: se
+	  <argname>format</argname> è semplicemente
+	  <quote><lit>8601</lit></quote>, la data e l'ora vengono
+	  mostrate nel formato ISO 8601.
 	</para>
       </description>
+      <para>
+	<seelist>
+          <fncref targ="strvals"/>
+	  <fncref targ="strvsort"/>
+	</seelist>
+	</para>
     </function>
 
     <function name="stringify" section="strings" output="int">

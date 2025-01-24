@@ -14412,6 +14412,7 @@ del comando <cmdref targ="set"/>.
 
 <command name="set" section="Programming"
 	 label="Imposta parametri del programma" context="cli">
+
   <usage>
     <altforms>
       <altform><lit>set</lit> <repl>variabile</repl> <repl>valore</repl></altform>
@@ -14558,12 +14559,12 @@ del comando <cmdref targ="set"/>.
       </li>
       <li>
 	<para><lit>display_digits</lit>: un intero da 3 a 6,
-	  specificante il numero di cifre significative da usare
-	  nell'output di coefficienti di regressione e corrispondenti
-	  errori standard (il default è 6). Questo settaggio è anche
-	  attivo sul numero di cifre usato dal comando <cmdref
-							 targ="summary"/>; in questo caso, il default (che è anche il
-	  massimo) è 5, o 4 con l'opzione <opt>simple</opt>.
+	specificante il numero di cifre significative da usare
+	nell'output di coefficienti di regressione e corrispondenti
+	errori standard (il default è 6). Questo settaggio è anche
+	attivo sul numero di cifre usato dal comando <cmdref
+	targ="summary"/>; in questo caso, il default (che è anche il
+	massimo) è 5.
 	</para>
       </li>
       <li>
@@ -14664,6 +14665,16 @@ del comando <cmdref targ="set"/>.
 	  <lit>null</lit>.
 	</para>
       </li>
+	<li>
+	  <para><lit>quantile_type</lit>: deve essere uno tra
+	  <lit>Q6</lit> (il default), <lit>Q7</lit> o
+	  <lit>Q8</lit>. Seleziona il metodo specifico utilizzato
+	  dalla funzione <fncref targ="quantile"/>. Per i dettagli,
+	  vedere <cite key="hyndman96">Hyndman e Fan (1996)</cite> o
+	  la voce di Wikipedia all'indirizzo
+	  <url>https://en.wikipedia.org/wiki/Quantile</url>.
+	  </para>
+	</li>
       <li>
 	<para><lit>huge</lit>: un numero grande positivo (di default,
 	  1.0E100). Questo settaggio controlla il valore ritornato
@@ -14853,20 +14864,22 @@ del comando <cmdref targ="set"/>.
       </li>
       <li>
 	<para><lit>fdjac_quality</lit>: un intero fra 0 e 2,
-	  corrsipondente all'algoritmo usato nella funzione <fncref
-							      targ="fdjac"/>.
+	corrsipondente all'algoritmo usato nella funzione <fncref
+	targ="fdjac"/>.
 	</para>
       </li>
-      <li>
-	<para><lit>quantile_type</lit>: una stringa
-	  (<quote>Q6</quote>, <quote>Q7</quote> o <quote>Q8</quote>),
-	  corrispondente al metodo usato per calcolare i quantili
-	  campionari secondo la classificazione di <cite
-						     key="hyndman96">Hyndman e Fan (1996)</cite>. Il default è
-	  <quote>Q6</quote>.
-	</para>
-      </li>
-    </ilist>
+ 	<li>
+	  <para><lit>gmp_bits</lit>: una potenza intera di 2 (valore
+	  predefinito e minimo 256, massimo 8192). Controlla il numero
+	  di bit utilizzati per rappresentare un numero in virgola
+	  mobile quando viene chiamata GMP (GNU Multiple Precision
+	  Arithmetic Library), principalmente tramite il comando
+	  <lit>mpols</lit>. Valori più grandi forniscono una maggiore
+	  precisione a costo di un tempo di elaborazione più
+	  lungo. Questa impostazione può anche essere controllata
+	  dalla variabile di ambiente <lit>GRETL_MP_BITS</lit>.
+	  </para> </li>
+   </ilist>
 
     <para>
       <emphasis>Generazione di numeri casuali</emphasis>
@@ -14894,8 +14907,7 @@ del comando <cmdref targ="set"/>.
 	</para>
       </li>
       <li>
-	<para><lit>garch_vcv</lit>:
-	  <lit>unset</lit>, <lit>hessian</lit>,
+	<para><lit>garch_vcv</lit>: <lit>unset</lit>, <lit>hessian</lit>,
 	  <lit>im</lit> (matrice di informazione) , <lit>op</lit>
 	  (matrice dei prodotti esterni), <lit>qml</lit> (stimatore QML),
 	  <lit>bw</lit> (Bollerslev&ndash;Wooldridge). Specifica la
@@ -14936,22 +14948,25 @@ del comando <cmdref targ="set"/>.
 	</para>
       </li>
       <li>
-	<para><lit>hac_lag</lit>: <lit>nw1</lit> (valore
-	  predefinito), <lit>nw2</lit>, <lit>nw3</lit>, o un intero.
-	  Imposta il massimo valore di ritardo, o la larghezza di
-	  banda, <math>p</math>, usato nel calcolo degli errori
-	  standard HAC (Heteroskedasticity and Autocorrelation
-	  Consistent) con l'approccio Newey-West, per le serie
-	  storiche.  <lit>nw1</lit> e <lit>nw2</lit> rappresentano due
-	  varianti di calcolo automatico basate sulla dimensione del
-	  campione, <math>T</math>: per nw1, <equation status="inline"
-						       tex="$p = 0.75 \times T^{1/3}$" ascii="p = 0.75 * T^(1/3)"
-						       graphic="nw1"/>, e per nw2, <equation status="inline"
-											     tex="$p = 4 \times (T/100)^{2/9}$" ascii="p = 4 *
-																       (T/100)^(2/9)" graphic="nw2"/>.  <lit>nw3</lit> permette di
-																			       selezionare la larghezza di banda basandosi sui dati.  Si
-																			       veda anche <lit>qs_bandwidth</lit> e
-																			       <lit>hac_prewhiten</lit>.
+	<para><lit>hac_lag</lit>: <lit>nw1</lit> (valore predefinito),
+	<lit>nw2</lit>, <lit>nw3</lit>, o un intero.  Imposta il
+	massimo valore di ritardo, o la larghezza di banda,
+	<math>p</math>, usato nel calcolo degli errori standard HAC
+	(Heteroskedasticity and Autocorrelation Consistent) con
+	l'approccio Newey-West, per le serie storiche.  <lit>nw1</lit>
+	e <lit>nw2</lit> rappresentano due varianti di calcolo
+	automatico basate sulla dimensione del campione,
+	<math>T</math>: per nw1,
+	<equation status="inline"
+		  tex="$p = 0.75 \times T^{1/3}$"
+		  ascii="p = 0.75 * T^(1/3)"
+		  graphic="nw1"/>, e per nw2,
+	<equation status="inline"
+		  tex="$p = 4 \times (T/100)^{2/9}$"
+		  ascii="p = 4 * (T/100)^(2/9)"
+		  graphic="nw2"/>.  <lit>nw3</lit> permette di selezionare la
+	larghezza di banda basandosi sui dati.  Si veda anche
+	<lit>qs_bandwidth</lit> e <lit>hac_prewhiten</lit>.
 	</para>
       </li>
       <li>
@@ -14971,15 +14986,15 @@ del comando <cmdref targ="set"/>.
       </li>
       <li>
 	<para><lit>hac_missvals</lit>: <lit>es</lit> (il default),
-	  <lit>am</lit> or <lit>off</lit>. Imposta come debbano essere
-	  calcolati gli errori standard HAC in presenza di
-	  osservazioni incomplete: <lit>es</lit> imposta il metodo
-	  <quote>Equal Spacing</quote> di <cite key="datta-du12">Datta
-	    e Du (2012)</cite>; <lit>am</lit> seleziona il metodo
-	  <quote>Amplitude Modulation</quote> di <cite
-						   key="parzen63">Parzen (1963)</cite>; infine, <lit>off</lit>
-	  fa sì che gretl rifiuti di procedere. Si veda <guideref
-							  targ="chap:robust_vcv"/> per dettagli.
+	<lit>am</lit> or <lit>off</lit>. Imposta come debbano essere
+	calcolati gli errori standard HAC in presenza di osservazioni
+	incomplete: <lit>es</lit> imposta il metodo <quote>Equal
+	Spacing</quote> di <cite key="datta-du12">Datta e Du
+	(2012)</cite>; <lit>am</lit> seleziona il metodo
+	<quote>Amplitude Modulation</quote> di <cite
+	key="parzen63">Parzen (1963)</cite>; infine, <lit>off</lit> fa
+	sì che gretl rifiuti di procedere. Si veda <guideref
+	targ="chap:robust_vcv"/> per dettagli.
 	</para>
       </li>	
       <li>
@@ -15043,6 +15058,17 @@ del comando <cmdref targ="set"/>.
 	  dettagli.
 	</para>
       </li>
+	<li>
+	  <para>
+	    <lit>boot_iters</lit>: un intero, <math>B</math>. Imposta
+	    il numero di iterazioni bootstrap utilizzate quando si
+	    calcolano le IRF con intervalli di confidenza. Il valore
+	    predefinito è 1999. Si consiglia che <math>B</math> + 1
+	    sia divisibile per 100&alpha;/2, quindi ad esempio con
+	    &alpha; = 0,1 <math>B</math> + 1 dovrebbe essere un
+	    multiplo di 5. Il valore minimo accettabile è 499.
+	    </para>
+	</li>
     </ilist>
 
     <para>
@@ -15094,7 +15120,7 @@ del comando <cmdref targ="set"/>.
 	  <lit>iwanthue</lit> o <lit>sober</lit>.  Imposta il
 	  <quote>tema</quote> ustao per i grafici prodotti da
 	  gretl. Con l'opzione <lit>classic</lit> si avrà il tema
-	  usato fino alla versione 2020b.
+	  usato fino alla versione 2020c.
 	</para>
       </li>
     </ilist>
@@ -15319,6 +15345,14 @@ del comando <cmdref targ="set"/>.
 	    <flag>--panel-vars</flag>
 	    <effect>usa variabili indice (si veda oltre)</effect>
           </option>
+          <option>
+	    <flag>--panel-time</flag>
+	    <effect>vedi sotto</effect>
+          </option>
+          <option>
+	    <flag>--panel-groups</flag>
+	    <effect>vedi sotto</effect>
+          </option>
 	</options>
 	<examples>
           <example>setobs 4 1990:1 --time-series</example>
@@ -15354,90 +15388,92 @@ del comando <cmdref targ="set"/>.
 	  1:1, mentre nel caso di dati cross section come 1. L'osservazione
           iniziale per i dati giornalieri o settimanali va indicata nella forma
 	  AA/MM/GG o AAAA/MM/GG (oppure semplicemente 1 per i dati non datati).
-</para>
-<para>
-  Alcune periodicità temporali hanno interpretazioni
-  convenzionali; ad esempio, 12 = mensile e 4 = trimestrale. Se
-  questa interpretazione non si applica alle vostre serie
-  storiche,si può usare l'opzione
-  <opt>special-time-series</opt>. In tal caso, gretl
-  si asterrà dall'indicare come (ad esempio) mensile una
-  periodicità pari a 12.
-</para>
-<para>
-  Se non viene data alcuna opzione esplicita per indicare la
-  struttura dei dati, il programma tenterà di desumerla dalle
-  informazioni in suo possesso.
-</para>
-<para>
-  La seconda forma del comando (che richiede l'uso dell'opzione
-  <opt>panel-vars</opt>) può essere usata per imporre un'interpretazione
-  panel dei dati, quando il dataset contiene variabili che identificano in
-  modo univoco le unità cross section e i periodi. Il dataset verrà
-  ordinato come pila di serie storiche, per valori crescenti della
-  variabile che rappresenta le unità, <repl>variabile-unità</repl>.
-</para>
-<subhead>Opzioni specifiche per dati panel</subhead>
-<para>
-  Le opzioni <opt>panel-time</opt> e <opt>panel-groups</opt>
-  possono essere usate solo con dataset già impostati come panel.
-</para>
-<para>
-  La funzione di <opt>panel-time</opt> è di stabilire
-  informazioni extra sulla dimesnione temporale del panel. Essa
-  deve essere indicata sul modello della proma forma di
-  <lit>setobs</lit> (vedi sopra). Ad esempio, il compando
-  seguente indica che la dimensione temporale del panel è
-  trimestrale, e comincia nel primo trimestre 1990.
-</para>
-<code>
-  setobs 4 1990:1 --panel-time
-</code>
-<para>
-  La funzione di <opt>panel-groups</opt> è di creare una serie
-  con valori stringa contentent i nomi delle unità longitudinal
-  inel panel. (Quest'informazione verrà, eventualmente, usata
-  nei grafici.) Con quest'opzione vanno indicati uno o due
-  argomenti, come segue.
-</para>
-<para>
-  Caso uno: l'unico argomento è il nome di una serie a valori
-  stringa. Se il numero di stringhe diverse eguaglia il numero
-  di unità nel panel, allora questi vengono usati come nomi dei
-  gruppi. Se necessario, il contenuto numerico della serie sarà
-  aggiustato per far sì che i valori siano tutti 1 per la prima
-  unità, 2 per la seconda eccetera. Se il numero di valori
-  stringa non corrisponde a quello delle unità, il programma
-  segnala un errore.
-</para>
-<para>
-  Caso due: il primo argomento è il nome di una serie e il
-  secondo è una stringa (o il nome di una variabile stringa) con
-  etichette per ciascuna unità. Se la serie non esiste, verrà
-  creata al momento. Nel secondo argomento, i nomi delle unità
-  vanno separati da spazi; se il nome stesso include degli
-  spazi, allora va racchiuso fra virgolette doppie. Se no, il
-  secondo argomento può essere un array di stringhe.
-</para>
-<para>
-  Ad esempio, il codice seguente creerò una serie di nome
-  <lit>paese</lit> in cui i nomi <lit>npaesi</lit> sono ripetuti
-  ognuno <math>T</math> volte, dove <math>T</math> è l'ampiezza
-  temporale del panel.
-</para>
-<code>
-  string npaesi = sprintf("Francia Germania Italia \"Regno Unito\"")
-  setobs paese npaesi --panel-groups
-</code>
-</description>
+	</para>
+	<para>
+	  Alcune periodicità temporali hanno interpretazioni
+	  convenzionali; ad esempio, 12 = mensile e 4 =
+	  trimestrale. Se questa interpretazione non si applica alle
+	  vostre serie storiche,si può usare l'opzione
+	  <opt>special-time-series</opt>. In tal caso, gretl si
+	  asterrà dall'indicare come (ad esempio) mensile una
+	  periodicità pari a 12.
+	</para>
+	<para>
+	  Se non viene data alcuna opzione esplicita per indicare la
+	  struttura dei dati, il programma tenterà di desumerla dalle
+	  informazioni in suo possesso.
+	</para>
+	<para>
+	  La seconda forma del comando (che richiede l'uso
+	  dell'opzione <opt>panel-vars</opt>) può essere usata per
+	  imporre un'interpretazione panel dei dati, quando il dataset
+	  contiene variabili che identificano in modo univoco le unità
+	  cross section e i periodi. Il dataset verrà ordinato come
+	  pila di serie storiche, per valori crescenti della variabile
+	  che rappresenta le unità, <repl>variabile-unità</repl>.
+	</para>
+	<subhead>Opzioni specifiche per dati panel</subhead>
+	<para>
+	  Le opzioni <opt>panel-time</opt> e <opt>panel-groups</opt>
+	  possono essere usate solo con dataset già impostati come
+	  panel.
+	</para>
+	<para>
+	  La scopo di <opt>panel-time</opt> è stabilire
+	  informazioni extra sulla dimensione temporale del
+	  panel. Essa deve essere indicata sul modello della proma
+	  forma di <lit>setobs</lit> (vedi sopra). Ad esempio, il
+	  compando seguente indica che la dimensione temporale del
+	  panel è trimestrale, e comincia nel primo trimestre 1990.
+	</para>
+	<code>
+	  setobs 4 1990:1 --panel-time
+	</code>
+	<para>
+	  La funzione di <opt>panel-groups</opt> è di creare una serie
+	  con valori stringa contentent i nomi delle unità
+	  longitudinali nel panel. (Quest'informazione verrà,
+	  eventualmente, usata nei grafici.) Con quest'opzione vanno
+	  indicati uno o due argomenti, come segue.
+	</para>
+	<para>
+	  Caso uno: l'unico argomento è il nome di una serie a valori
+	  stringa. Se il numero di stringhe diverse eguaglia il numero
+	  di unità nel panel, allora questi vengono usati come nomi
+	  dei gruppi. Se necessario, il contenuto numerico della serie
+	  sarà aggiustato per far sì che i valori siano tutti 1 per la
+	  prima unità, 2 per la seconda eccetera. Se il numero di
+	  valori stringa non corrisponde a quello delle unità, il
+	  programma segnala un errore.
+	</para>
+	<para>
+	  Caso due: il primo argomento è il nome di una serie e il
+	  secondo è una stringa (o il nome di una variabile stringa)
+	  con etichette per ciascuna unità. Se la serie non esiste,
+	  verrà creata al momento. Nel secondo argomento, i nomi delle
+	  unità vanno separati da spazi; se il nome stesso include
+	  degli spazi, allora va racchiuso fra virgolette doppie. Se
+	  no, il secondo argomento può essere un array di stringhe.
+	</para>
+	<para>
+	  Ad esempio, il codice seguente creerò una serie di nome
+	  <lit>paese</lit> in cui i nomi <lit>npaesi</lit> sono ripetuti
+	  ognuno <math>T</math> volte, dove <math>T</math> è l'ampiezza
+	  temporale del panel.
+	</para>
+	<code>
+	  string npaesi = sprintf("Francia Germania Italia \"Regno Unito\"")
+	  setobs paese npaesi --panel-groups
+	</code>
+      </description>
 
-<gui-access>
-  <menu-path>Dati/Struttura dataset</menu-path>
-</gui-access>
+      <gui-access>
+	<menu-path>Dati/Struttura dataset</menu-path>
+      </gui-access>
 
-</command>
+    </command>
 
-<command name="setopt" section="Programming" context="cli"
+    <command name="setopt" section="Programming" context="cli"
 	 label="Indica le opzioni per il comando seguente">
 
   <usage>
@@ -15629,6 +15665,10 @@ del comando <cmdref targ="set"/>.
 	  <flag>--time</flag>
 	  <effect>dati panel: opera nella dimensione temporale</effect>
         </option>
+        <option>
+	  <flag>--dates</flag>
+	  <effect>interpreta i numeri delle osservazioni come date</effect>
+        </option>
 	<option>
 	  <flag>--quiet</flag>
 	  <effect>non stampare il sottocampione selezionato</effect>
@@ -15639,8 +15679,8 @@ del comando <cmdref targ="set"/>.
       <example>smpl 3 10</example>
       <example>smpl 1960:2 1982:4</example>
       <example>smpl +1 -1</example>
-      <example>smpl x > 3000 --restrict</example>
-      <example>smpl y > 3000 --restrict --replace</example>
+      <example>smpl x &gt; 3000 --restrict</example>
+      <example>smpl y &gt; 3000 --restrict --replace</example>
       <example>smpl 100 --random</example>
     </examples>
   </usage>
@@ -15666,7 +15706,6 @@ del comando <cmdref targ="set"/>.
       specificata secondo la sintassi del comando <cmdref
       targ="genr"/>.
     </para>
-
     <para>
       Le opzioni <lit>no-missing</lit> e <lit>no-all-missing</lit>
       possono essere usate per escludere dal campione dati
@@ -15681,7 +15720,6 @@ del comando <cmdref targ="set"/>.
       <repl>lista-variabili</repl>, le variaili generiche
       <lit>index</lit> e <lit>time</lit> vengono ignorate.
     </para>
-
     <para>
       La forma <opt>contiguous</opt> viene usata nei dataset di
       serie storiche.  L'effetto è quello di tagliare il campione
@@ -15692,7 +15730,6 @@ del comando <cmdref targ="set"/>.
       sottocampione risultante rimangono valori mancanti, nel qual
       caso, viene segnalato un errore.
     </para>
-
     <para>
       Con la forma <opt>random</opt>, viene estratto casualmente dal
       dataset il numero indicato di osservazioni. Per essere in grado di
@@ -15700,14 +15737,12 @@ del comando <cmdref targ="set"/>.
       del generatore di numeri casuali (si veda il comando
       <cmdref targ="set"/>).
     </para>
-
     <para>
       La forma finale, <lit>smpl full</lit>, ripristina
       l'intervallo completo del campione.
     </para>
-
     <para>
-	Si noti che i vincoli sul campione di solito sono
+	Si noti che i vincoli sul campione sono, per default,
 	cumulativi: il valore di riferimento di ogni comando
 	<lit>smpl</lit> è il campione attuale, così che ogni vincolo si
 	aggiunge a quelli già impostati. Se si vuole che il comando
@@ -15744,6 +15779,26 @@ del comando <cmdref targ="set"/>.
       struttura originale con il comando <cmdref
       targ="setobs"/>. Un'opzione rilevante, per l'uso coi dati panel,
       è l'opzione <opt>preserve-panel</opt>, descritta più sotto.
+    </para>
+
+    <subhead>Date contro indici sequenziali</subhead>
+    <para>
+      L'opzione <opt>dates</opt> può essere utilizzata per risolvere
+      una potenziale ambiguità nell'interpretazione di
+      <repl>startobs</repl> e <repl>endobs</repl> nel caso di dataset
+      annuali.  Ad esempio, <lit>1997</lit> dovrebbe essere inteso
+      come riferimento all'anno 1997 o alla
+      millenovecentonovantasettesima osservazione? Nella maggior parte
+      dei casi gretl risolve la cosa automaticamente, ma si può
+      forzare l'interpretazione della data se necessario. Questa
+      opzione può essere utilizzata anche con dati giornalieri, per
+      forzare <lit>smpl</lit> ad interpretare, ad esempio, 20100301
+      come il primo marzo 2010 anziché un semplice indice
+      sequenziale. Nota che questa ambiguità non si verifica con
+      frequenze di serie temporali diverse da quelle annuali e
+      giornaliere; date come 1980:3 (terzo trimestre del 1980) e
+      2020:03 (marzo 2020) non possono essere confuse con indici
+      semplici.
     </para>
 
     <subhead>Opzione specifiche per dataset panel</subhead>
@@ -15784,12 +15839,14 @@ del comando <cmdref targ="set"/>.
       </para>
 
       <subhead>Sottocoampionamento permanente</subhead>
-
       <para>
 	Di default, le restrizioni sul campione attivo sono
 	reversibili: col comando <lit>smpl full</lit> si ritorna al
 	dataset completo. Tuttavia, con l'opzione <opt>permanent</opt>
-	il dataset ridotto rimpiazza quello originale.
+	il dataset ridotto rimpiazza quello originale. L'opzione
+	<opt>permanent</opt> senza altri argomenti o opzioni ha
+	l'effetto di ridurre il dataset all'intervallo di
+	campionamento corrente.
     </para>
 
     <para>
