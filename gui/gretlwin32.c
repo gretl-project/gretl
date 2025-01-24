@@ -226,7 +226,7 @@ static void stderr_output_handler (const gchar *log_domain,
 				   const gchar *message,
 				   gpointer user_data)
 {
-    if (!strcmp(log_domain, "Gtk") && (flags & G_LOG_LEVEL_WARNING)) {
+    if (!strcmp(log_domain, "Gtk") && (log_level & G_LOG_LEVEL_WARNING)) {
         /* suppress Gtk warning */
         return;
     } else {
