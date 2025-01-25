@@ -18,7 +18,7 @@ ChangesAssociations=yes
 ChangesEnvironment=yes
 DirExistsWarning=no
 UsedUserAreasWarning=no
-OutputBaseFilename=gretl_install-64-msvcrt
+OutputBaseFilename=gretl_install-64
 WizardStyle=modern
 
 [InstallDelete]
