@@ -2,7 +2,13 @@ version 2025a, in progress
 - "meantest" and "vartest" commands: support a variant where
   the second series is a dummy with which to split the first
   into two samples
-- macOS builds: update gnuplot to version 6.0.2
+- Fix bug: "dataset addobs n" with panel data (and without the
+  --panel-time option) was not respecting the documented
+  policy that 'n' refers to the number of cross-sectional
+  units to be added to the dataset
+- macOS and 64-bit Windows: update gnuplot to version 6.0.2
+- Windows 64-bit build: revert to use of MSVCRT rather then
+  UCRT, pending analysis of some problems with the latter
 
 2024-12-12 version 2024d
 - "append" command: make the help text more explicit
