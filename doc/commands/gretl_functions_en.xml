@@ -8422,6 +8422,8 @@
 	<para>
 	  Computes a (Pearson) correlation matrix treating each column
 	  of <argname>X</argname> as a variable.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="corr"/>
             <fncref targ="cov"/>
@@ -12492,6 +12494,8 @@
 	  optional third argument missing values are ignored,
 	  otherwise the result is <lit>NA</lit> for any columns that
 	  contain missing values.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="meanc"/>
             <fncref targ="sumc"/>
