@@ -718,7 +718,7 @@ augment_y_with_restrictions (gretl_matrix *y, int mk, int nr,
     return 0;
 }
 
-#define SYS_MAX_ITER 100
+#define SYS_MAX_ITER 250
 #define SYS_LL_TOL 1.0e-12
 #define SYS_BDIFF_TOL 1.0e-9
 
