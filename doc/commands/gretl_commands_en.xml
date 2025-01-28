@@ -5717,7 +5717,6 @@
     label="Graphing">
 
     <description>
-
       <para>
 	Gretl calls a separate program, namely gnuplot, to generate
 	graphs.  Gnuplot is a very full-featured graphing program with
@@ -5726,12 +5725,10 @@
 	to choose sensible values for you; it also allows you to take
 	complete control over graph details if you wish.
       </para>
-
       <para>
 	With a graph displayed, you can click on the graph window for
 	a pop-up menu with several options, including these:
       </para>
-
       <ilist>
 	<li>
 	  <para>
@@ -8454,14 +8451,15 @@
 
     <description>
       <para>
-	Computes the Mahalanobis distances between the series in
-	<repl>varlist</repl>.  The Mahalanobis distance is the
-	distance between two points in a <math>k</math>-dimensional
-	space, scaled by the statistical variation in each dimension
-	of the space.  For example, if <math>p</math> and
-	<math>q</math> are two observations on a set of <math>k</math>
-	variables with covariance matrix <math>C</math>, then the
-	Mahalanobis distance between the observations is given by
+	Computes the Mahalanobis distances of each observation from
+	the centroid, using the series in <repl>varlist</repl>.  The
+	Mahalanobis distance is the distance between two points in a
+	<math>k</math>-dimensional space, scaled by the statistical
+	variation in each dimension of the space.  For example, if
+	<math>p</math> and <math>q</math> are two observations on a
+	set of <math>k</math> variables with covariance matrix
+	<math>C</math>, then the Mahalanobis distance between the
+	observations is given by
 	<equation status="display"
         tex="\[\sqrt{(p-q)^{\prime}C^{-1}(p-q)}\]"
         ascii="sqrt((p - q)' * C-inverse * (p - q))"

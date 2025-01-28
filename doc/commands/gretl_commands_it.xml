@@ -4682,6 +4682,9 @@
       viene stampato assieme al messaggio di errore inviato alla
       funzione chiamante.
     </para>
+      <para>
+	Vedi anche la funzione <fncref targ="errorif"/>.
+      </para>
   </description>
 
 </command>
@@ -5511,22 +5514,23 @@
 	<lit>y2</lit> contro <lit>x</lit>,in modo tale che
 	<lit>y2</lit> sia rappresentata da una linea, ma <lit>y1</lit>
 	da punti.
-    </para>
-    <para>
-      Quando <repl>yvars</repl> contiene più di una variabile potrebbe
-      essere preferibile utilizzare due scale (sinistra e destra) per
-      le ordinate. Per default, questo viene gestito automaticamente,
-      tramite un'euristica basata sugli ordini di grandezza relativi
-      delle variabili, ma è possibile utilizzare due opzioni
-      (mutuamente esclusive) per cambiare l'impostazione di
-      default. Come è ovvio, <opt>single-yaxis</opt> impedisce l'uso
-      di un secondo asse, mentre <opt>y2axis=</opt><repl>yvar</repl>
-      specifica che una variabile selezionata deve essere
-      plottata usando un secondo asse delle ordinate.
-    </para>
-    <para>
-	Usando l'opzione <opt>dummy</opt>, solo tre variabili sono
-	ammesse come argomenti: una variabile <math>y</math>, una
+      </para>
+      <para>
+	Quando <repl>yvars</repl> contiene più di una variabile
+	potrebbe essere preferibile utilizzare due scale (sinistra e
+	destra) per le ordinate. Per default, questo viene gestito
+	automaticamente, tramite un'euristica basata sugli ordini di
+	grandezza relativi delle variabili, ma è possibile utilizzare
+	due opzioni (mutuamente esclusive) per cambiare l'impostazione
+	di default. Come è ovvio, <opt>single-yaxis</opt> impedisce
+	l'uso di un secondo asse, mentre
+	<opt>y2axis=</opt><repl>yvar</repl> specifica che una
+	variabile selezionata deve essere plottata usando un secondo
+	asse delle ordinate.
+      </para>
+      <para>
+	Usando l'opzione <opt>dummy</opt>, gli argomenti devono essere
+	esattamente tre variabili: una variabile <math>y</math>, una
 	variabile <math>x</math> e una variabile dummy
 	<repl>dumvar</repl>. L'effetto è quello di mostrare
 	<repl>y</repl> rispetto a <repl>x</repl> colorando in modo
@@ -5597,7 +5601,6 @@
 	<repl>fitspec</repl>. Se il grafico contiene un'unica serie
 	storica, <math>x</math> è implicitamente dato dal tempo.
       </para>
-
       <ilist>
 	<li>
 	  <para>
@@ -5786,23 +5789,21 @@
 	<filename>gpttmpN.plt</filename>, a partire da N =
 	<lit>01</lit>; il grafico vero e proprio può essere generato
 	usando il programma <program>gnuplot</program> (su MS Windows:
-	<program>wgnuplot</program>).  Alternativamente, usando l'opzione
-	<opt>output=</opt><repl>filename</repl>, è possibile controllare il nome
-	del file utilizzato e contemporaneamente 
+	<program>wgnuplot</program>).  Alternativamente, usando
+	l'opzione <opt>output=</opt><repl>filename</repl>, è possibile
+	controllare il nome del file utilizzato e contemporaneamente
 	specificare un particolare formato di output usando
 	l'estensione del nome del file (le tre lettere che seguono il
 	.): <lit>.eps</lit> produce un file Encapsulated PostScript
 	(EPS); <lit>.pdf</lit> produce un file PDF; <lit>.png</lit>
 	produce un formato PNG, <lit>.emf</lit> un formato EMF
 	(Enhanced MetaFile), <lit>.fig</lit> un file Xfig;
-	<lit>.svg</lit> uno SVG (Scalable Vector Graphics) e 
-	<lit>.html</lit> per un canvas HTML. 
-  Se come
-	nome del file si indica <quote><lit>display</lit></quote>, il
-	grafico è visualizzato su schermo come nella modalità
-	interattiva.  Se si indica un nome del file con un'estensione
-	diversa da quelle appena citate viene prodotto un file di
-	comandi gnuplot.
+	<lit>.svg</lit> uno SVG (Scalable Vector Graphics) e
+	<lit>.html</lit> per un canvas HTML.  Se come nome del file si
+	indica <quote><lit>display</lit></quote>, il grafico è
+	visualizzato su schermo come nella modalità interattiva.  Se
+	si indica un nome del file con un'estensione diversa da quelle
+	appena citate viene prodotto un file di comandi gnuplot.
       </para>
       <para>
 	Un modo alternativo di ridirigere l'output è dato dall'opzione
@@ -5843,11 +5844,9 @@
 	di comandi gnuplot sulla riga successiva. Ecco un esempio
 	della sintassi:
       </para>
-
       <code>
 	{ set title 'Il titolo'; set yrange [0:1000]; }
       </code>
-
     </description>
 
     <gui-access>
@@ -5862,7 +5861,6 @@
 	   label="Grafici">
 
     <description>
-
       <para>
 	Gretl richiama un programma separato, gnuplot, per generare i
 	grafici. Gnuplot è un programma di grafica molto completo, con
@@ -5872,37 +5870,52 @@
 	controllare l'aspetto di un grafico in tutti i suoi dettagli,
 	se si vuole.
       </para>
-
       <para>
 	Mentre un grafico viene visualizzato, facendo clic sulla
 	finestra del grafico si aprirà un menù pop-up con le seguenti
 	opzioni:
       </para>
-
       <ilist>
-	<li><para>Salva come postscript: salva il grafico in formato encapsulated
-	postscript (EPS)</para>
+	<li>
+	  <para>
+	    Salva come PNG: salva in formato Portable Network Graphics
+	  </para>
 	</li>
-	<li><para>Salva come PNG: salva in formato Portable Network Graphics</para>
+	<li>
+	  <para>
+	    Salva come postscript: salva il grafico in formato encapsulated
+	    postscript (EPS)
+	  </para>
 	</li>
-	<li><para>Salva alla sessione come icona: il grafico apparirà
-	sotto forma di icona quando si seleziona <quote>Visualizza
-	Icone</quote> dal menù Sessione</para>
+	<li>
+	  <para>
+	    Salva alla sessione come icona: il grafico apparirà
+	    sotto forma di icona quando si seleziona <quote>Visualizza
+	    Icone</quote> dal menù Sessione
+	  </para>
 	</li>
-	<li><para>Ingrandisci: permette di selezionare un'area
-	all'interno del grafico per visualizzarla da vicino</para>
+	<li>
+	  <para>
+	    Ingrandisci: permette di selezionare un'area
+	    all'interno del grafico per visualizzarla da vicino
+	  </para>
 	</li>
-	<li><para>Stampa: permette di stampare il grafico direttamente
-	(disponibile solo in Gnome e MS Windows)</para>
+	<li>
+	  <para>
+	    Copia negli appunti: permette di copiare il grafico per
+	    poi incollarlo in altri programmi
+	  </para>
 	</li>
-	<li><para>Copia negli appunti: permette di copiare il grafico
-	per poi incollarlo in altri programmi Windows, come ad esempio
-	MS Word (disponibile solo in MS Windows)</para>
+	<li>
+	  <para>
+	    Modifica: apre una finestra che permette di modificare
+	    vari dettagli dell'aspetto del grafico
+	  </para>
 	</li>
-	<li><para>Modifica: apre una finestra che permette di modificare
-	vari dettagli dell'aspetto del grafico</para>
-	</li>
-	<li><para>Chiudi: chiude la finestra del grafico</para>
+	<li>
+	  <para>
+	    Chiudi: chiude la finestra del grafico
+	  </para>
 	</li>
       </ilist>
 
@@ -5917,23 +5930,13 @@
 	<li>
 	  <para>
 	    Una volta salvato il grafico come icona di sessione,
-	    facendo clic col tasto destro sull'icona si apre un altro menù
-	    pop-up. Una delle opzioni disponibili è <quote>Comandi per
-	    modificare il grafico</quote>, che apre una finestra di modifica
-	    con i comandi di gnuplot. È possibile modificare questi comandi
-	    e salvarli per il futuro, oppure inviarli direttamente a
-	    gnuplot (con il comando <quote>File/Invia a gnuplot</quote> del
-	    menù della finestra di modifica dei comandi).
-	  </para>
-	</li>
-	<li>
-	  <para>
-	    Un altro modo per salvare i comandi del grafico (o per
-	    salvare il grafico in formati diversi da EPS o PNG) è quello di
-	    usare il comando <quote>Modifica</quote> nel menù pop-up del
-	    grafico per aprire la finestra di modifica del grafico, quindi
-	    fare clic su <quote>File</quote>: verrà visualizzato un menù a
-	    discesa con i formati in cui è possibile salvare il grafico.
+	    facendo clic col tasto destro sull'icona si apre un altro
+	    menù pop-up. Una delle opzioni disponibili è
+	    <quote>Comandi per modificare il grafico</quote>, che apre
+	    una finestra di modifica con i comandi di gnuplot. È
+	    possibile modificare questi comandi e salvarli per il
+	    futuro, oppure inviarli direttamente a gnuplot (usando
+	    l'icona "esegui" della finestra di modifica dei comandi).
 	  </para>
 	</li>
       </ilist>
@@ -8619,6 +8622,8 @@ contenga un percorso completo.
 
   <description>
     <para>
+      Calcola la distanza di Mahalanobis di ogni osservazione dal
+      centroide, usando le serie in <repl>varlist</repl>.
       La distanza di Mahalanobis è la distanza tra due punti in uno spazio
       <math>k</math>-dimensionale, scalata rispetto alla variazione
       statistica in ogni dimensione dello spazio. Ad esempio, se
@@ -8637,24 +8642,27 @@ contenga un percorso completo.
     </para>
     <para>
       Lo spazio in cui vengono calcolate le distanze è definito dalle
-      variabili selezionate; per ogni osservazione nell'intervallo attuale
-      viene calcolata la distanza tra l'osservazione e il centroide delle
-      variabili selezionate. La distanza è la controparte multidimensionale di uno
-      <math>z</math>-score standard e può essere usata per giudicare se una certa
-      osservazione <quote>appartiene</quote> a un gruppo di altre osservazioni.
+      variabili selezionate; per ogni osservazione nell'intervallo
+      attuale viene calcolata la distanza tra l'osservazione e il
+      centroide delle variabili selezionate. La distanza è la
+      controparte multidimensionale di uno <math>z</math>-score
+      standard e può essere usata per giudicare se una certa
+      osservazione <quote>appartiene</quote> a un gruppo di altre
+      osservazioni.
     </para>
     <para context="cli">
-      Se si usa l'opzione <opt>vcv</opt>, vengono mostrate
-      la matrice di covarianza e la sua inversa. Se si usa l'opzione
-      <opt>save</opt>, le distanze vengono salvate nel dataset con il nome
-      <lit>mdist</lit> (o <lit>mdist1</lit>, <lit>mdist2</lit> e così via, se
-      esiste già una variabile con quel nome).
+      Se si usa l'opzione <opt>vcv</opt>, vengono mostrate la matrice
+      di covarianza e la sua inversa. Se si usa l'opzione
+      <opt>save</opt>, le distanze vengono salvate nel dataset con il
+      nome <lit>mdist</lit> (o <lit>mdist1</lit>, <lit>mdist2</lit> e
+      così via, se esiste già una variabile con quel nome).
     </para>
     <para context="gui">
       Se il numero delle variabili selezionate è minore o uguale a 4,
       vengono mostrate la matrice di covarianza e la sua inversa.
-      Facendo clic sul pulsante "+" in cima alla finestra che mostra le
-      distanze è possibile aggiungerle al dataset come nuova variabile.
+      Facendo clic sul pulsante "+" in cima alla finestra che mostra
+      le distanze è possibile aggiungerle al dataset come nuova
+      variabile.
     </para>
   </description>
 
@@ -11468,6 +11476,11 @@ del comando <cmdref targ="set"/>.
 	<flag>--robust</flag>
 	<effect>errori standard robusti, si veda oltre</effect>
       </option>
+        <option>
+	  <flag>--cluster</flag>
+	  <optparm>cvar</optparm>
+	  <effect>errori standard clusterizzati; vedi sotto</effect>
+        </option>
       <option>
 	<flag>--time-dummies</flag>
 	<effect>include variabili dummy temporali</effect>
@@ -11502,15 +11515,16 @@ del comando <cmdref targ="set"/>.
     <examples>
       <demos>
 	<demo>penngrow.inp</demo>
+	<demo>panel-robust.inp</demo>
       </demos>
     </examples>
   </usage>
 
   <description>
     <para>
-      Stima un modello panel, per impostazione predefinita usando lo stimatore
-      a effetti fissi; la stima è implementata sottraendo le
-      medie di gruppo o delle unità dai dati originali.
+      Stima un modello panel, con lo stimatore a effetti fissi come
+      default; la stima è implementata sottraendo le medie di gruppo o
+      delle unità dai dati originali.
     </para>
     <para context="cli">
       Se l'opzione <opt>random-effects</opt> è data allora verrano
@@ -11542,13 +11556,18 @@ del comando <cmdref targ="set"/>.
     <para context="cli">
       Il metodo predefinito per calcolare errori standard robusti in
       modelli con dati panel è descritto dallo stimatore HAC di
-      Arellano, ma può essere utilizzato anche lo stimatore di
-      Beck&ndash;Katz per <quote>panel standard errors
-      corretti</quote> attraverso il comando <lit>set pcse
-      on</lit>. Quando è specificata l'opzione <opt>robust</opt> il
-      test <math>F</math> viene eseguito sullo stimatore ad effetti
-      fissi utilizzando il metodo robusto di <cite
-      key="welch51">Welch (1951)</cite>.
+      Arellano. In alternativa,ci sono gli stimatori <quote>Panel
+      Corrected</quote> (<cite key="beck-katz95">Beck and Katz,
+      1995</cite>) e <quote>Spatial Correlation Consistent</quote>
+      (<cite key="driscoll_kraay98">Driscoll and Kraay,
+      1998</cite>). Questi vengono selezionati tramite il comando
+      <lit>set panel_robust</lit>, con argomenti <lit>pcse</lit> e
+      <lit>scc</lit> rispettivamente. Un'ulteriore alternativa a
+      queste tre opzioni è data dall'opzione <opt>cluster</opt>; si
+      veda <guideref targ="chap:robust_vcv"/> per i dettagli. Quando è
+      specificata l'opzione <opt>robust</opt> il test <math>F</math>
+      viene eseguito sullo stimatore ad effetti fissi utilizzando il
+      metodo robusto di <cite key="welch51">Welch (1951)</cite>.
     </para>
     <para context="gui">
       Se la casella "Random effects" è spuntata allora verrà
@@ -11564,14 +11583,14 @@ del comando <cmdref targ="set"/>.
       quello di Swamy-Arora.
     </para>
     <para context="cli">
-      L'opzione <opt>unbalanced</opt> è disponibile solo per modelli
-      random effects: può essere utilizzato per scegliere un metodo
+      L'opzione <opt>unbalanced</opt> è disponibile solo per modelli a
+      effetti random: può essere utilizzato per scegliere un metodo
       ANOVA da usare con panel non bilanciati.  Per default, gretl
       utilizza il metodo di Swamy&ndash;Arora come per i panel
-      bilanciati, eccezion fatta per l'utilizzo di una media
-      armonica delle singole lunghezze temporali al posto di una
-      <math>T</math> comune. Con quest'opzione è possibile
-      specificare sia <lit>bc</lit>, per usare il metodo di <cite
+      bilanciati, eccezion fatta per l'utilizzo di una media armonica
+      delle singole lunghezze temporali al posto di una <math>T</math>
+      comune. Con quest'opzione è possibile specificare sia
+      <lit>bc</lit>, per usare il metodo di <cite
       key="baltagi-chang94">Baltagi e Chang (1994)</cite>, o
       <lit>stata</lit>, per emulare l'opzione <lit>sa</lit> per il
       comando <lit>xtreg</lit> in Stata.
@@ -11609,46 +11628,50 @@ del comando <cmdref targ="set"/>.
 
   <description>
     <para>
-      Questa finestra di dialogo offre tre opzioni per definire un dataset
-      come panel. Le prime due opzioni richiedono che il dataset sia già
-      organizzato in un formato panel (anche se gretl può non essersi accorto
-      di ciò). La terza opzione richiede che il dataset contenga variabili che
-      rappresentano la struttura panel.
+      Questa finestra di dialogo offre tre opzioni per definire un
+      dataset come panel. Le prime due opzioni richiedono che il
+      dataset sia già organizzato in un formato panel (anche se gretl
+      può non essersi accorto di ciò). La terza opzione richiede che
+      il dataset contenga variabili che rappresentano la struttura
+      panel.
     </para>
     <para>
-      <emphasis>Pila di serie storiche</emphasis>: date <repl>N </repl> unità
-      cross section nel dataset e <repl>T</repl> osservazioni temporali per
-      ogni unità, selezionando questa opzione si indica a gretl che il dataset
-      attuale è composto da <repl>N</repl> blocchi consecutivi di
-      <repl>T</repl> osservazioni ciascuno. Il passo successivo consiste nello
+      <emphasis>Pila di serie storiche</emphasis>: date <repl>N
+      </repl> unità cross section nel dataset e <repl>T</repl>
+      osservazioni temporali per ogni unità, selezionando questa
+      opzione si indica a gretl che il dataset attuale è composto da
+      <repl>N</repl> blocchi consecutivi di <repl>T</repl>
+      osservazioni ciascuno. Il passo successivo consiste nello
       specificare il valore di <repl>N</repl>.
     </para>
     <para>
-      <emphasis>Pila di dati cross section</emphasis>: si indica a gretl che
-      il dataset è composto da <repl>T</repl> blocchi consecutivi di
-      <repl>N</repl> osservazioni cross section ciascuno, uno per per ogni
-      periodo. Il passo successivo consiste nello specificare il
-      valore di <repl>N</repl>.
+      <emphasis>Pila di dati cross section</emphasis>: si indica a
+      gretl che il dataset è composto da <repl>T</repl> blocchi
+      consecutivi di <repl>N</repl> osservazioni cross section
+      ciascuno, uno per per ogni periodo. Il passo successivo consiste
+      nello specificare il valore di <repl>N</repl>.
     </para>
     <para>
-      Se il numero di osservazioni del dataset è un numero primo, le due
-      opzioni precedenti non sono disponibili.
+      Se il numero di osservazioni del dataset è un numero primo, le
+      due opzioni precedenti non sono disponibili.
     </para>
     <para>
-      <emphasis>Usa variabili indice</emphasis>: si indica che il dataset è organizzato in modo
-      qualsiasi, ma contiene due variabili che indicizzano le unità cross
-      section e quelle temporali. Il passo successivo consiste nell'indicare
-      queste due variabili. Le variabili indice per i panel possono assumere solo valori
-      interi e non negativi e non devono avere valori mancanti. Se il dataset
-      non contiene variabili di questo tipo, questa opzione non è disponibile.
+      <emphasis>Usa variabili indice</emphasis>: si indica che il
+      dataset è organizzato in modo qualsiasi, ma contiene due
+      variabili che indicizzano le unità cross section e quelle
+      temporali. Il passo successivo consiste nell'indicare queste due
+      variabili. Le variabili indice per i panel possono assumere solo
+      valori interi e non negativi e non devono avere valori
+      mancanti. Se il dataset non contiene variabili di questo tipo,
+      questa opzione non è disponibile.
     </para>
-      <para>
-	<emphasis>Converti da serie temporali affiancate</emphasis>:
-	questa opzione è disponibile solo se il dataset corrente ha
-	una struttura di serie striche e contiene più di una
-	variabile. Selezionando questa opzione, i dettagli vengono
-	forniti tramite il pulsante Guida nel passaggio successivo.
-      </para>
+    <para>
+      <emphasis>Converti da serie temporali affiancate</emphasis>:
+      questa opzione è disponibile solo se il dataset corrente ha
+      una struttura di serie striche e contiene più di una
+      variabile. Selezionando questa opzione, i dettagli vengono
+      forniti tramite il pulsante Guida nel passaggio successivo.
+    </para>
   </description>
 
 </command>
@@ -12782,6 +12805,10 @@ del comando <cmdref targ="set"/>.
 	marginali</effect>
       </option>
       <option>
+        <flag>--estrella</flag>
+         <effect>seleziona una variante dello pseudo-R-quadro</effect>
+      </option>
+      <option>
 	<flag>--random-effects</flag>
 	<effect>stima un modello panel a effetti casuali (RE)</effect>
       </option>
@@ -12825,7 +12852,17 @@ del comando <cmdref targ="set"/>.
       del prodotto esterno del gradiente. Per i dettagli, si veda
       Davidson e MacKinnon 2004, cap. 10.
     </para>
-    <para context="gui">
+    <para context="cli">
+      Per idefault, viene mostrata la statistica pseudo-R-quadro
+      suggerita da <cite key="mcfadden74">McFadden (1974)</cite>, ma
+      nel caso binario, se viene specificata l'opzione
+      <opt>estrella</opt>, viene invece mostrata la variante
+      consigliata da <cite key="estrella98">Estrella
+      (1998)</cite>. Questa variante, presumibilmente, imita più da
+      vicino le proprietà del normale <math>R</math><sup>2</sup> nel
+      contesto della stima OLS.
+   </para>
+   <para context="gui">
       In modalità predefinita, gli errori standard sono calcolati
       tramite l'inversa negativa della matrice Hessiana. Se si
       seleziona la casella "Errori standard robusti", verranno
@@ -16299,11 +16336,17 @@ del comando <cmdref targ="set"/>.
       Se si usa la forma alternativa in cui il parametro è una
       matrice, allora le statistiche descrittive sono calcolate per
       le colonne della matrice. L'opzione <opt>by</opt> non è
-      disponibile per questo caso.
+      disponibile per questo caso. 
     </para>
     <para>
       La tavola prodotta dal comando <lit>summary</lit> è
-      disponibile sotto forma di matrice con l'accessore <fncref targ="$result"/>.
+      disponibile sotto forma di matrice con l'accessore <fncref
+      targ="$result"/>. Con l'opzione <opt>by</opt>, questo accessore
+      viene prodotto soltanto se  <repl>varlist</repl> è una serie singola.
+    </para>
+    <para>
+      Vedi anche la funzione <fncref targ="aggregate"/> per produrre
+      statistiche <quote>fattorizzate</quote> in modo più flessibile.
     </para>
   </description>
 
@@ -16705,6 +16748,10 @@ del comando <cmdref targ="set"/>.
 	<flag>--verbose</flag>
 	<effect>mostra i dettagli delle iterazioni</effect>
       </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non stampa i risultati</effect>
+        </option>
     </options>
   </usage>
 
