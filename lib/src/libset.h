@@ -247,7 +247,7 @@ int show_activity_func_installed (void);
 void set_user_stop (int s);
 int get_user_stop (void);
 
-void set_workdir_callback (int (*callback)());
+void set_workdir_callback (int (*callback)(char *s));
 
 int libset_write_script (const char *fname);
 int libset_read_script (const char *fname);
