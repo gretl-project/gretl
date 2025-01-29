@@ -3535,7 +3535,7 @@ gretl_matrix *get_last_pvals_matrix (int *err)
 
 /*
   malloc and free for alignments greater than that guaranteed by the C
-  library, based on Steven G. Johnson's public domand code at
+  library, based on Steven G. Johnson's public-domain code at
   http://ab-initio.mit.edu/~stevenj/align.c
 */
 
