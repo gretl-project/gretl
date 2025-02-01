@@ -885,17 +885,18 @@ static gint script_key_handler (GtkWidget *w,
 #endif
 
     if (state & GDK_CONTROL_MASK) {
-	if (keyval == GDK_R) {
-	    /* Ctrl-Shift-r */
+	if (keyval == GDK_r) {
+            if (state & GDK_MOD1_MASK) {
+                /* Ctrl-Alt-r */
 #ifdef GRETL_EDIT
-	    do_run_script(w, vwin);
+                do_run_script(w, vwin);
 #else
-	    run_script_silent(w, vwin);
+                run_script_silent(w, vwin);
 #endif
-	    ret = TRUE;
-	} else if (keyval == GDK_r) {
-	    /* plain Ctrl-r */
-	    do_run_script(w, vwin);
+            } else {
+                /* plain Ctrl-r */
+                do_run_script(w, vwin);
+            }
 	    ret = TRUE;
         } else if (keyval == GDK_v) {
             text_paste(w, vwin);
