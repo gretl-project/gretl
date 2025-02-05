@@ -456,25 +456,6 @@
       </description>
     </function>
 
-    <function name="$lang" section="access" output="string">
-      <description>
-	<para>
-	  Devolve unha cadea de texto que representa o idioma que se está usando
-	  (se este pode determinarse). A cadea de texto está composta por dúas
-	  letras do código de linguaxe ISO 639-1 (por exemplo, <lit>en</lit>
-	  para o idioma inglés, <lit>jp</lit> para o xaponés, <lit>el</lit> para
-	  o grego) seguidas dun guión baixo máis outras dúas letras do código de
-	  país ISO 3166-1. Así, por exemplo, o idioma portugués de Portugal
-	  represéntase por <lit>pt_PT</lit> ao tempo que o idioma portugués do
-	  Brasil represéntase por <lit>pt_BR</lit>.
-	</para>
-	<para>
-	  Se non é posible determinar o idioma vixente, se devolve o texto
-	  <quote><lit>unknown</lit></quote>.
-	</para>
-      </description>
-    </function>
-
     <function name="$llt" section="access" output="series">
       <description>
 	<para>
@@ -1409,18 +1390,6 @@
       </description>
     </function>
 
-    <function name="$workdir" section="access" output="string">
-      <description>
-	<para>
-	  Este accesorio devolve unha cadea de texto coa ruta desde a que le e
-	  na que escribe GRETL por defecto. Ofrécese unha discusión máis cumprida
-	  no manual de Instrucións, na referencia <cmdref targ="workdir"/>. Cae
-	  na conta de que o usuario pode determinar esta cadea por medio da
-	  instrución <cmdref targ="set"/>.
-        </para>
-      </description>
-    </function>
-
     <function name="$xlist" section="access" output="list">
       <description>
 	<para>
@@ -1505,12 +1474,23 @@
         </description>
     </function>
 
-    <function name="$lang" section="straccess" output="string">
-        <description>
-        <para>
-          Proporciona unha cadea de texto co identificador do idioma vixente especificado.
-        </para>
-        </description>
+    <function name="$lang" section="access" output="string">
+      <description>
+	<para>
+	  Devolve unha cadea de texto que representa o idioma que se está usando
+	  (se este pode determinarse). A cadea de texto está composta por dúas
+	  letras do código de linguaxe ISO 639-1 (por exemplo, <lit>en</lit>
+	  para o idioma inglés, <lit>jp</lit> para o xaponés, <lit>el</lit> para
+	  o grego) seguidas dun guión baixo máis outras dúas letras do código de
+	  país ISO 3166-1. Así, por exemplo, o idioma portugués de Portugal
+	  represéntase por <lit>pt_PT</lit> ao tempo que o idioma portugués do
+	  Brasil represéntase por <lit>pt_BR</lit>.
+	</para>
+	<para>
+	  Se non é posible determinar o idioma vixente, se devolve o texto
+	  <quote><lit>unknown</lit></quote>.
+	</para>
+      </description>
     </function>
 
     <function name="$seats" section="straccess" output="string">
@@ -1547,9 +1527,12 @@
     <function name="$workdir" section="straccess" output="string">
         <description>
         <para>
-         Proporciona unha cadea de texto coa ruta do directorio de traballo
-         vixente de GRETL. Para usala en modo de substitución para
-         cadeas de texto, antepón o símbolo arroba (<lit>@workdir</lit>).
+	  Este accesorio devolve unha cadea de texto coa ruta desde a que le e
+	  na que escribe GRETL por defecto. Ofrécese unha discusión máis cumprida
+	  no manual de Instrucións, na referencia <cmdref targ="workdir"/>. Cae
+	  na conta de que o usuario pode determinar esta cadea por medio da
+	  instrución <cmdref targ="set"/>. Para usala en modo de substitución
+	  para cadeas de texto, antepón o símbolo arroba (<lit>@workdir</lit>).
         </para>
         </description>
     </function>
@@ -8439,6 +8422,8 @@
 	<para>
 	  Calcula unha matriz de correlacións (de Pearson), tratando cada columna
 	  da matriz argumento <argname>X</argname> como se fose unha variable.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="corr"/>
             <fncref targ="cov"/>
@@ -12509,6 +12494,8 @@
 	  (opcional), ignóranse os valores ausentes; doutro xeito, o resultado
 	  é <lit>NA</lit> para cada columna que conteña valores
 	  ausentes.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="meanc"/>
             <fncref targ="sumc"/>

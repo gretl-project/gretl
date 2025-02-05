@@ -5717,7 +5717,6 @@
     label="Representar gráficas">
 
     <description>
-
       <para>
 	GRETL solicita que un programa distinto, concretamente Gnuplot,
 	xere gráficas. Gnuplot é un programa de representación gráfica moi
@@ -5726,12 +5725,10 @@
 	de elixir valores sensatos para ti; se queres, tamén te permite
 	que teñas un control completo sobre os detalles da gráfica.
       </para>
-
       <para>
 	Cunha gráfica xa representada, podes facer clic na xanela da gráfica
 	para obter un menú emerxente con varias opcións, incluídas estas:
       </para>
-
       <ilist>
 	<li>
 	  <para>
@@ -8454,14 +8451,15 @@
 
     <description>
       <para>
-	Calcula as distancias de Mahalanobis entre as series indicadas
-	en <repl>listavariables</repl>. A distancia de Mahalanobis é a distancia
-	entre dous puntos nun espazo de dimensión <math>k</math>,
-	escalada pola variación estatística en cada dimensión do espazo.
-	Por exemplo, se <math>p</math> e <math>q</math> son dúas
-	observacións dun conxunto de <math>k</math> variables con
-	matriz de covarianzas <math>C</math>, entón a distancia de
-	Mahalanobis entre as observacións ven dada por
+	Calcula as distancias de Mahalanobis desde cada observación ata o
+	centroide, usando as series indicadas en <repl>listavariables</repl>.
+	A distancia de Mahalanobis é a distancia entre dous puntos nun
+	espazo de dimensión <math>k</math>, escalada pola variación
+	estatística en cada dimensión do espazo. Por exemplo, se
+	<math>p</math> e <math>q</math> son dúas observacións dun conxunto
+	de <math>k</math> variables con matriz de covarianzas <math>C</math>,
+	entón a distancia de Mahalanobis entre as observacións ven dada
+	por
 	<equation status="display"
         tex="\[\sqrt{(p-q)^{\prime}C^{-1}(p-q)}\]"
         ascii="sqrt((p - q)' * C-inverse * (p - q))"
@@ -14631,8 +14629,9 @@
 
       <ilist>
 	<li>
-	  <para><lit>bootrep</lit>: Un enteiro. Establece o número de repeticións
-	  da instrución <cmdref targ="restrict"/> coa opción <opt>bootstrap</opt>.
+	  <para><lit>bootrep</lit>: Un enteiro. Establece o número de
+	  repeticións da instrución <cmdref targ="restrict"/> coa opción
+	  <opt>bootstrap</opt>.
 	  </para>
 	</li>
 	<li>

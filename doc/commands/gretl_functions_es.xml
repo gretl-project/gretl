@@ -456,25 +456,6 @@
       </description>
     </function>
 
-    <function name="$lang" section="access" output="string">
-      <description>
-	<para>
-	  Devuelve una cadena de texto que representa el idioma que se está usando
-	  (si este puede determinarse). La cadena de texto está compuesta por dos
-	  letras del código de lenguaje ISO 639-1 (por ejemplo, <lit>en</lit>
-	  para el idioma inglés, <lit>jp</lit> para el japonés, <lit>el</lit> para
-	  el griego) seguidas de un guion bajo más otras dos letras del código de
-	  país ISO 3166-1. Así, por ejemplo, el idioma portugués de Portugal
-	  se representa por <lit>pt_PT</lit> mientras que el idioma portugués de
-	  Brasil se representa por <lit>pt_BR</lit>.
-	</para>
-	<para>
-	  Si no es posible determinar el idioma vigente, se devuelve el texto
-	  <quote><lit>unknown</lit></quote>.
-	</para>
-      </description>
-    </function>
-
     <function name="$llt" section="access" output="series">
       <description>
 	<para>
@@ -1409,18 +1390,6 @@
       </description>
     </function>
 
-    <function name="$workdir" section="access" output="string">
-      <description>
-	<para>
-	  Este accesor devuelve una cadena de texto con la ruta desde la que lee
-	  y en la que escribe GRETL por defecto. Se ofrece una discusión más
-	  detallada en la Guía de instrucciones, en <cmdref targ="workdir"/>.
-	  Ten en cuenta que el usuario puede determinar esta cadena mediante
-	  la instrucción <cmdref targ="set"/>.
-        </para>
-      </description>
-    </function>
-
     <function name="$xlist" section="access" output="list">
       <description>
 	<para>
@@ -1505,12 +1474,23 @@
         </description>
     </function>
 
-    <function name="$lang" section="straccess" output="string">
-        <description>
-        <para>
-          Proporciona una cadena de texto con el identificador del idioma vigente especificado.
-        </para>
-        </description>
+    <function name="$lang" section="access" output="string">
+      <description>
+	<para>
+	  Devuelve una cadena de texto que representa el idioma que se está usando
+	  (si este puede determinarse). La cadena de texto está compuesta por dos
+	  letras del código de lenguaje ISO 639-1 (por ejemplo, <lit>en</lit>
+	  para el idioma inglés, <lit>jp</lit> para el japonés, <lit>el</lit> para
+	  el griego) seguidas de un guion bajo más otras dos letras del código de
+	  país ISO 3166-1. Así, por ejemplo, el idioma portugués de Portugal
+	  se representa por <lit>pt_PT</lit> mientras que el idioma portugués de
+	  Brasil se representa por <lit>pt_BR</lit>.
+	</para>
+	<para>
+	  Si no es posible determinar el idioma vigente, se devuelve el texto
+	  <quote><lit>unknown</lit></quote>.
+	</para>
+      </description>
     </function>
 
     <function name="$seats" section="straccess" output="string">
@@ -1547,9 +1527,12 @@
     <function name="$workdir" section="straccess" output="string">
         <description>
         <para>
-         Proporciona una cadena de texto con la ruta del directorio de
-         trabajo vigente de GRETL. Para usarla en modo de sustitución para
-         cadenas de texto, antepón el símbolo arroba (<lit>@workdir</lit>).
+	  Este accesor devuelve una cadena de texto con la ruta desde la que lee
+	  y en la que escribe GRETL por defecto. Se ofrece una discusión más
+	  detallada en la Guía de instrucciones, en <cmdref targ="workdir"/>.
+	  Ten en cuenta que el usuario puede determinar esta cadena mediante
+	  la instrucción <cmdref targ="set"/>. Para usarla en modo de sustitución
+	  para cadenas de texto, antepón el símbolo arroba (<lit>@workdir</lit>).
         </para>
         </description>
     </function>
@@ -8439,6 +8422,8 @@
 	<para>
 	  Calcula una matriz de correlaciones (de Pearson), tratando cada columna
 	  de la matriz argumento <argname>X</argname> como si fuese una variable.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="corr"/>
             <fncref targ="cov"/>
@@ -12509,6 +12494,8 @@
 	  nulo para el tercer argumento (opcional), se ignoran los valores
 	  ausentes; de otra forma, el resultado es <lit>NA</lit> para cada
 	  columna que contenga valores ausentes.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="meanc"/>
             <fncref targ="sumc"/>

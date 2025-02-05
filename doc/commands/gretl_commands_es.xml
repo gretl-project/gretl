@@ -5717,7 +5717,6 @@
     label="Representar gráficos">
 
     <description>
-
       <para>
 	GRETL solicita que un programa distinto, concretamente Gnuplot,
 	genere gráficos. Gnuplot es un programa de representación gráfica muy
@@ -5726,12 +5725,10 @@
 	de elegir valores sensatos para ti; si quieres, también te permite
 	que tengas un control completo sobre los detalles del gráfico.
       </para>
-
       <para>
 	Con un gráfico ya representado, puedes hacer clic en la ventana del gráfico
 	para obtener un menú emergente con varias opciones, incluidas estas:
       </para>
-
       <ilist>
 	<li>
 	  <para>
@@ -8454,14 +8451,15 @@
 
     <description>
       <para>
-	Calcula las distancias de Mahalanobis entre las series indicadas
-	en <repl>listavariables</repl>. La distancia de Mahalanobis es la distancia
-	entre dos puntos en un espacio de dimensión <math>k</math>,
-	escalada por la variación estadística en cada dimensión del espacio.
-	Por ejemplo, si <math>p</math> y <math>q</math> son dos
-	observaciones de un conjunto de <math>k</math> variables con
-	matriz de covarianzas <math>C</math>, entonces la distancia de
-	Mahalanobis entre las observaciones viene dada por
+	Calcula las distancias de Mahalanobis desde cada observación hasta el
+	centroide, usando las series indicadas en <repl>listavariables</repl>.
+	La distancia de Mahalanobis es la distancia entre dos puntos en
+	un espacio de dimensión <math>k</math>, escalada por la variación
+	estadística en cada dimensión del espacio. Por ejemplo, si
+	<math>p</math> y <math>q</math> son dos observaciones de un conjunto
+	de <math>k</math> variables con matriz de covarianzas <math>C</math>,
+	entonces la distancia de Mahalanobis entre las observaciones viene
+	dada por
 	<equation status="display"
         tex="\[\sqrt{(p-q)^{\prime}C^{-1}(p-q)}\]"
         ascii="sqrt((p - q)' * C-inverse * (p - q))"
@@ -14631,8 +14629,9 @@
 
       <ilist>
 	<li>
-	  <para><lit>bootrep</lit>: Un entero. Establece el número de repeticiones
-	  de la instrucción <cmdref targ="restrict"/> con la opción <opt>bootstrap</opt>.
+	  <para><lit>bootrep</lit>: Un entero. Establece el número de
+	  repeticiones de la instrucción <cmdref targ="restrict"/> con la
+	  opción <opt>bootstrap</opt>.
 	  </para>
 	</li>
 	<li>
