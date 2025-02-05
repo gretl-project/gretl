@@ -8,6 +8,8 @@ version 2025a, in progress
   units to be added to the dataset
 - Fix bug: "mpols" was not respecting the --simple-print
   option, now it does
+- Fix bug: the RESET test in the GUI was broken when the
+  "show all variants" option was selected (since 2024c)
 - macOS and 64-bit Windows: update gnuplot to version 6.0.2
 - Windows 64-bit build: revert to use of MSVCRT rather then
   UCRT, pending analysis of some problems with the latter
