@@ -61,6 +61,7 @@
                          c == LEVINLIN ||       \
                          c == LOOP ||           \
                          c == MAHAL ||          \
+                         c == MEANTEST ||       \
                          c == NORMTEST ||       \
                          c == OLS ||            \
                          c == OMIT ||           \
@@ -75,6 +76,7 @@
                          c == SMPL ||           \
                          c == SYSTEM ||         \
                          c == VAR ||            \
+                         c == VARTEST ||        \
                          c == VECM ||           \
                          c == VIF ||            \
                          c == XCORRGM ||        \
@@ -454,6 +456,8 @@ struct gretl_option gretl_opts[] = {
     { MAHAL,    OPT_V, "vcv", 0 },
     { MEANTEST, OPT_O, "unequal-vars", 0 },
     { MEANTEST, OPT_D, "use-dummy", 0 },
+    { MEANTEST, OPT_P, "paired", 0 },
+    { MEANTEST, OPT_R, "robust", 0 },
     { MIDASREG, OPT_R, "robust", 0 },
     { MIDASREG, OPT_V, "verbose", 0 },
     { MIDASREG, OPT_L, "levenberg", 0 },
@@ -698,7 +702,7 @@ struct gretl_option gretl_opts[] = {
     { VARLIST,  OPT_T, "type", 2 },
     { VARLIST,  OPT_D, "debug", 0 },
     { VARTEST,  OPT_D, "use-dummy", 0 },
-    { VARTEST,  OPT_L, "levene", 1 },
+    { VARTEST,  OPT_R, "robust", 1 },
     { VECM,     OPT_A, "crt", 0 },
     { VECM,     OPT_D, "seasonals", 0 },
     { VECM,     OPT_F, "variance-decomp", 0 },
