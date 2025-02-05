@@ -3185,14 +3185,18 @@ void do_reset (GtkAction *action, gpointer p)
         /* gui special: show short form of all 3 tests */
         width = 60;
         height = 320;
+        /* squares and cubes */
         err = reset_test(pmod, dset, opt, prn);
         if (!err) {
-            err = reset_test(pmod, dset, (opt | OPT_R), prn);
+            /* squares only */
+            err = reset_test(pmod, dset, (opt | OPT_U), prn);
         }
         if (!err) {
+            /* cubes only */
             err = reset_test(pmod, dset, (opt | OPT_C), prn);
         }
     } else {
+        /* show the one selected variant */
         err = reset_test(pmod, dset, opt, prn);
     }
 
