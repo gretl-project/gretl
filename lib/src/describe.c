@@ -7497,7 +7497,7 @@ static double levene_test (const double *x, int n1,
 
 static int handle_levene_options (double *p, int *err)
 {
-    const char *s = get_optval_string(VARTEST, OPT_L);
+    const char *s = get_optval_string(VARTEST, OPT_R);
     double default_trim = 0.10;
     int f = 1;
 
