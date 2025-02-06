@@ -1,6 +1,6 @@
 version 2025a, in progress
 - "meantest" and "vartest" commands: support more options
-- "system" command, iterated variants: allow more interations
+- "system" command, iterated variants: allow more iterations
   (now 250) before declaring non-convergence
 - Fix bug: "dataset addobs n" with panel data (and without the
   --panel-time option) was not respecting the documented
@@ -9,7 +9,8 @@ version 2025a, in progress
 - Fix bug: "mpols" was not respecting the --simple-print
   option, now it does
 - Fix bug: the "join" command could overwrite some existing
-  observations (contrary to the documentation) in some cases
+  data with missing values (contrary to the documentation) in
+  some cases
 - Fix bug: the RESET test in the GUI was broken when the
   "show all variants" option was selected (since 2024c)
 - minor code adjustments to comply with the C23 standard
