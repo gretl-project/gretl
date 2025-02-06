@@ -7379,9 +7379,6 @@ int means_test (const int *list, const DATASET *dset,
         pprintf(prn, _("   Estimated standard error = %g\n"), se);
         pprintf(prn, _("   Test statistic: t(%d) = %g\n"), df, t);
         pprintf(prn, _("   p-value (two-tailed) = %g\n\n"), pval);
-        if (pval > .10) {
-            pputs(prn, _("   The difference is not statistically significant.\n\n"));
-        }
     }
 
  bailout:
@@ -7477,7 +7474,7 @@ static double levene_test (const double *x, int n1,
     /* numerator of W */
     d1 = zxbar - zbar;
     d2 = zybar - zbar;
-    num = dfd * (n1 * d1 * d1 + n2 * d2 * d2);
+    num = n1 * d1 * d1 + n2 * d2 * d2;
 
     /* denominator of W */
     den = 0;
@@ -7490,7 +7487,7 @@ static double levene_test (const double *x, int n1,
         den += d2 * d2;
     }
 
-    W = num / den;
+    W = dfd * num / den;
 
     free(zx);
     free(zy);
@@ -7506,7 +7503,7 @@ static int handle_levene_options (double *p, int *err)
 
     if (s != NULL) {
         if (!strcmp(s, "mean")) {
-            f = 1;
+            ; /* OK */
         } else if (!strcmp(s, "median")) {
             f = 2;
         } else if (!strcmp(s, "trimmed")) {
@@ -7569,8 +7566,6 @@ static void vartest_print (double F, double pval,
             _("The two population variances are equal"));
     pprintf(prn, "   %s: F(%d,%d) = %g\n", _("Test statistic"), dfn, dfd, F);
     pprintf(prn, _("   p-value (two-tailed) = %g\n\n"), pval);
-    if (snedecor_cdf_comp(dfn, dfd, F) > .10)
-        pputs(prn, _("   The difference is not statistically significant.\n\n"));
 }
 
 /**
@@ -7636,23 +7631,13 @@ int vars_test (const int *list, const DATASET *dset,
         dfn = 1; /* = 2 - 1 */
         dfd = n1 + n2 - 2;
     } else {
-        double var1, var2;
-        double m, s1, s2;
+        double mx, my, sx, sy;
 
-        gretl_moments(0, n1-1, x, NULL, &m, &s1, NULL, NULL, 1);
-        gretl_moments(0, n2-1, y, NULL, &m, &s2, NULL, NULL, 1);
-
-        var1 = s1 * s1;
-        var2 = s2 * s2;
-        if (var1 > var2) {
-            F = var1 / var2;
-            dfn = n1 - 1;
-            dfd = n2 - 1;
-        } else {
-            F = var2 / var1;
-            dfn = n2 - 1;
-            dfd = n1 - 1;
-        }
+        gretl_moments(0, n1-1, x, NULL, &mx, &sx, NULL, NULL, 1);
+        gretl_moments(0, n2-1, y, NULL, &my, &sy, NULL, NULL, 1);
+        F = (sx * sx) / (sy * sy);
+        dfn = n1 - 1;
+        dfd = n2 - 1;
     }
 
     pval = snedecor_cdf_comp(dfn, dfd, F);
