@@ -1,15 +1,19 @@
 version 2025a, in progress
-- "meantest" and "vartest" commands: support a variant where
-  the second series is a dummy with which to split the first
-  into two samples
+- "meantest" and "vartest" commands: support more options
+- "system" command, iterated variants: allow more interations
+  (now 250) before declaring non-convergence
 - Fix bug: "dataset addobs n" with panel data (and without the
   --panel-time option) was not respecting the documented
   policy that 'n' refers to the number of cross-sectional
   units to be added to the dataset
 - Fix bug: "mpols" was not respecting the --simple-print
   option, now it does
+- Fix bug: the "join" command could overwrite some existing
+  observations (contrary to the documentation) in some cases
 - Fix bug: the RESET test in the GUI was broken when the
   "show all variants" option was selected (since 2024c)
+- minor code adjustments to comply with the C23 standard
+- update sourceforge URLs to use https
 - macOS and 64-bit Windows: update gnuplot to version 6.0.2
 - Windows 64-bit build: revert to use of MSVCRT rather then
   UCRT, pending analysis of some problems with the latter
