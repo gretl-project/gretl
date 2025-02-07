@@ -6988,7 +6988,7 @@ int gretl_corrmx (int *list, const DATASET *dset,
   of Variance Components". Biometrics Bulletin, 2, 6, pp. 110–114.
 
   v = (s^2_1/n_1 + s^2_2/n_2)^2 /
-        [(s^_1/n1)^2 / (n_1 - 1) + (s^2_2/n_2)^2 / (n_2 - 1)]
+        [(s^2_1/n1)^2 / (n_1 - 1) + (s^2_2/n_2)^2 / (n_2 - 1)]
 */
 
 int satterthwaite_df (double v1, int n1,
@@ -6997,7 +6997,7 @@ int satterthwaite_df (double v1, int n1,
     double rtnum = v1 / n1 + v2 / n2;
     double d1 = (v1/n1) * (v1/n1) / (n1 - 1);
     double d2 = (v2/n2) * (v2/n2) / (n2 - 1);
-    double v = rtnum * rtnum / (d1 + d2);
+    double v = (rtnum * rtnum) / (d1 + d2);
 
     return (int) floor(v);
 }
@@ -7131,10 +7131,11 @@ static double *transcribe_ok_pairs (const DATASET *dset,
    @n2 should be 0.
 */
 
-static int robust_means_test (const double *x, int n1,
-                              const double *y, int n2,
-                              double *m1, double *m2,
-                              double *se, int *df)
+static int ols_means_test (const double *x, int n1,
+                           const double *y, int n2,
+                           double *m1, double *m2,
+                           double *se, int *df,
+                           PRN *prn)
 {
     MODEL mod;
     DATASET *aset;
@@ -7164,7 +7165,7 @@ static int robust_means_test (const double *x, int n1,
         for (i=0; i<nobs; i++) {
             aset->Z[2][i] = i >= n1;
         }
-        strcpy(aset->varname[2], "d_y");
+        strcpy(aset->varname[2], "dum_y");
     }
 
     gretl_model_init(&mod, aset);
@@ -7172,6 +7173,9 @@ static int robust_means_test (const double *x, int n1,
     err = mod.errcode;
 
     if (!err) {
+        if (prn != NULL) {
+            printmodel(&mod, aset, OPT_S, prn);
+        }
         *m1 = mod.coeff[0];
         if (y != NULL) {
             *m2 = mod.coeff[0] + mod.coeff[1];
@@ -7312,11 +7316,11 @@ int means_test (const int *list, const DATASET *dset,
 
     if (robust || paired) {
         /* use regression method */
-        err = robust_means_test(x, n1, y, n2, &m1, &m2, &se, &df);
+        err = ols_means_test(x, n1, y, n2, &m1, &m2, &se, &df, prn);
         if (err) {
             goto bailout;
         }
-        mdiff = paired ? m1 : m2 - m1;
+        mdiff = paired ? m1 : m1 - m2;
     } else {
         double var1, var2;
 
@@ -7354,7 +7358,6 @@ int means_test (const int *list, const DATASET *dset,
         paired_diff_print(n1, mdiff, se, df, t, pval, prn);
     } else {
         if (robust) {
-            pputc(prn, '\n');
             pputs(prn, _("Robust equality of means test"));
             pputs(prn, "\n\n");
         } else {
