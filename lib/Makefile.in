@@ -189,7 +189,8 @@ PUBLIC_HDRS = \
 	uservar.h \
 	var.h \
 	varprint.h \
-	vartest.h
+	vartest.h \
+	version.h
 
 SRCS = adf_kpss.c \
 	addons_utils.c \
@@ -283,8 +284,7 @@ SRCS = adf_kpss.c \
 	var.c \
 	varprint.c \
 	vartest.c \
-	irfboot.c \
-	version.h
+	irfboot.c
 
 ifeq ($(use_curl),yes)
   PUBLIC_HDRS += gretl_www.h
