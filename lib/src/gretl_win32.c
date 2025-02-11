@@ -416,7 +416,6 @@ int win32_ensure_dll_path (void)
 {
     const char *bindir = gretl_bindir();
     const gchar *path = g_getenv("PATH");
-    const gchar *tmpd = g_getenv("TMPDIR");
     int in_path = 0;
 
     if (path != NULL) {

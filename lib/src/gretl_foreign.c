@@ -242,6 +242,8 @@ static int set_foreign_lang (const char *lang, PRN *prn)
     return err;
 }
 
+#ifndef G_OS_WIN32
+
 static int lib_run_prog_sync (char **argv, gretlopt opt,
                               int lang, PRN *prn)
 {
@@ -305,6 +307,8 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
 
     return err;
 }
+
+#endif /* not Windows */
 
 #ifdef HAVE_MPI /* start common MPI-driver code block */
 
@@ -901,7 +905,7 @@ static int win32_lib_run_other_sync (gretlopt opt, PRN *prn)
 
 #else /* non-Windows code follows */
 
-#ifdef __APPLE__
+# ifdef __APPLE__
 
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
@@ -928,7 +932,7 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
     return ret;
 }
 
-#else
+# else
 
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
@@ -944,7 +948,7 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
     return lib_run_prog_sync(argv, opt, LANG_R, prn);
 }
 
-#endif /* macOS or not */
+# endif /* macOS or not */
 
 static int lib_run_other_sync (gretlopt opt, PRN *prn)
 {

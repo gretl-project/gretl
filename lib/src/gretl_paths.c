@@ -2279,17 +2279,6 @@ void show_paths (void)
 
 #ifdef WIN32
 
-static char *rightmost (char *s1, char *s2)
-{
-    if (s1 == NULL) {
-        return s2;
-    } else if (s2 == NULL) {
-        return s1;
-    } else {
-        return (s2 - s1 > 0)? s2 : s1;
-    }
-}
-
 static char getsep (const char *s)
 {
     int bak = 0, fwd = 0;

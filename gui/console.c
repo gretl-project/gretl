@@ -233,18 +233,21 @@ static gint console_paste_handler (GtkWidget *w, gpointer p)
     return console_paste_text(w, GDK_NONE);
 }
 
-/* paste from X selection onto the command line */
+#if defined(__linux) || defined(linux)
 
 static gint console_click_handler (GtkWidget *w,
                                    GdkEventButton *event,
                                    gpointer p)
 {
+    /* paste from the X selection onto the command line */
     if (event->button == 2) {
         return console_paste_text(w, GDK_SELECTION_PRIMARY);
+    } else {
+        return FALSE;
     }
-
-    return FALSE;
 }
+
+#endif /* linux */
 
 enum {
     SAMPLE_RECORD,
