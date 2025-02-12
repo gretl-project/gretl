@@ -171,6 +171,13 @@ int *gretl_list_new (int nterms)
     return list;
 }
 
+/* experimental wrapper for use with gretl4py */
+
+void gretl_list_free (int *list)
+{
+    free(list);
+}
+
 /**
  * gretl_list_array_new:
  * @nlists: the number of lists to create.
