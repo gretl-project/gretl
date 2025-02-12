@@ -3489,7 +3489,7 @@ static int dataset_int_param (const char **ps, int op,
 	    if (strstr(*ps, "spread")) {
 		*err = 0;
 	    }
-	} else if (dset->pd > 1 && k == 1) {
+	} else if (dset->pd > 1 && dset->pd != 10 && k == 1) {
             *err = 0;
         }
     } else if (op == DS_EXPAND) {

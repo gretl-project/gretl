@@ -186,7 +186,7 @@ void iconview_menubar_state (gboolean s)
 
 #define COMPACTABLE(d) ((d->structure == TIME_SERIES || \
                          d->structure == SPECIAL_TIME_SERIES) && \
-                        d->pd > 1)
+                        d->pd > 1 && d->pd != 10)
 
 #define EXPANSIBLE(d) (d->structure == TIME_SERIES && \
                        (d->pd == 1 || d->pd == 4))
