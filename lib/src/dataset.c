@@ -3489,7 +3489,9 @@ static int dataset_int_param (const char **ps, int op,
 	    if (strstr(*ps, "spread")) {
 		*err = 0;
 	    }
-	}
+	} else if (dset->pd > 1 && k == 1) {
+            *err = 0;
+        }
     } else if (op == DS_EXPAND) {
 	*err = E_PDWRONG;
 	if (dset->pd == 1 && (k == 4 || k == 12)) {

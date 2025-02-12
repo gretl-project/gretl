@@ -4114,6 +4114,9 @@ void data_compact_dialog (int spd, int *target_pd, int *week_start,
             labelstr = g_strdup(_("Compact hourly data to:"));
             *target_pd = 7;
             show_pd_buttons = 1;
+        } else if (spd > 1) {
+            labelstr = g_strdup_printf(_("Compact data frequency %d to 1"), spd);
+            *target_pd = 1;
         }
         methods_set = compact_methods_set(method);
     }

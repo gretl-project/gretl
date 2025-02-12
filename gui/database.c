@@ -4295,7 +4295,7 @@ void do_compact_dataset (void)
     data_compact_dialog(dataset->pd, &newpd, p_wkstart,
 			&method, p_repday, mdata->main);
 
-    if (method == COMPACT_UNSET) {
+    if (method == COMPACT_UNSET || newpd == 0) {
 	/* the user cancelled */
 	return;
     }
