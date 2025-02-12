@@ -113,7 +113,7 @@ struct urlinfo_ {
     char *getbuf;            /* buffer to which to write result or NULL */
     char agent[32];          /* user-agent string */
     FILE *fp;                /* for saving content locally */
-    int (*progfunc)();       /* progress indicator function */
+    int (*progfunc)(double, double, int); /* progress indicator function */
     int pstarted;            /* progress bar status flag */
     long timeout;            /* seconds till timing out */
     char errbuf[CURL_ERROR_SIZE]; /* for use with CURLOPT_ERRORBUFFER */
