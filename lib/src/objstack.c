@@ -1813,7 +1813,7 @@ int check_variable_deletion_list (int *list, const DATASET *dset)
 
 static GList *(*get_or_send_gui_models)(GList *);
 
-void set_gui_model_list_callback (GList *(*callback)())
+void set_gui_model_list_callback (GList *(*callback)(GList *))
 {
     get_or_send_gui_models = callback;
 }

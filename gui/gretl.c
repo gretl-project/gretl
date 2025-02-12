@@ -821,7 +821,7 @@ int main (int argc, char **argv)
     fprintf(stderr, "finished option processing\n");
 #endif
 
-    /* set libgretl callbacks */
+    /* set libgretl callback functions */
     set_workdir_callback(gui_set_working_dir);
     set_show_activity_func(gui_show_activity);
     set_gui_model_list_callback(get_or_send_gui_models);

@@ -194,7 +194,7 @@ int check_models_for_subsample (char *newmask, int *ndropped);
 
 int n_stacked_models (void);
 
-void set_gui_model_list_callback (GList *(*callback)());
+void set_gui_model_list_callback (GList *(*callback)(GList *));
 
 void gretl_saved_objects_cleanup (void);
 
