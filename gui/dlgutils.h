@@ -127,15 +127,16 @@ GtkWidget *gretl_option_check_button_switched (const char *label,
 					       gretlopt val);
 
 void blocking_edit_dialog (int ci, const char *title, 
-			   const char *info, const char *deflt, 
-			   void (*okfunc)(), void *okptr,
-			   Varclick click, GtkWidget *parent,
-			   int *canceled);
+			   const char *info, const char *deflt,
+                           void (*okfunc)(GtkWidget *, dialog_t *),
+			   void *okptr, Varclick click,
+                           GtkWidget *parent, int *canceled);
 
 void edit_dialog (int ci, const char *title, 
-		  const char *info, const char *deflt, 
-		  void (*okfunc)(), void *okptr,
-		  Varclick click, GtkWidget *parent);
+		  const char *info, const char *deflt,
+                  void (*okfunc)(GtkWidget *, dialog_t *),
+		  void *okptr, Varclick click,
+                  GtkWidget *parent);
 
 void edit_dialog_reset (dialog_t *dlg);
 

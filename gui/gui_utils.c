@@ -220,7 +220,7 @@ static GtkActionEntry model_items[] = {
     { "Forecasts", NULL, N_("_Forecasts..."), NULL, NULL, G_CALLBACK(gui_do_forecast) },
     { "ConfIntervals", NULL, N_("_Confidence intervals for coefficients"), NULL, NULL,
       G_CALLBACK(do_coeff_intervals) },
-    { "ConfEllipse", NULL, N_("Confidence _ellipse..."), NULL, NULL, G_CALLBACK(selector_callback) },
+    { "ConfEllipse", NULL, N_("Confidence _ellipse..."), NULL, NULL, G_CALLBACK(call_selector) },
     { "Covariance", NULL, N_("Coefficient covariance _matrix"), NULL, NULL, G_CALLBACK(do_outcovmx) },
     { "Collinearity", NULL, N_("_Collinearity"), NULL, NULL, G_CALLBACK(do_collin) },
     { "Leverage", NULL, N_("_Influential observations"), NULL, NULL, G_CALLBACK(do_leverage) },
@@ -229,9 +229,9 @@ static GtkActionEntry model_items[] = {
 };
 
 static GtkActionEntry model_test_items[] = {
-    { "omit", NULL, N_("_Omit variables"), NULL, NULL, G_CALLBACK(selector_callback) },
-    { "add", NULL, N_("_Add variables"), NULL, NULL, G_CALLBACK(selector_callback) },
-    { "coeffsum", NULL, N_("_Sum of coefficients"), NULL, NULL, G_CALLBACK(selector_callback) },
+    { "omit", NULL, N_("_Omit variables"), NULL, NULL, G_CALLBACK(call_selector) },
+    { "add", NULL, N_("_Add variables"), NULL, NULL, G_CALLBACK(call_selector) },
+    { "coeffsum", NULL, N_("_Sum of coefficients"), NULL, NULL, G_CALLBACK(call_selector) },
     { "restrict", NULL, N_("_Linear restrictions"), NULL, NULL, G_CALLBACK(gretl_callback) },
     { "modtest:s", NULL, N_("Non-linearity (s_quares)"), NULL, NULL, G_CALLBACK(do_modtest) },
     { "modtest:l", NULL, N_("Non-linearity (_logs)"), NULL, NULL, G_CALLBACK(do_modtest) },
@@ -3187,7 +3187,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	if (gretl_VAR_get_exo_list(var) != NULL) {
 	    item.name = "VarOmit";
 	    item.label = N_("Omit exogenous variables...");
-	    item.callback = G_CALLBACK(selector_callback);
+	    item.callback = G_CALLBACK(call_selector);
 	    vwin_menu_add_item(vwin, tests, &item);
 	}
 	if (var->detflags & DET_TREND) {

@@ -49,24 +49,30 @@ struct gui_midas_spec_ {
     int nparm;
 };
 
+typedef int (*sr_callback) (selector *sr);
+
 void clear_selector (void);
 
-selector *selection_dialog (int ci, const char *title,
-			    void *data, int (*callback)());
+selector *selection_dialog (int ci, const char *title, void *data,
+                            sr_callback callback);
 
-selector *simple_selection (int ci, const char *title, int (*callback)(), 
+selector *simple_selection (int ci, const char *title,
+                            sr_callback callback,
 			    GtkWidget *parent);
 
 selector *
-simple_selection_for_viewer (int ci, const char *title, int (*callback)(), 
+simple_selection_for_viewer (int ci, const char *title,
+                             sr_callback callback,
 			     windata_t *vwin);
 
 selector *
-simple_selection_with_data (int ci, const char *title, int (*callback)(), 
+simple_selection_with_data (int ci, const char *title,
+                            sr_callback callback,
 			    GtkWidget *parent, gpointer data);
 
 selector *
-sublist_selection (int ci, const char *title, int (*callback)(),
+sublist_selection (int ci, const char *title,
+                   sr_callback callback,
 		   GtkWidget *parent, const int *list,
 		   const int *presel, void *data);
 

@@ -420,7 +420,7 @@ void model_genr_callback (GtkAction *action, gpointer data)
                 vwin_toplevel(vwin));
 }
 
-static int selector_callback_code (const gchar *s)
+static int selector_call_code (const gchar *s)
 {
     int ci = gretl_command_number(s);
 
@@ -466,13 +466,13 @@ static int selector_callback_code (const gchar *s)
     return 0;
 }
 
-void selector_callback (GtkAction *action, gpointer data)
+void call_selector (GtkAction *action, gpointer data)
 {
     const gchar *s = gtk_action_get_name(action);
     windata_t *vwin = (windata_t *) data;
     int ci;
 
-    ci = selector_callback_code(s);
+    ci = selector_call_code(s);
 
     if (ci == COINT || ci == COINT2) {
         selection_dialog(ci, _("gretl: cointegration test"), NULL, do_coint);
@@ -486,36 +486,36 @@ void selector_callback (GtkAction *action, gpointer data)
     } else if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY ||
                ci == SCATTERS || ci == GR_3D || ci == GR_XYZ ||
                ci == GR_FBOX || ci == FSUMMARY) {
-        int (*selfunc)() = NULL;
+        sr_callback cb = NULL;
 
         switch (ci) {
         case GR_XY:
         case GR_IMP:
-            selfunc = do_graph_from_selector;
+            cb = do_graph_from_selector;
             break;
         case GR_3D:
-            selfunc = do_splot_from_selector;
+            cb = do_splot_from_selector;
             break;
         case GR_DUMMY:
-            selfunc = do_dummy_graph;
+            cb = do_dummy_graph;
             break;
         case GR_XYZ:
-            selfunc = do_xyz_graph;
+            cb = do_xyz_graph;
             break;
         case SCATTERS:
-            selfunc = do_multi_plots;
+            cb = do_multi_plots;
             break;
         case GR_FBOX:
         case FSUMMARY:
-            selfunc = do_factorized_command;
+            cb = do_factorized_command;
             break;
         default:
             return;
         }
         if (ci == FSUMMARY) {
-            selection_dialog(ci, _("gretl: factorized statistics"), NULL, selfunc);
+            selection_dialog(ci, _("gretl: factorized statistics"), NULL, cb);
         } else {
-            selection_dialog(ci, _("gretl: define graph"), NULL, selfunc);
+            selection_dialog(ci, _("gretl: define graph"), NULL, cb);
         }
     } else if (ci == ADD || ci == OMIT) {
         simple_selection_for_viewer(ci, _("gretl: model tests"),
@@ -545,7 +545,7 @@ void selector_callback (GtkAction *action, gpointer data)
         selection_dialog(ci, title, NULL, do_nonparam_model);
         g_free(title);
     } else {
-        errbox("selector_callback: code was not recognized");
+        errbox("call_selector: code was not recognized");
     }
 }
 
@@ -587,7 +587,7 @@ void gretl_callback (GtkAction *action, gpointer data)
     const char *query = NULL;
     const char *defstr = NULL;
     gchar *dynquery = NULL;
-    void (*okfunc)() = NULL;
+    void (*okfunc)(GtkWidget *, dialog_t *) = NULL;
     Varclick click = VARCLICK_NONE;
     int ci;
 
@@ -705,7 +705,7 @@ void revise_nl_model (MODEL *pmod, GtkWidget *parent)
     const char *title = NULL;
     const char *query = NULL;
     const char *defstr;
-    void (*okfunc)() = NULL;
+    void (*okfunc)(GtkWidget *, dialog_t *) = NULL;
 
     switch (pmod->ci) {
     case GMM:

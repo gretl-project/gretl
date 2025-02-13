@@ -25,7 +25,7 @@ void model_stat_callback (GtkAction *action, gpointer data);
 
 void model_callback (GtkAction *action, gpointer data);
 
-void selector_callback (GtkAction *action, gpointer data);
+void call_selector (GtkAction *action, gpointer data);
 
 void gretl_callback (GtkAction *action, gpointer data);
 
