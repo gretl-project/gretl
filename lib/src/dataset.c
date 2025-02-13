@@ -3489,6 +3489,11 @@ static int dataset_int_param (const char **ps, int op,
 	    if (strstr(*ps, "spread")) {
 		*err = 0;
 	    }
+#if 0 /* worth exploring, or not? */
+        } else if (dset->structure == SPECIAL_TIME_SERIES &&
+                   k < dset->pd) {
+            *err = 0;
+#endif
 	} else if (dset->pd > 1 && dset->pd != 10 && k == 1) {
             *err = 0;
         }
