@@ -1142,6 +1142,7 @@ static int process_starting_obs (const char *stobs_in, int pd,
                 if (structure == TIME_SERIES && min > 0 &&
                     !recognized_ts_frequency(pd)) {
                     if (opt & OPT_I) {
+                        /* --panel-time */
                         return invalid_stobs(stobs);
                     } else {
                         structure = SPECIAL_TIME_SERIES;
@@ -1323,6 +1324,7 @@ int set_obs (const char *parm1, const char *parm2,
 #if 0
     fprintf(stderr, "setobs: pd=%d, stobs=%s, sd0=%g, markers=%d, S=%p\n",
             dset->pd, dset->stobs, dset->sd0, dset->markers, (void *) dset->S);
+    fprintf(stderr, " dset->structure = %d\n", dset->structure);
 #endif
 
     return err;
