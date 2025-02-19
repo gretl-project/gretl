@@ -6438,20 +6438,46 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Ritorna la funzione ipergeometrica di Gauss per valori reali
-	  dell'argomento <argname>x</argname>.
-	</para>
-	<para context="tex">
-	  Ritorna la funzione ipergeometrica di Gauss
+	  Restituisce la funzione ipergeometrica di Gauss per
+	  l'argomento reale <argname>x</argname>. I valori validi per
+	  <argname>x</argname> sono compresi tra &minus;1 e 1
+	  (inclusi). Questa funzione è molto generale e si riduce a
+	  una funzione più semplice in alcuni casi particolari, come
+	  ad esempio
+	  <math>-</math>log(<math>1-x</math>)/<math>x</math> per
+	  <math>a=b=1</math> e <math>c=2</math>. Si veda
+	  <url>https://en.wikipedia.org/wiki/Hypergeometric_function</url>
+	  per maggiori dettagli. </para>
+	  <para context="tex">
+	  Restituisce la funzione ipergeometrica di Gauss
 	  <math>{}_2F_1(a,b;c;z) = \sum_{n=0}^\infty \frac{(a)_n
-	  (b)_n}{(c)_n} \frac{z^n}{n!}.</math> per valori reali
-	  dell'argomento <argname>x</argname>.  <argname>x</argname>.
-	</para>
-	<para>
-	  Se <argname>x</argname> è uno scalare, la funzione
-	  restituisce uno scalare; se no, il risultato sarà una
-	  matrice delle stesse dimensioni di <argname>x</argname>.
-	</para>
+	  (b)_n}{(c)_n} \frac{z^n}{n!}.</math> per l'argomento reale
+	  <argname>x</argname>. I valori validi per
+	  <argname>x</argname> sono compresi tra <math>-1</math> e 1
+	  (inclusi). Questa funzione è molto generale e si riduce a
+	  una funzione più semplice in alcuni casi speciali, come ad
+	  esempio <math>-\frac{\log(1-x)}{x}</math> per <math>a=b=1</math> e
+	  <math>c=2</math>. Si veda
+	  <url>https://en.wikipedia.org/wiki/Hypergeometric_function</url>
+	  per maggiori dettagli. </para>
+	  <para>
+	    Se <argname>x</argname> è uno scalare, il valore
+	    restituito sarà scalare; in caso contrario, sarà una
+	    matrice delle stesse dimensioni di
+	    <argname>x</argname>. Ad esempio,
+	  </para>
+	  <code>
+	    a = hyp2f1(1, 1, 2, {-1, 0, 0.5})
+	    print a
+	  </code>
+	  <para>
+	    produce l'output seguente:
+	  </para>
+	  <code>
+	  a (1 x 3)
+	  
+	  0.69315       1.0000       1.3863 
+	  </code>
       </description>
     </function>
 

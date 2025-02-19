@@ -6373,20 +6373,46 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Returns the Gauss hypergeometric function for real argument
-	  <argname>x</argname>.
+	  Returns the Gauss hypergeometric function for the real
+	  argument <argname>x</argname>. Valid values for
+	  <argname>x</argname> are between &minus;1 and 1
+	  (inclusive). This function is very general, and reduces to a
+	  simpler function is some special cases, such as for example
+	  <math>-</math>log(<math>1-x</math>)/<math>x</math> for
+	  <math>a=b=1</math> and <math>c=2</math>. See
+	  <url>https://en.wikipedia.org/wiki/Hypergeometric_function</url>
+	  for more details.
 	</para>
 	<para context="tex">
 	  Returns the Gauss hypergeometric function
 	  <math>{}_2F_1(a,b;c;z) = \sum_{n=0}^\infty \frac{(a)_n
 	  (b)_n}{(c)_n} \frac{z^n}{n!}.</math> for real argument
-	  <argname>x</argname>.
+	  <argname>x</argname>. Valid values for <argname>x</argname>
+	  are between <math>-1</math> and 1 (inclusive). This function
+	  is very general, and reduces to a simpler function is some
+	  special cases, such as for example
+	  <math>-\frac{\log(1-x)}{x}</math> for <math>a=b=1</math> and
+	  <math>c=2</math>. See
+	  <url>https://en.wikipedia.org/wiki/Hypergeometric_function</url>
+	  for more details.
 	</para>
 	<para>
 	  If <argname>x</argname> is a scalar, the return value will
 	  be scalar; otherwise, it will be a matrix the same size as
-	  <argname>x</argname>.
+	  <argname>x</argname>. For example,
 	</para>
+	<code>
+	  a = hyp2f1(1, 1, 2, {-1, 0, 0.5})
+	  print a
+	</code>
+	<para>
+	  produces the following output:
+	</para>
+	<code>
+	  a (1 x 3)
+	  
+	  0.69315       1.0000       1.3863 
+	</code>
       </description>
     </function>
 

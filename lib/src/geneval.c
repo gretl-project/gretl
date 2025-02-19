@@ -15225,7 +15225,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
 
                 for (i=0; i<n; i++) {
                     xi = x->val[i];
-                    if (xi < -1.0 || xi >= 1.0) {
+                    if (xi < -1.0 || xi > 1.0) {
                         y = NADBL;
                     } else {
                         y = hypergeo(a[0], a[1], a[2], xi);
