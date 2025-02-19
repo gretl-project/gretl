@@ -7131,11 +7131,12 @@ static double *transcribe_ok_pairs (const DATASET *dset,
    @n2 should be 0.
 */
 
-static int ols_means_test (const double *x, int n1,
+static int ols_means_test (const DATASET *dset,
+                           const double *x, int n1,
                            const double *y, int n2,
                            double *m1, double *m2,
                            double *se, int *df,
-                           PRN *prn)
+                           gretlopt opt, PRN *prn)
 {
     MODEL mod;
     DATASET *aset;
@@ -7152,6 +7153,8 @@ static int ols_means_test (const double *x, int n1,
     if (aset == NULL) {
         return E_ALLOC;
     }
+    aset->pd = dset->pd;
+    aset->structure = dset->structure;
 
     /* pairs, or stacked dependent variable, @x | @y */
     memcpy(aset->Z[1], x, n1 * sizeof *x);
@@ -7165,11 +7168,11 @@ static int ols_means_test (const double *x, int n1,
         for (i=0; i<nobs; i++) {
             aset->Z[2][i] = i >= n1;
         }
-        strcpy(aset->varname[2], "dum_y");
+        strcpy(aset->varname[2], "dummy");
     }
 
     gretl_model_init(&mod, aset);
-    mod = lsq(list, aset, OLS, OPT_A | OPT_R);
+    mod = lsq(list, aset, OLS, opt);
     err = mod.errcode;
 
     if (!err) {
@@ -7255,6 +7258,13 @@ static void paired_diff_print (int n,
     pprintf(prn, _("   p-value (two-tailed) = %g\n\n"), pval);
 }
 
+static int split_by_var (const DATASET *dset)
+{
+    const char *vname = get_optval_string(MEANTEST, OPT_D);
+
+    return current_series_index(dset, vname);
+}
+
 /**
  * means_test:
  * @list: gives the ID numbers of the variables to compare.
@@ -7284,19 +7294,25 @@ int means_test (const int *list, const DATASET *dset,
     int v1, v2;
     int n1 = 0;
     int n2 = 0;
-    int df, err = 0;
+    int df, err;
 
-    if (list[0] < 2) {
-	err = E_ARGS;
-    } else {
-        err = incompatible_options(opt, OPT_O | OPT_P);
+    err = incompatible_options(opt, OPT_O | OPT_P);
+
+    if (!err) {
+        v1 = list[1];
+        if (usedum) {
+            v2 = split_by_var(dset);
+            if (v2 < 0) {
+                err = E_UNKVAR;
+            }
+        } else {
+            v2 = list[2];
+        }
     }
+
     if (err) {
         return err;
     }
-
-    v1 = list[1];
-    v2 = list[2];
 
     if (paired) {
         /* get @x and @y as portions of dset->Z[v1] */
@@ -7316,7 +7332,10 @@ int means_test (const int *list, const DATASET *dset,
 
     if (robust || paired) {
         /* use regression method */
-        err = ols_means_test(x, n1, y, n2, &m1, &m2, &se, &df, prn);
+        gretlopt opt = robust ? OPT_A | OPT_R : OPT_A;
+
+        err = ols_means_test(dset, x, n1, y, n2, &m1, &m2, &se, &df,
+                             opt, prn);
         if (err) {
             goto bailout;
         }

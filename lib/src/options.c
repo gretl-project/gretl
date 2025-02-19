@@ -455,7 +455,7 @@ struct gretl_option gretl_opts[] = {
     { MAHAL,    OPT_S, "save", 0 },
     { MAHAL,    OPT_V, "vcv", 0 },
     { MEANTEST, OPT_O, "unequal-vars", 0 },
-    { MEANTEST, OPT_D, "use-dummy", 0 },
+    { MEANTEST, OPT_D, "split-by", 2 },
     { MEANTEST, OPT_P, "paired", 0 },
     { MEANTEST, OPT_R, "robust", 0 },
     { MIDASREG, OPT_R, "robust", 0 },

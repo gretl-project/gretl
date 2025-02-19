@@ -3953,6 +3953,12 @@ static void handle_option_inflections (CMD *cmd)
             cmd->ciflags &= ~CI_PARM1;
             cmd->ciflags &= ~CI_PARM2;
         }
+    } else if (cmd->ci == MEANTEST) {
+        if (cmd->opt & OPT_D) {
+            /* split-by */
+            cmd->ciflags &= ~CI_LLEN2;
+            cmd->ciflags |= CI_LLEN1;
+        }
     }
 }
 
