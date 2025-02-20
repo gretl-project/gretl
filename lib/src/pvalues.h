@@ -92,6 +92,8 @@ double snedecor_cdf_comp (double dfn, double dfd, double x);
 
 double snedecor_critval (double dfn, double dfd, double a);
 
+double snedecor_pvalue_2 (double dfn, double dfd, double x);
+
 double nc_snedecor_cdf (double dfn, double dfd, double delta, double x);
 
 double normal_cdf (double x);
