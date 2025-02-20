@@ -41,6 +41,7 @@
 
 \newcommand{\app}[1]{\textsf{#1}}
 \newcommand{\cmd}[1]{\texttt{#1}}
+%\newcommand{\cmd}[1]{\texttt{\detokenize{#1}}}
 \newcommand{\varname}[1]{\texttt{#1}}
 \newcommand{\option}[1]{\texttt{-{}-#1}}
 \newcommand{\dollar}[1]{\texttt{\$#1}}
