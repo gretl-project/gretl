@@ -7127,27 +7127,20 @@ static double *transcribe_ok_pairs (const DATASET *dset,
     return ret;
 }
 
-/* Note: @y may be NULL; in that case @x holds paired differences, and
-   @n2 should be 0.
-*/
+/* HAC difference of means test using OLS on stacked data */
 
 static int ols_means_test (const DATASET *dset,
                            const double *x, int n1,
                            const double *y, int n2,
                            double *m1, double *m2,
                            double *se, int *df,
-                           gretlopt opt, PRN *prn)
+                           PRN *prn)
 {
     MODEL mod;
     DATASET *aset;
     int list[4] = {3, 1, 0, 2};
     int nobs = n1 + n2;
     int i, err = 0;
-
-    if (y == NULL) {
-        /* using paired data */
-        list[0] = 2;
-    }
 
     aset = create_auxiliary_dataset(list[0], nobs, OPT_NONE);
     if (aset == NULL) {
@@ -7156,23 +7149,18 @@ static int ols_means_test (const DATASET *dset,
     aset->pd = dset->pd;
     aset->structure = dset->structure;
 
-    /* pairs, or stacked dependent variable, @x | @y */
+    /* stacked dependent variable, @x | @y */
     memcpy(aset->Z[1], x, n1 * sizeof *x);
-    if (y != NULL) {
-        memcpy(aset->Z[1] + n1, y, n2 * sizeof *y);
-    }
+    memcpy(aset->Z[1] + n1, y, n2 * sizeof *y);
     strcpy(aset->varname[1], "x_y");
 
-    if (y != NULL) {
-        /* dummy to indicate @y observations */
-        for (i=0; i<nobs; i++) {
-            aset->Z[2][i] = i >= n1;
-        }
-        strcpy(aset->varname[2], "dummy");
+    /* dummy to select the @y observations */
+    for (i=0; i<nobs; i++) {
+        aset->Z[2][i] = i >= n1;
     }
 
     gretl_model_init(&mod, aset);
-    mod = lsq(list, aset, OLS, opt);
+    mod = lsq(list, aset, OLS, OPT_A | OPT_R);
     err = mod.errcode;
 
     if (!err) {
@@ -7180,12 +7168,8 @@ static int ols_means_test (const DATASET *dset,
             printmodel(&mod, aset, OPT_S, prn);
         }
         *m1 = mod.coeff[0];
-        if (y != NULL) {
-            *m2 = mod.coeff[0] + mod.coeff[1];
-            *se = mod.sderr[1];
-        } else {
-            *se = mod.sderr[0];
-        }
+        *m2 = mod.coeff[0] + mod.coeff[1];
+        *se = mod.sderr[1];
         *df = mod.dfd;
     }
 
@@ -7315,13 +7299,13 @@ int means_test (const int *list, const DATASET *dset,
     }
 
     if (paired) {
-        /* get @x and @y as portions of dset->Z[v1] */
+        /* fill @x with paired differences between series v1 and v2 */
         err = paired_data_from_list(dset, v1, v2, &x, &n1);
     } else if (usedum) {
-        /* get @x and @y as portions of dset->Z[v1] */
+        /* get @x and @y as portions of series v1 */
         err = test_data_from_dummy(dset, v1, v2, &x, &y, &n1, &n2);
     } else {
-        /* get @x and @y as dset->Z[v1], dset->Z[v2] */
+        /* get @x and @y from the series v1 and v2 */
         err = test_data_from_list(dset, v1, v2, &x, &y, &n1, &n2);
     }
 
@@ -7330,16 +7314,19 @@ int means_test (const int *list, const DATASET *dset,
         return err;
     }
 
-    if (robust || paired) {
+    if (paired) {
+        /* @x actually holds the x,y differences */
+        gretl_moments(0, n1-1, x, NULL, &m1, &se, NULL, NULL, 1);
+        se /= sqrt(n1);
+        mdiff = m1;
+        df = n1 - 1;
+    } else if (robust) {
         /* use regression method */
-        gretlopt opt = robust ? OPT_A | OPT_R : OPT_A;
-
-        err = ols_means_test(dset, x, n1, y, n2, &m1, &m2, &se, &df,
-                             opt, prn);
+        err = ols_means_test(dset, x, n1, y, n2, &m1, &m2, &se, &df, prn);
         if (err) {
             goto bailout;
         }
-        mdiff = paired ? m1 : m1 - m2;
+        mdiff = m1 - m2;
     } else {
         double var1, var2;
 
@@ -7652,6 +7639,7 @@ int vars_test (const int *list, const DATASET *dset,
         F = levene_test(x, n1, y, n2, f, p, &err);
         dfn = 1; /* = 2 - 1 */
         dfd = n1 + n2 - 2;
+        pval = snedecor_cdf_comp(dfn, dfd, F);
     } else {
         double mx, my, sx, sy;
 
@@ -7660,6 +7648,7 @@ int vars_test (const int *list, const DATASET *dset,
         F = (sx * sx) / (sy * sy);
         dfn = n1 - 1;
         dfd = n2 - 1;
+        pval = snedecor_pvalue_2(dfn, dfd, F);
     }
 
     pval = snedecor_cdf_comp(dfn, dfd, F);
