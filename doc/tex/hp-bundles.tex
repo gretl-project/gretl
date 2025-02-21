@@ -32,7 +32,7 @@ bundle foo = defbundle()
 \end{code}
 %
 However, since defining a bundle is a common trope in hansl a handy
-abbreviation is supported: \cmd{\_()} is short for
+abbreviation is supported: \dtk{_()} is short for
 \texttt{defbundle()}.
 
 The formulations above are basically equivalent, in that they both
@@ -77,7 +77,7 @@ the effect is to replace the object which was previously stored under
 the given key. In this context it is not required that the type of the
 replacement object is the same as that of the original.
 
-A quicker way is to use \cmd{defbundle} or \cmd{\_()}, as in
+A quicker way is to use \cmd{defbundle} or \dtk{_()}, as in
 \begin{code}
   bundle b = _(s="Sample string", m=I(3))
 \end{code}

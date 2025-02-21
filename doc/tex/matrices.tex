@@ -103,7 +103,7 @@ the matrix as NaN (``Not a Number'').  Note that as per the IEEE
 standard, arithmetic operations involving one or more NaNs always
 produce a NaN result. Alternatively, you can take greater control over
 the observations (data rows) that are included in the matrix using the
-``set'' variable \texttt{matrix\_mask}, as in
+``set'' variable \dtkttt{matrix_mask}, as in
 %
 \begin{code}
 set matrix_mask msk
@@ -112,7 +112,7 @@ set matrix_mask msk
 where \texttt{msk} is the name of a series.  Subsequent commands that
 form matrices from series or lists will include only observations
 for which \texttt{msk} has non-zero (and non-missing) values. You
-can remove this mask via the command \texttt{set matrix\_mask null}.
+can remove this mask via the command \dtkttt{set matrix_mask null}.
 
 \tip{Names of matrices must satisfy the same requirements as names of
   gretl variables in general: the name can be no longer than 31

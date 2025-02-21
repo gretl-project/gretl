@@ -138,7 +138,7 @@ In this case we consider an Excel file provided by Eric Ghysels in his
   \url{http://www.unc.edu/~eghysels/} for links.} namely
 \texttt{mydata.xlsx}.  This contains quarterly real GDP in Sheet1 and
 monthly non-farm payroll employment in Sheet2. A hansl script to build
-a MIDAS-style file named \texttt{gdp\_midas.gdt} is shown in
+a MIDAS-style file named \dtkttt{gdp_midas.gdt} is shown in
 Listing~\ref{lst:ghysels-data}.
 
 \begin{script}[htbp]
@@ -179,7 +179,7 @@ happens, just containing one series) to quarterly frequency using the
 \texttt{append} the compacted data to the quarterly GDP dataset.
 
 We will put this dataset to use in subsequent sections. Note that it
-is provided in the gretl package (\texttt{gdp\_midas}, which you can
+is provided in the gretl package (\dtkttt{gdp_midas}, which you can
 find under the \textsf{Gretl} tab in the practice datafiles window
 in the gretl GUI).
 
@@ -231,7 +231,7 @@ convenient for running regressions, but not very convenient for
 inspecting and checking such data. We therefore provide some methods
 for displaying MIDAS data at their ``natural''
 frequency. Figure~\ref{fig:data-menu} shows the gretl main window with
-the \texttt{gdp\_midas} dataset loaded, along with the menu that pops
+the \dtkttt{gdp_midas} dataset loaded, along with the menu that pops
 up if you right-click with the \texttt{payems} series highlighted.
 The items ``Display values'' and ``Time series plot'' show the data
 on their original monthly calendar, while the ``Display components''
@@ -278,16 +278,16 @@ first (most recent) lag is employment for October 1984,\footnote{That
   nowcasting'' below for a possible ambiguity in this regard.} and the
 9-lag window means that we need to include monthly lags back to
 February 1984. Let the per-month employment series be called
-\texttt{x\_m3}, \texttt{x\_m2} and \texttt{x\_m1}, and let (quarterly)
+\dtkttt{x_m3}, \dtkttt{x_m2} and \dtkttt{x_m1}, and let (quarterly)
 lags be represented by \texttt{(-1)}, \texttt{(-2)} and so on. Then
 the terms we want are (reading left-to-right by row):
 \begin{center}
 {\small
 \begin{tabular}{ccc}
- . & . & \texttt{x\_m1(-1)} \\
-\texttt{x\_m3(-2)} & \texttt{x\_m2(-2)} & \texttt{x\_m1(-2)} \\
-\texttt{x\_m3(-3)} & \texttt{x\_m2(-3)} & \texttt{x\_m1(-3)} \\
-\texttt{x\_m3(-4)} & \texttt{x\_m2(-4)} & .
+ . & . & \dtkttt{x_m1(-1)} \\
+\dtkttt{x_m3(-2)} & \dtkttt{x_m2(-2)} & \dtkttt{x_m1(-2)} \\
+\dtkttt{x_m3(-3)} & \dtkttt{x_m2(-3)} & \dtkttt{x_m1(-3)} \\
+\dtkttt{x_m3(-4)} & \dtkttt{x_m2(-4)} & .
 \end{tabular}
 }
 \end{center}
@@ -762,12 +762,12 @@ Forecast RMSEs:
 \end{scode}
 \end{script}
 
-The data file used in the replication, \texttt{gdp\_midas.gdt}, was
+The data file used in the replication, \dtkttt{gdp_midas.gdt}, was
 contructed as described in section~\ref{sec:data-merge} (and as noted
 there, it is included in the current gretl package). Part of the
 output from the replication script is shown in
 Listing~\ref{ghysels-out}. The $\gamma$ coefficient is labeled
-\texttt{HF\_slope} in the gretl output.
+\dtkttt{HF_slope} in the gretl output.
 
 For reference, output from \textsf{Matlab} (version R2016a for Linux)
 is available at
@@ -944,8 +944,8 @@ Listing~\ref{lst:manual-beta1} presents a more ambitious example: we
 use \texttt{GSSmin} (Golden Section minimizer) to estimate a MIDAS
 model with the ``one-parameter beta'' specification (that is, the
 two-parameter beta with $\theta_1$ clamped at 1). Note that while the
-function named \texttt{beta1\_SSR} is specialized to the given
-parameterization, \texttt{midas\_GNR} is a fairly general means of
+function named \dtkttt{beta1_SSR} is specialized to the given
+parameterization, \dtkttt{midas_GNR} is a fairly general means of
 calculating the Gauss--Newton regression for an ADL(1) MIDAS
 model, and it could be generalized further without much difficulty.
 
@@ -1054,12 +1054,12 @@ hfplot dX ; dy --with-lines --time-series --output=display
 Another sort of plot which may be useful shows the ``gross''
 coefficients on the lags of the high-frequency series in a MIDAS
 regression---that is, the normalized weights multiplied by the
-\texttt{HF\_slope} coefficient. After estimation of a MIDAS model in
+\dtkttt{HF_slope} coefficient. After estimation of a MIDAS model in
 the gretl GUI this is available via the item \textsf{MIDAS
   coefficients} under the \textsf{Graphs} menu in the model window. It
 is also easily generated via script, since the \dollar{model} bundle
 that becomes available following the \texttt{midasreg} command
-contains a matrix, \texttt{midas\_coeffs}, holding these
+contains a matrix, \dtkttt{midas_coeffs}, holding these
 coefficients. So the following is sufficient to display the plot:
 %
 \begin{code}
@@ -1089,7 +1089,7 @@ frequency than the given dataset. In practice one would probably read
 high frequency data from file using the \texttt{mread} function, but
 here we just construct an artificial sequential vector.
 
-Note the check in the \texttt{high\_freq\_list} function: we determine
+Note the check in the \dtkttt{high_freq_list} function: we determine
 the current sample size, \texttt{T}, and insist that the input matrix
 is suitably dimensioned, with a single column of length equal to
 \texttt{T} times the compaction factor (here 3, for monthly to
@@ -1164,10 +1164,10 @@ open AWM.gdt
 join hamilton.gdt PCI --data=PC6IT --aggr=spread
 \end{code}
 
-In the first case MIDAS series \texttt{PC6IT\_m3}, \texttt{PC6IT\_m2}
-and \texttt{PC6IT\_m1} are added to the working dataset. In the second
+In the first case MIDAS series \dtkttt{PC6IT_m3}, \dtkttt{PC6IT_m2}
+and \dtkttt{PC6IT_m1} are added to the working dataset. In the second
 case ``\texttt{PCI}'' is used as the base name for the imports,
-giving \texttt{PCI\_m3}, \texttt{PCI\_m2} and \texttt{PCI\_m1}
+giving \dtkttt{PCI_m3}, \dtkttt{PCI_m2} and \dtkttt{PCI_m1}
 as the names of the per-month series.
 
 Note that only one high-frequency series can be imported in a given

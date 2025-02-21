@@ -454,7 +454,7 @@ bundle H2 = GHegy_test(reskwh, 2, 10, 2, 1)
 \end{code}
 
 The purpose of the first two commands is obvious and needs no
-comment. However, the two invocations of the \cmd{GHegy\_test}
+comment. However, the two invocations of the \dtk{GHegy_test}
 function may not be totally transparent. In general you should expect
 some documentation on (a) which functions are contained in the package
 and (b) their syntax: the parameters they accept, what they do, what
@@ -465,9 +465,9 @@ they return.\footnote{This is the responsibility of package authors.
 packages and click on the ``Info'' icon. A text box will appear
 showing the documentation provided by the package author. In the
 \textsf{GHegy} case, for example, not only are we told all we need to
-know about the \cmd{GHegy\_test} function, but we also discover that
+know about the \dtk{GHegy_test} function, but we also discover that
 the package contains two additional functions that we can use, namely
-\cmd{GHegy\_bundle\_print} and \cmd{GHegy\_test\_plot}.  So, for
+\dtk{GHegy_bundle_print} and \dtk{GHegy_test_plot}.  So, for
 example, we could use the latter to enhance Ignacio's sample script,
 appending the line
 %
@@ -481,7 +481,7 @@ Figure~\ref{fig:ghegy-plot}.
 \begin{figure}[htbp]
   \centering
   \includegraphics[scale=0.9]{figures/ghegy-plot}
-  \caption{Output of the \cmd{GHegy\_test\_plot} function}
+  \caption{Output of the \dtk{GHegy_test_plot} function}
   \label{fig:ghegy-plot}
 \end{figure}
 
@@ -840,9 +840,9 @@ files:
 \item A \textsf{spec} file, which supplies metadata and tells gretl how the
   package should be assembled; call this \texttt{mypkg.spec}.
 \item A sample script (\textsf{inp} file) which exercises your
-  package; call this \texttt{mypkg\_sample.inp}.
+  package; call this \dtkttt{mypkg_sample.inp}.
 \item A text file containing help on the packaged function(s). Call
-  this \texttt{mypkg\_help.txt}, or preferably \texttt{mypkg\_help.md}
+  this \dtkttt{mypkg_help.txt}, or preferably \dtkttt{mypkg_help.md}
   if you're going to use gretl's markdown option (which is
   recommended: see Section~\ref{sec:md} below).
 \end{enumerate}
@@ -1651,7 +1651,7 @@ wanted, but in the latter case it should probably be optional
 
 Listing~\ref{ex:bunret} shows a modification of our toy package to
 accommodate this. Hopefully it should be self-explanatory. We would
-now make \texttt{GUI\_bunret} the \texttt{gui-main} function and mark
+now make \dtkttt{GUI_bunret} the \texttt{gui-main} function and mark
 it as \texttt{no-print}. Plain \texttt{bunret} (now intended for
 script use) would not be ``no-print'' any more: it's silent by default
 but the user can make it print by supplying a non-zero value for the
@@ -1705,7 +1705,7 @@ code.''\footnote{Depending on your platform, you may have to install
   contributed package, installation is via the menu item ``Help, Check
   for addons'' in the gretl main window.} The GUI-related functions
 are found towards the end of the code listing: start from
-\texttt{gig\_bundle\_print} and \texttt{GUI\_gig\_plot}. You can also
+\dtkttt{gig_bundle_print} and \dtkttt{GUI_gig_plot}. You can also
 open \textsf{gig} in the package editor and inspect its ``Extra
 properties.'' The chapter titled ``User-defined functions'' in
 \cite{GUG}, besides providing essential background for package
@@ -1852,7 +1852,7 @@ showing this text will display a hyperlink to the PDF doc.
 
 This package also illustrates some special GUI-related inflections in
 the parameter listing for a user-defined function. Here's the
-signature of \texttt{GUI\_bandplot}, designed to be called from a
+signature of \dtkttt{GUI_bandplot}, designed to be called from a
 menu:
 %
 \begin{code}
@@ -1905,11 +1905,11 @@ advance, so we want a means of signaling to gretl that the list should
 be constructed at runtime, based on the particular model. But please
 note, this special feature is not ignored in non-GUI use; it will
 cause trouble. That's one reason why, as we saw in the spec file
-extract above, \texttt{GUI\_bandplot} is marked as \texttt{menu-only}.
+extract above, \dtkttt{GUI_bandplot} is marked as \texttt{menu-only}.
 Note that the \texttt{menu-only} attribute is also visible and
 settable via the GUI package editor (Figure~\ref{fig:special-funcs}).
 
-The other reason why \texttt{GUI\_bandplot} is ``menu-only'' is
+The other reason why \dtkttt{GUI_bandplot} is ``menu-only'' is
 evident from the first line of code in the function, namely
 %
 \begin{code}
@@ -2611,7 +2611,7 @@ end function
   are presumed to be available as members of the \texttt{\$model}
   bundle). This then provides an automatic listing of candidate
   arguments for the \texttt{xvar} parameter to the package's
-  \texttt{GUI\_exogtest} function, the signature of which is
+  \dtkttt{GUI_exogtest} function, the signature of which is
 \begin{code}
 function bundle GUI_exogtest (int xvar[$mylist] "regressor to test")
 \end{code}
@@ -2782,15 +2782,15 @@ A parameter calling for a list of series can be inflected in any of
 three ways, via the following keys.
 
 \begin{itemize}
-\item \texttt{list\_no\_singleton} is a boolean, with a default value
+\item \dtkttt{list_no_singleton} is a boolean, with a default value
   of 0, meaning that it's acceptable for a list to have a single
   member. If you want to ensure that a particular list contains more
   than one series, give a value of 1 for this key.
-\item \texttt{list\_no\_const} is also a boolean with a default value
+\item \dtkttt{list_no_const} is also a boolean with a default value
   of 0, meaning that it's acceptable for a list to contain the
   automatic \texttt{const} series. To prevent inclusion of
   \texttt{const} give a value of 1 for this key.
-\item \texttt{list\_exclude} requires a string value, the name of a
+\item \dtkttt{list_exclude} requires a string value, the name of a
   parameter of type series. The effect is to ensure that if a given
   series has been selected for that parameter it should not be shown
   as a candidate for inclusion in the list in question.
@@ -2806,7 +2806,7 @@ ret.X = _(list_no_singleton=1, list_no_const=1, list_exclude="y")
 \end{code}
 
 These keywords can also be given in a shorter form, omitting the
-\texttt{list\_} prefix, but the more explicit long version is
+\dtkttt{list_} prefix, but the more explicit long version is
 recommended for clarity.
 
 \subsection{Real-world examples}
@@ -2844,7 +2844,7 @@ end function
 \end{code}
 
 Note that if the data are of non-standard frequency, the bundle
-returned by \texttt{cf\_ui\_maker} will be empty. That's OK, it just
+returned by \dtkttt{cf_ui_maker} will be empty. That's OK, it just
 means the default values for \texttt{pl} and \texttt{pu} will remain
 at those set in the \texttt{gui-main} function.
 
@@ -2872,7 +2872,7 @@ return value is called \texttt{ret}) includes
 ret.X = _(list_no_singleton=1, list_no_const=1, list_exclude="y")
 \end{code}
 
-Now focus on \texttt{n\_train}, the number of observations to be used
+Now focus on \dtkttt{n_train}, the number of observations to be used
 for training. The signature above specifies a minimum of 50 but leaves
 the maximum and default values undetermined. The \texttt{ui-maker} can
 then fill in these values depending on the number of observations,
@@ -2883,7 +2883,7 @@ defstr = "ceil(0.65*$nobs)"
 ret.n_train = _(maximum=maxstr, default=defstr)
 \end{code}
 
-Finally, consider the \texttt{use\_seed} and \texttt{seed}
+Finally, consider the \dtkttt{use_seed} and \texttt{seed}
 parameters. The Random Forest algorithm, as the name implies, employs
 randomization. Setting a known seed for the random number generator
 will give reproducible results, otherwise results may differ somewhat
@@ -2893,7 +2893,7 @@ set a seed, so this is a case for \texttt{depends} in the
 \begin{code}
 ret.seed = _(depends="use_seed")
 \end{code}
-Unless the user checks the \texttt{use\_seed} box, the \texttt{seed}
+Unless the user checks the \dtkttt{use_seed} box, the \texttt{seed}
 widget will remain grayed out.
 
 \section{Bundle-related elements}
@@ -3120,7 +3120,7 @@ under the tabs \textsf{Data files}, \textsf{Dependencies}, and
 
 The \textsf{random\_forest} package for gretl, mentioned in
 Section~\ref{sec:ui-maker} above, uses the \texttt{R-setup} apparatus.
-A hansl function named \texttt{rf\_setup} defines an \textsf{R}
+A hansl function named \dtkttt{rf_setup} defines an \textsf{R}
 function named \texttt{randforest}, which is then called as
 \texttt{R.randforest} elsewhere in the package code. The relevant code
 can be inspected at

@@ -612,10 +612,10 @@ Any or all of the matrices \texttt{obsymat}, \texttt{obsxmat},
 \texttt{stconst} may be time-varying.  In that case you must supply
 the name of a function to be called to update the matrix or matrices
 in question: you add this to the bundle as a string, under the key
-\texttt{timevar\_call}.\footnote{The choice of the name for the
+\dtkttt{timevar_call}.\footnote{The choice of the name for the
   function itself is of course totally up to the user.} For example,
 if just \texttt{obsymat} ($\obsymat_t$) should be updated, by a
-function named \texttt{TV\_Z}, you would write
+function named \dtkttt{TV_Z}, you would write
 %
 \begin{code}
 SSmod.timevar_call = "TV_Z"
@@ -670,7 +670,7 @@ conditionality---are also possible in this framework.
 It is worth noting that this setup lends itself to a much wider scope
 than time-varying system matrices. In fact, this syntax allows for the
 possibility of executing user-defined operations at each step. The
-function that goes under \texttt{timevar\_call} can read all the
+function that goes under \dtkttt{timevar_call} can read all the
 elements of the model bundle and can modify several of them: the
 system matrices (which can therefore be made time-varying) as well as
 the user-defined elements.

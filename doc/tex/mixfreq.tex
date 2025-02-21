@@ -101,7 +101,7 @@ In this case we consider an Excel file provided by Eric Ghysels in his
   \url{http://eghysels.web.unc.edu/} for links.} namely
 \texttt{mydata.xlsx}.  This contains quarterly real GDP in Sheet1 and
 monthly non-farm payroll employment in Sheet2. A hansl script to build
-a MIDAS-style file named \texttt{gdp\_payroll\_midas.gdt} is shown in
+a MIDAS-style file named \dtkttt{gdp_payroll_midas.gdt} is shown in
 Listing~\ref{lst:ghysels-data}.
 
 \begin{script}[htbp]
@@ -142,7 +142,7 @@ happens, just containing one series) to quarterly frequency using the
 \texttt{append} the compacted data to the quarterly GDP dataset.
 
 We will put an extended version of this dataset (supplied with gretl,
-and named \texttt{gdp\_midas.gdt}) to use in subsequent sections.
+and named \dtkttt{gdp_midas.gdt}) to use in subsequent sections.
 
 \section{The notion of a ``MIDAS list''}
 \label{sec:midas-list}
@@ -192,7 +192,7 @@ convenient for running regressions, but not very convenient for
 inspecting and checking such data. We therefore provide some methods
 for displaying MIDAS data at their ``natural''
 frequency. Figure~\ref{fig:data-menu} shows the gretl main window with
-the \texttt{gdp\_midas} dataset loaded, along with the menu that pops
+the \dtkttt{gdp_midas} dataset loaded, along with the menu that pops
 up if you right-click with the \texttt{payems} series highlighted.
 The items ``Display values'' and ``Time series plot'' show the data
 on their original monthly calendar, while the ``Display components''
@@ -239,16 +239,16 @@ first (most recent) lag is employment for October 1984,\footnote{That
   nowcasting'' below for a possible ambiguity in this regard.} and the
 9-lag window means that we need to include monthly lags back to
 February 1984. Let the per-month employment series be called
-\texttt{x\_m3}, \texttt{x\_m2} and \texttt{x\_m1}, and let (quarterly)
+\dtkttt{x_m3}, \dtkttt{x_m2} and \dtkttt{x_m1}, and let (quarterly)
 lags be represented by \texttt{(-1)}, \texttt{(-2)} and so on. Then
 the terms we want are (reading left-to-right by row):
 \begin{center}
 {\small
 \begin{tabular}{ccc}
- . & . & \texttt{x\_m1(-1)} \\
-\texttt{x\_m3(-2)} & \texttt{x\_m2(-2)} & \texttt{x\_m1(-2)} \\
-\texttt{x\_m3(-3)} & \texttt{x\_m2(-3)} & \texttt{x\_m1(-3)} \\
-\texttt{x\_m3(-4)} & \texttt{x\_m2(-4)} & .
+ . & . & \dtkttt{x_m1(-1)} \\
+\dtkttt{x_m3(-2)} & \dtkttt{x_m2(-2)} & \dtkttt{x_m1(-2)} \\
+\dtkttt{x_m3(-3)} & \dtkttt{x_m2(-3)} & \dtkttt{x_m1(-3)} \\
+\dtkttt{x_m3(-4)} & \dtkttt{x_m2(-4)} & .
 \end{tabular}
 }
 \end{center}
@@ -453,7 +453,7 @@ frequency than the given dataset. In practice one would probably read
 high frequency data from file using the \texttt{mread} function, but
 here we just construct an artificial sequential vector.
 
-Note the check in the \texttt{high\_freq\_list} function: we determine
+Note the check in the \dtkttt{high_freq_list} function: we determine
 the current sample size, \texttt{T}, and insist that the input matrix
 is suitably dimensioned, with a single column of length equal to
 \texttt{T} times the compaction factor (here 3, for monthly to
@@ -530,10 +530,10 @@ open AWM.gdt
 join hamilton.gdt PCI --data=PC6IT --aggr=spread
 \end{code}
 
-In the first case MIDAS series \texttt{PC6IT\_m3}, \texttt{PC6IT\_m2}
-and \texttt{PC6IT\_m1} are added to the working dataset. In the second
+In the first case MIDAS series \dtkttt{PC6IT_m3}, \dtkttt{PC6IT_m2}
+and \dtkttt{PC6IT_m1} are added to the working dataset. In the second
 case ``\texttt{PCI}'' is used as the base name for the imports,
-giving \texttt{PCI\_m3}, \texttt{PCI\_m2} and \texttt{PCI\_m1}
+giving \dtkttt{PCI_m3}, \dtkttt{PCI_m2} and \dtkttt{PCI_m1}
 as the names of the per-month series.
 
 Note that only one high-frequency series can be imported in a given

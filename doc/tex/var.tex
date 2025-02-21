@@ -475,7 +475,7 @@ confidence intervals or bands is to use a bootstrap approach. Again, more
 advanced options are available with the \app{SVAR} addon, but the \cmd{irf}
 function used after the built-in \cmd{var} (or \cmd{vecm}) command also 
 provides the option to run a bootstrap based on resampling from the residuals.
-(The number of bootstrap iterations can be adjusted through \cmd{set boot\_iters x},
+(The number of bootstrap iterations can be adjusted through \dtk{set boot_iters x},
 where x must be larger than 499.) 
 The desired nominal confidence level must be specified after the target and 
 shock numbers as the third argument, and in that case the return vector becomes

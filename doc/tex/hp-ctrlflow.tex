@@ -280,7 +280,7 @@ becomes \texttt{NA}, an error is flagged and execution stops.  By
 default, \texttt{while} loops cannot exceed 100,000 iterations. This is
 intended as a safeguard against potentially infinite loops. This
 setting can be overridden if necessary by setting the
-\texttt{loop\_maxiter} state variable to a different value.
+\dtkttt{loop_maxiter} state variable to a different value.
 % (see chapter \ref{chap:settings}).
 
 \subsection{Foreach loop}
@@ -492,7 +492,7 @@ end function
 \end{code}
 
 What you should \textit{not} do here is apply catch to
-\cmd{may\_fail()}
+\dtk{may_fail()}
 
 \begin{code}
 function scalar caller (...)
