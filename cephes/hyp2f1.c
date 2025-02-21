@@ -27,7 +27,7 @@
  *      Tests and escapes for negative integer a, b, or c
  *      Linear transformation if c - a or c - b negative integer
  *      Special case c = a or c = b
- *      Linear transformation for  x near +1
+ *      Linear transformation for x near +1
  *      Transformation for x < -0.5
  *      Psi function expansion if x > 0.5 and c - a - b integer
  *      Conditionally, a recurrence on c to make c-a-b > 0
@@ -42,7 +42,6 @@
  * (1.0e-13 for IEEE arithmetic).
  *
  * ACCURACY:
- *
  *
  *               Relative error (-1 < x < 1):
  * arithmetic   domain     # trials      peak         rms
@@ -250,7 +249,7 @@ double hyp2f1 (double a, double b, double c, double x)
  hypdon:
     if (err > ETHRESH) {
 	mtherr("hyp2f1", CEPHES_PLOSS);
-	/*      printf( "Estimated err = %.2e\n", err ); */
+	/* printf( "Estimated err = %.2e\n", err ); */
     }
     return y;
 
