@@ -150,7 +150,7 @@ Section~\ref{sec:qualitative}.
 \begin{figure}[htbp]
   \centering
   \includegraphics[scale=0.75]{us2020-dem}
-  \caption{Output of \texttt{geoplot(dem, \_(palette="blues"))}}
+  \caption{Output of \dtk{geoplot(dem, _(palette="blues"))}}
   \label{fig:us2020-dem}
 \end{figure}
 
@@ -932,7 +932,7 @@ endloop
 bwrite(b, "founders_mod.json")
 \end{scode}
   \caption{Adding payload data to a map file:
-    \texttt{founders\_mod.inp}}
+    \dtk{founders_mod.inp}}
   \label{tab:add-gdp}
 \end{script}
 
@@ -942,7 +942,7 @@ bwrite(b, "founders_mod.json")
 Now how about rearranging regions of a given country (or more
 generally, \texttt{features} within a given
 \texttt{FeatureCollection})? Here we use the function
-\texttt{geoplot\_translate\_feature}. Unlike the \texttt{geoplot}
+\dtk{geoplot_translate_feature}. Unlike the \texttt{geoplot}
 function this is not ``built in'' so before calling it one must do
 \begin{code}
 include geoplot.gfn
@@ -1005,7 +1005,7 @@ bwrite(b, "us_modified.json")
 First, if you plot just the map outlines (no payload) then you should
 see the X and Y values on the axes, giving you at least a rough idea
 of the shifts you might want. Second, \textsf{geoplot} contains the
-function \texttt{geoplot\_describe\_json} which gives you a good deal
+function \dtk{geoplot_describe_json} which gives you a good deal
 of relevant information. The signature of this function is
 \begin{code}
 bundle geoplot_describe_json (const bundle jb, int verbose[1])
@@ -1336,7 +1336,7 @@ matrix geoplot_seek_feature(const bundle b,
   \texttt{name} (on a case-insensitive basis). If one or more matches
   are found their 1-based indices are returned in a row vector.  If a
   single match is found metadata for the feature are printed and if
-  \texttt{do\_plot} is not set to zero a plot of the feature is
+  \dtk{do_plot} is not set to zero a plot of the feature is
   shown.
 \begin{code}
 include geoplot.gfn
