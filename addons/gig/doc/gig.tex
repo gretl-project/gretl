@@ -7,12 +7,15 @@
 \usepackage{color}
 \usepackage{dcolumn,amsmath,mathrsfs}
 \usepackage{natbib}
+\usepackage{hyperref}
+
 \bibliographystyle{gretl}
 
 \graphicspath{{graphs/}}
 
+\newcommand{\dtk}[1]{\texttt{\detokenize{#1}}}
 \newenvironment{funcdoc}[1]
-{\noindent\hrulefill\newline\texttt{#1}\par\noindent\hrulefill\par\medskip\par}
+{\noindent\hrulefill\newline\dtk{#1}\par\noindent\hrulefill\par\medskip\par}
 {\bigskip}
 
 % ---------- Ripped from gretl.sty ----------------------------------------
@@ -49,8 +52,8 @@
 
 \renewcommand{\arraystretch}{1.2}
 
-\definecolor{mygray}{rgb}{0.85,0.85,0.85} 
-\definecolor{myteal}{rgb}{0.0,0.25,0.15} 
+\definecolor{mygray}{rgb}{0.85,0.85,0.85}
+\definecolor{myteal}{rgb}{0.0,0.25,0.15}
 
 \def\floatpagefraction{.8}
 
@@ -84,6 +87,18 @@
 
 \newcommand{\gig}{\texttt{gig}}
 
+\definecolor{steel}{rgb}{0.03,0.20,0.45}
+
+\hypersetup{pdftitle={The \gig\ package},
+            pdfauthor={Jack Lucchetti \and Stefano Balietti},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            citecolor=steel,
+            bookmarksnumbered=true,
+            plainpages=false
+          }
+
 \title{The \gig\ package}
 \author{Jack Lucchetti \and Stefano Balietti}
 \date{December 2023}
@@ -114,8 +129,8 @@ by the following system:
   \uhat_{t} \equiv y_t - E_{t-1}(y_t) & \Longrightarrow &
   y_t = \pi'x_t + \uhat_{t} \\
   \label{eq:vareq}
-  h_t \equiv V_{t-1}(\uhat_{t}) & = & 
-  v(\uhat_{t-1}, \uhat_{t-2}, \ldots, 
+  h_t \equiv V_{t-1}(\uhat_{t}) & = &
+  v(\uhat_{t-1}, \uhat_{t-2}, \ldots,
   h_{t-1}, h_{t-2}, \ldots, z_t) \\
   \label{eq:stdinn}
   \stdu_t & = & \frac{\uhat_{t}}{\sqrt{h_t}}
@@ -136,7 +151,7 @@ to be a known function, with possibly also some observable exogenous
 variables $z_t$. The most basic choice is the GARCH model, in which
 \eqref{eq:vareq} specialises to
 \[
-  h_t = \omega +  \sum_{i=1}^q \alpha_i \uhat_{t-i}^2 + 
+  h_t = \omega +  \sum_{i=1}^q \alpha_i \uhat_{t-i}^2 +
   \sum_{j=1}^p\beta_j h_{t-j} ,
 \]
 but a number of exotic alternatives have been devised in the past 30
@@ -167,24 +182,24 @@ applied literature (see Table \ref{tab:densities}).
   \centering
   \begin{footnotesize}
   \begin{tabular}{p{0.275\textwidth}cr}
-    \hline 
+    \hline
     \textbf{Name} &  \textbf{Density}  &  \textbf{Parameters} \\
-    \hline 
+    \hline
     \\
-    Normal & 
-    $\frac{1}{\sqrt{2\pi h_t}} 
-    \exp \left\{-\frac{\stdu_t^2}{2}\right\}$ & 
+    Normal &
+    $\frac{1}{\sqrt{2\pi h_t}}
+    \exp \left\{-\frac{\stdu_t^2}{2}\right\}$ &
     none \\
-    Student's $t$ & 
+    Student's $t$ &
     $\frac{K(\nu)}{\sqrt{h_t}}
     \left[1+\frac{\stdu_t^2}{\nu-2}\right]^{-(\nu + 1)/2}$ &
     $\nu > 2$ \\
     Generalised Error Distribution (GED) &
     $C(\nu)\exp\left\{-\left|\frac{\stdu_t}{\kappa_\nu}\right|^\nu\right\}$
     & $\nu > 0$ \\
-    Skewed $t$ & 
+    Skewed $t$ &
     $\frac{b K(\nu)}{\sqrt{h_t}}
-    \left[1 + \frac{\zeta_t^2}{\nu - 2}\right]^{-(\nu + 1)/2}$ 
+    \left[1 + \frac{\zeta_t^2}{\nu - 2}\right]^{-(\nu + 1)/2}$
     & $\nu > 2, \xi \in \Re$ \\
     \\
     Skewed GED &
@@ -193,7 +208,7 @@ applied literature (see Table \ref{tab:densities}).
         D(\nu) \exp\left\{-\beta_1 \left|\stdu_t - m\right|^\nu\right\} &
           \stdu_t < m \\
         D(\nu) \exp\left\{-\beta_2 \left|\stdu_t - m\right|^\nu\right\} &
-          \stdu_t \ge m 
+          \stdu_t \ge m
       \end{array}
     \right.$
     & $\nu > 0, \xi \in \Re$ \\
@@ -219,10 +234,10 @@ applied literature (see Table \ref{tab:densities}).
         \frac{b \stdu_t + a}{1+\lambda} & \mathrm{for\ } \stdu_t > -a/b
       \end{array}
       \right. \\
-  D(\nu) & = & 
+  D(\nu) & = &
   \frac{1}{\Gamma(1/\nu)}\sqrt{\frac{\Gamma(3/\nu)}{2 \cdot \Gamma(1/\nu)}
-  \left(\frac{1 + \lambda}{1 - \lambda}\right)^3 - 
-  \left(2 \lambda \Gamma(2/\nu)\right)^2 } 
+  \left(\frac{1 + \lambda}{1 - \lambda}\right)^3 -
+  \left(2 \lambda \Gamma(2/\nu)\right)^2 }
 \end{eqnarray*}
   \caption{Conditional densities for $\stdu_t$}
   \label{tab:densities}
@@ -278,7 +293,7 @@ Table \ref{tab:APARCH-submodels}.
   % \hline
   % \textbf{Log-ARCH} & \cite{Geweke} and \cite{Pantula} & if
   % $\delta \rightarrow 0$.\\
-  \hline  
+  \hline
   \end{tabular}
   \caption{APARCH nested sub-models}
   \label{tab:APARCH-submodels}
@@ -316,7 +331,7 @@ itself. Moreover, it captures asymmetric effects as a function of the
 standardised innovations. The log-conditional variance $\ln(h_t)$ is
 thus given by:
 \begin{equation}\label{eq:egarch-0}
-  \ln h_t = \bar{\omega}'z_t  + 
+  \ln h_t = \bar{\omega}'z_t  +
   \sum_{i=1}^q \left[
     \alpha_i \left( |\stdu_{t-i}| - \sqrt{2/\pi}\right) + \gamma_i \stdu_{t-i}
   \right]+
@@ -327,7 +342,7 @@ However, this is not the exact form that \gig\ uses: there are some
 computational advantages in moving the term $\sqrt{2/\pi}$ out of the
 summation operator. The model actually estimated is
 \begin{equation}\label{eq:egarch}
-  \ln h_t = \omega'z_t  + 
+  \ln h_t = \omega'z_t  +
   \sum_{i=1}^q \left( \alpha_i |\stdu_{t-i}| + \gamma_i \stdu_{t-i} \right)+
   \sum_{j=1}^p \beta_j \ln(h_{t-j})
 \end{equation}
@@ -360,10 +375,10 @@ inconsistent for compatibility with other software packages.
 \section{How you do things}
 
 The central idea in \gig\ is that your model is contained in a
-\app{gretl} bundle\footnote{If you don't know what a bundle is in
+\app{gretl} bundle,\footnote{If you don't know what a bundle is in
   \app{gretl}, you may want to have a look at the User's Guide,
   chapter 11. In short, a bundle is a container for assorted objects,
-  such as matrices, series etcetera.}, which is set up first with the
+  such as matrices, series etcetera.} which is set up first with the
 basic information about the model (what the dependent variable is,
 what kind of model it is, and so on), and then filled with all the
 quantities available after estimation (coefficients etc).
@@ -387,7 +402,7 @@ Suppose you have already loaded the data you want to analyse, and have
 already performed the necessary preliminary data transformations, if
 any. For example, suppose you loaded the example \app{gretl} dataset
 called \texttt{djclose}, and already have created a variable called
-$y_t$ which contains the daily returns, that is 
+$y_t$ which contains the daily returns, that is
 \begin{code}
   series y = 100 * ldiff(djclose)
 \end{code}
@@ -463,16 +478,16 @@ standardised innovations $\stdu_t$. In practice, the following model:
 \end{figure}
 
 All you have to do is select the appropriate entries in the
-\texttt{GUI\_gig} window. When it looks like Figure
+\dtk{GUI_gig} window. When it looks like Figure
 \ref{fig:GUI-gig-GJR}, just press OK\footnote{Note a subtle difference
   between Figure \ref{fig:GUI-gig} and Figure
   \ref{fig:GUI-gig-GJR}. In the latter, the ``close this dialog'' tick
   box near the bottom is not ticked. This, of course, has no effect on
   the estimates, but may be quite handy if you want to revise your
   model interactively.} and, after a second or two, the following
-estimate should appear\footnote{Note that the GJR model is presented
+estimate should appear.\footnote{Note that the GJR model is presented
   with both parametrisations discussed in section
-  \ref{sec:APARCH}.}. The asterisk at the end of the first line of the
+  \ref{sec:APARCH}.} The asterisk at the end of the first line of the
 output indicates that the analytical score was used for estimation.:
 
 \begin{code}
@@ -492,21 +507,21 @@ Sample: 1980/01/03-1989/12/29 (T = 2527), VCV method: Robust
   -------------------------------------------------------
   omega       0.0249070    0.00890124    2.798    0.0051  ***
   alpha       0.0332144    0.00895699    3.708    0.0002  ***
-  gamma       0.0259622    0.108140      0.2401   0.8103 
+  gamma       0.0259622    0.108140      0.2401   0.8103
   beta        0.939891     0.0155313    60.52     0.0000  ***
 
    (alt. parametrization)
 
-             coefficient   std. error      z      p-value 
+             coefficient   std. error      z      p-value
   --------------------------------------------------------
   delta      0.0249070     0.00890123    2.798    0.0051   ***
   alpha      0.0315122     0.00726215    4.339    1.43e-05 ***
-  gamma      0.00344928    0.0149219     0.2312   0.8172  
+  gamma      0.00344928    0.0149219     0.2312   0.8172
   beta       0.939891      0.0155313    60.52     0.0000   ***
 
     Conditional density parameters
 
-             coefficient   std. error     z     p-value 
+             coefficient   std. error     z     p-value
   ------------------------------------------------------
   ni           5.54597      0.738486    7.510   5.92e-14 ***
 
@@ -569,7 +584,7 @@ operations implicit in the GUI call in a series of steps. This will
 (hopefully) help you write nice, tidy, modular and reusable scripts.
 
 The two functions that you cannot avoid using are called
-\texttt{gig\_setup} and \texttt{gig\_estimate}: the former creates a
+\dtk{gig_setup} and \dtk{gig_estimate}: the former creates a
 bundle with the basic info about your model, the latter populates it
 with the estimates. The GUI interface merges these two actions into
 one, but when you work from a script keeping the two separate has its
@@ -599,24 +614,24 @@ plato = gig_setup(y)
 gig_estimate(&plato)
 \end{code}
 
-The first function we use is \texttt{gig\_setup}: this function
+The first function we use is \dtk{gig_setup}: this function
 creates a bundle (called \texttt{plato} in the present example), which
 contains the basic information on the model that are needed for
 estimation, that is the dependent variable, the model type and the
 regressors for the mean and variance equations. In this case, however,
 the only parameter we need to pass to the function needs is the name
-of the series containing $y_t$. This is because \texttt{gig\_setup}
+of the series containing $y_t$. This is because \dtk{gig_setup}
 has several default options that allow you to omit some arguments in
 certain cases. Since in this example the model for the conditional
 variance is GARCH (the default) and there are no exogenous regressors
 either in the mean equation nor in the variance equation, you may just
 omit the corresponding parameters. The complete list of parameters to
-\texttt{gig\_setup} can be found in the Appendix, section
+\dtk{gig_setup} can be found in the Appendix, section
 \ref{sec:gig_setup}.
 
 Once the model is set up, we pass the address of the bundle which
 contains it as the argument to the function
-\texttt{gig\_estimate}. This function performs the actual estimation
+\dtk{gig_estimate}. This function performs the actual estimation
 via maximum likelihood and (by default) prints out the results:
 \begin{code}
 Model: GARCH(1,1) [Bollerslev] (Normal)*
@@ -625,28 +640,28 @@ Sample: 1980/01/03-1989/12/29 (T = 2527), VCV method: Robust
 
     Conditional variance equation
 
-             coefficient   std. error     z      p-value 
+             coefficient   std. error     z      p-value
   -------------------------------------------------------
-  omega       0.0476635    0.0332897     1.432   0.1522  
-  alpha       0.0905285    0.0566925     1.597   0.1103  
+  omega       0.0476635    0.0332897     1.432   0.1522
+  alpha       0.0905285    0.0566925     1.597   0.1103
   beta        0.871816     0.0674671    12.92    3.38e-38 ***
 
 	Llik:  -3575.27720	 AIC:   7156.55440
 	BIC:    7174.05876	 HQC:   7162.90584
 \end{code}
 
-Note that the main purpose of \texttt{gig\_estimate} is to run the
+Note that the main purpose of \dtk{gig_estimate} is to run the
 maximum likelihood estimation routine and store its output into the
 bundle whose address is given as the function's first argument (in
-this case, \texttt{plato}). The \texttt{gig\_estimate} function also
+this case, \texttt{plato}). The \dtk{gig_estimate} function also
 accepts a second argument: a scalar which sets the verbosity of the
 output. Its default value (which can be omitted, as above) is 1, which
 causes the estimation output to be printed out. If set to 0, the
 estimation takes place silently, which can be useful at times (in a
 loop, for example); on the contrary, the value 2 forces
-\texttt{gig\_estimate} to print out all the BFGS iterations. You can
+\dtk{gig_estimate} to print out all the BFGS iterations. You can
 print out the contents of an estimated model any time after it has
-been estimated, via the \texttt{gig\_print} function.
+been estimated, via the \dtk{gig_print} function.
 
 \subsection{Regressors}
 \label{sec:regressors}
@@ -668,7 +683,7 @@ where $v_t$ is the log volume and $s_t$ is the log High/Low ratio.
 # Import the gig library
 include gig.gfn
 
-# Read the data 
+# Read the data
 open msft.gdt
 
 # compute returns
@@ -690,24 +705,24 @@ gig_set_dist(&socrates, 4)
 gig_estimate(&socrates)
 \end{code}
 
-In this case, we call \texttt{gig\_setup} with 5 parameters: the
+In this case, we call \dtk{gig_setup} with 5 parameters: the
 dependent variable, the model type (1, which stands for GARCH), the
 two lists of regressors for the mean and the variance equation and the
 number of AR lags in the mean equation.
 
 Note that in this case you could have done things a little differently
 with the same effect: first, you could have included $y_{t-1}$ in the
-list \texttt{X} via 
+list \texttt{X} via
 \begin{code}
   list X = const r(-1)
 \end{code}
 and this is indeed the way you would do things in earlier versions of
 \gig. However, it is advisable to follow the new syntax and specify
-lags of the dependent variable as regressors separately\footnote{Don't
-  ask why.}. Second, you could have used \texttt{const} instead of
-\texttt{X} in the call to \texttt{gig\_setup} and use the nice gretl
+lags of the dependent variable as regressors separately.\footnote{Don't
+  ask why.} Second, you could have used \texttt{const} instead of
+\texttt{X} in the call to \dtk{gig_setup} and use the nice gretl
 feature of being able to use a series name as a synonym for a
-one-element list, so 
+one-element list, so
 \begin{code}
   socrates = gig_setup(r, 1, const, vX, 1)
 \end{code}
@@ -715,7 +730,7 @@ would have worked just as well.
 
 The model will be contained in a bundle named \texttt{socrates}. The
 task of setting the conditional distribution for $\stdu_t$ is
-delegated to the \texttt{gig\_set\_dist} function, which takes as
+delegated to the \dtk{gig_set_dist} function, which takes as
 parameters the address to the bundle and a numerical code identifying
 the density. In this example, 4 stands for the skewed GED
 distribution; see Table \ref{tab:modelcodes}, right-hand side for the
@@ -735,9 +750,9 @@ Sample: 1990/01/04-2009/02/11 (T = 4817), VCV method: Robust
 
     Conditional variance equation
 
-             coefficient   std. error      z      p-value 
+             coefficient   std. error      z      p-value
   --------------------------------------------------------
-  const       0.169134     0.183983      0.9193   0.3579  
+  const       0.169134     0.183983      0.9193   0.3579
   lv_1       -0.125632     0.0441290    -2.847    0.0044   ***
   hl_1        0.425972     0.116401      3.660    0.0003   ***
   alpha       0.0331390    0.0126196     2.626    0.0086   ***
@@ -745,10 +760,10 @@ Sample: 1990/01/04-2009/02/11 (T = 4817), VCV method: Robust
 
     Conditional density parameters
 
-             coefficient   std. error     z       p-value 
+             coefficient   std. error     z       p-value
   --------------------------------------------------------
   ni          1.38025      0.0601761    22.94    1.99e-116 ***
-  lambda      0.0330455    0.0206053     1.604   0.1088   
+  lambda      0.0330455    0.0206053     1.604   0.1088
 
 	Llik:  -9964.53237	 AIC:  19947.06473
 	BIC:   20005.38389	 HQC:  19967.54332
@@ -757,20 +772,20 @@ Sample: 1990/01/04-2009/02/11 (T = 4817), VCV method: Robust
 \subsection{Tweaking the model specification}
 \label{sec:tweak}
 
-In the previous subsection, we used the \texttt{gig\_set\_dist}
+In the previous subsection, we used the \dtk{gig_set_dist}
 function to record into the bundle a piece of information (the
 conditional distribution) necessary for estimation. Another similar
-function is \texttt{gig\_set\_pq}, which sets the GARCH and ARCH
+function is \dtk{gig_set_pq}, which sets the GARCH and ARCH
 orders. In general, however, most aspects can be set simply by setting
 the bundle elements to specific values (see section
 \ref{sec:bundle_struct} for a complete list of the bundle elements).
 
-The reason why you'll want to use \texttt{gig\_set\_dist} and
-\texttt{gig\_set\_pq} is that a few adjustments have to be made to
+The reason why you'll want to use \dtk{gig_set_dist} and
+\dtk{gig_set_pq} is that a few adjustments have to be made to
 other bundle elements, and by using those functions you let \gig\ do
 it for you in the proper way. But in many cases all you have to do is
 set the appropriate bundle element to the appropriate value. An
-exception to this rule is the \texttt{gig\_set\_vcvtype} function: it
+exception to this rule is the \dtk{gig_set_vcvtype} function: it
 provides an alternative to setting the \texttt{vcvtype} scalar by
 using a string, which should be easier to remember. The example below
 should be rather self-explanatory, but you may also want to have a
@@ -788,12 +803,12 @@ gig_estimate(&democritus)                 # re-estimate
 \end{code}
 
 Another function that can be useful at times is
-\texttt{gig\_set\_vQR}: unfortunately, the lack of analytical
+\dtk{gig_set_vQR}: unfortunately, the lack of analytical
 derivatives at this stage of development of \gig\ makes it relatively
 prone to numerical issues when exogenous variables are present in the
 variance equation. It is advisable to express the variance regressors
 in such a way that the matrix $T^{-1} \sum_t z_t z_t'$ is numerically
-well-conditioned. If you call \texttt{gig\_set\_vQR} with 1 as second
+well-conditioned. If you call \dtk{gig_set_vQR} with 1 as second
 parameter, \gig\ will will try to do it for you via a QR
 decomposition. In most cases we've tried, it seems to work quite
 nicely, but this feature should be considered experimental and is
@@ -808,31 +823,31 @@ disabled by default.
     \textbf{You have to\ldots} \\
     \hline
     Change the type of an existing model &
-    You can't. Re-create the bundle with \texttt{gig\_setup} \\
+    You can't. Re-create the bundle with \dtk{gig_setup} \\
     Change the dependent variable of an existing model &
-    You can't. Re-create the bundle with \texttt{gig\_setup} \\
+    You can't. Re-create the bundle with \dtk{gig_setup} \\
     Change the regressors for an existing model &
-    You can't. Re-create the bundle with \texttt{gig\_setup} \\
+    You can't. Re-create the bundle with \dtk{gig_setup} \\
     Change the AR order for an existing model &
-    You can't. Re-create the bundle with \texttt{gig\_setup} \\
+    You can't. Re-create the bundle with \dtk{gig_setup} \\
     Re-estimate an existing model on a different sample &
-    You can't. Run the appropriate \texttt{smpl} command first 
-    and then re-create the bundle with \texttt{gig\_setup} \\
+    You can't. Run the appropriate \texttt{smpl} command first
+    and then re-create the bundle with \dtk{gig_setup} \\
     Change the density for an existing model &
-    Use \texttt{gig\_set\_dist} with the appropriate density code \\
+    Use \dtk{gig_set_dist} with the appropriate density code \\
     Change the orders of the polynomials for an existing model &
-    Use \texttt{gig\_set\_pq} \\
+    Use \dtk{gig_set_pq} \\
     Change the way the covariance matrix is computed &
     Set the bundle element \texttt{vcvtype} to 0, 1 or 2, or use
-    \texttt{gig\_set\_vcvtype} \\
+    \dtk{gig_set_vcvtype} \\
     Change the initial values for BFGS &
     Set the bundle element \texttt{inipar} to your liking; be sure you
     know what you're doing \\
     Toggle QR decomposition for variance regressors &
-    Use \texttt{gig\_set\_vQR} \\
+    Use \dtk{gig_set_vQR} \\
     Change the verbosity of BFGS &
-    You can't change it permanently: it's the second parameter to 
-    \texttt{gig\_estimate} \\
+    You can't change it permanently: it's the second parameter to
+    \dtk{gig_estimate} \\
     \hline
     \hline
   \end{tabular}
@@ -845,7 +860,7 @@ disabled by default.
 
 As of version 2.2 (July 2016) there is now a function for
 simulation-based variance
-forecasting named \cmd{gig\_var\_fcast}. It takes 3 arguments:
+forecasting named \dtk{gig_var_fcast}. It takes 3 arguments:
 \begin{enumerate}
 \item a pointer to the bundle containing the model
 \item the horizon up to which you want the forecast
@@ -857,9 +872,9 @@ means of equation \eqref{eq:aparch};\footnote{No, no EGARCH yet;
   sorry.} the future $\uhat_t$ terms are drawn with replacement from
 the residuals of the model.  It will return a matrix with the
 simulation results (one per row) for your playing pleasure.
- 
+
 The same matrix can be used as the first argument to the companion
-function \cmd{gig\_vfgraph}, for which we defer to section
+function \dtk{gig_vfgraph}, for which we defer to section
 \ref{sec:plots}.  A brief example follows.
 
 \begin{scode}
@@ -883,9 +898,9 @@ matrix varfore = gig_var_fcast(&heraclitus, 39, 1024)
 
 The matrix \texttt{varfore} will contain 39 rows and 1024 columns with
 the simulation results. If, for example, you'd like to calculate the
-median of the simulated variances, all you have to do is 
+median of the simulated variances, all you have to do is
 \begin{code}
-matrix median_vola = quantile(varfore, 0.5)  
+matrix median_vola = quantile(varfore, 0.5)
 \end{code}
 
 \section{Plots}
@@ -896,8 +911,8 @@ matrix median_vola = quantile(varfore, 0.5)
   \begin{tabular}{cc}
     \includegraphics[scale=0.5]{graphs/plot_ex} &
     \includegraphics[scale=0.5]{graphs/dplot_ex} \\
-    \texttt{gig\_plot} example &
-    \texttt{gig\_dplot} example 
+    \dtk{gig_plot} example &
+    \dtk{gig_dplot} example
   \end{tabular}
   \caption{Example plots}
   \label{fig:ex-plots}
@@ -905,17 +920,17 @@ matrix median_vola = quantile(varfore, 0.5)
 
 
 The \gig\ package provides three built-in functions for plotting the
-results of a model: \cmd{gig\_plot}, \cmd{gig\_dplot} and
-\cmd{gig\_vfgraph}, which correspond to the ``Time series'',
+results of a model: \dtk{gig_plot}, \dtk{gig_dplot} and
+\dtk{gig_vfgraph}, which correspond to the ``Time series'',
 ``Density'' and the ``Forecast'' entries of the ``Plot'' GUI menu (see
 subsection \ref{sec:GUI}).
 
-The \cmd{gig\_plot} function produces a plot that is very similar to
+The \dtk{gig_plot} function produces a plot that is very similar to
 the one that \app{gretl}'s native GARCH routine gives you after
 estimation, that is a time-plot of the model residuals and the
-estimated conditional standard deviation. 
+estimated conditional standard deviation.
 
-The \cmd{gig\_plot} function, instead, compares the estimated density
+The \dtk{gig_plot} function, instead, compares the estimated density
 of the standardised innovations to their non-parametric kernel
 estimate and can be used for judging visually how adequate the choice
 of a conditional distribution is.
@@ -930,7 +945,7 @@ epicurus = gig_setup(Y,7,const)
 gig_set_dist(&epicurus, 1)
 gig_estimate(&epicurus)
 gig_plot(&epicurus)
-gig_dplot(&epicurus)  
+gig_dplot(&epicurus)
 \end{code}
 produces the following output
 \begin{code}
@@ -942,11 +957,11 @@ Sample: 1-1974 (T = 1974), VCV method: Robust
 
              coefficient    std. error      z       p-value
   ---------------------------------------------------------
-  const      -0.000238229   0.00686306   -0.03471   0.9723 
+  const      -0.000238229   0.00686306   -0.03471   0.9723
 
     Conditional variance equation
 
-             coefficient   std. error     z      p-value 
+             coefficient   std. error     z      p-value
   -------------------------------------------------------
   omega      -0.220313     0.0623767    -3.532   0.0004   ***
   alpha       0.255802     0.0624886     4.094   4.25e-05 ***
@@ -955,7 +970,7 @@ Sample: 1-1974 (T = 1974), VCV method: Robust
 
     Conditional density parameters
 
-             coefficient   std. error     z     p-value 
+             coefficient   std. error     z     p-value
   ------------------------------------------------------
   ni           4.12520      0.402748    10.24   1.28e-24 ***
 
@@ -964,10 +979,10 @@ Sample: 1-1974 (T = 1974), VCV method: Robust
 \end{code}
 and the plots shown in Figure \ref{fig:ex-plots}.
 
-The function \cmd{gig\_vfgraph}, instead, is a little more complex: it
+The function \dtk{gig_vfgraph}, instead, is a little more complex: it
 takes four arguments. The first one is a matrix with the results of
 the simulations used to forecast the variances, such as the one
-produced by the \cmd{gig\_var\_fcast} function. The other two are two
+produced by the \dtk{gig_var_fcast} function. The other two are two
 scalars indicating how many observation of the in-sample fitted
 variants you want in the graph and the width of the coverage region
 (between 0 and 1).
@@ -979,9 +994,9 @@ variants you want in the graph and the width of the coverage region
 Analytical derivatives of the likelihood for APARCH model with normal
 innovations were computed by \cite{Laurent}. At present, however,
 \gig\ relies on numerical differentiation only for some of the models
-it handles\footnote{Note to the reader: we wouldn't feel offended if
+it handles.\footnote{Note to the reader: we wouldn't feel offended if
   \emph{you} helped with the code for the analytical score, you
-  know. Not in the slightest.}. 
+  know. Not in the slightest.}
 
 An important difference between equation \eqref{eq:aparch} and
 \eqref{eq:egarch} is that in the APARCH case the conditional variance
@@ -1000,7 +1015,7 @@ suffer from convergence or accuracy problems. In case you encounter
 convergence problems, you may want to try the following tricks:
 \begin{itemize}
 \item Enable the highest level of verbosity in
-  \texttt{gig\_estimate()} to see what goes wrong.
+  \dtk{gig_estimate()} to see what goes wrong.
 \item Rescale your data. Estimation may be sensitive to the scale of
   the dependent variable and/or your explanatory variables. There is
   an internal algorithm to rescale some data ``sensibly'', but is not
@@ -1013,7 +1028,7 @@ convergence problems, you may want to try the following tricks:
 \item Try starting the algorithm from a different starting point than
   the default. In order to do this, you must modify the \texttt{coeff}
   element of the model bundle before calling
-  \texttt{gig\_estimate}. See the example below.
+  \dtk{gig_estimate}. See the example below.
 \end{itemize}
 
 
@@ -1065,7 +1080,7 @@ maximisation but eventually go back into it because the maximum is
 inside that region after all.
 
 In such a situation, surely you wouldn't want the software to hide the
-problem from you, so just printing out something like 
+problem from you, so just printing out something like
 \begin{code}
   I'm sorry, your estimates are outside the admissible region
 \end{code}
@@ -1096,7 +1111,7 @@ appreciated, if any of you know of any.
 \subsection{Model setup}
 \label{sec:gig_setup}
 
-\begin{funcdoc}{gig\_setup(series depVar, scalar type, list X, 
+\begin{funcdoc}{gig_setup(series depVar, scalar type, list X,
 			  list varX, scalar ARlags)}
 \begin{enumerate}
 \item a series containing $y_t$, the dependent variable \textbf{(required)}
@@ -1114,27 +1129,27 @@ appreciated, if any of you know of any.
 \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{gig\_set\_dist(bundle *b, int code)}
+\begin{funcdoc}{gig_set_dist(bundle *b, int code)}
 \begin{enumerate}
-\item the address of a model bundle created via \texttt{gig\_setup}
+\item the address of a model bundle created via \dtk{gig_setup}
   \textbf{(required)}
 \item a scalar for the conditional density function (see Table \ref{tab:modelcodes},
   right-hand side)
 \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{gig\_set\_pq(bundle *b, int p, int q)}
+\begin{funcdoc}{gig_set_pq(bundle *b, int p, int q)}
 \begin{enumerate}
-\item the address of a model bundle created via \texttt{gig\_setup}
+\item the address of a model bundle created via \dtk{gig_setup}
   \textbf{(required)}
 \item  $p$, the GARCH order (between 0 and 2, default 1)
 \item  $q$, the ARCH order (minimum 1, default 1)
 \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{gig\_set\_vcvtype(bundle *b, string s)}
+\begin{funcdoc}{gig_set_vcvtype(bundle *b, string s)}
 \begin{enumerate}
-\item the address of a model bundle created via \texttt{gig\_setup}
+\item the address of a model bundle created via \dtk{gig_setup}
   \textbf{(required)}
 \item  a string: ``Hessian'', ``OPG'' or ``Sandwich'';
   \textbf{(required)}. Note that
@@ -1146,9 +1161,9 @@ appreciated, if any of you know of any.
 \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{gig\_set\_vQR(bundle *b, boolean on\_off)}
+\begin{funcdoc}{gig_set_vQR(bundle *b, boolean on_off)}
 \begin{enumerate}
-\item the address of a model bundle created via \texttt{gig\_setup}
+\item the address of a model bundle created via \dtk{gig_setup}
   \textbf{(required)}
 \item 1 to activate the QR decomposition for variance regressors, 0 to
   de-activate
@@ -1158,13 +1173,13 @@ appreciated, if any of you know of any.
 \subsection{Estimation}
 \label{sec:syntax_estim}
 
-\begin{funcdoc}{gig\_estimate(bundle *b, int verbose[0:2:1])}
+\begin{funcdoc}{gig_estimate(bundle *b, int verbose[0:2:1])}
 
 General estimation function. % It returns a matrix with the estimation
 % results stored in packed form (see appendix \ref{sec:output_struct}).
 Its arguments are:
 \begin{enumerate}
-\item the address of a model bundle created via \texttt{gig\_setup}
+\item the address of a model bundle created via \dtk{gig_setup}
   \textbf{(required)}
 \item a verbosity switch, from 0 to 2. (Default: 1)
 \end{enumerate}
@@ -1197,15 +1212,15 @@ Its arguments are:
 Note: these functions assume that the bundle they refer to contain a
 model that has already been estimated. No checks is performed.
 
-\begin{funcdoc}{gig\_print(bundle *b, scalar verbose)}
+\begin{funcdoc}{gig_print(bundle *b, scalar verbose)}
   Prints out a model.
 \end{funcdoc}
 
-\begin{funcdoc}{gig\_plot(bundle *b)}
+\begin{funcdoc}{gig_plot(bundle *b)}
   Plots the residuals/conditional SE graph.
 \end{funcdoc}
 
-\begin{funcdoc}{gig\_dplot(bundle *b)}
+\begin{funcdoc}{gig_dplot(bundle *b)}
   Plots the estimated density of the standardized residuals versus its
   nonparametric estimate.
 \end{funcdoc}
@@ -1228,7 +1243,7 @@ model that has already been estimated. No checks is performed.
   \texttt{cdist} & scalar & conditional density (as per Table \ref{tab:modelcodes})\\
   \texttt{mlistX} & matrix & list of mean regressors \\
   \texttt{vlistX} & matrix & list of variance regressors \\
-  \texttt{mk} & scalar & number of mean regressors \\ 
+  \texttt{mk} & scalar & number of mean regressors \\
   \texttt{vk} & scalar & number of variance regressors\\
   \texttt{nobs} & scalar & number of observations \\
   \texttt{t1} & scalar & first observation used \\
@@ -1256,7 +1271,7 @@ model that has already been estimated. No checks is performed.
   \texttt{inipar} & matrix  & Starting values for BFGS \\
   \texttt{active} & matrix  & indicates which elements of the parameter
   vector are active during ML estimation\\
-  \texttt{vX\_QR} & scalar  & Toggles QR decomposition for variance regressors\\
+  \dtk{vX_QR} & scalar  & Toggles QR decomposition for variance regressors\\
   \hline
   \multicolumn{3}{c}{Estimation results} \\
   \hline
@@ -1276,7 +1291,7 @@ model that has already been estimated. No checks is performed.
 \clearpage
 
 NOTA BENE: For APARCH models, the order in which the estimated
-parameters are stored in the \texttt{coeff} matrix is the following: 
+parameters are stored in the \texttt{coeff} matrix is the following:
 \begin{enumerate}
 \item Conditional mean parameters
 \item $\omega_0 \ldots \omega_k$, where $k$ is the number of variance
@@ -1292,8 +1307,7 @@ parameters are stored in the \texttt{coeff} matrix is the following:
 \end{document}
 
 
-%%% Local Variables: 
+%%% Local Variables:
 %%% mode: latex
 %%% TeX-master: t
-%%% End: 
-
+%%% End:
