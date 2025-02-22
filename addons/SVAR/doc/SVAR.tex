@@ -2908,7 +2908,7 @@ int drawix[0])}
    The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-% \begin{funcdoc}{IRF\_plotdata (bundles bs, scalar coveralpha[0.9])}
+% \begin{funcdoc}{IRF_plotdata (bundles bs, scalar coveralpha[0.9])}
 %    \noindent [Function name and usage subject to change.]
 %  Relating to a set identified (sign restricted) model, this function uses 
 %  all accepted draws to construct some summary measures needed for the 
@@ -2936,7 +2936,7 @@ int keypos[0:2:1], int drawix[0])}
    The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_boot (bundle *Smod, int rep[0::2000], scalar alpha[0:1:0.9], bool
+\begin{funcdoc}{\detokenize{SVAR_boot} (bundle *Smod, int rep[0::2000], scalar alpha[0:1:0.9], bool
     quiet[1],\\
     string btypestr[null], int biascorr[-1:2:-1])}
     \noindent Perform a bootstrap analysis of a model. Returns the number of
@@ -2964,7 +2964,7 @@ int keypos[0:2:1], int drawix[0])}
   non-SVEC models.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_coint (bundle *Smod, int dcase[1:5:3],
+\begin{funcdoc}{\detokenize{SVAR_coint} (bundle *Smod, int dcase[1:5:3],
 			   matrix jbeta, matrix jalpha[null],\\
 			   bool verbose[0]), list rexo[null])}
   \noindent Necessary for a SVEC model, adds the needed information 
@@ -2986,13 +2986,13 @@ int keypos[0:2:1], int drawix[0])}
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_cumulate (bundle *Smod, int nv)}
+\begin{funcdoc}{\detokenize{SVAR_cumulate} (bundle *Smod, int nv)}
   \noindent Stores into the model the fact that the cumulated IRFs for
   the \texttt{nv}-th variable are desired. This is typically used jointly
   with long-run restrictions.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_estimate (bundle *Smod, int verbosity[1])}
+\begin{funcdoc}{\detokenize{SVAR_estimate} (bundle *Smod, int verbosity[1])}
   \noindent Estimates the model by maximum likelihood. Its second argument is a
   scalar, which controls the verbosity of output. If omitted,
   standard output is printed. If set to 2 or higher, the output of the 
@@ -3004,7 +3004,7 @@ int keypos[0:2:1], int drawix[0])}
   to 0).
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_getshock (bundle *Smod, string sname[null], int drawix[0])}
+\begin{funcdoc}{\detokenize{SVAR_getshock} (bundle *Smod, string sname[null], int drawix[0])}
   \noindent Returns a series for the current workfile, namely the estimate of the 
   structural shock given in \texttt{sname} via equation \eqref{eq:PrE-StS-AB}, 
   in which VAR residuals are used instead of the one-step-ahead prediction errors
@@ -3020,7 +3020,7 @@ int keypos[0:2:1], int drawix[0])}
   default is yes.)
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_HD (bundle *Smod, string vname[null], int drawix[0])}
+\begin{funcdoc}{\detokenize{SVAR_HD} (bundle *Smod, string vname[null], int drawix[0])}
   \noindent Returns a list of series with 
   the ``historical decomposition'' of the variable given in \texttt{vname},
   decomposing it into a deterministic component
@@ -3037,7 +3037,7 @@ int keypos[0:2:1], int drawix[0])}
   The \texttt{drawix} argument can typically be omitted, see \texttt{SVAR\_getshock}.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_hd (bundle *Smod, int nv, int drawix[0])}
+\begin{funcdoc}{\detokenize{SVAR_hd} (bundle *Smod, int nv, int drawix[0])}
 \noindent Equivalent to the recommended \texttt{SVAR\_HD}, but with an alternative 
 interface: 
 Instead of specifying the name of the target variable its position in the 
@@ -3045,7 +3045,7 @@ list of endogenous variables must be given in \texttt{nv}.
 \end{funcdoc}
 
 
-\begin{funcdoc}{SVAR\_ident (bundle *Smod, int verbose[0])}
+\begin{funcdoc}{\detokenize{SVAR_ident} (bundle *Smod, int verbose[0])}
   \noindent Returns a 0/1 scalar checking if a model is identified by applying (among other things) 
   the algorithm described in \cite{AG}.  
   Its second argument controls the verbosity of output. 
@@ -3056,7 +3056,7 @@ list of endogenous variables must be given in \texttt{nv}.
   model bundle to facilitate further estimation.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_namedrestrict (bundle *Smod, string code, 
+\begin{funcdoc}{\detokenize{SVAR_namedrestrict} (bundle *Smod, string code, 
   string yname, string sname, scalar d[0])}
   \noindent An alternative interface for point restrictions, requiring the 
   names of the respective shock and variable pair instead of the index numbers 
@@ -3079,7 +3079,8 @@ list of endogenous variables must be given in \texttt{nv}.
   \texttt{SVAR\_restrict}, with the same default value of zero.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_restrict (bundle *Smod, string code, numeric r, int c[0], scalar d[0])}
+\begin{funcdoc}{\detokenize{SVAR_restrict} (bundle *Smod, string code,
+    numeric r, int c[0], scalar d[0])}
   \noindent Sets up point constraints for an existing model. The function
   takes at most five arguments:
 \begin{enumerate}
@@ -3160,7 +3161,7 @@ Note that this function can be used (albeit in a limited way) in the
 context of set-identified models. See section \ref{sec:mixed} for more details.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_setup (string type, list Y, list X, int varorder, 
+\begin{funcdoc}{\detokenize{SVAR_setup} (string type, list Y, list X, int varorder, 
   bool checkident[1])}
   \noindent Returns a bundle with the initialised model. 
   
@@ -3182,7 +3183,7 @@ context of set-identified models. See section \ref{sec:mixed} for more details.
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_spagplot (bundle Smod, string vname, string sname, 
+\begin{funcdoc}{\detokenize{SVAR_spagplot} (bundle Smod, string vname, string sname, 
  string fname (optional))}
  \noindent Relating to a set identified (sign restricted) model, does a 
   ``spaghetti'' plot of the IRFs, i.e. simply plotting the IRF of each accepted
@@ -3207,7 +3208,7 @@ context of set-identified models. See section \ref{sec:mixed} for more details.
 
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_SRdraw (bundle *Smod, int rep, bool
+\begin{funcdoc}{\detokenize{SVAR_SRdraw} (bundle *Smod, int rep, bool
     DO\_BAYES[0], scalar coveralpha[0.9],\\
     int maxiter[10000])}
   
@@ -3241,7 +3242,7 @@ context of set-identified models. See section \ref{sec:mixed} for more details.
 \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_SRexotic (bundle *Smod, string chkstr, strings shocks, \\
+\begin{funcdoc}{\detokenize{SVAR_SRexotic} (bundle *Smod, string chkstr, strings shocks, \\
  int length[0], int ini[0])} % left bool needs_model undocumented for now (Sven)
  
  \noindent Relating to a set identified (sign restricted) model, this is an experimental function serving 
@@ -3273,7 +3274,7 @@ context of set-identified models. See section \ref{sec:mixed} for more details.
  
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_SRfull (bundle *Smod, string yname, string sname, scalar lo (optional),\\
+\begin{funcdoc}{\detokenize{SVAR_SRfull} (bundle *Smod, string yname, string sname, scalar lo (optional),\\
   scalar hi (optional), int ini[0], int fin[0])}
   
   \noindent Relating to a set identified (sign restricted) model, this function serves to impose restrictions that
@@ -3295,7 +3296,7 @@ context of set-identified models. See section \ref{sec:mixed} for more details.
   (be omitted), which would mean a restriction only associated with the impact effect.
   \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_SRirf (bundle Smod, strings whichvars [optional], \\
+\begin{funcdoc}{\detokenize{SVAR_SRirf} (bundle Smod, strings whichvars [optional], \\
       strings whichshocks [optional], bool meanormed[0])}
 \noindent Relating to a set identified (sign restricted) model, does IRF plots
  based on all accepted draws. The empirical coverage level of the plotted
@@ -3329,7 +3330,7 @@ context of set-identified models. See section \ref{sec:mixed} for more details.
  It is not possible to exclude single variable-shock pairs, simply delete any unwanted plots afterwards. 
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_SRgetbest (bundle *Smod, string vname, string sname,
+\begin{funcdoc}{\detokenize{SVAR_SRgetbest} (bundle *Smod, string vname, string sname,
     int ini[0::0], \\ int length[0::0],  int disttarg[0:1:0],  string loss[null]) }
   \noindent Relating to a set identified (sign restricted) model, this function returns
    the (scalar) index number among all accepted draws of that particular draw which has 
@@ -3351,7 +3352,7 @@ context of set-identified models. See section \ref{sec:mixed} for more details.
    \end{enumerate}  
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_SRplain (bundle *Smod, string yname, string sname, string what, \\
+\begin{funcdoc}{\detokenize{SVAR_SRplain} (bundle *Smod, string yname, string sname, string what, \\
 int length[0], int ini[0])}
 \noindent Relating to a set identified model, this function serves to impose standard 
  sign restrictions.
@@ -3372,7 +3373,7 @@ int length[0], int ini[0])}
   trailing argument \texttt{ini} is omitted, then the restriction must hold up to horizon \texttt{length}.
   \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_SRresetalpha (bundle *Smod, scalar alpha)}
+\begin{funcdoc}{\detokenize{SVAR_SRresetalpha} (bundle *Smod, scalar alpha)}
 \noindent Relating to a set identified model, this function allows to redefine the 
 desired coverage level of the pointwise confidence intervals without having to 
 repeat the time-consuming model drawing stage. If necessary, this function would

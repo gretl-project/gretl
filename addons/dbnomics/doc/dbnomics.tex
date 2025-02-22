@@ -113,7 +113,7 @@ take charge of the naming of the imported series yourself, using the
 \begin{code}
 data ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z --name="IT_10yr"
 \end{code}
-In this case the series will be known to gretl as \texttt{IT\_10yr}.
+In this case the series will be known to gretl as \dtk{IT_10yr}.
 Note that when you import a series from \DB\ its
 descriptive ``label'' starts with the full triplet so you won't lose
 that information of record, regardless of the naming of the series.
@@ -237,7 +237,7 @@ complex objects, the metadata are going to be as important as the data
 themselves. Therefore, in most cases what you get from the functions
 provided by this package are bundles, or arrays of bundles.
 
-For example, the \cmd{dbnomics\_get\_series} function takes as its first
+For example, the \dtk{dbnomics_get_series} function takes as its first
 mandatory argument a series code and returns a bundle containing both
 the data and the metadata: take the series \texttt{Q.AU.C.A.M.USD.A},
 from the ``long series on total credit'' dataset, itself from the Bank
@@ -271,7 +271,7 @@ The actual data are stored as a column vector, under the key
 you: for example, the \texttt{frequency} key equals 4, thus indicating
 that the data are quarterly, and so on. If you want to have this
 information printed in a more readable way, you'll want to use the
-\cmd{dbnomics\_bundle\_print} function, that yields (long lines broken for
+\dtk{dbnomics_bundle_print} function, that yields (long lines broken for
 readability):
 \begin{code}
 Series: Q.AU.C.A.M.USD.A
@@ -308,7 +308,7 @@ dbnomics_bundles_print(bs)
 \end{code}
 Once the series have been downloaded, a short description of the
 resulting array of bundles is obtained by the
-\cmd{dbnomics\_bundles\_print} (note the plural) function, and this is
+\dtk{dbnomics_bundles_print} (note the plural) function, and this is
 the output (with long lines broken for readability, again):
 \begin{code}
 Contents of bs:
@@ -348,7 +348,7 @@ scalar dbnomics_bundle_get_data (const bundle b,
                                  series *x,
                                  bool verbose[0])
 \end{verbatim}
-Given a bundle obtained by \texttt{dbnomics\_get\_series}, writes the
+Given a bundle obtained by \dtk{dbnomics_get_series}, writes the
 actual data values (and description) into the series \texttt{x}, which
 must exist already and be given in ``pointer'' form. Returns zero on
 success, non-zero on error.
@@ -366,7 +366,7 @@ void dbnomics_bundle_print (const bundle b,
                             bool print_data[0])
 \end{verbatim}
 Displays the content of a bundle obtained by
-\texttt{dbnomics\_get\_series}. Give a non-zero value for the second
+\dtk{dbnomics_get_series}. Give a non-zero value for the second
 argument to print the actual values, otherwise just the metadata is
 shown.
 \end{funcdoc}
@@ -377,8 +377,8 @@ void dbnomics_bundles_print (const bundles bs)
 \end{verbatim}
 Displays a concise description of the series contained in an array of
 bundles, such as the ones you get from function like
-\cmd{dbnomics\_get\_multiple}. For a more detailed printout of the
-individual bundles, use \cmd{dbnomics\_bundle\_print}.
+\dtk{dbnomics_get_multiple}. For a more detailed printout of the
+individual bundles, use \dtk{dbnomics_bundle_print}.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -387,7 +387,7 @@ list dbnomics_bundles_to_list(bundles bs, string key[null])
 \end{verbatim}
   Creates a list of series from an array of bundles containing series
   data, as returned by functions such as
-  \cmd{dbnomics\_get\_multiple}. By default the names of the series
+  \dtk{dbnomics_get_multiple}. By default the names of the series
   will be constructed automatically but the second, optional string
   argument can be used to impose a chosen naming scheme: for each
   bundle, if it contains a string value under the specified
@@ -435,8 +435,8 @@ series dbnomics_fetch (const string datacode,
                        bool verbose[0])
 \end{verbatim}
   This is just a convenience wrapper for
-  \texttt{dbnomics\_get\_series} followed by
-  \texttt{dbnomics\_bundle\_get\_data}.
+  \dtk{dbnomics_get_series} followed by
+  \dtk{dbnomics_bundle_get_data}.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -450,7 +450,7 @@ link'' entry in the ``Download'' menu.
 
 At that point, you can just paste the result into a \app{gretl}
 string, and use that as the argument of this function. See the
-file \texttt{get\_cart\_example.inp} for an example.
+file \dtk{get_cart_example.inp} for an example.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -546,12 +546,12 @@ bundles dbnomics_get_multiple (const string provider,
     dataset, corresponds to the quarterly price indices for
     ``Alcoholic Beverages, Tobacco, and Narcotics'' in France, Germany
     and Belgium (see the example file
-    \texttt{get\_multiple\_example\_via\_mask});
+    \dtk{get_multiple_example_via_mask});
   \item alternatively, you may put into the \texttt{spec} bundle one
     or more string array with the ``dimensions'' for that dataset (see
-    the example file \texttt{get\_multiple\_example}).  In order to
+    the example file \dtk{get_multiple_example}).  In order to
     find the dimensions available for a given dataset, use the
-    function \cmd{dbnomics\_get\_dataset\_dimensions()}.
+    function \dtk{dbnomics_get_dataset_dimensions()}.
   \end{itemize}
 
 \end{funcdoc}
@@ -654,7 +654,7 @@ SI.RMT.COST.OB.ZS-IQ: Average transaction cost of sending remittances
 The same search facilities are also available through the GUI: if you
 go back to Figure \ref{fig:db-access-2}, you will notice a search text
 box at the top. By default, any term you insert will trigger a search
-for that term on the whole \DB\ space, like the \cmd{dbnomics\_search}
+for that term on the whole \DB\ space, like the \dtk{dbnomics_search}
 function with a \texttt{null} second argument. If you want to restrict
 the search to a particular dataset instead, you will have to ``click
 to'' that particular data set and use the search text box there, like
@@ -678,17 +678,17 @@ package. Details can be found at
 
 \begin{tabular}{lp{.6\textwidth}}
   2022-06-26 & ensure deletion of temporary data files \\
-  2022-01-12 & update for absence of \texttt{series\_name} \\
+  2022-01-12 & update for absence of \dtk{series_name} \\
   2021-10-21 & fix handling of quarterly data with gaps \\
   2021-03-29 & cut out waste of time downloading metadata \\
   2021-03-10 & update for presence of metadata switch in API \\
   2021-01-06 & update for absence of
-                      \texttt{complete\_missing\_periods} \\
+                      \dtk{complete_missing_periods} \\
   2020-10-22 & update for absence of
-                      \texttt{dimensions\_labels} in
+                      \dtk{dimensions_labels} in
                       many datasets \\
-  2020-02-27 & add \texttt{dbnomics\_printer} function \\
-  2020-01-25 & add the \texttt{commit\_missing\_periods} flag to our \DB{}
+  2020-02-27 & add \dtk{dbnomics_printer} function \\
+  2020-01-25 & add the \dtk{commit_missing_periods} flag to our \DB{}
                       requests to ensure we get a full data calendar \\
   2019-07-01 & more work on handling nested JSON arrays \\
   2019-06-26 & work around nested arrays in \DB{} ``dimensions'' info\\
