@@ -7280,7 +7280,11 @@ int means_test (const int *list, const DATASET *dset,
     int n2 = 0;
     int df, err;
 
-    err = incompatible_options(opt, OPT_O | OPT_P);
+    err = incompatible_options(opt, OPT_O | OPT_P | OPT_R);
+    if (!err && (opt & OPT_R) && !dataset_is_time_series(dset)) {
+        gretl_errmsg_set("meantest: the --robust option requires time-series data");
+        err = E_PDWRONG;
+    }
 
     if (!err) {
         v1 = list[1];

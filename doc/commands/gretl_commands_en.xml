@@ -8804,32 +8804,73 @@
   <command name="meantest" section="Tests" label="Difference of means">
 
     <usage>
-      <arguments>
-        <argument>series1</argument>
-        <argument>series2</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>meantest</lit> <repl>x</repl> <repl>y</repl> </altform>
+        <altform><lit>meantest</lit> <repl>x</repl> <lit>--split-by=</lit><repl>dummy</repl></altform>
+      </altforms>
       <options>
         <option>
 	  <flag>--unequal-vars</flag>
 	  <effect>assume variances are unequal</effect>
         </option>
+        <option>
+	  <flag>--paired</flag>
+	  <effect>conduct a paired test</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printed output</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+	  <effect>time series only</effect>
+        </option>
       </options>
+      <examples>
+        <example>meantest x y</example>
+        <example>meantest x y --unequal-vars</example>
+        <example>meantest x y --paired</example>
+        <example>meantest x --split-by=d</example>
+      </examples>
     </usage>
 
     <description>
       <para context="cli">
-	Calculates the <math>t</math> statistic for the null
-	hypothesis that the population means are equal for the
-	variables <repl>series1</repl> and <repl>series2</repl>, and
-	shows its p-value.
+	In its primary usage, calculates the <math>t</math> statistic
+	for the null hypothesis that the population means are equal
+	for the series <repl>x</repl> and <repl>y</repl>, and shows
+	output including the p-value. Results can be retrieved using
+	the accessors <fncref targ="$test"/> and <fncref
+	targ="$pvalue"/>, in which case the <opt>quiet</opt> option
+	may used to omit the printout.
       </para>
-      <para>
+      <para context="cli">
+	In its alternate form, with the <opt>split-by</opt> option,
+	the samples whose means are tested for equality are two
+	subsets of the series <repl>x</repl>, for which the series
+	<repl>dummy</repl> takes the values 0 and 1, respectively.
+      </para>
+      <para context="cli">
 	By default the test statistic is calculated on the assumption
 	that the variances are equal for the two variables. With the
 	<opt>unequal-vars</opt> option the variances are assumed to
 	be different; in this case the degrees of freedom for the test
 	statistic are approximated as per <cite
 	key="satter46">Satterthwaite (1946)</cite>.
+      </para>
+      <subhead context="cli">Paired test</subhead>
+      <para context="cli">
+        In the primary case (only) the <opt>paired</opt> option can be
+        given, to test the null hypothesis that the mean difference
+        between the paired values of the two series arguments is
+        zero. Otherwise, pairing is not assumed.
+      </para>
+      <subhead context="cli">Robust test</subhead>
+      <para context="cli">
+        Given time series data, in the primary case (only) the
+        <opt>robust</opt> option can be given to conduct a test of
+        equality of the means of <repl>x</repl> and <repl>y</repl>
+        which is robust in respect of serial correlation.
       </para>
       <para context="gui">
 	Calculates the t-test for the null hypothesis that the
