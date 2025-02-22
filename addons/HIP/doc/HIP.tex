@@ -6,8 +6,8 @@
 \usepackage[pdftex]{graphicx}
 \usepackage{dcolumn,amsmath}
 \usepackage{bm}
-% \usepackage[pdftex]{hyperref}
 \usepackage{natbib}
+\usepackage{hyperref,color}
 \bibliographystyle{gretl}
 
 \newenvironment{funcdoc}[1]
@@ -44,7 +44,6 @@
 \newcommand{\ScRfDist}{\bm{\omega}_i}
 
 % parameters 
-
 \newcommand{\ProbitPar}{\bm{\beta}}
 \newcommand{\ExoPar}{\ProbitPar_2}
 \newcommand{\EndoPar}{\ProbitPar_1}
@@ -56,6 +55,18 @@
 \newcommand{\ScCov}{\bm{\psi}}
 \newcommand{\RfVar}{\bm{\Sigma}}
 \newcommand{\vechC}{\mathbf{c}}
+
+\definecolor{steel}{rgb}{0.03,0.20,0.45}
+
+\hypersetup{pdftitle={The HIP package},
+            pdfauthor={Jack Lucchetti and Claudia Pigini},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            citecolor=steel,
+            bookmarksnumbered=true,
+            plainpages=false
+          }
 
 \title{The HIP package}
 \author{Jack Lucchetti \and Claudia Pigini}
@@ -583,18 +594,18 @@ be written as
 \subsection{Model setup}
 \label{sec:gig_setup}
 
-\begin{funcdoc}{HIP\_setoption(bundle *b, string opt, scalar value)}
+\begin{funcdoc}{\detokenize{HIP_setoption}(bundle *b, string opt, scalar value)}
   \begin{description}
   \item[Return type]: \texttt{scalar}
   \item[\texttt{b}]: pointer to a bundle containing the model to be
-    estimated, as created by \cmd{HIP\_setup}; 
+    estimated, as created by \dtk{HIP_setup}; 
   \item[\texttt{opt}]: string, the option to set;
   \item[\texttt{value}]: scalar, the option value
   \end{description}
 
   This function sets up an option for estimation of the model, so it
-  is typically used after \cmd{HIP\_setup} and before
-  \cmd{HIP\_estimate}. At present, the possible values for the
+  is typically used after \dtk{HIP_setup} and before
+  \dtk{HIP_estimate}. At present, the possible values for the
   \texttt{opt} field are ``verbose'' (possible values: 0 to 3) and
   ``vcvmeth'' (possible values: 0 to 2).
 
@@ -604,9 +615,7 @@ be written as
   meaning is: 0 = OPG (default), 1 = Hessian, 2 = Sandwich-robust.
 \end{funcdoc}
 
-
-
-\begin{funcdoc}{HIP\_setup(series y, list EXOG, list ENDOG[null], list ADDIN[null], \\
+\begin{funcdoc}{\detokenize{HIP_setup}(series y, list EXOG, list ENDOG[null], list ADDIN[null], \\
 			  \rule{2cm}{0pt} list HETVAR[null])}
 \begin{description}
   \item[Return type]: \texttt{bundle}
@@ -623,17 +632,17 @@ be written as
   \end{description}
 
   This function sets the model up so that it can be subsequently
-  estimated via \cmd{HIP\_estimate}.
+  estimated via \dtk{HIP_estimate}.
 \end{funcdoc}
 
 \subsection{Estimation}
 \label{sec:syntax_estim}
 
-\begin{funcdoc}{HIP\_estimate(bundle *b)}
+\begin{funcdoc}{\detokenize{HIP_estimate}(bundle *b)}
 \begin{description}
   \item[Return type]: \texttt{scalar}
   \item[\texttt{b}]: a model bundle in pointer form, as created by
-    \cmd{HIP\_setup}.
+    \dtk{HIP_setup}.
   \end{description}
 
   General estimation function. It fills the bundle with the estimated
@@ -643,11 +652,11 @@ be written as
 \subsection{Output}
 \label{sec:syntax_output}
 
-\begin{funcdoc}{HIP\_printout(bundle *b}
+\begin{funcdoc}{\detokenize{HIP_printout}(bundle *b}
 \begin{description}
   \item[Return type]: none.
   \item[\texttt{b}]: a model bundle in pointer form, as created by
-    \cmd{HIP\_setup} and filled up by \cmd{HIP\_estimate}.
+    \dtk{HIP_setup} and filled up by \dtk{HIP_estimate}.
   \end{description}
   Prints out a model. Note: this function assumes that the bundle it
   refers to contains a model that has already been estimated. No
@@ -657,17 +666,17 @@ be written as
 \subsection{GUI wrapper}
 \label{sec:syntax_GUI}
 
-\begin{funcdoc}{function bundle HIP(series y, list EXOG, list ENDOG[null],\ 
-		    list ADDIN[null], list HETVAR[null], \
-		    int v[0:3:1], int s[0:2:0])}
-Using the same argument descriptions as \texttt{HIP\_setup}, after
+\begin{funcdoc}{function bundle HIP(series y, list EXOG, list ENDOG[null],\\
+\rule{1cm}{0pt} list ADDIN[null], list HETVAR[null],\\
+\rule{1cm}{0pt} int v[0:3:1], int s[0:2:0])}
+Using the same argument descriptions as \dtk{HIP_setup}, after
 checking the rank condition (if estimating instrumental variables
 probit), it calls:
   \begin{enumerate}
-  \item \texttt{HIP\_setup}
-  \item \texttt{HIP\_setoption}
-  \item \texttt{HIP\_estimate}
-  \item \texttt{HIP\_printout}
+  \item \dtk{HIP_setup}
+  \item \dtk{HIP_setoption}
+  \item \dtk{HIP_estimate}
+  \item \dtk{HIP_printout}
 \end{enumerate}
 The parameter \cmd{v} controls the verbosity level: 0 = quiet, 1 =
 main equation only, 2 = first stages, 3 = mle verbose.
