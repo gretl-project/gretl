@@ -1614,11 +1614,19 @@ gretl_VAR_get_portmanteau_test (const GRETL_VAR *var, int *err)
             int k = levels_order(var);
             int df = var->neqns * var->neqns * (var->LBs - k);
             double pv = chisq_cdf_comp(df, var->LB);
+            char **S = strings_array_new(4);
 
             m->val[0] = var->LB;
             m->val[1] = var->LBs;
             m->val[2] = df;
             m->val[3] = pv;
+            if (S != NULL) {
+                S[0] = gretl_strdup("LB");
+                S[1] = gretl_strdup("maxlag");
+                S[2] = gretl_strdup("df");
+                S[3] = gretl_strdup("pvalue");
+                gretl_matrix_set_colnames(m, S);
+            }
             *err = 0;
         }
     }

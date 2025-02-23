@@ -778,6 +778,21 @@
       </description>
     </function>
 
+    <function name="$pmanteau" section="access" output="matrix">
+      <description>
+	<para>
+          Available after estimation of a vector autoregression.
+          Returns a row vector holding the results of the multivariate
+          portmanteau test for autocorrelation of the residuals, as
+          discussed on pages 21&ndash;22 in <cite
+          key="johansen95">Johansen (1995)</cite>. The elements are,
+          in order, the Ljung&ndash;Box statistic, the maximum lag
+          considered, the degrees of freedom for the (chi-square)
+          test, and the p-value of the test.
+	</para>
+      </description>
+    </function>
+
     <function name="$pvalue" section="access" output="scalar-or-matrix">
       <description>
 	<para>
