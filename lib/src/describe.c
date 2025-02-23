@@ -7612,19 +7612,22 @@ int vars_test (const int *list, const DATASET *dset,
     int f = 0;
     int err = 0;
 
-    if (list[0] < 2) {
-        return E_ARGS;
+    v1 = list[1];
+    if (usedum) {
+        v2 = split_by_var(dset);
+        if (v2 < 0) {
+            err = E_UNKVAR;
+        }
+    } else {
+        v2 = list[2];
     }
 
-    if (robust) {
+    if (!err && robust) {
         f = handle_levene_options(&p, &err);
         if (err) {
             return err;
         }
     }
-
-    v1 = list[1];
-    v2 = list[2];
 
     if (usedum) {
         /* get @x and @y as portions of dset->Z[v1] */

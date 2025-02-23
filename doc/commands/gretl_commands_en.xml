@@ -13489,7 +13489,7 @@
 	model:
       </para>
       <code>
-	restrict
+        restrict
 	 b[1] = 0
 	 b[2] - b[3] = 0
 	 b[4] + 2*b[5] = 1
@@ -17019,48 +17019,80 @@
 
   </command>
 
-  <command name="vartest" section="Tests"
-    label="Difference of variances">
+  <command name="vartest" section="Tests" label="Difference of variances">
 
     <usage>
-      <arguments>
-        <argument>series1</argument>
-        <argument>series2</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>vartest</lit> <repl>x</repl> <repl>y</repl> </altform>
+        <altform><lit>vartest</lit> <repl>x</repl> <lit>--split-by=</lit><repl>dummy</repl></altform>
+      </altforms>
+      <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printed output</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+	  <effect>see below</effect>
+        </option>
+      </options>
+      <examples>
+        <example>vartest x y</example>
+        <example>meantest x --split-by=d</example>
+        <example>meantest x y --robust</example>
+        <example>meantest x y --robust=trimmed,5</example>
+      </examples>
     </usage>
 
     <description>
       <para context="cli">
-	Calculates the <math>F</math> statistic for the null
-	hypothesis that the population variances for the variables
-	<repl>series1</repl> and <repl>series2</repl> are equal, and
-	shows its p-value. The test statistics and the p-value can be
-	retrieved through the accessors <fncref targ="$test"/>
-	and <fncref targ="$pvalue"/>, respectively. The following code
+	In its primary usage, calculates the <math>F</math> statistic
+	for the null hypothesis that the population variances are equal
+	for the series <repl>x</repl> and <repl>y</repl>, and shows
+	output including the p-value. Results can be retrieved using
+	the accessors <fncref targ="$test"/> and <fncref
+	targ="$pvalue"/>, in which case the <opt>quiet</opt> option
+	may used to omit the printout.
+      </para>
+      <para>
+        For example, the following code:
       </para>
       <code>
-      	open AWM18.gdt
-		vartest EEN EXR
-		eval $test
-		eval $pvalue
+        open AWM18.gdt
+        vartest EEN EXR
+        eval $test
+        eval $pvalue
       </code>
-    <para>
-      computes the test and shows how to retrieve the test statistics and
-      corresponding p-value afterwards:
-  	</para>
-  	<code>
-		Equality of variances test
+      <para>
+        produces the output shown below:
+      </para>
+      <code>
+        Equality of variances test
 
-		EEN: Number of observations = 192
-		EXR: Number of observations = 188
-		Ratio of sample variances = 3.70707
-		Null hypothesis: The two population variances are equal
-		Test statistic: F(191,187) = 3.70707
-		p-value (two-tailed) = 1.94866e-18
+        EEN: Number of observations = 192
+        EXR: Number of observations = 188
+        Ratio of sample variances = 3.70707
+        Null hypothesis: The two population variances are equal
+        Test statistic: F(191,187) = 3.70707
+        p-value (two-tailed) = 1.94866e-18
 
-		3.7070716
-		1.9486605e-18
-	</code>
+        3.7070716
+        1.9486605e-18
+      </code>
+      <para context="cli">
+	In its alternate form, with the <opt>split-by</opt> option,
+	the samples whose variances are tested for equality are two
+	subsets of the series <repl>x</repl>, for which the series
+	<repl>dummy</repl> takes the values 0 and 1, respectively.
+      </para>
+
+      <subhead context="cli">Robust test</subhead>
+      <para context="cli">
+        Since the Snedecor&ndash;Cochrane <math>F</math> test is quite
+        sensitive to deviations from normality in the samples to be
+        tested, the <opt>robust</opt> option can be given TO BE
+        COMPLETED.
+      </para>
       <para context="gui">
 	Calculates the <math>F</math> statistic for the null
 	hypothesis that the population variances are equal for the

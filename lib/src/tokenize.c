@@ -147,7 +147,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { MAHAL,    "mahal",    CI_LIST },
     { MAKEPKG,  "makepkg",  CI_PARM1 },
     { MARKERS,  "markers",  0 },
-    { MEANTEST, "meantest", CI_LIST | CI_LLEN2 },
+    { MEANTEST, "meantest", CI_LIST | CI_LLEN2 | CI_INFL },
     { MIDASREG, "midasreg", CI_LIST },
     { MLE,      "mle",      CI_EXPR | CI_BLOCK },
     { MODELTAB, "modeltab", CI_PARM1 | CI_INFL },
@@ -206,7 +206,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { IVREG,    "tsls",     CI_LIST },
     { VAR,      "var",      CI_ORD1 | CI_LIST },
     { VARLIST,  "varlist",  0 },
-    { VARTEST,  "vartest",  CI_LIST | CI_LLEN2 },
+    { VARTEST,  "vartest",  CI_LIST | CI_LLEN2 | CI_INFL },
     { VECM,     "vecm",     CI_ORD1 | CI_LIST },
     { VIF,      "vif",      0 },
     { WLS,      "wls",      CI_LIST },
@@ -3953,7 +3953,7 @@ static void handle_option_inflections (CMD *cmd)
             cmd->ciflags &= ~CI_PARM1;
             cmd->ciflags &= ~CI_PARM2;
         }
-    } else if (cmd->ci == MEANTEST) {
+    } else if (cmd->ci == MEANTEST || cmd->ci == VARTEST) {
         if (cmd->opt & OPT_D) {
             /* split-by */
             cmd->ciflags &= ~CI_LLEN2;

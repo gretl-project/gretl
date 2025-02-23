@@ -701,7 +701,7 @@ struct gretl_option gretl_opts[] = {
     { VARLIST,  OPT_S, "scalars", 0 },
     { VARLIST,  OPT_T, "type", 2 },
     { VARLIST,  OPT_D, "debug", 0 },
-    { VARTEST,  OPT_D, "use-dummy", 0 },
+    { VARTEST,  OPT_D, "split-by", 2 },
     { VARTEST,  OPT_R, "robust", 1 },
     { VECM,     OPT_A, "crt", 0 },
     { VECM,     OPT_D, "seasonals", 0 },
