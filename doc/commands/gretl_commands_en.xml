@@ -17033,13 +17033,14 @@
         </option>
         <option>
 	  <flag>--robust</flag>
+          <optparm>method</optparm>
 	  <effect>see below</effect>
         </option>
       </options>
       <examples>
         <example>vartest x y</example>
         <example>meantest x --split-by=d</example>
-        <example>meantest x y --robust</example>
+        <example>meantest x y --robust=median</example>
         <example>meantest x y --robust=trimmed,5</example>
       </examples>
     </usage>
@@ -17086,13 +17087,47 @@
 	<repl>dummy</repl> takes the values 0 and 1, respectively.
       </para>
 
-      <subhead context="cli">Robust test</subhead>
+      <subhead context="cli">Robust tests</subhead>
       <para context="cli">
-        Since the Snedecor&ndash;Cochrane <math>F</math> test is quite
-        sensitive to deviations from normality in the samples to be
-        tested, the <opt>robust</opt> option can be given TO BE
-        COMPLETED.
+        The standard <math>F</math> test rests on the assumption of
+        normality and can over-reject substantially if the data are
+        in fact non-normal. The <opt>robust</opt> option offers three
+        alternatives, as follows:
       </para>
+      <ilist context="cli">
+        <li>
+          <para>
+            When <repl>method</repl> is <lit>mean</lit>, the test
+            defined by <cite key="levene60">Levene (1960)</cite>. This
+            is in effect a one-way ANOVA using the absolute deviations
+            of the original data from their respective sample means.
+          </para>
+        </li>
+        <li>
+          <para>
+            When <repl>method</repl> is <lit>median</lit>, a variant
+            on Levene's test suggested by <cite
+            key="brown-forsythe">Brown and Forsythe (1974)</cite>,
+            where the initial centering uses the sample median rather
+            than the mean. This is recommended if the data are
+            substantially skewed.
+          </para>
+        </li>
+        <li>
+          <para>
+            When <repl>method</repl> is <lit>trimmed</lit>, a second
+            variant due to Brown and Forsythe, where centering is
+            relative to a trimmed mean. This may be preferable if the
+            data are fat-tailed but reasonably symmetrical. By default
+            10 percent trimming is employed (that is, the least and
+            the greatest 10 percent of observations are omitted when
+            calculating the mean) but this can be adjusted by
+            appending a comma and an integer value, as in
+            <opt>robust=trimmed,5</opt> which specifies 5 percent
+            trimming.
+          </para>
+        </li>
+      </ilist>
       <para context="gui">
 	Calculates the <math>F</math> statistic for the null
 	hypothesis that the population variances are equal for the
