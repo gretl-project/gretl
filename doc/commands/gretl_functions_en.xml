@@ -857,6 +857,17 @@
       </description>
     </function>
 
+    <function name="$rlnl" section="access" output="scalar">
+      <description>
+	<para>
+          Following estimation of a restricted VECM, returns the
+          log-likelihood for the restricted model. See also
+          <fncref targ="$lnl"/>, and <guideref targ="chap:vecm"/> for
+          examples of usage.
+	</para>
+      </description>
+    </function>
+
     <function name="$rsq" section="access" output="scalar">
       <description>
 	<para>
