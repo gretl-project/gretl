@@ -1,5 +1,6 @@
 version 2025a, in progress
-- "meantest" and "vartest" commands: support more options
+- "meantest" and "vartest" commands: support more options and
+  expand their documentation
 - "system" command, iterated variants: allow more iterations
   (now 250) before declaring non-convergence
 - Fix bug: "dataset addobs n" with panel data (and without the
@@ -18,6 +19,7 @@ version 2025a, in progress
 - macOS and 64-bit Windows: update gnuplot to version 6.0.2
 - Windows 64-bit build: revert to use of MSVCRT rather then
   UCRT, pending analysis of some problems with the latter
+- Windows 64-bit build: update to OpenBLAS 0.3.29.
 
 2024-12-12 version 2024d
 - "append" command: make the help text more explicit
