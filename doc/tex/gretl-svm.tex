@@ -110,7 +110,7 @@ observations followed by $m$ testing observations, and this dataset is
 loaded in gretl. You construct a list \texttt{L} as described above to
 pass as the first argument to \texttt{svm}. In the simplest case, the
 only parameter you need include in the bundle to pass as the second
-argument is \dtkttt{n_train}, which sets the number of observations
+argument is \dtk{n_train}, which sets the number of observations
 to use for training (assumed to be at the start of the dataset); for
 example, if you have 5000 training observations,
 \begin{code}
@@ -126,7 +126,7 @@ Here's what happens by default.
   $\epsilon$-SVR (regression) is selected. In both cases the default
   kernel is RBF (radial basis function).
 \item Gretl finds the maxima and minima of the independent variables
-  in the sample range 1 to \dtkttt{n_train} and scales them onto
+  in the sample range 1 to \dtk{n_train} and scales them onto
   [$-1,1$].
 \item The \textsf{libsvm} training function is called, with all
   parameters at their default values as shown in
@@ -137,7 +137,7 @@ Here's what happens by default.
   MSE and $R^2$).
 \item If all has gone OK, gretl checks if you have enough observations
   for a testing phase---that is, somewhat arbitrarily, there are at
-  least 10 observations between \dtkttt{n_train} and the end of the
+  least 10 observations between \dtk{n_train} and the end of the
   current sample range. (One would generally expect there to be a good
   deal more testing observations.) If so, the independent variables in
   the test set are scaled using the ranges saved from the training
@@ -207,7 +207,7 @@ printf "SVM: holdout R^2 = %.3f, MSE = %.3f\n", m[1], m[2]
 \end{script}
 
 In \texttt{BLOCK 1} of the Mullainathan--Spiess script we open a data
-file named \dtkttt{ahs_jep.gdtb}. This is a native gretl version of
+file named \dtk{ahs_jep.gdtb}. This is a native gretl version of
 the dataset used by the authors, which they created from ``raw''
 American Housing Survey data with the help of \textsf{R}. Our version
 is a translation of the \textsf{R} data; it is available for download
@@ -349,7 +349,7 @@ svm(L, b)
 %%% combined parameter/options table
 
 \begin{table}[p]
-  (a) Values for \dtkttt{svm_type} (default automatic):
+  (a) Values for \dtk{svm_type} (default automatic):
   \begin{center}
   \begin{tabular}{clll}
 \textit{code} & \textit{string} & \textit{SVM} & \textit{comment} \\[2pt]
@@ -361,7 +361,7 @@ svm(L, b)
   \end{tabular}
   \end{center}
 
-  (b) Values for \dtkttt{kernel_type} (default 2, RBF):
+  (b) Values for \dtk{kernel_type} (default 2, RBF):
   \begin{center}
   \begin{tabular}{clll}
 \textit{code} & \texttt{string} & \textit{kernel} & \textit{comment} \\[2pt]
@@ -395,17 +395,17 @@ svm(L, b)
   \begin{center}
   \begin{tabular}{ll}
     \textit{key} & \textit{comment} \\[2pt]
-    \dtkttt{n_train} & integer: the number of training observations \\
+    \dtk{n_train} & integer: the number of training observations \\
     \texttt{scaling} & 0 = none, 1 = [$-1,1$], 2 = [$0,1$] \\
     \texttt{loadmod} & 0/1: load model from bundle-pointer \\
     \texttt{predict} & 0, 1 or 2: do prediction if relevant (see text) \\
     \texttt{quiet} & 0/1: suppress printed output from \texttt{svm} \\
-    \dtkttt{model_outfile} & filename for writing model \\
-    \dtkttt{model_infile} & filename for reading model \\
-    \dtkttt{ranges_outfile} & filename for writing data ranges \\
-    \dtkttt{ranges_infile} & filename for reading data ranges \\
-    \dtkttt{data_outfile} & filename for writing data values \\
-    \dtkttt{range_format} & string: \texttt{libsvm} or \texttt{gretl}
+    \dtk{model_outfile} & filename for writing model \\
+    \dtk{model_infile} & filename for reading model \\
+    \dtk{ranges_outfile} & filename for writing data ranges \\
+    \dtk{ranges_infile} & filename for reading data ranges \\
+    \dtk{data_outfile} & filename for writing data values \\
+    \dtk{range_format} & string: \texttt{libsvm} or \texttt{gretl}
   \end{tabular}
   \end{center}
   \caption{Parameters and options that may be set using the second
@@ -423,13 +423,13 @@ to cross-validation, for which see section~\ref{sec:xvalid}.
 As mentioned above, gretl selects a default SVM type based on the
 character of the dependent variable. However, this can be overridden
 by including an appropriate integer code under the key
-\dtkttt{svm_type}---see panel (a) of the table---as in
+\dtk{svm_type}---see panel (a) of the table---as in
 \begin{code}
 bundle parms = defbundle()
 parms.svm_type = 4 # select nu-SVR
 \end{code}
 We also mentioned that gretl defaults to the RBF kernel; this can be
-overridden by use of the \dtkttt{kernel_type} key:
+overridden by use of the \dtk{kernel_type} key:
 \begin{code}
 parms.kernel_type = 3 # sigmoid, unlikely to be superior!
 \end{code}
@@ -461,11 +461,11 @@ parms.cachesize = 200
 That leaves the gretl-specific settings in panel (d) of the options
 Table, some of which may require more explanation.
 
-\dtkttt{n_train}: has already been discussed: it simply tells gretl
+\dtk{n_train}: has already been discussed: it simply tells gretl
 how many training observations can be found at the start of the
 dataset. But in this context ``the start'' means the first usable
 observation. If your dataset is complete (no missing observations)
-then specifying \dtkttt{n_train} = 5000 will result in the use of
+then specifying \dtk{n_train} = 5000 will result in the use of
 observations 1 to 5000 for training. But if there are, say, 10 missing
 observations at the beginning of the data, the training range will
 then be 11 to 5010.
@@ -501,9 +501,9 @@ supply filenames for writing or reading, respectively, certain sorts
 of data. Only if such names are given does \texttt{svm} write or read
 any files; by default everything goes on in memory.
 
-\dtkttt{model_infile} can be used to get gretl to read a previously
+\dtk{model_infile} can be used to get gretl to read a previously
 trained \textsf{libsvm} model file (which implies that \texttt{svm}
-will skip the training step), and \dtkttt{model_outfile} can be used
+will skip the training step), and \dtk{model_outfile} can be used
 to produce a file readable by the \texttt{svm-predict} executable.
 The \texttt{ranges} keys work in a similar manner, for files
 containing \textsf{libsvm} data-range information. However, gretl's
@@ -518,11 +518,11 @@ parms.range_format = "libsvm"
 no facility for the converse---that is, getting gretl's \texttt{svm()}
 to read a ranges file written by \texttt{svm-scale}. Attempting to do
 so will generate an error, regardless of the setting of
-\dtkttt{range_format}.
+\dtk{range_format}.
 
-Finally, \dtkttt{data_outfile} can be used to write data in the
+Finally, \dtk{data_outfile} can be used to write data in the
 format required by \texttt{svm-train} and \texttt{svm-predict}. Note
-that there is no \dtkttt{data_infile} key: \texttt{svm} only accepts
+that there is no \dtk{data_infile} key: \texttt{svm} only accepts
 data passed from a gretl dataset via its first (list) argument.
 
 \section{Cross validation}
@@ -578,7 +578,7 @@ shown in Table~\ref{tab:xvalid}.
     (see text) \\[4pt]
    & \texttt{search} & 0/1: parameter search using default grid \\
  \textit{or} & \texttt{grid} & matrix: user-specified grid \\[4pt]
-    & \dtkttt{search_only} & 0/1: see text \\
+    & \dtk{search_only} & 0/1: see text \\
     & \texttt{contiguous} & 0/1: see section~\ref{sec:user-folds} \\
     & \texttt{seed} & integer: see section~\ref{sec:random-folds} \\
     & \texttt{refold} & 0/1: see section~\ref{sec:random-folds} \\
@@ -625,30 +625,30 @@ search for $C$ and $\epsilon$, with $\gamma$ clamped, you need a
 three-row matrix: a row of zeros (in this example, the second or
 $\gamma$ row) indicates a clamped value.
 
-The \dtkttt{search_only} option has the effect of stopping
+The \dtk{search_only} option has the effect of stopping
 \texttt{svm} from doing any training or prediction following parameter
 tuning.
 
 To be clear, the number of observations used in tuning---call this
 $T_0$---is either the size of the current sample range, as set by the
 \texttt{smpl} command prior to calling \texttt{svm}, or
-\dtkttt{n_train} if that is specified in the parameter bundle. Once
+\dtk{n_train} if that is specified in the parameter bundle. Once
 tuning is completed, by default \texttt{svm} trains a model on all
 $T_0$ observations using the optimized parameters, then performs
 prediction for any additional data (i.e., from $T_0 + 1$ to the end of
 the sample range).
 
-You should define \dtkttt{search_only} if you just want to find and
+You should define \dtk{search_only} if you just want to find and
 save the ``best'' parameter values. As an aid, setting this flag has
 an additional effect: if a pointer-to-bundle is supplied as the third
-argument to \texttt{svm}, a matrix named \dtkttt{xvalid_results} is
+argument to \texttt{svm}, a matrix named \dtk{xvalid_results} is
 written into it. (Any other content of the bundle is not touched.)
 This matrix has either three or four columns and as many rows as there
 are parameter combinations. Columns 1 and 2 hold, respectively, the
 values of $C$ and $\gamma$.  If the model uses the parameter
 $\epsilon$ or $\nu$ this occupies the third column; the last column
 holds the associated value of the search criterion.  If
-\dtkttt{search_only} is the only cross-validation option given, this
+\dtk{search_only} is the only cross-validation option given, this
 implies use of the default grid and 5 folds.
 
 Note that grid search with cross validation can be very expensive on a
@@ -935,7 +935,7 @@ multi-threading via \textsf{OpenMP} is not greatly advantageous, but
 MPI works quite nicely---for up to six MPI processes.
 
 \begin{script}[htbp]
-  \caption{Parameter search, script \dtkttt{ca_xvalid.inp}}
+  \caption{Parameter search, script \dtk{ca_xvalid.inp}}
   \label{listing:cadata}
   \begin{center}
     {\small
@@ -970,7 +970,7 @@ MPI 4, OMP 2 & 0:27 & 535 \\
 MPI 4, OMP 1 & 0:27 & 357 \\
 MPI 6, OMP 1 & 0:23 & 478
 \end{tabular}
-\caption{Execution times (m:s) for \dtkttt{ca_xvalid.inp} (OMP =
+\caption{Execution times (m:s) for \dtk{ca_xvalid.inp} (OMP =
   number of OpenMP threads, MPI = number of MPI processes)}
 \label{tab:cadata}
 \end{table}
@@ -1055,10 +1055,10 @@ The focus of this document has been on regression, but gretl's
 above, the \texttt{svm} function automatically switches to
 classification mode---by default using $C$-SVC---if the dependent
 variable is marked as ``coded'' using the \texttt{setinfo} command.
-However, the \dtkttt{svm_type} switch in the parameter bundle passed
+However, the \dtk{svm_type} switch in the parameter bundle passed
 to \texttt{svm} can be used to force the issue in favor of
-classfication via $C$-SVC (\dtkttt{svm_type = 0}) or via $\nu$-SVC
-(\dtkttt{svm_type = 1}).
+classfication via $C$-SVC (\dtk{svm_type = 0}) or via $\nu$-SVC
+(\dtk{svm_type = 1}).
 
 \subsection{Classification example}
 \label{sec:SVC-example}
@@ -1181,7 +1181,7 @@ will contain probability information.
 \label{sec:SVR-probs}
 
 In the case of SV regression, the extra information takes the
-form of a scalar value under the key \dtkttt{svr_sigma}: this is an
+form of a scalar value under the key \dtk{svr_sigma}: this is an
 estimate of the scale parameter, $\sigma$, for the Laplace density of
 the prediction errors, $\hat{y}_i - y_i$, based on the training data,
 namely
@@ -1216,7 +1216,7 @@ In relation to the example in Listing~\ref{listing:keane} above, the
 following modifications could be made to generate and inspect
 probability estimates. First, after the line ``\texttt{parms.quiet =
   1}'' (9 lines from the foot of the script) and replacing the line
-``\dtkttt{yhat_svm = svm(All, parms)}'', insert:
+``\dtk{yhat_svm = svm(All, parms)}'', insert:
 %
 \begin{code}
 parms.probability = 1
@@ -1273,7 +1273,7 @@ dated 2018-07-15).
 \texttt{svmlib.cpp} is a slightly modified version of the
 \textsf{libsvm} C++ source file \texttt{svm.cpp}. It has been edited
 to support parallelization via \textsf{OpenMP} when the symbol
-\dtkttt{_OPENMP} is defined. The changes are as described in answer
+\dtk{_OPENMP} is defined. The changes are as described in answer
 to ``How can I use OpenMP to parallelize LIBSVM on a
 multicore/shared-memory computer?'' in the file \texttt{FAQ.html} in
 the \textsf{libsvm} distribution. In addition, the pseudo-random

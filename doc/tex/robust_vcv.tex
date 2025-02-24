@@ -715,12 +715,12 @@ select SCC is
 set panel_robust scc
 \end{code}
 An additional ``\texttt{set}'' variable is relevant when using this
-estimator, namely \dtkttt{hac_lag}, which governs the bandwidth of
+estimator, namely \dtk{hac_lag}, which governs the bandwidth of
 the kernel employed in the Newey--West component as described in
 section~\ref{sec:hac-bw} above. But note that in the SCC context only
 the Bartlett kernel is supported, and neither prewhitening nor
 data-based bandwidth selection are available.  So the applicable
-\dtkttt{hac_lag} variants are just \texttt{nw1}, \texttt{nw2} or a
+\dtk{hac_lag} variants are just \texttt{nw1}, \texttt{nw2} or a
 user-specified maximum (integer) lag. To replicate results from the
 \texttt{xtscc} command for \textsf{Stata} \citep{hoechle07} the
 \texttt{nw2} variant should be selected.

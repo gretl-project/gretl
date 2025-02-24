@@ -236,7 +236,7 @@ string fname = "C:/Users/yourname/Downloads/INDPRO.txt"
 
 We can then import the data vintage 2011-06-15 using \cmd{join},
 arbitrarily choosing the (hopefully) self-explanatory identifier
-\dtkttt{ip_asof_20110615}.
+\dtk{ip_asof_20110615}.
 
 \begin{code}
 join @fname ip_asof_20110615 --tkey=observation_date --data=INDPRO \
@@ -316,7 +316,7 @@ value from each sequence of matches, could have yielded a result
 different from the one intended. However, this assumption holds for
 Alfred files and is probably rather safe in general.
 
-The values of the variable imported as \dtkttt{ip_3rdpub} in this way
+The values of the variable imported as \dtk{ip_3rdpub} in this way
 were published at different dates, so the variable is effectively a
 mix of different vintages. Depending on the type of variable, this may
 also imply drastic jumps in the values; for example, index numbers are
@@ -500,7 +500,7 @@ the following month, when a data-point for this period was first
 published, and let it run to the end of the vintage history (in this
 file, March 2013).  Our outer time key is the realtime start date and
 we filter on observation date; we name the imported \texttt{INDPRO}
-values as \dtkttt{ip_jan70}. Since it sometimes happens that more
+values as \dtk{ip_jan70}. Since it sometimes happens that more
 than one revision occurs in a given month we need to select an
 aggregation method: here we choose to take the last revision in the
 month.

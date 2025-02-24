@@ -55,7 +55,7 @@ necessary to use the ``genr'' keyword:
 
 \item \texttt{genr unitdum} --- In the context of panel data, creates
   a set of dummies for the panel groups or ``units''. These are named
-  \dtkttt{du_1}, \dtkttt{du_2}, and so forth. Actually, this
+  \dtk{du_1}, \dtk{du_2}, and so forth. Actually, this
   particular genr usage is not strictly necessary, because a list of
   group dummies can also be obtained as:
 
@@ -69,7 +69,7 @@ list groupdums = dummify(gr, NA)
   set of dummies.)
 
 \item \texttt{genr timedum} --- Again for panel data, creates a set of
-  dummies for the time periods, named \dtkttt{dt_1}, \dtkttt{dt_2},
+  dummies for the time periods, named \dtk{dt_1}, \dtk{dt_2},
   \ldots. And again, a list-producing variant without genr exists,
   using the special accessor \dollar{obsminor} which indexes time in
   the panel context and can be used as a substitute for \texttt{time} from
