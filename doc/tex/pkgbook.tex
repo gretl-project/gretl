@@ -2625,7 +2625,7 @@ function bundle GUI_exogtest (int xvar[$mylist] "regressor to test")
   (or fail with an error message if no suitable list members are
   available). It should be a function private to the package.
 
-  \ttusage{list-maker = exogtest\_listmaker}
+  \ttusage{list-maker = \detokenize{exogtest_listmaker}}
 
 \item \texttt{ui-maker} (optional): This element allows a package
   writer control over certain aspects of the dialog box shown when the
@@ -2637,7 +2637,7 @@ function bundle GUI_exogtest (int xvar[$mylist] "regressor to test")
   are followed. Since this functionality is somewhat complex, its
   details are set out separately in Section~\ref{sec:ui-maker} below.
 
-  \ttusage{ui-maker = rf\_ui\_maker}
+  \ttusage{ui-maker = \detokenize{rf_ui_maker}}
 
 \item \texttt{no-print} (optional): A list of public interfaces that
   are not designed to print anything.  Consider, for example, a
@@ -2648,7 +2648,7 @@ function bundle GUI_exogtest (int xvar[$mylist] "regressor to test")
   confusing. You can suppress the text output window by adding such a
   function to the \texttt{no-print} list.
 
-  \ttusage{no-print = foo\_plot}
+  \ttusage{no-print = \detokenize{foo_plot}}
 
 \end{description}
 
@@ -3102,7 +3102,7 @@ under the tabs \textsf{Data files}, \textsf{Dependencies}, and
   or the \textsf{R} code to define a function is not successfully
   executed, the problem should be quickly apparent.
 
-  \ttusage{R-setup = foo\_setup}
+  \ttusage{R-setup = \detokenize{foo_setup}}
 
 \begin{script}[htbp]
   \caption{Skeleton of an \texttt{R-setup} function}

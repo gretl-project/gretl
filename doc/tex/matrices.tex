@@ -97,12 +97,12 @@ matrix A = {const}~{dataset}
 
 By default, when you build a matrix from series that include missing
 values any observations (rows) that contain \texttt{NA}s are skipped.
-This behavior can be modified via the command \texttt{set
-  skip\_missing off}.  In that case missing values are represented in
-the matrix as NaN (``Not a Number'').  Note that as per the IEEE
-standard, arithmetic operations involving one or more NaNs always
-produce a NaN result. Alternatively, you can take greater control over
-the observations (data rows) that are included in the matrix using the
+This behavior can be modified via the command \dtk{set skip\_missing
+  off}.  In that case missing values are represented in the matrix as
+NaN (``Not a Number'').  Note that as per the IEEE standard,
+arithmetic operations involving one or more NaNs always produce a NaN
+result. Alternatively, you can take greater control over the
+observations (data rows) that are included in the matrix using the
 ``set'' variable \dtk{matrix_mask}, as in
 %
 \begin{code}
