@@ -8858,7 +8858,7 @@ contenga un percorso completo.
   </description>
 
   <gui-access>
-    <menu-path>/Strumenti/Pacchetti di funzioni/Nuovo pacchetto</menu-path>
+    <menu-path>/File/Pacchetti di funzioni/Nuovo pacchetto</menu-path>
   </gui-access>
 
 </command>
@@ -8981,86 +8981,125 @@ contenga un percorso completo.
 <command name="meantest" section="Tests" label="Differenza delle medie">
 
   <usage>
-    <arguments>
-      <argument>var1</argument>
-      <argument>var2</argument>
-    </arguments>
+      <altforms>
+        <altform><lit>meantest</lit> <repl>x</repl> <repl>y</repl> </altform>
+        <altform><lit>meantest</lit> <repl>x</repl> <lit>--split-by=</lit><repl>dummy</repl></altform>
+      </altforms>
     <options>
       <option>
 	<flag>--unequal-vars</flag>
 	<effect>assume varianze diverse</effect>
       </option>
+        <option>
+	  <flag>--paired</flag>
+	  <effect>effettua un test appaiato</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra l'output</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+	  <effect>solo per serie temporali</effect>
+        </option>
     </options>
+      <examples>
+        <example>meantest x y</example>
+        <example>meantest x y --unequal-vars</example>
+        <example>meantest x y --paired</example>
+        <example>meantest x --split-by=d</example>
+      </examples>
   </usage>
 
   <description>
     <para context="cli">
-      Calcola la statistica <math>t</math> per l'ipotesi
-      nulla che le medie della popolazione siano uguali per le
-      variabili <repl>var1</repl> e <repl>var2</repl>, mostrando il
-      suo p-value.
+      L'utilizzo principale di questo comando è nel calcolare la
+      statistica <math>t</math> per l'ipotesi nulla che le medie della
+      popolazione siano uguali per le variabili <repl>var1</repl> e
+      <repl>var2</repl>, mostrando il suo p-value. I risultati possono
+      essere salvati utilizzando gli accessori <fncref
+      targ="$test"/> e <fncref targ="$pvalue"/>, nel qual caso è
+      possibile utilizzare l'opzione <opt>quiet</opt> per omettere la
+      stampa.
+    </para>
+    <para context="cli">
+      Nella sua forma alternativa, con l'opzione <opt>split-by</opt>,
+      i campioni le cui medie vengono testate per l'uguaglianza sono
+      due sottoinsiemi della serie <repl>x</repl>, per i quali la
+      serie <repl>dummy</repl> assume rispettivamente i valori 0 e 1.
+      </para>
+    <para>
+      Per default, si assume che le varianze delle due variabili siano
+     uguali, mentre usando l'opzione <opt>unequal-vars</opt>, si
+     assume che esse siano diverse; in questo caso i gradi di libertà
+     per la statistica test saranno approssimati per <cite
+     key="satter46">Satterthwaite (1946)</cite>.
+    </para>
+    <subhead context="cli">Test appaiato</subhead>
+    <para context="cli">
+      Nel caso principale (e solo in esso) può essere fornita
+      l'opzione <opt>paired</opt>, per testare l'ipotesi nulla che la
+      media della differenza fra le due serie sia zero. Altrimenti, il
+      test sarà calcolato senza assumere che le serie possano essere
+      accoppiate.
+    </para>
+    <subhead context="cli">Test robusto</subhead>
+    <para context="cli">
+      Con dati in serie storiche, e solo nel caso principale, può
+      essere fornita l'opzione <opt>robust</opt> per condurre un test
+      di uguaglianza delle medie di <repl>x</repl> e <repl>y</repl>
+      che è robusto rispetto alla correlazione seriale.
+    </para>
+    <para context="gui"> Calcola la statistica t per l'ipotesi nulla
+    che le medie della popolazione siano uguali per due variabili
+    selezionate, mostrando il suo p-value. Il comando può essere
+    eseguito con o senza l'ipotesi che le varianze delle due variabili
+    siano uguali.  In quest'ultimo caso i gradi di libertà per la
+    statistica test verranno approssimato per <cite
+    key="satter46">Satterthwaite (1946)</cite>.
+    </para>
+  </description>
+
+  <gui-access>
+    <menu-path>/Modello/Modelli bivariati/Differenza delle medie</menu-path>
+  </gui-access>
+
+</command>
+
+<command name="MIDAS_list" section="Dataset" label="lista MIDAS"
+	 context="gui">
+  <description>
+    <para>
+      Una lista MIDAS (MIDAS = Mixed Data Sampling) è una lista in
+      cui le serie, prese congiuntamente, contengono una serie
+      storica osservata a frequenza più alta di quella del dataset
+      <quote>ospite</quote>. Per esempio, questa lista può
+      rappresentare una serie mensile nel contesto di un dataset
+      trimestrale od annuale, o una serie giornaliera nel contesto
+      di un dataset mensile.
     </para>
     <para>
-      L'impostazione predefinita prevede di assumere che
-      le varianze delle due variabili siano uguali, mentre usando
-      l'opzione <opt>unequal-vars</opt>, si assume che esse siano
-      diverse; in questo caso i gradi di libertà per la statistica
-      test saranno approssimati per <cite key="satter46">Satterthwaite (1946)</cite>.
-	</para>
-	<para context="gui">
-	  Calcola la statistica t per l'ipotesi nulla che le medie della
-	  popolazione siano uguali per due variabili selezionate,
-	  mostrando il suo p-value. Il comando può essere eseguito con o
-	  senza l'ipotesi che le varianze delle due variabili siano uguali.
-	  In quest'ultimo caso i gradi di libertà per la statistica test
-	  verranno approssimato per <cite key="satter46">Satterthwaite (1946)</cite>.
-	</para>
-      </description>
-
-      <gui-access>
-	<menu-path>/Modello/Modelli bivariati/Differenza delle medie</menu-path>
-      </gui-access>
-
-    </command>
-
-    <command name="MIDAS_list" section="Dataset" label="lista MIDAS"
-	     context="gui">
-      <description>
-	<para>
-	  Una lista MIDAS (MIDAS = Mixed Data Sampling) è una lista in
-	  cui le serie, prese congiuntamente, contengono una serie
-	  storica osservata a frequenza più alta di quella del dataset
-	  <quote>ospite</quote>. Per esempio, questa lista può
-	  rappresentare una serie mensile nel contesto di un dataset
-	  trimestrale od annuale, o una serie giornaliera nel contesto
-	  di un dataset mensile.
-	</para>
-	<para>
-	  Questa lista deve avere <math>m</math> elementi, dove
-	  <math>m</math> è il numero di sottoperiodi ad alta frequenza:
-	  ogni serie contiene i valori per un dato sottoperiodo. Nel
-	  caso mensile/trimestrale, ciò fa sì che la lista abbia tre
-	  elementi: uno contenente i valori per il primo mese del
-	  trimestre, un altro per il secondo mese e l'ultimo i valori
-	  per il terzo mese.
-	</para>
-	<para>
-	  Questi elementi devono essere in un certo ordine, ossia
-	  <emphasis>prima il più recente</emphasis>. Usando di nuovo
-	  l'esempio mensile/trimestrale, l'ordine deve essere mese 3,
-	  mese 2, mese 1. Per controintuitivo che possa sembrare questo
-	  è l'ordine richiesto per formare liste di ritardi, cosa molto
-	  comune nei modelli MIDAS.
-	</para>
-	<para>
-	  Per una guida sul come creare un dataset che contenga liste
-	  midas, consultare
-	</para>
-	<para>
-	  <url>http://gretl.sourceforge.net/midas/midas_gretl.pdf</url>
-	</para>
-      </description>
-    </command>
+      Questa lista deve avere <math>m</math> elementi, dove
+      <math>m</math> è il numero di sottoperiodi ad alta frequenza:
+      ogni serie contiene i valori per un dato sottoperiodo. Nel
+      caso mensile/trimestrale, ciò fa sì che la lista abbia tre
+      elementi: uno contenente i valori per il primo mese del
+      trimestre, un altro per il secondo mese e l'ultimo i valori
+      per il terzo mese.
+    </para>
+    <para> Questi elementi devono essere in un certo ordine, ossia
+    <emphasis>prima il più recente</emphasis>. Usando di nuovo
+    l'esempio mensile/trimestrale, l'ordine deve essere mese 3, mese
+    2, mese 1. Per controintuitivo che possa sembrare questo è
+    l'ordine richiesto per formare liste di ritardi, cosa molto comune
+    nei modelli MIDAS.  </para> <para> Per una guida sul come creare
+    un dataset che contenga liste midas, consultare
+  </para>
+  <para>
+    <url>http://gretl.sourceforge.net/midas/midas_gretl.pdf</url>
+  </para>
+  </description>
+</command>
 
     <command name="MIDAS_parm" section="Estimation"
 	     label="iperprametri MIDAS" context="gui">
@@ -12215,7 +12254,7 @@ del comando <cmdref targ="set"/>.
   </description>
 
   <gui-access>
-    <menu-path>/Strumenti/Pacchetti/Sul server</menu-path>
+    <menu-path>/File/Pacchetti/Sul server</menu-path>
   </gui-access>
 
 </command>
@@ -17338,48 +17377,116 @@ del comando <cmdref targ="set"/>.
 
   </command>
 
-  <command name="vartest" section="Tests"
-	 label="Differenza delle varianze">
+<command name="vartest" section="Tests" label="Differenza delle varianze">
 
-    <usage>
-      <arguments>
-	<argument>var1</argument>
-	<argument>var2</argument>
-      </arguments>
-    </usage>
+  <usage>
+    <altforms>
+      <altform><lit>vartest</lit> <repl>x</repl> <repl>y</repl> </altform>
+      <altform><lit>vartest</lit> <repl>x</repl> <lit>--split-by=</lit><repl>dummy</repl></altform>
+    </altforms>
+    <options>
+      <option>
+	<flag>--quiet</flag>
+	<effect>sopprime la stampa dell'output</effect>
+      </option>
+      <option>
+	<flag>--robust</flag>
+        <optparm>metodo</optparm>
+	<effect>vedi sotto</effect>
+      </option>
+    </options>
+    <examples>
+      <example>vartest x y</example>
+      <example>meantest x --split-by=d</example>
+      <example>meantest x y --robust=median</example>
+        <example>meantest x y --robust=trimmed,5</example>
+    </examples>
+  </usage>
 
-    <description>
-      <para context="cli">
-	Calcola la statistica <math>F</math> per l'ipotesi nulla
-	che le varianze della popolazione per le variabili
-	<repl>var1</repl> e <repl>var2</repl> siano uguali e mostra il
-	p-value. La statistica test e il p-value sono disponibili
-	tramite gli accessori <fncref targ="$test"/> e
-	<fncref targ="$pvalue"/>. Il codice seguente
-      </para>
-      <code>
-      	open AWM18.gdt
-	vartest EEN EXR
-	eval $test
-	eval $pvalue
-      </code>
-      <para>
-	calcola il test e mostra come usare gli accessori:
-      </para>
-      <code>
-	Equality of variances test
+  <description>
+    <para context="cli">
+      Come uso principale, calcola la statistica <math>F</math> per
+      l'ipotesi nulla che le varianze della popolazione per le
+      variabili <repl>var1</repl> e <repl>var2</repl> siano uguali e
+      mostra il p-value. La statistica test e il p-value sono
+      disponibili tramite gli accessori <fncref targ="$test"/> e
+      <fncref targ="$pvalue"/>.
+    </para>
+    <para>
+      Ad esempio, il codice seguente
+    </para>
+    <code>
+      open AWM18.gdt
+      vartest EEN EXR
+      eval $test
+      eval $pvalue
+    </code>
+    <para>
+      calcola il test e mostra come usare gli accessori:
+    </para>
+    <code>
+      Equality of variances test
+      
+      EEN: Number of observations = 192
+      EXR: Number of observations = 188
+      Ratio of sample variances = 3.70707
+      Null hypothesis: The two population variances are equal
+      Test statistic: F(191,187) = 3.70707
+      p-value (two-tailed) = 1.94866e-18
+      
+      3.7070716
+      1.9486605e-18
+    </code>
+    <para context="cli">
+      Nella sua forma alternativa, con l'opzione <opt>split-by</opt>,
+      i campioni le cui varianze vengono testate per l'uguaglianza
+      sono due sottoinsiemi della serie <repl>x</repl>, per i quali la
+      serie <repl>dummy</repl> assume rispettivamente i valori 0 e 1.
+    </para>
 
-	EEN: Number of observations = 192
-	EXR: Number of observations = 188
-	Ratio of sample variances = 3.70707
-	Null hypothesis: The two population variances are equal
-	Test statistic: F(191,187) = 3.70707
-	p-value (two-tailed) = 1.94866e-18
-
-	3.7070716
-	1.9486605e-18
-      </code>
-      <para context="gui">
+    <subhead context="cli">Test robusti</subhead>
+    <para context="cli">
+      Il test <math>F</math> standard si basa sull'ipotesi di
+      normalità e può sovra-rifiutare sostanzialmente se tale
+      assunzione è falsa. L'opzione <opt>robust</opt> offre tre
+      alternative, come segue:
+    </para>
+    <ilist context="cli">
+      <li>
+	<para>
+	  Quando <repl>metodo</repl> è uguale a <lit>mean</lit>, si
+	  usa il test definito da <cite key="levene60">Levene
+	  (1960)</cite>. Si tratta in effetti di un'analisi ANOVA a
+	  una via che utilizza le deviazioni assolute dalle rispettive
+	  medie campionarie dei dati originali.
+	</para>
+      </li>
+      <li>
+	<para>
+	  Quando <repl>metodo</repl> è <lit>median</lit>, si usa una
+	  variante del test di Levene suggerita da <cite
+	  key="brown-forsythe">Brown e Forsythe (1974)</cite>, in cui
+	  la centratura iniziale utilizza la mediana campionaria
+	  anziché la media. Questa opzione è consigliata se i dati
+	  sono fortemente asimmetrici. </para>
+      </li>
+      <li>
+	<para>
+	  Quando <repl>metodo</repl> è <lit>trimmed</lit>, si usa una
+	  seconda variante dovuta a Brown e Forsythe, in cui il
+	  centraggio è relativo a una media <i>trimmed</i>. Questa
+	  opzione può essere preferibile se i dati sono leptocurtici
+	  ma abbastanza simmetrici. Per default, si utilizza un
+	  <i>trimming</i> del 10 per cento (ovvero, il 10 per cento
+	  più piccolo e il 10 per cento più grande delle osservazioni
+	  vengono omessi quando si calcola la media), ma questo può
+	  essere regolato aggiungendo una virgola e un valore intero,
+	  come in <opt>robust=trimmed,5</opt> che specifica il taglio
+	  del 5 percento.
+	</para>
+      </li>
+    </ilist>    
+    <para context="gui">
 	Calcola la statistica <math>F</math> per l'ipotesi nulla
 	che le varianze della popolazione per le variabili selezionate
 	siano uguali e mostra il p-value.
@@ -17387,7 +17494,7 @@ del comando <cmdref targ="set"/>.
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Modelli bivariati/Differenza delle varianze</menu-path>
+      <menu-path>/Strumenti/Calcola test</menu-path>
     </gui-access>
 
   </command>

@@ -789,6 +789,20 @@
       </description>
     </function>
 
+    <function name="$pmanteau" section="access" output="matrix">
+      <description>
+	<para>
+	Disponibile dopo la stima di un VAR. Restituisce un vettore
+	riga contenente i risultati del test portmanteau multivariato
+	per l'autocorrelazione dei residui, come discusso alle pagine
+	21&ndash;22 in <cite key="johansen95">Johansen
+	(1995)</cite>. Gli elementi sono, in ordine, la statistica
+	Ljung&ndash;Box, il ritardo massimo considerato, i gradi di
+	libertà per il test chi-quadro e il p-value del test.
+	</para>
+      </description>
+    </function>
+
     <function name="$pvalue" section="access" output="scalar-or-matrix">
       <description>
 	<para>
@@ -849,6 +863,17 @@
 	  un modello con il comando <lit>ar</lit>, la sintassi
 	  <lit>$rho(n)</lit> produce la corrispondente stima di
 	  &rgr;(<math>n</math>).
+	</para>
+      </description>
+    </function>
+
+    <function name="$rlnl" section="access" output="scalar">
+      <description>
+	<para>
+          Dopo la stima di un VECM vincolato, restituisce la
+          log-verosimiglianza del modello vncolato. Si vedano anche
+          <fncref targ="$lnl"/>, e <guideref targ="chap:vecm"/> per
+          esempi d'uso.
 	</para>
       </description>
     </function>
