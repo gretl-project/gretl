@@ -1735,6 +1735,8 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 
     if (role == VIEW_BIBITEM) {
 	add_text_closer(vwin);
+    } else {
+        //vwin_add_finder(vwin);
     }
 
     gtk_widget_show(vwin->vbox);

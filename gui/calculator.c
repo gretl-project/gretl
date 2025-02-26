@@ -2127,6 +2127,8 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
     char *str = g_strdup(s);
     int err = 0;
 
+    /* FIXME : use genr here */
+
     if (str == NULL) {
 	return 1;
     }
@@ -2194,7 +2196,12 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
     }
 
     if (!err) {
-	if (sscanf(q, "%lf", yval) != 1) {
+        q += strspn(q, " ");
+        if (!strncmp(q, "TRUE", 4)) {
+            *yval = 1;
+        } else if (!strncmp(q, "FALSE", 5)) {
+            *yval = 0;
+        } else if (sscanf(q, "%lf", yval) != 1) {
 	    err = 1;
 	}
     }
