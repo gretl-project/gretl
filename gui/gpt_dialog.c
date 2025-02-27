@@ -1249,6 +1249,7 @@ static void graph_font_selection_ok (GtkWidget *w, GtkFontChooser *fc)
 	    GtkWidget *b = g_object_get_data(G_OBJECT(fc), "launcher");
 
             if (type == 3) {
+                /* called from general preferences dialog */
                 gtk_button_set_label(GTK_BUTTON(b), fontname);
             } else {
                 gchar *title = g_strdup_printf(_("font: %s"), fontname);
@@ -1437,6 +1438,8 @@ void plot_show_font_selector (png_plot *plot, const char *currfont)
 {
     real_graph_font_selector(NULL, plot, 2, currfont);
 }
+
+/* called from the Plots tab of the general preferences dialog */
 
 void png_font_selector (GtkButton *button, gpointer p)
 {

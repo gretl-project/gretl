@@ -338,7 +338,7 @@ RCVAR rc_vars[] = {
       INVISET, sizeof datapage, TAB_NONE, NULL },
     { "ScriptPage", "Default script page", NULL, scriptpage,
       INVISET, sizeof scriptpage, TAB_NONE, NULL },
-    { "Png_font", N_("PNG graph font"), NULL, paths.pngfont,
+    { "Png_font", N_("Graph font"), NULL, paths.pngfont,
       USERSET | BTNSET, sizeof paths.pngfont, TAB_PLOTS, NULL },
     { "Gp_extra_colors", N_("Gnuplot extra colors"), NULL, gpcolors,
       INVISET, sizeof gpcolors, TAB_NONE, NULL },
@@ -2009,7 +2009,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 	    gtk_table_attach_defaults(GTK_TABLE(l_table),
 				      rc->widget, 1, 2, l_len - 1, l_len);
         } else if (rc->flags & BTNSET) {
-            /* string variable needing launcher button */
+            /* string variable needing a launcher button */
 	    l_len++;
 	    gtk_table_resize(GTK_TABLE(l_table), l_len, l_cols);
 	    w = gtk_label_new(_(rc->description));
@@ -2017,7 +2017,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 	    gtk_table_attach_defaults(GTK_TABLE(l_table),
 				      w, 0, 1, l_len - 1, l_len);
             rc->widget = gtk_button_new_with_label(gretl_png_font());
-            g_object_set_data(G_OBJECT(page), "fontstr", (char *) rc->var);
             g_signal_connect(G_OBJECT(rc->widget), "clicked",
                              G_CALLBACK(png_font_selector), page);
 	    gtk_table_attach_defaults(GTK_TABLE(l_table),
@@ -2264,6 +2263,10 @@ static void apply_prefs_changes (GtkWidget *widget, GtkWidget *parent)
 	    int ival = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(w));
 
 	    rcvar_set_int(rcvar, ival, &changed);
+        } else if (rcvar->flags & BTNSET) {
+            const gchar *sval = gtk_button_get_label(GTK_BUTTON(w));
+
+            strcpy((char *) rcvar->var, sval);
 	} else if (rcvar->flags & (USERSET | MACHSET)) {
 	    gchar *sval = entry_box_get_trimmed_text(w);
 
