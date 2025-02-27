@@ -1642,13 +1642,13 @@
 	  <quote>Matrix input</quote> below for alternative usage.
 	</para>
 	<para>
-	  In the most minimal usage, <argname>x</argname> is set to
+	  In the simplest usage <argname>x</argname> is set to
 	  <lit>null</lit>, <argname>byvar</argname> is a single series
-	  and the third argument is omitted, or set to
-	  <lit>null</lit>. In this case, the return value is a matrix
-	  with two columns holding, respectively, the distinct values
-	  of <argname>byvar</argname>, sorted in ascending order, and
-	  the count of observations at which <argname>byvar</argname>
+	  and the third argument is omitted or set to
+	  <lit>null</lit>. The return value is then a matrix with two
+	  columns holding, respectively, the distinct values of
+	  <argname>byvar</argname> sorted in ascending order, and the
+	  count of observations at which <argname>byvar</argname>
 	  takes on each of these values. For example,
 	</para>
 	<code>
@@ -1661,40 +1661,40 @@
 	</para>
 	<para>
 	  More generally, if <argname>byvar</argname> is a list with
-	  <math>n</math> members, then the left-hand <math>n</math>
-	  columns hold the combinations of the distinct values of each
-	  of the <math>n</math> series and the count column holds the
-	  number of observations at which each combination is
-	  realized. Note that the count column can always be found at
-	  the position <lit>nelem(byvar) + 1</lit>.
+	  <math>n</math> members then the first <math>n</math> columns
+	  of the returned matrix hold the combinations of the distinct
+	  values of each of the <math>n</math> series, and the count
+	  column holds the number of observations at which each
+	  combination is realized. (The count column can always be
+	  found at the position <lit>nelem(byvar)+1</lit>).
 	</para>
 	<subhead>Specifying an aggregation function</subhead>
 	<para>
-	  If the third argument is given, then <argname>x</argname>
+	  If the third argument is given then <argname>x</argname>
 	  must not be <lit>null</lit>, and the rightmost
 	  <math>m</math> columns hold the values of the statistic
 	  specified by <argname>funcname</argname> for each of the
-	  variables in <argname>x</argname>. (Thus, <math>m</math> is
+	  variables in <argname>x</argname>. (So <math>m</math> is
 	  equal to 1 if <argname>x</argname> is a single series and
 	  equal to <lit>nelem(x)</lit> if <argname>x</argname> is a
-	  list.)  The given statistic is calculated on the respective
+	  list.)  The specified statistic is calculated on the
 	  sub-samples defined by the combinations in
 	  <argname>byvar</argname> (in ascending order); these
 	  combinations are shown in the first <math>n</math> column(s)
 	  of the returned matrix.
 	</para>
 	<para>
-	  So, in the special case where <argname>x</argname> and
-	  <argname>byvar</argname> are both individual series, the
-	  return value is a matrix with three columns holding,
-	  respectively, the distinct values of
-	  <argname>byvar</argname>, sorted in ascending order; the
-	  count of observations at which <argname>byvar</argname>
-	  takes on each of these values; and the values of the
-	  statistic specified by <argname>funcname</argname>
-	  calculated on series <argname>x</argname>, using only those
-	  observations at which <argname>byvar</argname> takes on the
-	  value given in the first column.
+	  So, if both <argname>x</argname> and
+	  <argname>byvar</argname> are individual series, the return
+	  value is a matrix with three columns holding the distinct
+	  values of <argname>byvar</argname> sorted in ascending
+	  order; the count of observations at which
+	  <argname>byvar</argname> takes on each of these values; and
+	  the values of the statistic specified by
+	  <argname>funcname</argname> calculated on series
+	  <argname>x</argname>, using just those observations at which
+	  <argname>byvar</argname> takes on the value given in the
+	  first column.
 	</para>
 	<para>
 	  The following values of <argname>funcname</argname> are
@@ -1710,7 +1710,7 @@
 	  be said to <quote>aggregate</quote> the series in some way.
 	  If none of these built-in functions does what you need, you
 	  can give the name of a user-defined function as the
-	  aggregator; like the built-ins, such a function must take a
+	  aggregator. Like the built-ins, such a function must take a
 	  single series argument and return a scalar value.
 	</para>
 	<para>
@@ -1720,12 +1720,13 @@
 	  (non-missing) observations on <argname>x</argname> at
 	  each <argname>byvar</argname> combination.
 	</para>
+        <subhead>Some examples</subhead>
 	<para>
-	  For a simple example, suppose that <lit>region</lit>
-	  represents a coding of geographical region using integer
-	  values 1 to <math>n</math>, and <lit>income</lit> represents
-	  household income. Then the following would produce an <by
-	  r="n" c="3"/> matrix holding the region codes, the count of
+	  First, suppose that <lit>region</lit> represents a coding of
+	  geographical region using integer values 1 to
+	  <math>n</math>, and <lit>income</lit> represents household
+	  income. Then the following would produce an <by r="n"
+	  c="3"/> matrix holding the region codes, the count of
 	  observations in each region, and mean household income for
 	  each of the regions:
 	</para>
@@ -1752,15 +1753,15 @@
 	  of <lit>income</lit> and <lit>age</lit>.
 	</para>
 	<para>
-	  Note that if <argname>byvar</argname> is a list, some
-	  combinations of the <argname>byvar</argname> values may not
-	  be present in the data (giving a count of zero). In that
-	  case the value of the statistics for <argname>x</argname>
-	  are recorded as <lit>NaN</lit> (not a number).  If you want
-	  to ignore such cases you can use the <fncref targ="selifr"/>
-	  function to select only those rows that have a non-zero
-	  count. The column to test is one place to the right of the
-	  number of <argname>byvar</argname> variables, so we can do:
+	  If <argname>byvar</argname> is a list, some combinations of
+	  the <argname>byvar</argname> values may not be present in
+	  the data (giving a count of zero). In that case the value of
+	  the statistics for <argname>x</argname> are recorded as
+	  <lit>NaN</lit> (not a number).  To cut out such cases you
+	  can use the <fncref targ="selifr"/> function to select only
+	  those rows that have a non-zero count. The column to test is
+	  one place to the right of the number of
+	  <argname>byvar</argname> variables, so we can do:
 	</para>
 	<code>
 	  matrix m = aggregate(X, BY, sd)
@@ -1774,9 +1775,9 @@
 	  form. However, if both arguments are provided they must
 	  match in type (you cannot give a series or list for one
 	  argument and a matrix for the other) and two matrix
-	  arguments must have the same number of rows. Also note that
-	  in this context matrix columns are treated as if they were
-	  series, so the aggregation function must follow the pattern
+	  arguments must have the same number of rows.  In this
+	  context matrix columns are treated as if they were series,
+	  so the aggregation function must follow the pattern
 	  described above, taking a series argument and returning a
 	  scalar.
 	</para>
