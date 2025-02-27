@@ -1911,7 +1911,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 
 	    rc->widget = gtk_combo_box_text_new();
 
-	    if (tab == TAB_PLOTS) {
+	    if (tab == TAB_PLOTS || tab == TAB_MAIN) {
 		GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
 
 		gtk_box_pack_start(GTK_BOX(hbox), rc->widget, FALSE, FALSE, 5);
