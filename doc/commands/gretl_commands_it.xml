@@ -3584,12 +3584,13 @@
 	delle variabili dummy</quote>).
       </para>
       <para>
-	Questo comando può anche essere usato nel contesto di una
-	regressione.  Ad esempio, la riga seguente specifica un
-	modello in cui <lit>y</lit> viene regredita sull'insieme di
-	variabili dummy che codificano <lit>x</lit> (in questo
-	contesto non è possibile passare opzioni al comando
-	<cmd>dummify</cmd>).
+       Esiste anche una funzione corrispondente a questo comando, e
+       cioè <fncref targ="dummify"/>. Con tale funzione è possibile
+       creare delle dummy direttamente nel contesto di una
+       regressione.  Ad esempio, la riga seguente specifica un modello
+       in cui <lit>y</lit> viene regredita sull'insieme di variabili
+       dummy che codificano <lit>x</lit> (in questo contesto non è
+       possibile passare opzioni al comando <cmd>dummify</cmd>).
       </para>
       <code>
 	ols y dummify(x)
@@ -6405,6 +6406,14 @@
 	scegliere la variabile nella lista.  Appena si sceglie una
 	variabile, i valori delle statistiche rilevanti sono
 	automaticamente inseriti nelle caselle sottostanti.
+      </para>
+      <para>
+	Si noti che nel caso di due campioni i test sono di tipo non
+	appaiato. Se, ad esempio, si vuole eseguire un test
+	<emphasis>appaiato</emphasis> per verificare se la differenza
+	delle medie di due variabili è zero, basta creare una nuova
+	serie come differenza delle due esistenti, quindi eseguire un
+	semplice test della media su quella nuova serie.
       </para>
       <para>
 	Oltre che selezionare semplicemente una variabile, è possibile

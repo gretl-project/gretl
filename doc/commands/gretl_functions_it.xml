@@ -1652,7 +1652,7 @@
       </fnargs>
       <description>
 	<para>
-	  La maggior parte di quel che segue assumne che i primi due
+	  La maggior parte di quel che segue assume che i primi due
 	  argomenti siano serie o liste, ma si veda sotto 
 	  <quote>Input matriciale</quote> per un uso alternativo.
 	</para>
@@ -1660,10 +1660,10 @@
 	  Nella versione più minimale, <argname>x</argname> è la
 	  parola chiave <lit>null</lit>, <argname>byvar</argname> è
 	  una serie e il terzo argomento è omesso oppure
-	  <lit>null</lit>. In tal caso la funzione produce una matrice
-	  con due colonne contenenti rispettivamente i valori distinti
-	  di <argname>byvar</argname>, ordinati in senso ascendente e
-	  le corrispondenti frequenze assolute di
+	  <lit>null</lit>. La funzione produce una matrice con due
+	  colonne contenenti rispettivamente i valori distinti di
+	  <argname>byvar</argname>, ordinati in senso ascendente e le
+	  corrispondenti frequenze assolute di
 	  <argname>byvar</argname>. Ad esempio,
 	</para>
 	<code>
@@ -1700,15 +1700,15 @@
 	  colonne della matrice risultato.
 	</para>
 	<para>
-	  Quindi, nel caso particolare in cui sia <argname>x</argname>
-	  che <argname>byvar</argname> siano serie, la matrice
-	  risultato avrà tre colonne, contenenti rispettivamente i
-	  valori di <argname>byvar</argname>, in senso ascendente, il
-	  numero di osservazioni di <argname>byvar</argname> per
-	  ognuno di essi e i valori della statistica specificata da
-	  <argname>funcname</argname>, calcolati su
-	  <argname>x</argname> sul sottocampione dato dalle
-	  osservazioni in cui <argname>byvar</argname> prende il
+	  Quindi, quando <argname>x</argname> che
+	  <argname>byvar</argname> siano ambedue delle serie, la
+	  matrice risultato avrà tre colonne, contenenti
+	  rispettivamente i valori di <argname>byvar</argname>, in
+	  senso ascendente, il numero di osservazioni di
+	  <argname>byvar</argname> per ognuno di essi e i valori della
+	  statistica specificata da <argname>funcname</argname>,
+	  calcolati su <argname>x</argname> sul sottocampione dato
+	  dalle osservazioni in cui <argname>byvar</argname> prende il
 	  valore in colonna 1.
 	</para>
 	<para>
@@ -1725,7 +1725,7 @@
 	  restituisce uno scalare, e in tal senso può dirsi che
 	  <quote>aggrega</quote> la variabile in un qualche modo. È
 	  anche possibile inserire il nome di una funzione definita
-	  dall'utente come aggregatore; come le funzioni supportate in
+	  dall'utente come aggregatore. Come le funzioni supportate in
 	  modo nativo, tale funzione deve accettare come argomento una
 	  singola variabile e ritornare uno scalare.
 	</para>
@@ -1737,8 +1737,8 @@
 	  per ciascuna combinazione <argname>byvar</argname>.
 	</para>
 	<para>
-	  Come semplice esempio, si supponga che <lit>region</lit> sia
-	  la codifica di regioni geografiche con valori interi da 1 ad
+	  Ad esempio, mettiamo che <lit>region</lit> sia la codifica
+	  di regioni geografiche con valori interi da 1 ad
 	  <math>n</math> e <lit>income</lit> il reddito
 	  familiare. Allora quanto segue produrrà una matrice <by
 	  r="n" c="3"/> contenente: nella prima colonna, i codici
