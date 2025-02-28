@@ -3463,7 +3463,7 @@
       <para>
 	For any suitable variables in <repl>varlist</repl>, creates a set
 	of dummy variables coding for the distinct values of that
-	variable.   Suitable variables are those that have been explicitly
+	variable.  Suitable variables are those that have been explicitly
 	marked as discrete, or those that take on a fairly small number of
 	values all of which are <quote>fairly round</quote> (multiples of
 	0.25).
@@ -3483,11 +3483,14 @@
 	avoiding the <quote>dummy variable trap</quote>).
       </para>
       <para>
-	This command can also be embedded in the context of a regression
-	specification.  For example, the following line specifies a model
+	There is also a corresponding function for this command, 
+	see <fncref targ="dummify"/>. This makes it possible to embed
+	the call directly in a regression specification.  For example,
+	the following line specifies a model
 	where <lit>y</lit> is regressed on the set of dummy variables
-	coding for <lit>x</lit>.  (Option flags cannot be passed to
-	<cmd>dummify</cmd> in this context.)
+	coding for <lit>x</lit>.  (However, option flags are for the 
+	command variant only, not for the function variant of
+	<cmd>dummify</cmd>.)
       </para>
       <code>
 	ols y dummify(x)

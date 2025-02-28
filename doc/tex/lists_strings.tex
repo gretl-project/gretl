@@ -308,9 +308,11 @@ you multiply them all by $z_i$; these are commonly called the
   list H = D ^ Z
 \end{code}
 where \texttt{D} is a list of discrete series (or a single discrete
-series), \texttt{Z} is a list (or a single series)\footnote{Warning:
-  this construct does \emph{not} work if neither \texttt{D} nor
-  \texttt{Z} are of the the list type.}; all the interactions will be
+series), \texttt{Z} is a list (or a single series)\footnote{
+  This construct does \emph{not} work if neither \texttt{D} nor
+  \texttt{Z} are of the list type. However, a simple workaround is
+  to turn \texttt{D} into a one-element list in this case, by writing
+  \dtk{deflist(D) ^ Z}.}; all the interactions will be
 created and listed together under the name \texttt{H}.
 
 An example is provided in Listing~\ref{ex:interaction-lists}.
