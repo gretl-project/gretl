@@ -184,76 +184,59 @@ averages \citep[see for example][]{Islam1995}.
 with time are aware of the panel structure, so they will automatically
 ``do the right thing''. Therefore, all you have to do is use the
 \cmd{movavg()} function for computing moving averages and then just
-drop the years you don't need. An example with artificial data
+drop the years you don't need. An example with the Grunfeld dataset
 follows:
 \begin{code}
-nulldata 36
-set seed 61218
-setobs 12 1:1 --stacked-time-series
+open grunfeld
 
-###
-### generate simulated yearly data
-###
-series year = 2000 + time
-series y = round(normal())
-series x = round(3*uniform())
-list X = y x
-print year X -o
+# how many periods (here: years) to average
+ave = 4
 
-###
-### now re-cast as 4-year averages
-###
-# a dummy for endpoints
-series endpoint = (year % 4 == 0)
-# id variable
-series id = $unit
+# a dummy for endpoints of each time block
+# (using the modulo operator)
+series endpoint = ($time % ave == 0) 
+
+list X = invest value kstock # time-varying variables
 
 # compute averages
 loop foreach i X
-    series $i = movavg($i, 4)
+    series $i = movavg($i, ave)
 endloop
 
 # drop extra observations
 smpl endpoint --dummy --permanent
 
 # restore panel structure
-setobs id year --panel-vars
-print id year X -o
+setobs firm year --panel-vars
+print firm year X -o
 \end{code}
 % $
 Running the above script produces (among other output):
 \begin{code}
-? print year X -o
+? print firm year X -o
+             firm         year       invest        value       kstock
 
-             year            y            x
-
-1:01         2001            1            1
-1:02         2002           -1            1
-1:03         2003           -1            0
-1:04         2004            0            1
-1:05         2005            1            2
-1:06         2006            1            2
-1:07         2007           -1            0
-1:08         2008            1            1
-1:09         2009            0            3
-1:10         2010           -1            1
-1:11         2011            1            1
-1:12         2012            0            1
+ 1:1            1         1938      344.425     3979.875      105.375
+ 1:2            1         1942      438.000     4188.100      242.375
+ 1:3            1         1946      574.100     4543.700      283.225
+ 1:4            1         1950      574.025     3559.250      950.750
+ 1:5            1         1954     1109.550     5398.300     1660.450
+ 2:1            2         1938      324.350     1911.925      120.650
+ 2:2            2         1942      377.600     2177.325      281.750
+ 2:3            2         1946      332.200     1929.225      231.825
+ 2:4            2         1950      434.725     1691.725      320.150
+ 2:5            2         1954      583.500     2148.925      519.900
 ...
-3:09         2009            0            1
-3:10         2010            1            1
-3:11         2011            0            2
-3:12         2012            1            2
-
-? print id year X -o
-
-              id         year            y            x
-
-1:1            1         2004        -0.25         0.75
-1:2            1         2008         0.50         1.25
-1:3            1         2012         0.00         1.50
-...
-3:3            3         2012         0.50         1.50
+ 9:1            9         1938       25.390      290.675      179.250
+ 9:2            9         1942       30.000      281.875      228.250
+ 9:3            9         1946       51.858      364.250      293.500
+ 9:4            9         1950       42.717      285.150      359.500
+ 9:5            9         1954       59.480      446.300      429.000
+10:1           10         1938        2.180       74.943        4.585
+10:2           10         1942        1.960       76.713        4.135
+10:3           10         1946        1.427       64.863        3.382
+10:4           10         1950        4.275       68.315        6.352
+10:5           10         1954        5.580       69.772       11.253
 \end{code}
 
 \subsection{Turning observation-marker strings into a series}
@@ -431,7 +414,7 @@ want a manageable number of occupational category dummies.
 Let's call the source series \texttt{src} and one of the target dummies
 \texttt{D1}. And let's say that the values of \texttt{src} to be grouped
 under \texttt{D1} are 2, 13, 14 and 25. We'll consider three possible
-solutions: ``Longhand,'' ``Clever,'' and ``Proper.''
+solutions:
 
 \emph{``Longhand'' solution:}
 \begin{code}
@@ -443,40 +426,17 @@ in the source to be condensed into each dummy variable is fairly
 small, but it becomes cumbersome if a single dummy must comprise
 dozens of source values.
 
-\emph{Clever solution:}
+\emph{Condensed solution:}
 \begin{code}
 matrix sel = {2,13,14,25}
-series D1 = maxr({src} .= vec(sel)') .> 0
+series D1 = contains(src, sel)
 \end{code}
 
 \emph{Comment:} The subset of values to be grouped together can be
-written out as a matrix relatively compactly (first line). The magic
-that turns this into the desired series (second line) relies on the
-versatility of the ``dot'' (element-wise) matrix operators. The
-expression ``\texttt{\{src\}}'' gets a column-vector version of the
-input series---call this $x$---and ``\texttt{vec(sel)'}'' gets the
-input matrix as a row vector, in case it's a column vector or a matrix
-with both dimensions greater than 1---call this $s$. If $x$ is
-$n\times1$ and $s$ is $1\times m$, the ``\texttt{.=}'' operator
-produces an $n\times m$ result, each element $(i,j)$ of which equals 1
-if $x_i = s_j$, otherwise 0. The \texttt{maxr()} function along with
-the ``\verb|.>|'' operator (see chapter~\ref{chap:matrices} for both)
-then produces the result we want.
+written out as a matrix relatively compactly.
 
-Of course, whichever procedure you use, you have to repeat for each of
-the dummy series you want to create (but keep reading---the ``proper''
-solution is probably what you want if you plan to create several
-dummies).
-
-\emph{Further comment:} Note that the clever solution depends on
-converting what is ``naturally'' a vector result into a series. This
-will fail if there are missing values in \texttt{src}, since (by
-default) missing values will be skipped when converting \texttt{src}
-to $x$, and so the number of rows in the result will fall short of the
-number of observations in the dataset. One fix is then to subsample
-the dataset to exclude missing values before employing this method;
-another is to adjust the \dtk{skip_missing} setting via the
-\cmd{set} command (see the \GCR).
+Of course, whichever procedure you use, you have to repeat it for each of
+the dummy series you want to create.
 
 \emph{Proper solution:}
 
@@ -493,7 +453,13 @@ standard US regions. We could create a $2 \times 51$ matrix---call it
 corresponding region codes on the second, and then do
 \begin{code}
 series region = replace(fips, srmap[1,], srmap[2,])
+dummify region
 \end{code}
+
+\emph{Comment:} With this approach all the subset dummies are created
+in one go, using the naming pattern \dtk{Dregion_1} and so on. The
+minor price to pay is that the relatively large conversion table
+\texttt{srmap} has to be constructed first.
 
 \subsection{Generating an ARMA(1,1)}
 
@@ -582,16 +548,9 @@ the same way as the \texttt{=IF()} function in spreadsheets.
 
 \subsection{Generating a time index for panel datasets}
 
-\emph{Problem:} gretl has a \texttt{\$unit} accessor, but not
-the equivalent for time. What should I use?
-
-\emph{Solution:}
-\begin{code}
-series x = time
-\end{code}
-
-\emph{Comment:} The special construct \cmd{genr time} and its variants
-are aware of whether a dataset is a panel.
+\emph{Comment:} gretl has a \texttt{\$unit} as well as a \texttt{\$time}
+accessor. These special constructs as well as variants such as
+\cmd{genr time} are aware of whether a dataset is a panel.
 
 \subsection{Sanitizing a list of regressors}
 
@@ -811,27 +770,13 @@ as required.
 $\mathbf{x}_i$ and $\mathbf{z}_i$ are vectors of explanatory
 variables.
 
-\emph{Solution:} As of version 1.9.12, gretl provides the
-\verb|^| operator to make this operation easy. See section
+\emph{Solution:} Gretl provides the
+\verb|^| operator to make this operation easy, which essentially boils
+down to creating a new list with \dtk{d ^ z} and adding that to the
+regressors. See section
 \ref{sec:transform-lists} for details (especially
-Listing~\ref{ex:interaction-lists}). But back in my day,
-we used loops to do that! Here's how:
-
-\begin{code}
-list X = x1 x2 x3
-list Z = z1 z2
-list dZ = deflist()
-loop foreach i Z
-  series d$i = d * $i
-  list dZ = dZ d$i
-endloop
-
-ols y X Z d dZ
-\end{code}
-%$
-
-\emph{Comment:} It's amazing what string substitution can do for
-you, isn't it?
+Listing~\ref{ex:interaction-lists}). This method avoids an explicit
+loop construct in which products of the series would be formed.
 
 \subsection{Realized volatility}
 
@@ -841,24 +786,26 @@ you, isn't it?
 
 \emph{Solution:}
 \begin{code}
-smpl --full
-genr time
-series minute = int(time/60) + 1
-series second = time % 60
-setobs minute second --panel
-series rv = psd(y)^2
-setobs 1 1
-smpl second==1 --restrict
-store foo rv
+nulldata 720
+setobs 60 1:1 --time-series # 60 minutes per hour
+
+# artificial data by the minute
+series x = normal()
+
+# calculate variance using the 60 obs within each hour
+matrix v = aggregate(x, $obsmajor, var) # $obsmajor means hour here
+
+# go from minute data to lower hourly periodicity
+dataset compact 1
+series rv = v[,end] # final column of v holds the variance results
 \end{code}
 
-\emph{Comment:} Here we trick gretl into thinking that our
-dataset is a panel dataset, where the minutes are the ``units'' and
-the seconds are the ``time''; this way, we can take advantage of the
-special function \cmd{psd()}, panel standard deviation.  Then we
-simply drop all observations but one per minute and save the resulting
-data (\texttt{store foo rv} translates as ``store in the gretl
-datafile \texttt{foo.gdt} the series \texttt{rv}'').
+\emph{Comment:} Here we require that the dataset by the minute is
+explicitly defined with the special time-series periodicity of 60,
+so that it can be compacted to hourly data by using the
+\cmd{dataset compact 1} command. If needed, the dataset's new periodicity
+can be re-set to 24 afterwards with the \cmd{setobs} command, which is
+the usual property of hourly data.
 
 \subsection{Looping over two paired lists}
 
