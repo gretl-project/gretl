@@ -15370,7 +15370,7 @@ gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m,
         return NULL;
     }
 
-    a = gretl_matrix_copy(m);
+    a = gretl_matrix_alloc(m->rows, m->cols);
     if (a == NULL) {
         free(rs);
         *err = E_ALLOC;

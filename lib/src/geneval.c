@@ -13604,6 +13604,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	int *ylist = NULL;
 	gretl_matrix *xm = NULL;
 	gretl_matrix *ym = NULL;
+        int matrix_version = 0;
 	int data_args = 1;
 	int mat_args = 0;
 
@@ -13641,6 +13642,9 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    if (mat_args == 1 && data_args == 2) {
 		/* matrix arguments: can't be mixed with series/list */
 		p->err = E_TYPES;
+            } else if (mat_args == 2 && ym->cols == 1) {
+                /* experimental */
+                matrix_version = 1;
 	    } else if (mat_args > 0) {
 		/* convert to dataset (with borrowed Z) */
 		dset = mdset = matrix_dset_plus_lists(xm, ym, &xlist,
@@ -13650,7 +13654,9 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	if (!p->err && ylist != NULL) {
 	    p->err = aggregate_discrete_check(ylist, dset);
 	}
-	if (!p->err) {
+        if (!p->err && matrix_version) {
+            A = matrix_aggregate(xm, ym, fnname, &p->err);
+	} else if (!p->err) {
 	    A = aggregate_by(x, y, xlist, ylist, fnname, dset, &p->err);
 	}
 	if (mdset != NULL) {

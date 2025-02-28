@@ -7139,7 +7139,8 @@ static gretl_matrix *real_aggregate_by (const double *x,
     gretl_matrix **listvals;
     gretl_matrix *yvals;
     int n = sample_size(dset);
-    int match, skipnull = 0;
+    int match;
+    int skipnull = 0;
     int countcol = 1;
     int maxcases;
     int ny, nx, mcols;
@@ -7382,6 +7383,7 @@ static void aggr_add_colnames (gretl_matrix *m,
 */
 
 static fncall *get_user_aggrby_call (const char *s,
+                                     int nparam,
                                      double *tmp,
                                      int *err)
 {
@@ -7393,9 +7395,8 @@ static fncall *get_user_aggrby_call (const char *s,
         *err = E_INVARG;
     } else {
         GretlType rt = user_func_get_return_type(uf);
-        int np = fn_n_params(uf);
 
-        if (rt != GRETL_TYPE_DOUBLE || np != 1) {
+        if (rt != GRETL_TYPE_DOUBLE || fn_n_params(uf) != nparam) {
             *err = E_INVARG;
         }
     }
@@ -7404,14 +7405,75 @@ static fncall *get_user_aggrby_call (const char *s,
         fc = user_func_get_fncall(uf);
         if (fc == NULL) {
             *err = E_ALLOC;
-        } else {
+        } else if (tmp != NULL) {
             *err = push_function_arg(fc, NULL, NULL,
                                      GRETL_TYPE_SERIES,
                                      tmp);
+        } else {
+            ; /* not ready yet! */
         }
     }
 
     return fc;
+}
+
+static int get_aggregator (const char *fname,
+                           double (**dbuiltin) (int, int, const double *),
+                           int (**ibuiltin) (int, int, const double *))
+{
+    int f = function_lookup(fname);
+
+    switch (f) {
+    case F_SUM:
+        *dbuiltin = gretl_sum;
+        break;
+    case F_SUMALL:
+        *dbuiltin = series_sum_all;
+        break;
+    case F_MEAN:
+        *dbuiltin = gretl_mean;
+        break;
+    case F_SD:
+        *dbuiltin = gretl_stddev;
+        break;
+    case F_VCE:
+        *dbuiltin = gretl_variance;
+        break;
+    case F_SST:
+        *dbuiltin = gretl_sst;
+        break;
+    case F_SKEWNESS:
+        *dbuiltin = gretl_skewness;
+        break;
+    case F_KURTOSIS:
+        *dbuiltin = gretl_kurtosis;
+        break;
+    case F_MIN:
+        *dbuiltin = gretl_min;
+        break;
+    case F_MAX:
+        *dbuiltin = gretl_max;
+        break;
+    case F_MEDIAN:
+        *dbuiltin = gretl_median;
+        break;
+    case F_GINI:
+        *dbuiltin = gretl_gini;
+        break;
+    case F_NOBS:
+        *dbuiltin = series_get_nobs;
+        break;
+    case F_ISCONST:
+        *ibuiltin = gretl_isconst;
+        break;
+    case F_ISDUMMY:
+        *ibuiltin = gretl_isdummy;
+        break;
+    default:
+        break;
+    }
+
+    return *dbuiltin != NULL || *ibuiltin != NULL;
 }
 
 /**
@@ -7462,57 +7524,7 @@ gretl_matrix *aggregate_by (const double *x,
     }
 
     if (!just_count) {
-        int f = function_lookup(fname);
-
-        switch (f) {
-        case F_SUM:
-            dbuiltin = gretl_sum;
-            break;
-        case F_SUMALL:
-            dbuiltin = series_sum_all;
-            break;
-        case F_MEAN:
-            dbuiltin = gretl_mean;
-            break;
-        case F_SD:
-            dbuiltin = gretl_stddev;
-            break;
-        case F_VCE:
-            dbuiltin = gretl_variance;
-            break;
-        case F_SST:
-            dbuiltin = gretl_sst;
-            break;
-        case F_SKEWNESS:
-            dbuiltin = gretl_skewness;
-            break;
-        case F_KURTOSIS:
-            dbuiltin = gretl_kurtosis;
-            break;
-        case F_MIN:
-            dbuiltin = gretl_min;
-            break;
-        case F_MAX:
-            dbuiltin = gretl_max;
-            break;
-        case F_MEDIAN:
-            dbuiltin = gretl_median;
-            break;
-        case F_GINI:
-            dbuiltin = gretl_gini;
-            break;
-        case F_NOBS:
-            dbuiltin = series_get_nobs;
-            break;
-        case F_ISCONST:
-            ibuiltin = gretl_isconst;
-            break;
-        case F_ISDUMMY:
-            ibuiltin = gretl_isdummy;
-            break;
-        default:
-            break;
-        }
+        get_aggregator(fname, &dbuiltin, &ibuiltin);
     }
 
     n = sample_size(dset);
@@ -7524,7 +7536,7 @@ gretl_matrix *aggregate_by (const double *x,
         if (tmp == NULL) {
             *err = E_ALLOC;
         } else if (dbuiltin == NULL && ibuiltin == NULL) {
-            fc = get_user_aggrby_call(fname, tmp, err);
+            fc = get_user_aggrby_call(fname, 1, tmp, err);
         }
     }
 
@@ -7551,6 +7563,103 @@ gretl_matrix *aggregate_by (const double *x,
     free(tmp);
 
     return m;
+}
+
+gretl_matrix *matrix_aggregate (const gretl_matrix *X,
+                                const gretl_matrix *y,
+                                const char *func,
+                                int *err)
+{
+    double (*dbuiltin) (int, int, const double *) = NULL;
+    int (*ibuiltin) (int, int, const double *) = NULL;
+    gretl_matrix *Tmp;
+    gretl_matrix *M;
+    gretl_matrix *ret;
+    double *z, *zsave;
+    double by = 0;
+    double rkj;
+    int nx = X->cols;
+    int nby = 0;
+    int t1, t2, count;
+    int i, j, k;
+
+    if (X == NULL || y == NULL || X->rows != y->rows) {
+        *err = E_INVARG;
+    } else if (!get_aggregator(func, &dbuiltin, &ibuiltin)) {
+        // fc = get_user_aggrby_call(func, 3, NULL, err);
+        *err = E_INVARG;
+    }
+
+    if (*err) {
+        return NULL;
+    }
+
+    /* allocate space for y ~ X */
+    Tmp = gretl_matrix_alloc(X->rows, 1 + X->cols);
+    if (Tmp == NULL) {
+        *err = E_ALLOC;
+        return NULL;
+    }
+
+    /* make M = (y ~ X), sorted by y */
+    memcpy(Tmp->val, y->val, X->rows * sizeof(double));
+    memcpy(Tmp->val + X->rows, X->val, X->rows * nx * sizeof(double));
+    M = gretl_matrix_sort_by_column(Tmp, 0, err);
+    gretl_matrix_free(Tmp);
+    if (*err) {
+        return NULL;
+    }
+
+    /* determine the number of 'by' values */
+    nby = 0;
+    for (i=0; i<M->rows; i++) {
+        by = M->val[i];
+        if (i == 0 || by != M->val[i-1]) {
+            nby++;
+        }
+    }
+
+    /* allocate the return matrix */
+    ret = gretl_zero_matrix_new(nby, 2 + nx);
+
+    z = M->val + M->rows;
+    t2 = t1 = 0;
+    k = 0;
+
+    for (i=0; i<M->rows; i++) {
+        by = M->val[i];
+        if (i > 0) {
+            if (by > M->val[i-1] || i == M->rows - 1) {
+                if (i == M->rows - 1) {
+                    t2++;
+                }
+                /* calculate */
+                gretl_matrix_set(ret, k, 0, M->val[t1]);
+                count = t2 - t1 + 1;
+                gretl_matrix_set(ret, k, 1, count);
+                zsave = z;
+                for (j=0; j<nx; j++) {
+                    if (dbuiltin) {
+                        rkj = (*dbuiltin)(t1, t2, z);
+                    } else {
+                        rkj = (double) (*ibuiltin)(t1, t2, z);
+                    }
+                    gretl_matrix_set(ret, k, j+2, rkj);
+                    z += M->rows;
+                }
+                z = zsave + count;
+                k++;
+                t1 = t2 = 0;
+            } else {
+                /* increment sample range */
+                t2++;
+            }
+        }
+    }
+
+    gretl_matrix_free(M);
+
+    return ret;
 }
 
 static int monthly_or_quarterly_dates (const DATASET *dset,

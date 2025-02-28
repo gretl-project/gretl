@@ -237,6 +237,11 @@ gretl_matrix *aggregate_by (const double *x,
 			    DATASET *dset,
 			    int *err);
 
+gretl_matrix *matrix_aggregate (const gretl_matrix *X,
+                                const gretl_matrix *y,
+                                const char *func,
+                                int *err);
+
 int fill_dataset_dates_series (const DATASET *dset, double *x);
 
 int fill_day_of_week_array (double *dow,
