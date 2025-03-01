@@ -7565,6 +7565,34 @@ gretl_matrix *aggregate_by (const double *x,
     return m;
 }
 
+/* Remedial function for the case where we try the matrix variant
+   of aggregate but the aggregator function turns out not to be
+   a built-in: we fall back to the "convert to series" case.
+*/
+
+static gretl_matrix *series_aggregate (const gretl_matrix *X,
+                                       const gretl_matrix *y,
+                                       const char *func,
+                                       int *err)
+{
+    gretl_matrix *A = NULL;
+    DATASET *dset = NULL;
+    int *xlist = NULL;
+    int *ylist = NULL;
+
+    dset = matrix_dset_plus_lists(X, y, &xlist, &ylist, err);
+
+    if (!*err) {
+        A = aggregate_by(NULL, NULL, xlist, ylist, func, dset, err);
+    }
+
+    destroy_dataset(dset);
+    free(xlist);
+    free(ylist);
+
+    return A;
+}
+
 gretl_matrix *matrix_aggregate (const gretl_matrix *X,
                                 const gretl_matrix *y,
                                 const char *func,
@@ -7586,8 +7614,8 @@ gretl_matrix *matrix_aggregate (const gretl_matrix *X,
     if (X == NULL || y == NULL || X->rows != y->rows) {
         *err = E_INVARG;
     } else if (!get_aggregator(func, &dbuiltin, &ibuiltin)) {
-        // fc = get_user_aggrby_call(func, 3, NULL, err);
-        *err = E_INVARG;
+        /* can't handle a user-defined function here */
+        return series_aggregate(X, y, func, err);
     }
 
     if (*err) {
@@ -7623,37 +7651,36 @@ gretl_matrix *matrix_aggregate (const gretl_matrix *X,
     ret = gretl_zero_matrix_new(nby, 2 + nx);
 
     z = M->val + M->rows;
+    by = M->val[0];
     t2 = t1 = 0;
     k = 0;
 
-    for (i=0; i<M->rows; i++) {
+    for (i=1; i<M->rows; i++) {
         by = M->val[i];
-        if (i > 0) {
-            if (by > M->val[i-1] || i == M->rows - 1) {
-                if (i == M->rows - 1) {
-                    t2++;
-                }
-                /* calculate */
-                gretl_matrix_set(ret, k, 0, M->val[t1]);
-                count = t2 - t1 + 1;
-                gretl_matrix_set(ret, k, 1, count);
-                zsave = z;
-                for (j=0; j<nx; j++) {
-                    if (dbuiltin) {
-                        rkj = (*dbuiltin)(t1, t2, z);
-                    } else {
-                        rkj = (double) (*ibuiltin)(t1, t2, z);
-                    }
-                    gretl_matrix_set(ret, k, j+2, rkj);
-                    z += M->rows;
-                }
-                z = zsave + count;
-                k++;
-                t1 = t2 = 0;
-            } else {
-                /* increment sample range */
+        if (by > M->val[i-1] || i == M->rows - 1) {
+            if (i == M->rows - 1) {
                 t2++;
             }
+            /* calculate */
+            gretl_matrix_set(ret, k, 0, M->val[t1]);
+            count = t2 - t1 + 1;
+            gretl_matrix_set(ret, k, 1, count);
+            zsave = z;
+            for (j=0; j<nx; j++) {
+                if (dbuiltin) {
+                    rkj = (*dbuiltin)(t1, t2, z);
+                } else {
+                    rkj = (double) (*ibuiltin)(t1, t2, z);
+                }
+                gretl_matrix_set(ret, k, j+2, rkj);
+                z += M->rows;
+            }
+            z = zsave + count;
+            k++;
+            t1 = t2 = 0;
+        } else {
+            /* increment sample range */
+            t2++;
         }
     }
 
