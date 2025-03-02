@@ -7597,6 +7597,12 @@ static gretl_matrix *series_aggregate (const gretl_matrix *X,
 
 #if AGGR_SORT_ALL
 
+/* Design: start by forming (y ~ X), where y is a vector, and sorting
+   this matrix by its first column. This is an expensive operation,
+   but once it's done the rest of the calculation is very
+   straightforward.
+*/
+
 gretl_matrix *matrix_aggregate (const gretl_matrix *X,
                                 const gretl_matrix *y,
                                 const char *func,
@@ -7608,13 +7614,11 @@ gretl_matrix *matrix_aggregate (const gretl_matrix *X,
     gretl_matrix *M;
     gretl_matrix *ret;
     double *z, *zsave;
-    double by = 0;
     double rkj;
+    int *counts = NULL;
     int nx = X->cols;
     int nby = 0;
-    int do_final = 0;
-    int t1, t2, count;
-    int i, j, k;
+    int i, j, k, nk;
 
     if (X == NULL || y == NULL || X->rows != y->rows) {
         *err = E_NONCONF;
@@ -7646,72 +7650,64 @@ gretl_matrix *matrix_aggregate (const gretl_matrix *X,
     /* determine the number of 'by' values */
     nby = 0;
     for (i=0; i<M->rows; i++) {
-        by = M->val[i];
-        if (i == 0 || by != M->val[i-1]) {
+        if (i == 0 || M->val[i] > M->val[i-1]) {
             nby++;
         }
     }
 
     /* allocate the return matrix */
     ret = gretl_zero_matrix_new(nby, 2 + nx);
+    if (ret == NULL) {
+        *err = E_ALLOC;
+        gretl_matrix_free(M);
+        return NULL;
+    }
 
-    z = M->val + M->rows;
-    by = M->val[0];
-    t2 = t1 = 0;
-    k = 0;
-
-    for (i=1; i<M->rows; i++) {
-        by = M->val[i];
-        if (by > M->val[i-1] && i == M->rows - 1) {
-            do_final = 1;
-        }
-        if (by > M->val[i-1] || i == M->rows - 1) {
-            if (i == M->rows - 1 && by == M->val[i-1]) {
-                t2++;
-            }
-            /* calculate */
+    /* get the per-value counts, filling the first two columns
+       of @ret as we go
+    */
+    counts = calloc(nby, sizeof *counts);
+    counts[0] = 1;
+    for (i=1, k=0; i<M->rows; i++) {
+        if (M->val[i] > M->val[i-1]) {
             gretl_matrix_set(ret, k, 0, M->val[i-1]);
-            count = t2 - t1 + 1;
-            gretl_matrix_set(ret, k, 1, (double) count);
-            zsave = z;
-            for (j=0; j<nx; j++) {
-                if (dbuiltin) {
-                    rkj = (*dbuiltin)(t1, t2, z);
-                } else {
-                    rkj = (double) (*ibuiltin)(t1, t2, z);
-                }
-                gretl_matrix_set(ret, k, j+2, rkj);
-                z += M->rows;
+            gretl_matrix_set(ret, k, 1, (double) counts[k]);
+            counts[++k] = 1;
+            if (i == M->rows - 1) {
+                gretl_matrix_set(ret, k, 0, M->val[i]);
+                gretl_matrix_set(ret, k, 1, 1.0);
             }
-            z = zsave + count;
-            k++;
-            t1 = t2 = 0;
         } else {
-            /* increment sample range */
-            t2++;
+            counts[k] += 1;
+            if (i == M->rows - 1) {
+                gretl_matrix_set(ret, k, 0, M->val[i]);
+                gretl_matrix_set(ret, k, 1, (double) counts[k]);
+            }
         }
     }
 
-    if (do_final) {
-        /* handle singleton final row */
-        by = M->val[M->rows - 1];
-        t1 = t2 = 0;
-        count = 1;
-        gretl_matrix_set(ret, k, 0, by);
-        gretl_matrix_set(ret, k, 1, (double) count);
+    z = M->val + M->rows; /* the @X portion of @M */
+
+    /* do the actual aggregation */
+    for (k=0; k<nby; k++) {
         zsave = z;
+        nk = counts[k] - 1;
         for (j=0; j<nx; j++) {
-            if (dbuiltin) {
-                rkj = (*dbuiltin)(t1, t2, z);
+             if (dbuiltin) {
+                rkj = (*dbuiltin)(0, nk, z);
             } else {
-                rkj = (double) (*ibuiltin)(t1, t2, z);
+                rkj = (double) (*ibuiltin)(0, nk, z);
             }
             gretl_matrix_set(ret, k, j+2, rkj);
+            /* skip to the next column */
             z += M->rows;
         }
+        /* move to the next block of rows */
+        z = zsave + counts[k];
     }
 
     gretl_matrix_free(M);
+    free(counts);
 
     return ret;
 }
