@@ -15370,7 +15370,7 @@ gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m,
         return NULL;
     }
 
-    a = gretl_matrix_alloc(m->rows, m->cols);
+    a = gretl_matrix_copy(m);
     if (a == NULL) {
         free(rs);
         *err = E_ALLOC;
@@ -15406,6 +15406,122 @@ gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m,
     }
 
     free(rs);
+
+    return a;
+}
+
+struct rsortx {
+    double *x;
+    int n;
+    int row;
+};
+
+static int compare_rsortx (const void *a, const void *b)
+{
+    const struct rsortx *rsa = (const struct rsortx *) a;
+    const struct rsortx *rsb = (const struct rsortx *) b;
+    int i, ret = 0;
+
+    for (i=0; i<rsa->n; i++) {
+        ret = unstable_comp(rsa->x[i], rsb->x[i]);
+        if (ret != 0) {
+            break;
+        } else {
+            /* ensure stable sort and continue */
+            ret = a - b > 0 ? 1 : -1;
+        }
+    }
+
+    return ret;
+}
+
+gretl_matrix *gretl_matrix_sort_by_columns (const gretl_matrix *m,
+                                            int *cols, int *err)
+{
+    struct rsortx *rsx = NULL;
+    gretl_matrix *a = NULL;
+    double *rvals = NULL;
+    double *rptr = NULL;
+    double x;
+    int ns, i, j;
+
+    if (gretl_is_null_matrix(m)) {
+        *err = E_DATA;
+        return NULL;
+    }
+
+    if (cols == NULL || cols[0] == 0) {
+        return gretl_matrix_copy(m);
+    }
+
+    /* check out the @cols argument */
+    ns = cols[0];
+    if (ns > m->cols) {
+        *err = E_INVARG;
+    } else {
+        for (i=1; i<=ns; i++) {
+            if (cols[i] < 0 || cols[i] >= m->cols) {
+                *err = E_INVARG;
+                break;
+            }
+        }
+    }
+    if (*err) {
+        return NULL;
+    }
+
+    rsx = malloc(m->rows * sizeof *rsx);
+    rvals = malloc(m->rows * ns * sizeof *rvals);
+    if (rsx == NULL || rvals == NULL) {
+        *err = E_ALLOC;
+        goto bailout;
+    }
+
+    a = gretl_matrix_copy(m);
+    if (a == NULL) {
+        *err = E_ALLOC;
+        goto bailout;
+    }
+
+    /* fill the rsortx structs */
+    rptr = rvals;
+    for (i=0; i<m->rows; i++) {
+        rsx[i].x = rptr;
+        for (j=0; j<ns; j++) {
+            rsx[i].x[j] = gretl_matrix_get(m, i, cols[j+1]);
+        }
+        rsx[i].n = ns;
+        rsx[i].row = i;
+        rptr += ns;
+    }
+
+    qsort(rsx, m->rows, sizeof *rsx, compare_rsortx);
+
+    for (j=0; j<m->cols; j++) {
+        for (i=0; i<m->rows; i++) {
+            x = gretl_matrix_get(m, rsx[i].row, j);
+            gretl_matrix_set(a, i, j, x);
+        }
+    }
+
+    if (a->info != NULL && a->info->rownames != NULL) {
+        char **S = malloc(a->rows * sizeof *S);
+
+        if (S != NULL) {
+            for (i=0; i<a->rows; i++) {
+                S[i] = a->info->rownames[i];
+            }
+            for (i=0; i<a->rows; i++) {
+                a->info->rownames[i] = S[rsx[i].row];
+            }
+            free(S);
+        }
+    }
+
+ bailout:
+
+    free(rsx);
+    free(rvals);
 
     return a;
 }
