@@ -3,6 +3,7 @@ version 2025a, in progress
   expand their documentation
 - "system" command, iterated variants: allow more iterations
   (now 250) before declaring non-convergence
+- aggregate() function; speed improvement in the matrix case
 - Fix bug: "dataset addobs n" with panel data (and without the
   --panel-time option) was not respecting the documented
   policy that 'n' refers to the number of cross-sectional
