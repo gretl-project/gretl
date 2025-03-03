@@ -7593,209 +7593,166 @@ static gretl_matrix *series_aggregate (const gretl_matrix *X,
     return A;
 }
 
-#define AGGR_SORT_ALL 1
+static int row_starts_block (int i, const double *y,
+                             int ny, int n)
+{
+    int j;
 
-#if AGGR_SORT_ALL
+    if (i == 0) {
+        return 1;
+    } else {
+        for (j=0; j<ny; j++) {
+            if (y[i] > y[i-1]) {
+                return 1;
+            }
+            y += n;
+        }
+    }
 
-/* Design: start by forming (y ~ X), where y is a vector, and sorting
-   this matrix by its first column. This is an expensive operation,
-   but once it's done the rest of the calculation is very
-   straightforward.
+    return 0;
+}
+
+/* Design: start by forming (Y ~ X) and sorting this matrix by the Y
+   columns. This is an expensive operation, but once it's done the
+   rest of the calculation is very straightforward.
 */
 
 gretl_matrix *matrix_aggregate (const gretl_matrix *X,
-                                const gretl_matrix *y,
+                                const gretl_matrix *Y,
                                 const char *func,
                                 int *err)
 {
     double (*dbuiltin) (int, int, const double *) = NULL;
     int (*ibuiltin) (int, int, const double *) = NULL;
-    gretl_matrix *Tmp;
     gretl_matrix *M;
     gretl_matrix *ret;
-    double *z, *zsave;
+    double *y;
     double rkj;
+    int *cols = NULL;
     int *counts = NULL;
-    int nx = X->cols;
-    int nby = 0;
-    int i, j, k, nk;
+    int just_count = 0;
+    int nx, ny;
+    int n, nby = 0;
+    int i, j, k;
 
-    if (X == NULL || y == NULL || X->rows != y->rows) {
+    if (func == NULL || !strcmp(func, "null")) {
+        just_count = 1;
+    } else if (X == NULL || Y == NULL || X->rows != Y->rows) {
         *err = E_NONCONF;
+        return NULL;
     } else if (!get_aggregator(func, &dbuiltin, &ibuiltin)) {
-        /* can't handle a user-defined function here */
-        return series_aggregate(X, y, func, err);
+        /* we can't handle a user-defined function here */
+        return series_aggregate(X, Y, func, err);
     }
 
-    if (*err) {
-        return NULL;
+    nx = just_count ? 0 : X->cols;
+    ny = Y->cols;
+    n = Y->rows;
+
+    if (ny > 1) {
+        cols = gretl_consecutive_list_new(0, ny - 1);
     }
 
-    /* allocate space for y ~ X */
-    Tmp = gretl_matrix_alloc(X->rows, 1 + X->cols);
-    if (Tmp == NULL) {
-        *err = E_ALLOC;
-        return NULL;
+    if (nx == 0) {
+        /* make M = sorted Y */
+        if (ny > 1) {
+            M = gretl_matrix_sort_by_columns(Y, cols, err);
+        } else {
+            M = gretl_matrix_sort_by_column(Y, 0, err);
+        }
+    } else {
+        /* make M = (Y ~ X), sorted by Y */
+        gretl_matrix *Tmp = gretl_matrix_alloc(n, ny + nx);
+
+        if (Tmp == NULL) {
+            *err = E_ALLOC;
+            return NULL;
+        }
+        memcpy(Tmp->val, Y->val, n * ny * sizeof(double));
+        memcpy(Tmp->val + n * ny, X->val, n * nx * sizeof(double));
+        if (ny > 1) {
+            M = gretl_matrix_sort_by_columns(Tmp, cols, err);
+        } else {
+            M = gretl_matrix_sort_by_column(Tmp, 0, err);
+        }
+        gretl_matrix_free(Tmp);
     }
 
-    /* make M = (y ~ X), sorted by y */
-    memcpy(Tmp->val, y->val, X->rows * sizeof(double));
-    memcpy(Tmp->val + X->rows, X->val, X->rows * nx * sizeof(double));
-    M = gretl_matrix_sort_by_column(Tmp, 0, err);
-    gretl_matrix_free(Tmp);
     if (*err) {
         return NULL;
     }
 
     /* determine the number of 'by' values */
     nby = 0;
-    for (i=0; i<M->rows; i++) {
-        if (i == 0 || M->val[i] > M->val[i-1]) {
+    for (i=0; i<n; i++) {
+        if (row_starts_block(i, M->val, ny, n)) {
             nby++;
         }
     }
 
     /* allocate the return matrix */
-    ret = gretl_zero_matrix_new(nby, 2 + nx);
+    ret = gretl_zero_matrix_new(nby, ny + 1 + nx);
     if (ret == NULL) {
         *err = E_ALLOC;
         gretl_matrix_free(M);
+        free(cols);
         return NULL;
     }
 
-    /* get the per-value counts, filling the first two columns
-       of @ret as we go
-    */
+    /* find and record the per-value counts */
     counts = calloc(nby, sizeof *counts);
     counts[0] = 1;
-    for (i=1, k=0; i<M->rows; i++) {
-        if (M->val[i] > M->val[i-1]) {
-            gretl_matrix_set(ret, k, 0, M->val[i-1]);
-            gretl_matrix_set(ret, k, 1, (double) counts[k]);
-            counts[++k] = 1;
-            if (i == M->rows - 1) {
-                gretl_matrix_set(ret, k, 0, M->val[i]);
-                gretl_matrix_set(ret, k, 1, 1.0);
+    for (i=1, k=0; i<n; i++) {
+        y = M->val;
+        if (row_starts_block(i, y, ny, n)) {
+            for (j=0; j<ny; j++) {
+                gretl_matrix_set(ret, k, j, y[i-1]);
+                y += n;
             }
+            gretl_matrix_set(ret, k, j, (double) counts[k]);
+            counts[++k] = 1;
         } else {
             counts[k] += 1;
-            if (i == M->rows - 1) {
-                gretl_matrix_set(ret, k, 0, M->val[i]);
-                gretl_matrix_set(ret, k, 1, (double) counts[k]);
+            if (i == n - 1) {
+                for (j=0; j<ny; j++) {
+                    gretl_matrix_set(ret, k, j, y[i]);
+                    y += n;
+                }
+                gretl_matrix_set(ret, k, j, (double) counts[k]);
             }
         }
     }
 
-    z = M->val + M->rows; /* the @X portion of @M */
+    if (nx > 0) {
+        /* do the @X aggregation */
+        double *z = M->val + ny * n; /* the @X portion of @M */
+        double *zsave;
+        int nk;
 
-    /* do the actual aggregation */
-    for (k=0; k<nby; k++) {
-        zsave = z;
-        nk = counts[k] - 1;
-        for (j=0; j<nx; j++) {
-             if (dbuiltin) {
-                rkj = (*dbuiltin)(0, nk, z);
-            } else {
-                rkj = (double) (*ibuiltin)(0, nk, z);
+        for (k=0; k<nby; k++) {
+            zsave = z;
+            nk = counts[k] - 1;
+            for (j=0; j<nx; j++) {
+                if (dbuiltin) {
+                    rkj = (*dbuiltin)(0, nk, z);
+                } else {
+                    rkj = (double) (*ibuiltin)(0, nk, z);
+                }
+                gretl_matrix_set(ret, k, j + ny + 1, rkj);
+                /* skip to the next column */
+                z += n;
             }
-            gretl_matrix_set(ret, k, j+2, rkj);
-            /* skip to the next column */
-            z += M->rows;
+            /* move to the next block of rows */
+            z = zsave + counts[k];
         }
-        /* move to the next block of rows */
-        z = zsave + counts[k];
     }
 
     gretl_matrix_free(M);
     free(counts);
+    free(cols);
 
     return ret;
 }
-
-#else /* not AGGR_SORT_ALL */
-
-gretl_matrix *matrix_aggregate (const gretl_matrix *X,
-                                const gretl_matrix *y,
-                                const char *func,
-                                int *err)
-{
-    double (*dbuiltin) (int, int, const double *) = NULL;
-    int (*ibuiltin) (int, int, const double *) = NULL;
-    gretl_matrix *yvals = NULL;
-    gretl_matrix *sel = NULL;
-    gretl_matrix *xi = NULL;
-    gretl_matrix *ret = NULL;
-    double by, rkj;
-    double *z;
-    int n, ni, nx, nby;
-    int i, j, k;
-
-    if (X == NULL || y == NULL || X->rows != y->rows) {
-        *err = E_NONCONF;
-    } else if (!get_aggregator(func, &dbuiltin, &ibuiltin)) {
-        /* can't handle a user-defined function here */
-        return series_aggregate(X, y, func, err);
-    }
-    if (!*err) {
-        yvals = gretl_matrix_values(y->val, y->rows, OPT_S, err);
-    }
-
-    if (*err) {
-        return NULL;
-    }
-
-    n = y->rows;
-    nby = yvals->rows;
-    nx = X->cols;
-
-    ret = gretl_matrix_alloc(nby, 2 + nx);
-    sel = gretl_matrix_alloc(n, 1);
-
-    if (ret == NULL || sel == NULL) {
-        *err = E_ALLOC;
-        gretl_matrix_free(yvals);
-        gretl_matrix_free(ret);
-        gretl_matrix_free(sel);
-        return NULL;
-    }
-
-    for (i=0; i<nby && !*err; i++) {
-        by = yvals->val[i];
-        ni = 0;
-        for (k=0; k<n; k++) {
-            if (y->val[k] == by) {
-                sel->val[k] = 1.0;
-                ni++;
-            } else {
-                sel->val[k] = 0.0;
-            }
-        }
-        xi = gretl_matrix_bool_sel(X, sel, 1, err);
-        if (*err) {
-            break;
-        }
-        gretl_matrix_set(ret, i, 0, by);
-        gretl_matrix_set(ret, i, 1, (double) ni);
-        z = xi->val;
-        for (j=0; j<nx; j++) {
-            if (dbuiltin) {
-                rkj = (*dbuiltin)(0, ni-1, z);
-            } else {
-                rkj = (double) (*ibuiltin)(0, ni-1, z);
-            }
-            gretl_matrix_set(ret, i, j+2, rkj);
-            z += ni;
-        }
-        gretl_matrix_free(xi);
-    }
-
-    gretl_matrix_free(yvals);
-    gretl_matrix_free(sel);
-
-    return ret;
-}
-
-#endif /* AGGR_SORT_ALL or not */
 
 static int monthly_or_quarterly_dates (const DATASET *dset,
                                        int pd, double sd0, int T,

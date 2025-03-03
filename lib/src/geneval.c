@@ -13642,7 +13642,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    if (mat_args == 1 && data_args == 2) {
 		/* matrix arguments: can't be mixed with series/list */
 		p->err = E_TYPES;
-            } else if (mat_args == 2 && ym->cols == 1) {
+            } else if (mat_args == 2 /* && ym->cols == 1 */) {
                 /* experimental */
                 matrix_version = 1;
 	    } else if (mat_args > 0) {
