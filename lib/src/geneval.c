@@ -79,6 +79,7 @@
 #endif
 
 #define AUX_NODES_DEBUG 0
+#define AGGR_PREFER_MATRIX 1
 
 #if AUX_NODES_DEBUG
 # include <stdarg.h>
@@ -13605,50 +13606,53 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	gretl_matrix *xm = NULL;
 	gretl_matrix *ym = NULL;
         int matrix_version = 0;
-	int data_args = 1;
+	int data_args = 0;
 	int mat_args = 0;
 
+        /* if present, the optional r node must hold a string */
 	if (!null_or_string(r)) {
 	    node_type_error(f, 3, STR, r, p);
 	} else if (!null_node(r)) {
 	    fnname = r->v.str;
 	}
 	if (!p->err && !null_node(l)) {
-	    data_args++;
+            /* the [optional] l node holds @x */
             if (l->t == SERIES) {
-                x = l->v.xvec;
+                x = l->v.xvec; data_args++;
             } else if (l->t == LIST) {
-                xlist = l->v.ivec;
+                xlist = l->v.ivec; data_args++;
             } else if (l->t == MAT) {
-		xm = l->v.m;
+		xm = l->v.m; data_args++;
 		mat_args++;
 	    } else {
 		p->err = E_TYPES;
 	    }
 	}
 	if (!p->err) {
+            /* the [required] m node holds @byvar */
             if (m->t == SERIES) {
-                y = m->v.xvec;
+                y = m->v.xvec; data_args++;
             } else if (m->t == LIST) {
-                ylist = m->v.ivec;
+                ylist = m->v.ivec; data_args++;
             } else if (m->t == MAT) {
-		ym = m->v.m;
+		ym = m->v.m; data_args++;
 		mat_args++;
 	    } else {
 		p->err = E_TYPES;
 	    }
 	}
 	if (!p->err) {
-	    if (mat_args == 1 && data_args == 2) {
-		/* matrix arguments: can't be mixed with series/list */
+	    if (mat_args != data_args) {
+		/* and series/list arguments can't be mixed */
 		p->err = E_TYPES;
-            } else if (mat_args == 2 /* && ym->cols == 1 */) {
-                /* experimental */
+            } else if (mat_args > 0) {
+#if AGGR_PREFER_MATRIX
                 matrix_version = 1;
-	    } else if (mat_args > 0) {
+#else
 		/* convert to dataset (with borrowed Z) */
 		dset = mdset = matrix_dset_plus_lists(xm, ym, &xlist,
 						      &ylist, &p->err);
+#endif
 	    }
 	}
 	if (!p->err && ylist != NULL) {
