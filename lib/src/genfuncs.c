@@ -7319,13 +7319,18 @@ static gretl_matrix *real_aggregate_by (const double *x,
 */
 
 static void aggr_add_colnames (gretl_matrix *m,
-                               const int *ylist,
                                const int *xlist,
-                               const DATASET *dset,
-                               int just_count)
+                               const int *ylist,
+                               const gretl_matrix *X,
+                               const gretl_matrix *Y,
+                               const DATASET *dset)
 {
     char **S = NULL;
+    char **Sl = NULL;
+    const char **Sm;
     int i, j, n = m->cols;
+    int ny = 0;
+    int nx = 0;
     int err = 0;
 
     S = strings_array_new(n);
@@ -7333,46 +7338,57 @@ static void aggr_add_colnames (gretl_matrix *m,
         return;
     }
 
+    ny = ylist != NULL ? ylist[0] : Y->cols;
+    nx = n - ny - 1;
     j = 0;
 
-    if (ylist != NULL && ylist[0] > 0) {
-        char **Sy = gretl_list_get_names_array(ylist, dset, &err);
-
-        if (!err) {
-            for (i=0; i<ylist[0]; i++) {
-                S[j++] = Sy[i];
-                Sy[i] = NULL;
-            }
-            free(Sy);
+    if ((Sl = gretl_list_get_names_array(ylist, dset, NULL)) != NULL) {
+        for (i=0; i<ny; i++) {
+            S[j++] = Sl[i];
+            Sl[i] = NULL;
+        }
+        free(Sl);
+    } else if ((Sm = gretl_matrix_get_colnames(Y)) != NULL) {
+        for (i=0; i<ny; i++) {
+            S[j++] = gretl_strdup(Sm[i]);
         }
     } else {
-        S[j++] = gretl_strdup("byvar");
+        for (i=0; i<ny; i++) {
+            S[j++] = gretl_strdup("byvar");
+        }
     }
 
-    if (!err) {
-        S[j++] = gretl_strdup("count");
-    }
+    S[j++] = gretl_strdup("count");
 
-    if (!err && j < n) {
-        if (xlist != NULL && xlist[0] > 0) {
-            char **Sx = gretl_list_get_names_array(xlist, dset, &err);
-
-            if (!err) {
-                for (i=0; i<xlist[0]; i++) {
-                    S[j++] = Sx[i];
-                    Sx[i] = NULL;
-                }
-                free(Sx);
+    if (nx > 0) {
+        if ((Sl = gretl_list_get_names_array(xlist, dset, NULL)) != NULL) {
+            for (i=0; i<nx; i++) {
+                S[j++] = Sl[i];
+                Sl[i] = NULL;
+            }
+            free(Sl);
+        } else if ((Sm = gretl_matrix_get_colnames(X)) != NULL) {
+            for (i=0; i<nx; i++) {
+                S[j++] = gretl_strdup(Sm[i]);
             }
         } else {
-            S[j] = gretl_strdup("f(x)");
+            for (i=0; i<nx; i++) {
+                S[j++] = gretl_strdup("f(x)");
+            }
+        }
+    }
+
+    /* basic check on validity of @S */
+    for (i=0; i<n; i++) {
+        if (S[i] == NULL) {
+            strings_array_free(S, n);
+            err = 1;
+            break;
         }
     }
 
     if (!err) {
         gretl_matrix_set_colnames(m, S);
-    } else {
-        strings_array_free(S, n);
     }
 }
 
@@ -7557,7 +7573,7 @@ gretl_matrix *aggregate_by (const double *x,
     }
 
     if (m != NULL) {
-        aggr_add_colnames(m, ylist, xlist, dset, just_count);
+        aggr_add_colnames(m, xlist, ylist, NULL, NULL, dset);
     }
 
     free(tmp);
@@ -7746,6 +7762,8 @@ gretl_matrix *matrix_aggregate (const gretl_matrix *X,
             z = zsave + counts[k];
         }
     }
+
+    aggr_add_colnames(ret, NULL, NULL, X, Y, NULL);
 
     gretl_matrix_free(M);
     free(counts);
