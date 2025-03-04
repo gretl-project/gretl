@@ -478,7 +478,9 @@ static int *process_lagged_depvar (MODEL *pmod, const DATASET *dset)
     int nl = 0;
 
     xlist = model_xlist(pmod);
-    dvlags = malloc(xlist[0] * sizeof *dvlags);
+    if (xlist != NULL) {
+        dvlags = malloc(xlist[0] * sizeof *dvlags);
+    }
 
     if (dvlags != NULL) {
         int yv = gretl_model_get_depvar(pmod);
