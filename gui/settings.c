@@ -34,6 +34,7 @@
 #include "ssheet.h"
 #include "selector.h"
 #include "gpt_control.h"
+#include "gpt_dialog.h"
 #else
 # if __linux__
 #  define DEVEL_OPTS 1
@@ -202,7 +203,8 @@ typedef enum {
     RESTART  = 1 << 10, /* needs program restart to take effect */
     GOTSET   = 1 << 11, /* dynamic: already found a setting */
     SKIPSET  = 1 << 12, /* for string value, skip empty value */
-    SPINSET  = 1 << 13  /* integer value: represented by spin-button */
+    SPINSET  = 1 << 13, /* integer value: represented by spin-button */
+    BTNSET   = 1 << 14  /* requires a launcher button (font choice) */
 } rcflags;
 
 typedef struct {
@@ -253,7 +255,7 @@ RCVAR rc_vars[] = {
     { "session_prompt", N_("Prompt to save session"), NULL, &session_prompt,
       BOOLSET, 0, TAB_MAIN, NULL },
     { "collect_plots", N_("Enable collecting plots"), NULL, &auto_collect,
-      BOOLSET, 0, TAB_MAIN, NULL },
+      BOOLSET, 0, TAB_PLOTS, NULL },
     { "swallow_console", N_("Main window includes console"), NULL, &swallow_pref,
       BOOLSET | RESTART, 0, TAB_MAIN, NULL },
     { "icon_sizing", N_("Toolbar icon size"), NULL, &icon_sizing,
@@ -267,9 +269,9 @@ RCVAR rc_vars[] = {
       LISTSET | RESTART, 32, TAB_MAIN, NULL },
 #endif
     { "graph_scale", N_("Default graph scale"), NULL, &graph_scale,
-      LISTSET | FLOATSET, 0, TAB_MAIN, NULL },
+      LISTSET | FLOATSET, 0, TAB_PLOTS, NULL },
     { "graph_theme", N_("Graph theme"), NULL, graph_theme,
-      LISTSET, sizeof graph_theme, TAB_MAIN, NULL },
+      LISTSET, sizeof graph_theme, TAB_PLOTS, NULL },
 #if !defined(G_OS_WIN32) || !defined(PKGBUILD)
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot,
       MACHSET | BROWSER, MAXLEN, TAB_PROGS, NULL },
@@ -336,8 +338,8 @@ RCVAR rc_vars[] = {
       INVISET, sizeof datapage, TAB_NONE, NULL },
     { "ScriptPage", "Default script page", NULL, scriptpage,
       INVISET, sizeof scriptpage, TAB_NONE, NULL },
-    { "Png_font", N_("PNG graph font"), NULL, paths.pngfont,
-      INVISET, sizeof paths.pngfont, TAB_NONE, NULL },
+    { "Png_font", N_("Graph font"), NULL, paths.pngfont,
+      USERSET | BTNSET, sizeof paths.pngfont, TAB_PLOTS, NULL },
     { "Gp_extra_colors", N_("Gnuplot extra colors"), NULL, gpcolors,
       INVISET, sizeof gpcolors, TAB_NONE, NULL },
     { "tabwidth", N_("Number of spaces per tab"), NULL, &tabwidth,
@@ -1160,6 +1162,7 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
     gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
 
     make_prefs_tab(notebook, TAB_MAIN, 0);
+    make_prefs_tab(notebook, TAB_PLOTS, 0);
     make_prefs_tab(notebook, TAB_PROGS, 0);
     make_prefs_tab(notebook, TAB_EDITOR, 0);
     make_prefs_tab(notebook, TAB_NET, 0);
@@ -1659,7 +1662,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
     GtkWidget *s_table = NULL; /* widget table for string variables */
     GtkWidget *l_table = NULL; /* widget table for list selections */
     GtkWidget *vbox, *w = NULL;
-    GtkWidget *page;
+    GtkWidget *page = NULL;
     int s_len = 1, b_len = 0, l_len = 1;
     int s_cols, b_cols = 0, l_cols = 0;
     int b_col = 0;
@@ -1678,6 +1681,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 
 	if (tab == TAB_MAIN) {
 	    w = gtk_label_new(_("General"));
+        } else if (tab == TAB_PLOTS) {
+            w = gtk_label_new(_("Plots"));
 	} else if (tab == TAB_PROGS) {
 	    w = gtk_label_new(_("Programs"));
 	} else if (tab == TAB_EDITOR) {
@@ -1906,7 +1911,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 
 	    rc->widget = gtk_combo_box_text_new();
 
-	    if (tab == TAB_MAIN) {
+	    if (tab == TAB_PLOTS || tab == TAB_MAIN) {
 		GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
 
 		gtk_box_pack_start(GTK_BOX(hbox), rc->widget, FALSE, FALSE, 5);
@@ -1998,10 +2003,22 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 	    gtk_misc_set_alignment(GTK_MISC(w), 1, 0.5);
 	    gtk_table_attach_defaults(GTK_TABLE(l_table),
 				      w, 0, 1, l_len - 1, l_len);
-
 	    /* for now, this is specific to tab-spaces */
 	    rc->widget = gtk_spin_button_new_with_range(2, 8, 1);
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(rc->widget), *intvar);
+	    gtk_table_attach_defaults(GTK_TABLE(l_table),
+				      rc->widget, 1, 2, l_len - 1, l_len);
+        } else if (rc->flags & BTNSET) {
+            /* string variable needing a launcher button */
+	    l_len++;
+	    gtk_table_resize(GTK_TABLE(l_table), l_len, l_cols);
+	    w = gtk_label_new(_(rc->description));
+	    gtk_misc_set_alignment(GTK_MISC(w), 1, 0.5);
+	    gtk_table_attach_defaults(GTK_TABLE(l_table),
+				      w, 0, 1, l_len - 1, l_len);
+            rc->widget = gtk_button_new_with_label(gretl_png_font());
+            g_signal_connect(G_OBJECT(rc->widget), "clicked",
+                             G_CALLBACK(png_font_selector), page);
 	    gtk_table_attach_defaults(GTK_TABLE(l_table),
 				      rc->widget, 1, 2, l_len - 1, l_len);
 	} else if (!(rc->flags & INVISET)) {
@@ -2246,6 +2263,10 @@ static void apply_prefs_changes (GtkWidget *widget, GtkWidget *parent)
 	    int ival = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(w));
 
 	    rcvar_set_int(rcvar, ival, &changed);
+        } else if (rcvar->flags & BTNSET) {
+            const gchar *sval = gtk_button_get_label(GTK_BUTTON(w));
+
+            strcpy((char *) rcvar->var, sval);
 	} else if (rcvar->flags & (USERSET | MACHSET)) {
 	    gchar *sval = entry_box_get_trimmed_text(w);
 
