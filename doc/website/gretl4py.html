@@ -1,0 +1,161 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+ <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+ <meta http-equiv="pragma" content="no-cache">
+ <meta name="author" content="Marcin Błażejowski">
+ <meta name="description" content="gretl4py -- python module for libgretl">
+ <meta name="generator" content="KWrite, vim, nano">
+ <meta name="keywords" content="gretl4py -- python module for libgretl">
+ <title>gretl4py -- python module for libgretl</title>
+</head>
+
+<body>
+  <pre>
+                _   _   ___
+               | | | | /   |
+  __ _ _ __ ___| |_| |/ /| |_ __  _   _
+ / _` | '__/ _ \ __| / /_| | '_ \| | | |
+| (_| | | |  __/ |_| \___  | |_) | |_| |
+ \__, |_|  \___|\__|_|   |_/ .__/ \__, |
+  __/ |                    | |     __/ |
+ |___/                     |_|    |___/
+</pre>
+
+  <h1>About</h1>
+  <p>
+    <b>gretl4py</b> is a python package designed to meet the needs of econometricians and applied
+    economists who wish to use python in their research. It can be broadly viewed as a complement to
+    the <a href="https://www.statsmodels.org/stable/index.html" target="_new">statsmodels</a> package,
+    with a much more specific orientation to the inference methods commonly employed in applied
+    economics.
+  </p>
+  <p>
+    <b>gretl4py</b> provides an interface to
+    <a href="https://gretl.sourceforge.net/API/new/gretl" target="_new">libgretl</a>
+    for the Python language (3.11, 3.12, and 3.13 were tested). Libgretl is the underlying
+    engine for the <a href="https://gretl.sourceforge.net/" target="_new">gretl</a> program.
+    At present, the focus is mostly on the APIs implementing estimating methods, but a much larger
+    array of facilities is planned.
+  </p>  
+  
+  <b>gretl4py</b> consists of the following elements:
+  <ul>
+    <li>binary bindings written in C++,</li>
+    <li>a <i>Model</i> class implemented in Python,</li>
+    <li>a set of utility functions implemented in Python.</li>
+  </ul>
+
+
+<h1>Preliminaries</h1>
+<h2>Preparation</h2>
+
+Before installing <b>gretl4py</b>, please make sure that the following components are installed:
+<ul>
+    <li>One of the supported versions of Python.</li>
+    <li>The following Python packages: <b>numpy</b>, and <b>tabulate</b> (not required).</li>
+    <li>macOS or Linux users: <b>gretl</b> version 2024d or higher:
+      <ul>
+          <li>Linux: <b>gretl</b> package (Debian/Ubuntu/Fedora).</li>
+          <li>macOS: see <a href="https://gretl.sourceforge.net/osx.html" target="_new">this</a> page.</li>
+      </ul>
+    </li>
+</ul>
+
+<h2>Download</h2>
+
+  <p>
+    From the list below, download the zipfile appropriate for your platform:
+  </p>
+
+<ul>
+    <li>MS Windows: <a href="https://w5.wsb.torun.pl/gretl/gretl4py/files/gretl4py_for_windows.zip">gretl4py_for_windows.zip</a></li>
+    <li>macOS: in progress</li>
+    <li>Linux: <a href="https://w5.wsb.torun.pl/gretl/gretl4py/files/gretl4py_for_linux.zip">gretl4py_for_linux.zip</a></li>
+</ul>
+
+<h2>Installation</h2>
+<h3>MS Windows and MacOS</h3>
+<p>
+  The easiest way to install <b>gretl4py</b> on a MS Windows or macOS machine
+  is by executing the <i>install.py</i> script located in the <b>gretl4py</b>
+  top-level directory using the desired Python interpreter:
+</p>
+<ul>
+    <li>On MS Windows: <b><font style="font-family:'Courier New'">python.exe install.py</font></b></li>
+    <li>On macOS: <b><font style="font-family:'Courier New'">python3 install.py</font></b></li>
+</ul>
+  <p>The script assumes that <i>python.exe</i> (on MS Windows)
+    or <i>python3</i> (on macOS) is available in the system's <b>PATH</b>.<br>
+  </p>
+
+
+The <i>install.py</i> script copies the following files to the user
+site-packages directory, as determined by the command
+<b><font style="font-family:'Courier New'">python.exe -m site --user-site</font></b>
+on MS Windows or
+<b><font style="font-family:'Courier New'">python3 -m site --user-site</font></b>
+on macOS:
+<ul>
+    <li><font style="font-family:'Courier New'">__init__.py</font>,
+    <font style="font-family:'Courier New'">gretl4py_addons.py</font>,
+    and <font style="font-family:'Courier New'">gretl4py_classes.py</font>
+    from the <font style="font-family:'Courier New'">[gretl]</font> directory.</li>
+	<li><font style="font-family:'Courier New'">_gretl.cp3xx-win_amd64.pyd</font>
+	(for MS Windows) or <font style="font-family:'Courier New'">_gretl.cpython-3xx-darwin.so</font>
+	(for macOS) from the <font style="font-family:'Courier New'">[builds/3.xx]</font> directory.</li>
+</ul>
+Here, <i>3.xx</i> refers to the version of Python used to run the
+<i>install.py</i> script.
+<h3>Linux</h3>
+  <ul>
+      <li>For the time being, Linux users have to build and install <b>gretl4py</b>
+        by themselves. Instructions are 
+        <a href="https://w5.wsb.torun.pl/gretl/gretl4py/files/gretl4py.pdf">here</a>
+        (section 2.3). Apart from a C++ compiler (with support for
+        c++17 standard), the following development packages are needed (2024c or higher):
+        <ul>
+            <li>Debian/Ubuntu: <b>libgretl1-dev</b>, <b>python3-dev</b></li>
+            <li>Fedora: <b>gretl-devel</b></li>
+        </ul>
+      </li>
+      <li>We provide pre-build 3.12/3.13 binaries for Linux as well (experimental).
+          To install them, execute the <i>install.py</i> script located in
+          the <b>gretl4py</b> top-level directory using the desired Python interpreter.
+      </li>
+  </ul>
+
+<h1>Running gretl4py</h1>
+  <p>
+    To verify if <b>gretl4py</b> was installed correctly please run
+    the following code snippet:</p>
+<p style="font-family:'Courier New'">python3 -c 'import gretl; gretl.about(1)'</p>
+
+This should give you some text output on
+<ol>
+  <li>your <b>gretl4py</b> build;</li>
+  <li>your system, as provided by the gretl <i>$sysinfo</i> accessor;</li>
+  <li>a few libgretl built-in strings;</li>
+  <li>the simdjson architecture.</li>
+</ol>
+
+<p>
+  Note: On MS Windows, when <b>gretl4py</b> is loaded, you may see some warnings about the missing 'dark2' Gnuplot style. Don't worry, this is not a problem.
+</p>
+
+
+<h1>Documentation</h1>
+The <a href="https://w5.wsb.torun.pl/gretl/gretl4py/files/gretl4py.pdf">pdf
+documentation</a> file contains many more details
+about <b>gretl4py</b> module, including example, a list of the
+available APIs, and several usage examples.
+
+<p>Marcin Błażejowski, marcin(at)gretlconference(dot)org</p>
+
+<p>Last updated: 2025-02-12</p>
+
+  <p>
+    <a href="https://validator.w3.org/check?uri=https://w5.wsb.torun.pl/gretl/gretl4py/">
+    <img src="files/valid-html401.png" alt="Valid HTML 4.01 Transitional" height="31" width="88"></a>
+  </p>
+
+</body></html>
