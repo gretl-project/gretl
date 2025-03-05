@@ -1418,6 +1418,7 @@ spinbutton.horizontal {
     border: none;
     padding: 7px 15px; }
   spinbutton.horizontal button {
+    -gtk-icon-transform: scale(0.5);
     border-width: 0;
     border-radius: 0;
     border-left-width: 1px; }
