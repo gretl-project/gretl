@@ -4,6 +4,9 @@ version 2025a, in progress
 - "system" command, iterated variants: allow more iterations
   (now 250) before declaring non-convergence
 - aggregate() function; speed improvement in the matrix case
+- hyp2f1 function: enhance the documentation
+- Fix bug: potential crash in the GUI when trying to forecast
+  from an ARIMA model without a constant
 - Fix bug: "dataset addobs n" with panel data (and without the
   --panel-time option) was not respecting the documented
   policy that 'n' refers to the number of cross-sectional
@@ -15,12 +18,15 @@ version 2025a, in progress
   some cases
 - Fix bug: the RESET test in the GUI was broken when the
   "show all variants" option was selected (since 2024c)
+- markdown parser: improve extraction of URLs
 - minor code adjustments to comply with the C23 standard
 - update sourceforge URLs to use https
+- macOS builds: upgrade to GTK3
 - macOS and 64-bit Windows: update gnuplot to version 6.0.2
 - Windows 64-bit build: revert to use of MSVCRT rather then
   UCRT, pending analysis of some problems with the latter
-- Windows 64-bit build: update to OpenBLAS 0.3.29.
+- Windows 64-bit build: update to OpenBLAS 0.3.29; fixes for
+  the Windows-10 theme
 
 2024-12-12 version 2024d
 - "append" command: make the help text more explicit
