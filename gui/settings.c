@@ -1085,7 +1085,7 @@ static void preferences_dialog_canceled (GtkWidget *w, int *c)
 
 static int page_has_help (int p)
 {
-    return p == TAB_EDITOR || p == TAB_VCV;
+    return p == TAB_VCV;
 }
 
 static void sensitize_prefs_help (GtkNotebook *book,
@@ -1101,10 +1101,7 @@ static void show_prefs_help (GtkWidget *w, GtkWidget *notebook)
     gint page;
 
     page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
-
-    if (page + 1 == TAB_EDITOR) {
-	show_gui_help(EDITOR);
-    } else if (page + 1 == TAB_VCV) {
+    if (page + 1 == TAB_VCV) {
 	show_gui_help(HCCME);
     }
 }
@@ -1161,8 +1158,10 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
     notebook = gtk_notebook_new();
     gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
 
+#ifndef GRETL_EDIT
     make_prefs_tab(notebook, TAB_MAIN, 0);
     make_prefs_tab(notebook, TAB_PLOTS, 0);
+#endif
     make_prefs_tab(notebook, TAB_PROGS, 0);
     make_prefs_tab(notebook, TAB_EDITOR, 0);
     make_prefs_tab(notebook, TAB_NET, 0);
@@ -1209,7 +1208,11 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
 		     button);
 
     if (page > 1 && page < TAB_MAX) {
+#ifdef GRETL_EDIT
+        page = 1;
+#else
 	page--;
+#endif
 	/* "show" the target page first (see GtkNoteBook API doc) */
 	gtk_widget_show(gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), page));
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page);
@@ -2008,6 +2011,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(rc->widget), *intvar);
 	    gtk_table_attach_defaults(GTK_TABLE(l_table),
 				      rc->widget, 1, 2, l_len - 1, l_len);
+#ifndef GRETL_EDIT
         } else if (rc->flags & BTNSET) {
             /* string variable needing a launcher button */
 	    l_len++;
@@ -2021,6 +2025,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
                              G_CALLBACK(png_font_selector), page);
 	    gtk_table_attach_defaults(GTK_TABLE(l_table),
 				      rc->widget, 1, 2, l_len - 1, l_len);
+#endif
 	} else if (!(rc->flags & INVISET)) {
 	    /* visible string variable */
 	    char *strvar = (char *) rc->var;
