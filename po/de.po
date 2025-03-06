@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-11-10 12:49-0500\n"
-"PO-Revision-Date: 2024-10-18 16:56+0200\n"
+"PO-Revision-Date: 2025-03-06 15:53+0100\n"
 "Last-Translator: Sven Schreiber <svetosch (at) gmx (dot) net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -5387,19 +5387,17 @@ msgid "Invalid MPI rank %d"
 msgstr "Ungültiger MPI-Rang %d"
 
 #: lib/src/gretl_mt.c:177
-#, fuzzy, c-format
+#, c-format
 msgid "gretl_omp_threads: must be >= 1 and <= %d"
-msgstr "omp_num_threads: muss zwischen 1 und %d liegen"
+msgstr "gretl_omp_threads: muss zwischen 1 und %d liegen"
 
 #: lib/src/gretl_mt.c:188
-#, fuzzy
 msgid "gretl_set_omp_threads: OpenMP is not enabled"
-msgstr "set_omp_n_threads: OpenMP nicht aktiviert"
+msgstr "gretl_set_omp_threads: OpenMP nicht aktiviert"
 
 #: lib/src/gretl_mt.c:213
-#, fuzzy
 msgid "gretl_get_omp_threads: OpenMP is not enabled"
-msgstr "set_omp_n_threads: OpenMP nicht aktiviert"
+msgstr "gretl_get_omp_threads: OpenMP nicht aktiviert"
 
 #: lib/src/gretl_panel.c:2572
 msgid "Variance estimators:"
@@ -7415,7 +7413,7 @@ msgstr "%s, Beob. %s%s%s"
 
 #: lib/src/modelprint.c:2145
 msgid "J'WJ is not positive definite, std. errors not available"
-msgstr ""
+msgstr "J'WJ nicht positiv-definit, keine Standardfehler verfügbar"
 
 #: lib/src/modelprint.c:2149
 msgid "Missing or incomplete observations dropped"
@@ -8117,9 +8115,9 @@ msgid "No parameters have been specified"
 msgstr "Es wurden keine Parameter spezifiziert"
 
 #: lib/src/nls.c:3452
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown matrix '%s'"
-msgstr "Unbekannte Variable '%s'"
+msgstr "Unbekannte Matrix '%s'"
 
 #: lib/src/nls.c:3490
 msgid "No function has been specified"
@@ -13323,7 +13321,6 @@ msgid "Select arguments:"
 msgstr "Argumente auswählen:"
 
 #: gui/fncall.c:2119
-#, fuzzy
 msgid "Save return value (optional, clear box for no assignment):"
 msgstr "Rückgabewert speichern (optional, keine Zuweisung bei freier Box)"
 
@@ -13604,7 +13601,7 @@ msgstr "Jetzt zu PDF-Hilfe wechseln?"
 
 #: gui/fnsave.c:1942
 msgid "Markdown"
-msgstr ""
+msgstr "Markdown"
 
 #: gui/fnsave.c:1944
 msgid "Plain text"
@@ -17782,9 +17779,8 @@ msgid "Adj. R{\\super 2}"
 msgstr "Korr. R{\\super 2}"
 
 #: gui/model_table.c:944
-#, fuzzy
 msgid "Adj. R^2"
-msgstr "Korr. R**2"
+msgstr "Korr. R^2"
 
 #: gui/model_table.c:1091 gui/model_table.c:1155 gui/model_table.c:1162
 #: gui/model_table.c:1169
@@ -21833,73 +21829,60 @@ msgid "no seasonality was detected"
 msgstr "keine Saisoneffekte gefunden"
 
 #: plugin/tramo-x12a.c:2109
-#, fuzzy
 msgid "x13as options"
-msgstr "Optionen"
+msgstr "x13as-Optionen"
 
 #: plugin/tramo-x12a.c:2110
-#, fuzzy
 msgid "adjustment algorithm"
 msgstr "Algorithmus zur Saisonbereinigung:"
 
 #: plugin/tramo-x12a.c:2111
-#, fuzzy
 msgid "outlier correction"
-msgstr "Mittelwertkorrektur"
+msgstr "Ausreißerkorrektur"
 
 #: plugin/tramo-x12a.c:2112
-#, fuzzy
 msgid "trading days correction"
-msgstr "Verzerrungskorrektur"
+msgstr "Handelstagekorrektur"
 
 #: plugin/tramo-x12a.c:2113
-#, fuzzy
 msgid "working days correction"
-msgstr "Verzerrungskorrektur"
+msgstr "Arbeitstagekorrektur"
 
 #: plugin/tramo-x12a.c:2114
-#, fuzzy
 msgid "easter effect"
-msgstr "Keine Zeiteffekte"
+msgstr "Ostereffekt"
 
 #: plugin/tramo-x12a.c:2115
-#, fuzzy
 msgid "log transformation"
 msgstr "Log-Transformation"
 
 #: plugin/tramo-x12a.c:2116
-#, fuzzy
 msgid "arima specification"
-msgstr "_Panel-Spezifikation"
+msgstr "ARIMA-Spezifikation"
 
 #: plugin/tramo-x12a.c:2117
-#, fuzzy
 msgid "output series"
-msgstr "Ausgabeformat"
+msgstr "Ausgabereihe"
 
 #: plugin/tramo-x12a.c:2118
-#, fuzzy
 msgid "save spc content"
-msgstr "Speichere Bundle-Inhalt..."
+msgstr "Speichere spc-Inhalt"
 
 #: plugin/tramo-x12a.c:2121
-#, fuzzy
 msgid "no"
-msgstr "n"
+msgstr "nein"
 
 #: plugin/tramo-x12a.c:2121
-#, fuzzy
 msgid "yes"
-msgstr "Jahre"
+msgstr "ja"
 
 #: plugin/tramo-x12a.c:2121
 msgid "auto"
 msgstr ""
 
 #: plugin/tramo-x12a.c:2140
-#, fuzzy
 msgid "critical"
-msgstr "vertikal"
+msgstr "krit. Wert"
 
 #: plugin/vif.c:359
 msgid "Count of condition indices >= 30"
@@ -22394,9 +22377,8 @@ msgid "Verbosity level"
 msgstr "Grad an Ausführlichkeit"
 
 #: addons/addons-i18n.c:112
-#, fuzzy
 msgid "dbnomics"
-msgstr "binomial"
+msgstr "dbnomics"
 
 #: addons/addons-i18n.c:116
 msgid "Don't"
@@ -22499,55 +22481,46 @@ msgid "Criterion plot"
 msgstr "Kriteriumsgraph"
 
 #: addons/addons-i18n.c:148
-#, fuzzy
 msgid "Absolute value"
-msgstr "Asymptotische p-Werte"
+msgstr "Absoluter Wert"
 
 #: addons/addons-i18n.c:149
-#, fuzzy
 msgid "Disturbance in obs. equation?"
-msgstr "Störterm-Verhältnis, UD"
+msgstr "Störterm in Beob'gleichung?"
 
 #: addons/addons-i18n.c:152
-#, fuzzy
 msgid "Observation matrix (Z)"
-msgstr "Benutze Korrelationsmatrix"
+msgstr "Beobachtungsmatrix (Z)"
 
 #: addons/addons-i18n.c:153
-#, fuzzy
 msgid "Parametrization"
 msgstr "Parametrisierung"
 
 #: addons/addons-i18n.c:154
 msgid "Quiet"
-msgstr ""
+msgstr "Still"
 
 #: addons/addons-i18n.c:156
-#, fuzzy
 msgid "State transition matrix (T)"
-msgstr "Benutze Korrelationsmatrix"
+msgstr "Zustandstransitionsmatrix (T)"
 
 #: addons/addons-i18n.c:157
-#, fuzzy
 msgid "State variance factor matrix (R)"
-msgstr "Benutze Kovarianzmatrix"
+msgstr "Zustandsvarianz-Faktormatrix (R)"
 
 #: addons/addons-i18n.c:158
-#, fuzzy
 msgid "Verbose"
-msgstr "_ausführlich"
+msgstr "Ausführlich"
 
 #: addons/addons-i18n.c:159
 msgid "do smoothing"
-msgstr ""
+msgstr "mit Glättung"
 
 #: addons/addons-i18n.c:160
-#, fuzzy
 msgid "observables"
-msgstr "Beobachtungen"
+msgstr "beobachtete Variablen"
 
 #: addons/addons-i18n.c:161
-#, fuzzy
 msgid "verbosity"
 msgstr "Ausführlichkeit"
 
