@@ -1,15 +1,15 @@
-# Polish translation for gretl 2024c_cvs
+# Polish translation for gretl 2025a_cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
-# Pawel Kufel <pawel.kufel@torun.merito.pl>, 2004 - 2024
-# Tadeusz Kufel <tadeusz.kufel@umk.pl>, 2004 - 2024
-# Marcin Blazejowski <marcin.blazejowski@torun.merito.pl>, 2008 - 2024
+# Pawel Kufel <pawel.kufel@torun.merito.pl>, 2004 - 2025
+# Tadeusz Kufel <tadeusz.kufel@umk.pl>, 2004 - 2025
+# Marcin Blazejowski <marcin.blazejowski@torun.merito.pl>, 2008 - 2025
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl 2024c\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-11-10 12:49-0500\n"
-"PO-Revision-Date: 2024-10-11 12:27-0400\n"
+"PO-Revision-Date: 2025-03-06 02:27-0400\n"
 "Last-Translator: Pawel Kufel <pawel.kufel@torun.merito.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -2229,7 +2229,7 @@ msgstr "Odchylenie standardowe"
 #: lib/src/describe.c:5095 lib/src/describe.c:5315 lib/src/describe.c:5993
 #: gui/guiprint.c:315 gui/guiprint.c:742
 msgid "C.V."
-msgstr "Wsp. zmienności"
+msgstr "Wsp.zmienności"
 
 #: lib/src/describe.c:5096 lib/src/describe.c:5316 lib/src/describe.c:5993
 #: gui/guiprint.c:315 gui/guiprint.c:742
@@ -2329,7 +2329,7 @@ msgstr "Zakres Q3-Q1"
 #: lib/src/describe.c:5681 lib/src/describe.c:5848 lib/src/describe.c:5938
 #, c-format
 msgid "Dropping %s: sample range contains no valid observations\n"
-msgstr "Dropping %s: zakres próby zawiera nieprawidłowe obserwacje\n"
+msgstr "Usunięcie %s: zakres próby zawiera nieprawidłowe obserwacje\n"
 
 #: lib/src/describe.c:5845 lib/src/describe.c:5935
 #, c-format
@@ -2567,7 +2567,7 @@ msgstr "Uwaga: Prob(%s = %d | %s = %d) = 1\n"
 #: lib/src/discrete.c:1703
 #, c-format
 msgid "Dropping %s\n"
-msgstr "Dropping %s\n"
+msgstr "Usunięto %s\n"
 
 #: lib/src/discrete.c:2321
 msgid "logit: the dependent variable must form a sequence of integers"
@@ -5384,19 +5384,17 @@ msgid "Invalid MPI rank %d"
 msgstr "Błędny MPI rank %d"
 
 #: lib/src/gretl_mt.c:177
-#, fuzzy, c-format
+#, c-format
 msgid "gretl_omp_threads: must be >= 1 and <= %d"
-msgstr "omp_num_threads: musi być >= 1 oraz <= %d"
+msgstr "gretl_omp_threads: musi być >= 1 oraz <= %d"
 
 #: lib/src/gretl_mt.c:188
-#, fuzzy
 msgid "gretl_set_omp_threads: OpenMP is not enabled"
-msgstr "set_omp_n_threads: OpenMP nie jest włączony"
+msgstr "gretl_set_omp_threads: OpenMP nie jest włączony"
 
 #: lib/src/gretl_mt.c:213
-#, fuzzy
 msgid "gretl_get_omp_threads: OpenMP is not enabled"
-msgstr "set_omp_n_threads: OpenMP nie jest włączony"
+msgstr "gretl_get_omp_threads: OpenMP nie jest włączony"
 
 #: lib/src/gretl_panel.c:2572
 msgid "Variance estimators:"
@@ -7410,7 +7408,7 @@ msgstr "%s, obs. %s%s%s"
 
 #: lib/src/modelprint.c:2145
 msgid "J'WJ is not positive definite, std. errors not available"
-msgstr ""
+msgstr "J'WJ is not positive definite, std. errors not available"
 
 #: lib/src/modelprint.c:2149
 msgid "Missing or incomplete observations dropped"
@@ -8110,9 +8108,9 @@ msgid "No parameters have been specified"
 msgstr "Niewyspecyfikowane parametry"
 
 #: lib/src/nls.c:3452
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown matrix '%s'"
-msgstr "Nieznana zmienna '%s'"
+msgstr "Nieznana macierz '%s'"
 
 #: lib/src/nls.c:3490
 msgid "No function has been specified"
@@ -13323,9 +13321,8 @@ msgid "Select arguments:"
 msgstr "Wybór argumentów:"
 
 #: gui/fncall.c:2119
-#, fuzzy
 msgid "Save return value (optional, clear box for no assignment):"
-msgstr "Zapisz wartość (opcjonalne, wyczyść pole, aby nie przypisywać):"
+msgstr "Zapisz zwracaną wartość (opcjonalne, wyczyść pole, aby nie przypisywać):"
 
 #: gui/fncall.c:2122
 msgid "Assign return value (optional):"
@@ -14873,7 +14870,7 @@ msgstr "_indeks obserwacji"
 
 #: gui/gretl.c:1927
 msgid "_Random variable..."
-msgstr "_Generowanie zmiennych losowych..."
+msgstr "_generowanie zmiennych losowych..."
 
 #: gui/gretl.c:1928
 msgid "_Lags of selected variables"
@@ -17779,9 +17776,8 @@ msgid "Adj. R{\\super 2}"
 msgstr "Skoryg. R{\\super 2}"
 
 #: gui/model_table.c:944
-#, fuzzy
 msgid "Adj. R^2"
-msgstr "Skor. R**2"
+msgstr "Skor. R^2"
 
 #: gui/model_table.c:1091 gui/model_table.c:1155 gui/model_table.c:1162
 #: gui/model_table.c:1169
@@ -21829,73 +21825,60 @@ msgid "no seasonality was detected"
 msgstr "nie wykryto sezonowości"
 
 #: plugin/tramo-x12a.c:2109
-#, fuzzy
 msgid "x13as options"
-msgstr "opcje"
+msgstr "x13as opcje"
 
 #: plugin/tramo-x12a.c:2110
-#, fuzzy
 msgid "adjustment algorithm"
 msgstr "Algorytm korekty sezonowej:"
 
 #: plugin/tramo-x12a.c:2111
-#, fuzzy
 msgid "outlier correction"
-msgstr "Korekta przez średnią"
+msgstr "Korekta odstających"
 
 #: plugin/tramo-x12a.c:2112
-#, fuzzy
 msgid "trading days correction"
-msgstr "Bias correction"
+msgstr "korekta dni handlowych"
 
 #: plugin/tramo-x12a.c:2113
-#, fuzzy
 msgid "working days correction"
-msgstr "Bias correction"
+msgstr "korekta dni roboczych"
 
 #: plugin/tramo-x12a.c:2114
-#, fuzzy
 msgid "easter effect"
-msgstr "No time effects"
+msgstr "efekt Wielkanocy"
 
 #: plugin/tramo-x12a.c:2115
-#, fuzzy
 msgid "log transformation"
 msgstr "Transformacja logarytmiczna"
 
 #: plugin/tramo-x12a.c:2116
-#, fuzzy
 msgid "arima specification"
-msgstr "_Panel specification"
+msgstr "ARIMA specyfikacja"
 
 #: plugin/tramo-x12a.c:2117
-#, fuzzy
 msgid "output series"
-msgstr "Wykres kilku szeregów czasowych"
+msgstr "szeregi wyników"
 
 #: plugin/tramo-x12a.c:2118
-#, fuzzy
 msgid "save spc content"
-msgstr "Zapisz bundle jako ..."
+msgstr "Zapisz zawartość spc"
 
 #: plugin/tramo-x12a.c:2121
-#, fuzzy
 msgid "no"
-msgstr "n"
+msgstr "nie"
 
 #: plugin/tramo-x12a.c:2121
-#, fuzzy
 msgid "yes"
-msgstr "lat"
+msgstr "tak"
 
 #: plugin/tramo-x12a.c:2121
 msgid "auto"
-msgstr ""
+msgstr "auto"
 
 #: plugin/tramo-x12a.c:2140
-#, fuzzy
 msgid "critical"
-msgstr "tylko linie pionowe"
+msgstr "krytyczna"
 
 #: plugin/vif.c:359
 msgid "Count of condition indices >= 30"
@@ -22392,9 +22375,8 @@ msgid "Verbosity level"
 msgstr "Pokaż detale"
 
 #: addons/addons-i18n.c:112
-#, fuzzy
 msgid "dbnomics"
-msgstr "dwumianowy"
+msgstr "dbnomics"
 
 #: addons/addons-i18n.c:116
 msgid "Don't"
@@ -22497,57 +22479,46 @@ msgid "Criterion plot"
 msgstr "Pokaż wykres kryterium"
 
 #: addons/addons-i18n.c:148
-#, fuzzy
 msgid "Absolute value"
-msgstr "Asymptotyczna wartość p"
+msgstr "Bezwzględna wartość"
 
 #: addons/addons-i18n.c:149
-#, fuzzy
 msgid "Disturbance in obs. equation?"
-msgstr "Udział niezgodności kierunku       UD ="
+msgstr "Niezgodności liczby obs. w równaniu?"
 
 #: addons/addons-i18n.c:152
-#, fuzzy
 msgid "Observation matrix (Z)"
-msgstr "Wykorzystaj macierz korelacji"
+msgstr "Macierz obserwacji (Z)"
 
 #: addons/addons-i18n.c:153
-#, fuzzy
 msgid "Parametrization"
-msgstr "Parameterization"
+msgstr "Parametryzacja"
 
 #: addons/addons-i18n.c:154
 msgid "Quiet"
-msgstr ""
+msgstr "Quiet"
 
 #: addons/addons-i18n.c:156
-#, fuzzy
 msgid "State transition matrix (T)"
-msgstr "Wykorzystaj macierz korelacji"
+msgstr "State transition matrix (T)"
 
 #: addons/addons-i18n.c:157
-#, fuzzy
 msgid "State variance factor matrix (R)"
-msgstr "Wykorzystaj macierz kowariancji"
+msgstr "State variance factor matrix (R)"
 
 #: addons/addons-i18n.c:158
-#, fuzzy
 msgid "Verbose"
 msgstr "Rozszerzony"
 
 #: addons/addons-i18n.c:159
 msgid "do smoothing"
-msgstr ""
+msgstr "wygładzanie"
 
 #: addons/addons-i18n.c:160
-#, fuzzy
 msgid "observables"
-msgstr "Zakres obserwacji"
+msgstr "zakres obserwacji"
 
 #: addons/addons-i18n.c:161
-#, fuzzy
 msgid "verbosity"
-msgstr "Pokaż detale modelu"
+msgstr "pokaż detale"
 
-#~ msgid "Bigger"
-#~ msgstr "Większy"
