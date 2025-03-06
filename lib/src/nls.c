@@ -2055,7 +2055,7 @@ int finalize_nls_model (MODEL *pmod, nlspec *spec,
     pmod->smpl.t1 = spec->dset->t1;
     pmod->smpl.t2 = spec->dset->t2;
 
-    if (spec->lhtype == GRETL_TYPE_MATRIX) {
+    if (spec->lhtype == GRETL_TYPE_MATRIX && spec->nobs != dset->n) {
         gretl_model_set_int(pmod, "matrix_data", 1);
     }
 
@@ -2297,7 +2297,7 @@ static int make_other_nl_model (MODEL *pmod,
     pmod->t2 = spec->t2;
     pmod->nobs = spec->nobs;
 
-    if (spec->lhtype == GRETL_TYPE_MATRIX) {
+    if (spec->lhtype == GRETL_TYPE_MATRIX && spec->nobs != dset->n) {
         gretl_model_set_int(pmod, "matrix_data", 1);
     }
 
