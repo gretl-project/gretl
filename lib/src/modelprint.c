@@ -2108,7 +2108,7 @@ static void print_model_heading (const MODEL *pmod,
 	const char *estr = estimator_string(pmod, prn);
 	const char *fmt;
 
-	if (dset->v == 0) {
+	if (dset->v == 0 || gretl_model_get_int(pmod, "matrix_data")) {
 	    fmt = N_("%s, using %d observations");
 	    pprintf(prn, _(fmt), _(estr), pmod->nobs);
 	} else if (char_len(estr) > 32) {
