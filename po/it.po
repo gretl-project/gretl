@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-11-10 12:49-0500\n"
-"PO-Revision-Date: 2024-11-11 11:39+0100\n"
+"PO-Revision-Date: 2025-03-06 18:29+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -3960,7 +3960,7 @@ msgstr "Il valore iniziale della funzione obiettivo non è finito"
 msgid ""
 "\n"
 "Simulated annealing: initial function value = %.8g\n"
-msgstr ""
+msgstr "\nSimulated annealing: valore iniziale della funzione = %.8g\n"
 
 #: lib/src/gretl_bfgs.c:2986
 #, c-format
@@ -4004,7 +4004,7 @@ msgstr "nessun elemento di questo tipo"
 
 #: lib/src/gretl_bundle.c:1754 lib/src/gretl_bundle.c:2127
 msgid "bundle union: the right-hand operand cannot be a kalman bundle"
-msgstr ""
+msgstr "unione bundle: l'operando a destra non può essere un kalman bundle"
 
 #: lib/src/gretl_bundle.c:1912
 #, c-format
@@ -4060,7 +4060,7 @@ msgstr "Tipo di dati in importazione sconosciuto"
 
 #: lib/src/gretl_drivers.c:62
 msgid "modtest: no options selected\n"
-msgstr ""
+msgstr "modtest: nessuna opzione selezionata\n"
 
 #: lib/src/gretl_drivers.c:316
 #, c-format
@@ -4353,7 +4353,7 @@ msgstr "'%s': linguaggio sconosciuto\n"
 #: lib/src/gretl_foreign.c:264
 #, c-format
 msgid "%s exited with status %d\n"
-msgstr ""
+msgstr "%s è uscito con status %d\n"
 
 #: lib/src/gretl_foreign.c:299
 msgid "Got no output"
@@ -4361,7 +4361,7 @@ msgstr "Non c'è output"
 
 #: lib/src/gretl_foreign.c:791
 msgid "line could not be converted to UTF-8\n"
-msgstr ""
+msgstr "non è stato possibile convertire la riga in UTF-8\n"
 
 #: lib/src/gretl_foreign.c:1509 lib/src/system.c:912
 #, c-format
@@ -4370,7 +4370,7 @@ msgstr "'%s': lista inesistente"
 
 #: lib/src/gretl_foreign.c:2615 lib/src/gretl_foreign.c:2719
 msgid "Can't find the R shared library"
-msgstr ""
+msgstr "Non trovo la libreria di R"
 
 #: lib/src/gretl_foreign.c:2755
 msgid "Can't determine R_HOME"
@@ -4456,7 +4456,7 @@ msgstr "%s: tipo di parametro non valido"
 
 #: lib/src/gretl_func.c:2615
 msgid "Old-style function definitions no longer supported"
-msgstr ""
+msgstr "definizione di funzione non più supportata"
 
 #: lib/src/gretl_func.c:3089
 #, fuzzy, c-format
@@ -4480,17 +4480,16 @@ msgstr "Mancano alcune informazioni richieste"
 
 #: lib/src/gretl_func.c:4375
 msgid "Output must have extension \".gfn\""
-msgstr ""
+msgstr "L'output deve avere estensione \".gfn\""
 
 #: lib/src/gretl_func.c:4393
-#, fuzzy, c-format
+#, c-format
 msgid "Found spec file '%s'\n"
-msgstr "Chiuso il file di output '%s'\n"
+msgstr "Trovato il file spec '%s'\n"
 
 #: lib/src/gretl_func.c:4420
-#, fuzzy
 msgid "no specification of public functions was found\n"
-msgstr "Non è stato trovato alcun file di funzioni aggiuntivo"
+msgstr "Non è stato trovata alcuna specificazione di funzioni pubbliche\n"
 
 #: lib/src/gretl_func.c:4426
 #, c-format
@@ -4538,7 +4537,7 @@ msgstr "'%s' è il nome di una funzione interna"
 #: lib/src/gretl_func.c:5773 lib/src/gretl_func.c:7669
 #, c-format
 msgid "The function %s is already defined by package '%s'"
-msgstr ""
+msgstr "La funzione %s è già definita dal pacchetto '%s'"
 
 #: lib/src/gretl_func.c:5786
 #, c-format
@@ -4630,7 +4629,7 @@ msgstr "Cancellata la funzione '%s'\n"
 #: lib/src/gretl_func.c:7743
 #, c-format
 msgid "%s: parameters of type %s cannot have a default value of NA"
-msgstr ""
+msgstr "%s: parametri di tipo %s non possono avere NA come default"
 
 #: lib/src/gretl_func.c:7764 lib/src/gretl_func.c:7767
 #, fuzzy, c-format
@@ -4681,7 +4680,7 @@ msgstr "L'identificativo è più lungo di 31 caratteri"
 
 #: lib/src/gretl_func.c:8322
 msgid "A function definition must have a return type and name"
-msgstr ""
+msgstr "Una definizione di funzione deve avere un nome e un tipo per il ritorno"
 
 #: lib/src/gretl_func.c:8481
 #, c-format
@@ -4835,9 +4834,8 @@ msgid "%s, line %d: return value is missing"
 msgstr "%s: il parametro richiesto manca"
 
 #: lib/src/gretl_func.c:10414
-#, fuzzy
 msgid "return: can only be used in a function"
-msgstr "%s: il comando \"quit\" non può essere usato in una funzione"
+msgstr "return può essere usato solo in una funzione"
 
 #: lib/src/gretl_func.c:11176
 #, c-format
@@ -4949,9 +4947,9 @@ msgid "%s: locale is not supported on this system"
 msgstr "%s: localizzazione non supportata su questo sistema"
 
 #: lib/src/gretl_join.c:195 lib/src/gretl_join.c:220
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a valid date"
-msgstr "'%s' non è una variabile dummy"
+msgstr "'%s' non è una data valida"
 
 #: lib/src/gretl_join.c:413
 #, fuzzy, c-format
@@ -4959,9 +4957,9 @@ msgid "'%s' does not match the format '%s'"
 msgstr "La lunghezza della serie non coincide col dataset"
 
 #: lib/src/gretl_join.c:446
-#, fuzzy, c-format
+#, c-format
 msgid "'%.8g' is not a valid date"
-msgstr "'%s' non è una variabile dummy"
+msgstr "'%.8g' non è una data valida"
 
 #: lib/src/gretl_join.c:501
 #, c-format
@@ -5614,7 +5612,7 @@ msgstr ""
 #: lib/src/gretl_panel.c:6986
 #, c-format
 msgid "The string '%s' is given for two or more groups"
-msgstr ""
+msgstr "La stringa '%s' è usata per due o più gruppi"
 
 #: lib/src/gretl_panel.c:7048
 #, c-format
@@ -6135,7 +6133,7 @@ msgstr ""
 
 #: lib/src/gretl_zip.c:629
 msgid "Invalid package name (31 bytes max)"
-msgstr ""
+msgstr "Nome di pacchetto non valido (31 byte al massimo)"
 
 #: lib/src/gretl_zip.c:646
 #, fuzzy
@@ -6143,9 +6141,8 @@ msgid "Getting in place... "
 msgstr "Lettura del file...\n"
 
 #: lib/src/gretl_zip.c:654
-#, fuzzy
 msgid "Making temporary directory... "
-msgstr "Directory di lavoro..."
+msgstr "Creazione directory temporanea..."
 
 #: lib/src/gretl_zip.c:698
 #, fuzzy, c-format
@@ -6174,9 +6171,8 @@ msgid "No series labels are defined\n"
 msgstr "Non sono definite etichette per le serie\n"
 
 #: lib/src/interact.c:1067
-#, fuzzy
 msgid "Output has already been redirected"
-msgstr "I risultati sono già rediretti a '%s'"
+msgstr "I risultati sono già rediretti"
 
 #: lib/src/interact.c:1070
 msgid "Output redirection: maximum depth reached"
@@ -6193,9 +6189,8 @@ msgid "'%s' : not a string variable"
 msgstr "%s: non è una variabile stringa"
 
 #: lib/src/interact.c:1193
-#, fuzzy
 msgid "output cannot be redirected in this context"
-msgstr "Il modificatore 'catch' non è valido in questo contesto"
+msgstr "Non è possibile redirigere l'ouput in questo contesto"
 
 #: lib/src/interact.c:1240
 msgid "Now discarding output\n"
@@ -6277,7 +6272,7 @@ msgstr ""
 
 #: lib/src/interact.c:2172
 msgid "join: only CSV and gdt[b] files are supported"
-msgstr ""
+msgstr "join: sono supportati solo file CSV e gdt[b]"
 
 #: lib/src/interact.c:2185 lib/src/interact.c:2379 lib/src/interact.c:4214
 #, c-format
@@ -6285,9 +6280,8 @@ msgid "The \"%s\" command cannot be used in this context"
 msgstr "Il comando '%s' non è valido in questo contesto"
 
 #: lib/src/interact.c:2231
-#, fuzzy
 msgid "Invalid selection"
-msgstr "Restrizione non valida"
+msgstr "Selezione non valida"
 
 #: lib/src/interact.c:2334 lib/src/interact.c:2337
 #, c-format
