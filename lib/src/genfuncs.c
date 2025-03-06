@@ -7329,7 +7329,7 @@ static void aggr_add_colnames (gretl_matrix *m,
     char **Sl = NULL;
     const char **Sm;
     int i, j, n = m->cols;
-    int ny = 0;
+    int ny = 1;
     int nx = 0;
     int err = 0;
 
@@ -7338,7 +7338,11 @@ static void aggr_add_colnames (gretl_matrix *m,
         return;
     }
 
-    ny = ylist != NULL ? ylist[0] : Y->cols;
+    if (ylist != NULL) {
+        ny = ylist[0];
+    } else if (Y != NULL) {
+        ny = Y->cols;
+    }
     nx = n - ny - 1;
     j = 0;
 

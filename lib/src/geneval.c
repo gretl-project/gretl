@@ -13642,7 +13642,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             }
         }
         if (!p->err) {
-            if (mat_args != data_args) {
+            if (mat_args > 0 && mat_args < data_args) {
                 /* matrix and series/list arguments can't be mixed */
                 p->err = E_TYPES;
             } else if (mat_args > 0) {
