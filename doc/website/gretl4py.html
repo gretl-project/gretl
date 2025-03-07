@@ -71,14 +71,14 @@ Before installing <b>gretl4py</b>, please make sure that the following component
     <li>One of the supported versions of Python (3.11, 3.12 or 3.13).</li>
     <li>The Python packages <kbd>numpy</kbd> and <kbd>tabulate</kbd> (the latter
      is not strictly required).</li>
-    <li>macOS or Linux users: <b>gretl</b> version 2024c or higher:
+    <li>On macOS or Linux: <b>gretl</b> version 2024c or higher:
       <ul>
           <li>Linux: <b>gretl</b> package (Debian/Ubuntu/Fedora).</li>
           <li>macOS: see <a href="https://gretl.sourceforge.net/osx.html" target="_new">this</a> page.</li>
       </ul>
   </li>
   <li>
-    MS Windows users: <b>gretl</b> version 2025a or higher (snapshots may be downloaded from
+    On MS Windows: <b>gretl</b> version 2025a or higher (snapshots may be downloaded from
     <a href="https://sourceforge.net/projects/gretl/files/snapshots" target="_new">here</a>).
     </li>
 </ul>
@@ -94,9 +94,8 @@ Before installing <b>gretl4py</b>, please make sure that the following component
   follows:
   </p>
   <ul>
-    <li>On MS Windows: <kbd>python.exe install.py</kbd></li>
-    <li>On macOS: <kbd>python3 install.py</kbd></li>
-    <li>On Linux: <kbd>python3 install.py</kbd></li>
+    <li>MS Windows: <kbd>python.exe install.py</kbd></li>
+    <li>macOS or Linux: <kbd>python3 install.py</kbd></li>
   </ul>
   <p>
   We can't guarantee that the pre-compiled binary module installed by
@@ -111,25 +110,30 @@ Before installing <b>gretl4py</b>, please make sure that the following component
     <li>Linux: <a href="https://w5.wsb.torun.pl/gretl/gretl4py/files/gretl4py_for_linux.zip">gretl4py_for_linux.zip</a></li>
 </ul>-->
 
-The <kbd>install.py</kbd> script copies the following files to the user's
-site-packages directory, as determined by the command
-<kbd>python.exe -m site --user-site</kbd> on MS Windows or <kbd>python3 -m site --user-site</kbd>
-on macOS:
+<p>The <kbd>install.py</kbd> script copies the following files to the user's
+site-packages directory:</p>
 <ul>
   <li>
     <kbd>__init__.py</kbd>,
     <kbd>gretl4py_addons.py</kbd>,
     and <kbd>gretl4py_classes.py</kbd>
-    from the <kbd>[gretl]</kbd> directory.
+    from the <kbd>gretl</kbd> subdirectory.
   </li>
   <li>
     <kbd>_gretl.cp3xx-win_amd64.pyd</kbd>
 	(for MS Windows) or <kbd>_gretl.cpython-3xx-darwin.so</kbd>
-    (for macOS) from the <kbd>[builds/3.xx]</kbd> directory.
+    (for macOS) from the <kbd>builds/3.xx</kbd> subdirectory.
   </li>
 </ul>
-Here, <kbd>3.xx</kbd> refers to the version of Python used to run
-<kbd>install.py</kbd>.
+<p>Here, <kbd>3.xx</kbd> refers to the version of Python used to run
+<kbd>install.py</kbd>. To see exactly where the files were installed,
+you can execute the following:
+</p>
+  <ul>
+    <li>MS Windows: <kbd>python.exe showdir.py</kbd></li>
+    <li>macOS or Linux: <kbd>python3 showdir.py</kbd></li>
+  </ul>
+
 
 
 <h2>Building on Linux</h2>
@@ -150,7 +154,7 @@ you'll need these development packages associated with gretl 2024c or higher:</p
     the following code snippet:
  </p>
 <pre>
-python3 -c 'import gretl; gretl.about(1)'
+python3 -c 'import gretl; gretl.about(True)'
 </pre>
 <p>
 This should give you some text output on
