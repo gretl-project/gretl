@@ -62,7 +62,6 @@
 The source code (git repository) is
 <a href="https://sourceforge.net/p/gretl/gretl4py/ci/master/tree/" target="_new">here</a>.
 
-
 <!-- <h1>Preliminaries</h1> -->
 <h2>Preparation</h2>
 
@@ -133,7 +132,16 @@ you can execute the following:
     <li>MS Windows: <kbd>python.exe showdir.py</kbd></li>
     <li>macOS or Linux: <kbd>python3 showdir.py</kbd></li>
   </ul>
-
+<p>
+If there are no errors in copying the required files, <kbd>install.py</kbd>
+checks that the gretl4py module can be loaded, and calls the function
+<kbd>gretl.about()</kbd>. If all goes well this will give text output on</p>
+<ul>
+  <li>your <b>gretl4py</b> build;</li>
+  <li>your system, according to gretl's <kbd>$sysinfo</kbd> accessor;</li>
+  <li>a few libgretl built-in strings; and</li>
+  <li>the simdjson architecture.</li>
+</ul>
 
 
 <h2>Building on Linux</h2>
@@ -149,27 +157,29 @@ you'll need these development packages associated with gretl 2024c or higher:</p
 </ul>
 
 <h2>Running gretl4py</h2>
-  <p>
-    To verify that the package was installed correctly please run
-    the following code snippet:
- </p>
-<pre>
-python3 -c 'import gretl; gretl.about(True)'
-</pre>
-<p>
-This should give you some text output on
-</p>
-<ol>
-  <li>your <b>gretl4py</b> build;</li>
-  <li>your system, as provided by the gretl <kbd>$sysinfo</kbd> accessor;</li>
-  <li>a few libgretl built-in strings; and</li>
-  <li>the simdjson architecture.</li>
-</ol>
 
+<p>
+You can find a good number of sample <kbd>*.py</kbd> files in the <kbd>demo</kbd> and <kbd>examples</kbd>
+subdirectories of <kbd>gretl4py</kbd>. The contents of these files can be
+examined in any suitable text editor. Starting from the <kbd>gretl4py</kbd>
+directory, one way of getting a sense of what this package can do is:</p>
+
+<pre>
+cd demo
+python3 estimators.py
+</pre>
+<p>(Substitute <kbd>python.exe</kbd> for <kbd>python3</kbd> on Windows.)
+You can also run gretl4py interactively. Start the python executable and
+type the command <kbd>import gretl</kbd>. Then besides any regular python
+commands you can call any of the functions described in
+the gretl4py documentation.</p>
+
+<!--
 <p>
   Note: On MS Windows, when <b>gretl4py</b> is loaded, you may see some warnings about
   Gnuplot styles being missing. Don't worry, this is not a problem.
 </p>
+-->
 
 
 <h2>Documentation</h2>
@@ -181,7 +191,7 @@ available APIs and several usage examples.</p>
 
 <p>Marcin Błażejowski, marcin(at)gretlconference(dot)org</p>
 
-<p>Last updated: 2025-03-06</p>
+<p>Last updated: 2025-03-08</p>
 
 <!--
   <p>
