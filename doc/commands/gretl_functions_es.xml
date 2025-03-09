@@ -778,6 +778,21 @@
       </description>
     </function>
 
+    <function name="$pmanteau" section="access" output="matrix">
+      <description>
+	<para>
+	  Disponible luego de la estimación de una autorregresión de vectores.
+	  Devuelve un vector fila que contiene los resultados del contraste portmanteau
+	  multivariante de autocorrelación de los errores, como se discute en las
+	  páginas 21&ndash;22 en <cite key="johansen95">Johansen (1995)</cite>.
+	  Los elementos son, en este orden, el estadístico de Ljung&ndash;Box,
+	  el retardo máximo que se considera, los grados de libertad para el
+	  contraste (chi-cuadrado), y la probabilidad asociada (valor p) al
+	  valor que toma el estadístico de contraste.
+	</para>
+      </description>
+    </function>
+
     <function name="$pvalue" section="access" output="scalar-or-matrix">
       <description>
 	<para>
@@ -838,6 +853,17 @@
 	  con la sintaxis <lit>$rho(n)</lit> después de la estimación de un modelo por medio
 	  de la instrucción <lit>ar</lit>, devuelve el valor estimado correspondiente
 	  al coeficiente &rgr;(<math>n</math>).
+	</para>
+      </description>
+    </function>
+
+    <function name="$rlnl" section="access" output="scalar">
+      <description>
+	<para>
+	  Después de la estimación de un VECM restringido, devuelve un escalar
+	  con el logaritmo de la verosimilitud del modelo restringido. Consulta
+	  también <fncref targ="$lnl"/>, y <guideref targ="chap:vecm"/> para
+	  ver ejemplos de su uso.
 	</para>
       </description>
     </function>
@@ -1616,10 +1642,10 @@
 	  <quote>Entrada matricial</quote> de abajo para un uso alternativo.
 	</para>
 	<para>
-	  En la forma más simple de uso de esta función, <argname>x</argname>
-	  se establece igual a <lit>null</lit>, <argname>segunvar</argname> es
-	  una serie individual y el tercer argumento se omite (o se establece
-	  igual a cero). En este caso, se devuelve una matriz con dos columnas
+	  En la forma más simple de uso de esta función, <argname>x</argname> se
+	  establece igual a <lit>null</lit>, <argname>segunvar</argname> es una
+	  serie individual y el tercer argumento se omite (o se establece igual
+	  a cero). El valor que se devuelve entonces es una matriz con dos columnas
 	  que contiene: los distintos valores de <argname>segunvar</argname>
 	  ordenados de forma creciente en la primera columna, y el número de
 	  observaciones en las que <argname>segunvar</argname> toma cada uno
@@ -1634,13 +1660,13 @@
 	  3 (en total 5 veces) y 4 (en total 9 veces).
 	</para>
 	<para>
-	  De modo más general, si <argname>segunvar</argname> es una lista con
-	  <math>n</math> elementos, entonces las <math>n</math> columnas a la
-	  izquierda contienen las combinaciones de los distintos valores de cada
-	  una de las <math>n</math> series, y la columna de recuento contiene
-	  el número de observaciones en las que se produce cada combinación.
-	  Observa que siempre puedes encontrar la columna de recuento en la
-	  posición <lit>nelem(segunvar) + 1</lit>.
+	  De modo más general, si <argname>segunvar</argname> es una lista
+	  con <math>n</math> elementos, entonces las primeras <math>n</math>
+	  columnas de la matriz que se devuelve contienen las combinaciones de
+	  los distintos valores de cada una de las <math>n</math> series, y la
+	  columna de recuento contiene el número de observaciones en las que
+	  se produce cada combinación. (La columna de recuento siempre se
+	  puede encontrar en la posición <lit>nelem(segunvar)+1</lit>).
 	</para>
 	<subhead>Especificar una función de agregación</subhead>
 	<para>
@@ -1651,24 +1677,24 @@
 	  en <argname>x</argname>. (De este modo, <math>m</math> se iguala
 	  a 1 cuando <argname>x</argname> es una única serie, y se iguala a
 	  <lit>nelem(x)</lit> cuando <argname>x</argname> es una lista.)
-	  El estadístico indicado se calcula en las submuestras respectivas
-	  que estén definidas por medio de las combinaciones indicadas en
+	  El estadístico indicado se calcula en las submuestras que estén
+	  definidas por medio de las combinaciones indicadas en
 	  <argname>segunvar</argname> (en orden ascendente); estas
 	  combinaciones se muestran en la(s) primera(s) <math>n</math>
 	  columna(s) de la matriz que se devuelve.
 	</para>
 	<para>
-	  Entonces, en el caso especial en el que <argname>x</argname> y
-	  <argname>segunvar</argname> son ambas series individuales, el
-	  valor que se devuelve es una matriz con tres columnas
-	  que va a contener respectivamente: los distintos valores de
-	  <argname>segunvar</argname> ordenados de forma creciente, el número
-	  de observaciones en las que <argname>segunvar</argname> toma cada
-	  uno de esos valores, y los valores del estadístico que especifica la
-	  función <argname>nombrefunc</argname>, calculado para la serie
-	  <argname>x</argname>, pero usando tan solo aquellas observaciones
-	  en las que <argname>segunvar</argname> toma el mismo valor que se
-	  especifica en la primera columna de la matriz.
+	  Entonces, si tanto <argname>x</argname> como
+	  <argname>segunvar</argname> son series individuales, el valor que se
+	  devuelve es una matriz con tres columnas que va a contener: los distintos
+	  valores de <argname>segunvar</argname> ordenados de forma creciente,
+	  el número de observaciones en las que <argname>segunvar</argname>
+	  toma cada uno de esos valores, y los valores del estadístico que
+	  especifica la función <argname>nombrefunc</argname>, calculado
+	  para la serie <argname>x</argname>, pero usando justo aquellas
+	  observaciones en las que <argname>segunvar</argname> toma el mismo
+	  valor que se especifica en la primera columna de la
+	  matriz.
 	</para>
 	<para>
 	  Las siguientes opciones de <argname>nombrefunc</argname> se mantienen
@@ -1682,8 +1708,8 @@
 	  devuelve un valor escalar; por eso, en este sentido, puede decirse que
 	  de algún modo <quote>agregan</quote> la serie. Si no hay ninguha de
 	  estas funciones originales que haga lo que necesitas, puedes utilizar
-	  una función definida por el usuario como <quote>agregador</quote>;
-	  en ese caso, del mismo modo que las funciones originales, esa función
+	  una función definida por el usuario como <quote>agregador</quote>.
+	  En ese caso, del mismo modo que las funciones originales, esa función
 	  debe tener como argumento únicamente una serie, y devolver un
 	  valor escalar.
 	</para>
@@ -1694,14 +1720,15 @@
 	  proporciona el número de observaciones válidas (no ausentes) de
 	  <argname>x</argname> en cada combinación de <argname>segunvar</argname>.
 	</para>
+        <subhead>Algunos ejemplos</subhead>
 	<para>
-	  Como ejemplo sencillo, supón que con <lit>region</lit> se definen
-	  unos códigos para representar una distribución geográfica por regiones,
-	  utilizándose para ello enteros desde 1 hasta <math>n</math>, y que
-	  con <lit>renta</lit> se representa la renta de los hogares. Entonces el
-	  código indicado a continuación debe producir una matriz de orden
-	  <by r="n" c="3"/> que contiene los códigos de las regiones, el recuento de
-	  observaciones de cada una, y la renta media de los hogares en cada una:
+	  Primero, supón que con <lit>region</lit> se definen unos códigos para
+	  representar una distribución geográfica por regiones, utilizándose para
+	  ello enteros desde 1 hasta <math>n</math>, y que con <lit>renta</lit>
+	  se representa la renta de los hogares. Entonces el código indicado a
+	  continuación debe producir una matriz de orden <by r="n" c="3"/> que
+	  contiene los códigos de las regiones, el recuento de observaciones de
+	  cada una, y la renta media de los hogares en cada una:
 	</para>
 	<code>
 	  matrix m = aggregate(renta, region, mean)
@@ -1726,14 +1753,14 @@
 	  desviaciones típicas muestrales de <lit>renta</lit> y <lit>edad</lit>.
 	</para>
 	<para>
-	  Observa que si <argname>segunvar</argname> es una lista de variables,
-	  algunas combinaciones de los valores de <argname>segunvar</argname> pueden
-	  no estar presentes en los datos (produciéndose un recuento igual a cero).
-	  En ese caso, los valores de los estadísticos para <argname>x</argname> se
-	  registran como <lit>NaN</lit> (es decir, no son números). Si quieres
-	  ignorar esos casos, puedes usar la función <fncref targ="selifr"/> para
-	  escoger solo aquellas filas que no tengan recuento igual a cero. La columna
-	  a comprobar estará una posición a la derecha de la indicada por el número de
+	  Si <argname>segunvar</argname> es una lista de variables, algunas
+	  combinaciones de los valores de <argname>segunvar</argname> pueden no
+	  estar presentes en los datos (produciéndose un recuento igual a cero).
+	  En ese caso, los valores de los estadísticos para <argname>x</argname>
+	  se registran como <lit>NaN</lit> (es decir, no son números). Para cortar
+	  esos casos, puedes usar la función <fncref targ="selifr"/> para escoger
+	  solo aquellas filas que no tengan recuento igual a cero. La columna a
+	  comprobar estará una posición a la derecha de la indicada por el número de
 	  variables de <argname>segunvar</argname>, por lo que puede usarse el código:
 	</para>
 	<code>
@@ -1743,16 +1770,16 @@
 	</code>
 	<subhead>Entrada matricial</subhead>
 	<para>
-	  En lugar de indicar <argname>x</argname> y <argname>segunvar</argname>
-	  como series o listas, puedes indicarlas en formato matricial. Ahora bien,
-	  si indicas los dos argumentos, deben coincidir en el mismo tipo (no
-	  puedes indicar una serie o una lista para uno de los argumentos, y una
-	  matriz para el otro); además, dos argumentos de tipo matricial
-	  deberán tener el mismo número de filas. Ten en cuenta también, que en
-	  este contexto se trata a las columnas de las matrices como si fuesen
-	  series, por ello la función de agregación del tercer argumento (opcional)
-	  deberá seguir el mesmo patrón descrito más arriba, tomando un
-	  argumento de tipo serie y devolviendo un escalar.
+	  En lugar de indicar <argname>x</argname>
+	  y <argname>segunvar</argname> como series o listas, puedes indicarlas
+	  en formato matricial. Ahora bien, si indicas los dos argumentos,
+	  deben coincidir en el mismo tipo (no puedes indicar una serie o una
+	  lista para uno de los argumentos, y una matriz para el otro); además,
+	  dos argumentos de tipo matricial deberán tener el mismo número de
+	  filas. En este contexto, se trata a las columnas de las matrices como
+	  si fuesen series, por ello la función de agregación deberá seguir el
+	  mismo patrón descrito más arriba, tomando un argumento de tipo
+	  serie y devolviendo un escalar.
 	</para>
       </description>
     </function>
@@ -6373,20 +6400,46 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Devuelve el valor de la función hipergeométrica de Gauss para el
-	  argumento real <argname>x</argname>.
+	  Devuelve el valor de la función hipergeométrica gausiana para el
+	  argumento real <argname>x</argname>. Los valores válidos para
+	  <argname>x</argname> están en el intervalo cerrado [&minus;1, 1].
+	  Esta función es muy general, y se reduce a una función más simple
+	  en algunos casos especiales, como por ejemplo
+	  <math>-</math>log(<math>1-x</math>)/<math>x</math>
+	  cuando <math>a=b=1</math> y <math>c=2</math>. Consulta
+	  <url>https://en.wikipedia.org/wiki/Hypergeometric_function</url>
+	  para obtener más detalles.
 	</para>
 	<para context="tex">
-	  Devuelve el valor de la función hipergeométrica de Gauss
-    <math>{}_2F_1(a,b;c;z) = \sum_{n=0}^\infty \frac{(a)_n (b)_n}{(c)_n} \frac{z^n}{n!}.</math>
-    para el argumento real
-	  <argname>x</argname>.
+	  Devuelve el valor de la función hipergeométrica gausiana
+    <math>{}_2F_1(a,b;c;z) = \sum_{n=0}^\infty \frac{(a)_n (b)_n}{(c)_n} \frac{z^n}{n!}</math>
+    para el argumento real <argname>x</argname>.
+    Los valores válidos para <argname>x</argname> están en el intervalo
+    cerrado [&minus;1, 1]. Esta función es muy general, y se reduce a
+    una función más simple en algunos casos especiales,
+    como por ejemplo
+	  <math>-\frac{\log(1-x)}{x}</math>
+	  cuando <math>a=b=1</math> y <math>c=2</math>. Consulta
+	  <url>https://en.wikipedia.org/wiki/Hypergeometric_function</url>
+	  para obtener más detalles.
 	</para>
 	<para>
 	  Cuando <argname>x</argname> es un escalar, el valor que se devuelve
 	  va a ser un escalar; en caso contrario, va a ser una matriz con la
-	  misma dimensión que <argname>x</argname>.
+	  misma dimensión que <argname>x</argname>. Por ejemplo,
 	</para>
+	<code>
+	  a = hyp2f1(1, 1, 2, {-1, 0, 0.5})
+	  print a
+	</code>
+	<para>
+	  produce el siguiente resultado:
+	</para>
+	<code>
+	  a (1 x 3)
+	  
+	  0.69315       1.0000       1.3863 
+	</code>
       </description>
     </function>
 
