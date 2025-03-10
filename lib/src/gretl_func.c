@@ -9165,7 +9165,9 @@ int check_function_needs (const DATASET *dset, DataReq dreq,
         return E_DATA;
     }
 
-    pkg->prechecked = 1;
+    if (pkg != NULL) {
+        pkg->prechecked = 1;
+    }
 
     return 0;
 }
