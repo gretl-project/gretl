@@ -1190,17 +1190,20 @@
       <description>
 	<para>
 	  Deve seguire la stima di un sistema di equazioni, eseguita
-	  con uno dei comandi <cmdref targ="system"/>, <cmdref targ="var"/>
-	  o <cmdref targ="vecm"/>; restituisce un bundle contenente
-	  svariati elementi relativi al sistema. Sono inclusi tutti
-	  gli accessori di sistema rilevanti, sotto chiavi che hanno
-	  lo stesso nome dei normali accessori, a parte il dollaro
-	  iniziale. Ad esempio, i residui compaiono sotto la chiave
-	  <lit>uhat</lit> e i coefficienti sotto <lit>coeff</lit>. Le
-	  altre chiavi dovrebbero essere (si spera)
-	  auto-esplicative. Per vedere il contenuto del bundle, basta
-	  prenderne una copia e stamparne il contenuto, come mostrato
-	  qui di seguito:
+	  con uno dei comandi <cmdref targ="system"/>, <cmdref
+	  targ="var"/> o <cmdref targ="vecm"/>; restituisce un bundle
+	  contenente svariati elementi relativi al sistema. Sono
+	  inclusi tutti gli accessori di sistema rilevanti, sotto
+	  chiavi che hanno lo stesso nome dei normali accessori, a
+	  parte il dollaro iniziale. Ad esempio, i residui compaiono
+	  sotto la chiave <lit>uhat</lit> e i coefficienti sotto
+	  <lit>coeff</lit>. (Fanno eccezione le chiavi <lit>A</lit>,
+	  <lit>B</lit> e <lit>Gamma</lit>, che corrispondono ai
+	  normali accessori <fncref targ="$sysA"/>, <fncref
+	  targ="$sysB"/> e <fncref targ="$sysGamma"/>.)Le altre chiavi
+	  dovrebbero essere (si spera) auto-esplicative. Per vedere il
+	  contenuto del bundle, basta prenderne una copia e stamparne
+	  il contenuto, come mostrato qui di seguito:
 	</para>
 	<code>
 	  var 4 y1 y2 y2
@@ -5077,11 +5080,10 @@
       </fnargs>
       <description>
 	<para>
-	  Restituisce <math>e</math><sup>x</sup>.
-	  Si noti che nel caso di una matrice la funzione è
-	  calcolata elemento per elemento. Per il calcolo
-	  dell'esponenziale di una matrice, si veda <fncref
-	  targ="mexp"/>.
+	  Restituisce <math>e</math><sup>x</sup>.  Si noti che nel
+	  caso di una matrice la funzione è calcolata elemento per
+	  elemento. Per il calcolo dell'esponenziale di una matrice,
+	  si veda <fncref targ="mexp"/>.
 	</para>
       </description>
     </function>
@@ -11406,6 +11408,9 @@
 	  <fncref targ="pmean"/>, che replicano per tutti i periodi temporali
 	  un valore relativo a ogni unità della cross-section.
 	</para>
+	<para>
+	  Si veda <fncref targ="pexpand"/> per l'operazione inversa.
+	</para>
       </description>
     </function>
 
@@ -13856,11 +13861,15 @@
       </fnargs>
       <description>
 	<para>
-	  Restituisce una copia di <argname>s</argname> in cui tutte
-	  le occorrenze di <argname>find</argname> sono sostituite con
-	  <argname>subst</argname>. V. anche <fncref targ="regsub"/> per
-	  una funzione più complessa che permette di sostituire stringhe sulla
-	  base di espressioni regolari.
+	  Se <argname>s</argname> è una stringa, restituisce una copia
+	  di <argname>s</argname> in cui tutte le occorrenze di
+	  <argname>find</argname> sono sostituite con
+	  <argname>subst</argname>. Se invece <argname>s</argname> è
+	  un array di stringhe o una serie a valori stringa,
+	  l'operazione è ripetuta per tutti i suoi elementi. Vedi
+	  anche <fncref targ="regsub"/> per una funzione più complessa
+	  che permette di sostituire stringhe sulla base di
+	  espressioni regolari.
 	</para>
 	<para>
 	  Esempio:
@@ -14444,27 +14453,28 @@ d =  8.0000000
 
     <function name="typename" section="data-utils" output="string">
       <fnargs>
-	<fnarg type="string">nome</fnarg>
+	<fnarg type="string">espr</fnarg>
       </fnargs>
-      <description>
-	<para>
-          Se <argname>nome</argname> è l'identificativo di un oggetto
-          definito, la funzione ritorna il tipo di oggetto come
-          stringa: <lit>scalar</lit>, <lit>series</lit>,
-          <lit>matrix</lit>, <lit>string</lit>, <lit>bundle</lit>, o
-          uno dei tipi di array: <lit>matrices</lit>,
-          <lit>bundles</lit>, <lit>strings</lit>, <lit>lists</lit> o
-          <lit>arrays</lit>.  Se non esiste un oggetto con quel nome,
-          vene ritornata la stringa <lit>null</lit>.
-        </para>
-        <subhead>Compatibilità</subhead>
-        <para>
-          Questa funzione rappresenta una miglioria rispetto alle
-          vecchie funzioni <fncref targ="typeof"/> e <fncref
-          targ="typestr"/>, che però per il momento sono ancora
-          valide.
-        </para>
-      </description>
+      <description>      <para>
+	Questa funzione combina <fncref targ="typeof"/> e <fncref
+	targ="typestr"/>, con un piccolo valore aggiunto. In pratica,
+	le due istruzioni seguenti sono equivalenti
+      </para>
+      <code>
+	eval typestr(typeof(x))
+	eval typename(x)
+      </code>
+      <para>
+	eccetto che se <argname>expr</argname> nomina un array,
+	<lit>typename</lit> restituisce il tipo specifico dell'array,
+	come in
+      </para>
+      <code>
+	strings S = defarray("foo", "bar", "baz")
+	eval typestr(typeof(S)) # restituisce "array"
+	eval typename(S) # restituisce "strings"
+      </code>
+      </description>   
     </function>
     
     <function name="typeof" section="data-utils" output="int">
@@ -14511,15 +14521,16 @@ d =  8.0000000
       </fnargs>
       <description>
 	<para>
-	  Funzione obsoleta: vedi <fncref targ="typename"/> per
-	  un'alternativa migliore.  Restituisce il nome del tipo di
-	  dati di gretl corrispondente a
-	  <argname>typecode</argname>. È utilizzata insieme alla
+	  Restituisce il nome del tipo di dati di gretl corrispondente
+	  a <argname>typecode</argname>. È utilizzata insieme alla
 	  funzione <fncref targ="inbundle"/>. Il valore restituito è:
 	  <quote>scalar</quote>, <quote>series</quote>,
 	  <quote>matrix</quote>, <quote>string</quote>,
 	  <quote>bundle</quote>, <quote>array</quote> o
 	  <quote>null</quote>.
+	</para>
+	<para>
+	  Vedi <fncref targ="typename"/> per un'alternativa.
 	</para>
       </description>
     </function>

@@ -1183,10 +1183,11 @@
 	  by keys that are the same as the regular accessor names,
 	  minus the leading dollar sign. So for example the residuals
 	  appear under the key <lit>uhat</lit> and the coefficients
-	  under <lit>coeff</lit>. (Exceptions are the keys <lit>A</lit>,
-	  <lit>B</lit>, and <lit>Gamma</lit>, which correspond to the
-	  regular dollar accessors sysA, sysB, and sysGamma.) The
-	  keys for additional information
+	  under <lit>coeff</lit>. (Exceptions are the keys
+	  <lit>A</lit>, <lit>B</lit>, and <lit>Gamma</lit>, which
+	  correspond to the regular dollar accessors <fncref
+	  targ="sysA"/>, <fncref targ="sysB"/>, and <fncref
+	  targ="sysGamma"/>.) The keys for additional information
 	  should hopefully be fairly self-explanatory. To see what's
 	  available you can get a copy of the bundle and print its
 	  content, as in
