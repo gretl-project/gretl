@@ -17481,10 +17481,10 @@ static NODE *between_minmax_node (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = NULL;
 
-    if (r->t != l->t) {
-        p->err = E_TYPES;
-    } else if (l->t == NUM) {
+    if (scalar_node(l) && scalar_node(r)) {
         ret = two_scalars_func(l, r, f, p);
+    } else if (l->t != r->t) {
+        p->err = E_TYPES;
     } else if (l->t == SERIES) {
         ret = aux_series_node(p);
         if (ret != NULL) {
