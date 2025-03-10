@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-11-10 12:49-0500\n"
-"PO-Revision-Date: 2025-03-06 18:29+0100\n"
+"PO-Revision-Date: 2025-03-10 14:12+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -4413,22 +4413,22 @@ msgstr ""
 #: lib/src/gretl_foreign.c:3504
 #, c-format
 msgid "%s: got 'matrix' result, but not numeric"
-msgstr ""
+msgstr "%s: risultato 'matrice', ma non numerico"
 
 #: lib/src/gretl_foreign.c:3643
-#, fuzzy, c-format
+#, c-format
 msgid "%s: a block is already started"
-msgstr "Il modello è già salvato"
+msgstr "%s: blocco già iniziato"
 
 #: lib/src/gretl_foreign.c:3694
 #, c-format
 msgid "%s: no block is in progress"
-msgstr ""
+msgstr "%s: nessun blocco inziato"
 
 #: lib/src/gretl_foreign.c:3746 gui/fnsave.c:5554
-#, fuzzy, c-format
+#, c-format
 msgid "Wrote '%s'\n"
-msgstr "scritto %s\n"
+msgstr "scritto '%s'\n"
 
 #: lib/src/gretl_func.c:851 gui/fncall.c:3341
 #, c-format
@@ -4450,18 +4450,18 @@ msgid "%s: invalid return type for function"
 msgstr "%s: il tipo di ritorno della funzione non è valido"
 
 #: lib/src/gretl_func.c:2021
-#, fuzzy, c-format
+#, c-format
 msgid "function %s: invalid parameter type '%s'"
-msgstr "%s: tipo di parametro non valido"
+msgstr "funzione %s: tipo di parametro '%s' non valido"
 
 #: lib/src/gretl_func.c:2615
 msgid "Old-style function definitions no longer supported"
 msgstr "definizione di funzione non più supportata"
 
 #: lib/src/gretl_func.c:3089
-#, fuzzy, c-format
+#, c-format
 msgid "Duplicated function name '%s'"
-msgstr "Cancellata la funzione '%s'\n"
+msgstr "Nome di funzione '%s' duplicato"
 
 #: lib/src/gretl_func.c:4049
 #, c-format
@@ -4469,12 +4469,10 @@ msgid "PDF doc should be called %s.pdf"
 msgstr "Il file PDF deve chiamarsi %s.pdf"
 
 #: lib/src/gretl_func.c:4102
-#, fuzzy
 msgid "Invalid R-depends line"
-msgstr "Dichiarazione non valida"
+msgstr "Linea R-depends non valida"
 
 #: lib/src/gretl_func.c:4342
-#, fuzzy
 msgid "Some required information was missing"
 msgstr "Mancano alcune informazioni richieste"
 
@@ -4501,9 +4499,9 @@ msgid ": *** not found"
 msgstr ": *** non trovato"
 
 #: lib/src/gretl_func.c:4437
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no such function"
-msgstr "%s: matrice inesistente"
+msgstr "'%s': funzione inesistente"
 
 #: lib/src/gretl_func.c:4548 gui/fnsave.c:4236 gui/fnsave.c:4303
 #, c-format
@@ -4515,9 +4513,8 @@ msgid "No functions are available for packaging at present."
 msgstr "Al momento non sono disponibili funzioni per creare un pacchetto."
 
 #: lib/src/gretl_func.c:4781
-#, fuzzy
 msgid "string value is missing"
-msgstr "Manca il nome della variabile"
+msgstr "Manca un valore stringa"
 
 #: lib/src/gretl_func.c:5595
 #, c-format
@@ -4525,9 +4522,8 @@ msgid "'%s': package contains duplicated function names"
 msgstr ""
 
 #: lib/src/gretl_func.c:5642
-#, fuzzy
 msgid "Warning: R_functions could not be enabled\n"
-msgstr "Attenzione: la soluzione probabilmente non è unica"
+msgstr "Attenzione: Impossibile abilitare R_functions\n"
 
 #: lib/src/gretl_func.c:5739 lib/src/gretl_func.c:7652
 #, c-format
@@ -4551,14 +4547,14 @@ msgstr ""
 "nativa di gretl %s. Probabilmente serve una versione aggiornata di %s"
 
 #: lib/src/gretl_func.c:5857
-#, fuzzy, c-format
+#, c-format
 msgid "%s: dependency %s was not found"
-msgstr "%s: colonna '%s' non trovata"
+msgstr "%s: dipendenza '%s' non trovata"
 
 #: lib/src/gretl_func.c:5915
-#, fuzzy, c-format
+#, c-format
 msgid "Provider package %s is not loaded\n"
-msgstr "Il pacchetto %s non è caricato"
+msgstr "Il pacchetto %s non è caricato\n"
 
 #: lib/src/gretl_func.c:5932 gui/fnsave.c:1756
 msgid "Time-series data"
@@ -4581,22 +4577,21 @@ msgstr "dataset di qualche tipo"
 msgid ""
 "\n"
 "Broken package! Basic information is missing\n"
-msgstr "Informazione sulle variabili mancante"
+msgstr "\nIl pacchetto è malformato! Informazioni di base mancanti\n"
 
 #: lib/src/gretl_func.c:6339
-#, fuzzy
 msgid "Broken package! Basic information is missing\n"
-msgstr "Informazione sulle variabili mancante"
+msgstr "Pacchettoi malformato! Informazioni di base mancanti\n"
 
 #: lib/src/gretl_func.c:6936 gui/library.c:10128 gui/library.c:10130
-#, fuzzy, c-format
+#, c-format
 msgid "Error loading %s\n"
-msgstr "Errore nella lettura di %s\n"
+msgstr "Errore nel caricamento di %s\n"
 
 #: lib/src/gretl_func.c:7169
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find sample script for '%s'"
-msgstr "Non trovo la funzione \"%s\""
+msgstr "Non trovo lo script di esempio per '%s'"
 
 #: lib/src/gretl_func.c:7404
 msgid "No description available"
@@ -4612,9 +4607,9 @@ msgid "'%s' is the name of a variable"
 msgstr "'%s' è il nome di una variabile"
 
 #: lib/src/gretl_func.c:7695
-#, fuzzy, c-format
+#, c-format
 msgid "%s: function is in use"
-msgstr "gretl: pacchetti di funzioni su %s"
+msgstr "'%s': la funzione è in uso"
 
 #: lib/src/gretl_func.c:7698
 #, fuzzy, c-format
@@ -4638,7 +4633,7 @@ msgstr "%s: un valore negativo è fuori dai limiti.\n"
 
 #: lib/src/gretl_func.c:7802
 msgid "'null' is not a valid default for scalars"
-msgstr ""
+msgstr "'null' non è un default valido per gli scalari"
 
 #: lib/src/gretl_func.c:7966
 #, c-format
@@ -4696,7 +4691,7 @@ msgstr "%s: documento vuoto"
 #: lib/src/gretl_func.c:8541
 #, c-format
 msgid "%s: unbalanced if/else/endif"
-msgstr ""
+msgstr "%s: if/else/endif sbilanciato"
 
 #: lib/src/gretl_func.c:8795
 #, c-format
@@ -5608,6 +5603,13 @@ msgid ""
 "If you first structure your full dataset as a panel, you can then\n"
 "do what you are trying to do."
 msgstr ""
+"Non si può usare l'opzione --panel-vars con il comando setobs quando\n"
+"\n"
+"* il set di dati è attualmente sottocampionato e\n"
+"* il set di dati completo non è un panel.\n"
+"\n"
+"Per fare ciò che stai cercando di fare, bisogna prima strutturare il dataset\n"
+"come panel."
 
 #: lib/src/gretl_panel.c:6986
 #, c-format
