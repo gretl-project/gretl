@@ -16807,6 +16807,7 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
    sub-nodes of @t, not yet evaluated.
 */
 
+
 static NODE *eval_query (NODE *t, NODE *c, parser *p)
 {
     NODE *ret = NULL;
@@ -16824,7 +16825,12 @@ static NODE *eval_query (NODE *t, NODE *c, parser *p)
     } else if (c->t == SERIES) {
         ret = query_eval_series(c->v.xvec, t, p);
     } else if (c->t == MAT) {
-        ret = query_eval_matrix(c->v.m, t, p);
+        if (0 /* gretl_matrix_is_scalar(c->v.m) */) {
+            /* Watch out! This breaks compilation. */
+            ret = query_eval_scalar(c->v.m->val[0], t, p);
+        } else {
+            ret = query_eval_matrix(c->v.m, t, p);
+        }
     } else {
         /* invalid type for boolean condition */
         p->err = e_types(c);
