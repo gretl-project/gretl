@@ -16806,6 +16806,7 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
    sub-nodes of @t, not yet evaluated.
 */
 
+
 static NODE *eval_query (NODE *t, NODE *c, parser *p)
 {
     NODE *ret = NULL;
