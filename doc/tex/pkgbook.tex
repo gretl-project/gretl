@@ -2931,10 +2931,11 @@ editor these appear under the \textsf{Special functions} tab in the
 
 \end{description}
 
-Functions selected for the special bundle-related roles may be public (if it
-makes sense to allow users to call them directly) or private (if they're
-designed to be called only via GUI hooks). In either case they must conform
-to certain rules, as follows.
+With the exception of \texttt{plot-precheck}, which should be private,
+functions selected for the special bundle-related roles may be public
+(if it makes sense to allow users to call them directly) or private
+(if they're designed to be called only via GUI hooks). In either case
+they must conform to certain rules, as follows.
 \begin{itemize}
 \item In all cases the first argument must be a bundle-pointer.
 \item In the case of \texttt{bundle-fcast} this is followed by two
