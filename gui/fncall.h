@@ -48,6 +48,8 @@ int try_exec_bundle_print_function (gretl_bundle *b, PRN *prn);
 
 gretl_matrix *run_plot_precheck (ufunc *func, gretl_bundle *b);
 
+fnpkg *get_package_for_bundle (gretl_bundle *b);
+
 void get_fncall_param_info (GtkWidget *dlg, int *series_ok,
 			    char **pname);
 

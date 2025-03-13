@@ -488,18 +488,6 @@ static void bundle_plot_call (GtkAction *action, gpointer p)
     exec_bundle_special_function(bundle, BUNDLE_PLOT, aname, vwin->main);
 }
 
-static fnpkg *get_package_for_bundle (gretl_bundle *b)
-{
-    const char *s = gretl_bundle_get_creator(b);
-    fnpkg *pkg = NULL;
-
-    if (s != NULL) {
-	pkg = get_function_package_by_name(s);
-    }
-
-    return pkg;
-}
-
 static gretl_matrix *get_plotcheck_vec (gretl_bundle *b,
 					int *chklen,
 					int *zeros)
@@ -546,6 +534,7 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin, int *insensitive)
     plotfunc = get_bundle_special_function(bundle, BUNDLE_PLOT);
 
     if (plotfunc != NULL) {
+        fnpkg *pkg = get_package_for_bundle(bundle);
 	ufunc *fun = NULL;
 	const char **S = NULL;
 	gretl_matrix *chk = NULL;
@@ -553,10 +542,7 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin, int *insensitive)
 	int zeros = 0;
 	int p = 1;
 
-	if (strcmp(plotfunc, "builtin")) {
-	    /* how can this come about? */
-	    fun = get_user_function_by_name(plotfunc);
-	}
+        fun = get_function_from_package(plotfunc, pkg);
 	if (fun != NULL) {
 	    S = fn_param_value_labels(fun, 1, &p);
 	}
