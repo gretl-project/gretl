@@ -3293,6 +3293,20 @@ static int prepare_regls_coef_plot_call (gretl_bundle *b,
     return err;
 }
 
+/* also called from bundle_menus.c */
+
+fnpkg *get_package_for_bundle (gretl_bundle *b)
+{
+    const char *s = gretl_bundle_get_creator(b);
+    fnpkg *pkg = NULL;
+
+    if (s != NULL) {
+	pkg = get_function_package_by_name(s);
+    }
+
+    return pkg;
+}
+
 /* Execute a special-purpose function made available by the package
    that produced bundle @b, possibly inflected by an integer
    option. If an option is present it's packed into @aname, following
@@ -3304,6 +3318,7 @@ int exec_bundle_special_function (gretl_bundle *b,
 				  const char *aname,
 				  GtkWidget *parent)
 {
+    fnpkg *pkg = NULL;
     ufunc *func = NULL;
     char funname[32];
     int plotting = 0;
@@ -3334,7 +3349,13 @@ int exec_bundle_special_function (gretl_bundle *b,
 	}
     }
 
-    func = get_user_function_by_name(funname);
+    pkg = get_package_for_bundle(b);
+
+    if (pkg != NULL) {
+        func = get_function_from_package(funname, pkg);
+    } else {
+        func = get_user_function_by_name(funname);
+    }
 
     if (func == NULL) {
 	errbox_printf(_("Couldn't find function %s"), funname);
