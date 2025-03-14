@@ -2623,7 +2623,7 @@ function bundle GUI_exogtest (int xvar[$mylist] "regressor to test")
   Note that the \texttt{list-maker} function must take no arguments
   (but can assume access to \texttt{\$model}) and must return a list
   (or fail with an error message if no suitable list members are
-  available). It should be a function private to the package.
+  available). It should be private to the package.
 
   \ttusage{list-maker = \detokenize{exogtest_listmaker}}
 
@@ -2994,15 +2994,16 @@ by a \texttt{plot-precheck} function. There are two cases to consider.
   associated strings.
 \end{itemize}
 In each case \texttt{plot-precheck} must return a binary $p$-vector,
-with 1s indicating options that are available given the bundle content
-and 0s indicating unavailable options. The effect in the GUI is as
-follows. Let $z$ denotes the number of 0s in the vector returned by
+with ones indicating options that are available given the bundle content
+and zeros indicating unavailable options. The effect in the GUI is as
+follows. Let $z$ denotes the number of zeros in the vector returned by
 \texttt{plot-precheck}. Then
 \begin{itemize}
 \item if $z = p$ no plots are available and the plot toolbar button
   itself is insensitive (can't be clicked).
 \item if $0 < z < p$ the button is sensitive but the unavailable menu
-  item are shown as ``grayed out''.
+  items are shown as ``grayed out''.
+\item if $z = 0$ all options are available for selection.
 \end{itemize}
 
 \section{Extra elements}
