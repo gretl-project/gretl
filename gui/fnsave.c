@@ -1316,14 +1316,12 @@ static void edit_sample_callback (GtkWidget *w, function_info *finfo)
     g_free(title);
 }
 
-/* Callback to launch dialog for adding or removing functions.
-   We need to be careful here: if the package's "extra
-   properties" dialog is open, its content is liable to be
-   out-dated by changes in the public and/or private
-   function lists. Since it would be very complicated and
-   error-prone to adjust this content on the fly, we'll
-   insist that the user closes the extra props dialog
-   first.
+/* Callback to launch dialog for adding or removing functions.  We
+   need to be careful here: if the package's "extra properties" dialog
+   is open, its content is liable to be out-dated by changes in the
+   public and/or private function lists. Since it would be very
+   complicated and error-prone to adjust this content on the fly,
+   we'll insist that the user closes the extra props dialog first.
 */
 
 static void add_remove_callback (GtkWidget *w, function_info *finfo)
@@ -3165,16 +3163,16 @@ static int process_special_functions (function_info *finfo,
 
 #define must_be_private(r) (r == UFUN_GUI_PRECHECK || \
 	                    r == UFUN_PLOT_PRECHECK || \
+                            r == UFUN_LIST_MAKER || \
                             r == UFUN_R_SETUP || \
                             r == UFUN_UI_MAKER)
-#define must_be_public(r) (!must_be_private(r) && r != UFUN_LIST_MAKER)
 
-/* After adding or deleting functions, check that any
-   selected "specials" are still valid: the selected
-   funtion has not been removed from the package, nor
-   has its public/private status been changed such as
-   to disqualify it from playing the given role. If a
-   selection has been invalidated, null it out.
+/* After adding or deleting functions, check that any selected
+   "specials" are still valid -- which requires that the selected
+   function has not been removed from the package, nor has its
+   public/private status been changed such as to disqualify it from
+   playing the given role. If a selection has been invalidated, null
+   it out.
 */
 
 static void verify_selected_specials (function_info *finfo)
@@ -3196,7 +3194,7 @@ static void verify_selected_specials (function_info *finfo)
 		    }
 		}
 	    }
-	    if (!found && !must_be_public(role)) {
+	    if (!found) {
 		/* try the private interface list */
 		for (j=0; j<finfo->n_priv && !found; j++) {
 		    if (!strcmp(seek, finfo->privnames[j])) {
@@ -3644,9 +3642,9 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     g_object_set_data_full(G_OBJECT(dlg), "combo-array",
 			   combo_array, g_free);
 
-    /* For each "special" function role, test the functions
-       in finfo->pkg to see if they qualify as candidates for
-       that role; if so, add them to the combo selector.
+    /* For each "special" function role, test the functions in
+       finfo->pkg to see if they qualify as candidates for that role;
+       if so, add them to the combo selector.
     */
 
     for (i=0; i<N_SPECIALS; i++) {
@@ -3654,20 +3652,20 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
 	int n_cands = 0;
 	int selected = 0;
 	int role = i + 1;
+        int jmax = nfuns;
 
 	key = package_role_get_key(role);
 	special = finfo->specials[i];
 	combo = gtk_combo_box_text_new();
 	combo_box_append_text(combo, "none");
 
-	for (j=0; j<nfuns; j++) {
-	    if (j < finfo->n_priv && !must_be_public(role)) {
-		funname = finfo->privnames[j];
-	    } else if (j >= finfo->n_priv && !must_be_private(role)) {
-		funname = finfo->pubnames[j - finfo->n_priv];
-	    } else {
-		continue;
-	    }
+        if (must_be_private(role)) {
+            jmax = finfo->n_priv;
+        }
+
+	for (j=0; j<jmax; j++) {
+            funname = j < finfo->n_priv ? finfo->privnames[j] :
+                finfo->pubnames[j-finfo->n_priv];
 	    if (function_ok_for_package_role(funname, role)) {
 		combo_box_append_text(combo, funname);
 		if (special != NULL && !selected && !strcmp(special, funname)) {
@@ -4915,8 +4913,9 @@ static int write_aux_file (function_info *finfo,
 			   const gchar *content,
 			   int flag, PRN *prn)
 {
+    gchar *tmp = NULL;
     const char *auxname = NULL;
-    const char *id;
+    const char *key;
     int ret = 0;
 
     if (content == NULL || *content == '\0') {
@@ -4924,20 +4923,28 @@ static int write_aux_file (function_info *finfo,
     }
 
     if (flag == WRITE_SAMPFILE) {
+        key = "sample-script";
 	auxname = finfo->sample_fname;
-	id = "sample-script";
+        if (auxname == NULL) {
+            tmp = g_strdup_printf("%s_sample.inp", finfo_pkgname(finfo));
+        }
     } else if (flag == WRITE_HELPFILE) {
+        key = "help";
 	auxname = finfo->help_fname;
-	id = "help";
     } else if (flag == WRITE_GUI_HELP) {
+        key = "gui-help";
 	auxname = finfo->gui_help_fname;
-	id = "gui-help";
     } else {
 	return 0;
     }
 
-    /* record filename in spec file */
-    pprintf(prn, "%s = %s\n", id, auxname);
+    /* record filename in spec file? */
+    if (auxname != NULL) {
+        pprintf(prn, "%s = %s\n", key, auxname);
+    } else if (tmp != NULL) {
+        pprintf(prn, "%s = %s\n", key, tmp);
+        g_free(tmp);
+    }
 
     if (finfo->save_flags & flag) {
 	/* write out the actual file */
@@ -4985,6 +4992,7 @@ int save_function_package_spec (const char *fname, gpointer p)
 	BUNDLE_FCAST,
 	BUNDLE_EXTRA,
 	GUI_PRECHECK,
+        PLOT_PRECHECK,
 	LIST_MAKER,
 	R_SETUP,
         UI_MAKER,
@@ -5151,8 +5159,11 @@ int save_function_package_spec (const char *fname, gpointer p)
 	pputs(prn, "depends = ");
 	for (i=0; i<finfo->n_depends; i++) {
 	    pputs(prn, finfo->depends[i]);
-	    pputc(prn, (i == finfo->n_files - 1)? '\n' : ' ');
+            if (i < finfo->n_depends - 1) {
+                pputc(prn, ' ');
+            }
 	}
+        pputc(prn, '\n');
     }
 
     /* write out R dependency string? */
