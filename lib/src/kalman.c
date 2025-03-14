@@ -2442,8 +2442,7 @@ static int vector_from_row_offset (gretl_vector *targ,
 
 /* Row @t of @src represents the vech of an n x n matrix: extract the
    row and apply the inverse operation of vech to reconstitute the
-   matrix in @targ -- or subtract the newly reconstituted matrix
-   from @targ.
+   matrix in @targ.
 */
 
 static void load_from_vech (gretl_matrix *targ, const gretl_matrix *src,
@@ -4080,6 +4079,52 @@ static gretl_matrix *fill_smdisterr (kalman *K, int *ownit)
     }
 }
 
+#if 0 /* experimental */
+
+static gretl_matrix *fill_pevar (kalman *K, int *ownit)
+{
+    /* requires 'extra' on the kalman bundle */
+    const gretl_matrix *Ptt = gretl_bundle_get_matrix(K->b, "Ptt", NULL);
+    gretl_matrix *F = NULL;
+
+    if (Ptt != NULL) {
+        F = gretl_matrix_alloc(K->N, K->n*(K->n+1)/2);
+    }
+
+    if (F != NULL) {
+        gretl_matrix *Ft = gretl_zero_matrix_new(K->n, K->n);
+        gretl_matrix *Pt = gretl_zero_matrix_new(K->r, K->r);
+        gretl_matrix *PM = gretl_zero_matrix_new(K->n, K->r);
+        int t;
+
+        fprintf(stderr, "HERE Ptt = %d x %d\n", Ptt->rows, Ptt->cols);
+        gretl_matrix_print(K->ZT, "K->ZT");
+        gretl_matrix_print(K->VY, "K->VY");
+
+        for (t=0; t<K->N; t++) {
+            load_from_vech(Pt, Ptt, K->r, t);
+            fprintf(stderr, "t=%d, p=%g\n", t, Pt->val[0]);
+            gretl_matrix_multiply_mod(K->ZT, GRETL_MOD_TRANSPOSE,
+                                      Pt, GRETL_MOD_NONE,
+                                      PM, GRETL_MOD_NONE);
+            gretl_matrix_copy_values(Ft, K->VY); /* VY? */
+            gretl_matrix_multiply_mod(PM, GRETL_MOD_NONE,
+                                      K->ZT, GRETL_MOD_NONE,
+                                      Ft, GRETL_MOD_CUMULATE);
+            record_to_vech(F, Ft, K->n, t);
+        }
+
+        gretl_matrix_free(Ft);
+        gretl_matrix_free(Pt);
+        gretl_matrix_free(PM);
+        *ownit = 1;
+    }
+
+    return F;
+}
+
+#else /* the status quo ante */
+
 static gretl_matrix *fill_pevar (kalman *K, int *ownit)
 {
     gretl_matrix *F = gretl_matrix_alloc(K->N, K->n*(K->n+1)/2);
@@ -4103,6 +4148,8 @@ static gretl_matrix *fill_pevar (kalman *K, int *ownit)
 
     return NULL;
 }
+
+#endif
 
 static gretl_matrix *construct_kalman_matrix (kalman *K,
 					      const char *key,
@@ -5125,7 +5172,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
             gretl_matrix_realloc(ui->Kinf, ui->Kinf->rows, d);
         }
 #endif
-}
+    }
 
     if (kalman_diffuse(K) && K->exact) {
         K->d = d > 0 ? d : 0;
