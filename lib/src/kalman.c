@@ -4993,7 +4993,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
         Kki = ui->Kki;
     }
 
-    if (K->n > 1 && ) {
+    if (K->n > 1 && matrix_is_varying(K, K_ZT)) {
         err = kalman_ensure_stepinfo(K, 0);
         if (err) {
             return err;
