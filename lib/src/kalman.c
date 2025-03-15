@@ -45,9 +45,6 @@ static int kdebug;
 static int trace;
 static int identify;
 
-/* temporary testing thing */
-static int exact_set;
-
 enum {
     KALMAN_BUNDLE  = 1 << 0,  /* user-defined filter, inside bundle */
     KALMAN_DIFFUSE = 1 << 1,  /* using diffuse P_{1|0} */
@@ -362,10 +359,6 @@ static void kalman_check_env (kalman *K)
 
     if (s1 != NULL) kdebug = atoi(s1);
     if (s2 != NULL) trace  = atoi(s2);
-
-    if (getenv("KALMAN_EXACT")) {
-	exact_set = 1;
-    }
 
     s1 = getenv("KALMAN_UNIVAR");
     if (s1 != NULL) {
@@ -1920,7 +1913,9 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
 }
 
 /* Handling of missing y_t or x_t, for the case of univariate y_t
-   (or all y_t values missing).
+   (or when all y_t values are missing). This is called from
+   kalman_forecast() and kfilter_dejong(), but not when the
+   "univariate" method is being used.
 */
 
 static void handle_missing_obs (kalman *K)
@@ -3814,24 +3809,21 @@ static int input_matrix_slot (const char *s)
 static GretlType kalman_extra_type (const char *key)
 {
     if (!strcmp(key, "ssfsim")) {
+        /* for SsfPack comparison: not documented */
         return GRETL_TYPE_DOUBLE;
     } else if (!strcmp(key, "simstart") ||
                !strcmp(key, "simx")) {
+        /* documented */
         return GRETL_TYPE_MATRIX;
     } else {
         return GRETL_TYPE_NONE;
     }
 }
 
-/* Respond to "diffuse" setting: 0 = off, 1 = traditional, 2 = exact */
+/* Respond to "diffuse" setting: 0 = no, 1 = traditional, 2 = exact */
 
 static int kalman_set_diffuse (kalman *K, int d)
 {
-    /* temporary testing thing */
-    if (exact_set && d > 0) {
-	d = 2;
-    }
-
     if (d != 0 && d != 1 && d != 2) {
         return E_INVARG;
     } else if (d > 0) {
@@ -3942,6 +3934,7 @@ int maybe_set_kalman_element (void *kptr,
 	    } else if (!strcmp(key, "dejong")) {
 		*err = kalman_set_code(K, K_DEJONG, (int) v);
             } else {
+                /* just for KFAS comparison */
                 K->flags |= KALMAN_EXTRA;
             }
         } else {
@@ -4116,6 +4109,12 @@ static gretl_matrix *fill_smdisterr (kalman *K, int *ownit)
     }
 }
 
+/* When the "univariate" method is being used but the observable is
+   multivariate, transform K->V and K->F for compatibility with the
+   standard multivariate output. This corresponds to the function
+   mvInnovations in KFAS. Added March, 2025.
+*/
+
 static int mv_transform (kalman *K)
 {
     gretl_matrix *Vt = gretl_zero_matrix_new(K->n, 1);
@@ -4208,18 +4207,6 @@ void *maybe_retrieve_kalman_element (void *kptr,
                 (void *) ownit, (void *) K->b, kalman_univariate(K));
     }
 
-#if 0
-    if (!strcmp(key, "pevar") && kalman_univariate(K) && K->n > 1) {
-        /* special case: the univariate F-matrix is a vector */
-        *reserved = 1;
-        *type = GRETL_TYPE_MATRIX;
-        if (ownit != NULL) {
-            ret = fill_pevar(K, ownit);
-        }
-        goto finalize;
-    }
-#endif
-
     if (!strcmp(key, "timevar_call")) {
         /* function call specifier? */
         *reserved = 1;
@@ -4269,8 +4256,6 @@ void *maybe_retrieve_kalman_element (void *kptr,
            identifier */
         *reserved = 1;
     }
-
-    // finalize:
 
     if (*reserved && ret == NULL && ownit != NULL) {
         gretl_errmsg_sprintf("\"%s\": %s", key, _("no such item"));
@@ -4967,6 +4952,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     gretl_matrix *Pki = NULL;
     gretl_matrix *Kki = NULL;
 
+    /* used only for KFAS comparison */
     gretl_matrix *att = NULL;
     gretl_matrix *Ptt = NULL;
 
@@ -5206,11 +5192,13 @@ static int kfilter_univariate (kalman *K, PRN *prn)
         fprintf(stderr, "univariate: loglik = %#.8g\n", K->loglik);
     }
 
-    if (att != NULL) {
-        bundle_add_matrix(K->b, "att", att);
-    }
-    if (Ptt != NULL) {
-        bundle_add_matrix(K->b, "Ptt", Ptt);
+    if (kalman_extra(K)) {
+        if (att != NULL) {
+            bundle_add_matrix(K->b, "att", att);
+        }
+        if (Ptt != NULL) {
+            bundle_add_matrix(K->b, "Ptt", Ptt);
+        }
     }
 
     if (K->n > 1) {
