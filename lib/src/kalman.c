@@ -3934,7 +3934,7 @@ int maybe_set_kalman_element (void *kptr,
 	    } else if (!strcmp(key, "dejong")) {
 		*err = kalman_set_code(K, K_DEJONG, (int) v);
             } else {
-                /* just for KFAS comparison */
+                /* note: just for KFAS comparison */
                 K->flags |= KALMAN_EXTRA;
             }
         } else {
