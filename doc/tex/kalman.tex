@@ -465,23 +465,28 @@ SSmod.inivar = 1.0e5 * I(stdim)
 \end{code}
 where \texttt{stdim} is the dimension of the state.
 
-While the ``$\kappa \times I$'' approach works fairly well in many cases
-it is nowadays generally deprecated in favor of one or other ``exact
-initial'' method. Such methods depend on derivation of the properties of
-the Kalman filter (and smoother) in the limit, as the aforementioned
-``very large'' variance tends to infinity. Gretl supports two such
-methods: the ``univariate approach to multivariate observable''
-advocated by \cite{durbin-koopman12} and the augmented Kalman method set
-out by \cite{dejong91} and \cite{dejong-lin03}.\footnote{The first of
-these is used in the \textsf{KFAS} package for \textsf{R}
-\citep{helske17} and the second by the \texttt{sspace} command in
-\textsf{Stata}. See \url{https://www.stata.com/manuals/tssspace.pdf}.}
-We'll refer to them via the labels \texttt{univariate} and
+While the ``$\kappa \times I$'' approach works quite well in many
+cases it is nowadays generally deprecated in favor of one or other
+``exact initial'' method. Such methods depend on derivation of the
+properties of the Kalman filter and smoother in the limit, as the
+aforementioned ``very large'' variance tends to infinity. Gretl
+supports two such methods:
+\begin{itemize}
+\item The ``univariate approach to multivariate observable'' advocated
+  by \cite{durbin-koopman12}. This is based on ideas from
+  \cite{anderson-moore79}, who labeled it ``sequential
+  processing''. It is used exclusively in the \textsf{KFAS} package
+  for \textsf{R} \citep{helske17}.
+\item The augmented Kalman method set out by \cite{dejong91} and
+  \cite{dejong-lin03}. This is used by the \texttt{sspace} command in
+  \textsf{Stata}; see \url{https://www.stata.com/manuals/tssspace.pdf}.
+\end{itemize}
+We'll refer to these methods via the labels \texttt{sequential} and
 \texttt{dejong}, respectively.
 
 \subsection{Exact diffuse methods}
 
-The \texttt{univariate} approach handles a vector observable by
+The \texttt{sequential} approach handles a vector observable by
 ``unpacking'' it and substituting scalar calculations for matrix ones
 so far as possible. Durbin and Koopman claim it is faster than the
 alternatives. It is also able to deal in a straightforward way with
@@ -502,8 +507,8 @@ The \texttt{dejong} approach has no problem with the variance cases
 observations can be handled and at present observations with any
 missing elements are ignored.
 
-In short, there are cases where \texttt{univariate} may work best, and
-other cases that are not handled by \texttt{univariate} but where
+In short, there are cases where \texttt{sequential} may work best, and
+other cases that are not handled by \texttt{sequential} but where
 \texttt{dejong} works fine. Hence our decision to offer both
 methods.
 
@@ -511,7 +516,7 @@ Table~\ref{tab:code-diffuse} sets out the various cases that arise via
 combination of ``code'' (where \texttt{legacy} indicates the Kalman code
 as of gretl 2022a) and ``diffuse status'' (i.e.\ whether the model is
 diffuse, and if so how it is handled). (Note that although the primary
-virtue of \texttt{univariate} and \texttt{dejong} is their handling of
+virtue of \texttt{sequential} and \texttt{dejong} is their handling of
 the exact diffuse case, these methods can also handle the non-diffuse
 case and the traditional ``$\kappa$-diffuse'' case).
 
@@ -521,7 +526,7 @@ case and the traditional ``$\kappa$-diffuse'' case).
    & non-diffuse & $\kappa$-diffuse & exact diffuse \\
   code & \texttt{diffuse=0} & \texttt{diffuse=1} & \texttt{diffuse=2} \\[4pt]
   \texttt{legacy} & A & D & -- \\
-  \texttt{univariate} & B & E & G \\
+  \texttt{sequential} & B & E & G \\
   \texttt{dejong} & C & F & H
 \end{tabular}
 \caption{Cross-tabulation of code-path and diffuse status. Letters in
@@ -537,7 +542,7 @@ defaults to 0 but can be set to 1 or 2.
 \begin{itemize}
 \item \texttt{diffuse=0}: case A is the default (for backward
   compatibility) but case B or C can be selected, by adding
-  \texttt{univariate=1} or \texttt{dejong=1} to the bundle.
+  \texttt{sequential=1} or \texttt{dejong=1} to the bundle.
 \item \texttt{diffuse=1}: case D is the default but case
   E or F can be selected as above.
 \item \texttt{diffuse=2}: the default is G but H can be selected
