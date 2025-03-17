@@ -73,7 +73,7 @@ enum {
 /* Which filtering and smoothing code are we using? */
 enum {
     K_LEGACY, /* legacy Kalman code */
-    K_UNIVAR, /* univariate approach, a la KFAS */
+    K_SEQUEN, /* sequential, a la KFAS */
     K_DEJONG  /* de Jong and Lin apporach */
 };
 
@@ -85,10 +85,10 @@ struct stepinfo_ {
     gretl_matrix *ZT;  /* (r * n) x N */
 };
 
-typedef struct univar_info_ univar_info;
+typedef struct seq_info_ seq_info;
 
-/* holder for data specific to univariate representation */
-struct univar_info_ {
+/* holder for data specific to sequential processing */
+struct seq_info_ {
     gretl_matrix *g;    /* obs disturbance variance vector */
     gretl_matrix *Z;    /* untransposed Z matrix */
     gretl_matrix *Zi;   /* row i of Z */
@@ -101,7 +101,8 @@ struct univar_info_ {
     gretl_matrix *Finf; /* recorder for smoothing */
     gretl_matrix *Kinf; /* ditto */
     gretl_matrix *y0;   /* original data (when diagonalizing) */
-    gretl_matrix *UF;   /* univariate counterpart of F */
+    gretl_matrix *V;    /* sequential counterpart of regular V */
+    gretl_matrix *F;    /* sequential counterpart of regular F */
     int free_g;
     int free_Z;
     int Nd;
@@ -127,7 +128,7 @@ struct dejong_info_ {
 
 struct kalman_ {
     int flags;   /* for recording any options */
-    int code;    /* code collection used: K_LEGACY, K_UNIVAR or K_DEJONG */
+    int code;    /* code collection used: K_LEGACY, K_SEQUEN or K_DEJONG */
     int exact;   /* exact initial iterations? */
     int vartype; /* STD_VAR, DJ_VAR or DK_VAR */
 
@@ -140,7 +141,7 @@ struct kalman_ {
     int okN; /* N - number of missing observations */
     int t;   /* current time step, when filtering */
     int d;   /* (diffuse) time-step at which standard iterations start */
-    int j;   /* (univariate) observable at which standard iters start */
+    int j;   /* (sequential) observable at which standard iters start */
     int TI;  /* flag for K->T is identity matrix */
 
     int ifc; /* boolean: obs equation includes an implicit constant? */
@@ -158,7 +159,7 @@ struct kalman_ {
     gretl_matrix *P1; /* r x r: MSE matrix, after updating */
     gretl_matrix *vt; /* n x 1: one-step forecast error(s), time t */
 
-    /* for the exact diffuse univariate case */
+    /* for the exact diffuse sequential case */
     gretl_matrix *Pk0; /* P∞,t */
     gretl_matrix *PK;  /* P∞, all t */
 
@@ -215,8 +216,8 @@ struct kalman_ {
     /* struct needed only when smoothing in the time-varying case */
     stepinfo *step;
 
-    /* struct needed for univariate approach */
-    univar_info *uinfo;
+    /* struct needed for sequential approach */
+    seq_info *sinfo;
 
     /* struct needed for de Jong exact approach */
     dejong_info *djinfo;
@@ -257,7 +258,7 @@ enum {
 #define kalman_extra(K)       (K->flags & KALMAN_EXTRA)
 #define kalman_is_bundle(K)   ((K->flags & KALMAN_BUNDLE)? 1 : 0)
 
-#define kalman_univariate(K)  (K->code == K_UNIVAR)
+#define kalman_sequential(K)  (K->code == K_SEQUEN)
 #define kalman_dejong(K)      (K->code == K_DEJONG)
 
 #define kalman_djvar(K)       (K->vartype == DJ_VAR)
@@ -270,12 +271,12 @@ static int kalman_revise_variance (kalman *K);
 static int check_for_matrix_updates (kalman *K, ufunc *uf);
 static int set_initial_statevar (kalman *K);
 static int kalman_set_diffuse (kalman *K, int d);
-static int kfilter_univariate (kalman *K, PRN *prn);
+static int kfilter_sequential (kalman *K, PRN *prn);
 static int kfilter_dejong (kalman *K, PRN *prn);
-static int ksmooth_univariate (kalman *K, int dist);
+static int ksmooth_sequential (kalman *K, int dist);
 static int state_smooth_dejong (kalman *K);
 static int dist_smooth_dejong (kalman *K, int DKstyle);
-static int kalman_add_univar_info (kalman *K);
+static int kalman_add_seq_info (kalman *K);
 static int kalman_add_dejong_info (kalman *K);
 static int bundle_add_matrix (gretl_bundle *b,
                               const char *key,
@@ -359,20 +360,6 @@ static void kalman_check_env (kalman *K)
 
     if (s1 != NULL) kdebug = atoi(s1);
     if (s2 != NULL) trace  = atoi(s2);
-
-    s1 = getenv("KALMAN_UNIVAR");
-    if (s1 != NULL) {
-        if (K->vartype == DJ_VAR) {
-            fprintf(stderr, "KALMAN_UNIVAR not applicable!\n");
-        } else {
-            K->code = K_UNIVAR;
-        }
-    } else {
-        s2 = getenv("KALMAN_DEJONG");
-        if (s2 != NULL) {
-            K->code = K_DEJONG;
-        }
-    }
 }
 
 static void free_stepinfo (kalman *K)
@@ -385,29 +372,30 @@ static void free_stepinfo (kalman *K)
     }
 }
 
-static void free_univar_info (kalman *K)
+static void free_seq_info (kalman *K)
 {
-    if (K->uinfo != NULL) {
-        if (K->uinfo->free_g) {
-            gretl_matrix_free(K->uinfo->g);
+    if (K->sinfo != NULL) {
+        if (K->sinfo->free_g) {
+            gretl_matrix_free(K->sinfo->g);
         }
-        if (K->uinfo->free_Z) {
-            gretl_matrix_free(K->uinfo->Z);
+        if (K->sinfo->free_Z) {
+            gretl_matrix_free(K->sinfo->Z);
         }
-        gretl_matrix_free(K->uinfo->Zi);
-        gretl_matrix_free(K->uinfo->Kti);
-        gretl_matrix_free(K->uinfo->Pki);
-        gretl_matrix_free(K->uinfo->Kki);
-        gretl_matrix_free(K->uinfo->m1);
-        gretl_matrix_free(K->uinfo->mm);
-        gretl_matrix_free(K->uinfo->Linv);
-        gretl_matrix_free(K->uinfo->Finf);
-        gretl_matrix_free(K->uinfo->Kinf);
-        gretl_matrix_free(K->uinfo->y0);
-        gretl_matrix_free(K->uinfo->UF);
+        gretl_matrix_free(K->sinfo->Zi);
+        gretl_matrix_free(K->sinfo->Kti);
+        gretl_matrix_free(K->sinfo->Pki);
+        gretl_matrix_free(K->sinfo->Kki);
+        gretl_matrix_free(K->sinfo->m1);
+        gretl_matrix_free(K->sinfo->mm);
+        gretl_matrix_free(K->sinfo->Linv);
+        gretl_matrix_free(K->sinfo->Finf);
+        gretl_matrix_free(K->sinfo->Kinf);
+        gretl_matrix_free(K->sinfo->y0);
+        gretl_matrix_free(K->sinfo->V);
+        gretl_matrix_free(K->sinfo->F);
 
-        free(K->uinfo);
-        K->uinfo = NULL;
+        free(K->sinfo);
+        K->sinfo = NULL;
     }
 }
 
@@ -476,7 +464,7 @@ void kalman_free (kalman *K)
     free(K->matcall);
     free(K->varying);
 
-    if (!kalman_univariate(K)) {
+    if (!kalman_sequential(K)) {
         gretl_matrix_free(K->H);
         gretl_matrix_free(K->G);
         gretl_matrix_free(K->HG);
@@ -494,8 +482,8 @@ void kalman_free (kalman *K)
     if (K->step != NULL) {
         free_stepinfo(K);
     }
-    if (K->uinfo != NULL) {
-        free_univar_info(K);
+    if (K->sinfo != NULL) {
+        free_seq_info(K);
     } else if (K->djinfo != NULL) {
         free_dejong_info(K);
     }
@@ -533,7 +521,7 @@ static kalman *kalman_new_empty (int flags)
         K->matcall = NULL;
         K->varying = NULL;
         K->step = NULL;
-        K->uinfo = NULL;
+        K->sinfo = NULL;
         K->djinfo = NULL;
         K->flags = flags;
         K->t = 0;
@@ -1101,7 +1089,7 @@ static int diffuse_Pini (kalman *K)
         if (kalman_dejong(K)) {
             fast_copy_values(K->P0, K->VS); /* H*H' */
         } else {
-            /* univariate case */
+            /* sequential case */
 #if P0_ZERO
             gretl_matrix_zero(K->P0);
 #else
@@ -1654,7 +1642,7 @@ static int kalman_do_Bx (kalman *K, gretl_matrix *targ,
     return missvals;
 }
 
-/* version of the above for use with the univariate approach */
+/* version of the above for use with the sequential approach */
 
 static double kalman_Bx_uni (kalman *K, int i)
 {
@@ -1812,26 +1800,26 @@ static int kalman_update_matrices (kalman *K, PRN *prn)
    transformations that may be needed.
 */
 
-static int adjust_univariate_Z (kalman *K)
+static int adjust_sequential_Z (kalman *K)
 {
     int err = 0;
 
     if (K->r > 1 || K->n > 1) {
         if (kdebug > 1) {
-            fprintf(stderr, "doing adjust_univariate_Z\n");
+            fprintf(stderr, "doing adjust_sequential_Z\n");
         }
         /* transposition needed */
-        if (K->uinfo->Z == NULL) {
-            fprintf(stderr, "K->uinfo->Z not allocated!\n");
+        if (K->sinfo->Z == NULL) {
+            fprintf(stderr, "K->sinfo->Z not allocated!\n");
             err = E_DATA;
         } else {
-            err = gretl_matrix_transpose(K->uinfo->Z, K->ZT);
+            err = gretl_matrix_transpose(K->sinfo->Z, K->ZT);
         }
-        if (!err && K->uinfo->Linv != NULL) {
+        if (!err && K->sinfo->Linv != NULL) {
             /* diagonalization needed (FIXME conditionality) */
-            gretl_matrix_multiply_mod(K->uinfo->Linv, GRETL_MOD_NONE,
+            gretl_matrix_multiply_mod(K->sinfo->Linv, GRETL_MOD_NONE,
                                       K->ZT, GRETL_MOD_TRANSPOSE,
-                                      K->uinfo->Z, GRETL_MOD_NONE);
+                                      K->sinfo->Z, GRETL_MOD_NONE);
         }
     }
 
@@ -1877,8 +1865,8 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
             if (err) {
                 fprintf(stderr, "kalman_refresh_matrices: err = %d at t = %d\n",
                         err, K->t);
-            } else if (i == K_ZT && kalman_univariate(K)) {
-                err = adjust_univariate_Z(K);
+            } else if (i == K_ZT && kalman_sequential(K)) {
+                err = adjust_sequential_Z(K);
             } else if (i == K_T) {
                 K->TI = gretl_is_identity_matrix(K->T);
             }
@@ -1891,8 +1879,8 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
             record_to_col(K->step->T, K->T, K->t);
         }
         if (K->step->ZT != NULL) {
-            if (K->uinfo != NULL) {
-                record_to_col(K->step->ZT, K->uinfo->Z, K->t);
+            if (K->sinfo != NULL) {
+                record_to_col(K->step->ZT, K->sinfo->Z, K->t);
             } else {
                 record_to_col(K->step->ZT, K->ZT, K->t);
             }
@@ -1912,10 +1900,10 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
     return err;
 }
 
-/* Handling of missing y_t or x_t, for the case of univariate y_t
-   (or when all y_t values are missing). This is called from
-   kalman_forecast() and kfilter_dejong(), but not when the
-   "univariate" method is being used.
+/* Handle missing values in y_t or x_t, for the case of univariate y_t
+   or when all y_t values are missing. This is called from
+   kalman_forecast() and kfilter_dejong(), but not when the sequential
+   method is being used (kfilter_sequential).
 */
 
 static void handle_missing_obs (kalman *K)
@@ -2275,10 +2263,10 @@ static int kalman_ensure_output_matrices (kalman *K)
     return err;
 }
 
-static int ensure_univariate_info (kalman *K)
+static int ensure_sequential_info (kalman *K)
 {
-    if (K->uinfo == NULL) {
-        return kalman_add_univar_info(K);
+    if (K->sinfo == NULL) {
+        return kalman_add_seq_info(K);
     } else {
         return 0;
     }
@@ -2315,22 +2303,22 @@ int kalman_run (kalman *K, PRN *prn, int *errp)
     }
 
     if (!err) {
-        if (kalman_univariate(K)) {
-            err = ensure_univariate_info(K);
+        if (kalman_sequential(K)) {
+            err = ensure_sequential_info(K);
         } else if (K->exact) {
             /* only if diffuse? */
             err = ensure_dejong_info(K);
         }
     }
 
-    if (K->exact && kalman_univariate(K)) {
+    if (K->exact && kalman_sequential(K)) {
         /* in case we're re-running the filter */
         fast_write_I(K->Pk0);
     }
 
     if (!err) {
-        if (kalman_univariate(K)) {
-            err = kfilter_univariate(K, prn);
+        if (kalman_sequential(K)) {
+            err = kfilter_sequential(K, prn);
         } else if (kalman_dejong(K)) {
 	    err = kfilter_dejong(K, prn);
 	} else {
@@ -2501,8 +2489,8 @@ static int retrieve_Zt (kalman *K)
     if (K->step == NULL || K->step->ZT == NULL) {
         return E_DATA;
     } else {
-        if (K->uinfo != NULL) {
-            load_from_col((gretl_matrix *) K->uinfo->Z, K->step->ZT, K->t);
+        if (K->sinfo != NULL) {
+            load_from_col((gretl_matrix *) K->sinfo->Z, K->step->ZT, K->t);
         } else {
             load_from_col((gretl_matrix *) K->ZT, K->step->ZT, K->t);
         }
@@ -2559,7 +2547,7 @@ static int load_filter_data (kalman *K, int no_collapse, int *err)
 
 /* kalman_ensure_stepinfo() is called in two cases:
 
-  (a) If we're doing univariate filtering, K->ZT is time-varying, and
+  (a) If we're doing sequential filtering, K->ZT is time-varying, and
    K->n > 1, we need a record of K->ZT per time step for building a
    proper F matrix (pevar).
 
@@ -2627,57 +2615,59 @@ static int kalman_ensure_stepinfo (kalman *K, int smoothing)
     return err;
 }
 
-static int kalman_add_univar_info (kalman *K)
+static int kalman_add_seq_info (kalman *K)
 {
     int err = 0;
 
-    K->uinfo = calloc(1, sizeof *K->uinfo);
-    if (K->uinfo == NULL) {
+    K->sinfo = calloc(1, sizeof *K->sinfo);
+    if (K->sinfo == NULL) {
         return E_ALLOC;
     }
 
-    K->uinfo->Zi  = gretl_matrix_alloc(1, K->r);
-    K->uinfo->Kti = gretl_matrix_alloc(K->r, 1);
-    K->uinfo->Pki = gretl_matrix_alloc(K->r, K->r);
-    K->uinfo->Kki = gretl_matrix_alloc(K->r, 1);
-    K->uinfo->m1  = gretl_matrix_alloc(K->r, 1);
-    K->uinfo->mm  = gretl_matrix_alloc(K->r, K->r);
+    K->sinfo->Zi  = gretl_matrix_alloc(1, K->r);
+    K->sinfo->Kti = gretl_matrix_alloc(K->r, 1);
+    K->sinfo->Pki = gretl_matrix_alloc(K->r, K->r);
+    K->sinfo->Kki = gretl_matrix_alloc(K->r, 1);
+    K->sinfo->m1  = gretl_matrix_alloc(K->r, 1);
+    K->sinfo->mm  = gretl_matrix_alloc(K->r, K->r);
 
     if (K->n > 1) {
-        K->uinfo->UF = gretl_matrix_alloc(K->N, K->n);
+        K->sinfo->V = gretl_matrix_alloc(K->N, K->n);
+        K->sinfo->F = gretl_matrix_alloc(K->N, K->n);
     } else {
-        K->uinfo->UF = NULL;
+        K->sinfo->V = NULL;
+        K->sinfo->F = NULL;
     }
 
-    K->uinfo->free_Z = 0;
-    K->uinfo->free_g = 0;
-    K->uinfo->Linv = NULL;
-    K->uinfo->y0 = NULL;
+    K->sinfo->free_Z = 0;
+    K->sinfo->free_g = 0;
+    K->sinfo->Linv = NULL;
+    K->sinfo->y0 = NULL;
 
     if (K->r > 1 || K->n > 1) {
         /* we'll need untransposed Z */
-        K->uinfo->Z = gretl_zero_matrix_new(K->n, K->r);
-        K->uinfo->free_Z = 1;
+        K->sinfo->Z = gretl_zero_matrix_new(K->n, K->r);
+        K->sinfo->free_Z = 1;
     } else {
-        K->uinfo->Z = K->ZT;
+        K->sinfo->Z = K->ZT;
     }
 
     if (K->VY != NULL) {
         if (K->n > 1) {
-            K->uinfo->g = gretl_zero_matrix_new(K->n, 1);
-            K->uinfo->free_g = 1;
+            K->sinfo->g = gretl_zero_matrix_new(K->n, 1);
+            K->sinfo->free_g = 1;
             /* we may need this too */
-            K->uinfo->Linv = gretl_matrix_copy(K->VY);
+            K->sinfo->Linv = gretl_matrix_copy(K->VY);
         } else {
-            K->uinfo->g = K->VY;
+            K->sinfo->g = K->VY;
         }
     } else {
-        K->uinfo->g = NULL;
+        K->sinfo->g = NULL;
     }
 
-    K->uinfo->Finf = NULL;
-    K->uinfo->Kinf = NULL;
-    K->uinfo->Nd = 0;
+    K->sinfo->Finf = NULL;
+    K->sinfo->Kinf = NULL;
+    K->sinfo->Nd = 0;
 
     /* FIXME proper error checking above */
 
@@ -2735,7 +2725,7 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
     int err = kalman_ensure_output_matrices(K);
 
     if (trace) {
-        printf("real_kalman_smooth()\n");
+        printf("real_kalman_smooth(), K->code %d\n", K->code);
     }
 
     if (!err && dist && K->code == K_LEGACY) {
@@ -2754,7 +2744,7 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
         }
     }
 
-    if (K->exact && kalman_univariate(K)) {
+    if (K->exact && kalman_sequential(K)) {
         int Nd = matrix_is_varying(K, K_ZT) ? K->N : 4 * K->r;
         int rows = K->r * K->r;
 
@@ -2766,8 +2756,8 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
     }
 
     if (!err) {
-        if (kalman_univariate(K)) {
-            err = ensure_univariate_info(K);
+        if (kalman_sequential(K)) {
+            err = ensure_sequential_info(K);
         } else if (K->exact) {
             err = ensure_dejong_info(K);
         }
@@ -2776,8 +2766,8 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
     if (!err) {
         /* prior forward pass */
 	K->smo_prep = dist ? SM_DIST : SM_STATE;
-        if (kalman_univariate(K)) {
-            err = kfilter_univariate(K, NULL);
+        if (kalman_sequential(K)) {
+            err = kfilter_sequential(K, NULL);
         } else if (kalman_dejong(K)) {
             err = kfilter_dejong(K, NULL);
         } else {
@@ -2789,8 +2779,8 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
     K->t = 0;
 
     if (!err) {
-        if (kalman_univariate(K)) {
-            err = ksmooth_univariate(K, dist);
+        if (kalman_sequential(K)) {
+            err = ksmooth_sequential(K, dist);
 	} else if (kalman_dejong(K)) {
             if (dist) {
                 err = dist_smooth_dejong(K, dist > 1);
@@ -3642,7 +3632,7 @@ enum {
     Ks_EXACT,
     Ks_CROSS,
     Ks_DKVAR,
-    Ks_UNI,
+    Ks_SEQ,
     Ks_S2,
     Ks_LNL,
     Ks_r,
@@ -3660,7 +3650,7 @@ static const char *kalman_output_scalar_names[K_N_SCALARS] = {
     "exact",
     "cross",
     "dkvar",
-    "univariate",
+    "sequential",
     "s2",
     "lnl",
     "r",
@@ -3715,8 +3705,8 @@ static double *kalman_output_scalar (kalman *K,
     case Ks_DKVAR:
         retval[idx] = (K->vartype == DK_VAR);
         break;
-    case Ks_UNI:
-        retval[idx] = (K->code == K_UNIVAR)? 1 : 0;
+    case Ks_SEQ:
+        retval[idx] = (K->code == K_SEQUEN)? 1 : 0;
         break;
     case Ks_S2:
         retval[idx] = K->s2;
@@ -3824,6 +3814,11 @@ static GretlType kalman_extra_type (const char *key)
 
 static int kalman_set_diffuse (kalman *K, int d)
 {
+    int err = 0;
+
+    if (trace) {
+        printf("kalman_set_diffuse: d = %d\n", d);
+    }
     if (d != 0 && d != 1 && d != 2) {
         return E_INVARG;
     } else if (d > 0) {
@@ -3832,46 +3827,56 @@ static int kalman_set_diffuse (kalman *K, int d)
 	    /* exact initial diffuse mode */
 	    K->exact = 1;
 	    if (K->code == K_LEGACY) {
-		/* the legacy code doesn't handle this */
-		K->code = kalman_djvar(K) ? K_DEJONG : K_UNIVAR;
+		/* the legacy code doesn't handle "exact" */
+		K->code = kalman_djvar(K) ? K_DEJONG : K_SEQUEN;
 	    }
 	} else {
-	    /* traditional "kappa" mode */
+	    /* d == 1: traditional "kappa" mode */
 	    K->exact = 0;
 	}
-        return diffuse_Pini(K);
+        err = diffuse_Pini(K);
     } else {
+        /* d == 0 */
         K->exact = 0;
         K->flags &= ~KALMAN_DIFFUSE;
         if (K->Pk0 != NULL) {
             gretl_matrix_free(K->Pk0);
             K->Pk0 = NULL;
         }
-        return 0;
     }
+
+    return err;
 }
 
-/* respond to "univariate" or "dejong" setting */
+/* Respond to user's setting of "sequential" or "dejong": @code tells
+   us which term we got, and @s tells us whether the value was 0 or 1.
+*/
 
 static int kalman_set_code (kalman *K, int code, int s)
 {
-    if (s && code == K_UNIVAR && K->vartype == DJ_VAR) {
-        gretl_errmsg_set(_("kalman: the 'univariate' setting is not compatible with\n"
+    if (s && code == K_SEQUEN && K->vartype == DJ_VAR) {
+        gretl_errmsg_set(_("kalman: the 'sequential' setting is not compatible with\n"
                          "cross-correlated disturbances"));
         return E_INVARG;
     } else if (s && (code != K->code)) {
+        /* select the specified optional code */
         K->code = code;
-#if 0 /* this should not be required */
-	if (code == K_UNIVAR && kalman_diffuse(K) && !K->exact) {
-	    K->exact = 1;
-	}
-#endif
-	if (code == K_UNIVAR && kalman_diffuse(K) && K->Pk0 == NULL) {
-	    K->Pk0 = gretl_identity_matrix_new(K->r);
-	    if (K->Pk0 == NULL) {
-		return E_ALLOC;
-	    }
-	}
+    } else if (!s && (code == K->code)) {
+        /* deselect the specified optional code */
+        K->code = K_LEGACY;
+    }
+
+    /* is this clause actually in the right place? */
+    if (K->code == K_SEQUEN && kalman_diffuse(K) && K->Pk0 == NULL) {
+        K->Pk0 = gretl_identity_matrix_new(K->r);
+        if (K->Pk0 == NULL) {
+            return E_ALLOC;
+        }
+    }
+
+    if (trace) {
+        printf("kalman_set_code: code %d and s %d -> K->code %d\n",
+               code, s, K->code);
     }
 
     return 0;
@@ -3921,16 +3926,18 @@ int maybe_set_kalman_element (void *kptr,
         return 0;
     }
 
-    if (!strcmp(key, "diffuse") || !strcmp(key, "univariate") ||
-        !strcmp(key, "dejong") || !strcmp(key, "extra")) {
+    if (!strcmp(key, "diffuse") || !strcmp(key, "sequential") ||
+        !strcmp(key, "univariate") || !strcmp(key, "dejong") ||
+        !strcmp(key, "extra")) {
         /* scalar config settings */
         if (vtype == GRETL_TYPE_DOUBLE) {
             double v = *(double *) vptr;
 
             if (!strcmp(key, "diffuse")) {
                 *err = kalman_set_diffuse(K, (int) v);
-            } else if (!strcmp(key, "univariate")) {
-                *err = kalman_set_code(K, K_UNIVAR, (int) v);
+            } else if (!strcmp(key, "sequential") ||
+                       !strcmp(key, "univariate")) {
+                *err = kalman_set_code(K, K_SEQUEN, (int) v);
 	    } else if (!strcmp(key, "dejong")) {
 		*err = kalman_set_code(K, K_DEJONG, (int) v);
             } else {
@@ -4109,7 +4116,7 @@ static gretl_matrix *fill_smdisterr (kalman *K, int *ownit)
     }
 }
 
-/* When the "univariate" method is being used but the observable is
+/* When the sequential method is being used but the observable is
    multivariate, transform K->V and K->F for compatibility with the
    standard multivariate output. This corresponds to the function
    mvInnovations in KFAS. Added March, 2025.
@@ -4119,10 +4126,10 @@ static int mv_transform (kalman *K)
 {
     gretl_matrix *Vt = gretl_zero_matrix_new(K->n, 1);
     gretl_matrix *PM = gretl_zero_matrix_new(K->n, K->r);
-    gretl_matrix *Z  = K->uinfo->Z;
-    gretl_matrix *At = K->a0;
+    gretl_matrix *At = gretl_zero_matrix_new(K->r, 1);
+    gretl_matrix *Pt = gretl_zero_matrix_new(K->r, K->r);
+    gretl_matrix *Z  = K->sinfo->Z;
     gretl_matrix *Ft = K->Ft;
-    gretl_matrix *Pt = K->P0;
     int t;
 
     if (Vt == NULL || PM == NULL) {
@@ -4151,6 +4158,8 @@ static int mv_transform (kalman *K)
 
     gretl_matrix_free(Vt);
     gretl_matrix_free(PM);
+    gretl_matrix_free(At);
+    gretl_matrix_free(Pt);
 
     return 0;
 }
@@ -4203,8 +4212,8 @@ void *maybe_retrieve_kalman_element (void *kptr,
 
     if (kdebug > 1) {
 	fprintf(stderr, "maybe_retrieve_kalman_element: key '%s'\n", key);
-	fprintf(stderr, " ownit %p, K->b %p, univariate %d\n",
-                (void *) ownit, (void *) K->b, kalman_univariate(K));
+	fprintf(stderr, " ownit %p, K->b %p, sequential %d\n",
+                (void *) ownit, (void *) K->b, kalman_sequential(K));
     }
 
     if (!strcmp(key, "timevar_call")) {
@@ -4699,7 +4708,7 @@ int kalman_bundle_n_members (gretl_bundle *b)
     return n;
 }
 
-/* Start of "univariate" filtering and smoothing code. Based on Durbin
+/* Start of sequential filtering and smoothing code. Based on Durbin
    and Koopman, Time Series Analysis by State Space Methods, 2e
    (Oxford, 2012), section 6.4 in particular. The C implementation
    here owes a lot to Jouni Helske's fortran code in his KFAS package
@@ -4792,10 +4801,10 @@ static void state_cross_update (gretl_matrix *Pti,
 
 static int ensure_DK_smo_recorders (kalman *K, int Nd)
 {
-    if (K->uinfo->Finf == NULL) {
-        K->uinfo->Finf = gretl_zero_matrix_new(K->n, Nd);
-        K->uinfo->Kinf = gretl_zero_matrix_new(K->n * K->r, Nd);
-        K->uinfo->Nd = Nd;
+    if (K->sinfo->Finf == NULL) {
+        K->sinfo->Finf = gretl_zero_matrix_new(K->n, Nd);
+        K->sinfo->Kinf = gretl_zero_matrix_new(K->n * K->r, Nd);
+        K->sinfo->Nd = Nd;
     }
 
     return 0;
@@ -4803,8 +4812,8 @@ static int ensure_DK_smo_recorders (kalman *K, int Nd)
 
 static int kalman_ldl (kalman *K)
 {
-    gretl_matrix *L = K->uinfo->Linv;
-    gretl_matrix *g = K->uinfo->g;
+    gretl_matrix *L = K->sinfo->Linv;
+    gretl_matrix *g = K->sinfo->g;
     double gj, lij;
     int i, j, err;
 
@@ -4842,13 +4851,13 @@ static int kalman_diagonalize (kalman *K)
     }
 
     /* adjust Z */
-    gretl_matrix_multiply_mod(K->uinfo->Linv, GRETL_MOD_NONE,
+    gretl_matrix_multiply_mod(K->sinfo->Linv, GRETL_MOD_NONE,
                               K->ZT, GRETL_MOD_TRANSPOSE,
-                              K->uinfo->Z, GRETL_MOD_NONE);
+                              K->sinfo->Z, GRETL_MOD_NONE);
 
-    if (K->uinfo->y0 == NULL) {
-        K->uinfo->y0 = gretl_matrix_copy(K->y);
-        if (K->uinfo->y0 == NULL) {
+    if (K->sinfo->y0 == NULL) {
+        K->sinfo->y0 = gretl_matrix_copy(K->y);
+        if (K->sinfo->y0 == NULL) {
             err = E_ALLOC;
         }
     }
@@ -4856,8 +4865,8 @@ static int kalman_diagonalize (kalman *K)
     if (!err) {
         /* adjust the observable */
         for (t=0; t<K->N; t++) {
-            load_from_row(tmp, K->uinfo->y0, t);
-            gretl_matrix_multiply(K->uinfo->Linv, tmp, yt);
+            load_from_row(tmp, K->sinfo->y0, t);
+            gretl_matrix_multiply(K->sinfo->Linv, tmp, yt);
             record_to_vec(K->y, yt, t);
         }
     }
@@ -4868,11 +4877,11 @@ static int kalman_diagonalize (kalman *K)
     return err;
 }
 
-static int handle_univariate_transforms (kalman *K)
+static int handle_sequential_transforms (kalman *K)
 {
     int err = 0;
 
-    err = gretl_matrix_transpose(K->uinfo->Z, K->ZT);
+    err = gretl_matrix_transpose(K->sinfo->Z, K->ZT);
 
     if (K->n > 1 && K->VY != NULL) {
         /* obsvar needs transformation */
@@ -4880,7 +4889,7 @@ static int handle_univariate_transforms (kalman *K)
 
         if (matrix_is_diagonal(K->VY)) {
             for (i=0; i<K->n; i++) {
-                K->uinfo->g->val[i] = gretl_matrix_get(K->VY, i, i);
+                K->sinfo->g->val[i] = gretl_matrix_get(K->VY, i, i);
             }
         } else {
             if (kdebug) {
@@ -4932,23 +4941,24 @@ static double tiny_value (const gretl_matrix *Z)
 #endif
 }
 
-static int kfilter_univariate (kalman *K, PRN *prn)
+static int kfilter_sequential (kalman *K, PRN *prn)
 {
-    univar_info *ui = K->uinfo;
+    seq_info *si = K->sinfo;
     gretl_matrix *Kkt = K->Mt;
     gretl_matrix *at = K->a0;
     gretl_matrix *Pt = K->P0;
     gretl_matrix *ati = K->a1;
     gretl_matrix *Pti = K->P1;
     gretl_matrix *Pk = K->Pk0;
-    gretl_matrix *UF = K->F;
+    gretl_matrix *V = K->V;
+    gretl_matrix *F = K->F;
 
-    gretl_matrix *Z   = ui->Z;
-    gretl_matrix *g   = ui->g;
-    gretl_matrix *Zi  = ui->Zi;
-    gretl_matrix *Kti = ui->Kti;
-    gretl_matrix *m1  = ui->m1;
-    gretl_matrix *mm  = ui->mm;
+    gretl_matrix *Z   = si->Z;
+    gretl_matrix *g   = si->g;
+    gretl_matrix *Zi  = si->Zi;
+    gretl_matrix *Kti = si->Kti;
+    gretl_matrix *m1  = si->m1;
+    gretl_matrix *mm  = si->mm;
     gretl_matrix *Pki = NULL;
     gretl_matrix *Kki = NULL;
 
@@ -4970,13 +4980,13 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     int err = 0;
 
     if (identify || trace) {
-        printf("kfilter_univariate(), diffuse = %d, exact = %d\n",
-	       kalman_diffuse(K), K->exact);
+        printf("kfilter_sequential(), diffuse = %d, exact = %d, smo_prep = %d\n",
+	       kalman_diffuse(K), K->exact, K->smo_prep);
     }
 
     if (K->exact) {
-        Pki = ui->Pki;
-        Kki = ui->Kki;
+        Pki = si->Pki;
+        Kki = si->Kki;
     }
 
     if (K->n > 1) {
@@ -4986,11 +4996,16 @@ static int kfilter_univariate (kalman *K, PRN *prn)
                 return err;
             }
         }
-        UF = ui->UF;
+        /* select the sequential-special V and F matrices */
+        if (trace) {
+            printf("  select V, F from seq_info\n");
+        }
+        V = si->V;
+        F = si->F;
     }
 
     if (K->n > 1 || K->r > 1) {
-        handle_univariate_transforms(K);
+        handle_sequential_transforms(K);
     }
 
     if (K->smo_prep && K->exact) {
@@ -5009,11 +5024,8 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     K->loglik = 0;
     set_kalman_running(K);
 
-    if (trace) {
-        printf("kfilter_univariate(), exact = %d\n", K->exact);
-    }
     if (kdebug) {
-        fprintf(stderr, "\n*** kfilter_univariate: r=%d, n=%d, exact=%d ***\n",
+        fprintf(stderr, "\n*** kfilter_sequential: r=%d, n=%d, exact=%d ***\n",
                 K->r, K->n, K->exact);
     }
 
@@ -5056,7 +5068,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
             if (g != NULL) {
                 Fti += g->val[i];
             }
-            gretl_matrix_set(UF, t, i, Fti);
+            gretl_matrix_set(F, t, i, Fti);
             record_to_col(K->Kt, Kti, i);
             if (d == 0) {
                 /* still initial */
@@ -5065,13 +5077,13 @@ static int kfilter_univariate (kalman *K, PRN *prn)
                                           Kki, GRETL_MOD_NONE);
                 Fki = dotprod(Zi, Kki);
                 if (K->smo_prep && t < Nd) {
-                    gretl_matrix_set(ui->Finf, i, t, Fki);
+                    gretl_matrix_set(si->Finf, i, t, Fki);
                     record_to_col(Kkt, Kki, i);
                 }
             }
 
             vti = uni_get_vti(K, Zi, ati, i);
-            gretl_matrix_set(K->V, t, i, vti);
+            gretl_matrix_set(V, t, i, vti);
             if (na(vti)) {
                 K->okN -= 1;
                 continue;
@@ -5117,7 +5129,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 	}
         if (K->smo_prep && d == 0 && t < Nd) {
 	    /* record K∞ */
-	    record_to_col(ui->Kinf, Kkt, t);
+	    record_to_col(si->Kinf, Kkt, t);
         }
 
         if (j > 0 && d == 0) {
@@ -5169,11 +5181,11 @@ static int kfilter_univariate (kalman *K, PRN *prn)
         K->d = K->N;
         K->j = K->n;
     } else if (K->smo_prep && K->exact) {
-        dj_from_Finf(ui->Finf, &d, &j, k_tiny);
+        dj_from_Finf(si->Finf, &d, &j, k_tiny);
 #if 0 /* not sure about this, causes trouble? */
-        if (d > 0 && d < ui->Finf->cols) {
-            gretl_matrix_realloc(ui->Finf, ui->Finf->rows, d);
-            gretl_matrix_realloc(ui->Kinf, ui->Kinf->rows, d);
+        if (d > 0 && d < si->Finf->cols) {
+            gretl_matrix_realloc(si->Finf, si->Finf->rows, d);
+            gretl_matrix_realloc(si->Kinf, si->Kinf->rows, d);
         }
 #endif
     }
@@ -5189,7 +5201,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 
     if (kdebug) {
         fprintf(stderr, "*** after filtering: d=%d, j=%d ***\n", d, j);
-        fprintf(stderr, "univariate: loglik = %#.8g\n", K->loglik);
+        fprintf(stderr, "sequential: loglik = %#.8g\n", K->loglik);
     }
 
     if (kalman_extra(K)) {
@@ -5202,13 +5214,16 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     }
 
     if (K->n > 1) {
+        if (trace) {
+            printf( "  call mv_transform\n");
+        }
         mv_transform(K);
     }
 
     return 0;
 }
 
-/* univariate smoothing follows */
+/* sequential smoothing follows */
 
 /* cumulant matrices */
 
@@ -5231,7 +5246,7 @@ static int allocate_cumulants (struct cumulants *c,
 
     c->r0 = gretl_zero_matrix_new(r, 1);
     c->N0 = gretl_zero_matrix_new(r, r);
-    c->L0 = gretl_matrix_alloc(r, r);
+    c->L0 = gretl_zero_matrix_new(r, r);
     c->Nt = gretl_zero_matrix_new(r, r);
     c->mm = gretl_matrix_alloc(r, r);
     c->m1 = gretl_matrix_alloc(r, 1);
@@ -5463,11 +5478,12 @@ static int dagger_calc (struct cumulants *c,
     memcpy(Pdag->val, Pt->val, Nsize);
     memcpy(Pdag->val + mm, Pk->val, Nsize);
 
-#if 0
-    fprintf(stderr, "dagger calc, t=%d\n", K->t);
-    gretl_matrix_print(Pt, "Pt");
-    gretl_matrix_print(Pdag, "Pdag");
-#endif
+    if (kdebug) {
+        fprintf(stderr, "dagger calc, t=%d\n", K->t);
+        gretl_matrix_print(Pt, "Pt");
+        gretl_matrix_print(Pdag, "Pdag");
+        gretl_matrix_print(at, "at");
+    }
 
     /* ahat[t,] = (at + Pdag * rdag)' */
     gretl_matrix_multiply_mod(Pdag, GRETL_MOD_NONE,
@@ -5698,14 +5714,15 @@ static int state_dist_setup (kalman *K,
     return 1;
 }
 
-static int ksmooth_univariate (kalman *K, int dist)
+static int ksmooth_sequential (kalman *K, int dist)
 {
     gretl_matrix_block *B = NULL;
-    univar_info *ui = K->uinfo;
+    seq_info *si = K->sinfo;
     struct cumulants c = {0};
     gretl_matrix *Q = NULL;
     gretl_matrix *QRT = NULL;
-    gretl_matrix *UF = NULL;
+    gretl_matrix *V = NULL;
+    gretl_matrix *F = NULL;
     gretl_matrix *g = NULL;
 
     int i, t, N = K->N;
@@ -5733,14 +5750,16 @@ static int ksmooth_univariate (kalman *K, int dist)
     double k_tiny = 0;
 
     /* convenience pointers */
-    UF = K->n > 1 ? ui->UF : K->F;
-    g  = ui->g;
+    V = K->n > 1 ? si->V : K->V;
+    F = K->n > 1 ? si->F : K->F;
+    g  = si->g;
 
     if (trace) {
-        printf("ksmooth_univariate(), dist = %d\n", dist);
+        printf("ksmooth_sequential(), dist = %d, d=%d, j=%d\n",
+               dist, K->d, K->j);
     }
     if (kdebug) {
-        fprintf(stderr, "ksmooth_univariate: dist=%d, d=%d, j=%d\n",
+        fprintf(stderr, "ksmooth_sequential: dist=%d, d=%d, j=%d\n",
                 dist, K->d, K->j);
     }
 
@@ -5780,11 +5799,11 @@ static int ksmooth_univariate (kalman *K, int dist)
     }
 
     if (K->exact) {
-	k_tiny = tiny_value(ui->Z); /* ? */
+	k_tiny = tiny_value(si->Z); /* ? */
     }
 
     if (kdebug) {
-        fprintf(stderr, "\n*** univariate smoother: d=%d, j=%d, dist=%d ***\n",
+        fprintf(stderr, "\n*** sequential smoother: d=%d, j=%d, dist=%d ***\n",
                 d, j, dist);
     }
 
@@ -5796,8 +5815,8 @@ static int ksmooth_univariate (kalman *K, int dist)
         if (!err && matrix_is_varying(K, K_ZT)) {
             err = retrieve_Zt(K);
         }
-        load_from_row(vt, K->V, t);
-        load_from_row(Ft, UF, t);
+        load_from_row(vt, V, t);
+        load_from_row(Ft, F, t);
         load_from_row(Kt, K->K, t);
         load_from_row(at, K->A, t);
         load_from_vech(Pt, K->P, K->r, K->t);
@@ -5813,7 +5832,7 @@ static int ksmooth_univariate (kalman *K, int dist)
                 continue;
             }
             ftinv = 1.0 / Fti;
-            load_from_row(Zti, ui->Z, i);
+            load_from_row(Zti, si->Z, i);
             load_from_col(Kti, Kt, i);
             if (eps_smo) {
                 eps_smooth_Ft(ftinv, g->val[i], vti, Kti, &c,
@@ -5847,8 +5866,8 @@ static int ksmooth_univariate (kalman *K, int dist)
             err = retrieve_Zt(K);
         }
         load_from_row(Kt, K->K, t);
-        load_from_row(Ft, UF, t);
-        load_from_row(vt, K->V, t);
+        load_from_row(Ft, F, t);
+        load_from_row(vt, V, t);
 
         /* countdown to observable @j */
         for (i=K->n-1; i>=j; i--) {
@@ -5861,7 +5880,7 @@ static int ksmooth_univariate (kalman *K, int dist)
                 continue;
             }
             ftinv = 1.0 / Fti;
-            load_from_row(Zti, ui->Z, i);
+            load_from_row(Zti, si->Z, i);
             load_from_col(Kti, Kt, i);
             if (eps_smo) {
                 eps_smooth_Ft(ftinv, g->val[i], vti, Kti, &c,
@@ -5871,8 +5890,8 @@ static int ksmooth_univariate (kalman *K, int dist)
         }
 
         /* retrieve the diffuse values */
-        load_from_col(Fk, ui->Finf, t);
-        load_from_col(Kk, ui->Kinf, t);
+        load_from_col(Fk, si->Finf, t);
+        load_from_col(Kk, si->Kinf, t);
         load_from_col(Pk, K->PK, t);
 
         /* further countdown to first observable */
@@ -5890,9 +5909,9 @@ static int ksmooth_univariate (kalman *K, int dist)
                 }
                 continue;
             }
-            if (Fki > k_tiny) { /* was K_TINY */
+            if (Fki > k_tiny) {
                 fkinv = 1.0 / Fki;
-                load_from_row(Zti, ui->Z, i);
+                load_from_row(Zti, si->Z, i);
                 load_from_col(Kki, Kk, i);
                 load_from_col(Kti, Kt, i);
                 if (eps_smo) {
@@ -5902,7 +5921,7 @@ static int ksmooth_univariate (kalman *K, int dist)
                 fkpos(fkinv, Fti, vti, Kki, Kti, Zti, &c);
             } else if (Fti > 0) {
                 ftinv = 1.0 / Fti;
-                load_from_row(Zti, ui->Z, i);
+                load_from_row(Zti, si->Z, i);
                 load_from_col(Kti, Kt, i);
                 if (eps_smo) {
                     eps_smooth_Ft(ftinv, g->val[i], vti, Kti, &c,
@@ -5939,11 +5958,11 @@ static int ksmooth_univariate (kalman *K, int dist)
             if (!err && matrix_is_varying(K, K_ZT)) {
                 err = retrieve_Zt(K);
             }
-            load_from_row(vt, K->V, t);
-            load_from_row(Ft, UF, t);
+            load_from_row(vt, V, t);
+            load_from_row(Ft, F, t);
             load_from_row(Kt, K->K, t);
-            load_from_col(Fk, ui->Finf, t);
-            load_from_col(Kk, ui->Kinf, t);
+            load_from_col(Fk, si->Finf, t);
+            load_from_col(Kk, si->Kinf, t);
 
             for (i=K->n-1; i>=0; i--) {
                 if (kdebug) {
@@ -5960,7 +5979,7 @@ static int ksmooth_univariate (kalman *K, int dist)
                 }
                 if (Fki > k_tiny) {
                     fkinv = 1.0 / Fki;
-                    load_from_row(Zti, ui->Z, i);
+                    load_from_row(Zti, si->Z, i);
                     load_from_col(Kki, Kk, i);
                     load_from_col(Kti, Kt, i);
                     if (eps_smo) {
@@ -5970,7 +5989,7 @@ static int ksmooth_univariate (kalman *K, int dist)
                     fkpos(fkinv, Fti, vti, Kki, Kti, Zti, &c);
                 } else if (Fti > 0) {
                     ftinv = 1.0 / Fti;
-                    load_from_row(Zti, ui->Z, i);
+                    load_from_row(Zti, si->Z, i);
                     load_from_col(Kti, Kt, i);
                     if (eps_smo) {
                         eps_smooth_Ft(ftinv, g->val[i], vti, Kti, &c,
@@ -6014,7 +6033,7 @@ static int ksmooth_univariate (kalman *K, int dist)
     return 0;
 }
 
-/* end of univariate smoother functions */
+/* end of sequential smoother functions */
 
 /* Start de Jong filtering and smoothing functions.  These are based
    on the 2003 paper by de Jong and Lin, "Smoothing with an unknown
