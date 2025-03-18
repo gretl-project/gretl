@@ -2696,40 +2696,12 @@ static int kalman_add_dejong_info (kalman *K)
     return err;
 }
 
-/* optional matrix (old-style) to hold smoothed disturbances */
-
-static int ensure_U_matrix (kalman *K)
-{
-    int Ucols = K->r;
-    int Urows = K->N;
-    int err = 0;
-
-    if (K->VY != NULL) {
-        Ucols += K->n;
-    }
-
-    if (K->U == NULL) {
-        K->U = gretl_matrix_alloc(Urows, Ucols);
-        if (K->U == NULL) {
-            err = E_ALLOC;
-        }
-    } else if (K->U->rows != Urows || K->U->cols != Ucols) {
-        err = gretl_matrix_realloc(K->U, Urows, Ucols);
-    }
-
-    return err;
-}
-
 static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
 {
     int err = kalman_ensure_output_matrices(K);
 
     if (trace) {
         printf("real_kalman_smooth(), K->code %d\n", K->code);
-    }
-
-    if (!err && dist && K->code == K_LEGACY) {
-        err = ensure_U_matrix(K);
     }
 
     if (err) {
@@ -3569,6 +3541,20 @@ kalman_bundle_set_matrix (kalman *K, gretl_matrix *m,
     return err;
 }
 
+static const char *kalman_output_matrix_names[] = {
+    "prederr",
+    "pevar",
+    "state",
+    "stvar",
+    "gain",
+    "llt",
+    "smdist",
+    "smdisterr",
+    "uhat"
+};
+
+#define K_N_OUTPUTS G_N_ELEMENTS(kalman_output_matrix_names)
+
 static gretl_matrix **kalman_output_matrix (kalman *K,
                                             const char *key)
 {
@@ -3597,19 +3583,11 @@ static gretl_matrix **kalman_output_matrix (kalman *K,
     return pm;
 }
 
-static const char *kalman_output_matrix_names[] = {
-    "prederr",
-    "pevar",
-    "state",
-    "stvar",
-    "gain",
-    "llt",
-    "smdist",
-    "smdisterr",
-    "uhat"
-};
-
-#define K_N_OUTPUTS G_N_ELEMENTS(kalman_output_matrix_names)
+static int is_on_demand (const char *key)
+{
+    return (strcmp(key, "smdist") == 0 ||
+            strcmp(key, "smdisterr") == 0);
+}
 
 static int output_matrix_slot (const char *s)
 {
@@ -4037,12 +4015,12 @@ int maybe_delete_kalman_element (void *kptr,
     return done;
 }
 
-/* Take the vec representations of the smoothed disturbances
-   K->b.etahat and K->b.epshat (if present) and write them into
-   K->U in the format documented in the Guide.
+/* Take the smoothed disturbances recorded in K->b.etahat and
+   K->b.epshat (if present) and write them into K->U (aka "smdist") in
+   the format documented in the Guide.
 */
 
-static gretl_matrix *fill_smdist (kalman *K, int *ownit)
+static gretl_matrix *fill_smdist (kalman *K)
 {
     gretl_matrix *U1 = gretl_bundle_get_matrix(K->b, "etahat", NULL);
     gretl_matrix *U2 = gretl_bundle_get_matrix(K->b, "epshat", NULL);
@@ -4055,11 +4033,10 @@ static gretl_matrix *fill_smdist (kalman *K, int *ownit)
 
         if (U == NULL || U->rows != K->N || U->cols != q + n) {
             /* we need new storage */
-            U = gretl_matrix_alloc(K->N, q + n);
+            gretl_matrix_free(U);
+            K->U = U = gretl_matrix_alloc(K->N, q + n);
             if (U == NULL) {
                 return NULL;
-            } else {
-                *ownit = 1;
             }
         }
         for (t=0; t<K->N; t++) {
@@ -4072,48 +4049,62 @@ static gretl_matrix *fill_smdist (kalman *K, int *ownit)
                 gretl_matrix_set(U, t, j+q, utj);
             }
         }
-        return U;
     }
 
-    return NULL;
+    return U;
 }
 
-static gretl_matrix *fill_smdisterr (kalman *K, int *ownit)
+/* Take the representations of the variance of the smoothed
+   disturbances recorded in K->b.veta and K->b.veps (if present) and
+   write their square roots into K->Vsd (aka "smdisterr") in the
+   format documented in the Guide.
+*/
+
+static gretl_matrix *fill_smdisterr (kalman *K)
 {
     gretl_matrix *V1 = gretl_bundle_get_matrix(K->b, "veta", NULL);
     gretl_matrix *V2 = gretl_bundle_get_matrix(K->b, "veps", NULL);
     gretl_matrix *V = K->Vsd;
 
-    if (V1 == NULL) {
-        return NULL;
-    } else {
+    if (V1 != NULL) {
         int q = kalman_dkvar(K) ? K->q : K->r;
         int n = (V2 != NULL)? K->n : 0;
+        int c2 = (V2 != NULL)? V2->cols : 0;
+        int c1 = V1->cols;
+        int diag1 = 0;
+        int diag2 = 0;
         int j, k, t;
         double vtj;
 
+        diag1 = (q > 1 && c1 == q*q);
+        diag2 = (n > 1 && c2 == n*n);
+
         if (V == NULL || V->rows != K->N || V->cols != q + n) {
             /* we need new storage */
-            V = gretl_matrix_alloc(K->N, q + n);
+            gretl_matrix_free(V);
+            K->Vsd = V = gretl_zero_matrix_new(K->N, q + n);
             if (V == NULL) {
                 return NULL;
-            } else {
-                *ownit = 1;
             }
         }
-        for (t=0; t<K->N; t++) {
-            for (j=0, k=0; j<q; j++) {
-                vtj = gretl_matrix_get(V1, t, k);
-                gretl_matrix_set(V, t, j, sqrt(vtj));
-                k += q + 1;
+        k = 0;
+        for (j=0; j<q; j++) {
+            for (t=0; t<K->N; t++) {
+                vtj = gretl_matrix_get(V1, t, diag1 ? j*(q+1) : j);
+                gretl_matrix_set(V, t, k, sqrt(vtj));
             }
-            for (j=0; j<n; j++) {
-                vtj = gretl_matrix_get(V2, t, j);
-                gretl_matrix_set(V, t, j+q, sqrt(vtj));
-            }
+            k++;
         }
-        return V;
+        for (j=0; j<n; j++) {
+            for (t=0; t<K->N; t++) {
+                vtj = gretl_matrix_get(V2, t, diag2 ? j*(n+1) : j);
+                gretl_matrix_set(V, t, k, sqrt(vtj));
+            }
+            k++;
+        }
     }
+
+    return V;
 }
 
 /* When the sequential method is being used but the observable is
@@ -4165,21 +4156,38 @@ static int mv_transform (kalman *K)
 }
 
 static gretl_matrix *construct_kalman_matrix (kalman *K,
-					      const char *key,
-					      int *ownit)
+					      const char *key)
 {
     gretl_matrix *m = NULL;
 
-    if (m == NULL && K->code != K_LEGACY) {
-	if (!strcmp(key, "smdist")) {
-	    m = fill_smdist(K, ownit);
-	} else if (!strcmp(key, "smdisterr")) {
-	    m = fill_smdisterr(K, ownit);
-	}
+    if (!strcmp(key, "smdist")) {
+        m = fill_smdist(K);
+    } else if (!strcmp(key, "smdisterr")) {
+        m = fill_smdisterr(K);
     }
 
     return m;
 }
+
+/* maybe_retrieve_kalman_element():
+
+   This function handles retrieval of elements from a Kalman bundle by
+   @key. Such elements may be of type matrix, scalar or string.
+
+   Most retrievable items will already be available (or not available)
+   for access, but some are 'constructables' that will be built on
+   demand.
+
+   We set *reserved if the element in question is one that should not
+   be overwritten by the user on pain of breaking the Kalman bundle.
+
+   If @ownit is not NULL on input we set it content to 1 if the
+   element in question is newly allocated and will be 'owned' by the
+   caller, rather than just being a pointer to something inside the
+   kalman struct. If @ownit is NULL on input we'll take it that this
+   call is on behalf of gretl_bundle_get_member_type(), in which case
+   there's no need to construct a 'constructable' element.
+*/
 
 void *maybe_retrieve_kalman_element (void *kptr,
                                      const char *key,
@@ -4188,6 +4196,7 @@ void *maybe_retrieve_kalman_element (void *kptr,
                                      int *ownit,
                                      int *err)
 {
+    gretl_matrix **pm = NULL;
     kalman *K = kptr;
     void *ret = NULL;
     int i, id = -1;
@@ -4197,73 +4206,63 @@ void *maybe_retrieve_kalman_element (void *kptr,
         return NULL;
     }
 
-    *type = GRETL_TYPE_NONE;
-    if (ownit != NULL) {
-        *ownit = 0;
-    }
-
-    /* 2022-05-06: we'll want to set *ownit to 1 if the element in
-       question is newly allocated, and will be 'owned' by the caller,
-       rather than just being a pointer to something inside the kalman
-       struct.  If @ownit is NULL we'll take it that this call is on
-       behalf of gretl_bundle_get_member_type(), in which case there's
-       no need to construct a 'constructable' element.
-    */
-
     if (kdebug > 1) {
 	fprintf(stderr, "maybe_retrieve_kalman_element: key '%s'\n", key);
 	fprintf(stderr, " ownit %p, K->b %p, sequential %d\n",
                 (void *) ownit, (void *) K->b, kalman_sequential(K));
     }
 
+    /* initialize to nothing doing */
+    *type = GRETL_TYPE_NONE;
+    if (ownit != NULL) {
+        *ownit = 0;
+    }
+
     if (!strcmp(key, "timevar_call")) {
-        /* function call specifier? */
+        /* try for time-variation function call */
         *reserved = 1;
         if (K->matcall != NULL) {
             ret = K->matcall;
             *type = GRETL_TYPE_STRING;
         }
-    } else {
-        /* try for an input matrix specifier */
-        for (i=0; i<K_MMAX; i++) {
-            if (!strcmp(key, K_input_mats[i].name)) {
-                id = K_input_mats[i].sym;
-                ret = (gretl_matrix *) k_input_matrix_by_id(K, id);
-                if (ret != NULL) {
-                    *type = GRETL_TYPE_MATRIX;
-                }
-                break;
-            }
-        }
-        if (id < 0) {
-            /* try for an output matrix */
-            gretl_matrix **pm = kalman_output_matrix(K, key);
-	    gretl_matrix *m = NULL;
+        return ret; /* handled */
+    }
 
-            if (pm != NULL && *pm != NULL) {
-                m = *pm;
-            } else if (pm != NULL && ownit != NULL) {
-                m = construct_kalman_matrix(K, key, ownit);
-	    }
-	    if (m != NULL) {
-		*reserved = 1;
-		ret = m;
-		*type = GRETL_TYPE_MATRIX;
-            }
-        }
-        if (id < 0 && *reserved == 0) {
-            /* nothing matched yet: try scalar member */
-            ret = kalman_output_scalar(K, key);
+    /* try for an Kalman input matrix specifier */
+    for (i=0; i<K_MMAX; i++) {
+        if (!strcmp(key, K_input_mats[i].name)) {
+            *reserved = 1;
+            id = K_input_mats[i].sym;
+            ret = (gretl_matrix *) k_input_matrix_by_id(K, id);
             if (ret != NULL) {
-                *type = GRETL_TYPE_DOUBLE;
+                *type = GRETL_TYPE_MATRIX;
             }
+            return ret; /* handled */
         }
     }
 
-    if (id >= 0 && *reserved == 0) {
-        /* flag the fact that @key was a kalman-reserved
-           identifier */
+    /* try for an output matrix */
+    pm = kalman_output_matrix(K, key);
+    if (pm != NULL) {
+        *type = GRETL_TYPE_MATRIX;
         *reserved = 1;
+        if (ownit != NULL) {
+            /* not just a type query */
+            if (is_on_demand(key)) {
+                ret = construct_kalman_matrix(K, key);
+            } else if (*pm != NULL) {
+                ret = *pm;
+            } else {
+                gretl_errmsg_sprintf("\"%s\": %s", key, _("no such item"));
+            }
+        }
+        return ret; /* handled */
+    }
+
+    /* no match yet: try scalar member */
+    ret = kalman_output_scalar(K, key);
+    if (ret != NULL) {
+        *type = GRETL_TYPE_DOUBLE;
     }
 
     if (*reserved && ret == NULL && ownit != NULL) {
@@ -6927,24 +6926,25 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
     gretl_matrix *r0, *r1, *N0, *N1, *n1;
     gretl_matrix *Bt, *Ct, *Rt, *nr, *nn;
     gretl_matrix *dhat, *Psi;
-    gretl_matrix *nu = NULL, *vnu = NULL;
+    gretl_matrix *nuhat = NULL, *vnu = NULL;
     gretl_matrix *H_nu, *G_nu = NULL;
     gretl_matrix *etahat, *veta;
     gretl_matrix *epshat = NULL;
     gretl_matrix *veps = NULL;
     dejong_info *dj = K->djinfo;
-    int no_collapse = 0;
+    int no_collapse;
     int nt = K->n;
     int t, err = 0;
 
-    if (trace) {
-        printf("dist_smooth_dejong(), DKstyle = %d\n", DKstyle);
-    }
-
     no_collapse = (K->d == K->N);
 
+    if (trace) {
+        printf("dist_smooth_dejong(), DKstyle %d, no_collapse %d\n",
+               DKstyle, no_collapse);
+    }    
+
     if (1 /* K->HG != NULL ? */) {
-        nu  = gretl_zero_matrix_new(K->p, K->N);
+        nuhat  = gretl_zero_matrix_new(K->p, K->N);
         vnu = gretl_zero_matrix_new(K->p * K->p, K->N);
     }
 
@@ -6994,11 +6994,12 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
     }
 
     for (t=K->N-1; t>=0 && !err; t--) {
+        fprintf(stderr, "dist_smooth_dejong: t = %d\n", t);
         K->t = t;
         nt = load_filter_data(K, 0, &err);
         if (err) {
             break;
-        } else if (kdebug && nt == 0) {
+        } else if (nt == 0 /* kdebug && nt == 0 */) {
 	    fprintf(stderr, "dist_smooth_dejong: nt=0 at t=%d\n", K->t);
         }
 
@@ -7054,8 +7055,8 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
         }
 
         /* record t-dated results */
-        if (nu != NULL) {
-            record_to_col(nu, nu_t, t);
+        if (nuhat != NULL) {
+            record_to_col(nuhat, nu_t, t);
             record_to_col(vnu, vnu_t, t);
         }
         gretl_matrix_multiply(K->H, nu_t, H_nu);
@@ -7067,10 +7068,13 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
             gretl_matrix_multiply(K->G, nu_t, G_nu);
             record_to_row(epshat, G_nu, t);
 	    if (nt == 0) {
+                fprintf(stderr, "record to veps (1)\n");
 		record_to_vec(veps, K->VY, t);
 	    } else {
 		gretl_matrix_qform(K->G, GRETL_MOD_NONE, vnu_t,
 				   nn, GRETL_MOD_NONE);
+                fprintf(stderr, "record to veps (2)\n");
+                gretl_matrix_print(nn, "nn");
 		record_to_vec(veps, nn, t);
 	    }
         }
@@ -7104,10 +7108,13 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
     if (epshat != NULL) {
         bundle_add_matrix(K->b, "epshat", epshat);
         bundle_add_matrix(K->b, "veps",  veps);
+        gretl_matrix_print(veps, "veps");
     }
-    if (nu != NULL) {
-        bundle_add_matrix(K->b, "nuhat", nu);
+    if (nuhat != NULL) {
+        bundle_add_matrix(K->b, "nuhat", nuhat);
         bundle_add_matrix(K->b, "vnu", vnu);
+        //gretl_matrix_print(nuhat, "nuhat");
+        //gretl_matrix_print(vnu, "vnu");
     }
 
     gretl_matrix_free(G_nu);
