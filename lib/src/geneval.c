@@ -8706,27 +8706,6 @@ static NODE *readfile_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-#if 0
-static void strstr_escape (char *s)
-{
-    int i, n = strlen(s);
-
-    for (i=0; i<n; i++) {
-        if (s[i] == '\\' && (i == 0 || s[i-1] != '\\')) {
-            if (s[i+1] == 'n') {
-                s[i] = '\n';
-                shift_string_left(s + i + 1, 1);
-                i++;
-            } else if (s[i+1] == 't') {
-                s[i] = '\t';
-                shift_string_left(s + i + 1, 1);
-                i++;
-            }
-        }
-    }
-}
-#endif
-
 static const char *strstr_insensitive (const gchar *sd1,
                                        const gchar *sd2,
                                        const char *sl)
@@ -16826,7 +16805,7 @@ static NODE *eval_query (NODE *t, NODE *c, parser *p)
         /* note 2025-03-15: the special handling for 1 x 1 c->v.m,
            defined out below, resulted in breakage elsewhere
         */
-#if 0 
+#if 0
         if (gretl_matrix_is_scalar(c->v.m)) {
             ret = query_eval_scalar(c->v.m->val[0], t, p);
         } else {
