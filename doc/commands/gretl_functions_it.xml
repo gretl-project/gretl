@@ -7743,6 +7743,14 @@
 	  Per più dettagli, vedi <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
+	  Nota: i risultati contenuti in <lit>kb.smdisterr</lit>
+	  potrebbero essere spuri quando tutte le seguenti condizioni
+	  sono vere: (a) il modello ha più di un osservabile (b) viene
+	  utilizzata la variante DeJong dell'inizializzatore diffuso
+	  esatto. Al momento, consigliamo all'utente di utilizzare la
+	  variante <quote>sequenziale</quote> per i modelli
+	  multivariati. </para>
+	<para>
 	  <seelist>
             <fncref targ="ksetup"/>
             <fncref targ="kfilter"/>
