@@ -3996,7 +3996,7 @@ int maybe_delete_kalman_element (void *kptr,
         gretl_errmsg_sprintf(_("%s: cannot be deleted"), key);
         *err = E_DATA;
     } else if ((pm = kalman_output_matrix(K, key)) != NULL) {
-        /* OK to delete a user-output matrix */
+        /* OK to delete a user-output matrix? */
         gretl_matrix_free(*pm);
         *pm = NULL;
     } else if (!strcmp(key, "timevar_call")) {
@@ -4175,25 +4175,18 @@ static gretl_matrix *construct_kalman_matrix (kalman *K,
    @key. Such elements may be of type matrix, scalar or string.
 
    Most retrievable items will already be available (or not available)
-   for access, but some are 'constructables' that will be built on
+   for access, but a couple are 'constructables' that will be built on
    demand.
 
-   We set *reserved if the element in question is one that should not
-   be overwritten by the user on pain of breaking the Kalman bundle.
-
-   If @ownit is not NULL on input we set it content to 1 if the
-   element in question is newly allocated and will be 'owned' by the
-   caller, rather than just being a pointer to something inside the
-   kalman struct. If @ownit is NULL on input we'll take it that this
-   call is on behalf of gretl_bundle_get_member_type(), in which case
-   there's no need to construct a 'constructable' element.
+   We set *private to 1 if the given @key refers to a member of the
+   kalman struct inside the bundle, as opposed to a regular bundle
+   member.
 */
 
 void *maybe_retrieve_kalman_element (void *kptr,
                                      const char *key,
                                      GretlType *type,
-                                     int *reserved,
-                                     int *ownit,
+                                     int *private,
                                      int *err)
 {
     gretl_matrix **pm = NULL;
@@ -4206,21 +4199,17 @@ void *maybe_retrieve_kalman_element (void *kptr,
         return NULL;
     }
 
-    if (kdebug > 1) {
-	fprintf(stderr, "maybe_retrieve_kalman_element: key '%s'\n", key);
-	fprintf(stderr, " ownit %p, K->b %p, sequential %d\n",
-                (void *) ownit, (void *) K->b, kalman_sequential(K));
+    if (kdebug) {
+	fprintf(stderr, "maybe_retrieve_kalman_element: key '%s', K->b %p\n",
+                key, (void *) K->b);
     }
 
     /* initialize to nothing doing */
     *type = GRETL_TYPE_NONE;
-    if (ownit != NULL) {
-        *ownit = 0;
-    }
 
     if (!strcmp(key, "timevar_call")) {
         /* try for time-variation function call */
-        *reserved = 1;
+        *private = 1;
         if (K->matcall != NULL) {
             ret = K->matcall;
             *type = GRETL_TYPE_STRING;
@@ -4231,7 +4220,7 @@ void *maybe_retrieve_kalman_element (void *kptr,
     /* try for an Kalman input matrix specifier */
     for (i=0; i<K_MMAX; i++) {
         if (!strcmp(key, K_input_mats[i].name)) {
-            *reserved = 1;
+            *private = 1;
             id = K_input_mats[i].sym;
             ret = (gretl_matrix *) k_input_matrix_by_id(K, id);
             if (ret != NULL) {
@@ -4244,17 +4233,14 @@ void *maybe_retrieve_kalman_element (void *kptr,
     /* try for an output matrix */
     pm = kalman_output_matrix(K, key);
     if (pm != NULL) {
-        *type = GRETL_TYPE_MATRIX;
-        *reserved = 1;
-        if (ownit != NULL) {
-            /* not just a type query */
-            if (is_on_demand(key)) {
-                ret = construct_kalman_matrix(K, key);
-            } else if (*pm != NULL) {
-                ret = *pm;
-            } else {
-                gretl_errmsg_sprintf("\"%s\": %s", key, _("no such item"));
-            }
+        *private = 1;
+        if (is_on_demand(key)) {
+            ret = construct_kalman_matrix(K, key);
+        } else if (*pm != NULL) {
+            ret = *pm;
+        }
+        if (ret != NULL) {
+            *type = GRETL_TYPE_MATRIX;
         }
         return ret; /* handled */
     }
@@ -4262,12 +4248,8 @@ void *maybe_retrieve_kalman_element (void *kptr,
     /* no match yet: try scalar member */
     ret = kalman_output_scalar(K, key);
     if (ret != NULL) {
+        *private = 1;
         *type = GRETL_TYPE_DOUBLE;
-    }
-
-    if (*reserved && ret == NULL && ownit != NULL) {
-        gretl_errmsg_sprintf("\"%s\": %s", key, _("no such item"));
-        *err = E_DATA;
     }
 
     return ret;
@@ -6941,7 +6923,7 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
     if (trace) {
         printf("dist_smooth_dejong(), DKstyle %d, no_collapse %d\n",
                DKstyle, no_collapse);
-    }    
+    }
 
     if (1 /* if K->HG != NULL ? */) {
         nuhat  = gretl_zero_matrix_new(K->p, K->N);

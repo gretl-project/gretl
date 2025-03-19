@@ -472,19 +472,19 @@ static int gretl_bundle_has_data (gretl_bundle *b, const char *key)
 }
 
 /* Supports gretl_bundle_get_data(), gretl_bundle_get_element()
-   and gretl_bundle_get_target.
+   and gretl_bundle_get_target().
 */
 
-static void *real_gretl_bundle_get_data (gretl_bundle *bundle,
-                                         const char *key,
-                                         GretlType *type,
-                                         int *size,
-                                         int *ownit,
-                                         int get_target,
-                                         int *err)
+static void *real_bundle_get_data (gretl_bundle *bundle,
+                                   const char *key,
+                                   GretlType *type,
+                                   int *size,
+                                   int *ownit,
+                                   int get_target,
+                                   int *err)
 {
     void *ret = NULL;
-    int reserved = 0;
+    int private = 0;
     int myerr = 0;
 
     if (bundle == NULL) {
@@ -494,11 +494,12 @@ static void *real_gretl_bundle_get_data (gretl_bundle *bundle,
 
     if (!get_target && bundle->type == BUNDLE_KALMAN) {
         ret = maybe_retrieve_kalman_element(bundle->data, key,
-                                            type, &reserved,
-                                            ownit, &myerr);
+                                            type, &private,
+                                            &myerr);
     }
 
-    if (!myerr && ret == NULL && !reserved) {
+    if (!myerr && ret == NULL && !private) {
+        /* try for a regular bundle member */
         gpointer p = g_hash_table_lookup(bundle->ht, key);
 
         if (p != NULL) {
@@ -557,8 +558,8 @@ void *gretl_bundle_get_element (gretl_bundle *bundle, const char *key,
                                 GretlType *type, int *size,
                                 int *ownit, int *err)
 {
-    return real_gretl_bundle_get_data(bundle, key, type,
-                                      size, ownit, 0, err);
+    return real_bundle_get_data(bundle, key, type,
+                                size, ownit, 0, err);
 }
 
 /**
@@ -587,8 +588,8 @@ void *gretl_bundle_get_element (gretl_bundle *bundle, const char *key,
 void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
                              GretlType *type, int *size, int *err)
 {
-    return real_gretl_bundle_get_data(bundle, key, type,
-                                      size, NULL, 0, err);
+    return real_bundle_get_data(bundle, key, type,
+                                size, NULL, 0, err);
 }
 
 /* As gretl_bundle_get_data() except that the caller is looking
@@ -600,8 +601,8 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 void *gretl_bundle_get_target (gretl_bundle *bundle, const char *key,
                                GretlType *type, int *size, int *err)
 {
-    return real_gretl_bundle_get_data(bundle, key, type,
-                                      size, NULL, 1, err);
+    return real_bundle_get_data(bundle, key, type,
+                                size, NULL, 1, err);
 }
 
 /**
@@ -696,18 +697,19 @@ GretlType gretl_bundle_get_member_type (gretl_bundle *bundle,
                                         int *err)
 {
     GretlType ret = GRETL_TYPE_NONE;
-    int reserved = 0;
+    int private = 0;
     int myerr = 0;
 
     if (bundle == NULL) {
         myerr = E_DATA;
     } else if (bundle->type == BUNDLE_KALMAN) {
         maybe_retrieve_kalman_element(bundle->data, key,
-                                      &ret, &reserved,
-                                      NULL, &myerr);
+                                      &ret, &private,
+                                      &myerr);
     }
 
-    if (!myerr && ret == GRETL_TYPE_NONE && !reserved) {
+    if (!myerr && ret == GRETL_TYPE_NONE && !private) {
+        /* try for a regular bundle member */
         gpointer p = g_hash_table_lookup(bundle->ht, key);
 
         if (p != NULL) {
