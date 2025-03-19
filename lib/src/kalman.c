@@ -6943,7 +6943,7 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
                DKstyle, no_collapse);
     }    
 
-    if (1 /* K->HG != NULL ? */) {
+    if (1 /* if K->HG != NULL ? */) {
         nuhat  = gretl_zero_matrix_new(K->p, K->N);
         vnu = gretl_zero_matrix_new(K->p * K->p, K->N);
     }
@@ -6994,12 +6994,12 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
     }
 
     for (t=K->N-1; t>=0 && !err; t--) {
-        fprintf(stderr, "dist_smooth_dejong: t = %d\n", t);
+        // fprintf(stderr, "dist_smooth_dejong: t = %d\n", t);
         K->t = t;
         nt = load_filter_data(K, 0, &err);
         if (err) {
             break;
-        } else if (nt == 0 /* kdebug && nt == 0 */) {
+        } else if (kdebug && nt == 0) {
 	    fprintf(stderr, "dist_smooth_dejong: nt=0 at t=%d\n", K->t);
         }
 
@@ -7068,13 +7068,13 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
             gretl_matrix_multiply(K->G, nu_t, G_nu);
             record_to_row(epshat, G_nu, t);
 	    if (nt == 0) {
-                fprintf(stderr, "record to veps (1)\n");
+                //fprintf(stderr, "record to veps (1)\n");
 		record_to_vec(veps, K->VY, t);
 	    } else {
 		gretl_matrix_qform(K->G, GRETL_MOD_NONE, vnu_t,
 				   nn, GRETL_MOD_NONE);
-                fprintf(stderr, "record to veps (2)\n");
-                gretl_matrix_print(nn, "nn");
+                //fprintf(stderr, "record to veps (2)\n");
+                //gretl_matrix_print(nn, "nn");
 		record_to_vec(veps, nn, t);
 	    }
         }
@@ -7108,7 +7108,7 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
     if (epshat != NULL) {
         bundle_add_matrix(K->b, "epshat", epshat);
         bundle_add_matrix(K->b, "veps",  veps);
-        gretl_matrix_print(veps, "veps");
+        //gretl_matrix_print(veps, "veps");
     }
     if (nuhat != NULL) {
         bundle_add_matrix(K->b, "nuhat", nuhat);
