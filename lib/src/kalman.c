@@ -6901,6 +6901,10 @@ static int diffuse_dist_smooth_step (kalman *K,
     return err;
 }
 
+/* The code below needs to be reviewed in light of de Jong and Lin
+   (2003). 
+*/
+
 static int dist_smooth_dejong (kalman *K, int DKstyle)
 {
     gretl_matrix_block *B, *B2 = NULL;
@@ -7000,6 +7004,7 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
 	}
 
         if (DKstyle) {
+            /* eq (8)
             /* vnu = I(r) - (G' * iFt * G + Jt' * Nt * Jt) */
             gretl_matrix_inscribe_I(vnu_t, 0, 0, K->p);
             gretl_matrix_qform(K->Jt, GRETL_MOD_TRANSPOSE,
