@@ -414,8 +414,9 @@ V^{(2)}_t = E\left[\left(\hat{\stdist}_t - \stdist_t\right)
   | \,\obsvec_1, \ldots, \obsvec_T \right]
 \]
 We calculate this matrix using the formulae given in \citet[section
-4.5.2]{durbin-koopman12}. Its diagonal elements can be used to form
-confidence intervals for the true disturbances.
+  4.5.2]{durbin-koopman12}. Its diagonal elements can be used to form
+confidence intervals for the true disturbances. Further details
+regarding these two variance measures can be found in \cite{cottrell16}.
 
 We are now ready to state what gretl provides under the key
 \texttt{smdisterr}. If the optional second argument to \cmd{kdsmooth}
