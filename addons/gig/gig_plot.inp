@@ -232,3 +232,13 @@ function void GUI_gig_plot(bundle *model, int ptype[0:2:0] \
         gig_vfgraph(tmp, model, 60, 0.9)
     endif
 end function
+
+function matrix gig_plot_precheck (bundle *model)
+    if model.type == 7 || model.vk > 1
+        # variance forecasting plot not yet available,
+        # see gig_var_fcast()
+        return {1,1,0}
+    else
+        return {1,1,1}
+    endif
+end function
