@@ -7004,7 +7004,7 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
 	}
 
         if (DKstyle) {
-            /* eq (8)
+            /* eq (8) */
             /* vnu = I(r) - (G' * iFt * G + Jt' * Nt * Jt) */
             gretl_matrix_inscribe_I(vnu_t, 0, 0, K->p);
             gretl_matrix_qform(K->Jt, GRETL_MOD_TRANSPOSE,
