@@ -1,10 +1,15 @@
-version 2025a, in progress
+2025-03-20 version 2025a
+- kalman filter: fixes for variance of smoothed disturbances
+  and some documentation updates
 - "meantest" and "vartest" commands: support more options and
   expand their documentation
 - "system" command, iterated variants: allow more iterations
   (now 250) before declaring non-convergence
 - aggregate() function; speed improvement in the matrix case
 - hyp2f1 function: enhance the documentation
+- document the $pmanteau accessor for VARs
+- GUI, preferences dialog: add a tab specifically for plot-
+  related settings
 - Fix bug: potential crash in the GUI when trying to forecast
   from an ARIMA model without a constant
 - Fix bug: "dataset addobs n" with panel data (and without the
@@ -18,6 +23,8 @@ version 2025a, in progress
   some cases
 - Fix bug: the RESET test in the GUI was broken when the
   "show all variants" option was selected (since 2024c)
+- Function packaging: fix to allow a plot-checker function to
+  be private; documentation updates
 - markdown parser: improve extraction of URLs
 - minor code adjustments to comply with the C23 standard
 - update sourceforge URLs to use https

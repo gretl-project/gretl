@@ -6902,7 +6902,7 @@ static int diffuse_dist_smooth_step (kalman *K,
 }
 
 /* The code below needs to be reviewed in light of de Jong and Lin
-   (2003). 
+   (2003).
 */
 
 static int dist_smooth_dejong (kalman *K, int DKstyle)
