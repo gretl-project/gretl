@@ -1524,6 +1524,15 @@ int gretl_get_data (const char *fname, DATASET *dset,
     if (has_native_data_suffix(fname)) {
 	/* specific processing for gretl datafiles  */
 	err = gretl_read_gdt(fname, dset, myopt, prn);
+#if 0 /* for gretl4py, but not just yet */
+        if (err /* && (opt & OPT_S) */) {
+            char tmp[FILENAME_MAX];
+
+            gretl_error_clear();
+            strcpy(tmp, fname);
+            err = gretl_seek_data(tmp, dset, OPT_NONE, prn);
+        }
+#endif
     } else {
         /* try for an "import" of some kind */
         GretlFileType ft = gretl_detect_filetype(fname);
