@@ -7656,14 +7656,6 @@
 	  the auxiliary residuals from their true value.
 	</para>
 	<para>
-	  Note: the results contained in <lit>kb.smdisterr</lit> may be
-	  spurious under the following conditions: (a) the model has
-	  more than one observable and (b) the de Jong variant of the
-	  exact diffuse initializer is used. At present we recommend
-	  using the <quote>sequential</quote> variant when smoothed
-	  disturbances are wanted for a multivariate model.
-	</para>
-	<para>
 	  For more details see <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
