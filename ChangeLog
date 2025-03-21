@@ -1,3 +1,7 @@
+version 2025b, in progress
+- Fix bug: correct the disturbance smoother for the de Jong
+  variant of the Kalman filter
+
 2025-03-20 version 2025a
 - kalman filter: fixes for variance of smoothed disturbances
   and some documentation updates
