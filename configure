@@ -23888,64 +23888,6 @@ else
 fi
 
 if test -z "$PKG_CONFIG"; then
-   # Extract the first word of "pkg-config", so it can be a program name with args.
-set dummy pkg-config; ac_word=$2
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-printf %s "checking for $ac_word... " >&6; }
-if test ${ac_cv_path_PKG_CONFIG+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) case $PKG_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  case $as_dir in #(((
-    '') as_dir=./ ;;
-    */) ;;
-    *) as_dir=$as_dir/ ;;
-  esac
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
-    ac_cv_path_PKG_CONFIG="$as_dir$ac_word$ac_exec_ext"
-    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_PKG_CONFIG" && ac_cv_path_PKG_CONFIG="no"
-  ;;
-esac ;;
-esac
-fi
-PKG_CONFIG=$ac_cv_path_PKG_CONFIG
-if test -n "$PKG_CONFIG"; then
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
-printf "%s\n" "$PKG_CONFIG" >&6; }
-else
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
-printf "%s\n" "no" >&6; }
-fi
-
-
-fi
-if test "$PKG_CONFIG" = "no" ; then
-   echo "
-Please install pkg-config and then reconfigure gretl.
-pkg-config is available from http://www.freedesktop.org/
-"
-   exit 1
-fi
-
-orig_CFLAGS=$CFLAGS
-
 
 
 
@@ -24078,6 +24020,17 @@ printf "%s\n" "no" >&6; }
 		PKG_CONFIG=""
 	fi
 fi
+fi
+if test "$PKG_CONFIG" = "no" ; then
+   echo "
+Please install pkg-config and then reconfigure gretl.
+pkg-config is available from http://www.freedesktop.org/
+"
+   exit 1
+fi
+
+orig_CFLAGS=$CFLAGS
+
 
 pkg_failed=no
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for FFTW" >&5

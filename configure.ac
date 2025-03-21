@@ -656,7 +656,7 @@ dnl
 dnl Preliminary check for pkg-config
 dnl
 if test -z "$PKG_CONFIG"; then
-   AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+   PKG_PROG_PKG_CONFIG(,PKG_CONFIG="no")
 fi
 if test "$PKG_CONFIG" = "no" ; then
    echo "
