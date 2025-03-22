@@ -4513,7 +4513,7 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
         }
 
         if (r->t == STR) {
-            ret->v.xval = umatrix_set_names_from_string(m, r->v.str, byrow);
+            p->err = ret->v.xval = umatrix_set_names_from_string(m, r->v.str, byrow);
         } else if (r->t == ARRAY) {
             if (gretl_array_get_type(r->v.a) != GRETL_TYPE_STRINGS) {
                 p->err = e_types(r);
