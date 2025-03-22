@@ -484,7 +484,8 @@ void kalman_free (kalman *K)
     }
     if (K->sinfo != NULL) {
         free_seq_info(K);
-    } else if (K->djinfo != NULL) {
+    }
+    if (K->djinfo != NULL) {
         free_dejong_info(K);
     }
 
