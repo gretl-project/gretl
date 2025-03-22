@@ -166,10 +166,10 @@ enum {
    record that was kept on the prior forecasting pass. What we need
    from the forward pass depends on what exactly we're computing,
    which is conveyed by @smtype. We must handle time-variation in
-   anything for which that is relevant to the smoother.
+   any matrices for which that is relevant to the smoother.
 */
 
-static int old_load_filter_data (kalman *K, int smtype)
+static int legacy_load_filter_data (kalman *K, int smtype)
 {
     int err = 0;
 
@@ -463,7 +463,7 @@ static int koopman_smooth (kalman *K, int DKstyle)
 
     for (t=K->N-1; t>=0 && !err; t--) {
 	K->t = t;
-	err = old_load_filter_data(K, SM_DIST_BKWD);
+	err = legacy_load_filter_data(K, SM_DIST_BKWD);
         if (err) {
             break;
         }
@@ -502,7 +502,7 @@ static int koopman_smooth (kalman *K, int DKstyle)
     */
     for (t=ft_min; t<K->N; t++) {
 	K->t = t;
-        err = old_load_filter_data(K, SM_DIST_FRWD);
+        err = legacy_load_filter_data(K, SM_DIST_FRWD);
         if (err) {
             break;
         }
@@ -535,13 +535,15 @@ static int koopman_smooth (kalman *K, int DKstyle)
 	}
 
 	/* state: a_{t+1} = T a_t + w_t (or + H*eps_t) */
-	load_from_row(K->a0, K->A, t-1);
-	gretl_matrix_multiply(K->T, K->a0, K->a1);
-	vector_from_row_mod(K->a1, R, t-1, GRETL_MOD_CUMULATE);
-	if (K->mu != NULL) {
-	    gretl_matrix_add_to(K->a1, K->mu);
-	}
-	record_to_row(K->A, K->a1, t);
+        if (t > 0) {
+            load_from_row(K->a0, K->A, t-1);
+            gretl_matrix_multiply(K->T, K->a0, K->a1);
+            vector_from_row_mod(K->a1, R, t-1, GRETL_MOD_CUMULATE);
+            if (K->mu != NULL) {
+                gretl_matrix_add_to(K->a1, K->mu);
+            }
+            record_to_row(K->A, K->a1, t);
+        }
     }
 
     if (!err) {
@@ -592,7 +594,7 @@ static int anderson_moore_smooth (kalman *K)
 
     for (t=K->N-1; t>=0 && !err; t--) {
 	K->t = t;
-        err = old_load_filter_data(K, SM_STATE_STD);
+        err = legacy_load_filter_data(K, SM_STATE_STD);
         if (err) {
             break;
         }
