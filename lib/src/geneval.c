@@ -3347,7 +3347,7 @@ const double *get_colvec_as_series (NODE *n, int f, parser *p)
     double *ret = NULL;
 
     if (n->t != MAT) {
-        node_type_error(f, 1, SERIES, n, p);
+        p->err = e_types(n);
     } else {
         const gretl_matrix *m = n->v.m;
 
@@ -3361,14 +3361,14 @@ const double *get_colvec_as_series (NODE *n, int f, parser *p)
     return ret;
 }
 
-/* As get_colvec_as_series(), above, except that we'll tolerate
-   a column vector shorter than the length of the current dataset,
-   provided it equals the length of the current sample range.
+/* Similar to get_colvec_as_series(), above, except that (a) we'll
+   tolerate a column vector shorter than the length of the current
+   dataset provided it equals the length of the current sample range,
+   and (b) we return a _copy_ of the vector data, padded out to the
+   current full series length with NAs if necessary.
 */
 
-const double *get_colvec_as_series_with_size (NODE *n,
-                                              int *size,
-                                              parser *p)
+double *copy_colvec_as_series (NODE *n, int *size, parser *p)
 {
     double *ret = NULL;
 
@@ -3376,17 +3376,33 @@ const double *get_colvec_as_series_with_size (NODE *n,
         p->err = e_types(n);
     } else {
         const gretl_matrix *m = n->v.m;
+        size_t sz = p->dset->n * sizeof *ret;
+        int ns = sample_size(p->dset);
+        int i, t, r = m->rows;
 
         if (m->cols != 1) {
             p->err = E_INVARG;
-        } else if (m->rows == p->dset->n) {
-            *size = p->dset->n;
-            ret = m->val;
-        } else if (m->rows == sample_size(p->dset)) {
-            *size = sample_size(p->dset);
-            ret = m->val;
+        } else if (r != p->dset->n && r != ns) {
+            p->err = E_INVARG;
         } else {
-            p->err = E_TYPES;
+            ret = malloc(sz);
+            if (ret == NULL) {
+                p->err = E_ALLOC;
+            }
+        }
+        if (!p->err) {
+            *size = p->dset->n;
+            if (r == p->dset->n) {
+                memcpy(ret, m->val, sz);
+            } else {
+                for (t=0, i=0; t<p->dset->n; t++) {
+                    if (t < p->dset->t1 || t > p->dset->t2) {
+                        ret[t] = NADBL;
+                    } else {
+                        ret[t] = m->val[i++];
+                    }
+                }
+            }
         }
     }
 
@@ -4497,7 +4513,7 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
         }
 
         if (r->t == STR) {
-            ret->v.xval = umatrix_set_names_from_string(m, r->v.str, byrow);
+            p->err = ret->v.xval = umatrix_set_names_from_string(m, r->v.str, byrow);
         } else if (r->t == ARRAY) {
             if (gretl_array_get_type(r->v.a) != GRETL_TYPE_STRINGS) {
                 p->err = e_types(r);
@@ -12210,9 +12226,10 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
                 ptr = &rhs->v.m->val[0];
                 type = GRETL_TYPE_DOUBLE;
             } else if (targ == GRETL_TYPE_SERIES) {
-                ptr = (double *) get_colvec_as_series_with_size(rhs, &size, p);
+                ptr = copy_colvec_as_series(rhs, &size, p);
                 if (!p->err) {
                     type = GRETL_TYPE_SERIES;
+                    donate = 1;
                 } else {
                     err = E_TYPES;
                 }
