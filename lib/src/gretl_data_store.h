@@ -32,6 +32,8 @@ void gretl_data_store_remove (const char *key);
 
 void gretl_data_store_destroy (void);
 
+gchar *gretl_data_store_new_id (void);
+
 #ifdef  __cplusplus
 }
 #endif

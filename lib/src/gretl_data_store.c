@@ -69,3 +69,10 @@ void gretl_data_store_destroy (void)
         data_store = NULL;
     }
 }
+
+gchar *gretl_data_store_new_id (void)
+{
+    gint64 t = g_get_monotonic_time();
+
+    return g_strdup_printf("ds_%" G_GINT64_FORMAT, t);
+}
