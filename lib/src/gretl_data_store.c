@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "gretl_data_store.h"
 
 static GHashTable *data_store;
 
