@@ -135,6 +135,7 @@ PUBLIC_HDRS = \
 	gretl_bundle.h \
 	gretl_commands.h \
 	gretl_data_io.h \
+	gretl_data_store.h \
 	gretl_drivers.h \
 	gretl_errors.h \
 	gretl_f2c.h \
@@ -225,6 +226,7 @@ SRCS = adf_kpss.c \
 	gretl_color.c \
 	gretl_commands.c \
 	gretl_data_io.c \
+	gretl_data_store.c \
 	gretl_errors.c \
 	gretl_foreign.c \
 	gretl_func.c \
