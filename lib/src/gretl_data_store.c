@@ -35,7 +35,7 @@ void gretl_data_store_add (DATASET *dset, const char *key)
     }
     if (data_store != NULL) {
         gchar *id = g_strdup(key);
-        
+
         g_hash_table_insert(data_store, id, dset);
     }
 }
@@ -54,6 +54,24 @@ DATASET *gretl_data_store_get (const char *key, int *err)
     }
 
     return dset;
+}
+
+int gretl_data_store_contains (const char *key)
+{
+    if (data_store != NULL) {
+        return g_hash_table_lookup(data_store, key) != NULL;
+    } else {
+        return 0;
+    }
+}
+
+int gretl_data_store_get_size (void)
+{
+    if (data_store != NULL) {
+        return g_hash_table_size(data_store);
+    } else {
+        return 0;
+    }
 }
 
 void gretl_data_store_remove (const char *key)

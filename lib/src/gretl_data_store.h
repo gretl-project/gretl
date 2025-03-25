@@ -28,6 +28,10 @@ void gretl_data_store_add (DATASET *dset, const char *key);
 
 DATASET *gretl_data_store_get (const char *key, int *err);
 
+int gretl_data_store_contains (const char *key);
+
+int gretl_data_store_get_size (void);
+
 void gretl_data_store_remove (const char *key);
 
 void gretl_data_store_destroy (void);
