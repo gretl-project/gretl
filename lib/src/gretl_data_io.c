@@ -173,8 +173,7 @@ int gretl_read_foreign_data (const char *fname, GretlFileType file_type,
 	err = import_spreadsheet(fname, file_type, NULL, NULL,
 				 dset, OPT_NONE, prn);
     } else if (OTHER_IMPORT(file_type)) {
-	err = import_spreadsheet(fname, file_type, NULL, NULL,
-				 dset, OPT_NONE, prn);
+	err = import_other(fname, file_type, dset, OPT_NONE, prn);
     } else {	
 	gretl_errmsg_set(_("Unknown data import type"));
 	err = E_INVARG;

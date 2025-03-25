@@ -1170,8 +1170,8 @@ static int process_starting_obs (const char *stobs_in, int pd,
 
 /**
  * set_obs:
- * @parm1: first parameter.
- * @parm2: second parameter.
+ * @parm1: first parameter (periodicity: integer, as string).
+ * @parm2: second parameter (starting observation, string).
  * @dset: dataset struct.
  * @opt: %OPT_S for stacked time-series, %OPT_C for stacked cross-section,
  * %OPT_T for time series, %OPT_X for cross section, %OPT_P to set

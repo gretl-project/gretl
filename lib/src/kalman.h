@@ -90,8 +90,7 @@ int maybe_set_kalman_element (void *kptr,
 void *maybe_retrieve_kalman_element (void *kptr,
 				     const char *key,
 				     GretlType *type,
-				     int *reserved,
-				     int *ownit,
+				     int *private,
 				     int *err);
 
 int maybe_delete_kalman_element (void *kptr,

@@ -1,3 +1,7 @@
+2025-03-20 version 2025
+
+No known incompatible changes.
+
 2024-12-12 version 2024d
 
 The functions xmax() and xmin() are now deprecated in favor

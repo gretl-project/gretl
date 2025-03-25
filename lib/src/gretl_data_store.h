@@ -17,13 +17,25 @@
  *
  */
 
-#ifndef GRETL__VERSION_H
-#define GRETL__VERSION_H
+#ifndef GRETL_DATA_STORE_H
+#define GRETL_DATA_STORE_H
 
-#define LIBGRETL_CURRENT   51
-#define LIBGRETL_REVISION  0
-#define LIBGRETL_AGE       0
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
-#define GRETL_VERSION "2025b-git"
+void gretl_data_store_add (DATASET *dset, const char *key);
 
-#endif /* GRETL__VERSION_H */
+DATASET *gretl_data_store_get (const char *key, int *err);
+
+void gretl_data_store_remove (const char *key);
+
+void gretl_data_store_destroy (void);
+
+gchar *gretl_data_store_new_id (void);
+
+#ifdef  __cplusplus
+}
+#endif
+
+#endif /* GRETL_DATA_STORE_H */
