@@ -10133,7 +10133,7 @@ static gretl_matrix *real_gretl_dgeev (const gretl_matrix *A,
 
     if (info != 0) {
         fprintf(stderr, "dgeev: info = %d\n", info);
-        *err = E_DATA;
+        *err = E_INVARG;
     } else {
         if (VL != NULL) {
             if (legacy) {
@@ -10442,7 +10442,7 @@ static int basic_eigensym_work (double *mval, double *w,
     dsyev_(&jobz, &uplo, &n, mval, &n, w, work, &lwork, &info);
     if (info != 0) {
         fprintf(stderr, "dsyev: info = %d\n", info);
-        err = E_DATA;
+        err = E_INVARG;
     }
 
     lapack_free(work);
