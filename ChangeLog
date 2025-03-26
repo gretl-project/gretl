@@ -6,6 +6,8 @@ version 2025b, in progress
 - Fix minor bug: bad initialization in legacy Kalman code
 - Internals: make gretl_get_data() support more data file
   formats
+- GUI: fix the action of the "Stop" button when running a
+  packaged function from the function-call dialog
 
 2025-03-20 version 2025a
 - kalman filter: fixes for variance of smoothed disturbances
