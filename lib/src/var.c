@@ -2351,7 +2351,7 @@ static int VAR_add_roots (GRETL_VAR *var)
     }
 
     /* save eigenvalues of companion form matrix */
-    var->L = gretl_general_matrix_eigenvals(var->A, &err);
+    var->L = legacy_general_matrix_eigenvals(var->A, &err);
 #if 0
     gretl_matrix_print(var->A, "Companion form matrix");
     gretl_matrix_print(var->L, "Eigenvalues");

@@ -1061,7 +1061,7 @@ static int statemat_out_of_bounds (kalman *K)
     double r, c, x;
     int i, err = 0;
 
-    evals = gretl_general_matrix_eigenvals(K->T, &err);
+    evals = legacy_general_matrix_eigenvals(K->T, &err);
 
     for (i=0; i<evals->rows && !err; i++) {
         r = gretl_matrix_get(evals, i, 0);

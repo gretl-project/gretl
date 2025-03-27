@@ -9891,6 +9891,15 @@ int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
     return err;
 }
 
+/* Below: we need an n x n complex matrix to return eigenvectors to the
+   caller. The input matrix @m may or may not be correctly sized to do
+   this job -- if not, we have to allocate a new matrix, which we pass
+   pack via @pev. In addition we need a temporary n x n real matrix to
+   pass to dgeev_ to hold a compressed representation of the
+   eigenvectors; this we allocate unconditionally and pass back via
+   @pec.
+*/
+
 static int dgeev_eigvecs_alloc (gretl_matrix *m,
                                 gretl_matrix **pev,
                                 gretl_matrix **pec,
@@ -9898,55 +9907,42 @@ static int dgeev_eigvecs_alloc (gretl_matrix *m,
 {
     gretl_matrix *ev = NULL;
     gretl_matrix *ec = NULL;
+    int mrc = m->rows * m->cols;
+    int dim = n * n;
 
-    if (pev != NULL) {
-        /* We need an n x n complex matrix for output:
-           is @m usable or do we need to allocate a
-           new matrix?
-        */
-        int mrc = m->rows * m->cols;
-        int dim = n * n;
-
-        if (m->is_complex && mrc == dim) {
-            m->rows = m->cols = n;
-        } else if (!m->is_complex && mrc == 2*dim) {
-            m->rows = 2*n;
-            m->cols = n;
-            matrix_set_complex(m, 1, 1);
-        } else {
-            /* have to allocate */
-            ev = gretl_cmatrix_new0(n, n);
-            if (ev == NULL) {
-                return E_ALLOC;
-            }
+    if (m->is_complex && mrc == dim) {
+        /* OK */
+        m->rows = m->cols = n;
+    } else if (!m->is_complex && mrc == 2*dim) {
+        /* @m can be converted */
+        m->rows = 2*n;
+        m->cols = n;
+        matrix_set_complex(m, 1, 1);
+    } else {
+        /* we have to allocate */
+        ev = gretl_cmatrix_new0(n, n);
+        if (ev == NULL) {
+            return E_ALLOC;
         }
     }
 
-    /* We need an n x n real matrix to pass to lapack
-       to get the compressed representation of the
-       eigenvectors
-    */
     ec = gretl_matrix_alloc(n, n);
     if (ec == NULL) {
         gretl_matrix_free(ev);
         return E_ALLOC;
     }
 
-    if (pev != NULL) {
-        *pev = ev;
-    }
+    *pev = ev;
     *pec = ec;
 
     return 0;
 }
 
-/* Transcribe from compact representation of eigenvectors
-   in the n x n real matrix @src to the "new-style" n x n
-   complex matrix @targ. What happens for each column
-   depends on whether the associated eigenvalue is real or
-   a member of a conjugate pair. The arrays @wr and @wi
-   hold the real and imaginary parts of the eigenvalues,
-   respectively.
+/* Transcribe from compact representation of eigenvectors in the n x n
+   real matrix @src to the "new-style" n x n complex matrix @targ. What
+   happens for each column depends on whether the associated eigenvalue
+   is real or a member of a conjugate pair. The arrays @wr and @wi hold
+   the real and imaginary parts of the eigenvalues, respectively.
 */
 
 static void dgeev_eigvecs_transcribe (gretl_matrix *targ,
@@ -10034,6 +10030,11 @@ static void maybe_eigen_trim (gretl_matrix *lam)
     gretl_matrix_reuse(lam, -1, 1);
 }
 
+/* The @legacy case supports some non-updated usage in var.c,
+   kalman.c and genfuncs.c. But we know that @VR and @VL will
+   be NULL in such cases: only eigenvalues are wanted.
+*/
+
 static gretl_matrix *real_gretl_dgeev (const gretl_matrix *A,
                                        gretl_matrix *VR,
                                        gretl_matrix *VL,
@@ -10082,11 +10083,8 @@ static gretl_matrix *real_gretl_dgeev (const gretl_matrix *A,
     a = Acpy->val;
 
     if (VL != NULL) {
-        if (legacy) {
-            *err = dgeev_eigvecs_alloc(VL, NULL, &Ltmp, n);
-        } else {
-            *err = dgeev_eigvecs_alloc(VL, &VLz, &Ltmp, n);
-        }
+        /* left eigenvectors wanted */
+        *err = dgeev_eigvecs_alloc(VL, &VLz, &Ltmp, n);
         if (*err) {
             goto bailout;
         }
@@ -10094,11 +10092,8 @@ static gretl_matrix *real_gretl_dgeev (const gretl_matrix *A,
     }
 
     if (VR != NULL) {
-        if (legacy) {
-            *err = dgeev_eigvecs_alloc(VR, NULL, &Rtmp, n);
-        } else {
-            *err = dgeev_eigvecs_alloc(VR, &VRz, &Rtmp, n);
-        }
+        /* right eigenvectors wanted */
+        *err = dgeev_eigvecs_alloc(VR, &VRz, &Rtmp, n);
         if (*err) {
             goto bailout;
         }
@@ -10107,14 +10102,13 @@ static gretl_matrix *real_gretl_dgeev (const gretl_matrix *A,
 
     work = lapack_malloc(sizeof *work);
     ret = gretl_zero_matrix_new(n, 2);
-
     if (work == NULL || ret == NULL) {
         *err = E_ALLOC;
         return NULL;
     }
 
-    wr = ret->val;
-    wi = wr + n;
+    wr = ret->val; /* eigenvalues, real part */
+    wi = wr + n;   /* eigenvalues, imag. part */
 
     /* get optimal workspace size */
     lwork = -1;
@@ -10136,9 +10130,7 @@ static gretl_matrix *real_gretl_dgeev (const gretl_matrix *A,
         *err = E_INVARG;
     } else {
         if (VL != NULL) {
-            if (legacy) {
-                gretl_matrix_replace_content(VL, Ltmp);
-            } else if (VLz != NULL) {
+            if (VLz != NULL) {
                 dgeev_eigvecs_transcribe(VLz, Ltmp, wr, wi);
                 gretl_matrix_replace_content(VL, VLz);
             } else {
@@ -10146,9 +10138,7 @@ static gretl_matrix *real_gretl_dgeev (const gretl_matrix *A,
             }
         }
         if (VR != NULL) {
-            if (legacy) {
-                gretl_matrix_replace_content(VR, Rtmp);
-            } else if (VRz != NULL) {
+            if (VRz != NULL) {
                 dgeev_eigvecs_transcribe(VRz, Rtmp, wr, wi);
                 gretl_matrix_replace_content(VR, VRz);
             } else {
@@ -10187,7 +10177,7 @@ gretl_matrix *gretl_dgeev (const gretl_matrix *A,
 }
 
 /**
- * gretl_general_matrix_eigenvals:
+ * legacy_general_matrix_eigenvals:
  * @m: square matrix on which to operate.
  * @err: location to receive error code.
  *
@@ -10201,17 +10191,9 @@ gretl_matrix *gretl_dgeev (const gretl_matrix *A,
  */
 
 gretl_matrix *
-gretl_general_matrix_eigenvals (const gretl_matrix *m, int *err)
+legacy_general_matrix_eigenvals (const gretl_matrix *m, int *err)
 {
     return real_gretl_dgeev(m, NULL, NULL, 1, err);
-}
-
-gretl_matrix *old_eigengen (const gretl_matrix *m,
-                            gretl_matrix *VR,
-                            gretl_matrix *VL,
-                            int *err)
-{
-    return real_gretl_dgeev(m, VR, VL, 1, err);
 }
 
 /**

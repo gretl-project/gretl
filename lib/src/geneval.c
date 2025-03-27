@@ -13209,28 +13209,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
                 A = gretl_dgeev(lm, v1, v2, &p->err);
             }
         }
-    } else if (f == F_EIGGEN) {
-        /* legacy: get rid of this asap */
-        gretl_matrix *lm = node_get_matrix(l, p, 0, 1);
-        gretl_matrix *v1 = NULL, *v2 = NULL;
-
-        if (l->t != MAT) {
-            node_type_error(f, 1, MAT, l, p);
-        } else {
-            if (!null_node(m)) {
-                v1 = ptr_node_get_matrix(m, p);
-            }
-            if (!null_node(r)) {
-                v2 = ptr_node_get_matrix(r, p);
-            }
-        }
-        if (!p->err) {
-            if (lm->is_complex) {
-                p->err = E_CMPLX;
-            } else {
-                A = old_eigengen(lm, v1, v2, &p->err);
-            }
-        }
     } else if (f == F_SCHUR) {
         gretl_matrix *Z = NULL;
         gretl_matrix *W = NULL;
@@ -19125,7 +19103,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_SVD:
     case F_QR:
     case F_EIGEN:
-    case F_EIGGEN:
     case F_SCHUR:
     case F_TRIMR:
     case F_CORRGM:

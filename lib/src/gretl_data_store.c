@@ -34,9 +34,7 @@ void gretl_data_store_add (DATASET *dset, const char *key)
                                            g_free, destroy_stored_dset);
     }
     if (data_store != NULL) {
-        gchar *id = g_strdup(key);
-
-        g_hash_table_insert(data_store, id, dset);
+        g_hash_table_insert(data_store, g_strdup(key), dset);
     }
 }
 

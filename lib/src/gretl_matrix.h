@@ -643,7 +643,7 @@ int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs,
 				int rank);
 
 gretl_matrix *
-gretl_general_matrix_eigenvals (const gretl_matrix *m, int *err);
+legacy_general_matrix_eigenvals (const gretl_matrix *m, int *err);
 
 gretl_matrix *
 gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
@@ -667,11 +667,6 @@ gretl_matrix *gretl_dgeev (const gretl_matrix *A,
 			   gretl_matrix *VR,
 			   gretl_matrix *VL,
 			   int *err);
-
-gretl_matrix *old_eigengen (const gretl_matrix *m,
-                            gretl_matrix *VR,
-                            gretl_matrix *VL,
-                            int *err);
 
 double gretl_symm_matrix_lambda_min (const gretl_matrix *m, int *err);
 
