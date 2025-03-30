@@ -1091,6 +1091,10 @@ void *generate_gretl_object (const char *s, DATASET *dset,
             *type = GRETL_TYPE_ARRAY;
             ret = n->v.a;
             n->v.a = NULL;
+        } else if (n->t == LIST) {
+            *type = GRETL_TYPE_ARRAY;
+            ret = n->v.ivec;
+            n->v.ivec = NULL;
         }
     }
 
