@@ -1099,6 +1099,8 @@ void *generate_gretl_object (const char *s, DATASET *dset,
         }
     }
 
+    gen_cleanup(&p);
+
     return ret;
 }
 
