@@ -914,7 +914,6 @@ int generate_void (const char *s, DATASET *dset, PRN *prn)
     int err;
 
     err = realgen(s, &p, dset, prn, P_PRIV | P_VOID, EMPTY);
-
     gen_cleanup(&p);
 
     return err;
@@ -1057,6 +1056,43 @@ int *generate_list (const char *s, DATASET *dset, int ci, int *err)
     }
 
     gen_cleanup(&p);
+
+    return ret;
+}
+
+void *generate_gretl_object (const char *s, DATASET *dset,
+                             GretlType *type, int *err)
+{
+    void *ret = NULL;
+    genflags flags = P_PRIV | P_ANON;
+    parser p;
+
+    *err = realgen(s, &p, dset, NULL, flags, UNK);
+
+    if (!*err) {
+        NODE *n = p.ret;
+
+        if (n->t == NUM) {
+            *type = GRETL_TYPE_DOUBLE;
+            ret = &n->v.xval;
+        } else if (n->t == MAT) {
+            *type = GRETL_TYPE_MATRIX;
+            ret = n->v.m;
+            n->v.m = NULL;
+        } else if (n->t == STR) {
+            *type = GRETL_TYPE_STRING;
+            ret = n->v.str;
+            n->v.str = NULL;
+        } else if (n->t == BUNDLE) {
+            *type = GRETL_TYPE_BUNDLE;
+            ret = n->v.b;
+            n->v.b = NULL;
+        } else if (n->t == ARRAY) {
+            *type = GRETL_TYPE_ARRAY;
+            ret = n->v.a;
+            n->v.a = NULL;
+        }
+    }
 
     return ret;
 }
