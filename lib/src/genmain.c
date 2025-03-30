@@ -1067,6 +1067,7 @@ void *generate_gretl_object (const char *s, DATASET *dset,
     genflags flags = P_PRIV | P_ANON;
     parser p;
 
+    *type = GRETL_TYPE_NONE;
     *err = realgen(s, &p, dset, NULL, flags, UNK);
 
     if (!*err) {
