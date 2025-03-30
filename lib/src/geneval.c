@@ -20663,6 +20663,16 @@ static void gen_preprocess (parser *p, int flags, int *done)
     }
 }
 
+static void preprocess_minimal (parser *p)
+{
+    const char *s = p->input;
+
+    while (isspace(*s)) s++;
+    if (p->targ == UNK && *s == '{') {
+        p->targ = MAT;
+    }
+}
+
 /* tests for saving variable */
 
 static int matrix_may_be_masked (const gretl_matrix *m, int n,
@@ -22350,9 +22360,12 @@ static void parser_init (parser *p, const char *str,
 
     if (p->flags & P_VOID) {
         p->flags |= P_DISCARD;
-    } else if (p->targ == UNK || !(p->flags & P_ANON)) {
+    } else if (p->flags & P_ANON) {
+        preprocess_minimal(p);
+    } else {
         gen_preprocess(p, flags, done);
-    } else if (p->targ == LIST) {
+    }
+    if (p->targ == LIST) {
         p->flags |= P_LISTDEF;
     }
 
