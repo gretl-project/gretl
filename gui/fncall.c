@@ -25,6 +25,7 @@
 #include "gretl_func.h"
 #include "monte_carlo.h"
 #include "uservar.h"
+#include "libset.h"
 #include "cmd_private.h"
 #include "gretl_www.h"
 #include "gretl_xml.h"
@@ -2492,6 +2493,7 @@ static int real_GUI_function_call (call_info *cinfo,
     const char *title;
     gretl_bundle *bundle = NULL;
     int grab_bundle = 0;
+    int aborted = 0;
     int show = 1;
     int err = 0;
 
@@ -2566,7 +2568,13 @@ static int real_GUI_function_call (call_info *cinfo,
 	}
     }
 
-    if (!err && strstr(fnline, AUTOLIST) == NULL) {
+    /* check for execution aborted */
+    if (get_user_stop()) {
+        aborted = 1;
+        set_user_stop(0);
+    }
+
+    if (!err && !aborted && strstr(fnline, AUTOLIST) == NULL) {
 	int ID = 0;
 
 	if (cinfo->flags & MODEL_CALL) {
@@ -2588,7 +2596,7 @@ static int real_GUI_function_call (call_info *cinfo,
 	unset_genr_model();
     }
 
-    if (!err && cinfo->rettype == GRETL_TYPE_BUNDLE) {
+    if (!err && !aborted && cinfo->rettype == GRETL_TYPE_BUNDLE) {
 	if (grab_bundle) {
 	    bundle = get_bundle_by_name(tmpname);
 	    if (bundle != NULL && !gretl_bundle_has_content(bundle)) {
@@ -2602,7 +2610,7 @@ static int real_GUI_function_call (call_info *cinfo,
 	}
     }
 
-    if (!err && bundle != NULL && !show) {
+    if (!err && !aborted && bundle != NULL && !show) {
 	gretl_print_reset_buffer(prn);
 	if (try_exec_bundle_print_function(bundle, prn)) {
 	    /* flag the fact that we do have something to show */

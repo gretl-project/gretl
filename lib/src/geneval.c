@@ -13209,28 +13209,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
                 A = gretl_dgeev(lm, v1, v2, &p->err);
             }
         }
-    } else if (f == F_EIGGEN) {
-        /* legacy: get rid of this asap */
-        gretl_matrix *lm = node_get_matrix(l, p, 0, 1);
-        gretl_matrix *v1 = NULL, *v2 = NULL;
-
-        if (l->t != MAT) {
-            node_type_error(f, 1, MAT, l, p);
-        } else {
-            if (!null_node(m)) {
-                v1 = ptr_node_get_matrix(m, p);
-            }
-            if (!null_node(r)) {
-                v2 = ptr_node_get_matrix(r, p);
-            }
-        }
-        if (!p->err) {
-            if (lm->is_complex) {
-                p->err = E_CMPLX;
-            } else {
-                A = old_eigengen(lm, v1, v2, &p->err);
-            }
-        }
     } else if (f == F_SCHUR) {
         gretl_matrix *Z = NULL;
         gretl_matrix *W = NULL;
@@ -19125,7 +19103,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_SVD:
     case F_QR:
     case F_EIGEN:
-    case F_EIGGEN:
     case F_SCHUR:
     case F_TRIMR:
     case F_CORRGM:
@@ -20683,6 +20660,16 @@ static void gen_preprocess (parser *p, int flags, int *done)
     } else if (p->targ == LIST) {
         /* flag presence of list target to parser */
         p->flags |= P_LISTDEF;
+    }
+}
+
+static void preprocess_minimal (parser *p)
+{
+    const char *s = p->input;
+
+    while (isspace(*s)) s++;
+    if (p->targ == UNK && *s == '{') {
+        p->targ = MAT;
     }
 }
 
@@ -22373,9 +22360,12 @@ static void parser_init (parser *p, const char *str,
 
     if (p->flags & P_VOID) {
         p->flags |= P_DISCARD;
-    } else if (p->targ == UNK || !(p->flags & P_ANON)) {
+    } else if (p->flags & P_ANON) {
+        preprocess_minimal(p);
+    } else {
         gen_preprocess(p, flags, done);
-    } else if (p->targ == LIST) {
+    }
+    if (p->targ == LIST) {
         p->flags |= P_LISTDEF;
     }
 

@@ -1,4 +1,8 @@
-2025-03-20 version 2025
+version 2025b, in progress
+
+The long-deprecated eigengen() function has now been removed.
+
+2025-03-20 version 2025a
 
 No known incompatible changes.
 

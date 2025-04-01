@@ -5641,7 +5641,7 @@ double imhof (const gretl_matrix *m, double arg, int *err)
         lambda = (gretl_matrix *) m;
     } else if (m->rows == m->cols) {
         /* we'll assume m is the 'A' matrix */
-        lambda = gretl_general_matrix_eigenvals(m, err);
+        lambda = legacy_general_matrix_eigenvals(m, err);
         free_lambda = 1;
     } else {
         /* huh? */
@@ -5651,7 +5651,6 @@ double imhof (const gretl_matrix *m, double arg, int *err)
     if (!*err) {
         bound = imhof_bound(lambda, err);
     }
-
     if (!*err) {
         ret = imhof_integral(arg, lambda, bound, err);
     }
@@ -5729,7 +5728,7 @@ double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
     }
     if (!err) {
         DW /= uu;
-        E = gretl_general_matrix_eigenvals(MA, &err);
+        E = legacy_general_matrix_eigenvals(MA, &err);
 #if 0
         fprintf(stderr, "DW = %g\n", DW);
         gretl_matrix_print(E, "eigenvals of M*A");

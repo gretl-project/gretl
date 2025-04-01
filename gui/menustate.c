@@ -1073,7 +1073,7 @@ static void special_panel_label (DATASET *dset)
     u2 = 1 + dset->t2 / dset->pd;
     ntolabel(st1, 0, &tset);
     ntolabel(st2, dset->pd - 1, &tset);
-    s = g_strdup_printf("Panel: units %d:%d, time %s:%s",
+    s = g_strdup_printf(_("Panel: units %d:%d, time %s:%s"),
 			u1, u2, st1, st2);
     gtk_label_set_text(GTK_LABEL(mdata->status), s);
     g_free(s);

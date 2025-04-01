@@ -215,6 +215,9 @@ char *generate_string (const char *s, DATASET *dset, int *err);
 
 int *generate_list (const char *s, DATASET *dset, int ci, int *err);
 
+void *generate_gretl_object (const char *s, DATASET *dset,
+                             GretlType *type, int *err);
+
 int gretl_is_series (const char *name, const DATASET *dset);
 
 int gretl_reserved_word (const char *str);

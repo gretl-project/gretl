@@ -2629,8 +2629,8 @@ void show_activity_callback (void)
     }
 }
 
-/* Support for the GUI "Stop" button -- could in principle be extended
-   to gretlcli via some Ctrl+key combination?
+/* Support for the GUI "Stop" button, to terminate execution
+   of a long-running script.
 */
 
 static int user_stop;

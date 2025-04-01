@@ -8609,14 +8609,14 @@ void run_native_script (windata_t *vwin, const char *buf,
     gretl_set_batch_mode(save_batch);
     refresh_data();
 
+    /* in case execution was halted via the "stop" button */
+    clear_stop_script(prn);
+
     if (silent) {
 	set_gretl_echo(1);
 	gtk_widget_destroy(vwin_toplevel(vwin));
 	return;
     }
-
-    /* in case execution was halted via the "stop" button */
-    clear_stop_script(prn);
 
     if (oh.vwin != NULL) {
         if (untmp) {
