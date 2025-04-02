@@ -9,6 +9,7 @@ version 2025b, in progress
 - GUI: fix the action of the "Stop" button when running a
   packaged function from the function-call dialog
 - Cleanup: delete the long-deprecated eigengen() function
+- Update translatable strings
 
 2025-03-20 version 2025a
 - kalman filter: fixes for variance of smoothed disturbances
