@@ -2781,7 +2781,9 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
     return err;
 }
 
-/* For use with userland bundle-based API */
+/* For use with userspace bundle-based API: implements
+   the ksmooth() and kdsmooth() functions.
+*/
 
 int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
 {
