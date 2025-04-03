@@ -517,7 +517,7 @@ static const double *kalman_arma_llt_callback (const double *b, int i,
     int err;
 
     rewrite_kalman_matrices(K, b, i);
-    err = kalman_forecast(K, NULL);
+    err = kfilter_standard(K, NULL);
 
     return (err)? NULL : kh->V->val;
 }
@@ -541,7 +541,7 @@ static double kalman_arma_ll (const double *b, void *data)
     err = rewrite_kalman_matrices(K, b, KALMAN_ALL);
 
     if (!err) {
-        err = kalman_forecast(K, NULL);
+        err = kfilter_standard(K, NULL);
         ll = kalman_get_loglik(K);
     }
 
@@ -586,11 +586,10 @@ static int kalman_arma_finish (MODEL *pmod,
 
     s2 = kalman_get_arma_variance(K);
     pmod->sigma = sqrt(s2);
-
     pmod->lnL = kalman_get_loglik(K);
 
     if (!do_opg) {
-        /* base covariance matrix on Hessian (perhaps QML) */
+        /* covariance matrix based on Hessian (perhaps QML) */
         gretl_matrix *Hinv;
         double d = 0.0; /* adjust? */
 

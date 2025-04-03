@@ -36,9 +36,7 @@ kalman *kalman_new (gretl_matrix *a, gretl_matrix *P,
 		    gretl_matrix *x, gretl_matrix *mu,
 		    gretl_matrix *V, int *err);
 
-int kalman_forecast (kalman *K, PRN *prn);
-
-int kalman_run (kalman *K, PRN *prn, int *errp);
+int kfilter_standard (kalman *K, PRN *prn);
 
 int is_kalman_bundle (gretl_bundle *b);
 

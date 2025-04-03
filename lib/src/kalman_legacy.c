@@ -203,7 +203,7 @@ static int legacy_load_filter_data (kalman *K, int smtype)
     if (smtype == SM_STATE_STD || smtype == SM_DIST_BKWD) {
         /* load the gain and F^{-1} */
         load_from_vec(K->Kt, K->K, K->t);
-        load_from_vech(K->iFt, K->F, K->n, K->t);
+        load_from_vech(K->iFt, K->Finv, K->n, K->t);
     }
 
     return err;
@@ -575,7 +575,15 @@ static int anderson_moore_smooth (kalman *K)
     int t, err = 0;
 
     if (trace) {
-        printf("anderson_moore_smooth(), legacy\n");
+        printf("anderson_moore_smooth()\n");
+        if (K->K == NULL || K->Finv == NULL) {
+            printf(" K->K %p, K->Finv %p\n", (void *) K->K,
+                   (void *) K->Finv);
+        } else {
+            printf(" K->K is %d x %d, K->Finv is %d x %d\n",
+                   K->K->rows, K->K->cols, K->Finv->rows,
+                   K->Finv->cols);
+        }
     }
 
     B = gretl_matrix_block_new(&r0,  K->r, 1,
