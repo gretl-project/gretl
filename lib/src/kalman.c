@@ -6599,6 +6599,9 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 
             K->loglik -= 0.5 * ll_adj;
         }
+        /* FIXME: Can we come up with a meaningful K->s2 value
+           in the exact diffuse case?
+        */
     } else if (kalman_arma_ll(K)) {
         double ll1 = 1.0 + LN_2_PI + log(K->SSRw / K->okN);
 
