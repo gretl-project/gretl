@@ -166,24 +166,23 @@ computed using
 \myvec(\statecvar_{1|0}) = \left[ I - \statemat \otimes \statemat
 \right]^{-1} \myvec(\statevar)
 \]
-If the above condition is not satisfied you will have to make a
-choice on which technique to use for ``diffuse'' initialization.
+If the above condition is not satisfied you will have to make a choice
+on which technique to use for so-called ``diffuse'' initialization.
 
 In Section \ref{sec:diffuse} we provide a fuller discussion of the
-various options, but here's what is probably the bottom line for many
+various options, but here's what is likely the bottom line for many
 users. In earlier versions of gretl a rather crude solution was
 adopted, initializing $\statecvar_{1|0}$ to a ``numerically large''
 matrix. This was accomplished by setting a value of 1 on the bundle
 under the (reserved) key \texttt{diffuse}.  From gretl version 2022b
 on, if you have scripts where you set \texttt{diffuse=1} on your
-Kalman bundle you can now try \texttt{diffuse=2} instead. This
-invokes the new ``exact initial'' method for state space models with a
-diffuse initializer. Don't expect identical results from the new code,
-but to the extent results differ the new ones should be somewhat more
-accurate. (If results differ wildly you've probably found a bug;
-please report it!) You may also find that the new code is faster; it
-should be less likely to get hung up on numerical problems that delay
-or prevent convergence of ML estimation.
+Kalman bundle you can now try \texttt{diffuse=2} instead. This invokes
+the new ``exact initial'' method for state space models with a diffuse
+initializer. Don't expect identical results from the new code, but to
+the extent results differ the new ones should be somewhat more
+accurate. You may also find that the new code is faster; it should be
+less likely to get hung up on numerical problems that delay or prevent
+convergence of ML estimation.
 
 \section{Special features of state-space bundles}
 \label{sec:ss-special}
@@ -198,14 +197,14 @@ bundle there are certain constraints.
   \texttt{statemat}, \texttt{statevar} and (if applicable)
   \texttt{obsvar} in a given bundle if you wish---but only on
   condition that the replacement matrix has the same dimensions as the
-  original. In other words, the dimensions $\stdim$ and $\obsdim$ are
-  set once and for all by the \texttt{ksetup} call
-  (section~\ref{sec:setup}).
+  original. In other words, the dimensions of the state ($\stdim$) and
+  the observable ($\obsdim$) are set once and for all by the
+  \texttt{ksetup} call (section~\ref{sec:setup}).
 \item You can replace the data matrix \texttt{obsy} subject to the
-  condition that the number of columns, $\obsdim$, is unchanged; the
-  time-series length, $N$, is mutable.
-\item None of the input matrices just mentioned can be deleted from
-  the bundle.
+  condition that the number of columns, $\obsdim$, is unchanged; only
+  the time-series length, $N$, is mutable.
+\item None of the above-mentioned matrices can be deleted from the
+  bundle.
 \item Output matrices that are automatically added to the bundle by
   the functions described in the following sections \textit{can} be
   deleted (if you don't need them and want to save on storage). But
@@ -615,10 +614,10 @@ Any or all of the matrices \texttt{obsymat}, \texttt{obsxmat},
 \texttt{stconst} may be time-varying.  In that case you must supply
 the name of a function to be called to update the matrix or matrices
 in question: you add this to the bundle as a string, under the key
-\dtk{timevar_call}.\footnote{The choice of the name for the
-  function itself is of course totally up to the user.} For example,
-if just \texttt{obsymat} ($\obsymat_t$) should be updated, by a
-function named \dtk{TV_Z}, you would write
+\dtk{timevar_call}.\footnote{The choice of the name for the function
+  itself is up to the user.} For example, if just \texttt{obsymat}
+($\obsymat_t$) should be updated, by a function named \dtk{TV_Z}, you
+would write
 %
 \begin{code}
 SSmod.timevar_call = "TV_Z"
@@ -667,16 +666,15 @@ $N \times \stdim\obsdim$, with row $t$ holding the (transposed) vec of
 $\obsymat_t$, and \texttt{b.Tvals} is $N \times \stdim(\stdim +1)/2$,
 with row $t$ holding the vech of $\statemat_t$. Simpler variants
 (e.g.\ just one element of a relevant matrix in question is changed)
-and more complex variants---say, involving some sort of
+and more complex variants---for example, involving some sort of
 conditionality---are also possible in this framework.
 
 It is worth noting that this setup lends itself to a much wider scope
-than time-varying system matrices. In fact, this syntax allows for the
-possibility of executing user-defined operations at each step. The
-function that goes under \dtk{timevar_call} can read all the
-elements of the model bundle and can modify several of them: the
-system matrices (which can therefore be made time-varying) as well as
-the user-defined elements.
+than time-varying system matrices. In fact, it gives the possibility
+of executing user-defined operations at each step. The function that
+goes under \dtk{timevar_call} can read all the elements of the model
+bundle and can modify several of them---the system matrices (which can
+therefore be made time-varying) as well as the user-defined elements.
 
 An extended example of use of the time-variation facility is presented
 in section~\ref{sec:ss-examples}.
@@ -699,9 +697,9 @@ variance of the disturbances in (\ref{eq:obs}) and (\ref{eq:state}).
   $V(\obsdist_t)$ ($\obsdim \times \obsdim$) and $V(\stdist_t)$ ($\stdim \times \stdim$).
 \item The ``de Jong'' representation: write
   $\obsdist_t = \altobsvar_t\alldist_t$ and
-  $\stdist_t = \altstatevar_t\nu_t$, where $\altobsvar_t$ is
-  $\obsdim \times p$, $H_t$ is $\stdim \times p$ and $p$ is the
-  length of the underlying disturbance vector $\alldist_t$. This
+  $\stdist_t = \altstatevar_t\nu_t$, where $\alldist_t$ is an
+  underlying disturbance vector of length $p$, $\altobsvar_t$ is
+  $\obsdim \times p$ and $\altstatevar_t$ is $\stdim \times p$. This
   formulation allows for correlation of the disturbances across the
   equations, if $\altstatevar_t\altobsvar_t'$ is non-zero.
 \item The ``Durbin--Koopman'' representation: as in the first case
