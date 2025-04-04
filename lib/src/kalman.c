@@ -2346,13 +2346,6 @@ static int kalman_filter (kalman *K, PRN *prn, int *errp)
         err = kalman_bundle_recheck_matrices(K, prn);
     }
 
-    if (!err && K->LL == NULL) {
-        K->LL = gretl_matrix_alloc(K->N, 1);
-        if (K->LL == NULL) {
-            err = E_ALLOC;
-        }
-    }
-
     if (!err) {
         if (kalman_sequential(K)) {
             err = ensure_sequential_info(K);
@@ -6599,9 +6592,10 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 
             K->loglik -= 0.5 * ll_adj;
         }
-        /* FIXME: Can we come up with a meaningful K->s2 value
+        /* FIXME: is the following a meaningful K->s2 value
            in the exact diffuse case?
         */
+        K->s2 = K->SSRw / (K->n * K->okN - K->r);
     } else if (kalman_arma_ll(K)) {
         double ll1 = 1.0 + LN_2_PI + log(K->SSRw / K->okN);
 
