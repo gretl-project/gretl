@@ -121,7 +121,7 @@ struct dejong_info_ {
     gretl_matrix *A;   /* recorder for smoother */
     gretl_matrix *V;   /* ditto */
     gretl_matrix *Am;  /* ditto (redundant?) */
-    double qm;         /* scalar embedded in Qt */
+    double qm;         /* qt for t = m */
     double ldS;        /* log determinant of S-inverse */
     int Nd;            /* size of diffuse recorders */
 };
@@ -2736,6 +2736,7 @@ static int kalman_add_dejong_info (kalman *K)
     K->djinfo->A  = NULL;
     K->djinfo->V  = NULL;
     K->djinfo->Am = NULL;
+    K->djinfo->qm = 0;
 
     return err;
 }
@@ -6224,7 +6225,7 @@ static int update_dj_variance_matrices (kalman *K)
     return err;
 }
 
-static int dejong_diffuse_filter_step (kalman *K)
+static int dejong_diffuse_filter_step (kalman *K, double *pqt)
 {
     dejong_info *dj = K->djinfo;
     gretl_matrix *lam;
@@ -6309,6 +6310,7 @@ static int dejong_diffuse_filter_step (kalman *K)
         /* qm = Qt[r+1,r+1] - s'*S*s */
         dj->qm = gretl_matrix_get(dj->Qt, K->r, K->r);
         dj->qm -= gretl_scalar_qform(dj->s, dj->S, &err); /* FIXME? */
+        *pqt = dj->qm;
 
         /* record */
 	if (dj->Am == NULL) {
@@ -6553,7 +6555,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 
         if (exact_diffuse && K->t < K->d) {
 	    /* still in diffuse phase */
-            err = dejong_diffuse_filter_step(K);
+            err = dejong_diffuse_filter_step(K, &qt);
         } else {
             /* standard Kalman phase */
             qt = gretl_scalar_qform(K->vt, K->iFt, &err);
