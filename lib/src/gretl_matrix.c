@@ -14119,9 +14119,9 @@ double gretl_scalar_qform (const gretl_vector *b,
  * Returns: 0 on success, non-zero code on error.
  */
 
-int
-gretl_matrix_diagonal_sandwich (const gretl_vector *d, const gretl_matrix *X,
-                                gretl_matrix *DXD)
+int gretl_matrix_diagonal_sandwich (const gretl_vector *d,
+                                    const gretl_matrix *X,
+                                    gretl_matrix *DXD)
 {
     int dim = (d->rows == 1)? d->cols : d->rows;
     double x, xij;
