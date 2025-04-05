@@ -148,9 +148,9 @@ struct kalman_ {
     int ifc; /* boolean: obs equation includes an implicit constant? */
     int dj_initted; /* flag for basic de Jong initialization done */
 
-    double SSRw;    /* \sum_{t=1}^N v_t^{\prime} F_t^{-1} v_t */
+    double qsum;    /* \sum_{t=1}^N q_t = v_t' F_t^{-1} v_t */
     double loglik;  /* log-likelihood */
-    double s2;      /* = SSRw / k */
+    double s2;      /* = qsum / k */
 
     /* continuously updated matrices */
     gretl_matrix *a0; /* r x 1: state vector, before updating */
@@ -820,7 +820,7 @@ static int kalman_init (kalman *K)
                (void *) K->aini, (void *) K->Pini);
     }
 
-    K->SSRw = NADBL;
+    K->qsum = NADBL;
     K->loglik = NADBL;
     K->s2 = NADBL;
 
@@ -999,10 +999,10 @@ double kalman_get_loglik (const kalman *K)
 
 double kalman_get_arma_variance (const kalman *K)
 {
-    if (na(K->SSRw)) {
+    if (na(K->qsum)) {
         return NADBL;
     } else {
-        return K->SSRw / K->okN;
+        return K->qsum / K->okN;
     }
 }
 
@@ -2011,7 +2011,7 @@ int kfilter_standard (kalman *K, PRN *prn)
         }
     }
 
-    K->SSRw = K->loglik = 0.0;
+    K->qsum = K->loglik = 0.0;
     K->s2 = NADBL;
     K->okN = K->N;
     set_kalman_running(K);
@@ -2094,7 +2094,7 @@ int kfilter_standard (kalman *K, PRN *prn)
                 break;
             }
             K->loglik += llt;
-            K->SSRw += qt;
+            K->qsum += qt;
             sumldet += ldet;
         }
         if (K->LL != NULL) {
@@ -2139,13 +2139,13 @@ int kfilter_standard (kalman *K, PRN *prn)
     if (na(K->loglik)) {
         err = E_NAN;
     } else if (kalman_arma_ll(K)) {
-        double ll1 = 1.0 + LN_2_PI + log(K->SSRw / K->okN);
+        double ll1 = 1.0 + LN_2_PI + log(K->qsum / K->okN);
 
         K->loglik = -0.5 * (K->okN * ll1 + sumldet);
     } else {
 	int d = kalman_diffuse(K) ? K->r : 0;
 
-        K->s2 = K->SSRw / (K->n * K->okN - d);
+        K->s2 = K->qsum / (K->n * K->okN - d);
     }
 
     if (kdebug) {
@@ -5052,7 +5052,7 @@ static int kfilter_sequential (kalman *K, PRN *prn)
 
     K->TI = gretl_is_identity_matrix(K->T);
     K->okN = K->n * K->N;
-    K->SSRw = 0;
+    K->qsum = 0;
     K->loglik = 0;
     set_kalman_running(K);
 
@@ -5082,9 +5082,7 @@ static int kfilter_sequential (kalman *K, PRN *prn)
                 break;
             }
         }
-        qt = 0;
-        ldt = 0;
-        llct = 0;
+        qt = ldt = llct = 0;
         if (K->smo_prep && d == 0 && t < Nd) {
             record_to_col(K->PK, Pk, t);
         }
@@ -5163,7 +5161,6 @@ static int kfilter_sequential (kalman *K, PRN *prn)
 	    /* record K∞ */
 	    record_to_col(si->Kinf, Kkt, t);
         }
-
         if (j > 0 && d == 0) {
             d = t + 1; /* note: 1-based */
             if (kdebug) {
@@ -5200,7 +5197,7 @@ static int kfilter_sequential (kalman *K, PRN *prn)
         } else {
             K->loglik -= 0.5 * (llct + ldt + qt);
         }
-        K->SSRw += qt;
+        K->qsum += qt;
         if (att != NULL) {
             record_to_vec(att, ati, t);
         }
@@ -5229,7 +5226,7 @@ static int kfilter_sequential (kalman *K, PRN *prn)
 
     set_kalman_stopped(K);
 
-    K->s2 = K->SSRw / K->okN;
+    K->s2 = K->qsum / K->okN;
 
     if (kdebug) {
         fprintf(stderr, "*** after filtering: d=%d, j=%d ***\n", d, j);
@@ -6225,7 +6222,9 @@ static int update_dj_variance_matrices (kalman *K)
     return err;
 }
 
-static int dejong_diffuse_filter_step (kalman *K, double *pqt)
+static int dejong_diffuse_filter_step (kalman *K,
+                                       double *pqt,
+                                       double *pldt)
 {
     dejong_info *dj = K->djinfo;
     gretl_matrix *lam;
@@ -6296,6 +6295,7 @@ static int dejong_diffuse_filter_step (kalman *K, double *pqt)
 
         /* S = invpd(Sinv) */
         gretl_invert_symmetric_matrix2(dj->S, &dj->ldS);
+        *pldt = dj->ldS;
 
         /* at += At*S*s */
         gretl_matrix_multiply(dj->At, dj->S, K->rr);
@@ -6411,7 +6411,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     } else {
         K->d = -1;
     }
-    K->SSRw = K->loglik = 0.0;
+    K->qsum = K->loglik = 0.0;
     K->s2 = NADBL;
     K->TI = gretl_is_identity_matrix(K->T);
     K->okN = K->N;
@@ -6477,7 +6477,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
         }
         /* calculate F_t and its inverse */
         fast_copy_values(K->iFt, K->Ft);
-	if (K->t < K->d && !loglik_1991) {
+        if (K->t < K->d && !loglik_1991) {
 	    /* conditionality regarding the log-determinant? */
 	    err = gretl_invert_symmetric_matrix2(K->iFt, &pldt);
             sum_preldet += pldt;
@@ -6555,7 +6555,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 
         if (exact_diffuse && K->t < K->d) {
 	    /* still in diffuse phase */
-            err = dejong_diffuse_filter_step(K, &qt);
+            err = dejong_diffuse_filter_step(K, &qt, &ldt);
         } else {
             /* standard Kalman phase */
             qt = gretl_scalar_qform(K->vt, K->iFt, &err);
@@ -6573,7 +6573,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
                 break;
             }
             K->loglik += llt;
-            K->SSRw += qt;
+            K->qsum += qt;
             sumldet += ldt;
         }
         if (K->LL != NULL) {
@@ -6589,24 +6589,27 @@ static int kfilter_dejong (kalman *K, PRN *prn)
         if (K->d == K->N) {
             err = handle_no_collapse_case(K, nl2pi, sum_preldet);
         } else if (loglik_1991) {
-            /* deal with extra terms set out in De Jong (1991) */
+            /* Eeal with extra terms set out in De Jong (1991)?
+               Not activated at present.
+            */
             double ll_adj = K->djinfo->qm + K->djinfo->ldS;
 
+            //fprintf(stderr, "HERE qm = %g, ldS = %g, ll_adj = %g\n",
+            //        K->djinfo->qm, K->djinfo->ldS, ll_adj);
             K->loglik -= 0.5 * ll_adj;
+        } else {
+            /* FIXME: the following needs more testing */
+            K->s2 = K->qsum / (K->n * K->okN - K->r);
         }
-        /* FIXME: is the following a meaningful K->s2 value
-           in the exact diffuse case?
-        */
-        K->s2 = K->SSRw / (K->n * K->okN - K->r);
     } else if (kalman_arma_ll(K)) {
-        double ll1 = 1.0 + LN_2_PI + log(K->SSRw / K->okN);
+        double ll1 = 1.0 + LN_2_PI + log(K->qsum / K->okN);
 
         K->loglik = -0.5 * (K->okN * ll1 + sumldet);
     } else {
         int d = (kalman_diffuse(K) && !K->exact)? K->r : 0;
 
         /* as per kfilter_standard() code: do we want this? */
-        K->s2 = K->SSRw / (K->n * K->okN - d);
+        K->s2 = K->qsum / (K->n * K->okN - d);
     }
 
     if (kdebug) {
