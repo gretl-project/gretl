@@ -6154,12 +6154,36 @@ static double bincoeff (double n, double k, int *err)
     return ret;
 }
 
+static double threshold (double x, double a, int flag, int *err)
+{
+    /*
+      flag = 0 -> soft thresholding; flag = 1 -> hard thresholding;
+    */
+    double ret = 0.0;
+
+    if (a < 0) {
+        *err = E_INVARG;
+        return NADBL;
+    }
+
+    if (x > a) {
+        ret = flag ? x : x-a;
+    } else if (x < -a) {
+        ret = flag ? x : x+a;
+    } 
+
+    return ret;
+}
+
+
 /* flexible_2arg_node() handles cases like atan2, where we have two
    possibly heterogeneous arguments (scalar, series, matrix) and the
-   objective is to return a sensibly sized object.
+   objective is to return a sensibly sized object. The "flag" argument
+   is used for minimal inflection of the function, like in "threshold".
 */
 
-static NODE *flexible_2arg_node (NODE *l, NODE *r, int f, parser *p)
+static NODE *flexible_2arg_node (NODE *l, NODE *r, int f, int flag,
+				 parser *p)
 {
     NODE *ret = NULL;
     int rettype = 0;
@@ -6204,7 +6228,6 @@ static NODE *flexible_2arg_node (NODE *l, NODE *r, int f, parser *p)
     if (ret != NULL && !p->err) {
         double x1, x2, y = NADBL;
         int i;
-
         for (i=0; i<nmax; i++) {
             x1 = node_get_double(l, i, p);
             x2 = node_get_double(r, i, p);
@@ -6214,7 +6237,12 @@ static NODE *flexible_2arg_node (NODE *l, NODE *r, int f, parser *p)
                 y = bincoeff(x1, x2, &p->err);
                 if (p->err) {
                     break;
-                }
+		}
+            } else if (f == F_THRESHOLD) {
+		y = threshold(x1, x2, flag, &p->err);
+		if (p->err) {
+		    break;
+		}
             }
             node_set_double(ret, i, y, p);
         }
@@ -18356,7 +18384,18 @@ static NODE *eval (NODE *t, parser *p)
     case F_BINCOEFF:
         if ((l->t == NUM || l->t == MAT || l->t == SERIES) &&
             (r->t == NUM || r->t == MAT || r->t == SERIES)) {
-            ret = flexible_2arg_node(l, r, t->t, p);
+            ret = flexible_2arg_node(l, r, t->t, 0, p);
+        } else {
+            p->err = E_TYPES;
+        }
+        break;
+    case F_THRESHOLD:
+        if ((l->t == NUM || l->t == MAT || l->t == SERIES) &&
+            (m->t == NUM || m->t == MAT || m->t == SERIES)) {
+	    int hard = node_get_bool(r, p, 0);
+	    if (!p->err) {
+		ret = flexible_2arg_node(l, m, t->t, hard, p);
+	    }
         } else {
             p->err = E_TYPES;
         }

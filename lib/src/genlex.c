@@ -602,6 +602,7 @@ struct str_table funcs[] = {
     { F_COMMUTE,   "commute" },
     { F_ACCESS,    "access" },
     { F_SPHCORR,   "sphericorr" },
+    { F_THRESHOLD, "thresh" },
     { 0,           NULL }
 };
 

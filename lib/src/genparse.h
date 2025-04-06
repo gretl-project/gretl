@@ -475,6 +475,7 @@ enum {
     F_CDEMEAN,
     F_STDIZE,
     F_INSTRINGS,
+    F_THRESHOLD,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_URCPVAL,
