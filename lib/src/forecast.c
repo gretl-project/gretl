@@ -3140,7 +3140,7 @@ static int parse_forecast_string (const char *s,
        expect t1 and t2, so the max becomes 2 (if OPT_R), else 1.
 
        Also note: t1 and t2 need not be given (even in the absence
-       if OPT_O) since these default to the current sample range.
+       of OPT_O) since these default to the current sample range.
     */
 
     if (opt & OPT_O) {
