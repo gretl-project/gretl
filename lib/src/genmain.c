@@ -1060,6 +1060,30 @@ int *generate_list (const char *s, DATASET *dset, int ci, int *err)
     return ret;
 }
 
+/* retrieve a bundle result directly */
+
+gretl_bundle *generate_bundle (const char *s, DATASET *dset, int *err)
+{
+    gretl_bundle *ret = NULL;
+    genflags flags = P_PRIV | P_ANON;
+    parser p;
+
+    *err = realgen(s, &p, dset, NULL, flags, BUNDLE);
+
+    if (!*err) {
+        NODE *n = p.ret;
+
+        if (n->t == BUNDLE) {
+            ret = n->v.b;
+            n->v.b = NULL;
+        }
+    }
+
+    gen_cleanup(&p);
+
+    return ret;
+}
+
 void *generate_gretl_object (const char *s, DATASET *dset,
                              GretlType *type, int *err)
 {

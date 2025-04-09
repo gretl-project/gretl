@@ -56,12 +56,12 @@
 #define PKG_DEBUG 0
 #define MPKG_DEBUG 0
 
-enum {
+typedef enum {
     SHOW_GUI_MAIN = 1 << 0,
     MODEL_CALL    = 1 << 1,
     DATA_ACCESS   = 1 << 2,
     FOR_ADDON     = 1 << 3
-};
+} call_flags;
 
 typedef struct call_info_ call_info;
 
@@ -77,7 +77,7 @@ struct call_info_ {
     int *publist;        /* list of public interfaces */
     gretl_bundle *ui;    /* the package's GUI specification, if any */
     int iface;           /* selected interface */
-    int flags;           /* misc. info on package */
+    call_flags flags;    /* misc. info on package */
     const ufunc *func;   /* the function we're calling */
     DataReq dreq;        /* the function's data requirement */
     int modelreq;        /* the function's model (command) requirement */
