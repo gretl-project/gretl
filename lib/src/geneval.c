@@ -6154,11 +6154,10 @@ static double bincoeff (double n, double k, int *err)
     return ret;
 }
 
-static double threshold (double x, double a, int flag, int *err)
+/* hard or soft thresholding */
+
+static double threshold (double x, double a, int hard, int *err)
 {
-    /*
-      flag = 0 -> soft thresholding; flag = 1 -> hard thresholding;
-    */
     double ret = 0.0;
 
     if (a < 0) {
@@ -6167,10 +6166,10 @@ static double threshold (double x, double a, int flag, int *err)
     }
 
     if (x > a) {
-        ret = flag ? x : x-a;
+        ret = hard ? x : x-a;
     } else if (x < -a) {
-        ret = flag ? x : x+a;
-    } 
+        ret = hard ? x : x+a;
+    }
 
     return ret;
 }
@@ -6178,8 +6177,8 @@ static double threshold (double x, double a, int flag, int *err)
 
 /* flexible_2arg_node() handles cases like atan2, where we have two
    possibly heterogeneous arguments (scalar, series, matrix) and the
-   objective is to return a sensibly sized object. The "flag" argument
-   is used for minimal inflection of the function, like in "threshold".
+   objective is to return a sensibly sized object. The @flag argument
+   is used for minimal inflection of the function, as in thresh().
 */
 
 static NODE *flexible_2arg_node (NODE *l, NODE *r, int f, int flag,
