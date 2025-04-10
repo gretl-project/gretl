@@ -1457,7 +1457,6 @@ static int add_remote_db_series_list (windata_t *vwin, char *buf)
     gchar *row[3];
     char sername[VNAMELEN];
     char line1[256], line2[256];
-    int offset = 0;
     int n, err = 0;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model
@@ -1494,14 +1493,12 @@ static int add_remote_db_series_list (windata_t *vwin, char *buf)
 	}
 
 	gtk_list_store_append(store, &iter);
-	gtk_list_store_set (store, &iter,
-			    DBCOL_VARNAME, row[0],
-			    DBCOL_DESCRIP, row[1],
-			    DBCOL_OBSINFO, row[2],
-			    DBCOL_OFFSET, nobs * sizeof(dbnumber),
-			    -1);
-
-	offset += nobs;
+	gtk_list_store_set(store, &iter,
+                           DBCOL_VARNAME, row[0],
+                           DBCOL_DESCRIP, row[1],
+                           DBCOL_OBSINFO, row[2],
+                           DBCOL_OFFSET, nobs * sizeof(dbnumber),
+                           -1);
     }
 
     bufgets_finalize(buf);

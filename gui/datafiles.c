@@ -474,7 +474,7 @@ static int build_file_collections (int role)
         int uerr[2] = {0};
         int nd = 0;
         int ns = 0;
-        int nu = 0;
+        int nu = 0; /* FIXME: we're not making use of this */
         int i;
 
         gretl_error_clear();
@@ -488,7 +488,6 @@ static int build_file_collections (int role)
         nd += seek_file_collections(gretl_dotdir(), DATA_SEARCH, &derr[1]);
         ns += seek_file_collections(gretl_dotdir(), SCRIPT_SEARCH, &serr[1]);
 #endif
-
         nu += seek_file_collections(gretl_workdir(), USER_SEARCH, &uerr[0]);
         wd = maybe_get_default_workdir();
         if (wd != NULL) {

@@ -220,7 +220,6 @@ static void replace_all_callback (GtkWidget *button,
     gboolean selected = FALSE;
     gboolean found = TRUE;
     gboolean do_brackets;
-    int count = 0;
 
     update_search_strings(s);
 
@@ -259,7 +258,6 @@ static void replace_all_callback (GtkWidget *button,
     /* avoid spending time matching brackets */
     do_brackets = gtk_source_buffer_get_highlight_matching_brackets(GTK_SOURCE_BUFFER(s->buf));
     gtk_source_buffer_set_highlight_matching_brackets(GTK_SOURCE_BUFFER(s->buf), FALSE);
-
     gtk_text_buffer_begin_user_action(s->buf);
 
     do {
@@ -279,7 +277,6 @@ static void replace_all_callback (GtkWidget *button,
 					     selected ? &end : NULL);
 #endif
 	if (found) {
-	    count++;
 	    gtk_text_buffer_delete(s->buf, &r_start, &r_end);
 	    gtk_text_buffer_insert(s->buf, &r_start,
 				   s->replace,
@@ -293,12 +290,7 @@ static void replace_all_callback (GtkWidget *button,
 	}
     } while (found);
 
-#if 0
-    fprintf(stderr, "replaced %d occurrences\n", count);
-#endif
-
     gtk_text_buffer_end_user_action(s->buf);
-
     gtk_source_buffer_set_highlight_matching_brackets(GTK_SOURCE_BUFFER(s->buf),
 						      do_brackets);
 

@@ -114,13 +114,11 @@ static void md5digest (FILE *infile, char *digest)
 {
     MD5_CTX context;
     unsigned char buf[1000];
-    long length = 0;
     int nbytes;
     
     MD5Init(&context);
 
     while ((nbytes = fread(buf, 1, sizeof(buf), infile))) {
-	length += nbytes;
 	MD5Update(&context, buf, nbytes);
     }
 

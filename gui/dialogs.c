@@ -7170,7 +7170,7 @@ static void maybe_reinstate_selection (GList *plist,
 
     while (tmp != NULL) {
 	if (!strcmp((gchar *) tmp->data, payload)) {
-	    *selpos = 1;
+	    *selpos = i;
 	    break;
 	}
 	tmp = tmp->next;

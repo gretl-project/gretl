@@ -2239,7 +2239,6 @@ int win32_get_core_count (void)
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buf = NULL;
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION ptr = NULL;
     DWORD rc, retlen = 0;
-    int n_procs = 0;
     int n_cores = 0;
     int bufsize = 0;
     int offset = 0;
@@ -2274,18 +2273,10 @@ int win32_get_core_count (void)
     while (offset + bufsize <= retlen) {
         if (ptr->Relationship == RelationProcessorCore) {
             n_cores++;
-            /* hyper-threaded cores supply more than one logical processor */
-            n_procs += count_set_bits(ptr->ProcessorMask);
 	}
         offset += bufsize;
         ptr++;
     }
-
-#if 0
-    fprintf(stderr, "\nGetLogicalProcessorInformation results:\n");
-    fprintf(stderr, " Number of processor cores: %d\n", n_cores);
-    fprintf(stderr, " Number of logical processors: %d\n", n_procs);
-#endif
 
     free(buf);
 
