@@ -5389,7 +5389,6 @@ static void print_rho (const ARINFO *arinfo, int c, int dfd, PRN *prn)
 
 static void alt_print_rho_terms (const MODEL *pmod, PRN *prn)
 {
-    double xx = 0.0;
     int i, dfd;
 
     if (pmod->arinfo == NULL ||
@@ -5407,7 +5406,6 @@ static void alt_print_rho_terms (const MODEL *pmod, PRN *prn)
 
     for (i=1; i<=pmod->arinfo->arlist[0]; i++) {
 	print_rho(pmod->arinfo, i - 1, dfd, prn);
-	xx += pmod->arinfo->rho[i-1];
     }
 }
 

@@ -4564,19 +4564,13 @@ void series_delete_metadata (DATASET *dset, int i)
 void series_ensure_level_zero (DATASET *dset)
 {
     if (dset != NULL) {
-	int i, n = 0;
+	int i;
 
 	for (i=1; i<dset->v; i++) {
 	    if (dset->varinfo[i]->stack_level > 0) {
 		dset->varinfo[i]->stack_level = 0;
-		n++;
 	    }
 	}
-#if 0
-	if (n > 0) {
-	    fprintf(stderr, "Unauthorized access to series detected!\n");
-	}
-#endif
     }
 }
 

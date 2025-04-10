@@ -1088,11 +1088,10 @@ static int mask_get_t1_t2 (const char *mask,
     int nseq = 0; /* number of sequences of 1s */
     int t1 = -1;
     int t2 = -1;
-    int t, n = 0;
+    int t;
 
     for (t=0; s[t] != SUBMASK_SENTINEL; t++) {
         if (s[t] == 1) {
-            n++;
             if (t == 0 || s[t-1] == 0) {
                 nseq++;
             }
@@ -1129,8 +1128,7 @@ static int mask_get_t1_t2 (const char *mask,
     }
 
 #if SUBDEBUG
-    fprintf(stderr, "mask_get_t1_t2: n=%d, t1=%d, t2=%d\n",
-            n, *pt1, *pt2);
+    fprintf(stderr, "mask_get_t1_t2: t1=%d, t2=%d\n", *pt1, *pt2);
 #endif
 
     return contig;

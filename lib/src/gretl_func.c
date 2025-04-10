@@ -622,10 +622,10 @@ int push_function_args (fncall *fc, ...)
     va_list ap;
     int argtype;
     void *value;
-    int i, err = 0;
+    int err = 0;
 
     va_start(ap, fc);
-    for (i=0; !err; i++) {
+    while (err == 0) {
         argtype = va_arg(ap, int);
         if (argtype < 0) {
             /* reached the end of the args */
@@ -4934,11 +4934,11 @@ int function_package_set_properties (fnpkg *pkg, ...)
     const char *key;
     char **sptr;
     int optional;
-    int i, err = 0;
+    int err = 0;
 
     va_start(ap, pkg);
 
-    for (i=1; !err; i++) {
+    while (err == 0) {
         key = va_arg(ap, const char *);
         if (key == NULL) {
             break;

@@ -4352,8 +4352,6 @@ static int get_n_ok_months (const DATASET *dset,
     return nm;
 }
 
-#define WEEKLY_DEBUG 0
-
 static int
 weeks_to_months_exec (double **mZ, const DATASET *dset,
 		      CompactMethod method)
@@ -4445,7 +4443,7 @@ weeks_to_months_check (const DATASET *dset, int *startyr, int *endyr,
 {
     char obsstr[OBSLEN];
     int yr, mon, day;
-    int wcount = 0, mcount = 0;
+    int mcount = 0;
     int monbak = 0;
     int t, err = 0;
 
@@ -4461,18 +4459,9 @@ weeks_to_months_check (const DATASET *dset, int *startyr, int *endyr,
 	    *startyr = yr;
 	    *startmon = mon;
 	    mcount++;
-	    wcount = 1;
 	} else if (mon != monbak) {
-	    /* got a new month: report on previous one */
-#if WEEKLY_DEBUG
-	    fprintf(stderr, "month %d ('%d'), weekly obs = %d\n",
-		    mcount, monbak, wcount);
-#endif
+	    /* got a new month */
 	    mcount++;
-	    wcount = 1;
-	} else {
-	    /* continuation of current month */
-	    wcount++;
 	}
 	monbak = mon;
     }
@@ -4481,10 +4470,6 @@ weeks_to_months_check (const DATASET *dset, int *startyr, int *endyr,
 	mcount = 0;
     } else {
 	/* flush the last observation */
-#if WEEKLY_DEBUG
-	fprintf(stderr, "month %d ('%d'), weekly obs = %d\n",
-		mcount, monbak, wcount);
-#endif
 	*endyr = yr;
 	*endmon = mon;
     }

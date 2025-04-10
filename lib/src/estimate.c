@@ -640,7 +640,7 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs,
 	N_("Weight variable contains negative values");
     const char *bad_zeros =
 	N_("Weight variable is not a dummy but contains zeros");
-    int ones = 0, zeros = 0, nobs = 0;
+    int zeros = 0, nobs = 0;
     int t, is_dummy = 1;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -650,9 +650,7 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs,
 	    return 1;
 	} else if (w[t] > 0.0) {
 	    nobs++;
-	    if (w[t] == 1.0) {
-		ones++;
-	    } else {
+	    if (w[t] != 1.0) {
 		is_dummy = 0;
 	    }
 	} else if (w[t] == 0.0) {
@@ -673,7 +671,7 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs,
     *effobs = nobs;
 
     if (is_dummy) {
-	/* the weight var is a dummy */
+	/* the weight var is a 0/1 dummy */
 	gretl_model_set_int(pmod, "wt_dummy", 1);
 	gretl_model_set_int(pmod, "wt_zeros", zeros);
     } else if (zeros > 0) {

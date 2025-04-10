@@ -5530,7 +5530,7 @@ FILE *open_3d_plot_input_file (int *iact)
 
 static gchar *make_freq_test_label (int teststat, double v, double pv)
 {
-    gchar *s;
+    gchar *s = NULL;
 
     gretl_pop_c_numeric_locale();
     if (teststat == GRETL_STAT_Z) {
@@ -5545,7 +5545,7 @@ static gchar *make_freq_test_label (int teststat, double v, double pv)
 
 static gchar *make_freq_dist_label (int dist, double x, double y)
 {
-    gchar *s;
+    gchar *s = NULL;
     char c, test[10];
 
     gretl_pop_c_numeric_locale();

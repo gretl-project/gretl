@@ -3313,7 +3313,6 @@ fix_panel_hatvars (MODEL *pmod, panelmod_t *pan, const double **Z)
     double *yhat = pan->pooled->yhat;
     double *uhat = NULL;
     int n = pan->pooled->full_n;
-    int re_n = 0;
     double yht, SSR = 0.0;
     int i, j, s, t;
     int err = 0;
@@ -3361,7 +3360,6 @@ fix_panel_hatvars (MODEL *pmod, panelmod_t *pan, const double **Z)
                     yht += pmod->coeff[j] * Z[pan->pooled->list[j+2]][t];
                 }
                 yhat[t] = yht;
-                re_n++;
                 uhat[t] = y[t] - yht;
                 SSR += uhat[t] * uhat[t];
                 if (pan->re_uhat != NULL) {

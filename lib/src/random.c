@@ -1337,7 +1337,7 @@ int gretl_rand_beta (double *x, int t1, int t2,
     double aln4 = 1.3862944;
     double a, b, s, u, v, y, z;
     double d, f, h, u0, c;
-    int t, j, swap;
+    int t, swap;
     double val;
 
     if (s1 <= 0 || s2 <= 0) {
@@ -1366,7 +1366,7 @@ int gretl_rand_beta (double *x, int t1, int t2,
 
     /* generation */
     for (t=t1; t<=t2; t++) {
-	for (j=0; ; j++) {
+	while (1) {
 	    u = gretl_rand_uniform_one();
 	    v = gretl_rand_uniform_one();
 	    s = u * u * v;
@@ -1386,7 +1386,6 @@ int gretl_rand_beta (double *x, int t1, int t2,
 	    }
 	    break;
 	}
-
 	x[t] = swap ? (1.0 - val) : val;
     }
 
