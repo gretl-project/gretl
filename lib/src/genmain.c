@@ -1117,9 +1117,13 @@ void *generate_gretl_object (const char *s, DATASET *dset,
             ret = n->v.a;
             n->v.a = NULL;
         } else if (n->t == LIST) {
-            *type = GRETL_TYPE_ARRAY;
+            *type = GRETL_TYPE_LIST;
             ret = n->v.ivec;
             n->v.ivec = NULL;
+        } else if (n->t == SERIES) {
+            *type = GRETL_TYPE_SERIES;
+            ret = n->v.xvec;
+            n->v.xvec = NULL;
         }
     }
 

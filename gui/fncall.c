@@ -60,7 +60,8 @@ typedef enum {
     SHOW_GUI_MAIN = 1 << 0,
     MODEL_CALL    = 1 << 1,
     DATA_ACCESS   = 1 << 2,
-    FOR_ADDON     = 1 << 3
+    FOR_ADDON     = 1 << 3,
+    PASS_MODEL    = 1 << 4
 } call_flags;
 
 typedef struct call_info_ call_info;
@@ -96,8 +97,6 @@ struct call_info_ {
 #define array_arg(t)  (t == GRETL_TYPE_ARRAY  || t == GRETL_TYPE_ARRAY_REF)
 
 #define for_addon(c) (c->flags & FOR_ADDON)
-
-#define SELNAME "selected_series"
 
 static GtkWidget *open_fncall_dlg;
 static gboolean allow_full_data = TRUE;
@@ -745,12 +744,6 @@ static GList *add_list_names (GList *list, int no_single)
             list = g_list_append(list, tail->data);
         }
 	tail = tail->next;
-    }
-
-    if (mdata_selection_count() > 1) {
-	/* add the (unnamed) 'list' of series selected in the
-	   main gretl window */
-	list = g_list_append(list, SELNAME);
     }
 
     g_list_free(tlist);
@@ -1709,14 +1702,7 @@ static void arg_combo_set_default (call_info *cinfo,
 		targname = dataset->varname[v];
 	    }
 	}
-    } else if (ptype == GRETL_TYPE_LIST) {
-	if (has_single_arg_of_type(cinfo, ptype) &&
-	    mdata_selection_count() > 1) {
-	    targname = SELNAME;
-	    tmp = g_list_prepend(tmp, SELNAME);
-	}
     }
-
 
     for (i=0; tmp != NULL; i++) {
 	gchar *name = tmp->data;
@@ -1964,6 +1950,17 @@ static int function_call_dialog (call_info *cinfo)
 
     if (trows > 0 && tcols > 0) {
 	tbl = gtk_table_new(trows, tcols, FALSE);
+    }
+
+    if (cinfo->n_params > 0 && (cinfo->flags & MODEL_CALL)) {
+        int k = cinfo->n_params - 1;
+
+        if (fn_param_type(cinfo->func, k) == GRETL_TYPE_BUNDLE &&
+            !strcmp(fn_param_name(cinfo->func, k), "model")) {
+            cinfo->flags |= PASS_MODEL;
+            cinfo->n_params = k;
+            fprintf(stderr, "HERE added PASS_MODEL\n");
+        }
     }
 
     row = 0; /* initialize writing row */
@@ -2269,7 +2266,6 @@ static int function_data_check (call_info *cinfo,
     }
 
     if (err) {
-	/* 2018-02-12: was warnbox(_("Please open a data file first")); */
 	maybe_open_sample_script(cinfo, vwin, path);
     }
 
@@ -2755,42 +2751,41 @@ static void pkg_select_interface (call_info *cinfo, int npub)
 
 static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
 {
-    if (check_args_etc(cinfo)) {
-	return;
+    PRN *prn = NULL;
+    int autopos = -1;
+    int close_on_exec;
+    int err;
+
+    err = check_args_etc(cinfo) || bufopen(&prn);
+    if (err) {
+        return;
+    }
+
+    if (cinfo->args != NULL) {
+        err = pre_process_args(cinfo, &autopos, prn);
+        if (err) {
+            gui_errmsg(err);
+        }
+    }
+
+    close_on_exec = widget_get_int(w, "close");
+
+    if (!err) {
+        err = real_GUI_function_call(cinfo, close_on_exec, prn);
     } else {
-	PRN *prn = NULL;
-	int autopos = -1;
-	int close_on_exec;
-	int err;
+        gretl_print_destroy(prn);
+    }
 
-	err = bufopen(&prn);
+    if (autopos >= 0) {
+        user_var_delete_by_name(AUTOLIST, NULL);
+        g_free(cinfo->args[autopos]);
+        cinfo->args[autopos] = g_strdup(SELNAME);
+    }
 
-	if (!err && cinfo->args != NULL) {
-	    err = pre_process_args(cinfo, &autopos, prn);
-	    if (err) {
-		gui_errmsg(err);
-	    }
-	}
-
-	close_on_exec = widget_get_int(w, "close");
-
-	if (!err) {
-	    err = real_GUI_function_call(cinfo, close_on_exec, prn);
-	} else {
-	    gretl_print_destroy(prn);
-	}
-
-	if (autopos >= 0) {
-	    user_var_delete_by_name(AUTOLIST, NULL);
-	    g_free(cinfo->args[autopos]);
-	    cinfo->args[autopos] = g_strdup(SELNAME);
-	}
-
-	if (cinfo->dlg != NULL && close_on_exec) {
-	    gtk_widget_destroy(cinfo->dlg);
-	} else if (cinfo != NULL && cinfo->dlg == NULL) {
-	    cinfo_free(cinfo);
-	}
+    if (cinfo->dlg != NULL && close_on_exec) {
+        gtk_widget_destroy(cinfo->dlg);
+    } else if (cinfo != NULL && cinfo->dlg == NULL) {
+        cinfo_free(cinfo);
     }
 }
 
