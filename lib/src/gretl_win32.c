@@ -2322,9 +2322,15 @@ void woa_cpu_info (char buf[])
                               (PBYTE) inbuf, &Size)) {
             if (Type == REG_SZ && *inbuf != '\0') {
                 strcpy(buf, inbuf);
+            } else {
+                strcpy(buf, "didn't get REG_SZ && non-empty inbuf");
             }
+        } else {
+            strcpy(buf, "RegQueryValueExA failed");
         }
         RegCloseKey(hKey);
+    } else {
+        strcpy(buf, "RegOpenKeyExA failed");
     }
 }
 
