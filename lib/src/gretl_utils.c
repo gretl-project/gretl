@@ -3096,6 +3096,8 @@ char *get_cpu_details (void)
     } else {
         ret = gretl_strdup("unknown arm64");
     }
+
+	return ret;
 }
 
 #else
