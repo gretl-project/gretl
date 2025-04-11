@@ -3049,6 +3049,8 @@ char *get_cpu_details (void)
     size_t bsz = sizeof brand_buf;
 
     sysctlbyname("machdep.cpu.brand_string", &brand_buf, &bsz, NULL, 0);
+#elif defined(_WIN32) && defined(__aarch64__)
+    woa_cpu_info(brand_buf);
 #else
     guint32 i, j, data[4];
     int n_bytes = 4;

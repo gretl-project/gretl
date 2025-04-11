@@ -2307,3 +2307,25 @@ int win32_get_stack_size (void)
     return 0;
 #endif
 }
+
+#ifdef __aarch64__
+
+void woa_cpu_info (char buf[])
+{
+    const char *csName = "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0";
+    char inbuf[64] = {0};
+    DWORD Type, Size = 64;
+    HKEY hKey;
+
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, csName, 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        if (!RegQueryValueExA(hKey, "ProcessorNameString", NULL, &Type,
+                              (PBYTE) inbuf, &Size)) {
+            if (Type == REG_SZ && *inbuf != '\0') {
+                strcpy(buf, inbuf);
+            }
+        }
+        RegCloseKey(hKey);
+    }
+}
+
+#endif
