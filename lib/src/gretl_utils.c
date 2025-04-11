@@ -3049,8 +3049,6 @@ char *get_cpu_details (void)
     size_t bsz = sizeof brand_buf;
 
     sysctlbyname("machdep.cpu.brand_string", &brand_buf, &bsz, NULL, 0);
-#elif defined(_WIN32) && defined(__aarch64__)
-    woa_cpu_info(brand_buf);
 #else
     guint32 i, j, data[4];
     int n_bytes = 4;
@@ -3083,6 +3081,21 @@ char *get_cpu_details (void)
     }
 
     return ret;
+}
+
+#elif defined(WIN32) && defined(__aarch64__)
+
+char *get_cpu_details (void)
+{
+    char *ret = NULL;
+    char brand_buf[64] = {0};
+
+    woa_cpu_info(brand_buf);
+    if (*brand_buf) {
+        ret = gretl_strdup(g_strstrip(brand_buf));
+    } else {
+        ret = gretl_strdup("unknown arm64");
+    }
 }
 
 #else
