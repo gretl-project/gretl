@@ -2218,21 +2218,6 @@ typedef BOOL (WINAPI *LPFN_GLPI) (
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION,
     PDWORD);
 
-static DWORD count_set_bits (ULONG_PTR bit_mask)
-{
-    DWORD LSHIFT = sizeof(ULONG_PTR)*8 - 1;
-    DWORD set_count = 0;
-    ULONG_PTR bit_test = (ULONG_PTR)1 << LSHIFT;
-    int i;
-
-    for (i=0; i<=LSHIFT; i++) {
-        set_count += (bit_mask & bit_test)? 1 : 0;
-        bit_test /= 2;
-    }
-
-    return set_count;
-}
-
 int win32_get_core_count (void)
 {
     LPFN_GLPI glpi;
@@ -2283,16 +2268,6 @@ int win32_get_core_count (void)
     return n_cores;
 }
 
-#if 0 // _WIN32_WINNT == 0x0601
-/* This requires Windows 7, when NtCurrentTeb() was introduced. */
-static int win7_get_stack_size (void)
-{
-    NT_TIB *tib = (NT_TIB *) NtCurrentTeb();
-
-    return (int) (tib->StackLimit - tib->StackBase);
-}
-#endif
-
 /* requres _WIN32_WINNT >= 0x0602 (Windows 8) */
 
 int win32_get_stack_size (void)
@@ -2328,4 +2303,4 @@ void woa_cpu_info (char buf[])
     }
 }
 
-#endif
+#endif /* __aarch64__ */
