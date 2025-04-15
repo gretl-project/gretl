@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef FORECAST_H
@@ -57,21 +57,25 @@ struct FITRESID_ {
 
 void free_fit_resid (FITRESID *fr);
 
-FITRESID *get_fit_resid (const MODEL *pmod, const DATASET *dset, 
+FITRESID *get_fit_resid (const MODEL *pmod, const DATASET *dset,
 			 int *err);
 
 FITRESID *get_forecast (MODEL *pmod, int t1, int t2, int pre_n,
 			DATASET *dset, gretlopt opt, int *err);
 
-FITRESID *get_system_forecast (void *p, int ci, int i, 
+FITRESID *get_system_forecast (void *p, int ci, int i,
 			       int t1, int t2, int pre_n,
-			       DATASET *dset, gretlopt opt, 
+			       DATASET *dset, gretlopt opt,
 			       int *err);
 
-int do_forecast (const char *str, DATASET *dset, 
+gretl_matrix *matrix_forecast (MODEL *pmod,
+                               const gretl_matrix *X,
+                               int *err);
+
+int do_forecast (const char *str, DATASET *dset,
 		 gretlopt opt, PRN *prn);
 
-void forecast_options_for_model (MODEL *pmod, const DATASET *dset, 
+void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
 				 FcastFlags *flags, int *dt2max,
 				 int *st2max);
 
@@ -79,7 +83,7 @@ gretl_matrix *get_forecast_matrix (int idx, int *err);
 
 FITRESID *
 recursive_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
-			    int t1, int t2, int k, int pre_n, 
+			    int t1, int t2, int k, int pre_n,
 			    int *err);
 
 void fcast_get_continuous_range (const FITRESID *fr, int *pt1, int *pt2);
@@ -91,5 +95,3 @@ void forecast_matrix_cleanup (void);
 #endif
 
 #endif /* FORECAST_H */
-
-
