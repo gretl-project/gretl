@@ -3029,27 +3029,29 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     return err;
 }
 
-static int matrix_forecast_supported (const MODEL *pmod)
+static int matrix_forecast_supported (MODEL *pmod)
 {
-    int nc, nx;
+    const int *xlist;
 
     if (pmod->errcode) {
         return 0;
     } else if (pmod->ncoeff < 1) {
+        return 0;
+    } else if (gretl_model_get_int(pmod, "ldepvar")) {
         return 0;
     } else if (pmod->ci != OLS &&
                pmod->ci != LOGIT &&
                pmod->ci != PROBIT) {
         /* FIXME relax this! */
         return 0;
+    } else if ((xlist = model_xlist(pmod)) == NULL) {
+        return 0;
     }
 
-    nc = pmod->ncoeff;
-    nx = pmod->list == NULL ? 0 : pmod->list[0] - 1;
-    if (nc == nx) {
-        fprintf(stderr, "HERE ncoeff = nx = %d, OK?\n", nc);
-    } else {
+    if (pmod->ncoeff != xlist[0]) {
         return 0;
+    } else {
+        fprintf(stderr, "HERE ncoeff = nx = %d, OK?\n", pmod->ncoeff);
     }
 
     return 1;
