@@ -405,8 +405,7 @@ function bundle regls (series depvar, list indeps,
    # handle possible missing values
    list All = depvar indeps
    series okcheck = ok(All)
-   nskip = $nobs - sum(okcheck)
-   if nskip > 0
+   if sum(okcheck) < $nobs
       set matrix_mask okcheck
    endif
 
