@@ -9216,7 +9216,11 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
     VAR_special = (vlinfo[0].v == VDEFLT && vlinfo[0].context == LAG_Y_V);
     insts = in_gretl_list(list, LAG_W);
 
-    lmax = (dataset->t2 - dataset->t1) / list[0];
+    if (sr->ci == REGLS) {
+        lmax = 32;
+    } else {
+        lmax = 2 * (dataset->t2 - dataset->t1) / list[0];
+    }
 
     if (VAR_special) {
         /* allow for gaps in VAR lag order */
