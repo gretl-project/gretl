@@ -880,11 +880,11 @@ void regls_multiprint (const bundle b, const numeric y, const numeric X)
   passed to \texttt{regls} (\texttt{y} a series, \texttt{X} a list) or
   \texttt{mregls} (\texttt{y} an $n$-vector, \texttt{X} an
   $n \times k$ matrix). This function prints a summary table showing
-  $R^2$, the sum of absolute values of the coefficients, and df (the
-  number of non-zero coefficients) associated with each value of
-  $\lambda$. Usage is illustrated in the example script
-  \dtk{lambda_sequence.inp}, which is reproduced in part in
-  Listing~\ref{script:lamseq}.
+  $R^2$, the sum of absolute values of the coefficients, df (the
+  number of non-zero coefficients) and the minimized criterion
+  associated with each value of $\lambda$. Usage is illustrated in the
+  example script \dtk{lambda_sequence.inp}, which is reproduced in
+  part in Listing~\ref{script:lamseq}.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -947,7 +947,8 @@ bundle mregls (const matrix y, const matrix X, bundle parms)
 \end{verbatim}
   This function works like \texttt{regls()}, except that \texttt{y} is
   a column vector of length $n$ and \texttt{X} is an $n \times k$
-  matrix. The options accepted in \texttt{parms} are as described in
+  matrix. These matrices must not include any non-finite values. The
+  options accepted in \texttt{parms} are as described in
   Table~\ref{tab:regls-parms} above. Consistent with the different
   input types, one element in the output bundle also differs in type:
   in \texttt{regls} output \texttt{nzX} is a list of series while in
@@ -1013,6 +1014,9 @@ void glmnet_multiprint (const matrix RB, const matrix Rlam,
 \section{Change log}
 \label{sec:changes}
 
+2025-04-16: Add check for missing values in \texttt{mregls}; fix
+\dtk{regls_multiprint} for the case where it follows cross
+validation.\\[4pt]
 2024-04-29: Add specific prediction and plotting functions for use
 with \texttt{mregls}; implement fixes for the unlikely case where none
 of the candidate regressors are effective predictors of the dependent

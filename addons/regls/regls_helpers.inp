@@ -61,10 +61,13 @@ function void regls_multiprint (const bundle rb,
    scalar havecrit = inbundle(rb, "crit")
    scalar ridge = rb.estimator == "Ridge"
    string pstr = ridge ? "sum(b^2)" : "sum(|b|)"
-   if havecrit
-      printf "\n        lfrac      R^2    %s     df   criterion\n", pstr
+   printf "\n        lfrac      R^2    %s     df", pstr
+   if havecrit && cols(rb.crit) > 1
+      printf "         MSE\n"
+   elif havecrit
+      printf "   criterion\n"
    else
-      printf "\n        lfrac      R^2    %s     df\n", pstr
+      printf "\n"
    endif
    scalar haveconst = 0
    scalar nx = matdata ? cols(X) : nelem(X)
@@ -73,11 +76,7 @@ function void regls_multiprint (const bundle rb,
    elif rows(rb.B) != nx
       funcerr "B and X are not conformable"
    endif
-   if inbundle(rb, "lambda")
-      matrix lambda = rb.lambda
-   else
-      matrix lambda = rb.lfrac
-   endif
+   matrix lambda = rb.lfrac
    scalar have_edf = inbundle(rb, "edf")
    loop i=1..cols(rb.B) -q
       if haveconst
@@ -113,7 +112,9 @@ function void regls_multiprint (const bundle rb,
       else
          printf "    %3d", sumc(bi .!= 0)
       endif
-      if havecrit
+      if havecrit && cols(rb.crit) > 1
+         printf "  %#10g\n", rb.crit[i,1]
+      elif havecrit
          printf "  %#10g\n", rb.crit[i]
       else
          printf "\n"
