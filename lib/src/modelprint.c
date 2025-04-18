@@ -2014,6 +2014,11 @@ static void print_model_heading (const MODEL *pmod,
     int dvnl = 1;
     int order = 0;
 
+    /* have we already got a quote in the first
+       line of the output csv file?
+    */
+    int csv_iniquote = 0;
+
     if (pmod->aux != AUX_VAR && pmod->aux != AUX_VECM) {
 	ntolabel(startdate, t1, dset);
 	ntolabel(enddate, t2, dset);
@@ -2081,6 +2086,7 @@ static void print_model_heading (const MODEL *pmod,
 
 	    if (csv) {
 		pprintf(prn, "\"%s:\"\n", modname);
+		csv_iniquote = 1;
 	    } else if (strlen(pmod->name) > 8) {
 		pprintf(prn, "\n%s:\n", modname);
 	    } else {
@@ -2089,11 +2095,16 @@ static void print_model_heading (const MODEL *pmod,
 	} else {
 	    if (csv) {
 		pprintf(prn, "\"%s %d: ", _("Model"), pmod->ID);
+		csv_iniquote = 1;
 	    } else {
 		pprintf(prn, "\n%s %d: ", _("Model"), pmod->ID);
 	    }
 	}
 	break;
+    }
+
+    if (!csv_iniquote) {
+	pputc(prn, '"');
     }
 
     if (pmod->aux == AUX_VAR || pmod->aux == AUX_VECM) {
