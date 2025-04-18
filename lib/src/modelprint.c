@@ -2014,9 +2014,8 @@ static void print_model_heading (const MODEL *pmod,
     int dvnl = 1;
     int order = 0;
 
-    /* have we already got a quote in the first
-       line of the output csv file?
-    */
+    /* flag indicating whether we've printed an opening quote,
+       in the case of CSV output */
     int csv_iniquote = 0;
 
     if (pmod->aux != AUX_VAR && pmod->aux != AUX_VECM) {
@@ -2103,7 +2102,7 @@ static void print_model_heading (const MODEL *pmod,
 	break;
     }
 
-    if (!csv_iniquote) {
+    if (csv && !csv_iniquote) {
 	pputc(prn, '"');
     }
 
