@@ -1474,7 +1474,8 @@ static size_t curl_bufwrite (void *buf, size_t sz, size_t nmemb, void *p)
 
 int gretl_curl (const char *url, const char *header,
                 const char *postdata, int include,
-		int nobody, char **output, char **errmsg)
+		int nobody, char **output, char **errmsg,
+		int *http_stcode)
 {
     CURL *curl = NULL;
     struct curl_slist *hlist = NULL;
@@ -1520,7 +1521,10 @@ int gretl_curl (const char *url, const char *header,
     }
 
     res = curl_easy_perform(curl);
-
+    int code;
+    curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &code);
+    *http_stcode = code;
+    
     if (res != CURLE_OK) {
         const char *cmsg = curl_easy_strerror(res);
 
