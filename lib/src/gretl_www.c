@@ -1461,6 +1461,8 @@ static size_t curl_bufwrite (void *buf, size_t sz, size_t nmemb, void *p)
  * @postdata: string to send as data for POST (or NULL).
  * @include: if non-zero, include the received header with
  * the body output.
+ * @nobody: if non-zero, don't include the body-part in the
+ * output.
  * @output: location to receive the output.
  * @errmsg: location to receive cURL error message, or NULL.
  *
@@ -1472,7 +1474,7 @@ static size_t curl_bufwrite (void *buf, size_t sz, size_t nmemb, void *p)
 
 int gretl_curl (const char *url, const char *header,
                 const char *postdata, int include,
-                char **output, char **errmsg)
+		int nobody, char **output, char **errmsg)
 {
     CURL *curl = NULL;
     struct curl_slist *hlist = NULL;
@@ -1499,6 +1501,10 @@ int gretl_curl (const char *url, const char *header,
 
     if (include) {
         curl_easy_setopt(curl, CURLOPT_HEADER, 1);
+    }
+
+    if (nobody) {
+        curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
     }
 
     if (hlist != NULL) {
