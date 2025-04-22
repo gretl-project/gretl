@@ -1465,6 +1465,7 @@ static size_t curl_bufwrite (void *buf, size_t sz, size_t nmemb, void *p)
  * output.
  * @output: location to receive the output.
  * @errmsg: location to receive cURL error message, or NULL.
+ * @http_code: location to receive HTTP status code, or NULL.
  *
  * Somewhat flexible URI "grabber", allowing use of the POST
  * method with header and data to be sent to the host.
@@ -1475,7 +1476,7 @@ static size_t curl_bufwrite (void *buf, size_t sz, size_t nmemb, void *p)
 int gretl_curl (const char *url, const char *header,
                 const char *postdata, int include,
 		int nobody, char **output, char **errmsg,
-		int *http_stcode)
+		int *http_code)
 {
     CURL *curl = NULL;
     struct curl_slist *hlist = NULL;
@@ -1521,10 +1522,14 @@ int gretl_curl (const char *url, const char *header,
     }
 
     res = curl_easy_perform(curl);
-    int code;
-    curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &code);
-    *http_stcode = code;
-    
+
+    if (http_code != NULL) {
+        int code = 0;
+
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+        *http_code = code;
+    }
+
     if (res != CURLE_OK) {
         const char *cmsg = curl_easy_strerror(res);
 

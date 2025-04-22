@@ -11684,7 +11684,7 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
             char *errmsg = NULL;
             double xinclude = 0;
 	    double xnobody = 0;
-	    int http_stcode;
+	    int http_code = 0;
 	    
             url = gretl_bundle_get_string(b, "URL", &p->err);
             header = optional_bundle_get(b, "header", NULL, &p->err);
@@ -11697,17 +11697,19 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
                 int nobody = !isnan(xnobody) && (xnobody != 0.0);
 
                 curl_err = gretl_curl(url, header, postdata, include,
-                                      nobody, &output, &errmsg, &http_stcode);
+                                      nobody, &output, &errmsg,
+                                      &http_code);
             }
 
-	    p->err = gretl_bundle_set_int(b, "http_stcode", http_stcode);
-	    
             if (output != NULL) {
                 p->err = gretl_bundle_set_string(b, "output", output);
                 free(output);
             } else if (errmsg != NULL) {
                 p->err = gretl_bundle_set_string(b, "errmsg", errmsg);
                 free(errmsg);
+            }
+            if (!p->err) {
+                p->err = gretl_bundle_set_int(b, "http_code", http_code);
             }
         }
 
