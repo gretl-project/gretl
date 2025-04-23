@@ -3891,6 +3891,20 @@
 	  </li>
 	  <li>
 	    <para>
+	      <quote><lit>include</lit></quote>: a scalar: if nonzero,
+	      include the header received from the host with the
+	      output body.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <quote><lit>nobody</lit></quote>: a scalar: if nonzero,
+	      the function will <i>not</i> download the body of the
+	      requested URL.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
 	      <quote><lit>postdata</lit></quote>: a string holding
 	      data to be sent to the host.
 	    </para>
@@ -3900,56 +3914,83 @@
 	  The <lit>header</lit> and <lit>postdata</lit> fields are
 	  intended for use with an HTTP <lit>POST</lit> request; if
 	  <lit>postdata</lit> is present the <lit>POST</lit> method is
-	  implicit, otherwise the <lit>GET</lit> method is
-	  implicit. (But note that for straightforward <lit>GET</lit>
-	  requests <fncref targ="readfile"/> offers a simpler
-	  interface.)
-	</para>
-	<para>
-	  One other optional bundle element is recognized: if a scalar
-	  named <lit>include</lit> is present and has a non-zero value,
-	  this is taken as a request to include the header received
-	  from the host with the output body.
+	  implicit. Otherwise the <lit>GET</lit> or <lit>HEAD</lit>
+	  methods are implicit, depending on the value of the
+	  <lit>nobody</lit> key. (But note that for straightforward
+	  <lit>GET</lit> requests <fncref targ="readfile"/> offers a
+	  simpler interface.)
 	</para>
 	<para>
 	  On completion of the request, the text received from the
 	  server is added to the bundle under the key
-	  <quote><lit>output</lit></quote>.
+	  <quote><lit>output</lit></quote>, and the HTTP status code
+	  is stored under the <quote><lit>http_code</lit></quote> key.
 	</para>
 	<para>
 	  If an error occurs in formulating the request (for example
 	  there's no <lit>URL</lit> on input) the function fails,
-	  otherwise it returns 0 if the request succeeds or non-zero if
-	  it fails, in which case the error message from the curl
+	  otherwise it returns 0 if the request succeeds or non-zero
+	  if it fails, in which case the error message from the curl
 	  library is added to the bundle under the key
-	  <quote><lit>errmsg</lit></quote>.  Note, however, that
+	  <quote><lit>errmsg</lit></quote>.  Note that
 	  <quote>success</quote> in this sense does not necessarily
 	  mean you got the data you wanted; all it means is that some
-	  response was received from the server. You must check the
-	  content of the output buffer (which may in fact be a message
-	  such as <quote>Page not found</quote>).
+	  response was received from the server.  A quick way of
+	  checking is to inspect the HTTP status code: the most
+	  commonly used ones are 200 (success) or 404 (page not
+	  found). See
+	  <url>https://en.wikipedia.org/wiki/List_of_HTTP_status_codes</url>
+	  for the full list. Alternatively, you can check the content
+	  of the output buffer (which may in fact be a message such as
+	  <quote>Page not found</quote>).
 	</para>
+<!--
 	<para>
-	  Here is an example of use: downloading some data from the
-	  US Bureau of Labor Statistics site, which requires sending
-	  a JSON query. Note the use of <fncref targ="sprintf"/> to
-	  embed double-quotes in the <lit>POST</lit> data.
+	 Here is an example of use: downloading some data from the
+	 US Bureau of Labor Statistics site, which requires sending
+	 a JSON query. Note the use of <fncref targ="sprintf"/> to
+	 embed double-quotes in the <lit>POST</lit> data.
+       </para>
+       <code>
+	 bundle req
+	 req.URL = "http://api.bls.gov/publicAPI/v1/timeseries/data/"
+	 req.include = 1
+	 req.header = "Content-Type: application/json"
+	 string s = sprintf("{\"seriesid\":[\"LEU0254555900\"]}")
+	 req.postdata = s
+	 err = curl(&amp;req)
+	 if err == 0
+	     s = req.output
+	     string line
+	     loop while getline(s, &amp;line)
+		 printf "%s\n", line
+	     endloop
+	 endif
+         <code>
+-->	 
+	<para>
+	  For example: the code below checks if a particular version of the
+	  <quote>Global Macro Database</quote> dataset is available,
+	  and downloads it only if it is.
 	</para>
 	<code>
-	  bundle req
-	  req.URL = "http://api.bls.gov/publicAPI/v1/timeseries/data/"
-	  req.include = 1
-	  req.header = "Content-Type: application/json"
-	  string s = sprintf("{\"seriesid\":[\"LEU0254555900\"]}")
-	  req.postdata = s
-	  err = curl(&amp;req)
-	  if err == 0
-	      s = req.output
-	      string line
-	      loop while getline(s, &amp;line)
-	          printf "%s\n", line
-	      endloop
-	  endif
+        string base_URL = "https://www.globalmacrodata.com"
+        string filename = "GMD_2024_01.csv"
+         
+        bundle req
+        req.URL = base_URL ~ "/" ~ filename
+        req.nobody = 1
+        err = curl(&amp;req)
+         
+        if err || (req.http_code != 200)
+            printf "Oh, oh. It seems %s is unavailable\n", filename
+        else
+            # actual request
+            bundle req = empty
+            req.URL = base_URL ~ "/" ~ filename
+            err = curl(&amp;req)
+            print req
+        endif
 	</code>
 	<para>
 	  See also the functions <fncref targ="jsonget"/> and <fncref
