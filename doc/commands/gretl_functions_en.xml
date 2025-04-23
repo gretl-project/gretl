@@ -2448,11 +2448,11 @@
 	  the result is
 	</para>
 	<code>
-	  0   0   1   1 
-	  0   1   0   1 
-	  0   1   1   0 
-	  1   0   0   1 
-	  1   0   1   0 
+	  0   0   1   1
+	  0   1   0   1
+	  0   1   1   0
+	  1   0   0   1
+	  1   0   1   0
 	  1   1   0   0
 	</code>
 	<para>
@@ -5509,24 +5509,24 @@
 	<code>
 	  U (2 x 6)
 
-	  1    3    5    7    9   11 
-	  2    4    6    8   10   12 
+	  1    3    5    7    9   11
+	  2    4    6    8   10   12
 
 	  V (4 x 3)
 
-	  1    3    5 
-	  2    4    6 
-	  7    9   11 
-	  8   10   12 
+	  1    3    5
+	  2    4    6
+	  7    9   11
+	  8   10   12
 
 	  W (6 x 2)
 
-	  1    7 
-	  2    8 
-	  3    9 
-	  4   10 
-	  5   11 
-	  6   12 
+	  1    7
+	  2    8
+	  3    9
+	  4   10
+	  5   11
+	  6   12
 	</code>
 	<para>
 	  An error is flagged if the matrices in the array are not
@@ -6367,8 +6367,8 @@
 	</para>
 	<code>
 	  a (1 x 3)
-	  
-	  0.69315       1.0000       1.3863 
+
+	  0.69315       1.0000       1.3863
 	</code>
       </description>
     </function>
@@ -13994,6 +13994,55 @@
 	</para>
 	<para>
 	  See <guideref targ="chap:tdisagg"/> for details.
+	</para>
+      </description>
+    </function>
+
+    <function name="thresh" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="anyfloat">a</fnarg>
+	<fnarg optional="true" type="scalar">hard</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Performs soft or hard thresholding on <argname>x</argname>,
+	  depending on the value of the optional Boolean parameter
+	  <argname>hard</argname>, whose default value is 0.
+	</para>
+	<para>
+	  In both cases, entries in <argname>x</argname> whose
+	  absolute value is less than <argname>a</argname> are set to
+	  0. With soft thresholding, the other ones are shrunk towards
+	  0. For example, the code below
+	</para>
+	<code>
+	  s = seq(-2,2,0.5)'
+	  eval s ~ thresh(s, 0.5) ~ thresh(s, 0.5, 1)
+	</code>
+	<para>
+	  produces
+	</para>
+	<code>
+             -2      -1.5       -2
+           -1.5        -1     -1.5
+             -1      -0.5       -1
+           -0.5         0        0
+              0         0        0
+            0.5         0        0
+              1       0.5        1
+            1.5         1      1.5
+              2       1.5        2
+	</code>
+	<para>
+	  If the two arguments differ in type, the type of the result
+	  is the <quote>higher</quote> of the two, where the ordering
+	  is matrix &gt; series &gt; scalar. For example, if
+	  <argname>y</argname> is a scalar and <argname>x</argname> an
+	  <math>n</math>-vector (or vice versa) the result is an
+	  <math>n</math>-vector. Note that matrix arguments must be
+	  vectors, and if neither argument is a scalar the two
+	  arguments must be of the same length.
 	</para>
       </description>
     </function>

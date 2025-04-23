@@ -1656,7 +1656,7 @@
       <description>
 	<para>
 	  La maggior parte di quel che segue assume che i primi due
-	  argomenti siano serie o liste, ma si veda sotto 
+	  argomenti siano serie o liste, ma si veda sotto
 	  <quote>Input matriciale</quote> per un uso alternativo.
 	</para>
 	<para>
@@ -2018,12 +2018,12 @@
 	</para>
 	<para>
 	  Se i due argomenti sono di tipo diverso, il risultato è del
-	  tipo <quote>più alto</quote>dei due, dove l'ordinamento è
+	  tipo <quote>più alto</quote> dei due, dove l'ordinamento è
 	  matrice &gt; serie &gt; scalare. Ad esempio, se
 	  <argname>y</argname> è uno scalare e <argname>x</argname> un
 	  vettore di <math>n</math> elementi (o viceversa), il
 	  risultato è anch'esso un vettore. Si noti che gli argomenti
-	  matriciali debbono essere vettori, e che se nessuno dei due
+	  matriciali devono essere vettori, e che se nessuno dei due
 	  è uno scalare devono avere la stessa dimensione.
 	</para>
 	<para>
@@ -2396,7 +2396,7 @@
 	</para>
 	<para>
 	  Si noti che il bit meno significativo è nella prima colonna:
-	  di conseguenza, la colonna 1 corrisponde a 
+	  di conseguenza, la colonna 1 corrisponde a
 	  <math>2</math><sup>0</sup>, la colonna 2 a
 	  <math>2</math><sup>1</sup> e così via. Ad esempio, l'espressione
 	</para>
@@ -2412,7 +2412,7 @@
 	</para>
       </description>
     </function>
-    
+
     <function name="bincoeff" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">n</fnarg>
@@ -2446,12 +2446,12 @@
 	</para>
 	<para>
 	  Se i due argomenti sono di tipo diverso, il risultato è del
-	  tipo <quote>più alto</quote>dei due, dove l'ordinamento è
+	  tipo <quote>più alto</quote> dei due, dove l'ordinamento è
 	  matrice &gt; serie &gt; scalare. Ad esempio, se
 	  <argname>n</argname> è uno scalare e <argname>k</argname> un
 	  vettore di <math>r</math> elementi (o viceversa), il
 	  risultato è anch'esso un vettore. Si noti che gli argomenti
-	  matriciali debbono essere vettori, e che se nessuno dei due
+	  matriciali devono essere vettori, e che se nessuno dei due
 	  è uno scalare devono avere la stessa dimensione.
 	</para>
 	<para>
@@ -2482,11 +2482,11 @@
 	  risultato è
 	</para>
 	<code>
-	  0   0   1   1 
-	  0   1   0   1 
-	  0   1   1   0 
-	  1   0   0   1 
-	  1   0   1   0 
+	  0   0   1   1
+	  0   1   0   1
+	  0   1   1   0
+	  1   0   0   1
+	  1   0   1   0
 	  1   1   0   0
 	</code>
 	<para>
@@ -3620,7 +3620,7 @@
 	</para>
       </description>
     </function>
-    
+
     <function name="corrgm" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="smlist">x</fnarg>
@@ -4044,7 +4044,7 @@
 	</para>
 	<para>
 	  Si noti che il bit meno significativo è nella colonna 1: di
-	  conseguenza, la colonna 1 corrisponde a 
+	  conseguenza, la colonna 1 corrisponde a
 	  <math>2</math><sup>0</sup>, la colonna 2 a
 	  <math>2</math><sup>1</sup> e così via. Ad esempio, l'espressione
 	</para>
@@ -5295,7 +5295,7 @@
 	  argomenti).  In alternativa il bundle può contenere un array
 	  di stringhe dal nome speciale
 	  <lit>arglist</lit>. L'array deve contenere esattamente le
-	  chiavi del bundle <argname>b</argname>, tranne che 
+	  chiavi del bundle <argname>b</argname>, tranne che
 	  <lit>arglist</lit> stesso, nell'ordine desiderato.
 	</para>
 	<para>
@@ -5319,7 +5319,7 @@
 	</para>
       </description>
     </function>
-    
+
     <function name="fevd" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="int">target</fnarg>
@@ -5630,24 +5630,24 @@
 	<code>
 	  U (2 x 6)
 
-	  1    3    5    7    9   11 
-	  2    4    6    8   10   12 
+	  1    3    5    7    9   11
+	  2    4    6    8   10   12
 
 	  V (4 x 3)
 
-	  1    3    5 
-	  2    4    6 
-	  7    9   11 
-	  8   10   12 
+	  1    3    5
+	  2    4    6
+	  7    9   11
+	  8   10   12
 
 	  W (6 x 2)
 
-	  1    7 
-	  2    8 
-	  3    9 
-	  4   10 
-	  5   11 
-	  6   12 
+	  1    7
+	  2    8
+	  3    9
+	  4   10
+	  5   11
+	  6   12
 	</code>
 	<para>
 	  Qualora le matrici nell'array non siano conformabili per
@@ -5663,7 +5663,7 @@
 	  cui <argname>alt</argname> è una specifica stringa da usare
 	  come separatore. La funzione inversa è, in questo caso,
 	  <fncref targ="strsplit"/>.
-	</para> 
+	</para>
       </description>
     </function>
 
@@ -6502,8 +6502,8 @@
 	  </para>
 	  <code>
 	  a (1 x 3)
-	  
-	  0.69315       1.0000       1.3863 
+
+	  0.69315       1.0000       1.3863
 	  </code>
       </description>
     </function>
@@ -11895,7 +11895,7 @@
 	  parametri corrispondenti.
 	</para>
 	<para>
-	  Per i due casi speciali, le specifiche sono le seguenti: 
+	  Per i due casi speciali, le specifiche sono le seguenti:
 	</para>
         <ilist>
           <li>
@@ -13676,7 +13676,7 @@
 	<para>
 	  Si noti il valore restituito da questa funzione dipende dal
 	  settaggio di fuso orario del sistema su cui si sta
-	  lavorando. Ad esempio, l'output di 
+	  lavorando. Ad esempio, l'output di
 	</para>
 	<code>
 	  strptime("13/02/2009 23:31.30", "%d/%m/%Y %H:%M.%S")
@@ -13974,7 +13974,7 @@
 	</para>
       </description>
     </function>
-    
+
     <function name="substr" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -14253,6 +14253,57 @@
       </description>
     </function>
 
+    <function name="thresh" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="anyfloat">a</fnarg>
+	<fnarg optional="true" type="scalar">hard</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Applica un'operazione di soglia a <argname>x</argname>; tale
+	  operazione puo essere rigida o morbida a seconda del valore
+	  del parametro booleano opzionale <argname>hard</argname>,
+	  che per default è 0, il che corrisponde a una soglia
+	  morbida.
+	</para>
+	<para>
+	  In entrambi i casi, gli elementi di <argname>x</argname> il
+	  cui valore assoluto è minore di <argname>a</argname> vengono
+	  impostati a 0. Con la soglia morbida, le altre vengono
+	  ridotte verso lo 0. Ad esempio, il codice seguente
+	</para>
+	<code>
+	  s = seq(-2,2,0.5)'
+	  eval s ~ thresh(s, 0.5) ~ thresh(s, 0.5, 1)
+	</code>
+	<para>
+	  produce
+	</para>
+	<code>
+             -2      -1.5       -2
+           -1.5        -1     -1.5
+             -1      -0.5       -1
+           -0.5         0        0
+              0         0        0
+            0.5         0        0
+              1       0.5        1
+            1.5         1      1.5
+              2       1.5        2
+	</code>
+	<para>
+	  Se i due argomenti sono di tipo diverso, il risultato è del
+	  tipo <quote>più alto</quote> dei due, dove l'ordinamento è
+	  matrice &gt; serie &gt; scalare. Ad esempio, se
+	  <argname>y</argname> è uno scalare e <argname>x</argname> un
+	  vettore di <math>n</math> elementi (o viceversa), il
+	  risultato è anch'esso un vettore. Si noti che gli argomenti
+	  matriciali devono essere vettori, e che se nessuno dei due
+	  è uno scalare devono avere la stessa dimensione.
+	</para>
+      </description>
+    </function>
+
     <function name="toepsolv" section="linalg" output="cvec">
       <fnargs>
 	<fnarg type="vector">c</fnarg>
@@ -14306,24 +14357,24 @@
 	<code>
 A (3 x 3)
 
-  3   2   1 
-  2   3   2 
-  1   2   3 
+  3   2   1
+  2   3   2
+  1   2   3
 
 x (3 x 1)
 
-  1 
-  1 
-  1 
+  1
+  1
+  1
 
-     0.25000 
- -3.3307e-17 
-     0.25000 
+     0.25000
+ -3.3307e-17
+     0.25000
 
 8
-     0.25000 
-  2.7756e-17 
-     0.25000 
+     0.25000
+  2.7756e-17
+     0.25000
 
 
 d =  8.0000000
@@ -14474,9 +14525,9 @@ d =  8.0000000
 	eval typestr(typeof(S)) # restituisce "array"
 	eval typename(S) # restituisce "strings"
       </code>
-      </description>   
+      </description>
     </function>
-    
+
     <function name="typeof" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">espressione</fnarg>
