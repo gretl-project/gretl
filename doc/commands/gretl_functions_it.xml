@@ -3937,6 +3937,20 @@
 	  </li>
 	  <li>
 	    <para>
+	      <quote><lit>include</lit></quote>: uno scalare: se non è
+	      zero, lo header ricevuto dal sito è inserito nel testo in
+	      output.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <quote><lit>nobody</lit></quote>: uno scalare: se non è
+	      zero, la funzione <i>non</i> scaricherà il corpo del
+	      messaggio.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
 	      <quote><lit>postdata</lit></quote>: una stringa
 	      contenente dati da mandare al server.
 	    </para>
@@ -3946,34 +3960,35 @@
 	  I campi <lit>header</lit> e <lit>postdata</lit> vengono
 	  usati in congiunzione con una richiesta HTTP
 	  <lit>POST</lit>; se <lit>postdata</lit> è presente, allora
-	  il metodo <lit>POST</lit>è implicito, altrimenti lo è il
-	  metodo <lit>GET</lit>. (Si noti però che per semplici
-	  richieste di tipo <lit>GET</lit>, la funzione <fncref
-	  targ="readfile"/> fornisce un'interfaccia più snella.)
-	</para>
-	<para>
-	  In più, è possibile includere nel bundle un altro elemento
-	  opzionale: uno scalare di nome <lit>include</lit>, che è
-	  interpretato, se non-zero, come una richiesta di includere
-	  lo header dal server insieme al corpo del messaggio.
+	  il metodo <lit>POST</lit>è implicito, altrimenti lo sono i
+	  metodoi <lit>GET</lit> o <lit>HEAD</lit>, a seconda del
+	  valore del campo <lit>nobody</lit>. (Si noti però che per
+	  semplici richieste di tipo <lit>GET</lit>, la funzione
+	  <fncref targ="readfile"/> fornisce un'interfaccia più
+	  snella.)
 	</para>
 	<para>
 	  Se la richiesta va a buon fine, il testo ricevuto dal server
 	  è aggiunto al bundle sotto il nome
-	  <quote><lit>output</lit></quote>.
+	  <quote><lit>output</lit></quote> e il codice di status HTTP
+	  sotto la chiave <quote><lit>http_code</lit></quote>.
 	</para>
 	<para>
 	  Se si verifica un qualche errore (ad esempio la
 	  <lit>URL</lit> è irraggiungibile) la funzione ritorna un
 	  valore non-zero, nel qual caso il messaggio di errore di
 	  curl viene aggiunto al bundle sotto la chiave
-	  <quote><lit>errmsg</lit></quote>.  Si noti, tuttavia, che
-	  <quote>a buon fine</quote> in questo senso non implica che
-	  tutti i dati desiderati siano stati scaricati, ma solo che
-	  il server ha dato una qualche risposta. È responsabilità
-	  dell'utente controllare il contenuto del buffer di output
-	  (che per esempio potrebbe contenere semplicemente il testo
-	  <quote>Page not found</quote>).
+	  <quote><lit>errmsg</lit></quote>.  Si noti che <quote>a buon
+	  fine</quote> in questo senso non implica che tutti i dati
+	  desiderati siano stati scaricati, ma solo che il server ha
+	  dato una qualche risposta. Un modo veloce per controllare è
+	  il codice HTTP ricevuto in risposta: i più comuni sono 200
+	  (tutto ok) oppure 404 (pagina non trovata). La lista
+	  completa è al link
+	  <url>https://it.wikipedia.org/wiki/Codici_di_stato_HTTP</url>.
+	  In alternativa, si può controllare il contenuto del buffer
+	  di output (che per esempio potrebbe contenere semplicemente
+	  il testo <quote>Page not found</quote>).
 	</para>
 	<para>
 	  A seguire, un esempio, in cui scaricheremo dei dati dal
@@ -3983,21 +3998,45 @@
 	  dati <lit>POST</lit> il carattere <quote>virgoletta doppia</quote>.
 	</para>
 	<code>
-	  bundle req
-	  req.URL = "http://api.bls.gov/publicAPI/v1/timeseries/data/"
-	  req.include = 1
-	  req.header = "Content-Type: application/json"
-	  string s = sprintf("{\"seriesid\":[\"LEU0254555900\"]}")
-	  req.postdata = s
-	  err = curl(&amp;req)
-	  if err == 0
-	  s = req.output
-	  string line
-	  loop while getline(s, line)
-	      printf "%s\n", line
-	  endloop
-	  endif
+	 bundle req
+	 req.URL = "https://api.bls.gov/publicAPI/v1/timeseries/data/"
+	 req.include = 1
+	 eq.header = "Content-Type: application/json"
+	 string s = sprintf("{\"seriesid\":[\"LEU0254555900\"]}")
+	 req.postdata = s
+	 err = curl(&amp;req)
+	 if err == 0
+	    s = req.output
+	    string line
+	    loop while getline(s, &amp;line)
+	       printf "%s\n", line
+	    endloop
+	 endif
 	</code>
+       <para>
+	 Come secondo esempio, il codice seguente controlla se una
+	 certa versione del  <quote>Global Macro Database</quote> è
+	 disponibile, e la scarica solo se sì.
+       </para>
+       <code>
+	 string base_URL = "https://www.globalmacrodata.com"
+	 string filename = "GMD_2025_03.csv"
+
+	 bundle req
+	 req.URL = base_URL ~ "/" ~ filename
+	 req.nobody = 1
+	 err = curl(&amp;req)
+
+	 if err || (req.http_code != 200)
+	    printf "Oh, oh. Sembra che %s non sia disponibile.\n", filename
+	 else
+	    # actual request
+	    bundle req = empty
+	    req.URL = base_URL ~ "/" ~ filename
+	    err = curl(&amp;req)
+	    print req
+	 endif
+       </code>
 	<para>
 	  Vedi anche le funzione <fncref targ="jsonget"/> e <fncref
 	  targ="xmlget"/> per elaborare i dati JSON o XML
