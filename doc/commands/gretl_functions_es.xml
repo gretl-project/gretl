@@ -1185,11 +1185,12 @@
 	  los errores aparecen bajo la clave <lit>uhat</lit> y los coeficientes
 	  bajo <lit>coeff</lit>. (Como excepciones están las claves <lit>A</lit>,
 	  <lit>B</lit>, e <lit>Gamma</lit>, que se corresponden con los accesores
-	  habituales sysA, sysB, y sysGamma.)
-	  Las claves para obtener información adicional
-	  se espera que debieran explicarse suficientemente por si mismas.
-	  Para comprobar lo que tienes a tu disposición, puedes obtener una copia
-	  del 'bundle' y representar su contenido, como en
+	  habituales <fncref targ="sysA"/>, <fncref targ="sysB"/>, y
+	  <fncref targ="sysGamma"/>.) Las claves para obtener información
+	  adicional se espera que debieran explicarse suficientemente
+	  por si mismas. Para comprobar lo que tienes a tu disposición,
+	  puedes obtener una copia del 'bundle' y representar su contenido,
+	  como en
 	</para>
 	<code>
 	  var 4 y1 y2 y2
@@ -2447,11 +2448,11 @@
 	  el resultado es
 	</para>
 	<code>
-	  0   0   1   1 
-	  0   1   0   1 
-	  0   1   1   0 
-	  1   0   0   1 
-	  1   0   1   0 
+	  0   0   1   1
+	  0   1   0   1
+	  0   1   1   0
+	  1   0   0   1
+	  1   0   1   0
 	  1   1   0   0
 	</code>
 	<para>
@@ -3884,13 +3885,27 @@
 	<ilist>
 	  <li>
 	    <para>
-	      <quote><lit>header</lit></quote>: una cadena de texto que
-	      especifica un 'header' HTTP que va a enviarse al 'host'.
+	      <quote><lit>header</lit></quote>: Una cadena de texto que
+	      especifica un encabezamiento HTTP que va a enviarse al 'host'.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      <quote><lit>postdata</lit></quote>: una cadena de texto que
+	      <quote><lit>include</lit></quote>: Un escalar: si no es cero,
+	      el encabezamiento que se recibe del 'host' se incluye en el
+	      cuerpo del resultado.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <quote><lit>nobody</lit></quote>: Un escalar: si no es cero,
+	      la función <i>no</i> va a descargar el cuerpo de la URL que
+	      se requiere.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <quote><lit>postdata</lit></quote>: Una cadena de texto que
 	      contiene los datos que van a enviarse al 'host'.
 	    </para>
 	  </li>
@@ -3899,34 +3914,35 @@
 	  Los campos <lit>header</lit> y <lit>postdata</lit> se destinan
 	  para usarse con una solicitud HTTP de tipo <lit>POST</lit>. Si
 	  está presente <lit>postdata</lit>, va implícito el método
-	  <lit>POST</lit>; en caso contrario, va implícito el método <lit>GET</lit>.
-	  (Pero observa que para sencillas solicitudes <lit>GET</lit>, la
-	  función <fncref targ="readfile"/> ofrece una interfaz más
-	  simple.)
-	</para>
-	<para>
-	  Se reconoce otro elemento opcional del 'bundle': si está presente
-	  un escalar llamado <lit>include</lit> y tiene un valor no nulo, esto
-	  se entiende como una solicitud para incluir el 'header' recibido del
-	  'host', en el cuerpo del resultado.
+	  <lit>POST</lit>. En caso contrario, los métodos <lit>GET</lit> o
+	  <lit>HEAD</lit> van implícitos, dependiendo del valor de la clave
+	  <lit>nobody</lit>. (Pero observa que para solicitudes <lit>GET</lit>
+    sencillas, la función <fncref targ="readfile"/> ofrece una interfaz
+    más simple.)
 	</para>
 	<para>
 	  Al completarse la solicitud, el texto recibido del servidor
-	  se añade al 'bundle' con la clave
-	  <quote><lit>output</lit></quote>.
+	  se añade al 'bundle' con la clave <quote><lit>output</lit></quote>,
+	  y el código de status de HTTP se guarda bajo la clave
+	  <quote><lit>http_code</lit></quote>.
 	</para>
 	<para>
 	  La función va a fallar si hay una equivocación al formular la solicitud
-	  (por ejemplo, si no existe una <lit>URL</lit> en la entrada); en caso contrario,
-	  va a devolver el valor 0 si la solicitud prospera, o un valor no
-	  nulo si no lo hace. En este último caso, se añade el mensaje de
-	  fallo de la biblioteca 'curl' al 'bundle', con el identificador 
-	  <quote><lit>errmsg</lit></quote>. Ten en cuenta, sin embargo, que
-	  <quote>éxito</quote> en este sentido no significa necesariamente
-	  que obtienes los datos que deseabas; en realidad significa tan solo 
-	  que se recibió alguna respuesta del servidor. Debes comprobar el
-	  contenido del <quote>buffer</quote> de salida (que de hecho puede ser
-	  un mensaje tal como <quote>Página no encontrada</quote>).
+	  (por ejemplo, si no existe una <lit>URL</lit> en la entrada); en caso
+	  contrario, va a devolver el valor 0 si la solicitud prospera, o un valor
+	  no nulo si no lo hace. En este último caso, se añade el mensaje de fallo
+	  de libcurl al 'bundle', con el identificador <quote><lit>errmsg</lit></quote>.
+	  Ten en cuenta que <quote>éxito</quote> en este sentido no significa
+	  necesariamente que obtienes los datos que deseabas; en realidad
+	  significa tan solo que se recibió alguna respuesta del servidor.
+	  Una manera rápida de comprobación es inspeccionar el código de
+	  status de HTTP: los utilizados más habitualmente son 200 (éxito)
+	  o 404 (página no encontrada).
+	  Consulta
+	  <url>https://en.wikipedia.org/wiki/List_of_HTTP_status_codes</url>
+	  para obtener la lista completa. Como alternativa, también puedes
+	  comprobar el contenido del 'buffer' de salida (que de hecho puede
+	  ser un mensaje tal como <quote>Página no encontrada</quote>).
 	</para>
 	<para>
 	  Aquí tenemos un ejemplo de cómo utilizar esta función: para bajar
@@ -3934,22 +3950,46 @@
 	  el envío de una consulta JSON. Observa el uso de <fncref targ="sprintf"/>
 	  para insertar comillas en los datos <lit>POST</lit>.
 	</para>
-	<code>
-	  bundle req
-	  req.URL = "http://api.bls.gov/publicAPI/v1/timeseries/data/"
-	  req.include = 1
-	  req.header = "Content-Type: application/json"
-	  string s = sprintf("{\"seriesid\":[\"LEU0254555900\"]}")
-	  req.postdata = s
-	  err = curl(&amp;req)
-	  if err == 0
-	      s = req.output
-	      string line
-	      loop while getline(s, &amp;line)
-	          printf "%s\n", line
-	      endloop
-	  endif
-	</code>
+   	<code>
+	 bundle req
+	 req.URL = "https://api.bls.gov/publicAPI/v1/timeseries/data/"
+	 req.include = 1
+	 eq.header = "Content-Type: application/json"
+	 string s = sprintf("{\"seriesid\":[\"LEU0254555900\"]}")
+	 req.postdata = s
+	 err = curl(&amp;req)
+	 if err == 0
+	    s = req.output
+	    string line
+	    loop while getline(s, &amp;line)
+	       printf "%s\n", line
+	    endloop
+	 endif
+    </code>
+  <para>
+	 Como segundo ejemplo, el código de abajo comprueba si está disponible
+	 una versión concreta del conjunto de datos
+	 <quote>Global Macro Database</quote>, y la descarga en tal caso.
+  </para>
+    <code>
+	 string base_URL = "https://www.globalmacrodata.com"
+	 string filename = "GMD_2025_03.csv"
+
+	 bundle req
+	 req.URL = base_URL ~ "/" ~ filename
+	 req.nobody = 1
+	 err = curl(&amp;req)
+
+	 if err || (req.http_code != 200)
+	    printf "Oh, oh. It seems %s is unavailable\n", filename
+	 else
+	    # actual request
+	    bundle req = empty
+	    req.URL = base_URL ~ "/" ~ filename
+	    err = curl(&amp;req)
+	    print req
+	 endif
+    </code>
 	<para>
 	  Consulta también las funciones <fncref targ="jsonget"/> y
 	  <fncref targ="xmlget"/> para ver modos de procesamiento
@@ -4791,77 +4831,6 @@
       </description>
     </function>
 
-    <function name="eigengen" section="linalg" output="matrix">
-      <fnargs>
-	<fnarg type="smatrix">A</fnarg>
-	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  <emphasis>Esta es una función heredada, anterior al soporte
-	  original de GRETL para matrices complejas. No debes usarla en
-	  los guiones nuevos que escribas en lenguaje HANSL. Utiliza
-	  </emphasis> <fncref targ="eigen"/> <emphasis> en su lugar.</emphasis>
-	</para>
-	<para>
-	  Calcula los autovalores y, opcionalmente, los autovectores de la matriz
-	  <argname>A</argname> de orden <by r="n" c="n"/>. Cuando todos los
-	  autovalores son reales, se devuelve una matriz <by r="n" c="1"/>. En caso
-	  contrario, el resultado es una matriz <by r="n" c="2"/>, con una primera
-	  columna que contiene los elementos reales, y una segunda columna con los
-	  elementos imaginarios. No se garantiza que los autovalores se vayan a
-	  clasificar en ningún orden en particular.
-	</para>
-	<para>
-	  Hay dos opciones para el segundo argumento: que se trate del nombre
-	  de una matriz ya existente precedida por <lit>&amp;</lit> (para
-	  indicar la <quote>dirección</quote> de la matriz en cuestión), en cuyo
-	  caso en esta matriz se guarda un resultado auxiliar; o que se trate
-	  de la palabra clave <lit>null</lit>, en cuyo caso no se produce el
-	  resultado auxiliar.
-	</para>
-	<para>
-	  Cuando el segundo argumento no es nulo, se va a sobrescribir la matriz
-	  especificada con el resultado auxiliar (y no es necesario que la matriz
-	  existente tenga la dimensión adecuada para recibir el resultado). El
-	  resultado en la matriz <argname>U</argname> se organiza del siguiente modo:
-	</para>
-	<ilist>
-	  <li>
-            <para>
-              Si el <math>i</math>-ésimo autovalor es real, la
-              <math>i</math>-ésima columna de <math>U</math> va a
-              contener el autovector correspondiente;
-            </para>
-	  </li>
-	  <li>
-            <para>
-              Si el <math>i</math>-ésimo autovalor es complejo, la
-              <math>i</math>-ésima columna de <math>U</math> va a
-              contener la parte real del autovector correspondiente, y la
-              siguiente columna la parte imaginaria. El autovector del autovalor
-              conjugado es el conjugado del autovector.
-            </para>
-	  </li>
-	</ilist>
-	<para>
-	  En otras palabras, los autovectores se guardan en el mismo orden que los
-	  autovalores; ahora bien, los autovectores reales ocupan una columna,
-	  mientras que los autovectores complejos ocupan dos (y la parte real
-	  se guarda primero). Aún así, el número total de columnas es
-	  <math>n</math>, pues el autovector conjugado se ignora.
-	</para>
-	<para>
-	  <seelist>
-            <fncref targ="eigensym"/>
-            <fncref targ="eigsolve"/>
-            <fncref targ="qrdecomp"/>
-            <fncref targ="svd"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
     <function name="eigensym" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="symmat">A</fnarg>
@@ -5579,24 +5548,24 @@
 	<code>
 	  U (2 x 6)
 
-	  1    3    5    7    9   11 
-	  2    4    6    8   10   12 
+	  1    3    5    7    9   11
+	  2    4    6    8   10   12
 
 	  V (4 x 3)
 
-	  1    3    5 
-	  2    4    6 
-	  7    9   11 
-	  8   10   12 
+	  1    3    5
+	  2    4    6
+	  7    9   11
+	  8   10   12
 
 	  W (6 x 2)
 
-	  1    7 
-	  2    8 
-	  3    9 
-	  4   10 
-	  5   11 
-	  6   12 
+	  1    7
+	  2    8
+	  3    9
+	  4   10
+	  5   11
+	  6   12
 	</code>
 	<para>
 	  Se muestra un fallo cuando las matrices del 'array' no sean convenientes
@@ -6437,8 +6406,8 @@
 	</para>
 	<code>
 	  a (1 x 3)
-	  
-	  0.69315       1.0000       1.3863 
+
+	  0.69315       1.0000       1.3863
 	</code>
       </description>
     </function>
@@ -14064,6 +14033,55 @@
 	</para>
 	<para>
 	  Consulta <guideref targ="chap:tdisagg"/> para obtener más detalles.
+	</para>
+      </description>
+    </function>
+
+    <function name="thresh" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="anyfloat">a</fnarg>
+	<fnarg optional="true" type="scalar">fuerza</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Realiza una delimitación suave o fuerte sobre <argname>x</argname>,
+	  dependiendo del valor del parámetro Booleano opcional
+	  <argname>fuerza</argname>, cuyo valor predeterminado es 0.
+	</para>
+	<para>
+	  En los dos casos, las entradas de <argname>x</argname> cuyos valores
+	  absolutos sean menores que <argname>a</argname> se asignan a 0.
+	  Con la delimitación suave, las demás entradas se contraen hacia 0.
+	  Por ejemplo, el código de abajo
+	</para>
+	<code>
+	  s = seq(-2,2,0.5)'
+	  eval s ~ thresh(s, 0.5) ~ thresh(s, 0.5, 1)
+	</code>
+	<para>
+	  genera
+	</para>
+	<code>
+             -2      -1.5       -2
+           -1.5        -1     -1.5
+             -1      -0.5       -1
+           -0.5         0        0
+              0         0        0
+            0.5         0        0
+              1       0.5        1
+            1.5         1      1.5
+              2       1.5        2
+	</code>
+	<para>
+	  Cuando los dos argumentos difieren en el tipo, el tipo del resultado
+	  es el del <quote>mayor</quote> de los dos, donde la ordenación sería
+	  matriz &gt; serie &gt; escalar. Por ejemplo, cuando sea un escalar
+	  <argname>y</argname> y sea <argname>x</argname> un
+	  <math>n</math>-vector (o viceversa), el resultado será un
+	  <math>n</math>-vector. Ten en cuenta que los argumentos matriciales
+	  deben ser vectores; y que, si ninguno de los argumentos es un escalar,
+	  los dos argumentos deben tener la misma longitud.
 	</para>
       </description>
     </function>

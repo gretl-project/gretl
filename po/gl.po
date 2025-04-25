@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-03-31 10:25-0400\n"
-"PO-Revision-Date: 2024-11-11 12:52+0100\n"
+"PO-Revision-Date: 2025-03-31 18:06+0200\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -1498,9 +1498,8 @@ msgid "New data not conformable for appending\n"
 msgstr "Os novos datos non teñen a estrutura axeitada para engadilos\n"
 
 #: lib/src/dataio.c:2315
-#, fuzzy
 msgid "No data were found for appending"
-msgstr "Os novos datos non teñen a estrutura axeitada para engadilos\n"
+msgstr "Non se atoparon datos para engadir"
 
 #: lib/src/dataio.c:2324
 msgid "Found no data conformable for appending"
@@ -1783,9 +1782,9 @@ msgid "Panel time extended by %d observations"
 msgstr "A dimensión temporal do panel estendeuse %d observacións"
 
 #: lib/src/dataset.c:3368
-#, fuzzy, c-format
+#, c-format
 msgid "Dataset extended by %d units"
-msgstr "O conxunto de datos estendeuse %d observacións"
+msgstr "Conxunto de datos estendido en %d unidades"
 
 #: lib/src/dataset.c:3378
 #, c-format
@@ -2435,21 +2434,17 @@ msgid "%s, using samples of size %d to %d"
 msgstr "%s, utilizando mostras de tamaño %d a %d"
 
 #: lib/src/describe.c:7231
-#, fuzzy
 msgid "Paired difference test"
-msgstr "Proba de diferenzas"
+msgstr "Proba de diferenzas emparelladas"
 
 #: lib/src/describe.c:7236
-#, fuzzy, c-format
+#, c-format
 msgid "Sample mean paired difference = %g"
-msgstr ""
-"Varianza da mostra = %g\n"
-"\n"
+msgstr "Media mostral de diferenzas emparelladas = %g"
 
 #: lib/src/describe.c:7238
-#, fuzzy
 msgid "   Null hypothesis: The population mean difference is zero."
-msgstr "   Hipótese nula:[As dúas medias das poboacións son iguais]\n"
+msgstr "   Hipótese nula:[A diferenza media na poboación é cero]."
 
 #: lib/src/describe.c:7240 lib/src/describe.c:7392
 #, c-format
@@ -2471,12 +2466,8 @@ msgstr ""
 "\n"
 
 #: lib/src/describe.c:7371
-#, fuzzy
 msgid "Robust equality of means test"
-msgstr ""
-"\n"
-"Proba de igualdade de varianzas\n"
-"\n"
+msgstr "Proba robusta de igualdade de medias"
 
 #: lib/src/describe.c:7374
 #, c-format
@@ -2507,24 +2498,21 @@ msgid "   Null hypothesis: The two population means are the same.\n"
 msgstr "   Hipótese nula:[As dúas medias das poboacións son iguais]\n"
 
 #: lib/src/describe.c:7544
-#, fuzzy
 msgid ""
 "\n"
 "Robust equality of variances test\n"
 msgstr ""
 "\n"
-"Proba de igualdade de varianzas\n"
-"\n"
+"Proba robusta de igualdade de varianzas\n"
 
 #: lib/src/describe.c:7545
-#, fuzzy
 msgid "Centering: "
-msgstr "Só centrar"
+msgstr "Centrar:"
 
 #: lib/src/describe.c:7551
-#, fuzzy, c-format
+#, c-format
 msgid "%d percent trimmed mean"
-msgstr "Intervalo ao %g por cento"
+msgstr "Media recortada %d por cento"
 
 #: lib/src/describe.c:7565
 msgid ""
@@ -3322,8 +3310,8 @@ msgstr "constantes do modelo %d por unidade"
 #: lib/src/genfuncs.c:4411
 msgid "Invalid declaration: maybe you need the \"clear\" command?"
 msgstr ""
-"Expresión incorrecta: é posible que necesites utilizar a instrución "
-"\"clear\"?"
+"Expresión incorrecta: é posible que necesites utilizar a instrución \"clear"
+"\"?"
 
 #: lib/src/genfuncs.c:4414
 msgid "Invalid declaration"
@@ -6478,12 +6466,11 @@ msgid "You cannot resize a state-space system matrix"
 msgstr "Non podes mudar o tamaño dunha matriz do sistema do espazo dos estados"
 
 #: lib/src/kalman.c:3835
-#, fuzzy
 msgid ""
 "kalman: the 'sequential' setting is not compatible with\n"
 "cross-correlated disturbances"
 msgstr ""
-"Kalman: A configuración 'univariante' non é compatible con\n"
+"Kalman: A configuración 'secuencial' non é compatible con\n"
 "perturbacións correlacionadas cruzadas"
 
 #: lib/src/kalman.c:3945
@@ -12331,9 +12318,9 @@ msgid "Compact hourly data to:"
 msgstr "Compactar datos horarios a:"
 
 #: gui/dialogs.c:4118
-#, fuzzy, c-format
+#, c-format
 msgid "Compact data frequency %d to 1"
-msgstr "frecuencia dos datos = %d\n"
+msgstr "Compactar a frecuencia dos datos %d a 1"
 
 #: gui/dialogs.c:4202
 msgid "gretl: expand data"
@@ -13901,7 +13888,6 @@ msgid "Password"
 msgstr "Contrasinal"
 
 #: gui/fnsave.c:4034
-#, fuzzy
 msgid ""
 "If you don't have a login to the gretl server\n"
 "please see https://gretl.sourceforge.net/apply/.\n"
@@ -13909,8 +13895,8 @@ msgid ""
 "in your web browser."
 msgstr ""
 "Se non tes un nome de usuario definido no servidor de GRETL,\n"
-"por favor, mira http://gretl.sourceforge.net/apply/.\n"
-"O botón de 'Sitio web' de abaixo debera de abrir esta páxina\n"
+"por favor, mira https://gretl.sourceforge.net/apply/.\n"
+"O botón 'Sitio web' de abaixo debera de abrir esta páxina\n"
 "no teu navegador web."
 
 #: gui/fnsave.c:4297 gui/fnsave.c:4408
@@ -17792,7 +17778,7 @@ msgstr "Descoñecido"
 #: gui/menustate.c:1076
 #, c-format
 msgid "Panel: units %d:%d, time %s:%s"
-msgstr ""
+msgstr "Panel: unidades %d:%d, tempo %s:%s"
 
 #: gui/menustate.c:1108
 #, c-format
@@ -19386,9 +19372,8 @@ msgid "Menu font"
 msgstr "Tipo de letra do menú"
 
 #: gui/settings.c:341
-#, fuzzy
 msgid "Graph font"
-msgstr "Tipo de letra para a gráfica PNG"
+msgstr "Tipo de letra para a gráfica"
 
 #: gui/settings.c:343
 msgid "Gnuplot extra colors"
@@ -19507,7 +19492,7 @@ msgstr "Xeral"
 
 #: gui/settings.c:1688
 msgid "Plots"
-msgstr ""
+msgstr "Gráficas"
 
 #: gui/settings.c:1690
 msgid "Programs"
