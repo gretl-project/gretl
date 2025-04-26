@@ -748,6 +748,7 @@ HAVE_MPICC
 OPENMP_CFLAGS
 AVX_CFLAGS
 SSE2_CFLAGS
+CLANG_LIB
 OMP_LIB
 MPILINK
 MPICC
@@ -935,6 +936,7 @@ COMPRES
 MPICC
 MPILINK
 OMP_LIB
+CLANG_LIB
 CXX
 CXXFLAGS
 CCC
@@ -1666,6 +1668,7 @@ Some influential environment variables:
   MPICC       path to MPI compiler wrapper
   MPILINK     linker commands for MPI (cross-build)
   OMP_LIB     linker command for OpenMP (auto)
+  CLANG_LIB   linker command for clang runtime
   CXX         C++ compiler command
   CXXFLAGS    C++ compiler flags
   CXXCPP      C++ preprocessor
@@ -17785,6 +17788,7 @@ printf "%s\n" "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
      as_fn_error $? "unknown endianness
  presetting ac_cv_c_bigendian=no (or yes) will help" "$LINENO" 5 ;;
  esac
+
 
 
 

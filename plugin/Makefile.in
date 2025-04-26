@@ -42,6 +42,8 @@ JSON_GLIB_LIBS = @JSON_GLIB_LIBS@
 OMP_OPT = @OPENMP_CFLAGS@
 OMP_LIB = @OMP_LIB@
 
+CLANG_LIB = @CLANG_LIB@
+
 ifeq ($(win32pkg),yes)
   plugindir = $(libdir)/plugins
 else ifeq ($(gtk_version),3.0)
@@ -396,7 +398,7 @@ json_get.la: json_get.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(JSON_GLIB_LIBS)
 
 svm.la: svm.lo svmlib.lo
-	$(LDXX) -o $@ $^ $(GRETLLIB) $(OMP_LIB)
+	$(LDXX) -o $@ $^ $(GRETLLIB) $(OMP_LIB) $(CLANG_LIB)
 
 regls.la: regls.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
