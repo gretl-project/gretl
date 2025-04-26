@@ -2094,7 +2094,7 @@ const char *gretl_gnuplot_path (void)
 	    fprintf(stderr, "gretl_gnuplot_path: bad value '%s'\n",
 		    paths.gnuplot);
 # ifdef PKGBUILD
-	    gchar *tmp = g_build_filename(paths.gretldir, "wguplot.exe");
+	    gchar *tmp = g_build_filename(paths.gretldir, "wguplot.exe", NULL);
 	    if (strcmp(paths.gnuplot, tmp)) {
 		strcpy(paths.gnuplot, tmp);
 	    }
