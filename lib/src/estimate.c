@@ -1221,7 +1221,8 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     mdl.ifc = reglist_check_for_const(mdl.list, dset);
 
     /* Check for presence of lagged dependent variable?
-       (Don't bother if this is an auxiliary regression.) */
+       (Don't bother if this is an auxiliary regression.)
+    */
     if (!(opt & OPT_A) && !dataset_is_cross_section(dset)) {
 	ldv = check_for_lags(&mdl, dset);
     }
@@ -1733,7 +1734,7 @@ static int hatvars (MODEL *pmod, const DATASET *dset)
 {
     int yno = pmod->list[1];
     int xno, i, t;
-    double x;
+    double x, y;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (model_missing(pmod, t)) {
@@ -1748,11 +1749,11 @@ static int hatvars (MODEL *pmod, const DATASET *dset)
 	    }
             pmod->yhat[t] += pmod->coeff[i] * x;
         }
-	x = dset->Z[yno][t];
+	y = dset->Z[yno][t];
 	if (pmod->nwt) {
-	    x *= sqrt(dset->Z[pmod->nwt][t]);
+	    y *= sqrt(dset->Z[pmod->nwt][t]);
 	}
-        pmod->uhat[t] = x - pmod->yhat[t];
+        pmod->uhat[t] = y - pmod->yhat[t];
     }
 
     return 0;
