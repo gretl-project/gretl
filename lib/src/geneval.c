@@ -6227,6 +6227,7 @@ static NODE *flexible_2arg_node (NODE *l, NODE *r, int f, int flag,
     if (ret != NULL && !p->err) {
         double x1, x2, y = NADBL;
         int i;
+
         for (i=0; i<nmax; i++) {
             x1 = node_get_double(l, i, p);
             x2 = node_get_double(r, i, p);
@@ -11685,7 +11686,7 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
             double xinclude = 0;
 	    double xnobody = 0;
 	    int http_code = 0;
-	    
+
             url = gretl_bundle_get_string(b, "URL", &p->err);
             header = optional_bundle_get(b, "header", NULL, &p->err);
             postdata = optional_bundle_get(b, "postdata", NULL, &p->err);
