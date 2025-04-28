@@ -1327,6 +1327,7 @@ int arma_select (const int *list, const int *pqspec,
 	return real_arma_select(list, dset, opt, prn, NULL);
     }
 }
+
 int gui_arma_select (const int *list, DATASET *dset,
 		     gretlopt opt, PRN *prn,
 		     gretl_matrix **pm)

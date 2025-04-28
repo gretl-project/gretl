@@ -964,7 +964,13 @@ static double get_xti (const DATASET *dset,
     if (X != NULL) {
 	return gretl_matrix_get(X, t, i);
     } else {
-	return dset->Z[xlist[i+1]][t];
+        int vi = xlist[i+1];
+
+        if (vi == 0) {
+            return 1.0;
+        } else {
+            return dset->Z[vi][t];
+        }
     }
 }
 

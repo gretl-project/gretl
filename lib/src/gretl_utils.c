@@ -2954,6 +2954,11 @@ static void blas_init (void)
 {
     void *ptr = NULL;
 
+#if defined(__APPLE__) && defined(PKGBUILD)
+    blas_variant = BLAS_VECLIB;
+    return;
+#endif
+
     blas_variant = BLAS_UNKNOWN;
     ptr = dlopen(NULL, RTLD_NOW);
     if (ptr == NULL) {
