@@ -390,6 +390,7 @@ static int gp_set_non_point_info (gnuplot_info *gi,
     const char *s = get_optval_string(plot_ci, opt);
     int withval = W_POINTS;
     int i, imax = gi->withlist[0];
+    int *slist = NULL;
 
     if (opt == OPT_O) {
 	withval = W_LINES;
@@ -422,6 +423,16 @@ static int gp_set_non_point_info (gnuplot_info *gi,
 	    }
 	}
 	g_strfreev(strs);
+    } else if ((slist = get_list_by_name(s)) != NULL) {
+        /* got a named list spec */
+        int j;
+
+        for (j=1; j<=slist[0]; j++) {
+            i = in_gretl_list(list, slist[j]);
+            if (i > 0 && i <= imax) {
+                gi->withlist[i] = withval;
+            }
+        }
     } else {
 	/* just one component */
 	i = gp_list_pos(s, list, dset);
