@@ -10301,6 +10301,7 @@ static gretl_matrix *eigensym_rrr (gretl_matrix *m,
     integer n, info, lwork, liwork;
     integer nv, ldz = 1;
     double vl = 0, vu = 0;
+    int il = 1, iu = m->rows;
     gretl_matrix *evals = NULL;
     double *z = NULL;
     double *work = NULL;
@@ -10312,10 +10313,10 @@ static gretl_matrix *eigensym_rrr (gretl_matrix *m,
     char range = 'A';
     char uplo = 'U';
 
-    /* Note: vl and vu are required to work around buggy
-       implementations of dsyevr, which reference these
-       terms even when they're not supposed to. E.g.
-       Apple's libLAPACK.dylib. 2020-10-25.
+    /* Note: vl and vu, il and iu, are required to work around buggy
+       implementations of dsyevr, which reference these terms even
+       when they're not supposed to. E.g.  Apple's
+       libLAPACK.dylib. 2020-10-25.
     */
 
     n = m->rows;
@@ -10347,7 +10348,7 @@ static gretl_matrix *eigensym_rrr (gretl_matrix *m,
 
     lwork = liwork = -1; /* find optimal workspace size */
     dsyevr_(&jobz, &range, &uplo, &n, m->val, &n,
-            &vl, &vu, NULL, NULL, &abstol, &nv, w,
+            &vl, &vu, &il, &iu, &abstol, &nv, w,
             z, &ldz, isuppz, work, &lwork, iwork,
             &liwork, &info);
 
@@ -10366,7 +10367,7 @@ static gretl_matrix *eigensym_rrr (gretl_matrix *m,
 
     if (!*err) {
         dsyevr_(&jobz, &range, &uplo, &n, m->val, &n,
-                &vl, &vu, NULL, NULL, &abstol, &nv, w,
+                &vl, &vu, &il, &iu, &abstol, &nv, w,
                 z, &ldz, isuppz, work, &lwork, iwork,
                 &liwork, &info);
         if (info != 0) {
