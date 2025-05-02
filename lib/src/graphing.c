@@ -378,6 +378,10 @@ int get_effective_plot_ci (void)
 
    --with-lines=foo,bar
 
+   or
+
+   --with-lines=<listname>
+
    this indicates that the "with lines" format should be
    applied to selected y-axis variables, not all.
 */
@@ -783,6 +787,87 @@ static void printvars (FILE *fp, int t,
     fputc('\n', fp);
 }
 
+static int y_var_is_factorized (gnuplot_info *gi, int vj)
+{
+    if (gi->flist == NULL) {
+        return 1;
+    } else if (in_gretl_list(gi->flist, vj)) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+/* Here we see if the user added a list or series parameter to the
+   --factorized plot option, to limit factorization to a subset of the
+   y-variables. If so, we check the specified series: it/they must be
+   present in the "y" portion of the plot list or else we flag an
+   error. If there's no error we attach this information to @gi under
+   the name "flist".
+*/
+
+static int maybe_add_factorization_list (gnuplot_info *gi,
+                                         const DATASET *dset)
+{
+    const char *s = get_optval_string(GNUPLOT, OPT_Z);
+    int err = 0;
+
+    if (s != NULL) {
+        int lmax = gi->list[gi->list[0]];
+        int *flist = NULL;
+        int vf = 0;
+        int i, k;
+
+        if ((flist = get_list_by_name(s)) != NULL) {
+            for (i=1; i<=flist[0]; i++) {
+                k = in_gretl_list(gi->list, flist[i]);
+                if (k == 0 || k == lmax) {
+                    err = E_INVARG;
+                    break;
+                }
+            }
+            if (!err) {
+                gi->flist = gretl_list_copy(flist);
+            }
+        } else if (strchr(s, ',') != NULL) {
+            /* spec has multiple comma-separated components */
+            gchar **strs = g_strsplit(s, ",", 0);
+            int ns = 0;
+
+            for (i=0; strs[i]!=NULL; i++) {
+                vf = current_series_index(dset, strs[i]);
+                k = in_gretl_list(gi->list, vf);
+                if (k == 0 || k == lmax) {
+                    err = E_INVARG;
+                    break;
+                } else {
+                    ns++;
+                }
+            }
+            if (!err) {
+                gi->flist = gretl_list_new(ns);
+                for (i=0; strs[i]!=NULL; i++) {
+                    vf = current_series_index(dset, strs[i]);
+                    gi->flist[i+1] = vf;
+                }
+            }
+            g_strfreev(strs);
+        } else if ((vf = current_series_index(dset, s)) > 0) {
+            k = in_gretl_list(gi->list, vf);
+            if (k == 0 || k == lmax) {
+                err = E_INVARG;
+            } else {
+                gi->flist = gretl_list_new(1);
+                gi->flist[1] = vf;
+            }
+        } else {
+            err = E_INVARG;
+        }
+    }
+
+    return err;
+}
+
 static int factor_check (gnuplot_info *gi, const DATASET *dset)
 {
     int err = 0;
@@ -803,6 +888,7 @@ static int factor_check (gnuplot_info *gi, const DATASET *dset)
 	gi->fvals = gretl_matrix_values(d, T, OPT_S, &err);
         if (!err) {
             gi->n_fvals = gretl_vector_get_length(gi->fvals);
+            err = maybe_add_factorization_list(gi, dset);
         }
     }
 
@@ -3419,14 +3505,33 @@ static int print_gp_factorized_data (gnuplot_info *gi,
     const double *x = NULL;
     double yjt;
     int len;
-    int i, j, t;
+    int i, j, vj, t;
 
     len = gi->list[0];
     d = dset->Z[gi->fid];
     x = dset->Z[gi->list[len]];
 
     for (j=1; j<len; j++) {
-        y = dset->Z[gi->list[j]];
+        vj = gi->list[j];
+        y = dset->Z[vj];
+        if (!y_var_is_factorized(gi, vj)) {
+            for (t=gi->t1; t<=gi->t2; t++) {
+                if (na(x[t]) || na(d[t]) || na(y[t])) {
+                    continue;
+                }
+                fprintf(fp, "%.10g %.10g\n", x[t], y[t]);
+                if (dset->markers) {
+                    fprintf(fp, " # %s", dset->S[t]);
+                } else if (dataset_is_time_series(dset)) {
+                    char obs[OBSLEN];
+
+                    ntolabel(obs, t, dset);
+                    fprintf(fp, " # %s", obs);
+                }
+            }
+            fputs("e\n", fp);
+            continue;
+        }
         for (i=0; i<gi->n_fvals; i++) {
             for (t=gi->t1; t<=gi->t2; t++) {
                 yjt = (d[t] == gi->fvals->val[i])? y[t] : NADBL;
@@ -3593,6 +3698,7 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
     gi->x = NULL;
     gi->list = NULL;
     gi->fvals = NULL;
+    gi->flist = NULL;
     gi->n_fvals = 0;
     gi->fid = 0;
     gi->band = 0;
@@ -3677,6 +3783,7 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 void clear_gpinfo (gnuplot_info *gi)
 {
     free(gi->list);
+    free(gi->flist);
     gretl_matrix_free(gi->fvals);
     free(gi->withlist);
 }
@@ -4650,13 +4757,24 @@ int gnuplot (const int *plotlist, const char *literal,
         int lmax = gi.list[0];
 	series_table *st;
         double di;
-        int j;
+        int j, vj;
 
 	strcpy(s2, plotname(dset, gi.fid, 1));
 	st = series_get_string_table(dset, gi.fid);
 
         for (j=1; j<lmax; j++) {
+            vj = gi.list[j];
             set_plot_withstr(&gi, j, withstr);
+            if (!y_var_is_factorized(&gi, vj)) {
+                strcpy(s1, plotname(dset, vj, 1));
+                fprintf(fp, " '-' using 1:2 title \"%s\" %s", s1, withstr);
+                if (j < lmax - 1) {
+                    fputs(", \\\n", fp);
+                } else {
+                    fputc('\n', fp);
+                }
+                continue;
+            }
             for (i=0; i<gi.n_fvals; i++) {
                 di = gretl_vector_get(gi.fvals, i);
                 if (st != NULL) {

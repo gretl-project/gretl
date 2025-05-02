@@ -49,6 +49,7 @@ struct gnuplot_info_ {
     gretl_matrix *fvals; /* factor values */
     int n_fvals;         /* number of factor values */
     int fid;             /* factor variable ID */
+    int *flist;          /* lisy of y-vars to be factorized */
     int *withlist;
     int band;
     double ybase;
