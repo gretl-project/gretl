@@ -46,7 +46,9 @@ struct gnuplot_info_ {
     char yfmt[16];
     const char *yformula;
     const double *x;
-    gretl_matrix *dvals;
+    gretl_matrix *fvals; /* factor values */
+    int n_fvals;         /* number of factor values */
+    int fid;             /* factor variable ID */
     int *withlist;
     int band;
     double ybase;
@@ -56,8 +58,7 @@ void clear_gpinfo (gnuplot_info *gi);
 
 int get_effective_plot_ci (void);
 
-int graph_list_adjust_sample (int *list,
-                              gnuplot_info *ginfo,
+int graph_list_adjust_sample (gnuplot_info *gi,
                               const DATASET *dset,
                               int listmin);
 

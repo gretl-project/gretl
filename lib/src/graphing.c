@@ -786,25 +786,24 @@ static void printvars (FILE *fp, int t,
 static int factor_check (gnuplot_info *gi, const DATASET *dset)
 {
     int err = 0;
-    int v3 = 0;
 
-    if (gi->list[0] != 3) {
+    if (gi->list[0] < 2) {
 	err = E_DATA;
-    } else {
-	v3 = gi->list[3];
-	if (!accept_as_discrete(dset, v3, 0)) {
-	    err = E_DATA;
-	}
+    } else if (!accept_as_discrete(dset, gi->fid, 0)) {
+        err = E_DATA;
     }
 
     if (err) {
-	gretl_errmsg_set(_("You must supply three variables, the last of "
+	gretl_errmsg_set(_("You must supply at least three variables, the last of "
 			   "which is discrete"));
     } else {
-	const double *d = dset->Z[v3] + gi->t1;
+	const double *d = dset->Z[gi->fid] + gi->t1;
 	int T = gi->t2 - gi->t1 + 1;
 
-	gi->dvals = gretl_matrix_values(d, T, OPT_S, &err);
+	gi->fvals = gretl_matrix_values(d, T, OPT_S, &err);
+        if (!err) {
+            gi->n_fvals = gretl_vector_get_length(gi->fvals);
+        }
     }
 
     return err;
@@ -2938,7 +2937,7 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
 	xvar = dset->Z[xno];
     }
 
-    err = graph_list_adjust_sample(gi->list, gi, dset, 2);
+    err = graph_list_adjust_sample(gi, dset, 2);
     if (!err && gi->list[0] > 2) {
 	err = E_DATA;
     }
@@ -3142,7 +3141,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 	return E_DATA;
     }
 
-    err = graph_list_adjust_sample(gi->list, gi, dset, 1);
+    err = graph_list_adjust_sample(gi, dset, 1);
     if (err) {
 	return err;
     }
@@ -3257,23 +3256,16 @@ static void check_y_tics (gnuplot_info *gi, const double **Z,
 
 static void print_x_range_from_list (gnuplot_info *gi,
 				     const DATASET *dset,
-				     const int *list,
 				     FILE *fp)
 {
     const double *x, *d = NULL;
-    int k, l0 = list[0];
+    int k = gi->list[0];
 
     if (gi->flags & GPT_DUMMY) {
-	/* the factor variable comes last and the x variable
-	   is in second-last place */
-	d = dset->Z[list[l0]];
-	k = l0 - 1;
-    } else {
-	/* the x variable comes last in the list */
-	k = l0;
+        d = dset->Z[gi->fid];
     }
 
-    x = dset->Z[list[k]];
+    x = dset->Z[gi->list[k]];
 
     if (gretl_isdummy(gi->t1, gi->t2, x)) {
 	fputs("set xrange [-1:2]\n", fp);
@@ -3288,7 +3280,7 @@ static void print_x_range_from_list (gnuplot_info *gi,
 	    obs_ok = 0;
 	    if (!na(x[t]) && (d == NULL || !na(d[t]))) {
 		for (i=1; i<k; i++) {
-		    vy = list[i];
+		    vy = gi->list[i];
 		    if (!na(dset->Z[vy][t])) {
 			/* got x obs and at least one y obs */
 			obs_ok = 1;
@@ -3418,49 +3410,41 @@ static int get_y2_oddman (gnuplot_info *gi,
     return 0;
 }
 
-static int print_gp_dummy_data (gnuplot_info *gi,
-				const DATASET *dset,
-				FILE *fp)
+static int print_gp_factorized_data (gnuplot_info *gi,
+                                     const DATASET *dset,
+                                     FILE *fp)
 {
-    const double *d = dset->Z[gi->list[3]];
-    const double *y = dset->Z[gi->list[1]];
-    double xt, yt;
-    int i, t, n;
+    const double *d = NULL;
+    const double *y = NULL;
+    const double *x = NULL;
+    double yjt;
+    int len;
+    int i, j, t;
 
-    n = gretl_vector_get_length(gi->dvals);
+    len = gi->list[0];
+    d = dset->Z[gi->fid];
+    x = dset->Z[gi->list[len]];
 
-    for (i=0; i<n; i++) {
-	for (t=gi->t1; t<=gi->t2; t++) {
-	    if (gi->x != NULL) {
-		xt = gi->x[t];
-	    } else {
-		xt = dset->Z[gi->list[2]][t];
-		if (na(xt)) {
-		    continue;
-		}
-	    }
-	    if (na(d[t])) {
-		continue;
-	    }
-	    yt = (d[t] == gi->dvals->val[i])? y[t] : NADBL;
-	    if (na(yt)) {
-		fprintf(fp, "%.10g %s\n", xt, GPNA);
-	    } else {
-		fprintf(fp, "%.10g %.10g", xt, yt);
-		if (!(gi->flags & GPT_TS)) {
-		    if (dset->markers) {
-			fprintf(fp, " # %s", dset->S[t]);
-		    } else if (dataset_is_time_series(dset)) {
-			char obs[OBSLEN];
+    for (j=1; j<len; j++) {
+        y = dset->Z[gi->list[j]];
+        for (i=0; i<gi->n_fvals; i++) {
+            for (t=gi->t1; t<=gi->t2; t++) {
+                yjt = (d[t] == gi->fvals->val[i])? y[t] : NADBL;
+                if (na(x[t]) || na(d[t]) || na(yjt)) {
+                    continue;
+                }
+                fprintf(fp, "%.10g %.10g\n", x[t], y[t]);
+                if (dset->markers) {
+                    fprintf(fp, " # %s", dset->S[t]);
+                } else if (dataset_is_time_series(dset)) {
+                    char obs[OBSLEN];
 
-			ntolabel(obs, t, dset);
-			fprintf(fp, " # %s", obs);
-		    }
-		}
-		fputc('\n', fp);
-	    }
-	}
-	fputs("e\n", fp);
+                    ntolabel(obs, t, dset);
+                    fprintf(fp, " # %s", obs);
+                }
+            }
+            fputs("e\n", fp);
+        }
     }
 
     return 0;
@@ -3608,7 +3592,9 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
     gi->yformula = NULL;
     gi->x = NULL;
     gi->list = NULL;
-    gi->dvals = NULL;
+    gi->fvals = NULL;
+    gi->n_fvals = 0;
+    gi->fid = 0;
     gi->band = 0;
 
     err = get_gp_flags(gi, opt, list, dset);
@@ -3649,6 +3635,11 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
     if (gi->list == NULL) {
 	return E_ALLOC;
     }
+    if (gi->flags & GPT_DUMMY) {
+        /* record the factor var and cut it off the plot list */
+        gi->fid = gi->list[gi->list[0]];
+        gi->list[0] -= 1;
+    }
 
     if (opt & OPT_D) {
 	/* got explicit --y2axis spec */
@@ -3686,7 +3677,7 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 void clear_gpinfo (gnuplot_info *gi)
 {
     free(gi->list);
-    gretl_matrix_free(gi->dvals);
+    gretl_matrix_free(gi->fvals);
     free(gi->withlist);
 }
 
@@ -3781,20 +3772,19 @@ void set_plot_withstr (gnuplot_info *gi, int i, char *str)
     }
 }
 
-int graph_list_adjust_sample (int *list,
-			      gnuplot_info *ginfo,
+int graph_list_adjust_sample (gnuplot_info *gi,
 			      const DATASET *dset,
 			      int listmin)
 {
-    int t1min = ginfo->t1;
-    int t2max = ginfo->t2;
+    int t1min = gi->t1;
+    int t2max = gi->t2;
     int i, t, vi, t_ok;
     int err = 0;
 
     for (t=t1min; t<=t2max; t++) {
 	t_ok = 0;
-	for (i=1; i<=list[0]; i++) {
-	    vi = list[i];
+	for (i=1; i<=gi->list[0]; i++) {
+	    vi = gi->list[i];
 	    if (vi > 0 && !na(dset->Z[vi][t])) {
 		t_ok = 1;
 		break;
@@ -3808,8 +3798,8 @@ int graph_list_adjust_sample (int *list,
 
     for (t=t2max; t>t1min; t--) {
 	t_ok = 0;
-	for (i=1; i<=list[0]; i++) {
-	    vi = list[i];
+	for (i=1; i<=gi->list[0]; i++) {
+	    vi = gi->list[i];
 	    if (vi > 0 && !na(dset->Z[vi][t])) {
 		t_ok = 1;
 		break;
@@ -3822,10 +3812,10 @@ int graph_list_adjust_sample (int *list,
     }
 
     if (t2max > t1min) {
-	for (i=1; i<=list[0]; i++) {
+	for (i=1; i<=gi->list[0]; i++) {
 	    int all_missing = 1;
 
-	    vi = list[i];
+	    vi = gi->list[i];
 	    for (t=t1min; t<=t2max; t++) {
 		if (!na(dset->Z[vi][t])) {
 		    all_missing = 0;
@@ -3833,16 +3823,16 @@ int graph_list_adjust_sample (int *list,
 		}
 	    }
 	    if (all_missing) {
-		gretl_list_delete_at_pos(list, i);
+		gretl_list_delete_at_pos(gi->list, i);
 		i--;
 	    }
 	}
     }
 
-    ginfo->t1 = t1min;
-    ginfo->t2 = t2max;
+    gi->t1 = t1min;
+    gi->t2 = t2max;
 
-    if (ginfo->t1 >= ginfo->t2 || list[0] < listmin) {
+    if (gi->t1 >= gi->t2 || gi->list[0] < listmin) {
 	err = E_MISSDATA;
     }
 
@@ -4366,7 +4356,6 @@ int gnuplot (const int *plotlist, const char *literal,
 {
     PRN *prn = NULL;
     FILE *fp = NULL;
-    int *list = NULL;
     char s1[MAXDISP] = {0};
     char s2[MAXDISP] = {0};
     char xlabel[MAXDISP] = {0};
@@ -4448,40 +4437,37 @@ int gnuplot (const int *plotlist, const char *literal,
 	many = 1;
     }
 
-    /* convenience pointer */
-    list = gi.list;
-
     prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
     if (err) {
 	goto bailout;
     }
 
     /* adjust sample range, and reject if it's empty */
-    err = graph_list_adjust_sample(list, &gi, dset, 2);
+    err = graph_list_adjust_sample(&gi, dset, 2);
     if (err) {
 	goto bailout;
     }
 
     /* add a regression line if appropriate */
-    if (!use_impulses(&gi) && !(gi.flags & GPT_FIT_OMIT) && list[0] == 2 &&
+    if (!use_impulses(&gi) && !(gi.flags & GPT_FIT_OMIT) && gi.list[0] == 2 &&
 	!(gi.flags & GPT_TS) && !(gi.flags & GPT_RESIDS)) {
 	err = get_fitted_line(&gi, dset, &fitline);
 	if (err) {
 	    goto bailout;
 	} else {
-	    const char *xname = dset->varname[list[2]];
-	    const char *yname = dset->varname[list[1]];
+	    const char *xname = dset->varname[gi.list[2]];
+	    const char *yname = dset->varname[gi.list[1]];
 
 	    if (*xname != '\0' && *yname != '\0') {
-		pprintf(prn, "# X = '%s' (%d)\n", xname, list[2]);
-		pprintf(prn, "# Y = '%s' (%d)\n", yname, list[1]);
+		pprintf(prn, "# X = '%s' (%d)\n", xname, gi.list[2]);
+		pprintf(prn, "# Y = '%s' (%d)\n", yname, gi.list[1]);
 	    }
 	}
     }
 
     ptype = PLOT_REGULAR;
 
-    /* separation by dummy: create special vars */
+    /* separation by factor: create special vars */
     if (gi.flags & GPT_DUMMY) {
 	err = factor_check(&gi, dset);
 	if (err) {
@@ -4514,9 +4500,9 @@ int gnuplot (const int *plotlist, const char *literal,
 
     /* set x-axis label for non-time series plots */
     if (!(gi.flags & GPT_TS)) {
-	int v = (gi.flags & GPT_DUMMY)? list[2] : list[list[0]];
+        int vx = gi.list[gi.list[0]];
 
-	strcpy(xlabel, plotname(dset, v, 1));
+	strcpy(xlabel, plotname(dset, vx, 1));
     }
 
     print_axis_label('x', xlabel, fp);
@@ -4530,63 +4516,64 @@ int gnuplot (const int *plotlist, const char *literal,
     /* key: default to left top */
     strcpy(keystr, "set key left top\n");
 
-    if (list[0] == 1) {
+    if (gi.list[0] == 1) {
 	/* only one variable (time series) */
-	print_axis_label('y', plotname(dset, list[1], 1), fp);
+	print_axis_label('y', plotname(dset, gi.list[1], 1), fp);
 	strcpy(keystr, "set nokey\n");
-    } else if (list[0] == 2) {
+    } else if (gi.list[0] == 2) {
 	/* plotting two variables */
 	int no_key = 1;
 
 	if (gi.flags & GPT_AUTO_FIT) {
 	    print_auto_fit_string(gi.fit, fp);
 	    if (gi.flags & GPT_FA) {
-		char *tmp1 = make_plotname(dset, list[1]);
-		char *tmp2 = make_plotname(dset, list[2]);
+		char *tmp1 = make_plotname(dset, gi.list[1]);
+		char *tmp2 = make_plotname(dset, gi.list[2]);
 
 		make_gtitle(&gi, GTITLE_AFV, tmp1, tmp2, fp);
 		free(tmp1);
 		free(tmp2);
 	    } else {
-		make_gtitle(&gi, GTITLE_VLS, plotname(dset, list[1], 1),
+		make_gtitle(&gi, GTITLE_VLS, plotname(dset, gi.list[1], 1),
 			    xlabel, fp);
 	    }
 	    no_key = 0;
 	}
 	if (gi.flags & GPT_RESIDS) {
-	    const char *vlabel = series_get_label(dset, list[1]);
+	    const char *vlabel = series_get_label(dset, gi.list[1]);
 
 	    make_gtitle(&gi, GTITLE_RESID, vlabel == NULL ? "residual" : vlabel,
 			NULL, fp);
 	    fprintf(fp, "set ylabel '%s'\n", _("residual"));
 	} else {
-	    print_axis_label('y', plotname(dset, list[1], 1), fp);
+	    print_axis_label('y', plotname(dset, gi.list[1], 1), fp);
 	}
 	if (no_key) {
 	    strcpy(keystr, "set nokey\n");
 	}
     } else if ((gi.flags & GPT_RESIDS) && (gi.flags & GPT_DUMMY)) {
-	const char *vlabel = series_get_label(dset, list[1]);
+	const char *vlabel = series_get_label(dset, gi.list[1]);
 
 	make_gtitle(&gi, GTITLE_RESID, vlabel == NULL ? "residual" : vlabel,
 		    NULL, fp);
 	fprintf(fp, "set ylabel '%s'\n", _("residual"));
     } else if (gi.flags & GPT_FA) {
-	if (list[3] == dset->v - 1) {
+	if (gi.list[3] == dset->v - 1) {
 	    /* x var is just time or index: is this always right? */
-	    make_gtitle(&gi, GTITLE_AF, plotname(dset, list[2], 1),
+	    make_gtitle(&gi, GTITLE_AF, plotname(dset, gi.list[2], 1),
 			NULL, fp);
 	} else {
-	    char *s2 = make_plotname(dset, list[2]);
-	    char *s3 = make_plotname(dset, list[3]);
+	    char *s2 = make_plotname(dset, gi.list[2]);
+	    char *s3 = make_plotname(dset, gi.list[3]);
 
 	    make_gtitle(&gi, GTITLE_AFV, s2, s3, fp);
 	    free(s2);
 	    free(s3);
 	}
-	print_axis_label('y', plotname(dset, list[2], 1), fp);
+	print_axis_label('y', plotname(dset, gi.list[2], 1), fp);
     } else if (gi.flags & GPT_DUMMY) {
-	print_axis_label('y', plotname(dset, list[1], 1), fp);
+        /* FIXME multiple y? */
+	print_axis_label('y', plotname(dset, gi.list[1], 1), fp);
     }
 
     if (many) {
@@ -4601,7 +4588,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	if (gi.x != NULL) {
 	    print_x_range(&gi, fp);
 	} else {
-	    print_x_range_from_list(&gi, dset, list, fp);
+	    print_x_range_from_list(&gi, dset, fp);
 	}
     }
 
@@ -4619,7 +4606,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    fputs("set ytics nomirror\n", fp);
 	    fputs("set y2tics\n", fp);
 	}
-    } else if (gi.yformula == NULL && list[0] == 2) {
+    } else if (gi.yformula == NULL && gi.list[0] == 2) {
 	check_y_tics(&gi, (const double **) dset->Z, fp);
     }
 
@@ -4631,9 +4618,9 @@ int gnuplot (const int *plotlist, const char *literal,
     if (gi.yformula != NULL) {
 	/* cut out the "dummy" yvar that is in fact represented
 	   by a formula rather than raw data */
-	list[1] = list[2];
-	list[2] = list[3];
-	list[0] = 2;
+	gi.list[1] = gi.list[2];
+	gi.list[2] = gi.list[3];
+	gi.list[0] = 2;
     } else {
 	print_gnuplot_literal_lines(literal, GNUPLOT, opt, fp);
     }
@@ -4642,9 +4629,9 @@ int gnuplot (const int *plotlist, const char *literal,
     fputs("plot \\\n", fp);
     if (gi.flags & GPT_Y2AXIS) {
 	/* using two y axes */
-	int lmax = list[0];
+	int lmax = gi.list[0];
 
-	if ((gi.flags & GPT_IDX) && list[lmax] != 0) {
+	if ((gi.flags & GPT_IDX) && gi.list[lmax] != 0) {
 	    lmax++;
 	}
 	for (i=1; i<lmax; i++) {
@@ -4652,7 +4639,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    set_plot_withstr(&gi, i, withstr);
 	    fprintf(fp, " '-' using 1:2 axes %s title \"%s (%s)\" %s%s%s",
 		    (i == oddman)? "x1y2" : "x1y1",
-		    plotname(dset, list[i], 1),
+		    plotname(dset, gi.list[i], 1),
 		    (i == oddman)? _("right") : _("left"),
 		    withstr,
 		    lwstr,
@@ -4660,52 +4647,55 @@ int gnuplot (const int *plotlist, const char *literal,
 	}
     } else if (gi.flags & GPT_DUMMY) {
 	/* plot shows separation by discrete variable */
-	int nd = gretl_vector_get_length(gi.dvals);
-	int dv = list[3];
+        int lmax = gi.list[0];
 	series_table *st;
+        double di;
+        int j;
 
-	strcpy(s2, plotname(dset, dv, 1));
-	st = series_get_string_table(dset, dv);
+	strcpy(s2, plotname(dset, gi.fid, 1));
+	st = series_get_string_table(dset, gi.fid);
 
-	for (i=0; i<nd; i++) {
-	    double di = gretl_vector_get(gi.dvals, i);
-
-	    if (st != NULL) {
-		fprintf(fp, " '-' using 1:2 title \"%s\" w points",
-			series_table_get_string(st, di));
-	    } else {
-		fprintf(fp, " '-' using 1:2 title \"%s=%g\" w points",
-			s2, di);
-	    }
-	    if (i < nd - 1) {
-		fputs(", \\\n", fp);
-	    } else {
-		fputc('\n', fp);
-	    }
-	}
+        for (j=1; j<lmax; j++) {
+            set_plot_withstr(&gi, j, withstr);
+            for (i=0; i<gi.n_fvals; i++) {
+                di = gretl_vector_get(gi.fvals, i);
+                if (st != NULL) {
+                    fprintf(fp, " '-' using 1:2 title \"%s\" %s",
+                            series_table_get_string(st, di), withstr);
+                } else {
+                    fprintf(fp, " '-' using 1:2 title \"%s=%g\" %s",
+                            s2, di, withstr);
+                }
+                if (i < gi.n_fvals - 1 || j < lmax - 1) {
+                    fputs(", \\\n", fp);
+                } else {
+                    fputc('\n', fp);
+                }
+            }
+        }
     } else if (gi.yformula != NULL) {
 	/* we have a formula to plot, not just data */
 	fprintf(fp, " '-' using 1:2 title \"%s\" w points, \\\n", _("actual"));
 	fprintf(fp, "%s title '%s' w lines\n", gi.yformula, _("fitted"));
     } else if (gi.flags & GPT_FA) {
 	/* this is a fitted vs actual plot */
-	int tmp = list[1];
+	int tmp = gi.list[1];
 
-	list[1] = list[2];
-	list[2] = tmp;
+	gi.list[1] = gi.list[2];
+	gi.list[2] = tmp;
 	set_plot_withstr(&gi, 1, withstr);
 	fprintf(fp, " '-' using 1:2 title \"%s\" %s, \\\n", _("actual"), withstr);
 	fprintf(fp, " '-' using 1:2 title \"%s\" %s\n", _("fitted"), withstr);
     } else {
 	/* all other cases */
-	int lmax = list[0] - 1;
+	int lmax = gi.list[0] - 1;
 
 	for (i=1; i<=lmax; i++)  {
 	    set_lwstr(lwstr);
-	    if (list[0] == 2 && !(gi.flags & GPT_TIMEFMT)) {
+	    if (gi.list[0] == 2 && !(gi.flags & GPT_TIMEFMT)) {
 		*s1 = '\0';
 	    } else {
-		strcpy(s1, plotname(dset, list[i], 1));
+		strcpy(s1, plotname(dset, gi.list[i], 1));
 	    }
 	    set_plot_withstr(&gi, i, withstr);
 	    fprintf(fp, " '-' using 1:2 title \"%s\" %s%s", s1, withstr, lwstr);
@@ -4723,7 +4713,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
     /* print the data to be graphed */
     if (gi.flags & GPT_DUMMY) {
-	print_gp_dummy_data(&gi, dset, fp);
+	print_gp_factorized_data(&gi, dset, fp);
     } else {
 	print_gp_data(&gi, dset, fp);
     }
@@ -4762,7 +4752,7 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset)
     /* ensure the time-series flag is unset */
     gi.flags &= ~GPT_TS;
 
-    err = graph_list_adjust_sample(gi.list, &gi, dset, 1);
+    err = graph_list_adjust_sample(&gi, dset, 1);
     if (err) {
 	goto bailout;
     }
@@ -4784,7 +4774,7 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset)
 
     gretl_push_c_numeric_locale();
 
-    print_x_range_from_list(&gi, dset, gi.list, fp);
+    print_x_range_from_list(&gi, dset, fp);
 
     fputs("plot \\\n", fp);
     fputs(" '-' using 1:2 notitle w points, \\\n", fp);

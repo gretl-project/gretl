@@ -322,7 +322,8 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_B, "with-boxes", 1 },
     { GNUPLOT,  OPT_Q, "with-steps", 1 },
     { GNUPLOT,  OPT_T, "time-series", 0 },
-    { GNUPLOT,  OPT_Z, "dummy", 0 },
+    { GNUPLOT,  OPT_Z, "factorized", 0 },
+    { GNUPLOT,  OPT_Z, "dummy", 0 }, /* alias */
     { GNUPLOT,  OPT_C, "control", 0 },
     { GNUPLOT,  OPT_U, "output", 2 },
     { GNUPLOT,  OPT_b, "outbuf", 2 },

@@ -1043,7 +1043,7 @@ int plot_with_band (BPMode mode,
     printlist(gi->list, "gi->list, rev 2");
 #endif
 
-    err = graph_list_adjust_sample(gi->list, gi, dset, 1);
+    err = graph_list_adjust_sample(gi, dset, 1);
     if (err) {
         free_bbi(bbi, n_bands);
         return err;
