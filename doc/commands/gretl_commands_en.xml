@@ -5270,11 +5270,12 @@
     label="Create a gnuplot graph" context="cli">
 
     <usage>
-      <arguments>
-        <argument>yvars</argument>
-        <argument>xvar</argument>
-	<argument optional="true">dumvar</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>gnuplot</lit> <repl>yvars</repl> <repl>xvar</repl></altform>
+        <altform><lit>gnuplot</lit> <repl>yvars</repl> <lit>--time-series</lit></altform>
+        <altform><lit>gnuplot</lit> <repl>yvars</repl> <repl>xvar</repl> <repl>factor</repl> <lit>--factorized</lit></altform>
+	<altform><lit>gnuplot</lit> <repl>yvar</repl> <repl>xvar</repl> <repl>zvar</repl> <lit>--contol</lit></altform>
+      </altforms>
       <options>
         <option>
 	  <flag>--with-lines</flag>
@@ -5319,7 +5320,8 @@
 	  <effect>see below</effect>
         </option>
         <option>
-	  <flag>--dummy</flag>
+	  <flag>--factorized</flag>
+          <optparm optional="true">list</optparm>
 	  <effect>see below</effect>
         </option>
         <option>
@@ -5366,7 +5368,7 @@
       <examples>
         <example>gnuplot y1 y2 x</example>
         <example>gnuplot x --time-series --with-lines</example>
-	<example>gnuplot wages educ gender --dummy</example>
+	<example>gnuplot wages educ gender --factorized</example>
 	<example>gnuplot y x --fit=quadratic</example>
 	<example>gnuplot y1 y2 x --with-lines=y2</example>
       </examples>
@@ -5389,55 +5391,73 @@
 	the effect of these options may be confined to a subset of the
 	variables by using the <repl>varspec</repl> parameter. This
 	should take the form of a comma-separated listing of the names
-	or numbers of the variables to be plotted with lines or
-	impulses respectively. For instance, the final example above
-	shows how to plot <lit>y1</lit> and <lit>y2</lit> against
-	<lit>x</lit>, such that <lit>y2</lit> is represented by a line
-	but <lit>y1</lit> by points.
+	or numbers of the variables to be plotted in the specified
+	manner, or the name of a predefined list.  For instance, the
+	final example above shows how to plot <lit>y1</lit> and
+	<lit>y2</lit> against <lit>x</lit>, such that <lit>y2</lit> is
+	represented by a line but <lit>y1</lit> by points.
       </para>
       <para>
 	When <repl>yvars</repl> contains more than one variable it may
 	be preferable to use two y axes (left and right). By default
 	this is handled automatically, via a heuristic based on the
 	relative scales of the variables, but two (mutually exclusive)
-	options can be used to override the default. As you'd expect,
+	options can be used to override the default:
 	<opt>single-yaxis</opt> prevents use of a second axis, while
 	<opt>y2axis=</opt><repl>yvar</repl> specifies that a selected
 	variable (only) be plotted relative to a second axis.
       </para>
+      <subhead>Factorized plots</subhead>
       <para>
-	If the <opt>dummy</opt> option is selected, exactly three
-	variables should be given: a single <math>y</math> variable, an
-	<math>x</math> variable, and <repl>dvar</repl>, a discrete
-	variable.  The effect is to plot <repl>yvar</repl> against
-	<repl>xvar</repl> with the points shown in different colors
-	depending on the value of <repl>dvar</repl> at the given
-	observation.
+        The <opt>factorized</opt> option supports a X&ndash;Y plot in
+        which the <repl>yvars</repl> are plotted in different styles
+        (point type, color) depending on the value of a discrete
+        factor variable at each observation. The factor must
+        be specified following the <math>x</math> variable.
       </para>
       <para>
-	The <opt>control</opt> option is similar, in that exactly
-	three variables should be given: a single <math>y</math>
-	variable and two <quote>explanatory</quote> variables
-	<math>x</math> and <math>z</math>.  The effect is to plot
-	<repl>y</repl> against <repl>x</repl> controlling for
-	<math>z</math>.  Such plot can be useful to visualize the
-	relationship between <math>x</math> and <math>y</math>, taking
-	into account the effect that <math>z</math> can have on
-	both. Statistically, this would be equivalent to a regression
-	of <math>y</math> on <math>x</math> <emphasis>and</emphasis>
-	<math>z</math>.
+        The simplest case features a single <math>y</math> variable
+        and a 0/1 dummy variable as factor, as in the third usage
+        example given above which plots wage against education,
+        factorized by gender.  But you can have more than one
+        <math>y</math> variable and the factor may have more than two
+        values. When multiple <math>y</math> variables are to be
+        plotted you can restrict the factorization treatment to a
+        subset by appending a parameter to the option flag: the name
+        of a series or list of series. In the following example
+        <lit>y</lit> and <lit>yhat</lit> are plotted against
+        <lit>x</lit>, with factorization by <lit>id</lit> limited to
+        <lit>y</lit>.
       </para>
+      <code>
+	gnuplot y yhat x id --with-lines=yhat --factorized=y
+      </code>
+      <subhead>Controlled plot</subhead>
       <para>
-	You can specify the scale for the y axis as logarithmic rather
-	than linear by using the <opt>ylogscale</opt> option, together
-	with a base parameter. For example,
+	When the <opt>control</opt> option is specified exactly three
+	variables should be given: a single <math>y</math> variable
+	and two <quote>explanatory</quote> variables <math>x</math>
+	and <math>z</math>.  The effect is to plot <repl>y</repl>
+	against <repl>x</repl> controlling for <math>z</math>.  Such
+	a plot can be useful to visualize the relationship between
+	<math>x</math> and <math>y</math>, taking into account the
+	effect that <math>z</math> can have on both. Statistically,
+	this would be equivalent to a regression of <math>y</math> on
+	both <math>x</math> and <math>z</math>.
+      </para>
+      <subhead>Log scale</subhead>
+      <para>
+	You can specify the scale for the <math>y</math> axis as
+	logarithmic rather than linear by using the
+	<opt>ylogscale</opt> option, together with a base
+	parameter. For example,
       </para>
       <code>
 	gnuplot y x --ylogscale=2
       </code>
       <para>
 	plots the data such that the vertical axis is expressed as
-	powers of 2. If the base is omitted, it defaults to 10.
+	powers of 2. If the base is not specified it defaults to 10.
       </para>
       <subhead>Taking data from a matrix</subhead>
       <para>
@@ -5586,33 +5606,6 @@
 	name of a two-column matrix with the center in column 1 and
 	the width in column 2.
       </para>
-      <subhead>Legacy band syntax</subhead>
-      <para>
-	The syntax described above was introduced in gretl
-	2023c. Prior to that release only one band could be specified
-	per plot and the syntax was somewhat different. The old
-	approach, which is still accepted until further notice, split
-	the band details over two options. First, the <opt>band</opt>
-	option required as parameter the names of two series,
-	separated by a comma, giving center and width. The
-	multiplicative <lit>factor</lit> for the width could be added
-	as a third comma-separated term. Examples:
-      </para>
-      <code>
-	gnuplot ... --band=x,w
-	gnuplot ... --band=x,w,1.96
-      </code>
-      <para>
-	A second option, <opt>band-style</opt>, accepted one or both
-	of the style and color specifiers, in that order and again
-	separated by a comma, as in these examples.
-      </para>
-      <code>
-	gnuplot ... --band-style=fill
-	gnuplot ... --band-style=dash,0xbbddff
-	gnuplot ... --band-style=,black
-	gnuplot ... --band-style=bars,blue
-      </code>
       <subhead>Recession bars</subhead>
       <para>
 	The <quote>band</quote> option can also be used to add
@@ -5646,26 +5639,70 @@
       <subhead>Controlling the output</subhead>
       <para>
 	In interactive mode the plot is displayed immediately. In
-	batch mode the default behavior is that a gnuplot command file
-	is written in the user's working directory, with a name on the
-	pattern <filename>gpttmpN.plt</filename>, starting with N =
+	batch mode (as when running a script) the default behavior is
+	that a gnuplot command file is written in the user's working
+	directory, with a name on the pattern
+	<filename>gpttmpN.plt</filename>, starting with N =
 	<lit>01</lit>. The actual plots may be generated later using
 	<program>gnuplot</program> (under MS Windows,
 	<program>wgnuplot</program>).  This behavior can be modified
 	by use of the <opt>output=</opt><repl>filename</repl> option.
 	This option controls the filename used, and at the same time
 	allows you to specify a particular output format via the
-	three-letter extension of the file name, as follows:
-	<lit>.eps</lit> results in the production of an Encapsulated
-	PostScript (EPS) file; <lit>.pdf</lit> produces PDF;
-	<lit>.png</lit> produces PNG format, <lit>.emf</lit> calls for
-	EMF (Enhanced MetaFile), <lit>.fig</lit> calls for an Xfig
-	file, <lit>.svg</lit> for SVG (Scalable Vector Graphics) and
-	<lit>.html</lit> for an HTML canvas. If the dummy filename
-	<quote><lit>display</lit></quote> is given then the plot is
-	shown on screen as in interactive mode. If a filename with any
-	extension other than those just mentioned is given, a gnuplot
-	command file is written.
+	extension of the file name, as follows:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>.eps</lit>: Encapsulated PostScript
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.pdf</lit>: PDF
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.png</lit>: PNG (Portable Network Graphics)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.emf</lit>: EMF (Microsoft's Enhanced MetaFile)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.html</lit>: HTML canvas
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.svg</lit>: SVG (Scalable Vector Graphics)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.fig</lit>: Xfig (*nix drawing program).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.tex</lit>: pict2e (for use with &latex;).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.tikz</lit>: TiKZ (for use with &latex;).
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	If the dummy filename <quote><lit>display</lit></quote> is
+	given then the plot is shown on screen as in interactive
+	mode. If a filename with any extension other than those just
+	mentioned is given, a gnuplot command file is written.
       </para>
       <para>
 	An alternative means of directing output is the
@@ -5693,20 +5730,19 @@
       </para>
       <subhead>Adding gnuplot commands</subhead>
       <para>
-	A further option to this command is available: following the
-	specification of the variables to be plotted and the option
-	flag (if any), you may add literal gnuplot commands to control
-	the appearance of the plot (for example, setting the plot
-	title and/or the axis ranges).  These commands should be
-	enclosed in braces, and each gnuplot command must be
-	terminated with a semi-colon.  A backslash may be used to
+	A further special option to this command is available:
+	following the specification of the variables to be plotted and
+	the option flag (if any), you may add literal gnuplot commands
+	to control the appearance of the plot (for example, setting
+	the plot title and/or the axis ranges).  These commands should
+	be enclosed in braces, and each gnuplot command must be
+	terminated with a semicolon.  A backslash may be used to
 	continue a set of gnuplot commands over more than one line.
 	Here is an example of the syntax:
       </para>
       <code>
 	{ set title 'My Title'; set yrange [0:1000]; }
       </code>
-
     </description>
 
     <gui-access>
