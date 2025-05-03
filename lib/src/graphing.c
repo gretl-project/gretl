@@ -3424,6 +3424,10 @@ void print_x_range (gnuplot_info *gi, FILE *fp)
 	    xmin = 0.0;
 	}
 	xmax = xmax0 + gi->xrange * .025;
+        if (xmax == xmin) {
+            xmax += 0.1;
+            xmin -= 0.1;
+        }
 	fprintf(fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);
 	gi->xrange = xmax - xmin;
     }
@@ -3943,8 +3947,9 @@ int graph_list_adjust_sample (gnuplot_info *gi,
     gi->t1 = t1min;
     gi->t2 = t2max;
 
-    if (gi->t1 >= gi->t2 || gi->list[0] < listmin) {
-	err = E_MISSDATA;
+    if (gi->t1 > gi->t2 || gi->list[0] < listmin) {
+        err = E_DATA;
+        gretl_errmsg_set(_("No data are available for plotting"));
     }
 
     return err;
@@ -4526,7 +4531,6 @@ int gnuplot (const int *plotlist, const char *literal,
 
 #if GP_DEBUG
     fprintf(stderr, "after gpinfo_init: gi.fit = %d\n", gi.fit);
-
 #endif
 
     err = maybe_add_plotx(&gi, time_fit, dset);
@@ -4558,6 +4562,10 @@ int gnuplot (const int *plotlist, const char *literal,
     if (err) {
 	goto bailout;
     }
+
+#if GP_DEBUG
+    fprintf(stderr, "after graph_list_adjust_sample: t1=%d, t2=%d\n", gi.t1, gi.t2);
+#endif
 
     /* add a regression line if appropriate */
     if (!use_impulses(&gi) && !(gi.flags & GPT_FIT_OMIT) && gi.list[0] == 2 &&
@@ -4601,7 +4609,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	goto bailout;
     }
 
-#if 0
+#if GP_DEBUG
     fprintf(stderr, "After open_plot_input_file, this_term_type = %d\n",
 	    this_term_type);
 #endif
