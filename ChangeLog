@@ -1,15 +1,32 @@
 version 2025b, in progress
+- new function thresh() for hard and soft thresholding
+- "gnuplot" command: generalize the --dummy functionality
+  for factorized plots; update and improve the help text
+- curl() function: add an option to skip downloading of
+  the body of the requested URL
+- cnameset() and rnameset(): these functions now flag an
+  error if the number of names given does not match the
+  relevant matrix dimension (as per the documentation)
 - Fix bug: correct the disturbance smoother for the de Jong
   variant of the Kalman filter; also fix a memory leak
 - Fix bug: poor handling of vector added to a bundle "as a
   series" when the dataset is sub-sampled
 - Fix minor bug: bad initialization in legacy Kalman code
 - Internals: make gretl_get_data() support more data file
-  formats
+  formats; several small fixes to quell errors and warnings
+  from gcc 15 and clang 20; add some code to facilitate new
+  gretl4py functionality
 - GUI: fix the action of the "Stop" button when running a
   packaged function from the function-call dialog
-- Cleanup: delete the long-deprecated eigengen() function
-- Update translatable strings
+- GUI: relax the restrictions on the number of lags that
+  can be selected in the model specification dialog
+- regls addon: miscellaneous small fixes and tweaks
+- cleanup: delete the long-deprecated eigengen() function
+- start work on a gretl package for Windows ARM64
+- macOS: drop the "Calculator" button in the main window
+  toolbar, since this has stopped working as a result of
+  recent security updates
+- update translatable strings
 
 2025-03-20 version 2025a
 - kalman filter: fixes for variance of smoothed disturbances
