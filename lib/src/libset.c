@@ -136,6 +136,7 @@ static int seed_is_set;
 static int comments_on;
 static char data_delim = ',';
 static char export_decpoint = '.';
+static int suppress_plots;
 
 typedef struct setvar_ setvar;
 
@@ -2393,6 +2394,10 @@ int libset_init (void)
 	done = 1;
     }
 
+    if (getenv("CLI_NO_PLOTS")) {
+        suppress_plots = 1;
+    }
+
     return err;
 }
 
@@ -2605,6 +2610,18 @@ void gretl_set_tool_mode (void)
 int gretl_in_tool_mode (void)
 {
     return tool_mode;
+}
+
+/* for CLI use: suppress production of plots? */
+
+void gretl_set_no_plots (void)
+{
+    suppress_plots = 1;
+}
+
+int gretl_no_plots (void)
+{
+    return gui_mode ? 0 : suppress_plots;
 }
 
 /* mechanism to support callback for representing ongoing

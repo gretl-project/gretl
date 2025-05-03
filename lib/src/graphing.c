@@ -2548,6 +2548,10 @@ int gnuplot_graph_wanted (PlotType ptype, gretlopt opt, int *err)
     const char *optname = NULL;
     int ret = 0;
 
+    if (gretl_no_plots()) {
+        return 0;
+    }
+
     if (opt & (OPT_U | OPT_b)) {
 	/* check for --plot or --outbuf option */
 	int griderr = 0;
