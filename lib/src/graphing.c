@@ -9366,15 +9366,15 @@ int hf_plot (const int *list, const char *literal,
 
 /**
  * xy_plot_with_control:
- * @list: list of variables by ID number: Y, X, control.
+ * @list: list of variables by ID number: Y, X, control(s).
  * @literal: extra gnuplot commands or %NULL.
  * @dset: dataset struct.
  * @opt: can add "gnuplot" options.
  *
  * Constructs a scatterplot of modified Y against modified X,
  * where the modification consists in taking the residuals from
- * OLS regression of the variable in question on the control variable,
- * a la Frisch-Waugh-Lovell.
+ * OLS regression of the variable in question on the control
+ * variables, a la Frisch-Waugh-Lovell.
  *
  * Returns: 0 on success, non-zero on error.
  */
@@ -9383,59 +9383,69 @@ int xy_plot_with_control (const int *list, const char *literal,
                           const DATASET *dset, gretlopt opt)
 {
     int t1 = dset->t1, t2 = dset->t2;
-    int mlist[4] = {3, 0, 0, 0};
+    int *mlist = NULL;
     char dname[MAXDISP];
     MODEL mod;
     DATASET *gset = NULL;
-    int vy, vx, vz;
-    int s, t, T;
+    int l0, vy, vx;
+    int i, s, t, T;
     int missvals = 0;
+    int skip = 0;
     int err = 0;
 
-    if (list == NULL || list[0] != 3) {
-        return E_DATA;
+    if (list == NULL || list[0] < 3) {
+        return E_ARGS;
     }
 
+    l0 = list[0];
     vy = list[1];
     vx = list[2];
-    vz = list[3];
 
     list_adjust_sample(list, &t1, &t2, dset, &missvals);
 
     /* maximum usable observations */
     T = t2 - t1 + 1 - missvals;
 
-    if (T < 3) {
+    if (T <= l0) {
         return E_DF;
     }
 
     /* create temporary dataset */
-
-    gset = create_auxiliary_dataset(4, T, 0);
+    gset = create_auxiliary_dataset(l0 + 1, T, 0);
     if (gset == NULL) {
         return E_ALLOC;
     }
 
     sprintf(dname, _("adjusted %s"), dset->varname[vy]);
     series_set_display_name(gset, 1, dname);
-
     sprintf(dname, _("adjusted %s"), dset->varname[vx]);
     series_set_display_name(gset, 2, dname);
 
     s = 0;
     for (t=t1; t<=t2; t++) {
-        if (!na(dset->Z[vy][t]) && !na(dset->Z[vx][t]) && !na(dset->Z[vz][t])) {
-            gset->Z[1][s] = dset->Z[vy][t];
-            gset->Z[2][s] = dset->Z[vx][t];
-            gset->Z[3][s] = dset->Z[vz][t];
+        skip = 0;
+        for (i=1; i<=list[0]; i++) {
+            if (na(dset->Z[list[i]][t])) {
+                skip = 1;
+                break;
+            }
+        }
+        if (!skip) {
+            for (i=1; i<=l0; i++) {
+                gset->Z[i][s] = dset->Z[list[i]][t];
+            }
             s++;
         }
     }
 
-    /* regress Y (1) on Z (3) and save the residuals in series 1 */
+    /* construct regression list */
+    mlist = gretl_list_new(l0);
+    for (i=3; i<=l0; i++) {
+        mlist[i] = i;
+    }
 
+    /* regress Y on Z and save the residuals in series 1 */
     mlist[1] = 1;
-    mlist[3] = 3;
     mod = lsq(mlist, gset, OLS, OPT_A);
     err = mod.errcode;
     if (err) {
@@ -9448,8 +9458,7 @@ int xy_plot_with_control (const int *list, const char *literal,
         clear_model(&mod);
     }
 
-    /* regress X (2) on Z and save the residuals in series 2 */
-
+    /* regress X on Z and save the residuals in series 2 */
     mlist[1] = 2;
     mod = lsq(mlist, gset, OLS, OPT_A);
     err = mod.errcode;
@@ -9464,7 +9473,6 @@ int xy_plot_with_control (const int *list, const char *literal,
     }
 
     /* call for scatter of Y-residuals against X-residuals */
-
     mlist[0] = 2;
     mlist[1] = 1;
     mlist[2] = 2;
@@ -9474,6 +9482,7 @@ int xy_plot_with_control (const int *list, const char *literal,
 
     /* trash the temporary dataset */
     destroy_dataset(gset);
+    free(mlist);
 
     return err;
 }
