@@ -6289,14 +6289,14 @@
 	relevant statistics are automatically entered in the boxes
 	below.
       </para>
-	  <para>
-	Note that in the case of two samples the tests are of the unpaired
-	type.  If, for example, you want to perform a
-	<emphasis>paired</emphasis> test of whether the difference of the
-	means of two variables is zero, you should simply create a new
-	series as the difference of the two existing ones, and then perform
-	a simple mean test on that new series.
-	  </para>
+      <para>
+	Note that in the case of two samples the tests are of the
+	unpaired type.  If, for example, you want to perform a
+	<emphasis>paired</emphasis> test of whether the difference of
+	the means of two variables is zero, you should simply create a
+	new series as the difference of the two existing ones, and
+	then perform a simple mean test on that new series.
+      </para>
       <para>
 	In addition to the simple selection of a variable, you have
 	the option of specifying a restriction on the selected
