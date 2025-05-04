@@ -5274,7 +5274,7 @@
         <altform><lit>gnuplot</lit> <repl>yvars</repl> <repl>xvar</repl></altform>
         <altform><lit>gnuplot</lit> <repl>yvars</repl> <lit>--time-series</lit></altform>
         <altform><lit>gnuplot</lit> <repl>yvars</repl> <repl>xvar</repl> <repl>factor</repl> <lit>--factorized</lit></altform>
-	<altform><lit>gnuplot</lit> <repl>yvar</repl> <repl>xvar</repl> <repl>zvar</repl> <lit>--contol</lit></altform>
+	<altform><lit>gnuplot</lit> <repl>yvar</repl> <repl>xvar</repl> <repl>zvar</repl> <lit>--control</lit></altform>
       </altforms>
       <options>
         <option>
@@ -5684,12 +5684,12 @@
 	</li>
 	<li>
 	  <para>
-	    <lit>.fig</lit>: Xfig (*nix drawing program).
+	    <lit>.fig</lit>: Xfig (*nix drawing program)
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <lit>.tex</lit>: pict2e (for use with &latex;).
+	    <lit>.tex</lit>: pict2e (for use with &latex;)
 	  </para>
 	</li>
 	<li>

@@ -5389,11 +5389,12 @@
   <command name="gnuplot" section="Graphs" label="Crea un grafico Gnuplot" context="cli">
 
     <usage>
-      <arguments>
-	<argument>variabili-y</argument>
-	<argument>variabile-x</argument>
-	<argument optional="true">variabile-dummy</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>gnuplot</lit> <repl>yvars</repl> <repl>xvar</repl></altform>
+        <altform><lit>gnuplot</lit> <repl>yvars</repl> <lit>--time-series</lit></altform>
+        <altform><lit>gnuplot</lit> <repl>yvars</repl> <repl>xvar</repl> <repl>factor</repl> <lit>--factorized</lit></altform>
+	<altform><lit>gnuplot</lit> <repl>yvar</repl> <repl>xvar</repl> <repl>zvar</repl> <lit>--control</lit></altform>
+      </altforms>
       <options>
 	<option>
 	  <flag>--with-lines</flag>
@@ -5426,8 +5427,7 @@
 	<option>
 	  <flag>--y2axis</flag>
 	  <optparm>yvar</optparm>
-	  <effect>mette la variabile specificata sul secondo asse
-	  delle ordinate</effect>
+	  <effect>mette la variabile specificata sul secondo asse delle ordinate</effect>
 	</option>
 	<option>
 	  <flag>--ylogscale</flag>
@@ -5486,7 +5486,7 @@
       <examples>
 	<example>gnuplot y1 y2 x</example>
 	<example>gnuplot x --time-series --with-lines</example>
-	<example>gnuplot wages educ gender --dummy</example>
+	<example>gnuplot wages educ gender --factorized</example>
 	<example>gnuplot y x --fit=quadratic</example>
 	<example>gnuplot y1 y2 x --with-lines=y2</example>
       </examples>
@@ -5502,19 +5502,19 @@
 	targ="plot"/> e <cmdref targ="panplot"/>.
       </para>
       <para>
-	Di default, i dati sono mostrati come punti; ma questa scelta
+	Di default, i dati sono mostrati come punti, ma questa scelta
 	può essere modificata usando una delle opzioni
-	<opt>with-lines</opt>, <opt>with-lp</opt> o
-	<opt>with-impulses</opt>. Se il grafico contiene più di una
-	serie, l'effetto di queste opzioni può essere limitato ad un
-	sottoinsieme delle stesse usando il parametro
-	<repl>varspec</repl>.  Questo deve essere una lista dei nomi
-	(o dei numeri), separati da virgole, delle variabili da
-	tracciare con linee e/o con impulsi. L'ultimo tra gli esempi
-	di cui sopra mostra come tracciare <lit>y1</lit> e
-	<lit>y2</lit> contro <lit>x</lit>,in modo tale che
-	<lit>y2</lit> sia rappresentata da una linea, ma <lit>y1</lit>
-	da punti.
+	<opt>with-lines</opt>, <opt>with-lp</opt>,
+	<opt>with-impulses</opt> o <opt>with-steps</opt>. Se il
+	grafico contiene più di una serie, l'effetto di queste opzioni
+	può essere limitato ad un sottoinsieme delle stesse usando il
+	parametro <repl>varspec</repl>.  Questo deve essere una lista
+	di variabili oppure un elenco dei nomi (o dei numeri),
+	separati da virgole, delle variabili da tracciare. L'ultimo
+	tra gli esempi di cui sopra mostra come tracciare
+	<lit>y1</lit> e <lit>y2</lit> contro <lit>x</lit>,in modo tale
+	che <lit>y2</lit> sia rappresentata da una linea, ma
+	<lit>y1</lit> da punti.
       </para>
       <para>
 	Quando <repl>yvars</repl> contiene più di una variabile
@@ -5523,35 +5523,53 @@
 	automaticamente, tramite un'euristica basata sugli ordini di
 	grandezza relativi delle variabili, ma è possibile utilizzare
 	due opzioni (mutuamente esclusive) per cambiare l'impostazione
-	di default. Come è ovvio, <opt>single-yaxis</opt> impedisce
-	l'uso di un secondo asse, mentre
-	<opt>y2axis=</opt><repl>yvar</repl> specifica che una
-	variabile selezionata deve essere plottata usando un secondo
-	asse delle ordinate.
+	di default. L'opzione <opt>single-yaxis</opt> impedisce l'uso
+	di un secondo asse, mentre <opt>y2axis=</opt><repl>yvar</repl>
+	specifica che una variabile selezionata deve essere plottata
+	usando un secondo asse delle ordinate.
+      </para>
+      <subhead>Grafici fattorizzati</subhead>
+      <para>
+	L'opzione <opt>factorized</opt> supporta un grafico X&ndash;Y
+	in cui le variabili <repl>yvars</repl> sono tracciate in stili
+	diversi (tipo di punto, colore) a seconda del valore di una
+	variabile fattore discreta. Il fattore deve essere specificato
+	dopo la variabile <math>x</math>.
       </para>
       <para>
-	Usando l'opzione <opt>dummy</opt>, gli argomenti devono essere
-	esattamente tre variabili: una variabile <math>y</math>, una
-	variabile <math>x</math> e una variabile dummy
-	<repl>dumvar</repl>. L'effetto è quello di mostrare
-	<repl>y</repl> rispetto a <repl>x</repl> colorando in modo
-	diverso i vari punti, a seconda che <repl>dumvar</repl> valga
-	1 o 0.
+	Il caso più semplice è quello di una singola variabile
+	<math>y</math> e di una variabile dummy 0/1 come fattore, come
+	nel terzo esempio di utilizzo riportato sopra, che mette in
+	grafico il salario rispetto all'istruzione, fattorizzata per
+	il genere.  Ma è possibile avere più di una variabile
+	<math>y</math> e il fattore può avere più di due
+	valori. Quando più variabili <math>y</math> devono essere
+	tracciate è possibile limitare il trattamento della
+	fattorizzazione a un sottoinsieme aggiungendo un parametro al
+	flag di opzione: il nome di una serie o di un elenco di
+	serie. Nell'esempio seguente <lit>y</lit> e <lit>yhat</lit>
+	sono tracciate rispetto a <lit>x</lit>, con la fattorizzazione
+	per <lit>id</lit> limitata a <lit>y</lit>.
       </para>
+      <code>
+	gnuplot y yhat x id --with-lines=yhat --fattorizzato=y
+      </code>
+      <subhead>Grafici con controllo</subhead>
       <para>
-	L'opzione <opt>control</opt> è simile, in quanto occorre
-	fornire esattamente tre variabili: una variabile
-	<math>y</math> e due variabili <quote>esplicative</quote>
-	<math>x</math> e <math>z</math>.  L'effetto è quello di
-	mostrare <repl>y</repl> rispetto a <repl>x</repl> controllando
-	per <math>z</math>.  Questo può essere utile per visualizzare
-	la relazione fra <math>x</math> e <math>y</math>, tenendo
-	conto dell'effetto che <math>z</math> può avere su
-	ambedue. Statisticamente, questo è equivalente a una
-	regressione di <math>y</math> su <math>x</math>
-	<emphasis>e</emphasis> <math>z</math>
-	<emphasis>contemporaneamente</emphasis>.
+	Quando l'opzione <opt>control</opt> è specificata, devono
+	essere fornite esattamente tre variabili: una singola
+	variabile <math>y</math> e due variabili
+	<quote>esplicative</quote> <math>x</math> e <math>z</math>.
+	L'effetto è quello di tracciare un grafico di <repl>y</repl>
+	rispetto a <repl>x</repl> controllando per <math>z</math>.
+	Questo grafico può essere utile per visualizzare la relazione
+	tra <math>x</math> e <math>y</math>, tenendo conto
+	dell'effetto che <math>z</math> può avere su
+	entrambe. Statisticamente, sarebbe equivalente a una
+	regressione di <math>y</math> su sia <math>x</math> che
+	<math>z</math>.
       </para>
+      <subhead>Scala logaritmica</subhead>
       <para>
 	L'opzione <opt>ylogscale</opt> fa sì che l'asse delle ordinate
 	sia logaritmico anziché lineare. L'opzione accetta un
@@ -5721,36 +5739,6 @@
 	contenente nella prima il corrispettivo di <lit>center</lit> e
 	nella seconda il corrispettivo di <lit>width</lit>.
       </para>
-      <subhead>Sintassi preesistente</subhead>
-      <para>
-	La sintassi sopra riportata è stata introdotta a partire da
-	gretl 2023c. Precedentemente, una sola banda per grafico
-	poteva essere specificata e la sintassi richiesta era
-	differente. L'approccio preesistente, ancora accettato,
-	consentiva di personalizzare la banda mediante due opzioni. La
-	prima era <opt>band</opt>, che richiedeva il nome (o numero
-	ID) di una serie come centro della banda e il nome (o numero
-	ID) di un'altra come ampiezza, entrambe separate da una
-	virgola. Il fattore moltiplicativo <lit>factor</lit> per
-	l'ampiezza poteva essere aggiunto come terzo termine,
-	anch'esso separato dalla virgola. Ad esempio,
-      </para>
-      <code>
-	gnuplot ... --band=x,w
-	gnuplot ... --band=x,w,1.96
-      </code>
-      <para>
-	La seconda opzione, <opt>band-style</opt>, accettava uno o
-	entrambi i parametri di stile e colore, seguendo l'ordine
-	<quote>stile,colore</quote> e usando la virgola come
-	separatore. A seguito sono riportati alcuni esempi,
-      </para>
-      <code>
-	gnuplot ... --band-style=fill
-	gnuplot ... --band-style=dash,0xbbddff
-	gnuplot ... --band-style=,black
-	gnuplot ... --band-style=bars,blue
-      </code>
       <subhead>Barre di recessione</subhead>
       <para>
 	L'opzione <quote>band</quote> sopra descritta può inoltre
@@ -5785,8 +5773,9 @@
       <subhead>Controllo dell'output</subhead>
       <para>
 	In modalità interattiva il risultato è mostrato
-	immediatamente.  In modalità <quote>batch</quote>, viene
-	scritto un file di comandi gnuplot, chiamato
+	immediatamente.  In modalità <quote>batch</quote>, quando
+	viene eseguito uno script, per default viene scritto un file
+	di comandi gnuplot nella directory di lavoro, chiamato
 	<filename>gpttmpN.plt</filename>, a partire da N =
 	<lit>01</lit>; il grafico vero e proprio può essere generato
 	usando il programma <program>gnuplot</program> (su MS Windows:
@@ -5794,17 +5783,61 @@
 	l'opzione <opt>output=</opt><repl>filename</repl>, è possibile
 	controllare il nome del file utilizzato e contemporaneamente
 	specificare un particolare formato di output usando
-	l'estensione del nome del file (le tre lettere che seguono il
-	.): <lit>.eps</lit> produce un file Encapsulated PostScript
-	(EPS); <lit>.pdf</lit> produce un file PDF; <lit>.png</lit>
-	produce un formato PNG, <lit>.emf</lit> un formato EMF
-	(Enhanced MetaFile), <lit>.fig</lit> un file Xfig;
-	<lit>.svg</lit> uno SVG (Scalable Vector Graphics) e
-	<lit>.html</lit> per un canvas HTML.  Se come nome del file si
-	indica <quote><lit>display</lit></quote>, il grafico è
-	visualizzato su schermo come nella modalità interattiva.  Se
-	si indica un nome del file con un'estensione diversa da quelle
-	appena citate viene prodotto un file di comandi gnuplot.
+	l'estensione del nome del file, come segue:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>.eps</lit>: Encapsulated PostScript
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.pdf</lit>: PDF
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.png</lit>: PNG (Portable Network Graphics)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.emf</lit>: EMF (Microsoft's Enhanced MetaFile)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.html</lit>: HTML canvas
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.svg</lit>: SVG (Scalable Vector Graphics)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.fig</lit>: Xfig (programma di grafica *nix)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.tex</lit>: pict2e (per uso con &latex;)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.tikz</lit>: TiKZ (per uso con &latex;).
+	  </para>
+	</li>
+      </ilist>
+       <para>
+	Se come nome del file si indica
+	<quote><lit>display</lit></quote>, il grafico è visualizzato
+	su schermo come nella modalità interattiva.  Se si indica un
+	nome del file con un'estensione diversa da quelle appena
+	citate viene prodotto un file di comandi gnuplot.
       </para>
       <para>
 	Un modo alternativo di ridirigere l'output è dato dall'opzione
