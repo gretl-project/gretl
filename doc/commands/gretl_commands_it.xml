@@ -5393,7 +5393,7 @@
         <altform><lit>gnuplot</lit> <repl>yvars</repl> <repl>xvar</repl></altform>
         <altform><lit>gnuplot</lit> <repl>yvars</repl> <lit>--time-series</lit></altform>
         <altform><lit>gnuplot</lit> <repl>yvars</repl> <repl>xvar</repl> <repl>factor</repl> <lit>--factorized</lit></altform>
-	<altform><lit>gnuplot</lit> <repl>yvar</repl> <repl>xvar</repl> <repl>zvar</repl> <lit>--control</lit></altform>
+	<altform><lit>gnuplot</lit> <repl>yvar</repl> <repl>xvar</repl> <repl>zvars</repl> <lit>--control</lit></altform>
       </altforms>
       <options>
 	<option>
@@ -5557,17 +5557,16 @@
       <subhead>Grafici con controllo</subhead>
       <para>
 	Quando l'opzione <opt>control</opt> è specificata, devono
-	essere fornite esattamente tre variabili: una singola
-	variabile <math>y</math> e due variabili
-	<quote>esplicative</quote> <math>x</math> e <math>z</math>.
-	L'effetto è quello di tracciare un grafico di <repl>y</repl>
-	rispetto a <repl>x</repl> controllando per <math>z</math>.
-	Questo grafico può essere utile per visualizzare la relazione
+	essere fornite tre o più variabili: una singola variabile
+	<math>y</math> e due variabili <quote>esplicative</quote>
+	<math>x</math> e una o più variabili di controllo
+	<math>zvars</math>.  L'effetto è che sia <math>y</math> che
+	<math>x</math> sono regredite su <math>zvars</math> e i
+	residui della <math>y</math> vengono plottati contro i residui
+	della <math>x</math>.  Questo grafico visualizza la relazione
 	tra <math>x</math> e <math>y</math>, tenendo conto
-	dell'effetto che <math>z</math> può avere su
-	entrambe. Statisticamente, sarebbe equivalente a una
-	regressione di <math>y</math> su sia <math>x</math> che
-	<math>z</math>.
+	dell'effetto che i controlli hanno su
+	entrambe.
       </para>
       <subhead>Scala logaritmica</subhead>
       <para>
