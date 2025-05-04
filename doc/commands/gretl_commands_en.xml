@@ -5274,7 +5274,7 @@
         <altform><lit>gnuplot</lit> <repl>yvars</repl> <repl>xvar</repl></altform>
         <altform><lit>gnuplot</lit> <repl>yvars</repl> <lit>--time-series</lit></altform>
         <altform><lit>gnuplot</lit> <repl>yvars</repl> <repl>xvar</repl> <repl>factor</repl> <lit>--factorized</lit></altform>
-	<altform><lit>gnuplot</lit> <repl>yvar</repl> <repl>xvar</repl> <repl>zvar</repl> <lit>--control</lit></altform>
+	<altform><lit>gnuplot</lit> <repl>yvar</repl> <repl>xvar</repl> <repl>zvars</repl> <lit>--control</lit></altform>
       </altforms>
       <options>
         <option>
@@ -5434,16 +5434,15 @@
       </code>
       <subhead>Controlled plot</subhead>
       <para>
-	When the <opt>control</opt> option is specified exactly three
-	variables should be given: a single <math>y</math> variable
-	and two <quote>explanatory</quote> variables <math>x</math>
-	and <math>z</math>.  The effect is to plot <repl>y</repl>
-	against <repl>x</repl> controlling for <math>z</math>.  Such
-	a plot can be useful to visualize the relationship between
-	<math>x</math> and <math>y</math>, taking into account the
-	effect that <math>z</math> can have on both. Statistically,
-	this would be equivalent to a regression of <math>y</math> on
-	both <math>x</math> and <math>z</math>.
+	When the <opt>control</opt> option is specified three or more
+	variables should be given: a single <math>y</math> variable, a
+	single <math>x</math> variable, and one or more control
+	variables, <repl>zvars</repl>.  The effect is that
+	<math>y</math> and <math>x</math> are each regressed on
+	<repl>zvars</repl> and the <math>y</math> residuals are
+	plotted against the <math>x</math> residuals. This plot shows
+	the relationship between <math>x</math> and <math>y</math>
+	taking into account the effect that the controls have on both.
       </para>
       <subhead>Log scale</subhead>
       <para>
