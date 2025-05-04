@@ -5735,9 +5735,11 @@
 	La sola differenza nel caso di grafici di matrici, anziché di
 	serie, concerne la sostituzione di <lit>center</lit> e
 	<lit>width</lit> con la chiave <lit>bandmat</lit>; questa deve
-	essere il nome (virgolettato) di una matrice a due colonne
+	essere il <i>nome (virgolettato)</i> di una matrice a due colonne
 	contenente nella prima il corrispettivo di <lit>center</lit> e
-	nella seconda il corrispettivo di <lit>width</lit>.
+	nella seconda il corrispettivo di <lit>width</lit>. In
+	pratica, il contenuto della chiave <lit>bandmat</lit> deve
+	essere una stringa col nome della matrice, e non la matrice stessa. 
       </para>
       <subhead>Barre di recessione</subhead>
       <para>
