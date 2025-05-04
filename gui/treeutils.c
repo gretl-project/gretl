@@ -26,15 +26,15 @@
 #include "menustate.h"
 
 static void tree_view_get_string2 (GtkTreeView *view,
-				   GtkTreePath *path,
-				   int col, gchar **val);
+                                   GtkTreePath *path,
+                                   int col, gchar **val);
 
 /* special comparator which always preserves "const" (variable 0) in
    the first position when sorting variables by name */
 
 static gint list_alpha_compare (GtkTreeModel *model,
-				GtkTreeIter *a, GtkTreeIter *b,
-				gpointer p)
+                                GtkTreeIter *a, GtkTreeIter *b,
+                                gpointer p)
 {
     gchar *str_a, *str_b;
     gchar *id_a, *id_b;
@@ -42,17 +42,17 @@ static gint list_alpha_compare (GtkTreeModel *model,
     gint scol, ret;
 
     gtk_tree_sortable_get_sort_column_id(GTK_TREE_SORTABLE(model),
-					 &scol, &order);
+                                         &scol, &order);
 
     gtk_tree_model_get(model, a, 0, &id_a, scol, &str_a, -1);
     gtk_tree_model_get(model, b, 0, &id_b, scol, &str_b, -1);
 
     if (atoi(id_a) == 0) {
-	ret = (order == GTK_SORT_DESCENDING)? 1 : 0;
+        ret = (order == GTK_SORT_DESCENDING)? 1 : 0;
     } else if (atoi(id_b) == 0) {
-	ret = (order == GTK_SORT_DESCENDING)? 0 : 1;
+        ret = (order == GTK_SORT_DESCENDING)? 0 : 1;
     } else {
-	ret = strcmp(str_a, str_b);
+        ret = strcmp(str_a, str_b);
     }
 
     g_free(id_a);
@@ -70,15 +70,15 @@ static gint list_alpha_compare (GtkTreeModel *model,
    variables by ID number */
 
 static gint list_id_compare (GtkTreeModel *model,
-			     GtkTreeIter *a, GtkTreeIter *b,
-			     gpointer p)
+                             GtkTreeIter *a, GtkTreeIter *b,
+                             gpointer p)
 {
     gchar *id_a, *id_b;
     GtkSortType order;
     gint ia, ib, scol, ret;
 
     gtk_tree_sortable_get_sort_column_id(GTK_TREE_SORTABLE(model),
-					 &scol, &order);
+                                         &scol, &order);
 
     gtk_tree_model_get(model, a, 0, &id_a, -1);
     gtk_tree_model_get(model, b, 0, &id_b, -1);
@@ -90,11 +90,11 @@ static gint list_id_compare (GtkTreeModel *model,
     ret = (order == GTK_SORT_DESCENDING)? ib - ia : ia - ib;
 #else
     if (ia == 0) {
-	ret = (order == GTK_SORT_DESCENDING)? 1 : 0;
+        ret = (order == GTK_SORT_DESCENDING)? 1 : 0;
     } else if (ib == 0) {
-	ret = (order == GTK_SORT_DESCENDING)? 0 : 1;
+        ret = (order == GTK_SORT_DESCENDING)? 0 : 1;
     } else {
-	ret = ia - ib;
+        ret = ia - ib;
     }
 #endif
 
@@ -110,33 +110,33 @@ static gint list_id_compare (GtkTreeModel *model,
 */
 
 static gint db_series_compare (GtkTreeModel *model,
-			       GtkTreeIter *a, GtkTreeIter *b,
-			       GtkTreeViewColumn *col)
+                               GtkTreeIter *a, GtkTreeIter *b,
+                               GtkTreeViewColumn *col)
 {
     GtkSortType order;
     gint scol, ret;
 
     gtk_tree_sortable_get_sort_column_id(GTK_TREE_SORTABLE(model),
-					 &scol, &order);
+                                         &scol, &order);
 
     if (order == GTK_SORT_ASCENDING) {
-	/* alphabetize as usual */
-	gchar *sa, *sb;
+        /* alphabetize as usual */
+        gchar *sa, *sb;
 
-	gtk_tree_model_get(model, a, 0, &sa, -1);
-	gtk_tree_model_get(model, b, 0, &sb, -1);
-	ret = strcmp(sa, sb);
-	g_free(sa);
-	g_free(sb);
+        gtk_tree_model_get(model, a, 0, &sa, -1);
+        gtk_tree_model_get(model, b, 0, &sb, -1);
+        ret = strcmp(sa, sb);
+        g_free(sa);
+        g_free(sb);
     } else {
-	/* 'natural' order in place of descending sort:
-	   use the last (integer) column */
-	gint ia, ib;
+        /* 'natural' order in place of descending sort:
+           use the last (integer) column */
+        gint ia, ib;
 
-	gtk_tree_model_get(model, a, 3, &ia, -1);
-	gtk_tree_model_get(model, b, 3, &ib, -1);
-	ret = ib - ia;
-	gtk_tree_view_column_set_sort_indicator(col, FALSE);
+        gtk_tree_model_get(model, a, 3, &ia, -1);
+        gtk_tree_model_get(model, b, 3, &ib, -1);
+        ret = ib - ia;
+        gtk_tree_view_column_set_sort_indicator(col, FALSE);
     }
 
     return ret;
@@ -144,7 +144,7 @@ static gint db_series_compare (GtkTreeModel *model,
 
 static gint
 compare_treenames (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b,
-		   gpointer p)
+                   gpointer p)
 {
     gchar *s1, *s2;
     gint ret;
@@ -155,9 +155,9 @@ compare_treenames (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b,
     ret = strcmp(gretl_lower(s1), gretl_lower(s2));
 
     if (ret == 0 && p != NULL) {
-	int *dups = (int *) p;
+        int *dups = (int *) p;
 
-	*dups = 1;
+        *dups = 1;
     }
 
     g_free(s1);
@@ -179,23 +179,23 @@ void presort_treelist (windata_t *vwin, int *dups)
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox));
 
     gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(model),
-					 0, GTK_SORT_ASCENDING);
+                                         0, GTK_SORT_ASCENDING);
     gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(model), 0,
-				    compare_treenames, dups, NULL);
+                                    compare_treenames, dups, NULL);
 }
 
 
 static gboolean no_select_row_zero (GtkTreeSelection *selection,
-				    GtkTreeModel *model,
-				    GtkTreePath *path,
-				    gboolean path_currently_selected,
-				    gpointer data)
+                                    GtkTreeModel *model,
+                                    GtkTreePath *path,
+                                    gboolean path_currently_selected,
+                                    gpointer data)
 {
     return tree_path_get_row_number(path) != 0;
 }
 
 static void get_selected_varnum (GtkTreeModel *model, GtkTreePath *path,
-				 GtkTreeIter *iter, int *v)
+                                 GtkTreeIter *iter, int *v)
 {
     gchar *id;
 
@@ -209,14 +209,14 @@ int tree_selection_count (GtkTreeSelection *select, int *vnum)
     int selcount = 0;
 
     if (select != NULL) {
-	selcount = gtk_tree_selection_count_selected_rows(select);
+        selcount = gtk_tree_selection_count_selected_rows(select);
     }
 
     if (vnum != NULL && selcount == 1) {
-	gtk_tree_selection_selected_foreach(select,
-					    (GtkTreeSelectionForeachFunc)
-					    get_selected_varnum,
-					    vnum);
+        gtk_tree_selection_selected_foreach(select,
+                                            (GtkTreeSelectionForeachFunc)
+                                            get_selected_varnum,
+                                            vnum);
     }
 
     return selcount;
@@ -248,28 +248,28 @@ static void update_dialogs_from_varclick (int active_var)
     const gchar *edttext;
 
     if (active_edit_id != NULL) {
-	gchar addvar[9];
+        gchar addvar[9];
 
-	edttext = gtk_entry_get_text(GTK_ENTRY(active_edit_id));
-	if (*edttext != '\0') {
-	    sprintf(addvar, " %d", active_var);
-	} else {
-	    sprintf(addvar, "%d", active_var);
-	}
-	my_gtk_entry_append_text(GTK_ENTRY(active_edit_id), addvar);
+        edttext = gtk_entry_get_text(GTK_ENTRY(active_edit_id));
+        if (*edttext != '\0') {
+            sprintf(addvar, " %d", active_var);
+        } else {
+            sprintf(addvar, "%d", active_var);
+        }
+        my_gtk_entry_append_text(GTK_ENTRY(active_edit_id), addvar);
     } else if (active_edit_name != NULL) {
-	edttext = gtk_entry_get_text(GTK_ENTRY(active_edit_name));
-	my_gtk_entry_append_text(GTK_ENTRY(active_edit_name),
-				 dataset->varname[active_var]);
+        edttext = gtk_entry_get_text(GTK_ENTRY(active_edit_name));
+        my_gtk_entry_append_text(GTK_ENTRY(active_edit_name),
+                                 dataset->varname[active_var]);
     } else if (active_edit_text != NULL) {
-	GtkTextBuffer *tbuf;
+        GtkTextBuffer *tbuf;
 
-	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(active_edit_text));
-	if (tbuf != NULL) {
-	    gtk_text_buffer_insert_at_cursor(tbuf,
-					     dataset->varname[active_var],
-					     -1);
-	}
+        tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(active_edit_text));
+        if (tbuf != NULL) {
+            gtk_text_buffer_insert_at_cursor(tbuf,
+                                             dataset->varname[active_var],
+                                             -1);
+        }
     }
 }
 
@@ -279,23 +279,23 @@ static void update_dialogs_from_varclick (int active_var)
    on OS X */
 
 static gboolean maybe_do_meta_click (GdkEventButton *event,
-				     GtkTreeView *view,
-				     GtkTreePath *path)
+                                     GtkTreeView *view,
+                                     GtkTreePath *path)
 {
     if (event->state & GDK_MOD2_MASK) {
-	/* The idea here is that we add to the current selection
-	   and return TRUE to block further processing of the
-	   click, so as to implement selection of non-contiguous
-	   rows in the GtkTreeView. It works on Linux using
-	   GDK_CONTROL_MASK as the criterion (i.e. faking the
-	   standard behavior of Ctrl-click as test of concept).
-	*/
-	GtkTreeSelection *sel = gtk_tree_view_get_selection(view);
+        /* The idea here is that we add to the current selection
+           and return TRUE to block further processing of the
+           click, so as to implement selection of non-contiguous
+           rows in the GtkTreeView. It works on Linux using
+           GDK_CONTROL_MASK as the criterion (i.e. faking the
+           standard behavior of Ctrl-click as test of concept).
+        */
+        GtkTreeSelection *sel = gtk_tree_view_get_selection(view);
 
-	gtk_tree_selection_select_path(sel, path);
-	return TRUE;
+        gtk_tree_selection_select_path(sel, path);
+        return TRUE;
     } else {
-	return FALSE;
+        return FALSE;
     }
 }
 
@@ -310,40 +310,40 @@ static gboolean maybe_do_meta_click (GdkEventButton *event,
 */
 
 static int extend_midas_selection (GtkTreeView *view,
-				   GtkTreePath *path,
-				   int vnum, int p0)
+                                   GtkTreePath *path,
+                                   int vnum, int p0)
 {
     GtkTreePath *path0 = gtk_tree_path_copy(path);
     GtkTreePath *path1 = gtk_tree_path_copy(path);
     int p, i, j, extended = 0;
 
     if (!series_is_midas_anchor(dataset, vnum)) {
-	for (i=vnum-1, j=1; i>0; i--, j++) {
-	    p = series_get_midas_period(dataset, i);
-	    if (p != p0 + j) {
-		break;
-	    }
-	    if (gtk_tree_path_prev(path0)) {
-		extended++;
-	    }
-	}
+        for (i=vnum-1, j=1; i>0; i--, j++) {
+            p = series_get_midas_period(dataset, i);
+            if (p != p0 + j) {
+                break;
+            }
+            if (gtk_tree_path_prev(path0)) {
+                extended++;
+            }
+        }
     }
 
     for (i=vnum+1, j=1; i<dataset->v; i++, j++) {
-	p = series_get_midas_period(dataset, i);
-	if (p == 0 || p != p0 - j) {
-	    break;
-	}
-	gtk_tree_path_next(path1);
-	extended++;
+        p = series_get_midas_period(dataset, i);
+        if (p == 0 || p != p0 - j) {
+            break;
+        }
+        gtk_tree_path_next(path1);
+        extended++;
     }
 
     if (extended) {
-	GtkTreeSelection *selection;
+        GtkTreeSelection *selection;
 
-	selection = gtk_tree_view_get_selection(view);
-	gtk_tree_selection_unselect_all(selection);
-	gtk_tree_selection_select_range(selection, path0, path1);
+        selection = gtk_tree_view_get_selection(view);
+        gtk_tree_selection_unselect_all(selection);
+        gtk_tree_selection_select_range(selection, path0, path1);
     }
 
     gtk_tree_path_free(path0);
@@ -358,48 +358,48 @@ static int extend_midas_selection (GtkTreeView *view,
 */
 
 gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
-			windata_t *vwin)
+                        windata_t *vwin)
 {
     GtkTreeView *view = GTK_TREE_VIEW(vwin->listbox);
     GtkTreePath *path;
     gboolean ret = FALSE;
 
     if (dataset == NULL || dataset->n == 0) {
-	return TRUE;
+        return TRUE;
     }
 
     if (gtk_tree_view_get_path_at_pos(view, event->x, event->y, &path,
-				      NULL, NULL, NULL)) {
-	gint row = gtk_tree_path_get_indices(path)[0];
+                                      NULL, NULL, NULL)) {
+        gint row = gtk_tree_path_get_indices(path)[0];
 
-	if (row == 0) {
-	    ret = TRUE;
-	} else {
-	    gchar *varnum;
-	    int p;
+        if (row == 0) {
+            ret = TRUE;
+        } else {
+            gchar *varnum;
+            int p;
 
-	    g_object_set_data(G_OBJECT(vwin->listbox), "active_row",
-			      GINT_TO_POINTER(row));
-	    tree_view_get_string2(view, path, 0, &varnum);
-	    vwin->active_var = atoi(varnum);
-	    g_free(varnum);
-	    p = series_get_midas_period(dataset, vwin->active_var);
-	    if (p > 0 &&
-		extend_midas_selection(view, path,
-				       vwin->active_var, p)) {
-		ret = TRUE;
-	    } else {
-		update_dialogs_from_varclick(vwin->active_var);
+            g_object_set_data(G_OBJECT(vwin->listbox), "active_row",
+                              GINT_TO_POINTER(row));
+            tree_view_get_string2(view, path, 0, &varnum);
+            vwin->active_var = atoi(varnum);
+            g_free(varnum);
+            p = series_get_midas_period(dataset, vwin->active_var);
+            if (p > 0 &&
+                extend_midas_selection(view, path,
+                                       vwin->active_var, p)) {
+                ret = TRUE;
+            } else {
+                update_dialogs_from_varclick(vwin->active_var);
 #ifdef __APPLE__
-		ret = maybe_do_meta_click(event, view, path);
+                ret = maybe_do_meta_click(event, view, path);
 #endif
-	    }
-	}
+            }
+        }
 
-	gtk_tree_path_free(path);
+        gtk_tree_path_free(path);
     } else {
-	/* clicked below the lines representing variables */
-	return FALSE;
+        /* clicked below the lines representing variables */
+        return FALSE;
     }
 
     return ret;
@@ -420,8 +420,8 @@ bool_col_toggled (GtkCellRendererToggle *cell, gchar *path_str, windata_t *vwin)
     gtk_tree_model_get(model, &iter, col, &val, -1);
 
     if (val) {
-	gtk_tree_path_free(path);
-	return;
+        gtk_tree_path_free(path);
+        return;
     }
 
     gtk_list_store_set(GTK_LIST_STORE(model), &iter, col, TRUE, -1);
@@ -429,90 +429,90 @@ bool_col_toggled (GtkCellRendererToggle *cell, gchar *path_str, windata_t *vwin)
 }
 
 static gint catch_listbox_key (GtkWidget *w, GdkEventKey *event,
-			       windata_t *vwin)
+                               windata_t *vwin)
 {
     int key = event->keyval;
 
 #ifdef __APPLE__
     if (key == GDK_w && cmd_key(event)) {
-	if (vwin != mdata) {
-	    gtk_widget_destroy(vwin->main);
-	}
-	return TRUE;
+        if (vwin != mdata) {
+            gtk_widget_destroy(vwin->main);
+        }
+        return TRUE;
     }
 #endif
 
     if (key == GDK_q) {
-	/* Q = quit */
-	if (vwin != mdata) {
-	    gtk_widget_destroy(vwin->main);
-	}
-	return TRUE;
+        /* Q = quit */
+        if (vwin != mdata) {
+            gtk_widget_destroy(vwin->main);
+        }
+        return TRUE;
     } else if (key == GDK_f || key == GDK_g) {
-	/* F = find, G = find again */
-	if (vwin == mdata && !data_status) {
-	    return TRUE;
-	}
-	if (event->state & GDK_CONTROL_MASK) {
-	    if (key == GDK_f) {
-		listbox_find(NULL, vwin);
-	    } else {
-		listbox_find_again(NULL, vwin);
-	    }
-	    return TRUE;
-	}
+        /* F = find, G = find again */
+        if (vwin == mdata && !data_status) {
+            return TRUE;
+        }
+        if (event->state & GDK_CONTROL_MASK) {
+            if (key == GDK_f) {
+                listbox_find(NULL, vwin);
+            } else {
+                listbox_find_again(NULL, vwin);
+            }
+            return TRUE;
+        }
     }
 
     return FALSE;
 }
 
 static void check_series_pd (GtkTreeModel *model, GtkTreePath *path,
-			     GtkTreeIter *iter, windata_t *vwin)
+                             GtkTreeIter *iter, windata_t *vwin)
 {
     static int pd0;
     gchar *tmp = NULL;
 
     if (model == NULL) {
-	/* reset */
-	pd0 = 0;
-	return;
+        /* reset */
+        pd0 = 0;
+        return;
     }
 
     gtk_tree_model_get(model, iter, 2, &tmp, -1);
     if (tmp != NULL) {
-	if (pd0 == 0) {
-	    pd0 = *tmp;
-	} else if (*tmp != pd0) {
-	    GtkTreeView *view = GTK_TREE_VIEW(vwin->listbox);
-	    GtkTreeSelection *sel;
+        if (pd0 == 0) {
+            pd0 = *tmp;
+        } else if (*tmp != pd0) {
+            GtkTreeView *view = GTK_TREE_VIEW(vwin->listbox);
+            GtkTreeSelection *sel;
 
-	    sel = gtk_tree_view_get_selection(view);
-	    gtk_tree_selection_unselect_iter(sel, iter);
-	}
-	g_free(tmp);
+            sel = gtk_tree_view_get_selection(view);
+            gtk_tree_selection_unselect_iter(sel, iter);
+        }
+        g_free(tmp);
     }
 }
 
 static void set_active_row (GtkTreeModel *model, GtkTreePath *path,
-			    GtkTreeIter *iter, windata_t *vwin)
+                            GtkTreeIter *iter, windata_t *vwin)
 {
     vwin->active_var = tree_path_get_row_number(path);
 }
 
 static void check_db_series_selection (GtkTreeSelection *sel,
-				       windata_t *vwin)
+                                       windata_t *vwin)
 {
     int nsel = gtk_tree_selection_count_selected_rows(sel);
 
     if (nsel == 1) {
-	gtk_tree_selection_selected_foreach(sel,
-					    (GtkTreeSelectionForeachFunc)
-					    set_active_row, vwin);
+        gtk_tree_selection_selected_foreach(sel,
+                                            (GtkTreeSelectionForeachFunc)
+                                            set_active_row, vwin);
     } else {
-	check_series_pd(NULL, NULL, NULL, NULL);
-	gtk_tree_selection_selected_foreach(sel,
-					    (GtkTreeSelectionForeachFunc)
-					    check_series_pd, vwin);
+        check_series_pd(NULL, NULL, NULL, NULL);
+        gtk_tree_selection_selected_foreach(sel,
+                                            (GtkTreeSelectionForeachFunc)
+                                            check_series_pd, vwin);
     }
 }
 
@@ -528,7 +528,7 @@ static void id_col_clicked (GtkTreeViewColumn *column, GtkWidget *view)
 
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(view));
     gtk_tree_sortable_get_sort_column_id(GTK_TREE_SORTABLE(model),
-					 &scol, &order);
+                                         &scol, &order);
     gtk_tree_view_column_set_sort_indicator(column, FALSE);
 }
 
@@ -555,22 +555,22 @@ static void set_min_col_width (GtkTreeViewColumn *column,
     int w = 0;
 
     if (gfn_window(vwin) && i == 3) {
-	/* for the "author" field in a gfn-listing window */
-	w = get_string_width(" Marcos Larios Santa Rosa ");
+        /* for the "author" field in a gfn-listing window */
+        w = get_string_width(" Marcos Larios Santa Rosa ");
     } else if (i > 0) {
-	/* database series window */
-	w = get_string_width("   Industrial Production: Equipment: "
-			     "Business Equipment, 2017=100    ");
+        /* database series window */
+        w = get_string_width("   Industrial Production: Equipment: "
+                             "Business Equipment, 2017=100    ");
     }
     if (w > 0) {
-	gtk_tree_view_column_set_min_width(column, w);
+        gtk_tree_view_column_set_min_width(column, w);
     }
 }
 
 void vwin_add_list_box (windata_t *vwin, GtkBox *box,
-			int ncols, int hidden_cols,
-			GType *types, const char **titles,
-			int tree)
+                        int ncols, int hidden_cols,
+                        GType *types, const char **titles,
+                        int tree)
 {
     GtkListStore *lstore = NULL;
     GtkTreeStore *tstore = NULL;
@@ -587,11 +587,11 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
     viscols = ncols - hidden_cols;
 
     if (tree) {
-	tstore = gtk_tree_store_newv(ncols, types);
-	vwin->listbox = view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(tstore));
+        tstore = gtk_tree_store_newv(ncols, types);
+        vwin->listbox = view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(tstore));
     } else {
-	lstore = gtk_list_store_newv(ncols, types);
-	vwin->listbox = view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(lstore));
+        lstore = gtk_list_store_newv(ncols, types);
+        vwin->listbox = view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(lstore));
     }
 
 #ifndef G_OS_WIN32
@@ -602,139 +602,139 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
     g_object_set(text_renderer, "ypad", 0, NULL);
 
     if (gfn_view || db_view) {
-	alt_renderer = gtk_cell_renderer_text_new();
-	g_object_set(alt_renderer, "ypad", 0, "ellipsize",
-		     PANGO_ELLIPSIZE_END, NULL);
+        alt_renderer = gtk_cell_renderer_text_new();
+        g_object_set(alt_renderer, "ypad", 0, "ellipsize",
+                     PANGO_ELLIPSIZE_END, NULL);
     }
 
     for (i=0; i<viscols; i++) {
-	if (types[i] == G_TYPE_BOOLEAN) {
-	    bool_renderer = gtk_cell_renderer_toggle_new();
-	    g_object_set_data(G_OBJECT(vwin->main), "boolcol", GINT_TO_POINTER(i));
-	    g_signal_connect(G_OBJECT(bool_renderer), "toggled",
-			     G_CALLBACK(bool_col_toggled), vwin);
-	    column = gtk_tree_view_column_new_with_attributes(_(titles[i]),
-							      bool_renderer,
-							      "active", i,
-							      NULL);
-	    gtk_tree_view_column_set_sizing(GTK_TREE_VIEW_COLUMN(column),
-					    GTK_TREE_VIEW_COLUMN_FIXED);
-	    gtk_tree_view_column_set_fixed_width(GTK_TREE_VIEW_COLUMN(column), 50);
-	    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
-	} else {
-	    GtkCellRenderer *renderer = text_renderer;
+        if (types[i] == G_TYPE_BOOLEAN) {
+            bool_renderer = gtk_cell_renderer_toggle_new();
+            g_object_set_data(G_OBJECT(vwin->main), "boolcol", GINT_TO_POINTER(i));
+            g_signal_connect(G_OBJECT(bool_renderer), "toggled",
+                             G_CALLBACK(bool_col_toggled), vwin);
+            column = gtk_tree_view_column_new_with_attributes(_(titles[i]),
+                                                              bool_renderer,
+                                                              "active", i,
+                                                              NULL);
+            gtk_tree_view_column_set_sizing(GTK_TREE_VIEW_COLUMN(column),
+                                            GTK_TREE_VIEW_COLUMN_FIXED);
+            gtk_tree_view_column_set_fixed_width(GTK_TREE_VIEW_COLUMN(column), 50);
+            gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
+        } else {
+            GtkCellRenderer *renderer = text_renderer;
 
-	    if ((gfn_view && i > 2) || (db_view && i > 0)) {
-		renderer = alt_renderer;
-	    }
-	    column = gtk_tree_view_column_new_with_attributes(_(titles[i]),
-							      renderer,
-							      "text", i,
-							      NULL);
-	    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
+            if ((gfn_view && i > 2) || (db_view && i > 0)) {
+                renderer = alt_renderer;
+            }
+            column = gtk_tree_view_column_new_with_attributes(_(titles[i]),
+                                                              renderer,
+                                                              "text", i,
+                                                              NULL);
+            gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 
-	    if (renderer == alt_renderer) {
+            if (renderer == alt_renderer) {
                 /* allowing automatic ellipsis */
                 set_min_col_width(column, vwin, i);
-	    }
-	    if (!gfn_window(vwin) || i != 1) {
-		/* sorting gfns by version number (col 1) is not meaningful;
+            }
+            if (!gfn_window(vwin) || i != 1) {
+                /* sorting gfns by version number (col 1) is not meaningful;
                    otherwise allow sorting by any column
                 */
-		gtk_tree_view_column_set_sort_column_id(GTK_TREE_VIEW_COLUMN(column), i);
-	    }
-	    if (vwin != mdata) {
-		g_object_set(G_OBJECT(column), "resizable", TRUE, NULL);
-	    } else if (i == 1 || i == 2) {
-		/* try to signal sortability to the user */
+                gtk_tree_view_column_set_sort_column_id(GTK_TREE_VIEW_COLUMN(column), i);
+            }
+            if (vwin != mdata) {
+                g_object_set(G_OBJECT(column), "resizable", TRUE, NULL);
+            } else if (i == 1 || i == 2) {
+                /* try to signal sortability to the user */
 #if 0 /* 2025-01-07 */
-		gtk_tree_view_column_set_sort_order(column, GTK_SORT_DESCENDING);
+                gtk_tree_view_column_set_sort_order(column, GTK_SORT_DESCENDING);
 #endif
-		gtk_tree_view_column_set_sort_indicator(column, TRUE);
-	    }
-	    /* first column specials */
-	    if (i == 0 && vwin == mdata) {
-		g_signal_connect(G_OBJECT(column), "clicked",
-				 G_CALLBACK(id_col_clicked), view);
-	    } else if (i == 0 && db_view) {
-		/* database view special */
-		gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(lstore), 0,
-						(GtkTreeIterCompareFunc)
-						db_series_compare,
-						column, NULL);
-	    }
-	}
+                gtk_tree_view_column_set_sort_indicator(column, TRUE);
+            }
+            /* first column specials */
+            if (i == 0 && vwin == mdata) {
+                g_signal_connect(G_OBJECT(column), "clicked",
+                                 G_CALLBACK(id_col_clicked), view);
+            } else if (i == 0 && db_view) {
+                /* database view special */
+                gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(lstore), 0,
+                                                (GtkTreeIterCompareFunc)
+                                                db_series_compare,
+                                                column, NULL);
+            }
+        }
     }
 
     for (i=viscols; i<ncols; i++) {
         /* handle the invisible columns, if any */
-	column = gtk_tree_view_column_new_with_attributes(NULL,
-							  text_renderer,
-							  "text", i,
-							  NULL);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
-	gtk_tree_view_column_set_visible(column, FALSE);
+        column = gtk_tree_view_column_new_with_attributes(NULL,
+                                                          text_renderer,
+                                                          "text", i,
+                                                          NULL);
+        gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
+        gtk_tree_view_column_set_visible(column, FALSE);
     }
 
     /* set the selection properties on the tree view */
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
 
     if (vwin == mdata) {
-	/* gretl main window */
-	gtk_tree_selection_set_mode(select, GTK_SELECTION_MULTIPLE);
-	gtk_tree_selection_set_select_function(select,
-					       (GtkTreeSelectionFunc)
-					       no_select_row_zero,
-					       NULL, NULL);
-	gtk_widget_set_events(view, GDK_POINTER_MOTION_MASK
-			      | GDK_POINTER_MOTION_HINT_MASK);
+        /* gretl main window */
+        gtk_tree_selection_set_mode(select, GTK_SELECTION_MULTIPLE);
+        gtk_tree_selection_set_select_function(select,
+                                               (GtkTreeSelectionFunc)
+                                               no_select_row_zero,
+                                               NULL, NULL);
+        gtk_widget_set_events(view, GDK_POINTER_MOTION_MASK
+                              | GDK_POINTER_MOTION_HINT_MASK);
         g_signal_connect(G_OBJECT(view), "motion-notify-event",
-			 G_CALLBACK(listbox_drag), NULL);
+                         G_CALLBACK(listbox_drag), NULL);
     } else if (db_view) {
-	gtk_tree_selection_set_mode(select, GTK_SELECTION_MULTIPLE);
-	g_signal_connect(G_OBJECT(select), "changed",
-			 G_CALLBACK(check_db_series_selection),
-			 vwin);
+        gtk_tree_selection_set_mode(select, GTK_SELECTION_MULTIPLE);
+        g_signal_connect(G_OBJECT(select), "changed",
+                         G_CALLBACK(check_db_series_selection),
+                         vwin);
     } else {
-	gtk_tree_selection_set_mode(select, GTK_SELECTION_SINGLE);
-	g_signal_connect(G_OBJECT(select), "changed",
-			 G_CALLBACK(listbox_select_row),
-			 vwin);
+        gtk_tree_selection_set_mode(select, GTK_SELECTION_SINGLE);
+        g_signal_connect(G_OBJECT(select), "changed",
+                         G_CALLBACK(listbox_select_row),
+                         vwin);
     }
 
     g_signal_connect(G_OBJECT(view), "key-press-event",
-		     G_CALLBACK(catch_listbox_key), vwin);
+                     G_CALLBACK(catch_listbox_key), vwin);
     g_signal_connect(G_OBJECT(view), "button-press-event",
-		     G_CALLBACK(listbox_double_click), vwin);
+                     G_CALLBACK(listbox_double_click), vwin);
 
     /* set sort properties on the tree model */
     if (vwin == mdata && tstore != NULL) {
-	gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(tstore), 0,
-					(GtkTreeIterCompareFunc)
-					list_id_compare,
-					NULL, NULL);
-	gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(tstore), 1,
-					(GtkTreeIterCompareFunc)
-					list_alpha_compare,
-					NULL, NULL);
-	gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(tstore), 2,
-					(GtkTreeIterCompareFunc)
-					list_alpha_compare,
-					NULL, NULL);
+        gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(tstore), 0,
+                                        (GtkTreeIterCompareFunc)
+                                        list_id_compare,
+                                        NULL, NULL);
+        gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(tstore), 1,
+                                        (GtkTreeIterCompareFunc)
+                                        list_alpha_compare,
+                                        NULL, NULL);
+        gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(tstore), 2,
+                                        (GtkTreeIterCompareFunc)
+                                        list_alpha_compare,
+                                        NULL, NULL);
     }
 
     if (lstore != NULL) {
-	g_object_unref(G_OBJECT(lstore));
+        g_object_unref(G_OBJECT(lstore));
     } else if (tstore != NULL) {
-	g_object_unref(G_OBJECT(tstore));
+        g_object_unref(G_OBJECT(tstore));
     }
 
     scroller = gtk_scrolled_window_new(NULL, NULL);
 
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
-				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+                                   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scroller),
-					GTK_SHADOW_IN);
+                                        GTK_SHADOW_IN);
 
     gtk_container_add(GTK_CONTAINER(scroller), view);
     gtk_box_pack_start(box, scroller, TRUE, TRUE, TRUE);
@@ -749,12 +749,12 @@ void set_main_colheads_clickable (gboolean s)
     int i;
 
     for (i=0; i<3; i++) {
-	col = gtk_tree_view_get_column(GTK_TREE_VIEW(mdata->listbox), i);
-	gtk_tree_view_column_set_clickable(col, s);
+        col = gtk_tree_view_get_column(GTK_TREE_VIEW(mdata->listbox), i);
+        gtk_tree_view_column_set_clickable(col, s);
     }
 
     if (!s) {
-	gtk_widget_grab_focus(mdata->listbox);
+        gtk_widget_grab_focus(mdata->listbox);
     }
 }
 
@@ -767,7 +767,7 @@ void tree_view_get_bool (GtkTreeView *view, int row, int col, gboolean *val)
     model = gtk_tree_view_get_model(view);
     path = g_strdup_printf("%d", row);
     if (gtk_tree_model_get_iter_from_string(model, &iter, path)) {
-	gtk_tree_model_get(model, &iter, col, val, -1);
+        gtk_tree_model_get(model, &iter, col, val, -1);
     }
     g_free(path);
 }
@@ -781,7 +781,7 @@ void tree_view_get_int (GtkTreeView *view, int row, int col, gint *val)
     model = gtk_tree_view_get_model(view);
     path = g_strdup_printf("%d", row);
     if (gtk_tree_model_get_iter_from_string(model, &iter, path)) {
-	gtk_tree_model_get(model, &iter, col, val, -1);
+        gtk_tree_model_get(model, &iter, col, val, -1);
     }
     g_free(path);
 }
@@ -795,26 +795,26 @@ void tree_view_get_string (GtkTreeView *view, int row, int col, gchar **val)
     model = gtk_tree_view_get_model(view);
     path = g_strdup_printf("%d", row);
     if (gtk_tree_model_get_iter_from_string(model, &iter, path)) {
-	gtk_tree_model_get(model, &iter, col, val, -1);
+        gtk_tree_model_get(model, &iter, col, val, -1);
     }
     g_free(path);
 }
 
 static void tree_view_get_string2 (GtkTreeView *view,
-				   GtkTreePath *path,
-				   int col, gchar **val)
+                                   GtkTreePath *path,
+                                   int col, gchar **val)
 {
     GtkTreeModel *model;
     GtkTreeIter iter;
 
     model = gtk_tree_view_get_model(view);
     if (gtk_tree_model_get_iter(model, &iter, path)) {
-	gtk_tree_model_get(model, &iter, col, val, -1);
+        gtk_tree_model_get(model, &iter, col, val, -1);
     }
 }
 
 static void tree_view_set_string (GtkTreeView *view, int row, int col,
-				  const gchar *val, int tstore)
+                                  const gchar *val, int tstore)
 {
     GtkTreeModel *model;
     GtkTreeIter iter;
@@ -823,11 +823,11 @@ static void tree_view_set_string (GtkTreeView *view, int row, int col,
     model = gtk_tree_view_get_model(view);
     path = g_strdup_printf("%d", row);
     if (gtk_tree_model_get_iter_from_string(model, &iter, path)) {
-	if (tstore == 1) {
-	    gtk_tree_store_set(GTK_TREE_STORE(model), &iter, col, val, -1);
-	} else {
-	    gtk_list_store_set(GTK_LIST_STORE(model), &iter, col, val, -1);
-	}
+        if (tstore == 1) {
+            gtk_tree_store_set(GTK_TREE_STORE(model), &iter, col, val, -1);
+        } else {
+            gtk_list_store_set(GTK_LIST_STORE(model), &iter, col, val, -1);
+        }
     }
     g_free(path);
 }
@@ -855,7 +855,7 @@ void tree_model_get_iter_last (GtkTreeModel *mod, GtkTreeIter *iter)
     s = gtk_tree_model_get_iter_first(mod, &first);
     *iter = first;
     while (s && gtk_tree_model_iter_next(mod, &first)) {
-	*iter = first;
+        *iter = first;
     }
 }
 
@@ -865,10 +865,10 @@ int tree_model_count_rows (GtkTreeModel *mod)
     int nrows = 0;
 
     if (gtk_tree_model_get_iter_first(mod, &iter)) {
-	nrows = 1;
-	while (gtk_tree_model_iter_next(mod, &iter)) {
-	    nrows++;
-	}
+        nrows = 1;
+        while (gtk_tree_model_iter_next(mod, &iter)) {
+            nrows++;
+        }
     }
 
     return nrows;
@@ -882,20 +882,20 @@ gboolean tree_model_iter_prev (GtkTreeModel *mod, GtkTreeIter *iter)
     path = gtk_tree_model_get_path(mod, iter);
     s = gtk_tree_path_prev(path);
     if (s) {
-	gtk_tree_model_get_iter(mod, iter, path);
+        gtk_tree_model_get_iter(mod, iter, path);
     }
     gtk_tree_path_free(path);
     return s;
 }
 
 static void add_to_selection_count (GtkTreeModel *model, GtkTreePath *path,
-				    GtkTreeIter *iter, int *count)
+                                    GtkTreeIter *iter, int *count)
 {
     *count += 1;
 }
 
 static void add_to_selection_list (GtkTreeModel *model, GtkTreePath *path,
-				   GtkTreeIter *iter, int *list)
+                                   GtkTreeIter *iter, int *list)
 {
     gchar *varnum = NULL;
 
@@ -913,20 +913,20 @@ int *main_window_selection_as_list (void)
 
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
     gtk_tree_selection_selected_foreach(select,
-					(GtkTreeSelectionForeachFunc)
-					add_to_selection_count,
-					&scount);
+                                        (GtkTreeSelectionForeachFunc)
+                                        add_to_selection_count,
+                                        &scount);
 
     if (scount > 0) {
-	list = gretl_list_new(scount);
+        list = gretl_list_new(scount);
     }
 
     if (list != NULL) {
-	list[0] = 0;
-	gtk_tree_selection_selected_foreach(select,
-					    (GtkTreeSelectionForeachFunc)
-					    add_to_selection_list,
-					    list);
+        list[0] = 0;
+        gtk_tree_selection_selected_foreach(select,
+                                            (GtkTreeSelectionForeachFunc)
+                                            add_to_selection_list,
+                                            list);
     }
 
     return list;
@@ -938,9 +938,9 @@ char *main_window_selection_as_string (void)
     char *liststr = NULL;
 
     if (list != NULL) {
-	int err = 0;
+        int err = 0;
 
-	liststr = gretl_list_to_string(list, dataset, &err);
+        liststr = gretl_list_to_string(list, dataset, &err);
     }
 
     return liststr;
