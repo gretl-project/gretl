@@ -94,17 +94,16 @@ static BandStyle style_from_string (const char *s, int *err)
 
 /* handle the band-as-matrix case */
 
-static int process_band_matrix (const char *mname,
+static int process_band_matrix (const gretl_matrix *m,
 				band_info *bi,
 				gnuplot_info *gi,
 				DATASET *dset)
 {
-    gretl_matrix *m = get_matrix_by_name(mname);
     int err = 0;
 
     if (m == NULL || m->cols != 2 || m->rows != dset->n) {
 	/* matrix missing or non-conformable */
-	err = invalid_field_error(mname);
+	err = E_NONCONF;
     } else {
         /* enlarge the dset->Z array and stick bi->center and
            bi->width onto the end of it
@@ -229,6 +228,28 @@ static int get_input_color (gretl_bundle *b, char *rgb)
     return err;
 }
 
+static const gretl_matrix *retrieve_bandmat (gretl_bundle *b,
+                                             int *err)
+{
+    gretl_matrix *m = NULL;
+    GretlType t;
+    void *ptr;
+
+    ptr = gretl_bundle_get_data(b, "bandmat", &t, NULL, err);
+
+    if (!*err) {
+        if (t == GRETL_TYPE_MATRIX) {
+            m = (gretl_matrix *) ptr;
+        } else if (t == GRETL_TYPE_STRING) {
+            m = get_matrix_by_name((const char *) ptr);
+        } else {
+            *err = E_TYPES;
+        }
+    }
+
+    return m;
+}
+
 static band_info *band_info_from_bundle (int matrix_mode,
 					 gretl_bundle *b,
 					 gnuplot_info *gi,
@@ -253,10 +274,10 @@ static band_info *band_info_from_bundle (int matrix_mode,
        "gnuplot" or "plot" is fed data in matrix form.
     */
     if (matrix_mode) {
-	const char *s = gretl_bundle_get_string(b, "bandmat", err);
+        const gretl_matrix *m = retrieve_bandmat(b, err);
 
 	if (!*err) {
-	    *err = process_band_matrix(s, bi, gi, dset);
+	    *err = process_band_matrix(m, bi, gi, dset);
 	}
 	if (!*err) {
 	    imin = 3;
@@ -325,51 +346,89 @@ static band_info *band_info_from_bundle (int matrix_mode,
     return bi;
 }
 
-static int swap_bands_order (gretl_array *a)
+static int band_matrices_differ (const gretl_matrix *a,
+                                 const gretl_matrix *b)
+{
+    const void *p0 = a;
+    const void *p1 = b;
+
+    if (p1 - p0 == 0) {
+        return 0;
+    } else if (a->rows * a->cols != b->rows * b->cols) {
+        return 1;
+    } else {
+        int i, n = a->rows * a->cols;
+
+        for (i=0; i<n; i++) {
+            if (a->val[i] != b->val[i]) {
+                return 1;
+            }
+        }
+    }
+
+    return 0;
+}
+
+/* Here we're trying to determine a plausible z-order for two bands
+   that both employ the "fill" style, to avoid having a narrower band
+   obscured by a wider one. The idea is that if a multiplicative
+   "factor" is present in both cases, and the two bands have the same
+   center and width, they can be ordered by the factor. Otherwise we
+   treat them as unordered.
+*/
+
+static int swap_bands_order (gretl_array *a, int *err)
 {
     gretl_bundle *b0 = gretl_array_get_data(a, 0);
     gretl_bundle *b1 = gretl_array_get_data(a, 1);
-    const char *tmp0;
-    const char *tmp1;
-    double fac0, fac1;
-    int ret = 0;
+    const char *s0;
+    const char *s1;
+    double f0, f1;
 
-    fac0 = gretl_bundle_get_scalar(b0, "factor", NULL);
-    fac1 = gretl_bundle_get_scalar(b1, "factor", NULL);
-    if (na(fac0) || na(fac1)) {
+    f0 = gretl_bundle_get_scalar(b0, "factor", NULL);
+    f1 = gretl_bundle_get_scalar(b1, "factor", NULL);
+    if (na(f0) || na(f1)) {
+        /* we won't try to order the two */
         return 0;
     }
 
-    tmp0 = gretl_bundle_get_string(b0, "style", NULL);
-    tmp1 = gretl_bundle_get_string(b1, "style", NULL);
-    if (tmp0 == NULL || tmp1 == NULL) {
+    s0 = gretl_bundle_get_string(b0, "style", NULL);
+    s1 = gretl_bundle_get_string(b1, "style", NULL);
+    if (s0 == NULL || s1 == NULL) {
         return 0;
-    } else if (strcmp(tmp0, "fill") || strcmp(tmp1, "fill")) {
-        /* condition on "fill" for both bands? */
+    } else if (strcmp(s0, "fill") || strcmp(s1, "fill")) {
+        /* condition ordering on "fill" for both bands? */
         return 0;
     }
 
-    /* matrix version */
-    tmp0 = gretl_bundle_get_string(b0, "bandmat", NULL);
-    tmp1 = gretl_bundle_get_string(b1, "bandmat", NULL);
-    if (tmp0 != NULL || tmp1 != NULL || !strcmp(tmp0, tmp1)) {
-        ret = fac1 > fac0;
-    } else if (tmp0 == NULL && tmp1 == NULL) {
-        /* series data version */
-        tmp0 = gretl_bundle_get_string(b0, "center", NULL);
-        tmp1 = gretl_bundle_get_string(b1, "center", NULL);
-        if (tmp0 == NULL || tmp1 == NULL || strcmp(tmp0, tmp1)) {
+    if (gretl_bundle_has_key(b0, "bandmat") &&
+        gretl_bundle_has_key(b1, "bandmat")) {
+        const gretl_matrix *m0 = retrieve_bandmat(b0, err);
+        const gretl_matrix *m1 = retrieve_bandmat(b1, err);
+
+        if (m0 == NULL || m1 == NULL ||
+            band_matrices_differ(m0, m1)) {
             return 0;
         }
-        tmp0 = gretl_bundle_get_string(b0, "width", NULL);
-        tmp1 = gretl_bundle_get_string(b1, "width", NULL);
-        if (tmp0 == NULL || tmp1 == NULL || strcmp(tmp0, tmp1)) {
+    } else if (gretl_bundle_has_key(b0, "center") &&
+               gretl_bundle_has_key(b1, "center") &&
+               gretl_bundle_has_key(b0, "width") &&
+               gretl_bundle_has_key(b1, "width")) {
+        s0 = gretl_bundle_get_string(b0, "center", NULL);
+        s1 = gretl_bundle_get_string(b1, "center", NULL);
+        if (s0 == NULL || s1 == NULL || strcmp(s0, s1)) {
+            /* we don't have the same centers */
             return 0;
         }
-        ret = fac1 > fac0;
+        s0 = gretl_bundle_get_string(b0, "width", NULL);
+        s1 = gretl_bundle_get_string(b1, "width", NULL);
+        if (s0 == NULL || s1 == NULL || strcmp(s0, s1)) {
+            /* we don't have the same widths */
+            return 0;
+        }
     }
 
-    return ret;
+    return f1 > f0;
 }
 
 /* Here we're supposing we got --bands=@aname. We try to retrieve an
@@ -400,7 +459,7 @@ static band_info **get_band_info_array (int matrix_mode,
     }
 
     if (n == 2) {
-        swap = swap_bands_order(a);
+        swap = swap_bands_order(a, err);
     }
 
     pbi = calloc(n, sizeof *pbi);
@@ -575,197 +634,6 @@ static void print_data_block (gnuplot_info *gi,
     }
 }
 
-/* Legacy syntax: handle the case where we get to the band-plot code
-   from a command in which the data to be plotted (and hence also the
-   band specification) are given in matrix form. By this point the
-   plot-data have been converted to (temporary) DATASET form; here we
-   retrieve the band-spec matrix, check it for conformability, and
-   stick the two extra columns onto the dataset (borrowing pointers
-   into the matrix content).
-*/
-
-static int parse_band_matrix_option (band_info *bi,
-				     const char *spec,
-				     gnuplot_info *gi,
-				     DATASET *dset)
-{
-    const char *mname = NULL;
-    gchar **S;
-    int i = 0;
-    int err = 0;
-
-    S = g_strsplit(spec, ",", -1);
-
-    while (S != NULL && S[i] != NULL && !err) {
-        if (i == 0) {
-	    mname = S[i];
-        } else if (i == 1) {
-            /* spec for width multiplier: optional */
-            if (numeric_string(S[i])) {
-                bi->factor = dot_atof(S[i]);
-            } else if (gretl_is_scalar(S[i])) {
-                bi->factor = gretl_scalar_get_value(S[i], &err);
-            } else {
-                err = invalid_field_error(S[i]);
-            }
-        } else {
-            /* we got too many comma-separated terms */
-            err = invalid_field_error(S[i]);
-        }
-        i++;
-    }
-
-    if (!err && (bi->factor <= 0 || na(bi->factor))) {
-        err = E_INVARG;
-    }
-    if (!err) {
-	err = process_band_matrix(mname, bi, gi, dset);
-    }
-
-    g_strfreev(S);
-
-    return err;
-}
-
-static int handle_recession_bars (band_info *bi,
-				  const char *s,
-				  const DATASET *dset)
-{
-    int v = current_series_index(dset, s);
-    int err = 0;
-
-    if (v >= 0 && v < dset->v) {
-	err = check_assign_bdummy(bi, v, dset);
-    } else {
-	err = E_INVARG;
-    }
-
-    return err;
-}
-
-/* Legacy syntax: handle the band plus-minus option for all cases
-   apart from the one handled just above. Here we require two
-   comma-separated series identifiers for center and width.
-*/
-
-static int parse_band_pm_option (band_info *bi,
-				 const char *spec,
-				 gnuplot_info *gi,
-                                 const DATASET *dset,
-                                 gretlopt opt)
-{
-    gchar **S;
-    int v, i = 0;
-    int err = 0;
-
-    if (strchr(spec, ',') == NULL) {
-	return handle_recession_bars(bi, spec, dset);
-    }
-
-    S = g_strsplit(spec, ",", -1);
-
-    while (S != NULL && S[i] != NULL && !err) {
-        if (i < 2) {
-            /* specs for the "center" and "width" series: required */
-            if (integer_string(S[i])) {
-                /* var ID number? */
-                v = atoi(S[i]);
-            } else {
-                /* varname? */
-                v = current_series_index(dset, S[i]);
-            }
-            if (v >= 0 && v < dset->v) {
-		do_center_or_width(bi, gi, i, v);
-            } else {
-                err = invalid_field_error(S[i]);
-            }
-        } else if (i == 2) {
-            /* spec for width multiplier: optional */
-            if (numeric_string(S[i])) {
-                bi->factor = dot_atof(S[i]);
-            } else if (gretl_is_scalar(S[i])) {
-                bi->factor = gretl_scalar_get_value(S[i], &err);
-            } else {
-                err = invalid_field_error(S[i]);
-            }
-        } else {
-            /* we got too many comma-separated terms */
-            err = invalid_field_error(S[i]);
-        }
-        i++;
-    }
-
-    g_strfreev(S);
-
-#if PB_DEBUG
-    fprintf(stderr, "parse_band_pm_option: err = %d\n", err);
-    fprintf(stderr, "center = %d\n", bi->center);
-    fprintf(stderr, "width = %d\n", bi->width);
-    fprintf(stderr, "factor = %g\n", bi->factor);
-#endif
-
-    if (!err) {
-        if (bi->center < 0 || bi->width < 0 ||
-            bi->factor < 0 || na(bi->factor)) {
-            err = E_INVARG;
-        }
-    }
-
-    return err;
-}
-
-/* Legacy syntax: We're looking here for any one of three patterns:
-
-   <style>
-   <style>,<color>
-   <color>
-
-   where <style> should be "fill", "dash" or "line" (the default) and
-   <color> should be a hex string such as "#00ff00" or "0x00ff00".
-*/
-
-static int parse_band_style_option (band_info *bi)
-{
-    const char *s = get_optval_string(GNUPLOT, OPT_J);
-    int err = 0;
-
-    if (s != NULL) {
-        const char *p = strchr(s, ',');
-	int do_color = 1;
-	guint32 u = 0;
-
-        if (bi->bdummy && *s != ',') {
-            /* must be just a color */
-            u = numeric_color_from_string(s, &err);
-        } else if (*s == ',') {
-            /* skipping field 1, going straight to color */
-            u = numeric_color_from_string(s + 1, &err);
-        } else if (p == NULL) {
-            /* just got field 1, style spec */
-            bi->style = style_from_string(s, &err);
-	    do_color = 0;
-        } else {
-            /* embedded comma: style + color */
-            if (strlen(s) >= 8 && s[4] == ',') {
-                gchar *tmp = g_strndup(s, 4);
-
-                bi->style = style_from_string(tmp, &err);
-                g_free(tmp);
-            } else {
-                err = invalid_field_error(s);
-            }
-            if (!err) {
-                u = numeric_color_from_string(s + 5, &err);
-            }
-	    if (!err && do_color) {
-		sprintf(bi->rgb, "#%x", u);
-	    }
-        }
-    }
-
-    return err;
-}
-
 static band_info **get_single_band_info (int matrix_mode,
 					 gnuplot_info *gi,
 					 DATASET *dset,
@@ -781,46 +649,19 @@ static band_info **get_single_band_info (int matrix_mode,
 	return NULL;
     }
 
+    b = get_bundle_by_name(spec);
+    if (b == NULL) {
+        *err = E_INVARG;
+        return NULL;
+    }
+
     /* allocate return array */
     bi = malloc(sizeof *bi);
 
-    /* See if we got a new-style single band specification
-       in the form of a named bundle.
-    */
-    b = get_bundle_by_name(spec);
-    if (b != NULL) {
-	/* OK, we should have the new syntax */
-	bi[0] = band_info_from_bundle(matrix_mode, b, gi, dset, err);
-	if (*err) {
-	    free(bi);
-	    bi = NULL;
-	}
-	return bi; /* done */
-    }
-
-    /* Proceed in legacy mode */
-    bi[0] = band_info_new();
-    if (bi[0] == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    if (matrix_mode) {
-	/* In this case the band should be given in the form of a
-	   named matrix with two columns holding center and width,
-	   respectively.
-	*/
-	*err = parse_band_matrix_option(bi[0], spec, gi, dset);
-    } else {
-	*err = parse_band_pm_option(bi[0], spec, gi, dset, opt);
-    }
-    if (!*err && (opt & OPT_J)) {
-	*err = parse_band_style_option(bi[0]);
-    }
-
+    bi[0] = band_info_from_bundle(matrix_mode, b, gi, dset, err);
     if (*err) {
-	free_bbi(bi, 1);
-	bi = NULL;
+        free(bi);
+        bi = NULL;
     }
 
     return bi;

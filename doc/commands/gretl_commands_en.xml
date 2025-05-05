@@ -5601,11 +5601,13 @@
 	When plotting matrix rather than series data, the only
 	difference is that the <lit>center</lit> and <lit>width</lit>
 	elements of the band bundle are replaced by a single element
-	under the key <lit>bandmat</lit>; this should be the <i>quoted
-	name</i> of a two-column matrix with the center in column 1 and
-	the width in column 2. This means that the content of the
-	<lit>bandmat</lit> key must be a string with the matrix name,
-	not the matrix itself. 
+	under the key <lit>bandmat</lit>. This should be a two-column
+	matrix with the center of the band in the first column and the
+	width in the second. Alternatively you can give a string under
+	this key: the <i>quoted name</i> of a suitable matrix. This
+	variant may be preferable if the matrix in question is to be
+	reused with different factor values, since it avoids
+	duplicating the matrix in memory.
       </para>
       <subhead>Recession bars</subhead>
       <para>
