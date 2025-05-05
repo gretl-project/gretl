@@ -5552,8 +5552,9 @@
 	<li>
 	  <para>Under the key <lit>color</lit>, a color for the band,
 	  either as a string holding a gnuplot color name or as a
-	  hexadecimal RGB representation (given as a string or a
-	  scalar). By default the color is selected automatically.
+	  hexadecimal RGB representation, given as a string or a
+	  scalar (see below for more details). By default the color is
+	  selected automatically.
 	  </para>
 	</li>
 	<li>
@@ -5563,15 +5564,6 @@
 	  </para>
 	</li>
       </ilist>
-      <para>
-	Note that you can access the list of color names recognized by
-	gnuplot by issuing the command <quote><lit>show
-	colornames</lit></quote> in gnuplot itself, or in the gretl
-	console by doing
-      </para>
-      <code>
-	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
-      </code>
       <para>
 	Here are two examples of usage, employing the shorthand syntax
 	<lit>_()</lit> for defining a bundle. The first just satisfies
@@ -5639,6 +5631,39 @@
 	gnuplot YER URX --with-lines --time-series \
 	  --band=b --output=display {set key top left;}
       </code>
+      <subhead>Color names</subhead>
+      <para>
+	Colors are identified via RGB numbers, usually expressed in
+	6-digit hexadecimal form: the first two digit indicate the
+	amount of red (from 0 to 255), the middle ones the amount of
+	green, and the last two the amount of blue. So for example
+	<lit>0xff0080</lit> has maximum red, no green and some blue
+	(it's a reddish purple). With gnuplot 5.2 onwards, you can use
+	four digits instead of three: in this case, the first two
+	digits indicate transparency, ranging from 0 (opaque) to 255
+	(transparent). For example, <lit>0xc0ff0080</lit> would give
+	the color a value of 192 (c0 in hex) for transparency. 
+	You can check your gnuplot version by inspecting the <fncref
+	targ="$sysinfo"/> bundle.
+      </para>
+      <para>
+	Hexadecimal colors can be passed either as scalars or as
+	strings. A color string can be a quoted hexadecimal number (eg
+	"0x191970"), but gnuplot recognizes some
+	<quote>shorthand</quote> colors. For example,
+	<quote>violet</quote> equates to <quote>0xee82ee</quote> and
+	<quote>brown</quote> to <quote>0xa52a2a</quote>.  You can
+	access the full list of color names recognized by gnuplot by
+	issuing the command <quote><lit>show colornames</lit></quote>
+	in gnuplot itself, or in the gretl console by doing
+      </para>
+      <code>
+	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
+      </code>
+      <para>
+	To achieve aesthetically pleasing result, you may want to use
+	the <fncref targ="rgbmix"/> function.
+      </para>
       <subhead>Controlling the output</subhead>
       <para>
 	In interactive mode the plot is displayed immediately. In
