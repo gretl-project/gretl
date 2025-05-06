@@ -26,6 +26,7 @@
 #include "plot_priv.h"
 
 #define PB_DEBUG 0
+#define SUPPORT_LEGACY 1
 
 typedef enum {
     BAND_LINE,
@@ -48,6 +49,15 @@ typedef struct {
     char rgb[10];    /* specific color, if wanted */
     const char *title;
 } band_info;
+
+#if SUPPORT_LEGACY
+static band_info **legacy_get_band_info (const char *spec,
+                                         int matrix_mode,
+					 gnuplot_info *gi,
+					 DATASET *dset,
+					 gretlopt opt,
+					 int *err);
+#endif
 
 static band_info *band_info_new (void)
 {
@@ -650,19 +660,21 @@ static band_info **get_single_band_info (int matrix_mode,
     }
 
     b = get_bundle_by_name(spec);
-    if (b == NULL) {
-        *err = E_INVARG;
-        return NULL;
+    if (b != NULL) {
+        bi = malloc(sizeof *bi);
+        bi[0] = band_info_from_bundle(matrix_mode, b, gi, dset, err);
+        if (*err) {
+            free(bi);
+            bi = NULL;
+        }
+        return bi; /* done */
     }
 
-    /* allocate return array */
-    bi = malloc(sizeof *bi);
-
-    bi[0] = band_info_from_bundle(matrix_mode, b, gi, dset, err);
-    if (*err) {
-        free(bi);
-        bi = NULL;
-    }
+#if SUPPORT_LEGACY
+    bi = legacy_get_band_info(spec, matrix_mode, gi, dset, opt, err);
+#else
+    *err = E_INVARG;
+#endif
 
     return bi;
 }
@@ -994,3 +1006,7 @@ int plot_with_band (BPMode mode,
 
     return err;
 }
+
+#ifdef SUPPORT_LEGACY
+# include "pb_legacy.c"
+#endif
