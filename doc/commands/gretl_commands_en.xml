@@ -3984,10 +3984,10 @@
 
     <description>
       <para>
-	This command requires the selection of three variables, the last
-	of which must be a dummy variable (values 1 or 0). The Y variable
-	is plotted against the X variable, with the data points colored
-	differently depending on the value of the third.
+	This command requires the selection of three variables, the
+	last of which (the factor variable) must be discrete. The Y
+	variable is plotted against the X variable, with the data
+	points styled differently depending on the value of the third.
       </para>
       <para>
 	Example: You have data on wages and educational attainment for a
