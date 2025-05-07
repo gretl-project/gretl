@@ -10313,10 +10313,12 @@ static gretl_matrix *eigensym_rrr (gretl_matrix *m,
     char range = 'A';
     char uplo = 'U';
 
-    /* Note: vl and vu, il and iu, are required to work around buggy
-       implementations of dsyevr, which reference these terms even
-       when they're not supposed to. E.g.  Apple's
-       libLAPACK.dylib. 2020-10-25.
+    /* Note: @vl and @vu, @il and @iu, are required to work around
+       buggy implementations of dsyevr, which reference these terms
+       even when they're not supposed to. @vl and @vu were added in
+       October 2020 as a fix for Apple's libLAPACK.dylib; @il and @iu
+       were added to prevent a crash in libopenblas from
+       MSYS2/clangarm64 in May 2025.
     */
 
     n = m->rows;
