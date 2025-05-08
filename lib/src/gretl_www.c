@@ -1524,10 +1524,10 @@ int gretl_curl (const char *url, const char *header,
     res = curl_easy_perform(curl);
 
     if (http_code != NULL) {
-        int code = 0;
+        long code = 0;
 
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
-        *http_code = code;
+        *http_code = (int) code;
     }
 
     if (res != CURLE_OK) {
