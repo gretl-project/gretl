@@ -1042,7 +1042,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 
     if (should_apply_changes(ed->keycombo)) {
         s = combo_box_get_active_text(ed->keycombo);
-	spec->keyspec = gp_keypos_from_display_name(s);
+	spec->keyspec = gp_keyspec_from_string(s);
 	g_free(s);
     }
 
@@ -1744,12 +1744,16 @@ static int show_bars_check (GPT_SPEC *spec)
 
 static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 {
+    static const char *basic_key_strings[] = {
+        "left top", "right top", "left bottom",
+        "right bottom", "outside", "none", NULL
+    };
     GtkWidget *label, *vbox, *tbl;
     GtkWidget *hsep, *button;
-    gp_key_spec *kp;
+    const char *kstr;
     gchar *title;
     int i, rows = 1;
-    int kactive = 0;
+    int kactive = -1;
 
     vbox = gp_page_vbox(ed->notebook, _("Main"));
 
@@ -1793,12 +1797,19 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
     gtk_table_attach_defaults(GTK_TABLE(tbl),
 			      ed->keycombo, 1, TAB_MAIN_COLS, rows-1, rows);
     i = 0;
-    while ((kp = get_keypos_spec(i)) != NULL) {
-	combo_box_append_text(ed->keycombo, _(kp->str));
-	if (kp->id == spec->keyspec) {
+    while ((kstr = basic_key_strings[i]) != NULL) {
+	combo_box_append_text(ed->keycombo, kstr);
+        if (gp_keyspec_from_string(kstr) == spec->keyspec) {
 	    kactive = i;
 	}
 	i++;
+    }
+    if (kactive < 0) {
+        gchar *s = gp_keyspec_string(spec->keyspec);
+
+        combo_box_prepend_text(ed->keycombo, s);
+        kactive = 0;
+        g_free(s);
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(ed->keycombo), kactive);
     gtk_widget_show(ed->keycombo);

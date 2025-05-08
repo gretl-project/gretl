@@ -3061,7 +3061,7 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
         char *s2 = make_plotname(dset, xno);
 
         title = g_strdup_printf(_("%s versus %s (with loess fit)"), s1, s2);
-        print_keypos_string(GP_KEY_LEFT_TOP, fp);
+        print_keypos_string(GP_KEY_LEFT | GP_KEY_TOP, fp);
         fprintf(fp, "set title '%s'\n", title);
         g_free(title);
         print_axis_label('y', s1, fp);
@@ -3069,7 +3069,7 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
         free(s1);
         free(s2);
     } else {
-        print_keypos_string(GP_KEY_LEFT_TOP, fp);
+        print_keypos_string(GP_KEY_LEFT | GP_KEY_TOP, fp);
         print_axis_label('y', plotname(dset, yno, 1), fp);
     }
 
@@ -3257,7 +3257,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
         gretl_print_destroy(prn);
     }
 
-    print_keypos_string(GP_KEY_LEFT_TOP, fp);
+    print_keypos_string(GP_KEY_LEFT | GP_KEY_TOP, fp);
     print_axis_label('y', plotname(dset, yno, 1), fp);
     print_auto_fit_string(gi->fit, fp);
     print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
@@ -8598,7 +8598,7 @@ static int real_correlogram_print_plot (const char *vname,
         fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.48\n", fp);
     }
     fputs("set xzeroaxis\n", fp);
-    print_keypos_string(GP_KEY_RIGHT_TOP, fp);
+    print_keypos_string(GP_KEY_RIGHT | GP_KEY_TOP, fp);
     fprintf(fp, "set xlabel '%s'\n", _("lag"));
 
     fprintf(fp, "set yrange [%.2f:%.2f]\n", ymin, ymax);

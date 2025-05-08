@@ -986,7 +986,7 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 
 	fputs("set origin 0.0,0.4\n", fp);
 	if (zkeypos == 'L') {
-	    print_keypos_string(GP_KEY_LEFT_TOP, fp);
+	    print_keypos_string(GP_KEY_LEFT | GP_KEY_TOP, fp);
 	}
 	xtitle = g_strdup_printf(_("%s (original data)"), finfo->vname);
 	ztitle = g_strdup_printf(_("%s (smoothed)"), finfo->vname);
@@ -1012,7 +1012,7 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	fputs("e\n", fp);
      } else if (finfo->graph_opt & FILTER_GRAPH_TREND) {
 	if (zkeypos == 'L') {
-	    print_keypos_string(GP_KEY_LEFT_TOP, fp);
+	    print_keypos_string(GP_KEY_LEFT | GP_KEY_TOP, fp);
 	}
 	xtitle = g_strdup_printf(_("%s (original data)"), finfo->vname);
 	ztitle = g_strdup_printf(_("%s (smoothed)"), finfo->vname);

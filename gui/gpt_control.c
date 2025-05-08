@@ -1728,6 +1728,8 @@ static int unhandled_label_spec (const char *s)
     }
 }
 
+#if 0 /* unused, for now */
+
 static int unhandled_key_spec (const char *s)
 {
     if (strstr(s, "enhanced")) {
@@ -1740,6 +1742,8 @@ static int unhandled_key_spec (const char *s)
         return 0;
     }
 }
+
+#endif
 
 /* read a gnuplot source line specifying a text label */
 
@@ -2414,11 +2418,15 @@ static int parse_gp_set_line (GPT_SPEC *spec,
     } else if (!strcmp(key, "x2label")) {
         spec->titles[4] = g_strdup(val);
     } else if (!strcmp(key, "key")) {
+#if 1
+        spec->keyspec = gp_keyspec_from_string(val);
+#else
         if (unhandled != NULL && unhandled_key_spec(val)) {
             *unhandled = 1;
         } else {
-            spec->keyspec = gp_keypos_from_name(val);
+            spec->keyspec = gp_keyspec_from_string(val);
         }
+#endif
     } else if (!strcmp(key, "xtics") || !strcmp(key, "x2tics")) {
         read_xtics_setting(spec, key, val);
     } else if (!strcmp(key, "mxtics")) {

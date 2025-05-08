@@ -562,7 +562,7 @@ static void htest_graph (int d, double x, double *parms)
 
     alt = use_alt_form(d, parms);
 
-    print_keypos_string(GP_KEY_RIGHT_TOP, fp);
+    print_keypos_string(GP_KEY_RIGHT | GP_KEY_TOP, fp);
 
     gretl_push_c_numeric_locale();
 
@@ -643,7 +643,7 @@ static void dist_graph (int d, double *parms)
 
     alt = use_alt_form(d, parms);
 
-    print_keypos_string(GP_KEY_RIGHT_TOP, fp);
+    print_keypos_string(GP_KEY_RIGHT | GP_KEY_TOP, fp);
     fputs("set parametric\n", fp);
 
     title = dist_graph_title(d, parms);
@@ -3287,7 +3287,7 @@ static void do_plot_curve (GtkWidget *w, struct curve_plotter *p)
 	return;
     }
 
-    print_keypos_string(GP_KEY_RIGHT_TOP, fp);
+    print_keypos_string(GP_KEY_RIGHT | GP_KEY_TOP, fp);
 
     gretl_push_c_numeric_locale();
 
@@ -3408,7 +3408,7 @@ static void do_plot_cdf (GtkWidget *w, GtkWidget *dlg)
 
     opt = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(dlg), "opt"));
 
-    print_keypos_string(GP_KEY_LEFT_TOP, fp);
+    print_keypos_string(GP_KEY_LEFT | GP_KEY_TOP, fp);
 
     if (opt > 0) {
 	xmax = 6.0;

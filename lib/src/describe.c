@@ -4000,7 +4000,7 @@ static int xcorrgm_graph (const char *xname, const char *yname,
 
     fputs("set xzeroaxis\n", fp);
     fputs("set yzeroaxis\n", fp);
-    print_keypos_string(GP_KEY_RIGHT_TOP, fp);
+    print_keypos_string(GP_KEY_RIGHT | GP_KEY_TOP, fp);
     fprintf(fp, "set xlabel '%s'\n", _("lag"));
     if (allpos) {
 	fputs("set yrange [-0.1:1.1]\n", fp);
@@ -8237,7 +8237,7 @@ static int lorenz_graph (const char *vname, double *lz, int n)
 	return err;
     }
 
-    print_keypos_string(GP_KEY_LEFT_TOP, fp);
+    print_keypos_string(GP_KEY_LEFT | GP_KEY_TOP, fp);
 
     fprintf(fp, "set title '%s'\n", vname);
     fprintf(fp, "plot \\\n"
