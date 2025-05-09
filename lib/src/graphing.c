@@ -6323,8 +6323,8 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     }
 
     n = t2 - t1 + 1;
-    if (n < 3) {
-        /* we won't draw a graph for 2 data points or less */
+    if (n < 2) {
+        /* we won't draw a graph for fewer than 2 data points */
         return 1;
     }
 
@@ -6406,8 +6406,11 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     } else {
         /* plot confidence bands last */
         if (depvar_present) {
-            fprintf(fp, "'-' using 1:2 title '%s' w lines, \\\n",
-                    fr->depvar);
+            const char *wstr =
+                dataset_is_time_series(dset) ? "lines" : "points";
+
+            fprintf(fp, "'-' using 1:2 title '%s' w %s, \\\n",
+                    fr->depvar, wstr);
         }
         fprintf(fp, "'-' using 1:2 title '%s' w lines", _("forecast"));
         if (do_errs) {
@@ -6619,10 +6622,9 @@ int plot_simple_fcast_bands (const MODEL *pmod,
     int *order = NULL;
     GptFlags flags = 0;
     double a, xmin, xmax, xrange, tval;
-    int xv = pmod->list[3];
     gchar *cistr;
     int t2 = fr->t2;
-    int t1, yhmin;
+    int xv, t1, yhmin;
     int t, n, err = 0;
 
     /* note: yhmin is the first obs at which to start plotting y-hat */
@@ -6645,6 +6647,7 @@ int plot_simple_fcast_bands (const MODEL *pmod,
         return 1;
     }
 
+    xv = pmod->list[pmod->list[0]];
     x = dset->Z[xv];
 
     order = get_x_sorted_order(fr, x, t1, &t2);

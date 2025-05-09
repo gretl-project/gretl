@@ -1411,6 +1411,8 @@ int gretl_is_simple_OLS (const MODEL *pmod)
         return 0;
     } else if (pmod->list[0] == 3 && pmod->list[2] == 0) {
         return 1;
+    } else if (pmod->list[0] == 2 && pmod->list[2] != 0) {
+        return 1;
     } else {
 	return 0;
     }
