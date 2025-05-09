@@ -2329,18 +2329,6 @@ static int have_examples (const char *dirname)
     return ret;
 }
 
-char *maybe_ellipsize_string (char *s, int maxlen)
-{
-    size_t n = g_utf8_strlen(s, -1);
-
-    if (n > maxlen) {
-        gretl_utf8_truncate(s, maxlen - 3);
-        strcat(s, "...");
-    }
-
-    return s;
-}
-
 static void browser_insert_gfn_info (const char *pkgname,
                                      const char *version,
                                      const char *date,

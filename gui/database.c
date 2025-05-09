@@ -2810,10 +2810,10 @@ finish:
     g_free(target);
 }
 
-/* called from within datafiles.c, when dragging a
-   remote database or function package from its
-   "on server" window to the associated local
-   window */
+/* called from within datafiles.c, when dragging a remote database or
+   function package from its "on server" window to the associated
+   local window
+*/
 
 void drag_file_from_server (guint info)
 {
@@ -3765,9 +3765,8 @@ static int is_depends_line (const char *line,
     }
 }
 
-/* Fill a list box with name, version number, author,
-   and short description of function packages, retrieved
-   from server.
+/* Fill a list box with name, version number, author, and short
+   description of function packages, retrieved from server.
 */
 
 gint populate_remote_func_list (windata_t *vwin, int filter)
@@ -3832,7 +3831,6 @@ gint populate_remote_func_list (windata_t *vwin, int filter)
 	    tailstrip(line);
 	    utf8_correct(line);
 	    descrip = gretl_strdup(line + 2);
-	    maybe_ellipsize_string(descrip, 48);
 	}
 
 	if (bufgets(line, sizeof line, getbuf)) {
@@ -3843,7 +3841,6 @@ gint populate_remote_func_list (windata_t *vwin, int filter)
 	if (bufgets(line, sizeof line, getbuf)) {
 	    tailstrip(line);
 	    author = gretl_strdup(line + 2);
-	    maybe_ellipsize_string(author, 26);
 	}
 
 	if (descrip != NULL && version != NULL && author != NULL) {
