@@ -1919,9 +1919,11 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     char startobs[OBSLEN], endobs[OBSLEN];
+    int ts = dataset_is_time_series(dataset);
     FcastFlags flags = 0;
     int t2, t1 = 0;
-    int premax, pre_n = 0;
+    int premax = 0;
+    int pre_n = 0;
     int t1min = 0;
     int recursive = 0, k = 1, *kptr;
     int dt2 = dataset->n - 1;
@@ -1958,19 +1960,25 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     }
 
     /* max number of pre-forecast obs in "best case" */
-    premax = dataset->n - 1;
+    if (ts) {
+        premax = dataset->n - 1;
+    }
 
     /* if there are spare obs available, default to an
        out-of-sample forecast */
     if (t2 > pmod->t2) {
         t1 = pmod->t2 + 1;
-        pre_n = pmod->t2 / 2;
-        if (pre_n > 100) {
-            pre_n = 100;
-        }
-        if (pmod->ci == GARCH) {
-            /* force out-of-sample fcast */
-            t1min = t1;
+        if (ts) {
+            pre_n = pmod->t2 / 2;
+            if (pre_n > 100) {
+                pre_n = 100;
+            }
+            if (pmod->ci == GARCH) {
+                /* force out-of-sample fcast */
+                t1min = t1;
+            }
+        } else {
+            pre_n = 0;
         }
     } else {
         pre_n = 0;

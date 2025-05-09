@@ -6640,8 +6640,8 @@ int plot_simple_fcast_bands (const MODEL *pmod,
 
     n = t2 - t1 + 1;
 
-    if (n < 3) {
-        /* won't draw a graph for 2 data points or less */
+    if (n < 2) {
+        /* won't draw a graph for a single data point */
         return 1;
     }
 
@@ -6684,7 +6684,7 @@ int plot_simple_fcast_bands (const MODEL *pmod,
     }
 
     fputs("'-' using 1:2 notitle w points, \\\n", fp);
-    fputs("'-' using 1:2 notitle w lines, \\\n", fp);
+    fprintf(fp, "'-' using 1:2 title '%s' w lp, \\\n", _("fitted"));
     fprintf(fp, "'-' using 1:2 title '%s' w lines, \\\n", cistr);
     fputs("'-' using 1:2 notitle '%s' w lines lt 3\n", fp);
     g_free(cistr);
