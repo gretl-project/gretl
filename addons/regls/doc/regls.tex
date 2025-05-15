@@ -110,7 +110,7 @@ assume their default values, described below.
 \section{Basic options}
 \label{sec:basic-opts}
 
-One basic element in the \texttt{parms} bundle is a specification for
+A basic element in the \texttt{parms} bundle is a specification for
 $\lambda$, which may take either of two forms, as follows:
 \begin{enumerate}
 \item under the key \texttt{lfrac} (``lambda fraction''), a scalar
@@ -119,21 +119,26 @@ $\lambda$, which may take either of two forms, as follows:
   used ($\geq 4$), in which case the values will be assigned
   automatically.
 \end{enumerate}
-If \texttt{nlambda} is provided instead of \texttt{lfrac}, the
-automatic $s$ vector is a declining logarithmic sequence starting at 1
-and finishing at 0.0001. For example, given \texttt{nlambda} = 5 the
-sequence will be $s$ = \{1, 0.1, 0.01, 0.001, 0.0001\}.
+If \texttt{nlambda} is provided instead of \texttt{lfrac}, the automatic
+$s$ vector is a logarithmically declining sequence starting at 1 and
+finishing at a value we'll call $s_{\rm min}$. If the number of
+observations, $n$, is greater than the number of regressors, $k$, we set
+$s_{\rm min} = 0.0001$, otherwise $s_{\rm min} = 0.01$.\footnote{As per
+\textsf{glmnet}, we avoid using a very small value of $s$ when $n \leq
+k$ since this leads to a saturated model.} For example, given
+\texttt{nlambda} = 5 and $n > k$ the sequence will be $s$ = \{1, 0.1,
+0.01, 0.001, 0.0001\}.
 
 If neither \texttt{lfrac} nor \texttt{nlambda} is specified, the
 default is as if \texttt{nlambda} were given as 25.
 
-In case you wish to specify a sequence succinctly but with more
-control, the package contains a utility function
-\dtk{lambda_sequence()}, which takes up to three arguments. The
-first and second arguments (required) give the maximum $s$ and the
-number of values, while the third (optional) argument can be used to
-give the minimum $s$ (by default 0.0001). As with the \texttt{nlambda}
-option the values are spaced logarithmically.  So if you were to do
+In case you wish to specify a sequence succinctly but with more control,
+the package contains a utility function \dtk{lambda_sequence()}, which
+takes up to three arguments. The first and second arguments (required)
+give the maximum $s$ and the number of values, while the third
+(optional) argument can be used to give the minimum $s$. As with the
+\texttt{nlambda} option the values are spaced logarithmically.  So if
+you were to do
 \begin{code}
 parms.lfrac = lambda_sequence(1, 20, 0.001)
 \end{code}
@@ -143,12 +148,13 @@ the resulting sequence would be $s$ = \{1, 0.69519, 0.48329, \dots,
 To be clear, if no option pertaining to $\lambda$ is given that's
 equivalent to
 \begin{code}
-parms.lfrac = lambda_sequence(1, 25, 0.0001)
+parms.lfrac = lambda_sequence(1, 25, s_min)
 \end{code}
 while if \texttt{nlambda = 100} is given that's equivalent to
 \begin{code}
-parms.lfrac = lambda_sequence(1, 100, 0.0001)
+parms.lfrac = lambda_sequence(1, 100, s_min)
 \end{code}
+where \verb|s_min| corresponds to $s_{\rm min}$ as described above.
 
 A second basic member of the parameter bundle is \texttt{stdize}, a
 boolean switch to toggle standardization of the data. The default is
@@ -286,12 +292,12 @@ The BIC \citep{schwarz78} is calculated by \textsf{regls} as
 $-2\ell(\hat{\beta}) + k^*(\lambda) \log n$, where $\ell(\hat{\beta})$
 is the log-likelihood, based on the sum of squared residuals, and
 $k^*(\lambda)$ the number of non-zero coefficients for the given
-$\lambda$. This criterion provides a guide (though certainly not an
-infallible one) to the likely out-of-sample performance of a model:
-smaller values of BIC are better. Note that the LASSO criterion itself
-does not offer such a guide (it is likely to decrease monotonically
-along with $\lambda$), but it can be useful in comparing the
-effectiveness of minimization algorithms (see \ref{app:ccd}).
+$\lambda$. This criterion can provide a rough guide to the likely
+out-of-sample performance of a model: smaller values of BIC are
+better. Note that the LASSO criterion itself does not offer such a guide
+(it is likely to decrease monotonically along with $\lambda$), but it
+can be useful in comparing the effectiveness of minimization algorithms
+(see \ref{app:ccd}).
 
 When multiple $\lambda$ values are specified, the vector \texttt{nzb}
 and list \texttt{nzX} refer to the non-zero coefficients and
@@ -1014,6 +1020,10 @@ void glmnet_multiprint (const matrix RB, const matrix Rlam,
 \section{Change log}
 \label{sec:changes}
 
+2025-05-15: Increase the default minimum $s$ value for the case when
+\texttt{nlambda} is given and the number of observations is not greater
+than the number of regressors (as per \textsf{glmnet}). Revise the
+documentation accordingly.\\[4pt]
 2025-04-16: Add check for missing values in \texttt{mregls}; fix
 \dtk{regls_multiprint} for the case where it follows cross
 validation.\\[4pt]
