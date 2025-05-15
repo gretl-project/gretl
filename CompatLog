@@ -9,6 +9,9 @@ dimension (as per the documentation).
 The --dummy option for "gnuplot" has been officially renamed as
 --factorized, but the old name still works as an alias.
 
+A deprecation message has been added for the plot --band syntax
+that was current prior to gretl 2023c.
+
 2025-03-20 version 2025a
 
 No known incompatible changes.
