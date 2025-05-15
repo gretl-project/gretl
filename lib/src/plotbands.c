@@ -672,6 +672,8 @@ static band_info **get_single_band_info (int matrix_mode,
 
 #if SUPPORT_LEGACY
     bi = legacy_get_band_info(spec, matrix_mode, gi, dset, opt, err);
+    gretl_warnmsg_set(_("Deprecated --band syntax: please use the current syntax\n"
+                        "as described in the help for the 'gnuplot' command"));
 #else
     *err = E_INVARG;
 #endif
