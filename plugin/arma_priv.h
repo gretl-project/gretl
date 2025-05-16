@@ -140,6 +140,9 @@ int ar_arma_init (double *coeff, const DATASET *dset,
 		  arma_info *ainfo, MODEL *pmod,
 		  gretlopt opt);
 
+int arma_by_simple_ols (const double *coeff, const DATASET *dset,
+                        arma_info *ainfo, MODEL *pmod);
+
 int arma_by_ls (const double *coeff, const DATASET *dset,
 		arma_info *ainfo, MODEL *pmod);
 

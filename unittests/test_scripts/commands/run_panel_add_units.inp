@@ -1,0 +1,31 @@
+set verbose off
+clear
+set assert stop
+set seed 12345
+
+nulldata 6
+setobs 2 1:1 --stacked-time-series
+genr time
+series country = $unit + 3
+series year = time + 1999
+series x = year * country
+delete index time
+store rhs.csv
+
+# artificial panel data
+nulldata 6
+setobs 2 1:1 --stacked-time-series
+genr time
+series country = $unit
+series year = time + 1999
+series x = year * country
+delete index time
+
+# extend LHS in cross-sectional dimension
+dataset addobs 3
+# add the RHS data
+join rhs.csv x --ikey=country,year
+remove("rhs.csv")
+
+assert({x} == {year * country})
+# print -o

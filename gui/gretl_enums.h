@@ -268,6 +268,7 @@ enum browser_codes {
 enum pref_tabs {
     TAB_NONE = 0,
     TAB_MAIN,
+    TAB_PLOTS,
     TAB_PROGS,
     TAB_EDITOR,
     TAB_NET,

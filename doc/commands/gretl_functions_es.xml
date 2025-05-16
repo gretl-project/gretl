@@ -456,25 +456,6 @@
       </description>
     </function>
 
-    <function name="$lang" section="access" output="string">
-      <description>
-	<para>
-	  Devuelve una cadena de texto que representa el idioma que se está usando
-	  (si este puede determinarse). La cadena de texto está compuesta por dos
-	  letras del código de lenguaje ISO 639-1 (por ejemplo, <lit>en</lit>
-	  para el idioma inglés, <lit>jp</lit> para el japonés, <lit>el</lit> para
-	  el griego) seguidas de un guion bajo más otras dos letras del código de
-	  país ISO 3166-1. Así, por ejemplo, el idioma portugués de Portugal
-	  se representa por <lit>pt_PT</lit> mientras que el idioma portugués de
-	  Brasil se representa por <lit>pt_BR</lit>.
-	</para>
-	<para>
-	  Si no es posible determinar el idioma vigente, se devuelve el texto
-	  <quote><lit>unknown</lit></quote>.
-	</para>
-      </description>
-    </function>
-
     <function name="$llt" section="access" output="series">
       <description>
 	<para>
@@ -797,6 +778,21 @@
       </description>
     </function>
 
+    <function name="$pmanteau" section="access" output="matrix">
+      <description>
+	<para>
+	  Disponible luego de la estimación de una autorregresión de vectores.
+	  Devuelve un vector fila que contiene los resultados del contraste portmanteau
+	  multivariante de autocorrelación de los errores, como se discute en las
+	  páginas 21&ndash;22 en <cite key="johansen95">Johansen (1995)</cite>.
+	  Los elementos son, en este orden, el estadístico de Ljung&ndash;Box,
+	  el retardo máximo que se considera, los grados de libertad para el
+	  contraste (chi-cuadrado), y la probabilidad asociada (valor p) al
+	  valor que toma el estadístico de contraste.
+	</para>
+      </description>
+    </function>
+
     <function name="$pvalue" section="access" output="scalar-or-matrix">
       <description>
 	<para>
@@ -857,6 +853,17 @@
 	  con la sintaxis <lit>$rho(n)</lit> después de la estimación de un modelo por medio
 	  de la instrucción <lit>ar</lit>, devuelve el valor estimado correspondiente
 	  al coeficiente &rgr;(<math>n</math>).
+	</para>
+      </description>
+    </function>
+
+    <function name="$rlnl" section="access" output="scalar">
+      <description>
+	<para>
+	  Después de la estimación de un VECM restringido, devuelve un escalar
+	  con el logaritmo de la verosimilitud del modelo restringido. Consulta
+	  también <fncref targ="$lnl"/>, y <guideref targ="chap:vecm"/> para
+	  ver ejemplos de su uso.
 	</para>
       </description>
     </function>
@@ -1178,11 +1185,12 @@
 	  los errores aparecen bajo la clave <lit>uhat</lit> y los coeficientes
 	  bajo <lit>coeff</lit>. (Como excepciones están las claves <lit>A</lit>,
 	  <lit>B</lit>, e <lit>Gamma</lit>, que se corresponden con los accesores
-	  habituales sysA, sysB, y sysGamma.)
-	  Las claves para obtener información adicional
-	  se espera que debieran explicarse suficientemente por si mismas.
-	  Para comprobar lo que tienes a tu disposición, puedes obtener una copia
-	  del 'bundle' y representar su contenido, como en
+	  habituales <fncref targ="sysA"/>, <fncref targ="sysB"/>, y
+	  <fncref targ="sysGamma"/>.) Las claves para obtener información
+	  adicional se espera que debieran explicarse suficientemente
+	  por si mismas. Para comprobar lo que tienes a tu disposición,
+	  puedes obtener una copia del 'bundle' y representar su contenido,
+	  como en
 	</para>
 	<code>
 	  var 4 y1 y2 y2
@@ -1409,18 +1417,6 @@
       </description>
     </function>
 
-    <function name="$workdir" section="access" output="string">
-      <description>
-	<para>
-	  Este accesor devuelve una cadena de texto con la ruta desde la que lee
-	  y en la que escribe GRETL por defecto. Se ofrece una discusión más
-	  detallada en la Guía de instrucciones, en <cmdref targ="workdir"/>.
-	  Ten en cuenta que el usuario puede determinar esta cadena mediante
-	  la instrucción <cmdref targ="set"/>.
-        </para>
-      </description>
-    </function>
-
     <function name="$xlist" section="access" output="list">
       <description>
 	<para>
@@ -1505,12 +1501,23 @@
         </description>
     </function>
 
-    <function name="$lang" section="straccess" output="string">
-        <description>
-        <para>
-          Proporciona una cadena de texto con el identificador del idioma vigente especificado.
-        </para>
-        </description>
+    <function name="$lang" section="access" output="string">
+      <description>
+	<para>
+	  Devuelve una cadena de texto que representa el idioma que se está usando
+	  (si este puede determinarse). La cadena de texto está compuesta por dos
+	  letras del código de lenguaje ISO 639-1 (por ejemplo, <lit>en</lit>
+	  para el idioma inglés, <lit>jp</lit> para el japonés, <lit>el</lit> para
+	  el griego) seguidas de un guion bajo más otras dos letras del código de
+	  país ISO 3166-1. Así, por ejemplo, el idioma portugués de Portugal
+	  se representa por <lit>pt_PT</lit> mientras que el idioma portugués de
+	  Brasil se representa por <lit>pt_BR</lit>.
+	</para>
+	<para>
+	  Si no es posible determinar el idioma vigente, se devuelve el texto
+	  <quote><lit>unknown</lit></quote>.
+	</para>
+      </description>
     </function>
 
     <function name="$seats" section="straccess" output="string">
@@ -1547,9 +1554,12 @@
     <function name="$workdir" section="straccess" output="string">
         <description>
         <para>
-         Proporciona una cadena de texto con la ruta del directorio de
-         trabajo vigente de GRETL. Para usarla en modo de sustitución para
-         cadenas de texto, antepón el símbolo arroba (<lit>@workdir</lit>).
+	  Este accesor devuelve una cadena de texto con la ruta desde la que lee
+	  y en la que escribe GRETL por defecto. Se ofrece una discusión más
+	  detallada en la Guía de instrucciones, en <cmdref targ="workdir"/>.
+	  Ten en cuenta que el usuario puede determinar esta cadena mediante
+	  la instrucción <cmdref targ="set"/>. Para usarla en modo de sustitución
+	  para cadenas de texto, antepón el símbolo arroba (<lit>@workdir</lit>).
         </para>
         </description>
     </function>
@@ -1633,10 +1643,10 @@
 	  <quote>Entrada matricial</quote> de abajo para un uso alternativo.
 	</para>
 	<para>
-	  En la forma más simple de uso de esta función, <argname>x</argname>
-	  se establece igual a <lit>null</lit>, <argname>segunvar</argname> es
-	  una serie individual y el tercer argumento se omite (o se establece
-	  igual a cero). En este caso, se devuelve una matriz con dos columnas
+	  En la forma más simple de uso de esta función, <argname>x</argname> se
+	  establece igual a <lit>null</lit>, <argname>segunvar</argname> es una
+	  serie individual y el tercer argumento se omite (o se establece igual
+	  a cero). El valor que se devuelve entonces es una matriz con dos columnas
 	  que contiene: los distintos valores de <argname>segunvar</argname>
 	  ordenados de forma creciente en la primera columna, y el número de
 	  observaciones en las que <argname>segunvar</argname> toma cada uno
@@ -1651,13 +1661,13 @@
 	  3 (en total 5 veces) y 4 (en total 9 veces).
 	</para>
 	<para>
-	  De modo más general, si <argname>segunvar</argname> es una lista con
-	  <math>n</math> elementos, entonces las <math>n</math> columnas a la
-	  izquierda contienen las combinaciones de los distintos valores de cada
-	  una de las <math>n</math> series, y la columna de recuento contiene
-	  el número de observaciones en las que se produce cada combinación.
-	  Observa que siempre puedes encontrar la columna de recuento en la
-	  posición <lit>nelem(segunvar) + 1</lit>.
+	  De modo más general, si <argname>segunvar</argname> es una lista
+	  con <math>n</math> elementos, entonces las primeras <math>n</math>
+	  columnas de la matriz que se devuelve contienen las combinaciones de
+	  los distintos valores de cada una de las <math>n</math> series, y la
+	  columna de recuento contiene el número de observaciones en las que
+	  se produce cada combinación. (La columna de recuento siempre se
+	  puede encontrar en la posición <lit>nelem(segunvar)+1</lit>).
 	</para>
 	<subhead>Especificar una función de agregación</subhead>
 	<para>
@@ -1668,24 +1678,24 @@
 	  en <argname>x</argname>. (De este modo, <math>m</math> se iguala
 	  a 1 cuando <argname>x</argname> es una única serie, y se iguala a
 	  <lit>nelem(x)</lit> cuando <argname>x</argname> es una lista.)
-	  El estadístico indicado se calcula en las submuestras respectivas
-	  que estén definidas por medio de las combinaciones indicadas en
+	  El estadístico indicado se calcula en las submuestras que estén
+	  definidas por medio de las combinaciones indicadas en
 	  <argname>segunvar</argname> (en orden ascendente); estas
 	  combinaciones se muestran en la(s) primera(s) <math>n</math>
 	  columna(s) de la matriz que se devuelve.
 	</para>
 	<para>
-	  Entonces, en el caso especial en el que <argname>x</argname> y
-	  <argname>segunvar</argname> son ambas series individuales, el
-	  valor que se devuelve es una matriz con tres columnas
-	  que va a contener respectivamente: los distintos valores de
-	  <argname>segunvar</argname> ordenados de forma creciente, el número
-	  de observaciones en las que <argname>segunvar</argname> toma cada
-	  uno de esos valores, y los valores del estadístico que especifica la
-	  función <argname>nombrefunc</argname>, calculado para la serie
-	  <argname>x</argname>, pero usando tan solo aquellas observaciones
-	  en las que <argname>segunvar</argname> toma el mismo valor que se
-	  especifica en la primera columna de la matriz.
+	  Entonces, si tanto <argname>x</argname> como
+	  <argname>segunvar</argname> son series individuales, el valor que se
+	  devuelve es una matriz con tres columnas que va a contener: los distintos
+	  valores de <argname>segunvar</argname> ordenados de forma creciente,
+	  el número de observaciones en las que <argname>segunvar</argname>
+	  toma cada uno de esos valores, y los valores del estadístico que
+	  especifica la función <argname>nombrefunc</argname>, calculado
+	  para la serie <argname>x</argname>, pero usando justo aquellas
+	  observaciones en las que <argname>segunvar</argname> toma el mismo
+	  valor que se especifica en la primera columna de la
+	  matriz.
 	</para>
 	<para>
 	  Las siguientes opciones de <argname>nombrefunc</argname> se mantienen
@@ -1699,8 +1709,8 @@
 	  devuelve un valor escalar; por eso, en este sentido, puede decirse que
 	  de algún modo <quote>agregan</quote> la serie. Si no hay ninguha de
 	  estas funciones originales que haga lo que necesitas, puedes utilizar
-	  una función definida por el usuario como <quote>agregador</quote>;
-	  en ese caso, del mismo modo que las funciones originales, esa función
+	  una función definida por el usuario como <quote>agregador</quote>.
+	  En ese caso, del mismo modo que las funciones originales, esa función
 	  debe tener como argumento únicamente una serie, y devolver un
 	  valor escalar.
 	</para>
@@ -1711,14 +1721,15 @@
 	  proporciona el número de observaciones válidas (no ausentes) de
 	  <argname>x</argname> en cada combinación de <argname>segunvar</argname>.
 	</para>
+        <subhead>Algunos ejemplos</subhead>
 	<para>
-	  Como ejemplo sencillo, supón que con <lit>region</lit> se definen
-	  unos códigos para representar una distribución geográfica por regiones,
-	  utilizándose para ello enteros desde 1 hasta <math>n</math>, y que
-	  con <lit>renta</lit> se representa la renta de los hogares. Entonces el
-	  código indicado a continuación debe producir una matriz de orden
-	  <by r="n" c="3"/> que contiene los códigos de las regiones, el recuento de
-	  observaciones de cada una, y la renta media de los hogares en cada una:
+	  Primero, supón que con <lit>region</lit> se definen unos códigos para
+	  representar una distribución geográfica por regiones, utilizándose para
+	  ello enteros desde 1 hasta <math>n</math>, y que con <lit>renta</lit>
+	  se representa la renta de los hogares. Entonces el código indicado a
+	  continuación debe producir una matriz de orden <by r="n" c="3"/> que
+	  contiene los códigos de las regiones, el recuento de observaciones de
+	  cada una, y la renta media de los hogares en cada una:
 	</para>
 	<code>
 	  matrix m = aggregate(renta, region, mean)
@@ -1743,14 +1754,14 @@
 	  desviaciones típicas muestrales de <lit>renta</lit> y <lit>edad</lit>.
 	</para>
 	<para>
-	  Observa que si <argname>segunvar</argname> es una lista de variables,
-	  algunas combinaciones de los valores de <argname>segunvar</argname> pueden
-	  no estar presentes en los datos (produciéndose un recuento igual a cero).
-	  En ese caso, los valores de los estadísticos para <argname>x</argname> se
-	  registran como <lit>NaN</lit> (es decir, no son números). Si quieres
-	  ignorar esos casos, puedes usar la función <fncref targ="selifr"/> para
-	  escoger solo aquellas filas que no tengan recuento igual a cero. La columna
-	  a comprobar estará una posición a la derecha de la indicada por el número de
+	  Si <argname>segunvar</argname> es una lista de variables, algunas
+	  combinaciones de los valores de <argname>segunvar</argname> pueden no
+	  estar presentes en los datos (produciéndose un recuento igual a cero).
+	  En ese caso, los valores de los estadísticos para <argname>x</argname>
+	  se registran como <lit>NaN</lit> (es decir, no son números). Para cortar
+	  esos casos, puedes usar la función <fncref targ="selifr"/> para escoger
+	  solo aquellas filas que no tengan recuento igual a cero. La columna a
+	  comprobar estará una posición a la derecha de la indicada por el número de
 	  variables de <argname>segunvar</argname>, por lo que puede usarse el código:
 	</para>
 	<code>
@@ -1760,16 +1771,16 @@
 	</code>
 	<subhead>Entrada matricial</subhead>
 	<para>
-	  En lugar de indicar <argname>x</argname> y <argname>segunvar</argname>
-	  como series o listas, puedes indicarlas en formato matricial. Ahora bien,
-	  si indicas los dos argumentos, deben coincidir en el mismo tipo (no
-	  puedes indicar una serie o una lista para uno de los argumentos, y una
-	  matriz para el otro); además, dos argumentos de tipo matricial
-	  deberán tener el mismo número de filas. Ten en cuenta también, que en
-	  este contexto se trata a las columnas de las matrices como si fuesen
-	  series, por ello la función de agregación del tercer argumento (opcional)
-	  deberá seguir el mesmo patrón descrito más arriba, tomando un
-	  argumento de tipo serie y devolviendo un escalar.
+	  En lugar de indicar <argname>x</argname>
+	  y <argname>segunvar</argname> como series o listas, puedes indicarlas
+	  en formato matricial. Ahora bien, si indicas los dos argumentos,
+	  deben coincidir en el mismo tipo (no puedes indicar una serie o una
+	  lista para uno de los argumentos, y una matriz para el otro); además,
+	  dos argumentos de tipo matricial deberán tener el mismo número de
+	  filas. En este contexto, se trata a las columnas de las matrices como
+	  si fuesen series, por ello la función de agregación deberá seguir el
+	  mismo patrón descrito más arriba, tomando un argumento de tipo
+	  serie y devolviendo un escalar.
 	</para>
       </description>
     </function>
@@ -2437,11 +2448,11 @@
 	  el resultado es
 	</para>
 	<code>
-	  0   0   1   1 
-	  0   1   0   1 
-	  0   1   1   0 
-	  1   0   0   1 
-	  1   0   1   0 
+	  0   0   1   1
+	  0   1   0   1
+	  0   1   1   0
+	  1   0   0   1
+	  1   0   1   0
 	  1   1   0   0
 	</code>
 	<para>
@@ -3874,13 +3885,27 @@
 	<ilist>
 	  <li>
 	    <para>
-	      <quote><lit>header</lit></quote>: una cadena de texto que
-	      especifica un 'header' HTTP que va a enviarse al 'host'.
+	      <quote><lit>header</lit></quote>: Una cadena de texto que
+	      especifica un encabezamiento HTTP que va a enviarse al 'host'.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      <quote><lit>postdata</lit></quote>: una cadena de texto que
+	      <quote><lit>include</lit></quote>: Un escalar: si no es cero,
+	      el encabezamiento que se recibe del 'host' se incluye en el
+	      cuerpo del resultado.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <quote><lit>nobody</lit></quote>: Un escalar: si no es cero,
+	      la función <i>no</i> va a descargar el cuerpo de la URL que
+	      se requiere.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <quote><lit>postdata</lit></quote>: Una cadena de texto que
 	      contiene los datos que van a enviarse al 'host'.
 	    </para>
 	  </li>
@@ -3889,34 +3914,35 @@
 	  Los campos <lit>header</lit> y <lit>postdata</lit> se destinan
 	  para usarse con una solicitud HTTP de tipo <lit>POST</lit>. Si
 	  está presente <lit>postdata</lit>, va implícito el método
-	  <lit>POST</lit>; en caso contrario, va implícito el método <lit>GET</lit>.
-	  (Pero observa que para sencillas solicitudes <lit>GET</lit>, la
-	  función <fncref targ="readfile"/> ofrece una interfaz más
-	  simple.)
-	</para>
-	<para>
-	  Se reconoce otro elemento opcional del 'bundle': si está presente
-	  un escalar llamado <lit>include</lit> y tiene un valor no nulo, esto
-	  se entiende como una solicitud para incluir el 'header' recibido del
-	  'host', en el cuerpo del resultado.
+	  <lit>POST</lit>. En caso contrario, los métodos <lit>GET</lit> o
+	  <lit>HEAD</lit> van implícitos, dependiendo del valor de la clave
+	  <lit>nobody</lit>. (Pero observa que para solicitudes <lit>GET</lit>
+    sencillas, la función <fncref targ="readfile"/> ofrece una interfaz
+    más simple.)
 	</para>
 	<para>
 	  Al completarse la solicitud, el texto recibido del servidor
-	  se añade al 'bundle' con la clave
-	  <quote><lit>output</lit></quote>.
+	  se añade al 'bundle' con la clave <quote><lit>output</lit></quote>,
+	  y el código de status de HTTP se guarda bajo la clave
+	  <quote><lit>http_code</lit></quote>.
 	</para>
 	<para>
 	  La función va a fallar si hay una equivocación al formular la solicitud
-	  (por ejemplo, si no existe una <lit>URL</lit> en la entrada); en caso contrario,
-	  va a devolver el valor 0 si la solicitud prospera, o un valor no
-	  nulo si no lo hace. En este último caso, se añade el mensaje de
-	  fallo de la biblioteca 'curl' al 'bundle', con el identificador 
-	  <quote><lit>errmsg</lit></quote>. Ten en cuenta, sin embargo, que
-	  <quote>éxito</quote> en este sentido no significa necesariamente
-	  que obtienes los datos que deseabas; en realidad significa tan solo 
-	  que se recibió alguna respuesta del servidor. Debes comprobar el
-	  contenido del <quote>buffer</quote> de salida (que de hecho puede ser
-	  un mensaje tal como <quote>Página no encontrada</quote>).
+	  (por ejemplo, si no existe una <lit>URL</lit> en la entrada); en caso
+	  contrario, va a devolver el valor 0 si la solicitud prospera, o un valor
+	  no nulo si no lo hace. En este último caso, se añade el mensaje de fallo
+	  de libcurl al 'bundle', con el identificador <quote><lit>errmsg</lit></quote>.
+	  Ten en cuenta que <quote>éxito</quote> en este sentido no significa
+	  necesariamente que obtienes los datos que deseabas; en realidad
+	  significa tan solo que se recibió alguna respuesta del servidor.
+	  Una manera rápida de comprobación es inspeccionar el código de
+	  status de HTTP: los utilizados más habitualmente son 200 (éxito)
+	  o 404 (página no encontrada).
+	  Consulta
+	  <url>https://en.wikipedia.org/wiki/List_of_HTTP_status_codes</url>
+	  para obtener la lista completa. Como alternativa, también puedes
+	  comprobar el contenido del 'buffer' de salida (que de hecho puede
+	  ser un mensaje tal como <quote>Página no encontrada</quote>).
 	</para>
 	<para>
 	  Aquí tenemos un ejemplo de cómo utilizar esta función: para bajar
@@ -3924,22 +3950,46 @@
 	  el envío de una consulta JSON. Observa el uso de <fncref targ="sprintf"/>
 	  para insertar comillas en los datos <lit>POST</lit>.
 	</para>
-	<code>
-	  bundle req
-	  req.URL = "http://api.bls.gov/publicAPI/v1/timeseries/data/"
-	  req.include = 1
-	  req.header = "Content-Type: application/json"
-	  string s = sprintf("{\"seriesid\":[\"LEU0254555900\"]}")
-	  req.postdata = s
-	  err = curl(&amp;req)
-	  if err == 0
-	      s = req.output
-	      string line
-	      loop while getline(s, &amp;line)
-	          printf "%s\n", line
-	      endloop
-	  endif
-	</code>
+   	<code>
+	 bundle req
+	 req.URL = "https://api.bls.gov/publicAPI/v1/timeseries/data/"
+	 req.include = 1
+	 eq.header = "Content-Type: application/json"
+	 string s = sprintf("{\"seriesid\":[\"LEU0254555900\"]}")
+	 req.postdata = s
+	 err = curl(&amp;req)
+	 if err == 0
+	    s = req.output
+	    string line
+	    loop while getline(s, &amp;line)
+	       printf "%s\n", line
+	    endloop
+	 endif
+    </code>
+  <para>
+	 Como segundo ejemplo, el código de abajo comprueba si está disponible
+	 una versión concreta del conjunto de datos
+	 <quote>Global Macro Database</quote>, y la descarga en tal caso.
+  </para>
+    <code>
+	 string base_URL = "https://www.globalmacrodata.com"
+	 string filename = "GMD_2025_03.csv"
+
+	 bundle req
+	 req.URL = base_URL ~ "/" ~ filename
+	 req.nobody = 1
+	 err = curl(&amp;req)
+
+	 if err || (req.http_code != 200)
+	    printf "Oh, oh. It seems %s is unavailable\n", filename
+	 else
+	    # actual request
+	    bundle req = empty
+	    req.URL = base_URL ~ "/" ~ filename
+	    err = curl(&amp;req)
+	    print req
+	 endif
+    </code>
 	<para>
 	  Consulta también las funciones <fncref targ="jsonget"/> y
 	  <fncref targ="xmlget"/> para ver modos de procesamiento
@@ -4781,77 +4831,6 @@
       </description>
     </function>
 
-    <function name="eigengen" section="linalg" output="matrix">
-      <fnargs>
-	<fnarg type="smatrix">A</fnarg>
-	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  <emphasis>Esta es una función heredada, anterior al soporte
-	  original de GRETL para matrices complejas. No debes usarla en
-	  los guiones nuevos que escribas en lenguaje HANSL. Utiliza
-	  </emphasis> <fncref targ="eigen"/> <emphasis> en su lugar.</emphasis>
-	</para>
-	<para>
-	  Calcula los autovalores y, opcionalmente, los autovectores de la matriz
-	  <argname>A</argname> de orden <by r="n" c="n"/>. Cuando todos los
-	  autovalores son reales, se devuelve una matriz <by r="n" c="1"/>. En caso
-	  contrario, el resultado es una matriz <by r="n" c="2"/>, con una primera
-	  columna que contiene los elementos reales, y una segunda columna con los
-	  elementos imaginarios. No se garantiza que los autovalores se vayan a
-	  clasificar en ningún orden en particular.
-	</para>
-	<para>
-	  Hay dos opciones para el segundo argumento: que se trate del nombre
-	  de una matriz ya existente precedida por <lit>&amp;</lit> (para
-	  indicar la <quote>dirección</quote> de la matriz en cuestión), en cuyo
-	  caso en esta matriz se guarda un resultado auxiliar; o que se trate
-	  de la palabra clave <lit>null</lit>, en cuyo caso no se produce el
-	  resultado auxiliar.
-	</para>
-	<para>
-	  Cuando el segundo argumento no es nulo, se va a sobrescribir la matriz
-	  especificada con el resultado auxiliar (y no es necesario que la matriz
-	  existente tenga la dimensión adecuada para recibir el resultado). El
-	  resultado en la matriz <argname>U</argname> se organiza del siguiente modo:
-	</para>
-	<ilist>
-	  <li>
-            <para>
-              Si el <math>i</math>-ésimo autovalor es real, la
-              <math>i</math>-ésima columna de <math>U</math> va a
-              contener el autovector correspondiente;
-            </para>
-	  </li>
-	  <li>
-            <para>
-              Si el <math>i</math>-ésimo autovalor es complejo, la
-              <math>i</math>-ésima columna de <math>U</math> va a
-              contener la parte real del autovector correspondiente, y la
-              siguiente columna la parte imaginaria. El autovector del autovalor
-              conjugado es el conjugado del autovector.
-            </para>
-	  </li>
-	</ilist>
-	<para>
-	  En otras palabras, los autovectores se guardan en el mismo orden que los
-	  autovalores; ahora bien, los autovectores reales ocupan una columna,
-	  mientras que los autovectores complejos ocupan dos (y la parte real
-	  se guarda primero). Aún así, el número total de columnas es
-	  <math>n</math>, pues el autovector conjugado se ignora.
-	</para>
-	<para>
-	  <seelist>
-            <fncref targ="eigensym"/>
-            <fncref targ="eigsolve"/>
-            <fncref targ="qrdecomp"/>
-            <fncref targ="svd"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
     <function name="eigensym" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="symmat">A</fnarg>
@@ -5569,24 +5548,24 @@
 	<code>
 	  U (2 x 6)
 
-	  1    3    5    7    9   11 
-	  2    4    6    8   10   12 
+	  1    3    5    7    9   11
+	  2    4    6    8   10   12
 
 	  V (4 x 3)
 
-	  1    3    5 
-	  2    4    6 
-	  7    9   11 
-	  8   10   12 
+	  1    3    5
+	  2    4    6
+	  7    9   11
+	  8   10   12
 
 	  W (6 x 2)
 
-	  1    7 
-	  2    8 
-	  3    9 
-	  4   10 
-	  5   11 
-	  6   12 
+	  1    7
+	  2    8
+	  3    9
+	  4   10
+	  5   11
+	  6   12
 	</code>
 	<para>
 	  Se muestra un fallo cuando las matrices del 'array' no sean convenientes
@@ -6390,20 +6369,46 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Devuelve el valor de la función hipergeométrica de Gauss para el
-	  argumento real <argname>x</argname>.
+	  Devuelve el valor de la función hipergeométrica gausiana para el
+	  argumento real <argname>x</argname>. Los valores válidos para
+	  <argname>x</argname> están en el intervalo cerrado [&minus;1, 1].
+	  Esta función es muy general, y se reduce a una función más simple
+	  en algunos casos especiales, como por ejemplo
+	  <math>-</math>log(<math>1-x</math>)/<math>x</math>
+	  cuando <math>a=b=1</math> y <math>c=2</math>. Consulta
+	  <url>https://en.wikipedia.org/wiki/Hypergeometric_function</url>
+	  para obtener más detalles.
 	</para>
 	<para context="tex">
-	  Devuelve el valor de la función hipergeométrica de Gauss
-    <math>{}_2F_1(a,b;c;z) = \sum_{n=0}^\infty \frac{(a)_n (b)_n}{(c)_n} \frac{z^n}{n!}.</math>
-    para el argumento real
-	  <argname>x</argname>.
+	  Devuelve el valor de la función hipergeométrica gausiana
+    <math>{}_2F_1(a,b;c;z) = \sum_{n=0}^\infty \frac{(a)_n (b)_n}{(c)_n} \frac{z^n}{n!}</math>
+    para el argumento real <argname>x</argname>.
+    Los valores válidos para <argname>x</argname> están en el intervalo
+    cerrado [&minus;1, 1]. Esta función es muy general, y se reduce a
+    una función más simple en algunos casos especiales,
+    como por ejemplo
+	  <math>-\frac{\log(1-x)}{x}</math>
+	  cuando <math>a=b=1</math> y <math>c=2</math>. Consulta
+	  <url>https://en.wikipedia.org/wiki/Hypergeometric_function</url>
+	  para obtener más detalles.
 	</para>
 	<para>
 	  Cuando <argname>x</argname> es un escalar, el valor que se devuelve
 	  va a ser un escalar; en caso contrario, va a ser una matriz con la
-	  misma dimensión que <argname>x</argname>.
+	  misma dimensión que <argname>x</argname>. Por ejemplo,
 	</para>
+	<code>
+	  a = hyp2f1(1, 1, 2, {-1, 0, 0.5})
+	  print a
+	</code>
+	<para>
+	  produce el siguiente resultado:
+	</para>
+	<code>
+	  a (1 x 3)
+
+	  0.69315       1.0000       1.3863
+	</code>
       </description>
     </function>
 
@@ -8439,6 +8444,8 @@
 	<para>
 	  Calcula una matriz de correlaciones (de Pearson), tratando cada columna
 	  de la matriz argumento <argname>X</argname> como si fuese una variable.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="corr"/>
             <fncref targ="cov"/>
@@ -12509,6 +12516,8 @@
 	  nulo para el tercer argumento (opcional), se ignoran los valores
 	  ausentes; de otra forma, el resultado es <lit>NA</lit> para cada
 	  columna que contenga valores ausentes.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="meanc"/>
             <fncref targ="sumc"/>
@@ -14024,6 +14033,55 @@
 	</para>
 	<para>
 	  Consulta <guideref targ="chap:tdisagg"/> para obtener más detalles.
+	</para>
+      </description>
+    </function>
+
+    <function name="thresh" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="anyfloat">a</fnarg>
+	<fnarg optional="true" type="scalar">fuerza</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Realiza una delimitación suave o fuerte sobre <argname>x</argname>,
+	  dependiendo del valor del parámetro Booleano opcional
+	  <argname>fuerza</argname>, cuyo valor predeterminado es 0.
+	</para>
+	<para>
+	  En los dos casos, las entradas de <argname>x</argname> cuyos valores
+	  absolutos sean menores que <argname>a</argname> se asignan a 0.
+	  Con la delimitación suave, las demás entradas se contraen hacia 0.
+	  Por ejemplo, el código de abajo
+	</para>
+	<code>
+	  s = seq(-2,2,0.5)'
+	  eval s ~ thresh(s, 0.5) ~ thresh(s, 0.5, 1)
+	</code>
+	<para>
+	  genera
+	</para>
+	<code>
+             -2      -1.5       -2
+           -1.5        -1     -1.5
+             -1      -0.5       -1
+           -0.5         0        0
+              0         0        0
+            0.5         0        0
+              1       0.5        1
+            1.5         1      1.5
+              2       1.5        2
+	</code>
+	<para>
+	  Cuando los dos argumentos difieren en el tipo, el tipo del resultado
+	  es el del <quote>mayor</quote> de los dos, donde la ordenación sería
+	  matriz &gt; serie &gt; escalar. Por ejemplo, cuando sea un escalar
+	  <argname>y</argname> y sea <argname>x</argname> un
+	  <math>n</math>-vector (o viceversa), el resultado será un
+	  <math>n</math>-vector. Ten en cuenta que los argumentos matriciales
+	  deben ser vectores; y que, si ninguno de los argumentos es un escalar,
+	  los dos argumentos deben tener la misma longitud.
 	</para>
       </description>
     </function>

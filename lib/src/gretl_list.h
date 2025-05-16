@@ -24,6 +24,8 @@
 
 int *gretl_list_new (int nterms);
 
+void gretl_list_free (int *list);
+
 int *gretl_list_resize (int **oldlist, int nterms);
 
 int *gretl_list_append_term (int **plist, int v);

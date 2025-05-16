@@ -127,7 +127,7 @@ you may give \texttt{obsy} as a series or list of series, and the
 other arguments can be given as scalars if in context they are
 $1 \times 1$.
 
-If applicable you may specify any of the following optional input
+In addition you can specify any of the following optional input
 matrices:\footnote{Additional optional matrices are described in
 section~\ref{sec:extensions} below.}
 
@@ -166,24 +166,23 @@ computed using
 \myvec(\statecvar_{1|0}) = \left[ I - \statemat \otimes \statemat
 \right]^{-1} \myvec(\statevar)
 \]
-If the above condition is not satisfied you will have to make a
-choice on which technique to use for ``diffuse'' initialization.
+If the above condition is not satisfied you will have to make a choice
+on which technique to use for so-called ``diffuse'' initialization.
 
 In Section \ref{sec:diffuse} we provide a fuller discussion of the
-various options, but here's what is probably the bottom line for many
+various options, but here's what is likely the bottom line for many
 users. In earlier versions of gretl a rather crude solution was
 adopted, initializing $\statecvar_{1|0}$ to a ``numerically large''
 matrix. This was accomplished by setting a value of 1 on the bundle
 under the (reserved) key \texttt{diffuse}.  From gretl version 2022b
 on, if you have scripts where you set \texttt{diffuse=1} on your
-Kalman bundle you can now try \texttt{diffuse=2} instead. This
-invokes the new ``exact initial'' method for state space models with a
-diffuse initializer. Don't expect identical results from the new code,
-but to the extent results differ the new ones should be somewhat more
-accurate. (If results differ wildly you've probably found a bug;
-please report it!) You may also find that the new code is faster; it
-should be less likely to get hung up on numerical problems that delay
-or prevent convergence of ML estimation.
+Kalman bundle you can now try \texttt{diffuse=2} instead. This invokes
+the new ``exact initial'' method for state space models with a diffuse
+initializer. Don't expect identical results from the new code, but to
+the extent results differ the new ones should be somewhat more
+accurate. You may also find that the new code is faster; it should be
+less likely to get hung up on numerical problems that delay or prevent
+convergence of ML estimation.
 
 \section{Special features of state-space bundles}
 \label{sec:ss-special}
@@ -198,14 +197,14 @@ bundle there are certain constraints.
   \texttt{statemat}, \texttt{statevar} and (if applicable)
   \texttt{obsvar} in a given bundle if you wish---but only on
   condition that the replacement matrix has the same dimensions as the
-  original. In other words, the dimensions $\stdim$ and $\obsdim$ are
-  set once and for all by the \texttt{ksetup} call
-  (section~\ref{sec:setup}).
+  original. In other words, the dimensions of the state ($\stdim$) and
+  the observable ($\obsdim$) are set once and for all by the
+  \texttt{ksetup} call (section~\ref{sec:setup}).
 \item You can replace the data matrix \texttt{obsy} subject to the
-  condition that the number of columns, $\obsdim$, is unchanged; the
-  time-series length, $N$, is mutable.
-\item None of the input matrices just mentioned can be deleted from
-  the bundle.
+  condition that the number of columns, $\obsdim$, is unchanged; only
+  the time-series length, $N$, is mutable.
+\item None of the above-mentioned matrices can be deleted from the
+  bundle.
 \item Output matrices that are automatically added to the bundle by
   the functions described in the following sections \textit{can} be
   deleted (if you don't need them and want to save on storage). But
@@ -414,8 +413,9 @@ V^{(2)}_t = E\left[\left(\hat{\stdist}_t - \stdist_t\right)
   | \,\obsvec_1, \ldots, \obsvec_T \right]
 \]
 We calculate this matrix using the formulae given in \citet[section
-4.5.2]{durbin-koopman12}. Its diagonal elements can be used to form
-confidence intervals for the true disturbances.
+  4.5.2]{durbin-koopman12}. Its diagonal elements can be used to form
+confidence intervals for the true disturbances. Further details
+regarding these two variance measures can be found in \cite{cottrell16}.
 
 We are now ready to state what gretl provides under the key
 \texttt{smdisterr}. If the optional second argument to \cmd{kdsmooth}
@@ -465,24 +465,28 @@ SSmod.inivar = 1.0e5 * I(stdim)
 \end{code}
 where \texttt{stdim} is the dimension of the state.
 
-While the ``$\kappa \times I$'' approach works fairly well in many
+While the ``$\kappa \times I$'' approach works quite well in many
 cases it is nowadays generally deprecated in favor of one or other
 ``exact initial'' method. Such methods depend on derivation of the
-properties of the Kalman filter (and smoother) in the limit, as the
-aforementioned ``very large'' variance tends to infinity. In libgretl
-we have implemented two such methods: the ``univariate approach to
-multivariate observable'' advocated by \cite{durbin-koopman12} and the
-augmented Kalman method set out by \cite{dejong91} and
-\cite{dejong-lin03}.\footnote{The first of these is used in the
-  \textsf{KFAS} package for \textsf{R} \citep{helske17} and the second
-  by the \texttt{sspace} command in \textsf{Stata}. See
-  \url{https://www.stata.com/manuals/tssspace.pdf}.} We'll refer to
-them via the labels \texttt{univariate} and \texttt{dejong},
-respectively.
+properties of the Kalman filter and smoother in the limit, as the
+aforementioned ``very large'' variance tends to infinity. Gretl
+supports two such methods:
+\begin{itemize}
+\item The ``univariate approach to multivariate observable'' advocated
+  by \cite{durbin-koopman12}. This is based on ideas from
+  \cite{anderson-moore79}, who labeled it ``sequential
+  processing''. It is used exclusively in the \textsf{KFAS} package
+  for \textsf{R} \citep{helske17}.
+\item The augmented Kalman method set out by \cite{dejong91} and
+  \cite{dejong-lin03}. This is used by the \texttt{sspace} command in
+  \textsf{Stata}; see \url{https://www.stata.com/manuals/tssspace.pdf}.
+\end{itemize}
+We'll refer to these methods via the labels \texttt{sequential} and
+\texttt{dejong}, respectively.
 
 \subsection{Exact diffuse methods}
 
-The \texttt{univariate} approach handles a vector observable by
+The \texttt{sequential} approach handles a vector observable by
 ``unpacking'' it and substituting scalar calculations for matrix ones
 so far as possible. Durbin and Koopman claim it is faster than the
 alternatives. It is also able to deal in a straightforward way with
@@ -503,29 +507,29 @@ The \texttt{dejong} approach has no problem with the variance cases
 observations can be handled and at present observations with any
 missing elements are ignored.
 
-In short, there are cases where \texttt{univariate} may work best, and
-other cases that are not handled by \texttt{univariate} but where
-\texttt{dejong} works fine. Hence our decision to implement both
+In short, there are cases where \texttt{sequential} may work best, and
+other cases that are not handled by \texttt{sequential} but where
+\texttt{dejong} works fine. Hence our decision to offer both
 methods.
 
 Table~\ref{tab:code-diffuse} sets out the various cases that arise via
-combination of ``code'' (where \texttt{legacy} indicates the Kalman
-code as of gretl 2022a) and ``diffuse status'' (i.e.\ whether the
-model is diffuse, and if so how it is handled). (Note that although
-the primary virtue of \texttt{univariate} and \texttt{dejong} is their
-handling of the exact diffuse case, these methods can handle the
-non-diffuse case and the traditional ``$\kappa$-diffuse'' case).
+combination of ``code'' (where \texttt{legacy} indicates the Kalman code
+as of gretl 2022a) and ``diffuse status'' (i.e.\ whether the model is
+diffuse, and if so how it is handled). (Note that although the primary
+virtue of \texttt{sequential} and \texttt{dejong} is their handling of
+the exact diffuse case, these methods can also handle the non-diffuse
+case and the traditional ``$\kappa$-diffuse'' case).
 
 \begin{table}[htbp]
 \begin{center}
 \begin{tabular}{lccc}
    & non-diffuse & $\kappa$-diffuse & exact diffuse \\
   code & \texttt{diffuse=0} & \texttt{diffuse=1} & \texttt{diffuse=2} \\[4pt]
-  \texttt{legacy} & 1 & 2 & -- \\
-  \texttt{univariate} & 4 & 5 & 6 \\
-  \texttt{dejong} & 7 & 8 & 9
+  \texttt{legacy} & A & D & -- \\
+  \texttt{sequential} & B & E & G \\
+  \texttt{dejong} & C & F & H
 \end{tabular}
-\caption{Cross-tabulation of code-path and diffuse status. Numbers in
+\caption{Cross-tabulation of code-path and diffuse status. Letters in
   cells are used for reference in the text; ``legacy'' indicates gretl
   2022a or earlier.}
 \label{tab:code-diffuse}
@@ -536,26 +540,24 @@ The case used depends on various points, the primary one being the
 \texttt{diffuse} integer member of the state space bundle, which
 defaults to 0 but can be set to 1 or 2.
 \begin{itemize}
-\item \texttt{diffuse=0}: case 1 is the default (for backward
-  compatibility) but case 4 or 7 can be selected, by adding
-  \texttt{univariate=1} or \texttt{dejong=1} to the bundle.
-\item \texttt{diffuse=1}: case 2 is the default but case
-  5 or 8 can be selected as above.
-\item \texttt{diffuse=2}: the default is 6 but can be switched to 9
+\item \texttt{diffuse=0}: case A is the default (for backward
+  compatibility) but case B or C can be selected, by adding
+  \texttt{sequential=1} or \texttt{dejong=1} to the bundle.
+\item \texttt{diffuse=1}: case D is the default but case
+  E or F can be selected as above.
+\item \texttt{diffuse=2}: the default is G but H can be selected
   via \texttt{dejong=1}.
 \end{itemize}
 
-For cases in the same column---namely \{1,4,7\}, \{2,5,8\} and
-\{6,9\}---results from \texttt{kfilter()}, \texttt{ksmooth()} and
-\texttt{kdsmooth()} should in principle be the same across the
-code-paths but in practice there are bound to be slight differences
-due to the different algorithms employed. And note that slight
-differences at that level may be somewhat amplified by iterated
-filtering as in ML estimation. 
+For cases in the same column---namely \{A,B,C\}, \{D,E,F\} and
+\{G,H\}---results from \texttt{kfilter}, \texttt{ksmooth} and
+\texttt{kdsmooth} should in principle be the same across the code-paths
+but in practice there are bound to be slight differences due to the
+different algorithms employed. And note that such differences may be
+somewhat amplified by iterated filtering, as in ML estimation.
 
 \section{Extensions and refinements}
 \label{sec:extensions}
-
 
 \subsection{Regressors in the observation equation}
 \label{sec:obsx}
@@ -612,10 +614,10 @@ Any or all of the matrices \texttt{obsymat}, \texttt{obsxmat},
 \texttt{stconst} may be time-varying.  In that case you must supply
 the name of a function to be called to update the matrix or matrices
 in question: you add this to the bundle as a string, under the key
-\texttt{timevar\_call}.\footnote{The choice of the name for the
-  function itself is of course totally up to the user.} For example,
-if just \texttt{obsymat} ($\obsymat_t$) should be updated, by a
-function named \texttt{TV\_Z}, you would write
+\dtk{timevar_call}.\footnote{The choice of the name for the function
+  itself is up to the user.} For example, if just \texttt{obsymat}
+($\obsymat_t$) should be updated, by a function named \dtk{TV_Z}, you
+would write
 %
 \begin{code}
 SSmod.timevar_call = "TV_Z"
@@ -664,16 +666,15 @@ $N \times \stdim\obsdim$, with row $t$ holding the (transposed) vec of
 $\obsymat_t$, and \texttt{b.Tvals} is $N \times \stdim(\stdim +1)/2$,
 with row $t$ holding the vech of $\statemat_t$. Simpler variants
 (e.g.\ just one element of a relevant matrix in question is changed)
-and more complex variants---say, involving some sort of
+and more complex variants---for example, involving some sort of
 conditionality---are also possible in this framework.
 
 It is worth noting that this setup lends itself to a much wider scope
-than time-varying system matrices. In fact, this syntax allows for the
-possibility of executing user-defined operations at each step. The
-function that goes under \texttt{timevar\_call} can read all the
-elements of the model bundle and can modify several of them: the
-system matrices (which can therefore be made time-varying) as well as
-the user-defined elements.
+than time-varying system matrices. In fact, it gives the possibility
+of executing user-defined operations at each step. The function that
+goes under \dtk{timevar_call} can read all the elements of the model
+bundle and can modify several of them---the system matrices (which can
+therefore be made time-varying) as well as the user-defined elements.
 
 An extended example of use of the time-variation facility is presented
 in section~\ref{sec:ss-examples}.
@@ -696,9 +697,9 @@ variance of the disturbances in (\ref{eq:obs}) and (\ref{eq:state}).
   $V(\obsdist_t)$ ($\obsdim \times \obsdim$) and $V(\stdist_t)$ ($\stdim \times \stdim$).
 \item The ``de Jong'' representation: write
   $\obsdist_t = \altobsvar_t\alldist_t$ and
-  $\stdist_t = \altstatevar_t\nu_t$, where $\altobsvar_t$ is
-  $\obsdim \times \stdim$, $H_t$ is $\stdim \times p$ and $p$ is the
-  length of the underlying disturbance vector $\alldist_t$. This
+  $\stdist_t = \altstatevar_t\nu_t$, where $\alldist_t$ is an
+  underlying disturbance vector of length $p$, $\altobsvar_t$ is
+  $\obsdim \times p$ and $\altstatevar_t$ is $\stdim \times p$. This
   formulation allows for correlation of the disturbances across the
   equations, if $\altstatevar_t\altobsvar_t'$ is non-zero.
 \item The ``Durbin--Koopman'' representation: as in the first case

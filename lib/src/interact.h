@@ -45,7 +45,8 @@ typedef enum {
     OPT_BASQUE  = 1 << 11,
     OPT_MAKEPKG = 1 << 12,
     OPT_INSTPKG = 1 << 13,
-    OPT_TOOL    = 1 << 14
+    OPT_TOOL    = 1 << 14,
+    OPT_NO_PLOT = 1 << 15
 } ProgramOptions;
 
 typedef enum {

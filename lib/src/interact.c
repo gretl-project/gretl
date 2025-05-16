@@ -3189,8 +3189,7 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
         opt |= OPT_G;
     }
 
-    if (!gretl_in_gui_mode() && getenv("CLI_NO_PLOTS")
-        && cmd->ci != END) {
+    if (gretl_no_plots() && cmd->ci != END) {
         return 0;
     }
 
@@ -3239,7 +3238,7 @@ static int execute_gridplot_call (CMD *cmd, PRN *prn)
     }
 #endif
 
-    if (!gretl_in_gui_mode() && getenv("CLI_NO_PLOTS")) {
+    if (gretl_no_plots()) {
         return 0;
     }
 

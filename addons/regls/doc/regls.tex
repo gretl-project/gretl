@@ -110,7 +110,7 @@ assume their default values, described below.
 \section{Basic options}
 \label{sec:basic-opts}
 
-One basic element in the \texttt{parms} bundle is a specification for
+A basic element in the \texttt{parms} bundle is a specification for
 $\lambda$, which may take either of two forms, as follows:
 \begin{enumerate}
 \item under the key \texttt{lfrac} (``lambda fraction''), a scalar
@@ -119,21 +119,26 @@ $\lambda$, which may take either of two forms, as follows:
   used ($\geq 4$), in which case the values will be assigned
   automatically.
 \end{enumerate}
-If \texttt{nlambda} is provided instead of \texttt{lfrac}, the
-automatic $s$ vector is a declining logarithmic sequence starting at 1
-and finishing at 0.0001. For example, given \texttt{nlambda} = 5 the
-sequence will be $s$ = \{1, 0.1, 0.01, 0.001, 0.0001\}.
+If \texttt{nlambda} is provided instead of \texttt{lfrac}, the automatic
+$s$ vector is a logarithmically declining sequence starting at 1 and
+finishing at a value we'll call $s_{\rm min}$. If the number of
+observations, $n$, is greater than the number of regressors, $k$, we set
+$s_{\rm min} = 0.0001$, otherwise $s_{\rm min} = 0.01$.\footnote{As per
+\textsf{glmnet}, we avoid using a very small value of $s$ when $n \leq
+k$ since this leads to a saturated model.} For example, given
+\texttt{nlambda} = 5 and $n > k$ the sequence will be $s$ = \{1, 0.1,
+0.01, 0.001, 0.0001\}.
 
 If neither \texttt{lfrac} nor \texttt{nlambda} is specified, the
 default is as if \texttt{nlambda} were given as 25.
 
-In case you wish to specify a sequence succinctly but with more
-control, the package contains a utility function
-\texttt{lambda\_sequence()}, which takes up to three arguments. The
-first and second arguments (required) give the maximum $s$ and the
-number of values, while the third (optional) argument can be used to
-give the minimum $s$ (by default 0.0001). As with the \texttt{nlambda}
-option the values are spaced logarithmically.  So if you were to do
+In case you wish to specify a sequence succinctly but with more control,
+the package contains a utility function \dtk{lambda_sequence()}, which
+takes up to three arguments. The first and second arguments (required)
+give the maximum $s$ and the number of values, while the third
+(optional) argument can be used to give the minimum $s$. As with the
+\texttt{nlambda} option the values are spaced logarithmically.  So if
+you were to do
 \begin{code}
 parms.lfrac = lambda_sequence(1, 20, 0.001)
 \end{code}
@@ -143,12 +148,13 @@ the resulting sequence would be $s$ = \{1, 0.69519, 0.48329, \dots,
 To be clear, if no option pertaining to $\lambda$ is given that's
 equivalent to
 \begin{code}
-parms.lfrac = lambda_sequence(1, 25, 0.0001)
+parms.lfrac = lambda_sequence(1, 25, s_min)
 \end{code}
 while if \texttt{nlambda = 100} is given that's equivalent to
 \begin{code}
-parms.lfrac = lambda_sequence(1, 100, 0.0001)
+parms.lfrac = lambda_sequence(1, 100, s_min)
 \end{code}
+where \verb|s_min| corresponds to $s_{\rm min}$ as described above.
 
 A second basic member of the parameter bundle is \texttt{stdize}, a
 boolean switch to toggle standardization of the data. The default is
@@ -286,12 +292,12 @@ The BIC \citep{schwarz78} is calculated by \textsf{regls} as
 $-2\ell(\hat{\beta}) + k^*(\lambda) \log n$, where $\ell(\hat{\beta})$
 is the log-likelihood, based on the sum of squared residuals, and
 $k^*(\lambda)$ the number of non-zero coefficients for the given
-$\lambda$. This criterion provides a guide (though certainly not an
-infallible one) to the likely out-of-sample performance of a model:
-smaller values of BIC are better. Note that the LASSO criterion itself
-does not offer such a guide (it is likely to decrease monotonically
-along with $\lambda$), but it can be useful in comparing the
-effectiveness of minimization algorithms (see \ref{app:ccd}).
+$\lambda$. This criterion can provide a rough guide to the likely
+out-of-sample performance of a model: smaller values of BIC are
+better. Note that the LASSO criterion itself does not offer such a guide
+(it is likely to decrease monotonically along with $\lambda$), but it
+can be useful in comparing the effectiveness of minimization algorithms
+(see \ref{app:ccd}).
 
 When multiple $\lambda$ values are specified, the vector \texttt{nzb}
 and list \texttt{nzX} refer to the non-zero coefficients and
@@ -380,14 +386,14 @@ the indices of both $s^*$ and $s^{\dagger}$, under the keys
 Optimization of out-of-sample prediction is of course the name of the
 game with regularized regression. To obtain out-of-sample predictions
 (and/or within-sample fitted values if you want them), the recommended
-approach is to use \texttt{regls\_pred()}. This function takes two
+approach is to use \dtk{regls_pred()}. This function takes two
 arguments: a bundle produced by \texttt{regls()} and the list passed
 to \texttt{regls} as \texttt{X}. By default the return value is a
 series holding predicted values.
 
 If you use \texttt{mregls()} for estimation, the alternative
-prediction function \texttt{mregls\_pred()} should be called in place
-of \texttt{regls\_pred}. In that case the second argument should be a
+prediction function \dtk{mregls_pred()} should be called in place
+of \dtk{regls_pred}. In that case the second argument should be a
 matrix of regressors with the same number of columns as that passed to
 \texttt{mregls}, and by default the return value is a column vector of
 length equal to the row dimension of the matrix argument.
@@ -398,7 +404,7 @@ coefficient vector if just one value of $\lambda$ was used, or the
 values---that is, the BIC minimizer if cross-validation is not
 performed, or that corresponding to either \texttt{idxmin} or
 \texttt{idx1se} (see above) after cross-validation. The
-\texttt{idxmin} value is used automatically unless \texttt{use\_1se}
+\texttt{idxmin} value is used automatically unless \dtk{use_1se}
 was set in the parameter bundle passed to \texttt{regls} or
 \texttt{mregls}.
 
@@ -427,8 +433,8 @@ matrix yhat = mregls_pred(b, X[1001:,])
 Beyond the default behavior of the prediction functions, if multiple
 $\lambda$ values were used in estimation you can control the output by
 adding a preference to the bundle \texttt{b}, under the key
-\texttt{pred}, before passing it to \texttt{regls\_pred} or
-\texttt{mregls\_pred}. The admissible values for \texttt{pred} are as
+\texttt{pred}, before passing it to \dtk{regls_pred} or
+\dtk{mregls_pred}. The admissible values for \texttt{pred} are as
 follows:
 \begin{enumerate}
 \item \texttt{idxmin}: use the \texttt{idxmin} column of the \texttt{B}
@@ -482,7 +488,7 @@ issue, by two main means.
 \item We implemented automatic ``farming out'' of cross validation to
   multiple \textsf{MPI} processes (when \textsf{MPI} is available on
   the host machine). It's possible to prevent this by adding
-  \texttt{no\_mpi} to the parameter bundle with a non-zero value.
+  \dtk{no_mpi} to the parameter bundle with a non-zero value.
 \end{itemize}
 In one benchmark case we considered---with 1500 training observations,
 101 covariates, 50 values of $\lambda$ and 10 randomized cross
@@ -574,34 +580,34 @@ the case of Ridge there is generally no finite $\lambda$ that will
 drive all coefficients to zero and so no ``natural'' maximum to serve
 as a benchmark. We therefore offer the user three options for the
 specification of ``\texttt{lfrac},'' controlled by the integer-valued
-parameter \texttt{lambda\_scale}:
+parameter \dtk{lambda_scale}:
 \begin{itemize}
-\item \texttt{lambda\_scale} = 0: no scaling is performed. The
+\item \dtk{lambda_scale} = 0: no scaling is performed. The
   ``\texttt{lfrac}'' values are taken as actual $\lambda$ values (and
   so do not have to be bounded by 1.0 above).
-\item \texttt{lambda\_scale} = 1 (the default): we emulate
+\item \dtk{lambda_scale} = 1 (the default): we emulate
   \textsf{glmnet}. The largest value of $\lambda$ is set to
   $9.9 \times 10^{35}$, which will drive all coefficients to
   near-zero. The second-largest $\lambda$ (call it $\lambda_2$) is
   then set to 1000 times $\|X'y\|_{\infty}$, and subsequent values in
   the sequence are scaled in relation to $\lambda_2$.
-\item \texttt{lambda\_scale} = 2: we follow the suggestion of some
+\item \dtk{lambda_scale} = 2: we follow the suggestion of some
   practitioners, setting $\lambda_{\max}$ to the squared Frobenius
   norm of $X$, which will not drive all coefficients to near-zero but
   will impose substantial shrinkage in relation to OLS.
 \end{itemize}
 
 To be clear on the action of options 1 and 2 for
-\texttt{lambda\_scale}, suppose our \texttt{lfrac} specification is
+\dtk{lambda_scale}, suppose our \texttt{lfrac} specification is
 \begin{code}
 lfrac = {1, 0.5, 0.25, 0.125}
 \end{code}
-Then if \texttt{lambda\_scale} = 1 this translates to
+Then if \dtk{lambda_scale} = 1 this translates to
 \begin{code}
 lam2 = 1000 * infnorm(X'y)
 effective_lambda = {9.9e35, lam2, 0.5*lam2, 0.25*lam2}
 \end{code}
-while if \texttt{lambda\_scale} = 2 it becomes
+while if \dtk{lambda_scale} = 2 it becomes
 \begin{code}
 lam1 = tr(X'X) # Frobenius norm squared
 effective_lambda = {lam1, 0.5*lam1, 0.25*lam1, 0.125*lam1}
@@ -610,10 +616,10 @@ Note that the relevant matrix norms are computed after
 standardization.
 
 One further point on the scaling of $\lambda$: since the key
-\texttt{lfrac} doesn't look right when \texttt{lambda\_scale} = 0, we
+\texttt{lfrac} doesn't look right when \dtk{lambda_scale} = 0, we
 accept \texttt{lambda} as an alternative key. In fact, if
 \texttt{lambda} rather than \texttt{lfrac} is found in the input
-bundle, the default for \texttt{lambda\_scale} switches to 0 (but an
+bundle, the default for \dtk{lambda_scale} switches to 0 (but an
 explicit setting will override this).
 
 In addition to \texttt{BIC} and \texttt{R2} the return bundle from
@@ -646,7 +652,7 @@ Descent (CCD) algorithm, as employed by \textsf{glmnet}. This is
 governed by two additional keys in the \texttt{parms} bundle:
 \begin{itemize}
 \item \texttt{ccd}: boolean, default 0. Set this to 1 to use CCD.
-\item \texttt{ccd\_toler}: a positive scalar setting the convergence
+\item \dtk{ccd_toler}: a positive scalar setting the convergence
   tolerance for CCD. The default is $10^{-7}$ (as in \textsf{glmnet});
   setting a smaller value will give greater accuracy at the expense of
   more iterations.
@@ -683,7 +689,7 @@ this.
 In the \texttt{regls} function, elastic net is selected by specifying
 a fractional value under the key \texttt{alpha} in the parameters
 bundle. This automatically switches to the CCD algorithm
-(Section~\ref{sec:ccd}), so the \texttt{ccd\_toler} option becomes
+(Section~\ref{sec:ccd}), so the \dtk{ccd_toler} option becomes
 applicable.\footnote{In principle the ADMM algorithm could handle
   elastic net, but to date we have not implemented such support.}
 
@@ -802,20 +808,20 @@ bundle regls (series y, list X, bundle parms)
     \texttt{nlambda} & integer & number of automatic $\lambda$s \\
     \texttt{stdize} & 0/1, default 1 & standardize the data \\
     \texttt{ridge} & 0/1, default 0 & do Ridge regression \\
-    \texttt{lambda\_scale} & 0, 1 or 2, default 1 & see Section~\ref{sec:ridge} \\
+    \dtk{lambda_scale} & 0, 1 or 2, default 1 & see Section~\ref{sec:ridge} \\
     \texttt{verbosity} & 0, 1, 2 or 3, default 1 & printing of output\\
     \texttt{xvalidate} & 0/1, default 0 & do cross validation\\
     \texttt{nfolds} & optional integer $>1$, default 10 & number of
                                                           folds \\
     \texttt{randfolds} & 0/1, default 0 & use random folds\\
-    \texttt{use\_1se} & 0/1, default 0 & see Section~\ref{sec:xvalid} \\
+    \dtk{use_1se} & 0/1, default 0 & see Section~\ref{sec:xvalid} \\
     \texttt{seed} & optional integer & controls random folds\\
-    \texttt{single\_b} & 0/1, default 0 & see Section~\ref{sec:xvalid}\\
-    \texttt{no\_mpi} & 0/1, default 0 & see Section~\ref{sec:speed}\\
+    \dtk{single_b} & 0/1, default 0 & see Section~\ref{sec:xvalid}\\
+    \dtk{no_mpi} & 0/1, default 0 & see Section~\ref{sec:speed}\\
     \texttt{admmctrl} & optional control vector & see
                                                   Section~\ref{sec:add-controls} \\
     \texttt{ccd} & 0/1, default 0 & see section~\ref{sec:ccd} \\
-    \texttt{ccd\_toler} & positive scalar, default $10^{-7}$ & see
+    \dtk{ccd_toler} & positive scalar, default $10^{-7}$ & see
                                                                Section~\ref{sec:ccd}\\
     \texttt{alpha} & $0 \leq \alpha \leq 1$ (default 1) & see
                                                                Section~\ref{sec:elnet}
@@ -880,11 +886,11 @@ void regls_multiprint (const bundle b, const numeric y, const numeric X)
   passed to \texttt{regls} (\texttt{y} a series, \texttt{X} a list) or
   \texttt{mregls} (\texttt{y} an $n$-vector, \texttt{X} an
   $n \times k$ matrix). This function prints a summary table showing
-  $R^2$, the sum of absolute values of the coefficients, and df (the
-  number of non-zero coefficients) associated with each value of
-  $\lambda$. Usage is illustrated in the example script
-  \texttt{lambda\_sequence.inp}, which is reproduced in part in
-  Listing~\ref{script:lamseq}.
+  $R^2$, the sum of absolute values of the coefficients, df (the
+  number of non-zero coefficients) and the minimized criterion
+  associated with each value of $\lambda$. Usage is illustrated in the
+  example script \dtk{lambda_sequence.inp}, which is reproduced in
+  part in Listing~\ref{script:lamseq}.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -907,7 +913,7 @@ void regls_coeff_plot (const bundle b, const list L[null], string fname[null])
   file, as described in the documentation for gretl's \texttt{gnuplot}
   command. By default the plot is shown on screen.
 
-  See also \texttt{mregls\_coeff\_plot} below.
+  See also \dtk{mregls_coeff_plot} below.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -937,7 +943,7 @@ numeric regls_pred (const bundle b, const list X)
   handles the presence or absence of an estimated intercept, as well
   as selection of a specific coefficient vector when estimation has
   been performed for multiple values of the regularization parameter.
-  See also \texttt{mregls\_pred} below. See Section~\ref{sec:predict}
+  See also \dtk{mregls_pred} below. See Section~\ref{sec:predict}
   for details.
 \end{funcdoc}
 
@@ -947,7 +953,8 @@ bundle mregls (const matrix y, const matrix X, bundle parms)
 \end{verbatim}
   This function works like \texttt{regls()}, except that \texttt{y} is
   a column vector of length $n$ and \texttt{X} is an $n \times k$
-  matrix. The options accepted in \texttt{parms} are as described in
+  matrix. These matrices must not include any non-finite values. The
+  options accepted in \texttt{parms} are as described in
   Table~\ref{tab:regls-parms} above. Consistent with the different
   input types, one element in the output bundle also differs in type:
   in \texttt{regls} output \texttt{nzX} is a list of series while in
@@ -959,7 +966,7 @@ bundle mregls (const matrix y, const matrix X, bundle parms)
 \begin{verbatim}
 matrix mregls_pred (const bundle b, const matrix X)
 \end{verbatim}
-  Companion to \texttt{regls\_pred}, for a bundle obtained via
+  Companion to \dtk{regls_pred}, for a bundle obtained via
   \texttt{mregls}. The matrix \texttt{X} must have the same number of
   columns as that passed to \texttt{mregls}. The return value is by
   default a column vector of length equal to the row dimension of
@@ -974,7 +981,7 @@ matrix mregls_pred (const bundle b, const matrix X)
 \begin{verbatim}
 void mregls_coeff_plot (const bundle b, const matrix sel[null], string fname[null])
 \end{verbatim}
-  Works just like \texttt{regls\_coeff\_plot} (see above) except that
+  Works just like \dtk{regls_coeff_plot} (see above) except that
   this variant is for use after \texttt{mregls} estimation. The
   optional selection of coefficients to be tracked works via a
   selection (row) vector. The elements of this vector should be column
@@ -1003,7 +1010,7 @@ void glmnet_multiprint (const matrix RB, const matrix Rlam,
   Convenience function for facilitating comparison of results when the
   same regularization task has been performed in gretl using
   \texttt{regls} and in \textsf{R} using \texttt{glmnet}. The output
-  is like that of \texttt{regls\_multiprint}.  The matrices
+  is like that of \dtk{regls_multiprint}.  The matrices
   \texttt{RB} and \texttt{Rlam} should be obtained from the object
   returned by \texttt{glmnet()}; \texttt{b} should be the bundle
   returned by \texttt{regls}.  Usage is illustrated in
@@ -1013,14 +1020,21 @@ void glmnet_multiprint (const matrix RB, const matrix Rlam,
 \section{Change log}
 \label{sec:changes}
 
+2025-05-15: Increase the default minimum $s$ value for the case when
+\texttt{nlambda} is given and the number of observations is not greater
+than the number of regressors (as per \textsf{glmnet}). Revise the
+documentation accordingly.\\[4pt]
+2025-04-16: Add check for missing values in \texttt{mregls}; fix
+\dtk{regls_multiprint} for the case where it follows cross
+validation.\\[4pt]
 2024-04-29: Add specific prediction and plotting functions for use
 with \texttt{mregls}; implement fixes for the unlikely case where none
 of the candidate regressors are effective predictors of the dependent
 variable; make plots more robust; add descriptive labels to the
 included murder-rates dataset; expand and update the documentation.\\[4pt]
 2023-05-20: Add support for matrix input via the \texttt{mregls}
-function; simplify the signature of \texttt{regls\_multiprint};
-add function \texttt{glmnet\_multiprint}.\\[4pt]
+function; simplify the signature of \dtk{regls_multiprint};
+add function \dtk{glmnet_multiprint}.\\[4pt]
 2022-10-02: Enhancements for regls plots; document GUI usage; update
 an internal function signature to comply with gretl's
 new ``const inheritance'' policy.\\[4pt]
@@ -1149,7 +1163,7 @@ takes longer than SVD if one wants the extra accuracy associated with
 a tolerance of $10^{-9}$ or less. Note, however, that there seems to
 be little point in reducing the CCD tolerance below $10^{-9}$.
 
-%% Ridge: CCD and SVD, using \texttt{ridge\_crit\_native.inp}
+%% Ridge: CCD and SVD, using \dtk{ridge_crit_native.inp}
 \begin{figure}[htbp]
 \begin{center}
 \includegraphics[scale=0.9]{ccd_svd.pdf}
@@ -1181,7 +1195,7 @@ marked than in the Ridge case. When the CCD tolerance is reduced from
 $10^{-7}$ to $10^{-9}$ Ridge time becomes slightly greater than SVD
 time, while LASSO time becomes over twice that of ADMM.
 
-%% LASSO: CCD and ADMM, using \texttt{lasso\_crit\_native.inp}
+%% LASSO: CCD and ADMM, using \dtk{lasso_crit_native.inp}
 \begin{figure}[htbp]
 \begin{center}
 \includegraphics[scale=0.9]{ccd_admm.pdf}

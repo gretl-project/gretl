@@ -115,6 +115,12 @@ int win32_get_core_count (void);
 
 int win32_get_stack_size (void);
 
+# ifdef __aarch64__
+
+void woa_cpu_info (char buf[]);
+
+# endif
+
 #endif /* WIN32 */
 
 #ifdef  __cplusplus

@@ -1457,7 +1457,6 @@ static int add_remote_db_series_list (windata_t *vwin, char *buf)
     gchar *row[3];
     char sername[VNAMELEN];
     char line1[256], line2[256];
-    int offset = 0;
     int n, err = 0;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model
@@ -1494,14 +1493,12 @@ static int add_remote_db_series_list (windata_t *vwin, char *buf)
 	}
 
 	gtk_list_store_append(store, &iter);
-	gtk_list_store_set (store, &iter,
-			    DBCOL_VARNAME, row[0],
-			    DBCOL_DESCRIP, row[1],
-			    DBCOL_OBSINFO, row[2],
-			    DBCOL_OFFSET, nobs * sizeof(dbnumber),
-			    -1);
-
-	offset += nobs;
+	gtk_list_store_set(store, &iter,
+                           DBCOL_VARNAME, row[0],
+                           DBCOL_DESCRIP, row[1],
+                           DBCOL_OBSINFO, row[2],
+                           DBCOL_OFFSET, nobs * sizeof(dbnumber),
+                           -1);
     }
 
     bufgets_finalize(buf);
@@ -2813,10 +2810,10 @@ finish:
     g_free(target);
 }
 
-/* called from within datafiles.c, when dragging a
-   remote database or function package from its
-   "on server" window to the associated local
-   window */
+/* called from within datafiles.c, when dragging a remote database or
+   function package from its "on server" window to the associated
+   local window
+*/
 
 void drag_file_from_server (guint info)
 {
@@ -3768,9 +3765,8 @@ static int is_depends_line (const char *line,
     }
 }
 
-/* Fill a list box with name, version number, author,
-   and short description of function packages, retrieved
-   from server.
+/* Fill a list box with name, version number, author, and short
+   description of function packages, retrieved from server.
 */
 
 gint populate_remote_func_list (windata_t *vwin, int filter)
@@ -3835,7 +3831,6 @@ gint populate_remote_func_list (windata_t *vwin, int filter)
 	    tailstrip(line);
 	    utf8_correct(line);
 	    descrip = gretl_strdup(line + 2);
-	    maybe_ellipsize_string(descrip, 48);
 	}
 
 	if (bufgets(line, sizeof line, getbuf)) {
@@ -3846,7 +3841,6 @@ gint populate_remote_func_list (windata_t *vwin, int filter)
 	if (bufgets(line, sizeof line, getbuf)) {
 	    tailstrip(line);
 	    author = gretl_strdup(line + 2);
-	    maybe_ellipsize_string(author, 26);
 	}
 
 	if (descrip != NULL && version != NULL && author != NULL) {
@@ -4295,7 +4289,7 @@ void do_compact_dataset (void)
     data_compact_dialog(dataset->pd, &newpd, p_wkstart,
 			&method, p_repday, mdata->main);
 
-    if (method == COMPACT_UNSET) {
+    if (method == COMPACT_UNSET || newpd == 0) {
 	/* the user cancelled */
 	return;
     }

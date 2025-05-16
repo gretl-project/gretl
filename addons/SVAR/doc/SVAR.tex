@@ -21,6 +21,7 @@
 
 \newcommand{\app}[1]{\textsf{#1}}
 \newcommand{\cmd}[1]{\texttt{#1}}
+\newcommand{\dtk}[1]{\texttt{\detokenize{#1}}}
 \newcommand{\varname}[1]{\texttt{#1}}
 \newcommand{\option}[1]{\texttt{-{}-#1}}
 \newcommand{\ttsl}[1]{\ttfamily{\textsl{#1}}\normalfont}
@@ -268,7 +269,7 @@ universally adopted, although in some cases it may be quite CPU-heavy.
 
 As a trivial example, we will estimate a plain Cholesky model. The
 data are taken from Stock and Watson's sample data
-\texttt{sw\_ch14.gdt}, and our VAR will include inflation and
+\dtk{sw_ch14.gdt}, and our VAR will include inflation and
 unemployment, with a constant and 3 lags. Then, we will compute the
 IRFs and their 90\% bootstrap confidence interval.\footnote{Why not
   95\%? Well, keeping the number of bootstrap replications low is one
@@ -409,7 +410,7 @@ the bundle is called \texttt{Mod}, but it can of course take any valid
 
 After performing the same preliminary steps as in the example in Table
 \ref{InternalChol-in}, we load the package and use the
-\texttt{SVAR\_setup} function, which initialises the model and sets up
+\dtk{SVAR_setup} function, which initialises the model and sets up
 a few things. This function takes 4 arguments:
 \begin{itemize}
 \item a string, with the model type (\texttt{"C"} in this example);
@@ -432,9 +433,9 @@ form as
 where $R = \left[ 0, 0, 1, 0 \right]$ and $d=0$.
 
 There are several ways to constrain a model: the easiest way is to use
-the \texttt{SVAR\_restrict} function, which should be enough in most
+the \dtk{SVAR_restrict} function, which should be enough in most
 cases; for alternatives, jump to section \ref{sec:OtherConstraints}. A
-complete description of the the \texttt{SVAR\_restrict} function can
+complete description of the the \dtk{SVAR_restrict} function can
 be found in appendix \ref{sec:syntax}; suffice it to say here that the
 result of the function
 \begin{code}
@@ -443,8 +444,8 @@ result of the function
 is to ensure that $C_{1,2} = 0$ (see eq.~\ref{eq:cholesky}). 
 
 The next step is estimation, which is accomplished via the
-\texttt{SVAR\_estimate} function, which just takes one argument, the
-model to estimate. The output of the \texttt{SVAR\_estimate} function
+\dtk{SVAR_estimate} function, which just takes one argument, the
+model to estimate. The output of the \dtk{SVAR_estimate} function
 is shown below:\footnote{For compatibility with other packages,
   $\hat{\Sigma}$ is estimated by dividing the cross-products of the
   VAR residuals by $T-k$ instead of $T$; this means that the actual
@@ -486,7 +487,7 @@ variable $m$ with respect to the shock $k$, you'd have to pick its
 $[(k-1)\cdot n + m]$-th column.
 
 The number of rows $h$ is closely related to the ``horizon''. The function
-\texttt{SVAR\_setup} initialises automatically the horizon to 24 for
+\dtk{SVAR_setup} initialises automatically the horizon to 24 for
 monthly data and to 20 for quarterly data. To change it, you just
 assign the desired value to the \texttt{horizon} element of the
 bundle, as in
@@ -496,7 +497,7 @@ bundle, as in
 (Since the contemporaneous impact effect is also part of the IRFs, the 
 matrix will have one more row than this horizon specification.)
 Clearly, this adjustment has to be done \emph{before} the
-\texttt{SVAR\_estimate} function is called.
+\dtk{SVAR_estimate} function is called.
  
 More details on the internal organisation of the bundle can be
 found in section \ref{sec:bundle_struct} in the appendix. Its contents
@@ -548,7 +549,7 @@ available datapoint for estimation will be 1981Q3 because data from
 \label{sec:algorithms}
 
 Another thing you may want to toggle before calling
-\texttt{SVAR\_estimate} is the optimisation method: you do this by
+\dtk{SVAR_estimate} is the optimisation method: you do this by
 setting the bundle element \texttt{optmeth} to some number between 0
 and 4; its meaning is shown below:
 
@@ -674,7 +675,7 @@ before calling \cmd{IRFplot}. Setting it back to its default value of
 The next step is computing bootstrap-based confidence intervals for
 the estimated coefficients and, more interestingly, for the impulse
 responses: as can be seen in Table \ref{tab:simpleC-IRF}, this task is
-given to the \texttt{SVAR\_boot} function, which takes as arguments
+given to the \dtk{SVAR_boot} function, which takes as arguments
 \begin{enumerate}
 \item The model bundle pointer;
 \item the required number of bootstrap replications (1024
@@ -709,7 +710,7 @@ Bootstrap results (1024 replications)
 Failed = 0, Time (bootstrap) = 20.24
 \end{code}
 This can be achieved by supplying a zero fourth argument to the
-\texttt{SVAR\_boot} function, as in
+\dtk{SVAR_boot} function, as in
 \begin{code}
   bfail = SVAR_boot(&Mod, 1024, 0.90, 0)
 \end{code}
@@ -723,9 +724,9 @@ addition, it will contain three matrices in which each column is one
 of the $n^2$ IRFs, and the rows contain
 \begin{enumerate}
 \item the lower limit of the confidence interval in the
-  \texttt{lo\_cb} matrix;
+  \dtk{lo_cb} matrix;
 \item the upper limit of the confidence interval in the
-  \texttt{hi\_cb} matrix;
+  \dtk{hi_cb} matrix;
 \item the medians in the \texttt{mdns} matrix.
 \end{enumerate}
 where $h$ is the IRF horizon.
@@ -795,12 +796,12 @@ may want to experiment with both.
 
 The ``Partial'' and ``Full'' variant may either be enabled by setting the
 bundle member \texttt{biascorr} to 1 and 2, respectively, before
-calling \texttt{SVAR\_boot}. For an example, look at the example file
-\texttt{bias\_correction.inp}. Alternatively, that choice can be specified 
-as the final (sixth) argument when calling \texttt{SVAR\_boot}.
+calling \dtk{SVAR_boot}. For an example, look at the example file
+\dtk{bias_correction.inp}. Alternatively, that choice can be specified 
+as the final (sixth) argument when calling \dtk{SVAR_boot}.
 
 Another bootstrap choice which can either be specified before the call to
-\texttt{SVAR\_boot} or directly in that call is to use the so-called 
+\dtk{SVAR_boot} or directly in that call is to use the so-called 
 \emph{wild} bootstrap, or the residual-based moving blocks bootstrap (MBB)
 proposed by \cite{BrugJenTrenk16}.
 As regards the wild bootstrap, instead of resampling the residuals to create 
@@ -817,7 +818,7 @@ appropriate value, as per the following table.
 \begin{center}
 \begin{tabular}{rccl}
   \hline
-  \texttt{boottype} & Argument in \texttt{SVAR\_boot} & Distribution & Description\\
+  \texttt{boottype} & Argument in \dtk{SVAR_boot} & Distribution & Description\\
   \hline
   1 & \emph{resampling}, \emph{resample} & (none) & non-wild\\
   2 & \emph{wild}, \emph{wildN} & Gaussian & $w_t \sim N(0,1)$ \\
@@ -840,11 +841,11 @@ SVAR_boot(&Mod, 5000, 0.95, 0, "wild", 1)
 \end{code}
 
 Finally: if you change the \texttt{optmeth} bundle element before
-\texttt{SVAR\_boot} is called, the choice affects the estimation of
+\dtk{SVAR_boot} is called, the choice affects the estimation of
 the bootstrap artificial models. Hence, you may use one method for the
 real data and another method for the bootstrap, if you so desire. 
 If you use the MBB option you can also add the \texttt{movblocklen} 
-bundle element (again, before the call to \texttt{SVAR\_boot}) to give a 
+bundle element (again, before the call to \dtk{SVAR_boot}) to give a 
 positive integer that sets a non-automatic choice for the block length of the
 bootstrap innovations; the automatic choice currently being 10\% of the 
 sample length.
@@ -861,13 +862,13 @@ contains the restrictions in a C model of the form
 \]
 by stacking horizontally the $R$ matrix and the $d$ vector, so that a
 matrix $R^* = [R | d ]$ is stored as \texttt{Rd1}. All the
-\texttt{SVAR\_restrict} function does is adding rows to $R^*$ and
+\dtk{SVAR_restrict} function does is adding rows to $R^*$ and
 checking for redundant or inconsistent restrictions.
 
 However, if you feel like building the matrix $R^*$ via \app{gretl}'s
 ordinary matrix functions, all you have to do is to fill up the bundle
 elements \texttt{Rd1} and \texttt{nc1} properly before calling
-\texttt{SVAR\_estimate()}. As an example, take the script contained in
+\dtk{SVAR_estimate()}. As an example, take the script contained in
 Table \ref{tab:simpleC-base}, where we identify our C-model via the
 (rather silly) constraint $c_{11} = c_{12}$. The equation above would
 specialise to
@@ -902,11 +903,11 @@ That said, in many cases a triangular, Cholesky-style specification
 for the $C$ matrix like the one analysed in this section is all that
 is needed. When many variables are involved, the setting of the
 $\frac{n \times (n-1)}{2}$ restrictions via the
-\texttt{SVAR\_restrict} function could be quite boring, although
+\dtk{SVAR_restrict} function could be quite boring, although
 easily done via a loop.
 
 For these cases, the \texttt{SVAR} package provides an alternative
-way: if you supply the \texttt{SVAR\_setup} function with the string
+way: if you supply the \dtk{SVAR_setup} function with the string
 \texttt{"plain"} as its first argument, the necessary restrictions are
 set up automatically. Thus, the example considered above in Table
 \ref{tab:simpleC-base} could by modified by replacing the lines
@@ -1105,7 +1106,7 @@ variables $y^*_t$, which are then transformed back into the original
 series $y_t$.
 
 The decomposition above can be performed in the SVAR package using the
-estimated quantities by the \cmd{SVAR\_hd} function, which takes two
+estimated quantities by the \dtk{SVAR_hd} function, which takes two
 arguments: a pointer to the SVAR model and an integer, indicating
 which variable you want the decomposition for. Upon successful
 completion, it will return a list of $n+1$ series, containing the
@@ -1350,16 +1351,16 @@ Bootstrap results (1024 replications, 0 failed)
 The way all this is handled in \texttt{SVAR} is hopefully quite
 intuitive: an example script is reported in Table
 \ref{tab:BlQuah}. After reading the data in, the function
-\texttt{SVAR\_setup} is invoked in pretty much the same way as in
+\dtk{SVAR_setup} is invoked in pretty much the same way as in
 section \ref{sec:Cmodel}.
 
-Then, the \texttt{SVAR\_restrict} is used to specify the identifying
+Then, the \dtk{SVAR_restrict} is used to specify the identifying
 restriction. Note that in this case the code for the restriction type
 is \texttt{"lrC"}, which indicates that the restriction applies to the
 long-run matrix, so the formula \eqref{BQlongrun2} is employed. Next,
 we insert into the model the information that we will want IRFs for
 $y_t$, so those for $\Delta y_t$ will have to be cumulated. This is
-done via the function \texttt{SVAR\_cumulate()}, in what should be a
+done via the function \dtk{SVAR_cumulate()}, in what should be a
 rather self-explanatory way (the number 1 refers in this case to the
 position of $\Delta Y_t$ in the list \texttt{X}). Finally, a cosmetic
 touch: we overwrite the model's default shock labels with a string array 
@@ -1370,7 +1371,7 @@ When a model with long-run restrictions is estimated, the resulting
 long-run matrix is stored in the model bundle as member \texttt{lrmat},
 and is also printed out by default.
 
-The bootstrap is invoked by \texttt{SVAR\_boot}, which however by default
+The bootstrap is invoked by \dtk{SVAR_boot}, which however by default
 does not produce any additional printout. To display the results 
 straight away set the optional fourth (trailing) argument to 0.
 
@@ -1435,8 +1436,8 @@ to this effect: in this case, we simply need to insert the line
 \begin{code}
   SVAR_restrict(&BQModel, "C", 1, 1, 0)
 \end{code}
-somewhere between the \texttt{SVAR\_setup} and the
-\texttt{SVAR\_estimate} function. 
+somewhere between the \dtk{SVAR_setup} and the
+\dtk{SVAR_estimate} function. 
 The rest is unchanged, and below is the output.
 
 %\pagebreak[4]
@@ -1522,20 +1523,20 @@ so for example the first structural relationship is
 which can be read as an IS curve. The LM curve is the second
 relationship, while money supply is exogenous.
 
-The model is set up via the function \texttt{SVAR\_setup}, like in the
+The model is set up via the function \dtk{SVAR_setup}, like in the
 previous section. Note, however, that in this case the model code is
 \texttt{"AB"} rather than \texttt{"C"}.  The base VAR has 4 lags, with
 the constant and a linear time trend as exogenous variables. The
 horizon of impulse response analysis is set to 48 quarters.
 
 The constraints on the matrices $A$ and $B$ can be set up quite simply
-by using the function \texttt{SVAR\_restrict} via a special syntax
+by using the function \dtk{SVAR_restrict} via a special syntax
 construct: the line
 \begin{code}
   SVAR_restrict(&ISLM, "Adiag", 1)
 \end{code}
 sets up a system of constraints such that all elements on the diagonal
-of $A$ are set to 1. More precisely, \texttt{SVAR\_restrict(\&Model,
+of $A$ are set to 1. More precisely, \dtk{SVAR_restrict(\&Model,
   "Adiag", x)} sets all diagonal elements of $A$ to the value $x$,
 unless $x$ is \texttt{NA}. In that case, all \emph{non-diagonal}
 elements are constrained to 0, while diagonal elements are left
@@ -1546,7 +1547,7 @@ unrestricted; in other words, the syntax
 is a compact form for saying ``$B$ is diagonal''. The other three
 constraints are set up as usual.
 
-Estimation is then carried out via the \texttt{SVAR\_estimate}
+Estimation is then carried out via the \dtk{SVAR_estimate}
 function; as an example, Figure \ref{fig:Dynamic-IS} shows the effect
 on the interest rate of a shock on the IS curve.  This example also
 shows how to retrieve estimated quantities from the model: after
@@ -1704,7 +1705,7 @@ condition. The rank condition is described in \cite{AG} (chapter 4 for
 the AB model), and it involves the rank of a certain matrix, which can
 be computed as a function of the four matrices $R_a$, $d_a$, $R_b$ and
 $d_b$. The \texttt{SVAR} package contains a function for doing just
-that, whose name is \texttt{SVAR\_ident}.\footnote{Starting in version 1.4 
+that, whose name is \dtk{SVAR_ident}.\footnote{Starting in version 1.4 
 of the SVAR addon this identification check is carried out by default.}
 
 As a simple example, let's check that the plain model is in fact
@@ -1878,7 +1879,7 @@ they interact.}
 \label{sec:KPSWsyntax}
 
 Fort this type of model, the model code you have to supply to
-\cmd{SVAR\_setup} is \cmd{"SVEC"}. This means that your model is a
+\dtk{SVAR_setup} is \cmd{"SVEC"}. This means that your model is a
 C-model in which, however, the structural shocks will be classified as
 transitory or permanent, depending on the cointegration properties you
 assume.
@@ -1899,7 +1900,7 @@ the trend) in your model to be treated; in practice, which of the
 famous ``five cases'' you want to apply to your model. In fact, the
 constant and the trend are subject to a special treatment in this
 class of models, so they will be dropped from the exogenous list
-\texttt{X}, if present, when you call \cmd{SVAR\_setup} and re-added
+\texttt{X}, if present, when you call \dtk{SVAR_setup} and re-added
 internally if needed. Unless you have extra exogenous variables, such
 as centred seasonals, you might just as well leave \texttt{X} as
 \texttt{null}. The five cases range from the most to the least
@@ -1929,7 +1930,7 @@ don't, grab any decent econometrics textbook or the \emph{Gretl User's
 
 For injecting the necessary information into the model bundle once
 you've set it up, there is a dedicated function whose name is
-\texttt{SVAR\_coint}. It takes three compulsory parameters: the SVAR
+\dtk{SVAR_coint}. It takes three compulsory parameters: the SVAR
 model (in pointer form), the ``deterministic terms code'' and the
 cointegration matrix $\beta$. 
 Next is the loading matrix $\alpha$; this argument may be omitted or 
@@ -2156,9 +2157,9 @@ Some artificial as well as real-life example scripts are included with
 SVAR to demonstrate the usage of sign restrictions and set
 identification in general. These are: \texttt{ChoMoreno.inp},
 \texttt{exotic1.inp}, \texttt{exotic2.inp},
-\texttt{spaghetti\_plot.inp},
-\texttt{mixed\_example.inp}, \texttt{supply\_demand.inp}, \texttt{KilianMurphy\_relaxed.inp},  and
-\texttt{Uhlig\_example.inp}
+\dtk{spaghetti_plot.inp},
+\dtk{mixed_example.inp}, \dtk{supply_demand.inp}, \dtk{KilianMurphy_relaxed.inp},  and
+\dtk{Uhlig_example.inp}
 
 \subsection{Notation}
 
@@ -2238,13 +2239,13 @@ arbitrary, so the user is required to make a choice here (see below).
 
 After having initially set up the model bundle appropriately (see
 below), sign restrictions in the narrow or plain sense are specified
-through the \texttt{SVAR\_SRplain} function.
+through the \dtk{SVAR_SRplain} function.
 
 The full documentation is in the appendix, but the gist is: this
 function gives you a way to indicate the sign of the impact that of a
 certain shock is assumed to have on a certain variable, and optionally
 over which set of lags. Internally, each call to
-\texttt{SVAR\_SRplain} adds a row vector to the \texttt{SRest} matrix
+\dtk{SVAR_SRplain} adds a row vector to the \texttt{SRest} matrix
 contained in the bundle referenced as the first argument; the
 restriction matrix is simply created by stacking these rows
 vertically.
@@ -2292,7 +2293,7 @@ into which the impulse response is supposed to fall. A generalization of this id
 specify an arbitrary interval with a lower or upper bound or both, none of which has 
 to be zero. This idea was already mentioned above in the guise of ``elasticity bounds''.
 
-The \texttt{SVAR\_SRfull} function allows to use such restrictions, see the appendix 
+The \dtk{SVAR_SRfull} function allows to use such restrictions, see the appendix 
 for its documentation. These restrictions can be ``static" in the sense that they only 
 apply to a certain horizon, for example on impact; or just like sign restrictions they 
 can be ``dynamic" and associated with a range of horizons. 
@@ -2301,7 +2302,7 @@ can be ``dynamic" and associated with a range of horizons.
 \subsubsection{General (``exotic'') set restrictions}
 
 General set restrictions are specified via the function
-\texttt{SVAR\_SRexotic}, which takes 2 mandatory arguments and 2 optional ones
+\dtk{SVAR_SRexotic}, which takes 2 mandatory arguments and 2 optional ones
 (again, see the appendix).
 
 The string you pass as argument \#2 must contain a valid hansl
@@ -2373,7 +2374,7 @@ two types of restrictions are not allowed:
 \subsection{The workflow for set identification}
 
 \begin{enumerate}
-\item First of all the model should be set up as usual through \texttt{SVAR\_setup},
+\item First of all the model should be set up as usual through \dtk{SVAR_setup},
 but now with model code ``SR''. This automatically arranges for the reduced-form
 parameters to be estimated (or if you're a Bayesian: to calculate the likelihood-based
 ingredient to update your prior).
@@ -2385,9 +2386,9 @@ Mod.snames[1] = "monetary"
 \end{code}
 
 \item Next the restrictions have to be formulated and imposed on the model,
-  namely through any number of calls to the functions \texttt{SVAR\_SRplain},
-  \texttt{SVAR\_SRfull}, or \texttt{SVAR\_SRexotic}. If necessary, add point
-  restrictions using \texttt{SVAR\_restrict}.
+  namely through any number of calls to the functions \dtk{SVAR_SRplain},
+  \dtk{SVAR_SRfull}, or \dtk{SVAR_SRexotic}. If necessary, add point
+  restrictions using \dtk{SVAR_restrict}.
 
 \item The core of set-identified SVAR estimation happens now: a large number of
   random orthogonal matrices $Q$ are generated, and the IRFs are computed
@@ -2397,7 +2398,7 @@ Mod.snames[1] = "monetary"
   a few hundred).
 
   The randomized drawing is performed by the function
-  \texttt{SVAR\_SRdraw}. This is the heavy number-crunching part.\footnote{With
+  \dtk{SVAR_SRdraw}. This is the heavy number-crunching part.\footnote{With
     the computing power these days even that will typically not give you enough
     time to get coffee, unless you need a monster number of draws.} At this
   stage one also chooses the desired coverage level of the error bands
@@ -2411,13 +2412,13 @@ Mod.snames[1] = "monetary"
   representation of the results, functions again documented in the appendix:
   \begin{itemize}
   \item Standard -- these plots resemble the traditional IRF graphs and are produced 
-    by the function \texttt{SVAR\_SRirf}. The centers of the
+    by the function \dtk{SVAR_SRirf}. The centers of the
     IRF distributions as well as their lower and upper error bounds are calculated 
     separately for each horizon. It is a well-known criticism that the resulting plotted
     lines can be a combination of very different draws, possibly distorting the impression 
     that is conveyed by the plot. Other researchers have countered this criticism by 
     remarking that one just needs to know what is being done. So now you know.
-  \item Spaghetti -- this kind of plot is provided by \texttt{SVAR\_spagplot} which 
+  \item Spaghetti -- this kind of plot is provided by \dtk{SVAR_spagplot} which 
   literally gives the user everything identified by the 
   set restrictions; each accepted draw's IRF is drawn, and one can hopefully judge 
   whether they have the same tendency or are constantly crossing each other.
@@ -2442,7 +2443,7 @@ A well-known complication in the set identification context is that by its very
 nature there exists no point estimate of the IRFs, but the standard HD and FEVD 
 require unique coefficients. On a technical level, any of the accepted model draws
 can be chosen and thus there are many possible HD and FEVD variants. Therefore
-the relevant functions \texttt{SVAR\_hd}, \texttt{FEVD}, and also \texttt{GetShock}
+the relevant functions \dtk{SVAR_hd}, \texttt{FEVD}, and also \texttt{GetShock}
 (which stores the estimated historical shock realization as a gretl series into the
 workfile) take as an additional argument an integer as an index to pick a certain
 accepted model draw.
@@ -2476,7 +2477,7 @@ more flexibility as a kind of override option.
 
 While it is beyond the scope of this user guide to provide a discussion of the possible conceptual 
 approaches to find a suitable unique model among the many accepted draws, the \texttt{SVAR}
-addon provides the \texttt{SVAR\_SRgetbest} convenience function to help with this task.
+addon provides the \dtk{SVAR_SRgetbest} convenience function to help with this task.
 
 For example, continuing with \texttt{ChoMoreno.inp}, say you are most interested in the 
 impulse response of inflation (\texttt{INFL}, 2nd variable) to the shock \texttt{Demand} 
@@ -2502,9 +2503,9 @@ be found inside the bundle with $nv=2$ and $ns=1$ (and of course $n=3$) as
 
 We find that the representative model in this particular sense is the one with index 58; 
 by construction the associated impulse response value is very close to the median, namely $0.171297$.
-The \texttt{SVAR\_SRgetbest} function stores this index number 58 in the model bundle under the key
+The \dtk{SVAR_SRgetbest} function stores this index number 58 in the model bundle under the key
 \texttt{bestdraw}. The functions that require a unique model parametrization such as 
-\texttt{SVAR\_hd}, \texttt{FEVD}, \texttt{GetShock}, and \texttt{IRFplot}  
+\dtk{SVAR_hd}, \texttt{FEVD}, \texttt{GetShock}, and \texttt{IRFplot}  
 will automatically use the associated draw (unless the user overrides it with her own choice as
 described above). This carries over to the higher-level interface functions such that you could write 
 calls like the following as always:
@@ -2517,7 +2518,7 @@ HDplot(&mod)
 
 Since a single accepted draw by itself does not contain any information about the parameter uncertainty, 
 this kind of IRF plot only shows a single line without any intervals. For specially designed plots for the 
-set-identified situation please refer to the functions \texttt{SVAR\_SRirf} and \texttt{SVAR\_spagplot} 
+set-identified situation please refer to the functions \dtk{SVAR_SRirf} and \dtk{SVAR_spagplot} 
 as explained above.
 
 % end sign restrictions part
@@ -2663,7 +2664,7 @@ For example, suppose we wanted to estimate a C model like the one used
 as example so far, with the only difference that we want the $C$
 matrix to be \emph{upper} triangular, rather than lower
 triangular. Via a script, you would use the function
-\texttt{SVAR\_restrict()}, as in
+\dtk{SVAR_restrict()}, as in
 \begin{code}
 # Force C_{2,1} to 0
 SVAR_restrict(&Mod, "C", 2, 1, 0)
@@ -2686,7 +2687,7 @@ window (be sure to select C-model as the model type). After clicking
 ``OK'', the results window will appear, as in
 Figure~\ref{fig:GUI-output}. Note that the estimated $C$ matrix is now
 upper triangular.\footnote{The same pattern matrix can also be used 
-in scripting for the \texttt{SVAR\_restrict()} function, since gretl 2024c.}
+in scripting for the \dtk{SVAR_restrict()} function, since gretl 2024c.}
 
 From the output window, you can save the model bundle to the Icon view
 by clicking on the leftmost icon\footnote{The visual appearance of the
@@ -2731,7 +2732,7 @@ a flat or uninformative Bayesian prior. Some might argue that this kind of prior
 is relatively close in spirit to a frequentist approach.
 
 In any case, this choice corresponds to a Boolean flag which is the third
-argument to the \texttt{SVAR\_SRdraw} function: the default, 0, is to skip the
+argument to the \dtk{SVAR_SRdraw} function: the default, 0, is to skip the
 sampling from the posterior and just use the frequentist point estimates.
 
 What happens inside this function? First, the relevant items from the model
@@ -2806,7 +2807,7 @@ for each iteration:
 
 The name of the model bundle which is passed around in pointer form between 
 most of these functions is determined by the user when the bundle is assigned
-from a call to \texttt{SVAR\_setup}. To avoid confusion, it is assumed in the
+from a call to \dtk{SVAR_setup}. To avoid confusion, it is assumed in the
 following that that bundle is named \texttt{"Smod"} (although the internal 
 name of the argument inside the local function scope is of course arbitrary 
 and need not be harmonized). 
@@ -2860,7 +2861,7 @@ int drawix[0])}
 \end{funcdoc}
 
 \begin{funcdoc}{GetShock (bundle *Smod, int i[1], int drawix[0])}
-  \noindent Equivalent to the recommended \texttt{SVAR\_getshock}, but with an alternative
+  \noindent Equivalent to the recommended \dtk{SVAR_getshock}, but with an alternative
   interface: 
   Instead of specifying the name of the shock of interest its position in the 
   names of shocks array (\texttt{Smod.snames}) must be given in \texttt{i}.
@@ -2908,7 +2909,7 @@ int drawix[0])}
    The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-% \begin{funcdoc}{IRF\_plotdata (bundles bs, scalar coveralpha[0.9])}
+% \begin{funcdoc}{IRF_plotdata (bundles bs, scalar coveralpha[0.9])}
 %    \noindent [Function name and usage subject to change.]
 %  Relating to a set identified (sign restricted) model, this function uses 
 %  all accepted draws to construct some summary measures needed for the 
@@ -2936,7 +2937,7 @@ int keypos[0:2:1], int drawix[0])}
    The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_boot (bundle *Smod, int rep[0::2000], scalar alpha[0:1:0.9], bool
+\begin{funcdoc}{\detokenize{SVAR_boot} (bundle *Smod, int rep[0::2000], scalar alpha[0:1:0.9], bool
     quiet[1],\\
     string btypestr[null], int biascorr[-1:2:-1])}
     \noindent Perform a bootstrap analysis of a model. Returns the number of
@@ -2964,7 +2965,7 @@ int keypos[0:2:1], int drawix[0])}
   non-SVEC models.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_coint (bundle *Smod, int dcase[1:5:3],
+\begin{funcdoc}{\detokenize{SVAR_coint} (bundle *Smod, int dcase[1:5:3],
 			   matrix jbeta, matrix jalpha[null],\\
 			   bool verbose[0]), list rexo[null])}
   \noindent Necessary for a SVEC model, adds the needed information 
@@ -2976,7 +2977,7 @@ int keypos[0:2:1], int drawix[0])}
   \item A code for the constant/trend combination (1 to 5, as per
     Johansen; default 3).
   \item The cointegration matrix (required\footnote{In the accompanying but 
-  technically separate package \texttt{SVEC\_GUI} the corresponding input is optional and
+  technically separate package \dtk{SVEC_GUI} the corresponding input is optional and
   would be automatically estimated.}).
   \item The loadings matrix (optional, will be estimated via OLS if
     omitted or empty).
@@ -2986,13 +2987,13 @@ int keypos[0:2:1], int drawix[0])}
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_cumulate (bundle *Smod, int nv)}
+\begin{funcdoc}{\detokenize{SVAR_cumulate} (bundle *Smod, int nv)}
   \noindent Stores into the model the fact that the cumulated IRFs for
   the \texttt{nv}-th variable are desired. This is typically used jointly
   with long-run restrictions.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_estimate (bundle *Smod, int verbosity[1])}
+\begin{funcdoc}{\detokenize{SVAR_estimate} (bundle *Smod, int verbosity[1])}
   \noindent Estimates the model by maximum likelihood. Its second argument is a
   scalar, which controls the verbosity of output. If omitted,
   standard output is printed. If set to 2 or higher, the output of the 
@@ -3000,11 +3001,11 @@ int keypos[0:2:1], int drawix[0])}
   
   If you're sure about it, the identification check before
   the estimation of the structural form can be suppressed in 
-  \texttt{SVAR\_setup} (or by manually setting \texttt{Smod.checkident}
+  \dtk{SVAR_setup} (or by manually setting \texttt{Smod.checkident}
   to 0).
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_getshock (bundle *Smod, string sname[null], int drawix[0])}
+\begin{funcdoc}{\detokenize{SVAR_getshock} (bundle *Smod, string sname[null], int drawix[0])}
   \noindent Returns a series for the current workfile, namely the estimate of the 
   structural shock given in \texttt{sname} via equation \eqref{eq:PrE-StS-AB}, 
   in which VAR residuals are used instead of the one-step-ahead prediction errors
@@ -3013,39 +3014,39 @@ int keypos[0:2:1], int drawix[0])}
   The \texttt{drawix} argument is only meaningful in the set identification 
   (sign restriction) case and overrides from which of the accepted model draws 
   the coefficients should be taken. Normally this draw index should instead be determined 
-  with the help of the \texttt{SVAR\_SRgetbest} function and can be omitted here. 
+  with the help of the \dtk{SVAR_SRgetbest} function and can be omitted here. 
   This index can range from 1 to the number
   of accepted draws. In order to work the SR type model must have been set up such that all
-  accepted draws are stored in the model bundle. (See \texttt{SVAR\_setup},
+  accepted draws are stored in the model bundle. (See \dtk{SVAR_setup},
   default is yes.)
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_HD (bundle *Smod, string vname[null], int drawix[0])}
+\begin{funcdoc}{\detokenize{SVAR_HD} (bundle *Smod, string vname[null], int drawix[0])}
   \noindent Returns a list of series with 
   the ``historical decomposition'' of the variable given in \texttt{vname},
   decomposing it into a deterministic component
   and $n$ stochastic components. The names of the resulting series are
   as follows: if the name of the decomposed variable is \texttt{foo},
   then the historical component attributable to the first structural
-  shock is called \texttt{hd\_foo\_1}, the one attributable to the
-  second structural shock is called \texttt{hd\_foo\_2}, and so
+  shock is called \dtk{hd_foo_1}, the one attributable to the
+  second structural shock is called \dtk{hd_foo_2}, and so
   on. Finally, the one for the first deterministic component is called
-  \texttt{hd\_foo\_det}.
+  \dtk{hd_foo_det}.
   
   If the \texttt{vname} argument is omitted, the default is to target the first variable.
   
-  The \texttt{drawix} argument can typically be omitted, see \texttt{SVAR\_getshock}.
+  The \texttt{drawix} argument can typically be omitted, see \dtk{SVAR_getshock}.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_hd (bundle *Smod, int nv, int drawix[0])}
-\noindent Equivalent to the recommended \texttt{SVAR\_HD}, but with an alternative 
+\begin{funcdoc}{\detokenize{SVAR_hd} (bundle *Smod, int nv, int drawix[0])}
+\noindent Equivalent to the recommended \dtk{SVAR_HD}, but with an alternative 
 interface: 
 Instead of specifying the name of the target variable its position in the 
 list of endogenous variables must be given in \texttt{nv}.
 \end{funcdoc}
 
 
-\begin{funcdoc}{SVAR\_ident (bundle *Smod, int verbose[0])}
+\begin{funcdoc}{\detokenize{SVAR_ident} (bundle *Smod, int verbose[0])}
   \noindent Returns a 0/1 scalar checking if a model is identified by applying (among other things) 
   the algorithm described in \cite{AG}.  
   Its second argument controls the verbosity of output. 
@@ -3056,15 +3057,15 @@ list of endogenous variables must be given in \texttt{nv}.
   model bundle to facilitate further estimation.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_namedrestrict (bundle *Smod, string code, 
+\begin{funcdoc}{\detokenize{SVAR_namedrestrict} (bundle *Smod, string code, 
   string yname, string sname, scalar d[0])}
   \noindent An alternative interface for point restrictions, requiring the 
   names of the respective shock and variable pair instead of the index numbers 
-  used in \texttt{SVAR\_restrict}. An example based on the main sample script 
-  is given in the included script file \texttt{simple\_C\_named.inp}.
+  used in \dtk{SVAR_restrict}. An example based on the main sample script 
+  is given in the included script file \dtk{simple_C_named.inp}.
   
   For the first two arguments \texttt{Smod} and \texttt{code}, see the explanation
-  for \texttt{SVAR\_restrict}. However, the type codes \texttt{"Adiag"} and 
+  for \dtk{SVAR_restrict}. However, the type codes \texttt{"Adiag"} and 
   \texttt{"Bdiag"} make no sense here and are not allowed.
   
   The next two string arguments \texttt{yname} and 
@@ -3073,13 +3074,14 @@ list of endogenous variables must be given in \texttt{nv}.
   are automatically taken from the model setup. Using unrecognized names will cause 
   an error. Notice that for the A-matrix in an AB model no shock is directly 
   involved, and thus it may be more natural to use the indexation form in 
-  \texttt{SVAR\_restrict}.
+  \dtk{SVAR_restrict}.
   
   Finally, the scalar restriction value \texttt{d} works again as in 
-  \texttt{SVAR\_restrict}, with the same default value of zero.
+  \dtk{SVAR_restrict}, with the same default value of zero.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_restrict (bundle *Smod, string code, numeric r, int c[0], scalar d[0])}
+\begin{funcdoc}{\detokenize{SVAR_restrict} (bundle *Smod, string code,
+    numeric r, int c[0], scalar d[0])}
   \noindent Sets up point constraints for an existing model. The function
   takes at most five arguments:
 \begin{enumerate}
@@ -3133,22 +3135,22 @@ list of endogenous variables must be given in \texttt{nv}.
 
 A few examples: 
 \begin{itemize}
-\item \texttt{SVAR\_restrict(\&M, "C", 3, 2, 0)}; in a C model called
+\item \dtk{SVAR_restrict(\&M, "C", 3, 2, 0)}; in a C model called
   \texttt{M}, sets $C_{3,2} = 0$. As a consequence, the IRF for
   variable number 3 with respect to the shock number 2 starts from
   zero.
-\item \texttt{SVAR\_restrict(\&foo, "A", 1, 2, 0)}; in an AB model called
+\item \dtk{SVAR_restrict(\&foo, "A", 1, 2, 0)}; in an AB model called
   \texttt{foo}, sets $A_{1,2} = 0$.
-\item \texttt{SVAR\_restrict(\&MyMod, "lrC", 5, 3, 0)}; in a C model
+\item \dtk{SVAR_restrict(\&MyMod, "lrC", 5, 3, 0)}; in a C model
   called \texttt{MyMod}, restricts $C$ such that the long-run impact
   of shock number 3 on variable number 5 is 0. This implies that the
   cumulated IRF for variable 5 with respect to shock 3 tends to zero.
-\item \texttt{SVAR\_restrict(\&Mod2, "B", \{NA, 0; NA, NA\})} specifies a 
+\item \dtk{SVAR_restrict(\&Mod2, "B", \{NA, 0; NA, NA\})} specifies a 
   pattern matrix in a 2-dimensional system to restrict the 1,2-element of
   the B matrix to zero. 
-\item \texttt{SVAR\_restrict(\&bar, "Adiag", 1)}; in an AB model called
+\item \dtk{SVAR_restrict(\&bar, "Adiag", 1)}; in an AB model called
   \texttt{bar}, sets $A_{i,i} = 1$ for $1 \le i \le n$.
-\item \texttt{SVAR\_restrict(\&baz, "Bdiag", NA)}; in an AB model called
+\item \dtk{SVAR_restrict(\&baz, "Bdiag", NA)}; in an AB model called
   \texttt{baz}, sets $B_{i,j} = 0$ for $i \ne j$.
 \end{itemize}
 
@@ -3160,7 +3162,7 @@ Note that this function can be used (albeit in a limited way) in the
 context of set-identified models. See section \ref{sec:mixed} for more details.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_setup (string type, list Y, list X, int varorder, 
+\begin{funcdoc}{\detokenize{SVAR_setup} (string type, list Y, list X, int varorder, 
   bool checkident[1])}
   \noindent Returns a bundle with the initialised model. 
   
@@ -3182,7 +3184,7 @@ context of set-identified models. See section \ref{sec:mixed} for more details.
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_spagplot (bundle Smod, string vname, string sname, 
+\begin{funcdoc}{\detokenize{SVAR_spagplot} (bundle Smod, string vname, string sname, 
  string fname (optional))}
  \noindent Relating to a set identified (sign restricted) model, does a 
   ``spaghetti'' plot of the IRFs, i.e. simply plotting the IRF of each accepted
@@ -3207,7 +3209,7 @@ context of set-identified models. See section \ref{sec:mixed} for more details.
 
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_SRdraw (bundle *Smod, int rep, bool
+\begin{funcdoc}{\detokenize{SVAR_SRdraw} (bundle *Smod, int rep, bool
     DO\_BAYES[0], scalar coveralpha[0.9],\\
     int maxiter[10000])}
   
@@ -3227,7 +3229,7 @@ context of set-identified models. See section \ref{sec:mixed} for more details.
   \emph{Returns}: \texttt{array of bundles}, one for each accepted draws. 
   By default you would \emph{not} need to produce or grab this object directly
   because this array would be stored inside the main model bundle as member 
-  \texttt{acc\_draws} and then processed automatically. So only use it under 
+  \dtk{acc_draws} and then processed automatically. So only use it under 
   special circumstances.
 
    \noindent Arguments:
@@ -3241,7 +3243,7 @@ context of set-identified models. See section \ref{sec:mixed} for more details.
 \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_SRexotic (bundle *Smod, string chkstr, strings shocks, \\
+\begin{funcdoc}{\detokenize{SVAR_SRexotic} (bundle *Smod, string chkstr, strings shocks, \\
  int length[0], int ini[0])} % left bool needs_model undocumented for now (Sven)
  
  \noindent Relating to a set identified (sign restricted) model, this is an experimental function serving 
@@ -3249,7 +3251,7 @@ context of set-identified models. See section \ref{sec:mixed} for more details.
  variable-shock pair.\footnote{Here we are not talking about the case of having several 
  restrictions where each of them concerns a different variable-shock pair. Such a scenario 
  is of course already covered
- by the more standard approaches, see \texttt{SVAR\_SRplain, SVAR\_SRfull}, simply 
+ by the more standard approaches, see \dtk{SVAR_SRplain, SVAR_SRfull}, simply 
  applying and combining several restrictions. Instead, the question here is how to deal 
  with any additional restriction which intrinsically links more than one impulse response.}
  See section \ref{sec:SR} for an explanation of the usage. 
@@ -3267,13 +3269,13 @@ context of set-identified models. See section \ref{sec:mixed} for more details.
   This information is in principle already contained in the restriction expression, but we are too 
   lazy to parse that string properly and want to be on the safe side, so we shift that responsibility
   to the user -- later on it may also serve as a cross-check to catch unwanted input errors.}
-  \item see \texttt{SVAR\_SRplain (length)}
-  \item see \texttt{SVAR\_SRplain (ini)}
+  \item see \dtk{SVAR_SRplain (length)}
+  \item see \dtk{SVAR_SRplain (ini)}
  \end{enumerate}
  
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_SRfull (bundle *Smod, string yname, string sname, scalar lo (optional),\\
+\begin{funcdoc}{\detokenize{SVAR_SRfull} (bundle *Smod, string yname, string sname, scalar lo (optional),\\
   scalar hi (optional), int ini[0], int fin[0])}
   
   \noindent Relating to a set identified (sign restricted) model, this function serves to impose restrictions that
@@ -3295,21 +3297,21 @@ context of set-identified models. See section \ref{sec:mixed} for more details.
   (be omitted), which would mean a restriction only associated with the impact effect.
   \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_SRirf (bundle Smod, strings whichvars [optional], \\
+\begin{funcdoc}{\detokenize{SVAR_SRirf} (bundle Smod, strings whichvars [optional], \\
       strings whichshocks [optional], bool meanormed[0])}
 \noindent Relating to a set identified (sign restricted) model, does IRF plots
  based on all accepted draws. The empirical coverage level of the plotted
  confidence bands (or credible sets, if you like) must have been chosen
  previously at the stage of getting the draws (see 
- \texttt{SVAR\_SRdraw}, but also see \texttt{SVAR\_SRresetalpha}).% \footnote{%
+ \dtk{SVAR_SRdraw}, but also see \dtk{SVAR_SRresetalpha}).% \footnote{%
 % If you change your mind about the desired coverage level 
 % but want to avoid re-running the computationally intensive drawing stage, the following hack 
 % should work in theory: (1) Set the bundle element \texttt{Smod.SRcoveralpha} to the desired level.
 % (2) Call the relevant helper function like this: 
-% \texttt{ bundle newIrfdata = IRF\_plotdata(Smod.acc\_draws, Smod.SRcoveralpha)}. 
+% \dtk{ bundle newIrfdata = IRF_plotdata(Smod.acc_draws, Smod.SRcoveralpha)}. 
 % (3) Copy over the following 
 % elements from \texttt{newIrfdata} to \texttt{Smod} and observe the internally different names:
-% \texttt{irfSRmeans $\rightarrow$ SRirfmeans, lo\_cb $\rightarrow$ SRlo\_cb,
+% \dtk{irfSRmeans $\rightarrow$ SRirfmeans, lo_cb $\rightarrow$ SRlo_cb,
 % hi\_cb $\rightarrow$ SRhi\_cb, irfSRmeds $\rightarrow$ SRirfmeds.}
 % This hack is not
 % guaranteed to work in the future. (We should probably add a helper function to automate this.) }
@@ -3329,7 +3331,7 @@ context of set-identified models. See section \ref{sec:mixed} for more details.
  It is not possible to exclude single variable-shock pairs, simply delete any unwanted plots afterwards. 
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_SRgetbest (bundle *Smod, string vname, string sname,
+\begin{funcdoc}{\detokenize{SVAR_SRgetbest} (bundle *Smod, string vname, string sname,
     int ini[0::0], \\ int length[0::0],  int disttarg[0:1:0],  string loss[null]) }
   \noindent Relating to a set identified (sign restricted) model, this function returns
    the (scalar) index number among all accepted draws of that particular draw which has 
@@ -3351,7 +3353,7 @@ context of set-identified models. See section \ref{sec:mixed} for more details.
    \end{enumerate}  
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_SRplain (bundle *Smod, string yname, string sname, string what, \\
+\begin{funcdoc}{\detokenize{SVAR_SRplain} (bundle *Smod, string yname, string sname, string what, \\
 int length[0], int ini[0])}
 \noindent Relating to a set identified model, this function serves to impose standard 
  sign restrictions.
@@ -3372,11 +3374,11 @@ int length[0], int ini[0])}
   trailing argument \texttt{ini} is omitted, then the restriction must hold up to horizon \texttt{length}.
   \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_SRresetalpha (bundle *Smod, scalar alpha)}
+\begin{funcdoc}{\detokenize{SVAR_SRresetalpha} (bundle *Smod, scalar alpha)}
 \noindent Relating to a set identified model, this function allows to redefine the 
 desired coverage level of the pointwise confidence intervals without having to 
 repeat the time-consuming model drawing stage. If necessary, this function would
-typically be called before \texttt{SVAR\_SRirf}. 
+typically be called before \dtk{SVAR_SRirf}. 
 
 \noindent Arguments:
  
@@ -3407,7 +3409,7 @@ typically be called before \texttt{SVAR\_SRirf}.
     \texttt{t1, t2}	  & initial and final observations \\
     \texttt{Y}	  & endogenous variables data matrix \\
     \texttt{X}	  & exogenous variables data matrix \\
-    \texttt{calc\_lr} & switch to get long-run matrix \texttt{lrmat} in short-run models \\ 
+    \dtk{calc_lr} & switch to get long-run matrix \texttt{lrmat} in short-run models \\ 
     \texttt{checkident} & switch indicating whether to check
                           identification before estimation\\
     \texttt{calinfo} & bundle, calendar info: the ``t1'', ``t2'' and
@@ -3471,7 +3473,7 @@ typically be called before \texttt{SVAR\_SRirf}.
     \multicolumn{2}{c}{\textbf{Bootstrap-related}} \\
     \hline
     \texttt{nboot}	 & integer, number of bootstrap replications \\
-    \texttt{boot\_alpha} & scalar, bootstrap confidence level (coverage)\\
+    \dtk{boot_alpha} & scalar, bootstrap confidence level (coverage)\\
     \texttt{bootdata}	 & output from the bootstrap (see section \ref{sec:bootstrap})\\
     \texttt{biascorr}	 & 0 for no bias correction, 1 for
     partial, 2 for full\\
@@ -3488,7 +3490,7 @@ typically be called before \texttt{SVAR\_SRirf}.
     \hline 
     \texttt{SRiter} & integer, number of draws actually done \\
     \texttt{SRacc} & integer, number of accepted draws stored and used\\
-    \texttt{SRid\_snames} & strings array, names of those shocks that are subject 
+    \dtk{SRid_snames} & strings array, names of those shocks that are subject 
       to sign (and similar) restrictions, subset of \texttt{snames}\\
     \texttt{SRest} & matrix, internal representation of the (non-exotic) set identification
     restrictions; each row has: variable id number, lower bound, upper bound, starting
@@ -3511,20 +3513,20 @@ typically be called before \texttt{SVAR\_SRirf}.
    \texttt{SRirfserrs} & matrix, the horizon-by-horizon pointwise (pseudo) standard errors
   of the accepted IRF draws;  dimensions see \texttt{SRirfmeans}\\
   
-  \texttt{SRlo\_cb} & matrix, the horizon-by-horizon pointwise lower bounds of the 
+  \dtk{SRlo_cb} & matrix, the horizon-by-horizon pointwise lower bounds of the 
   confidence intervals (or credible sets), quantile-based (not symmetric around the 
   means or medians); dimensions see  \texttt{SRirfmeans}\\
   
-  \texttt{SRhi\_cb} & matrix, ditto for the upper bounds\\
+  \dtk{SRhi_cb} & matrix, ditto for the upper bounds\\
   
    \texttt{storeSRirfs} & switch indicating whether the IRF outcomes from all accepted draws
-     will be stored in the main model bundle (see also \texttt{acc\_draws})\\
-   \texttt{acc\_draws} & array of bundles, collecting the outcomes and data of all accepted 
+     will be stored in the main model bundle (see also \dtk{acc_draws})\\
+   \dtk{acc_draws} & array of bundles, collecting the outcomes and data of all accepted 
    draws; this member is absent if suppressed at the setup stage. The data type and the 
    stored representation of the draws is still experimental and subject to change.\\
    
-   \texttt{bestdraw} & positive integer to index the best of all accepted draws in \texttt{acc\_draws} 
-   according to criteria specified in call to \texttt{SVAR\_SRgetbest}. Zero if undefined. 
+   \texttt{bestdraw} & positive integer to index the best of all accepted draws in \dtk{acc_draws} 
+   according to criteria specified in call to \dtk{SVAR_SRgetbest}. Zero if undefined. 
   \end{tabular}
   
 \section{Changelog (after v1.2)}
@@ -3535,12 +3537,12 @@ typically be called before \texttt{SVAR\_SRirf}.
   \item Get rid of version number since SVAR is a gretl addon, and starting
    with gretl 2024b such official addons inherit the version number directly
    from gretl itself.
-  \item Extend the \cmd{SVAR\_restrict} function to accept full restriction pattern matrices.
-  \item Extend the \cmd{SVAR\_SRirf} function to return the created plotting codes
+  \item Extend the \dtk{SVAR_restrict} function to accept full restriction pattern matrices.
+  \item Extend the \dtk{SVAR_SRirf} function to return the created plotting codes
    in a strings array (returned nothing before, just ran the plots).
   \item Use a more efficient normal-inverse-Wishart generation algorithm.
   \item Properly generate the uniformly distributed rotation matrices (internally 
-   with the new \cmd{gen\_haar} function). 
+   with the new \dtk{gen_haar} function). 
   \item Fix a bug with the spaghetti plot (for set-id models) in case of partial
    identification.
   \item Try to fix more sub-cases with only ``exotic'' restrictions (and no standard 
@@ -3561,7 +3563,7 @@ typically be called before \texttt{SVAR\_SRirf}.
 \subsection*{Version 2.0, June/July 2023}
 \begin{itemize}
 \item Implement mixed (sign- and zero-) restrictions. Deprecate \cmd{SRgetbest}
- in favour of \cmd{SVAR\_SRgetbest}. 
+ in favour of \dtk{SVAR_SRgetbest}. 
 \item Move the internal function drawbootres to the extra addon, and along the
  way fix a bug with the moving blocks bootstrap, the explicit choice of the
  block length was not honored (probably introduced in 2021).  
@@ -3655,7 +3657,7 @@ Also for SVECs, check whether a long-run restriction really applies to a permane
 \begin{itemize}
 
 \item The documentation of the bootstrap $\alpha$ level did not match the actual
-implementation. This has been changed such that \texttt{boot\_alpha} really 
+implementation. This has been changed such that \dtk{boot_alpha} really 
 represents the nominal coverage of the confidence intervals around each impulse
 response. (This quantity is often denoted with $1 - \alpha$ instead, but for 
 backward compatibility we stick to $\alpha$.)
@@ -3667,7 +3669,7 @@ heteroskedasticity.
 
 \item Reformat the identification check output.
 
-\item Add the possibility to choose the bias correction directly in the call to \texttt{SVAR\_boot}.
+\item Add the possibility to choose the bias correction directly in the call to \dtk{SVAR_boot}.
 
 \end{itemize}
 
@@ -3677,17 +3679,17 @@ heteroskedasticity.
 \item catches of wrong user input: catch the case when no restrictions are given, 
 to prevent other errors; catch a missing cointegration setup when trying to 
 estimate a SVEC; add a linear dependency check on the exogenous terms 
-in \texttt{SVAR\_setup}; catch the case where restrictions would not work 
+in \dtk{SVAR_setup}; catch the case where restrictions would not work 
 (\texttt{imp2exp}) and print out a message
 
 \item fixes in the SVEC case especially with further exogenous variables: 
-fix indexing error and mis-concatenation, and companion matrix in \texttt{vecm\_est} 
+fix indexing error and mis-concatenation, and companion matrix in \dtk{vecm_est} 
 with exogenous; and fix the restricted terms in the bootstrap
  
 \item internal changes: simplify centered seasonals creation in determ(),
 replace isnull with !exists (and vice versa)
 
-\item interface: allow omission of alpha in \texttt{SVAR\_coint}
+\item interface: allow omission of alpha in \dtk{SVAR_coint}
 
 \item New argument 'checkident' in SVAR\_setup. Checking identification is now default 
   in script use.
@@ -3736,7 +3738,7 @@ explicitly, not only the implied IRFs.
 \item Make it clear that long-run restrictions are not supported in AB models.
 
 \item Calculate the long-run matrix and put it into the model bundle as \texttt{lrmat}.
-Also add a boolean switch \texttt{calc\_lr} to the model bundle to force its 
+Also add a boolean switch \dtk{calc_lr} to the model bundle to force its 
 calculation when it would normally not be done 
 (in models with short-run constraints only).
 

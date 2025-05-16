@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE gretldata SYSTEM "gretldata.dtd">
 
-<gretldata version="1.3" name="AWM" frequency="4" startobs="1970:1" endobs="1998:4" type="time-series">
+<gretldata version="1.5" name="AWM" frequency="4" n="116" startobs="1970:1" endobs="1998:4" type="time-series">
 <description>Euro Area macroeconomic time series from the Area Wide Model (AWM) dataset by
 Gabriel Fagan, Jérôme Henry and Ricardo Mestre. The dataset covers a wide range
 of quarterly Euro Area macroeconomic time series and has become a standard
@@ -9,7 +9,11 @@ reference for empirical studies on the Euro Area economy.
 
 For a description of this database, see the ECB working paper No. 42: ‘An
 Area-wide Model (AWM) for the euro area’ by Gabriel Fagan, Jérôme Henry, and
-Ricardo Mestre (January 2001).</description>
+Ricardo Mestre (January 2001).
+
+Note: the AWM model was decommissioned in 2010; this version of the dataset is
+distributed only in the interest of replicability of published results.
+</description>
 <variables count="130">
 <variable name="CAN"
  label="Current Account Balance"

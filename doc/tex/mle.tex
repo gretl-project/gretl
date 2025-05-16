@@ -867,7 +867,7 @@ inspecting the function code, you can see that the actual estimation
 does not happen here: rather, the \texttt{zip()} function merely
 uses the built-in \cmd{modprint} command to print out the results
 coming from another user-written function, namely
-\texttt{zip\_estimate()}.
+\dtk{zip_estimate()}.
 
 \begin{script}[htbp]
   \scriptinfo{poisson-functions}{Zero-inflated Poisson Model --- internal functions}
@@ -908,10 +908,10 @@ end function
 \end{scode}
 \end{script}
 
-The function \texttt{zip\_estimate()} is not meant to be executed
+The function \dtk{zip_estimate()} is not meant to be executed
 directly; it just contains the number-crunching part of the job, whose
 results are then picked up by the end function \texttt{zip()}. In
-turn, \texttt{zip\_estimate()} calls other user-written functions to
+turn, \dtk{zip_estimate()} calls other user-written functions to
 perform other tasks. The whole set of ``internal'' functions is shown
 in the panel \ref{ex:poisson-functions}.
 
@@ -919,7 +919,7 @@ All the functions shown in \ref{ex:poisson-mle} and \ref{ex:poisson-functions} c
 be stored in a separate \texttt{inp} file and executed once, at the
 beginning of our job, by means of the \texttt{include}
 command.  Assuming the name of this script file is
-\texttt{zip\_est.inp}, the following is an example script which
+\dtk{zip_est.inp}, the following is an example script which
 (a) includes the script file, (b) generates a simulated dataset,
 and (c) performs the estimation of a ZIP model on the artificial data.
 
@@ -1119,7 +1119,7 @@ techniques\footnote{The gist to it is that, if $\mathbf{H}$ is not
   \mathrm{dg}(\mathbf{H}) + (1-k) \cdot \mathbf{H}$, where $k$ is a
   suitable scalar; however, if you're interested in the precise
   details, you'll be much better off looking at the source code: the
-  file you'll want to look at is \texttt{lib/src/gretl\_bfgs.c}.}, but
+  file you'll want to look at is \dtk{lib/src/gretl_bfgs.c}.}, but
 a number of adverse consequences may occur, which range from
 \emph{longer} computation time for optimization to non-convergence of
 the algorithm.

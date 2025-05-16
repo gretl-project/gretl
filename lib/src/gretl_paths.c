@@ -2094,7 +2094,7 @@ const char *gretl_gnuplot_path (void)
 	    fprintf(stderr, "gretl_gnuplot_path: bad value '%s'\n",
 		    paths.gnuplot);
 # ifdef PKGBUILD
-	    gchar *tmp = g_build_filename(paths.gretldir, "wguplot.exe");
+	    gchar *tmp = g_build_filename(paths.gretldir, "wguplot.exe", NULL);
 	    if (strcmp(paths.gnuplot, tmp)) {
 		strcpy(paths.gnuplot, tmp);
 	    }
@@ -2278,17 +2278,6 @@ void show_paths (void)
 }
 
 #ifdef WIN32
-
-static char *rightmost (char *s1, char *s2)
-{
-    if (s1 == NULL) {
-        return s2;
-    } else if (s2 == NULL) {
-        return s1;
-    } else {
-        return (s2 - s1 > 0)? s2 : s1;
-    }
-}
 
 static char getsep (const char *s)
 {

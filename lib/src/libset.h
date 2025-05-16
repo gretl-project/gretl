@@ -212,6 +212,9 @@ int gretl_in_gui_mode (void);
 void gretl_set_tool_mode (void);
 int gretl_in_tool_mode (void);
 
+void gretl_set_no_plots (void);
+int gretl_no_plots (void);
+
 void set_gretl_echo (int e);
 int gretl_echo_on (void);
 
@@ -247,7 +250,7 @@ int show_activity_func_installed (void);
 void set_user_stop (int s);
 int get_user_stop (void);
 
-void set_workdir_callback (int (*callback)());
+void set_workdir_callback (int (*callback)(char *s));
 
 int libset_write_script (const char *fname);
 int libset_read_script (const char *fname);

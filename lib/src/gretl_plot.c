@@ -570,7 +570,7 @@ int gretl_plot_finalize (const char *s, const DATASET *dset,
     debug_print_option_flags("end plot", opt);
 #endif
 
-    if (!gretl_in_gui_mode() && getenv("CLI_NO_PLOTS")) {
+    if (gretl_no_plots()) {
 	; /* skip it */
     } else {
 	err = execute_plot(dset, opt);

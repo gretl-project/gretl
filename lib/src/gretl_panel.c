@@ -3313,7 +3313,6 @@ fix_panel_hatvars (MODEL *pmod, panelmod_t *pan, const double **Z)
     double *yhat = pan->pooled->yhat;
     double *uhat = NULL;
     int n = pan->pooled->full_n;
-    int re_n = 0;
     double yht, SSR = 0.0;
     int i, j, s, t;
     int err = 0;
@@ -3361,7 +3360,6 @@ fix_panel_hatvars (MODEL *pmod, panelmod_t *pan, const double **Z)
                     yht += pmod->coeff[j] * Z[pan->pooled->list[j+2]][t];
                 }
                 yhat[t] = yht;
-                re_n++;
                 uhat[t] = y[t] - yht;
                 SSR += uhat[t] * uhat[t];
                 if (pan->re_uhat != NULL) {
@@ -7329,6 +7327,72 @@ int plausible_panel_time_var (const DATASET *dset)
             if (ok) {
                 ret = i;
             }
+        }
+    }
+
+    return ret;
+}
+
+/* Tests whether the series with index number @v codes for the
+   time dimension of a panel dataset. If so, returns 1 and
+   records the minimum value and (constant) increment of the
+   index; otherwise returns 0.
+*/
+
+int is_panel_time_var (const DATASET *dset, int v,
+                       int tmax, int *minval,
+                       int *incr)
+{
+    int t, ret = 0;
+
+    *minval = 0;
+    *incr = 0;
+
+    if (may_be_time_name(dset->varname[v])) {
+        const double *x = dset->Z[v];
+        int val0 = (int) x[0];
+        int incr0 = (int) x[1] - (int) x[0];
+        int ok = 1;
+
+        for (t=0; t<tmax && ok; t++) {
+            if (na(x[t]) || x[t] < 0 || x[t] != floor(x[t])) {
+                ok = 0;
+            } else if (t > 0 && t % dset->pd == 0) {
+                if (x[t] != val0) {
+                    ok = 0;
+                }
+            } else if (t > 1 && x[t] - x[t-1] != incr0) {
+                ok = 0;
+            }
+        }
+        if (ok) {
+            *minval = val0;
+            *incr = incr0;
+            ret = 1;
+        }
+    }
+
+    return ret;
+}
+
+int is_panel_unit_var (const DATASET *dset, int v, int tmax)
+{
+    const double *x = dset->Z[v];
+    int t, ret = 1;
+
+    if (x[0] != 1) {
+        return 0;
+    }
+
+    for (t=1; t<tmax && ret; t++) {
+        if (na(x[t]) || x[t] < 0 || x[t] != floor(x[t])) {
+            ret = 0;
+        } else if (t % dset->pd == 0) {
+            if (x[t] != x[t-1] + 1) {
+                ret = 0;
+            }
+        } else if (x[t] != x[t-1]) {
+            ret = 0;
         }
     }
 

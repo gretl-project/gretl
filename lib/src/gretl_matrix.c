@@ -9891,6 +9891,15 @@ int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
     return err;
 }
 
+/* Below: we need an n x n complex matrix to return eigenvectors to the
+   caller. The input matrix @m may or may not be correctly sized to do
+   this job -- if not, we have to allocate a new matrix, which we pass
+   pack via @pev. In addition we need a temporary n x n real matrix to
+   pass to dgeev_ to hold a compressed representation of the
+   eigenvectors; this we allocate unconditionally and pass back via
+   @pec.
+*/
+
 static int dgeev_eigvecs_alloc (gretl_matrix *m,
                                 gretl_matrix **pev,
                                 gretl_matrix **pec,
@@ -9898,55 +9907,42 @@ static int dgeev_eigvecs_alloc (gretl_matrix *m,
 {
     gretl_matrix *ev = NULL;
     gretl_matrix *ec = NULL;
+    int mrc = m->rows * m->cols;
+    int dim = n * n;
 
-    if (pev != NULL) {
-        /* We need an n x n complex matrix for output:
-           is @m usable or do we need to allocate a
-           new matrix?
-        */
-        int mrc = m->rows * m->cols;
-        int dim = n * n;
-
-        if (m->is_complex && mrc == dim) {
-            m->rows = m->cols = n;
-        } else if (!m->is_complex && mrc == 2*dim) {
-            m->rows = 2*n;
-            m->cols = n;
-            matrix_set_complex(m, 1, 1);
-        } else {
-            /* have to allocate */
-            ev = gretl_cmatrix_new0(n, n);
-            if (ev == NULL) {
-                return E_ALLOC;
-            }
+    if (m->is_complex && mrc == dim) {
+        /* OK */
+        m->rows = m->cols = n;
+    } else if (!m->is_complex && mrc == 2*dim) {
+        /* @m can be converted */
+        m->rows = 2*n;
+        m->cols = n;
+        matrix_set_complex(m, 1, 1);
+    } else {
+        /* we have to allocate */
+        ev = gretl_cmatrix_new0(n, n);
+        if (ev == NULL) {
+            return E_ALLOC;
         }
     }
 
-    /* We need an n x n real matrix to pass to lapack
-       to get the compressed representation of the
-       eigenvectors
-    */
     ec = gretl_matrix_alloc(n, n);
     if (ec == NULL) {
         gretl_matrix_free(ev);
         return E_ALLOC;
     }
 
-    if (pev != NULL) {
-        *pev = ev;
-    }
+    *pev = ev;
     *pec = ec;
 
     return 0;
 }
 
-/* Transcribe from compact representation of eigenvectors
-   in the n x n real matrix @src to the "new-style" n x n
-   complex matrix @targ. What happens for each column
-   depends on whether the associated eigenvalue is real or
-   a member of a conjugate pair. The arrays @wr and @wi
-   hold the real and imaginary parts of the eigenvalues,
-   respectively.
+/* Transcribe from compact representation of eigenvectors in the n x n
+   real matrix @src to the "new-style" n x n complex matrix @targ. What
+   happens for each column depends on whether the associated eigenvalue
+   is real or a member of a conjugate pair. The arrays @wr and @wi hold
+   the real and imaginary parts of the eigenvalues, respectively.
 */
 
 static void dgeev_eigvecs_transcribe (gretl_matrix *targ,
@@ -10034,6 +10030,11 @@ static void maybe_eigen_trim (gretl_matrix *lam)
     gretl_matrix_reuse(lam, -1, 1);
 }
 
+/* The @legacy case supports some non-updated usage in var.c,
+   kalman.c and genfuncs.c. But we know that @VR and @VL will
+   be NULL in such cases: only eigenvalues are wanted.
+*/
+
 static gretl_matrix *real_gretl_dgeev (const gretl_matrix *A,
                                        gretl_matrix *VR,
                                        gretl_matrix *VL,
@@ -10082,11 +10083,8 @@ static gretl_matrix *real_gretl_dgeev (const gretl_matrix *A,
     a = Acpy->val;
 
     if (VL != NULL) {
-        if (legacy) {
-            *err = dgeev_eigvecs_alloc(VL, NULL, &Ltmp, n);
-        } else {
-            *err = dgeev_eigvecs_alloc(VL, &VLz, &Ltmp, n);
-        }
+        /* left eigenvectors wanted */
+        *err = dgeev_eigvecs_alloc(VL, &VLz, &Ltmp, n);
         if (*err) {
             goto bailout;
         }
@@ -10094,11 +10092,8 @@ static gretl_matrix *real_gretl_dgeev (const gretl_matrix *A,
     }
 
     if (VR != NULL) {
-        if (legacy) {
-            *err = dgeev_eigvecs_alloc(VR, NULL, &Rtmp, n);
-        } else {
-            *err = dgeev_eigvecs_alloc(VR, &VRz, &Rtmp, n);
-        }
+        /* right eigenvectors wanted */
+        *err = dgeev_eigvecs_alloc(VR, &VRz, &Rtmp, n);
         if (*err) {
             goto bailout;
         }
@@ -10107,14 +10102,13 @@ static gretl_matrix *real_gretl_dgeev (const gretl_matrix *A,
 
     work = lapack_malloc(sizeof *work);
     ret = gretl_zero_matrix_new(n, 2);
-
     if (work == NULL || ret == NULL) {
         *err = E_ALLOC;
         return NULL;
     }
 
-    wr = ret->val;
-    wi = wr + n;
+    wr = ret->val; /* eigenvalues, real part */
+    wi = wr + n;   /* eigenvalues, imag. part */
 
     /* get optimal workspace size */
     lwork = -1;
@@ -10133,12 +10127,10 @@ static gretl_matrix *real_gretl_dgeev (const gretl_matrix *A,
 
     if (info != 0) {
         fprintf(stderr, "dgeev: info = %d\n", info);
-        *err = E_DATA;
+        *err = E_INVARG;
     } else {
         if (VL != NULL) {
-            if (legacy) {
-                gretl_matrix_replace_content(VL, Ltmp);
-            } else if (VLz != NULL) {
+            if (VLz != NULL) {
                 dgeev_eigvecs_transcribe(VLz, Ltmp, wr, wi);
                 gretl_matrix_replace_content(VL, VLz);
             } else {
@@ -10146,9 +10138,7 @@ static gretl_matrix *real_gretl_dgeev (const gretl_matrix *A,
             }
         }
         if (VR != NULL) {
-            if (legacy) {
-                gretl_matrix_replace_content(VR, Rtmp);
-            } else if (VRz != NULL) {
+            if (VRz != NULL) {
                 dgeev_eigvecs_transcribe(VRz, Rtmp, wr, wi);
                 gretl_matrix_replace_content(VR, VRz);
             } else {
@@ -10187,7 +10177,7 @@ gretl_matrix *gretl_dgeev (const gretl_matrix *A,
 }
 
 /**
- * gretl_general_matrix_eigenvals:
+ * legacy_general_matrix_eigenvals:
  * @m: square matrix on which to operate.
  * @err: location to receive error code.
  *
@@ -10201,17 +10191,9 @@ gretl_matrix *gretl_dgeev (const gretl_matrix *A,
  */
 
 gretl_matrix *
-gretl_general_matrix_eigenvals (const gretl_matrix *m, int *err)
+legacy_general_matrix_eigenvals (const gretl_matrix *m, int *err)
 {
     return real_gretl_dgeev(m, NULL, NULL, 1, err);
-}
-
-gretl_matrix *old_eigengen (const gretl_matrix *m,
-                            gretl_matrix *VR,
-                            gretl_matrix *VL,
-                            int *err)
-{
-    return real_gretl_dgeev(m, VR, VL, 1, err);
 }
 
 /**
@@ -10319,6 +10301,7 @@ static gretl_matrix *eigensym_rrr (gretl_matrix *m,
     integer n, info, lwork, liwork;
     integer nv, ldz = 1;
     double vl = 0, vu = 0;
+    int il = 1, iu = m->rows;
     gretl_matrix *evals = NULL;
     double *z = NULL;
     double *work = NULL;
@@ -10330,10 +10313,12 @@ static gretl_matrix *eigensym_rrr (gretl_matrix *m,
     char range = 'A';
     char uplo = 'U';
 
-    /* Note: vl and vu are required to work around buggy
-       implementations of dsyevr, which reference these
-       terms even when they're not supposed to. E.g.
-       Apple's libLAPACK.dylib. 2020-10-25.
+    /* Note: @vl and @vu, @il and @iu, are required to work around
+       buggy implementations of dsyevr, which reference these terms
+       even when they're not supposed to. @vl and @vu were added in
+       October 2020 as a fix for Apple's libLAPACK.dylib; @il and @iu
+       were added to prevent a crash in libopenblas from
+       MSYS2/clangarm64 in May 2025.
     */
 
     n = m->rows;
@@ -10365,7 +10350,7 @@ static gretl_matrix *eigensym_rrr (gretl_matrix *m,
 
     lwork = liwork = -1; /* find optimal workspace size */
     dsyevr_(&jobz, &range, &uplo, &n, m->val, &n,
-            &vl, &vu, NULL, NULL, &abstol, &nv, w,
+            &vl, &vu, &il, &iu, &abstol, &nv, w,
             z, &ldz, isuppz, work, &lwork, iwork,
             &liwork, &info);
 
@@ -10384,7 +10369,7 @@ static gretl_matrix *eigensym_rrr (gretl_matrix *m,
 
     if (!*err) {
         dsyevr_(&jobz, &range, &uplo, &n, m->val, &n,
-                &vl, &vu, NULL, NULL, &abstol, &nv, w,
+                &vl, &vu, &il, &iu, &abstol, &nv, w,
                 z, &ldz, isuppz, work, &lwork, iwork,
                 &liwork, &info);
         if (info != 0) {
@@ -10442,7 +10427,7 @@ static int basic_eigensym_work (double *mval, double *w,
     dsyev_(&jobz, &uplo, &n, mval, &n, w, work, &lwork, &info);
     if (info != 0) {
         fprintf(stderr, "dsyev: info = %d\n", info);
-        err = E_DATA;
+        err = E_INVARG;
     }
 
     lapack_free(work);
@@ -14137,9 +14122,9 @@ double gretl_scalar_qform (const gretl_vector *b,
  * Returns: 0 on success, non-zero code on error.
  */
 
-int
-gretl_matrix_diagonal_sandwich (const gretl_vector *d, const gretl_matrix *X,
-                                gretl_matrix *DXD)
+int gretl_matrix_diagonal_sandwich (const gretl_vector *d,
+                                    const gretl_matrix *X,
+                                    gretl_matrix *DXD)
 {
     int dim = (d->rows == 1)? d->cols : d->rows;
     double x, xij;
@@ -15406,6 +15391,122 @@ gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m,
     }
 
     free(rs);
+
+    return a;
+}
+
+struct rsortx {
+    double *x;
+    int n;
+    int row;
+};
+
+static int compare_rsortx (const void *a, const void *b)
+{
+    const struct rsortx *rsa = (const struct rsortx *) a;
+    const struct rsortx *rsb = (const struct rsortx *) b;
+    int i, ret = 0;
+
+    for (i=0; i<rsa->n; i++) {
+        ret = unstable_comp(rsa->x[i], rsb->x[i]);
+        if (ret != 0) {
+            break;
+        } else {
+            /* ensure stable sort and continue */
+            ret = a - b > 0 ? 1 : -1;
+        }
+    }
+
+    return ret;
+}
+
+gretl_matrix *gretl_matrix_sort_by_columns (const gretl_matrix *m,
+                                            int *cols, int *err)
+{
+    struct rsortx *rsx = NULL;
+    gretl_matrix *a = NULL;
+    double *rvals = NULL;
+    double *rptr = NULL;
+    double x;
+    int ns, i, j;
+
+    if (gretl_is_null_matrix(m)) {
+        *err = E_DATA;
+        return NULL;
+    }
+
+    if (cols == NULL || cols[0] == 0) {
+        return gretl_matrix_copy(m);
+    }
+
+    /* check out the @cols argument */
+    ns = cols[0];
+    if (ns > m->cols) {
+        *err = E_INVARG;
+    } else {
+        for (i=1; i<=ns; i++) {
+            if (cols[i] < 0 || cols[i] >= m->cols) {
+                *err = E_INVARG;
+                break;
+            }
+        }
+    }
+    if (*err) {
+        return NULL;
+    }
+
+    rsx = malloc(m->rows * sizeof *rsx);
+    rvals = malloc(m->rows * ns * sizeof *rvals);
+    if (rsx == NULL || rvals == NULL) {
+        *err = E_ALLOC;
+        goto bailout;
+    }
+
+    a = gretl_matrix_copy(m);
+    if (a == NULL) {
+        *err = E_ALLOC;
+        goto bailout;
+    }
+
+    /* fill the rsortx structs */
+    rptr = rvals;
+    for (i=0; i<m->rows; i++) {
+        rsx[i].x = rptr;
+        for (j=0; j<ns; j++) {
+            rsx[i].x[j] = gretl_matrix_get(m, i, cols[j+1]);
+        }
+        rsx[i].n = ns;
+        rsx[i].row = i;
+        rptr += ns;
+    }
+
+    qsort(rsx, m->rows, sizeof *rsx, compare_rsortx);
+
+    for (j=0; j<m->cols; j++) {
+        for (i=0; i<m->rows; i++) {
+            x = gretl_matrix_get(m, rsx[i].row, j);
+            gretl_matrix_set(a, i, j, x);
+        }
+    }
+
+    if (a->info != NULL && a->info->rownames != NULL) {
+        char **S = malloc(a->rows * sizeof *S);
+
+        if (S != NULL) {
+            for (i=0; i<a->rows; i++) {
+                S[i] = a->info->rownames[i];
+            }
+            for (i=0; i<a->rows; i++) {
+                a->info->rownames[i] = S[rsx[i].row];
+            }
+            free(S);
+        }
+    }
+
+ bailout:
+
+    free(rsx);
+    free(rvals);
 
     return a;
 }

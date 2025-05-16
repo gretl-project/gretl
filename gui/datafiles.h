@@ -54,8 +54,6 @@ gint populate_filelist (windata_t *fdata, gpointer p);
 
 char *strip_extension (char *s);
 
-char *maybe_ellipsize_string (char *s, int maxlen);
-
 windata_t *display_function_package_data (const char *pkgname, 
 					  const char *path,
 					  int role);

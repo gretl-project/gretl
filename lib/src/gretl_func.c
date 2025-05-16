@@ -630,10 +630,10 @@ int push_function_args (fncall *fc, ...)
     va_list ap;
     int argtype;
     void *value;
-    int i, err = 0;
+    int err = 0;
 
     va_start(ap, fc);
-    for (i=0; !err; i++) {
+    while (err == 0) {
         argtype = va_arg(ap, int);
         if (argtype < 0) {
             /* reached the end of the args */
@@ -1738,12 +1738,12 @@ ufunc *get_user_function_by_name (const char *name)
         }
         if (fun == NULL && pkg->provider != NULL) {
             /* functions shared by provider */
-            fnpkg *ppkg = get_function_package_by_name(pkg->provider);
+            fnpkg *prv = get_function_package_by_name(pkg->provider);
 
-            if (ppkg != NULL) {
-                for (i=0; i<ppkg->n_priv; i++) {
-                    if (!strcmp(name, ppkg->priv[i]->name)) {
-                        fun = ppkg->priv[i];
+            if (prv != NULL) {
+                for (i=0; i<prv->n_priv; i++) {
+                    if (!strcmp(name, prv->priv[i]->name)) {
+                        fun = prv->priv[i];
                         break;
                     }
                 }
@@ -1752,7 +1752,7 @@ ufunc *get_user_function_by_name (const char *name)
     }
 
     if (fun == NULL) {
-        /* Match any non-private function */
+        /* Match any function (WAS any non-private function) */
         for (i=0; i<n_ufuns; i++) {
             if (!function_is_private(ufuns[i]) &&
                 !strcmp(name, ufuns[i]->name)) {
@@ -1798,12 +1798,18 @@ int is_user_function (const char *name)
 
 ufunc *get_function_from_package (const char *funname, fnpkg *pkg)
 {
-    int i;
+    if (pkg != NULL) {
+        int i;
 
-    for (i=0; i<n_ufuns; i++) {
-        if (ufuns[i]->pkg == pkg &&
-            !strcmp(funname, ufuns[i]->name)) {
-            return ufuns[i];
+        for (i=0; i<pkg->n_pub; i++) {
+            if (!strcmp(funname, pkg->pub[i]->name)) {
+                return pkg->pub[i];
+            }
+        }
+        for (i=0; i<pkg->n_priv; i++) {
+            if (!strcmp(funname, pkg->priv[i]->name)) {
+                return pkg->priv[i];
+            }
         }
     }
 
@@ -5011,11 +5017,11 @@ int function_package_set_properties (fnpkg *pkg, ...)
     const char *key;
     char **sptr;
     int optional;
-    int i, err = 0;
+    int err = 0;
 
     va_start(ap, pkg);
 
-    for (i=1; !err; i++) {
+    while (err == 0) {
         key = va_arg(ap, const char *);
         if (key == NULL) {
             break;
@@ -5124,9 +5130,14 @@ static gchar *pkg_get_special_func_name (fnpkg *pkg, UfunRole role)
 {
     int i;
 
-    for (i=0; i<n_ufuns; i++) {
-        if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == role) {
-            return g_strdup(ufuns[i]->name);
+    for (i=0; i<pkg->n_pub; i++) {
+        if (pkg->pub[i]->pkg_role == role) {
+            return g_strdup(pkg->pub[i]->name);
+        }
+    }
+    for (i=0; i<pkg->n_priv; i++) {
+        if (pkg->priv[i]->pkg_role == role) {
+            return g_strdup(pkg->priv[i]->name);
         }
     }
 
@@ -9273,6 +9284,10 @@ int check_function_needs (const DATASET *dset, DataReq dreq,
                                  pkg->name);
         }
         return E_DATA;
+    }
+
+    if (pkg != NULL) {
+        pkg->prechecked = 1;
     }
 
     return 0;

@@ -1142,6 +1142,7 @@ static int process_starting_obs (const char *stobs_in, int pd,
                 if (structure == TIME_SERIES && min > 0 &&
                     !recognized_ts_frequency(pd)) {
                     if (opt & OPT_I) {
+                        /* --panel-time */
                         return invalid_stobs(stobs);
                     } else {
                         structure = SPECIAL_TIME_SERIES;
@@ -1169,8 +1170,8 @@ static int process_starting_obs (const char *stobs_in, int pd,
 
 /**
  * set_obs:
- * @parm1: first parameter.
- * @parm2: second parameter.
+ * @parm1: first parameter (periodicity: integer, as string).
+ * @parm2: second parameter (starting observation, string).
  * @dset: dataset struct.
  * @opt: %OPT_S for stacked time-series, %OPT_C for stacked cross-section,
  * %OPT_T for time series, %OPT_X for cross section, %OPT_P to set
@@ -1323,6 +1324,7 @@ int set_obs (const char *parm1, const char *parm2,
 #if 0
     fprintf(stderr, "setobs: pd=%d, stobs=%s, sd0=%g, markers=%d, S=%p\n",
             dset->pd, dset->stobs, dset->sd0, dset->markers, (void *) dset->S);
+    fprintf(stderr, " dset->structure = %d\n", dset->structure);
 #endif
 
     return err;
@@ -2952,6 +2954,11 @@ static void blas_init (void)
 {
     void *ptr = NULL;
 
+#if defined(__APPLE__) && defined(PKGBUILD)
+    blas_variant = BLAS_VECLIB;
+    return;
+#endif
+
     blas_variant = BLAS_UNKNOWN;
     ptr = dlopen(NULL, RTLD_NOW);
     if (ptr == NULL) {
@@ -3079,6 +3086,23 @@ char *get_cpu_details (void)
     }
 
     return ret;
+}
+
+#elif defined(WIN32) && defined(__aarch64__)
+
+char *get_cpu_details (void)
+{
+    char *ret = NULL;
+    char brand_buf[64] = {0};
+
+    woa_cpu_info(brand_buf);
+    if (*brand_buf) {
+        ret = gretl_strdup(g_strstrip(brand_buf));
+    } else {
+        ret = gretl_strdup("unknown arm64");
+    }
+
+	return ret;
 }
 
 #else
@@ -3535,7 +3559,7 @@ gretl_matrix *get_last_pvals_matrix (int *err)
 
 /*
   malloc and free for alignments greater than that guaranteed by the C
-  library, based on Steven G. Johnson's public domand code at
+  library, based on Steven G. Johnson's public-domain code at
   http://ab-initio.mit.edu/~stevenj/align.c
 */
 

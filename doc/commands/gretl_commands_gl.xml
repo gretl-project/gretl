@@ -3483,11 +3483,14 @@
 	<quote>trampa das variables ficticias</quote>).
       </para>
       <para>
-	Tamén podes inserir esta instrución no contexto da especificación
-	dunha regresión. Por exemplo, a seguinte liña especifica un modelo
-	onde <lit>y</lit> se regresa sobre o conxunto de variables ficticias
-	que se codifican para <lit>x</lit>. (Non podes aplicar os indicadores
-	de opción a <cmd>dummify</cmd> neste contexto.)
+	Tamén hai unha función que se corresponde con esta instrución,
+	consulta <fncref targ="dummify"/>. Isto posibilita integrar a chamada
+	directamente na especificación dunha regresión. Por exemplo, a
+	seguinte liña especifica un modelo no que <lit>y</lit> se regresa
+	sobre o conxunto de variables ficticias que se codifican para
+	<lit>x</lit>. (Porén, os indicadores de opcións son unicamente
+	para a variante da instrución, non para a variante da función de
+	<cmd>dummify</cmd>.)
       </para>
       <code>
 	ols y dummify(x)
@@ -5717,7 +5720,6 @@
     label="Representar gráficas">
 
     <description>
-
       <para>
 	GRETL solicita que un programa distinto, concretamente Gnuplot,
 	xere gráficas. Gnuplot é un programa de representación gráfica moi
@@ -5726,12 +5728,10 @@
 	de elixir valores sensatos para ti; se queres, tamén te permite
 	que teñas un control completo sobre os detalles da gráfica.
       </para>
-
       <para>
 	Cunha gráfica xa representada, podes facer clic na xanela da gráfica
 	para obter un menú emerxente con varias opcións, incluídas estas:
       </para>
-
       <ilist>
 	<li>
 	  <para>
@@ -6252,6 +6252,14 @@
 	estatísticos destacados insírense automaticamente nas caixas
 	de debaixo.
       </para>
+	  <para>
+	Cae na conta de que no caso de dúas mostras, as probas son de
+	tipo desemparellado. Se, por exemplo, queres realizar unha proba
+	<emphasis>emparellada</emphasis> sobre se a diferenza entre as
+	medias de dúas variables é nula, debes crear simplemente unha nova
+	serie coas diferenzas entre as dúas xa existentes, e realizar unha
+	sinxela proba sobre a media desa nova serie.
+	  </para>
       <para>
 	Amais da simple selección dunha variable, tes a opción de
 	especificar unha restrición sobre a variable escollida (é
@@ -8454,14 +8462,15 @@
 
     <description>
       <para>
-	Calcula as distancias de Mahalanobis entre as series indicadas
-	en <repl>listavariables</repl>. A distancia de Mahalanobis é a distancia
-	entre dous puntos nun espazo de dimensión <math>k</math>,
-	escalada pola variación estatística en cada dimensión do espazo.
-	Por exemplo, se <math>p</math> e <math>q</math> son dúas
-	observacións dun conxunto de <math>k</math> variables con
-	matriz de covarianzas <math>C</math>, entón a distancia de
-	Mahalanobis entre as observacións ven dada por
+	Calcula as distancias de Mahalanobis desde cada observación ata o
+	centroide, usando as series indicadas en <repl>listavariables</repl>.
+	A distancia de Mahalanobis é a distancia entre dous puntos nun
+	espazo de dimensión <math>k</math>, escalada pola variación
+	estatística en cada dimensión do espazo. Por exemplo, se
+	<math>p</math> e <math>q</math> son dúas observacións dun conxunto
+	de <math>k</math> variables con matriz de covarianzas <math>C</math>,
+	entón a distancia de Mahalanobis entre as observacións ven dada
+	por
 	<equation status="display"
         tex="\[\sqrt{(p-q)^{\prime}C^{-1}(p-q)}\]"
         ascii="sqrt((p - q)' * C-inverse * (p - q))"
@@ -8806,32 +8815,73 @@
   <command name="meantest" section="Tests" label="Diferenza de medias">
 
     <usage>
-      <arguments>
-        <argument>serie1</argument>
-        <argument>serie2</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>meantest</lit> <repl>x</repl> <repl>y</repl> </altform>
+        <altform><lit>meantest</lit> <repl>x</repl> <lit>--split-by=</lit><repl>ficticia</repl></altform>
+      </altforms>
       <options>
         <option>
 	  <flag>--unequal-vars</flag>
 	  <effect>Asume que as varianzas non son iguais</effect>
         </option>
+        <option>
+	  <flag>--paired</flag>
+	  <effect>Realiza unha proba de emparellados</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>Elimina a presentación do resultado</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+	  <effect>Só para series temporais</effect>
+        </option>
       </options>
+      <examples>
+        <example>meantest x y</example>
+        <example>meantest x y --unequal-vars</example>
+        <example>meantest x y --paired</example>
+        <example>meantest x --split-by=d</example>
+      </examples>
     </usage>
 
     <description>
       <para context="cli">
-	Calcula o estatístico <math>t</math> para probar a hipótese nula
-	de que as medias na poboación son iguais para as variables
-	<repl>serie1</repl> e <repl>serie2</repl>, e amosa a súa
-	probabilidade asociada (valor p).
+	No seu uso básico, calcula o estatístico <math>t</math> para probar
+	a hipótese nula de que as medias na poboación son iguais para as
+	series <repl>x</repl> e <repl>y</repl>, e amosa un resultado que
+	inclúe a súa probabilidade asociada (valor p). Os resultados se
+	poden recuperar utilizando os accesorios <fncref targ="$test"/> e
+	<fncref targ="$pvalue"/>, en cuxo caso pódese utilizar a opción
+	<opt>quiet</opt> para omitir a impresión.
       </para>
-      <para>
+      <para context="cli">
+	Na súa forma alternativa, coa opción <opt>split-by</opt>, as mostras
+	para as que se proba a igualdade das súas medias son dous subconxuntos
+	da serie <repl>x</repl>, para as que a serie <repl>ficticia</repl>
+	toma os valores 0 e 1, respectivamente.
+      </para>
+      <para context="cli">
 	Por defecto, o estatístico de proba calcúlase baixo o suposto
-	de que as varianzas son iguais para as dúas variables.Coa
+	de que as varianzas son iguais para as dúas variables. Coa
 	opción <opt>unequal-vars</opt> asúmese que as varianzas
 	son diferentes; e neste caso, os graos de liberdade do
 	estatístico de proba aproxímanse consonte a
 	<cite key="satter46">Satterthwaite (1946)</cite>.
+      </para>
+      <subhead context="cli">Proba de emparellados</subhead>
+      <para context="cli">
+	No caso básico (unicamente) pódese indicar a opción <opt>paired</opt>
+	para probar a hipótese nula de que a diferenza media entre os
+	valores emparellados das dúas series dos argumentos, é nula.
+	Noutro caso, non se asume o emparellamento.
+      </para>
+      <subhead context="cli">Proba robusta</subhead>
+      <para context="cli">
+	Con datos de series temporais, no caso básico (unicamente) pódese
+	indicar a opción <opt>robust</opt> para realizar unha proba de
+	igualdade de medias entre <repl>x</repl> e <repl>y</repl> que é
+	robusta a respecto da autocorrelación.
       </para>
       <para context="gui">
 	Calcula o estatístico t para probar a hipótese nula de que as medias
@@ -13450,7 +13500,7 @@
 	estimado previamente:
       </para>
       <code>
-	restrict
+  restrict
 	 b[1] = 0
 	 b[2] - b[3] = 0
 	 b[4] + 2*b[5] = 1
@@ -14631,8 +14681,9 @@
 
       <ilist>
 	<li>
-	  <para><lit>bootrep</lit>: Un enteiro. Establece o número de repeticións
-	  da instrución <cmdref targ="restrict"/> coa opción <opt>bootstrap</opt>.
+	  <para><lit>bootrep</lit>: Un enteiro. Establece o número de
+	  repeticións da instrución <cmdref targ="restrict"/> coa opción
+	  <opt>bootstrap</opt>.
 	  </para>
 	</li>
 	<li>
@@ -16979,24 +17030,44 @@
 
   </command>
 
-  <command name="vartest" section="Tests"
-    label="Probar a diferenza de varianzas">
+  <command name="vartest" section="Tests" label="Probar a diferenza de varianzas">
 
     <usage>
-      <arguments>
-        <argument>serie1</argument>
-        <argument>serie2</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>vartest</lit> <repl>x</repl> <repl>y</repl> </altform>
+        <altform><lit>vartest</lit> <repl>x</repl> <lit>--split-by=</lit><repl>ficticia</repl></altform>
+      </altforms>
+      <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>Elimina a presentación de resultados</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+          <optparm>método</optparm>
+	  <effect>Mira abaixo</effect>
+        </option>
+      </options>
+      <examples>
+        <example>vartest x y</example>
+        <example>meantest x --split-by=d</example>
+        <example>meantest x y --robust=median</example>
+        <example>meantest x y --robust=trimmed,5</example>
+      </examples>
     </usage>
 
     <description>
       <para context="cli">
-	Calcula o estatístico <math>F</math> para probar a hipótese nula de
-	que as varianzas poboacionais das variables <repl>serie1</repl> e
-	<repl>serie2</repl> son iguais, e amosa a súa probabilidade asociada
-	(valor p). Podes obter as estatísticas da proba e a probabilidade asociada
-	mediante os accesorios <fncref targ="$test"/> e <fncref targ="$pvalue"/>,
-	respectivamente. O seguinte código
+	No seu uso básico, calcula o estatístico <math>F</math> para probar
+	a hipótese nula de que as varianzas poboacionais son iguais para as
+	series <repl>x</repl> e <repl>y</repl>, e amosa un resultado que
+	inclúe a súa probabilidade asociada (valor p). Os resultados se
+	poden recuperar utilizando os accesorios <fncref targ="$test"/> e
+	<fncref targ="$pvalue"/>, en cuxo caso pódese utilizar a opción
+	<opt>quiet</opt> para omitir a impresión.
+      </para>
+      <para>
+	Por exemplo, o seguinte código:
       </para>
       <code>
 		open AWM18.gdt
@@ -17005,10 +17076,9 @@
 		eval $pvalue
       </code>
     <para>
-      calcula a proba, e amosa como recuperar máis tarde o estatístico de
-      proba e a probabilidade asociada correspondente:
+	proporciona o resultado que se amosa abaixo:
   	</para>
-  	<code>
+  	  <code>
 		Proba de igualdade de varianzas
 
 		EEN: Número de observacións = 192
@@ -17020,7 +17090,55 @@
 
 		3.7070716
 		1.9486605e-18
-	</code>
+	    </code>
+      <para context="cli">
+	Na súa forma alternativa, coa opción <opt>split-by</opt>, as mostras
+	para as que se proba a igualdade das súas varianzas son dous subconxuntos
+	da serie <repl>x</repl>, para as que a serie <repl>ficticia</repl>
+	toma os valores 0 e 1, respectivamente.
+      </para>
+
+      <subhead context="cli">Probas robustas</subhead>
+      <para context="cli">
+	A proba <math>F</math> típica baséase no suposto de Normalidade
+	e pode provocar en exceso o rexeite da hipótese nula se os datos
+	realmente son Non-Normais. A opción <opt>robust</opt> ofrece tres
+	alternativas, do seguinte xeito:
+      </para>
+      <ilist context="cli">
+        <li>
+          <para>
+            Cando <repl>método</repl> é <lit>mean</lit>: a proba definida
+            por <cite key="levene60">Levene (1960)</cite>. En realidade
+            isto é un ANOVA dun factor que usa os desvíos absolutos
+            dos datos orixinais respecto das súas respectivas medias mostrais.
+          </para>
+        </li>
+        <li>
+          <para>
+            Cando <repl>método</repl> é <lit>median</lit>: unha variante
+            da proba de Levene suxerida por
+            <cite key="brown-forsythe">Brown e Forsythe (1974)</cite>,
+            na que o centrado inicial utiliza a mediana mostral en
+            troques da media. Isto recoméndase cando os datos
+            están bastante nesgados.
+          </para>
+        </li>
+        <li>
+          <para>
+            Cando <repl>método</repl> é <lit>trimmed</lit>: unha segunda
+            variante debida a Brown e Forsythe, na que o centrado é
+            respecto a unha media recortada. Isto pode ser preferible se
+            os datos teñen colas grosas pero son razoablemente simétricos.
+            Por defecto, utilízase o recorte do 10 por cento (é dicir,
+            calcúlase a media despois de omitir o 10 por cento das
+            observacións con menores valores e con maiores valores) pero
+            isto pódese axustar engadindo unha coma e un valor enteiro,
+            como en <opt>robust=trimmed,5</opt> onde se especifica que
+            se recorta o 5 por cento.
+          </para>
+        </li>
+      </ilist>
       <para context="gui">
 	Calcula o estatístico <math>F</math> para probar a hipótese nula de
 	que as varianzas poboacionais das dúas series elixidas son iguais, e

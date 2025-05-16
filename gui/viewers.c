@@ -1235,7 +1235,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	}
     }
 
-#ifndef GRETL_EDIT    
+#ifndef GRETL_EDIT
     if (role == VIEW_PKG_CODE || role == VIEW_PKG_SAMPLE || role == VIEW_LOG) {
 	create_source(vwin, hsize, vsize, FALSE);
     } else if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE) {
@@ -1254,7 +1254,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     }
 #else
     create_text(vwin, hsize, vsize, nlines, FALSE);
-#endif    
+#endif
 
     text_table_setup(vwin->vbox, vwin->text);
 
@@ -1743,6 +1743,9 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 	gtk_widget_show(vwin->main);
 	gtk_widget_grab_focus(vwin->text);
 	connect_text_sizer(vwin);
+        vwin->flags |= VWIN_USE_FOOTER;
+        g_signal_connect(G_OBJECT(vwin->main), "key-press-event",
+                         G_CALLBACK(catch_viewer_key), vwin);
     }
 
     return vwin;

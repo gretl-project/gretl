@@ -1816,6 +1816,12 @@
 	e scalari salvati in precedenza, vengono conservati.
       </para>
       <para>
+	Con l'opzione <opt>functions</opt>, tutte le funzioni definite
+	dall'utente e tutte le funzioni definite dai pacchetti che
+	sono stati caricati vengono cancellate dalla memoria. Il
+	datasete le altre variabili non vengono toccati.
+      </para>
+      <para>
 	Con l'opzione <opt>all</opt>, la cancellazione è totale, e
 	riguarda il dataset, variabili di tutti i tipi, e tutte le
 	funzioni, sia definite dall'utente che provenienti da pacchetti.
@@ -3578,12 +3584,13 @@
 	delle variabili dummy</quote>).
       </para>
       <para>
-	Questo comando può anche essere usato nel contesto di una
-	regressione.  Ad esempio, la riga seguente specifica un
-	modello in cui <lit>y</lit> viene regredita sull'insieme di
-	variabili dummy che codificano <lit>x</lit> (in questo
-	contesto non è possibile passare opzioni al comando
-	<cmd>dummify</cmd>).
+       Esiste anche una funzione corrispondente a questo comando, e
+       cioè <fncref targ="dummify"/>. Con tale funzione è possibile
+       creare delle dummy direttamente nel contesto di una
+       regressione.  Ad esempio, la riga seguente specifica un modello
+       in cui <lit>y</lit> viene regredita sull'insieme di variabili
+       dummy che codificano <lit>x</lit> (in questo contesto non è
+       possibile passare opzioni al comando <cmd>dummify</cmd>).
       </para>
       <code>
 	ols y dummify(x)
@@ -4676,6 +4683,9 @@
       viene stampato assieme al messaggio di errore inviato alla
       funzione chiamante.
     </para>
+      <para>
+	Vedi anche la funzione <fncref targ="errorif"/>.
+      </para>
   </description>
 
 </command>
@@ -5379,11 +5389,12 @@
   <command name="gnuplot" section="Graphs" label="Crea un grafico Gnuplot" context="cli">
 
     <usage>
-      <arguments>
-	<argument>variabili-y</argument>
-	<argument>variabile-x</argument>
-	<argument optional="true">variabile-dummy</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>gnuplot</lit> <repl>yvars</repl> <repl>xvar</repl></altform>
+        <altform><lit>gnuplot</lit> <repl>yvars</repl> <lit>--time-series</lit></altform>
+        <altform><lit>gnuplot</lit> <repl>yvars</repl> <repl>xvar</repl> <repl>factor</repl> <lit>--factorized</lit></altform>
+	<altform><lit>gnuplot</lit> <repl>yvar</repl> <repl>xvar</repl> <repl>zvars</repl> <lit>--control</lit></altform>
+      </altforms>
       <options>
 	<option>
 	  <flag>--with-lines</flag>
@@ -5416,8 +5427,7 @@
 	<option>
 	  <flag>--y2axis</flag>
 	  <optparm>yvar</optparm>
-	  <effect>mette la variabile specificata sul secondo asse
-	  delle ordinate</effect>
+	  <effect>mette la variabile specificata sul secondo asse delle ordinate</effect>
 	</option>
 	<option>
 	  <flag>--ylogscale</flag>
@@ -5476,7 +5486,7 @@
       <examples>
 	<example>gnuplot y1 y2 x</example>
 	<example>gnuplot x --time-series --with-lines</example>
-	<example>gnuplot wages educ gender --dummy</example>
+	<example>gnuplot wages educ gender --factorized</example>
 	<example>gnuplot y x --fit=quadratic</example>
 	<example>gnuplot y1 y2 x --with-lines=y2</example>
       </examples>
@@ -5492,55 +5502,73 @@
 	targ="plot"/> e <cmdref targ="panplot"/>.
       </para>
       <para>
-	Di default, i dati sono mostrati come punti; ma questa scelta
+	Di default, i dati sono mostrati come punti, ma questa scelta
 	può essere modificata usando una delle opzioni
-	<opt>with-lines</opt>, <opt>with-lp</opt> o
-	<opt>with-impulses</opt>. Se il grafico contiene più di una
-	serie, l'effetto di queste opzioni può essere limitato ad un
-	sottoinsieme delle stesse usando il parametro
-	<repl>varspec</repl>.  Questo deve essere una lista dei nomi
-	(o dei numeri), separati da virgole, delle variabili da
-	tracciare con linee e/o con impulsi. L'ultimo tra gli esempi
-	di cui sopra mostra come tracciare <lit>y1</lit> e
-	<lit>y2</lit> contro <lit>x</lit>,in modo tale che
-	<lit>y2</lit> sia rappresentata da una linea, ma <lit>y1</lit>
-	da punti.
-    </para>
-    <para>
-      Quando <repl>yvars</repl> contiene più di una variabile potrebbe
-      essere preferibile utilizzare due scale (sinistra e destra) per
-      le ordinate. Per default, questo viene gestito automaticamente,
-      tramite un'euristica basata sugli ordini di grandezza relativi
-      delle variabili, ma è possibile utilizzare due opzioni
-      (mutuamente esclusive) per cambiare l'impostazione di
-      default. Come è ovvio, <opt>single-yaxis</opt> impedisce l'uso
-      di un secondo asse, mentre <opt>y2axis=</opt><repl>yvar</repl>
-      specifica che una variabile selezionata deve essere
-      plottata usando un secondo asse delle ordinate.
-    </para>
-    <para>
-	Usando l'opzione <opt>dummy</opt>, solo tre variabili sono
-	ammesse come argomenti: una variabile <math>y</math>, una
-	variabile <math>x</math> e una variabile dummy
-	<repl>dumvar</repl>. L'effetto è quello di mostrare
-	<repl>y</repl> rispetto a <repl>x</repl> colorando in modo
-	diverso i vari punti, a seconda che <repl>dumvar</repl> valga
-	1 o 0.
+	<opt>with-lines</opt>, <opt>with-lp</opt>,
+	<opt>with-impulses</opt> o <opt>with-steps</opt>. Se il
+	grafico contiene più di una serie, l'effetto di queste opzioni
+	può essere limitato ad un sottoinsieme delle stesse usando il
+	parametro <repl>varspec</repl>.  Questo deve essere una lista
+	di variabili oppure un elenco dei nomi (o dei numeri),
+	separati da virgole, delle variabili da tracciare. L'ultimo
+	tra gli esempi di cui sopra mostra come tracciare
+	<lit>y1</lit> e <lit>y2</lit> contro <lit>x</lit>,in modo tale
+	che <lit>y2</lit> sia rappresentata da una linea, ma
+	<lit>y1</lit> da punti.
       </para>
       <para>
-	L'opzione <opt>control</opt> è simile, in quanto occorre
-	fornire esattamente tre variabili: una variabile
-	<math>y</math> e due variabili <quote>esplicative</quote>
-	<math>x</math> e <math>z</math>.  L'effetto è quello di
-	mostrare <repl>y</repl> rispetto a <repl>x</repl> controllando
-	per <math>z</math>.  Questo può essere utile per visualizzare
-	la relazione fra <math>x</math> e <math>y</math>, tenendo
-	conto dell'effetto che <math>z</math> può avere su
-	ambedue. Statisticamente, questo è equivalente a una
-	regressione di <math>y</math> su <math>x</math>
-	<emphasis>e</emphasis> <math>z</math>
-	<emphasis>contemporaneamente</emphasis>.
+	Quando <repl>yvars</repl> contiene più di una variabile
+	potrebbe essere preferibile utilizzare due scale (sinistra e
+	destra) per le ordinate. Per default, questo viene gestito
+	automaticamente, tramite un'euristica basata sugli ordini di
+	grandezza relativi delle variabili, ma è possibile utilizzare
+	due opzioni (mutuamente esclusive) per cambiare l'impostazione
+	di default. L'opzione <opt>single-yaxis</opt> impedisce l'uso
+	di un secondo asse, mentre <opt>y2axis=</opt><repl>yvar</repl>
+	specifica che una variabile selezionata deve essere plottata
+	usando un secondo asse delle ordinate.
       </para>
+      <subhead>Grafici fattorizzati</subhead>
+      <para>
+	L'opzione <opt>factorized</opt> supporta un grafico X&ndash;Y
+	in cui le variabili <repl>yvars</repl> sono tracciate in stili
+	diversi (tipo di punto, colore) a seconda del valore di una
+	variabile fattore discreta. Il fattore deve essere specificato
+	dopo la variabile <math>x</math>.
+      </para>
+      <para>
+	Il caso più semplice è quello di una singola variabile
+	<math>y</math> e di una variabile dummy 0/1 come fattore, come
+	nel terzo esempio di utilizzo riportato sopra, che mette in
+	grafico il salario rispetto all'istruzione, fattorizzata per
+	il genere.  Ma è possibile avere più di una variabile
+	<math>y</math> e il fattore può avere più di due
+	valori. Quando più variabili <math>y</math> devono essere
+	tracciate è possibile limitare il trattamento della
+	fattorizzazione a un sottoinsieme aggiungendo un parametro al
+	flag di opzione: il nome di una serie o di un elenco di
+	serie. Nell'esempio seguente <lit>y</lit> e <lit>yhat</lit>
+	sono tracciate rispetto a <lit>x</lit>, con la fattorizzazione
+	per <lit>id</lit> limitata a <lit>y</lit>.
+      </para>
+      <code>
+	gnuplot y yhat x id --with-lines=yhat --fattorizzato=y
+      </code>
+      <subhead>Grafici con controllo</subhead>
+      <para>
+	Quando l'opzione <opt>control</opt> è specificata, devono
+	essere fornite tre o più variabili: una singola variabile
+	<math>y</math> e due variabili <quote>esplicative</quote>
+	<math>x</math> e una o più variabili di controllo
+	<math>zvars</math>.  L'effetto è che sia <math>y</math> che
+	<math>x</math> sono regredite su <math>zvars</math> e i
+	residui della <math>y</math> vengono plottati contro i residui
+	della <math>x</math>.  Questo grafico visualizza la relazione
+	tra <math>x</math> e <math>y</math>, tenendo conto
+	dell'effetto che i controlli hanno su
+	entrambe.
+      </para>
+      <subhead>Scala logaritmica</subhead>
       <para>
 	L'opzione <opt>ylogscale</opt> fa sì che l'asse delle ordinate
 	sia logaritmico anziché lineare. L'opzione accetta un
@@ -5591,7 +5619,6 @@
 	<repl>fitspec</repl>. Se il grafico contiene un'unica serie
 	storica, <math>x</math> è implicitamente dato dal tempo.
       </para>
-
       <ilist>
 	<li>
 	  <para>
@@ -5706,41 +5733,15 @@
       <para>
 	La sola differenza nel caso di grafici di matrici, anziché di
 	serie, concerne la sostituzione di <lit>center</lit> e
-	<lit>width</lit> con la chiave <lit>bandmat</lit>; questa deve
-	essere il nome (virgolettato) di una matrice a due colonne
-	contenente nella prima il corrispettivo di <lit>center</lit> e
-	nella seconda il corrispettivo di <lit>width</lit>.
+	<lit>width</lit> con la chiave <lit>bandmat</lit>. Questa deve
+	essere una matrice a due colonne contenente in centro nella
+	prima e la larghezza nella seconda. In alternativa, si può
+	passare come stringa (e cioè fra virgolette doppie) il nome di
+	una matrice già esistente, di contenuto e dimensioni
+	opportune. Ciò può essere preferibile quando tale matrice deve
+	essere riutilizzata in più di un bundle, per evitare spreco di
+	memoria.
       </para>
-      <subhead>Sintassi preesistente</subhead>
-      <para>
-	La sintassi sopra riportata è stata introdotta a partire da
-	gretl 2023c. Precedentemente, una sola banda per grafico
-	poteva essere specificata e la sintassi richiesta era
-	differente. L'approccio preesistente, ancora accettato,
-	consentiva di personalizzare la banda mediante due opzioni. La
-	prima era <opt>band</opt>, che richiedeva il nome (o numero
-	ID) di una serie come centro della banda e il nome (o numero
-	ID) di un'altra come ampiezza, entrambe separate da una
-	virgola. Il fattore moltiplicativo <lit>factor</lit> per
-	l'ampiezza poteva essere aggiunto come terzo termine,
-	anch'esso separato dalla virgola. Ad esempio,
-      </para>
-      <code>
-	gnuplot ... --band=x,w
-	gnuplot ... --band=x,w,1.96
-      </code>
-      <para>
-	La seconda opzione, <opt>band-style</opt>, accettava uno o
-	entrambi i parametri di stile e colore, seguendo l'ordine
-	<quote>stile,colore</quote> e usando la virgola come
-	separatore. A seguito sono riportati alcuni esempi,
-      </para>
-      <code>
-	gnuplot ... --band-style=fill
-	gnuplot ... --band-style=dash,0xbbddff
-	gnuplot ... --band-style=,black
-	gnuplot ... --band-style=bars,blue
-      </code>
       <subhead>Barre di recessione</subhead>
       <para>
 	L'opzione <quote>band</quote> sopra descritta può inoltre
@@ -5775,28 +5776,71 @@
       <subhead>Controllo dell'output</subhead>
       <para>
 	In modalità interattiva il risultato è mostrato
-	immediatamente.  In modalità <quote>batch</quote>, viene
-	scritto un file di comandi gnuplot, chiamato
+	immediatamente.  In modalità <quote>batch</quote>, quando
+	viene eseguito uno script, per default viene scritto un file
+	di comandi gnuplot nella directory di lavoro, chiamato
 	<filename>gpttmpN.plt</filename>, a partire da N =
 	<lit>01</lit>; il grafico vero e proprio può essere generato
 	usando il programma <program>gnuplot</program> (su MS Windows:
-	<program>wgnuplot</program>).  Alternativamente, usando l'opzione
-	<opt>output=</opt><repl>filename</repl>, è possibile controllare il nome
-	del file utilizzato e contemporaneamente 
+	<program>wgnuplot</program>).  Alternativamente, usando
+	l'opzione <opt>output=</opt><repl>filename</repl>, è possibile
+	controllare il nome del file utilizzato e contemporaneamente
 	specificare un particolare formato di output usando
-	l'estensione del nome del file (le tre lettere che seguono il
-	.): <lit>.eps</lit> produce un file Encapsulated PostScript
-	(EPS); <lit>.pdf</lit> produce un file PDF; <lit>.png</lit>
-	produce un formato PNG, <lit>.emf</lit> un formato EMF
-	(Enhanced MetaFile), <lit>.fig</lit> un file Xfig;
-	<lit>.svg</lit> uno SVG (Scalable Vector Graphics) e 
-	<lit>.html</lit> per un canvas HTML. 
-  Se come
-	nome del file si indica <quote><lit>display</lit></quote>, il
-	grafico è visualizzato su schermo come nella modalità
-	interattiva.  Se si indica un nome del file con un'estensione
-	diversa da quelle appena citate viene prodotto un file di
-	comandi gnuplot.
+	l'estensione del nome del file, come segue:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>.eps</lit>: Encapsulated PostScript
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.pdf</lit>: PDF
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.png</lit>: PNG (Portable Network Graphics)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.emf</lit>: EMF (Microsoft's Enhanced MetaFile)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.html</lit>: HTML canvas
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.svg</lit>: SVG (Scalable Vector Graphics)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.fig</lit>: Xfig (programma di grafica *nix)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.tex</lit>: pict2e (per uso con &latex;)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.tikz</lit>: TiKZ (per uso con &latex;).
+	  </para>
+	</li>
+      </ilist>
+       <para>
+	Se come nome del file si indica
+	<quote><lit>display</lit></quote>, il grafico è visualizzato
+	su schermo come nella modalità interattiva.  Se si indica un
+	nome del file con un'estensione diversa da quelle appena
+	citate viene prodotto un file di comandi gnuplot.
       </para>
       <para>
 	Un modo alternativo di ridirigere l'output è dato dall'opzione
@@ -5837,11 +5881,9 @@
 	di comandi gnuplot sulla riga successiva. Ecco un esempio
 	della sintassi:
       </para>
-
       <code>
 	{ set title 'Il titolo'; set yrange [0:1000]; }
       </code>
-
     </description>
 
     <gui-access>
@@ -5856,7 +5898,6 @@
 	   label="Grafici">
 
     <description>
-
       <para>
 	Gretl richiama un programma separato, gnuplot, per generare i
 	grafici. Gnuplot è un programma di grafica molto completo, con
@@ -5866,37 +5907,52 @@
 	controllare l'aspetto di un grafico in tutti i suoi dettagli,
 	se si vuole.
       </para>
-
       <para>
 	Mentre un grafico viene visualizzato, facendo clic sulla
 	finestra del grafico si aprirà un menù pop-up con le seguenti
 	opzioni:
       </para>
-
       <ilist>
-	<li><para>Salva come postscript: salva il grafico in formato encapsulated
-	postscript (EPS)</para>
+	<li>
+	  <para>
+	    Salva come PNG: salva in formato Portable Network Graphics
+	  </para>
 	</li>
-	<li><para>Salva come PNG: salva in formato Portable Network Graphics</para>
+	<li>
+	  <para>
+	    Salva come postscript: salva il grafico in formato encapsulated
+	    postscript (EPS)
+	  </para>
 	</li>
-	<li><para>Salva alla sessione come icona: il grafico apparirà
-	sotto forma di icona quando si seleziona <quote>Visualizza
-	Icone</quote> dal menù Sessione</para>
+	<li>
+	  <para>
+	    Salva alla sessione come icona: il grafico apparirà
+	    sotto forma di icona quando si seleziona <quote>Visualizza
+	    Icone</quote> dal menù Sessione
+	  </para>
 	</li>
-	<li><para>Ingrandisci: permette di selezionare un'area
-	all'interno del grafico per visualizzarla da vicino</para>
+	<li>
+	  <para>
+	    Ingrandisci: permette di selezionare un'area
+	    all'interno del grafico per visualizzarla da vicino
+	  </para>
 	</li>
-	<li><para>Stampa: permette di stampare il grafico direttamente
-	(disponibile solo in Gnome e MS Windows)</para>
+	<li>
+	  <para>
+	    Copia negli appunti: permette di copiare il grafico per
+	    poi incollarlo in altri programmi
+	  </para>
 	</li>
-	<li><para>Copia negli appunti: permette di copiare il grafico
-	per poi incollarlo in altri programmi Windows, come ad esempio
-	MS Word (disponibile solo in MS Windows)</para>
+	<li>
+	  <para>
+	    Modifica: apre una finestra che permette di modificare
+	    vari dettagli dell'aspetto del grafico
+	  </para>
 	</li>
-	<li><para>Modifica: apre una finestra che permette di modificare
-	vari dettagli dell'aspetto del grafico</para>
-	</li>
-	<li><para>Chiudi: chiude la finestra del grafico</para>
+	<li>
+	  <para>
+	    Chiudi: chiude la finestra del grafico
+	  </para>
 	</li>
       </ilist>
 
@@ -5911,23 +5967,13 @@
 	<li>
 	  <para>
 	    Una volta salvato il grafico come icona di sessione,
-	    facendo clic col tasto destro sull'icona si apre un altro menù
-	    pop-up. Una delle opzioni disponibili è <quote>Comandi per
-	    modificare il grafico</quote>, che apre una finestra di modifica
-	    con i comandi di gnuplot. È possibile modificare questi comandi
-	    e salvarli per il futuro, oppure inviarli direttamente a
-	    gnuplot (con il comando <quote>File/Invia a gnuplot</quote> del
-	    menù della finestra di modifica dei comandi).
-	  </para>
-	</li>
-	<li>
-	  <para>
-	    Un altro modo per salvare i comandi del grafico (o per
-	    salvare il grafico in formati diversi da EPS o PNG) è quello di
-	    usare il comando <quote>Modifica</quote> nel menù pop-up del
-	    grafico per aprire la finestra di modifica del grafico, quindi
-	    fare clic su <quote>File</quote>: verrà visualizzato un menù a
-	    discesa con i formati in cui è possibile salvare il grafico.
+	    facendo clic col tasto destro sull'icona si apre un altro
+	    menù pop-up. Una delle opzioni disponibili è
+	    <quote>Comandi per modificare il grafico</quote>, che apre
+	    una finestra di modifica con i comandi di gnuplot. È
+	    possibile modificare questi comandi e salvarli per il
+	    futuro, oppure inviarli direttamente a gnuplot (usando
+	    l'icona "esegui" della finestra di modifica dei comandi).
 	  </para>
 	</li>
       </ilist>
@@ -6396,6 +6442,14 @@
 	scegliere la variabile nella lista.  Appena si sceglie una
 	variabile, i valori delle statistiche rilevanti sono
 	automaticamente inseriti nelle caselle sottostanti.
+      </para>
+      <para>
+	Si noti che nel caso di due campioni i test sono di tipo non
+	appaiato. Se, ad esempio, si vuole eseguire un test
+	<emphasis>appaiato</emphasis> per verificare se la differenza
+	delle medie di due variabili è zero, basta creare una nuova
+	serie come differenza delle due esistenti, quindi eseguire un
+	semplice test della media su quella nuova serie.
       </para>
       <para>
 	Oltre che selezionare semplicemente una variabile, è possibile
@@ -8529,12 +8583,15 @@ contenga un percorso completo.
         <flag>--verbose</flag>
         <effect>mostra i dettagli dei comandi genr</effect>
       </option>
+        <option>
+          <flag>--decr</flag>
+          <effect>vedi sotto</effect>
+        </option>
     </options>
     <examples>
       <example>loop 1000</example>
-      <example>loop 1000 --progressive</example>
-      <example>loop while essdiff > .00001</example>
-      <example>loop i=1991..2000 --verbose</example>
+      <example>loop i=1..10</example>
+      <example>loop while essdiff &gt; .00001</example>
       <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
       <example>loop foreach i xlist</example>
       <demos>
@@ -8561,6 +8618,14 @@ contenga un percorso completo.
       linguaggio di programmazione C); infine, <quote><lit>foreach</lit></quote>
       seguito da una variabile indice e una lista.
     </para>
+      <para>
+        L'opzione <opt>decr</opt> è specifica della forma di ciclo
+        <quote>intervallo di valori interi</quote>. Per default,
+        l'indice viene incrementato di 1 a ogni iterazione e, se il
+        valore iniziale è inferiore al valore finale, il ciclo non
+        verrà eseguito. Quando viene specificato <opt>decr</opt>,
+        l'indice viene invece decrementato di 1 a ogni iterazione.
+      </para>
     <para>
       Si veda <guideref targ="chap:looping"/> per altri dettagli ed esempi,
       oltre che per la spiegazione dell'opzione <opt>progressive</opt> (che
@@ -8578,8 +8643,7 @@ contenga un percorso completo.
 
 </command>
 
-<command name="mahal" section="Statistics"
-	 label="Distanze di Mahalanobis">
+<command name="mahal" section="Statistics" label="Distanze di Mahalanobis">
 
   <usage>
     <arguments>
@@ -8603,6 +8667,8 @@ contenga un percorso completo.
 
   <description>
     <para>
+      Calcola la distanza di Mahalanobis di ogni osservazione dal
+      centroide, usando le serie in <repl>varlist</repl>.
       La distanza di Mahalanobis è la distanza tra due punti in uno spazio
       <math>k</math>-dimensionale, scalata rispetto alla variazione
       statistica in ogni dimensione dello spazio. Ad esempio, se
@@ -8621,24 +8687,27 @@ contenga un percorso completo.
     </para>
     <para>
       Lo spazio in cui vengono calcolate le distanze è definito dalle
-      variabili selezionate; per ogni osservazione nell'intervallo attuale
-      viene calcolata la distanza tra l'osservazione e il centroide delle
-      variabili selezionate. La distanza è la controparte multidimensionale di uno
-      <math>z</math>-score standard e può essere usata per giudicare se una certa
-      osservazione <quote>appartiene</quote> a un gruppo di altre osservazioni.
+      variabili selezionate; per ogni osservazione nell'intervallo
+      attuale viene calcolata la distanza tra l'osservazione e il
+      centroide delle variabili selezionate. La distanza è la
+      controparte multidimensionale di uno <math>z</math>-score
+      standard e può essere usata per giudicare se una certa
+      osservazione <quote>appartiene</quote> a un gruppo di altre
+      osservazioni.
     </para>
     <para context="cli">
-      Se si usa l'opzione <opt>vcv</opt>, vengono mostrate
-      la matrice di covarianza e la sua inversa. Se si usa l'opzione
-      <opt>save</opt>, le distanze vengono salvate nel dataset con il nome
-      <lit>mdist</lit> (o <lit>mdist1</lit>, <lit>mdist2</lit> e così via, se
-      esiste già una variabile con quel nome).
+      Se si usa l'opzione <opt>vcv</opt>, vengono mostrate la matrice
+      di covarianza e la sua inversa. Se si usa l'opzione
+      <opt>save</opt>, le distanze vengono salvate nel dataset con il
+      nome <lit>mdist</lit> (o <lit>mdist1</lit>, <lit>mdist2</lit> e
+      così via, se esiste già una variabile con quel nome).
     </para>
     <para context="gui">
       Se il numero delle variabili selezionate è minore o uguale a 4,
       vengono mostrate la matrice di covarianza e la sua inversa.
-      Facendo clic sul pulsante "+" in cima alla finestra che mostra le
-      distanze è possibile aggiungerle al dataset come nuova variabile.
+      Facendo clic sul pulsante "+" in cima alla finestra che mostra
+      le distanze è possibile aggiungerle al dataset come nuova
+      variabile.
     </para>
   </description>
 
@@ -8834,7 +8903,7 @@ contenga un percorso completo.
   </description>
 
   <gui-access>
-    <menu-path>/Strumenti/Pacchetti di funzioni/Nuovo pacchetto</menu-path>
+    <menu-path>/File/Pacchetti di funzioni/Nuovo pacchetto</menu-path>
   </gui-access>
 
 </command>
@@ -8849,7 +8918,7 @@ contenga un percorso completo.
     <ilist>
       <li>
 	<para>
-	  payload: questa è l'eventuale serie in base alla
+	  serie da plottare: questa è l'eventuale serie in base alla
 	  quale la mappa verrà colorata. senza un
 	  <quote>contenuto</quote> verranno mostrati solo i
 	  confini. Se il dataset attualmente aperto contiene una o
@@ -8860,26 +8929,35 @@ contenga un percorso completo.
       </li>
       <li>
 	<para>
-	  palette: questo elemento permette di scegliere fra diverse
+	  paletta: questo elemento permette di scegliere fra diverse
 	  tavolozze di colori, cosicché è rilevante solo se è stata
 	  selezionata una serie contenuto.
 	</para>
       </li>
       <li>
 	<para>
-	  log scale: Se esite una serie contenuto, va rappresentata
+	  Scala logaritmica: Se esite una serie contenuto, va rappresentata
 	  in scala logaritmica? Di default, no.
 	</para>
       </li>
       <li>
 	<para>
-	  border: si vuole disegnare un bordo rettangolare intorno
+	  disegna il bordo: si vuole disegnare un bordo rettangolare intorno
 	  alla mappa? Di default, sì, ma lo si può rimuovere.
 	</para>
       </li>
+	<li>
+	  <para>
+	    Spessore dei confini: controlla la larghezza del bordo o
+	    del contorno disegnato attorno alle distinte aree nella
+	    mappa (ad esempio, paesi o regioni). Se il tuo grafico
+	    include un a serie da plottare, la larghezza può essere
+	    ridotta a zero così da eliminare tali bordi.
+	  </para>
+	</li>
       <li>
 	<para>
-	  height: questo parametro controlla l'altezza
+	  altezza in pixel: questo parametro controlla l'altezza
 	  dell'immagine. Data quest'ultima, la larghezza viene
 	  calcolata in base all'ampiezza in longitudine della mappa.
 	</para>
@@ -8887,7 +8965,7 @@ contenga un percorso completo.
     </ilist>
     <para>
       Si noti che si usando la funzione <fncref targ="geoplot"/> da
-      script ci sono <i>molte</i> più possibilità di personalizzare
+      script ci sono <i>molte</i> più possibilità per personalizzare
       l'aspetto e il contenuto della mappa.
     </para>
   </description>
@@ -8948,86 +9026,125 @@ contenga un percorso completo.
 <command name="meantest" section="Tests" label="Differenza delle medie">
 
   <usage>
-    <arguments>
-      <argument>var1</argument>
-      <argument>var2</argument>
-    </arguments>
+      <altforms>
+        <altform><lit>meantest</lit> <repl>x</repl> <repl>y</repl> </altform>
+        <altform><lit>meantest</lit> <repl>x</repl> <lit>--split-by=</lit><repl>dummy</repl></altform>
+      </altforms>
     <options>
       <option>
 	<flag>--unequal-vars</flag>
 	<effect>assume varianze diverse</effect>
       </option>
+        <option>
+	  <flag>--paired</flag>
+	  <effect>effettua un test appaiato</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra l'output</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+	  <effect>solo per serie temporali</effect>
+        </option>
     </options>
+      <examples>
+        <example>meantest x y</example>
+        <example>meantest x y --unequal-vars</example>
+        <example>meantest x y --paired</example>
+        <example>meantest x --split-by=d</example>
+      </examples>
   </usage>
 
   <description>
     <para context="cli">
-      Calcola la statistica <math>t</math> per l'ipotesi
-      nulla che le medie della popolazione siano uguali per le
-      variabili <repl>var1</repl> e <repl>var2</repl>, mostrando il
-      suo p-value.
+      L'utilizzo principale di questo comando è nel calcolare la
+      statistica <math>t</math> per l'ipotesi nulla che le medie della
+      popolazione siano uguali per le variabili <repl>var1</repl> e
+      <repl>var2</repl>, mostrando il suo p-value. I risultati possono
+      essere salvati utilizzando gli accessori <fncref
+      targ="$test"/> e <fncref targ="$pvalue"/>, nel qual caso è
+      possibile utilizzare l'opzione <opt>quiet</opt> per omettere la
+      stampa.
+    </para>
+    <para context="cli">
+      Nella sua forma alternativa, con l'opzione <opt>split-by</opt>,
+      i campioni le cui medie vengono testate per l'uguaglianza sono
+      due sottoinsiemi della serie <repl>x</repl>, per i quali la
+      serie <repl>dummy</repl> assume rispettivamente i valori 0 e 1.
+      </para>
+    <para>
+      Per default, si assume che le varianze delle due variabili siano
+     uguali, mentre usando l'opzione <opt>unequal-vars</opt>, si
+     assume che esse siano diverse; in questo caso i gradi di libertà
+     per la statistica test saranno approssimati per <cite
+     key="satter46">Satterthwaite (1946)</cite>.
+    </para>
+    <subhead context="cli">Test appaiato</subhead>
+    <para context="cli">
+      Nel caso principale (e solo in esso) può essere fornita
+      l'opzione <opt>paired</opt>, per testare l'ipotesi nulla che la
+      media della differenza fra le due serie sia zero. Altrimenti, il
+      test sarà calcolato senza assumere che le serie possano essere
+      accoppiate.
+    </para>
+    <subhead context="cli">Test robusto</subhead>
+    <para context="cli">
+      Con dati in serie storiche, e solo nel caso principale, può
+      essere fornita l'opzione <opt>robust</opt> per condurre un test
+      di uguaglianza delle medie di <repl>x</repl> e <repl>y</repl>
+      che è robusto rispetto alla correlazione seriale.
+    </para>
+    <para context="gui"> Calcola la statistica t per l'ipotesi nulla
+    che le medie della popolazione siano uguali per due variabili
+    selezionate, mostrando il suo p-value. Il comando può essere
+    eseguito con o senza l'ipotesi che le varianze delle due variabili
+    siano uguali.  In quest'ultimo caso i gradi di libertà per la
+    statistica test verranno approssimato per <cite
+    key="satter46">Satterthwaite (1946)</cite>.
+    </para>
+  </description>
+
+  <gui-access>
+    <menu-path>/Modello/Modelli bivariati/Differenza delle medie</menu-path>
+  </gui-access>
+
+</command>
+
+<command name="MIDAS_list" section="Dataset" label="lista MIDAS"
+	 context="gui">
+  <description>
+    <para>
+      Una lista MIDAS (MIDAS = Mixed Data Sampling) è una lista in
+      cui le serie, prese congiuntamente, contengono una serie
+      storica osservata a frequenza più alta di quella del dataset
+      <quote>ospite</quote>. Per esempio, questa lista può
+      rappresentare una serie mensile nel contesto di un dataset
+      trimestrale od annuale, o una serie giornaliera nel contesto
+      di un dataset mensile.
     </para>
     <para>
-      L'impostazione predefinita prevede di assumere che
-      le varianze delle due variabili siano uguali, mentre usando
-      l'opzione <opt>unequal-vars</opt>, si assume che esse siano
-      diverse; in questo caso i gradi di libertà per la statistica
-      test saranno approssimati per <cite key="satter46">Satterthwaite (1946)</cite>.
-	</para>
-	<para context="gui">
-	  Calcola la statistica t per l'ipotesi nulla che le medie della
-	  popolazione siano uguali per due variabili selezionate,
-	  mostrando il suo p-value. Il comando può essere eseguito con o
-	  senza l'ipotesi che le varianze delle due variabili siano uguali.
-	  In quest'ultimo caso i gradi di libertà per la statistica test
-	  verranno approssimato per <cite key="satter46">Satterthwaite (1946)</cite>.
-	</para>
-      </description>
-
-      <gui-access>
-	<menu-path>/Modello/Modelli bivariati/Differenza delle medie</menu-path>
-      </gui-access>
-
-    </command>
-
-    <command name="MIDAS_list" section="Dataset" label="lista MIDAS"
-	     context="gui">
-      <description>
-	<para>
-	  Una lista MIDAS (MIDAS = Mixed Data Sampling) è una lista in
-	  cui le serie, prese congiuntamente, contengono una serie
-	  storica osservata a frequenza più alta di quella del dataset
-	  <quote>ospite</quote>. Per esempio, questa lista può
-	  rappresentare una serie mensile nel contesto di un dataset
-	  trimestrale od annuale, o una serie giornaliera nel contesto
-	  di un dataset mensile.
-	</para>
-	<para>
-	  Questa lista deve avere <math>m</math> elementi, dove
-	  <math>m</math> è il numero di sottoperiodi ad alta frequenza:
-	  ogni serie contiene i valori per un dato sottoperiodo. Nel
-	  caso mensile/trimestrale, ciò fa sì che la lista abbia tre
-	  elementi: uno contenente i valori per il primo mese del
-	  trimestre, un altro per il secondo mese e l'ultimo i valori
-	  per il terzo mese.
-	</para>
-	<para>
-	  Questi elementi devono essere in un certo ordine, ossia
-	  <emphasis>prima il più recente</emphasis>. Usando di nuovo
-	  l'esempio mensile/trimestrale, l'ordine deve essere mese 3,
-	  mese 2, mese 1. Per controintuitivo che possa sembrare questo
-	  è l'ordine richiesto per formare liste di ritardi, cosa molto
-	  comune nei modelli MIDAS.
-	</para>
-	<para>
-	  Per una guida sul come creare un dataset che contenga liste
-	  midas, consultare
-	</para>
-	<para>
-	  <url>http://gretl.sourceforge.net/midas/midas_gretl.pdf</url>
-	</para>
-      </description>
-    </command>
+      Questa lista deve avere <math>m</math> elementi, dove
+      <math>m</math> è il numero di sottoperiodi ad alta frequenza:
+      ogni serie contiene i valori per un dato sottoperiodo. Nel
+      caso mensile/trimestrale, ciò fa sì che la lista abbia tre
+      elementi: uno contenente i valori per il primo mese del
+      trimestre, un altro per il secondo mese e l'ultimo i valori
+      per il terzo mese.
+    </para>
+    <para> Questi elementi devono essere in un certo ordine, ossia
+    <emphasis>prima il più recente</emphasis>. Usando di nuovo
+    l'esempio mensile/trimestrale, l'ordine deve essere mese 3, mese
+    2, mese 1. Per controintuitivo che possa sembrare questo è
+    l'ordine richiesto per formare liste di ritardi, cosa molto comune
+    nei modelli MIDAS.  </para> <para> Per una guida sul come creare
+    un dataset che contenga liste midas, consultare
+  </para>
+  <para>
+    <url>http://gretl.sourceforge.net/midas/midas_gretl.pdf</url>
+  </para>
+  </description>
+</command>
 
     <command name="MIDAS_parm" section="Estimation"
 	     label="iperprametri MIDAS" context="gui">
@@ -11443,6 +11560,11 @@ del comando <cmdref targ="set"/>.
 	<flag>--robust</flag>
 	<effect>errori standard robusti, si veda oltre</effect>
       </option>
+        <option>
+	  <flag>--cluster</flag>
+	  <optparm>cvar</optparm>
+	  <effect>errori standard clusterizzati; vedi sotto</effect>
+        </option>
       <option>
 	<flag>--time-dummies</flag>
 	<effect>include variabili dummy temporali</effect>
@@ -11477,15 +11599,16 @@ del comando <cmdref targ="set"/>.
     <examples>
       <demos>
 	<demo>penngrow.inp</demo>
+	<demo>panel-robust.inp</demo>
       </demos>
     </examples>
   </usage>
 
   <description>
     <para>
-      Stima un modello panel, per impostazione predefinita usando lo stimatore
-      a effetti fissi; la stima è implementata sottraendo le
-      medie di gruppo o delle unità dai dati originali.
+      Stima un modello panel, con lo stimatore a effetti fissi come
+      default; la stima è implementata sottraendo le medie di gruppo o
+      delle unità dai dati originali.
     </para>
     <para context="cli">
       Se l'opzione <opt>random-effects</opt> è data allora verrano
@@ -11517,13 +11640,18 @@ del comando <cmdref targ="set"/>.
     <para context="cli">
       Il metodo predefinito per calcolare errori standard robusti in
       modelli con dati panel è descritto dallo stimatore HAC di
-      Arellano, ma può essere utilizzato anche lo stimatore di
-      Beck&ndash;Katz per <quote>panel standard errors
-      corretti</quote> attraverso il comando <lit>set pcse
-      on</lit>. Quando è specificata l'opzione <opt>robust</opt> il
-      test <math>F</math> viene eseguito sullo stimatore ad effetti
-      fissi utilizzando il metodo robusto di <cite
-      key="welch51">Welch (1951)</cite>.
+      Arellano. In alternativa,ci sono gli stimatori <quote>Panel
+      Corrected</quote> (<cite key="beck-katz95">Beck and Katz,
+      1995</cite>) e <quote>Spatial Correlation Consistent</quote>
+      (<cite key="driscoll_kraay98">Driscoll and Kraay,
+      1998</cite>). Questi vengono selezionati tramite il comando
+      <lit>set panel_robust</lit>, con argomenti <lit>pcse</lit> e
+      <lit>scc</lit> rispettivamente. Un'ulteriore alternativa a
+      queste tre opzioni è data dall'opzione <opt>cluster</opt>; si
+      veda <guideref targ="chap:robust_vcv"/> per i dettagli. Quando è
+      specificata l'opzione <opt>robust</opt> il test <math>F</math>
+      viene eseguito sullo stimatore ad effetti fissi utilizzando il
+      metodo robusto di <cite key="welch51">Welch (1951)</cite>.
     </para>
     <para context="gui">
       Se la casella "Random effects" è spuntata allora verrà
@@ -11539,14 +11667,14 @@ del comando <cmdref targ="set"/>.
       quello di Swamy-Arora.
     </para>
     <para context="cli">
-      L'opzione <opt>unbalanced</opt> è disponibile solo per modelli
-      random effects: può essere utilizzato per scegliere un metodo
+      L'opzione <opt>unbalanced</opt> è disponibile solo per modelli a
+      effetti random: può essere utilizzato per scegliere un metodo
       ANOVA da usare con panel non bilanciati.  Per default, gretl
       utilizza il metodo di Swamy&ndash;Arora come per i panel
-      bilanciati, eccezion fatta per l'utilizzo di una media
-      armonica delle singole lunghezze temporali al posto di una
-      <math>T</math> comune. Con quest'opzione è possibile
-      specificare sia <lit>bc</lit>, per usare il metodo di <cite
+      bilanciati, eccezion fatta per l'utilizzo di una media armonica
+      delle singole lunghezze temporali al posto di una <math>T</math>
+      comune. Con quest'opzione è possibile specificare sia
+      <lit>bc</lit>, per usare il metodo di <cite
       key="baltagi-chang94">Baltagi e Chang (1994)</cite>, o
       <lit>stata</lit>, per emulare l'opzione <lit>sa</lit> per il
       comando <lit>xtreg</lit> in Stata.
@@ -11584,46 +11712,50 @@ del comando <cmdref targ="set"/>.
 
   <description>
     <para>
-      Questa finestra di dialogo offre tre opzioni per definire un dataset
-      come panel. Le prime due opzioni richiedono che il dataset sia già
-      organizzato in un formato panel (anche se gretl può non essersi accorto
-      di ciò). La terza opzione richiede che il dataset contenga variabili che
-      rappresentano la struttura panel.
+      Questa finestra di dialogo offre tre opzioni per definire un
+      dataset come panel. Le prime due opzioni richiedono che il
+      dataset sia già organizzato in un formato panel (anche se gretl
+      può non essersi accorto di ciò). La terza opzione richiede che
+      il dataset contenga variabili che rappresentano la struttura
+      panel.
     </para>
     <para>
-      <emphasis>Pila di serie storiche</emphasis>: date <repl>N </repl> unità
-      cross section nel dataset e <repl>T</repl> osservazioni temporali per
-      ogni unità, selezionando questa opzione si indica a gretl che il dataset
-      attuale è composto da <repl>N</repl> blocchi consecutivi di
-      <repl>T</repl> osservazioni ciascuno. Il passo successivo consiste nello
+      <emphasis>Pila di serie storiche</emphasis>: date <repl>N
+      </repl> unità cross section nel dataset e <repl>T</repl>
+      osservazioni temporali per ogni unità, selezionando questa
+      opzione si indica a gretl che il dataset attuale è composto da
+      <repl>N</repl> blocchi consecutivi di <repl>T</repl>
+      osservazioni ciascuno. Il passo successivo consiste nello
       specificare il valore di <repl>N</repl>.
     </para>
     <para>
-      <emphasis>Pila di dati cross section</emphasis>: si indica a gretl che
-      il dataset è composto da <repl>T</repl> blocchi consecutivi di
-      <repl>N</repl> osservazioni cross section ciascuno, uno per per ogni
-      periodo. Il passo successivo consiste nello specificare il
-      valore di <repl>N</repl>.
+      <emphasis>Pila di dati cross section</emphasis>: si indica a
+      gretl che il dataset è composto da <repl>T</repl> blocchi
+      consecutivi di <repl>N</repl> osservazioni cross section
+      ciascuno, uno per per ogni periodo. Il passo successivo consiste
+      nello specificare il valore di <repl>N</repl>.
     </para>
     <para>
-      Se il numero di osservazioni del dataset è un numero primo, le due
-      opzioni precedenti non sono disponibili.
+      Se il numero di osservazioni del dataset è un numero primo, le
+      due opzioni precedenti non sono disponibili.
     </para>
     <para>
-      <emphasis>Usa variabili indice</emphasis>: si indica che il dataset è organizzato in modo
-      qualsiasi, ma contiene due variabili che indicizzano le unità cross
-      section e quelle temporali. Il passo successivo consiste nell'indicare
-      queste due variabili. Le variabili indice per i panel possono assumere solo valori
-      interi e non negativi e non devono avere valori mancanti. Se il dataset
-      non contiene variabili di questo tipo, questa opzione non è disponibile.
+      <emphasis>Usa variabili indice</emphasis>: si indica che il
+      dataset è organizzato in modo qualsiasi, ma contiene due
+      variabili che indicizzano le unità cross section e quelle
+      temporali. Il passo successivo consiste nell'indicare queste due
+      variabili. Le variabili indice per i panel possono assumere solo
+      valori interi e non negativi e non devono avere valori
+      mancanti. Se il dataset non contiene variabili di questo tipo,
+      questa opzione non è disponibile.
     </para>
-      <para>
-	<emphasis>Converti da serie temporali affiancate</emphasis>:
-	questa opzione è disponibile solo se il dataset corrente ha
-	una struttura di serie striche e contiene più di una
-	variabile. Selezionando questa opzione, i dettagli vengono
-	forniti tramite il pulsante Guida nel passaggio successivo.
-      </para>
+    <para>
+      <emphasis>Converti da serie temporali affiancate</emphasis>:
+      questa opzione è disponibile solo se il dataset corrente ha
+      una struttura di serie striche e contiene più di una
+      variabile. Selezionando questa opzione, i dettagli vengono
+      forniti tramite il pulsante Guida nel passaggio successivo.
+    </para>
   </description>
 
 </command>
@@ -12167,7 +12299,7 @@ del comando <cmdref targ="set"/>.
   </description>
 
   <gui-access>
-    <menu-path>/Strumenti/Pacchetti/Sul server</menu-path>
+    <menu-path>/File/Pacchetti/Sul server</menu-path>
   </gui-access>
 
 </command>
@@ -12757,6 +12889,10 @@ del comando <cmdref targ="set"/>.
 	marginali</effect>
       </option>
       <option>
+        <flag>--estrella</flag>
+         <effect>seleziona una variante dello pseudo-R-quadro</effect>
+      </option>
+      <option>
 	<flag>--random-effects</flag>
 	<effect>stima un modello panel a effetti casuali (RE)</effect>
       </option>
@@ -12800,7 +12936,17 @@ del comando <cmdref targ="set"/>.
       del prodotto esterno del gradiente. Per i dettagli, si veda
       Davidson e MacKinnon 2004, cap. 10.
     </para>
-    <para context="gui">
+    <para context="cli">
+      Per idefault, viene mostrata la statistica pseudo-R-quadro
+      suggerita da <cite key="mcfadden74">McFadden (1974)</cite>, ma
+      nel caso binario, se viene specificata l'opzione
+      <opt>estrella</opt>, viene invece mostrata la variante
+      consigliata da <cite key="estrella98">Estrella
+      (1998)</cite>. Questa variante, presumibilmente, imita più da
+      vicino le proprietà del normale <math>R</math><sup>2</sup> nel
+      contesto della stima OLS.
+   </para>
+   <para context="gui">
       In modalità predefinita, gli errori standard sono calcolati
       tramite l'inversa negativa della matrice Hessiana. Se si
       seleziona la casella "Errori standard robusti", verranno
@@ -13285,11 +13431,20 @@ del comando <cmdref targ="set"/>.
       scalati automaticamente.
     </para>
     <para>
-      È possibile esercitare un controllo molto più puntuale su
-      questa procedura usando la funzione <lit>regls</lit> da
-      script. In particolare, è possibile specificare le opzioni di
-      validazione incrociata (cross validation); si veda
-      <doc>regls.pdf</doc> per ulteriori dettagli.
+      Selezionandi più valori &lgr; diventa disponibile l'opzione di
+      cross-validation. In tal caso si può scegliere il numero di
+      <quote>fold</quote> per i dati di training (predefinito 10) e se
+      questi fold devono essere sottoinsiemi casuali o contigui delle
+      osservazioni. Si può anche scegliere di mostrare un grafico
+      dell'errore quadratico medio (MSE) rispetto alla frazione &lgr;.
+    </para>
+    <para>
+      	Il pulsante <quote>Opzioni avanzate</quote> porta a una nuova
+      	finestra che permette un controllo più fine sulla procedura di
+      	regolarizzazione. Tuttavia, si noti che è possibile esercitare
+      	un controllo molto più puntuale su questa procedura usando la
+      	funzione <lit>regls</lit> da script. Si veda
+      	<doc>regls.pdf</doc> per ulteriori dettagli.
     </para>
   </description>
 </command>
@@ -14378,6 +14533,7 @@ del comando <cmdref targ="set"/>.
 
 <command name="set" section="Programming"
 	 label="Imposta parametri del programma" context="cli">
+
   <usage>
     <altforms>
       <altform><lit>set</lit> <repl>variabile</repl> <repl>valore</repl></altform>
@@ -14524,12 +14680,12 @@ del comando <cmdref targ="set"/>.
       </li>
       <li>
 	<para><lit>display_digits</lit>: un intero da 3 a 6,
-	  specificante il numero di cifre significative da usare
-	  nell'output di coefficienti di regressione e corrispondenti
-	  errori standard (il default è 6). Questo settaggio è anche
-	  attivo sul numero di cifre usato dal comando <cmdref
-							 targ="summary"/>; in questo caso, il default (che è anche il
-	  massimo) è 5, o 4 con l'opzione <opt>simple</opt>.
+	specificante il numero di cifre significative da usare
+	nell'output di coefficienti di regressione e corrispondenti
+	errori standard (il default è 6). Questo settaggio è anche
+	attivo sul numero di cifre usato dal comando <cmdref
+	targ="summary"/>; in questo caso, il default (che è anche il
+	massimo) è 5.
 	</para>
       </li>
       <li>
@@ -14630,6 +14786,16 @@ del comando <cmdref targ="set"/>.
 	  <lit>null</lit>.
 	</para>
       </li>
+	<li>
+	  <para><lit>quantile_type</lit>: deve essere uno tra
+	  <lit>Q6</lit> (il default), <lit>Q7</lit> o
+	  <lit>Q8</lit>. Seleziona il metodo specifico utilizzato
+	  dalla funzione <fncref targ="quantile"/>. Per i dettagli,
+	  vedere <cite key="hyndman96">Hyndman e Fan (1996)</cite> o
+	  la voce di Wikipedia all'indirizzo
+	  <url>https://en.wikipedia.org/wiki/Quantile</url>.
+	  </para>
+	</li>
       <li>
 	<para><lit>huge</lit>: un numero grande positivo (di default,
 	  1.0E100). Questo settaggio controlla il valore ritornato
@@ -14819,20 +14985,22 @@ del comando <cmdref targ="set"/>.
       </li>
       <li>
 	<para><lit>fdjac_quality</lit>: un intero fra 0 e 2,
-	  corrsipondente all'algoritmo usato nella funzione <fncref
-							      targ="fdjac"/>.
+	corrsipondente all'algoritmo usato nella funzione <fncref
+	targ="fdjac"/>.
 	</para>
       </li>
-      <li>
-	<para><lit>quantile_type</lit>: una stringa
-	  (<quote>Q6</quote>, <quote>Q7</quote> o <quote>Q8</quote>),
-	  corrispondente al metodo usato per calcolare i quantili
-	  campionari secondo la classificazione di <cite
-						     key="hyndman96">Hyndman e Fan (1996)</cite>. Il default è
-	  <quote>Q6</quote>.
-	</para>
-      </li>
-    </ilist>
+ 	<li>
+	  <para><lit>gmp_bits</lit>: una potenza intera di 2 (valore
+	  predefinito e minimo 256, massimo 8192). Controlla il numero
+	  di bit utilizzati per rappresentare un numero in virgola
+	  mobile quando viene chiamata GMP (GNU Multiple Precision
+	  Arithmetic Library), principalmente tramite il comando
+	  <lit>mpols</lit>. Valori più grandi forniscono una maggiore
+	  precisione a costo di un tempo di elaborazione più
+	  lungo. Questa impostazione può anche essere controllata
+	  dalla variabile di ambiente <lit>GRETL_MP_BITS</lit>.
+	  </para> </li>
+   </ilist>
 
     <para>
       <emphasis>Generazione di numeri casuali</emphasis>
@@ -14860,8 +15028,7 @@ del comando <cmdref targ="set"/>.
 	</para>
       </li>
       <li>
-	<para><lit>garch_vcv</lit>:
-	  <lit>unset</lit>, <lit>hessian</lit>,
+	<para><lit>garch_vcv</lit>: <lit>unset</lit>, <lit>hessian</lit>,
 	  <lit>im</lit> (matrice di informazione) , <lit>op</lit>
 	  (matrice dei prodotti esterni), <lit>qml</lit> (stimatore QML),
 	  <lit>bw</lit> (Bollerslev&ndash;Wooldridge). Specifica la
@@ -14902,22 +15069,25 @@ del comando <cmdref targ="set"/>.
 	</para>
       </li>
       <li>
-	<para><lit>hac_lag</lit>: <lit>nw1</lit> (valore
-	  predefinito), <lit>nw2</lit>, <lit>nw3</lit>, o un intero.
-	  Imposta il massimo valore di ritardo, o la larghezza di
-	  banda, <math>p</math>, usato nel calcolo degli errori
-	  standard HAC (Heteroskedasticity and Autocorrelation
-	  Consistent) con l'approccio Newey-West, per le serie
-	  storiche.  <lit>nw1</lit> e <lit>nw2</lit> rappresentano due
-	  varianti di calcolo automatico basate sulla dimensione del
-	  campione, <math>T</math>: per nw1, <equation status="inline"
-						       tex="$p = 0.75 \times T^{1/3}$" ascii="p = 0.75 * T^(1/3)"
-						       graphic="nw1"/>, e per nw2, <equation status="inline"
-											     tex="$p = 4 \times (T/100)^{2/9}$" ascii="p = 4 *
-																       (T/100)^(2/9)" graphic="nw2"/>.  <lit>nw3</lit> permette di
-																			       selezionare la larghezza di banda basandosi sui dati.  Si
-																			       veda anche <lit>qs_bandwidth</lit> e
-																			       <lit>hac_prewhiten</lit>.
+	<para><lit>hac_lag</lit>: <lit>nw1</lit> (valore predefinito),
+	<lit>nw2</lit>, <lit>nw3</lit>, o un intero.  Imposta il
+	massimo valore di ritardo, o la larghezza di banda,
+	<math>p</math>, usato nel calcolo degli errori standard HAC
+	(Heteroskedasticity and Autocorrelation Consistent) con
+	l'approccio Newey-West, per le serie storiche.  <lit>nw1</lit>
+	e <lit>nw2</lit> rappresentano due varianti di calcolo
+	automatico basate sulla dimensione del campione,
+	<math>T</math>: per nw1,
+	<equation status="inline"
+		  tex="$p = 0.75 \times T^{1/3}$"
+		  ascii="p = 0.75 * T^(1/3)"
+		  graphic="nw1"/>, e per nw2,
+	<equation status="inline"
+		  tex="$p = 4 \times (T/100)^{2/9}$"
+		  ascii="p = 4 * (T/100)^(2/9)"
+		  graphic="nw2"/>.  <lit>nw3</lit> permette di selezionare la
+	larghezza di banda basandosi sui dati.  Si veda anche
+	<lit>qs_bandwidth</lit> e <lit>hac_prewhiten</lit>.
 	</para>
       </li>
       <li>
@@ -14937,15 +15107,15 @@ del comando <cmdref targ="set"/>.
       </li>
       <li>
 	<para><lit>hac_missvals</lit>: <lit>es</lit> (il default),
-	  <lit>am</lit> or <lit>off</lit>. Imposta come debbano essere
-	  calcolati gli errori standard HAC in presenza di
-	  osservazioni incomplete: <lit>es</lit> imposta il metodo
-	  <quote>Equal Spacing</quote> di <cite key="datta-du12">Datta
-	    e Du (2012)</cite>; <lit>am</lit> seleziona il metodo
-	  <quote>Amplitude Modulation</quote> di <cite
-						   key="parzen63">Parzen (1963)</cite>; infine, <lit>off</lit>
-	  fa sì che gretl rifiuti di procedere. Si veda <guideref
-							  targ="chap:robust_vcv"/> per dettagli.
+	<lit>am</lit> or <lit>off</lit>. Imposta come debbano essere
+	calcolati gli errori standard HAC in presenza di osservazioni
+	incomplete: <lit>es</lit> imposta il metodo <quote>Equal
+	Spacing</quote> di <cite key="datta-du12">Datta e Du
+	(2012)</cite>; <lit>am</lit> seleziona il metodo
+	<quote>Amplitude Modulation</quote> di <cite
+	key="parzen63">Parzen (1963)</cite>; infine, <lit>off</lit> fa
+	sì che gretl rifiuti di procedere. Si veda <guideref
+	targ="chap:robust_vcv"/> per dettagli.
 	</para>
       </li>	
       <li>
@@ -15009,6 +15179,17 @@ del comando <cmdref targ="set"/>.
 	  dettagli.
 	</para>
       </li>
+	<li>
+	  <para>
+	    <lit>boot_iters</lit>: un intero, <math>B</math>. Imposta
+	    il numero di iterazioni bootstrap utilizzate quando si
+	    calcolano le IRF con intervalli di confidenza. Il valore
+	    predefinito è 1999. Si consiglia che <math>B</math> + 1
+	    sia divisibile per 100&alpha;/2, quindi ad esempio con
+	    &alpha; = 0,1 <math>B</math> + 1 dovrebbe essere un
+	    multiplo di 5. Il valore minimo accettabile è 499.
+	    </para>
+	</li>
     </ilist>
 
     <para>
@@ -15060,7 +15241,7 @@ del comando <cmdref targ="set"/>.
 	  <lit>iwanthue</lit> o <lit>sober</lit>.  Imposta il
 	  <quote>tema</quote> ustao per i grafici prodotti da
 	  gretl. Con l'opzione <lit>classic</lit> si avrà il tema
-	  usato fino alla versione 2020b.
+	  usato fino alla versione 2020c.
 	</para>
       </li>
     </ilist>
@@ -15285,6 +15466,14 @@ del comando <cmdref targ="set"/>.
 	    <flag>--panel-vars</flag>
 	    <effect>usa variabili indice (si veda oltre)</effect>
           </option>
+          <option>
+	    <flag>--panel-time</flag>
+	    <effect>vedi sotto</effect>
+          </option>
+          <option>
+	    <flag>--panel-groups</flag>
+	    <effect>vedi sotto</effect>
+          </option>
 	</options>
 	<examples>
           <example>setobs 4 1990:1 --time-series</example>
@@ -15320,90 +15509,92 @@ del comando <cmdref targ="set"/>.
 	  1:1, mentre nel caso di dati cross section come 1. L'osservazione
           iniziale per i dati giornalieri o settimanali va indicata nella forma
 	  AA/MM/GG o AAAA/MM/GG (oppure semplicemente 1 per i dati non datati).
-</para>
-<para>
-  Alcune periodicità temporali hanno interpretazioni
-  convenzionali; ad esempio, 12 = mensile e 4 = trimestrale. Se
-  questa interpretazione non si applica alle vostre serie
-  storiche,si può usare l'opzione
-  <opt>special-time-series</opt>. In tal caso, gretl
-  si asterrà dall'indicare come (ad esempio) mensile una
-  periodicità pari a 12.
-</para>
-<para>
-  Se non viene data alcuna opzione esplicita per indicare la
-  struttura dei dati, il programma tenterà di desumerla dalle
-  informazioni in suo possesso.
-</para>
-<para>
-  La seconda forma del comando (che richiede l'uso dell'opzione
-  <opt>panel-vars</opt>) può essere usata per imporre un'interpretazione
-  panel dei dati, quando il dataset contiene variabili che identificano in
-  modo univoco le unità cross section e i periodi. Il dataset verrà
-  ordinato come pila di serie storiche, per valori crescenti della
-  variabile che rappresenta le unità, <repl>variabile-unità</repl>.
-</para>
-<subhead>Opzioni specifiche per dati panel</subhead>
-<para>
-  Le opzioni <opt>panel-time</opt> e <opt>panel-groups</opt>
-  possono essere usate solo con dataset già impostati come panel.
-</para>
-<para>
-  La funzione di <opt>panel-time</opt> è di stabilire
-  informazioni extra sulla dimesnione temporale del panel. Essa
-  deve essere indicata sul modello della proma forma di
-  <lit>setobs</lit> (vedi sopra). Ad esempio, il compando
-  seguente indica che la dimensione temporale del panel è
-  trimestrale, e comincia nel primo trimestre 1990.
-</para>
-<code>
-  setobs 4 1990:1 --panel-time
-</code>
-<para>
-  La funzione di <opt>panel-groups</opt> è di creare una serie
-  con valori stringa contentent i nomi delle unità longitudinal
-  inel panel. (Quest'informazione verrà, eventualmente, usata
-  nei grafici.) Con quest'opzione vanno indicati uno o due
-  argomenti, come segue.
-</para>
-<para>
-  Caso uno: l'unico argomento è il nome di una serie a valori
-  stringa. Se il numero di stringhe diverse eguaglia il numero
-  di unità nel panel, allora questi vengono usati come nomi dei
-  gruppi. Se necessario, il contenuto numerico della serie sarà
-  aggiustato per far sì che i valori siano tutti 1 per la prima
-  unità, 2 per la seconda eccetera. Se il numero di valori
-  stringa non corrisponde a quello delle unità, il programma
-  segnala un errore.
-</para>
-<para>
-  Caso due: il primo argomento è il nome di una serie e il
-  secondo è una stringa (o il nome di una variabile stringa) con
-  etichette per ciascuna unità. Se la serie non esiste, verrà
-  creata al momento. Nel secondo argomento, i nomi delle unità
-  vanno separati da spazi; se il nome stesso include degli
-  spazi, allora va racchiuso fra virgolette doppie. Se no, il
-  secondo argomento può essere un array di stringhe.
-</para>
-<para>
-  Ad esempio, il codice seguente creerò una serie di nome
-  <lit>paese</lit> in cui i nomi <lit>npaesi</lit> sono ripetuti
-  ognuno <math>T</math> volte, dove <math>T</math> è l'ampiezza
-  temporale del panel.
-</para>
-<code>
-  string npaesi = sprintf("Francia Germania Italia \"Regno Unito\"")
-  setobs paese npaesi --panel-groups
-</code>
-</description>
+	</para>
+	<para>
+	  Alcune periodicità temporali hanno interpretazioni
+	  convenzionali; ad esempio, 12 = mensile e 4 =
+	  trimestrale. Se questa interpretazione non si applica alle
+	  vostre serie storiche,si può usare l'opzione
+	  <opt>special-time-series</opt>. In tal caso, gretl si
+	  asterrà dall'indicare come (ad esempio) mensile una
+	  periodicità pari a 12.
+	</para>
+	<para>
+	  Se non viene data alcuna opzione esplicita per indicare la
+	  struttura dei dati, il programma tenterà di desumerla dalle
+	  informazioni in suo possesso.
+	</para>
+	<para>
+	  La seconda forma del comando (che richiede l'uso
+	  dell'opzione <opt>panel-vars</opt>) può essere usata per
+	  imporre un'interpretazione panel dei dati, quando il dataset
+	  contiene variabili che identificano in modo univoco le unità
+	  cross section e i periodi. Il dataset verrà ordinato come
+	  pila di serie storiche, per valori crescenti della variabile
+	  che rappresenta le unità, <repl>variabile-unità</repl>.
+	</para>
+	<subhead>Opzioni specifiche per dati panel</subhead>
+	<para>
+	  Le opzioni <opt>panel-time</opt> e <opt>panel-groups</opt>
+	  possono essere usate solo con dataset già impostati come
+	  panel.
+	</para>
+	<para>
+	  La scopo di <opt>panel-time</opt> è stabilire
+	  informazioni extra sulla dimensione temporale del
+	  panel. Essa deve essere indicata sul modello della proma
+	  forma di <lit>setobs</lit> (vedi sopra). Ad esempio, il
+	  compando seguente indica che la dimensione temporale del
+	  panel è trimestrale, e comincia nel primo trimestre 1990.
+	</para>
+	<code>
+	  setobs 4 1990:1 --panel-time
+	</code>
+	<para>
+	  La funzione di <opt>panel-groups</opt> è di creare una serie
+	  con valori stringa contentent i nomi delle unità
+	  longitudinali nel panel. (Quest'informazione verrà,
+	  eventualmente, usata nei grafici.) Con quest'opzione vanno
+	  indicati uno o due argomenti, come segue.
+	</para>
+	<para>
+	  Caso uno: l'unico argomento è il nome di una serie a valori
+	  stringa. Se il numero di stringhe diverse eguaglia il numero
+	  di unità nel panel, allora questi vengono usati come nomi
+	  dei gruppi. Se necessario, il contenuto numerico della serie
+	  sarà aggiustato per far sì che i valori siano tutti 1 per la
+	  prima unità, 2 per la seconda eccetera. Se il numero di
+	  valori stringa non corrisponde a quello delle unità, il
+	  programma segnala un errore.
+	</para>
+	<para>
+	  Caso due: il primo argomento è il nome di una serie e il
+	  secondo è una stringa (o il nome di una variabile stringa)
+	  con etichette per ciascuna unità. Se la serie non esiste,
+	  verrà creata al momento. Nel secondo argomento, i nomi delle
+	  unità vanno separati da spazi; se il nome stesso include
+	  degli spazi, allora va racchiuso fra virgolette doppie. Se
+	  no, il secondo argomento può essere un array di stringhe.
+	</para>
+	<para>
+	  Ad esempio, il codice seguente creerò una serie di nome
+	  <lit>paese</lit> in cui i nomi <lit>npaesi</lit> sono ripetuti
+	  ognuno <math>T</math> volte, dove <math>T</math> è l'ampiezza
+	  temporale del panel.
+	</para>
+	<code>
+	  string npaesi = sprintf("Francia Germania Italia \"Regno Unito\"")
+	  setobs paese npaesi --panel-groups
+	</code>
+      </description>
 
-<gui-access>
-  <menu-path>Dati/Struttura dataset</menu-path>
-</gui-access>
+      <gui-access>
+	<menu-path>Dati/Struttura dataset</menu-path>
+      </gui-access>
 
-</command>
+    </command>
 
-<command name="setopt" section="Programming" context="cli"
+    <command name="setopt" section="Programming" context="cli"
 	 label="Indica le opzioni per il comando seguente">
 
   <usage>
@@ -15595,6 +15786,10 @@ del comando <cmdref targ="set"/>.
 	  <flag>--time</flag>
 	  <effect>dati panel: opera nella dimensione temporale</effect>
         </option>
+        <option>
+	  <flag>--dates</flag>
+	  <effect>interpreta i numeri delle osservazioni come date</effect>
+        </option>
 	<option>
 	  <flag>--quiet</flag>
 	  <effect>non stampare il sottocampione selezionato</effect>
@@ -15605,8 +15800,8 @@ del comando <cmdref targ="set"/>.
       <example>smpl 3 10</example>
       <example>smpl 1960:2 1982:4</example>
       <example>smpl +1 -1</example>
-      <example>smpl x > 3000 --restrict</example>
-      <example>smpl y > 3000 --restrict --replace</example>
+      <example>smpl x &gt; 3000 --restrict</example>
+      <example>smpl y &gt; 3000 --restrict --replace</example>
       <example>smpl 100 --random</example>
     </examples>
   </usage>
@@ -15632,7 +15827,6 @@ del comando <cmdref targ="set"/>.
       specificata secondo la sintassi del comando <cmdref
       targ="genr"/>.
     </para>
-
     <para>
       Le opzioni <lit>no-missing</lit> e <lit>no-all-missing</lit>
       possono essere usate per escludere dal campione dati
@@ -15647,7 +15841,6 @@ del comando <cmdref targ="set"/>.
       <repl>lista-variabili</repl>, le variaili generiche
       <lit>index</lit> e <lit>time</lit> vengono ignorate.
     </para>
-
     <para>
       La forma <opt>contiguous</opt> viene usata nei dataset di
       serie storiche.  L'effetto è quello di tagliare il campione
@@ -15658,7 +15851,6 @@ del comando <cmdref targ="set"/>.
       sottocampione risultante rimangono valori mancanti, nel qual
       caso, viene segnalato un errore.
     </para>
-
     <para>
       Con la forma <opt>random</opt>, viene estratto casualmente dal
       dataset il numero indicato di osservazioni. Per essere in grado di
@@ -15666,14 +15858,12 @@ del comando <cmdref targ="set"/>.
       del generatore di numeri casuali (si veda il comando
       <cmdref targ="set"/>).
     </para>
-
     <para>
       La forma finale, <lit>smpl full</lit>, ripristina
       l'intervallo completo del campione.
     </para>
-
     <para>
-	Si noti che i vincoli sul campione di solito sono
+	Si noti che i vincoli sul campione sono, per default,
 	cumulativi: il valore di riferimento di ogni comando
 	<lit>smpl</lit> è il campione attuale, così che ogni vincolo si
 	aggiunge a quelli già impostati. Se si vuole che il comando
@@ -15710,6 +15900,26 @@ del comando <cmdref targ="set"/>.
       struttura originale con il comando <cmdref
       targ="setobs"/>. Un'opzione rilevante, per l'uso coi dati panel,
       è l'opzione <opt>preserve-panel</opt>, descritta più sotto.
+    </para>
+
+    <subhead>Date contro indici sequenziali</subhead>
+    <para>
+      L'opzione <opt>dates</opt> può essere utilizzata per risolvere
+      una potenziale ambiguità nell'interpretazione di
+      <repl>startobs</repl> e <repl>endobs</repl> nel caso di dataset
+      annuali.  Ad esempio, <lit>1997</lit> dovrebbe essere inteso
+      come riferimento all'anno 1997 o alla
+      millenovecentonovantasettesima osservazione? Nella maggior parte
+      dei casi gretl risolve la cosa automaticamente, ma si può
+      forzare l'interpretazione della data se necessario. Questa
+      opzione può essere utilizzata anche con dati giornalieri, per
+      forzare <lit>smpl</lit> ad interpretare, ad esempio, 20100301
+      come il primo marzo 2010 anziché un semplice indice
+      sequenziale. Nota che questa ambiguità non si verifica con
+      frequenze di serie temporali diverse da quelle annuali e
+      giornaliere; date come 1980:3 (terzo trimestre del 1980) e
+      2020:03 (marzo 2020) non possono essere confuse con indici
+      semplici.
     </para>
 
     <subhead>Opzione specifiche per dataset panel</subhead>
@@ -15750,12 +15960,14 @@ del comando <cmdref targ="set"/>.
       </para>
 
       <subhead>Sottocoampionamento permanente</subhead>
-
       <para>
 	Di default, le restrizioni sul campione attivo sono
 	reversibili: col comando <lit>smpl full</lit> si ritorna al
 	dataset completo. Tuttavia, con l'opzione <opt>permanent</opt>
-	il dataset ridotto rimpiazza quello originale.
+	il dataset ridotto rimpiazza quello originale. L'opzione
+	<opt>permanent</opt> senza altri argomenti o opzioni ha
+	l'effetto di ridurre il dataset all'intervallo di
+	campionamento corrente.
     </para>
 
     <para>
@@ -16208,11 +16420,17 @@ del comando <cmdref targ="set"/>.
       Se si usa la forma alternativa in cui il parametro è una
       matrice, allora le statistiche descrittive sono calcolate per
       le colonne della matrice. L'opzione <opt>by</opt> non è
-      disponibile per questo caso.
+      disponibile per questo caso. 
     </para>
     <para>
       La tavola prodotta dal comando <lit>summary</lit> è
-      disponibile sotto forma di matrice con l'accessore <fncref targ="$result"/>.
+      disponibile sotto forma di matrice con l'accessore <fncref
+      targ="$result"/>. Con l'opzione <opt>by</opt>, questo accessore
+      viene prodotto soltanto se  <repl>varlist</repl> è una serie singola.
+    </para>
+    <para>
+      Vedi anche la funzione <fncref targ="aggregate"/> per produrre
+      statistiche <quote>fattorizzate</quote> in modo più flessibile.
     </para>
   </description>
 
@@ -16614,6 +16832,10 @@ del comando <cmdref targ="set"/>.
 	<flag>--verbose</flag>
 	<effect>mostra i dettagli delle iterazioni</effect>
       </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non stampa i risultati</effect>
+        </option>
     </options>
   </usage>
 
@@ -17200,48 +17422,116 @@ del comando <cmdref targ="set"/>.
 
   </command>
 
-  <command name="vartest" section="Tests"
-	 label="Differenza delle varianze">
+<command name="vartest" section="Tests" label="Differenza delle varianze">
 
-    <usage>
-      <arguments>
-	<argument>var1</argument>
-	<argument>var2</argument>
-      </arguments>
-    </usage>
+  <usage>
+    <altforms>
+      <altform><lit>vartest</lit> <repl>x</repl> <repl>y</repl> </altform>
+      <altform><lit>vartest</lit> <repl>x</repl> <lit>--split-by=</lit><repl>dummy</repl></altform>
+    </altforms>
+    <options>
+      <option>
+	<flag>--quiet</flag>
+	<effect>sopprime la stampa dell'output</effect>
+      </option>
+      <option>
+	<flag>--robust</flag>
+        <optparm>metodo</optparm>
+	<effect>vedi sotto</effect>
+      </option>
+    </options>
+    <examples>
+      <example>vartest x y</example>
+      <example>meantest x --split-by=d</example>
+      <example>meantest x y --robust=median</example>
+        <example>meantest x y --robust=trimmed,5</example>
+    </examples>
+  </usage>
 
-    <description>
-      <para context="cli">
-	Calcola la statistica <math>F</math> per l'ipotesi nulla
-	che le varianze della popolazione per le variabili
-	<repl>var1</repl> e <repl>var2</repl> siano uguali e mostra il
-	p-value. La statistica test e il p-value sono disponibili
-	tramite gli accessori <fncref targ="$test"/> e
-	<fncref targ="$pvalue"/>. Il codice seguente
-      </para>
-      <code>
-      	open AWM18.gdt
-	vartest EEN EXR
-	eval $test
-	eval $pvalue
-      </code>
-      <para>
-	calcola il test e mostra come usare gli accessori:
-      </para>
-      <code>
-	Equality of variances test
+  <description>
+    <para context="cli">
+      Come uso principale, calcola la statistica <math>F</math> per
+      l'ipotesi nulla che le varianze della popolazione per le
+      variabili <repl>var1</repl> e <repl>var2</repl> siano uguali e
+      mostra il p-value. La statistica test e il p-value sono
+      disponibili tramite gli accessori <fncref targ="$test"/> e
+      <fncref targ="$pvalue"/>.
+    </para>
+    <para>
+      Ad esempio, il codice seguente
+    </para>
+    <code>
+      open AWM18.gdt
+      vartest EEN EXR
+      eval $test
+      eval $pvalue
+    </code>
+    <para>
+      calcola il test e mostra come usare gli accessori:
+    </para>
+    <code>
+      Equality of variances test
+      
+      EEN: Number of observations = 192
+      EXR: Number of observations = 188
+      Ratio of sample variances = 3.70707
+      Null hypothesis: The two population variances are equal
+      Test statistic: F(191,187) = 3.70707
+      p-value (two-tailed) = 1.94866e-18
+      
+      3.7070716
+      1.9486605e-18
+    </code>
+    <para context="cli">
+      Nella sua forma alternativa, con l'opzione <opt>split-by</opt>,
+      i campioni le cui varianze vengono testate per l'uguaglianza
+      sono due sottoinsiemi della serie <repl>x</repl>, per i quali la
+      serie <repl>dummy</repl> assume rispettivamente i valori 0 e 1.
+    </para>
 
-	EEN: Number of observations = 192
-	EXR: Number of observations = 188
-	Ratio of sample variances = 3.70707
-	Null hypothesis: The two population variances are equal
-	Test statistic: F(191,187) = 3.70707
-	p-value (two-tailed) = 1.94866e-18
-
-	3.7070716
-	1.9486605e-18
-      </code>
-      <para context="gui">
+    <subhead context="cli">Test robusti</subhead>
+    <para context="cli">
+      Il test <math>F</math> standard si basa sull'ipotesi di
+      normalità e può sovra-rifiutare sostanzialmente se tale
+      assunzione è falsa. L'opzione <opt>robust</opt> offre tre
+      alternative, come segue:
+    </para>
+    <ilist context="cli">
+      <li>
+	<para>
+	  Quando <repl>metodo</repl> è uguale a <lit>mean</lit>, si
+	  usa il test definito da <cite key="levene60">Levene
+	  (1960)</cite>. Si tratta in effetti di un'analisi ANOVA a
+	  una via che utilizza le deviazioni assolute dalle rispettive
+	  medie campionarie dei dati originali.
+	</para>
+      </li>
+      <li>
+	<para>
+	  Quando <repl>metodo</repl> è <lit>median</lit>, si usa una
+	  variante del test di Levene suggerita da <cite
+	  key="brown-forsythe">Brown e Forsythe (1974)</cite>, in cui
+	  la centratura iniziale utilizza la mediana campionaria
+	  anziché la media. Questa opzione è consigliata se i dati
+	  sono fortemente asimmetrici. </para>
+      </li>
+      <li>
+	<para>
+	  Quando <repl>metodo</repl> è <lit>trimmed</lit>, si usa una
+	  seconda variante dovuta a Brown e Forsythe, in cui il
+	  centraggio è relativo a una media <i>trimmed</i>. Questa
+	  opzione può essere preferibile se i dati sono leptocurtici
+	  ma abbastanza simmetrici. Per default, si utilizza un
+	  <i>trimming</i> del 10 per cento (ovvero, il 10 per cento
+	  più piccolo e il 10 per cento più grande delle osservazioni
+	  vengono omessi quando si calcola la media), ma questo può
+	  essere regolato aggiungendo una virgola e un valore intero,
+	  come in <opt>robust=trimmed,5</opt> che specifica il taglio
+	  del 5 percento.
+	</para>
+      </li>
+    </ilist>    
+    <para context="gui">
 	Calcola la statistica <math>F</math> per l'ipotesi nulla
 	che le varianze della popolazione per le variabili selezionate
 	siano uguali e mostra il p-value.
@@ -17249,7 +17539,7 @@ del comando <cmdref targ="set"/>.
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Modelli bivariati/Differenza delle varianze</menu-path>
+      <menu-path>/Strumenti/Calcola test</menu-path>
     </gui-access>
 
   </command>

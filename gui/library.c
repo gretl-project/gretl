@@ -1886,7 +1886,7 @@ int out_of_sample_info (int add_ok, int *t2)
     int err = 0;
 
     if (add_ok) {
-        int n = add_obs_dialog(_(can_add), 0, OPT_NONE, NULL);
+        int n = add_obs_dialog(_(can_add), 0, NULL, NULL);
 
         if (n < 0) {
             err = 1;
@@ -1919,9 +1919,11 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     char startobs[OBSLEN], endobs[OBSLEN];
+    int ts = dataset_is_time_series(dataset);
     FcastFlags flags = 0;
     int t2, t1 = 0;
-    int premax, pre_n = 0;
+    int premax = 0;
+    int pre_n = 0;
     int t1min = 0;
     int recursive = 0, k = 1, *kptr;
     int dt2 = dataset->n - 1;
@@ -1958,19 +1960,25 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     }
 
     /* max number of pre-forecast obs in "best case" */
-    premax = dataset->n - 1;
+    if (ts) {
+        premax = dataset->n - 1;
+    }
 
     /* if there are spare obs available, default to an
        out-of-sample forecast */
     if (t2 > pmod->t2) {
         t1 = pmod->t2 + 1;
-        pre_n = pmod->t2 / 2;
-        if (pre_n > 100) {
-            pre_n = 100;
-        }
-        if (pmod->ci == GARCH) {
-            /* force out-of-sample fcast */
-            t1min = t1;
+        if (ts) {
+            pre_n = pmod->t2 / 2;
+            if (pre_n > 100) {
+                pre_n = 100;
+            }
+            if (pmod->ci == GARCH) {
+                /* force out-of-sample fcast */
+                t1min = t1;
+            }
+        } else {
+            pre_n = 0;
         }
     } else {
         pre_n = 0;
@@ -3185,14 +3193,18 @@ void do_reset (GtkAction *action, gpointer p)
         /* gui special: show short form of all 3 tests */
         width = 60;
         height = 320;
+        /* squares and cubes */
         err = reset_test(pmod, dset, opt, prn);
         if (!err) {
-            err = reset_test(pmod, dset, (opt | OPT_R), prn);
+            /* squares only */
+            err = reset_test(pmod, dset, (opt | OPT_U), prn);
         }
         if (!err) {
+            /* cubes only */
             err = reset_test(pmod, dset, (opt | OPT_C), prn);
         }
     } else {
+        /* show the one selected variant */
         err = reset_test(pmod, dset, opt, prn);
     }
 
@@ -6465,34 +6477,24 @@ void add_index (GtkAction *action)
 
 void do_add_obs (void)
 {
-    gretlopt opt = OPT_A;
+    int timedim = 0;
     int n, err = 0;
 
     if (dataset_is_panel(dataset)) {
-        const char *opts[] = {
-            _("in the cross-sectional dimension"),
-            _("in the time dimension")
-        };
-        int resp;
-
-        resp = radio_dialog(NULL, _("Add observations"),
-                            opts, 2, 0, 0, NULL);
-        if (resp == GRETL_CANCEL) {
-            return;
-        }
-        if (resp == 1) {
-            opt |= OPT_T;
-        }
+        n = add_obs_dialog(NULL, 1, &timedim, NULL);
+    } else {
+        n = add_obs_dialog(NULL, 1, NULL, NULL);
     }
 
-    n = add_obs_dialog(NULL, 1, opt, NULL);
-
     if (n > 0) {
+        gretlopt opt = timedim ? OPT_T : OPT_A;
+
         err = dataset_add_observations(dataset, n, opt);
         if (err) {
             gui_errmsg(err);
         } else {
             mark_dataset_as_modified();
+            /* FIXME record command */
         }
     }
 }
@@ -8615,14 +8617,14 @@ void run_native_script (windata_t *vwin, const char *buf,
     gretl_set_batch_mode(save_batch);
     refresh_data();
 
+    /* in case execution was halted via the "stop" button */
+    clear_stop_script(prn);
+
     if (silent) {
 	set_gretl_echo(1);
 	gtk_widget_destroy(vwin_toplevel(vwin));
 	return;
     }
-
-    /* in case execution was halted via the "stop" button */
-    clear_stop_script(prn);
 
     if (oh.vwin != NULL) {
         if (untmp) {

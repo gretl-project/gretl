@@ -61,9 +61,11 @@ static windata_t *real_do_help (int idx, int pos, int role);
 static void en_help_callback (GtkWidget *w, windata_t *hwin);
 static void helpwin_set_topic_index (windata_t *hwin, int idx);
 
+typedef void (*find_func) (GtkWidget *button, GtkWidget *dialog);
+
 /* searching stuff */
 static void find_in_text (GtkWidget *button, GtkWidget *dialog);
-static void find_string_dialog (void (*findfunc)(), windata_t *vwin);
+static void find_string_dialog (find_func ff, windata_t *vwin);
 static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
 				   gboolean sensitive,
 				   gboolean from_cursor,
@@ -2070,7 +2072,7 @@ static gint maybe_find_again (GtkWidget *w, GdkEventKey *event,
     }
 }
 
-static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
+static void find_string_dialog (find_func ff, windata_t *vwin)
 {
     GtkWidget *parent;
     GtkWidget *label;
@@ -2104,7 +2106,7 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
     }
 
     g_signal_connect(G_OBJECT(find_entry), "activate",
-		     G_CALLBACK(findfunc), find_dialog);
+		     G_CALLBACK(ff), find_dialog);
     gtk_widget_show(find_entry);
     gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), find_entry, TRUE, TRUE, 5);
@@ -2138,7 +2140,7 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
     gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(findfunc), find_dialog);
+		     G_CALLBACK(ff), find_dialog);
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 

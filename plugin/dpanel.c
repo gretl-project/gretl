@@ -3367,7 +3367,6 @@ static int dpanel_adjust_GMM_spec (dpmod *dpd)
 {
     int have_ydiff_spec = 0;
     int have_ylev_spec = 0;
-    int nzb1 = 0;
     int i, err = 0;
 
     /* check whether we have:
@@ -3378,7 +3377,6 @@ static int dpanel_adjust_GMM_spec (dpmod *dpd)
 
     for (i=0; i<dpd->nzb; i++) {
 	if (dpd->d[i].level == 0) {
-	    nzb1++;
 	    if (dpd->d[i].v == dpd->yno) {
 		dpd->d[i].depvar = 1;
 		have_ydiff_spec = 1;

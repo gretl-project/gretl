@@ -88,7 +88,7 @@ between the series and matrix types.
   \begin{code}
     series y = my_matrix[,4]
   \end{code}
-  but only if the number of rows in \texttt{my\_matrix} matches the
+  but only if the number of rows in \dtk{my_matrix} matches the
   length of the dataset, or the currently selected sample range.
 \end{itemize}
 
@@ -107,7 +107,7 @@ Consider this assignment:
 
 Here we assume that \texttt{employed} is a dummy series coding for
 employee status. Its value will be tested for each observation in the
-current sample range and the value assigned to \texttt{worker\_income}
+current sample range and the value assigned to \dtk{worker_income}
 at that observation will be determined accordingly. It is therefore
 equivalent to the following much more verbose formulation (where
 \dollar{t1} and \dollar{t2} are accessors for the start and end of the

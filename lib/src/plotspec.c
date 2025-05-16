@@ -81,7 +81,7 @@ GPT_SPEC *plotspec_new (void)
     spec->yfmt[0] = 0;
     spec->ytics[0] = 0;
     spec->fname[0] = 0;
-    spec->keyspec = GP_KEY_LEFT_TOP;
+    spec->keyspec = GP_KEY_LEFT | GP_KEY_TOP;
 
     for (i=0; i<5; i++) {
 	spec->range[i][0] = NADBL;
@@ -315,82 +315,62 @@ gp_style_spec *get_style_spec (int t)
     return NULL;
 }
 
-static gp_key_spec key_specs[] = {
-    { GP_KEY_LEFT_TOP,     N_("left top") },
-    { GP_KEY_RIGHT_TOP,    N_("right top") },
-    { GP_KEY_LEFT_BOTTOM,  N_("left bottom") },
-    { GP_KEY_RIGHT_BOTTOM, N_("right bottom") },
-    { GP_KEY_OUTSIDE,      N_("outside") },
-    { GP_KEY_NONE,         N_("none") },
-    /* in reverse order */
-    { GP_KEY_LEFT_TOP,     N_("top left") },
-    { GP_KEY_RIGHT_TOP,    N_("top right") },
-    { GP_KEY_LEFT_BOTTOM,  N_("bottom left") },
-    { GP_KEY_RIGHT_BOTTOM, N_("bottom right") },
-    { -1,                  NULL }
-};
-
-static const char *gp_keypos_string (int t)
+gchar *gp_keyspec_string (GpKeySpec t)
 {
-    int i;
+    GString *gs = g_string_new(NULL);
 
-    for (i=0; key_specs[i].str != NULL; i++) {
-	if (t == key_specs[i].id) {
-	    return key_specs[i].str;
-	}
+    if (t & GP_KEY_LEFT) {
+        g_string_append(gs, " left");
+    } else if (t & GP_KEY_RIGHT) {
+        g_string_append(gs, " right");
+    }
+    if (t & GP_KEY_TOP) {
+        g_string_append(gs, " top");
+    } else if (t & GP_KEY_BOTTOM) {
+        g_string_append(gs, " bottom");
+    } else if (t & GP_KEY_OUTSIDE) {
+        g_string_append(gs, " outside");
+    }
+    if (t & GP_KEY_PLAIN) {
+        g_string_append(gs, " noenhanced");
     }
 
-    return N_("none");
+    return g_string_free(gs, FALSE);
 }
 
-void print_keypos_string (int t, FILE *fp)
+void print_keypos_string (GpKeySpec t, FILE *fp)
 {
-    const char *s = gp_keypos_string(t);
-
-    if (!strcmp(s, "none")) {
-	fputs("set nokey\n", fp);
+    if (t == GP_KEY_NONE) {
+        fputs("set nokey\n", fp);
     } else {
-	fprintf(fp, "set key %s\n", s);
+        gchar *s = gp_keyspec_string(t);
+
+        fprintf(fp, "set key %s\n", s);
+        g_free(s);
     }
 }
 
-int gp_keypos_from_name (const char *s)
+GpKeySpec gp_keyspec_from_string (const char *s)
 {
-    int i;
+    GpKeySpec ret = GP_KEY_NONE;
 
-    for (i=0; key_specs[i].id >= 0; i++) {
-	if (!strcmp(s, key_specs[i].str)) {
-	    return key_specs[i].id;
-	}
+    if (strstr(s, "left")) {
+        ret |= GP_KEY_LEFT;
+    } else if (strstr(s, "right")) {
+        ret |= GP_KEY_RIGHT;
+    }
+    if (strstr(s, "top")) {
+        ret |= GP_KEY_TOP;
+    } else if (strstr(s, "bottom")) {
+        ret |= GP_KEY_BOTTOM;
+    } else if (strstr(s, "outside")) {
+        ret |= GP_KEY_OUTSIDE;
+    }
+    if (strstr(s, "noenhanced")) {
+        ret |= GP_KEY_PLAIN;
     }
 
-    return GP_KEY_NONE;
-}
-
-int gp_keypos_from_display_name (const char *s)
-{
-    int i;
-
-    for (i=0; key_specs[i].id >= 0; i++) {
-	if (!strcmp(s, _(key_specs[i].str))) {
-	    return key_specs[i].id;
-	}
-    }
-
-    return GP_KEY_NONE;
-}
-
-gp_key_spec *get_keypos_spec (int t)
-{
-    int i;
-
-    for (i=0; key_specs[i].id >= 0; i++) {
-	if (t == key_specs[i].id) {
-	    return &key_specs[i];
-	}
-    }
-
-    return NULL;
+    return ret;
 }
 
 int plotspec_add_line (GPT_SPEC *spec)
@@ -1372,11 +1352,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 
     gnuplot_missval_string(fp);
 
-    if (spec->keyspec == GP_KEY_NONE) {
-	fputs("set nokey\n", fp);
-    } else {
-	fprintf(fp, "set key %s\n", gp_keypos_string(spec->keyspec));
-    }
+    print_keypos_string(spec->keyspec, fp);
 
     print_plot_ranges_etc(spec, fp);
 

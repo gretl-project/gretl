@@ -402,6 +402,7 @@ AC_ARG_VAR(COMPRES, GLib resource compiler (cross-build))
 AC_ARG_VAR(MPICC, path to MPI compiler wrapper)
 AC_ARG_VAR(MPILINK, linker commands for MPI (cross-build))
 AC_ARG_VAR(OMP_LIB, linker command for OpenMP (auto))
+AC_ARG_VAR(CLANG_LIB, linker command for clang runtime)
 
 AC_C_SSE2
 AC_C_AVX
@@ -656,7 +657,7 @@ dnl
 dnl Preliminary check for pkg-config
 dnl
 if test -z "$PKG_CONFIG"; then
-   AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+   PKG_PROG_PKG_CONFIG(,PKG_CONFIG="no")
 fi
 if test "$PKG_CONFIG" = "no" ; then
    echo "

@@ -1614,11 +1614,19 @@ gretl_VAR_get_portmanteau_test (const GRETL_VAR *var, int *err)
             int k = levels_order(var);
             int df = var->neqns * var->neqns * (var->LBs - k);
             double pv = chisq_cdf_comp(df, var->LB);
+            char **S = strings_array_new(4);
 
             m->val[0] = var->LB;
             m->val[1] = var->LBs;
             m->val[2] = df;
             m->val[3] = pv;
+            if (S != NULL) {
+                S[0] = gretl_strdup("LB");
+                S[1] = gretl_strdup("maxlag");
+                S[2] = gretl_strdup("df");
+                S[3] = gretl_strdup("pvalue");
+                gretl_matrix_set_colnames(m, S);
+            }
             *err = 0;
         }
     }
@@ -2343,7 +2351,7 @@ static int VAR_add_roots (GRETL_VAR *var)
     }
 
     /* save eigenvalues of companion form matrix */
-    var->L = gretl_general_matrix_eigenvals(var->A, &err);
+    var->L = legacy_general_matrix_eigenvals(var->A, &err);
 #if 0
     gretl_matrix_print(var->A, "Companion form matrix");
     gretl_matrix_print(var->L, "Eigenvalues");

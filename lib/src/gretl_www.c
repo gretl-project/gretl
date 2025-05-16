@@ -113,7 +113,7 @@ struct urlinfo_ {
     char *getbuf;            /* buffer to which to write result or NULL */
     char agent[32];          /* user-agent string */
     FILE *fp;                /* for saving content locally */
-    int (*progfunc)();       /* progress indicator function */
+    int (*progfunc)(double, double, int); /* progress indicator function */
     int pstarted;            /* progress bar status flag */
     long timeout;            /* seconds till timing out */
     char errbuf[CURL_ERROR_SIZE]; /* for use with CURLOPT_ERRORBUFFER */
@@ -1461,8 +1461,11 @@ static size_t curl_bufwrite (void *buf, size_t sz, size_t nmemb, void *p)
  * @postdata: string to send as data for POST (or NULL).
  * @include: if non-zero, include the received header with
  * the body output.
+ * @nobody: if non-zero, don't include the body-part in the
+ * output.
  * @output: location to receive the output.
  * @errmsg: location to receive cURL error message, or NULL.
+ * @http_code: location to receive HTTP status code, or NULL.
  *
  * Somewhat flexible URI "grabber", allowing use of the POST
  * method with header and data to be sent to the host.
@@ -1472,7 +1475,8 @@ static size_t curl_bufwrite (void *buf, size_t sz, size_t nmemb, void *p)
 
 int gretl_curl (const char *url, const char *header,
                 const char *postdata, int include,
-                char **output, char **errmsg)
+		int nobody, char **output, char **errmsg,
+		int *http_code)
 {
     CURL *curl = NULL;
     struct curl_slist *hlist = NULL;
@@ -1501,6 +1505,10 @@ int gretl_curl (const char *url, const char *header,
         curl_easy_setopt(curl, CURLOPT_HEADER, 1);
     }
 
+    if (nobody) {
+        curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
+    }
+
     if (hlist != NULL) {
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, hlist);
     }
@@ -1514,6 +1522,13 @@ int gretl_curl (const char *url, const char *header,
     }
 
     res = curl_easy_perform(curl);
+
+    if (http_code != NULL) {
+        long code = 0;
+
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+        *http_code = (int) code;
+    }
 
     if (res != CURLE_OK) {
         const char *cmsg = curl_easy_strerror(res);

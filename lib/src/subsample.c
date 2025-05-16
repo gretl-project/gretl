@@ -1088,11 +1088,10 @@ static int mask_get_t1_t2 (const char *mask,
     int nseq = 0; /* number of sequences of 1s */
     int t1 = -1;
     int t2 = -1;
-    int t, n = 0;
+    int t;
 
     for (t=0; s[t] != SUBMASK_SENTINEL; t++) {
         if (s[t] == 1) {
-            n++;
             if (t == 0 || s[t-1] == 0) {
                 nseq++;
             }
@@ -1129,8 +1128,7 @@ static int mask_get_t1_t2 (const char *mask,
     }
 
 #if SUBDEBUG
-    fprintf(stderr, "mask_get_t1_t2: n=%d, t1=%d, t2=%d\n",
-            n, *pt1, *pt2);
+    fprintf(stderr, "mask_get_t1_t2: t1=%d, t2=%d\n", *pt1, *pt2);
 #endif
 
     return contig;
@@ -3643,35 +3641,37 @@ void print_sample_status (const DATASET *dset, PRN *prn)
 /**
  * data_report:
  * @dset: data information struct.
- * @fname: filename for current datafile.
+ * @fname: filename for current datafile, or NULL.
  * @prn: gretl printing struct.
  *
  * Write out a summary of the content of the current data set.
  *
  * Returns: 0 on successful completion, non-zero on error.
- *
  */
 
 int data_report (const DATASET *dset, const char *fname, PRN *prn)
 {
-    char startdate[OBSLEN], enddate[OBSLEN], tmp[MAXLEN];
-    char tstr[48];
+    char startobs[OBSLEN], endobs[OBSLEN], tmp[MAXLEN];
     const char *vlabel;
     int i;
 
-    ntolabel(startdate, 0, dset);
-    ntolabel(enddate, dset->n - 1, dset);
+    ntolabel(startobs, 0, dset);
+    ntolabel(endobs, dset->n - 1, dset);
 
-    sprintf(tmp, _("Data file %s\nas of"),
-	    (*fname != '\0')? fname : _("(unsaved)"));
+    if (fname != NULL) {
+        /* the original code for this function */
+        char tstr[48];
 
-    print_time(tstr);
-    pprintf(prn, "%s %s\n\n", tmp, tstr);
+        sprintf(tmp, _("Data file %s\nas of"),
+                (*fname != '\0')? fname : _("(unsaved)"));
+        print_time(tstr);
+        pprintf(prn, "%s %s\n\n", tmp, tstr);
 
-    if (dset->descrip != NULL && *dset->descrip != '\0') {
-	pprintf(prn, "%s:\n\n", _("Description"));
-	pputs(prn, dset->descrip);
-	pputs(prn, "\n\n");
+        if (dset->descrip != NULL && *dset->descrip != '\0') {
+            pprintf(prn, "%s:\n\n", _("Description"));
+            pputs(prn, dset->descrip);
+            pputs(prn, "\n\n");
+        }
     }
 
     dataset_type_string(tmp, dset);
@@ -3682,8 +3682,13 @@ int data_report (const DATASET *dset, const char *fname, PRN *prn)
 	pprintf(prn, "%s: %s\n", _("Frequency"), tmp);
     }
 
-    pprintf(prn, "%s: %s - %s (n = %d)\n\n", _("Range"),
-	    startdate, enddate, dset->n);
+    if (dataset_is_panel(dset)) {
+        pprintf(prn, "%s: N = %d, T = %d\n", _("Panel data"),
+                dset->n / dset->pd, dset->pd);
+    } else {
+        pprintf(prn, "%s: %s - %s (n = %d)\n\n", _("Range"),
+                startobs, endobs, dset->n);
+    }
 
     pprintf(prn, "%s:\n\n", _("Listing of variables"));
 

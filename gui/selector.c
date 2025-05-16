@@ -106,7 +106,7 @@ struct _selector {
     size_t cmdlen;
     gpointer data;
     gpointer extra_data;
-    int (*callback)(selector *);
+    sr_callback callback;
 };
 
 enum {
@@ -271,6 +271,8 @@ enum {
                             c == HECKIT || c == BIPROBIT)
 
 #define list_lag_special(i) (i < -1)
+
+typedef void (*click_func) (GtkWidget *, selector *);
 
 /* static state variables */
 
@@ -4761,7 +4763,7 @@ static GtkWidget *
 entry_with_label_and_chooser (selector *sr,
                               gchar *label_string,
                               int label_active,
-                              void (*clickfunc)())
+                              click_func cf)
 {
     GtkWidget *tmp, *hbox, *entry;
 
@@ -4776,13 +4778,13 @@ entry_with_label_and_chooser (selector *sr,
     tmp = pix_button(choose_inline, _("Choose"));
     table_add_mid(sr, tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(clickfunc), sr);
+                     G_CALLBACK(cf), sr);
 
     hbox = name_entry_in_hbox(&entry);
     table_add_right(sr, hbox, 1);
 
     if (label_active || label_string != NULL) {
-        if (clickfunc != set_third_var_callback) {
+        if (cf != set_third_var_callback) {
             table_add_vwedge(sr);
         }
     }
@@ -5103,8 +5105,8 @@ static gboolean accept_left_arrow (GtkWidget *w, GdkEventKey *key,
 }
 
 static void push_pull_buttons (selector *sr,
-                               void (*addfunc)(),
-                               void (*remfunc)(),
+                               void (*addfunc)(GtkWidget *, selector *),
+                               void (*remfunc)(GtkWidget *, selector *),
                                GtkWidget **lags_button,
                                gretlopt opt)
 {
@@ -5461,7 +5463,7 @@ static int maybe_increase_vsize (selector *sr, float vsize)
 }
 
 static void selector_init (selector *sr, guint ci, const char *title,
-                           int (*callback)(), GtkWidget *parent,
+                           sr_callback cb, GtkWidget *parent,
                            gpointer data, int selcode)
 {
     int i, dlgx = -1, dlgy = 340;
@@ -5556,7 +5558,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
 
     sr->cmdlist = NULL;
     sr->cmdlen = sr->cmdsize = 0;
-    sr->callback = callback;
+    sr->callback = cb;
 
     sr->active_var = 0;
     sr->error = 0;
@@ -7738,8 +7740,8 @@ static int midas_special_left_panel (selector *sr,
     return err;
 }
 
-selector *selection_dialog (int ci, const char *title,
-                            void *data, int (*callback)())
+selector *selection_dialog (int ci, const char *title, void *data,
+                            sr_callback callback)
 {
     GtkListStore *store;
     GtkTreeIter iter;
@@ -8273,7 +8275,8 @@ static void maybe_prefill_RHS (selector *sr)
 }
 
 selector *
-simple_selection_with_data (int ci, const char *title, int (*callback)(),
+simple_selection_with_data (int ci, const char *title,
+                            sr_callback callback,
                             GtkWidget *parent, gpointer data)
 {
     GtkListStore *store;
@@ -8447,7 +8450,8 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
 }
 
 selector *
-sublist_selection (int ci, const char *title, int (*callback)(),
+sublist_selection (int ci, const char *title,
+                   sr_callback callback,
 		   GtkWidget *parent, const int *list,
 		   const int *presel, void *data)
 {
@@ -8526,7 +8530,8 @@ sublist_selection (int ci, const char *title, int (*callback)(),
     return sr;
 }
 
-selector *simple_selection (int ci, const char *title, int (*callback)(),
+selector *simple_selection (int ci, const char *title,
+                            sr_callback callback,
                             GtkWidget *parent)
 {
     return simple_selection_with_data(ci, title, callback, parent, NULL);
@@ -8541,7 +8546,8 @@ static void restore_vwin_menu (GtkWidget *w, windata_t *vwin)
 }
 
 selector *
-simple_selection_for_viewer (int ci, const char *title, int (*callback)(),
+simple_selection_for_viewer (int ci, const char *title,
+                             sr_callback callback,
                              windata_t *vwin)
 {
     selector *sr;
@@ -9210,7 +9216,11 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
     VAR_special = (vlinfo[0].v == VDEFLT && vlinfo[0].context == LAG_Y_V);
     insts = in_gretl_list(list, LAG_W);
 
-    lmax = (dataset->t2 - dataset->t1) / list[0];
+    if (sr->ci == REGLS) {
+        lmax = 32;
+    } else {
+        lmax = 2 * (dataset->t2 - dataset->t1) / list[0];
+    }
 
     if (VAR_special) {
         /* allow for gaps in VAR lag order */

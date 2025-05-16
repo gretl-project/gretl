@@ -120,6 +120,8 @@ static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
             opt |= OPT_INSTPKG;
         } else if (!strcmp(s, "-t") || !strcmp(s, "--tool")) {
             opt |= (OPT_TOOL | OPT_BATCH);
+        } else if (!strcmp(s, "-n") || !strcmp(s, "--no-plots")) {
+            opt |= OPT_NO_PLOT;
 	} else if (!strcmp(s, "-x") || !strcmp(s, "--exec")) {
 	    gui_exec = 1;
 	    opt |= OPT_BATCH;
@@ -171,6 +173,7 @@ static void usage (int err)
              " -e or --english   Force use of English rather than translation.\n"
              " -q or --quiet     Print less verbose program information.\n"
              " -t or --tool      Operate silently.\n"
+             " -n or --no-plots  Suppress production of plots.\n"
              "Example of batch mode usage:\n"
              " gretlcli -b myfile.inp > myfile.out\n"
              "Example of run mode usage:\n"
@@ -711,6 +714,10 @@ int main (int argc, char *argv[])
                 logo(0);
                 exit(EXIT_SUCCESS);
             }
+        }
+
+        if (opt & OPT_NO_PLOT) {
+            gretl_set_no_plots();
         }
 
         if (opt & (OPT_BATCH | OPT_RUNIT | OPT_MAKEPKG | OPT_INSTPKG)) {

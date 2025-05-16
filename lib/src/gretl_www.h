@@ -77,7 +77,8 @@ int query_sourceforge (const char *query, char **getbuf);
 
 int gretl_curl (const char *url, const char *header,
 		const char *postdata, int include,
-		char **output, char **errmsg);
+		int nobody, char **output, char **errmsg,
+                int *http_code);
 
 int try_http (const char *s, char *fname, int *http);
 

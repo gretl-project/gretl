@@ -172,13 +172,13 @@ The input bundle, \texttt{specs}, must hold a specification of the
 problem to be solved and may hold some optional elements.  The
 problem specification itself may take any of these three forms:
 \begin{itemize}
-\item Under the key \texttt{lp\_filename}, the name of an \texttt{lp}
+\item Under the key \dtk{lp_filename}, the name of an \texttt{lp}
   file.
-\item Under the key \texttt{lp\_buffer}, a multi-line string in
+\item Under the key \dtk{lp_buffer}, a multi-line string in
   \texttt{lp} format. Such a string can be composed using gretl's
   \texttt{sprintf} function and string concatenation. You can think of
   this as an \texttt{lp} file existing in memory rather than on disk.
-\item Under the key \texttt{lp\_bundle}, a gretl bundle in which a
+\item Under the key \dtk{lp_bundle}, a gretl bundle in which a
   linear program is represented by (primarily) a set of matrices. The
   requirements for such a bundle are set out in
   section~\ref{sec:lp-bundle} below.
@@ -202,7 +202,7 @@ linear program is specified.
 \item \texttt{sensitivity} (boolean, default 0): If this has a
   non-zero value additional output is provided as described in
   section~\ref{sec:retval}.
-\item \texttt{model\_name} (string): If this is included it is shown
+\item \dtk{model_name} (string): If this is included it is shown
   when verbose output is produced.
 \end{itemize}
 
@@ -217,11 +217,11 @@ following:
 \begin{itemize}
 \item \texttt{objective}: a scalar, the optimized value of the objective
   function.
-\item \texttt{variable\_values}: an $n$-vector holding the optimized
+\item \dtk{variable_values}: an $n$-vector holding the optimized
   values of the variables.
-\item \texttt{constraint\_values}: an $m$-vector holding the values of
+\item \dtk{constraint_values}: an $m$-vector holding the values of
   the constrained magnitudes at the solution.
-\item \texttt{shadow\_prices}: an $m$-vector holding the Lagrange
+\item \dtk{shadow_prices}: an $m$-vector holding the Lagrange
   multipliers associated with the constraints.
 \end{itemize}
 
@@ -238,7 +238,7 @@ lower and upper limits of their validity.
 \section{Specifying a linear program via bundle}
 \label{sec:lp-bundle}
 
-A bundle given as \texttt{lp\_bundle} must have at least three
+A bundle given as \dtk{lp_bundle} must have at least three
 members, as follows.
 \begin{enumerate}
 \item \texttt{objective}: a row vector of length $n$ holding the
@@ -246,7 +246,7 @@ members, as follows.
   function. Zeros must be inserted for variables that do not feature
   in the objective. If column names are attached to
   \texttt{objective} the variables are named accordingly in the
-  printed output (if any) and the rows of \texttt{variable\_values}
+  printed output (if any) and the rows of \dtk{variable_values}
   in the output bundle are named.
 \item \texttt{constraints}: a matrix of dimension $m \times
   (n+1)$. Row $i$ holds the coefficient on each of the variables in
@@ -262,7 +262,7 @@ members, as follows.
 \end{enumerate}
 
 If you require that certain variables be integer-valued, you should
-supply a fourth member of \texttt{lp\_bundle}: a matrix under the key
+supply a fourth member of \dtk{lp_bundle}: a matrix under the key
 \texttt{intvars}. This is a vector holding the 1-based indices of the
 variables in question.
 

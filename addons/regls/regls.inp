@@ -92,7 +92,8 @@ function scalar unscaled_lambda (const bundle b)
 end function
 
 function scalar check_params (const bundle b, matrix *lfrac,
-                              scalar *nlam, bundle *ret)
+                              scalar *nlam, scalar *make_seq,
+                              bundle *ret)
    matrix m = {}
    scalar scl = -1
 
@@ -123,13 +124,13 @@ function scalar check_params (const bundle b, matrix *lfrac,
          return 1
       else
          nlam = b.nlambda
-         lfrac = lambda_sequence(1, nlam)
+         make_seq = 1
          return 0
       endif
    elif nelem(m) == 0
       # default to 25 automatic lambdas
       nlam = 25
-      lfrac = lambda_sequence(1, nlam)
+      make_seq = 1
       return 0
    endif
    lfrac = m
@@ -362,6 +363,7 @@ end function
 function bundle regls (series depvar, list indeps,
                        const bundle parms[null])
    scalar nlam = 1
+   scalar make_seq = 0
    scalar timer = 0
    matrix lfrac = {}
    scalar rank = $mpirank
@@ -388,7 +390,7 @@ function bundle regls (series depvar, list indeps,
    # initialize the return bundle
    bundle ret = regls_ret_init(0)
 
-   err = check_params(parms, &lfrac, &nlam, &ret)
+   err = check_params(parms, &lfrac, &nlam, &make_seq, &ret)
    if err
       funcerr "invalid or missing parameter(s)"
    endif
@@ -405,8 +407,7 @@ function bundle regls (series depvar, list indeps,
    # handle possible missing values
    list All = depvar indeps
    series okcheck = ok(All)
-   nskip = $nobs - sum(okcheck)
-   if nskip > 0
+   if sum(okcheck) < $nobs
       set matrix_mask okcheck
    endif
 
@@ -424,7 +425,12 @@ function bundle regls (series depvar, list indeps,
    endif
 
    scalar ret.nobs = rows(X)
-   if nelem(lfrac) > 0
+   if make_seq
+      scalar nvars = cols(X)
+      scalar s_min = ret.nobs > nvars ? 0.0001 : 0.01
+      matrix ret.lfrac = lambda_sequence(1, nlam, s_min)
+   elif nelem(lfrac) > 0
+      # ensure we have a column vector
       matrix ret.lfrac = vec(lfrac)
    endif
 

@@ -993,6 +993,34 @@ double snedecor_cdf_comp (double dfn, double dfd, double x)
 }
 
 /**
+ * snedecor_pvalue_2:
+ * @dfn: numerator degrees of freedom.
+ * @dfd: denominator degrees of freedom.
+ * @x: observed F-value.
+ *
+ * Returns: the two-sided p-value for the null hypothesis that
+ * the population value of F equals 1.0, as in a test for
+ * equality of variances, or #NADBL on failure.
+ */
+
+double snedecor_pvalue_2 (double dfn, double dfd, double x)
+{
+    double p = NADBL;
+
+    if (dfn > 0 && dfd > 0 && x >= 0) {
+        p = 2.0 * fdtrc(dfn, dfd, x);
+        if (x < 1) {
+            p = 2.0 - p;
+        }
+	if (get_cephes_errno()) {
+	    p = NADBL;
+	}
+    }
+
+    return p;
+}
+
+/**
  * snedecor_critval:
  * @dfn: numerator degrees of freedom.
  * @dfd: denominator degrees of freedom.

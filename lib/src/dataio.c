@@ -1524,9 +1524,23 @@ int gretl_get_data (const char *fname, DATASET *dset,
     if (has_native_data_suffix(fname)) {
 	/* specific processing for gretl datafiles  */
 	err = gretl_read_gdt(fname, dset, myopt, prn);
+        if (err == E_FOPEN) {
+            char tmp[FILENAME_MAX];
+
+            gretl_error_clear();
+            strcpy(tmp, fname);
+            err = gretl_seek_data(tmp, dset, OPT_NONE, prn);
+        }
     } else {
-	/* try for a "csv"-type import */
-	err = import_csv(fname, dset, myopt, prn);
+        /* try for an "import" of some kind */
+        GretlFileType ft = gretl_detect_filetype(fname);
+
+        if (ft == GRETL_UNRECOGNIZED) {
+            gretl_errmsg_set(_("Unknown data import type"));
+            err = E_DATA;
+        } else {
+            err = gretl_read_foreign_data(fname, ft, dset, prn);
+        }
     }
 
     return err;

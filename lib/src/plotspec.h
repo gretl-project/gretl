@@ -39,13 +39,14 @@ typedef enum {
 } GpLineStyle;
 
 typedef enum {
-    GP_KEY_LEFT_TOP,
-    GP_KEY_RIGHT_TOP,
-    GP_KEY_LEFT_BOTTOM,
-    GP_KEY_RIGHT_BOTTOM,
-    GP_KEY_OUTSIDE,
-    GP_KEY_NONE
-} GpKeyPos;
+    GP_KEY_NONE    = 0,
+    GP_KEY_LEFT    = 1 << 0,
+    GP_KEY_RIGHT   = 1 << 1,
+    GP_KEY_TOP     = 1 << 2,
+    GP_KEY_BOTTOM  = 1 << 3,
+    GP_KEY_OUTSIDE = 1 << 4,
+    GP_KEY_PLAIN   = 1 << 5
+} GpKeySpec;
 
 typedef enum {
     GP_X_RANGE,
@@ -61,13 +62,6 @@ struct gp_style_spec_ {
     int id;
     const char *name;
     const char *trname;
-};
-
-typedef struct gp_key_spec_ gp_key_spec;
-
-struct gp_key_spec_ {
-    int id;
-    const char *str;
 };
 
 typedef struct plotbars_ plotbars;
@@ -143,7 +137,7 @@ struct GPT_SPEC_ {
     gchar *titles[5];          /* main, x, y, y2, x2 */
     double range[5][2];        /* axis range specifiers: x, y, y2, t, x2 */
     double logbase[3];         /* axis log-scales base (0 for linear) */
-    int keyspec;               /* position of key (or none) */
+    GpKeySpec keyspec;         /* specification of key (or none) */
     char xfmt[16];             /* x-axis tic format */
     char xtics[64];            /* x-axis tic marks */
     char mxtics[4];            /* minor tics */
@@ -228,13 +222,11 @@ int gp_style_index_from_display_name (const char *s);
 
 gp_style_spec *get_style_spec (int t);
 
-int gp_keypos_from_name (const char *s);
+GpKeySpec gp_keyspec_from_string (const char *s);
 
-int gp_keypos_from_display_name (const char *s);
+gchar *gp_keyspec_string (GpKeySpec t);
 
-gp_key_spec *get_keypos_spec (int t);
-
-void print_keypos_string (int t, FILE *fp);
+void print_keypos_string (GpKeySpec t, FILE *fp);
 
 void set_plotfit_line (GPT_LINE *line,
 		       FitType f, const double *b,

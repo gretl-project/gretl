@@ -463,26 +463,6 @@
       </description>
     </function>
 
-    <function name="$lang" section="access" output="string">
-      <description>
-	<para>
-	  Restituisce una stringa indicante la lingua attualmente
-	  usata da gretl, se può essere determinata. La stringa è data
-	  da un codice a due lettere ISO 639-1 (per esempio,
-	  <lit>en</lit> per l'inglese, <lit>jp</lit> per il
-	  giapponese, <lit>el</lit> per il greco) seguito da un
-	  trattino basso e un codice a due lettere ISO 3166-1 per il
-	  paese.  Quindi, ad esempio, il portoghese europeo è
-	  <lit>pt_PT</lit>, mentre quello brasiliano è
-	  <lit>pt_BR</lit>.
-	</para>
-	<para>
-	  Se la lingua di sistema non si può determinare, il risultato
-	  è la stringa <quote><lit>unknown</lit></quote>.
-	</para>
-      </description>
-    </function>
-
     <function name="$llt" section="access" output="series">
       <description>
 	<para>
@@ -709,6 +689,10 @@
 	  alta, come il mese).
 	</para>
 	<para>
+	  Per dati giornalieri, <lit>$obsminor</lit> ritorna il mese
+	  dell'osservazione corrispondente.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="$obsmajor"/>
             <fncref targ="$obsmicro"/>
@@ -805,6 +789,20 @@
       </description>
     </function>
 
+    <function name="$pmanteau" section="access" output="matrix">
+      <description>
+	<para>
+	Disponibile dopo la stima di un VAR. Restituisce un vettore
+	riga contenente i risultati del test portmanteau multivariato
+	per l'autocorrelazione dei residui, come discusso alle pagine
+	21&ndash;22 in <cite key="johansen95">Johansen
+	(1995)</cite>. Gli elementi sono, in ordine, la statistica
+	Ljung&ndash;Box, il ritardo massimo considerato, i gradi di
+	libertà per il test chi-quadro e il p-value del test.
+	</para>
+      </description>
+    </function>
+
     <function name="$pvalue" section="access" output="scalar-or-matrix">
       <description>
 	<para>
@@ -865,6 +863,17 @@
 	  un modello con il comando <lit>ar</lit>, la sintassi
 	  <lit>$rho(n)</lit> produce la corrispondente stima di
 	  &rgr;(<math>n</math>).
+	</para>
+      </description>
+    </function>
+
+    <function name="$rlnl" section="access" output="scalar">
+      <description>
+	<para>
+          Dopo la stima di un VECM vincolato, restituisce la
+          log-verosimiglianza del modello vncolato. Si vedano anche
+          <fncref targ="$lnl"/>, e <guideref targ="chap:vecm"/> per
+          esempi d'uso.
 	</para>
       </description>
     </function>
@@ -1181,17 +1190,20 @@
       <description>
 	<para>
 	  Deve seguire la stima di un sistema di equazioni, eseguita
-	  con uno dei comandi <cmdref targ="system"/>, <cmdref targ="var"/>
-	  o <cmdref targ="vecm"/>; restituisce un bundle contenente
-	  svariati elementi relativi al sistema. Sono inclusi tutti
-	  gli accessori di sistema rilevanti, sotto chiavi che hanno
-	  lo stesso nome dei normali accessori, a parte il dollaro
-	  iniziale. Ad esempio, i residui compaiono sotto la chiave
-	  <lit>uhat</lit> e i coefficienti sotto <lit>coeff</lit>. Le
-	  altre chiavi dovrebbero essere (si spera)
-	  auto-esplicative. Per vedere il contenuto del bundle, basta
-	  prenderne una copia e stamparne il contenuto, come mostrato
-	  qui di seguito:
+	  con uno dei comandi <cmdref targ="system"/>, <cmdref
+	  targ="var"/> o <cmdref targ="vecm"/>; restituisce un bundle
+	  contenente svariati elementi relativi al sistema. Sono
+	  inclusi tutti gli accessori di sistema rilevanti, sotto
+	  chiavi che hanno lo stesso nome dei normali accessori, a
+	  parte il dollaro iniziale. Ad esempio, i residui compaiono
+	  sotto la chiave <lit>uhat</lit> e i coefficienti sotto
+	  <lit>coeff</lit>. (Fanno eccezione le chiavi <lit>A</lit>,
+	  <lit>B</lit> e <lit>Gamma</lit>, che corrispondono ai
+	  normali accessori <fncref targ="$sysA"/>, <fncref
+	  targ="$sysB"/> e <fncref targ="$sysGamma"/>.)Le altre chiavi
+	  dovrebbero essere (si spera) auto-esplicative. Per vedere il
+	  contenuto del bundle, basta prenderne una copia e stamparne
+	  il contenuto, come mostrato qui di seguito:
 	</para>
 	<code>
 	  var 4 y1 y2 y2
@@ -1421,20 +1433,6 @@
       </description>
     </function>
 
-    <function name="$workdir" section="access" output="string">
-      <description>
-	<para>
-	  Questo accessore restituisce il percorso di default dove
-	  gretl legge e scrive file. Una descrizione più ampia si
-	  trova nella Command Reference sotto <cmdref
-	  targ="workdir"/>. Si noti che questa stringa può essere
-	  impostata tramite il comando <cmdref targ="set"/>. Per usare
-	  questa stringa in modalità sostituzione, si usi la
-	  chiocciola (@tramodir).
-        </para>
-      </description>
-    </function>
-
     <function name="$xlist" section="access" output="list">
       <description>
 	<para>
@@ -1487,14 +1485,14 @@
 
   </funclist>
 
-  <funclist name="Built-in strings" ref="string_constants">
+  <funclist name="Stringhe predefinite" ref="string_constants">
 
     <function name="$dotdir" section="access" output="string">
       <description>
 	<para>
 	  Questo accessore restituisce il percorso dove gretl salva i
 	  file temporanei. Per usare questa stringa in modalità
-	  sostituzione, si usi la chiocciola (@dotdir).
+	  sostituzione, si usi la chiocciola (<lit>@dotdir</lit>).
 	</para>
       </description>
     </function>
@@ -1503,8 +1501,8 @@
       <description>
         <para>
 	  Restituisce il percorso completo all'eseguibile di
-	  gnuplot. Per usare questa stringa in modalità sostituzione,
-	  si usi la chiocciola (@gnuplot).
+	  <lit>gnuplot</lit>. Per usare questa stringa in modalità sostituzione,
+	  si usi la chiocciola (<lit>@gnuplot</lit>).
         </para>
       </description>
     </function>
@@ -1514,7 +1512,37 @@
         <para>
 	  Restituisce il percorso completo dell'installazione di
 	  gretl. Per usare questa stringa in modalità sostituzione, si
-	  usi la chiocciola (@gretldir).
+	  usi la chiocciola (<lit>@gretldir</lit>).
+        </para>
+        </description>
+    </function>
+
+    <function name="$lang" section="access" output="string">
+      <description>
+	<para>
+	  Restituisce una stringa indicante la lingua attualmente
+	  usata da gretl, se può essere determinata. La stringa è data
+	  da un codice a due lettere ISO 639-1 (per esempio,
+	  <lit>en</lit> per l'inglese, <lit>jp</lit> per il
+	  giapponese, <lit>el</lit> per il greco) seguito da un
+	  trattino basso e un codice a due lettere ISO 3166-1 per il
+	  paese.  Quindi, ad esempio, il portoghese europeo è
+	  <lit>pt_PT</lit>, mentre quello brasiliano è
+	  <lit>pt_BR</lit>.
+	</para>
+	<para>
+	  Se la lingua di sistema non si può determinare, il risultato
+	  è la stringa <quote><lit>unknown</lit></quote>.
+	</para>
+      </description>
+    </function>
+
+    <function name="$seats" section="straccess" output="string">
+        <description>
+        <para>
+	  Restituisce il percorso completo all'eseguibile di
+	  <lit>seats</lit>. Per usare questa stringa in modalità
+	  sostituzione, si usi la chiocciola (<lit>@seats</lit>).
         </para>
         </description>
     </function>
@@ -1523,8 +1551,8 @@
         <description>
         <para>
 	  Restituisce il percorso completo all'eseguibile di
-	  TRAMO. Per usare questa stringa in modalità sostituzione,
-	  si usi la chiocciola (@tramo).
+	  <lit>tramo</lit>. Per usare questa stringa in modalità
+	  sostituzione, si usi la chiocciola (<lit>@tramo</lit>).
         </para>
         </description>
     </function>
@@ -1533,18 +1561,33 @@
         <description>
         <para>
 	  Restituisce il percorso completo dell'installazione di
-	  TRAMO. Per usare questa stringa in modalità sostituzione, si
-	  usi la chiocciola (@tramodir).
+	  <lit>tramo</lit>. Per usare questa stringa in modalità
+	  sostituzione, si usi la chiocciola (<lit>@tramodir</lit>).
         </para>
         </description>
+    </function>
+
+    <function name="$workdir" section="access" output="string">
+      <description>
+	<para>
+	  Questo accessore restituisce il percorso di default dove
+	  gretl legge e scrive file. Una descrizione più ampia si
+	  trova nella Command Reference sotto <cmdref
+	  targ="workdir"/>. Si noti che questa stringa può essere
+	  impostata tramite il comando <cmdref targ="set"/>. Per usare
+	  questa stringa in modalità sostituzione, si usi la
+	  chiocciola (<lit>@tramodir</lit>).
+        </para>
+      </description>
     </function>
 
     <function name="$x12a" section="straccess" output="string">
         <description>
         <para>
 	  Restituisce il percorso completo all'eseguibile di
-	  X-12. Per usare questa stringa in modalità sostituzione,
-	  si usi la chiocciola (@x12a).
+	  <lit>x-12-arima</lit> (o <lit>x-13-arima</lit>). Per usare
+	  questa stringa in modalità sostituzione, si usi la
+	  chiocciola (<lit>@x12a</lit>).
         </para>
         </description>
     </function>
@@ -1553,15 +1596,16 @@
         <description>
         <para>
 	  Restituisce il percorso completo dell'installazione di
-	  X-12. Per usare questa stringa in modalità sostituzione, si
-	  usi la chiocciola (@x12adir).
+	  <lit>x-12-arima</lit> (o <lit>x-13-arima</lit>). Per usare
+	  questa stringa in modalità sostituzione, si usi la
+	  chiocciola (<lit>@x12adir</lit>).
         </para>
         </description>
     </function>
 
   </funclist>
 
-  <funclist name="Functions proper" ref="functions">
+  <funclist name="Funzioni vere e proprie" ref="functions">
 
     <function name="abs" section="math" output="asinput">
       <fnargs>
@@ -1611,18 +1655,18 @@
       </fnargs>
       <description>
 	<para>
-	  La maggior parte di quel che segue assumne che i primi due
-	  argomenti siano serie o liste, ma si veda sotto 
+	  La maggior parte di quel che segue assume che i primi due
+	  argomenti siano serie o liste, ma si veda sotto
 	  <quote>Input matriciale</quote> per un uso alternativo.
 	</para>
 	<para>
 	  Nella versione più minimale, <argname>x</argname> è la
 	  parola chiave <lit>null</lit>, <argname>byvar</argname> è
 	  una serie e il terzo argomento è omesso oppure
-	  <lit>null</lit>. In tal caso la funzione produce una matrice
-	  con due colonne contenenti rispettivamente i valori distinti
-	  di <argname>byvar</argname>, ordinati in senso ascendente e
-	  le corrispondenti frequenze assolute di
+	  <lit>null</lit>. La funzione produce una matrice con due
+	  colonne contenenti rispettivamente i valori distinti di
+	  <argname>byvar</argname>, ordinati in senso ascendente e le
+	  corrispondenti frequenze assolute di
 	  <argname>byvar</argname>. Ad esempio,
 	</para>
 	<code>
@@ -1659,15 +1703,15 @@
 	  colonne della matrice risultato.
 	</para>
 	<para>
-	  Quindi, nel caso particolare in cui sia <argname>x</argname>
-	  che <argname>byvar</argname> siano serie, la matrice
-	  risultato avrà tre colonne, contenenti rispettivamente i
-	  valori di <argname>byvar</argname>, in senso ascendente, il
-	  numero di osservazioni di <argname>byvar</argname> per
-	  ognuno di essi e i valori della statistica specificata da
-	  <argname>funcname</argname>, calcolati su
-	  <argname>x</argname> sul sottocampione dato dalle
-	  osservazioni in cui <argname>byvar</argname> prende il
+	  Quindi, quando <argname>x</argname> che
+	  <argname>byvar</argname> siano ambedue delle serie, la
+	  matrice risultato avrà tre colonne, contenenti
+	  rispettivamente i valori di <argname>byvar</argname>, in
+	  senso ascendente, il numero di osservazioni di
+	  <argname>byvar</argname> per ognuno di essi e i valori della
+	  statistica specificata da <argname>funcname</argname>,
+	  calcolati su <argname>x</argname> sul sottocampione dato
+	  dalle osservazioni in cui <argname>byvar</argname> prende il
 	  valore in colonna 1.
 	</para>
 	<para>
@@ -1684,7 +1728,7 @@
 	  restituisce uno scalare, e in tal senso può dirsi che
 	  <quote>aggrega</quote> la variabile in un qualche modo. È
 	  anche possibile inserire il nome di una funzione definita
-	  dall'utente come aggregatore; come le funzioni supportate in
+	  dall'utente come aggregatore. Come le funzioni supportate in
 	  modo nativo, tale funzione deve accettare come argomento una
 	  singola variabile e ritornare uno scalare.
 	</para>
@@ -1696,8 +1740,8 @@
 	  per ciascuna combinazione <argname>byvar</argname>.
 	</para>
 	<para>
-	  Come semplice esempio, si supponga che <lit>region</lit> sia
-	  la codifica di regioni geografiche con valori interi da 1 ad
+	  Ad esempio, mettiamo che <lit>region</lit> sia la codifica
+	  di regioni geografiche con valori interi da 1 ad
 	  <math>n</math> e <lit>income</lit> il reddito
 	  familiare. Allora quanto segue produrrà una matrice <by
 	  r="n" c="3"/> contenente: nella prima colonna, i codici
@@ -1737,11 +1781,11 @@
 	  voglia non considerare tali casi, si può utilizzare la
 	  funzione <fncref targ="selifr"/> per selezionare solo le
 	  righe associate ad un numero di osservazioni diverso da
-	  zero. Nel caso in cui <argname>byvar</argname> contenga
-	  <math>n</math> elementi, la colonna da testare sarà quella
-	  immediatamente a destra delle prime <math>n</math> colonne
-	  partendo da sinistra. Possiamo quindi eseguire il seguente
-	  codice:
+	  zero. La colonna da testare sarà quella immediatamente a
+	  destra delle prime <math>n</math> colonne partendo da
+	  sinistra, dove <math>n</math> è il numero di variabili
+	  <argname>byvar</argname>. Possiamo quindi eseguire il
+	  seguente codice:
 	</para>
 	<code>
 	  matrix m = aggregate(X, BY, sd)
@@ -1974,12 +2018,12 @@
 	</para>
 	<para>
 	  Se i due argomenti sono di tipo diverso, il risultato è del
-	  tipo <quote>più alto</quote>dei due, dove l'ordinamento è
+	  tipo <quote>più alto</quote> dei due, dove l'ordinamento è
 	  matrice &gt; serie &gt; scalare. Ad esempio, se
 	  <argname>y</argname> è uno scalare e <argname>x</argname> un
 	  vettore di <math>n</math> elementi (o viceversa), il
 	  risultato è anch'esso un vettore. Si noti che gli argomenti
-	  matriciali debbono essere vettori, e che se nessuno dei due
+	  matriciali devono essere vettori, e che se nessuno dei due
 	  è uno scalare devono avere la stessa dimensione.
 	</para>
 	<para>
@@ -2352,7 +2396,7 @@
 	</para>
 	<para>
 	  Si noti che il bit meno significativo è nella prima colonna:
-	  di conseguenza, la colonna 1 corrisponde a 
+	  di conseguenza, la colonna 1 corrisponde a
 	  <math>2</math><sup>0</sup>, la colonna 2 a
 	  <math>2</math><sup>1</sup> e così via. Ad esempio, l'espressione
 	</para>
@@ -2368,7 +2412,7 @@
 	</para>
       </description>
     </function>
-    
+
     <function name="bincoeff" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">n</fnarg>
@@ -2402,12 +2446,12 @@
 	</para>
 	<para>
 	  Se i due argomenti sono di tipo diverso, il risultato è del
-	  tipo <quote>più alto</quote>dei due, dove l'ordinamento è
+	  tipo <quote>più alto</quote> dei due, dove l'ordinamento è
 	  matrice &gt; serie &gt; scalare. Ad esempio, se
 	  <argname>n</argname> è uno scalare e <argname>k</argname> un
 	  vettore di <math>r</math> elementi (o viceversa), il
 	  risultato è anch'esso un vettore. Si noti che gli argomenti
-	  matriciali debbono essere vettori, e che se nessuno dei due
+	  matriciali devono essere vettori, e che se nessuno dei due
 	  è uno scalare devono avere la stessa dimensione.
 	</para>
 	<para>
@@ -2438,11 +2482,11 @@
 	  risultato è
 	</para>
 	<code>
-	  0   0   1   1 
-	  0   1   0   1 
-	  0   1   1   0 
-	  1   0   0   1 
-	  1   0   1   0 
+	  0   0   1   1
+	  0   1   0   1
+	  0   1   1   0
+	  1   0   0   1
+	  1   0   1   0
 	  1   1   0   0
 	</code>
 	<para>
@@ -2778,6 +2822,13 @@
 	  <argname>X</argname>).
 	</para>
 	<para>
+	  Se viene fornito un valore nonzero per
+	  <argname>skip_na</argname>, i valori mancanti vengono
+	  ignorati; altrimenti, se una colonna di <argname>X</argname>
+	  contiene valori mancanti, la colonna corrispondente
+	  nell'output conterrà solo valori mancanti.
+	</para>
+	<para>
 	  Si noti che la funzione <fncref targ="stdize"/> è più
 	  flessibile.
 	</para>
@@ -2967,6 +3018,11 @@
       </fnargs>
       <description>
 	<para>
+	  Questa funzione è obsoleta: risale a prima che gretl
+	  supportasse i numeri complessi e viene mantenuta solo per
+	  motivi di compatibilità.
+	</para>
+	<para>
 	  Divisione complessa. I due argomenti devono avere lo stesso
 	  numero di righe, <math>n</math>, e una o due colonne.  La
 	  prima colonna contiene la parte reale e l'eventuale seconda
@@ -3130,6 +3186,11 @@
 	<fnarg type="matrix">Y</fnarg>
       </fnargs>
       <description>
+	<para>
+	  Questa funzione è obsoleta: risale a prima che gretl
+	  supportasse i numeri complessi e viene mantenuta solo per
+	  motivi di compatibilità.
+	</para>
 	<para>
 	  Moltiplicazione complessa. I due argomenti devono avere lo
 	  stesso numero di righe, <math>n</math>, e una o due colonne.
@@ -3559,7 +3620,7 @@
 	</para>
       </description>
     </function>
-    
+
     <function name="corrgm" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="smlist">x</fnarg>
@@ -3876,6 +3937,20 @@
 	  </li>
 	  <li>
 	    <para>
+	      <quote><lit>include</lit></quote>: uno scalare: se non è
+	      zero, lo header ricevuto dal sito è inserito nel testo in
+	      output.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <quote><lit>nobody</lit></quote>: uno scalare: se non è
+	      zero, la funzione <i>non</i> scaricherà il corpo del
+	      messaggio.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
 	      <quote><lit>postdata</lit></quote>: una stringa
 	      contenente dati da mandare al server.
 	    </para>
@@ -3885,34 +3960,35 @@
 	  I campi <lit>header</lit> e <lit>postdata</lit> vengono
 	  usati in congiunzione con una richiesta HTTP
 	  <lit>POST</lit>; se <lit>postdata</lit> è presente, allora
-	  il metodo <lit>POST</lit>è implicito, altrimenti lo è il
-	  metodo <lit>GET</lit>. (Si noti però che per semplici
-	  richieste di tipo <lit>GET</lit>, la funzione <fncref
-	  targ="readfile"/> fornisce un'interfaccia più snella.)
-	</para>
-	<para>
-	  In più, è possibile includere nel bundle un altro elemento
-	  opzionale: uno scalare di nome <lit>include</lit>, che è
-	  interpretato, se non-zero, come una richiesta di includere
-	  lo header dal server insieme al corpo del messaggio.
+	  il metodo <lit>POST</lit>è implicito, altrimenti lo sono i
+	  metodoi <lit>GET</lit> o <lit>HEAD</lit>, a seconda del
+	  valore del campo <lit>nobody</lit>. (Si noti però che per
+	  semplici richieste di tipo <lit>GET</lit>, la funzione
+	  <fncref targ="readfile"/> fornisce un'interfaccia più
+	  snella.)
 	</para>
 	<para>
 	  Se la richiesta va a buon fine, il testo ricevuto dal server
 	  è aggiunto al bundle sotto il nome
-	  <quote><lit>output</lit></quote>.
+	  <quote><lit>output</lit></quote> e il codice di status HTTP
+	  sotto la chiave <quote><lit>http_code</lit></quote>.
 	</para>
 	<para>
 	  Se si verifica un qualche errore (ad esempio la
 	  <lit>URL</lit> è irraggiungibile) la funzione ritorna un
 	  valore non-zero, nel qual caso il messaggio di errore di
 	  curl viene aggiunto al bundle sotto la chiave
-	  <quote><lit>errmsg</lit></quote>.  Si noti, tuttavia, che
-	  <quote>a buon fine</quote> in questo senso non implica che
-	  tutti i dati desiderati siano stati scaricati, ma solo che
-	  il server ha dato una qualche risposta. È responsabilità
-	  dell'utente controllare il contenuto del buffer di output
-	  (che per esempio potrebbe contenere semplicemente il testo
-	  <quote>Page not found</quote>).
+	  <quote><lit>errmsg</lit></quote>.  Si noti che <quote>a buon
+	  fine</quote> in questo senso non implica che tutti i dati
+	  desiderati siano stati scaricati, ma solo che il server ha
+	  dato una qualche risposta. Un modo veloce per controllare è
+	  il codice HTTP ricevuto in risposta: i più comuni sono 200
+	  (tutto ok) oppure 404 (pagina non trovata). La lista
+	  completa è al link
+	  <url>https://it.wikipedia.org/wiki/Codici_di_stato_HTTP</url>.
+	  In alternativa, si può controllare il contenuto del buffer
+	  di output (che per esempio potrebbe contenere semplicemente
+	  il testo <quote>Page not found</quote>).
 	</para>
 	<para>
 	  A seguire, un esempio, in cui scaricheremo dei dati dal
@@ -3922,21 +3998,45 @@
 	  dati <lit>POST</lit> il carattere <quote>virgoletta doppia</quote>.
 	</para>
 	<code>
-	  bundle req
-	  req.URL = "http://api.bls.gov/publicAPI/v1/timeseries/data/"
-	  req.include = 1
-	  req.header = "Content-Type: application/json"
-	  string s = sprintf("{\"seriesid\":[\"LEU0254555900\"]}")
-	  req.postdata = s
-	  err = curl(&amp;req)
-	  if err == 0
-	  s = req.output
-	  string line
-	  loop while getline(s, line)
-	      printf "%s\n", line
-	  endloop
-	  endif
+	 bundle req
+	 req.URL = "https://api.bls.gov/publicAPI/v1/timeseries/data/"
+	 req.include = 1
+	 eq.header = "Content-Type: application/json"
+	 string s = sprintf("{\"seriesid\":[\"LEU0254555900\"]}")
+	 req.postdata = s
+	 err = curl(&amp;req)
+	 if err == 0
+	    s = req.output
+	    string line
+	    loop while getline(s, &amp;line)
+	       printf "%s\n", line
+	    endloop
+	 endif
 	</code>
+       <para>
+	 Come secondo esempio, il codice seguente controlla se una
+	 certa versione del  <quote>Global Macro Database</quote> è
+	 disponibile, e la scarica solo se sì.
+       </para>
+       <code>
+	 string base_URL = "https://www.globalmacrodata.com"
+	 string filename = "GMD_2025_03.csv"
+
+	 bundle req
+	 req.URL = base_URL ~ "/" ~ filename
+	 req.nobody = 1
+	 err = curl(&amp;req)
+
+	 if err || (req.http_code != 200)
+	    printf "Oh, oh. Sembra che %s non sia disponibile.\n", filename
+	 else
+	    # actual request
+	    bundle req = empty
+	    req.URL = base_URL ~ "/" ~ filename
+	    err = curl(&amp;req)
+	    print req
+	 endif
+       </code>
 	<para>
 	  Vedi anche le funzione <fncref targ="jsonget"/> e <fncref
 	  targ="xmlget"/> per elaborare i dati JSON o XML
@@ -3983,7 +4083,7 @@
 	</para>
 	<para>
 	  Si noti che il bit meno significativo è nella colonna 1: di
-	  conseguenza, la colonna 1 corrisponde a 
+	  conseguenza, la colonna 1 corrisponde a
 	  <math>2</math><sup>0</sup>, la colonna 2 a
 	  <math>2</math><sup>1</sup> e così via. Ad esempio, l'espressione
 	</para>
@@ -5019,11 +5119,10 @@
       </fnargs>
       <description>
 	<para>
-	  Restituisce <math>e</math><sup>x</sup>.
-	  Si noti che nel caso di una matrice la funzione è
-	  calcolata elemento per elemento. Per il calcolo
-	  dell'esponenziale di una matrice, si veda <fncref
-	  targ="mexp"/>.
+	  Restituisce <math>e</math><sup>x</sup>.  Si noti che nel
+	  caso di una matrice la funzione è calcolata elemento per
+	  elemento. Per il calcolo dell'esponenziale di una matrice,
+	  si veda <fncref targ="mexp"/>.
 	</para>
       </description>
     </function>
@@ -5235,7 +5334,7 @@
 	  argomenti).  In alternativa il bundle può contenere un array
 	  di stringhe dal nome speciale
 	  <lit>arglist</lit>. L'array deve contenere esattamente le
-	  chiavi del bundle <argname>b</argname>, tranne che 
+	  chiavi del bundle <argname>b</argname>, tranne che
 	  <lit>arglist</lit> stesso, nell'ordine desiderato.
 	</para>
 	<para>
@@ -5259,7 +5358,7 @@
 	</para>
       </description>
     </function>
-    
+
     <function name="fevd" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="int">target</fnarg>
@@ -5570,24 +5669,24 @@
 	<code>
 	  U (2 x 6)
 
-	  1    3    5    7    9   11 
-	  2    4    6    8   10   12 
+	  1    3    5    7    9   11
+	  2    4    6    8   10   12
 
 	  V (4 x 3)
 
-	  1    3    5 
-	  2    4    6 
-	  7    9   11 
-	  8   10   12 
+	  1    3    5
+	  2    4    6
+	  7    9   11
+	  8   10   12
 
 	  W (6 x 2)
 
-	  1    7 
-	  2    8 
-	  3    9 
-	  4   10 
-	  5   11 
-	  6   12 
+	  1    7
+	  2    8
+	  3    9
+	  4   10
+	  5   11
+	  6   12
 	</code>
 	<para>
 	  Qualora le matrici nell'array non siano conformabili per
@@ -5603,7 +5702,7 @@
 	  cui <argname>alt</argname> è una specifica stringa da usare
 	  come separatore. La funzione inversa è, in questo caso,
 	  <fncref targ="strsplit"/>.
-	</para> 
+	</para>
       </description>
     </function>
 
@@ -6405,20 +6504,46 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Ritorna la funzione ipergeometrica di Gauss per valori reali
-	  dell'argomento <argname>x</argname>.
-	</para>
-	<para context="tex">
-	  Ritorna la funzione ipergeometrica di Gauss
+	  Restituisce la funzione ipergeometrica di Gauss per
+	  l'argomento reale <argname>x</argname>. I valori validi per
+	  <argname>x</argname> sono compresi tra &minus;1 e 1
+	  (inclusi). Questa funzione è molto generale e si riduce a
+	  una funzione più semplice in alcuni casi particolari, come
+	  ad esempio
+	  <math>-</math>log(<math>1-x</math>)/<math>x</math> per
+	  <math>a=b=1</math> e <math>c=2</math>. Si veda
+	  <url>https://en.wikipedia.org/wiki/Hypergeometric_function</url>
+	  per maggiori dettagli. </para>
+	  <para context="tex">
+	  Restituisce la funzione ipergeometrica di Gauss
 	  <math>{}_2F_1(a,b;c;z) = \sum_{n=0}^\infty \frac{(a)_n
-	  (b)_n}{(c)_n} \frac{z^n}{n!}.</math> per valori reali
-	  dell'argomento <argname>x</argname>.  <argname>x</argname>.
-	</para>
-	<para>
-	  Se <argname>x</argname> è uno scalare, la funzione
-	  restituisce uno scalare; se no, il risultato sarà una
-	  matrice delle stesse dimensioni di <argname>x</argname>.
-	</para>
+	  (b)_n}{(c)_n} \frac{z^n}{n!}.</math> per l'argomento reale
+	  <argname>x</argname>. I valori validi per
+	  <argname>x</argname> sono compresi tra <math>-1</math> e 1
+	  (inclusi). Questa funzione è molto generale e si riduce a
+	  una funzione più semplice in alcuni casi speciali, come ad
+	  esempio <math>-\frac{\log(1-x)}{x}</math> per <math>a=b=1</math> e
+	  <math>c=2</math>. Si veda
+	  <url>https://en.wikipedia.org/wiki/Hypergeometric_function</url>
+	  per maggiori dettagli. </para>
+	  <para>
+	    Se <argname>x</argname> è uno scalare, il valore
+	    restituito sarà scalare; in caso contrario, sarà una
+	    matrice delle stesse dimensioni di
+	    <argname>x</argname>. Ad esempio,
+	  </para>
+	  <code>
+	    a = hyp2f1(1, 1, 2, {-1, 0, 0.5})
+	    print a
+	  </code>
+	  <para>
+	    produce l'output seguente:
+	  </para>
+	  <code>
+	  a (1 x 3)
+
+	  0.69315       1.0000       1.3863
+	  </code>
       </description>
     </function>
 
@@ -6698,6 +6823,7 @@
       <fnargs>
 	<fnarg type="strings">S</fnarg>
 	<fnarg type="string">test</fnarg>
+	<fnarg type="bool" optional="true">simple</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6717,6 +6843,14 @@
 	  2
 	  4
 	</code>
+	<para>
+	  Se viene fornito un valore nonzero per l'argomento opzionale
+	  <argname>simple</argname>, il valore restituito è uno
+	  scalare: 1 se <argname>test</argname> si trova in
+	  <argname>S</argname>, 0 altrimenti. In questo caso la
+	  funzione usa un algoritmo semplificato e quindi è più
+	  efficiente se si desidera solo una risposta vero/falso.
+	</para>
       </description>
     </function>
 
@@ -7017,12 +7151,12 @@
 	  convenzionale per <quote>tutte</quote>. Le IRF sono espresse
 	  nell'unità di misura della variabile
 	  <argname>target</argname> e sono relative ad uno shock di
-	  una deviazione standard nella variabile <argname>shock</argname>.
-	  Se si specifica l'argomento opzionale
-	  <argname>alpha</argname>, la matrice dei risultati
-	  comprenderà anche un intervallo di confidenza al livello 1 &minus; &agr;,
-	  per cui da esempio il valore 0.1 fornisce un intervallo al
-	  90 per cento.
+	  una deviazione standard nella variabile
+	  <argname>shock</argname>.  Se si specifica l'argomento
+	  opzionale <argname>alpha</argname>, la matrice dei risultati
+	  comprenderà anche un intervallo di confidenza al livello 1
+	  &minus; &agr;, per cui da esempio il valore 0.1 fornisce un
+	  intervallo al 90 per cento.
 	</para>
 	<para>
 	  Il frammento di codice che segue illustra l'uso della
@@ -7307,16 +7441,20 @@
 	  &mdash; dello stesso tipo di <argname>ed</argname> &mdash; è
 	  un numero a 8 cifre, o una serie di tali numeri, del tipo
 	  <lit>YYYYMMDD</lit> (formato <quote>base</quote> ISO 8601),
-	  che fornisce la data di calendario corrispondente al giorno
-	  epoch.
+	  che fornisce la data di calendario gregoriano corrispondente
+	  al giorno epoch.
 	</para>
 	<para>
-	  Se <argname>ed</argname> è uno scalare (solo) e il secondo
-	  argomento opzionale <argname>as-string</argname> è diverso
-	  da zero, il risultato non è numerico ma una stringa del tipo
+	  Se il secondo argomento opzionale
+	  <argname>as-string</argname> è diverso da zero, il valore
+	  restituito non è numerico, bensì una stringa del tipo
 	  <lit>YYYY-MM-DD</lit> (formato ISO 8601
-	  <quote>esteso</quote>).
-	</para>
+	  <quote>extended</quote>), o una serie con valori di stringa
+	  se <argname>ed</argname> è una serie, o un array di stringhe
+	  se <argname>ed</argname> è un vettore. Per ottenere
+	  rappresentazioni di stringa dei giorni dell'epoca in modo
+	  più flessibile, si veda <fncref targ="strfday"/>.
+        </para>
 	<para>
 	  Per la funzione inversa, si veda <fncref targ="epochday"/>.
 	</para>
@@ -7584,8 +7722,14 @@
 	<para>
 	  Il parametro opzionale <argname>scale</argname> può essere
 	  utilizzato per adattare il grado di lisciaggio rispetto al
-	  valore di default di 1.0 (valori più elevati producono un
-	  risultato più liscio). Il parametro
+	  valore di default di 1.0, che usa la regola proposta da
+	  <cite key="silverman86">Silverman (1986)</cite>, e cioè
+	  <equation status="display"
+	     tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{-1/5}\]"
+	     ascii="h = 0.9 min(s, IQR/1.349) n^{-1/5}"
+	     graphic="kernel2"/>
+	  dove <math>s</math> è lo scarto quadratico medio dei dati e
+	  IQR è il range interquartile. Il parametro
 	  <argname>control</argname> è booleano: si utilizza il kernel
 	  Gaussiano quando <argname>control</argname> è pari 0 (il
 	  valore di default); altrimenti, si utilizza il kernel di
@@ -7798,11 +7942,20 @@
     <function name="ksimul" section="sspace" output="scalar">
       <fnargs>
 	<fnarg type="bundleref">&amp;Mod</fnarg>
+	<fnarg type="matrix">U</fnarg>
+	<fnarg type="bool" optional="true">extra</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Usa un bundle di tipo Kalman, creato in precedenza con
-	  <fncref targ="ksetup"/> per simulare dei dati.
+	  <fncref targ="ksetup"/> per simulare dei dati, prendendo i
+	  disturbi dalla matrice <argname>U</argname>. Per default, la
+	  matrice restituita (che avrà tante righe quante
+	  <argname>U</argname>) contiene valori simulati delle
+	  osservabili, ma se viene specificato un valore diverso da
+	  zero per <argname>extra</argname> viene inclusa anche la
+	  simulazione degli stati. In quest'ultimo caso, ogni riga
+	  contiene prima gli stati, poi le osservabili.
 	</para>
 	<para>
 	  Per maggiori dettagli, vedi <guideref targ="chap:kalman"/>.
@@ -8112,18 +8265,23 @@
       </fnargs>
       <description>
 	<para>
-	  Logaritmo naturale di <argname>x</argname>; genera <lit>NA</lit> per valori non
-	  positivi. Nota: <lit>ln</lit> può essere usato al posto di
-	  di <lit>log</lit>.
+	  Logaritmo naturale di <argname>x</argname>; genera
+	  <lit>NA</lit> per valori non positivi. Nota: <lit>ln</lit>
+	  può essere usato al posto di di <lit>log</lit>.
 	</para>
 	<para>
-	  Quando restituisce una lista alle singole variabili viene automaticamente
-	  assegnato un nome sulla base del formato
-	  <lit>l_</lit><repl>varname</repl> dove
-	  <repl>varname</repl> è il nome della variabile originale.
-	  Se necessario il nome viene troncato e può essere modificato
-	  in caso di ripetizioni nell'insieme dei nomi delle variabili
-	  così costruite.
+	  Quando restituisce una lista, alle singole variabili viene
+	  automaticamente assegnato un nome sulla base del formato
+	  <lit>l_</lit><repl>varname</repl> dove <repl>varname</repl>
+	  è il nome della variabile originale.  Se necessario il nome
+	  viene troncato e può essere modificato in caso di
+	  ripetizioni nell'insieme dei nomi delle variabili così
+	  costruite.
+	</para>
+	<para>
+	  Si noti che in caso di input matriciale la funzione agisce
+	  elemento per elemento. Per la funzione logaritmo matriciale,
+	  si veda <fncref targ="mlog"/>.
 	</para>
       </description>
     </function>
@@ -8453,6 +8611,8 @@
 	<para>
 	  Calcola la matrice di correlazione di Pearson considerando ogni
 	  colonna di <argname>X</argname> come una variabile.
+	</para>
+	<para>
 	  <seelist>
 	    <fncref targ="corr"/>
 	    <fncref targ="cov"/>
@@ -8474,6 +8634,8 @@
 	  <math>n</math> &minus; 1, dove <math>n</math> è il numero di
 	  righe di <argname>X</argname>; se però l'argomento opzionale
 	  <argname>dfcorr</argname> è 0, viene usato <math>n</math>.
+	</para>
+	<para>
 	  <seelist>
 	    <fncref targ="corr"/>
 	    <fncref targ="cov"/>
@@ -8636,11 +8798,16 @@
     <function name="meanc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Calcola le medie per colonna di <argname>X</argname>, senza
-	  saltare osservazioni mancanti.
+	  saltare osservazioni mancanti. Se viene
+	  specificato un valore non-zero per il secondo argomento
+	  (opzionale), i valori mancanti vengono ignorati, altrimenti
+	  il ​​risultato è <lit>NA</lit> per tutte le colonne che
+	  contengono valori mancanti.
 	</para>
 	<para>
 	  Ad esempio, il codice seguente
@@ -8683,10 +8850,15 @@
     <function name="meanr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Calcola le medie per riga di <argname>X</argname>.
+	  Calcola le medie per riga di <argname>X</argname>. Se viene
+	  specificato un valore non-zero per il secondo argomento
+	  (opzionale), i valori mancanti vengono ignorati, altrimenti
+	  il ​​risultato è <lit>NA</lit> per tutte le righe che
+	  contengono valori mancanti.
 	  <seelist>
 	    <fncref targ="meanc"/>
 	    <fncref targ="sumr"/>
@@ -11122,11 +11294,17 @@
     <function name="prodc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Restituisce il prodotto degli elementi di <argname>X</argname>,
-	  per colonna.
+	  per colonna. Se viene specificato un
+	  valore diverso da zero per il secondo argomento opzionale, i
+	  valori mancanti vengono ignorati, altrimenti il ​​risultato è
+	  <lit>NA</lit> per tutte le colonne che contengono valori
+	  mancanti. Quindi, specificare <argname>skip_na</argname>
+	  equivale a trattare i valori mancanti come se fossero 1.
 	  <seelist>
 	    <fncref targ="prodr"/>
 	    <fncref targ="meanc"/>
@@ -11140,11 +11318,17 @@
     <function name="prodr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce il prodotto degli elementi di <argname>X</argname>,
-	  per riga.
+	  Restituisce il prodotto degli elementi di
+	  <argname>X</argname>, per riga. Se viene specificato un
+	  valore diverso da zero per il secondo argomento opzionale, i
+	  valori mancanti vengono ignorati, altrimenti il ​​risultato è
+	  <lit>NA</lit> per tutte le righe che contengono valori
+	  mancanti. Quindi, specificare <argname>skip_na</argname>
+	  equivale a trattare i valori mancanti come se fossero 1.
 	  <seelist>
 	    <fncref targ="prodc"/>
 	    <fncref targ="meanr"/>
@@ -11262,6 +11446,9 @@
 	  create da funzioni come <fncref targ="pmax"/> e
 	  <fncref targ="pmean"/>, che replicano per tutti i periodi temporali
 	  un valore relativo a ogni unità della cross-section.
+	</para>
+	<para>
+	  Si veda <fncref targ="pexpand"/> per l'operazione inversa.
 	</para>
       </description>
     </function>
@@ -11687,13 +11874,6 @@
 	  $y_{[i]}$ è l'$i$-esimo elemento della serie ordinata in
 	  senso crescente.
 	</para>
-	<para context="tex">
-	  Per una serie di lunghezza $n$, il $p$-quantile, $q$, è
-	  definito come: \[q = y_{[k]} + [(n+1) \cdot p - k] (y_{[k+1]} -
-	  y_{[k]})\] dove $k$ è la parte intera di $(n+1) \cdot p$ e
-	  $y_{[i]}$ è l'elemento $i$-esimo della serie ordinata in
-	  senso crescente.
-	</para>
 	<para>
 	Ad esempio, il codice
 	</para>
@@ -11754,7 +11934,7 @@
 	  parametri corrispondenti.
 	</para>
 	<para>
-	  Per i due casi speciali, le specifiche sono le seguenti: 
+	  Per i due casi speciali, le specifiche sono le seguenti:
 	</para>
         <ilist>
           <li>
@@ -12160,17 +12340,20 @@
 
     <function name="regsub" section="strings" output="string">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="string">match</fnarg>
 	<fnarg type="string">repl</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce una copia di <argname>s</argname> in cui tutte
-	  le occorrenze del tipo <argname>match</argname> sono
-	  sostituite con <argname>repl</argname>. Gli argomenti
+	  Se <argname>s</argname> è una stringa, restituisce una copia
+	  di <argname>s</argname> in cui tutte le occorrenze del tipo
+	  <argname>match</argname> sono sostituite con
+	  <argname>repl</argname>. Gli argomenti
 	  <argname>match</argname> e <argname>repl</argname> sono
-	  interpretati come espressioni regolari in stile Perl.
+	  interpretati come espressioni regolari in stile Perl. Se
+	  <argname>s</argname> è un array o una serie a valori
+	  stringa, l'operazione è effettuata su tutti i suoi elementi.
 	</para>
 	<para>
 	  Si veda anche <fncref targ="strsub"/> per semplici
@@ -12453,7 +12636,11 @@
 	</para>
 	<code>
 	  matrix M = {1,2;2,1;4,1}
-	  rnameset(M, "Row1 Row2 Row3")
+	  strings S = array(3)
+	  S[1] = "Row1"
+	  S[2] = "Row2"
+	  S[3] = "Row3"
+	  rnameset(M, S)
 	  print M
 	</code>
       </description>
@@ -12541,8 +12728,14 @@
 	  <argname>X</argname>. Se <argname>df</argname> è positivo, è
 	  utilizzato come divisore nel calcolo delle varianze delle
 	  colonne, in caso contrario il divisore utilizzato è il
-	  numero di righe di <argname>X</argname> (in altre parole non viene
-	  applicata nessuna correzione per i gradi di libertà).
+	  numero di righe di <argname>X</argname> (in altre parole non
+	  viene applicata nessuna correzione per i gradi di
+	  libertà). Se viene specificato un valore diverso da zero per
+	  il terzo argomento opzionale, i valori mancanti vengono
+	  ignorati, altrimenti il ​​risultato è <lit>NA</lit> per tutte
+	  le colonne che contengono valori mancanti.
+	</para>
+	<para>
 	  <seelist>
 	    <fncref targ="meanc"/>
 	    <fncref targ="sumc"/>
@@ -13287,6 +13480,13 @@
 	  <argname>v</argname> è uguale a &minus;1 è eseguita solo
 	  la centratura.
 	</para>
+	<para>
+	  Per default, i valori mancanti vengono automaticamente
+	  saltati se l'input è una serie o una lista, ma non se è una
+	  matrice. Per ignorare i valori mancanti in questo ultimo
+	  caso, va fornito un valore non-zero per
+	  <argname>skip_na</argname>.
+	</para>
       </description>
     </function>
 
@@ -13315,58 +13515,65 @@
 
     <function name="strftime" section="calendar" output="string">
       <fnargs>
-	<fnarg type="scalar">t</fnarg>
+	<fnarg type="scalar">tm</fnarg>
 	<fnarg optional="true" type="string">formato</fnarg>
+	<fnarg optional="true" type="scalar">offset</fnarg>
       </fnargs>
       <description>
 	<para>
-	  L'argomento <argname>t</argname> viene interpretato come il
-	  numero di secondi trascorsi dall'inizio dell'anno 1970 nel
-	  fuso orario UTC (un tempo noto come ora di Greenwich);
-	  produce una stringa con la data e l'ora corrispondenti.  Il
-	  formato di default è quello standard di sistema, ma può
-	  essere modificato se il secondo argomento (opzionale) è una
-	  stringa appropriata.
+	  L'argomento <argname>tm</argname> viene utilizzato per
+	  fornire lo <quote>Unix time</quote>, il numero di secondi
+	  dall'inizio dell'anno 1970 secondo UTC, e il valore
+	  restituito è una stringa che fornisce la data e/o l'ora
+	  corrispondente, in un formato specificato tramite il secondo
+	  argomento facoltativo o, per default, la
+	  <quote>rappresentazione di data e ora preferita per le
+	  impostazioni locali correnti</quote> come determinato dalla
+	  libreria C di sistema. Si veda sotto per più dettagli
+	  sul formato.
 	</para>
 	<para>
-	  Nota bene: in certi casi, l'output di questa funzione
-	  potrebbe dover essere aggiustato a seconda dei fusi
-	  orari. Se, ad esempio, l'orologio del sistema su cui si sta
-	  lavorando è impostato a un fuso orario ad est di UTC (per
-	  esempio, l'Europa centrale), la chiamata
-	</para>
-	<code>
-	  strftime(1234567890, "%d-%m-%Y")
-	</code>
+	  L'argomento facoltativo <argname>offset</argname> può essere
+	  utilizzato per specificare un divario in secondi rispetto a
+	  UTC, selezionando così un fuso orario diverso da quello
+	  predefinito, che è sempre l'ora locale. Ad esempio, un
+	  offset di 3600 seleziona il fuso orario dell'Europa
+	  centrale, mentre 0 seleziona GMT. Il valore assoluto di
+	  <argname>offset</argname> non deve superare 86400 (24
+	  ore). </para>
 	<para>
-	produrrà la stringa <quote>14-02-2009</quote>. Se invece il
-	sistema è impostato come UTC o ancora più a ovest (per
-	esempio, gli Stati Uniti), la stessa chiamata darà come
-	risultato <quote>13-02-2009</quote>. Il motivo è che il numero
-	1234567890 corrisponde precisamente al 13 febbraio 2009, alle
-	23:31:30 UTC.
+	  Il tipo dell'output dipende da quello di
+	  <argname>tm</argname>: se <argname>tm</argname> è uno
+	  scalare, un vettore o una serie, l'output è,
+	  rispettivamente, una singola stringa, un array di stringhe o
+	  una serie con valori stringa.
 	</para>
 	<para>
-	  Attenzione: a causa di differenze nell'implementazione,
-	  questa funzione si comporta in modo diverso su sistemi
-	  Windows e Unix-like per date precedenti al 1 gennaio
-	  1970. Su sistemi Unix-like (Linux, Mac) queste date sono
-	  rappresentati con numeri negativi, cosicché se
-	  <argname>t</argname> è negativo l'output sarà comunque una
-	  stringa contenente una data; su windows, questa convenzione
-	  non è supportata e il risultato sarà una stringa vuota.
+	  I valori di <argname>tm</argname> adatti all'uso con questa
+	  funzione possono essere ottenuti tramite l'accessore <fncref
+	  targ="$now"/> o la funzione <fncref targ="strptime"/>.
 	</para>
 	<para>
-	  Valori di <argname>tm</argname> adatti per questa funzione
-	  possono venir prodotti tramite l'accessore <fncref targ="$now"/>
-	  o la funzione <fncref targ="strptime"/>.
+	  Nota che mentre <argname>tm</argname> è preso come relativo
+	  a UTC, l'output di questa funzione è per impostazione
+	  predefinita <quote>locale</quote>, relativo all'impostazione
+	  del fuso orario sul computer host. Un dato
+	  <argname>tm</argname> mostrerà quindi un orario diverso e
+	  forse una data diversa, in fusi orari diversi. Se si
+	  desidera una stringa che rappresenti l'UTC anziché l'ora
+	  locale, vedi sotto.
 	</para>
+	<subhead>Opzioni di formato</subhead>
 	<para>
-	  Le opzioni di formato disponibili sono elencate sulla
-	  pagina di manuale per <lit>strftime</lit>, sui sistemi che
-	  la offrono, oppure su uno dei tanti siti che contengono tale
-	  informazione, come ad esempio
-	  <url>https://devhints.io/strftime</url>.
+	  Le opzioni di formattazione standard possono essere trovate
+	  consultando la pagina di manuale <lit>strftime</lit>, sui
+	  sistemi che hanno tali pagine, o tramite uno dei tanti siti
+	  web che presentano informazioni rilevanti, come
+	  <url>https://devhints.io/strftime</url>. Oltre ai formati
+	  standard, gretl riconosce un'opzione speciale: se
+	  <argname>format</argname> è semplicemente
+	  <quote><lit>8601</lit></quote>, la data e l'ora vengono
+	  mostrate nel formato ISO 8601.
 	</para>
       </description>
     </function>
@@ -13508,7 +13715,7 @@
 	<para>
 	  Si noti il valore restituito da questa funzione dipende dal
 	  settaggio di fuso orario del sistema su cui si sta
-	  lavorando. Ad esempio, l'output di 
+	  lavorando. Ad esempio, l'output di
 	</para>
 	<code>
 	  strptime("13/02/2009 23:31.30", "%d/%m/%Y %H:%M.%S")
@@ -13693,11 +13900,15 @@
       </fnargs>
       <description>
 	<para>
-	  Restituisce una copia di <argname>s</argname> in cui tutte
-	  le occorrenze di <argname>find</argname> sono sostituite con
-	  <argname>subst</argname>. V. anche <fncref targ="regsub"/> per
-	  una funzione più complessa che permette di sostituire stringhe sulla
-	  base di espressioni regolari.
+	  Se <argname>s</argname> è una stringa, restituisce una copia
+	  di <argname>s</argname> in cui tutte le occorrenze di
+	  <argname>find</argname> sono sostituite con
+	  <argname>subst</argname>. Se invece <argname>s</argname> è
+	  un array di stringhe o una serie a valori stringa,
+	  l'operazione è ripetuta per tutti i suoi elementi. Vedi
+	  anche <fncref targ="regsub"/> per una funzione più complessa
+	  che permette di sostituire stringhe sulla base di
+	  espressioni regolari.
 	</para>
 	<para>
 	  Esempio:
@@ -13802,7 +14013,7 @@
 	</para>
       </description>
     </function>
-    
+
     <function name="substr" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -13903,10 +14114,15 @@
     <function name="sumc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce le somme per colonna di <argname>X</argname>.
+	  Restituisce le somme per colonna di <argname>X</argname>. Se
+	  viene specificato un valore non-zero per il secondo
+	  argomento facoltativo, i valori mancanti vengono ignorati,
+	  altrimenti il ​​risultato è <lit>NA</lit> per tutte le colonne
+	  che contengono valori mancanti.
 	  <seelist>
 	    <fncref targ="meanc"/>
 	    <fncref targ="sumr"/>
@@ -13918,10 +14134,15 @@
     <function name="sumr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce le somme per riga di <argname>X</argname>.
+	  Restituisce le somme per riga di <argname>X</argname>. Se
+	  viene specificato un valore non-zero per il secondo
+	  argomento facoltativo, i valori mancanti vengono ignorati,
+	  altrimenti il ​​risultato è <lit>NA</lit> per tutte le righe
+	  che contengono valori mancanti.
 	  <seelist>
 	    <fncref targ="meanr"/>
 	    <fncref targ="sumc"/>
@@ -14071,6 +14292,57 @@
       </description>
     </function>
 
+    <function name="thresh" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="anyfloat">a</fnarg>
+	<fnarg optional="true" type="scalar">hard</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Applica un'operazione di soglia a <argname>x</argname>; tale
+	  operazione puo essere rigida o morbida a seconda del valore
+	  del parametro booleano opzionale <argname>hard</argname>,
+	  che per default è 0, il che corrisponde a una soglia
+	  morbida.
+	</para>
+	<para>
+	  In entrambi i casi, gli elementi di <argname>x</argname> il
+	  cui valore assoluto è minore di <argname>a</argname> vengono
+	  impostati a 0. Con la soglia morbida, le altre vengono
+	  ridotte verso lo 0. Ad esempio, il codice seguente
+	</para>
+	<code>
+	  s = seq(-2,2,0.5)'
+	  eval s ~ thresh(s, 0.5) ~ thresh(s, 0.5, 1)
+	</code>
+	<para>
+	  produce
+	</para>
+	<code>
+             -2      -1.5       -2
+           -1.5        -1     -1.5
+             -1      -0.5       -1
+           -0.5         0        0
+              0         0        0
+            0.5         0        0
+              1       0.5        1
+            1.5         1      1.5
+              2       1.5        2
+	</code>
+	<para>
+	  Se i due argomenti sono di tipo diverso, il risultato è del
+	  tipo <quote>più alto</quote> dei due, dove l'ordinamento è
+	  matrice &gt; serie &gt; scalare. Ad esempio, se
+	  <argname>y</argname> è uno scalare e <argname>x</argname> un
+	  vettore di <math>n</math> elementi (o viceversa), il
+	  risultato è anch'esso un vettore. Si noti che gli argomenti
+	  matriciali devono essere vettori, e che se nessuno dei due
+	  è uno scalare devono avere la stessa dimensione.
+	</para>
+      </description>
+    </function>
+
     <function name="toepsolv" section="linalg" output="cvec">
       <fnargs>
 	<fnarg type="vector">c</fnarg>
@@ -14124,24 +14396,24 @@
 	<code>
 A (3 x 3)
 
-  3   2   1 
-  2   3   2 
-  1   2   3 
+  3   2   1
+  2   3   2
+  1   2   3
 
 x (3 x 1)
 
-  1 
-  1 
-  1 
+  1
+  1
+  1
 
-     0.25000 
- -3.3307e-17 
-     0.25000 
+     0.25000
+ -3.3307e-17
+     0.25000
 
 8
-     0.25000 
-  2.7756e-17 
-     0.25000 
+     0.25000
+  2.7756e-17
+     0.25000
 
 
 d =  8.0000000
@@ -14271,57 +14543,64 @@ d =  8.0000000
 
     <function name="typename" section="data-utils" output="string">
       <fnargs>
-	<fnarg type="string">nome</fnarg>
+	<fnarg type="string">espr</fnarg>
       </fnargs>
-      <description>
-	<para>
-          Se <argname>nome</argname> è l'identificativo di un oggetto
-          definito, la funzione ritorna il tipo di oggetto come
-          stringa: <lit>scalar</lit>, <lit>series</lit>,
-          <lit>matrix</lit>, <lit>string</lit>, <lit>bundle</lit>, o
-          uno dei tipi di array: <lit>matrices</lit>,
-          <lit>bundles</lit>, <lit>strings</lit>, <lit>lists</lit> o
-          <lit>arrays</lit>.  Se non esiste un oggetto con quel nome,
-          vene ritornata la stringa <lit>null</lit>.
-        </para>
-        <subhead>Compatibilità</subhead>
-        <para>
-          Questa funzione rappresenta una miglioria rispetto alle
-          vecchie funzioni <fncref targ="typeof"/> e <fncref
-          targ="typestr"/>, che però per il momento sono ancora
-          valide.
-        </para>
+      <description>      <para>
+	Questa funzione combina <fncref targ="typeof"/> e <fncref
+	targ="typestr"/>, con un piccolo valore aggiunto. In pratica,
+	le due istruzioni seguenti sono equivalenti
+      </para>
+      <code>
+	eval typestr(typeof(x))
+	eval typename(x)
+      </code>
+      <para>
+	eccetto che se <argname>expr</argname> nomina un array,
+	<lit>typename</lit> restituisce il tipo specifico dell'array,
+	come in
+      </para>
+      <code>
+	strings S = defarray("foo", "bar", "baz")
+	eval typestr(typeof(S)) # restituisce "array"
+	eval typename(S) # restituisce "strings"
+      </code>
       </description>
     </function>
-    
+
     <function name="typeof" section="data-utils" output="int">
       <fnargs>
-	<fnarg type="string">nome</fnarg>
+	<fnarg type="string">espressione</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Funzione obsoleta: vedi <fncref targ="typename"/> per
-	  un'alternativa migliore.  Restituisce un codice di tipo per
-	  <argname>nome</argname>, che è l'identificativo di un
+	  Restituisce un codice numerico di tipo per
+	  <argname>espressione</argname>, che è l'identificativo di un
 	  qualche oggetto. I codici sono: 1 = scalare, 2 = serie, 3 =
-	  matrice, 4 = stringa, 5 = bundle, 6 = array e 7 = lista. Se
-	  l'oggetto non è definito, ritorna 0.  Per avere la stringa
-	  corrispondente al codice, si può usare la funzione <fncref
-	  targ="typestr"/>.
+	  matrice, 4 = stringa, 5 = bundle, 6 = array e 7 = lista.
+	  Per avere la stringa corrispondente al codice, si può usare
+	  la funzione <fncref targ="typestr"/>. Se l'oggetto non è
+	  definito (o più in generale se un'assegnazione con
+	  <argname>espressione</argname> produce un errore), ritorna
+	  0.
 	</para>
 	<para>
-	  Questa funzione si può anche usare per stabilire il tipo di
-	  un elemento di un bundle o di un array. Ad esempio:
+	  Qui di seguito, qualche esempio:
 	</para>
 	<code>
-	  matrices M = array(1)
-	  eval typestr(typeof(M))
-	  eval typestr(typeof(M[1]))
+	  strings S = defarray("foo", "bar")
+	  eval typeof(S)            # ritorna 6 (array)
+	  eval typeof(S[1])	    # ritorna 4 (stringa)
+	  eval typeof(S[7])	    # ritorna 0 (indice non valido)
+	  eval typeof(S[x])	    # ritorna 0 (indice non valido)
+	  eval typeof(1+1)	    # ritorna 1 (scalare)
+	  eval typeof(sqrt("foo"))  # ritorna 0 (non valido)
 	</code>
 	<para>
-	  Il risultato della prima <lit>eval</lit> è
-	  <quote>array</quote> e quello della seconda è
-	  <quote>matrice</quote>.
+	  La funzione <fncref targ="typestr"/> può essere utilizzata
+	  per ottenere la stringa corrispondente al valore restituito
+	  da <lit>typeof</lit>, ma se si desidera solo il risultato
+	  della stringa <fncref targ="typename"/> potrebbe essere
+	  preferibile.
 	</para>
       </description>
     </function>
@@ -14332,15 +14611,16 @@ d =  8.0000000
       </fnargs>
       <description>
 	<para>
-	  Funzione obsoleta: vedi <fncref targ="typename"/> per
-	  un'alternativa migliore.  Restituisce il nome del tipo di
-	  dati di gretl corrispondente a
-	  <argname>typecode</argname>. È utilizzata insieme alla
+	  Restituisce il nome del tipo di dati di gretl corrispondente
+	  a <argname>typecode</argname>. È utilizzata insieme alla
 	  funzione <fncref targ="inbundle"/>. Il valore restituito è:
 	  <quote>scalar</quote>, <quote>series</quote>,
 	  <quote>matrix</quote>, <quote>string</quote>,
 	  <quote>bundle</quote>, <quote>array</quote> o
 	  <quote>null</quote>.
+	</para>
+	<para>
+	  Vedi <fncref targ="typename"/> per un'alternativa.
 	</para>
       </description>
     </function>

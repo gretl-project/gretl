@@ -20,8 +20,7 @@
 #ifndef GRETL_PATHS_H
 #define GRETL_PATHS_H
 
-#include <sys/stat.h>
-#include <dirent.h>
+#include <sys/stat.h> /* for struct stat */
 
 typedef enum {
     DATA_SEARCH,

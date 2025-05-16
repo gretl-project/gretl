@@ -65,7 +65,10 @@ static m2g_data m2g_styles[] = {
     { "(!)?(\\[)(.*)(\\]\\()(.+)(\\))", "<@url=\"\\5\">", 0, NULL },
     { "(!)?(\\[)(.*)(\\]\\(\\))", "<@url=\"\\3\">", 0, NULL },
 #endif
-    { "(http[s]?:\\/\\/[^\\s',]*)", "<@url=\"\\1\">", 0, NULL },
+    /* see https://stackoverflow.com/questions/6038061/regular-expression-to-find-urls-within-a-string */
+    { "(http[s?]):\\/\\/([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:\\/~+#-]*[\\w@?^=%&\\/~+#-])",
+      "<@url=\"\\1://\\2\\3\">", 0, NULL },
+    // { "(http[s]?:\\/\\/[^\\s',]*)", "<@url=\"\\1\">", 0, NULL },
 #if 0 /* messes up '_' in URIs */
     { "(^|[^_])(_)(.*)(_)", "\\1<@itl=\"\\3\">", NULL },
 #endif

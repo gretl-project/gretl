@@ -416,7 +416,6 @@ int win32_ensure_dll_path (void)
 {
     const char *bindir = gretl_bindir();
     const gchar *path = g_getenv("PATH");
-    const gchar *tmpd = g_getenv("TMPDIR");
     int in_path = 0;
 
     if (path != NULL) {
@@ -2219,28 +2218,12 @@ typedef BOOL (WINAPI *LPFN_GLPI) (
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION,
     PDWORD);
 
-static DWORD count_set_bits (ULONG_PTR bit_mask)
-{
-    DWORD LSHIFT = sizeof(ULONG_PTR)*8 - 1;
-    DWORD set_count = 0;
-    ULONG_PTR bit_test = (ULONG_PTR)1 << LSHIFT;
-    int i;
-
-    for (i=0; i<=LSHIFT; i++) {
-        set_count += (bit_mask & bit_test)? 1 : 0;
-        bit_test /= 2;
-    }
-
-    return set_count;
-}
-
 int win32_get_core_count (void)
 {
     LPFN_GLPI glpi;
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buf = NULL;
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION ptr = NULL;
     DWORD rc, retlen = 0;
-    int n_procs = 0;
     int n_cores = 0;
     int bufsize = 0;
     int offset = 0;
@@ -2275,33 +2258,15 @@ int win32_get_core_count (void)
     while (offset + bufsize <= retlen) {
         if (ptr->Relationship == RelationProcessorCore) {
             n_cores++;
-            /* hyper-threaded cores supply more than one logical processor */
-            n_procs += count_set_bits(ptr->ProcessorMask);
 	}
         offset += bufsize;
         ptr++;
     }
 
-#if 0
-    fprintf(stderr, "\nGetLogicalProcessorInformation results:\n");
-    fprintf(stderr, " Number of processor cores: %d\n", n_cores);
-    fprintf(stderr, " Number of logical processors: %d\n", n_procs);
-#endif
-
     free(buf);
 
     return n_cores;
 }
-
-#if 0 // _WIN32_WINNT == 0x0601
-/* This requires Windows 7, when NtCurrentTeb() was introduced. */
-static int win7_get_stack_size (void)
-{
-    NT_TIB *tib = (NT_TIB *) NtCurrentTeb();
-
-    return (int) (tib->StackLimit - tib->StackBase);
-}
-#endif
 
 /* requres _WIN32_WINNT >= 0x0602 (Windows 8) */
 
@@ -2317,3 +2282,25 @@ int win32_get_stack_size (void)
     return 0;
 #endif
 }
+
+#ifdef __aarch64__
+
+void woa_cpu_info (char buf[])
+{
+    const char *csName = "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0";
+    char inbuf[64] = {0};
+    DWORD Type, Size = 64;
+    HKEY hKey;
+
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, csName, 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        if (!RegQueryValueExA(hKey, "ProcessorNameString", NULL, &Type,
+                              (PBYTE) inbuf, &Size)) {
+            if (Type == REG_SZ && *inbuf != '\0') {
+                strcpy(buf, inbuf);
+            }
+        }
+        RegCloseKey(hKey);
+    }
+}
+
+#endif /* __aarch64__ */

@@ -202,8 +202,7 @@ static int active_(int *n, double *l, double *u, int *nbd,
 		   logical *cnstnd, logical *boxed)
 {
     int i__1;
-
-    int i__, nbdd;
+    int i__;
 
     --iwhere;
     --x;
@@ -211,7 +210,6 @@ static int active_(int *n, double *l, double *u, int *nbd,
     --u;
     --l;
 
-    nbdd = 0;
     *prjctd = 0;
     *cnstnd = 0;
     *boxed = 1;
@@ -223,13 +221,11 @@ static int active_(int *n, double *l, double *u, int *nbd,
 		    *prjctd = 1;
 		    x[i__] = l[i__];
 		}
-		++nbdd;
 	    } else if (nbd[i__] >= 2 && x[i__] >= u[i__]) {
 		if (x[i__] > u[i__]) {
 		    *prjctd = 1;
 		    x[i__] = u[i__];
 		}
-		++nbdd;
 	    }
 	}
     }

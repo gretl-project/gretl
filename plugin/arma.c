@@ -58,7 +58,6 @@ int maybe_correct_MA (arma_info *ainfo,
     if (!err && ainfo->Q > 0) {
 	err = flip_poly(Theta, ainfo, 0, 1);
     }
-
     return err;
 }
 
@@ -537,6 +536,10 @@ static int arima_by_ls (const DATASET *dset, arma_info *ainfo,
     return err;
 }
 
+#define simple_OLS_case(a) (a->p == 0 && a->P == 0 && \
+                            a->q == 0 && a->Q == 0 && \
+                            a->d == 0 && a->D == 0)
+
 /* calculate info criteria for compatibility with ML? */
 #define ML_COMPAT 1 /* 2017-03-23 */
 
@@ -549,6 +552,8 @@ static int arma_via_OLS (arma_info *ainfo, const double *coeff,
 
     if (arma_xdiff(ainfo)) {
 	err = arima_by_ls(dset, ainfo, pmod);
+    } else if (simple_OLS_case(ainfo)) {
+        err = arma_by_simple_ols(coeff, dset, ainfo, pmod);
     } else {
 	err = arma_by_ls(coeff, dset, ainfo, pmod);
     }
@@ -1327,6 +1332,7 @@ int arma_select (const int *list, const int *pqspec,
 	return real_arma_select(list, dset, opt, prn, NULL);
     }
 }
+
 int gui_arma_select (const int *list, DATASET *dset,
 		     gretlopt opt, PRN *prn,
 		     gretl_matrix **pm)

@@ -1042,7 +1042,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 
     if (should_apply_changes(ed->keycombo)) {
         s = combo_box_get_active_text(ed->keycombo);
-	spec->keyspec = gp_keypos_from_display_name(s);
+	spec->keyspec = gp_keyspec_from_string(s);
 	g_free(s);
     }
 
@@ -1245,12 +1245,18 @@ static void graph_font_selection_ok (GtkWidget *w, GtkFontChooser *fc)
 	gpointer p = g_object_get_data(G_OBJECT(fc), "parent");
 	gint type = widget_get_int(fc, "parent-type");
 
-	if (type < 2) {
+	if (type != 2) {
 	    GtkWidget *b = g_object_get_data(G_OBJECT(fc), "launcher");
-	    gchar *title = g_strdup_printf(_("font: %s"), fontname);
 
-	    gtk_button_set_label(GTK_BUTTON(b), title);
-	    g_free(title);
+            if (type == 3) {
+                /* called from general preferences dialog */
+                gtk_button_set_label(GTK_BUTTON(b), fontname);
+            } else {
+                gchar *title = g_strdup_printf(_("font: %s"), fontname);
+
+                gtk_button_set_label(GTK_BUTTON(b), title);
+                g_free(title);
+            }
 	}
 	if (type == 0) {
 	    plot_editor_set_fontname(p, fontname);
@@ -1258,7 +1264,9 @@ static void graph_font_selection_ok (GtkWidget *w, GtkFontChooser *fc)
 	    pdf_ps_saver_set_fontname(p, fontname);
 	} else if (type == 2) {
 	    activate_plot_font_choice(p, fontname);
-	}
+	} else if (type == 3) {
+            set_gretl_png_font(fontname);
+        }
     }
 
     g_free(fontname);
@@ -1429,6 +1437,13 @@ void pdf_font_selector (GtkButton *button, gpointer p)
 void plot_show_font_selector (png_plot *plot, const char *currfont)
 {
     real_graph_font_selector(NULL, plot, 2, currfont);
+}
+
+/* called from the Plots tab of the general preferences dialog */
+
+void png_font_selector (GtkButton *button, gpointer p)
+{
+    real_graph_font_selector(button, p, 3, NULL);
 }
 
 static void strip_lr (gchar *txt)
@@ -1729,12 +1744,16 @@ static int show_bars_check (GPT_SPEC *spec)
 
 static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 {
+    static const char *basic_key_strings[] = {
+        "left top", "right top", "left bottom",
+        "right bottom", "outside", "none", NULL
+    };
     GtkWidget *label, *vbox, *tbl;
     GtkWidget *hsep, *button;
-    gp_key_spec *kp;
+    const char *kstr;
     gchar *title;
     int i, rows = 1;
-    int kactive = 0;
+    int kactive = -1;
 
     vbox = gp_page_vbox(ed->notebook, _("Main"));
 
@@ -1778,12 +1797,19 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
     gtk_table_attach_defaults(GTK_TABLE(tbl),
 			      ed->keycombo, 1, TAB_MAIN_COLS, rows-1, rows);
     i = 0;
-    while ((kp = get_keypos_spec(i)) != NULL) {
-	combo_box_append_text(ed->keycombo, _(kp->str));
-	if (kp->id == spec->keyspec) {
+    while ((kstr = basic_key_strings[i]) != NULL) {
+	combo_box_append_text(ed->keycombo, kstr);
+        if (gp_keyspec_from_string(kstr) == spec->keyspec) {
 	    kactive = i;
 	}
 	i++;
+    }
+    if (kactive < 0) {
+        gchar *s = gp_keyspec_string(spec->keyspec);
+
+        combo_box_prepend_text(ed->keycombo, s);
+        kactive = 0;
+        g_free(s);
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(ed->keycombo), kactive);
     gtk_widget_show(ed->keycombo);

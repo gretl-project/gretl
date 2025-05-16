@@ -1767,8 +1767,10 @@ static int gmm_normalize_wts_2 (nlspec *s)
 int gmm_calculate (nlspec *s, PRN *prn)
 {
     static int normalize = 0;
+#if GMM_DEBUG
     int full_fncount = 0;
     int full_grcount = 0;
+#endif
     double itol = 1.0e-12, icrit = 1;
     double *oldcoeff = NULL;
     int maxit = 500;
@@ -1838,8 +1840,10 @@ int gmm_calculate (nlspec *s, PRN *prn)
 	/* don't keep displaying certain things */
 	iopt |= OPT_Q;
 
+#if GMM_DEBUG
 	full_fncount += s->fncount;
 	full_grcount += s->grcount;
+#endif
 
 	if (!err && outer_max > 1) {
 	    if (outer_max > 2) {

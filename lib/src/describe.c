@@ -1069,11 +1069,11 @@ double gretl_kurtosis (int t1, int t2, const double *x)
  * @t1: starting observation.
  * @t2: ending observation.
  * @x: data series.
- * @wts: weights (may be NULL)
+ * @wts: weights (may be NULL).
  * @xbar: pointer to receive mean.
  * @sd: pointer to receive standard deviation.
- * @skew: pointer to receive skewness.
- * @kurt: pointer to receive excess kurtosis.
+ * @skew: pointer to receive skewness (may be NULL).
+ * @kurt: pointer to receive excess kurtosis (may be NULL).
  * @k: degrees of freedom loss (generally 1).
  *
  * Calculates sample moments for series @x from obs @t1 to obs
@@ -4000,7 +4000,7 @@ static int xcorrgm_graph (const char *xname, const char *yname,
 
     fputs("set xzeroaxis\n", fp);
     fputs("set yzeroaxis\n", fp);
-    print_keypos_string(GP_KEY_RIGHT_TOP, fp);
+    print_keypos_string(GP_KEY_RIGHT | GP_KEY_TOP, fp);
     fprintf(fp, "set xlabel '%s'\n", _("lag"));
     if (allpos) {
 	fputs("set yrange [-0.1:1.1]\n", fp);
@@ -6988,7 +6988,7 @@ int gretl_corrmx (int *list, const DATASET *dset,
   of Variance Components". Biometrics Bulletin, 2, 6, pp. 110–114.
 
   v = (s^2_1/n_1 + s^2_2/n_2)^2 /
-        [(s^_1/n1)^2 / (n_1 - 1) + (s^2_2/n_2)^2 / (n_2 - 1)]
+        [(s^2_1/n1)^2 / (n_1 - 1) + (s^2_2/n_2)^2 / (n_2 - 1)]
 */
 
 int satterthwaite_df (double v1, int n1,
@@ -6997,13 +6997,13 @@ int satterthwaite_df (double v1, int n1,
     double rtnum = v1 / n1 + v2 / n2;
     double d1 = (v1/n1) * (v1/n1) / (n1 - 1);
     double d2 = (v2/n2) * (v2/n2) / (n2 - 1);
-    double v = rtnum * rtnum / (d1 + d2);
+    double v = (rtnum * rtnum) / (d1 + d2);
 
     return (int) floor(v);
 }
 
-static int test_data_from_dummy (int v1, int v2,
-                                 const DATASET *dset,
+static int test_data_from_dummy (const DATASET *dset,
+                                 int v1, int v2,
                                  double **px,
                                  double **py,
                                  int *pn1, int *pn2)
@@ -7057,39 +7057,207 @@ static int test_data_from_dummy (int v1, int v2,
     return 0;
 }
 
-static int test_data_from_list (int v1, int v2,
-                                const DATASET *dset,
+static double *transcribe_ok_obs (const DATASET *dset, int v,
+                                  int *pn, int *err)
+{
+    const double *src = dset->Z[v];
+    double *ret = NULL;
+    int t, n = 0;
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+        if (!na(src[t])) {
+            n++;
+        }
+    }
+
+    if (n < 2) {
+        *err = E_TOOFEW;
+    } else {
+        ret = malloc(n * sizeof *ret);
+        if (ret == NULL) {
+            *err = E_ALLOC;
+        }
+    }
+    if (!*err) {
+        *pn = n;
+        n = 0;
+        for (t=dset->t1; t<=dset->t2; t++) {
+            if (!na(src[t])) {
+                ret[n++] = src[t];
+            }
+        }
+    }
+
+    return ret;
+}
+
+static double *transcribe_ok_pairs (const DATASET *dset,
+                                    int v1, int v2,
+                                    int *pn, int *err)
+{
+    const double *x = dset->Z[v1];
+    const double *y = dset->Z[v2];
+    double *ret = NULL;
+    int t, n = 0;
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+        if (!na(x[t]) && !na(y[t])) {
+            n++;
+        }
+    }
+
+    if (n < 2) {
+        *err = E_TOOFEW;
+    } else {
+        ret = malloc(n * sizeof *ret);
+        if (ret == NULL) {
+            *err = E_ALLOC;
+        }
+    }
+    if (!*err) {
+        *pn = n;
+        n = 0;
+        for (t=dset->t1; t<=dset->t2; t++) {
+            if (!na(x[t]) && !na(y[t])) {
+                ret[n++] = x[t] - y[t];
+            }
+        }
+    }
+
+    return ret;
+}
+
+/* HAC difference of means test using OLS on stacked data */
+
+static int ols_means_test (const DATASET *dset,
+                           const double *x, int n1,
+                           const double *y, int n2,
+                           double *m1, double *m2,
+                           double *se, int *df,
+                           PRN *prn)
+{
+    MODEL mod;
+    DATASET *aset;
+    int list[4] = {3, 1, 0, 2};
+    int nobs = n1 + n2;
+    int i, err = 0;
+
+    aset = create_auxiliary_dataset(list[0], nobs, OPT_NONE);
+    if (aset == NULL) {
+        return E_ALLOC;
+    }
+    aset->pd = dset->pd;
+    aset->structure = dset->structure;
+
+    /* stacked dependent variable, @x | @y */
+    memcpy(aset->Z[1], x, n1 * sizeof *x);
+    memcpy(aset->Z[1] + n1, y, n2 * sizeof *y);
+    strcpy(aset->varname[1], "x_y");
+
+    /* dummy to select the @y observations */
+    for (i=0; i<nobs; i++) {
+        aset->Z[2][i] = i >= n1;
+    }
+
+    gretl_model_init(&mod, aset);
+    mod = lsq(list, aset, OLS, OPT_A | OPT_R);
+    err = mod.errcode;
+
+    if (!err) {
+        if (prn != NULL) {
+            printmodel(&mod, aset, OPT_S, prn);
+        }
+        *m1 = mod.coeff[0];
+        *m2 = mod.coeff[0] + mod.coeff[1];
+        *se = mod.sderr[1];
+        *df = mod.dfd;
+    }
+
+    clear_model(&mod);
+    destroy_dataset(aset);
+
+    return err;
+}
+
+static int test_data_from_list (const DATASET *dset,
+                                int v1, int v2,
                                 double **px,
                                 double **py,
                                 int *pn1, int *pn2)
 {
-    int n = sample_size(dset);
-    double *x = malloc(n * sizeof *x);
-    double *y = malloc(n * sizeof *y);
+    double *x, *y;
+    int n1, n2;
     int err = 0;
 
-    if (x == NULL || y == NULL) {
-        err = E_ALLOC;
-    } else {
-        *pn1 = transcribe_array(x, dset->Z[v1], dset);
-        *pn2 = transcribe_array(y, dset->Z[v2], dset);
-        if (*pn1 < 2 || *pn2 < 2) {
-            free(x); free(y);
-            err = E_TOOFEW;
-        } else {
-            *px = x;
-            *py = y;
-        }
+    x = transcribe_ok_obs(dset, v1, &n1, &err);
+    if (!err) {
+        y = transcribe_ok_obs(dset, v2, &n2, &err);
+    }
+    if (!err) {
+        *px = x;
+        *py = y;
+        *pn1 = n1;
+        *pn2 = n2;
     }
 
     return err;
+}
+
+static int paired_data_from_list (const DATASET *dset,
+                                  int v1, int v2,
+                                  double **px, int *pn)
+{
+    double *x;
+    int n, err = 0;
+
+    x = transcribe_ok_pairs(dset, v1, v2, &n, &err);
+    if (!err) {
+        *px = x;
+        *pn = n;
+    }
+
+    return err;
+}
+
+static void paired_diff_print (int n,
+                               double mdiff,
+                               double se,
+                               int df,
+                               double t,
+                               double pval,
+                               PRN *prn)
+{
+    pputc(prn, '\n');
+    pputs(prn, _("Paired difference test"));
+    pputs(prn, "\n\n");
+    pputs(prn, "   ");
+    pprintf(prn, _("Number of observations = %d\n"), n);
+    pputs(prn, "   ");
+    pprintf(prn, _("Sample mean paired difference = %g"), mdiff);
+    pputc(prn, '\n');
+    pputs(prn, _("   Null hypothesis: The population mean difference is zero."));
+    pputc(prn, '\n');
+    pprintf(prn, _("   Estimated standard error = %g\n"), se);
+    pprintf(prn, _("   Test statistic: t(%d) = %g\n"), df, t);
+    pprintf(prn, _("   p-value (two-tailed) = %g\n\n"), pval);
+}
+
+static int split_by_var (const DATASET *dset)
+{
+    const char *vname = get_optval_string(MEANTEST, OPT_D);
+
+    return current_series_index(dset, vname);
 }
 
 /**
  * means_test:
  * @list: gives the ID numbers of the variables to compare.
  * @dset: dataset struct.
- * @opt: if OPT_O, assume population variances are different.
+ * @opt: if OPT_O, assume that the population variances differ;
+ * if OPT_D interpret the second series as a factor (dummy);
+ * if OPT_R, carry out a robust, regression-based test; if OPT_P,
+ * carry out a paired-difference test; if OPT_Q, don't print
+ * the resuults.
  * @prn: gretl printing struct.
  *
  * Carries out test of the null hypothesis that the means of two
@@ -7101,29 +7269,48 @@ static int test_data_from_list (int v1, int v2,
 int means_test (const int *list, const DATASET *dset,
 		gretlopt opt, PRN *prn)
 {
-    double m1, m2, s1, s2, skew, kurt, se, mdiff, t, pval;
-    double var1, var2;
+    double m1, m2, s1, s2, se, mdiff, t, pval;
     double *x = NULL, *y = NULL;
     int vardiff = (opt & OPT_O)? 1 : 0;
     int usedum = (opt & OPT_D)? 1 : 0;
+    int robust = (opt & OPT_R)? 1 : 0;
+    int paired = (opt & OPT_P)? 1 : 0;
     int v1, v2;
     int n1 = 0;
     int n2 = 0;
-    int df, err = 0;
+    int df, err;
 
-    if (list[0] < 2) {
-	return E_ARGS;
+    err = incompatible_options(opt, OPT_O | OPT_P | OPT_R);
+    if (!err && (opt & OPT_R) && !dataset_is_time_series(dset)) {
+        gretl_errmsg_set("meantest: the --robust option requires time-series data");
+        err = E_PDWRONG;
     }
 
-    v1 = list[1];
-    v2 = list[2];
+    if (!err) {
+        v1 = list[1];
+        if (usedum) {
+            v2 = split_by_var(dset);
+            if (v2 < 0) {
+                err = E_UNKVAR;
+            }
+        } else {
+            v2 = list[2];
+        }
+    }
 
-    if (usedum) {
-        /* get @x and @y as portions of dset->Z[v1] */
-        err = test_data_from_dummy(v1, v2, dset, &x, &y, &n1, &n2);
+    if (err) {
+        return err;
+    }
+
+    if (paired) {
+        /* fill @x with paired differences between series v1 and v2 */
+        err = paired_data_from_list(dset, v1, v2, &x, &n1);
+    } else if (usedum) {
+        /* get @x and @y as portions of series v1 */
+        err = test_data_from_dummy(dset, v1, v2, &x, &y, &n1, &n2);
     } else {
-        /* get @x and @y as dset->Z[v1], dset->Z[v2] */
-        err = test_data_from_list(v1, v2, dset, &x, &y, &n1, &n2);
+        /* get @x and @y from the series v1 and v2 */
+        err = test_data_from_list(dset, v1, v2, &x, &y, &n1, &n2);
     }
 
     if (err) {
@@ -7131,54 +7318,83 @@ int means_test (const int *list, const DATASET *dset,
         return err;
     }
 
-    df = n1 + n2 - 2;
-
-    gretl_moments(0, n1-1, x, NULL, &m1, &s1, &skew, &kurt, 1);
-    gretl_moments(0, n2-1, y, NULL, &m2, &s2, &skew, &kurt, 1);
-    mdiff = m1 - m2;
-
-    var1 = s1 * s1;
-    var2 = s2 * s2;
-
-    if (vardiff) {
-	/* do not assume the variances are equal */
-	se = sqrt((var1 / n1) + (var2 / n2));
-	df = satterthwaite_df(var1, n1, var2, n2);
+    if (paired) {
+        /* @x actually holds the x,y differences */
+        gretl_moments(0, n1-1, x, NULL, &m1, &se, NULL, NULL, 1);
+        se /= sqrt(n1);
+        mdiff = m1;
+        df = n1 - 1;
+    } else if (robust) {
+        /* use regression method */
+        err = ols_means_test(dset, x, n1, y, n2, &m1, &m2, &se, &df, prn);
+        if (err) {
+            goto bailout;
+        }
+        mdiff = m1 - m2;
     } else {
-	/* form pooled estimate of variance */
-	double s2p;
+        double var1, var2;
 
-	s2p = ((n1-1) * var1 + (n2-1) * var2) / df;
-	se = sqrt(s2p / n1 + s2p / n2);
-	df = n1 + n2 - 2;
+        df = n1 + n2 - 2;
+        gretl_moments(0, n1-1, x, NULL, &m1, &s1, NULL, NULL, 1);
+        gretl_moments(0, n2-1, y, NULL, &m2, &s2, NULL, NULL, 1);
+        mdiff = m1 - m2;
+        var1 = s1 * s1;
+        var2 = s2 * s2;
+
+        if (vardiff) {
+            /* assuming unequal variances */
+            se = sqrt((var1 / n1) + (var2 / n2));
+            df = satterthwaite_df(var1, n1, var2, n2);
+        } else {
+            /* form pooled estimate of variance */
+            double s2p;
+
+            s2p = ((n1-1) * var1 + (n2-1) * var2) / df;
+            se = sqrt(s2p / n1 + s2p / n2);
+            df = n1 + n2 - 2;
+        }
     }
 
     t = mdiff / se;
     pval = student_pvalue_2(df, t);
-
-    pprintf(prn, _("\nEquality of means test "
-	    "(assuming %s variances)\n\n"), (vardiff)? _("unequal") : _("equal"));
-    if (usedum) {
-        pprintf(prn, "   %s (%s==0): ", dset->varname[v1], dset->varname[v2]);
-        pprintf(prn, _("Number of observations = %d\n"), n1);
-        pprintf(prn, "   %s (%s==1): ", dset->varname[v1], dset->varname[v2]);
-        pprintf(prn, _("Number of observations = %d\n"), n2);
-    } else {
-        pprintf(prn, "   %s: ", dset->varname[v1]);
-        pprintf(prn, _("Number of observations = %d\n"), n1);
-        pprintf(prn, "   %s: ", dset->varname[v2]);
-        pprintf(prn, _("Number of observations = %d\n"), n2);
-    }
-    pprintf(prn, _("   Difference between sample means = %g - %g = %g\n"),
-	    m1, m2, mdiff);
-    pputs(prn, _("   Null hypothesis: The two population means are the same.\n"));
-    pprintf(prn, _("   Estimated standard error = %g\n"), se);
-    pprintf(prn, _("   Test statistic: t(%d) = %g\n"), df, t);
-    pprintf(prn, _("   p-value (two-tailed) = %g\n\n"), pval);
-    if (pval > .10)
-	pputs(prn, _("   The difference is not statistically significant.\n\n"));
-
     record_test_result(t, pval);
+
+    if (opt & OPT_Q) {
+        /* quiet */
+        goto bailout;
+    }
+
+    if (paired) {
+        paired_diff_print(n1, mdiff, se, df, t, pval, prn);
+    } else {
+        if (robust) {
+            pputs(prn, _("Robust equality of means test"));
+            pputs(prn, "\n\n");
+        } else {
+            pprintf(prn, _("\nEquality of means test "
+                           "(assuming %s variances)\n\n"),
+                    vardiff ? _("unequal") : _("equal"));
+        }
+        if (usedum) {
+            pprintf(prn, "   %s (%s==0): ", dset->varname[v1], dset->varname[v2]);
+            pprintf(prn, _("Number of observations = %d\n"), n1);
+            pprintf(prn, "   %s (%s==1): ", dset->varname[v1], dset->varname[v2]);
+            pprintf(prn, _("Number of observations = %d\n"), n2);
+        } else {
+            pprintf(prn, "   %s: ", dset->varname[v1]);
+            pprintf(prn, _("Number of observations = %d\n"), n1);
+            pprintf(prn, "   %s: ", dset->varname[v2]);
+            pprintf(prn, _("Number of observations = %d\n"), n2);
+        }
+        pprintf(prn, _("   Difference between sample means = %g - %g = %g\n"),
+                m1, m2, mdiff);
+        pputs(prn, _("   Null hypothesis: The two population means are the same.\n"));
+        pprintf(prn, _("   Estimated standard error = %g\n"), se);
+        pprintf(prn, _("   Test statistic: t(%d) = %g\n"), df, t);
+        pprintf(prn, _("   p-value (two-tailed) = %g\n\n"), pval);
+    }
+
+ bailout:
 
     free(x);
     free(y);
@@ -7186,68 +7402,166 @@ int means_test (const int *list, const DATASET *dset,
     return 0;
 }
 
-/**
- * vars_test:
- * @list: gives the ID numbers of the variables to compare.
- * @dset: dataset struct.
- * @prn: gretl printing struct.
- *
- * Carries out test of the null hypothesis that the variances of two
- * variables are equal.
- *
- * Returns: 0 on successful completion, error code on error.
- */
-
-int vars_test (const int *list, const DATASET *dset,
-               gretlopt opt, PRN *prn)
+static double trimmed_mean (const double *x, double p,
+                            int n, int *err)
 {
-    double m, s1, s2, var1, var2;
-    double F, pval;
-    double *x = NULL, *y = NULL;
-    int usedum = (opt & OPT_D)? 1 : 0;
-    int dfn, dfd;
-    int v1, v2;
-    int n1 = 0;
-    int n2 = 0;
-    int err = 0;
+    double ret;
+    double *sx;
+    int skip;
 
-    if (list[0] < 2) {
-        return E_ARGS;
-    }
+    sx = malloc(n * sizeof *sx);
+    memcpy(sx, x, n * sizeof *sx);
+    qsort(sx, n, sizeof *sx, gretl_compare_doubles);
+    skip = floor(p * n);
+    ret = gretl_mean(skip, n-skip-1, sx);
+    free(sx);
 
-    v1 = list[1];
-    v2 = list[2];
+    return ret;
+}
 
-    if (usedum) {
-        /* get @x and @y as portions of dset->Z[v1] */
-        err = test_data_from_dummy(v1, v2, dset, &x, &y, &n1, &n2);
+static double levene_center (const double *x, int n,
+                             int f, double p,
+                             int *err)
+{
+    if (f == 1) {
+        return gretl_mean(0, n-1, x);
+    } else if (f == 2) {
+        return gretl_median(0, n-1, x);
     } else {
-        /* get @x and @y as dset->Z[v1], dset->Z[v2] */
-        err = test_data_from_list(v1, v2, dset, &x, &y, &n1, &n2);
+        return trimmed_mean(x, p, n, err);
+    }
+}
+
+/* Levene's test for difference of variance, with the options added by
+   Brown and Forsythe. Refs:
+
+   Levene, H. (1960) Robust Tests for Equality of Variances. In: Olkin,
+   I. (ed), Contributions to Probability and Statistics, Stanford
+   University Press. pp. 278-292.
+
+   Brown, Morton B and Forsythe, Alan B. (1974). "Robust tests for the
+   equality of variances". Journal of the American Statistical
+   Association 69 (346), pp. 364–367.
+*/
+
+static double levene_test (const double *x, int n1,
+                           const double *y, int n2,
+                           int f, double p,
+                           int *err)
+{
+    double zxbar, zybar, zbar, lc;
+    double num, den, W;
+    double d1, d2;
+    double *zx, *zy;
+    int i, dfd;
+
+    zx = malloc(n1 * sizeof *zx);
+    zy = malloc(n2 * sizeof *zy);
+    if (zx == NULL || zy == NULL) {
+        *err = E_ALLOC;
+        return NADBL;
     }
 
-    if (err) {
-        free(x); free(y);
-        return err;
+    /* absolute deviations, x */
+    lc = levene_center(x, n1, f, p, err);
+    zxbar = 0;
+    for (i=0; i<n1; i++) {
+        zx[i] = fabs(x[i] - lc);
+        zxbar += zx[i];
+    }
+    zxbar /= n1;
+
+    /* absolute deviations, y */
+    lc = levene_center(y, n2, f, p, err);
+    zybar = 0;
+    for (i=0; i<n2; i++) {
+        zy[i] = fabs(y[i] - lc);
+        zybar += zy[i];
+    }
+    zybar /= n2;
+
+    /* grand mean */
+    zbar = (n1 * zxbar + n2 * zybar) / (n1+n2);
+    dfd = n1 + n2 - 2;
+
+    /* numerator of W */
+    d1 = zxbar - zbar;
+    d2 = zybar - zbar;
+    num = n1 * d1 * d1 + n2 * d2 * d2;
+
+    /* denominator of W */
+    den = 0;
+    for (i=0; i<n1; i++) {
+        d1 = zx[i] - zxbar;
+        den += d1 * d1;
+    }
+    for (i=0; i<n2; i++) {
+        d2 = zy[i] - zybar;
+        den += d2 * d2;
     }
 
-    gretl_moments(0, n1-1, x, NULL, &m, &s1, NULL, NULL, 1);
-    gretl_moments(0, n2-1, y, NULL, &m, &s2, NULL, NULL, 1);
+    W = dfd * num / den;
 
-    var1 = s1 * s1;
-    var2 = s2 * s2;
-    if (var1 > var2) {
-	F = var1 / var2;
-	dfn = n1 - 1;
-	dfd = n2 - 1;
+    free(zx);
+    free(zy);
+
+    return W;
+}
+
+static int handle_levene_options (double *p, int *err)
+{
+    const char *s = get_optval_string(VARTEST, OPT_R);
+    double default_trim = 0.10;
+    int f = 1;
+
+    if (s != NULL) {
+        if (!strcmp(s, "mean")) {
+            ; /* OK */
+        } else if (!strcmp(s, "median")) {
+            f = 2;
+        } else if (!strcmp(s, "trimmed")) {
+            f = 3;
+            *p = default_trim;
+        } else if (!strncmp(s, "trimmed,", 8)) {
+            int k = positive_int_from_string(s + 8);
+
+            if (k > 0 && k < 50) {
+                *p = k / 100.0;
+                f = 3;
+            } else {
+                *err = E_INVARG;
+            }
+        }
+    }
+
+    return f;
+}
+
+static void levene_print (double W, double pval,
+                          int dfn, int dfd, int f,
+                          double p, PRN *prn)
+{
+    pputs(prn, _("\nRobust equality of variances test\n"));
+    pputs(prn, _("Centering: "));
+    if (f == 1) {
+        pputs(prn, _("mean"));
+    } else if (f == 2) {
+        pputs(prn, _("median"));
     } else {
-	F = var2 / var1;
-	dfn = n2 - 1;
-	dfd = n1 - 1;
+        pprintf(prn, _("%d percent trimmed mean"), (int) (p*100));
     }
+    pputc(prn, '\n');
+    pprintf(prn, "F(%d,%d) = %g ", dfn, dfd, W);
+    pprintf(prn, "%s %g\n", _("with p-value"), pval);
+}
 
-    pval = snedecor_cdf_comp(dfn, dfd, F);
-
+static void vartest_print (double F, double pval,
+                           int dfn, int dfd,
+                           const DATASET *dset,
+                           int v1, int v2,
+                           int n1, int n2,
+                           int usedum, PRN *prn)
+{
     pputs(prn, _("\nEquality of variances test\n\n"));
     if (usedum) {
         pprintf(prn, "   %s (%s==0): ", dset->varname[v1], dset->varname[v2]);
@@ -7262,18 +7576,105 @@ int vars_test (const int *list, const DATASET *dset,
     }
     pprintf(prn, _("   Ratio of sample variances = %g\n"), F);
     pprintf(prn, "   %s: %s\n", _("Null hypothesis"),
-	    _("The two population variances are equal"));
+            _("The two population variances are equal"));
     pprintf(prn, "   %s: F(%d,%d) = %g\n", _("Test statistic"), dfn, dfd, F);
     pprintf(prn, _("   p-value (two-tailed) = %g\n\n"), pval);
-    if (snedecor_cdf_comp(dfn, dfd, F) > .10)
-	pputs(prn, _("   The difference is not statistically significant.\n\n"));
+}
 
+/**
+ * vars_test:
+ * @list: gives the ID numbers of the variables to compare.
+ * @dset: pointer to dataset.
+ * @opt: if includes OPT_R, carry out a robust (Levene-type) test;
+ * if OPT_D, interpret the second series as a factor (dummy); if
+ * OPT_Q (quiet), don't print the results.
+ * @prn: gretl printing struct.
+ *
+ * Carries out test of the null hypothesis that the variances of two
+ * variables are equal.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int vars_test (const int *list, const DATASET *dset,
+               gretlopt opt, PRN *prn)
+{
+    double F, pval;
+    double p = NADBL;
+    double *x = NULL;
+    double *y = NULL;
+    int robust = (opt & OPT_R)? 1 : 0;
+    int usedum = (opt & OPT_D)? 1 : 0;
+    int dfn, dfd;
+    int v1, v2;
+    int n1 = 0;
+    int n2 = 0;
+    int f = 0;
+    int err = 0;
+
+    v1 = list[1];
+    if (usedum) {
+        v2 = split_by_var(dset);
+        if (v2 < 0) {
+            err = E_UNKVAR;
+        }
+    } else {
+        v2 = list[2];
+    }
+
+    if (!err && robust) {
+        f = handle_levene_options(&p, &err);
+        if (err) {
+            return err;
+        }
+    }
+
+    if (usedum) {
+        /* get @x and @y as portions of dset->Z[v1] */
+        err = test_data_from_dummy(dset, v1, v2, &x, &y, &n1, &n2);
+    } else {
+        /* get @x and @y as dset->Z[v1], dset->Z[v2] */
+        err = test_data_from_list(dset, v1, v2, &x, &y, &n1, &n2);
+    }
+
+    if (err) {
+        free(x); free(y);
+        return err;
+    }
+
+    if (robust) {
+        F = levene_test(x, n1, y, n2, f, p, &err);
+        dfn = 1; /* = 2 - 1 */
+        dfd = n1 + n2 - 2;
+        pval = snedecor_cdf_comp(dfn, dfd, F);
+    } else {
+        double mx, my, sx, sy;
+
+        gretl_moments(0, n1-1, x, NULL, &mx, &sx, NULL, NULL, 1);
+        gretl_moments(0, n2-1, y, NULL, &my, &sy, NULL, NULL, 1);
+        F = (sx * sx) / (sy * sy);
+        dfn = n1 - 1;
+        dfd = n2 - 1;
+        pval = snedecor_pvalue_2(dfn, dfd, F);
+    }
+
+    pval = snedecor_cdf_comp(dfn, dfd, F);
     record_test_result(F, pval);
+
+    if (!(opt & OPT_Q)) {
+        /* not quiet */
+        if (robust) {
+            levene_print(F, pval, dfn, dfd, f, p, prn);
+        } else {
+            vartest_print(F, pval, dfn, dfd, dset, v1, v2,
+                          n1, n2, usedum, prn);
+        }
+    }
 
     free(x);
     free(y);
 
-    return 0;
+    return err;
 }
 
 struct MahalDist_ {
@@ -7836,7 +8237,7 @@ static int lorenz_graph (const char *vname, double *lz, int n)
 	return err;
     }
 
-    print_keypos_string(GP_KEY_LEFT_TOP, fp);
+    print_keypos_string(GP_KEY_LEFT | GP_KEY_TOP, fp);
 
     fprintf(fp, "set title '%s'\n", vname);
     fprintf(fp, "plot \\\n"

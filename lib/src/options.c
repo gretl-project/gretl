@@ -61,6 +61,7 @@
                          c == LEVINLIN ||       \
                          c == LOOP ||           \
                          c == MAHAL ||          \
+                         c == MEANTEST ||       \
                          c == NORMTEST ||       \
                          c == OLS ||            \
                          c == OMIT ||           \
@@ -75,6 +76,7 @@
                          c == SMPL ||           \
                          c == SYSTEM ||         \
                          c == VAR ||            \
+                         c == VARTEST ||        \
                          c == VECM ||           \
                          c == VIF ||            \
                          c == XCORRGM ||        \
@@ -320,7 +322,8 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_B, "with-boxes", 1 },
     { GNUPLOT,  OPT_Q, "with-steps", 1 },
     { GNUPLOT,  OPT_T, "time-series", 0 },
-    { GNUPLOT,  OPT_Z, "dummy", 0 },
+    { GNUPLOT,  OPT_Z, "factorized", 1 },
+    { GNUPLOT,  OPT_Z, "dummy", 1 }, /* alias */
     { GNUPLOT,  OPT_C, "control", 0 },
     { GNUPLOT,  OPT_U, "output", 2 },
     { GNUPLOT,  OPT_b, "outbuf", 2 },
@@ -453,7 +456,9 @@ struct gretl_option gretl_opts[] = {
     { MAHAL,    OPT_S, "save", 0 },
     { MAHAL,    OPT_V, "vcv", 0 },
     { MEANTEST, OPT_O, "unequal-vars", 0 },
-    { MEANTEST, OPT_D, "use-dummy", 0 },
+    { MEANTEST, OPT_D, "split-by", 2 },
+    { MEANTEST, OPT_P, "paired", 0 },
+    { MEANTEST, OPT_R, "robust", 0 },
     { MIDASREG, OPT_R, "robust", 0 },
     { MIDASREG, OPT_V, "verbose", 0 },
     { MIDASREG, OPT_L, "levenberg", 0 },
@@ -697,7 +702,8 @@ struct gretl_option gretl_opts[] = {
     { VARLIST,  OPT_S, "scalars", 0 },
     { VARLIST,  OPT_T, "type", 2 },
     { VARLIST,  OPT_D, "debug", 0 },
-    { VARTEST,  OPT_D, "use-dummy", 0 },
+    { VARTEST,  OPT_D, "split-by", 2 },
+    { VARTEST,  OPT_R, "robust", 1 },
     { VECM,     OPT_A, "crt", 0 },
     { VECM,     OPT_D, "seasonals", 0 },
     { VECM,     OPT_F, "variance-decomp", 0 },

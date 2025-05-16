@@ -363,12 +363,12 @@ Forecast RMSEs:
 \end{outbit}
 \end{script}
 
-The data file used in the replication, \texttt{gdp\_midas.gdt}, was
+The data file used in the replication, \dtk{gdp_midas.gdt}, was
 contructed as described in section~\ref{sec:data-merge} (and as noted
 there, it is included in the current gretl package). Part of the
 output from the replication script is shown in
 Listing~\ref{ghysels-out}. The $\gamma$ coefficient is labeled
-\texttt{HF\_slope} in the gretl output.
+\dtk{HF_slope} in the gretl output.
 
 For reference, output from \textsf{Matlab} (version R2016a for Linux)
 is available at
@@ -523,8 +523,8 @@ Listing~\ref{ex:midas-beta} presents a more ambitious example: we
 use \texttt{GSSmin} (Golden Section minimizer) to estimate a MIDAS
 model with the ``one-parameter beta'' specification (that is, the
 two-parameter beta with $\theta_1$ clamped at 1). Note that while the
-function named \texttt{beta1\_SSR} is specialized to the given
-parameterization, \texttt{midas\_GNR} is a fairly general means of
+function named \dtk{beta1_SSR} is specialized to the given
+parameterization, \dtk{midas_GNR} is a fairly general means of
 calculating the Gauss--Newton regression for an ADL(1) MIDAS
 model, and it could be generalized further without much difficulty.
 
@@ -584,13 +584,13 @@ modprint bse "const dy(-1) HF_slope Beta1 Beta2"
 
 At times, it may be useful to plot the ``gross'' coefficients on the
 lags of the high-frequency series in a MIDAS regression---that is, the
-normalized weights multiplied by the \texttt{HF\_slope} coefficient
+normalized weights multiplied by the \dtk{HF_slope} coefficient
 (the $\gamma$ in \ref{eq:MIDAS}). After estimation of a MIDAS model in
 the gretl GUI this is available via the item \textsf{MIDAS
   coefficients} under the \textsf{Graphs} menu in the model window. It
 is also easily generated via script, since the \dollar{model} bundle
 that becomes available following the \texttt{midasreg} command
-contains a matrix, \texttt{midas\_coeffs}, holding these
+contains a matrix, \dtk{midas_coeffs}, holding these
 coefficients. So the following is sufficient to display the plot:
 %
 \begin{code}

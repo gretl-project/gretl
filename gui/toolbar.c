@@ -1826,7 +1826,9 @@ static void maybe_find_series (GtkWidget *w, gpointer p)
 /* end toolbar icon callbacks */
 
 static GretlToolItem mainbar_items[] = {
+#ifndef __APPLE__
     { N_("launch calculator"),  GRETL_STOCK_CALC,    G_CALLBACK(tbar_calc), 0 },
+#endif
     { N_("new script"),         GTK_STOCK_EDIT,      G_CALLBACK(tbar_new_script), 0 },
     { N_("open gretl console"), GRETL_STOCK_CONSOLE, G_CALLBACK(gretl_console), 1 },
     { N_("session icon view"),  GRETL_STOCK_ICONS,   G_CALLBACK(view_session), 0 },

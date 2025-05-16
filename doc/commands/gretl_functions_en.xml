@@ -456,25 +456,6 @@
       </description>
     </function>
 
-    <function name="$lang" section="access" output="string">
-      <description>
-	<para>
-	  Returns a string representing the national language in force
-	  currently, if this can be determined. The string is composed
-	  of a two-letter ISO 639-1 language code (for example,
-	  <lit>en</lit> for English, <lit>jp</lit> for Japanese,
-	  <lit>el</lit> for Greek) followed by an underscore plus a
-	  two-letter ISO 3166-1 country code.  Thus for example
-	  Portuguese in Portugal gives <lit>pt_PT</lit> while
-	  Portuguese in Brazil gives <lit>pt_BR</lit>.
-	</para>
-	<para>
-	  If the national language cannot be determined, the string
-	  <quote><lit>unknown</lit></quote> is returned.
-	</para>
-      </description>
-    </function>
-
     <function name="$llt" section="access" output="series">
       <description>
 	<para>
@@ -797,6 +778,21 @@
       </description>
     </function>
 
+    <function name="$pmanteau" section="access" output="matrix">
+      <description>
+	<para>
+          Available after estimation of a vector autoregression.
+          Returns a row vector holding the results of the multivariate
+          portmanteau test for autocorrelation of the residuals, as
+          discussed on pages 21&ndash;22 in <cite
+          key="johansen95">Johansen (1995)</cite>. The elements are,
+          in order, the Ljung&ndash;Box statistic, the maximum lag
+          considered, the degrees of freedom for the (chi-square)
+          test, and the p-value of the test.
+	</para>
+      </description>
+    </function>
+
     <function name="$pvalue" section="access" output="scalar-or-matrix">
       <description>
 	<para>
@@ -857,6 +853,17 @@
 	  estimating a model via the <lit>ar</lit> command, the syntax
 	  <lit>$rho(n)</lit> returns the corresponding estimate of
 	  &rgr;(<math>n</math>).
+	</para>
+      </description>
+    </function>
+
+    <function name="$rlnl" section="access" output="scalar">
+      <description>
+	<para>
+          Following estimation of a restricted VECM, returns the
+          log-likelihood for the restricted model. See also
+          <fncref targ="$lnl"/>, and <guideref targ="chap:vecm"/> for
+          examples of usage.
 	</para>
       </description>
     </function>
@@ -1176,10 +1183,11 @@
 	  by keys that are the same as the regular accessor names,
 	  minus the leading dollar sign. So for example the residuals
 	  appear under the key <lit>uhat</lit> and the coefficients
-	  under <lit>coeff</lit>. (Exceptions are the keys <lit>A</lit>,
-	  <lit>B</lit>, and <lit>Gamma</lit>, which correspond to the
-	  regular dollar accessors sysA, sysB, and sysGamma.) The
-	  keys for additional information
+	  under <lit>coeff</lit>. (Exceptions are the keys
+	  <lit>A</lit>, <lit>B</lit>, and <lit>Gamma</lit>, which
+	  correspond to the regular dollar accessors <fncref
+	  targ="sysA"/>, <fncref targ="sysB"/>, and <fncref
+	  targ="sysGamma"/>.) The keys for additional information
 	  should hopefully be fairly self-explanatory. To see what's
 	  available you can get a copy of the bundle and print its
 	  content, as in
@@ -1409,18 +1417,6 @@
       </description>
     </function>
 
-    <function name="$workdir" section="access" output="string">
-      <description>
-	<para>
-	  This accessor returns the path which gretl reads from and
-	  writes to by default. A fuller discussion is provided in the
-	  Command Reference under <cmdref targ="workdir"/>. Note that
-	  this string can be set by the user via the <cmdref
-	  targ="set"/> command.
-        </para>
-      </description>
-    </function>
-
     <function name="$xlist" section="access" output="list">
       <description>
 	<para>
@@ -1505,12 +1501,23 @@
         </description>
     </function>
 
-    <function name="$lang" section="straccess" output="string">
-        <description>
-        <para>
-          Yields the identifier for the currently specified language.
-        </para>
-        </description>
+    <function name="$lang" section="access" output="string">
+      <description>
+	<para>
+	  Returns a string representing the national language in force
+	  currently, if this can be determined. The string is composed
+	  of a two-letter ISO 639-1 language code (for example,
+	  <lit>en</lit> for English, <lit>jp</lit> for Japanese,
+	  <lit>el</lit> for Greek) followed by an underscore plus a
+	  two-letter ISO 3166-1 country code.  Thus for example
+	  Portuguese in Portugal gives <lit>pt_PT</lit> while
+	  Portuguese in Brazil gives <lit>pt_BR</lit>.
+	</para>
+	<para>
+	  If the national language cannot be determined, the string
+	  <quote><lit>unknown</lit></quote> is returned.
+	</para>
+      </description>
     </function>
 
     <function name="$seats" section="straccess" output="string">
@@ -1544,14 +1551,17 @@
         </description>
     </function>
 
-    <function name="$workdir" section="straccess" output="string">
-        <description>
-        <para>
-         Yields the path string of gretl's current working directory.
-         To use it in string-substitution mode, prepend the at-sign
-         (<lit>@workdir</lit>).
+    <function name="$workdir" section="access" output="string">
+      <description>
+	<para>
+	  Yields the path which gretl reads from and writes to by
+	  default. A fuller discussion is provided in the Command
+	  Reference under <cmdref targ="workdir"/>. Note that this
+	  string can be set by the user via the <cmdref targ="set"/>
+	  command.  To use it in string-substitution mode, prepend the
+	  at-sign (<lit>@workdir</lit>).
         </para>
-        </description>
+      </description>
     </function>
 
     <function name="$x12a" section="straccess" output="string">
@@ -1633,13 +1643,13 @@
 	  <quote>Matrix input</quote> below for alternative usage.
 	</para>
 	<para>
-	  In the most minimal usage, <argname>x</argname> is set to
+	  In the simplest usage <argname>x</argname> is set to
 	  <lit>null</lit>, <argname>byvar</argname> is a single series
-	  and the third argument is omitted, or set to
-	  <lit>null</lit>. In this case, the return value is a matrix
-	  with two columns holding, respectively, the distinct values
-	  of <argname>byvar</argname>, sorted in ascending order, and
-	  the count of observations at which <argname>byvar</argname>
+	  and the third argument is omitted or set to
+	  <lit>null</lit>. The return value is then a matrix with two
+	  columns holding, respectively, the distinct values of
+	  <argname>byvar</argname> sorted in ascending order, and the
+	  count of observations at which <argname>byvar</argname>
 	  takes on each of these values. For example,
 	</para>
 	<code>
@@ -1652,40 +1662,40 @@
 	</para>
 	<para>
 	  More generally, if <argname>byvar</argname> is a list with
-	  <math>n</math> members, then the left-hand <math>n</math>
-	  columns hold the combinations of the distinct values of each
-	  of the <math>n</math> series and the count column holds the
-	  number of observations at which each combination is
-	  realized. Note that the count column can always be found at
-	  the position <lit>nelem(byvar) + 1</lit>.
+	  <math>n</math> members then the first <math>n</math> columns
+	  of the returned matrix hold the combinations of the distinct
+	  values of each of the <math>n</math> series, and the count
+	  column holds the number of observations at which each
+	  combination is realized. (The count column can always be
+	  found at the position <lit>nelem(byvar)+1</lit>).
 	</para>
 	<subhead>Specifying an aggregation function</subhead>
 	<para>
-	  If the third argument is given, then <argname>x</argname>
+	  If the third argument is given then <argname>x</argname>
 	  must not be <lit>null</lit>, and the rightmost
 	  <math>m</math> columns hold the values of the statistic
 	  specified by <argname>funcname</argname> for each of the
-	  variables in <argname>x</argname>. (Thus, <math>m</math> is
+	  variables in <argname>x</argname>. (So <math>m</math> is
 	  equal to 1 if <argname>x</argname> is a single series and
 	  equal to <lit>nelem(x)</lit> if <argname>x</argname> is a
-	  list.)  The given statistic is calculated on the respective
+	  list.)  The specified statistic is calculated on the
 	  sub-samples defined by the combinations in
 	  <argname>byvar</argname> (in ascending order); these
 	  combinations are shown in the first <math>n</math> column(s)
 	  of the returned matrix.
 	</para>
 	<para>
-	  So, in the special case where <argname>x</argname> and
-	  <argname>byvar</argname> are both individual series, the
-	  return value is a matrix with three columns holding,
-	  respectively, the distinct values of
-	  <argname>byvar</argname>, sorted in ascending order; the
-	  count of observations at which <argname>byvar</argname>
-	  takes on each of these values; and the values of the
-	  statistic specified by <argname>funcname</argname>
-	  calculated on series <argname>x</argname>, using only those
-	  observations at which <argname>byvar</argname> takes on the
-	  value given in the first column.
+	  So, if both <argname>x</argname> and
+	  <argname>byvar</argname> are individual series, the return
+	  value is a matrix with three columns holding the distinct
+	  values of <argname>byvar</argname> sorted in ascending
+	  order; the count of observations at which
+	  <argname>byvar</argname> takes on each of these values; and
+	  the values of the statistic specified by
+	  <argname>funcname</argname> calculated on series
+	  <argname>x</argname>, using just those observations at which
+	  <argname>byvar</argname> takes on the value given in the
+	  first column.
 	</para>
 	<para>
 	  The following values of <argname>funcname</argname> are
@@ -1701,7 +1711,7 @@
 	  be said to <quote>aggregate</quote> the series in some way.
 	  If none of these built-in functions does what you need, you
 	  can give the name of a user-defined function as the
-	  aggregator; like the built-ins, such a function must take a
+	  aggregator. Like the built-ins, such a function must take a
 	  single series argument and return a scalar value.
 	</para>
 	<para>
@@ -1711,12 +1721,13 @@
 	  (non-missing) observations on <argname>x</argname> at
 	  each <argname>byvar</argname> combination.
 	</para>
+        <subhead>Some examples</subhead>
 	<para>
-	  For a simple example, suppose that <lit>region</lit>
-	  represents a coding of geographical region using integer
-	  values 1 to <math>n</math>, and <lit>income</lit> represents
-	  household income. Then the following would produce an <by
-	  r="n" c="3"/> matrix holding the region codes, the count of
+	  First, suppose that <lit>region</lit> represents a coding of
+	  geographical region using integer values 1 to
+	  <math>n</math>, and <lit>income</lit> represents household
+	  income. Then the following would produce an <by r="n"
+	  c="3"/> matrix holding the region codes, the count of
 	  observations in each region, and mean household income for
 	  each of the regions:
 	</para>
@@ -1743,15 +1754,15 @@
 	  of <lit>income</lit> and <lit>age</lit>.
 	</para>
 	<para>
-	  Note that if <argname>byvar</argname> is a list, some
-	  combinations of the <argname>byvar</argname> values may not
-	  be present in the data (giving a count of zero). In that
-	  case the value of the statistics for <argname>x</argname>
-	  are recorded as <lit>NaN</lit> (not a number).  If you want
-	  to ignore such cases you can use the <fncref targ="selifr"/>
-	  function to select only those rows that have a non-zero
-	  count. The column to test is one place to the right of the
-	  number of <argname>byvar</argname> variables, so we can do:
+	  If <argname>byvar</argname> is a list, some combinations of
+	  the <argname>byvar</argname> values may not be present in
+	  the data (giving a count of zero). In that case the value of
+	  the statistics for <argname>x</argname> are recorded as
+	  <lit>NaN</lit> (not a number).  To cut out such cases you
+	  can use the <fncref targ="selifr"/> function to select only
+	  those rows that have a non-zero count. The column to test is
+	  one place to the right of the number of
+	  <argname>byvar</argname> variables, so we can do:
 	</para>
 	<code>
 	  matrix m = aggregate(X, BY, sd)
@@ -1765,9 +1776,9 @@
 	  form. However, if both arguments are provided they must
 	  match in type (you cannot give a series or list for one
 	  argument and a matrix for the other) and two matrix
-	  arguments must have the same number of rows. Also note that
-	  in this context matrix columns are treated as if they were
-	  series, so the aggregation function must follow the pattern
+	  arguments must have the same number of rows.  In this
+	  context matrix columns are treated as if they were series,
+	  so the aggregation function must follow the pattern
 	  described above, taking a series argument and returning a
 	  scalar.
 	</para>
@@ -2437,11 +2448,11 @@
 	  the result is
 	</para>
 	<code>
-	  0   0   1   1 
-	  0   1   0   1 
-	  0   1   1   0 
-	  1   0   0   1 
-	  1   0   1   0 
+	  0   0   1   1
+	  0   1   0   1
+	  0   1   1   0
+	  1   0   0   1
+	  1   0   1   0
 	  1   1   0   0
 	</code>
 	<para>
@@ -3880,6 +3891,20 @@
 	  </li>
 	  <li>
 	    <para>
+	      <quote><lit>include</lit></quote>: a scalar: if nonzero,
+	      the header received from the host is included with the
+	      output body.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <quote><lit>nobody</lit></quote>: a scalar: if nonzero,
+	      the function will <i>not</i> download the body of the
+	      requested URL.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
 	      <quote><lit>postdata</lit></quote>: a string holding
 	      data to be sent to the host.
 	    </para>
@@ -3889,63 +3914,88 @@
 	  The <lit>header</lit> and <lit>postdata</lit> fields are
 	  intended for use with an HTTP <lit>POST</lit> request; if
 	  <lit>postdata</lit> is present the <lit>POST</lit> method is
-	  implicit, otherwise the <lit>GET</lit> method is
-	  implicit. (But note that for straightforward <lit>GET</lit>
-	  requests <fncref targ="readfile"/> offers a simpler
-	  interface.)
-	</para>
-	<para>
-	  One other optional bundle element is recognized: if a scalar
-	  named <lit>include</lit> is present and has a non-zero value,
-	  this is taken as a request to include the header received
-	  from the host with the output body.
+	  implicit. Otherwise the <lit>GET</lit> or <lit>HEAD</lit>
+	  methods are implicit, depending on the value of the
+	  <lit>nobody</lit> key. (But note that for straightforward
+	  <lit>GET</lit> requests <fncref targ="readfile"/> offers a
+	  simpler interface.)
 	</para>
 	<para>
 	  On completion of the request, the text received from the
 	  server is added to the bundle under the key
-	  <quote><lit>output</lit></quote>.
+	  <quote><lit>output</lit></quote>, and the HTTP status code
+	  is stored under the key <quote><lit>http_code</lit></quote>.
 	</para>
 	<para>
 	  If an error occurs in formulating the request (for example
 	  there's no <lit>URL</lit> on input) the function fails,
-	  otherwise it returns 0 if the request succeeds or non-zero if
-	  it fails, in which case the error message from the curl
-	  library is added to the bundle under the key
-	  <quote><lit>errmsg</lit></quote>.  Note, however, that
+	  otherwise it returns 0 if the request succeeds or non-zero
+	  if it fails, in which case the error message from libcurl is
+	  added to the bundle under the key
+	  <quote><lit>errmsg</lit></quote>.  Note that
 	  <quote>success</quote> in this sense does not necessarily
 	  mean you got the data you wanted; all it means is that some
-	  response was received from the server. You must check the
-	  content of the output buffer (which may in fact be a message
-	  such as <quote>Page not found</quote>).
+	  response was received from the server.  A quick way of
+	  checking is to inspect the HTTP status code: the most
+	  commonly used ones are 200 (success) or 404 (page not
+	  found). See
+	  <url>https://en.wikipedia.org/wiki/List_of_HTTP_status_codes</url>
+	  for the full list. Alternatively, you can check the content
+	  of the output buffer (which may in fact be a message such as
+	  <quote>Page not found</quote>).
 	</para>
 	<para>
 	  Here is an example of use: downloading some data from the
 	  US Bureau of Labor Statistics site, which requires sending
 	  a JSON query. Note the use of <fncref targ="sprintf"/> to
 	  embed double-quotes in the <lit>POST</lit> data.
-	</para>
-	<code>
-	  bundle req
-	  req.URL = "http://api.bls.gov/publicAPI/v1/timeseries/data/"
-	  req.include = 1
-	  req.header = "Content-Type: application/json"
-	  string s = sprintf("{\"seriesid\":[\"LEU0254555900\"]}")
-	  req.postdata = s
-	  err = curl(&amp;req)
-	  if err == 0
-	      s = req.output
-	      string line
-	      loop while getline(s, &amp;line)
-	          printf "%s\n", line
-	      endloop
-	  endif
-	</code>
-	<para>
-	  See also the functions <fncref targ="jsonget"/> and <fncref
-	  targ="xmlget"/> for means of processing JSON and XML data
-	  received, respectively.
-	</para>
-      </description>
+       </para>
+       <code>
+	 bundle req
+	 req.URL = "https://api.bls.gov/publicAPI/v1/timeseries/data/"
+	 req.include = 1
+	 eq.header = "Content-Type: application/json"
+	 string s = sprintf("{\"seriesid\":[\"LEU0254555900\"]}")
+	 req.postdata = s
+	 err = curl(&amp;req)
+	 if err == 0
+	    s = req.output
+	    string line
+	    loop while getline(s, &amp;line)
+	       printf "%s\n", line
+	    endloop
+	 endif
+       </code>
+       <para>
+	 As a second example, the code below checks if a particular
+	 version of the <quote>Global Macro Database</quote> dataset
+	 is available, and downloads it only if so.
+       </para>
+       <code>
+	 string base_URL = "https://www.globalmacrodata.com"
+	 string filename = "GMD_2025_03.csv"
+
+	 bundle req
+	 req.URL = base_URL ~ "/" ~ filename
+	 req.nobody = 1
+	 err = curl(&amp;req)
+
+	 if err || (req.http_code != 200)
+	    printf "Oh, oh. It seems %s is unavailable\n", filename
+	 else
+	    # actual request
+	    bundle req = empty
+	    req.URL = base_URL ~ "/" ~ filename
+	    err = curl(&amp;req)
+	    print req
+	 endif
+       </code>
+       <para>
+	 See also the functions <fncref targ="jsonget"/> and <fncref
+	 targ="xmlget"/> for means of processing JSON and XML data
+	 received, respectively.
+       </para>
+     </description>
     </function>
 
     <function name="dayspan" section="calendar" output="int">
@@ -4781,77 +4831,6 @@
       </description>
     </function>
 
-    <function name="eigengen" section="linalg" output="matrix">
-      <fnargs>
-	<fnarg type="smatrix">A</fnarg>
-	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  <emphasis>This is a legacy function, predating gretl's
-	  native support for complex matrices. It should not be used
-	  in newly written hansl scripts. Use</emphasis> <fncref targ="eigen"/>
-	  <emphasis>instead.</emphasis>
-	</para>
-	<para>
-	  Computes the eigenvalues, and optionally the right eigenvectors, of
-	  the <by r="n" c="n"/> matrix <argname>A</argname>.  If all the
-	  eigenvalues are real an <by r="n" c="1"/> matrix is returned;
-	  otherwise the result is an <by r="n" c="2"/> matrix, the first
-	  column holding the real components and the second column the
-	  imaginary components. The eigenvalues are not guaranteed to
-	  be sorted in any particular order.
-	</para>
-	<para>
-	  The second argument must be either the name of an existing
-	  matrix preceded by <lit>&amp;</lit> (to indicate the
-	  <quote>address</quote> of the matrix in question), in which case
-	  an auxiliary result is written to that matrix, or the keyword
-	  <lit>null</lit>, in which case the auxiliary result is not
-	  produced.
-	</para>
-	<para>
-	  If a non-null second argument is given, the specified matrix
-	  will be over-written with the auxiliary result.  (It is not
-	  required that the existing matrix be of the right dimensions to
-	  receive the result.) The output is organized as follows:
-	</para>
-	<ilist>
-	  <li>
-            <para>
-              If the <math>i</math>-th eigenvalue is real, the
-              <math>i</math>-th column of <math>U</math> will contain the
-              corresponding eigenvector;
-            </para>
-	  </li>
-	  <li>
-            <para>
-              If the <math>i</math>-th eigenvalue is complex, the
-              <math>i</math>-th column of <argname>U</argname> will
-              contain the real part of the corresponding eigenvector and
-              the next column the imaginary part. The eigenvector for the
-              conjugate eigenvalue is the conjugate of the eigenvector.
-            </para>
-	  </li>
-	</ilist>
-	<para>
-	  In other words, the eigenvectors are stored in the same order as
-	  the eigenvalues, but the real eigenvectors occupy one column,
-	  whereas complex eigenvectors take two (the real part comes
-	  first); the total number of columns is still <math>n</math>,
-	  because the conjugate eigenvector is skipped.
-	</para>
-	<para>
-	  <seelist>
-            <fncref targ="eigensym"/>
-            <fncref targ="eigsolve"/>
-            <fncref targ="qrdecomp"/>
-            <fncref targ="svd"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
     <function name="eigensym" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="symmat">A</fnarg>
@@ -5569,24 +5548,24 @@
 	<code>
 	  U (2 x 6)
 
-	  1    3    5    7    9   11 
-	  2    4    6    8   10   12 
+	  1    3    5    7    9   11
+	  2    4    6    8   10   12
 
 	  V (4 x 3)
 
-	  1    3    5 
-	  2    4    6 
-	  7    9   11 
-	  8   10   12 
+	  1    3    5
+	  2    4    6
+	  7    9   11
+	  8   10   12
 
 	  W (6 x 2)
 
-	  1    7 
-	  2    8 
-	  3    9 
-	  4   10 
-	  5   11 
-	  6   12 
+	  1    7
+	  2    8
+	  3    9
+	  4   10
+	  5   11
+	  6   12
 	</code>
 	<para>
 	  An error is flagged if the matrices in the array are not
@@ -6390,20 +6369,46 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Returns the Gauss hypergeometric function for real argument
-	  <argname>x</argname>.
+	  Returns the Gaussian hypergeometric function for the real
+	  argument <argname>x</argname>. Valid values for
+	  <argname>x</argname> are in the closed interval [&minus;1, 1].
+	  This function is very general, and reduces to a
+	  simpler function in some special cases, such as for example
+	  <math>-</math>log(<math>1-x</math>)/<math>x</math> for
+	  <math>a=b=1</math> and <math>c=2</math>. See
+	  <url>https://en.wikipedia.org/wiki/Hypergeometric_function</url>
+	  for more details.
 	</para>
 	<para context="tex">
-	  Returns the Gauss hypergeometric function
+	  Returns the Gaussian hypergeometric function
 	  <math>{}_2F_1(a,b;c;z) = \sum_{n=0}^\infty \frac{(a)_n
-	  (b)_n}{(c)_n} \frac{z^n}{n!}.</math> for real argument
-	  <argname>x</argname>.
+	  (b)_n}{(c)_n} \frac{z^n}{n!}</math> for real argument
+	  <argname>x</argname>. Valid values for <argname>x</argname>
+	  are in the closed interval [&minus;1, 1]. This function
+	  is very general, and reduces to a simpler function in some
+	  special cases, such as for example
+	  <math>-\frac{\log(1-x)}{x}</math> for <math>a=b=1</math> and
+	  <math>c=2</math>. See
+	  <url>https://en.wikipedia.org/wiki/Hypergeometric_function</url>
+	  for more details.
 	</para>
 	<para>
 	  If <argname>x</argname> is a scalar, the return value will
 	  be scalar; otherwise, it will be a matrix the same size as
-	  <argname>x</argname>.
+	  <argname>x</argname>. For example,
 	</para>
+	<code>
+	  a = hyp2f1(1, 1, 2, {-1, 0, 0.5})
+	  print a
+	</code>
+	<para>
+	  produces the following output:
+	</para>
+	<code>
+	  a (1 x 3)
+
+	  0.69315       1.0000       1.3863
+	</code>
       </description>
     </function>
 
@@ -8439,6 +8444,8 @@
 	<para>
 	  Computes a (Pearson) correlation matrix treating each column
 	  of <argname>X</argname> as a variable.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="corr"/>
             <fncref targ="cov"/>
@@ -12509,6 +12516,8 @@
 	  optional third argument missing values are ignored,
 	  otherwise the result is <lit>NA</lit> for any columns that
 	  contain missing values.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="meanc"/>
             <fncref targ="sumc"/>
@@ -14024,6 +14033,55 @@
 	</para>
 	<para>
 	  See <guideref targ="chap:tdisagg"/> for details.
+	</para>
+      </description>
+    </function>
+
+    <function name="thresh" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="anyfloat">a</fnarg>
+	<fnarg optional="true" type="scalar">hard</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Performs soft or hard thresholding on <argname>x</argname>,
+	  depending on the value of the optional Boolean parameter
+	  <argname>hard</argname>, whose default value is 0.
+	</para>
+	<para>
+	  In both cases, entries in <argname>x</argname> whose
+	  absolute value is less than <argname>a</argname> are set to
+	  0. With soft thresholding, the other ones are shrunk towards
+	  0. For example, the code below
+	</para>
+	<code>
+	  s = seq(-2,2,0.5)'
+	  eval s ~ thresh(s, 0.5) ~ thresh(s, 0.5, 1)
+	</code>
+	<para>
+	  produces
+	</para>
+	<code>
+             -2      -1.5       -2
+           -1.5        -1     -1.5
+             -1      -0.5       -1
+           -0.5         0        0
+              0         0        0
+            0.5         0        0
+              1       0.5        1
+            1.5         1      1.5
+              2       1.5        2
+	</code>
+	<para>
+	  If the two arguments differ in type, the type of the result
+	  is the <quote>higher</quote> of the two, where the ordering
+	  is matrix &gt; series &gt; scalar. For example, if
+	  <argname>y</argname> is a scalar and <argname>x</argname> an
+	  <math>n</math>-vector (or vice versa) the result is an
+	  <math>n</math>-vector. Note that matrix arguments must be
+	  vectors, and if neither argument is a scalar the two
+	  arguments must be of the same length.
 	</para>
       </description>
     </function>

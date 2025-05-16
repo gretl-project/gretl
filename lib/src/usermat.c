@@ -1233,35 +1233,41 @@ static int real_umatrix_set_names (gretl_matrix *M,
 				   int byrow)
 {
     int n = byrow ? M->rows : M->cols;
+    int set_done = 0;
     int err = 0;
 
-    if (S == NULL) {
-	if (byrow) {
-	    gretl_matrix_set_rownames(M, NULL);
-	} else {
-	    gretl_matrix_set_colnames(M, NULL);
-	}
-    } else {
-	int i;
+    if (S != NULL) {
+	int i, n_empty = 0;
 
 	for (i=0; i<n && !err; i++) {
-	    if (S[i] == NULL || S[i][0] == '\0') {
+	    if (S[i] == NULL) {
 		gretl_errmsg_sprintf("Missing string in %s",
 				     byrow? "rnameset" : "cnameset");
 		err = E_INVARG;
-	    }
+	    } else if (S[i][0] == '\0') {
+                n_empty++;
+            }
 	}
-	if (!err) {
+	if (!err && n_empty < n) {
 	    if (byrow) {
 		gretl_matrix_set_rownames(M, S);
 	    } else {
 		gretl_matrix_set_colnames(M, S);
 	    }
+            set_done = 1;
 	}
     }
 
-    if (err) {
-	strings_array_free(S, n);
+    /* !set_done implies that either (a) S = NULL or (b) n_empty = n
+       or (c) an error was flagged
+    */
+    if (!set_done) {
+        strings_array_free(S, n);
+        if (!err && byrow) {
+            gretl_matrix_set_rownames(M, NULL);
+        } else if (!err) {
+            gretl_matrix_set_colnames(M, NULL);
+        }
     }
 
     return err;
@@ -1283,14 +1289,17 @@ int umatrix_set_names_from_string (gretl_matrix *M,
 				   const char *s,
 				   int byrow)
 {
-    char **S = NULL;
-    int n, ns = 0;
+    int n = byrow ? M->rows : M->cols;
     int err = 0;
 
-    n = byrow ? M->rows : M->cols;
-
-    if (s != NULL && *s != '\0') {
-	S = gretl_string_split(s, &ns, " \n\t");
+    if (s == NULL || *s == '\0') {
+        /* OK: delete any existing names */
+        err = real_umatrix_set_names(M, NULL, byrow);
+    } else if (string_is_blank(s)) {
+        err = E_INVARG;
+    } else {
+        int ns = 0;
+	char **S = gretl_string_split(s, &ns, " \n\t");
 
 	if (S == NULL) {
 	    err = E_ALLOC;
@@ -1303,10 +1312,9 @@ int umatrix_set_names_from_string (gretl_matrix *M,
 		strings_array_free(S, ns);
 	    }
 	}
-    }
-
-    if (!err) {
-	err = real_umatrix_set_names(M, S, byrow);
+        if (!err) {
+            err = real_umatrix_set_names(M, S, byrow);
+        }
     }
 
     return err;
@@ -1980,6 +1988,7 @@ gretl_matrix *user_matrix_eigensym (const gretl_matrix *m,
     }
 
     if (gretl_matrix_na_check(m)) {
+        /* 2025-03-26: do we want this? */
 	*err = E_NAN;
 	return NULL;
     }

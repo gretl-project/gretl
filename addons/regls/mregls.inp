@@ -6,6 +6,22 @@ function strings make_xnames (int n)
    return S
 end function
 
+function scalar broken_matrix (const matrix m)
+   scalar ret = 0
+   loop j=1..cols(m)
+      loop i=1..rows(m)
+         if !ok(m[i,j])
+            ret = 1
+            break
+         endif
+      endloop
+      if ret
+         break
+      endif
+   endloop
+   return ret
+end function
+
 function bundle mregls (const matrix y, const matrix X,
                         const bundle parms[null])
    scalar nlam = 1
@@ -23,6 +39,9 @@ function bundle mregls (const matrix y, const matrix X,
    if (cols(y) != 1 || rows(y) == 0 || rows(X) != rows(y))
       funcerr "Invalid y and/or X input"
    endif
+
+   errorif(broken_matrix(y), "matrix y contains non-finite values")
+   errorif(broken_matrix(X), "matrix X contains non-finite values")
 
    if !exists(parms)
       # an empty bundle will do

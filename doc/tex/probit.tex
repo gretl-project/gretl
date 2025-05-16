@@ -280,7 +280,7 @@ don't have enough data to estimate your model. You may want to drop
 some of your explanatory variables.
 
 This problem is well analyzed in \cite{stokes04}; the results therein
-are replicated in the example script \texttt{murder\_rates.inp}. 
+are replicated in the example script \dtk{murder_rates.inp}. 
 
 \section{Ordered response models}
 \label{sec:ordered}
@@ -546,7 +546,7 @@ hypothesis $\rho = 0$.\footnote{Note that if the \option{robust}
   option is given to \cmd{biprobit}---and therefore the estimator is
   meant to be QMLE---this test may not be valid, even asymptotically.}
 This can be retrieved in the form of a bundle named
-\texttt{independence\_test} under the \dollar{model} accessor, as in
+\dtk{independence_test} under the \dollar{model} accessor, as in
 \begin{code}
 ? eval $model.independence_test
 bundle:

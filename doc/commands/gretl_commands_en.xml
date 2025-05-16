@@ -3463,7 +3463,7 @@
       <para>
 	For any suitable variables in <repl>varlist</repl>, creates a set
 	of dummy variables coding for the distinct values of that
-	variable.   Suitable variables are those that have been explicitly
+	variable.  Suitable variables are those that have been explicitly
 	marked as discrete, or those that take on a fairly small number of
 	values all of which are <quote>fairly round</quote> (multiples of
 	0.25).
@@ -3483,11 +3483,14 @@
 	avoiding the <quote>dummy variable trap</quote>).
       </para>
       <para>
-	This command can also be embedded in the context of a regression
-	specification.  For example, the following line specifies a model
+	There is also a corresponding function for this command, 
+	see <fncref targ="dummify"/>. This makes it possible to embed
+	the call directly in a regression specification.  For example,
+	the following line specifies a model
 	where <lit>y</lit> is regressed on the set of dummy variables
-	coding for <lit>x</lit>.  (Option flags cannot be passed to
-	<cmd>dummify</cmd> in this context.)
+	coding for <lit>x</lit>.  (However, option flags are for the 
+	command variant only, not for the function variant of
+	<cmd>dummify</cmd>.)
       </para>
       <code>
 	ols y dummify(x)
@@ -3981,10 +3984,10 @@
 
     <description>
       <para>
-	This command requires the selection of three variables, the last
-	of which must be a dummy variable (values 1 or 0). The Y variable
-	is plotted against the X variable, with the data points colored
-	differently depending on the value of the third.
+	This command requires the selection of three variables, the
+	last of which (the factor variable) must be discrete. The Y
+	variable is plotted against the X variable, with the data
+	points styled differently depending on the value of the third.
       </para>
       <para>
 	Example: You have data on wages and educational attainment for a
@@ -5267,11 +5270,12 @@
     label="Create a gnuplot graph" context="cli">
 
     <usage>
-      <arguments>
-        <argument>yvars</argument>
-        <argument>xvar</argument>
-	<argument optional="true">dumvar</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>gnuplot</lit> <repl>yvars</repl> <repl>xvar</repl></altform>
+        <altform><lit>gnuplot</lit> <repl>yvars</repl> <lit>--time-series</lit></altform>
+        <altform><lit>gnuplot</lit> <repl>yvars</repl> <repl>xvar</repl> <repl>factor</repl> <lit>--factorized</lit></altform>
+	<altform><lit>gnuplot</lit> <repl>yvar</repl> <repl>xvar</repl> <repl>zvars</repl> <lit>--control</lit></altform>
+      </altforms>
       <options>
         <option>
 	  <flag>--with-lines</flag>
@@ -5316,7 +5320,8 @@
 	  <effect>see below</effect>
         </option>
         <option>
-	  <flag>--dummy</flag>
+	  <flag>--factorized</flag>
+          <optparm optional="true">list</optparm>
 	  <effect>see below</effect>
         </option>
         <option>
@@ -5363,7 +5368,7 @@
       <examples>
         <example>gnuplot y1 y2 x</example>
         <example>gnuplot x --time-series --with-lines</example>
-	<example>gnuplot wages educ gender --dummy</example>
+	<example>gnuplot wages educ gender --factorized</example>
 	<example>gnuplot y x --fit=quadratic</example>
 	<example>gnuplot y1 y2 x --with-lines=y2</example>
       </examples>
@@ -5386,55 +5391,72 @@
 	the effect of these options may be confined to a subset of the
 	variables by using the <repl>varspec</repl> parameter. This
 	should take the form of a comma-separated listing of the names
-	or numbers of the variables to be plotted with lines or
-	impulses respectively. For instance, the final example above
-	shows how to plot <lit>y1</lit> and <lit>y2</lit> against
-	<lit>x</lit>, such that <lit>y2</lit> is represented by a line
-	but <lit>y1</lit> by points.
+	or numbers of the variables to be plotted in the specified
+	manner, or the name of a predefined list.  For instance, the
+	final example above shows how to plot <lit>y1</lit> and
+	<lit>y2</lit> against <lit>x</lit>, such that <lit>y2</lit> is
+	represented by a line but <lit>y1</lit> by points.
       </para>
       <para>
 	When <repl>yvars</repl> contains more than one variable it may
 	be preferable to use two y axes (left and right). By default
 	this is handled automatically, via a heuristic based on the
 	relative scales of the variables, but two (mutually exclusive)
-	options can be used to override the default. As you'd expect,
+	options can be used to override the default:
 	<opt>single-yaxis</opt> prevents use of a second axis, while
 	<opt>y2axis=</opt><repl>yvar</repl> specifies that a selected
 	variable (only) be plotted relative to a second axis.
       </para>
+      <subhead>Factorized plots</subhead>
       <para>
-	If the <opt>dummy</opt> option is selected, exactly three
-	variables should be given: a single <math>y</math> variable, an
-	<math>x</math> variable, and <repl>dvar</repl>, a discrete
-	variable.  The effect is to plot <repl>yvar</repl> against
-	<repl>xvar</repl> with the points shown in different colors
-	depending on the value of <repl>dvar</repl> at the given
-	observation.
+        The <opt>factorized</opt> option supports a X&ndash;Y plot in
+        which the <repl>yvars</repl> are plotted in different styles
+        (point type, color) depending on the value of a discrete
+        factor variable at each observation. The factor must
+        be specified following the <math>x</math> variable.
       </para>
       <para>
-	The <opt>control</opt> option is similar, in that exactly
-	three variables should be given: a single <math>y</math>
-	variable and two <quote>explanatory</quote> variables
-	<math>x</math> and <math>z</math>.  The effect is to plot
-	<repl>y</repl> against <repl>x</repl> controlling for
-	<math>z</math>.  Such plot can be useful to visualize the
-	relationship between <math>x</math> and <math>y</math>, taking
-	into account the effect that <math>z</math> can have on
-	both. Statistically, this would be equivalent to a regression
-	of <math>y</math> on <math>x</math> <emphasis>and</emphasis>
-	<math>z</math>.
+        The simplest case features a single <math>y</math> variable
+        and a 0/1 dummy variable as factor, as in the third usage
+        example given above which plots wage against education,
+        factorized by gender.  But you can have more than one
+        <math>y</math> variable and the factor may have more than two
+        values. When multiple <math>y</math> variables are to be
+        plotted you can restrict the factorization treatment to a
+        subset by appending a parameter to the option flag: the name
+        of a series or list of series. In the following example
+        <lit>y</lit> and <lit>yhat</lit> are plotted against
+        <lit>x</lit>, with factorization by <lit>id</lit> limited to
+        <lit>y</lit>.
       </para>
+      <code>
+	gnuplot y yhat x id --with-lines=yhat --factorized=y
+      </code>
+      <subhead>Controlled plot</subhead>
       <para>
-	You can specify the scale for the y axis as logarithmic rather
-	than linear by using the <opt>ylogscale</opt> option, together
-	with a base parameter. For example,
+	When the <opt>control</opt> option is specified three or more
+	variables should be given: a single <math>y</math> variable, a
+	single <math>x</math> variable, and one or more control
+	variables, <repl>zvars</repl>.  The effect is that
+	<math>y</math> and <math>x</math> are each regressed on
+	<repl>zvars</repl> and the <math>y</math> residuals are
+	plotted against the <math>x</math> residuals. This plot shows
+	the relationship between <math>x</math> and <math>y</math>
+	taking into account the effect that the controls have on both.
+      </para>
+      <subhead>Log scale</subhead>
+      <para>
+	You can specify the scale for the <math>y</math> axis as
+	logarithmic rather than linear by using the
+	<opt>ylogscale</opt> option, together with a base
+	parameter. For example,
       </para>
       <code>
 	gnuplot y x --ylogscale=2
       </code>
       <para>
 	plots the data such that the vertical axis is expressed as
-	powers of 2. If the base is omitted, it defaults to 10.
+	powers of 2. If the base is not specified it defaults to 10.
       </para>
       <subhead>Taking data from a matrix</subhead>
       <para>
@@ -5530,8 +5552,9 @@
 	<li>
 	  <para>Under the key <lit>color</lit>, a color for the band,
 	  either as a string holding a gnuplot color name or as a
-	  hexadecimal RGB representation (given as a string or a
-	  scalar). By default the color is selected automatically.
+	  hexadecimal RGB representation, given as a string or a
+	  scalar (see below for more details). By default the color is
+	  selected automatically.
 	  </para>
 	</li>
 	<li>
@@ -5541,15 +5564,6 @@
 	  </para>
 	</li>
       </ilist>
-      <para>
-	Note that you can access the list of color names recognized by
-	gnuplot by issuing the command <quote><lit>show
-	colornames</lit></quote> in gnuplot itself, or in the gretl
-	console by doing
-      </para>
-      <code>
-	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
-      </code>
       <para>
 	Here are two examples of usage, employing the shorthand syntax
 	<lit>_()</lit> for defining a bundle. The first just satisfies
@@ -5579,37 +5593,14 @@
 	When plotting matrix rather than series data, the only
 	difference is that the <lit>center</lit> and <lit>width</lit>
 	elements of the band bundle are replaced by a single element
-	under the key <lit>bandmat</lit>; this should be the quoted
-	name of a two-column matrix with the center in column 1 and
-	the width in column 2.
+	under the key <lit>bandmat</lit>. This should be a two-column
+	matrix with the center of the band in the first column and the
+	width in the second. Alternatively you can give a string under
+	this key: the <i>quoted name</i> of a suitable matrix. This
+	variant may be preferable if the matrix in question is to be
+	reused with different factor values, since it avoids
+	duplicating the matrix in memory.
       </para>
-      <subhead>Legacy band syntax</subhead>
-      <para>
-	The syntax described above was introduced in gretl
-	2023c. Prior to that release only one band could be specified
-	per plot and the syntax was somewhat different. The old
-	approach, which is still accepted until further notice, split
-	the band details over two options. First, the <opt>band</opt>
-	option required as parameter the names of two series,
-	separated by a comma, giving center and width. The
-	multiplicative <lit>factor</lit> for the width could be added
-	as a third comma-separated term. Examples:
-      </para>
-      <code>
-	gnuplot ... --band=x,w
-	gnuplot ... --band=x,w,1.96
-      </code>
-      <para>
-	A second option, <opt>band-style</opt>, accepted one or both
-	of the style and color specifiers, in that order and again
-	separated by a comma, as in these examples.
-      </para>
-      <code>
-	gnuplot ... --band-style=fill
-	gnuplot ... --band-style=dash,0xbbddff
-	gnuplot ... --band-style=,black
-	gnuplot ... --band-style=bars,blue
-      </code>
       <subhead>Recession bars</subhead>
       <para>
 	The <quote>band</quote> option can also be used to add
@@ -5640,29 +5631,106 @@
 	gnuplot YER URX --with-lines --time-series \
 	  --band=b --output=display {set key top left;}
       </code>
+      <subhead>Color names</subhead>
+      <para>
+	Colors are identified via RGB numbers, usually expressed in
+	6-digit hexadecimal form: the first two digit indicate the
+	amount of red (from 0 to 255), the middle ones the amount of
+	green, and the last two the amount of blue. So for example
+	<lit>0xff0080</lit> has maximum red, no green and some blue
+	(it's a reddish purple). With gnuplot 5.2 onwards, you can use
+	four digits instead of three: in this case, the first two
+	digits indicate transparency, ranging from 0 (opaque) to 255
+	(transparent). For example, <lit>0xc0ff0080</lit> would give
+	the color a value of 192 (c0 in hex) for transparency. 
+	You can check your gnuplot version by inspecting the <fncref
+	targ="$sysinfo"/> bundle.
+      </para>
+      <para>
+	Hexadecimal colors can be passed either as scalars or as
+	strings. A color string can be a quoted hexadecimal number (eg
+	"0x191970"), but gnuplot recognizes some
+	<quote>shorthand</quote> colors. For example,
+	<quote>violet</quote> equates to <quote>0xee82ee</quote> and
+	<quote>brown</quote> to <quote>0xa52a2a</quote>.  You can
+	access the full list of color names recognized by gnuplot by
+	issuing the command <quote><lit>show colornames</lit></quote>
+	in gnuplot itself, or in the gretl console by doing
+      </para>
+      <code>
+	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
+      </code>
+      <para>
+	To achieve aesthetically pleasing result, you may want to use
+	the <fncref targ="rgbmix"/> function.
+      </para>
       <subhead>Controlling the output</subhead>
       <para>
 	In interactive mode the plot is displayed immediately. In
-	batch mode the default behavior is that a gnuplot command file
-	is written in the user's working directory, with a name on the
-	pattern <filename>gpttmpN.plt</filename>, starting with N =
+	batch mode (as when running a script) the default behavior is
+	that a gnuplot command file is written in the user's working
+	directory, with a name on the pattern
+	<filename>gpttmpN.plt</filename>, starting with N =
 	<lit>01</lit>. The actual plots may be generated later using
 	<program>gnuplot</program> (under MS Windows,
 	<program>wgnuplot</program>).  This behavior can be modified
 	by use of the <opt>output=</opt><repl>filename</repl> option.
 	This option controls the filename used, and at the same time
 	allows you to specify a particular output format via the
-	three-letter extension of the file name, as follows:
-	<lit>.eps</lit> results in the production of an Encapsulated
-	PostScript (EPS) file; <lit>.pdf</lit> produces PDF;
-	<lit>.png</lit> produces PNG format, <lit>.emf</lit> calls for
-	EMF (Enhanced MetaFile), <lit>.fig</lit> calls for an Xfig
-	file, <lit>.svg</lit> for SVG (Scalable Vector Graphics) and
-	<lit>.html</lit> for an HTML canvas. If the dummy filename
-	<quote><lit>display</lit></quote> is given then the plot is
-	shown on screen as in interactive mode. If a filename with any
-	extension other than those just mentioned is given, a gnuplot
-	command file is written.
+	extension of the file name, as follows:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>.eps</lit>: Encapsulated PostScript
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.pdf</lit>: PDF
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.png</lit>: PNG (Portable Network Graphics)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.emf</lit>: EMF (Microsoft's Enhanced MetaFile)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.html</lit>: HTML canvas
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.svg</lit>: SVG (Scalable Vector Graphics)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.fig</lit>: Xfig (*nix drawing program)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.tex</lit>: pict2e (for use with &latex;)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.tikz</lit>: TiKZ (for use with &latex;).
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	If the dummy filename <quote><lit>display</lit></quote> is
+	given then the plot is shown on screen as in interactive
+	mode. If a filename with any extension other than those just
+	mentioned is given, a gnuplot command file is written.
       </para>
       <para>
 	An alternative means of directing output is the
@@ -5690,20 +5758,19 @@
       </para>
       <subhead>Adding gnuplot commands</subhead>
       <para>
-	A further option to this command is available: following the
-	specification of the variables to be plotted and the option
-	flag (if any), you may add literal gnuplot commands to control
-	the appearance of the plot (for example, setting the plot
-	title and/or the axis ranges).  These commands should be
-	enclosed in braces, and each gnuplot command must be
-	terminated with a semi-colon.  A backslash may be used to
+	A further special option to this command is available:
+	following the specification of the variables to be plotted and
+	the option flag (if any), you may add literal gnuplot commands
+	to control the appearance of the plot (for example, setting
+	the plot title and/or the axis ranges).  These commands should
+	be enclosed in braces, and each gnuplot command must be
+	terminated with a semicolon.  A backslash may be used to
 	continue a set of gnuplot commands over more than one line.
 	Here is an example of the syntax:
       </para>
       <code>
 	{ set title 'My Title'; set yrange [0:1000]; }
       </code>
-
     </description>
 
     <gui-access>
@@ -5717,7 +5784,6 @@
     label="Graphing">
 
     <description>
-
       <para>
 	Gretl calls a separate program, namely gnuplot, to generate
 	graphs.  Gnuplot is a very full-featured graphing program with
@@ -5726,12 +5792,10 @@
 	to choose sensible values for you; it also allows you to take
 	complete control over graph details if you wish.
       </para>
-
       <para>
 	With a graph displayed, you can click on the graph window for
 	a pop-up menu with several options, including these:
       </para>
-
       <ilist>
 	<li>
 	  <para>
@@ -6251,6 +6315,14 @@
 	variable.  When you select a variable from the list, the
 	relevant statistics are automatically entered in the boxes
 	below.
+      </para>
+      <para>
+	Note that in the case of two samples the tests are of the
+	unpaired type.  If, for example, you want to perform a
+	<emphasis>paired</emphasis> test of whether the difference of
+	the means of two variables is zero, you should simply create a
+	new series as the difference of the two existing ones, and
+	then perform a simple mean test on that new series.
       </para>
       <para>
 	In addition to the simple selection of a variable, you have
@@ -8454,14 +8526,15 @@
 
     <description>
       <para>
-	Computes the Mahalanobis distances between the series in
-	<repl>varlist</repl>.  The Mahalanobis distance is the
-	distance between two points in a <math>k</math>-dimensional
-	space, scaled by the statistical variation in each dimension
-	of the space.  For example, if <math>p</math> and
-	<math>q</math> are two observations on a set of <math>k</math>
-	variables with covariance matrix <math>C</math>, then the
-	Mahalanobis distance between the observations is given by
+	Computes the Mahalanobis distances of each observation from
+	the centroid, using the series in <repl>varlist</repl>.  The
+	Mahalanobis distance is the distance between two points in a
+	<math>k</math>-dimensional space, scaled by the statistical
+	variation in each dimension of the space.  For example, if
+	<math>p</math> and <math>q</math> are two observations on a
+	set of <math>k</math> variables with covariance matrix
+	<math>C</math>, then the Mahalanobis distance between the
+	observations is given by
 	<equation status="display"
         tex="\[\sqrt{(p-q)^{\prime}C^{-1}(p-q)}\]"
         ascii="sqrt((p - q)' * C-inverse * (p - q))"
@@ -8806,32 +8879,73 @@
   <command name="meantest" section="Tests" label="Difference of means">
 
     <usage>
-      <arguments>
-        <argument>series1</argument>
-        <argument>series2</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>meantest</lit> <repl>x</repl> <repl>y</repl> </altform>
+        <altform><lit>meantest</lit> <repl>x</repl> <lit>--split-by=</lit><repl>dummy</repl></altform>
+      </altforms>
       <options>
         <option>
 	  <flag>--unequal-vars</flag>
 	  <effect>assume variances are unequal</effect>
         </option>
+        <option>
+	  <flag>--paired</flag>
+	  <effect>conduct a paired test</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printed output</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+	  <effect>time series only</effect>
+        </option>
       </options>
+      <examples>
+        <example>meantest x y</example>
+        <example>meantest x y --unequal-vars</example>
+        <example>meantest x y --paired</example>
+        <example>meantest x --split-by=d</example>
+      </examples>
     </usage>
 
     <description>
       <para context="cli">
-	Calculates the <math>t</math> statistic for the null
-	hypothesis that the population means are equal for the
-	variables <repl>series1</repl> and <repl>series2</repl>, and
-	shows its p-value.
+	In its primary usage, calculates the <math>t</math> statistic
+	for the null hypothesis that the population means are equal
+	for the series <repl>x</repl> and <repl>y</repl>, and shows
+	output including the p-value. Results can be retrieved using
+	the accessors <fncref targ="$test"/> and <fncref
+	targ="$pvalue"/>, in which case the <opt>quiet</opt> option
+	may used to omit the printout.
       </para>
-      <para>
+      <para context="cli">
+	In its alternate form, with the <opt>split-by</opt> option,
+	the samples whose means are tested for equality are two
+	subsets of the series <repl>x</repl>, for which the series
+	<repl>dummy</repl> takes the values 0 and 1, respectively.
+      </para>
+      <para context="cli">
 	By default the test statistic is calculated on the assumption
 	that the variances are equal for the two variables. With the
 	<opt>unequal-vars</opt> option the variances are assumed to
 	be different; in this case the degrees of freedom for the test
 	statistic are approximated as per <cite
 	key="satter46">Satterthwaite (1946)</cite>.
+      </para>
+      <subhead context="cli">Paired test</subhead>
+      <para context="cli">
+        In the primary case (only) the <opt>paired</opt> option can be
+        given, to test the null hypothesis that the mean difference
+        between the paired values of the two series arguments is
+        zero. Otherwise, pairing is not assumed.
+      </para>
+      <subhead context="cli">Robust test</subhead>
+      <para context="cli">
+        Given time series data, in the primary case (only) the
+        <opt>robust</opt> option can be given to conduct a test of
+        equality of the means of <repl>x</repl> and <repl>y</repl>
+        which is robust in respect of serial correlation.
       </para>
       <para context="gui">
 	Calculates the t-test for the null hypothesis that the
@@ -13450,7 +13564,7 @@
 	model:
       </para>
       <code>
-	restrict
+        restrict
 	 b[1] = 0
 	 b[2] - b[3] = 0
 	 b[4] + 2*b[5] = 1
@@ -14633,7 +14747,8 @@
 	<li>
 	  <para><lit>bootrep</lit>: an integer. Sets the number of
 	  replications for the <cmdref targ="restrict"/> command with
-	  the <opt>bootstrap</opt> option.</para>
+	  the <opt>bootstrap</opt> option.
+	  </para>
 	</li>
 	<li>
 	  <para><lit>garch_vcv</lit>: <lit>unset</lit>,
@@ -16979,48 +17094,115 @@
 
   </command>
 
-  <command name="vartest" section="Tests"
-    label="Difference of variances">
+  <command name="vartest" section="Tests" label="Difference of variances">
 
     <usage>
-      <arguments>
-        <argument>series1</argument>
-        <argument>series2</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>vartest</lit> <repl>x</repl> <repl>y</repl> </altform>
+        <altform><lit>vartest</lit> <repl>x</repl> <lit>--split-by=</lit><repl>dummy</repl></altform>
+      </altforms>
+      <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printed output</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+          <optparm>method</optparm>
+	  <effect>see below</effect>
+        </option>
+      </options>
+      <examples>
+        <example>vartest x y</example>
+        <example>meantest x --split-by=d</example>
+        <example>meantest x y --robust=median</example>
+        <example>meantest x y --robust=trimmed,5</example>
+      </examples>
     </usage>
 
     <description>
       <para context="cli">
-	Calculates the <math>F</math> statistic for the null
-	hypothesis that the population variances for the variables
-	<repl>series1</repl> and <repl>series2</repl> are equal, and
-	shows its p-value. The test statistics and the p-value can be
-	retrieved through the accessors <fncref targ="$test"/>
-	and <fncref targ="$pvalue"/>, respectively. The following code
+	In its primary usage, calculates the <math>F</math> statistic
+	for the null hypothesis that the population variances are equal
+	for the series <repl>x</repl> and <repl>y</repl>, and shows
+	output including the p-value. Results can be retrieved using
+	the accessors <fncref targ="$test"/> and <fncref
+	targ="$pvalue"/>, in which case the <opt>quiet</opt> option
+	may used to omit the printout.
+      </para>
+      <para>
+        For example, the following code:
       </para>
       <code>
-      	open AWM18.gdt
-		vartest EEN EXR
-		eval $test
-		eval $pvalue
+        open AWM18.gdt
+        vartest EEN EXR
+        eval $test
+        eval $pvalue
       </code>
-    <para>
-      computes the test and shows how to retrieve the test statistics and
-      corresponding p-value afterwards:
-  	</para>
-  	<code>
-		Equality of variances test
+      <para>
+        produces the output shown below:
+      </para>
+      <code>
+        Equality of variances test
 
-		EEN: Number of observations = 192
-		EXR: Number of observations = 188
-		Ratio of sample variances = 3.70707
-		Null hypothesis: The two population variances are equal
-		Test statistic: F(191,187) = 3.70707
-		p-value (two-tailed) = 1.94866e-18
+        EEN: Number of observations = 192
+        EXR: Number of observations = 188
+        Ratio of sample variances = 3.70707
+        Null hypothesis: The two population variances are equal
+        Test statistic: F(191,187) = 3.70707
+        p-value (two-tailed) = 1.94866e-18
 
-		3.7070716
-		1.9486605e-18
-	</code>
+        3.7070716
+        1.9486605e-18
+      </code>
+      <para context="cli">
+	In its alternate form, with the <opt>split-by</opt> option,
+	the samples whose variances are tested for equality are two
+	subsets of the series <repl>x</repl>, for which the series
+	<repl>dummy</repl> takes the values 0 and 1, respectively.
+      </para>
+
+      <subhead context="cli">Robust tests</subhead>
+      <para context="cli">
+        The standard <math>F</math> test rests on the assumption of
+        normality and can over-reject substantially if the data are
+        in fact non-normal. The <opt>robust</opt> option offers three
+        alternatives, as follows:
+      </para>
+      <ilist context="cli">
+        <li>
+          <para>
+            When <repl>method</repl> is <lit>mean</lit>, the test
+            defined by <cite key="levene60">Levene (1960)</cite>. This
+            is in effect a one-way ANOVA using the absolute deviations
+            of the original data from their respective sample means.
+          </para>
+        </li>
+        <li>
+          <para>
+            When <repl>method</repl> is <lit>median</lit>, a variant
+            on Levene's test suggested by <cite
+            key="brown-forsythe">Brown and Forsythe (1974)</cite>,
+            where the initial centering uses the sample median rather
+            than the mean. This is recommended if the data are
+            substantially skewed.
+          </para>
+        </li>
+        <li>
+          <para>
+            When <repl>method</repl> is <lit>trimmed</lit>, a second
+            variant due to Brown and Forsythe, where centering is
+            relative to a trimmed mean. This may be preferable if the
+            data are fat-tailed but reasonably symmetrical. By default
+            10 percent trimming is employed (that is, the least and
+            the greatest 10 percent of observations are omitted when
+            calculating the mean) but this can be adjusted by
+            appending a comma and an integer value, as in
+            <opt>robust=trimmed,5</opt> which specifies 5 percent
+            trimming.
+          </para>
+        </li>
+      </ilist>
       <para context="gui">
 	Calculates the <math>F</math> statistic for the null
 	hypothesis that the population variances are equal for the

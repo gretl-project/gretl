@@ -226,7 +226,12 @@ static void stderr_output_handler (const gchar *log_domain,
 				   const gchar *message,
 				   gpointer user_data)
 {
-    fprintf(stderr, "%s : %s\n", log_domain, message);
+    if (!strcmp(log_domain, "Gtk") && (log_level & G_LOG_LEVEL_WARNING)) {
+        /* suppress Gtk warning */
+        return;
+    } else {
+        fprintf(stderr, "%s : %s\n", log_domain, message);
+    }
 }
 
 static void set_g_logging (int debug)
@@ -340,9 +345,9 @@ void gretl_win32_debug_init (int debug)
 
 void gretl_win32_init (int debug, int ignore_rc)
 {
+#if GTK_MAJOR_VERSION < 3
     char tmp[4] = {0};
 
-#if GTK_MAJOR_VERSION < 3
     read_reg_val(HKEY_CURRENT_USER,
 		 "Microsoft\\Windows\\CurrentVersion\\ThemeManager",
 		 "ThemeActive", tmp);
@@ -461,7 +466,6 @@ int emf_to_clipboard (char *emfname)
     HENHMETAFILE hemfclip;
     HENHMETAFILE hemf = NULL;
     HANDLE htest;
-    gchar *fconv = NULL;
 
 #if GTK_MAJOR_VERSION > 2
     mainw = GDK_WINDOW_HWND(gtk_widget_get_window(mdata->main));

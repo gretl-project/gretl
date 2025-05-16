@@ -1407,11 +1407,12 @@ gretl_matrix *conf_intervals_matrix (CoeffIntervals *cf)
 
 int gretl_is_simple_OLS (const MODEL *pmod)
 {
-    if (pmod->ci == OLS &&
-	pmod->list != NULL &&
-	pmod->list[0] == 3 &&
-	pmod->list[2] == 0) {
-	return 1;
+    if (pmod->ci != OLS || pmod->list == NULL) {
+        return 0;
+    } else if (pmod->list[0] == 3 && pmod->list[2] == 0) {
+        return 1;
+    } else if (pmod->list[0] == 2 && pmod->list[2] != 0) {
+        return 1;
     } else {
 	return 0;
     }

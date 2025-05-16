@@ -33,7 +33,7 @@ typedef struct {
     double wmax, wmin; /* whisker max and min */
     int n;
     char varname[VNAMELEN];
-    char *bool;        /* FIXME */
+    char *boolstr;     /* FIXME */
     gretl_matrix *outliers;
 } BOXPLOT;
 
@@ -259,8 +259,8 @@ static void box_stats_leader (PLOTGROUP *grp, int i, int offset,
             sprintf(numstr, "%d", grp->pan_min + i);
         }
         pprintf(prn, "%-*s", offset, numstr);
-    } else if (plt->bool != NULL) {
-        pprintf(prn, "%s\n %-*s", plt->varname, offset - 1, plt->bool);
+    } else if (plt->boolstr != NULL) {
+        pprintf(prn, "%s\n %-*s", plt->varname, offset - 1, plt->boolstr);
     } else {
         pprintf(prn, "%-*s", offset, plt->varname);
     }
@@ -292,8 +292,8 @@ static int get_format_offset (PLOTGROUP *grp)
     int i, n;
 
     for (i=0; i<grp->nplots; i++) {
-        if (grp->plots[i].bool != NULL) {
-            n = strlen(grp->plots[i].bool);
+        if (grp->plots[i].boolstr != NULL) {
+            n = strlen(grp->plots[i].boolstr);
         } else {
             n = strlen(grp->plots[i].varname);
         }
@@ -442,7 +442,7 @@ static void plotgroup_destroy (PLOTGROUP *grp)
 
     for (i=0; i<grp->nplots; i++) {
         gretl_matrix_free(grp->plots[i].outliers);
-        free(grp->plots[i].bool);
+        free(grp->plots[i].boolstr);
     }
 
     free(grp->title);
@@ -467,7 +467,7 @@ static void boxplot_init (BOXPLOT *bp)
     bp->wmax = bp->wmin = NADBL;
     bp->n = 0;
     bp->varname[0] = '\0';
-    bp->bool = NULL;
+    bp->boolstr = NULL;
     bp->outliers = NULL;
 }
 
@@ -603,7 +603,7 @@ static int test_for_bool (PLOTGROUP *grp)
     int i;
 
     for (i=0; i<grp->nplots; i++) {
-        if (grp->plots[i].bool != NULL) {
+        if (grp->plots[i].boolstr != NULL) {
             return 1;
         }
     }
@@ -647,7 +647,7 @@ static void do_boxplot_xtics (PLOTGROUP *grp, gretlopt opt,
 
     for (i=0, j=0; i<grp->nplots; i+=ticskip, j++) {
         bp = &grp->plots[i];
-        tstr = (opt & OPT_Z)? bp->bool : bp->varname;
+        tstr = (opt & OPT_Z)? bp->boolstr : bp->varname;
         ilen = strlen(tstr);
         if (ilen > ticlen) {
             ticlen = ilen;
@@ -683,10 +683,10 @@ static void do_boxplot_labels (PLOTGROUP *grp, int anybool,
         bp = &grp->plots[i];
         fprintf(fp, "set label \"%s\" at %d,%g center\n",
                 bp->varname, i+1, lpos);
-        if (bp->bool != NULL) {
+        if (bp->boolstr != NULL) {
             /* FIXME positioning? */
             fprintf(fp, "set label \"%s\" at %d,%g center\n",
-                    bp->bool, i+1, lpos - .8 * h);
+                    bp->boolstr, i+1, lpos - .8 * h);
         }
     }
 }
@@ -1038,9 +1038,9 @@ static int real_boxplots (const int *list,
             double di = grp->dvals->val[i];
 
             if (st != NULL) {
-                plot->bool = gretl_strdup(series_table_get_string(st, di));
+                plot->boolstr = gretl_strdup(series_table_get_string(st, di));
             } else {
-                plot->bool = gretl_strdup_printf("%g", di);
+                plot->boolstr = gretl_strdup_printf("%g", di);
             }
             grp->n_bools += 1;
         }
@@ -1491,7 +1491,7 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
                 } else if (*label == '(') {
                     /* should be boolean specifier, following varname */
                     if (i > 0) {
-                        grp->plots[i-1].bool = label;
+                        grp->plots[i-1].boolstr = label;
                     } else {
                         free(label);
                         err = E_DATA;

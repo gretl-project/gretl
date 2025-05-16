@@ -184,12 +184,12 @@ void iconview_menubar_state (gboolean s)
 
 #define OK_MIDAS_PD(p) (p == 1 || p == 4 || p == 12)
 
-#define COMPACTABLE(d) (d->structure == TIME_SERIES && \
-                        ((d->pd == 4 || d->pd == 12 || d->pd == 24) || \
-                         ((d->pd == 5 || d->pd == 6 || d->pd == 7) &&  \
-                          d->sd0 > 100000)))
+#define COMPACTABLE(d) ((d->structure == TIME_SERIES || \
+                         d->structure == SPECIAL_TIME_SERIES) && \
+                        d->pd > 1 && d->pd != 10)
 
-#define EXPANSIBLE(d) (d->structure == TIME_SERIES && (d->pd == 1 || d->pd == 4))
+#define EXPANSIBLE(d) (d->structure == TIME_SERIES && \
+                       (d->pd == 1 || d->pd == 4))
 
 #define extended_ts(d) ((d)->structure == TIME_SERIES || \
                         (d)->structure == SPECIAL_TIME_SERIES || \
@@ -322,12 +322,12 @@ void sample_related_menu_state (void)
     if (mdata->ui != NULL) {
 	gboolean s = dataset_is_subsampled(dataset);
 
+        /* actions supported only when subsampled */
 	flip(mdata->ui, "/menubar/Sample/FullRange", s);
 	flip(mdata->ui, "/menubar/Sample/PermaSample", s);
+        /* actions supported when not subsampled */
 	flip(mdata->ui, "/menubar/Data/DataStructure", !s);
-	flip(mdata->ui, "/menubar/Data/DataCompact", !s);
-	flip(mdata->ui, "/menubar/Data/DataExpand", !s);
-	flip(mdata->ui, "/menubar/Data/DataTranspose", !s);
+        flip(mdata->ui, "/menubar/Data/DataTranspose", !s);
 
 	if (s && dataset->submask != NULL && dataset->submask == RESAMPLED) {
 	    flip(mdata->ui, "/menubar/Sample/PermaSample", FALSE);
@@ -1073,7 +1073,7 @@ static void special_panel_label (DATASET *dset)
     u2 = 1 + dset->t2 / dset->pd;
     ntolabel(st1, 0, &tset);
     ntolabel(st2, dset->pd - 1, &tset);
-    s = g_strdup_printf("Panel: units %d:%d, time %s:%s",
+    s = g_strdup_printf(_("Panel: units %d:%d, time %s:%s"),
 			u1, u2, st1, st2);
     gtk_label_set_text(GTK_LABEL(mdata->status), s);
     g_free(s);

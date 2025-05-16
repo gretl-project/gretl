@@ -640,7 +640,7 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs,
 	N_("Weight variable contains negative values");
     const char *bad_zeros =
 	N_("Weight variable is not a dummy but contains zeros");
-    int ones = 0, zeros = 0, nobs = 0;
+    int zeros = 0, nobs = 0;
     int t, is_dummy = 1;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -650,9 +650,7 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs,
 	    return 1;
 	} else if (w[t] > 0.0) {
 	    nobs++;
-	    if (w[t] == 1.0) {
-		ones++;
-	    } else {
+	    if (w[t] != 1.0) {
 		is_dummy = 0;
 	    }
 	} else if (w[t] == 0.0) {
@@ -673,7 +671,7 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs,
     *effobs = nobs;
 
     if (is_dummy) {
-	/* the weight var is a dummy */
+	/* the weight var is a 0/1 dummy */
 	gretl_model_set_int(pmod, "wt_dummy", 1);
 	gretl_model_set_int(pmod, "wt_zeros", zeros);
     } else if (zeros > 0) {
@@ -1223,7 +1221,8 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     mdl.ifc = reglist_check_for_const(mdl.list, dset);
 
     /* Check for presence of lagged dependent variable?
-       (Don't bother if this is an auxiliary regression.) */
+       (Don't bother if this is an auxiliary regression.)
+    */
     if (!(opt & OPT_A) && !dataset_is_cross_section(dset)) {
 	ldv = check_for_lags(&mdl, dset);
     }
@@ -1735,7 +1734,7 @@ static int hatvars (MODEL *pmod, const DATASET *dset)
 {
     int yno = pmod->list[1];
     int xno, i, t;
-    double x;
+    double x, y;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (model_missing(pmod, t)) {
@@ -1750,11 +1749,11 @@ static int hatvars (MODEL *pmod, const DATASET *dset)
 	    }
             pmod->yhat[t] += pmod->coeff[i] * x;
         }
-	x = dset->Z[yno][t];
+	y = dset->Z[yno][t];
 	if (pmod->nwt) {
-	    x *= sqrt(dset->Z[pmod->nwt][t]);
+	    y *= sqrt(dset->Z[pmod->nwt][t]);
 	}
-        pmod->uhat[t] = x - pmod->yhat[t];
+        pmod->uhat[t] = y - pmod->yhat[t];
     }
 
     return 0;

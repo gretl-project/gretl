@@ -109,7 +109,8 @@ static int check_lhs_vec (nlspec *s)
     int v = gretl_vector_get_length(s->lvec);
 
     if (v != s->nobs) {
-	if (v > 0 && s->nobs == 1) {
+	if (v > 0) {
+            s->t2 = v;
 	    s->nobs = v;
 	} else {
 	    fprintf(stderr, "LHS vector should be of length %d, is %d\n",
@@ -2054,6 +2055,10 @@ int finalize_nls_model (MODEL *pmod, nlspec *spec,
     pmod->smpl.t1 = spec->dset->t1;
     pmod->smpl.t2 = spec->dset->t2;
 
+    if (spec->lhtype == GRETL_TYPE_MATRIX && spec->nobs != dset->n) {
+        gretl_model_set_int(pmod, "matrix_data", 1);
+    }
+
     err = add_GNR_std_errs_to_model(pmod, glist);
 
     add_stats_to_model(pmod, spec);
@@ -2291,6 +2296,10 @@ static int make_other_nl_model (MODEL *pmod,
     pmod->t1 = spec->t1;
     pmod->t2 = spec->t2;
     pmod->nobs = spec->nobs;
+
+    if (spec->lhtype == GRETL_TYPE_MATRIX && spec->nobs != dset->n) {
+        gretl_model_set_int(pmod, "matrix_data", 1);
+    }
 
     /* hmm */
     pmod->dfn = pmod->ncoeff;

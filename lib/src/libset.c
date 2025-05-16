@@ -136,6 +136,7 @@ static int seed_is_set;
 static int comments_on;
 static char data_delim = ',';
 static char export_decpoint = '.';
+static int suppress_plots;
 
 typedef struct setvar_ setvar;
 
@@ -2393,6 +2394,10 @@ int libset_init (void)
 	done = 1;
     }
 
+    if (getenv("CLI_NO_PLOTS")) {
+        suppress_plots = 1;
+    }
+
     return err;
 }
 
@@ -2607,6 +2612,18 @@ int gretl_in_tool_mode (void)
     return tool_mode;
 }
 
+/* for CLI use: suppress production of plots? */
+
+void gretl_set_no_plots (void)
+{
+    suppress_plots = 1;
+}
+
+int gretl_no_plots (void)
+{
+    return gui_mode ? 0 : suppress_plots;
+}
+
 /* mechanism to support callback for representing ongoing
    activity in the GUI */
 
@@ -2629,8 +2646,8 @@ void show_activity_callback (void)
     }
 }
 
-/* Support for the GUI "Stop" button -- could in principle be extended
-   to gretlcli via some Ctrl+key combination?
+/* Support for the GUI "Stop" button, to terminate execution
+   of a long-running script.
 */
 
 static int user_stop;

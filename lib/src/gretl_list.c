@@ -171,6 +171,13 @@ int *gretl_list_new (int nterms)
     return list;
 }
 
+/* experimental wrapper for use with gretl4py */
+
+void gretl_list_free (int *list)
+{
+    free(list);
+}
+
 /**
  * gretl_list_array_new:
  * @nlists: the number of lists to create.
@@ -1073,7 +1080,7 @@ char *gretl_list_get_names (const int *list, const DATASET *dset,
  * gretl_list_get_names_array:
  * @list: array of integers.
  * @dset: dataset information.
- * @err: location to receive error code.
+ * @err: location to receive error code, or #NULL.
  *
  * Returns: An array of strings holding the names of the
  * members of @list, or NULL on failure.
@@ -1086,8 +1093,10 @@ char **gretl_list_get_names_array (const int *list,
     char **S = NULL;
     int i, vi, n;
 
-    if (list == NULL) {
-	*err = E_DATA;
+    if (list == NULL || dset == NULL) {
+        if (err != NULL) {
+            *err = E_DATA;
+        }
 	return NULL;
     }
 
@@ -1099,7 +1108,9 @@ char **gretl_list_get_names_array (const int *list,
 
     S = strings_array_new(n);
     if (S == NULL) {
-	*err = E_ALLOC;
+        if (err != NULL) {
+            *err = E_ALLOC;
+        }
 	return NULL;
     }
 
@@ -1111,7 +1122,9 @@ char **gretl_list_get_names_array (const int *list,
 	    S[i] = gretl_strdup(dset->varname[vi]);
 	}
 	if (S[i] == NULL) {
-	    *err = E_ALLOC;
+            if (err != NULL) {
+                *err = E_ALLOC;
+            }
 	    strings_array_free(S, n);
 	    S = NULL;
 	    break;

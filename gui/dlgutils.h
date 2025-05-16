@@ -73,15 +73,15 @@ GtkWidget *get_active_edit_text (void);
 void set_active_edit_name (GtkWidget *w);
 
 void raise_and_focus_dialog (GtkEditable *entry, 
-			     GtkWidget *parent);
+                             GtkWidget *parent);
 
 gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key, 
-			   gpointer p);
+                           gpointer p);
 
 typedef struct combo_opts_ combo_opts;
 
 GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
-			     unsigned char flags);
+                             unsigned char flags);
 
 gint gretl_dialog_set_destruction (GtkWidget *w, gpointer p);
 
@@ -102,7 +102,7 @@ GtkWidget *close_button (GtkWidget *hbox);
 GtkWidget *ok_button (GtkWidget *hbox);
 
 GtkWidget *ok_validate_button (GtkWidget *hbox, int *retptr,
-			       int *valptr);
+                               int *valptr);
 
 GtkWidget *apply_button (GtkWidget *hbox);
 
@@ -119,23 +119,24 @@ void set_double_from_spin (GtkSpinButton *b, double *x);
 void set_int_from_spin (GtkSpinButton *b, int *k);
 
 GtkWidget *gretl_option_check_button (const char *label,
-				      gretlopt *popt,
-				      gretlopt val);
+                                      gretlopt *popt,
+                                      gretlopt val);
 
 GtkWidget *gretl_option_check_button_switched (const char *label,
-					       gretlopt *popt,
-					       gretlopt val);
+                                               gretlopt *popt,
+                                               gretlopt val);
 
 void blocking_edit_dialog (int ci, const char *title, 
-			   const char *info, const char *deflt, 
-			   void (*okfunc)(), void *okptr,
-			   Varclick click, GtkWidget *parent,
-			   int *canceled);
+                           const char *info, const char *deflt,
+                           void (*okfunc)(GtkWidget *, dialog_t *),
+                           void *okptr, Varclick click,
+                           GtkWidget *parent, int *canceled);
 
 void edit_dialog (int ci, const char *title, 
-		  const char *info, const char *deflt, 
-		  void (*okfunc)(), void *okptr,
-		  Varclick click, GtkWidget *parent);
+                  const char *info, const char *deflt,
+                  void (*okfunc)(GtkWidget *, dialog_t *),
+                  void *okptr, Varclick click,
+                  GtkWidget *parent);
 
 void edit_dialog_reset (dialog_t *dlg);
 
@@ -158,17 +159,17 @@ gchar *entry_box_get_trimmed_text (GtkWidget *w);
 GtkWidget *gretl_opts_combo (combo_opts *opts, int deflt);
 
 GtkWidget *gretl_opts_combo_masked (combo_opts *opts, int deflt,
-				    const int *masked);
+                                    const int *masked);
 
 GtkWidget *gretl_opts_combo_full (combo_opts *opts, int deflt, 
-				  const int *masked,
-				  GCallback callback,
-				  gpointer calldata);
+                                  const int *masked,
+                                  GCallback callback,
+                                  gpointer calldata);
 
 dialog_opts *dialog_opts_new (int n, int type, 
-			      gretlopt *optp,
-			      const gretlopt *vals,
-			      const char **strs);
+                              gretlopt *optp,
+                              const gretlopt *vals,
+                              const char **strs);
 
 void dialog_opts_free (dialog_opts *opts);
 
@@ -179,10 +180,10 @@ void set_combo_box_default_text (GtkComboBox *box, const char *s);
 void depopulate_combo_box (GtkComboBox *box);
 
 gboolean widget_get_pointer_info (GtkWidget *w, gint *x, gint *y,
-				  GdkModifierType *mask);
+                                  GdkModifierType *mask);
 
 void gretl_emulated_dialog_add_structure (GtkWidget *dlg,
-					  GtkWidget **pvbox,
-					  GtkWidget **pbbox);
+                                          GtkWidget **pvbox,
+                                          GtkWidget **pbbox);
 
 #endif /* DLGUTILS_H */

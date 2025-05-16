@@ -114,19 +114,6 @@ static inline BTreeNode *btree_first_node (BTree *tree)
     return tmp;
 }
 
-static inline BTreeNode *btree_node_previous (BTreeNode *node)
-{
-    BTreeNode *tmp = node->left;
-
-    if (node->left_child) {
-	while (tmp->right_child) {
-	    tmp = tmp->right;
-	}
-    }
-
-    return tmp;
-}
-
 static inline BTreeNode *btree_node_next (BTreeNode *node)
 {
     BTreeNode *tmp = node->right;

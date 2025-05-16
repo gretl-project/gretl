@@ -2014,6 +2014,10 @@ static void print_model_heading (const MODEL *pmod,
     int dvnl = 1;
     int order = 0;
 
+    /* flag indicating whether we've printed an opening quote,
+       in the case of CSV output */
+    int csv_iniquote = 0;
+
     if (pmod->aux != AUX_VAR && pmod->aux != AUX_VECM) {
 	ntolabel(startdate, t1, dset);
 	ntolabel(enddate, t2, dset);
@@ -2081,6 +2085,7 @@ static void print_model_heading (const MODEL *pmod,
 
 	    if (csv) {
 		pprintf(prn, "\"%s:\"\n", modname);
+		csv_iniquote = 1;
 	    } else if (strlen(pmod->name) > 8) {
 		pprintf(prn, "\n%s:\n", modname);
 	    } else {
@@ -2089,11 +2094,16 @@ static void print_model_heading (const MODEL *pmod,
 	} else {
 	    if (csv) {
 		pprintf(prn, "\"%s %d: ", _("Model"), pmod->ID);
+		csv_iniquote = 1;
 	    } else {
 		pprintf(prn, "\n%s %d: ", _("Model"), pmod->ID);
 	    }
 	}
 	break;
+    }
+
+    if (csv && !csv_iniquote) {
+	pputc(prn, '"');
     }
 
     if (pmod->aux == AUX_VAR || pmod->aux == AUX_VECM) {
@@ -2108,7 +2118,7 @@ static void print_model_heading (const MODEL *pmod,
 	const char *estr = estimator_string(pmod, prn);
 	const char *fmt;
 
-	if (dset->v == 0) {
+	if (dset->v == 0 || gretl_model_get_int(pmod, "matrix_data")) {
 	    fmt = N_("%s, using %d observations");
 	    pprintf(prn, _(fmt), _(estr), pmod->nobs);
 	} else if (char_len(estr) > 32) {
@@ -5389,7 +5399,6 @@ static void print_rho (const ARINFO *arinfo, int c, int dfd, PRN *prn)
 
 static void alt_print_rho_terms (const MODEL *pmod, PRN *prn)
 {
-    double xx = 0.0;
     int i, dfd;
 
     if (pmod->arinfo == NULL ||
@@ -5407,7 +5416,6 @@ static void alt_print_rho_terms (const MODEL *pmod, PRN *prn)
 
     for (i=1; i<=pmod->arinfo->arlist[0]; i++) {
 	print_rho(pmod->arinfo, i - 1, dfd, prn);
-	xx += pmod->arinfo->rho[i-1];
     }
 }
 

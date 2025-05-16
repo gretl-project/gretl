@@ -231,7 +231,11 @@ static FITRESID *fit_resid_new_for_model (const MODEL *pmod,
 	return NULL;
     }
 
-    fr = fit_resid_new_with_length(dset->n, 0);
+    if (dset != NULL) {
+        fr = fit_resid_new_with_length(dset->n, 0);
+    } else {
+        fr = fit_resid_new_with_length(t2 - t1 + 1, 0);
+    }
 
     if (fr == NULL) {
 	*err = E_ALLOC;
@@ -466,7 +470,7 @@ static int detect_lag (int vy, int vx, int t1, int t2,
    elements as the model has independent variables, and in each place
    we either write a zero (if the coefficient does not correspond to a
    lag of the dependent variable) or a positive integer corresponding
-   to the lag order.  However, In case the list of independent vars
+   to the lag order.  However, in case the list of independent vars
    contains no lagged dependent var, *depvar_lags is set to NULL.
    Returns 1 on error, 0 otherwise.
 */
@@ -478,7 +482,9 @@ static int *process_lagged_depvar (MODEL *pmod, const DATASET *dset)
     int nl = 0;
 
     xlist = model_xlist(pmod);
-    dvlags = malloc(xlist[0] * sizeof *dvlags);
+    if (xlist != NULL) {
+        dvlags = malloc(xlist[0] * sizeof *dvlags);
+    }
 
     if (dvlags != NULL) {
         int yv = gretl_model_get_depvar(pmod);
@@ -2571,8 +2577,12 @@ static int mlogit_fcast (Forecast *fc, const MODEL *pmod,
    the forecast from a static model estimated via OLS.
 */
 
-static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
-			 const DATASET *dset, gretlopt opt)
+static int linear_fcast (Forecast *fc,
+                         const MODEL *pmod,
+                         int yno,
+			 const DATASET *dset,
+                         const gretl_matrix *X,
+                         gretlopt opt)
 {
     const double *offvar = NULL;
     double xval, lmax = NADBL;
@@ -2581,7 +2591,7 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
     int i, vi, t;
     int err = 0;
 
-    if (COUNT_MODEL(pmod->ci)) {
+    if (COUNT_MODEL(pmod->ci) && dset != NULL) {
 	/* special for "offset" variable */
 	int offnum = gretl_model_get_int(pmod, "offset_var");
 
@@ -2608,14 +2618,16 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
 	int miss = 0;
 
 	for (i=0; i<k && !miss; i++) {
-	    int lag;
+	    int lag = depvar_lag(fc, i);
 
-	    vi = pmod->list[i+2];
-	    if ((lag = depvar_lag(fc, i))) {
+	    if (lag != 0) {
 		xval = fcast_get_ldv(fc, yno, t, lag, dset);
-	    } else {
+	    } else if (dset != NULL) {
+                vi = pmod->list[i+2];
 		xval = dset->Z[vi][t];
-	    }
+	    } else {
+                xval = X->val[i * X->rows + t];
+            }
 	    if (na(xval)) {
 		miss = 1;
 	    } else {
@@ -2633,7 +2645,7 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
 	}
     }
 
-    if (all_probs) {
+    if (all_probs && dset != NULL) {
 	gretl_matrix *P;
 
 	P = ordered_probabilities(pmod, fc->yhat, fc->t1, fc->t2,
@@ -2665,7 +2677,8 @@ static int get_forecast_method (Forecast *fc,
     fc->method = FC_STATIC;
 
     /* do setup for possible lags of the dependent variable,
-       unless OPT_S for "static" has been given */
+       unless OPT_S for "static" has been given
+    */
     if (dataset_is_time_series(dset) && !(opt & OPT_S) && pmod->ci != ARMA) {
 	fc->dvlags = process_lagged_depvar(pmod, dset);
     }
@@ -2801,7 +2814,7 @@ static int revise_fr_start (FITRESID *fr, int yno, const double **Z,
     return 0;
 }
 
-/* check we we really can do an integrated forecast */
+/* check whether we really can do an integrated forecast */
 
 static int check_integrated_forecast_option (MODEL *pmod,
 					     DATASET *dset,
@@ -2968,7 +2981,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	    err = mlogit_fcast(&fc, pmod, dset);
 	}
     } else {
-	err = linear_fcast(&fc, pmod, yno, dset, opt);
+	err = linear_fcast(&fc, pmod, yno, dset, NULL, opt);
     }
 
     /* free any auxiliary info */
@@ -3014,6 +3027,90 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     }
 
     return err;
+}
+
+static int matrix_forecast_supported (MODEL *pmod)
+{
+    const int *xlist;
+
+    if (pmod->errcode) {
+        return 0;
+    } else if (pmod->ncoeff < 1) {
+        return 0;
+    } else if (gretl_model_get_int(pmod, "ldepvar")) {
+        return 0;
+    } else if (pmod->ci != OLS &&
+               pmod->ci != LOGIT &&
+               pmod->ci != PROBIT) {
+        /* FIXME relax this! */
+        return 0;
+    } else if ((xlist = model_xlist(pmod)) == NULL) {
+        return 0;
+    }
+
+    if (pmod->ncoeff != xlist[0]) {
+        return 0;
+    } else {
+        fprintf(stderr, "HERE ncoeff = nx = %d, OK?\n", pmod->ncoeff);
+    }
+
+    return 1;
+}
+
+/* April 2025: simple forecast interface: X-data given in matrix
+   form and prediction returned in matrix form.
+*/
+
+gretl_matrix *matrix_forecast (MODEL *pmod,
+                               const gretl_matrix *X,
+                               int *err)
+{
+    gretl_matrix *F = NULL;
+    FITRESID *fr = NULL;
+    Forecast fc;
+    int n = 0;
+
+    if (!matrix_forecast_supported(pmod)) {
+        *err = E_DATA;
+    } else if (X == NULL || X->rows < 1) {
+        *err = E_DATA;
+    } else {
+        n = X->rows;
+        fr = fit_resid_new_for_model(pmod, NULL, 0, n, 0, err);
+    }
+
+    if (!*err) {
+        int yno = pmod->list[1]; /* FIXME */
+
+        forecast_init(&fc);
+        fc.method = FC_STATIC;
+        fc.yhat = fr->fitted;
+        fc.sderr = fr->sderr;
+        fc.t1 = 0;
+        fc.t2 = n - 1;
+        *err = linear_fcast(&fc, pmod, yno, NULL, X, OPT_NONE);
+    }
+
+    if (!*err) {
+        int cols = fc.sderr == NULL ? 1 : 2;
+        int i;
+
+        F = gretl_zero_matrix_new(n, cols);
+        if (F == NULL) {
+            *err = E_ALLOC;
+        } else {
+            for (i=0; i<n; i++) {
+                gretl_matrix_set(F, i, 0, fc.yhat[i]);
+                if (cols > 1) {
+                    gretl_matrix_set(F, i, 1, fc.sderr[i]);
+                }
+            }
+        }
+    }
+
+    free_fit_resid(fr);
+
+    return F;
 }
 
 static int fcast_get_limit (const char *s, DATASET *dset)
@@ -3138,7 +3235,7 @@ static int parse_forecast_string (const char *s,
        expect t1 and t2, so the max becomes 2 (if OPT_R), else 1.
 
        Also note: t1 and t2 need not be given (even in the absence
-       if OPT_O) since these default to the current sample range.
+       of OPT_O) since these default to the current sample range.
     */
 
     if (opt & OPT_O) {

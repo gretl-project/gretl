@@ -1249,7 +1249,7 @@ static void sheet_add_obs_direct (Spreadsheet *sheet)
     if (dataset->markers) {
 	new_case_dialog(sheet);
     } else if (sheet->point == SHEET_AT_END) {
-	int n = add_obs_dialog(NULL, 1, OPT_NONE, sheet->win);
+	int n = add_obs_dialog(NULL, 1, NULL, sheet->win);
 
 	if (n > 0) {
 	    real_add_new_obs(sheet, NULL, n);
@@ -1314,7 +1314,6 @@ static void build_sheet_popup (Spreadsheet *sheet)
 		       G_CALLBACK(popup_sheet_add_obs),
 		       sheet);
     }
-
     if (sheet->flags & SHEET_INSERT_OBS_OK) {
 	add_popup_item(_("Insert Observation"), sheet->popup,
 		       G_CALLBACK(popup_sheet_insert_obs),
@@ -3073,8 +3072,10 @@ static void adjust_add_menu_state (Spreadsheet *sheet)
     if (complex_subsampled() || dataset->t2 < dataset->n - 1) {
 	sheet->flags &= ~SHEET_ADD_OBS_OK;
 	sheet->flags &= ~SHEET_INSERT_OBS_OK;
-    } else if ((sheet->flags & SHEET_SHORT_VARLIST) ||
-	       dataset_is_panel(dataset)) {
+    } else if (dataset_is_panel(dataset)) {
+	sheet->flags &= ~SHEET_ADD_OBS_OK;
+	sheet->flags &= ~SHEET_INSERT_OBS_OK;
+    } else if (sheet->flags & SHEET_SHORT_VARLIST) {
 	sheet->flags &= ~SHEET_INSERT_OBS_OK;
     }
 }

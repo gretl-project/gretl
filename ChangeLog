@@ -1,8 +1,71 @@
-version 2025a, in progress
-- "meantest" and "vartest" commands: support a variant where
-  the second series is a dummy with which to split the first
-  into two samples
-- macOS builds: update gnuplot to version 6.0.2
+version 2025b, in progress
+- gretlcli: add --no-plots option to suppress plots
+- new function thresh() for hard and soft thresholding
+- "gnuplot" command: generalize the --dummy functionality
+  for factorized plots; update and improve the help text
+- curl() function: add an option to skip downloading of
+  the body of the requested URL
+- cnameset() and rnameset(): these functions now flag an
+  error if the number of names given does not match the
+  relevant matrix dimension (as per the documentation)
+- Fix bug: correct the disturbance smoother for the de Jong
+  variant of the Kalman filter; also fix a memory leak
+- Fix bug: poor handling of vector added to a bundle "as a
+  series" when the dataset is sub-sampled
+- Fix minor bug: bad initialization in legacy Kalman code
+- internals: make gretl_get_data() support more data file
+  formats; several small fixes to quell errors and warnings
+  from gcc 15 and clang 20; add some code to facilitate new
+  gretl4py functionality
+- GUI: fix the action of the "Stop" button when running a
+  packaged function from the function-call dialog
+- GUI: relax the restrictions on the number of lags that
+  can be selected in the model specification dialog
+- regls addon: miscellaneous small fixes and tweaks
+- cleanup: delete the long-deprecated eigengen() function
+- start work on a gretl package for Windows ARM64
+- macOS: drop the "Calculator" button in the main window
+  toolbar, since this stopped working as a result of
+  recent security updates; also drop usage of otool by
+  libgretl_init()
+- update translatable strings
+
+2025-03-20 version 2025a
+- kalman filter: fixes for variance of smoothed disturbances
+  and some documentation updates
+- "meantest" and "vartest" commands: support more options and
+  expand their documentation
+- "system" command, iterated variants: allow more iterations
+  (now 250) before declaring non-convergence
+- aggregate() function; speed improvement in the matrix case
+- hyp2f1 function: enhance the documentation
+- document the $pmanteau accessor for VARs
+- GUI, preferences dialog: add a tab specifically for plot-
+  related settings
+- Fix bug: potential crash in the GUI when trying to forecast
+  from an ARIMA model without a constant
+- Fix bug: "dataset addobs n" with panel data (and without the
+  --panel-time option) was not respecting the documented
+  policy that 'n' refers to the number of cross-sectional
+  units to be added to the dataset
+- Fix bug: "mpols" was not respecting the --simple-print
+  option, now it does
+- Fix bug: the "join" command could overwrite some existing
+  data with missing values (contrary to the documentation) in
+  some cases
+- Fix bug: the RESET test in the GUI was broken when the
+  "show all variants" option was selected (since 2024c)
+- Function packaging: fix to allow a plot-checker function to
+  be private; documentation updates
+- markdown parser: improve extraction of URLs
+- minor code adjustments to comply with the C23 standard
+- update sourceforge URLs to use https
+- macOS builds: upgrade to GTK3
+- macOS and 64-bit Windows: update gnuplot to version 6.0.2
+- Windows 64-bit build: revert to use of MSVCRT rather then
+  UCRT, pending analysis of some problems with the latter
+- Windows 64-bit build: update to OpenBLAS 0.3.29; fixes for
+  the Windows-10 theme
 
 2024-12-12 version 2024d
 - "append" command: make the help text more explicit

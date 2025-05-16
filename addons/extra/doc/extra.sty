@@ -1,6 +1,7 @@
 \usepackage{fancyvrb,color}
+\newcommand{\dtk}[1]{\texttt{\detokenize{#1}}}
 \newenvironment{funcdoc}[1]
-{\noindent\hrulefill\newline\texttt{#1}\par\noindent\hrulefill\par\medskip\par}
+{\noindent\hrulefill\newline\dtk{#1}\par\noindent\hrulefill\par\medskip\par}
 {\bigskip}
 
 % ---------- Ripped from gretl.sty ----------------------------------------

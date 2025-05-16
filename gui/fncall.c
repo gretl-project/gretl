@@ -25,6 +25,7 @@
 #include "gretl_func.h"
 #include "monte_carlo.h"
 #include "uservar.h"
+#include "libset.h"
 #include "cmd_private.h"
 #include "gretl_www.h"
 #include "gretl_xml.h"
@@ -55,12 +56,12 @@
 #define PKG_DEBUG 0
 #define MPKG_DEBUG 0
 
-enum {
+typedef enum {
     SHOW_GUI_MAIN = 1 << 0,
     MODEL_CALL    = 1 << 1,
     DATA_ACCESS   = 1 << 2,
     FOR_ADDON     = 1 << 3
-};
+} call_flags;
 
 typedef struct call_info_ call_info;
 
@@ -76,7 +77,7 @@ struct call_info_ {
     int *publist;        /* list of public interfaces */
     gretl_bundle *ui;    /* the package's GUI specification, if any */
     int iface;           /* selected interface */
-    int flags;           /* misc. info on package */
+    call_flags flags;    /* misc. info on package */
     const ufunc *func;   /* the function we're calling */
     DataReq dreq;        /* the function's data requirement */
     int modelreq;        /* the function's model (command) requirement */
@@ -2028,8 +2029,7 @@ static int function_call_dialog (call_info *cinfo)
 		argtxt = g_strdup_printf("%s", trdesc != NULL ? trdesc : desc);
 	    } else {
 		argtxt = g_strdup_printf("%s (%s)", trdesc != NULL ? trdesc :
-					 desc != NULL ? _(desc) :
-					 parname, astr);
+					 desc != NULL ? desc : parname, astr);
 	    }
 	}
 
@@ -2501,6 +2501,7 @@ static int real_GUI_function_call (call_info *cinfo,
     const char *title;
     gretl_bundle *bundle = NULL;
     int grab_bundle = 0;
+    int aborted = 0;
     int show = 1;
     int err = 0;
 
@@ -2575,7 +2576,13 @@ static int real_GUI_function_call (call_info *cinfo,
 	}
     }
 
-    if (!err && strstr(fnline, AUTOLIST) == NULL) {
+    /* check for execution aborted */
+    if (get_user_stop()) {
+        aborted = 1;
+        set_user_stop(0);
+    }
+
+    if (!err && !aborted && strstr(fnline, AUTOLIST) == NULL) {
 	int ID = 0;
 
 	if (cinfo->flags & MODEL_CALL) {
@@ -2597,7 +2604,7 @@ static int real_GUI_function_call (call_info *cinfo,
 	unset_genr_model();
     }
 
-    if (!err && cinfo->rettype == GRETL_TYPE_BUNDLE) {
+    if (!err && !aborted && cinfo->rettype == GRETL_TYPE_BUNDLE) {
 	if (grab_bundle) {
 	    bundle = get_bundle_by_name(tmpname);
 	    if (bundle != NULL && !gretl_bundle_has_content(bundle)) {
@@ -2611,7 +2618,7 @@ static int real_GUI_function_call (call_info *cinfo,
 	}
     }
 
-    if (!err && bundle != NULL && !show) {
+    if (!err && !aborted && bundle != NULL && !show) {
 	gretl_print_reset_buffer(prn);
 	if (try_exec_bundle_print_function(bundle, prn)) {
 	    /* flag the fact that we do have something to show */
@@ -3302,6 +3309,20 @@ static int prepare_regls_coef_plot_call (gretl_bundle *b,
     return err;
 }
 
+/* also called from bundle_menus.c */
+
+fnpkg *get_package_for_bundle (gretl_bundle *b)
+{
+    const char *s = gretl_bundle_get_creator(b);
+    fnpkg *pkg = NULL;
+
+    if (s != NULL) {
+	pkg = get_function_package_by_name(s);
+    }
+
+    return pkg;
+}
+
 /* Execute a special-purpose function made available by the package
    that produced bundle @b, possibly inflected by an integer
    option. If an option is present it's packed into @aname, following
@@ -3313,6 +3334,7 @@ int exec_bundle_special_function (gretl_bundle *b,
 				  const char *aname,
 				  GtkWidget *parent)
 {
+    fnpkg *pkg = NULL;
     ufunc *func = NULL;
     char funname[32];
     int plotting = 0;
@@ -3343,7 +3365,13 @@ int exec_bundle_special_function (gretl_bundle *b,
 	}
     }
 
-    func = get_user_function_by_name(funname);
+    pkg = get_package_for_bundle(b);
+
+    if (pkg != NULL) {
+        func = get_function_from_package(funname, pkg);
+    } else {
+        func = get_user_function_by_name(funname);
+    }
 
     if (func == NULL) {
 	errbox_printf(_("Couldn't find function %s"), funname);

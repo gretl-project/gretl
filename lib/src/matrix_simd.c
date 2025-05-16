@@ -96,8 +96,7 @@ static int gretl_matrix_simd_add (const double *ax,
     int rem = n % 4;
 
 #if SHOW_SIMD
-    fprintf(stderr, "AVX: gretl_matrix_simd_add (%d x %d)\n",
-	    a->rows, a->cols);
+    fprintf(stderr, "AVX: gretl_matrix_simd_add (n = %d\n", n);
 #endif
 
     for (i=0; i<imax; i++) {

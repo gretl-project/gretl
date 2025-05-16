@@ -115,7 +115,7 @@ neighborhood of 1. Some comments on the code:
 \item The function ends by returning the computed value, \texttt{ret}.
 \item The lines below the function definition give a simple example of
   usage. Note that in the \cmd{printf} command, the two functions
-  \cmd{ln()} and \cmd{quasi\_log()} behave in exactly the same way
+  \cmd{ln()} and \dtk{quasi_log()} behave in exactly the same way
   from a purely syntactic viewpoint, although the former is native and
   the latter is user-defined.
 \end{enumerate}
@@ -391,7 +391,7 @@ Let's analyse the body of the function line by line:
      opts = opts_in + opts
   \end{code}
   replaces the keys in \texttt{opts} with those present in
-  \texttt{opts\_in} (with the \texttt{+} operator, the left-hand
+  \dtk{opts_in} (with the \texttt{+} operator, the left-hand
   bundle takes precedence). At this point, the bundle \texttt{opts}
   will contain a mixture of default and user-set keys.
 \item From here on, everything proceeds as above.

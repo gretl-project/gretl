@@ -3384,9 +3384,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
                          sbutton);
     }
 
- skip_ts_options:
-
-     /* pre-forecast obs spin button */
+    /* pre-forecast obs spin button */
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     hbox = gtk_hbox_new(FALSE, 5);
@@ -3407,6 +3405,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     g_signal_connect(GTK_ADJUSTMENT(rset->p), "value-changed",
                      G_CALLBACK(toggle_activate_fitvals), tmp);
 
+ skip_ts_options:
+
     if (pmod == NULL || fcast_errs_ok(pmod)) {
 	/* Applicable only if forecast standard errors can be
 	   produced: offer selection of plotting style and
@@ -3425,12 +3425,13 @@ int forecast_dialog (int t1min, int t1max, int *t1,
         };
         static combo_opts ci_opts;
         GtkWidget *combo;
-        int deflt, fixit = 0;
+        gboolean combo_choice = 1;
+        int deflt;
 
         if (*t2 - *t1 < 1) {
             /* one observation: can only do error bar */
             deflt = 0;
-            fixit = 1;
+            combo_choice = 0;
             *optp &= ~OPT_L;
             *optp &= ~OPT_F;
         } else {
@@ -3453,16 +3454,16 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 
         if (conf != NULL) {
             dialog_add_confidence_selector(rset->dlg, conf, NULL);
-            if (!fixit && (flags & FC_MEAN_OK)) {
+            if (combo_choice && (flags & FC_MEAN_OK)) {
                 confidence_scope_selector(rset->dlg, optp);
                 if (gretl_is_simple_OLS(pmod)) {
+                    /* ols: y 0 x */
                     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 1);
-                    /* why were we doing the following? */
-                    /* fixit = 1; */
+                    combo_choice = 0;
                 }
             }
         }
-        if (fixit) {
+        if (!combo_choice) {
             gtk_widget_set_sensitive(combo, FALSE);
         }
     }
@@ -3542,26 +3543,38 @@ static void set_add_obs (GtkButton *b, int *n_add)
 }
 
 int add_obs_dialog (const char *blurb, int addmin,
-                    gretlopt opt, GtkWidget *parent)
+                    int *optval, GtkWidget *parent)
 {
-    int step, panel = dataset_is_panel(dataset);
     GtkWidget *dlg, *vbox, *hbox;
     GtkWidget *addspin, *tmp;
     int n_add = -1;
-
-    if (panel && !(opt & OPT_T)) {
-        addmin = dataset->pd;
-        step = dataset->pd;
-    } else {
-        step = 1;
-    }
 
     dlg = gretl_dialog_new(_("Add observations"), parent,
                            GRETL_DLG_MODAL | GRETL_DLG_BLOCK);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 
-    if (blurb != NULL) {
+    if (dataset_is_panel(dataset) && addmin > 0) {
+        const char *opts[] = {
+            _("in the cross-sectional dimension"),
+            _("in the time dimension")
+        };
+        GSList *group = NULL;
+        GtkWidget *b;
+        int i;
+
+        for (i=0; i<2; i++) {
+            b = gtk_radio_button_new_with_label(group, _(opts[i]));
+            gtk_box_pack_start(GTK_BOX(vbox), b, TRUE, TRUE, 0);
+            g_object_set_data(G_OBJECT(b), "action", GINT_TO_POINTER(i));
+            g_signal_connect(G_OBJECT(b), "clicked",
+                             G_CALLBACK(set_radio_opt), optval);
+            if (i == 0) {
+                gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRUE);
+            }
+            group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b));
+        }
+    } else if (blurb != NULL) {
         hbox = gtk_hbox_new(FALSE, 5);
         tmp = gtk_label_new(blurb);
         gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
@@ -3572,7 +3585,7 @@ int add_obs_dialog (const char *blurb, int addmin,
     tmp = gtk_label_new(_("Number of observations to add:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 
-    addspin = gtk_spin_button_new_with_range(addmin, 10000, step);
+    addspin = gtk_spin_button_new_with_range(1, 10000, 1);
     gtk_entry_set_activates_default(GTK_ENTRY(addspin), TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), addspin, TRUE, TRUE, 5);
 
@@ -4102,6 +4115,9 @@ void data_compact_dialog (int spd, int *target_pd, int *week_start,
             labelstr = g_strdup(_("Compact hourly data to:"));
             *target_pd = 7;
             show_pd_buttons = 1;
+        } else if (spd > 1) {
+            labelstr = g_strdup_printf(_("Compact data frequency %d to 1"), spd);
+            *target_pd = 1;
         }
         methods_set = compact_methods_set(method);
     }
@@ -7155,7 +7171,7 @@ static void maybe_reinstate_selection (GList *plist,
 
     while (tmp != NULL) {
 	if (!strcmp((gchar *) tmp->data, payload)) {
-	    *selpos = 1;
+	    *selpos = i;
 	    break;
 	}
 	tmp = tmp->next;

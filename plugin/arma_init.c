@@ -964,7 +964,7 @@ static double get_xti (const DATASET *dset,
     if (X != NULL) {
 	return gretl_matrix_get(X, t, i);
     } else {
-	return dset->Z[xlist[i+1]][t];
+        return dset->Z[xlist[i+1]][t];
     }
 }
 
@@ -1588,6 +1588,57 @@ int ar_arma_init (double *coeff, const DATASET *dset,
     return err;
 }
 
+static int *plain_ols_list (arma_info *ainfo)
+{
+    int *list;
+    int nl = 1; /* y */
+    int i, j;
+
+    if (ainfo->ifc) {
+        nl++;
+    }
+    if (ainfo->xlist != NULL) {
+        nl += ainfo->xlist[0];
+    }
+    list = gretl_list_new(nl);
+    i = 1;
+    list[i++] = ainfo->yno;
+    if (ainfo->ifc) {
+        list[i++] = 0;
+    }
+    if (ainfo->xlist != NULL) {
+        for (j=1; j<=ainfo->xlist[0]; j++) {
+            list[i++] = ainfo->xlist[j];
+        }
+    }
+
+    return list;
+}
+
+static gretlopt arma_ols_opt (arma_info *ainfo)
+{
+    gretlopt opt = OPT_A | OPT_Z;
+
+    if (ainfo->nc == 0) {
+        opt |= OPT_U;
+    }
+
+    return opt;
+}
+
+int arma_by_simple_ols (const double *coeff, const DATASET *dset,
+                        arma_info *ainfo, MODEL *pmod)
+{
+    int *arlist;
+    gretlopt opt;
+
+    arlist = plain_ols_list(ainfo);
+    opt = arma_ols_opt(ainfo);
+    *pmod = lsq(arlist, (DATASET *) dset, OLS, opt);
+
+    return pmod->errcode;
+}
+
 int arma_by_ls (const double *coeff, const DATASET *dset,
 		arma_info *ainfo, MODEL *pmod)
 {
@@ -1621,11 +1672,8 @@ int arma_by_ls (const double *coeff, const DATASET *dset,
 	pmod->errcode = arma_get_nls_model(pmod, ainfo, 0, coeff, aset,
 					   prn);
     } else {
-	gretlopt opt = OPT_A | OPT_Z;
+	gretlopt opt = arma_ols_opt(ainfo);
 
-	if (ainfo->nc == 0) {
-	    opt |= OPT_U;
-	}
 	*pmod = lsq(arlist, aset, OLS, opt);
     }
 

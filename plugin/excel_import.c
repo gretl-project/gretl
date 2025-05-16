@@ -1153,13 +1153,11 @@ static int check_all_varnames (wbook *book, xls_info *xi, PRN *prn)
     int j, i = book->row_offset;
     int startcol = book->col_offset;
     int realcols = 0;
-    int gotcols = 0;
     int vnames = 0;
     int ret = VARNAMES_NONE;
 
     if (book_obs_labels(book) || book_numeric_dates(book)) {
 	startcol++;
-	gotcols = 1;
     }
 
     if (xi->rows[i].cells == NULL) {
@@ -1172,16 +1170,12 @@ static int check_all_varnames (wbook *book, xls_info *xi, PRN *prn)
 
     for (j=startcol; j<xi->totcols; j++) {
 	if (xi->blank_col[j]) {
-	    gotcols++;
 	    continue;
 	}
-
 	if (xi->rows[i].cells[j] == NULL) {
 	    dbprintf("got_varnames: rows[%d].cells[%d] is NULL\n", i, j);
 	    break;
 	}
-
-	gotcols++;
 
 	dbprintf("got_varnames: rows[%d].cells[%d] is '%s'\n", i, j,
 		 xi->rows[i].cells[j]);

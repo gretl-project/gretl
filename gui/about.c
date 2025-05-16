@@ -39,7 +39,9 @@ const gchar *website = "http://gretl.sourceforge.net/";
 #endif
 
 #ifdef PKGBUILD
-# if defined(_WIN64)
+# if defined(_WIN64) && defined(__aarch64__)
+#  define SYSINFO "MS Windows (arm64, "
+# elif defined(_WIN64)
 #  define SYSINFO "MS Windows (x86_64, "
 # elif defined(G_OS_WIN32)
 #  define SYSINFO "MS Windows (i686, "

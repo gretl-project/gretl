@@ -341,7 +341,7 @@ int series_table_add_strings (series_table *st,
 			      int ns)
 {
     int oldn, newn;
-    int i, j, err;
+    int i, j, err = 0;
 
     if (S == NULL || ns <= 0) {
 	return 0;
@@ -1384,7 +1384,7 @@ int substitute_named_strings (char *line, int *subst)
     char *sub, *tmp, *s = line;
     int bs = 0, in_format = 0;
     int freeit;
-    int i, n, m, err = 0;
+    int n, m, err = 0;
 
     *subst = 0;
 
@@ -1401,8 +1401,6 @@ int substitute_named_strings (char *line, int *subst)
 	s++;
 	in_format = 1;
     }
-
-    i = s - line;
 
     while (*s && !err) {
 	if (in_format) {
@@ -1442,7 +1440,6 @@ int substitute_named_strings (char *line, int *subst)
 			free(tmp);
 			len += m - (n + 1);
 			s += m - 1;
-			i += m - 1;
 			*subst = 1;
 		    }
 		    if (freeit) {
@@ -1452,7 +1449,6 @@ int substitute_named_strings (char *line, int *subst)
 	    }
 	}
 	s++;
-	i++;
     }
 
     return err;

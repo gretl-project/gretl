@@ -3483,11 +3483,14 @@
 	<quote>trampa de las variables ficticias</quote>).
       </para>
       <para>
-	También puedes insertar esta instrucción en el contexto de la especificación
-	de una regresión. Por ejemplo, la siguiente línea especifica un modelo
-	donde <lit>y</lit> se regresa sobre el conjunto de variables ficticias
-	que se codifican para <lit>x</lit>. (No puedes aplicar los indicadores
-	de opción a <cmd>dummify</cmd> en este contexto.)
+	También hay una función que se corresponde con esta instrucción,
+	consulta <fncref targ="dummify"/>. Esto posibilita integrar la llamada
+	directamente en la especificación de una regresión. Por ejemplo, la
+	siguiente linea especifica un modelo en el que <lit>y</lit> se regresa
+	sobre el conjunto de variables ficticias que se codifican para
+	<lit>x</lit>. (Sin embargo, los indicadores de opciones son únicamente
+	para la variante de la instrucción, no para la variante de la función
+	<cmd>dummify</cmd>.)
       </para>
       <code>
 	ols y dummify(x)
@@ -5717,7 +5720,6 @@
     label="Representar gráficos">
 
     <description>
-
       <para>
 	GRETL solicita que un programa distinto, concretamente Gnuplot,
 	genere gráficos. Gnuplot es un programa de representación gráfica muy
@@ -5726,12 +5728,10 @@
 	de elegir valores sensatos para ti; si quieres, también te permite
 	que tengas un control completo sobre los detalles del gráfico.
       </para>
-
       <para>
 	Con un gráfico ya representado, puedes hacer clic en la ventana del gráfico
 	para obtener un menú emergente con varias opciones, incluidas estas:
       </para>
-
       <ilist>
 	<li>
 	  <para>
@@ -6252,6 +6252,14 @@
 	estadísticos destacados se insertan automáticamente en las cajas
 	de debajo.
       </para>
+	  <para>
+	Ten en cuenta que en el caso de dos muestras, los contrastes son de
+	tipo desemparejado. Si, por ejemplo, quieres realizar un contraste
+	<emphasis>emparejado</emphasis> sobre si la diferencia entre las
+	medias de dos variables es nula, debes crear simplemente una nueva
+	serie con las diferencias entre las dos ya existentes, y realizar un
+	sencillo contraste sobre la media de esa nueva serie.
+	  </para>
       <para>
 	Además de la simple selección de una variable, tienes la opción de
 	especificar una restricción sobre la variable escogida (es
@@ -8454,14 +8462,15 @@
 
     <description>
       <para>
-	Calcula las distancias de Mahalanobis entre las series indicadas
-	en <repl>listavariables</repl>. La distancia de Mahalanobis es la distancia
-	entre dos puntos en un espacio de dimensión <math>k</math>,
-	escalada por la variación estadística en cada dimensión del espacio.
-	Por ejemplo, si <math>p</math> y <math>q</math> son dos
-	observaciones de un conjunto de <math>k</math> variables con
-	matriz de covarianzas <math>C</math>, entonces la distancia de
-	Mahalanobis entre las observaciones viene dada por
+	Calcula las distancias de Mahalanobis desde cada observación hasta el
+	centroide, usando las series indicadas en <repl>listavariables</repl>.
+	La distancia de Mahalanobis es la distancia entre dos puntos en
+	un espacio de dimensión <math>k</math>, escalada por la variación
+	estadística en cada dimensión del espacio. Por ejemplo, si
+	<math>p</math> y <math>q</math> son dos observaciones de un conjunto
+	de <math>k</math> variables con matriz de covarianzas <math>C</math>,
+	entonces la distancia de Mahalanobis entre las observaciones viene
+	dada por
 	<equation status="display"
         tex="\[\sqrt{(p-q)^{\prime}C^{-1}(p-q)}\]"
         ascii="sqrt((p - q)' * C-inverse * (p - q))"
@@ -8806,32 +8815,73 @@
   <command name="meantest" section="Tests" label="Diferencia de medias">
 
     <usage>
-      <arguments>
-        <argument>serie1</argument>
-        <argument>serie2</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>meantest</lit> <repl>x</repl> <repl>y</repl> </altform>
+        <altform><lit>meantest</lit> <repl>x</repl> <lit>--split-by=</lit><repl>ficticia</repl></altform>
+      </altforms>
       <options>
         <option>
 	  <flag>--unequal-vars</flag>
 	  <effect>Asume que las varianzas no son iguales</effect>
         </option>
+        <option>
+	  <flag>--paired</flag>
+	  <effect>Realiza un contraste de emparejados</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>Elimina la presentación del resultado</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+	  <effect>Solo para series temporales</effect>
+        </option>
       </options>
+      <examples>
+        <example>meantest x y</example>
+        <example>meantest x y --unequal-vars</example>
+        <example>meantest x y --paired</example>
+        <example>meantest x --split-by=d</example>
+      </examples>
     </usage>
 
     <description>
       <para context="cli">
-	Calcula el estadístico <math>t</math> para contrastar la hipótesis nula
-	de que las medias en la población son iguales para las variables
-	<repl>serie1</repl> y <repl>serie2</repl>, y muestra su
-	probabilidad asociada (valor p).
+	En su uso básico, calcula el estadístico <math>t</math> para contrastar
+	la hipótesis nula de que las medias en la población son iguales para las
+	series <repl>x</repl> e <repl>y</repl>, mostrando además un resultado
+	que incluye su probabilidad asociada (valor p). Los resultados se
+	pueden recuperar utilizando los accesores <fncref targ="$test"/> y
+	<fncref targ="$pvalue"/>, en cuyo caso se puede utilizar la opción
+	<opt>quiet</opt> para omitir la impresión.
       </para>
-      <para>
+      <para context="cli">
+	En su forma alternativa, con la opción <opt>split-by</opt>, las muestras
+	para las que se contrasta la igualdad de sus medias son dos subconjuntos
+	de la serie <repl>x</repl>, para las que la serie <repl>ficticia</repl>
+	toma los valores 0 y 1, respectivamente.
+      </para>
+      <para context="cli">
 	Por defecto, el estadístico de contraste se calcula bajo el supuesto
 	de que las varianzas son iguales para las dos variables. Con la
 	opción <opt>unequal-vars</opt> se asume que las varianzas
 	son diferentes; y en este caso, los grados de libertad del
 	estadístico de contraste se aproximan conforme a
 	<cite key="satter46">Satterthwaite (1946)</cite>.
+      </para>
+      <subhead context="cli">Contraste de emparejados</subhead>
+      <para context="cli">
+	En el caso básico (únicamente) se puede indicar la opción
+	<opt>paired</opt> para contrastar la hipótesis nula de que la
+	diferencia media entre los valores emparejados de las dos series de
+	los argumentos, es nula. En caso contrario, no se asume el emparejamiento.
+      </para>
+      <subhead context="cli">Contraste robusto</subhead>
+      <para context="cli">
+	Con datos de series temporales, en el caso básico (únicamente) se
+	puede indicar la opción <opt>robust</opt> para realizar un contraste
+	de igualdad de medias entre <repl>x</repl> e <repl>y</repl> que es
+	robusta respecto a la autocorrelación.
       </para>
       <para context="gui">
 	Calcula el estadístico t para contrastar la hipótesis nula de que las medias
@@ -14631,8 +14681,9 @@
 
       <ilist>
 	<li>
-	  <para><lit>bootrep</lit>: Un entero. Establece el número de repeticiones
-	  de la instrucción <cmdref targ="restrict"/> con la opción <opt>bootstrap</opt>.
+	  <para><lit>bootrep</lit>: Un entero. Establece el número de
+	  repeticiones de la instrucción <cmdref targ="restrict"/> con la
+	  opción <opt>bootstrap</opt>.
 	  </para>
 	</li>
 	<li>
@@ -16979,24 +17030,44 @@
 
   </command>
 
-  <command name="vartest" section="Tests"
-    label="Contrastar la diferencia de varianzas">
+  <command name="vartest" section="Tests" label="Contrastar la diferencia de varianzas">
 
     <usage>
-      <arguments>
-        <argument>serie1</argument>
-        <argument>serie2</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>vartest</lit> <repl>x</repl> <repl>y</repl> </altform>
+        <altform><lit>vartest</lit> <repl>x</repl> <lit>--split-by=</lit><repl>ficticia</repl></altform>
+      </altforms>
+      <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>Elimina la presentación de resultados</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+          <optparm>método</optparm>
+	  <effect>Mira abajo</effect>
+        </option>
+      </options>
+      <examples>
+        <example>vartest x y</example>
+        <example>meantest x --split-by=d</example>
+        <example>meantest x y --robust=median</example>
+        <example>meantest x y --robust=trimmed,5</example>
+      </examples>
     </usage>
 
     <description>
       <para context="cli">
-	Calcula el estadístico <math>F</math> para contrastar la hipótesis nula de
-	que las varianzas poblacionales de las variables <repl>serie1</repl> y
-	<repl>serie2</repl> son iguales, y muestra su probabilidad asociada
-	(valor p). Puedes obtener las estadísticas del contraste y el valor p
-	mediante los accesores <fncref targ="$test"/> y <fncref targ="$pvalue"/>,
-	respectivamente. El siguiente código
+	En su uso básico, calcula el estadístico <math>F</math> para contrastar
+	la hipótesis nula de que las varianzas poblacionales son iguales para las
+	series <repl>x</repl> e <repl>y</repl>, mostrando además un resultado
+	que incluye su probabilidad asociada (valor p). Los resultados se
+	pueden recuperar utilizando los accesores <fncref targ="$test"/> y
+	<fncref targ="$pvalue"/>, en cuyo caso se puede utilizar la opción
+	<opt>quiet</opt> para omitir la impresión.
+      </para>
+      <para>
+	Por ejemplo, el siguiente código:
       </para>
       <code>
 		open AWM18.gdt
@@ -17005,10 +17076,9 @@
 		eval $pvalue
       </code>
     <para>
-      calcula el contraste, y muestra como recuperar más tarde el estadístico
-      de contraste y el valor p correspondiente:
+	proporciona el resultado que muestra abajo:
   	</para>
-  	<code>
+  	  <code>
 		Contraste de igualdad de varianzas
 
 		EEN: Número de observaciones = 192
@@ -17020,7 +17090,55 @@
 
 		3.7070716
 		1.9486605e-18
-	</code>
+    	</code>
+      <para context="cli">
+	En su forma alternativa, con la opción <opt>split-by</opt>, las muestras
+	para las que se contrasta la igualdad de sus varianzas son dos subconjuntos
+	de la serie <repl>x</repl>, para las que la serie <repl>ficticia</repl>
+	toma los valores 0 y 1, respectivamente.
+      </para>
+
+      <subhead context="cli">Probas robustas</subhead>
+      <para context="cli">
+	El contraste <math>F</math> típico se basa en el supuesto de Normalidad
+	y puede provocar en exceso el rechazo de la hipótesis nula si los datos
+	realmente son No-Normales. La opción <opt>robust</opt> ofrece tres
+	alternativas, del siguiente modo:
+      </para>
+      <ilist context="cli">
+        <li>
+          <para>
+            Cuando <repl>método</repl> es <lit>mean</lit>: el contraste
+            definido por <cite key="levene60">Levene (1960)</cite>. En
+            realidad esto es un ANOVA de un factor que usa las desviaciones absolutas
+            de los datos originales respecto a sus respectivas medias muestrales.
+          </para>
+        </li>
+        <li>
+          <para>
+            Cuando <repl>método</repl> es <lit>median</lit>: una variante
+            del contraste de Levene sugerida por
+            <cite key="brown-forsythe">Brown y Forsythe (1974)</cite>,
+            en la que el centrado inicial utiliza la mediana muestral en
+            lugar de la media. Esto se recomienda cuando los datos
+            están bastante sesgados.
+          </para>
+        </li>
+        <li>
+          <para>
+            Cuando <repl>método</repl> es <lit>trimmed</lit>: una segunda
+            variante debida a Brown y Forsythe, en la que el centrado es
+            respecto a una media recortada. Esto puede ser preferible si
+            los datos tienen colas gruesas pero son razonablemente simétricos.
+            Por defecto, se usa el recorte del 10 por ciento (es decir,
+            se calcula la media después de omitir el 10 por ciento de las
+            observaciones con menores valores y con mayores valores) pero
+            esto se puede ajustar añadiendo una coma y un valor entero,
+            como en <opt>robust=trimmed,5</opt> donde se especifica
+            que se recorta el 5 por ciento.
+          </para>
+        </li>
+      </ilist>
       <para context="gui">
 	Calcula el estadístico <math>F</math> para contrastar la hipótesis nula de
 	que las varianzas poblacionales de las dos series elegidas son iguales, y

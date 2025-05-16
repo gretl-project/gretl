@@ -2752,7 +2752,7 @@ static int QLR_graph (const double *testvec, int t1, int t2,
 	critval = qlr_critval(df);
     }
 
-    print_keypos_string(GP_KEY_LEFT_TOP, fp);
+    print_keypos_string(GP_KEY_LEFT | GP_KEY_TOP, fp);
 
     if (robust) {
 	title = titles[1];
