@@ -20,19 +20,19 @@
 #ifndef GFN_TRANSLATIONS_H
 #define GFN_TRANSLATIONS_H
 
-typedef struct Translations_ Translations;
+typedef struct Translation_ Translation;
 
-void destroy_translations (Translations *T);
+void destroy_translation (Translation *T);
 
-const char *get_gfn_translation (Translations *T,
+const char *get_gfn_translation (Translation *T,
                                  const char *id);
 
-Translations *read_translations_file (const char *fname,
-                                      int *err);
+Translation *read_translations_file (const char *fname,
+                                     int *err);
 
-Translations *read_translations_element (xmlNodePtr root,
-                                         xmlDocPtr doc);
+Translation *read_translation_element (xmlNodePtr root,
+                                       xmlDocPtr doc);
 
-void write_translations (Translations *T, PRN *prn);
+void write_translation (Translation *T, PRN *prn);
 
 #endif /* GFN_TRANSLATIONS_H */

@@ -52,6 +52,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+/* for validation of packages via XML schema */
+#include <libxml/xmlreader.h>
+
 #define FNPARSE_DEBUG 0 /* debug parsing of function code */
 #define EXEC_DEBUG 0    /* debugging of function execution */
 #define ARGS_DEBUG 0    /* debug handling of args */
@@ -3598,7 +3601,7 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn, int mpi)
     }
 
     if (pkg->trans != NULL) {
-        write_translations(pkg->trans, prn);
+        write_translation(pkg->trans, prn);
     }
 
     pputs(prn, "</gretl-function-package>\n");
@@ -4583,67 +4586,99 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
     return pkg;
 }
 
-static int cli_validate_package_file (const char *fname,
-                                      gretlopt opt, PRN *prn)
+# if LIBXML_VERSION >= 21200
+static void xs_err_handler (void *arg, const xmlError *errp)
+#else
+static void xs_err_handler (void *arg, xmlErrorPtr errp)
+#endif
 {
-    char dtdname[FILENAME_MAX];
-    xmlDocPtr doc = NULL;
-    xmlDtdPtr dtd = NULL;
-    int err;
+    *(int *) arg = 1;
+    printf("parse error at line %d, col %d:\n%s",
+           errp->line, errp->int2, errp->message);
+}
 
-    err = gretl_xml_open_doc_root(fname, NULL, &doc, NULL);
-    if (err) {
-        pprintf(prn, "Couldn't parse %s\n", fname);
-        return 1;
+static xmlSchemaValidCtxtPtr get_validation_context (const char *xsdpath,
+                                                     xmlSchemaPtr *pschema)
+{
+    xmlSchemaValidCtxtPtr vc = NULL;
+    xmlSchemaParserCtxtPtr spc;
+
+    spc = xmlSchemaNewParserCtxt(xsdpath);
+    if (spc == NULL) {
+        puts("Couldn't open XML schema to check package");
+    } else {
+	*pschema = xmlSchemaParse(spc);
+	xmlSchemaFreeParserCtxt(spc);
+	if (*pschema == NULL) {
+	    puts("Couldn't get xmlSchemaPtr to check package");
+	} else {
+	    vc = xmlSchemaNewValidCtxt(*pschema);
+	    if (vc == NULL) {
+		puts("Failed to obtain XML schema validator");
+	    }
+	}
     }
 
-    *dtdname = '\0';
+    return vc;
+}
 
-    if (opt & OPT_D) {
-        const char *dpath = get_optval_string(MAKEPKG, OPT_D);
+static int cli_validate_package_file (const char *fname,
+                                      gretlopt opt,
+                                      PRN *prn)
+{
+    char xsdpath[FILENAME_MAX];
+    xmlSchemaValidCtxtPtr validator = NULL;
+    xmlSchemaPtr schema = NULL;
+    xmlTextReaderPtr reader = NULL;
+    int err = 0;
 
-        if (dpath != NULL && *dpath != '\0') {
-            strcat(dtdname, dpath);
+    xsdpath[0] = '\0';
+
+    if (opt & OPT_S) {
+        /* respond to the --schema option for building addons */
+        const char *spath = get_optval_string(MAKEPKG, OPT_S);
+
+        if (spath != NULL && *spath != '\0') {
+            strcat(xsdpath, spath);
         }
     } else {
-        sprintf(dtdname, "%sfunctions%cgretlfunc.dtd", gretl_home(), SLASH);
+        sprintf(xsdpath, "%sfunctions%cgretlfunc.xsd", gretl_home(), SLASH);
     }
 
-    if (*dtdname != '\0') {
-        dtd = xmlParseDTD(NULL, (const xmlChar *) dtdname);
+    if (xsdpath[0] != '\0') {
+        validator = get_validation_context(xsdpath, &schema);
+    }
+    if (validator == NULL) {
+        pprintf(prn, "Couldn't get schema from %s\n", xsdpath);
+	return 1;
     }
 
-    if (dtd == NULL) {
-        pputs(prn, "Couldn't open DTD to check package\n");
+    reader = xmlReaderForFile(fname, NULL, 0);
+
+    if (reader == NULL) {
+	pprintf(prn, "Failed to obtain reader for file '%s'\n", fname);
+	err = 1;
     } else {
-        const char *pkgname = path_last_element(fname);
-        xmlValidCtxtPtr cvp = xmlNewValidCtxt();
+	int xserr = 0;
+	int got = -1;
 
-        if (cvp == NULL) {
-            pputs(prn, "Couldn't get an XML validation context\n");
-            xmlFreeDtd(dtd);
-            xmlFreeDoc(doc);
-            return 0;
-        }
-
-        cvp->userData = (void *) prn;
-        cvp->error    = (xmlValidityErrorFunc) pprintf2;
-        cvp->warning  = (xmlValidityWarningFunc) pprintf2;
-
-        pprintf(prn, "Checking against %s\n", dtdname);
-
-        if (!xmlValidateDtd(cvp, doc, dtd)) {
-            err = 1;
-        } else {
-            pprintf(prn, _("%s: validated against DTD OK"), pkgname);
-            pputc(prn, '\n');
-        }
-
-        xmlFreeValidCtxt(cvp);
-        xmlFreeDtd(dtd);
+	xmlTextReaderSchemaValidateCtxt(reader, validator, 0);
+	xmlSchemaSetValidStructuredErrors(validator, xs_err_handler, &xserr);
+	got = xmlTextReaderRead(reader);
+	while (got == 1 && xserr == 0) {
+	    got = xmlTextReaderRead(reader);
+	}
+	if (xserr) {
+	    pprintf(prn, "%s:\n does not validate against the XML schema\n", fname);
+	    err = 1;
+	} else {
+	    pputs(prn, _("Validated successfully against the XML schema\n"));
+	}
     }
 
-    xmlFreeDoc(doc);
+    xmlFreeTextReader(reader);
+    xmlSchemaFreeValidCtxt(validator);
+    xmlSchemaFree(schema);
 
     return err;
 }
@@ -4779,7 +4814,9 @@ static int should_rebuild_gfn (const char *gfnname)
  * create_and_write_function_package:
  * @fname: filename for function package.
  * @opt: may include OPT_I to write a package-index entry,
- * OPT_T to write translatable strings (for addons).
+ * OPT_T to write translatable strings (for addons). OPT_G
+ * is used internally when this function is called from the
+ * GUI, to inflect the informative printout.
  * @prn: printer struct for feedback.
  *
  * Create a package based on the functions currently loaded, and
@@ -5530,7 +5567,7 @@ static void real_function_package_free (fnpkg *pkg, int full)
             strings_array_free(pkg->depends, pkg->n_depends);
         }
         if (pkg->trans != NULL) {
-            destroy_translations(pkg->trans);
+            destroy_translation(pkg->trans);
         }
 
         free(pkg->pub);
@@ -6741,8 +6778,8 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node,
             pkg->depends =
                 gretl_xml_get_strings_array(cur, doc, &pkg->n_depends,
                                             0, err);
-        } else if (!xmlStrcmp(cur->name, (XUC) "translations")) {
-            pkg->trans = read_translations_element(cur, doc);
+        } else if (!xmlStrcmp(cur->name, (XUC) "translation")) {
+            pkg->trans = read_translation_element(cur, doc);
         }
 
         cur = cur->next;

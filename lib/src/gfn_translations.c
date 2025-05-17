@@ -24,84 +24,78 @@
 #include "gfn_translations.h"
 #include "gretl_string_table.h"
 
-static int verbose = 0;
+// static int verbose = 1;
 
 typedef struct msg_ {
-    char *id;     /* English text */
-    char **strs;  /* One or more translations */
+    char *en;  /* English text */
+    char *tr;  /* translation */
 } msg;
 
-struct Translations_ {
-    int n_msgs;   /* number of messages handled */
-    int n_langs;  /* number of languages (other than English) */
-    msg *msgs;    /* array of structs */
-    char **langs; /* array of language IDs */
-    int active;
+struct Translation_ {
+    char *lang;  /* language */
+    int n_msgs;  /* number of messages handled */
+    msg *msgs;   /* array of structs */
 };
 
-void destroy_translations (Translations *T)
+#if 0
+
+/* Apparatus for dealing with multiple translations: not used yet */
+
+struct Translations_ {
+    int n_langs;     /* number of languages (other than English) */
+    Translation **T; /* individual language translations */
+    int active;      /* ID number of active translation */
+};
+
+typedef struct Translations_ Translations;
+
+void destroy_translations (Translations *TT)
 {
-    int i, j;
+    int i;
 
-    for (i=0; i<T->n_langs; i++) {
-        free(T->langs[i]);
+    for (i=0; i<TT->n_langs; i++) {
+        destroy_translation(TT->T[i]);
     }
-    free(T->langs);
-
-    for (i=0; i<T->n_msgs; i++) {
-        free(T->msgs[i].id);
-        for (j=0; j<T->n_langs; j++) {
-            free(T->msgs[i].strs[j]);
-        }
-        free(T->msgs[i].strs);
-    }
-    free(T->msgs);
-
-    free(T);
+    free(TT);
 }
 
-static Translations *allocate_translations (int n_msgs, int n_langs)
+static Translations *allocate_translations (int n_langs)
 {
-    Translations *T = malloc(sizeof *T);
+    Translations *TT = malloc(sizeof *TT);
 
-    if (T != NULL) {
-        int i;
-
-        T->n_msgs = n_msgs;
-        T->n_langs = n_langs;
-        T->msgs = malloc(n_msgs * sizeof *T->msgs);
-        for (i=0; i<n_msgs; i++) {
-            T->msgs[i].strs = NULL;
-        }
-        T->langs = NULL;
-        T->active = -1;
+    if (TT != NULL) {
+        TT->n_langs = n_langs;
+        TT->T = malloc(n_langs * sizeof *TT->T);
+        TT->active = -1;
     }
 
-    return T;
+    return TT;
 }
 
-const char *get_gfn_translation (Translations *T,
+const char *get_gfn_translation (Translations *TT,
                                  const char *id)
 {
-    int i, a = T->active;
+    int i;
 
-    if (a < 0) {
+    if (TT->active < 0) {
         char *lang = get_built_in_string_by_name("lang");
 
-        for (i=0; i<T->n_langs && a < 0; i++) {
+        for (i=0; i<TT->n_langs; i++) {
             /* FIXME comparison? */
-            if (!strcmp(lang, T->langs[i]) ||
-                !strncmp(lang, T->langs[i], 2)) {
-                a = i;
+            if (!strcmp(lang, TT->T[i]->lang) ||
+                !strncmp(lang, TT->T[i]->lang, 2)) {
+                TT->active = i;
+                break;
             }
         }
-        T->active = a;
     }
 
-    if (a >= 0) {
+    if (TT->active >= 0) {
+        Translation *T = TT->T[TT->active];
+
         for (i=0; i<T->n_msgs; i++) {
-            if (!strcmp(id, T->msgs[i].id)) {
-                return T->msgs[i].strs[a];
+            if (!strcmp(id, T->msgs[i].en)) {
+                return T->msgs[i].tr;
             }
         }
     }
@@ -109,146 +103,147 @@ const char *get_gfn_translation (Translations *T,
     return id;
 }
 
-/* This is first called with @n_langs non-NULL but @langs and @strs
-   NULL, just to get a count of the elements to be stored.
-
-   It is then called with @langs and @strs non-NULL to record the
-   language IDs and translated strings.
-*/
-
-static int msg_get_data (xmlNodePtr np, xmlDocPtr doc, int i,
-                         int *n_langs, char **langs, char **strs)
-{
-    xmlNodePtr cur = np->xmlChildrenNode;
-    char *lang;
-    char *str;
-    int j = 0;
-    int err = 0;
-
-    while (cur != NULL && !err) {
-        if (!xmlStrcmp(cur->name, (XUC) "s")) {
-            lang = str = NULL;
-            if (!gretl_xml_get_prop_as_string(cur, "lang", &lang)) {
-                err = E_DATA;
-            } else if (!gretl_xml_node_get_string(cur, doc, &str)) {
-                err = E_DATA;
-            } else if (langs != NULL && strs != NULL) {
-                if (i == 0) {
-                    /* attach lang string */
-                    langs[j] = lang;
-                    if (verbose) {
-                        printf("attach: lang[%d] = %s\n", j, langs[j]);
-                    }
-                } else {
-                    /* just checking langs */
-                    if (strcmp(lang, langs[j])) {
-                        printf(" language ids are not consistent\n");
-                    }
-                    free(lang);
-                }
-                strs[j] = str;
-            } else {
-                /* just counting */
-                if (verbose) {
-                    printf(" msg: lang '%s', str '%s'\n", lang, str);
-                }
-                *n_langs += 1;
-                free(lang);
-                free(str);
-            }
-            j++;
-        }
-        cur = cur->next;
-    }
-
-    return err;
-}
-
 Translations *read_translations_element (xmlNodePtr root,
                                          xmlDocPtr doc)
 {
-    Translations *T = NULL;
-    xmlNodePtr cur;
-    int n_msgs = 0;
-    int n_langs = 0;
-    char *id = NULL;
-    int i, nli;
-    int err = 0;
+    return NULL; /* FIXME */
+}
 
-    /* first pass through the XML */
+void write_translations (Translations *TT, PRN *prn)
+{
+    ; /* FIXME */
+}
 
-    cur = root->xmlChildrenNode;
-    i = 0;
-    while (cur != NULL && !err) {
-        if (!xmlStrcmp(cur->name, (XUC) "msg")) {
-            nli = 0;
-            if (gretl_xml_get_prop_as_string(cur, "id", &id)) {
-                ++n_msgs;
-                if (verbose) {
-                    printf("id %d: '%s'\n", n_msgs, id);
-                }
-                err = msg_get_data(cur, doc, i, &nli, NULL, NULL);
-                if (n_langs == 0) {
-                    n_langs = nli;
-                } else if (nli != n_langs) {
-                    printf(" number of_langs is not consistent\n");
-                    err = E_DATA;
-                }
-                free(id);
-            } else {
-                err = E_DATA;
-            }
-            i++;
-        }
-        cur = cur->next;
+#endif
+
+void destroy_translation (Translation *T)
+{
+    int i;
+
+    free(T->lang);
+
+    for (i=0; i<T->n_msgs; i++) {
+        free(T->msgs[i].en);
+        free(T->msgs[i].tr);
     }
 
-    if (!err && (n_msgs == 0 || n_langs == 0)) {
-        err = E_DATA;
-    }
+    free(T->msgs);
+    free(T);
+}
 
-    /* second pass */
+static Translation *allocate_translation (char *lang, int n_msgs)
+{
+    Translation *T = malloc(sizeof *T);
 
-    if (!err) {
-        char **langs = calloc(n_langs, sizeof *langs);
+    if (T != NULL) {
         int i;
 
-        if (verbose) {
-            printf("Got %d msg elements, each with %d langs\n", n_msgs, n_langs);
-        }
-        T = allocate_translations(n_msgs, n_langs);
-
-        cur = root->xmlChildrenNode;
-        for (i=0; i<n_msgs && !err; i++) {
-            if (!xmlStrcmp(cur->name, (XUC) "msg")) {
-                char **strs = calloc(n_langs, sizeof *strs);
-
-                gretl_xml_get_prop_as_string(cur, "id", &id);
-                err = msg_get_data(cur, doc, i, NULL, langs, strs);
-                if (!err) {
-                    T->msgs[i].id = id;
-                    T->msgs[i].strs = strs;
-                }
-            }
-            cur = cur->next;
-        }
-        if (!err) {
-            T->langs = langs;
+        T->lang = lang;
+        T->n_msgs = n_msgs;
+        T->msgs = malloc(n_msgs * sizeof *T->msgs);
+        for (i=0; i<n_msgs; i++) {
+            T->msgs[i].en = NULL;
+            T->msgs[i].tr = NULL;
         }
     }
 
     return T;
 }
 
-Translations *read_translations_file (const char *fname, int *err)
+const char *get_gfn_translation (Translation *T,
+                                 const char *id)
 {
-    Translations *T = NULL;
+    static char *lang;
+
+    if (lang == NULL) {
+        lang = get_built_in_string_by_name("lang");
+    }
+
+    if (!strcmp(lang, T->lang) || !strncmp(lang, T->lang, 2)) {
+        int i;
+
+        for (i=0; i<T->n_msgs; i++) {
+            if (!strcmp(id, T->msgs[i].en)) {
+                return T->msgs[i].tr;
+            }
+        }
+    }
+
+    return id;
+}
+
+Translation *read_translation_element (xmlNodePtr root,
+                                       xmlDocPtr doc)
+{
+    Translation *T = NULL;
+    xmlNodePtr cur;
+    int n_msgs = 0;
+    char *lang = NULL;
+    int i;
+
+    if (!gretl_xml_get_prop_as_string(root, "lang", &lang)) {
+        fprintf(stderr, "translation: @lang property is missing\n");
+        return NULL;
+    }
+
+    /* first pass: count the @msg elements */
+
+    cur = root->xmlChildrenNode;
+    while (cur != NULL) {
+        if (!xmlStrcmp(cur->name, (XUC) "msg")) {
+            n_msgs++;
+        }
+        cur = cur->next;
+    }
+
+    if (n_msgs > 0) {
+        T = allocate_translation(lang, n_msgs);
+    }
+    if (T == NULL) {
+        return NULL;
+    }
+
+    /* second pass: populate the Translations struct */
+
+    i = 0;
+    cur = root->xmlChildrenNode;
+    while (cur != NULL) {
+        if (!xmlStrcmp(cur->name, (XUC) "msg")) {
+            char *en = NULL;
+            char *tr = NULL;
+
+            if (gretl_xml_get_prop_as_string(cur, "en", &en) &&
+                gretl_xml_node_get_string(cur, doc, &tr)) {
+                if (*en != '\0' && *tr != '\0') {
+                    T->msgs[i].en = en;
+                    T->msgs[i].tr = tr;
+                    i++;
+                }
+            }
+        }
+        cur = cur->next;
+    }
+
+    if (i == 0) {
+        destroy_translation(T);
+        T = NULL;
+    } else if (i < n_msgs) {
+        fprintf(stderr, "n_msgs = %d but only %d were usable\n", n_msgs, i);
+        T->n_msgs = i;
+    }
+
+    return T;
+}
+
+Translation *read_translations_file (const char *fname, int *err)
+{
+    Translation *T = NULL;
     xmlDocPtr doc = NULL;
     xmlNodePtr root;
 
-    *err = gretl_xml_open_doc_root(fname, "translations", &doc, &root);
+    *err = gretl_xml_open_doc_root(fname, "translation", &doc, &root);
     if (!*err) {
-        T = read_translations_element(root, doc);
+        T = read_translation_element(root, doc);
     }
 
     if (doc != NULL) {
@@ -258,22 +253,17 @@ Translations *read_translations_file (const char *fname, int *err)
     return T;
 }
 
-void write_translations (Translations *T, PRN *prn)
+void write_translation (Translation *T, PRN *prn)
 {
     if (T != NULL) {
         msg *m;
-        int i, j;
+        int i;
 
-        pputs(prn, "<translations>\n");
+        pprintf(prn, "<translation lang=\"%s\">\n", T->lang);
         for (i=0; i<T->n_msgs; i++) {
             m = &T->msgs[i];
-            pprintf(prn, " <msg id=\"%s\">\n", m->id);
-            for (j=0; j<T->n_langs; j++) {
-                pprintf(prn, "  <s lang=\"%s\">%s</s>\n", T->langs[j],
-                        m->strs[j]);
-            }
-            pputs(prn, " </msg>\n");
+            pprintf(prn, " <msg en=\"%s\">%s</msg>\n", m->en, m->tr);
         }
-        pputs(prn, "</translations>\n");
+        pputs(prn, "</translation>\n");
     }
 }
