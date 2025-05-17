@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<!-- XML schema for gretl function packages -->
-
+<!--
+  Document Type Definition (DTD) for gretl function packages: a package
+  needs a name, author, version, date, description and help text.  It
+  also needs at least one gretl-function.  The latter must have a name
+  and must include function code; it may have zero or more
+  parameters, and zero or one return values. And the package must
+  contain a sample script which illustrates a correct call.
+-->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
   <xs:element name="gretl-functions">
     <xs:complexType>
@@ -28,6 +33,7 @@
         <xs:element minOccurs="0" ref="R-depends"/>
         <xs:element maxOccurs="unbounded" ref="gretl-function"/>
         <xs:element ref="sample-script"/>
+        <xs:element minOccurs="0" ref="translation"/>
       </xs:sequence>
       <xs:attribute name="name" use="required"/>
       <xs:attribute name="ID"/>
@@ -97,7 +103,7 @@
     </xs:complexType>
   </xs:element>
   <xs:element name="version" type="xs:string"/>
-  <xs:element name="date" type="xs:date"/>
+  <xs:element name="date" type="xs:string"/>
   <xs:element name="description">
     <xs:complexType mixed="true">
       <xs:attribute name="lang"/>
@@ -187,6 +193,19 @@
       </xs:attribute>
     </xs:complexType>
   </xs:element>
+  <xs:element name="translation">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="msg"/>
+      </xs:sequence>
+      <xs:attribute name="lang" use="required"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="msg">
+    <xs:complexType mixed="true">
+      <xs:attribute name="en" use="required"/>
+    </xs:complexType>
+  </xs:element>
   <xs:element name="help">
     <xs:complexType mixed="true">
       <xs:attribute name="filename"/>
@@ -248,6 +267,22 @@
         </xs:simpleType>
       </xs:attribute>
       <xs:attribute name="const" default="false">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="true"/>
+            <xs:enumeration value="false"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="dtrans" default="false">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="true"/>
+            <xs:enumeration value="false"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="ltrans" default="false">
         <xs:simpleType>
           <xs:restriction base="xs:token">
             <xs:enumeration value="true"/>

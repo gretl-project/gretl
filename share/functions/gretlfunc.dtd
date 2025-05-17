@@ -1,8 +1,8 @@
 <!--
   Document Type Definition (DTD) for gretl function packages: a package
-  needs a name, author, version, date, description and help text.  It 
-  also needs at least one gretl-function.  The latter must have a name 
-  and must include function code; it may have zero or more 
+  needs a name, author, version, date, description and help text.  It
+  also needs at least one gretl-function.  The latter must have a name
+  and must include function code; it may have zero or more
   parameters, and zero or one return values. And the package must
   contain a sample script which illustrates a correct call.
  -->
@@ -12,7 +12,7 @@
 <!ELEMENT gretl-function-package (author, version, date, description, tags, 
                                   label?, menu-attachment?, help, gui-help?, 
                                   data-files?, depends?, provider?, R-depends?,
-				  gretl-function+, sample-script, translations?)>
+				  gretl-function+, sample-script, translation?)>
 <!ATTLIST gretl-function-package
    name CDATA #REQUIRED
    ID CDATA #IMPLIED
@@ -57,15 +57,14 @@
 	     list-maker | R-setup | ui-maker | none) 'none'
 >
 
-<!ELEMENT translations (msg+)>
-<!ELEMENT msg (s+)>
-<!ATTLIST msg
-   id CDATA #REQUIRED
->
-<!ELEMENT s (#PCDATA)>
-<!ATTLIST s
+<!ELEMENT translation (msg+)>
+<!ATTLIST translation
    lang CDATA #REQUIRED
 >
+<!ATTLIST msg
+   en CDATA #REQUIRED
+>
+<!ELEMENT msg (#PCDATA)>
 
 <!ATTLIST help
    filename CDATA #IMPLIED
