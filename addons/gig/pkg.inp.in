@@ -2,7 +2,7 @@ set echo off
 set messages off
 
 string topsrc = "@top_srcdir@"
-string dtd = topsrc ~ "/share/functions/gretlfunc.dtd"
+string xsd = topsrc ~ "/share/functions/gretlfunc.xsd"
 string pkgdir = topsrc ~ "/addons/gig"
 
 include @pkgdir/gig_mle.inp
@@ -12,5 +12,5 @@ include @pkgdir/gig_printout.inp
 include @pkgdir/gig_plot.inp
 include @pkgdir/gig_fcast.inp
 
-makepkg gig.gfn --index --translations --quiet --dtd="@dtd"
+makepkg gig.gfn --index --translations --quiet --schema="@xsd"
 

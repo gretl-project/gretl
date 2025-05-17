@@ -1,7 +1,7 @@
 set verbose off
 
 string topsrc = "@top_srcdir@"
-string dtd = topsrc ~ "/share/functions/gretlfunc.dtd"
+string xsd = topsrc ~ "/share/functions/gretlfunc.xsd"
 string pkgdir = topsrc ~ "/addons/SVAR"
 
 include @pkgdir/SVAR_utils.inp
@@ -18,4 +18,4 @@ include @pkgdir/SVAR_estim_backend.inp
 include @pkgdir/SVAR_signrestr_utils.inp
 include @pkgdir/SVAR_signrestr.inp
 
-makepkg SVAR.gfn --index --translations --quiet --dtd="@dtd"
+makepkg SVAR.gfn --index --translations --quiet --schema="@xsd"
