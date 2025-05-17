@@ -1594,6 +1594,11 @@ const char *function_package_translate (const char *id)
     }
 }
 
+void *function_package_translation (fnpkg *pkg)
+{
+    return pkg == NULL ? NULL : pkg->trans;
+}
+
 fnpkg *gretl_function_get_package (const ufunc *fun)
 {
     return fun == NULL ? NULL : fun->pkg;
@@ -3505,11 +3510,9 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn, int mpi)
 
         pprintf(prn, " minver=\"%s\"", gretl_version_string(vstr, pkg->minver));
     }
-
     if (pkg->uses_subdir) {
         pprintf(prn, " lives-in-subdir=\"true\"");
     }
-
     if (pkg->data_access) {
         pprintf(prn, " wants-data-access=\"true\"");
     }
@@ -4917,7 +4920,8 @@ static int maybe_replace_string_var (char **svar, const char *src)
 /* unlike the case above, here we'll accept NULL for @src, to wipe
    out an existing string var */
 
-static int maybe_replace_optional_string_var (char **svar, const char *src)
+static int maybe_replace_optional_string_var (char **svar,
+                                              const char *src)
 {
     if (src == NULL) {
         free(*svar);
@@ -8301,8 +8305,11 @@ static void arg_tail_strip (char *s)
     int i, n = strlen(s);
 
     for (i=n-1; i>=0; i--) {
-        if (isspace(s[i]) || s[i] == ')') {
+        if (isspace(s[i])) {
             s[i] = '\0';
+        } else if (s[i] == ')') {
+            s[i] = '\0';
+            break;
         } else {
             break;
         }

@@ -48,6 +48,7 @@
 #include "gpt_control.h"
 #include "fnsave.h"
 #include "gui_addons.h"
+#include "gfn_translations.h"
 #include "fncall.h"
 
 #include <errno.h>
@@ -592,8 +593,15 @@ static GtkWidget *label_hbox (call_info *cinfo, GtkWidget *w)
 				      _("State space model"),
 				      _("see Help for more"));
     } else if (cinfo->label != NULL) {
-	buf = g_markup_printf_escaped("<span weight=\"bold\">%s</span>",
-				      _(cinfo->label));
+        void *trans = function_package_translation(cinfo->pkg);
+        const char *s;
+
+        if (trans != NULL) {
+            s = get_gfn_translation(trans, cinfo->label);
+        } else {
+            s = _(cinfo->label);
+        }
+        buf = g_markup_printf_escaped("<span weight=\"bold\">%s</span>", s);
     } else {
 	const char *funcname;
 
