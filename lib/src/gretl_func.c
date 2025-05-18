@@ -80,9 +80,7 @@ typedef struct stmt_ fn_line;
 enum {
     FP_CONST    = 1 << 0, /* explicitly marked as "const" */
     FP_OPTIONAL = 1 << 1, /* marked as optional (null is OK) */
-    FP_AUTO     = 1 << 2, /* marked as automatic (has a default value) */
-    FP_DTRANS   = 1 << 3, /* description is translatable */
-    FP_LTRANS   = 1 << 4  /* value-labels are translatable */
+    FP_AUTO     = 1 << 2  /* marked as automatic (has a default value) */
 };
 
 /* structure representing a parameter of a user-defined function */
@@ -103,13 +101,9 @@ struct fn_param_ {
 #define param_is_const(p) (p->flags & FP_CONST)
 #define param_is_optional(p) (p->flags & FP_OPTIONAL)
 #define param_is_auto(p) (p->flags & FP_AUTO)
-#define param_translatable(p) (p->flags & FP_DTRANS)
-#define labels_translatable(p) (p->flags & FP_LTRANS)
 
 #define set_param_optional(p) (p->flags |= FP_OPTIONAL)
 #define set_param_auto(p) (p->flags |= (FP_OPTIONAL | FP_AUTO))
-#define set_param_translatable(p) (p->flags |= FP_DTRANS)
-#define set_labels_translatable(p) (p->flags |= FP_LTRANS)
 
 typedef enum {
     LINE_IGNORE = 1 << 0,
@@ -1143,8 +1137,7 @@ const char *fn_param_descrip (const ufunc *fun, int i)
         fn_param *fp = &fun->params[i];
 
         if (fp->descrip != NULL) {
-            if (fun->pkg != NULL && fun->pkg->trans != NULL &&
-                param_translatable(fp)) {
+            if (fun->pkg != NULL && fun->pkg->trans != NULL) {
                 ret = get_gfn_translation(fun->pkg->trans, fp->descrip);
             } else {
                 ret = fp->descrip;
@@ -1173,14 +1166,13 @@ char **fn_param_value_labels (const ufunc *fun, int i, int *n)
         if (fp->labels != NULL) {
             void *trans = fun->pkg == NULL ? NULL : fun->pkg->trans;
             char **S = calloc(fp->nlabels, sizeof *S);
-            int j, try_trans;
+            int j;
 
             if (S == NULL) {
                 return NULL;
             }
-            try_trans = trans != NULL && labels_translatable(fp);
             for (j=0; j<fp->nlabels; j++) {
-                if (try_trans) {
+                if (trans != NULL) {
                     S[j] = (char *) get_gfn_translation(fun->pkg->trans,
                                                         fp->labels[j]);
                 } else {
@@ -2184,12 +2176,6 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
                 if (gretl_xml_get_prop_as_bool(cur, "const")) {
                     maybe_set_param_const(param);
                 }
-                if (gretl_xml_get_prop_as_bool(cur, "dtrans")) {
-                    set_param_translatable(param);
-                }
-                if (gretl_xml_get_prop_as_bool(cur, "ltrans")) {
-                    set_labels_translatable(param);
-                }
             } else {
                 err = E_DATA;
                 break;
@@ -2407,19 +2393,13 @@ static void print_param_labels (fn_param *param, PRN *prn)
 {
     int i;
 
-    if (labels_translatable(param)) {
-        pputs(prn, " T_{");
-    } else {
-        pputs(prn, " {");
-    }
-
+    pputs(prn, " {");
     for (i=0; i<param->nlabels; i++) {
         pprintf(prn, "\"%s\"", param->labels[i]);
         if (i < param->nlabels - 1) {
             pputs(prn, ", ");
         }
     }
-
     pputc(prn, '}');
 }
 
@@ -2811,12 +2791,6 @@ static int write_function_xml (ufunc *fun, PRN *prn, int mpi)
             }
             if (param_is_const(param)) {
                 pputs(prn, " const=\"true\"");
-            }
-            if (param_translatable(param)) {
-                pputs(prn, " dtrans=\"true\"");
-            }
-            if (labels_translatable(param)) {
-                pputs(prn, " ltrans=\"true\"");
             }
             if (parm_has_children(param)) {
                 pputs(prn, ">\n"); /* terminate opening tag */
@@ -3304,7 +3278,7 @@ static char *trim_text (char *s)
     return tailstrip(s);
 }
 
-static int package_write_translatable_strings (fnpkg *pkg, PRN *prn)
+static int addon_write_translatable_strings (fnpkg *pkg, PRN *prn)
 {
     FILE *fp;
     gchar *trname;
@@ -4861,7 +4835,8 @@ int create_and_write_function_package (const char *fname,
             }
             if (!err) {
                 if (opt & OPT_T) {
-                    package_write_translatable_strings(pkg, prn);
+                    /* special option for addons */
+                    addon_write_translatable_strings(pkg, prn);
                 }
                 if (opt & OPT_I) {
                     package_write_index(pkg, prn);
@@ -8042,9 +8017,9 @@ static int read_param_option (char **ps, fn_param *param)
 
 /* get the descriptive string for a function parameter */
 
-static int read_param_descrip (char **ps, int trans, fn_param *param)
+static int read_param_descrip (char **ps, fn_param *param)
 {
-    int offset = trans ? 4 : 1;
+    int offset = 1;
     char *p = *ps + offset;
     int len = 0;
     int err = E_PARSE;
@@ -8052,14 +8027,8 @@ static int read_param_descrip (char **ps, int trans, fn_param *param)
     while (*p) {
         if (*p == '"') {
             /* found closing quote */
-            if (!trans) {
-                err = 0;
-                break;
-            } else if (*(p+1) == ')') {
-                /* found closing paren */
-                err = 0;
-                break;
-            }
+            err = 0;
+            break;
         }
         len++;
         p++;
@@ -8071,10 +8040,7 @@ static int read_param_descrip (char **ps, int trans, fn_param *param)
         if (param->descrip == NULL) {
             err = E_ALLOC;
         } else {
-            *ps = p + len + trans + 1;
-            if (trans) {
-                set_param_translatable(param);
-            }
+            *ps = p + len + 1;
         }
     }
 
@@ -8082,15 +8048,14 @@ static int read_param_descrip (char **ps, int trans, fn_param *param)
 }
 
 /* Get the value labels for a function parameter. The syntactic
-   element we're looking at starts with "{", or "T_{" if the
-   labels are translatable.
+   element we're looking at starts with "{".
 */
 
 static int read_param_labels (char **ps, fn_param *param,
                               const char *name, int nvals)
 {
     char *p = *ps;
-    int offset = *p == 'T' ? 3 : 1;
+    int offset = 1;
     int len = 0;
     int err = E_PARSE;
 
@@ -8123,9 +8088,6 @@ static int read_param_labels (char **ps, fn_param *param,
                 gretl_errmsg_sprintf(_("%s: found %d values but %d value-labels"),
                                      name, nvals, param->nlabels);
                 err = E_DATA;
-            }
-            if (!err && offset == 3) {
-                set_labels_translatable(param);
             }
         }
     }
@@ -8249,11 +8211,8 @@ static int parse_function_param (char *s, fn_param *param, int i)
        for the parameter */
 
     if (!err && *s == '"') {
-        err = read_param_descrip(&s, 0, param);
+        err = read_param_descrip(&s, param);
         s += strspn(s, " ");
-    } else if (!strncmp(s, "T_(\"", 4)) {
-        err = read_param_descrip(&s, 1, param);
-        s += strspn(s, " "); /* FIXME */
     }
 
     /* and finally we may have a set of value-labels enclosed
@@ -8262,7 +8221,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
        for the parameter
     */
 
-    if (!err && (*s == '{' || !strncmp(s, "T_{", 3))) {
+    if (!err && *s == '{') {
         if (nvals == 0) {
             err = E_PARSE;
         } else {
