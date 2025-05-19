@@ -35,4 +35,6 @@ Translation *read_translation_element (xmlNodePtr root,
 
 void write_translation (Translation *T, PRN *prn);
 
+gchar *get_translatable_content (const char **ps);
+
 #endif /* GFN_TRANSLATIONS_H */

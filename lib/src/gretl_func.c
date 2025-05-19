@@ -3351,6 +3351,103 @@ static int addon_write_translatable_strings (fnpkg *pkg, PRN *prn)
     return 0;
 }
 
+static int gfn_write_translatable_strings (fnpkg *pkg, PRN *prn)
+{
+    FILE *fp;
+    gchar *trname;
+    gchar *enstr;
+    char **S = NULL;
+    const char *s;
+    ufunc *fun;
+    fn_param *param;
+    int trans = 0;
+    int i, j, k;
+    int ns = 0;
+
+    /* open a file to contain the results */
+    trname = g_strdup_printf("%s_xx.xml", pkg->name);
+    fp = gretl_fopen(trname, "wb");
+    if (fp == NULL) {
+        gretl_errmsg_sprintf(_("Couldn't open %s"), trname);
+        g_free(trname);
+        return E_FOPEN;
+    }
+
+    if (pkg->pub != NULL) {
+        /* pick up any parameter descriptions and/or parameter-value
+           enumeration strings
+        */
+        for (i=0; i<pkg->n_pub; i++) {
+            fun = pkg->pub[i];
+            for (j=0; j<fun->n_params; j++) {
+                param = &fun->params[j];
+                if (param->descrip != NULL) {
+                    strings_array_add_uniq(&S, &ns, param->descrip, NULL);
+                }
+                for (k=0; k<param->nlabels; k++) {
+                    strings_array_add_uniq(&S, &ns, param->labels[k], NULL);
+                }
+            }
+            /* also check lines of code for @fun, looking for T_() */
+            for (j=0; j<fun->n_lines; j++) {
+                s = fun->lines[j].s;
+                while ((s = strstr(s, "T_(")) != NULL) {
+                    enstr = get_translatable_content(&s);
+                    if (enstr != NULL) {
+                        strings_array_add_uniq(&S, &ns, enstr, NULL);
+                        g_free(enstr);
+                    }
+                }
+            }
+        }
+    }
+
+    if (pkg->priv != NULL) {
+        for (i=0; i<pkg->n_priv; i++) {
+            fun = pkg->priv[i];
+            for (j=0; j<fun->n_lines; j++) {
+                s = fun->lines[j].s;
+                 while ((s = strstr(s, "T_(")) != NULL) {
+                    enstr = get_translatable_content(&s);
+                    if (enstr != NULL) {
+                        strings_array_add_uniq(&S, &ns, enstr, NULL);
+                        g_free(enstr);
+                    }
+                }
+            }
+        }
+    }
+
+    if (pkg->label != NULL || S != NULL) {
+        /* we got some relevant content */
+        fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", fp);
+        fputs("<translation lang=\"xx\">\n", fp);
+        if (pkg->label != NULL) {
+            fprintf(fp, " <msg en=\"%s\"></msg>\n", pkg->label);
+        }
+        if (S != NULL) {
+            for (i=0; i<ns; i++) {
+                fprintf(fp, " <msg en=\"%s\"></msg>\n", S[i]);
+            }
+            strings_array_free(S, ns);
+        }
+        fputs("</translation>\n", fp);
+        trans = 1;
+    }
+
+    fclose(fp);
+
+    if (!trans) {
+        gretl_remove(trname);
+    } else {
+        pprintf(prn, "Wrote translations file %s\n", trname);
+    }
+
+    g_free(trname);
+
+    return 0;
+}
+
 static int package_write_index (fnpkg *pkg, PRN *inprn)
 {
     PRN *prn;
@@ -3415,11 +3512,9 @@ static int package_write_index (fnpkg *pkg, PRN *inprn)
     if (pkg->tags != NULL) {
         gretl_xml_put_tagged_string("tags", pkg->tags, prn);
     }
-
     if (pkg->label != NULL) {
         gretl_xml_put_tagged_string("label", pkg->label, prn);
     }
-
     if (pkg->mpath != NULL) {
         gretl_xml_put_tagged_string("menu-attachment", pkg->mpath, prn);
     }
@@ -3507,7 +3602,6 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn, int mpi)
     if (pkg->tags != NULL) {
         gretl_xml_put_tagged_string("tags", pkg->tags, prn);
     }
-
     if (pkg->label != NULL) {
         gretl_xml_put_tagged_string("label", pkg->label, prn);
     }
@@ -3515,7 +3609,6 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn, int mpi)
     if (pkg->mpath != NULL) {
         gretl_xml_put_tagged_string("menu-attachment", pkg->mpath, prn);
     }
-
     if (pkg->help != NULL && !mpi) {
         if (pkg->help_fname != NULL) {
             pprintf(prn, "<help filename=\"%s\">\n", pkg->help_fname);
@@ -3554,7 +3647,6 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn, int mpi)
     if (pkg->Rdeps != NULL) {
         gretl_xml_put_tagged_string("R-depends", pkg->Rdeps, prn);
     }
-
     if (pkg->pub != NULL) {
         for (i=0; i<pkg->n_pub; i++) {
             write_function_xml(pkg->pub[i], prn, mpi);
@@ -3565,7 +3657,6 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn, int mpi)
             write_function_xml(pkg->priv[i], prn, mpi);
         }
     }
-
     if (pkg->sample != NULL && !mpi) {
         if (pkg->sample_fname != NULL) {
             pprintf(prn, "<sample-script filename=\"%s\">\n",
@@ -4835,8 +4926,12 @@ int create_and_write_function_package (const char *fname,
             }
             if (!err) {
                 if (opt & OPT_T) {
-                    /* special option for addons */
-                    addon_write_translatable_strings(pkg, prn);
+                    if (is_gretl_addon(pkg->name)) {
+                        /* addons are a special case */
+                        addon_write_translatable_strings(pkg, prn);
+                    } else {
+                        gfn_write_translatable_strings(pkg, prn);
+                    }
                 }
                 if (opt & OPT_I) {
                     package_write_index(pkg, prn);

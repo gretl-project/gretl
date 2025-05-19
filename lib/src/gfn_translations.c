@@ -267,3 +267,42 @@ void write_translation (Translation *T, PRN *prn)
         pputs(prn, "</translation>\n");
     }
 }
+
+/* Here we're looking at T_(...) and we want the "..." bit, unquoted */
+
+gchar *get_translatable_content (const char **ps)
+{
+    gchar *ret = NULL;
+    const char *s = *ps;
+    const char *p;
+    int quoted = 0;
+
+    s += 3; /* skip "T_(" */
+    if (*s == '"') {
+        quoted = 1;
+        s++;
+    }
+    p = s;
+    while (*p) {
+        if (quoted) {
+            if (*p == '"') {
+                break;
+            }
+        } else if (*p == ')') {
+            break;
+        }
+        p++;
+    }
+
+    ret = g_strndup(s, p - s);
+
+    if (*p == '"') {
+        p++;
+    }
+    if (*p == ')') {
+        p++;
+    }
+    *ps = p;
+
+    return ret;
+}
