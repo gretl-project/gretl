@@ -4758,40 +4758,34 @@ static int get_gfn_info_for_zip (const char *fname,
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
-    xmlNodePtr sub;
+    xmlNodePtr cur;
     int found = 0;
     int err = 0;
 
-    err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
+    node = gretl_xml_get_gfn(fname, &doc, &err);
     if (err) {
         return err;
     }
 
-    node = node->xmlChildrenNode;
-    while (node != NULL && found < 2) {
-        if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
-            sub = node->xmlChildrenNode;
-            while (sub != NULL && found < 2) {
-                if (!xmlStrcmp(sub->name, (XUC) "help")) {
-                    char *s = NULL;
+    cur = node->xmlChildrenNode;
+    while (cur != NULL && found < 2) {
+        if (!xmlStrcmp(cur->name, (XUC) "help")) {
+            char *s = NULL;
 
-                    gretl_xml_node_get_trimmed_string(sub, doc, &s);
-                    *pdfdoc = is_pdf_ref(s);
-                    free(s);
-                    found++;
-                } else if (!xmlStrcmp(sub->name, (XUC) "data-files")) {
-                    *datafiles =
-                        gretl_xml_get_strings_array(sub, doc, n_datafiles,
-                                                    0, &err);
-                    found++;
-                } else if (!xmlStrcmp(sub->name, (XUC) "gretl-function")) {
-                    /* we've overshot */
-                    found = 2;
-                }
-                sub = sub->next;
-            }
+            gretl_xml_node_get_trimmed_string(cur, doc, &s);
+            *pdfdoc = is_pdf_ref(s);
+            free(s);
+            found++;
+        } else if (!xmlStrcmp(cur->name, (XUC) "data-files")) {
+            *datafiles =
+                gretl_xml_get_strings_array(cur, doc, n_datafiles,
+                                            0, &err);
+            found++;
+        } else if (!xmlStrcmp(cur->name, (XUC) "gretl-function")) {
+            /* we've overshot */
+            found = 2;
         }
-        node = node->next;
+        cur = cur->next;
     }
 
     if (doc != NULL) {
@@ -6966,32 +6960,18 @@ static fnpkg *read_package_file (const char *fname,
     fnpkg *pkg = NULL;
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
-    xmlNodePtr cur;
 
 #if PKG_DEBUG
     fprintf(stderr, "read_package_file: got '%s'\n", fname);
 #endif
 
-    *err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
-    if (*err) {
-        return NULL;
-    }
-
-    cur = node->xmlChildrenNode;
-    while (cur != NULL && !*err) {
-        if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
-            pkg = real_read_package(doc, cur, fname, get_funcs, err);
-            break;
-        }
-        cur = cur->next;
+    node = gretl_xml_get_gfn(fname, &doc, err);
+    if (!*err) {
+        pkg = real_read_package(doc, node, fname, get_funcs, err);
     }
 
     if (doc != NULL) {
         xmlFreeDoc(doc);
-    }
-
-    if (!*err && pkg == NULL) {
-        *err = E_DATA;
     }
 
 #if PKG_DEBUG
@@ -7001,25 +6981,39 @@ static fnpkg *read_package_file (const char *fname,
     return pkg;
 }
 
-char **package_peek_dependencies (const char *fname, int *ndeps)
+static char **read_package_strings_array (const char *fname,
+                                          const char *tag,
+                                          int *ns)
 {
-    char **deps = NULL;
-    fnpkg *pkg;
-    int err = 0;
+    char **S = NULL;
+    xmlDocPtr doc = NULL;
+    xmlNodePtr node = NULL;
+    xmlNodePtr cur;
+    int err;
 
-    pkg = read_package_file(fname, 0, &err);
+    node = gretl_xml_get_gfn(fname, &doc, &err);
 
-    if (pkg != NULL) {
-        deps = pkg->depends; /* stolen! */
-        *ndeps = pkg->n_depends;
-        pkg->depends = NULL;
-        pkg->n_depends = 0;
-        function_package_free(pkg);
-    } else {
-        *ndeps = 0;
+    if (node != NULL) {
+        cur = node->xmlChildrenNode;
+        while (cur != NULL) {
+            if (!xmlStrcmp(cur->name, (XUC) tag)) {
+                S = gretl_xml_get_strings_array(cur, doc, ns, 0, &err);
+                break;
+            }
+            cur = cur->next;
+        }
     }
 
-    return deps;
+    if (doc != NULL) {
+        xmlFreeDoc(doc);
+    }
+
+    return S;
+}
+
+char **package_peek_dependencies (const char *fname, int *ndeps)
+{
+    return read_package_strings_array(fname, "depends", ndeps);
 }
 
 /**
@@ -7327,29 +7321,24 @@ static char *sample_script_from_xml (const char *pkgname, int *err)
     char fullname[MAXLEN];
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
-    xmlNodePtr cur = NULL;
 
     gfnname = g_strdup_printf("%s.gfn", pkgname);
     *err = get_full_filename(gfnname, fullname, OPT_I);
+
     if (!*err) {
-	*err = gretl_xml_open_doc_root(fullname, "gretl-functions", &doc, &node);
+        node = gretl_xml_get_gfn(fullname, &doc, err);
     }
 
     if (!*err) {
-	cur = node->xmlChildrenNode;
+	xmlNodePtr cur = node->xmlChildrenNode;
+
 	while (cur != NULL) {
-	    if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
-		cur = cur->xmlChildrenNode;
-		while (cur != NULL) {
-		    if (!xmlStrcmp(cur->name, (XUC) "sample-script")) {
-			gretl_xml_node_get_trimmed_string(cur, doc, &ret);
-			break;
-		    }
-		    cur = cur->next;
-		}
-		break;
-	    }
-	}
+            if (!xmlStrcmp(cur->name, (XUC) "sample-script")) {
+                gretl_xml_node_get_trimmed_string(cur, doc, &ret);
+                break;
+            }
+            cur = cur->next;
+        }
     }
 
     g_free(gfnname);
@@ -7387,7 +7376,7 @@ int grab_package_sample (const char *pkgname, char **pscript)
 
 /* Retrieve summary info, sample script, or code listing for a
    function package, identified by its filename.  This is called
-   (indirectly) from the GUI (see below for the actual callbacks).
+   (indirectly) from the GUI -- see below for the actual callbacks.
 */
 
 static int real_print_gfn_data (const char *fname,
@@ -7548,7 +7537,7 @@ int get_function_file_header (const char *fname, char **pdesc,
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
-    xmlNodePtr sub;
+    xmlNodePtr cur;
     int docdone = 0;
     int ndone = 0;
     int err = 0;
@@ -7558,7 +7547,7 @@ int get_function_file_header (const char *fname, char **pdesc,
         return E_DATA;
     }
 
-    err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
+    node = gretl_xml_get_gfn(fname, &doc, &err);
     if (err) {
         return err;
     }
@@ -7570,41 +7559,31 @@ int get_function_file_header (const char *fname, char **pdesc,
         *pdfdoc = 0;
     }
 
-    node = node->xmlChildrenNode;
-    while (node != NULL) {
-        if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
-            sub = node->xmlChildrenNode;
-            while (sub != NULL) {
-                if (!xmlStrcmp(sub->name, (XUC) "description")) {
-                    gretl_xml_node_get_trimmed_string(sub, doc, pdesc);
-                    ndone++;
-                } else if (!xmlStrcmp(sub->name, (XUC) "version")) {
-                    gretl_xml_node_get_trimmed_string(sub, doc, pver);
-                    ndone++;
-                } else if (!xmlStrcmp(sub->name, (XUC) "date")) {
-                    gretl_xml_node_get_trimmed_string(sub, doc, pdate);
-                    if (*pdate != NULL) {
-                        maybe_fix_broken_date(pdate);
-                    }
-                    ndone++;
-                } else if (!xmlStrcmp(sub->name, (XUC) "author")) {
-                    gretl_xml_node_get_trimmed_string(sub, doc, pauthor);
-                    ndone++;
-                } else if (!docdone && !xmlStrcmp(sub->name, (XUC) "help")) {
-                    *pdfdoc = get_pdfdoc_status(sub, doc);
-                    docdone = 1;
-                }
-                if (docdone && ndone == 4) {
-                    break;
-                }
-                sub = sub->next;
+    cur = node->xmlChildrenNode;
+    while (cur != NULL) {
+        if (!xmlStrcmp(cur->name, (XUC) "description")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, pdesc);
+            ndone++;
+        } else if (!xmlStrcmp(cur->name, (XUC) "version")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, pver);
+            ndone++;
+        } else if (!xmlStrcmp(cur->name, (XUC) "date")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, pdate);
+            if (*pdate != NULL) {
+                maybe_fix_broken_date(pdate);
             }
-            if (docdone && ndone == 4) {
-                /* we've already got what we want */
-                break;
-            }
+            ndone++;
+        } else if (!xmlStrcmp(cur->name, (XUC) "author")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, pauthor);
+            ndone++;
+        } else if (!docdone && !xmlStrcmp(cur->name, (XUC) "help")) {
+            *pdfdoc = get_pdfdoc_status(cur, doc);
+            docdone = 1;
         }
-        node = node->next;
+        if (docdone && ndone == 4) {
+            break;
+        }
+        cur = cur->next;
     }
 
     if (doc != NULL) {
@@ -7639,65 +7618,64 @@ int package_has_menu_attachment (const char *fname,
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
-    xmlNodePtr sub;
+    xmlNodePtr cur;
     char *tmp = NULL;
+    int skipit = 0;
     int got_label = 0;
     int got_attach = 0;
-    int stop = 0;
     int err = 0;
 
-    err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
+    node = gretl_xml_get_gfn(fname, &doc, &err);
     if (err) {
         return 0;
     }
 
-    node = node->xmlChildrenNode;
-
-    while (!stop && node != NULL) {
-        if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
-            if (pkgname != NULL) {
-                gretl_xml_get_prop_as_string(node, "name", pkgname);
-                if (*pkgname != NULL && !strcmp(*pkgname, "ridge")) {
-                    /* don't put it into menu */
-                    stop = 1;
-                }
-            }
-            sub = node->xmlChildrenNode;
-            while (!stop && sub != NULL) {
-                if (!xmlStrcmp(sub->name, (XUC) "menu-attachment")) {
-                    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
-                    if (tmp != NULL) {
-                        got_attach = 1;
-                        if (got_attach && got_label) {
-                            stop = 1;
-                        }
-                        if (attach != NULL) {
-                            *attach = tmp;
-                        } else {
-                            free(tmp);
-                        }
-                    }
-                } else if (!xmlStrcmp(sub->name, (XUC) "label")) {
-                    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
-                    if (tmp != NULL) {
-                        got_label = 1;
-                        if (got_attach && got_label) {
-                            stop = 1;
-                        }
-                        if (label != NULL) {
-                            *label = tmp;
-                        } else {
-                            free(tmp);
-                        }
-                    }
-                } else if (!xmlStrcmp(sub->name, (XUC) "help")) {
-                    /* we've overshot */
-                    stop = 1;
-                }
-                sub = sub->next;
-            }
+    if (pkgname != NULL) {
+        gretl_xml_get_prop_as_string(node, "name", &tmp);
+        if (tmp != NULL && !strcmp(tmp, "ridge")) {
+            /* don't give "ridge" a menu attachment */
+            free(tmp);
+            skipit = 1;
+        } else {
+            *pkgname = tmp;
         }
-        node = node->next;
+    }
+
+    if (skipit) {
+        xmlFreeDoc(doc);
+        return 0;
+    }
+
+    cur = node->xmlChildrenNode;
+    while (cur != NULL) {
+        if (!xmlStrcmp(cur->name, (XUC) "menu-attachment")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, &tmp);
+            if (tmp != NULL) {
+                got_attach = 1;
+                if (attach != NULL) {
+                    *attach = tmp;
+                } else {
+                    free(tmp);
+                }
+            }
+        } else if (!xmlStrcmp(cur->name, (XUC) "label")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, &tmp);
+            if (tmp != NULL) {
+                got_label = 1;
+                if (label != NULL) {
+                    *label = tmp;
+                } else {
+                    free(tmp);
+                }
+            }
+        } else if (!xmlStrcmp(cur->name, (XUC) "help")) {
+            /* we've overshot */
+            break;
+        }
+        if (got_attach && got_label) {
+            break;
+        }
+        cur = cur->next;
     }
 
     if (doc != NULL) {
@@ -7714,14 +7692,13 @@ int package_needs_zipping (const char *fname,
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
-    xmlNodePtr sub;
+    xmlNodePtr cur;
     char *tmp = NULL;
-    int stop = 0;
     int retmax = 1;
     int ret = 0;
     int err = 0;
 
-    err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
+    node = gretl_xml_get_gfn(fname, &doc, &err);
     if (err) {
         return 0;
     }
@@ -7730,39 +7707,31 @@ int package_needs_zipping (const char *fname,
         retmax = 2;
     }
 
-    node = node->xmlChildrenNode;
-
-    while (!stop && node != NULL) {
-        if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
-            sub = node->xmlChildrenNode;
-            while (!stop && sub != NULL) {
-                if (!xmlStrcmp(sub->name, (XUC) "help")) {
-                    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
-                    if (tmp != NULL && !strncmp(tmp, "pdfdoc:", 7)) {
-                        if (pdfdoc != NULL) {
-                            *pdfdoc = 1;
-                        }
-                        ret++;
-                    }
-                    free(tmp);
-                } else if (!xmlStrcmp(sub->name, (XUC) "data-files")) {
-                    if (datafiles != NULL) {
-                        *datafiles = gretl_xml_get_strings_array(sub, doc, n_files,
-                                                                 0, &err);
-                    }
-                    ret++;
-                } else if (!xmlStrcmp(sub->name, (XUC) "gretl-function")) {
-                    /* we've overshot */
-                    stop = 1;
+    cur = node->xmlChildrenNode;
+    while (cur != NULL) {
+        if (!xmlStrcmp(cur->name, (XUC) "help")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, &tmp);
+            if (tmp != NULL && !strncmp(tmp, "pdfdoc:", 7)) {
+                if (pdfdoc != NULL) {
+                    *pdfdoc = 1;
                 }
-                if (ret == retmax) {
-                    stop = 1;
-                } else {
-                    sub = sub->next;
-                }
+                ret++;
             }
+            free(tmp);
+        } else if (!xmlStrcmp(cur->name, (XUC) "data-files")) {
+            if (datafiles != NULL) {
+                *datafiles = gretl_xml_get_strings_array(cur, doc, n_files,
+                                                         0, &err);
+            }
+            ret++;
+        } else if (!xmlStrcmp(cur->name, (XUC) "gretl-function")) {
+            /* we've overshot */
+            break;
         }
-        node = node->next;
+        if (ret == retmax) {
+            break;
+        }
+        cur = cur->next;
     }
 
     if (doc != NULL) {
@@ -7777,27 +7746,19 @@ double gfn_file_get_version (const char *fname)
     xmlDocPtr doc = NULL;
     xmlNodePtr node;
     double version = NADBL;
-    int err;
+    int err = 0;
 
-    err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
+    node = gretl_xml_get_gfn(fname, &doc, &err);
 
     if (!err) {
-        xmlNodePtr sub;
-        int found = 0;
+        xmlNodePtr cur = node->xmlChildrenNode;
 
-        node = node->xmlChildrenNode;
-        while (node != NULL && !found) {
-            if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
-                sub = node->xmlChildrenNode;
-                while (sub != NULL && !found) {
-                    if (!xmlStrcmp(sub->name, (XUC) "version")) {
-                        gretl_xml_node_get_double(sub, doc, &version);
-                        found = 1;
-                    }
-                    sub = sub->next;
-                }
+        while (cur != NULL) {
+            if (!xmlStrcmp(cur->name, (XUC) "version")) {
+                gretl_xml_node_get_double(cur, doc, &version);
+                break;
             }
-            node = node->next;
+            cur = cur->next;
         }
     }
 

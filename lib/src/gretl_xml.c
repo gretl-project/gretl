@@ -102,6 +102,33 @@ int gretl_xml_open_doc_root (const char *fname,
     return err;
 }
 
+xmlNodePtr gretl_xml_get_gfn (const char *fname,
+                              xmlDocPtr *pdoc,
+                              int *err)
+{
+    xmlNodePtr ret = NULL;
+    xmlNodePtr node = NULL;
+
+    *err = gretl_xml_open_doc_root(fname, "gretl-functions", pdoc, &node);
+
+    if (!*err) {
+        xmlNodePtr cur = node->xmlChildrenNode;
+
+        while (cur != NULL) {
+            if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
+                ret = cur;
+                break;
+            }
+            cur = cur->next;
+        }
+        if (ret == NULL) {
+            *err = E_DATA;
+        }
+    }
+
+    return ret;
+}
+
 int gretl_xml_read_buffer (const char *buf,
                            const char *rootname,
                            xmlDocPtr *pdoc,
