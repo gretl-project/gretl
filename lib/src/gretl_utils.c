@@ -2957,45 +2957,46 @@ static void blas_init (void)
 #if defined(__APPLE__) && defined(PKGBUILD)
     blas_variant = BLAS_VECLIB;
     return;
-#endif
-
+#else
     blas_variant = BLAS_UNKNOWN;
     ptr = dlopen(NULL, RTLD_NOW);
     if (ptr == NULL) {
-#ifdef WIN32
+# ifdef WIN32
         return;
-#else
+# else
         goto try_ldd;
+# endif
 #endif
     }
 
+    /* try for OpenBLAS */
     OB_set_num_threads = dlsym(ptr, "openblas_set_num_threads");
     OB_get_num_threads = dlsym(ptr, "openblas_get_num_threads");
     if (OB_set_num_threads != NULL) {
         blas_variant = BLAS_OPENBLAS;
         register_openblas_details(ptr);
+        return;
     }
 
-    if (blas_variant == BLAS_UNKNOWN) {
-        BLIS_init = dlsym(ptr, "bli_init");
-        BLIS_finalize = dlsym(ptr, "bli_finalize");
-        BLIS_set_num_threads = dlsym(ptr, "bli_thread_set_num_threads");
-        BLIS_get_num_threads = dlsym(ptr, "bli_thread_get_num_threads");
-        if (BLIS_init != NULL) {
-            blas_variant = BLAS_BLIS;
-            BLIS_init(); /* This is only to be sure that BLIS was initialized */
-            register_blis_details(ptr);
-        }
+    /* try for Intel's MKL */
+    MKL_finalize = dlsym(ptr, "mkl_finalize");
+    MKL_domain_get_max_threads = dlsym(ptr, "MKL_Domain_Get_Max_Threads");
+    MKL_domain_set_num_threads = dlsym(ptr, "MKL_Domain_Set_Num_Threads");
+    if (MKL_domain_set_num_threads != NULL) {
+        blas_variant = BLAS_MKL;
+        register_mkl_details(ptr);
+        return;
     }
 
-    if (blas_variant == BLAS_UNKNOWN) {
-        MKL_finalize = dlsym(ptr, "mkl_finalize");
-        MKL_domain_get_max_threads = dlsym(ptr, "MKL_Domain_Get_Max_Threads");
-        MKL_domain_set_num_threads = dlsym(ptr, "MKL_Domain_Set_Num_Threads");
-        if (MKL_domain_set_num_threads != NULL) {
-            blas_variant = BLAS_MKL;
-            register_mkl_details(ptr);
-        }
+    BLIS_init = dlsym(ptr, "bli_init");
+    BLIS_finalize = dlsym(ptr, "bli_finalize");
+    BLIS_set_num_threads = dlsym(ptr, "bli_thread_set_num_threads");
+    BLIS_get_num_threads = dlsym(ptr, "bli_thread_get_num_threads");
+    if (BLIS_init != NULL) {
+        blas_variant = BLAS_BLIS;
+        BLIS_init(); /* This is only to be sure that BLIS was initialized */
+        register_blis_details(ptr);
+        /* don't return in case libflame is used */
     }
 
     if (FLAME_init == NULL) {
@@ -3008,7 +3009,6 @@ static void blas_init (void)
 
 #ifndef WIN32
  try_ldd:
-
     if (blas_variant == BLAS_UNKNOWN) {
         blas_variant = detect_blas_via_ldd();
     }
