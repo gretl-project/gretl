@@ -1768,6 +1768,7 @@ static int compare_ranges (const DATASET *targ,
 			   int newvars,
 			   int *offset,
 			   int *yrspecial,
+                           PRN *prn,
 			   int *err)
 {
     int ed0 = dateton(targ->endobs, targ);
@@ -1793,7 +1794,8 @@ static int compare_ranges (const DATASET *targ,
 	       no information with which to match rows for new
 	       series
 	    */
-	    gretl_errmsg_set(_("append: don't know how to align the new series!"));
+	    pputs(prn, _("append: don't know how to align the new series!"));
+            pputc(prn, '\n');
 	    *err = E_DATA;
 	    return -1;
 	}
@@ -1860,11 +1862,11 @@ static int compare_ranges (const DATASET *targ,
 
     if (addobs < 0) {
 	if (range_err == 1) {
-	    fputs("compare_ranges: no overlap, can't merge\n", stderr);
+	    pputs(prn, "compare_ranges: no overlap, can't merge\n");
 	} else if (range_err == 2) {
-	    fputs("compare ranges: new data start earlier, end later\n", stderr);
+	    pputs(prn, "compare ranges: new data start earlier, end later\n");
 	} else {
-	    fputs("compare_ranges: flagging error\n", stderr);
+	    pputs(prn, "compare_ranges: unclassified error\n");
 	}
     }
 
@@ -2124,62 +2126,6 @@ static int merge_lengthen_series (DATASET *dset,
     return err;
 }
 
-#if 0 /* not yet (maybe usable with DND) */
-
-int basic_data_merge_check (const DATASET *dset,
-			    DATASET *addset)
-{
-    int dayspecial = 0;
-    int yrspecial = 0;
-    int addsimple = 0;
-    int addvars = 0;
-    int addobs = 0;
-    int offset = 0;
-    int err = 0;
-
-    /* first see how many new vars we have */
-    addvars = count_new_vars(dset, addset, NULL);
-    if (addvars < 0) {
-	return 1;
-    }
-
-    if (dated_daily_data(dset) && dated_daily_data(addset)) {
-	dayspecial = 1;
-    }
-
-    if (simple_range_match(dset, addset, &offset)) {
-	addsimple = 1;
-    } else if (dset->pd != addset->pd) {
-	err = 1;
-    }
-
-    if (!err) {
-	if (!addsimple) {
-	    addobs = compare_ranges(dset, addset, addvars, &offset,
-				    &yrspecial, &err);
-	}
-	if (!err && addobs <= 0 && addvars == 0) {
-	    addobs = just_append_rows(dset, addset, &offset);
-	}
-    }
-
-    if (!err && (addobs < 0 || addvars < 0)) {
-	err = E_DATA;
-    }
-
-    if (!err && dset->markers != addset->markers) {
-	if (addobs == 0 && addvars == 0) {
-	    err = E_DATA;
-	} else if (addset->n != dset->n && !yrspecial && !dayspecial) {
-	    err = E_DATA;
-	}
-    }
-
-    return err;
-}
-
-#endif
-
 /* When we're merging dated weekly data, the day-of-week on which
    weeks are supposed to start should be consistent across the
    two datasets.
@@ -2286,7 +2232,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
 	*/
 	if (!addsimple && !addpanel) {
 	    addobs = compare_ranges(dset, addset, addvars, &offset,
-				    &yrspecial, &err);
+				    &yrspecial, prn, &err);
 	    if (!err && addobs > 0) {
 		addobs = 0;
 	    }
@@ -2294,7 +2240,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
     } else if (!err) {
 	if (!addsimple && !addpanel) {
 	    addobs = compare_ranges(dset, addset, addvars, &offset,
-				    &yrspecial, &err);
+				    &yrspecial, prn, &err);
 #if MERGE_DEBUG
 	    fprintf(stderr, " added obs, from compare_ranges: %d (offset %d)\n",
 		    addobs, offset);
