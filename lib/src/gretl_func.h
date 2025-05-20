@@ -355,4 +355,8 @@ void adjust_indent (const char *line, int *this_indent,
 void normalize_hansl (const char *buf, int tabwidth,
 		      PRN *prn);
 
+const char *try_for_label_translation (const char *label,
+                                       const char *fname,
+                                       const char *lang);
+
 #endif /* GRETL_FUNC_H */

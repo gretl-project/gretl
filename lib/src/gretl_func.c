@@ -7769,6 +7769,54 @@ double gfn_file_get_version (const char *fname)
     return version;
 }
 
+const char *try_for_label_translation (const char *label,
+                                       const char *fname,
+                                       const char *lang)
+{
+    const char *ret = label;
+    xmlDocPtr doc = NULL;
+    xmlNodePtr node;
+    int err = 0;
+
+    node = gretl_xml_get_gfn(fname, &doc, &err);
+
+    if (!err) {
+        xmlNodePtr cur = node->xmlChildrenNode;
+        xmlNodePtr msg;
+        char *trlang = NULL;
+        char *tr = NULL;
+
+        while (cur != NULL) {
+            if (!xmlStrcmp(cur->name, (XUC) "translation")) {
+                if (gretl_xml_get_prop_as_string(cur, "lang", &trlang)) {
+                    if (!strncmp(lang, trlang, 2)) {
+                        msg = cur->xmlChildrenNode;
+                        while (msg != NULL) {
+                            if (gretl_xml_node_get_string(msg, doc, &tr)) {
+                                if (!strcmp(label, tr)) {
+                                    ret = tr;
+                                    break;
+                                }
+                            }
+                            msg = msg->next;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+                break;
+            }
+            cur = cur->next;
+        }
+    }
+
+    if (doc != NULL) {
+        xmlFreeDoc(doc);
+    }
+
+    return ret;
+}
+
 /**
  * gretl_is_public_user_function:
  * @name: name to test.

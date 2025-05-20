@@ -4246,6 +4246,20 @@ static void add_package_to_menu (gui_package_info *gpi,
     item.name = gpi->pkgname;
     item.label = gpi->label != NULL ? gpi->label : gpi->pkgname;
 
+#if 0
+    #include "gretl_string_table.h"
+    if (gpi->label != NULL) {
+        char *lang = get_built_in_string_by_name("lang");
+
+        fprintf(stderr, "HERE lang='%s', filepath '%s'\n",
+                lang, gpi->filepath);
+
+        if (strncmp(lang, "en", 2)) {
+            item.label = try_for_label_translation(gpi->label, gpi->filepath, lang);
+        }
+    }
+#endif
+
     if (strchr(item.label, '_')) {
 	fixed_label = double_underscores_new(item.label);
 	item.label = fixed_label;
