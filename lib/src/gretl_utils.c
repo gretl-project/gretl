@@ -2968,7 +2968,6 @@ static void blas_init (void)
 # else
         goto try_ldd;
 # endif
-#endif
     }
 
     /* try for OpenBLAS */
@@ -3009,12 +3008,13 @@ static void blas_init (void)
         }
     }
 
-#ifndef WIN32
+# ifndef WIN32
  try_ldd:
     if (blas_variant == BLAS_UNKNOWN) {
         blas_variant = detect_blas_via_ldd();
     }
-#endif
+# endif
+#endif /* not (__APPLE__ && PKGBUILD) */
 }
 
 void blas_cleanup (void)
