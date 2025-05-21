@@ -309,6 +309,7 @@ struct str_table funcs[] = {
     { F_PMEAN,    "pmean" },     /* panel mean */
     { F_PXSUM,    "pxsum" },     /* panel x-sectional sum */
     { F_PXNOBS,   "pxnobs" },    /* panel x-sectional obs count */
+    { F_PXMEAN,   "pxmean" },    /* panel x-sectional mean */
     { F_PSD,      "psd" },       /* panel std dev */
     { F_PSHRINK,  "pshrink" },
     { F_PEXPAND,  "pexpand" },

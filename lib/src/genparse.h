@@ -319,6 +319,7 @@ enum {
     F_PMEAN,
     F_PXSUM,
     F_PXNOBS,
+    F_PXMEAN,
     F_PSD,
     F_PSHRINK,
     F_RANDINT,
