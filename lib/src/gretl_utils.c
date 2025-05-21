@@ -2557,12 +2557,11 @@ static int parse_ldd_output (const char *s)
 
 static int detect_blas_via_ldd (void)
 {
-    gchar *targ;
+    char *targ;
     gchar *sout = NULL;
     gchar *errout = NULL;
     gint status = 0;
     GError *gerr = NULL;
-    int free_targ = 1; /* we don't free in case we got path via GRETL_LIB_NAME */
 
 #ifdef __APPLE__
     int variant = BLAS_VECLIB;
@@ -2577,9 +2576,7 @@ static int detect_blas_via_ldd (void)
     gchar *argv[3];
     targ = getenv("GRETL_LIB_NAME");
     if (targ == NULL || *targ == '\0') {
-        targ = g_strdup(GRETL_PREFIX "/lib/libgretl-1.0.so");
-    } else {
-        free_targ = 0;
+        targ = GRETL_PREFIX "/lib/libgretl-1.0.so";
     }
     argv[0] = "ldd";
     argv[1] = targ;
@@ -2603,9 +2600,6 @@ static int detect_blas_via_ldd (void)
 
     g_free(sout);
     g_free(errout);
-    if (free_targ) {
-        g_free(targ);
-    }
 
     return variant;
 }
