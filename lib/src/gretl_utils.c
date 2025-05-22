@@ -2501,7 +2501,8 @@ static void retry_for_blas_details (char *ldd_line,
             }
         }
         free(libpath);
-        /* dlclose(ptr); ?? */
+    } else {
+        fprintf(stderr, "retry_for_blas_details: couldn't get @libpath\n");
     }
 }
 
