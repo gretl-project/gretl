@@ -284,6 +284,11 @@ static void pc_change_callback (GtkAction *action, gpointer p)
     const char *s = gtk_action_get_name(action);
     int idxvals = !strcmp(s, "idxvals");
 
+    if (idxvals && dataset_is_panel(dataset)) {
+        /* this shouldn't be needed, but... */
+        warnbox(_("This option is not available for panel data"));
+    }
+
     if (mdata_selection_count() == 1) {
 	single_percent_change_dialog(mdata->active_var, idxvals);
     } else {
