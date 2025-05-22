@@ -2466,6 +2466,11 @@ static void register_openblas_details (void *handle);
 static void register_mkl_details (void *handle);
 static void register_blis_details (void *handle);
 
+/* @ldd_line should look something like this:
+
+   libopenblaso.so.0 => /usr/lib64/libopenblaso.so.0 ...
+*/
+
 static void retry_for_blas_details (char *ldd_line,
                                     int blastype)
 {
@@ -2478,6 +2483,7 @@ static void retry_for_blas_details (char *ldd_line,
         s += strspn(s, " ");
         p = strchr(s, ' ');
         if (p != NULL) {
+            /* copy the library path */
             libpath = gretl_strndup(s, p-s);
         }
     }
@@ -2501,54 +2507,43 @@ static void retry_for_blas_details (char *ldd_line,
 
 static int parse_ldd_output (const char *s)
 {
-    char found[6] = {0};
     char line[512];
     int i = 0;
     int ret = BLAS_UNKNOWN;
 
     *line = '\0';
 
-    while (*s) {
+    while (*s && ret == BLAS_UNKNOWN) {
         if (*s == '\n') {
-            /* got to the end of a line */
+            /* got to the end of a line: check it */
             line[i] = '\0';
 	    if (strstr(line, "libopenblas")) {
-                retry_for_blas_details(line, BLAS_OPENBLAS);
-		found[5] = 5;
+                ret = BLAS_OPENBLAS;
 	    } else if (strstr(line, "libblis")) {
-                retry_for_blas_details(line, BLAS_BLIS);
-		found[4] = 1;
+                ret = BLAS_BLIS;
 	    } else if (strstr(line, "Accelerate.frame")) {
-		found[3] = 1;
+                ret = BLAS_VECLIB;
 	    } else if (strstr(line, "libmkl")) {
-                retry_for_blas_details(line, BLAS_MKL);
-		found[2] = 1;
-	    } else if (strstr(line, "atlas")) {
-		found[1] = 1;
+                ret = BLAS_MKL;
+	    } else if (strstr(line, "libatlas")) {
+                ret = BLAS_ATLAS;
 	    } else if (strstr(line, "libblas")) {
-		found[0] = 1;
-	    }
-	    *line = '\0';
-	    i = 0;
+                ret = BLAS_NETLIB;
+	    } else {
+                /* prepare for next line */
+                *line = '\0';
+                i = 0;
+            }
 	} else {
+            /* cumulate this line */
 	    line[i++] = *s;
 	}
 	s++;
     }
 
-    if (found[5]) {
-	ret = BLAS_OPENBLAS;
-    } else if (found[4]) {
-        ret = BLAS_BLIS;
-    } else if (found[3]) {
-        ret = BLAS_VECLIB;
-    } else if (found[2]) {
-        ret = BLAS_MKL;
-    } else if (found[1]) {
-        ret = BLAS_ATLAS;
-    } else if (found[0]) {
-        ret = BLAS_NETLIB;
-    } else {
+    if (ret == BLAS_OPENBLAS || ret == BLAS_BLIS || ret == BLAS_MKL) {
+        retry_for_blas_details(line, ret);
+    } else if (ret == BLAS_UNKNOWN) {
         fputs("detect blas: found no relevant libs!\n", stderr);
     }
 
