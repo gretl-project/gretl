@@ -287,6 +287,7 @@ static void pc_change_callback (GtkAction *action, gpointer p)
     if (idxvals && dataset_is_panel(dataset)) {
         /* this shouldn't be needed, but... */
         warnbox(_("This option is not available for panel data"));
+        return;
     }
 
     if (mdata_selection_count() == 1) {
