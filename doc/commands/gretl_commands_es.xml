@@ -3984,10 +3984,10 @@
 
     <description>
       <para>
-	Esta instrucción requiere que selecciones 3 variables, y la última de ellas
-	debe ser una variable ficticia (con valores 1 o 0). La variable Y se
+	Esta instrucción requiere que selecciones 3 variables y la última de
+	ellas (la variable de factor) debe ser discreta. La variable Y se
 	representa gráficamente frente a la variable X, con los puntos de datos
-	colorados de forma diferente dependiendo del valor de la tercera variable.
+	con estilos diferentes dependiendo del valor de la tercera variable.
       </para>
       <para>
 	Ejemplo: Supón que tienes datos sobre salarios y cualificaciones educativas
@@ -5270,11 +5270,12 @@
     label="Generar un gráfico Gnuplot" context="cli">
 
     <usage>
-      <arguments>
-        <argument>yvars</argument>
-        <argument>xvar</argument>
-	      <argument optional="true">varficticia</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>gnuplot</lit> <repl>yvars</repl> <repl>xvar</repl></altform>
+        <altform><lit>gnuplot</lit> <repl>yvars</repl> <lit>--time-series</lit></altform>
+        <altform><lit>gnuplot</lit> <repl>yvars</repl> <repl>xvar</repl> <repl>factor</repl> <lit>--factorized</lit></altform>
+        <altform><lit>gnuplot</lit> <repl>yvar</repl> <repl>xvar</repl> <repl>zvars</repl> <lit>--control</lit></altform>
+      </altforms>
       <options>
         <option>
 	  <flag>--with-lines</flag>
@@ -5319,7 +5320,8 @@
 	  <effect>Mira abajo</effect>
         </option>
         <option>
-	  <flag>--dummy</flag>
+	  <flag>--factorized</flag>
+          <optparm optional="true">lista</optparm>
 	  <effect>Mira abajo</effect>
         </option>
         <option>
@@ -5366,7 +5368,7 @@
       <examples>
         <example>gnuplot y1 y2 x</example>
         <example>gnuplot x --time-series --with-lines</example>
-	<example>gnuplot wages educ gender --dummy</example>
+	<example>gnuplot wages educ gender --factorized</example>
 	<example>gnuplot y x --fit=quadratic</example>
 	<example>gnuplot y1 y2 x --with-lines=y2</example>
       </examples>
@@ -5387,57 +5389,74 @@
 	<opt>with-impulses</opt> o <opt>with-steps</opt>. Cuando vas a
 	representar más de una variable en el eje de la <math>y</math>, puedes
 	limitar el efecto de estas opciones a un subconjunto de las variables
-	utilizando el parámetro <repl>varspec</repl>. Este deberá tener el
-	formato de un listado con los nombres o números (en ambos casos separados
-	por comas) de las variables que se van a representar respectivamente.
-	Por ejemplo, en el último ejemplo de arriba se muestra como
-	representar <lit>y1</lit> e <lit>y2</lit> frente a <lit>x</lit>,
-	de tal modo que <lit>y2</lit> se representa con una línea mientras
-	<lit>y1</lit> con puntos.
+	usando el parámetro <repl>varspec</repl>. Este deberá tener el formato
+	bien de un listado con los nombres o números (en ambos casos separados
+	por comas) de las variables que se van a representar del modo indicado,
+	o bien del nombre de una lista predefinida. Pongamos por caso, en el
+	último ejemplo de arriba se muestra como representar <lit>y1</lit> e
+	<lit>y2</lit> frente a <lit>x</lit>, de tal modo que <lit>y2</lit> se
+	representa con una línea mientras <lit>y1</lit> con puntos.
       </para>
       <para>
 	Cuando <repl>yvars</repl> contiene más de una variable, podría ser
 	preferible utilizar dos ejes y (a la izquierda y a la derecha). Por defecto,
 	esto se realiza automáticamente, mediante una técnica heurística basada
 	en las escalas relativas de las variables; pero puedes utilizar dos
-	opciones (mutuamente excluyentes) para anular lo predeterminado. Como
-	cabría esperar, la opción <opt>single-yaxis</opt> evita el uso de un segundo
-	eje, mientras que <opt>y2axis=</opt><repl>yvar</repl> especifica que se
-	represente una cierta variable (únicamente) en relación al segundo eje.
+	opciones (mutuamente excluyentes) para anular lo predeterminado:
+	<opt>single-yaxis</opt> evita el uso de un segundo eje, mientras que
+	<opt>y2axis=</opt><repl>yvar</repl> especifica que se represente una
+	cierta variable (únicamente) en relación al segundo eje.
+      </para>
+	      <subhead>Gráficas factorizadas</subhead>
+      <para>
+	La opción <opt>factorized</opt> apoya al gráfico X&ndash;Y en el que
+	<repl>yvars</repl> se dibujan con distintos estilos (tipo de punto, color)
+	dependiendo del valor de una variable factorial discreta en cada
+	observación. El factor se debe especificar siguiendo la variable
+	<math>x</math>.
       </para>
       <para>
-	Cuando selecciones la opción <opt>dummy</opt>, debes indicar
-	exactamente tres variables: una variable <math>y</math> simple,
-	una variable <math>x</math> y <repl>dvar</repl>, una variable
-	discreta. El efecto de esto consiste en representar <repl>yvar</repl>
-	frente a <repl>xvar</repl> con los puntos mostrados con colores diferentes
-	dependiendo del valor de <repl>varficticia</repl> en la observación
-	indicada.
+	El caso más simple representa una única variable <math>y</math>
+	con una variable ficticia de tipo 0/1 como factor, como en el tercer
+	ejemplo de utilización indicado arriba que representa el salario (wage)
+	frente a la educación, factorizado por el género (gender). Pero puedes
+	tener más de una variable <math>y</math>, y el factor puede tener más
+	de dos valores. Cuando se van a representar múltiples variables
+	<math>y</math>, puedes restringir el tratamiento de factorización
+	a un subconjunto añadiendo un parámetro al indicador de opciones:
+	el nombre de una serie o de una lista de series. En el siguiente ejemplo
+	<lit>y</lit> e <lit>yhat</lit> se representan frente a <lit>x</lit>,
+	con factorización mediante <lit>id</lit> limitada a
+	<lit>y</lit>.
       </para>
+      <code>
+	gnuplot y yhat x id --with-lines=yhat --factorized=y
+      </code>
+      <subhead>Gráfico con control</subhead>
       <para>
-	La opción <opt>control</opt> es similar en el hecho de que se deben
-	indicar exactamente tres variables: una única variable <math>y</math>
-	además de las dos variables <quote>explicativas</quote>, <math>x</math>
-	y <math>z</math>. El efecto de esto es la representación de <repl>y</repl>
-	respecto a <repl>x</repl>, con el control de <math>z</math>. Esta forma
-	de representación puede ser útil para observar la relación entre
-	<math>x</math> e <math>y</math>, teniendo en cuenta el efecto que
-	pueda tener <math>z</math> en ambas. Estadísticamente, esto podría
-	ser equivalente a una regresión de <math>y</math> sobre las variables
-	<math>x</math> <emphasis>y</emphasis>
-	<math>z</math>.
+	Cuando se especifica la opción <opt>control</opt>, deben indicarse
+	tres o más variables: una única variable <math>y</math>, una
+	única variable <math>x</math>, y una o más variables de control,
+	<repl>zvars</repl>. El  efecto de esto es que tanto <math>y</math> como
+	<math>x</math> se van a regresar cada una sobre <repl>zvars</repl>,
+	y los errores de <math>y</math> se representan contra los errores de
+	<math>x</math>. Este gráfico muestra la relación entre <math>x</math>
+	e <math>y</math> teniendo en cuenta el efecto que los controles tienen
+	sobre las dos.
       </para>
+      <subhead>Escala logarítmica</subhead>
       <para>
-	Puedes especificar que la escala del eje 'y' sea logarítmica en lugar
-	de lineal, utilizando la opción <opt>ylogscale</opt>, junto con un
-	parámetro de base. Por ejemplo,
+	Puedes especificar que la escala del eje <math>y</math> sea logarítmica
+	en lugar de que sea lineal, utilizando la opción <opt>ylogscale</opt>,
+	junto con un parámetro de base.
+	Por ejemplo,
       </para>
       <code>
 	gnuplot y x --ylogscale=2
       </code>
       <para>
-	representa los datos de forma que el eje vertical se expresa con
-	potencias de 2. Si omites la base, por defecto, se establece igual a 10.
+	representa los datos de modo que el eje vertical se expresa con potencias
+	de 2. Si no especificas la base, por defecto, se establece igual a 10.
       </para>
       <subhead>Cogiendo datos de una matriz</subhead>
       <para>
@@ -5532,9 +5551,10 @@
 	</li>
 	<li>
 	  <para>En la clave <lit>color</lit>: un color para la franja, como una
-	  cadena de texto que contenga el nombre de un color de Gnuplot, o como
-	  una representación de RGB en hexadecimal (indicada como cadena de texto
-	  o como escalar). Por defecto, el color se selecciona automáticamente.
+	  cadena de texto que contenga el nombre de un color de Gnuplot, o
+	  como una representación de RGB en hexadecimal, indicada como cadena
+	  de texto o como escalar (mira más abajo para obtener más detalles).
+	  Por defecto, el color se selecciona automáticamente.
 	  </para>
 	</li>
 	<li>
@@ -5544,15 +5564,6 @@
 	  </para>
 	</li>
       </ilist>
-      <para>
-	Ten en cuenta que puedes acceder al listado de nombres de color que
-	reconoce Gnuplot, mediante la instrucción del propio Gnuplot 
-	<quote><lit>show colornames</lit></quote>; o por medio de la consola
-	de GRETL, utilizando:
-      </para>
-      <code>
-	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
-      </code>
       <para>
 	Aquí tienes dos ejemplos de uso, en los que se emplea la sintaxis abreviada
 	<lit>_()</lit> para definir un 'bundle'. El primero únicamente satisface
@@ -5582,37 +5593,14 @@
 	Cuando se representa gráficamente una matriz, en lugar de datos de
 	series, la única diferencia es que los elementos <lit>centro</lit> (center)
 	y <lit>ancho</lit> (width) del ‘bundle’ de la franja se sustituyen por un
-	único elemento en la clave <lit>bandmat</lit>; este debe ser el nombre
-	entre comillas de una matriz con dos columnas, con el centro en la columna 1
-	y el ancho en la columna 2.
+	único elemento en la clave <lit>bandmat</lit>. Este tiene que indicar una
+	matriz con dos columnas, con el centro de banda en la primera columna
+	y el ancho en la segunda. Como alternativa, puedes indicar una cadena de
+	texto bajo esta clave: el <i>nombre entre comillas</i> de una matriz
+	adecuada. Esta variante puede ser preferible si la matriz en cuestión
+	se va a reutilizar con distintos valores del factor, dado que evita tener
+	que duplicar la matriz en la memoria.
       </para>
-      <subhead>Sintaxis heredada de franja</subhead>
-      <para>
-	La sintaxis descrita más arriba fue introducida en el GRETL 2023c.
-	Previamente a esa edición, solo se podía especificar una franja por
-	gráfico y la sintaxis era un poco diferente. El enfoque antiguo (que
-	todavía se va a admitir hasta que se comunique lo contrario) divide los
-	detalles de la franja en dos opciones. Primero, la opción <opt>band</opt>
-	que requiere como parámetro los nombres de dos series que indican el
-	centro y el ancho, separadas por una coma. El <lit>factor</lit>
-	multiplicativo para el ancho se puede añadir como tercer elemento
-	separado por otra coma. Ejemplos:
-      </para>
-      <code>
-	gnuplot ... --band=x,w
-	gnuplot ... --band=x,w,1.96
-      </code>
-      <para>
-	La segunda opción, <opt>band-style</opt>, admite uno o los dos indicadores
-	del estilo y del color de la franja, en ese orden y separados de nuevo
-	por una coma, como en estos ejemplos:
-      </para>
-      <code>
-	gnuplot ... --band-style=fill
-	gnuplot ... --band-style=dash,0xbbddff
-	gnuplot ... --band-style=,black
-	gnuplot ... --band-style=bars,blue
-      </code>
       <subhead>Barras de recesión</subhead>
       <para>
 	También puedes utilizar la opción <quote>band</quote> para añadir
@@ -5643,29 +5631,106 @@
 	gnuplot YER URX --with-lines --time-series \
 	  --band=b --output=display {set key top left;}
       </code>
+      <subhead>Nombres de los colores</subhead>
+      <para>
+	Los colores se identifican mediante los números RGB, habitualmente
+	expresados en formato hexadecimal con 6 dígitos: los dos primeros
+	dígitos indican la cantidad de rojo (de 0 a 255), los dos del medio
+	indican la cantidad de verde, y los dos últimos indican la cantidad de
+	azul. Así, por ejemplo, <lit>0xff0080</lit> tiene el máximo de rojo, no
+	tiene verde, y un poco de azul (es un morado rojizo). Con gnuplot 5.2
+	en adelante, puedes utilizar cuatro pares de dígitos en lugar de tres:
+	en ese caso, los dos primeros dígitos indican la transparencia, variando
+	de 0 (opaco) a 255 (transparente). Por ejemplo, <lit>0xc0ff0080</lit>
+	proporcionaría al color un valor de 192 (c0 en hexadecimal) para la
+	transparencia. Puedes comprobar tu versión de gnuplot revisando
+	el 'bundle' que devuelve la función <fncref targ="$sysinfo"/>.
+      </para>
+      <para>
+	Los colores hexadecimales se pueden pasar como escalares, o bien como
+	cadenas de texto. Una cadena para el color puede ser un número hexadecimal
+	entre comillas (p.e. "0x191970"), pero gnuplot reconoce algunos
+	colores <quote>abreviados</quote>. Por ejemplo, <quote>violet</quote>
+	equivale a <quote>0xee82ee</quote> y <quote>brown</quote> equivale
+	a <quote>0xa52a2a</quote>. Puedes acceder a la lista completa con
+	los nombres de colores que reconoce gnuplot formulando la instrucción
+	<quote><lit>show colornames</lit></quote> en el propio gnuplot, o
+	ejecutando en la consola de Gretl
+      </para>
+      <code>
+	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
+      </code>
+      <para>
+	Para obtener un resultado estéticamente agradable, puede interesarte
+	usar la función <fncref targ="rgbmix"/>.
+      </para>
       <subhead>Controlando la salida de resultados</subhead>
       <para>
-	En modo interactivo, el gráfico se muestra inmediatamente pero, en modo
-	de procesamiento por lotes, el procedimiento por defecto consiste
-	en escribir un archivo de instrucciones Gnuplot en el directorio de trabajo
-	del usuario, con un nombre con el patrón <filename>gpttmpN.plt</filename>,
-	comenzando con N = <lit>01</lit>. Puedes generar los gráficos reales más
-	tarde utilizando <program>gnuplot</program> (bajo MS Windows,
+	En modo interactivo, el gráfico se muestra inmediatamente. En modo
+	de procesamiento por lotes (como al ejecutar un guion), el procedimiento
+	por defecto consiste en escribir un archivo de instrucciones Gnuplot
+	en el directorio de trabajo del usuario, con un nombre con el patrón
+	<filename>gpttmpN.plt</filename>, comenzando con N = <lit>01</lit>.
+	Puedes generar los gráficos reales más tarde utilizando
+	<program>gnuplot</program> (bajo MS Windows,
 	<program>wgnuplot</program>). Y puedes modificar este proceder
 	utilizando la opción <opt>output=</opt><repl>nombrearchivo</repl>. Esta
 	opción controla el nombre de archivo utilizado, y al mismo tiempo te
 	permite especificar un formato concreto para el resultado mediante
-	la extensión de tres letras del nombre del archivo, del siguiente modo:
-	<lit>.eps</lit> da como resultado la génesis de un archivo Encapsulated
-	PostScript (EPS); <lit>.pdf</lit> produce un PDF; <lit>.png</lit>
-	genera uno con formato PNG, <lit>.emf</lit> solicita que sea EMF
-	(Enhanced MetaFile), <lit>.fig</lit> pide que sea un archivo Xfig,
-	<lit>.svg</lit> que sea un SVG (Scalable Vector Graphics) y 
-	<lit>.html</lit> es para un lienzo de HTML. Si indicas el nombre ficticio
-	de archivo <quote><lit>display</lit></quote>, entonces el gráfico se
-	muestra en la pantalla, como en el modo interactivo. Y cuando indicas
-	un nombre de archivo con cualquier extensión diferente a las que
-	acaban de mencionarse, se escribe un archivo de instrucciones Gnuplot.
+	la extensión del nombre del archivo, del siguiente modo:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>.eps</lit>: Encapsulated PostScript
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.pdf</lit>: PDF
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.png</lit>: PNG (Portable Network Graphics)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.emf</lit>: EMF (Microsoft's Enhanced MetaFile)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.html</lit>: 'canvas' de HTML
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.svg</lit>: SVG (Scalable Vector Graphics)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.fig</lit>: Xfig (*nix, programa de dibujo)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.tex</lit>: pict2e (para usar con &latex;)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.tikz</lit>: TiKZ (para usar con &latex;).
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Cuando se proporciona el nombre ficticio <quote><lit>display</lit></quote>
+	para el archivo, el gráfico se muestra en la pantalla en modo interactivo.
+	Cuando se proporciona un nombre de ficheiro con cualquier otra extensión
+	distinta a las antes mencionadas, se escribe un archivo de instruciones de gnuplot.
       </para>
       <para>
 	Un medio alternativo para dirigir la salida de resultados es con la opción
@@ -5693,20 +5758,19 @@
       </para>
       <subhead>Añadiendo instrucciones Gnuplot</subhead>
       <para>
-	Dispones de una opción añadida de esta instrucción pues, a continuación
-	de la especificación de las variables que se van a dibujar y del indicador de
-	opción (si hay alguno), puedes añadir instrucciones literales de Gnuplot
-	para controlar la apariencia del gráfico (por ejemplo, estableciendo
-	el título del gráfico y/o rangos de los ejes). Estas instrucciones deben
-	estar puestas entre llaves, y debes terminar cada instrucción
-	Gnuplot con un punto y coma. Puedes utilizar una barra inversa para
-	continuar un conjunto de instrucciones Gnuplot a lo largo de más de una
-	línea. Aquí tienes un ejemplo de la sintaxis:
+	Dispones de una opción especial añadida de esta instrucción pues, a
+	continuación de la especificación de las variables que se van a dibujar y
+	del indicador de opción (si hay alguno), puedes añadir instrucciones
+	literales de Gnuplot para controlar la apariencia del gráfico (por ejemplo,
+	estableciendo el título del gráfico y/o rangos de los ejes). Estas
+	instrucciones deben estar puestas entre llaves, y debes terminar cada
+	instrucción Gnuplot con un punto y coma. Puedes utilizar una barra
+	inversa para continuar un conjunto de instrucciones Gnuplot a lo largo
+	de más de una línea. Aquí tienes un ejemplo de la sintaxis:
       </para>
       <code>
 	{ set title 'Mi Título'; set yrange [0:1000]; }
       </code>
-
     </description>
 
     <gui-access>
@@ -6252,14 +6316,14 @@
 	estadísticos destacados se insertan automáticamente en las cajas
 	de debajo.
       </para>
-	  <para>
+      <para>
 	Ten en cuenta que en el caso de dos muestras, los contrastes son de
 	tipo desemparejado. Si, por ejemplo, quieres realizar un contraste
 	<emphasis>emparejado</emphasis> sobre si la diferencia entre las
 	medias de dos variables es nula, debes crear simplemente una nueva
 	serie con las diferencias entre las dos ya existentes, y realizar un
 	sencillo contraste sobre la media de esa nueva serie.
-	  </para>
+	    </para>
       <para>
 	Además de la simple selección de una variable, tienes la opción de
 	especificar una restricción sobre la variable escogida (es
