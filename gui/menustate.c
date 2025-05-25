@@ -263,10 +263,10 @@ void time_series_menu_state (gboolean s)
 void panel_menu_state (gboolean s)
 {
     if (mdata->ui != NULL) {
-        flip(mdata->ui, "/menubar/Add/AddUnit", s);
-        flip(mdata->ui, "/menubar/Add/UnitDums", s);
-        flip(mdata->ui, "/menubar/Add/TimeDums", s);
+        flip(mdata->ui, "/menubar/Add/Panel", s);
         flip(mdata->ui, "/menubar/Add/RangeDum", !s);
+        flip(mdata->ui, "/menubar/Add/Time/idxvals", !s);
+        flip(mdata->ui, "/menubar/Add/Time/PeriodDums", !s);
         flip(mdata->ui, "/menubar/Model/PanelModels", s);
         flip(mdata->ui, "/menubar/Model/LimdepModels/probit/reprobit", s);
         flip(mdata->ui, "/menubar/Model/PanelModels/dpanel",
@@ -280,13 +280,8 @@ void ts_or_panel_menu_state (gboolean s)
     if (mdata->ui == NULL) return;
 
     flip(mdata->ui, "/menubar/Data/DataSort", !s);
-
-    flip(mdata->ui, "/menubar/Add/AddTime", s);
-    flip(mdata->ui, "/menubar/Add/lags", s);
-    flip(mdata->ui, "/menubar/Add/diff", s);
-    flip(mdata->ui, "/menubar/Add/ldiff", s);
-    flip(mdata->ui, "/menubar/Add/pcdiff", s);
-    flip(mdata->ui, "/menubar/Add/idxvals",
+    flip(mdata->ui, "/menubar/Add/Time", s);
+    flip(mdata->ui, "/menubar/Add/Time/idxvals",
          s && !dataset_is_panel(dataset));
 
     s = dataset_is_seasonal(dataset);
@@ -296,8 +291,8 @@ void ts_or_panel_menu_state (gboolean s)
             dataset->panel_pd == 24;
     }
 
-    flip(mdata->ui, "/menubar/Add/sdiff", s);
-    flip(mdata->ui, "/menubar/Add/PeriodDums", s);
+    flip(mdata->ui, "/menubar/Add/Time/sdiff", s);
+    flip(mdata->ui, "/menubar/Add/Time/PeriodDums", s);
 }
 
 void session_menu_state (gboolean s)
