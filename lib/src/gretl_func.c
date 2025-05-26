@@ -5791,8 +5791,8 @@ static int load_public_function (fnpkg *pkg, int i)
     if (!err && !done && function_lookup(fun->name)) {
         if (!strcmp(pkg->name, "PanelTools") &&
             !strcmp(fun->name, "pxmean")) {
-            /* give this a pass for now */
-            do_override(fun);
+            /* give this a pass: just use the built-in pxmean() */
+            return 0;
         } else if (strcmp(fun->name, "bkw")) {
             /* for now, don't throw an error on loading Lee Adkins'
                bkw package */
