@@ -213,6 +213,8 @@ void single_percent_change_dialog (int v, int idxvals);
 
 void multi_percent_change_dialog (int idxvals);
 
+void panel_mean_dialog (int v, int xsect);
+
 int midas_term_dialog (const char *name, int m,
 		       int *minlag, int *maxlag,
 		       int *ptype, int *ncoef,

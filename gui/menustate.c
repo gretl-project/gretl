@@ -519,6 +519,8 @@ enum MenuIdx_ {
     MNU_LOGS,
     MNU_DIFF,
     MNU_PCDIF,
+    MNU_TMEAN,
+    MNU_XMEAN,
     MNU_IDXV,
     MNU_DUMIF,
     MNU_GENR,
@@ -588,6 +590,8 @@ struct popup_entries main_pop_entries[] = {
     { MNU_LOGS,  N_("Add log"), T_SINGLE },
     { MNU_DIFF,  N_("Add difference"), T_SINGLE },
     { MNU_PCDIF, N_("Add percent change..."), T_SINGLE },
+    { MNU_TMEAN, N_("Add time mean..."), T_SINGLE },
+    { MNU_XMEAN, N_("Add cross-sectional mean..."), T_SINGLE },
     { MNU_IDXV,  N_("Add index values..."), T_SINGLE },
     { MNU_DUMIF, N_("Dummify..."), T_SINGLE },
     { MNU_LOGS,  N_("Add logs"), T_MULTI },
@@ -671,6 +675,12 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     case MNU_PCDIF:
         single_percent_change_dialog(v, 0);
         break;
+    case MNU_TMEAN:
+        panel_mean_dialog(v, 0);
+        break;
+    case MNU_XMEAN:
+        panel_mean_dialog(v, 1);
+        break;
     case MNU_IDXV:
         single_percent_change_dialog(v, 1);
         break;
@@ -723,8 +733,10 @@ GtkWidget *build_var_popup (int selvar)
             /* don't offer regular ts or boxplot */
             continue;
         }
-        if (!real_panel && i == MNU_PPLOT) {
-            /* don't offer panel plot */
+        if (!real_panel && (i == MNU_PPLOT ||
+                            i == MNU_TMEAN ||
+                            i == MNU_XMEAN)) {
+            /* don't offer panel plot or panel means */
             continue;
         }
         if (!have_map && (i == MNU_MPLOT || i == MNU_MSAVE)) {
