@@ -2278,10 +2278,10 @@ int gretl_matrix_cut_cols (gretl_matrix *m, const char *mask)
     n = count_unmasked_elements(mask, m->cols);
 
     k = 0;
-    for (i=0; i<m->cols; i++) {
-	if (!mask[i]) {
-	    for (j=0; j<m->rows; j++) {
-		x = gretl_matrix_get(m, j, i);
+    for (j=0; j<m->cols; j++) {
+	if (!mask[j]) {
+	    for (i=0; i<m->rows; i++) {
+		x = gretl_matrix_get(m, i, j);
 		m->val[k++] = x;
 	    }
 	}
