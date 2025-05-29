@@ -146,6 +146,7 @@ SRCS = excel_import.c \
 	geoplot.c \
 	purebin.c \
 	bdstest.c \
+	stepwise.c \
 	lpsolve.c
 
 ZIPSRC = zfileio.c \
@@ -192,7 +193,8 @@ PLUGINS = arma.la \
 	regls.la \
 	geoplot.la \
 	purebin.la \
-	bdstest.la
+	bdstest.la \
+	stepwise.la
 
 GUI_DEPENDENT_PLUGINS = arma_x12.la \
 	excel_import.la \
@@ -404,6 +406,9 @@ regls.la: regls.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 bdstest.la: bdstest.lo
+	$(LINK) -o $@ $< $(GRETLLIB)
+
+stepwise.la: stepwise.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 lpsolve.la: lpsolve.lo

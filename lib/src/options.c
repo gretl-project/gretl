@@ -133,6 +133,7 @@ struct flag_match {
 */
 
 struct gretl_option gretl_opts[] = {
+    { ADD,      OPT_A, "auto", 2 },
     { ADD,      OPT_B, "both", 0 },
     { ADD,      OPT_I, "silent", 0 },
     { ADD,      OPT_L, "lm", 0 },
