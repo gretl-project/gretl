@@ -17,6 +17,11 @@
 	  <effect>do an LM test, OLS only</effect>
 	</option>
 	<option>
+	  <flag>--auto</flag>
+	  <optparm>criterion</optparm>
+	  <effect>forward stepwise, OLS only</effect>
+	</option>
+	<option>
 	  <flag>--quiet</flag>
 	  <effect>print only the basic test result</effect>
 	</option>
@@ -36,50 +41,109 @@
       <examples>
         <example>add 5 7 9</example>
         <example>add xx yy zz --quiet</example>
+	<example>add xlist --auto=BIC</example>
       </examples>
     </usage>
 
     <description>
       <para context="cli">
-	Must be invoked after an estimation command. Performs a joint
-	test for the addition of the specified variables to the last
-	model, the results of which may be retrieved using the
-	accessors <fncref targ="$test"/> and <fncref targ="$pvalue"/>.
+	Must be invoked after an estimation command. If neither of the
+	<opt>lm</opt> and <opt>auto</opt> options are given, this
+	command performs a joint test for the addition of the specified
+	variables to the last model. An augmented version of the
+	original model is estimated, including the variables in
+	<repl>varlist</repl>, and a Wald test is carried out on the
+	augmented model. The augmented model replaces the original as
+	the <quote>last model</quote> for the purposes of, for
+	example, retrieving the residuals as <lit>$uhat</lit> or doing
+	further tests. The results of the Wald test may be retrieved
+	using the accessors <fncref targ="$test"/> and <fncref
+	targ="$pvalue"/>.
       </para>
       <para context="cli">
-	By default an augmented version of the original model is
-	estimated, including the variables in <repl>varlist</repl>.
-	The test is a Wald test on the augmented model, which replaces
-	the original as the <quote>current model</quote> for the
-	purposes of, for example, retrieving the residuals as
-	<lit>$uhat</lit> or doing further tests.
+	The <opt>both</opt> option applies only if the last model was
+	estimated via two-stage least squares: it specifies that the new
+	variables should be added to the list of instruments as well as
+	to the list of regressors, the default being to add them to the
+	regressors only.
       </para>
+      <subhead context="cli">The lm option</subhead>
       <para context="cli">
-	Alternatively, given the <opt>lm</opt> option (available
-	only for the models estimated via OLS), an LM test is
-	performed. An auxiliary regression is run in which the
-	dependent variable is the residual from the last model and the
-	independent variables are those from the last model plus
-	<repl>varlist</repl>. Under the null hypothesis that the added
-	variables have no additional explanatory power, the sample
-	size times the unadjusted R-squared from this regression is
-	distributed as chi-square with degrees of freedom equal to the
-	number of added regressors. In this case the original model is
-	not replaced.
+	Given the <opt>lm</opt> option (available only for models
+	estimated via OLS), an LM test is performed. An auxiliary
+	regression is run in which the dependent variable is the
+	residual from the last model and the independent variables are
+	those from the last model plus <repl>varlist</repl>. Under the
+	null hypothesis that the added variables have no additional
+	predictive power, the sample size times the unadjusted R-squared
+	from this regression is distributed as chi-square with degrees
+	of freedom equal to the number of added regressors. Under this
+	option the original model is not replaced.
       </para>
+      <subhead context="cli">The auto option</subhead>
       <para context="cli">
-	The <opt>both</opt> option is specific to two-stage
-	least squares: it specifies that the new variables
-	should be added both to the list of regressors and the
-	list of instruments, the default in this case being to
-	add to the regressors only.
+	The <opt>auto</opt> option (which cannot be combined with
+	<opt>lm</opt>) calls for forward stepwise regression, using the
+	QR algorithm described by <cite key="hastie20">Hastie et al
+	(2020)</cite>. In this case <repl>varlist</repl> is interpreted
+	as a list of <emphasis>candidates</emphasis> for addition to the
+	original model. At each step the method determines which
+	candidate offers the greatest improvement in fit according to
+	the specified <lit>criterion</lit> (given as parameter to the
+	option). The algorithm halts when no further improvement is
+	possible. The criterion must take one of these forms:
       </para>
+      <ilist context="cli">
+	<li>
+	  <para>
+	    An Information Criterion: <lit>AIC</lit>, <lit>BIC</lit> or
+	    <lit>HQC</lit>. The <quote>best</quote> candidate at each
+	    step is then that which gives the greatest improvement
+	    (reduction) in the selected criterion.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    An &alpha; value (positive decimal fraction). In this case
+	    the figure of merit is the sum of squared residuals. The
+	    algorithm halts when no remaining candidate gives a
+	    reduction in SSR that is statistically significant at the
+	    &alpha; level on a chi-square test.
+	  </para>
+	</li>
+      </ilist>
       <para context="gui">
-	The selected variables are added to the previous model and the
-	new model estimated. A test statistic for the joint
-	significance of the added variables is printed, along with its
-	p-value.
+	You have three options here:
       </para>
+      <ilist context="gui">
+	<li>
+	  <para>
+	    Wald test: The selected variables are added to the previous
+	    model and the augmented model is estimated. A Wald test
+	    statistic for the joint significance of the added variables
+	    is printed, along with its p-value.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    LM test: A Lagrange Multiplier test is carried out for the
+	    joint significance of the added variables, without
+	    estimation of the augmented model.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Stepwise addition: The extra variables are added
+	    sequentially. At each step the variable giving the greatest
+	    improvement in fit is added, the process stopping when no
+	    remaining candidate yields an improvement. In this case you
+	    need to choose a criterion: either one of the Information
+	    Criteria (AIC, BIC, HQC) or SSR. If SSR is selected you also
+	    need to specify a significance level, &alpha;, for testing
+	    whether each variable merits inclusion.
+	  </para>
+	</li>
+      </ilist>
     </description>
 
     <gui-access>
@@ -3483,12 +3547,12 @@
 	avoiding the <quote>dummy variable trap</quote>).
       </para>
       <para>
-	There is also a corresponding function for this command, 
+	There is also a corresponding function for this command,
 	see <fncref targ="dummify"/>. This makes it possible to embed
 	the call directly in a regression specification.  For example,
 	the following line specifies a model
 	where <lit>y</lit> is regressed on the set of dummy variables
-	coding for <lit>x</lit>.  (However, option flags are for the 
+	coding for <lit>x</lit>.  (However, option flags are for the
 	command variant only, not for the function variant of
 	<cmd>dummify</cmd>.)
       </para>
@@ -5642,7 +5706,7 @@
 	four digits instead of three: in this case, the first two
 	digits indicate transparency, ranging from 0 (opaque) to 255
 	(transparent). For example, <lit>0xc0ff0080</lit> would give
-	the color a value of 192 (c0 in hex) for transparency. 
+	the color a value of 192 (c0 in hex) for transparency.
 	You can check your gnuplot version by inspecting the <fncref
 	targ="$sysinfo"/> bundle.
       </para>
@@ -13448,7 +13512,7 @@
 	regression and calculating the <math>F</math> statistic for
 	the null hypothesis that the coefficients on the added terms
 	are zero. For numerical reasons, the squares and cubes are
-	rescaled using the standard deviation of the fitted values. 
+	rescaled using the standard deviation of the fitted values.
       </para>
       <para context="cli">
 	Both the squares and the cubes are added unless one of the

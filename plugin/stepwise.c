@@ -225,6 +225,8 @@ int *forward_stepwise (MODEL *pmod,
                        int crit,
                        double alpha,
                        int verbose,
+                       int addlen,
+                       int namelen,
                        PRN *prn,
                        int *err)
 {
@@ -277,7 +279,8 @@ int *forward_stepwise (MODEL *pmod,
     cstr = crit_string(crit);
 
     if (verbose) {
-        pprintf(prn, "\nBaseline:            %s = %#g\n", cstr, prev);
+        pprintf(prn, "\n%-*s %s = %#g\n", addlen + namelen + 1,
+                _("Baseline"), cstr, prev);
     }
 
     while (!conv && added < nz) {
@@ -311,11 +314,11 @@ int *forward_stepwise (MODEL *pmod,
 
         if (verbose) {
             if (conv && added < nz) {
-                pprintf(prn, "[%-19s %s = %#g]\n", dset->varname[aux[best+1]],
-                        cstr, cur);
+                pprintf(prn, "[%-*s %s = %#g]\n", namelen + addlen,
+                        dset->varname[aux[best+1]], cstr, cur);
             } else {
-                pprintf(prn, "Add %-16s %s = %#g\n", dset->varname[aux[best+1]],
-                        cstr, cur);
+                pprintf(prn, "%s %-*s %s = %#g\n", _("Add"), namelen,
+                        dset->varname[aux[best+1]], cstr, cur);
             }
         }
 
@@ -342,18 +345,24 @@ int *forward_stepwise (MODEL *pmod,
 
 /* In case of forward stepwise regression, check @zlist (list of
    candidate regressors) for the possibility that it may contain one
-   or more of the baseline regressors.
+   or more of the baseline regressors. While we're at it, get the
+   maximum length of the names of the @zlist members.
 */
 
 static int stepwise_check_zlist (MODEL *pmod,
                                  const int *zlist,
-                                 DATASET *dset)
+                                 DATASET *dset,
+                                 int *len)
 {
-    int i;
+    int i, n;
 
     for (i=1; i<=zlist[0]; i++) {
         if (in_gretl_list(pmod->list, zlist[i])) {
             return E_ADDDUP;
+        }
+        n = strlen(dset->varname[zlist[i]]);
+        if (n > *len) {
+            *len = n;
         }
     }
 
@@ -413,6 +422,19 @@ static int *compose_list (MODEL *pmod, int *best)
     return list;
 }
 
+static void do_overall_test (MODEL *orig, MODEL *revised)
+{
+    double W = orig->nobs * (revised->rsq - orig->rsq);
+    int dk = revised->ncoeff - orig->ncoeff;
+
+    if (dk > 0) {
+        /* should we print this? */
+        double parm[] = {dk};
+        double pval = gretl_get_pvalue(D_CHISQ, parm, W);
+        record_test_result(W, pval);
+    }
+}
+
 /* Implement "add --auto=..." using forward stepwise procedure */
 
 MODEL stepwise_add (MODEL *pmod,
@@ -425,10 +447,11 @@ MODEL stepwise_add (MODEL *pmod,
     int *best = NULL;
     int crit = 0;
     int ols_done = 0;
+    int namelen = 0;
     double alpha = 0;
     int err;
 
-    err = stepwise_check_zlist(pmod, zlist, dset);
+    err = stepwise_check_zlist(pmod, zlist, dset, &namelen);
 
     if (!err) {
         err = process_stepwise_option(opt, &crit, &alpha);
@@ -436,9 +459,11 @@ MODEL stepwise_add (MODEL *pmod,
 
     if (!err) {
         int verbose = (opt & OPT_Q)? 0 : 1;
+        int addlen = verbose ? g_utf8_strlen(_("Add"), -1) : 0;
 
         best = forward_stepwise(pmod, zlist, dset, crit, alpha,
-                                verbose, prn, &err);
+                                verbose, addlen, namelen + 2,
+                                prn, &err);
     }
 
     if (!err) {
@@ -456,6 +481,9 @@ MODEL stepwise_add (MODEL *pmod,
         model = lsq(list, dset, OLS, ols_opt);
         free(list);
         ols_done = 1;
+        if (!model.errcode) {
+            do_overall_test(pmod, &model);
+        }
     }
 
     free(best);
