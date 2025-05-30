@@ -1268,13 +1268,14 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 
     if (opt & OPT_A) {
         /* Do stepwise augmentation of the original model */
-        MODEL (*stepwise_add) (MODEL *, int *, DATASET *, gretlopt, *PRN);
+        MODEL (*stepwise_add) (MODEL *, const int *, DATASET *,
+                               gretlopt, PRN *);
 
         stepwise_add = get_plugin_function("stepwise_add");
         if (stepwise_add == NULL) {
             err = E_FOPEN;
         } else {
-            umod = stepwise_add();
+            umod = stepwise_add(orig, addvars, dset, opt, prn);
         }
     } else if (opt & OPT_L) {
 	/* run an LM test */
@@ -1296,14 +1297,17 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
     if (umod.errcode) {
 	err = umod.errcode;
 	errmsg(err, prn);
-    } else if (umod.ncoeff - orig->ncoeff != n_add) {
-	gretl_errmsg_sprintf(_("Failed to add %d variable(s)"), n_add);
-	err = E_DATA;
     }
 
-    if (!err && !(opt & OPT_A)) {
-	err = add_or_omit_compare(orig, &umod, addvars,
-				  dset, ADD, opt, prn);
+    if (!(opt & OPT_A)) {
+        if (!err && umod.ncoeff - orig->ncoeff != n_add) {
+            gretl_errmsg_sprintf(_("Failed to add %d variable(s)"), n_add);
+            err = E_DATA;
+        }
+        if (!err) {
+            err = add_or_omit_compare(orig, &umod, addvars,
+                                      dset, ADD, opt, prn);
+        }
     }
 
     if (err || pmod == NULL) {
