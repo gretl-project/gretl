@@ -277,13 +277,12 @@ int *forward_stepwise (MODEL *pmod,
     cstr = crit_string(crit);
 
     if (verbose) {
-        printf("\nBaseline:            %s = %#g\n", cstr, prev);
+        pprintf(prn, "\nBaseline:            %s = %#g\n", cstr, prev);
     }
 
     while (!conv && added < nz) {
         *err = qr_update(&Q, &R, mZ, e, crit, &best, &cur);
         if (*err) {
-            printf("got error %d from qr_update\n", *err);
             break;
         }
 
@@ -312,11 +311,11 @@ int *forward_stepwise (MODEL *pmod,
 
         if (verbose) {
             if (conv && added < nz) {
-                printf("[%-19s %s = %#g]\n", dset->varname[aux[best+1]],
-                       cstr, cur);
+                pprintf(prn, "[%-19s %s = %#g]\n", dset->varname[aux[best+1]],
+                        cstr, cur);
             } else {
-                printf("Add %-16s %s = %#g\n", dset->varname[aux[best+1]],
-                       cstr, cur);
+                pprintf(prn, "Add %-16s %s = %#g\n", dset->varname[aux[best+1]],
+                        cstr, cur);
             }
         }
 
@@ -331,6 +330,7 @@ int *forward_stepwise (MODEL *pmod,
     }
 
     free(aux);
+    free(xlist);
     gretl_matrix_free(Q);
     gretl_matrix_free(R);
     gretl_matrix_free(mZ);
@@ -340,9 +340,9 @@ int *forward_stepwise (MODEL *pmod,
     return ret;
 }
 
-/* In case of forward stepwise regression, check @zlist (the list of
-   candidate regressors to be added) for the possibility that it may
-   contain one or more of the baseline regressors.
+/* In case of forward stepwise regression, check @zlist (list of
+   candidate regressors) for the possibility that it may contain one
+   or more of the baseline regressors.
 */
 
 static int stepwise_check_zlist (MODEL *pmod,
@@ -360,27 +360,17 @@ static int stepwise_check_zlist (MODEL *pmod,
     return 0;
 }
 
-/* Process the --silent, --quiet and --auto options to the "add"
-   command. In the --auto case we should have either the standard
-   abbreviation for one of the Information Criteria, or an alpha
-   value for use with the plain SSR criterion.
+/* Process the --auto option to the "add" command. We should have
+   either the standard abbreviation for one of the Information
+   Criteria, or an alpha value for use with the SSR criterion.
 */
 
-static int process_stepwise_options (gretlopt opt,
-                                     int *crit,
-                                     double *alpha,
-                                     int *verbosity)
+static int process_stepwise_option (gretlopt opt,
+                                    int *crit,
+                                    double *alpha)
 {
     const char *s = get_optval_string(ADD, OPT_A);
     int i, err = 0;
-
-    if (opt & OPT_I) {
-        *verbosity = 0;
-    } else if (opt & OPT_Q) {
-        *verbosity = 1;
-    } else {
-        *verbosity = 2;
-    }
 
     for (i=1; i<4; i++) {
         /* AIC, BIC or HQC */
@@ -402,8 +392,8 @@ static int process_stepwise_options (gretlopt opt,
     return err;
 }
 
-/* compose the final OLS list based on the original model plus the
-   'best' list of added regressors
+/* Compose the final OLS list based on the original model plus the
+   'best' list of added regressors.
 */
 
 static int *compose_list (MODEL *pmod, int *best)
@@ -418,12 +408,12 @@ static int *compose_list (MODEL *pmod, int *best)
     }
     for (i=1; i<=best[0]; i++) {
         list[j++] = best[i];
-    }    
-   
+    }
+
     return list;
 }
 
-/* implement "add --auto=<param>" using forward stepwise procedure */
+/* Implement "add --auto=..." using forward stepwise procedure */
 
 MODEL stepwise_add (MODEL *pmod,
                     const int *zlist,
@@ -434,7 +424,6 @@ MODEL stepwise_add (MODEL *pmod,
     MODEL model;
     int *best = NULL;
     int crit = 0;
-    int verbosity = 2;
     int ols_done = 0;
     double alpha = 0;
     int err;
@@ -442,20 +431,27 @@ MODEL stepwise_add (MODEL *pmod,
     err = stepwise_check_zlist(pmod, zlist, dset);
 
     if (!err) {
-        err = process_stepwise_options(opt, &crit, &alpha, &verbosity);
+        err = process_stepwise_options(opt, &crit, &alpha);
     }
 
     if (!err) {
+        int verbose = (opt & OPT_Q)? 0 : 1;
+
         best = forward_stepwise(pmod, zlist, dset, crit, alpha,
-                                verbosity, prn, &err);
+                                verbose, prn, &err);
     }
 
     if (!err) {
         gretlopt ols_opt = OPT_NONE;
         int *list = compose_list(pmod, best);
 
-        if (verbosity == 0) {
-            ols_opt = OPT_Q;
+        if (opt & OPT_I) {
+            /* --silent */
+            ols_opt |= OPT_Q;
+        }
+        if (opt & OPT_O) {
+            /* --vcv */
+            ols_opt |= OPT_O;
         }
         model = lsq(list, dset, OLS, ols_opt);
         free(list);

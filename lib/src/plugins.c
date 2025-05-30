@@ -555,10 +555,9 @@ void *get_plugin_function (const char *funcname)
     return funp;
 }
 
-/* For use with valgrind: if you want to trace memory
-   leaks into plugin code you have to keep the plugins
-   open at program termination. So you can define this
-   as non-zero temporarily.
+/* For use with valgrind: if you want to trace memory leaks into
+   plugin code you have to keep the plugins open at program
+   termination. So you can define this as non-zero temporarily.
 */
 #define KEEP_PLUGINS_OPEN 0
 
