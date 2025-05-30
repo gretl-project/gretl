@@ -340,31 +340,20 @@ int *forward_stepwise (MODEL *pmod,
     return ret;
 }
 
-/* In case of forward stepwise regression, check @zlist (list of
-   candidate regressors to be added) for two potential problems: (i) a
-   @zlist member may in fact be one of the baseline regressors; and/or
-   (ii) a @zlist member may be missing for some observations that were
-   used when estimating @pmod.
+/* In case of forward stepwise regression, check @zlist (the list of
+   candidate regressors to be added) for the possibility that it may
+   contain one or more of the baseline regressors.
 */
 
 static int stepwise_check_zlist (MODEL *pmod,
                                  const int *zlist,
                                  DATASET *dset)
 {
-    int i, t, v;
+    int i;
 
     for (i=1; i<=zlist[0]; i++) {
         if (in_gretl_list(pmod->list, zlist[i])) {
             return E_ADDDUP;
-        }
-    }
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-        for (i=1; i<=zlist[0]; i++) {
-            v = zlist[i];
-            if (na(dset->Z[v][t])) {
-                return E_MISSDATA;
-            }
         }
     }
 

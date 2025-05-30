@@ -1216,6 +1216,11 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 	return E_NOADD;
     }
 
+    if (incompatible_options(opt, OPT_A | OPT_L)) {
+        /* --auto and --lm cannot be combined */
+        return E_BADOPT;
+    }
+
     if (!command_ok_for_model(ADD, opt, orig)) {
 	return E_NOTIMP;
     }
@@ -1241,13 +1246,15 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 	return err;
     }
 
-    /* create augmented regression list */
-    if (orig->ci == IVREG) {
-	biglist = ivreg_list_add(orig->list, addvars, opt, &err);
-    } else if (orig->ci == DPANEL) {
-	biglist = panel_list_add(orig, addvars, &err);
-    } else {
-	biglist = gretl_list_add(orig->list, addvars, &err);
+    if (!(opt & OPT_A)) {
+        /* create augmented regression list, unless --auto (stepwise) */
+        if (orig->ci == IVREG) {
+            biglist = ivreg_list_add(orig->list, addvars, opt, &err);
+        } else if (orig->ci == DPANEL) {
+            biglist = panel_list_add(orig, addvars, &err);
+        } else {
+            biglist = gretl_list_add(orig->list, addvars, &err);
+        }
     }
 
     if (err) {
@@ -1259,7 +1266,17 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
     */
     impose_model_smpl(orig, dset);
 
-    if (opt & OPT_L) {
+    if (opt & OPT_A) {
+        /* Do stepwise augmentation of the original model */
+        MODEL (*stepwise_add) (MODEL *, int *, DATASET *, gretlopt, *PRN);
+
+        stepwise_add = get_plugin_function("stepwise_add");
+        if (stepwise_add == NULL) {
+            err = E_FOPEN;
+        } else {
+            umod = stepwise_add();
+        }
+    } else if (opt & OPT_L) {
 	/* run an LM test */
 	umod = LM_add_test(orig, dset, biglist, opt, prn);
     } else {
@@ -1284,22 +1301,10 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 	err = E_DATA;
     }
 
-#if 1
-    if (!err) {
+    if (!err && !(opt & OPT_A)) {
 	err = add_or_omit_compare(orig, &umod, addvars,
 				  dset, ADD, opt, prn);
     }
-#else
-    if (!err) {
-	int *addlist = gretl_list_diff_new(umod.list, orig->list, 2);
-
-	if (addlist != NULL) {
-	    err = add_or_omit_compare(orig, &umod, addlist,
-				      dset, ADD, opt, prn);
-	    free(addlist);
-	}
-    }
-#endif
 
     if (err || pmod == NULL) {
 	clear_model(&umod);
