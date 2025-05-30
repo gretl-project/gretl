@@ -219,8 +219,7 @@ static const char *crit_string (int crit)
     return cstrs[crit-1];
 }
 
-int *forward_stepwise (int yvar,
-                       const int *xlist,
+int *forward_stepwise (MODEL *pmod,
                        const int *zlist,
                        DATASET *dset,
                        int crit,
@@ -229,7 +228,6 @@ int *forward_stepwise (int yvar,
                        PRN *prn,
                        int *err)
 {
-    MODEL mod;
     const char *cstr;
     gretl_matrix *e;
     gretl_matrix *Q;
@@ -243,44 +241,30 @@ int *forward_stepwise (int yvar,
     int best = 0;
     int bpos;
     double cur, prev;
-    int *list = NULL;
+    int *xlist = NULL;
     int *aux = NULL;
     int *ret = NULL;
+    int yvar;
     int t1, t2;
     int T, k, i, nz;
 
-    /* do checks: xlist contains const, handle any missing obs */
-
-    T = sample_size(dset);
-    k = xlist[0];
-    t1 = dset->t1;
-    t2 = dset->t2;
-
-    /* baseline OLS */
-    list = gretl_list_new(1 + xlist[0]);
-    list[1] = yvar;
-    for (i=1; i<=xlist[0]; i++) {
-        list[i+1] = xlist[i];
+    T = pmod->nobs;
+    k = pmod->ncoeff;
+    t1 = pmod->t1;
+    t2 = pmod->t2;
+    e = gretl_matrix_alloc(T, 1);
+    for (i=0; i<pmod->nobs; i++) {
+        e->val[i] = pmod->uhat[i];
     }
-    gretl_model_init(&mod, dset);
-    mod = lsq(list, dset, OLS, OPT_A);
-    *err = mod.errcode;
-    if (*err) {
-        free(list);
-        return NULL;
-    }
-    if (verbose > 1) {
-        printmodel(&mod, dset, OPT_NONE, prn);
-    }
-    e = gretl_matrix_alloc(mod.nobs, 1);
-    for (i=0; i<mod.nobs; i++) {
-        e->val[i] = mod.uhat[i];
-    }
-    ess = gretl_matrix_from_scalar(mod.ess);
+    ess = gretl_matrix_from_scalar(pmod->ess);
     ess2crit(&best, &prev, ess, T, k, crit);
-    clear_model(&mod);
     gretl_matrix_free(ess);
-    free(list);
+
+    yvar = pmod->list[1];
+    xlist = gretl_list_new(pmod->list[0] - 1);
+    for (i=2; i<=pmod->list[0]; i++) {
+        xlist[i-1] = pmod->list[i];
+    }
 
     Q  = gretl_matrix_data_subset(xlist, dset, t1, t2, M_MISSING_ERROR, err);
     mZ = gretl_matrix_data_subset(zlist, dset, t1, t2, M_MISSING_ERROR, err);
@@ -370,15 +354,16 @@ static int stepwise_check_zlist (MODEL *pmod,
     int i, t, v;
 
     for (i=1; i<=zlist[0]; i++) {
-        if (in_gretl_list(pmod->xlist, zlist[i])) {
+        if (in_gretl_list(pmod->list, zlist[i])) {
             return E_ADDDUP;
         }
     }
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
         for (i=1; i<=zlist[0]; i++) {
-            if (na(dset->Z[list[i]], t)) {
-                return E_MISSOBS;
+            v = zlist[i];
+            if (na(dset->Z[v][t])) {
+                return E_MISSDATA;
             }
         }
     }
@@ -418,7 +403,7 @@ static int process_stepwise_options (gretlopt opt,
     if (*crit == 0) {
         /* SSR */
         *alpha = gretl_double_from_string(s, &err);
-        if (!err && *alpha < 0.001 || *alpha > 0.99) {
+        if (!err && (*alpha < 0.001 || *alpha > 0.99)) {
             err = E_INVARG;
         }
     }
@@ -432,14 +417,13 @@ static int process_stepwise_options (gretlopt opt,
 
 static int *compose_list (MODEL *pmod, int *best)
 {
-    int n = 1 + pmod->xlist[0] + best[0];
+    int n = pmod->list[0] + best[0];
     int i, j = 1;
     int *list;
 
-    list = gretl_list-new(n);
-    list[j++] = pmod->ylist[1];
-    for (i=1; i<=pmod->xlist[0]; i++) {
-        list[j++] = pmod->xlist[i];
+    list = gretl_list_new(n);
+    for (i=1; i<=pmod->list[0]; i++) {
+        list[j++] = pmod->list[i];
     }
     for (i=1; i<=best[0]; i++) {
         list[j++] = best[i];
@@ -471,8 +455,8 @@ MODEL stepwise_add (MODEL *pmod,
     }
 
     if (!err) {
-        best = forward_stepwise(pmod->ylist[1], pmod->xlist, zlist, dset,
-                                crit, alpha, verbosity, prn, &err);
+        best = forward_stepwise(pmod, zlist, dset, crit, alpha,
+                                verbosity, prn, &err);
     }
 
     if (!err) {
@@ -482,7 +466,7 @@ MODEL stepwise_add (MODEL *pmod,
         if (verbosity == 0) {
             ols_opt = OPT_Q;
         }
-        *model = lsq(list, dset, OLS, ols_opt);
+        model = lsq(list, dset, OLS, ols_opt);
         free(list);
         ols_done = 1;
     }
