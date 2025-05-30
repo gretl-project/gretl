@@ -52,11 +52,11 @@ static int matrix_drop_column (gretl_matrix *m, int drop)
     return 0;
 }
 
-static void ess2crit (int *best, double *xbest,
-                      const gretl_matrix *ess,
+static void ssr2crit (int *best, double *xbest,
+                      const gretl_matrix *ssr,
                       int T, int k, int crit)
 {
-    int n = ess->cols;
+    int n = ssr->cols;
     int j;
 
     *best = 0;
@@ -65,9 +65,9 @@ static void ess2crit (int *best, double *xbest,
     if (crit == 1) {
         /* just using SSR */
         for (j=0; j<n; j++) {
-            if (ess->val[j] < *xbest) {
+            if (ssr->val[j] < *xbest) {
                 *best = j;
-                *xbest = ess->val[j];
+                *xbest = ssr->val[j];
             }
         }
     } else {
@@ -83,7 +83,7 @@ static void ess2crit (int *best, double *xbest,
             C0 = 2 * log(log((double) T)) * k; /* HQC */
         }
         for (j=0; j<n; j++) {
-            llj = l0 * (l1 + log(ess->val[j]/T) + 1);
+            llj = l0 * (l1 + log(ssr->val[j]/T) + 1);
             if (crit == 2) {
                 /* AIC */
                 icj = 2.0 * (k - llj);
@@ -175,7 +175,7 @@ static int qr_update (gretl_matrix **pQ,
         ssr->val[j] = ee - xij * xij / den->val[j];
     }
 
-    ess2crit(best, xbest, ssr, n, k + 1, crit);
+    ssr2crit(best, xbest, ssr, n, k + 1, crit);
 
     /* update Q -> Q ~ -stdres[,best] */
     tmp = gretl_matrix_alloc(n, k + 1);
@@ -235,7 +235,7 @@ int *forward_stepwise (MODEL *pmod,
     gretl_matrix *mZ;
     gretl_matrix *my;
     gretl_matrix *tmp;
-    gretl_matrix *ess;
+    gretl_matrix *ssr;
     int conv = 0;
     int added = 0;
     int best = 0;
@@ -256,9 +256,9 @@ int *forward_stepwise (MODEL *pmod,
     for (i=0; i<pmod->nobs; i++) {
         e->val[i] = pmod->uhat[i];
     }
-    ess = gretl_matrix_from_scalar(pmod->ess);
-    ess2crit(&best, &prev, ess, T, k, crit);
-    gretl_matrix_free(ess);
+    ssr = gretl_matrix_from_scalar(pmod->ess);
+    ssr2crit(&best, &prev, ssr, T, k, crit);
+    gretl_matrix_free(ssr);
 
     yvar = pmod->list[1];
     xlist = gretl_list_new(pmod->list[0] - 1);
@@ -385,7 +385,7 @@ static int process_stepwise_options (gretlopt opt,
     for (i=1; i<4; i++) {
         /* AIC, BIC or HQC */
         if (!strcmp(s, cstrs[i])) {
-            *crit = i;
+            *crit = i + 1;
         }
     }
 
@@ -394,6 +394,8 @@ static int process_stepwise_options (gretlopt opt,
         *alpha = gretl_double_from_string(s, &err);
         if (!err && (*alpha < 0.001 || *alpha > 0.99)) {
             err = E_INVARG;
+        } else {
+            *crit = 1;
         }
     }
 
