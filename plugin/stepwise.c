@@ -431,7 +431,7 @@ MODEL stepwise_add (MODEL *pmod,
     err = stepwise_check_zlist(pmod, zlist, dset);
 
     if (!err) {
-        err = process_stepwise_options(opt, &crit, &alpha);
+        err = process_stepwise_option(opt, &crit, &alpha);
     }
 
     if (!err) {
