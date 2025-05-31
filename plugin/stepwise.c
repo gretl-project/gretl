@@ -24,7 +24,7 @@
 #include "matrix_extra.h"
 
 /* qr_wspace: workspace matrices whose row dimension will remain
-   unchanged but their column dimension @zc will shrink on each call
+   unchanged but whose column dimension @zc will shrink on each call
    to qr_update().
 */
 
