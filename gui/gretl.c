@@ -201,7 +201,11 @@ static char tryfile[MAXLEN];
 void set_tryfile (const char *fname)
 {
     tryfile[0] = '\0';
-    strncat(tryfile, fname, MAXLEN - 1);
+    if (!strncmp(fname, "file://", 7)) {
+        strncat(tryfile, fname + 7, MAXLEN - 1);
+    } else {
+        strncat(tryfile, fname, MAXLEN - 1);
+    }
 }
 
 char *get_tryfile (void)
@@ -868,7 +872,11 @@ int main (int argc, char **argv)
 	/* If we have a residual unhandled command-line argument,
 	   it should be the name of a file to be opened.
 	*/
-	strncat(filearg, argv[1], MAXLEN - 1);
+        if (!strncmp(argv[1], "file://", 7)) {
+            strncat(filearg, argv[1] + 7, MAXLEN - 1);
+        } else {
+            strncat(filearg, argv[1], MAXLEN - 1);
+        }
     }
 
 #ifdef GRETL_OPEN_HANDLER
@@ -921,7 +929,6 @@ int main (int argc, char **argv)
     session_menu_state(FALSE);
     sample_menubar_state(FALSE);
     dataset_menubar_state(FALSE);
-
 
 #if GUI_DEBUG
     fprintf(stderr, "done setting GUI state\n");
