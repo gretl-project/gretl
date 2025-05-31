@@ -136,16 +136,14 @@ static void ssr2crit (int *best, double *xbest,
 }
 
 static int qr_update (gretl_matrix *Q,
-                      gretl_matrix **pR,
+                      gretl_matrix *R,
                       const gretl_matrix *Z,
                       const gretl_matrix *e,
                       qr_wspace *mm,
                       int crit, int *best,
                       double *xbest)
 {
-    gretl_matrix *R = *pR;
     gretl_matrix *B;
-    gretl_matrix *tmp;
     double *dest;
     double *src;
     double xij, ee;
@@ -213,22 +211,20 @@ static int qr_update (gretl_matrix *Q,
     }
 
     /* update R = (R|0)  ~ (B[,best] | -std[best]) */
-    tmp = gretl_matrix_alloc(k + 1, k + 1);
+    gretl_matrix_realloc(R, k+1, k+1);
     sz = k * sizeof *dest;
-    dest = tmp->val;
-    src = R->val;
-    for (j=0; j<k; j++) {
-        memcpy(dest, src, sz);
+    for (j=k-1; j>0; j--) {
+        src = R->val + k * j;
+        dest = src + j;
+        memmove(dest, src, sz);
         dest[k] = 0.0;
-        dest += k + 1;
-        src += k;
     }
+    /* fill the last column */
     src = B->val + k * p;
+    dest = R->val + k*(k-1);
     memcpy(dest, src, sz);
     xij = mm->std->val[p];
-    gretl_matrix_set(tmp, k, k, -xij);
-    gretl_matrix_free(R);
-    *pR = tmp;
+    gretl_matrix_set(R, k, k, -xij);
 
     gretl_matrix_free(B);
 
@@ -318,7 +314,7 @@ int *forward_stepwise (MODEL *pmod,
     }
 
     while (!conv && added < nz) {
-        *err = qr_update(Q, &R, mZ, e, &mm, crit, &best, &cur);
+        *err = qr_update(Q, R, mZ, e, &mm, crit, &best, &cur);
         if (*err) {
             break;
         }
