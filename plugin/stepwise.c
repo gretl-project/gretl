@@ -23,6 +23,8 @@
 #include "version.h"
 #include "matrix_extra.h"
 
+enum {SSR = 1, AIC, BIC, HQC};
+
 /* qr_wspace: workspace matrices whose row dimension will remain
    unchanged but whose column dimension @zc will shrink on each call
    to qr_update().
@@ -105,19 +107,19 @@ static void ssr2crit (int *best, double *xbest,
         }
     }
 
-    if (crit > 1) {
+    if (crit > SSR) {
         /* using AIC, BIC or HQC */
         double l1 = log(2*M_PI);
         double ll, C0 = 0;
 
-        if (crit == 3) {
-            C0 = k * log((double) T); /* BIC */
-        } else if (crit == 4) {
-            C0 = 2 * k * log(log((double) T)); /* HQC */
+        if (crit == BIC) {
+            C0 = k * log((double) T);
+        } else if (crit == HQC) {
+            C0 = 2 * k * log(log((double) T));
         }
         ll = -0.5 * T * (l1 + log(ssr->val[*best]/T) + 1);
-        if (crit == 2) {
-            *xbest = 2.0 * (k - ll); /* AIC */
+        if (crit == AIC) {
+            *xbest = 2.0 * (k - ll);
         } else {
             *xbest = C0 - 2 * ll;
         }
@@ -319,7 +321,7 @@ int *forward_stepwise (MODEL *pmod,
                                   e, GRETL_MOD_DECREMENT);
         gretl_matrix_free(tmp);
 
-        if (crit == 1) {
+        if (crit == SSR) {
             /* SSR */
             double parm[1] = {1.0};
             double Xcrit = gretl_get_cdf_inverse(D_CHISQ, parm, 1.0 - alpha);
@@ -412,12 +414,12 @@ static int process_stepwise_option (gretlopt opt,
     }
 
     if (*crit == 0) {
-        /* SSR */
+        /* not yet determined */
         *alpha = gretl_double_from_string(s, &err);
         if (!err && (*alpha < 0.001 || *alpha > 0.99)) {
             err = E_INVARG;
         } else {
-            *crit = 1;
+            *crit = SSR;
         }
     }
 
