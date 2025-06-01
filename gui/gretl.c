@@ -201,7 +201,11 @@ static char tryfile[MAXLEN];
 void set_tryfile (const char *fname)
 {
     tryfile[0] = '\0';
-    strncat(tryfile, fname, MAXLEN - 1);
+    if (!strncmp(fname, "file://", 7)) {
+        strncat(tryfile, fname + 7, MAXLEN - 1);
+    } else {
+        strncat(tryfile, fname, MAXLEN - 1);
+    }
 }
 
 char *get_tryfile (void)
@@ -283,6 +287,12 @@ static void pc_change_callback (GtkAction *action, gpointer p)
 {
     const char *s = gtk_action_get_name(action);
     int idxvals = !strcmp(s, "idxvals");
+
+    if (idxvals && dataset_is_panel(dataset)) {
+        /* this shouldn't be needed, but... */
+        warnbox(_("This option is not available for panel data"));
+        return;
+    }
 
     if (mdata_selection_count() == 1) {
 	single_percent_change_dialog(mdata->active_var, idxvals);
@@ -862,7 +872,11 @@ int main (int argc, char **argv)
 	/* If we have a residual unhandled command-line argument,
 	   it should be the name of a file to be opened.
 	*/
-	strncat(filearg, argv[1], MAXLEN - 1);
+        if (!strncmp(argv[1], "file://", 7)) {
+            strncat(filearg, argv[1] + 7, MAXLEN - 1);
+        } else {
+            strncat(filearg, argv[1], MAXLEN - 1);
+        }
     }
 
 #ifdef GRETL_OPEN_HANDLER
@@ -915,7 +929,6 @@ int main (int argc, char **argv)
     session_menu_state(FALSE);
     sample_menubar_state(FALSE);
     dataset_menubar_state(FALSE);
-
 
 #if GUI_DEBUG
     fprintf(stderr, "done setting GUI state\n");
@@ -1924,6 +1937,7 @@ GtkActionEntry main_entries[] = {
     { "stdize", NULL, N_("_Standardize selected variables"), NULL, NULL, G_CALLBACK(logs_etc_callback) },
     { "AddIndex", NULL, N_("_Index variable"), NULL, NULL, G_CALLBACK(add_index) },
     { "AddRandom", NULL, N_("_Random variable..."), NULL, NULL, G_CALLBACK(stats_calculator) },
+    { "Time", NULL, N_("_Time"), NULL, NULL, NULL },
     { "lags", NULL, N_("_Lags of selected variables"), NULL, NULL, G_CALLBACK(logs_etc_callback) },
     { "diff", NULL, N_("_First differences of selected variables"), NULL, NULL,
       G_CALLBACK(logs_etc_callback) },
@@ -1936,8 +1950,9 @@ GtkActionEntry main_entries[] = {
     { "idxvals", NULL, N_("_100-based indices of selected variables"), NULL, NULL,
       G_CALLBACK(pc_change_callback) },
     { "AddTime", NULL, N_("_Time trend"), NULL, NULL, G_CALLBACK(add_index) },
-    { "AddUnit", NULL, N_("_Panel unit index"), NULL, NULL, G_CALLBACK(add_index) },
     { "PeriodDums", NULL, N_("_Periodic dummies"), NULL, NULL, G_CALLBACK(add_dummies) },
+    { "Panel", NULL, N_("_Panel"), NULL, NULL, NULL },
+    { "AddUnit", NULL, N_("_Unit index"), NULL, NULL, G_CALLBACK(add_index) },
     { "UnitDums", NULL, N_("_Unit dummies"), NULL, NULL, G_CALLBACK(add_dummies) },
     { "TimeDums", NULL, N_("_Time dummies"), NULL, NULL, G_CALLBACK(add_dummies) },
     { "RangeDum", NULL, N_("_Observation range dummy"), NULL, NULL, G_CALLBACK(range_dummy_dialog) },

@@ -6297,10 +6297,10 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 	    ok = 0;
 	} else if (mci == PANEL && (pmod->opt & OPT_B)) {
 	    ok = 0;
-	} else if (opt & OPT_L) {
-	    /* --lm variant: OLS only? */
+	} else if (opt & (OPT_L | OPT_A)) {
+	    /* --lm and --auto variants: OLS only */
 	    ok = (mci == OLS);
-	}
+        }
 	break;
 
     case OMIT:

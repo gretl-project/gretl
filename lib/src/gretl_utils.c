@@ -2466,6 +2466,11 @@ static void register_openblas_details (void *handle);
 static void register_mkl_details (void *handle);
 static void register_blis_details (void *handle);
 
+/* @ldd_line should look something like this:
+
+   libopenblaso.so.0 => /usr/lib64/libopenblaso.so.0 ...
+*/
+
 static void retry_for_blas_details (char *ldd_line,
                                     int blastype)
 {
@@ -2478,6 +2483,7 @@ static void retry_for_blas_details (char *ldd_line,
         s += strspn(s, " ");
         p = strchr(s, ' ');
         if (p != NULL) {
+            /* copy the library path */
             libpath = gretl_strndup(s, p-s);
         }
     }
@@ -2495,60 +2501,50 @@ static void retry_for_blas_details (char *ldd_line,
             }
         }
         free(libpath);
-        /* dlclose(ptr); ?? */
+    } else {
+        fprintf(stderr, "retry_for_blas_details: couldn't get @libpath\n");
     }
 }
 
 static int parse_ldd_output (const char *s)
 {
-    char found[6] = {0};
     char line[512];
     int i = 0;
     int ret = BLAS_UNKNOWN;
 
     *line = '\0';
 
-    while (*s) {
+    while (*s && ret == BLAS_UNKNOWN) {
         if (*s == '\n') {
-            /* got to the end of a line */
+            /* got to the end of a line: check it */
             line[i] = '\0';
 	    if (strstr(line, "libopenblas")) {
-                retry_for_blas_details(line, BLAS_OPENBLAS);
-		found[5] = 5;
+                ret = BLAS_OPENBLAS;
 	    } else if (strstr(line, "libblis")) {
-                retry_for_blas_details(line, BLAS_BLIS);
-		found[4] = 1;
+                ret = BLAS_BLIS;
 	    } else if (strstr(line, "Accelerate.frame")) {
-		found[3] = 1;
+                ret = BLAS_VECLIB;
 	    } else if (strstr(line, "libmkl")) {
-                retry_for_blas_details(line, BLAS_MKL);
-		found[2] = 1;
-	    } else if (strstr(line, "atlas")) {
-		found[1] = 1;
+                ret = BLAS_MKL;
+	    } else if (strstr(line, "libatlas")) {
+                ret = BLAS_ATLAS;
 	    } else if (strstr(line, "libblas")) {
-		found[0] = 1;
-	    }
-	    *line = '\0';
-	    i = 0;
+                ret = BLAS_NETLIB;
+	    } else {
+                /* prepare for next line */
+                *line = '\0';
+                i = 0;
+            }
 	} else {
+            /* cumulate this line */
 	    line[i++] = *s;
 	}
 	s++;
     }
 
-    if (found[5]) {
-	ret = BLAS_OPENBLAS;
-    } else if (found[4]) {
-        ret = BLAS_BLIS;
-    } else if (found[3]) {
-        ret = BLAS_VECLIB;
-    } else if (found[2]) {
-        ret = BLAS_MKL;
-    } else if (found[1]) {
-        ret = BLAS_ATLAS;
-    } else if (found[0]) {
-        ret = BLAS_NETLIB;
-    } else {
+    if (ret == BLAS_OPENBLAS || ret == BLAS_BLIS || ret == BLAS_MKL) {
+        retry_for_blas_details(line, ret);
+    } else if (ret == BLAS_UNKNOWN) {
         fputs("detect blas: found no relevant libs!\n", stderr);
     }
 
@@ -2557,7 +2553,7 @@ static int parse_ldd_output (const char *s)
 
 static int detect_blas_via_ldd (void)
 {
-    gchar *targ;
+    char *targ;
     gchar *sout = NULL;
     gchar *errout = NULL;
     gint status = 0;
@@ -2574,7 +2570,10 @@ static int detect_blas_via_ldd (void)
 #else
     int variant = BLAS_UNKNOWN;
     gchar *argv[3];
-    targ = g_strdup(GRETL_PREFIX "/lib/libgretl-1.0.so");
+    targ = getenv("GRETL_LIB_NAME");
+    if (targ == NULL || *targ == '\0') {
+        targ = GRETL_PREFIX "/lib/libgretl-1.0.so";
+    }
     argv[0] = "ldd";
     argv[1] = targ;
     argv[2] = NULL;
@@ -2597,7 +2596,6 @@ static int detect_blas_via_ldd (void)
 
     g_free(sout);
     g_free(errout);
-    g_free(targ);
 
     return variant;
 }
@@ -2957,45 +2955,45 @@ static void blas_init (void)
 #if defined(__APPLE__) && defined(PKGBUILD)
     blas_variant = BLAS_VECLIB;
     return;
-#endif
-
+#else
     blas_variant = BLAS_UNKNOWN;
     ptr = dlopen(NULL, RTLD_NOW);
     if (ptr == NULL) {
-#ifdef WIN32
+# ifdef WIN32
         return;
-#else
+# else
         goto try_ldd;
-#endif
+# endif
     }
 
+    /* try for OpenBLAS */
     OB_set_num_threads = dlsym(ptr, "openblas_set_num_threads");
     OB_get_num_threads = dlsym(ptr, "openblas_get_num_threads");
     if (OB_set_num_threads != NULL) {
         blas_variant = BLAS_OPENBLAS;
         register_openblas_details(ptr);
+        return;
     }
 
-    if (blas_variant == BLAS_UNKNOWN) {
-        BLIS_init = dlsym(ptr, "bli_init");
-        BLIS_finalize = dlsym(ptr, "bli_finalize");
-        BLIS_set_num_threads = dlsym(ptr, "bli_thread_set_num_threads");
-        BLIS_get_num_threads = dlsym(ptr, "bli_thread_get_num_threads");
-        if (BLIS_init != NULL) {
-            blas_variant = BLAS_BLIS;
-            BLIS_init(); /* This is only to be sure that BLIS was initialized */
-            register_blis_details(ptr);
-        }
+    /* try for Intel's MKL */
+    MKL_finalize = dlsym(ptr, "mkl_finalize");
+    MKL_domain_get_max_threads = dlsym(ptr, "MKL_Domain_Get_Max_Threads");
+    MKL_domain_set_num_threads = dlsym(ptr, "MKL_Domain_Set_Num_Threads");
+    if (MKL_domain_set_num_threads != NULL) {
+        blas_variant = BLAS_MKL;
+        register_mkl_details(ptr);
+        return;
     }
 
-    if (blas_variant == BLAS_UNKNOWN) {
-        MKL_finalize = dlsym(ptr, "mkl_finalize");
-        MKL_domain_get_max_threads = dlsym(ptr, "MKL_Domain_Get_Max_Threads");
-        MKL_domain_set_num_threads = dlsym(ptr, "MKL_Domain_Set_Num_Threads");
-        if (MKL_domain_set_num_threads != NULL) {
-            blas_variant = BLAS_MKL;
-            register_mkl_details(ptr);
-        }
+    BLIS_init = dlsym(ptr, "bli_init");
+    BLIS_finalize = dlsym(ptr, "bli_finalize");
+    BLIS_set_num_threads = dlsym(ptr, "bli_thread_set_num_threads");
+    BLIS_get_num_threads = dlsym(ptr, "bli_thread_get_num_threads");
+    if (BLIS_init != NULL) {
+        blas_variant = BLAS_BLIS;
+        BLIS_init(); /* This is only to be sure that BLIS was initialized */
+        register_blis_details(ptr);
+        /* don't return in case libflame is used */
     }
 
     if (FLAME_init == NULL) {
@@ -3006,13 +3004,13 @@ static void blas_init (void)
         }
     }
 
-#ifndef WIN32
+# ifndef WIN32
  try_ldd:
-
     if (blas_variant == BLAS_UNKNOWN) {
         blas_variant = detect_blas_via_ldd();
     }
-#endif
+# endif
+#endif /* not (__APPLE__ && PKGBUILD) */
 }
 
 void blas_cleanup (void)

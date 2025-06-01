@@ -2489,8 +2489,12 @@ int gretl_set_path_by_name (const char *name, const char *path)
         return 1;
     } else if (!strcmp(name, "workdir")) {
         return set_gretl_workdir(path);
+    } else if (!strcmp(name, "gretldir")) {
+        targ = paths.gretldir;
+        builtin = 1;
     } else if (!strcmp(name, "gnuplot")) {
         targ = paths.gnuplot;
+        builtin = 1;
     } else if (!strcmp(name, "plotfile")) {
         targ = paths.plotfile;
     } else if (!strcmp(name, "rlibpath")) {

@@ -10934,6 +10934,7 @@
             <fncref targ="pmin"/>
             <fncref targ="pnobs"/>
             <fncref targ="psd"/>
+            <fncref targ="pxmean"/>
             <fncref targ="pxsum"/>
             <fncref targ="pshrink"/>
             <fncref targ="psum"/>
@@ -11321,6 +11322,47 @@
             <fncref targ="invcdf"/>
             <fncref targ="urcpval"/>
             <fncref targ="imhof"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="pxmean" section="panel" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="series" optional="true">máscara</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Se aplica tan solo si el conjunto vigente de datos tiene una estrutura
+	  de panel. Devuelve una serie que contiene la media de sección
+	  cruzada de la variable <argname>y</argname> en cada período de
+	  tiempo, repitiéndose los valores para cada unidad. Las observaciones
+	  ausentes se eliminan al calcular las medias.
+	</para>
+	<para context="tex">
+	  Se aplica tan solo si el conjunto vigente de datos tiene una estructura
+	  de panel. Calcula una serie que contiene la media de sección cruzada
+	  de la variable <argname>y</argname> en cada período de tiempo;
+	  es decir, \[ \bar{y}_t = \frac{1}{N_t} \sum_{i=1}^{N_t} y_{i,t}\]
+	  donde $N_t$ es el número de observaciones válidas para el período
+	  $t$.
+	</para>
+	<para>
+	  Cuando se indica el segundo argumento (opcional), se ignoran las
+	  observaciones para las que el valor de <argname>máscara</argname>
+	  es cero.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="pmax"/>
+            <fncref targ="pmean"/>
+            <fncref targ="pmin"/>
+            <fncref targ="pnobs"/>
+            <fncref targ="psd"/>
+            <fncref targ="pxsum"/>
+            <fncref targ="pshrink"/>
+            <fncref targ="psum"/>
 	  </seelist>
 	</para>
       </description>

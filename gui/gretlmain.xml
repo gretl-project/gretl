@@ -164,19 +164,23 @@
       <menuitem action="AddIndex"/>
       <menuitem action="AddRandom"/>
       <separator/>
-      <menuitem action="lags"/>
-      <menuitem action="diff"/>
-      <menuitem action="ldiff"/>
-      <menuitem action="sdiff"/>
-      <menuitem action="pcdiff"/>
-      <menuitem action="idxvals"/>
+      <menu action="Time">
+        <menuitem action="lags"/>
+        <menuitem action="diff"/>
+        <menuitem action="ldiff"/>
+        <menuitem action="sdiff"/>
+        <menuitem action="pcdiff"/>
+        <menuitem action="idxvals"/>
+        <menuitem action="AddTime"/>
+        <menuitem action="PeriodDums"/>
+      </menu>
       <separator/>
-      <menuitem action="AddTime"/>
-      <menuitem action="AddUnit"/>
+      <menu action="Panel">
+        <menuitem action="AddUnit"/>
+        <menuitem action="UnitDums"/>
+        <menuitem action="TimeDums"/>
+      </menu>
       <separator/>
-      <menuitem action="PeriodDums"/>
-      <menuitem action="UnitDums"/>
-      <menuitem action="TimeDums"/>
       <menuitem action="RangeDum"/>
       <menuitem action="dummify"/>
       <separator/>

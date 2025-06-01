@@ -5910,7 +5910,13 @@ static int package_run_R_setup (ufunc *fun, PRN *prn)
 
 #endif /* USE_RLIB */
 
-#define fn_redef_msg(s) fprintf(stderr, "Redefining function '%s'\n", s)
+static void do_override (ufunc *fun)
+{
+    gretl_warnmsg_sprintf(_("'%s' is the name of a built-in function"),
+                          fun->name);
+    install_function_override(fun->name, fun->pkg->name, fun);
+    fun->pkg->overrides += 1;
+}
 
 /* When loading a private function the only real conflict would be
    with a function of the same name owned by the same package.
@@ -5939,10 +5945,7 @@ static int load_private_function (fnpkg *pkg, int i, PRN *prn)
     if (!err) {
         err = add_allocated_ufunc(fun);
         if (!err && function_lookup(fun->name)) {
-            gretl_warnmsg_sprintf(_("'%s' is the name of a built-in function"),
-                                  fun->name);
-            install_function_override(fun->name, fun->pkg->name, fun);
-            pkg->overrides += 1;
+            do_override(fun);
         }
     }
 
@@ -5983,7 +5986,11 @@ static int load_public_function (fnpkg *pkg, int i)
     }
 
     if (!err && !done && function_lookup(fun->name)) {
-        if (strcmp(fun->name, "bkw")) {
+        if (!strcmp(pkg->name, "PanelTools") &&
+            !strcmp(fun->name, "pxmean")) {
+            /* give this a pass: just use the built-in pxmean() */
+            return 0;
+        } else if (strcmp(fun->name, "bkw")) {
             /* for now, don't throw an error on loading Lee Adkins'
                bkw package */
             gretl_errmsg_sprintf(_("Package loading error:\n"

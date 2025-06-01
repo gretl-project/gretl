@@ -139,11 +139,11 @@ static void import_ts_check (DATASET *dset)
 
 #if defined(ODS_IMPORTER) || defined(XLSX_IMPORTER) || defined(GNUMERIC_IMPORTER)
 
-/* check for spurious empty columns at the right of the sheet */
+/* check for empty columns at the right of the sheet */
 
 static int import_prune_columns (DATASET *dset)
 {
-    int allmiss = 1, ndel = 0;
+    int allmiss = 1, n_empty = 0;
     int i, t, err = 0;
 
     for (i=dset->v-1; i>0 && allmiss; i--) {
@@ -153,15 +153,16 @@ static int import_prune_columns (DATASET *dset)
 		break;
 	    }
 	}
-	if (allmiss) ndel++;
+	if (allmiss) n_empty++;
     }
 
-    if (ndel == dset->v - 1) {
+    if (n_empty == dset->v - 1) {
 	gretl_errmsg_set(_("No numeric data were found"));
 	err = E_DATA;
-    } else if (ndel > 0) {
-	fprintf(stderr, "Sheet has %d trailing empty variables\n", ndel);
-	err = dataset_drop_last_variables(dset, ndel);
+    } else if (n_empty > 0) {
+        /* changed 2025-05-21 */
+        gretl_warnmsg_sprintf(_("Sheet has %d trailing empty variables"), n_empty);
+	/* err = dataset_drop_last_variables(dset, ndel); */
     }
 
     return err;

@@ -263,10 +263,10 @@ void time_series_menu_state (gboolean s)
 void panel_menu_state (gboolean s)
 {
     if (mdata->ui != NULL) {
-        flip(mdata->ui, "/menubar/Add/AddUnit", s);
-        flip(mdata->ui, "/menubar/Add/UnitDums", s);
-        flip(mdata->ui, "/menubar/Add/TimeDums", s);
+        flip(mdata->ui, "/menubar/Add/Panel", s);
         flip(mdata->ui, "/menubar/Add/RangeDum", !s);
+        flip(mdata->ui, "/menubar/Add/Time/idxvals", !s);
+        flip(mdata->ui, "/menubar/Add/Time/PeriodDums", !s);
         flip(mdata->ui, "/menubar/Model/PanelModels", s);
         flip(mdata->ui, "/menubar/Model/LimdepModels/probit/reprobit", s);
         flip(mdata->ui, "/menubar/Model/PanelModels/dpanel",
@@ -280,13 +280,8 @@ void ts_or_panel_menu_state (gboolean s)
     if (mdata->ui == NULL) return;
 
     flip(mdata->ui, "/menubar/Data/DataSort", !s);
-
-    flip(mdata->ui, "/menubar/Add/AddTime", s);
-    flip(mdata->ui, "/menubar/Add/lags", s);
-    flip(mdata->ui, "/menubar/Add/diff", s);
-    flip(mdata->ui, "/menubar/Add/ldiff", s);
-    flip(mdata->ui, "/menubar/Add/pcdiff", s);
-    flip(mdata->ui, "/menubar/Add/idxvals",
+    flip(mdata->ui, "/menubar/Add/Time", s);
+    flip(mdata->ui, "/menubar/Add/Time/idxvals",
          s && !dataset_is_panel(dataset));
 
     s = dataset_is_seasonal(dataset);
@@ -296,8 +291,8 @@ void ts_or_panel_menu_state (gboolean s)
             dataset->panel_pd == 24;
     }
 
-    flip(mdata->ui, "/menubar/Add/sdiff", s);
-    flip(mdata->ui, "/menubar/Add/PeriodDums", s);
+    flip(mdata->ui, "/menubar/Add/Time/sdiff", s);
+    flip(mdata->ui, "/menubar/Add/Time/PeriodDums", s);
 }
 
 void session_menu_state (gboolean s)
@@ -524,6 +519,8 @@ enum MenuIdx_ {
     MNU_LOGS,
     MNU_DIFF,
     MNU_PCDIF,
+    MNU_TMEAN,
+    MNU_XMEAN,
     MNU_IDXV,
     MNU_DUMIF,
     MNU_GENR,
@@ -593,6 +590,8 @@ struct popup_entries main_pop_entries[] = {
     { MNU_LOGS,  N_("Add log"), T_SINGLE },
     { MNU_DIFF,  N_("Add difference"), T_SINGLE },
     { MNU_PCDIF, N_("Add percent change..."), T_SINGLE },
+    { MNU_TMEAN, N_("Add time mean..."), T_SINGLE },
+    { MNU_XMEAN, N_("Add cross-sectional mean..."), T_SINGLE },
     { MNU_IDXV,  N_("Add index values..."), T_SINGLE },
     { MNU_DUMIF, N_("Dummify..."), T_SINGLE },
     { MNU_LOGS,  N_("Add logs"), T_MULTI },
@@ -676,6 +675,12 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     case MNU_PCDIF:
         single_percent_change_dialog(v, 0);
         break;
+    case MNU_TMEAN:
+        panel_mean_dialog(v, 0);
+        break;
+    case MNU_XMEAN:
+        panel_mean_dialog(v, 1);
+        break;
     case MNU_IDXV:
         single_percent_change_dialog(v, 1);
         break;
@@ -728,8 +733,10 @@ GtkWidget *build_var_popup (int selvar)
             /* don't offer regular ts or boxplot */
             continue;
         }
-        if (!real_panel && i == MNU_PPLOT) {
-            /* don't offer panel plot */
+        if (!real_panel && (i == MNU_PPLOT ||
+                            i == MNU_TMEAN ||
+                            i == MNU_XMEAN)) {
+            /* don't offer panel plot or panel means */
             continue;
         }
         if (!have_map && (i == MNU_MPLOT || i == MNU_MSAVE)) {

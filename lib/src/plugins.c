@@ -98,7 +98,8 @@ enum {
     P_GEOPLOT,
     P_PUREBIN,
     P_BDSTEST,
-    P_LPSOLVE
+    P_LPSOLVE,
+    P_STEPWISE
 } plugin_codes;
 
 struct plugin_info {
@@ -164,6 +165,7 @@ struct plugin_info plugins[] = {
     { P_PUREBIN,         "purebin",         NULL },
     { P_BDSTEST,         "bdstest",         NULL },
     { P_LPSOLVE,         "lpsolve",         NULL },
+    { P_STEPWISE,        "stepwise",        NULL }
 };
 
 struct plugin_function_info plugin_functions[] = {
@@ -249,6 +251,7 @@ struct plugin_function_info plugin_functions[] = {
     { "biprobit_estimate",   P_BIPROBIT },
     { "biprobit_adjust_vcv", P_BIPROBIT },
     { "reprobit_estimate", P_REPROBIT },
+    { "stepwise_add",      P_STEPWISE },
 
     /* Dickey-Fuller test p-values */
     { "mackinnon_pvalue",  P_URCDIST },
@@ -552,10 +555,9 @@ void *get_plugin_function (const char *funcname)
     return funp;
 }
 
-/* For use with valgrind: if you want to trace memory
-   leaks into plugin code you have to keep the plugins
-   open at program termination. So you can define this
-   as non-zero temporarily.
+/* For use with valgrind: if you want to trace memory leaks into
+   plugin code you have to keep the plugins open at program
+   termination. So you can define this as non-zero temporarily.
 */
 #define KEEP_PLUGINS_OPEN 0
 

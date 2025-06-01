@@ -415,7 +415,7 @@ static int want_radios (selector *sr)
             /* omit: Wald test only */
             sr->opts |= OPT_W;
         } else if (c == ADD && pmod->ci != OLS) {
-            /* add: LM option is OLS-only */
+            /* add: LM and auto options are OLS-only */
             ret = 0;
         } else {
             ret = 1;
@@ -3671,6 +3671,24 @@ static void read_omit_cutoff (selector *sr)
     }
 }
 
+static void read_add_auto_param (selector *sr)
+{
+    if (sr->extra[0] != NULL && gtk_widget_is_sensitive(sr->extra[0])) {
+        gchar *parm;
+
+        if (gtk_widget_is_sensitive(sr->extra[1])) {
+            double a = gtk_spin_button_get_value(GTK_SPIN_BUTTON(sr->extra[1]));
+            gretl_push_c_numeric_locale();
+            parm = g_strdup_printf("%g", a);
+            gretl_pop_c_numeric_locale();
+        } else {
+            parm = combo_box_get_active_text(sr->extra[0]);
+        }
+        set_optval_string(ADD, OPT_A, parm);
+        g_free(parm);
+    }
+}
+
 static void read_reprobit_quadpoints (selector *sr)
 {
     if (sr->extra[0] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[0])) {
@@ -3826,29 +3844,22 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     } else if (sr->ci == REGLS) {
         read_regls_extras(sr);
         return;
-    }
-
-    if (sr->ci == LOGISTIC || sr->ci == FE_LOGISTIC) {
+    } else if (sr->ci == LOGISTIC || sr->ci == FE_LOGISTIC) {
         read_logistic_extras(sr);
         return;
-    }
-
-    if (sr->ci == ELLIPSE) {
+    } else if (sr->ci == ELLIPSE) {
         read_ellipse_alpha(sr);
         return;
-    }
-
-    if (sr->ci == OMIT) {
+    } else if (sr->ci == OMIT) {
         read_omit_cutoff(sr);
         return;
-    }
-
-    if (sr->ci == TOBIT) {
+    } else if (sr->ci == ADD) {
+        read_add_auto_param(sr);
+        return;
+    } else if (sr->ci == TOBIT) {
         read_tobit_limits(sr);
         return;
-    }
-
-    if (sr->ci == REPROBIT) {
+    } else if (sr->ci == REPROBIT) {
         read_reprobit_quadpoints(sr);
         return;
     }
@@ -5950,7 +5961,6 @@ static GtkWidget *pack_switch (GtkWidget *b, selector *sr,
 
     gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, offset);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), checked);
 
     return hbox;
@@ -6843,10 +6853,36 @@ static void auto_omit_callback (GtkWidget *w, selector *sr)
     gtk_widget_set_sensitive(sr->remove_button, arrows);
 }
 
+static void sensitize_alpha_spin (GtkComboBox *cb,
+                                  GtkWidget *spin)
+{
+    gint i = gtk_combo_box_get_active(cb);
+
+    gtk_widget_set_sensitive(spin, i == 3);
+}
+
+static void sensitize_stepwise (GtkToggleButton *tb,
+                                selector *sr)
+{
+    if (gtk_toggle_button_get_active(tb)) {
+        gint i = gtk_combo_box_get_active(GTK_COMBO_BOX(sr->extra[0]));
+
+        gtk_widget_set_sensitive(sr->extra[0], TRUE);
+        gtk_widget_set_sensitive(sr->extra[1], i == 3);
+    } else {
+        gtk_widget_set_sensitive(sr->extra[0], FALSE);
+        gtk_widget_set_sensitive(sr->extra[1], FALSE);
+    }
+}
+
 static void build_add_test_radios (selector *sr)
 {
-    GtkWidget *b1, *b2;
+    const char *opts[] = {"AIC", "BIC", "HQC", "SSR"};
+    GtkWidget *b1, *b2, *b3;
+    GtkWidget *cb, *lbl, *spin;
+    GtkWidget *hbox;
     GSList *group;
+    int i;
 
     vbox_add_vwedge(sr->vbox);
 
@@ -6856,6 +6892,27 @@ static void build_add_test_radios (selector *sr)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("LM test using auxiliary regression"));
     pack_switch(b2, sr, FALSE, FALSE, OPT_L, 0);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b2));
+    b3 = gtk_radio_button_new_with_label(group, _("Stepwise add, using"));
+    hbox = pack_switch(b3, sr, FALSE, FALSE, OPT_A, 0);
+    sr->extra[0] = cb = gtk_combo_box_text_new();
+    for (i=0; i<4; i++) {
+        combo_box_append_text(cb, opts[i]);
+    }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(cb), 1);
+    gtk_box_pack_start(GTK_BOX(hbox), cb, TRUE, TRUE, 0);
+    lbl = gtk_label_new("α =");
+    gtk_box_pack_start(GTK_BOX(hbox), lbl, TRUE, TRUE, 0);
+    sr->extra[1] = spin = gtk_spin_button_new_with_range(0.01, 0.5, 0.01);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), 0.10);
+    gtk_widget_set_sensitive(cb, FALSE);
+    gtk_widget_set_sensitive(spin, FALSE);
+    gtk_box_pack_start(GTK_BOX(hbox), spin, TRUE, TRUE, 0);
+    g_signal_connect(GTK_COMBO_BOX(cb), "changed",
+                     G_CALLBACK(sensitize_alpha_spin), spin);
+    g_signal_connect(GTK_TOGGLE_BUTTON(b3), "toggled",
+                     G_CALLBACK(sensitize_stepwise), sr);
 }
 
 static void build_omit_test_radios (selector *sr)
@@ -8390,17 +8447,14 @@ simple_selection_with_data (int ci, const char *title,
     if (want_radios(sr)) {
         build_selector_radios(sr);
     }
-
     /* toggle switches for some cases */
     if (WANT_TOGGLES(ci)) {
         build_selector_switches(sr);
     }
-
     /* combo/dropdown list? */
     if (want_combo(sr)) {
         build_selector_combo(sr);
     }
-
     if (ci == ELLIPSE) {
         build_ellipse_spin(sr);
     }

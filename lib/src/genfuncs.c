@@ -1525,8 +1525,8 @@ static int time_invariant (const double *x,
  * @y: target into which to write.
  * @dset: data set information.
  * @k: code representing the desired statistic: F_PNOBS,
- * F_PMIN, F_PMAX, F_PSUM, F_PMEAN, F_PXSUM, F_PSD, F_PXNOBS
- * or F_PXSUM.
+ * F_PMIN, F_PMAX, F_PSUM, F_PMEAN, F_PXSUM, F_PSD, F_PXNOBS,
+ * F_PXSUM, or F_PXMEAN.
  * @mask: either NULL or a series with 0s for observations
  * to be excluded from the calculations, non-zero values
  * at other observations.
@@ -1658,8 +1658,8 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
                 }
             }
         }
-    } else if (k == F_PXSUM) {
-        /* the sum of cross-sectional values for each period */
+    } else if (k == F_PXSUM || k == F_PXMEAN) {
+        /* the sum or mean of cross-sectional values for each period */
         double yt;
         int nt;
 
@@ -1686,7 +1686,7 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
                 yt = NADBL;
             }
             for (i=u1; i<=u2; i++) {
-                y[i*T + t] = yt;
+                y[i*T + t] = k == F_PXSUM ? yt : yt/nt;
             }
         }
     } else if (k == F_PXNOBS) {

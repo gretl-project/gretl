@@ -10595,6 +10595,7 @@ static int deseasonalize (const double *x, double *y,
                           f == F_PMEAN || \
                           f == F_PXSUM ||  \
                           f == F_PXNOBS ||  \
+                          f == F_PXMEAN ||  \
                           f == F_PSD)
 
 /* Functions taking a series as argument and returning a series.  Note
@@ -10741,6 +10742,7 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
         case F_PMEAN:
         case F_PXSUM:
         case F_PXNOBS:
+        case F_PXMEAN:
         case F_PSD:
             p->err = panel_statistic(x, y, p->dset, f, z);
             break;
@@ -18659,6 +18661,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_PMEAN:
     case F_PXSUM:
     case F_PXNOBS:
+    case F_PXMEAN:
     case F_PSD:
     case F_DESEAS:
     case F_TRAMOLIN:

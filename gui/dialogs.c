@@ -6388,21 +6388,15 @@ int output_policy_dialog (windata_t *source,
     return policy;
 }
 
-static gchar *auto_pc_name (const char *vname, int idxvals)
+static gchar *auto_transform_name (const char *vname,
+                                   const char *pfx)
 {
-    char pcname[VNAMELEN];
+    char tname[VNAMELEN];
 
-    pcname[0] = '\0';
+    sprintf(tname, "%s_", pfx);
+    strncat(tname, vname, VNAMELEN - 4);
 
-    if (idxvals) {
-        strcat(pcname, "i_");
-        strncat(pcname, vname, VNAMELEN - 4);
-    } else {
-        strcat(pcname, "pc_");
-        strncat(pcname, vname, VNAMELEN - 5);
-    }
-
-    return g_strdup(pcname);
+    return g_strdup(tname);
 }
 
 struct pc_change_info {
@@ -6420,8 +6414,15 @@ struct index_vals_info {
     const int *varlist;
 };
 
-static gchar *pc_change_get_vname (GtkWidget *dialog,
-                                   GtkWidget *entry)
+struct panel_mean_info {
+    GtkWidget *dialog;
+    GtkWidget *entry;
+    int v;
+    int xsect;
+};
+
+static gchar *entry_get_vname (GtkWidget *dialog,
+                               GtkWidget *entry)
 {
     gchar *newname = entry_box_get_trimmed_text(entry);
 
@@ -6450,7 +6451,7 @@ static void do_pc_change (GtkWidget *w, struct pc_change_info *pci)
     int err = 0;
 
     if (pci->entry != NULL) {
-        lhname = pc_change_get_vname(pci->dialog, pci->entry);
+        lhname = entry_get_vname(pci->dialog, pci->entry);
         if (lhname == NULL) {
             return;
         }
@@ -6476,7 +6477,7 @@ static void do_pc_change (GtkWidget *w, struct pc_change_info *pci)
 	    gchar *genline = NULL;
 
             if (autoname) {
-                lhname = auto_pc_name(vname, 0);
+                lhname = auto_transform_name(vname, "pc");
             }
             if (ctrl == 0) {
                 /* period to period rate */
@@ -6538,11 +6539,13 @@ static void index_values_callback (GtkWidget *w,
                                    struct index_vals_info *ixi)
 {
     gchar *lhname = NULL;
+    char obsstr[OBSLEN];
     int autoname = 0;
+    int i, t1;
     int err = 0;
 
     if (ixi->entry != NULL) {
-        lhname = pc_change_get_vname(ixi->dialog, ixi->entry);
+        lhname = entry_get_vname(ixi->dialog, ixi->entry);
         if (lhname == NULL) {
             return;
         }
@@ -6550,34 +6553,29 @@ static void index_values_callback (GtkWidget *w,
         autoname = 1;
     }
 
-    if (!err) {
-        char obsstr[OBSLEN];
-        int i, t1;
+    t1 = spin_get_int(ixi->spin);
+    ntolabel(obsstr, t1, dataset);
 
-        t1 = spin_get_int(ixi->spin);
-        ntolabel(obsstr, t1, dataset);
+    for (i=1; i<=ixi->varlist[0] && !err; i++) {
+        const char *vname = dataset->varname[ixi->varlist[i]];
+        gchar *genline = NULL;
 
-        for (i=1; i<=ixi->varlist[0] && !err; i++) {
-            const char *vname = dataset->varname[ixi->varlist[i]];
-	    gchar *genline = NULL;
-
-            if (autoname) {
-                lhname = auto_pc_name(vname, 1);
-            }
-            genline = g_strdup_printf("series %s=100*%s/%s[%s]",
-                                      lhname, vname, vname, obsstr);
-            err = gui_run_genr(genline, dataset, OPT_NONE, NULL);
-            if (err) {
-                gui_errmsg(err);
-            } else {
-                add_command_to_stack(genline, 0);
-                refresh_data();
-            }
-            g_free(genline);
-	    if (autoname) {
-		g_free(lhname);
-		lhname = NULL;
-	    }
+        if (autoname) {
+            lhname = auto_transform_name(vname, "i");
+        }
+        genline = g_strdup_printf("series %s=100*%s/%s[%s]",
+                                  lhname, vname, vname, obsstr);
+        err = gui_run_genr(genline, dataset, OPT_NONE, NULL);
+        if (err) {
+            gui_errmsg(err);
+        } else {
+            add_command_to_stack(genline, 0);
+            refresh_data();
+        }
+        g_free(genline);
+        if (autoname) {
+            g_free(lhname);
+            lhname = NULL;
         }
     }
 
@@ -6590,9 +6588,72 @@ static void index_values_callback (GtkWidget *w,
     }
 }
 
+static void panel_mean_callback (GtkWidget *w,
+                                 struct panel_mean_info *pmi)
+{
+    gchar *lhname = NULL;
+    gchar *genline = NULL;
+    const char *vname;
+    const char *func;
+    int err = 0;
+
+    lhname = entry_get_vname(pmi->dialog, pmi->entry);
+    if (lhname == NULL) {
+        return;
+    }
+
+    func = pmi->xsect ? "pxmean" : "pmean";
+    vname = dataset->varname[pmi->v];
+    genline = g_strdup_printf("series %s=%s(%s)", lhname, func, vname);
+    err = gui_run_genr(genline, dataset, OPT_NONE, NULL);
+    if (err) {
+        gui_errmsg(err);
+    } else {
+        add_command_to_stack(genline, 0);
+        refresh_data();
+    }
+    g_free(genline);
+
+    if (!err) {
+        gtk_widget_destroy(pmi->dialog);
+    }
+}
+
+static GtkWidget *new_varname_entry (GtkWidget *vbox,
+                                     const char *vname,
+                                     const char *pfx)
+{
+    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+    GtkWidget *w;
+    gchar *txt;
+
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    txt = g_strdup_printf(_("Enter name for new variable\n"
+                            "(max. %d characters)"),
+                          VNAMELEN - 1);
+    w = gtk_label_new(txt);
+    g_free(txt);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    w = gtk_entry_new();
+    gtk_entry_set_max_length(GTK_ENTRY(w), 32);
+    gtk_entry_set_width_chars(GTK_ENTRY(w), 32);
+    txt = auto_transform_name(vname, pfx);
+    gtk_entry_set_text(GTK_ENTRY(w), txt);
+    gtk_editable_select_region(GTK_EDITABLE(w), 0, -1);
+    g_free(txt);
+    gtk_entry_set_activates_default(GTK_ENTRY(w), TRUE);
+    gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
+
+    return w;
+}
+
 static void percent_change_dialog (const int *list)
 {
     struct pc_change_info pci;
+    const char *vname = NULL;
     GtkWidget *dialog;
     GtkWidget *vbox, *hbox, *tmp;
     GtkWidget *button = NULL;
@@ -6609,12 +6670,13 @@ static void percent_change_dialog (const int *list)
     pci.dialog = dialog;
     pci.varlist = list;
     pci.ctrl = NULL;
+    pci.entry = NULL;
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
     if (list[0] == 1) {
-        msg = g_strdup_printf(_("percent change in %s"),
-                              dataset->varname[list[1]]);
+        vname = dataset->varname[list[1]];
+        msg = g_strdup_printf(_("percent change in %s"), vname);
     } else {
         msg = g_strdup_printf(_("percent changes"));
     }
@@ -6623,24 +6685,7 @@ static void percent_change_dialog (const int *list)
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 
     if (pci.varlist[0] == 1) {
-        hbox = gtk_hbox_new(FALSE, 5);
-        gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-        msg = g_strdup_printf(_("Enter name for new variable\n"
-                                "(max. %d characters)"),
-                              VNAMELEN - 1);
-        tmp = gtk_label_new(msg);
-        g_free(msg);
-        gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-
-        hbox = gtk_hbox_new(FALSE, 5);
-        gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-        pci.entry = tmp = gtk_entry_new();
-        gtk_entry_set_max_length(GTK_ENTRY(tmp), 32);
-        gtk_entry_set_width_chars(GTK_ENTRY(tmp), 32);
-        gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
-        gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
-    } else {
-        pci.entry = NULL;
+        pci.entry = new_varname_entry(vbox, vname, "pc");
     }
 
     if (quarterly_or_monthly(dataset)) {
@@ -6695,6 +6740,7 @@ static void percent_change_dialog (const int *list)
 static void index_values_dialog (const int *list)
 {
     struct index_vals_info ixi;
+    const char *vname = NULL;
     GtkAdjustment *adj;
     GtkWidget *dialog;
     GtkWidget *vbox, *hbox, *tmp;
@@ -6710,12 +6756,13 @@ static void index_values_dialog (const int *list)
     ixi.dialog = dialog;
     ixi.varlist = list;
     ixi.spin = NULL;
+    ixi.entry = NULL;
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
     if (list[0] == 1) {
-        msg = g_strdup_printf(_("100-based index of %s"),
-                              dataset->varname[list[1]]);
+        vname = dataset->varname[list[1]];
+        msg = g_strdup_printf(_("100-based index of %s"), vname);
     } else {
         msg = g_strdup_printf(_("100-based indices"));
     }
@@ -6724,24 +6771,7 @@ static void index_values_dialog (const int *list)
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 
     if (ixi.varlist[0] == 1) {
-        hbox = gtk_hbox_new(FALSE, 5);
-        gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-        msg = g_strdup_printf(_("Enter name for new variable\n"
-                                "(max. %d characters)"),
-                              VNAMELEN - 1);
-        tmp = gtk_label_new(msg);
-        g_free(msg);
-        gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-
-        hbox = gtk_hbox_new(FALSE, 5);
-        gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-        ixi.entry = tmp = gtk_entry_new();
-        gtk_entry_set_max_length(GTK_ENTRY(tmp), 32);
-        gtk_entry_set_width_chars(GTK_ENTRY(tmp), 32);
-        gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
-        gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
-    } else {
-        ixi.entry = NULL;
+        ixi.entry = new_varname_entry(vbox, vname, "i");
     }
 
     /* selection of base period for index via spin button */
@@ -6761,6 +6791,50 @@ static void index_values_dialog (const int *list)
     tmp = ok_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(index_values_callback), &ixi);
+    gtk_widget_grab_default(tmp);
+
+    gretl_dialog_keep_above(dialog);
+    gtk_widget_show_all(dialog);
+}
+
+void panel_mean_dialog (int v, int xsect)
+{
+    struct panel_mean_info pmi;
+    const char *vname;
+    GtkWidget *dialog;
+    GtkWidget *vbox, *hbox, *tmp;
+    gchar *msg;
+
+    if (maybe_raise_dialog()) {
+        return;
+    }
+
+    dialog = gretl_dialog_new(NULL, NULL, GRETL_DLG_BLOCK);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    vname = dataset->varname[v];
+    if (xsect) {
+        msg = g_strdup_printf(_("Cross-sectional mean of %s"), vname);
+    } else {
+        msg = g_strdup_printf(_("Time mean of %s"), vname);
+    }
+    tmp = gtk_label_new(msg);
+    g_free(msg);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+
+    pmi.dialog = dialog;
+    pmi.entry = new_varname_entry(vbox, vname, xsect ? "xm" : "tm");
+    pmi.v = v;
+    pmi.xsect = xsect;
+
+    /* buttons */
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+    cancel_delete_button(hbox, dialog);
+    tmp = ok_button(hbox);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+                     G_CALLBACK(panel_mean_callback), &pmi);
     gtk_widget_grab_default(tmp);
 
     gretl_dialog_keep_above(dialog);

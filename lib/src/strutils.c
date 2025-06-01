@@ -621,6 +621,9 @@ char *gretl_strdup_printf (const char *format, ...)
 #else
     int bsize = 2048;
 
+    if (!strcmp(format, "%g") || !strcmp(format, "%d")) {
+        bsize = 32;
+    }
     buf = malloc(bsize);
     if (buf == NULL) {
 	return NULL;
