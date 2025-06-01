@@ -92,45 +92,34 @@ static void ssr2crit (int *best, double *xbest,
                       const gretl_matrix *ssr,
                       int T, int k, int crit)
 {
-    int n = ssr->cols;
-    int j;
+    int j, n = ssr->cols;
 
     *best = 0;
     *xbest = 1.0e200;
 
-    if (crit == 1) {
-        /* just using SSR */
-        for (j=0; j<n; j++) {
-            if (ssr->val[j] < *xbest) {
-                *best = j;
-                *xbest = ssr->val[j];
-            }
+    /* check SSR first */
+    for (j=0; j<n; j++) {
+        if (ssr->val[j] < *xbest) {
+            *best = j;
+            *xbest = ssr->val[j];
         }
-    } else {
+    }
+
+    if (crit > 1) {
         /* using AIC, BIC or HQC */
-        double llj, icj;
-        double l0 = -T/2.0;
         double l1 = log(2*M_PI);
-        double C0 = 0;
+        double ll, C0 = 0;
 
         if (crit == 3) {
-            C0 = log((double) T) * k; /* BIC */
+            C0 = k * log((double) T); /* BIC */
         } else if (crit == 4) {
-            C0 = 2 * log(log((double) T)) * k; /* HQC */
+            C0 = 2 * k * log(log((double) T)); /* HQC */
         }
-        for (j=0; j<n; j++) {
-            llj = l0 * (l1 + log(ssr->val[j]/T) + 1);
-            if (crit == 2) {
-                /* AIC */
-                icj = 2.0 * (k - llj);
-            } else {
-                /* BIC or HQC */
-                icj = C0 - 2 * llj;
-            }
-            if (icj < *xbest) {
-                *xbest = icj;
-                *best = j;
-            }
+        ll = -0.5 * T * (l1 + log(ssr->val[*best]/T) + 1);
+        if (crit == 2) {
+            *xbest = 2.0 * (k - ll); /* AIC */
+        } else {
+            *xbest = C0 - 2 * ll;
         }
     }
 }
