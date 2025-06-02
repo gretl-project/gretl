@@ -22,6 +22,7 @@
 #include "gretl_xml.h"
 #include "libset.h"
 #include "gretl_mdconv.h"
+#include "gfn_translations.h"
 #include "dlgutils.h"
 #include "datafiles.h"
 #include "textbuf.h"
@@ -2748,6 +2749,38 @@ static void add_dependency_entries (GtkWidget *holder,
     gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
 }
 
+static void add_translation_entries (GtkWidget *holder,
+                                     function_info *finfo)
+{
+    GtkWidget *w, *hbox;
+    void *trans;
+    // int i;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+
+    trans = function_package_translation(finfo->pkg);
+    if (trans != NULL) {
+        w = gtk_label_new("Got a translation -- what next?");
+        gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+        gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
+    } else {
+        GtkWidget *combo = gtk_combo_box_text_new();
+        const char *str;
+        int j;
+
+        w = gtk_label_new("Language for translation");
+        gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+        for (j=LANG_SQ; j<LANG_MAX; j++) {
+            str = gretl_lang_string_from_id(j);
+            if (str != NULL) {
+                combo_box_append_text(combo, str);
+            }
+        }
+        gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
+        gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
+    }
+}
+
 static void gui_help_text_callback (GtkButton *b, function_info *finfo)
 {
     const char *pkgname;
@@ -3685,6 +3718,14 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     tmp = gtk_label_new(_("Dependencies"));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);
     add_dependency_entries(vbox, finfo);
+
+    /* the translation page */
+
+    vbox = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
+    tmp = gtk_label_new(_("Translation"));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);
+    add_translation_entries(vbox, finfo);
 
     /* the common buttons area */
 

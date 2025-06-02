@@ -26,17 +26,6 @@
 
 // static int verbose = 1;
 
-typedef struct msg_ {
-    char *en;  /* English text */
-    char *tr;  /* translation */
-} msg;
-
-struct Translation_ {
-    char *lang;  /* language */
-    int n_msgs;  /* number of messages handled */
-    msg *msgs;   /* array of structs */
-};
-
 #if 0
 
 /* Apparatus for dealing with multiple translations: not used yet */
@@ -114,7 +103,7 @@ void write_translations (Translations *TT, PRN *prn)
     ; /* FIXME */
 }
 
-#endif
+#endif /* not yet */
 
 void destroy_translation (Translation *T)
 {
@@ -186,14 +175,15 @@ Translation *read_translation_element (xmlNodePtr root,
         return NULL;
     }
 
-    /* first pass: count the @msg elements */
-
-    cur = root->xmlChildrenNode;
-    while (cur != NULL) {
-        if (!xmlStrcmp(cur->name, (XUC) "msg")) {
-            n_msgs++;
+    if (!gretl_xml_get_prop_as_int(root, "n_msgs", &n_msgs)) {
+        /* we need to count the @msg elements */
+        cur = root->xmlChildrenNode;
+        while (cur != NULL) {
+            if (!xmlStrcmp(cur->name, (XUC) "msg")) {
+                n_msgs++;
+            }
+            cur = cur->next;
         }
-        cur = cur->next;
     }
 
     if (n_msgs > 0) {
@@ -259,7 +249,8 @@ void write_translation (Translation *T, PRN *prn)
         msg *m;
         int i;
 
-        pprintf(prn, "<translation lang=\"%s\">\n", T->lang);
+        pprintf(prn, "<translation lang=\"%s\" n_msgs=\"%d\">\n",
+                T->lang, T->n_msgs);
         for (i=0; i<T->n_msgs; i++) {
             m = &T->msgs[i];
             pprintf(prn, " <msg en=\"%s\">%s</msg>\n", m->en, m->tr);
