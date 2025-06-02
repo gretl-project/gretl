@@ -91,16 +91,19 @@ int matrix_replace_submatrix (gretl_matrix *M,
 
 int umatrix_set_names_from_string (gretl_matrix *M,
 				   const char *s,
-				   int byrow);
+				   int byrow,
+                                   PRN *prn);
 
 int umatrix_set_names_from_array (gretl_matrix *M,
 				  void *data,
-				  int byrow);
+				  int byrow,
+                                  PRN *prn);
 
 int umatrix_set_names_from_list (gretl_matrix *M,
 				 const int *list,
 				 const DATASET *dset,
-				 int byrow);
+				 int byrow,
+                                 PRN *prn);
 
 char *user_matrix_get_column_name (const gretl_matrix *M, int col,
 				   int *err);
