@@ -268,11 +268,6 @@ static void edit_spec_callback (GtkAction *action, gpointer p)
     file_selector(OPEN_SPEC, FSEL_DATA_NONE, NULL);
 }
 
-static void edit_xml_callback (GtkAction *action, gpointer p)
-{
-    file_selector(OPEN_XML, FSEL_DATA_NONE, NULL);
-}
-
 static void upload_package_callback (GtkAction *action, gpointer p)
 {
     file_selector(UPLOAD_PKG, FSEL_DATA_NONE, NULL);
@@ -1856,7 +1851,6 @@ GtkActionEntry main_entries[] = {
     { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_gfn_callback) },
     { "UploadGfn", GTK_STOCK_NETWORK, N_("_Upload package..."), "", NULL, G_CALLBACK(upload_package_callback) },
     { "EditSpec", GTK_STOCK_EDIT, N_("Edit spec file..."), NULL, NULL, G_CALLBACK(edit_spec_callback) },
-    { "EditXML", GTK_STOCK_EDIT, N_("Edit XML file..."), NULL, NULL, G_CALLBACK(edit_xml_callback) },
     { "AddonResources", NULL, N_("_Resource from addon"), NULL, NULL, NULL },
 
     { "Quit", GTK_STOCK_QUIT, NULL, NULL, NULL,  G_CALLBACK(menu_exit_check)},
