@@ -888,6 +888,8 @@ gchar *title_from_filename (const char *fname,
 	    title = g_strdup(_("gretl: edit lpsolve script"));
 	} else if (role == EDIT_SPEC) {
 	    title = g_strdup(_("gretl: edit package spec file"));
+        } else if (role == EDIT_XML) {
+            title = g_strdup(_("gretl: edit XML file"));
 	} else {
 	    title = g_strdup(_("gretl: untitled"));
 	}
@@ -982,6 +984,7 @@ static gchar *make_viewer_title (int role, const char *fname,
     case EDIT_DYNARE:
     case EDIT_LPSOLVE:
     case EDIT_SPEC:
+    case EDIT_XML:
 	title = title_from_filename(fname, role, TRUE);
 	break;
     case EDIT_NOTES:
@@ -1022,7 +1025,8 @@ static void attach_content_changed_signal (windata_t *vwin)
 			   r == EDIT_PKG_CODE || \
 			   r == VIEW_LOG ||      \
 			   r == EDIT_PKG_SAMPLE || \
-			   r == VIEW_PKG_SAMPLE)
+			   r == VIEW_PKG_SAMPLE || \
+                           r == EDIT_XML)
 
 static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 {
@@ -1212,7 +1216,8 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     } else if (role == EDIT_PKG_CODE ||
 	       role == EDIT_PKG_SAMPLE ||
 	       role == EDIT_PKG_HELP ||
-	       role == EDIT_PKG_GHLP) {
+	       role == EDIT_PKG_GHLP ||
+               role == EDIT_XML) {
 	vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
     } else if (role == IMPORT || role == BUILD_PKG) {
 	vwin_add_closer(vwin);
@@ -1238,7 +1243,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 #ifndef GRETL_EDIT
     if (role == VIEW_PKG_CODE || role == VIEW_PKG_SAMPLE || role == VIEW_LOG) {
 	create_source(vwin, hsize, vsize, FALSE);
-    } else if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE) {
+    } else if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE || role == EDIT_XML) {
 	create_source(vwin, hsize, vsize, TRUE);
     } else if (role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP) {
 	/* editable text */
@@ -1283,7 +1288,8 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     gtk_widget_show(vwin->main);
 
     if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE ||
-	role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP) {
+	role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP ||
+        role == EDIT_XML) {
 	attach_content_changed_signal(vwin);
 	g_signal_connect(G_OBJECT(vwin->main), "delete-event",
 			 G_CALLBACK(query_save_text), vwin);

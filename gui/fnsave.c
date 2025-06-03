@@ -99,6 +99,7 @@ struct function_info_ {
     windata_t *samplewin;  /* window for editing sample script */
     windata_t *helpwin;    /* window for editing regular help text */
     windata_t *gui_helpwin; /* window for editing GUI-specific help text */
+    windata_t *transwin;   /* window for editing XML translation */
     GtkUIManager *ui;      /* for dialog File menu */
     GList *codewins;       /* list of windows editing function code */
     fnpkg *pkg;            /* pointer to package being edited */
@@ -216,6 +217,7 @@ function_info *finfo_new (void)
     finfo->samplewin = NULL;
     finfo->helpwin = NULL;
     finfo->gui_helpwin = NULL;
+    finfo->transwin = NULL;
     finfo->codewins = NULL;
     finfo->codesel = NULL;
     finfo->popup = NULL;
@@ -326,6 +328,9 @@ static void finfo_free (function_info *finfo)
     }
     if (finfo->gui_helpwin != NULL) {
 	gtk_widget_destroy(finfo->gui_helpwin->main);
+    }
+    if (finfo->transwin != NULL) {
+	gtk_widget_destroy(finfo->transwin->main);
     }
     if (finfo->codewins != NULL) {
 	g_list_foreach(finfo->codewins, (GFunc) destroy_code_window, NULL);
@@ -1275,6 +1280,11 @@ static void nullify_gui_helpwin (GtkWidget *w, function_info *finfo)
     finfo->gui_helpwin = NULL;
 }
 
+static void nullify_transwin (GtkWidget *w, function_info *finfo)
+{
+    finfo->transwin = NULL;
+}
+
 /* edit the sample script for a package: callback from
    "Edit sample script" button in packager
 */
@@ -1988,6 +1998,48 @@ static void add_help_radios (GtkWidget *tbl, int i,
 
     gtk_table_attach_defaults(GTK_TABLE(tbl), htab, i, i+1, 1, 3);
     gtk_widget_show_all(htab);
+}
+
+static void translation_callback (GtkButton *b,
+                                  function_info *finfo)
+{
+    Translation *T = function_package_translation(finfo->pkg);
+
+    if (T != NULL) {
+        gchar *title;
+        PRN *prn = NULL;
+
+        if (finfo->transwin != NULL) {
+            gtk_window_present(GTK_WINDOW(finfo->transwin->main));
+            return;
+        }
+        if (bufopen(&prn)) {
+            return;
+        }
+        title = g_strdup_printf("%s translation", finfo_pkgname(finfo));
+        write_translation(T, prn);
+        finfo->transwin = view_buffer(prn, HELP_WIDTH, HELP_HEIGHT, title,
+                                      EDIT_XML, finfo);
+        g_object_set_data(G_OBJECT(finfo->transwin->main), "finfo",
+                          finfo);
+        g_signal_connect(G_OBJECT(finfo->transwin->main), "destroy",
+                         G_CALLBACK(nullify_transwin), finfo);
+        g_free(title);
+    } else {
+        warnbox("Not ready yet");
+    }
+}
+
+static void add_translation_button (GtkWidget *tbl, int i,
+                                    function_info *finfo)
+{
+    GtkWidget *w;
+
+    w = gtk_button_new_with_label(_("Translation"));
+    gtk_table_attach_defaults(GTK_TABLE(tbl), w, i, i+1, 0, 1);
+    g_signal_connect(G_OBJECT(w), "clicked",
+		     G_CALLBACK(translation_callback), finfo);
+    gtk_widget_show(w);
 }
 
 enum {
@@ -2749,6 +2801,8 @@ static void add_dependency_entries (GtkWidget *holder,
     gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
 }
 
+#if 0
+
 static void add_translation_entries (GtkWidget *holder,
                                      function_info *finfo)
 {
@@ -2765,8 +2819,12 @@ static void add_translation_entries (GtkWidget *holder,
         gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
     } else {
         GtkWidget *combo = gtk_combo_box_text_new();
+        int lang_id = gretl_lang_id_from_name(NULL);
         const char *str;
-        int j;
+        int active = 0;
+        int j, k = 0;
+
+        fprintf(stderr, "HERE lang_id = %d\n", lang_id);
 
         w = gtk_label_new("Language for translation");
         gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
@@ -2774,12 +2832,19 @@ static void add_translation_entries (GtkWidget *holder,
             str = gretl_lang_string_from_id(j);
             if (str != NULL) {
                 combo_box_append_text(combo, str);
+                if (j == lang_id) {
+                    active = k;
+                }
+                k++;
             }
         }
+        gtk_combo_box_set_active(GTK_COMBO_BOX(combo), active);
         gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
         gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
     }
 }
+
+#endif
 
 static void gui_help_text_callback (GtkButton *b, function_info *finfo)
 {
@@ -3719,13 +3784,14 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);
     add_dependency_entries(vbox, finfo);
 
+#if 0
     /* the translation page */
-
     vbox = gtk_vbox_new(FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
     tmp = gtk_label_new(_("Translation"));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);
     add_translation_entries(vbox, finfo);
+#endif
 
     /* the common buttons area */
 
@@ -3933,9 +3999,9 @@ static void finfo_dialog (function_info *finfo)
     i += 2;
     add_data_requirement_menu(tbl, i, finfo);
 
-    /* table for min version and help doc controls */
+    /* table for min version, help doc controls, translation */
     hbox = gtk_hbox_new(FALSE, 0);
-    tbl = gtk_table_new(3, 2, FALSE);
+    tbl = gtk_table_new(3, 3, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 4);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 64);
     gtk_box_pack_start(GTK_BOX(hbox), tbl, TRUE, FALSE, 0);
@@ -3943,6 +4009,7 @@ static void finfo_dialog (function_info *finfo)
 
     add_minver_selector(tbl, 0, finfo);
     add_help_radios(tbl, 1, finfo);
+    add_translation_button(tbl, 2, finfo);
 
     /* table for buttons arrayed at foot of window */
     hbox = gtk_hbox_new(FALSE, 0);

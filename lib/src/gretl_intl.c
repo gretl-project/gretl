@@ -317,9 +317,18 @@ const char *gretl_lang_string_from_id (int langid)
 
 int gretl_lang_id_from_name (const char *s)
 {
-    if (s != NULL && *s != '\0') {
-        int i;
+    int i;
 
+    if (s == NULL) {
+        s = get_built_in_string_by_name("lang");
+        for (i=LANG_C; i<LANG_MAX; i++) {
+            if (!strcmp(s, langs[i].code)) {
+                return langs[i].id;
+            }
+        }
+    }
+
+    if (s != NULL && *s != '\0') {
         for (i=0; i<LANG_MAX; i++) {
             if (!strcmp(s, langs[i].name)) {
                 return langs[i].id;
@@ -330,7 +339,7 @@ int gretl_lang_id_from_name (const char *s)
     return 0;
 }
 
-static const char *lang_code_from_id (int langid)
+const char *gretl_lang_code_from_id (int langid)
 {
     int i;
 
@@ -414,7 +423,7 @@ void set_lcnumeric (int langid, int lcnumeric)
             lang = getenv("LANG");
         } else {
             /* fake it from user preference */
-            lang = lang_code_from_id(langid);
+            lang = gretl_lang_code_from_id(langid);
         }
 
         if (lang != NULL) {
@@ -483,7 +492,7 @@ set_locale_with_workaround (int langid, const char *lcode,
 # ifdef WIN32
 # define get_setlocale_string(i) (locale_code_from_id(i))
 # else
-# define get_setlocale_string(i) (lang_code_from_id(i))
+# define get_setlocale_string(i) (gretl_lang_code_from_id(i))
 # endif
 
 /* Here we're testing the validity, on the current system, of a request
@@ -617,7 +626,7 @@ int force_language (int langid)
         gretl_setenv("LC_ALL", "C");
         textdomain("none");
     } else if (lcode != NULL) {
-        lcode = lang_code_from_id(langid);
+        lcode = gretl_lang_code_from_id(langid);
         if (lcode != NULL) {
             gretl_setenv("LC_ALL", lcode);
             gretl_setenv("LANG", lcode);
@@ -625,7 +634,7 @@ int force_language (int langid)
     }
 # else /* elif defined(__APPLE__) */
     if (langid != LANG_C) {
-        lcode = lang_code_from_id(langid);
+        lcode = gretl_lang_code_from_id(langid);
         if (lcode != NULL) {
             gretl_setenv("LANGUAGE", lcode);
             gretl_setenv("LANG", lcode);

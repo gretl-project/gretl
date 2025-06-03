@@ -82,6 +82,7 @@ static struct extmap action_map[] = {
     { SAVE_DYNARE_CODE,  ".mod" },
     { SAVE_LPSOLVE_CODE, ".lp" },
     { SAVE_SPEC_FILE,    ".spec" },
+    { SAVE_XML_FILE,     ".xml" },
     { SAVE_X13_SPC,      ".spc" },
     { SAVE_FUNCTIONS,    ".gfn" },
     { SAVE_MARKERS,      ".txt" },
@@ -106,6 +107,7 @@ static struct extmap action_map[] = {
     { OPEN_PCGIVE_DB,    ".bn7" },
     { OPEN_GFN,          ".gfn" },
     { OPEN_SPEC,         ".spec" },
+    { OPEN_XML,          ".xml" },
     { OPEN_BARS,         ".txt" },
     { SELECT_PDF,        ".pdf" },
     { FILE_OP_MAX,       NULL }
@@ -736,6 +738,8 @@ file_selector_process_result (const char *in_fname, int action,
 	edit_function_package(fname);
     } else if (action == OPEN_SPEC) {
 	view_script(fname, 1, EDIT_SPEC);
+    } else if (action == OPEN_XML) {
+        view_script(fname, 1, EDIT_XML);
     } else if (action == OPEN_RATS_DB) {
 	open_rats_window(fname);
     } else if (action == OPEN_PCGIVE_DB) {

@@ -670,7 +670,8 @@ static void sourceview_apply_language (windata_t *vwin)
 	{ EDIT_STATA,   "stata" },
 	{ EDIT_DYNARE,  "cpp" },
 	{ EDIT_LPSOLVE, "lpsolve" },
-	{ EDIT_SPEC,    "gfnspec" }
+	{ EDIT_SPEC,    "gfnspec" },
+        { EDIT_XML,     "xml" }
     };
     GtkSourceLanguageManager *lm;
     GtkSourceLanguage *lang = NULL;

@@ -28,6 +28,7 @@
 				       r == EDIT_PKG_SAMPLE ||		\
 				       r == VIEW_PKG_SAMPLE ||		\
 				       r == VIEW_LOG ||			\
+                                       r == EDIT_XML ||                 \
 				       r == CONSOLE))
 
 #define lbracket(k) (k == GDK_parenleft || \

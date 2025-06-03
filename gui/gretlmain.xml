@@ -63,6 +63,7 @@
 	<menuitem action="NewGfn"/>
 	<menuitem action="UploadGfn"/>
 	<menuitem action="EditSpec"/>
+	<menuitem action="EditXML"/>
 	<separator/>
 	<placeholder name="RecentGfns"/>
       </menu>

@@ -388,6 +388,8 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
 	u = SAVE_STATA_CMDS;
     } else if (vwin->role == EDIT_SPEC) {
 	u = SAVE_SPEC_FILE;
+    } else if (vwin->role == EDIT_XML) {
+        u = SAVE_XML_FILE;
     } else if (vwin->role == VIEW_FILE) {
 	u = SAVE_TEXT;
     } else if (vwin->role == EDIT_PKG_HELP ||
