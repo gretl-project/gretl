@@ -13,7 +13,6 @@
         <xs:element maxOccurs="unbounded" ref="msg"/>
       </xs:sequence>
       <xs:attribute name="lang" use="required"/>
-      <xs:attribute name="n_msgs"/>
     </xs:complexType>
   </xs:element>
   <xs:element name="msg">

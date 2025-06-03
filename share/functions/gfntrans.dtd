@@ -10,7 +10,6 @@
 
 <!ATTLIST translation
    lang   CDATA #REQUIRED
-   n_msgs CDATA #IMPLIED
 >
 
 <!ELEMENT msg (#PCDATA)>

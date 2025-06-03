@@ -12,7 +12,7 @@
 <!ELEMENT gretl-function-package (author, version, date, description, tags, 
                                   label?, menu-attachment?, help, gui-help?, 
                                   data-files?, depends?, provider?, R-depends?,
-				  gretl-function+, sample-script, translation?)>
+                                  gretl-function+, sample-script, translation?)>
 <!ATTLIST gretl-function-package
    name CDATA #REQUIRED
    ID CDATA #IMPLIED
@@ -54,7 +54,7 @@
    menu-only (0|1) '0'
    pkg-role (bundle-print | bundle-plot | bundle-test | bundle-fcast |
              bundle-extra | gui-main | gui-precheck | plot-precheck |
-	     list-maker | R-setup | ui-maker | none) 'none'
+             list-maker | R-setup | ui-maker | none) 'none'
 >
 
 <!ELEMENT translation (msg+)>
@@ -112,8 +112,8 @@
    type (bool | boolean | int | obs | scalar | series | list |
          matrix | bundle | scalarref | seriesref | matrixref |
          bundleref | string | stringref | strings | matrices |
-	 bundles | lists | arrays | stringsref | matricesref | 
-	 bundlesref | numeric) 'series'
+         bundles | lists | arrays | stringsref | matricesref | 
+         bundlesref | numeric) 'series'
 >
 
 <!ELEMENT return EMPTY>
