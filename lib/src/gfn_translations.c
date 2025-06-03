@@ -88,11 +88,10 @@ const char *get_gfn_translation (Translations *TT,
 
     if (TT->active >= 0) {
         Translation *T = TT->T[TT->active];
+        const char *tr = g_hash_table_lookup(T->msgs, id);
 
-        for (i=0; i<T->n_msgs; i++) {
-            if (!strcmp(id, T->msgs[i].en)) {
-                return T->msgs[i].tr;
-            }
+        if (tr != NULL) {
+            return tr;
         }
     }
 
@@ -222,10 +221,7 @@ static void write_msg (gpointer key,
 void write_translation (Translation *T, PRN *prn)
 {
     if (T != NULL) {
-        int n = g_hash_table_size(T->msgs);
-
-        pprintf(prn, "<translation lang=\"%s\" n_msgs=\"%d\">\n",
-                T->lang, n);
+        pprintf(prn, "<translation lang=\"%s\">\n", T->lang);
         g_hash_table_foreach(T->msgs, write_msg, prn);
         pputs(prn, "</translation>\n");
     }

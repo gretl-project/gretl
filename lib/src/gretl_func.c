@@ -3351,27 +3351,21 @@ static int addon_write_translatable_strings (fnpkg *pkg, PRN *prn)
     return 0;
 }
 
-static int gfn_write_translatable_strings (fnpkg *pkg, PRN *prn)
+/* Note: return 0 on failure; 1 on writing _something_ but no
+   T_()-marked strings; 2 on writing some T_()-marked strings.
+*/
+
+int package_write_translatables (fnpkg *pkg, PRN *prn)
 {
-    FILE *fp;
-    gchar *trname;
     gchar *enstr;
     char **S = NULL;
     const char *s;
     ufunc *fun;
     fn_param *param;
-    int trans = 0;
+    int T_strs = 0;
     int i, j, k;
     int ns = 0;
-
-    /* open a file to contain the results */
-    trname = g_strdup_printf("%s_xx.xml", pkg->name);
-    fp = gretl_fopen(trname, "wb");
-    if (fp == NULL) {
-        gretl_errmsg_sprintf(_("Couldn't open %s"), trname);
-        g_free(trname);
-        return E_FOPEN;
-    }
+    int ret = 0;
 
     if (pkg->pub != NULL) {
         /* pick up any parameter descriptions and/or parameter-value
@@ -3396,6 +3390,7 @@ static int gfn_write_translatable_strings (fnpkg *pkg, PRN *prn)
                     if (enstr != NULL) {
                         strings_array_add_uniq(&S, &ns, enstr, NULL);
                         g_free(enstr);
+                        T_strs++;
                     }
                 }
             }
@@ -3412,6 +3407,7 @@ static int gfn_write_translatable_strings (fnpkg *pkg, PRN *prn)
                     if (enstr != NULL) {
                         strings_array_add_uniq(&S, &ns, enstr, NULL);
                         g_free(enstr);
+                        T_strs++;
                     }
                 }
             }
@@ -3420,32 +3416,22 @@ static int gfn_write_translatable_strings (fnpkg *pkg, PRN *prn)
 
     if (pkg->label != NULL || S != NULL) {
         /* we got some relevant content */
-        fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", fp);
-        fputs("<translation lang=\"xx\">\n", fp);
+        pputs(prn, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        pputs(prn, "<translation lang=\"xx\">\n");
         if (pkg->label != NULL) {
-            fprintf(fp, " <msg en=\"%s\"></msg>\n", pkg->label);
+            pprintf(prn, " <msg en=\"%s\"></msg>\n", pkg->label);
         }
         if (S != NULL) {
             for (i=0; i<ns; i++) {
-                fprintf(fp, " <msg en=\"%s\"></msg>\n", S[i]);
+                pprintf(prn, " <msg en=\"%s\"></msg>\n", S[i]);
             }
             strings_array_free(S, ns);
         }
-        fputs("</translation>\n", fp);
-        trans = 1;
+        pputs(prn, "</translation>\n");
+        ret = 1 + (T_strs > 0);
     }
 
-    fclose(fp);
-
-    if (!trans) {
-        gretl_remove(trname);
-    } else {
-        pprintf(prn, "Wrote translations file %s\n", trname);
-    }
-
-    g_free(trname);
-
-    return 0;
+    return ret;
 }
 
 static int package_write_index (fnpkg *pkg, PRN *inprn)
@@ -4872,6 +4858,30 @@ static int should_rebuild_gfn (const char *gfnname)
     return 0;
 }
 
+static int gfn_write_translatables_to_file (fnpkg *pkg, PRN *prn)
+{
+    gchar *trname = g_strdup_printf("%s_xx.xml", pkg->name);
+    FILE *fp = gretl_fopen(trname, "wb");
+    int ret = 0;
+
+    if (fp == NULL) {
+        gretl_errmsg_sprintf(_("Couldn't open %s"), trname);
+    } else {
+        PRN *fprn = gretl_print_new_with_stream(fp);
+
+        ret = package_write_translatables(pkg, fprn);
+        if (ret == 0) {
+            gretl_remove(trname);
+        } else {
+            pprintf(prn, "Wrote translations file %s\n", trname);
+        }
+        gretl_print_destroy(fprn);
+    }
+
+    g_free(trname);
+    return ret;
+}
+
 /**
  * create_and_write_function_package:
  * @fname: filename for function package.
@@ -4924,7 +4934,7 @@ int create_and_write_function_package (const char *fname,
                         /* addons are a special case */
                         addon_write_translatable_strings(pkg, prn);
                     } else {
-                        gfn_write_translatable_strings(pkg, prn);
+                        gfn_write_translatables_to_file(pkg, prn);
                     }
                 }
                 if (opt & OPT_I) {
