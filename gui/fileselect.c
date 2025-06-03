@@ -650,8 +650,15 @@ static void os_open_other (const char *fname)
 #endif /* not GRETL_EDIT */
 
 static void maybe_set_fsel_status (int action, FselDataSrc src,
-				   gpointer p, int val)
+				   gpointer p, char *fname,
+                                   int val)
 {
+#ifndef GRETL_EDIT
+    if (action == OPEN_XML && fname != NULL && src == FSEL_DATA_STATUS) {
+        * (char **) p = fname;
+        return;
+    }
+#endif
     if (src == FSEL_DATA_STATUS && p != NULL) {
 	* (int *) p = val;
     }
@@ -678,7 +685,7 @@ file_selector_process_result (const char *in_fname, int action,
 	err = gretl_test_fopen(fname, "r");
 	if (err) {
 	    file_read_errbox(fname);
-	    maybe_set_fsel_status(action, src, data, E_FOPEN);
+	    maybe_set_fsel_status(action, src, data, NULL, E_FOPEN);
 	    return;
 	}
     }
@@ -739,7 +746,13 @@ file_selector_process_result (const char *in_fname, int action,
     } else if (action == OPEN_SPEC) {
 	view_script(fname, 1, EDIT_SPEC);
     } else if (action == OPEN_XML) {
-        view_script(fname, 1, EDIT_XML);
+        if (src == FSEL_DATA_STATUS) {
+            maybe_set_fsel_status(action, src, data,
+                                  gretl_strdup(fname),
+                                  err);
+        } else {
+            view_script(fname, 1, EDIT_XML);
+        }
     } else if (action == OPEN_RATS_DB) {
 	open_rats_window(fname);
     } else if (action == OPEN_PCGIVE_DB) {
@@ -827,7 +840,7 @@ file_selector_process_result (const char *in_fname, int action,
     }
 #endif /* GRETL_EDIT or not */
 
-    maybe_set_fsel_status(action, src, data, err);
+    maybe_set_fsel_status(action, src, data, NULL, err);
 }
 
 static char *get_filter_suffix (int action, gpointer data, char *suffix)
@@ -1499,7 +1512,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	    g_free(fname);
 	}
     } else {
-	maybe_set_fsel_status(action, src, data, GRETL_CANCEL);
+	maybe_set_fsel_status(action, src, data, NULL, GRETL_CANCEL);
     }
 
     if (filesel != NULL) {

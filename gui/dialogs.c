@@ -114,7 +114,7 @@ real_yes_no_dialog (const char *title, const char *msg,
 {
     GtkDialogFlags flags = GTK_DIALOG_MODAL;
     GtkWidget *dlg;
-    int ret = GTK_RESPONSE_HELP;
+    int ret = GTK_RESPONSE_NONE;
 
     if (title == NULL) {
         title = "gretl";
@@ -4278,10 +4278,10 @@ int real_radio_dialog (const char *title, const char *label,
 
     if (label != NULL) {
         hbox = gtk_hbox_new(FALSE, 5);
-        gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-        gtk_widget_show(hbox);
         tmp = gtk_label_new(label);
         gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+        gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+        gtk_widget_show_all(hbox);
     }
 
     for (i=0; i<nopts; i++) {

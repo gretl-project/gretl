@@ -178,6 +178,7 @@ static struct gui_help_item gui_help_items[] = {
     { DBNHELP,        "dbnomics" },
     { MAPHELP,        "maps" },
     { MDHELP,         "mdhelp" },
+    { GFNTRANS,       "gfntrans" },
     { KALMAN,         "kalman" },
     { EDITOR,         "gretl_edit" },
     { -1,             NULL },

@@ -38,11 +38,8 @@
 #include "fncall.h"
 #include "fnsave.h"
 
-#define USE_XML_SCHEMA 1
-
-#if USE_XML_SCHEMA
-# include <libxml/xmlreader.h>
-#endif
+/* For handling XML schema */
+#include <libxml/xmlreader.h>
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -155,8 +152,8 @@ struct login_info_ {
     int canceled;
 };
 
-static int validate_package_file (const char *fname,
-				  int verbose);
+static int validate_package_file (const char *fname, int verbose);
+static int validate_translations_file (const char *fname, int verbose);
 static void finfo_set_menuwin (function_info *finfo);
 static gint query_save_package (GtkWidget *w, GdkEvent *event,
 				function_info *finfo);
@@ -2000,13 +1997,27 @@ static void add_help_radios (GtkWidget *tbl, int i,
     gtk_widget_show_all(htab);
 }
 
+static void open_translations_window (function_info *finfo,
+                                      PRN *prn)
+{
+    gchar *title = g_strdup_printf("%s translation", finfo_pkgname(finfo));
+
+    finfo->transwin = view_buffer(prn, HELP_WIDTH, HELP_HEIGHT, title,
+                                  EDIT_XML, finfo);
+    g_object_set_data(G_OBJECT(finfo->transwin->main), "finfo",
+                      finfo);
+    g_signal_connect(G_OBJECT(finfo->transwin->main), "destroy",
+                     G_CALLBACK(nullify_transwin), finfo);
+    g_free(title);
+}
+
 static void translation_callback (GtkButton *b,
                                   function_info *finfo)
 {
     Translation *T = function_package_translation(finfo->pkg);
 
     if (T != NULL) {
-        gchar *title;
+        /* Open an editable window holding XML translations */
         PRN *prn = NULL;
 
         if (finfo->transwin != NULL) {
@@ -2016,17 +2027,25 @@ static void translation_callback (GtkButton *b,
         if (bufopen(&prn)) {
             return;
         }
-        title = g_strdup_printf("%s translation", finfo_pkgname(finfo));
         write_translation(T, prn);
-        finfo->transwin = view_buffer(prn, HELP_WIDTH, HELP_HEIGHT, title,
-                                      EDIT_XML, finfo);
-        g_object_set_data(G_OBJECT(finfo->transwin->main), "finfo",
-                          finfo);
-        g_signal_connect(G_OBJECT(finfo->transwin->main), "destroy",
-                         G_CALLBACK(nullify_transwin), finfo);
-        g_free(title);
+        open_translations_window(finfo, prn);
     } else {
-        warnbox("Not ready yet");
+        /* No translations yet */
+        // gchar *title = "Add translations?";
+        gchar *msg = "This package has no translations at present.\n"
+            "Do you want to try adding some translations now?\n"
+            "Please click on Help for details.";
+
+        if (yes_no_help_dialog(msg, GFNTRANS, GRETL_YES) == GRETL_YES) {
+            PRN *prn = NULL;
+
+            if (bufopen(&prn)) {
+                return;
+            }
+            if (package_write_translatables(finfo->pkg, prn)) {
+                open_translations_window(finfo, prn);
+            }
+        }
     }
 }
 
@@ -4171,14 +4190,12 @@ static void login_dialog (login_info *linfo, GtkWidget *parent)
     gtk_widget_show_all(linfo->dlg);
 }
 
-/* Check the package file against gretlfunc.dtd. We call this
+/* Check the package file against gretlfunc.xsd. We call this
    automatically before uploading a package file to the server.  The
    user can also choose to run the test by clicking the "Validate"
    button in the package editor; in that case we set the @verbose
    flag.
 */
-
-#if USE_XML_SCHEMA
 
 struct xs_err_info {
     int err;
@@ -4237,7 +4254,9 @@ static xmlSchemaValidCtxtPtr get_validation_context (const char *fname,
     return vc;
 }
 
-static int validate_package_file (const char *fname, int verbose)
+static int validate_XML_file (const char *fname,
+                              const char *xsdname,
+                              int verbose)
 {
     xmlSchemaValidCtxtPtr validator = NULL;
     xmlSchemaPtr schema = NULL;
@@ -4250,7 +4269,7 @@ static int validate_package_file (const char *fname, int verbose)
     xse.msg = NULL;
 
     xsdpath = g_build_filename(gretl_home(), "functions",
-			       "gretlfunc.xsd", NULL);
+			       xsdname, NULL);
     validator = get_validation_context(xsdpath, &schema, verbose);
     if (validator != NULL) {
 	reader = xmlReaderForFile(fname, NULL, 0);
@@ -4258,7 +4277,7 @@ static int validate_package_file (const char *fname, int verbose)
     g_free(xsdpath);
 
     if (reader == NULL) {
-	errbox("Failed to obtain reader for gfn file");
+	errbox("Failed to obtain reader for XML file");
 	err = 1;
     } else {
 	int ret = -1;
@@ -4272,16 +4291,16 @@ static int validate_package_file (const char *fname, int verbose)
     }
 
     if (!err) {
-	const char *pkgname = path_last_element(fname);
+	const char *basename = path_last_element(fname);
 
 	if (xse.err) {
 	    errbox(xse.msg);
 	    g_free(xse.msg);
 	    err = 1;
 	} else if (verbose) {
-	    infobox_printf(_("%s: validated against DTD OK"), pkgname);
+	    infobox_printf(_("%s: validated against DTD OK"), basename);
 	} else {
-	    fprintf(stderr, "%s: validated against DTD OK\n", pkgname);
+	    fprintf(stderr, "%s: validated against DTD OK\n", basename);
 	}
     }
 
@@ -4292,76 +4311,15 @@ static int validate_package_file (const char *fname, int verbose)
     return err;
 }
 
-#else /* use DTD, not schema */
-
 static int validate_package_file (const char *fname, int verbose)
 {
-    const char *gretldir = gretl_home();
-    char dtdname[FILENAME_MAX];
-    xmlDocPtr doc;
-    xmlDtdPtr dtd;
-    int err = 0;
-
-    err = gretl_xml_open_doc_root(fname, NULL, &doc, NULL);
-    if (err) {
-	gui_errmsg(err);
-	return 1;
-    }
-
-    sprintf(dtdname, "%sfunctions%cgretlfunc.dtd", gretldir, SLASH);
-    dtd = xmlParseDTD(NULL, (const xmlChar *) dtdname);
-
-    if (dtd == NULL) {
-	if (verbose) {
-	    errbox("Couldn't open DTD to check package");
-	} else {
-	    fprintf(stderr, "Couldn't open DTD to check package\n");
-	}
-    } else {
-	const char *pkgname = path_last_element(fname);
-	xmlValidCtxtPtr cvp = xmlNewValidCtxt();
-	PRN *prn = NULL;
-	int xerr = 0;
-
-	if (cvp == NULL) {
-	    xerr = 1;
-	    if (verbose) nomem();
-	} else {
-	    xerr = bufopen(&prn);
-	}
-
-	if (xerr) {
-	    xmlFreeDtd(dtd);
-	    xmlFreeDoc(doc);
-	    return 0;
-	}
-
-	cvp->userData = (void *) prn;
-	cvp->error    = (xmlValidityErrorFunc) pprintf2;
-	cvp->warning  = (xmlValidityWarningFunc) pprintf2;
-
-	if (!xmlValidateDtd(cvp, doc, dtd)) {
-	    const char *buf = gretl_print_get_buffer(prn);
-
-	    errbox(buf);
-	    err = 1;
-	} else if (verbose) {
-	    infobox_printf(_("%s: validated against DTD OK"), pkgname);
-	} else {
-	    fprintf(stderr, "%s: validated against DTD OK\n", pkgname);
-	}
-
-	gretl_print_destroy(prn);
-	xmlFreeValidCtxt(cvp);
-	xmlFreeDtd(dtd);
-    }
-
-    xmlFreeDoc(doc);
-
-    return err;
+    return validate_XML_file(fname, "gretlfunc.xsd", verbose);
 }
 
-#endif /* validation by XML schema or DTD */
+static int validate_translations_file (const char *fname, int verbose)
+{
+    return validate_XML_file(fname, "gfntrans.xsd", verbose);
+}
 
 /* Collect pkg.gfn plus additional package files (PDF doc and/or data
    files) into a temporary dir under the user's dotdir, and make a zip

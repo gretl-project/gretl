@@ -5237,6 +5237,38 @@
     </description>
   </command>
 
+  <command name="gfntrans" section="Programming" context="gui"
+    label="Adding translations to a function package">
+
+    <description>
+      <para>
+        The idea here is that, if you are so motivated, you can
+        specify translated versions of the strings emitted by
+        a gretl function package.
+      </para>
+      <para>
+        The input format for such translations is XML on the following
+        pattern:
+      </para>
+      <code>
+	&lt;translations lang="xx"&gt;
+	  &lt;msg en="English text"&gt;translated text&lt;/msg&gt;
+	  ...
+	&lt;/translations&gt;
+      </code>
+      <para>
+	The <lit>lang</lit> value must be the code for a recognized
+	language, for example <lit>es</lit> for Spanish. There can be
+	as many <lit>msg</lit> entries as you like, each one mapping
+	from an English string to a localized one.
+      </para>
+      <para>
+	You can make a start on the required XML by getting a
+	template (<quote>Open a template for translations</quote>).
+      </para>
+    </description>
+  </command>
+
   <command name="gmm" section="Estimation" label="GMM estimation">
 
     <usage>

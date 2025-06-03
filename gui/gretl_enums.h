@@ -153,6 +153,7 @@ enum extra_cmds {
     DBNHELP,
     MAPHELP,
     MDHELP,
+    GFNTRANS,
     KALMAN,
     GUI_CMD_MAX
 };
