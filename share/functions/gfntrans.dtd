@@ -1,0 +1,19 @@
+<!--
+  Document Type Definition (DTD) for translation of gretl function
+  packages: this file needs a translation element with a @lang
+  property and optionally an @n_msgs property. The translation
+  must hold at least one msg element with @en property and content
+  equal to the translation of the @en string.
+ -->
+
+<!ELEMENT translation (msg+)>
+
+<!ATTLIST translation
+   lang   CDATA #REQUIRED
+   n_msgs CDATA #IMPLIED
+>
+
+<!ELEMENT msg (#PCDATA)>
+<!ATTLIST msg
+   en CDATA #REQUIRED
+>

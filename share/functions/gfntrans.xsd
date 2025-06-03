@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Document Type Definition (DTD) for translation of gretl function
+  packages: this file needs a translation element with a @lang
+  property and optionally an @n_msgs property. The translation
+  must hold at least one msg element with @en property and content
+  equal to the translation of the @en string.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:element name="translation">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="msg"/>
+      </xs:sequence>
+      <xs:attribute name="lang" use="required"/>
+      <xs:attribute name="n_msgs"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="msg">
+    <xs:complexType mixed="true">
+      <xs:attribute name="en" use="required"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

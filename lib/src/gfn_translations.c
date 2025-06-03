@@ -26,7 +26,14 @@
 
 // static int verbose = 1;
 
-#if 0
+struct Translation_ {
+    char *lang;       /* language */
+    GHashTable *msgs; /* table */
+};
+
+#define SUPPORT_MULTIPLE 0 /* not yet */
+
+#if SUPPORT_MULTIPLE
 
 /* Apparatus for dealing with multiple translations: not used yet */
 
@@ -103,37 +110,23 @@ void write_translations (Translations *TT, PRN *prn)
     ; /* FIXME */
 }
 
-#endif /* not yet */
+#endif /* SUPPORT_MULTIPLE */
 
 void destroy_translation (Translation *T)
 {
-    int i;
-
     free(T->lang);
-
-    for (i=0; i<T->n_msgs; i++) {
-        free(T->msgs[i].en);
-        free(T->msgs[i].tr);
-    }
-
-    free(T->msgs);
+    g_hash_table_destroy(T->msgs);
     free(T);
 }
 
-static Translation *allocate_translation (char *lang, int n_msgs)
+static Translation *allocate_translation (char *lang)
 {
     Translation *T = malloc(sizeof *T);
 
     if (T != NULL) {
-        int i;
-
         T->lang = lang;
-        T->n_msgs = n_msgs;
-        T->msgs = malloc(n_msgs * sizeof *T->msgs);
-        for (i=0; i<n_msgs; i++) {
-            T->msgs[i].en = NULL;
-            T->msgs[i].tr = NULL;
-        }
+        T->msgs = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                        free, free);
     }
 
     return T;
@@ -143,22 +136,17 @@ const char *get_gfn_translation (Translation *T,
                                  const char *id)
 {
     static char *lang;
+    const char *ret = NULL;
 
     if (lang == NULL) {
         lang = get_built_in_string_by_name("lang");
     }
 
     if (!strcmp(lang, T->lang) || !strncmp(lang, T->lang, 2)) {
-        int i;
-
-        for (i=0; i<T->n_msgs; i++) {
-            if (!strcmp(id, T->msgs[i].en)) {
-                return T->msgs[i].tr;
-            }
-        }
+        ret = g_hash_table_lookup(T->msgs, id);
     }
 
-    return id;
+    return ret != NULL ? ret : id;
 }
 
 Translation *read_translation_element (xmlNodePtr root,
@@ -166,7 +154,6 @@ Translation *read_translation_element (xmlNodePtr root,
 {
     Translation *T = NULL;
     xmlNodePtr cur;
-    int n_msgs = 0;
     char *lang = NULL;
     int i;
 
@@ -175,25 +162,10 @@ Translation *read_translation_element (xmlNodePtr root,
         return NULL;
     }
 
-    if (!gretl_xml_get_prop_as_int(root, "n_msgs", &n_msgs)) {
-        /* we need to count the @msg elements */
-        cur = root->xmlChildrenNode;
-        while (cur != NULL) {
-            if (!xmlStrcmp(cur->name, (XUC) "msg")) {
-                n_msgs++;
-            }
-            cur = cur->next;
-        }
-    }
-
-    if (n_msgs > 0) {
-        T = allocate_translation(lang, n_msgs);
-    }
+    T = allocate_translation(lang);
     if (T == NULL) {
         return NULL;
     }
-
-    /* second pass: populate the Translations struct */
 
     i = 0;
     cur = root->xmlChildrenNode;
@@ -205,8 +177,7 @@ Translation *read_translation_element (xmlNodePtr root,
             if (gretl_xml_get_prop_as_string(cur, "en", &en) &&
                 gretl_xml_node_get_string(cur, doc, &tr)) {
                 if (*en != '\0' && *tr != '\0') {
-                    T->msgs[i].en = en;
-                    T->msgs[i].tr = tr;
+                    g_hash_table_insert(T->msgs, en, tr);
                     i++;
                 }
             }
@@ -217,9 +188,6 @@ Translation *read_translation_element (xmlNodePtr root,
     if (i == 0) {
         destroy_translation(T);
         T = NULL;
-    } else if (i < n_msgs) {
-        fprintf(stderr, "n_msgs = %d but only %d were usable\n", n_msgs, i);
-        T->n_msgs = i;
     }
 
     return T;
@@ -243,18 +211,22 @@ Translation *read_translations_file (const char *fname, int *err)
     return T;
 }
 
+static void write_msg (gpointer key,
+                       gpointer value,
+                       gpointer data)
+{
+    pprintf((PRN *) data, " <msg en=\"%s\">%s</msg>\n",
+            (const char *) key, (const char *) value);
+}
+
 void write_translation (Translation *T, PRN *prn)
 {
     if (T != NULL) {
-        msg *m;
-        int i;
+        int n = g_hash_table_size(T->msgs);
 
         pprintf(prn, "<translation lang=\"%s\" n_msgs=\"%d\">\n",
-                T->lang, T->n_msgs);
-        for (i=0; i<T->n_msgs; i++) {
-            m = &T->msgs[i];
-            pprintf(prn, " <msg en=\"%s\">%s</msg>\n", m->en, m->tr);
-        }
+                T->lang, n);
+        g_hash_table_foreach(T->msgs, write_msg, prn);
         pputs(prn, "</translation>\n");
     }
 }

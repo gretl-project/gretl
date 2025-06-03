@@ -20,16 +20,7 @@
 #ifndef GFN_TRANSLATIONS_H
 #define GFN_TRANSLATIONS_H
 
-typedef struct msg_ {
-    char *en;  /* English text */
-    char *tr;  /* translation */
-} msg;
-
-typedef struct Translation_ {
-    char *lang;  /* language */
-    int n_msgs;  /* number of messages handled */
-    msg *msgs;   /* array of structs */
-} Translation;
+typedef struct Translation_ Translation;
 
 void destroy_translation (Translation *T);
 
