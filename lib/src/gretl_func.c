@@ -4826,7 +4826,7 @@ static int cli_build_zip_package (const char *fname,
 static int should_rebuild_gfn (const char *gfnname)
 {
     char testname[FILENAME_MAX];
-    struct stat b1, b2, b3;
+    struct stat b1, b2, b3, b4;
     int err;
 
     err = gretl_stat(gfnname, &b1);
@@ -4847,6 +4847,13 @@ static int should_rebuild_gfn (const char *gfnname)
     if (err) {
         /* no corresponding spec: can't rebuild */
         return 0;
+    }
+
+    switch_ext(testname, gfnname, "xml");
+    err = gretl_stat(testname, &b4);
+    if (!err && b4.st_mtime > b1.st_mtime) {
+        /* xml is newer than gfn */
+        return 1;
     }
 
     if (b2.st_mtime > b1.st_mtime ||
