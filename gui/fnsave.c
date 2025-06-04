@@ -153,7 +153,6 @@ struct login_info_ {
 };
 
 static int validate_package_file (const char *fname, int verbose);
-static int validate_translations_file (const char *fname, int verbose);
 static void finfo_set_menuwin (function_info *finfo);
 static gint query_save_package (GtkWidget *w, GdkEvent *event,
 				function_info *finfo);
@@ -4314,11 +4313,6 @@ static int validate_XML_file (const char *fname,
 static int validate_package_file (const char *fname, int verbose)
 {
     return validate_XML_file(fname, "gretlfunc.xsd", verbose);
-}
-
-static int validate_translations_file (const char *fname, int verbose)
-{
-    return validate_XML_file(fname, "gfntrans.xsd", verbose);
 }
 
 /* Collect pkg.gfn plus additional package files (PDF doc and/or data
