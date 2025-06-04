@@ -117,7 +117,7 @@ static void ssr2crit (int *best, double *xbest,
         } else if (crit == HQC) {
             C0 = 2 * k * log(log((double) T));
         }
-        ll = -0.5 * T * (l1 + log(ssr->val[*best]/T) + 1);
+        ll = -0.5 * T * (l1 + log(*xbest/T) + 1);
         if (crit == AIC) {
             *xbest = 2.0 * (k - ll);
         } else {
