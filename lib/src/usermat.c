@@ -1273,12 +1273,18 @@ static int real_umatrix_set_names (gretl_matrix *M,
     return err;
 }
 
-static int n_names_check (int n, int ns, int byrow)
+static int n_names_check (int n, int ns, int byrow, PRN *prn)
 {
     if (ns != n) {
+#if 0 /* not yet */
 	gretl_errmsg_sprintf("%s: got %d names but matrix has %d %s",
-			     byrow ? "rnameset" : "cnameset",
-			     ns, n, byrow ? "row(s)" : "column(s)");
+                             byrow ? "rnameset" : "cnameset",
+                             ns, n, byrow ? "row(s)" : "column(s)");
+#else
+ 	pprintf(prn, "*** Warning: %s: got %d names but matrix has %d %s ***\n",
+                byrow ? "rnameset" : "cnameset",
+                ns, n, byrow ? "row(s)" : "column(s)");
+#endif
 	return E_INVARG;
     } else {
 	return 0;
@@ -1287,7 +1293,8 @@ static int n_names_check (int n, int ns, int byrow)
 
 int umatrix_set_names_from_string (gretl_matrix *M,
 				   const char *s,
-				   int byrow)
+				   int byrow,
+                                   PRN *prn)
 {
     int n = byrow ? M->rows : M->cols;
     int err = 0;
@@ -1307,7 +1314,7 @@ int umatrix_set_names_from_string (gretl_matrix *M,
 	    strings_array_free(S, ns);
 	    S = expand_names(s, n, &err);
 	} else {
-	    err = n_names_check(n, ns, byrow);
+	    err = n_names_check(n, ns, byrow, prn);
 	    if (err) {
 		strings_array_free(S, ns);
 	    }
@@ -1322,7 +1329,8 @@ int umatrix_set_names_from_string (gretl_matrix *M,
 
 int umatrix_set_names_from_array (gretl_matrix *M,
 				  void *data,
-				  int byrow)
+				  int byrow,
+                                  PRN *prn)
 {
     gretl_array *A = data;
     char **S = NULL;
@@ -1334,7 +1342,7 @@ int umatrix_set_names_from_array (gretl_matrix *M,
     if (A != NULL && gretl_array_get_length(A) > 0) {
 	char **AS = gretl_array_get_strings(A, &ns);
 
-	err = n_names_check(n, ns, byrow);
+	err = n_names_check(n, ns, byrow, prn);
 	if (!err) {
 	    S = strings_array_dup(AS, n);
 	    if (S == NULL) {
@@ -1353,7 +1361,8 @@ int umatrix_set_names_from_array (gretl_matrix *M,
 int umatrix_set_names_from_list (gretl_matrix *M,
 				 const int *list,
 				 const DATASET *dset,
-				 int byrow)
+				 int byrow,
+                                 PRN *prn)
 {
     char **S = NULL;
     int n, err = 0;
@@ -1363,7 +1372,7 @@ int umatrix_set_names_from_list (gretl_matrix *M,
     if (list != NULL && list[0] > 0) {
 	int i;
 
-	err = n_names_check(n, list[0], byrow);
+	err = n_names_check(n, list[0], byrow, prn);
 	if (!err) {
 	    S = strings_array_new(n);
 	    if (S == NULL) {

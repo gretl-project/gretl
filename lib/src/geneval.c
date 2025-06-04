@@ -4526,13 +4526,14 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
         }
 
         if (r->t == STR) {
-            p->err = ret->v.xval = umatrix_set_names_from_string(m, r->v.str, byrow);
+            ret->v.xval = umatrix_set_names_from_string(m, r->v.str,
+                                                        byrow, p->prn);
         } else if (r->t == ARRAY) {
             if (gretl_array_get_type(r->v.a) != GRETL_TYPE_STRINGS) {
                 p->err = e_types(r);
             } else {
-                p->err = ret->v.xval = umatrix_set_names_from_array(m, r->v.a,
-                                                                    byrow);
+                ret->v.xval = umatrix_set_names_from_array(m, r->v.a,
+                                                           byrow, p->prn);
             }
         } else {
             /* some sort of list-bearing node */
@@ -4541,11 +4542,21 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
             if (p->err) {
                 ret->v.xval = 1;
             } else {
-                p->err = ret->v.xval = umatrix_set_names_from_list(m, list, p->dset,
-                                                                   byrow);
+                ret->v.xval = umatrix_set_names_from_list(m, list, p->dset,
+                                                          byrow, p->prn);
             }
             free(list);
         }
+#if 0 /* not yet */
+        /* FIXME 2025-06-02: we should set p->err to the return value
+           from umatrix_set_names..., but for now that's deferred to
+           preserve backward compatibility for the function packages
+           ADMBP and Threshold_Panel.
+        */
+        if (p->err == 0 && ret->v.xval != 0) {
+            p->err = ret->v.xval;
+        }
+#endif
     }
 
     return ret;

@@ -2663,6 +2663,43 @@ static int process_import_name_option (char *vname)
     return err;
 }
 
+/* Remedial code to handle dicontinued FRED series whose
+   names end with "96" and which are no longer included in
+   gretl's fedstl database, but are continued in series
+   whose names (mostly) end in "1".
+*/
+
+static void maybe_update_name (char *argname,
+                               char *altname)
+{
+    const char *dups[] = {
+        "gdpc", "fpic", "fgcec", "gcec", "slcec9", "gpdic",
+        "prfic", "expgsc", "impgsc96", "cbic", "finslc", NULL
+    };
+    char test[16];
+    int i, done = 0;
+
+    for (i=0; dups[i] != NULL; i++) {
+        sprintf(test, "%s96", dups[i]);
+        if (!strcmp(test, argname)) {
+            if (*altname == '\0') {
+                strcpy(altname, argname);
+            }
+            sprintf(argname, "%s1", dups[i]);
+            done = 1;
+            break;
+        }
+    }
+
+    if (!done && !strcmp(argname, "netexc96")) {
+        /* special case: netexc96 -> netexc */
+        if (*altname == '\0') {
+            strcpy(altname, argname);
+        }
+        strcpy(argname, "netexc");
+    }
+}
+
 /* main function for getting one or more series out of a
    database (including ODBC) via command-line/script
 */
@@ -2676,6 +2713,7 @@ int db_get_series (const char *line, DATASET *dset,
     CompactMethod cmethod;
     int i, nnames = 0;
     int from_scratch = 0;
+    int FRED = 0;
     int err = 0;
 
     if (opt & OPT_O) {
@@ -2683,7 +2721,7 @@ int db_get_series (const char *line, DATASET *dset,
     }
 
     if (opt & OPT_N) {
-	/* --name=whatever */
+	/* --name=whatever to rename a db import */
 	err = process_import_name_option(altname);
 	if (err) {
 	    return err;
@@ -2702,6 +2740,7 @@ int db_get_series (const char *line, DATASET *dset,
     }
 
     from_scratch = (dset->n == 0);
+    FRED = strstr(saved_db_name, "fedstl") != NULL;
 
     if (opt & OPT_C) {
 	/* new-style: compaction method supplied as option */
@@ -2766,8 +2805,12 @@ int db_get_series (const char *line, DATASET *dset,
 	    err = get_one_dbnomics_series(vnames[i], altname, dset,
 					  cmethod, prn);
 	} else {
+            if (FRED && strstr(vnames[i], "96")) {
+                maybe_update_name(vnames[i], altname);
+            }
 	    err = get_one_db_series(vnames[i], altname, dset,
 				    cmethod, idxname, prn);
+            *altname = '\0'; /* zero after use */
 	}
     }
 

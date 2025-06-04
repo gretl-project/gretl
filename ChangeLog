@@ -8,9 +8,10 @@ version 2025b, in progress
   for factorized plots; update and improve the help text
 - curl() function: add an option to skip downloading of
   the body of the requested URL
-- cnameset() and rnameset(): these functions now flag an
-  error if the number of names given does not match the
-  relevant matrix dimension (as per the documentation)
+- cnameset() and rnameset(): these functions now flag a
+  warning if the number of names given does not match the
+  relevant matrix dimension; this will become an error in
+  a future release
 - Fix bug: correct the disturbance smoother for the de Jong
   variant of the Kalman filter; also fix a memory leak
 - Fix bug: poor handling of vector added to a bundle "as a
@@ -33,6 +34,8 @@ version 2025b, in progress
   toolbar, since this stopped working as a result of
   recent security updates; also drop usage of otool by
   libgretl_init()
+- macOS: fix for launching gretl by double-clicking on a
+  gretl script or data file
 - update translatable strings
 
 2025-03-20 version 2025a

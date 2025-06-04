@@ -2,9 +2,10 @@ version 2025b, in progress
 
 The long-deprecated eigengen() function has now been removed.
 
-The cnameset() snd rnameset() functions now flag an error if
+The cnameset() snd rnameset() functions now flag a warning if
 the number of names given does not match the relevant matrix
-dimension (as per the documentation).
+dimension. This should be an error, per the documentation, and
+will become an error in a future release.
 
 The --dummy option for "gnuplot" has been officially renamed as
 --factorized, but the old name still works as an alias.
