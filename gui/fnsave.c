@@ -2035,7 +2035,7 @@ static void translation_callback (GtkButton *b,
             "Do you want to try adding some translations now?\n"
             "Please click on Help for details.";
 
-        if (yes_no_help_dialog(msg, GFNTRANS, GRETL_YES) == GRETL_YES) {
+        if (yes_no_help_dialog(msg, GFNTRANS, NULL) == GRETL_YES) {
             PRN *prn = NULL;
 
             if (bufopen(&prn)) {

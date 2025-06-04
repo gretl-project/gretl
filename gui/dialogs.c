@@ -109,7 +109,8 @@ void gretl_dialog_add_message (GtkWidget *dlg, const char *msg)
 
 static gint
 real_yes_no_dialog (const char *title, const char *msg,
-                    int cancel, GtkWidget *parent,
+                    int cancel, int helpcode,
+                    GtkWidget *parent,
                     int default_id)
 {
     GtkDialogFlags flags = GTK_DIALOG_MODAL;
@@ -142,6 +143,13 @@ real_yes_no_dialog (const char *title, const char *msg,
                               GTK_RESPONSE_REJECT);
     }
 
+    if (helpcode > 0) {
+        GtkWidget *hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
+        GtkWidget *chb = context_help_button(hbox, helpcode);
+
+        gtk_widget_show(chb);
+    }
+
     if (default_id != 0) {
         gtk_dialog_set_default_response(GTK_DIALOG(dlg), default_id);
     }
@@ -170,19 +178,26 @@ gint yes_no_dialog (const char *title,
                     const char *msg,
                     GtkWidget *parent)
 {
-    return real_yes_no_dialog(title, msg, 0, parent, 0);
+    return real_yes_no_dialog(title, msg, 0, 0, parent, 0);
 }
 
 gint yes_no_cancel_dialog (const char *title,
                            const char *msg,
                            GtkWidget *parent)
 {
-    return real_yes_no_dialog(title, msg, 1, parent, 0);
+    return real_yes_no_dialog(title, msg, 1, 0, parent, 0);
+}
+
+gint yes_no_help_dialog (const char *msg,
+                         int helpcode,
+                         GtkWidget *parent)
+{
+    return real_yes_no_dialog(NULL, msg, 0, helpcode, parent, 0);
 }
 
 gint no_yes_dialog (const char *title, const char *msg)
 {
-    return real_yes_no_dialog(title, msg, 0, NULL,
+    return real_yes_no_dialog(title, msg, 0, 0, NULL,
                               GTK_RESPONSE_NO);
 }
 
@@ -5131,65 +5146,6 @@ int pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
     context_help_button(hbox, PERGM);
 
     gtk_widget_show_all(dialog);
-
-    return ret;
-}
-
-static void set_response_yes (GtkButton *b, int *ret)
-{
-    *ret = GRETL_YES;
-}
-
-int yes_no_help_dialog (const char *msg, int hcode, int deflt)
-{
-    GtkWidget *dlg;
-    GtkWidget *vbox, *hbox, *tmp;
-    GtkWidget *button = NULL;
-    int ret = GRETL_NO;
-
-    dlg = gretl_dialog_new("gretl", NULL, GRETL_DLG_BLOCK);
-#if GTK_MAJOR_VERSION < 3
-    gtk_dialog_set_has_separator(GTK_DIALOG(dlg), FALSE);
-#endif
-
-    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
-
-    tmp = dialog_blurb_box(msg);
-    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
-
-    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
-
-    /* Yes button */
-    button = gtk_button_new_from_stock(GTK_STOCK_YES);
-    g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(set_response_yes), &ret);
-    g_signal_connect_swapped(G_OBJECT(button), "clicked",
-			     G_CALLBACK(gtk_widget_destroy),
-			     dlg);
-    gtk_widget_set_can_default(button, TRUE);
-    gtk_container_add(GTK_CONTAINER(hbox), button);
-    gtk_widget_set_can_default(button, TRUE);
-    if (deflt == GRETL_YES) {
-	gtk_widget_grab_default(button);
-    } else {
-	gtk_widget_set_can_default(button, FALSE);
-    }
-
-    /* No button */
-    button = gtk_button_new_from_stock(GTK_STOCK_NO);
-    gtk_container_add(GTK_CONTAINER(hbox), button);
-    g_signal_connect_swapped(G_OBJECT(button), "clicked",
-			     G_CALLBACK(gtk_widget_destroy),
-			     dlg);
-    if (deflt == GRETL_NO) {
-	gtk_widget_set_can_default(button, TRUE);
-	gtk_widget_grab_default(button);
-    }
-
-    /* Help button */
-    context_help_button(hbox, hcode);
-
-    gtk_widget_show_all(dlg);
 
     return ret;
 }
