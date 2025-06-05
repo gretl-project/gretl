@@ -90,39 +90,55 @@ static void matrix_drop_column (gretl_matrix *m, int drop)
     m->cols -= 1;
 }
 
-static void ssr2crit (int *best, double *xbest,
-                      const gretl_matrix *ssr,
-                      int T, int k, int crit)
+static double get_info_crit (double ssr, int T, int k, int crit)
+{
+    /* using AIC, BIC or HQC */
+    double l1 = log(2*M_PI);
+    double ll, C0 = 0;
+
+    if (crit == BIC) {
+        C0 = k * log((double) T);
+    } else if (crit == HQC) {
+        C0 = 2 * k * log(log((double) T));
+    }
+    ll = -0.5 * T * (l1 + log(ssr/T) + 1);
+    if (crit == AIC) {
+        return 2.0 * (k - ll);
+    } else {
+        return C0 - 2 * ll;
+    }
+}
+
+static double best_ssr2crit (int *best,
+                             const gretl_matrix *ssr,
+                             int T, int k, int crit)
 {
     int j, n = ssr->cols;
+    double ssr_min = 1.0e200;
 
     *best = 0;
-    *xbest = 1.0e200;
 
     /* check SSR first */
     for (j=0; j<n; j++) {
-        if (ssr->val[j] < *xbest) {
+        if (ssr->val[j] < ssr_min) {
             *best = j;
-            *xbest = ssr->val[j];
+            ssr_min = ssr->val[j];
         }
     }
 
-    if (crit > SSR) {
-        /* using AIC, BIC or HQC */
-        double l1 = log(2*M_PI);
-        double ll, C0 = 0;
+    if (crit == SSR) {
+        return ssr_min;
+    } else {
+        return get_info_crit(ssr_min, T, k, crit);
+    }
+}
 
-        if (crit == BIC) {
-            C0 = k * log((double) T);
-        } else if (crit == HQC) {
-            C0 = 2 * k * log(log((double) T));
-        }
-        ll = -0.5 * T * (l1 + log(*xbest/T) + 1);
-        if (crit == AIC) {
-            *xbest = 2.0 * (k - ll);
-        } else {
-            *xbest = C0 - 2 * ll;
-        }
+static double ssr2crit (double ssr, int T, int k, int crit)
+{
+    if (crit == SSR) {
+        return ssr;
+    } else {
+        return get_info_crit(ssr, T, k, crit);
     }
 }
 
@@ -191,7 +207,7 @@ static int qr_update (gretl_matrix *Q,
         mm->ssr->val[j] = ee - xij * xij / mm->den->val[j];
     }
 
-    ssr2crit(&p, xbest, mm->ssr, n, k + 1, crit);
+    *xbest = best_ssr2crit(&p, mm->ssr, n, k + 1, crit);
     *best = p;
 
     /* update Q -> Q ~ -stdres[,best] */
@@ -249,7 +265,6 @@ int *forward_stepwise (MODEL *pmod,
     gretl_matrix *mZ;
     gretl_matrix *my;
     gretl_matrix *tmp;
-    gretl_matrix *ssr;
     qr_wspace mm = {0};
     int conv = 0;
     int added = 0;
@@ -271,9 +286,7 @@ int *forward_stepwise (MODEL *pmod,
     for (i=0; i<pmod->nobs; i++) {
         e->val[i] = pmod->uhat[i];
     }
-    ssr = gretl_matrix_from_scalar(pmod->ess);
-    ssr2crit(&best, &prev, ssr, T, k, crit);
-    gretl_matrix_free(ssr);
+    prev = ssr2crit(pmod->ess, T, k, crit);
 
     yvar = pmod->list[1];
     xlist = gretl_list_new(pmod->list[0] - 1);
