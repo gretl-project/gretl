@@ -9,12 +9,17 @@
 
     <usage>
       <arguments>
-        <argument>lista-variabili</argument>
+        <argument>varlist</argument>
       </arguments>
       <options>
 	<option>
 	  <flag>--lm</flag>
-	  <effect>effettua un test LM (solo OLS)</effect>
+	  <effect>effettua un test LM, solo OLS</effect>
+	</option>
+	<option>
+	  <flag>--auto</flag>
+	  <optparm>criterio</optparm>
+	  <effect>stepwise <quote>in avanti</quote>, solo OLS</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
@@ -30,7 +35,7 @@
 	</option>
         <option>
           <flag>--both</flag>
-          <effect>aggiunge come regressore e come strumento, solo per TSLS</effect>
+          <effect>aggiunge come regressore e come strumento (vedi sotto)</effect>
         </option>
       </options>
       <examples>
@@ -41,51 +46,114 @@
 
     <description>
       <para context="cli">
-	Va invocato dopo un comando di stima. Esegue un test congiunto
-	per l'aggiunta delle variabili specificate all'ultimo modello
-	stimato; si può avere accesso ai risultati del test tramite
-	<fncref targ="$test"/> e <fncref targ="$pvalue"/>.
-      </para>
-      <para context="cli">
-	Di default, aggiunge al modello precedente le variabili nella
-	<repl>lista-variabili</repl> e stima il nuovo modello.  Il
-	test è un test di Wald sul modello aumentato, che rimpiazza
-	quello originale come <quote>ultimo modello</quote> per quanto
-	riguarda,ad esempio, il contenuto di <lit>$uhat</lit> o test
-	ulteriori.
-      </para>
-      <para context="cli">
-	Alternativamente, con l'opzione <opt>lm</opt> (disponibile
-	solo per i modelli stimati via OLS), viene effettuato un test
-	LM. Viene eseguita una regressione ausiliaria in cui la
-	variabile dipendente è il residuo dell'ultimo modello e le
-	variabili indipendenti sono quello del modello originale più
-	<repl>lista-variabili</repl>. Sotto l'ipotesi nulla che le
-	variabili aggiuntive non hanno potere esplicativo, il prodotto
-	fra l'R-quadro non aggiustato della regressione ausiliaria e
-	il numero di osservazioni si distribuisce come una chi quadro
-	con tanti gradi di libertà quante sono le variabili in
-	<repl>lista-variabili</repl>. In questo caso, il modello
-	originale non viene rimpiazzato.
+	Va invocato dopo un comando di stima. A meno che non siano
+	usate le opzioni <opt>lm</opt> o <opt>auto</opt>, esegue un
+	test congiunto per l'aggiunta delle variabili specificate
+	all'ultimo modello stimato. Viene stimata una versione
+	ampliata del modello originale, includendo le variabili in
+	<repl>varlist</repl>, e viene eseguito un test di Wald sul
+	modello ampliato. Il modello ampliato sostituisce l'originale
+	come <quote>ultimo modello</quote> allo scopo, ad esempio, di
+	recuperare i residui come <fncref targ="$uhat"/> o di eseguire
+	ulteriori test. Si può avere accesso ai risultati
+	del Wald test tramite <fncref targ="$test"/> e <fncref
+	targ="$pvalue"/>.
       </para>
       <para context="cli">
 	L'opzione <opt>both</opt> è specifica per le stime con i
 	minimi quadrati a due stadi: essa indica che le nuove
 	variabili vanno aggiunte sia alla lista dei regressori che a
 	quella degli strumenti; di default, infatti, la
-	<repl>lista-variabili</repl> viene aggiunta soltanto ai
-	regressori.
+	<repl>varlist</repl> viene aggiunta soltanto ai regressori.
       </para>
-      <para context="gui">
-	Aggiunge le variabili selezionate al modello precedente e
-	stima il nuovo modello. Viene eseguito anche un test per la
-	significatività congiunta delle variabili aggiunte.
+      <subhead context="cli">L'opzione lm</subhead>
+      <para context="cli">
+	Con l'opzione <opt>lm</opt> (disponibile solo per i modelli
+	stimati via OLS), viene effettuato un test LM. Viene eseguita
+	una regressione ausiliaria in cui la variabile dipendente è il
+	residuo dell'ultimo modello e le variabili indipendenti sono
+	quello del modello originale più <repl>varlist</repl>. Sotto
+	l'ipotesi nulla che le variabili aggiuntive non abbiano potere
+	esplicativo, il prodotto fra l'R-quadro non aggiustato della
+	regressione ausiliaria e il numero di osservazioni si
+	distribuisce come una chi quadro con tanti gradi di libertà
+	quante sono le variabili in <repl>varlist</repl>. In questo
+	caso, il modello originale non viene rimpiazzato.
       </para>
-    </description>
+      <subhead context="cli">L'opzione auto</subhead>
+      <para context="cli">
+	Con l'opzione <opt>auto</opt> (incompatibile con
+	<opt>lm</opt>) si effettua una regressione stepwise in avanti,
+	utilizzando l'algoritmo QR descritto da <cite
+	key="hastie20">Hastie et al (2020)</cite>. In questo caso,
+	<repl>varlist</repl> viene interpretata come un elenco di
+	<emphasis>candidati</emphasis> da aggiungere al modello
+	originale. A ogni passaggio, il metodo determina quale
+	candidato offre il maggiore miglioramento nell'adattamento in
+	base al criterio specificato (indicato come parametro
+	dell'opzione). L'algoritmo si arresta quando non è possibile
+	alcun ulteriore miglioramento. Il criterio deve assumere una
+	di queste forme:
+      </para>
+      <ilist context="cli">
+	<li>
+	  <para>
+	    Un criterio di informazione: <lit>AIC</lit>,
+	    <lit>BIC</lit> o <lit>HQC</lit>. Il candidato
+	    <quote>migliore</quote> a ogni passaggio è quindi quello
+	    che fornisce la maggiore riduzione nel criterio
+	    selezionato.
+	</para>
+	</li>
+	<li>
+	  <para>
+	    Un valore &alpha; compreso fra 0 e 1. In questo caso, il
+	    criterio è dato dalla somma dei quadrati dei
+	    residui. L'algoritmo si arresta quando nessun candidato
+	    rimanente fornisce una riduzione dell'SSR statisticamente
+	    significativa al livello  &alpha; con un test chi-quadro.
+      </para>
+    </li>
+  </ilist>
+  <para context="gui">
+    Sono disponibili tre opzioni:
+  </para>
+  <ilist context="gui">
+    <li>
+      <para>
+      Test di Wald: le variabili selezionate vengono aggiunte al
+      modello precedente e il modello ampliato viene stimato. Viene
+      visualizzata una statistica del test di Wald per la
+      significatività congiunta delle variabili aggiunte, insieme al
+      relativo p-value.
+      </para>
+    </li>
+    <li>
+      <para>
+	Test LM: viene eseguito un test del moltiplicatore di Lagrange
+	per la significatività congiunta delle variabili aggiunte,
+	senza stima del modello ampliato.
+      </para>
+    </li>
+    <li>
+      <para>
+	Aggiunta stepwise: le variabili aggiuntive vengono aggiunte
+	sequenzialmente. A ogni passaggio viene aggiunta la variabile
+	che fornisce il maggiore miglioramento nel modello. Il
+	processo si interrompe quando nessuna delle variabili
+	rimanenti produce un miglioramento. In questo caso è
+	necessario scegliere un criterio: uno dei criteri informativi
+	(AIC, BIC, HQC) o SSR. Se si seleziona SSR, è necessario
+	specificare anche un livello di significatività, &alpha;, per
+	verificare se ciascuna variabile merita l'inclusione.
+      </para>
+    </li>
+  </ilist>
+</description>
 
-    <gui-access>
-      <menu-path>Finestra del modello, /Test/ADD - Aggiungi variabili</menu-path>
-    </gui-access>
+<gui-access>
+  <menu-path>Finestra del modello, /Test/ADD - Aggiungi variabili</menu-path>
+</gui-access>
 
   </command>
 
