@@ -1,4 +1,4 @@
-version 2025b, in progress
+2025-06-05 version 2025b
 - gretlcli: add --no-plots option to suppress plots
 - "add" command: add an --auto option for forward stepwise
   regession via QR algorithm
