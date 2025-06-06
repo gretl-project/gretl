@@ -2341,14 +2341,12 @@ static void print_param_labels (fn_param *param, PRN *prn)
     int i;
 
     pputs(prn, " {");
-
     for (i=0; i<param->nlabels; i++) {
         pprintf(prn, "\"%s\"", param->labels[i]);
         if (i < param->nlabels - 1) {
             pputs(prn, ", ");
         }
     }
-
     pputc(prn, '}');
 }
 
@@ -3315,7 +3313,6 @@ static int package_write_index (fnpkg *pkg, PRN *inprn)
     }
 
     gretl_xml_header(prn);
-
     pprintf(prn, "<gretl-addon name=\"%s\"", pkg->name);
 
     if (pkg->dreq == FN_NEEDS_TS) {
@@ -3327,23 +3324,19 @@ static int package_write_index (fnpkg *pkg, PRN *inprn)
     } else if (pkg->dreq == FN_NODATA_OK) {
         pprintf(prn, " %s=\"true\"", NO_DATA_OK);
     }
-
     if (pkg->modelreq > 0) {
         pprintf(prn, " model-requirement=\"%s\"",
                 gretl_command_word(pkg->modelreq));
     }
-
     if (pkg->minver > 0) {
         char vstr[10];
 
         pprintf(prn, " minver=\"%s\"",
                 gretl_version_string(vstr, pkg->minver));
     }
-
     if (pkg->uses_subdir) {
         pputs(prn, " lives-in-subdir=\"true\"");
     }
-
     if (pkg->data_access) {
         pputs(prn, " wants-data-access=\"true\"");
     }
@@ -3364,11 +3357,9 @@ static int package_write_index (fnpkg *pkg, PRN *inprn)
     if (pkg->tags != NULL) {
         gretl_xml_put_tagged_string("tags", pkg->tags, prn);
     }
-
     if (pkg->label != NULL) {
         gretl_xml_put_tagged_string("label", pkg->label, prn);
     }
-
     if (pkg->mpath != NULL) {
         gretl_xml_put_tagged_string("menu-attachment", pkg->mpath, prn);
     }
@@ -3427,17 +3418,14 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn, int mpi)
         pprintf(prn, " model-requirement=\"%s\"",
                 gretl_command_word(pkg->modelreq));
     }
-
     if (pkg->minver > 0) {
         char vstr[10];
 
         pprintf(prn, " minver=\"%s\"", gretl_version_string(vstr, pkg->minver));
     }
-
     if (pkg->uses_subdir) {
         pprintf(prn, " lives-in-subdir=\"true\"");
     }
-
     if (pkg->data_access) {
         pprintf(prn, " wants-data-access=\"true\"");
     }
@@ -3458,15 +3446,12 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn, int mpi)
     if (pkg->tags != NULL) {
         gretl_xml_put_tagged_string("tags", pkg->tags, prn);
     }
-
     if (pkg->label != NULL) {
         gretl_xml_put_tagged_string("label", pkg->label, prn);
     }
-
     if (pkg->mpath != NULL) {
         gretl_xml_put_tagged_string("menu-attachment", pkg->mpath, prn);
     }
-
     if (pkg->help != NULL && !mpi) {
         if (pkg->help_fname != NULL) {
             pprintf(prn, "<help filename=\"%s\">\n", pkg->help_fname);
@@ -3476,7 +3461,6 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn, int mpi)
         gretl_xml_put_string(trim_text(pkg->help), prn);
         pputs(prn, "\n</help>\n");
     }
-
     if (pkg->gui_help != NULL && !mpi) {
         if (pkg->gui_help_fname != NULL) {
             pprintf(prn, "<gui-help filename=\"%s\">\n",
@@ -3493,7 +3477,6 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn, int mpi)
                                     (const char **) pkg->datafiles,
                                     pkg->n_files, prn);
     }
-
     if (pkg->depends != NULL) {
         gretl_xml_put_strings_array("depends",
                                     (const char **) pkg->depends,
@@ -3505,7 +3488,6 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn, int mpi)
     if (pkg->Rdeps != NULL) {
         gretl_xml_put_tagged_string("R-depends", pkg->Rdeps, prn);
     }
-
     if (pkg->pub != NULL) {
         for (i=0; i<pkg->n_pub; i++) {
             write_function_xml(pkg->pub[i], prn, mpi);
@@ -3516,7 +3498,6 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn, int mpi)
             write_function_xml(pkg->priv[i], prn, mpi);
         }
     }
-
     if (pkg->sample != NULL && !mpi) {
         if (pkg->sample_fname != NULL) {
             pprintf(prn, "<sample-script filename=\"%s\">\n",
@@ -7910,6 +7891,7 @@ static int read_param_descrip (char **ps, fn_param *param)
 
     return err;
 }
+
 /* Get the value labels for a function parameter. The syntactic
    element we're looking at starts with "{".
 */
@@ -8127,8 +8109,11 @@ static void arg_tail_strip (char *s)
     int i, n = strlen(s);
 
     for (i=n-1; i>=0; i--) {
-        if (isspace(s[i]) || s[i] == ')') {
+        if (isspace(s[i])) {
             s[i] = '\0';
+        } else if (s[i] == ')') {
+            s[i] = '\0';
+            break;
         } else {
             break;
         }
