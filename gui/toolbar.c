@@ -1238,6 +1238,9 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
     if (f == CLEAR_ITEM && r != CONSOLE) {
 	return NULL;
     }
+    if (f == SAVE_AS_ITEM && r == EDIT_XML) {
+	return NULL;
+    }
 
     if (r == EDIT_PKG_SAMPLE && f == OPEN_ITEM) {
 	return G_CALLBACK(open_pkg_sample);

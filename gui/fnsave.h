@@ -52,6 +52,8 @@ void update_gfn_help_text (windata_t *vwin);
 
 int update_func_code (windata_t *vwin);
 
+void save_gfn_translation (windata_t *vwin);
+
 gboolean edit_specified_package (const char *fname);
 
 void upload_specified_package (const char *fname);

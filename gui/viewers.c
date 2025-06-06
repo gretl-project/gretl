@@ -662,7 +662,10 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 
 void vwin_save_callback (GtkWidget *w, windata_t *vwin)
 {
-    if (vwin_editing_buffer(vwin->role)) {
+    if (vwin->role == EDIT_XML) {
+        save_gfn_translation(vwin);
+        mark_vwin_content_saved(vwin);
+    } else if (vwin_editing_buffer(vwin->role)) {
 	buf_edit_save(w, vwin);
     } else {
 	file_edit_save(w, vwin);

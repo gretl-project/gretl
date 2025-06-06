@@ -1996,6 +1996,25 @@ static void add_help_radios (GtkWidget *tbl, int i,
     gtk_widget_show_all(htab);
 }
 
+void save_gfn_translation (windata_t *vwin)
+{
+    static gchar *trans_tmp;
+    function_info *finfo = vwin->data;
+    gchar *text;
+
+    text = textview_get_text(vwin->text);
+    if (text == NULL || *text == '\0') {
+	errbox(_("Buffer is empty"));
+	g_free(text);
+	return;
+    }
+
+    /* What's the best way of handling this? */
+    g_free(trans_tmp);
+    trans_tmp = text;
+    fprintf(stderr, "HERE, trans_tmp = '%s'\n", trans_tmp);
+}
+
 static void open_translations_window (function_info *finfo,
                                       PRN *prn)
 {
@@ -2003,8 +2022,6 @@ static void open_translations_window (function_info *finfo,
 
     finfo->transwin = view_buffer(prn, HELP_WIDTH, HELP_HEIGHT, title,
                                   EDIT_XML, finfo);
-    g_object_set_data(G_OBJECT(finfo->transwin->main), "finfo",
-                      finfo);
     g_signal_connect(G_OBJECT(finfo->transwin->main), "destroy",
                      G_CALLBACK(nullify_transwin), finfo);
     g_free(title);
