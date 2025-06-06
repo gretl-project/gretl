@@ -375,6 +375,17 @@ int *forward_stepwise (MODEL *pmod,
     gretl_matrix_free(e);
     qr_wspace_free(&mm);
 
+    if (!*err && added == 0) {
+        *err = E_NOADD;
+    }
+    if (*err) {
+        if (verbose) {
+            pputc(prn, '\n');
+        }
+        free(ret);
+        ret = NULL;
+    }
+
     return ret;
 }
 
@@ -501,6 +512,9 @@ int *backward_stepwise (MODEL *pmod,
         *err = E_NOOMIT;
     }
     if (*err) {
+        if (verbose) {
+            pputc(prn, '\n');
+        }
         free(xlist);
         xlist = NULL;
     }
