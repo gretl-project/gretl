@@ -313,7 +313,7 @@ int *forward_stepwise (MODEL *pmod,
     qr_wspace_alloc(&mm, Q->rows, nz);
 
     if (verbose) {
-        pprintf(prn, "\n%-*s %s = %#g\n", addlen + namelen + 1,
+        pprintf(prn, "\n %-*s %s = %#g\n", addlen + namelen + 1,
                 _("Baseline"), cstr, prev);
     }
 
@@ -346,10 +346,10 @@ int *forward_stepwise (MODEL *pmod,
         }
         if (verbose) {
             if (conv && added < nz) {
-                pprintf(prn, "[%-*s %s = %#g]\n", namelen + addlen,
+                pprintf(prn, " [%-*s %s = %#g]\n", namelen + addlen,
                         dset->varname[aux[best+1]], cstr, cur);
             } else {
-                pprintf(prn, "%s %-*s %s = %#g\n", _("Add"), namelen,
+                pprintf(prn, " %s %-*s %s = %#g\n", _("Add"), namelen,
                         dset->varname[aux[best+1]], cstr, cur);
             }
         }
@@ -473,10 +473,10 @@ int *backward_stepwise (MODEL *pmod,
         conv = cur > prev;
         if (verbose) {
             if (conv && dropped < nz) {
-                pprintf(prn, "[%-*s %s = %#g]\n", namelen + addlen,
+                pprintf(prn, " [%-*s %s = %#g]\n", namelen + addlen,
                         dset->varname[delvar], cstr, cur);
             } else {
-                pprintf(prn, "%s %-*s %s = %#g\n", _("Drop"), namelen,
+                pprintf(prn, " %s %-*s %s = %#g\n", _("Drop"), namelen,
                         dset->varname[delvar], cstr, cur);
             }
         }
@@ -700,6 +700,11 @@ MODEL stepwise_omit (MODEL *pmod,
         int verbose = (opt & OPT_Q)? 0 : 1;
         int addlen = verbose ? g_utf8_strlen(_("Drop"), -1) : 0;
 
+	if (verbose) {
+	    pputc(prn, '\n');
+	    pprintf(prn, _("Sequential elimination using %s"), crit_string(crit));
+	    pputs(prn, "\n\n");
+	}
         xlist = backward_stepwise(pmod, zlist, dset, crit,
                                   verbose, addlen, namelen + 2,
                                   prn, &err);
