@@ -1,3 +1,6 @@
+version 2025c, in progress
+- "omit" command: start augmenting the --auto option
+
 2025-06-05 version 2025b
 - gretlcli: add --no-plots option to suppress plots
 - "add" command: add an --auto option for forward stepwise
