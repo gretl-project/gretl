@@ -2,8 +2,8 @@ set echo off
 set messages off
 
 string topsrc = "@top_srcdir@"
-string xsd = topsrc ~ "/share/functions/gretlfunc.xsd"
+string dtd = topsrc ~ "/share/functions/gretlfunc.dtd"
 string pkgdir = topsrc ~ "/addons/logging"
 
 include @pkgdir/logging.inp
-makepkg logging.gfn --index --translations --quiet --schema="@xsd"
+makepkg logging.gfn --index --translations --quiet --dtd="@dtd"

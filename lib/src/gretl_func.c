@@ -52,9 +52,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-/* for validation of packages via XML schema */
-#include <libxml/xmlreader.h>
-
 #define FNPARSE_DEBUG 0 /* debug parsing of function code */
 #define EXEC_DEBUG 0    /* debugging of function execution */
 #define ARGS_DEBUG 0    /* debug handling of args */
@@ -4640,99 +4637,67 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
     return pkg;
 }
 
-# if LIBXML_VERSION >= 21200
-static void xs_err_handler (void *arg, const xmlError *errp)
-#else
-static void xs_err_handler (void *arg, xmlErrorPtr errp)
-#endif
+static int cli_validate_package_file (const char *fname,
+                                      gretlopt opt, PRN *prn)
 {
-    *(int *) arg = 1;
-    printf("parse error at line %d, col %d:\n%s",
-           errp->line, errp->int2, errp->message);
-}
+    char dtdname[FILENAME_MAX];
+    xmlDocPtr doc = NULL;
+    xmlDtdPtr dtd = NULL;
+    int err;
 
-static xmlSchemaValidCtxtPtr get_validation_context (const char *xsdpath,
-                                                     xmlSchemaPtr *pschema)
-{
-    xmlSchemaValidCtxtPtr vc = NULL;
-    xmlSchemaParserCtxtPtr spc;
-
-    spc = xmlSchemaNewParserCtxt(xsdpath);
-    if (spc == NULL) {
-        puts("Couldn't open XML schema to check package");
-    } else {
-	*pschema = xmlSchemaParse(spc);
-	xmlSchemaFreeParserCtxt(spc);
-	if (*pschema == NULL) {
-	    puts("Couldn't get xmlSchemaPtr to check package");
-	} else {
-	    vc = xmlSchemaNewValidCtxt(*pschema);
-	    if (vc == NULL) {
-		puts("Failed to obtain XML schema validator");
-	    }
-	}
+    err = gretl_xml_open_doc_root(fname, NULL, &doc, NULL);
+    if (err) {
+        pprintf(prn, "Couldn't parse %s\n", fname);
+        return 1;
     }
 
-    return vc;
-}
+    *dtdname = '\0';
 
-static int cli_validate_package_file (const char *fname,
-                                      gretlopt opt,
-                                      PRN *prn)
-{
-    char xsdpath[FILENAME_MAX];
-    xmlSchemaValidCtxtPtr validator = NULL;
-    xmlSchemaPtr schema = NULL;
-    xmlTextReaderPtr reader = NULL;
-    int err = 0;
+    if (opt & OPT_D) {
+        const char *dpath = get_optval_string(MAKEPKG, OPT_D);
 
-    xsdpath[0] = '\0';
-
-    if (opt & OPT_S) {
-        /* respond to the --schema option for building addons */
-        const char *spath = get_optval_string(MAKEPKG, OPT_S);
-
-        if (spath != NULL && *spath != '\0') {
-            strcat(xsdpath, spath);
+        if (dpath != NULL && *dpath != '\0') {
+            strcat(dtdname, dpath);
         }
     } else {
-        sprintf(xsdpath, "%sfunctions%cgretlfunc.xsd", gretl_home(), SLASH);
+        sprintf(dtdname, "%sfunctions%cgretlfunc.dtd", gretl_home(), SLASH);
     }
 
-    if (xsdpath[0] != '\0') {
-        validator = get_validation_context(xsdpath, &schema);
-    }
-    if (validator == NULL) {
-        pprintf(prn, "Couldn't get schema from %s\n", xsdpath);
-	return 1;
+    if (*dtdname != '\0') {
+        dtd = xmlParseDTD(NULL, (const xmlChar *) dtdname);
     }
 
-    reader = xmlReaderForFile(fname, NULL, 0);
-
-    if (reader == NULL) {
-	pprintf(prn, "Failed to obtain reader for file '%s'\n", fname);
-	err = 1;
+    if (dtd == NULL) {
+        pputs(prn, "Couldn't open DTD to check package\n");
     } else {
-	int xserr = 0;
-	int got = -1;
+        const char *pkgname = path_last_element(fname);
+        xmlValidCtxtPtr cvp = xmlNewValidCtxt();
 
-	xmlTextReaderSchemaValidateCtxt(reader, validator, 0);
-	xmlSchemaSetValidStructuredErrors(validator, xs_err_handler, &xserr);
-	got = xmlTextReaderRead(reader);
-	while (got == 1 && xserr == 0) {
-	    got = xmlTextReaderRead(reader);
-	}
-	if (xserr) {
-	    pprintf(prn, "%s:\n does not validate against the XML schema\n", fname);
-	    err = 1;
-	} else {
-	    pputs(prn, _("Validated successfully against the XML schema\n"));
-	}
+        if (cvp == NULL) {
+            pputs(prn, "Couldn't get an XML validation context\n");
+            xmlFreeDtd(dtd);
+            xmlFreeDoc(doc);
+            return 0;
+        }
+
+        cvp->userData = (void *) prn;
+        cvp->error    = (xmlValidityErrorFunc) pprintf2;
+        cvp->warning  = (xmlValidityWarningFunc) pprintf2;
+
+        pprintf(prn, "Checking against %s\n", dtdname);
+
+        if (!xmlValidateDtd(cvp, doc, dtd)) {
+            err = 1;
+        } else {
+            pprintf(prn, _("%s: validated against DTD OK"), pkgname);
+            pputc(prn, '\n');
+        }
+
+        xmlFreeValidCtxt(cvp);
+        xmlFreeDtd(dtd);
     }
 
-    xmlFreeTextReader(reader);
-    xmlSchemaFreeValidCtxt(validator);
-    xmlSchemaFree(schema);
+    xmlFreeDoc(doc);
 
     return err;
 }

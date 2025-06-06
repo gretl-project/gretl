@@ -2,8 +2,8 @@ set echo off
 set messages off
 
 string topsrc = "@top_srcdir@"
-string xsd = topsrc ~ "/share/functions/gretlfunc.xsd"
+string dtd = topsrc ~ "/share/functions/gretlfunc.dtd"
 string pkgdir = topsrc ~ "/addons/ivpanel"
 
 include @pkgdir/ivpanel.inp
-makepkg ivpanel.gfn --index --translations --quiet --schema="@xsd"
+makepkg ivpanel.gfn --index --translations --quiet --dtd="@dtd"

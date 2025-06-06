@@ -2,10 +2,10 @@ set echo off
 set messages off
 
 string topsrc = "@top_srcdir@"
-string xsd = topsrc ~ "/share/functions/gretlfunc.xsd"
+string dtd = topsrc ~ "/share/functions/gretlfunc.dtd"
 string pkgdir = topsrc ~ "/addons/HIP"
 
 include @pkgdir/HIP_private.inp
 include @pkgdir/HIP_public.inp
 
-makepkg HIP.gfn --index --translations --quiet --schema="@xsd"
+makepkg HIP.gfn --index --translations --quiet --dtd="@dtd"

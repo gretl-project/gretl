@@ -2,10 +2,10 @@ set echo off
 set messages off
 
 string topsrc = "@top_srcdir@"
-string xsd = topsrc ~ "/share/functions/gretlfunc.xsd"
+string dtd = topsrc ~ "/share/functions/gretlfunc.dtd"
 string pkgdir = topsrc ~ "/addons/dbnomics"
 
 include @pkgdir/dbnomics_public.inp
 
 # required translations are provided via C code
-makepkg dbnomics.gfn --index --quiet --schema="@xsd"
+makepkg dbnomics.gfn --index --quiet --dtd="@dtd"
