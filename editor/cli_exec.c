@@ -22,6 +22,62 @@
 #include "dlgutils.h"
 #include "winstack.h"
 
+/* list to accommodate builds of gretl other than the installed one */
+static GList *gretlcli_paths;
+
+static void populate_gretlcli_combo (GtkWidget *box,
+				     GList **pL,
+				     int paths)
+{
+    GList *L = *pL;
+
+    if (L == NULL) {
+        gchar *s;
+
+	if (paths) {
+	    s = g_strdup_printf("%sgretlcli", gretl_bindir());
+	} else {
+	    s = g_strdup("default");
+	}
+        *pL = g_list_prepend(*pL, s);
+
+    }
+
+    L = *pL;
+    while (L != NULL) {
+        combo_box_append_text(box, L->data);
+        L = L->next;
+    }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(box), 0);
+}
+
+static void set_gretlcli_param (GtkWidget *box, GList **pL)
+{
+    gchar *s = g_strstrip(combo_box_get_active_text(box));
+    GList *L = g_list_first(*pL);
+    int i = 0;
+
+    while (L != NULL) {
+        if (!strcmp(s, (gchar *) L->data)) {
+            if (i > 0) {
+                /* move @L to first position */
+                *pL = g_list_remove_link(*pL, L);
+                *pL = g_list_concat(L, *pL);
+            }
+            g_free(s);
+            s = NULL;
+            break;
+        }
+        i++;
+        L = L->next;
+    }
+
+    if (s != NULL) {
+        /* @s is not yet recorded in list */
+        *pL = g_list_prepend(*pL, s);
+    }
+}
+
 #ifndef G_OS_WIN32
 
 static gchar **argv_copy (gchar **argv)
@@ -40,7 +96,98 @@ static gchar **argv_copy (gchar **argv)
     return cpy;
 }
 
-#endif
+/* Accommodate different environment settings */
+
+static char *should_add_basic (const char *s, gchar **envp)
+{
+    int i, n = g_strv_length(envp);
+    int k = strlen(s);
+
+    for (i=0; i<n; i++) {
+	if (!strncmp(envp[i], s, k) && envp[i][k] == '=') {
+	    return NULL; /* present already */
+	}
+    }
+
+    return getenv(s);
+}
+
+static gchar **maybe_append_env_basics (gchar **envp)
+{
+    gchar **ret = envp;
+    gchar *sh = NULL;
+    gchar *sr = NULL;
+
+    /* We'll assume it's safer to carry these two definitions across
+       from the parent environment if they're not specified in the
+       specific-to-gretlcli env.
+    */
+    if ((sh = should_add_basic("HOME", envp)) != NULL) {
+	sh = g_strdup_printf("HOME=%s", sh);
+    }
+    if ((sr = should_add_basic("R_HOME", envp)) != NULL) {
+	sr = g_strdup_printf("R_HOME=%s", sr);
+    }
+
+    if (sh != NULL || sr != NULL) {
+	int n = g_strv_length(envp);
+	int m = n + 1 + (sh != NULL) + (sr != NULL);
+
+	ret = g_realloc(envp, m * sizeof *ret);
+	if (sh != NULL) {
+	    ret[n++] = sh;
+	}
+	if (sr != NULL) {
+	    ret[n++] = sr;
+	}
+	ret[n] = NULL;
+    }
+
+    return ret;
+}
+
+static GList *gretlcli_envs;
+
+static gchar **get_cli_env (void)
+{
+    gchar **ret = NULL;
+
+    if (gretlcli_envs != NULL) {
+        GList *L = g_list_first(gretlcli_envs);
+	gchar *s = L->data;
+
+	if (s != NULL && *s != '\0' && strcmp(s, "default")) {
+	    ret = g_strsplit(s, " ", -1);
+	    if (ret != NULL) {
+		ret = maybe_append_env_basics(ret);
+	    }
+	}
+    }
+
+    return ret;
+}
+
+/* For settings.c: populate a combo box with "default" plus any other
+   set of environment variable settings specified in the current
+   session, with the most recently used value in first position.
+*/
+
+void populate_gretlcli_env_combo (GtkWidget *box)
+{
+    populate_gretlcli_combo(box, &gretlcli_envs, 0);
+}
+
+/* Called from settings.c: put whatever gretlcli env was selected, via
+   the Editor tab under Preferences/General, into first position in
+   @gretlcli_envs.
+*/
+
+void set_gretlcli_env (GtkWidget *box)
+{
+    set_gretlcli_param(box, &gretlcli_envs);
+}
+
+#endif /* !G_OS_WIN32 */
 
 /* switch between EXEC and STOP icons */
 
@@ -411,38 +558,6 @@ static void run_script_async (gchar *cmd,
     g_task_run_in_thread(task, exec_script_thread);
 }
 
-/* list to accommodate builds of gretl other than the installed one */
-static GList *gretlcli_paths;
-
-/* and to accommodate different environment settings */
-static GList *gretlcli_envs;
-
-static void populate_gretlcli_combo (GtkWidget *box,
-				     GList **pL,
-				     int paths)
-{
-    GList *L = *pL;
-
-    if (L == NULL) {
-        gchar *s;
-
-	if (paths) {
-	    s = g_strdup_printf("%sgretlcli", gretl_bindir());
-	} else {
-	    s = g_strdup("default");
-	}
-        *pL = g_list_prepend(*pL, s);
-
-    }
-
-    L = *pL;
-    while (L != NULL) {
-        combo_box_append_text(box, L->data);
-        L = L->next;
-    }
-    gtk_combo_box_set_active(GTK_COMBO_BOX(box), 0);
-}
-
 /* For the benefit of settings.c: populate a combo box with
    the installed gretlcli path plus any others specified in
    the current session, with the most recently used path
@@ -454,43 +569,7 @@ void populate_gretlcli_path_combo (GtkWidget *box)
     populate_gretlcli_combo(box, &gretlcli_paths, 1);
 }
 
-/* Also for settings.c: populate a combo box with "default"
-   plus any other set of environment variable settings
-   specified in the current session, with the most recently
-   used value in first position.
-*/
 
-void populate_gretlcli_env_combo (GtkWidget *box)
-{
-    populate_gretlcli_combo(box, &gretlcli_envs, 0);
-}
-
-static void set_gretlcli_param (GtkWidget *box, GList **pL)
-{
-    gchar *s = g_strstrip(combo_box_get_active_text(box));
-    GList *L = g_list_first(*pL);
-    int i = 0;
-
-    while (L != NULL) {
-        if (!strcmp(s, (gchar *) L->data)) {
-            if (i > 0) {
-                /* move @L to first position */
-                *pL = g_list_remove_link(*pL, L);
-                *pL = g_list_concat(L, *pL);
-            }
-            g_free(s);
-            s = NULL;
-            break;
-        }
-        i++;
-        L = L->next;
-    }
-
-    if (s != NULL) {
-        /* @s is not yet recorded in list */
-        *pL = g_list_prepend(*pL, s);
-    }
-}
 
 /* Called from settings.c: put whatever gretlcli path was
    selected, via the Editor tab under Preferences/General,
@@ -500,16 +579,6 @@ static void set_gretlcli_param (GtkWidget *box, GList **pL)
 void set_gretlcli_path (GtkWidget *box)
 {
     set_gretlcli_param(box, &gretlcli_paths);
-}
-
-/* Called from settings.c: put whatever gretlcli env was
-   selected, via the Editor tab under Preferences/General,
-   into first position in @gretlcli_envs.
-*/
-
-void set_gretlcli_env (GtkWidget *box)
-{
-    set_gretlcli_param(box, &gretlcli_envs);
 }
 
 static gchar *get_cli_path (void)
@@ -523,79 +592,14 @@ static gchar *get_cli_path (void)
     }
 }
 
-static char *should_add_basic (const char *s, gchar **envp)
-{
-    int i, n = g_strv_length(envp);
-    int k = strlen(s);
-
-    for (i=0; i<n; i++) {
-	if (!strncmp(envp[i], s, k) && envp[i][k] == '=') {
-	    return NULL; /* present already */
-	}
-    }
-
-    return getenv(s);
-}
-
-static gchar **maybe_append_env_basics (gchar **envp)
-{
-    gchar **ret = envp;
-    gchar *sh = NULL;
-    gchar *sr = NULL;
-
-    /* We'll assume it's safer to carry these two definitions across
-       from the parent environment if they're not specified in the
-       specific-to-gretlcli env.
-    */
-    if ((sh = should_add_basic("HOME", envp)) != NULL) {
-	sh = g_strdup_printf("HOME=%s", sh);
-    }
-    if ((sr = should_add_basic("R_HOME", envp)) != NULL) {
-	sr = g_strdup_printf("R_HOME=%s", sr);
-    }
-
-    if (sh != NULL || sr != NULL) {
-	int n = g_strv_length(envp);
-	int m = n + 1 + (sh != NULL) + (sr != NULL);
-
-	ret = g_realloc(envp, m * sizeof *ret);
-	if (sh != NULL) {
-	    ret[n++] = sh;
-	}
-	if (sr != NULL) {
-	    ret[n++] = sr;
-	}
-	ret[n] = NULL;
-    }
-
-    return ret;
-}
-
-static gchar **get_cli_env (void)
-{
-    gchar **ret = NULL;
-
-    if (gretlcli_envs != NULL) {
-        GList *L = g_list_first(gretlcli_envs);
-	gchar *s = L->data;
-
-	if (s != NULL && *s != '\0' && strcmp(s, "default")) {
-	    ret = g_strsplit(s, " ", -1);
-	    if (ret != NULL) {
-		ret = maybe_append_env_basics(ret);
-	    }
-	}
-    }
-
-    return ret;
-}
-
 static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 {
     gchar *inpname = gretl_make_dotpath("cli_XXXXXX.inp");
     FILE *fp = gretl_mktemp(inpname, "wb");
     gchar *clipath = get_cli_path();
+#ifndef G_OS_WIN32
     gchar **envp = get_cli_env();
+#endif
     int err = 0;
 
     if (fp == NULL) {

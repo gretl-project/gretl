@@ -1178,6 +1178,51 @@ static MODEL LM_add_test (MODEL *pmod, DATASET *dset, int *list,
     return aux;
 }
 
+/* Process the --auto option to the "add" or "omit" command. We should
+   have either the standard abbreviation for one of the Information
+   Criteria, or an alpha value.
+*/
+
+static int process_stepwise_option (int ci,
+                                    MODEL *orig,
+                                    int *crit,
+                                    double *alpha)
+{
+    const char *cstrs[] = {
+        "AIC", "BIC", "HQC"
+    };
+    const char *s = get_optval_string(ci, OPT_A);
+    int i, err = 0;
+
+    if (ci == OMIT && s == NULL) {
+        /* omit: the --auto parameter is optional */
+        *alpha = 0.10;
+        return 0;
+    }
+
+    for (i=0; i<3; i++) {
+        if (!strcmp(s, cstrs[i])) {
+            if (orig->ci != OLS) {
+                return E_NOTIMP;
+            } else {
+                *crit = i;
+            }
+        }
+    }
+
+    if (*crit < 0) {
+        /* not yet determined */
+        *alpha = gretl_double_from_string(s, &err);
+        if (!err && (*alpha < 0.001 || *alpha > 0.99)) {
+            err = E_INVARG;
+        } else {
+            *crit = C_MAX;
+        }
+    }
+
+    return err;
+}
+
 /**
  * add_test_full:
  * @orig: pointer to original model.
@@ -1204,7 +1249,9 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
     int save_t2 = dset->t2;
     int *biglist = NULL;
     const int orig_nvar = dset->v;
+    double alpha = 0;
     int n_add = 0;
+    int crit = -1;
     int err = 0;
 
     if (orig == NULL || orig->list == NULL || addvars == NULL) {
@@ -1246,8 +1293,11 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 	return err;
     }
 
-    if (!(opt & OPT_A)) {
-        /* create augmented regression list, unless --auto (stepwise) */
+    if (opt & OPT_A) {
+        /* check the --auto option */
+        err = process_stepwise_option(ADD, orig, &crit, &alpha);
+    } else {
+        /* create augmented regression list */
         if (orig->ci == IVREG) {
             biglist = ivreg_list_add(orig->list, addvars, opt, &err);
         } else if (orig->ci == DPANEL) {
@@ -1268,14 +1318,15 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 
     if (opt & OPT_A) {
         /* Do stepwise augmentation of the original model */
-        MODEL (*stepwise_add) (MODEL *, const int *, DATASET *,
-                               gretlopt, PRN *);
+        MODEL (*stepwise_add) (MODEL *, const int *, int, double,
+                               DATASET *, gretlopt, PRN *);
 
         stepwise_add = get_plugin_function("stepwise_add");
         if (stepwise_add == NULL) {
             err = E_FOPEN;
         } else {
-            umod = stepwise_add(orig, addvars, dset, opt, prn);
+            umod = stepwise_add(orig, addvars, crit, alpha,
+                                dset, opt, prn);
         }
     } else if (opt & OPT_L) {
 	/* run an LM test */
@@ -1492,11 +1543,10 @@ static void list_copy_values (int *targ, const int *src)
 */
 
 static MODEL auto_omit (MODEL *orig, const int *omitlist,
-			DATASET *dset, gretlopt opt,
-			PRN *prn)
+			double amax, DATASET *dset,
+                        gretlopt opt, PRN *prn)
 {
     MODEL omod;
-    double amax;
     int *tmplist;
     int allgone = 0;
     int i, drop;
@@ -1508,16 +1558,6 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
     if (tmplist == NULL) {
 	omod.errcode = E_ALLOC;
 	return omod;
-    }
-
-    amax = get_optval_double(OMIT, OPT_A, &err);
-    if (err) {
-	omod.errcode = err;
-	return omod;
-    }
-
-    if (na(amax) || amax <= 0.0 || amax >= 1.0) {
-	amax = 0.10;
     }
 
     drop = auto_drop_var(orig, tmplist, omitlist, dset, amax,
@@ -1637,6 +1677,8 @@ static int omit_test_precheck (MODEL *pmod, gretlopt opt)
     return err;
 }
 
+#define is_info_crit(c) (c == C_AIC || c == C_BIC || c == C_HQC)
+
 /**
  * omit_test_full:
  * @orig: pointer to original model.
@@ -1664,6 +1706,8 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
     int *tmplist = NULL;
+    double alpha = 0;
+    int crit = -1;
     int err;
 
     err = omit_test_precheck(orig, opt);
@@ -1676,13 +1720,16 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
 	return err;
     }
 
-    if (!(opt & OPT_A)) {
-	/* not doing auto-omit */
+    if (opt & OPT_A) {
+        /* doing auto-omit */
+        err = process_stepwise_option(OMIT, orig, &crit, &alpha);
+    } else {
 	err = make_short_list(orig, omitvars, opt, &tmplist);
-	if (err) {
-	    free(tmplist);
-	    return err;
-	}
+    }
+
+    if (err) {
+        free(tmplist);
+        return err;
     }
 
     /* impose the sample range used for the original model */
@@ -1692,8 +1739,19 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
        on the original model */
     set_reference_missmask_from_model(orig);
 
-    if (opt & OPT_A) {
-	rmod = auto_omit(orig, omitvars, dset, opt, prn);
+    if ((opt & OPT_A) && is_info_crit(crit)) {
+        MODEL (*stepwise_omit) (MODEL *, const int *, int, DATASET *,
+                               gretlopt, PRN *);
+
+        stepwise_omit = get_plugin_function("stepwise_omit");
+        if (stepwise_omit == NULL) {
+            err = E_FOPEN;
+        } else {
+            rmod = stepwise_omit(orig, omitvars, crit,
+                                 dset, opt, prn);
+        }
+    } else if (opt & OPT_A) {
+	rmod = auto_omit(orig, omitvars, alpha, dset, opt, prn);
     } else {
 	gretlopt ropt = OPT_NONE;
 

@@ -2492,6 +2492,9 @@ int gretl_set_path_by_name (const char *name, const char *path)
     } else if (!strcmp(name, "gretldir")) {
         targ = paths.gretldir;
         builtin = 1;
+    } else if (!strcmp(name, "dotdir")) {
+        targ = paths.dotdir;
+        builtin = 1;
     } else if (!strcmp(name, "gnuplot")) {
         targ = paths.gnuplot;
         builtin = 1;

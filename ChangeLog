@@ -1,4 +1,7 @@
-version 2025b, in progress
+version 2025c, in progress
+- "omit" command: start augmenting the --auto option
+
+2025-06-05 version 2025b
 - gretlcli: add --no-plots option to suppress plots
 - "add" command: add an --auto option for forward stepwise
   regession via QR algorithm
@@ -29,7 +32,7 @@ version 2025b, in progress
   pop-up context menu for single series
 - regls addon: miscellaneous small fixes and tweaks
 - cleanup: delete the long-deprecated eigengen() function
-- start work on a gretl package for Windows ARM64
+- Windows: add a gretl package for Windows on ARM64
 - macOS: drop the "Calculator" button in the main window
   toolbar, since this stopped working as a result of
   recent security updates; also drop usage of otool by

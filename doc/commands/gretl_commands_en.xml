@@ -55,7 +55,7 @@
 	<repl>varlist</repl>, and a Wald test is carried out on the
 	augmented model. The augmented model replaces the original as
 	the <quote>last model</quote> for the purposes of, for
-	example, retrieving the residuals as <lit>$uhat</lit> or doing
+	example, retrieving the residuals as <fncref targ="$uhat"/> or doing
 	further tests. The results of the Wald test may be retrieved
 	using the accessors <fncref targ="$test"/> and <fncref
 	targ="$pvalue"/>.
