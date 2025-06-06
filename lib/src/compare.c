@@ -1693,7 +1693,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
     set_reference_missmask_from_model(orig);
 
     if (opt & OPT_A) {
-#if 0 /* not yet */
+#if 1 /* not yet */
         /* Do stepwise reduction of the original model */
         MODEL (*stepwise_omit) (MODEL *, const int *, DATASET *,
                                gretlopt, PRN *);

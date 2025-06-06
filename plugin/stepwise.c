@@ -242,9 +242,13 @@ static const char *cstrs[] = {
     "SSR", "AIC", "BIC", "HQC"
 };
 
-static const char *crit_string (int crit)
+static const char *crit_string (int ci, int crit)
 {
-    return cstrs[crit-1];
+    if (ci == OMIT && crit == 1) {
+        return "P-value";
+    } else {
+        return cstrs[crit-1];
+    }
 }
 
 int *forward_stepwise (MODEL *pmod,
@@ -309,7 +313,7 @@ int *forward_stepwise (MODEL *pmod,
     gretl_matrix_QR_decomp(Q, R);
     aux = gretl_list_copy(zlist);
     nz = zlist[0];
-    cstr = crit_string(crit);
+    cstr = crit_string(ADD, crit);
     qr_wspace_alloc(&mm, Q->rows, nz);
 
     if (verbose) {
@@ -389,8 +393,8 @@ static int tval_min_pos (const double *b,
                          const double *se,
                          const int *xlist,
                          const int *zlist,
-                         int ifc, int k,
-                         double *ptmin)
+                         int ifc, int T, int k,
+                         double *pval)
 {
     double tval, tmin = 1.0e200;
     int i, vi, ret = 0;
@@ -410,7 +414,9 @@ static int tval_min_pos (const double *b,
         }
     }
 
-    *ptmin = tmin;
+    if (pval != NULL) {
+        *pval = student_pvalue_2(T - k, tmin);
+    }
 
     return ret;
 }
@@ -434,7 +440,7 @@ int *backward_stepwise (MODEL *pmod,
     int *xlist = NULL;
     double *se = NULL;
     double cur, prev;
-    double ssr, tmin;
+    double ssr, pval;
     double s2;
     int ifc = pmod->ifc;
     int T = pmod->nobs;
@@ -450,10 +456,10 @@ int *backward_stepwise (MODEL *pmod,
     prev = ssr2crit(pmod->ess, T, k, crit);
     xlist = gretl_model_get_x_list(pmod);
     trycol = tval_min_pos(pmod->coeff, pmod->sderr,
-                          xlist, zlist, ifc, k, &tmin);
-    if (crit == SSR && student_pvalue_2(T-k, tmin) < alpha) {
+                          xlist, zlist, ifc, T, k, &pval);
+    if (crit == SSR && pval < alpha) {
         printf("Nothing to be dropped\n");
-        return 0;
+        return NULL;
     }
 
     k--;
@@ -465,7 +471,7 @@ int *backward_stepwise (MODEL *pmod,
 
     dropped = 0;
     nz = zlist != NULL ? zlist[0] : xlist[0] - ifc;
-    cstr = crit_string(crit);
+    cstr = crit_string(OMIT, crit);
 
     while (!conv && dropped < nz) {
         delvar = xlist[trycol+1];
@@ -478,19 +484,12 @@ int *backward_stepwise (MODEL *pmod,
             break;
         }
         ssr = (T - k) * s2;
-        cur = ssr2crit(ssr, T, k, crit);
-
-        if (0 /* crit == SSR */) {
-            double parm[1] = {1.0};
-            double Xcrit = gretl_get_cdf_inverse(D_CHISQ, parm, 1.0 - alpha);
-            double W = T * (cur/prev - 1.0);
-
-            fprintf(stderr, "HERE prev %g, cur %g, W %g\n", prev, cur, W);
-
-            conv = W < Xcrit;
-        } else {
+        if (crit > SSR) {
             /* AIC, etc. */
+            cur = ssr2crit(ssr, T, k, crit);
             conv = cur > prev;
+        } else {
+            cur = pval;
         }
         if (verbose) {
             if (conv && dropped < nz) {
@@ -506,8 +505,8 @@ int *backward_stepwise (MODEL *pmod,
                 se[i] = sqrt(gretl_matrix_get(V, i, i));
             }
             gretl_list_delete_at_pos(xlist, trycol+1);
-            trycol = tval_min_pos(b->val, se, xlist, zlist, ifc, k, &tmin);
-            if (crit == SSR && student_pvalue_2(T-k, tmin) < alpha) {
+            trycol = tval_min_pos(b->val, se, xlist, zlist, ifc, T, k, &pval);
+            if (crit == SSR && pval < alpha) {
                 conv = 1;
             }
             dropped++;
