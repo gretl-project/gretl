@@ -7883,13 +7883,14 @@ static int read_param_option (char **ps, fn_param *param)
 
 static int read_param_descrip (char **ps, fn_param *param)
 {
-    char *p = *ps + 1; /* skip opening quote */
+    int offset = 1;
+    char *p = *ps + offset;
     int len = 0;
     int err = E_PARSE;
 
     while (*p) {
         if (*p == '"') {
-            /* OK, found closing quote */
+            /* found closing quote */
             err = 0;
             break;
         }
@@ -7898,7 +7899,7 @@ static int read_param_descrip (char **ps, fn_param *param)
     }
 
     if (!err && len > 0) {
-        p = *ps + 1;
+        p = *ps + offset;
         param->descrip = gretl_strndup(p, len);
         if (param->descrip == NULL) {
             err = E_ALLOC;
@@ -7909,15 +7910,19 @@ static int read_param_descrip (char **ps, fn_param *param)
 
     return err;
 }
-
-/* get the value labels for a function parameter */
+/* Get the value labels for a function parameter. The syntactic
+   element we're looking at starts with "{".
+*/
 
 static int read_param_labels (char **ps, fn_param *param,
                               const char *name, int nvals)
 {
-    char *p = *ps + 1; /* skip opening '{' */
+    char *p = *ps;
+    int offset = 1;
     int len = 0;
     int err = E_PARSE;
+
+    p += offset;
 
     while (*p) {
         if (*p == '}') {
@@ -7932,7 +7937,7 @@ static int read_param_labels (char **ps, fn_param *param,
     if (!err && len > 0) {
         char *tmp;
 
-        p = *ps + 1;
+        p = *ps + offset;
         tmp = gretl_strndup(p, len);
 
         if (tmp == NULL) {
