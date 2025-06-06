@@ -23,7 +23,7 @@
 #include "version.h"
 #include "matrix_extra.h"
 
-enum {SSR = 1, AIC, BIC, HQC};
+#define C_SSR C_MAX
 
 /* qr_wspace: workspace matrices whose row dimension will remain
    unchanged but whose column dimension @zc will shrink on each call
@@ -96,13 +96,13 @@ static double get_info_crit (double ssr, int T, int k, int crit)
     double l1 = log(2*M_PI);
     double ll, C0 = 0;
 
-    if (crit == BIC) {
+    if (crit == C_BIC) {
         C0 = k * log((double) T);
-    } else if (crit == HQC) {
+    } else if (crit == C_HQC) {
         C0 = 2 * k * log(log((double) T));
     }
     ll = -0.5 * T * (l1 + log(ssr/T) + 1);
-    if (crit == AIC) {
+    if (crit == C_AIC) {
         return 2.0 * (k - ll);
     } else {
         return C0 - 2 * ll;
@@ -118,7 +118,7 @@ static double best_ssr2crit (int *best,
 
     *best = 0;
 
-    /* check SSR first */
+    /* find minimum SSR first */
     for (j=0; j<n; j++) {
         if (ssr->val[j] < ssr_min) {
             *best = j;
@@ -126,7 +126,7 @@ static double best_ssr2crit (int *best,
         }
     }
 
-    if (crit == SSR) {
+    if (crit == C_SSR) {
         return ssr_min;
     } else {
         return get_info_crit(ssr_min, T, k, crit);
@@ -135,7 +135,7 @@ static double best_ssr2crit (int *best,
 
 static double ssr2crit (double ssr, int T, int k, int crit)
 {
-    if (crit == SSR) {
+    if (crit == C_SSR) {
         return ssr;
     } else {
         return get_info_crit(ssr, T, k, crit);
@@ -239,16 +239,12 @@ static int qr_update (gretl_matrix *Q,
 }
 
 static const char *cstrs[] = {
-    "SSR", "AIC", "BIC", "HQC"
+    "AIC", "BIC", "HQC", "SSR"
 };
 
-static const char *crit_string (int ci, int crit)
+static const char *crit_string (int crit)
 {
-    if (ci == OMIT && crit == 1) {
-        return "P-value";
-    } else {
-        return cstrs[crit-1];
-    }
+    return cstrs[crit];
 }
 
 int *forward_stepwise (MODEL *pmod,
@@ -313,7 +309,7 @@ int *forward_stepwise (MODEL *pmod,
     gretl_matrix_QR_decomp(Q, R);
     aux = gretl_list_copy(zlist);
     nz = zlist[0];
-    cstr = crit_string(ADD, crit);
+    cstr = crit_string(crit);
     qr_wspace_alloc(&mm, Q->rows, nz);
 
     if (verbose) {
@@ -338,7 +334,7 @@ int *forward_stepwise (MODEL *pmod,
                                   e, GRETL_MOD_DECREMENT);
         gretl_matrix_free(tmp);
 
-        if (crit == SSR) {
+        if (crit == C_SSR) {
             double parm[1] = {1.0};
             double Xcrit = gretl_get_cdf_inverse(D_CHISQ, parm, 1.0 - alpha);
             double W = T * (prev/cur - 1.0);
@@ -393,8 +389,7 @@ static int tval_min_pos (const double *b,
                          const double *se,
                          const int *xlist,
                          const int *zlist,
-                         int ifc, int T, int k,
-                         double *pval)
+                         int ifc, int k)
 {
     double tval, tmin = 1.0e200;
     int i, vi, ret = 0;
@@ -414,10 +409,6 @@ static int tval_min_pos (const double *b,
         }
     }
 
-    if (pval != NULL) {
-        *pval = student_pvalue_2(T - k, tmin);
-    }
-
     return ret;
 }
 
@@ -425,7 +416,6 @@ int *backward_stepwise (MODEL *pmod,
                         const int *zlist,
                         DATASET *dset,
                         int crit,
-                        double alpha,
                         int verbose,
                         int addlen,
                         int namelen,
@@ -440,7 +430,7 @@ int *backward_stepwise (MODEL *pmod,
     int *xlist = NULL;
     double *se = NULL;
     double cur, prev;
-    double ssr, pval;
+    double ssr;
     double s2;
     int ifc = pmod->ifc;
     int T = pmod->nobs;
@@ -450,17 +440,13 @@ int *backward_stepwise (MODEL *pmod,
     int yvar = pmod->list[1];
     int conv = 0;
     int trycol, delvar;
-    int nz, dropped;
+    int nz, dropped = 0;
     int i;
 
     prev = ssr2crit(pmod->ess, T, k, crit);
     xlist = gretl_model_get_x_list(pmod);
     trycol = tval_min_pos(pmod->coeff, pmod->sderr,
-                          xlist, zlist, ifc, T, k, &pval);
-    if (crit == SSR && pval < alpha) {
-        printf("Nothing to be dropped\n");
-        return NULL;
-    }
+                          xlist, zlist, ifc, k);
 
     k--;
     y = gretl_vector_from_series(dset->Z[yvar], t1, t2);
@@ -469,9 +455,8 @@ int *backward_stepwise (MODEL *pmod,
     V = gretl_matrix_alloc(k, k);
     se = malloc(k * sizeof *se);
 
-    dropped = 0;
     nz = zlist != NULL ? zlist[0] : xlist[0] - ifc;
-    cstr = crit_string(OMIT, crit);
+    cstr = crit_string(crit);
 
     while (!conv && dropped < nz) {
         delvar = xlist[trycol+1];
@@ -484,13 +469,8 @@ int *backward_stepwise (MODEL *pmod,
             break;
         }
         ssr = (T - k) * s2;
-        if (crit > SSR) {
-            /* AIC, etc. */
-            cur = ssr2crit(ssr, T, k, crit);
-            conv = cur > prev;
-        } else {
-            cur = pval;
-        }
+        cur = ssr2crit(ssr, T, k, crit);
+        conv = cur > prev;
         if (verbose) {
             if (conv && dropped < nz) {
                 pprintf(prn, "[%-*s %s = %#g]\n", namelen + addlen,
@@ -505,10 +485,7 @@ int *backward_stepwise (MODEL *pmod,
                 se[i] = sqrt(gretl_matrix_get(V, i, i));
             }
             gretl_list_delete_at_pos(xlist, trycol+1);
-            trycol = tval_min_pos(b->val, se, xlist, zlist, ifc, T, k, &pval);
-            if (crit == SSR && pval < alpha) {
-                conv = 1;
-            }
+            trycol = tval_min_pos(b->val, se, xlist, zlist, ifc, k);
             dropped++;
             prev = cur;
         }
@@ -520,6 +497,9 @@ int *backward_stepwise (MODEL *pmod,
     gretl_matrix_free(V);
     free(se);
 
+    if (!*err && dropped == 0) {
+        *err = E_NOOMIT;
+    }
     if (*err) {
         free(xlist);
         xlist = NULL;
@@ -590,45 +570,6 @@ static int backward_stepwise_check_zlist (MODEL *pmod,
     return 0;
 }
 
-/* Process the --auto option to the "add" command. We should have
-   either the standard abbreviation for one of the Information
-   Criteria, or an alpha value for use with the SSR criterion.
-*/
-
-static int process_stepwise_option (int ci,
-                                    gretlopt opt,
-                                    int *crit,
-                                    double *alpha)
-{
-    const char *s = get_optval_string(ci, OPT_A);
-    int i, err = 0;
-
-    if (ci == OMIT && s == NULL) {
-        /* omit: the --auto parameter is optional */
-        *alpha = 0.10;
-        return 0;
-    }
-
-    for (i=1; i<4; i++) {
-        /* AIC, BIC or HQC */
-        if (!strcmp(s, cstrs[i])) {
-            *crit = i + 1;
-        }
-    }
-
-    if (*crit == 0) {
-        /* not yet determined */
-        *alpha = gretl_double_from_string(s, &err);
-        if (!err && (*alpha < 0.001 || *alpha > 0.99)) {
-            err = E_INVARG;
-        } else {
-            *crit = SSR;
-        }
-    }
-
-    return err;
-}
-
 /* Compose the final OLS list based on the original model plus the
    input @zlist and the @best list of added regressors.
 */
@@ -685,23 +626,19 @@ static void do_overall_test (MODEL *orig, MODEL *revised)
 
 MODEL stepwise_add (MODEL *pmod,
                     const int *zlist,
+                    int crit,
+                    double alpha,
                     DATASET *dset,
                     gretlopt opt,
                     PRN *prn)
 {
     MODEL model;
     int *best = NULL;
-    int crit = 0;
     int ols_done = 0;
     int namelen = 0;
-    double alpha = 0;
     int err;
 
     err = forward_stepwise_check_zlist(pmod, zlist, dset, &namelen);
-
-    if (!err) {
-        err = process_stepwise_option(ADD, opt, &crit, &alpha);
-    }
 
     if (!err) {
         int verbose = (opt & OPT_Q)? 0 : 1;
@@ -746,29 +683,24 @@ MODEL stepwise_add (MODEL *pmod,
 
 MODEL stepwise_omit (MODEL *pmod,
                      const int *zlist,
+                     int crit,
                      DATASET *dset,
                      gretlopt opt,
                      PRN *prn)
 {
     MODEL model;
     int *xlist = NULL;
-    int crit = 0;
     int ols_done = 0;
     int namelen = 0;
-    double alpha = 0;
     int err;
 
     err = backward_stepwise_check_zlist(pmod, zlist, dset, &namelen);
 
     if (!err) {
-        err = process_stepwise_option(OMIT, opt, &crit, &alpha);
-    }
-
-    if (!err) {
         int verbose = (opt & OPT_Q)? 0 : 1;
         int addlen = verbose ? g_utf8_strlen(_("Drop"), -1) : 0;
 
-        xlist = backward_stepwise(pmod, zlist, dset, crit, alpha,
+        xlist = backward_stepwise(pmod, zlist, dset, crit,
                                   verbose, addlen, namelen + 2,
                                   prn, &err);
     }
