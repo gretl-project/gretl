@@ -252,6 +252,7 @@ struct plugin_function_info plugin_functions[] = {
     { "biprobit_adjust_vcv", P_BIPROBIT },
     { "reprobit_estimate", P_REPROBIT },
     { "stepwise_add",      P_STEPWISE },
+    { "stepwise_omit",     P_STEPWISE },
 
     /* Dickey-Fuller test p-values */
     { "mackinnon_pvalue",  P_URCDIST },

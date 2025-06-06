@@ -1693,7 +1693,20 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
     set_reference_missmask_from_model(orig);
 
     if (opt & OPT_A) {
+#if 0 /* not yet */
+        /* Do stepwise reduction of the original model */
+        MODEL (*stepwise_omit) (MODEL *, const int *, DATASET *,
+                               gretlopt, PRN *);
+
+        stepwise_omit = get_plugin_function("stepwise_omit");
+        if (stepwise_omit == NULL) {
+            err = E_FOPEN;
+        } else {
+            rmod = stepwise_omit(orig, omitvars, dset, opt, prn);
+        }
+#else
 	rmod = auto_omit(orig, omitvars, dset, opt, prn);
+#endif
     } else {
 	gretlopt ropt = OPT_NONE;
 
