@@ -145,6 +145,14 @@ enum {
     REGLS_FTYPE
 };
 
+enum {
+    OMIT_B3,
+    OMIT_ALPHA,
+    OMIT_B4,
+    OMIT_IC,
+    OMIT_SEL
+};
+
 #define EXTRA_LAGS (N_EXTRA - 1)
 
 #define VNAME_WIDTH 18
@@ -3657,17 +3665,30 @@ static void read_logistic_extras (selector *sr)
     }
 }
 
-static void read_omit_cutoff (selector *sr)
+static void read_omit_auto_param (selector *sr)
 {
-    if (sr->extra[0] != NULL && gtk_widget_is_sensitive(sr->extra[0])) {
-        double val, orig;
-        int err = 0;
+    GtkWidget *w = sr->extra[OMIT_ALPHA];
+    int err = 0;
 
-        orig = get_optval_double(OMIT, OPT_A, &err);
-        val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(sr->extra[0]));
+    if (w != NULL && gtk_widget_is_sensitive(w)) {
+        double val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
+        double orig = get_optval_double(OMIT, OPT_A, &err);
+
         if (val != orig) {
             set_optval_double(OMIT, OPT_A, val);
         }
+        return;
+    }
+
+    w = sr->extra[OMIT_IC];
+    if (w != NULL && gtk_widget_is_sensitive(w)) {
+        gchar *val = combo_box_get_active_text(w);
+        const char *orig = get_optval_string(OMIT, OPT_A);
+
+        if (orig == NULL || strcmp(orig, val)) {
+            set_optval_string(OMIT, OPT_A, val);
+        }
+        g_free(val);
     }
 }
 
@@ -3851,7 +3872,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
         read_ellipse_alpha(sr);
         return;
     } else if (sr->ci == OMIT) {
-        read_omit_cutoff(sr);
+        read_omit_auto_param(sr);
         return;
     } else if (sr->ci == ADD) {
         read_add_auto_param(sr);
@@ -6830,15 +6851,23 @@ static void auto_omit_callback (GtkWidget *w, selector *sr)
     gboolean s = button_is_active(w);
     gboolean arrows = !s;
 
-    if (sr->extra[0] != NULL) {
-        gtk_widget_set_sensitive(sr->extra[0], s);
+    if (w == sr->extra[OMIT_B3]) {
+        /* the p-value criterion button */
+        gtk_widget_set_sensitive(sr->extra[OMIT_ALPHA], s);
+        if (sr->extra[OMIT_IC] != NULL) {
+            gtk_widget_set_sensitive(sr->extra[OMIT_IC], !s);
+        }
+    } else {
+        /* B4: the info criterion button */
+        gtk_widget_set_sensitive(sr->extra[OMIT_IC], s);
+        gtk_widget_set_sensitive(sr->extra[OMIT_ALPHA], !s);
     }
 
-    if (sr->extra[1] != NULL) {
-        if (button_is_active(sr->extra[1])) {
+    if (sr->extra[OMIT_SEL] != NULL) {
+        if (button_is_active(sr->extra[OMIT_SEL])) {
             arrows = TRUE;
         }
-        gtk_widget_set_sensitive(sr->extra[1], s);
+        gtk_widget_set_sensitive(sr->extra[OMIT_SEL], s);
     }
 
     if (sr->lvars != NULL) {
@@ -6918,9 +6947,10 @@ static void build_add_test_radios (selector *sr)
 static void build_omit_test_radios (selector *sr)
 {
     windata_t *vwin = (windata_t *) sr->data;
-    GtkWidget *b1, *b2, *b3;
+    GtkWidget *b1, *b2, *b3, *b4;
     GSList *group;
     int auto_ok = 0;
+    int ic_ok = 0;
 
     vbox_add_vwedge(sr->vbox);
 
@@ -6936,24 +6966,46 @@ static void build_omit_test_radios (selector *sr)
 
         if (pmod != NULL) {
             auto_ok = (pmod->ci != PANEL);
+            ic_ok = (pmod->ci == OLS);
         }
     }
 
     if (auto_ok) {
+        GtkWidget *label = gtk_label_new(_("Or stepwise elimination"));
+        GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+        GtkWidget *aspin, *combo, *chk;
+
+        vbox_add_vwedge(sr->vbox);
+        gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
+        gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+
         group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b2));
-        b3 = gtk_radio_button_new_with_label(group, _("Sequential elimination of variables\n"
-                                                      "using two-sided p-value:"));
-        g_signal_connect(G_OBJECT(b3), "toggled",
-                         G_CALLBACK(auto_omit_callback), sr);
+        b3 = gtk_radio_button_new_with_label(group, _("using two-sided p-value:"));
+        sr->extra[OMIT_B3] = b3;
+        g_signal_connect(G_OBJECT(b3), "toggled", G_CALLBACK(auto_omit_callback), sr);
+        sr->extra[OMIT_ALPHA] = aspin = alpha_spin(0.10, 0.01);
+        pack_switch_with_extra(b3, sr, FALSE, OPT_A, 0, aspin, NULL);
+        gtk_widget_set_sensitive(aspin, FALSE);
 
-        sr->extra[0] = alpha_spin(0.10, 0.01);
-        pack_switch_with_extra(b3, sr, FALSE, OPT_A, 0, sr->extra[0], NULL);
-        gtk_widget_set_sensitive(sr->extra[0], FALSE);
+        if (ic_ok) {
+            group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b3));
+            b4 = gtk_radio_button_new_with_label(group, _("using information criterion: "));
+            sr->extra[OMIT_B4] = b4;
+            g_signal_connect(G_OBJECT(b4), "toggled", G_CALLBACK(auto_omit_callback), sr);
+            sr->extra[OMIT_IC] = combo = gtk_combo_box_text_new();
+            combo_box_append_text(combo, "AIC");
+            combo_box_append_text(combo, "BIC");
+            combo_box_append_text(combo, "HQC");
+            gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+            pack_switch_with_extra(b4, sr, FALSE, OPT_A, 0, combo, NULL);
+            gtk_widget_set_sensitive(combo, FALSE);
+        }
 
-        sr->extra[1] = gtk_check_button_new_with_label(_("Test only selected variables"));
-        pack_switch(sr->extra[1], sr, FALSE, FALSE, OPT_NONE, 1);
-        gtk_widget_set_sensitive(sr->extra[1], FALSE);
-        g_signal_connect(G_OBJECT(sr->extra[1]), "toggled",
+        chk = gtk_check_button_new_with_label(_("Test only selected variables"));
+        sr->extra[OMIT_SEL] = chk;
+        pack_switch(chk, sr, FALSE, FALSE, OPT_NONE, 0);
+        gtk_widget_set_sensitive(chk, FALSE);
+        g_signal_connect(G_OBJECT(chk), "toggled",
                          G_CALLBACK(auto_omit_restrict_callback), sr);
     }
 }
