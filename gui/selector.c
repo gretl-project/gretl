@@ -3665,7 +3665,7 @@ static void read_logistic_extras (selector *sr)
     }
 }
 
-static void read_omit_criterion (selector *sr)
+static void read_omit_auto_param (selector *sr)
 {
     GtkWidget *w = sr->extra[OMIT_ALPHA];
     int err = 0;
@@ -3872,7 +3872,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
         read_ellipse_alpha(sr);
         return;
     } else if (sr->ci == OMIT) {
-        read_omit_criterion(sr);
+        read_omit_auto_param(sr);
         return;
     } else if (sr->ci == ADD) {
         read_add_auto_param(sr);
@@ -6950,6 +6950,7 @@ static void build_omit_test_radios (selector *sr)
     GtkWidget *b1, *b2, *b3, *b4;
     GSList *group;
     int auto_ok = 0;
+    int ic_ok = 0;
 
     vbox_add_vwedge(sr->vbox);
 
@@ -6965,6 +6966,7 @@ static void build_omit_test_radios (selector *sr)
 
         if (pmod != NULL) {
             auto_ok = (pmod->ci != PANEL);
+            ic_ok = (pmod->ci == OLS);
         }
     }
 
@@ -6985,17 +6987,19 @@ static void build_omit_test_radios (selector *sr)
         pack_switch_with_extra(b3, sr, FALSE, OPT_A, 0, aspin, NULL);
         gtk_widget_set_sensitive(aspin, FALSE);
 
-        group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b3));
-        b4 = gtk_radio_button_new_with_label(group, _("using information criterion: "));
-        sr->extra[OMIT_B4] = b4;
-        g_signal_connect(G_OBJECT(b4), "toggled", G_CALLBACK(auto_omit_callback), sr);
-        sr->extra[OMIT_IC] = combo = gtk_combo_box_text_new();
-        combo_box_append_text(combo, "AIC");
-        combo_box_append_text(combo, "BIC");
-        combo_box_append_text(combo, "HQC");
-        gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
-        pack_switch_with_extra(b4, sr, FALSE, OPT_A, 0, combo, NULL);
-        gtk_widget_set_sensitive(combo, FALSE);
+        if (ic_ok) {
+            group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b3));
+            b4 = gtk_radio_button_new_with_label(group, _("using information criterion: "));
+            sr->extra[OMIT_B4] = b4;
+            g_signal_connect(G_OBJECT(b4), "toggled", G_CALLBACK(auto_omit_callback), sr);
+            sr->extra[OMIT_IC] = combo = gtk_combo_box_text_new();
+            combo_box_append_text(combo, "AIC");
+            combo_box_append_text(combo, "BIC");
+            combo_box_append_text(combo, "HQC");
+            gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+            pack_switch_with_extra(b4, sr, FALSE, OPT_A, 0, combo, NULL);
+            gtk_widget_set_sensitive(combo, FALSE);
+        }
 
         chk = gtk_check_button_new_with_label(_("Test only selected variables"));
         sr->extra[OMIT_SEL] = chk;
