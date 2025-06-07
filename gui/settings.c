@@ -1911,8 +1911,17 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 	    }
 	    gtk_table_attach_defaults(GTK_TABLE(l_table),
 				      w, 0, 1, l_len - 1, l_len);
+#ifndef GRETL_EDIT
+            if (langs) {
+                char *strvar = (char *) rc->var;
 
-	    rc->widget = gtk_combo_box_text_new();
+                rc->widget = lang_selector_combo(strvar, &active);
+            } else {
+                rc->widget = gtk_combo_box_text_new();
+            }
+#else
+            rc->widget = gtk_combo_box_text_new();
+#endif
 
 	    if (tab == TAB_PLOTS || tab == TAB_MAIN) {
 		GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
@@ -1942,22 +1951,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 			active = j;
 		    }
 		}
-	    } else if (langs) {
-		char *strvar = (char *) rc->var;
-		const char *str;
-		int jj = 0;
-
-		for (j=LANG_AUTO; j<LANG_MAX; j++) {
-		    str = gretl_lang_string_from_id(j);
-		    if (str != NULL) {
-			combo_box_append_text(rc->widget, str);
-			if (!strcmp(str, strvar)) {
-			    active = jj;
-			}
-			jj++;
-		    }
-		}
-	    } else {
+	    } else if (!langs) {
+                /* language selector already handled above */
 		char *strvar = NULL;
 		int *intvar = NULL;
 		const char **strs;

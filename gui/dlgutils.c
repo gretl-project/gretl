@@ -959,6 +959,53 @@ static GtkWidget *dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
     return b;
 }
 
+/* When called from gretl's main preferences dialog, @deflt should be
+   non-NULL (the value of the current @langpref), and @pactive should
+   also be non-NULL (to receive the index that should be active). In
+   other usage both of the arguments should be NULL.
+*/
+
+GtkWidget *lang_selector_combo (const char *deflt, int *pactive)
+{
+    GtkWidget *w = gtk_combo_box_text_new();
+    int imin = LANG_AUTO;
+    const char *lstr;
+    int active = 0;
+    int lang_id = 0;
+    int cond;
+    int i, j = 0;
+
+    if (deflt == NULL) {
+        /* not coming from the preferences dialog */
+        lang_id = gretl_lang_id_from_name(NULL);
+        imin = LANG_SQ;
+    }
+
+    for (i=imin; i<LANG_MAX; i++) {
+        lstr = gretl_lang_string_from_id(i);
+        if (lstr != NULL) {
+            combo_box_append_text(w, lstr);
+            if (deflt != NULL) {
+                cond = strcmp(lstr, deflt) == 0;
+            } else {
+                cond = i == lang_id;
+            }
+            if (cond) {
+                active = j;
+            }
+            j++;
+        }
+    }
+
+    if (pactive != NULL) {
+        *pactive = active;
+    } else {
+        gtk_combo_box_set_active(GTK_COMBO_BOX(w), active);
+    }
+
+    return w;
+}
+
 #endif /* not GRETL_EDIT */
 
 static void combo_opt_changed (GtkComboBox *box, combo_opts *opts)
