@@ -2027,6 +2027,24 @@ static void open_translations_window (function_info *finfo,
     g_free(title);
 }
 
+#if 0
+
+/* Material for use if gfn_translation seems worthwhile: something to
+   stick in to enhance the add-a-translation dialog, which at present
+   (see below) is just a yes_no dialog.
+*/
+
+static void foo (void)
+{
+    /* support selection of target language */
+    GtkWidget *w = lang_selector_combo(NULL, NULL);
+
+    g_signal_connect(G_OBJECT(w), "changed",
+                     G_CALLBACK(some_callback), ptr);
+}
+
+#endif
+
 static void translation_callback (GtkButton *b,
                                   function_info *finfo)
 {
@@ -2047,10 +2065,11 @@ static void translation_callback (GtkButton *b,
         open_translations_window(finfo, prn);
     } else {
         /* No translations yet */
-        // gchar *title = "Add translations?";
         gchar *msg = "This package has no translations at present.\n"
             "Do you want to try adding some translations now?\n"
             "Please click on Help for details.";
+
+        /* see above for additional content */
 
         if (yes_no_help_dialog(msg, GFNTRANS, NULL) == GRETL_YES) {
             PRN *prn = NULL;
@@ -2838,45 +2857,17 @@ static void add_dependency_entries (GtkWidget *holder,
 
 #if 0
 
-static void add_translation_entries (GtkWidget *holder,
-                                     function_info *finfo)
+/* Material for use if gfn_translation seems worthwhile: something to
+   stick in to enhance the XML translation dialog.
+*/
+
+int foo (void)
 {
-    GtkWidget *w, *hbox;
-    void *trans;
-    // int i;
+    /* support selection of target language */
+    GtkWidget *w = lang_selector_combo(NULL, NULL);
 
-    hbox = gtk_hbox_new(FALSE, 5);
-
-    trans = function_package_translation(finfo->pkg);
-    if (trans != NULL) {
-        w = gtk_label_new("Got a translation -- what next?");
-        gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-        gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
-    } else {
-        GtkWidget *combo = gtk_combo_box_text_new();
-        int lang_id = gretl_lang_id_from_name(NULL);
-        const char *str;
-        int active = 0;
-        int j, k = 0;
-
-        fprintf(stderr, "HERE lang_id = %d\n", lang_id);
-
-        w = gtk_label_new("Language for translation");
-        gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-        for (j=LANG_SQ; j<LANG_MAX; j++) {
-            str = gretl_lang_string_from_id(j);
-            if (str != NULL) {
-                combo_box_append_text(combo, str);
-                if (j == lang_id) {
-                    active = k;
-                }
-                k++;
-            }
-        }
-        gtk_combo_box_set_active(GTK_COMBO_BOX(combo), active);
-        gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
-        gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
-    }
+    g_signal_connect(G_OBJECT(w), "changed",
+                     G_CALLBACK(some_callback), ptr);
 }
 
 #endif
@@ -3818,15 +3809,6 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     tmp = gtk_label_new(_("Dependencies"));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);
     add_dependency_entries(vbox, finfo);
-
-#if 0
-    /* the translation page */
-    vbox = gtk_vbox_new(FALSE, 0);
-    gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
-    tmp = gtk_label_new(_("Translation"));
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);
-    add_translation_entries(vbox, finfo);
-#endif
 
     /* the common buttons area */
 

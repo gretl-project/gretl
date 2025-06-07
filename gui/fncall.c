@@ -3618,7 +3618,7 @@ static void write_packages_xml (void)
 			    modelreq_string(gpkgs[i].modelreq));
 		}
 		fprintf(fp, " path=\"%s\"", gpkgs[i].menupath);
-		if (!(gpkgs[i].flags & GPI_SUBDIR)) {
+ 		if (!(gpkgs[i].flags & GPI_SUBDIR)) {
 		    fputs(" toplev=\"true\"", fp);
 		}
 		if (gpkgs[i].flags & GPI_DATACHK) {
