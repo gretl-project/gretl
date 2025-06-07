@@ -70,6 +70,8 @@ typedef enum {
 
 const char *gretl_lang_string_from_id (int langid);
 
+const char *gretl_lang_code_from_id (int langid);
+
 char *utf8_to_rtf (const char *s);
 
 int gretl_lang_id_from_name (const char *s);

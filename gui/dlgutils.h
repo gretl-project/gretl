@@ -186,4 +186,10 @@ void gretl_emulated_dialog_add_structure (GtkWidget *dlg,
                                           GtkWidget **pvbox,
                                           GtkWidget **pbbox);
 
+#ifndef GRETL_EDIT
+
+GtkWidget *lang_selector_combo (const char *deflt, int *pactive);
+
+#endif
+
 #endif /* DLGUTILS_H */
