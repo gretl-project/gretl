@@ -210,6 +210,19 @@ Translation *read_translations_file (const char *fname, int *err)
     return T;
 }
 
+#if 0 /* not yet */
+
+Translation *merge_translations (Translation *T0, char *trbuf)
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr root;
+    int err;
+
+    err = gretl_xml_read_buffer(trbuf, "translation", &doc, &node);
+}
+
+#endif
+
 static void write_msg (gpointer key,
                        gpointer value,
                        gpointer data)
