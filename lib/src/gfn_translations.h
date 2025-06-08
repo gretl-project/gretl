@@ -33,6 +33,9 @@ Translation *read_translations_file (const char *fname,
 Translation *read_translation_element (xmlNodePtr root,
                                        xmlDocPtr doc);
 
+Translation *update_translation (Translation *T0,
+                                 const char *trbuf);
+
 void write_translation (Translation *T, PRN *prn);
 
 gchar *get_translatable_content (const char **ps);

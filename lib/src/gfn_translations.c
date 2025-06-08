@@ -163,6 +163,7 @@ Translation *read_translation_element (xmlNodePtr root,
 
     T = allocate_translation(lang);
     if (T == NULL) {
+        fprintf(stderr, "translation: allocation failed\n");
         return NULL;
     }
 
@@ -173,12 +174,10 @@ Translation *read_translation_element (xmlNodePtr root,
             char *en = NULL;
             char *tr = NULL;
 
-            if (gretl_xml_get_prop_as_string(cur, "en", &en) &&
-                gretl_xml_node_get_string(cur, doc, &tr)) {
-                if (*en != '\0' && *tr != '\0') {
-                    g_hash_table_insert(T->msgs, en, tr);
-                    i++;
-                }
+            if (gretl_xml_get_prop_as_string(cur, "en", &en)) {
+                gretl_xml_node_get_string(cur, doc, &tr);
+                g_hash_table_insert(T->msgs, en, tr);
+                i++;
             }
         }
         cur = cur->next;
@@ -210,22 +209,62 @@ Translation *read_translations_file (const char *fname, int *err)
     return T;
 }
 
-#if 0 /* not yet */
-
-Translation *merge_translations (Translation *T0, char *trbuf)
+static void merge_tr_msg (gpointer key,
+                          gpointer value,
+                          gpointer data)
 {
+    Translation *T0 = data;
+    char *newkey, *newval;
+
+    if (!g_hash_table_contains(T0->msgs, key)) {
+        newkey = gretl_strdup((const char *) key);
+        newval = gretl_strdup((const char *) value);
+        g_hash_table_insert(T0->msgs, newkey, newval);
+    } else {
+        char *val0 = g_hash_table_lookup(T0->msgs, key);
+
+        if (strcmp(val0, (const char *) value)) {
+            newkey = gretl_strdup((const char *) key);
+            newval = gretl_strdup((const char *) value);
+            g_hash_table_replace(T0->msgs, newkey, newval);
+        }
+    }
+}
+
+Translation *update_translation (Translation *T0, const char *trbuf)
+{
+    Translation *ret = NULL;
     xmlDocPtr doc = NULL;
     xmlNodePtr root;
     int err;
 
-    err = gretl_xml_read_buffer(trbuf, "translation", &doc, &node);
+    err = gretl_xml_read_buffer(trbuf, "translation", &doc, &root);
+    if (err) {
+        fprintf(stderr, "update_translation: error on reading buffer\n");
+        return NULL;
+    }
+
+    if (T0 == NULL) {
+        ret = read_translation_element(root, doc);
+    } else {
+        /* merge content of @trbuf into @T0 */
+        Translation *T1 = read_translation_element(root, doc);
+
+        g_hash_table_foreach(T1->msgs, merge_tr_msg, T0);
+        destroy_translation(T1);
+        ret = T0;
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+    }
+
+    return ret;
 }
 
-#endif
-
-static void write_msg (gpointer key,
-                       gpointer value,
-                       gpointer data)
+static void write_tr_msg (gpointer key,
+                          gpointer value,
+                          gpointer data)
 {
     pprintf((PRN *) data, " <msg en=\"%s\">%s</msg>\n",
             (const char *) key, (const char *) value);
@@ -235,7 +274,7 @@ void write_translation (Translation *T, PRN *prn)
 {
     if (T != NULL) {
         pprintf(prn, "<translation lang=\"%s\">\n", T->lang);
-        g_hash_table_foreach(T->msgs, write_msg, prn);
+        g_hash_table_foreach(T->msgs, write_tr_msg, prn);
         pputs(prn, "</translation>\n");
     }
 }

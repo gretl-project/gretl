@@ -164,7 +164,9 @@ fnpkg *get_active_function_package (gretlopt opt);
 
 const char *function_package_translate (const char *id);
 
-void *function_package_translation (fnpkg *pkg);
+void *function_package_get_translation (fnpkg *pkg);
+
+void function_package_set_translation (fnpkg *pkg, void *ptr);
 
 fnpkg *gretl_function_get_package (const ufunc *fun);
 

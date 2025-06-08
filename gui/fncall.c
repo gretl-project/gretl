@@ -593,7 +593,7 @@ static GtkWidget *label_hbox (call_info *cinfo, GtkWidget *w)
 				      _("State space model"),
 				      _("see Help for more"));
     } else if (cinfo->label != NULL) {
-        void *trans = function_package_translation(cinfo->pkg);
+        void *trans = function_package_get_translation(cinfo->pkg);
         const char *s;
 
         if (trans != NULL) {

@@ -1583,9 +1583,16 @@ const char *function_package_translate (const char *id)
     }
 }
 
-void *function_package_translation (fnpkg *pkg)
+void *function_package_get_translation (fnpkg *pkg)
 {
     return pkg == NULL ? NULL : pkg->trans;
+}
+
+void function_package_set_translation (fnpkg *pkg, void *ptr)
+{
+    if (pkg != NULL) {
+        pkg->trans = ptr;
+    }
 }
 
 fnpkg *gretl_function_get_package (const ufunc *fun)

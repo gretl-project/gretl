@@ -152,7 +152,12 @@ struct login_info_ {
     int canceled;
 };
 
+static int validate_XML (const char *fname,
+                         const char *buf,
+                         const char *xsdname,
+                         int verbose);
 static int validate_package_file (const char *fname, int verbose);
+static int validate_gfn_translation (const char *buf, int verbose);
 static void finfo_set_menuwin (function_info *finfo);
 static gint query_save_package (GtkWidget *w, GdkEvent *event,
 				function_info *finfo);
@@ -1996,23 +2001,35 @@ static void add_help_radios (GtkWidget *tbl, int i,
     gtk_widget_show_all(htab);
 }
 
+/* Here we're coming from an editor window holding an XML translation.
+   On saving, we check the XML for validity, and if that's OK we try
+   updating the translation struct that's attached to the function
+   package we're editing.
+*/
+
 void save_gfn_translation (windata_t *vwin)
 {
-    static gchar *trans_tmp;
     function_info *finfo = vwin->data;
-    gchar *text;
+    gchar *buf = NULL;
+    int err = 0;
 
-    text = textview_get_text(vwin->text);
-    if (text == NULL || *text == '\0') {
+    buf = textview_get_text(vwin->text);
+    if (buf == NULL || *buf == '\0') {
 	errbox(_("Buffer is empty"));
-	g_free(text);
-	return;
+    } else {
+        err = validate_gfn_translation(buf, 1);
+        if (!err) {
+            Translation *T0 = function_package_get_translation(finfo->pkg);
+            Translation *T = update_translation(T0, buf);
+
+            if (T != NULL) {
+                /* FIXME premature? */
+                function_package_set_translation(finfo->pkg, T);
+            }
+        }
     }
 
-    /* What's the best way of handling this? */
-    g_free(trans_tmp);
-    trans_tmp = text;
-    fprintf(stderr, "HERE, trans_tmp = '%s'\n", trans_tmp);
+    g_free(buf);
 }
 
 static void open_translations_window (function_info *finfo,
@@ -2048,7 +2065,7 @@ static void foo (void)
 static void translation_callback (GtkButton *b,
                                   function_info *finfo)
 {
-    Translation *T = function_package_translation(finfo->pkg);
+    Translation *T = function_package_get_translation(finfo->pkg);
 
     if (T != NULL) {
         /* Open an editable window holding XML translations */
@@ -4252,9 +4269,10 @@ static xmlSchemaValidCtxtPtr get_validation_context (const char *fname,
     return vc;
 }
 
-static int validate_XML_file (const char *fname,
-                              const char *xsdname,
-                              int verbose)
+static int validate_XML (const char *fname,
+                         const char *buf,
+                         const char *xsdname,
+                         int verbose)
 {
     xmlSchemaValidCtxtPtr validator = NULL;
     xmlSchemaPtr schema = NULL;
@@ -4269,13 +4287,19 @@ static int validate_XML_file (const char *fname,
     xsdpath = g_build_filename(gretl_home(), "functions",
 			       xsdname, NULL);
     validator = get_validation_context(xsdpath, &schema, verbose);
-    if (validator != NULL) {
-	reader = xmlReaderForFile(fname, NULL, 0);
+    if (validator == NULL) {
+        errbox("Failed to obtain XML validator");
+        err = 1;
+    } else if (buf != NULL) {
+        reader = xmlReaderForMemory(buf, strlen(buf), "",
+                                    NULL, XML_PARSE_NOBLANKS);
+    } else {
+        reader = xmlReaderForFile(fname, NULL, 0);
     }
     g_free(xsdpath);
 
     if (reader == NULL) {
-	errbox("Failed to obtain reader for XML file");
+	errbox("Failed to obtain XML reader");
 	err = 1;
     } else {
 	int ret = -1;
@@ -4289,8 +4313,13 @@ static int validate_XML_file (const char *fname,
     }
 
     if (!err) {
-	const char *basename = path_last_element(fname);
+        const char *basename = NULL;
 
+        if (fname != NULL) {
+            basename = path_last_element(fname);
+        } else {
+            basename = "XML buffer";
+        }
 	if (xse.err) {
 	    errbox(xse.msg);
 	    g_free(xse.msg);
@@ -4302,16 +4331,27 @@ static int validate_XML_file (const char *fname,
 	}
     }
 
-    xmlFreeTextReader(reader);
-    xmlSchemaFreeValidCtxt(validator);
-    xmlSchemaFree(schema);
+    if (reader != NULL) {
+        xmlFreeTextReader(reader);
+    }
+    if (validator != NULL) {
+        xmlSchemaFreeValidCtxt(validator);
+    }
+    if (schema != NULL) {
+        xmlSchemaFree(schema);
+    }
 
     return err;
 }
 
 static int validate_package_file (const char *fname, int verbose)
 {
-    return validate_XML_file(fname, "gretlfunc.xsd", verbose);
+    return validate_XML(fname, NULL, "gretlfunc.xsd", verbose);
+}
+
+static int validate_gfn_translation (const char *buf, int verbose)
+{
+    return validate_XML(NULL, buf, "gfntrans.xsd", verbose);
 }
 
 /* Collect pkg.gfn plus additional package files (PDF doc and/or data

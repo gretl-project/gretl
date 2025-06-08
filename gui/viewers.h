@@ -33,7 +33,7 @@
 				r == EDIT_X12A ||   \
 				r == EDIT_SPEC)
 
-#define vwin_editing_buffer(r) (r == EDIT_HEADER || r == EDIT_NOTES)
+#define vwin_editing_buffer(r) (r == EDIT_HEADER || r == EDIT_NOTES || EDIT_XML)
 
 #define vwin_content_changed(v) (v->flags & VWIN_CONTENT_CHANGED)
 
