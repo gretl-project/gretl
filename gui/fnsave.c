@@ -2032,8 +2032,7 @@ void save_gfn_translation (windata_t *vwin)
     g_free(buf);
 }
 
-static void open_translations_window (function_info *finfo,
-                                      PRN *prn)
+static void edit_translations (function_info *finfo, PRN *prn)
 {
     gchar *title = g_strdup_printf("%s translation", finfo_pkgname(finfo));
 
@@ -2078,8 +2077,9 @@ static void translation_callback (GtkButton *b,
         if (bufopen(&prn)) {
             return;
         }
+        pputs(prn, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         write_translation(T, prn);
-        open_translations_window(finfo, prn);
+        edit_translations(finfo, prn);
     } else {
         /* No translations yet */
         gchar *msg = "This package has no translations at present.\n"
@@ -2095,7 +2095,7 @@ static void translation_callback (GtkButton *b,
                 return;
             }
             if (package_write_translatables(finfo->pkg, prn)) {
-                open_translations_window(finfo, prn);
+                edit_translations(finfo, prn);
             }
         }
     }

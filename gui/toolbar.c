@@ -395,6 +395,8 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
 	u = SAVE_HELP_TEXT;
     } else if (vwin->role == EDIT_X12A) {
 	u = SAVE_X13_SPC;
+    } else if (vwin->role == EDIT_XML) {
+        u = SAVE_XML;
     } else {
 	dummy_call();
 	return;
@@ -1236,9 +1238,6 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
     }
 
     if (f == CLEAR_ITEM && r != CONSOLE) {
-	return NULL;
-    }
-    if (f == SAVE_AS_ITEM && r == EDIT_XML) {
 	return NULL;
     }
 

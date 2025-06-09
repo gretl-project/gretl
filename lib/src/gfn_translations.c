@@ -154,7 +154,7 @@ Translation *read_translation_element (xmlNodePtr root,
     Translation *T = NULL;
     xmlNodePtr cur;
     char *lang = NULL;
-    int i;
+    int n;
 
     if (!gretl_xml_get_prop_as_string(root, "lang", &lang)) {
         fprintf(stderr, "translation: @lang property is missing\n");
@@ -167,7 +167,7 @@ Translation *read_translation_element (xmlNodePtr root,
         return NULL;
     }
 
-    i = 0;
+    n = 0;
     cur = root->xmlChildrenNode;
     while (cur != NULL) {
         if (!xmlStrcmp(cur->name, (XUC) "msg")) {
@@ -177,13 +177,13 @@ Translation *read_translation_element (xmlNodePtr root,
             if (gretl_xml_get_prop_as_string(cur, "en", &en)) {
                 gretl_xml_node_get_string(cur, doc, &tr);
                 g_hash_table_insert(T->msgs, en, tr);
-                i++;
+                n++;
             }
         }
         cur = cur->next;
     }
 
-    if (i == 0) {
+    if (n == 0) {
         destroy_translation(T);
         T = NULL;
     }
@@ -210,7 +210,7 @@ Translation *read_translations_file (const char *fname, int *err)
 }
 
 static void merge_tr_msg (gpointer key,
-                          gpointer value,
+                          gpointer val,
                           gpointer data)
 {
     Translation *T0 = data;
@@ -218,14 +218,14 @@ static void merge_tr_msg (gpointer key,
 
     if (!g_hash_table_contains(T0->msgs, key)) {
         newkey = gretl_strdup((const char *) key);
-        newval = gretl_strdup((const char *) value);
+        newval = (val == NULL)? NULL : gretl_strdup((const char *) val);
         g_hash_table_insert(T0->msgs, newkey, newval);
     } else {
         char *val0 = g_hash_table_lookup(T0->msgs, key);
 
-        if (strcmp(val0, (const char *) value)) {
+        if (strcmp(val0, (const char *) val)) {
             newkey = gretl_strdup((const char *) key);
-            newval = gretl_strdup((const char *) value);
+            newval = (val == NULL)? NULL : gretl_strdup((const char *) val);
             g_hash_table_replace(T0->msgs, newkey, newval);
         }
     }
@@ -266,8 +266,13 @@ static void write_tr_msg (gpointer key,
                           gpointer value,
                           gpointer data)
 {
-    pprintf((PRN *) data, " <msg en=\"%s\">%s</msg>\n",
-            (const char *) key, (const char *) value);
+    if (value != NULL) {
+        pprintf((PRN *) data, " <msg en=\"%s\">%s</msg>\n",
+                (const char *) key, (const char *) value);
+    } else {
+        pprintf((PRN *) data, " <msg en=\"%s\"></msg>\n",
+                (const char *) key);
+    }
 }
 
 void write_translation (Translation *T, PRN *prn)

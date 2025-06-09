@@ -200,6 +200,7 @@ enum file_ops {
     END_SAVE_DATA,  /* marker for end of data-saving section */
     SAVE_TEX,
     SAVE_RTF,
+    SAVE_XML,
     SAVE_TEXT,
     SAVE_SCRIPT,
     SAVE_OUTPUT,

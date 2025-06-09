@@ -213,6 +213,7 @@ void file_save (windata_t *vwin, int ci)
     case SAVE_SPEC_FILE:
     case SAVE_X13_SPC:
     case SAVE_HELP_TEXT:
+    case SAVE_XML:
         file_selector(ci, FSEL_DATA_VWIN, vwin);
         break;
     case EXPORT_CSV:
