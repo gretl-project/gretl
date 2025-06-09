@@ -28,6 +28,7 @@
 
 struct Translation_ {
     char *lang;       /* language */
+    char *filename;   /* (optional) name of XML file */
     GHashTable *msgs; /* table */
 };
 
@@ -114,6 +115,7 @@ void write_translations (Translations *TT, PRN *prn)
 void destroy_translation (Translation *T)
 {
     free(T->lang);
+    free(T->filename);
     g_hash_table_destroy(T->msgs);
     free(T);
 }
@@ -124,6 +126,7 @@ static Translation *allocate_translation (char *lang)
 
     if (T != NULL) {
         T->lang = lang;
+        T->filename = NULL;
         T->msgs = g_hash_table_new_full(g_str_hash, g_str_equal,
                                         free, free);
     }
@@ -154,12 +157,15 @@ Translation *read_translation_element (xmlNodePtr root,
     Translation *T = NULL;
     xmlNodePtr cur;
     char *lang = NULL;
+    char *fname = NULL;
     int n;
 
     if (!gretl_xml_get_prop_as_string(root, "lang", &lang)) {
         fprintf(stderr, "translation: @lang property is missing\n");
         return NULL;
     }
+
+    gretl_xml_get_prop_as_string(root, "filename", &fname);
 
     T = allocate_translation(lang);
     if (T == NULL) {
@@ -186,6 +192,8 @@ Translation *read_translation_element (xmlNodePtr root,
     if (n == 0) {
         destroy_translation(T);
         T = NULL;
+    } else if (fname != NULL) {
+        T->filename = fname;
     }
 
     return T;
@@ -200,6 +208,9 @@ Translation *read_translations_file (const char *fname, int *err)
     *err = gretl_xml_open_doc_root(fname, "translation", &doc, &root);
     if (!*err) {
         T = read_translation_element(root, doc);
+        if (T != NULL) {
+            T->filename = gretl_strdup(fname);
+        }
     }
 
     if (doc != NULL) {
@@ -222,8 +233,15 @@ static void merge_tr_msg (gpointer key,
         g_hash_table_insert(T0->msgs, newkey, newval);
     } else {
         char *val0 = g_hash_table_lookup(T0->msgs, key);
+        int replace = 0;
 
-        if (strcmp(val0, (const char *) val)) {
+        if (val0 == NULL && val != NULL) {
+            replace = 1;
+        } else if (val0 != NULL && val != NULL &&
+                   strcmp(val0, (const char *) val)) {
+            replace = 1;
+        }
+        if (replace) {
             newkey = gretl_strdup((const char *) key);
             newval = (val == NULL)? NULL : gretl_strdup((const char *) val);
             g_hash_table_replace(T0->msgs, newkey, newval);
@@ -250,6 +268,12 @@ Translation *update_translation (Translation *T0, const char *trbuf)
         /* merge content of @trbuf into @T0 */
         Translation *T1 = read_translation_element(root, doc);
 
+        if (strcmp(T0->lang, T1->lang)) {
+            /* replace the language spec */
+            free(T0->lang);
+            T0->lang = T1->lang;
+            T1->lang = NULL;
+        }
         g_hash_table_foreach(T1->msgs, merge_tr_msg, T0);
         destroy_translation(T1);
         ret = T0;
@@ -278,7 +302,11 @@ static void write_tr_msg (gpointer key,
 void write_translation (Translation *T, PRN *prn)
 {
     if (T != NULL) {
-        pprintf(prn, "<translation lang=\"%s\">\n", T->lang);
+        pprintf(prn, "<translation lang=\"%s\"", T->lang);
+        if (T->filename != NULL) {
+            pprintf(prn, " filename=\"%s\"", T->filename);
+        }
+        pputs(prn, ">\n");
         g_hash_table_foreach(T->msgs, write_tr_msg, prn);
         pputs(prn, "</translation>\n");
     }

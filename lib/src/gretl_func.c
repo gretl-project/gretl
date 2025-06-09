@@ -200,6 +200,7 @@ struct fnpkg_ {
     char *sample;     /* sample caller script */
     char *help_fname;     /* filename: package help text */
     char *gui_help_fname; /* filename: GUI-specific help text */
+    char *xml_tr_fname;   /* filename: XML translation */
     char *sample_fname;   /* filename: sample caller script */
     char *tags;       /* tag string(s) */
     char *label;      /* for use in GUI menus */
@@ -888,6 +889,7 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->sample = NULL;
     pkg->help_fname = NULL;
     pkg->gui_help_fname = NULL;
+    pkg->xml_tr_fname = NULL;
     pkg->sample_fname = NULL;
     pkg->tags = NULL;
     pkg->label = NULL;
@@ -4141,10 +4143,9 @@ static void function_package_set_auxfile (fnpkg *pkg,
 {
     gchar *test = NULL;
 
-    /* Maybe set the source filename for an element
-       of a function package read from file, but only
-       if it's not the standard, default filename for
-       the element in question.
+    /* Maybe set the source filename for an element of a function
+       package read from file, but only if it's not the standard,
+       default filename for the element in question.
     */
 
     if (!strcmp(id, "help-fname")) {
@@ -4153,6 +4154,8 @@ static void function_package_set_auxfile (fnpkg *pkg,
         test = g_strdup_printf("%s_gui_help.txt", pkg->name);
     } else if (!strcmp(id, "sample-fname")) {
         test = g_strdup_printf("%s_sample.inp", pkg->name);
+    } else if (!strcmp(id, "tr-fname")) {
+        test = g_strdup_printf("%s_tr.xml", pkg->name);
     }
 
     if (test != NULL) {
@@ -5084,6 +5087,8 @@ static char **pkg_strvar_pointer (fnpkg *pkg, const char *key,
         return &pkg->gui_help_fname;
     } else if (!strcmp(key, "sample-fname")) {
         return &pkg->sample_fname;
+    } else if (!strcmp(key, "xml-tr-fname")) {
+        return &pkg->xml_tr_fname;
     } else if (!strcmp(key, "provider")) {
         return &pkg->provider;
     }
@@ -5333,6 +5338,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
         } else if (!strcmp(key, "gui-help-fname")) {
             ps = (char **) ptr;
             handle_optional_string(ps, pkg->gui_help_fname);
+        } else if (!strcmp(key, "xml-tr-fname")) {
+            ps = (char **) ptr;
+            handle_optional_string(ps, pkg->xml_tr_fname);
         } else if (!strcmp(key, "sample-fname")) {
             ps = (char **) ptr;
             handle_optional_string(ps, pkg->sample_fname);
@@ -5403,6 +5411,8 @@ const char *function_package_get_string (fnpkg *pkg,
         return pkg->help_fname;
     } else if (!strcmp(id, "gui-help-fname")) {
         return pkg->gui_help_fname;
+    } else if (!strcmp(id, "xml-tr-fname")) {
+        return pkg->xml_tr_fname;
     } else if (!strcmp(id, "sample-fname")) {
         return pkg->sample_fname;
     } else if (!strcmp(id, "sample-script")) {
@@ -5632,6 +5642,7 @@ static void real_function_package_free (fnpkg *pkg, int full)
         free(pkg->sample);
         free(pkg->help_fname);
         free(pkg->gui_help_fname);
+        free(pkg->xml_tr_fname);
         free(pkg->sample_fname);
         free(pkg->tags);
         free(pkg->label);
@@ -6835,6 +6846,7 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node,
                                             0, err);
         } else if (!xmlStrcmp(cur->name, (XUC) "translation")) {
             pkg->trans = read_translation_element(cur, doc);
+            gretl_xml_get_prop_as_string(cur, "filename", &pkg->xml_tr_fname);
         }
 
         cur = cur->next;

@@ -9,7 +9,8 @@
 <!ELEMENT translation (msg+)>
 
 <!ATTLIST translation
-   lang   CDATA #REQUIRED
+ lang     CDATA #REQUIRED
+ filename CDATA #IMPLIED
 >
 
 <!ELEMENT msg (#PCDATA)>

@@ -65,7 +65,8 @@ enum {
     APPEND_SAMPLE  = 1 << 0, /* write functions as .inp: append sample? */
     WRITE_SAMPFILE = 1 << 1, /* write .spec file: also write sample script? */
     WRITE_HELPFILE = 1 << 2, /* write .spec file: also write help file? */
-    WRITE_GUI_HELP = 1 << 3  /* write .spec file: also write gui help? */
+    WRITE_GUI_HELP = 1 << 3, /* write .spec file: also write gui help? */
+    WRITE_XMLTRANS = 1 << 4  /* write .spec file: also write translation? */
 } PkgSaveFlags;
 
 typedef struct function_info_ function_info;
@@ -114,6 +115,7 @@ struct function_info_ {
     gchar *sample_fname;   /* filename: sample script */
     gchar *help_fname;     /* filename: help text */
     gchar *gui_help_fname; /* filename: GUI-specific help */
+    gchar *xml_tr_fname;   /* filename: translation */
     gchar *pdfname;        /* name of PDF help file */
     char **pubnames;       /* names of public functions */
     char **privnames;      /* names of private functions */
@@ -211,8 +213,8 @@ function_info *finfo_new (void)
     finfo->ui = NULL;
 
     finfo->modified = FALSE;
-    finfo->save_flags = WRITE_SAMPFILE |
-	WRITE_HELPFILE | WRITE_GUI_HELP;
+    finfo->save_flags = WRITE_SAMPFILE | WRITE_HELPFILE |
+        WRITE_GUI_HELP | WRITE_XMLTRANS ;
 
     finfo->active = NULL;
     finfo->samplewin = NULL;
@@ -1381,10 +1383,12 @@ static void gfn_to_script_callback (function_info *finfo)
 			      finfo, finfo->dlg);
 }
 
+#define SI_FIELDS 4
+
 struct spec_info {
     GtkWidget *dialog;
-    GtkWidget *checks[3];
-    GtkWidget *entries[3];
+    GtkWidget *checks[SI_FIELDS];
+    GtkWidget *entries[SI_FIELDS];
     int *flags;
     function_info *finfo;
     int retval;
@@ -1398,9 +1402,12 @@ static void reset_finfo_filename (function_info *finfo, int i, gchar *src)
     } else if (i == 1) {
 	g_free(finfo->help_fname);
 	finfo->help_fname = src;
-    } else {
+    } else if (i == 2) {
 	g_free(finfo->gui_help_fname);
 	finfo->gui_help_fname = src;
+    } else {
+        g_free(finfo->xml_tr_fname);
+        finfo->xml_tr_fname = src;
     }
 }
 
@@ -1411,7 +1418,7 @@ static void spec_save_ok (GtkWidget *button, gpointer data)
     gchar *fname;
     int i, flag;
 
-    for (i=0; i<3; i++) {
+    for (i=0; i<SI_FIELDS; i++) {
 	if (sinfo->checks[i] != NULL) {
 	    flag = sinfo->flags[i];
 	    finfo->save_flags &= ~flag;
@@ -1445,8 +1452,10 @@ static gchar *get_pkg_aux_filename (function_info *finfo,
 	fname = g_strdup_printf("%s_sample.inp", pkgname);
     } else if (i == 1) {
 	fname = g_strdup_printf("%s_help.txt", pkgname);
-    } else {
+    } else if (i == 2) {
 	fname = g_strdup_printf("%s_gui_help.txt", pkgname);
+    } else {
+        fname = g_strdup_printf("%s_trans.xml", pkgname);
     }
 
     return fname;
@@ -1471,19 +1480,23 @@ static int gfn_spec_save_dialog (function_info *finfo,
     const gchar *msgs[] = {
 	N_("Save sample script as"),
 	N_("Save help text as"),
-	N_("Save GUI help as")
+	N_("Save GUI help as"),
+        N_("Save translation as")
     };
     const char *ids[] = {
 	"sample-fname",
 	"help-fname",
-	"gui-help-fname"
+	"gui-help-fname",
+        "xml-tr-fname"
     };
     int flags[] = {
 	WRITE_SAMPFILE,
 	WRITE_HELPFILE,
-	WRITE_GUI_HELP
+	WRITE_GUI_HELP,
+        WRITE_XMLTRANS
     };
     struct spec_info sinfo;
+    Translation *trans;
     GtkWidget *dialog, *entry;
     GtkWidget *vbox, *hbox, *w;
     GtkWidget *table;
@@ -1511,6 +1524,9 @@ static int gfn_spec_save_dialog (function_info *finfo,
     w = gtk_label_new(tmp);
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
 
+    if ((trans = function_package_get_translation(finfo->pkg)) != NULL) {
+        n++;
+    }
     for (i=0; i<3; i++) {
 	n += (texts[i] != NULL);
     }
@@ -1521,8 +1537,13 @@ static int gfn_spec_save_dialog (function_info *finfo,
     gtk_box_pack_start(GTK_BOX(vbox), table, FALSE, FALSE, 5);
 
     j = 0;
-    for (i=0; i<3; i++) {
-	if (texts[i] == NULL) {
+    for (i=0; i<SI_FIELDS; i++) {
+        if (i == 3) {
+            if (trans == NULL) {
+                sinfo.checks[i] = sinfo.entries[i] = NULL;
+                continue;
+            }
+        } else if (texts[i] == NULL) {
 	    sinfo.checks[i] = sinfo.entries[i] = NULL;
 	    continue;
 	}
@@ -2023,8 +2044,8 @@ void save_gfn_translation (windata_t *vwin)
             Translation *T = update_translation(T0, buf);
 
             if (T != NULL) {
-                /* FIXME premature? */
                 function_package_set_translation(finfo->pkg, T);
+                finfo_set_modified(finfo, TRUE);
             }
         }
     }
@@ -4947,6 +4968,51 @@ static void maybe_print (PRN *prn, const char *key,
     }
 }
 
+static FILE *open_auxfile (const char *spec_fname,
+                           const char *auxname)
+{
+    FILE *fp = NULL;
+
+    if (path_last_slash_const(spec_fname)) {
+        /* the spec filename has a directory component */
+        char *s, tmp[FILENAME_MAX];
+
+        strcpy(tmp, spec_fname);
+        s = strrslash(tmp);
+        *(s + 1) = '\0';
+        strcat(tmp, auxname);
+        fp = gretl_fopen(tmp, "wb");
+    } else {
+        fp = gretl_fopen(auxname, "wb");
+    }
+
+    return fp;
+}
+
+static int write_translation_data (function_info *finfo,
+                                   const char *spec_fname,
+                                   Translation *trans,
+                                   PRN *prn)
+{
+    int ret = 0;
+
+    /* write to spec file */
+    pprintf(prn, "translations = %s\n", finfo->xml_tr_fname);
+
+    if (finfo->save_flags & WRITE_XMLTRANS) {
+        /* write to XML file */
+        FILE *fp = open_auxfile(spec_fname, finfo->xml_tr_fname);
+        PRN *fprn = gretl_print_new_with_stream(fp);
+
+        pputs(fprn, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        write_translation(trans, fprn);
+        gretl_print_destroy(fprn);
+        ret = 1;
+    }
+
+    return ret;
+}
+
 static int write_aux_file (function_info *finfo,
 			   const char *spec_fname,
 			   const gchar *content,
@@ -4987,26 +5053,13 @@ static int write_aux_file (function_info *finfo,
 
     if (finfo->save_flags & flag) {
 	/* write out the actual file */
-	FILE *fp = NULL;
-
-	if (path_last_slash_const(spec_fname)) {
-	    /* the spec filename has a directory component */
-	    char *s, tmp[FILENAME_MAX];
-
-	    strcpy(tmp, spec_fname);
-	    s = strrslash(tmp);
-	    *(s + 1) = '\0';
-	    strcat(tmp, auxname);
-	    fp = gretl_fopen(tmp, "wb");
-	} else {
-	    fp = gretl_fopen(auxname, "wb");
-	}
+	FILE *fp = open_auxfile(spec_fname, auxname);
 
 	if (fp != NULL) {
-	    fputs(content, fp);
-	    fputc('\n', fp);
-	    fclose(fp);
-	    ret = 1;
+            fputs(content, fp);
+            fputc('\n', fp);
+            fclose(fp);
+            ret = 1;
 	}
     }
 
@@ -5037,6 +5090,7 @@ int save_function_package_spec (const char *fname, gpointer p)
         UI_MAKER,
 	NULL
     };
+    Translation *trans = NULL;
     const char *reqstr = NULL;
     const char *gui_help;
     const char *sample;
@@ -5178,6 +5232,12 @@ int save_function_package_spec (const char *fname, gpointer p)
 
     /* write out sample script? */
     write_aux_file(finfo, fname, sample, WRITE_SAMPFILE, prn);
+
+    /* write out translation? */
+    trans = function_package_get_translation(finfo->pkg);
+    if (trans != NULL) {
+        write_translation_data(finfo, fname, trans, prn);
+    }
 
     /* write out data-files listing? */
     if (finfo->datafiles != NULL) {
@@ -5461,6 +5521,7 @@ void edit_function_package (const char *fname)
 					  "label", &finfo->menulabel,
 					  "gui-help", &finfo->gui_help,
 					  "gui-help-fname", &finfo->gui_help_fname,
+                                          "xml-tr-fname", &finfo->xml_tr_fname,
 					  "lives-in-subdir", &finfo->uses_subdir,
 					  "wants-data-access", &finfo->data_access,
 					  "model-requirement", &finfo->mreq,
