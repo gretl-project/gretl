@@ -180,6 +180,13 @@ modify the files in your working copy, it just grabs information about
 git diff origin/master
 </pre>
 
+<p>If you just want an overview of which files differ between two
+  branches, here's a good way:</p>
+
+<pre>
+git diff --stat --color someBranch..otherBranch
+</pre>
+
 <h2><a name="history">Examining history</a></h2>
 
 <p>To see a simple record of the commits to an individual file you can
