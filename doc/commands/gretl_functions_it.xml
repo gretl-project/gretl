@@ -11134,6 +11134,7 @@
 	    <fncref targ="pmin"/>
 	    <fncref targ="pnobs"/>
 	    <fncref targ="psd"/>
+	    <fncref targ="pxmean"/>
 	    <fncref targ="pxsum"/>
 	    <fncref targ="pshrink"/>
 	    <fncref targ="psum"/>
@@ -11523,6 +11524,47 @@
 	    <fncref targ="invcdf"/>
 	    <fncref targ="urcpval"/>
 	    <fncref targ="imhof"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="pxmean" section="panel" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="series" optional="true">mask</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Applicabile solo se il dataset corrente ha una struttura
+	  panel. Restituisce una serie contenente la media
+	  cross-sezionale della variabile <argname>y</argname> per
+	  ogni periodo di tempo, i cui valori vengono ripetuti per
+	  ogni unità. Le osservazioni mancanti vengono ignorate.
+	</para>
+	<para context="tex">
+	  Applicabile solo se il dataset corrente ha una struttura
+	  panel. Calcola la media cross-sezionale della variabile
+	  <argname>y</argname> per ogni periodo di tempo; ovvero, \[
+	  \bar{y}_t = \frac{1}{N_t} \sum_{i=1}^{N_t} y_{i,t}\] dove
+	  $N_t$ è il numero di osservazioni valide per il periodo
+	  $t$.
+	</para>
+	<para>
+	  Se il secondo argomento è presente, le osservazioni per le
+	  quali il valore di <argname>mask</argname> è zero vengono
+	  ignorate.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="pmax"/>
+	    <fncref targ="pmean"/>
+            <fncref targ="pmin"/>
+            <fncref targ="pnobs"/>
+            <fncref targ="psd"/>
+            <fncref targ="pxsum"/>
+            <fncref targ="pshrink"/>
+            <fncref targ="psum"/>
 	  </seelist>
 	</para>
       </description>
