@@ -717,10 +717,11 @@ function void SVAR_SRirf(const bundle mod "the model bundle",
             matrix grph = center[,k] ~ seq(0, mod.horizon)' # IrfData.irfSRmeans
             matrix band = mod.SRlo_cb[,k] ~ mod.SRhi_cb[,k] # IrfData.lo_cb, IrfData.hi_cb
             band = 0.5 * band * {1, 1; 1, -1}
+            bundle bandspec = _(bandmat=band, style="fill")
 
             plot grph
                 options with-lines fit=none
-                options band=band,1 band-style=fill
+                option band=bandspec
                 printf "set title '%s shock -> %s'", mod.SRid_snames[j], \
                   mod.Ynames[i]
             end plot @gpopts
