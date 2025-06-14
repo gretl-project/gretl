@@ -1,22 +1,23 @@
 # translation of es.po to Spanish
-# Copyright (C) 2001--2023 Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>,
+# Copyright (C) 2001--2024 Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>,
+# Copyright (C) 2025 Juan I. Modroño <juan.modrono@ehu.eus>,
 # This file is distributed under the same license as the gretl package.
 #
-# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>, 2023.
+# Juan I. Modroño <juan.modrono@ehu.eus>, 2025.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-2023a\n"
+"Project-Id-Version: gretl-2025c\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-30 17:28-0400\n"
-"PO-Revision-Date: 2025-02-09 16:32+0100\n"
-"Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
+"PO-Revision-Date: 2025-06-13 13:22+0200\n"
+"Last-Translator: Juan I. Modroño <juan.modrono@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Emacs 29.3 using po-mode v2.29\n"
 
 #: lib/src/addons_utils.c:187
 msgid "try"
@@ -1790,7 +1791,7 @@ msgstr "El periodo del panel se ha extendido en %d observaciones"
 #: lib/src/dataset.c:3368
 #, fuzzy, c-format
 msgid "Dataset extended by %d units"
-msgstr "El conjunto de datos ha sido extendido en %d observaciones"
+msgstr "El conjunto de datos ha sido extendido en %d unidades"
 
 #: lib/src/dataset.c:3378
 #, c-format
@@ -4345,7 +4346,7 @@ msgstr "Falló una instrucción externa"
 #: lib/src/gretl_errors.c:79
 msgid "Maximum length of command line (65536 bytes) exceeded"
 msgstr ""
-"Se ha sobrepasado la largura máxima de la línea de instrucciones (65536 "
+"Se ha sobrepasado la longitud máxima de la línea de instrucciones (65536 "
 "bytes)"
 
 #: lib/src/gretl_errors.c:80
@@ -4479,7 +4480,7 @@ msgstr "%s: dimensiones de la matriz no válidas, %d x %d"
 #: lib/src/gretl_foreign.c:3379
 #, c-format
 msgid "%s: invalid array length %d"
-msgstr "%s: largura del array no válida %d"
+msgstr "%s: longitud del array no válida %d"
 
 #: lib/src/gretl_foreign.c:3405
 #, c-format
@@ -5962,7 +5963,7 @@ msgstr "el nombre del fichero es demasiado largo (%d bytes)"
 #, c-format
 msgid "Maximum length of command line (%d bytes) exceeded\n"
 msgstr ""
-"Se ha sobrepasado la largura máxima de la línea de instrucciones (%d bytes)\n"
+"Se ha sobrepasado la longitud máxima de la línea de instrucciones (%d bytes)\n"
 
 #: lib/src/gretl_typemap.c:412 gui/library.c:5298
 #, c-format
@@ -6352,7 +6353,7 @@ msgstr "No hay información disponible sobre los datos.\n"
 #, c-format
 msgid "Maximum length of command line (%d bytes) exceeded"
 msgstr ""
-"Se ha sobrepasado la largura máxima de la línea de instrucciones (%d bytes)"
+"Se ha sobrepasado la longitud máxima de la línea de instrucciones (%d bytes)"
 
 #: lib/src/interact.c:1702
 #, c-format
@@ -7548,12 +7549,12 @@ msgstr "Se han incluido %d unidades de sección cruzada"
 #: lib/src/modelprint.c:2192
 #, c-format
 msgid "Time-series length = %d"
-msgstr "Largura de la serie temporal = %d"
+msgstr "Longitud de la serie temporal = %d"
 
 #: lib/src/modelprint.c:2194
 #, c-format
 msgid "Time-series length: minimum %d, maximum %d"
-msgstr "Largura de la serie temporal: mínimo %d, máximo %d"
+msgstr "Longitud de la serie temporal: mínimo %d, máximo %d"
 
 #: lib/src/modelprint.c:2201
 msgid "Including equations in levels"
@@ -8527,6 +8528,8 @@ msgid ""
 "Deprecated --band syntax: please use the current syntax\n"
 "as described in the help for the 'gnuplot' command"
 msgstr ""
+"Obsoleto --error de sintaxis: por favor, usa la sintaxis actual\n"
+"tal y como se describe en la ayuda del comando 'gnuplot'"
 
 #: lib/src/plotspec.c:223 lib/src/plotspec.c:246
 msgid "lines"
@@ -17859,7 +17862,7 @@ msgstr "Desconocido"
 #: gui/menustate.c:1083
 #, c-format
 msgid "Panel: units %d:%d, time %s:%s"
-msgstr ""
+msgstr "Panel: unidades %d:%d, periodo %s:%s"
 
 #: gui/menustate.c:1115
 #, c-format
@@ -18693,7 +18696,7 @@ msgstr "Contraste LM usando una regresión auxiliar"
 
 #: gui/selector.c:6897
 msgid "Stepwise add, using"
-msgstr ""
+msgstr "Añadir mediante Stepwise, usando"
 
 #: gui/selector.c:6927
 msgid "Estimate reduced model"
@@ -19375,7 +19378,7 @@ msgstr "Instrucción para lanzar GNU R"
 
 #: gui/settings.c:282
 msgid "Path to R.exe"
-msgstr "Camino a R.exe"
+msgstr "Ruta a R.exe"
 
 #: gui/settings.c:285
 msgid "Command to compile TeX files"
@@ -19395,47 +19398,47 @@ msgstr "Calculadora"
 
 #: gui/settings.c:296
 msgid "Path to x12arima (or x13)"
-msgstr "Camino a x12arima (o x13)"
+msgstr "Ruta a x12arima (o x13)"
 
 #: gui/settings.c:300
 msgid "Path to tramo"
-msgstr "Camino a tramo"
+msgstr "Ruta a tramo"
 
 #: gui/settings.c:304
 msgid "Path to R library"
-msgstr "Camino a la biblioteca de R"
+msgstr "Ruta a la biblioteca de R"
 
 #: gui/settings.c:307
 msgid "Path to oxl executable"
-msgstr "Camino al ejecutable de oxl"
+msgstr "Ruta al ejecutable de oxl"
 
 #: gui/settings.c:309
 msgid "Path to octave executable"
-msgstr "Camino al ejecutable de Octave"
+msgstr "Ruta al ejecutable de Octave"
 
 #: gui/settings.c:311
 msgid "Path to Stata executable"
-msgstr "Camino al ejecutable de Stata"
+msgstr "Ruta al ejecutable de Stata"
 
 #: gui/settings.c:313
 msgid "Path to Python executable"
-msgstr "Camino al ejecutable de Python"
+msgstr "Ruta al ejecutable de Python"
 
 #: gui/settings.c:315
 msgid "Path to Julia executable"
-msgstr "Camino al ejecutable de Julia"
+msgstr "Ruta al ejecutable de Julia"
 
 #: gui/settings.c:318
 msgid "Path to lpsolve library"
-msgstr "Camino a la biblioteca de lpsolve"
+msgstr "Ruta a la biblioteca de lpsolve"
 
 #: gui/settings.c:322
 msgid "Path to mpiexec"
-msgstr "Camino a mpiexec"
+msgstr "Ruta a mpiexec"
 
 #: gui/settings.c:324
 msgid "Path to MPI hosts file"
-msgstr "Camino al fichero de anfitriones de MPI"
+msgstr "Ruta al fichero de anfitriones de MPI"
 
 #: gui/settings.c:326
 msgid "Installed MPI variant"
@@ -19578,7 +19581,7 @@ msgstr "General"
 
 #: gui/settings.c:1688
 msgid "Plots"
-msgstr ""
+msgstr "Gráficos"
 
 #: gui/settings.c:1690
 msgid "Programs"
@@ -21532,7 +21535,7 @@ msgid ""
 "(Type 0 characteristic of nonzero length)"
 msgstr ""
 "hay algo extraño en el fichero\n"
-"(característica de tipo 0 de largura distinta de cero)"
+"(característica de tipo 0 de longitud distinta de cero)"
 
 #: plugin/stata_import.c:1979
 msgid "This dta version not yet supported\n"
@@ -23118,7 +23121,7 @@ msgstr "Nivel de detalle"
 #~ msgstr "Serie"
 
 #~ msgid "No series length has been defined"
-#~ msgstr "No se ha definido una largura para las series"
+#~ msgstr "No se ha definido la longitud de las series"
 
 #~ msgid "Program to play MIDI files"
 #~ msgstr "Programa para tocar ficheros MIDI"
