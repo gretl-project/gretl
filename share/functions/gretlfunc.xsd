@@ -199,6 +199,7 @@
         <xs:element maxOccurs="unbounded" ref="msg"/>
       </xs:sequence>
       <xs:attribute name="lang" use="required"/>
+      <xs:attribute name="filename"/>
     </xs:complexType>
   </xs:element>
   <xs:element name="msg">

@@ -1998,9 +1998,12 @@ static int function_call_dialog (call_info *cinfo)
             trdesc = _(desc);
         }
 
+#if 0
 	if (i == 0 && cinfo->n_params > 1) {
+            /* FIXME why is this header not being translated? */
 	    add_table_header(tbl, _("Select arguments:"), tcols, row, 5);
 	}
+#endif
 	if (alist != NULL) {
 	    prior_val = arglist_lookup_val(alist, i);
 	}
