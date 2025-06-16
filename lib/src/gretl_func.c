@@ -3652,7 +3652,7 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn, int mpi)
     }
 
     if (pkg->trans != NULL) {
-        write_translation(pkg->trans, prn);
+        write_gfn_translation(pkg->trans, prn);
     }
 
     pputs(prn, "</gretl-function-package>\n");
@@ -5625,7 +5625,7 @@ static void real_function_package_free (fnpkg *pkg, int full)
             strings_array_free(pkg->depends, pkg->n_depends);
         }
         if (pkg->trans != NULL) {
-            destroy_translation(pkg->trans);
+            destroy_gfn_translation(pkg->trans);
         }
 
         free(pkg->pub);

@@ -24,95 +24,13 @@
 #include "gfn_translations.h"
 #include "gretl_string_table.h"
 
-// static int verbose = 1;
-
-struct Translation_ {
+struct GfnTranslation_ {
     char *lang;       /* language */
     char *filename;   /* (optional) name of XML file */
     GHashTable *msgs; /* table */
 };
 
-#define SUPPORT_MULTIPLE 0 /* not yet */
-
-#if SUPPORT_MULTIPLE
-
-/* Apparatus for dealing with multiple translations: not used yet */
-
-struct Translations_ {
-    int n_langs;     /* number of languages (other than English) */
-    Translation **T; /* individual language translations */
-    int active;      /* ID number of active translation */
-};
-
-typedef struct Translations_ Translations;
-
-void destroy_translations (Translations *TT)
-{
-    int i;
-
-    for (i=0; i<TT->n_langs; i++) {
-        destroy_translation(TT->T[i]);
-    }
-    free(TT);
-}
-
-static Translations *allocate_translations (int n_langs)
-{
-    Translations *TT = malloc(sizeof *TT);
-
-    if (TT != NULL) {
-        TT->n_langs = n_langs;
-        TT->T = malloc(n_langs * sizeof *TT->T);
-        TT->active = -1;
-    }
-
-    return TT;
-}
-
-const char *get_gfn_translation (Translations *TT,
-                                 const char *id)
-{
-    int i;
-
-    if (TT->active < 0) {
-        char *lang = get_built_in_string_by_name("lang");
-
-        for (i=0; i<TT->n_langs; i++) {
-            /* FIXME comparison? */
-            if (!strcmp(lang, TT->T[i]->lang) ||
-                !strncmp(lang, TT->T[i]->lang, 2)) {
-                TT->active = i;
-                break;
-            }
-        }
-    }
-
-    if (TT->active >= 0) {
-        Translation *T = TT->T[TT->active];
-        const char *tr = g_hash_table_lookup(T->msgs, id);
-
-        if (tr != NULL) {
-            return tr;
-        }
-    }
-
-    return id;
-}
-
-Translations *read_translations_element (xmlNodePtr root,
-                                         xmlDocPtr doc)
-{
-    return NULL; /* FIXME */
-}
-
-void write_translations (Translations *TT, PRN *prn)
-{
-    ; /* FIXME */
-}
-
-#endif /* SUPPORT_MULTIPLE */
-
-void destroy_translation (Translation *T)
+void destroy_gfn_translation (GfnTranslation *T)
 {
     free(T->lang);
     free(T->filename);
@@ -120,9 +38,9 @@ void destroy_translation (Translation *T)
     free(T);
 }
 
-static Translation *allocate_translation (char *lang)
+static GfnTranslation *allocate_translation (char *lang)
 {
-    Translation *T = malloc(sizeof *T);
+    GfnTranslation *T = malloc(sizeof *T);
 
     if (T != NULL) {
         T->lang = lang;
@@ -134,7 +52,7 @@ static Translation *allocate_translation (char *lang)
     return T;
 }
 
-const char *get_gfn_translation (Translation *T,
+const char *get_gfn_translation (GfnTranslation *T,
                                  const char *id)
 {
     static char *lang;
@@ -151,10 +69,10 @@ const char *get_gfn_translation (Translation *T,
     return ret != NULL ? ret : id;
 }
 
-Translation *read_translation_element (xmlNodePtr root,
-                                       xmlDocPtr doc)
+GfnTranslation *read_translation_element (xmlNodePtr root,
+                                          xmlDocPtr doc)
 {
-    Translation *T = NULL;
+    GfnTranslation *T = NULL;
     xmlNodePtr cur;
     char *lang = NULL;
     char *fname = NULL;
@@ -190,7 +108,7 @@ Translation *read_translation_element (xmlNodePtr root,
     }
 
     if (n == 0) {
-        destroy_translation(T);
+        destroy_gfn_translation(T);
         T = NULL;
     } else if (fname != NULL) {
         T->filename = fname;
@@ -199,9 +117,9 @@ Translation *read_translation_element (xmlNodePtr root,
     return T;
 }
 
-Translation *read_translations_file (const char *fname, int *err)
+GfnTranslation *read_translations_file (const char *fname, int *err)
 {
-    Translation *T = NULL;
+    GfnTranslation *T = NULL;
     xmlDocPtr doc = NULL;
     xmlNodePtr root;
 
@@ -224,7 +142,7 @@ static void merge_tr_msg (gpointer key,
                           gpointer val,
                           gpointer data)
 {
-    Translation *T0 = data;
+    GfnTranslation *T0 = data;
     char *newkey, *newval;
 
     if (!g_hash_table_contains(T0->msgs, key)) {
@@ -249,9 +167,10 @@ static void merge_tr_msg (gpointer key,
     }
 }
 
-Translation *update_translation (Translation *T0, const char *trbuf)
+GfnTranslation *update_gfn_translation (GfnTranslation *T0,
+                                        const char *trbuf)
 {
-    Translation *ret = NULL;
+    GfnTranslation *ret = NULL;
     xmlDocPtr doc = NULL;
     xmlNodePtr root;
     int err;
@@ -266,7 +185,7 @@ Translation *update_translation (Translation *T0, const char *trbuf)
         ret = read_translation_element(root, doc);
     } else {
         /* merge content of @trbuf into @T0 */
-        Translation *T1 = read_translation_element(root, doc);
+        GfnTranslation *T1 = read_translation_element(root, doc);
 
         if (strcmp(T0->lang, T1->lang)) {
             /* replace the language spec */
@@ -275,7 +194,7 @@ Translation *update_translation (Translation *T0, const char *trbuf)
             T1->lang = NULL;
         }
         g_hash_table_foreach(T1->msgs, merge_tr_msg, T0);
-        destroy_translation(T1);
+        destroy_gfn_translation(T1);
         ret = T0;
     }
 
@@ -299,7 +218,7 @@ static void write_tr_msg (gpointer key,
     }
 }
 
-void write_translation (Translation *T, PRN *prn)
+void write_gfn_translation (GfnTranslation *T, PRN *prn)
 {
     if (T != NULL) {
         pprintf(prn, "<translation lang=\"%s\"", T->lang);

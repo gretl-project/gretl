@@ -1496,7 +1496,7 @@ static int gfn_spec_save_dialog (function_info *finfo,
         WRITE_XMLTRANS
     };
     struct spec_info sinfo;
-    Translation *trans;
+    GfnTranslation *trans;
     GtkWidget *dialog, *entry;
     GtkWidget *vbox, *hbox, *w;
     GtkWidget *table;
@@ -2040,8 +2040,8 @@ void save_gfn_translation (windata_t *vwin)
     } else {
         err = validate_gfn_translation(buf, 1);
         if (!err) {
-            Translation *T0 = function_package_get_translation(finfo->pkg);
-            Translation *T = update_translation(T0, buf);
+            GfnTranslation *T0 = function_package_get_translation(finfo->pkg);
+            GfnTranslation *T = update_gfn_translation(T0, buf);
 
             if (T != NULL) {
                 function_package_set_translation(finfo->pkg, T);
@@ -2085,7 +2085,7 @@ static void foo (void)
 static void translation_callback (GtkButton *b,
                                   function_info *finfo)
 {
-    Translation *T = function_package_get_translation(finfo->pkg);
+    GfnTranslation *T = function_package_get_translation(finfo->pkg);
 
     if (T != NULL) {
         /* Open an editable window holding XML translations */
@@ -2099,7 +2099,7 @@ static void translation_callback (GtkButton *b,
             return;
         }
         pputs(prn, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-        write_translation(T, prn);
+        write_gfn_translation(T, prn);
         edit_translations(finfo, prn);
     } else {
         /* No translations yet */
@@ -4991,7 +4991,7 @@ static FILE *open_auxfile (const char *spec_fname,
 
 static int write_translation_data (function_info *finfo,
                                    const char *spec_fname,
-                                   Translation *trans,
+                                   GfnTranslation *trans,
                                    PRN *prn)
 {
     int ret = 0;
@@ -5005,7 +5005,7 @@ static int write_translation_data (function_info *finfo,
         PRN *fprn = gretl_print_new_with_stream(fp);
 
         pputs(fprn, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-        write_translation(trans, fprn);
+        write_gfn_translation(trans, fprn);
         gretl_print_destroy(fprn);
         ret = 1;
     }
@@ -5090,7 +5090,7 @@ int save_function_package_spec (const char *fname, gpointer p)
         UI_MAKER,
 	NULL
     };
-    Translation *trans = NULL;
+    GfnTranslation *trans = NULL;
     const char *reqstr = NULL;
     const char *gui_help;
     const char *sample;
