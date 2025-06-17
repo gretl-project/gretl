@@ -7737,11 +7737,22 @@ int time_series_from_panel (DATASET *tset, const DATASET *pset)
 int obs_index_from_aqm (const char *s, int pd, int t0, int n)
 {
     const char *digits = "0123456789";
+
     int ok_len = (pd == 1)? 4 : (pd == 4)? 6 : 7;
     int len = strlen(s);
     int t = 0;
+    int is_len_ok = 0;
 
-    if (len != ok_len || strspn(s, digits) != 4) {
+    switch (pd) {
+    case 1:
+	is_len_ok = (len == 4);
+    case 4:
+	is_len_ok = (len == 6);
+    case 12:
+	is_len_ok = (len == 6) || (len == 7);
+    }
+
+    if (!is_len_ok || strspn(s, digits) != 4) {
         return -1;
     }
 
