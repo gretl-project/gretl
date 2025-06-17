@@ -9455,7 +9455,7 @@ int gretl_invert_diagonal_matrix (gretl_matrix *a)
  * @a: matrix to invert.
  *
  * Computes the inverse of matrix @a: on exit @a is
- * overwritten with the inverse.  If @a is diagonal
+ * overwritten with the inverse.  If @a is diagonal, triangular
  * or symmetric, appropriate simple inversion routines
  * are called.
  *
