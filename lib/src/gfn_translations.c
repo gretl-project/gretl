@@ -55,7 +55,7 @@ static GfnTranslation *allocate_translation (char *lang)
 const char *get_gfn_translation (GfnTranslation *T,
                                  const char *id)
 {
-    static char *lang;
+    static char *lang = NULL;
     const char *ret = NULL;
 
     if (lang == NULL) {
@@ -65,6 +65,9 @@ const char *get_gfn_translation (GfnTranslation *T,
     if (!strcmp(lang, T->lang) || !strncmp(lang, T->lang, 2)) {
         ret = g_hash_table_lookup(T->msgs, id);
     }
+
+    /* ensure we're on track for subsequent gettext() calls */
+    textdomain("gretl");
 
     return ret != NULL ? ret : id;
 }
