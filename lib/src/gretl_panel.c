@@ -7724,7 +7724,8 @@ int time_series_from_panel (DATASET *tset, const DATASET *pset)
 /* Given an annual, quarterly or monthly date string @s in gretl's
    standard format (YYYY, YYYY:Q or YYYY:MM), convert to a zero-based
    observation index relative to a series of frequency @pd and length
-   @n starting at @t0.
+   @n starting at @t0. (We'll also accept YYYY:M for monthly data with
+   a single-digit month.)
 
    @t0 is assumed to be given in a form that makes the calculation
    easy, namely the number of periods since the start of the year 0.
@@ -7737,22 +7738,19 @@ int time_series_from_panel (DATASET *tset, const DATASET *pset)
 int obs_index_from_aqm (const char *s, int pd, int t0, int n)
 {
     const char *digits = "0123456789";
-
-    int ok_len = (pd == 1)? 4 : (pd == 4)? 6 : 7;
     int len = strlen(s);
+    int len_ok = 0;
     int t = 0;
-    int is_len_ok = 0;
 
-    switch (pd) {
-    case 1:
-	is_len_ok = (len == 4);
-    case 4:
-	is_len_ok = (len == 6);
-    case 12:
-	is_len_ok = (len == 6) || (len == 7);
+    if (pd == 1) {
+	len_ok = (len == 4); /* e.g. 2025 */
+    } else if (pd == 4) {
+	len_ok = (len == 6); /* e.g. 2025:1 */
+    } else if (pd == 12) {
+	len_ok = (len == 6 || len == 7); /* 2025:1 or 2025:01 */
     }
 
-    if (!is_len_ok || strspn(s, digits) != 4) {
+    if (!len_ok || strspn(s, digits) != 4) {
         return -1;
     }
 
