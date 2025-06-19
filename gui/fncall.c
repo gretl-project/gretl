@@ -4249,16 +4249,19 @@ static void add_package_to_menu (gui_package_info *gpi,
     item.name = gpi->pkgname;
     item.label = gpi->label != NULL ? gpi->label : gpi->pkgname;
 
-#if 0
-    #include "gretl_string_table.h"
-    if (gpi->label != NULL) {
+#if 1
+# include "gretl_string_table.h"
+    fnpkg *pkg;
+
+    if ((pkg = get_function_package_by_name(gpi->pkgname)) && gpi->label != NULL) {
+        GfnTranslation *T = NULL;
         char *lang = get_built_in_string_by_name("lang");
 
-        fprintf(stderr, "HERE lang='%s', filepath '%s'\n",
-                lang, gpi->filepath);
+        T = function_package_get_translation(pkg);
 
-        if (strncmp(lang, "en", 2)) {
-            item.label = try_for_label_translation(gpi->label, gpi->filepath, lang);
+        fprintf(stderr, "HERE lang='%s'\n", lang);
+        if (T != NULL && strncmp(lang, "en", 2)) {
+            item.label = get_gfn_translation(T, gpi->label);
         }
     }
 #endif
