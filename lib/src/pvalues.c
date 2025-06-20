@@ -82,6 +82,33 @@ double lngamma (double x)
 }
 
 /**
+ * lnmgamma:
+ * @x: argument
+ * @p: shape parameter.
+ *
+ * Returns: the log multivariate gamma function of @x, or #NADBL
+ * on failure.
+ */
+
+double lnmgamma(double x, int p)
+{
+    double ret;
+
+    if (p < 1) {
+	ret = NADBL;
+    } else {
+	ret = lngamma(x);
+	int i;
+	for (i=1; i<p; i++) {
+	    ret += lngamma(x - 0.5*i);
+	}
+	ret += p*(p-1) * LN_PI / 4.0;
+    }
+    
+    return ret;
+}
+
+/**
  * digamma:
  * @x: argument.
  *

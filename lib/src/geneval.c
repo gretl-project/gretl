@@ -6249,6 +6249,11 @@ static NODE *flexible_2arg_node (NODE *l, NODE *r, int f, int flag,
                 if (p->err) {
                     break;
 		}
+            } else if (f == F_LNMGAMMA) {
+                y = lnmgamma(x1, x2);
+                if (p->err) {
+                    break;
+		}
             } else if (f == F_THRESHOLD) {
 		y = threshold(x1, x2, flag, &p->err);
 		if (p->err) {
@@ -18404,6 +18409,7 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_ATAN2:
     case F_BINCOEFF:
+    case F_LNMGAMMA:
         if ((l->t == NUM || l->t == MAT || l->t == SERIES) &&
             (r->t == NUM || r->t == MAT || r->t == SERIES)) {
             ret = flexible_2arg_node(l, r, t->t, 0, p);

@@ -396,6 +396,7 @@ enum {
     F_FEVALB,
     F_BINPERMS,
     F_MNORM,
+    F_LNMGAMMA,
     HF_VCNORM,
     HF_GLASSO,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */

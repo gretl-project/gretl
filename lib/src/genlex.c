@@ -604,6 +604,7 @@ struct str_table funcs[] = {
     { F_ACCESS,    "access" },
     { F_SPHCORR,   "sphericorr" },
     { F_THRESHOLD, "thresh" },
+    { F_LNMGAMMA,  "lnmgamma"},
     { 0,           NULL }
 };
 

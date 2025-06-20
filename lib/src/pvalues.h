@@ -52,6 +52,8 @@ double gammafun (double x);
 
 double lngamma (double x);
 
+double lnmgamma (double x, int p);
+
 double digamma (double x);
 
 double trigamma (double x);
