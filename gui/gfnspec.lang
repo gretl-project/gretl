@@ -56,6 +56,9 @@
       <keyword>bundle-fcast</keyword>
       <keyword>bundle-extra</keyword>
       <keyword>data-files</keyword>
+      <keyword>R-setup</keyword>
+      <keyword>R-depends</keyword>
+      <keyword>translations</keyword>
     </context>
     <context id="gfnspec">
       <include>
