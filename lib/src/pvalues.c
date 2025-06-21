@@ -90,21 +90,20 @@ double lngamma (double x)
  * on failure.
  */
 
-double lnmgamma(double x, int p)
+double lnmgamma (double x, int p)
 {
-    double ret;
+    double ret = NADBL;
 
-    if (p < 1) {
-	ret = NADBL;
-    } else {
+    if (p >= 1) {
+        int i;
+
 	ret = lngamma(x);
-	int i;
 	for (i=1; i<p; i++) {
 	    ret += lngamma(x - 0.5*i);
 	}
 	ret += p*(p-1) * LN_PI / 4.0;
     }
-    
+
     return ret;
 }
 
