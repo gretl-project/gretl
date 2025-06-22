@@ -94,6 +94,10 @@ double lnmgamma (double x, int p)
 {
     double ret = NADBL;
 
+    if (p > 2*x) {
+	return ret;
+    }
+
     if (p >= 1) {
         int i;
 

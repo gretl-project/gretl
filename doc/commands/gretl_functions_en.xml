@@ -8049,9 +8049,31 @@
 	<para>
 	  Returns the log of the gamma function of <argname>x</argname>.
 	</para>
+	  <seelist>
+            <fncref targ="bincoeff"/>
+            <fncref targ="gammafun"/>
+	  </seelist>
+      </description>
+    </function>
+
+    <function name="lnmgamma" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="anyfloat">p</fnarg>
+      </fnargs>
+      <description>
 	<para>
-	  See also <fncref targ="bincoeff"/> and <fncref targ="gammafun"/>.
+	  Returns the log of the multivariate gamma function of
+	  <argname>x</argname> with shape parameter <argname>p</argname>.
 	</para>
+	<para>
+	  For its definition and properties, see
+	  <url>https://dlmf.nist.gov/35.3</url> or
+	  <url>https://en.wikipedia.org/wiki/Multivariate_gamma_function</url>.
+	</para>
+	  <seelist>
+            <fncref targ="lngamma"/>
+	  </seelist>
       </description>
     </function>
 

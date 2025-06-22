@@ -8211,9 +8211,31 @@
 	<para>
 	  Logaritmo della funzione gamma di <argname>x</argname>.
 	</para>
+	  <seelist>
+            <fncref targ="bincoeff"/>
+            <fncref targ="gammafun"/>
+	  </seelist>
+      </description>
+    </function>
+
+    <function name="lnmgamma" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="anyfloat">p</fnarg>
+      </fnargs>
+      <description>
 	<para>
-	  Vedi anche <fncref targ="bincoeff"/> e <fncref targ="gammafun"/>.
+	  Logaritmo della funzione gamma multivariata di
+	  <argname>x</argname> con parametro <argname>p</argname>.
 	</para>
+	<para>
+	  Per la sua definizione e le sue proprietà, si veda
+	  <url>https://dlmf.nist.gov/35.3</url> oppure
+	  <url>https://en.wikipedia.org/wiki/Multivariate_gamma_function</url>.
+	</para>
+	  <seelist>
+            <fncref targ="lngamma"/>
+	  </seelist>
       </description>
     </function>
 
