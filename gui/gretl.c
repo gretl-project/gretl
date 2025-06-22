@@ -2702,6 +2702,9 @@ gboolean open_tryfile (gboolean startup, gboolean dnd)
     } else if (has_suffix(tryfile, ".gfn") &&
 	       gretl_is_xml_file(tryfile)) {
 	ret = gfn_open_dialog(tryfile);
+    } else if (has_suffix(tryfile, ".spec")) {
+        view_script(tryfile, 1, EDIT_SPEC);
+        ret = TRUE;
     } else {
 	ret = verify_open_data(NULL, 0, dnd);
     }
