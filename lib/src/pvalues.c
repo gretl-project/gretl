@@ -57,7 +57,7 @@ double gammafun (double x)
     double ret = cephes_gamma(x);
 
     if (get_cephes_errno()) {
-	ret = NADBL;
+        ret = NADBL;
     }
 
     return ret;
@@ -75,7 +75,7 @@ double lngamma (double x)
     double ret = cephes_lgamma(x);
 
     if (get_cephes_errno()) {
-	ret = NADBL;
+        ret = NADBL;
     }
 
     return ret;
@@ -87,25 +87,23 @@ double lngamma (double x)
  * @p: shape parameter.
  *
  * Returns: the log multivariate gamma function of @x, or #NADBL
- * on failure.
+ * on failure. Note that the shape parameter @p must be at least
+ * 1 and no greater than 2 times the argument @x, otherwise
+ * NODBL is returned.
  */
 
 double lnmgamma (double x, int p)
 {
     double ret = NADBL;
 
-    if (p > 2*x) {
-	return ret;
-    }
-
-    if (p >= 1) {
+    if (p >= 1 && p <= 2*x) {
         int i;
 
-	ret = lngamma(x);
-	for (i=1; i<p; i++) {
-	    ret += lngamma(x - 0.5*i);
-	}
-	ret += p*(p-1) * LN_PI / 4.0;
+        ret = lngamma(x);
+        for (i=1; i<p; i++) {
+            ret += lngamma(x - 0.5*i);
+        }
+        ret += p*(p-1) * LN_PI / 4.0;
     }
 
     return ret;
@@ -123,7 +121,7 @@ double digamma (double x)
     double ret = psi(x);
 
     if (get_cephes_errno()) {
-	ret = NADBL;
+        ret = NADBL;
     }
 
     return ret;
@@ -159,27 +157,27 @@ double trigamma (double x)
     double b14 = 7.0/6;
 
     if (x <= 0) {
-	ret = NADBL;
+        ret = NADBL;
     } else if (x < A) {
-	ret = 1.0 / (x * x);
+        ret = 1.0 / (x * x);
     } else {
-	double y, a1, a2, z = x;
+        double y, a1, a2, z = x;
 
-	while (z < B) {
-	    ret += 1.0 / (z * z);
-	    z += 1.0;
-	}
-	/* Apply asymptotic formula for argument >= B */
-	y = 1.0 / (z * z);
-	a1 = 0.5 * y;
-	a2 = (1 + y *
-	      (b2 + y *
-	       (b4 + y *
-		(b6 + y *
-		 (b8 + y *
-		  (b10 + y *
-		   (b12 + y * b14))))))) / z;
-	ret += a1 + a2;
+        while (z < B) {
+            ret += 1.0 / (z * z);
+            z += 1.0;
+        }
+        /* Apply asymptotic formula for argument >= B */
+        y = 1.0 / (z * z);
+        a1 = 0.5 * y;
+        a2 = (1 + y *
+              (b2 + y *
+               (b4 + y *
+                (b6 + y *
+                 (b8 + y *
+                  (b10 + y *
+                   (b12 + y * b14))))))) / z;
+        ret += a1 + a2;
     }
 
     return ret;
@@ -201,7 +199,7 @@ double hypergeo (double a, double b, double c, double x)
     double ret = hyp2f1(a, b, c, x);
 
     if (get_cephes_errno()) {
-	ret = NADBL;
+        ret = NADBL;
     }
 
     return ret;
@@ -223,10 +221,10 @@ double binomial_cdf (double p, int n, int k)
     double x = NADBL;
 
     if (p >= 0 && n >= 0 && k >= 0) {
-	x = bdtr(k, n, p);
-	if (get_cephes_errno()) {
-	    x = NADBL;
-	}
+        x = bdtr(k, n, p);
+        if (get_cephes_errno()) {
+            x = NADBL;
+        }
     }
 
     return x;
@@ -244,10 +242,10 @@ double beta_cdf (double a, double b, double z)
     double x = NADBL;
 
     if (a > 0 && b > 0 && z >= 0 && z <= 1) {
-	x = btdtr(a, b, z);
-	if (get_cephes_errno()) {
-	    x = NADBL;
-	}
+        x = btdtr(a, b, z);
+        if (get_cephes_errno()) {
+            x = NADBL;
+        }
     }
 
     return x;
@@ -269,10 +267,10 @@ double binomial_cdf_comp (double p, int n, int k)
     double x = NADBL;
 
     if (p >= 0 && n >= 0 && k >= 0) {
-	x = bdtrc(k, n, p);
-	if (get_cephes_errno()) {
-	    x = NADBL;
-	}
+        x = bdtrc(k, n, p);
+        if (get_cephes_errno()) {
+            x = NADBL;
+        }
     }
 
     return x;
@@ -293,9 +291,9 @@ static int bininv_binary (double p, int n, double u)
     int ret = -1;
 
     if (u > 0.5) {
-	klo = floor(n*p) - 1;
+        klo = floor(n*p) - 1;
     } else if (u < 0.5) {
-	khi = floor(n*p) + 1;
+        khi = floor(n*p) + 1;
     }
 
     kmid = (klo + khi) / 2;
@@ -308,65 +306,65 @@ static int bininv_binary (double p, int n, double u)
     mu = n*p;
     ke = u > 0.5 ? ceil(mu) : floor(mu);
     if (ke > 0) {
-	ke1 = ke - 1;
-	fe = binomial_cdf(p, n, ke);
-	fe1 = binomial_cdf(p, n, ke1);
-	pdmax = fe - fe1;
+        ke1 = ke - 1;
+        fe = binomial_cdf(p, n, ke);
+        fe1 = binomial_cdf(p, n, ke1);
+        pdmax = fe - fe1;
     } else {
-	pdmax = 0;
-	ke = ke1 = -1;
-	fe = fe1 = 0;
+        pdmax = 0;
+        ke = ke1 = -1;
+        fe = fe1 = 0;
     }
 
     while (evals < emax) {
-	if (kmid == ke || kmid == ke1) {
-	    f = (kmid == ke)? fe : fe1;
-	} else {
-	    f = binomial_cdf(p, n, kmid);
-	    evals++;
-	}
-	if (f < u) {
-	    /* we need to look on the right */
-	    klo = kmid;
-	    kmid = (klo + khi) / 2;
-	    if (kmid == klo) {
-		ret = kmid;
-		break;
-	    }
-	} else if (f == u) {
-	    /* on the nail (unlikely) */
-	    ret = kmid;
-	    break;
-	} else {
-	    /* f > u */
-	    if (f - u <= pdmax && kmid > 0) {
-		/* check out k - 1 */
-		int k1 = kmid - 1;
+        if (kmid == ke || kmid == ke1) {
+            f = (kmid == ke)? fe : fe1;
+        } else {
+            f = binomial_cdf(p, n, kmid);
+            evals++;
+        }
+        if (f < u) {
+            /* we need to look on the right */
+            klo = kmid;
+            kmid = (klo + khi) / 2;
+            if (kmid == klo) {
+                ret = kmid;
+                break;
+            }
+        } else if (f == u) {
+            /* on the nail (unlikely) */
+            ret = kmid;
+            break;
+        } else {
+            /* f > u */
+            if (f - u <= pdmax && kmid > 0) {
+                /* check out k - 1 */
+                int k1 = kmid - 1;
 
-		if (k1 == ke || k1 == ke1) {
-		    f1 = (k1 == ke)? fe : fe1;
-		} else {
-		    f1 = binomial_cdf(p, n, k1);
-		    evals++;
-		}
-		if (f1 < u) {
-		    ret = kmid;
-		    break;
-		}
-	    }
-	    /* we need to look on the left */
-	    khi = kmid;
-	    kmid = (klo + khi) / 2;
-	    if (kmid == klo) {
-		ret = kmid;
-		break;
-	    }
-	}
+                if (k1 == ke || k1 == ke1) {
+                    f1 = (k1 == ke)? fe : fe1;
+                } else {
+                    f1 = binomial_cdf(p, n, k1);
+                    evals++;
+                }
+                if (f1 < u) {
+                    ret = kmid;
+                    break;
+                }
+            }
+            /* we need to look on the left */
+            khi = kmid;
+            kmid = (klo + khi) / 2;
+            if (kmid == klo) {
+                ret = kmid;
+                break;
+            }
+        }
     }
 
     if (ret < 0) {
-	fprintf(stderr, "bininv_binary, bad: evals=%d, p=%g, n=%d, u=%g\n",
-		evals, p, n, u);
+        fprintf(stderr, "bininv_binary, bad: evals=%d, p=%g, n=%d, u=%g\n",
+                evals, p, n, u);
     }
 
     return ret;
@@ -382,25 +380,25 @@ static int bininv_sum (double p, int n, double u)
     f = binomial_cdf(p, n, n/2);
 
     if (u <= f) {
-	/* bottom-up */
-	a = pow(1 - p, n);
-	s = a - u;
-	while (s < 0) {
-	    a = (a*p/(1 - p)) * (n - k + 1)/k;
-	    s += a;
-	    k++;
-	}
-	return k - 1;
+        /* bottom-up */
+        a = pow(1 - p, n);
+        s = a - u;
+        while (s < 0) {
+            a = (a*p/(1 - p)) * (n - k + 1)/k;
+            s += a;
+            k++;
+        }
+        return k - 1;
     } else {
-	/* top-down */
-	a = pow(p, n);
-	s = 1 - u - a;
-	while (s >= 0) {
-	    a = (a*(1 - p)/p) * (n - k + 1)/k;
-	    s -= a;
-	    k++;
-	}
-	return n - k + 1;
+        /* top-down */
+        a = pow(p, n);
+        s = 1 - u - a;
+        while (s >= 0) {
+            a = (a*(1 - p)/p) * (n - k + 1)/k;
+            s -= a;
+            k++;
+        }
+        return n - k + 1;
     }
 
     return -1;
@@ -417,19 +415,19 @@ static double binomial_cdf_inverse (double p, int n, double u)
     int k;
 
     if (u <= 0 || u > 1 || n <= 0 || p <= 0 || p >= 1) {
-	;
+        ;
     } else if (u == 1.0) {
-	x = n;
+        x = n;
     } else if (n < 500) {
-	k = bininv_sum(p, n, u);
-	if (k >= 0) {
-	    x = k;
-	}
+        k = bininv_sum(p, n, u);
+        if (k >= 0) {
+            x = k;
+        }
     } else {
-	k = bininv_binary(p, n, u);
-	if (k >= 0) {
-	    x = k;
-	}
+        k = bininv_binary(p, n, u);
+        if (k >= 0) {
+            x = k;
+        }
     }
 
     return x;
@@ -446,10 +444,10 @@ static double gretl_bdtri (int n, int k, double a)
     double p = NADBL;
 
     if (a > 0 && a < 1 && n >= 0 && k >= 0 && k <= n) {
-	p = bdtri(k, n, a);
-	if (get_cephes_errno()) {
-	    p = NADBL;
-	}
+        p = bdtri(k, n, a);
+        if (get_cephes_errno()) {
+            p = NADBL;
+        }
     }
 
     return p;
@@ -465,14 +463,14 @@ static double binomial_critval (double p, int n, double a)
     int k;
 
     if (n <= 0 || p <= 0 || p >= 1 || a <= 0 || a >= 1) {
-	return NADBL;
+        return NADBL;
     }
 
     for (k=n; k>0; k--) {
-	pk = binomial_cdf(p, n, k);
-	if (pk < ac) {
-	    break;
-	}
+        pk = binomial_cdf(p, n, k);
+        if (pk < ac) {
+            break;
+        }
     }
 
     return (double) (k + 1);
@@ -493,7 +491,7 @@ double binomial_pmf (double p, int n, int k)
     double pm = binomial_cdf(p, n, k);
 
     if (k > 0 && !na(pm)) {
-	pm -= binomial_cdf(p, n, k - 1);
+        pm -= binomial_cdf(p, n, k - 1);
     }
 
     return pm;
@@ -505,12 +503,12 @@ static int binomial_pmf_array (double p, int n, double *x, int T)
     int i, k;
 
     for (i=0; i<T; i++) {
-	k = x[i];
-	pm = binomial_cdf(p, n, k);
-	if (k > 0 && !na(pm)) {
-	    pm -= binomial_cdf(p, n, k - 1);
-	}
-	x[i] = pm;
+        k = x[i];
+        pm = binomial_cdf(p, n, k);
+        if (k > 0 && !na(pm)) {
+            pm -= binomial_cdf(p, n, k - 1);
+        }
+        x[i] = pm;
     }
 
     return 0;
@@ -530,19 +528,19 @@ double x_factorial (double x)
     int n = x;
 
     if (x < 0) {
-	fact = NADBL;
+        fact = NADBL;
     } else if (x > 12) {
-	fact = cephes_gamma(1 + x);
-	if (get_cephes_errno()) {
-	    fact = NADBL;
-	}
+        fact = cephes_gamma(1 + x);
+        if (get_cephes_errno()) {
+            fact = NADBL;
+        }
     } else if (n == 0) {
-	fact = 1;
+        fact = 1;
     } else {
-	fact = n;
-	while (--n > 1) {
-	    fact *= n;
-	}
+        fact = n;
+        while (--n > 1) {
+            fact *= n;
+        }
     }
 
     return fact;
@@ -562,20 +560,20 @@ double log_x_factorial (double x)
     int n = x;
 
     if (x < 0) {
-	lfact = NADBL;
+        lfact = NADBL;
     } else if (x > 12) {
-	lfact = cephes_lgamma(1 + x);
-	if (get_cephes_errno()) {
-	    lfact = NADBL;
-	}
+        lfact = cephes_lgamma(1 + x);
+        if (get_cephes_errno()) {
+            lfact = NADBL;
+        }
     } else if (n == 0) {
-	lfact = 0;
+        lfact = 0;
     } else {
-	lfact = n;
-	while (--n > 1) {
-	    lfact *= n;
-	}
-	lfact = log(lfact);
+        lfact = n;
+        while (--n > 1) {
+            lfact *= n;
+        }
+        lfact = log(lfact);
     }
 
     return lfact;
@@ -595,10 +593,10 @@ double tcrit95 (int df)
     double x = NADBL;
 
     if (df > 0) {
-	x = stdtri(df, 0.975);
-	if (get_cephes_errno()) {
-	    x = NADBL;
-	}
+        x = stdtri(df, 0.975);
+        if (get_cephes_errno()) {
+            x = NADBL;
+        }
     }
 
     return x;
@@ -626,14 +624,14 @@ double rhocrit (int n, double alpha)
     double rc = NADBL;
 
     if (n - 2 > 0) {
-	double tmax = 1.0 - 0.5 * alpha;
-	double tc = stdtri(n - 2, tmax);
+        double tmax = 1.0 - 0.5 * alpha;
+        double tc = stdtri(n - 2, tmax);
 
-	if (get_cephes_errno() == 0) {
-	    double tc2 = tc * tc;
+        if (get_cephes_errno() == 0) {
+            double tc2 = tc * tc;
 
-	    rc = sqrt(tc2 / (tc2 + n - 2));
-	}
+            rc = sqrt(tc2 / (tc2 + n - 2));
+        }
     }
 
     return rc;
@@ -674,9 +672,9 @@ double normal_pvalue_1 (double x)
     double p = ndtr(x);
 
     if (get_cephes_errno()) {
-	p = NADBL;
+        p = NADBL;
     } else {
-	p = 1 - p;
+        p = 1 - p;
     }
 
     return p;
@@ -697,10 +695,10 @@ double student_cdf (double df, double x)
     double p = NADBL;
 
     if (df > 0) {
-	p = stdtr(df, x);
-	if (get_cephes_errno()) {
-	    p = NADBL;
-	}
+        p = stdtr(df, x);
+        if (get_cephes_errno()) {
+            p = NADBL;
+        }
     }
 
     return p;
@@ -721,19 +719,19 @@ static double student_cdf_comp (double df, double x)
     double p = NADBL;
 
     if (df > 0) {
-	if (x > 0) {
-	    p = stdtr(df, -x);
-	    if (get_cephes_errno()) {
-		p = NADBL;
-	    }
-	} else {
-	    p = stdtr(df, x);
-	    if (get_cephes_errno()) {
-		p = NADBL;
-	    } else {
-		p = 1 - p;
-	    }
-	}
+        if (x > 0) {
+            p = stdtr(df, -x);
+            if (get_cephes_errno()) {
+                p = NADBL;
+            }
+        } else {
+            p = stdtr(df, x);
+            if (get_cephes_errno()) {
+                p = NADBL;
+            } else {
+                p = 1 - p;
+            }
+        }
     }
 
     return p;
@@ -752,17 +750,17 @@ double normal_cdf_comp (double x)
     double p;
 
     if (x > 0) {
-	p = ndtr(-x);
-	if (get_cephes_errno()) {
-	    p = NADBL;
-	}
+        p = ndtr(-x);
+        if (get_cephes_errno()) {
+            p = NADBL;
+        }
     } else {
-	p = ndtr(x);
-	if (get_cephes_errno()) {
-	    p = NADBL;
-	} else {
-	    p = 1 - p;
-	}
+        p = ndtr(x);
+        if (get_cephes_errno()) {
+            p = NADBL;
+        } else {
+            p = 1 - p;
+        }
     }
 
     return p;
@@ -782,12 +780,12 @@ double student_pvalue_1 (double df, double x)
     double p = NADBL;
 
     if (df > 0) {
-	p = stdtr(df, x);
-	if (get_cephes_errno()) {
-	    p = NADBL;
-	} else {
-	    p = (p >= 1.0)? 0.0 : 1 - p;
-	}
+        p = stdtr(df, x);
+        if (get_cephes_errno()) {
+            p = NADBL;
+        } else {
+            p = (p >= 1.0)? 0.0 : 1 - p;
+        }
     }
 
     return p;
@@ -808,16 +806,16 @@ double student_pvalue_2 (double df, double x)
     double p = NADBL;
 
     if (df > 0) {
-	if (x < 0.0) {
-	    p = stdtr(df, x);
-	} else {
-	    p = stdtr(df, -x);
-	}
-	if (get_cephes_errno()) {
-	    p = NADBL;
-	} else {
-	    p *= 2;
-	}
+        if (x < 0.0) {
+            p = stdtr(df, x);
+        } else {
+            p = stdtr(df, -x);
+        }
+        if (get_cephes_errno()) {
+            p = NADBL;
+        } else {
+            p *= 2;
+        }
     }
 
     return p;
@@ -838,17 +836,17 @@ double student_critval (double df, double a)
     double x;
 
     if (df < 0) {
-	return NADBL;
+        return NADBL;
     }
 
     if (a > .10) {
-	x = stdtri(df, 1 - a);
+        x = stdtri(df, 1 - a);
     } else {
-	x = -stdtri(df, a);
+        x = -stdtri(df, a);
     }
 
     if (get_cephes_errno()) {
-	x = NADBL;
+        x = NADBL;
     }
 
     return x;
@@ -869,13 +867,13 @@ double student_cdf_inverse (double df, double a)
     double x;
 
     if (df < 0) {
-	return NADBL;
+        return NADBL;
     }
 
     x = stdtri(df, a);
 
     if (get_cephes_errno()) {
-	x = NADBL;
+        x = NADBL;
     }
 
     return x;
@@ -898,7 +896,7 @@ double chisq_cdf (double df, double x)
     /* 2016-07-22: should we return NA instead of zero
        in case of CEPHES_UNDERFLOW? */
     if (get_cephes_errno() == CEPHES_DOMAIN) {
-	p = NADBL;
+        p = NADBL;
     }
 
     return p;
@@ -919,7 +917,7 @@ double chisq_cdf_comp (double df, double x)
     double p = chdtrc(df, x);
 
     if (get_cephes_errno() == CEPHES_DOMAIN) {
-	p = NADBL;
+        p = NADBL;
     }
 
     return p;
@@ -940,14 +938,14 @@ static double chisq_critval (int df, double a)
     double x = NADBL;
 
     if (a == 1.0) {
-	return 0.0;
+        return 0.0;
     } else if (a == 0.0) {
-	return 1.0/0.0;
+        return 1.0/0.0;
     }
 
     x = chdtri(df, a);
     if (get_cephes_errno() == CEPHES_DOMAIN) {
-	x = NADBL;
+        x = NADBL;
     }
 
     return x;
@@ -958,16 +956,16 @@ static double chisq_cdf_inverse (int df, double a)
     double x = NADBL;
 
     if (a == 1.0) {
-	return 1.0/0.0;
+        return 1.0/0.0;
     } else if (a == 0.0) {
-	return 0.0;
+        return 0.0;
     }
 
     if (df >= 1 && a >= 0.0) {
-	x = chdtri(df, 1 - a);
-	if (get_cephes_errno()) {
-	    x = NADBL;
-	}
+        x = chdtri(df, 1 - a);
+        if (get_cephes_errno()) {
+            x = NADBL;
+        }
     }
 
     return x;
@@ -988,10 +986,10 @@ double snedecor_cdf (double dfn, double dfd, double x)
     double p = NADBL;
 
     if (dfn > 0 && dfd > 0 && x >= 0) {
-	p = fdtr(dfn, dfd, x);
-	if (get_cephes_errno()) {
-	    p = NADBL;
-	}
+        p = fdtr(dfn, dfd, x);
+        if (get_cephes_errno()) {
+            p = NADBL;
+        }
     }
 
     return p;
@@ -1013,10 +1011,10 @@ double snedecor_cdf_comp (double dfn, double dfd, double x)
     double p = NADBL;
 
     if (dfn > 0 && dfd > 0 && x >= 0) {
-	p = fdtrc(dfn, dfd, x);
-	if (get_cephes_errno()) {
-	    p = NADBL;
-	}
+        p = fdtrc(dfn, dfd, x);
+        if (get_cephes_errno()) {
+            p = NADBL;
+        }
     }
 
     return p;
@@ -1042,9 +1040,9 @@ double snedecor_pvalue_2 (double dfn, double dfd, double x)
         if (x < 1) {
             p = 2.0 - p;
         }
-	if (get_cephes_errno()) {
-	    p = NADBL;
-	}
+        if (get_cephes_errno()) {
+            p = NADBL;
+        }
     }
 
     return p;
@@ -1066,10 +1064,10 @@ double snedecor_critval (double dfn, double dfd, double a)
     double x = NADBL;
 
     if (dfn > 0 && dfd > 0 && a >= 0) {
-	x = fdtri(dfn, dfd, a);
-	if (get_cephes_errno()) {
-	    x = NADBL;
-	}
+        x = fdtri(dfn, dfd, a);
+        if (get_cephes_errno()) {
+            x = NADBL;
+        }
     }
 
     return x;
@@ -1080,10 +1078,10 @@ static double snedecor_cdf_inverse (double dfn, double dfd, double a)
     double x = NADBL;
 
     if (dfn > 0 && dfd > 0 && a >= 0) {
-	x = fdtri(dfn, dfd, 1 - a);
-	if (get_cephes_errno()) {
-	    x = NADBL;
-	}
+        x = fdtri(dfn, dfd, 1 - a);
+        if (get_cephes_errno()) {
+            x = NADBL;
+        }
     }
 
     return x;
@@ -1098,16 +1096,16 @@ static double Binv (double p, double q)
     errno = 0;
 
     if (p > 0 && q > 0) {
-	double x1 = lngamma(p + q);
-	double x2 = lngamma(p);
-	double x3 = lngamma(q);
+        double x1 = lngamma(p + q);
+        double x2 = lngamma(p);
+        double x3 = lngamma(q);
 
-	if (!na(x1) && !na(x2) && !na(x3)) {
-	    f = exp(x1 - x2 - x3);
-	    if (errno) {
-		f = NADBL;
-	    }
-	}
+        if (!na(x1) && !na(x2) && !na(x3)) {
+            f = exp(x1 - x2 - x3);
+            if (errno) {
+                f = NADBL;
+            }
+        }
     }
 
     return f;
@@ -1120,37 +1118,37 @@ static int snedecor_pdf_array (double v1, double v2, double *x, int n)
     errno = 0;
 
     if (v1 > 0 && v2 > 0) {
-	double xm = v1, xn = v2;
-	double vr = xm / xn;
-	double x1 = Binv(0.5*xm, 0.5*xn);
-	double x2 = pow(vr, 0.5*xm);
-	double x3, x4;
+        double xm = v1, xn = v2;
+        double vr = xm / xn;
+        double x1 = Binv(0.5*xm, 0.5*xn);
+        double x2 = pow(vr, 0.5*xm);
+        double x3, x4;
 
-	if (errno) {
-	    err = E_NAN;
-	} else {
-	    for (i=0; i<n; i++) {
-		if (!na(x[i]) && x[i] > 0) {
-		    errno = 0;
-		    x3 = pow(x[i], 0.5*xm - 1.0);
-		    x4 = pow(1.0 + vr * x[i], 0.5 * (xm+xn));
-		    x[i] = x1 * x2 * x3 / x4;
-		    if (errno) {
-			x[i] = NADBL;
-		    }
-		} else {
-		    x[i] = NADBL;
-		}
-	    }
-	}
+        if (errno) {
+            err = E_NAN;
+        } else {
+            for (i=0; i<n; i++) {
+                if (!na(x[i]) && x[i] > 0) {
+                    errno = 0;
+                    x3 = pow(x[i], 0.5*xm - 1.0);
+                    x4 = pow(1.0 + vr * x[i], 0.5 * (xm+xn));
+                    x[i] = x1 * x2 * x3 / x4;
+                    if (errno) {
+                        x[i] = NADBL;
+                    }
+                } else {
+                    x[i] = NADBL;
+                }
+            }
+        }
     } else {
-	err = E_DATA;
+        err = E_DATA;
     }
 
     if (err) {
-	for (i=0; i<n; i++) {
-	    x[i] = NADBL;
-	}
+        for (i=0; i<n; i++) {
+            x[i] = NADBL;
+        }
     }
 
     errno = 0;
@@ -1172,36 +1170,36 @@ static int chisq_pdf_array (double m, double *x, int n)
     errno = 0;
 
     if (m > 0) {
-	double m2 = m / 2.0;
-	double x1 = pow(.5, m2);
-	double x2 = gammafun(m2);
-	double x3, x4;
+        double m2 = m / 2.0;
+        double x1 = pow(.5, m2);
+        double x2 = gammafun(m2);
+        double x3, x4;
 
-	if (errno) {
-	    err = E_NAN;
-	} else {
-	    for (i=0; i<n; i++) {
-		if (!na(x[i]) && x[i] >= 0) {
-		    errno = 0;
-		    x3 = pow(x[i], m2 - 1.0);
-		    x4 = exp(-x[i] / 2.0);
-		    x[i] = (x1/x2) * x3 * x4;
-		    if (errno) {
-			x[i] = NADBL;
-		    }
-		} else {
-		    x[i] = NADBL;
-		}
-	    }
-	}
+        if (errno) {
+            err = E_NAN;
+        } else {
+            for (i=0; i<n; i++) {
+                if (!na(x[i]) && x[i] >= 0) {
+                    errno = 0;
+                    x3 = pow(x[i], m2 - 1.0);
+                    x4 = exp(-x[i] / 2.0);
+                    x[i] = (x1/x2) * x3 * x4;
+                    if (errno) {
+                        x[i] = NADBL;
+                    }
+                } else {
+                    x[i] = NADBL;
+                }
+            }
+        }
     } else {
-	err = E_DATA;
+        err = E_DATA;
     }
 
     if (err) {
-	for (i=0; i<n; i++) {
-	    x[i] = NADBL;
-	}
+        for (i=0; i<n; i++) {
+            x[i] = NADBL;
+        }
     }
 
     errno = 0;
@@ -1223,32 +1221,32 @@ static int student_pdf_array (double m, double *x, int n)
     errno = 0;
 
     if (m > 0 && !na(m)) {
-	double x1 = Binv(0.5 * m, 0.5) / sqrt(m);
-	double x3 = 0.5 * (m + 1.0);
-	double x2;
+        double x1 = Binv(0.5 * m, 0.5) / sqrt(m);
+        double x3 = 0.5 * (m + 1.0);
+        double x2;
 
-	if (errno) {
-	    err = E_NAN;
-	} else {
-	    for (i=0; i<n; i++) {
-		if (!na(x[i])) {
-		    errno = 0;
-		    x2 = m / (m + x[i] * x[i]);
-		    x[i] = x1 * pow(x2, x3);
-		    if (errno) {
-			x[i] = NADBL;
-		    }
-		}
-	    }
-	}
+        if (errno) {
+            err = E_NAN;
+        } else {
+            for (i=0; i<n; i++) {
+                if (!na(x[i])) {
+                    errno = 0;
+                    x2 = m / (m + x[i] * x[i]);
+                    x[i] = x1 * pow(x2, x3);
+                    if (errno) {
+                        x[i] = NADBL;
+                    }
+                }
+            }
+        }
     } else {
-	err = E_DATA;
+        err = E_DATA;
     }
 
     if (err) {
-	for (i=0; i<n; i++) {
-	    x[i] = NADBL;
-	}
+        for (i=0; i<n; i++) {
+            x[i] = NADBL;
+        }
     }
 
     errno = 0;
@@ -1264,43 +1262,43 @@ static double student_pdf (double m, double x)
 }
 
 static int weibull_pdf_array (double k, double l,
-			      double *x, int n)
+                              double *x, int n)
 {
     int i, err = 0;
 
     errno = 0;
 
     if (!na(k) && k > 0 && !na(l) && l > 0) {
-	double x1 = k / l;
-	double x2, x3, x4;
+        double x1 = k / l;
+        double x2, x3, x4;
 
-	if (errno) {
-	    err = E_NAN;
-	} else {
-	    for (i=0; i<n; i++) {
-		if (!na(x[i]) && x[i] >= 0) {
-		    errno = 0;
-		    x3 = x[i] / l;
-		    x2 = pow(x3, k - 1.0);
-		    x3 *= x2;
-		    x4 = exp(-x3);
-		    x[i] = x1 * x2 * x4;
-		    if (errno) {
-			x[i] = NADBL;
-		    }
-		} else {
-		    x[i] = NADBL;
-		}
-	    }
-	}
+        if (errno) {
+            err = E_NAN;
+        } else {
+            for (i=0; i<n; i++) {
+                if (!na(x[i]) && x[i] >= 0) {
+                    errno = 0;
+                    x3 = x[i] / l;
+                    x2 = pow(x3, k - 1.0);
+                    x3 *= x2;
+                    x4 = exp(-x3);
+                    x[i] = x1 * x2 * x4;
+                    if (errno) {
+                        x[i] = NADBL;
+                    }
+                } else {
+                    x[i] = NADBL;
+                }
+            }
+        }
     } else {
-	err = E_DATA;
+        err = E_DATA;
     }
 
     if (err) {
-	for (i=0; i<n; i++) {
-	    x[i] = NADBL;
-	}
+        for (i=0; i<n; i++) {
+            x[i] = NADBL;
+        }
     }
 
     errno = 0;
@@ -1313,22 +1311,22 @@ static int exponential_pdf_array (double mu, double *x, int n)
     int i, err = 0;
 
     if (na(mu) || mu <= 0) {
-	err = E_INVARG;
-	for (i=0; i<n; i++) {
-	    x[i] = NADBL;
-	}
+        err = E_INVARG;
+        for (i=0; i<n; i++) {
+            x[i] = NADBL;
+        }
     } else {
-	double b = 1.0 / mu;
+        double b = 1.0 / mu;
 
-	for (i=0; i<n; i++) {
-	    if (x[i] < 0) {
-		x[i] = 0;
-	    } else if (!na(x[i])) {
-		x[i] = b * exp(-b * x[i]);
-	    } else {
-		x[i] = NADBL;
-	    }
-	}
+        for (i=0; i<n; i++) {
+            if (x[i] < 0) {
+                x[i] = 0;
+            } else if (!na(x[i])) {
+                x[i] = b * exp(-b * x[i]);
+            } else {
+                x[i] = NADBL;
+            }
+        }
     }
 
     return err;
@@ -1339,16 +1337,16 @@ static int beta_pdf_array (double a, double b, double *x, int n)
     int i, err = 0;
 
     if (na(a) || a <= 0 || na(b) || b <= 0) {
-	err = E_INVARG;
-	for (i=0; i<n; i++) {
-	    x[i] = NADBL;
-	}
+        err = E_INVARG;
+        for (i=0; i<n; i++) {
+            x[i] = NADBL;
+        }
     } else {
-	double k = exp(lngamma(a + b) - lngamma(a) - lngamma(b));
+        double k = exp(lngamma(a + b) - lngamma(a) - lngamma(b));
 
-	for (i=0; i<n; i++) {
-	    x[i] = k * pow(x[i], a-1) * pow(1.0 - x[i], b-1);
-	}
+        for (i=0; i<n; i++) {
+            x[i] = k * pow(x[i], a-1) * pow(1.0 - x[i], b-1);
+        }
     }
 
     return err;
@@ -1388,10 +1386,10 @@ double normal_cdf (double x)
     double y = ndtr(x);
 
     if (get_cephes_errno()) {
-	y = NADBL;
+        y = NADBL;
     } else if (y == 1.0) {
-	/* do we want to do this? */
-	y = NORM_CDF_MAX;
+        /* do we want to do this? */
+        y = NORM_CDF_MAX;
     }
 
     return y;
@@ -1411,7 +1409,7 @@ double normal_cdf_inverse (double x)
     double y = ndtri(x);
 
     if (get_cephes_errno()) {
-	y = NADBL;
+        y = NADBL;
     }
 
     return y;
@@ -1431,13 +1429,13 @@ double normal_critval (double a)
     double z;
 
     if (a > 0.10) {
-	z = ndtri(1.0 - a);
+        z = ndtri(1.0 - a);
     } else {
-	z = -ndtri(a);
+        z = -ndtri(a);
     }
 
     if (get_cephes_errno()) {
-	z = NADBL;
+        z = NADBL;
     }
 
     return z;
@@ -1449,13 +1447,13 @@ static int normal_pdf_array (double *x, int n)
     int i;
 
     for (i=0; i<n; i++) {
-	if (!na(x[i])) {
-	    errno = 0;
-	    x[i] = s * exp(-0.5 * x[i] * x[i]);
-	    if (errno) {
-		x[i] = NADBL;
-	    }
-	}
+        if (!na(x[i])) {
+            errno = 0;
+            x[i] = s * exp(-0.5 * x[i] * x[i]);
+            if (errno) {
+                x[i] = NADBL;
+            }
+        }
     }
 
     errno = 0;
@@ -1510,11 +1508,11 @@ double gamma_cdf (double s1, double s2, double x, int control)
     double scale, shape, p;
 
     if (control == 1) {
-	shape = s1;
-	scale = s2;
+        shape = s1;
+        scale = s2;
     } else {
-	scale = s2 / s1;
-	shape = s1 / scale;
+        scale = s2 / s1;
+        shape = s1 / scale;
     }
 
     /* for the cephes functions, the parameterization is
@@ -1522,7 +1520,7 @@ double gamma_cdf (double s1, double s2, double x, int control)
 
     p = gdtr(1.0 / scale, shape, x);
     if (get_cephes_errno()) {
-	p = NADBL;
+        p = NADBL;
     }
 
     return p;
@@ -1549,16 +1547,16 @@ double gamma_cdf_comp (double s1, double s2, double x, int control)
     double shape, scale, p;
 
     if (control == 1) {
-	shape = s1;
-	scale = s2;
+        shape = s1;
+        scale = s2;
     } else {
-	scale = s2 / s1;    /* variance / mean */
-	shape = s1 / scale; /* mean / scale */
+        scale = s2 / s1;    /* variance / mean */
+        shape = s1 / scale; /* mean / scale */
     }
 
     p = gdtrc(1.0 / scale, shape, x);
     if (get_cephes_errno()) {
-	p = NADBL;
+        p = NADBL;
     }
 
     return p;
@@ -1581,56 +1579,56 @@ double gamma_cdf_inverse (double shape, double scale, double p)
     double x = NADBL;
 
     if (p==0) {
-	return 0;
+        return 0;
     }
 
     if (shape > 0 && scale > 0 && p > 0 && p < 1) {
-	x = igami(shape, 1-p) * scale;
-	if (get_cephes_errno()) {
-	    x = NADBL;
-	}
+        x = igami(shape, 1-p) * scale;
+        if (get_cephes_errno()) {
+            x = NADBL;
+        }
     }
 
     return x;
 }
 
 static int gamma_pdf_array (double shape, double scale,
-			    double *x, int n)
+                            double *x, int n)
 {
     int i, err = 0;
 
     errno = 0;
 
     if (!na(shape) && shape > 0 && !na(scale) && scale > 0) {
-	double x1, x2;
-	double x3 = pow(scale, shape);
-	double x4 = gammafun(shape);
+        double x1, x2;
+        double x3 = pow(scale, shape);
+        double x4 = gammafun(shape);
 
-	if (errno || na(x4)) {
-	    err = E_NAN;
-	} else {
-	    for (i=0; i<n; i++) {
-		if (!na(x[i]) && x[i] > 0) {
-		    errno = 0;
-		    x1 = pow(x[i], shape - 1.0);
-		    x2 = exp(-x[i]/scale);
-		    x[i] = x1 * x2 / (x3 * x4);
-		    if (errno) {
-			x[i] = NADBL;
-		    }
-		} else {
-		    x[i] = NADBL;
-		}
-	    }
-	}
+        if (errno || na(x4)) {
+            err = E_NAN;
+        } else {
+            for (i=0; i<n; i++) {
+                if (!na(x[i]) && x[i] > 0) {
+                    errno = 0;
+                    x1 = pow(x[i], shape - 1.0);
+                    x2 = exp(-x[i]/scale);
+                    x[i] = x1 * x2 / (x3 * x4);
+                    if (errno) {
+                        x[i] = NADBL;
+                    }
+                } else {
+                    x[i] = NADBL;
+                }
+            }
+        }
     } else {
-	err = E_DATA;
+        err = E_DATA;
     }
 
     if (err) {
-	for (i=0; i<n; i++) {
-	    x[i] = NADBL;
-	}
+        for (i=0; i<n; i++) {
+            x[i] = NADBL;
+        }
     }
 
     errno = 0;
@@ -1668,10 +1666,10 @@ static double poisson_cdf (double lambda, int k)
     double x = NADBL;
 
     if (lambda >= 0 && k >= 0) {
-	x = pdtr(k, lambda);
-	if (get_cephes_errno()) {
-	    x = NADBL;
-	}
+        x = pdtr(k, lambda);
+        if (get_cephes_errno()) {
+            x = NADBL;
+        }
     }
 
     return x;
@@ -1691,10 +1689,10 @@ static double poisson_cdf_comp (double lambda, int k)
     double x = NADBL;
 
     if (lambda >= 0 && k >= 0) {
-	x = pdtrc(k, lambda);
-	if (get_cephes_errno()) {
-	    x = NADBL;
-	}
+        x = pdtrc(k, lambda);
+        if (get_cephes_errno()) {
+            x = NADBL;
+        }
     }
 
     return x;
@@ -1706,29 +1704,29 @@ static int poisson_pmf_array (double lambda, double *x, int n)
     int i, j, k;
 
     if (lambda <= 0) {
-	for (i=0; i<n; i++) {
-	    x[i] = NADBL;
-	}
-	return 0;
+        for (i=0; i<n; i++) {
+            x[i] = NADBL;
+        }
+        return 0;
     }
 
     l0 = exp(-lambda);
 
     for (i=0; i<n; i++) {
-	k = x[i];
-	den = x_factorial((double) k);
-	if (na(den)) {
-	    p = NADBL;
-	} else {
-	    p = l0 * pow(lambda, (double) k) / den;
-	}
-	if (na(p)) {
-	    p = l0;
-	    for (j=1; j<=k; j++) {
-		p *= lambda / j;
-	    }
-	}
-	x[i] = p;
+        k = x[i];
+        den = x_factorial((double) k);
+        if (na(den)) {
+            p = NADBL;
+        } else {
+            p = l0 * pow(lambda, (double) k) / den;
+        }
+        if (na(p)) {
+            p = l0;
+            for (j=1; j<=k; j++) {
+                p *= lambda / j;
+            }
+        }
+        x[i] = p;
     }
 
     return 0;
@@ -1748,25 +1746,25 @@ double poisson_pmf (double lambda, int k)
     double den, l0, p;
 
     if (lambda <= 0 || k < 0) {
-	return NADBL;
+        return NADBL;
     }
 
     den = x_factorial((double) k);
     l0 = exp(-lambda);
 
     if (na(den)) {
-	p = NADBL;
+        p = NADBL;
     } else {
-	p = l0 * pow(lambda, (double) k) / den;
+        p = l0 * pow(lambda, (double) k) / den;
     }
 
     if (na(p)) {
-	int i;
+        int i;
 
-	p = l0;
-	for (i=1; i<=k; i++) {
-	    p *= lambda / i;
-	}
+        p = l0;
+        for (i=1; i<=k; i++) {
+            p *= lambda / i;
+        }
     }
 
     return p;
@@ -1784,19 +1782,19 @@ static double poisson_critval (double mu, double a)
     int k, k0 = 0;
 
     if (mu <= 0 || a <= 0 || a >= 1) {
-	return NADBL;
+        return NADBL;
     }
 
     if (mu >= 10 && a < 0.5) {
-	k0 = mu - 1;
-	pk = poisson_cdf(mu, k0++);
+        k0 = mu - 1;
+        pk = poisson_cdf(mu, k0++);
     }
 
     for (k=k0; ; k++) {
-	pk = poisson_cdf(mu, k);
-	if (pk >= ac) {
-	    break;
-	}
+        pk = poisson_cdf(mu, k);
+        if (pk >= ac) {
+            break;
+        }
     }
 
     return (double) k;
@@ -1830,10 +1828,10 @@ static double gretl_pdtri (int k, double p)
     double lambda = NADBL;
 
     if (k >= 0 && p >= 0 && p <= 1) {
-	lambda = pdtri(k, p);
-	if (get_cephes_errno()) {
-	    lambda = NADBL;
-	}
+        lambda = pdtri(k, p);
+        if (get_cephes_errno()) {
+            lambda = NADBL;
+        }
     }
 
     return lambda;
@@ -1842,12 +1840,12 @@ static double gretl_pdtri (int k, double p)
 #endif
 
 static double weibull_critval (double shape, double scale,
-			       double rtail)
+                               double rtail)
 {
     double ret = NADBL;
 
     if (shape > 0 && scale > 0 && rtail > 0 && rtail < 1) {
-	ret = scale * pow(-log(rtail), 1.0 / shape);
+        ret = scale * pow(-log(rtail), 1.0 / shape);
     }
 
     return ret;
@@ -1868,11 +1866,11 @@ double weibull_cdf (double shape, double scale, double x)
     double ret = NADBL;
 
     if (shape > 0 && scale > 0 && !na(x)) {
-	if (x == 0.0) {
-	    ret = 0.0;
-	} else if (x > 0.0) {
-	    ret = 1.0 - exp(-pow(x/scale, shape));
-	}
+        if (x == 0.0) {
+            ret = 0.0;
+        } else if (x > 0.0) {
+            ret = 1.0 - exp(-pow(x/scale, shape));
+        }
     }
 
     return ret;
@@ -1892,11 +1890,11 @@ double exponential_cdf (double mu, double x)
     double ret = NADBL;
 
     if (mu > 0 && !na(x)) {
-	if (x < 0.0) {
-	    ret = 0.0;
-	} else {
-	    ret = 1.0 - exp(-x / mu);
-	}
+        if (x < 0.0) {
+            ret = 0.0;
+        } else {
+            ret = 1.0 - exp(-x / mu);
+        }
     }
 
     return ret;
@@ -1907,11 +1905,11 @@ static double weibull_cdf_comp (double shape, double scale, double x)
     double ret = NADBL;
 
     if (shape > 0 && scale > 0 && !na(x)) {
-	if (x == 0.0) {
-	    ret = 1.0;
-	} else if (x > 0.0) {
-	    ret = exp(-pow(x/scale, shape));
-	}
+        if (x == 0.0) {
+            ret = 1.0;
+        } else if (x > 0.0) {
+            ret = exp(-pow(x/scale, shape));
+        }
     }
 
     return ret;
@@ -1929,15 +1927,15 @@ static double weibull_cdf_comp (double shape, double scale, double x)
 double GED_pdf (double nu, double x)
 {
     if (nu > 0) {
-	double lg1 = lngamma(1/nu);
-	double lg3 = lngamma(3/nu);
-	double lC  = 0.5*(lg3 - 3*lg1);
-	double k   = pow(0.5, 1/nu) * exp(0.5*(lg1 - lg3));
-	double znu = pow(fabs(x/k), nu);
+        double lg1 = lngamma(1/nu);
+        double lg3 = lngamma(3/nu);
+        double lC  = 0.5*(lg3 - 3*lg1);
+        double k   = pow(0.5, 1/nu) * exp(0.5*(lg1 - lg3));
+        double znu = pow(fabs(x/k), nu);
 
-	return (0.5 * nu) * exp(lC - 0.5 * znu);
+        return (0.5 * nu) * exp(lC - 0.5 * znu);
     } else {
-	return NADBL;
+        return NADBL;
     }
 }
 
@@ -1946,28 +1944,28 @@ static int GED_pdf_array (double nu, double *x, int n)
     int i, err = 0;
 
     if (nu > 0) {
-	double lg1 = lngamma(1/nu);
-	double lg3 = lngamma(3/nu);
-	double lC  = 0.5*(lg3 - 3*lg1);
-	double k   = pow(0.5, 1/nu) * exp(0.5*(lg1 - lg3));
-	double znu;
+        double lg1 = lngamma(1/nu);
+        double lg3 = lngamma(3/nu);
+        double lC  = 0.5*(lg3 - 3*lg1);
+        double k   = pow(0.5, 1/nu) * exp(0.5*(lg1 - lg3));
+        double znu;
 
-	for (i=0; i<n; i++) {
-	    if (!na(x[i])) {
-		znu = pow(fabs(x[i]/k), nu);
-		x[i] = (0.5 * nu) * exp(lC - 0.5 * znu);
-	    } else {
-		x[i] = NADBL;
-	    }
-	}
+        for (i=0; i<n; i++) {
+            if (!na(x[i])) {
+                znu = pow(fabs(x[i]/k), nu);
+                x[i] = (0.5 * nu) * exp(lC - 0.5 * znu);
+            } else {
+                x[i] = NADBL;
+            }
+        }
     } else {
-	err = E_DATA;
+        err = E_DATA;
     }
 
     if (err) {
-	for (i=0; i<n; i++) {
-	    x[i] = NADBL;
-	}
+        for (i=0; i<n; i++) {
+            x[i] = NADBL;
+        }
     }
 
     return err;
@@ -1988,18 +1986,18 @@ static int GED_pdf_array (double nu, double *x, int n)
 double GED_cdf (double nu, double x)
 {
     if (nu > 0) {
-	int sgn    = (x > 0)? 1 : -1;
-	double p   = 1/nu;
-	double lg1 = lngamma(p);
-	double lg3 = lngamma(3*p);
-	double k   = pow(0.5, p) * exp(0.5*(lg1 - lg3));
-	double znu = pow(fabs(x/k), nu);
-	double P   = gamma_cdf(p, 2, znu, 1);
+        int sgn    = (x > 0)? 1 : -1;
+        double p   = 1/nu;
+        double lg1 = lngamma(p);
+        double lg3 = lngamma(3*p);
+        double k   = pow(0.5, p) * exp(0.5*(lg1 - lg3));
+        double znu = pow(fabs(x/k), nu);
+        double P   = gamma_cdf(p, 2, znu, 1);
 
-	P = 0.5 * (1 + sgn*P);
-	return P;
+        P = 0.5 * (1 + sgn*P);
+        return P;
     } else {
-	return NADBL;
+        return NADBL;
     }
 }
 
@@ -2018,18 +2016,18 @@ double GED_cdf (double nu, double x)
 double GED_cdf_comp (double nu, double x)
 {
     if (nu > 0) {
-	int sgn    = (x > 0)? 1 : -1;
-	double p   = 1/nu;
-	double lg1 = lngamma(p);
-	double lg3 = lngamma(3*p);
-	double k   = pow(0.5, p) * exp(0.5*(lg1 - lg3));
-	double znu = pow(fabs(x/k), nu);
-	double P   = gamma_cdf_comp(p, 2, znu, 1);
+        int sgn    = (x > 0)? 1 : -1;
+        double p   = 1/nu;
+        double lg1 = lngamma(p);
+        double lg3 = lngamma(3*p);
+        double k   = pow(0.5, p) * exp(0.5*(lg1 - lg3));
+        double znu = pow(fabs(x/k), nu);
+        double P   = gamma_cdf_comp(p, 2, znu, 1);
 
-	P = (sgn == 1) ? 0.5 * P : 1 - 0.5 * P;
-	return P;
+        P = (sgn == 1) ? 0.5 * P : 1 - 0.5 * P;
+        return P;
     } else {
-	return NADBL;
+        return NADBL;
     }
 }
 
@@ -2048,26 +2046,26 @@ double GED_cdf_comp (double nu, double x)
 double GED_cdf_inverse (double nu, double a)
 {
     if (nu > 0 && a < 1 && a > 0) {
-	double a2, p, lg1, lg3, sd, x;
-	int sgn;
+        double a2, p, lg1, lg3, sd, x;
+        int sgn;
 
-	if (a > 0.5) {
-	    a2 = 2*a - 1;
-	    sgn = 1;
-	} else {
-	    a2 = 1 - 2*a;
-	    sgn = -1;
-	}
+        if (a > 0.5) {
+            a2 = 2*a - 1;
+            sgn = 1;
+        } else {
+            a2 = 1 - 2*a;
+            sgn = -1;
+        }
 
-	p   = 1/nu;
-	lg1 = lngamma(p);
-	lg3 = lngamma(3*p);
-	sd  = pow(2.0, p) * exp(0.5*(lg3 - lg1));
-	x   = gamma_cdf_inverse(p, 2.0, a2);
+        p   = 1/nu;
+        lg1 = lngamma(p);
+        lg3 = lngamma(3*p);
+        sd  = pow(2.0, p) * exp(0.5*(lg3 - lg1));
+        x   = gamma_cdf_inverse(p, 2.0, a2);
 
-	return sgn * pow(x, p) / sd;
+        return sgn * pow(x, p) / sd;
     } else {
-	return NADBL;
+        return NADBL;
     }
 }
 
@@ -2084,30 +2082,30 @@ double GED_cdf_inverse (double nu, double a)
 double laplace_pdf (double mu, double b, double x)
 {
     if (b > 0) {
-	return exp(-fabs(x - mu)/b) / (2*b);
+        return exp(-fabs(x - mu)/b) / (2*b);
     } else {
-	return NADBL;
+        return NADBL;
     }
 }
 
 static int laplace_pdf_array (double mu, double b,
-			      double *x, int n)
+                              double *x, int n)
 {
     int i, err = 0;
 
     if (b > 0) {
-	for (i=0; i<n; i++) {
-	    if (!na(x[i])) {
-		x[i] = exp(-fabs(x[i] - mu)/b) / (2*b);
-	    } else {
-		x[i] = NADBL;
-	    }
-	}
+        for (i=0; i<n; i++) {
+            if (!na(x[i])) {
+                x[i] = exp(-fabs(x[i] - mu)/b) / (2*b);
+            } else {
+                x[i] = NADBL;
+            }
+        }
     } else {
-	err = E_DATA;
-	for (i=0; i<n; i++) {
-	    x[i] = NADBL;
-	}
+        err = E_DATA;
+        for (i=0; i<n; i++) {
+            x[i] = NADBL;
+        }
     }
 
     return err;
@@ -2126,13 +2124,13 @@ static int laplace_pdf_array (double mu, double b,
 double laplace_cdf (double mu, double b, double x)
 {
     if (b > 0) {
-	if (x < mu) {
-	    return 0.5 * exp((x-mu)/b);
-	} else {
-	    return 1 - 0.5 * exp(-(x-mu)/b);
-	}
+        if (x < mu) {
+            return 0.5 * exp((x-mu)/b);
+        } else {
+            return 1 - 0.5 * exp(-(x-mu)/b);
+        }
     } else {
-	return NADBL;
+        return NADBL;
     }
 }
 
@@ -2149,13 +2147,13 @@ double laplace_cdf (double mu, double b, double x)
 double laplace_cdf_comp (double mu, double b, double x)
 {
     if (b > 0) {
-	if (x < mu) {
-	    return 1 - 0.5 * exp((x-mu)/b);
-	} else {
-	    return 0.5 * exp(-(x-mu)/b);
-	}
+        if (x < mu) {
+            return 1 - 0.5 * exp((x-mu)/b);
+        } else {
+            return 0.5 * exp(-(x-mu)/b);
+        }
     } else {
-	return NADBL;
+        return NADBL;
     }
 }
 
@@ -2173,15 +2171,15 @@ double laplace_cdf_comp (double mu, double b, double x)
 double laplace_cdf_inverse (double mu, double b, double a)
 {
     if (b <= 0 || a < 0 || a > 1) {
-	return NADBL;
+        return NADBL;
     } else if (a == 0.0) {
-	return -1.0 / 0.0;
+        return -1.0 / 0.0;
     } else if (a == 1.0) {
-	return 1.0 / 0.0;
+        return 1.0 / 0.0;
     } else {
-	int sgn = a - 0.5 < 0 ? -1 : 1;
+        int sgn = a - 0.5 < 0 ? -1 : 1;
 
-	return mu - b*sgn * log(1.0 - 2*fabs(a - 0.5));
+        return mu - b*sgn * log(1.0 - 2*fabs(a - 0.5));
     }
 }
 
@@ -2205,7 +2203,7 @@ double johansen_trace_pval (int N, int det, int T, double tr)
     pvfunc = get_plugin_function("trace_pvalue");
 
     if (pvfunc != NULL) {
-	pv = (*pvfunc) (tr, N, det, T);
+        pv = (*pvfunc) (tr, N, det, T);
     }
 
     return pv;
@@ -2243,19 +2241,19 @@ double nc_chisq_cdf (double df, double delta, double x)
     int itermax = 1000;
 
     if (x < 0.0) {
-	return 1.0;
+        return 1.0;
     }
 
     if (df <= 0.0) {
-	return NADBL;
+        return NADBL;
     }
 
     if (delta <= 1.0e-10) {
-	/*
-	  When non-centrality parameter is (essentially) zero,
-	  use ordinary chi-square distribution
-	*/
-	return chisq_cdf(df, x);
+        /*
+          When non-centrality parameter is (essentially) zero,
+          use ordinary chi-square distribution
+        */
+        return chisq_cdf(df, x);
     }
 
     xnonc = delta / 2.0;
@@ -2312,22 +2310,22 @@ double nc_chisq_cdf (double df, double delta, double x)
     i = icent;
 
     do {
-	dfd2 = df/2.0 + i;
-	/*
-	  Adjust chi-square for two fewer degrees of freedom.
-	  The adjusted value ends up in PTERM.
-	*/
-	adj = adj * dfd2/chid2;
-	sumadj += adj;
-	pterm = pcent + sumadj;
-	/*
-	  Adjust poisson weight for J decreased by one
-	*/
-	wt *= ((double)i/xnonc);
-	term = wt * pterm;
-	sum += term;
-	i--;
-	iterb++;
+        dfd2 = df/2.0 + i;
+        /*
+          Adjust chi-square for two fewer degrees of freedom.
+          The adjusted value ends up in PTERM.
+        */
+        adj = adj * dfd2/chid2;
+        sumadj += adj;
+        pterm = pcent + sumadj;
+        /*
+          Adjust poisson weight for J decreased by one
+        */
+        wt *= ((double)i/xnonc);
+        term = wt * pterm;
+        sum += term;
+        i--;
+        iterb++;
     } while (iterb <= itermax && !qsmall(sum, term) && i > 0);
 
     /*
@@ -2342,24 +2340,24 @@ double nc_chisq_cdf (double df, double delta, double x)
     i = icent;
 
     do {
-	/*
-	  Update weights for next higher J
-	*/
-	wt *= (xnonc/(double)(i+1));
-	/*
-	  Calculate PTERM and add term to sum
-	*/
-	pterm = pcent - sumadj;
-	term = wt * pterm;
-	sum += term;
-	/*
-	  Update adjustment term for DF for next iteration
-	*/
-	i++;
-	dfd2 = df/2.0 + i;
-	adj = adj * chid2/dfd2;
-	sumadj += adj;
-	iterf++;
+        /*
+          Update weights for next higher J
+        */
+        wt *= (xnonc/(double)(i+1));
+        /*
+          Calculate PTERM and add term to sum
+        */
+        pterm = pcent - sumadj;
+        term = wt * pterm;
+        sum += term;
+        /*
+          Update adjustment term for DF for next iteration
+        */
+        i++;
+        dfd2 = df/2.0 + i;
+        adj = adj * chid2/dfd2;
+        sumadj += adj;
+        iterf++;
     } while (iterf <= itermax && !qsmall(sum, term));
 
     return sum;
@@ -2385,26 +2383,26 @@ static int nc_chisq_pdf_array (double p, double c, double *x, int n)
     double k, a, b;
 
     if (fabs(c) < 1.0e-10) {
-	return chisq_pdf_array((int) floor(p), x, n);
+        return chisq_pdf_array((int) floor(p), x, n);
     }
 
     if (p <= 0 || c < 0) {
-	return E_DATA;
+        return E_DATA;
     }
 
     k = p/2.0 - 1;
 
     for (i=0; i<n; i++) {
-	if (na(x[i]) || x[i] < 0) {
-	    x[i] = NADBL;
-	} else {
-	    a = exp(-0.5*(x[i]+c) + k/2.0 * log(x[i]/c)) / 2.0;
-	    b = gretl_bessel('I', k, sqrt(x[i]*c), &err);
-	    if (err) {
-		break;
-	    }
-	    x[i] = a*b;
-	}
+        if (na(x[i]) || x[i] < 0) {
+            x[i] = NADBL;
+        } else {
+            a = exp(-0.5*(x[i]+c) + k/2.0 * log(x[i]/c)) / 2.0;
+            b = gretl_bessel('I', k, sqrt(x[i]*c), &err);
+            if (err) {
+                break;
+            }
+            x[i] = a*b;
+        }
     }
 
     return err;
@@ -2438,12 +2436,12 @@ static double nc_chisq_cdf_inverse (double p, double c, double q)
     double F, f, dir;
 
     if (p < 0 || c < 0 || q <= 0 || q >= 1) {
-	return NADBL;
+        return NADBL;
     }
 
     if (fabs(c) < 1.0e-10) {
-	/* don't bother for infinitesimal c */
-	return chisq_cdf_inverse(p, q);
+        /* don't bother for infinitesimal c */
+        return chisq_cdf_inverse(p, q);
     }
 
     /* start from the mean (safe bet) */
@@ -2452,35 +2450,35 @@ static double nc_chisq_cdf_inverse (double p, double c, double q)
     iter = 0;
 
     while (fabs(d0) > 1.0e-10 && iter < 1000) {
-	F = nc_chisq_cdf(p, c, x);
-	f = nc_chisq_pdf(p, c, x);
-	d0 = F - q;
+        F = nc_chisq_cdf(p, c, x);
+        f = nc_chisq_pdf(p, c, x);
+        d0 = F - q;
         dir = d0/f;
         d1 = 1.0e7;
-	retry = 1;
-	subiter = 0;
+        retry = 1;
+        subiter = 0;
 
         while (retry && subiter < 100) {
-	    if ((x-dir) > 0) {
-		d1 = F - nc_chisq_cdf(p, c, x - dir);
-	    }
+            if ((x-dir) > 0) {
+                d1 = F - nc_chisq_cdf(p, c, x - dir);
+            }
             dir /= 2.0;
-	    retry = (x-dir) < 0 || fabs(d1) > fabs(d0);
-	    subiter++;
-	}
+            retry = (x-dir) < 0 || fabs(d1) > fabs(d0);
+            subiter++;
+        }
 
-	if (subiter >= 100) {
-	    x = NADBL;
-	    break;
-	} else {
-	    x -= dir*2;
-	    d0 = d1;
-	    iter++;
-	}
+        if (subiter >= 100) {
+            x = NADBL;
+            break;
+        } else {
+            x -= dir*2;
+            d0 = d1;
+            iter++;
+        }
     }
 
     if (iter >= 1000) {
-	x = NADBL;
+        x = NADBL;
     }
 
     return x;
@@ -2514,21 +2512,21 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
     int i, icent;
 
     if (x < 0.0) {
-	return 1.0;
+        return 1.0;
     }
 
     if (dfn <= 0.0 || dfd <= 0.0) {
-	return NADBL;
+        return NADBL;
     }
 
     if (delta <= 1.0e-10) {
-	/*
-	  When non-centrality parameter is (essentially) zero, use
-	  ordinary F distribution
-	*/
-	return snedecor_cdf(dfn, dfd, x);
+        /*
+          When non-centrality parameter is (essentially) zero, use
+          ordinary F distribution
+        */
+        return snedecor_cdf(dfn, dfd, x);
     } else {
-	xnonc = delta / 2.0;
+        xnonc = delta / 2.0;
     }
 
     /*
@@ -2554,7 +2552,7 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
         xx = prod / dsum;
         yy = 1.0 - xx;
     } else {
-	xx = 1.0 - yy;
+        xx = 1.0 - yy;
     }
 
     T2 = dfn / 2.0 + (double) icent;
@@ -2577,12 +2575,12 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
     dnterm = exp(lngamma(T4)-lngamma(T5)-lngamma(b) + adn*log(xx) + b*log(yy));
 
     while (!qsmall(sum, xmult*betdn) && i > 0) {
-	xmult *= (double) i /xnonc;
-	i--;
-	adn -= 1.0;
-	dnterm *= (adn + 1.0)/((adn+b)*xx);
-	betdn += dnterm;
-	sum += xmult * betdn;
+        xmult *= (double) i /xnonc;
+        i--;
+        adn -= 1.0;
+        dnterm *= (adn + 1.0)/((adn+b)*xx);
+        betdn += dnterm;
+        sum += xmult * betdn;
     }
 
     i = icent+1;
@@ -2592,21 +2590,21 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
     */
     xmult = centwt;
     if (aup-1.0+b == 0) {
-	upterm = exp(-lngamma(aup) - lngamma(b) +
-		     (aup-1.0)*log(xx) + b*log(yy));
+        upterm = exp(-lngamma(aup) - lngamma(b) +
+                     (aup-1.0)*log(xx) + b*log(yy));
     } else {
         T6 = aup - 1.0 + b;
         upterm = exp(lngamma(T6) - lngamma(aup) - lngamma(b) +
-		     (aup-1.0)*log(xx) + b*log(yy));
+                     (aup-1.0)*log(xx) + b*log(yy));
     }
 
     while (!qsmall(sum, xmult*betup)) {
-	xmult *= (xnonc/(double)i);
-	i++;
-	aup += 1.0;
-	upterm *= (aup + b - 2.0) * xx/(aup-1.0);
-	betup -= upterm;
-	sum += (xmult*betup);
+        xmult *= (xnonc/(double)i);
+        i++;
+        aup += 1.0;
+        upterm *= (aup + b - 2.0) * xx/(aup-1.0);
+        betup -= upterm;
+        sum += (xmult*betup);
     }
 
     return sum;
@@ -2641,7 +2639,7 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
  */
 
 static int ncf_pdf_array (double dfn, double dfd, double c,
-			  double *x, int n)
+                          double *x, int n)
 {
     double ch, k1, k2, k;
     double a, b, l, pw, beta;
@@ -2653,23 +2651,23 @@ static int ncf_pdf_array (double dfn, double dfd, double c,
     int err = 0;
 
     if (dfd <= 0.0 || dfn <= 0.0 || c < 0.0) {
-	return E_DATA;
+        return E_DATA;
     }
 
     if (fabs(c) <= 1.0e-10) {
-	/*
-	  When non-centrality parameter is (essentially) zero, use
-	  ordinary F distribution
-	*/
-	return snedecor_pdf_array(dfn, dfd, x, n);
+        /*
+          When non-centrality parameter is (essentially) zero, use
+          ordinary F distribution
+        */
+        return snedecor_pdf_array(dfn, dfd, x, n);
     }
 
     vx  = malloc(n * sizeof *vx);
     vz  = malloc(n * sizeof *vz);
 
     if (vx == NULL || vz == NULL) {
-	err = E_ALLOC;
-	goto bailout;
+        err = E_ALLOC;
+        goto bailout;
     }
 
     /* fill up auxiliary vectors */
@@ -2679,12 +2677,12 @@ static int ncf_pdf_array (double dfn, double dfd, double c,
     k = log(dfn) - log(dfd);
 
     for(t=0; t<n; t++) {
-	if (na(x[t]) || x[t] < 0) {
-	    vx[t] = vz[t] = NADBL;
-	} else {
-	    vx[t] = log(x[t]);
-	    vz[t] = log(dfd) - log(dfd + dfn * x[t]);
-	}
+        if (na(x[t]) || x[t] < 0) {
+            vx[t] = vz[t] = NADBL;
+        } else {
+            vx[t] = log(x[t]);
+            vz[t] = log(dfd) - log(dfd + dfn * x[t]);
+        }
     }
 
     /* start from central Poisson weight */
@@ -2699,12 +2697,12 @@ static int ncf_pdf_array (double dfn, double dfd, double c,
     b = (k1 + start) * k;
 
     for (t=0; t<n; t++) {
-	if (na(x[t]) || x[t] < 0) {
-	    x[t] = NADBL;
-	} else {
-	    l = b + (start + k1 - 1) * vx[t] + (start + k2) * vz[t];
-	    x[t] = a * exp(l);
-	}
+        if (na(x[t]) || x[t] < 0) {
+            x[t] = NADBL;
+        } else {
+            l = b + (start + k1 - 1) * vx[t] + (start + k2) * vz[t];
+            x[t] = a * exp(l);
+        }
     }
 
     /*
@@ -2716,17 +2714,17 @@ static int ncf_pdf_array (double dfn, double dfd, double c,
     iter = 0;
 
     for (i = start-1; i>=0 && pwi>errtol && iter < maxit; i--) {
-	iter++;
-	pwi *= (i + 1.0)/ch;
-	betai *= (k2 + i)/(k1 + i);
-	a = pwi / betai;
-	b = (k1 + i) * k;
-	for (t=0; t<n; t++) {
-	    if (!na(x[t])) {
-		l = b + (i + k1 - 1) * vx[t] + (i + k2) * vz[t];
-		x[t] += a * exp(l);
-	    }
-	}
+        iter++;
+        pwi *= (i + 1.0)/ch;
+        betai *= (k2 + i)/(k1 + i);
+        a = pwi / betai;
+        b = (k1 + i) * k;
+        for (t=0; t<n; t++) {
+            if (!na(x[t])) {
+                l = b + (i + k1 - 1) * vx[t] + (i + k2) * vz[t];
+                x[t] += a * exp(l);
+            }
+        }
     }
 
     /*
@@ -2738,17 +2736,17 @@ static int ncf_pdf_array (double dfn, double dfd, double c,
     betai = beta;
 
     for (i = start+1; pwi>errtol && iter<maxit; i++) {
-	iter++;
-	pwi *= ch/i;
-	betai *= (k1 + i - 1.0)/(k2 + i - 1.0);
-	a = pwi / betai;
-	b = (k1 + i) * k;
-	for (t=0; t<n; t++) {
-	    if (!na(x[t])) {
-		l = b + (i + k1 - 1) * vx[t] + (i + k2) * vz[t];
-		x[t] += a * exp(l);
-	    }
-	}
+        iter++;
+        pwi *= ch/i;
+        betai *= (k1 + i - 1.0)/(k2 + i - 1.0);
+        a = pwi / betai;
+        b = (k1 + i) * k;
+        for (t=0; t<n; t++) {
+            if (!na(x[t])) {
+                l = b + (i + k1 - 1) * vx[t] + (i + k2) * vz[t];
+                x[t] += a * exp(l);
+            }
+        }
     }
 
  bailout:
@@ -2788,7 +2786,7 @@ static double ncf_cdf_inverse (double n1, double n2, double c, double q)
     double F, f, dir;
 
     if (n2 < 1 || n1 < 1 || c < 0 || q <= 0 || q >= 1) {
-	return NADBL;
+        return NADBL;
     }
 
     x = 0.5;
@@ -2796,31 +2794,31 @@ static double ncf_cdf_inverse (double n1, double n2, double c, double q)
     iter = 0;
 
     while (fabs(d0) > 1.0e-10 && iter < 1000) {
-	F = nc_snedecor_cdf(n1, n2, c, x);
-	f = ncf_pdf(n1, n2, c, x);
-	d0 = F - q;
+        F = nc_snedecor_cdf(n1, n2, c, x);
+        f = ncf_pdf(n1, n2, c, x);
+        d0 = F - q;
         dir = d0/f;
         d1 = 1.0e7;
-	subiter = 0;
+        subiter = 0;
 
         while (fabs(d1) > fabs(d0) && subiter < 100) {
             d1 = F - nc_snedecor_cdf(n1, n2, c, x - dir);
             dir /= 2.0;
-	    subiter++;
-	}
+            subiter++;
+        }
 
-	if (subiter >= 100) {
-	    x = NADBL;
-	    break;
-	} else {
-	    x -= dir*2;
-	    d0 = d1;
-	    iter++;
-	}
+        if (subiter >= 100) {
+            x = NADBL;
+            break;
+        } else {
+            x -= dir*2;
+            d0 = d1;
+            iter++;
+        }
     }
 
     if (iter >= 1000) {
-	x = NADBL;
+        x = NADBL;
     }
 
     return x;
@@ -2855,15 +2853,15 @@ double nc_student_cdf (double df, double delta, double x)
     int i;
 
     if (df <= 0.0) {
-	return NADBL;
+        return NADBL;
     }
 
     if (fabs(delta) <= 1.0e-10) {
-	/*
-	  When non-centrality parameter is (essentially) zero, use
-	  ordinary t distribution
-	*/
-	return student_cdf(df, x);
+        /*
+          When non-centrality parameter is (essentially) zero, use
+          ordinary t distribution
+        */
+        return student_cdf(df, x);
     }
 
     ax = fabs(x);
@@ -2872,7 +2870,7 @@ double nc_student_cdf (double df, double delta, double x)
     ret = normal_cdf(-del);
 
     if (ax < 1.0e-12) {
-	return 1.0 - ret;
+        return 1.0 - ret;
     }
 
     /* settings */
@@ -2915,39 +2913,39 @@ double nc_student_cdf (double df, double delta, double x)
     sum = pkf * pbetaf + del * qkf * qbetaf * ISQRT_2;
 
     for (i = 1; i<=k && rempois>errtol; i++) {
-	/* first block --- backwards */
-	pgamb *= (a-i+1)/(y * (a+b-i));
-	pbetab += pgamb;
-	pkb *= (k-i+1)/dels;
-	ptermb = pkb * pbetab;
+        /* first block --- backwards */
+        pgamb *= (a-i+1)/(y * (a+b-i));
+        pbetab += pgamb;
+        pkb *= (k-i+1)/dels;
+        ptermb = pkb * pbetab;
 
-	/* second block --- backwards */
-	qgamb *= (c-i+1)/(y * (c+b-i));
-	qbetab += qgamb;
-	qkb *= (k-i+1.5)/dels;
-	qtermb = qkb * qbetab;
+        /* second block --- backwards */
+        qgamb *= (c-i+1)/(y * (c+b-i));
+        qbetab += qgamb;
+        qkb *= (k-i+1.5)/dels;
+        qtermb = qkb * qbetab;
 
-	/* accumulate */
-	sum += ptermb + del * qtermb * ISQRT_2;
-	rempois -= pkb;
+        /* accumulate */
+        sum += ptermb + del * qtermb * ISQRT_2;
+        rempois -= pkb;
     }
 
     for (i = 1; i<maxit && rempois > errtol; i++) {
-	/* first block --- forwards */
-	pgamf *= y * (a+b-2+i)/(a+i-1);
-	pbetaf -= pgamf;
-	pkf *= dels/(k+i);
-	ptermf = pkf * pbetaf;
+        /* first block --- forwards */
+        pgamf *= y * (a+b-2+i)/(a+i-1);
+        pbetaf -= pgamf;
+        pkf *= dels/(k+i);
+        ptermf = pkf * pbetaf;
 
-	/* second block --- forwards */
-	qgamf *= y * (c+b-2+i)/(c+i-1);
-	qbetaf -= qgamf;
-	qkf *= dels/(k+i+0.5);
-	qtermf = qkf * qbetaf;
+        /* second block --- forwards */
+        qgamf *= y * (c+b-2+i)/(c+i-1);
+        qbetaf -= qgamf;
+        qkf *= dels/(k+i+0.5);
+        qtermf = qkf * qbetaf;
 
-	/* accumulate */
-	sum += ptermf + del * qtermf * ISQRT_2;
-	rempois -= pkf;
+        /* accumulate */
+        sum += ptermf + del * qtermf * ISQRT_2;
+        rempois -= pkf;
     }
 
     ret += sum/2.0;
@@ -2973,24 +2971,24 @@ double nc_student_pdf (double df, double delta, double x)
     double ret, tmp;
 
     if (df <= 0.0) {
-	return NADBL;
+        return NADBL;
     }
 
     if (fabs(delta) <= 1.0e-10) {
-	/*
-	  When non-centrality parameter is (essentially) zero, use
-	  ordinary t distribution
-	*/
-	return student_pdf(df, x);
+        /*
+          When non-centrality parameter is (essentially) zero, use
+          ordinary t distribution
+        */
+        return student_pdf(df, x);
     }
 
     if (fabs(x) < 1.0e-12) {
-	tmp = lngamma((df+1)/2) - lngamma(df/2);
-	ret = exp(tmp - 0.5 * delta*delta) / (sqrt(M_PI * df));
+        tmp = lngamma((df+1)/2) - lngamma(df/2);
+        ret = exp(tmp - 0.5 * delta*delta) / (sqrt(M_PI * df));
     } else {
-	tmp = nc_student_cdf(df+2, delta, x * sqrt(1 + 2.0/df)) -
-	    nc_student_cdf(df, delta, x);
-	ret = tmp * (df / x);
+        tmp = nc_student_cdf(df+2, delta, x * sqrt(1 + 2.0/df)) -
+            nc_student_cdf(df, delta, x);
+        ret = tmp * (df / x);
     }
 
     return ret;
@@ -3002,21 +3000,21 @@ static int nct_pdf_array (double df, double delta, double *x, int n)
     int i, err = 0;
 
     if (df > 0) {
-	for (i=0; i<n; i++) {
-	    if (!na(x[i])) {
-		x[i] = nc_student_pdf(df, delta, x[i]);
-	    } else {
-		x[i] = NADBL;
-	    }
-	}
+        for (i=0; i<n; i++) {
+            if (!na(x[i])) {
+                x[i] = nc_student_pdf(df, delta, x[i]);
+            } else {
+                x[i] = NADBL;
+            }
+        }
     } else {
-	err = E_DATA;
+        err = E_DATA;
     }
 
     if (err) {
-	for (i=0; i<n; i++) {
-	    x[i] = NADBL;
-	}
+        for (i=0; i<n; i++) {
+            x[i] = NADBL;
+        }
     }
 
     return err;
@@ -3044,12 +3042,12 @@ static double nct_cdf_inverse (double p, double c, double q)
     double F, f, dir;
 
     if (p < 1 || c < 0 || q <= 0 || q >= 1) {
-	return NADBL;
+        return NADBL;
     }
 
     if (fabs(c) < 1.0e-10) {
-	/* don't bother for infinitesimal c */
-	return student_cdf_inverse(p, q);
+        /* don't bother for infinitesimal c */
+        return student_cdf_inverse(p, q);
     }
 
     x = c + student_cdf_inverse(p, q) / sqrt(p - 0.5);
@@ -3057,31 +3055,31 @@ static double nct_cdf_inverse (double p, double c, double q)
     iter = 0;
 
     while (fabs(d0) > 1.0e-10 && iter < 1000) {
-	F = nc_student_cdf(p, c, x);
-	f = nc_student_pdf(p, c, x);
-	d0 = F - q;
+        F = nc_student_cdf(p, c, x);
+        f = nc_student_pdf(p, c, x);
+        d0 = F - q;
         dir = d0/f;
         d1 = 1.0e7;
-	subiter = 0;
+        subiter = 0;
 
         while (fabs(d1) > fabs(d0) && subiter < 100) {
             d1 = F - nc_student_cdf(p, c, x - dir);
             dir /= 2.0;
-	    subiter++;
-	}
+            subiter++;
+        }
 
-	if (subiter >= 100) {
-	    x = NADBL;
-	    break;
-	} else {
-	    x -= dir*2;
-	    d0 = d1;
-	    iter++;
-	}
+        if (subiter >= 100) {
+            x = NADBL;
+            break;
+        } else {
+            x -= dir*2;
+            d0 = d1;
+            iter++;
+        }
     }
 
     if (iter >= 1000) {
-	x = NADBL;
+        x = NADBL;
     }
 
     return x;
@@ -3095,59 +3093,59 @@ struct distmap {
 int dist_code_from_string (const char *s)
 {
     struct distmap dmap[] = {
-	{ D_UNIFORM,   "u" },
-	{ D_UDISCRT,   "i" },
-	{ D_NORMAL,    "z" },
-	{ D_STUDENT,   "t" },
-	{ D_CHISQ,     "x" },
-	{ D_SNEDECOR,  "f" },
-	{ D_BINOMIAL,  "b" },
-	{ D_POISSON,   "p" },
-	{ D_EXPON,     "exp" },
-	{ D_WEIBULL,   "w" },
-	{ D_GAMMA,     "g" },
-	{ D_GED,       "e" },
-	{ D_LAPLACE,   "l" },
-	{ D_BETA,      "beta" },
-	{ D_DW,        "d" },
-	{ D_BINORM,    "D" },
-	{ D_JOHANSEN,  "J" },
-	{ D_BETABIN,   "bb" },
-	{ D_NC_CHISQ,  "ncx" },
-	{ D_NC_F,      "ncf" },
-	{ D_NC_T,      "nct" },
-	{ D_LOGISTIC,  "s" },
-	{ D_DIRICHLET, "dir" },
-	{ D_DISCRETE,  "disc" },
-	{ D_NONE,     NULL }
+        { D_UNIFORM,   "u" },
+        { D_UDISCRT,   "i" },
+        { D_NORMAL,    "z" },
+        { D_STUDENT,   "t" },
+        { D_CHISQ,     "x" },
+        { D_SNEDECOR,  "f" },
+        { D_BINOMIAL,  "b" },
+        { D_POISSON,   "p" },
+        { D_EXPON,     "exp" },
+        { D_WEIBULL,   "w" },
+        { D_GAMMA,     "g" },
+        { D_GED,       "e" },
+        { D_LAPLACE,   "l" },
+        { D_BETA,      "beta" },
+        { D_DW,        "d" },
+        { D_BINORM,    "D" },
+        { D_JOHANSEN,  "J" },
+        { D_BETABIN,   "bb" },
+        { D_NC_CHISQ,  "ncx" },
+        { D_NC_F,      "ncf" },
+        { D_NC_T,      "nct" },
+        { D_LOGISTIC,  "s" },
+        { D_DIRICHLET, "dir" },
+        { D_DISCRETE,  "disc" },
+        { D_NONE,     NULL }
     };
     char test[8];
     int i;
 
     if (!strcmp(s, "D")) {
-	/* special: case counts for bivariate normal */
-	return D_BINORM;
+        /* special: case counts for bivariate normal */
+        return D_BINORM;
     }
 
     /* otherwise we'll ignore case */
     for (i=0; i<8 && s[i]; i++) {
-	test[i] = tolower(s[i]);
+        test[i] = tolower(s[i]);
     }
     test[i] = '\0';
 
     for (i=0; dmap[i].code; i++) {
-	if (!strcmp(test, dmap[i].s)) {
-	    return dmap[i].code;
-	}
+        if (!strcmp(test, dmap[i].s)) {
+            return dmap[i].code;
+        }
     }
 
     /* backward compatibility */
     if (!strcmp(test, "n")) {
-	return D_NORMAL;
+        return D_NORMAL;
     } else if (!strcmp(test, "c")) {
-	return D_CHISQ;
+        return D_CHISQ;
     } else if (!strcmp(test, "lgt")) {
-	return D_LOGISTIC;
+        return D_LOGISTIC;
     }
 
     return D_NONE;
@@ -3168,29 +3166,29 @@ void print_critval (int dist, const double *parm, double a, double c, PRN *prn)
 {
     switch (dist) {
     case D_NORMAL:
-	pprintf(prn, "%s", _("Standard normal distribution"));
-	break;
+        pprintf(prn, "%s", _("Standard normal distribution"));
+        break;
     case D_STUDENT:
-	pprintf(prn, "t(%g)", parm[0]);
-	break;
+        pprintf(prn, "t(%g)", parm[0]);
+        break;
     case D_CHISQ:
-	pprintf(prn, "%s(%g)", _("Chi-square"), parm[0]);
-	break;
+        pprintf(prn, "%s(%g)", _("Chi-square"), parm[0]);
+        break;
     case D_SNEDECOR:
-	pprintf(prn, "F(%g, %g)", parm[0], parm[1]);
-	break;
+        pprintf(prn, "F(%g, %g)", parm[0], parm[1]);
+        break;
     case D_BINOMIAL:
-	pprintf(prn, _("Binomial (P = %g, %g trials)"), parm[0], parm[1]);
-	break;
+        pprintf(prn, _("Binomial (P = %g, %g trials)"), parm[0], parm[1]);
+        break;
     case D_POISSON:
-	pprintf(prn, _("Poisson (mean = %g)"), parm[0]);
-	break;
+        pprintf(prn, _("Poisson (mean = %g)"), parm[0]);
+        break;
     case D_EXPON:
-	pprintf(prn, _("Exponential (scale = %g)"), parm[0]);
-	break;
+        pprintf(prn, _("Exponential (scale = %g)"), parm[0]);
+        break;
     case D_WEIBULL:
-	pprintf(prn, _("Weibull (shape = %g, scale = %g)"), parm[0], parm[1]);
-	break;
+        pprintf(prn, _("Weibull (shape = %g, scale = %g)"), parm[0], parm[1]);
+        break;
     }
 
     pputs(prn, "\n ");
@@ -3198,8 +3196,8 @@ void print_critval (int dist, const double *parm, double a, double c, PRN *prn)
     pputs(prn, "\n ");
     pprintf(prn, _("complementary probability = %g"), 1.0 - a);
     if (a < 0.5 && (dist == D_NORMAL || dist == D_STUDENT)) {
-	pputs(prn, "\n ");
-	pprintf(prn, _("two-tailed probability = %g"), 2.0 * a);
+        pputs(prn, "\n ");
+        pprintf(prn, _("two-tailed probability = %g"), 2.0 * a);
     }
     pputs(prn, "\n\n ");
     pprintf(prn, _("Critical value = %g"), c);
@@ -3224,30 +3222,30 @@ static void remember_pvalue_args (const double *p, double x)
 /* end remember parameters */
 
 static int pdist_check_input (int dist, const double *parm,
-			      double x)
+                              double x)
 {
     int i, np = 1; /* default */
 
     if (na(x)) {
-	return E_MISSDATA;
+        return E_MISSDATA;
     }
 
     if (dist == D_NORMAL) {
-	np = 0;
+        np = 0;
     } else if (dist == D_SNEDECOR || dist == D_GAMMA ||
-	       dist == D_BINOMIAL || dist == D_WEIBULL ||
-	       dist == D_NC_CHISQ || dist == D_NC_T ||
-	       dist == D_LAPLACE  || dist == D_BETA) {
-	np = 2;
+               dist == D_BINOMIAL || dist == D_WEIBULL ||
+               dist == D_NC_CHISQ || dist == D_NC_T ||
+               dist == D_LAPLACE  || dist == D_BETA) {
+        np = 2;
     } else if (dist == D_JOHANSEN || dist == D_BETABIN ||
-	       dist == D_NC_F) {
-	np = 3;
+               dist == D_NC_F) {
+        np = 3;
     }
 
     for (i=0; i<np; i++) {
-	if (na(parm[i])) {
-	    return E_MISSDATA;
-	}
+        if (na(parm[i])) {
+            return E_MISSDATA;
+        }
     }
 
     return 0;
@@ -3267,38 +3265,38 @@ static int pdist_check_input (int dist, const double *parm,
  */
 
 double gretl_get_cdf_inverse (int dist, const double *parm,
-			      double a)
+                              double a)
 {
     double y = NADBL;
 
     if (pdist_check_input(dist, parm, a) == E_MISSDATA) {
-	return y;
+        return y;
     }
 
     if (dist == D_NORMAL) {
-	y = normal_cdf_inverse(a);
+        y = normal_cdf_inverse(a);
     } else if (dist == D_STUDENT) {
-	y = student_cdf_inverse(parm[0], a);
+        y = student_cdf_inverse(parm[0], a);
     } else if (dist == D_CHISQ) {
-	y = chisq_cdf_inverse((int) parm[0], a);
+        y = chisq_cdf_inverse((int) parm[0], a);
     } else if (dist == D_GAMMA) {
-	y = gamma_cdf_inverse(parm[0], parm[1], a);
+        y = gamma_cdf_inverse(parm[0], parm[1], a);
     } else if (dist == D_SNEDECOR) {
-	y = snedecor_cdf_inverse(parm[0], parm[1], a);
+        y = snedecor_cdf_inverse(parm[0], parm[1], a);
     } else if (dist == D_BINOMIAL) {
-	y = binomial_cdf_inverse(parm[0], (int) parm[1], a);
+        y = binomial_cdf_inverse(parm[0], (int) parm[1], a);
     } else if (dist == D_POISSON) {
-	y = poisson_cdf_inverse(parm[0], a);
+        y = poisson_cdf_inverse(parm[0], a);
     } else if (dist == D_GED) {
-	y = GED_cdf_inverse(parm[0], a);
+        y = GED_cdf_inverse(parm[0], a);
     } else if (dist == D_LAPLACE) {
-	y = laplace_cdf_inverse(parm[0], parm[1], a);
+        y = laplace_cdf_inverse(parm[0], parm[1], a);
     } else if (dist == D_NC_F) {
-	y = ncf_cdf_inverse(parm[0], parm[1], parm[2], a);
+        y = ncf_cdf_inverse(parm[0], parm[1], parm[2], a);
     } else if (dist == D_NC_CHISQ) {
-	y = nc_chisq_cdf_inverse(parm[0], parm[1], a);
+        y = nc_chisq_cdf_inverse(parm[0], parm[1], a);
     } else if (dist == D_NC_T) {
-	y = nct_cdf_inverse(parm[0], parm[1], a);
+        y = nct_cdf_inverse(parm[0], parm[1], a);
     }
 
     return y;
@@ -3322,32 +3320,32 @@ double gretl_get_critval (int dist, const double *parm, double a)
     double x = NADBL;
 
     if (pdist_check_input(dist, parm, a) == E_MISSDATA) {
-	return x;
+        return x;
     }
 
     if (dist == D_NORMAL) {
-	x = normal_critval(a);
+        x = normal_critval(a);
     } else if (dist == D_STUDENT) {
-	x = student_critval(parm[0], a);
+        x = student_critval(parm[0], a);
     } else if (dist == D_CHISQ) {
-	x = chisq_critval((int) parm[0], a);
+        x = chisq_critval((int) parm[0], a);
     } else if (dist == D_SNEDECOR) {
-	x = snedecor_critval((int) parm[0], (int) parm[1], a);
+        x = snedecor_critval((int) parm[0], (int) parm[1], a);
     } else if (dist == D_BINOMIAL) {
-	x = binomial_critval(parm[0], (int) parm[1], a);
+        x = binomial_critval(parm[0], (int) parm[1], a);
     } else if (dist == D_POISSON) {
-	x = poisson_critval(parm[0], a);
+        x = poisson_critval(parm[0], a);
     } else if (dist == D_WEIBULL) {
-	x = weibull_critval(parm[0], parm[1], a);
+        x = weibull_critval(parm[0], parm[1], a);
     } else if (dist == D_GAMMA) {
-	x = gamma_cdf_inverse(parm[0], parm[1], 1-a);
+        x = gamma_cdf_inverse(parm[0], parm[1], 1-a);
     } else if (dist == D_EXPON) {
-	/* special case of Weibull */
-	x = weibull_critval(1.0, parm[0], a);
+        /* special case of Weibull */
+        x = weibull_critval(1.0, parm[0], a);
     } else if (dist == D_GED) {
-	x = GED_cdf_inverse(parm[0], 1-a);
+        x = GED_cdf_inverse(parm[0], 1-a);
     } else if (dist == D_LAPLACE) {
-	x = laplace_cdf_inverse(parm[0], parm[1], 1-a);
+        x = laplace_cdf_inverse(parm[0], parm[1], 1-a);
     }
 
     return x;
@@ -3371,41 +3369,41 @@ double gretl_get_cdf (int dist, const double *parm, double x)
     double y = NADBL;
 
     if (pdist_check_input(dist, parm, x) == E_MISSDATA) {
-	return y;
+        return y;
     }
 
     if (dist == D_NORMAL) {
-	y = normal_cdf(x);
+        y = normal_cdf(x);
     } else if (dist == D_STUDENT) {
-	y = student_cdf(parm[0], x);
+        y = student_cdf(parm[0], x);
     } else if (dist == D_CHISQ) {
-	y = chisq_cdf((int) parm[0], x);
+        y = chisq_cdf((int) parm[0], x);
     } else if (dist == D_SNEDECOR) {
-	y = snedecor_cdf((int) parm[0], (int) parm[1], x);
+        y = snedecor_cdf((int) parm[0], (int) parm[1], x);
     } else if (dist == D_GAMMA) {
-	y = gamma_cdf(parm[0], parm[1], x, 1);
+        y = gamma_cdf(parm[0], parm[1], x, 1);
     } else if (dist == D_BINOMIAL) {
-	y = binomial_cdf(parm[0], (int) parm[1], (int) x);
+        y = binomial_cdf(parm[0], (int) parm[1], (int) x);
     } else if (dist == D_POISSON) {
-	y = poisson_cdf(parm[0], (int) x);
+        y = poisson_cdf(parm[0], (int) x);
     } else if (dist == D_EXPON) {
-	y = exponential_cdf(parm[0], x);
+        y = exponential_cdf(parm[0], x);
     } else if (dist == D_WEIBULL) {
-	y = weibull_cdf(parm[0], parm[1], x);
+        y = weibull_cdf(parm[0], parm[1], x);
     } else if (dist == D_GED) {
-	y = GED_cdf(parm[0], x);
+        y = GED_cdf(parm[0], x);
     } else if (dist == D_LAPLACE) {
-	y = laplace_cdf(parm[0], parm[1], x);
+        y = laplace_cdf(parm[0], parm[1], x);
     } else if (dist == D_NC_CHISQ) {
-	y = nc_chisq_cdf(parm[0], parm[1], x);
+        y = nc_chisq_cdf(parm[0], parm[1], x);
     } else if (dist == D_NC_F) {
-	y = nc_snedecor_cdf(parm[0], parm[1], parm[2], x);
+        y = nc_snedecor_cdf(parm[0], parm[1], parm[2], x);
     } else if (dist == D_NC_T) {
-	y = nc_student_cdf(parm[0], parm[1], x);
+        y = nc_student_cdf(parm[0], parm[1], x);
     } else if (dist == D_LOGISTIC) {
-	y = logistic_cdf(x);
+        y = logistic_cdf(x);
     } else if (dist == D_BETA) {
-	y = beta_cdf(parm[0], parm[1], x);
+        y = beta_cdf(parm[0], parm[1], x);
     }
 
     return y;
@@ -3429,39 +3427,39 @@ double gretl_get_pdf (int dist, const double *parm, double x)
     double y = NADBL;
 
     if (pdist_check_input(dist, parm, x) == E_MISSDATA) {
-	return y;
+        return y;
     }
 
     if (dist == D_NORMAL) {
-	y = normal_pdf(x);
+        y = normal_pdf(x);
     } else if (dist == D_STUDENT) {
-	y = student_pdf(parm[0], x);
+        y = student_pdf(parm[0], x);
     } else if (dist == D_CHISQ) {
-	y = chisq_pdf(parm[0], x);
+        y = chisq_pdf(parm[0], x);
     } else if (dist == D_SNEDECOR) {
-	y = snedecor_pdf((int) parm[0], (int) parm[1], x);
+        y = snedecor_pdf((int) parm[0], (int) parm[1], x);
     } else if (dist == D_GAMMA) {
-	y = gamma_pdf(parm[0], parm[1], x);
+        y = gamma_pdf(parm[0], parm[1], x);
     } else if (dist == D_BINOMIAL) {
-	y = binomial_pmf(parm[0], parm[1], x);
+        y = binomial_pmf(parm[0], parm[1], x);
     } else if (dist == D_POISSON) {
-	y = poisson_pmf(parm[0], x);
+        y = poisson_pmf(parm[0], x);
     } else if (dist == D_EXPON) {
-	y = exponential_pdf(parm[0], x);
+        y = exponential_pdf(parm[0], x);
     } else if (dist == D_WEIBULL) {
-	y = weibull_pdf(parm[0], parm[1], x);
+        y = weibull_pdf(parm[0], parm[1], x);
     } else if (dist == D_GED) {
-	y = GED_pdf(parm[0], x);
+        y = GED_pdf(parm[0], x);
     } else if (dist == D_LAPLACE) {
-	y = laplace_pdf(parm[0], parm[1], x);
+        y = laplace_pdf(parm[0], parm[1], x);
     } else if (dist == D_NC_F) {
-	y = ncf_pdf(parm[0], parm[1], parm[2], x);
+        y = ncf_pdf(parm[0], parm[1], parm[2], x);
     } else if (dist == D_NC_T) {
-	y = nc_student_pdf(parm[0], parm[1], x);
+        y = nc_student_pdf(parm[0], parm[1], x);
     } else if (dist == D_NC_CHISQ) {
-	y = nc_chisq_pdf(parm[0], parm[1], x);
+        y = nc_chisq_pdf(parm[0], parm[1], x);
     } else if (dist == D_BETA) {
-	y = beta_pdf(parm[0], parm[1], x);
+        y = beta_pdf(parm[0], parm[1], x);
     }
 
     return y;
@@ -3483,44 +3481,44 @@ double gretl_get_pdf (int dist, const double *parm, double x)
  */
 
 int gretl_fill_pdf_array (int dist, const double *parm,
-			  double *x, int n)
+                          double *x, int n)
 {
     int err = E_DATA;
 
     if (pdist_check_input(dist, parm, 0) == E_MISSDATA) {
-	return E_MISSDATA;
+        return E_MISSDATA;
     }
 
     if (dist == D_NORMAL) {
-	err = normal_pdf_array(x, n);
+        err = normal_pdf_array(x, n);
     } else if (dist == D_STUDENT) {
-	err = student_pdf_array(parm[0], x, n);
+        err = student_pdf_array(parm[0], x, n);
     } else if (dist == D_CHISQ) {
-	err = chisq_pdf_array(parm[0], x, n);
+        err = chisq_pdf_array(parm[0], x, n);
     } else if (dist == D_SNEDECOR) {
-	err = snedecor_pdf_array((int) parm[0], (int) parm[1], x, n);
+        err = snedecor_pdf_array((int) parm[0], (int) parm[1], x, n);
     } else if (dist == D_GAMMA) {
-	err = gamma_pdf_array(parm[0], parm[1], x, n);
+        err = gamma_pdf_array(parm[0], parm[1], x, n);
     } else if (dist == D_BINOMIAL) {
-	err = binomial_pmf_array(parm[0], parm[1], x, n);
+        err = binomial_pmf_array(parm[0], parm[1], x, n);
     } else if (dist == D_POISSON) {
-	err = poisson_pmf_array(parm[0], x, n);
+        err = poisson_pmf_array(parm[0], x, n);
     } else if (dist == D_EXPON) {
-	err = exponential_pdf_array(parm[0], x, n);
+        err = exponential_pdf_array(parm[0], x, n);
     } else if (dist == D_WEIBULL) {
-	err = weibull_pdf_array(parm[0], parm[1], x, n);
+        err = weibull_pdf_array(parm[0], parm[1], x, n);
     } else if (dist == D_GED) {
-	err = GED_pdf_array(parm[0], x, n);
+        err = GED_pdf_array(parm[0], x, n);
     } else if (dist == D_LAPLACE) {
-	err = laplace_pdf_array(parm[0], parm[1], x, n);
+        err = laplace_pdf_array(parm[0], parm[1], x, n);
     } else if (dist == D_NC_F) {
-	err = ncf_pdf_array(parm[0], parm[1], parm[2], x, n);
+        err = ncf_pdf_array(parm[0], parm[1], parm[2], x, n);
     } else if (dist == D_NC_T) {
-	err = nct_pdf_array(parm[0], parm[1], x, n);
+        err = nct_pdf_array(parm[0], parm[1], x, n);
     } else if (dist == D_NC_CHISQ) {
-	err = nc_chisq_pdf_array(parm[0], parm[1], x, n);
+        err = nc_chisq_pdf_array(parm[0], parm[1], x, n);
     } else if (dist == D_BETA) {
-	err = beta_pdf_array(parm[0], parm[1], x, n);
+        err = beta_pdf_array(parm[0], parm[1], x, n);
     }
 
     return err;
@@ -3542,34 +3540,34 @@ double gretl_get_pvalue (int dist, const double *parm, double x)
     double y = NADBL;
 
     if (pdist_check_input(dist, parm, x) == E_MISSDATA) {
-	return y;
+        return y;
     }
 
     if (dist == D_NORMAL) {
-	y = normal_cdf_comp(x);
+        y = normal_cdf_comp(x);
     } else if (dist == D_STUDENT) {
-	y = student_cdf_comp(parm[0], x);
+        y = student_cdf_comp(parm[0], x);
     } else if (dist == D_CHISQ) {
-	y = chisq_cdf_comp((int) parm[0], x);
+        y = chisq_cdf_comp((int) parm[0], x);
     } else if (dist == D_SNEDECOR) {
-	y = snedecor_cdf_comp(parm[0], parm[1], x);
+        y = snedecor_cdf_comp(parm[0], parm[1], x);
     } else if (dist == D_GAMMA) {
-	y = gamma_cdf_comp(parm[0], parm[1], x, 1);
+        y = gamma_cdf_comp(parm[0], parm[1], x, 1);
     } else if (dist == D_BINOMIAL) {
-	y = binomial_cdf_comp(parm[0], (int) parm[1], x);
+        y = binomial_cdf_comp(parm[0], (int) parm[1], x);
     } else if (dist == D_POISSON) {
-	y = poisson_cdf_comp(parm[0], x);
+        y = poisson_cdf_comp(parm[0], x);
     } else if (dist == D_EXPON) {
-	y = weibull_cdf_comp(1.0, parm[0], x);
+        y = weibull_cdf_comp(1.0, parm[0], x);
     } else if (dist == D_WEIBULL) {
-	y = weibull_cdf_comp(parm[0], parm[1], x);
+        y = weibull_cdf_comp(parm[0], parm[1], x);
     } else if (dist == D_GED) {
-	y = GED_cdf_comp(parm[0], x);
+        y = GED_cdf_comp(parm[0], x);
     } else if (dist == D_LAPLACE) {
-	y = laplace_cdf_comp(parm[0], parm[1], x);
+        y = laplace_cdf_comp(parm[0], parm[1], x);
     } else if (dist == D_JOHANSEN) {
-	y = johansen_trace_pval((int) parm[0], (int) parm[1],
-				(int) parm[2], x);
+        y = johansen_trace_pval((int) parm[0], (int) parm[1],
+                                (int) parm[2], x);
     }
 
     remember_pvalue_args(parm, x);
@@ -3578,191 +3576,191 @@ double gretl_get_pvalue (int dist, const double *parm, double x)
 }
 
 static int gretl_fill_random_array (double *x, int t1, int t2,
-				    int dist, const double *parm,
-				    const double *vecp1,
-				    const double *vecp2)
+                                    int dist, const double *parm,
+                                    const double *vecp1,
+                                    const double *vecp2)
 {
     int t, err = 0;
 
     if (dist == D_UNIFORM) {
-	/* uniform, continuous */
-	double min = parm[0], max = parm[1];
+        /* uniform, continuous */
+        double min = parm[0], max = parm[1];
 
-	if (vecp1 != NULL || vecp2 != NULL) {
-	    for (t=t1; t<=t2 && !err; t++) {
-		if (vecp1 != NULL) min = vecp1[t];
-		if (vecp2 != NULL) max = vecp2[t];
-		err = gretl_rand_uniform_minmax(x, t, t, min, max);
-	    }
-	} else {
-	    err = gretl_rand_uniform_minmax(x, t1, t2, min, max);
-	}
+        if (vecp1 != NULL || vecp2 != NULL) {
+            for (t=t1; t<=t2 && !err; t++) {
+                if (vecp1 != NULL) min = vecp1[t];
+                if (vecp2 != NULL) max = vecp2[t];
+                err = gretl_rand_uniform_minmax(x, t, t, min, max);
+            }
+        } else {
+            err = gretl_rand_uniform_minmax(x, t1, t2, min, max);
+        }
     } else if (dist == D_UDISCRT) {
-	/* uniform, discrete */
-	int min = (int) parm[0], max = (int) parm[1];
+        /* uniform, discrete */
+        int min = (int) parm[0], max = (int) parm[1];
 
-	if (vecp1 != NULL || vecp2 != NULL) {
-	    for (t=t1; t<=t2 && !err; t++) {
-		if (vecp1 != NULL) min = (int) vecp1[t];
-		if (vecp2 != NULL) max = (int) vecp2[t];
-		err = gretl_rand_uniform_int_minmax(x, t, t, min, max,
-						    OPT_NONE);
-	    }
-	} else {
-	    err = gretl_rand_uniform_int_minmax(x, t1, t2, min, max,
-						OPT_NONE);
-	}
+        if (vecp1 != NULL || vecp2 != NULL) {
+            for (t=t1; t<=t2 && !err; t++) {
+                if (vecp1 != NULL) min = (int) vecp1[t];
+                if (vecp2 != NULL) max = (int) vecp2[t];
+                err = gretl_rand_uniform_int_minmax(x, t, t, min, max,
+                                                    OPT_NONE);
+            }
+        } else {
+            err = gretl_rand_uniform_int_minmax(x, t1, t2, min, max,
+                                                OPT_NONE);
+        }
     } else if (dist == D_NORMAL) {
-	double mu = parm[0], sd = parm[1];
+        double mu = parm[0], sd = parm[1];
 
-	if (vecp1 != NULL || vecp2 != NULL) {
-	    for (t=t1; t<=t2 && !err; t++) {
-		if (vecp1 != NULL) mu = vecp1[t];
-		if (vecp2 != NULL) sd = vecp2[t];
-		err = gretl_rand_normal_full(x, t, t, mu, sd);
-	    }
-	} else {
-	    err = gretl_rand_normal_full(x, t1, t2, mu, sd);
-	}
+        if (vecp1 != NULL || vecp2 != NULL) {
+            for (t=t1; t<=t2 && !err; t++) {
+                if (vecp1 != NULL) mu = vecp1[t];
+                if (vecp2 != NULL) sd = vecp2[t];
+                err = gretl_rand_normal_full(x, t, t, mu, sd);
+            }
+        } else {
+            err = gretl_rand_normal_full(x, t1, t2, mu, sd);
+        }
     } else if (dist == D_STUDENT) {
-	/* Student's t */
-	double v = parm[0];
+        /* Student's t */
+        double v = parm[0];
 
-	if (vecp1 != NULL) {
-	    for (t=t1; t<=t2 && !err; t++) {
-		v = vecp1[t];
-		err = gretl_rand_student(x, t, t, v);
-	    }
-	} else {
-	    err = gretl_rand_student(x, t1, t2, v);
-	}
+        if (vecp1 != NULL) {
+            for (t=t1; t<=t2 && !err; t++) {
+                v = vecp1[t];
+                err = gretl_rand_student(x, t, t, v);
+            }
+        } else {
+            err = gretl_rand_student(x, t1, t2, v);
+        }
     } else if (dist == D_CHISQ) {
-	/* chi-square */
-	int v = parm[0];
+        /* chi-square */
+        int v = parm[0];
 
-	if (vecp1 != NULL) {
-	    for (t=t1; t<=t2 && !err; t++) {
-		v = vecp1[t];
-		err = gretl_rand_chisq(x, t, t, v);
-	    }
-	} else {
-	    err = gretl_rand_chisq(x, t1, t2, v);
-	}
+        if (vecp1 != NULL) {
+            for (t=t1; t<=t2 && !err; t++) {
+                v = vecp1[t];
+                err = gretl_rand_chisq(x, t, t, v);
+            }
+        } else {
+            err = gretl_rand_chisq(x, t1, t2, v);
+        }
     } else if (dist == D_SNEDECOR) {
-	int v1 = parm[0], v2 = parm[1];
+        int v1 = parm[0], v2 = parm[1];
 
-	if (vecp1 != NULL || vecp2 != NULL) {
-	    for (t=t1; t<=t2 && !err; t++) {
-		if (vecp1 != NULL) v1 = vecp1[t];
-		if (vecp2 != NULL) v2 = vecp2[t];
-		err = gretl_rand_F(x, t, t, v1, v2);
-	    }
-	} else {
-	    err = gretl_rand_F(x, t1, t2, v1, v2);
-	}
+        if (vecp1 != NULL || vecp2 != NULL) {
+            for (t=t1; t<=t2 && !err; t++) {
+                if (vecp1 != NULL) v1 = vecp1[t];
+                if (vecp2 != NULL) v2 = vecp2[t];
+                err = gretl_rand_F(x, t, t, v1, v2);
+            }
+        } else {
+            err = gretl_rand_F(x, t1, t2, v1, v2);
+        }
     } else if (dist == D_GAMMA) {
-	double shape = parm[0], scale = parm[1];
+        double shape = parm[0], scale = parm[1];
 
-	if (vecp1 != NULL || vecp2 != NULL) {
-	    for (t=t1; t<=t2 && !err; t++) {
-		if (vecp1 != NULL) shape = vecp1[t];
-		if (vecp2 != NULL) scale = vecp2[t];
-		err = gretl_rand_gamma(x, t, t, shape, scale);
-	    }
-	} else {
-	    err = gretl_rand_gamma(x, t1, t2, shape, scale);
-	}
+        if (vecp1 != NULL || vecp2 != NULL) {
+            for (t=t1; t<=t2 && !err; t++) {
+                if (vecp1 != NULL) shape = vecp1[t];
+                if (vecp2 != NULL) scale = vecp2[t];
+                err = gretl_rand_gamma(x, t, t, shape, scale);
+            }
+        } else {
+            err = gretl_rand_gamma(x, t1, t2, shape, scale);
+        }
     } else if (dist == D_BINOMIAL) {
-	double pr = parm[0];
-	int n = parm[1];
+        double pr = parm[0];
+        int n = parm[1];
 
-	if (vecp1 != NULL || vecp2 != NULL) {
-	    for (t=t1; t<=t2 && !err; t++) {
-		if (vecp1 != NULL) pr = vecp1[t];
-		if (vecp2 != NULL) n = vecp2[1];
-		err = gretl_rand_binomial(x, t, t, n, pr);
-	    }
-	} else {
-	    err = gretl_rand_binomial(x, t1, t2, n, pr);
-	}
+        if (vecp1 != NULL || vecp2 != NULL) {
+            for (t=t1; t<=t2 && !err; t++) {
+                if (vecp1 != NULL) pr = vecp1[t];
+                if (vecp2 != NULL) n = vecp2[1];
+                err = gretl_rand_binomial(x, t, t, n, pr);
+            }
+        } else {
+            err = gretl_rand_binomial(x, t1, t2, n, pr);
+        }
     } else if (dist == D_POISSON) {
-	double m = parm[0];
+        double m = parm[0];
 
-	if (vecp1 != NULL) {
-	    for (t=t1; t<=t2 && !err; t++) {
-		m = vecp1[t];
-		err = gretl_rand_poisson(x, t, t, &m, 0);
-	    }
-	} else {
-	    err = gretl_rand_poisson(x, t1, t2, &m, 0);
-	}
+        if (vecp1 != NULL) {
+            for (t=t1; t<=t2 && !err; t++) {
+                m = vecp1[t];
+                err = gretl_rand_poisson(x, t, t, &m, 0);
+            }
+        } else {
+            err = gretl_rand_poisson(x, t1, t2, &m, 0);
+        }
     } else if (dist == D_EXPON) {
-	double scale = parm[0];
+        double scale = parm[0];
 
-	if (vecp1 != NULL) {
-	    for (t=t1; t<=t2 && !err; t++) {
-		scale = vecp1[t];
-		err = gretl_rand_exponential(x, t, t, scale);
-	    }
-	} else {
-	    err = gretl_rand_exponential(x, t1, t2, scale);
-	}
+        if (vecp1 != NULL) {
+            for (t=t1; t<=t2 && !err; t++) {
+                scale = vecp1[t];
+                err = gretl_rand_exponential(x, t, t, scale);
+            }
+        } else {
+            err = gretl_rand_exponential(x, t1, t2, scale);
+        }
     } else if (dist == D_WEIBULL) {
-	double shape = parm[0], scale = parm[1];
+        double shape = parm[0], scale = parm[1];
 
-	if (vecp1 != NULL || vecp2 != NULL) {
-	    for (t=t1; t<=t2 && !err; t++) {
-		if (vecp1 != NULL) shape = vecp1[t];
-		if (vecp2 != NULL) scale = vecp2[t];
-		err = gretl_rand_weibull(x, t, t, shape, scale);
-	    }
-	} else {
-	    err = gretl_rand_weibull(x, t1, t2, shape, scale);
-	}
+        if (vecp1 != NULL || vecp2 != NULL) {
+            for (t=t1; t<=t2 && !err; t++) {
+                if (vecp1 != NULL) shape = vecp1[t];
+                if (vecp2 != NULL) scale = vecp2[t];
+                err = gretl_rand_weibull(x, t, t, shape, scale);
+            }
+        } else {
+            err = gretl_rand_weibull(x, t1, t2, shape, scale);
+        }
     } else if (dist == D_GED) {
-	double nu = parm[0];
+        double nu = parm[0];
 
-	if (vecp1 != NULL) {
-	    for (t=t1; t<=t2 && !err; t++) {
-		if (vecp1 != NULL) nu = vecp1[t];
-		err = gretl_rand_GED(x, t, t, nu);
-	    }
-	} else {
-	    err = gretl_rand_GED(x, t1, t2, nu);
-	}
+        if (vecp1 != NULL) {
+            for (t=t1; t<=t2 && !err; t++) {
+                if (vecp1 != NULL) nu = vecp1[t];
+                err = gretl_rand_GED(x, t, t, nu);
+            }
+        } else {
+            err = gretl_rand_GED(x, t1, t2, nu);
+        }
     } else if (dist == D_LAPLACE) {
-	double mu = parm[0], b = parm[1];
+        double mu = parm[0], b = parm[1];
 
-	if (vecp1 != NULL || vecp2 != NULL) {
-	    for (t=t1; t<=t2 && !err; t++) {
-		if (vecp1 != NULL) mu = vecp1[t];
-		if (vecp2 != NULL) b = vecp1[t];
-		err = gretl_rand_laplace(x, t, t, mu, b);
-	    }
-	} else {
-	    err = gretl_rand_laplace(x, t1, t2, mu, b);
-	}
+        if (vecp1 != NULL || vecp2 != NULL) {
+            for (t=t1; t<=t2 && !err; t++) {
+                if (vecp1 != NULL) mu = vecp1[t];
+                if (vecp2 != NULL) b = vecp1[t];
+                err = gretl_rand_laplace(x, t, t, mu, b);
+            }
+        } else {
+            err = gretl_rand_laplace(x, t1, t2, mu, b);
+        }
     } else if (dist == D_BETA) {
-	double shape1 = parm[0], shape2 = parm[1];
+        double shape1 = parm[0], shape2 = parm[1];
 
-	if (vecp1 != NULL || vecp2 != NULL) {
-	    for (t=t1; t<=t2 && !err; t++) {
-		if (vecp1 != NULL) shape1 = vecp1[t];
-		if (vecp2 != NULL) shape2 = vecp2[t];
-		err = gretl_rand_beta(x, t, t, shape1, shape2);
-	    }
-	} else {
-	    err = gretl_rand_beta(x, t1, t2, shape1, shape2);
-	}
+        if (vecp1 != NULL || vecp2 != NULL) {
+            for (t=t1; t<=t2 && !err; t++) {
+                if (vecp1 != NULL) shape1 = vecp1[t];
+                if (vecp2 != NULL) shape2 = vecp2[t];
+                err = gretl_rand_beta(x, t, t, shape1, shape2);
+            }
+        } else {
+            err = gretl_rand_beta(x, t1, t2, shape1, shape2);
+        }
     } else if (dist == D_BETABIN) {
-	double shape1 = parm[1], shape2 = parm[2];
-	int n = parm[0];
+        double shape1 = parm[1], shape2 = parm[2];
+        int n = parm[0];
 
-	err = gretl_rand_beta_binomial(x, t1, t2, n, shape1, shape2);
+        err = gretl_rand_beta_binomial(x, t1, t2, n, shape1, shape2);
     } else if (dist == D_LOGISTIC) {
-	double loc = parm[0], shape = parm[1];
+        double loc = parm[0], shape = parm[1];
 
-	err = gretl_rand_logistic(x, t1, t2, loc, shape);
+        err = gretl_rand_logistic(x, t1, t2, loc, shape);
     }
 
     return err;
@@ -3791,48 +3789,48 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
  */
 
 int gretl_fill_random_series (double *x, int dist,
-			      const double *parm,
-			      const double *vecp1,
-			      const double *vecp2,
-			      const DATASET *dset)
+                              const double *parm,
+                              const double *vecp1,
+                              const double *vecp2,
+                              const DATASET *dset)
 {
     return gretl_fill_random_array(x, dset->t1, dset->t2,
-				   dist, parm, vecp1, vecp2);
+                                   dist, parm, vecp1, vecp2);
 }
 
 gretl_matrix *gretl_get_random_matrix (int dist,
-				       const double *parm,
-				       const double *vecp1,
-				       const double *vecp2,
-				       int rows, int cols,
-				       int *err)
+                                       const double *parm,
+                                       const double *vecp1,
+                                       const double *vecp2,
+                                       int rows, int cols,
+                                       int *err)
 {
     gretl_matrix *m = NULL;
     int n = rows * cols;
 
     if (n <= 0) {
-	*err = E_INVARG;
+        *err = E_INVARG;
     } else {
-	m = gretl_matrix_alloc(rows, cols);
-	if (m == NULL) {
-	    *err = E_ALLOC;
-	    return NULL;
-	} else {
-	    *err = gretl_fill_random_array(m->val, 0, n-1, dist,
-					   parm, vecp1, vecp2);
-	}
+        m = gretl_matrix_alloc(rows, cols);
+        if (m == NULL) {
+            *err = E_ALLOC;
+            return NULL;
+        } else {
+            *err = gretl_fill_random_array(m->val, 0, n-1, dist,
+                                           parm, vecp1, vecp2);
+        }
     }
 
     return m;
 }
 
 double gretl_get_random_scalar (int dist, const double *parm,
-				int *err)
+                                int *err)
 {
     double x;
 
     *err = gretl_fill_random_array(&x, 0, 0, dist,
-				   parm, NULL, NULL);
+                                   parm, NULL, NULL);
 
     return x;
 }
@@ -3843,16 +3841,16 @@ print_pv_string (double x, double p, PRN *prn)
     char numstr[32];
 
     if (na(p)) {
-	pprintf(prn, _("area to the right of %g: NA\n"), x);
-	return 1;
+        pprintf(prn, _("area to the right of %g: NA\n"), x);
+        return 1;
     }
 
     sprintf(numstr, "%g", p);
 
     if (!strcmp(numstr, "1") || !strcmp(numstr, "0")) {
-	pprintf(prn, _("area to the right of %g =~ %g\n"), x, p);
+        pprintf(prn, _("area to the right of %g =~ %g\n"), x, p);
     } else {
-	pprintf(prn, _("area to the right of %g = %g\n"), x, p);
+        pprintf(prn, _("area to the right of %g = %g\n"), x, p);
     }
 
     return 0;
@@ -3870,7 +3868,7 @@ print_pv_string (double x, double p, PRN *prn)
  */
 
 void print_pvalue (int dist, const double *parm, double x,
-		   double pv, PRN *prn)
+                   double pv, PRN *prn)
 {
     double pc;
     int err;
@@ -3878,124 +3876,124 @@ void print_pvalue (int dist, const double *parm, double x,
     switch (dist) {
 
     case D_NORMAL:
-	pprintf(prn, "%s: ", _("Standard normal"));
-	err = print_pv_string(x, pv, prn);
-	if (err) return;
-	if (pv < 0.5) {
-	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"),
-		    2 * pv, 1 - 2 * pv);
-	} else {
-	    pc = normal_cdf(x);
-	    pprintf(prn, _("(to the left: %g)\n"), pc);
-	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"),
-		    2 * pc, 1 - 2 * pc);
-	}
-	break;
+        pprintf(prn, "%s: ", _("Standard normal"));
+        err = print_pv_string(x, pv, prn);
+        if (err) return;
+        if (pv < 0.5) {
+            pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"),
+                    2 * pv, 1 - 2 * pv);
+        } else {
+            pc = normal_cdf(x);
+            pprintf(prn, _("(to the left: %g)\n"), pc);
+            pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"),
+                    2 * pc, 1 - 2 * pc);
+        }
+        break;
 
     case D_STUDENT:
-	pprintf(prn, "t(%d): ", (int) parm[0]);
-	err = print_pv_string(x, pv, prn);
-	if (err) return;
-	if (pv < 0.5) {
-	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"),
-		    2 * pv, 1 - 2 * pv);
-	} else {
-	    pc = student_cdf(parm[0], x);
-	    pprintf(prn, _("(to the left: %g)\n"), pc);
-	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"),
-		    2 * pc, 1 - 2 * pc);
-	}
-	break;
+        pprintf(prn, "t(%d): ", (int) parm[0]);
+        err = print_pv_string(x, pv, prn);
+        if (err) return;
+        if (pv < 0.5) {
+            pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"),
+                    2 * pv, 1 - 2 * pv);
+        } else {
+            pc = student_cdf(parm[0], x);
+            pprintf(prn, _("(to the left: %g)\n"), pc);
+            pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"),
+                    2 * pc, 1 - 2 * pc);
+        }
+        break;
 
     case D_CHISQ:
-	pprintf(prn, "%s(%d): ", _("Chi-square"), (int) parm[0]);
-	err = print_pv_string(x, pv, prn);
-	if (err) return;
-	pc = chisq_cdf(parm[0], x);
-	pprintf(prn, _("(to the left: %g)\n"), pc);
-	break;
+        pprintf(prn, "%s(%d): ", _("Chi-square"), (int) parm[0]);
+        err = print_pv_string(x, pv, prn);
+        if (err) return;
+        pc = chisq_cdf(parm[0], x);
+        pprintf(prn, _("(to the left: %g)\n"), pc);
+        break;
 
     case D_SNEDECOR:
-	pprintf(prn, "F(%d, %d): ", (int) parm[0], (int) parm[1]);
-	err = print_pv_string(x, pv, prn);
-	if (err) return;
-	pc = snedecor_cdf((int) parm[0], (int) parm[1], x);
-	pprintf(prn, _("(to the left: %g)\n"), pc);
-	break;
+        pprintf(prn, "F(%d, %d): ", (int) parm[0], (int) parm[1]);
+        err = print_pv_string(x, pv, prn);
+        if (err) return;
+        pc = snedecor_cdf((int) parm[0], (int) parm[1], x);
+        pprintf(prn, _("(to the left: %g)\n"), pc);
+        break;
 
     case D_GAMMA:
-	pprintf(prn, _("Gamma (shape %g, scale %g, mean %g, variance %g):"
-		       "\n area to the right of %g = %g\n"),
-		parm[0], parm[1], parm[0] * parm[1],
-		parm[0] * parm[1] * parm[1],
-		x, pv);
-	break;
+        pprintf(prn, _("Gamma (shape %g, scale %g, mean %g, variance %g):"
+                       "\n area to the right of %g = %g\n"),
+                parm[0], parm[1], parm[0] * parm[1],
+                parm[0] * parm[1] * parm[1],
+                x, pv);
+        break;
 
     case D_BINOMIAL:
-	pprintf(prn, _("Binomial (p = %g, n = %d):"
-		       "\n Prob(x > %d) = %g\n"),
-		parm[0], (int) parm[1], (int) x, pv);
-	pc = binomial_cdf(parm[0], parm[1], x);
-	if (x > 0) {
+        pprintf(prn, _("Binomial (p = %g, n = %d):"
+                       "\n Prob(x > %d) = %g\n"),
+                parm[0], (int) parm[1], (int) x, pv);
+        pc = binomial_cdf(parm[0], parm[1], x);
+        if (x > 0) {
             double pm1 = binomial_cdf(parm[0], parm[1], x - 1);
 
-	    pprintf(prn, _(" Prob(x <= %d) = %g\n"), (int) x, pc);
+            pprintf(prn, _(" Prob(x <= %d) = %g\n"), (int) x, pc);
             pprintf(prn, _(" Prob(x >= %d) = %g\n"), (int) x, 1.0 - pm1);
-	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) x, pc - pm1);
-	} else {
-	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) x, pc);
-	}
-	break;
+            pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) x, pc - pm1);
+        } else {
+            pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) x, pc);
+        }
+        break;
 
     case D_POISSON:
-	pprintf(prn, _("Poisson (mean = %g): "), parm[0]);
-	err = print_pv_string(x, pv, prn);
-	if (err) return;
-	pc = poisson_cdf(parm[0], (int) x);
-	if (x > 0) {
-	    pprintf(prn, _(" Prob(x <= %d) = %g\n"), (int) x, pc);
-	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) x,
-		    poisson_pmf(parm[0], x));
-	} else {
-	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) x, pc);
-	}
-	break;
+        pprintf(prn, _("Poisson (mean = %g): "), parm[0]);
+        err = print_pv_string(x, pv, prn);
+        if (err) return;
+        pc = poisson_cdf(parm[0], (int) x);
+        if (x > 0) {
+            pprintf(prn, _(" Prob(x <= %d) = %g\n"), (int) x, pc);
+            pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) x,
+                    poisson_pmf(parm[0], x));
+        } else {
+            pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) x, pc);
+        }
+        break;
 
     case D_EXPON:
-	pprintf(prn, _("Exponential (scale = %g): "), parm[0]);
-	err = print_pv_string(x, pv, prn);
-	if (err) return;
-	pc = exponential_cdf(parm[0], x);
-	pprintf(prn, _("(to the left: %g)\n"), pc);
-	break;
+        pprintf(prn, _("Exponential (scale = %g): "), parm[0]);
+        err = print_pv_string(x, pv, prn);
+        if (err) return;
+        pc = exponential_cdf(parm[0], x);
+        pprintf(prn, _("(to the left: %g)\n"), pc);
+        break;
 
     case D_WEIBULL:
-	pprintf(prn, _("Weibull (shape = %g, scale = %g): "),
-		parm[0], parm[1]);
-	err = print_pv_string(x, pv, prn);
-	if (err) return;
-	pc = weibull_cdf(parm[0], parm[1], x);
-	pprintf(prn, _("(to the left: %g)\n"), pc);
-	break;
+        pprintf(prn, _("Weibull (shape = %g, scale = %g): "),
+                parm[0], parm[1]);
+        err = print_pv_string(x, pv, prn);
+        if (err) return;
+        pc = weibull_cdf(parm[0], parm[1], x);
+        pprintf(prn, _("(to the left: %g)\n"), pc);
+        break;
 
     case D_GED:
-	pprintf(prn, _("GED (shape = %g): "), parm[0]);
-	err = print_pv_string(x, pv, prn);
-	if (err) return;
-	pc = GED_cdf(parm[0], x);
-	pprintf(prn, _("(to the left: %g)\n"), pc);
-	break;
+        pprintf(prn, _("GED (shape = %g): "), parm[0]);
+        err = print_pv_string(x, pv, prn);
+        if (err) return;
+        pc = GED_cdf(parm[0], x);
+        pprintf(prn, _("(to the left: %g)\n"), pc);
+        break;
 
     case D_LAPLACE:
-	pprintf(prn, _("Laplace (mean = %g, scale = %g): "), parm[0], parm[1]);
-	err = print_pv_string(x, pv, prn);
-	if (err) return;
-	pc = laplace_cdf(parm[0], parm[1], x);
-	pprintf(prn, _("(to the left: %g)\n"), pc);
-	break;
+        pprintf(prn, _("Laplace (mean = %g, scale = %g): "), parm[0], parm[1]);
+        err = print_pv_string(x, pv, prn);
+        if (err) return;
+        pc = laplace_cdf(parm[0], parm[1], x);
+        pprintf(prn, _("(to the left: %g)\n"), pc);
+        break;
 
     default:
-	break;
+        break;
     }
 }
 
@@ -4030,44 +4028,44 @@ int batch_pvalue (const char *str, DATASET *dset, PRN *prn)
     int err = 0;
 
     if (str == NULL || *str == '\0') {
-	return E_ARGS;
+        return E_ARGS;
     }
 
     if (!strncmp(str, "pvalue ", 7)) {
-	str += 7;
+        str += 7;
     }
 
     S = gretl_string_split(str, &n, NULL);
     if (S == NULL) {
-	return E_ALLOC;
+        return E_ALLOC;
     }
 
     dist = dist_code_from_string(S[0]);
 
     if (dist == D_NONE) {
-	err = E_INVARG;
+        err = E_INVARG;
     } else {
-	strcpy(line, "pvalue(");
-	m = 8;
-	for (i=0; i<n && !err; i++) {
-	    m += strlen(S[i]) + 1;
-	    if (m > MAXLEN) {
-		err = E_DATA;
-	    } else {
-		strcat(line, S[i]);
-		strcat(line, (i == n - 1)? ")" : ",");
-	    }
-	}
+        strcpy(line, "pvalue(");
+        m = 8;
+        for (i=0; i<n && !err; i++) {
+            m += strlen(S[i]) + 1;
+            if (m > MAXLEN) {
+                err = E_DATA;
+            } else {
+                strcat(line, S[i]);
+                strcat(line, (i == n - 1)? ")" : ",");
+            }
+        }
     }
 
     strings_array_free(S, n);
 
     if (!err) {
-	pv = generate_scalar(line, dset, &err);
+        pv = generate_scalar(line, dset, &err);
     }
 
     if (!err) {
-	print_pvalue(dist, pvargs, pvargs[2], pv, prn);
+        print_pvalue(dist, pvargs, pvargs[2], pv, prn);
     }
 
     return err;
@@ -4098,8 +4096,8 @@ gretl_matrix *gretl_get_DW (int n, int k, int *err)
     dw_lookup = get_plugin_function("dw_lookup");
 
     if (dw_lookup == NULL) {
-	*err = E_FOPEN;
-	return NULL;
+        *err = E_FOPEN;
+        return NULL;
     }
 
     *err = (*dw_lookup) (n, k, &m);
