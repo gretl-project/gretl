@@ -527,10 +527,11 @@ static int common_curl_setup (CURL **pcurl)
         err = 1;
     } else {
 #if WDEBUG
-        curl_easy_setopt(*pcurl, CURLOPT_VERBOSE, (long int) 1);
+        curl_easy_setopt(*pcurl, CURLOPT_VERBOSE, 1L);
 #else
-        curl_easy_setopt(*pcurl, CURLOPT_VERBOSE,
-                         (long int) (getenv("GRETL_WWW_VERBOSE") != NULL));
+        if (getenv("GRETL_WWW_VERBOSE") != NULL) {
+            curl_easy_setopt(*pcurl, CURLOPT_VERBOSE, 1L);
+        }
 #endif
 #ifdef _WIN32
         /* be on the safe side: 'http' can turn into 'https'
