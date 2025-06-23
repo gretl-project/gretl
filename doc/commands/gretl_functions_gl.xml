@@ -8049,9 +8049,31 @@
 	<para>
 	  Devolve un resultado (do tipo do argumento) co logaritmo da función Gamma de <argname>x</argname>.
 	</para>
+	  <seelist>
+            <fncref targ="bincoeff"/>
+            <fncref targ="gammafun"/>
+	  </seelist>
+      </description>
+    </function>
+
+    <function name="lnmgamma" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="anyfloat">p</fnarg>
+      </fnargs>
+      <description>
 	<para>
-	  Consulta tamén <fncref targ="bincoeff"/> e <fncref targ="gammafun"/>.
+	  Devolve o logaritmo da función Gamma multivariante de
+	  <argname>x</argname> con parámetro <argname>p</argname> de forma.
 	</para>
+	<para>
+	  Para a súa definición e propiedades, consulta
+	  <url>https://dlmf.nist.gov/35.3</url> ou
+	  <url>https://en.wikipedia.org/wiki/Multivariate_gamma_function</url>.
+	</para>
+	  <seelist>
+            <fncref targ="lngamma"/>
+	  </seelist>
       </description>
     </function>
 

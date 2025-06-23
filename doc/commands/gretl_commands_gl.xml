@@ -17,6 +17,11 @@
 	  <effect>Fai unha proba de ML; só con MCO</effect>
 	</option>
 	<option>
+	  <flag>--auto</flag>
+	  <optparm>criterio</optparm>
+	  <effect>Progresivo cara adiante, só MCO</effect>
+	</option>
+	<option>
 	  <flag>--quiet</flag>
 	  <effect>Presenta só os resultados básicos da proba</effect>
 	</option>
@@ -36,50 +41,109 @@
 	    <examples>
 	      <example>add 5 7 9</example>
 	      <example>add xx yy zz --quiet</example>
+	      <example>add xlist --auto=BIC</example>
 	    </examples>
 	  </usage>
 
     <description>
       <para context="cli">
-	Debes de solicitar esta instrución despois de executar unha instrución de
-	estimación. Realiza unha proba conxunta (cuxos resultados podes obter cos
-	accesorios <fncref targ="$test"/> e <fncref targ="$pvalue"/>) sobre a
-	adición das variables indicadas no argumento, ao derradeiro modelo estimado.
+	Debes solicitar esta instrución despois de executar unha instrución
+	de estimación. Se non se indica ningunha das opcións <opt>lm</opt>
+	ou <opt>auto</opt>, esta instrución realiza unha proba conxunta
+	sobre a adición das variables expresadas no argumento, ao derradeiro
+	modelo estimado. Estímase unha versión ampliada do modelo orixinal,
+	incluíndo as variables de <repl>listavariables</repl>, e se realiza
+	unha proba de Wald sobre o modelo ampliado. Este substitúe ao
+	orixinal como o <quote>último modelo</quote> co propósito, por
+	exemplo, de recuperar os erros mediante o accesorio <fncref targ="$uhat"/>
+	ou de facer outras probas. Os resultados da proba de Wald poden
+	recuperarse utilizando os accesorios <fncref targ="$test"/> e
+	<fncref targ="$pvalue"/>.
       </para>
       <para context="cli">
-	Por defecto, estímase unha versión <quote>ampliada</quote> do modelo orixinal,
-	que resulta ao engadirlle a este as variables do argumento <repl>listavariables</repl>,
-	como regresores. Neste caso, a proba é de tipo Wald sobre o modelo ampliado,
-	pasando a ser este o <quote>modelo vixente</quote> en troques do orixinal. Debes de ter
-	isto en conta, por exemplo, para usar <lit>$uhat</lit> porque este permite recuperar os erros
-	do que sexa o modelo vixente en cada momento, ou para facer probas posteriores.
+	A opción <opt>both</opt> aplícase só cando se estima o último
+	modelo mediante Mínimos Cadrados en 2 Etapas. Indica que as
+	novas variables deben engadirse tanto á lista dos instrumentos,
+	como á lista dos regresores, engadíndose por defecto só á lista
+	de regresores.
       </para>
+      <subhead context="cli">A opción lm</subhead>
       <para context="cli">
-	Alternativamente, se indicas a opción <opt>lm</opt> (que só está dispoñible
-	para aqueles modelos estimados mediante MCO), realízase unha proba de
-	Multiplicadores de Lagrange. Para iso, execútase unha regresión auxiliar na que
-	o erro de estimación do derradeiro modelo tómase como variable dependente; e
-	as variables independentes son as dese derradeiro modelo máis as de
-	<repl>listavariables</repl>. Baixo a hipótese nula de que as variables engadidas
-	non teñen unha capacidade explicativa adicional, o estatístico formado
-	multiplicando o tamaño da mostra polo R-cadrado desta regresión, ten
-	a distribución dunha variable khi-cadrado con tantos graos de liberdade
-	como o número de regresores engadidos. Neste caso, o modelo orixinal non
-	se substitúe polo modelo da regresión auxiliar.
+	Se indicas a opción <opt>lm</opt> (só dispoñible para modelos estimados
+	mediante MCO), faise unha proba de Multiplicadores de Lagrange. Para iso,
+	execútase unha regresión auxiliar na que o erro de estimación do derradeiro
+	modelo tómase como variable dependente; e as variables independentes son
+	as dese derradeiro modelo máis as de <repl>listavariables</repl>. Baixo a
+	hipótese nula de que as variables engadidas non teñen unha capacidade
+	preditiva adicional, o estatístico formado multiplicando o tamaño da mostra
+	polo R-cadrado desta regresión, ten unha distribución Khi-cadrado con
+	tantos graos de liberdade como o número de regresores engadidos. Con
+	esta opción, o modelo orixinal non se substitúe polo modelo da regresión auxiliar.
       </para>
+      <subhead context="cli">A opción auto</subhead>
       <para context="cli">
-	A opción <opt>both</opt> é específica do método de estimación de
-	Mínimos Cadrados en 2 Etapas. Indica que as novas variables
-	deben de engadirse tanto á lista dos regresores como á lista dos
-	instrumentos, posto que cando non se indica nada, engádense por
-	defecto só á de regresores.
+	A opción <opt>auto</opt> (que non se pode combinar coa opción
+	<opt>lm</opt>) solicita que se faga a regresión progresiva cara
+	adiante, utilizando o algoritmo QR tal como se describe en
+	<cite key="hastie20">Hastie et al (2020)</cite>. Neste caso, interprétase
+	<repl>listavariables</repl> como unha lista de <emphasis>candidatos</emphasis>
+	a engadirse ao modelo orixinal. En cada etapa, o método determina
+	que candidato ofrece a maior mellora do axuste, de acordo co
+	<lit>criterio</lit> (indicado como un parámetro desa opción).
+	O algoritmo detense cando non é posible unha mellora adicional.
+	O criterio debe ter unha destas formas:
       </para>
+      <ilist context="cli">
+	<li>
+	  <para>
+	    Un Criterio de Información: <lit>AIC</lit>, <lit>BIC</lit> ou
+	    <lit>HQC</lit>. O <quote>mellor</quote> candidato en cada etapa
+	    é entón o que proporciona a maior mellora (redución) do criterio
+	    seleccionado.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Un valor &alpha; (fracción decimal positiva). Neste caso, o factor
+	    de relevancia é a suma de erros cadrados. O algoritmo detense
+	    cando ningún candidato dos que queden proporcione unha redución
+	    na SCE que sexa estatisticamente significativa a un nivel &alpha;
+	    nunha proba Khi-cadrado.
+	  </para>
+	</li>
+      </ilist>
       <para context="gui">
-	As variables escollidas engádense ao modelo previo e estímase o novo
-	modelo así resultante. Como consecuencia, preséntase o valor dun
-	estatístico que comproba a significación conxunta das variables engadidas,
-	xunto coa súa probabilidade asociada (valor p).
+	Aquí dispós de tres opcións:
       </para>
+      <ilist context="gui">
+	<li>
+	  <para>
+	    Proba de Wald: As variables seleccionadas engádense ao modelo
+	    previo, e estímase o modelo ampliado. Preséntase un estatístico
+	    de proba de Wald sobre a significación conxunta das variables
+	    engadidas, xunto co seu valor p.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Proba de ML (LM): Se realiza unha proba de Multiplicadores de Lagrange
+	    sobre a significación conxunta das variables engadidas, sen estimar
+	    o modelo ampliado.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Adición progresiva: As variables adicionais engádense de forma
+	    secuencial. En cada etapa, engádese a variable que proporciona
+	    a maior mellora no axuste, deténdose o proceso cando ningunha das
+	    candidatas restantes proporcione unha mellora. Neste caso, é
+	    necesario que elixas un criterio: un dos Criterios de Información
+	    (AIC, BIC, HQC) ou SCE. Se elixes SCE, tamén é necesario que
+	    especifiques un nivel &alpha; de significación para probar se
+	    cada variable merece a súa inclusión.
+	  </para>
+	</li>
+      </ilist>
     </description>
 
     <gui-access>

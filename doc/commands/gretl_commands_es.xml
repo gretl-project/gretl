@@ -17,6 +17,11 @@
 	  <effect>Hace un contraste de ML; solo con MCO</effect>
 	</option>
 	<option>
+	  <flag>--auto</flag>
+	  <optparm>criterio</optparm>
+	  <effect>Progresivo hacia adelante, solo MCO</effect>
+	</option>
+	<option>
 	  <flag>--quiet</flag>
 	  <effect>Presenta solo los resultados básicos del contraste</effect>
 	</option>
@@ -36,50 +41,109 @@
 	    <examples>
 	      <example>add 5 7 9</example>
 	      <example>add xx yy zz --quiet</example>
+	      <example>add xlist --auto=BIC</example>
 	    </examples>
 	  </usage>
 
     <description>
       <para context="cli">
-	Debes solicitar esta instrucción después de ejecutar una instrucción de
-	estimación. Realiza un contraste conjunto (cuyos resultados puedes obtener con
-	los accesores <fncref targ="$test"/> y <fncref targ="$pvalue"/>) sobre la
-	adición de las variables indicadas en el argumento, al último modelo estimado.
+	Debes solicitar esta instrucción después de ejecutar una instrucción
+	de estimación. Si no se indica ninguna de las opciones <opt>lm</opt>
+	o <opt>auto</opt>, esta instrucción realiza un contraste conjunto
+	sobre la adición de las variables expresadas en el argumento, al último
+	modelo estimado. Se estima una versión ampliada del modelo original,
+	incluyendo las variables de <repl>listavariables</repl>, y se realiza
+	un contraste de Wald sobre el modelo ampliado. Este substituye al
+	original como el <quote>último modelo</quote> con el propósito, por
+	ejemplo, de recuperar los errores mediante el accesor <fncref targ="$uhat"/>
+	o de hacer otros contrastes. Los resultados del contraste de Wald
+	pueden recuperarse utilizando los accesores <fncref targ="$test"/> y
+	<fncref targ="$pvalue"/>.
       </para>
       <para context="cli">
-	Por defecto, se estima una versión <quote>ampliada</quote> del modelo original,
-	que resulta al añadirle a este las variables del argumento <repl>listavariables</repl>,
-	como regresores. En este caso, el contraste es de tipo Wald sobre el modelo ampliado,
-	pasando a ser este el <quote>modelo vigente</quote> en lugar del original. Debes tener
-	esto en cuenta, por ejemplo, para usar <lit>$uhat</lit> porque este permite recuperar los errores
-	del que sea el modelo vigente en cada momento, o para hacer contrastes posteriores.
+	La opción <opt>both</opt> se aplica solo cuando se estima el último
+	modelo mediante Mínimos Cuadrados en 2 Etapas. Indica que las
+	nuevas variables deben añadirse tanto a la lista de los instrumentos,
+	como a la lista de los regresores, añadiéndose por defecto solo a
+	la lista de regresores.
       </para>
+      <subhead context="cli">La opción lm</subhead>
       <para context="cli">
-	Alternativamente, si indicas la opción <opt>lm</opt> (que solo está disponible
-	para aquellos modelos estimados mediante MCO), se realiza un contraste de
-	Multiplicadores de Lagrange. Para eso, se ejecuta una regresión auxiliar en la que
-	el error de estimación del último modelo se toma como variable dependiente; y
-	las variables independientes son las de ese último modelo más las de
-	<repl>listavariables</repl>. Bajo la hipótesis nula de que las variables añadidas
-	no tienen una capacidad explicativa adicional, el estadístico formado
-	multiplicando el tamaño de la muestra por el R-cuadrado de esta regresión, tiene
-	la distribución de una variable chi-cuadrado con tantos grados de libertad
-	como el número de regresores añadidos. En este caso, el modelo original no
-	se substituye por el modelo de la regresión auxiliar.
+	Si indicas la opción <opt>lm</opt> (solo disponible para modelos estimados
+	mediante MCO), se hace un contraste de Multiplicadores de Lagrange. Para
+	ello, se ejecuta una regresión auxiliar en la que el error de estimación
+	del último modelo se toma como variable dependiente; y las variables
+	independientes son las de ese último modelo más las de <repl>listavariables</repl>.
+	Bajo la hipótesis nula de que las variables añadidas no tienen una capacidad
+	predictiva adicional, el estadístico formado multiplicando el tamaño de la
+	muestra por el R-cuadrado de esta regresión, tiene una distribución Chi-cuadrado
+	con tantos grados de libertad como el número de regresores añadidos. Con esta
+	opción, el modelo original no se substituye por el modelo de la regresión auxiliar.
       </para>
+      <subhead context="cli">La opción auto</subhead>
       <para context="cli">
-	La opción <opt>both</opt> es específica del método de estimación de
-	Mínimos Cuadrados en 2 Etapas. Indica que las nuevas variables
-	deben añadirse tanto a la lista de los regresores como a la lista de los
-	instrumentos, puesto que cuando no se indica nada, se añaden por
-	defecto solo a la de regresores.
+	La opción <opt>auto</opt> (que no se puede combinar con la opción
+	<opt>lm</opt>) solicita que se haga la regresión progresiva hacia
+	adelante, utilizando el algoritmo QR tal como se describe en
+	<cite key="hastie20">Hastie et al (2020)</cite>. En este caso, se interpreta
+	<repl>listavariables</repl> como una lista de <emphasis>candidatos</emphasis>
+	a ser añadidos al modelo original. En cada etapa, el método determina
+	qué candidato ofrece la mayor mejora del ajuste, de acuerdo con el
+	<lit>criterio</lit> (indicado como un parámetro de esa opción).
+	El algoritmo se detiene cuando no es posible una mejora adicional.
+	El criterio debe tener una de estas formas:
       </para>
+      <ilist context="cli">
+	<li>
+	  <para>
+	    Un Criterio de Información: <lit>AIC</lit>, <lit>BIC</lit> o
+	    <lit>HQC</lit>. El <quote>mejor</quote> candidato en cada etapa
+	    es entonces el que proporciona la mayor mejora (reducción) del
+	    criterio seleccionado.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Un valor &alpha; (fracción decimal positiva). En este caso, el factor
+	    de relevancia es la suma de cuadrados de los errores. El algoritmo
+	    se detiene cuando ningún candidato de los que queden proporcione
+	    una reducción en la SCE que sea estadísticamente significativa a un
+	    nivel &alpha; en un contraste Chi-cuadrado.
+	  </para>
+	</li>
+      </ilist>
       <para context="gui">
-	Las variables escogidas se añaden al modelo previo y se estima el nuevo
-	modelo así resultante. Como consecuencia, se presenta el valor de un
-	estadístico que contrasta la significación conjunta de las variables añadidas,
-	junto con su probabilidad asociada (valor p).
+	Aquí dispones de tres opciones:
       </para>
+      <ilist context="gui">
+	<li>
+	  <para>
+	    Contraste de Wald: Las variables seleccionadas se añaden al modelo
+	    previo, y se estima el modelo ampliado. Se presenta un estadístico
+	    de prueba de Wald sobre la significación conjunta de las variables
+	    añadidas, junto con su valor p.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Contraste de ML (LM): Se realiza un contraste de Multiplicadores de
+	    Lagrange sobre la significación conjunta de las variables añadidas,
+	    sin estimar el modelo ampliado.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Adición progresiva: Las variables adicionales se añaden de forma
+	    secuencial. En cada etapa, se añade la variable que proporciona
+	    la mayor mejora en el ajuste, deteniéndose el proceso cuando
+	    ninguna de las candidatas restantes proporcione una mejora. En
+	    este caso, es necesario que elijas un criterio: uno de los Criterios
+	    de Información (AIC, BIC, HQC) o SCE. Si elijes SCE, también es
+	    necesario que especifiques un nivel &alpha; de significación para
+	    contrastar si cada variable merece su inclusión.
+	  </para>
+	</li>
+      </ilist>
     </description>
 
     <gui-access>

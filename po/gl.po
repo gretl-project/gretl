@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-30 17:28-0400\n"
-"PO-Revision-Date: 2025-03-31 18:06+0200\n"
+"PO-Revision-Date: 2025-05-31 09:43+0200\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.1\n"
+"X-Generator: Poedit 3.6\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
 #: lib/src/addons_utils.c:187
@@ -1153,7 +1153,7 @@ msgstr "O ficheiro de datos está baldeiro\n"
 
 #: lib/src/csvdata.c:1715
 msgid "Data file has trailing commas\n"
-msgstr "O ficheiro de datos ten comas posteriores\n"
+msgstr "O ficheiro de datos ten comas pendentes\n"
 
 #: lib/src/csvdata.c:1945
 #, c-format
@@ -3604,9 +3604,8 @@ msgid "std. dev"
 msgstr "Desv. padrón"
 
 #: lib/src/graphing.c:882
-#, fuzzy
 msgid "You must supply at least three variables, the last of which is discrete"
-msgstr "Debes de indicar tres variables, a última delas debe de ser discreta"
+msgstr "Debes indicar cando menos tres variables e a última delas discreta"
 
 #: lib/src/graphing.c:2347
 msgid "incompatible output specification"
@@ -3653,9 +3652,8 @@ msgid "loess fit, d = %d, q = %g"
 msgstr "axuste Loess, d = %d, q = %g"
 
 #: lib/src/graphing.c:3952
-#, fuzzy
 msgid "No data are available for plotting"
-msgstr "Non existen marcadores dispoñibles para escribir\n"
+msgstr "Non existen datos dispoñibles que representar"
 
 #: lib/src/graphing.c:4332
 msgid "time series by group"
@@ -8467,6 +8465,8 @@ msgid ""
 "Deprecated --band syntax: please use the current syntax\n"
 "as described in the help for the 'gnuplot' command"
 msgstr ""
+"Sintaxe --band obsoleta: por favor, utiliza a sintaxe vixente\n"
+"como se describe na axuda para a instrución 'gnuplot'"
 
 #: lib/src/plotspec.c:223 lib/src/plotspec.c:246
 msgid "lines"
@@ -9914,7 +9914,7 @@ msgid "Freed %s\n"
 msgstr "Liberado %s\n"
 
 #: cli/gretlcli.c:165
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "You may supply the name of a data file on the command line.\n"
@@ -9941,12 +9941,13 @@ msgstr ""
 " -r ou --run    Executar un guión e logo tomar o control da liña de "
 "instrucións.\n"
 " -m ou --makepkg    Executar un guión e crear un paquete a partir del.\n"
-" -i ou --instpkg    Instalar un paquete de función específico.\n"
+" -i ou --instpkg    Instalar un paquete concreto de funcións.\n"
 " -h ou --help    Amosar esta información e saír.\n"
 " -v ou --version    Amosar a información da versión e saír.\n"
 " -e ou --english    Forzar o uso do inglés en lugar da tradución.\n"
 " -q ou --quiet    Amosar información do programa menos cumprida.\n"
 " -t ou --tool    Funcionar en silenzo.\n"
+" -n or --no-plots  Eliminar a xeración de gráficas.\n"
 "Exemplo de utilización do modo 'batch':\n"
 " gretlcli -b myfile.inp >myfile.out\n"
 "Exemplo de utilización do modo 'run':\n"
@@ -12613,14 +12614,14 @@ msgid "Base period:"
 msgstr "Período base:"
 
 #: gui/dialogs.c:6819
-#, fuzzy, c-format
+#, c-format
 msgid "Cross-sectional mean of %s"
-msgstr "Datos de sección cruzada"
+msgstr "Media de sección cruzada de %s"
 
 #: gui/dialogs.c:6821
-#, fuzzy, c-format
+#, c-format
 msgid "Time mean of %s"
-msgstr "Dimension temporal: "
+msgstr "Media temporal de %s"
 
 #: gui/dialogs.c:6931
 msgid "Unrestricted (U-MIDAS)"
@@ -14487,11 +14488,8 @@ msgid "reuse an existing gretl instance unconditionally"
 msgstr "Volver usar incondicionalmente un caso xa existente de GRETL"
 
 #: gui/gretl.c:289
-#, fuzzy
 msgid "This option is not available for panel data"
-msgstr ""
-"Lamentablemente, esta instrución aínda non está dispoñible para datos de "
-"panel"
+msgstr "Esta opción non está dispoñible para datos de panel"
 
 #: gui/gretl.c:644
 msgid "Start a new gretl instance?"
@@ -14974,9 +14972,8 @@ msgid "_Random variable..."
 msgstr "Variable _aleatoria..."
 
 #: gui/gretl.c:1933
-#, fuzzy
 msgid "_Time"
-msgstr "_Tendencia temporal"
+msgstr "_Tempo"
 
 #: gui/gretl.c:1934
 msgid "_Lags of selected variables"
@@ -15015,9 +15012,8 @@ msgid "_Panel"
 msgstr "_Panel"
 
 #: gui/gretl.c:1948
-#, fuzzy
 msgid "_Unit index"
-msgstr "Í_ndice de unidades en panel"
+msgstr "Í_ndice de unidades"
 
 #: gui/gretl.c:1949
 msgid "_Unit dummies"
@@ -17716,14 +17712,12 @@ msgid "Add percent change..."
 msgstr "Engadir variación porcentual..."
 
 #: gui/menustate.c:593
-#, fuzzy
 msgid "Add time mean..."
-msgstr "Engadir ao menú"
+msgstr "Engadir media temporal..."
 
 #: gui/menustate.c:594
-#, fuzzy
 msgid "Add cross-sectional mean..."
-msgstr "Para datos de sección cruzada"
+msgstr "Engadir media de sección cruzada..."
 
 #: gui/menustate.c:595 gui/menustate.c:600
 msgid "Add index values..."
@@ -18625,7 +18619,7 @@ msgstr "Proba ML usando unha regresión auxiliar"
 
 #: gui/selector.c:6897
 msgid "Stepwise add, using"
-msgstr ""
+msgstr "Engadir gradualmente, usando"
 
 #: gui/selector.c:6927
 msgid "Estimate reduced model"
@@ -20795,9 +20789,9 @@ msgid "No numeric data were found"
 msgstr "Non se atoparon datos numéricos"
 
 #: plugin/import_common.c:164
-#, fuzzy, c-format
+#, c-format
 msgid "Sheet has %d trailing empty variables"
-msgstr "Tipificando variables"
+msgstr "A folla ten %d variables baleiras pendentes"
 
 #: plugin/import_common.c:345
 #, c-format
