@@ -1285,12 +1285,14 @@ static void check_native_data_save_filter (GtkWidget *filesel)
     GtkFileFilter *filter;
     const gchar *filter_name;
 
-    /* we need to know if .gdt or .gdtb was chosen */
+    /* we want to know if .gdt or .gdtb was chosen */
 
     filter = gtk_file_chooser_get_filter(GTK_FILE_CHOOSER(filesel));
-    filter_name = gtk_file_filter_get_name(filter);
-    if (strstr(filter_name, "gdtb") != NULL) {
-	gdtb_save = 1;
+    if (filter != NULL) {
+        filter_name = gtk_file_filter_get_name(filter);
+        if (filter_name != NULL && strstr(filter_name, "gdtb") != NULL) {
+            gdtb_save = 1;
+        }
     }
 }
 
