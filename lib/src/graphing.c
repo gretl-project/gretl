@@ -8586,10 +8586,11 @@ static int real_correlogram_print_plot (const char *vname,
     int PMcol = 0;
     int k;
 
-    if (PM == NULL || multi) {
-        sprintf(pm_title, "%.2f/T^%.1f", 1.96, 0.5);
-    } else if (PM != NULL && PM->cols) {
+    if (PM != NULL) {
         PMcol = 1;
+    }
+    if (multi) {
+        sprintf(pm_title, "%.2f/T^%.1f", 1.96, 0.5);
     }
 
     corrgm_min_max(acf, pacf, PM, m, pm, &ymin, &ymax);
