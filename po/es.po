@@ -1,6 +1,6 @@
 # translation of es.po to Spanish
 # Copyright (C) 2001--2024 Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>,
-# Copyright (C) 2025 Juan I. Modroño <juan.modrono@ehu.eus>,
+# SPDX-FileCopyrightText: 2025 Juan I. Modroño <juan.modrono@ehu.eus>
 # This file is distributed under the same license as the gretl package.
 #
 # Juan I. Modroño <juan.modrono@ehu.eus>, 2025.
@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-2025c\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-30 17:28-0400\n"
-"PO-Revision-Date: 2025-06-13 13:22+0200\n"
+"PO-Revision-Date: 2025-06-26 17:50+0200\n"
 "Last-Translator: Juan I. Modroño <juan.modrono@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Emacs 29.3 using po-mode v2.29\n"
+"X-Generator: Lokalize 23.08.5\n"
 
 #: lib/src/addons_utils.c:187
 msgid "try"
@@ -1504,9 +1504,8 @@ msgid "New data not conformable for appending\n"
 msgstr "Los nuevos datos no tienen la estructura adecuada para añadirlos\n"
 
 #: lib/src/dataio.c:2261
-#, fuzzy
 msgid "No data were found for appending"
-msgstr "Los nuevos datos no tienen la estructura adecuada para añadirlos\n"
+msgstr "No hay datos que añadir"
 
 #: lib/src/dataio.c:2270
 msgid "Found no data conformable for appending"
@@ -1789,7 +1788,7 @@ msgid "Panel time extended by %d observations"
 msgstr "El periodo del panel se ha extendido en %d observaciones"
 
 #: lib/src/dataset.c:3368
-#, fuzzy, c-format
+#, c-format
 msgid "Dataset extended by %d units"
 msgstr "El conjunto de datos ha sido extendido en %d unidades"
 
@@ -2439,19 +2438,17 @@ msgid "%s, using samples of size %d to %d"
 msgstr "%s, utilizando muestras de tamaños %d a %d"
 
 #: lib/src/describe.c:7231
-#, fuzzy
 msgid "Paired difference test"
-msgstr "Contraste de diferencias"
+msgstr "Contraste de diferencia de medias (muestras emparejadas)"
 
 #: lib/src/describe.c:7236
-#, fuzzy, c-format
+#, c-format
 msgid "Sample mean paired difference = %g"
-msgstr "Varianza muestral = %g\n"
+msgstr "Diferencia de medias muestrales (m. emparejadas) = %g"
 
 #: lib/src/describe.c:7238
-#, fuzzy
 msgid "   Null hypothesis: The population mean difference is zero."
-msgstr "   Hipótesis nula: Las dos medias poblacionales son iguales.\n"
+msgstr "   Hipótesis nula: Las dos medias poblacionales son iguales."
 
 #: lib/src/describe.c:7240 lib/src/describe.c:7392
 #, c-format
@@ -2473,12 +2470,8 @@ msgstr ""
 "\n"
 
 #: lib/src/describe.c:7371
-#, fuzzy
 msgid "Robust equality of means test"
-msgstr ""
-"\n"
-"Contraste de igualdad de varianzas\n"
-"\n"
+msgstr "Contraste robusto de igualdad de medias"
 
 #: lib/src/describe.c:7374
 #, c-format
@@ -2509,24 +2502,21 @@ msgid "   Null hypothesis: The two population means are the same.\n"
 msgstr "   Hipótesis nula: Las dos medias poblacionales son iguales.\n"
 
 #: lib/src/describe.c:7544
-#, fuzzy
 msgid ""
 "\n"
 "Robust equality of variances test\n"
 msgstr ""
 "\n"
-"Contraste de igualdad de varianzas\n"
-"\n"
+"Contraste robusto de igualdad de varianzas\n"
 
 #: lib/src/describe.c:7545
-#, fuzzy
 msgid "Centering: "
-msgstr "Solo centrar"
+msgstr "Centrando:"
 
 #: lib/src/describe.c:7551
-#, fuzzy, c-format
+#, c-format
 msgid "%d percent trimmed mean"
-msgstr "Intervalo de %g por ciento"
+msgstr "Media recortada (%d por ciento)"
 
 #: lib/src/describe.c:7565
 msgid ""
@@ -3630,10 +3620,10 @@ msgid "std. dev"
 msgstr "desv. típica"
 
 #: lib/src/graphing.c:882
-#, fuzzy
 msgid "You must supply at least three variables, the last of which is discrete"
 msgstr ""
-"Se deben suministrar tres variables, la última de las cuales ha de ser "
+"Se deben suministrar al menos tres variables, la última de las cuales ha de"
+" ser "
 "discreta"
 
 #: lib/src/graphing.c:2347
@@ -3681,9 +3671,8 @@ msgid "loess fit, d = %d, q = %g"
 msgstr "ajuste Loess, d = %d, q = %g"
 
 #: lib/src/graphing.c:3952
-#, fuzzy
 msgid "No data are available for plotting"
-msgstr "No hay  etiquetas disponibles para escribir\n"
+msgstr "No hay datos a mostrar en el gráfico"
 
 #: lib/src/graphing.c:4332
 msgid "time series by group"
@@ -6521,12 +6510,11 @@ msgstr ""
 "estados"
 
 #: lib/src/kalman.c:3887
-#, fuzzy
 msgid ""
 "kalman: the 'sequential' setting is not compatible with\n"
 "cross-correlated disturbances"
 msgstr ""
-"kalman: la configuración 'univariante' no es compatible con\n"
+"kalman: el ajuste 'secuencial' no es compatible con\n"
 "perturbaciones con correlación cruzada"
 
 #: lib/src/kalman.c:3997
@@ -9982,7 +9970,7 @@ msgid "Freed %s\n"
 msgstr "Liberado %s\n"
 
 #: cli/gretlcli.c:165
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "You may supply the name of a data file on the command line.\n"
@@ -10006,17 +9994,19 @@ msgstr ""
 "Se puede indicar el nombre de un fichero de datos en la línea de comandos.\n"
 "Opciones:\n"
 " -b o --batch     Procesa un lote de instrucciones y sale.\n"
-" -r o --run       Ejecuta un lote de instrucciones y después pasa a control\n"
-" manual en línea de comandos.\n"
-" -m o --makepkg   Ejecuta un guion y crea un paquete a partir de el.\n"
+" -r o --run       Ejecuta un lote de instrucciones y después pasa al modo\n"
+" interactivo en la línea de comandos.\n"
+" -m o --makepkg   Ejecuta un lote y crea un paquete a partir de el.\n"
 " -i o --instpkg   Instala el paquete de funciones que se especifique.\n"
 " -h o --help      Muestra esta información y sale.\n"
 " -v o --version   Muestra la información de versión y sale.\n"
 " -e o --english   Fuerza al uso del idioma Inglés en lugar de la "
 "traducción.\n"
 " -q o --quiet      Muestra menos información al ejecutar el programa.\n"
+"-t or --tool      Opera sin mostrar nada.\n"
+"-n or --no-plots  Suprime la producción de gráficos.\n"
 "Ejemplo de uso en modo 'batch':\n"
-" gretlcli -b mifichero.inp >mifichero.out\n"
+" gretlcli -b mifichero.inp > mifichero.out\n"
 "Ejemplo de uso en modo 'run':\n"
 " gretlcli -r mifichero.inp\n"
 
@@ -12357,9 +12347,9 @@ msgid "Compact hourly data to:"
 msgstr "Compactar datos horarios a:"
 
 #: gui/dialogs.c:4119
-#, fuzzy, c-format
+#, c-format, fuzzy
 msgid "Compact data frequency %d to 1"
-msgstr "frecuencia de los datos = %d\n"
+msgstr "Compacta la frecuencia de los datos = %d al valor 1"
 
 #: gui/dialogs.c:4203
 msgid "gretl: expand data"
@@ -12675,14 +12665,14 @@ msgid "Base period:"
 msgstr "Período base:"
 
 #: gui/dialogs.c:6819
-#, fuzzy, c-format
+#, c-format
 msgid "Cross-sectional mean of %s"
-msgstr "Datos de sección cruzada"
+msgstr "Media de sección cruzada %s"
 
 #: gui/dialogs.c:6821
-#, fuzzy, c-format
+#, c-format
 msgid "Time mean of %s"
-msgstr "Dimensión temporal:"
+msgstr "Media temporal %s"
 
 #: gui/dialogs.c:6931
 msgid "Unrestricted (U-MIDAS)"
@@ -13941,7 +13931,6 @@ msgid "Password"
 msgstr "Clave"
 
 #: gui/fnsave.c:4034
-#, fuzzy
 msgid ""
 "If you don't have a login to the gretl server\n"
 "please see https://gretl.sourceforge.net/apply/.\n"
@@ -14555,9 +14544,8 @@ msgid "reuse an existing gretl instance unconditionally"
 msgstr "reutilizar incondicionalmente una instancia de Gretl ya existente"
 
 #: gui/gretl.c:289
-#, fuzzy
 msgid "This option is not available for panel data"
-msgstr "Este contraste sólo está disponible para datos de panel"
+msgstr "Esta opción no está disponible para datos de panel"
 
 #: gui/gretl.c:644
 msgid "Start a new gretl instance?"
@@ -15040,7 +15028,6 @@ msgid "_Random variable..."
 msgstr "_Variable aleatoria..."
 
 #: gui/gretl.c:1933
-#, fuzzy
 msgid "_Time"
 msgstr "_Tendencia temporal"
 
@@ -15081,7 +15068,6 @@ msgid "_Panel"
 msgstr "_Panel"
 
 #: gui/gretl.c:1948
-#, fuzzy
 msgid "_Unit index"
 msgstr "Índice de unidades en datos de _panel"
 
@@ -17786,14 +17772,12 @@ msgid "Add percent change..."
 msgstr "Añadir cambio porcentual..."
 
 #: gui/menustate.c:593
-#, fuzzy
 msgid "Add time mean..."
-msgstr "Añadir al menú"
+msgstr "Añadir media temporal..."
 
 #: gui/menustate.c:594
-#, fuzzy
 msgid "Add cross-sectional mean..."
-msgstr "sección cruzada"
+msgstr "Añadir media de sección cruzada"
 
 #: gui/menustate.c:595 gui/menustate.c:600
 msgid "Add index values..."
@@ -19461,9 +19445,8 @@ msgid "Menu font"
 msgstr "Fuente de menú"
 
 #: gui/settings.c:341
-#, fuzzy
 msgid "Graph font"
-msgstr "Fuente para el gráfico PNG"
+msgstr "Fuente para el gráfico"
 
 #: gui/settings.c:343
 msgid "Gnuplot extra colors"
@@ -20866,9 +20849,9 @@ msgid "No numeric data were found"
 msgstr "No se encontraron datos numéricos"
 
 #: plugin/import_common.c:164
-#, fuzzy, c-format
+#, c-format
 msgid "Sheet has %d trailing empty variables"
-msgstr "Estandarizar variables"
+msgstr "Tiene %d variables vacías al final"
 
 #: plugin/import_common.c:345
 #, c-format
@@ -24670,3 +24653,4 @@ msgstr "Nivel de detalle"
 
 #~ msgid "File dialog box error"
 #~ msgstr "Error en archivo de caja de diálogo"
+
