@@ -1740,14 +1740,14 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
     set_reference_missmask_from_model(orig);
 
     if ((opt & OPT_A) && is_info_crit(crit)) {
-        MODEL (*stepwise_omit) (MODEL *, const int *, int, DATASET *,
-                               gretlopt, PRN *);
+        MODEL (*stepwise_omit) (MODEL *, const int *, int, double,
+                                DATASET *, gretlopt, PRN *);
 
         stepwise_omit = get_plugin_function("stepwise_omit");
         if (stepwise_omit == NULL) {
             err = E_FOPEN;
         } else {
-            rmod = stepwise_omit(orig, omitvars, crit,
+            rmod = stepwise_omit(orig, omitvars, crit, alpha,
                                  dset, opt, prn);
         }
     } else if (opt & OPT_A) {

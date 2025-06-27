@@ -70,23 +70,19 @@ static void qr_wspace_free (qr_wspace *mm)
 
 /* Drop/cut a single column from matrix @m */
 
-static void matrix_drop_column (gretl_matrix *m, int drop)
+static void matrix_drop_column (gretl_matrix *m, int j)
 {
-    int i, j, k = drop * m->rows;
-    double x;
+    size_t sz = m->rows * sizeof(double);
+    int ntrail = m->cols - j - 1;
+    double *dest = m->val + j * m->rows;
+    double *src = dest + m->rows;
 
-    for (j=drop+1; j<m->cols; j++) {
-        for (i=0; i<m->rows; i++) {
-            x = gretl_matrix_get(m, i, j);
-            m->val[k++] = x;
-        }
-    }
-
-    /* don't leak column names */
     if (m->info != NULL) {
+        /* don't leak column names */
         gretl_matrix_destroy_info(m);
     }
 
+    memmove(dest, src, ntrail * sz);
     m->cols -= 1;
 }
 
@@ -427,6 +423,7 @@ int *backward_stepwise (MODEL *pmod,
                         const int *zlist,
                         DATASET *dset,
                         int crit,
+                        double alpha,
                         int verbose,
                         int addlen,
                         int namelen,
@@ -469,6 +466,11 @@ int *backward_stepwise (MODEL *pmod,
     nz = zlist != NULL ? zlist[0] : xlist[0] - ifc;
     cstr = crit_string(crit);
 
+    if (verbose) {
+        pprintf(prn, " %-*s %s = %#g\n", addlen + namelen + 1,
+                _("Baseline"), cstr, prev);
+    }
+
     while (!conv && dropped < nz) {
         delvar = xlist[trycol+1];
         matrix_drop_column(X, trycol);
@@ -481,7 +483,20 @@ int *backward_stepwise (MODEL *pmod,
         }
         ssr = (T - k) * s2;
         cur = ssr2crit(ssr, T, k, crit);
-        conv = cur > prev;
+        if (crit == C_SSR) {
+            double parm[1] = {1.0};
+            double Xcrit = gretl_get_cdf_inverse(D_CHISQ, parm, 1.0 - alpha);
+            double W = T * (prev/cur - 1.0);
+
+            conv = W < Xcrit;
+        } else {
+            /* AIC, etc. */
+            conv = cur > prev;
+        }
+#if 0
+        fprintf(stderr, "ssr = %g, k %d, cur %g, prev %g\n", ssr, k, cur, prev);
+        fprintf(stderr, "conv = %d\n", conv);
+#endif
         if (verbose) {
             if (conv && dropped < nz) {
                 pprintf(prn, " [%-*s %s = %#g]\n", namelen + addlen,
@@ -698,6 +713,7 @@ MODEL stepwise_add (MODEL *pmod,
 MODEL stepwise_omit (MODEL *pmod,
                      const int *zlist,
                      int crit,
+                     double alpha,
                      DATASET *dset,
                      gretlopt opt,
                      PRN *prn)
@@ -719,7 +735,7 @@ MODEL stepwise_omit (MODEL *pmod,
 	    pprintf(prn, _("Sequential elimination using %s"), crit_string(crit));
 	    pputs(prn, "\n\n");
 	}
-        xlist = backward_stepwise(pmod, zlist, dset, crit,
+        xlist = backward_stepwise(pmod, zlist, dset, crit, alpha,
                                   verbose, addlen, namelen + 2,
                                   prn, &err);
     }
