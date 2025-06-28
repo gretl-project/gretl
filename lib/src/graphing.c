@@ -8589,7 +8589,7 @@ static int real_correlogram_print_plot (const char *vname,
     if (PM != NULL) {
         PMcol = 1;
     }
-    if (multi) {
+    if (multi || PM == NULL) {
         sprintf(pm_title, "%.2f/T^%.1f", 1.96, 0.5);
     }
 
