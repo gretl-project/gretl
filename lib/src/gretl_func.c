@@ -1236,6 +1236,10 @@ double fn_param_step (const ufunc *fun, int i)
         fun->params[i].step;
 }
 
+/* An "optional" parameter ("null" is OK and omission is
+   also OK) must be a pointery thing (not a scalar).
+*/
+
 static int arg_may_be_optional (GretlType t)
 {
     return gretl_ref_type(t) || gretl_is_array_type(t) ||
