@@ -8620,7 +8620,7 @@ static int real_correlogram_print_plot (const char *vname,
 
     if (PM != NULL) {
         /* xgettext:no-c-format */
-        const char *PM_title = N_("95% interval");
+        const char *PM_title = N_("95% Bartlett interval");
 
         fprintf(fp, "plot \\\n"
                 "'-' using 1:2 notitle w impulses lw 5, \\\n"
