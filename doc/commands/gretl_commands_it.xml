@@ -2394,34 +2394,33 @@
 	ritardi intermedi, ma volendo questa opzione può essere
 	disattivata.
       </para>
-      <para>
-	La statistica si distribuisce asintoticamente come
-        chi-quadro con gradi di libertà pari al numero di ritardi specificati.
-      </para>
       <para context="cli">
 	La significatività statistica delle singole autocorrelazioni
-	viene indicata per mezzo di asterischi. Di default, essa è
-	calcolata per mezzo della radice inversa dell'ampiezza
-	campionaria, ma con l'opzione <opt>bartlett</opt> vengono
-	usate le formule di Bartlett per l'ACF. Quest'opzione, se
-	applicabile, controlla anche la banda di confidenza mostrata
-	nel grafico. Il comando produce anche
-        un grafico del correlogramma e mostra la statistica
-        <math>Q</math> di Ljung&ndash;Box per testare l'ipotesi nulla
-        che la serie sia <quote>white noise</quote> (priva di
-        autocorrelazione) fino a quel certo ritardo. 
+	viene indicata per mezzo di asterischi. Di default, questo
+	viene valutato utilizzando un errore standard pari all'inversa
+	della radice quadrata della dimensione del campione, ma se
+	viene specificata l'opzione <opt>bartlett</opt>, vengono
+	utilizzati gli errori standard di Bartlett per l'ACF; vedere
+	sotto per i dettagli. Questa opzione influisce anche sulla
+	banda di confidenza disegnata nel grafico ACF, se
+	applicabile. Inoltre, viene mostrata la statistica
+	<math>Q</math> di Ljung-Box; questa verifica il valore nullo
+	che la serie sia <quote>white noise</quote> fino al ritardo
+	specificato.
       </para>
       <para context="gui">
 	La significatività statistica delle singole autocorrelazioni
-	viene indicata per mezzo di asterischi. Di default, essa è
-	calcolata per mezzo della radice inversa dell'ampiezza
-	campionaria, ma è anche possibile usare le formule di Bartlett
-	per l'ACF. Quest'opzione, se applicabile, controlla anche la
-	banda di confidenza mostrata nel grafico. Il comando produce anche
-        un grafico del correlogramma e mostra la statistica
-        <math>Q</math> di Ljung&ndash;Box per testare l'ipotesi nulla
-        che la serie sia <quote>white noise</quote> (priva di
-        autocorrelazione) fino a quel certo ritardo. 
+	viene indicata per mezzo di asterischi.  Di default, questo
+	viene valutato utilizzando un errore standard pari all'inversa
+	della radice quadrata della dimensione del campione, ma se
+	viene specificata l'opzione <opt>bartlett</opt>, vengono
+	utilizzati gli errori standard di Bartlett per l'ACF; vedere
+	sotto per i dettagli. Questa opzione influisce anche sulla
+	banda di confidenza disegnata nel grafico ACF, se
+	applicabile. Inoltre, viene mostrata la statistica
+	<math>Q</math> di Ljung-Box; questa verifica il valore nullo
+	che la serie sia <quote>white noise</quote> fino al ritardo
+	specificato.
       </para>
       <para context="cli">
 	Se viene specificato un valore <repl>max-ritardo</repl>, la
@@ -2430,6 +2429,24 @@
 	in funzione della frequenza dei dati e del numero di
 	osservazioni.
       </para>
+      <subhead>Errori standard di Bartlett</subhead>
+      <para>
+	Si noti che in questo contesto gli errori standard di Bartlett
+	non sono solo una variante robusta di quelli predefiniti. Gli
+	errori standard predefiniti si riferiscono all'ipotesi nulla
+	che la serie in questione sia rumore bianco; in parole povere,
+	questa non viene rifiutata al livello del 5% se non più del 5%
+	dei valori ACF supera l'errore standard moltiplicato per
+	1.96. I valori di Bartlett, invece, sono associati all'ipotesi
+	nulla che la serie segua un processo a media mobile. Nello
+	specifico, se nessun valore ACF supera i limiti di Bartlett
+	con ritardi maggiori di <math>k</math>, non possiamo rifiutare
+	l'ipotesi nulla che <math>y</math> sia
+	MA(<math>k</math>&minus;1). Si veda il capitolo 7 di <cite
+	key="brockwell-davis87">Brockwell e Davis (1987)</cite> per
+	ulteriori informazioni su questo punto.
+      </para>
+      <subhead context="cli">Grafici</subhead>
       <para context="cli">
 	Di default, se gretl non è in modalità batch, viene mostrato
 	un grafico del correlogramma.  Questo

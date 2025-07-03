@@ -2340,7 +2340,7 @@
 	individual autocorrelations. By default this is assessed using a
 	standard error of one over the square root of the sample size,
 	but if the <opt>bartlett</opt> option is given then Bartlett
-	standard errors are used for the ACF; see delow for
+	standard errors are used for the ACF; see below for
 	details. This option also governs the confidence band drawn in
 	the ACF plot, if applicable. In addition the Ljung&ndash;Box
 	<math>Q</math> statistic is shown; this tests the null that the
