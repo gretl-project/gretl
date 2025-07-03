@@ -2373,12 +2373,12 @@
         rejected at the 5 percent level if no more than 5 percent of the
         ACF values exceed the bounds set at 1.96 times the standard
         error. The Bartlett values, however, are associated with the
-        null hypothesis that the series follows a moving average
-        process. Specifically, if no ACF values exceed the Bartlett
-        bounds at lags greater than <math>k</math>, we fail to reject
-        the null that <math>y</math> is MA(<math>k</math>&minus;1).
-        See chapter 7 of <cite key="brockwell-davis87">Brockwell and
-        Davis (1987)</cite> for more on this point.
+        hypothesis that the series follows a moving average
+        process. Specifically, if the ACF values fall within the
+        Bartlett bounds for lags greater than <math>k</math>, we fail to
+        reject the null that <math>y</math> is MA(<math>k</math>).  See
+        chapter 7 of <cite key="brockwell-davis87">Brockwell and Davis
+        (1987)</cite> for more on this point.
       </para>
       <subhead context="cli">Plotting</subhead>
       <para context="cli">

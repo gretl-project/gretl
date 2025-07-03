@@ -5903,16 +5903,20 @@ static void real_do_corrgm (DATASET *dset, int code,
     gchar *title;
     int T = sample_size(dset);
     int order = auto_acf_order(T);
-    gretlopt opt = OPT_NONE;
+    static gretlopt opt = OPT_NONE;
     const char *opts[2] = {
 	N_("Show partial autocorrelations"),
 	N_("Use Bartlett standard errors")
     };
-    int active[2] = {1, 0};
+    int active[2];
     PRN *prn;
     int err;
 
     title = gretl_window_title(_("correlogram"));
+
+    /* set check boxes based on remembered values */
+    active[0] = opt & OPT_A ? 0 : 1;
+    active[1] = opt & OPT_B ? 1 : 0;
 
     err = checks_dialog(title, NULL, opts, 2, active,
                         0, 0, 0, NULL,
@@ -5929,13 +5933,19 @@ static void real_do_corrgm (DATASET *dset, int code,
         return;
     }
 
-    if (!active[0]) {
-	/* no PACF */
-	opt |= OPT_A;
+    if (active[0]) {
+	/* don't limit to ACF */
+	opt &= ~OPT_A;
+    } else {
+        /* limit to ACF */
+        opt |= OPT_A;
     }
     if (active[1]) {
-	/* Bartlett */
+	/* do Bartlett */
         opt |= OPT_B;
+    } else {
+        /* don't do Bartlett */
+        opt &= ~OPT_B;
     }
 
     if (code == SELECTED_VAR) {
