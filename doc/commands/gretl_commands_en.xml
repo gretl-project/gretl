@@ -2282,10 +2282,6 @@
       </arguments>
       <options>
 	<option>
-	  <flag>--bartlett</flag>
-	  <effect>use Bartlett standard errors</effect>
-        </option>
-	<option>
 	  <flag>--plot</flag>
 	  <optparm>mode-or-filename</optparm>
 	  <effect>see below</effect>
@@ -2297,6 +2293,10 @@
 	<option>
 	  <flag>--acf-only</flag>
 	  <effect>omit partial autocorrelations</effect>
+        </option>
+	<option>
+	  <flag>--bartlett</flag>
+	  <effect>use Bartlett standard errors</effect>
         </option>
       </options>
       <examples>
@@ -2337,24 +2337,25 @@
       </para>
       <para context="cli">
 	Asterisks are used to indicate statistical significance of the
-	individual autocorrelations. By default this is assessed using
-	a standard error of one over the square root of the sample
-	size, but if the <opt>bartlett</opt> option is given then
-	Bartlett standard errors are used for the ACF. This option
-	also governs the confidence band drawn in the ACF plot, if
-	applicable. In addition the Ljung&ndash;Box <math>Q</math>
-	statistic is shown; this tests the null that the series is
-	<quote>white noise</quote> up to the given lag.
+	individual autocorrelations. By default this is assessed using a
+	standard error of one over the square root of the sample size,
+	but if the <opt>bartlett</opt> option is given then Bartlett
+	standard errors are used for the ACF; see delow for
+	details. This option also governs the confidence band drawn in
+	the ACF plot, if applicable. In addition the Ljung&ndash;Box
+	<math>Q</math> statistic is shown; this tests the null that the
+	series is <quote>white noise</quote> up to the given lag.
       </para>
       <para context="gui">
 	Asterisks are used to indicate statistical significance of the
-	individual autocorrelations. By default this is assessed using
-	a standard error of one over the square root of the sample
-	size, but you have the choice of using Bartlett standard
-	errors for the ACF. This option also governs the confidence
-	band drawn in the ACF plot. In addition the Ljung&ndash;Box
-	<math>Q</math> statistic is shown; this tests the null that
-	the series is <quote>white noise</quote> up to the given lag.
+	individual autocorrelations. By default this is assessed using a
+	standard error of one over the square root of the sample size,
+	but you have the choice of using Bartlett standard errors for
+	the ACF; see delow for details. This option also governs the
+	confidence band drawn in the ACF plot. In addition the
+	Ljung&ndash;Box <math>Q</math> statistic is shown; this tests
+	the null that the series is <quote>white noise</quote> up to the
+	given lag.
       </para>
       <para context="cli">
 	If an <repl>order</repl> value is specified the length of the
@@ -2362,6 +2363,22 @@
 	otherwise the length is determined automatically, as a
 	function of the frequency of the data and the number of
 	observations.
+      </para>
+      <subhead>Bartlett standard errors</subhead>
+      <para>
+        Please note that in this context Bartlett standard errors are
+        not just a robust variant of the default ones.  The default
+        standard errors pertain to the null hypothesis that the series
+        in question is white noise; roughly speaking, this is not
+        rejected at the 5 percent level if no more than 5 percent of the
+        ACF values exceed the bounds set at 1.96 times the standard
+        error. The Bartlett values, however, are associated with the
+        null hypothesis that the series follows a moving average
+        process. Specifically, if no ACF values exceed the Bartlett
+        bounds at lags greater than <math>k</math>, we fail to reject
+        the null that <math>y</math> is MA(<math>k</math>&minus;1).
+        See chapter 7 of <cite key="brockwell-davis87">Brockwell and
+        Davis (1987)</cite> for more on this point.
       </para>
       <subhead context="cli">Plotting</subhead>
       <para context="cli">
