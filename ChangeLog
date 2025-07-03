@@ -1,5 +1,17 @@
 version 2025c, in progress
+- "corrgm" command: clarify the role of Barlett standard
+  errors
 - "omit" command: start augmenting the --auto option
+- "setobs" syntax: accept month as single digit for panel
+  data with monthly time dimension
+- new function lnmgamma(): multivariate log gamma function
+- slight speedup for forward stepwise regression code
+- Fix bug: potential crash in GTK file chooser dialog
+- Fix bug: incorrect Bartlett band in ACF + PACF plot
+- GUI: support opening gfn "spec" file via command-line or
+  drag-and-drop
+- GUI: ensure that the special strings "[null]" and "[auto]"
+  are not offered as the default names for lists
 
 2025-06-05 version 2025b
 - gretlcli: add --no-plots option to suppress plots
