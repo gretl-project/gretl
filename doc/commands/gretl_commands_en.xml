@@ -2351,7 +2351,7 @@
 	individual autocorrelations. By default this is assessed using a
 	standard error of one over the square root of the sample size,
 	but you have the choice of using Bartlett standard errors for
-	the ACF; see delow for details. This option also governs the
+	the ACF; see below for details. This option also governs the
 	confidence band drawn in the ACF plot. In addition the
 	Ljung&ndash;Box <math>Q</math> statistic is shown; this tests
 	the null that the series is <quote>white noise</quote> up to the
