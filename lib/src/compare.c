@@ -1483,7 +1483,7 @@ static int auto_drop_var (const MODEL *pmod,
 	imax = pmod->list[0] - 1;
     }
 
-    /* if the constant is the sole regressors, allow it
+    /* if the constant is the sole regressor, allow it
        to be dropped */
     imin = (pmod->ncoeff == 1)? 0 : pmod->ifc;
 
@@ -1679,6 +1679,17 @@ static int omit_test_precheck (MODEL *pmod, gretlopt opt)
 
 #define is_info_crit(c) (c == C_AIC || c == C_BIC || c == C_HQC)
 
+static int stepwise_ok (MODEL *orig, int crit)
+{
+    /* we can only handle OLS with classical std errors */
+    if (orig->ci != OLS || (orig->opt & OPT_R)) {
+        return 0;
+    }
+
+    /* and for now we'll restrict this to info criteria */
+    return is_info_crit(crit);
+}
+
 /**
  * omit_test_full:
  * @orig: pointer to original model.
@@ -1739,7 +1750,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
        on the original model */
     set_reference_missmask_from_model(orig);
 
-    if ((opt & OPT_A) && is_info_crit(crit)) {
+    if ((opt & OPT_A) && stepwise_ok(orig, crit)) {
         MODEL (*stepwise_omit) (MODEL *, const int *, int, double,
                                 DATASET *, gretlopt, PRN *);
 
