@@ -10044,6 +10044,9 @@ static int check_function_args (fncall *call, PRN *prn)
         arg = &call->args[i];
         fp = &u->params[i];
 
+#if ARGS_DEBUG
+        fprintf(stderr, "looking at arg %d, type %s\n", i, gretl_type_get_name(arg->type));
+#endif
         if (param_is_optional(fp) && arg->type == GRETL_TYPE_NONE) {
             ; /* this is OK */
         } else if (gretl_scalar_type(fp->type) && arg->type == GRETL_TYPE_DOUBLE) {
@@ -10066,6 +10069,11 @@ static int check_function_args (fncall *call, PRN *prn)
         } else if (fp->type == GRETL_TYPE_NUMERIC && NUMERIC_TYPE(arg->type)) {
             ; /* OK, for overloaded param */
         } else if (fp->type != arg->type) {
+#if ARGS_DEBUG
+            fprintf(stderr, "%s: argument %d is of the wrong type (is %s, should be %s)\n",
+                    u->name, i + 1, gretl_type_get_name(arg->type),
+                    gretl_type_get_name(fp->type));
+#endif
             pprintf(prn, _("%s: argument %d is of the wrong type (is %s, should be %s)\n"),
                     u->name, i + 1, gretl_type_get_name(arg->type),
                     gretl_type_get_name(fp->type));
