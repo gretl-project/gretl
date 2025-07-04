@@ -1863,6 +1863,16 @@ static void set_builtin_path_strings (int update)
 
 const char *gretl_home (void)
 {
+    if (paths.gretldir[0] == '\0') {
+        /* try to remedy this! */
+        char *chk = getenv("GRETL_HOME");
+
+        if (chk != NULL) {
+            strncat(paths.gretldir, chk, MAXLEN-2);
+            slash_terminate(paths.gretldir);
+        }
+    }
+
     return paths.gretldir;
 }
 
