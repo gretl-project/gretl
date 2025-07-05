@@ -5545,7 +5545,7 @@ void function_package_unload_full_by_filename (const char *fname)
  * are also unloaded from memory.
  *
  * Returns: 1 if the specified package was loaded and is
- * new unloaded, otherwise 0.
+ * now unloaded, otherwise 0.
  */
 
 int function_package_unload_full (const char *pkgname)
