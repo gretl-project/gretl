@@ -1196,6 +1196,7 @@ static int process_stepwise_option (int ci,
 
     if (ci == OMIT && s == NULL) {
         /* omit: the --auto parameter is optional */
+        *crit = C_HQC + 2;
         *alpha = 0.10;
         return 0;
     }
@@ -1679,7 +1680,7 @@ static int omit_test_precheck (MODEL *pmod, gretlopt opt)
 
 #define is_info_crit(c) (c == C_AIC || c == C_BIC || c == C_HQC)
 
-static int stepwise_ok (MODEL *orig, int crit)
+static int stepwise_omit_ok (MODEL *orig, int crit)
 {
     /* we can only handle OLS with classical std errors */
     if (orig->ci != OLS || (orig->opt & OPT_R)) {
@@ -1687,7 +1688,8 @@ static int stepwise_ok (MODEL *orig, int crit)
     }
 
     /* and for now we'll restrict this to info criteria */
-    return is_info_crit(crit);
+    //return is_info_crit(crit);
+    return 1;
 }
 
 /**
@@ -1750,7 +1752,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
        on the original model */
     set_reference_missmask_from_model(orig);
 
-    if ((opt & OPT_A) && stepwise_ok(orig, crit)) {
+    if ((opt & OPT_A) && stepwise_omit_ok(orig, crit)) {
         MODEL (*stepwise_omit) (MODEL *, const int *, int, double,
                                 DATASET *, gretlopt, PRN *);
 
