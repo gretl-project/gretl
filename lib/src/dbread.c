@@ -4906,7 +4906,8 @@ int compact_dataset (DATASET *dset, int newpd,
     int start_minor;
     int end_major = 0;
     int end_minor = 0;
-    int from_dated_daily;
+    int from_dated_daily = 0;
+    int from_hourly;
     char stobs[OBSLEN];
     int i, err = 0;
 
@@ -4927,7 +4928,12 @@ int compact_dataset (DATASET *dset, int newpd,
 	return weekly_dataset_to_monthly(dset, default_method);
     }
 
-    from_dated_daily = dated_daily_data(dset);
+    if (oldpd == 24 && newpd == 7) {
+        from_hourly = 7;
+        newpd = 1;
+    } else {
+        from_dated_daily = dated_daily_data(dset);
+    }
 
     if (from_dated_daily) {
 	/* allow for the possibility that the daily dataset
@@ -4959,12 +4965,6 @@ int compact_dataset (DATASET *dset, int newpd,
 	    start_minor = dated_daily_startmin(dset, wkstart);
 	} else {
 	    start_minor = 1;
-	}
-    } else if (oldpd == 24 && is_daily(newpd)) {
-	/* hourly to daily */
-	compfac = 24;
-	if (!get_obs_maj_min(dset->stobs, &start_major, &start_minor)) {
-	    return 1;
 	}
     } else {
 	compfac = oldpd / newpd;
@@ -5059,6 +5059,10 @@ int compact_dataset (DATASET *dset, int newpd,
 	    free(dset->Z[i]);
 	    dset->Z[i] = x;
 	}
+    }
+
+    if (from_hourly && !err) {
+        dset->pd = from_hourly;
     }
 
     return err;

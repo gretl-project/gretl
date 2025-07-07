@@ -3494,6 +3494,9 @@ static int dataset_int_param (const char **ps, int op,
                    k < dset->pd) {
             *err = 0;
 #endif
+        } else if (dset->pd == 24 && k == 7) {
+            /* hourly to daily */
+            *err = 0;
 	} else if (dset->pd > 1 && dset->pd != 10 && k == 1) {
             *err = 0;
         }
@@ -3536,9 +3539,7 @@ static int compact_strvals_check (DATASET *dset)
     }
 }
 
-/* run some checks before handing off to compact_dataset()
-   int dbread.c
-*/
+/* Run some checks before handing off to compact_dataset() in dbread.c */
 
 static int compact_dataset_wrapper (const char *s, DATASET *dset,
 				    int k, gretlopt opt)
