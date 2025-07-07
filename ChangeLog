@@ -1,4 +1,8 @@
 version 2025c, in progress
+- "dataset compact": support hourly to daily compaction via
+  the command line (was already OK via the GUI)
+- "store" command: enable saving of user-defined functions
+  in XML format
 - "corrgm" command: clarify the role of Barlett standard
   errors
 - "omit" command: start augmenting the --auto option
