@@ -4792,9 +4792,9 @@ static char *gretl_xml_get_doc_type (const char *fname, int *err)
     return ret;
 }
 
-/* This is called in response to the "include" command in
-   the CLI program, the GUI program, and in interact.c,
-   if we detect that the named file is XML.
+/* This is called in response to the "include" command in the CLI
+   program, the GUI program, and in interact.c, if we detect that the
+   named file is XML.
 */
 
 int load_XML_functions_file (const char *fname, gretlopt opt, PRN *prn)
