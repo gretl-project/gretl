@@ -5336,22 +5336,38 @@ static int validate_function_package (fnpkg *pkg)
     return 1;
 }
 
-/* for session file use, and also MPI: dump all currently defined
-   functions, packaged or not, into a single XML file */
+/* For session file use, and also MPI: dump currently defined
+   functions into a single XML file. OPT_U can be passed to
+   limit the functions to ones that are _not_ members of a
+   function package. OPT_M is passed to indicate usage under
+   MPI.
+*/
 
-int write_loaded_functions_file (const char *fname, int mpicall)
+int write_loaded_functions_file (const char *fname, gretlopt opt)
 {
     PRN *prn;
-    int i, err = 0;
+    int mpicall;
+    int unpackaged;
+    int i, nf;
+    int err = 0;
+
+    unpackaged = (opt & OPT_U)? 1 : 0;
 
     if (n_ufuns == 0) {
         return 0;
+    }
+
+    if (unpackaged && !has_suffix(fname, ".xml")) {
+        gretl_errmsg_set("Storing functions: the filename suffix must be '.xml'");
+        return E_INVARG;
     }
 
     prn = gretl_print_new_with_filename(fname, &err);
     if (prn == NULL) {
         return err;
     }
+
+    mpicall = (opt & OPT_M)? 1 : 0;
 
     gretl_xml_header(prn);
     pputs(prn, "<gretl-functions>\n");
@@ -5369,25 +5385,37 @@ int write_loaded_functions_file (const char *fname, int mpicall)
     }
 #endif
 
-    /* write any loaded function packages */
-    for (i=0; i<n_pkgs; i++) {
-        if (validate_function_package(pkgs[i])) {
-            real_write_function_package(pkgs[i], prn, mpicall);
+    if (!unpackaged) {
+        /* write any loaded function packages */
+        for (i=0; i<n_pkgs; i++) {
+            if (validate_function_package(pkgs[i])) {
+                real_write_function_package(pkgs[i], prn, mpicall);
+            }
         }
     }
 
     /* then any unpackaged functions */
+    nf = 0;
     for (i=0; i<n_ufuns; i++) {
         if (ufuns[i]->pkg == NULL) {
             write_function_xml(ufuns[i], prn, mpicall);
+            nf++;
         }
+    }
+    if (unpackaged && nf == 0) {
+        gretl_errmsg_set("No unpackaged functiond were found");
+        err = E_DATA;
     }
 
     pputs(prn, "</gretl-functions>\n");
 
     gretl_print_destroy(prn);
 
-    return 0;
+    if (err) {
+        gretl_remove(fname);
+    }
+
+    return err;
 }
 
 /* De-allocate a function package: this can be done in either of two

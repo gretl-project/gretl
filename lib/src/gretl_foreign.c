@@ -1586,7 +1586,7 @@ static int mpi_send_funcs_setup (FILE *fp)
     int err;
 
     fname = gretl_make_dotpath("mpi-funcs-tmp.xml");
-    err = write_loaded_functions_file(fname, 1);
+    err = write_loaded_functions_file(fname, OPT_M);
 
     if (!err) {
         fprintf(fp, "include \"%s\"\n", fname);

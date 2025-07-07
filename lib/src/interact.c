@@ -3795,6 +3795,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
             err = E_PARSE;
         } else if (cmd->opt & OPT_A) {
             err = write_matrix_as_dataset(cmd->param, cmd->opt, prn);
+        } else if (cmd->opt & OPT_U) {
+            err = write_loaded_functions_file(cmd->param, cmd->opt);
         } else if (dset == NULL || dset->Z == NULL) {
             err = E_NODATA;
         } else {

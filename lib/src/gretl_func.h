@@ -260,7 +260,7 @@ int check_function_needs (const DATASET *dset, DataReq dreq,
 
 int package_version_ok (int minver, char *reqstr);
 
-int write_loaded_functions_file (const char *fname, int mpicall);
+int write_loaded_functions_file (const char *fname, gretlopt opt);
 
 int read_session_functions_file (const char *fname);
 
