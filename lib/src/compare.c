@@ -1195,15 +1195,22 @@ static int process_stepwise_option (int ci,
     int i, err = 0;
 
     if (ci == OMIT && s == NULL) {
-        /* omit: the --auto parameter is optional */
+        /* omit: the --auto parameter is optional, and
+           defaults to using a p-value of 0.10
+        */
         *crit = C_HQC + 2;
         *alpha = 0.10;
         return 0;
     }
 
+    /* For now the info criterion method is restricted to
+       the "new" stepwise case, and that code requires
+       OLS with classical standard errors. This should
+       be relaxed whenever possible.
+    */
     for (i=0; i<3; i++) {
         if (!strcmp(s, cstrs[i])) {
-            if (orig->ci != OLS) {
+            if (orig->ci != OLS || (orig->opt & OPT_R)) {
                 return E_NOTIMP;
             } else {
                 *crit = i;
@@ -1427,6 +1434,19 @@ static int wald_omit_test (const int *list, MODEL *pmod,
     return err;
 }
 
+typedef struct omit_info_ {
+    MODEL *orig;
+    MODEL *curr;
+    MODEL *tmp;
+    int *list;
+    const int *cands;
+    double alpha;
+    double cval;
+    gint8 starting;
+    gint8 crit;
+    gint8 use_pval;
+} omit_info;
+
 /* Check whether coefficient @i corresponds to a variable
    that is removable from the model: this is the case if either
    (a) the @cands list is empty, or (b) coefficient @i is the
@@ -1457,26 +1477,49 @@ static int coeff_is_removable (const int *cands, const MODEL *pmod,
     return ret;
 }
 
-/* Determine if @pmod contains a variable with p-value
-   greater than some cutoff alpha_max; and if so, remove
-   this variable from @list.
+static void print_drop (MODEL *pmod, omit_info *oi, int k,
+                        DATASET *dset, PRN *prn)
+{
+    const char *cstrs[] = {"AIC", "BIC", "HQC", "SSR", "p-value"};
 
-   If the list @cands is non-empty then confine the search
-   to candidate variables in that list.
+    if (oi->starting) {
+        pputc(prn, '\n');
+        pprintf(prn, _("Sequential elimination using %s"), cstrs[oi->crit]);
+        if (oi->crit == C_HQC + 2) {
+            pprintf(prn, " (α = %.2f)", oi->alpha);
+        }
+        pputs(prn, "\n\n");
+    }
+
+    pprintf(prn, _(" Dropping %-16s (%s %.3f)\n"),
+            dset->varname[oi->list[k+2]],
+            cstrs[oi->crit], oi->cval);
+}
+
+/* Determine if @pmod contains a variable with p-value greater than
+   some cutoff alpha_max; and if so, remove this variable from @list.
+
+   If the list @cands is non-empty then confine the search to
+   candidate variables in that list.
 
    Returns 1 if a variable was dropped, else 0.
 */
 
-static int auto_drop_var (const MODEL *pmod,
-			  int *list, const int *cands,
-			  DATASET *dset, double alpha_max,
-			  int starting, gretlopt opt,
-			  PRN *prn)
+static int auto_drop_var (omit_info *oi,
+                          DATASET *dset,
+                          gretlopt opt,
+                          PRN *prn)
 {
-    double tstat, pv = 0.0, tmin = 4.0;
-    int imin, imax = pmod->ncoeff;
+    MODEL *pmod;
+    MODEL *tmp = oi->tmp;
+    double tstat, tmin = 4.0;
+    int imin, imax;
     int i, k = -1;
-    int ret = 0;
+    int do_drop = 0;
+    int dropped = 0;
+
+    pmod = oi->starting ? oi->orig : oi->curr;
+    imax = pmod->ncoeff;
 
     if ((pmod->ci == LOGIT || pmod->ci == PROBIT) &&
 	gretl_model_get_int(pmod, "ordered")) {
@@ -1484,12 +1527,12 @@ static int auto_drop_var (const MODEL *pmod,
 	imax = pmod->list[0] - 1;
     }
 
-    /* if the constant is the sole regressor, allow it
-       to be dropped */
-    imin = (pmod->ncoeff == 1)? 0 : pmod->ifc;
+    /* If the constant is the sole regressor, allow it
+       to be dropped? */
+    imin = pmod->ncoeff == 1 ? 0 : pmod->ifc;
 
     for (i=imin; i<imax; i++) {
-	if (coeff_is_removable(cands, pmod, dset, i)) {
+	if (coeff_is_removable(oi->cands, pmod, dset, i)) {
 	    tstat = fabs(pmod->coeff[i] / pmod->sderr[i]);
 	    if (tstat < tmin) {
 		tmin = tstat;
@@ -1499,32 +1542,51 @@ static int auto_drop_var (const MODEL *pmod,
     }
 
     if (k >= 0) {
-	pv = coeff_pval(pmod->ci, tmin, pmod->dfd);
+        if (oi->use_pval) {
+            /* using the p-value approach */
+            oi->cval = coeff_pval(pmod->ci, tmin, pmod->dfd);
+            do_drop = oi->cval > oi->alpha;
+        } else {
+            /* using an info criterion */
+            int *ltmp = gretl_list_copy(oi->list);
+            double crit0 = pmod->criterion[oi->crit];
+
+            gretl_list_delete_at_pos(ltmp, k + 2);
+            if (!oi->starting) {
+                clear_model(oi->curr);
+            }
+            *tmp = replicate_estimator(oi->orig, ltmp, dset, OPT_A, prn);
+            if (tmp->errcode) {
+                fprintf(stderr, "auto_omit: error %d from replicate_estimator\n",
+                        tmp->errcode);
+                clear_model(tmp);
+            } else {
+                // printmodel(&tmp, dset, OPT_NONE, prn);
+                oi->cval = tmp->criterion[oi->crit];
+                do_drop = oi->cval < crit0;
+            }
+            free(ltmp);
+        }
     }
 
-    if (pv > alpha_max) {
-	char pname[VNAMELEN];
-	int err;
-
-	if (starting && !(opt & OPT_I)) {
-	    /* not --silent */
-	    pputc(prn, '\n');
-	    pprintf(prn, _("Sequential elimination using two-sided alpha = %.2f"),
-		    alpha_max);
-	    pputs(prn, "\n\n");
-	}
-
-	gretl_model_get_param_name(pmod, dset, k, pname);
-	err = gretl_list_delete_at_pos(list, k + 2);
-	if (!err) {
-	    if (!(opt & OPT_I)) {
-		pprintf(prn, _(" Dropping %-16s (p-value %.3f)\n"), pname, pv);
-	    }
-	    ret = 1;
-	}
+    if (do_drop) {
+        if (!(opt & OPT_I)) {
+            print_drop(pmod, oi, k, dset, prn);
+        }
+        if (oi->use_pval) {
+            gretl_list_delete_at_pos(oi->list, k + 2);
+        } else {
+            if (!oi->starting) {
+                clear_model(oi->curr);
+            }
+            *(oi->curr) = *tmp;
+        }
+        dropped = 1;
     }
 
-    return ret;
+    oi->starting = 0;
+
+    return dropped;
 }
 
 static void list_copy_values (int *targ, const int *src)
@@ -1536,33 +1598,42 @@ static void list_copy_values (int *targ, const int *src)
     }
 }
 
-/* run a loop in which the least significant variable is dropped
-   from the regression list, provided its p-value exceeds some
-   specified cutoff.  FIXME this probably still needs work for
-   estimators other than OLS.  If @omitlist is non-empty the
-   routine is confined to members of the list.
+/* run a loop in which the least significant variable is dropped from
+   the regression list, provided its p-value exceeds some specified
+   cutoff.  FIXME this probably still needs work for estimators other
+   than OLS.  If @omitlist is non-empty the routine is confined to
+   members of the list.
 */
 
 static MODEL auto_omit (MODEL *orig, const int *omitlist,
-			double amax, DATASET *dset,
-                        gretlopt opt, PRN *prn)
+			int crit, double alpha,
+                        DATASET *dset, gretlopt opt,
+                        PRN *prn)
 {
+    omit_info oi = {0};
     MODEL omod;
-    int *tmplist;
     int allgone = 0;
     int i, drop;
     int err = 0;
 
     gretl_model_init(&omod, dset);
 
-    tmplist = gretl_list_copy(orig->list);
-    if (tmplist == NULL) {
+    oi.list = gretl_list_copy(orig->list);
+    if (oi.list == NULL) {
 	omod.errcode = E_ALLOC;
 	return omod;
     }
 
-    drop = auto_drop_var(orig, tmplist, omitlist, dset, amax,
-			 1, opt, prn);
+    oi.orig = orig;
+    oi.curr = &omod;
+    oi.cands = omitlist;
+    oi.alpha = alpha;
+    oi.starting = 1;
+    oi.crit = crit;
+    oi.use_pval = (crit < C_AIC || crit > C_HQC);
+    oi.tmp = oi.use_pval ? NULL : gretl_model_new();
+
+    drop = auto_drop_var(&oi, dset, opt, prn);
     if (!drop) {
 	/* nothing was dropped: set a "benign" error code */
 	err = omod.errcode = E_NOOMIT;
@@ -1572,26 +1643,28 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
 	if (i > 0) {
 	    set_reference_missmask_from_model(orig);
 	}
-	omod = replicate_estimator(orig, tmplist, dset, OPT_A, prn);
-	err = omod.errcode;
-	if (err) {
-	    fprintf(stderr, "auto_omit: error %d from replicate_estimator\n",
-		    err);
-	    drop = 0; /* will break */
-	} else {
-	    list_copy_values(tmplist, omod.list);
-	    drop = auto_drop_var(&omod, tmplist, omitlist, dset,
-				 amax, 0, opt, prn);
-	    if (drop && omod.ncoeff == 1) {
-		allgone = 1; /* will break */
-	    }
-	    clear_model(&omod);
-	}
+        if (oi.use_pval) {
+            omod = replicate_estimator(orig, oi.list, dset, OPT_A, prn);
+            err = omod.errcode;
+            if (err) {
+                fprintf(stderr, "auto_omit: error %d from replicate_estimator\n",
+                        err);
+                break;
+            }
+        }
+        list_copy_values(oi.list, omod.list);
+        drop = auto_drop_var(&oi, dset, opt, prn);
+        if (drop && omod.ncoeff == 1) {
+            allgone = 1; /* will break */
+        }
+        if (oi.use_pval) {
+            clear_model(&omod);
+        }
     }
 
     if (allgone) {
 	pputc(prn, '\n');
-	pprintf(prn, _("No coefficient has a p-value less than %g"), amax);
+	pprintf(prn, _("No coefficient has a p-value less than %g"), alpha);
 	pputc(prn, '\n');
     } else if (!err) {
 	/* re-estimate the final model without the auxiliary flag */
@@ -1602,10 +1675,17 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
 	    ropt |= OPT_Q;
 	}
 	set_reference_missmask_from_model(orig);
-	omod = replicate_estimator(orig, tmplist, dset, ropt, prn);
+        if (!oi.use_pval) {
+            clear_model(&omod);
+        }
+        omod = replicate_estimator(orig, oi.list, dset, ropt, prn);
     }
 
-    free(tmplist);
+    if (oi.tmp != NULL) {
+        gretl_model_free(oi.tmp);
+    }
+
+    free(oi.list);
 
     return omod;
 }
@@ -1682,14 +1762,16 @@ static int omit_test_precheck (MODEL *pmod, gretlopt opt)
 
 static int stepwise_omit_ok (MODEL *orig, int crit)
 {
+    /* not doing this for now! */
+    return 0;
+#if 0
     /* we can only handle OLS with classical std errors */
     if (orig->ci != OLS || (orig->opt & OPT_R)) {
         return 0;
+    } else {
+        return 1;
     }
-
-    /* and for now we'll restrict this to info criteria */
-    //return is_info_crit(crit);
-    return 1;
+#endif
 }
 
 /**
@@ -1764,7 +1846,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
                                  dset, opt, prn);
         }
     } else if (opt & OPT_A) {
-	rmod = auto_omit(orig, omitvars, alpha, dset, opt, prn);
+	rmod = auto_omit(orig, omitvars, crit, alpha, dset, opt, prn);
     } else {
 	gretlopt ropt = OPT_NONE;
 
