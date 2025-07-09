@@ -1844,7 +1844,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
        on the original model */
     set_reference_missmask_from_model(orig);
 
-    if ((opt & OPT_A) && user_stepwise_omit(orig, crit)) {
+    if ((opt & OPT_A) && use_stepwise_omit(orig, crit)) {
         MODEL (*stepwise_omit) (MODEL *, const int *, int, double,
                                 DATASET *, gretlopt, PRN *);
 

@@ -1206,6 +1206,10 @@ parser *genr_compile (const char *s, DATASET *dset,
 
     *err = realgen(s, p, dset, prn, flags, targtype);
 
+#if GDEBUG
+    fprintf(stderr, "*** genr_compile: finished realgen\n");
+#endif
+
     if (*err == 0 && p != NULL &&
 	!(opt & OPT_N) && p->targ != EMPTY) {
 	gen_save_or_print(p, prn);

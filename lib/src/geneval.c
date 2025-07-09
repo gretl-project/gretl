@@ -916,6 +916,14 @@ static NODE *get_aux_node (parser *p, int t, int n, int flags)
         }
     }
 
+#if EDEBUG
+    fprintf(stderr, "get_aux_node: returning %s at %p\n",
+            ret == NULL ? "NULL" : getsymb(ret->t), (void *) ret);
+    if (ret != NULL && ret->t == NUM) {
+        fprintf(stderr, "  ret->v.xval = %g\n", ret->v.xval);
+    }
+#endif
+
     return ret;
 }
 
