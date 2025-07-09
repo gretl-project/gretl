@@ -1762,16 +1762,16 @@ static int omit_test_precheck (MODEL *pmod, gretlopt opt)
 
 static int stepwise_omit_ok (MODEL *orig, int crit)
 {
-    /* not doing this for now! */
-    return 0;
-#if 0
-    /* we can only handle OLS with classical std errors */
     if (orig->ci != OLS || (orig->opt & OPT_R)) {
+        /* we only handle OLS with classical std errors */
+        return 0;
+    } else if (crit > C_HQC) {
+        /* we're not handling the p-value approach */
         return 0;
     } else {
+        // return getenv("USE_STEPWISE_PLUGIN") != NULL;
         return 1;
     }
-#endif
 }
 
 /**
