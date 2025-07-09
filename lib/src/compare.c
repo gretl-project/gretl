@@ -1758,18 +1758,28 @@ static int omit_test_precheck (MODEL *pmod, gretlopt opt)
     return err;
 }
 
-#define is_info_crit(c) (c == C_AIC || c == C_BIC || c == C_HQC)
+/* This is about whether we should use the relatively new code in the
+   "stepwise" plugin rather than the code here in compare.c.
+*/
 
-static int stepwise_omit_ok (MODEL *orig, int crit)
+static int use_stepwise_omit (MODEL *orig, int crit)
 {
     if (orig->ci != OLS || (orig->opt & OPT_R)) {
         /* we only handle OLS with classical std errors */
         return 0;
     } else if (crit > C_HQC) {
-        /* we're not handling the p-value approach */
+        /* we're only handling the info criterion approach */
         return 0;
     } else {
-        // return getenv("USE_STEPWISE_PLUGIN") != NULL;
+        /* Note 2025-07-09: for now we'll give preference to the
+           plugin code when using an info criterion, as it seems to be
+           somewhat faster. For testing purposes one might put here
+
+           return getenv("USE_STEPWISE_PLUGIN") != NULL;
+
+           so that the code in compare.c is used unless the envronment
+           variable USE_STEPWISE_PLUGIN is set.
+        */
         return 1;
     }
 }
@@ -1834,7 +1844,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
        on the original model */
     set_reference_missmask_from_model(orig);
 
-    if ((opt & OPT_A) && stepwise_omit_ok(orig, crit)) {
+    if ((opt & OPT_A) && user_stepwise_omit(orig, crit)) {
         MODEL (*stepwise_omit) (MODEL *, const int *, int, double,
                                 DATASET *, gretlopt, PRN *);
 

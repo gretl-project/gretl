@@ -80,7 +80,7 @@
 	of freedom equal to the number of added regressors. Under this
 	option the original model is not replaced.
       </para>
-      <subhead context="cli">The auto option</subhead>
+      <subhead context="cli">The automatic option</subhead>
       <para context="cli">
 	The <opt>auto</opt> option (which cannot be combined with
 	<opt>lm</opt>) calls for forward stepwise regression, using the
@@ -10768,14 +10768,14 @@
 	</option>
 	<option>
 	  <flag>--auto</flag>
-	  <optparm optional="true">alpha</optparm>
+	  <optparm optional="true">criterion</optparm>
 	  <effect>sequential elimination, see below</effect>
 	</option>
       </options>
       <examples>
         <example>omit 5 7 9</example>
         <example>omit seasonals --quiet</example>
-        <example>omit --auto</example>
+        <example>omit --auto=BIC</example>
         <example>omit --auto=0.05</example>
 	 <demos>
 	  <demo>restrict.inp</demo>
@@ -10791,7 +10791,7 @@
 	after omitting the specified variables. Besides the usual
 	model output, it prints a test for the joint significance of
 	the omitted variables. The null hypothesis is that the true
-	coefficients on all the omitted variables equal zero.
+	coefficients on all the omitted regressors equal zero.
       </para>
       <para>
 	If the <quote>Wald test</quote> option is selected, the joint
@@ -10799,19 +10799,25 @@
 	test on the covariance matrix of the given model, and no
 	re-estimation is performed.
       </para>
+      <subhead>The stepwise options</subhead>
       <para>
-	If the <quote>Sequential elimination</quote> option is
-	selected (note: this option will not always be displayed) it
-	works as follows: at each step the variable with the highest
-	p-value is omitted, until all remaining variables have a
-	p-value no greater than some cutoff.  The default cutoff is 10
-	percent (two-sided); this can be adjusted via a spin button.
-	By default this process operates on all variables in the model
-	(apart from the constant); if you want to confine it to a
-	subset of the variables, check the box labeled <quote>Test
-	only selected variables</quote> and make a selection. As in
-	the primary case, the model is re-estimated after omitting
-	variables unless no variables remain.
+	The <quote>stepwise elimination</quote> options call for
+	backward stepwise regression.  In this case
+	<repl>varlist</repl> is interpreted as a list of
+	<emphasis>candidates</emphasis> for omission from the original
+	model. At each step the method finds the candidate which
+	offers the greatest improvement according to the specified
+	criterion (two-sided <math>P</math>-value, or information
+	criterion), if any. The algorithm halts when no further
+	improvement is possible. Then the reduced estimates are shown,
+	unless it turns out that no regressors were omitted.
+      </para>
+      <para>
+        When a stepwise method is selected, the list of variables to
+        omit is by default ignored, in favor of treating all the
+        regressors as candidates for omission. However you can limit
+        the candidates by checking the box labeled <quote>Test only
+        selected variables</quote>.
       </para>
     </description>
 
@@ -10843,19 +10849,43 @@
 	<opt>vcv</opt> option has the effect of printing its
 	covariance matrix, otherwise this option is ignored.
       </para>
+      <subhead>The automatic option</subhead>
       <para>
-	Alternatively, if the <opt>auto</opt> flag is given,
-	sequential elimination is performed: at each step the variable
-	with the highest p-value is omitted, until all remaining
-	variables have a p-value no greater than some cutoff.  The
-	default cutoff is 10 percent (two-sided); this can be adjusted
-	by appending <quote><lit>=</lit></quote> and a value between 0
-	and 1 (with no spaces), as in the fourth example above.  If
-	<repl>varlist</repl> is given this process is confined to the
-	listed variables, otherwise all regressors aside from the
-	constant are treated as candidates for omission. Note that the
-	<opt>auto</opt> and <opt>test-only</opt> options cannot be
-	combined.
+	The <opt>auto</opt> option (which cannot be combined with
+	<opt>test-only</opt>) calls for backward stepwise regression.
+	In this case <repl>varlist</repl> is taken to be a list of
+	<emphasis>candidates</emphasis> for omission from the original
+	model. At each step the method determines which candidate
+	might best be eliminated according to the specified
+	<repl>criterion</repl> (given as parameter to the option). The
+	algorithm halts when no further improvement is possible. The
+	criterion must take one of the following forms:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    An Information Criterion: <lit>AIC</lit>, <lit>BIC</lit>
+	    or <lit>HQC</lit>. The <quote>best</quote> candidate at
+	    each step is then that whose omission gives the greatest
+	    improvement (reduction) in the selected
+	    criterion&mdash;until there is no candidate whose
+	    omission gives an improvement, when the algorithm halts.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    An &alpha; value (positive decimal fraction). In this case
+	    the regressor with the greatest two-sided
+	    <math>P</math>-value is chosen for omission&mdash;until
+	    there is no candidate whose <math>P</math>-value is
+	    greater than &alpha;, when the algorithm halts.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+        If no <repl>criterion</repl> is specified with the
+        <opt>auto</opt> option, the default is to use the
+        <math>P</math>-value method with &alpha; = 0.10.
       </para>
     </description>
 
