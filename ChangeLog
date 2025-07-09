@@ -2,10 +2,11 @@ version 2025c, in progress
 - "dataset compact": support hourly to daily compaction via
   the command line (was already OK via the GUI)
 - "store" command: enable saving of user-defined functions
-  in XML format
+  to file in XML format
 - "corrgm" command: clarify the role of Barlett standard
-  errors
-- "omit" command: start augmenting the --auto option
+  errors for the ACF
+- "omit" command: extend the --auto option to support use of
+  information criteria
 - "setobs" syntax: accept month as single digit for panel
   data with monthly time dimension
 - new function lnmgamma(): multivariate log gamma function
