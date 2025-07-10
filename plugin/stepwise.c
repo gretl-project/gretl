@@ -382,6 +382,9 @@ static int qr_reduce (gretl_matrix *Q,
     matrix_drop_column(A, delcol);
     matrix_drop_index(R, delcol);
 
+    /* If we deleted any column other than the last, we have
+       some extra work to do.
+    */
     if (delcol < Q->cols) {
         qr_fixup(Q, R, A, delcol);
     }
@@ -892,6 +895,51 @@ MODEL stepwise_add (MODEL *pmod,
     return model;
 }
 
+static int *maybe_reorder_regressors (MODEL *pmod)
+{
+    gretl_matrix *lmat, *tmp;
+    int *list = NULL;
+    int jmin = pmod->ifc;
+    int k = pmod->ncoeff;
+    int changed = 0;
+    int i, j, err = 0;
+
+    lmat = gretl_matrix_alloc(k - pmod->ifc, 2);
+
+    j = jmin;
+    for (i=0; i<lmat->rows; i++) {
+        gretl_matrix_set(lmat, i, 0, (double) pmod->list[i+2+jmin]);
+        gretl_matrix_set(lmat, i, 1, -fabs(pmod->coeff[j] / pmod->sderr[j]));
+        j++;
+    }
+
+    tmp = gretl_matrix_sort_by_column(lmat, 1, &err);
+
+    list = gretl_list_new(pmod->list[0]);
+    j = 1;
+    list[j++] = pmod->list[1];
+    if (pmod->ifc) {
+        list[j++] = 0;
+    }
+    for (i=0; i<tmp->rows; i++) {
+        list[j] = (int) gretl_matrix_get(tmp, i, 0);
+        if (list[j] != pmod->list[j]) {
+            changed = 1;
+        }
+        j++;
+    }
+
+    if (!changed) {
+        free(list);
+        list = NULL;
+    }
+
+    gretl_matrix_free(lmat);
+    gretl_matrix_free(tmp);
+
+    return list;
+}
+
 /* Implement "omit --auto=..." using backward stepwise procedure.
    Note: @alpha is unused at present, since backward_stepwise() above
    doesn't handle the p-value criterion for omission. (That's handled
@@ -907,12 +955,22 @@ MODEL stepwise_omit (MODEL *pmod,
                      PRN *prn)
 {
     MODEL model;
+    MODEL *mptr;
     int *xlist = NULL;
+    int *olist = NULL;
     int ols_done = 0;
     int namelen = 0;
     int err;
 
     err = backward_stepwise_check_zlist(pmod, zlist, dset, &namelen);
+
+    olist = maybe_reorder_regressors(pmod);
+    if (olist != NULL) {
+        model = lsq(olist, dset, OLS, pmod->opt);
+        mptr = &model;
+    } else {
+        mptr = pmod;
+    }
 
     if (!err) {
         int verbose = (opt & OPT_Q)? 0 : 1;
@@ -923,9 +981,12 @@ MODEL stepwise_omit (MODEL *pmod,
 	    pprintf(prn, _("Sequential elimination using %s"), crit_string(crit));
 	    pputs(prn, "\n\n");
 	}
-        xlist = backward_stepwise(pmod, zlist, dset, crit,
+        xlist = backward_stepwise(mptr, zlist, dset, crit,
                                   verbose, droplen, namelen + 2,
                                   prn, &err);
+        if (mptr != pmod) {
+            clear_model(mptr);
+        }
     }
 
     if (!err) {
