@@ -25,21 +25,34 @@
 
 #define C_SSR C_MAX
 
-/* qr_wspace: workspace matrices whose row dimension will remain
+/* fwd_wspace: workspace matrices whose row dimension will remain
    unchanged but whose column dimension @zc will shrink on each call
-   to qr_update().
+   to qr_augment().
 */
 
-typedef struct qr_wspace_ {
+typedef struct fwd_wspace_ {
     gretl_matrix_block *B; /* holder */
     gretl_matrix *E;       /* n x zc */
     gretl_matrix *den;     /* 1 x zc */
     gretl_matrix *std;     /* 1 x zc */
     gretl_matrix *stdres;  /* n x zc */
     gretl_matrix *ssr;     /* 1 x zc */
-} qr_wspace;
+} fwd_wspace;
 
-static int qr_wspace_alloc (qr_wspace *mm, int n, int zc)
+/* bwd_wspace: workspace matrices whose @k dimension will shrink on
+   each call to qr_reduce().
+*/
+
+typedef struct bwd_wspace_ {
+    gretl_matrix_block *B; /* holder */
+    gretl_matrix *iR;      /* R-inverse: k x k */
+    gretl_matrix *g;       /* k x 1 */
+    gretl_matrix *b;       /* k x 1 */
+    gretl_matrix *V;       /* k x k */
+    gretl_matrix *e;       /* T x 1 */
+} bwd_wspace;
+
+static int fwd_wspace_alloc (fwd_wspace *mm, int n, int zc)
 {
     mm->B = gretl_matrix_block_new(&mm->E,   n, zc,
                                    &mm->den, 1, zc,
@@ -54,7 +67,7 @@ static int qr_wspace_alloc (qr_wspace *mm, int n, int zc)
     }
 }
 
-static void qr_wspace_shrink (qr_wspace *mm)
+static void fwd_wspace_shrink (fwd_wspace *mm)
 {
     mm->E->cols   -= 1;
     mm->den->cols -= 1;
@@ -63,7 +76,37 @@ static void qr_wspace_shrink (qr_wspace *mm)
     mm->ssr->cols -= 1;
 }
 
-static void qr_wspace_free (qr_wspace *mm)
+static void fwd_wspace_free (fwd_wspace *mm)
+{
+    gretl_matrix_block_destroy(mm->B);
+}
+
+static int bwd_wspace_alloc (bwd_wspace *mm, int T, int k)
+{
+    mm->B = gretl_matrix_block_new(&mm->iR, k, k,
+                                   &mm->g, k, 1,
+                                   &mm->b, k, 1,
+                                   &mm->V, k, k,
+                                   &mm->e, T, 1,
+                                   NULL);
+    if (mm->B == NULL) {
+        return E_ALLOC;
+    } else {
+        return 0;
+    }
+}
+
+static void bwd_wspace_shrink (bwd_wspace *mm)
+{
+    mm->g->rows -= 1;
+    mm->b->rows -= 1;
+    mm->V->rows -= 1;
+    mm->V->cols -= 1;
+    mm->iR->rows -= 1;
+    mm->iR->cols -= 1;
+}
+
+static void bwd_wspace_free (bwd_wspace *mm)
 {
     gretl_matrix_block_destroy(mm->B);
 }
@@ -86,10 +129,42 @@ static void matrix_drop_column (gretl_matrix *m, int j)
     m->cols -= 1;
 }
 
+static void matrix_drop_index (gretl_matrix *m, int idx)
+{
+    size_t sz = m->rows * sizeof(double);
+    int ntrail = m->cols - idx - 1;
+    double *dest = m->val + idx * m->rows;
+    double *src = dest + m->rows;
+    int n, j;
+
+    if (m->info != NULL) {
+        /* don't leak column names */
+        gretl_matrix_destroy_info(m);
+    }
+
+    /* drop the relevant column */
+    memmove(dest, src, ntrail * sz);
+    m->cols -= 1;
+
+    n = m->rows * m->cols - idx - 1;
+    sz = n * sizeof(double);
+
+    /* drop corresponding row */
+    dest = m->val + idx;
+    for (j=0; j<m->cols; j++) {
+        src = dest + 1;
+        memmove(dest, src, sz);
+        dest += m->rows - 1;
+        n -= m->rows;
+        sz = n * sizeof(double);
+    }
+    m->rows -= 1;
+}
+
 static double get_info_crit (double ssr, int T, int k, int crit)
 {
     /* using AIC, BIC or HQC */
-    double l1 = log(2*M_PI);
+    double l0 = log(2*M_PI);
     double ll, C0 = 0;
 
     if (crit == C_BIC) {
@@ -97,12 +172,10 @@ static double get_info_crit (double ssr, int T, int k, int crit)
     } else if (crit == C_HQC) {
         C0 = 2 * k * log(log((double) T));
     }
-    ll = -0.5 * T * (l1 + log(ssr/T) + 1);
-    if (crit == C_AIC) {
-        return 2.0 * (k - ll);
-    } else {
-        return C0 - 2 * ll;
-    }
+
+    ll = -0.5 * T * (l0 + log(ssr/T) + 1);
+
+    return crit == C_AIC ? 2.0 * (k - ll) : C0 - 2 * ll;
 }
 
 static double best_ssr2crit (int *best,
@@ -138,13 +211,13 @@ static double ssr2crit (double ssr, int T, int k, int crit)
     }
 }
 
-static int qr_update (gretl_matrix *Q,
-                      gretl_matrix *R,
-                      const gretl_matrix *Z,
-                      const gretl_matrix *e,
-                      qr_wspace *mm,
-                      int crit, int *best,
-                      double *xbest)
+static int qr_augment (gretl_matrix *Q,
+                       gretl_matrix *R,
+                       const gretl_matrix *Z,
+                       const gretl_matrix *e,
+                       fwd_wspace *mm,
+                       int crit, int *best,
+                       double *xbest)
 {
     gretl_matrix *B;
     double *dest;
@@ -234,6 +307,125 @@ static int qr_update (gretl_matrix *Q,
     return err;
 }
 
+/* The following function fixes up the trailing columns of the QR
+   decomposition of the matrix @A, following deletion of column @jmin of
+   @A when @jmin was not the last column. We assume that @Q contains
+   the correct decomposition of the submatrix of @A to the left of the
+   @jmin.
+*/
+
+void qr_fixup (gretl_matrix *Q,
+               gretl_matrix *R,
+               gretl_matrix *A,
+               int jmin)
+{
+    double *aj;
+    size_t sz;
+    double tmp;
+    int n = A->rows;
+    int m = R->rows;
+    int i, j, k;
+
+    aj = malloc(n * sizeof *aj);
+    sz = n * sizeof(double);
+
+    /* complete Q */
+    for (j=jmin; j<m; j++) {
+        memcpy(aj, A->val + j*n, sz);
+        for (i=0; i<j; i++) {
+            tmp = 0.0;
+            for (k=0; k<n; k++) {
+                tmp += aj[k] * gretl_matrix_get(Q, k, i);
+            }
+            for (k=0; k<n; k++) {
+                aj[k] -= tmp * gretl_matrix_get(Q, k, i);
+            }
+        }
+        tmp = 0.0;
+        for (i=0; i<n; i++) {
+            tmp += aj[i] * aj[i];
+        }
+        tmp = sqrt(tmp);
+        for (i=0; i<n; i++) {
+            gretl_matrix_set(Q, i, j, aj[i]/tmp);
+        }
+    }
+
+    /* complete R */
+    for (i=jmin; i<m; i++) {
+        for (j=i; j<m; j++) {
+            tmp = 0.0;
+            for (k=0; k<n; k++) {
+                tmp += gretl_matrix_get(A, k, j) * gretl_matrix_get(Q, k, i);
+            }
+            gretl_matrix_set(R, i, j, tmp);
+        }
+    }
+
+    free(aj);
+}
+
+static int qr_reduce (gretl_matrix *Q,
+                      gretl_matrix *R,
+                      gretl_matrix *A,
+                      int delcol,
+                      const gretl_matrix *y,
+                      bwd_wspace *mm,
+                      double *ssr)
+{
+    int i, k = R->rows;
+    int T = Q->rows;
+    double s2;
+    int err = 0;
+
+    matrix_drop_column(Q, delcol);
+    matrix_drop_column(A, delcol);
+    matrix_drop_index(R, delcol);
+
+    if (delcol < Q->cols) {
+        qr_fixup(Q, R, A, delcol);
+    }
+
+    bwd_wspace_shrink(mm);
+
+    gretl_matrix_copy_values(mm->iR, R);
+    err = gretl_invert_triangular_matrix(mm->iR, 'U');
+    if (err) {
+        return err;
+    }
+
+    /* g = Q'y */
+    gretl_matrix_multiply_mod(Q, GRETL_MOD_TRANSPOSE,
+                              y, GRETL_MOD_NONE,
+                              mm->g, GRETL_MOD_NONE);
+    /* b = inv(R) * g */
+    gretl_matrix_multiply(mm->iR, mm->g, mm->b);
+
+    /* e = residuals */
+    gretl_matrix_copy_values(mm->e, y);
+    gretl_matrix_multiply_mod(Q, GRETL_MOD_NONE,
+                              mm->g, GRETL_MOD_NONE,
+                              mm->e, GRETL_MOD_DECREMENT);
+
+    /* V [= (X'X)^{-1}] = inv(R)*inv(R)' */
+    gretl_matrix_multiply_mod(mm->iR, GRETL_MOD_NONE,
+                              mm->iR, GRETL_MOD_TRANSPOSE,
+                              mm->V, GRETL_MOD_NONE);
+
+    *ssr = 0.0;
+    for (i=0; i<T; i++) {
+        *ssr += mm->e->val[i] * mm->e->val[i];
+    }
+    s2 = *ssr / (T - k);
+
+    /* g <- std errors */
+    for (i=0; i<k; i++) {
+        mm->g->val[i] = sqrt(s2 * gretl_matrix_get(mm->V, i, i));
+    }
+
+    return err;
+}
+
 static const char *cstrs[] = {
     "AIC", "BIC", "HQC", "SSR"
 };
@@ -261,7 +453,7 @@ int *forward_stepwise (MODEL *pmod,
     gretl_matrix *mZ;
     gretl_matrix *my;
     gretl_matrix *tmp;
-    qr_wspace mm = {0};
+    fwd_wspace mm = {0};
     int conv = 0;
     int added = 0;
     int best = 0;
@@ -271,13 +463,12 @@ int *forward_stepwise (MODEL *pmod,
     int *aux = NULL;
     int *ret = NULL;
     int yvar;
-    int t1, t2;
-    int T, k, i, nz;
+    int t1 = pmod->t1;
+    int t2 = pmod->t2;
+    int T = pmod->nobs;
+    int k = pmod->ncoeff;
+    int i, nz;
 
-    T = pmod->nobs;
-    k = pmod->ncoeff;
-    t1 = pmod->t1;
-    t2 = pmod->t2;
     e = gretl_matrix_alloc(T, 1);
     for (i=0; i<pmod->nobs; i++) {
         e->val[i] = pmod->uhat[i];
@@ -306,7 +497,7 @@ int *forward_stepwise (MODEL *pmod,
     aux = gretl_list_copy(zlist);
     nz = zlist[0];
     cstr = crit_string(crit);
-    qr_wspace_alloc(&mm, Q->rows, nz);
+    fwd_wspace_alloc(&mm, Q->rows, nz);
 
     if (verbose) {
         pprintf(prn, "\n %-*s %s = %#g\n", addlen + namelen + 1,
@@ -314,7 +505,7 @@ int *forward_stepwise (MODEL *pmod,
     }
 
     while (!conv && added < nz) {
-        *err = qr_update(Q, R, mZ, e, &mm, crit, &best, &cur);
+        *err = qr_augment(Q, R, mZ, e, &mm, crit, &best, &cur);
         if (*err) {
             break;
         }
@@ -352,7 +543,7 @@ int *forward_stepwise (MODEL *pmod,
         if (!conv) {
             bpos = best + 1;
             matrix_drop_column(mZ, best);
-            qr_wspace_shrink(&mm);
+            fwd_wspace_shrink(&mm);
             gretl_list_append_term(&ret, aux[bpos]);
             gretl_list_delete_at_pos(aux, bpos);
             added++;
@@ -369,7 +560,7 @@ int *forward_stepwise (MODEL *pmod,
     gretl_matrix_free(mZ);
     gretl_matrix_free(my);
     gretl_matrix_free(e);
-    qr_wspace_free(&mm);
+    fwd_wspace_free(&mm);
 
     if (!*err && added == 0) {
         *err = E_NOADD;
@@ -424,21 +615,19 @@ int *backward_stepwise (MODEL *pmod,
                         DATASET *dset,
                         int crit,
                         int verbose,
-                        int addlen,
+                        int droplen,
                         int namelen,
                         PRN *prn,
                         int *err)
 {
     const char *cstr;
+    gretl_matrix *Q;
+    gretl_matrix *R;
     gretl_matrix *y;
-    gretl_matrix *X;
-    gretl_matrix *b;
-    gretl_matrix *V;
+    gretl_matrix *A;
     int *xlist = NULL;
-    double *se = NULL;
+    bwd_wspace mm = {0};
     double cur, prev;
-    double ssr;
-    double s2;
     int ifc = pmod->ifc;
     int T = pmod->nobs;
     int k = pmod->ncoeff;
@@ -448,44 +637,50 @@ int *backward_stepwise (MODEL *pmod,
     int conv = 0;
     int trycol, delvar;
     int nz, dropped = 0;
-    int i;
 
     prev = ssr2crit(pmod->ess, T, k, crit);
     xlist = gretl_model_get_x_list(pmod);
     trycol = tval_min_pos(pmod->coeff, pmod->sderr,
                           xlist, zlist, ifc, k);
 
-    k--;
     y = gretl_vector_from_series(dset->Z[yvar], t1, t2);
-    X = gretl_matrix_data_subset(xlist, dset, t1, t2, M_MISSING_ERROR, err);
-    b = gretl_matrix_alloc(k, 1);
-    V = gretl_matrix_alloc(k, k);
-    se = malloc(k * sizeof *se);
+    Q = gretl_matrix_data_subset(xlist, dset, t1, t2, M_MISSING_ERROR, err);
+    R = gretl_zero_matrix_new(k, k);
+    A = gretl_matrix_copy(Q);
+
+    if (!*err && (y == NULL || Q == NULL || R == NULL || A == NULL)) {
+        *err = E_ALLOC;
+    }
+    if (*err) {
+        goto bailout;
+    }
+
+    gretl_matrix_QR_decomp(Q, R);
 
     nz = zlist != NULL ? zlist[0] : xlist[0] - ifc;
     cstr = crit_string(crit);
+    bwd_wspace_alloc(&mm, Q->rows, R->rows);
 
     if (verbose) {
-        pprintf(prn, " %-*s %s = %#g\n", addlen + namelen + 1,
+        pprintf(prn, " %-*s %s = %#g\n", droplen + namelen + 1,
                 _("Baseline"), cstr, prev);
     }
 
     while (!conv && dropped < nz) {
+        double ssr;
+
         delvar = xlist[trycol+1];
-        matrix_drop_column(X, trycol);
-        k = X->cols;
-        gretl_matrix_reuse(b, k, 1);
-        gretl_matrix_reuse(V, k, k);
-        *err = gretl_matrix_ols(y, X, b, V, NULL, &s2);
+        *err = qr_reduce(Q, R, A, trycol, y, &mm, &ssr);
         if (*err) {
+            fprintf(stderr, "error %d in qr_reduce\n", *err);
             break;
         }
-        ssr = (T - k) * s2;
+        k = R->rows;
         cur = ssr2crit(ssr, T, k, crit);
         conv = cur > prev;
         if (verbose) {
             if (conv && dropped < nz) {
-                pprintf(prn, " [%-*s %s = %#g]\n", namelen + addlen,
+                pprintf(prn, " [%-*s %s = %#g]\n", namelen + droplen,
                         dset->varname[delvar], cstr, cur);
             } else {
                 pprintf(prn, " %s %-*s %s = %#g\n", _("Drop"), namelen,
@@ -493,21 +688,20 @@ int *backward_stepwise (MODEL *pmod,
             }
         }
         if (!conv) {
-            for (i=ifc; i<V->cols; i++) {
-                se[i] = sqrt(gretl_matrix_get(V, i, i));
-            }
             gretl_list_delete_at_pos(xlist, trycol+1);
-            trycol = tval_min_pos(b->val, se, xlist, zlist, ifc, k);
+            trycol = tval_min_pos(mm.b->val, mm.g->val, xlist, zlist, ifc, k);
             dropped++;
             prev = cur;
         }
     }
 
+ bailout:
+
+    gretl_matrix_free(Q);
+    gretl_matrix_free(R);
     gretl_matrix_free(y);
-    gretl_matrix_free(X);
-    gretl_matrix_free(b);
-    gretl_matrix_free(V);
-    free(se);
+    gretl_matrix_free(A);
+    bwd_wspace_free(&mm);
 
     if (!*err && dropped == 0) {
         *err = E_NOOMIT;
@@ -609,6 +803,10 @@ static int *compose_forward_list (const MODEL *pmod,
 
     return list;
 }
+
+/* Compose the final OLS list based on the original model plus @xlist,
+   which contains the regressors that survived automatic elimination.
+*/
 
 static int *compose_backward_list (const MODEL *pmod,
                                    const int *xlist)
@@ -718,15 +916,15 @@ MODEL stepwise_omit (MODEL *pmod,
 
     if (!err) {
         int verbose = (opt & OPT_Q)? 0 : 1;
-        int addlen = verbose ? g_utf8_strlen(_("Drop"), -1) : 0;
+        int droplen = verbose ? g_utf8_strlen(_("Drop"), -1) : 0;
 
 	if (verbose) {
-	    pputc(prn, '\n');
+	    // pputc(prn, '\n');
 	    pprintf(prn, _("Sequential elimination using %s"), crit_string(crit));
 	    pputs(prn, "\n\n");
 	}
         xlist = backward_stepwise(pmod, zlist, dset, crit,
-                                  verbose, addlen, namelen + 2,
+                                  verbose, droplen, namelen + 2,
                                   prn, &err);
     }
 
