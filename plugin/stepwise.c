@@ -895,6 +895,11 @@ MODEL stepwise_add (MODEL *pmod,
     return model;
 }
 
+/* Arrange the original regressors in order of decreasing absolute
+   t-ratio, to try to get the ones most likely to be omitted towards
+   the end.
+*/
+
 static int *maybe_reorder_regressors (MODEL *pmod)
 {
     gretl_matrix *lmat, *tmp;
@@ -930,6 +935,7 @@ static int *maybe_reorder_regressors (MODEL *pmod)
     }
 
     if (!changed) {
+        /* reordering was not actually needed */
         free(list);
         list = NULL;
     }
