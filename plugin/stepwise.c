@@ -831,11 +831,13 @@ static int *compose_backward_list (const MODEL *pmod,
                                    const int *xlist)
 {
     int *list = gretl_list_new(1 + xlist[0]);
-    int i;
+    int i, j = 2;
 
     list[1] = pmod->list[1];
-    for (i=1; i<=xlist[0]; i++) {
-        list[i+1] = xlist[i];
+    for (i=2; i<=pmod->list[0]; i++) {
+        if (in_gretl_list(xlist, pmod->list[i])) {
+            list[j++] = pmod->list[i];
+        }
     }
 
     return list;

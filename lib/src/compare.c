@@ -1772,8 +1772,8 @@ static int use_stepwise_omit (MODEL *orig, int crit)
         return 0;
     } else {
         /* Note 2025-07-09: for now we'll give preference to the
-           plugin code when using an info criterion, as it seems to be
-           somewhat faster. For testing purposes one might put here
+           somewhat faster plugin code when using an info criterion.
+           For testing purposes one might put here
 
            return getenv("USE_STEPWISE_PLUGIN") != NULL;
 
