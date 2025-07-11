@@ -1224,7 +1224,7 @@ static int process_stepwise_option (int ci,
         if (!err && (*alpha < 0.001 || *alpha > 0.99)) {
             err = E_INVARG;
         } else {
-            *crit = C_MAX;
+            *crit = C_HQC + 2;
         }
     }
 

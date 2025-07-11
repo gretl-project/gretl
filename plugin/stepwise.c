@@ -825,18 +825,28 @@ static int *compose_forward_list (const MODEL *pmod,
 
 /* Compose the final OLS list based on the original model plus @xlist,
    which contains the regressors that survived automatic elimination.
+   If @olist is non-NULL we put the surviving regressors back into
+   their original order.
 */
 
 static int *compose_backward_list (const MODEL *pmod,
-                                   const int *xlist)
+                                   const int *xlist,
+                                   const int *olist)
 {
     int *list = gretl_list_new(1 + xlist[0]);
     int i, j = 2;
 
     list[1] = pmod->list[1];
-    for (i=2; i<=pmod->list[0]; i++) {
-        if (in_gretl_list(xlist, pmod->list[i])) {
-            list[j++] = pmod->list[i];
+
+    if (olist == NULL) {
+        for (i=1; i<=xlist[0]; i++) {
+            list[j++] = xlist[i];
+        }
+    } else {
+        for (i=2; i<=pmod->list[0]; i++) {
+            if (in_gretl_list(xlist, pmod->list[i])) {
+                list[j++] = pmod->list[i];
+            }
         }
     }
 
@@ -997,7 +1007,7 @@ MODEL stepwise_omit (MODEL *pmod,
 
     olist = maybe_reorder_regressors(pmod);
     if (olist != NULL) {
-        model = lsq(olist, dset, OLS, pmod->opt);
+        model = lsq(olist, dset, OLS, pmod->opt | OPT_A);
         mptr = &model;
     } else {
         mptr = pmod;
@@ -1022,7 +1032,7 @@ MODEL stepwise_omit (MODEL *pmod,
 
     if (!err) {
         gretlopt ols_opt = OPT_NONE;
-        int *list = compose_backward_list(pmod, xlist);
+        int *list = compose_backward_list(pmod, xlist, olist);
 
         if (opt & OPT_I) {
             /* --silent */
