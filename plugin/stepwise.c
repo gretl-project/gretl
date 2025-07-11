@@ -23,6 +23,8 @@
 #include "version.h"
 #include "matrix_extra.h"
 
+#define SDEBUG 0
+
 #define C_SSR C_MAX
 
 /* fwd_wspace: workspace matrices whose row dimension will remain
@@ -308,30 +310,43 @@ static int qr_augment (gretl_matrix *Q,
 }
 
 /* The following function fixes up the trailing columns of the QR
-   decomposition of the matrix @A, following deletion of column @jmin of
-   @A when @jmin was not the last column. We assume that @Q contains
-   the correct decomposition of the submatrix of @A to the left of the
-   @jmin.
+   decomposition of the matrix X of regressors following deletion of
+   column @jmin, when @jmin was not the last column. We assume that @Q
+   contains the correct decomposition of the columns of X to the left
+   of @jmin.
+
+   The code here is based on the concise account of the Gram-Schmidt
+   algorithm given by Igor Yanovsky at
+   https://www.math.ucla.edu/~yanovsky/Teaching/Math151B/handouts/GramSchmidt.pdf
 */
 
 void qr_fixup (gretl_matrix *Q,
                gretl_matrix *R,
-               gretl_matrix *A,
+               const DATASET *dset,
+               const int *xlist,
                int jmin)
 {
     double *aj;
     size_t sz;
     double tmp;
-    int n = A->rows;
+    int n = Q->rows;
     int m = R->rows;
-    int i, j, k;
+    int i, j, vj, k;
 
     aj = malloc(n * sizeof *aj);
     sz = n * sizeof(double);
 
+#if SDEBUG
+    printlist(xlist, "xlist");
+#endif
+
     /* complete Q */
     for (j=jmin; j<m; j++) {
-        memcpy(aj, A->val + j*n, sz);
+        vj = xlist[j+2];
+#if SDEBUG
+        fprintf(stderr, "Q: work on col %d, using var %d\n", j, vj);
+#endif
+        memcpy(aj, dset->Z[vj] + dset->t1, sz);
         for (i=0; i<j; i++) {
             tmp = 0.0;
             for (k=0; k<n; k++) {
@@ -354,9 +369,11 @@ void qr_fixup (gretl_matrix *Q,
     /* complete R */
     for (i=jmin; i<m; i++) {
         for (j=i; j<m; j++) {
+            vj = xlist[j+2];
+            memcpy(aj, dset->Z[vj] + dset->t1, sz);
             tmp = 0.0;
             for (k=0; k<n; k++) {
-                tmp += gretl_matrix_get(A, k, j) * gretl_matrix_get(Q, k, i);
+                tmp += aj[k] * gretl_matrix_get(Q, k, i);
             }
             gretl_matrix_set(R, i, j, tmp);
         }
@@ -367,7 +384,8 @@ void qr_fixup (gretl_matrix *Q,
 
 static int qr_reduce (gretl_matrix *Q,
                       gretl_matrix *R,
-                      gretl_matrix *A,
+                      const DATASET *dset,
+                      const int *xlist,
                       int delcol,
                       const gretl_matrix *y,
                       bwd_wspace *mm,
@@ -379,15 +397,18 @@ static int qr_reduce (gretl_matrix *Q,
     int err = 0;
 
     matrix_drop_column(Q, delcol);
-    matrix_drop_column(A, delcol);
     matrix_drop_index(R, delcol);
 
     /* If we deleted any column other than the last, we have
        some extra work to do.
     */
     if (delcol < Q->cols) {
-        qr_fixup(Q, R, A, delcol);
+        qr_fixup(Q, R, dset, xlist, delcol);
     }
+#if SDEBUG
+    fprintf(stderr, "dropped Q[,%d], %s\n", delcol,
+            delcol < Q->cols ? "fixup needed" : "no fixup");
+#endif
 
     bwd_wspace_shrink(mm);
 
@@ -627,10 +648,9 @@ int *backward_stepwise (MODEL *pmod,
     gretl_matrix *Q;
     gretl_matrix *R;
     gretl_matrix *y;
-    gretl_matrix *A;
     int *xlist = NULL;
     bwd_wspace mm = {0};
-    double cur, prev;
+    double cur, prev, ssr;
     int ifc = pmod->ifc;
     int T = pmod->nobs;
     int k = pmod->ncoeff;
@@ -649,9 +669,8 @@ int *backward_stepwise (MODEL *pmod,
     y = gretl_vector_from_series(dset->Z[yvar], t1, t2);
     Q = gretl_matrix_data_subset(xlist, dset, t1, t2, M_MISSING_ERROR, err);
     R = gretl_zero_matrix_new(k, k);
-    A = gretl_matrix_copy(Q);
 
-    if (!*err && (y == NULL || Q == NULL || R == NULL || A == NULL)) {
+    if (!*err && (y == NULL || Q == NULL || R == NULL)) {
         *err = E_ALLOC;
     }
     if (*err) {
@@ -670,10 +689,8 @@ int *backward_stepwise (MODEL *pmod,
     }
 
     while (!conv && dropped < nz) {
-        double ssr;
-
         delvar = xlist[trycol+1];
-        *err = qr_reduce(Q, R, A, trycol, y, &mm, &ssr);
+        *err = qr_reduce(Q, R, dset, xlist, trycol, y, &mm, &ssr);
         if (*err) {
             fprintf(stderr, "error %d in qr_reduce\n", *err);
             break;
@@ -703,7 +720,6 @@ int *backward_stepwise (MODEL *pmod,
     gretl_matrix_free(Q);
     gretl_matrix_free(R);
     gretl_matrix_free(y);
-    gretl_matrix_free(A);
     bwd_wspace_free(&mm);
 
     if (!*err && dropped == 0) {
@@ -939,6 +955,13 @@ static int *maybe_reorder_regressors (MODEL *pmod)
         free(list);
         list = NULL;
     }
+
+#if SDEBUG
+    if (changed) {
+        printlist(pmod->list, "pmod->list");
+        printlist(list, "reordered");
+    }
+#endif
 
     gretl_matrix_free(lmat);
     gretl_matrix_free(tmp);
