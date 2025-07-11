@@ -10939,27 +10939,18 @@ del comando <cmdref targ="set"/>.
       </option>
       <option>
 	<flag>--vcv</flag>
-	<effect>stampa la matrice di varianze-covarianze del modello
-	ridotto</effect>
+	<effect>stampa la matrice di varianze-covarianze del modello ridotto</effect>
       </option>
       <option>
 	<flag>--auto</flag>
 	<optparm>alpha</optparm>
 	<effect>eliminazione sequenziale, si veda oltre</effect>
       </option>
-      <option>
-	<flag>--inst</flag>
-	<effect>omette come strumento, solo per TSLS</effect>
-      </option>
-      <option>
-	<flag>--both</flag>
-	<effect>omette come regressore e come strumento, solo per TSLS</effect>
-      </option>
     </options>
     <examples>
       <example>omit 5 7 9</example>
       <example>omit seasonals --quiet</example>
-      <example>omit --auto</example>
+      <example>omit --auto=BIC</example>
       <example>omit --auto=0.05</example>
       <demos>
 	<demo>restrict.inp</demo>
@@ -10984,20 +10975,30 @@ del comando <cmdref targ="set"/>.
 	specificate per mezzo di un test di Wald e la stima vincolata
 	non viene eseguita.
       </para>
-    <para context="gui">
-      Selezionando l'opzione <quote>Eliminazione sequenziale</quote>
-      (non sempre disponibile) il programma si comporta come segue: ad
-      ogni passo viene omessa la variabile con il p-value più alto,
-      fino a che tutte le variabili restanti hanno un p-value
-      inferiore a una certa soglia. La soglia predefinita è del 10 per
-      cento (con due code), che può essere modificata usando
-      l'apposito pulsante.  Per default, questo processo opera su
-      tutte le variabili del modello (esclusa la costante). Se si
-      vuole limitare il numero di variabili sul quale far agire il
-      comando allora bisogna spuntare la casella chiamata <quote>Testa
-      solo le variabili selezionate</quote> e fare la selezione.
-    </para>
-  </description>
+      <subhead>Eliminazione sequenziale</subhead>
+      <para>
+	L'opzione <quote>Eliminazione sequenziale</quote> mette in
+	atto la regressione cosiddetta <quote>backward
+	stepwise</quote>. In questo caso, la lista
+	<repl>varlist</repl> è un elenco di
+	<emphasis>candidati</emphasis> da omettere dal modello
+	originale. A ogni passaggio, il metodo individua il candidato
+	che offre il miglioramento maggiore in base al criterio
+	specificato (<math>P</math>-value a due code o criterio
+	informativo), se presente. L'algoritmo si interrompe quando
+	non è possibile alcun ulteriore miglioramento. Se almeno un
+	regressore è stato omesso, vengono quindi mostrate le stime
+	ridotte.
+      </para>
+      <para>
+	Quando si seleziona un metodo stepwise, l'elenco delle
+	variabili da omettere viene ignorato per default, a favore del
+	trattamento di tutti i regressori come candidati
+	all'omissione. Tuttavia, è possibile limitare i candidati
+	selezionando la casella <quote>Testa solo le variabili
+	selezionate</quote>.
+      </para>
+    </description>
 
   <description context="cli">
     <para>
@@ -11005,10 +11006,10 @@ del comando <cmdref targ="set"/>.
       principale, questo comando calcola un test di Wald per la
       significatività congiunta delle variabili presenti nella
       <repl>lista variabili</repl>, che deve essere un sottoinsieme
-      delle variabili indipendenti presenti nell'ultimo modello
-      stimato. I risultati possono poi venire richiamati attraverso
-      l'uso degli accessori <fncref targ="$test"/> e <fncref
-      targ="$pvalue"/>.
+      (non necessariamente proprio) delle variabili indipendenti
+      presenti nell'ultimo modello stimato. I risultati possono poi
+      venire richiamati attraverso l'uso degli accessori <fncref
+      targ="$test"/> e <fncref targ="$pvalue"/>.
     </para>
     <para>
       A meno che non vengano rimossi tutti i regressori, il modello
@@ -11028,28 +11029,50 @@ del comando <cmdref targ="set"/>.
       dell'opzione <opt>vcv</opt> ha l'effetto di stampare anche la matrice
       di covarianze, altrimenti se non usata l'opzione viene ignorata.
     </para>
+    <subhead>L'opzione "auto"</subhead>
     <para>
-      Alternativamente, se l'opzione <opt>auto</opt> è abilitata,
-      l'eliminazione sequenziale viene eseguita in questo modo: ad
-      ogni step le variabili con p-value più alto vengono omesse
-      sicchè tutte quelle con p-value maggiore di un certo cutoff
-      vengono eliminate. Il cutoff di default è impostato al 10 per
-      cento (considerando sia la coda destra che sinistra); esso,
-      tuttavia, può venire modificato utilizzando l'argomento
-      <quote><lit>=</lit></quote> ed un valore compreso tra 0 e 1
-      (senza spazio in mezzo), come nel quarto esempio descritto
-      sopra.  Se viene data una <repl>lista-variabili</repl> questo
-      processo sarà limitato alle sole variabili presenti nella lista,
-      altrimenti tutte le variabili saranno coinvolte e considerate
-      come possibili candidate all'omissione.  Si noti che le opzioni
-      <opt>auto</opt> e <opt>test-only</opt> sono incompatibili.
+      L'opzione <opt>auto</opt> (che non può essere combinata con
+      <opt>test-only</opt>) invoca una regressione stepwise
+      all'indietro. In questo caso, <repl>varlist</repl> viene
+      considerata un elenco di variabili <quote>candidate</quote> da
+      omettere dal modello originale. A ogni passo, il metodo
+      determina la miglior candidata da eliminare in base al criterio
+      specificato (indicato come parametro dell'opzione). L'algoritmo
+      si arresta quando non è possibile alcun ulteriore
+      miglioramento. Il criterio deve assumere una delle seguenti
+      forme:
     </para>
-</description>
-
-<gui-access>
-  <menu-path>Finestra del modello, /Test/OMIT - Ometti variabili</menu-path>
-</gui-access>
-
+    <ilist>
+      <li>
+	<para>
+	  Un criterio di informazione: <lit>AIC</lit>, <lit>BIC</lit>
+	  o <lit>HQC</lit>. Il candidato <quote>migliore</quote> a
+	  ogni passaggio è quindi quello la cui omissione fornisce il
+	  maggiore miglioramento (riduzione) nel criterio selezionato,
+	  finché non vi è alcun candidato la cui omissione fornisca un
+	  miglioramento, quando l'algoritmo si arresta.
+	</para>
+      </li>
+      <li>
+	<para>
+	  Un valore &alpha; (frazione decimale positiva). In questo
+	  caso, il regressore con il valore <math>P</math> a due code
+	  più alto viene scelto per l'omissione, finché non vi è alcun
+	  candidato il cui valore <math>P</math> sia maggiore di
+	  &alpha;; a quel punto, l'algoritmo si arresta.
+	</para>
+      </li>
+    </ilist>
+    <para>
+      Se non viene specificato alcun <repl>criterio</repl> con
+      l'opzione <opt>auto</opt>, l'impostazione predefinita è
+      utilizzare il metodo del valore <math>P</math> con &alpha; =
+      0.10.
+    </para>
+  </description>
+  <gui-access>
+    <menu-path>Finestra del modello, /Test/OMIT - Ometti variabili</menu-path>
+  </gui-access>
 </command>
 
 <command name="online" section="Dataset" context="gui"
