@@ -14652,9 +14652,9 @@ static int check_argc (int f, int k, parser *p)
         { F_TDISAGG,   3, 5 },
         { F_COMMUTE,   2, 5 },
         { F_TOEPSOLV,  3, 4 },
-        { F_RGBMIX,    3, 4 }
+        { F_RGBMIX,    3, 4 },
+        { F_GIBBS,     4, 4 }
     };
-
     int argc_min = 2;
     int argc_max = 4;
     int i;
@@ -14683,6 +14683,9 @@ static int no_ts_data (parser *p)
 
     return p->err;
 }
+
+/* FIXME place this code properly, if it's wanted */
+#include "gretl_sampler.c"
 
 #define nargs_needs_ts(f) (f == F_BKFILT)
 
@@ -15494,6 +15497,37 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
         }
         if (!p->err) {
             ret->v.a = colormix_array(c[0], c[1], f, nf, do_plot, &p->err);
+        }
+    } else if (t->t == F_GIBBS) {
+        char **init = NULL;
+        char **iter = NULL;
+        char **S = NULL;
+        int n1, n2;
+        int burnin, N;
+
+        for (i=0; i<k && !p->err; i++) {
+            e = n->v.bn.n[i];
+            if (i < 2) {
+                if (e->t != ARRAY) {
+                    p->err = E_INVARG;
+                } else if (i == 0) {
+                    S = init = gretl_array_get_strings(e->v.a, &n1);
+                } else {
+                    S = iter = gretl_array_get_strings(e->v.a, &n2);
+                }
+                if (!p->err && S == NULL) {
+                    p->err = E_INVARG;
+                }
+            } else {
+                int *intp = i == 2 ? &burnin : &N;
+
+                *intp = node_get_int(e, p);
+            }
+        }
+        if (!p->err) {
+            ret = aux_matrix_node(p);
+            ret->v.m = do_sampler(init, n1, iter, n2, burnin, N,
+                                  p->prn, &p->err);
         }
     } else if (t->t == HF_FELOGITR) {
         gretl_matrix *U = NULL;
@@ -19277,6 +19311,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_COMMUTE:
     case F_TOEPSOLV:
     case F_RGBMIX:
+    case F_GIBBS:
     case HF_FELOGITR:
         /* built-in functions taking more than three args */
         if (multi == NULL) {
