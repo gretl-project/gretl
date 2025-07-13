@@ -185,6 +185,10 @@ static gretl_matrix *do_sampler (char **init, int ni,
     return ret;
 }
 
+#if 0
+
+/* the code below is not ready to compile yet */
+
 static gretl_matrix *extract_param (const char *s, int i,
                                     const gretl_bundle *allInfo)
 {
@@ -376,6 +380,7 @@ gretl_matrix *gibbs (const gretl_bundle *B, int T)
             
     return ret;
 }
-                
+
+#endif /* not ready */
             
 
