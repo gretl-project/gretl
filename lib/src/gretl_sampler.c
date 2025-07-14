@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "gretl_func.h"
 #include "gretl_typemap.h"
 #include "uservar.h"
 #include "libset.h"
@@ -212,56 +213,129 @@ gretl_matrix *gibbs_via_genrs (char **init, int ni,
 
 /* Below: apparatus pertaining to gibbs_via_bundles() */
 
-static gretl_matrix *extract_param (const char *s, int i,
-                                    gretl_bundle *allInfo)
+static gretl_matrix *run_extractor_func (const char *fname,
+                                         gretl_bundle *b)
 {
+    gretl_matrix *ret = NULL;
+    fncall *fcall = NULL;
+    ufunc *func;
+    int err = 0;
+
+    func = get_user_function_by_name(fname);
+
+    if (func != NULL) {
+        fcall = fncall_new(func, 0);
+        if (fcall != NULL) {
+            err = push_anon_function_arg(fcall, GRETL_TYPE_BUNDLE, b);
+        }
+        if (!err) {
+            err = gretl_function_exec(fcall, GRETL_TYPE_MATRIX, NULL,
+                                      &ret, NULL);
+            if (err) {
+                fprintf(stderr, "run_extractor_func: err %d\n", err);
+            }
+        }
+    }
+
+    return ret;
+}
+
+static gretl_matrix *extract_param (const char *s, int i,
+                                    gretl_bundle *allInfo,
+                                    int *err)
+{
+    gretl_matrix *ret = NULL;
     gretl_array *dists;
     gchar *tmp = g_strdup(s);
-    gretl_matrix *ret = NULL;
-    int n, k, err = 0;
+    int branch = 0;
+    int n, k;
 
-    dists = gretl_bundle_get_array(allInfo, "dists", &err);
+    dists = gretl_bundle_get_array(allInfo, "dists", err);
 
     g_strstrip(tmp);
     n = strlen(tmp);
+
     if (*tmp == '[') {
         if (tmp[n-1] == ']') {
+            /* matrix from private array */
             gretl_bundle *b = gretl_array_get_data(dists, i);
-            gretl_array *a = gretl_bundle_get_array(b, "private", &err);
+            gretl_array *a = gretl_bundle_get_array(b, "private", err);
 
             sscanf(tmp+1, "%d]", &k);
             ret = gretl_array_get_data(a, k-1);
+            branch = 1;
+        } else {
+            *err = E_INVARG;
         }
     } else if (*tmp == '(') {
         if (tmp[n-1] == ')') {
+            /* @value from specified dists member */
             gretl_bundle *b;
 
             sscanf(tmp+1, "%d)", &k);
             b = gretl_array_get_data(dists, k-1);
-            ret = gretl_bundle_get_matrix(b, "value", &err); /* copy? */
+            ret = gretl_bundle_get_matrix(b, "value", err);
+            branch = 2;
+        } else {
+            *err = E_INVARG;
         }
     } else if (!strncmp(tmp, "__", 2)) {
-        /* a user-written function? */
-#if 0
-        gchar *call = g_strdup_printf("matrix XXX");
-        err = generate(line, dset, GRETL_TYPE_MATRIX, OPT_NONE,
-                       prn);
-#else        
-        gchar *call = g_strdup_printf("%s(allInfo)", tmp + 2);
-
-        ret = generate_matrix(call, NULL, &err);
-        fprintf(stderr, "HERE '%s' genr err %d\n", call, err);
-        g_free(call);
+        /* should be a user-written function */
+        ret = run_extractor_func(tmp + 2, allInfo);
+        branch = 3;
+    } else {
+        *err = E_INVARG;
     }
 
-    if (ret == NULL) {
-        ret = gretl_matrix_alloc(1,1);
-        ret->val[0] = NADBL;
-    }
+    fprintf(stderr, "extract_param: i=%d, branch=%d\n", i, branch);
+    gretl_matrix_print(ret, "ret");
 
     g_free(tmp);
 
     return ret;
+}
+
+static gretl_matrix *make_N_matrix (gretl_matrix *m,
+                                    gretl_matrix *S,
+                                    int dim, int N2)
+{
+    gretl_matrix *C = NULL;
+    gretl_matrix *Mn = NULL;
+    gretl_matrix *v = NULL;
+    int err = 0;
+
+    //gretl_matrix_print(m, "m, in make_N_matrix");
+
+    /* C = cholesky(S) */
+    C = gretl_matrix_copy(S);
+    err = gretl_matrix_cholesky_decomp(C);
+    if (err) {
+        fprintf(stderr, "make_N_matrix: cholesky(S) failed\n");
+        return NULL;
+    }
+
+    if (N2) {
+        /* v = S * m */
+        v = gretl_matrix_alloc(S->rows, m->cols);
+        gretl_matrix_multiply(S, m, v);
+    } else {
+        v = gretl_matrix_copy(m);
+    }
+
+    /* Mn = mnormal(dim,1) */
+    Mn = gretl_random_matrix_new(dim, 1, D_NORMAL);
+
+    /* v += C * Mn */
+    gretl_matrix_multiply_mod(C,  GRETL_MOD_NONE,
+                              Mn, GRETL_MOD_NONE,
+                              v,  GRETL_MOD_CUMULATE);
+    gretl_matrix_transpose_in_place(v);
+    gretl_matrix_print(v, "v' in make_N_matrix");
+
+    gretl_matrix_free(C);
+    gretl_matrix_free(Mn);
+
+    return v;
 }
 
 #define mapstr(m,i) gretl_array_get_data(m,i)
@@ -284,41 +358,21 @@ static double gen_one (gretl_bundle *B, int which)
         gretl_matrix *md;
         gretl_matrix *m;
         gretl_matrix *S;
-        gretl_matrix *C;
         gretl_matrix *V;
-        gretl_matrix *Mn;
         int dim;
 
-        md = extract_param(mapstr(map, 0), which, B);
-        m  = extract_param(mapstr(map, 1), which, B);
-        S  = extract_param(mapstr(map, 2), which, B);
+        md = extract_param(mapstr(map, 0), which, B, &err);
+        m  = extract_param(mapstr(map, 1), which, B, &err);
+        S  = extract_param(mapstr(map, 2), which, B, &err);
         dim = (int) md->val[0];
-        if (N2) {
-            gretl_matrix *Sm;
-
-            Sm = gretl_matrix_alloc(S->rows, m->cols);
-            gretl_matrix_multiply(S, m, Sm);
-            V = gretl_matrix_vectorize_new(Sm);
-            gretl_matrix_free(Sm);
-        } else {
-            V = gretl_matrix_vectorize_new(m);
-        }
-        C = gretl_matrix_copy(S);
-        err = gretl_matrix_cholesky_decomp(C);
-        Mn = gretl_random_matrix_new(dim, 1, D_NORMAL);
-
-        gretl_matrix_multiply_mod(C,  GRETL_MOD_NONE,
-                                  Mn, GRETL_MOD_NONE,
-                                  V,  GRETL_MOD_CUMULATE);
-        /* FIXME efficiency! */
-        gretl_matrix_transpose_in_place(V);
+        V = make_N_matrix(m, S, dim, N2);
         gretl_bundle_donate_data(this, "value", V, GRETL_TYPE_MATRIX, 0);
     } else if (!strcmp(id, "U")) {
         gretl_matrix *ma, *mb;
         double d, parm[2];
 
-        ma = extract_param(mapstr(map, 0), which, B);
-        mb = extract_param(mapstr(map, 1), which, B);
+        ma = extract_param(mapstr(map, 0), which, B, &err);
+        mb = extract_param(mapstr(map, 1), which, B, &err);
         parm[0] = ma->val[0]; parm[1] = mb->val[0];
         d = gretl_get_random_scalar(D_UNIFORM, parm, &err);
         gretl_bundle_set_scalar(this, "value", d);
@@ -328,7 +382,7 @@ static double gen_one (gretl_bundle *B, int which)
         double parm[2] = {0, 1};
         double p, d;
 
-        mp = extract_param(mapstr(map, 0), which, B);
+        mp = extract_param(mapstr(map, 0), which, B, &err);
         p = mp->val[0];
         d = gretl_get_random_scalar(D_UNIFORM, parm, &err);
         gretl_bundle_set_scalar(this, "value", d < p);
@@ -336,8 +390,8 @@ static double gen_one (gretl_bundle *B, int which)
         gretl_matrix *mp, *ma;
         double d, parm[2];
 
-        mp = extract_param(mapstr(map, 0), which, B);
-        ma = extract_param(mapstr(map, 1), which, B);
+        mp = extract_param(mapstr(map, 0), which, B, &err);
+        ma = extract_param(mapstr(map, 1), which, B, &err);
         parm[0] = mp->val[0];
         parm[1] = ma->val[0];
         d = gretl_get_random_scalar(D_GAMMA, parm, &err);
@@ -368,7 +422,7 @@ static int *gibbs_init (gretl_bundle *allInfo, int *err)
     }
 
     n = gretl_array_get_length(dists);
-    ret = malloc(n * sizeof *ret);
+    ret = malloc((n+1) * sizeof *ret);
 
     for (i=0; i<n && !*err; i++) {
         ret[i] = 0;
@@ -381,7 +435,7 @@ static int *gibbs_init (gretl_bundle *allInfo, int *err)
             int dim;
 
             map = gretl_bundle_get_array(this, "map", err);
-            md = extract_param(mapstr(map, 0), i, allInfo);
+            md = extract_param(mapstr(map, 0), i, allInfo, err);
             fprintf(stderr, "md: %p\n", (void *) md);
             gretl_matrix_print(md, "md");
             dim = md->val[0];
@@ -403,6 +457,7 @@ static int *gibbs_init (gretl_bundle *allInfo, int *err)
             ret[i] = 1;
         }
         fprintf(stderr, "ret[%d] = %d\n", i, ret[i]);
+        ret[n] += ret[i];
     }
 
     return ret;
@@ -413,9 +468,10 @@ gretl_matrix *gibbs_via_bundles (gretl_bundle *B, int T,
 {
     gretl_matrix *ret = NULL;
     gretl_array *dists;
-    gretl_bundle *localB;
     gretl_bundle *dist;
     gretl_matrix *m;
+    GretlType gt;
+    double x;
     int *nparams;
     int i, j, k, t;
     int n;
@@ -428,42 +484,50 @@ gretl_matrix *gibbs_via_bundles (gretl_bundle *B, int T,
 
     /* the number of distributions */
     n = gretl_array_get_length(dists);
-    pprintf(prn, "gibbs_via_bundles: n=%d, T=%d\n", n, T);
+    fprintf(stderr, "gibbs_via_bundles: n=%d, T=%d\n", n, T);
 
-
-    localB = gretl_bundle_copy(B, err);
-    if (!*err) {
-        nparams = gibbs_init(localB, err);
-    }
+    /* initialize and count params */
+    nparams = gibbs_init(B, err);
 
     if (!*err) {
-        int c = 0;
-
-        for (i=0; i<n; i++) {
-            c += nparams[i];
-        }
-        ret = gretl_zero_matrix_new(T, c);
-        pprintf(prn, " output cols=%d\n", c);
+        /* allocate output matrix */
+        ret = gretl_zero_matrix_new(T, nparams[n]);
+        pprintf(prn, " output cols=%d\n", ret->cols);
     }
 
     for (t=0; t<T && !*err; t++) {
-        pprintf(prn, " t = %d\n", t);
         k = 0;
+        gt = 0;
         for (i=0; i<n && !*err; i++) {
-            pprintf(prn, "   i = %d\n", i);
-            *err = gen_one(localB, i);
-            dist = gretl_array_get_data(dists, i);
-            m = gretl_bundle_get_matrix(dist, "value", err);
-            for (j=0; j<nparams[i]; j++) {
-                gretl_matrix_set(ret, t, k++, m->val[j]);
+            fprintf(stderr, "*** t = %d, i = %d ***\n", t, i);
+            *err = gen_one(B, i);
+            fprintf(stderr, " gen_one err %d\n", *err);
+            if (!*err) {
+                dist = gretl_array_get_data(dists, i);
+                gt = gretl_bundle_get_member_type(dist, "value", NULL);
+                if (gt == GRETL_TYPE_MATRIX) {
+                    m = gretl_bundle_get_matrix(dist, "value", err);
+                } else {
+                    x = gretl_bundle_get_scalar(dist, "value", err);
+                }
+            }
+            if (!*err && gt == GRETL_TYPE_MATRIX) {
+                for (j=0; j<nparams[i]; j++) {
+                    gretl_matrix_set(ret, t, k++, m->val[j]);
+                }
+            } else if (!*err) {
+                gretl_matrix_set(ret, t, k++, x);
             }
         }
     }
 
-    pprintf(prn, "gibbs_via_bundles: *err = %d\n", *err);
+    fprintf(stderr, "gibbs_via_bundles: *err = %d\n", *err);
 
     free(nparams);
-    gretl_bundle_destroy(localB);
+    if (*err) {
+        gretl_matrix_free(ret);
+        ret = NULL;
+    }
 
     return ret;
 }
