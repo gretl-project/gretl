@@ -240,13 +240,6 @@ static gretl_matrix *run_extractor_func (const char *fname,
         }
     }
 
-#if 0
-    if (free_it != NULL && ret != NULL &&
-        ret->rows == 1 && ret->cols == 1) {
-        *free_it = 1;
-    }
-#endif
-
     return ret;
 }
 
@@ -295,7 +288,6 @@ static gretl_matrix *extract_param (const char *s, int i,
 
 #if BDEBUG
     fprintf(stderr, "extract_param: i=%d, s='%s'\n", i, s);
-    gretl_matrix_print(ret, "ret");
 #endif
 
     g_free(tmp);
@@ -353,7 +345,8 @@ static double gen_one (gretl_bundle *B, int which, PRN *prn)
     gretl_array *dists;
     gretl_bundle *this;
     gretl_array *map;
-    int id;
+    const char *s;
+    int i, id;
     int err = 0;
 
     dists = gretl_bundle_get_array(B, "dists", &err);
@@ -362,46 +355,70 @@ static double gen_one (gretl_bundle *B, int which, PRN *prn)
     map = gretl_bundle_get_array(this, "map", &err);
 
     if (id == D_NORMAL || id == D_NORMAL2) {
-        gretl_matrix *md;
-        gretl_matrix *m;
-        gretl_matrix *S;
+        gretl_matrix *md, *m, *S;
+        gretl_matrix **MM[3] = {&md, &m, &S};
+        int mfree[3];
         gretl_matrix *V;
         int dim;
 
-        md = extract_param(mapstr(map, 0), which, B, prn, &err);
-        m  = extract_param(mapstr(map, 1), which, B, prn, &err);
-        S  = extract_param(mapstr(map, 2), which, B, prn, &err);
+        for (i=0; i<3 && !err; i++) {
+            s = gretl_array_get_data(map, i);
+            mfree[i] = (*s == '_');
+            *(MM[i]) = extract_param(s, which, B, prn, &err);
+        }
         dim = (int) md->val[0];
         V = make_N_matrix(m, S, dim, id);
+        for (i=0; i<3; i++) {
+            if (mfree[i]) gretl_matrix_free(*(MM[i]));
+        }
         gretl_bundle_donate_data(this, "value", V, GRETL_TYPE_MATRIX, 0);
     } else if (id == D_UNIFORM) {
         gretl_matrix *ma, *mb;
+        gretl_matrix **MM[2] = {&ma, &mb};
+        int mfree[2];
         double d, parm[2];
 
-        ma = extract_param(mapstr(map, 0), which, B, prn, &err);
-        mb = extract_param(mapstr(map, 1), which, B, prn, &err);
+        for (i=0; i<2 && !err; i++) {
+            s = gretl_array_get_data(map, i);
+            mfree[i] = (*s == '_');
+            *(MM[i]) = extract_param(s, which, B, prn, &err);
+        }
         parm[0] = ma->val[0];
         parm[1] = mb->val[0];
+        for (i=0; i<2; i++) {
+            if (mfree[i]) gretl_matrix_free(*(MM[i]));
+        }
         d = gretl_get_random_scalar(D_UNIFORM, parm, &err);
         gretl_bundle_set_scalar(this, "value", d);
-        /* free stuff? */
     } else if (id == D_BINOMIAL) {
         gretl_matrix *mp;
+        int mfree = 0;
         double parm[2] = {0, 1};
         double p, d;
 
-        mp = extract_param(mapstr(map, 0), which, B, prn, &err);
+        s = gretl_array_get_data(map, 0);
+        mfree = (*s == '_');
+        mp = extract_param(s, which, B, prn, &err);
         p = mp->val[0];
+        if (mfree) gretl_matrix_free(mp);
         d = gretl_get_random_scalar(D_UNIFORM, parm, &err);
         gretl_bundle_set_scalar(this, "value", d < p);
     } else if (id == D_GAMMA || id == D_IGAMMA) {
         gretl_matrix *mp, *ma;
+        gretl_matrix **MM[2] = {&mp, &ma};
+        int mfree[2];
         double d, parm[2];
 
-        mp = extract_param(mapstr(map, 0), which, B, prn, &err);
-        ma = extract_param(mapstr(map, 1), which, B, prn, &err);
+        for (i=0; i<2 && !err; i++) {
+            s = gretl_array_get_data(map, i);
+            mfree[i] = (*s == '_');
+            *(MM[i]) = extract_param(s, which, B, prn, &err);
+        }
         parm[0] = mp->val[0];
         parm[1] = 1.0 / ma->val[0];
+        for (i=0; i<2; i++) {
+            if (mfree[i]) gretl_matrix_free(*(MM[i]));
+        }
         d = gretl_get_random_scalar(D_GAMMA, parm, &err);
         if (id == D_GAMMA) {
             gretl_bundle_set_scalar(this, "value", d);
