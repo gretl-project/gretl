@@ -240,6 +240,13 @@ static gretl_matrix *run_extractor_func (const char *fname,
         }
     }
 
+#if 0
+    if (free_it != NULL && ret != NULL &&
+        ret->rows == 1 && ret->cols == 1) {
+        *free_it = 1;
+    }
+#endif
+
     return ret;
 }
 
@@ -373,7 +380,8 @@ static double gen_one (gretl_bundle *B, int which, PRN *prn)
 
         ma = extract_param(mapstr(map, 0), which, B, prn, &err);
         mb = extract_param(mapstr(map, 1), which, B, prn, &err);
-        parm[0] = ma->val[0]; parm[1] = mb->val[0];
+        parm[0] = ma->val[0];
+        parm[1] = mb->val[0];
         d = gretl_get_random_scalar(D_UNIFORM, parm, &err);
         gretl_bundle_set_scalar(this, "value", d);
         /* free stuff? */
@@ -423,7 +431,7 @@ static int *gibbs_init (gretl_bundle *allInfo, PRN *prn, int *err)
     }
 
     n = gretl_array_get_length(dists);
-    ret = malloc((n+1) * sizeof *ret);
+    ret = calloc(n+1, sizeof *ret);
 
     for (i=0; i<n && !*err; i++) {
         ret[i] = 0;
@@ -431,7 +439,7 @@ static int *gibbs_init (gretl_bundle *allInfo, PRN *prn, int *err)
         idstr = gretl_bundle_get_string(this, "dist", err);
         id = dist_code_from_string(idstr);
         gretl_bundle_set_int(this, "id", id);
-        if (id == D_NORMAL || id == D_NORMAL) {
+        if (id == D_NORMAL || id == D_NORMAL2) {
             gretl_array *map;
             gretl_matrix *md;
             gretl_matrix *Mn;
@@ -456,6 +464,8 @@ static int *gibbs_init (gretl_bundle *allInfo, PRN *prn, int *err)
         } else if (id == D_GAMMA || id == D_IGAMMA) {
             gretl_bundle_set_scalar(this, "value", 1);
             ret[i] = 1;
+        } else {
+            fprintf(stderr, "unknown distribution code '%s'\n", idstr);
         }
         ret[n] += ret[i];
     }
@@ -484,7 +494,6 @@ gretl_matrix *gibbs_via_bundles (gretl_bundle *B, int T,
 
     /* the number of distributions */
     n = gretl_array_get_length(dists);
-    //fprintf(stderr, "gibbs_via_bundles: n=%d, T=%d\n", n, T);
 
     /* initialize and count params */
     nparams = gibbs_init(B, prn, err);
@@ -492,7 +501,6 @@ gretl_matrix *gibbs_via_bundles (gretl_bundle *B, int T,
     if (!*err) {
         /* allocate output matrix */
         ret = gretl_zero_matrix_new(T, nparams[n]);
-        pprintf(prn, " output cols=%d\n", ret->cols);
     }
 
     for (t=0; t<T && !*err; t++) {
@@ -522,8 +530,6 @@ gretl_matrix *gibbs_via_bundles (gretl_bundle *B, int T,
             }
         }
     }
-
-    //fprintf(stderr, "gibbs_via_bundles: *err = %d\n", *err);
 
     free(nparams);
     if (*err) {

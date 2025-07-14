@@ -3135,7 +3135,7 @@ int dist_code_from_string (const char *s)
     }
     test[i] = '\0';
 
-    for (i=0; dmap[i].code; i++) {
+    for (i=0; dmap[i].code > 0; i++) {
         if (!strcmp(test, dmap[i].s)) {
             return dmap[i].code;
         }
