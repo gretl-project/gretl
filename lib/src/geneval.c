@@ -48,6 +48,7 @@
 #include "vartest.h"
 #include "flow_control.h"
 #include "mapinfo.h"
+#include "gretl_sampler.h"
 
 #include <time.h> /* for the $now accessor */
 
@@ -14653,7 +14654,7 @@ static int check_argc (int f, int k, parser *p)
         { F_COMMUTE,   2, 5 },
         { F_TOEPSOLV,  3, 4 },
         { F_RGBMIX,    3, 4 },
-        { F_GIBBS,     4, 4 }
+        { F_GIBBS,     2, 4 }
     };
     int argc_min = 2;
     int argc_max = 4;
@@ -14683,9 +14684,6 @@ static int no_ts_data (parser *p)
 
     return p->err;
 }
-
-/* FIXME place this code properly, if it's wanted */
-#include "gretl_sampler.c"
 
 #define nargs_needs_ts(f) (f == F_BKFILT)
 
@@ -15498,7 +15496,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
         if (!p->err) {
             ret->v.a = colormix_array(c[0], c[1], f, nf, do_plot, &p->err);
         }
-    } else if (t->t == F_GIBBS) {
+    } else if (t->t == F_GIBBS && k == 4) {
         char **init = NULL;
         char **iter = NULL;
         char **S = NULL;
@@ -15526,8 +15524,28 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
         }
         if (!p->err) {
             ret = aux_matrix_node(p);
-            ret->v.m = do_sampler(init, n1, iter, n2, burnin, N,
-                                  p->prn, &p->err);
+            ret->v.m = gibbs_via_genrs(init, n1, iter, n2, burnin, N,
+                                       p->prn, &p->err);
+        }
+    } else if (t->t == F_GIBBS && k == 2) {
+        gretl_bundle *b = NULL;
+        int T = 0;
+
+        for (i=0; i<k && !p->err; i++) {
+            e = n->v.bn.n[i];
+            if (i == 0) {
+                if (e->t == BUNDLE) {
+                    b = e->v.b;
+                } else {
+                    p->err = E_INVARG;
+                }
+            } else {
+                T = node_get_int(n->v.bn.n[i], p);
+            }
+        }
+        if (!p->err) {
+            ret = aux_matrix_node(p);
+            ret->v.m = gibbs_via_bundles(b, T, p->prn, &p->err);
         }
     } else if (t->t == HF_FELOGITR) {
         gretl_matrix *U = NULL;
