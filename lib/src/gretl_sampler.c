@@ -520,6 +520,8 @@ gretl_matrix *gibbs_via_bundles (gretl_bundle *B, int T,
         ret = gretl_zero_matrix_new(T, nparams[n]);
     }
 
+    gretl_iteration_push();
+
     for (t=0; t<T && !*err; t++) {
         k = 0;
         gt = 0;
@@ -547,6 +549,8 @@ gretl_matrix *gibbs_via_bundles (gretl_bundle *B, int T,
             }
         }
     }
+
+    gretl_iteration_pop();
 
     free(nparams);
     if (*err) {
