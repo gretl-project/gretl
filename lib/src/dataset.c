@@ -3441,6 +3441,8 @@ int dataset_op_from_string (const char *s)
     return op;
 }
 
+#define is_daily_frequency(f) (f==5 || f==6 || f==7)
+
 static int dataset_int_param (const char **ps, int op,
 			      DATASET *dset, int *err)
 {
@@ -3494,7 +3496,7 @@ static int dataset_int_param (const char **ps, int op,
                    k < dset->pd) {
             *err = 0;
 #endif
-        } else if (dset->pd == 24 && k == 7) {
+        } else if (dset->pd == 24 && is_daily_frequency(k)) {
             /* hourly to daily */
             *err = 0;
 	} else if (dset->pd > 1 && dset->pd != 10 && k == 1) {
