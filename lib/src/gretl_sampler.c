@@ -455,10 +455,24 @@ static int gibbs_record_result (GENERATOR *genr,
     return err;
 }
 
+static int should_record (char *vname, char **S, int n)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+        if (!strcmp(vname, S[i])) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 static gretl_matrix *gibbs_via_genrs (char **init, int ni,
                                       char **iterate, int ng,
                                       int burnin, int N,
                                       guint8 *record,
+                                      char **recnames, int nr,
                                       PRN *prn, int *err)
 {
     gretl_matrix *ret = NULL;
@@ -482,13 +496,18 @@ static gretl_matrix *gibbs_via_genrs (char **init, int ni,
             pprintf(prn, " > %s\n", init[i]);
         } else {
             user_var *uv = get_user_var_by_name(vname);
+            int add_cols = should_record(vname, recnames, nr);
 
             gt = user_var_get_type(uv);
             if (gt == GRETL_TYPE_DOUBLE) {
-                ncols++;
+                if (add_cols) {
+                    ncols++;
+                }
             } else if (gt == GRETL_TYPE_MATRIX) {
-                gm = user_var_get_value(uv);
-                ncols += gm->rows * gm->cols;
+                if (add_cols) {
+                    gm = user_var_get_value(uv);
+                    ncols += gm->rows * gm->cols;
+                }
             } else {
                 pprintf(prn, "bad type from init[%d]\n", i+1);
                 pprintf(prn, " > %s\n", init[i]);
@@ -671,10 +690,13 @@ int gibbs_execute (gretlopt opt, PRN *prn)
     char **init = NULL;
     char **iter = NULL;
     guint8 *record = NULL;
+    char vname[VNAMELEN];
+    char **recnames = NULL;
     char *s;
     int verbose;
     int ni = 0;
     int ng = 0;
+    int nr = 0;
     int i, iniprev = 0;
     int err = 0;
 
@@ -705,6 +727,9 @@ int gibbs_execute (gretlopt opt, PRN *prn)
             if (!strncmp(s, "record: ", 8)) {
                 record[i-ni] = 1;
                 shift_string_left(s, 8);
+                s += strspn(s, " ");
+                sscanf(s, "%31[^ =]", vname);
+                strings_array_add(&recnames, &nr, vname);
             }
             iniprev = 0;
         }
@@ -720,7 +745,8 @@ int gibbs_execute (gretlopt opt, PRN *prn)
     if (!err) {
         H = gibbs_via_genrs(init, ni, iter, ng,
                             gibbs_burnin, gibbs_N,
-                            record, prn, &err);
+                            record, recnames, nr,
+                            prn, &err);
         if (H != NULL) {
             err = user_var_add_or_replace(gibbs_output,
                                           GRETL_TYPE_MATRIX,
@@ -731,6 +757,7 @@ int gibbs_execute (gretlopt opt, PRN *prn)
         }
     }
 
+    strings_array_free(recnames, nr);
     free(record);
     gibbs_destroy();
 
