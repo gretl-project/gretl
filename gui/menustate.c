@@ -1010,16 +1010,40 @@ void set_main_window_title (const char *name, gboolean modified)
     }
 }
 
+static const char *daily_pdstr (DATASET *dset)
+{
+    const char *pdstrs[] = {
+        N_("Daily (5 days)"),
+        N_("Daily (6 days)"),
+        N_("Daily (7 days)"),
+        N_("Daily (5 days, incomplete)"),
+        N_("Daily (6 days, incomplete)"),
+        N_("Daily (7 days, incomplete)"),
+        N_("Daily (5 days, undated)"),
+        N_("Daily (6 days, undated)"),
+        N_("Daily (7 days, undated)")
+    };
+    int i = dset->pd - 5;
+    int j = 0;
+
+    if (dset->markers == DAILY_DATE_STRINGS) {
+        /* incomplete */
+        j = 1;
+    } else if (dset->sd0 < 100000) {
+        /* undated */
+        j = 2;
+    }
+
+    return pdstrs[i + j*3];
+}
+
 static const char *get_pd_string (DATASET *dset)
 {
-    char *pdstr;
+    const char *pdstr;
 
     if (custom_time_series(dset)) {
         pdstr = N_("Time series");
     } else if (dataset_is_time_series(dset)) {
-	int daystrings = dset->markers == DAILY_DATE_STRINGS;
-	int plain_sd0 = dset->sd0 < 100000;
-
         switch (dset->pd) {
         case 1:
             pdstr = N_("Annual"); break;
@@ -1032,26 +1056,9 @@ static const char *get_pd_string (DATASET *dset)
         case 52:
             pdstr = N_("Weekly"); break;
         case 5:
-	    if (daystrings || plain_sd0) {
-		pdstr = N_("Daily (5 days, incomplete)");
-	    } else {
-		pdstr = N_("Daily (5 days)");
-	    }
-	    break;
-	case 6:
-	    if (daystrings || plain_sd0) {
-		pdstr = N_("Daily (6 days, incomplete)");
-	    } else {
-		pdstr = N_("Daily (6 days)");
-	    }
-	    break;
-	case 7:
-	    if (daystrings || plain_sd0) {
-		pdstr = N_("Daily (7 days, incomplete)");
-	    } else {
-		pdstr = N_("Daily (7 days)");
-	    }
-	    break;
+        case 6:
+        case 7:
+            pdstr = daily_pdstr(dset); break;
         case 10:
             pdstr = N_("Decennial"); break;
         default:

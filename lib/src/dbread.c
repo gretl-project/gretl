@@ -4907,7 +4907,7 @@ int compact_dataset (DATASET *dset, int newpd,
     int end_major = 0;
     int end_minor = 0;
     int from_dated_daily = 0;
-    int from_hourly;
+    int from_hourly = 0;
     char stobs[OBSLEN];
     int i, err = 0;
 
@@ -4928,8 +4928,8 @@ int compact_dataset (DATASET *dset, int newpd,
 	return weekly_dataset_to_monthly(dset, default_method);
     }
 
-    if (oldpd == 24 && newpd == 7) {
-        from_hourly = 7;
+    if (oldpd == 24 && is_daily(newpd)) {
+        from_hourly = newpd;
         newpd = 1;
     } else {
         from_dated_daily = dated_daily_data(dset);
