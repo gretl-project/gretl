@@ -731,6 +731,7 @@ int gibbs_execute (gretlopt opt, PRN *prn)
         }
     }
 
+    free(record);
     gibbs_destroy();
 
     return err;
