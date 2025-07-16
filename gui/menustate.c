@@ -1023,18 +1023,18 @@ static const char *daily_pdstr (DATASET *dset)
         N_("Daily (6 days, undated)"),
         N_("Daily (7 days, undated)")
     };
-    int n1 = dset->pd - 5;
-    int n2 = 0;
+    int i = dset->pd - 5;
+    int j = 0;
 
     if (dset->markers == DAILY_DATE_STRINGS) {
         /* incomplete */
-        n2 = 1;
+        j = 1;
     } else if (dset->sd0 < 100000) {
         /* undated */
-        n2 = 2;
+        j = 2;
     }
 
-    return pdstrs[n1 + n2*3];
+    return pdstrs[i + j*3];
 }
 
 static const char *get_pd_string (DATASET *dset)
