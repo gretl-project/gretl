@@ -24,174 +24,7 @@
 #include "libset.h"
 #include "gretl_sampler.h"
 
-static GENERATOR **allocate_generators (int nv, int *err)
-{
-    GENERATOR **genrs = malloc(nv * sizeof *genrs);
-    int i;
-
-    if (genrs == NULL) {
-        *err = E_ALLOC;
-    } else {
-        for (i=0; i<nv; i++) {
-            genrs[i] = NULL;
-        }
-    }
-
-    return genrs;
-}
-
-static int get_lhs_info (const char **psrc,
-                         GretlType *pt,
-                         char *vname)
-{
-    const char *src = *psrc;
-    char s[VNAMELEN];
-    GretlType t;
-
-    sscanf(src, "%31[^= ]", s);
-    t = gretl_type_from_string(s);
-    if (t == GRETL_TYPE_NONE) {
-        t = GRETL_TYPE_ANY;
-        strcpy(vname, s);
-    } else if (t != GRETL_TYPE_DOUBLE &&
-               t != GRETL_TYPE_MATRIX) {
-        return E_TYPES;
-    } else {
-        /* got 'scalar' or 'matrix': skip forward */
-        src += strspn(src, " ");
-        src += strlen(s);
-        src += strspn(src, " ");
-        sscanf(src, "%31[^= ]", vname);
-    }
-
-    *pt = t;
-    *psrc = src;
-
-    return 0;
-}
-
-static int gibbs_record_result (GENERATOR *genr,
-                                gretl_matrix *H,
-                                int t, int *pc)
-{
-    GretlType gt = genr_get_output_type(genr);
-    int c = *pc;
-    int err = 0;
-
-    if (gt == GRETL_TYPE_DOUBLE) {
-        double gx = genr_get_output_scalar(genr);
-
-        gretl_matrix_set(H, t, c++, gx);
-    } else {
-        gretl_matrix *gm = genr_get_output_matrix(genr);
-        int j, nvals;
-
-        if (gm == NULL) {
-            err = E_TYPES;
-        } else {
-            nvals = gm->rows * gm->cols;
-            for (j=0; j<nvals; j++) {
-                gretl_matrix_set(H, t, c++, gm->val[j]);
-            }
-        }
-    }
-
-    *pc = c;
-
-    return err;
-}
-
-static gretl_matrix *gibbs_via_genrs (char **init, int ni,
-                                      char **iterate, int ng,
-                                      int burnin, int N,
-                                      guint8 *record,
-                                      PRN *prn, int *err)
-{
-    gretl_matrix *ret = NULL;
-    gretl_matrix *gm = NULL;
-    GENERATOR **genrs = NULL;
-    char vname[VNAMELEN];
-    GretlType gt;
-    const char *s;
-    int ncols = 0;
-    int iters;
-    int i, j, t, c;
-
-    for (i=0; i<ni && !*err; i++) {
-        s = init[i];
-        *err = get_lhs_info(&s, &gt, vname);
-        if (!*err) {
-            *err = generate(s, NULL, gt, OPT_NONE, prn);
-        }
-        if (*err) {
-            pprintf(prn, "generate failed on init[%d]\n", i+1);
-            pprintf(prn, " > %s\n", init[i]);
-        } else {
-            user_var *uv = get_user_var_by_name(vname);
-
-            gt = user_var_get_type(uv);
-            if (gt == GRETL_TYPE_DOUBLE) {
-                ncols++;
-            } else if (gt == GRETL_TYPE_MATRIX) {
-                gm = user_var_get_value(uv);
-                ncols += gm->rows * gm->cols;
-            } else {
-                pprintf(prn, "bad type on init[%d]\n", i+1);
-                *err = E_TYPES;
-            }
-        }
-    }
-
-    if (*err) {
-        return ret;
-    }
-
-    genrs = allocate_generators(ng, err);
-    if (!*err) {
-        ret = gretl_matrix_alloc(N, ncols);
-        if (ret == NULL) {
-            *err = E_ALLOC;
-        }
-    }
-
-    iters = burnin + N;
-    gretl_iteration_push();
-
-    /* the main iteration */
-    for (t=0; t<iters && !*err; t++) {
-        c = 0;
-        for (i=0; i<ng && !*err; i++) {
-            if (t == 0) {
-                s = iterate[i];
-                *err = get_lhs_info(&s, &gt, vname);
-                if (!*err) {
-                    genrs[i] = genr_compile(s, NULL, gt, OPT_NONE,
-                                            prn, err);
-                }
-            } else {
-                /* already compiled */
-                *err = execute_genr(genrs[i], NULL, prn);
-            }
-            if (*err) {
-                pprintf(prn, "genr[%d] failed at iter %d\n> %s\n",
-                        i, t, iterate[i]);
-            } else if (t >= burnin && record[i]) {
-                *err = gibbs_record_result(genrs[i], ret, t, &c);
-            }
-        }
-    }
-
-    gretl_iteration_pop();
-
-    for (j=0; j<ng; j++) {
-        destroy_genr(genrs[j]);
-    }
-    free(genrs);
-
-    return ret;
-}
-
-/* Below: apparatus pertaining to gibbs_via_bundles() */
+/* first: apparatus pertaining to gibbs_via_bundles() */
 
 #define BDEBUG 0
 
@@ -541,6 +374,178 @@ gretl_matrix *gibbs_via_bundles (gretl_bundle *B, int T,
     return ret;
 }
 
+/* End of apparatus pertaining to gibbs_via_bundles().
+   Start of apparatus for "gibbs" block command.
+*/
+
+static GENERATOR **allocate_generators (int nv, int *err)
+{
+    GENERATOR **genrs = malloc(nv * sizeof *genrs);
+    int i;
+
+    if (genrs == NULL) {
+        *err = E_ALLOC;
+    } else {
+        for (i=0; i<nv; i++) {
+            genrs[i] = NULL;
+        }
+    }
+
+    return genrs;
+}
+
+static int get_lhs_info (const char **psrc,
+                         GretlType *pt,
+                         char *vname)
+{
+    const char *src = *psrc;
+    char s[VNAMELEN];
+    GretlType t;
+
+    sscanf(src, "%31[^= ]", s);
+    t = gretl_type_from_string(s);
+    if (t == GRETL_TYPE_NONE) {
+        t = GRETL_TYPE_ANY;
+        strcpy(vname, s);
+    } else if (t != GRETL_TYPE_DOUBLE &&
+               t != GRETL_TYPE_MATRIX) {
+        return E_TYPES;
+    } else {
+        /* got 'scalar' or 'matrix': skip forward */
+        src += strspn(src, " ");
+        src += strlen(s);
+        src += strspn(src, " ");
+        sscanf(src, "%31[^= ]", vname);
+    }
+
+    *pt = t;
+    *psrc = src;
+
+    return 0;
+}
+
+static int gibbs_record_result (GENERATOR *genr,
+                                gretl_matrix *H,
+                                int t, int *pc)
+{
+    GretlType gt = genr_get_output_type(genr);
+    int c = *pc;
+    int err = 0;
+
+    if (gt == GRETL_TYPE_DOUBLE) {
+        double gx = genr_get_output_scalar(genr);
+
+        gretl_matrix_set(H, t, c++, gx);
+    } else {
+        gretl_matrix *gm = genr_get_output_matrix(genr);
+        int j, nvals;
+
+        if (gm == NULL) {
+            err = E_TYPES;
+        } else {
+            nvals = gm->rows * gm->cols;
+            for (j=0; j<nvals; j++) {
+                gretl_matrix_set(H, t, c++, gm->val[j]);
+            }
+        }
+    }
+
+    *pc = c;
+
+    return err;
+}
+
+static gretl_matrix *gibbs_via_genrs (char **init, int ni,
+                                      char **iterate, int ng,
+                                      int burnin, int N,
+                                      guint8 *record,
+                                      PRN *prn, int *err)
+{
+    gretl_matrix *ret = NULL;
+    gretl_matrix *gm = NULL;
+    GENERATOR **genrs = NULL;
+    char vname[VNAMELEN];
+    GretlType gt;
+    const char *s;
+    int ncols = 0;
+    int iters;
+    int i, j, t, c;
+
+    for (i=0; i<ni && !*err; i++) {
+        s = init[i];
+        *err = get_lhs_info(&s, &gt, vname);
+        if (!*err) {
+            *err = generate(s, NULL, gt, OPT_NONE, prn);
+        }
+        if (*err) {
+            pprintf(prn, "generate failed on init[%d]\n", i+1);
+            pprintf(prn, " > %s\n", init[i]);
+        } else {
+            user_var *uv = get_user_var_by_name(vname);
+
+            gt = user_var_get_type(uv);
+            if (gt == GRETL_TYPE_DOUBLE) {
+                ncols++;
+            } else if (gt == GRETL_TYPE_MATRIX) {
+                gm = user_var_get_value(uv);
+                ncols += gm->rows * gm->cols;
+            } else {
+                pprintf(prn, "bad type from init[%d]\n", i+1);
+                pprintf(prn, " > %s\n", init[i]);
+                *err = E_TYPES;
+            }
+        }
+    }
+
+    if (*err) {
+        return ret;
+    }
+
+    genrs = allocate_generators(ng, err);
+    if (!*err) {
+        ret = gretl_matrix_alloc(N, ncols);
+        if (ret == NULL) {
+            *err = E_ALLOC;
+        }
+    }
+
+    iters = burnin + N;
+    gretl_iteration_push();
+
+    /* the main iteration */
+    for (t=0; t<iters && !*err; t++) {
+        c = 0;
+        for (i=0; i<ng && !*err; i++) {
+            if (t == 0) {
+                s = iterate[i];
+                *err = get_lhs_info(&s, &gt, vname);
+                if (!*err) {
+                    genrs[i] = genr_compile(s, NULL, gt, OPT_NONE,
+                                            prn, err);
+                }
+            } else {
+                /* already compiled */
+                *err = execute_genr(genrs[i], NULL, prn);
+            }
+            if (*err) {
+                pprintf(prn, "genr[%d] failed at iter %d\n> %s\n",
+                        i, t, iterate[i]);
+            } else if (t >= burnin && record[i]) {
+                *err = gibbs_record_result(genrs[i], ret, t, &c);
+            }
+        }
+    }
+
+    gretl_iteration_pop();
+
+    for (j=0; j<ng; j++) {
+        destroy_genr(genrs[j]);
+    }
+    free(genrs);
+
+    return ret;
+}
+
 static char **gibbs_lines;
 static int gibbs_started;
 static int gibbs_n_lines;
@@ -599,7 +604,10 @@ static int parse_gibbs_params (const char *s)
         } else if (i == 1) {
             gibbs_N = gretl_int_from_string(p, &err);
         } else {
-            gibbs_output = gretl_strdup(p);
+            err = check_identifier(p);
+            if (!err) {
+                gibbs_output = gretl_strdup(p);
+            }
         }
         s += strlen(p);
     }
