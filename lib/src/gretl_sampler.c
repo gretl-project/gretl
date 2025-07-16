@@ -67,81 +67,82 @@ static int get_lhs_info (const char **psrc,
     *pt = t;
     *psrc = src;
 
-#if 0
-    fprintf(stderr, "get_lhs_info: vname '%s', type '%s'\n",
-            vname, gretl_type_get_name(t));
-#endif
-
     return 0;
 }
 
-static int is_inivar (const char *s, char **S, int ns)
+static int gibbs_record_result (GENERATOR *genr,
+                                gretl_matrix *H,
+                                int t, int *pc)
 {
-    int i;
+    GretlType gt = genr_get_output_type(genr);
+    int c = *pc;
+    int err = 0;
 
-    for (i=0; i<ns; i++) {
-        if (!strcmp(s, S[i])) {
-            return 1;
+    if (gt == GRETL_TYPE_DOUBLE) {
+        double gx = genr_get_output_scalar(genr);
+
+        gretl_matrix_set(H, t, c++, gx);
+    } else {
+        gretl_matrix *gm = genr_get_output_matrix(genr);
+        int j, nvals;
+
+        if (gm == NULL) {
+            err = E_TYPES;
+        } else {
+            nvals = gm->rows * gm->cols;
+            for (j=0; j<nvals; j++) {
+                gretl_matrix_set(H, t, c++, gm->val[j]);
+            }
         }
     }
 
-    return 0;
+    *pc = c;
+
+    return err;
 }
 
-gretl_matrix *gibbs_via_genrs (char **init, int ni,
-                               char **iterate, int ng,
-                               int burnin, int N,
-                               PRN *prn, int *err)
+static gretl_matrix *gibbs_via_genrs (char **init, int ni,
+                                      char **iterate, int ng,
+                                      int burnin, int N,
+                                      guint8 *record,
+                                      PRN *prn, int *err)
 {
     gretl_matrix *ret = NULL;
     gretl_matrix *gm = NULL;
     GENERATOR **genrs = NULL;
-    GretlType *gtypes = NULL;
-    GretlType gt;
-    char **inivars = NULL;
     char vname[VNAMELEN];
+    GretlType gt;
     const char *s;
-    gint8 *record = NULL;
     int ncols = 0;
-    int nvals;
     int iters;
-    double gx;
-    int i, j, k, t, c;
-
-    gtypes = calloc(ni, sizeof *gtypes);
-    record = calloc(ng, sizeof *record);
-    inivars = strings_array_new(ni);
+    int i, j, t, c;
 
     for (i=0; i<ni && !*err; i++) {
         s = init[i];
         *err = get_lhs_info(&s, &gt, vname);
         if (!*err) {
-            gtypes[i] = gt;
-            inivars[i] = gretl_strdup(vname);
             *err = generate(s, NULL, gt, OPT_NONE, prn);
         }
         if (*err) {
-            fprintf(stderr, "generate failed on init[%d]\n", i);
-            fprintf(stderr, " > %s\n", init[i]);
+            pprintf(prn, "generate failed on init[%d]\n", i+1);
+            pprintf(prn, " > %s\n", init[i]);
         } else {
             user_var *uv = get_user_var_by_name(vname);
 
-            gtypes[i] = user_var_get_type(uv);
-            if (gtypes[i] == GRETL_TYPE_DOUBLE) {
+            gt = user_var_get_type(uv);
+            if (gt == GRETL_TYPE_DOUBLE) {
                 ncols++;
-            } else if (gtypes[i] == GRETL_TYPE_MATRIX) {
+            } else if (gt == GRETL_TYPE_MATRIX) {
                 gm = user_var_get_value(uv);
                 ncols += gm->rows * gm->cols;
             } else {
-                fprintf(stderr, "E_TYPES on init[%d]\n", i);
+                pprintf(prn, "bad type on init[%d]\n", i+1);
                 *err = E_TYPES;
             }
         }
     }
 
     if (*err) {
-        free(record);
-        free(gtypes);
         return ret;
     }
 
@@ -158,7 +159,7 @@ gretl_matrix *gibbs_via_genrs (char **init, int ni,
 
     /* the main iteration */
     for (t=0; t<iters && !*err; t++) {
-        k = c = 0;
+        c = 0;
         for (i=0; i<ng && !*err; i++) {
             if (t == 0) {
                 s = iterate[i];
@@ -167,33 +168,15 @@ gretl_matrix *gibbs_via_genrs (char **init, int ni,
                     genrs[i] = genr_compile(s, NULL, gt, OPT_NONE,
                                             prn, err);
                 }
-                if (!*err && is_inivar(vname, inivars, ni)) {
-                    record[i] = 1;
-                }
             } else {
                 /* already compiled */
                 *err = execute_genr(genrs[i], NULL, prn);
             }
             if (*err) {
-                fprintf(stderr, "genr[%d] failed at iter %d\n> %s\n",
+                pprintf(prn, "genr[%d] failed at iter %d\n> %s\n",
                         i, t, iterate[i]);
             } else if (t >= burnin && record[i]) {
-                if (gtypes[k] == GRETL_TYPE_DOUBLE) {
-                    gx = genr_get_output_scalar(genrs[i]);
-                    gretl_matrix_set(ret, t, c++, gx);
-                } else {
-                    gm = genr_get_output_matrix(genrs[i]);
-                    if (gm == NULL) {
-                        fprintf(stderr, "genr[%d] didn't produce a matrix\n", i);
-                        *err = 1;
-                    } else {
-                        nvals = gm->rows * gm->cols;
-                        for (j=0; j<nvals; j++) {
-                            gretl_matrix_set(ret, t, c++, gm->val[j]);
-                        }
-                    }
-                }
-                k++;
+                *err = gibbs_record_result(genrs[i], ret, t, &c);
             }
         }
     }
@@ -204,9 +187,6 @@ gretl_matrix *gibbs_via_genrs (char **init, int ni,
         destroy_genr(genrs[j]);
     }
     free(genrs);
-    free(record);
-    free(gtypes);
-    strings_array_free(inivars, ni);
 
     return ret;
 }
@@ -559,4 +539,184 @@ gretl_matrix *gibbs_via_bundles (gretl_bundle *B, int T,
     }
 
     return ret;
+}
+
+static char **gibbs_lines;
+static int gibbs_started;
+static int gibbs_n_lines;
+static int gibbs_burnin;
+static int gibbs_N;
+static char *gibbs_output;
+
+static void gibbs_destroy (void)
+{
+    if (gibbs_lines != NULL) {
+        strings_array_free(gibbs_lines, gibbs_n_lines);
+        gibbs_lines = NULL;
+    }
+    if (gibbs_output != NULL) {
+        free(gibbs_output);
+        gibbs_output = NULL;
+    }
+    gibbs_started = 0;
+    gibbs_n_lines = 0;
+    gibbs_burnin = 0;
+    gibbs_N = 0;
+}
+
+static int parse_gibbs_params (const char *s)
+{
+    const char *targ[] = {
+        "burnin", "N", "output"
+    };
+    char p[VNAMELEN] = {0};
+    int i, err = 0;
+
+    for (i=0; i<3; i++) {
+        s += strspn(s, " ");
+        if (*s == '\0') {
+            err = E_PARSE;
+            break;
+        }
+        if (!sscanf(s, "%8[^ =]", p) || strcmp(p, targ[i])) {
+            err = E_PARSE;
+            break;
+        }
+        s += strlen(p);
+        s += strspn(s, " ");
+        if (*s != '=') {
+            err = E_PARSE;
+            break;
+        }
+        s += 1 + strspn(s, " ");
+        p[0] = '\0';
+        if (!sscanf(s, "%31[^ ]", p)) {
+            err = E_PARSE;
+            break;
+        }
+        if (i == 0) {
+            gibbs_burnin = gretl_int_from_string(p, &err);
+        } else if (i == 1) {
+            gibbs_N = gretl_int_from_string(p, &err);
+        } else {
+            gibbs_output = gretl_strdup(p);
+        }
+        s += strlen(p);
+    }
+
+    if (!err) {
+        s += strspn(s, " ");
+        if (*s != '\0') {
+            err = E_PARSE;
+        }
+    }
+    if (err) {
+        fprintf(stderr, "> %s\n", s);
+        gibbs_destroy();
+    }
+
+    return err;
+}
+
+int gibbs_block_start (const char *line, PRN *prn)
+{
+    int err = 0;
+
+    if (gibbs_started) {
+        gretl_errmsg_sprintf(_("%s: a block is already started"),
+                             gretl_command_word(GIBBS));
+        return E_DATA;
+    }
+
+    /* parse out burnin, N and output */
+    err = parse_gibbs_params(line);
+
+    if (!err) {
+        gibbs_started = 1;
+    }
+
+    return err;
+}
+
+int gibbs_block_append (const char *line)
+{
+    int err = 0;
+
+    if (!gibbs_started) {
+        gretl_errmsg_sprintf(_("%s: no block is in progress"),
+                             gretl_command_word(GIBBS));
+        err = E_DATA;
+    } else if (!string_is_blank(line)) {
+        err = strings_array_add(&gibbs_lines, &gibbs_n_lines, line);
+        if (err) {
+            gibbs_destroy();
+        }
+    }
+
+    return err;
+}
+
+int gibbs_execute (gretlopt opt, PRN *prn)
+{
+    gretl_matrix *H = NULL;
+    char **init = NULL;
+    char **iter = NULL;
+    guint8 *record = NULL;
+    char *s;
+    int ni = 0;
+    int ng = 0;
+    int i, iniprev = 0;
+    int err = 0;
+
+    if (opt & OPT_V) {
+        pprintf(prn, "gibbs: burnin = %d, N = %d, output %s\n",
+                gibbs_burnin, gibbs_N, gibbs_output);
+    }
+
+    for (i=0; i<gibbs_n_lines && !err; i++) {
+        s = gibbs_lines[i];
+        if (!strncmp(s, "init: ", 6)) {
+            if (i > 0 && !iniprev) {
+                pprintf(prn, "Initializers must come first\n");
+                pprintf(prn, "> %s\n", s);
+                err = E_INVARG;
+            } else {
+                shift_string_left(s, 6);
+                iniprev = 1;
+                ni++;
+            }
+        } else {
+            if (ng == 0) {
+                ng = gibbs_n_lines - ni;
+                record = calloc(ng, 1);
+            }
+            if (!strncmp(s, "record: ", 8)) {
+                record[i-ni] = 1;
+                shift_string_left(s, 8);
+            }
+            iniprev = 0;
+        }
+    }
+
+    if (!err) {
+        if (ni > 0) {
+            init = gibbs_lines;
+        }
+        iter = gibbs_lines + ni;
+    }
+
+    if (!err) {
+        H = gibbs_via_genrs(init, ni, iter, ng,
+                            gibbs_burnin, gibbs_N,
+                            record, prn, &err);
+        if (H != NULL) {
+            err = user_var_add_or_replace(gibbs_output,
+                                          GRETL_TYPE_MATRIX,
+                                          H);
+        }
+    }
+
+    gibbs_destroy();
+
+    return err;
 }

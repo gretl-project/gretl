@@ -14654,7 +14654,7 @@ static int check_argc (int f, int k, parser *p)
         { F_COMMUTE,   2, 5 },
         { F_TOEPSOLV,  3, 4 },
         { F_RGBMIX,    3, 4 },
-        { F_GIBBS,     2, 4 }
+        { F_GIBBS,     2, 2 }
     };
     int argc_min = 2;
     int argc_max = 4;
@@ -15496,38 +15496,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
         if (!p->err) {
             ret->v.a = colormix_array(c[0], c[1], f, nf, do_plot, &p->err);
         }
-    } else if (t->t == F_GIBBS && k == 4) {
-        char **init = NULL;
-        char **iter = NULL;
-        char **S = NULL;
-        int n1, n2;
-        int burnin, N;
-
-        for (i=0; i<k && !p->err; i++) {
-            e = n->v.bn.n[i];
-            if (i < 2) {
-                if (e->t != ARRAY) {
-                    p->err = E_INVARG;
-                } else if (i == 0) {
-                    S = init = gretl_array_get_strings(e->v.a, &n1);
-                } else {
-                    S = iter = gretl_array_get_strings(e->v.a, &n2);
-                }
-                if (!p->err && S == NULL) {
-                    p->err = E_INVARG;
-                }
-            } else {
-                int *intp = i == 2 ? &burnin : &N;
-
-                *intp = node_get_int(e, p);
-            }
-        }
-        if (!p->err) {
-            ret = aux_matrix_node(p);
-            ret->v.m = gibbs_via_genrs(init, n1, iter, n2, burnin, N,
-                                       p->prn, &p->err);
-        }
-    } else if (t->t == F_GIBBS && k == 2) {
+    } else if (t->t == F_GIBBS) {
         gretl_bundle *b = NULL;
         int T = 0;
 

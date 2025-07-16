@@ -20,12 +20,13 @@
 #ifndef GRETL_SAMPLER_H
 #define GRETL_SAMPLER_H
 
-gretl_matrix *gibbs_via_genrs (char **init, int ni,
-                               char **iterate, int ng,
-                               int burnin, int N,
-                               PRN *prn, int *err);
-
 gretl_matrix *gibbs_via_bundles (gretl_bundle *B, int T,
                                  PRN *prn, int *err);
+
+int gibbs_block_start (const char *line, PRN *prn);
+
+int gibbs_block_append (const char *line);
+
+int gibbs_execute (gretlopt opt, PRN *prn);
 
 #endif /* GRETL_SAMPLER_H */
