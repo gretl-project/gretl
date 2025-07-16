@@ -469,7 +469,7 @@ static gretl_matrix *gibbs_via_genrs (char **init, int ni,
     const char *s;
     int ncols = 0;
     int iters;
-    int i, j, t, c;
+    int i, j, k, t, c;
 
     for (i=0; i<ni && !*err; i++) {
         s = init[i];
@@ -514,6 +514,7 @@ static gretl_matrix *gibbs_via_genrs (char **init, int ni,
 
     /* the main iteration */
     for (t=0; t<iters && !*err; t++) {
+        k = t - burnin;
         c = 0;
         for (i=0; i<ng && !*err; i++) {
             if (t == 0) {
@@ -530,8 +531,8 @@ static gretl_matrix *gibbs_via_genrs (char **init, int ni,
             if (*err) {
                 pprintf(prn, "genr[%d] failed at iter %d\n> %s\n",
                         i, t, iterate[i]);
-            } else if (t >= burnin && record[i]) {
-                *err = gibbs_record_result(genrs[i], ret, t, &c);
+            } else if (k >= 0 && record[i]) {
+                *err = gibbs_record_result(genrs[i], ret, k, &c);
             }
         }
     }
@@ -671,12 +672,15 @@ int gibbs_execute (gretlopt opt, PRN *prn)
     char **iter = NULL;
     guint8 *record = NULL;
     char *s;
+    int verbose;
     int ni = 0;
     int ng = 0;
     int i, iniprev = 0;
     int err = 0;
 
-    if (opt & OPT_V) {
+    verbose = (opt & OPT_V)? 1 : 0;
+
+    if (verbose) {
         pprintf(prn, "gibbs: burnin = %d, N = %d, output %s\n",
                 gibbs_burnin, gibbs_N, gibbs_output);
     }
@@ -721,6 +725,9 @@ int gibbs_execute (gretlopt opt, PRN *prn)
             err = user_var_add_or_replace(gibbs_output,
                                           GRETL_TYPE_MATRIX,
                                           H);
+        }
+        if (!err && verbose) {
+            pprintf(prn, "%s is %d x %d\n", gibbs_output, H->rows, H->cols);
         }
     }
 
