@@ -1602,9 +1602,6 @@ int mainwin_insert_vwin (windata_t *vwin)
     }
     if (gtk_paned_get_child2(GTK_PANED(mdata->hpanes1)) == NULL) {
 	gtk_paned_add2(GTK_PANED(mdata->hpanes1), vwin->vbox);
-#if GTK_MAJOR_VERSION > 2 && defined(G_OS_WIN32)
-        gtk_paned_set_wide_handle(GTK_PANED(mdata->hpanes1), TRUE);
-#endif
 	gtk_paned_set_position(GTK_PANED(mdata->hpanes1), mainwin_width/2);
 	ret = 1;
     } else if (mdata->hpanes2 != NULL) {

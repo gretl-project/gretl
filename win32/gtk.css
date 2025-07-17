@@ -970,6 +970,8 @@ notebook {
       color: #999999; }
 
 paned > separator {
+  min-width: 4px;
+  min-height: 4px;
   border: none;
   color: transparent;
   background-color: #c6c6c6; }
