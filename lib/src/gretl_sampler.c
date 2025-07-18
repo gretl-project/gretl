@@ -425,8 +425,9 @@ static int get_lhs_info (const char **psrc,
 }
 
 static int gibbs_record_result (GENERATOR *genr,
+                                int recsize,
                                 gretl_matrix *H,
-                                int t, int *pc)
+                                int s, int *pc)
 {
     GretlType gt = genr_get_output_type(genr);
     int c = *pc;
@@ -435,7 +436,7 @@ static int gibbs_record_result (GENERATOR *genr,
     if (gt == GRETL_TYPE_DOUBLE) {
         double gx = genr_get_output_scalar(genr);
 
-        gretl_matrix_set(H, t, c++, gx);
+        gretl_matrix_set(H, s, c++, gx);
     } else {
         gretl_matrix *gm = genr_get_output_matrix(genr);
         int j, nvals;
@@ -444,8 +445,12 @@ static int gibbs_record_result (GENERATOR *genr,
             err = E_TYPES;
         } else {
             nvals = gm->rows * gm->cols;
-            for (j=0; j<nvals; j++) {
-                gretl_matrix_set(H, t, c++, gm->val[j]);
+            if (nvals != recsize) {
+                err = E_DATA;
+            } else {
+                for (j=0; j<nvals; j++) {
+                    gretl_matrix_set(H, s, c++, gm->val[j]);
+                }
             }
         }
     }
@@ -455,24 +460,10 @@ static int gibbs_record_result (GENERATOR *genr,
     return err;
 }
 
-static int should_record (char *vname, char **S, int n)
-{
-    int i;
-
-    for (i=0; i<n; i++) {
-        if (!strcmp(vname, S[i])) {
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
 static gretl_matrix *gibbs_via_genrs (char **init, int ni,
-                                      char **iterate, int ng,
+                                      char **iter, int ng,
                                       int burnin, int N,
                                       guint8 *record,
-                                      char **recnames, int nr,
                                       PRN *prn, int *err)
 {
     gretl_matrix *ret = NULL;
@@ -480,35 +471,28 @@ static gretl_matrix *gibbs_via_genrs (char **init, int ni,
     GENERATOR **genrs = NULL;
     char vname[VNAMELEN];
     GretlType gt;
-    const char *s;
+    const char *str;
     int ncols = 0;
     int iters;
-    int i, j, k, t, c;
+    int i, j, s, t, c;
 
+    /* run the @init generators and ensure that they all produce
+       a scalar or matrix result
+    */
     for (i=0; i<ni && !*err; i++) {
-        s = init[i];
-        *err = get_lhs_info(&s, &gt, vname);
+        str = init[i];
+        *err = get_lhs_info(&str, &gt, vname);
         if (!*err) {
-            *err = generate(s, NULL, gt, OPT_NONE, prn);
+            *err = generate(str, NULL, gt, OPT_NONE, prn);
         }
         if (*err) {
             pprintf(prn, "generate failed on init[%d]\n", i+1);
             pprintf(prn, " > %s\n", init[i]);
         } else {
             user_var *uv = get_user_var_by_name(vname);
-            int add_cols = should_record(vname, recnames, nr);
 
             gt = user_var_get_type(uv);
-            if (gt == GRETL_TYPE_DOUBLE) {
-                if (add_cols) {
-                    ncols++;
-                }
-            } else if (gt == GRETL_TYPE_MATRIX) {
-                if (add_cols) {
-                    gm = user_var_get_value(uv);
-                    ncols += gm->rows * gm->cols;
-                }
-            } else {
+            if (gt != GRETL_TYPE_DOUBLE && gt != GRETL_TYPE_MATRIX) {
                 pprintf(prn, "bad type from init[%d]\n", i+1);
                 pprintf(prn, " > %s\n", init[i]);
                 *err = E_TYPES;
@@ -516,16 +500,54 @@ static gretl_matrix *gibbs_via_genrs (char **init, int ni,
         }
     }
 
-    if (*err) {
-        return ret;
+    if (!*err) {
+        genrs = allocate_generators(ng, err);
     }
 
-    genrs = allocate_generators(ng, err);
-    if (!*err) {
-        ret = gretl_matrix_alloc(N, ncols);
-        if (ret == NULL) {
-            *err = E_ALLOC;
+    /* Compile and run the @iter generators. We don't record the results
+       here, but we check that the genrs work, and for those that are
+       tagged for recording we store the sizes of the objects generated.
+    */
+    for (i=0; i<ng && !*err; i++) {
+        str = iter[i];
+        *err = get_lhs_info(&str, &gt, vname);
+        if (!*err) {
+            genrs[i] = genr_compile(str, NULL, gt, OPT_NONE,
+                                    prn, err);
         }
+        if (*err) {
+            pprintf(prn, "generate failed on iter[%d]\n", i+1);
+            pprintf(prn, " > %s\n", iter[i]);
+        } else {
+            user_var *uv = get_user_var_by_name(vname);
+
+            gt = user_var_get_type(uv);
+            if (gt == GRETL_TYPE_DOUBLE) {
+                if (record[i]) {
+                    ncols++;
+                }
+            } else if (gt == GRETL_TYPE_MATRIX) {
+                if (record[i]) {
+                    gm = user_var_get_value(uv);
+                    ncols += gm->rows * gm->cols;
+                    record[i] = ncols;
+                }
+            } else {
+                pprintf(prn, "bad type from iter[%d]\n", i+1);
+                pprintf(prn, " > %s\n", iter[i]);
+                *err = E_TYPES;
+            }
+        }
+    }
+
+    if (*err) {
+        goto bailout;
+    }
+
+    ret = gretl_matrix_alloc(N, ncols);
+    if (ret == NULL) {
+        *err = E_ALLOC;
+        goto bailout;
     }
 
     iters = burnin + N;
@@ -533,30 +555,23 @@ static gretl_matrix *gibbs_via_genrs (char **init, int ni,
 
     /* the main iteration */
     for (t=0; t<iters && !*err; t++) {
-        k = t - burnin;
+        s = t - burnin;
         c = 0;
         for (i=0; i<ng && !*err; i++) {
-            if (t == 0) {
-                s = iterate[i];
-                *err = get_lhs_info(&s, &gt, vname);
-                if (!*err) {
-                    genrs[i] = genr_compile(s, NULL, gt, OPT_NONE,
-                                            prn, err);
-                }
-            } else {
-                /* already compiled */
-                *err = execute_genr(genrs[i], NULL, prn);
-            }
+            *err = execute_genr(genrs[i], NULL, prn);
             if (*err) {
                 pprintf(prn, "genr[%d] failed at iter %d\n> %s\n",
-                        i, t, iterate[i]);
-            } else if (k >= 0 && record[i]) {
-                *err = gibbs_record_result(genrs[i], ret, k, &c);
+                        i, t, iter[i]);
+            } else if (s >= 0 && record[i]) {
+                *err = gibbs_record_result(genrs[i], record[i],
+                                           ret, s, &c);
             }
         }
     }
 
     gretl_iteration_pop();
+
+ bailout:
 
     for (j=0; j<ng; j++) {
         destroy_genr(genrs[j]);
@@ -690,13 +705,10 @@ int gibbs_execute (gretlopt opt, PRN *prn)
     char **init = NULL;
     char **iter = NULL;
     guint8 *record = NULL;
-    char vname[VNAMELEN];
-    char **recnames = NULL;
-    char *s;
+    char *str;
     int verbose;
     int ni = 0;
     int ng = 0;
-    int nr = 0;
     int i, iniprev = 0;
     int err = 0;
 
@@ -708,14 +720,14 @@ int gibbs_execute (gretlopt opt, PRN *prn)
     }
 
     for (i=0; i<gibbs_n_lines && !err; i++) {
-        s = gibbs_lines[i];
-        if (!strncmp(s, "init: ", 6)) {
+        str = gibbs_lines[i];
+        if (!strncmp(str, "init: ", 6)) {
             if (i > 0 && !iniprev) {
                 pprintf(prn, "Initializers must come first\n");
-                pprintf(prn, "> %s\n", s);
+                pprintf(prn, "> %s\n", str);
                 err = E_INVARG;
             } else {
-                shift_string_left(s, 6);
+                shift_string_left(str, 6);
                 iniprev = 1;
                 ni++;
             }
@@ -724,12 +736,9 @@ int gibbs_execute (gretlopt opt, PRN *prn)
                 ng = gibbs_n_lines - ni;
                 record = calloc(ng, 1);
             }
-            if (!strncmp(s, "record: ", 8)) {
+            if (!strncmp(str, "record: ", 8)) {
                 record[i-ni] = 1;
-                shift_string_left(s, 8);
-                s += strspn(s, " ");
-                sscanf(s, "%31[^ =]", vname);
-                strings_array_add(&recnames, &nr, vname);
+                shift_string_left(str, 8);
             }
             iniprev = 0;
         }
@@ -745,8 +754,7 @@ int gibbs_execute (gretlopt opt, PRN *prn)
     if (!err) {
         H = gibbs_via_genrs(init, ni, iter, ng,
                             gibbs_burnin, gibbs_N,
-                            record, recnames, nr,
-                            prn, &err);
+                            record, prn, &err);
         if (H != NULL) {
             err = user_var_add_or_replace(gibbs_output,
                                           GRETL_TYPE_MATRIX,
@@ -757,7 +765,6 @@ int gibbs_execute (gretlopt opt, PRN *prn)
         }
     }
 
-    strings_array_free(recnames, nr);
     free(record);
     gibbs_destroy();
 
