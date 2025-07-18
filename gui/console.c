@@ -52,6 +52,7 @@ static int hpos, hlines;
 static gchar *hist0;
 static PRN *cprn;
 static int console_protected;
+static int console_contd;
 
 static gint console_key_handler (GtkWidget *cview,
                                  GdkEvent *key,
@@ -329,7 +330,8 @@ static void print_result_to_console (GtkTextBuffer *tb,
 static const char *get_console_prompt (void)
 {
     if (gretl_compiling_function() ||
-        gretl_compiling_loop()) {
+        gretl_compiling_loop() ||
+        console_contd) {
         return "> ";
     } else {
         return "? ";
@@ -564,28 +566,19 @@ windata_t *gretl_console (void)
 
 /* handle backslash continuation of console command line */
 
-static int command_continues (char *targ, const gchar *src, int *err)
+static int command_continues (char *targ, gchar *src, int *err)
 {
-    int contd = 0;
+    int ret = 0;
 
     if (strlen(targ) + strlen(src) + 1 > MAXLINE) {
         *err = E_TOOLONG;
         return 0;
     } else {
-        contd = ends_with_backslash(src);
+        ret = top_n_tail(src, MAXLINE, NULL);
         strcat(targ, src);
-        if (contd) {
-            char *p = strrchr(targ, '\\');
-
-            if (p - targ > 0 && !isspace(*(p - 1))) {
-                *p = ' ';
-            } else {
-                *p = '\0';
-            }
-        }
     }
 
-    return contd;
+    return ret;
 }
 
 static gchar *console_get_current_line (GtkTextBuffer *buf,
@@ -698,19 +691,17 @@ static gint console_key_handler (GtkWidget *cview,
            is happening */
         ExecState *state = cvwin->data;
         gchar *thisline;
-        int contd = 0, err = 0;
+        int err = 0;
 
 	thisline = console_get_current_line(buf, &ins);
-
         if (thisline != NULL) {
-            g_strstrip(thisline);
-            contd = command_continues(state->line, thisline, &err);
+            console_contd = command_continues(state->line, thisline, &err);
             g_free(thisline);
         }
 
         if (err) {
             gui_errmsg(err);
-        } else if (contd) {
+        } else if (console_contd) {
             console_insert_prompt(buf, &end, "\n> ");
             console_scroll_to_end(cview, buf, &end);
         } else {
