@@ -2827,13 +2827,13 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
 
 static int strvals_return_check (NODE *f, parser *p)
 {
-    if (f != p->tree || (p->targ != SERIES && p->targ != UNK)) {
+    if ((f != NULL && f != p->tree) || (p->targ != SERIES && p->targ != UNK)) {
         /* we must be at the top of the tree, with the target of
            assignment either known to be a series or undetermined
            as yet
         */
         gretl_errmsg_sprintf(_("%s: series usage is valid only in direct assignment"),
-                             getsymb(f->t));
+                             f == NULL ? "?" : getsymb(f->t));
         return E_DATA;
     } else if (dataset_is_subsampled(p->dset) && p->lh.t == SERIES &&
                !is_string_valued(p->dset, p->lh.vnum)) {
@@ -9434,7 +9434,12 @@ static NODE *strftime_node (NODE *l, NODE *r, NODE *o, int f,
     int nv = 0;
 
     if (l->t == SERIES) {
-        p->err = strvals_return_check(l->parent, p);
+        if (f != F_ISODATE && f != F_JULDATE) {
+            /* this check has not been performed yet */
+            p->err = strvals_return_check(NULL, p);
+        } else {
+            p->err = strvals_return_check(l->parent, p);
+        }
         if (!p->err) {
             ret = aux_series_node(p);
         }
@@ -9564,9 +9569,9 @@ static NODE *strftime_node (NODE *l, NODE *r, NODE *o, int f,
     return ret;
 }
 
-static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
+static NODE *isodate_node (NODE *l, NODE *r, NODE *f, parser *p)
 {
-    int julian = (f == F_JULDATE);
+    int julian = (f->t == F_JULDATE);
     int as_string;
     int n = 0;
     NODE *ret = NULL;
@@ -9579,13 +9584,20 @@ static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
             p->err = E_NONCONF;
         }
     } else if (!scalar_node(l) && l->t != SERIES) {
-        node_type_error(f, 1, NUM, l, p);
+        node_type_error(f->t, 1, NUM, l, p);
     }
 
     if (p->err) {
         return NULL;
     } else if ((l->t == SERIES || l->t == MAT) && as_string) {
-        return strftime_node(l, NULL, NULL, F_ISODATE, julian, p);
+        if (f->t == F_ISODATE) {
+             p->err = strvals_return_check(f, p);
+        }
+        if (p->err) {
+            return NULL;
+        } else {
+            return strftime_node(l, NULL, NULL, F_ISODATE, julian, p);
+        }
     }
 
     if (l->t == MAT) {
@@ -19633,7 +19645,7 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_ISODATE:
     case F_JULDATE:
-        ret = isodate_node(l, r, t->t, p);
+        ret = isodate_node(l, r, t, p);
         break;
     case F_STRFTIME:
     case F_STRFDAY:
