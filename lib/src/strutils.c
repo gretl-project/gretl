@@ -1597,6 +1597,8 @@ int top_n_tail (char *str, size_t maxlen, int *err)
 
 	if (*str == '#' || !strncmp(str, "/*", 2)) {
 	    ; /* the line starts a comment: leave well alone */
+        } else if (!strncmp(str, "smpl ", 5) && str[n] == ';') {
+            ; /* e.g. smpl -1 ; */
 	} else if (n >= 0 && LINE_CONT(str[n])) {
 	    /* register line continuation characters at the end of
 	       the line, but only if not preceded by the comment
