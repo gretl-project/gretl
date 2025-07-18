@@ -1536,7 +1536,7 @@ static int ends_in_comment (const char *s, int n)
     return 0;
 }
 
-#define LINE_CONT(c) (c == '\\' || c == ',' || c == '(')
+#define LINE_CONT(c) (c == '\\' || c == ',' || c == ';' || c == '(')
 
 /**
  * top_n_tail:
