@@ -1056,6 +1056,8 @@ static void maybe_fix_daily_start (guint32 *ed, int pd)
 
 #define recognized_ts_frequency(f) (f == 4 || f == 12 || f == 24)
 
+#define calendar_pd(pd) (pd == 5 || pd == 6 || pd == 7 || pd == 52)
+
 static int process_starting_obs (const char *stobs_in, int pd,
                                  int *pstructure, double *psd0,
                                  guint32 *ped0, gretlopt opt)
@@ -1078,39 +1080,26 @@ static int process_starting_obs (const char *stobs_in, int pd,
 
     /* check for possible calendar date */
     if (likely_calendar_obs_string(stobs)) {
-        if (maybe_tseries) {
+        if (maybe_tseries && calendar_pd(pd)) {
             dated = 1;
         } else {
             return invalid_stobs(stobs);
         }
-    } else {
-        ; /* stobs[8] = '\0'; */
     }
 
-    /* 2023-01-04: if the likely_calendar_obs_string() test failed, we
-       were truncating @stobs to 8 bytes. Now I don't understand
-       why. That truncation prevents interpretation of, e.g., "setobs
-       24 726468:01" as calling for hourly data starting in epoch day
-       726468, since it knocks off the trailing '1'.
-    */
-
     if (dated) {
-        if (pd == 5 || pd == 6 || pd == 7 || pd == 52) {
-            /* calendar-dated data, daily or weekly */
-            guint32 ed0 = get_epoch_day(stobs);
+        /* calendar-dated data, daily or weekly */
+        guint32 ed0 = get_epoch_day(stobs);
 
-            if (ed0 <= 0) {
-                return invalid_stobs(stobs);
-            } else {
-                if (pd < 7) {
-                    maybe_fix_daily_start(&ed0, pd);
-                }
-                sd0 = ed0;
-                *ped0 = ed0;
-                structure = TIME_SERIES;
-            }
-        } else {
+        if (ed0 <= 0) {
             return invalid_stobs(stobs);
+        } else {
+            if (pd < 7) {
+                maybe_fix_daily_start(&ed0, pd);
+            }
+            sd0 = ed0;
+            *ped0 = ed0;
+            structure = TIME_SERIES;
         }
     } else if (structure == TIME_SERIES && pd == 10) {
         /* decennial data */
@@ -1122,8 +1111,7 @@ static int process_starting_obs (const char *stobs_in, int pd,
             return invalid_stobs(stobs);
         }
 
-        if ((pd == 5 || pd == 6 || pd == 7 || pd == 52) &&
-            min == 0 && maybe_tseries) {
+        if (calendar_pd(pd) && min == 0 && maybe_tseries) {
             /* catch undated daily or weekly data */
             structure = TIME_SERIES;
         } else {
