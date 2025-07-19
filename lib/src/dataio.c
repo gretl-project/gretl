@@ -541,6 +541,9 @@ char *ntolabel (char *datestr, int t, const DATASET *dset)
     } else if (dataset_is_panel(dset)) {
 	panel_obs(datestr, t, dset);
 	return datestr;
+    } else if (dataset_is_hourly(dset) && dataset_has_markers(dset)) {
+        strcpy(datestr, dset->S[t]);
+        return datestr;
     }
 
     x = date_as_double(t, dset->pd, dset->sd0);
