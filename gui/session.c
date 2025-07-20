@@ -3007,25 +3007,29 @@ static void session_delete_icon (gui_obj *obj)
     }
 }
 
-/* apparatus for getting a white background */
+/* apparatus for setting the iconview background */
 
 #if GTK_MAJOR_VERSION >= 3
 
-static void white_bg_style (GtkWidget *widget, gpointer data)
+static void iconview_bg_style (GtkWidget *widget, gpointer data)
 {
-    static GdkRGBA rgbw = {1, 1, 1, 1};
-    static GdkRGBA rgbb;
+    static GdkRGBA rgb_wht = {1, 1, 1, 1};
+    static GdkRGBA rgb_blk = {0, 0, 0, 0};
+    static GdkRGBA rgbp;
     static int done;
+    GdkRGBA *rgbb;
 
+    rgbb = dark_theme_active()? &rgb_blk : &rgb_wht;
     gtk_widget_override_background_color(widget,
 					 GTK_STATE_FLAG_NORMAL,
-					 &rgbw);
+					 rgbb);
     if (!done) {
-	gdk_rgba_parse(&rgbb, "#4a90d9");
+	gdk_rgba_parse(&rgbp, "#4a90d9");
+        done = 1;
     }
     gtk_widget_override_background_color(widget,
 					 GTK_STATE_FLAG_PRELIGHT,
-					 &rgbb);
+					 &rgbp);
 }
 
 #else
@@ -3045,7 +3049,7 @@ static GdkColor *get_white (void)
     return white;
 }
 
-static void white_bg_style (GtkWidget *widget, gpointer data)
+static void iconview_bg_style (GtkWidget *widget, gpointer data)
 {
     static GdkColor *white;
 
@@ -3068,7 +3072,7 @@ static void real_pack_icon (gui_obj *obj, int row, int col)
 		     GTK_EXPAND, GTK_FILL, 5, 5);
 
     gtk_widget_show(obj->icon);
-    white_bg_style(obj->icon, NULL);
+    iconview_bg_style(obj->icon, NULL);
 
     gtk_table_attach(GTK_TABLE(icon_table), obj->label,
 		     col, col + 1, row + 1, row + 2,
@@ -4141,7 +4145,7 @@ void view_session (void)
     gtk_widget_show_all(iconview);
 
     gtk_container_foreach(GTK_CONTAINER(scroller),
-			  (GtkCallback) white_bg_style,
+			  (GtkCallback) iconview_bg_style,
 			  NULL);
 
     gtk_widget_set_can_focus(icon_table, TRUE);
