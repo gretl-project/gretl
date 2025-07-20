@@ -14665,8 +14665,7 @@ static int check_argc (int f, int k, parser *p)
         { F_TDISAGG,   3, 5 },
         { F_COMMUTE,   2, 5 },
         { F_TOEPSOLV,  3, 4 },
-        { F_RGBMIX,    3, 4 },
-        { F_GIBBS,     2, 2 }
+        { F_RGBMIX,    3, 4 }
     };
     int argc_min = 2;
     int argc_max = 4;
@@ -15507,26 +15506,6 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
         }
         if (!p->err) {
             ret->v.a = colormix_array(c[0], c[1], f, nf, do_plot, &p->err);
-        }
-    } else if (t->t == F_GIBBS) {
-        gretl_bundle *b = NULL;
-        int T = 0;
-
-        for (i=0; i<k && !p->err; i++) {
-            e = n->v.bn.n[i];
-            if (i == 0) {
-                if (e->t == BUNDLE) {
-                    b = e->v.b;
-                } else {
-                    p->err = E_INVARG;
-                }
-            } else {
-                T = node_get_int(n->v.bn.n[i], p);
-            }
-        }
-        if (!p->err) {
-            ret = aux_matrix_node(p);
-            ret->v.m = gibbs_via_bundles(b, T, p->prn, &p->err);
         }
     } else if (t->t == HF_FELOGITR) {
         gretl_matrix *U = NULL;
@@ -19310,7 +19289,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_COMMUTE:
     case F_TOEPSOLV:
     case F_RGBMIX:
-    case F_GIBBS:
     case HF_FELOGITR:
         /* built-in functions taking more than three args */
         if (multi == NULL) {

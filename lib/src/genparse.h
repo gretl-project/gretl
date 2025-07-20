@@ -526,7 +526,6 @@ enum {
     F_COMMUTE,
     F_TOEPSOLV,
     F_RGBMIX,
-    F_GIBBS,
     HF_FELOGITR,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
