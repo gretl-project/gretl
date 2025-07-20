@@ -7398,6 +7398,7 @@ int max_untouchable_series_ID (void)
 static int maybe_prune_delete_list (int *list)
 {
     int i, vsave, pruned = 0;
+    int d0 = list[0];
 
     vsave = max_untouchable_series_ID();
 
@@ -7406,6 +7407,10 @@ static int maybe_prune_delete_list (int *list)
             gretl_list_delete_at_pos(list, i--);
             pruned++;
         }
+    }
+
+    if (pruned) {
+        list_deletion_set_d0(d0);
     }
 
     return pruned;
@@ -10383,7 +10388,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
                 if (maybe_prune_delete_list(cmd->list)) {
                     if (cmd->list[0] == 0) {
                         pputs(prn, _("No series were deleted"));
-                        pputc(prn, '\n');
+                        pprintf(prn, " (%s)\n", _("some data were in use"));
                         if (cmd->param == NULL) {
                             break;
                         }

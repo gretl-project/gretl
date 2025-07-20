@@ -2110,6 +2110,14 @@ int dataset_replace_series_data (DATASET *dset, int v,
     return 0;
 }
 
+static int real_d0;
+
+/* called from the GUI program */
+void list_deletion_set_d0 (int d)
+{
+    real_d0 = d;
+}
+
 static int real_drop_listed_vars (int *list, DATASET *dset,
 				  int *renumber, int drop,
 				  PRN *prn)
@@ -2127,10 +2135,15 @@ static int real_drop_listed_vars (int *list, DATASET *dset,
 
     if (list == NULL || list[0] == 0) {
 	/* no-op */
+        real_d0 = 0;
 	return 0;
     }
 
     d0 = list[0];
+    if (real_d0 > d0) {
+        /* @list may have been pre-pruned in the GUI */
+        d0 = real_d0;
+    }
 
     check_variable_deletion_list(list, dset);
     d1 = list[0];
@@ -2170,6 +2183,7 @@ static int real_drop_listed_vars (int *list, DATASET *dset,
     }
 
     if (ndel == 0) {
+        real_d0 = 0;
 	return 0;
     }
 
@@ -2233,6 +2247,7 @@ static int real_drop_listed_vars (int *list, DATASET *dset,
 
     if (!err && prn != NULL) {
 	if (d0 == d1) {
+            /* all the series selected for deletion were deleted */
 	    if (gretl_messages_on()) {
 		if (*vname != '\0') {
 		    pprintf(prn, _("Deleted %s"), vname);
@@ -2252,6 +2267,8 @@ static int real_drop_listed_vars (int *list, DATASET *dset,
 	    pprintf(prn, " (%s)\n", _("some data were in use"));
 	}
     }
+
+    real_d0 = 0;
 
     return err;
 }

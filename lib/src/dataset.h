@@ -407,6 +407,8 @@ int rename_series (DATASET *dset, int v, const char *name,
 int dataset_drop_listed_variables (int *list, DATASET *dset, 
 				   int *renumber, PRN *prn);
 
+void list_deletion_set_d0 (int d);
+
 int dataset_drop_variable (int v, DATASET *dset); 
 
 int dataset_destroy_hidden_variables (DATASET *dset, int vmin);
