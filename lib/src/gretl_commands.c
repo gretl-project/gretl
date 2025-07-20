@@ -81,6 +81,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { FUNCERR,  "funcerr" },
     { GARCH,    "garch" },
     { GENR,     "genr" },
+    { GIBBS,    "gibbs" },
     { GMM,      "gmm" },
     { GNUPLOT,  "gnuplot" },
     { GPBUILD,  "gpbuild" },

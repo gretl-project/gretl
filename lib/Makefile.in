@@ -245,6 +245,7 @@ SRCS = adf_kpss.c \
 	gretl_plot.c \
 	gretl_prn.c \
 	gretl_restrict.c \
+	gretl_sampler.c \
 	gretl_string_table.c \
 	gretl_tdisagg.c \
 	gretl_typemap.c \

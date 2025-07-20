@@ -48,6 +48,7 @@
 #include "vartest.h"
 #include "flow_control.h"
 #include "mapinfo.h"
+#include "gretl_sampler.h"
 
 #include <time.h> /* for the $now accessor */
 
@@ -2826,13 +2827,13 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
 
 static int strvals_return_check (NODE *f, parser *p)
 {
-    if (f != p->tree || (p->targ != SERIES && p->targ != UNK)) {
+    if ((f != NULL && f != p->tree) || (p->targ != SERIES && p->targ != UNK)) {
         /* we must be at the top of the tree, with the target of
            assignment either known to be a series or undetermined
            as yet
         */
         gretl_errmsg_sprintf(_("%s: series usage is valid only in direct assignment"),
-                             getsymb(f->t));
+                             f == NULL ? "?" : getsymb(f->t));
         return E_DATA;
     } else if (dataset_is_subsampled(p->dset) && p->lh.t == SERIES &&
                !is_string_valued(p->dset, p->lh.vnum)) {
@@ -9433,7 +9434,12 @@ static NODE *strftime_node (NODE *l, NODE *r, NODE *o, int f,
     int nv = 0;
 
     if (l->t == SERIES) {
-        p->err = strvals_return_check(l->parent, p);
+        if (f != F_ISODATE && f != F_JULDATE) {
+            /* this check has not been performed yet */
+            p->err = strvals_return_check(NULL, p);
+        } else {
+            p->err = strvals_return_check(l->parent, p);
+        }
         if (!p->err) {
             ret = aux_series_node(p);
         }
@@ -9563,9 +9569,9 @@ static NODE *strftime_node (NODE *l, NODE *r, NODE *o, int f,
     return ret;
 }
 
-static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
+static NODE *isodate_node (NODE *l, NODE *r, NODE *f, parser *p)
 {
-    int julian = (f == F_JULDATE);
+    int julian = (f->t == F_JULDATE);
     int as_string;
     int n = 0;
     NODE *ret = NULL;
@@ -9578,13 +9584,20 @@ static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
             p->err = E_NONCONF;
         }
     } else if (!scalar_node(l) && l->t != SERIES) {
-        node_type_error(f, 1, NUM, l, p);
+        node_type_error(f->t, 1, NUM, l, p);
     }
 
     if (p->err) {
         return NULL;
     } else if ((l->t == SERIES || l->t == MAT) && as_string) {
-        return strftime_node(l, NULL, NULL, F_ISODATE, julian, p);
+        if (f->t == F_ISODATE) {
+             p->err = strvals_return_check(f, p);
+        }
+        if (p->err) {
+            return NULL;
+        } else {
+            return strftime_node(l, NULL, NULL, F_ISODATE, julian, p);
+        }
     }
 
     if (l->t == MAT) {
@@ -14652,9 +14665,9 @@ static int check_argc (int f, int k, parser *p)
         { F_TDISAGG,   3, 5 },
         { F_COMMUTE,   2, 5 },
         { F_TOEPSOLV,  3, 4 },
-        { F_RGBMIX,    3, 4 }
+        { F_RGBMIX,    3, 4 },
+        { F_GIBBS,     2, 2 }
     };
-
     int argc_min = 2;
     int argc_max = 4;
     int i;
@@ -15494,6 +15507,26 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
         }
         if (!p->err) {
             ret->v.a = colormix_array(c[0], c[1], f, nf, do_plot, &p->err);
+        }
+    } else if (t->t == F_GIBBS) {
+        gretl_bundle *b = NULL;
+        int T = 0;
+
+        for (i=0; i<k && !p->err; i++) {
+            e = n->v.bn.n[i];
+            if (i == 0) {
+                if (e->t == BUNDLE) {
+                    b = e->v.b;
+                } else {
+                    p->err = E_INVARG;
+                }
+            } else {
+                T = node_get_int(n->v.bn.n[i], p);
+            }
+        }
+        if (!p->err) {
+            ret = aux_matrix_node(p);
+            ret->v.m = gibbs_via_bundles(b, T, p->prn, &p->err);
         }
     } else if (t->t == HF_FELOGITR) {
         gretl_matrix *U = NULL;
@@ -19277,6 +19310,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_COMMUTE:
     case F_TOEPSOLV:
     case F_RGBMIX:
+    case F_GIBBS:
     case HF_FELOGITR:
         /* built-in functions taking more than three args */
         if (multi == NULL) {
@@ -19611,7 +19645,7 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_ISODATE:
     case F_JULDATE:
-        ret = isodate_node(l, r, t->t, p);
+        ret = isodate_node(l, r, t, p);
         break;
     case F_STRFTIME:
     case F_STRFDAY:

@@ -3117,7 +3117,9 @@ int dist_code_from_string (const char *s)
         { D_LOGISTIC,  "s" },
         { D_DIRICHLET, "dir" },
         { D_DISCRETE,  "disc" },
-        { D_NONE,     NULL }
+        { D_IGAMMA,    "ig" },
+        { D_NORMAL2,   "n2" },
+        { D_NONE,      NULL }
     };
     char test[8];
     int i;
@@ -3133,7 +3135,7 @@ int dist_code_from_string (const char *s)
     }
     test[i] = '\0';
 
-    for (i=0; dmap[i].code; i++) {
+    for (i=0; dmap[i].code > 0; i++) {
         if (!strcmp(test, dmap[i].s)) {
             return dmap[i].code;
         }

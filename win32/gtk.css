@@ -974,7 +974,7 @@ paned > separator {
   min-height: 4px;
   border: none;
   color: transparent;
-  background-color: #c6c6c6; }
+  background-color: #d9d9d9; }
   paned > separator:backdrop {
     background-color: #c6c6c6; }
   paned > separator:selected {

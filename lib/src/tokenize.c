@@ -117,6 +117,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { FUNCERR,  "funcerr",  CI_PARM1 | CI_NOOPT },
     { GARCH,    "garch",    CI_LIST | CI_L1INT },
     { GENR,     "genr",     CI_EXPR },
+    { GIBBS,    "gibbs",    CI_EXPR | CI_BLOCK },
     { GMM,      "gmm",      CI_EXPR | CI_BLOCK },
     { GNUPLOT,  "gnuplot",  CI_LIST | CI_EXTRA | CI_INFL },
     { GPBUILD,  "gpbuild",  CI_PARM1 | CI_BLOCK },

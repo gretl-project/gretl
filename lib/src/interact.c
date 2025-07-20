@@ -48,6 +48,7 @@
 #include "matrix_extra.h"
 #include "addons_utils.h"
 #include "gretl_gridplot.h"
+#include "gretl_sampler.h"
 #include "gretl_untar.h"
 #ifdef USE_CURL
 # include "gretl_www.h"
@@ -3928,6 +3929,17 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         }
         break;
 
+    case GIBBS:
+        if (cmd->context == GIBBS) {
+            err = gibbs_block_append(line);
+        } else {
+            err = gibbs_block_start(cmd->vstart, prn);
+            if (!err) {
+                gretl_cmd_set_context(cmd, cmd->ci);
+            }
+        }
+        break;
+
     case PLOT:
         if (!cmd->context) {
             err = gretl_plot_start(cmd->param, dset);
@@ -4131,6 +4143,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
             err = close_outfile(prn);
         } else if (!strcmp(cmd->param, "gpbuild")) {
             err = execute_gridplot_call(cmd, prn);
+        } else if (!strcmp(cmd->param, "gibbs")) {
+            err = gibbs_execute(cmd->opt, prn);
         } else {
             err = E_PARSE;
         }
