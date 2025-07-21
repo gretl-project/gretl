@@ -23,6 +23,7 @@
 #include "gretl_string_table.h"
 
 #define DB_DESCRIP_LEN 72  /* size of array to hold "# description" */
+#define DB_INIT_ROWS 32
 
 typedef enum {
     DB_MISSING_DATA = E_MAX + 1,
@@ -85,6 +86,8 @@ typedef struct {
 
 float retrieve_float (netfloat nf);
 #endif
+
+void series_info_init (SERIESINFO *sinfo);
 
 void series_info_set_description (SERIESINFO *sinfo,
 				  const char *s);

@@ -211,6 +211,7 @@ SRCS = adf_kpss.c \
 	estimate.c \
 	flow_control.c \
 	forecast.c \
+	foreign_db.c \
 	geneval.c \
 	genfuncs.c \
 	genlex.c \
