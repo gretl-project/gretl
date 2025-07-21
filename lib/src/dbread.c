@@ -2554,6 +2554,68 @@ static int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
     return err;
 }
 
+/* Functions specific to compacting hourly data (pd = 24) to 7-day daily.
+   Here we're determining whether we can add calendrical info to the
+   daily dataset, based on epoch days.
+*/
+
+/* hours: must run from 1 to 24, although the first day in the dataset
+   may start at 1 < h <= 24.
+*/
+
+static int hour_ok (int t, int h, int hprev)
+{
+    if (t == 0) {
+        return 1;
+    } else if (hprev == 24) {
+        return h == 1;
+    } else {
+        /* must be consecutive */
+        return h == hprev + 1;
+    }
+}
+
+static int day_ok (int t, int d, int dprev, int hprev)
+{
+    if (t == 0) {
+        /* could start on any day within range */
+        return 1;
+    } else if (hprev == 24) {
+        /* here we must be starting the next day */
+        return d == dprev + 1;
+    } else {
+        /* if hprev < 24, we must still be on the same day */
+        return d == dprev;
+    }
+}
+
+static int hourly_to_dated_daily_ok (DATASET *dset)
+{
+    char obs[OBSLEN];
+    int dprev = 0;
+    int hprev = 0;
+    int d, h, t;
+    int ok = 1;
+
+    for (t=0; t<dset->n && ok; t++) {
+        ntolabel(obs, t, dset);
+        if (sscanf(obs, "%d:%d", &d, &h) != 2) {
+            ok = 0;
+        } else if ((d < 100000 || d > 799999) ||
+                   (h < 1 || h > 24)) {
+            ok = 0;
+        } else if (!hour_ok(t, h, hprev)) {
+            ok = 0;
+        } else if (!day_ok(t, d, dprev, hprev)) {
+            ok = 0;
+        }
+        dprev = d;
+        hprev = h;
+    }
+
+    return ok;
+}
+
 /* Compact an individual series, in the context of converting an
    entire working dataset to a lower frequency: used in all cases
    except conversion from daily to monthly.
@@ -4103,7 +4165,7 @@ int compact_dataset (DATASET *dset, int newpd,
 	return 1;
     }
 
-    if (newpd == 1) {
+    if (newpd == 1 && !from_hourly) {
 	if (cp.min_startskip > 0 && !cp.any_eop) {
 	    start_major++;
 	}
@@ -4122,7 +4184,20 @@ int compact_dataset (DATASET *dset, int newpd,
 	    start_major++;
 	    minor -= newpd;
 	}
-	format_obs(stobs, start_major, minor, newpd);
+        if (from_hourly) {
+            if (hourly_to_dated_daily_ok(dset)) {
+                /* go to calendar days */
+                int y, m, d;
+
+                ymd_bits_from_epoch_day(start_major, &y, &m, &d);
+                sprintf(stobs, "%04d-%02d-%02d", y, m, d);
+            } else {
+                /* go to undated 24-hour days */
+                sprintf(stobs, "%d", start_major);
+            }
+        } else {
+            format_obs(stobs, start_major, minor, newpd);
+        }
     }
 
     /* revise datainfo members */
@@ -4179,8 +4254,17 @@ int compact_dataset (DATASET *dset, int newpd,
     }
 
     if (from_hourly && !err) {
+        /* reinstate the true target pd */
         dset->pd = from_hourly;
+        dset->sd0 = get_date_x(dset->pd, dset->stobs);
+        ntolabel(dset->endobs, dset->t2, dset);
     }
+
+#if 0
+    fprintf(stderr, "done compacting, err = %d\n", err);
+    fprintf(stderr, " pd=%d, sd0=%g, stobs='%s', endobs='%s'\n",
+            dset->pd, dset->sd0, dset->stobs, dset->endobs);
+#endif
 
     return err;
 }
