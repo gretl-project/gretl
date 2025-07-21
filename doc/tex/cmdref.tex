@@ -31,17 +31,19 @@ The following notational conventions are used below:
 \end{itemize}
 
 In general, each line of a command script should contain one and only
-one complete gretl command.  There are, however, two means of
-continuing a long command from one line of input to another.  First,
-if the last non-space character on a line is a backslash, this is
-taken as an indication that the command is continued on the following
-line.  In addition, if the comma is a valid character in a given
-command (for instance, as a separator between function arguments, or
-as punctuation in the command \texttt{printf}) then a trailing comma
-also indicates continuation.  To emphasize the point: a backslash may
-be inserted ``arbitrarily'' to indicate continuation, but a comma
-works in this capacity only if it is syntactically valid as part of
-the command.
+one complete gretl command.  There are, however, means of continuing a
+long command from one line of input to another.  First, if the last
+non-space character on a line is a backslash, this is taken to indicate
+that the command is continued on the following line.  In addition, if
+comma or semicolon is a valid character in context then a trailing comma
+or semicolon also indicates continuation.\footnote{There's one
+  exception: in the \texttt{smpl} command, a trailing semicolon
+  indicates that the end of the sample range should remain unchanged; in
+  that context it is not taken to call for continuation.}  To emphasize
+the point: a backslash may be inserted ``arbitrarily'' to indicate
+continuation, but comma and semicolon work in this capacity only if (a)
+they are syntactically valid as part of the command but (b) they are not
+legitimate as the terminating character of the command.
 
 \section{Commands}
 \label{cmd-cmd}
