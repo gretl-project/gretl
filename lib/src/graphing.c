@@ -4828,7 +4828,11 @@ int gnuplot (const int *plotlist, const char *literal,
                 strcpy(s1, plotname(dset, gi.list[i], 1));
             }
             set_plot_withstr(&gi, i, withstr);
-            fprintf(fp, " '-' using 1:2 title \"%s\" %s%s", s1, withstr, lwstr);
+            if (string_is_blank(s1)) {
+                fprintf(fp, " '-' using 1:2 notitle %s%s", withstr, lwstr);
+            } else {
+                fprintf(fp, " '-' using 1:2 title \"%s\" %s%s", s1, withstr, lwstr);
+            }
             if (i < lmax || (gi.flags & GPT_AUTO_FIT)) {
                 fputs(", \\\n", fp);
             } else {
