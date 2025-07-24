@@ -22,8 +22,8 @@ bundle B = _(a=2,
 assert(B.a == 2 && B.b == "abc")
 
 # multiline array
-defarray A = defarray("a",
-  "b")
+strings A = defarray("a",
+                     "b")
 assert(A[1] == "a" && A[2] == "b")
 
 # multiline function call
