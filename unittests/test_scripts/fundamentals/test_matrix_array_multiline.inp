@@ -1,0 +1,43 @@
+# Test for multiline matrix, bundle, array, and function calls
+set assert stop
+
+# works: comma-separated matrix
+matrix m1 = { 1,
+  2}
+assert(m1[1] == 1 && m1[2] == 2)
+
+# failed before June 2025: semicolon-separated matrix
+matrix m2 = { 1;
+  2}
+assert(m2[1] == 1 && m2[2] == 2)
+
+# explicit workaround with line continuation
+matrix m3 = { 1; \
+  2}
+assert(m3[1] == 1 && m3[2] == 2)
+
+# multiline bundle
+bundle B = _(a=2,
+  b="abc")
+assert(B.a == 2 && B.b == "abc")
+
+# multiline array
+defarray A = defarray("a",
+  "b")
+assert(A[1] == "a" && A[2] == "b")
+
+# multiline function call
+matrix m4 = mnormal(2,
+3)
+assert(rows(m4) == 2 && cols(m4) == 3)
+
+# linebreaks in gnuplot command without need for backslash
+matrix y = mnormal(100, 2)
+string filename = sprintf("%s/foo.gp", $dotdir)
+gnuplot --matrix=y --output="@filename" \
+  { set xlabel "Predicted Value";
+    set ylabel "Actual Value";
+    set grid;}
+
+printf "\nMultiline matrix, bundle, array, and function call tests passed."
+quit
