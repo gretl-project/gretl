@@ -656,14 +656,14 @@ gretl_matrix *gretl_matrix_block_get_matrix (gretl_matrix_block *B,
     }
 }
 
-int gretl_matrix_na_check (const gretl_matrix *m)
+int gretl_matrix_is_nonfinite (const gretl_matrix *m)
 {
     if (m != NULL) {
         int i, n = m->rows * m->cols;
 
         for (i=0; i<n; i++) {
-            if (na(m->val[i])) {
-                return E_NAN;
+            if (!isfinite(m->val[i])) {
+                return E_NONFIN;
             }
         }
     }

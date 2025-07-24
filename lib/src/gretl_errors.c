@@ -89,6 +89,7 @@ static const char *gretl_error_messages[] = {
     N_("complex arguments/operands not supported"),              /* E_CMPLX */
     N_("mixed complex/real arguments not supported"),            /* E_MIXED */
     N_("Dependencies not met"),                                  /* E_DEPENDS */
+    N_("Matrix argument contains non-finite values"),            /* E_NONFIN */
     NULL,                                                        /* E_DB_DUP */
     NULL,                                                        /* E_OK */
     NULL                                                         /* E_MAX */

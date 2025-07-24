@@ -232,7 +232,7 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg);
 
 void gretl_matrix_print2 (const gretl_matrix *m, const char *msg);
 
-int gretl_matrix_na_check (const gretl_matrix *m);
+int gretl_matrix_is_nonfinite (const gretl_matrix *m);
 
 int gretl_matrix_is_symmetric (const gretl_matrix *m);
 

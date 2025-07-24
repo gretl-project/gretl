@@ -77,9 +77,10 @@ typedef enum {
     E_CMPLX,       /* 51 : complex arguments/operands not supported */
     E_MIXED,       /* 52 : mixed complex/real operands not supported */
     E_DEPENDS,     /* 53 : gfn dependencies not met */
-    E_DB_DUP,      /* 54 : duplicate vars found when saving to database */
-    E_OK,          /* 55 : not really an error */
-    E_MAX          /* 56 */
+    E_NONFIN,      /* 54 : non-finite values found in matrix argument */
+    E_DB_DUP,      /* 55 : duplicate vars found when saving to database */
+    E_OK,          /* 56 : not really an error */
+    E_MAX          /* 57 */
 } GretlError;
 
 enum gretl_warning_codes {

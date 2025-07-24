@@ -1996,9 +1996,9 @@ gretl_matrix *user_matrix_eigensym (const gretl_matrix *m,
 	return NULL;
     }
 
-    if (gretl_matrix_na_check(m)) {
+    if (gretl_matrix_is_nonfinite(m)) {
         /* 2025-03-26: do we want this? */
-	*err = E_NAN;
+	*err = E_NONFIN;
 	return NULL;
     }
 
@@ -2044,8 +2044,8 @@ gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A,
 	return NULL;
     }
 
-    if (gretl_matrix_na_check(A) || gretl_matrix_na_check(B)) {
-	*err = E_NAN;
+    if (gretl_matrix_is_nonfinite(A) || gretl_matrix_is_nonfinite(B)) {
+	*err = E_NONFIN;
 	return NULL;
     }
 
