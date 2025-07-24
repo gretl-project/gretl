@@ -1,0 +1,9 @@
+# Test for correct handling of semicolons and linebreaks in the smpl command
+# Semicolon in smpl means "no change" for start or end obs; test linebreak after second semicolon
+set assert stop
+open denmark
+smpl ; ;
+a = "aha"
+assert(a == "aha")
+print "Test for smpl semicolons and linebreak passed."
+quit
