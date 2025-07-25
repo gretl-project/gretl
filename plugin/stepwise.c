@@ -600,11 +600,11 @@ int *forward_stepwise (MODEL *pmod,
     return ret;
 }
 
-/* Returns the index of the column of the X matrix which seems to be the
-   prime candidate for dropping next: the one associated with the
-   smallest absolute t-ratio. We're ignoring the constant, if present,
-   and if @zlist is non-NULL we're also ignoring any regressors that
-   are not specified therein.
+/* Returns the index of the column of the regressor matrix which is
+   the prime candidate for dropping next, namely, the one associated
+   with the smallest absolute t-ratio. We're ignoring the constant, if
+   present, and if @zlist is non-NULL we're limiting the candidates
+   to those specified therein.
 */
 
 static int tval_min_pos (const double *b,
@@ -614,20 +614,20 @@ static int tval_min_pos (const double *b,
                          int ifc, int k)
 {
     double tval, tmin = 1.0e200;
-    int i, vi, ret = 0;
+    int j, vj, ret = 0;
 
-    for (i=ifc; i<k; i++) {
+    for (j=ifc; j<k; j++) {
         if (zlist != NULL) {
-            vi = xlist[i+1];
-            if (!in_gretl_list(zlist, vi)) {
-                /* vi is not a candidate for dropping */
+            vj = xlist[j+1];
+            if (!in_gretl_list(zlist, vj)) {
+                /* vj is not a candidate for dropping */
                 continue;
             }
         }
-        tval = fabs(b[i]) / se[i];
+        tval = fabs(b[j]) / se[j];
         if (tval < tmin) {
             tmin = tval;
-            ret = i;
+            ret = j;
         }
     }
 
@@ -925,7 +925,8 @@ MODEL stepwise_add (MODEL *pmod,
 
 /* Arrange the original regressors in order of decreasing absolute
    t-ratio, to try to get the ones most likely to be omitted towards
-   the end.
+   the end. But if the specification contains const, don't move it
+   from first position among the regressors.
 */
 
 static int *maybe_reorder_regressors (MODEL *pmod)
@@ -937,7 +938,7 @@ static int *maybe_reorder_regressors (MODEL *pmod)
     int changed = 0;
     int i, j, err = 0;
 
-    lmat = gretl_matrix_alloc(k - pmod->ifc, 2);
+    lmat = gretl_matrix_alloc(k - jmin, 2);
 
     j = jmin;
     for (i=0; i<lmat->rows; i++) {
@@ -948,12 +949,8 @@ static int *maybe_reorder_regressors (MODEL *pmod)
 
     tmp = gretl_matrix_sort_by_column(lmat, 1, &err);
 
-    list = gretl_list_new(pmod->list[0]);
-    j = 1;
-    list[j++] = pmod->list[1];
-    if (pmod->ifc) {
-        list[j++] = 0;
-    }
+    list = gretl_list_copy(pmod->list);
+    j = 2 + jmin;
     for (i=0; i<tmp->rows; i++) {
         list[j] = (int) gretl_matrix_get(tmp, i, 0);
         if (list[j] != pmod->list[j]) {

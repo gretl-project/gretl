@@ -1462,7 +1462,10 @@ static int coeff_is_removable (const int *cands, const MODEL *pmod,
 	const char *vname;
 	int j, pj;
 
-	ret = 0; /* reverse the presumption */
+        /* We're only "allowed" to drop members of the @cands list,
+           so reverse the presumption.
+        */
+	ret = 0;
 
 	for (j=1; j<=cands[0]; j++) {
 	    vname = dset->varname[cands[j]];
@@ -1527,9 +1530,13 @@ static int auto_drop_var (omit_info *oi,
 	imax = pmod->list[0] - 1;
     }
 
+#if 0
     /* If the constant is the sole regressor, allow it
        to be dropped? */
     imin = pmod->ncoeff == 1 ? 0 : pmod->ifc;
+#else
+    imin = pmod->ifc;
+#endif
 
     for (i=imin; i<imax; i++) {
 	if (coeff_is_removable(oi->cands, pmod, dset, i)) {
