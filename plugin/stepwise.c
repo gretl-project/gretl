@@ -611,10 +611,11 @@ static int tval_min_pos (const double *b,
                          const double *se,
                          const int *xlist,
                          const int *zlist,
-                         int ifc, int k)
+                         int ifc, int k,
+                         int *err)
 {
-    double tval, tmin = 1.0e200;
-    int j, vj, ret = 0;
+    double tval, tmin = DBL_MAX;
+    int j, vj, ret = -1;
 
     for (j=ifc; j<k; j++) {
         if (zlist != NULL) {
@@ -629,6 +630,10 @@ static int tval_min_pos (const double *b,
             tmin = tval;
             ret = j;
         }
+    }
+
+    if (ret < 0) {
+        *err = E_DATA;
     }
 
     return ret;
@@ -672,7 +677,11 @@ int *backward_stepwise (MODEL *pmod,
     prev = ssr2crit(pmod->ess, T, k, crit);
     xlist = gretl_model_get_x_list(pmod);
     trycol = tval_min_pos(pmod->coeff, pmod->sderr,
-                          xlist, zlist, ifc, k);
+                          xlist, zlist, ifc, k, err);
+    if (*err) {
+        pprintf(prn, "Failed to find minimum absolute t-ratio\n");
+        return NULL;
+    }
 
     y = gretl_vector_from_series(dset->Z[yvar], t1, t2);
     Q = gretl_matrix_data_subset(xlist, dset, t1, t2, M_MISSING_ERROR, err);
@@ -722,9 +731,14 @@ int *backward_stepwise (MODEL *pmod,
         }
         if (!conv) {
             gretl_list_delete_at_pos(xlist, trycol+1);
-            trycol = tval_min_pos(mm.b->val, mm.g->val, xlist, zlist, ifc, k);
-            dropped++;
-            prev = cur;
+            trycol = tval_min_pos(mm.b->val, mm.g->val, xlist, zlist,
+                                  ifc, k, err);
+            if (*err) {
+                break;
+            } else {
+                dropped++;
+                prev = cur;
+            }
         }
     }
 
