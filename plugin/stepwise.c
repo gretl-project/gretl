@@ -17,7 +17,7 @@
  *
  */
 
-/* Forward stepwise plugin for gretl, using progressive QR decomposition */
+/* Forward and backward stepwise plugin for gretl, using QR decomposition */
 
 #include "libgretl.h"
 #include "version.h"
@@ -600,38 +600,51 @@ int *forward_stepwise (MODEL *pmod,
     return ret;
 }
 
-/* Returns the index of the column of the X matrix which seems to be the
-   prime candidate for dropping next: the one associated with the
-   smallest absolute t-ratio. We're ignoring the constant, if present,
-   and if @zlist is non-NULL we're also ignoring any regressors that
-   are not specified therein.
+/* Returns the index of the column of the regressor matrix which is
+   the prime candidate for dropping next, namely, the one associated
+   with the smallest absolute t-ratio. We're ignoring the constant, if
+   present, and if @zlist is non-NULL we're limiting the candidates
+   to those specified therein.
 */
 
 static int tval_min_pos (const double *b,
                          const double *se,
                          const int *xlist,
                          const int *zlist,
-                         int ifc, int k)
+                         int ifc, int k,
+                         int *err)
 {
-    double tval, tmin = 1.0e200;
-    int i, vi, ret = 0;
+    double tval, tmin = DBL_MAX;
+    int j, vj, ret = -1;
 
-    for (i=ifc; i<k; i++) {
+    for (j=ifc; j<k; j++) {
         if (zlist != NULL) {
-            vi = xlist[i+1];
-            if (!in_gretl_list(zlist, vi)) {
-                /* vi is not a candidate for dropping */
+            vj = xlist[j+1];
+            if (!in_gretl_list(zlist, vj)) {
+                /* vj is not a candidate for dropping */
                 continue;
             }
         }
-        tval = fabs(b[i]) / se[i];
+        tval = fabs(b[j]) / se[j];
         if (tval < tmin) {
             tmin = tval;
-            ret = i;
+            ret = j;
         }
     }
 
+    if (ret < 0) {
+        *err = E_DATA;
+    }
+
     return ret;
+}
+
+static int crit_na_error (double ssr, int T, int k,
+                          const char *cstr, PRN *prn)
+{
+    pprintf(prn, "Error calculating %s with SSR = %g, T = %d, k = %d\n",
+            cstr, ssr, T, k);
+    return E_NAN;
 }
 
 int *backward_stepwise (MODEL *pmod,
@@ -664,7 +677,11 @@ int *backward_stepwise (MODEL *pmod,
     prev = ssr2crit(pmod->ess, T, k, crit);
     xlist = gretl_model_get_x_list(pmod);
     trycol = tval_min_pos(pmod->coeff, pmod->sderr,
-                          xlist, zlist, ifc, k);
+                          xlist, zlist, ifc, k, err);
+    if (*err) {
+        pprintf(prn, "Failed to find minimum absolute t-ratio\n");
+        return NULL;
+    }
 
     y = gretl_vector_from_series(dset->Z[yvar], t1, t2);
     Q = gretl_matrix_data_subset(xlist, dset, t1, t2, M_MISSING_ERROR, err);
@@ -692,11 +709,16 @@ int *backward_stepwise (MODEL *pmod,
         delvar = xlist[trycol+1];
         *err = qr_reduce(Q, R, dset, xlist, trycol, y, &mm, &ssr);
         if (*err) {
-            fprintf(stderr, "error %d in qr_reduce\n", *err);
+            pprintf(prn, "Error in qr_reduce when dropping %s\n",
+                    dset->varname[delvar]);
             break;
         }
         k = R->rows;
         cur = ssr2crit(ssr, T, k, crit);
+        if (na(cur)) {
+            *err = crit_na_error(ssr, T, k, cstr, prn);
+            break;
+        }
         conv = cur > prev;
         if (verbose) {
             if (conv && dropped < nz) {
@@ -709,9 +731,14 @@ int *backward_stepwise (MODEL *pmod,
         }
         if (!conv) {
             gretl_list_delete_at_pos(xlist, trycol+1);
-            trycol = tval_min_pos(mm.b->val, mm.g->val, xlist, zlist, ifc, k);
-            dropped++;
-            prev = cur;
+            trycol = tval_min_pos(mm.b->val, mm.g->val, xlist, zlist,
+                                  ifc, k, err);
+            if (*err) {
+                break;
+            } else {
+                dropped++;
+                prev = cur;
+            }
         }
     }
 
@@ -925,7 +952,8 @@ MODEL stepwise_add (MODEL *pmod,
 
 /* Arrange the original regressors in order of decreasing absolute
    t-ratio, to try to get the ones most likely to be omitted towards
-   the end.
+   the end. But if the specification contains const, don't move it
+   from first position among the regressors.
 */
 
 static int *maybe_reorder_regressors (MODEL *pmod)
@@ -937,7 +965,7 @@ static int *maybe_reorder_regressors (MODEL *pmod)
     int changed = 0;
     int i, j, err = 0;
 
-    lmat = gretl_matrix_alloc(k - pmod->ifc, 2);
+    lmat = gretl_matrix_alloc(k - jmin, 2);
 
     j = jmin;
     for (i=0; i<lmat->rows; i++) {
@@ -948,12 +976,8 @@ static int *maybe_reorder_regressors (MODEL *pmod)
 
     tmp = gretl_matrix_sort_by_column(lmat, 1, &err);
 
-    list = gretl_list_new(pmod->list[0]);
-    j = 1;
-    list[j++] = pmod->list[1];
-    if (pmod->ifc) {
-        list[j++] = 0;
-    }
+    list = gretl_list_copy(pmod->list);
+    j = 2 + jmin;
     for (i=0; i<tmp->rows; i++) {
         list[j] = (int) gretl_matrix_get(tmp, i, 0);
         if (list[j] != pmod->list[j]) {

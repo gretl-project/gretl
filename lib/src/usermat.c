@@ -1997,7 +1997,6 @@ gretl_matrix *user_matrix_eigensym (const gretl_matrix *m,
     }
 
     if (gretl_matrix_is_nonfinite(m)) {
-        /* 2025-03-26: do we want this? */
 	*err = E_NONFIN;
 	return NULL;
     }
