@@ -17,7 +17,7 @@
  *
  */
 
-/* Forward stepwise plugin for gretl, using progressive QR decomposition */
+/* Forward and backward stepwise plugin for gretl, using QR decomposition */
 
 #include "libgretl.h"
 #include "version.h"
@@ -634,6 +634,14 @@ static int tval_min_pos (const double *b,
     return ret;
 }
 
+static int crit_na_error (double ssr, int T, int k,
+                          const char *cstr, PRN *prn)
+{
+    pprintf(prn, "Error calculating %s with SSR = %g, T = %d, k = %d\n",
+            cstr, ssr, T, k);
+    return E_NAN;
+}
+
 int *backward_stepwise (MODEL *pmod,
                         const int *zlist,
                         DATASET *dset,
@@ -692,11 +700,16 @@ int *backward_stepwise (MODEL *pmod,
         delvar = xlist[trycol+1];
         *err = qr_reduce(Q, R, dset, xlist, trycol, y, &mm, &ssr);
         if (*err) {
-            fprintf(stderr, "error %d in qr_reduce\n", *err);
+            pprintf(prn, "Error in qr_reduce when dropping %s\n",
+                    dset->varname[delvar]);
             break;
         }
         k = R->rows;
         cur = ssr2crit(ssr, T, k, crit);
+        if (na(cur)) {
+            *err = crit_na_error(ssr, T, k, cstr, prn);
+            break;
+        }
         conv = cur > prev;
         if (verbose) {
             if (conv && dropped < nz) {
