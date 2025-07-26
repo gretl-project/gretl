@@ -322,6 +322,7 @@ static int qr_augment (gretl_matrix *Q,
 
 void qr_fixup (gretl_matrix *Q,
                gretl_matrix *R,
+               const MODEL *pmod,
                const DATASET *dset,
                const int *xlist,
                int jmin)
@@ -344,9 +345,10 @@ void qr_fixup (gretl_matrix *Q,
     for (j=jmin; j<m; j++) {
         vj = xlist[j+2];
 #if SDEBUG
-        fprintf(stderr, "Q: work on col %d, using var %d\n", j, vj);
+        fprintf(stderr, "Q: work on col %d, using %s\n", j,
+                dset->varname[vj]);
 #endif
-        memcpy(aj, dset->Z[vj] + dset->t1, sz);
+        memcpy(aj, dset->Z[vj] + pmod->t1, sz);
         for (i=0; i<j; i++) {
             tmp = 0.0;
             for (k=0; k<n; k++) {
@@ -370,7 +372,7 @@ void qr_fixup (gretl_matrix *Q,
     for (i=jmin; i<m; i++) {
         for (j=i; j<m; j++) {
             vj = xlist[j+2];
-            memcpy(aj, dset->Z[vj] + dset->t1, sz);
+            memcpy(aj, dset->Z[vj] + pmod->t1, sz);
             tmp = 0.0;
             for (k=0; k<n; k++) {
                 tmp += aj[k] * gretl_matrix_get(Q, k, i);
@@ -384,6 +386,7 @@ void qr_fixup (gretl_matrix *Q,
 
 static int qr_reduce (gretl_matrix *Q,
                       gretl_matrix *R,
+                      const MODEL *pmod,
                       const DATASET *dset,
                       const int *xlist,
                       int delcol,
@@ -403,7 +406,7 @@ static int qr_reduce (gretl_matrix *Q,
        some extra work to do.
     */
     if (delcol < Q->cols) {
-        qr_fixup(Q, R, dset, xlist, delcol);
+        qr_fixup(Q, R, pmod, dset, xlist, delcol);
     }
 #if SDEBUG
     fprintf(stderr, "dropped Q[,%d], %s\n", delcol,
@@ -417,6 +420,11 @@ static int qr_reduce (gretl_matrix *Q,
     if (err) {
         return err;
     }
+
+#if SDEBUG > 1
+    gretl_matrix_print(Q, "Q, in qr_reduce");
+    gretl_matrix_print(R, "R, in qr_reduce");
+#endif
 
     /* g = Q'y */
     gretl_matrix_multiply_mod(Q, GRETL_MOD_TRANSPOSE,
@@ -642,7 +650,7 @@ static int tval_min_pos (const double *b,
 static int crit_na_error (double ssr, int T, int k,
                           const char *cstr, PRN *prn)
 {
-    pprintf(prn, "Error calculating %s with SSR = %g, T = %d, k = %d\n",
+    pprintf(prn, "\nError calculating %s with SSR = %g, T = %d, k = %d\n",
             cstr, ssr, T, k);
     return E_NAN;
 }
@@ -707,7 +715,7 @@ int *backward_stepwise (MODEL *pmod,
 
     while (!conv && dropped < nz) {
         delvar = xlist[trycol+1];
-        *err = qr_reduce(Q, R, dset, xlist, trycol, y, &mm, &ssr);
+        *err = qr_reduce(Q, R, pmod, dset, xlist, trycol, y, &mm, &ssr);
         if (*err) {
             pprintf(prn, "Error in qr_reduce when dropping %s\n",
                     dset->varname[delvar]);
@@ -1057,6 +1065,8 @@ MODEL stepwise_omit (MODEL *pmod,
     if (!err) {
         gretlopt ols_opt = OPT_NONE;
         int *list = compose_backward_list(pmod, xlist, olist);
+        int save_t1 = dset->t1;
+        int save_t2 = dset->t2;
 
         if (opt & OPT_I) {
             /* --silent */
@@ -1066,12 +1076,16 @@ MODEL stepwise_omit (MODEL *pmod,
             /* --vcv */
             ols_opt |= OPT_O;
         }
+        dset->t1 = pmod->t1;
+        dset->t2 = pmod->t2;
         model = lsq(list, dset, OLS, ols_opt);
         free(list);
         ols_done = 1;
         if (!model.errcode) {
             do_overall_test(pmod, &model);
         }
+        dset->t1 = save_t1;
+        dset->t1 = save_t2;
     }
 
     free(xlist);

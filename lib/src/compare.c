@@ -1203,6 +1203,7 @@ static int process_stepwise_option (int ci,
         return 0;
     }
 
+#if 0
     /* For now the info criterion method is restricted to
        the "new" stepwise case, and that code requires
        OLS with classical standard errors. This should
@@ -1217,6 +1218,13 @@ static int process_stepwise_option (int ci,
             }
         }
     }
+#else
+    for (i=0; i<3; i++) {
+        if (!strcmp(s, cstrs[i])) {
+            *crit = i;
+        }
+    }
+#endif
 
     if (*crit < 0) {
         /* not yet determined */
@@ -1494,7 +1502,7 @@ static void print_drop (MODEL *pmod, omit_info *oi, int k,
         pputs(prn, "\n\n");
     }
 
-    pprintf(prn, _(" Dropping %-16s (%s %.3f)\n"),
+    pprintf(prn, _(" Dropping %-16s (%s %#g)\n"),
             dset->varname[oi->list[k+2]],
             cstrs[oi->crit], oi->cval);
 }
@@ -1682,9 +1690,6 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
 	    ropt |= OPT_Q;
 	}
 	set_reference_missmask_from_model(orig);
-        if (!oi.use_pval) {
-            clear_model(&omod);
-        }
         omod = replicate_estimator(orig, oi.list, dset, ropt, prn);
     }
 
@@ -1778,16 +1783,12 @@ static int use_stepwise_omit (MODEL *orig, int crit)
         /* we're only handling the info criterion approach */
         return 0;
     } else {
-        /* Note 2025-07-09: for now we'll give preference to the
-           somewhat faster plugin code when using an info criterion.
-           For testing purposes one might put here
-
-           return getenv("USE_STEPWISE_PLUGIN") != NULL;
-
-           so that the code in compare.c is used unless the envronment
-           variable USE_STEPWISE_PLUGIN is set.
-        */
-        return 1;
+        if (getenv("USE_AUTO_OMIT")) {
+            /* for now, allow forcing use of the older code */
+            return 0;
+        } else {
+            return 1;
+        }
     }
 }
 
