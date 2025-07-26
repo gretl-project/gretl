@@ -425,16 +425,21 @@ int list_adjust_sample (const int *list, int *t1, int *t2,
     return err;
 }
 
-/* For handling the "omit" command, applied to a model that has
-   missing values within the sample range.  The model as re-estimated
-   with a reduced set of regressors must use the sample sample range
-   as the original model, or else the comparison of the original and
-   reduced models will be invalid.
+/* A copy of a given model's missmask, or NULL. If non-NULL this will
+   be a NUL-terminated array of char of length equal to the full
+   length of the dataset on which the model was estimated, with
+   elements '1' for each observation in the sample range t >= pmod->t1
+   and t <= pmod->t2 at which the model residual is missing and '0'
+   for all other observations.
 */
-
-/* copy of a given model's missmask, or NULL */
-
 static char *refmask;
+
+/* For handling the "omit" command, applied to a model that has
+   missing values within the sample range. When the model is
+   re-estimated with a reduced set of regressors we must use exactly
+   the same sample as the original model, otherwise the comparison of
+   the original and reduced models will be invalid.
+*/
 
 static char *build_refmask_from_model (const MODEL *pmod)
 {
@@ -443,7 +448,7 @@ static char *build_refmask_from_model (const MODEL *pmod)
 
     if (mask != NULL) {
 	memset(mask, '0', n);
-	mask[n] = 0; /* NUL-terminate */
+	mask[n] = '\0'; /* NUL-terminate */
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (na(pmod->uhat[t])) {
 		mask[t] = '1';
@@ -454,7 +459,9 @@ static char *build_refmask_from_model (const MODEL *pmod)
     return mask;
 }
 
-/* Set the "reference" mask based on a given model */
+/* Set the "reference" missing observations mask, @refmask,
+   based on @pmod.
+*/
 
 void set_reference_missmask_from_model (const MODEL *pmod)
 {

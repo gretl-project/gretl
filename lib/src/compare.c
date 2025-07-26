@@ -1807,7 +1807,7 @@ static int use_stepwise_omit (MODEL *orig, int crit)
  * specified in @omitvars.  Or if OPT_A is given, proceed
  * sequentially, at each step dropping the least significant
  * variable provided its p-value is above a certain threshold
- * (currently 0.10, two-sided).
+ * (by default 0.10, two-sided).
  *
  * Returns: 0 on successful completion, error code on error.
  */
