@@ -519,7 +519,7 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opt, DATASET *dset,
     int missv = 0;
 
 #if SMPL_DEBUG
-    fprintf(stderr, "lsq_check_for_missing_obs\n");
+    fprintf(stderr, "\nlsq_check_for_missing_obs\n");
 #endif
 
     if (reference_missmask_present()) {
@@ -529,6 +529,9 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opt, DATASET *dset,
 	   as part of a hypothesis test on some original model, and
 	   it should be respected in estimation of this model
 	*/
+#if SMPL_DEBUG
+        fprintf(stderr, "applied reference missmask, err = %d\n", err);
+#endif
 	if (err) {
 	    pmod->errcode = E_ALLOC;
 	    return 1;

@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "version.h"
 #include "matrix_extra.h"
+#include "missing_private.h"
 
 #define SDEBUG 0
 
@@ -113,6 +114,21 @@ static void bwd_wspace_free (bwd_wspace *mm)
     gretl_matrix_block_destroy(mm->B);
 }
 
+static gretl_matrix *matrix_steal_col0 (gretl_matrix *m)
+{
+    gretl_matrix *ret = gretl_matrix_alloc(m->rows, 1);
+    size_t sz = m->rows * sizeof(double);
+
+    if (m->info != NULL) {
+        gretl_matrix_destroy_info(m);
+    }
+    memcpy(ret->val, m->val, sz);
+    memmove(m->val, m->val + m->rows, (m->cols - 1) * sz);
+    m->cols -= 1;
+
+    return ret;
+}
+
 /* Drop/cut a single column from matrix @m */
 
 static void matrix_drop_column (gretl_matrix *m, int j)
@@ -140,7 +156,6 @@ static void matrix_drop_index (gretl_matrix *m, int idx)
     int n, j;
 
     if (m->info != NULL) {
-        /* don't leak column names */
         gretl_matrix_destroy_info(m);
     }
 
@@ -309,6 +324,19 @@ static int qr_augment (gretl_matrix *Q,
     return err;
 }
 
+static void fill_aj (double *aj, int vj,
+                     const DATASET *dset,
+                     const MODEL *pmod)
+{
+    int t, i = 0;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+        if (!na(pmod->uhat[t])) {
+            aj[i++] = dset->Z[vj][t];
+        }
+    }
+}
+
 /* The following function fixes up the trailing columns of the QR
    decomposition of the matrix X of regressors following deletion of
    column @jmin, when @jmin was not the last column. We assume that @Q
@@ -328,17 +356,17 @@ void qr_fixup (gretl_matrix *Q,
                int jmin)
 {
     double *aj;
-    size_t sz;
+    // size_t sz;
     double tmp;
     int n = Q->rows;
     int m = R->rows;
     int i, j, vj, k;
 
     aj = malloc(n * sizeof *aj);
-    sz = n * sizeof(double);
+    // sz = n * sizeof(double);
 
 #if SDEBUG
-    printlist(xlist, "xlist");
+    printlist(xlist, "xlist, in qr_fixup");
 #endif
 
     /* complete Q */
@@ -348,7 +376,8 @@ void qr_fixup (gretl_matrix *Q,
         fprintf(stderr, "Q: work on col %d, using %s\n", j,
                 dset->varname[vj]);
 #endif
-        memcpy(aj, dset->Z[vj] + pmod->t1, sz);
+        // memcpy(aj, dset->Z[vj] + pmod->t1, sz);
+        fill_aj(aj, vj, dset, pmod);
         for (i=0; i<j; i++) {
             tmp = 0.0;
             for (k=0; k<n; k++) {
@@ -372,7 +401,8 @@ void qr_fixup (gretl_matrix *Q,
     for (i=jmin; i<m; i++) {
         for (j=i; j<m; j++) {
             vj = xlist[j+2];
-            memcpy(aj, dset->Z[vj] + pmod->t1, sz);
+            // memcpy(aj, dset->Z[vj] + pmod->t1, sz);
+            fill_aj(aj, vj, dset, pmod);
             tmp = 0.0;
             for (k=0; k<n; k++) {
                 tmp += aj[k] * gretl_matrix_get(Q, k, i);
@@ -409,7 +439,8 @@ static int qr_reduce (gretl_matrix *Q,
         qr_fixup(Q, R, pmod, dset, xlist, delcol);
     }
 #if SDEBUG
-    fprintf(stderr, "dropped Q[,%d], %s\n", delcol,
+    fprintf(stderr, "dropped Q[,%d] (var %d, %s), %s\n", delcol,
+            xlist[delcol+1], dset->varname[xlist[delcol+1]],
             delcol < Q->cols ? "fixup needed" : "no fixup");
 #endif
 
@@ -482,8 +513,8 @@ int *forward_stepwise (MODEL *pmod,
     gretl_matrix *e;
     gretl_matrix *Q;
     gretl_matrix *R;
-    gretl_matrix *mZ;
-    gretl_matrix *my;
+    gretl_matrix *Z = NULL;
+    gretl_matrix *y = NULL;
     gretl_matrix *tmp;
     fwd_wspace mm = {0};
     int conv = 0;
@@ -491,34 +522,41 @@ int *forward_stepwise (MODEL *pmod,
     int best = 0;
     int bpos;
     double cur, prev;
+    char *mask = NULL;
     int *xlist = NULL;
     int *aux = NULL;
     int *ret = NULL;
-    int yvar;
     int t1 = pmod->t1;
     int t2 = pmod->t2;
     int T = pmod->nobs;
     int k = pmod->ncoeff;
-    int i, nz;
+    int i, t, nz;
 
     e = gretl_matrix_alloc(T, 1);
-    for (i=0; i<pmod->nobs; i++) {
-        e->val[i] = pmod->uhat[i];
+    for (t=pmod->t1, i=0; t<=pmod->t2; t++) {
+        if (!na(pmod->uhat[t])) {
+            e->val[i++] = pmod->uhat[t];
+        }
     }
     prev = ssr2crit(pmod->ess, T, k, crit);
 
-    yvar = pmod->list[1];
     xlist = gretl_list_new(pmod->list[0] - 1);
     for (i=2; i<=pmod->list[0]; i++) {
         xlist[i-1] = pmod->list[i];
     }
 
-    Q  = gretl_matrix_data_subset(xlist, dset, t1, t2, M_MISSING_ERROR, err);
-    mZ = gretl_matrix_data_subset(zlist, dset, t1, t2, M_MISSING_ERROR, err);
-    my = gretl_vector_from_series(dset->Z[yvar], t1, t2);
+    mask = model_sample_mask(pmod);
+    Q = gretl_matrix_data_subset_masked(pmod->list, dset, t1, t2, mask, err);
+    if (!*err) {
+        Z = gretl_matrix_data_subset_masked(zlist, dset, t1, t2, mask, err);
+    }
+    if (!*err) {
+        y = matrix_steal_col0(Q);
+    }
+    free(mask);
     R = gretl_zero_matrix_new(k, k);
 
-    if (!*err && (my == NULL || R == NULL)) {
+    if (!*err && (y == NULL || R == NULL)) {
         *err = E_ALLOC;
     }
     if (*err) {
@@ -537,7 +575,7 @@ int *forward_stepwise (MODEL *pmod,
     }
 
     while (!conv && added < nz) {
-        *err = qr_augment(Q, R, mZ, e, &mm, crit, &best, &cur);
+        *err = qr_augment(Q, R, Z, e, &mm, crit, &best, &cur);
         if (*err) {
             break;
         }
@@ -545,9 +583,9 @@ int *forward_stepwise (MODEL *pmod,
         /* e = my - Q*(Q'my) */
         tmp = gretl_matrix_alloc(Q->cols, 1);
         gretl_matrix_multiply_mod(Q, GRETL_MOD_TRANSPOSE,
-                                  my, GRETL_MOD_NONE,
+                                  y, GRETL_MOD_NONE,
                                   tmp, GRETL_MOD_NONE);
-        gretl_matrix_copy_values(e, my);
+        gretl_matrix_copy_values(e, y);
         gretl_matrix_multiply_mod(Q, GRETL_MOD_NONE,
                                   tmp, GRETL_MOD_NONE,
                                   e, GRETL_MOD_DECREMENT);
@@ -574,7 +612,7 @@ int *forward_stepwise (MODEL *pmod,
         }
         if (!conv) {
             bpos = best + 1;
-            matrix_drop_column(mZ, best);
+            matrix_drop_column(Z, best);
             fwd_wspace_shrink(&mm);
             gretl_list_append_term(&ret, aux[bpos]);
             gretl_list_delete_at_pos(aux, bpos);
@@ -589,8 +627,8 @@ int *forward_stepwise (MODEL *pmod,
     free(xlist);
     gretl_matrix_free(Q);
     gretl_matrix_free(R);
-    gretl_matrix_free(mZ);
-    gretl_matrix_free(my);
+    gretl_matrix_free(Z);
+    gretl_matrix_free(y);
     gretl_matrix_free(e);
     fwd_wspace_free(&mm);
 
@@ -668,7 +706,8 @@ int *backward_stepwise (MODEL *pmod,
     const char *cstr;
     gretl_matrix *Q;
     gretl_matrix *R;
-    gretl_matrix *y;
+    gretl_matrix *y = NULL;
+    char *mask = NULL;
     int *xlist = NULL;
     bwd_wspace mm = {0};
     double cur, prev, ssr;
@@ -677,7 +716,6 @@ int *backward_stepwise (MODEL *pmod,
     int k = pmod->ncoeff;
     int t1 = pmod->t1;
     int t2 = pmod->t2;
-    int yvar = pmod->list[1];
     int conv = 0;
     int trycol, delvar;
     int nz, dropped = 0;
@@ -691,11 +729,15 @@ int *backward_stepwise (MODEL *pmod,
         return NULL;
     }
 
-    y = gretl_vector_from_series(dset->Z[yvar], t1, t2);
-    Q = gretl_matrix_data_subset(xlist, dset, t1, t2, M_MISSING_ERROR, err);
+    mask = model_sample_mask(pmod);
+    Q = gretl_matrix_data_subset_masked(pmod->list, dset, t1, t2, mask, err);
+    if (!*err) {
+        y = matrix_steal_col0(Q);
+    }
     R = gretl_zero_matrix_new(k, k);
+    free(mask);
 
-    if (!*err && (y == NULL || Q == NULL || R == NULL)) {
+    if (!*err && (y == NULL || R == NULL)) {
         *err = E_ALLOC;
     }
     if (*err) {
@@ -1050,7 +1092,6 @@ MODEL stepwise_omit (MODEL *pmod,
         int droplen = verbose ? g_utf8_strlen(_("Drop"), -1) : 0;
 
 	if (verbose) {
-	    // pputc(prn, '\n');
 	    pprintf(prn, _("Sequential elimination using %s"), crit_string(crit));
 	    pputs(prn, "\n\n");
 	}
@@ -1078,6 +1119,8 @@ MODEL stepwise_omit (MODEL *pmod,
         }
         dset->t1 = pmod->t1;
         dset->t2 = pmod->t2;
+        // fprintf(stderr, "*** stepwise: call set_reference_missmask_from_model\n");
+        set_reference_missmask_from_model(pmod);
         model = lsq(list, dset, OLS, ols_opt);
         free(list);
         ols_done = 1;

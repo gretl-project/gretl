@@ -33,4 +33,6 @@ int reference_missmask_present (void);
 int model_adjust_sample (MODEL *pmod, int n, const double **Z, 
 			 int *misst);
 
+char *model_sample_mask (const MODEL *pmod);
+
 #endif /* MISSING_PRIVATE_H */

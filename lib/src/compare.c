@@ -920,7 +920,9 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 	    first = 0;
 	    goto try_again;
 	} else {
-	    fprintf(stderr, "Original obs = %d but new = %d\n", orig->nobs, rep.nobs);
+            gretl_errmsg_sprintf(_("replicate_estimator() failed:\n"
+                                   " %d observations used versus %d for the original model"),
+                                 rep.nobs, orig->nobs);
 	    rep.errcode = E_DATA;
 	}
     }
@@ -1519,7 +1521,8 @@ static void print_drop (MODEL *pmod, omit_info *oi, int k,
 static int auto_drop_var (omit_info *oi,
                           DATASET *dset,
                           gretlopt opt,
-                          PRN *prn)
+                          PRN *prn,
+                          int *err)
 {
     MODEL *pmod;
     MODEL *tmp = oi->tmp;
@@ -1570,10 +1573,10 @@ static int auto_drop_var (omit_info *oi,
             if (!oi->starting) {
                 clear_model(oi->curr);
             }
+            set_reference_missmask_from_model(oi->orig);
             *tmp = replicate_estimator(oi->orig, ltmp, dset, OPT_A, prn);
             if (tmp->errcode) {
-                fprintf(stderr, "auto_omit: error %d from replicate_estimator\n",
-                        tmp->errcode);
+                *err = tmp->errcode;
                 clear_model(tmp);
             } else {
                 // printmodel(&tmp, dset, OPT_NONE, prn);
@@ -1648,13 +1651,15 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
     oi.use_pval = (crit < C_AIC || crit > C_HQC);
     oi.tmp = oi.use_pval ? NULL : gretl_model_new();
 
-    drop = auto_drop_var(&oi, dset, opt, prn);
-    if (!drop) {
+    drop = auto_drop_var(&oi, dset, opt, prn, &err);
+    if (err) {
+        omod.errcode = err;
+    } else if (!drop) {
 	/* nothing was dropped: set a "benign" error code */
 	err = omod.errcode = E_NOOMIT;
     }
 
-    for (i=0; drop > 0 && !allgone; i++) {
+    for (i=0; drop > 0 && !allgone && !err; i++) {
 	if (i > 0) {
 	    set_reference_missmask_from_model(orig);
 	}
@@ -1662,13 +1667,11 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
             omod = replicate_estimator(orig, oi.list, dset, OPT_A, prn);
             err = omod.errcode;
             if (err) {
-                fprintf(stderr, "auto_omit: error %d from replicate_estimator\n",
-                        err);
                 break;
             }
         }
         list_copy_values(oi.list, omod.list);
-        drop = auto_drop_var(&oi, dset, opt, prn);
+        drop = auto_drop_var(&oi, dset, opt, prn, &err);
         if (drop && omod.ncoeff == 1) {
             allgone = 1; /* will break */
         }
@@ -1677,11 +1680,13 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
         }
     }
 
-    if (allgone) {
+    if (err) {
+        omod.errcode = err;
+    } else if (allgone) {
 	pputc(prn, '\n');
 	pprintf(prn, _("No coefficient has a p-value less than %g"), alpha);
 	pputc(prn, '\n');
-    } else if (!err) {
+    } else {
 	/* re-estimate the final model without the auxiliary flag */
 	gretlopt ropt = OPT_NONE;
 

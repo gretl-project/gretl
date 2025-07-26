@@ -425,6 +425,40 @@ int list_adjust_sample (const int *list, int *t1, int *t2,
     return err;
 }
 
+/* If there are any missing data within the sample range pmod->t1 to
+   pmod->t2, as gauged by reference to pmod->uhat, returns an array of
+   char of length pmod->t2 - pmod->t1 + 1 with 1s indicating missing
+   observations and 0s otherwise. Otherwise (i.e. there are no missing
+   data in the given range) returns NULL.
+*/
+
+char *model_sample_mask (const MODEL *pmod)
+{
+    char *ret = NULL;
+    int doit = 0;
+    int t;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+        if (na(pmod->uhat[t])) {
+            doit = 1;
+            break;
+        }
+    }
+
+    if (doit) {
+        int i, n = pmod->t2 - pmod->t1 + 1;
+
+        ret = calloc(n, 1);
+        for (t=pmod->t1, i=0; t<=pmod->t2; t++, i++) {
+            if (na(pmod->uhat[t])) {
+                ret[i] = 1;
+            }
+        }
+    }
+
+    return ret;
+}
+
 /* A copy of a given model's missmask, or NULL. If non-NULL this will
    be a NUL-terminated array of char of length equal to the full
    length of the dataset on which the model was estimated, with
@@ -501,8 +535,8 @@ int apply_reference_missmask (MODEL *pmod)
 {
     if (refmask != NULL) {
 #if MASKDEBUG
-	fprintf(stderr, "applying reference mask to model = %p\n",
-		(void *) pmod);
+	fprintf(stderr, "applying reference mask %p to model %p\n",
+		(void *) refmask, (void *) pmod);
 #endif
 	pmod->missmask = refmask;
 	refmask = NULL; /* note: apply it only once */
