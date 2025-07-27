@@ -705,7 +705,7 @@ int *backward_stepwise (MODEL *pmod,
 {
     const char *cstr;
     gretl_matrix *Q;
-    gretl_matrix *R;
+    gretl_matrix *R = NULL;
     gretl_matrix *y = NULL;
     char *mask = NULL;
     int *xlist = NULL;
@@ -733,8 +733,8 @@ int *backward_stepwise (MODEL *pmod,
     Q = gretl_matrix_data_subset_masked(pmod->list, dset, t1, t2, mask, err);
     if (!*err) {
         y = matrix_steal_col0(Q);
+        R = gretl_zero_matrix_new(k, k);
     }
-    R = gretl_zero_matrix_new(k, k);
     free(mask);
 
     if (!*err && (y == NULL || R == NULL)) {
