@@ -2612,6 +2612,22 @@ int gretl_in_tool_mode (void)
     return tool_mode;
 }
 
+/* "python_mode" is set when libgretl is being called from
+   python, via gretl4py.
+*/
+
+static int python_mode;
+
+void gretl_set_python_mode (void)
+{
+    python_mode = 1;
+}
+
+int gretl_in_python_mode (void)
+{
+    return python_mode;
+}
+
 /* for CLI use: suppress production of plots? */
 
 void gretl_set_no_plots (void)

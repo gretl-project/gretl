@@ -209,6 +209,9 @@ int gretl_in_batch_mode (void);
 void gretl_set_gui_mode (void);
 int gretl_in_gui_mode (void);
 
+void gretl_set_python_mode (void);
+int gretl_in_python_mode (void);
+
 void gretl_set_tool_mode (void);
 int gretl_in_tool_mode (void);
 

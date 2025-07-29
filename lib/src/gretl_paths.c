@@ -1411,13 +1411,10 @@ char *gretl_addpath (char *fname, int script)
     }
 
     if (!found) {
+        const char *gpath = gretl_home();
         char trydir[MAXLEN];
-        const char *gpath;
 
         strcpy(fname, orig);
-
-        /* now try gretl installation dir */
-        gpath = gretl_home();
 
         if (*gpath != '\0') {
             /* try searching some standard gretl paths */
@@ -1869,8 +1866,11 @@ const char *gretl_home (void)
 
         if (chk != NULL) {
             strncat(paths.gretldir, chk, MAXLEN-2);
-            slash_terminate(paths.gretldir);
         }
+    }
+
+    if (paths.gretldir[0] != '\0') {
+        slash_terminate(paths.gretldir);
     }
 
     return paths.gretldir;
