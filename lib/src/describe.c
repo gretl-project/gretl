@@ -8006,7 +8006,7 @@ static gretl_matrix *matrix_mahalanobis (const gretl_matrix *X,
         D =  gretl_matrix_alloc(m, n); /* to hold X .- centroid */
         DC = gretl_matrix_alloc(m, n); /* to hold D * inv(C) */
         M =  gretl_matrix_alloc(m, p); /* to hold return value */
-        if (D == NULL || M == NULL) {
+        if (D == NULL || DC == NULL || M == NULL) {
             *err = E_ALLOC;
         }
     }
