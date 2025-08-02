@@ -14293,7 +14293,7 @@ int gretl_matrices_are_equal (const gretl_matrix *a,
 
 /**
  * gretl_covariance_matrix:
- * @m: (x x n) matrix containing n observations on each of k
+ * @m: (n x k) matrix containing n observations on each of k
  * variables.
  * @corr: flag for computing correlations.
  * @dfc: degrees of freedom correction: use 1 for sample
