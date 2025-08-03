@@ -7932,7 +7932,7 @@ enum {
     MAHALANOBIS
 };
 
-static int distance_type (const char *s)
+static int distance_metric (const char *s)
 {
     int n = strlen(s);
 
@@ -7958,7 +7958,106 @@ static int distance_type (const char *s)
     }
 }
 
-/* implement the mahalanobis metric for the distance() function */
+static gretl_matrix *mahal_cholesky_factor (const gretl_matrix *X,
+                                            int *err)
+{
+    gretl_matrix *C;
+
+    C = gretl_covariance_matrix(X, 0, 1, err);
+    if (!*err) {
+        *err = gretl_matrix_cholesky_decomp(C);
+        gretl_square_matrix_transpose(C);
+        if (!*err) {
+            *err = gretl_invert_triangular_matrix(C, 'U');
+        }
+    }
+
+    return C;
+}
+
+static int mahalanobis_allocate (gretl_matrix **D,
+                                 gretl_matrix **DC,
+                                 gretl_matrix **ret,
+                                 int r1, int c1,
+                                 int r2, int c2)
+{
+    *D   = gretl_matrix_alloc(r1, c1); /* to hold X .- centroid */
+    *DC  = gretl_matrix_alloc(r1, c1); /* to hold D * inv(C) */
+    *ret = gretl_matrix_alloc(r2, c2); /* return matrix */
+
+    if (*D == NULL || *DC == NULL || *ret == NULL) {
+        return E_ALLOC;
+    } else {
+        return 0;
+    }
+}
+
+static gretl_matrix *matrix_mahal_all (const gretl_matrix *X,
+                                       int *err)
+{
+    gretl_matrix *v = NULL;
+    gretl_matrix *D = NULL;
+    gretl_matrix *C = NULL;
+    gretl_matrix *DC = NULL;
+    double x, y;
+    double d, dij;
+    int m = X->rows;
+    int n = X->cols;
+    int i, j, k, p, r;
+    int ii, jj;
+
+    C = mahal_cholesky_factor(X, err);
+    if (*err) {
+        goto bailout;
+    }
+
+    p = (m * (m-1)) / 2;
+    r = m - 1;
+    *err = mahalanobis_allocate(&D, &DC, &v, r, n, p, 1);
+    if (*err) {
+        goto bailout;
+    }
+
+    jj = 0;
+    for (k=0; k<r; k++) {
+        if (k > 0) {
+            gretl_matrix_reuse(D, r-k, n);
+            gretl_matrix_reuse(DC, r-k, n);
+        }
+        /* Dij = Xij - Xkj */
+        ii = 0;
+        for (i=k+1; i<m; i++) {
+            for (j=0; j<n; j++) {
+                x = gretl_matrix_get(X, i, j);
+                y = gretl_matrix_get(X, k, j);
+                gretl_matrix_set(D, ii, j, x - y);
+            }
+            ii++;
+        }
+        gretl_matrix_multiply(D, C, DC);
+        for (i=0; i<DC->rows; i++) {
+            dij = 0;
+            for (j=0; j<n; j++) {
+                d = gretl_matrix_get(DC, i, j);
+                dij += d * d;
+            }
+            v->val[jj++] = sqrt(dij);
+        }
+    }
+
+ bailout:
+
+    gretl_matrix_free(C);
+    gretl_matrix_free(D);
+    gretl_matrix_free(DC);
+
+    if (*err) {
+        gretl_matrix_free(v);
+        v = NULL;
+    }
+
+    return v;
+}
 
 static gretl_matrix *matrix_mahalanobis (const gretl_matrix *X,
                                          const gretl_matrix *Y,
@@ -7976,21 +8075,13 @@ static gretl_matrix *matrix_mahalanobis (const gretl_matrix *X,
     int i, j, k, p;
     int ii;
 
-    C = gretl_covariance_matrix(X, 0, 1, err);
-    if (!*err) {
-        *err = gretl_matrix_cholesky_decomp(C);
-        gretl_square_matrix_transpose(C);
-        if (!*err) {
-            *err = gretl_invert_triangular_matrix(C, 'U');
-        }
-    }
-
+    C = mahal_cholesky_factor(X, err);
     if (*err) {
         goto bailout;
     }
 
     if (Y == NULL) {
-        /* get meanc(X) */
+        /* default: Y = meanc(X) */
         y = gretl_matrix_vector_stat(X, V_MEAN, 0, 0, err);
         p = 1;
     } else {
@@ -7998,17 +8089,12 @@ static gretl_matrix *matrix_mahalanobis (const gretl_matrix *X,
         if (p == 1) {
             y = gretl_matrix_copy(Y);
         } else {
-            y = gretl_matrix_alloc(1, m);
+            y = gretl_matrix_alloc(1, n);
         }
     }
 
     if (!*err) {
-        D =  gretl_matrix_alloc(m, n); /* to hold X .- centroid */
-        DC = gretl_matrix_alloc(m, n); /* to hold D * inv(C) */
-        M =  gretl_matrix_alloc(m, p); /* to hold return value */
-        if (D == NULL || DC == NULL || M == NULL) {
-            *err = E_ALLOC;
-        }
+        *err = mahalanobis_allocate(&D, &DC, &M, m, n, m, p);
     }
 
     if (*err) {
@@ -8038,6 +8124,7 @@ static gretl_matrix *matrix_mahalanobis (const gretl_matrix *X,
             }
             mval[i] = sqrt(dij);
         }
+        /* go to next column of M */
         mval += m;
     }
 
@@ -8073,48 +8160,51 @@ static gretl_matrix *matrix_mahalanobis (const gretl_matrix *X,
 
 gretl_matrix *distance (const gretl_matrix *X,
 			const gretl_matrix *Y,
-			const char *type, int *err)
+			const char *type,
+                        int *err)
 {
     gretl_matrix *ret;
     double d, dij, x, y;
     double den1, den2;
-    int dtype, vlen, pos;
-    int r1, r2, c, jmin;
+    int metric, vlen, pos;
+    int m, n, p, jmin;
     int i, j, k;
     int Ynull = (Y == NULL);
 
-    if (gretl_is_null_matrix(X) || gretl_is_complex(X)) {
-	*err = E_INVARG;
-	return NULL;
+    if (gretl_is_null_matrix(X)) {
+        *err = E_INVARG;
+    } else if (gretl_is_complex(X) || gretl_is_complex(Y)) {
+        *err = E_CMPLX;
+    } else if (Y != NULL && Y->cols != X->cols) {
+        *err = E_NONCONF;
+    } else if ((metric = distance_metric(type)) < 0) {
+        *err = E_INVARG;
     }
 
-    if (Y != NULL && (gretl_is_complex(Y) || Y->cols != X->cols)) {
-	*err = E_INVARG;
-	return NULL;
+    if (*err) {
+        return NULL;
     }
 
-    dtype = distance_type(type);
-    if (dtype < 0) {
-	*err = E_INVARG;
-	return NULL;
+    if (metric == MAHALANOBIS) {
+        if (Y == X) {
+            return matrix_mahal_all(X, err);
+        } else {
+            return matrix_mahalanobis(X, Y, err);
+        }
     }
 
-    if (dtype == MAHALANOBIS) {
-        return matrix_mahalanobis(X, Y, err);
-    }
-
-    r1 = X->rows;
-    c  = X->cols;
+    m = X->rows;
+    n = X->cols;
 
     if (Ynull) {
-	r2 = r1;
-	vlen = r1 * (r1 - 1) / 2;
+	p = m;
+	vlen = m * (m - 1) / 2;
 	/* column vector for results */
 	ret = gretl_matrix_alloc(vlen, 1);
     } else {
-	r2 = Y->rows;
+	p = Y->rows;
 	/* matrix for results */
-	ret = gretl_matrix_alloc(r1, r2);
+	ret = gretl_matrix_alloc(m, p);
     }
 
     if (ret == NULL) {
@@ -8123,28 +8213,28 @@ gretl_matrix *distance (const gretl_matrix *X,
     }
 
     pos = 0;
-    for (i=0; i<r1; i++) {
+    for (i=0; i<m; i++) {
 	jmin = Ynull ? i + 1 : 0;
-	for (j=jmin; j<r2; j++) {
+	for (j=jmin; j<p; j++) {
 	    den1 = den2 = dij = 0;
-	    for (k=0; k<c; k++) {
+	    for (k=0; k<n; k++) {
 		x = gretl_matrix_get(X, i, k);
 		if (Y == NULL) {
 		    y = gretl_matrix_get(X, j, k);
 		} else {
 		    y = gretl_matrix_get(Y, j, k);
 		}
-		if (dtype == MANHATTAN) {
+		if (metric == MANHATTAN) {
 		    dij += fabs(x - y);
-		} else if (dtype == HAMMING) {
+		} else if (metric == HAMMING) {
 		    dij += (x - y != 0);
-		} else if (dtype == CHEBYSHEV) {
+		} else if (metric == CHEBYSHEV) {
 		    d = fabs(x - y);
 		    if (d > dij) {
 			dij = d;
 		    }
-		} else if (dtype == COSINE) {
-		    dij += x * y;
+		} else if (metric == COSINE) {
+		    dij  += x * y;
 		    den1 += x * x;
 		    den2 += y * y;
 		} else {
@@ -8153,11 +8243,11 @@ gretl_matrix *distance (const gretl_matrix *X,
 		    dij += d * d;
 		}
 	    }
-	    if (dtype == EUCLIDEAN) {
+	    if (metric == EUCLIDEAN) {
 		dij = sqrt(dij);
-	    } else if (dtype == HAMMING) {
-		dij /= c;
-	    } else if (dtype == COSINE) {
+	    } else if (metric == HAMMING) {
+		dij /= n;
+	    } else if (metric == COSINE) {
 		dij = 1.0 - dij / sqrt(den1 * den2);
 	    }
 	    if (Ynull) {
