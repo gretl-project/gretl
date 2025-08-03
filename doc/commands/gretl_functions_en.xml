@@ -4474,7 +4474,7 @@
 	  <lit>hamming</lit>, <lit>chebyshev</lit>, <lit>cosine</lit>
 	  or <lit>mahalanobis</lit>. The string identifying the metric
 	  can be given as an unambiguous truncation. The additional
-	  metrics correlation, standardized Euclidean are supported
+	  metrics correlation and standardized Euclidean are supported
 	  via simple transformations of the inputs; see below.
 	</para>
 	<para>
@@ -4487,7 +4487,7 @@
 	<subhead>Standard cases</subhead>
 	<para>
 	  This section applies to all metrics except the Mahalanobis
-	  distance, for which the syntax is slightly different (see
+	  distance, for which the semantics are slightly different (see
 	  below).
 	</para>
 	<para>
@@ -4561,36 +4561,52 @@
 	  Mahalanobis distances are defined as the Euclidean distances
 	  between the points in question (rows of
 	  <argname>X</argname>) and a given centroid, scaled by the
-	  inverse of a covariance matrix. In the simplest case the
-	  centroid is constituted by the sample means of the variables
-	  (columns of <argname>X</argname>) and the covariance matrix
-	  is their sample covariance.
+	  inverse of a covariance matrix.
         </para>
         <para>
-	  These can be obtained by supplying as second argument the
-	  string <quote>mahalanobis</quote> or any unambiguous
-	  abbreviation, as in
+          In the most common case the centroid is the vector of sample
+          means of the variables (columns of <argname>X</argname>) and
+          the covariance matrix is their sample covariance. So results
+          for this case can be obtained by supplying as second argument
+          the string <quote>mahalanobis</quote> or any unambiguous
+          abbreviation, and omitting the optional third argument, as in
 	</para>
 	<code>
 	  dmahal = distance(X, "mahal")
 	</code>
 	<para>
-          In this case the third argument <argname>Y</argname> is not
-          supported, and the return value is a column vector of length
-          <math>m</math> with the Mahalanobis distances from the
-          centroid of <argname>X</argname> (that is, its sample
-          mean). In practice, the output matrix in this case is the
-          same you get by executing the <cmdref targ="mahal"/> command
-          on a list of series corresponding to the columns of
-          <argname>X</argname>.
-	</para>
+          If the third argument, <argname>Y</argname>, is given, and
+          <argname>Y</argname> is distinct from <argname>X</argname>,
+          then the result is as described above for the other metrics:
+          it is an <by r="m" c="p"/> matrix of distances, where
+          <math>p</math> is the number of rows in
+          <argname>Y</argname>. It follows that the previous example can
+          be replicated, slightly less efficiently, via
+        </para>
+        <code>
+	  dmahal2 = distance(X, "mahal", meanc(X))
+        </code>
 	<para>
-	  To obtain Mahalanobis distances using a different centroid,
-	  <lit>mu</lit>, and/or inverse covariance matrix,
-	  <lit>ICV</lit>, the following syntax can be used:
+	  but a <argname>Y</argname> with multiple rows is also
+	  supported.
+	</para>
+        <para>
+          If you want the vector of all non-redundant pairwise distances
+          between the <math>m</math> points in <argname>X</argname>,
+          this can be obtained via
+        </para>
+        <code>
+	  dmahal3 = distance(X, "mahal", X)
+        </code>
+	<para>
+	  To obtain the Mahalanobis distances of the rows of
+	  <argname>X</argname> from an arbitrary centroid,
+	  <math>c</math>, using an arbitrary covariance matrix,
+	  <math>V</math>, you can do
 	</para>
 	<code>
-	  dmahal = distance(X*cholesky(ICV), "euc", mu)
+	  z = zeros(1, cols(X))
+	  d = distance((X .- c) / cholesky(V)', "euc", z)
 	</code>
 	<subhead>Other metrics</subhead>
 	<para>
@@ -4599,7 +4615,7 @@
 	</para>
 	<code>
 	  # standardized euclidean
-	  dseu = distance(stdize(X), "eu")
+	  dseu = distance(stdize(X), "euc")
 	  # correlation (based on cosine)
 	  dcor = distance(stdize(X', -1)', "cos")
 	</code>
