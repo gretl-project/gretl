@@ -1340,10 +1340,9 @@ gretl_matrix *gretl_matrix_copy_transpose (const gretl_matrix *m)
     return gretl_matrix_copy_mod(m, GRETL_MOD_TRANSPOSE);
 }
 
-/* Relatively lightweight version of gretl_matrix_copy, for
-   internal use when we just want a temporary copy of an
-   original matrix as workspace, and we know that the original
-   is not a null matrix.
+/* Relatively lightweight version of gretl_matrix_copy, for internal
+   use when we just want a temporary copy of an original matrix as
+   workspace, and we know that the original is not a null matrix.
 */
 
 static gretl_matrix *gretl_matrix_copy_tmp (const gretl_matrix *a)
