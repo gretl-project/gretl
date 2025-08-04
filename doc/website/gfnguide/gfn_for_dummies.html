@@ -1,0 +1,348 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/REC-html40/loose.dtd">
+
+<html>
+  <head>
+    <title>Creating a gretl function package: a guide for dummies</title>
+    <LINK REL=STYLESHEET TYPE="text/css" HREF="./css_article.html">
+    <meta name="generator" content="GNU Emacs">
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  </head>
+
+  <body>
+<p>[<a href="../index.html">gretl main page</a>]</p>    
+
+<h1>Creating a gretl function package: a guide for dummies</h1>
+
+<p align="center">Stefano Fachin, Universit&agrave; di Roma "La Sapienza", February 2021</p>
+
+<h2>Summary</h2>
+
+<p>Creating a function package is, believe it or not, much easier and
+more useful than you might think. Useful because sharing code, even if
+naive and inefficient, can save other people lots of time and
+effort. Easier because the process only requires grasping some
+fundamental steps, which we shall illustrate in this "Guide for
+Dummies". Of course, everything we shall say is explained more
+accurately and in more depth in the <i>Gretl Function Package
+Guide</i> (hereinafter simply the <i>Guide</i>), to which we refer for
+any doubt. The <i>Guide</i> can be found under gretl's Help menu, or
+<a href="https://sourceforge.net/projects/gretl/files/manual/pkgbook.pdf">on
+  sourceforge</a>.</p>
+
+<h2>1 Introduction</h2>
+
+<p>As explained at the beginning of the <i>Guide</i>, a "function
+package" is simply a file which "packages", hence the name, four
+different objects:</p>
+
+<ol>
+<li><p>the hansl code for the function (actually, there can be more
+than one, but we shall stick to the basic case of a single
+function);</p></li>
+
+<li><p>information on author, version, date, etc. (the "metadata" of
+the package);</p></li>
+
+<li><p>some help text explaining what the function does; and</p></li>
+
+<li><p>a sample script that illustrates its use.</p></li>
+</ol>
+
+<p>The extension for files of this type is <kbd>gfn</kbd>; therefore,
+I will use "function package" and "gfn file" as synonyms.</p>
+
+<h2>2 A simple example</h2>
+
+<p>Suppose you have written a function for your own needs and decide
+to share it on gretl's server. Since the metadata items (piece 2) are
+simple and will be inserted easily in due course, the only actual
+extra work you have to do is to write pieces (3) and (4), the help
+text and sample script, and assemble the four pieces.</p>
+
+<p>Following the example in the <i>Guide</i>, suppose that you have
+written a function, say <kbd>pc</kbd>, which computes the series of
+percentage changes from a given series. You'll make this function
+available via a function package whose name will
+be <kbd>pcchange</kbd>. The function is:</p>
+
+<pre>
+function series pc(series y "Series to process")
+    series ret = 100 * diff(y)/y(-1)
+    return ret
+end function
+</pre>
+
+<p>You now need the Help text and the Sample script.</p>
+
+<p><b>Help text</b>: not much to be said, just explain what the
+different inputs are and what output will be obtained. A plain text
+file with lines around 70 characters wide, nice to be read in a small
+window, will do. Here something like this will suffice:</p>
+
+<pre>
+This function computes the percentage changes of a given series.
+inputs: x, a series
+output: the percentage change of x, a series
+</pre>
+
+<p><b>Sample script</b>: this requires some details. Quoting from the
+<i>Guide</i>, in the first line of the script write</p>
+
+<pre>
+include pcchange.gfn
+</pre>
+
+<p>
+  This will ensure that your packaged <kbd>pc</kbd> function is
+  available in the rest of the script. Then open a dataset. The
+  simplest choice is to use one of those supplied with gretl. For
+  instance, to open Søren Johansen's Danish macroeconomic data write:
+</p>
+
+<pre>
+  open denmark.gdt
+</pre>
+
+<p>Then write a couple of lines which run your function and use its
+output (possibly, with a few explanatory comments). Therefore, the
+sample script which computes and prints the percentage change of the
+variable LRM included in the Johansen dataset will look something like
+this:</p>
+
+<pre>
+  include pcchange.gfn
+  open denmark.gdt         # open Johansen's dataset
+  series pcLRM = pc(LRM)   # compute percentage change for LRM
+  print LRM pcLRM --byobs
+</pre>
+
+<p>We now have all the pieces. We just need to put them together in the
+gfn file.</p>
+
+<h2>3 Putting the pieces together</h2>
+
+<p>To put everything together into a gfn file, the GUI offers an handy
+tool, but there is a catch: it works only on functions already loaded
+in gretl's workspace. Don't worry, this simply means that before using
+the tool you have to run the function: since you probably used gretl's
+script editor to write the function in the first place, running that
+as a script (by clicking on the "gears" icon) will do.</p>
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+<p>Once this is done, all you have to do is open the File > Function
+packages > New package menu item from the gretl main window. A box
+with a familiar look, very similar to the one offered to select the
+  variables for a regression, will appear (Fig. 1).</p>
+
+<p>Select the <kbd>pc</kbd> function for packaging (blue background in
+Fig. 1) and move it in the area "Public functions" on the right using
+the green arrow. Then just fill in the box on the top with package
+name (<kbd>pcchange</kbd> in this case) and hit OK.</p>
+
+<p>In case you are curious: "Helper functions" are those used in
+the background by public functions (that is, they are included in
+packages but are not visible to users). In our simple example there
+are no such functions.</p>
+
+    </td>
+    <td width="50%" valign="top">
+<table align="center">
+  <tr><td><img src="select_function.png" alt="select function"/></td></tr>
+  <tr align="center"><td>Figure 1: Selecting a function for
+      creating a package.</td></tr>
+</table>  
+<br>
+    </td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <p>
+	A window for entering the metadata should now appear
+	(Fig. 2). Here you type your name, e-mail address and a
+	one-line description of the package. If you plan to publish
+	your package (see below), it is preferable to use an e-mail
+	address that you check frequently, because that is what the
+	gretl administrators would use to contact you if there was any
+	problem with your package, not to mention package users who
+	may need to ask for your assistance.
+      </p>
+
+<p>In this window, you also choose one or two tags (here we choose
+"General" and "Univariate Time-Series Models", somehow restrictive but
+certainly relevant) and, if relevant, the type of data required for
+the function (here time series). Since your function can work with any
+version of gretl, simply accept the "Minimum gretl version" of 2011a
+offered by the system.</p>
+
+    </td>
+    <td width="50%" valign="top">
+<table align="center">
+  <tr><td><img src="metadata.png" alt="package metadata"/></td></tr>
+ <tr align="center"><td>Figure 2: Entering the package metadata</td></tr>
+</table>
+    </td>
+  </tr>
+</table>
+
+<br>
+<br>
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+<p>You now need only two more steps: inserting the Help text and the
+Sample script. The area for the Help text is on the right of the
+window, near the bottom. If you created a PDF file you can upload it
+by clicking on the "PDF file" option, otherwise select the "plain
+text" option and click on "Edit". This opens an editor window in which
+you type your text. When you are done save and exit (Fig. 3).</p>
+    </td>
+    <td width="50%" valign="top">
+<table align="center">
+<tr><td><img src="help_text.png" alt="help text window"/></td></tr>
+<tr align="center"><td>Figure 3: Creating the Help in text format</td></tr>
+</table>
+    </td>
+  </tr>
+</table>
+
+<br>
+<br>
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+<p>The next step is creating the sample script. In the last line click
+on "Edit sample script". This will open a script editor window in
+which the first line is preset to <kbd>include</kbd> the newly created
+package. Insert the rest of your code, save and exit (Fig. 4).</p>
+    </td>
+    <td width="50%" valign="top">
+<table align="center">
+<tr><td><img src="sample_script.png" alt="sample script window"/></td></tr>
+<tr align="center"><td>Figure 4: Creating the sample script
+</table>
+    </td>
+  </tr>
+</table>
+
+<br>
+<br>
+
+<p>You are almost done. An additional, not strictly necessary, step is
+related to a cute gretl functionality: function packages can be
+attached to the native gretl menus of the GUI (in other words, your
+package may sit next to those found out-of-the-box when installing
+gretl: isn't that cool?). For that purpose, you will need to set a few
+parameters. To do so, click on the button "Extra properties" at the
+bottom (Fig. 5).</p>
+
+<br>
+<table align="center">
+<tr><td><img src="extra_props_hilit.png" alt="extra properties button"/></td></tr>
+<tr align="center"><td>Figure 5: Selecting the "Extra properties" item</td></tr>
+</table>
+<br>
+
+<br>
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+<p>This will open a box with various tabs (Fig. 6). Select the second
+from the left, "Menu attachment". There you find a few options to
+choose, for instance whether you wish the menu-item for your function
+to appear in the main window or in a secondary, model window. Here the
+obvious choice is "main window", while "model window" would
+have been a more appropriate choice for a function computing, say,
+model residual diagnostics.</p>
+
+<p>You can also type some Help text for the GUI. All details are
+explained in the Help (button on the bottom left in Fig. 6). When you
+  have finished, click "Apply" and then "Close".</p>
+
+<p>This leads you back to main packager window (the one in
+Fig. 5). Click on "Save" and choose the option "gfn file" You can
+either let gretl choose where to save it or pick your own location,
+but the safest option is to let gretl choose for you. (See Fig. 7
+below.)</p>
+    </td>
+    <td width="50%" valign="top">
+<table align="center">
+<tr><td><img src="extra_props.png" alt="extra properties dialog"/></td></tr>
+<tr align="center"><td>Figure 6: giving the package a menu attachment</td></tr>
+</table>
+    </td>
+  </tr>
+</table>
+
+<br>
+<br>
+<table align="center">
+<tr><td><img src="save_gfn.png" alt="save gfn file"/></td></tr>
+<tr align="center"><td>Figure 7: Saving the package as a gfn file</td></tr>
+</table>
+<br>
+
+<p>To check that everything is OK now click on "Validate". If you see
+something like Fig. 8, then your package is working properly. Good
+job!</p>
+
+<br>
+<table align="center">
+<tr><td><img src="validated.png" alt="package validated"/></td></tr>
+<tr align="center"><td>Figure 8: Validation message</td></tr>
+</table>
+<br>
+
+<h2>4 Uploading your package</h2>
+
+<p>At this point, your function happily sits on your computer with
+"package" status. Since it deserves to be distributed,
+let's move to the publishing step.</p>
+
+<p>The first thing you need is a gretl ID: if you don't have one
+already, open the address
+  <a href="https://gretl.sourceforge.net/apply/">https://gretl.sourceforge.net/apply/</a>
+    in your browser and apply for a ID.</p>
+
+<p>Once you have an ID, go to "File > Function packages > Upload
+package" in the gretl main-window menu and select your package (See Figs 9
+and 10).</p>
+
+<br>
+<table align="center">
+<tr><td><img src="upload_pkg_menu.png" alt="upload package menu item"/></td></tr> 
+<tr align="center"><td>Figure 9: Selecting a package for upload, step 1</td></tr>
+</table>
+<br>
+
+<br>
+<table align="center">
+<tr><td><img src="file_select.png" alt="select gfn for upload"/></td></tr>
+<tr align="center"><td>Figure 10: Selecting a package for upload, step 2</td></tr>
+</table>
+<br>
+
+<p>Once you have selected your package you will be asked for
+your login information (Fig. 11), and can perform the upload. Now you
+have simply to wait for the administrators to check your
+submission. Congratulations!</p>
+
+<br>
+<table align="center">
+<tr><td><img src="upload_login.png" alt="upload login"/></td></tr>
+<tr align="center"><td>Figure 11: Logging in to upload a package</td></tr>
+</table>
+<br>
+
+And that's all for now.
+
+  </body>
+  </html>
