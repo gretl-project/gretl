@@ -8157,7 +8157,7 @@ static gretl_matrix *matrix_mahalanobis (const gretl_matrix *X,
    the rows of @X, or if @Y is non-NULL, between the rows of @X and
    the rows of @Y.
 
-   If @X is m x n and @Y is NULL, the result is a vector &v of length
+   If @X is m x n and @Y is NULL, the result is a vector @v of length
    m * (m - 1) / 2, comprising the non-redundant pairwise distances
    with the zeros on the diagonal suppressed. This can be turned into
    a square matrix via unvech(v, 0).
