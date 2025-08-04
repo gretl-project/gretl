@@ -7992,6 +7992,10 @@ static int mahalanobis_allocate (gretl_matrix **D,
     }
 }
 
+/* @X is m x n. Returns a column vector of length m*(m-1)/2 holding the
+   non-redundant pairwise distances between the rows of @X.
+*/
+
 static gretl_matrix *matrix_mahal_all (const gretl_matrix *X,
                                        int *err)
 {
@@ -8018,21 +8022,18 @@ static gretl_matrix *matrix_mahal_all (const gretl_matrix *X,
         goto bailout;
     }
 
-    jj = 0;
-    for (k=0; k<r; k++) {
+    for (k=0, jj=0; k<r; k++) {
         if (k > 0) {
             gretl_matrix_reuse(D, r-k, n);
             gretl_matrix_reuse(DC, r-k, n);
         }
         /* Dij = Xij - Xkj */
-        ii = 0;
-        for (i=k+1; i<m; i++) {
+        for (i=k+1, ii=0; i<m; i++, ii++) {
             for (j=0; j<n; j++) {
                 x = gretl_matrix_get(X, i, j);
                 y = gretl_matrix_get(X, k, j);
                 gretl_matrix_set(D, ii, j, x - y);
             }
-            ii++;
         }
         gretl_matrix_multiply(D, C, DC);
         for (i=0; i<DC->rows; i++) {
@@ -8058,6 +8059,15 @@ static gretl_matrix *matrix_mahal_all (const gretl_matrix *X,
 
     return v;
 }
+
+/* @X is m x n, @Y is p x n or NULL.
+
+   If @Y is NULL, returns an m-vector holding the distances of the rows
+   of @X from the centroid defined by the column means of @X.
+
+   If @Y is non-NULL, returns a m x p matrix holding the distances
+   between the rows of @X and the rows of @Y.
+*/
 
 static gretl_matrix *matrix_mahalanobis (const gretl_matrix *X,
                                          const gretl_matrix *Y,

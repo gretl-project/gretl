@@ -4566,9 +4566,9 @@
         <para>
           In the most common case the centroid is the vector of sample
           means of the variables (columns of <argname>X</argname>) and
-          the covariance matrix is their sample covariance. So results
-          for this case can be obtained by supplying as second argument
-          the string <quote>mahalanobis</quote> or any unambiguous
+          the covariance matrix is their sample covariance. Results for
+          this case can be obtained by supplying as second argument the
+          string <quote>mahalanobis</quote> or any unambiguous
           abbreviation, and omitting the optional third argument, as in
 	</para>
 	<code>
@@ -4591,7 +4591,7 @@
 	  supported.
 	</para>
         <para>
-          If you want the vector of all non-redundant pairwise distances
+          If you want the vector of non-redundant pairwise distances
           between the <math>m</math> points in <argname>X</argname>,
           this can be obtained via
         </para>
