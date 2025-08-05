@@ -20,15 +20,9 @@
 <p>
 Function packages, written in gretl's scripting language
 <a href="https://sourceforge.net/projects/gretl/files/manual/hansl-primer.pdf">hansl</a>,
-extend the program's functionality in numerous econometric domains,
-including time-series methods, univariate and multivariate;
-microeconometric methods; panel-data estimators and tests; Bayesian
-methods, including VARs and model averaging; marginal effects for
-nonlinear models; and specialized plotting methods. As of this writing
-over 170 such packages are available. Some packages can only be used
-via the command line, but many of them also include a GUI <q>hook</q>
-(that is, offer to insert a menu item from which they can be
-called via a dialog box).</p>
+extend the program's functionality in numerous econometric
+domains.
+</p>
 
 <p>There are two types of packages:</p>
 
@@ -44,13 +38,94 @@ called via a dialog box).</p>
   <li><p>Contributed packages: these are written by gretl users who
   may or may not be team members. They are moderated by the team, to
   ensure that they <q>work</q> (that is, produce plausible output when
-  called as per their documentation), that they are reasonably
-  well documented, and that they are non-redundant (don't just
-  replicate functionality that's already available).
+  called as per their documentation), that they are reasonably well
+  documented, and that they are non-redundant (don't just replicate
+  functionality that's already available). As of this writing over 170
+  such packages are available. Some packages can only be used via the
+  command line, but many of them also include a GUI <q>hook</q> (that
+  is, offer to insert a menu item from which they can be called via a
+  dialog box).
     </p>
-    </li>
+  </li>
 </ul>
 
+</p>
+Some examples of the extra features provided by addons and packages
+include:
+</p>
+<ul>
+  <li><p>
+      Assorted statistical methods: correspondence analysis,
+      multidimensional scaling, factor analysis, CUB models, weighted
+      statistics; additional tests (Bartlett, Friedman,
+      Kruskal-Wallis, Kolmogorov-Smironv, Levene).
+  </p></li>
+  <li><p>
+      Bayesian methods: Bayesian regression, Bayesian VARs, Bayesian
+      Model Averaging.
+  </p></li>
+  <li><p>
+      Causal inference: matching estimators.
+  </p></li>
+  <li><p>
+      Additional tools for univariate models: multipliers for ARDL
+      models, time-varying parameters, spatial regression, threshold
+      models, Bai-Perron structural breaks, marginal effects for nonlinear
+      models, Box-Cox modelling, extra utilities for IV estimation.
+  </p></li>
+  <li><p> Microeconometric methods: <b>probit models with
+      heteroskedasticity and IV</b>, ROC curve and specification tests
+      for binary models, discrete choice models, predictions for
+      Tobit, ordered, count data models.
+  </p></li>
+  <li><p> Machine learning tools: <b>Regularized least squares (LASSO,
+      RIDGE, Elastic Net)</b>, adaptive and graphical LASSO, k-means
+      clustering, random forests.
+  </p></li>
+  <li><p>
+      Time series:
+      <ul>
+	<li><p>
+	    Univariate: time series filters (Christiano-Fitzgerald,
+	    Hamilton), Harvey-style structural models, additional unit
+	    root tests (including Phillips-Perron and HEGY), FM-OLS,
+	    SETAR models.
+	</p></li>
+	<li><p> Multivariate: <b>Structural VARs</b>, recursive VARs, Dynamic
+	    Factor Models (also hierarchical), multivariate spectra,
+	    Markov-switching VARs, bootstrap-based cointegration
+	    tests.
+	</p></li>
+	<li><p>
+	    Financial: Automated data downloading from Yahoo Finance,
+	    <b>univariate GARCH</b> and SV models, DCC and BEKK multivariate models.
+	</p></li>
+	<li><p>
+	    Forecasts: Forecats evaluations, Diebold-Mariano test,
+	    interval forecasts.
+	</p></li>
+      </ul>
+  </p></li>
+  <li><p> Models for panel data: <b>IV models</b>, dynamic binary
+      models, FE Poisson, Pooled and Mean Group estimator for dynamic
+      models, RE Tobit, cross-sectional tests, unit-root and
+      cointegration tests.
+  </p></li>
+  <li><p> Specialized plotting methods: <b>geographical maps</b>,
+      candlesticks, heamaps, scatterplots with factor separation,
+      bivariate and factorized densities.
+  </p></li>
+  <li><p>
+      Various utilities for Hansl programming. 
+  </p></li>
+</ul>
+
+<p>
+  Entries in boldface are provided via addons, and are therefore
+  immediately available upon successful installation on most
+  platforms.
+</p>
+  
 <p>Contributed packages are not installed automatically with the rest
   of gretl. You can install them from the GUI program: go to the menu
   item <span style="font-family: sans-serif;">File/Function
@@ -74,8 +149,8 @@ called via a dialog box).</p>
     guide</a>.
 </p>
 
-Allin Cottrell<br>
-2025-08-04
+Allin Cottrell and Riccardo (Jack) Lucchetti<br>
+2025-08-05
 
 </body>
 </html>
