@@ -24,34 +24,45 @@ extend the program's functionality in numerous econometric
 domains.
 </p>
 
+<h2>Types of packages</h2>
+
 <p>There are two types of packages:</p>
 
 <ul>
   <li><p>Addons: these <q>official</q> packages are written by members
     of the gretl team.  While gretl offers no warranty, the addons are
     tested as thoroughly as the core gretl code. They are supplied in
-    the packages we provide for MS Windows and macOS, and also in the
-    packages for Linux prepared
+    the installers we provide for MS Windows and macOS, and also in the
+    gretl packages for Linux prepared
     by <a href="https://packages.debian.org/search?keywords=gretl">Debian</a>
     and <a href="https://packages.fedoraproject.org/pkgs/gretl/">Fedora</a>.
+    The addons are automatically present in the gretl GUI. For example,
+    the menu item <span style="font-family:
+    sans-serif;"><q>Model/Univariate time series/GARCH variants</q></span> gives an
+    interface to the <q>gig</q> (Garch in gretl) addon.
+
   </p></li>
-  <li><p>Contributed packages: these are written by gretl users who
-  may or may not be team members. They are moderated by the team, to
-  ensure that they <q>work</q> (that is, produce plausible output when
-  called as per their documentation), that they are reasonably well
-  documented, and that they are non-redundant (don't just replicate
-  functionality that's already available). As of this writing over 170
-  such packages are available. Some packages can only be used via the
-  command line, but many of them also include a GUI <q>hook</q> (that
-  is, offer to insert a menu item from which they can be called via a
-  dialog box).
+  <li><p>Contributed packages: these are written by gretl users who may
+  or may not be team members. They are moderated by the team, to ensure
+  that they <q>work</q> (that is, produce plausible output when called
+  as per their documentation), that they are reasonably well documented,
+  and that they are non-redundant (don't just replicate functionality
+  that's already available). As of this writing over 170 such packages
+  are available. These packages are not installed automatically with the
+  rest of gretl. You can install them from the GUI program: go to the
+  menu item <span style="font-family: sans-serif;"><q>File/Function
+        packages/On server</q></span> to see a listing of what's available.
+  Some such packages can only be used via the command line, but many of them
+  also include a GUI <q>hook</q> (that is, offer to insert a menu item
+  from which they can be called via a dialog box).
     </p>
   </li>
 </ul>
 
+<h2>Features</h2>
+
 </p>
-Some examples of the extra features provided by addons and packages
-include:
+The extra features provided by addons and packages include:
 </p>
 <ul>
   <li><p>
@@ -116,34 +127,32 @@ include:
       bivariate and factorized densities.
   </p></li>
   <li><p>
-      Various utilities for Hansl programming. 
+      Various utilities for Hansl programming.
   </p></li>
 </ul>
 
 <p>
-  Entries in boldface are provided via addons, and are therefore
+  Entries in <b>boldface</b> are provided via addons, and are therefore
   immediately available upon successful installation on most
   platforms.
 </p>
-  
-<p>Contributed packages are not installed automatically with the rest
-  of gretl. You can install them from the GUI program: go to the menu
-  item <span style="font-family: sans-serif;">File/Function
-  packages/On server</span> to see a listing of what's available.
-</p>
 
-<p>You can also browse the gretl addons
-  online <a href="https://gretl.sourceforge.net/addons-data/addons.xml">here</a>
+<h2>Browsing</h2>
+
+<p>You can browse automatically updated listings of the gretl addons
+  <a href="https://gretl.sourceforge.net/addons-data/addons.xml">here</a>
   and the contributed
   packages <a href="https://gretl.sourceforge.net/cgi-bin/gretldata.cgi">here</a>.
   In both cases you can access documentation for the packages.
 </p>
 
+<h2>Contributing</h2>
+
 <p>
   Gretl users who are familiar with hansl are welcome to contribute
   packages. There's
   a <a href="https://sourceforge.net/projects/gretl/files/manual/pkgbook.pdf">comprehensive
-  document</a> explaining how to this and also, thanks to the late
+  document</a> explaining how to do this and also, thanks to the late
   Stefano Fachin, a nice
   <a href="https://gretl.sourceforge.net/gfnguide/gfn_for_dummies.html">quick
     guide</a>.
