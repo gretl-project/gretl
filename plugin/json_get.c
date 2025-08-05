@@ -1186,7 +1186,7 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	    sprintf(tmp, "%d", k);
 	    err = gretl_array_set_string(a, i, tmp, 1);
 	} else {
-	    gretl_bundle_set_int(jb->bcurr, name, k);
+	    gretl_bundle_set_scalar(jb->bcurr, name, (double) k);
 	}
     } else if (type == G_TYPE_DOUBLE) {
 	gdouble x = json_reader_get_double_value(reader);

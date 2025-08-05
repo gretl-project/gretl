@@ -505,7 +505,15 @@ static void *real_bundle_get_data (gretl_bundle *bundle,
         if (p != NULL) {
             bundled_item *item = p;
 
-            ret = item->data;
+            if (item->type == GRETL_TYPE_INT) {
+                /* remedial action needed? */
+                static double d;
+
+                d = (double) *(int *) item->data;
+                ret = &d;
+            } else {
+                ret = item->data;
+            }
             if (type != NULL) {
                 *type = item->type;
             }
