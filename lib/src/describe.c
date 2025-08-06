@@ -8090,17 +8090,11 @@ static gretl_matrix *matrix_mahalanobis (const gretl_matrix *X,
         goto bailout;
     }
 
-    if (Y == NULL) {
-        /* default: Y = meanc(X) */
-        y = gretl_matrix_vector_stat(X, V_MEAN, 0, 0, err);
-        p = 1;
+    p = Y->rows;
+    if (p == 1) {
+        y = gretl_matrix_copy(Y);
     } else {
-        p = Y->rows;
-        if (p == 1) {
-            y = gretl_matrix_copy(Y);
-        } else {
-            y = gretl_matrix_alloc(1, n);
-        }
+        y = gretl_matrix_alloc(1, n);
     }
 
     if (!*err) {
@@ -8196,7 +8190,7 @@ gretl_matrix *distance (const gretl_matrix *X,
     }
 
     if (metric == MAHALANOBIS) {
-        if (Y == X) {
+        if (Y == NULL) {
             return matrix_mahal_all(X, err);
         } else {
             return matrix_mahalanobis(X, Y, err);

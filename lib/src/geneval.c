@@ -4214,7 +4214,7 @@ static NODE *matrix_string_func (NODE *l, NODE *m, NODE *r,
     if (starting(p)) {
         gretl_matrix *X = l->v.m;
         gretl_matrix *Y = NULL;
-        const char *s = "e"; /* euclidean default */
+        const char *s = "euc"; /* euclidean default */
 
         if (!null_node(m)) {
             if (m->t == STR) {

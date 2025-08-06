@@ -1137,6 +1137,8 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
     return err;
 }
 
+/* Respond to finding a null JSON object in jb_do_value() */
+
 static void bundle_set_missing (jbundle *jb, const gchar *key)
 {
     if (jb->tmap != NULL) {
@@ -1213,7 +1215,7 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	    gretl_bundle_set_int(jb->bcurr, name, k);
 	}
     } else if (type == G_TYPE_INVALID) {
-	/* try null object -> empty string */
+	/* try null JSON object -> empty string */
 	if (a != NULL) {
 	    err = gretl_array_set_string(a, i, "", 1);
 	} else {
