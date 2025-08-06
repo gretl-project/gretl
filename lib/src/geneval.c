@@ -4214,7 +4214,7 @@ static NODE *matrix_string_func (NODE *l, NODE *m, NODE *r,
     if (starting(p)) {
         gretl_matrix *X = l->v.m;
         gretl_matrix *Y = NULL;
-        const char *s = "e"; /* euclidean default */
+        const char *s = "euc"; /* euclidean default */
 
         if (!null_node(m)) {
             if (m->t == STR) {
@@ -8803,7 +8803,10 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
         const char *sr = NULL;
 
         if (f == F_JSONGETB) {
-            ; /* checks done below */
+            /* more checks are done below */
+            if (!null_node(x) && x->t != BUNDLE) {
+                p->err = E_TYPES;
+            }
         } else if (f == F_XMLGET && r->t == ARRAY) {
             if (gretl_array_get_type(r->v.a) != GRETL_TYPE_STRINGS) {
                 p->err = E_TYPES;
@@ -8878,14 +8881,16 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
                 }
             }
         } else if (f == F_JSONGETB) {
-            gretl_bundle *(*jfunc) (const char *, const char *, int *);
+            gretl_bundle *(*jfunc) (const char *, const char *,
+                                    gretl_bundle *, int *);
             const char *path = null_node(r) ? NULL: r->v.str;
+            gretl_bundle *map = null_node(x) ? NULL : x->v.b;
 
             jfunc = get_plugin_function("json_get_bundle");
             if (jfunc == NULL) {
                 p->err = E_FOPEN;
             } else {
-                ret->v.b = jfunc(l->v.str, path, &p->err);
+                ret->v.b = jfunc(l->v.str, path, map, &p->err);
             }
         } else if (f == F_XMLGET) {
             char *(*xfunc) (const char *, void *, GretlType,
@@ -19584,8 +19589,8 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_JSONGETB:
-        if (l->t == STR && null_or_string(r)) {
-            ret = two_string_func(l, r, NULL, t->t, p);
+        if (l->t == STR && null_or_string(m)) {
+            ret = two_string_func(l, m, r, t->t, p);
         } else {
             p->err = E_TYPES;
         }

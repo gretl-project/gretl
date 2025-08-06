@@ -39,22 +39,8 @@
 #define non_empty_array(a) (a != NULL && json_array_get_length(a) > 0)
 #define null_json_node(n) (n == NULL || json_node_is_null(n))
 
-#if JSON_MAJOR_VERSION < 1
-static GType jnode_get_value_type (JsonNode *node)
-{
-    if (node == NULL) {
-	return G_TYPE_INVALID;
-    } else {
-	return json_node_get_value_type(node);
-    }
-}
-#else
-# define jnode_get_value_type(n) json_node_get_value_type(n);
-#endif
-
-/* We don't want to leak memory allocated for @node, but it
-   should not be freed directly if it's the root node of
-   @parser.
+/* We don't want to leak memory allocated for @node, but it should not
+   be freed directly if it's the root node of @parser.
 */
 
 static void json_deallocate (JsonNode *node, JsonParser *parser)
@@ -176,7 +162,7 @@ static int output_json_node_value (JsonNode *node,
 	return E_DATA;
     }
 
-    type = jnode_get_value_type(node);
+    type = json_node_get_value_type(node);
 
 #if 0
     fprintf(stderr, "jsonget: node type %s\n", g_type_name(type));
@@ -299,7 +285,7 @@ static int real_json_get (JsonNode *match,
 	    err = allow_empty ? 0 : E_DATA;
 	    goto bailout;
 	} else {
-	    ntype = jnode_get_value_type(node);
+	    ntype = json_node_get_value_type(node);
 	}
 
 	if (node != NULL && !handled_type(ntype)) {
@@ -420,10 +406,10 @@ char *json_get_string (const char *data, const char *path,
 struct jbundle_ {
     gretl_bundle *b0;
     gretl_bundle *bcurr;
+    gretl_bundle *tmap;
     gchar ***a;
     int nlev;
     int level;
-    int array2mat;
 };
 
 typedef struct jbundle_ jbundle;
@@ -460,9 +446,9 @@ static void print_pathbits (gchar ***a, int nlev)
 
 #endif
 
-/* Given a user-suppled @path string, parse it into chunks
-   specific to levels in the JSON tree; each of these should
-   be a single name or {name1,name2,...} or "*".
+/* Given a user-suppled @path string, parse it into chunks specific to
+   levels in the JSON tree; each of these should be a single name or
+   {name1,name2,...} or "*".
 */
 
 static int jb_make_pathbits (jbundle *jb, const char *path)
@@ -519,11 +505,10 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
 static int jb_do_value (JsonReader *reader, jbundle *jb,
 			gretl_array *a, int i);
 
-/* Check whether a given JSON element is wanted in the
-   context of json_get_bundle(). We treat every element
-   as wanted by default, but if we have a path spec for
-   the current structural level (jb->level) and the
-   current node has a name, we need to check for a match.
+/* Check whether a given JSON element is wanted in the context of
+   json_get_bundle(). We treat every element as wanted by default, but
+   if we have a path spec for the current structural level (jb->level)
+   and the current node has a name, we need to check for a match.
 */
 
 static int is_wanted (jbundle *jb, JsonReader *reader)
@@ -564,9 +549,9 @@ static int is_wanted (jbundle *jb, JsonReader *reader)
     return ret;
 }
 
-/* Add a new bundle to the tree -- either as a named
-   member of the bundle jb->bcurr, or, if @a is non-NULL,
-   as an anonymous element in an array of bundles.
+/* Add a new bundle to the tree -- either as a named member of the
+   bundle jb->bcurr, or, if @a is non-NULL, as an anonymous element in
+   an array of bundles.
 */
 
 static int jb_add_bundle (jbundle *jb, const char *name,
@@ -598,19 +583,21 @@ static int jb_add_bundle (jbundle *jb, const char *name,
     return err;
 }
 
-/* Retrieve a numeric value for placement in a matrix
-   (or series). It's not totally clear what we should
-   recognize as NAs -- for now we're accepting a null
-   value and a short list of string values.
+/* Retrieve a numeric value for placement in a matrix (or series). It's
+   not totally clear what we should recognize as NAs -- for now we're
+   accepting a null value and a short list of string values.
 */
 
 static double get_matrix_element (JsonReader *reader, int *err)
 {
     JsonNode *node = json_reader_get_value(reader);
-    GType type = jnode_get_value_type(node);
+    GType type = json_node_get_value_type(node);
     double x = NADBL;
 
+    fprintf(stderr, "HERE get_matrix_element\n");
+
     if (json_node_is_null(node)) {
+        fprintf(stderr, "  json_is_null_node\n");
 	; /* OK: NA? */
     } else if (numeric_type(type)) {
 	x = json_reader_get_double_value(reader);
@@ -631,10 +618,9 @@ static double get_matrix_element (JsonReader *reader, int *err)
     return x;
 }
 
-/* Add a gretl matrix to the current bundle (if @a is NULL)
-   or array (if @a is non-NULL). This also handles the
-   case of a gretl series, but only if the target is a
-   bundle.
+/* Add a gretl matrix to the current bundle (if @a is NULL) or array (if
+   @a is non-NULL). This also handles the case of a gretl series, but
+   only if the target is a bundle.
 */
 
 static int jb_add_matrix (JsonReader *reader,
@@ -742,8 +728,8 @@ static int jb_add_matrix (JsonReader *reader,
     return err;
 }
 
-/* Add a gretl list to the current bundle (if @a is NULL)
-   or array (if @a is non-NULL).
+/* Add a gretl list to the current bundle (if @a is NULL) or array (if
+   @a is non-NULL).
 */
 
 static int jb_add_list (JsonReader *reader,
@@ -789,10 +775,9 @@ static int jb_add_list (JsonReader *reader,
     return err;
 }
 
-/* add_array_as_matrix(): we come here if we have NOT
-   found a special "gretl_matrix" object but we reckon
-   the JSON array in question is probably numeric and
-   should be made into a matrix.
+/* add_array_as_matrix(): we come here if we have NOT found a special
+   "gretl_matrix" object but we reckon the JSON array in question is
+   probably numeric and should be made into a matrix.
 */
 
 static int add_array_as_matrix (JsonReader *reader,
@@ -835,9 +820,8 @@ static int add_array_as_matrix (JsonReader *reader,
 
 static int do_gretl_objects;
 
-/* Determine if a JSON object is a gretl special:
-   a matrix, series or list. This keys off the
-   "type" string in the object.
+/* Determine if a JSON object is a gretl special: a matrix, series or
+   list. This keys off the "type" string in the object.
 */
 
 static int is_gretl_object (JsonReader *reader,
@@ -863,8 +847,8 @@ static int is_gretl_object (JsonReader *reader,
     return *type;
 }
 
-/* Try to determine if a JSON array is numeric, and
-   therefore should be turned into a gretl matrix.
+/* Try to determine if a JSON array is numeric, and therefore should be
+   turned into a gretl matrix.
 */
 
 static int array_is_matrix (JsonReader *reader)
@@ -877,7 +861,7 @@ static int array_is_matrix (JsonReader *reader)
 	if (json_reader_read_element(reader, i)) {
 	    if (json_reader_is_value(reader)) {
 		JsonNode *node = json_reader_get_value(reader);
-		GType type = jnode_get_value_type(node);
+		GType type = json_node_get_value_type(node);
 
 		if (numeric_type(type)) {
 		    ret = 1;
@@ -968,7 +952,7 @@ static int jb_do_object (JsonReader *reader, jbundle *jb,
 		jb->level = lsave;
 	    }
 	} else if (json_reader_is_array(reader)) {
-	    if (jb->array2mat && array_is_matrix(reader)) {
+	    if (array_is_matrix(reader)) {
 		err = add_array_as_matrix(reader, jb, S[i], NULL, 0);
 	    } else {
 		int lsave = jb->level;
@@ -998,9 +982,9 @@ static int jb_do_object (JsonReader *reader, jbundle *jb,
     return err;
 }
 
-/* Switch the type of the array @a from its original value
-   to @targ, but only if we haven't already added elements
-   that make the type of @a immutable.
+/* Switch the type of the array @a from its original value to @targ, but
+   only if we haven't already added elements that make the type of @a
+   immutable.
 */
 
 static int jb_transmute_array (gretl_array *a,
@@ -1021,8 +1005,8 @@ static int jb_transmute_array (gretl_array *a,
     return err;
 }
 
-/* Process a JSON array node: we'll construct an array of
-   strings, bundles, or arrays.
+/* Process a JSON array node: we'll construct an array of strings,
+   bundles, or arrays.
 */
 
 static int jb_do_array (JsonReader *reader, jbundle *jb,
@@ -1092,7 +1076,7 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
 		}
 	    }
 	} else if (json_reader_is_array(reader)) {
-	    if (jb->array2mat && array_is_matrix(reader)) {
+	    if (array_is_matrix(reader)) {
 		err = add_array_as_matrix(reader, jb, NULL, a, i);
 	    } else {
 		if (atype != GRETL_TYPE_ARRAYS) {
@@ -1153,8 +1137,24 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
     return err;
 }
 
-/* Process a JSON value node: in this context we convert
-   all array values to strings.
+/* Respond to finding a null JSON object in jb_do_value() */
+
+static void bundle_set_missing (jbundle *jb, const gchar *key)
+{
+    if (jb->tmap != NULL) {
+        int isnum = gretl_bundle_get_int(jb->tmap, key, NULL);
+
+        if (isnum) {
+            gretl_bundle_set_scalar(jb->bcurr, key, NADBL);
+            return;
+        }
+    }
+
+    gretl_bundle_set_string(jb->bcurr, key, "");
+}
+
+/* Process a JSON value node: in this context we convert all array
+   values to strings.
 */
 
 static int jb_do_value (JsonReader *reader, jbundle *jb,
@@ -1167,7 +1167,7 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
     int err = 0;
 
     name = json_reader_get_member_name(reader);
-    type = jnode_get_value_type(node);
+    type = json_node_get_value_type(node);
     typename = g_type_name(type);
 
 #if JB_DEBUG
@@ -1214,12 +1214,13 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	} else {
 	    gretl_bundle_set_int(jb->bcurr, name, k);
 	}
-    } else if (type == 0 || type == G_TYPE_INVALID) {
-	/* try null object -> empty string */
+    } else if (type == G_TYPE_INVALID) {
+	/* try null JSON object -> empty string */
 	if (a != NULL) {
 	    err = gretl_array_set_string(a, i, "", 1);
 	} else {
-	    gretl_bundle_set_string(jb->bcurr, name, "");
+            bundle_set_missing(jb, name);
+	    // gretl_bundle_set_string(jb->bcurr, name, "");
 	}
     } else {
 	gretl_errmsg_sprintf("Unhandled JSON value of type %s\n",
@@ -1257,6 +1258,7 @@ static void maybe_enable_gretl_objects (JsonReader *reader)
 
 gretl_bundle *json_get_bundle (const char *data,
 			       const char *path,
+                               gretl_bundle *tmap,
 			       int *err)
 {
     gretl_bundle *ret = NULL;
@@ -1289,15 +1291,8 @@ gretl_bundle *json_get_bundle (const char *data,
 	}
     }
 
+    jb.tmap = tmap;
     jb.bcurr = jb.b0 = gretl_bundle_new();
-
-    if (getenv("JSONGETB_OLD") != NULL) {
-	/* old-style: numeric array -> strings */
-	jb.array2mat = 0;
-    } else {
-	/* new-style: numeric array -> matrix */
-	jb.array2mat = 1;
-    }
 
     reader = json_reader_new(root);
     gretl_push_c_numeric_locale();
@@ -1380,16 +1375,16 @@ static int filter_bundle_tree (gretl_bundle *b, gretl_array *A)
 }
 
 /* Given a bundle @b produced by json_get_bundle(), this function
-   constructs an array of bundles holding all and only the
-   "terminal" bundles within @b. A "terminal" bundle is one
-   which contains no member named "children" (or "category tree").
+   constructs an array of bundles holding all and only the "terminal"
+   bundles within @b. A "terminal" bundle is one which contains no
+   member named "children" (or "category tree").
 
-   We want this for handling the results from the category_tree
-   of a dbnomics provider: if we're looking to list datasets we
-   don't want to include any intermediate nodes that are not
-   themselves datasets but rather groupings of datasets. The
-   latter can be distinguished by the presence of a "children"
-   node; an actual dataset node never has "children".
+   We want this for handling the results from the category_tree of a
+   dbnomics provider: if we're looking to list datasets we don't want to
+   include any intermediate nodes that are not themselves datasets but
+   rather groupings of datasets. The latter can be distinguished by the
+   presence of a "children" node; an actual dataset node never has
+   "children".
 */
 
 gretl_array *json_bundle_get_terminals (gretl_bundle *b, int *err)
@@ -1474,8 +1469,8 @@ static void jb_add_double (JsonBuilder *jb, double x)
     }
 }
 
-/* write matrix @m as a JSON object, including the
-   matrix data in vec form */
+/* write matrix @m as a JSON object, including the matrix data in vec
+   form */
 
 static void matrix_to_json_as_vec (void *data,
 				   GretlType type,
@@ -1607,7 +1602,7 @@ static void bundled_item_to_json (gpointer keyp,
 
 #if JB_DEBUG
     fprintf(stderr, "*** bundled item '%s', type %s ***\n",
-	    key, gretl_type_get_name(type));
+	    key, gretl_type_get_name(item->type));
 #endif
 
     if (item->type == GRETL_TYPE_STRING) {
@@ -1652,8 +1647,8 @@ static JsonBuilder *real_bundle_to_json (gretl_bundle *b)
     return jb;
 }
 
-/* for now: OPT_P for pretty printing, OPT_A for
-   conversion of matrices to arrays of arrays
+/* for now: OPT_P for pretty printing, OPT_A for conversion of matrices
+   to arrays of arrays
 */
 
 int bundle_to_json (gretl_bundle *b, const char *fname,

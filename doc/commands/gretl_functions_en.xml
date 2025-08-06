@@ -4484,21 +4484,15 @@
 	  this is likely to represent a single observation comprising
 	  the values of <math>n</math> variables.
 	</para>
-	<subhead>Standard cases</subhead>
 	<para>
-	  This section applies to all metrics except the Mahalanobis
-	  distance, for which the semantics are slightly different (see
-	  below).
-	</para>
-	<para>
-	  If <argname>Y</argname> is not given, the return value is a
-	  column vector of length <math>m</math>(<math>m</math>
-	  &minus; 1)/2 comprising the non-redundant subset of all
-	  pairwise distances between the <math>m</math> points (rows
-	  of <argname>X</argname>). Given such a vector named
-	  <lit>d</lit>, the full symmetric matrix of inter-point
-	  distances (with zeros on the principal diagonal) can be
-	  constructed via
+	  If the optional argument <argname>Y</argname> is not given,
+	  the return value is a column vector of length
+	  <math>m</math>(<math>m</math> &minus; 1)/2 comprising the
+	  non-redundant subset of all pairwise distances between the
+	  <math>m</math> points (rows of <argname>X</argname>). Given
+	  such a vector named <lit>d</lit>, the full symmetric matrix of
+	  inter-point distances (with zeros on the principal diagonal)
+	  can be constructed via
 	</para>
 	<code>
 	  D = unvech(d, 0)
@@ -4519,9 +4513,11 @@
 	  <argname>Y</argname>.
 	</para>
 	<para>
-	  To obtain the distances from a given reference point (for
-	  example, the centroid) to each of <math>n</math>
-	  data-points, give <argname>Y</argname> as a single row.
+	  To obtain the distances from a given reference point to each
+	  of <math>n</math> data-points, give <argname>Y</argname> as a
+	  single row. If the reference point is the centroid in the
+          usual sense (vector of sample means), give <lit>meanc(X)</lit>
+          as the <argname>Y</argname> value.
 	</para>
 	<subhead>Definitions of the supported metrics</subhead>
 	<ilist>
@@ -4555,54 +4551,33 @@
 	      between the <quote>points</quote>, considered as vectors.
 	    </para>
 	  </li>
+	  <li>
+	    <para>
+	      <lit>Mahalanobis</lit>: works like <lit>euclidean</lit>
+	      except that the distances are scaled by the inverse of a
+	      covariance matrix. See also <emphasis>Mahalanobis
+	      notes</emphasis> below.
+	    </para>
+	  </li>
 	</ilist>
-	<subhead>Mahalanobis distance</subhead>
-	<para>
-	  Mahalanobis distances are defined as the Euclidean distances
-	  between the points in question (rows of
-	  <argname>X</argname>) and a given centroid, scaled by the
-	  inverse of a covariance matrix.
-        </para>
+	<subhead>Mahalanobis notes</subhead>
         <para>
-          In the most common case the centroid is the vector of sample
-          means of the variables (columns of <argname>X</argname>) and
-          the covariance matrix is their sample covariance. Results for
-          this case can be obtained by supplying as second argument the
-          string <quote>mahalanobis</quote> or any unambiguous
-          abbreviation, and omitting the optional third argument, as in
+          in the most common usage of Mahalanobis distances the centroid
+          is the vector of sample means and scaling is by the inverse
+          covariance of the columns of
+          <argname>X</argname>. Specifically this means that the
+          distances are multiplied by an upper triangular matrix, the
+          transpose of the inverse cholesky factor of the covariance
+          matrix. To obtain this result you can do
 	</para>
 	<code>
-	  dmahal = distance(X, "mahal")
-	</code>
-	<para>
-          If the third argument, <argname>Y</argname>, is given, and
-          <argname>Y</argname> is distinct from <argname>X</argname>,
-          then the result is as described above for the other metrics:
-          it is an <by r="m" c="p"/> matrix of distances, where
-          <math>p</math> is the number of rows in
-          <argname>Y</argname>. It follows that the previous example can
-          be replicated, slightly less efficiently, via
-        </para>
-        <code>
 	  dmahal2 = distance(X, "mahal", meanc(X))
-        </code>
-	<para>
-	  but a <argname>Y</argname> with multiple rows is also
-	  supported.
-	</para>
-        <para>
-          If you want the vector of non-redundant pairwise distances
-          between the <math>m</math> points in <argname>X</argname>,
-          this can be obtained via
-        </para>
-        <code>
-	  dmahal3 = distance(X, "mahal", X)
-        </code>
+	</code>
 	<para>
 	  To obtain the Mahalanobis distances of the rows of
 	  <argname>X</argname> from an arbitrary centroid,
 	  <math>c</math>, using an arbitrary covariance matrix,
-	  <math>V</math>, you can do
+	  <math>V</math>, the following method should be used.
 	</para>
 	<code>
 	  z = zeros(1, cols(X))
