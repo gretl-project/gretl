@@ -406,10 +406,10 @@ char *json_get_string (const char *data, const char *path,
 struct jbundle_ {
     gretl_bundle *b0;
     gretl_bundle *bcurr;
+    gretl_bundle *tmap;
     gchar ***a;
     int nlev;
     int level;
-    int array2mat;
 };
 
 typedef struct jbundle_ jbundle;
@@ -952,7 +952,7 @@ static int jb_do_object (JsonReader *reader, jbundle *jb,
 		jb->level = lsave;
 	    }
 	} else if (json_reader_is_array(reader)) {
-	    if (jb->array2mat && array_is_matrix(reader)) {
+	    if (array_is_matrix(reader)) {
 		err = add_array_as_matrix(reader, jb, S[i], NULL, 0);
 	    } else {
 		int lsave = jb->level;
@@ -1076,7 +1076,7 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
 		}
 	    }
 	} else if (json_reader_is_array(reader)) {
-	    if (jb->array2mat && array_is_matrix(reader)) {
+	    if (array_is_matrix(reader)) {
 		err = add_array_as_matrix(reader, jb, NULL, a, i);
 	    } else {
 		if (atype != GRETL_TYPE_ARRAYS) {
@@ -1135,6 +1135,20 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
     }
 
     return err;
+}
+
+static void bundle_set_missing (jbundle *jb, const gchar *key)
+{
+    if (jb->tmap != NULL) {
+        int isnum = gretl_bundle_get_int(jb->tmap, key, NULL);
+
+        if (isnum) {
+            gretl_bundle_set_scalar(jb->bcurr, key, NADBL);
+            return;
+        }
+    }
+
+    gretl_bundle_set_string(jb->bcurr, key, "");
 }
 
 /* Process a JSON value node: in this context we convert all array
@@ -1203,7 +1217,8 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	if (a != NULL) {
 	    err = gretl_array_set_string(a, i, "", 1);
 	} else {
-	    gretl_bundle_set_string(jb->bcurr, name, "");
+            bundle_set_missing(jb, name);
+	    // gretl_bundle_set_string(jb->bcurr, name, "");
 	}
     } else {
 	gretl_errmsg_sprintf("Unhandled JSON value of type %s\n",
@@ -1241,6 +1256,7 @@ static void maybe_enable_gretl_objects (JsonReader *reader)
 
 gretl_bundle *json_get_bundle (const char *data,
 			       const char *path,
+                               gretl_bundle *tmap,
 			       int *err)
 {
     gretl_bundle *ret = NULL;
@@ -1273,15 +1289,8 @@ gretl_bundle *json_get_bundle (const char *data,
 	}
     }
 
+    jb.tmap = tmap;
     jb.bcurr = jb.b0 = gretl_bundle_new();
-
-    if (getenv("JSONGETB_OLD") != NULL) {
-	/* old-style: numeric array -> strings */
-	jb.array2mat = 0;
-    } else {
-	/* new-style: numeric array -> matrix */
-	jb.array2mat = 1;
-    }
 
     reader = json_reader_new(root);
     gretl_push_c_numeric_locale();
@@ -1364,16 +1373,16 @@ static int filter_bundle_tree (gretl_bundle *b, gretl_array *A)
 }
 
 /* Given a bundle @b produced by json_get_bundle(), this function
-   constructs an array of bundles holding all and only the
-   "terminal" bundles within @b. A "terminal" bundle is one
-   which contains no member named "children" (or "category tree").
+   constructs an array of bundles holding all and only the "terminal"
+   bundles within @b. A "terminal" bundle is one which contains no
+   member named "children" (or "category tree").
 
-   We want this for handling the results from the category_tree
-   of a dbnomics provider: if we're looking to list datasets we
-   don't want to include any intermediate nodes that are not
-   themselves datasets but rather groupings of datasets. The
-   latter can be distinguished by the presence of a "children"
-   node; an actual dataset node never has "children".
+   We want this for handling the results from the category_tree of a
+   dbnomics provider: if we're looking to list datasets we don't want to
+   include any intermediate nodes that are not themselves datasets but
+   rather groupings of datasets. The latter can be distinguished by the
+   presence of a "children" node; an actual dataset node never has
+   "children".
 */
 
 gretl_array *json_bundle_get_terminals (gretl_bundle *b, int *err)
@@ -1458,8 +1467,8 @@ static void jb_add_double (JsonBuilder *jb, double x)
     }
 }
 
-/* write matrix @m as a JSON object, including the
-   matrix data in vec form */
+/* write matrix @m as a JSON object, including the matrix data in vec
+   form */
 
 static void matrix_to_json_as_vec (void *data,
 				   GretlType type,
@@ -1636,8 +1645,8 @@ static JsonBuilder *real_bundle_to_json (gretl_bundle *b)
     return jb;
 }
 
-/* for now: OPT_P for pretty printing, OPT_A for
-   conversion of matrices to arrays of arrays
+/* for now: OPT_P for pretty printing, OPT_A for conversion of matrices
+   to arrays of arrays
 */
 
 int bundle_to_json (gretl_bundle *b, const char *fname,

@@ -348,7 +348,6 @@ enum {
     F_NORMTEST,
     F_COR,
     F_LRCOVAR,
-    F_JSONGETB,
     F_FIXNAME,
     F_ATAN2,
     F_CCODE,
@@ -478,6 +477,7 @@ enum {
     F_STDIZE,
     F_INSTRINGS,
     F_THRESHOLD,
+    F_JSONGETB,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_URCPVAL,
