@@ -704,7 +704,7 @@ dnl
 dnl see if we have json-glib-1.0 (not a hard dependency, yet)
 dnl
 if test "$try_json_glib" = "yes" ; then
-   PKG_CHECK_MODULES(JSON_GLIB, json-glib-1.0 >= 0.14,
+   PKG_CHECK_MODULES(JSON_GLIB, json-glib-1.0 >= 1.4,
    have_json_glib="yes",
    have_json_glib="no")
    if test $have_json_glib = "no" ; then
