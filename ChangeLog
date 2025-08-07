@@ -11,6 +11,8 @@ version 2025c, in progress
   shown when some series cannot be deleted
 - "setobs" syntax: accept month as single digit for panel
   data with monthly time dimension
+- distance() function: treat the Mahalanobis metric in the
+  same way as the other metrics
 - new function lnmgamma(): multivariate log gamma function
 - slight speedup for forward stepwise regression code
 - command-line continuation: accept ';' as calling for
