@@ -4564,13 +4564,13 @@
 	</ilist>
 	<subhead>Mahalanobis notes</subhead>
         <para>
-          In the most common usage of Mahalanobis distances the centroid
-          is the vector of sample means and scaling is by the inverse
-          covariance of the columns of
+          In the most common usage of Mahalanobis distances the
+          centroid is the vector of sample means and scaling is by the
+          inverse covariance of the columns of
           <argname>X</argname>. Specifically this means that the
-          distances are multiplied by an upper triangular matrix, the
-          transpose of the inverse cholesky factor of the covariance
-          matrix. To obtain this result you can do
+          points matrix is multiplied by an upper triangular matrix,
+          the transpose of the inverse cholesky factor of the
+          covariance matrix. To obtain this result you can do
 	</para>
 	<code>
 	  dmahal2 = distance(X, "mahal", meanc(X))

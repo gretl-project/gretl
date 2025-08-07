@@ -4519,36 +4519,31 @@
       </fnargs>
       <description>
 	<para>
-	  Calcola distanze fra punti, secondo una matrica che può
+	  Calcola distanze fra punti, secondo una metrica che può
 	  essere <lit>euclidean</lit> (il default),
 	  <lit>manhattan</lit>, <lit>hamming</lit>,
 	  <lit>chebyshev</lit>, <lit>cosine</lit> oppute
 	  <lit>mahalanobis</lit>. La stringa per la metrica può essere
 	  abbreviata, purché non risulti ambigua. Altre metriche, come
-	  quella di correlazione, Euclidea standardizzata e di
-	  Mahalanobis possono essere ottenute con semplici
-	  trasformazioni dell'argomento <argname>X</argname>; vedi più
-	  avanti.
+	  quella di correlazione o Euclidea standardizzata possono
+	  essere ottenute con semplici trasformazioni dell'argomento
+	  <argname>X</argname>; vedi più avanti.
 	</para>
 	<para>
 	  Ogni riga della matrice <by r="m" c="n"/>
 	  <argname>X</argname> è considerata un punto a <math>n</math>
-	  dimensioni; in un contesto econometrico l'uso tipico è di
-	  rappresentare un'osservazione su <math>n</math> variabili.
-	</para>
-	<subhead>Casi standard</subhead>
-	<para>
-	  Questa sezione descrive il comportamento della funzione per
-	  tutte le metriche a parte quella di Mahalanobis, per la
-	  quale la sintassi è lievemente diversa (vedi sotto).
+	  dimensioni; in un contesto econometrico tipicamente ogni
+	  riga di <argname>X</argname> rappresenta un'osservazione su
+	  <math>n</math> variabili.
 	</para>
 	<para>
-	  Se <argname>Y</argname> non è specificato, il risultato è un
-	  vettore colonna con <math>m</math>(<math>m</math> &minus;
-	  1)/2 elementi, con tutte le distanze fra le <math>m</math>
-	  righe di <argname>X</argname>. Dato tale vettore
-	  <lit>d</lit>, la matrice completa delle distanze fra i punti
-	  con zero sulla diagonale) può essere ottenuta col comando
+	  Se l'argomento opzionale <argname>Y</argname> non è
+	  specificato, il risultato è un vettore colonna con
+	  <math>m</math>(<math>m</math> &minus; 1)/2 elementi, con
+	  tutte le distanze fra le <math>m</math> righe di
+	  <argname>X</argname>. Dato tale vettore <lit>d</lit>, la
+	  matrice completa delle distanze fra i punti con zero sulla
+	  diagonale) può essere ottenuta col comando
 	</para>
 	<code>
 	  D = unvech(d, 0)
@@ -4571,10 +4566,11 @@
 	</para>
 	<para>
 	  Per ottenere le distanze da un punto di riferimento dato (ad
-	  esempio il centroide) a ognuno di <math>k</math> punti, si
-	  può specificare <argname>X</argname> come matrice di una
-	  riga e <argname>Y</argname> con <math>k</math> righe, o
-	  viceversa.
+	  esempio il centroide) a ognuno degli <math>n</math> punti,
+	  si può specificare <argname>Y</argname> come vettore
+	  riga. Se il punto di riferimento è il centroide comunemente
+	  inteso (il vettore delle medie aritmetiche), si può usare
+	  <lit>meanc(X)</lit> come argomento <argname>Y</argname>.
 	</para>
 	<subhead>Definizione delle metriche</subhead>
 	<ilist>
@@ -4608,42 +4604,41 @@
 	      <quote>punti</quote> dati dai vettori.
 	    </para>
 	  </li>
+	  <li>
+	    <para>
+	    <lit>Mahalanobis</lit>: funziona come
+	    <lit>euclidean</lit>, tranne per il fatto che le distanze
+	    sono scalate dall'inversa della matrice di
+	    covarianza. Vedi anche le <emphasis>note sulla distanza di
+	    Mahalanobis</emphasis> qui sotto e
+	    <url>https://it.wikipedia.org/wiki/Distanza_di_Mahalanobis</url>
+	    per ulteriori chiarimenti.</para>
+	  </li>
 	</ilist>
-	<subhead>Distanza di Mahalanobis</subhead>
+	<subhead>Note sulla distanza di Mahalanobis</subhead>
 	<para>
-	  Le distanze di Mahalanobis sono definite come le distanze
-	  euclidee fra i punti dati dalle righe di
-	  <argname>X</argname> e un centroide dato, ove le coordinate
-	  siano scalate dall'inversa di una matrice di covarianze. Nel
-	  caso più semplice il centroide è il vettore delle medie
-	  aritmetiche e la matrice di covarianze è quella campionaria.
-        </para>
-        <para>
-	  Queste distanze possono essere prodotte indicando come
-	  secondo argomento la stringa <quote>mahalanobis</quote> o
-	  una sua abbreviazione non ambigua, come ad esempio
+	  Nell'uso più comune della distanza di Mahalanobis, il
+	  centroide è il vettore delle medie campionarie e la
+	  scalatura avviene tramite l'inversa della matrice di
+	  covarianza di <argname>X</argname>. Nello specifico, ciò
+	  significa che la matrice dei punti viene moltiplicata per una
+	  matrice triangolare superiore, la trasposta del fattore di
+	  Cholesky inverso della matrice di covarianza. Per ottenere
+	  questo risultato, si può usare:
 	</para>
 	<code>
-	  dmahal = distance(X, "mahal")
+	  dmahal2 = distance(X, "mahal", meanc(X))
 	</code>
 	<para>
-          In questo caso il terzo argomento <argname>Y</argname> non è
-          consentito, e il vettore ritornato avrà <math>m</math>
-          elementi, dati dalle distanze di Mahalanobis di ogni riga
-          <argname>X</argname> dal centroide (la media
-          campionaria). In pratica, la matrice risultato che si
-          ottiene in questo caso è la stessa che si ha eseguando il
-          comando <cmdref targ="mahal"/> su una lista di serie
-          corrispondenti alle colonne di <argname>X</argname>.
-	</para>
-	<para>
-	  Per calcolare le distanze di Mahalanobis rispetto a un altro
-	  centroide
-	  <lit>mu</lit> e/o diversa matrice di covarianze inversa
-	  <lit>ICV</lit> si può usare la seguente sintassi:
+	  Per ottenere le distanze di Mahalanobis delle righe di
+	  <argname>X</argname> da un centroide arbitrario,
+	  <math>c</math>, utilizzando una matrice di covarianza
+	  arbitraria, <math>V</math>, va usato il seguente
+	  metodo:
 	</para>
 	<code>
-	  dmahal = distance(X*cholesky(ICV), "euc", mu)
+	  z = zeros(1, cols(X))
+	  d = distance((X .- c) / cholesky(V)', "euc", z)
 	</code>
 	<subhead>Altre metriche</subhead>
 	<para>
