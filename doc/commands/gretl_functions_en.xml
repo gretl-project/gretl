@@ -4568,10 +4568,11 @@
           In the most common usage of Mahalanobis distances the
           centroid is the vector of sample means and scaling is by the
           inverse covariance of the columns of
-          <argname>X</argname>. Specifically this means that the
-          points matrix is multiplied by an upper triangular matrix,
-          the transpose of the inverse cholesky factor of the
-          covariance matrix. To obtain this result you can do
+          <argname>X</argname>. Specifically this means that
+          <argname>X</argname> (and also <argname>Y</argname>, if
+          present) is multiplied by an upper triangular matrix, the
+          transpose of the inverse cholesky factor of the covariance
+          matrix. To obtain this result you can do
 	</para>
 	<code>
 	  dmahal = distance(X, "mahal", meanc(X))
@@ -4584,11 +4585,11 @@
 	  To obtain the Mahalanobis distances of the rows of
 	  <argname>X</argname> from an arbitrary centroid,
 	  <math>c</math>, using an arbitrary covariance matrix,
-	  <math>V</math>, the following method should be used.
+	  <math>V</math>, the following method can be used.
 	</para>
 	<code>
-	  z = zeros(1, cols(X))
-	  d = distance((X .- c) / cholesky(V)', "euc", z)
+	  U = cholesky(V)'
+	  d = distance(X / U, "euc", c / U)
 	</code>
 	<subhead>Other metrics</subhead>
 	<para>
