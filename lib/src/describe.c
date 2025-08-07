@@ -7966,185 +7966,53 @@ static gretl_matrix *mahal_cholesky_factor (const gretl_matrix *X,
     C = gretl_covariance_matrix(X, 0, 1, err);
     if (!*err) {
         *err = gretl_matrix_cholesky_decomp(C);
-        gretl_square_matrix_transpose(C);
         if (!*err) {
+            gretl_square_matrix_transpose(C);
             *err = gretl_invert_triangular_matrix(C, 'U');
         }
+    }
+
+    if (*err) {
+        gretl_matrix_free(C);
+        C = NULL;
     }
 
     return C;
 }
 
-static int mahalanobis_allocate (gretl_matrix **D,
-                                 gretl_matrix **DC,
-                                 gretl_matrix **ret,
-                                 int r1, int c1,
-                                 int r2, int c2)
+/* Produce scaled versions of @X and @Y using the inverse Cholesky
+   factor of @X */
+
+static int mahalanobis_prep (const gretl_matrix *X,
+                             const gretl_matrix *Y,
+                             gretl_matrix **XC,
+                             gretl_matrix **YC)
 {
-    *D   = gretl_matrix_alloc(r1, c1); /* to hold X .- centroid */
-    *DC  = gretl_matrix_alloc(r1, c1); /* to hold D * inv(C) */
-    *ret = gretl_matrix_alloc(r2, c2); /* return matrix */
+    gretl_matrix *C;
+    int err = 0;
 
-    if (*D == NULL || *DC == NULL || *ret == NULL) {
-        return E_ALLOC;
-    } else {
-        return 0;
-    }
-}
-
-/* @X is m x n. Returns a column vector of length m*(m-1)/2 holding the
-   non-redundant pairwise distances between the rows of @X.
-*/
-
-static gretl_matrix *matrix_mahal_all (const gretl_matrix *X,
-                                       int *err)
-{
-    gretl_matrix *v = NULL;
-    gretl_matrix *D = NULL;
-    gretl_matrix *C = NULL;
-    gretl_matrix *DC = NULL;
-    double x, y;
-    double d, dij;
-    int m = X->rows;
-    int n = X->cols;
-    int i, j, k, p, r;
-    int ii, jj;
-
-    C = mahal_cholesky_factor(X, err);
-    if (*err) {
-        goto bailout;
-    }
-
-    p = (m * (m-1)) / 2;
-    r = m - 1;
-    *err = mahalanobis_allocate(&D, &DC, &v, r, n, p, 1);
-    if (*err) {
-        goto bailout;
-    }
-
-    for (k=0, jj=0; k<r; k++) {
-        if (k > 0) {
-            gretl_matrix_reuse(D, r-k, n);
-            gretl_matrix_reuse(DC, r-k, n);
-        }
-        /* Dij = Xij - Xkj */
-        for (i=k+1, ii=0; i<m; i++, ii++) {
-            for (j=0; j<n; j++) {
-                x = gretl_matrix_get(X, i, j);
-                y = gretl_matrix_get(X, k, j);
-                gretl_matrix_set(D, ii, j, x - y);
-            }
-        }
-        gretl_matrix_multiply(D, C, DC);
-        for (i=0; i<DC->rows; i++) {
-            dij = 0;
-            for (j=0; j<n; j++) {
-                d = gretl_matrix_get(DC, i, j);
-                dij += d * d;
-            }
-            v->val[jj++] = sqrt(dij);
+    C = mahal_cholesky_factor(X, &err);
+    if (!err) {
+        *XC = gretl_matrix_alloc(X->rows, X->cols);
+        if (*XC == NULL) {
+            err = E_ALLOC;
+        } else {
+            gretl_matrix_multiply(X, C, *XC);
         }
     }
-
- bailout:
+    if (!err && Y != NULL) {
+        *YC = gretl_matrix_alloc(Y->rows, Y->cols);
+        if (*YC == NULL) {
+            gretl_matrix_free(*XC);
+            err = E_ALLOC;
+        } else {
+            gretl_matrix_multiply(Y, C, *YC);
+        }
+    }
 
     gretl_matrix_free(C);
-    gretl_matrix_free(D);
-    gretl_matrix_free(DC);
 
-    if (*err) {
-        gretl_matrix_free(v);
-        v = NULL;
-    }
-
-    return v;
-}
-
-/* @X is m x n, @Y is p x n or NULL.
-
-   If @Y is NULL, returns an m-vector holding the distances of the rows
-   of @X from the centroid defined by the column means of @X.
-
-   If @Y is non-NULL, returns a m x p matrix holding the distances
-   between the rows of @X and the rows of @Y.
-*/
-
-static gretl_matrix *matrix_mahalanobis (const gretl_matrix *X,
-                                         const gretl_matrix *Y,
-                                         int *err)
-{
-    gretl_matrix *M = NULL;
-    gretl_matrix *D = NULL;
-    gretl_matrix *C = NULL;
-    gretl_matrix *DC = NULL;
-    gretl_vector *y = NULL;
-    double *mval;
-    double d, dij;
-    int m = X->rows;
-    int n = X->cols;
-    int i, j, k, p;
-    int ii;
-
-    C = mahal_cholesky_factor(X, err);
-    if (*err) {
-        goto bailout;
-    }
-
-    p = Y->rows;
-    if (p == 1) {
-        y = gretl_matrix_copy(Y);
-    } else {
-        y = gretl_matrix_alloc(1, n);
-    }
-
-    if (!*err) {
-        *err = mahalanobis_allocate(&D, &DC, &M, m, n, m, p);
-    }
-
-    if (*err) {
-        goto bailout;
-    }
-
-    mval = M->val;
-    for (k=0; k<p; k++) {
-        if (p > 1) {
-            for (j=0; j<n; j++) {
-                y->val[j] = gretl_matrix_get(Y, k, j);
-            }
-        }
-        ii = 0;
-        for (j=0; j<n; j++) {
-            for (i=0; i<m; i++) {
-                D->val[ii] = X->val[ii] - y->val[j];
-                ii++;
-            }
-        }
-        gretl_matrix_multiply(D, C, DC);
-        for (i=0; i<m; i++) {
-            dij = 0;
-            for (j=0; j<n; j++) {
-                d = gretl_matrix_get(DC, i, j);
-                dij += d * d;
-            }
-            mval[i] = sqrt(dij);
-        }
-        /* go to next column of M */
-        mval += m;
-    }
-
- bailout:
-
-    gretl_matrix_free(C);
-    gretl_matrix_free(D);
-    gretl_matrix_free(DC);
-    gretl_matrix_free(y);
-
-    if (*err) {
-        gretl_matrix_free(M);
-        M = NULL;
-    }
-
-    return M;
+    return err;
 }
 
 /* distance(): produces a set of pairwise distances, either between
@@ -8168,12 +8036,16 @@ gretl_matrix *distance (const gretl_matrix *X,
                         int *err)
 {
     gretl_matrix *ret;
+    const gretl_matrix *P = X;
+    const gretl_matrix *Q = Y;
+    gretl_matrix *XC = NULL;
+    gretl_matrix *YC = NULL;
     double d, dij, x, y;
     double den1, den2;
-    int metric, vlen, pos;
+    int metric, pos;
     int m, n, p, jmin;
     int i, j, k;
-    int Ynull = (Y == NULL);
+    int colvec = (Y == NULL);
 
     if (gretl_is_null_matrix(X)) {
         *err = E_INVARG;
@@ -8189,22 +8061,13 @@ gretl_matrix *distance (const gretl_matrix *X,
         return NULL;
     }
 
-    if (metric == MAHALANOBIS) {
-        if (Y == NULL) {
-            return matrix_mahal_all(X, err);
-        } else {
-            return matrix_mahalanobis(X, Y, err);
-        }
-    }
-
     m = X->rows;
     n = X->cols;
 
-    if (Ynull) {
-	p = m;
-	vlen = m * (m - 1) / 2;
-	/* column vector for results */
-	ret = gretl_matrix_alloc(vlen, 1);
+    if (colvec) {
+        p = m;
+        /* column vector for results */
+	ret = gretl_matrix_alloc(m * (m-1) / 2, 1);
     } else {
 	p = Y->rows;
 	/* matrix for results */
@@ -8216,17 +8079,28 @@ gretl_matrix *distance (const gretl_matrix *X,
 	return NULL;
     }
 
+    if (metric == MAHALANOBIS) {
+        *err = mahalanobis_prep(X, Y, &XC, &YC);
+        if (*err) {
+            free(ret);
+            return NULL;
+        }
+        P = XC;
+        Q = YC;
+        metric = EUCLIDEAN;
+    }
+
     pos = 0;
     for (i=0; i<m; i++) {
-	jmin = Ynull ? i + 1 : 0;
+	jmin = colvec ? i + 1 : 0;
 	for (j=jmin; j<p; j++) {
 	    den1 = den2 = dij = 0;
 	    for (k=0; k<n; k++) {
-		x = gretl_matrix_get(X, i, k);
-		if (Y == NULL) {
-		    y = gretl_matrix_get(X, j, k);
+		x = gretl_matrix_get(P, i, k);
+		if (colvec) {
+		    y = gretl_matrix_get(P, j, k);
 		} else {
-		    y = gretl_matrix_get(Y, j, k);
+		    y = gretl_matrix_get(Q, j, k);
 		}
 		if (metric == MANHATTAN) {
 		    dij += fabs(x - y);
@@ -8242,7 +8116,7 @@ gretl_matrix *distance (const gretl_matrix *X,
 		    den1 += x * x;
 		    den2 += y * y;
 		} else {
-		    /* euclidean */
+		    /* Euclidean or Mahalanobis */
 		    d = x - y;
 		    dij += d * d;
 		}
@@ -8254,13 +8128,16 @@ gretl_matrix *distance (const gretl_matrix *X,
 	    } else if (metric == COSINE) {
 		dij = 1.0 - dij / sqrt(den1 * den2);
 	    }
-	    if (Ynull) {
+	    if (colvec) {
 		ret->val[pos++] = dij;
 	    } else {
 		gretl_matrix_set(ret, i, j, dij);
 	    }
 	}
     }
+
+    gretl_matrix_free(XC);
+    gretl_matrix_free(YC);
 
     return ret;
 }
