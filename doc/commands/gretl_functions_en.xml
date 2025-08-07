@@ -4555,8 +4555,9 @@
 	    <para>
 	      <lit>Mahalanobis</lit>: works like <lit>euclidean</lit>
 	      except that the distances are scaled by the inverse of a
-	      covariance matrix. See also <emphasis>Mahalanobis
-	      notes</emphasis> below, and
+	      covariance matrix, giving the <math>n</math>-dimensional
+	      counterpart of a <math>z</math>-score. See also
+	      <emphasis>Mahalanobis notes</emphasis> below, and
 	      <url>https://en.wikipedia.org/wiki/Mahalanobis_distance</url>
 	      for further elucidation.
 	    </para>
@@ -4573,8 +4574,12 @@
           covariance matrix. To obtain this result you can do
 	</para>
 	<code>
-	  dmahal2 = distance(X, "mahal", meanc(X))
+	  dmahal = distance(X, "mahal", meanc(X))
 	</code>
+        <para>
+          For a series or list argument, the <cmdref targ="mahal"/>
+          command produces the same result.
+        </para>
 	<para>
 	  To obtain the Mahalanobis distances of the rows of
 	  <argname>X</argname> from an arbitrary centroid,

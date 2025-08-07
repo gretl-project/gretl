@@ -8650,6 +8650,9 @@
 	the distances give you the option of adding the distances to
 	the dataset as a new variable.
       </para>
+      <para>
+        See also the <fncref targ="distance"/> function.
+      </para>
     </description>
 
     <gui-access>
