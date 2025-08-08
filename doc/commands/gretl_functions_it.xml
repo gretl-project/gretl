@@ -4621,10 +4621,11 @@
 	  centroide è il vettore delle medie campionarie e la
 	  scalatura avviene tramite l'inversa della matrice di
 	  covarianza di <argname>X</argname>. Nello specifico, ciò
-	  significa che la matrice dei punti viene moltiplicata per una
-	  matrice triangolare superiore, la trasposta del fattore di
-	  Cholesky inverso della matrice di covarianza. Per ottenere
-	  questo risultato, si può usare:
+	  significa che <argname>X</argname> (e anche
+	  <argname>Y</argname>, se presente) viene moltiplicata per
+	  una matrice triangolare superiore, l'inversa trasposta del
+	  fattore di Cholesky della matrice di covarianza. Per
+	  ottenere questo risultato, si può usare:
 	</para>
 	<code>
 	  dmahal2 = distance(X, "mahal", meanc(X))
@@ -4633,12 +4634,12 @@
 	  Per ottenere le distanze di Mahalanobis delle righe di
 	  <argname>X</argname> da un centroide arbitrario,
 	  <math>c</math>, utilizzando una matrice di covarianza
-	  arbitraria, <math>V</math>, va usato il seguente
-	  metodo:
+	  arbitraria, <math>V</math>, può anche essere usato il
+	  seguente metodo:
 	</para>
 	<code>
-	  z = zeros(1, cols(X))
-	  d = distance((X .- c) / cholesky(V)', "euc", z)
+          U = cholesky(V)'
+          d = distance(X / U, "euc", c / U)
 	</code>
 	<subhead>Altre metriche</subhead>
 	<para>
