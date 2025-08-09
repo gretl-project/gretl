@@ -2688,7 +2688,14 @@ static int smpl_get_int (const char *s, DATASET *dset, int *err)
     int k = -1;
 
     if (integer_string(s)) {
-	k = atoi(s);
+        double k0 = dset->sd0;
+
+        if (k0 > 1.0 && k0 == floor(k0)) {
+            /* allow for a starting obs such as 250 */
+            k = atoi(s) - (int) k0 + 1;
+        } else {
+            k = atoi(s);
+        }
     } else {
 	double x;
 
