@@ -25,6 +25,52 @@
 #include "libset.h"
 #include "gretl_sampler.h"
 
+/* file-scope globals */
+static char **gibbs_lines;
+static char **gibbs_temps;
+static int gibbs_started;
+static int gibbs_n_lines;
+static int gibbs_n_temps;
+static int gibbs_burnin;
+static int gibbs_N;
+static char *gibbs_output;
+
+static void gibbs_delete_temps (void)
+{
+    int i;
+
+    for (i=0; i<gibbs_n_temps; i++) {
+        user_var_delete_by_name(gibbs_temps[i], NULL);
+    }
+}
+
+static void gibbs_destroy (void)
+{
+    if (gibbs_lines != NULL) {
+        strings_array_free(gibbs_lines, gibbs_n_lines);
+        gibbs_lines = NULL;
+    }
+    if (gibbs_temps != NULL) {
+        gibbs_delete_temps();
+        strings_array_free(gibbs_temps, gibbs_n_temps);
+        gibbs_temps = NULL;
+    }
+    if (gibbs_output != NULL) {
+        free(gibbs_output);
+        gibbs_output = NULL;
+    }
+    gibbs_started = 0;
+    gibbs_n_lines = 0;
+    gibbs_n_temps = 0;
+    gibbs_burnin = 0;
+    gibbs_N = 0;
+}
+
+static void gibbs_mark_as_temp (const char *s)
+{
+    strings_array_add(&gibbs_temps, &gibbs_n_temps, s);
+}
+
 static GENERATOR **allocate_generators (int nv, int *err)
 {
     GENERATOR **genrs = malloc(nv * sizeof *genrs);
@@ -48,19 +94,21 @@ static GENERATOR **allocate_generators (int nv, int *err)
    starting with @vname.
 */
 
-static int get_lhs_info (const char **psrc,
-                         GretlType *pt,
-                         char *vname)
+static int gibbs_get_lhs_info (const char **psrc,
+                               GretlType *pt,
+                               char *vname)
 {
     const char *src = *psrc;
-    char s[VNAMELEN];
+    char s[VNAMELEN] = {0};
     GretlType t;
 
     sscanf(src, "%31[^= ]", s);
     t = gretl_type_from_string(s);
     if (t == GRETL_TYPE_NONE) {
+        if (strlen(s) == gretl_namechar_spn(s)) {
+            strcpy(vname, s);
+        }
         t = GRETL_TYPE_ANY;
-        strcpy(vname, s);
     } else if (t != GRETL_TYPE_DOUBLE &&
                t != GRETL_TYPE_MATRIX) {
         return E_TYPES;
@@ -123,7 +171,8 @@ static gretl_matrix *do_run_sampler (char **init, int ni,
                                      char **iter, int ng,
                                      int burnin, int N,
                                      guint8 *record,
-                                     PRN *prn, int *err)
+                                     gretlopt opt, PRN *prn,
+                                     int *err)
 {
     gretl_matrix *ret = NULL;
     gretl_matrix *gm = NULL;
@@ -131,6 +180,8 @@ static gretl_matrix *do_run_sampler (char **init, int ni,
     char vname[VNAMELEN];
     GretlType gt;
     const char *str;
+    int cleanup = (opt & OPT_C);
+    int verbose = (opt & OPT_V);
     int ncols = 0;
     int iters;
     int i, j, s, t, c;
@@ -138,10 +189,16 @@ static gretl_matrix *do_run_sampler (char **init, int ni,
     /* run the @init generators and ensure that they all produce
        a scalar or matrix result
     */
+    if (verbose && ni > 0) {
+        pputs(prn, "initializing\n");
+    }
     for (i=0; i<ni && !*err; i++) {
         str = init[i];
-        *err = get_lhs_info(&str, &gt, vname);
+        *err = gibbs_get_lhs_info(&str, &gt, vname);
         if (!*err) {
+            if (cleanup && !gretl_is_user_var(vname)) {
+                gibbs_mark_as_temp(vname);
+            }
             *err = generate(str, NULL, gt, OPT_NONE, prn);
         }
         if (*err) {
@@ -167,10 +224,16 @@ static gretl_matrix *do_run_sampler (char **init, int ni,
        here, but we check that the genrs work, and for those that are
        tagged for recording we store the sizes of the objects generated.
     */
+    if (verbose) {
+        pputs(prn, "checking iteration statements\n");
+    }
     for (i=0; i<ng && !*err; i++) {
         str = iter[i];
-        *err = get_lhs_info(&str, &gt, vname);
+        *err = gibbs_get_lhs_info(&str, &gt, vname);
         if (!*err) {
+            if (cleanup && !gretl_is_user_var(vname)) {
+                gibbs_mark_as_temp(vname);
+            }
             genrs[i] = genr_compile(str, NULL, gt, OPT_NONE,
                                     prn, err);
         }
@@ -210,6 +273,9 @@ static gretl_matrix *do_run_sampler (char **init, int ni,
     }
 
     iters = burnin + N;
+    if (verbose) {
+        pputs(prn, "starting iteration\n");
+    }
     gretl_iteration_push();
 
     /* the main iteration, using compiled genrs */
@@ -229,6 +295,9 @@ static gretl_matrix *do_run_sampler (char **init, int ni,
     }
 
     gretl_iteration_pop();
+    if (verbose && !*err) {
+        pputs(prn, "iteration completed\n");
+    }
 
  bailout:
 
@@ -238,29 +307,6 @@ static gretl_matrix *do_run_sampler (char **init, int ni,
     free(genrs);
 
     return ret;
-}
-
-static char **gibbs_lines;
-static int gibbs_started;
-static int gibbs_n_lines;
-static int gibbs_burnin;
-static int gibbs_N;
-static char *gibbs_output;
-
-static void gibbs_destroy (void)
-{
-    if (gibbs_lines != NULL) {
-        strings_array_free(gibbs_lines, gibbs_n_lines);
-        gibbs_lines = NULL;
-    }
-    if (gibbs_output != NULL) {
-        free(gibbs_output);
-        gibbs_output = NULL;
-    }
-    gibbs_started = 0;
-    gibbs_n_lines = 0;
-    gibbs_burnin = 0;
-    gibbs_N = 0;
 }
 
 static int parse_gibbs_params (const char *s)
@@ -368,6 +414,7 @@ int gibbs_execute (gretlopt opt, PRN *prn)
     int verbose;
     int ni = 0;
     int ng = 0;
+    int nr = 0;
     int i, iniprev = 0;
     int err = 0;
 
@@ -398,11 +445,20 @@ int gibbs_execute (gretlopt opt, PRN *prn)
             if (!strncmp(str, "record: ", 8)) {
                 record[i-ni] = 1;
                 shift_string_left(str, 8);
+                nr++;
             }
             iniprev = 0;
         }
     }
 
+    if (!err && ng == 0) {
+        gretl_errmsg_sprintf("%s: no statements to be interated", "gibbs");
+        err = E_ARGS;
+    }
+    if (!err && nr == 0) {
+        gretl_errmsg_sprintf("%s: nothing to be recorded", "gibbs");
+        err = E_ARGS;
+    }
     if (!err) {
         if (ni > 0) {
             init = gibbs_lines;
@@ -413,7 +469,7 @@ int gibbs_execute (gretlopt opt, PRN *prn)
     if (!err) {
         H = do_run_sampler(init, ni, iter, ng,
                            gibbs_burnin, gibbs_N,
-                           record, prn, &err);
+                           record, opt, prn, &err);
         if (H != NULL) {
             err = user_var_add_or_replace(gibbs_output,
                                           GRETL_TYPE_MATRIX,
