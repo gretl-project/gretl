@@ -7514,7 +7514,8 @@ static int list_show_var (selector *sr, int v, int show_lags,
     if (ci == LOESS || ci == NADARWAT) {
         /* special: for nonparam models we should show
            lagged vars, since we don't display the full
-           lag-selection mechanism */
+           lag-selection mechanism
+        */
         show_lags = 1;
     }
 

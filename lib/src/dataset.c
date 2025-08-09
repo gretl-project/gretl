@@ -4417,11 +4417,15 @@ int series_get_parent_id (const DATASET *dset, int i)
 
 int series_get_lag (const DATASET *dset, int i)
 {
-    if (i > 0 && i < dset->v) {
-	return dset->varinfo[i]->lag;
-    } else {
-	return 0;
+    if (i > 0 && i < dset->v && dset->varinfo[i]->lag) {
+        int j = series_get_parent_id(dset, i);
+
+        if (j != i) {
+            return dset->varinfo[i]->lag;
+        }
     }
+
+    return 0;
 }
 
 int series_get_transform (const DATASET *dset, int i)
