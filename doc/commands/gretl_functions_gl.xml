@@ -4484,21 +4484,15 @@
 	  observación que abranga os valores de <math>n</math>
 	  variables.
 	</para>
-	<subhead>Casos típicos</subhead>
 	<para>
-	  Esta sección se aplica a tódaslas métricas, agás á distancia de
-	  Mahalanobis, para a que a sintaxe é lixeiramente diferente
-	  (mira máis abaixo).
-	</para>
-	<para>
-	  Se non indicas <argname>Y</argname>, o valor que se devolve é un
-	  vector columna de longura <math>m</math>(<math>m</math> &minus; 1)/2
-	  que abrangue o subconxunto non redundante de tódalas distancias por
-	  parellas entre os <math>m</math> puntos (as filas de <argname>X</argname>).
-	  Entón, dado un vector deste tipo que teña por nome <lit>d</lit>,
-	  podes xerar a matriz simétrica completa coas distancias entre os
-	  puntos (con ceros na diagonal principal, naturalmente) por medio
-	  de
+	  Se non indicas o argumento opcional <argname>Y</argname>,
+	  o valor que se devolve é un vector columna de longura
+	  <math>m</math>(<math>m</math> &minus; 1)/2 que abrangue o subconxunto
+	  non redundante de tódalas distancias por parellas entre os
+	  <math>m</math> puntos (as filas de <argname>X</argname>). Dado un
+	  vector deste tipo que teña por nome <lit>d</lit>, podes xerar a matriz
+	  simétrica completa coas distancias entre os puntos (con ceros na
+	  diagonal principal, naturalmente) por medio de
 	</para>
 	<code>
 	  D = unvech(d, 0)
@@ -4519,9 +4513,11 @@
 	  <argname>Y</argname>.
 	</para>
 	<para>
-	  Para obter as distancias desde un punto de referencia dado (por exemplo,
-	  o centroide) ata cada un dos <math>n</math> puntos de datos, indica
-	  <argname>Y</argname> como unha única fila.
+	  Para obter as distancias desde un punto concreto de referencia ata
+	  cada un dos <math>n</math> puntos de datos, indica
+	  <argname>Y</argname> como unha única fila. Se o punto de referencia é
+	  o centroide no senso habitual (o vector de medias mostrais),
+	  indica <lit>meanc(X)</lit> como valor de <argname>Y</argname>.
 	</para>
 	<subhead>Definicións das métricas admitidas</subhead>
 	<ilist>
@@ -4555,42 +4551,45 @@
 	      os <quote>puntos</quote>, considerados como vectores.
 	    </para>
 	  </li>
+	  <li>
+	    <para>
+	      <lit>Mahalanobis</lit>: funciona igual que <lit>euclidean</lit>,
+	      agás que as distancias se escalan coa inversa dunha matriz
+	      de covarianzas, dada a contrapartida <math>n</math>-dimensional
+	      dunha puntuación <math>z</math>. Consulta tamén as
+	      <emphasis>Notas sobre Mahalanobis</emphasis> máis abaixo,e
+	      <url>https://en.wikipedia.org/wiki/Mahalanobis_distance</url>
+	      para outras aclaracións.
+      </para>
+	  </li>
 	</ilist>
-	<subhead>Distancia de Mahalanobis</subhead>
-	<para>
-	  As distancias de Mahalanobis defínense como distancias euclídeas,
-	  entre os puntos considerados (filas da matriz <argname>X</argname>)
-	  e un centroide dado, escaladas mediante a inversa dunha matriz de
-	  covarianzas. No caso máis sinxelo, o centroide está constituído polas
-	  medias na mostra das variables (columnas de <argname>X</argname>)
-	  e a matriz de covarianzas está formada polas covarianzas entre elas
-	  na mostra.
-  </para>
+	<subhead>Notas sobre Mahalanobis</subhead>
   <para>
-	  Isto pódese obter indicando como segundo argumento a cadea de texto
-	  <quote>mahalanobis</quote> ou calquera abreviatura non ambigua,
-	  como en
+	  No uso máis habitual das distancias de Mahalanobis, o centroide
+	  é o vector de medias mostrais e o escalado faise coas inversas
+	  das covarianzas das columnas de <argname>X</argname>.
+	  En concreto, isto significa que a matriz <argname>X</argname>
+	  (e tamén a matriz <argname>Y</argname>, se está presente) se
+	  multiplica por unha matriz triangular superior, a trasposta do
+	  factor inverso de Cholesky da matriz de covarianzas. Para obter
+	  este resultado, podes executar
 	</para>
 	<code>
-	  dmahal = distance(X, "mahal")
+	  dmahal = distance(X, "mahal", meanc(X))
 	</code>
 	<para>
-    Neste caso, o terceiro argumento <argname>Y</argname> non se
-    admite, e o valor que se devolve é un vector columna de longura
-    <math>m</math> coas distancias de Mahalanobis desde o centroide
-    de <argname>X</argname> (é dicir, a súa media na mostra). Na
-    práctica, a matriz do resultado neste caso é a mesma que obtés ao
-    executar a instrución <cmdref targ="mahal"/> sobre unha listaxe
-    de series que se correspondan coas columnas da matriz
-    <argname>X</argname>.
-	</para>
+	  Para un argumento que sexa unha serie ou unha lista, a instrución
+	  <cmdref targ="mahal"/> produce o mesmo resultado.
+  </para>
 	<para>
-	  Para obter as distancias de Mahalanobis usando un centroide
-	  distinto, <lit>mu</lit>, e/ou a inversa da matriz de covarianzas,
-	  <lit>ICV</lit>, podes utilizar a seguinte sintaxe:
+	  Para obter as distancias de Mahalanobis das filas da matriz
+	  <argname>X</argname> desde un centroide arbitrario, <math>c</math>,
+	  utilizando unha matriz arbitraria de covarianzas, <math>V</math>,
+	  pode utilizarse o seguinte método:
 	</para>
 	<code>
-	  dmahal = distance(X*cholesky(ICV), "euc", mu)
+	  U = cholesky(V)'
+	  d = distance(X / U, "euc", c / U)
 	</code>
 	<subhead>Outras métricas</subhead>
 	<para>
@@ -4599,7 +4598,7 @@
 	</para>
 	<code>
 	  # Euclídea tipificada
-	  dseu = distance(stdize(X), "eu")
+	  dseu = distance(stdize(X), "euc")
 	  # Correlación (baseada no coseno)
 	  dcor = distance(stdize(X', -1)', "cos")
 	</code>

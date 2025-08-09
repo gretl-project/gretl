@@ -80,7 +80,7 @@
 	tantos graos de liberdade como o número de regresores engadidos. Con
 	esta opción, o modelo orixinal non se substitúe polo modelo da regresión auxiliar.
       </para>
-      <subhead context="cli">A opción auto</subhead>
+      <subhead context="cli">A opción automática</subhead>
       <para context="cli">
 	A opción <opt>auto</opt> (que non se pode combinar coa opción
 	<opt>lm</opt>) solicita que se faga a regresión progresiva cara
@@ -2282,10 +2282,6 @@
       </arguments>
       <options>
 	<option>
-	  <flag>--bartlett</flag>
-	  <effect>Utiliza os desvíos padrón de Bartlett</effect>
-	</option>
-	<option>
 	  <flag>--plot</flag>
 	  <optparm>modo-ou-nomeficheiro</optparm>
 	  <effect>Mira abaixo</effect>
@@ -2297,6 +2293,10 @@
 	<option>
 	  <flag>--acf-only</flag>
 	  <effect>Omite as autocorrelacións parciais</effect>
+	</option>
+	<option>
+	  <flag>--bartlett</flag>
+	  <effect>Utiliza os erros padrón de Bartlett</effect>
 	</option>
       </options>
       <examples>
@@ -2338,23 +2338,24 @@
       <para context="cli">
 	Utilízanse asteriscos para indicar a significación estatística das
 	autocorrelacións individuais. Por defecto, isto avalíase utilizando un
-	desvío padrón igual ao cociente entre 1 e a raíz cadrada do tamaño
-	da mostra; pero cando indicas a opción <opt>bartlett</opt>, entón
-	utilízanse os desvíos padrón de Bartlett para a FAC. Se resulta
-	aplicable, esta opción tamén determina a banda de confianza que se
-	debuxa na gráfica da FAC. Ademais, preséntase o estatístico
+	desvío padrón igual ao cociente entre 1 e a raíz cadrada do tamaño da
+	mostra; pero cando indicas a opción <opt>bartlett</opt>, entón utilízanse
+	os erros padrón de Bartlett para a FAC; mira abaixo para máis detalles.
+	Se resulta aplicable, esta opción tamén determina a banda de confianza
+	que se debuxa na gráfica da FAC. Ademais, preséntase o estatístico
 	<math>Q</math> de Ljung&ndash;Box, que proba a hipótese nula de que a
 	serie é <quote>ruído branco</quote> ata o nivel de retardo indicado.
       </para>
       <para context="gui">
 	Utilízanse asteriscos para indicar a significación estatística das
-	autocorrelacións individuais. Por defecto, isto avalíase utilizando
-	un desvío padrón igual ao cociente entre 1 e a raíz cadrada
-	do tamaño da mostra, pero tes a opción de utilizar os desvíos
-	padrón de Bartlett para a FAC. Esta opción tamén determina a banda
-	de confianza que se debuxa na gráfica da FAC. Ademais, preséntase o estatístico
-	<math>Q</math> de Ljung&ndash;Box, que proba a hipótese nula de que a
-	serie é <quote>ruído branco</quote> ata o nivel de retardo indicado.
+	autocorrelacións individuais. Por defecto, isto avalíase utilizando un
+	desvío padrón igual ao cociente entre 1 e a raíz cadrada do tamaño da
+	mostra; pero tes a opción de utilizar os erros padrón de Bartlett para a
+	FAC; mira abaixo para máis detalles. Esta opción tamén determina a
+	banda de confianza que se debuxa na gráfica da FAC. Ademais, preséntase
+	o estatístico <math>Q</math> de Ljung&ndash;Box, que proba a hipótese
+	nula de que a serie é <quote>ruído branco</quote> ata o nivel de
+	retardo indicado.
       </para>
       <para context="cli">
 	Se especificas un valor para <repl>nivel</repl>, a lonxitude
@@ -2362,6 +2363,22 @@
 	máximo; se non, a longura determínase automaticamente
 	como unha función da frecuencia dos datos e do número de
 	observacións.
+      </para>
+      <subhead>Erros padrón de Bartlett</subhead>
+      <para>
+	Por favor, cae na conta de que neste contexto os erros padrón de Bartlett
+	non son exactamente unha variante robusta dos predeterminados. Os erros
+	padrón predeterminados refírense á hipótese nula de que a serie en
+	cuestión provén dun proceso de tipo ruído branco; en liñas xerais, isto
+	non se rexeitará cun nivel do 5 por cento, cando non haxa máis dun 5 por
+	cento dos valores da FAC que excedan os límites establecidos en 1.96
+	veces o erro padrón. Porén, os valores de Bartlett están asociados á
+	hipótese de que a serie provén dun proceso de medias móbiles. En concreto,
+	se os valores da FAC caen dentro dos límites de Bartlett para retardos
+	maiores que <math>k</math>, nos equivocamos ao rexeitar a hipótese
+	nula de que <math>y</math> é MA(<math>k</math>). Consulta o capítulo 7
+	de <cite key="brockwell-davis87">Brockwell e Davis (1987)</cite> para
+	obter máis detalles sobre este punto.
       </para>
       <subhead context="cli">Representación gráfica</subhead>
       <para context="cli">
@@ -8633,6 +8650,9 @@
 	distancias, te permite a posibilidade de engadir as distancias
 	ao conxunto de datos como unha nova variable.
       </para>
+      <para>
+        Consulta tamén a función <fncref targ="distance"/>.
+      </para>
     </description>
 
     <gui-access>
@@ -10751,14 +10771,14 @@
 	</option>
 	<option>
 	  <flag>--auto</flag>
-	  <optparm optional="true">alfa</optparm>
+	  <optparm optional="true">criterio</optparm>
 	  <effect>Eliminación secuencial, mira abaixo</effect>
 	</option>
       </options>
       <examples>
         <example>omit 5 7 9</example>
         <example>omit seasonals --quiet</example>
-        <example>omit --auto</example>
+        <example>omit --auto=BIC</example>
         <example>omit --auto=0.05</example>
 	 <demos>
 	  <demo>restrict.inp</demo>
@@ -10774,7 +10794,7 @@
 	logo de excluír as variables especificadas. Aparte do resultado
 	habitual do modelo, presenta unha proba da significación conxunta
 	das variables excluídas. A hipótese nula supón que os verdadeiros
-	coeficientes de todas as variables excluídas son iguais a cero.
+	coeficientes de todos os regresores excluídos son iguais a cero.
       </para>
       <para>
 	Se escolles a opción <quote>Proba de Wald</quote>, avalíase a
@@ -10782,19 +10802,25 @@
 	dunha proba de Wald baseada na matriz de varianzas-covarianzas
 	do modelo indicado, e non se volve realizar a estimación.
       </para>
+      <subhead>As opcións secuenciais</subhead>
       <para>
-	Se escolles a opción <quote>Eliminación secuencial</quote> (aviso:
-	dita opción non sempre se vai amosar), esta vai funcionar como se
-	indica deseguido. En cada etapa exclúese a variable ligada á maior
-	probabilidade asociada (valor p), ata que todas as que queden estean
-	ligadas a valores p que non sexan maiores ca algún valor de corte.
-	Por defecto, este é o 10 por cento (con 2 colas) e podes axustalo
-	co botón con frechas arriba/abaixo. Por defecto, este proceso opera de
-	modo automático sobre todas as variables no modelo (aparte da constante);
-	se queres limitalo só a un subconxunto das variables, marca o cadriño de
-	<quote>Probar só as variables seleccionadas</quote> e fai a selección.
-	De igual xeito que no caso básico, vaise volver estimar un modelo logo
-	de excluír as variables, agás que non quede ningunha.
+	A opción de <quote>eliminación secuencial</quote> invoca unha
+	regresión secuencial cara atrás. Nese caso, interprétase que
+	<repl>listavariables</repl> é unha lista de regresores
+	<emphasis>candidatos</emphasis> a ser omitidos do modelo orixinal.
+	En cada unha das etapas, o método atopa o candidato que proporciona
+	a maior mellora de acordo co criterio especificado (valor <math>P</math>
+	bilateral ou criterio de información), se hai algún. O algoritmo detense
+	cando non é posible unha mellora posterior. Entón, amósanse as
+	estimacións do modelo reducido, agás que resulte que non se omite
+	ningún dos regresores.
+      </para>
+      <para>
+	Cando se selecciona un método secuencial, a lista de variables a
+	omitir ignórase por defecto, a beneficio de tratar tódolos regresores
+	como candidatos a ser omitidos. Porén, podes limitar os candidatos
+	mediante a marcaxe da caixiña titulada
+	<quote>Probar só as variables seleccionadas</quote>.
       </para>
     </description>
 
@@ -10819,26 +10845,50 @@
       <para>
 	Por defecto, rexístrase a forma <math>F</math> da proba de Wald;
 	pero podes utilizar a opción <opt>chi-square</opt> para recoller
-	a forma khi-cadrado no seu lugar.
+	a forma Khi-cadrado no seu lugar.
       </para>
       <para>
 	Se tanto estimas como representas o modelo restrinxido, a opción
 	<opt>vcv</opt> ten o efecto de presentar a súa matriz de covarianzas;
 	se non, esta opción ignórase.
       </para>
+      <subhead>A opción automática</subhead>
       <para>
-	Como alternativa, cando indicas a opción <opt>auto</opt>, lévase
-	adiante a eliminación secuencial por pasos. En cada etapa exclúese
-	a variable ligada á maior probabilidade asociada (valor p), ata
-	que todas as que queden estean ligadas a valores p que non sexan
-	maiores ca algún valor de corte. Por defecto, este é do 10 por cento
-	(con 2 colas) e podes axustalo engadindo <quote><lit>=</lit></quote>,
-	e un valor entre 0 e 1 (sen espazos), como no cuarto exemplo de
-	arriba. Se indicas <repl>listavariables</repl>, este proceso limítase
-	só ás variables da lista; se non, todos os regresores aparte da
-	constante se tratan como candidatos á exclusión. Cae na conta de
-	que as opcións <opt>auto</opt> e <opt>test-only</opt> non podes
-	combinalas.
+	A opción <opt>auto</opt> (que non pode combinarse coa opción
+	<opt>test-only</opt>) reclama a regresión secuencial cara atrás.
+	Nese caso, considérase que <repl>listavariables</repl> é unha lista
+	de regresores <emphasis>candidatos</emphasis> a ser omitidos do modelo
+	orixinal. En cada unha das etapas, o método determina que candidato
+	podería ser mellor eliminar de acordo co <repl>criterio</repl>
+	especificado (indicado como parámetro desta opción). O algoritmo detense
+	cando non é posible unha mellora posterior. O criterio debe tomar unha
+	das seguintes formas:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Un Criterio de Información: <lit>AIC</lit>, <lit>BIC</lit> ou
+	    <lit>HQC</lit>. Entón, o <quote>mellor</quote> candidato en
+	    cada etapa é aquel cuxa omisión proporciona a maior mellora
+	    (redución) no criterio seleccionado &mdash;ata que non haxa
+	    ningún candidato cuxa omisión proporcione unha mellora;
+	    momento no que o algoritmo se detén.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Un valor &alpha; (como fracción decimal positiva). Neste caso,
+	    o regresor ao que corresponda o maior valor <math>P</math>
+	    bilateral, elíxese para ser omitido &mdash;ata que non haxa
+	    ningún candidato cuxo valor <math>P</math> sexa maior que
+	    &alpha;; momento no que o algoritmo se detén.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+        Se non se especifica ningún <repl>criterio</repl> na opción
+        <opt>auto</opt>, por defecto se utiliza o método do valor
+        <math>P</math> con &alpha; = 0.10.
       </para>
     </description>
 
