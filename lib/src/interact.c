@@ -2341,7 +2341,6 @@ static int lib_open_append (ExecState *s,
         gretl_print_destroy(vprn);
     }
 
-
     if (err) {
 	if (op.quiet && catch) {
 	    ; /* keep quiet */

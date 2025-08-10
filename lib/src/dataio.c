@@ -1473,11 +1473,6 @@ int gretl_seek_data (char *fname, DATASET *dset,
     int err = 0;
 
     gretl_error_clear();
-
-#if 0
-    fprintf(stderr, "gretl_seek_data: calling addpath\n");
-#endif
-
     test = gretl_addpath(fname, 0);
     if (test == NULL) {
 	return E_FOPEN;
@@ -1491,8 +1486,14 @@ int gretl_seek_data (char *fname, DATASET *dset,
 	/* specific processing for gretl datafiles  */
 	err = gretl_read_gdt(fname, dset, myopt, prn);
     } else {
-	/* try fallback to a "csv"-type import */
-	err = import_csv(fname, dset, myopt, prn);
+        GretlFileType ft = data_file_type_from_name(fname);
+
+        if (ft == GRETL_UNRECOGNIZED) {
+            gretl_errmsg_set(_("Unknown data import type"));
+            err = E_DATA;
+        } else {
+            err = gretl_read_foreign_data(fname, ft, dset, prn);
+        }
     }
 
     return err;
@@ -1503,11 +1504,9 @@ int gretl_seek_data (char *fname, DATASET *dset,
  * @fname: name of file to try.
  * @dset: dataset struct.
  * @opt: option flags.
- * @prn: where messages should be written.
+ * @prn: where any messages should be written.
  *
- * Works like gretl_seek_data() except that no path searching
- * is performed; @fname is always taken "as is" and is never
- * modified.
+ * Wrapper for gretl_seek_data() designed for use by gretl4py.
  *
  * Returns: 0 on successful completion, non-zero otherwise.
  */
@@ -1515,41 +1514,10 @@ int gretl_seek_data (char *fname, DATASET *dset,
 int gretl_get_data (const char *fname, DATASET *dset,
 		    gretlopt opt, PRN *prn)
 {
-    gretlopt myopt = OPT_NONE;
-    int err = 0;
+    char tmp[MAXLEN] = {0};
 
-    gretl_error_clear();
-
-    if (opt & OPT_T) {
-	myopt = OPT_T;
-    }
-
-    if (has_native_data_suffix(fname)) {
-	/* specific processing for gretl-supplied datafiles */
-	err = gretl_read_gdt(fname, dset, myopt, prn);
-    } else {
-        /* try for an "import" of some kind */
-        GretlFileType ft = gretl_detect_filetype(fname);
-
-        if (ft == GRETL_UNRECOGNIZED) {
-            gretl_errmsg_set(_("Unknown data import type"));
-            err = E_DATA;
-        } else {
-            err = gretl_read_foreign_data(fname, ft, dset, prn);
-        }
-    }
-
-    if (err == E_FOPEN && (has_native_data_suffix(fname) ||
-                           gretl_in_python_mode())) {
-        /* try path searching */
-        char tmp[FILENAME_MAX];
-
-        gretl_error_clear();
-        strcpy(tmp, fname);
-        err = gretl_seek_data(tmp, dset, OPT_NONE, prn);
-    }
-
-    return err;
+    strcpy(tmp, fname);
+    return gretl_seek_data(tmp, dset, opt, prn);
 }
 
 /**
