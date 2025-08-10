@@ -1483,9 +1483,10 @@ int gretl_seek_data (char *fname, DATASET *dset,
     }
 
     if (has_native_data_suffix(fname)) {
-	/* specific processing for gretl datafiles  */
+	/* specific processing for gretl datafiles */
 	err = gretl_read_gdt(fname, dset, myopt, prn);
     } else {
+        /* all other file types */
         GretlFileType ft = data_file_type_from_name(fname);
 
         if (ft == GRETL_UNRECOGNIZED) {
@@ -1506,7 +1507,8 @@ int gretl_seek_data (char *fname, DATASET *dset,
  * @opt: option flags.
  * @prn: where any messages should be written.
  *
- * Wrapper for gretl_seek_data() designed for use by gretl4py.
+ * Wrapper for gretl_seek_data() designed for use by gretl4py,
+ * respecting the const modifier for @fname.
  *
  * Returns: 0 on successful completion, non-zero otherwise.
  */
@@ -3581,23 +3583,17 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
 			int *list, char *sheetname,
 			DATASET *dset, gretlopt opt, PRN *prn)
 {
-    FILE *fp;
     int (*importer) (const char*, int *, char *,
 		     DATASET *, gretlopt, PRN *,
 		     void *);
-    int err = 0;
+    int err = gretl_test_fopen(fname, "r");
 
-    import_na_init();
-
-    fp = gretl_fopen(fname, "r");
-
-    if (fp == NULL) {
+    if (err) {
 	pprintf(prn, _("Couldn't open %s\n"), fname);
-	err = E_FOPEN;
-	goto bailout;
+	return E_FOPEN;
     }
 
-    fclose(fp);
+    import_na_init();
 
     if (ftype == GRETL_GNUMERIC) {
 	importer = get_plugin_function("gnumeric_get_data");
@@ -3614,20 +3610,18 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
     }
 
     if (importer == NULL) {
+        fprintf(stderr, "import_spreadsheet: importer not found\n");
         err = 1;
     } else {
 	gchar *thisdir = g_get_current_dir();
 
 	err = (*importer)(fname, list, sheetname, dset, opt, prn, NULL);
-
 	if (thisdir != NULL) {
 	    /* come back out of dotdir? */
 	    gretl_chdir(thisdir);
 	    g_free(thisdir);
 	}
     }
-
- bailout:
 
     return err;
 }
