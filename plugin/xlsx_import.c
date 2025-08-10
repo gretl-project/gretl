@@ -1620,15 +1620,13 @@ static int finalize_xlsx_import (DATASET *dset,
 	pputs(prn, _("warning: some variable names were duplicated\n"));
     }
 
-    if (!err && xinfo->trydates) {
-	xlsx_dates_check(xinfo->dset);
-    }
-
-    if (!err && xinfo->dset->S != NULL) {
-	import_ts_check(xinfo->dset);
-    }
-
     if (!err) {
+        if (xinfo->trydates) {
+            xlsx_dates_check(xinfo->dset);
+        }
+        if (xinfo->dset->S != NULL) {
+            import_ts_check(xinfo->dset);
+        }
 	err = merge_or_replace_data(dset, &xinfo->dset,
 				    get_merge_opts(opt), prn);
     }
@@ -1673,7 +1671,6 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 #endif
 
     xlsx_info_init(&xinfo);
-
     err = xlsx_gather_sheet_names(&xinfo, sheetname, list, prn);
 
     if (!err) {
