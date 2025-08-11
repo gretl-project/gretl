@@ -819,24 +819,23 @@ static GretlFileType data_file_type_from_extension (const char *ext,
 
 GretlFileType data_file_type_from_name (const char *fname)
 {
+    GretlFileType ret = GRETL_UNRECOGNIZED;
     const char *ext = strrchr(fname, '.');
 
     if (ext != NULL && strchr(ext, '/')) {
 	/* the rightmost dot is not in the basename */
 	ext = NULL;
     }
-
 #ifdef WIN32
     if (ext != NULL && strchr(ext, '\\')) {
 	ext = NULL;
     }
 #endif
-
     if (ext != NULL) {
-	return data_file_type_from_extension(ext, fname);
+	ret = data_file_type_from_extension(ext, fname);
     }
 
-    return GRETL_UNRECOGNIZED;
+    return ret;
 }
 
 #define non_native(o) (o & (OPT_M | OPT_R | OPT_D | OPT_G | OPT_J))
@@ -3514,19 +3513,13 @@ static int import_octave (const char *fname, DATASET *dset,
 int import_other (const char *fname, GretlFileType ftype,
 		  DATASET *dset, gretlopt opt, PRN *prn)
 {
-    FILE *fp;
     int (*importer) (const char *, DATASET *,
 		     gretlopt, PRN *);
-    int err = 0;
 
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) {
-	pprintf(prn, _("Couldn't open %s\n"), fname);
-	err = E_FOPEN;
-	goto bailout;
+    if (gretl_test_fopen(fname, "r") != 0) {
+        pprintf(prn, _("Couldn't open %s\n"), fname);
+        return E_FOPEN;
     }
-
-    fclose(fp);
 
     if (ftype == GRETL_OCTAVE) {
 	/* plugin not needed */
@@ -3586,9 +3579,9 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
     int (*importer) (const char*, int *, char *,
 		     DATASET *, gretlopt, PRN *,
 		     void *);
-    int err = gretl_test_fopen(fname, "r");
+    int err = 0;
 
-    if (err) {
+    if (gretl_test_fopen(fname, "r") != 0) {
 	pprintf(prn, _("Couldn't open %s\n"), fname);
 	return E_FOPEN;
     }
