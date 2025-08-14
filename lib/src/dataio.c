@@ -3515,6 +3515,7 @@ int import_other (const char *fname, GretlFileType ftype,
 {
     int (*importer) (const char *, DATASET *,
 		     gretlopt, PRN *);
+    int err = 0;
 
     if (gretl_test_fopen(fname, "r") != 0) {
         pprintf(prn, _("Couldn't open %s\n"), fname);
@@ -3549,8 +3550,6 @@ int import_other (const char *fname, GretlFileType ftype,
     } else {
 	err = (*importer)(fname, dset, opt, prn);
     }
-
- bailout:
 
     return err;
 }
