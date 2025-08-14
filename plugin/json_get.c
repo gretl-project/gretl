@@ -594,8 +594,6 @@ static double get_matrix_element (JsonReader *reader, int *err)
     GType type = json_node_get_value_type(node);
     double x = NADBL;
 
-    fprintf(stderr, "HERE get_matrix_element\n");
-
     if (json_node_is_null(node)) {
         fprintf(stderr, "  json_is_null_node\n");
 	; /* OK: NA? */
