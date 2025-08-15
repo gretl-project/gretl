@@ -29,6 +29,8 @@ int remove_png_term_from_plot_by_name (const char *fname);
 void display_session_graph (const char *path, const char *title,
 			    void *ptr);
 
+void gnuplot_view_session_graph (const char *fname);
+
 void register_graph (void);
 
 void adjust_plot_collection (const char *parm);

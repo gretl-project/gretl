@@ -1254,6 +1254,23 @@ void run_gnuplot_script (gchar *buf, windata_t *vwin)
     g_free(src);
 }
 
+void gnuplot_view_session_graph (const char *fname)
+{
+    gchar *buf = NULL;
+    gchar *tmpfile = NULL;
+    int err = 0;
+
+    if (g_file_get_contents(fname, &buf, NULL, NULL)) {
+        tmpfile = gretl_make_dotpath("showtmp.gp");
+        err = dump_plot_buffer(buf, tmpfile, 1, fname);
+        if (!err) {
+            err = real_send_to_gp(tmpfile, 1);
+        }
+    }
+
+    g_free(tmpfile);
+}
+
 #ifdef G_OS_WIN32
 
 /* common code for sending an EMF file to the clipboard,

@@ -191,6 +191,7 @@ static char *generic_items[] = {
 
 static char *graph_items[] = {
     N_("Display"),
+    N_("View using gnuplot"),
     N_("Edit plot commands"),
     N_("Add to graph page"),
     N_("Rename"),
@@ -3609,7 +3610,8 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 		   obj->sort == GRETL_OBJ_PLOT) {
 	    open_gui_graph(obj);
 	}
-    } else if (!strcmp(item, _("Edit plot commands"))) {
+    } else if (!strcmp(item, _("Edit plot commands")) ||
+               !strcmp(item, _("View using gnuplot"))) {
 	if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
 	    SESSION_GRAPH *graph = (SESSION_GRAPH *) obj->data;
 	    char fullname[MAXLEN];
@@ -3625,7 +3627,7 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 		/* the following handles error message if needed */
 		err = remove_png_term_from_plot_by_name(fullname);
 	    }
-	    if (!err) {
+	    if (!err && !strcmp(item, _("Edit plot commands"))) {
 		title = object_get_window_title(obj);
 		vwin = view_file_with_title(fullname, 1, 0, 78, 400,
 					    EDIT_GP, title);
@@ -3636,7 +3638,9 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 		if (graph->has_datafile) {
 		    vwin->data = graph;
 		}
-	    }
+	    } else if (!err) {
+                gnuplot_view_session_graph(fullname);
+            }
 	}
     } else if (!strcmp(item, _("Add to graph page"))) {
 	if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
