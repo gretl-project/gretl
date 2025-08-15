@@ -79,7 +79,8 @@ static DATASET *peerset;
 
 #define SUBMASK_SENTINEL 0x0f
 
-static int smpl_get_int (const char *s, DATASET *dset, int *err);
+static int smpl_get_int (const char *s, DATASET *dset,
+                         int relative, int *err);
 
 /* accessors for full dataset, when sub-sampled */
 
@@ -1283,7 +1284,7 @@ static int make_random_mask (const char *s, const char *oldmask,
     int err = 0;
 
     /* how many cases are requested? */
-    subn = smpl_get_int(s, dset, &err);
+    subn = smpl_get_int(s, dset, 0, &err);
 
     if (subn <= 0 || subn >= dset->n) {
 	err = 1;
@@ -2683,14 +2684,15 @@ enum {
     SMPL_T2
 };
 
-static int smpl_get_int (const char *s, DATASET *dset, int *err)
+static int smpl_get_int (const char *s, DATASET *dset,
+                         int relative, int *err)
 {
     int k = -1;
 
     if (integer_string(s)) {
         double k0 = dset->sd0;
 
-        if (k0 > 1.0 && k0 == floor(k0)) {
+        if (!relative && k0 > 1.0 && k0 == floor(k0)) {
             /* allow for a starting obs such as 250 */
             k = atoi(s) - (int) k0 + 1;
         } else {
@@ -2800,7 +2802,7 @@ static int get_sample_limit (const char *s, DATASET *dset,
 
     if (*s == '-' || *s == '+') {
 	/* increment/decrement form */
-	int incr = smpl_get_int(s + 1, dset, &err);
+	int incr = smpl_get_int(s + 1, dset, 1, &err);
 
 	if (!err) {
 	    if (*s == '-') {
@@ -2819,7 +2821,7 @@ static int get_sample_limit (const char *s, DATASET *dset,
 	/* absolute form */
 	if (opt & OPT_D) {
 	    /* force interpretation of integers as dates */
-	    int k = smpl_get_int(s, dset, &err);
+	    int k = smpl_get_int(s, dset, 0, &err);
 
 	    if (!err) {
 		ret = verify_integer_date(k, dset, &err);
@@ -2830,7 +2832,7 @@ static int get_sample_limit (const char *s, DATASET *dset,
 	    }
 	    if (ret < 0) {
 		gretl_error_clear();
-		ret = smpl_get_int(s, dset, &err);
+		ret = smpl_get_int(s, dset, 0, &err);
 		/* convert to base 0 */
 		if (!err) ret--;
 	    }
@@ -3119,10 +3121,10 @@ int set_panel_sample (const char *start,
 
     /* first pass: read start and stop as integer values? */
     if (strchr(start, ':') == NULL && strchr(start, '-') == NULL) {
-	s1 = smpl_get_int(start, dset, &err);
+	s1 = smpl_get_int(start, dset, 0, &err);
     }
     if (!err && strchr(stop, ':') == NULL && strchr(stop, '-') == NULL) {
-	s2 = smpl_get_int(stop, dset, &err);
+	s2 = smpl_get_int(stop, dset, 0, &err);
     }
 
 #if PANDEBUG
