@@ -1096,6 +1096,7 @@ int split_graph_fontspec (const char *s, char *name, int *psz)
     int i, k = 0;
     int n, nf = 0;
 
+    *name = '\0';
     s += strspn(s, " ");
 
     if (isdigit(*s)) {
@@ -1216,12 +1217,10 @@ static void write_png_font_string (char *fstr,
         *fstr = '\0';
         return;
     } else {
-        char fname[128] = {0};
+        char fname[128];
         int nf, fsize = 0;
 
         nf = split_graph_fontspec(thisfont, fname, &fsize);
-        fprintf(stderr, "nf %d, fname '%s', fsize %d\n", nf, fname, fsize);
-
         if (special_font_size_is_set()) {
             fsize = special_fontsize;
         } else if (nf == 2) {
