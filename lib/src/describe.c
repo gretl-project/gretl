@@ -7992,14 +7992,17 @@ static int mahalanobis_prep (const gretl_matrix *X,
     int err = 0;
 
     C = mahal_cholesky_factor(X, &err);
-    if (!err) {
-        *XC = gretl_matrix_alloc(X->rows, X->cols);
-        if (*XC == NULL) {
-            err = E_ALLOC;
-        } else {
-            gretl_matrix_multiply(X, C, *XC);
-        }
+    if (err) {
+        return err;
     }
+
+    *XC = gretl_matrix_alloc(X->rows, X->cols);
+    if (*XC == NULL) {
+        err = E_ALLOC;
+    } else {
+        gretl_matrix_multiply(X, C, *XC);
+    }
+
     if (!err && Y != NULL) {
         *YC = gretl_matrix_alloc(Y->rows, Y->cols);
         if (*YC == NULL) {
@@ -8048,12 +8051,15 @@ gretl_matrix *distance (const gretl_matrix *X,
     int colvec = (Y == NULL);
 
     if (gretl_is_null_matrix(X)) {
+        fprintf(stderr, "distance(): X is null matrix\n");
         *err = E_INVARG;
     } else if (gretl_is_complex(X) || gretl_is_complex(Y)) {
         *err = E_CMPLX;
     } else if (Y != NULL && Y->cols != X->cols) {
+        fprintf(stderr, "distance(): Y is not conformable\n");
         *err = E_NONCONF;
     } else if ((metric = distance_metric(type)) < 0) {
+        fprintf(stderr, "distance(): invalid metric value '%s'\n", type);
         *err = E_INVARG;
     }
 
