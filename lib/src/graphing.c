@@ -1093,9 +1093,20 @@ void graph_palette_reset (int i)
 
 int split_graph_fontspec (const char *s, char *name, int *psz)
 {
-    int i, k = 0, n = strlen(s);
-    int nf = 0;
+    int i, k = 0;
+    int n, nf = 0;
 
+    s += strspn(s, " ");
+
+    if (isdigit(*s)) {
+        /* we only got a size? */
+        *psz = atoi(s);
+        strcpy(name, "sans");
+        return 2;
+    }
+
+    /* look for digits at the end */
+    n = strlen(s);
     for (i=n-1; i>0; i--) {
         if (isdigit(s[i])) k++;
         else break;
@@ -1183,32 +1194,33 @@ static int special_font_size_is_set (void)
 static void write_png_font_string (char *fstr,
                                    char *ad_hoc_fontspec,
                                    PlotType ptype,
-                                   const char *grfont,
+                                   const char *specfont,
                                    double scale)
 {
-    int adhoc = 0;
+    const char *thisfont;
 
-    if (grfont == NULL) {
-        if (ad_hoc_font[0] != '\0') {
-            adhoc = 1;
-            grfont = ad_hoc_font;
-        } else {
-            grfont = gretl_png_font();
-        }
+    if (specfont != NULL) {
+        thisfont = specfont;
+    } else if (*ad_hoc_font != '\0') {
+        thisfont = ad_hoc_font;
+    } else {
+        thisfont = gretl_png_font();
     }
 
-    if (*grfont == '\0') {
-        grfont = getenv("GRETL_PNG_GRAPH_FONT");
+    if (*thisfont == '\0') {
+        /* fallback */
+        thisfont = getenv("GRETL_PNG_GRAPH_FONT");
     }
 
-    if (*grfont == '\0') {
+    if (*thisfont == '\0') {
         *fstr = '\0';
         return;
     } else {
-        char fname[128];
+        char fname[128] = {0};
         int nf, fsize = 0;
 
-        nf = split_graph_fontspec(grfont, fname, &fsize);
+        nf = split_graph_fontspec(thisfont, fname, &fsize);
+        fprintf(stderr, "nf %d, fname '%s', fsize %d\n", nf, fname, fsize);
 
         if (special_font_size_is_set()) {
             fsize = special_fontsize;
@@ -1225,8 +1237,8 @@ static void write_png_font_string (char *fstr,
         } else if (nf == 1) {
             sprintf(fstr, " font \"%s\"", fname);
         }
-        if (adhoc) {
-            strcpy(ad_hoc_fontspec, grfont);
+        if (thisfont == ad_hoc_font && ad_hoc_fontspec != NULL) {
+            strcpy(ad_hoc_fontspec, thisfont);
         }
         /* ensure these settings don't outstay their welcome */
         ad_hoc_font[0] = '\0';
@@ -1737,7 +1749,7 @@ static char *var_term_line (char *term_line, int ptype, GptFlags flags)
 #endif
 
     *font_string = *size_string = '\0';
-    write_png_font_string(font_string, "", ptype, NULL, 1.0);
+    write_png_font_string(font_string, NULL, ptype, NULL, 1.0);
     write_png_size_string(size_string, ptype, flags, 1.0);
 
     sprintf(term_line, "set term %s%s%s noenhanced",
@@ -1758,6 +1770,10 @@ static char *real_png_term_line (char *term_line,
     char size_string[16];
 
     *font_string = *size_string = *ad_hoc_fontspec = '\0';
+
+    /* Note: @specfont will be non-NULL only if we're coming
+       from the GUI with a GPT_SPEC struct in hand.
+    */
 
     write_png_font_string(font_string, ad_hoc_fontspec,
                           ptype, specfont, scale);
