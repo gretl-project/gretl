@@ -4726,14 +4726,13 @@ char *gretl_get_gdt_description (const char *fname, int *err)
 {
     xmlDocPtr doc;
     xmlNodePtr cur;
-    int found = 0;
     xmlChar *buf = NULL;
 
     gretl_error_clear();
 
-    if (has_suffix(fname, ".gdtb")) {
-	gretl_errmsg_set("Binary data file, cannot access description");
-	*err = E_DATA;
+    if (!has_suffix(fname, ".gdt")) {
+	gretl_errmsg_set("gretl_get_gdt_description() is only for gdt files");
+	*err = E_INVARG;
 	return NULL;
     }
 
@@ -4743,15 +4742,15 @@ char *gretl_get_gdt_description (const char *fname, int *err)
     }
 
     cur = cur->xmlChildrenNode;
-    while (cur != NULL && !found) {
+    while (cur != NULL) {
         if (!xmlStrcmp(cur->name, (XUC) "description")) {
 	    buf = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-	    found = 1;
+	    break;
         }
 	cur = cur->next;
     }
 
-    if (!found) {
+    if (buf == NULL) {
 	gretl_errmsg_set("No description was found");
 	*err = E_DATA;
     }
