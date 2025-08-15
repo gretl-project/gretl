@@ -14311,19 +14311,18 @@ gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m,
     gretl_matrix *D = NULL;
     gretl_matrix *V = NULL;
 
-    if (gretl_is_null_matrix(m) || dfc < 0 || dfc >= m->rows) {
+    if (gretl_is_null_matrix(m) || dfc < 0) {
         *err = E_INVARG;
-        return NULL;
-    }
-
-    if (m->rows < 2) {
+    } else if (m->rows < 2 || dfc >= m->rows) {
         *err = E_TOOFEW;
-        return NULL;
+    } else {
+        D = gretl_matrix_copy(m);
+        if (D == NULL) {
+            *err = E_ALLOC;
+        }
     }
 
-    D = gretl_matrix_copy(m);
-    if (D == NULL) {
-        *err = E_ALLOC;
+    if (*err) {
         return NULL;
     }
 
