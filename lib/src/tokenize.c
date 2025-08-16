@@ -1053,7 +1053,13 @@ static char *merge_option_toks_l_to_r (CMD *c, int k1)
 	}
     }
 
-    return fuse_tokens(c, k1, k2, n);
+    if (k2 == k1) {
+        /* no need to fuse */
+        mark_token_done(c->toks[k1]);
+        return gretl_strdup(c->toks[k1].s);
+    } else {
+        return fuse_tokens(c, k1, k2, n);
+    }
 }
 
 /* Merge tokens from position k1 rightward, stopping at the

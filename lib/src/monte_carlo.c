@@ -2800,7 +2800,10 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
                 }
 	    } else if ((ci == IF || ci == ELIF) && compiled) {
                 cmd->ci = ci;
-                s->cmd->vstart = NULL;
+                if (s->cmd->vstart != NULL) {
+                    free(s->cmd->vstart);
+                    s->cmd->vstart = NULL;
+                }
                 flow_control(s, dset, &ll->ptr);
                 if (cmd->err) {
                     /* we hit an error evaluating the if state */
