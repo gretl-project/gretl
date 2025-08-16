@@ -1086,7 +1086,8 @@ void stored_options_cleanup (void)
     int i;
 
 #if OPTDEBUG
-    fprintf(stderr, "stored_options_cleanup\n");
+    fprintf(stderr, "stored_options_cleanup (n_stored = %d)\n",
+            n_stored_opts);
 #endif
 
     for (i=0; i<n_stored_opts; i++) {
@@ -1128,7 +1129,7 @@ static stored_opt *matching_stored_opt (int ci, gretlopt opt)
     int i, fd = gretl_function_depth();
 
 #if OPTDEBUG
-    fprintf(stderr, "matching_stored_opt? ci=%d, fd=%d, opt=%d, n_stored=%d\n",
+    fprintf(stderr, "matching_stored_opt? ci=%d, fd=%d, opt=%d (n_stored=%d)\n",
             ci, fd, opt, n_stored_opts);
 #endif
 
@@ -1139,6 +1140,10 @@ static stored_opt *matching_stored_opt (int ci, gretlopt opt)
             return so;
         }
     }
+
+#if OPTDEBUG
+    fprintf(stderr, " no match found\n");
+#endif
 
     return NULL;
 }

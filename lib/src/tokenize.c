@@ -1219,8 +1219,9 @@ static int handle_option_value (CMD *c, int i, gretlopt opt,
 	}
 
 #if CDEBUG > 1
-	fprintf(stderr, "option '--%s': param='%s'\n", tok->s,
-		(val == NULL)? "NULL" : val);
+	fprintf(stderr, "%s: option '--%s': param='%s'\n",
+                gretl_command_word(c->ci), tok->s,
+                (val == NULL)? "NULL" : val);
 #endif
 
 	if (val != NULL) {

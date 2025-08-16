@@ -560,6 +560,8 @@ int gretl_gridplot_from_array (const char *param, gretlopt opt)
         err = output_multiplot_script(a, m, np, maxp, title);
     }
 
+    clear_stored_options_for_command(GRIDPLOT);
+
     return err;
 }
 
