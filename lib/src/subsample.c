@@ -82,6 +82,8 @@ static DATASET *peerset;
 static int smpl_get_int (const char *s, DATASET *dset,
                          int relative, int *err);
 
+static int probably_year (const char *s, DATASET *dset);
+
 /* accessors for full dataset, when sub-sampled */
 
 DATASET *fetch_full_dataset (void)
@@ -2692,7 +2694,11 @@ static int smpl_get_int (const char *s, DATASET *dset,
     if (integer_string(s)) {
         double k0 = dset->sd0;
 
-        if (!relative && k0 > 1.0 && k0 == floor(k0)) {
+        if (annual_data(dset) && !probably_year(s, dset)) {
+            k = atoi(s);
+        } else if (dated_daily_data(dset)) {
+            k = atoi(s);
+        } else if (!relative && k0 > 1.0 && k0 == floor(k0)) {
             /* allow for a starting obs such as 250 */
             k = atoi(s) - (int) k0 + 1;
         } else {
@@ -2845,7 +2851,7 @@ static int get_sample_limit (const char *s, DATASET *dset,
 /* Catch the case where we're in a function and attempting to
    move t1 or t2 out of the range established on entry to the
    function: we don't want to carry forward any error message
-   that implies t was out of the full data range.
+   that implies @t was out of the full data range.
 */
 
 static void maybe_clear_range_error (int t, DATASET *dset)
@@ -2853,6 +2859,41 @@ static void maybe_clear_range_error (int t, DATASET *dset)
     if (t >= 0 && t < dset->n) {
 	gretl_error_clear();
     }
+}
+
+static int out_of_bounds_check (int *t, int which,
+                                const char *s, DATASET *dset,
+                                int tmin, int tmax)
+{
+    int err = 0;
+
+    if (*t < tmin || *t > tmax) {
+        /* Prima facie there's an error, but could we be
+           wrong about that? Probably only if @s is an
+           integer string and we over-interpreted it. So
+           try reading @s as a simple 1-based index.
+        */
+        err = E_INVARG;
+        if (integer_string(s)) {
+            int k = atoi(s) - 1;
+
+            if (k >= tmin && k <= tmax) {
+                *t = k;
+                err = 0;
+            }
+        }
+    }
+
+    if (err) {
+        maybe_clear_range_error(*t, dset);
+        if (which == SMPL_T2) {
+            gretl_errmsg_set(_("error in new ending obs"));
+        } else {
+            gretl_errmsg_set(_("error in new starting obs"));
+        }
+    }
+
+    return err;
 }
 
 /**
@@ -2878,9 +2919,10 @@ int set_sample (const char *start,
 		gretlopt opt)
 {
     gretlopt opt_in = opt;
-    int nf, new_t1 = dset->t1, new_t2 = dset->t2;
+    int new_t1 = dset->t1;
+    int new_t2 = dset->t2;
     int tmin = 0, tmax = 0;
-    int err = 0;
+    int nf, err = 0;
 
     if (dset == NULL) {
 	return E_NODATA;
@@ -2920,7 +2962,7 @@ int set_sample (const char *start,
     sample_range_get_extrema(dset, &tmin, &tmax);
 
 #if SUBDEBUG
-    fprintf(stderr, "sample extrema: lo = %d, hi = %d\n", tmin, tmax);
+    fprintf(stderr, "sample extrema: tmin = %d, tmax = %d\n", tmin, tmax);
 #endif
 
     if (nf == 1) {
@@ -2929,35 +2971,21 @@ int set_sample (const char *start,
 	    return E_ARGS;
 	}
 	new_t1 = get_sample_limit(start, dset, SMPL_T1, opt);
-	if (new_t1 < tmin || new_t1 > tmax) {
-	    maybe_clear_range_error(new_t1, dset);
-	    gretl_errmsg_set(_("error in new starting obs"));
-	    return E_INVARG;
-	}
+        err = out_of_bounds_check(&new_t1, SMPL_T1, start, dset, tmin, tmax);
 	goto finish;
     }
 
     /* now we're looking at the 2 fields case */
-
     if (strcmp(start, ";")) {
 	new_t1 = get_sample_limit(start, dset, SMPL_T1, opt);
-	if (new_t1 < tmin || new_t1 > tmax) {
-	    maybe_clear_range_error(new_t1, dset);
-	    gretl_errmsg_set(_("error in new starting obs"));
-	    err = E_DATA;
-	}
+        err = out_of_bounds_check(&new_t1, SMPL_T1, start, dset, tmin, tmax);
     }
-
     if (!err && strcmp(stop, ";")) {
 	new_t2 = get_sample_limit(stop, dset, SMPL_T2, opt);
-	if (new_t2 < tmin || new_t2 > tmax) {
-	    maybe_clear_range_error(new_t2, dset);
-	    gretl_errmsg_set(_("error in new ending obs"));
-	    err = E_DATA;
-	}
+        err = out_of_bounds_check(&new_t2, SMPL_T2, stop, dset, tmin, tmax);
     }
 
-    if (!err && (new_t1 < tmin || new_t1 > new_t2)) {
+    if (!err && new_t1 > new_t2) {
 	gretl_error_clear();
 	gretl_errmsg_set(_("Invalid null sample"));
 	err = E_DATA;
