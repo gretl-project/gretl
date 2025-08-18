@@ -1134,7 +1134,7 @@ static int gen_type_from_gretl_type (GretlType t)
         }
     }
 
-    if (t == GRETL_TYPE_INT) {
+    if (gretl_is_scalar_type(t)) {
         return NUM;
     }
 
@@ -5999,7 +5999,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
                 if (t == NUM) {
                     ret = aux_scalar_node(p);
                     if (!p->err) {
-                        ret->v.xval = *(double *) val;
+                        ret->v.xval = gretl_bundle_get_scalar(l->v.b, key, NULL);
                     }
                 } else {
                     ret = get_aux_node(p, t, 0, tmp ? TMP_NODE : 0);
@@ -11587,10 +11587,8 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
         ret = get_aux_node(p, gen_t, 0, 0);
     }
 
-    if (type == GRETL_TYPE_INT) {
-        ret->v.xval = *(int *) val;
-    } else if (type == GRETL_TYPE_DOUBLE) {
-        ret->v.xval = *(double *) val;
+    if (gretl_is_scalar_type(type)) {
+        ret->v.xval = gretl_bundle_get_scalar(l->v.b, key, NULL);
     } else if (type == GRETL_TYPE_STRING) {
         ret->v.str = (char *) val;
     } else if (type == GRETL_TYPE_MATRIX) {
@@ -20400,11 +20398,10 @@ static int overwrite_const_check (const char *name, int vnum)
     }
 }
 
-/* Check that we're not trying to modify a const object
-   via a compound LHS expression; and while we're at
-   it, check whether we should be generating a list
-   (a list member of a bundle or an element of an array
-   of lists).
+/* Check that we're not trying to modify a const object via a compound
+   LHS expression; and while we're at it, check whether we should be
+   generating a list (a list member of a bundle or an element of an
+   array of lists).
 */
 
 static int compound_const_check (NODE *lhs, parser *p)

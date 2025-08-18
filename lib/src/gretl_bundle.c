@@ -505,15 +505,7 @@ static void *real_bundle_get_data (gretl_bundle *bundle,
         if (p != NULL) {
             bundled_item *item = p;
 
-            if (item->type == GRETL_TYPE_INT) {
-                /* remedial action needed? */
-                static double d;
-
-                d = (double) *(int *) item->data;
-                ret = &d;
-            } else {
-                ret = item->data;
-            }
+            ret = item->data;
             if (type != NULL) {
                 *type = item->type;
             }
@@ -969,17 +961,15 @@ double gretl_bundle_get_scalar (gretl_bundle *bundle,
 
     if (ptr != NULL && !myerr) {
         if (type == GRETL_TYPE_DOUBLE) {
-            double *px = (double *) ptr;
-
-            x = *px;
+            x = *(double *) ptr;
         } else if (type == GRETL_TYPE_INT) {
-            int *pi = (int *) ptr;
+            int k = *(int *) ptr;
 
-            x = (double) *pi;
+            x = (double) k;
         } else if (type == GRETL_TYPE_UNSIGNED) {
-            guint32 *pu = (guint32 *) ptr;
+            guint32 u = *(guint32 *) ptr;
 
-            x = (double) *pu;
+            x = (double) u;
         } else {
             /* must be a matrix */
             gretl_matrix *m = ptr;
