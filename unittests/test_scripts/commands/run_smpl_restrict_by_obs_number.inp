@@ -1,0 +1,12 @@
+set verbose off
+clear
+set assert stop
+
+set verbose off
+open longley --quiet
+catch smpl 5 10
+
+assert($error == FALSE)
+
+print "Successfully finished tests."
+quit
