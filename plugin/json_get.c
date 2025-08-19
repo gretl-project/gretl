@@ -406,7 +406,7 @@ char *json_get_string (const char *data, const char *path,
 struct jbundle_ {
     gretl_bundle *b0;
     gretl_bundle *bcurr;
-    gretl_bundle *tmap;
+    gretl_array *strvars;
     gchar ***a;
     int nlev;
     int level;
@@ -1139,16 +1139,15 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
 
 static void bundle_set_missing (jbundle *jb, const gchar *key)
 {
-    if (jb->tmap != NULL) {
-        int isnum = gretl_bundle_get_int(jb->tmap, key, NULL);
-
-        if (isnum) {
-            gretl_bundle_set_scalar(jb->bcurr, key, NADBL);
+    if (jb->strvars != NULL) {
+        if (gretl_strings_array_includes(jb->strvars, key)) {
+            gretl_bundle_set_string(jb->bcurr, key, "");
             return;
         }
     }
 
-    gretl_bundle_set_string(jb->bcurr, key, "");
+    /* default; treat as numeric NA */
+    gretl_bundle_set_scalar(jb->bcurr, key, NADBL);
 }
 
 /* Process a JSON value node: in this context we convert all array
@@ -1248,7 +1247,7 @@ static void maybe_enable_gretl_objects (JsonReader *reader)
   @data: JSON buffer.
   @path: array of strings identifying JSON objects to include,
   or NULL to retrieve all.
-  @tmap: <TO BE WRITTEN>
+  @strvars: array of names fo string-values variables.
   @err: location to receive error code.
 
   On success, returns an allocated gretl_bundle whose
@@ -1257,7 +1256,7 @@ static void maybe_enable_gretl_objects (JsonReader *reader)
 
 gretl_bundle *json_get_bundle (const char *data,
 			       const char *path,
-                               gretl_bundle *tmap,
+                               gretl_array *strvars,
 			       int *err)
 {
     gretl_bundle *ret = NULL;
@@ -1290,7 +1289,7 @@ gretl_bundle *json_get_bundle (const char *data,
 	}
     }
 
-    jb.tmap = tmap;
+    jb.strvars = strvars;
     jb.bcurr = jb.b0 = gretl_bundle_new();
 
     reader = json_reader_new(root);

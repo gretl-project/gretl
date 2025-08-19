@@ -8804,7 +8804,7 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 
         if (f == F_JSONGETB) {
             /* more checks are done below */
-            if (!null_node(x) && x->t != BUNDLE) {
+            if (!null_node(x) && x->t != ARRAY) {
                 p->err = E_TYPES;
             }
         } else if (f == F_XMLGET && r->t == ARRAY) {
@@ -8882,15 +8882,15 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
             }
         } else if (f == F_JSONGETB) {
             gretl_bundle *(*jfunc) (const char *, const char *,
-                                    gretl_bundle *, int *);
+                                    gretl_array *, int *);
             const char *path = null_node(r) ? NULL: r->v.str;
-            gretl_bundle *map = null_node(x) ? NULL : x->v.b;
+            gretl_array *strvars = null_node(x) ? NULL : x->v.a;
 
             jfunc = get_plugin_function("json_get_bundle");
             if (jfunc == NULL) {
                 p->err = E_FOPEN;
             } else {
-                ret->v.b = jfunc(l->v.str, path, map, &p->err);
+                ret->v.b = jfunc(l->v.str, path, strvars, &p->err);
             }
         } else if (f == F_XMLGET) {
             char *(*xfunc) (const char *, void *, GretlType,

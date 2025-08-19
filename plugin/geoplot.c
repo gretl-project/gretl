@@ -279,7 +279,7 @@ static gretl_array *geojson_get_features (const char *fname,
 					  int *err)
 {
     gretl_bundle *(*jfunc) (const char *, const char *,
-                            gretl_bundle *, int *);
+                            gretl_array *, int *);
     gretl_array *a = NULL;
     GError *gerr = NULL;
     gchar *JSON = NULL;
@@ -1047,7 +1047,7 @@ static int geojson_to_csv (const char *fname,
 	err = E_DATA;
     } else {
 	gretl_bundle *(*jfunc) (const char *, const char *,
-                                gretl_bundle *, int *);
+                                gretl_array *, int *);
 	FILE *fp = NULL;
 	void *ptr = NULL;
 	GretlType type;

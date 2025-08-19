@@ -2989,7 +2989,7 @@ static gretl_bundle *read_json_bundle (const char *fname,
                                        int *err)
 {
     gretl_bundle *(*jfunc) (const char *, const char *,
-                            gretl_bundle *, int *);
+                            gretl_array *, int *);
     gretl_bundle *b = NULL;
     GError *gerr = NULL;
     gchar *JSON = NULL;
