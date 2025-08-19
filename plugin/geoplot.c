@@ -278,7 +278,8 @@ static gretl_array *geojson_get_features (const char *fname,
 					  int *non_standard,
 					  int *err)
 {
-    gretl_bundle *(*jfunc) (const char *, const char *, int *);
+    gretl_bundle *(*jfunc) (const char *, const char *,
+                            gretl_bundle *, int *);
     gretl_array *a = NULL;
     GError *gerr = NULL;
     gchar *JSON = NULL;
@@ -296,7 +297,7 @@ static gretl_array *geojson_get_features (const char *fname,
 	if (jfunc == NULL) {
 	    *err = E_FOPEN;
 	} else {
-	    b = jfunc(JSON, NULL, err);
+	    b = jfunc(JSON, NULL, NULL, err);
 	    if (!*err) {
 		a = gretl_bundle_steal_data(b, "features", &type, NULL, err);
 	    }
@@ -1045,7 +1046,8 @@ static int geojson_to_csv (const char *fname,
 	}
 	err = E_DATA;
     } else {
-	gretl_bundle *(*jfunc) (const char *, const char *, int *);
+	gretl_bundle *(*jfunc) (const char *, const char *,
+                                gretl_bundle *, int *);
 	FILE *fp = NULL;
 	void *ptr = NULL;
 	GretlType type;
@@ -1068,7 +1070,7 @@ static int geojson_to_csv (const char *fname,
 #if GEODEBUG
 	fprintf(stderr, " calling json_get_bundle()\n");
 #endif
-	jb = jfunc(JSON, NULL, &err);
+	jb = jfunc(JSON, NULL, NULL, &err);
 	if (!err) {
 	    features = gretl_bundle_get_array(jb, "features", &err);
 	    if (err) {

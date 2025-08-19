@@ -2988,7 +2988,8 @@ gchar *gretl_bundle_write_to_json_buffer (gretl_bundle *b,
 static gretl_bundle *read_json_bundle (const char *fname,
                                        int *err)
 {
-    gretl_bundle *(*jfunc) (const char *, const char *, int *);
+    gretl_bundle *(*jfunc) (const char *, const char *,
+                            gretl_bundle *, int *);
     gretl_bundle *b = NULL;
     GError *gerr = NULL;
     gchar *JSON = NULL;
@@ -3002,7 +3003,7 @@ static gretl_bundle *read_json_bundle (const char *fname,
         if (jfunc == NULL) {
             *err = E_FOPEN;
         } else {
-            b = jfunc(JSON, NULL, err);
+            b = jfunc(JSON, NULL, NULL, err);
         }
         g_free(JSON);
     } else if (gerr != NULL) {

@@ -1248,6 +1248,7 @@ static void maybe_enable_gretl_objects (JsonReader *reader)
   @data: JSON buffer.
   @path: array of strings identifying JSON objects to include,
   or NULL to retrieve all.
+  @tmap: <TO BE WRITTEN>
   @err: location to receive error code.
 
   On success, returns an allocated gretl_bundle whose
