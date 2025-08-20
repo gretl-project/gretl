@@ -691,6 +691,15 @@ static gboolean update_return (GtkComboBox *combo,
     return FALSE;
 }
 
+static gboolean update_return_2 (GtkWidget *entry,
+                                 call_info *cinfo)
+{
+    g_free(cinfo->ret);
+    cinfo->ret = entry_box_get_trimmed_text(entry);
+
+    return FALSE;
+}
+
 /* simple heuristic for whether or not a series probably
    represents a stochastic variable
 */
@@ -2123,24 +2132,32 @@ static int function_call_dialog (call_info *cinfo)
 			     tcols, ++row, 5);
 	}
 
-	label = gtk_label_new(_("selection (or new variable)"));
-	add_table_cell(tbl, label, 1, 2, ++row);
+        if (0) {
+            label = gtk_label_new(_("selection (or new variable)"));
+            add_table_cell(tbl, label, 1, 2, ++row);
+        }
 
 	label = gtk_label_new(gretl_type_get_name(cinfo->rettype));
 	gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
 	add_table_cell(tbl, label, 0, 1, ++row);
 
-	sel = combo_box_text_new_with_entry();
-	g_signal_connect(G_OBJECT(sel), "changed",
-			 G_CALLBACK(update_return), cinfo);
-	if (auto_sel) {
+        if (auto_sel) {
+            sel = combo_box_text_new_with_entry();
+            g_signal_connect(G_OBJECT(sel), "changed",
+                             G_CALLBACK(update_return), cinfo);
 	    /* prepend automatic list name */
 	    combo_box_prepend_text(sel, auto_listname());
-	}
-	/* prepend empty option */
-	combo_box_prepend_text(sel, "");
-	gtk_combo_box_set_active(GTK_COMBO_BOX(sel), auto_sel);
-	cinfo->rentry = gtk_bin_get_child(GTK_BIN(sel));
+            /* prepend empty option */
+            combo_box_prepend_text(sel, "");
+            gtk_combo_box_set_active(GTK_COMBO_BOX(sel), TRUE);
+            cinfo->rentry = gtk_bin_get_child(GTK_BIN(sel));
+	} else {
+            cinfo->rentry = sel = gtk_entry_new();
+            gtk_entry_set_max_length(GTK_ENTRY(sel), VNAMELEN-1);
+            gtk_entry_set_width_chars(GTK_ENTRY(sel), VNAMELEN+3);
+            g_signal_connect(cinfo->rentry, "changed",
+                             G_CALLBACK(update_return_2), cinfo);
+        }
 	gtk_entry_set_activates_default(GTK_ENTRY(cinfo->rentry), TRUE);
 	add_table_cell(tbl, sel, 1, 2, row); /* same row as above */
     }
