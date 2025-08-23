@@ -78,6 +78,14 @@ enum {
 
 #define gui_help(r) (r == GUI_HELP || r == GUI_HELP_EN)
 #define function_help(r) (r == FUNC_HELP || r == FUNC_HELP_EN)
+
+#define gretl_script_role(r) (r == EDIT_HANSL || \
+			      r == VIEW_SCRIPT || \
+			      r == EDIT_PKG_CODE || \
+			      r == EDIT_PKG_SAMPLE || \
+			      r == VIEW_PKG_SAMPLE || \
+                              r == VIEW_PKG_CODE)
+
 #define foreign_script_role(r) (r == EDIT_GP || \
 				r == EDIT_R || \
 				r == EDIT_OX || \
@@ -87,6 +95,7 @@ enum {
 				r == EDIT_JULIA || \
 				r == EDIT_DYNARE || \
 				r == EDIT_LPSOLVE)
+
 #define medium_markup(r) (r == VIEW_PKG_INFO || \
 			  r == EDIT_PKG_HELP || \
 			  r == EDIT_PKG_GHLP)
@@ -1129,12 +1138,28 @@ void set_style_for_textview (GtkWidget *text, const char *id)
     }
 }
 
-#define gretl_script_role(r) (r == EDIT_HANSL || \
-			      r == VIEW_SCRIPT || \
-			      r == EDIT_PKG_CODE || \
-			      r == EDIT_PKG_SAMPLE || \
-			      r == VIEW_PKG_SAMPLE || \
-                              r == VIEW_PKG_CODE)
+static void sourceview_attach_handlers (GtkWidget *text,
+                                        windata_t *vwin)
+{
+    if (gretl_script_role(vwin->role)) {
+	g_signal_connect(G_OBJECT(text), "key-press-event",
+			 G_CALLBACK(script_key_handler), vwin);
+	g_signal_connect(G_OBJECT(text), "button-press-event",
+			 G_CALLBACK(script_popup_handler),
+			 vwin);
+	g_signal_connect(G_OBJECT(text), "button-release-event",
+			 G_CALLBACK(interactive_script_help), vwin);
+    } else if (foreign_script_role(vwin->role)) {
+	g_signal_connect(G_OBJECT(text), "key-press-event",
+			 G_CALLBACK(foreign_script_key_handler), vwin);
+	g_signal_connect(G_OBJECT(text), "button-press-event",
+			 G_CALLBACK(script_popup_handler),
+			 vwin);
+    } else if (vwin->role == VIEW_LOG) {
+	g_signal_connect(G_OBJECT(text), "button-release-event",
+			 G_CALLBACK(interactive_script_help), vwin);
+    }
+}
 
 void create_source (windata_t *vwin, int hsize, int vsize,
 		    gboolean editable)
@@ -1222,24 +1247,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 			 G_CALLBACK(catch_viewer_key), vwin);
     }
 
-    if (gretl_script_role(vwin->role)) {
-	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
-			 G_CALLBACK(script_key_handler), vwin);
-	g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
-			 G_CALLBACK(script_popup_handler),
-			 vwin);
-	g_signal_connect(G_OBJECT(vwin->text), "button-release-event",
-			 G_CALLBACK(interactive_script_help), vwin);
-    } else if (foreign_script_role(vwin->role)) {
-	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
-			 G_CALLBACK(foreign_script_key_handler), vwin);
-	g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
-			 G_CALLBACK(script_popup_handler),
-			 vwin);
-    } else if (vwin->role == VIEW_LOG) {
-	g_signal_connect(G_OBJECT(vwin->text), "button-release-event",
-			 G_CALLBACK(interactive_script_help), vwin);
-    }
+    sourceview_attach_handlers(vwin->text, vwin);
 
     if (editing_hansl(vwin->role)) {
 	connect_link_signals(vwin);
@@ -3865,14 +3873,14 @@ static int maybe_insert_smart_tab (windata_t *vwin, int *comp_ok)
 
 #ifdef HAVE_GTKSV_COMPLETION
 
-/* Is the insertion point directly preceded by at least two
-   non-space characters? If so we have a possible candidate for
-   completion via gtksourceview. We come here only if "smart
-   tab" is not in force; otherwise this check is rolled into
-   the check for inserting a smart tab.
+/* Is the insertion point directly preceded by at least two non-space
+   characters? If so we have a possible candidate for completion via
+   gtksourceview. We come here only if "smart tab" is not in force;
+   otherwise this check is rolled into the check for inserting a smart
+   tab.
 
-   This function is public because it's called from console.c
-   as well as internally.
+   This function is public because it's called from console.c as well as
+   internally.
 */
 
 int maybe_try_completion (windata_t *vwin)
@@ -3926,9 +3934,8 @@ static char rightchar (guint k)
 	k == GDK_bracketleft ? ']' : '}';
 }
 
-/* Is the insertion point at the end of a line? If so, we'll
-   auto-insert a matching right bracket and move the cursor
-   back before it.
+/* Is the insertion point at the end of a line? If so, we'll auto-insert
+   a matching right bracket and move the cursor back before it.
 */
 
 static int maybe_insert_auto_bracket (windata_t *vwin,
@@ -3976,11 +3983,11 @@ static int maybe_insert_auto_bracket (windata_t *vwin,
     return ret;
 }
 
-/* On "Enter" in script editing, try to compute the correct indent
-   level for the current line, and make an adjustment if it's not
-   already right. We also attempt to place the cursor at the
-   appropriate indent on the next, new line -- unless @alt is
-   non-zero, in which case we don't insert a newline.
+/* On "Enter" in script editing, try to compute the correct indent level
+   for the current line, and make an adjustment if it's not already
+   right. We also attempt to place the cursor at the appropriate indent
+   on the next, new line -- unless @alt is non-zero, in which case we
+   don't insert a newline.
 */
 
 static gboolean script_electric_enter (windata_t *vwin, int alt)
@@ -4094,9 +4101,9 @@ static gboolean script_electric_enter (windata_t *vwin, int alt)
     return ret;
 }
 
-/* Handler for the Tab key when editing a gretl script: we
-   may want to insert a "smart tab", or take Tab as a
-   request for gtksourceview completion.
+/* Handler for the Tab key when editing a gretl script: we may want to
+   insert a "smart tab", or take Tab as a request for gtksourceview
+   completion.
 */
 
 #ifdef HAVE_GTKSV_COMPLETION
@@ -4120,6 +4127,7 @@ static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
 	int *ptr = ucomp ? &comp_ok : NULL;
 
 	if (maybe_insert_smart_tab(vwin, ptr)) {
+            fprintf(stderr, "HERE 2 insert_smart_tab\n");
 	    return TRUE;
 	} else if (comp_ok) {
 	    call_user_completion(vwin->text);
@@ -5165,7 +5173,8 @@ void text_table_setup (GtkWidget *vbox, GtkWidget *w)
 }
 
 static void set_pane_text_properties (GtkWidget *w2,
-				      GtkWidget *w1)
+				      GtkWidget *w1,
+                                      windata_t *vwin)
 {
     GtkTextView *tv2 = GTK_TEXT_VIEW(w2);
     GtkTextView *tv1 = GTK_TEXT_VIEW(w1);
@@ -5184,6 +5193,7 @@ static void set_pane_text_properties (GtkWidget *w2,
     if (GTK_IS_SOURCE_VIEW(w2)) {
 	s = gtk_source_view_get_show_line_numbers(GTK_SOURCE_VIEW(w1));
 	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(w2), s);
+        sourceview_attach_handlers(w2, vwin);
     }
 }
 
@@ -5201,6 +5211,7 @@ void viewer_split_pane (windata_t *vwin, int vertical)
     vmain = vwin_toplevel(vwin);
     gtk_window_get_size(GTK_WINDOW(vmain), &width, &height);
 
+    /* extract the original scrolled window */
     sw = g_object_get_data(G_OBJECT(vbox), "sw");
     g_object_ref(sw);
     gtk_container_remove(GTK_CONTAINER(vwin->vbox), sw);
@@ -5225,7 +5236,7 @@ void viewer_split_pane (windata_t *vwin, int vertical)
 	view2 = gtk_text_view_new_with_buffer(tbuf);
     }
 
-    set_pane_text_properties(view2, view1);
+    set_pane_text_properties(view2, view1, vwin);
 
     g_signal_connect(G_OBJECT(view2), "button-press-event",
 		     G_CALLBACK(text_popup_handler), vwin);

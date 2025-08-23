@@ -95,8 +95,8 @@ static void destroy_completion_providers (GtkWidget *w, gpointer p)
 static gchar const **func_names;
 static int n_func_names;
 
-/* Create an array of function names for use with
-   the functions completion provider */
+/* Create an array of function names for use with the functions
+   completion provider */
 
 static void make_function_names_array (void)
 {
@@ -127,8 +127,8 @@ static void make_function_names_array (void)
 #endif
 }
 
-/* Create a GtkTextBuffer holding the names of gretl
-   commands to serve as a completion provider.
+/* Create a GtkTextBuffer holding the names of gretl commands to serve
+   as a completion provider.
 */
 
 static GtkTextBuffer *command_names_buffer (void)
@@ -153,8 +153,8 @@ static GtkTextBuffer *command_names_buffer (void)
     return tbuf;
 }
 
-/* Apparatus for providing "snippets" which may consist of
-   several "words", and other gretl-specific material.
+/* Apparatus for providing "snippets" which may consist of several
+   "words", and other gretl-specific material.
 */
 
 typedef struct _GretlProvider GretlProvider;
@@ -278,9 +278,9 @@ static int snippet_proposal_get_cursor_offset (const gchar *s)
     }
 }
 
-/* Back up over the trigger for completion; insert the replacement
-   text; then back the cursor up to the point where the user will
-   first have to add something to the boilerplate.
+/* Back up over the trigger for completion; insert the replacement text;
+   then back the cursor up to the point where the user will first have
+   to add something to the boilerplate.
 */
 
 static gboolean
