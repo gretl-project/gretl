@@ -6845,7 +6845,7 @@ void add_system_resid (GtkAction *action, gpointer p)
 
     j++;
 
-    if (ci == VAR || ci == VECM) {
+    if (ci == VAR) {
         sprintf(vname, "uhat%d", j);
         descrip = g_strdup_printf(_("residual from VAR system, equation %d"), j);
     } else if (ci == VECM) {
