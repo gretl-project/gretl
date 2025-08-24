@@ -28,7 +28,7 @@ enum completion_modes {
 extern int hansl_completion;
 extern int console_completion;
 
-void set_sv_completion (windata_t *vwin);
+void set_sv_completion (GtkWidget *w, int role);
 
 void call_user_completion (GtkWidget *w);
 

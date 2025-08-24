@@ -649,7 +649,6 @@ static void notify_populate (GtkSourceCompletion *comp,
 
 static void add_gretl_provider (GtkSourceCompletion *comp,
 				gint id, gint priority,
-				windata_t *vwin,
 				prov_info *pi)
 {
     GretlProvider *gp;
@@ -670,8 +669,7 @@ static void add_gretl_provider (GtkSourceCompletion *comp,
 
 static void add_words_provider (GtkSourceCompletion *comp,
 				gint8 id, gint priority,
-				windata_t *vwin,
-				prov_info *pi)
+				GtkWidget *w, prov_info *pi)
 {
     const char *name = prov_names[id];
     GtkSourceCompletionWords *cw;
@@ -685,25 +683,25 @@ static void add_words_provider (GtkSourceCompletion *comp,
 	buf = pi[id].buf = command_names_buffer();
     } else {
 	/* plain PROV_WORDS */
-	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
     }
     gtk_source_completion_words_register(cw, buf);
     gtk_source_completion_add_provider(comp,
 				       GTK_SOURCE_COMPLETION_PROVIDER(cw),
 				       NULL);
-    g_object_set_data(G_OBJECT(vwin->text), name, cw);
+    g_object_set_data(G_OBJECT(w), name, cw);
     g_object_unref(cw);
 }
 
-void set_sv_completion (windata_t *vwin)
+void set_sv_completion (GtkWidget *text, int role)
 {
     GtkSourceCompletion *comp;
     prov_info *pi = NULL;
     int compval;
 
-    comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
-    pi = g_object_get_data(G_OBJECT(vwin->text), "prov_info");
-    compval = (vwin->role == CONSOLE)? console_completion :
+    comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(text));
+    pi = g_object_get_data(G_OBJECT(text), "prov_info");
+    compval = (role == CONSOLE)? console_completion :
 	hansl_completion;
 
 #if AC_DEBUG
@@ -717,28 +715,28 @@ void set_sv_completion (windata_t *vwin)
 	g_object_set(G_OBJECT(comp), "accelerators", 10,
 		     "remember-info-visibility", TRUE, NULL);
 	pi = prov_info_new();
-	g_object_set_data(G_OBJECT(vwin->text), "prov_info", pi);
-	if (vwin->role == CONSOLE) {
-	    add_words_provider(comp, PROV_CMDS,   4, vwin, pi);
-	    add_gretl_provider(comp, PROV_SERIES, 3, vwin, pi);
-	    add_gretl_provider(comp, PROV_FUNCS,  2, vwin, pi);
-	    add_words_provider(comp, PROV_WORDS,  1, vwin, pi);
+	g_object_set_data(G_OBJECT(text), "prov_info", pi);
+	if (role == CONSOLE) {
+	    add_words_provider(comp, PROV_CMDS,   4, text, pi);
+	    add_gretl_provider(comp, PROV_SERIES, 3, pi);
+	    add_gretl_provider(comp, PROV_FUNCS,  2, pi);
+	    add_words_provider(comp, PROV_WORDS,  1, text, pi);
 	} else {
 	    /* context is script editor */
 #ifdef GRETL_EDIT
-	    add_gretl_provider(comp, PROV_SNIPPETS, 4, vwin, pi);
-	    add_words_provider(comp, PROV_CMDS,     3, vwin, pi);
-	    add_gretl_provider(comp, PROV_FUNCS,    2, vwin, pi);
-	    add_words_provider(comp, PROV_WORDS,    1, vwin, pi);
+	    add_gretl_provider(comp, PROV_SNIPPETS, 4, pi);
+	    add_words_provider(comp, PROV_CMDS,     3, text, pi);
+	    add_gretl_provider(comp, PROV_FUNCS,    2, pi);
+	    add_words_provider(comp, PROV_WORDS,    1, text, pi);
 #else
-	    add_gretl_provider(comp, PROV_SNIPPETS, 5, vwin, pi);
-	    add_words_provider(comp, PROV_CMDS,     4, vwin, pi);
-	    add_gretl_provider(comp, PROV_FUNCS,    3, vwin, pi);
-	    add_gretl_provider(comp, PROV_SERIES,   2, vwin, pi);
-	    add_words_provider(comp, PROV_WORDS,    1, vwin, pi);
+	    add_gretl_provider(comp, PROV_SNIPPETS, 5, pi);
+	    add_words_provider(comp, PROV_CMDS,     4, text, pi);
+	    add_gretl_provider(comp, PROV_FUNCS,    3, pi);
+	    add_gretl_provider(comp, PROV_SERIES,   2, pi);
+	    add_words_provider(comp, PROV_WORDS,    1, text, pi);
 #endif
 	}
-	g_signal_connect(G_OBJECT(vwin->text), "destroy",
+	g_signal_connect(G_OBJECT(text), "destroy",
 			 G_CALLBACK(destroy_completion_providers), NULL);
 #if AC_DEBUG
 	g_signal_connect(G_OBJECT(comp), "activate-proposal",

@@ -743,14 +743,14 @@ static gint console_key_handler (GtkWidget *cview,
 
 #ifdef HAVE_GTKSV_COMPLETION
     if (keyval == GDK_Tab && console_completion == COMPLETE_USER &&
-        maybe_try_completion(cvwin)) {
+        maybe_try_completion(cview, CONSOLE)) {
         call_user_completion(cview);
         return TRUE;
     }
 #endif
 
     if (script_auto_bracket && lbracket(keyval)) {
-        return script_bracket_handler(cvwin, keyval);
+        return script_bracket_handler(cview, keyval);
     }
 
     return FALSE;

@@ -109,16 +109,20 @@ int script_auto_bracket = 0;
 /* file-scope constant */
 static const char *hidden_marker = "hidden region\n";
 
-static gboolean script_electric_enter (windata_t *vwin, int alt);
-static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event);
-static gboolean
-script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p);
-static gboolean
-insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
-			 const char *s, int role);
+static gboolean script_electric_enter (GtkWidget *text, int alt);
+static gboolean script_tab_handler (GtkWidget *w,
+                                    GdkEvent *event,
+                                    int role);
+static gboolean script_popup_handler (GtkWidget *w,
+                                      GdkEventButton *event,
+                                      gpointer p);
+static gboolean insert_text_with_markup (GtkTextBuffer *tbuf,
+                                         GtkTextIter *iter,
+                                         const char *s,
+                                         int role);
 static void connect_link_signals (windata_t *vwin);
 static void auto_indent_script (GtkWidget *w, windata_t *vwin);
-static int maybe_insert_smart_tab (windata_t *vwin, int *comp_ok);
+static int maybe_insert_smart_tab (GtkWidget *w, int *comp_ok);
 #ifndef GRETL_EDIT
 static gchar *textview_get_current_line_with_newline (GtkWidget *view);
 #endif
@@ -934,14 +938,14 @@ static gint script_key_handler (GtkWidget *w,
 	ret = TRUE;
     } else if (editing_hansl(vwin->role)) {
 	if (keyval == GDK_Return) {
-	    ret = script_electric_enter(vwin, state & GDK_MOD1_MASK);
+	    ret = script_electric_enter(w, state & GDK_MOD1_MASK);
 	} else if (tabkey(keyval)) {
 #if TABDEBUG
 	    fprintf(stderr, "*** calling script_tab_handler ***\n");
 #endif
-	    ret = script_tab_handler(vwin, event);
+	    ret = script_tab_handler(w, event, vwin->role);
 	} else if (script_auto_bracket && lbracket(keyval)) {
-	    ret = script_bracket_handler(vwin, keyval);
+	    ret = script_bracket_handler(w, keyval);
 	}
     }
 
@@ -1195,7 +1199,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 
 #ifdef HAVE_GTKSV_COMPLETION
     if (editing_hansl(vwin->role) || vwin->role == CONSOLE) {
-	set_sv_completion(vwin);
+	set_sv_completion(vwin->text, vwin->role);
     }
 #endif
 
@@ -1237,11 +1241,9 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text),
 					      script_line_numbers);
     }
-
     if (lm != NULL) {
 	set_style_for_buffer(sbuf, get_sourceview_style(), vwin->role);
     }
-
     if (!(vwin->flags & WVIN_KEY_SIGNAL_SET)) {
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 			 G_CALLBACK(catch_viewer_key), vwin);
@@ -1315,7 +1317,7 @@ void update_script_editor_options (windata_t *vwin)
 
 #ifdef HAVE_GTKSV_COMPLETION
     if (vwin->role == CONSOLE || editing_hansl(vwin->role)) {
-	set_sv_completion(vwin);
+	set_sv_completion(vwin->text, vwin->role);
     }
 #endif
 }
@@ -2491,17 +2493,16 @@ static gboolean textview_event_after (GtkWidget *w, GdkEvent *ev,
     GtkTextIter start, end, iter;
     GtkTextView *view;
     GtkTextBuffer *buffer;
-    GdkEventButton *event;
+    GdkEventButton *eb;
     gint x, y;
 
     if (ev->type != GDK_BUTTON_RELEASE) {
 	return FALSE;
-    }
-
-    event = (GdkEventButton *) ev;
-
-    if (event->button != 1) {
-	return FALSE;
+    } else {
+        eb = (GdkEventButton *) ev;
+        if (eb->button != 1) {
+            return FALSE;
+        }
     }
 
     view = GTK_TEXT_VIEW(w);
@@ -2514,7 +2515,7 @@ static gboolean textview_event_after (GtkWidget *w, GdkEvent *ev,
     }
 
     gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_WIDGET,
-					  event->x, event->y, &x, &y);
+					  eb->x, eb->y, &x, &y);
     gtk_text_view_get_iter_at_location(view, &iter, x, y);
 
     if (active_tag != NULL && object_get_int(active_tag, "show")) {
@@ -3343,7 +3344,7 @@ static int in_foreign_land (GtkWidget *text_widget)
     GtkTextIter start, end;
     gchar *buf;
     char *s, line[1024];
-    int inforeign = 0;
+    int in_foreign = 0;
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_widget));
     gtk_text_buffer_get_start_iter(tbuf, &start);
@@ -3356,16 +3357,16 @@ static int in_foreign_land (GtkWidget *text_widget)
     while (bufgets(line, sizeof line, buf)) {
 	s = line + strspn(line, " \t");
 	if (!strncmp(s, "foreign ", 8)) {
-	    inforeign = 1;
+	    in_foreign = 1;
 	} else if (!strncmp(s, "end foreign", 11)) {
-	    inforeign = 0;
+	    in_foreign = 0;
 	}
     }
 
     bufgets_finalize(buf);
     g_free(buf);
 
-    return inforeign;
+    return in_foreign;
 }
 
 static void auto_indent_script (GtkWidget *w, windata_t *vwin)
@@ -3786,7 +3787,7 @@ static char *get_previous_line_start_word (char *word,
    let Tab at the end of the line adjust its indentation.
 */
 
-static int maybe_insert_smart_tab (windata_t *vwin, int *comp_ok)
+static int maybe_insert_smart_tab (GtkWidget *w, int *comp_ok)
 {
     GtkTextBuffer *tbuf;
     GtkTextMark *mark;
@@ -3794,7 +3795,7 @@ static int maybe_insert_smart_tab (windata_t *vwin, int *comp_ok)
     int curr_nsp = 0;
     int pos, ret = 0;
 
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
 
     if (gtk_text_buffer_get_selection_bounds(tbuf, &start, &end)) {
 	/* don't do this if there's a selection in place */
@@ -3834,7 +3835,7 @@ static int maybe_insert_smart_tab (windata_t *vwin, int *comp_ok)
 	int contd = 0;
 	int i, nsp = 0;
 
-	s = textview_get_current_line(vwin->text, 1);
+	s = textview_get_current_line(w, 1);
 	if (s != NULL) {
 #if TABDEBUG > 1
 	    fprintf(stderr, "*** maybe_insert_smart_tab: "
@@ -3868,6 +3869,11 @@ static int maybe_insert_smart_tab (windata_t *vwin, int *comp_ok)
 	}
     }
 
+#if TABDEBUG
+    fprintf(stderr, "maybe_insert... ret=%d, comp_ok=%d\n",
+            ret, comp_ok != NULL ? *comp_ok : -1);
+#endif
+
     return ret;
 }
 
@@ -3883,14 +3889,14 @@ static int maybe_insert_smart_tab (windata_t *vwin, int *comp_ok)
    internally.
 */
 
-int maybe_try_completion (windata_t *vwin)
+int maybe_try_completion (GtkWidget *w, int role)
 {
     GtkTextBuffer *tbuf;
     GtkTextMark *mark;
     GtkTextIter start, end;
     int pos, ret = 0;
 
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
 
     if (gtk_text_buffer_get_selection_bounds(tbuf, &start, &end)) {
 	/* don't do this if there's a selection in place? */
@@ -3909,7 +3915,7 @@ int maybe_try_completion (windata_t *vwin)
 	start = end;
 	gtk_text_iter_set_line_offset(&start, 0);
 	test = chunk = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
-	if (vwin->role == CONSOLE && !strncmp(chunk, "? ", 2)) {
+	if (role == CONSOLE && !strncmp(chunk, "? ", 2)) {
 	    test += 2;
 	    pos -= 2;
 	}
@@ -3938,7 +3944,7 @@ static char rightchar (guint k)
    a matching right bracket and move the cursor back before it.
 */
 
-static int maybe_insert_auto_bracket (windata_t *vwin,
+static int maybe_insert_auto_bracket (GtkWidget *text,
 				      guint keyval)
 {
     GtkTextBuffer *tbuf;
@@ -3947,7 +3953,7 @@ static int maybe_insert_auto_bracket (windata_t *vwin,
     gchar *chunk = NULL;
     int ret = 0;
 
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text));
 
     if (gtk_text_buffer_get_has_selection(tbuf)) {
 	return 0;
@@ -3990,13 +3996,13 @@ static int maybe_insert_auto_bracket (windata_t *vwin,
    don't insert a newline.
 */
 
-static gboolean script_electric_enter (windata_t *vwin, int alt)
+static gboolean script_electric_enter (GtkWidget *text, int alt)
 {
     char *s = NULL;
     int targsp = 0;
     gboolean ret = FALSE;
 
-    if (!smarttab || in_foreign_land(vwin->text)) {
+    if (!smarttab || in_foreign_land(text)) {
 	return FALSE;
     }
 
@@ -4004,7 +4010,7 @@ static gboolean script_electric_enter (windata_t *vwin, int alt)
     fprintf(stderr, "*** script_electric_enter: alt = %d\n", alt);
 #endif
 
-    s = textview_get_current_line(vwin->text, 0);
+    s = textview_get_current_line(text, 0);
 
     if (s != NULL && *s != '\0') {
 	GtkTextBuffer *tbuf;
@@ -4015,7 +4021,7 @@ static gboolean script_electric_enter (windata_t *vwin, int alt)
 	int i, diff, nsp, incr;
 	int ipos, k, contd = 0;
 
-	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text));
 	mark = gtk_text_buffer_get_insert(tbuf);
 	gtk_text_buffer_get_iter_at_mark(tbuf, &start, mark);
 	ipos = gtk_text_iter_get_line_offset(&start);
@@ -4091,7 +4097,7 @@ static gboolean script_electric_enter (windata_t *vwin, int alt)
 	    gtk_text_buffer_place_cursor(tbuf, &start);
 	    gtk_text_buffer_end_user_action(tbuf);
 	    mark = gtk_text_buffer_get_insert(tbuf);
-	    gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(vwin->text), mark);
+	    gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(text), mark);
 	}
 	ret = TRUE;
     }
@@ -4108,13 +4114,15 @@ static gboolean script_electric_enter (windata_t *vwin, int alt)
 
 #ifdef HAVE_GTKSV_COMPLETION
 
-static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
+static gboolean script_tab_handler (GtkWidget *w,
+                                    GdkEvent *event,
+                                    int role)
 {
     int ucomp;
 
-    g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->text), FALSE);
+    g_return_val_if_fail(GTK_IS_TEXT_VIEW(w), FALSE);
 
-    if (in_foreign_land(vwin->text)) {
+    if (in_foreign_land(w)) {
 	return FALSE;
     } else if (((GdkEventKey *) event)->state & GDK_SHIFT_MASK) {
 	return FALSE;
@@ -4122,19 +4130,22 @@ static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
 
     ucomp = (hansl_completion == COMPLETE_USER);
 
+#if TABDEBUG
+    fprintf(stderr, "script_tab_handler: ucomp %d, smarttab %d\n", ucomp, smarttab);
+#endif
+
     if (smarttab) {
 	int comp_ok = 0;
 	int *ptr = ucomp ? &comp_ok : NULL;
 
-	if (maybe_insert_smart_tab(vwin, ptr)) {
-            fprintf(stderr, "HERE 2 insert_smart_tab\n");
+	if (maybe_insert_smart_tab(w, ptr)) {
 	    return TRUE;
 	} else if (comp_ok) {
-	    call_user_completion(vwin->text);
+	    call_user_completion(w);
 	    return TRUE;
 	}
-    } else if (ucomp && maybe_try_completion(vwin)) {
-	call_user_completion(vwin->text);
+    } else if (ucomp && maybe_try_completion(w, role)) {
+	call_user_completion(w);
 	return TRUE;
     }
 
@@ -4143,17 +4154,19 @@ static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
 
 #else
 
-static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
+static gboolean script_tab_handler (GtkWidget *w,
+                                    GdkEvent *event,
+                                    int role)
 {
-    g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->text), FALSE);
+    g_return_val_if_fail(GTK_IS_TEXT_VIEW(w), FALSE);
 
-    if (in_foreign_land(vwin->text)) {
+    if (in_foreign_land(w)) {
 	return FALSE;
     } else if (((GdkEventKey *) event)->state & GDK_SHIFT_MASK) {
 	return FALSE;
     }
 
-    if (smarttab && maybe_insert_smart_tab(vwin, NULL)) {
+    if (smarttab && maybe_insert_smart_tab(w, NULL)) {
 	return TRUE;
     }
 
@@ -4162,9 +4175,9 @@ static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
 
 #endif /* HAVE_GTKSV_COMPLETION or not */
 
-gboolean script_bracket_handler (windata_t *vwin, guint keyval)
+gboolean script_bracket_handler (GtkWidget *w, guint keyval)
 {
-    if (maybe_insert_auto_bracket(vwin, keyval)) {
+    if (maybe_insert_auto_bracket(w, keyval)) {
 	return TRUE;
     } else {
 	return FALSE;
@@ -5122,7 +5135,7 @@ void create_console (windata_t *vwin, int hsize, int vsize)
 #ifdef HAVE_GTKSV_COMPLETION
     if (console_completion) {
 	/* since 2021-06-11 */
-	set_sv_completion(vwin);
+	set_sv_completion(vwin->text, CONSOLE);
     }
 #endif
 
@@ -5189,11 +5202,14 @@ static void set_pane_text_properties (GtkWidget *w2,
     gtk_text_view_set_editable(tv2, s);
     gtk_text_view_set_cursor_visible(tv2, s);
 
-    /* sourceview line numbering? */
     if (GTK_IS_SOURCE_VIEW(w2)) {
+        /* sourceview-related attributes */
 	s = gtk_source_view_get_show_line_numbers(GTK_SOURCE_VIEW(w1));
 	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(w2), s);
         sourceview_attach_handlers(w2, vwin);
+        if (editing_hansl(vwin->role)) {
+            set_sv_completion(w2, vwin->role);
+        }
     }
 }
 

@@ -163,13 +163,13 @@ void textview_format_paragraph (GtkWidget *view);
 
 void indent_hansl (GtkWidget *w, windata_t *vwin);
 
-gboolean script_bracket_handler (windata_t *vwin, guint keyval);
+gboolean script_bracket_handler (GtkWidget *w, guint keyval);
 
 gchar *unctrlr (const char *buf);
 
 #ifdef HAVE_GTKSV_COMPLETION
 
-int maybe_try_completion (windata_t *vwin);
+int maybe_try_completion (GtkWidget *w, int role);
 
 #endif
 
