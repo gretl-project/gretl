@@ -120,7 +120,7 @@ static gboolean insert_text_with_markup (GtkTextBuffer *tbuf,
                                          GtkTextIter *iter,
                                          const char *s,
                                          int role);
-static void connect_link_signals (windata_t *vwin);
+static void connect_link_signals (GtkWidget *w, windata_t *vwin);
 static void auto_indent_script (GtkWidget *w, windata_t *vwin);
 static int maybe_insert_smart_tab (GtkWidget *w, int *comp_ok);
 #ifndef GRETL_EDIT
@@ -1165,6 +1165,55 @@ static void sourceview_attach_handlers (GtkWidget *text,
     }
 }
 
+static GtkWidget *create_duplicate_source_view (windata_t *vwin)
+{
+    GtkWidget *text;
+    GtkTextView *view;
+    gboolean s;
+    int cw;
+
+    text = gtk_source_view_new_with_buffer(vwin->sbuf);
+
+#ifdef HAVE_GTKSV_COMPLETION
+    if (editing_hansl(vwin->role)) {
+	set_sv_completion(text, vwin->role);
+    }
+#endif
+
+    view = GTK_TEXT_VIEW(text);
+    gtk_text_view_set_wrap_mode(view, GTK_WRAP_NONE);
+    gtk_text_view_set_left_margin(view, 4);
+    gtk_text_view_set_right_margin(view, 4);
+#if GTK_MAJOR_VERSION > 2
+    gtk_text_view_set_bottom_margin(view, 10);
+#endif
+
+    gtk_widget_modify_font(text, fixed_font);
+    cw = get_char_width(text);
+    set_source_tabs(text, cw);
+
+    s = gtk_text_view_get_editable(GTK_TEXT_VIEW(vwin->text));
+    gtk_text_view_set_editable(view, s);
+    gtk_text_view_set_cursor_visible(view, s);
+
+    if (vwin->role != EDIT_HEADER) {
+	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(text),
+					      script_line_numbers);
+    }
+    if (!(vwin->flags & WVIN_KEY_SIGNAL_SET)) {
+	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
+			 G_CALLBACK(catch_viewer_key), vwin);
+    }
+
+    sourceview_attach_handlers(text, vwin);
+
+    if (editing_hansl(vwin->role)) {
+	connect_link_signals(text, vwin);
+    }
+
+    return text;
+}
+
 void create_source (windata_t *vwin, int hsize, int vsize,
 		    gboolean editable)
 {
@@ -1252,7 +1301,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     sourceview_attach_handlers(vwin->text, vwin);
 
     if (editing_hansl(vwin->role)) {
-	connect_link_signals(vwin);
+	connect_link_signals(vwin->text, vwin);
     }
 }
 
@@ -1778,7 +1827,7 @@ void textview_set_text_dbsearch (windata_t *vwin, const char *buf)
 
     gtk_text_buffer_insert(tbuf, &iter, buf, -1);
 
-    connect_link_signals(vwin);
+    connect_link_signals(vwin->text, vwin);
 }
 
 void textview_delete_processing_message (GtkWidget *view)
@@ -1940,7 +1989,7 @@ void textview_insert_file (windata_t *vwin, const char *fname)
     fclose(fp);
 
     if (links) {
-	connect_link_signals(vwin);
+	connect_link_signals(vwin->text, vwin);
     }
 }
 
@@ -2610,18 +2659,18 @@ textview_visibility_notify (GtkWidget *w,  GdkEventVisibility *e,
     return FALSE;
 }
 
-static void connect_link_signals (windata_t *vwin)
+static void connect_link_signals (GtkWidget *text, windata_t *vwin)
 {
     ensure_text_cursors();
     if (!vwin_is_editing(vwin)) {
-	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
+	g_signal_connect(G_OBJECT(text), "key-press-event",
 			 G_CALLBACK(cmdref_key_press), vwin);
     }
-    g_signal_connect(G_OBJECT(vwin->text), "event-after",
+    g_signal_connect(G_OBJECT(text), "event-after",
 		     G_CALLBACK(textview_event_after), vwin);
-    g_signal_connect(G_OBJECT(vwin->text), "motion-notify-event",
+    g_signal_connect(G_OBJECT(text), "motion-notify-event",
 		     G_CALLBACK(textview_motion_notify), vwin);
-    g_signal_connect(G_OBJECT(vwin->text), "visibility-notify-event",
+    g_signal_connect(G_OBJECT(text), "visibility-notify-event",
 		     G_CALLBACK(textview_visibility_notify), vwin);
 }
 
@@ -4930,7 +4979,7 @@ void gretl_viewer_set_formatted_buffer (windata_t *vwin,
     cursor_to_top(vwin);
 
     if (links) {
-	connect_link_signals(vwin);
+	connect_link_signals(vwin->text, vwin);
     }
 }
 
@@ -5008,7 +5057,6 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 
     gtk_text_view_set_left_margin(GTK_TEXT_VIEW(w), 4);
     gtk_text_view_set_right_margin(GTK_TEXT_VIEW(w), 4);
-
     gtk_widget_modify_font(GTK_WIDGET(w), fixed_font);
 
 #if HDEBUG
@@ -5201,16 +5249,6 @@ static void set_pane_text_properties (GtkWidget *w2,
     s = gtk_text_view_get_editable(tv1);
     gtk_text_view_set_editable(tv2, s);
     gtk_text_view_set_cursor_visible(tv2, s);
-
-    if (GTK_IS_SOURCE_VIEW(w2)) {
-        /* sourceview-related attributes */
-	s = gtk_source_view_get_show_line_numbers(GTK_SOURCE_VIEW(w1));
-	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(w2), s);
-        sourceview_attach_handlers(w2, vwin);
-        if (editing_hansl(vwin->role)) {
-            set_sv_completion(w2, vwin->role);
-        }
-    }
 }
 
 /* divide a text window into two panes */
@@ -5221,7 +5259,6 @@ void viewer_split_pane (windata_t *vwin, int vertical)
     GtkWidget *view1 = vwin->text;
     GtkWidget *sw, *paned, *view2;
     GtkWidget *vmain;
-    GtkTextBuffer *tbuf;
     gint width, height;
 
     vmain = vwin_toplevel(vwin);
@@ -5244,15 +5281,15 @@ void viewer_split_pane (windata_t *vwin, int vertical)
     g_object_set_data(G_OBJECT(vwin->vbox), "paned", paned);
     g_object_set_data(G_OBJECT(vwin->vbox), "sw", NULL);
 
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view1));
-
     if (GTK_IS_SOURCE_VIEW(view1)) {
-	view2 = gtk_source_view_new_with_buffer(GTK_SOURCE_BUFFER(tbuf));
+        view2 = create_duplicate_source_view(vwin);
     } else {
-	view2 = gtk_text_view_new_with_buffer(tbuf);
-    }
+        GtkTextBuffer *tbuf;
 
-    set_pane_text_properties(view2, view1, vwin);
+        tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view1));
+	view2 = gtk_text_view_new_with_buffer(tbuf);
+        set_pane_text_properties(view2, view1, vwin);
+    }
 
     g_signal_connect(G_OBJECT(view2), "button-press-event",
 		     G_CALLBACK(text_popup_handler), vwin);
