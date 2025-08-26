@@ -115,12 +115,14 @@ struct function_info_ {
     gchar *pdfname;        /* name of PDF help file */
     char **pubnames;       /* names of public functions */
     char **privnames;      /* names of private functions */
+    char **assnnames;      /* names of "must assign" functions */
     char **specials;       /* names of special functions */
     char **datafiles;      /* names of included data files */
     char **depends;        /* names of dependencies */
     char *R_depends;       /* R dependency info */
     int n_pub;             /* number of public functions */
     int n_priv;            /* number of private functions */
+    int n_assn;            /* number of "must assign" functions */
     int n_files;           /* number of included data files */
     int n_depends;         /* number of dependencies */
     gchar *provider;       /* name of "provider" package */
@@ -231,12 +233,14 @@ function_info *finfo_new (void)
 
     finfo->pubnames = NULL;
     finfo->privnames = NULL;
+    finfo->assnnames = NULL;
     finfo->datafiles = NULL;
     finfo->depends = NULL;
     finfo->R_depends = NULL;
 
     finfo->n_pub = 0;
     finfo->n_priv = 0;
+    finfo->n_assn = 0;
     finfo->n_files = 0;
     finfo->n_depends = 0;
     finfo->provider = NULL;
@@ -298,6 +302,9 @@ static void finfo_free (function_info *finfo)
     }
     if (finfo->privnames != NULL) {
 	strings_array_free(finfo->privnames, finfo->n_priv);
+    }
+    if (finfo->assnnames != NULL) {
+	strings_array_free(finfo->assnnames, finfo->n_assn);
     }
     if (finfo->specials != NULL) {
 	strings_array_free(finfo->specials, N_SPECIALS);
@@ -1646,6 +1653,8 @@ static char **get_function_names (const int *list, int *err)
     return names;
 }
 
+/* FIXME assnnames ? */
+
 static int finfo_reset_function_names (function_info *finfo,
 				       char **pubnames, int npub,
 				       char **privnames, int npriv,
@@ -1685,20 +1694,27 @@ static int finfo_reset_function_names (function_info *finfo,
 
 static int finfo_set_function_names (function_info *finfo,
 				     const int *publist,
-				     const int *privlist)
+				     const int *privlist,
+                                     const int *assnlist)
 {
     int npriv = (privlist == NULL)? 0 : privlist[0];
+    int nassn = (assnlist == NULL)? 0 : assnlist[0];
     int err = 0;
 
     finfo->pubnames = get_function_names(publist, &err);
     if (!err) {
 	finfo->n_pub = publist[0];
     }
-
     if (!err && npriv > 0) {
 	finfo->privnames = get_function_names(privlist, &err);
 	if (!err) {
 	    finfo->n_priv = npriv;
+	}
+    }
+    if (!err && nassn > 0) {
+	finfo->assnnames = get_function_names(assnlist, &err);
+	if (!err) {
+	    finfo->n_assn = nassn;
 	}
     }
 
@@ -2745,6 +2761,86 @@ static void add_dependency_entries (GtkWidget *holder,
     gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
 }
 
+static int edit_assign_done (selector *sr)
+{
+    fprintf(stderr, "HERE edit_assign_done\n");
+
+    return 0;
+}
+
+static void must_assign_editor (GtkWidget *w, function_info *finfo)
+{
+    selector *sr;
+    int *plist = NULL;
+    int *alist = NULL;
+    int np, nassn;
+    int fidx;
+    int i, j;
+
+    if (finfo->n_pub == 0) {
+        /* error */
+        return;
+    }
+
+    np = finfo->n_pub;
+    plist = gretl_list_new(np);
+
+    for (i=0, j=1; i<np; i++) {
+        fidx = user_function_index_by_name(finfo->pubnames[i], finfo->pkg);
+        if (fidx >= 0) {
+            plist[j++] = fidx;
+        } else {
+            np--;
+        }
+    }
+    plist[0] = np;
+
+    if (finfo->n_assn > 0) {
+        nassn = finfo->n_assn;
+        alist = gretl_list_new(nassn);
+        for (i=0, j=1; i<nassn; i++) {
+            fidx = user_function_index_by_name(finfo->assnnames[i], finfo->pkg);
+            if (fidx >= 0) {
+                plist[j++] = fidx;
+            } else {
+                nassn--;
+            }
+        }
+        alist[0] = nassn;
+    }
+
+    sr = sublist_selection(EDIT_ASSIGN,
+                           "Set \"must assign\" function(s)",
+                           edit_assign_done, finfo->extra,
+                           plist, alist, finfo);
+    free(plist);
+    free(alist);
+}
+
+static void add_must_assign_widgets (GtkWidget *holder,
+                                     function_info *finfo)
+{
+    const char *msg =
+        N_("By setting the \"must assign\" attribute on a public function you are saying\n"
+           "that assignment of the return value from the function is not optional, when\n"
+           "it is called from the graphical interface.");
+    GtkWidget *w, *b, *hbox;
+
+    w = gtk_label_new(_(msg));
+    gtk_label_set_line_wrap(GTK_LABEL(w), TRUE);
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
+
+    b = gtk_button_new_with_label("Go for it");
+    g_signal_connect(G_OBJECT(b), "clicked",
+                     G_CALLBACK(must_assign_editor),
+                     finfo);
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
+}
+
 static void gui_help_text_callback (GtkButton *b, function_info *finfo)
 {
     const char *pkgname;
@@ -3682,6 +3778,14 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     tmp = gtk_label_new(_("Dependencies"));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);
     add_dependency_entries(vbox, finfo);
+
+    /* the "must assign" page */
+
+    vbox = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
+    tmp = gtk_label_new(_("Must assign"));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);
+    add_must_assign_widgets(vbox, finfo);
 
     /* the common buttons area */
 
@@ -5235,6 +5339,7 @@ void edit_function_package (const char *fname)
     function_info *finfo = NULL;
     int *publist = NULL;
     int *privlist = NULL;
+    int *assnlist = NULL;
     fnpkg *pkg;
     int err = 0;
 
@@ -5270,6 +5375,7 @@ void edit_function_package (const char *fname)
     err = function_package_get_properties(finfo->pkg,
 					  "publist",  &publist,
 					  "privlist", &privlist,
+                                          "assnlist", &assnlist,
 					  "author",   &finfo->author,
 					  "email",    &finfo->email,
 					  "version",  &finfo->version,
@@ -5297,7 +5403,7 @@ void edit_function_package (const char *fname)
 	err = E_DATA;
     }
     if (!err) {
-	err = finfo_set_function_names(finfo, publist, privlist);
+	err = finfo_set_function_names(finfo, publist, privlist, assnlist);
     }
     if (!err) {
 	err = finfo_set_special_names(finfo);
@@ -5319,12 +5425,14 @@ void edit_function_package (const char *fname)
     }
 
 #if PKG_DEBUG
-    printlist(publist, "publist");
+    printlist(publist,  "publist");
     printlist(privlist, "privlist");
+    printlist(assnlist, "assnlist");
 #endif
 
     free(publist);
     free(privlist);
+    free(assnlist);
 
     if (err) {
 	fprintf(stderr, "function_package_get_info: failed on %s\n", fname);

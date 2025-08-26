@@ -4996,7 +4996,8 @@ int function_package_set_properties (fnpkg *pkg, ...)
 enum {
     PUBLIST,
     GUILIST,
-    PRIVLIST
+    PRIVLIST,
+    ASSNLIST
 };
 
 /* From a function package get a list of either its public or its
@@ -5022,6 +5023,10 @@ static int *function_package_get_list (fnpkg *pkg, int code, int n)
                 if (ufuns[i]->pkg == pkg) {
                     priv = function_is_private(ufuns[i]);
                     menu_only = function_is_menu_only(ufuns[i]);
+                    if (code == ASSNLIST && !priv &&
+                        function_must_assign(ufuns[i])) {
+                        list[++j] = i;
+                    }
                     if (code == PRIVLIST && priv) {
                         list[++j] = i;
                     } else if (code == PUBLIST && !priv) {
@@ -5211,6 +5216,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
         } else if (!strcmp(key, "privlist")) {
             plist = (int **) ptr;
             *plist = function_package_get_list(pkg, PRIVLIST, npriv);
+        } else if (!strcmp(key, "assnlist")) {
+            plist = (int **) ptr;
+            *plist = function_package_get_list(pkg, ASSNLIST, npriv);
         } else if (!strcmp(key, "gui-main-id")) {
             pi = (int *) ptr;
             *pi = pkg_get_special_func_id(pkg, UFUN_GUI_MAIN);

@@ -1248,6 +1248,20 @@ static void list_append_var_simple (GtkListStore *store,
                        -1);
 }
 
+static void list_append_func_simple (GtkListStore *store,
+                                     GtkTreeIter *iterp,
+                                     int v)
+{
+    const char *fname = user_function_name_by_index(v);
+
+    gtk_list_store_append(store, iterp);
+    gtk_list_store_set(store, iterp,
+                       COL_ID, v,
+                       COL_LAG, 0,
+                       COL_NAME, fname,
+                       -1);
+}
+
 static void list_append_var (GtkTreeModel *mod,
                              GtkTreeIter *iter,
                              int v, selector *sr,
@@ -8597,7 +8611,11 @@ sublist_selection (int ci, const char *title,
 
     /* add @list to left-hand box */
     for (i=1; i<=list[0]; i++) {
-	list_append_var_simple(store, &iter, list[i]);
+        if (ci == EDIT_ASSIGN) {
+            list_append_func_simple(store, &iter, list[i]);
+        } else {
+            list_append_var_simple(store, &iter, list[i]);
+        }
 	sr->n_left += 1;
     }
 
@@ -8616,7 +8634,11 @@ sublist_selection (int ci, const char *title,
 	gtk_list_store_clear(store);
 	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 	for (i=1; i<=presel[0]; i++) {
-	    list_append_var_simple(store, &iter, presel[i]);
+            if (ci == EDIT_ASSIGN) {
+                list_append_func_simple(store, &iter, list[i]);
+            } else {
+                list_append_var_simple(store, &iter, presel[i]);
+            }
 	    if (++n_right == selmax) {
 		break;
 	    }
