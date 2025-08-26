@@ -302,6 +302,7 @@ static char mpi_caller[FN_NAMELEN];
 #define function_is_private(f)   (f->flags & UFUN_PRIVATE)
 #define function_is_noprint(f)   (f->flags & UFUN_NOPRINT)
 #define function_is_menu_only(f) (f->flags & UFUN_MENU_ONLY)
+#define function_must_assign(f)  (f->flags & UFUN_ASSIGN)
 #define function_is_recursive(f) (f->flags & UFUN_RECURSES)
 
 #define set_call_recursing(c)   (c->flags |= FC_RECURSING)
@@ -1375,6 +1376,23 @@ int user_func_is_menu_only (const ufunc *fun)
         return 0;
     } else {
         return function_is_menu_only(fun);
+    }
+}
+
+/**
+ * user_func_must_assign:
+ * @fun: pointer to user-function.
+ *
+ * Returns: 1 if the function return value must be assigned in
+ * GUI usage.
+ */
+
+int user_func_must_assign (const ufunc *fun)
+{
+    if (fun == NULL) {
+        return 0;
+    } else {
+        return function_must_assign(fun);
     }
 }
 
@@ -2583,6 +2601,9 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     if (gretl_xml_get_prop_as_bool(node, "menu-only")) {
         fun->flags |= UFUN_MENU_ONLY;
     }
+    if (gretl_xml_get_prop_as_bool(node, "must-assign")) {
+        fun->flags |= UFUN_ASSIGN;
+    }
     if (gretl_xml_get_prop_as_string(node, "pkg-role", &tmp)) {
         fun->pkg_role = pkg_key_get_role(tmp);
         free(tmp);
@@ -2698,6 +2719,9 @@ static int write_function_xml (ufunc *fun, PRN *prn, int mpi)
     }
     if (function_is_menu_only(fun)) {
         pputs(prn, " menu-only=\"1\"");
+    }
+    if (function_must_assign(fun)) {
+        pputs(prn, " must-assign=\"1\"");
     }
 
     if (fun->pkg_role) {
@@ -3045,6 +3069,8 @@ static void check_special_comments (ufunc *fun)
             fun->flags |= UFUN_NOPRINT;
         } else if (strstr(fun->lines[i].s, "## menu-only ##")) {
             fun->flags |= UFUN_MENU_ONLY;
+        } else if (strstr(fun->lines[i].s, "## must-assign ##")) {
+            fun->flags |= UFUN_ASSIGN;
         }
     }
 }
@@ -4295,6 +4321,8 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
                 err = pkg_set_funcs_attribute(pkg, p, UFUN_NOPRINT);
             } else if (!strncmp(line, "menu-only", 9)) {
                 err = pkg_set_funcs_attribute(pkg, p, UFUN_MENU_ONLY);
+            } else if (!strncmp(line, "must-assign", 11)) {
+                err = pkg_set_funcs_attribute(pkg, p, UFUN_ASSIGN);
             } else {
                 const char *key;
 		int found = 0;

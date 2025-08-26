@@ -526,8 +526,9 @@ static const char *nullarg_label (int null_OK)
 }
 
 /* Before launching a function call: check that all required arguments
-   are in place, and that the name for the return value (if any) is
-   acceptable.
+   are in place; that if the package specifies "must-assign" we have an
+   assignment specification; and that the name for the return value (if
+   any) is acceptable.
 */
 
 static int check_args_etc (call_info *cinfo)
@@ -552,6 +553,12 @@ static int check_args_etc (call_info *cinfo)
 		}
 	    }
 	}
+    }
+
+    if (user_func_must_assign(cinfo->func) && cinfo->ret == NULL) {
+        errbox(_("The return value must be assigned"));
+        gtk_widget_grab_focus(cinfo->rentry);
+        return 1;
     }
 
     if (cinfo->ret != NULL) {
@@ -2123,19 +2130,15 @@ static int function_call_dialog (call_info *cinfo)
 	    add_table_header(tbl, "", tcols, ++row, 0);
 	}
 
-	if (cinfo->rettype == GRETL_TYPE_LIST) {
+        if (user_func_must_assign(cinfo->func)) {
+	    add_table_header(tbl, _("Assign return value:"), tcols, ++row, 5);
+	} else if (cinfo->rettype == GRETL_TYPE_LIST) {
 	    auto_sel = 1;
 	    add_table_header(tbl, _("Save return value (optional, clear box for no assignment):"),
 			     tcols, ++row, 5);
 	} else {
-	    add_table_header(tbl, _("Assign return value (optional):"),
-			     tcols, ++row, 5);
+	    add_table_header(tbl, _("Assign return value (optional):"), tcols, ++row, 5);
 	}
-
-        if (0) {
-            label = gtk_label_new(_("selection (or new variable)"));
-            add_table_cell(tbl, label, 1, 2, ++row);
-        }
 
 	label = gtk_label_new(gretl_type_get_name(cinfo->rettype));
 	gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
@@ -2934,7 +2937,9 @@ static call_info *start_cinfo_for_package (const char *pkgname,
     }
 
     if (!*err && data_access) {
-	cinfo->flags |= DATA_ACCESS;
+        if (data_access) {
+            cinfo->flags |= DATA_ACCESS;
+        }
     }
 
     if (*err) {
@@ -2946,10 +2951,10 @@ static call_info *start_cinfo_for_package (const char *pkgname,
 }
 
 /* Call to execute a function from the package pre-attached to
-   @cinfo. We may or may not end up offering a list of
-   interfaces. This is called both from menu items (see below in this
-   file) and (indirectly) from the "browser" window that lists
-   installed function packages -- see open_function_package() below.
+   @cinfo. We may or may not end up offering a list of interfaces. This
+   is called both from menu items (see below in this file) and
+   (indirectly) from the "browser" window that lists installed function
+   packages -- see open_function_package() below.
 */
 
 static int call_function_package (call_info *cinfo,

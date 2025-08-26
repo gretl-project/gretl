@@ -52,7 +52,8 @@ typedef enum {
     UFUN_MENU_ONLY = 1 << 2, /* is GUI-only */
     UFUN_USES_SET  = 1 << 3, /* includes the "set" command */
     UFUN_HAS_FLOW  = 1 << 4, /* includes flow-control (ifs, loops) */
-    UFUN_RECURSES  = 1 << 5  /* includes a call to itself */
+    UFUN_RECURSES  = 1 << 5, /* includes a call to itself */
+    UFUN_ASSIGN    = 1 << 6  /* GUI usage: return must be assigned */
 } UfunAttrs;
 
 #define NEEDS_TS    "needs-time-series-data"
@@ -136,6 +137,8 @@ fncall *user_func_get_fncall (ufunc *fun);
 int user_func_is_noprint (const ufunc *fun);
 
 int user_func_is_menu_only (const ufunc *fun);
+
+int user_func_must_assign (const ufunc *fun);
 
 const char *user_function_name_by_index (int i);
 
