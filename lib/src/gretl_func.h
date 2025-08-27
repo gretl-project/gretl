@@ -240,6 +240,8 @@ int function_package_set_depends (fnpkg *pkg, char **S, int n);
 
 char **function_package_get_depends (fnpkg *pkg, int *n);
 
+int function_package_set_must_assign (fnpkg *pkg, char **S, int n);
+
 const char *function_package_get_name (fnpkg *pkg);
 
 double function_package_get_version (fnpkg *pkg);

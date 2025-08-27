@@ -1653,8 +1653,6 @@ static char **get_function_names (const int *list, int *err)
     return names;
 }
 
-/* FIXME assnnames ? */
-
 static int finfo_reset_function_names (function_info *finfo,
 				       char **pubnames, int npub,
 				       char **privnames, int npriv,
@@ -4765,7 +4763,10 @@ int save_function_package (const char *fname, gpointer p)
 	function_package_set_depends(finfo->pkg,
 				     finfo->depends,
 				     finfo->n_depends);
-    }
+	function_package_set_must_assign(finfo->pkg,
+                                         finfo->assnnames,
+                                         finfo->n_assn);
+     }
 
     if (!err && finfo->uses_subdir) {
 	maybe_fix_package_location(finfo);

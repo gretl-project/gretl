@@ -5354,6 +5354,26 @@ int function_package_set_depends (fnpkg *pkg, char **S, int n)
     return err;
 }
 
+/* For use by the GUI gfn editor */
+
+int function_package_set_must_assign (fnpkg *pkg, char **S, int n)
+{
+    ufunc *f;
+    int i, pos;
+
+    for (i=0; i<pkg->n_pub; i++) {
+        f = pkg->pub[i];
+        pos = strings_array_position(S, n, f->name);
+        if (pos >= 0) {
+            f->flags |= UFUN_ASSIGN;
+        } else {
+            f->flags &= ~UFUN_ASSIGN;
+        }
+    }
+
+    return 0;
+}
+
 /* quick check to see if there's a gross problem with a package,
    in the context of considering packing it into a gretl
    session file
