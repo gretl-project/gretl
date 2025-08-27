@@ -2761,84 +2761,61 @@ static void add_dependency_entries (GtkWidget *holder,
     gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
 }
 
-static int edit_assign_done (selector *sr)
-{
-    fprintf(stderr, "HERE edit_assign_done\n");
-
-    return 0;
-}
-
-static void must_assign_editor (GtkWidget *w, function_info *finfo)
-{
-    selector *sr;
-    int *plist = NULL;
-    int *alist = NULL;
-    int np, nassn;
-    int fidx;
-    int i, j;
-
-    if (finfo->n_pub == 0) {
-        /* error */
-        return;
-    }
-
-    np = finfo->n_pub;
-    plist = gretl_list_new(np);
-
-    for (i=0, j=1; i<np; i++) {
-        fidx = user_function_index_by_name(finfo->pubnames[i], finfo->pkg);
-        if (fidx >= 0) {
-            plist[j++] = fidx;
-        } else {
-            np--;
-        }
-    }
-    plist[0] = np;
-
-    if (finfo->n_assn > 0) {
-        nassn = finfo->n_assn;
-        alist = gretl_list_new(nassn);
-        for (i=0, j=1; i<nassn; i++) {
-            fidx = user_function_index_by_name(finfo->assnnames[i], finfo->pkg);
-            if (fidx >= 0) {
-                plist[j++] = fidx;
-            } else {
-                nassn--;
-            }
-        }
-        alist[0] = nassn;
-    }
-
-    sr = sublist_selection(EDIT_ASSIGN,
-                           "Set \"must assign\" function(s)",
-                           edit_assign_done, finfo->extra,
-                           plist, alist, finfo);
-    free(plist);
-    free(alist);
-}
-
 static void add_must_assign_widgets (GtkWidget *holder,
                                      function_info *finfo)
 {
     const char *msg =
-        N_("By setting the \"must assign\" attribute on a public function you are saying\n"
+        N_("By checking the \"must assign\" box for a public function you are saying\n"
            "that assignment of the return value from the function is not optional, when\n"
            "it is called from the graphical interface.");
-    GtkWidget *w, *b, *hbox;
+    GtkWidget **cbs;
+    GtkWidget *hbox;
+    GtkWidget *table;
+    GtkWidget *label;
+    const char *s;
+    int i, pos;
 
-    w = gtk_label_new(_(msg));
-    gtk_label_set_line_wrap(GTK_LABEL(w), TRUE);
+    if (finfo->n_pub == 0) {
+        /* ?? */
+        return;
+    }
+
+    cbs = g_malloc(finfo->n_pub * sizeof *cbs);
+
+    label = gtk_label_new(_(msg));
+    // gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
     hbox = gtk_hbox_new(FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
 
-    b = gtk_button_new_with_label("Go for it");
-    g_signal_connect(G_OBJECT(b), "clicked",
-                     G_CALLBACK(must_assign_editor),
-                     finfo);
-    hbox = gtk_hbox_new(FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
+    table = gtk_table_new(finfo->n_pub, 2, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(table), 5);
+    gtk_table_set_col_spacings(GTK_TABLE(table), 10);
+
+    label = gtk_label_new(_("function"));
+    gtk_misc_set_alignment(GTK_MISC(label), 0, 0);
+    gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 0, 1);
+    label = gtk_label_new(_("must assign"));
+    gtk_table_attach_defaults(GTK_TABLE(table), label, 1, 2, 0, 1);
+
+    for (i=0; i<finfo->n_pub; i++) {
+        s = finfo->pubnames[i];
+        label = gtk_label_new(s);
+        gtk_misc_set_alignment(GTK_MISC(label), 0, 0);
+        cbs[i] = gtk_check_button_new();
+        pos = strings_array_position(finfo->assnnames, finfo->n_assn, s);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cbs[i]), pos >= 0);
+        hbox = gtk_hbox_new(FALSE, 5);
+        gtk_box_pack_start(GTK_BOX(hbox), cbs[i], TRUE, FALSE, 5);
+        gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, i+1, i+2);
+        gtk_table_attach_defaults(GTK_TABLE(table), hbox, 1, 2, i+1, i+2);
+    }
+
+    g_object_set_data_full(G_OBJECT(finfo->extra), "assign_checks",
+                           cbs, g_free);
+    hbox = gtk_hbox_new(FALSE, 10);
+    gtk_box_pack_start(GTK_BOX(hbox), table, FALSE, FALSE, 10);
+    gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 10);
 }
 
 static void gui_help_text_callback (GtkButton *b, function_info *finfo)
@@ -2972,6 +2949,38 @@ static GretlCmdIndex get_model_req_ci (function_info *finfo)
     }
 
     return ci;
+}
+
+static int process_must_assign (function_info *finfo,
+                                gboolean make_changes)
+{
+    GtkWidget **cbs;
+    const char *s;
+    gboolean s0;
+    gboolean s1;
+    int i, pos;
+    int changed = 0;
+
+    cbs = g_object_get_data(G_OBJECT(finfo->extra), "assign_checks");
+
+    for (i=0; i<finfo->n_pub; i++) {
+        s = finfo->pubnames[i];
+        pos = strings_array_position(finfo->assnnames, finfo->n_assn, s);
+        s0 = pos >= 0;
+        s1 = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(cbs[i]));
+        if (s1 != s0) {
+            changed = 1;
+            if (make_changes && s1) {
+                strings_array_add(&finfo->assnnames, &finfo->n_assn, s);
+            } else if (make_changes) {
+                strings_array_delete(&finfo->assnnames, &finfo->n_assn, pos);
+            }
+        }
+    }
+
+    fprintf(stderr, "must_assign changed: %d\n", changed);
+
+    return changed;
 }
 
 /* pertaining to the "extra properties" dialog: check for
@@ -3474,6 +3483,7 @@ static int process_extra_properties (function_info *finfo,
     changed += process_dependency_names(finfo, make_changes);
     changed += process_provider_name(finfo, make_changes);
     changed += process_R_dependency(finfo, make_changes);
+    changed += process_must_assign(finfo, make_changes);
 
     if (changed && make_changes) {
 	finfo_set_modified(finfo, TRUE);
@@ -3600,10 +3610,14 @@ static void finfo_extra_help (GtkWidget *w, function_info *finfo)
 	show_gui_help(MENU_ATTACH);
     } else if (page == 2) {
 	show_gui_help(PKG_FILES);
-    } else {
+    } else if (page == 3) {
 	show_gui_help(PKG_DEPS);
+    } else {
+        show_gui_help(PKG_ASSIGN);
     }
 }
+
+/* called on destruction of finfo->extra */
 
 static void unref_trees (GtkWidget *w, function_info *finfo)
 {

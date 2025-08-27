@@ -12229,6 +12229,28 @@
     </gui-access>
   </command>
 
+  <command name="pkg-assign" section="Programming"
+	   label="Must assign" context="gui">
+    <description>
+      <para>
+        Why would you want to insist that the user assigns the
+        return value from one or more of the public functions in your
+        package, in the GUI context?
+      </para>
+      <para>
+        The point is that some functions are designed simply to
+        provide a result, in the form of a series or matrix or whatever,
+        without showing any printed output or displaying a plot. For
+        such functions, if the user clicks <quote>OK</quote> without
+        assigning the return value precisely nothing will happen, and
+        this could be puzzling. By setting the <quote>must
+        assign</quote> flag you are in effect telling the user
+        <emphasis>not</emphasis> to expect anything from the given
+        function other than its return value.
+      </para>
+    </description>
+  </command>
+
   <command name="pkg-depends" section="Programming"
 	   label="Dependencies" context="gui">
     <description>

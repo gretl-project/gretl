@@ -145,6 +145,7 @@ enum extra_cmds {
     BUILD_PKG,
     PKG_FILES,
     PKG_DEPS,
+    PKG_ASSIGN,
     EDITOR,
     MIDAS_LIST,
     MIDAS_PARM,

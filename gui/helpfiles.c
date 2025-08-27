@@ -171,6 +171,7 @@ static struct gui_help_item gui_help_items[] = {
     { DAILY_PURGE,    "daily-purge" },
     { PKG_FILES,      "data-files" },
     { PKG_DEPS,       "pkg-depends" },
+    { PKG_ASSIGN,     "pkg-assign" },
     { EDITOR,         "script-editor" },
     { MIDAS_LIST,     "MIDAS_list" },
     { MIDAS_PARM,     "MIDAS_parm" },
