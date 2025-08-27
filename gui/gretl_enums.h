@@ -229,7 +229,6 @@ enum file_ops {
     WRITE_MAP,
     END_SAVE_OTHER, /* marker for end of other user-file saving */
     EDIT_FUNCTIONS,
-    EDIT_ASSIGN,
     SET_PROG,
     SET_DIR,
     SET_WDIR,
