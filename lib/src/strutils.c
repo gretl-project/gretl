@@ -1858,6 +1858,50 @@ int strings_array_add (char ***pS, int *n, const char *p)
 }
 
 /**
+ * strings_array_delete:
+ * @pS: pointer to strings array.
+ * @n: location of present number of strings in array.
+ * @pos: position of string to delete.
+ *
+ * Deletes the string at 0-based position @pos in @S, shortening
+ * the array by 1.
+ *
+ * Returns: 0 on success, %E_INVARG if @pos is out of bounds.
+ */
+
+int strings_array_delete (char ***pS, int *n, int pos)
+{
+    int m = n == NULL ? 0 : *n;
+    char **S = NULL;
+
+    if (pS == NULL || m == 0 || pos < 0 || pos >= m) {
+        return E_INVARG;
+    }
+
+    S = *pS;
+
+    if (m == 1) {
+        free(S[0]);
+        free(S);
+        *pS = NULL;
+        *n = 0;
+    } else {
+        int i;
+
+        m -= 1;
+        free(S[pos]);
+        for (i=pos; i<m; i++) {
+            S[i] = S[i+1];
+        }
+        S = realloc(S, m * sizeof *S);
+        *pS = S;
+        *n = m;
+    }
+
+    return 0;
+}
+
+/**
  * strings_array_prepend_uniq:
  * @pS: pointer to strings array.
  * @n: location of present number of strings in array.
