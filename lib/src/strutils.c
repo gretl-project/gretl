@@ -1871,14 +1871,12 @@ int strings_array_add (char ***pS, int *n, const char *p)
 
 int strings_array_delete (char ***pS, int *n, int pos)
 {
+    char **S = pS == NULL ? NULL : *pS;
     int m = n == NULL ? 0 : *n;
-    char **S = NULL;
 
-    if (pS == NULL || m == 0 || pos < 0 || pos >= m) {
+    if (S == NULL || m == 0 || pos < 0 || pos >= m) {
         return E_INVARG;
     }
-
-    S = *pS;
 
     if (m == 1) {
         free(S[0]);
