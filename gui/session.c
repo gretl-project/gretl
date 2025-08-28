@@ -3581,17 +3581,6 @@ static void scalars_popup_callback (GtkWidget *widget, gpointer data)
     }
 }
 
-static gchar *object_get_window_title (gui_obj *obj)
-{
-    gchar *title = NULL;
-
-    if (obj != NULL) {
-	title = g_strdup_printf("gretl: %s", obj->name);
-    }
-
-    return title;
-}
-
 static int prepare_plot_action (SESSION_GRAPH *graph,
                                 char *fullname)
 {
