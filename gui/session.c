@@ -89,7 +89,6 @@
 typedef struct SESSION_ SESSION;
 typedef struct SESSION_TEXT_ SESSION_TEXT;
 typedef struct SESSION_MODEL_ SESSION_MODEL;
-typedef struct SESSION_GRAPH_ SESSION_GRAPH;
 typedef struct gui_obj_ gui_obj;
 
 enum {
@@ -897,14 +896,14 @@ static int maybe_move_plot_datafile (const char *orig,
     return err;
 }
 
-/* Callback for "add to session as icon" on a graph displayed
-   as PNG -- see gpt_control.c. Note that there is code in
-   gpt_control designed to ensure that this option is not
-   available for a graph that has already been saved in
-   this way.
+/* Callback for "add to session as icon" on a graph displayed as PNG --
+   see gpt_control.c. Note that there is code in gpt_control designed to
+   ensure that this option is not available for a graph that has already
+   been saved in this way.
 */
 
-int gui_add_graph_to_session (char *fname, char *fullname, int type)
+int gui_add_graph_to_session (char *fname, char *fullname,
+                              int type, SESSION_GRAPH **pgrf)
 {
     char shortname[MAXSAVENAME];
     char graphname[MAXSAVENAME];
@@ -956,6 +955,9 @@ int gui_add_graph_to_session (char *fname, char *fullname, int type)
 	} else if (has_datafile) {
 	    grf->has_datafile = 1;
 	}
+        if (pgrf != NULL) {
+            *pgrf = grf;
+        }
     }
 
     return err;
@@ -3590,6 +3592,53 @@ static gchar *object_get_window_title (gui_obj *obj)
     return title;
 }
 
+static int prepare_plot_action (SESSION_GRAPH *graph,
+                                char *fullname)
+{
+    int err = gretl_chdir(gretl_dotdir());
+
+    if (err) {
+        gui_errmsg(err);
+    } else {
+        session_file_make_path(fullname, graph->fname, NULL);
+        /* the following shows an error message if needed */
+        err = remove_png_term_from_plot_by_name(fullname);
+    }
+
+    return err;
+}
+
+void view_plot_commands (SESSION_GRAPH *graph)
+{
+    char fullname[MAXLEN];
+    int err;
+
+    err = prepare_plot_action(graph, fullname);
+    if (!err) {
+        windata_t *vwin;
+
+        vwin = view_file_with_title(fullname, 1, 0, 78, 400,
+                                    EDIT_GP, graph->name);
+        /* add flag so we can mark the session as modified
+           if the plot file is changed */
+        vwin->flags |= VWIN_SESSION_GRAPH;
+        if (graph->has_datafile) {
+            vwin->data = graph;
+        }
+    }
+}
+
+static void view_using_gnuplot (SESSION_GRAPH *graph)
+{
+    char fullname[MAXLEN];
+    int err;
+
+    err = prepare_plot_action(graph, fullname);
+    if (!err) {
+        gnuplot_view_session_graph(fullname);
+    }
+}
+
 static void object_popup_callback (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
@@ -3610,37 +3659,17 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 		   obj->sort == GRETL_OBJ_PLOT) {
 	    open_gui_graph(obj);
 	}
-    } else if (!strcmp(item, _("Edit plot commands")) ||
-               !strcmp(item, _("View using gnuplot"))) {
+    } else if (!strcmp(item, _("Edit plot commands"))) {
+        if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
+            SESSION_GRAPH *graph = (SESSION_GRAPH *) obj->data;
+
+            view_plot_commands(graph);
+        }
+    } else if (!strcmp(item, _("View using gnuplot"))) {
 	if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
 	    SESSION_GRAPH *graph = (SESSION_GRAPH *) obj->data;
-	    char fullname[MAXLEN];
-	    gchar *title;
-	    windata_t *vwin;
-	    int err;
 
-	    err = gretl_chdir(gretl_dotdir());
-	    if (err) {
-		gui_errmsg(err);
-	    } else {
-		session_file_make_path(fullname, graph->fname, NULL);
-		/* the following handles error message if needed */
-		err = remove_png_term_from_plot_by_name(fullname);
-	    }
-	    if (!err && !strcmp(item, _("Edit plot commands"))) {
-		title = object_get_window_title(obj);
-		vwin = view_file_with_title(fullname, 1, 0, 78, 400,
-					    EDIT_GP, title);
-		g_free(title);
-		/* add flag so we can mark the session as modified
-		   if the plot file is changed */
-		vwin->flags |= VWIN_SESSION_GRAPH;
-		if (graph->has_datafile) {
-		    vwin->data = graph;
-		}
-	    } else if (!err) {
-                gnuplot_view_session_graph(fullname);
-            }
+            view_using_gnuplot(graph);
 	}
     } else if (!strcmp(item, _("Add to graph page"))) {
 	if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {

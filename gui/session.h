@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* session.h for gretl */
@@ -23,6 +23,8 @@
 #define SESSION_H
 
 #include "objstack.h"
+
+typedef struct SESSION_GRAPH_ SESSION_GRAPH;
 
 enum {
     SCHEDULE_FOR_DELETION,
@@ -70,12 +72,15 @@ int real_add_text_to_session (PRN *prn, int pos, const char *tname);
 
 void save_output_as_text_icon (windata_t *vwin);
 
-int gui_add_graph_to_session (char *fname, char *fullname, int type);
+int gui_add_graph_to_session (char *fname, char *fullname,
+                              int type, SESSION_GRAPH **pgrf);
 
 int cli_add_graph_to_session (const char *fname, const char *gname,
 			      GretlObjType type, int display);
 
 char *session_graph_make_path (char *path, const char *fname);
+
+void view_plot_commands (SESSION_GRAPH *graph);
 
 const char *last_session_graph_name (void);
 

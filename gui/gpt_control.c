@@ -62,18 +62,17 @@
 #define SPIN_PAGER 0
 
 enum {
-    PLOT_SAVED          = 1 << 0,
-    PLOT_ZOOMED         = 1 << 1,
-    PLOT_ZOOMING        = 1 << 2,
-    PLOT_PNG_COORDS     = 1 << 3,
-    PLOT_HAS_XRANGE     = 1 << 4,
-    PLOT_HAS_YRANGE     = 1 << 5,
-    PLOT_DONT_ZOOM      = 1 << 6,
-    PLOT_DONT_EDIT      = 1 << 7,
-    PLOT_DONT_MOUSE     = 1 << 8,
-    PLOT_POSITIONING    = 1 << 9,
-    PLOT_CURSOR_LABEL   = 1 << 10,
-    PLOT_TERM_HIDDEN    = 1 << 11
+    PLOT_ZOOMED         = 1 << 0,
+    PLOT_ZOOMING        = 1 << 1,
+    PLOT_PNG_COORDS     = 1 << 2,
+    PLOT_HAS_XRANGE     = 1 << 3,
+    PLOT_HAS_YRANGE     = 1 << 4,
+    PLOT_DONT_ZOOM      = 1 << 5,
+    PLOT_DONT_EDIT      = 1 << 6,
+    PLOT_DONT_MOUSE     = 1 << 7,
+    PLOT_POSITIONING    = 1 << 8,
+    PLOT_CURSOR_LABEL   = 1 << 9,
+    PLOT_TERM_HIDDEN    = 1 << 10
 } plot_status_flags;
 
 enum {
@@ -170,6 +169,7 @@ struct png_plot_t {
     GdkPixmap *pixmap;
     GdkPixbuf *savebuf;
 #endif
+    SESSION_GRAPH *grf;
     GPT_SPEC *spec;
     double xmin, xmax;
     double ymin, ymax;
@@ -311,7 +311,7 @@ GtkWidget *plot_get_shell (png_plot *plot)
 
 int plot_is_saved (const png_plot *plot)
 {
-    return (plot->status & PLOT_SAVED);
+    return plot->grf != NULL;
 }
 
 int plot_is_mouseable (const png_plot *plot)
@@ -4514,20 +4514,36 @@ static void boxplot_show_summary (GPT_SPEC *spec)
     }
 }
 
-static void add_to_session_callback (png_plot *plot)
+static int add_to_session_callback (png_plot *plot)
 {
     char fullname[MAXLEN] = {0};
+    SESSION_GRAPH *grf = NULL;
     int err, type;
 
     type = (plot->spec->code == PLOT_BOXPLOTS)? GRETL_OBJ_PLOT :
         GRETL_OBJ_GRAPH;
 
-    err = gui_add_graph_to_session(plot->spec->fname, fullname, type);
+    err = gui_add_graph_to_session(plot->spec->fname, fullname,
+                                   type, &grf);
 
     if (!err) {
         remove_png_term_from_plot(fullname, plot->spec);
-        plot->status |= PLOT_SAVED;
         plot->status |= PLOT_TERM_HIDDEN;
+        plot->grf = grf;
+    }
+
+    return err;
+}
+
+static void call_view_plot_commands (png_plot *plot)
+{
+    int err = 0;
+
+    if (plot->grf == NULL) {
+        err = add_to_session_callback(plot);
+    }
+    if (!err) {
+        view_plot_commands(plot->grf);
     }
 }
 
@@ -4708,6 +4724,8 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
         pdf_ps_dialog(plot->spec, shell);
     } else if (!strcmp(item_string, _("Save to session as icon"))) {
         add_to_session_callback(plot);
+    } else if (!strcmp(item_string, _("View gnuplot commands"))) {
+        call_view_plot_commands(plot);
     } else if (plot_is_range_mean(plot) && !strcmp(item_string, _("Help"))) {
         show_gui_help(RMPLOT);
     } else if (plot_is_hurst(plot) && !strcmp(item_string, _("Help"))) {
@@ -4814,6 +4832,7 @@ static void build_plot_menu (png_plot *plot)
 #endif
         N_("Copy to clipboard"),
         N_("Save to session as icon"),
+        N_("View gnuplot commands"),
         N_("Freeze data labels"),
         N_("All data labels"),
         N_("Clear data labels"),
@@ -5780,6 +5799,7 @@ static png_plot *png_plot_new (void)
     plot->pixmap = NULL;
     plot->savebuf = NULL;
 #endif
+    plot->grf = NULL;
     plot->spec = NULL;
     plot->editor = NULL;
     plot->window = NULL;
@@ -5949,13 +5969,11 @@ static void plot_handle_specials (png_plot *plot)
     }
 }
 
-/* note: @fname is the name of the file containing the
-   plot commands.
-*/
+/* @fname is the name of the file containing the plot commands */
 
 static int gnuplot_show_png (const char *fname,
                              const char *name,
-                             void *session_ptr,
+                             SESSION_GRAPH *grf,
                              png_plot *coll)
 {
     png_plot *plot;
@@ -5969,7 +5987,7 @@ static int gnuplot_show_png (const char *fname,
 
 #if GPDEBUG || WINDEBUG
     fprintf(stderr, "gnuplot_show_png:\n fname='%s', saved=%d\n",
-            fname, (session_ptr != NULL));
+            fname, (grf != NULL));
 #endif
 
     plot = png_plot_new();
@@ -5984,10 +6002,6 @@ static int gnuplot_show_png (const char *fname,
     }
 
     strcpy(plot->spec->fname, fname);
-
-    if (session_ptr != NULL) {
-        plot->status |= PLOT_SAVED;
-    }
 
     /* make png plot struct accessible via spec */
     plot->spec->ptr = plot;
@@ -6054,9 +6068,8 @@ static int gnuplot_show_png (const char *fname,
         gtk_widget_destroy(plot->shell);
     } else {
         g_object_set_data(G_OBJECT(plot->shell), "object", plot);
-        if (session_ptr != NULL) {
-            g_object_set_data(G_OBJECT(plot->shell),
-                              "session-ptr", session_ptr);
+        if (grf != NULL) {
+            plot->grf = grf;
         } else if (coll == NULL && do_collect_plots()) {
             set_plot_collection(plot);
         }
@@ -6151,9 +6164,8 @@ int gnuplot_show_map (gretl_bundle *mb)
     return err;
 }
 
-/* Called on a newly created PNG graph; note that
-   the filename returned by gretl_plotfile() is the
-   input file (set of gnuplot commands).
+/* Called on a newly created PNG graph; note that the filename returned
+   by gretl_plotfile() is the input file (set of gnuplot commands).
 */
 
 void register_graph (void)
@@ -6180,14 +6192,14 @@ void register_graph (void)
     gnuplot_show_png(gretl_plotfile(), NULL, NULL, pp);
 }
 
-/* @fname is the name of a plot command file from the
-   current session and @title is its display name;
-   @session_ptr is a pointer to the session object.
+/* @fname is the name of a plot command file from the current session
+   and @title is its display name; @grf is a pointer to the session
+   object.
 */
 
 void display_session_graph (const char *fname,
                             const char *title,
-                            void *session_ptr)
+                            SESSION_GRAPH *grf)
 {
     gchar *fullname = NULL;
     int err = 0;
@@ -6220,7 +6232,7 @@ void display_session_graph (const char *fname,
         /* display the bad plot file */
         view_file(fullname, 0, 0, 78, 350, VIEW_FILE);
     } else {
-        err = gnuplot_show_png(fullname, title, session_ptr, NULL);
+        err = gnuplot_show_png(fullname, title, grf, NULL);
     }
 
     g_free(fullname);
