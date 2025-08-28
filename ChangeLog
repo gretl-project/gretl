@@ -15,8 +15,13 @@ version 2025c, in progress
   same way as all the other supported metrics
 - new function lnmgamma(): multivariate log gamma function
 - slight speedup for forward stepwise regression code
-- command-line syntax: accept ';' as calling for line
-  continuation (except in the "smpl" command)
+- command-line syntax: accept trailing ';' as calling for
+  line continuation (except in the "smpl" command)
+- function packages: add apparatus to specify that the
+  return value of a given public function must be assigned,
+  in GUI usage
+- printing of a bundle with the --tree option: clarify the
+  structure
 - Fix bug: potential crash in GTK file chooser dialog
 - Fix bug: incorrect Bartlett band in ACF + PACF plot
 - Fix bug: memory leak in some cases of loop code
@@ -33,6 +38,8 @@ version 2025c, in progress
   are not offered as the default names for lists
 - GUI: offer a more direct way to view a graph in the Icon
   View window using gnuplot
+- GUI: plot context menu: add option to view the gnuplot
+  commands that generated the plot
 
 2025-06-05 version 2025b
 - gretlcli: add --no-plots option to suppress plots
