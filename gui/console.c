@@ -234,21 +234,37 @@ static gint console_paste_handler (GtkWidget *w, gpointer p)
     return console_paste_text(w, GDK_NONE);
 }
 
-#if defined(__linux) || defined(linux)
-
 static gint console_click_handler (GtkWidget *w,
                                    GdkEventButton *event,
                                    gpointer p)
 {
+    GtkTextView *tview = GTK_TEXT_VIEW(w);
+    GtkTextWindowType wintype;
+    GtkTextIter iter;
+    gint x, y;
+    gint off;
+
+    /* disallow sticking the cursor into the console prompt */
+    wintype = gtk_text_view_get_window_type(tview, event->window);
+    gtk_text_view_window_to_buffer_coords(tview, wintype,
+                                          (gint) event->x,
+                                          (gint) event->y,
+                                          &x, &y);
+    gtk_text_view_get_iter_at_location(tview, &iter, x, y);
+    off = gtk_text_iter_get_line_offset(&iter);
+    if (off < 2) {
+        return TRUE;
+    }
+
+#if defined(__linux) || defined(linux)
     /* paste from the X selection onto the command line */
     if (event->button == 2) {
         return console_paste_text(w, GDK_SELECTION_PRIMARY);
-    } else {
-        return FALSE;
     }
-}
+#endif
 
-#endif /* linux */
+    return FALSE;
+}
 
 enum {
     SAMPLE_RECORD,
@@ -525,10 +541,8 @@ windata_t *gretl_console (void)
 
     g_signal_connect(G_OBJECT(cvwin->text), "paste-clipboard",
                      G_CALLBACK(console_paste_handler), NULL);
-#if defined(__linux) || defined(linux)
     g_signal_connect(G_OBJECT(cvwin->text), "button-press-event",
                      G_CALLBACK(console_click_handler), NULL);
-#endif
     g_signal_connect(G_OBJECT(cvwin->text), "button-release-event",
                      G_CALLBACK(console_mouse_handler), cvwin);
     g_signal_connect(G_OBJECT(cvwin->text), "key-press-event",
