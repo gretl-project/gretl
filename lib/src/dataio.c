@@ -752,16 +752,18 @@ static const char *get_filename_extension (const char *fname)
 {
     const char *ext = strrchr(fname, '.');
 
-    if (ext != NULL && strchr(ext, '/')) {
-	/* the rightmost dot is not in the basename */
-	ext = NULL;
-    }
-
+    if (ext != NULL) {
+        /* check that the rightmost dot is in the basename */
 #ifdef WIN32
-    if (ext != NULL && strchr(ext, '\\')) {
-	ext = NULL;
-    }
+        if (strchr(ext, '\\') || strchr(ext, '/')) {
+            ext = NULL;
+        }
+#else
+        if (strchr(ext, '/')) {
+            ext = NULL;
+        }
 #endif
+    }
 
     return ext;
 }

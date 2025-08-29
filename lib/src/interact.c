@@ -2087,12 +2087,33 @@ static int check_import_subsetting (CMD *cmd, OpenOp *op)
     }
 }
 
+static int no_suffix (const char *fname)
+{
+    char *s = strrchr(fname, '.');
+
+    if (s != NULL) {
+        /* check that the rightmost dot is in the basename */
+#ifdef WIN32
+        if (strchr(s, '\\') || strchr(s, '/')) {
+            s = NULL;
+        }
+#else
+        if (strchr(s, '/')) {
+            s = NULL;
+        }
+#endif
+    }
+
+    return s == NULL;
+}
+
 static int open_append_stage_1 (CMD *cmd,
                                 DATASET *dset,
                                 OpenOp *op,
                                 PRN *prn)
 {
     gretlopt opt = cmd->opt;
+    gchar *tmpname = NULL;
     int pkgdata = 0;
     int err = 0;
 
@@ -2111,6 +2132,7 @@ static int open_append_stage_1 (CMD *cmd,
         op->dbdata = 1;
         strncat(op->fname, cmd->param, MAXLEN - 1);
     } else if (cmd->ci != JOIN && (opt & OPT_O)) {
+        /* --odbc */
         op->ftype = GRETL_ODBC;
         op->dbdata = 1;
     } else if ((cmd->ci == OPEN && (opt & OPT_K)) ||
@@ -2126,19 +2148,29 @@ static int open_append_stage_1 (CMD *cmd,
         op->http = 1;
     }
 
-    if (!op->dbdata) {
-        if (op->http) {
-#ifdef USE_CURL
-            err = try_http(cmd->param, op->fname, NULL);
-#else
-            gretl_errmsg_set("http resource: cURL is not available");
-            err = E_DATA;
-#endif
-        } else if (pkgdata) {
-            err = get_package_data_path(cmd->ci, cmd->param, op->fname);
-        } else {
-            err = get_full_filename(cmd->param, op->fname, OPT_NONE);
+    if (cmd->ci == OPEN && !op->dbdata && !op->http) {
+        /* respect the claim that no suffix implies ".gdt" */
+        if (no_suffix(cmd->param)) {
+            tmpname = g_strdup_printf("%s.gdt", cmd->param);
         }
+    }
+
+    if (!op->dbdata && op->http) {
+#ifdef USE_CURL
+        err = try_http(cmd->param, op->fname, NULL);
+#else
+        gretl_errmsg_set("http resource: cURL is not available");
+        err = E_DATA;
+#endif
+    } else if (!op->dbdata) {
+        gchar *orig = tmpname != NULL ? tmpname : cmd->param;
+
+        if (pkgdata) {
+            err = get_package_data_path(cmd->ci, orig, op->fname);
+        } else {
+            err = get_full_filename(orig, op->fname, OPT_NONE);
+        }
+        g_free(tmpname);
     }
 
     if (!err) {
@@ -2260,11 +2292,8 @@ static int lib_open_append (ExecState *s,
 
     err = open_append_stage_1(cmd, dset, &op, prn);
 
-    if (cmd->ci == JOIN) {
+    if (err || cmd->ci == JOIN) {
         /* handled by stage 1 */
-        return err;
-    } else if (err) {
-        /* error at stage 1, don't proceed */
         return err;
     }
 
