@@ -856,8 +856,9 @@ int gretl_path_prepend (char *file, const char *path)
 }
 
 enum {
-    ADD_GFN = 1 << 0,
-    SUBDIRS = 1 << 1
+    ADD_GDT = 1 << 0,
+    ADD_GFN = 1 << 1,
+    SUBDIRS = 1 << 2
 };
 
 static int try_open_file (char *targ, const char *finddir,
@@ -872,6 +873,18 @@ static int try_open_file (char *targ, const char *finddir,
     strcat(tmp, targ);
 
     err = gretl_test_fopen(tmp, "r");
+
+    if (err && (flags & ADD_GDT)) {
+        if (maybe_add_suffix(tmp, ".gdt")) {
+            err = gretl_test_fopen(tmp, "r");
+            if (err) {
+                /* try .gdtb also */
+                strcat(tmp, "b");
+                err = gretl_test_fopen(tmp, "r");
+            }
+        }
+    }
+
     if (!err) {
         strcpy(targ, tmp);
         found = 1;
@@ -950,7 +963,19 @@ static char *search_dir (char *fname, const char *topdir, int flags)
         if (!err) {
             return fname;
         }
-        if (flags & ADD_GFN) {
+        if (flags & ADD_GDT) {
+            if (maybe_add_suffix(fname, ".gdt")) {
+                err = gretl_test_fopen(fname, "r");
+                if (!err) {
+                    return fname;
+                }
+            } else if (maybe_add_suffix(fname, ".gdtb")) {
+                err = gretl_test_fopen(fname, "r");
+                if (!err) {
+                    return fname;
+                }
+            }
+        } else if (flags & ADD_GFN) {
             if (maybe_add_suffix(fname, ".gfn")) {
                 err = gretl_test_fopen(fname, "r");
                 if (!err) {
@@ -1346,6 +1371,12 @@ char *gretl_addpath (char *fname, int script)
 
     if (g_path_is_absolute(fname)) {
         err = gretl_test_fopen(fname, "r");
+        if (err && !script && maybe_add_suffix(fname, ".gdt")) {
+            err = gretl_test_fopen(fname, "r");
+            if (err) {
+                strcpy(fname, orig);
+            }
+        }
         return err ? NULL : fname;
     }
 
@@ -1359,6 +1390,7 @@ char *gretl_addpath (char *fname, int script)
 
     if (script_dirs != NULL) {
         GList *dirs = g_list_last(script_dirs);
+        int flags = script ? 0 : ADD_GDT;
         const char *gpath;
 
 #if SCRIPT_DIRS_DEBUG
@@ -1367,7 +1399,7 @@ char *gretl_addpath (char *fname, int script)
         while (dirs != NULL && !found) {
             strcpy(fname, orig);
             gpath = dirs->data;
-            test = search_dir(fname, gpath, 0);
+            test = search_dir(fname, gpath, flags);
             if (test != NULL) {
                 found = 1;
             }
@@ -1409,7 +1441,7 @@ char *gretl_addpath (char *fname, int script)
             } else {
                 /* data file */
                 sprintf(trydir, "%sdata", gpath);
-                test = search_dir(fname, trydir, SUBDIRS);
+                test = search_dir(fname, trydir, ADD_GDT | SUBDIRS);
                 if (test != NULL) {
                     return fname;
                 }
@@ -1450,7 +1482,7 @@ char *gretl_addpath (char *fname, int script)
             } else {
                 /* data file? */
                 sprintf(trydir, "%sdata", gpath);
-                test = search_dir(fname, trydir, SUBDIRS);
+                test = search_dir(fname, trydir, ADD_GDT | SUBDIRS);
                 if (test != NULL) {
                     return fname;
                 }
