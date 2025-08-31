@@ -301,20 +301,25 @@ static int cond_met (gint a, gint v, gint op)
     return a != v;
 }
 
-static void toggle_sensitivity (GtkWidget *cb, GtkWidget *w)
+static void cb_toggle_sensitivity (GtkWidget *cb, GtkWidget *w)
 {
     gint a = gtk_combo_box_get_active(GTK_COMBO_BOX(cb));
     gint minv = widget_get_int(cb, "minv");
     gint val  = widget_get_int(w, "condval");
     gint cop  = widget_get_int(w, "condop");
+    int met = cond_met(a + minv, val, cop);
 
-    gtk_widget_set_sensitive(w, cond_met(a + minv, val, cop));
+    if (GTK_IS_TOGGLE_BUTTON(w) && !met &&
+        gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), FALSE);
+    }
+    gtk_widget_set_sensitive(w, met);
 }
 
 static void condition_on_combo (GtkWidget *w, GtkWidget *cb)
 {
     g_signal_connect(G_OBJECT(cb), "changed",
-		     G_CALLBACK(toggle_sensitivity), w);
+		     G_CALLBACK(cb_toggle_sensitivity), w);
 }
 
 static int validate_op (const char *s)
@@ -377,12 +382,14 @@ static void check_depends (call_info *cinfo, int i,
 	char ctrl[32] = {0};
 	char opstr[3] = {0};
         char valstr[16] = {0};
+        int simple = 0;
 	int val = -1;
 	int op = 0;
 
 	/* check the 'depends' string for validity */
 	if (gretl_namechar_spn(depname) == strlen(depname)) {
-	    /* the simple case: should be the ID of a toggle button */
+	    /* the simple case: should be the ID of a suitable parameter */
+            simple = 1;
 	    val = 1;
         } else if (sscanf(depstr, "%31[^=<>! ] %2[=<>!]%15s", ctrl, opstr, valstr) == 3) {
             /* the general case: <name><op><value> */
@@ -429,6 +436,18 @@ static void check_depends (call_info *cinfo, int i,
 		gtk_widget_set_sensitive(cinfo->sels[i], a);
 		sensitize_conditional_on(cinfo->sels[i], dep);
 	    }
+        } else if (GTK_IS_COMBO_BOX(dep) && simple) {
+             if (widget_get_int(dep, "null_OK")) {
+                int a = gtk_combo_box_get_active(GTK_COMBO_BOX(dep));
+                int n = widget_get_int(dep, "nullpos");
+
+                gtk_widget_set_sensitive(cinfo->sels[i], a != n);
+                widget_set_int(cinfo->sels[i], "condval", n);
+                widget_set_int(cinfo->sels[i], "condop", OP_NEQ);
+                condition_on_combo(cinfo->sels[i], dep);
+             } else {
+                 fprintf(stderr, "ui-maker depends: invalid combo-box spec '%s'\n", depstr);
+             }
 	} else if (GTK_IS_COMBO_BOX(dep)) {
 	    gint a = gtk_combo_box_get_active(GTK_COMBO_BOX(dep));
 	    int minv = widget_get_int(dep, "minv");
@@ -441,7 +460,7 @@ static void check_depends (call_info *cinfo, int i,
 		widget_set_int(cinfo->sels[i], "condop", op);
 		condition_on_combo(cinfo->sels[i], dep);
 	    } else {
-		fprintf(stderr, "ui-maker depends: bad combo-box usage '%s'\n", depstr);
+		fprintf(stderr, "ui-maker depends: invalid combo-box spec '%s'\n", depstr);
 	    }
 	} else {
 	    fprintf(stderr, "ui-maker depends: unsupported usage '%s'\n", depstr);
@@ -1801,6 +1820,7 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype,
     if (null_OK) {
 	combo_box_append_text(combo, nullarg_label(null_OK));
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), k);
+        widget_set_int(combo, "nullpos", k);
     }
 
     if (prior_val != NULL) {
