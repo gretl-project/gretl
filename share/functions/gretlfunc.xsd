@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<!-- XML schema for gretl function packages -->
-
+<!--
+  Document Type Definition (DTD) for gretl function packages: a package
+  needs a name, author, version, date, description and help text.  It 
+  also needs at least one gretl-function.  The latter must have a name 
+  and must include function code; it may have zero or more 
+  parameters, and zero or one return values. And the package must
+  contain a sample script which illustrates a correct call.
+-->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
   <xs:element name="gretl-functions">
     <xs:complexType>
@@ -97,7 +102,7 @@
     </xs:complexType>
   </xs:element>
   <xs:element name="version" type="xs:string"/>
-  <xs:element name="date" type="xs:date"/>
+  <xs:element name="date" type="xs:string"/>
   <xs:element name="description">
     <xs:complexType mixed="true">
       <xs:attribute name="lang"/>
@@ -160,6 +165,14 @@
         </xs:simpleType>
       </xs:attribute>
       <xs:attribute name="menu-only" default="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="0"/>
+            <xs:enumeration value="1"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="must-assign" default="0">
         <xs:simpleType>
           <xs:restriction base="xs:token">
             <xs:enumeration value="0"/>
