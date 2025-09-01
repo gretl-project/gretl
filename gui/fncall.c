@@ -1050,6 +1050,7 @@ static void update_combo_selectors (call_info *cinfo,
 	null_OK = widget_get_int(sel, "null_OK");
 	if (null_OK) {
 	    combo_box_append_text(sel, nullarg_label(null_OK));
+            widget_set_int(sel, "nullpos", llen);
 	}
 
 	if (target) {
@@ -1515,11 +1516,13 @@ static GtkWidget *spin_arg_selector (call_info *cinfo, int i,
 /* Check a parameter's @ui bundle for strings containing recipes to
    generate the minimum, maximum and/or default values for the
    parameter. If we find any, generate the value(s) in question and
-   return them indirectly via @dvals.
+   return them indirectly via @rtvals. If @intvals is non-zero we
+   are dealing with values that will eventually be taken as ints.
 */
 
 static int min_max_def_from_ui (gretl_bundle *ui,
-				double *dvals[])
+				double rtvals[],
+                                int intvals)
 {
     const char *S[] = {"minimum", "maximum", "default"};
     const char *s;
@@ -1530,10 +1533,20 @@ static int min_max_def_from_ui (gretl_bundle *ui,
 	s = gretl_bundle_get_string(ui, S[i], NULL);
 	if (s != NULL) {
 	    val = generate_scalar(s, dataset, &err);
-	    if (!err && !na(val)) {
-		*(dvals[i]) = val;
-	    }
-	}
+            if (!err && !na(val)) {
+                if (intvals &&
+                    ((i == 0 && val < rtvals[i]) ||
+                     (i == 1 && val > rtvals[i]))) {
+                    err = 1;
+                } else {
+                    rtvals[i] = val;
+                }
+            }
+        }
+    }
+
+    if (err) {
+        fprintf(stderr, "ui: min_max_def_from_ui failed\n");
     }
 
     return err;
@@ -1544,54 +1557,65 @@ static GtkWidget *int_arg_selector (call_info *cinfo,
 				    const char *prior_val,
 				    gretl_bundle *ui)
 {
-    double dminv = fn_param_minval(cinfo->func, i);
-    double dmaxv = fn_param_maxval(cinfo->func, i);
-    double deflt = fn_param_default(cinfo->func, i);
+    double pminv = fn_param_minval(cinfo->func, i);
+    double pmaxv = fn_param_maxval(cinfo->func, i);
+    double pdflt = fn_param_default(cinfo->func, i);
     int minv, maxv, initv = 0;
+    int orig_min = 0;
+    int ui_err = 0;
+
+    if (!na(pminv) && !na(pmaxv)) {
+        orig_min = (int) pminv;
+    }
 
     if (ui != NULL) {
 	/* check for run-time values */
-	double *dvals[] = {&dminv, &dmaxv, &deflt};
+        double rtvals[3] = {pminv, pmaxv, pdflt};
 
-	min_max_def_from_ui(ui, dvals);
+	ui_err = min_max_def_from_ui(ui, rtvals, 1);
+        if (!ui_err) {
+            if (rtvals[2] < rtvals[0] || rtvals[2] > rtvals[1]) {
+                /* invalid */
+                ui_err = 1;
+            }
+        }
+        if (!ui_err) {
+            /* update run-time values */
+            pminv = rtvals[0];
+            pmaxv = rtvals[1];
+            pdflt = rtvals[2];
+        }
     }
 
     if (type == GRETL_TYPE_OBS) {
 	/* the incoming vals will be 1-based */
-	minv = (na(dminv) || dminv < 1)? 0 : (int) dminv - 1;
-	maxv = (na(dmaxv) || dmaxv > dataset->n)?
-	    (dataset->n - 1) : (int) dmaxv - 1;
+	minv = (na(pminv) || pminv < 1)? 0 : (int) pminv - 1;
+	maxv = (na(pmaxv) || pmaxv > dataset->n)?
+	    (dataset->n - 1) : (int) pmaxv - 1;
     } else {
-	minv = (na(dminv))? INT_MIN : (int) dminv;
-	maxv = (na(dmaxv))? INT_MAX : (int) dmaxv;
+	minv = na(pminv) ? INT_MIN : (int) pminv;
+	maxv = na(pmaxv) ? INT_MAX : (int) pmaxv;
     }
 
     if (prior_val != NULL) {
 	initv = atoi(prior_val);
-    } else if (!na(deflt)) {
-	initv = (int) deflt;
-    } else if (!na(dminv)) {
-	initv = (int) dminv;
+    } else if (!na(pdflt)) {
+	initv = (int) pdflt;
+    } else if (!na(pminv)) {
+	initv = (int) pminv;
     }
 
-    if (type == GRETL_TYPE_INT && !na(dminv) && !na(dmaxv)) {
-	int nvals, ns = 0;
+    if (type == GRETL_TYPE_INT && !na(pminv) && !na(pmaxv)) {
 	const char **S;
+        int ns = 0;
 
-	S = fn_param_value_labels(cinfo->func, i, &nvals);
-	if (S == NULL) {
-	    /* try for alternative value-labels */
-	    S = gretl_bundle_get_strings(ui, "value_labels", &ns);
-	    if (S != NULL) {
-		/* check for right number of labels */
-		nvals = maxv - minv + 1;
-		if (ns != nvals) {
-		    S = NULL;
-		}
-	    }
-	}
+	S = fn_param_value_labels(cinfo->func, i, &ns);
 	if (S != NULL) {
-	    return enum_arg_selector(cinfo, i, S, nvals, minv, initv);
+            int offset = minv - orig_min;
+            int nvals = maxv - minv + 1;
+
+	    return enum_arg_selector(cinfo, i, S + offset,
+                                     nvals, minv, initv);
 	}
     }
 
@@ -1602,19 +1626,25 @@ static GtkWidget *double_arg_selector (call_info *cinfo, int i,
 				       const char *prior_val,
 				       gretl_bundle *ui)
 {
-    double minv  = fn_param_minval(cinfo->func, i);
-    double maxv  = fn_param_maxval(cinfo->func, i);
-    double deflt = fn_param_default(cinfo->func, i);
-    double step  = fn_param_step(cinfo->func, i);
+    double minv = fn_param_minval(cinfo->func, i);
+    double maxv = fn_param_maxval(cinfo->func, i);
+    double dflt = fn_param_default(cinfo->func, i);
+    double step = fn_param_step(cinfo->func, i);
     GtkAdjustment *adj;
     GtkWidget *spin;
     gchar *p, *tmp;
     int ndec = 0;
 
     if (ui != NULL) {
-	double *dvals[] = {&minv, &maxv, &deflt};
+	double dvals[] = {minv, maxv, dflt};
+        int err;
 
-	min_max_def_from_ui(ui, dvals);
+	err = min_max_def_from_ui(ui, dvals, 0);
+        if (!err) {
+            minv = dvals[0];
+            minv = dvals[1];
+            dflt = dvals[2];
+        }
     }
 
     tmp = g_strdup_printf("%g", maxv - step);
@@ -1629,22 +1659,21 @@ static GtkWidget *double_arg_selector (call_info *cinfo, int i,
 
     if (prior_val != NULL) {
 	/* locale? */
-	deflt = atof(prior_val);
+	dflt = atof(prior_val);
+    }
+    if (na(dflt)) {
+	/* note that the default may be NADBL */
+	dflt = minv;
     }
 
-    if (na(deflt)) {
-	/* note that default may be NADBL */
-	deflt = minv;
-    }
-
-    adj = (GtkAdjustment *) gtk_adjustment_new(deflt, minv, maxv,
+    adj = (GtkAdjustment *) gtk_adjustment_new(dflt, minv, maxv,
 					       step, step, 0);
     spin = gtk_spin_button_new(adj, 1, ndec);
     widget_set_int(spin, "argnum", i);
     g_object_set_data(G_OBJECT(spin), "cinfo", cinfo);
     g_signal_connect(G_OBJECT(spin), "value-changed",
 		     G_CALLBACK(update_double_arg), cinfo);
-    cinfo->args[i] = g_strdup_printf("%g", deflt);
+    cinfo->args[i] = g_strdup_printf("%g", dflt);
 
     return spin;
 }
