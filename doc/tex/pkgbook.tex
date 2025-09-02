@@ -2650,20 +2650,31 @@ function bundle GUI_exogtest (int xvar[$mylist] "regressor to test")
 
   \ttusage{no-print = \detokenize{foo_plot}}
 
+\item \texttt{must-assign} (optional): A list of public functions whose
+  return value must be assigned by the caller, in GUI usage.  Putting a
+  function in this list is a way of telling the user that it produces
+  neither printed output nor a plot, so there's no point in calling it
+  unless you mean to make use of the value it returns. If the user
+  clicks \texttt{OK} in the function-call dialog without specifying
+  assignment, an error is flagged. (But note that there's no way to stop
+  the user from discarding a function's return value in command-line
+  usage.)
+
+  \ttusage{must-assign = \detokenize{silent_func}}
+
 \end{description}
 
 \section{More on the GUI: ui-maker}
 \label{sec:ui-maker}
 
 The basic idea of the \texttt{ui-maker} function has been introduced
-above; in this section we delve into the details.  First, note that
-the private function that supports this functionality must take no
-arguments, and must return a bundle containing one or more
-sub-bundles, each identified by the name of a parameter whose GUI
-representation the author wishes to inflect, and each of which
-contains one or more special keys corresponding to recognized
-directives. So in outline such a function should look something like
-this:
+above; in this section we delve into the details.  First, note that the
+private function that supports this functionality must take no
+arguments, and must return a bundle containing one or more sub-bundles,
+each identified by the name of a parameter whose GUI representation the
+author wishes to inflect, and each of which contains one or more special
+keys corresponding to recognized directives. In outline such a function
+should look like this:
 
 \begin{code}
 function bundle my_uimaker (void)
@@ -2681,52 +2692,64 @@ arguments corresponding to the parameters are set. This is a
 one-to-one mapping so you can refer to particular widgets by the name
 of the corresponding parameter.
 
-The aspects of the GUI that a function writer can control, or at least
-inflect, via \texttt{ui-maker} fall into three categories: conditional
-sensitivity of argument widgets, run-time determination of the
-minimum, maximum and/or default values for arguments, and restrictions
-relating to list arguments (lists of series, that is). We go into each
-of these below. For concreteness, we'll assume that the
-\texttt{ui-maker} returns a bundle named \texttt{ret}, as in the
-example above (though you're free to choose the name yourself).
+The aspects of the GUI that a function writer can influence via
+\texttt{ui-maker} fall into three categories: conditional sensitivity of
+argument widgets, run-time determination of the minimum, maximum and/or
+default values for arguments, and restrictions relating to list
+arguments (lists of series, that is). We go into each of these
+below. For concreteness, we'll assume that the \texttt{ui-maker} returns
+a bundle named \texttt{ret}, as in the example above (though you're free
+to choose the name yourself).
 
 \subsection{Conditional sensitivity}
 
-The widget for a given parameter---denoted by \textsf{W}$_i$, where
-$i$ indicates its place in the parameter list---can be made sensitive
-or insensitive (``grayed out'') conditional on the state of the widget
-representing a prior parameter, \textsf{W}$_j$, $j<i$. This is
-achieved via a string under the key \texttt{depends} in the sub-bundle
-for \textsf{W}$_i$.  In the simplest case this is just the name of a
-prior boolean parameter, where \textsf{W}$_j$ takes the form of a
-check-box. Suppose we want the widget for a parameter \texttt{baz} to
-be shown as sensitive if and only if the check-box for a parameter
-\texttt{foo} is checked. Then this statement in the \texttt{ui-maker}
-would do the job:
+The widget for a given parameter---denoted by \textsf{W}$_i$, where $i$
+indicates its place in the parameter list---can be made sensitive or
+insensitive (``grayed out'') conditional on the state of the widget
+representing a prior parameter, \textsf{W}$_j$, $j<i$. This is achieved
+via a string under the key \texttt{depends} in the sub-bundle for
+\textsf{W}$_i$.  In the simplest case this string is just the name of a
+prior parameter. That works if the widget associated with the prior
+parameter is
+\begin{itemize}
+\item a check box (boolean switch), or
+\item a drop-down chooser pertaining to an \textit{optional} selection,
+  with a default value of \texttt{null}.
+\end{itemize}
+Suppose we want the widget for a parameter \texttt{baz} to be shown as
+sensitive conditional on the state of a prior parameter \texttt{foo}.
+The following statement in the \texttt{ui-maker} will do the job:
 \begin{code}
 ret.baz = _(depends = "foo")
 \end{code}
+If the widget for \texttt{foo} is a check box, \texttt{baz} will be
+sensitive if and only if that box is checked, while if it's a drop-down
+chooser \texttt{baz} will be sensitive if and only if something other
+than \texttt{null} is selected.
 
-Alternatively, \texttt{depends} may take the form
-\textsl{name}\,\texttt{cmp}\,\textsl{value}, where \textsl{name} is
-the name of parameter $j$, \textsl{value} is an integer indicating the
-state of \textsf{W}$_j$ and \texttt{cmp} is a `comparator':
-``\texttt{=}'' (or ``\texttt{==}'') for equality; ``\texttt{!=}'' for
-inequality; ``\texttt{<}'' and ``\texttt{>}'' for less than or greater
-than, respectively.
+Alternatively, the \texttt{depends} string may take the form
 
-If \textsf{W}$_j$ is a check box only the equality comparator is
-supported, but this allows for for inverse dependency. Given
+\qquad \textsl{name}\,\textsl{op}\,\textsl{value}
+
+where \textsl{name} is the name of parameter $j$, \textsl{value} is an
+integer indicating the state of \textsf{W}$_j$ and \textsl{op} is a
+comparison operator: ``\texttt{=}'' or ``\texttt{==}'' for equality;
+``\texttt{!=}'' for inequality; ``\texttt{<}'' and ``\texttt{>}'' for
+less than or greater than, respectively.
+
+If the prior widget \textsf{W}$_j$ is a check box only the equality
+comparator is supported, but this allows for inverse dependency. For
+example, given
 \begin{code}
 ret.baz = _(depends = "foo=0")
 \end{code}
 the widget for \texttt{baz} will be sensitive if and only if the box
 for parameter \texttt{foo} is \textit{not} checked.
 
-The extended case also allows for dependency on a ``combo box''
-holding a pull-down list of options. Suppose we have a parameter named
-\texttt{bar}, represented thus in the signature of the function in
-question:
+The extended case also allows for dependency on a chooser offering a
+fixed list of options \textit{without} a \texttt{null} option. Say
+there's a parameter named \texttt{bar}, represented thus in the
+signature of the function in question:
 \begin{code}
 int bar[0:2:0] "some option" {"none", "basic", "advanced"}
 \end{code}
@@ -2740,7 +2763,7 @@ ret.baz = _(depends = "bar>0")
 # sensitive if an option lower than 2 is selected
 ret.baz = _(depends = "bar<2")
 \end{code}
-Note that the \textsl{value} to the right of the comparator refers to
+Note that the \textsl{value} to the right of the operator refers to
 the numbering in the specification of \texttt{bar}. If the three
 option values were given as \texttt{[1:3:1]} instead of
 \texttt{[0:2:0]}, the \texttt{depends} condition would have to be
@@ -2761,7 +2784,6 @@ For example, suppose that your function has a parameter \texttt{n}
 whose value should be no greater than 20 percent of the current sample
 size. Then you could include the following statement in your
 \texttt{ui-maker} (where \texttt{ret} is the bundle to be returned):
-
 \begin{code}
 ret.n = _(maximum="floor(0.2*$nobs)")
 \end{code}
@@ -2775,6 +2797,22 @@ ret.n = _(maximum=maxstr, default=maxstr)
 
 And of course you could add a data-dependent minimum value if that's
 wanted.
+
+For another example, say we have a integer parameter supporting a choice
+of estimation method, as in this fragment from a possible function
+signature:
+\begin{code}
+int method[1:3:1] {"ols", "gls", "arma"}
+\end{code}
+Method 3, \texttt{arma}, should presumably be shown only if the current
+dataset is time series. To achieve that effect we could add this
+statement to the bundle returned by the \texttt{ui-maker} function
+\begin{code}
+ret.method = _(maximum = "$datatype==2 ? 3 : 2")
+\end{code}
+since \texttt{\$datatype==2} means we have time-series data. If at run
+time the dataset is not time series, only the \texttt{ols} and
+\texttt{gls} options will be shown in the drop-down selection.
 
 \subsection{Restrictions on list arguments}
 
