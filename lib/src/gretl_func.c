@@ -11554,7 +11554,7 @@ void adjust_indent (const char *s, int *this_indent, int *next_indent)
     const char *block_starts[] = {
         "loop", "if", "nls", "mle", "gmm", "mpi", "plot",
         "function", "restrict", "system", "foreign",
-        "outfile", "gpbuild", NULL
+        "outfile", "gpbuild", "gibbs", NULL
     };
     int ti = *next_indent;
     int ni = *next_indent;
