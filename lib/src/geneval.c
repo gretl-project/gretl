@@ -20453,9 +20453,9 @@ static int ok_array_decl (parser *p, const char *s)
     return p->lh.gtype != 0;
 }
 
-/* Given an existing LHS variable, whose type is recorded in
-   p->lh.t, check that the specified operator is supported
-   for the type. Return error code if not.
+/* Given an existing LHS variable, whose type is recorded in p->lh.t,
+   check that the specified operator is supported for the type. Return
+   error code if not.
 */
 
 static int check_operator_validity (parser *p, const char *opstr)
@@ -20495,13 +20495,12 @@ static int check_operator_validity (parser *p, const char *opstr)
     return 0;
 }
 
-/* Do we have an inline type specification preceding the
-   statement proper? In most cases we shouldn't, since it
-   will already have been handled by the tokenizer (and
-   the type will now be recorded in p->targ). But we allow
-   for finding a typespec here in case of "genrs" within
-   nls/mle/gmm blocks, where the statement bypasses the
-   regular tokenizer. (FIXME?)
+/* Do we have an inline type specification preceding the statement
+   proper? In most cases we shouldn't, since it will already have been
+   handled by the tokenizer (and the type will now be recorded in
+   p->targ). But we allow for finding a typespec here in case of "genrs"
+   within a block command, where the statement bypasses the regular
+   tokenizer. (FIXME?)
 */
 
 static void check_for_inline_typespec (const char **ps, parser *p)
@@ -20535,10 +20534,9 @@ static void check_for_inline_typespec (const char **ps, parser *p)
     *ps = s;
 }
 
-/* Check @p->lh.name for the name of an existing series or
-   user_var of some kind. If found, record the relevant
-   info in p->lh.t, and also either p->lh.vnum (series) or
-   p->lh.uv (other types).
+/* Check @p->lh.name for the name of an existing series or user_var of
+   some kind. If found, record the relevant info in p->lh.t, and also
+   either p->lh.vnum (series) or p->lh.uv (other types).
 */
 
 static int check_existing_lhs_type (parser *p, int *newvar)
@@ -20814,11 +20812,10 @@ static int series_compatible_matrix (const gretl_matrix *m, parser *p)
     return ok;
 }
 
-/* Check for assignment of an array of strings to a series,
-   which thereby becomes string-valued. The size of the array
-   must equal the full length of the dataset, which must not
-   be sub-sampled, and if there's a pre-existing series it
-   must not be string-valued already.
+/* Check for assignment of an array of strings to a series, which
+   thereby becomes string-valued. The size of the array must equal the
+   full length of the dataset, which must not be sub-sampled, and if
+   there's a pre-existing series it must not be string-valued already.
 */
 
 static int series_compatible_array (gretl_array *a, parser *p)
@@ -20837,10 +20834,10 @@ static int series_compatible_array (gretl_array *a, parser *p)
     }
 }
 
-/* This function converts a series to a column vector,
-   respecting the value of the set-variable "skip_missing".
-   In that respect it differs from tmp_matrix_from_series(),
-   which always just grabs the entire sample range.
+/* This function converts a series to a column vector, respecting the
+   value of the set-variable "skip_missing".  In that respect it differs
+   from tmp_matrix_from_series(), which always just grabs the entire
+   sample range.
 */
 
 static gretl_matrix *series_to_matrix (const double *x,
@@ -20954,8 +20951,8 @@ static gretl_matrix *retrieve_matrix_result (parser *p)
     return m;
 }
 
-/* Check to see if the existing LHS matrix is of the
-   same dimensions as the RHS result */
+/* Check to see if the existing LHS matrix is of the same dimensions as
+   the RHS result */
 
 static int LHS_matrix_reusable (parser *p, gretl_matrix **pm,
                                 gretl_matrix *tmp)
@@ -20983,8 +20980,8 @@ static int LHS_matrix_reusable (parser *p, gretl_matrix **pm,
     return ok;
 }
 
-/* Generating a matrix, and there's a pre-existing LHS matrix:
-   we re-use the left-hand side matrix if possible.
+/* Generating a matrix, and there's a pre-existing LHS matrix: we re-use
+   the left-hand side matrix if possible.
 */
 
 static gretl_matrix *assign_to_matrix (parser *p)
@@ -21044,9 +21041,9 @@ static gretl_matrix *assign_to_matrix (parser *p)
     return m;
 }
 
-/* Assigning to an existing (whole) LHS matrix, but using '+='
-   or some such modified/inflected assignment. Note that
-   save_generated_var() is the only caller.
+/* Assigning to an existing (whole) LHS matrix, but using '+=' or some
+   such modified/inflected assignment. Note that save_generated_var() is
+   the only caller.
 */
 
 static gretl_matrix *assign_to_matrix_mod (gretl_matrix *m1,
@@ -21373,9 +21370,8 @@ static int create_or_edit_list (parser *p)
                            t == STR || t == BUNDLE || t == ARRAY ||     \
                            t == U_ADDR || t == DBUNDLE)
 
-/* Note: we're doing this only in relation to "primary" types
-   (excluding bundle members, array elements, matrix sub-
-   specs).
+/* Note: we're doing this only in relation to "primary" types (excluding
+   bundle members, array elements, matrix sub-specs).
 */
 
 static int gen_check_return_type (parser *p)
@@ -21485,9 +21481,9 @@ static int gen_check_return_type (parser *p)
     return err;
 }
 
-/* Allocate storage if saving a new series to the dataset. We also
-   check for collision with the name of a function and issue a warning
-   if need be.
+/* Allocate storage if saving a new series to the dataset. We also check
+   for collision with the name of a function and issue a warning if need
+   be.
 */
 
 static int gen_allocate_storage (parser *p)
@@ -21691,36 +21687,33 @@ static int traverse_left (parser *p)
 /* set_nested_matrix_value(): this and its helper above,
    traverse_left(), require a little comment.
 
-   We come here when a hansl statement modifies a matrix that
-   is "under" something else. That something could be a
-   bundle or array, as in
+   We come here when a hansl statement modifies a matrix that is "under"
+   something else. That something could be a bundle or array, as in
 
    # Case 0
    b.m[diag] = x     # under bundle b
    a[3][1:2,1:2] = y # under array a
 
-   In such cases the first invocation of set_matrix_chunk
-   below is sufficient. However, we also come here when the
-   matrix is "under" another matrix -- that is, we have a
-   double index or subspec, as in these examples for a complex
-   matrix, C:
+   In such cases the first invocation of set_matrix_chunk below is
+   sufficient. However, we also come here when the matrix is "under"
+   another matrix -- that is, we have a double index or subspec, as in
+   these examples for a complex matrix, C:
 
    # Case 1
    C[real][1:2,1:2] = x
    C[3,3][real] = y
 
-   and also in these more extended examples where the
-   complex matrix is itself "under" something else:
+   and also in these more extended examples where the complex matrix is
+   itself "under" something else:
 
    # Case 2
    b.C[real][1:2,1:2] = x
    a[3][i,j][imag] = y
 
-   To handle such cases we have to crawl the parser's
-   "lhtree" (left-hand side tree) to find the matrix that
-   ultimately has to be modified, executing further calls
-   to set_matrix_chunk(). In Case 1 above, the matrix
-   we're looking for will be at depth 1 in the lhtree,
+   To handle such cases we have to crawl the parser's "lhtree"
+   (left-hand side tree) to find the matrix that ultimately has to be
+   modified, executing further calls to set_matrix_chunk(). In Case 1
+   above, the matrix we're looking for will be at depth 1 in the lhtree,
    while in Case 2 it will be at depth 2.
 */
 
@@ -21801,21 +21794,21 @@ enum {
     OVW_NUMERIC
 };
 
-/* Determine if it seems OK to overwrite a string-valued series.
-   This action was banned altogether up to gretl 2023b, but
-   we're now allowing it subject to two conditions:
+/* Determine if it seems OK to overwrite a string-valued series.  This
+   action was banned altogether up to gretl 2023b, but we're now
+   allowing it subject to two conditions:
 
    * It must be a case of simple (not inflected) assignment
    * The RHS must be a series
 
-   If the RHS series is not string-valued we'll treat that as
-   OK provisionally. The suitability of the RHS values will be
-   checked later, when we call assign_numeric_to_strvar():
-   they must be compatible with the encoding on the LHS.
+   If the RHS series is not string-valued we'll treat that as OK
+   provisionally. The suitability of the RHS values will be checked
+   later, when we call assign_numeric_to_strvar(): they must be
+   compatible with the encoding on the LHS.
 
    If the case is not rejected as unsuitable, we return either
-   OVW_STRINGS to indicate a string-valued RHS or OVW_NUMERIC
-   to indicate an overwrite using plain numerical input.
+   OVW_STRINGS to indicate a string-valued RHS or OVW_NUMERIC to
+   indicate an overwrite using plain numerical input.
 */
 
 static int strv_overwrite_ok (parser *p)
