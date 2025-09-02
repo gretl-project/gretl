@@ -427,13 +427,13 @@ int gibbs_execute (gretlopt opt, PRN *prn)
 
     for (i=0; i<gibbs_n_lines && !err; i++) {
         str = gibbs_lines[i];
-        if (!strncmp(str, "init: ", 6)) {
+        if (!strncmp(str, "init ", 5)) {
             if (i > 0 && !iniprev) {
                 pprintf(prn, "Initializers must come first\n");
                 pprintf(prn, "> %s\n", str);
                 err = E_INVARG;
             } else {
-                shift_string_left(str, 6);
+                shift_string_left(str, 5);
                 iniprev = 1;
                 ni++;
             }
@@ -442,9 +442,9 @@ int gibbs_execute (gretlopt opt, PRN *prn)
                 ng = gibbs_n_lines - ni;
                 record = calloc(ng, 1);
             }
-            if (!strncmp(str, "record: ", 8)) {
+            if (!strncmp(str, "record ", 7)) {
                 record[i-ni] = 1;
-                shift_string_left(str, 8);
+                shift_string_left(str, 7);
                 nr++;
             }
             iniprev = 0;
