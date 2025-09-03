@@ -460,7 +460,7 @@ function bundle dbnomics_dsets_for_provider(const string provider,
    ret.error = dbn_get_json("providers/" ~ provider, verbose, &json)
 
    if !ret.error
-      bundle b = jsongetb(json, "category_tree")
+      bundle b = jsongetb(json, "category_tree", defarray("name", "code"))
       bundles B = _jbterms(b)
       n = nelem(B)
       if n == 0
