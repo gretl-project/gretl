@@ -5254,6 +5254,73 @@
     </description>
   </command>
 
+  <command name="gibbs" section="Statistics" label="Gibbs sampler">
+
+    <usage>
+      <arguments>
+        <argument>burnin</argument>
+        <argument>N</argument>
+        <argument>output</argument>
+      </arguments>  
+      <options>
+	<option>
+	  <flag>--cleanup</flag>
+	  <effect>see below</effect>
+        </option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>print progress report</effect>
+        </option>
+      </options>
+      <examples>
+	<demos>
+	  <demo>gibbs_block.inp</demo>
+	</demos>
+      </examples>
+    </usage>  
+
+    <description>
+      <para>
+        This command is designed to facilitate the construction and
+        execution of a Gibbs sampler, for a good explanation of which
+        see <cite key="casella92">Casella and George (1992)</cite>.
+      </para>
+      <para>
+        It takes the form of a block of statements that define scalar
+        or matrix objects, started with <lit>gibbs</lit> and
+        terminated by <lit>end gibbs</lit>. Option flags can be
+        appended to the last line. Within the block two (mutually
+        exclusive) keywords are used to control how statements are
+        handled.
+      </para>
+      <ilist>
+        <li>
+          <para>
+            <lit>init</lit> identifies a statement as an initializer,
+            to be executed just once prior to the Gibbs iteration.
+          </para>
+        </li>
+        <li>
+          <para>
+            <lit>record</lit> tags a statement as one whose result
+            should be recorded at each iteration.
+          </para>
+        </li>
+      </ilist>
+      <para>
+        These keywords should be put first on a given line, followed
+        by the associated statement. Statements that feature neither
+        keyword are taken to be part of the iteration but their
+        results are not recorded in the output matrix. Statements
+        tagged with <lit>init</lit> should be given before all the
+        rest.
+      </para>
+      <para>
+        To be continued.
+      </para>
+    </description>
+  </command>
+
   <command name="gmm" section="Estimation" label="GMM estimation">
 
     <usage>
