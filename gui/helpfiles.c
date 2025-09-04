@@ -935,11 +935,11 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
     sensitive = !all_lower_case(needle);
 
 #ifdef GRETL_EDIT
-    if (g_object_get_data(G_OBJECT(entry), "search-all")) {
+    if (widget_get_int(entry, "search-all")) {
 	search_all = TRUE;
     }
 #else
-    if (g_object_get_data(G_OBJECT(entry), "search-all")) {
+    if (widget_get_int(entry, "search-all")) {
 	if (vwin->role == DBNOMICS_TOP ||
 	    vwin->role == DBNOMICS_DB ||
 	    vwin->role == DBNOMICS_SERIES) {
@@ -986,11 +986,7 @@ static void toggle_search_all_help (GtkComboBox *box, GtkWidget *entry)
 {
     gint i = gtk_combo_box_get_active(box);
 
-    if (i > 0) {
-	g_object_set_data(G_OBJECT(entry), "search-all", GINT_TO_POINTER(1));
-    } else {
-	g_object_steal_data(G_OBJECT(entry), "search-all");
-    }
+    widget_set_int(entry, "search-all", i > 0);
 }
 
 static void finder_add_options (GtkWidget *hbox, GtkWidget *entry)
@@ -1007,15 +1003,11 @@ static void finder_add_options (GtkWidget *hbox, GtkWidget *entry)
 		     entry);
 }
 
-static void toggle_search_this_help (GtkComboBox *box, GtkWidget *entry)
+static void toggle_search_target (GtkComboBox *box, GtkWidget *entry)
 {
     gint i = gtk_combo_box_get_active(box);
 
-    if (i > 0) {
-	g_object_steal_data(G_OBJECT(entry), "search-all");
-    } else {
-	g_object_set_data(G_OBJECT(entry), "search-all", GINT_TO_POINTER(1));
-    }
+    widget_set_int(entry, "search-all", i > 0);
 }
 
 static void finder_add_dbn_options (windata_t *vwin,
@@ -1024,20 +1016,18 @@ static void finder_add_dbn_options (windata_t *vwin,
 {
     GtkWidget *combo = gtk_combo_box_text_new();
 
-    if (vwin->role == DBNOMICS_DB) {
-	combo_box_append_text(combo, _("selected dataset"));
-    } else if (vwin->role == DBNOMICS_SERIES) {
-	combo_box_append_text(combo, _("this dataset"));
-    } else {
-	combo_box_append_text(combo, _("all DB.NOMICS"));
-    }
     combo_box_append_text(combo, _("this window"));
+    if (vwin->role == DBNOMICS_DB) {
+        combo_box_append_text(combo, _("selected dataset"));
+    } else if (vwin->role == DBNOMICS_SERIES) {
+        combo_box_append_text(combo, _("this dataset"));
+    } else {
+        combo_box_append_text(combo, _("all DB.NOMICS"));
+    }
     gtk_box_pack_end(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
-
-    g_object_set_data(G_OBJECT(entry), "search-all", GINT_TO_POINTER(1));
     g_signal_connect(G_OBJECT(combo), "changed",
-		     G_CALLBACK(toggle_search_this_help),
+		     G_CALLBACK(toggle_search_target),
 		     entry);
 }
 
