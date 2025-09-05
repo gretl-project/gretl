@@ -1,7 +1,7 @@
 author = Riccardo "Jack" Lucchetti and Allin Cottrell
 email = r.lucchetti@univpm.it
 version = @VERSION@
-date = 2022-06-26
+date = 2025-09-05
 description = obtain data via dbnomics
 tags = C81
 label = dbnomics
@@ -11,7 +11,8 @@ public = dbnomics_bundle_print dbnomics_bundles_print \
        dbnomics_fetch dbnomics_get_cart dbnomics_bundles_to_list \
        dbnomics_providers dbnomics_search dbnomics_category_tree \
        dbnomics_dsets_for_provider dbnomics_get_dataset_content \
-       dbnomics_get_dataset_dimensions dbnomics_printer
+       dbnomics_get_dataset_dimensions dbnomics_printer \
+       dbnomics_tree_for_provider dbnomics_tree_get_child
 bundle-print = dbnomics_printer
 help = dbnomics.pdf
 sample-script = dbnomics_sample.inp

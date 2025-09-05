@@ -527,7 +527,7 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function matrix get_widths(bundles bs)
+function matrix dbn_get_widths(bundles bs)
     w1 = 6
     w2 = 12
     w3 = 24
@@ -540,6 +540,16 @@ function matrix get_widths(bundles bs)
         w3 = xmin(xmax(w3, l), 40)
     endloop
     return {w1, w2, w3} + 2
+end function
+
+### ------------------------------------------------------------------------
+
+function string dbn_get_name_element(const bundles bs, int i)
+    if inbundle(bs[i], "name") && bs[i].name != ""
+        return bs[i].name
+    else
+        return "no description"
+    endif
 end function
 
 ### ------------------------------------------------------------------------

@@ -80,7 +80,7 @@ function void dbnomics_bundles_print(bundles bs)
    n = nelem(bs)
    if n > 0
       printf("\n\nContents of %s:\n\n", aname)
-      widths = get_widths(bs)
+      widths = dbn_get_widths(bs)
       fmtstring = sprintf("%%-%ds %%-%ds %%-%ds", widths[1], widths[2], widths[3])
       printf("%5s" ~ fmtstring ~ "\n", "", "Provider", "Code", "Description")
       loop i = 1..nelem(bs) --quiet
@@ -439,7 +439,7 @@ function bundle dbnomics_category_tree(const string provider,
    string json
    ret.error = dbn_get_json("providers/" ~ provider, verbose, &json)
    if !ret.error
-      ret = jsongetb(json, "category_tree")
+      ret = jsongetb(json, "category_tree", defarray("code", "name"))
    endif
    return ret
 end function
@@ -458,45 +458,45 @@ function bundle dbnomics_dsets_for_provider(const string provider,
    bundle ret
    string json
    ret.error = dbn_get_json("providers/" ~ provider, verbose, &json)
+   if ret.error
+      return ret
+   endif
 
-   if !ret.error
-      bundle b = jsongetb(json, "category_tree", defarray("name", "code"))
-      bundles B = _jbterms(b)
-      n = nelem(B)
-      if n == 0
-         msg = sprintf("Found no datasets for provider %s", provider)
-         funcerr msg
+   bundle b = jsongetb(json, "category_tree", defarray("code", "name"))
+   bundles B = _jbterms(b)
+   n = nelem(B)
+   if n == 0
+      msg = sprintf("Found no datasets for provider %s", provider)
+      funcerr msg
+   endif
+   strings dscodes = array(n)
+   strings dsnames = array(n)
+   n_ok = 0
+   j = 1
+   loop i=1..n -q
+      if inbundle(B[i], "code") && B[i].code != ""
+         dscodes[j] = B[i].code
+         dsnames[j] = dbn_get_name_element(B, i)
+         j++
+         n_ok++
       endif
-      strings dscodes = array(n)
-      strings dsnames = array(n)
-      n_ok = 0
-      j = 1
-      loop i=1..n -q
-         if inbundle(B[i], "code")
-            dscodes[j] = B[i].code
-            if inbundle(B[i], "name")
-               dsnames[j] = B[i].name
-            else
-               dsnames[j] = "no description"
-            endif
-            j++
-            n_ok++
-         endif
-      endloop
-      if n_ok == 0
-         printf("Found no datasets for provider %s", provider)
-      elif n_ok < n
+   endloop
+   if n_ok == 0
+      msg = sprintf("Found no datasets for provider %s", provider)
+      funcerr msg
+   else
+      ret.error = 0
+      if n_ok < n
          dscodes = dscodes[1:n_ok]
          dsnames = dsnames[1:n_ok]
+      else
+         ret.codes = dscodes
+         ret.names = dsnames
       endif
-      ret.error = 0
-      ret.codes = dscodes
-      ret.names = dsnames
    endif
 
    return ret
 end function
-
 
 ### ------------------------------------------------------------------------
 
@@ -549,3 +549,88 @@ function list dbnomics_bundles_to_list(bundles bs, string key[null])
    return RET
 end function
 
+### ------------------------------------------------------------------------
+
+function bundle dbnomics_tree_for_provider(const string provider,
+                                           bool verbose[0])
+
+   bundle ret
+   string json
+   ret.error = dbn_get_json("providers/" ~ provider, verbose, &json)
+   if ret.error
+      return ret
+   endif
+
+   scalar catlist = 0
+   bundle b = jsongetb(json, "category_tree", defarray("name", "code"))
+   bundles ctree = b.category_tree
+   bundle ct1 = ctree[1]
+   if inbundle(ct1, "children") && nelem(ct1.children) > 0
+      bundles B = ctree
+      catlist = 1
+   else
+      bundles B = _jbterms(b)
+   endif
+   n = nelem(B)
+   if n == 0
+      msg = sprintf("Found no datasets for provider %s", provider)
+      funcerr msg
+   endif
+   loop for (i=1; i<=n; i++)
+      if !inbundle(B[i], "code") || B[i].code == ""
+         B = B[-i]
+         n--
+      endif
+   endloop
+   if n == 0
+      msg = sprintf("Found no datasets for provider %s", provider)
+      funcerr msg
+   else
+      ret.type = catlist ? "cat_list" : "db_list"
+      strings ret.codes = array(n)
+      strings ret.names = array(n)
+      loop i=1..n
+         ret.codes[i] = B[i].code
+         ret.names[i] = B[i].name
+      endloop
+      if catlist
+         ret.B = B
+      endif
+   endif
+
+   return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function bundle dbnomics_tree_get_child (const bundle b, int i)
+   bundle ret
+   if b.type == "db_list"
+      ret.type = "db"
+      ret.code = b.codes[i]
+      ret.name = b.names[i]
+   elif b.type == "cat_list"
+      ret.code = b.codes[i]
+      ret.name = b.names[i]
+      bundles B = b.B[i].children
+      bundle chk = B[1]
+      if inbundle(chk, "children") && nelem(chk.children) > 0
+         ret.type = "cat_list"
+      else
+         ret.type = "db_list"
+      endif
+      n = nelem(B)
+      strings ret.codes = array(n)
+      strings ret.names = array(n)
+      loop i=1..n
+         ret.codes[i] = B[i].code
+         ret.names[i] = B[i].name
+      endloop
+      if ret.type == "cat_list"
+         ret.B = B
+      endif
+   endif
+   return ret
+end function
+
+### ------------------------------------------------------------------------
