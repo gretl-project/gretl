@@ -3774,14 +3774,20 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
 	}
     }
 
+    if (pgr->ntotal <= pgr->chunk) {
+        vwin_delete_pager(vwin, &pgr);
+    }
+
     gretl_array_destroy(A); /* we're done with this */
 
     if (pgr->n == 0) {
 	errbox(_("No series were found"));
 	err = 1;
     } else {
-	/* set and show status */
-	set_dbn_pager_status(vwin, pgr);
+        if (pgr != NULL) {
+            /* set and show status */
+            set_dbn_pager_status(vwin, pgr);
+        }
 	if (starting) {
 	    /* make the dataset 'path' available downstream */
 	    g_object_set_data_full(G_OBJECT(vwin->listbox), "path",

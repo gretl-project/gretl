@@ -3297,9 +3297,9 @@ static int regls_plot_from_selector (selector *sr)
     if (fc != NULL) {
 	int one = 1;
 
-	push_anon_function_arg(fc, GRETL_TYPE_BUNDLE_REF, pdata->b);
-	push_anon_function_arg(fc, GRETL_TYPE_INT, &one);
-	push_anon_function_arg(fc, GRETL_TYPE_LIST, list);
+        push_function_args(fc, GRETL_TYPE_BUNDLE_REF, pdata->b,
+                           GRETL_TYPE_INT, &one,
+                           GRETL_TYPE_LIST, list, -1);
 	err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
 				  NULL, NULL);
     }
@@ -5023,14 +5023,9 @@ int dbnomics_get_dimensions_call (const char *provider,
 	  " * units of measurement\n"
 	  " * other information\n\n"));
 
-    err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) provider);
-    if (!err) {
-	err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) dsname);
-    }
-    if (!err) {
-	/* verbosity */
-	err = push_anon_function_arg(fc, GRETL_TYPE_DOUBLE, (void *) &one);
-    }
+    err = push_function_args(fc, GRETL_TYPE_STRING, (void *) provider,
+                             GRETL_TYPE_STRING, (void *) dsname,
+                             GRETL_TYPE_DOUBLE, (void *) &one, -1);
     if (!err) {
 	GdkWindow *cwin = NULL;
 
@@ -5175,10 +5170,8 @@ void *dbnomics_category_get_data (const void *data,
 	return NULL;
     }
 
-    *err = push_anon_function_arg(fc, GRETL_TYPE_BUNDLE, (void *) b0);
-    if (!*err) {
-        *err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) path);
-    }
+    *err = push_function_args(fc, GRETL_TYPE_BUNDLE, (void *) b0,
+                              GRETL_TYPE_STRING, (void *) path, -1);
     if (!*err) {
 	GdkWindow *cwin = NULL;
 
