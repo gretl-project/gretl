@@ -1734,6 +1734,8 @@ static int files_item_get_callback (GretlToolItem *item, int role)
         } else if (role == DBNOMICS_TOP) {
             item->func = G_CALLBACK(open_dbnomics_provider);
             item->tip = N_("List datasets");
+        } else if (role == DBNOMICS_CAT) {
+            item->func = G_CALLBACK(open_dbnomics_category);
         } else if (role == DBNOMICS_DB) {
             item->func = G_CALLBACK(open_dbnomics_dataset);
         }
@@ -2076,6 +2078,9 @@ void display_files (int role, const gchar *path)
         title = g_strdup(_("gretl: addons"));
     } else if (role == PKG_REGISTRY) {
         title = g_strdup(_("gretl: packages on menus"));
+    } else if (role == DBNOMICS_CAT) {
+        mypath = g_strdup(path);
+        title = g_strdup_printf("gretl: %s categories", path);
     } else if (role == DBNOMICS_DB) {
         mypath = g_strdup(path);
         title = g_strdup_printf("gretl: %s datasets", path);
@@ -2849,6 +2854,8 @@ gint populate_filelist (windata_t *vwin, gpointer p)
         return populate_remote_db_list(vwin);
     } else if (vwin->role == DBNOMICS_TOP) {
         return populate_dbnomics_provider_list(vwin);
+    } else if (vwin->role == DBNOMICS_CAT) {
+        return populate_dbnomics_category_list(vwin, p);
     } else if (vwin->role == DBNOMICS_DB) {
         return populate_dbnomics_dataset_list(vwin, p);
     } else if (vwin->role == DBNOMICS_SERIES) {
@@ -2898,7 +2905,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
         N_("Code"),
         N_("Name")
     };
-    const char *dbnomics_db_titles[] = {
+    const char *dbnomics_cat_titles[] = {
         N_("Code"),
         N_("Content")
     };
@@ -2994,8 +3001,9 @@ static GtkWidget *files_vbox (windata_t *vwin)
         titles = dbnomics_top_titles;
         full_width = 650;
         break;
+    case DBNOMICS_CAT:
     case DBNOMICS_DB:
-        titles = dbnomics_db_titles;
+        titles = dbnomics_cat_titles;
         full_width = 650;
         break;
     case DBNOMICS_SERIES:
