@@ -95,9 +95,8 @@ void *dbnomics_search_call (const char *key,
 			    int limit, int offset,
 			    int *err);
 
-void *dbnomics_provider_tree (const char *provider, int *err);
-
-void *dbnomics_dataset_list (const char *provider, int *err);
+void *dbnomics_provider_get_data (const char *provider,
+                                  int role, int *err);
 
 void *dbnomics_probe_series (const char *prov,
 			     const char *dset,

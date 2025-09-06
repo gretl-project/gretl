@@ -2284,7 +2284,7 @@ void open_dbnomics_provider (GtkWidget *w, gpointer data)
 
     gtk_tree_model_get(model, &iter, 0, &pname, -1);
     if (pname != NULL && *pname != '\0') {
-        /* HERE: can try DBNOMICS_CAT */
+        /* HERE: can try DBNOMICS_CAT (was DBNOMICS_DB) */
 	display_files(DBNOMICS_DB, pname);
     }
     g_free(pname);

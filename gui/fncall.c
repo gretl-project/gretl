@@ -5126,41 +5126,19 @@ void *dbnomics_search_call (const char *key,
     return A;
 }
 
-void *dbnomics_dataset_list (const char *provider, int *err)
+void *dbnomics_provider_get_data (const char *provider,
+                                  int role, int *err)
 {
     gretl_bundle *b = NULL;
     fncall *fc = NULL;
 
-    fc = get_pkg_function_call("dbnomics_dsets_for_provider",
-			       "dbnomics", NULL);
-    if (fc == NULL) {
-	*err = E_DATA;
-	return NULL;
+    if (role == DBNOMICS_CAT) {
+        fc = get_pkg_function_call("dbnomics_tree_for_provider",
+                                   "dbnomics", NULL);
+    } else {
+        fc = get_pkg_function_call("dbnomics_dsets_for_provider",
+                                   "dbnomics", NULL);
     }
-
-    *err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) provider);
-    if (!*err) {
-	GdkWindow *cwin = NULL;
-
-	set_wait_cursor(&cwin);
-	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
-				   &b, NULL);
-	unset_wait_cursor(cwin);
-    }
-    if (*err) {
-	gui_errmsg(*err);
-    }
-
-    return b;
-}
-
-void *dbnomics_provider_tree (const char *provider, int *err)
-{
-    gretl_bundle *b = NULL;
-    fncall *fc = NULL;
-
-    fc = get_pkg_function_call("dbnomics_tree_for_provider",
-			       "dbnomics", NULL);
     if (fc == NULL) {
 	*err = E_DATA;
 	return NULL;

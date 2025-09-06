@@ -2029,6 +2029,34 @@ static gint catch_browser_key (GtkWidget *w, GdkEventKey *event,
     return FALSE;
 }
 
+static gretl_bundle *dbnomics_display_prep (int *role,
+                                            const gchar *path,
+                                            int *err)
+{
+    gretl_bundle *b = NULL;
+
+    if (*role == DBNOMICS_CAT) {
+        /* we need to get a dbnomics bundle first, and see if
+           it holds categories or datasets
+        */
+        b = dbnomics_provider_get_data(path, *role, err);
+        if (!*err) {
+            const char *s = gretl_bundle_get_string(b, "type", err);
+
+            if (*err) {
+                gretl_bundle_destroy(b);
+                b = NULL;
+            } else if (s != NULL && !strcmp(s, "db_list")) {
+                *role = DBNOMICS_DB;
+            }
+        }
+    } else if (*role == DBNOMICS_DB) {
+        b = dbnomics_provider_get_data(path, *role, err);
+    }
+
+    return b;
+}
+
 static void set_up_browser_keystrokes (windata_t *vwin)
 {
     g_signal_connect(G_OBJECT(vwin->main), "key-press-event",
@@ -2061,22 +2089,11 @@ void display_files (int role, const gchar *path)
         return;
     }
 
-    if (role == DBNOMICS_CAT) {
-        /* we need to get a dbnomics bundle first, and see if
-           it holds categories or datasets
-        */
-        const char *typestr;
-
-        dbn_bundle = dbnomics_provider_tree(path, &err);
+    if (role == DBNOMICS_CAT || role == DBNOMICS_DB) {
+        dbn_bundle = dbnomics_display_prep(&role, path, &err);
         if (err) {
             return;
         }
-        typestr = gretl_bundle_get_string(dbn_bundle, "type", &err);
-        if (!strcmp(typestr, "db_list")) {
-            role = DBNOMICS_DB;
-        }
-    } else if (role == DBNOMICS_DB) {
-        dbn_bundle = dbnomics_dataset_list(path, &err);
     }
 
     if (role == FUNC_FILES || role == NATIVE_DB) {
