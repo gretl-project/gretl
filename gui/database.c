@@ -90,11 +90,17 @@ enum {
     DBCOL_OFFSET
 };
 
-/* columns of list-of-databases window */
+/* columns of non-dbnomics list-of-databases window */
 enum {
     COL_DBNAME,
     COL_DBINFO,
     COL_DBPATH
+};
+
+/* columns of dbnomics category list or database list */
+enum {
+    COL_DBN_CODE,
+    COL_DBN_NAME
 };
 
 static int utf8_correct (char *orig)
@@ -1962,7 +1968,7 @@ void open_dbnomics_series (GtkWidget *w, gpointer data)
 
     path = g_object_get_data(G_OBJECT(vwin->listbox), "path");
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
-			 vwin->active_var, COL_DBNAME, &scode);
+			 vwin->active_var, COL_DBN_CODE, &scode);
 
     datacode = g_strdup_printf("%s/%s", path, scode);
     dbnomics_get_series_call(datacode);
@@ -2151,7 +2157,7 @@ void dbnomics_search (gchar *key, windata_t *vwin)
 	gchar *dset = NULL;
 
 	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
-			     vwin->active_var, COL_DBNAME, &dset);
+			     vwin->active_var, COL_DBN_CODE, &dset);
 	a = dbnomics_search_call(key, prov, dset, SEARCH_CHUNK, 0, &err);
 	if (!err) {
 	    n_found = dbn_dataset_search_results(key, prov, dset, 0, a, NULL);
@@ -2278,6 +2284,7 @@ void open_dbnomics_provider (GtkWidget *w, gpointer data)
 
     gtk_tree_model_get(model, &iter, 0, &pname, -1);
     if (pname != NULL && *pname != '\0') {
+        /* HERE: can try DBNOMICS_CAT */
 	display_files(DBNOMICS_DB, pname);
     }
     g_free(pname);
@@ -2307,6 +2314,17 @@ static int get_db_provider_and_name (windata_t *vwin,
     }
 
     return 0;
+}
+
+void open_dbnomics_category (GtkWidget *w, gpointer data)
+{
+    //windata_t *vwin = (windata_t *) data;
+    //const gchar *code = NULL;
+    //const gchar *name = NULL;
+    //int err;
+    //err = get_db_code_and_name(vwin, &code, &name);
+
+    fprintf(stderr, "HERE open_dbnomics_category\n");
 }
 
 /* "open" a dbnomics dataset in the sense of showing the series
@@ -2612,7 +2630,7 @@ static void gfn_install_notify (const gchar *objname,
 			  vwin->active_var, STATUS_COLUMN,
 			  _("Up to date"));
     if (local != NULL) {
-	populate_filelist(local, NULL);
+	populate_filelist(local, NULL, NULL);
     }
 }
 
@@ -2704,7 +2722,7 @@ static void finalize_db_download (char *target,
 			      vwin->active_var, 2,
 			      _("Up to date"));
 	if (local != NULL) {
-	    populate_filelist(local, NULL);
+	    populate_filelist(local, NULL, NULL);
 	} else if (target != NULL) {
 	    offer_db_open(target, vwin);
 	}
@@ -2846,7 +2864,7 @@ void maybe_update_pkgview (const char *filename,
     /* update local package browser? */
     vwin = get_browser_for_role(FUNC_FILES, NULL);
     if (vwin != NULL) {
-	populate_filelist(vwin, NULL);
+	populate_filelist(vwin, NULL, NULL);
     }
 
     /* update remote package browser? */
@@ -3390,8 +3408,8 @@ gint populate_dbnomics_provider_list (windata_t *vwin)
 	    if (!err) {
 		gtk_list_store_append(store, &iter);
 		gtk_list_store_set(store, &iter,
-				   COL_DBNAME, code,
-				   COL_DBINFO, name, -1);
+				   COL_DBN_CODE, code,
+				   COL_DBN_NAME, name, -1);
 		ndb++;
 	    }
 	}
@@ -3406,19 +3424,36 @@ gint populate_dbnomics_provider_list (windata_t *vwin)
     return err;
 }
 
-struct dbn_pager {
+typedef struct dbn_pager_ {
     int offset;  /* offset to pass to dbnomics */
     int n;       /* number of datasets or series in window */
     int ntotal;  /* total, as reported by dbnomics */
     int chunk;   /* limit to number of items to grab */
-};
+} dbn_pager;
 
-#define DBN_DSETS_CHUNK 80
+#define DBN_DSETS_CHUNK 100
 #define DBN_SERIES_CHUNK 200
 
-static struct dbn_pager *dbn_pager_new (windata_t *vwin)
+static dbn_pager *vwin_get_pager (windata_t *vwin)
 {
-    struct dbn_pager *p = malloc(sizeof *p);
+    return g_object_get_data(G_OBJECT(vwin->listbox), "pager");
+}
+
+static void vwin_set_pager (windata_t *vwin, dbn_pager *pgr)
+{
+    g_object_set_data_full(G_OBJECT(vwin->listbox), "pager",
+                           pgr, g_free);
+}
+
+static void vwin_delete_pager (windata_t *vwin, dbn_pager **pgr)
+{
+    g_object_set_data(G_OBJECT(vwin->listbox), "pager", NULL);
+    *pgr = NULL;
+}
+
+static dbn_pager *dbn_pager_new (windata_t *vwin)
+{
+    dbn_pager *p = g_malloc(sizeof *p);
 
     if (p != NULL) {
 	p->offset = 0;
@@ -3429,7 +3464,7 @@ static struct dbn_pager *dbn_pager_new (windata_t *vwin)
 	} else {
 	    p->chunk = DBN_SERIES_CHUNK;
 	}
-	vwin->data = p;
+        vwin_set_pager(vwin, p);
     }
 
     return p;
@@ -3438,7 +3473,7 @@ static struct dbn_pager *dbn_pager_new (windata_t *vwin)
 void dbnomics_pager_call (GtkWidget *button, windata_t *vwin)
 {
     int action = widget_get_int(button, "action");
-    struct dbn_pager *pgr = vwin->data;
+    dbn_pager *pgr = vwin_get_pager(vwin);
     int oldoff = pgr->offset;
     int newoff;
 
@@ -3466,7 +3501,7 @@ void dbnomics_pager_call (GtkWidget *button, windata_t *vwin)
 
     if (pgr->offset != oldoff) {
 	if (vwin->role == DBNOMICS_DB) {
-	    populate_dbnomics_dataset_list(vwin, NULL);
+	    populate_dbnomics_dataset_list(vwin, NULL, NULL);
 	} else {
 	    populate_dbnomics_series_list(vwin, NULL);
 	}
@@ -3474,13 +3509,13 @@ void dbnomics_pager_call (GtkWidget *button, windata_t *vwin)
     }
 }
 
-static void set_dbn_pager_status (windata_t *vwin)
+static void set_dbn_pager_status (windata_t *vwin,
+                                  dbn_pager *pgr)
 {
     GtkWidget *b1 = g_object_get_data(G_OBJECT(vwin->mbar), "first-button");
     GtkWidget *b2 = g_object_get_data(G_OBJECT(vwin->mbar), "prev-button");
     GtkWidget *b3 = g_object_get_data(G_OBJECT(vwin->mbar), "next-button");
     GtkWidget *b4 = g_object_get_data(G_OBJECT(vwin->mbar), "last-button");
-    struct dbn_pager *pgr = vwin->data;
     int first = pgr->offset + 1;
     int last = pgr->offset + pgr->n;
     gchar *tmp;
@@ -3505,19 +3540,40 @@ static void set_dbn_pager_status (windata_t *vwin)
     g_free(tmp);
 }
 
+static void set_dbn_pager_limits (dbn_pager *pgr,
+                                  int *imin, int *imax)
+{
+    if (pgr->ntotal <= pgr->chunk) {
+	/* we just display everything */
+	*imin = 0;
+	*imax = pgr->ntotal;
+    } else {
+	/* w display the first so many items after offset */
+	*imin = pgr->offset;
+	*imax = *imin + pgr->chunk;
+        if (*imax > pgr->ntotal) {
+            *imax = pgr->ntotal;
+        }
+    }
+    pgr->n = *imax - *imin;
+}
+
 /* list the datasets available for a given provider */
 
-gint populate_dbnomics_dataset_list (windata_t *vwin, gpointer p)
+gint populate_dbnomics_dataset_list (windata_t *vwin,
+                                     gpointer p,
+                                     void *data)
 {
     gchar *provider = (gchar *) p;
+    dbn_pager *pgr = NULL;
     gretl_array *C, *N;
     gretl_bundle *b;
     char *code, *name;
     GtkListStore *store;
     GtkTreeIter iter;
-    struct dbn_pager *pgr;
     int starting = 1;
     int i, imin, imax;
+    int ndsets = 0;
     int err = 0;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
@@ -3525,47 +3581,44 @@ gint populate_dbnomics_dataset_list (windata_t *vwin, gpointer p)
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     if (vwin->data == NULL) {
-	/* starting: we don't have a pager yet */
-	pgr = dbn_pager_new(vwin);
-	b = dbnomics_dataset_list(provider, &err);
-	if (err) {
-	    return err;
-	}
+        /* starting from scratch */
+	b = vwin->data = data;
+        pgr = dbn_pager_new(vwin);
     } else {
-	b = g_object_get_data(G_OBJECT(vwin->listbox), "dset-list");
+        /* repopulating the list */
+	b = vwin->data;
 	provider = g_object_get_data(G_OBJECT(vwin->listbox), "provider");
-	pgr = vwin->data;
+	pgr = vwin_get_pager(vwin);
 	starting = 0;
     }
 
-    if (!err) {
-	C = gretl_bundle_get_array(b, "codes", &err);
-	N = gretl_bundle_get_array(b, "names", &err);
-	if (!err && starting) {
-	    pgr->ntotal = gretl_array_get_length(C);
-	    if (pgr->ntotal == 0) {
-		errbox(_("No datasets were found"));
-		err = 1;
-	    }
-	}
+    if (err) {
+        return err;
     }
 
+    C = gretl_bundle_get_array(b, "codes", &err);
+    N = gretl_bundle_get_array(b, "names", &err);
     if (err) {
 	return err;
     }
 
-    if (pgr->ntotal <= pgr->chunk) {
-	/* just display everything */
-	imin = 0;
-	imax = pgr->ntotal;
-    } else {
-	/* display the first so many after offset */
-	imin = pgr->offset;
-	imax = imin + pgr->chunk;
-	imax = imax > pgr->ntotal ? pgr->ntotal : imax;
+    ndsets = gretl_array_get_length(C);
+    if (starting) {
+        pgr->ntotal = ndsets;
+        if (pgr->ntotal == 0) {
+            errbox(_("No datasets were found"));
+            return 1;
+        } else if (pgr->ntotal <= pgr->chunk) {
+            vwin_delete_pager(vwin, &pgr);
+        }
     }
 
-    pgr->n = imax - imin;
+    if (pgr != NULL) {
+        set_dbn_pager_limits(pgr, &imin, &imax);
+    } else {
+        imin = 0;
+        imax = ndsets;
+    }
 
     for (i=imin; i<imax; i++) {
 	code = gretl_array_get_element(C, i, NULL, &err);
@@ -3573,25 +3626,70 @@ gint populate_dbnomics_dataset_list (windata_t *vwin, gpointer p)
 	if (!err) {
 	    gtk_list_store_append(store, &iter);
 	    gtk_list_store_set(store, &iter,
-			       COL_DBNAME, code,
-			       COL_DBINFO, name, -1);
+			       COL_DBN_CODE, code,
+			       COL_DBN_NAME, name, -1);
 	}
     }
 
-    if (pgr->ntotal <= pgr->chunk) {
-	/* no need to keep the dataset-list bundle */
-	gretl_bundle_destroy(b);
-    } else if (starting) {
-	g_object_set_data_full(G_OBJECT(vwin->listbox), "dset-list", b,
-			       (GDestroyNotify) gretl_bundle_destroy);
+    if (pgr != NULL) {
+        /* set and show status */
+        set_dbn_pager_status(vwin, pgr);
     }
 
-    /* set and show status */
-    set_dbn_pager_status(vwin);
     if (starting) {
-	/* and make the provider name available downstream */
+	/* make the provider name available downstream */
 	g_object_set_data_full(G_OBJECT(vwin->listbox), "provider",
 			       provider, g_free);
+    }
+
+    return err;
+}
+
+/* NEW, provisional, expermental */
+
+gint populate_dbnomics_category_list (windata_t *vwin,
+                                      gpointer p,
+                                      void *data)
+{
+    gchar *provider = (gchar *) p;
+    gretl_array *C, *N;
+    gretl_bundle *b;
+    char *code, *name;
+    GtkListStore *store;
+    GtkTreeIter iter;
+    int i, ncats = 0;
+    int err = 0;
+
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
+    gtk_list_store_clear(store);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+    b = vwin->data = data;
+
+    C = gretl_bundle_get_array(b, "codes", &err);
+    N = gretl_bundle_get_array(b, "names", &err);
+    if (!err) {
+        ncats = gretl_array_get_length(C);
+        if (ncats == 0) {
+            errbox(_("No datasets were found"));
+            err = 1;
+        }
+    }
+    if (err) {
+        return err;
+    }
+
+    g_object_set_data_full(G_OBJECT(vwin->listbox), "provider",
+                           provider, g_free);
+
+    for (i=0; i<ncats; i++) {
+	code = gretl_array_get_element(C, i, NULL, &err);
+	name = gretl_array_get_element(N, i, NULL, &err);
+	if (!err) {
+	    gtk_list_store_append(store, &iter);
+	    gtk_list_store_set(store, &iter,
+			       COL_DBN_CODE, code,
+			       COL_DBN_NAME, name, -1);
+	}
     }
 
     return err;
@@ -3600,13 +3698,13 @@ gint populate_dbnomics_dataset_list (windata_t *vwin, gpointer p)
 gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
 {
     gchar *dsref = (gchar *) p;
+    dbn_pager *pgr = NULL;
     gretl_array *A = NULL;
     gretl_bundle *b;
     char *s, *prov, *dset;
     char *code, *name;
     GtkListStore *store;
     GtkTreeIter iter;
-    struct dbn_pager *pgr;
     int starting = 1;
     int alen = 0;
     int i, err = 0;
@@ -3615,12 +3713,13 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    if (vwin->data == NULL) {
-	/* starting: we don't have a pager yet */
+    pgr = vwin_get_pager(vwin);
+    if (pgr == NULL) {
+	/* starting from scratch */
 	pgr = dbn_pager_new(vwin);
     } else {
+        /* repopulating list */
 	dsref = g_object_get_data(G_OBJECT(vwin->listbox), "path");
-	pgr = vwin->data;
 	starting = 0;
     }
 
@@ -3628,13 +3727,11 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
     dset = g_strdup(s + 1);
     prov = g_strndup(dsref, s - dsref);
 
-    /* Note: the length of the retrieved array, which we write into
-       @alen, may be less (perhaps a lot less) than the "num_found"
-       field that we access below, since the latter records the
-       total number of series, regardless of the max number set on
-       the dbnomics query.
+    /* Note: the length of the retrieved array, which we store as @alen,
+       may be less (perhaps a lot less) than the "num_found" field that
+       we access below, since the latter records the total number of
+       series, regardless of the max number set on the dbnomics query.
     */
-
     A = dbnomics_probe_series(prov, dset, pgr->chunk, pgr->offset, &err);
     if (!err) {
 	alen = gretl_array_get_length(A);
@@ -3659,8 +3756,8 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
 	if (!err) {
 	    gtk_list_store_append(store, &iter);
 	    gtk_list_store_set(store, &iter,
-			       COL_DBNAME, code,
-			       COL_DBINFO, name, -1);
+			       COL_DBN_CODE, code,
+			       COL_DBN_NAME, name, -1);
 	    pgr->n += 1;
 	}
     }
@@ -3672,9 +3769,9 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
 	err = 1;
     } else {
 	/* set and show status */
-	set_dbn_pager_status(vwin);
+	set_dbn_pager_status(vwin, pgr);
 	if (starting) {
-	    /* and make the dataset 'path' available downstream */
+	    /* make the dataset 'path' available downstream */
 	    g_object_set_data_full(G_OBJECT(vwin->listbox), "path",
 				   dsref, g_free);
 	}

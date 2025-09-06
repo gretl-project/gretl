@@ -2047,6 +2047,7 @@ void display_files (int role, const gchar *path)
     windata_t *vwin;
     gchar *title = NULL;
     gchar *mypath = NULL;
+    gretl_bundle *dbn_bundle = NULL;
     int err = 0;
 
     vwin = get_browser_for_role(role, path);
@@ -2058,6 +2059,24 @@ void display_files (int role, const gchar *path)
     if (role == PKG_REGISTRY && n_user_handled_packages() == 0) {
         infobox(_("The gui package registry is empty"));
         return;
+    }
+
+    if (role == DBNOMICS_CAT) {
+        /* we need to get a dbnomics bundle first, and see if
+           it holds categories or datasets
+        */
+        const char *typestr;
+
+        dbn_bundle = dbnomics_provider_tree(path, &err);
+        if (err) {
+            return;
+        }
+        typestr = gretl_bundle_get_string(dbn_bundle, "type", &err);
+        if (!strcmp(typestr, "db_list")) {
+            role = DBNOMICS_DB;
+        }
+    } else if (role == DBNOMICS_DB) {
+        dbn_bundle = dbnomics_dataset_list(path, &err);
     }
 
     if (role == FUNC_FILES || role == NATIVE_DB) {
@@ -2169,18 +2188,20 @@ void display_files (int role, const gchar *path)
     if (notebook_needed(role)) {
         err = populate_notebook_filelists(vwin, filebox, role);
     } else if (role == FUNC_FILES) {
-        err = populate_filelist(vwin, NULL);
+        err = populate_filelist(vwin, NULL, NULL);
     } else if (role == NATIVE_DB) {
         gint w, h, ndb = 0;
 
-        err = populate_filelist(vwin, &ndb);
+        err = populate_filelist(vwin, &ndb, NULL);
         if (!err && ndb > 12) {
             gtk_widget_get_size_request(filebox, &w, &h);
             h += 100;
             gtk_widget_set_size_request(filebox, w, h);
         }
+    } else if (role == DBNOMICS_CAT || role == DBNOMICS_DB) {
+        err = populate_filelist(vwin, mypath, dbn_bundle);
     } else {
-        err = populate_filelist(vwin, mypath);
+        err = populate_filelist(vwin, mypath, NULL);
     }
 
     if (err) {
@@ -2846,7 +2867,8 @@ void maybe_update_pkg_registry_window (const char *pkgname,
     }
 }
 
-gint populate_filelist (windata_t *vwin, gpointer p)
+gint populate_filelist (windata_t *vwin, gpointer p,
+                        void *data)
 {
     if (vwin->role == NATIVE_DB) {
         return populate_dbfilelist(vwin, p);
@@ -2855,9 +2877,9 @@ gint populate_filelist (windata_t *vwin, gpointer p)
     } else if (vwin->role == DBNOMICS_TOP) {
         return populate_dbnomics_provider_list(vwin);
     } else if (vwin->role == DBNOMICS_CAT) {
-        return populate_dbnomics_category_list(vwin, p);
+        return populate_dbnomics_category_list(vwin, p, data);
     } else if (vwin->role == DBNOMICS_DB) {
-        return populate_dbnomics_dataset_list(vwin, p);
+        return populate_dbnomics_dataset_list(vwin, p, data);
     } else if (vwin->role == DBNOMICS_SERIES) {
         return populate_dbnomics_series_list(vwin, p);
     } else if (vwin->role == REMOTE_FUNC_FILES) {
@@ -3167,7 +3189,7 @@ static int populate_notebook_filelists (windata_t *vwin,
     while (L) {
         collection = L->data;
         vwin->listbox = collection->listbox;
-        populate_filelist(vwin, collection);
+        populate_filelist(vwin, collection, NULL);
         if (page != NULL && !strcmp(collection->title, page)) {
             selected = collection;
             pgnum = found;

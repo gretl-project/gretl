@@ -832,6 +832,9 @@ void free_windata (GtkWidget *w, gpointer data)
 	if (!get_user_var_by_data(vwin->data)) {
 	    gretl_bundle_destroy(vwin->data);
 	}
+    } else if (vwin->role == DBNOMICS_CAT ||
+               vwin->role == DBNOMICS_DB) {
+        gretl_bundle_destroy(vwin->data);
     } else if (vwin->role == LOESS || vwin->role == NADARWAT) {
 	gretl_bundle_destroy(vwin->data);
     } else if (vwin->role == CONSOLE) {

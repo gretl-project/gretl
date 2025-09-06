@@ -50,7 +50,8 @@ void display_files (int role, const gchar *path);
 
 void show_native_dbs (void);
 
-gint populate_filelist (windata_t *fdata, gpointer p);
+gint populate_filelist (windata_t *fdata, gpointer p,
+                        void *data);
 
 char *strip_extension (char *s);
 
