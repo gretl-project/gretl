@@ -1015,7 +1015,9 @@ windata_t *get_browser_for_role (int role, const char *path)
 	int checkpath = 0;
 	windata_t *vwin;
 
-	if (path != NULL && (role == DBNOMICS_DB || role == DBNOMICS_SERIES)) {
+	if (path != NULL && (role == DBNOMICS_CAT ||
+                             role == DBNOMICS_DB ||
+                             role == DBNOMICS_SERIES)) {
 	    checkpath = 1;
 	}
 	while (list != NULL && ret == NULL) {
