@@ -5154,6 +5154,34 @@ void *dbnomics_dataset_list (const char *provider, int *err)
     return b;
 }
 
+void *dbnomics_provider_tree (const char *provider, int *err)
+{
+    gretl_bundle *b = NULL;
+    fncall *fc = NULL;
+
+    fc = get_pkg_function_call("dbnomics_tree_for_provider",
+			       "dbnomics", NULL);
+    if (fc == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    *err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) provider);
+    if (!*err) {
+	GdkWindow *cwin = NULL;
+
+	set_wait_cursor(&cwin);
+	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
+				   &b, NULL);
+	unset_wait_cursor(cwin);
+    }
+    if (*err) {
+	gui_errmsg(*err);
+    }
+
+    return b;
+}
+
 void *dbnomics_probe_series (const char *prov,
 			     const char *dset,
 			     int limit, int offset,
