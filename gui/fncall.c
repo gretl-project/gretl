@@ -5160,6 +5160,40 @@ void *dbnomics_provider_get_data (const char *provider,
     return b;
 }
 
+void *dbnomics_category_get_data (const void *data,
+                                  const char *path,
+                                  int *err)
+{
+    const gretl_bundle *b0 = data;
+    gretl_bundle *b = NULL;
+    fncall *fc = NULL;
+
+    fc = get_pkg_function_call("dbnomics_tree_get_child",
+                               "dbnomics", NULL);
+    if (fc == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    *err = push_anon_function_arg(fc, GRETL_TYPE_BUNDLE, (void *) b0);
+    if (!*err) {
+        *err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) path);
+    }
+    if (!*err) {
+	GdkWindow *cwin = NULL;
+
+	set_wait_cursor(&cwin);
+	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
+				   &b, NULL);
+	unset_wait_cursor(cwin);
+    }
+    if (*err) {
+	gui_errmsg(*err);
+    }
+
+    return b;
+}
+
 void *dbnomics_probe_series (const char *prov,
 			     const char *dset,
 			     int limit, int offset,

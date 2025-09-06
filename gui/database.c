@@ -2284,15 +2284,38 @@ void open_dbnomics_provider (GtkWidget *w, gpointer data)
 
     gtk_tree_model_get(model, &iter, 0, &pname, -1);
     if (pname != NULL && *pname != '\0') {
-        /* HERE: can try DBNOMICS_CAT (was DBNOMICS_DB) */
+        /* HERE: this should now be DBNOMICS_CAT (was DBNOMICS_DB) */
 	display_files(DBNOMICS_DB, pname);
     }
     g_free(pname);
 }
 
-static int get_db_provider_and_name (windata_t *vwin,
+void open_dbnomics_category (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+    gchar *code = NULL;
+    GtkTreeSelection *sel;
+    GtkTreeIter iter;
+    GtkTreeModel *model;
+
+    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
+    if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
+        gtk_tree_model_get(model, &iter, 0, &code, -1);
+    }
+    if (code == NULL || *code == '\0') {
+        errbox("Couldn't get dbnomics category code");
+        g_free(code);
+    } else {
+        set_db_parent_bundle(vwin->data);
+	display_files(DBNOMICS_SUB, code);
+	g_free(code);
+        set_db_parent_bundle(NULL);
+    }
+}
+
+static int get_db_provider_and_code (windata_t *vwin,
 				     const gchar **provider,
-				     gchar **dsname)
+				     gchar **code)
 {
     GtkTreeSelection *sel;
     GtkTreeIter iter;
@@ -2302,29 +2325,18 @@ static int get_db_provider_and_name (windata_t *vwin,
     if (!gtk_tree_selection_get_selected(sel, &model, &iter)) {
 	return E_DATA;
     }
-    gtk_tree_model_get(model, &iter, 0, dsname, -1);
-    if (*dsname == NULL || **dsname == '\0') {
-	g_free(dsname);
+    gtk_tree_model_get(model, &iter, 0, code, -1);
+    if (*code == NULL || **code == '\0') {
+	g_free(*code);
 	return E_DATA;
     }
     *provider = g_object_get_data(G_OBJECT(vwin->listbox), "provider");
     if (*provider == NULL) {
-	g_free(*dsname);
+	g_free(*code);
 	return E_DATA;
     }
 
     return 0;
-}
-
-void open_dbnomics_category (GtkWidget *w, gpointer data)
-{
-    //windata_t *vwin = (windata_t *) data;
-    //const gchar *code = NULL;
-    //const gchar *name = NULL;
-    //int err;
-    //err = get_db_code_and_name(vwin, &code, &name);
-
-    fprintf(stderr, "HERE open_dbnomics_category\n");
 }
 
 /* "open" a dbnomics dataset in the sense of showing the series
@@ -2335,15 +2347,15 @@ void open_dbnomics_dataset (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
     const gchar *provider = NULL;
-    gchar *dsname = NULL;
+    gchar *code = NULL;
     int err;
 
-    err = get_db_provider_and_name(vwin, &provider, &dsname);
+    err = get_db_provider_and_code(vwin, &provider, &code);
 
     if (!err) {
-	gchar *arg = g_strdup_printf("%s/%s", provider, dsname);
+	gchar *arg = g_strdup_printf("%s/%s", provider, code);
 
-	g_free(dsname);
+	g_free(code);
 	display_files(DBNOMICS_SERIES, arg);
 	g_free(arg);
     }
@@ -2358,14 +2370,14 @@ void show_dbnomics_dimensions (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
     const gchar *provider = NULL;
-    gchar *dsname = NULL;
+    gchar *code = NULL;
     int err;
 
-    err = get_db_provider_and_name(vwin, &provider, &dsname);
+    err = get_db_provider_and_code(vwin, &provider, &code);
 
     if (!err) {
-	err = dbnomics_get_dimensions_call(provider, dsname);
-	g_free(dsname);
+	err = dbnomics_get_dimensions_call(provider, code);
+	g_free(code);
     }
 }
 

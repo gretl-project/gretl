@@ -2029,16 +2029,38 @@ static gint catch_browser_key (GtkWidget *w, GdkEventKey *event,
     return FALSE;
 }
 
+static const gretl_bundle *db_parent_bundle;
+
+void set_db_parent_bundle (const gretl_bundle *b)
+{
+    db_parent_bundle = b;
+}
+
 static gretl_bundle *dbnomics_display_prep (int *role,
                                             const gchar *path,
                                             int *err)
 {
     gretl_bundle *b = NULL;
 
-    if (*role == DBNOMICS_CAT) {
-        /* we need to get a dbnomics bundle first, and see if
-           it holds categories or datasets
-        */
+    /* For DBNOMICS_SUB and DBNOMICS_CAT we need to get a dbnomics
+       bundle first and see if it holds categories or datasets.
+    */
+
+    if (*role == DBNOMICS_SUB) {
+        b = dbnomics_category_get_data(db_parent_bundle, path, err);
+        if (!*err) {
+            const char *s = gretl_bundle_get_string(b, "type", err);
+
+            if (*err) {
+                gretl_bundle_destroy(b);
+                b = NULL;
+            } else if (!strcmp(s, "cat_list")) {
+                *role = DBNOMICS_CAT;
+            } else if (!strcmp(s, "db_list")) {
+                *role = DBNOMICS_DB;
+            }
+        }
+    } else if (*role == DBNOMICS_CAT) {
         b = dbnomics_provider_get_data(path, *role, err);
         if (!*err) {
             const char *s = gretl_bundle_get_string(b, "type", err);
@@ -2046,7 +2068,7 @@ static gretl_bundle *dbnomics_display_prep (int *role,
             if (*err) {
                 gretl_bundle_destroy(b);
                 b = NULL;
-            } else if (s != NULL && !strcmp(s, "db_list")) {
+            } else if (!strcmp(s, "db_list")) {
                 *role = DBNOMICS_DB;
             }
         }
@@ -2089,7 +2111,9 @@ void display_files (int role, const gchar *path)
         return;
     }
 
-    if (role == DBNOMICS_CAT || role == DBNOMICS_DB) {
+    if (role == DBNOMICS_CAT ||
+        role == DBNOMICS_SUB ||
+        role == DBNOMICS_DB) {
         dbn_bundle = dbnomics_display_prep(&role, path, &err);
         if (err) {
             return;

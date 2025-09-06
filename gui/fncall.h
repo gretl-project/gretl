@@ -98,6 +98,10 @@ void *dbnomics_search_call (const char *key,
 void *dbnomics_provider_get_data (const char *provider,
                                   int role, int *err);
 
+void *dbnomics_category_get_data (const void *data,
+                                  const char *path,
+                                  int *err);
+
 void *dbnomics_probe_series (const char *prov,
 			     const char *dset,
 			     int limit, int offset,

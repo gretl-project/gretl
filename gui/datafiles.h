@@ -85,4 +85,6 @@ windata_t *get_local_viewer (int remote_role);
 
 void listbox_select_first (windata_t *vwin);
 
+void set_db_parent_bundle (const gretl_bundle *b);
+
 #endif /* DATAFILES_H */

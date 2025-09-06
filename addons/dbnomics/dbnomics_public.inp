@@ -601,8 +601,19 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function bundle dbnomics_tree_get_child (const bundle b, int i)
+function bundle dbnomics_tree_get_child (const bundle b, const string s)
    bundle ret
+   i = 0
+   loop j=1..nelem(b.codes)
+      if b.codes[j] == s
+         i = j
+         break
+      endif
+   endloop
+   if i == 0
+      string msg = sprintf("%s: code not found", s)
+      funcerr msg
+   endif
    if b.type == "db_list"
       ret.type = "db"
       ret.code = b.codes[i]

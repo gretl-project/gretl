@@ -253,6 +253,7 @@ enum browser_codes {
     REMOTE_DB,
     DBNOMICS_TOP,
     DBNOMICS_CAT,
+    DBNOMICS_SUB,
     DBNOMICS_DB,
     REMOTE_DATA_PKGS,
     NATIVE_SERIES,
