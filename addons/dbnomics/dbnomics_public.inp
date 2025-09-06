@@ -577,25 +577,23 @@ function bundle dbnomics_tree_for_provider(const string provider,
       funcerr msg
    endif
    loop for (i=1; i<=n; i++)
-      if !inbundle(B[i], "code") || B[i].code == ""
-         B = B[-i]
-         n--
+      if catlist && (!inbundle(B[i], "code") || B[i].code == "")
+         # write something in place of missing category codes
+         B[i].code = sprintf("category%d", i)
+      endif
+      if inbundle(B[i], "name") && B[i].name != ""
+         B[i].name = strstrip(B[i].name)
       endif
    endloop
-   if n == 0
-      msg = sprintf("Found no datasets for provider %s", provider)
-      funcerr msg
-   else
-      ret.type = catlist ? "cat_list" : "db_list"
-      strings ret.codes = array(n)
-      strings ret.names = array(n)
-      loop i=1..n
-         ret.codes[i] = B[i].code
-         ret.names[i] = B[i].name
-      endloop
-      if catlist
-         ret.B = B
-      endif
+   ret.type = catlist ? "cat_list" : "db_list"
+   strings ret.codes = array(n)
+   strings ret.names = array(n)
+   loop i=1..n
+      ret.codes[i] = B[i].code
+      ret.names[i] = B[i].name
+   endloop
+   if catlist
+      ret.B = B
    endif
 
    return ret

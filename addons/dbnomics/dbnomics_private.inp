@@ -552,6 +552,14 @@ function string dbn_get_name_element(const bundles bs, int i)
     endif
 end function
 
+function string dbn_get_code_element(const bundles bs, int i)
+    if inbundle(bs[i], "code") && bs[i].code != ""
+        return bs[i].code
+    else
+        return "no code"
+    endif
+end function
+
 ### ------------------------------------------------------------------------
 
 function string one_line_bprint(bundle b, matrix widths)
