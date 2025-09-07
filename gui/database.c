@@ -2113,10 +2113,9 @@ void maybe_fill_dbn_finder (GtkWidget *entry)
     }
 }
 
-/* The @key string is passed here when "all DB.NOMICS"
-   is selected as the search space in the dbnomics
-   providers window, or when "this database" is selected
-   in a dbnomics dataset window.
+/* The @key string is passed here when "all DB.NOMICS" is selected as
+   the search space in the dbnomics providers window, or when "this
+   database" is selected in a dbnomics dataset window.
 */
 
 void dbnomics_search (gchar *key, windata_t *vwin)
@@ -2152,10 +2151,11 @@ void dbnomics_search (gchar *key, windata_t *vwin)
 	key = NULL; /* don't free it! */
     } else if (vwin->role == DBNOMICS_DB) {
 	/* searching "selected dataset" in datasets window */
-	const gchar *prov = g_object_get_data(G_OBJECT(vwin->listbox),
-					       "provider");
+        gretl_bundle *b = vwin->data;
+	const gchar *prov;
 	gchar *dset = NULL;
 
+        prov = gretl_bundle_get_string(b, "provider", NULL);
 	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
 			     vwin->active_var, COL_DBN_CODE, &dset);
 	a = dbnomics_search_call(key, prov, dset, SEARCH_CHUNK, 0, &err);
@@ -2269,6 +2269,10 @@ void open_remote_db_index (GtkWidget *w, gpointer data)
     free(getbuf);
 }
 
+/* Here we're coming off a window showing the list of dbnomics
+   providers.
+*/
+
 void open_dbnomics_provider (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
@@ -2317,6 +2321,7 @@ static int get_db_provider_and_code (windata_t *vwin,
 				     const gchar **provider,
 				     gchar **code)
 {
+    gretl_bundle *b = vwin->data;
     GtkTreeSelection *sel;
     GtkTreeIter iter;
     GtkTreeModel *model;
@@ -2330,7 +2335,7 @@ static int get_db_provider_and_code (windata_t *vwin,
 	g_free(*code);
 	return E_DATA;
     }
-    *provider = g_object_get_data(G_OBJECT(vwin->listbox), "provider");
+    *provider = gretl_bundle_get_string(b, "provider", NULL);
     if (*provider == NULL) {
 	g_free(*code);
 	return E_DATA;
@@ -3517,7 +3522,7 @@ void dbnomics_pager_call (GtkWidget *button, windata_t *vwin)
 
     if (pgr->offset != oldoff) {
 	if (vwin->role == DBNOMICS_DB) {
-	    populate_dbnomics_dataset_list(vwin, NULL, NULL);
+	    populate_dbnomics_dataset_list(vwin, NULL);
 	} else {
 	    populate_dbnomics_series_list(vwin, NULL);
 	}
@@ -3582,10 +3587,8 @@ static void set_dbn_pager_limits (dbn_pager *pgr,
 /* list the datasets available for a given provider */
 
 gint populate_dbnomics_dataset_list (windata_t *vwin,
-                                     gpointer p,
                                      void *data)
 {
-    gchar *provider = (gchar *) p;
     dbn_pager *pgr = NULL;
     gretl_array *C, *N;
     gretl_bundle *b;
@@ -3608,7 +3611,6 @@ gint populate_dbnomics_dataset_list (windata_t *vwin,
     } else {
         /* repopulating the list */
 	b = vwin->data;
-	provider = g_object_get_data(G_OBJECT(vwin->listbox), "provider");
 	pgr = vwin_get_pager(vwin);
 	starting = 0;
     }
@@ -3657,22 +3659,14 @@ gint populate_dbnomics_dataset_list (windata_t *vwin,
         set_dbn_pager_status(vwin, pgr);
     }
 
-    if (starting) {
-	/* make the provider name available downstream */
-	g_object_set_data_full(G_OBJECT(vwin->listbox), "provider",
-			       provider, g_free);
-    }
-
     return err;
 }
 
 /* NEW, provisional, expermental */
 
 gint populate_dbnomics_category_list (windata_t *vwin,
-                                      gpointer p,
                                       void *data)
 {
-    gchar *provider = (gchar *) p;
     gretl_array *C, *N;
     gretl_bundle *b;
     char *code, *name;
@@ -3698,9 +3692,6 @@ gint populate_dbnomics_category_list (windata_t *vwin,
     if (err) {
         return err;
     }
-
-    g_object_set_data_full(G_OBJECT(vwin->listbox), "provider",
-                           provider, g_free);
 
     for (i=0; i<ncats; i++) {
 	code = gretl_array_get_element(C, i, NULL, &err);
@@ -3752,8 +3743,10 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
     s = strchr(dsref, '/');
     dset = g_strdup(s + 1);
     prov = g_strndup(dsref, s - dsref);
+#if 0
     fprintf(stderr, "series_list: dsref '%s', dset '%s', prov '%s'\n",
             dsref, dset, prov);
+#endif
 
     /* Note: the length of the retrieved array, which we store as @alen,
        may be less (perhaps a lot less) than the "num_found" field that

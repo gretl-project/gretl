@@ -2918,9 +2918,9 @@ gint populate_filelist (windata_t *vwin, gpointer p,
     } else if (vwin->role == DBNOMICS_TOP) {
         return populate_dbnomics_provider_list(vwin);
     } else if (vwin->role == DBNOMICS_CAT) {
-        return populate_dbnomics_category_list(vwin, p, data);
+        return populate_dbnomics_category_list(vwin, data);
     } else if (vwin->role == DBNOMICS_DB) {
-        return populate_dbnomics_dataset_list(vwin, p, data);
+        return populate_dbnomics_dataset_list(vwin, data);
     } else if (vwin->role == DBNOMICS_SERIES) {
         return populate_dbnomics_series_list(vwin, p);
     } else if (vwin->role == REMOTE_FUNC_FILES) {
