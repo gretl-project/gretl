@@ -462,6 +462,7 @@ function bundle dbnomics_dsets_for_provider(const string provider,
       return ret
    endif
 
+   ret.provider = provider
    bundle b = jsongetb(json, "category_tree", defarray("code", "name"))
    bundles B = _jbterms(b)
    n = nelem(B)
@@ -561,6 +562,7 @@ function bundle dbnomics_tree_for_provider(const string provider,
       return ret
    endif
 
+   ret.provider = provider
    scalar catlist = 0
    bundle b = jsongetb(json, "category_tree", defarray("name", "code"))
    bundles ctree = b.category_tree
@@ -603,6 +605,7 @@ end function
 
 function bundle dbnomics_tree_get_child (const bundle b, const string s)
    bundle ret
+   ret.provider = b.provider
    i = 0
    loop j=1..nelem(b.codes)
       if b.codes[j] == s
