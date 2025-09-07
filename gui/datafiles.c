@@ -2533,11 +2533,10 @@ read_fn_files_in_dir (GDir *dir, const char *path,
     const gchar *basename;
     char fullname[MAXLEN];
 
-    /* Look first for a gfn file in its own subdir, as
-       in functions/foo/foo.gfn. That way if a package
-       has been updated to zipfile status and there's
-       also an older "plain gfn" version lying around
-       we should get the newer one.
+    /* Look first for a gfn file in its own subdir, as in
+       functions/foo/foo.gfn. That way if a package has been updated to
+       zipfile status and there's also an older "plain gfn" version
+       lying around we should get the newer one.
     */
 
     if (is_functions_dir(path)) {
@@ -2864,10 +2863,9 @@ static void update_gfn_browser (const char *pkgname,
     g_free(summary);
 }
 
-/* Update function package status, if needed, either after
-   a call to save a function package, or after deleting a
-   package by CLI means; the latter case is flagged by
-   NULL values for @version and @descrip.
+/* Update function package status, if needed, either after a call to
+   save a package or after deleting a package by CLI means. The latter
+   case is flagged by NULL values for @version and @descrip.
 */
 
 void maybe_update_gfn_browser (const char *pkgname,
@@ -3142,9 +3140,9 @@ static void switch_files_page (GtkNotebook *notebook,
     vwin->listbox = g_object_get_data(G_OBJECT(tab), "listbox");
 }
 
-/* below: construct a set of notebook pages for either data file
-   collections (Ramanathan, Wooldridge, etc.) or example scripts.
-   The function creates the pages but does not yet fill them out.
+/* Construct a set of notebook pages for either data file collections
+   (Ramanathan, Wooldridge, etc.) or example scripts.  The function
+   creates the pages but does not yet fill them out.
 */
 
 static GtkWidget *files_notebook (windata_t *vwin, int role)
@@ -3198,9 +3196,8 @@ static GtkWidget *files_notebook (windata_t *vwin, int role)
     return notebook;
 }
 
-/* below: fill out a set of notebook pages (for data files
-   or script files), entering the details into the page,
-   then select the page to display
+/* Fill out a set of notebook pages (for data files or script files),
+   entering the details into the page, then select the page to display.
 */
 
 static int populate_notebook_filelists (windata_t *vwin,
