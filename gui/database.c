@@ -2339,8 +2339,8 @@ static int get_db_provider_and_code (windata_t *vwin,
     return 0;
 }
 
-/* "open" a dbnomics dataset in the sense of showing the series
-   it contains (or a portion thereof if there are many series)
+/* "open" a dbnomics dataset: showing the series it contains (or a
+   portion thereof if there are many series)
 */
 
 void open_dbnomics_dataset (GtkWidget *w, gpointer data)
@@ -2361,9 +2361,8 @@ void open_dbnomics_dataset (GtkWidget *w, gpointer data)
     }
 }
 
-/* "open" a dbnomics dataset in the sense of showing its
-   "dimensions": topics/subjects/indicators and countries,
-   if applicable.
+/* show the "dimensions" of a dbnomics dataset: topics, subjects,
+   indicators and countries, if applicable.
 */
 
 void show_dbnomics_dimensions (GtkWidget *w, gpointer data)
