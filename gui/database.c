@@ -3489,6 +3489,11 @@ void dbnomics_pager_call (GtkWidget *button, windata_t *vwin)
     int oldoff = pgr->offset;
     int newoff;
 
+    if (pgr == NULL) {
+        fprintf(stderr, "dbnomics_pager_call: pager is NULL\n");
+        return;
+    }
+
     /* action: 1-based enumeration; see make_files_toolbar()
        in datafiles.c
     */
@@ -3524,18 +3529,23 @@ void dbnomics_pager_call (GtkWidget *button, windata_t *vwin)
 static void set_dbn_pager_status (windata_t *vwin,
                                   dbn_pager *pgr)
 {
-    GtkWidget *b1 = g_object_get_data(G_OBJECT(vwin->mbar), "first-button");
-    GtkWidget *b2 = g_object_get_data(G_OBJECT(vwin->mbar), "prev-button");
-    GtkWidget *b3 = g_object_get_data(G_OBJECT(vwin->mbar), "next-button");
-    GtkWidget *b4 = g_object_get_data(G_OBJECT(vwin->mbar), "last-button");
+    const char *ids[4] = {
+        "first-button", "prev-button", "next-button", "last-button"
+    };
+    GtkWidget *button;
     int first = pgr->offset + 1;
     int last = pgr->offset + pgr->n;
+    gboolean s1 = pgr->offset > 0;
+    gboolean s2 = last < pgr->ntotal;
+    gboolean s;
     gchar *tmp;
+    int i;
 
-    gtk_widget_set_sensitive(b1, pgr->offset > 0);
-    gtk_widget_set_sensitive(b2, pgr->offset > 0);
-    gtk_widget_set_sensitive(b3, last < pgr->ntotal);
-    gtk_widget_set_sensitive(b4, last < pgr->ntotal);
+    for (i=0; i<4; i++) {
+        s = i < 2 ? s1 : s2;
+        button = g_object_get_data(G_OBJECT(vwin->mbar), ids[i]);
+        gtk_widget_set_sensitive(button, s);
+    }
 
     if (vwin->role == DBNOMICS_DB) {
 	tmp = g_strdup_printf(_("showing datasets %d-%d of %d"),
@@ -3707,6 +3717,11 @@ gint populate_dbnomics_category_list (windata_t *vwin,
     return err;
 }
 
+/* The argument @p is non-NULL only when populating the series list
+   initially, not when repopulating it. In the latter case @dsref will
+   be set on vwin->listbox under the key "path".
+*/
+
 gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
 {
     gchar *dsref = (gchar *) p;
@@ -3725,12 +3740,12 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    pgr = vwin_get_pager(vwin);
-    if (pgr == NULL) {
+    if (dsref != NULL) {
 	/* starting from scratch */
 	pgr = dbn_pager_new(vwin);
     } else {
         /* repopulating list */
+        pgr = vwin_get_pager(vwin);
 	dsref = g_object_get_data(G_OBJECT(vwin->listbox), "path");
 	starting = 0;
     }
@@ -3738,6 +3753,8 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
     s = strchr(dsref, '/');
     dset = g_strdup(s + 1);
     prov = g_strndup(dsref, s - dsref);
+    fprintf(stderr, "series_list: dsref '%s', dset '%s', prov '%s'\n",
+            dsref, dset, prov);
 
     /* Note: the length of the retrieved array, which we store as @alen,
        may be less (perhaps a lot less) than the "num_found" field that
@@ -3774,25 +3791,27 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
 	}
     }
 
+#if 0 /* better not messing with this! */
     if (pgr->ntotal <= pgr->chunk) {
         vwin_delete_pager(vwin, &pgr);
     }
+#endif
 
     gretl_array_destroy(A); /* we're done with this */
 
-    if (pgr->n == 0) {
-	errbox(_("No series were found"));
-	err = 1;
-    } else {
-        if (pgr != NULL) {
-            /* set and show status */
+    if (pgr != NULL) {
+        if (pgr->n == 0) {
+            errbox(_("No series were found"));
+            err = 1;
+        } else {
             set_dbn_pager_status(vwin, pgr);
         }
-	if (starting) {
-	    /* make the dataset 'path' available downstream */
-	    g_object_set_data_full(G_OBJECT(vwin->listbox), "path",
-				   dsref, g_free);
-	}
+    }
+
+    if (!err && starting) {
+        /* make the dataset 'path' available downstream */
+        g_object_set_data_full(G_OBJECT(vwin->listbox), "path",
+                               dsref, g_free);
     }
 
     return err;
