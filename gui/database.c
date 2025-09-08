@@ -1960,19 +1960,37 @@ void dbnomics_specific_series (GtkAction *action, gpointer data)
     free(datacode);
 }
 
+static void dbn_browser_set_path (windata_t *vwin,
+                                  gchar *path)
+{
+    g_object_set_data_full(G_OBJECT(vwin->listbox), "path",
+                           path, g_free);
+}
+
+static gchar *dbn_browser_get_path (windata_t *vwin)
+{
+    return g_object_get_data(G_OBJECT(vwin->listbox), "path");
+}
+
+static const gchar *dbn_browser_get_provider (windata_t *vwin)
+{
+    return gretl_bundle_get_string(vwin->data, "provider", NULL);
+}
+
 void open_dbnomics_series (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
-    gchar *scode = NULL, *path = NULL;
-    gchar *datacode;
+    const gchar *provider;
+    gchar *code = NULL;
+    gchar *path;
 
-    path = g_object_get_data(G_OBJECT(vwin->listbox), "path");
+    provider = dbn_browser_get_provider(vwin);
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
-			 vwin->active_var, COL_DBN_CODE, &scode);
-
-    datacode = g_strdup_printf("%s/%s", path, scode);
-    dbnomics_get_series_call(datacode);
-    g_free(datacode);
+			 vwin->active_var, COL_DBN_CODE, &code);
+    path = g_strdup_printf("%s/%s", provider, code);
+    dbnomics_get_series_call(path);
+    g_free(path);
+    g_free(code);
 }
 
 static int dbn_general_search_results (const gchar *key,
@@ -2151,11 +2169,10 @@ void dbnomics_search (gchar *key, windata_t *vwin)
 	key = NULL; /* don't free it! */
     } else if (vwin->role == DBNOMICS_DSETS) {
 	/* searching "selected dataset" in datasets window */
-        gretl_bundle *b = vwin->data;
 	const gchar *prov;
 	gchar *dset = NULL;
 
-        prov = gretl_bundle_get_string(b, "provider", NULL);
+        prov = dbn_browser_get_provider(vwin);
 	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
 			     vwin->active_var, COL_DBN_CODE, &dset);
 	a = dbnomics_search_call(key, prov, dset, SEARCH_CHUNK, 0, &err);
@@ -2165,8 +2182,7 @@ void dbnomics_search (gchar *key, windata_t *vwin)
 	g_free(dset);
     } else if (vwin->role == DBNOMICS_SERIES) {
 	/* searching from a particular dataset window */
-	const gchar *path = g_object_get_data(G_OBJECT(vwin->listbox),
-					      "path");
+        const gchar *path = dbn_browser_get_path(vwin);
 	const gchar *p = strchr(path, '/');
 	const gchar *dset = p + 1;
 	gchar *prov = g_strndup(path, p - path);
@@ -2269,11 +2285,10 @@ void open_remote_db_index (GtkWidget *w, gpointer data)
     free(getbuf);
 }
 
-static int get_db_provider_and_code (windata_t *vwin,
-				     const gchar **provider,
-				     gchar **code)
+static int get_dbn_provider_and_code (windata_t *vwin,
+                                      const gchar **provider,
+                                      gchar **code)
 {
-    gretl_bundle *b = vwin->data;
     GtkTreeSelection *sel;
     GtkTreeIter iter;
     GtkTreeModel *model;
@@ -2287,7 +2302,7 @@ static int get_db_provider_and_code (windata_t *vwin,
 	g_free(*code);
 	return E_DATA;
     }
-    *provider = gretl_bundle_get_string(b, "provider", NULL);
+    *provider = dbn_browser_get_provider(vwin);
     if (*provider == NULL) {
 	g_free(*code);
 	return E_DATA;
@@ -2316,7 +2331,7 @@ void open_dbnomics_provider (GtkWidget *w, gpointer data)
     gtk_tree_model_get(model, &iter, 0, &provider, -1);
     if (provider != NULL && *provider != '\0') {
         /* HERE: this should now be DBNOMICS_CATS (was DBNOMICS_DSETS) */
-	dbnomics_browser(DBNOMICS_CATS, provider, NULL);
+	dbnomics_browser(DBNOMICS_DSETS, provider, NULL);
     }
     g_free(provider);
 }
@@ -2328,7 +2343,9 @@ void open_dbnomics_category (GtkWidget *w, gpointer data)
     gchar *code = NULL;
     int err = 0;
 
-    err = get_db_provider_and_code(vwin, &provider, &code);
+    err = get_dbn_provider_and_code(vwin, &provider, &code);
+    fprintf(stderr, "HERE 1, current dbn path '%s'\n",
+            dbn_browser_get_path(vwin));
 
     if (!err) {
 	gchar *path = g_strdup_printf("%s/%s", provider, code);
@@ -2350,7 +2367,7 @@ void open_dbnomics_dataset (GtkWidget *w, gpointer data)
     gchar *code = NULL;
     int err;
 
-    err = get_db_provider_and_code(vwin, &provider, &code);
+    err = get_dbn_provider_and_code(vwin, &provider, &code);
 
     if (!err) {
 	gchar *path = g_strdup_printf("%s/%s", provider, code);
@@ -2361,7 +2378,7 @@ void open_dbnomics_dataset (GtkWidget *w, gpointer data)
     }
 }
 
-/* show the "dimensions" of a dbnomics dataset: topics, subjects,
+/* Show the "dimensions" of a dbnomics dataset: topics, subjects,
    indicators and countries, if applicable.
 */
 
@@ -2372,7 +2389,7 @@ void show_dbnomics_dimensions (GtkWidget *w, gpointer data)
     gchar *code = NULL;
     int err;
 
-    err = get_db_provider_and_code(vwin, &provider, &code);
+    err = get_dbn_provider_and_code(vwin, &provider, &code);
 
     if (!err) {
 	err = dbnomics_get_dimensions_call(provider, code);
@@ -3612,7 +3629,7 @@ gint populate_dbnomics_dataset_list (windata_t *vwin,
         /* starting from scratch */
 	b = vwin->data = data;
         pgr = dbn_pager_new(vwin);
-        g_object_set_data_full(G_OBJECT(vwin->listbox), "path", path, g_free);
+        dbn_browser_set_path(vwin, path);
     } else {
         /* repopulating the list */
 	b = vwin->data;
@@ -3678,7 +3695,7 @@ gint populate_dbnomics_category_list (windata_t *vwin,
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
     b = vwin->data = data;
-    g_object_set_data_full(G_OBJECT(vwin->listbox), "path", path, g_free);
+    dbn_browser_set_path(vwin, path);
 
     C = gretl_bundle_get_array(b, "codes", &err);
     N = gretl_bundle_get_array(b, "names", &err);
@@ -3733,12 +3750,11 @@ gint populate_dbnomics_series_list (windata_t *vwin, gchar *path)
     if (path != NULL) {
 	/* starting from scratch */
 	pgr = dbn_pager_new(vwin);
-        g_object_set_data_full(G_OBJECT(vwin->listbox), "path",
-                               path, g_free);
+        dbn_browser_set_path(vwin, path);
     } else {
         /* repopulating list */
         pgr = vwin_get_pager(vwin);
-	path = g_object_get_data(G_OBJECT(vwin->listbox), "path");
+	path = dbn_browser_get_path(vwin);
     }
 
     s = strchr(path, '/');

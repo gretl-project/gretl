@@ -4926,7 +4926,7 @@ static void dbnomics_report_error (const char *datacode,
    that invoke calls to the dbnomics package in the background
 */
 
-int dbnomics_get_series_call (const char *datacode)
+int dbnomics_get_series_call (const char *path)
 {
     gretl_bundle *b = NULL;
     fncall *fc = NULL;
@@ -4942,12 +4942,11 @@ int dbnomics_get_series_call (const char *datacode)
 	    err = E_DATA;
 	}
     }
-
     if (err) {
 	return err;
     }
 
-    err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) datacode);
+    err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) path);
     if (!err) {
 	err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
 				  &b, prn);
@@ -4963,10 +4962,10 @@ int dbnomics_get_series_call (const char *datacode)
 	    /* we need to handle the case where dbnomics failed
 	       but did not provide any error message
 	    */
-	    dbnomics_report_error(datacode, b, &prn);
+	    dbnomics_report_error(path, b, &prn);
 	    gretl_bundle_destroy(b);
 	} else {
-	    const char *p = strrchr(datacode, '/');
+	    const char *p = strrchr(path, '/');
 	    gchar *title;
 
 	    title = g_strdup_printf("gretl: %s", p + 1);
