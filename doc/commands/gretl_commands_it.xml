@@ -5374,6 +5374,76 @@
     </description>
   </command>
 
+
+  <command name="gibbs" section="Statistics" label="campionatore di Gibbs">
+
+    <usage>
+      <arguments>
+        <argument>burnin</argument>
+        <argument>N</argument>
+        <argument>output</argument>
+      </arguments>  
+      <options>
+	<option>
+	  <flag>--cleanup</flag>
+	  <effect>vedi sotto</effect>
+        </option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>stampa lo stato di avanzamento del comando</effect>
+        </option>
+      </options>
+      <examples>
+	<demos>
+	  <demo>gibbs_block.inp</demo>
+	</demos>
+      </examples>
+    </usage>  
+
+    <description>
+      <para>
+	Questo comando è progettato per facilitare la costruzione e
+	l'esecuzione di un cmpionatore di Gibbs; per una spiegazione
+	approfondita vedere <cite key="casella92">Casella e George
+	(1992)</cite>.
+      </para>
+      <para>
+	Il comando ha la forma di un blocco di istruzioni che
+	definiscono scalari o matrici; il blocco inizia con
+	<lit>gibbs</lit> e termina con <lit>end gibbs</lit>. Le
+	eventuali opzioni vanno all'ultima riga. All'interno
+	del blocco vengono utilizzate due parole chiave (mutualmente
+	esclusive) per controllare come vengono gestite le istruzioni.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>init</lit> identifica un'istruzione come un inizializzatore,
+	    da eseguire una sola volta prima dell'iterazione di Gibbs.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>record</lit> contrassegna un'istruzione come un'istruzione il cui risultato
+	    deve essere registrato a ogni iterazione.
+	  </para>
+        </li>
+    </ilist>
+    <para>
+      Queste parole chiave devono essere inserite per prime su una
+      determinata riga, seguite dall'istruzione associata. Le
+      istruzioni che non contengono nessuna parola chiave vengono
+      considerate parte dell'iterazione, ma i loro risultati non
+      vengono registrati nella matrice di output. Le istruzioni
+      contrassegnate con <lit>init</lit> devono essere fornite prima
+      di tutte le altre.
+   </para>
+   <para>
+     [...Continua...]
+   </para>
+ </description>
+</command>
+  
   <command name="gmm" section="Estimation" label="Stima GMM">
 
     <usage>
