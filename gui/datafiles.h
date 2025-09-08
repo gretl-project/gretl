@@ -46,12 +46,14 @@ void destroy_file_collections (void);
 
 void show_files (GtkAction *action, gpointer p);
 
-void display_files (int role, const gchar *path);
+void display_files (int role);
 
 void show_native_dbs (void);
 
-gint populate_filelist (windata_t *fdata, gpointer p,
-                        void *data);
+void dbnomics_browser (int role, const gchar *path,
+                       void *data);
+
+gint populate_filelist (windata_t *fdata, gpointer p);
 
 char *strip_extension (char *s);
 
@@ -84,7 +86,5 @@ void start_new_function_package (GtkWidget *w, gpointer data);
 windata_t *get_local_viewer (int remote_role);
 
 void listbox_select_first (windata_t *vwin);
-
-void set_db_parent_bundle (const gretl_bundle *b);
 
 #endif /* DATAFILES_H */

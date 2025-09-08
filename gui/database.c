@@ -2279,42 +2279,19 @@ void open_dbnomics_provider (GtkWidget *w, gpointer data)
     GtkTreeIter iter;
     GtkTreeModel *model;
     GtkTreeSelection *sel;
-    gchar *pname = NULL;
+    gchar *provider = NULL;
 
     sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
     if (!gtk_tree_selection_get_selected(sel, &model, &iter)) {
 	return;
     }
 
-    gtk_tree_model_get(model, &iter, 0, &pname, -1);
-    if (pname != NULL && *pname != '\0') {
+    gtk_tree_model_get(model, &iter, 0, &provider, -1);
+    if (provider != NULL && *provider != '\0') {
         /* HERE: this should now be DBNOMICS_CAT (was DBNOMICS_DB) */
-	display_files(DBNOMICS_DB, pname);
+	dbnomics_browser(DBNOMICS_DB, provider, NULL);
     }
-    g_free(pname);
-}
-
-void open_dbnomics_category (GtkWidget *w, gpointer data)
-{
-    windata_t *vwin = (windata_t *) data;
-    gchar *code = NULL;
-    GtkTreeSelection *sel;
-    GtkTreeIter iter;
-    GtkTreeModel *model;
-
-    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
-    if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
-        gtk_tree_model_get(model, &iter, 0, &code, -1);
-    }
-    if (code == NULL || *code == '\0') {
-        errbox("Couldn't get dbnomics category code");
-        g_free(code);
-    } else {
-        set_db_parent_bundle(vwin->data);
-	display_files(DBNOMICS_SUB, code);
-	g_free(code);
-        set_db_parent_bundle(NULL);
-    }
+    g_free(provider);
 }
 
 static int get_db_provider_and_code (windata_t *vwin,
@@ -2344,6 +2321,24 @@ static int get_db_provider_and_code (windata_t *vwin,
     return 0;
 }
 
+void open_dbnomics_category (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+    const gchar *provider = NULL;
+    gchar *code = NULL;
+    int err = 0;
+
+    err = get_db_provider_and_code(vwin, &provider, &code);
+
+    if (!err) {
+	gchar *arg = g_strdup_printf("%s/%s", provider, code);
+
+	dbnomics_browser(DBNOMICS_SUB, arg, vwin->data);
+	g_free(arg);
+        g_free(code);
+    }
+}
+
 /* "open" a dbnomics dataset: showing the series it contains (or a
    portion thereof if there are many series)
 */
@@ -2361,7 +2356,7 @@ void open_dbnomics_dataset (GtkWidget *w, gpointer data)
 	gchar *arg = g_strdup_printf("%s/%s", provider, code);
 
 	g_free(code);
-	display_files(DBNOMICS_SERIES, arg);
+	dbnomics_browser(DBNOMICS_SERIES, arg, NULL);
 	g_free(arg);
     }
 }
@@ -2646,7 +2641,7 @@ static void gfn_install_notify (const gchar *objname,
 			  vwin->active_var, STATUS_COLUMN,
 			  _("Up to date"));
     if (local != NULL) {
-	populate_filelist(local, NULL, NULL);
+	populate_filelist(local, NULL);
     }
 }
 
@@ -2738,7 +2733,7 @@ static void finalize_db_download (char *target,
 			      vwin->active_var, 2,
 			      _("Up to date"));
 	if (local != NULL) {
-	    populate_filelist(local, NULL, NULL);
+	    populate_filelist(local, NULL);
 	} else if (target != NULL) {
 	    offer_db_open(target, vwin);
 	}
@@ -2880,7 +2875,7 @@ void maybe_update_pkgview (const char *filename,
     /* update local package browser? */
     vwin = get_browser_for_role(FUNC_FILES, NULL);
     if (vwin != NULL) {
-	populate_filelist(vwin, NULL, NULL);
+	populate_filelist(vwin, NULL);
     }
 
     /* update remote package browser? */
@@ -3662,7 +3657,7 @@ gint populate_dbnomics_dataset_list (windata_t *vwin,
     return err;
 }
 
-/* NEW, provisional, expermental */
+/* NEW, provisional, experimental */
 
 gint populate_dbnomics_category_list (windata_t *vwin,
                                       void *data)

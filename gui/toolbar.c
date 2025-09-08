@@ -533,7 +533,7 @@ static void multi_save_as_callback (GtkWidget *w, windata_t *vwin)
 
 static void script_index (GtkWidget *w, windata_t *vwin)
 {
-    display_files(PS_FILES, NULL);
+    display_files(PS_FILES);
 }
 
 static void toolbar_refresh (GtkWidget *w, windata_t *vwin)
@@ -1771,7 +1771,7 @@ static void tbar_calc (void)
 
 static void tbar_open_data (void)
 {
-    display_files(TEXTBOOK_DATA, NULL);
+    display_files(TEXTBOOK_DATA);
 }
 
 static void tbar_command_ref (void)
@@ -1811,7 +1811,7 @@ static void tbar_new_script (void)
 
 static void tbar_show_funcs (GtkWidget *w, gpointer p)
 {
-    display_files(FUNC_FILES, NULL);
+    display_files(FUNC_FILES);
 }
 
 static void maybe_find_series (GtkWidget *w, gpointer p)

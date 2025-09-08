@@ -2286,13 +2286,13 @@ static void open_menu_item (GtkTextTag *tag)
 
     if (name != NULL) {
 	if (!strcmp(name, "RemoteGfn")) {
-	    display_files(REMOTE_FUNC_FILES, NULL);
+	    display_files(REMOTE_FUNC_FILES);
 	} else if (!strcmp(name, "LocalGfn")) {
-	    display_files(FUNC_FILES, NULL);
+	    display_files(FUNC_FILES);
 	} else if (!strcmp(name, "Addons")) {
-	    display_files(ADDONS_FILES, NULL);
+	    display_files(ADDONS_FILES);
 	} else if (!strcmp(name, "Registry")) {
-	    display_files(PKG_REGISTRY, NULL);
+	    display_files(PKG_REGISTRY);
 	} else if (!strcmp(name, "SetSeed")) {
 	    rand_seed_dialog();
 	} else {
@@ -2318,7 +2318,7 @@ static void open_dbn_link (GtkTextTag *tag)
     g_object_get(G_OBJECT(tag), "name", &name, NULL);
 
     if (name != NULL) {
-	display_files(DBNOMICS_SERIES, name);
+	dbnomics_browser(DBNOMICS_SERIES, name, NULL);
 	g_free(name);
     }
 }

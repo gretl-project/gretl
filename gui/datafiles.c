@@ -1516,32 +1516,32 @@ static void build_data_pkg_popup (windata_t *vwin)
 
 static void show_server_dbs (GtkWidget *w, gpointer p)
 {
-    display_files(REMOTE_DB, NULL);
+    display_files(REMOTE_DB);
 }
 
 static void show_local_dbs (GtkWidget *w, gpointer p)
 {
-    display_files(NATIVE_DB, NULL);
+    display_files(NATIVE_DB);
 }
 
 static void show_server_funcs (GtkWidget *w, gpointer p)
 {
-    display_files(REMOTE_FUNC_FILES, NULL);
+    display_files(REMOTE_FUNC_FILES);
 }
 
 static void show_server_data_pkgs (GtkWidget *w, gpointer p)
 {
-    display_files(REMOTE_DATA_PKGS, NULL);
+    display_files(REMOTE_DATA_PKGS);
 }
 
 static void show_local_funcs (GtkWidget *w, gpointer p)
 {
-    display_files(FUNC_FILES, NULL);
+    display_files(FUNC_FILES);
 }
 
 static void show_gfn_registry (GtkWidget *w, windata_t *vwin)
 {
-    display_files(PKG_REGISTRY, NULL);
+    display_files(PKG_REGISTRY);
 }
 
 /* Respond when the user has clicked the Directory button
@@ -2029,56 +2029,6 @@ static gint catch_browser_key (GtkWidget *w, GdkEventKey *event,
     return FALSE;
 }
 
-static const gretl_bundle *db_parent_bundle;
-
-void set_db_parent_bundle (const gretl_bundle *b)
-{
-    db_parent_bundle = b;
-}
-
-static gretl_bundle *dbnomics_display_prep (int *role,
-                                            const gchar *path,
-                                            int *err)
-{
-    gretl_bundle *b = NULL;
-
-    /* For DBNOMICS_SUB and DBNOMICS_CAT we need to get a dbnomics
-       bundle first and see if it holds categories or datasets.
-    */
-
-    if (*role == DBNOMICS_SUB) {
-        b = dbnomics_category_get_data(db_parent_bundle, path, err);
-        if (!*err) {
-            const char *s = gretl_bundle_get_string(b, "type", err);
-
-            if (*err) {
-                gretl_bundle_destroy(b);
-                b = NULL;
-            } else if (!strcmp(s, "cat_list")) {
-                *role = DBNOMICS_CAT;
-            } else if (!strcmp(s, "db_list")) {
-                *role = DBNOMICS_DB;
-            }
-        }
-    } else if (*role == DBNOMICS_CAT) {
-        b = dbnomics_provider_get_data(path, *role, err);
-        if (!*err) {
-            const char *s = gretl_bundle_get_string(b, "type", err);
-
-            if (*err) {
-                gretl_bundle_destroy(b);
-                b = NULL;
-            } else if (!strcmp(s, "db_list")) {
-                *role = DBNOMICS_DB;
-            }
-        }
-    } else if (*role == DBNOMICS_DB) {
-        b = dbnomics_provider_get_data(path, *role, err);
-    }
-
-    return b;
-}
-
 static void set_up_browser_keystrokes (windata_t *vwin)
 {
     g_signal_connect(G_OBJECT(vwin->main), "key-press-event",
@@ -2091,13 +2041,13 @@ static void set_up_browser_keystrokes (windata_t *vwin)
 
 #define notebook_needed(r) (r==TEXTBOOK_DATA || r==PS_FILES)
 
-void display_files (int role, const gchar *path)
+static void make_browser_window (int role, const gchar *path,
+                                 void *data)
 {
     GtkWidget *filebox;
     windata_t *vwin;
     gchar *title = NULL;
     gchar *mypath = NULL;
-    gretl_bundle *dbn_bundle = NULL;
     int err = 0;
 
     vwin = get_browser_for_role(role, path);
@@ -2109,15 +2059,6 @@ void display_files (int role, const gchar *path)
     if (role == PKG_REGISTRY && n_user_handled_packages() == 0) {
         infobox(_("The gui package registry is empty"));
         return;
-    }
-
-    if (role == DBNOMICS_CAT ||
-        role == DBNOMICS_SUB ||
-        role == DBNOMICS_DB) {
-        dbn_bundle = dbnomics_display_prep(&role, path, &err);
-        if (err) {
-            return;
-        }
     }
 
     if (role == FUNC_FILES || role == NATIVE_DB) {
@@ -2139,10 +2080,8 @@ void display_files (int role, const gchar *path)
     } else if (role == PKG_REGISTRY) {
         title = g_strdup(_("gretl: packages on menus"));
     } else if (role == DBNOMICS_CAT) {
-        mypath = g_strdup(path);
         title = g_strdup_printf("gretl: %s categories", path);
     } else if (role == DBNOMICS_DB) {
-        mypath = g_strdup(path);
         title = g_strdup_printf("gretl: %s datasets", path);
     } else if (role == DBNOMICS_SERIES) {
         mypath = g_strdup(path);
@@ -2229,20 +2168,20 @@ void display_files (int role, const gchar *path)
     if (notebook_needed(role)) {
         err = populate_notebook_filelists(vwin, filebox, role);
     } else if (role == FUNC_FILES) {
-        err = populate_filelist(vwin, NULL, NULL);
+        err = populate_filelist(vwin, NULL);
     } else if (role == NATIVE_DB) {
         gint w, h, ndb = 0;
 
-        err = populate_filelist(vwin, &ndb, NULL);
+        err = populate_filelist(vwin, &ndb);
         if (!err && ndb > 12) {
             gtk_widget_get_size_request(filebox, &w, &h);
             h += 100;
             gtk_widget_set_size_request(filebox, w, h);
         }
     } else if (role == DBNOMICS_CAT || role == DBNOMICS_DB) {
-        err = populate_filelist(vwin, mypath, dbn_bundle);
+        err = populate_filelist(vwin, data);
     } else {
-        err = populate_filelist(vwin, mypath, NULL);
+        err = populate_filelist(vwin, mypath);
     }
 
     if (err) {
@@ -2267,7 +2206,61 @@ void display_files (int role, const gchar *path)
     }
 }
 
-static int display_files_code (const gchar *s)
+void display_files (int role)
+{
+    make_browser_window(role, NULL, NULL);
+}
+
+void dbnomics_browser (int role, const gchar *path, void *data)
+{
+    gretl_bundle *b1 = NULL;
+    int err = 0;
+
+    /* For DBNOMICS_SUB and DBNOMICS_CAT we need to get a dbnomics
+       bundle first and see if it holds categories or datasets.
+       For DBNOMICS_DB we also need to get a bundle but we know
+       what it will hold. For DBNOMICS_SERIES we don't need a
+       bundle at this point.
+    */
+
+    if (role == DBNOMICS_SUB) {
+        /* we have a "parent" dbnomics bundle */
+        gretl_bundle *b0 = data;
+        
+        b1 = dbnomics_category_get_data(b0, path, &err);
+        if (!err) {
+            const char *s = gretl_bundle_get_string(b1, "type", &err);
+
+            if (err) {
+                gretl_bundle_destroy(b1);
+            } else if (!strcmp(s, "cat_list")) {
+                role = DBNOMICS_CAT;
+            } else if (!strcmp(s, "db_list")) {
+                role = DBNOMICS_DB;
+            }
+        }
+    } else if (role == DBNOMICS_CAT) {
+        b1 = dbnomics_provider_get_data(path, role, &err);
+        if (!err) {
+            const char *s = gretl_bundle_get_string(b1, "type", &err);
+
+            if (err) {
+                gretl_bundle_destroy(b1);
+            } else if (!strcmp(s, "db_list")) {
+                role = DBNOMICS_DB;
+            }
+        }
+    } else if (role == DBNOMICS_DB) {
+        b1 = dbnomics_provider_get_data(path, role, &err);
+    }
+        
+
+    if (!err) {
+        make_browser_window(role, path, b1);
+    }
+}
+
+static int browser_window_code (const gchar *s)
 {
     if (!strcmp(s, "DisplayDataFiles"))
         return TEXTBOOK_DATA;
@@ -2289,20 +2282,23 @@ static int display_files_code (const gchar *s)
     return 0;
 }
 
-/* make a browser window to display a set of files: textbook
+/* Make a browser window to display a set of files: textbook
    data files, example (formerly: practice) scripts, databases...
+   This function is a callback from main window menu items.
 */
 
 void show_files (GtkAction *action, gpointer p)
 {
-    int code = display_files_code(gtk_action_get_name(action));
+    int code = browser_window_code(gtk_action_get_name(action));
 
-    display_files(code, NULL);
+    display_files(code);
 }
+
+/* Callback from main window toolbar */
 
 void show_native_dbs (void)
 {
-    display_files(NATIVE_DB, NULL);
+    display_files(NATIVE_DB);
 }
 
 /* functions pertaining to gfn function packages */
@@ -2906,8 +2902,7 @@ void maybe_update_pkg_registry_window (const char *pkgname,
     }
 }
 
-gint populate_filelist (windata_t *vwin, gpointer p,
-                        void *data)
+gint populate_filelist (windata_t *vwin, gpointer p)
 {
     if (vwin->role == NATIVE_DB) {
         return populate_dbfilelist(vwin, p);
@@ -2916,9 +2911,9 @@ gint populate_filelist (windata_t *vwin, gpointer p,
     } else if (vwin->role == DBNOMICS_TOP) {
         return populate_dbnomics_provider_list(vwin);
     } else if (vwin->role == DBNOMICS_CAT) {
-        return populate_dbnomics_category_list(vwin, data);
+        return populate_dbnomics_category_list(vwin, p);
     } else if (vwin->role == DBNOMICS_DB) {
-        return populate_dbnomics_dataset_list(vwin, data);
+        return populate_dbnomics_dataset_list(vwin, p);
     } else if (vwin->role == DBNOMICS_SERIES) {
         return populate_dbnomics_series_list(vwin, p);
     } else if (vwin->role == REMOTE_FUNC_FILES) {
@@ -3227,7 +3222,7 @@ static int populate_notebook_filelists (windata_t *vwin,
     while (L) {
         collection = L->data;
         vwin->listbox = collection->listbox;
-        populate_filelist(vwin, collection, NULL);
+        populate_filelist(vwin, collection);
         if (page != NULL && !strcmp(collection->title, page)) {
             selected = collection;
             pgnum = found;
