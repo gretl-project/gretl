@@ -67,10 +67,10 @@ static void doubleclick_action (windata_t *vwin)
     case DBNOMICS_TOP:
         open_dbnomics_provider(NULL, vwin);
         break;
-    case DBNOMICS_CAT:
+    case DBNOMICS_CATS:
         open_dbnomics_category(NULL, vwin);
         break;
-    case DBNOMICS_DB:
+    case DBNOMICS_DSETS:
         open_dbnomics_dataset(NULL, vwin);
         break;
     case DBNOMICS_SERIES:

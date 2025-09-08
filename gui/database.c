@@ -2149,7 +2149,7 @@ void dbnomics_search (gchar *key, windata_t *vwin)
 	    n_found = dbn_dataset_search_results(key, prov, dset, offset, a, vwin);
 	}
 	key = NULL; /* don't free it! */
-    } else if (vwin->role == DBNOMICS_DB) {
+    } else if (vwin->role == DBNOMICS_DSETS) {
 	/* searching "selected dataset" in datasets window */
         gretl_bundle *b = vwin->data;
 	const gchar *prov;
@@ -2269,31 +2269,6 @@ void open_remote_db_index (GtkWidget *w, gpointer data)
     free(getbuf);
 }
 
-/* Here we're coming off a window showing the list of dbnomics
-   providers.
-*/
-
-void open_dbnomics_provider (GtkWidget *w, gpointer data)
-{
-    windata_t *vwin = (windata_t *) data;
-    GtkTreeIter iter;
-    GtkTreeModel *model;
-    GtkTreeSelection *sel;
-    gchar *provider = NULL;
-
-    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
-    if (!gtk_tree_selection_get_selected(sel, &model, &iter)) {
-	return;
-    }
-
-    gtk_tree_model_get(model, &iter, 0, &provider, -1);
-    if (provider != NULL && *provider != '\0') {
-        /* HERE: this should now be DBNOMICS_CAT (was DBNOMICS_DB) */
-	dbnomics_browser(DBNOMICS_DB, provider, NULL);
-    }
-    g_free(provider);
-}
-
 static int get_db_provider_and_code (windata_t *vwin,
 				     const gchar **provider,
 				     gchar **code)
@@ -2321,6 +2296,31 @@ static int get_db_provider_and_code (windata_t *vwin,
     return 0;
 }
 
+/* Here we're coming off a window showing the list of dbnomics
+   providers.
+*/
+
+void open_dbnomics_provider (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+    GtkTreeIter iter;
+    GtkTreeModel *model;
+    GtkTreeSelection *sel;
+    gchar *provider = NULL;
+
+    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
+    if (!gtk_tree_selection_get_selected(sel, &model, &iter)) {
+	return;
+    }
+
+    gtk_tree_model_get(model, &iter, 0, &provider, -1);
+    if (provider != NULL && *provider != '\0') {
+        /* HERE: this should now be DBNOMICS_CATS (was DBNOMICS_DSETS) */
+	dbnomics_browser(DBNOMICS_CATS, provider, NULL);
+    }
+    g_free(provider);
+}
+
 void open_dbnomics_category (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
@@ -2331,10 +2331,10 @@ void open_dbnomics_category (GtkWidget *w, gpointer data)
     err = get_db_provider_and_code(vwin, &provider, &code);
 
     if (!err) {
-	gchar *arg = g_strdup_printf("%s/%s", provider, code);
+	gchar *path = g_strdup_printf("%s/%s", provider, code);
 
-	dbnomics_browser(DBNOMICS_SUB, arg, vwin->data);
-	g_free(arg);
+	dbnomics_browser(DBNOMICS_SUB, path, vwin->data);
+	g_free(path);
         g_free(code);
     }
 }
@@ -2353,11 +2353,11 @@ void open_dbnomics_dataset (GtkWidget *w, gpointer data)
     err = get_db_provider_and_code(vwin, &provider, &code);
 
     if (!err) {
-	gchar *arg = g_strdup_printf("%s/%s", provider, code);
+	gchar *path = g_strdup_printf("%s/%s", provider, code);
 
-	g_free(code);
-	dbnomics_browser(DBNOMICS_SERIES, arg, NULL);
-	g_free(arg);
+	dbnomics_browser(DBNOMICS_SERIES, path, NULL);
+	g_free(path);
+        g_free(code);
     }
 }
 
@@ -3456,12 +3456,6 @@ static void vwin_set_pager (windata_t *vwin, dbn_pager *pgr)
                            pgr, g_free);
 }
 
-static void vwin_delete_pager (windata_t *vwin, dbn_pager **pgr)
-{
-    g_object_set_data(G_OBJECT(vwin->listbox), "pager", NULL);
-    *pgr = NULL;
-}
-
 static dbn_pager *dbn_pager_new (windata_t *vwin)
 {
     dbn_pager *p = g_malloc(sizeof *p);
@@ -3470,7 +3464,7 @@ static dbn_pager *dbn_pager_new (windata_t *vwin)
 	p->offset = 0;
 	p->n = 0;
 	p->ntotal = 0;
-	if (vwin->role == DBNOMICS_DB) {
+	if (vwin->role == DBNOMICS_DSETS) {
 	    p->chunk = DBN_DSETS_CHUNK;
 	} else {
 	    p->chunk = DBN_SERIES_CHUNK;
@@ -3516,13 +3510,27 @@ void dbnomics_pager_call (GtkWidget *button, windata_t *vwin)
     }
 
     if (pgr->offset != oldoff) {
-	if (vwin->role == DBNOMICS_DB) {
-	    populate_dbnomics_dataset_list(vwin, NULL);
+	if (vwin->role == DBNOMICS_DSETS) {
+	    populate_dbnomics_dataset_list(vwin, NULL, NULL);
 	} else {
 	    populate_dbnomics_series_list(vwin, NULL);
 	}
 	listbox_select_first(vwin);
     }
+}
+
+static void show_dbn_categories_status (windata_t *vwin,
+                                        int ncats)
+{
+    gchar *tmp;
+
+    tmp = g_strdup_printf(_("showing categories 1-%d of %d"),
+                          ncats, ncats);
+    gtk_label_set_text(GTK_LABEL(vwin->status), tmp);
+    while (gtk_events_pending()) {
+	gtk_main_iteration();
+    }
+    g_free(tmp);
 }
 
 static void set_dbn_pager_status (windata_t *vwin,
@@ -3546,7 +3554,7 @@ static void set_dbn_pager_status (windata_t *vwin,
         gtk_widget_set_sensitive(button, s);
     }
 
-    if (vwin->role == DBNOMICS_DB) {
+    if (vwin->role == DBNOMICS_DSETS) {
 	tmp = g_strdup_printf(_("showing datasets %d-%d of %d"),
 			      first, last, pgr->ntotal);
     } else {
@@ -3582,6 +3590,7 @@ static void set_dbn_pager_limits (dbn_pager *pgr,
 /* list the datasets available for a given provider */
 
 gint populate_dbnomics_dataset_list (windata_t *vwin,
+                                     gchar *path,
                                      void *data)
 {
     dbn_pager *pgr = NULL;
@@ -3599,10 +3608,11 @@ gint populate_dbnomics_dataset_list (windata_t *vwin,
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    if (vwin->data == NULL) {
+    if (data != NULL) {
         /* starting from scratch */
 	b = vwin->data = data;
         pgr = dbn_pager_new(vwin);
+        g_object_set_data_full(G_OBJECT(vwin->listbox), "path", path, g_free);
     } else {
         /* repopulating the list */
 	b = vwin->data;
@@ -3626,17 +3636,10 @@ gint populate_dbnomics_dataset_list (windata_t *vwin,
         if (pgr->ntotal == 0) {
             errbox(_("No datasets were found"));
             return 1;
-        } else if (pgr->ntotal <= pgr->chunk) {
-            vwin_delete_pager(vwin, &pgr);
         }
     }
 
-    if (pgr != NULL) {
-        set_dbn_pager_limits(pgr, &imin, &imax);
-    } else {
-        imin = 0;
-        imax = ndsets;
-    }
+    set_dbn_pager_limits(pgr, &imin, &imax);
 
     for (i=imin; i<imax; i++) {
 	code = gretl_array_get_element(C, i, NULL, &err);
@@ -3660,6 +3663,7 @@ gint populate_dbnomics_dataset_list (windata_t *vwin,
 /* NEW, provisional, experimental */
 
 gint populate_dbnomics_category_list (windata_t *vwin,
+                                      gchar *path,
                                       void *data)
 {
     gretl_array *C, *N;
@@ -3674,6 +3678,7 @@ gint populate_dbnomics_category_list (windata_t *vwin,
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
     b = vwin->data = data;
+    g_object_set_data_full(G_OBJECT(vwin->listbox), "path", path, g_free);
 
     C = gretl_bundle_get_array(b, "codes", &err);
     N = gretl_bundle_get_array(b, "names", &err);
@@ -3699,17 +3704,18 @@ gint populate_dbnomics_category_list (windata_t *vwin,
 	}
     }
 
+    show_dbn_categories_status(vwin, ncats);
+
     return err;
 }
 
-/* The argument @p is non-NULL only when populating the series list
-   initially, not when repopulating it. In the latter case @dsref will
+/* The argument @path is non-NULL only when populating the series list
+   initially, not when repopulating it. In the latter case @path will
    be set on vwin->listbox under the key "path".
 */
 
-gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
+gint populate_dbnomics_series_list (windata_t *vwin, gchar *path)
 {
-    gchar *dsref = (gchar *) p;
     dbn_pager *pgr = NULL;
     gretl_array *A = NULL;
     gretl_bundle *b;
@@ -3717,7 +3723,6 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
     char *code, *name;
     GtkListStore *store;
     GtkTreeIter iter;
-    int starting = 1;
     int alen = 0;
     int i, err = 0;
 
@@ -3725,19 +3730,20 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    if (dsref != NULL) {
+    if (path != NULL) {
 	/* starting from scratch */
 	pgr = dbn_pager_new(vwin);
+        g_object_set_data_full(G_OBJECT(vwin->listbox), "path",
+                               path, g_free);
     } else {
         /* repopulating list */
         pgr = vwin_get_pager(vwin);
-	dsref = g_object_get_data(G_OBJECT(vwin->listbox), "path");
-	starting = 0;
+	path = g_object_get_data(G_OBJECT(vwin->listbox), "path");
     }
 
-    s = strchr(dsref, '/');
+    s = strchr(path, '/');
     dset = g_strdup(s + 1);
-    prov = g_strndup(dsref, s - dsref);
+    prov = g_strndup(path, s - path);
 #if 0
     fprintf(stderr, "series_list: dsref '%s', dset '%s', prov '%s'\n",
             dsref, dset, prov);
@@ -3793,12 +3799,6 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
         } else {
             set_dbn_pager_status(vwin, pgr);
         }
-    }
-
-    if (!err && starting) {
-        /* make the dataset 'path' available downstream */
-        g_object_set_data_full(G_OBJECT(vwin->listbox), "path",
-                               dsref, g_free);
     }
 
     return err;

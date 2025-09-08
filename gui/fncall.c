@@ -5127,7 +5127,7 @@ void *dbnomics_provider_get_data (const char *provider,
     gretl_bundle *b = NULL;
     fncall *fc = NULL;
 
-    if (role == DBNOMICS_CAT) {
+    if (role == DBNOMICS_CATS) {
         fc = get_pkg_function_call("dbnomics_tree_for_provider",
                                    "dbnomics", NULL);
     } else {
@@ -5160,6 +5160,7 @@ void *dbnomics_category_get_data (const void *data,
                                   int *err)
 {
     const gretl_bundle *b0 = data;
+    const char *pathbit;
     gretl_bundle *b = NULL;
     fncall *fc = NULL;
 
@@ -5170,8 +5171,16 @@ void *dbnomics_category_get_data (const void *data,
 	return NULL;
     }
 
+    /* @path may give provider/category but we just want the category */
+    pathbit = strrchr(path, '/');
+    if (pathbit == NULL) {
+        pathbit = path;
+    } else {
+        pathbit++;
+    }
+
     *err = push_function_args(fc, GRETL_TYPE_BUNDLE, (void *) b0,
-                              GRETL_TYPE_STRING, (void *) path, -1);
+                              GRETL_TYPE_STRING, (void *) pathbit, -1);
     if (!*err) {
 	GdkWindow *cwin = NULL;
 

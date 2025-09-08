@@ -43,13 +43,15 @@ gint populate_remote_db_list (windata_t *vwin);
 gint populate_dbnomics_provider_list (windata_t *vwin);
 
 gint populate_dbnomics_category_list (windata_t *vwin,
+                                      gchar *path,
                                       void *data);
 
 gint populate_dbnomics_dataset_list (windata_t *vwin,
+                                     gchar *path,
                                      void *data);
 
 gint populate_dbnomics_series_list (windata_t *vwin,
-                                    gpointer p);
+                                    gchar *path);
 
 gint populate_remote_func_list (windata_t *win, int filter);
 

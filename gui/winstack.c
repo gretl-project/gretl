@@ -120,7 +120,8 @@ static const gchar *window_list_icon (int role)
     } else if (role == PKG_REGISTRY) {
 	id = GTK_STOCK_PREFERENCES;
     } else if (role == DBNOMICS_TOP ||
-	       role == DBNOMICS_DB ||
+               role == DBNOMICS_CATS ||
+	       role == DBNOMICS_DSETS ||
 	       role == DBNOMICS_SERIES ||
 	       role == VIEW_DBSEARCH) {
 	id = GRETL_STOCK_DBN;
@@ -734,7 +735,8 @@ gboolean window_list_exit_check (void)
 			     r == NATIVE_DB ||		\
 			     r == REMOTE_DB ||		\
 			     r == DBNOMICS_TOP ||	\
-			     r == DBNOMICS_DB ||	\
+                             r == DBNOMICS_CATS ||      \
+			     r == DBNOMICS_DSETS ||	\
 			     r == NATIVE_SERIES ||	\
 			     r == REMOTE_SERIES ||	\
 			     r == FUNC_FILES ||		\
@@ -994,14 +996,9 @@ windata_t *get_viewer_for_data (const gpointer data)
 
 static int paths_match (const char *path, windata_t *vwin)
 {
-    const char *wstr = NULL;
+    const char *wstr;
 
-    if (vwin->role == DBNOMICS_DB) {
-	wstr = g_object_get_data(G_OBJECT(vwin->listbox), "provider");
-    } else {
-	wstr = g_object_get_data(G_OBJECT(vwin->listbox), "path");
-    }
-
+    wstr = g_object_get_data(G_OBJECT(vwin->listbox), "path");
     return wstr != NULL && !strcmp(path, wstr);
 }
 
@@ -1015,8 +1012,8 @@ windata_t *get_browser_for_role (int role, const char *path)
 	int checkpath = 0;
 	windata_t *vwin;
 
-	if (path != NULL && (role == DBNOMICS_CAT ||
-                             role == DBNOMICS_DB ||
+	if (path != NULL && (role == DBNOMICS_CATS ||
+                             role == DBNOMICS_DSETS ||
                              role == DBNOMICS_SERIES)) {
 	    checkpath = 1;
 	}

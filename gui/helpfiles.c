@@ -941,7 +941,8 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 #else
     if (widget_get_int(entry, "search-all")) {
 	if (vwin->role == DBNOMICS_TOP ||
-	    vwin->role == DBNOMICS_DB ||
+            vwin->role == DBNOMICS_CATS ||
+	    vwin->role == DBNOMICS_DSETS ||
 	    vwin->role == DBNOMICS_SERIES) {
 	    dbnomics_search(needle, vwin);
 	    return;
@@ -1017,7 +1018,7 @@ static void finder_add_dbn_options (windata_t *vwin,
     GtkWidget *combo = gtk_combo_box_text_new();
 
     combo_box_append_text(combo, _("this window"));
-    if (vwin->role == DBNOMICS_DB) {
+    if (vwin->role == DBNOMICS_DSETS) {
         combo_box_append_text(combo, _("selected dataset"));
     } else if (vwin->role == DBNOMICS_SERIES) {
         combo_box_append_text(combo, _("this dataset"));
@@ -1069,7 +1070,7 @@ void vwin_add_finder (windata_t *vwin)
 	vwin->role == FUNC_HELP_EN) {
 	finder_add_options(hbox, entry);
     } else if (vwin->role == DBNOMICS_TOP ||
-	       vwin->role == DBNOMICS_DB ||
+	       vwin->role == DBNOMICS_DSETS ||
 	       vwin->role == DBNOMICS_SERIES) {
 	finder_add_dbn_options(vwin, hbox, entry);
 	fwidth = 28;
@@ -1083,7 +1084,7 @@ void vwin_add_finder (windata_t *vwin)
     if (vwin->role == DBNOMICS_TOP ||
 	vwin->role == VIEW_DBSEARCH ||
 	vwin->role == DBNOMICS_SERIES ||
-	vwin->role == DBNOMICS_DB) {
+	vwin->role == DBNOMICS_DSETS) {
 	maybe_fill_dbn_finder(vwin->finder);
     }
 #endif
@@ -1879,7 +1880,8 @@ static gboolean real_find_in_listbox (windata_t *vwin,
 	search_cols[0] = 0;  /* package name */
 	search_cols[1] = 4;  /* description */
 	search_cols[2] = 3;  /* author */
-    } else if (vwin->role == DBNOMICS_DB) {
+    } else if (vwin->role == DBNOMICS_DSETS ||
+               vwin->role == DBNOMICS_CATS) {
 	search_cols[0] = 1;  /* content */
 	search_cols[1] = 0;  /* code */
     } else {
