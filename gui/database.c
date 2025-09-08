@@ -2344,8 +2344,8 @@ void open_dbnomics_category (GtkWidget *w, gpointer data)
     int err = 0;
 
     err = get_dbn_provider_and_code(vwin, &provider, &code);
-    fprintf(stderr, "HERE 1, current dbn path '%s'\n",
-            dbn_browser_get_path(vwin));
+    //fprintf(stderr, "HERE 1, current dbn path '%s'\n",
+    //        dbn_browser_get_path(vwin));
 
     if (!err) {
 	gchar *path = g_strdup_printf("%s/%s", provider, code);
@@ -3530,7 +3530,7 @@ void dbnomics_pager_call (GtkWidget *button, windata_t *vwin)
 	if (vwin->role == DBNOMICS_DSETS) {
 	    populate_dbnomics_dataset_list(vwin, NULL, NULL);
 	} else {
-	    populate_dbnomics_series_list(vwin, NULL);
+	    populate_dbnomics_series_list(vwin, NULL, NULL);
 	}
 	listbox_select_first(vwin);
     }
@@ -3731,7 +3731,9 @@ gint populate_dbnomics_category_list (windata_t *vwin,
    be set on vwin->listbox under the key "path".
 */
 
-gint populate_dbnomics_series_list (windata_t *vwin, gchar *path)
+gint populate_dbnomics_series_list (windata_t *vwin,
+                                    gchar *path,
+                                    void *data)
 {
     dbn_pager *pgr = NULL;
     gretl_array *A = NULL;
@@ -3751,6 +3753,7 @@ gint populate_dbnomics_series_list (windata_t *vwin, gchar *path)
 	/* starting from scratch */
 	pgr = dbn_pager_new(vwin);
         dbn_browser_set_path(vwin, path);
+        vwin->data = data;
     } else {
         /* repopulating list */
         pgr = vwin_get_pager(vwin);
@@ -3760,9 +3763,9 @@ gint populate_dbnomics_series_list (windata_t *vwin, gchar *path)
     s = strchr(path, '/');
     dset = g_strdup(s + 1);
     prov = g_strndup(path, s - path);
-#if 0
-    fprintf(stderr, "series_list: dsref '%s', dset '%s', prov '%s'\n",
-            dsref, dset, prov);
+#if 1
+    fprintf(stderr, "series_list: path '%s', dset '%s', prov '%s'\n",
+            path, dset, prov);
 #endif
 
     /* Note: the length of the retrieved array, which we store as @alen,

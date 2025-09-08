@@ -619,13 +619,9 @@ function bundle dbnomics_tree_get_child (const bundle b, const string s)
    endif
    ret.code = b.codes[i]
    ret.name = b.names[i]
-   if b.type == "db_list"
+   if b.type == "db_list" || !inbundle(b.B[i], "children")
       ret.type = "db"
    elif b.type == "cat_list"
-      if !inbundle(b.B[i], "children")
-         msg = sprintf("%s: no children were found", b.codes[i])
-         funcerr msg
-      endif
       bundles B = b.B[i].children
       bundle chk = B[1]
       if inbundle(chk, "children") && nelem(chk.children) > 0

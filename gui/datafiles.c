@@ -2114,7 +2114,6 @@ static void make_browser_window (int role, const gchar *path,
         /* we'll need more than one tab */
         filebox = files_notebook(vwin, role);
     } else {
-        /* no tabs needed */
         filebox = files_vbox(vwin);
     }
 
@@ -2240,6 +2239,9 @@ void dbnomics_browser (int role, const gchar *path, void *data)
                 role = DBNOMICS_CATS;
             } else if (!strcmp(s, "db_list")) {
                 role = DBNOMICS_DSETS;
+            } else if (!strcmp(s, "db")) {
+                fprintf(stderr, "HERE got DBNOMICS_SERIES\n");
+                role = DBNOMICS_SERIES;
             }
         }
     } else if (role == DBNOMICS_CATS) {
@@ -2937,7 +2939,7 @@ static gint populate_dbnomics_browser (windata_t *vwin,
         return populate_dbnomics_dataset_list(vwin, path, b);
     } else {
         /* DBNOMICS_SERIES */
-        return populate_dbnomics_series_list(vwin, path);
+        return populate_dbnomics_series_list(vwin, path, b);
     }
 }
 
