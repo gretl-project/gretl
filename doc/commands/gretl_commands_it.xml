@@ -5566,6 +5566,11 @@
 	  <optparm optional="true">varspec</optparm>
 	  <effect>usa linee verticali</effect>
 	</option>
+        <option>
+	  <flag>--with-boxes</flag>
+	  <optparm optional="true">varspec</optparm>
+	  <effect>produce un istogramma</effect>
+        </option>
 	<option>
 	  <flag>--with-steps</flag>
 	  <optparm optional="true">varspec</optparm>

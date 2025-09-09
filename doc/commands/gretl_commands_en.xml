@@ -5441,6 +5441,11 @@
 	  <effect>use vertical lines</effect>
         </option>
         <option>
+	  <flag>--with-boxes</flag>
+	  <optparm optional="true">varspec</optparm>
+	  <effect>use histograms</effect>
+        </option>
+        <option>
 	  <flag>--with-steps</flag>
 	  <optparm optional="true">varspec</optparm>
 	  <effect>use perpendicular line segments</effect>
