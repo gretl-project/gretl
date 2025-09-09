@@ -24,6 +24,6 @@ int gibbs_block_start (const char *line, PRN *prn);
 
 int gibbs_block_append (const char *line);
 
-int gibbs_execute (gretlopt opt, PRN *prn);
+int gibbs_execute (gretlopt opt, DATASET *dset, PRN *prn);
 
 #endif /* GRETL_SAMPLER_H */
