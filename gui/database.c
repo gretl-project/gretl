@@ -1980,17 +1980,19 @@ static const gchar *dbn_browser_get_provider (windata_t *vwin)
 void open_dbnomics_series (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
-    const gchar *provider;
-    gchar *code = NULL;
-    gchar *path;
+    const gchar *path;
+    gchar *code, *arg;
 
-    provider = dbn_browser_get_provider(vwin);
+    path = g_object_get_data(G_OBJECT(vwin->listbox), "path");
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
 			 vwin->active_var, COL_DBN_CODE, &code);
-    path = g_strdup_printf("%s/%s", provider, code);
-    dbnomics_get_series_call(path);
-    g_free(path);
+    arg = g_strdup_printf("%s/%s", path, code);
+#if 0
+    fprintf(stderr, "HERE open_dbnomics_series, arg='%s'\n", arg);
+#endif
+    dbnomics_get_series_call(arg);
     g_free(code);
+    g_free(arg);
 }
 
 static int dbn_general_search_results (const gchar *key,
@@ -2331,7 +2333,7 @@ void open_dbnomics_provider (GtkWidget *w, gpointer data)
     gtk_tree_model_get(model, &iter, 0, &provider, -1);
     if (provider != NULL && *provider != '\0') {
         /* HERE: this should now be DBNOMICS_CATS (was DBNOMICS_DSETS) */
-	dbnomics_browser(DBNOMICS_DSETS, provider, NULL);
+	dbnomics_browser(DBNOMICS_CATS, provider, NULL);
     }
     g_free(provider);
 }
@@ -2344,8 +2346,6 @@ void open_dbnomics_category (GtkWidget *w, gpointer data)
     int err = 0;
 
     err = get_dbn_provider_and_code(vwin, &provider, &code);
-    //fprintf(stderr, "HERE 1, current dbn path '%s'\n",
-    //        dbn_browser_get_path(vwin));
 
     if (!err) {
 	gchar *path = g_strdup_printf("%s/%s", provider, code);
@@ -3530,7 +3530,7 @@ void dbnomics_pager_call (GtkWidget *button, windata_t *vwin)
 	if (vwin->role == DBNOMICS_DSETS) {
 	    populate_dbnomics_dataset_list(vwin, NULL, NULL);
 	} else {
-	    populate_dbnomics_series_list(vwin, NULL, NULL);
+	    populate_dbnomics_series_list(vwin, NULL);
 	}
 	listbox_select_first(vwin);
     }
@@ -3726,47 +3726,22 @@ gint populate_dbnomics_category_list (windata_t *vwin,
     return err;
 }
 
-/* The argument @path is non-NULL only when populating the series list
-   initially, not when repopulating it. In the latter case @path will
-   be set on vwin->listbox under the key "path".
+/* Helper for populate_dbnomics_series_list(): actually insert
+   series codes and names.
 */
 
-gint populate_dbnomics_series_list (windata_t *vwin,
-                                    gchar *path,
-                                    void *data)
+static int load_dbn_series_info (GtkListStore *store,
+                                 dbn_pager *pgr,
+                                 gchar *prov,
+                                 gchar *dset)
 {
-    dbn_pager *pgr = NULL;
-    gretl_array *A = NULL;
+    gretl_array *A;
     gretl_bundle *b;
-    char *s, *prov, *dset;
-    char *code, *name;
-    GtkListStore *store;
     GtkTreeIter iter;
+    char *code;
+    char *name;
     int alen = 0;
     int i, err = 0;
-
-    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
-    gtk_list_store_clear(store);
-    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-
-    if (path != NULL) {
-	/* starting from scratch */
-	pgr = dbn_pager_new(vwin);
-        dbn_browser_set_path(vwin, path);
-        vwin->data = data;
-    } else {
-        /* repopulating list */
-        pgr = vwin_get_pager(vwin);
-	path = dbn_browser_get_path(vwin);
-    }
-
-    s = strchr(path, '/');
-    dset = g_strdup(s + 1);
-    prov = g_strndup(path, s - path);
-#if 1
-    fprintf(stderr, "series_list: path '%s', dset '%s', prov '%s'\n",
-            path, dset, prov);
-#endif
 
     /* Note: the length of the retrieved array, which we store as @alen,
        may be less (perhaps a lot less) than the "num_found" field that
@@ -3774,19 +3749,20 @@ gint populate_dbnomics_series_list (windata_t *vwin,
        series, regardless of the max number set on the dbnomics query.
     */
     A = dbnomics_probe_series(prov, dset, pgr->chunk, pgr->offset, &err);
-    if (!err) {
-	alen = gretl_array_get_length(A);
-	if (alen == 0) {
-	    errbox(_("No series were found"));
-	    err = 1;
-	}
-    }
-
     if (err) {
-	return err;
+        return err;
     }
 
+    alen = gretl_array_get_length(A);
+    if (alen == 0) {
+        gretl_array_destroy(A);
+        errbox(_("No series were found"));
+        return 1;
+    }
+
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
     pgr->n = 0;
+
     for (i=0; i<alen; i++) {
 	b = gretl_array_get_bundle(A, i);
 	if (i == 0) {
@@ -3803,22 +3779,57 @@ gint populate_dbnomics_series_list (windata_t *vwin,
 	}
     }
 
-#if 0 /* better not messing with this! */
-    if (pgr->ntotal <= pgr->chunk) {
-        vwin_delete_pager(vwin, &pgr);
+    gretl_array_destroy(A);
+
+    return err;
+}
+
+/* The argument @path is non-NULL only when populating the series list
+   initially, not when repopulating it. In the latter case @path will
+   be set on vwin->listbox under the key "path".
+*/
+
+gint populate_dbnomics_series_list (windata_t *vwin,
+                                    gchar *path)
+{
+    dbn_pager *pgr = NULL;
+    gchar *prov = NULL;
+    gchar *dset = NULL;
+    gchar *s;
+    GtkListStore *store;
+    int err = 0;
+
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
+    gtk_list_store_clear(store);
+
+    if (path != NULL) {
+	/* starting from scratch */
+	pgr = dbn_pager_new(vwin);
+        dbn_browser_set_path(vwin, path);
+    } else {
+        /* repopulating list */
+        pgr = vwin_get_pager(vwin);
+	path = dbn_browser_get_path(vwin);
     }
+
+    s = strchr(path, '/');
+    dset = g_strdup(s + 1);
+    prov = g_strndup(path, s - path);
+#if 0
+    fprintf(stderr, "series_list: path '%s', dset '%s', prov '%s'\n",
+            path, dset, prov);
 #endif
+    err = load_dbn_series_info(store, pgr, prov, dset);
 
-    gretl_array_destroy(A); /* we're done with this */
-
-    if (pgr != NULL) {
-        if (pgr->n == 0) {
-            errbox(_("No series were found"));
-            err = 1;
-        } else {
-            set_dbn_pager_status(vwin, pgr);
-        }
+    if (pgr->n == 0) {
+        errbox(_("No series were found"));
+        err = 1;
+    } else {
+        set_dbn_pager_status(vwin, pgr);
     }
+
+    g_free(dset);
+    g_free(prov);
 
     return err;
 }

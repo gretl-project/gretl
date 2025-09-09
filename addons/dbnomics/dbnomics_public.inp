@@ -587,7 +587,7 @@ function bundle dbnomics_tree_for_provider(const string provider,
          B[i].name = strstrip(B[i].name)
       endif
    endloop
-   ret.type = catlist ? "cat_list" : "db_list"
+   ret.type = catlist ? "cat_list" : "dset_list"
    strings ret.codes = array(n)
    strings ret.names = array(n)
    loop i=1..n
@@ -619,15 +619,15 @@ function bundle dbnomics_tree_get_child (const bundle b, const string s)
    endif
    ret.code = b.codes[i]
    ret.name = b.names[i]
-   if b.type == "db_list" || !inbundle(b.B[i], "children")
-      ret.type = "db"
+   if b.type == "dset_list" || !inbundle(b.B[i], "children")
+      ret.type = "dset"
    elif b.type == "cat_list"
       bundles B = b.B[i].children
       bundle chk = B[1]
       if inbundle(chk, "children") && nelem(chk.children) > 0
          ret.type = "cat_list"
       else
-         ret.type = "db_list"
+         ret.type = "dset_list"
       endif
       n = nelem(B)
       strings ret.codes = array(n)

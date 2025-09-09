@@ -2216,42 +2216,43 @@ void display_files (int role)
 void dbnomics_browser (int role, const gchar *path, void *data)
 {
     gretl_bundle *b1 = NULL;
+    const char *s;
     int err = 0;
 
-    /* For DBNOMICS_SUB and DBNOMICS_CATS we need to get a dbnomics
-       bundle first and see if it holds categories or datasets.  For
-       DBNOMICS_DSETS we also need to get a bundle but we know what it
-       will hold. For DBNOMICS_SERIES we don't need a bundle at this
-       point.
+    /* If we're supporting browsing of a dbnomics provider's category
+       hierarchy we need to get hold of a dbnomics bundle here, so
+       we can determine its type and act accordingly.
     */
 
     if (role == DBNOMICS_SUB) {
-        /* we have a "parent" dbnomics bundle */
+        /* we have a "parent" dbnomics bundle in @data */
         gretl_bundle *b0 = data;
 
         b1 = dbnomics_category_get_data(b0, path, &err);
         if (!err) {
-            const char *s = gretl_bundle_get_string(b1, "type", &err);
-
+            s = gretl_bundle_get_string(b1, "type", &err);
             if (err) {
                 gretl_bundle_destroy(b1);
             } else if (!strcmp(s, "cat_list")) {
                 role = DBNOMICS_CATS;
-            } else if (!strcmp(s, "db_list")) {
+            } else if (!strcmp(s, "dset_list")) {
                 role = DBNOMICS_DSETS;
-            } else if (!strcmp(s, "db")) {
-                fprintf(stderr, "HERE got DBNOMICS_SERIES\n");
+            } else if (!strcmp(s, "dset")) {
                 role = DBNOMICS_SERIES;
+                /* we have no further need for @b1, since a dset
+                   bundle has no children
+                */
+                gretl_bundle_destroy(b1);
+                b1 = NULL;
             }
         }
     } else if (role == DBNOMICS_CATS) {
         b1 = dbnomics_provider_get_data(path, role, &err);
         if (!err) {
-            const char *s = gretl_bundle_get_string(b1, "type", &err);
-
+            s = gretl_bundle_get_string(b1, "type", &err);
             if (err) {
                 gretl_bundle_destroy(b1);
-            } else if (!strcmp(s, "db_list")) {
+            } else if (!strcmp(s, "dset_list")) {
                 role = DBNOMICS_DSETS;
             }
         }
@@ -2937,9 +2938,11 @@ static gint populate_dbnomics_browser (windata_t *vwin,
         return populate_dbnomics_category_list(vwin, path, b);
     } else if (vwin->role == DBNOMICS_DSETS) {
         return populate_dbnomics_dataset_list(vwin, path, b);
+    } else if (vwin->role == DBNOMICS_SERIES) {
+        return populate_dbnomics_series_list(vwin, path);
     } else {
-        /* DBNOMICS_SERIES */
-        return populate_dbnomics_series_list(vwin, path, b);
+        errbox("unknown dbnomics role!");
+        return 1;
     }
 }
 

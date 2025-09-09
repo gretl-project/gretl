@@ -51,8 +51,7 @@ gint populate_dbnomics_dataset_list (windata_t *vwin,
                                      void *data);
 
 gint populate_dbnomics_series_list (windata_t *vwin,
-                                    gchar *path,
-                                    void *data);
+                                    gchar *path);
 
 gint populate_remote_func_list (windata_t *win, int filter);
 
