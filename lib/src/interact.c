@@ -4172,7 +4172,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         } else if (!strcmp(cmd->param, "gpbuild")) {
             err = execute_gridplot_call(cmd, prn);
         } else if (!strcmp(cmd->param, "gibbs")) {
-            err = gibbs_execute(cmd->opt, prn);
+            err = gibbs_execute(cmd->opt, dset, prn);
         } else {
             err = E_PARSE;
         }

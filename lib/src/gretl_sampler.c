@@ -171,7 +171,9 @@ static gretl_matrix *do_run_sampler (char **init, int ni,
                                      char **iter, int ng,
                                      int burnin, int N,
                                      guint8 *record,
-                                     gretlopt opt, PRN *prn,
+                                     gretlopt opt,
+                                     DATASET *dset,
+                                     PRN *prn,
                                      int *err)
 {
     gretl_matrix *ret = NULL;
@@ -199,7 +201,7 @@ static gretl_matrix *do_run_sampler (char **init, int ni,
             if (cleanup && !gretl_is_user_var(vname)) {
                 gibbs_mark_as_temp(vname);
             }
-            *err = generate(str, NULL, gt, OPT_NONE, prn);
+            *err = generate(str, dset, gt, OPT_NONE, prn);
         }
         if (*err) {
             pprintf(prn, "generate failed on init[%d]\n", i+1);
@@ -234,7 +236,7 @@ static gretl_matrix *do_run_sampler (char **init, int ni,
             if (cleanup && !gretl_is_user_var(vname)) {
                 gibbs_mark_as_temp(vname);
             }
-            genrs[i] = genr_compile(str, NULL, gt, OPT_NONE,
+            genrs[i] = genr_compile(str, dset, gt, OPT_NONE,
                                     prn, err);
         }
         if (*err) {
@@ -283,7 +285,7 @@ static gretl_matrix *do_run_sampler (char **init, int ni,
         s = t - burnin;
         c = 0;
         for (i=0; i<ng && !*err; i++) {
-            *err = execute_genr(genrs[i], NULL, prn);
+            *err = execute_genr(genrs[i], dset, prn);
             if (*err) {
                 pprintf(prn, "genr[%d] failed at iter %d\n> %s\n",
                         i, t, iter[i]);
@@ -404,7 +406,7 @@ int gibbs_block_append (const char *line)
     return err;
 }
 
-int gibbs_execute (gretlopt opt, PRN *prn)
+int gibbs_execute (gretlopt opt, DATASET *dset, PRN *prn)
 {
     gretl_matrix *H = NULL;
     char **init = NULL;
@@ -469,7 +471,7 @@ int gibbs_execute (gretlopt opt, PRN *prn)
     if (!err) {
         H = do_run_sampler(init, ni, iter, ng,
                            gibbs_burnin, gibbs_N,
-                           record, opt, prn, &err);
+                           record, opt, dset, prn, &err);
         if (H != NULL) {
             err = user_var_add_or_replace(gibbs_output,
                                           GRETL_TYPE_MATRIX,
