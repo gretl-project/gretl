@@ -10014,6 +10014,11 @@ static NODE *series_scalar_func (NODE *n, int f,
 {
     NODE *ret = aux_scalar_node(p);
 
+    if (p->err == 0 && (p->dset == NULL || p->dset->v == 0)) {
+        p->err = E_NODATA;
+        return ret;
+    }
+
     if (ret != NULL && starting(p)) {
         gretl_matrix *tmp = NULL;
         int t1 = p->dset->t1;
