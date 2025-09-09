@@ -633,6 +633,7 @@ function bundle dbnomics_tree_get_child (const bundle b, const string s)
       strings ret.codes = array(n)
       strings ret.names = array(n)
       loop i=1..n
+         B[i].name = strstrip(B[i].name)
          ret.codes[i] = B[i].code
          ret.names[i] = B[i].name
       endloop
