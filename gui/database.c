@@ -2333,7 +2333,11 @@ void open_dbnomics_provider (GtkWidget *w, gpointer data)
     gtk_tree_model_get(model, &iter, 0, &provider, -1);
     if (provider != NULL && *provider != '\0') {
         /* HERE: this should now be DBNOMICS_CATS (was DBNOMICS_DSETS) */
-	dbnomics_browser(DBNOMICS_CATS, provider, NULL);
+        if (getenv("DBN_DSETS")) {
+            dbnomics_browser(DBNOMICS_DSETS, provider, NULL);
+        } else {
+            dbnomics_browser(DBNOMICS_CATS, provider, NULL);
+        }
     }
     g_free(provider);
 }
