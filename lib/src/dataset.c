@@ -205,6 +205,8 @@ void clear_datainfo (DATASET *dset, int code)
 	dset->n_varinfo = 0;
 	dset->structure = 0;
 	dset->pd = 1;
+        dset->panel_pd = 0;
+        dset->panel_sd0 = 0;
     }
 }
 
