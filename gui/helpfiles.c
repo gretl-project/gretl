@@ -933,22 +933,20 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
     }
 
     sensitive = !all_lower_case(needle);
+    search_all = widget_get_int(entry, "search-all");
 
-#ifdef GRETL_EDIT
-    if (widget_get_int(entry, "search-all")) {
-	search_all = TRUE;
-    }
-#else
-    if (widget_get_int(entry, "search-all")) {
-	if (vwin->role == DBNOMICS_TOP ||
-            vwin->role == DBNOMICS_CATS ||
-	    vwin->role == DBNOMICS_DSETS ||
-	    vwin->role == DBNOMICS_SERIES) {
-	    dbnomics_search(needle, vwin);
-	    return;
-	} else {
-	    search_all = TRUE;
-	}
+#ifndef GRETL_EDIT
+    if (vwin->role == DBNOMICS_TOP ||
+        vwin->role == DBNOMICS_CATS ||
+        vwin->role == DBNOMICS_DSETS ||
+        vwin->role == DBNOMICS_SERIES) {
+        int s = widget_get_int(entry, "dbn_search_opt");
+
+        if (s > 0) {
+            /* special: not searching "this window" */
+            dbnomics_search(needle, vwin, s);
+            return;
+        }
     }
 #endif
 
@@ -1004,11 +1002,11 @@ static void finder_add_options (GtkWidget *hbox, GtkWidget *entry)
 		     entry);
 }
 
-static void toggle_search_target (GtkComboBox *box, GtkWidget *entry)
+static void set_dbn_search_target (GtkComboBox *box, GtkWidget *entry)
 {
     gint i = gtk_combo_box_get_active(box);
 
-    widget_set_int(entry, "search-all", i > 0);
+    widget_set_int(entry, "dbn_search_opt", i);
 }
 
 static void finder_add_dbn_options (windata_t *vwin,
@@ -1018,17 +1016,20 @@ static void finder_add_dbn_options (windata_t *vwin,
     GtkWidget *combo = gtk_combo_box_text_new();
 
     combo_box_append_text(combo, _("this window"));
-    if (vwin->role == DBNOMICS_DSETS) {
+    if (vwin->role == DBNOMICS_CATS) {
+        combo_box_append_text(combo, _("this provider"));
+    } else if (vwin->role == DBNOMICS_DSETS) {
         combo_box_append_text(combo, _("selected dataset"));
     } else if (vwin->role == DBNOMICS_SERIES) {
         combo_box_append_text(combo, _("this dataset"));
-    } else {
+    } else if (vwin->role == DBNOMICS_TOP) {
+        combo_box_append_text(combo, _("selected provider"));
         combo_box_append_text(combo, _("all DB.NOMICS"));
     }
     gtk_box_pack_end(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
     g_signal_connect(G_OBJECT(combo), "changed",
-		     G_CALLBACK(toggle_search_target),
+		     G_CALLBACK(set_dbn_search_target),
 		     entry);
 }
 
@@ -1070,6 +1071,7 @@ void vwin_add_finder (windata_t *vwin)
 	vwin->role == FUNC_HELP_EN) {
 	finder_add_options(hbox, entry);
     } else if (vwin->role == DBNOMICS_TOP ||
+               vwin->role == DBNOMICS_CATS ||
 	       vwin->role == DBNOMICS_DSETS ||
 	       vwin->role == DBNOMICS_SERIES) {
 	finder_add_dbn_options(vwin, hbox, entry);
@@ -1083,6 +1085,7 @@ void vwin_add_finder (windata_t *vwin)
 #ifndef GRETL_EDIT
     if (vwin->role == DBNOMICS_TOP ||
 	vwin->role == VIEW_DBSEARCH ||
+        vwin->role == DBNOMICS_CATS ||
 	vwin->role == DBNOMICS_SERIES ||
 	vwin->role == DBNOMICS_DSETS) {
 	maybe_fill_dbn_finder(vwin->finder);

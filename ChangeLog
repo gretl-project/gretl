@@ -11,6 +11,8 @@ version 2025c, in progress
   shown when some series cannot be deleted
 - "setobs" syntax: accept month as single digit for panel
   data with monthly time dimension
+- "nulldata" command: ensure that all pre-existing dataset
+  information is cleared out
 - distance() function: treat the Mahalanobis metric in the
   same way as all the other supported metrics
 - new function lnmgamma(): multivariate log gamma function

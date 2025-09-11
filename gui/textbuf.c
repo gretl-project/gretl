@@ -2346,7 +2346,7 @@ static void open_next_link (GtkTextTag *tag, GtkWidget *tview)
 
     vwin = g_object_get_data(G_OBJECT(tview), "vwin");
     if (vwin != NULL) {
-	dbnomics_search(NULL, vwin);
+	dbnomics_search(NULL, vwin, 0);
     }
 }
 

@@ -2000,13 +2000,14 @@ static int dbn_general_search_results (const gchar *key,
 {
     int n = gretl_array_get_length(a);
     PRN *prn = NULL;
-    int err, n_ok = 0;
+    int n_ok = 0;
+    int err;
 
     if (n == 0) {
-	return 0;
+	err = 1;
+    } else {
+        err = bufopen(&prn);
     }
-
-    err = bufopen(&prn);
 
     if (!err) {
 	const char *pcode, *dcode, *name;
@@ -2133,12 +2134,14 @@ void maybe_fill_dbn_finder (GtkWidget *entry)
     }
 }
 
-/* The @key string is passed here when "all DB.NOMICS" is selected as
-   the search space in the dbnomics providers window, or when "this
-   database" is selected in a dbnomics dataset window.
+/* The search @key string is passed here when "all DB.NOMICS" or "this
+   provider" is selected as the search space in the dbnomics providers
+   window, when "this provider" is selected in a dbnomics categories
+   window, and when "this database" is selected in a dbnomics dataset
+   window.
 */
 
-void dbnomics_search (gchar *key, windata_t *vwin)
+void dbnomics_search (gchar *key, windata_t *vwin, int stype)
 {
     gretl_array *a = NULL;
     int n_found = 0;
@@ -2169,6 +2172,17 @@ void dbnomics_search (gchar *key, windata_t *vwin)
 	    n_found = dbn_dataset_search_results(key, prov, dset, offset, a, vwin);
 	}
 	key = NULL; /* don't free it! */
+    } else if (vwin->role == DBNOMICS_CATS) {
+        /* searching "this provider" in categories window */
+        const gchar *prov = dbn_browser_get_provider(vwin);
+        gchar *mykey;
+
+        mykey = g_strdup_printf("%s %s", prov, key);
+	a = dbnomics_search_call(mykey, NULL, NULL, SEARCH_CHUNK, 0, &err);
+	if (!err) {
+	    n_found = dbn_general_search_results(mykey, a);
+	}
+        g_free(mykey);
     } else if (vwin->role == DBNOMICS_DSETS) {
 	/* searching "selected dataset" in datasets window */
 	const gchar *prov;
@@ -2194,12 +2208,25 @@ void dbnomics_search (gchar *key, windata_t *vwin)
 	    n_found = dbn_dataset_search_results(key, prov, dset, 0, a, NULL);
 	}
 	g_free(prov);
+    } else if (vwin->role == DBNOMICS_TOP && stype == 1) {
+        /* "selected provider" */
+        gchar *prov = NULL;
+        gchar *mykey = NULL;
+
+        tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
+                             vwin->active_var, COL_DBN_CODE, &prov);
+        mykey = g_strdup_printf("%s %s", prov, key);
+        a = dbnomics_search_call(mykey, NULL, NULL, SEARCH_CHUNK, 0, &err);
+        if (!err) {
+            n_found = dbn_general_search_results(mykey, a);
+        }
+        g_free(mykey);
     } else {
-	/* top-level search */
-	a = dbnomics_search_call(key, NULL, NULL, SEARCH_CHUNK, 0, &err);
-	if (!err) {
-	    n_found = dbn_general_search_results(key, a);
-	}
+        /* "all DB.NOMICS" */
+        a = dbnomics_search_call(key, NULL, NULL, SEARCH_CHUNK, 0, &err);
+        if (!err) {
+            n_found = dbn_general_search_results(key, a);
+        }
     }
 
     if (!err && n_found == 0) {
