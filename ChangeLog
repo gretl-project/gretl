@@ -30,6 +30,7 @@ version 2025c, in progress
 - Fix bug: possible spurious error from "smpl" command
 - Fix bug: a series could be wrongly taken to be a lag of
   another series
+- GUI: enhance the dbnomics search facility
 - GUI: ensure that the separator between the main window
   and the "swallowed" console can be grabbed via the mouse
 - GUI: fix background of the "icon view" window when a dark
