@@ -5249,7 +5249,7 @@ void print_summary (const Summary *summ,
 		       dset->varname[summ->weight_var]);
     }
 
-    if (nv == 1 && !(summ->opt & OPT_B)) {
+    if (nv == 1 && !(summ->opt & (OPT_B | OPT_M))){
 	print_summary_single(summ, 6, 0, dset, prn);
 	return;
     }
@@ -5258,7 +5258,7 @@ void print_summary (const Summary *summ,
     dmax = 5; // was: (summ->opt & OPT_S)? 4 : 5;
     d = d > dmax ? dmax : d;
 
-    if (nv > 1) {
+    if (nv > 1 || (summ->opt & OPT_M)) {
 	int maxlen = max_namelen_in_list(summ->list, dset);
 
 	len = maxlen + 1;
@@ -5292,7 +5292,7 @@ void print_summary (const Summary *summ,
 	for (i=0; i<summ->list[0]; i++) {
 	    vi = summ->list[i+1];
 	    ival = summ->ival[i];
-	    if (nv > 1) {
+	    if (nv > 1 || (summ->opt & OPT_M)) {
 		summary_print_varname(dset->varname[vi], len, prn);
 	    }
 	    printfw(w, summ->mean[i], d, ival, prn);

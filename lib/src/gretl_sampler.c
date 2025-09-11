@@ -23,6 +23,7 @@
 #include "gretl_typemap.h"
 #include "uservar.h"
 #include "libset.h"
+#include "matrix_extra.h"
 #include "gretl_sampler.h"
 
 /* file-scope globals */
@@ -34,6 +35,49 @@ static int gibbs_n_temps;
 static int gibbs_burnin;
 static int gibbs_N;
 static char *gibbs_output;
+
+typedef struct gibbs_var_info_ {
+    char *name;
+    GretlType gt;
+    int startcol;
+    int ncols;
+    int discrete;
+    double mean;
+    double sd;
+    double min;
+    double max;
+} gibbs_var_info;
+
+static gibbs_var_info *gibbs_info_alloc (int nr)
+{
+    gibbs_var_info *gvi = malloc(nr * sizeof *gvi);
+    int i;
+
+    for (i=0; i<nr; i++) {
+        gvi[i].name = NULL;
+        gvi[i].startcol = 0;
+        gvi[i].ncols = 0;
+        gvi[i].discrete = 0;
+        gvi[i].mean = NADBL;
+        gvi[i].sd = NADBL;
+        gvi[i].min = NADBL;
+        gvi[i].max = NADBL;
+    }
+
+    return gvi;
+}
+
+static void gibbs_info_destroy (gibbs_var_info *gvi, int nr)
+{
+    if (gvi != NULL) {
+        int i;
+
+        for (i=0; i<nr; i++) {
+            free(gvi[i].name);
+        }
+        free(gvi);
+    }
+}
 
 static void gibbs_delete_temps (void)
 {
@@ -167,10 +211,75 @@ static int gibbs_record_result (GENERATOR *genr,
     return err;
 }
 
-static gretl_matrix *do_run_sampler (char **init, int ni,
+static void matrix_dset_set_names (DATASET *mdset, int *list)
+{
+    int i;
+
+    for (i=1; i<=list[0]; i++) {
+        sprintf(mdset->varname[i], "col%d", list[i]);
+    }
+}
+
+static void gibbs_print_info (gibbs_var_info *gvi, int nr,
+                              gretl_matrix *M, PRN *prn)
+{
+    DATASET *mdset;
+    int *collist;
+    int i, c1;
+    int err = 0;
+
+    pprintf(prn, "variables recorded in %s:\n\n", gibbs_output);
+    for (i=0; i<nr; i++) {
+        c1 = gvi[i].startcol + 1;
+        if (gvi[i].gt == GRETL_TYPE_DOUBLE) {
+            /* a scalar variable */
+            int list[2] = {1, c1};
+
+            pprintf(prn, "scalar %s", gvi[i].name);
+            mdset = gretl_dataset_from_matrix(M, list, OPT_B, &err);
+            if (!err) {
+                matrix_dset_set_names(mdset, list);
+                collist = gretl_consecutive_list_new(1, mdset->v - 1);
+                err = list_summary(collist, 0, mdset, OPT_S | OPT_M, prn);
+                free(collist);
+            }
+            destroy_dataset(mdset);
+        } else {
+            /* a matrix variable */
+            int c2 = c1 + gvi[i].ncols - 1;
+            int *list = gretl_consecutive_list_new(c1, c2);
+
+            pprintf(prn, "matrix %s", gvi[i].name);
+            mdset = gretl_dataset_from_matrix(M, list, OPT_B, &err);
+            if (!err) {
+                matrix_dset_set_names(mdset, list);
+                collist = gretl_consecutive_list_new(1, mdset->v - 1);
+                err = list_summary(collist, 0, mdset, OPT_S, prn);
+                free(collist);
+            }
+            destroy_dataset(mdset);
+            free(list);
+        }
+    }
+    pputc(prn, '\n');
+}
+
+static void gibbs_record_info (gibbs_var_info *gvi,
+                               const char *vname,
+                               GretlType gt,
+                               int c, int recsize)
+{
+    gvi->name = gretl_strdup(vname);
+    gvi->gt = gt;
+    gvi->startcol = c;
+    gvi->ncols = recsize;
+}
+
+gretl_matrix *do_run_sampler (char **init, int ni,
                                      char **iter, int ng,
                                      int burnin, int N,
                                      guint8 *record,
+                                     gibbs_var_info *gvi,
                                      gretlopt opt,
                                      DATASET *dset,
                                      PRN *prn,
@@ -185,6 +294,7 @@ static gretl_matrix *do_run_sampler (char **init, int ni,
     int cleanup = (opt & OPT_C);
     int verbose = (opt & OPT_V);
     int ncols = 0;
+    int msize = 0;
     int iters;
     int i, j, s, t, c;
 
@@ -229,7 +339,7 @@ static gretl_matrix *do_run_sampler (char **init, int ni,
     if (verbose) {
         pputs(prn, "checking iteration statements\n");
     }
-    for (i=0; i<ng && !*err; i++) {
+    for (i=0, j=0; i<ng && !*err; i++) {
         str = iter[i];
         *err = gibbs_get_lhs_info(&str, &gt, vname);
         if (!*err) {
@@ -244,22 +354,23 @@ static gretl_matrix *do_run_sampler (char **init, int ni,
             pprintf(prn, " > %s\n", iter[i]);
         } else {
             user_var *uv = get_user_var_by_name(vname);
+            int colnum = ncols;
 
             gt = user_var_get_type(uv);
-            if (gt == GRETL_TYPE_DOUBLE) {
-                if (record[i]) {
-                    ncols++;
-                }
-            } else if (gt == GRETL_TYPE_MATRIX) {
-                if (record[i]) {
-                    gm = user_var_get_value(uv);
-                    ncols += gm->rows * gm->cols;
-                    record[i] = ncols;
-                }
-            } else {
+            if (gt != GRETL_TYPE_DOUBLE && gt != GRETL_TYPE_MATRIX) {
                 pprintf(prn, "bad type from iter[%d]\n", i+1);
                 pprintf(prn, " > %s\n", iter[i]);
                 *err = E_TYPES;
+            } else if (record[i]) {
+                if (gt == GRETL_TYPE_DOUBLE) {
+                    ncols++;
+                } else {
+                    gm = user_var_get_value(uv);
+                    msize = gm->rows * gm->cols;
+                    ncols += msize;
+                    record[i] = msize;
+                }
+                gibbs_record_info(&gvi[j++], vname, gt, colnum, record[i]);
             }
         }
     }
@@ -412,6 +523,7 @@ int gibbs_execute (gretlopt opt, DATASET *dset, PRN *prn)
     char **init = NULL;
     char **iter = NULL;
     guint8 *record = NULL;
+    gibbs_var_info *gvi = NULL;
     char *str;
     int verbose;
     int ni = 0;
@@ -466,24 +578,28 @@ int gibbs_execute (gretlopt opt, DATASET *dset, PRN *prn)
             init = gibbs_lines;
         }
         iter = gibbs_lines + ni;
+        gvi = gibbs_info_alloc(nr);
     }
 
     if (!err) {
         H = do_run_sampler(init, ni, iter, ng,
                            gibbs_burnin, gibbs_N,
-                           record, opt, dset, prn, &err);
+                           record, gvi, opt, dset,
+                           prn, &err);
         if (H != NULL) {
             err = user_var_add_or_replace(gibbs_output,
                                           GRETL_TYPE_MATRIX,
                                           H);
         }
         if (!err && verbose) {
-            pprintf(prn, "%s is %d x %d\n", gibbs_output, H->rows, H->cols);
+            pprintf(prn, "output matrix %s is %d x %d\n", gibbs_output, H->rows, H->cols);
+            gibbs_print_info(gvi, nr, H, prn);
         }
     }
 
     free(record);
     gibbs_destroy();
+    gibbs_info_destroy(gvi, nr);
 
     return err;
 }
