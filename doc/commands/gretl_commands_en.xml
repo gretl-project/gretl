@@ -5283,15 +5283,44 @@
       <para>
         This command is designed to facilitate the construction and
         execution of a Gibbs sampler, for a good explanation of which
-        see <cite key="casella92">Casella and George (1992)</cite>.
+        see <cite key="casella92">Casella and George (1992)</cite>. To
+        summarize, the Gibbs sampler is a means of approximating the
+        marginal distribution of one or more random variables which
+        belong to a joint distribution, in case there's no analytical
+        formula for the marginals, or if there is a formula it's
+        excessively complicated. This is achieved by iterated
+        simulation of the associated conditional
+        distributions. Provided the marginals exist they can be
+        approximated to arbitrary precision given a sufficient number
+        of iterations.
       </para>
       <para>
-        It takes the form of a block of statements that define scalar
-        or matrix objects, started with <lit>gibbs</lit> and
-        terminated by <lit>end gibbs</lit>. Option flags can be
-        appended to the last line. Within the block two (mutually
-        exclusive) keywords are used to control how statements are
-        handled.
+        The command takes the form of a block of statements that
+        define scalar or matrix objects, started with <lit>gibbs</lit>
+        and terminated by <lit>end gibbs</lit>, as illustrated in the
+        following simple example, where <lit>x</lit> FIXME.
+      </para>
+      <code>
+	gibbs burnin=500 N=5000 output=M
+	   init y = randgen1(beta, a, n - b)
+	   record x = randgen1(b, y, n)
+	   y = randgen1(beta, x + a, n - x + b)
+	end gibbs
+      </code>
+      <para>
+	On the first line a non-negative integer must be given for
+	<lit>burnin</lit> and a positive integer for <lit>N</lit>
+	(either numerical values or via the names of scalar
+	variables). The <lit>burnin</lit> value determines the number
+	of preliminary iterations, which will not be recorded but are
+	intended to stabilize the recursion, while <lit>N</lit> gives
+	the number of iterations to be recorded, in a matrix named by
+	the <lit>output</lit> argument.
+      </para>
+      <para>
+	The interior lines of the block can have a keyword prepended,
+	either <lit>init</lit> or <lit>record</lit>, with the
+	following meaning.
       </para>
       <ilist>
         <li>
@@ -5308,15 +5337,15 @@
         </li>
       </ilist>
       <para>
-        These keywords should be put first on a given line, followed
-        by the associated statement. Statements that feature neither
-        keyword are taken to be part of the iteration but their
-        results are not recorded in the output matrix. Statements
-        tagged with <lit>init</lit> should be given before all the
-        rest.
+        Statements that feature neither keyword are taken to be part
+        of the iteration but their results are not recorded in the
+        output matrix. Statements tagged with <lit>init</lit> should
+        be given before all the rest.
       </para>
       <para>
-        To be continued.
+	The output matrix has <lit>N</lit> rows and a column dimension
+	that depends on the number and type of the marginals to be
+	recorded.
       </para>
     </description>
   </command>
