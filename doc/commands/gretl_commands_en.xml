@@ -5269,7 +5269,7 @@
         </option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>print progress report</effect>
+	  <effect>see below</effect>
         </option>
       </options>
       <examples>
@@ -5280,6 +5280,10 @@
     </usage>  
 
     <description>
+      <para>
+        <emphasis>This documentation is preliminary and subject to
+        change before the next gretl release.</emphasis>
+      </para>
       <para>
         This command is designed to facilitate the construction and
         execution of a Gibbs sampler, for a good explanation of which
@@ -5295,32 +5299,36 @@
         of iterations.
       </para>
       <para>
-        The command takes the form of a block of statements that
-        define scalar or matrix objects, started with <lit>gibbs</lit>
-        and terminated by <lit>end gibbs</lit>, as illustrated in the
-        following simple example, where <lit>x</lit> FIXME.
+        The command takes the form of a block of statements that define
+        scalar or matrix objects, started with <lit>gibbs</lit> and
+        terminated by <lit>end gibbs</lit>. The structure is illustrated
+        in the following simple example, where <lit>x</lit> follows the
+        binomial distribution conditional on <lit>y</lit>, which in turn
+        follows the beta distribution conditional on <lit>x</lit>, and
+        it's the marginal distribution of <lit>x</lit> that is of
+        interest.
       </para>
       <code>
 	gibbs burnin=500 N=5000 output=M
 	   init y = randgen1(beta, a, n - b)
 	   record x = randgen1(b, y, n)
 	   y = randgen1(beta, x + a, n - x + b)
-	end gibbs
+	end gibbs --verbose
       </code>
       <para>
 	On the first line a non-negative integer must be given for
 	<lit>burnin</lit> and a positive integer for <lit>N</lit>
 	(either numerical values or via the names of scalar
-	variables). The <lit>burnin</lit> value determines the number
-	of preliminary iterations, which will not be recorded but are
-	intended to stabilize the recursion, while <lit>N</lit> gives
-	the number of iterations to be recorded, in a matrix named by
-	the <lit>output</lit> argument.
+	variables). The <lit>burnin</lit> value determines the number of
+	preliminary iterations, which are intended to stabilize the
+	recursion and will not be recorded, while <lit>N</lit> gives the
+	number of iterations to be recorded, in a matrix named by the
+	<lit>output</lit> argument.
       </para>
       <para>
 	The interior lines of the block can have a keyword prepended,
 	either <lit>init</lit> or <lit>record</lit>, with the
-	following meaning.
+	following meanings.
       </para>
       <ilist>
         <li>
@@ -5340,12 +5348,23 @@
         Statements that feature neither keyword are taken to be part
         of the iteration but their results are not recorded in the
         output matrix. Statements tagged with <lit>init</lit> should
-        be given before all the rest.
+        be given first.
       </para>
       <para>
 	The output matrix has <lit>N</lit> rows and a column dimension
 	that depends on the number and type of the marginals to be
-	recorded.
+	recorded; matrix results are recorded in transposed vec form.
+	If the matrix named in the <lit>output</lit> argument already
+	exists it is overwritten, otherwise a new matrix is created.
+      </para>
+      <para>
+        Two options are supported; these should be appended to the
+        terminating line of the block. The <opt>verbose</opt> flag
+        produces a brief progress report and some basic summary
+        statistics pertaining to the output matrix. The
+        <opt>cleanup</opt> flag has the effect that any variables newly
+        created within the <lit>gibbs</lit> block are deleted once the
+        iteration is completed.
       </para>
     </description>
   </command>
