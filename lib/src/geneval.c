@@ -4784,6 +4784,9 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
             } else if (!null_node(r)) {
                 xparm = node_get_scalar(r, p);
             }
+        } else if (f == F_NULLSPC) {
+            /* set the 'left' boolean */
+            parm = node_get_bool(r, p, 0);
         } else if (f >= F_MINC && f <= F_MEANR) {
             /* set the skip_na boolean option */
             parm = node_get_bool(r, p, 0);
@@ -4889,14 +4892,18 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
             ret->v.m = user_matrix_unvech(m, xparm, &p->err);
             break;
         case F_MREV:
-            if (parm != 0) {
+            if (parm) {
                 ret->v.m = gretl_matrix_reverse_cols(m, &p->err);
             } else {
                 ret->v.m = gretl_matrix_reverse_rows(m, &p->err);
             }
             break;
         case F_NULLSPC:
-            ret->v.m = gretl_matrix_right_nullspace(m, &p->err);
+            if (parm) {
+                ret->v.m = gretl_matrix_left_nullspace(m, GRETL_MOD_NONE, &p->err);
+            } else {
+                ret->v.m = gretl_matrix_right_nullspace(m, &p->err);
+            }
             break;
         case F_MEXP:
             if (m->is_complex) {

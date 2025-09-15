@@ -111,6 +111,9 @@ static void fill_x_corr_array (double *x, int n, int T)
     x[6] = (n == 3)? 1.0 : 0.0;;
 }
 
+static gretl_matrix *johansen_nullspace (const gretl_matrix *R,
+					 int *err);
+
 /*
    Asymptotic p-values for Johansen's likelihood ratio tests
    computed using J. Doornik's gamma approximation --
@@ -1150,6 +1153,17 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
         if (alpha_restricted(flags)) {
             transcribe_alpha(v);
         }
+    }
+
+    if (!err && G != NULL) {
+        /* see Johansen (1995, p. 45) */
+        gretl_matrix *Tmp;
+
+        Tmp = gretl_identity_matrix_new(n);
+        for (i=0; i<order; i++) {
+            gretl_matrix_subtract_from(Tmp, G[i]);
+        }
+        v->jinfo->Gamma = Tmp;
     }
 
  bailout:

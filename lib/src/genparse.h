@@ -215,7 +215,6 @@ enum {
     F_NELEM,
     F_VALUES,
     F_UNIQ,
-    F_NULLSPC,
     F_MEXP,
     F_FFT,
     F_FFTI,
@@ -396,6 +395,7 @@ enum {
     F_BINPERMS,
     F_MNORM,
     F_LNMGAMMA,
+    F_NULLSPC,
     HF_VCNORM,
     HF_GLASSO,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */

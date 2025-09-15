@@ -923,6 +923,8 @@ static void johansen_info_free (JohansenInfo *jv)
     gretl_matrix_free(jv->evals);
     gretl_matrix_free(jv->Beta);
     gretl_matrix_free(jv->Alpha);
+    gretl_matrix_free(jv->Gamma);
+    gretl_matrix_free(jv->JC);
     gretl_matrix_free(jv->Bvar);
     gretl_matrix_free(jv->Bse);
     gretl_matrix_free(jv->Ase);
@@ -3320,6 +3322,8 @@ johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
     jv->evals = NULL;
     jv->Beta = NULL;
     jv->Alpha = NULL;
+    jv->Gamma = NULL;
+    jv->JC = NULL;
     jv->Bse = NULL;
     jv->Ase = NULL;
     jv->Bvar = NULL;
@@ -4704,6 +4708,8 @@ static void johansen_serialize (JohansenInfo *j, PRN *prn)
     gretl_matrix_serialize(j->Alpha, "Alpha", prn);
     gretl_matrix_serialize(j->Bvar, "Bvar", prn);
     gretl_matrix_serialize(j->Bse, "Bse", prn);
+    gretl_matrix_serialize(j->Gamma, "Gamma", prn);
+    gretl_matrix_serialize(j->JC, "JC", prn);
     gretl_matrix_serialize(j->R, "R", prn);
     gretl_matrix_serialize(j->q, "q", prn);
     gretl_matrix_serialize(j->Ra, "Ra", prn);
@@ -4763,6 +4769,69 @@ static int retrieve_johansen_basics (GRETL_VAR *var,
     return err;
 }
 
+static void add_johansen_C (JohansenInfo *j)
+{
+    gretl_matrix *a0, *b0;
+    gretl_matrix *tmp = NULL;
+    gretl_matrix *C1 = NULL;
+    gretl_matrix *JC = NULL;
+    int p = j->Alpha->rows;
+    int err = 0;
+
+    /* make \alpha_{\perp} in a0 */
+    a0 = gretl_matrix_left_nullspace(j->Alpha, GRETL_MOD_NONE, &err);
+
+    /* make \beta_{\perp} in b0 */
+    if (!err && j->Beta->rows > p) {
+        double bik;
+        int i, k;
+
+        tmp = gretl_matrix_alloc(p, j->rank);
+        for (k=0; k<j->rank; k++) {
+            for (i=0; i<p; i++) {
+                bik = gretl_matrix_get(j->Beta, i, k);
+                gretl_matrix_set(tmp, i, k, bik);
+            }
+        }
+        b0 = gretl_matrix_left_nullspace(tmp, GRETL_MOD_NONE, &err);
+        gretl_matrix_free(tmp);
+    } else if (!err) {
+        b0 = gretl_matrix_left_nullspace(j->Beta, GRETL_MOD_NONE, &err);
+    }
+
+    if (err) {
+        return;
+    }
+
+    /* Johansen's C = b0 * inv(a0' * Gamma * b0) * a0' */
+    tmp = gretl_matrix_alloc(a0->cols, j->Gamma->cols);
+    C1 = gretl_matrix_alloc(a0->cols, b0->cols);
+    JC = gretl_matrix_alloc(p, p);
+    gretl_matrix_multiply_mod(a0, GRETL_MOD_TRANSPOSE,
+                              j->Gamma, GRETL_MOD_NONE,
+                              tmp, GRETL_MOD_NONE);
+    gretl_matrix_multiply(tmp, b0, C1);
+    err = gretl_invert_general_matrix(C1);
+    if (!err) {
+        gretl_matrix_realloc(tmp, p, C1->cols);
+        gretl_matrix_multiply(b0, C1, tmp);
+        gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
+                                  a0, GRETL_MOD_TRANSPOSE,
+                                  JC, GRETL_MOD_NONE);
+    }
+
+    if (!err) {
+        j->JC = JC;
+        JC = NULL;
+    }
+
+    gretl_matrix_free(tmp);
+    gretl_matrix_free(C1);
+    gretl_matrix_free(a0);
+    gretl_matrix_free(b0);
+    gretl_matrix_free(JC);
+}
+
 static gretl_bundle *johansen_bundlize (JohansenInfo *j)
 {
     gretl_bundle *b = gretl_bundle_new();
@@ -4792,6 +4861,9 @@ static gretl_bundle *johansen_bundlize (JohansenInfo *j)
     gretl_bundle_set_matrix(b, "Bvar", j->Bvar);
     gretl_bundle_set_matrix(b, "Bse", j->Bse);
 
+    if (j->Gamma != NULL) {
+        gretl_bundle_set_matrix(b, "Gamma", j->Gamma);
+    }
     if (j->R != NULL) {
         gretl_bundle_set_matrix(b, "R", j->R);
     }
@@ -4803,6 +4875,13 @@ static gretl_bundle *johansen_bundlize (JohansenInfo *j)
     }
     if (j->qa != NULL) {
         gretl_bundle_set_matrix(b, "qa", j->qa);
+    }
+
+    if (j->Alpha != NULL && j->Beta != NULL && j->Gamma != NULL) {
+        add_johansen_C(j);
+        if (j->JC != NULL) {
+            gretl_bundle_set_matrix(b, "JC", j->JC);
+        }
     }
 
     return b;
