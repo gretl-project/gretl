@@ -5402,18 +5402,54 @@
 
     <description>
       <para>
+        <emphasis>Questa documentazione è preliminare e provvisoria.</emphasis>
+      </para>
+      <para>
 	Questo comando è progettato per facilitare la costruzione e
-	l'esecuzione di un cmpionatore di Gibbs; per una spiegazione
+	l'esecuzione di un campionatore di Gibbs; per una spiegazione
 	approfondita vedere <cite key="casella92">Casella e George
-	(1992)</cite>.
+	(1992)</cite>. In sintesi, il campionatore di Gibbs è un
+	metodo per approssimare la distribuzione marginale di una o
+	più variabili casuali appartenenti a una distribuzione
+	congiunta, nel caso in cui non esista una formula analitica
+	per le variabili marginali, o se esiste una formula, questa
+	sia eccessivamente complicata. Questo risultato si ottiene
+	mediante la simulazione delle distribuzioni condizionali
+	associate. Se le marginali esistono, possono essere
+	approssimate con precisione arbitraria con un numero
+	sufficiente di iterazioni.
       </para>
       <para>
 	Il comando ha la forma di un blocco di istruzioni che
 	definiscono scalari o matrici; il blocco inizia con
 	<lit>gibbs</lit> e termina con <lit>end gibbs</lit>. Le
-	eventuali opzioni vanno all'ultima riga. All'interno
-	del blocco vengono utilizzate due parole chiave (mutualmente
-	esclusive) per controllare come vengono gestite le istruzioni.
+	eventuali opzioni vanno all'ultima riga. La struttura è
+	illustrata nel seguente semplice esempio, dove <lit>x</lit>
+	condizionata a <lit>y</lit> è una binomiale mentre
+	<lit>y</lit> condizionata a <lit>x</lit> è una beta; quel che
+	interessa è la distribuzione marginale di <lit>x</lit>.
+      </para>
+      <code>
+	gibbs burnin=500 N=5000 output=M
+	  init y = randgen1(beta, a, n - b)
+	  record x = randgen1(b, y, n)
+	  y = randgen1(beta, x + a, n - x + b)
+	end gibbs --verbose
+      </code>
+      <para>
+	Nella prima riga, <lit>burnin</lit> deve essere un intero non
+	negativo e <lit>N</lit> un intero positivo (sia come valori
+	numerici che come variabili scalari). Il valore
+	<lit>burnin</lit> determina il numero di iterazioni
+	preliminari, che servono a stabilizzare la ricorsione e non
+	verranno registrate, mentre <lit>N</lit> indica il numero di
+	iterazioni da registrare, in una matrice denominata
+	dall'argomento <lit>output</lit>.
+      </para>
+      <para>
+	All'interno del blocco vengono utilizzate due parole chiave
+	(mutualmente esclusive) per controllare come vengono gestite
+	le istruzioni.
       </para>
       <ilist>
 	<li>
@@ -5424,24 +5460,36 @@
 	</li>
 	<li>
 	  <para>
-	    <lit>record</lit> contrassegna un'istruzione come un'istruzione il cui risultato
-	    deve essere registrato a ogni iterazione.
+	    <lit>record</lit> contrassegna un'istruzione come
+	    un'istruzione il cui risultato deve essere registrato a
+	    ogni iterazione.
 	  </para>
         </li>
-    </ilist>
+      </ilist>
     <para>
-      Queste parole chiave devono essere inserite per prime su una
-      determinata riga, seguite dall'istruzione associata. Le
-      istruzioni che non contengono nessuna parola chiave vengono
-      considerate parte dell'iterazione, ma i loro risultati non
-      vengono registrati nella matrice di output. Le istruzioni
-      contrassegnate con <lit>init</lit> devono essere fornite prima
-      di tutte le altre.
-   </para>
-   <para>
-     [...Continua...]
-   </para>
- </description>
+      Le istruzioni che non contengono nessuna delle due parole chiave
+      vengono considerate parte dell'iterazione, ma i loro risultati
+      non vengono registrati nella matrice di output. Le istruzioni
+      contrassegnate con <lit>init</lit> devono essere fornite per
+      prime.
+    </para>
+    <para>
+      La matrice di output ha <lit>N</lit> righe e un numero di
+      colonne che dipende dal numero e dal tipo di marginali da
+      registrare; i risultati della matrice vengono registrati in
+      formato vec trasposto.  Se la matrice indicata nell'argomento
+      <lit>output</lit> esiste già, viene sovrascritta, altrimenti
+      viene creata una nuova matrice.
+    </para>
+    <para>
+      Sono supportate due opzioni, che vanno nella riga finale del
+      blocco. Il flag <opt>verbose</opt> produce un breve report sullo
+      stato di avanzamento e alcune statistiche di riepilogo di base
+      relative alla matrice di output. Il flag <opt>cleanup</opt> fa
+      sì che tutte le variabili appena create all'interno del blocco
+      <lit>gibbs</lit> vengano eliminate al termine dell'iterazione.
+    </para>
+    </description>
 </command>
   
   <command name="gmm" section="Estimation" label="Stima GMM">
