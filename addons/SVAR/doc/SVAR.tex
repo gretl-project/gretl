@@ -1536,7 +1536,7 @@ construct: the line
   SVAR_restrict(&ISLM, "Adiag", 1)
 \end{code}
 sets up a system of constraints such that all elements on the diagonal
-of $A$ are set to 1. More precisely, \dtk{SVAR_restrict(\&Model,
+of $A$ are set to 1. More precisely, \dtk{SVAR_restrict(&Model,
   "Adiag", x)} sets all diagonal elements of $A$ to the value $x$,
 unless $x$ is \texttt{NA}. In that case, all \emph{non-diagonal}
 elements are constrained to 0, while diagonal elements are left
@@ -2815,7 +2815,7 @@ and need not be harmonized).
 (The function signatures below are given as-is with the asterisk ``*'' denoting
 the pointer argument, but remember that in \emph{gretl}'s language \emph{hansl} 
 in a function call the pointer has to be 
-specified with an ampersand character as ``\&Smod''.)
+specified with an ampersand character,  as in ``\verb|&Smod|''.)
 
 
 \begin{funcdoc}{FEVD (bundle *Smod, int drawix[0])}
@@ -3135,22 +3135,22 @@ list of endogenous variables must be given in \texttt{nv}.
 
 A few examples: 
 \begin{itemize}
-\item \dtk{SVAR_restrict(\&M, "C", 3, 2, 0)}; in a C model called
+\item \dtk{SVAR_restrict(&M, "C", 3, 2, 0)}; in a C model called
   \texttt{M}, sets $C_{3,2} = 0$. As a consequence, the IRF for
   variable number 3 with respect to the shock number 2 starts from
   zero.
-\item \dtk{SVAR_restrict(\&foo, "A", 1, 2, 0)}; in an AB model called
+\item \dtk{SVAR_restrict(&foo, "A", 1, 2, 0)}; in an AB model called
   \texttt{foo}, sets $A_{1,2} = 0$.
-\item \dtk{SVAR_restrict(\&MyMod, "lrC", 5, 3, 0)}; in a C model
+\item \dtk{SVAR_restrict(&MyMod, "lrC", 5, 3, 0)}; in a C model
   called \texttt{MyMod}, restricts $C$ such that the long-run impact
   of shock number 3 on variable number 5 is 0. This implies that the
   cumulated IRF for variable 5 with respect to shock 3 tends to zero.
-\item \dtk{SVAR_restrict(\&Mod2, "B", \{NA, 0; NA, NA\})} specifies a 
+\item \dtk{SVAR_restrict(&Mod2, "B", \{NA, 0; NA, NA\})} specifies a 
   pattern matrix in a 2-dimensional system to restrict the 1,2-element of
   the B matrix to zero. 
-\item \dtk{SVAR_restrict(\&bar, "Adiag", 1)}; in an AB model called
+\item \dtk{SVAR_restrict(&bar, "Adiag", 1)}; in an AB model called
   \texttt{bar}, sets $A_{i,i} = 1$ for $1 \le i \le n$.
-\item \dtk{SVAR_restrict(\&baz, "Bdiag", NA)}; in an AB model called
+\item \dtk{SVAR_restrict(&baz, "Bdiag", NA)}; in an AB model called
   \texttt{baz}, sets $B_{i,j} = 0$ for $i \ne j$.
 \end{itemize}
 
