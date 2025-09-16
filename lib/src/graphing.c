@@ -8302,7 +8302,7 @@ int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset)
     }
 
     nvars = gretl_matrix_cols(E);
-    if (nvars > 6) {
+    if (nvars > 9) {
         return 1;
     }
 
@@ -8324,9 +8324,11 @@ int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset)
         cols = 1;
     } else if (nvars == 4) {
         rows = cols = 2;
+    } else if (nvars == 4) {
+        rows = cols = 2;
     } else {
         rows = 3;
-        cols = ceil(nvars / 3);
+        cols = 1 + floor((nvars - 0.1) / 3);
     }
 
     fprintf(fp, "set multiplot layout %d,%d\n", rows, cols);

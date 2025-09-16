@@ -3263,7 +3263,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	vwin_menu_add_item(vwin, "/menubar/Graphs/ResidsMenu", &item);
     }
 
-    if (neqns > 1 && neqns <= 6) {
+    if (neqns > 1 && neqns <= 9) {
 	/* multiple residual plots in one frame */
 	sprintf(min, "multiresid %s", cmdword);
 	item.name = min;
