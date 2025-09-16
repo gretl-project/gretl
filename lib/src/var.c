@@ -4709,7 +4709,7 @@ static void johansen_serialize (JohansenInfo *j, PRN *prn)
     gretl_matrix_serialize(j->Bvar, "Bvar", prn);
     gretl_matrix_serialize(j->Bse, "Bse", prn);
     gretl_matrix_serialize(j->Gamma, "Gamma", prn);
-    gretl_matrix_serialize(j->JC, "JC", prn);
+    gretl_matrix_serialize(j->JC, "long_run", prn);
     gretl_matrix_serialize(j->R, "R", prn);
     gretl_matrix_serialize(j->q, "q", prn);
     gretl_matrix_serialize(j->Ra, "Ra", prn);
@@ -4880,7 +4880,7 @@ static gretl_bundle *johansen_bundlize (JohansenInfo *j)
     if (j->Alpha != NULL && j->Beta != NULL && j->Gamma != NULL) {
         add_johansen_C(j);
         if (j->JC != NULL) {
-            gretl_bundle_set_matrix(b, "JC", j->JC);
+            gretl_bundle_set_matrix(b, "long_run", j->JC);
         }
     }
 
