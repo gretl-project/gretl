@@ -236,7 +236,7 @@ static int try_fixing_model_XML (const char *fname,
         rx = g_regex_new(re, 0, 0, NULL);
         if (rx != NULL) {
             if (g_regex_match(rx, buf, 0, NULL)) {
-                rev = g_regex_replace(rx, buf, -1, 0, sub, 0, &gerr);
+                rev = g_regex_replace(rx, buf, -1, 0, sub, 0, NULL);
             }
         }
         if (rev != NULL) {
