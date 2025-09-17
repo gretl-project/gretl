@@ -212,6 +212,45 @@ static int data_restrict_from_xml (xmlNodePtr node, xmlDocPtr doc,
     return 0;
 }
 
+/* Remedy for the case where the XML representation of a gretl model
+   ended up using comma for the decimal point. This shouldn't happen,
+   but for the sake of reading "broken" session files we provide this
+   fix: replace <digit>,<digit> with <digit>.<digit> and retry.
+*/
+
+static int try_fixing_model_XML (const char *fname,
+                                 const char *root,
+                                 xmlDocPtr *pdoc,
+                                 xmlNodePtr *pnode)
+{
+    gchar *buf = NULL;
+    gchar *rev = NULL;
+    int err = 1;
+
+    if (g_file_get_contents(fname, &buf, NULL, NULL)) {
+        /* replace ',' with '.' in numeric strings */
+        const char *re = "([0-9]+),([0-9]+)";
+        const char *sub = "\\1.\\2";
+        GRegex *rx;
+
+        rx = g_regex_new(re, 0, 0, NULL);
+        if (rx != NULL) {
+            if (g_regex_match(rx, buf, 0, NULL)) {
+                rev = g_regex_replace(rx, buf, -1, 0, sub, 0, &gerr);
+            }
+        }
+        if (rev != NULL) {
+            err = gretl_xml_read_buffer(rev, root, pdoc, pnode);
+        }
+        g_regex_unref(rx);
+    }
+
+    g_free(buf);
+    g_free(rev);
+
+    return err;
+}
+
 static int rebuild_session_model (const char *fname,
 				  const char *name,
 				  GretlObjType type,
@@ -219,17 +258,22 @@ static int rebuild_session_model (const char *fname,
 {
     gpointer ptr = NULL;
     SavedObjectFlags flags = 0;
+    int try_remedy = 1;
+    const char *root;
     xmlDocPtr doc;
     xmlNodePtr node;
     int iflag, err;
 
-    err = gretl_xml_open_doc_root(fname,
-				  (type == GRETL_OBJ_EQN)? "gretl-model" :
-				  (type == GRETL_OBJ_VAR)? "gretl-VAR" :
-				  "gretl-equation-system", &doc, &node);
+    root = (type == GRETL_OBJ_EQN)? "gretl-model" :
+        (type == GRETL_OBJ_VAR)? "gretl-VAR" :
+        "gretl-equation-system";
+
+    err = gretl_xml_open_doc_root(fname, root, &doc, &node);
     if (err) {
 	return err;
     }
+
+ remedy:
 
     if (gretl_xml_get_prop_as_int(node, "saveflags", &iflag)) {
 	flags = iflag;
@@ -246,6 +290,16 @@ static int rebuild_session_model (const char *fname,
     }
 
     xmlFreeDoc(doc);
+    doc = NULL;
+
+    if (err && try_remedy) {
+        try_remedy = 0;
+        fprintf(stderr, "HERE: error %d for rebuilding of '%s'\n", err, name);
+        err = try_fixing_model_XML(fname, root, &doc, &node);
+        if (!err) {
+            goto remedy;
+        }
+    }
 
     if (!err && ptr != NULL) {
 #if SESSION_DEBUG
@@ -561,8 +615,8 @@ static int get_session_datafile_name (const char *fname, struct sample_info *sin
     return err;
 }
 
-/* (having previously grabbed the data file name) get the rest
-   of the info from session.xml */
+/* Having previously grabbed the data file name, get the rest of the
+   info from session.xml */
 
 static int
 read_session_xml (const char *fname, struct sample_info *sinfo)
@@ -780,9 +834,8 @@ static int session_graph_wanted (const char *fname)
     return 0;
 }
 
-/* on re-saving a session, avoid keeping model files for
-   models that have been dropped from the session, and
-   similarly for graph files
+/* on re-saving a session, avoid keeping model files for models that
+   have been dropped from the session, and similarly for graph files
 */
 
 static void trash_old_session_files (const char *path)
@@ -873,6 +926,8 @@ static int write_session_xml (const char *datname)
 
     trash_old_session_files(session.dirname);
 
+    gretl_push_c_numeric_locale();
+
     pprintf(prn, " <models count=\"%d\">\n", nmodels);
 
     modnum = 1;
@@ -961,6 +1016,8 @@ static int write_session_xml (const char *datname)
 	    }
 	}
     }
+
+    gretl_pop_c_numeric_locale();
 
     if (err) {
 	gretl_print_destroy(prn);
