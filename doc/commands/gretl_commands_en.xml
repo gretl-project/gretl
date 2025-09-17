@@ -13820,7 +13820,7 @@
 	model:
       </para>
       <code>
-        restrict
+	restrict
 	 b[1] = 0
 	 b[2] - b[3] = 0
 	 b[4] + 2*b[5] = 1
