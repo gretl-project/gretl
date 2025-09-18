@@ -752,18 +752,16 @@ static const char *get_filename_extension (const char *fname)
 {
     const char *ext = strrchr(fname, '.');
 
-    if (ext != NULL) {
-        /* check that the rightmost dot is in the basename */
-#ifdef WIN32
-        if (strchr(ext, '\\') || strchr(ext, '/')) {
-            ext = NULL;
-        }
-#else
-        if (strchr(ext, '/')) {
-            ext = NULL;
-        }
-#endif
+    if (ext != NULL && strchr(ext, '/')) {
+        /* the rightmost dot is not in the basename */
+        ext = NULL;
     }
+
+#ifdef WIN32
+    if (ext != NULL && strchr(ext, '\\')) {
+        ext = NULL;
+    }
+#endif
 
     return ext;
 }
@@ -1693,33 +1691,33 @@ static int count_new_vars (const DATASET *d1, const DATASET *d2,
     return addvars;
 }
 
-static int year_special_markers (const DATASET *dset,
-                                 const DATASET *addset)
+enum { DAY_SPECIAL = 1, YR_SPECIAL = 2 };
+
+static int year_special_markers (const DATASET *ldset,
+                                 const DATASET *rdset)
 {
-    char *test;
+    char *test = NULL;
     int overlap = 0;
     int i, t, err = 0;
 
-    /* See if we can match obs markers in @addset
-       against years in @dset: we'll try this if all
-       the markers in addset are integer strings, at
-       least some of them are within the obs range of
-       @dset, and none of them are outside of the
-       "sanity" range of 1 to 2500.
+    /* See if we can match obs markers in @addset against years in
+       @dset: we'll try this if all the markers in addset are integer
+       strings, at least some of them are within the obs range of @dset,
+       and none of them are outside of the "sanity" range of 1 to 2500.
     */
 
-    if (!dataset_is_time_series(dset) || dset->pd != 1) {
+    if (!dataset_is_time_series(ldset) || ldset->pd != 1) {
         return 0;
     }
 
-    if (dset->markers || !addset->markers) {
+    if (ldset->markers || !rdset->markers) {
         return 0;
     }
 
     errno = 0;
 
-    for (i=0; i<addset->n; i++) {
-        t = strtol(addset->S[i], &test, 10);
+    for (i=0; i<rdset->n; i++) {
+        t = strtol(rdset->S[i], &test, 10);
         if (*test || errno) {
             errno = 0;
             err = 1;
@@ -1730,44 +1728,44 @@ static int year_special_markers (const DATASET *dset,
             break;
         }
         if (!overlap) {
-            t = dateton(addset->S[i], dset);
-            if (t >= 0 && t < dset->n) {
+            t = dateton(rdset->S[i], ldset);
+            if (t >= 0 && t < ldset->n) {
                 overlap = 1;
             }
         }
     }
 
-    return !err && overlap;
+    return (!err && overlap) ? YR_SPECIAL : 0;
 }
 
-static int compare_ranges (const DATASET *targ,
-                           const DATASET *src,
+static int compare_ranges (const DATASET *ldset,
+                           const DATASET *rdset,
                            int newvars,
                            int *offset,
-                           int *yrspecial,
+                           int *tspecial,
                            PRN *prn,
                            int *err)
 {
-    int ed0 = dateton(targ->endobs, targ);
+    int ed0 = dateton(ldset->endobs, ldset);
     int sd1, ed1, addobs = -1;
     int range_err = 0;
 
-    if (dataset_is_cross_section(targ) &&
-        dataset_is_cross_section(src) &&
-        !(targ->markers && src->markers)) {
+    if (dataset_is_cross_section(ldset) &&
+        dataset_is_cross_section(rdset) &&
+        !(ldset->markers && rdset->markers)) {
         if (newvars == 0) {
-            if (src->markers) {
+            if (rdset->markers) {
                 /* pass the problem on to just_append_rows */
                 return 0;
             } else {
                 /* assume the new data should be appended length-wise */
                 *offset = ed0 + 1;
-                return src->n;
+                return rdset->n;
             }
         } else {
             /* we've already determined that the series length in
-               @src doesn't match either the full series length or
-               the current sample range in @targ; we therefore have
+               @rdset doesn't match either the full series length or
+               the current sample range in @ldset; we therefore have
                no information with which to match rows for new
                series
             */
@@ -1778,16 +1776,16 @@ static int compare_ranges (const DATASET *targ,
         }
     }
 
-    sd1 = merge_dateton(src->stobs, targ);
-    ed1 = merge_dateton(src->endobs, targ);
+    sd1 = merge_dateton(rdset->stobs, ldset);
+    ed1 = merge_dateton(rdset->endobs, ldset);
 
 #if DATES_DEBUG
     fprintf(stderr, "compare_ranges:\n"
-            " targ->n = %d, src->n = %d, targ->stobs = '%s'\n"
-            " src->stobs =  '%s' -> sd1 %d\n"
-            " src->endobs = '%s' -> ed1 = %d\n",
-            targ->n, src->n, targ->stobs, src->stobs,
-            sd1, src->endobs, ed1);
+            " ldset->n = %d, rdset->n = %d, ldset->stobs = '%s'\n"
+            " rdset->stobs =  '%s' -> sd1 %d\n"
+            " rdset->endobs = '%s' -> ed1 = %d\n",
+            ldset->n, rdset->n, ldset->stobs, rdset->stobs,
+            sd1, rdset->endobs, ed1);
 #endif
 
     if (sd1 < 0) {
@@ -1815,7 +1813,7 @@ static int compare_ranges (const DATASET *targ,
     } else if (sd1 == ed0 + 1) {
         /* case: new data start right after end of old */
         *offset = sd1;
-        addobs = src->n;
+        addobs = rdset->n;
     } else if (sd1 > 0) {
         /* case: new data start later than old */
         if (sd1 <= ed0) {
@@ -1831,8 +1829,8 @@ static int compare_ranges (const DATASET *targ,
 
     if (range_err) {
         /* try another approach? */
-        *yrspecial = year_special_markers(targ, src);
-        if (*yrspecial) {
+        *tspecial = year_special_markers(ldset, rdset);
+        if (*tspecial) {
             addobs = 0;
         }
     }
@@ -1877,33 +1875,33 @@ static int check_for_overlap (const DATASET *dset,
 }
 
 /* When appending data to a current panel dataset, and the length of
-   the series in the new data is less than the full panel size
-   (n * T), try to determine if it's OK to expand the incoming data to
+   the series in the new data is less than the full panel size (n *
+   T), try to determine if it's OK to expand the incoming data to
    match.
 
    We'll say it's OK if the new series length equals the panel T: in
    that case we'll take the new data to be time-series, which should
    be replicated for each panel unit.
 
-   A second possibility arises if the length of the new series
-   equals the panel n: in that case we could treat it as a time-
-   invariant characteristic of the panel unit, which should be
-   replicated for each time period.  But note that if OPT_T is
-   given, this second expansion is forbidden: the user has
-   stipulated that the new data are time-varying.
+   A second possibility arises if the length of the new series equals
+   the panel N: in that case we could treat it as a time-invariant
+   characteristic of the panel unit, which should be replicated for
+   each time period.  But note that if OPT_T is given, this second
+   expansion is forbidden: the user has stipulated that the new data
+   are time-varying.
 */
 
 static int panel_expand_ok (DATASET *dset, DATASET *addinfo,
                             gretlopt opt)
 {
-    int n = dset->n / dset->pd;
+    int N = dset->n / dset->pd;
     int T = dset->pd;
     int ok = 0;
 
     if (addinfo->n == T) {
         ok = 1;
     } else if (!(opt & OPT_T) &&
-               addinfo->n == n &&
+               addinfo->n == N &&
                addinfo->pd == 1) {
         ok = 1;
     }
@@ -1911,9 +1909,9 @@ static int panel_expand_ok (DATASET *dset, DATASET *addinfo,
     return ok;
 }
 
-static int panel_append_special (int addvars,
-                                 DATASET *dset,
+static int panel_append_special (DATASET *dset,
                                  DATASET *addset,
+                                 int addvars,
                                  gretlopt opt,
                                  PRN *prn)
 {
@@ -2058,6 +2056,102 @@ static int simple_range_match (const DATASET *targ, const DATASET *src,
     return ret;
 }
 
+static int merge_series_data (DATASET *ldset,
+                              DATASET *rdset,
+                              int addvars,
+                              int addobs,
+                              int offset,
+                              int update_overlap,
+                              int tspecial)
+{
+    int k = ldset->v;
+    int orig_n = ldset->n;
+    int newvar;
+    int t, tmin;
+    int i, v;
+    int err = 0;
+
+    for (i=1; i<rdset->v && !err; i++) {
+        v = series_index(ldset, rdset->varname[i]);
+        newvar = v >= k;
+        if (!newvar && !update_overlap) {
+            tmin = orig_n;
+        } else {
+            tmin = 0;
+        }
+        if (newvar) {
+            v = k++;
+            strcpy(ldset->varname[v], rdset->varname[i]);
+            copy_varinfo(ldset->varinfo[v], rdset->varinfo[i]);
+            if (is_string_valued(rdset, i) &&
+                rdset->n == ldset->n && offset == 0 &&
+                addobs == 0) {
+                /* attach the string table to the target
+                   series and detach it from @rdset
+                */
+                series_table *st;
+
+                st = series_get_string_table(rdset, i);
+                series_attach_string_table(ldset, v, st);
+                series_attach_string_table(rdset, i, NULL);
+            }
+        } else {
+            /* not a new series */
+            int lsval = is_string_valued(ldset, v);
+            int rsval = is_string_valued(rdset, i);
+
+            if (lsval + rsval == 1) {
+                gretl_errmsg_set(_("Can't concatenate string-valued and numeric series"));
+                err = E_DATA;
+            } else if (lsval) {
+                err = merge_string_tables(ldset, v, rdset, i);
+            }
+            if (err) {
+                break;
+            }
+        }
+
+        if (tspecial == DAY_SPECIAL) {
+            char obs[OBSLEN];
+            int s;
+
+            for (t=tmin; t<ldset->n; t++) {
+                ntolabel(obs, t, ldset);
+                s = dateton(obs, rdset);
+                if (s >= 0 && s < rdset->n) {
+                    ldset->Z[v][t] = rdset->Z[i][s];
+                } else {
+                    ldset->Z[v][t] = NADBL;
+                }
+            }
+        } else if (tspecial == YR_SPECIAL) {
+            int s;
+
+            if (newvar) {
+                for (t=0; t<ldset->n; t++) {
+                    ldset->Z[v][t] = NADBL;
+                }
+            }
+            for (s=0; s<rdset->n; s++) {
+                t = dateton(rdset->S[s], ldset);
+                if (t >= tmin && t < ldset->n) {
+                    ldset->Z[v][t] = rdset->Z[i][s];
+                }
+            }
+        } else {
+            for (t=tmin; t<ldset->n; t++) {
+                if (t >= offset && t - offset < rdset->n) {
+                    ldset->Z[v][t] = rdset->Z[i][t - offset];
+                } else if (newvar) {
+                    ldset->Z[v][t] = NADBL;
+                }
+            }
+        }
+    }
+
+    return err;
+}
+
 static int merge_lengthen_series (DATASET *dset,
                                   const DATASET *addset,
                                   int addobs,
@@ -2122,6 +2216,16 @@ static int check_week_start_dates (const DATASET *ds0,
     }
 }
 
+static int two_panels_check (DATASET *dset, DATASET *addset)
+{
+    if (dset->pd == addset->pd && dset->n == addset->n) {
+        return 0;
+    } else {
+        gretl_errmsg_set(_("Panel data not conformable for appending"));
+        return E_DATA;
+    }
+}
+
 #define simple_structure(p) (p->structure == TIME_SERIES ||             \
                              p->structure == SPECIAL_TIME_SERIES ||     \
                              (p->structure == CROSS_SECTION &&          \
@@ -2146,9 +2250,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
                        gretlopt opt, PRN *prn)
 {
     int update_overlap = (opt & OPT_U);
-    int orig_n = dset->n;
-    int dayspecial = 0;
-    int yrspecial = 0;
+    int tspecial = 0;
     int fixsample = 0;
     int addsimple = 0;
     int addpanel = 0;
@@ -2160,6 +2262,13 @@ static int merge_data (DATASET *dset, DATASET *addset,
 #if MERGE_DEBUG
     debug_print_option_flags("merge_data", opt);
 #endif
+
+    if (dataset_is_panel(dset) && dataset_is_panel(addset)) {
+        err = two_panels_check(dset, addset);
+        if (err) {
+            return err;
+        }
+    }
 
     /* first see how many new vars we have */
     addvars = count_new_vars(dset, addset, prn);
@@ -2175,7 +2284,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
 #if MERGE_DEBUG
         fprintf(stderr, " special: merging daily data\n");
 #endif
-        dayspecial = 1;
+        tspecial = DAY_SPECIAL;
     } else if (dated_weekly_data(dset) && dated_weekly_data(addset)) {
         err = check_week_start_dates(dset, addset);
         if (err) {
@@ -2188,7 +2297,8 @@ static int merge_data (DATASET *dset, DATASET *addset,
     } else if (simple_range_match(dset, addset, &offset)) {
         /* we'll allow undated data to be merged with the existing
            dateset, sideways, provided the number of observations
-           matches OK */
+           matches OK
+        */
         addsimple = 1;
     } else if (dataset_is_panel(dset) &&
                panel_expand_ok(dset, addset, opt)) {
@@ -2209,7 +2319,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
         */
         if (!addsimple && !addpanel) {
             addobs = compare_ranges(dset, addset, addvars, &offset,
-                                    &yrspecial, prn, &err);
+                                    &tspecial, prn, &err);
             if (!err && addobs > 0) {
                 addobs = 0;
             }
@@ -2217,7 +2327,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
     } else if (!err) {
         if (!addsimple && !addpanel) {
             addobs = compare_ranges(dset, addset, addvars, &offset,
-                                    &yrspecial, prn, &err);
+                                    &tspecial, prn, &err);
 #if MERGE_DEBUG
             fprintf(stderr, " added obs, from compare_ranges: %d (offset %d)\n",
                     addobs, offset);
@@ -2247,11 +2357,10 @@ static int merge_data (DATASET *dset, DATASET *addset,
                 gretl_errmsg_set(_("Found no data conformable for appending"));
                 err = E_DATA;
             }
-        } else if (addset->n != dset->n && !yrspecial && !dayspecial) {
+        } else if (addset->n != dset->n && !tspecial) {
             merge_error(_("Inconsistency in observation markers\n"), prn);
             err = E_DATA;
-        } else if (addset->markers && !dset->markers &&
-                   !yrspecial && !dayspecial) {
+        } else if (addset->markers && !dset->markers && !tspecial) {
             dataset_destroy_obs_markers(addset);
         }
     }
@@ -2275,92 +2384,14 @@ static int merge_data (DATASET *dset, DATASET *addset,
     }
 
     if (!err && addpanel) {
-        err = panel_append_special(addvars, dset, addset,
-                                   opt, prn);
+        err = panel_append_special(dset, addset, addvars, opt, prn);
     } else if (!err) {
-        int k = dset->v;
-        int i, t;
-
         if (addvars > 0 && dataset_add_series(dset, addvars)) {
             merge_error(_("Out of memory!\n"), prn);
             err = E_ALLOC;
-        }
-
-        for (i=1; i<addset->v && !err; i++) {
-            int v = series_index(dset, addset->varname[i]);
-            int tmin, newvar = v >= k;
-
-            if (!newvar && !update_overlap) {
-                tmin = orig_n;
-            } else {
-                tmin = 0;
-            }
-
-            if (newvar) {
-                v = k++;
-                strcpy(dset->varname[v], addset->varname[i]);
-                copy_varinfo(dset->varinfo[v], addset->varinfo[i]);
-                if (is_string_valued(addset, i) &&
-                    addset->n == dset->n && offset == 0 &&
-                    addobs == 0) {
-                    /* attach the string table to the target
-                       series and detach it from @addset
-                    */
-                    series_table *st;
-
-                    st = series_get_string_table(addset, i);
-                    series_attach_string_table(dset, v, st);
-                    series_attach_string_table(addset, i, NULL);
-                }
-            } else {
-                /* not a new series */
-                int lsval = is_string_valued(dset, v);
-                int rsval = is_string_valued(addset, i);
-
-                if (lsval + rsval == 1) {
-                    gretl_errmsg_set(_("Can't concatenate string-valued and numeric series"));
-                    err = E_DATA;
-                } else if (lsval) {
-                    err = merge_string_tables(dset, v, addset, i);
-                }
-            }
-
-            if (dayspecial) {
-                char obs[OBSLEN];
-                int s;
-
-                for (t=tmin; t<dset->n; t++) {
-                    ntolabel(obs, t, dset);
-                    s = dateton(obs, addset);
-                    if (s >= 0 && s < addset->n) {
-                        dset->Z[v][t] = addset->Z[i][s];
-                    } else {
-                        dset->Z[v][t] = NADBL;
-                    }
-                }
-            } else if (yrspecial) {
-                int s;
-
-                if (newvar) {
-                    for (t=0; t<dset->n; t++) {
-                        dset->Z[v][t] = NADBL;
-                    }
-                }
-                for (s=0; s<addset->n; s++) {
-                    t = dateton(addset->S[s], dset);
-                    if (t >= tmin && t < dset->n) {
-                        dset->Z[v][t] = addset->Z[i][s];
-                    }
-                }
-            } else {
-                for (t=tmin; t<dset->n; t++) {
-                    if (t >= offset && t - offset < addset->n) {
-                        dset->Z[v][t] = addset->Z[i][t - offset];
-                    } else if (newvar) {
-                        dset->Z[v][t] = NADBL;
-                    }
-                }
-            }
+        } else {
+            err = merge_series_data(dset, addset, addvars, addobs,
+                                    offset, update_overlap, tspecial);
         }
     }
 

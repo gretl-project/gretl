@@ -622,12 +622,12 @@
 	targ="open"/>; see that command for explanations.
       </para>
       <para>
-        By default some information about the appended dataset is printed.
-        The <opt>quiet</opt> option reduces that printout to a
+        By default some information about the appended dataset is
+        printed.  The <opt>quiet</opt> option reduces that printout to a
         confirmatory message stating just the path to the file. If you
         want the operation to be completely silent, then issue the
-        command <lit>set verbose off</lit> before appending the data,
-        in combination with the <opt>quiet</opt> option.
+        command <lit>set verbose off</lit> before appending the data, in
+        combination with the <opt>quiet</opt> option.
       </para>
       <subhead>Panel data</subhead>
       <para>
@@ -638,29 +638,26 @@
       </para>
       <para>
 	Two relatively simple cases should be handled correctly by
-	<lit>append</lit>. Let <math>n</math> denote the number of
+	<lit>append</lit>. Let <math>N</math> denote the number of
 	cross-sectional units and <math>T</math> denote the number of
 	time periods in the current panel, and let <math>m</math>
 	denote the number of observations for the new data.  If
-	<math>m = n</math> the new data are taken to be
+	<math>m = N</math> the new data are taken to be
 	time-invariant, and are copied into place for each time
 	period. On the other hand, if <math>m = T</math> the data are
 	treated as invariant across the panel units, and are copied
-	into place for each unit. If <math>T = n</math> an ambiguity
+	into place for each unit. If <math>T = N</math> an ambiguity
 	arises. In that case the new data are treated as
 	time-invariant by default, but you can force gretl to treat
 	them as time series (invariant across the units) via the
 	<opt>time-series</opt> option.
       </para>
       <para>
-	If both the current dataset and the incoming data are
-	recognized as panel data two cases arise. (1) The time-series
-	length, <math>T</math>, differs between the two. Then an error
-	is flagged.  (2) <math>T</math> matches. Then a very simple
-	assumption is made, namely that the units match up,
-	<emphasis>starting with the first unit</emphasis> in both
-	datasets. If that assumption is not correct you must use
-	<cmdref targ="join"/> instead of <lit>append</lit>.
+	If the current dataset and the incoming data are both recognized
+	as panel data then appending is supported only if both the
+	<math>T</math> and <math>N</math> dimensions match; otherwise an
+	error is flagged. For more complex cases use <cmdref
+	targ="join"/> instead of <lit>append</lit>.
       </para>
     </description>
 
