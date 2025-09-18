@@ -8,6 +8,7 @@
 "bjg","Mixed ARIMA (Box and Jenkins)","airline passengers"
 "BSMestim","Basic Structural Model","electricity demand"
 "camtriv","Count Data (Cameron and Trivedi)","doctor visits"
+"casella_ex1","Gibbs sampler example","artificial data"
 "convolve","Fast Fourier Transform","artificial data"
 "credscore","Testing for heteroskedasticity","credit card spending"
 "denmark","Vector Error Correction Model","Danish macro data"

@@ -1,0 +1,63 @@
+set verbose off
+
+# simple two-column histogram showing both analytical values
+# and those obtained via the Gibbs sampler
+
+function void histo (const matrix M)
+   n = rows(M)
+   outfile --buffer=buf --quiet
+      print "set style data histograms"
+      print "set style histogram clustered"
+      print "set style fill solid 0.6"
+      print "$DATA << EOD"
+      loop i=1..n
+         printf "%d %g %g\n", M[i,1], M[i,2], M[i,3]
+      endloop
+      print "EOD"
+      print "plot $DATA using 2:xticlabels(1) title 'analytical', \"
+      print " $DATA using 3 title 'sampler'"
+   end outfile
+   gnuplot --inbuf=buf --output=display
+end function
+
+# beta-binomial probability mass function for x
+
+function scalar bbdensity (scalar x, scalar n, scalar a, scalar b)
+   cnx = bincoeff(n, x)
+   T1 = lngamma(a+b) - lngamma(a) - lngamma(b)
+   T2 = lngamma(x+a) + lngamma(n-x+b) - lngamma(a+b+n)
+   return cnx * exp(T1 + T2)
+end function
+
+/* Casella and George (1992), Example 1
+
+   f(x | y) is Binomial (n, y)
+   f(y | x) is Beta (x + a, n - x + b)
+   f(x) is beta-binomial (n, a, b)
+   
+   This is an example where there's an analytical expression
+   for the marginal density (actually, probability mass function),
+   f(x), but it illustrates how the Gibbs sampler can produce a
+   close approximation to the "true" distribution.
+*/
+
+n = 16
+a = 2
+b = 4
+iters = 20000
+
+gibbs burnin=1000 N=iters output=M
+   init y = randgen1(beta, a, n - b)
+   record x = randgen1(b, y, n)
+   y = randgen1(beta, x + a, n - x + b)
+end gibbs --verbose
+
+BB = zeros(17,3)
+loop i=1..17
+   x = i - 1
+   BB[i,1] = x
+   BB[i,2] = bbdensity(x, n, a, b)
+   BB[i,3] = sumc(M .= x) / iters
+endloop
+
+histo(BB)
