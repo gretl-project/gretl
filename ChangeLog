@@ -1,4 +1,7 @@
 version 2025c, in progress
+- new (block) command, "gibbs", implements the Gibbs sampler
+- "append" command: tighten the restriction on appending to
+  a panel dataset, to avoid spurious results
 - "dataset compact": support hourly to daily compaction via
   the command line (was already OK via the GUI)
 - "store" command: enable saving of user-defined functions
@@ -24,12 +27,16 @@ version 2025c, in progress
   in GUI usage
 - printing of a bundle with the --tree option: clarify the
   structure
+- Fix bug: restore the "savename <- gnuplot ..." syntax,
+  which had got broken
 - Fix bug: potential crash in GTK file chooser dialog
 - Fix bug: incorrect Bartlett band in ACF + PACF plot
 - Fix bug: memory leak in some cases of loop code
 - Fix bug: possible spurious error from "smpl" command
 - Fix bug: a series could be wrongly taken to be a lag of
   another series
+- Fix bug: decimal comma creeping into the representation
+  of models stored in a gretl session file
 - GUI: enhance the dbnomics search facility
 - GUI: ensure that the separator between the main window
   and the "swallowed" console can be grabbed via the mouse
