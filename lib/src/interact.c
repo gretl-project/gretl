@@ -3212,8 +3212,9 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
     int err = 0;
 
     if (gretl_in_gui_mode() && *cmd->savename != '\0') {
-        /* saving plot "as icon": add internal option to
-           override production of a "gpttmp" file
+        /* A call to save a plot "as icon": add internal option to
+           override production of a "gpttmp" file. In graphing.c
+           this gets parlayed into the GPT_ICON flag.
         */
         opt |= OPT_G;
     }

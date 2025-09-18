@@ -710,6 +710,11 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
         }
     }
 
+    if (opt & OPT_G) {
+	/* internal option, saving as icon */
+	gi->flags |= GPT_ICON;
+    }
+
     gi->fit = PLOT_FIT_NONE;
 
     if (!(gi->flags & GPT_FIT_OMIT) && n_yvars == 1) {
@@ -2522,6 +2527,8 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
     } else if (outspec != NULL) {
         /* --output=filename or --buffer=starvar specified */
         interactive = 0;
+    } else if (flags & GPT_ICON) {
+        interactive = 1;
     } else {
         /* default */
         interactive = !gretl_in_batch_mode();
@@ -2631,6 +2638,11 @@ int graph_written_to_file (void)
     return graph_file_written;
 }
 
+static void set_graph_file_written (int w)
+{
+    graph_file_written = w;
+}
+
 static int graph_file_shown;
 
 int graph_displayed (void)
@@ -2649,12 +2661,11 @@ static void remove_old_png (void)
 /*
  * gnuplot_make_graph:
  *
- * Executes gnuplot to produce a graph: in the gretl GUI
- * in interactive mode this will be a PNG file. In the
- * CLI program in interactive mode there will be a direct
- * call to gnuplot to display the graph. In batch mode
- * the type of file written depends on the options selected
- * by the user.
+ * Executes gnuplot to produce a graph: in the gretl GUI in interactive
+ * mode this will be a PNG file. In the CLI program in interactive mode
+ * there will be a direct call to gnuplot to display the graph. In batch
+ * mode the type of file written depends on the options selected by the
+ * user.
  *
  * Returns: 0 on success, non-zero on error.
  */
@@ -2666,7 +2677,7 @@ static int gnuplot_make_graph (void)
     int gui = gretl_in_gui_mode();
     int fmt, err = 0;
 
-    graph_file_written = 0;
+    set_graph_file_written(0);
     graph_file_shown = 0;
     fmt = specified_gp_output_format();
 
@@ -2675,7 +2686,7 @@ static int gnuplot_make_graph (void)
         if (plot_output_to_buffer()) {
             err = make_plot_commands_buffer(fname);
         } else {
-            graph_file_written = 1;
+            set_graph_file_written(1);
         }
         return err;
     } else if (fmt == GP_TERM_NONE && gui) {
@@ -2719,7 +2730,7 @@ static int gnuplot_make_graph (void)
                 graph_file_shown = 1;
             } else {
                 gretl_set_path_by_name("plotfile", gnuplot_outname);
-                graph_file_written = 1;
+                set_graph_file_written(1);
             }
         }
     }
@@ -2772,7 +2783,7 @@ int finalize_3d_plot_input_file (FILE *fp)
 
     if (fp != NULL) {
         fclose(fp);
-        graph_file_written = 1;
+        set_graph_file_written(1);
     } else {
         err = 1;
     }
@@ -9067,6 +9078,10 @@ static int normal_qq_plot (const int *list,
     if (opt & OPT_Z) {
         /* standardize the data */
         zscores = 1;
+    }
+
+    if (opt & OPT_G) {
+	flags = GPT_ICON;
     }
 
     if (!(opt & OPT_R)) {

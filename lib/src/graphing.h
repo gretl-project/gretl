@@ -53,7 +53,8 @@ typedef enum {
     GPT_XW             = 1 << 25, /* extra-wide */
     GPT_TIMEFMT        = 1 << 26, /* using gnuplot "timefmt" */
     GPT_STEPS          = 1 << 27, /* force steps for plot */
-    GPT_LOGY           = 1 << 28  /* log y axis */
+    GPT_LOGY           = 1 << 28, /* log y axis */
+    GPT_ICON           = 1 << 29  /* saving plot "as icon" */
 } GptFlags;
 
 /* an extra "command" for use with GUI callback */
