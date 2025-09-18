@@ -2058,14 +2058,15 @@ static int simple_range_match (const DATASET *targ, const DATASET *src,
 
 static int merge_series_data (DATASET *ldset,
                               DATASET *rdset,
+                              int orig_v,
+                              int orig_n,
                               int addvars,
                               int addobs,
                               int offset,
                               int update_overlap,
                               int tspecial)
 {
-    int k = ldset->v;
-    int orig_n = ldset->n;
+    int k = orig_v;
     int newvar;
     int t, tmin;
     int i, v;
@@ -2250,6 +2251,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
                        gretlopt opt, PRN *prn)
 {
     int update_overlap = (opt & OPT_U);
+    int orig_n = dset->n;
     int tspecial = 0;
     int fixsample = 0;
     int addsimple = 0;
@@ -2386,12 +2388,15 @@ static int merge_data (DATASET *dset, DATASET *addset,
     if (!err && addpanel) {
         err = panel_append_special(dset, addset, addvars, opt, prn);
     } else if (!err) {
+        int orig_v = dset->v;
+
         if (addvars > 0 && dataset_add_series(dset, addvars)) {
             merge_error(_("Out of memory!\n"), prn);
             err = E_ALLOC;
         } else {
-            err = merge_series_data(dset, addset, addvars, addobs,
-                                    offset, update_overlap, tspecial);
+            err = merge_series_data(dset, addset, orig_v, orig_n,
+                                    addvars, addobs, offset,
+                                    update_overlap, tspecial);
         }
     }
 
