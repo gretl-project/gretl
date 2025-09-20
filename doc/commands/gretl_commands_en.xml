@@ -5265,8 +5265,8 @@
 	  <effect>see below</effect>
         </option>
 	<option>
-	  <flag>--verbose</flag>
-	  <effect>see below</effect>
+	  <flag>--quiet</flag>
+	  <effect>suppress printing</effect>
         </option>
       </options>
       <examples>
@@ -5310,7 +5310,7 @@
 	   init y = randgen1(beta, a, n - b)
 	   record x = randgen1(b, y, n)
 	   y = randgen1(beta, x + a, n - x + b)
-	end gibbs --verbose
+	end gibbs
       </code>
       <para>
 	On the first line a non-negative integer must be given for
@@ -5356,12 +5356,13 @@
       </para>
       <para>
         Two options are supported; these should be appended to the
-        terminating line of the block. The <opt>verbose</opt> flag
-        produces a brief progress report and some basic summary
-        statistics pertaining to the output matrix. The
-        <opt>cleanup</opt> flag has the effect that any variables newly
-        created within the <lit>gibbs</lit> block are deleted once the
-        iteration is completed.
+        terminating line of the block. The <opt>quiet</opt> flag
+        suppresses the default printed output (which shows a brief
+        progress report and some basic summary statistics pertaining
+        to the output matrix). The <opt>cleanup</opt> flag has the
+        effect that any variables newly created within the
+        <lit>gibbs</lit> block are deleted once the iteration is
+        completed.
       </para>
     </description>
   </command>
