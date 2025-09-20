@@ -292,7 +292,7 @@ gretl_matrix *do_run_sampler (char **init, int ni,
     GretlType gt;
     const char *str;
     int cleanup = (opt & OPT_C);
-    int verbose = (opt & OPT_V);
+    int quiet = (opt & OPT_Q);
     int ncols = 0;
     int msize = 0;
     int iters;
@@ -301,7 +301,7 @@ gretl_matrix *do_run_sampler (char **init, int ni,
     /* run the @init generators and ensure that they all produce
        a scalar or matrix result
     */
-    if (verbose && ni > 0) {
+    if (!quiet && ni > 0) {
         pputs(prn, "initializing\n");
     }
     for (i=0; i<ni && !*err; i++) {
@@ -336,7 +336,7 @@ gretl_matrix *do_run_sampler (char **init, int ni,
        here, but we check that the genrs work, and for those that are
        tagged for recording we store the sizes of the objects generated.
     */
-    if (verbose) {
+    if (!quiet) {
         pputs(prn, "checking iteration statements\n");
     }
     for (i=0, j=0; i<ng && !*err; i++) {
@@ -386,7 +386,7 @@ gretl_matrix *do_run_sampler (char **init, int ni,
     }
 
     iters = burnin + N;
-    if (verbose) {
+    if (!quiet) {
         pputs(prn, "starting iteration\n");
     }
     gretl_iteration_push();
@@ -408,7 +408,7 @@ gretl_matrix *do_run_sampler (char **init, int ni,
     }
 
     gretl_iteration_pop();
-    if (verbose && !*err) {
+    if (!quiet && !*err) {
         pputs(prn, "iteration completed\n");
     }
 
@@ -525,16 +525,16 @@ int gibbs_execute (gretlopt opt, DATASET *dset, PRN *prn)
     guint8 *record = NULL;
     gibbs_var_info *gvi = NULL;
     char *str;
-    int verbose;
+    int quiet;
     int ni = 0;
     int ng = 0;
     int nr = 0;
     int i, iniprev = 0;
     int err = 0;
 
-    verbose = (opt & OPT_V)? 1 : 0;
+    quiet = (opt & OPT_Q)? 1 : 0;
 
-    if (verbose) {
+    if (!quiet) {
         pprintf(prn, "gibbs: burnin = %d, N = %d, output %s\n",
                 gibbs_burnin, gibbs_N, gibbs_output);
     }
@@ -591,7 +591,7 @@ int gibbs_execute (gretlopt opt, DATASET *dset, PRN *prn)
                                           GRETL_TYPE_MATRIX,
                                           H);
         }
-        if (!err && verbose) {
+        if (!err && !quiet) {
             pprintf(prn, "output matrix %s is %d x %d\n", gibbs_output, H->rows, H->cols);
             gibbs_print_info(gvi, nr, H, prn);
         }

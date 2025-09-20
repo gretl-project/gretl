@@ -312,7 +312,7 @@ struct gretl_option gretl_opts[] = {
     { GARCH,    OPT_Z, "stdresid", 0 },
     { GIBBS,    OPT_B, "bundle", 0 },
     { GIBBS,    OPT_C, "cleanup", 0 },
-    { GIBBS,    OPT_V, "verbose", 0 },
+    { GIBBS,    OPT_Q, "quiet", 0 },
     { GMM,      OPT_I, "iterate", 0 },
     { GMM,      OPT_L, "lbfgs", 1 },
     { GMM,      OPT_T, "two-step", 0 },

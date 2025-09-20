@@ -2749,8 +2749,10 @@ int libset_write_script (const char *fname)
     prn = gretl_print_new_with_filename(fname, &err);
 
     if (!err) {
+        gretl_push_c_numeric_locale();
 	print_settings(prn, OPT_NONE);
 	gretl_print_destroy(prn);
+        gretl_pop_c_numeric_locale();
     }
 
     return err;
