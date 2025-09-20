@@ -654,13 +654,10 @@
       </para>
       <para>
 	Cando se recoñece tanto ao conxunto de datos vixente como aos datos
-	que se van engadir como datos de panel, xorden dúas situacións.
-	(1) A longura das series de tempo, <math>T</math>, é diferente entre
-	os dous. Entón amósase un fallo. (2) <math>T</math> coincide. Nese
-	caso faise un suposto moi simple, concretamente que as unidades
-	coinciden, <emphasis>empezando pola primeira unidade</emphasis> en
-	ambos conxuntos de datos. Se ese suposto non é correcto, deberás utilizar
-	a instrución <cmdref targ="join"/> en troques de <lit>append</lit>.
+	que se van engadir como datos de panel, entón admítese o engadido
+	só se tanto a dimensión de <math>T</math> como de <math>N</math>
+	coinciden; noutro caso, amósase un fallo. Para casos máis complexos,
+	utiliza a instrución <cmdref targ="join"/> en troques de <lit>append</lit>.
       </para>
     </description>
 
@@ -5254,6 +5251,121 @@
     </description>
   </command>
 
+  <command name="gibbs" section="Statistics" label="Mostraxe de Gibbs">
+
+    <usage>
+      <arguments>
+        <argument>queimado</argument>
+        <argument>N</argument>
+        <argument>saída</argument>
+      </arguments>  
+      <options>
+	<option>
+	  <flag>--cleanup</flag>
+	  <effect>Mira abaixo</effect>
+        </option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>Mira abaixo</effect>
+        </option>
+      </options>
+      <examples>
+	<demos>
+	  <demo>casella_ex1.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	   <emphasis>Esta documentación é provisoria e está suxeita a
+	   trocos antes da seguinte versión de GRETL.</emphasis>
+      </para>
+      <para>
+	Esta instrución está deseñada para facilitar a construción e execución
+	dunha mostraxe de Gibbs; para unha boa explicación da mesma,
+	consulta <cite key="casella92">Casella e George (1992)</cite>.
+	De xeito resumido, a mostraxe de Gibbs é un xeito de aproximar a
+	distribución marxinal de unha ou máis variables aleatorias que
+	pertencen a unha distribución conxunta no caso de que non exista
+	unha expresión analítica para as marxinais, ou de que sexa
+	excesivamente complexa, se existe. Isto acádase mediante a
+	simulación repetida das distribucións condicionadas asociadas.
+	Dado que as marxinais existen, pódense aproximar a unha precisión
+	arbitraria indicando un número suficiente de
+	iteracións.
+      </para>
+      <para>
+	A instrución ten a forma dun bloque de enunciados que definen
+	obxectos de tipo escalar ou matricial, iniciado con <lit>gibbs</lit>
+	e rematado con <lit>end gibbs</lit>. A estrutura ilústrase no
+	sinxelo exemplo seguinte, no que <lit>x</lit> segue unha
+	distribución Binomial condicionada a <lit>y</lit>, quen pola
+	súa banda segue unha distribución Beta condicionada a <lit>x</lit>,
+	e o que interesa é a distribución marxinal de
+	<lit>x</lit>.
+      </para>
+      <code>
+	gibbs burnin=500 N=5000 output=M
+	   init y = randgen1(beta, a, n - b)
+	   record x = randgen1(b, y, n)
+	   y = randgen1(beta, x + a, n - x + b)
+	end gibbs --verbose
+      </code>
+      <para>
+	Na primeira liña debe indicarse un enteiro non negativo para
+	o <lit>queimado</lit> e un enteiro positivo para <lit>N</lit>
+	(ben como valores numéricos, ben mediante os nomes de variables
+	escalares). O valor de <lit>queimado</lit> determina o número de
+	iteracións preliminares que se van tentar para estabilizar o proceso
+	recursivo e que non se van gravar, mentres que <lit>N</lit>indica
+	o número de iteracións que se van gravar, nunha matriz nomeada
+	mediante o argumento <lit>saída</lit>.
+      </para>
+      <para>
+	As liñas interiores do bloque poden ter unha clave anteposta,
+	ben <lit>init</lit> ou ben <lit>record</lit>, cos seguintes
+	significados.
+      </para>
+      <ilist>
+  <li>
+      <para>
+        <lit>init</lit> identifica un enunciado como o iniciador que se
+        executa só unha vez previamente á iteración de Gibbs.
+      </para>
+  </li>
+  <li>
+      <para>
+        <lit>record</lit> etiqueta un enunciado como aquel cuxo
+        resultado debe gravarse en cada iteración.
+      </para>
+  </li>
+      </ilist>
+      <para>
+	Os enunciados que non caracterizan ningunha chave se considera que
+	son parte da iteración, pero os seus resultados non se gravan na matriz
+	de saída. Os enunciados que se etiqueten con <lit>init</lit> deberán
+	indicarse primeiro.
+      </para>
+      <para>
+	A matriz de saída ten <lit>N</lit> filas e unha dimensión de columnas
+	que depende do número e do tipo de marxinais que se graven; os
+	resultados da matriz grávanse en formato vec trasposto. Se xa existe
+	o nome de matriz indicado no argumento <lit>saída</lit>, sobrescríbese;
+	doutro xeito, créase unha nova matriz.
+      </para>
+      <para>
+	Admítense dúas opcións, que deben engadirse á derradeira liña do
+	bloque. A opción <opt>verbose</opt> produce un breve informe de
+	progreso e algúns estatísticos básicos de resumo, correspondentes
+	á matriz de saída de resultados. A opción <opt>cleanup</opt> ten
+	como efecto que calquera nova variable creada dentro do bloque
+	<lit>gibbs</lit>, vaise eliminar unha vez que se complete a
+	iteración.
+      </para>
+    </description>
+  </command>
+
   <command name="gmm" section="Estimation" label="Estimación MXM (GMM)">
 
     <usage>
@@ -5361,7 +5473,7 @@
         <option>
 	  <flag>--with-lines</flag>
 	  <optparm optional="true">varspec</optparm>
-	  <effect>Utiliza liñas, non puntos</effect>
+	  <effect>Utiliza liñas, puntos non</effect>
         </option>
         <option>
 	  <flag>--with-lp</flag>
@@ -5371,7 +5483,12 @@
         <option>
 	  <flag>--with-impulses</flag>
 	  <optparm optional="true">varspec</optparm>
-	  <effect>Utiliza barras finas verticais</effect>
+	  <effect>Utilizar barras finas verticais</effect>
+        </option>
+        <option>
+	  <flag>--with-boxes</flag>
+	  <optparm optional="true">varspec</optparm>
+	  <effect>Utiliza histogramas</effect>
         </option>
         <option>
 	  <flag>--with-steps</flag>
@@ -12229,6 +12346,28 @@
     </gui-access>
   </command>
 
+  <command name="pkg-assign" section="Programming"
+	   label="Debe asignarse" context="gui">
+    <description>
+      <para>
+  Por que poderías querer insistir en que o usuario asigne o valor de
+  retorno de unha ou máis funcións públicas do teu paquete, no contexto
+  da GUI?
+      </para>
+      <para>
+  A cuestión é que algunhas funcións se deseñan simplemente para
+  proporcionar un resultado, en formato dunha serie ou matriz ou calquera
+  outro, sen amosar ningunha saída de resultados nin presentar ningunha
+  gráfica. Para esas funcións, se o usuario fai clic en <quote>OK</quote>
+  sen asignar o valor de retorno, precisamente non acontecerá nada,
+  e isto podería resultar desconcertante. Ao determinar a opción
+  <quote>Debe asignarse</quote> estás indicando efectivamente ao
+  usuario que <emphasis>non</emphasis> agarde nada da función indicada
+  que non sexa o seu valor de retorno.
+      </para>
+    </description>
+  </command>
+
   <command name="pkg-depends" section="Programming"
 	   label="Dependencias" context="gui">
     <description>
@@ -13678,7 +13817,7 @@
 	estimado previamente:
       </para>
       <code>
-  restrict
+	restrict
 	 b[1] = 0
 	 b[2] - b[3] = 0
 	 b[4] + 2*b[5] = 1

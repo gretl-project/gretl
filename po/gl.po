@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-09-18 10:21-0400\n"
-"PO-Revision-Date: 2025-05-31 09:43+0200\n"
+"PO-Revision-Date: 2025-09-19 22:21+0200\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -649,6 +649,8 @@ msgid ""
 "replicate_estimator() failed:\n"
 " %d observations used versus %d for the original model"
 msgstr ""
+"Fallou replicate_estimator():\n"
+" %d observacións usadas versus %d para o modelo orixinal"
 
 #: lib/src/compare.c:961 lib/src/compare.c:2584 lib/src/graphing.c:4692
 #: lib/src/graphing.c:4704 lib/src/graphing.c:6905 lib/src/printout.c:1549
@@ -688,14 +690,14 @@ msgid "Failed to add %d variable(s)"
 msgstr "Fallo ao engadir %d variable(s)"
 
 #: lib/src/compare.c:1500
-#, fuzzy, c-format
+#, c-format
 msgid "Sequential elimination using %s"
-msgstr "Eliminación secuencial utilizando alfa= %.2f a dúas colas"
+msgstr "Eliminación secuencial utilizando %s"
 
 #: lib/src/compare.c:1507
-#, fuzzy, c-format
+#, c-format
 msgid " Dropping %-16s (%s %#g)\n"
-msgstr " Prescindindo de %-16s (valor p %.3f)\n"
+msgstr " Prescindindo de %-16s (%s %#g)\n"
 
 #: lib/src/compare.c:1687
 #, c-format
@@ -1501,9 +1503,8 @@ msgid "Can't concatenate string-valued and numeric series"
 msgstr "Non poden concatenarse valores de cadea con series numéricas"
 
 #: lib/src/dataio.c:2224
-#, fuzzy
 msgid "Panel data not conformable for appending"
-msgstr "Os novos datos non teñen a estrutura axeitada para engadilos\n"
+msgstr "Datos de panel non axeitados para engadilos"
 
 #: lib/src/dataio.c:2310
 msgid "Data frequency does not match\n"
@@ -3823,9 +3824,9 @@ msgid "ACF for"
 msgstr "FAC de"
 
 #: lib/src/graphing.c:8655
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "95% Bartlett interval"
-msgstr "Intervalo ao 95%"
+msgstr "Intervalo de Bartlett ao 95%"
 
 #: lib/src/graphing.c:8690
 msgid "Residual PACF"
@@ -4357,9 +4358,8 @@ msgid "Dependencies not met"
 msgstr "Non se cumpren as dependencias"
 
 #: lib/src/gretl_errors.c:92
-#, fuzzy
 msgid "Matrix argument contains non-finite values"
-msgstr "Xeráronse valores non finitos"
+msgstr "O argumento de matriz contén valores non finitos"
 
 #: lib/src/gretl_errors.c:100
 msgid "gradient is not close to zero"
@@ -11149,9 +11149,9 @@ msgid "No database files found"
 msgstr "Non se atoparon ficheiros de banco de datos"
 
 #: gui/database.c:3575
-#, fuzzy, c-format
+#, c-format
 msgid "showing categories 1-%d of %d"
-msgstr "Amosando as series %d-%d de %d"
+msgstr "Amosando as categorías 1-%d de %d"
 
 #: gui/database.c:3606
 #, c-format
@@ -13134,12 +13134,12 @@ msgstr "Erros da media móbil exponencial de *%s* (ponderación actual %g)"
 #: gui/filters.c:232
 #, c-format
 msgid "Filtered %s: one-sided Hodrick-Prescott trend (lambda = %g)"
-msgstr "%s filtrada: Tendencia do Hodrick-Prescott dunha cola (lambda = %g)"
+msgstr "%s filtrada: Tendencia do Hodrick-Prescott unilateral (lambda = %g)"
 
 #: gui/filters.c:235
 #, c-format
 msgid "Filtered %s: one-sided Hodrick-Prescott cycle (lambda = %g)"
-msgstr "%s filtrada: Ciclo do Hodrick-Prescott dunha cola (lambda = %g)"
+msgstr "%s filtrada: Ciclo do Hodrick-Prescott unilateral (lambda = %g)"
 
 #: gui/filters.c:240
 #, c-format
@@ -13266,7 +13266,7 @@ msgstr "Lambda (valores máis altos -> tendencia máis suave):"
 
 #: gui/filters.c:756
 msgid "One-sided"
-msgstr "Unha cola"
+msgstr "Unilateral"
 
 #: gui/filters.c:767
 msgid "k (higher values -> better approximation):"
@@ -13364,9 +13364,8 @@ msgid "Argument %d (%s) is missing"
 msgstr "Falta o argumento %d (%s)"
 
 #: gui/fncall.c:578
-#, fuzzy
 msgid "The return value must be assigned"
-msgstr "Os valores da serie deben ser enteiros"
+msgstr "Debe asignarse o valor de retorno"
 
 #: gui/fncall.c:618 gui/gretl.c:2083
 msgid "State space model"
@@ -13423,9 +13422,8 @@ msgid "Select arguments:"
 msgstr "Escoller argumentos:"
 
 #: gui/fncall.c:2183
-#, fuzzy
 msgid "Assign return value:"
-msgstr "Asignar o valor de resposta (opcional) a:"
+msgstr "Asignar valor de retorno:"
 
 #: gui/fncall.c:2186
 msgid "Save return value (optional, clear box for no assignment):"
@@ -13783,15 +13781,18 @@ msgid ""
 "that assignment of the return value from the function is not optional, when\n"
 "it is called from the graphical interface."
 msgstr ""
+"Marcando a caixa \"debe asignar\" para unha función pública, estás "
+"indicando\n"
+"que a asignación do valor de retorno da función non é opcional, cando\n"
+"se invoca desde a interface gráfica."
 
 #: gui/fnsave.c:2793
-#, fuzzy
 msgid "function"
-msgstr "Gardar funcións"
+msgstr "Función"
 
 #: gui/fnsave.c:2796
 msgid "must assign"
-msgstr ""
+msgstr "debe asignar"
 
 #: gui/fnsave.c:2832
 msgid ""
@@ -13839,7 +13840,7 @@ msgstr "Dependencias"
 
 #: gui/fnsave.c:3798
 msgid "Must assign"
-msgstr ""
+msgstr "Debe asignar"
 
 #: gui/fnsave.c:3907
 msgid "Email"
@@ -14058,9 +14059,8 @@ msgid "Save to session as icon"
 msgstr "Gardar na sesión como icona"
 
 #: gui/gpt_control.c:4727 gui/gpt_control.c:4835
-#, fuzzy
 msgid "View gnuplot commands"
-msgstr "Editar as ordes de gráfica"
+msgstr "Ver as instrucións de Gnuplot"
 
 #: gui/gpt_control.c:4733 gui/gpt_control.c:4836
 msgid "Freeze data labels"
@@ -16625,9 +16625,8 @@ msgid "this window"
 msgstr "Esta xanela"
 
 #: gui/helpfiles.c:1020
-#, fuzzy
 msgid "this provider"
-msgstr "Fornecedor?"
+msgstr "Este provedor"
 
 #: gui/helpfiles.c:1022
 msgid "selected dataset"
@@ -16638,9 +16637,8 @@ msgid "this dataset"
 msgstr "Este conxunto de datos"
 
 #: gui/helpfiles.c:1026
-#, fuzzy
 msgid "selected provider"
-msgstr "Conxunto de datos seleccionado"
+msgstr "Provedor seleccionado"
 
 #: gui/helpfiles.c:1027
 msgid "all DB.NOMICS"
@@ -17825,19 +17823,16 @@ msgid "Daily (7 days, incomplete)"
 msgstr "Diaria (7 días, incompleta)"
 
 #: gui/menustate.c:1022
-#, fuzzy
 msgid "Daily (5 days, undated)"
-msgstr "Diaria (5 días, incompleta)"
+msgstr "Diaria (5 días, sen data)"
 
 #: gui/menustate.c:1023
-#, fuzzy
 msgid "Daily (6 days, undated)"
-msgstr "Diaria (6 días, incompleta)"
+msgstr "Diaria (6 días, sen data)"
 
 #: gui/menustate.c:1024
-#, fuzzy
 msgid "Daily (7 days, undated)"
-msgstr "Diaria (7 días, incompleta)"
+msgstr "Diaria (7 días, sen data)"
 
 #: gui/menustate.c:1065
 msgid "Unknown"
@@ -18690,19 +18685,16 @@ msgid "Wald test, based on covariance matrix"
 msgstr "Proba de Wald baseada na matriz de covarianzas"
 
 #: gui/selector.c:6974
-#, fuzzy
 msgid "Or stepwise elimination"
-msgstr "Estimación nunha etapa"
+msgstr "Ou eliminación por Estimación nunha etapa"
 
 #: gui/selector.c:6983
-#, fuzzy
 msgid "using two-sided p-value:"
-msgstr "Valor p con dúas colas"
+msgstr "Usando valor p bilateral:"
 
 #: gui/selector.c:6992
-#, fuzzy
 msgid "using information criterion: "
-msgstr "Criterio de información de Akaike"
+msgstr "Utilizando criterio de información: "
 
 #: gui/selector.c:7004
 msgid "Test only selected variables"
@@ -19063,7 +19055,7 @@ msgstr "Gardar como TeX..."
 
 #: gui/session.c:193 gui/session.c:3656
 msgid "View using gnuplot"
-msgstr ""
+msgstr "Ver usando Gnuplot"
 
 #: gui/session.c:194 gui/session.c:3650
 msgid "Edit plot commands"
