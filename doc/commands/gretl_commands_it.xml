@@ -5389,8 +5389,8 @@
 	  <effect>vedi sotto</effect>
         </option>
 	<option>
-	  <flag>--verbose</flag>
-	  <effect>stampa lo stato di avanzamento del comando</effect>
+	  <flag>--quiet</flag>
+	  <effect>non stampa nulla</effect>
         </option>
       </options>
       <examples>
@@ -5434,7 +5434,7 @@
 	  init y = randgen1(beta, a, n - b)
 	  record x = randgen1(b, y, n)
 	  y = randgen1(beta, x + a, n - x + b)
-	end gibbs --verbose
+	end gibbs
       </code>
       <para>
 	Nella prima riga, <lit>burnin</lit> deve essere un intero non
@@ -5483,11 +5483,12 @@
     </para>
     <para>
       Sono supportate due opzioni, che vanno nella riga finale del
-      blocco. Il flag <opt>verbose</opt> produce un breve report sullo
-      stato di avanzamento e alcune statistiche di riepilogo di base
-      relative alla matrice di output. Il flag <opt>cleanup</opt> fa
-      sì che tutte le variabili appena create all'interno del blocco
-      <lit>gibbs</lit> vengano eliminate al termine dell'iterazione.
+      blocco. L'opzione <opt>quiet</opt> sopprime l'output di default
+      (un breve report sullo stato di avanzamento e alcune statistiche
+      di riepilogo di base relative alla matrice di output). L'opzione
+      <opt>cleanup</opt> fa sì che tutte le variabili appena create
+      all'interno del blocco <lit>gibbs</lit> vengano eliminate al
+      termine dell'iterazione.
     </para>
     </description>
 </command>
