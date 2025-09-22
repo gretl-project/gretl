@@ -468,6 +468,9 @@ static void cmd_set_vstart (CMD *c, const char *s)
 {
     if (s != NULL && *s != '\0') {
 	if (c->vstart != NULL) {
+            if (!strcmp(c->vstart, s)) {
+                return;
+            }
 	    free(c->vstart);
 	}
 	/* note: string substitution should already be done

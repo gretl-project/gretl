@@ -221,7 +221,7 @@ static void series_write_metadata (parser *p, int oldv)
 	return;
     }
 
-    if (p->targ == SERIES) {
+    if (p->targ == SERIES && p->input != NULL) {
 	maybe_record_lag_info(p);
     }
 
@@ -1315,7 +1315,7 @@ void destroy_genr (parser *p)
 #endif
 
     if (p != NULL) {
-	p->flags = 0;
+        p->flags = p->flags & P_ALTINP ? P_ALTINP : 0;
 	gen_cleanup(p);
 	free(p);
     }

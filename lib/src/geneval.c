@@ -153,7 +153,7 @@ enum {
 #define exestart(p) ((p->flags & P_EXEC) && (p->flags & P_START))
 
 static void parser_init (parser *p, const char *str, DATASET *dset,
-                         PRN *prn, int flags, int targtype, int *done);
+                         PRN *prn, genflags flags, int targtype, int *done);
 static void parser_reinit (parser *p, DATASET *dset, PRN *prn);
 static NODE *eval (NODE *t, parser *p);
 static void node_type_error (int ntype, int argnum, int goodt,
@@ -22350,7 +22350,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     */
     int saveflags[] = {
         P_NATEST, P_AUTOREG, P_DISCARD, P_NODECL,
-        P_LISTDEF, P_PRIV, P_UFRET, 0
+        P_LISTDEF, P_PRIV, P_UFRET, P_ALTINP, 0
     };
     int i, prevflags = p->flags;
     GretlType lhtype = 0;
@@ -22407,15 +22407,22 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 
 static void parser_init (parser *p, const char *str,
                          DATASET *dset, PRN *prn,
-                         int flags, int targtype,
+                         genflags flags, int targtype,
                          int *done)
 {
-    p->point = p->rhs = p->input = str;
+    p->flags = flags | P_START;
+    if (p->flags & P_COMPILE) {
+        char *tmp = gretl_strdup(str);
+
+        p->point = p->rhs = p->input = tmp;
+        p->flags |= P_ALTINP;
+    } else {
+        p->point = p->rhs = p->input = str;
+    }
     p->dset = dset;
     p->dset_n = dset != NULL ? dset->n : 0;
     p->prn = prn;
     p->errprn = NULL;
-    p->flags = flags | P_START;
     p->targ = targtype;
     p->op = 0;
 
@@ -22523,8 +22530,8 @@ void gen_cleanup (parser *p)
     int save = (p->flags & (P_COMPILE | P_EXEC));
 
 #if EDEBUG
-    fprintf(stderr, "gen cleanup on %p: save = %d\n",
-            p, save ? 1 : 0);
+    fprintf(stderr, "gen cleanup on %p: save=%d, alt=%d, input='%s'\n",
+            p, save ? 1 : 0, (p->flags & P_ALTINP) ? 1 : 0, p->input);
 #endif
 
     if (p->lh.label != NULL) {
