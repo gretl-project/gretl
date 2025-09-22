@@ -58,6 +58,7 @@ int gretl_xml_open_doc_root (const char *fname,
 {
     xmlDocPtr doc;
     xmlNodePtr node = NULL;
+    int options;
     int err = 0;
 
     LIBXML_TEST_VERSION;
@@ -67,7 +68,12 @@ int gretl_xml_open_doc_root (const char *fname,
 	*pnode = NULL;
     }
 
-    doc = xmlReadFile(fname, NULL, XML_PARSE_HUGE | XML_PARSE_NOBLANKS);
+    options = XML_PARSE_HUGE | XML_PARSE_NOBLANKS;
+#if LIBXML_VERSION >= 21500   
+    options |= XML_PARSE_UNZIP;
+#endif    
+
+    doc = xmlReadFile(fname, NULL, options);
     if (doc == NULL) {
 	gretl_errmsg_sprintf(_("xmlReadFile failed on %s"), fname);
 	err = 1;
@@ -4764,9 +4770,15 @@ static char *gretl_xml_get_doc_type (const char *fname, int *err)
 {
     xmlDocPtr doc;
     xmlNodePtr node;
+    int options;
     char *ret = NULL;
 
-    doc = xmlReadFile(fname, NULL, XML_PARSE_HUGE);
+    options = XML_PARSE_HUGE;
+#if LIBXML_VERSION >= 21500
+    options |= XML_PARSE_UNZIP;
+#endif
+
+    doc = xmlReadFile(fname, NULL, options);
 
     if (doc == NULL) {
 	gretl_errmsg_sprintf(_("xmlReadFile failed on %s"), fname);
