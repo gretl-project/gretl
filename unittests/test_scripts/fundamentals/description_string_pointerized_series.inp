@@ -1,0 +1,26 @@
+/*
+This test checks that the description string of a pointerized series
+is correctly set by the function that creates it.
+
+This dates back to a bug in version 2025b:
+https://gretlml.univpm.it/hyperkitty/list/gretl-devel@gretlml.univpm.it/message/FB25BFR2U63DC4Y55PWIX52ETO5ORDAJ/
+*/
+
+set verbose off
+set assert stop
+
+function void bugtest (series *e)
+    e = normal()
+end function
+
+nulldata 10
+series e
+loop 2
+    bugtest(&e)
+endloop
+
+string expected = "normal()"
+string got = getinfo(e).description
+assert(got == expected)
+
+print "Successfully finished tests."
