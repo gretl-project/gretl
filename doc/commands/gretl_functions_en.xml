@@ -8047,11 +8047,11 @@
       <description>
 	<para>
 	  Returns the log of the gamma function of <argname>x</argname>.
-	</para>
 	  <seelist>
             <fncref targ="bincoeff"/>
             <fncref targ="gammafun"/>
 	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -8069,10 +8069,10 @@
 	  For its definition and properties, see
 	  <url>https://dlmf.nist.gov/35.3</url> or
 	  <url>https://en.wikipedia.org/wiki/Multivariate_gamma_function</url>.
-	</para>
 	  <seelist>
             <fncref targ="lngamma"/>
 	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -13126,80 +13126,91 @@
       </fnargs>
       <description>
 	<para>
-	  Reads values from <argname>src</argname> under the control
-	  of <argname>format</argname> and assigns these values to one
-	  or more trailing arguments, indicated by the dots above.
-	  Returns the number of values assigned. This is a simplified
-	  version of the <lit>sscanf</lit> function in the C
-	  programming language, with an extension to the scanning of
-	  an entire matrix; this extension is described under the
-	  leading <quote>Scanning a matrix</quote> below. Note that
-	  giving an array of strings as <argname>src</argname> is
-	  acceptable only in the case of matrix scanning.
+	  Reads values from <argname>src</argname> under the control of
+	  <argname>format</argname> and assigns these values to one or
+	  more trailing arguments, indicated by the dots above.  Returns
+	  the number of values assigned. This is a simplified version of
+	  the <lit>sscanf</lit> function in the C programming language,
+	  with an extension to the scanning of an entire matrix (see
+	  <quote>Scanning a matrix</quote> below). Note that giving an
+	  array of strings as <argname>src</argname> is acceptable only
+	  in the case of matrix scanning.
 	</para>
 	<para>
-	  <repl>src</repl> may be either a literal string, enclosed
-	  in double quotes, or the name of a predefined string
-	  variable.  <repl>format</repl> is defined similarly to the
-	  format string in <cmdref targ="printf"/> (more on this
-	  below). <repl>args</repl> should be a comma-separated list
-	  containing the names of predefined variables: these are the
-	  targets of conversion from <repl>src</repl>.  (For those
-	  used to C: one can prefix the names of numerical variables
-	  with <lit>&amp;</lit> but this is not required.)
+	  <repl>src</repl> may be either a literal string, enclosed in
+	  double quotes, or the name of a predefined string variable.
+	  <repl>format</repl> is defined similarly to the format string
+	  in <cmdref targ="printf"/> (more on this below). The trailing
+	  arguments&mdash;the names of predefined variables that are the
+	  targets of conversion&mdash; must be separated by commas.
+	  (For those used to C: one can prefix the names of numerical
+	  variables with an ampersand, as in <lit>&amp;x</lit> but this
+	  is not required.)
 	</para>
 	<para>
 	  Literal text in <repl>format</repl> is matched against
 	  <repl>src</repl>.  Conversion specifiers start with
 	  <lit>%</lit>, and recognized conversions include
 	  <lit>%f</lit>, <lit>%g</lit> or <lit>%lf</lit> for
-	  floating-point numbers; <lit>%d</lit> for integers;
-	  <lit>%s</lit> for strings.  You may insert a positive
-	  integer after the percent sign: this sets the maximum number
-	  of characters to read for the given
-	  conversion. Alternatively, you can insert a literal
-	  <lit>*</lit> after the percent to suppress the conversion
-	  (thereby skipping any characters that would otherwise have
-	  been converted for the given type).  For example,
-	  <lit>%3d</lit> converts the next 3 characters in
-	  <repl>src</repl> to an integer, if possible; <lit>%*g</lit>
-	  skips as many characters in <repl>src</repl> as could be
-	  converted to a single floating-point number.
+	  floating-point numbers; <lit>%d</lit> for integers; and
+	  <lit>%s</lit> for strings.  You may insert a positive integer
+	  after the percent sign: this sets the maximum number of
+	  characters to read for the given conversion. Alternatively,
+	  you can insert a literal asterisk, <lit>*</lit>, after the
+	  percent to suppress the conversion (thereby skipping any
+	  characters that would otherwise have been converted for the
+	  given type).  For example, <lit>%3d</lit> converts the next 3
+	  characters in <repl>src</repl> to an integer, if possible;
+	  <lit>%*g</lit> skips as many characters in <repl>src</repl> as
+	  could be converted to a single floating-point number.
 	</para>
+        <subhead>String conversions</subhead>
 	<para>
-	  In addition to <lit>%s</lit> conversion for strings, a
-	  simplified version of the C format
-	  <lit>%</lit><repl>N</repl><lit>[</lit><repl>chars</repl><lit>]</lit>
-	  is available.  In this format <repl>N</repl> is the maximum
-	  number of characters to read and <repl>chars</repl> is a set
-	  of acceptable characters, enclosed in square brackets:
-	  reading stops if <repl>N</repl> is reached or if a character
-	  not in <repl>chars</repl> is encountered. The function of
-	  <repl>chars</repl> can be reversed by giving a circumflex,
-	  <lit>^</lit>, as the first character; in that case reading
-	  stops if a character in the given set is found.  (Unlike C,
-	  the hyphen does not play a special role in the
-	  <repl>chars</repl> set.)
+          Note that in the case of <lit>%s</lit> conversion for strings,
+          scanning for a given argument stops when white space is
+          encountered. For greater flexibility a simplified version of
+          the C format
+          <lit>%</lit><repl>N</repl><lit>[</lit><repl>chars</repl><lit>]</lit>
+          is available.  In this format <repl>N</repl> (which is
+          optional) is the maximum number of characters to read and
+          <repl>chars</repl> is a set of acceptable characters, enclosed
+          in square brackets: reading stops if <repl>N</repl> is reached
+          or if a character not in <repl>chars</repl> is
+          encountered. The behavior of this construction is reversed if
+          a circumflex, <lit>^</lit>, is given as the first element of
+          <repl>chars</repl>. In that case reading stops when a character
+          in the given set is found.  (Unlike C, the hyphen does not
+          play a special role in the <repl>chars</repl> set.) For
+          example,
 	</para>
+	<code>
+	  string src = "some arbitary text that might be of interest"
+	  string s1
+	  string s2
+	  sscanf(src, "%s", s1)
+	  printf "s1 = '%s'\n", s1
+	  sscanf(src, "%18[^\n]", s2)
+	  printf "s2 = '%s'\n", s2
+	</code>
+	<para>
+	  The first scan yields <quote><lit>some</lit></quote> while the
+	  second gives <quote><lit>some arbitary text</lit></quote>.
+	</para>
+	<subhead>Return value</subhead>
 	<para>
 	  If the source string does not (fully) match the format, the
 	  number of conversions may fall short of the number of
 	  arguments given.  This is not in itself an error so far as
 	  gretl is concerned.  However, you may wish to check the
 	  number of conversions performed; this is given by the return
-	  value.  Some simple examples follow:
+	  value.  A simple example follows:
 	</para>
 	<code>
 	  # scanning scalar values
 	  scalar x
 	  scalar y
-	  sscanf("123456", "%3d%3d", x, y)
-	  # scanning string values
-	  string s = "one two"
-	  string s1
-	  string s2
-	  sscanf(s, "%s %s", s1, s2)
-	  print s1 s2
+	  n = sscanf("123456", "%3d%3d", x, y)
+	  printf "scanned %d values\n", n
 	</code>
 	<subhead>Scanning a matrix</subhead>
 	<para>
@@ -13214,12 +13225,12 @@
 	</para>
 	<para>
 	  If <argname>src</argname> is a single string argument the
-	  scanner reads a line of input and counts the (space- or
-	  tab-separated) number of numeric fields.  This defines the
-	  number of columns in the matrix.  By default, reading then
-	  proceeds for as many lines (rows) as contain the same number
-	  of numeric columns, but the maximum number of rows can be
-	  limited via the optional integer value mentioned above.
+	  scanner reads a line of input and counts the number of space-
+	  or tab-separated numeric fields.  This defines the number of
+	  columns in the matrix.  By default, reading then proceeds for
+	  as many lines (rows) as contain the same number of numeric
+	  columns, but the maximum number of rows can be limited via the
+	  optional integer value mentioned above.
 	</para>
 	<para>
 	  If <argname>src</argname> is an array of strings the output
