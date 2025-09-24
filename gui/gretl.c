@@ -2630,6 +2630,7 @@ mdata_handle_drag  (GtkWidget *widget,
 
     /* check for zip files */
     if (has_suffix(tmp, ".xlsx") ||
+        has_suffix(tmp, ".ods") ||
 	has_suffix(tmp, ".gdtb") ||
 	has_suffix(tmp, ".gretl")) {
 	    ; /* "authorized" zip files: OK? */

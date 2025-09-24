@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #define FULL_XML_HEADERS
@@ -39,11 +39,11 @@
 
 #include "import_common.c"
 
-#define ODEBUG 0
+#define ODEBUG 2
 
 enum {
-    ODS_NONE,     
-    ODS_NUMERIC, 
+    ODS_NONE,
+    ODS_NUMERIC,
     ODS_DATE,
     ODS_TIME,
     ODS_BOOL,
@@ -66,7 +66,7 @@ struct ods_table_ {
 };
 
 struct ods_sheet_ {
-    int flags;             
+    int flags;
     xmlDocPtr doc;         /* document pointer */
     int n_tables;          /* number of tables */
     ods_table **tables;    /* pointers to table info */
@@ -87,7 +87,7 @@ static ods_table *ods_table_new (xmlNodePtr node, int *err)
     if (name == NULL) {
 	*err = E_DATA;
 	return NULL;
-    }    
+    }
 
     tab = malloc(sizeof *tab);
 
@@ -106,7 +106,7 @@ static ods_table *ods_table_new (xmlNodePtr node, int *err)
     return tab;
 }
 
-static int 
+static int
 ods_sheet_add_table (ods_sheet *sheet, ods_table *tab)
 {
     int n = sheet->n_tables;
@@ -172,7 +172,7 @@ static void ods_sheet_free (ods_sheet *sheet)
 	free(sheet->codelist);
 	if (sheet->st != NULL) {
 	    gretl_string_table_destroy(sheet->st);
-	}	
+	}
 
 	free(sheet);
     }
@@ -223,7 +223,7 @@ static int ods_sheet_prune (ods_sheet *sheet, PRN *prn)
 		i--;
 	    }
 	}
-    
+
 	if (sheet->n_tables == 0) {
 	    pputs(prn, _("File contains no data"));
 	    err = E_DATA;
@@ -396,24 +396,24 @@ static int ods_cell_width (xmlNodePtr p)
 
 static const char *ods_name (int t)
 {
-    if (t == ODS_NONE) 
+    if (t == ODS_NONE)
 	return "blank";
-    if (t == ODS_NUMERIC) 
+    if (t == ODS_NUMERIC)
 	return "numerical value";
-    if (t == ODS_DATE) 
+    if (t == ODS_DATE)
 	return "date string";
-    if (t == ODS_TIME) 
+    if (t == ODS_TIME)
 	return "time string";
-    if (t == ODS_BOOL) 
+    if (t == ODS_BOOL)
 	return "boolean";
-    if (t == ODS_STRING) 
+    if (t == ODS_STRING)
 	return "string";
 
     return "blank";
 }
 
 static int ods_error (ods_sheet *sheet,
-		      int i, int j, 
+		      int i, int j,
 		      int etype, int vtype,
 		      PRN *prn)
 {
@@ -437,8 +437,8 @@ static int ods_error (ods_sheet *sheet,
     pprintf(prn, _("expected %s but found %s"),
 	    ods_name(etype), ods_name(vtype));
     pputc(prn, '\n');
-    
-    return E_DATA; 
+
+    return E_DATA;
 }
 
 static int ods_handle_stringval (ods_sheet *sheet,
@@ -460,13 +460,13 @@ static int ods_handle_stringval (ods_sheet *sheet,
 		err = E_DATA;
 		break;
 	    }
-	}	
+	}
     }
 
     return err;
 }
 
-static int real_read_cell (xmlNodePtr cur, 
+static int real_read_cell (xmlNodePtr cur,
 			   ods_sheet *sheet, int pass,
 			   int iread, int *preadcol,
 			   PRN *prn)
@@ -475,7 +475,7 @@ static int real_read_cell (xmlNodePtr cur,
     int verbose = 1;
 #else
     int verbose = 0;
-#endif    
+#endif
     char *val = NULL;
     int jread = *preadcol;
     int obscol = (sheet->flags & BOOK_OBS_LABELS)? 1 : 0;
@@ -499,8 +499,8 @@ static int real_read_cell (xmlNodePtr cur,
     *preadcol += nr;
 
 #if ODEBUG
-    fprintf(stderr, "real_read_cell: i=%d, j=%d, v=%d, t=%d\n",
-	    iread, jread, v, t);
+    fprintf(stderr, "real_read_cell: i=%d, j=%d, v=%d, t=%d, vtype=%d, nr=%d\n",
+	    iread, jread, v, t, vtype, nr);
 #endif
 
     if (pass == 2) {
@@ -534,11 +534,11 @@ static int real_read_cell (xmlNodePtr cur,
 					     v, iread, jread, prn);
 		free(val);
 	    } else {
-		err = ods_error(sheet, iread, jread, ODS_STRING, 
+		err = ods_error(sheet, iread, jread, ODS_STRING,
 				ODS_NONE, prn);
 	    }
 	} else if (vtype != ODS_NONE) {
-	    err = ods_error(sheet, iread, jread, ODS_STRING, 
+	    err = ods_error(sheet, iread, jread, ODS_STRING,
 			    vtype, prn);
 	}
 	return err;
@@ -575,7 +575,7 @@ static int real_read_cell (xmlNodePtr cur,
 		}
 	    } else {
 		err = ods_error(sheet, iread, jread, ODS_NUMERIC,
-				ODS_NONE, prn);		
+				ODS_NONE, prn);
 	    }
 	} else {
 	    err = ods_error(sheet, iread, jread, ODS_DATE,
@@ -595,31 +595,46 @@ static int real_read_cell (xmlNodePtr cur,
 
     if (vtype == ODS_NUMERIC) {
 	x = get_ods_numeric_value(cur);
-#if ODEBUG	
+#if ODEBUG
 	fprintf(stderr, " float: %.15g\n", x);
-#endif	
+#endif
     } else if (vtype == ODS_BOOL) {
 	x = get_ods_bool_value(cur);
-#if ODEBUG	
+#if ODEBUG
 	fprintf(stderr, " boolean: %g\n", x);
-#endif	
+#endif
     } else if (vtype == ODS_NONE) {
-#if ODEBUG	
+#if ODEBUG
 	fprintf(stderr, " blank: NA?\n");
-#endif	
+#endif
     } else if (vtype == ODS_STRING) {
 	val = get_ods_string_value(cur);
 	if (val != NULL && import_na_string(val)) {
-#if ODEBUG	    
+#if ODEBUG
 	    fprintf(stderr, " string: NA?\n");
-#endif	    
+#endif
 	} else if (val != NULL && *val != '\0') {
 	    x = NON_NUMERIC;
 	    sheet->flags |= BOOK_NON_NUMERIC;
 	}
 	free(val);
+    } else if (vtype == ODS_DATE || vtype == ODS_TIME) {
+        val = get_ods_string_value(cur);
+	if (val != NULL && import_na_string(val)) {
+#if ODEBUG
+	    fprintf(stderr, " string: NA?\n");
+#endif
+	} else if (val != NULL && *val != '\0') {
+#if ODEBUG
+	    fprintf(stderr, " %s: '%s'\n", vtype == ODS_DATE ?
+                    "date" : "time", val);
+#endif
+	    //x = NON_NUMERIC;
+	    sheet->flags |= BOOK_NON_NUMERIC;
+	}
+	free(val);
     } else {
-	fprintf(stderr, " vtype = %d??\n", vtype); 
+	fprintf(stderr, " vtype = %d??\n", vtype);
 	err = E_DATA;
     }
 
@@ -629,12 +644,12 @@ static int real_read_cell (xmlNodePtr cur,
 	for (j=0, vj=v; j<nr && vj<sheet->dset->v; j++, vj++) {
 	    sheet->dset->Z[vj][t] = x;
 	}
-    }	    
+    }
 
     return err;
 }
 
-static int read_data_row (xmlNodePtr cur, 
+static int read_data_row (xmlNodePtr cur,
 			  ods_table *tab,
 			  ods_sheet *sheet,
 			  int pass,
@@ -651,7 +666,7 @@ static int read_data_row (xmlNodePtr cur,
 	if (!xmlStrcmp(cur->name, (XUC) "table-cell")) {
 	    if (tabcol >= sheet->xoffset) {
 		err = real_read_cell(cur, sheet, pass,
-				     readrow, &readcol, 
+				     readrow, &readcol,
 				     prn);
 	    }
 	    tabcol += ods_cell_width(cur);
@@ -676,7 +691,7 @@ static int sheet_allocate_data (ods_sheet *sheet,
     if (sheet->flags & BOOK_OBS_LABELS) {
 	labels = 1;
 	v--;
-    }    
+    }
 
     if (n <= 0 || v <= 1) {
 	return E_DATA;
@@ -703,7 +718,7 @@ static int sheet_allocate_data (ods_sheet *sheet,
    column and (b) if we have a varnames row.
 */
 
-static int 
+static int
 analyse_top_left (ods_sheet *sheet, ods_table *tab)
 {
     xmlNodePtr colp, rowp = tab->node->xmlChildrenNode;
@@ -754,7 +769,7 @@ analyse_top_left (ods_sheet *sheet, ods_table *tab)
 	    done = (p10 != NULL);
 	}
 	rowp = rowp->next;
-    } 
+    }
 
     if (!done) {
 	fprintf(stderr, "analyse_top_left: failed\n");
@@ -799,7 +814,7 @@ analyse_top_left (ods_sheet *sheet, ods_table *tab)
 	}
     }
 
-    fprintf(stderr, "analyse_top_left: vnames=%d, obscol=%d, returning %d\n", 
+    fprintf(stderr, "analyse_top_left: vnames=%d, obscol=%d, returning %d\n",
 	    (sheet->flags & BOOK_AUTO_VARNAMES)? 0 : 1,
 	    (sheet->flags & BOOK_OBS_LABELS)? 1 : 0, err);
 
@@ -840,7 +855,7 @@ static int read_table_content (ods_sheet *sheet, PRN *prn)
 #if ODEBUG
     fprintf(stderr, "\n*** read_table_content ***\n");
 #endif
-    
+
     if (sheet->seltab < 0 || sheet->seltab >= sheet->n_tables) {
 	return E_DATA;
     }
@@ -900,7 +915,7 @@ static int read_table_content (ods_sheet *sheet, PRN *prn)
     return err;
 }
 
-static int 
+static int
 get_table_dimensions (xmlNodePtr cur, ods_sheet *sheet)
 {
     ods_table *tab = NULL;
@@ -947,7 +962,7 @@ get_table_dimensions (xmlNodePtr cur, ods_sheet *sheet)
 			xtrail = 0;
 		    } else if (row_empty) {
 			xoffset += nc;
-		    } 
+		    }
 		    if (rowp->next == NULL) {
 			/* last cell(s) in row: ignore if blank */
 			cols += (hascont)? nc : 0;
@@ -961,7 +976,7 @@ get_table_dimensions (xmlNodePtr cur, ods_sheet *sheet)
 		rowp = rowp->next;
 	    }
 #if ODEBUG > 2
-	    fprintf(stderr, "row %d: cols = %d, trailing empty cols = %d\n", 
+	    fprintf(stderr, "row %d: cols = %d, trailing empty cols = %d\n",
 		    ++i, cols, xtrail);
 #endif
 	    cols -= xtrail;
@@ -987,22 +1002,22 @@ get_table_dimensions (xmlNodePtr cur, ods_sheet *sheet)
     tab->rows = rchk;
 
 #if ODEBUG
-    fprintf(stderr, "get_table_dimensions, done: rows=%d, err=%d\n\n", 
+    fprintf(stderr, "get_table_dimensions, done: rows=%d, err=%d\n\n",
 	    tab->rows, err);
 #endif
 
     return err;
 }
 
-static ods_sheet *ods_read_content (PRN *prn, int *err) 
+static ods_sheet *ods_read_content (PRN *prn, int *err)
 {
     ods_sheet *sheet = NULL;
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
     xmlNodePtr c1, c2;
 
-    *err = gretl_xml_open_doc_root("content.xml", 
-				   "document-content", 
+    *err = gretl_xml_open_doc_root("content.xml",
+				   "document-content",
 				   &doc, &cur);
 
     if (*err) {
@@ -1043,7 +1058,7 @@ static ods_sheet *ods_read_content (PRN *prn, int *err)
 
 static int check_mimetype (PRN *prn)
 {
-    const char *odsmime = 
+    const char *odsmime =
 	"application/vnd.oasis.opendocument.spreadsheet";
     char buf[48] = {0};
     FILE *fp;
@@ -1056,7 +1071,7 @@ static int check_mimetype (PRN *prn)
     } else {
 	if (fread(buf, 1, 46, fp) != 46 ||
 	    strcmp(buf, odsmime)) {
-	    pprintf(prn, _("Wrong or missing mime type,\n should be '%s'\n"), 
+	    pprintf(prn, _("Wrong or missing mime type,\n should be '%s'\n"),
 		    odsmime);
 	    err = E_DATA;
 	}
@@ -1123,7 +1138,7 @@ static void record_ods_params (ods_sheet *sheet, int *list)
     }
 }
 
-static int set_ods_params_from_cli (ods_sheet *sheet, 
+static int set_ods_params_from_cli (ods_sheet *sheet,
 				    const int *list,
 				    char *sheetname)
 {
@@ -1173,7 +1188,7 @@ static int set_ods_params_from_cli (ods_sheet *sheet,
 	sheet->xoffset < 0 || sheet->yoffset < 0) {
 	gretl_errmsg_set(_("Invalid argument for worksheet import"));
 	fprintf(stderr, "seltab=%d, xoffset=%d, yoffset=%d\n",
-		sheet->seltab, sheet->xoffset, sheet->yoffset); 
+		sheet->seltab, sheet->xoffset, sheet->yoffset);
 	return E_DATA;
     }
 
@@ -1184,7 +1199,7 @@ static int ods_sheet_dialog (ods_sheet *sheet,
 			     GtkWidget *parent,
 			     int *err)
 {
-    wbook book;   
+    wbook book;
 
     *err = ods_book_init(&book, sheet, NULL);
     if (*err) {
@@ -1217,7 +1232,7 @@ static int ods_sheet_dialog (ods_sheet *sheet,
 
 static int finalize_ods_import (DATASET *dset,
 				ods_sheet *sheet,
-				const char *fname, 
+				const char *fname,
 				gretlopt opt,
 				PRN *prn)
 {
@@ -1231,11 +1246,11 @@ static int finalize_ods_import (DATASET *dset,
     if (!err) {
 	err = merge_or_replace_data(dset, &sheet->dset,
 				    get_merge_opts(opt), prn);
-    }  
+    }
 
     if (!err && !merge) {
 	dataset_add_import_info(dset, fname, GRETL_ODS);
-    }    
+    }
 
     return err;
 }
@@ -1252,7 +1267,7 @@ int ods_get_data (const char *fname, int *list, char *sheetname,
     err = open_import_zipfile(fname, dname, prn);
     if (err) {
 	return err;
-    }    
+    }
 
     if (!err) {
 	err = check_mimetype(prn);
@@ -1281,10 +1296,10 @@ int ods_get_data (const char *fname, int *list, char *sheetname,
 		/* canceled */
 		err = -1;
 		goto bailout;
-	    } 
+	    }
 	} else {
 	    err = set_ods_params_from_cli(sheet, list, sheetname);
-	} 
+	}
     }
 
     if (!err) {
@@ -1301,7 +1316,7 @@ int ods_get_data (const char *fname, int *list, char *sheetname,
     }
 
     if (!err) {
-	err = finalize_ods_import(dset, sheet, fname, opt, prn); 
+	err = finalize_ods_import(dset, sheet, fname, opt, prn);
 	if (!err && gui) {
 	    record_ods_params(sheet, list);
 	}
