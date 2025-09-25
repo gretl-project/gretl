@@ -39,7 +39,7 @@
 
 #include "import_common.c"
 
-#define ODEBUG 2
+#define ODEBUG 0
 
 enum {
     ODS_NONE,
@@ -49,6 +49,11 @@ enum {
     ODS_BOOL,
     ODS_STRING
 };
+
+/* Is this (always) right? */
+#define ODS_STRING_TYPE(t) (t == ODS_STRING || \
+                            t == ODS_DATE || \
+                            t == ODS_TIME)
 
 #define XOFF_UNDEF 999999
 
@@ -74,7 +79,7 @@ struct ods_sheet_ {
     int xoffset;           /* col offset chosen by user */
     int yoffset;           /* row offset chosen by user */
     DATASET *dset;         /* dataset struct */
-    int *codelist;          /* list of string-valued variables */
+    int *codelist;         /* list of string-valued variables */
     gretl_string_table *st; /* table for the above */
 };
 
@@ -399,11 +404,11 @@ static const char *ods_name (int t)
     if (t == ODS_NONE)
 	return "blank";
     if (t == ODS_NUMERIC)
-	return "numerical value";
+	return "numeric";
     if (t == ODS_DATE)
-	return "date string";
+	return "date";
     if (t == ODS_TIME)
-	return "time string";
+	return "time";
     if (t == ODS_BOOL)
 	return "boolean";
     if (t == ODS_STRING)
@@ -499,17 +504,21 @@ static int real_read_cell (xmlNodePtr cur,
     *preadcol += nr;
 
 #if ODEBUG
-    fprintf(stderr, "real_read_cell: i=%d, j=%d, v=%d, t=%d, vtype=%d, nr=%d\n",
-	    iread, jread, v, t, vtype, nr);
+    if (jread == 0) {
+        fputc('\n', stderr);
+    }
+    fprintf(stderr, "real_read_cell: pass=%d, i=%d, j=%d, v=%d, "
+            "t=%d, vtype=%s, nr=%d\n", pass, iread, jread, v, t,
+            ods_name(vtype), nr);
 #endif
 
     if (pass == 2) {
-	/* just going after string-valued variables */
+	/* just going after string-valued variables on second pass */
 	if (iread == 0 && vnames) {
 	    return 0;
 	} else if (jread == 0 && obscol) {
 	    return 0;
-	} else if (vtype == ODS_STRING && in_gretl_list(sheet->codelist, v)) {
+	} else if (ODS_STRING_TYPE(vtype) && in_gretl_list(sheet->codelist, v)) {
 	    val = get_ods_string_value(cur);
 	    err = ods_handle_stringval(sheet, v, t, val, nr, prn);
 	    free(val);
@@ -517,9 +526,8 @@ static int real_read_cell (xmlNodePtr cur,
 	return err;
     }
 
-    /* reading a variable name? */
-
     if (iread == 0 && vnames) {
+        /* reading a variable name */
 	jread += blank0;
 	v += blank0;
 	if (jread == 0 && obscol) {
@@ -544,9 +552,8 @@ static int real_read_cell (xmlNodePtr cur,
 	return err;
     }
 
-    /* reading an observation label? */
-
     if (jread == 0 && obscol) {
+        /* reading an observation label */
 	if (vtype == ODS_STRING) {
 	    val = get_ods_string_value(cur);
 	    if (val != NULL) {
@@ -578,10 +585,8 @@ static int real_read_cell (xmlNodePtr cur,
 				ODS_NONE, prn);
 	    }
 	} else {
-	    err = ods_error(sheet, iread, jread, ODS_DATE,
-			    vtype, prn);
+	    err = ods_error(sheet, iread, jread, ODS_DATE, vtype, prn);
 	}
-
 	if (!err) {
 	    gretl_utf8_strncat_trim(sheet->dset->S[t], val, OBSLEN - 1);
 	}
@@ -607,34 +612,22 @@ static int real_read_cell (xmlNodePtr cur,
 #if ODEBUG
 	fprintf(stderr, " blank: NA?\n");
 #endif
-    } else if (vtype == ODS_STRING) {
+    } else if (ODS_STRING_TYPE(vtype)) {
 	val = get_ods_string_value(cur);
 	if (val != NULL && import_na_string(val)) {
 #if ODEBUG
-	    fprintf(stderr, " string: NA?\n");
+	    fprintf(stderr, " %s: NA?\n", ods_name(vtype));
 #endif
 	} else if (val != NULL && *val != '\0') {
+#if ODEBUG
+	    fprintf(stderr, " %s: '%s'\n", ods_name(vtype), val);
+#endif
 	    x = NON_NUMERIC;
 	    sheet->flags |= BOOK_NON_NUMERIC;
 	}
 	free(val);
-    } else if (vtype == ODS_DATE || vtype == ODS_TIME) {
-        val = get_ods_string_value(cur);
-	if (val != NULL && import_na_string(val)) {
-#if ODEBUG
-	    fprintf(stderr, " string: NA?\n");
-#endif
-	} else if (val != NULL && *val != '\0') {
-#if ODEBUG
-	    fprintf(stderr, " %s: '%s'\n", vtype == ODS_DATE ?
-                    "date" : "time", val);
-#endif
-	    //x = NON_NUMERIC;
-	    sheet->flags |= BOOK_NON_NUMERIC;
-	}
-	free(val);
     } else {
-	fprintf(stderr, " vtype = %d??\n", vtype);
+	fprintf(stderr, " unrecognized value-type %d\n", vtype);
 	err = E_DATA;
     }
 
@@ -821,8 +814,9 @@ analyse_top_left (ods_sheet *sheet, ods_table *tab)
     return err;
 }
 
-static int repeat_data_row (ods_sheet *sheet, int iread,
-			    PRN *prn)
+static int check_repeat_data_row (ods_sheet *sheet,
+                                  int iread,
+                                  PRN *prn)
 {
     int vnames = (sheet->flags & BOOK_AUTO_VARNAMES)? 0 : 1;
     int i, t = iread - vnames;
@@ -888,7 +882,7 @@ static int read_table_content (ods_sheet *sheet, PRN *prn)
 	    if (tabrow >= sheet->yoffset) {
 		err = read_data_row(cur, tab, sheet, pass, readrow++, prn);
 		for (i=1; i<nr && !err; i++) {
-		    err = repeat_data_row(sheet, readrow++, prn);
+		    err = check_repeat_data_row(sheet, readrow++, prn);
 		}
 	    }
 	    tabrow += nr;
@@ -924,7 +918,7 @@ get_table_dimensions (xmlNodePtr cur, ods_sheet *sheet)
     int cols, xoffset, xtrail;
     int rows, rchk;
     int err = 0;
-#if ODEBUG > 2
+#if ODEBUG > 1
     int i = 0;
 #endif
 
@@ -975,7 +969,7 @@ get_table_dimensions (xmlNodePtr cur, ods_sheet *sheet)
 		}
 		rowp = rowp->next;
 	    }
-#if ODEBUG > 2
+#if ODEBUG > 1
 	    fprintf(stderr, "row %d: cols = %d, trailing empty cols = %d\n",
 		    ++i, cols, xtrail);
 #endif
