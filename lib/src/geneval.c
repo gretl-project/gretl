@@ -10021,11 +10021,6 @@ static NODE *series_scalar_func (NODE *n, int f,
 {
     NODE *ret = aux_scalar_node(p);
 
-    if (p->err == 0 && (p->dset == NULL || p->dset->v == 0)) {
-        p->err = E_NODATA;
-        return ret;
-    }
-
     if (ret != NULL && starting(p)) {
         gretl_matrix *tmp = NULL;
         int t1 = p->dset->t1;
@@ -10035,38 +10030,37 @@ static NODE *series_scalar_func (NODE *n, int f,
         if (n->t == MAT && gretl_is_complex(n->v.m)) {
             p->err = E_CMPLX;
         } else if (n->t == MAT) {
+            /* we got a matrix rather than a series */
             if (f == F_SUM || f == F_MAX || f == F_MIN) {
                 /* we'll sum, max, or min all elements of a matrix */
                 if (f == F_SUM) {
                     ret->v.xval = gretl_matrix_global_sum(n->v.m, &p->err);
                 } else {
-                    int mm = (f == F_MAX);
-
-                    ret->v.xval = gretl_matrix_global_minmax(n->v.m, mm,
+                    ret->v.xval = gretl_matrix_global_minmax(n->v.m,
+                                                             f == F_MAX,
                                                              &p->err);
                 }
                 return ret; /* handled */
-            } else if (f == F_T1 || f == F_T2) {
-                cast_to_series(n, f, &tmp, NULL, NULL, p);
             } else {
                 cast_to_series(n, f, &tmp, &t1, &t2, p);
-            }
-            if (p->err) {
-                return NULL;
             }
         }
 
         if (f == F_T1 || f == F_T2) {
+            /* matrix argument not supported */
             int insample = node_get_bool(r, p, 0);
 
-            if (p->err) {
-                return NULL;
-            } else if (!insample) {
+            if (!p->err && !insample) {
                 t1 = 0;
                 t2 = p->dset->n - 1;
             }
         }
 
+        if (p->err) {
+            return ret;
+        }
+
+        /* pointer to series or matrix data */
         x = n->v.xvec;
 
         switch (f) {
@@ -17004,23 +16998,18 @@ static int dvar_get_series (double *x, int i, const DATASET *dset)
     if (dset == NULL || dset->n == 0) {
         return E_NODATA;
     }
-
     if (i == R_OBSMIN && dset->pd < 2) {
         return E_PDWRONG;
     }
-
     if (i == R_OBSMIC && !YMD) {
         return E_PDWRONG;
     }
-
     if (i == R_PUNIT && !panel) {
         return E_PDWRONG;
     }
-
     if (i == R_TIME && !panel && !tseries) {
         return E_PDWRONG;
     }
-
     if (i == R_DATES && !date_series_ok(dset)) {
         return E_PDWRONG;
     }
@@ -18813,8 +18802,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_MEDIAN:
     case F_GINI:
     case F_NOBS:
-    case F_T1:
-    case F_T2:
         /* functions taking series arg (mostly), returning scalar */
         if (l->t == SERIES || l->t == MAT) {
             ret = series_scalar_func(l, t->t, r, p);
@@ -18826,6 +18813,15 @@ static NODE *eval (NODE *t, parser *p)
             ret = list_to_series_func(l, t->t, p);
         } else if (l->t == NUM) {
             ret = pretend_matrix_scalar_func(l, t->t, p);
+        } else {
+            node_type_error(t->t, 0, SERIES, l, p);
+        }
+        break;
+    case F_T1:
+    case F_T2:
+        /* firstobs() and lastobs() */
+        if (l->t == SERIES) {
+            ret = series_scalar_func(l, t->t, r, p);
         } else {
             node_type_error(t->t, 0, SERIES, l, p);
         }
