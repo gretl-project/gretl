@@ -37,6 +37,8 @@ version 2025c, in progress
   another series
 - Fix bug: decimal comma creeping into the representation
   of models stored in a gretl session file
+- Fix bug: failure on reading ods spreadsheet files with
+  columns of date type
 - GUI: enhance the dbnomics search facility
 - GUI: ensure that the separator between the main window
   and the "swallowed" console can be grabbed via the mouse
