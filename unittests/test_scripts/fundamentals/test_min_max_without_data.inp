@@ -1,0 +1,64 @@
+set verbose off
+set assert stop
+
+/*
+This unit test checks that the scalar/matrix min() and max() functions do
+not require an active dataset.  The original report showed errors for
+min() and max() when no dataset was in place.  We keep the existing
+catch/assert($error == FALSE) pattern and add symmetric tests for minc()
+and minr() to mirror the existing maxc()/maxr() checks.
+
+Bug report with Gretl 2025c (development snapshot):
+https://gretlml.univpm.it/hyperkitty/list/gretl-devel@gretlml.univpm.it/message/A4UCHWF4YATKLTKNM5ZAILV3S3K74A5N/
+*/
+
+
+# No dataset in place
+matrix m = seq(1,4)
+
+# both should NOT fail even if no dataset is in place
+catch min(m)
+scalar err = $error
+if err != FALSE
+    print "min(m) failed unexpectedly"
+    stop
+endif
+
+catch eval max(m)
+err = $error
+if err != FALSE
+    print "max(m) failed unexpectedly"
+    stop
+endif
+
+# also check the column/row variants (mirror of maxc/maxr checks)
+catch eval minc(m)
+err = $error
+if err != FALSE
+    print "minc(m) failed unexpectedly"
+    stop
+endif
+
+catch eval minr(m)
+err = $error
+if err != FALSE
+    print "minr(m) failed unexpectedly"
+    stop
+endif
+
+# existing max column/row checks
+catch eval maxc(m)
+err = $error
+if err != FALSE
+    print "maxc(m) failed unexpectedly"
+    stop
+endif
+
+catch eval maxr(m)
+err = $error
+if err != FALSE
+    print "maxr(m) failed unexpectedly"
+    stop
+endif
+
+print "Successfully finished tests."
