@@ -2339,7 +2339,7 @@ static int get_print_range (int len, int *start, int *stop)
     int err = 0;
 
     if (s == NULL || *s == '\0' || strchr(s, ':') == NULL) {
-	err = E_DATA;
+	err = E_PARSE;
     } else {
 	int k1 = 0, k2 = 0, nf = 0;
 	char **S = gretl_string_split(s, &nf, ":");

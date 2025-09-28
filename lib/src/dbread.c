@@ -2363,7 +2363,9 @@ real_transcribe_db_data (const char *stobs, int nobs,
     pad2 = dset->n - nobs - pad1;
 
     if (pad1 > 0) {
+#if 0
 	fprintf(stderr, "Padding at start, %d obs\n", pad1);
+#endif
 	for (t=0; t<pad1; t++) {
 	    dset->Z[dbv][t] = NADBL;
 	}
@@ -2374,7 +2376,9 @@ real_transcribe_db_data (const char *stobs, int nobs,
     if (pad2 > 0) {
 	int n = dset->n;
 
+#if 0
 	fprintf(stderr, "Padding at end, %d obs\n", pad2);
+#endif
 	for (t=n-1; t>=n-1-pad2; t--) {
 	    dset->Z[dbv][t] = NADBL;
 	}
@@ -2383,7 +2387,9 @@ real_transcribe_db_data (const char *stobs, int nobs,
 	stop = dset->n;
     }
 
+#if 0
     fprintf(stderr, "Filling in values from %d to %d\n", start, stop - 1);
+#endif
     for (t=start; t<stop; t++) {
 	x = xvec[t - pad1];
 	dset->Z[dbv][t] = (x == DBNA)? NADBL : x;
