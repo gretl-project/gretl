@@ -8206,11 +8206,11 @@
       <description>
 	<para>
 	  Logaritmo della funzione gamma di <argname>x</argname>.
-	</para>
 	  <seelist>
             <fncref targ="bincoeff"/>
             <fncref targ="gammafun"/>
 	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -8228,10 +8228,10 @@
 	  Per la sua definizione e le sue proprietà, si veda
 	  <url>https://dlmf.nist.gov/35.3</url> oppure
 	  <url>https://en.wikipedia.org/wiki/Multivariate_gamma_function</url>.
-	</para>
 	  <seelist>
             <fncref targ="lngamma"/>
 	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -13350,61 +13350,83 @@
 	<para>
 	  Legge valori da <argname>src</argname> seguendo il formato
 	  <argname>format</argname> e assegna questi valori a uno o
-	  più degli q argomenti seguenti, rappresentati dai
-	  punti. Restituisce il numero di valori assegnati. Questa
-	  funzione rappresenta una versione semplificata della
-	  funzione <lit>sscanf</lit> usata nel linguaggio di
-	  programmazione C.
+	  più degli argomenti seguenti. Restituisce il numero di
+	  valori assegnati. Questa funzione rappresenta una versione
+	  semplificata della funzione <lit>sscanf</lit> usata nel
+	  linguaggio di programmazione C, con un'estensione per la
+	  scansione di un'intera matrice (vedere <quote>Scansione di
+	  una matrice</quote> più sotto). Si noti che specificare un
+	  array di stringhe come <argname>src</argname> è accettabile
+	  solo nel caso della scansione di una matrice.
 	</para>
 	<para>
-	  La <repl>stringa</repl> può essere una stringa vera e
+	  La stringa <repl>src</repl> può essere una stringa vera e
 	  propria, racchiusa tra virgolette doppie, o il nome di una
 	  variabile stringa predefinita. <repl>format</repl> è
 	  definito in modo simile alla stringa di formato del comando
-	  <cmdref targ="printf"/> (si veda oltre). <repl>args</repl> è
-	  una lista separata da virgole che contiene i nomi di
-	  variabili predefinite cui verranno assegnati i valori letti
-	  da <repl>src</repl>. (Per chi conosce C: è possibile ma non
-	  indispensabile prefissare con <lit>&amp;</lit> i nomi delle
-	  variabili numeriche).
+	  <cmdref targ="printf"/> (si veda oltre). Gli argomenti
+	  successivi sono una lista separata da virgole con i nomi di
+	  variabili preesistenti cui verranno assegnati i valori letti
+	  da <repl>src</repl>. (Per chi conosce C: è possibile
+	  prefissare con <lit>&amp;</lit> i nomi delle variabili
+	  numeriche, ma non obbligatorio).
 	</para>
 	<para>
 	  Le regole specificate in <repl>format</repl> vengono usate
 	  per analizzare <repl>src</repl>. Le specifiche iniziano con
 	  un carattere <lit>%</lit>, e comprendono <lit>%f</lit>,
 	  <lit>%g</lit> o <lit>%lf</lit> per i numeri a virgola
-	  mobile; <lit>%d</lit> per gli interi; <lit>%s</lit> per le
-	  stringhe, e <lit>%m</lit> per le matrici. È possibile
-	  inserire un numero intero positivo dopo il carattere
-	  percentuale per impostare il numero massimo di caratteri da
-	  leggere per ogni tipo di specifica (o il numero massimo di
-	  righe nel caso di conversione in matrici). In alternativa, è
-	  possibile inserire un carattere <lit>*</lit> dopo il
-	  percentuale per sopprimere la conversione di un certo numero
-	  di caratteri della stringa (e saltando così eventuali
-	  caratteri che in caso contrario verrebbero convertiti per un
-	  certo tipo). Ad esempio, <lit>%3d</lit> converte i 3
-	  caratteri successivi di <repl>src</repl> in un numero
-	  intero, se possibile; <lit>%*g</lit> salta tutti i caratteri
-	  in <repl>src</repl> che potrebbero essere convertiti in un
-	  numero a virgola mobile.
+	  mobile; <lit>%d</lit> per gli interi e <lit>%s</lit> per le
+	  stringhe. È possibile inserire un numero intero positivo
+	  dopo il carattere percentuale per impostare il numero
+	  massimo di caratteri da leggere per ogni tipo di
+	  specifica. In alternativa, è possibile inserire un carattere
+	  asterisco (<lit>*</lit>) dopo il percentuale per sopprimere
+	  la conversione di un certo numero di caratteri della stringa
+	  (e saltando così eventuali caratteri che in caso contrario
+	  verrebbero convertiti per un certo tipo). Ad esempio,
+	  <lit>%3d</lit> converte i 3 caratteri successivi di
+	  <repl>src</repl> in un numero intero, se possibile;
+	  <lit>%*g</lit> salta tutti i caratteri in <repl>src</repl>
+	  che potrebbero essere convertiti in un numero a virgola
+	  mobile.
 	</para>
+	<subhead>Conversioni di stringhe</subhead>
 	<para>
-	  Oltre alla conversione di <lit>%s</lit> per le stringhe, è
-	  disponibile anche una versione semplificata del formato C
+	  Si noti che nel caso della conversione <lit>%s</lit> per le
+	  stringhe, la ricerca di un dato argomento si interrompe
+	  quando viene rilevato uno spazio vuoto. Per una maggiore
+	  flessibilità, è disponibile una versione semplificata del
+	  formato C
 	  <lit>%</lit><repl>N</repl><lit>[</lit><repl>chars</repl><lit>]</lit>.
-	  In questo formato, <repl>N</repl> è il numero massimo di
-	  caratteri da leggere, e <repl>chars</repl> è un insieme di
-	  caratteri accettabili, racchiusi tra parentesi quadre; la
-	  lettura si ferma se si raggiunge il limite di <repl>N</repl>
-	  o se si incontra un carattere non compreso nell'insieme
-	  ammissibile. La funzione dell'insieme <repl>chars</repl> può
-	  essere invertita specificando un accento circonflesso
-	  <lit>^</lit> come primo carattere dell'insieme; in questo
-	  caso, la lettura si ferma se si incontra un carattere
-	  dell'insieme specificato. Al contrario del C, il carattere
-	  trattino non ha alcuna funzione speciale in questo contesto.
+	  In questo formato <repl>N</repl> (facoltativo) è il numero
+	  massimo di caratteri da leggere e <repl>chars</repl> è un
+	  insieme di caratteri accettabili, racchiuso tra parentesi
+	  quadre: la lettura si interrompe se viene raggiunto
+	  <repl>N</repl> o se viene rilevato un carattere non presente
+	  in <repl>chars</repl>. Il comportamento di questa
+	  costruzione si inverte se viene specificato un accento
+	  circonflesso, <lit>^</lit>, come primo elemento di
+	  <repl>chars</repl>. In tal caso, la lettura si interrompe
+	  quando viene trovato un carattere nell'insieme
+	  specificato. (A differenza del C, il trattino non ha un
+	  ruolo speciale nell'insieme <repl>chars</repl>.) ​​Esempio:
 	</para>
+	<code>
+	  string src = "un po' di testo arbitrario"
+	  string s1
+	  string s2
+	  sscanf(src, "%s", s1)
+	  printf "s1 = '%s'\n", s1
+	  sscanf(src, "%15[^\n]", s2)
+	  printf "s2 = '%s'\n", s2
+	</code>
+	<para>
+	  La prima scansione restituisce <quote><lit>un</lit></quote>,
+	  mentre la seconda restituisce <quote><lit>un po' di
+	  testo</lit></quote>.
+	</para>
+	<subhead>Valore di ritorno</subhead>
 	<para>
 	  Se la stringa <repl>src</repl> non è pienamente conforme al
 	  formato, il numero di conversioni effettuate potrà essere
@@ -13418,15 +13440,10 @@
 	  # lettura di scalari
 	  scalar x
 	  scalar y
-	  sscanf("123456", "%3d%3d", x, y)
-	  # lettura di stringhe
-	  string s = "uno due"
-	  string s1
-	  string s2
-	  sscanf(s, "%s %s", s1, s2)
-	  print s1 s2
+	  n = sscanf("123456", "%3d%3d", x, y)
+	  printf "letti %d valori\n", n
 	</code>
-	<subhead>Matrici</subhead>
+	<subhead>Scansione di una matrice</subhead>
 	<para>
 	  La lettura di matrici è attivata dalla specifica di
 	  conversione <quote><lit>%m</lit></quote>. Inserendo un
@@ -13445,7 +13462,8 @@
 	  di colonne della matrice.  Vengono quindi lette tutte le
 	  righe seguenti che contengono lo stesso numero di colonne
 	  numeriche, ma è comunque possibile limitare il numero
-	  massimo di righe da leggere procedendo come descritto sopra.
+	  massimo di righe da leggere usando l'intero opzionale come
+	  descritto sopra.
 	</para>
 	<para>
 	  Se <argname>src</argname> è un array di stringhe, l'output
