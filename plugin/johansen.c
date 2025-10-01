@@ -1005,7 +1005,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
     int i, err;
 
 #if JDEBUG
-    fprintf(stderr, "VECM_estimate_full: %s\n",
+    fprintf(stderr, "VECM_estimate_full (order %d): %s\n", order,
             (estimate_alpha(flags))? "including alpha in estimation" :
             "netting out the EC terms");
 #endif
@@ -1155,11 +1155,10 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
         }
     }
 
-    if (!err && G != NULL) {
+    if (!err) {
         /* see Johansen (1995, p. 45) */
-        gretl_matrix *Tmp;
+        gretl_matrix *Tmp = gretl_identity_matrix_new(n);
 
-        Tmp = gretl_identity_matrix_new(n);
         for (i=0; i<order; i++) {
             gretl_matrix_subtract_from(Tmp, G[i]);
         }

@@ -4497,19 +4497,15 @@ static int rebuild_VAR_matrices (GRETL_VAR *var)
     if (var->E == NULL) {
         err = VAR_allocate_residuals_matrix(var);
     }
-
     if (!err && var->A == NULL) {
         err = VAR_allocate_companion_matrix(var);
     }
-
     if (!err && gotX && var->XTX == NULL) {
         err = VAR_add_XTX_matrix(var);
     }
-
     if (!err && var->C == NULL) {
         err = VAR_allocate_cholesky_matrix(var);
     }
-
     if (!err && var->B == NULL) {
         var->B = gretl_matrix_alloc(var->models[0]->ncoeff,
                                     var->neqns);
@@ -4655,15 +4651,12 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc,
     if (var->ylist == NULL) {
         *err = make_VAR_global_lists(var);
     }
-
     if (!*err) {
         *err = rebuild_VAR_matrices(var);
     }
-
     if (!*err) {
         *err = VAR_add_stats(var, 0);
     }
-
     if (!*err) {
         *err = gretl_VAR_do_error_decomp(var->S, var->C, NULL);
     }
@@ -4769,19 +4762,61 @@ static int retrieve_johansen_basics (GRETL_VAR *var,
     return err;
 }
 
+static gretl_matrix *johansen_perp (const gretl_matrix *a)
+{
+    gretl_matrix *c;
+    gretl_matrix *cp;
+    gretl_matrix *atc;
+    gretl_matrix *tmp1;
+    gretl_matrix *tmp2;
+    gretl_matrix *ret;
+    int p = a->rows;
+    int r = a->cols;
+
+    c = gretl_zero_matrix_new(p, r);
+    cp = gretl_zero_matrix_new(p, p-r);
+    gretl_matrix_inscribe_I(c, 0, 0, r);
+    gretl_matrix_inscribe_I(cp, r, 0, p-r);
+    atc = gretl_matrix_alloc(r, r);
+    gretl_matrix_multiply_mod(a, GRETL_MOD_TRANSPOSE,
+                              c, GRETL_MOD_NONE,
+                              atc, GRETL_MOD_NONE);
+    gretl_invert_general_matrix(atc);
+    tmp1 = gretl_matrix_alloc(p, r);
+    gretl_matrix_multiply(c, atc, tmp1);
+    tmp2 = gretl_identity_matrix_new(p);
+    gretl_matrix_multiply_mod(tmp1, GRETL_MOD_NONE,
+                              a, GRETL_MOD_TRANSPOSE,
+                              tmp2, GRETL_MOD_DECREMENT);
+    ret = gretl_matrix_alloc(p, p-r);
+    gretl_matrix_multiply(tmp2, cp, ret);
+
+    gretl_matrix_free(c);
+    gretl_matrix_free(cp);
+    gretl_matrix_free(atc);
+    gretl_matrix_free(tmp1);
+    gretl_matrix_free(tmp2);
+
+    return ret;
+}
+
+/* Add the "long-run impact" matrix, which Johansen (1995) calls c
+   (Lütkepohl calls it $\Xi$).
+*/
+
 static void add_johansen_C (JohansenInfo *j)
 {
-    gretl_matrix *a0, *b0;
+    gretl_matrix *ap, *bp;
     gretl_matrix *tmp = NULL;
     gretl_matrix *C1 = NULL;
     gretl_matrix *JC = NULL;
     int p = j->Alpha->rows;
     int err = 0;
 
-    /* make \alpha_{\perp} in a0 */
-    a0 = gretl_matrix_left_nullspace(j->Alpha, GRETL_MOD_NONE, &err);
+    /* make \alpha_{\perp} in ap */
+    ap = johansen_perp(j->Alpha);
 
-    /* make \beta_{\perp} in b0 */
+    /* make \beta_{\perp} in bp */
     if (!err && j->Beta->rows > p) {
         double bik;
         int i, k;
@@ -4793,43 +4828,43 @@ static void add_johansen_C (JohansenInfo *j)
                 gretl_matrix_set(tmp, i, k, bik);
             }
         }
-        b0 = gretl_matrix_left_nullspace(tmp, GRETL_MOD_NONE, &err);
+        bp = johansen_perp(tmp);
         gretl_matrix_free(tmp);
     } else if (!err) {
-        b0 = gretl_matrix_left_nullspace(j->Beta, GRETL_MOD_NONE, &err);
+        bp = johansen_perp(j->Beta);
     }
 
     if (err) {
         return;
     }
 
-    /* Johansen's C = b0 * inv(a0' * Gamma * b0) * a0' */
-    tmp = gretl_matrix_alloc(a0->cols, j->Gamma->cols);
-    C1 = gretl_matrix_alloc(a0->cols, b0->cols);
+    /* JC = bp * inv(ap' * Gamma * bp) * ap' */
+    tmp = gretl_matrix_alloc(ap->cols, j->Gamma->cols);
+    C1 = gretl_matrix_alloc(ap->cols, bp->cols);
     JC = gretl_matrix_alloc(p, p);
-    gretl_matrix_multiply_mod(a0, GRETL_MOD_TRANSPOSE,
+    gretl_matrix_multiply_mod(ap, GRETL_MOD_TRANSPOSE,
                               j->Gamma, GRETL_MOD_NONE,
                               tmp, GRETL_MOD_NONE);
-    gretl_matrix_multiply(tmp, b0, C1);
+    gretl_matrix_multiply(tmp, bp, C1);
     err = gretl_invert_general_matrix(C1);
     if (!err) {
         gretl_matrix_realloc(tmp, p, C1->cols);
-        gretl_matrix_multiply(b0, C1, tmp);
+        gretl_matrix_multiply(bp, C1, tmp);
         gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
-                                  a0, GRETL_MOD_TRANSPOSE,
+                                  ap, GRETL_MOD_TRANSPOSE,
                                   JC, GRETL_MOD_NONE);
     }
 
-    if (!err) {
+    if (err) {
+        gretl_matrix_free(JC);
+    } else {
         j->JC = JC;
-        JC = NULL;
     }
 
     gretl_matrix_free(tmp);
     gretl_matrix_free(C1);
-    gretl_matrix_free(a0);
-    gretl_matrix_free(b0);
-    gretl_matrix_free(JC);
+    gretl_matrix_free(ap);
+    gretl_matrix_free(bp);
 }
 
 static gretl_bundle *johansen_bundlize (JohansenInfo *j)
