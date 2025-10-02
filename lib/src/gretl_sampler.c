@@ -331,6 +331,9 @@ gretl_matrix *do_run_sampler (char **init, int ni,
     if (!*err) {
         genrs = allocate_generators(ng, err);
     }
+    if (*err) {
+        goto bailout;
+    }
 
     /* Compile and run the @iter generators. We don't record the results
        here, but we check that the genrs work, and for those that are
@@ -414,10 +417,12 @@ gretl_matrix *do_run_sampler (char **init, int ni,
 
  bailout:
 
-    for (j=0; j<ng; j++) {
-        destroy_genr(genrs[j]);
+    if (genrs != NULL) {
+        for (j=0; j<ng; j++) {
+            destroy_genr(genrs[j]);
+        }
+        free(genrs);
     }
-    free(genrs);
 
     return ret;
 }
