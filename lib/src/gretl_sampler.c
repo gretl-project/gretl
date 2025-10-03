@@ -34,6 +34,7 @@ static int gibbs_n_lines;
 static int gibbs_n_temps;
 static int gibbs_burnin;
 static int gibbs_N;
+static int gibbs_thin;
 static char *gibbs_output;
 
 typedef struct gibbs_var_info_ {
@@ -108,6 +109,7 @@ static void gibbs_destroy (void)
     gibbs_n_temps = 0;
     gibbs_burnin = 0;
     gibbs_N = 0;
+    gibbs_thin = 0;
 }
 
 static void gibbs_mark_as_temp (const char *s)
@@ -170,7 +172,7 @@ static int gibbs_get_lhs_info (const char **psrc,
     return 0;
 }
 
-/* Write the result from the compiled @genr into row @s of the matrix
+/* Write the result from the compiled @genr into row @k of the matrix
    @H, starting at column c = *pc. Pass back in @pc the column that was
    reached.
 */
@@ -178,7 +180,7 @@ static int gibbs_get_lhs_info (const char **psrc,
 static int gibbs_record_result (GENERATOR *genr,
                                 int recsize,
                                 gretl_matrix *H,
-                                int s, int *pc)
+                                int k, int *pc)
 {
     GretlType gt = genr_get_output_type(genr);
     int c = *pc;
@@ -187,7 +189,7 @@ static int gibbs_record_result (GENERATOR *genr,
     if (gt == GRETL_TYPE_DOUBLE) {
         double gx = genr_get_output_scalar(genr);
 
-        gretl_matrix_set(H, s, c++, gx);
+        gretl_matrix_set(H, k, c++, gx);
     } else {
         gretl_matrix *gm = genr_get_output_matrix(genr);
         int j, nvals;
@@ -200,7 +202,7 @@ static int gibbs_record_result (GENERATOR *genr,
                 err = E_DATA;
             } else {
                 for (j=0; j<nvals; j++) {
-                    gretl_matrix_set(H, s, c++, gm->val[j]);
+                    gretl_matrix_set(H, k, c++, gm->val[j]);
                 }
             }
         }
@@ -276,14 +278,14 @@ static void gibbs_record_info (gibbs_var_info *gvi,
 }
 
 gretl_matrix *do_run_sampler (char **init, int ni,
-                                     char **iter, int ng,
-                                     int burnin, int N,
-                                     guint8 *record,
-                                     gibbs_var_info *gvi,
-                                     gretlopt opt,
-                                     DATASET *dset,
-                                     PRN *prn,
-                                     int *err)
+			      char **iter, int ng,
+			      int burnin, int N,
+			      guint8 *record,
+			      gibbs_var_info *gvi,
+			      gretlopt opt,
+			      DATASET *dset,
+			      PRN *prn,
+			      int *err)
 {
     gretl_matrix *ret = NULL;
     gretl_matrix *gm = NULL;
@@ -293,10 +295,16 @@ gretl_matrix *do_run_sampler (char **init, int ni,
     const char *str;
     int cleanup = (opt & OPT_C);
     int quiet = (opt & OPT_Q);
+    int nrec = gibbs_N;
+    int discard = 0;
     int ncols = 0;
     int msize = 0;
     int iters;
-    int i, j, s, t, c;
+    int i, j, k, s, t, c;
+
+    if (gibbs_thin > 0) {
+	nrec /= gibbs_thin;
+    }
 
     /* run the @init generators and ensure that they all produce
        a scalar or matrix result
@@ -382,30 +390,33 @@ gretl_matrix *do_run_sampler (char **init, int ni,
         goto bailout;
     }
 
-    ret = gretl_matrix_alloc(N, ncols);
+    ret = gretl_matrix_alloc(nrec, ncols);
     if (ret == NULL) {
         *err = E_ALLOC;
         goto bailout;
     }
 
-    iters = burnin + N;
+    iters = burnin + gibbs_N;
     if (!quiet) {
         pputs(prn, "starting iteration\n");
     }
     gretl_iteration_push();
 
     /* the main iteration, using compiled genrs */
-    for (t=0; t<iters && !*err; t++) {
+    for (t=0, k=0; t<iters && !*err; t++) {
         s = t - burnin;
+	if (gibbs_thin) {
+	    discard = (s == 0 || s % gibbs_thin);
+	}
         c = 0;
         for (i=0; i<ng && !*err; i++) {
             *err = execute_genr(genrs[i], dset, prn);
             if (*err) {
                 pprintf(prn, "genr[%d] failed at iter %d\n> %s\n",
                         i, t, iter[i]);
-            } else if (s >= 0 && record[i]) {
+            } else if (s >= 0 && record[i] && !discard) {
                 *err = gibbs_record_result(genrs[i], record[i],
-                                           ret, s, &c);
+                                           ret, k++, &c);
             }
         }
     }
@@ -537,6 +548,17 @@ int gibbs_execute (gretlopt opt, DATASET *dset, PRN *prn)
     int i, iniprev = 0;
     int err = 0;
 
+    if (opt & OPT_T) {
+	int thin = get_optval_int(GIBBS, OPT_T, &err);
+
+	if (err) {
+	    gibbs_destroy();
+	    return err;
+	} else {
+	    gibbs_thin = thin;
+	}
+    }
+
     quiet = (opt & OPT_Q)? 1 : 0;
 
     if (!quiet) {
@@ -571,10 +593,10 @@ int gibbs_execute (gretlopt opt, DATASET *dset, PRN *prn)
     }
 
     if (!err && ng == 0) {
-        gretl_errmsg_sprintf("%s: no statements to be interated", "gibbs");
+        gretl_errmsg_sprintf("%s: no statements to be iterated", "gibbs");
         err = E_ARGS;
     }
-    if (!err && nr == 0) {
+    if (!err && (nr == 0 || gibbs_N < gibbs_thin)) {
         gretl_errmsg_sprintf("%s: nothing to be recorded", "gibbs");
         err = E_ARGS;
     }
