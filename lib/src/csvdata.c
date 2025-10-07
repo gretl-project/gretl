@@ -40,7 +40,7 @@
 
 #define CSVSTRLEN 128
 
-enum {
+typedef enum {
     CSV_HAVEDATA = 1 << 0,
     CSV_GOTDELIM = 1 << 1,
     CSV_GOTTAB   = 1 << 2,
@@ -58,8 +58,9 @@ enum {
     CSV_THOUSEP  = 1 << 14,
     CSV_NOHEADER = 1 << 15,
     CSV_QUOTES   = 1 << 16,
-    CSV_AS_MAT   = 1 << 17
-};
+    CSV_AS_MAT   = 1 << 17,
+    CSV_QPURGE   = 1 << 18
+} csvflags;
 
 struct csvprobe_ {
     DATASET *dset; /* more info might be wanted */
@@ -68,7 +69,7 @@ struct csvprobe_ {
 typedef struct csvprobe_ csvprobe;
 
 struct csvdata_ {
-    int flags;
+    csvflags flags;
     char delim;
     char decpoint;
     char thousep;
@@ -132,6 +133,8 @@ struct csvdata_ {
 #define csv_set_no_header(c)        (c->flags |= CSV_NOHEADER)
 #define csv_unset_keep_quotes(c)    (c->flags &= ~CSV_QUOTES)
 #define csv_set_as_matrix(c)        (c->flags |= CSV_AS_MAT)
+
+#define csv_purge_quotes(c) (c->flags |= CSV_QPURGE)
 
 #define csv_skip_bad(c)        (*c->skipstr != '\0')
 #define csv_has_non_numeric(c) (c->st != NULL)
@@ -1659,7 +1662,9 @@ static int csv_max_line_length (gzFile fp, csvdata *cdata, PRN *prn)
             }
             lines++;
 	    for (i=0; i<2; i++) {
+                /* quotation--mark info, double and single */
 		if (nq[i] % 2) {
+                    /* unpaired: not a valid candidate */
 		    qcand[i] = 0;
 		}
 		if (nq[i] > nqmax[i]) {
@@ -1723,17 +1728,18 @@ static int csv_max_line_length (gzFile fp, csvdata *cdata, PRN *prn)
 
     if (qtotal[0] || qtotal[1]) {
         if (qcand[0] && qcand[1]) {
-            /* hmm, prefer the more numerous? */
-            if (qtotal[1] > qtotal[0]) {
-		cdata->qchar = '\'';
-            } else {
-		cdata->qchar = '"';
-            }
+            /* quotes: double and single are both paired,
+               maybe prefer the more numerous as @qchar?
+            */
+            cdata->qchar = qtotal[1] > qtotal[0] ? '\'' : '"';
         } else if (qcand[0]) {
 	    cdata->qchar = '"';
 	} else if (qcand[1]) {
 	    cdata->qchar = '\'';
-	}
+	} else {
+            /* 2025-10-07: experimental */
+            cdata->flags |= CSV_QPURGE;
+        }
 	err = report_quotation_info(qtotal, nqmax, cdata->qchar, prn);
     }
 
@@ -1805,6 +1811,12 @@ static void purge_unquoted_spaces (char *s)
     }
 }
 
+static void purge_all_quotes (char *s)
+{
+    gretl_delchar('\'', s);
+    gretl_delchar('"', s);
+}
+
 static void compress_csv_line (csvdata *c, int nospace)
 {
     int n = strlen(c->line);
@@ -1819,7 +1831,9 @@ static void compress_csv_line (csvdata *c, int nospace)
         *p = '\0';
     }
 
-    if (!csv_keep_quotes(c) && c->delim == ',') {
+    if (csv_purge_quotes(c)) {
+        purge_all_quotes(c->line);
+    } else if (!csv_keep_quotes(c) && c->delim == ',') {
         purge_quoted_commas(c->line);
     }
 
@@ -2585,8 +2599,8 @@ csv_msg = N_("\nPlease note:\n"
              "- The remainder of the file must be a rectangular "
              "array of data.\n");
 
-/* Here we check whether we get a consistent reading on
-   the number of fields per line in the CSV file
+/* Here we check whether we get a consistent reading on the number of
+   fields per line in the CSV file.
 */
 
 static int csv_fields_check (gzFile fp, csvdata *c, PRN *prn)
@@ -2602,12 +2616,10 @@ static int csv_fields_check (gzFile fp, csvdata *c, PRN *prn)
     }
 
     while (csv_fgets(c, fp) && !err) {
-
         /* skip comment lines */
         if (*c->line == '#') {
             continue;
         }
-
         /* skip blank lines -- but finish if the blank comes after data */
         if (string_is_blank(c->line)) {
             if (gotdata) {
