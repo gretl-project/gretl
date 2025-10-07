@@ -134,7 +134,7 @@ struct csvdata_ {
 #define csv_unset_keep_quotes(c)    (c->flags &= ~CSV_QUOTES)
 #define csv_set_as_matrix(c)        (c->flags |= CSV_AS_MAT)
 
-#define csv_purge_quotes(c) (c->flags |= CSV_QPURGE)
+#define csv_purge_quotes(c) (c->flags & CSV_QPURGE)
 
 #define csv_skip_bad(c)        (*c->skipstr != '\0')
 #define csv_has_non_numeric(c) (c->st != NULL)
@@ -1736,7 +1736,7 @@ static int csv_max_line_length (gzFile fp, csvdata *cdata, PRN *prn)
 	    cdata->qchar = '"';
 	} else if (qcand[1]) {
 	    cdata->qchar = '\'';
-	} else {
+	} else if (qtotal[0] && qtotal[1]) {
             /* 2025-10-07: experimental */
             cdata->flags |= CSV_QPURGE;
         }
@@ -1831,6 +1831,13 @@ static void compress_csv_line (csvdata *c, int nospace)
         *p = '\0';
     }
 
+#if 0
+    fprintf(stderr, "HERE compress: keep_quotes=%d, qchar=%c, purge=%d\n",
+            csv_keep_quotes(c) ? 1 : 0, c->qchar ? c->qchar : '0',
+            csv_purge_quotes(c) ? 1 : 0);
+    fprintf(stderr, " before:\n  '%s'\n", c->line);
+#endif
+
     if (csv_purge_quotes(c)) {
         purge_all_quotes(c->line);
     } else if (!csv_keep_quotes(c) && c->delim == ',') {
@@ -1848,6 +1855,11 @@ static void compress_csv_line (csvdata *c, int nospace)
     if (!csv_keep_quotes(c)) {
         gretl_delchar('"', c->line);
     }
+
+#if 0
+    fprintf(stderr, " after:\n  '%s'\n", c->line);
+#endif
+
 
     if (csv_has_trailing_comma(c)) {
         /* chop trailing comma */
