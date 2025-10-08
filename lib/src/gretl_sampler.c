@@ -278,14 +278,13 @@ static void gibbs_record_info (gibbs_var_info *gvi,
 }
 
 gretl_matrix *do_run_sampler (char **init, int ni,
-			      char **iter, int ng,
-			      int burnin, int N,
-			      guint8 *record,
-			      gibbs_var_info *gvi,
-			      gretlopt opt,
-			      DATASET *dset,
-			      PRN *prn,
-			      int *err)
+                              char **iter, int ng,
+                              guint8 *record,
+                              gibbs_var_info *gvi,
+                              gretlopt opt,
+                              DATASET *dset,
+                              PRN *prn,
+                              int *err)
 {
     gretl_matrix *ret = NULL;
     gretl_matrix *gm = NULL;
@@ -296,7 +295,6 @@ gretl_matrix *do_run_sampler (char **init, int ni,
     int cleanup = (opt & OPT_C);
     int quiet = (opt & OPT_Q);
     int nrec = gibbs_N;
-    int discard = 0;
     int ncols = 0;
     int msize = 0;
     int iters;
@@ -396,17 +394,19 @@ gretl_matrix *do_run_sampler (char **init, int ni,
         goto bailout;
     }
 
-    iters = burnin + gibbs_N;
+    iters = gibbs_burnin + gibbs_N;
     if (!quiet) {
-        pputs(prn, "starting iteration\n");
+        pprintf(prn, "starting %d iterations\n", iters);
     }
     gretl_iteration_push();
 
     /* the main iteration, using compiled genrs */
     for (t=0, k=0; t<iters && !*err; t++) {
-        s = t - burnin;
-	if (gibbs_thin) {
-	    discard = (s == 0 || s % gibbs_thin);
+        int discard = 0;
+
+        s = t - gibbs_burnin;
+	if (gibbs_thin > 0 && s >= 0) {
+	    discard = s % gibbs_thin > 0;
 	}
         c = 0;
         for (i=0; i<ng && !*err; i++) {
@@ -416,8 +416,11 @@ gretl_matrix *do_run_sampler (char **init, int ni,
                         i, t, iter[i]);
             } else if (s >= 0 && record[i] && !discard) {
                 *err = gibbs_record_result(genrs[i], record[i],
-                                           ret, k++, &c);
+                                           ret, k, &c);
             }
+        }
+        if (s >= 0 && !discard) {
+            k++;
         }
     }
 
@@ -562,8 +565,8 @@ int gibbs_execute (gretlopt opt, DATASET *dset, PRN *prn)
     quiet = (opt & OPT_Q)? 1 : 0;
 
     if (!quiet) {
-        pprintf(prn, "gibbs: burnin = %d, N = %d, output %s\n",
-                gibbs_burnin, gibbs_N, gibbs_output);
+        pprintf(prn, "gibbs: burnin = %d, N = %d, thinning = %d, output %s\n",
+                gibbs_burnin, gibbs_N, gibbs_thin, gibbs_output);
     }
 
     for (i=0; i<gibbs_n_lines && !err; i++) {
@@ -610,7 +613,6 @@ int gibbs_execute (gretlopt opt, DATASET *dset, PRN *prn)
 
     if (!err) {
         H = do_run_sampler(init, ni, iter, ng,
-                           gibbs_burnin, gibbs_N,
                            record, gvi, opt, dset,
                            prn, &err);
         if (H != NULL) {
