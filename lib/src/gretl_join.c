@@ -3236,7 +3236,7 @@ int gretl_join_data (const char *fname,
             }
             err = join_import_gdt(fname, &jspec, gdt_opt, vprn);
         } else {
-            err = join_import_csv(fname, &jspec, dset, opt, vprn);
+            err = join_import_csv(fname, &jspec, dset, OPT_NONE, vprn);
         }
         if (!err) {
             outer_dset = outer_dataset(&jspec);
