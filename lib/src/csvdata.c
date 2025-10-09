@@ -1583,10 +1583,8 @@ static int report_quotation_info (int *qtotal, int *nqmax,
 	pputs(prn, _("Assuming single-quote is the relevant "
 		     "quotation character\n"));
     } else {
+        gretl_warnmsg_set(_("unmatched quotation marks in CSV file"));
 	pputs(prn, _("Quotation broken: marks not paired\n"));
-#if 0 /* not yet, more testing wanted */
-	err = E_DATA;
-#endif
     }
 
     return err;
@@ -3271,7 +3269,7 @@ static int real_read_labels_and_data (csvdata *c, gzFile fp, PRN *prn)
     }
 
     if (truncated) {
-        pprintf(prn, _("warning: %d labels were truncated.\n"), truncated);
+        pprintf(prn, _("warning: %d strings were truncated.\n"), truncated);
     }
 
     if (!err && c->real_n < c->dset->n) {
