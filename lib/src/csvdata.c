@@ -36,7 +36,8 @@
 
 #include <errno.h>
 
-#define CDEBUG 0  /* CSV reading in general */
+#define CDEBUG 0    /* CSV reading in general */
+#define COMPDEBUG 0 /* line compression */
 
 #define CSVSTRLEN 128
 
@@ -58,8 +59,7 @@ typedef enum {
     CSV_THOUSEP  = 1 << 14,
     CSV_NOHEADER = 1 << 15,
     CSV_QUOTES   = 1 << 16,
-    CSV_AS_MAT   = 1 << 17,
-    CSV_QPURGE   = 1 << 18
+    CSV_AS_MAT   = 1 << 17
 } csvflags;
 
 struct csvprobe_ {
@@ -133,8 +133,6 @@ struct csvdata_ {
 #define csv_set_no_header(c)        (c->flags |= CSV_NOHEADER)
 #define csv_unset_keep_quotes(c)    (c->flags &= ~CSV_QUOTES)
 #define csv_set_as_matrix(c)        (c->flags |= CSV_AS_MAT)
-
-#define csv_purge_quotes(c) (c->flags & CSV_QPURGE)
 
 #define csv_skip_bad(c)        (*c->skipstr != '\0')
 #define csv_has_non_numeric(c) (c->st != NULL)
@@ -245,7 +243,7 @@ static csvdata *csvdata_new (DATASET *dset)
             c->flags |= CSV_HAVEDATA;
         }
 #if CDEBUG
-        fprintf(stderr, "csvdata_new: c->delim = '%c', c->decpoint = '%c'\n",
+        fprintf(stderr, "\ncsvdata_new: c->delim = '%c', c->decpoint = '%c'\n",
                 c->delim, c->decpoint);
 #endif
     }
@@ -1471,10 +1469,9 @@ enum {
     UTF_32
 };
 
-/* If we got a UTF-16 or UTF-32 BOM, try recoding to
-   UTF-8 before parsing data. We write the recoded text
-   to a temporary file in the user's "dotdir" (and
-   then delete that file once we're done).
+/* If we got a UTF-16 or UTF-32 BOM, try recoding to UTF-8 before
+   parsing data. We write the recoded text to a temporary file in the
+   user's "dotdir" (and then delete that file once we're done).
 */
 
 static int csv_recode_input (gzFile *fpp,
@@ -1519,14 +1516,12 @@ static int csv_recode_input (gzFile *fpp,
     return err;
 }
 
-/* Check the first 4 bytes of "CSV" input for a Byte Order
-   Mark. If we find the UTF-8 BOM (typically written by
-   Microsoft tools), simply record the fact so that we can
-   skip it on reading. But if we find a BOM indicating a
-   16-bit or 32-bit unicode encoding, flag this by returning
-   a non-zero @ucode value; in that case we'll attempt a
-   full recording of the input (via GLib) before we start
-   reading data.
+/* Check the first 4 bytes of "CSV" input for a Byte Order Mark. If we
+   find the UTF-8 BOM (typically written by Microsoft tools), simply
+   record the fact so that we can skip it on reading. But if we find a
+   BOM indicating a 16-bit or 32-bit unicode encoding, flag this by
+   returning a non-zero @ucode value; in that case we'll attempt a full
+   recording of the input (via GLib) before we start reading data.
 */
 
 static int csv_unicode_check (gzFile fp, csvdata *c, PRN *prn)
@@ -1736,10 +1731,7 @@ static int csv_max_line_length (gzFile fp, csvdata *cdata, PRN *prn)
 	    cdata->qchar = '"';
 	} else if (qcand[1]) {
 	    cdata->qchar = '\'';
-	} else if (qtotal[0] && qtotal[1]) {
-            /* 2025-10-07: experimental */
-            cdata->flags |= CSV_QPURGE;
-        }
+	}
 	err = report_quotation_info(qtotal, nqmax, cdata->qchar, prn);
     }
 
@@ -1811,12 +1803,6 @@ static void purge_unquoted_spaces (char *s)
     }
 }
 
-static void purge_all_quotes (char *s)
-{
-    gretl_delchar('\'', s);
-    gretl_delchar('"', s);
-}
-
 static void compress_csv_line (csvdata *c, int nospace)
 {
     int n = strlen(c->line);
@@ -1831,16 +1817,13 @@ static void compress_csv_line (csvdata *c, int nospace)
         *p = '\0';
     }
 
-#if 0
-    fprintf(stderr, "HERE compress: keep_quotes=%d, qchar=%c, purge=%d\n",
-            csv_keep_quotes(c) ? 1 : 0, c->qchar ? c->qchar : '0',
-            csv_purge_quotes(c) ? 1 : 0);
+#if COMPDEBUG
+    fprintf(stderr, "HERE compress: keep_quotes=%d, qchar=%c\n",
+            csv_keep_quotes(c) ? 1 : 0, c->qchar ? c->qchar : '0');
     fprintf(stderr, " before:\n  '%s'\n", c->line);
 #endif
 
-    if (csv_purge_quotes(c)) {
-        purge_all_quotes(c->line);
-    } else if (!csv_keep_quotes(c) && c->delim == ',') {
+    if (!csv_keep_quotes(c) && c->delim == ',') {
         purge_quoted_commas(c->line);
     }
 
@@ -1856,7 +1839,7 @@ static void compress_csv_line (csvdata *c, int nospace)
         gretl_delchar('"', c->line);
     }
 
-#if 0
+#if COMPDEBUG
     fprintf(stderr, " after:\n  '%s'\n", c->line);
 #endif
 
@@ -2058,10 +2041,9 @@ static int csv_missval (const char *str, int i, int t,
     return miss;
 }
 
-/* In the case where we think we've found thousands
-   separators in numerical input, provisionally mark
-   all "non-numeric" values as NAs; we do this prior
-   to a second pass through the data.
+/* In the case where we think we've found thousands separators in
+   numerical input, provisionally mark all "non-numeric" values as NAs;
+   we do this prior to a second pass through the data.
 */
 
 static void revise_non_numeric_values (csvdata *c)
