@@ -1773,15 +1773,16 @@ static int count_csv_fields (csvdata *c)
     return nf + 1;
 }
 
-static void purge_quoted_commas (char *s)
+static void purge_quoted_delimiters (csvdata *c)
 {
+    char *s = c->line;
     int inquote = 0;
 
     while (*s) {
         if (*s == '"') {
             inquote = !inquote;
-        } else if (inquote && *s == ',') {
-            *s = ' ';
+        } else if (inquote && *s == c->delim) {
+            *s = (c->delim == ' ')? '_' : '_';
         }
         s++;
     }
@@ -1821,8 +1822,8 @@ static void compress_csv_line (csvdata *c, int nospace)
     fprintf(stderr, " before:\n  '%s'\n", c->line);
 #endif
 
-    if (!csv_keep_quotes(c) && c->delim == ',') {
-        purge_quoted_commas(c->line);
+    if (!csv_keep_quotes(c)) {
+        purge_quoted_delimiters(c);
     }
 
     if (c->delim != ' ') {
