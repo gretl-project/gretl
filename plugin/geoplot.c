@@ -1284,9 +1284,7 @@ static int real_map_to_csv (const char *fname,
     return ret;
 }
 
-/* Get metadata from map file for importation to
-   gretl dataset.
-*/
+/* Get metadata from map file for importation to gretl dataset */
 
 int map_get_data (const char *fname, DATASET *dset,
 		  gretlopt opt, PRN *prn)

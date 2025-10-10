@@ -981,9 +981,9 @@ static void do_join_command (GtkWidget *w, join_info *jinfo)
     free(buf);
 }
 
-/* Driver function, called from do_open_data() in gui_utils.c.
-   We come here only if the data file in question has been
-   determined to be delimited text or native gretl.
+/* Driver function, called from do_open_data() in gui_utils.c.  We
+   come here only if the data file in question has been determined to
+   be delimited text or native gretl.
 */
 
 int gui_join_data (const char *fname, GretlFileType ftype)

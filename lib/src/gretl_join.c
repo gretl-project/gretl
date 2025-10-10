@@ -2502,10 +2502,9 @@ static int join_import_gdt (const char *fname,
     return err;
 }
 
-/* add/replace an entry in @jspec's colnames array,
-   and record the fact that @src is now owned by
-   @jspec so we can free it when we're finished
-   and hence avoid leaking memory
+/* add/replace an entry in @jspec's colnames array, and record the
+   fact that @src is now owned by @jspec so we can free it when we're
+   finished and hence avoid leaking memory
 */
 
 static int jspec_push_tmpname (joinspec *jspec,
@@ -2567,7 +2566,6 @@ static int determine_csv_matches (const char *fname,
 static int join_import_csv (const char *fname,
                             joinspec *jspec,
 			    DATASET *ldset,
-                            gretlopt opt,
                             PRN *prn)
 {
     int err = 0;
@@ -2581,7 +2579,7 @@ static int join_import_csv (const char *fname,
 
     if (!err) {
         err = real_import_csv(fname, NULL, NULL, NULL, jspec,
-                              NULL, NULL, opt, prn);
+                              NULL, NULL, OPT_NONE, prn);
     }
 
     if (!err && !jspec->user_tkey && dataset_is_time_series(ldset)) {
@@ -3236,7 +3234,7 @@ int gretl_join_data (const char *fname,
             }
             err = join_import_gdt(fname, &jspec, gdt_opt, vprn);
         } else {
-            err = join_import_csv(fname, &jspec, dset, OPT_NONE, vprn);
+            err = join_import_csv(fname, &jspec, dset, vprn);
         }
         if (!err) {
             outer_dset = outer_dataset(&jspec);
