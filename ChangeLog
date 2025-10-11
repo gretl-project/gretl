@@ -12,6 +12,7 @@ version 2025c, in progress
   information criteria
 - "delete" command: ensure that an informative message is
   shown when some series cannot be deleted
+- "join" command: fix handling of problematic CSV files
 - "setobs" syntax: accept month as single digit for panel
   data with monthly time dimension
 - "nulldata" command: ensure that all pre-existing dataset
