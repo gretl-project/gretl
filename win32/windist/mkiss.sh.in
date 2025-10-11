@@ -12,6 +12,9 @@ elif [ "a${ARCH}" = "aucrt" ] ; then
   ISSTOP="${topsrc}/win32/windist/isstop.ucrt"
 elif [ "a${ARCH}" = "amsvcrt" ] ; then
   ISSTOP="${topsrc}/win32/windist/isstop.msvcrt"
+elif [ "a${ARCH}" = "acompat" ] ; then
+  # compatibility with earlier Inno version
+  ISSTOP="${topsrc}/win32/windist/isstop.compat"
 else
   echo "Please specify i686, x86_64, ucrt or msvcrt"
   exit 1

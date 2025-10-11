@@ -1,0 +1,48 @@
+; -- gretl.iss --
+
+[Setup]
+AppName=gretl
+AppVerName=gretl version VERSION (x86_64, MSVCRT, GTK3)
+AppVersion=VERSION
+MinVersion=10.0
+ArchitecturesAllowed=x64
+ArchitecturesInstallIn64BitMode=x64
+AppPublisher=The gretl team
+AppPublisherURL=http://gretl.sourceforge.net/
+AppSupportURL=http://gretl.sourceforge.net/
+DefaultDirName={commonpf}\gretl
+DefaultGroupName=gretl
+PrivilegesRequired=poweruser
+UninstallDisplayIcon={app}\gretl.exe
+ChangesAssociations=yes
+ChangesEnvironment=yes
+DirExistsWarning=no
+UsedUserAreasWarning=no
+OutputBaseFilename=gretl_install-64
+WizardStyle=modern
+
+[InstallDelete]
+Type: files; Name: "{app}\*.dll"
+
+[Languages]
+Name: "en"; MessagesFile: "compiler:Default.isl"
+Name: "eu"; MessagesFile: "compiler:Languages\Spanish.isl"
+Name: "gl"; MessagesFile: "compiler:Languages\Spanish.isl"
+Name: "pt_BR"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
+Name: "cs"; MessagesFile: "compiler:Languages\Czech.isl"
+Name: "fr"; MessagesFile: "compiler:Languages\French.isl"
+Name: "de"; MessagesFile: "compiler:Languages\German.isl"
+Name: "it"; MessagesFile: "compiler:Languages\Italian.isl"
+Name: "pl"; MessagesFile: "compiler:Languages\Polish.isl"
+Name: "pt"; MessagesFile: "compiler:Languages\Portuguese.isl"
+Name: "ru"; MessagesFile: "compiler:Languages\Russian.isl"
+Name: "es"; MessagesFile: "compiler:Languages\Spanish.isl"
+Name: "tr"; MessagesFile: "compiler:Languages\Turkish.isl"
+Name: "ca"; MessagesFile: "compiler:Languages\Catalan.isl"
+Name: "el"; MessagesFile: "compiler:Languages\Greek.isl"
+Name: "ja"; MessagesFile: "compiler:Languages\Japanese.isl"
+Name: "uk"; MessagesFile: "compiler:Languages\Ukrainian.isl"
+
+[Tasks]
+Name: modifypath; Description: &Add gretl directory to your PATH; Flags: unchecked
+
