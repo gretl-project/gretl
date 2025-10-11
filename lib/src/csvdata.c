@@ -1782,7 +1782,7 @@ static void purge_quoted_delimiters (csvdata *c)
         if (*s == '"') {
             inquote = !inquote;
         } else if (inquote && *s == c->delim) {
-            *s = (c->delim == ' ')? '_' : '_';
+            *s = (c->delim == ' ')? '_' : ' ';
         }
         s++;
     }
