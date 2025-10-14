@@ -3311,6 +3311,12 @@ MODEL ar_model (const int *list, DATASET *dset,
 
     ar.errcode = gretl_list_split_on_separator(list, &arlist, &reglist);
 
+    if (!ar.errcode && reglist != NULL && reglist[0] == 1) {
+        gretl_errmsg_set(_("At least one regressor is required"));
+        ar.errcode = E_ARGS;
+        goto bailout;
+    }
+
     if (!ar.errcode && arlist[0] == 1 && arlist[1] == 1) {
 	/* special case: ar 1 ; ... => use AR1 apparatus */
 	ar = ar1_model(reglist, dset, opt, prn);
