@@ -2636,6 +2636,33 @@ int gretl_arrays_are_equal (const gretl_array *a,
     }
 }
 
+/* Create a gretl_array holding either strings or matrices, taking as
+   input a "raw" C array of the same type, with @n elements. The
+   gretl_array takes ownership of @data, which should not be touched
+   after calling this function.
+*/
+
+gretl_array *gretl_array_from_C_array (GretlType type,
+                                       void *data, int n,
+                                       int *err)
+{
+    gretl_array *a = NULL;
+
+    if (type != GRETL_TYPE_STRINGS &&
+        type != GRETL_TYPE_MATRICES) {
+        *err = E_TYPES;
+    } else if (data == NULL || n <= 0) {
+        *err = E_DATA;
+    } else {
+        a = gretl_array_new(type, 0, err);
+        if (a != NULL) {
+            a->data = data;
+        }
+    }
+
+    return a;
+}
+
 /* arglist_validate() is used only in geneval.c but it's defined here
    because (a) geneval.c is already overburdened and (b) the job can
    be done more efficiently with access to the internals of
