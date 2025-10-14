@@ -3119,11 +3119,10 @@ static void johansen_fill_S_matrices (GRETL_VAR *v)
     gretl_matrix_divide_by_scalar(v->jinfo->S01, v->T);
 }
 
-/* We come here if there are no regressors at stage 1 of
-   the Johansen procedure. This happens if the associated
-   VAR is of order 1 (becomes order 0 on differencing)
-   and there are no unrestricted exogenous variables.
-   The residuals are then just the values of the
+/* We come here if there are no regressors at stage 1 of the Johansen
+   procedure. This happens if the associated VAR is of order 1 (which
+   becomes order 0 on differencing) and there are no unrestricted
+   exogenous variables.  The residuals are then just the values of the
    variables themselves.
 */
 
@@ -3209,10 +3208,10 @@ static void johansen_partition_residuals (GRETL_VAR *v)
 }
 
 /* For Johansen analysis: estimate VAR in differences along with the
-   other auxiliary regressions required to compute the relevant
-   matrices of residuals, for concentration of the log-likelihood.
-   Then compute S00, S11, S01. See for example James Hamilton,
-   "Time Series Analysis", section 20.2.
+   other auxiliary regressions required to compute the relevant matrices
+   of residuals, for concentration of the log-likelihood.  Then compute
+   S00, S11, S01. See for example James Hamilton, "Time Series
+   Analysis", section 20.2.
 */
 
 int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
@@ -3381,8 +3380,8 @@ static int jvar_check_allocation (GRETL_VAR *v, const DATASET *dset)
     return err;
 }
 
-/* Driver function for Johansen analysis.  An appropriately
-   initialized "jvar" must have been set up already.
+/* Driver function for Johansen analysis.  An appropriately initialized
+   "jvar" must have been set up already.
 */
 
 static int
