@@ -11216,7 +11216,6 @@ int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
 
         if (B != NULL) {
             /* \hat{\beta} = T^{1/2} V_1 {\Sigma_1}^{-1} U_z */
-
             for (i=0; i<p1; i++) {
                 si = S1->val[i];
                 for (j=0; j<p1; j++) {
@@ -11240,7 +11239,6 @@ int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
 
         if (A != NULL) {
             /* \hat{\alpha} = T^{-1/2} R_0' U_1 U_z */
-
             gretl_matrix_reuse(Z, p, p1);
             gretl_matrix_multiply_mod(R0, GRETL_MOD_TRANSPOSE,
                                       U1, GRETL_MOD_NONE,

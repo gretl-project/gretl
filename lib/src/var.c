@@ -911,8 +911,10 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
     return var;
 }
 
-static void johansen_info_free (JohansenInfo *jv)
+static void johansen_info_free (GRETL_VAR *var)
 {
+    JohansenInfo *jv = var->jinfo;
+
     gretl_matrix_free(jv->R0);
     gretl_matrix_free(jv->R1);
 
@@ -936,6 +938,9 @@ static void johansen_info_free (JohansenInfo *jv)
     gretl_matrix_free(jv->YY);
     gretl_matrix_free(jv->RR);
     gretl_matrix_free(jv->BB);
+    if (jv->G != NULL) {
+        gretl_matrix_array_free(jv->G, var->order - 1);
+    }
 
     free(jv);
 }
@@ -982,7 +987,7 @@ void gretl_VAR_free (GRETL_VAR *var)
     }
 
     if (var->jinfo != NULL) {
-        johansen_info_free(var->jinfo);
+        johansen_info_free(var);
     }
 
     free(var);
@@ -3333,6 +3338,7 @@ johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
     jv->YY = NULL;
     jv->RR = NULL;
     jv->BB = NULL;
+    jv->G = NULL;
 
     jv->ll0 = jv->prior_ll = NADBL;
     jv->lrdf = jv->prior_df = 0;
@@ -4401,7 +4407,7 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
     }
 
     if (err) {
-        johansen_info_free(jinfo);
+        johansen_info_free(var);
     } else {
         var->jinfo = jinfo;
     }
@@ -4866,9 +4872,10 @@ static void add_johansen_C (JohansenInfo *j)
     gretl_matrix_free(bp);
 }
 
-static gretl_bundle *johansen_bundlize (JohansenInfo *j)
+static gretl_bundle *johansen_bundlize (const GRETL_VAR *var)
 {
     gretl_bundle *b = gretl_bundle_new();
+    JohansenInfo *j = var->jinfo;
 
     if (b == NULL) {
         return NULL;
@@ -4910,7 +4917,18 @@ static gretl_bundle *johansen_bundlize (JohansenInfo *j)
     if (j->qa != NULL) {
         gretl_bundle_set_matrix(b, "qa", j->qa);
     }
+    if (j->G != NULL) {
+        gretl_array *a;
 
+        a = gretl_array_from_C_array(GRETL_TYPE_MATRICES,
+                                     j->G, var->order,
+                                     NULL);
+        if (a != NULL) {
+            gretl_bundle_donate_data(b, "G_array", a,
+                                     GRETL_TYPE_ARRAY, 0);
+            j->G = NULL; /* don't double-free */
+        }
+    }
     if (j->Alpha != NULL && j->Beta != NULL && j->Gamma != NULL) {
         add_johansen_C(j);
         if (j->JC != NULL) {
@@ -5359,7 +5377,7 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
 
     if (var->jinfo != NULL) {
         /* VECM specific info */
-        gretl_bundle *jb = johansen_bundlize(var->jinfo);
+        gretl_bundle *jb = johansen_bundlize(var);
 
         if (jb != NULL) {
             err = gretl_bundle_donate_data(b, "vecm_info", jb,

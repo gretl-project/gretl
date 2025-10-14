@@ -2650,12 +2650,13 @@ gretl_array *gretl_array_from_C_array (GretlType type,
 
     if (type != GRETL_TYPE_STRINGS &&
         type != GRETL_TYPE_MATRICES) {
-        *err = E_TYPES;
-    } else if (data == NULL || n <= 0) {
-        *err = E_DATA;
+        if (err != NULL) {
+            *err = E_TYPES;
+        }
     } else {
         a = gretl_array_new(type, 0, err);
         if (a != NULL) {
+            a->n = n;
             a->data = data;
         }
     }

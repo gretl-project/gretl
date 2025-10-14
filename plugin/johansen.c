@@ -1169,7 +1169,9 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 
     gretl_matrix_free(Pi);
     gretl_matrix_free(Ai);
-    gretl_matrix_array_free(G, order);
+    if (G != NULL) {
+        v->jinfo->G = G;
+    }
 
     return err;
 }
