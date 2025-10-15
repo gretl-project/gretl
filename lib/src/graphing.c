@@ -3553,7 +3553,7 @@ static int print_gp_factorized_data (gnuplot_info *gi,
                 if (na(x[t]) || na(d[t]) || na(y[t])) {
                     continue;
                 }
-                fprintf(fp, "%.10g %.10g\n", x[t], y[t]);
+                fprintf(fp, "%.10g %.10g", x[t], y[t]);
                 if (dset->markers) {
                     fprintf(fp, " # %s", dset->S[t]);
                 } else if (dataset_is_time_series(dset)) {
@@ -3562,6 +3562,7 @@ static int print_gp_factorized_data (gnuplot_info *gi,
                     ntolabel(obs, t, dset);
                     fprintf(fp, " # %s", obs);
                 }
+                fputc('\n', fp);
             }
             fputs("e\n", fp);
             continue;
@@ -3572,7 +3573,7 @@ static int print_gp_factorized_data (gnuplot_info *gi,
                 if (na(x[t]) || na(d[t]) || na(yjt)) {
                     continue;
                 }
-                fprintf(fp, "%.10g %.10g\n", x[t], y[t]);
+                fprintf(fp, "%.10g %.10g", x[t], y[t]);
                 if (dset->markers) {
                     fprintf(fp, " # %s", dset->S[t]);
                 } else if (dataset_is_time_series(dset)) {
@@ -3581,6 +3582,7 @@ static int print_gp_factorized_data (gnuplot_info *gi,
                     ntolabel(obs, t, dset);
                     fprintf(fp, " # %s", obs);
                 }
+                fputc('\n', fp);
             }
             fputs("e\n", fp);
         }
