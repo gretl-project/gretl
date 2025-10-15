@@ -45,6 +45,7 @@ struct gnuplot_info_ {
     char xfmt[16];
     char yfmt[16];
     const char *yformula;
+    const char *facname;
     const double *x;
     gretl_matrix *fvals; /* factor values */
     int n_fvals;         /* number of factor values */

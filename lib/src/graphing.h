@@ -29,7 +29,7 @@ typedef enum {
     GPT_LINES          = 1 << 1,  /* force use of lines for plotting */
     GPT_RESIDS         = 1 << 2,  /* doing residual plot */
     GPT_FA             = 1 << 3,  /* doing fitted/actual plot */
-    GPT_DUMMY          = 1 << 4,  /* using a dummy for separation */
+    GPT_FACTOR         = 1 << 4,  /* using a factor for separation */
     GPT_XYZ            = 1 << 5,  /* X-Y, controlling for Z */
     GPT_FIT_OMIT       = 1 << 6,  /* user said don't draw fitted line on graph */
     GPT_DATA_STYLE     = 1 << 7,  /* data style is set by user */

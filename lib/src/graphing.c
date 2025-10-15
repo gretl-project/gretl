@@ -661,8 +661,8 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
     }
 
     if (opt & OPT_Z) {
-        /* --dummy */
-        gi->flags |= GPT_DUMMY;
+        /* --factorized */
+        gi->flags |= (GPT_FACTOR | GPT_FIT_OMIT);
     } else if (opt & OPT_C) {
         /* --control */
         gi->flags |= GPT_XYZ;
@@ -2795,7 +2795,8 @@ enum {
     GTITLE_VLS,
     GTITLE_RESID,
     GTITLE_AF,
-    GTITLE_AFV
+    GTITLE_AFV,
+    GTITLE_FACTOR
 } graph_titles;
 
 static void make_gtitle (gnuplot_info *gi, int code,
@@ -2837,6 +2838,10 @@ static void make_gtitle (gnuplot_info *gi, int code,
         } else {
             title = g_strdup_printf(_("Actual and fitted %s versus %s"), s1, s2);
         }
+        break;
+    case GTITLE_FACTOR:
+        title = g_strdup_printf(_("%s versus %s with separation by %s"),
+                                s1, s2, gi->facname);
         break;
     default:
         break;
@@ -3377,7 +3382,7 @@ static void print_x_range_from_list (gnuplot_info *gi,
     const double *x, *d = NULL;
     int k = gi->list[0];
 
-    if (gi->flags & GPT_DUMMY) {
+    if (gi->flags & GPT_FACTOR) {
         d = dset->Z[gi->fid];
     }
 
@@ -3731,6 +3736,7 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 
     gi->withlist = NULL;
     gi->yformula = NULL;
+    gi->facname = NULL;
     gi->x = NULL;
     gi->list = NULL;
     gi->fvals = NULL;
@@ -3769,7 +3775,7 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
         return E_ARGS;
     }
 
-    if ((gi->flags & GPT_DUMMY) && (gi->flags & GPT_IDX)) {
+    if ((gi->flags & GPT_FACTOR) && (gi->flags & GPT_IDX)) {
         return E_BADOPT;
     }
 
@@ -3777,9 +3783,10 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
     if (gi->list == NULL) {
         return E_ALLOC;
     }
-    if (gi->flags & GPT_DUMMY) {
+    if (gi->flags & GPT_FACTOR) {
         /* record the factor var and cut it off the plot list */
         gi->fid = gi->list[gi->list[0]];
+        gi->facname = dset->varname[gi->fid];
         gi->list[0] -= 1;
     }
 
@@ -3788,7 +3795,7 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
         gi->flags |= GPT_Y2AXIS;
     } else if ((l0 > 2 || (l0 > 1 && (gi->flags & GPT_IDX))) &&
         l0 < 7 && !(gi->flags & GPT_RESIDS) && !(gi->flags & GPT_FA)
-        && !(gi->flags & GPT_DUMMY) && !(opt & OPT_Y)) {
+        && !(gi->flags & GPT_FACTOR) && !(opt & OPT_Y)) {
         /* FIXME GPT_XYZ ? */
         /* allow probe for using two y axes */
 #if GP_DEBUG
@@ -3840,8 +3847,8 @@ static void print_gnuplot_flags (int flags, int revised)
     if (flags & GPT_FA) {
         fprintf(stderr, " GPT_FA\n");
     }
-    if (flags & GPT_DUMMY) {
-        fprintf(stderr, " GPT_DUMMY\n");
+    if (flags & GPT_FACTOR) {
+        fprintf(stderr, " GPT_FACTOR\n");
     }
     if (flags & GPT_XYZ) {
         fprintf(stderr, " GPT_XYZ\n");
@@ -4615,7 +4622,7 @@ int gnuplot (const int *plotlist, const char *literal,
     ptype = PLOT_REGULAR;
 
     /* separation by factor: create special vars */
-    if (gi.flags & GPT_DUMMY) {
+    if (gi.flags & GPT_FACTOR) {
         err = factor_check(&gi, dset);
         if (err) {
             goto bailout;
@@ -4685,6 +4692,12 @@ int gnuplot (const int *plotlist, const char *literal,
                             xlabel, fp);
             }
             no_key = 0;
+        } else if (gi.flags & GPT_FACTOR) {
+            char *tmp1 = make_plotname(dset, gi.list[1]);
+            char *tmp2 = make_plotname(dset, gi.list[2]);
+
+            make_gtitle(&gi, GTITLE_FACTOR, tmp1, tmp2, fp);
+            no_key = 0;
         }
         if (gi.flags & GPT_RESIDS) {
             const char *vlabel = series_get_label(dset, gi.list[1]);
@@ -4698,7 +4711,7 @@ int gnuplot (const int *plotlist, const char *literal,
         if (no_key) {
             strcpy(keystr, "set nokey\n");
         }
-    } else if ((gi.flags & GPT_RESIDS) && (gi.flags & GPT_DUMMY)) {
+    } else if ((gi.flags & GPT_RESIDS) && (gi.flags & GPT_FACTOR)) {
         const char *vlabel = series_get_label(dset, gi.list[1]);
 
         make_gtitle(&gi, GTITLE_RESID, vlabel == NULL ? "residual" : vlabel,
@@ -4718,9 +4731,10 @@ int gnuplot (const int *plotlist, const char *literal,
             free(s3);
         }
         print_axis_label('y', plotname(dset, gi.list[2], 1), fp);
-    } else if (gi.flags & GPT_DUMMY) {
-        /* FIXME multiple y? */
-        print_axis_label('y', plotname(dset, gi.list[1], 1), fp);
+    } else if (gi.flags & GPT_FACTOR) {
+        if (gi.list[0] == 2) {
+            print_axis_label('y', plotname(dset, gi.list[1], 1), fp);
+        }
     }
 
     if (many) {
@@ -4792,8 +4806,8 @@ int gnuplot (const int *plotlist, const char *literal,
                     lwstr,
                     (i == lmax - 1)? "\n" : ", \\\n");
         }
-    } else if (gi.flags & GPT_DUMMY) {
-        /* plot shows separation by discrete variable */
+    } else if (gi.flags & GPT_FACTOR) {
+        /* plot shows separation by a discrete factor variable */
         int lmax = gi.list[0];
         series_table *st;
         double di;
@@ -4805,8 +4819,8 @@ int gnuplot (const int *plotlist, const char *literal,
         for (j=1; j<lmax; j++) {
             vj = gi.list[j];
             set_plot_withstr(&gi, j, withstr);
+            strcpy(s1, plotname(dset, vj, 1));
             if (!y_var_is_factorized(&gi, vj)) {
-                strcpy(s1, plotname(dset, vj, 1));
                 fprintf(fp, " '-' using 1:2 title \"%s\" %s", s1, withstr);
                 if (j < lmax - 1) {
                     fputs(", \\\n", fp);
@@ -4821,8 +4835,8 @@ int gnuplot (const int *plotlist, const char *literal,
                     fprintf(fp, " '-' using 1:2 title \"%s\" %s",
                             series_table_get_string(st, di), withstr);
                 } else {
-                    fprintf(fp, " '-' using 1:2 title \"%s=%g\" %s",
-                            s2, di, withstr);
+                    fprintf(fp, " '-' using 1:2 title \"%s,%s=%g\" %s",
+                            s1, s2, di, withstr);
                 }
                 if (i < gi.n_fvals - 1 || j < lmax - 1) {
                     fputs(", \\\n", fp);
@@ -4874,7 +4888,7 @@ int gnuplot (const int *plotlist, const char *literal,
     }
 
     /* print the data to be graphed */
-    if (gi.flags & GPT_DUMMY) {
+    if (gi.flags & GPT_FACTOR) {
         print_gp_factorized_data(&gi, dset, fp);
     } else {
         print_gp_data(&gi, dset, fp);
