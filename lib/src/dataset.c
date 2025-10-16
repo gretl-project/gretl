@@ -3340,6 +3340,7 @@ int series_record_label (DATASET *dset, int i,
     if (labels_differ(targ, s)) {
 	copy_label(dset->varinfo[i], s);
 	set_dataset_is_changed(dset, 1);
+        return 1;
     }
 
     return 0;
@@ -3350,7 +3351,10 @@ int series_record_display_name (DATASET *dset, int i,
 {
     char *targ = dset->varinfo[i]->display_name;
 
-    if (strcmp(targ, s)) {
+    if (s == NULL) {
+        *targ = '\0';
+        set_dataset_is_changed(dset, 1);
+    } else if (strcmp(targ, s)) {
 	*targ = '\0';
 	strncat(targ, s, MAXDISP - 1);
 	set_dataset_is_changed(dset, 1);

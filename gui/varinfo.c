@@ -220,6 +220,12 @@ static int try_regenerate_var (int v, const char *s)
     PRN *prn;
     int err;
 
+    if (s == NULL || *s == '\0') {
+        err = E_EQN;
+        gui_errmsg(err);
+        return err;
+    }
+
     if (bufopen(&prn)) {
 	return 0;
     }
@@ -253,11 +259,10 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
     if (vset->tbuf != NULL) {
 	/* long label: we didn't key off a "changed" signal */
 	newstr = textview_get_normalized_line(vset->label_entry);
-	if (strcmp(newstr, series_get_label(dataset, v))) {
-	    series_record_label(dataset, v, newstr);
-	    record_varlabel_change(v, 1, 0);
-	}
-	g_free(newstr);
+        if (series_record_label(dataset, v, newstr)) {
+            record_varlabel_change(v, 1, 0);
+        }
+        g_free(newstr);
     }
 
     if (!varinfo_any_changed(vset)) {

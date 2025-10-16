@@ -5289,6 +5289,11 @@ int do_rename_variable (int v, const char *newname,
 {
     int err = 0;
 
+    if (newname == NULL || *newname == '\0') {
+        errbox(_("No name was given"));
+        return E_DATA;
+    }
+
     if (v < dataset->v && !strcmp(newname, dataset->varname[v])) {
         /* no-op (shouldn't happen) */
         return 0;
