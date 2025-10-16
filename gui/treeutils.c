@@ -920,7 +920,6 @@ int *main_window_selection_as_list (void)
     if (scount > 0) {
         list = gretl_list_new(scount);
     }
-
     if (list != NULL) {
         list[0] = 0;
         gtk_tree_selection_selected_foreach(select,

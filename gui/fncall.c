@@ -877,28 +877,34 @@ static GList *add_names_for_type (GList *list, GretlType type)
     return list;
 }
 
-static GList *add_list_names (GList *list, int no_single)
+static GList *add_list_names (GList *list, int no_single, int no_const)
 {
     GList *tlist = user_var_names_for_type(GRETL_TYPE_LIST);
     GList *tail = tlist;
+    const int *L;
+    int skip;
 
     while (tail != NULL) {
-        if (no_single) {
-            const int *L = get_list_by_name((const char *) tail->data);
-
-            if (L != NULL && L[0] > 1) {
+        L = get_list_by_name((const char *) tail->data);
+        if (L != NULL) {
+            skip = 0;
+            if (no_single && L[0] < 2) {
+                skip = 1;
+            } else if (no_const && in_gretl_list(L, 0)) {
+                skip = 1;
+            }
+            if (!skip) {
                 list = g_list_append(list, tail->data);
             }
-        } else {
-            list = g_list_append(list, tail->data);
         }
 	tail = tail->next;
     }
 
     if (mdata_selection_count() > 1) {
 	/* add the (unnamed) 'list' of series selected in the
-	   main gretl window */
-	list = g_list_append(list, SELNAME);
+	   main gretl window?
+        */
+        list = g_list_append(list, SELNAME);
     }
 
     g_list_free(tlist);
@@ -971,7 +977,10 @@ static const char *list_exclude_other (gretl_bundle *ui)
     }
 }
 
-static GList *get_selection_list (int type, gretl_bundle *ui)
+/* Note that we're returning a list in the GList sense here, not a gretl
+   list */
+
+static GList *get_selection_list (GretlType type, gretl_bundle *ui)
 {
     GList *list = NULL;
 
@@ -983,10 +992,12 @@ static GList *get_selection_list (int type, gretl_bundle *ui)
         int no_single = list_exclude_singleton(ui);
         int no_const = list_exclude_const(ui);
 
-	list = add_list_names(list, no_single);
+	list = add_list_names(list, no_single, no_const);
+#if 0 /* suppressed 2025-10-16 */
 	if (!no_single) {
 	    list = add_series_names(list, no_const);
 	}
+#endif
     } else if (matrix_arg(type)) {
 	list = add_names_for_type(list, GRETL_TYPE_MATRIX);
     } else if (bundle_arg(type)) {
