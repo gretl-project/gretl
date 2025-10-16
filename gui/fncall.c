@@ -48,6 +48,7 @@
 #include "gpt_control.h"
 #include "fnsave.h"
 #include "gui_addons.h"
+#include "placeholder.h"
 #include "fncall.h"
 
 #include <errno.h>
@@ -60,7 +61,8 @@ typedef enum {
     SHOW_GUI_MAIN = 1 << 0,
     MODEL_CALL    = 1 << 1,
     DATA_ACCESS   = 1 << 2,
-    FOR_ADDON     = 1 << 3
+    FOR_ADDON     = 1 << 3,
+    AUTO_ASSIGN   = 1 << 4
 } call_flags;
 
 typedef struct call_info_ call_info;
@@ -345,6 +347,21 @@ static int validate_op (const char *s)
     return op;
 }
 
+static void record_auto_assign (call_info *cinfo, int i,
+                                gretl_bundle *ui)
+{
+    GtkWidget *w = cinfo->sels[i];
+    int assign_order;
+
+    assign_order = gretl_bundle_get_int(ui, "auto_assign", NULL);
+
+    if (assign_order > 0) {
+        widget_set_int(w, "assign-order", assign_order);
+        fprintf(stderr, "set assign-order %d on selector %d\n",
+                assign_order, i);
+    }
+}
+
 /* Based on the @ui bundle returned by the ui-maker function of a
    package, check for a dependency specification regarding the
    parameter at position i in the argument list; call it P(i).  This
@@ -468,6 +485,35 @@ static void check_depends (call_info *cinfo, int i,
     }
 }
 
+static int precheck_auto_assign (call_info *cinfo)
+{
+    gretl_bundle *bi;
+    int i, ai;
+    int err = 0;
+
+    for (i=0; i<cinfo->n_params; i++) {
+	const char *parname = fn_param_name(cinfo->func, i);
+
+        bi = gretl_bundle_get_bundle(cinfo->ui, parname, NULL);
+        if (bi == NULL) {
+            continue;
+        }
+        ai = gretl_bundle_get_int(bi, "auto_assign", NULL);
+        if (ai == 0) {
+            continue;
+        } else if (ai < 0 || ai > cinfo->n_params) {
+            errbox_printf("package error: invalid 'auto_assign' value %d", ai);
+        } else if (fn_param_type(cinfo->func, i) != GRETL_TYPE_STRING) {
+            errbox("package error: auto_assign parameter must be a string");
+            err = E_INVARG;
+        } else {
+            cinfo->flags |= AUTO_ASSIGN;
+        }
+    }
+
+    return err;
+}
+
 static int cinfo_args_init (call_info *cinfo)
 {
     int err = 0;
@@ -490,6 +536,9 @@ static int cinfo_args_init (call_info *cinfo)
 	if (funname != NULL) {
 	    cinfo->ui = get_ui_from_maker(cinfo->pkg, funname);
 	    g_free(funname);
+            if (cinfo->ui != NULL) {
+                err = precheck_auto_assign(cinfo);
+            }
 	}
     }
 
@@ -544,6 +593,58 @@ static const char *nullarg_label (int null_OK)
     }
 }
 
+/* In the "auto-assign" case we're trying to get a string to serve as
+   the LHS for assignment, not from the usual place in an entry box
+   explicitly marked as for assignment, but from a string parameter
+   which implicitly fixes the assignment name. If we're successful this
+   name is recorded as cinfo->ret. If we fail, this is most likely due
+   to a bug in the package code.
+*/
+
+static int get_assignment_name (call_info *cinfo)
+{
+    gchar *assn = NULL;
+    GtkWidget *w;
+    int try_again = 0;
+    int ai, target = 1;
+    int i, err = 0;
+
+ restart:
+
+    for (i=0; i<cinfo->n_params; i++) {
+        if (fn_param_type(cinfo->func, i) != GRETL_TYPE_STRING) {
+            continue;
+        }
+        w = cinfo->sels[i];
+        ai = widget_get_int(w, "assign-order");
+        if (ai == target) {
+            assn = entry_box_get_real_text(w);
+            if (assn != NULL) {
+                g_free(cinfo->ret);
+                cinfo->ret = assn;
+                try_again = 0;
+                break;
+            } else if (target < cinfo->n_params) {
+                target++;
+            }
+        } else if (ai > target) {
+            try_again = 1;
+        }
+    }
+
+    if (try_again) {
+        try_again = 0;
+        goto restart;
+    }
+
+    if (cinfo->ret == NULL) {
+        errbox("package error: no 'auto-assign' string was found");
+        err = E_DATA;
+    }
+
+    return err;
+}
+
 /* Before launching a function call: check that all required arguments
    are in place; that if the package specifies "must-assign" we have an
    assignment specification; and that the name for the return value (if
@@ -574,7 +675,9 @@ static int check_args_etc (call_info *cinfo)
 	}
     }
 
-    if (user_func_must_assign(cinfo->func) && cinfo->ret == NULL) {
+    if (cinfo->flags & AUTO_ASSIGN) {
+        err = get_assignment_name(cinfo);
+    } else if (user_func_must_assign(cinfo->func) && cinfo->ret == NULL) {
         errbox(_("The return value must be assigned"));
         gtk_widget_grab_focus(cinfo->rentry);
         return 1;
@@ -583,7 +686,7 @@ static int check_args_etc (call_info *cinfo)
     if (cinfo->ret != NULL) {
 	err = gui_validate_varname(cinfo->ret, cinfo->rettype,
 				   cinfo->dlg);
-	if (err) {
+	if (err && cinfo->rentry != NULL) {
 	    gtk_widget_grab_focus(cinfo->rentry);
 	    gtk_editable_select_region(GTK_EDITABLE(cinfo->rentry), 0, -1);
 	}
@@ -670,6 +773,16 @@ static gboolean update_bool_arg (GtkWidget *w, call_info *cinfo)
     } else {
 	cinfo->args[i] = g_strdup("0");
     }
+
+    return FALSE;
+}
+
+static gboolean update_string_arg (GtkWidget *w, call_info *cinfo)
+{
+    int i = widget_get_int(w, "argnum");
+
+    g_free(cinfo->args[i]);
+    cinfo->args[i] = entry_box_get_real_text(w);
 
     return FALSE;
 }
@@ -1678,6 +1791,24 @@ static GtkWidget *double_arg_selector (call_info *cinfo, int i,
     return spin;
 }
 
+static GtkWidget *string_arg_selector (call_info *cinfo, int i)
+{
+    GtkWidget *entry;
+
+    entry = gtk_entry_new();
+    gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN-1);
+    if (fn_param_automatic(cinfo->func, i)) {
+        set_placeholder_text(entry, "automatic");
+    } else if (fn_param_optional(cinfo->func, i)) {
+        set_placeholder_text(entry, "null");
+    }
+    g_signal_connect(G_OBJECT(entry), "changed",
+		     G_CALLBACK(update_string_arg), cinfo);
+    gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
+
+    return entry;
+}
+
 /* See if the variable named @name of type @ptype has already been set
    as the default argument in an "upstream" combo argument selector.
 */
@@ -1966,6 +2097,8 @@ static int cinfo_show_return (call_info *c)
     } else if (c->rettype == GRETL_TYPE_BUNDLE &&
 	       (c->flags & SHOW_GUI_MAIN)) {
 	return 0;
+    } else if (c->flags & AUTO_ASSIGN) {
+        return 0;
     } else {
 	return 1;
     }
@@ -2107,6 +2240,8 @@ static int function_call_dialog (call_info *cinfo)
 	    sel = int_arg_selector(cinfo, i, ptype, prior_val, ui);
 	} else if (spinnable) {
 	    sel = double_arg_selector(cinfo, i, prior_val, ui);
+        } else if (ptype == GRETL_TYPE_STRING) {
+            sel = string_arg_selector(cinfo, i);
 	} else {
 	    sel = combo_arg_selector(cinfo, ptype, i, prior_val, ui);
 	}
@@ -2120,7 +2255,10 @@ static int function_call_dialog (call_info *cinfo)
 	    g_object_set_data(G_OBJECT(sel), "parname", (char *) parname);
 	    widget_set_int(sel, "ptype", ptype);
 	    if (ui != NULL) {
-		check_depends(cinfo, i, ui);
+                if (cinfo->flags & AUTO_ASSIGN) {
+                    record_auto_assign(cinfo, i, ui);
+                }
+                check_depends(cinfo, i, ui);
 	    }
 	}
 
