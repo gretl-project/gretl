@@ -21,19 +21,13 @@
 #include "gui_utils.h"
 #include "dlgutils.h"
 #include "arrows.h"
+#include "placeholder.h"
 #include "gretl_string_table.h"
 #include "csvdata.h"
 #include "cmd_private.h"
 #include "gretl_xml.h"
 
 #define JDEBUG 0
-
-#if GTK_MAJOR_VERSION > 2
-# define HAVE_PLACEHOLDER 1
-#else
-# define HAVE_PLACEHOLDER 0
-# define PLACEHOLDER "place-holder"
-#endif
 
 struct join_info_ {
     GtkWidget *dlg;         /* dialog box */
@@ -164,56 +158,6 @@ static GtkWidget *series_list_box (GtkBox *box, join_info *jinfo,
     return view;
 }
 
-#if !HAVE_PLACEHOLDER
-
-/* For gtk2, emulate gtk3's place-holder text apparatus:
-   make the dummy text gray, and make it disappear when
-   the GtkEntry receives focus.
-*/
-
-static gboolean undo_placeholder (GtkWidget *w, gpointer p)
-{
-    if (widget_get_int(w, PLACEHOLDER)) {
-	if (p == NULL) {
-	    /* just getting focus, not inserting text */
-	    gtk_entry_set_text(GTK_ENTRY(w), "");
-	}
-	gtk_widget_modify_text(w, GTK_STATE_NORMAL, NULL);
-	widget_set_int(w, PLACEHOLDER, 0);
-    }
-
-    return FALSE;
-}
-
-static void make_text_gray (GtkWidget *entry)
-{
-    GdkColor gray = {
-	0, 32767, 32767, 32767
-    };
-
-    gtk_widget_modify_text(entry, GTK_STATE_NORMAL, &gray);
-}
-
-#endif
-
-static void set_placeholder_text (GtkWidget *w, const char *s)
-{
-#if HAVE_PLACEHOLDER
-    gtk_entry_set_placeholder_text(GTK_ENTRY(w), s);
-#else
-    gtk_entry_set_text(GTK_ENTRY(w), s);
-    make_text_gray(w);
-    widget_set_int(w, PLACEHOLDER, 1);
-    if (!widget_get_int(w, "signal-set")) {
-	g_signal_connect(G_OBJECT(w), "grab-focus",
-			 G_CALLBACK(undo_placeholder), NULL);
-	g_signal_connect(G_OBJECT(w), "changed",
-			 G_CALLBACK(undo_placeholder), w);
-	widget_set_int(w, "signal-set", 1);
-    }
-#endif
-}
-
 /* Callback for "Clear" button */
 
 static void clear_joiner (GtkWidget *w, join_info *jinfo)
@@ -245,14 +189,14 @@ static void cancel_joiner (GtkWidget *w, join_info *jinfo)
     gtk_widget_destroy(jinfo->dlg);
 }
 
-/* Get the text from an entry box, or NULL if it's
-   of zero length or just a placeholder.
+/* Get the text from an entry box, or NULL if it's of zero length or
+   just a placeholder.
 */
 
 static const char *join_entry_text (GtkWidget *w)
 {
     const char *s = gtk_entry_get_text(GTK_ENTRY(w));
-#if HAVE_PLACEHOLDER
+#if GTK_MAJOR_VERSION > 2
     return (*s == '\0')? NULL : s;
 #else
     int ph = widget_get_int(w, PLACEHOLDER);
@@ -800,7 +744,7 @@ static gchar *get_aggr_string (GtkWidget *cbox,
 			       int *err)
 {
     gchar *s = combo_box_get_active_text(cbox);
-#if !HAVE_PLACEHOLDER
+#if GTK_MAJOR_VERSION == 2
     int ph = widget_get_int(cbox, PLACEHOLDER);
 
     if (ph) {
