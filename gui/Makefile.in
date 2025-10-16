@@ -212,6 +212,7 @@ SRCS = about.c \
 	model_table.c \
 	objectsave.c \
 	obsbutton.c \
+	placeholder.c \
 	selector.c \
 	series_view.c \
 	session.c \
