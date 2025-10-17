@@ -43,10 +43,6 @@ typedef struct gibbs_var_info_ {
     int startcol;
     int ncols;
     int discrete;
-    double mean;
-    double sd;
-    double min;
-    double max;
 } gibbs_var_info;
 
 static gibbs_var_info *gibbs_info_alloc (int nr)
@@ -59,10 +55,6 @@ static gibbs_var_info *gibbs_info_alloc (int nr)
         gvi[i].startcol = 0;
         gvi[i].ncols = 0;
         gvi[i].discrete = 0;
-        gvi[i].mean = NADBL;
-        gvi[i].sd = NADBL;
-        gvi[i].min = NADBL;
-        gvi[i].max = NADBL;
     }
 
     return gvi;
@@ -277,14 +269,14 @@ static void gibbs_record_info (gibbs_var_info *gvi,
     gvi->ncols = recsize;
 }
 
-gretl_matrix *do_run_sampler (char **init, int ni,
-                              char **iter, int ng,
-                              guint8 *record,
-                              gibbs_var_info *gvi,
-                              gretlopt opt,
-                              DATASET *dset,
-                              PRN *prn,
-                              int *err)
+static gretl_matrix *do_run_sampler (char **init, int ni,
+                                     char **iter, int ng,
+                                     guint8 *record,
+                                     gibbs_var_info *gvi,
+                                     gretlopt opt,
+                                     DATASET *dset,
+                                     PRN *prn,
+                                     int *err)
 {
     gretl_matrix *ret = NULL;
     gretl_matrix *gm = NULL;
@@ -536,13 +528,57 @@ int gibbs_block_append (const char *line)
     return err;
 }
 
+static char *gibbs_type_name (GretlType gt)
+{
+    if (gt == GRETL_TYPE_DOUBLE) {
+        return gretl_strdup("scalar");
+    } else {
+        return gretl_strdup("matrix");
+    }
+}
+
+static gretl_bundle *make_gibbs_bundle (gretl_matrix *H,
+                                        gibbs_var_info *gvi,
+                                        int nr, int *err)
+{
+    gretl_bundle *b = gretl_bundle_new();
+    gretl_bundle *bi = NULL;
+    int i;
+
+    if (b == NULL) {
+        *err = E_ALLOC;
+        return NULL;
+    }
+
+    gretl_bundle_donate_data(b, "H", H, GRETL_TYPE_MATRIX, 0);
+    /* general metadata */
+    gretl_bundle_set_int(b, "burnin", gibbs_burnin);
+    gretl_bundle_set_int(b, "iterations", gibbs_N);
+    gretl_bundle_set_int(b, "thinning", gibbs_thin);
+
+    for (i=0; i<nr; i++) {
+        /* per-variable metadata */
+        bi = gretl_bundle_new();
+        gretl_bundle_donate_data(bi, "type", gibbs_type_name(gvi[i].gt),
+                                 GRETL_TYPE_STRING, 0);
+        gretl_bundle_set_int(bi, "startcol", gvi[i].startcol + 1);
+        gretl_bundle_set_int(bi, "ncols", gvi[i].ncols);
+        gretl_bundle_set_int(bi, "discrete", gvi[i].discrete);
+        gretl_bundle_donate_data(b, gvi[i].name, bi,
+                                 GRETL_TYPE_BUNDLE, 0);
+    }
+
+    return b;
+}
+
 int gibbs_execute (gretlopt opt, DATASET *dset, PRN *prn)
 {
+    gibbs_var_info *gvi = NULL;
+    gretl_bundle *GB = NULL;
     gretl_matrix *H = NULL;
     char **init = NULL;
     char **iter = NULL;
     guint8 *record = NULL;
-    gibbs_var_info *gvi = NULL;
     char *str;
     int quiet;
     int ni = 0;
@@ -616,12 +652,15 @@ int gibbs_execute (gretlopt opt, DATASET *dset, PRN *prn)
                            record, gvi, opt, dset,
                            prn, &err);
         if (H != NULL) {
+            GB = make_gibbs_bundle(H, gvi, nr, &err);
+        }
+        if (GB != NULL) {
             err = user_var_add_or_replace(gibbs_output,
-                                          GRETL_TYPE_MATRIX,
-                                          H);
+                                          GRETL_TYPE_BUNDLE,
+                                          GB);
         }
         if (!err && !quiet) {
-            pprintf(prn, "output matrix %s is %d x %d\n", gibbs_output, H->rows, H->cols);
+            pprintf(prn, "results matrix is %d x %d\n", H->rows, H->cols);
             gibbs_print_info(gvi, nr, H, prn);
         }
     }

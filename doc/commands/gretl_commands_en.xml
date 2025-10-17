@@ -5268,6 +5268,10 @@
 	  <flag>--quiet</flag>
 	  <effect>suppress printing</effect>
         </option>
+	<option>
+	  <flag>--thinning</flag>
+	  <effect>see below</effect>
+        </option>
       </options>
       <examples>
 	<demos>
@@ -5279,7 +5283,7 @@
     <description>
       <para>
         <emphasis>This documentation is preliminary and subject to
-        change before the next gretl release.</emphasis>
+        change.</emphasis>
       </para>
       <para>
         This command is designed to facilitate the construction and
@@ -5306,7 +5310,7 @@
         interest.
       </para>
       <code>
-	gibbs burnin=500 N=5000 output=M
+	gibbs burnin=500 N=5000 output=GB
 	   init y = randgen1(beta, a, n - b)
 	   record x = randgen1(b, y, n)
 	   y = randgen1(beta, x + a, n - x + b)
@@ -5319,7 +5323,7 @@
 	variables). The <lit>burnin</lit> value determines the number of
 	preliminary iterations, which are intended to stabilize the
 	recursion and will not be recorded, while <lit>N</lit> gives the
-	number of iterations to be recorded, in a matrix named by the
+	number of iterations to be recorded, in a bundle named by the
 	<lit>output</lit> argument.
       </para>
       <para>
@@ -5348,21 +5352,59 @@
         be given first.
       </para>
       <para>
-	The output matrix has <lit>N</lit> rows and a column dimension
-	that depends on the number and type of the marginals to be
-	recorded; matrix results are recorded in transposed vec form.
-	If the matrix named in the <lit>output</lit> argument already
-	exists it is overwritten, otherwise a new matrix is created.
+	The primary content of the output bundle is a matrix named
+	<lit>H</lit> which by default has <lit>N</lit> rows and a column
+	dimension that depends on the number and type of the marginals
+	to be recorded; matrix results are recorded in transposed vec
+	form.  Besides this matrix the bundle contains several items of
+	metadata which make it a self-contained record of the sampler
+	(see Sampler metadata below). If the bundle named in the
+	<lit>output</lit> argument already exists it is overwritten,
+	otherwise a new bundle is created.
       </para>
+      <subhead>Option flags</subhead>
       <para>
-        Two options are supported; these should be appended to the
-        terminating line of the block. The <opt>quiet</opt> flag
-        suppresses the default printed output (which shows a brief
-        progress report and some basic summary statistics pertaining
-        to the output matrix). The <opt>cleanup</opt> flag has the
-        effect that any variables newly created within the
-        <lit>gibbs</lit> block are deleted once the iteration is
-        completed.
+        Three options are supported; these should be appended to the
+        terminating line of the block.
+      </para>
+      <ilist>
+        <li>
+          <para>
+            The <opt>quiet</opt> flag suppresses the default printed
+            output, which shows a brief progress report and some basic
+            summary statistics pertaining to the output matrix.
+          </para>
+        </li>
+        <li>
+          <para>
+            The <opt>cleanup</opt> flag has the effect that any
+            variables newly created within the <lit>gibbs</lit> block
+            are deleted once the iteration is completed.
+          </para>
+        </li>
+        <li>
+          <para>
+            The <opt>thinning</opt> flag can be used to restrict the
+            recording of results to a subset of the full number of
+            iterations. For example <lit>--thinning=10</lit> means
+            that only every 10th iteration will be recorded. In that
+            case the row dimension of the <lit>H</lit> matrix will
+            be <math>N</math>/10 rather than <math>N</math>.
+          </para>
+        </li>
+      </ilist>
+      <subhead>Sampler metadata</subhead>
+      <para>
+        Extra members of the returned bundle record the
+        <lit>burnin</lit>, <lit>N</lit> and <lit>thinning</lit>
+        values. In addition it contains a sub-bundle pertaining to (and
+        named for) each variable selected for recording. These
+        sub-bundles hold the starting column (<lit>startcol</lit>) and
+        the number of columns (<lit>ncols</lit>) in the <lit>H</lit>
+        matrix that are devoted to the variable in question; a
+        <lit>discrete</lit> boolean indicating whether the variable is
+        discrete or not; and a <lit>type</lit> string (either
+        <lit>scalar</lit> or <lit>matrix</lit>).
       </para>
     </description>
   </command>

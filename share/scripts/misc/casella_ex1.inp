@@ -46,18 +46,18 @@ a = 2
 b = 4
 iters = 20000
 
-gibbs burnin=1000 N=iters output=M
+gibbs burnin=1000 N=iters output=GB
    init y = randgen1(beta, a, n - b)
    record x = randgen1(b, y, n)
    y = randgen1(beta, x + a, n - x + b)
-end gibbs --verbose
+end gibbs
 
 BB = zeros(17,3)
 loop i=1..17
    x = i - 1
    BB[i,1] = x
    BB[i,2] = bbdensity(x, n, a, b)
-   BB[i,3] = sumc(M .= x) / iters
+   BB[i,3] = sumc(GB.H .= x) / iters
 endloop
 
 histo(BB)
