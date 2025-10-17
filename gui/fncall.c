@@ -601,7 +601,8 @@ static const char *nullarg_label (int null_OK)
    to a bug in the package code.
 */
 
-static int get_assignment_name (call_info *cinfo)
+static int get_assignment_name (call_info *cinfo,
+                                GtkWidget **pw)
 {
     gchar *assn = NULL;
     GtkWidget *w;
@@ -622,6 +623,7 @@ static int get_assignment_name (call_info *cinfo)
             if (assn != NULL) {
                 g_free(cinfo->ret);
                 cinfo->ret = assn;
+                *pw = w;
                 try_again = 0;
                 break;
             } else if (target < cinfo->n_params) {
@@ -653,6 +655,7 @@ static int get_assignment_name (call_info *cinfo)
 
 static int check_args_etc (call_info *cinfo)
 {
+    GtkWidget *rentry = cinfo->rentry;
     const char *argstr;
     int i, null_OK;
     int err = 0;
@@ -676,19 +679,19 @@ static int check_args_etc (call_info *cinfo)
     }
 
     if (cinfo->flags & AUTO_ASSIGN) {
-        err = get_assignment_name(cinfo);
+        err = get_assignment_name(cinfo, &rentry);
     } else if (user_func_must_assign(cinfo->func) && cinfo->ret == NULL) {
         errbox(_("The return value must be assigned"));
-        gtk_widget_grab_focus(cinfo->rentry);
+        gtk_widget_grab_focus(rentry);
         return 1;
     }
 
     if (cinfo->ret != NULL) {
 	err = gui_validate_varname(cinfo->ret, cinfo->rettype,
 				   cinfo->dlg);
-	if (err && cinfo->rentry != NULL) {
-	    gtk_widget_grab_focus(cinfo->rentry);
-	    gtk_editable_select_region(GTK_EDITABLE(cinfo->rentry), 0, -1);
+	if (err && rentry != NULL) {
+	    gtk_widget_grab_focus(rentry);
+	    gtk_editable_select_region(GTK_EDITABLE(rentry), 0, -1);
 	}
     }
 
