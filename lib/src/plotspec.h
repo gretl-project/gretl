@@ -53,7 +53,8 @@ typedef enum {
     GP_Y_RANGE,
     GP_Y2_RANGE,
     GP_T_RANGE,
-    GP_X2_RANGE
+    GP_X2_RANGE,
+    GP_CB_RANGE
 } GpRange;
 
 typedef struct gp_style_spec_ gp_style_spec;
@@ -135,7 +136,7 @@ struct GPT_SPEC_ {
     char xvarname[MAXDISP];    /* name of x variable */
     char yvarname[MAXDISP];    /* name of y variable */
     gchar *titles[5];          /* main, x, y, y2, x2 */
-    double range[5][2];        /* axis range specifiers: x, y, y2, t, x2 */
+    double range[6][2];        /* axis range specifiers: x, y, y2, t, x2, cb */
     double logbase[3];         /* axis log-scales base (0 for linear) */
     GpKeySpec keyspec;         /* specification of key (or none) */
     char xfmt[16];             /* x-axis tic format */

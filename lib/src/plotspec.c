@@ -83,7 +83,7 @@ GPT_SPEC *plotspec_new (void)
     spec->fname[0] = 0;
     spec->keyspec = GP_KEY_LEFT | GP_KEY_TOP;
 
-    for (i=0; i<5; i++) {
+    for (i=0; i<6; i++) {
 	spec->range[i][0] = NADBL;
 	spec->range[i][1] = NADBL;
 	if (i < 3) {
@@ -939,27 +939,35 @@ void print_auto_fit_string (FitType fit, FILE *fp)
     }
 }
 
+static int range_is_unset (const GPT_SPEC *spec, int i)
+{
+    const double *r = spec->range[i];
+
+    return r[0] == 0 && r[1] == 0;
+}
+
 void print_plot_ranges_etc (const GPT_SPEC *spec, FILE *fp)
 {
     const char *rstrs[] = {
-	"x", "y", "y2", "t", "x2"
+	"x", "y", "y2", "t", "x2", "cb"
     };
     int i;
 
     gretl_push_c_numeric_locale();
 
-    for (i=0; i<5; i++) {
+    for (i=0; i<6; i++) {
 	if (i < 3 && spec->logbase[i] > 0.0) {
 	    fprintf(fp, "set logscale %s %g\n", rstrs[i], spec->logbase[i]);
 	}
 	if (na(spec->range[i][0]) || na(spec->range[i][1]) ||
 	    spec->range[i][0] == spec->range[i][1]) {
 	    continue;
-	}
-	if ((i == GP_Y2_RANGE && !(spec->flags & GPT_Y2AXIS)) ||
+	} else if ((i == GP_Y2_RANGE && !(spec->flags & GPT_Y2AXIS)) ||
 	    (i == GP_T_RANGE && !(spec->flags & GPT_PARAMETRIC))) {
 	    continue;
-	}
+	} else if (i == GP_CB_RANGE && range_is_unset(spec, i)) {
+            continue;
+        }
 
 	fprintf(fp, "set %srange [%.10g:%.10g]\n", rstrs[i],
 		spec->range[i][0], spec->range[i][1]);

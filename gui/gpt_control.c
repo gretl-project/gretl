@@ -583,6 +583,11 @@ static void add_new_term_line (FILE *fp, GPT_SPEC *spec,
     }
 }
 
+static int is_plot_line (const char *s)
+{
+    return !strncmp(s, "plot", 4) || !strncmp(s, "splot", 5);
+}
+
 static void real_add_png_term_line (FILE *ftarg, FILE *fsrc,
                                     GPT_SPEC *spec)
 {
@@ -615,7 +620,7 @@ static void real_add_png_term_line (FILE *ftarg, FILE *fsrc,
         } else if (!strncmp(line, "set linetype", 12)) {
             /* line styles already present */
             add_line_styles = 0;
-        } else if (!strncmp(line, "plot", 4)) {
+        } else if (is_plot_line(line)) {
             break;
         }
     }
@@ -1901,15 +1906,17 @@ read_plotspec_range (const char *obj, const char *s, GPT_SPEC *spec)
     int i = 0, err = 0;
 
     if (!strcmp(obj, "xrange")) {
-        i = 0;
+        i = GP_X_RANGE;
     } else if (!strcmp(obj, "yrange")) {
-        i = 1;
+        i = GP_Y_RANGE;
     } else if (!strcmp(obj, "y2range")) {
-        i = 2;
+        i = GP_Y2_RANGE;
     } else if (!strcmp(obj, "trange")) {
-        i = 3;
+        i = GP_T_RANGE;
     } else if (!strcmp(obj, "x2range")) {
-        i = 4;
+        i = GP_X2_RANGE;
+    } else if (!strcmp(obj, "cbrange")) {
+        i = GP_CB_RANGE;
     } else {
         err = 1;
     }
@@ -2606,7 +2613,7 @@ static void get_plot_nobs (png_plot *plot,
             }
             nobs++;
         } else {
-            if (!strncmp(line, "plot", 4) || !strncmp(line, "splot", 5)) {
+            if (is_plot_line(line)) {
                 started = 0;
             }
             if (started == 0 && strchr(line, '\\') == NULL) {
@@ -2882,6 +2889,8 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 
     if (!strncmp(s, "plot ", 5)) {
         s += 5;
+    } else if (!strncmp(s, "splot ", 6)) {
+        s += 6;
     }
     s += strspn(s, " ");
 
@@ -2907,10 +2916,10 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
             spec->n_datacols += 2;
         }
     } else {
-        /* absence of "using" should mean that the line plots
-           a formula, not a set of data columns
+        /* Absence of "using" should mean that the line plots
+           a formula, not a set of data columns. So get the
+           formula: it runs up to "title" or "notitle".
         */
-        /* get the formula: it runs up to "title" or "notitle" */
         p = strstr(s, " title");
         if (p == NULL) {
             p = strstr(s, " notitle");
@@ -2937,6 +2946,9 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
     }
     if ((p = strstr(s, " w "))) {
         sscanf(p + 3, "%15[^, ]", tmp);
+        line->style = gp_style_index_from_name(tmp);
+    } else if ((p = strstr(s, " with "))) {
+        sscanf(p + 6, "%15[^, ]", tmp);
         line->style = gp_style_index_from_name(tmp);
     }
     if ((p = strstr(s, " lt "))) {
