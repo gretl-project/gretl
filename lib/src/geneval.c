@@ -8864,6 +8864,8 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
                 strcat(ret->v.str, l->v.str);
                 strcat(ret->v.str, r->v.str);
             }
+        } else if (f == HF_GPLABEL) {
+            ret->v.str = safe_gp_set_string(sl, sr);
         } else if (f == F_JSONGET) {
             char *(*jfunc) (const char *, const char *,
                             int *, int *) = NULL;
@@ -19603,7 +19605,10 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_STRSTR:
     case F_INSTRING:
-        if (l->t == STR && m->t == STR) {
+    case HF_GPLABEL:
+        if (l->t == STR && r->t == STR) {
+            ret = two_string_func(l, r, NULL, t->t, p);
+        } else if (l->t == STR && m->t == STR) {
             ret = two_string_func(l, m, r, t->t, p);
         } else {
             node_type_error(t->t, (l->t == STR)? 2 : 1,

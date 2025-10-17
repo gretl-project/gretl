@@ -3527,3 +3527,51 @@ char *gretl_change_case (const char *s, GretlCase c, int *err)
 
     return ret;
 }
+
+/* Build a string on the pattern "set <target> <string>" for use in a
+   gnuplot script; <target> is likely "title" or "label" of some
+   sort. The point of this function is that it handles cases where
+   <string> has embedded quotes, single or double. If it contains
+   single quotes we wrap it in double quotes, and if it contains
+   double-quotes we escape them.
+*/
+
+char *safe_gp_set_string (const char *target, const char *str)
+{
+    int quote = strchr(str, '\'') ? 2 : 1;
+    char *mod = NULL;
+    char *ret = NULL;
+    int retlen = 0;
+
+    if (quote == 1 || (quote == 2 && strchr(str, '"') == NULL)) {
+        retlen = 5 + strlen(target) + 1 + strlen(str) + 3;
+    } else {
+        const char *p = str;
+        int i, nq = 0;
+
+        while ((p = strchr(p, '"'))) {
+            nq++;
+            p++;
+        }
+        mod = calloc(strlen(str) + 1 + nq, 1);
+        p = str;
+        i = 0;
+        while (*p) {
+            if (*p == '"') mod[i++] = '\\';
+            mod[i++] = *p++;
+        }
+        retlen = 5 + strlen(target) + 1 + strlen(mod) + 3;
+    }
+
+    ret = calloc(retlen, 1);
+    if (quote == 1) {
+        sprintf(ret, "set %s '%s'", target, str);
+    } else if (mod == NULL) {
+        sprintf(ret, "set %s \"%s\"", target, str);
+    } else {
+        sprintf(ret, "set %s \"%s\"", target, mod);
+        free(mod);
+    }
+
+    return ret;
+}
