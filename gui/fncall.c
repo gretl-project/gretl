@@ -1807,6 +1807,7 @@ static GtkWidget *string_arg_selector (call_info *cinfo, int i)
     GtkWidget *entry;
 
     entry = gtk_entry_new();
+    widget_set_int(entry, "argnum", i);
     gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN-1);
     if (fn_param_automatic(cinfo->func, i)) {
         set_placeholder_text(entry, "automatic");
