@@ -512,7 +512,6 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 	    if (ret != NULL) {
 		if (eat_last) {
 		    /* consume trailing right paren */
-		    /* note: was parser_getc(p); */
 		    lex(p);
 		}
 		return ret;
