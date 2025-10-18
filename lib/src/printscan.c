@@ -231,7 +231,9 @@ static char *get_next_arg (const char *s, int *len, int *err)
 {
     const char *p;
     char *arg = NULL;
-    int par = 0, br = 0;
+    int par = 0;
+    int br = 0;
+    int cbr = 0;
     int quoted = 0;
     int n = 0;
 
@@ -253,8 +255,10 @@ static char *get_next_arg (const char *s, int *len, int *err)
 	    else if (*p == ')') par--;
 	    else if (*p == '[') br++;
 	    else if (*p == ']') br--;
+	    else if (*p == '{') cbr++;
+	    else if (*p == '}') cbr--;
 	}
-	if (!quoted && !par && !br && *p == ',') {
+	if (!quoted && !par && !br && !cbr && *p == ',') {
 	    break;
 	}
 	p++;
