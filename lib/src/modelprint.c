@@ -985,6 +985,7 @@ static const char *simple_estimator_string (int ci, PRN *prn)
     else if (ci == DPANEL) return N_("Dynamic panel");
     else if (ci == BIPROBIT) return N_("Bivariate probit");
     else if (ci == MIDASREG) return N_("MIDAS");
+    else if (ci == FOLS)  return N_("FOLS");
     else return "";
 }
 
@@ -1012,6 +1013,8 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	}
     } else if (POOLED_MODEL(pmod)) {
 	return N_("Pooled OLS");
+    } else if (pmod->ci == FOLS) {
+        return N_("Factorized OLS");
     } else if (pmod->ci == PANEL) {
 	if (pmod->opt & OPT_F) {
 	    return N_("Fixed-effects");
@@ -1917,6 +1920,15 @@ static const char *heckit_selvar_name (const MODEL *pmod,
     }
 }
 
+static const char *fols_factor_name (const MODEL *pmod,
+                                     const DATASET *dset)
+{
+    const int *list = pmod->list;
+    int fvar = list[list[0]];
+
+    return dset->varname[fvar];
+}
+
 static void print_intreg_depvar (const MODEL *pmod,
 				 const DATASET *dset,
 				 PRN *prn)
@@ -2315,6 +2327,20 @@ static void print_model_heading (const MODEL *pmod,
 	    }
 	    pprintf(prn, "%s: %s", _("Selection variable"),
 		    (tex)? vname : selvar);
+	    if (csv) pputc(prn, '"');
+	    pputc(prn, '\n');
+	}
+    } else if (pmod->ci == FOLS) {
+        const char *facvar = fols_factor_name(pmod, dset);
+        int nfvals = gretl_model_get_int(pmod, "nfvals");
+
+	if (facvar != NULL) {
+	    if (csv) pputc(prn, '"');
+	    if (tex) {
+		tex_escape(vname, facvar);
+	    }
+	    pprintf(prn, "%s: %s (with %d values)", _("Factor variable"),
+		    (tex)? vname : facvar, nfvals);
 	    if (csv) pputc(prn, '"');
 	    pputc(prn, '\n');
 	}
@@ -3212,6 +3238,8 @@ static void print_middle_table (MODEL *pmod, PRN *prn, int code)
 	} else if ((pmod->ci == PANEL || pmod->ci == LOGISTIC) &&
 		   (pmod->opt & OPT_F)) {
 	    teststr = g_strdup_printf(_("LSDV F(%d, %d)"), pmod->dfn, dfd);
+        } else if (pmod->ci == FOLS) {
+            teststr = g_strdup_printf(_("LSDV F(%d, %d)"), pmod->dfn, dfd);
 	} else {
 	    teststr = g_strdup_printf("F(%d, %d)", pmod->dfn, dfd);
 	}
@@ -3249,6 +3277,10 @@ static void print_middle_table (MODEL *pmod, PRN *prn, int code)
 	/* 22: panel, fixed effects */
 	key[K_RSQ] = (tex)? N_("LSDV $R^2$") : N_("LSDV R-squared");
 	key[K_R22] = (tex)? N_("Within $R^2$") : N_("Within R-squared");
+    } else if (pmod->ci == FOLS) {
+        /*factorized */
+	key[K_RSQ] = (tex)? N_("LSDV $R^2$") : N_("LSDV R-squared");
+	key[K_R22] = (tex)? N_("centered $R^2$") : N_("centered R-squared");
     }
 
     if (pmod->ci == DPANEL) {

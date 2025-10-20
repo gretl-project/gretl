@@ -63,6 +63,7 @@ typedef enum {
     EVAL,
     FCAST,
     FLUSH,
+    FOLS,
     FOREIGN,
     FRACTINT,
     FREQ, 
@@ -183,6 +184,7 @@ typedef enum {
                         c == CORRGM || \
                         c == CUSUM || \
                         c == FCAST || \
+                        c == FOLS || \
                         c == FREQ || \
                         c == PANSPEC || \
                         c == KPSS || \

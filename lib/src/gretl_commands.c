@@ -74,6 +74,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { EVAL,     "eval" },
     { FCAST,    "fcast" },
     { FLUSH,    "flush" },
+    { FOLS,     "fols" },
     { FOREIGN,  "foreign" },
     { FRACTINT, "fractint" },
     { FREQ,     "freq" },

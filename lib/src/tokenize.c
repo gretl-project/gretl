@@ -110,6 +110,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { EVAL,     "eval",     CI_EXPR },
     { FCAST,    "fcast",    CI_ADHOC },
     { FLUSH,    "flush",    CI_NOOPT },
+    { FOLS,     "fols",     CI_LIST },
     { FOREIGN,  "foreign",  CI_PARM1 | CI_BLOCK },
     { FRACTINT, "fractint", CI_LIST | CI_LLEN1 | CI_ORD2 },
     { FREQ,     "freq",     CI_LIST | CI_LLEN1 },

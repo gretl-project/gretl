@@ -99,7 +99,8 @@ enum {
     P_PUREBIN,
     P_BDSTEST,
     P_LPSOLVE,
-    P_STEPWISE
+    P_STEPWISE,
+    P_FOLS
 } plugin_codes;
 
 struct plugin_info {
@@ -165,7 +166,8 @@ struct plugin_info plugins[] = {
     { P_PUREBIN,         "purebin",         NULL },
     { P_BDSTEST,         "bdstest",         NULL },
     { P_LPSOLVE,         "lpsolve",         NULL },
-    { P_STEPWISE,        "stepwise",        NULL }
+    { P_STEPWISE,        "stepwise",        NULL },
+    { P_FOLS,            "fols",            NULL }
 };
 
 struct plugin_function_info plugin_functions[] = {
@@ -253,6 +255,7 @@ struct plugin_function_info plugin_functions[] = {
     { "reprobit_estimate", P_REPROBIT },
     { "stepwise_add",      P_STEPWISE },
     { "stepwise_omit",     P_STEPWISE },
+    { "fols_estimate",     P_FOLS },
 
     /* Dickey-Fuller test p-values */
     { "mackinnon_pvalue",  P_URCDIST },

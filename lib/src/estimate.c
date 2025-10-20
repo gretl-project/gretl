@@ -4009,7 +4009,7 @@ MODEL arch_model (const int *list, int order, DATASET *dset,
  * Estimate the model given in @list using the method of Least
  * Absolute Deviation (LAD).
  *
- * Returns: a #MODEL struct, containing the estimates.
+ * Returns: a #MODEL struct containing the estimates.
  */
 
 MODEL lad_model (const int *list, DATASET *dset, gretlopt opt)
@@ -4020,9 +4020,7 @@ MODEL lad_model (const int *list, DATASET *dset, gretlopt opt)
     /* run an initial OLS to "set the model up" and check for errors.
        the lad_driver function will overwrite the coefficients etc.
     */
-
     mod = lsq(list, dset, OLS, OPT_A);
-
     if (mod.errcode) {
         return mod;
     }
@@ -4038,6 +4036,64 @@ MODEL lad_model (const int *list, DATASET *dset, gretlopt opt)
     set_model_id(&mod, opt);
 
     return mod;
+}
+
+/**
+ * fols_model:
+ * @list: dependent variable plus list of regressors, plus factor.
+ * @dset: dataset struct.
+ * @opt: may include OPT_Q for quiet operation.
+ * @prn: gretl printing struct.
+ *
+ * Estimate the model given in @list using a factorized variant
+ * of OLS.
+ *
+ * Returns: a #MODEL struct containing the estimates.
+ */
+
+MODEL fols_model (const int *list, DATASET *dset,
+                  gretlopt opt, PRN *prn)
+{
+    MODEL model;
+    int (* fols_estimate) (MODEL *, int, const int *, int,
+                           DATASET *, gretlopt, PRN *);
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
+    int *xlist;
+    int yv, facv;
+    int err = 0;
+
+    /* FIXME some of this! */
+
+    gretl_error_clear();
+    gretl_model_init(&model, dset);
+
+    fols_estimate = get_plugin_function("fols_estimate");
+    if (fols_estimate == NULL) {
+        err = E_FOPEN;
+    } else {
+        err = list_adjust_sample(list, &dset->t1, &dset->t2, dset, NULL);
+    }
+
+    if (err) {
+        model.errcode = err;
+        return model;
+    }
+
+    model.list = gretl_list_copy(list);
+    xlist = gretl_list_copy(list);
+    gretl_list_purge_const(xlist, dset);
+    /* separate out depvar (first) and factor (last) */
+    yv = xlist[1];
+    gretl_list_delete_at_pos(xlist, 1);
+    facv = xlist[xlist[0]];
+    gretl_list_delete_at_pos(xlist, xlist[0]);
+    err = (*fols_estimate) (&model, yv, xlist, facv, dset, opt, prn);
+
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
+
+    return model;
 }
 
 /**

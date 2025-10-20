@@ -35,6 +35,9 @@ MODEL ar1_model (const int *list, DATASET *dset,
 
 MODEL lad_model (const int *list, DATASET *dset, gretlopt opt);
 
+MODEL fols_model (const int *list, DATASET *dset,
+                  gretlopt opt, PRN *prn);
+
 MODEL quantreg (const gretl_matrix *tau, const int *list, 
 		DATASET *dset, gretlopt opt, PRN *prn);
 

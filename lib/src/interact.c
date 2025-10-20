@@ -3896,6 +3896,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case DURATION:
     case BIPROBIT:
     case MIDASREG:
+    case FOLS:
         clear_model(model);
         if (cmd->ci == LOGIT || cmd->ci == PROBIT) {
             *model = logit_probit(cmd->list, dset, cmd->ci, cmd->opt, prn);
@@ -3929,6 +3930,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
             *model = biprobit_model(cmd->list, dset, cmd->opt, prn);
         } else if (cmd->ci == MIDASREG) {
             *model = midas_model(cmd->list, cmd->param, dset, cmd->opt, prn);
+        } else if (cmd->ci == FOLS) {
+            *model = fols_model(cmd->list, dset, cmd->opt, prn);
         } else {
             /* can't happen */
             err = 1;
