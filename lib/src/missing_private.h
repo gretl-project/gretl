@@ -30,8 +30,8 @@ int apply_reference_missmask (MODEL *pmod);
 
 int reference_missmask_present (void);
 
-int model_adjust_sample (MODEL *pmod, int n, const double **Z, 
-			 int *misst);
+int model_adjust_sample (MODEL *pmod, const DATASET *dset,
+                         int *misst);
 
 char *model_sample_mask (const MODEL *pmod);
 

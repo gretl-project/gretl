@@ -552,17 +552,13 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opt, DATASET *dset,
 
     if (reject_missing) {
 	/* reject missing obs within adjusted sample */
-	missv = model_adjust_sample(pmod, dset->n,
-				    (const double **) dset->Z,
-				    misst);
+	missv = model_adjust_sample(pmod, dset, misst);
 	if (reject_missing == 2) {
 	    gretl_errmsg_append(_("HAC standard errors not available"), 0);
 	}
     } else {
 	/* we'll try to work around missing obs */
-	missv = model_adjust_sample(pmod, dset->n,
-				    (const double **) dset->Z,
-				    NULL);
+	missv = model_adjust_sample(pmod, dset, NULL);
     }
 
 #if SMPL_DEBUG
@@ -4057,30 +4053,33 @@ MODEL fols_model (const int *list, DATASET *dset,
     MODEL model;
     int (* fols_estimate) (MODEL *, int, const int *, int,
                            DATASET *, gretlopt, PRN *);
-    int save_t1 = dset->t1;
-    int save_t2 = dset->t2;
     int *xlist;
     int yv, facv;
     int err = 0;
 
-    /* FIXME some of this! */
-
     gretl_error_clear();
     gretl_model_init(&model, dset);
+    model.t1 = dset->t1;
+    model.t2 = dset->t2;
+    model.full_n = dset->n;
 
     fols_estimate = get_plugin_function("fols_estimate");
     if (fols_estimate == NULL) {
         err = E_FOPEN;
     } else {
-        err = list_adjust_sample(list, &dset->t1, &dset->t2, dset, NULL);
+        model.list = gretl_list_copy(list);
+        err = model_adjust_sample(&model, dset, NULL);
     }
-
     if (err) {
         model.errcode = err;
         return model;
     }
 
-    model.list = gretl_list_copy(list);
+    model.nobs = model.t2 - model.t1 + 1;
+    if (model.missmask != NULL) {
+        model.nobs -= model_missval_count(&model);
+    }
+
     xlist = gretl_list_copy(list);
     gretl_list_purge_const(xlist, dset);
     /* separate out depvar (first) and factor (last) */
@@ -4089,9 +4088,6 @@ MODEL fols_model (const int *list, DATASET *dset,
     facv = xlist[xlist[0]];
     gretl_list_delete_at_pos(xlist, xlist[0]);
     err = (*fols_estimate) (&model, yv, xlist, facv, dset, opt, prn);
-
-    dset->t1 = save_t1;
-    dset->t2 = save_t2;
 
     return model;
 }

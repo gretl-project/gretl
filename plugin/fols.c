@@ -17,13 +17,13 @@
  *
  */
 
-/*  Apparatus for factorized variant of OLS */
+/* Apparatus for factorized variant of OLS */
 
 #include "libgretl.h"
 #include "matrix_extra.h"
 #include "version.h"
 
-static void add_ols_stuff (MODEL *pmod,
+static void add_ols_stats (MODEL *pmod,
                            gretl_matrix *y,
                            gretl_matrix *b,
                            gretl_matrix *u,
@@ -31,10 +31,11 @@ static void add_ols_stuff (MODEL *pmod,
                            int T, int k,
                            int nfac)
 {
+    const char *mask;
     double cybar = 0.0;
     double ctss = 0.0;
     double d, s2;
-    int t, s;
+    int j, t, s;
 
     pmod->ci = FOLS;
     pmod->dfn = k + nfac - 1;
@@ -45,14 +46,17 @@ static void add_ols_stuff (MODEL *pmod,
     pmod->coeff = b->val;
     b->val = NULL; /* donated */
 
+    mask = pmod->missmask;
     pmod->ess = 0.0;
-    s = pmod->t1;
-    for (t=0; t<T; t++) {
-        pmod->ess += u->val[t] * u->val[t];
-        pmod->uhat[s] = u->val[t];
-        pmod->yhat[s] = y->val[t] - u->val[t];
-        cybar += y->val[t];
-        s++;
+    s = 0;
+    for (t=pmod->t1, j=0; t<=pmod->t2; t++, j++) {
+        if (mask == NULL || mask[j] == '0') {
+            pmod->ess += u->val[s] * u->val[s];
+            pmod->uhat[t] = u->val[s];
+            pmod->yhat[t] = y->val[s] - u->val[s];
+            cybar += y->val[s];
+            s++;
+        }
     }
     cybar /= T;
     for (t=0; t<T; t++) {
@@ -60,7 +64,6 @@ static void add_ols_stuff (MODEL *pmod,
         ctss += d * d;
     }
 
-    /* rsq, fstt */
     pmod->rsq = (1 - (pmod->ess / pmod->tss));
     pmod->adjrsq = (1 - (pmod->ess / ctss));
     pmod->fstt = pmod->dfd * (pmod->tss - pmod->ess) / (pmod->dfn * pmod->ess);
@@ -71,38 +74,37 @@ static void add_ols_stuff (MODEL *pmod,
     gretl_model_write_vcv(pmod, V);
 }
 
+/* dep. variable stats based on the original, uncentered data */
+
 static void add_depvar_stats (MODEL *pmod, int yv, DATASET *dset)
 {
+    const char *mask = pmod->missmask;
     const double *y = dset->Z[yv];
     double d;
-    int t;
+    int j, t;
 
     pmod->ybar = 0.0;
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-        pmod->ybar += y[t];
+    for (t=pmod->t1, j=0; t<=pmod->t2; t++, j++) {
+        if (mask == NULL || mask[j] == '0') {
+            pmod->ybar += y[t];
+        }
     }
     pmod->ybar /= pmod->nobs;
 
     pmod->tss = 0.0;
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-        d = y[t] - pmod->ybar;
-        pmod->tss += d * d;
+    for (t=pmod->t1, j=0; t<=pmod->t2; t++, j++) {
+        if (mask == NULL || mask[j] == '0') {
+            d = y[t] - pmod->ybar;
+            pmod->tss += d * d;
+        }
     }
     pmod->sdy = sqrt(pmod->tss / (pmod->nobs - 1));
-}
-
-static void fols_basics (MODEL *pmod, int yv, DATASET *dset)
-{
-    pmod->t1 = dset->t1;
-    pmod->t2 = dset->t2;
-    pmod->nobs = sample_size(dset);
-    pmod->full_n = dset->n;
-    add_depvar_stats(pmod, yv, dset);
 }
 
 int fols_estimate (MODEL *pmod, int yv, int *xlist, int facv,
                    DATASET *dset, gretlopt opt, PRN *prn)
 {
+    gretl_matrix *fvec = NULL;
     gretl_matrix *fvals = NULL;
     gretl_matrix *y = NULL;
     gretl_matrix *X = NULL;
@@ -111,30 +113,63 @@ int fols_estimate (MODEL *pmod, int yv, int *xlist, int facv,
     gretl_matrix *V = NULL;
     const double *fac;
     double *means = NULL;
+    const char *mask;
     int *njs = NULL;
     double x, fvi;
-    int i, j, t, k, T;
+    int i, j, s, t, k, T;
     int nfvals;
     int err = 0;
 
-    T = sample_size(dset);
+    T = pmod->nobs;
     pmod->ncoeff = k = xlist[0];
-    fols_basics(pmod, yv, dset);
 
+    mask = pmod->missmask;
+    fac = dset->Z[facv] + pmod->t1;
+
+    add_depvar_stats(pmod, yv, dset);
+
+    /* allocate storage */
     means = malloc((k+1) * sizeof *means);
     njs = malloc((k+1) * sizeof *njs);
-    if (means == NULL || njs == NULL) {
+    y = gretl_matrix_alloc(T, 1);
+    X = gretl_matrix_alloc(T, k);
+
+    if (means == NULL || njs == NULL || y == NULL || X == NULL) {
         err = E_ALLOC;
         goto bailout;
     }
 
-    fac = dset->Z[facv] + dset->t1;
-    fvals = gretl_matrix_values(fac, T, OPT_S, &err);
-    if (!err) {
-        y = gretl_vector_from_series(dset->Z[yv], dset->t1, dset->t2);
-        X = gretl_matrix_data_subset(xlist, dset, dset->t1, dset->t2,
-                                     M_MISSING_ERROR, &err);
+    if (mask != NULL) {
+        /* we have to work around NAs */
+        double xit;
+
+        fvec = gretl_matrix_alloc(T, 1);
+        s = 0;
+        for (t=pmod->t1, j=0; t<=pmod->t2; t++, j++) {
+            if (mask[j] == '0') {
+                fvec->val[s] = fac[t];
+                y->val[s] = dset->Z[yv][t];
+                for (i=0; i<k; i++) {
+                    xit = dset->Z[xlist[i+1]][t];
+                    gretl_matrix_set(X, s, i, xit);
+                }
+                s++;
+            }
+        }
+        fac = fvec->val;
+    } else {
+        /* no internal NAs */
+        size_t sz = T * sizeof(double);
+        double *Xval = X->val;
+
+        memcpy(y->val, dset->Z[yv] + pmod->t1, sz);
+        for (i=1; i<=k; i++) {
+            memcpy(Xval, dset->Z[xlist[i]] + pmod->t1, sz);
+            Xval += T;
+        }
     }
+
+    fvals = gretl_matrix_values(fac, T, OPT_S, &err);
     if (err) {
         goto bailout;
     }
@@ -182,13 +217,14 @@ int fols_estimate (MODEL *pmod, int yv, int *xlist, int facv,
     V = gretl_matrix_alloc(k, k);
     err = gretl_matrix_ols(y, X, b, V, u, NULL);
     if (!err) {
-        add_ols_stuff(pmod, y, b, u, V, T, k, nfvals);
+        add_ols_stats(pmod, y, b, u, V, T, k, nfvals);
     }
 
  bailout:
 
     gretl_matrix_free(y);
     gretl_matrix_free(X);
+    gretl_matrix_free(fvec);
     gretl_matrix_free(fvals);
     gretl_matrix_free(u);
     gretl_matrix_free(V);
