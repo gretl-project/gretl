@@ -23,19 +23,20 @@
 #include "matrix_extra.h"
 #include "version.h"
 
-static void add_ols_stats (MODEL *pmod,
-                           gretl_matrix *y,
-                           gretl_matrix *b,
-                           gretl_matrix *u,
-                           gretl_matrix *V,
-                           int T, int k,
-                           int nfac)
+static int add_ols_stats (MODEL *pmod,
+                          gretl_matrix *y,
+                          gretl_matrix *b,
+                          gretl_matrix *u,
+                          gretl_matrix *V,
+                          int T, int k,
+                          int nfac)
 {
     const char *mask;
     double cybar = 0.0;
     double ctss = 0.0;
     double d, s2;
     int j, t, s;
+    int err = 0;
 
     pmod->ci = FOLS;
     pmod->dfn = k + nfac - 1;
@@ -71,7 +72,9 @@ static void add_ols_stats (MODEL *pmod,
     s2 = pmod->ess / pmod->dfd;
     pmod->sigma = sqrt(s2);
     gretl_matrix_multiply_by_scalar(V, s2);
-    gretl_model_write_vcv(pmod, V);
+    err = gretl_model_write_vcv(pmod, V);
+
+    return err;
 }
 
 /* dep. variable stats based on the original, uncentered data */
