@@ -12932,13 +12932,13 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     if (use_lapack) {
-	err = gretl_cholesky_decomp_solve(XTX, b);
-	if (err) {
-	    try_QR = 1;
-	}
 	if (vcv != NULL) {
 	    /* we'll want this even if we switch to QR */
 	    gretl_matrix_copy_values(vcv, XTX);
+	}
+	err = gretl_cholesky_decomp_solve(XTX, b);
+	if (err) {
+	    try_QR = 1;
 	}
     } else {
         if (vcv != NULL) {

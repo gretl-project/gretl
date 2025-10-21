@@ -2695,7 +2695,11 @@ static double vcv_get_se (double vii, int restricted)
 	vii = fabs(vii) < 1.0e-17 ? 0.0 : vii;
     }
 
-    return (na(vii) || vii < 0)? NADBL : sqrt(vii);
+    if (na(vii) || vii < 0) {
+        return NADBL;
+    } else {
+        return sqrt(vii);
+    }
 }
 
 /**
