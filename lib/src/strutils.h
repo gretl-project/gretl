@@ -242,6 +242,4 @@ GretlCase gretl_case_from_string (const char *s);
 
 char *gretl_change_case (const char *s, GretlCase c, int *err);
 
-char *safe_gp_set_string (const char *target, const char *str);
-
 #endif /* STRUTILS_H */

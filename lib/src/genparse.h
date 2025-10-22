@@ -398,7 +398,6 @@ enum {
     F_NULLSPC,
     HF_VCNORM,
     HF_GLASSO,
-    HF_GPLABEL,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,
     F_WVAR,
