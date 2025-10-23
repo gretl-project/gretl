@@ -877,11 +877,7 @@ static int win32_lib_run_other_sync (gretlopt opt, PRN *prn)
         cmd = g_strdup_printf("\"%s\" \"%s\"", exe, fname);
     } else if (foreign_lang == LANG_JULIA) {
         exe = gretl_julia_path();
-        if (opt & OPT_N) {
-            cmd = g_strdup_printf("\"%s\" --compile=no \"%s\"", exe, fname);
-        } else {
-            cmd = g_strdup_printf("\"%s\" \"%s\"", exe, fname);
-        }
+        cmd = g_strdup_printf("\"%s\" \"%s\"", exe, fname);
     } else {
         return 1;
     }
@@ -974,14 +970,8 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
         argv[2] = NULL;
     } else if (foreign_lang == LANG_JULIA) {
         argv[0] = (char *) gretl_julia_path();
-        if (opt & OPT_N) {
-            argv[1] = "--compile=no";
-            argv[2] = scriptpath;
-            argv[3] = NULL;
-        } else {
-            argv[1] = scriptpath;
-            argv[2] = NULL;
-        }
+        argv[1] = scriptpath;
+        argv[2] = NULL;
     } else if (foreign_lang == LANG_STATA) {
         argv[0] = (char *) gretl_stata_path();
         argv[1] = "-q";
