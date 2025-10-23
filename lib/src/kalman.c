@@ -51,9 +51,8 @@ typedef enum {
     KALMAN_FORWARD = 1 << 2,  /* running forward filtering pass */
     KALMAN_SIM     = 1 << 3,  /* running simulation */
     KALMAN_CHECK   = 1 << 4,  /* checking user-defined matrices */
-    KALMAN_SSFSIM  = 1 << 5,  /* on simulation, emulate SsfPack */
-    KALMAN_ARMA_LL = 1 << 6,  /* filtering for ARMA estimation */
-    KALMAN_EXTRA   = 1 << 7   /* recording extra info (att, Ptt) */
+    KALMAN_ARMA_LL = 1 << 5,  /* filtering for ARMA estimation */
+    KALMAN_EXTRA   = 1 << 6   /* recording extra info (att, Ptt) */
 } K_flags;
 
 /* How exactly are the disturbance variances represented? */
@@ -74,7 +73,7 @@ typedef enum {
 typedef enum {
     K_LEGACY, /* legacy Kalman code */
     K_SEQUEN, /* sequential, a la KFAS */
-    K_DEJONG  /* de Jong and Lin apporach */
+    K_DEJONG  /* de Jong and Lin approach */
 } K_code_type;
 
 typedef struct stepinfo_ stepinfo;
@@ -132,6 +131,7 @@ struct kalman_ {
     K_code_type code;    /* algorithms used: K_LEGACY, K_SEQUEN or K_DEJONG */
     K_smo_type smo_prep; /* preparing for smoothing (of type)? */
     int exact;           /* using an exact initial diffuse method? */
+    int user_code;       /* code selected by user (sequential or dejong) */
 
     int r;   /* rows of a = number of elements in state */
     int n;   /* columns of y = number of observables */
@@ -253,7 +253,6 @@ enum {
 #define kalman_is_running(K)  (K->flags & KALMAN_FORWARD)
 #define kalman_simulating(K)  (K->flags & KALMAN_SIM)
 #define kalman_checking(K)    (K->flags & KALMAN_CHECK)
-#define kalman_ssfsim(K)      (K->flags & KALMAN_SSFSIM)
 #define kalman_diffuse(K)     ((K->flags & KALMAN_DIFFUSE)? 1 : 0)
 #define kalman_arma_ll(K)     (K->flags & KALMAN_ARMA_LL)
 #define kalman_extra(K)       (K->flags & KALMAN_EXTRA)
@@ -500,6 +499,7 @@ static kalman *kalman_new_empty (int flags)
 
     if (K != NULL) {
         K->exact = 0;
+        K->user_code = K_LEGACY;
 	K->code = K_LEGACY;
         K->vartype = STD_VAR;
         K->aini = K->Pini = NULL;
@@ -2374,7 +2374,8 @@ static int kalman_filter (kalman *K, PRN *prn, int *errp)
         *errp = err;
     } else {
         /* we'll flag E_NAN with a return value of 1 but
-           won't count it as a 'true' error */
+           won't count it as a 'true' error
+        */
         *errp = 0;
     }
 
@@ -2391,6 +2392,7 @@ int kalman_bundle_filter (gretl_bundle *b, PRN *prn, int *errp)
         printf("kalman_bundle_filter()\n");
     }
 
+    K->code = K->user_code;
     K->b = b; /* attach bundle pointer */
 
     return kalman_filter(K, prn, errp);
@@ -2890,112 +2892,6 @@ gretl_matrix *kalman_smooth (kalman *K, gretlopt opt,
     return S;
 }
 
-static gretl_matrix *extract_Q (kalman *K,
-                                const gretl_matrix *Sim0)
-{
-    gretl_matrix *Q;
-    double x;
-    int i, j;
-
-    Q = gretl_matrix_alloc(K->r, K->r);
-
-    if (Q != NULL) {
-        for (i=0; i<K->r; i++) {
-            for (j=0; j<K->r; j++) {
-                x = gretl_matrix_get(Sim0, i, j);
-                gretl_matrix_set(Q, i, j, x);
-            }
-        }
-    }
-
-    return Q;
-}
-
-/* See the account in Koopman, Shephard and Doornik, Econometrics
-   Journal, 1999 (volume 2, pp. 113-166), section 4.2, regarding the
-   initialization of the state under simulation.
-*/
-
-static int sim_state_0 (kalman *K, const gretl_matrix *U,
-                        const gretl_matrix *Sim0)
-{
-    gretl_matrix *Q, *v0 = NULL, *bv = NULL;
-    int getroot = 1;
-    int i, err = 0;
-
-    if (!kalman_ssfsim(K)) {
-        if (Sim0 != NULL) {
-            /* Sim0 contains the state for t = 1 */
-            err = gretl_matrix_copy_values(K->a0, Sim0);
-        }
-        /* error or not, we're done */
-        return err;
-    }
-
-    /* now we're in the "ssfsim" case, emulating ssfpack */
-
-    if (Sim0 != NULL) {
-        /* Sim0 contains state variance factor
-           plus the state for t = 0
-        */
-        Q = extract_Q(K, Sim0);
-        getroot = 0;
-    } else {
-        Q = gretl_matrix_copy(K->P0);
-    }
-
-    if (Q == NULL) {
-        err = E_ALLOC;
-    } else if (getroot) {
-        err = gretl_matrix_psd_root(Q, 0);
-    }
-
-    if (!err) {
-        int vlen = K->p > 0 ? K->p : K->r;
-
-        v0 = gretl_matrix_alloc(vlen, 1);
-        if (v0 == NULL) {
-            err = E_ALLOC;
-        }
-    }
-
-    if (K->p > 0) {
-        bv = gretl_matrix_alloc(K->r, 1);
-        if (bv == NULL) {
-            err = E_ALLOC;
-        }
-    }
-
-    if (!err && Sim0 != NULL) {
-        /* set a0 from last row of Sim0 */
-        for (i=0; i<K->r; i++) {
-            K->a0->val[i] = gretl_matrix_get(Sim0, K->r, i);
-        }
-    }
-
-    if (!err) {
-        /* handle the t = 0 disturbance */
-        load_from_row(v0, U, 0);
-        if (K->p > 0) {
-            /* cross-correlated */
-            gretl_matrix_multiply(K->H, v0, bv);
-            gretl_matrix_multiply_mod(Q, GRETL_MOD_NONE,
-                                      bv, GRETL_MOD_NONE,
-                                      K->a0, GRETL_MOD_CUMULATE);
-        } else {
-            gretl_matrix_multiply_mod(Q, GRETL_MOD_NONE,
-                                      v0, GRETL_MOD_NONE,
-                                      K->a0, GRETL_MOD_CUMULATE);
-        }
-    }
-
-    gretl_matrix_free(Q);
-    gretl_matrix_free(v0);
-    gretl_matrix_free(bv);
-
-    return err;
-}
-
 /* note: it's OK for @S to be NULL (if the simulated state is not
    wanted), so watch out for that!
 */
@@ -3007,11 +2903,20 @@ static int kalman_simulate (kalman *K,
                             gretl_matrix *S,
                             PRN *prn)
 {
-    gretl_matrix *yt, *et = NULL;
+    gretl_matrix *yt = NULL;
+    gretl_matrix *et = NULL;
     int obs_offset = 0;
     int obsdist = 0;
     int tmin = 0;
     int err = 0;
+
+    if (Sim0 != NULL) {
+        /* Sim0 contains the state for t = 1 */
+        err = gretl_matrix_copy_values(K->a0, Sim0);
+        if (err) {
+            return err;
+        }
+    }
 
     yt = gretl_zero_matrix_new(K->n, 1);
     if (yt == NULL) {
@@ -3030,17 +2935,6 @@ static int kalman_simulate (kalman *K,
         /* combined (state, obs) in @Y */
         S = Y;
         obs_offset = K->r;
-    }
-
-    err = sim_state_0(K, U, Sim0);
-
-    if (!err && kalman_ssfsim(K)) {
-        if (S != NULL) {
-            record_to_row_offset(S, K->a0, 0, 0);
-        }
-        record_to_row_offset(Y, yt, 0, obs_offset);
-        /* the first row of output is handled */
-        tmin = 1;
     }
 
     if (K->p == 0 && K->VY != NULL) {
@@ -3114,7 +3008,6 @@ static int check_simul_inputs (kalman *K,
                                const gretl_matrix *U,
                                const gretl_matrix *Sim0,
                                const gretl_matrix *SimX,
-                               int ssfsim,
                                PRN *prn)
 {
     int err = 0;
@@ -3139,12 +3032,9 @@ static int check_simul_inputs (kalman *K,
     }
 
     if (!err && Sim0 != NULL) {
-        int r = ssfsim ? K->r + 1 : K->r;
-        int c = ssfsim ? K->r : 1;
-
-        if (Sim0->rows != r || Sim0->cols != c) {
+        if (Sim0->rows != K->r || Sim0->cols != 1) {
             pprintf(prn, _("simstart should be %d x %d, is %d x %d\n"),
-                    r, c, Sim0->rows, Sim0->cols);
+                    K->r, 1, Sim0->rows, Sim0->cols);
         }
     }
 
@@ -3172,8 +3062,6 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
     const gretl_matrix *SimX = NULL;
     gretl_matrix *Ret = NULL;
     gretl_matrix *savex = NULL;
-    double ssfx;
-    int ssfsim = 0;
     int saveN;
 
     if (K == NULL) {
@@ -3183,14 +3071,11 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 
     /* try accessing auxiliary info from the bundle */
     Sim0 = gretl_bundle_get_matrix(b, "simstart", NULL);
-    ssfx = gretl_bundle_get_scalar(b, "ssfsim", NULL);
     if (K->x != NULL) {
         SimX = gretl_bundle_get_matrix(b, "simx", NULL);
     }
 
-    ssfsim = !na(ssfx) && ssfx != 0;
-
-    *err = check_simul_inputs(K, U, Sim0, SimX, ssfsim, prn);
+    *err = check_simul_inputs(K, U, Sim0, SimX, prn);
     if (*err) {
         return NULL;
     }
@@ -3209,11 +3094,7 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
     }
 
     /* set state */
-    if (ssfsim) {
-        K->flags |= (KALMAN_SIM | KALMAN_SSFSIM);
-    } else {
-        K->flags |= KALMAN_SIM;
-    }
+    K->flags |= KALMAN_SIM;
 
     /* now, are the other needed matrices in place? */
     *err = kalman_bundle_recheck_matrices(K, prn);
@@ -3240,7 +3121,6 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 
     /* restore state */
     K->flags &= ~KALMAN_SIM;
-    K->flags &= ~KALMAN_SSFSIM;
     K->N = saveN;
     K->x = savex;
 
@@ -3662,6 +3542,7 @@ enum {
     Ks_CROSS,
     Ks_DKVAR,
     Ks_SEQ,
+    Ks_DEJ,
     Ks_S2,
     Ks_LNL,
     Ks_r,
@@ -3669,8 +3550,7 @@ enum {
     Ks_N,
     Ks_p,
     Ks_d,
-    Ks_j,
-    Ks_extra
+    Ks_j
 };
 
 static const char *kalman_output_scalar_names[K_N_SCALARS] = {
@@ -3680,6 +3560,7 @@ static const char *kalman_output_scalar_names[K_N_SCALARS] = {
     "cross",
     "dkvar",
     "sequential",
+    "dejong",
     "s2",
     "lnl",
     "r",
@@ -3687,8 +3568,7 @@ static const char *kalman_output_scalar_names[K_N_SCALARS] = {
     "N",
     "p",
     "d",
-    "j",
-    "extra"
+    "j"
 };
 
 static double *kalman_output_scalar (kalman *K,
@@ -3723,7 +3603,7 @@ static double *kalman_output_scalar (kalman *K,
         }
         break;
     case Ks_DIFFUSE:
-        retval[idx] = (K->flags & KALMAN_DIFFUSE)? 1 : 0;
+        retval[idx] = kalman_diffuse(K) + K->exact;
         break;
     case Ks_EXACT:
         retval[idx] = K->exact;
@@ -3735,7 +3615,10 @@ static double *kalman_output_scalar (kalman *K,
         retval[idx] = (K->vartype == DK_VAR);
         break;
     case Ks_SEQ:
-        retval[idx] = (K->code == K_SEQUEN)? 1 : 0;
+        retval[idx] = kalman_sequential(K);
+        break;
+    case Ks_DEJ:
+        retval[idx] = kalman_dejong(K);
         break;
     case Ks_S2:
         retval[idx] = K->s2;
@@ -3760,9 +3643,6 @@ static double *kalman_output_scalar (kalman *K,
         break;
     case Ks_j:
         retval[idx] = K->j;
-        break;
-    case Ks_extra:
-        retval[idx] = (K->flags & KALMAN_EXTRA)? 1 : 0;
         break;
     default:
         break;
@@ -3827,12 +3707,7 @@ static int input_matrix_slot (const char *s)
 
 static GretlType kalman_extra_type (const char *key)
 {
-    if (!strcmp(key, "ssfsim")) {
-        /* for SsfPack comparison: not documented */
-        return GRETL_TYPE_DOUBLE;
-    } else if (!strcmp(key, "simstart") ||
-               !strcmp(key, "simx")) {
-        /* documented */
+    if (!strcmp(key, "simstart") || !strcmp(key, "simx")) {
         return GRETL_TYPE_MATRIX;
     } else {
         return GRETL_TYPE_NONE;
@@ -3887,16 +3762,16 @@ static int kalman_set_code (kalman *K, int code, int s)
         gretl_errmsg_set(_("kalman: the 'sequential' setting is not compatible with\n"
                          "cross-correlated disturbances"));
         return E_INVARG;
-    } else if (s && (code != K->code)) {
+    } else if (s && (code != K->user_code)) {
         /* select the specified optional code */
-        K->code = code;
-    } else if (!s && (code == K->code)) {
+        K->user_code = code;
+    } else if (!s && (code == K->user_code)) {
         /* deselect the specified optional code */
-        K->code = K_LEGACY;
+        K->user_code = K_LEGACY;
     }
 
     /* is this clause actually in the right place? */
-    if (K->code == K_SEQUEN && kalman_diffuse(K) && K->Pk0 == NULL) {
+    if (K->user_code == K_SEQUEN && kalman_diffuse(K) && K->Pk0 == NULL) {
         K->Pk0 = gretl_identity_matrix_new(K->r);
         if (K->Pk0 == NULL) {
             return E_ALLOC;
@@ -3944,7 +3819,7 @@ int maybe_set_kalman_element (void *kptr,
 		key, gretl_type_get_name(vtype));
     }
 
-    /* Check for optional "extra" kalman items that
+    /* Check for optional "extra" kalman matrices that
        live outside of the kalman struct itself.
     */
     targtype = kalman_extra_type(key);
@@ -3956,16 +3831,14 @@ int maybe_set_kalman_element (void *kptr,
     }
 
     if (!strcmp(key, "diffuse") || !strcmp(key, "sequential") ||
-        !strcmp(key, "univariate") || !strcmp(key, "dejong") ||
-        !strcmp(key, "extra")) {
+        !strcmp(key, "dejong") || !strcmp(key, "extra")) {
         /* scalar config settings */
         if (vtype == GRETL_TYPE_DOUBLE) {
             double v = *(double *) vptr;
 
             if (!strcmp(key, "diffuse")) {
                 *err = kalman_set_diffuse(K, (int) v);
-            } else if (!strcmp(key, "sequential") ||
-                       !strcmp(key, "univariate")) {
+            } else if (!strcmp(key, "sequential")) {
                 *err = kalman_set_code(K, K_SEQUEN, (int) v);
 	    } else if (!strcmp(key, "dejong")) {
 		*err = kalman_set_code(K, K_DEJONG, (int) v);
