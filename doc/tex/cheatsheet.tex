@@ -936,7 +936,8 @@ defined by the two series \texttt{top} and \texttt{bot}. Here we go:
 # create series for mid-point and deviation
 series mid = (top + bot)/2
 series dev = top - mid
-gnuplot x --band=mid,dev --time-series --with-lines --output=display
+bundle asym = _(center="mid", width="dev")
+gnuplot x --band=asym --time-series --with-lines --output=display
 \end{code}
 
 \subsection{Cross-validation}
