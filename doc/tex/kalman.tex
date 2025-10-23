@@ -1277,8 +1277,8 @@ end mle
 ksmooth(&B)
 series tvar_b1hat = B.state[,1]
 series tvar_b1se = sqrt(B.stvar[,1])
-gnuplot tvar_b1hat --time-series --with-lines --output=display \
-    --band=tvar_b1hat,tvar_b1se,1.96 --band-style=fill
+bundle bd = _(center="tvar_b1hat", width="tvar_b1se", factor=1.96, style="fill")
+gnuplot tvar_b1hat --time-series --band=bd --with-lines --output=display
 \end{scode}
 \end{script}
 
