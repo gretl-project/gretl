@@ -13,10 +13,7 @@ function library.'' \app{Julia} is well known for being very fast;
 however, you should be aware that by default starting \app{Julia}
 takes some time due to Just-in-Time compilation of the input. This
 fixed cost is well worth bearing if you are asking \app{Julia} to
-perform a big computation, but small jobs are likely to run faster if
-you use the (\app{Julia}-specific) \option{no-compile} option with the
-\texttt{foreign} command.\footnote{Caveat: it seems that this option
-  is not supported by all builds of \app{Julia}.}
+perform a big computation.
 
 \section{Julia support in gretl}
 \label{sec:Julia-support}
@@ -64,15 +61,15 @@ with Julia from a gretl script.
 set verbose off
 
 matrix A = mnormal(4,4)                # generate a random matrix
-mwrite(A, "A", 1)                      # and save it to a file
+mwrite(A, "A.bin", 1)                  # and save it to a file
 
 foreign language=julia                 # call Julia
     print("Hi from Julia!\n");         # output a string
-    A = gretl_loadmat("A");            # grab the matrix from gretl
-    gretl_export(inv(A), "iA.mat");    # and save its inverse
+    A = gretl_loadmat("A.bin");        # grab the matrix from gretl
+    gretl_export(inv(A), "iA.bin");    # and save its inverse
 end foreign                            # go back to gretl
 
-matrix iA = mread("iA.mat", 1)         # read the inverse from Julia
+matrix iA = mread("iA.bin", 1)         # read the inverse from Julia
 matrix check = A * iA                  # compute the product
 print check                            # print out the check (should be I)
 \end{scode}
@@ -88,15 +85,6 @@ check (4 x 4)
  -4.4409e-16  -1.3878e-17  -1.1102e-16       1.0000 
 \end{outbit}
 \end{script}
-
-Since this is a very small job JIT compilation is not worthwhile; in
-our testing the script runs almost 4 times faster if the \app{Julia}
-block is opened with
-\begin{code}
-foreign language=julia --no-compile
-\end{code}
-This has the effect of passing the option \option{compile=no} to the
-\app{Julia} executable.
 
 %%% Local Variables: 
 %%% mode: latex
