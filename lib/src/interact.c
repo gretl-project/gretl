@@ -78,12 +78,14 @@
 #define ends_ccmt(p)    (*p == '*' && *(p+1) == '/')
 
 static int install_package (const char *pkgname,
-			    gretlopt opt,
-			    ExecState *s,
+			    ExecState *state,
+                            gretlopt opt,
 			    PRN *prn);
 
-static int run_script (const char *fname, ExecState *s,
-                       DATASET *dset, gretlopt opt,
+static int run_script (const char *fname,
+                       ExecState *state,
+                       DATASET *dset,
+                       gretlopt opt,
                        PRN *prn);
 
 static int strip_inline_comments (char *s)
@@ -1410,7 +1412,7 @@ static void query_package (const char *pkgname,
 static int lib_run_pkg_sample (const char *pkgname,
 			       char *runfile,
 			       DATASET *dset,
-			       ExecState *s,
+			       ExecState *state,
 			       PRN *prn)
 {
     char *buf = NULL;
@@ -1429,7 +1431,7 @@ static int lib_run_pkg_sample (const char *pkgname,
 	    fputs(buf, fp);
 	    fclose(fp);
 	    strcpy(runfile, fname);
-	    err = run_script(runfile, s, dset, OPT_NONE, prn);
+	    err = run_script(runfile, state, dset, OPT_NONE, prn);
 	    gretl_remove(runfile);
 	}
 	g_free(base);
@@ -1442,16 +1444,16 @@ static int lib_run_pkg_sample (const char *pkgname,
 
 static int do_pkg_command (char *readfile,
 			   DATASET *dset,
-                           ExecState *s,
+                           ExecState *state,
                            PRN *prn)
 {
-    const char *action = s->cmd->param;
-    const char *pkgname = s->cmd->parm2;
-    gretlopt opt = s->cmd->opt;
+    const char *action = state->cmd->param;
+    const char *pkgname = state->cmd->parm2;
+    gretlopt opt = state->cmd->opt;
     int err = 0;
 
     if (!strcmp(action, "install")) {
-        err = install_package(pkgname, opt, s, prn);
+        err = install_package(pkgname, state, opt, prn);
     } else if (!strcmp(action, "unload")) {
         err = uninstall_function_package(pkgname, OPT_NONE, prn);
     } else if (!strcmp(action, "remove")) {
@@ -1459,7 +1461,7 @@ static int do_pkg_command (char *readfile,
     } else if (!strcmp(action, "query")) {
         query_package(pkgname, opt, prn);
     } else if (!strcmp(action, "run-sample")) {
-	err = lib_run_pkg_sample(pkgname, readfile, dset, s, prn);
+	err = lib_run_pkg_sample(pkgname, readfile, dset, state, prn);
     } else if (!strcmp(action, "index") && !strcmp(pkgname, "addons")) {
         update_addons_index((opt & OPT_V)? prn : NULL);
     } else {
@@ -1621,8 +1623,10 @@ static int get_line_continuation (char *line, FILE *fp, PRN *prn)
     return err;
 }
 
-static int run_script (const char *fname, ExecState *s,
-                       DATASET *dset, gretlopt opt,
+static int run_script (const char *fname,
+                       ExecState *state,
+                       DATASET *dset,
+                       gretlopt opt,
                        PRN *prn)
 {
     int indent = gretl_if_state_record();
@@ -1637,7 +1641,7 @@ static int run_script (const char *fname, ExecState *s,
         return E_FOPEN;
     }
 
-    strcpy(s->runfile, fname);
+    strcpy(state->runfile, fname);
 
     if (opt & OPT_Q) {
         set_gretl_echo(0);
@@ -1648,10 +1652,10 @@ static int run_script (const char *fname, ExecState *s,
         pprintf(prn, "run \"%s\"\n", fname);
     }
 
-    while (fgets(s->line, MAXLINE - 1, fp) && !err) {
-        err = get_line_continuation(s->line, fp, prn);
+    while (fgets(state->line, MAXLINE - 1, fp) && !err) {
+        err = get_line_continuation(state->line, fp, prn);
         if (!err) {
-            err = maybe_exec_line(s, dset, NULL);
+            err = maybe_exec_line(state, dset, NULL);
         }
     }
 
@@ -2719,7 +2723,7 @@ static int model_print_driver (MODEL *pmod, DATASET *dset,
 #if USE_CURL
 
 static int package_check_dependencies (const char *fname,
-                                       ExecState *s,
+                                       ExecState *state,
                                        PRN *prn)
 {
     char **depends;
@@ -2748,7 +2752,7 @@ static int package_check_dependencies (const char *fname,
         for (i=0; i<ndeps && !err; i++) {
             pkgpath = gretl_function_package_get_path(depends[i], PKG_ALL);
             if (pkgpath == NULL) {
-                err = install_package(depends[i], OPT_D, s, prn);
+                err = install_package(depends[i], state, OPT_D, prn);
 		fprintf(stderr, "pkg install dependency %s: err = %d\n",
 			depends[i], err);
             }
@@ -2774,7 +2778,7 @@ static int package_check_dependencies (const char *fname,
 #if DO_BINPKG
 
 static int handle_binary_package (const char *fname,
-				  ExecState *es,
+				  ExecState *state,
 				  PRN *prn)
 {
     const char *sf = "https://sourceforge.net/projects/gretl/files";
@@ -2912,8 +2916,8 @@ static void pkg_install_invoke_callback (ExecState *s,
 }
 
 static int install_package (const char *pkgname,
+                            ExecState *state,
 			    gretlopt opt,
-			    ExecState *s,
 			    PRN *prn)
 {
     char *fname = NULL;
@@ -2938,7 +2942,7 @@ static int install_package (const char *pkgname,
     if (!local && has_suffix(pkgname, ".tar.gz") &&
 	(strstr(pkgname, "tramo") || strstr(pkgname, "x13as"))) {
 	/* specific to macOS at present */
-        return handle_binary_package(pkgname, s, prn);
+        return handle_binary_package(pkgname, state, prn);
     }
 #endif
 
@@ -3003,8 +3007,8 @@ static int install_package (const char *pkgname,
 	    gretl_remove(dlpath);
 	    if (!err && addons) {
 		update_addons_index(NULL);
-	    } else if (!err && s != NULL && gui_callback != NULL) {
-		pkg_install_invoke_callback(s, pkgname, dlpath, filetype);
+	    } else if (!err && state != NULL && gui_callback != NULL) {
+		pkg_install_invoke_callback(state, pkgname, dlpath, filetype);
 	    }
 	    g_free(dlpath);
 	    return err;
@@ -3060,7 +3064,7 @@ static int install_package (const char *pkgname,
         }
 
         if (!err && !scripts) {
-	    package_check_dependencies(fullname, s, prn);
+	    package_check_dependencies(fullname, state, prn);
         }
 
         if (!err && gretl_messages_on()) {
@@ -3071,9 +3075,9 @@ static int install_package (const char *pkgname,
             }
         }
 
-        if (!err && s != NULL && gui_callback != NULL && !(opt & OPT_D)) {
+        if (!err && state != NULL && gui_callback != NULL && !(opt & OPT_D)) {
             /* FIXME: handling of OPT_D (dependency) here? */
-	    pkg_install_invoke_callback(s, basename, fullname, filetype);
+	    pkg_install_invoke_callback(state, basename, fullname, filetype);
         }
 
         g_free(fullname);
@@ -3089,8 +3093,8 @@ static int install_package (const char *pkgname,
 /* in this case we can only install from a local file */
 
 static int install_package (const char *pkgname,
+                            ExecState *state,
 			    gretlopt opt,
-			    ExecState *s,
 			    PRN *prn)
 {
     char *fname = NULL;
