@@ -309,17 +309,19 @@ user, is mandated by the non-zero value for the third, optional
 argument to \texttt{mwrite}.
 \begin{code}
   matrix A = mshape(seq(3,14),4,3)
-  err = mwrite(A, "mymatfile.mat", 1)
+  err = mwrite(A, "A.mat", 1)
 \end{code}
 The recommended \app{R} code to import such a matrix is
 \begin{code}
-  A <- gretl.loadmat("mymatfile.mat")
+  A <- gretl.loadmat("A.mat")
 \end{code}
 
 The function \texttt{gretl.loadmat}, which is predefined when \app{R}
-is called from gretl, retrieves the matrix from dotdir.  (The
+is called from gretl, retrieves the matrix from dotdir.  The
 ``\texttt{.mat}'' extension for gretl matrix files is not compulsory;
-you can name these files as you wish.)
+you can name these files as you wish. However, for efficient transfer
+of big matrices you should use the extension ``\texttt{.bin}'', in
+which case the file format is binary rather than text.
 
 It's also possible to take more control over the details of the
 transfer if you wish. You have the built-in string variable

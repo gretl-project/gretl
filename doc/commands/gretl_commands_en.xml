@@ -5577,7 +5577,12 @@
         </option>
         <option>
 	  <flag>--band</flag>
-	  <optparm>bandspec</optparm>
+	  <optparm>bundle</optparm>
+	  <effect>see below</effect>
+        </option>
+        <option>
+	  <flag>--bands</flag>
+	  <optparm>array</optparm>
 	  <effect>see below</effect>
         </option>
         <option>
