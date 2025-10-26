@@ -5392,6 +5392,10 @@
 	  <flag>--quiet</flag>
 	  <effect>non stampa nulla</effect>
         </option>
+	<option>
+	  <flag>--thinning</flag>
+	  <effect>vedi sotto</effect>
+        </option>
       </options>
       <examples>
 	<demos>
@@ -5430,7 +5434,7 @@
 	interessa è la distribuzione marginale di <lit>x</lit>.
       </para>
       <code>
-	gibbs burnin=500 N=5000 output=M
+	gibbs burnin=500 N=5000 output=GB
 	  init y = randgen1(beta, a, n - b)
 	  record x = randgen1(b, y, n)
 	  y = randgen1(beta, x + a, n - x + b)
@@ -5474,22 +5478,60 @@
       prime.
     </para>
     <para>
-      La matrice di output ha <lit>N</lit> righe e un numero di
-      colonne che dipende dal numero e dal tipo di marginali da
-      registrare; i risultati della matrice vengono registrati in
-      formato vec trasposto.  Se la matrice indicata nell'argomento
-      <lit>output</lit> esiste già, viene sovrascritta, altrimenti
-      viene creata una nuova matrice.
+      Il contenuto principale del bundle di output è una matrice
+      denominata <lit>H</lit> che per default ha <lit>N</lit> righe e
+      una dimensione in colonna che dipende dal numero e dal tipo di
+      marginali da registrare; i risultati della matrice vengono
+      registrati in formato vec trasposto. Oltre a questa matrice, il
+      bundle contiene diversi elementi di metadati: si veda "Metadati"
+      più sotto. Se il bundle indicato nell'argomento
+      <lit>output</lit> esiste già, viene sovrascritto, altrimenti
+      viene creato un nuovo bundle.
     </para>
+    <subhead>Opzioni</subhead>
     <para>
-      Sono supportate due opzioni, che vanno nella riga finale del
-      blocco. L'opzione <opt>quiet</opt> sopprime l'output di default
-      (un breve report sullo stato di avanzamento e alcune statistiche
-      di riepilogo di base relative alla matrice di output). L'opzione
-      <opt>cleanup</opt> fa sì che tutte le variabili appena create
-      all'interno del blocco <lit>gibbs</lit> vengano eliminate al
-      termine dell'iterazione.
+      Sono supportate tre opzioni, che vanno nella riga finale del
+      blocco.
     </para>
+    <ilist>
+      <li>
+	<para>
+	  L'opzione <opt>quiet</opt> sopprime l'output di default
+	  (un breve report sullo stato di avanzamento e alcune statistiche
+	  di riepilogo di base relative alla matrice di output).
+	</para>
+      </li>
+      <li>
+	<para>
+	  L'opzione <opt>cleanup</opt> fa sì che tutte le variabili
+	  appena create all'interno del blocco <lit>gibbs</lit>
+	  vengano eliminate al termine dell'iterazione.
+	</para>
+      </li>
+      <li>
+	<para>
+	L'opzione <opt>thinning</opt> può essere usata per limitare
+	l'output a un sottoinsieme del numero totale di iterazioni. Ad
+	esempio, <lit>--thinning=10</lit> significa che verrà salvata
+	solo un'iterazione ogni 10. In tal caso, la dimensione di riga
+	della matrice <lit>H</lit> sarà <math>N</math>/10 anziché
+	<math>N</math>.
+	</para>
+      </li>
+    </ilist>
+    <subhead>Metadati</subhead>
+      <para>
+      I membri aggiuntivi del bundle di output contengono i valori di
+      <lit>burnin</lit>, <lit>N</lit> e <lit>thinning</lit>. Inoltre,
+      l'output contiene un sotto-bundle relativo a (e denominato in
+      base a) ciascuna variabile selezionata per la
+      registrazione. Questi sotto-bundle contengono la colonna
+      iniziale (<lit>startcol</lit>) e il numero di colonne
+      (<lit>ncols</lit>) nella matrice <lit>H</lit> dedicate alla
+      variabile in questione; un valore booleano <lit>discrete</lit>
+      che indica se la variabile è discreta o meno e infine, una
+      stringa <lit>type</lit> (<lit>scalar</lit> o <lit>matrix</lit>).
+      </para>
     </description>
 </command>
   
