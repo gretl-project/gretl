@@ -5645,26 +5645,31 @@
 	</option>
 	<option>
 	  <flag>--control</flag>
-	  <effect>si veda sotto</effect>
+	  <effect>vedi sotto</effect>
 	</option>
 	<option>
 	  <flag>--dummy</flag>
-	  <effect>si veda sotto</effect>
+	  <effect>vedi sotto</effect>
 	</option>
 	<option>
 	  <flag>--fit</flag>
 	  <optparm>fitspec</optparm>
-	  <effect>si veda sotto</effect>
+	  <effect>vedi sotto</effect>
 	</option>
 	<option>
 	  <flag>--font</flag>
 	  <optparm>fontspec</optparm>
-	  <effect>si veda sotto</effect>
+	  <effect>vedi sotto</effect>
 	</option>
 	<option>
 	  <flag>--band</flag>
-	  <optparm>bandspec</optparm>
-	  <effect>si veda sotto</effect>
+	  <optparm>bundle</optparm>
+	  <effect>vedi sotto</effect>
+	</option>
+	<option>
+	  <flag>--bands</flag>
+	  <optparm>array</optparm>
+	  <effect>vedi sotto</effect>
 	</option>
 	<option>
 	  <flag>--matrix</flag>
@@ -5761,7 +5766,7 @@
 	per <lit>id</lit> limitata a <lit>y</lit>.
       </para>
       <code>
-	gnuplot y yhat x id --with-lines=yhat --fattorizzato=y
+	gnuplot y yhat x id --with-lines=yhat --factorized=y
       </code>
       <subhead>Grafici con controllo</subhead>
       <para>
@@ -5903,15 +5908,6 @@
 	</li>
       </ilist>
       <para>
-	Si noti che la lista di colori disponibili può essere
-	consultata con il comando <quote><lit>show
-	colornames</lit></quote> all'interno di gnuplot, o in una
-	console gretl mediante la seguente linea di codice:
-      </para>
-      <code>
-	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
-      </code>
-      <para>
 	Di seguito sono riportati due esempi per la personalizzazione
 	delle bande, sfruttando in entrambi i casi la sintassi
 	<lit>_()</lit> per costruire bundle. La prima implementazione
@@ -5930,7 +5926,7 @@
       <para>
 	Se il grafico fosse destinato a contenere due o più bande, il
 	flag dell'opzione dovrebbe essere riportato al plurale
-	(<lit>bands </lit> anziché <lit>band</lit>) e i relativi
+	(<lit>bands</lit> anziché <lit>band</lit>) e i relativi
 	parametri come <emphasis>array</emphasis> di bundle. Ciò è
 	illustrato nel seguente esempio (che richiama quello
 	precedente):
@@ -5982,6 +5978,41 @@
 	gnuplot YER URX --with-lines --time-series \
 	  --band=b --output=display {set key top left;}
       </code>
+      <subhead>Nomi dei colori</subhead>
+      <para>
+	I colori sono identificati tramite numeri RGB, solitamente
+	espressi in formato esadecimale a 6 cifre: le prime due cifre
+	indicano la quantità di rosso (da 0 a 255), quelle centrali la
+	quantità di verde e le ultime due la quantità di blu. Ad
+	esempio, <lit>0xff0080</lit> ha il massimo del rosso, nessun
+	verde e un po' di blu (è un viola rossastro). A partire dalla
+	versione 5.2 di gnuplot, è possibile utilizzare quattro cifre
+	invece di tre: in questo caso, le prime due cifre indicano la
+	trasparenza, che va da 0 (opaco) a 255 (trasparente). Ad
+	esempio, <lit>0xc0ff0080</lit> attribuirebbe al colore il
+	valore 192 (c0 in esadecimale) per la trasparenza.  È
+	possibile verificare la versione di gnuplot in uso esaminando
+	il bundle <fncref targ="$sysinfo"/>.
+      </para>
+      <para>
+	I colori esadecimali possono essere passati come scalari o
+	come stringhe. Una stringa di colore può essere un numero
+	esadecimale tra virgolette (ad esempio "0x191970"), ma gnuplot
+	riconosce alcuni colori <quote>abbreviati</quote> (in
+	inglese). Ad esempio, <quote>violet</quote> equivale a
+	<quote>0xee82ee</quote> e <quote>brown</quote> a
+	<quote>0xa52a2a</quote>. È possibile accedere all'elenco
+	completo dei nomi dei colori riconosciuti da gnuplot eseguendo
+	il comando <quote><lit>show colornames</lit></quote> in
+	gnuplot stesso, oppure nella console di gretl digitando:
+      </para>
+      <code>
+	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
+      </code>
+      <para>
+	Per ottenere un risultato esteticamente gradevole, la funzione
+	<fncref targ="rgbmix"/> risulta spesso utile.
+      </para>
       <subhead>Controllo dell'output</subhead>
       <para>
 	In modalità interattiva il risultato è mostrato
@@ -6091,7 +6122,7 @@
 	della sintassi:
       </para>
       <code>
-	{ set title 'Il titolo'; set yrange [0:1000]; }
+	{ set title 'Titolo personalizzato'; set yrange [0:1000]; }
       </code>
     </description>
 
