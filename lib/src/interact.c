@@ -1411,8 +1411,8 @@ static void query_package (const char *pkgname,
 
 static int lib_run_pkg_sample (const char *pkgname,
 			       char *runfile,
-			       DATASET *dset,
 			       ExecState *state,
+                               DATASET *dset,
 			       PRN *prn)
 {
     char *buf = NULL;
@@ -1426,13 +1426,15 @@ static int lib_run_pkg_sample (const char *pkgname,
 	FILE *fp = gretl_fopen(fname, "w");
 
 	if (fp == NULL) {
-	    err = 1;
+	    err = E_FOPEN;
 	} else {
 	    fputs(buf, fp);
 	    fclose(fp);
-	    strcpy(runfile, fname);
-	    err = run_script(runfile, state, dset, OPT_NONE, prn);
-	    gretl_remove(runfile);
+	    err = run_script(fname, state, dset, OPT_NONE, prn);
+	    gretl_remove(fname);
+            if (runfile != NULL) {
+                strcpy(runfile, fname);
+            }
 	}
 	g_free(base);
 	g_free(fname);
@@ -1442,13 +1444,13 @@ static int lib_run_pkg_sample (const char *pkgname,
     return err;
 }
 
-static int do_pkg_command (char *readfile,
+static int do_pkg_command (const char *action,
+                           const char *pkgname,
+                           char *readfile,
 			   DATASET *dset,
                            ExecState *state,
                            PRN *prn)
 {
-    const char *action = state->cmd->param;
-    const char *pkgname = state->cmd->parm2;
     gretlopt opt = state->cmd->opt;
     int err = 0;
 
@@ -1461,12 +1463,44 @@ static int do_pkg_command (char *readfile,
     } else if (!strcmp(action, "query")) {
         query_package(pkgname, opt, prn);
     } else if (!strcmp(action, "run-sample")) {
-	err = lib_run_pkg_sample(pkgname, readfile, dset, state, prn);
+	err = lib_run_pkg_sample(pkgname, readfile, state, dset, prn);
     } else if (!strcmp(action, "index") && !strcmp(pkgname, "addons")) {
         update_addons_index((opt & OPT_V)? prn : NULL);
     } else {
         gretl_errmsg_sprintf(_("pkg: unknown action '%s'"), action);
-        err = E_PARSE;
+        err = E_INVARG;
+    }
+
+    return err;
+}
+
+int function_package_action (const char *action,
+                             const char *pkgname,
+                             DATASET *dset,
+                             gretlopt opt,
+                             PRN *prn)
+{
+    int err = 0;
+
+    if (!strcmp(action, "install")) {
+        err = install_package(pkgname, NULL, opt, prn);
+    } else if (!strcmp(action, "unload")) {
+        err = uninstall_function_package(pkgname, OPT_NONE, prn);
+    } else if (!strcmp(action, "remove")) {
+        err = uninstall_function_package(pkgname, OPT_P, prn);
+    } else if (!strcmp(action, "query")) {
+        query_package(pkgname, opt, prn);
+    } else if (!strcmp(action, "run-sample")) {
+        char line[MAXLINE] = {0};
+        ExecState state = {0};
+        CMD cmd = {0};
+
+        gretl_cmd_init(&cmd);
+        state.cmd = &cmd;
+        state.line = line;
+	err = lib_run_pkg_sample(pkgname, NULL, &state, dset, prn);
+    } else {
+        err = E_INVARG;
     }
 
     return err;
@@ -3816,7 +3850,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case PKG:
-        err = do_pkg_command(readfile, dset, s, prn);
+        err = do_pkg_command(cmd->param, cmd->parm2,
+                             readfile, dset, s, prn);
         break;
 
     case MAKEPKG:
