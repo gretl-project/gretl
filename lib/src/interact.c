@@ -1375,6 +1375,7 @@ static void query_package (const char *pkgname,
     fnpkg *pkg = NULL;
     int err = 0;
 
+    /* Is the package already loaded? */
     pkg = get_function_package_by_name(pkgname);
 
     if (pkg != NULL) {
@@ -1493,12 +1494,16 @@ int function_package_action (const char *action,
     } else if (!strcmp(action, "run-sample")) {
         char line[MAXLINE] = {0};
         ExecState state = {0};
+        MODEL *model = gretl_model_new();
         CMD cmd = {0};
 
         gretl_cmd_init(&cmd);
         state.cmd = &cmd;
         state.line = line;
+        state.prn = prn;
+        state.model = model;
 	err = lib_run_pkg_sample(pkgname, NULL, &state, dset, prn);
+        gretl_exec_state_clear(&state);
     } else {
         err = E_INVARG;
     }
