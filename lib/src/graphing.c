@@ -2338,8 +2338,12 @@ static int gnuplot_too_old (void)
 
     if (gpv == 0.0) {
         if (!msg_done) {
-            gretl_errmsg_sprintf("'%s': gnuplot is broken or too old: must be >= version 5.0",
-                                 gretl_gnuplot_path());
+            if (gretl_gnuplot_path()[0] == '\0') {
+                gretl_errmsg_set("Path to gnuplot is not available");
+            } else {
+                gretl_errmsg_sprintf("'%s': gnuplot is broken or too old: must be >= version 5.0",
+                                     gretl_gnuplot_path());
+            }
         }
         ret = 1;
     } else if (gpv < 5.0) {
