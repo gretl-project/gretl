@@ -128,6 +128,12 @@ int lib_join_data (const char *param,
 		   gretlopt opt,
 		   PRN *prn);
 
+int function_package_action (const char *action,
+                             const char *pkgname,
+                             DATASET *dset,
+                             gretlopt opt,
+                             PRN *prn);
+
 #endif /* INTERACT_H */
 
 
