@@ -4618,10 +4618,10 @@ static NODE *bkw_node (NODE *l, NODE *m, NODE *r, parser *p)
 
         if (!null_node(m)) {
             if (m->t == STR) {
-                /* for compat with Lee's bkw() we expect comma-
-                   separated parameter names here
+                /* For compatibility with Lee Adkins' bkw() we accept
+                   space-separated parameter names.
                 */
-                char **S = gretl_string_split(m->v.str, &ns, ",");
+                char **S = gretl_string_split(m->v.str, &ns, NULL);
 
                 if (S == NULL) {
                     p->err = E_DATA;
