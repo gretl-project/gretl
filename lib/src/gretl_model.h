@@ -271,10 +271,6 @@ void display_model_data_items (const MODEL *pmod);
 
 int bundlize_model_data_items (const MODEL *pmod, gretl_bundle *b);
 
-int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *ptr,
-					  GretlType type, size_t size,
-					  void (*destructor) (void *));
-
 int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr,
 			  GretlType type, size_t size);
 

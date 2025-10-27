@@ -40,12 +40,14 @@
 
 #define MDEBUG 0
 
+typedef void (*DESTFUNC) (void *);
+
 struct model_data_item_ {
     char *key;
     void *ptr;
     int type;
     size_t size;
-    void (*destructor) (void *);
+    DESTFUNC destructor;
 };
 
 struct ModelTest_ {
@@ -165,7 +167,7 @@ static void free_model_data_item (model_data_item *item)
 
 static model_data_item *create_data_item (const char *key, void *ptr,
 					  GretlType type, size_t size,
-					  void (*destructor) (void *))
+					  DESTFUNC destructor)
 {
     model_data_item *item = malloc(sizeof *item);
 
@@ -254,9 +256,12 @@ replicate_data_item (const model_data_item *orig)
  * Returns: 0 on success, 1 on failure.
  */
 
-int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *ptr,
-					  GretlType type, size_t size,
-					  void (*destructor) (void *))
+static int gretl_model_set_data_with_destructor (MODEL *pmod,
+                                                 const char *key,
+                                                 void *ptr,
+                                                 GretlType type,
+                                                 size_t size,
+                                                 DESTFUNC destructor)
 {
     model_data_item **items;
     model_data_item *item;
@@ -310,14 +315,14 @@ int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *pt
  *
  * Attaches data to @pmod: the data can be retrieved later using
  * gretl_model_get_data().  Note that the data are not "physically"
- * copied to the model; simply, @ptr is recorded on the model.
- * This means that the data referenced by the pointer now in
- * effect belong to @pmod.  The data pointer will be freed when
- * @pmod is cleared with clear_model().  If the data has deep
- * structure that requires special treatment on freeing, use
- * gretl_model_set_data_with_destructor() instead.
+ * copied to the model; simply, @ptr is recorded on the model,
+ * meaning that @pmod takes ownership of the data. The data
+ * pointer will be freed when @pmod is cleared with clear_model().
+ * If the data item has structure that requires special treatment
+ * on freeing, use a type-specific function instead, for example
+ * gretl_model_set_matrix_as_data().
  *
- * The @size is needed in case the model is copied with
+ * The @size is needed just in case the model is copied with
  * copy_model(), in which case the target of the copying
  * operation receives a newly allocated copy of the data in
  * question.
