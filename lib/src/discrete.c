@@ -2192,8 +2192,7 @@ static int binary_logit_odds_ratios (MODEL *pmod,
     cf = gretl_model_get_coeff_intervals(pmod, dset, OPT_O | OPT_E);
     if (cf != NULL) {
         m = conf_intervals_matrix(cf);
-        err = gretl_model_set_data(pmod, "oddsratios", m,
-                                   GRETL_TYPE_MATRIX, 0);
+        err = gretl_model_set_matrix_as_data(pmod, "oddsratios", m);
         free_coeff_intervals(cf);
     }
 

@@ -1380,22 +1380,30 @@ gretl_matrix *conf_intervals_matrix (CoeffIntervals *cf)
 	    if (j == 0) {
 		/* coeff or odds ratio */
 		gretl_matrix_set(ret, i, j, odds ? exp(b[i]) : b[i]);
-		S[j] = gretl_strdup(odds? "odds ratio" : "coefficient");
+                if (i == 0) {
+                    S[j] = gretl_strdup(odds? "odds ratio" : "coefficient");
+                }
 	    } else if (j == se_col) {
 		/* standard error */
 		se = me[i] / cf->t;
 		gretl_matrix_set(ret, i, j, odds ? exp(b[i]) * se : se);
-		S[j] = gretl_strdup("std. error");
+                if (i == 0) {
+                    S[j] = gretl_strdup("std. error");
+                }
 	    } else if (j == lo_col) {
 		/* lower limit */
 		gretl_matrix_set(ret, i, j, odds ? exp(lo) : lo);
-		sprintf(head, "low%g", pc);
-		S[j] = gretl_strdup(head);
+                if (i == 0) {
+                    sprintf(head, "low%g", pc);
+                    S[j] = gretl_strdup(head);
+                }
 	    } else if (j == hi_col) {
 		/* upper limit */
 		gretl_matrix_set(ret, i, j, odds ? exp(hi) : hi);
-		sprintf(head, "high%g", pc);
-		S[j] = gretl_strdup(head);
+                if (i == 0) {
+                    sprintf(head, "high%g", pc);
+                    S[j] = gretl_strdup(head);
+                }
 	    }
 	}
     }
