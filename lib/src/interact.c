@@ -2890,12 +2890,12 @@ static int handle_binary_package (const char *fname,
         pprintf(prn, _("Installed %s\n"), fname);
     }
 
-    if (!err && es != NULL && path_id != NULL && gui_callback != NULL) {
+    if (!err && state != NULL && path_id != NULL && gui_callback != NULL) {
         gretl_bundle *b = gretl_bundle_new();
 
         gretl_bundle_set_string(b, "path_id", path_id);
         gretl_bundle_set_int(b, "binpkg", 1);
-        gui_callback(es, b, GRETL_OBJ_BUNDLE);
+        gui_callback(state, b, GRETL_OBJ_BUNDLE);
     }
 
     g_free(fullname);
