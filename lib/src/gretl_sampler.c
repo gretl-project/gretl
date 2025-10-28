@@ -214,27 +214,57 @@ static void matrix_dset_set_names (DATASET *mdset, int *list)
     }
 }
 
-static void gibbs_print_info (gibbs_var_info *gvi, int nr,
-                              gretl_matrix *M, PRN *prn)
+static void gibbs_attach_param_stats (gretl_bundle *GB,
+                                      gretl_matrix *m,
+                                      const char *pname)
+{
+    gretl_bundle *b;
+
+    b = gretl_bundle_get_bundle(GB, pname, NULL);
+    if (b != NULL) {
+        gretl_bundle_donate_data(b, "stats", m, GRETL_TYPE_MATRIX, 0);
+    }
+}
+
+static void gibbs_param_info (gibbs_var_info *gvi, int nr,
+                              gretl_matrix *M,
+                              gretl_bundle *GB,
+                              PRN *prn)
 {
     DATASET *mdset;
+    gretl_matrix *m;
+    GretlType gt;
+    gretlopt opt = OPT_S;
     int *collist;
     int i, c1;
     int err = 0;
 
-    pprintf(prn, "variables recorded in %s:\n\n", gibbs_output);
+    if (prn == NULL) {
+        opt |= OPT_Q;
+    } else {
+        pprintf(prn, "variables recorded in %s:\n\n", gibbs_output);
+    }
+
     for (i=0; i<nr; i++) {
         c1 = gvi[i].startcol + 1;
         if (gvi[i].gt == GRETL_TYPE_DOUBLE) {
             /* a scalar variable */
             int list[2] = {1, c1};
 
-            pprintf(prn, "scalar %s", gvi[i].name);
+            if (prn != NULL) {
+                pprintf(prn, "scalar %s", gvi[i].name);
+            }
             mdset = gretl_dataset_from_matrix(M, list, OPT_B, &err);
             if (!err) {
                 matrix_dset_set_names(mdset, list);
                 collist = gretl_consecutive_list_new(1, mdset->v - 1);
-                err = list_summary(collist, 0, mdset, OPT_S | OPT_M, prn);
+                err = list_summary(collist, 0, mdset, opt | OPT_M, prn);
+                if (!err) {
+                    m = get_last_result_data(&gt, &err);
+                    if (m != NULL) {
+                        gibbs_attach_param_stats(GB, m, gvi[i].name);
+                    }
+                }
                 free(collist);
             }
             destroy_dataset(mdset);
@@ -243,19 +273,29 @@ static void gibbs_print_info (gibbs_var_info *gvi, int nr,
             int c2 = c1 + gvi[i].ncols - 1;
             int *list = gretl_consecutive_list_new(c1, c2);
 
-            pprintf(prn, "matrix %s", gvi[i].name);
+            if (prn != NULL) {
+                pprintf(prn, "matrix %s", gvi[i].name);
+            }
             mdset = gretl_dataset_from_matrix(M, list, OPT_B, &err);
             if (!err) {
                 matrix_dset_set_names(mdset, list);
                 collist = gretl_consecutive_list_new(1, mdset->v - 1);
-                err = list_summary(collist, 0, mdset, OPT_S, prn);
+                err = list_summary(collist, 0, mdset, opt, prn);
+                if (!err) {
+                    m = get_last_result_data(&gt, &err);
+                    if (m != NULL) {
+                        gibbs_attach_param_stats(GB, m, gvi[i].name);
+                    }
+                }
                 free(collist);
             }
             destroy_dataset(mdset);
             free(list);
         }
     }
-    pputc(prn, '\n');
+    if (prn != NULL) {
+        pputc(prn, '\n');
+    }
 }
 
 static void gibbs_record_info (gibbs_var_info *gvi,
@@ -284,7 +324,7 @@ static gretl_matrix *do_run_sampler (char **init, int ni,
     char vname[VNAMELEN];
     GretlType gt;
     const char *str;
-    int cleanup = (opt & OPT_C);
+    int cleanup = !(opt & OPT_K);
     int quiet = (opt & OPT_Q);
     int nrec = gibbs_N;
     int ncols = 0;
@@ -659,9 +699,13 @@ int gibbs_execute (gretlopt opt, DATASET *dset, PRN *prn)
                                           GRETL_TYPE_BUNDLE,
                                           GB);
         }
-        if (!err && !quiet) {
-            pprintf(prn, "results matrix is %d x %d\n", H->rows, H->cols);
-            gibbs_print_info(gvi, nr, H, prn);
+        if (!err) {
+            if (quiet) {
+                gibbs_param_info(gvi, nr, H, GB, NULL);
+            } else {
+                pprintf(prn, "results matrix is %d x %d\n", H->rows, H->cols);
+                gibbs_param_info(gvi, nr, H, GB, prn);
+            }
         }
     }
 

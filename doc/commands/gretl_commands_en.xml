@@ -5261,7 +5261,7 @@
       </arguments>  
       <options>
 	<option>
-	  <flag>--cleanup</flag>
+	  <flag>--keep</flag>
 	  <effect>see below</effect>
         </option>
 	<option>
@@ -5377,9 +5377,11 @@
         </li>
         <li>
           <para>
-            The <opt>cleanup</opt> flag has the effect that any
-            variables newly created within the <lit>gibbs</lit> block
-            are deleted once the iteration is completed.
+            By default, any variables newly created within the
+            <lit>gibbs</lit> block are deleted once the iteration is
+            completed. The effect of the <opt>keep</opt> option is to
+            preserve such variables, which may be useful for debugging
+            a sampler.
           </para>
         </li>
         <li>
@@ -5403,8 +5405,9 @@
         the number of columns (<lit>ncols</lit>) in the <lit>H</lit>
         matrix that are devoted to the variable in question; a
         <lit>discrete</lit> boolean indicating whether the variable is
-        discrete or not; and a <lit>type</lit> string (either
-        <lit>scalar</lit> or <lit>matrix</lit>).
+        discrete or not; a <lit>type</lit> string (either
+        <lit>scalar</lit> or <lit>matrix</lit>); and a matrix named
+        <lit>stats</lit> which holds basic statistics.
       </para>
     </description>
   </command>
