@@ -1927,8 +1927,10 @@ static int real_save_session_dataset (const char *dname)
 
     if (!err) {
 	session_file_make_path(tmpname, dname, NULL);
+        gretl_push_c_numeric_locale();
 	write_err = gretl_write_gdt(tmpname, NULL, dataset,
 				    OPT_NONE, 1);
+        gretl_pop_c_numeric_locale();
     }
 
     if (mask != NULL) {

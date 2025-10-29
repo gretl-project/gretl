@@ -926,6 +926,7 @@ static int write_session_xml (const char *datname)
 
     trash_old_session_files(session.dirname);
 
+    /* ensure that we don't print any decimal commas */
     gretl_push_c_numeric_locale();
 
     pprintf(prn, " <models count=\"%d\">\n", nmodels);
@@ -966,7 +967,6 @@ static int write_session_xml (const char *datname)
 	    }
 	    gretl_xml_header(pm);
 	    sflags = model_save_flags(ptr, type);
-	    gretl_push_c_numeric_locale();
 	    if (type == GRETL_OBJ_EQN) {
 		gretl_model_serialize(ptr, sflags, pm);
 	    } else if (type == GRETL_OBJ_VAR) {
@@ -974,7 +974,6 @@ static int write_session_xml (const char *datname)
 	    } else if (type == GRETL_OBJ_SYS) {
 		equation_system_serialize(ptr, sflags, pm);
 	    }
-	    gretl_pop_c_numeric_locale();
 	    gretl_print_destroy(pm);
 	}
     }
@@ -1008,18 +1007,15 @@ static int write_session_xml (const char *datname)
 		    free(xmlname);
 		}
 		gretl_xml_header(pm);
-		gretl_push_c_numeric_locale();
 		gretl_model_serialize(pmod, model_save_flags(pmod, GRETL_OBJ_EQN),
 				      pm);
-		gretl_pop_c_numeric_locale();
 		gretl_print_destroy(pm);
 	    }
 	}
     }
 
-    gretl_pop_c_numeric_locale();
-
     if (err) {
+        gretl_pop_c_numeric_locale();
 	gretl_print_destroy(prn);
 	gretl_remove(fname);
 	return err;
@@ -1085,6 +1081,8 @@ static int write_session_xml (const char *datname)
 
     maybe_write_function_file(tmpname);
     write_settings_file(tmpname);
+
+    gretl_pop_c_numeric_locale();
 
     return 0;
 }
