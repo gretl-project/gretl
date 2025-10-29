@@ -5401,14 +5401,35 @@
         <lit>burnin</lit>, <lit>N</lit> and <lit>thinning</lit>
         values. In addition it contains a sub-bundle pertaining to (and
         named for) each variable selected for recording. These
-        sub-bundles hold the starting column (<lit>startcol</lit>) and
-        the number of columns (<lit>ncols</lit>) in the <lit>H</lit>
-        matrix that are devoted to the variable in question; a
-        <lit>discrete</lit> boolean indicating whether the variable is
-        discrete or not; a <lit>type</lit> string (either
-        <lit>scalar</lit> or <lit>matrix</lit>); and a matrix named
-        <lit>stats</lit> which holds basic statistics.
+        sub-bundles hold
       </para>
+      <ilist>
+	<li>
+	  <para>
+	    the starting column (<lit>startcol</lit>) and the number
+	    of columns (<lit>ncols</lit>) in the <lit>H</lit> matrix
+	    that are devoted to the variable in question;
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    a <lit>discrete</lit> boolean indicating whether the
+	    variable is discrete or not;
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    a <lit>type</lit> string (either
+            <lit>scalar</lit> or <lit>matrix</lit>);
+ 	  </para>
+	</li>
+	<li>
+	  <para>
+	    a matrix named <lit>stats</lit> which holds basic
+	    statistics.
+	  </para>
+	</li>
+      </ilist>
     </description>
   </command>
 

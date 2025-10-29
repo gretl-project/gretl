@@ -5385,7 +5385,7 @@
       </arguments>  
       <options>
 	<option>
-	  <flag>--cleanup</flag>
+	  <flag>--keep</flag>
 	  <effect>vedi sotto</effect>
         </option>
 	<option>
@@ -5451,9 +5451,9 @@
 	dall'argomento <lit>output</lit>.
       </para>
       <para>
-	All'interno del blocco vengono utilizzate due parole chiave
-	(mutualmente esclusive) per controllare come vengono gestite
-	le istruzioni.
+	All'interno del blocco vengono utilizzate due parole chiave,
+	<lit>init</lit> e <lit>record</lit>, che sono mutualmente
+	esclusive e controllano come vengono gestite le istruzioni.
       </para>
       <ilist>
 	<li>
@@ -5503,9 +5503,10 @@
       </li>
       <li>
 	<para>
-	  L'opzione <opt>cleanup</opt> fa sì che tutte le variabili
-	  appena create all'interno del blocco <lit>gibbs</lit>
-	  vengano eliminate al termine dell'iterazione.
+	  Per default, tutte le variabili appena create all'interno
+	  del blocco <lit>gibbs</lit> vengono eliminate al termine
+	  dell'iterazione. L'opzione <opt>keep</opt> preserva tali
+	  variabili, il che può essere utile in fase di debug.
 	</para>
       </li>
       <li>
@@ -5525,13 +5526,35 @@
       <lit>burnin</lit>, <lit>N</lit> e <lit>thinning</lit>. Inoltre,
       l'output contiene un sotto-bundle relativo a (e denominato in
       base a) ciascuna variabile selezionata per la
-      registrazione. Questi sotto-bundle contengono la colonna
-      iniziale (<lit>startcol</lit>) e il numero di colonne
-      (<lit>ncols</lit>) nella matrice <lit>H</lit> dedicate alla
-      variabile in questione; un valore booleano <lit>discrete</lit>
-      che indica se la variabile è discreta o meno e infine, una
-      stringa <lit>type</lit> (<lit>scalar</lit> o <lit>matrix</lit>).
+      registrazione. Questi sotto-bundle contengono
       </para>
+      <ilist>
+	<li>
+	  <para>
+	    la colonna iniziale (<lit>startcol</lit>) e il numero di colonne
+	    (<lit>ncols</lit>) nella matrice <lit>H</lit> relative alla
+	    variabile in questione;
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    un valore booleano <lit>discrete</lit> che indica se la
+	    variabile è discreta o meno;
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    una stringa <lit>type</lit>, che può essere <lit>scalar</lit> o
+	    <lit>matrix</lit>;
+ 	  </para>
+	</li>
+	<li>
+	  <para>
+	    una matrice di nome <lit>stats</lit> con alcune
+	    statistiche descrittive.
+	  </para>
+	</li>
+      </ilist>
     </description>
 </command>
   
