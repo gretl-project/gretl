@@ -3139,14 +3139,19 @@ static int process_values (DATASET *dset,
 			   const int *vlist,
 			   int *n_uflow)
 {
+    int try_again = 1;
+    char *s0 = s;
+    char *alt = NULL;
     char *test;
     double x;
-    int i, k = 1;
+    int i, k;
     int err = 0;
+
+ reread:
 
     gretl_error_clear();
 
-    for (i=1; i<fullv && !err; i++) {
+    for (i=1, k=1; i<fullv && !err; i++) {
 	while (isspace(*s)) s++;
 	if (vlist != NULL && !in_gretl_list(vlist, i)) {
 	    s += strcspn(s, " \t\r\n");
@@ -3176,16 +3181,22 @@ static int process_values (DATASET *dset,
 	}
     }
 
-    /* check for trailing junk in <obs> line */
     s += strspn(s, " \t");
-    if (*s) {
-	fprintf(stderr, "Warning: found trailing junk at obs %d:\n'%s'\n",
-		t + 1, s);
+    if (try_again && strchr(s, ',')) {
+        /* remedial read in case of decimal commas */
+        alt = gretl_strdup(s0);
+        gretl_charsub(alt, ',', '.');
+        s = alt;
+        err = 0;
+        try_again = 0;
+        goto reread;
     }
 
     if (err && !gretl_errmsg_is_set()) {
 	gretl_errmsg_sprintf(_("Failed to parse data values at obs %d"), t+1);
     }
+
+    free(alt);
 
     return err;
 }
