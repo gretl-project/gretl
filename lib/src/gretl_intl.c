@@ -46,12 +46,14 @@ static int native_dot = -1;
 void gretl_push_c_numeric_locale (void)
 {
     if (native_dot == -1) {
+        /* not yet determined */
         struct lconv *lc = localeconv();
 
         native_dot = (*lc->decimal_point == '.');
     }
 
     if (native_dot == 1) {
+        /* no-op */
         return;
     }
 
@@ -77,6 +79,7 @@ void gretl_push_c_numeric_locale (void)
 void gretl_pop_c_numeric_locale (void)
 {
     if (numeric_c_locale_depth == 0) {
+        /* no-op */
         return;
     }
 
