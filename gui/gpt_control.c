@@ -1703,8 +1703,6 @@ static int get_gpt_heredata (GPT_SPEC *spec,
     gretl_matrix_print(m, "gp heredata");
 #endif
 
-    gretl_pop_c_numeric_locale();
-
     return err;
 }
 
