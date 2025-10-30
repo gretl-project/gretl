@@ -1308,6 +1308,9 @@ int set_obs (const char *parm1, const char *parm2,
     if (dset->structure == STACKED_CROSS_SECTION) {
         err = switch_panel_orientation(dset);
     }
+    if (dataset_is_panel(dset) && dset->panel_pd == 0) {
+        dset->panel_pd = 1;
+    }
 
 #if 0
     fprintf(stderr, "setobs: pd=%d, stobs=%s, sd0=%g, markers=%d, S=%p\n",
