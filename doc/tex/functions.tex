@@ -50,7 +50,7 @@ below.\footnote{An additional parameter type is available for GUI use,
 
 \begin{center}
 \begin{tabular}{ll}
-\multicolumn{1}{c}{Type} & 
+\multicolumn{1}{c}{Type} &
 \multicolumn{1}{c}{Description} \\ [4pt]
 \texttt{bool}   & scalar variable acting as a Boolean switch \\
 \texttt{int}    & scalar variable acting as an integer  \\
@@ -60,18 +60,19 @@ below.\footnote{An additional parameter type is available for GUI use,
 \texttt{matrix} & matrix or vector \\
 \texttt{string} & string variable or string literal \\
 \texttt{bundle} & all-purpose container (see
-                  section~\ref{sec:Bundles}) \\
-\texttt{matrices} & array of matrices (see
-                    section~\ref{sec:arrays}) \\
-\texttt{bundles}  & array of bundles \\
-\texttt{strings}  & array of strings
+                  section~\ref{sec:Bundles})
 \end{tabular}
 \end{center}
+
+In addition, parameters can be of any of the plural
+types---\texttt{matrices}, \texttt{bundles}, \texttt{strings},
+\texttt{lists} and \texttt{arrays}---supported by the gretl
+\texttt{array} type (see section~\ref{sec:arrays}).
 
 Each element in the listing of parameters must include two terms: a
 type specifier, and the name by which the parameter shall be known
 within the function.  An example follows:
-%    
+%
 \begin{code}
 function scalar myfunc (series y, list xvars, bool verbose)
 \end{code}
@@ -79,7 +80,7 @@ function scalar myfunc (series y, list xvars, bool verbose)
 Each of the type-specifiers, with the exception of \texttt{list} and
 \texttt{string}, may be modified by prepending an asterisk to the
 associated parameter name, as in
-%    
+%
 \begin{code}
 function scalar myfunc (series *y, scalar *b)
 \end{code}
@@ -99,7 +100,7 @@ function parameter may include some additional fields, as follows:
   default value. And in addition for \texttt{scalar} parameters,
   a step size.
 \item For optional arguments other than \texttt{scalar}, \texttt{int}
-  and \texttt{bool}, the special default value \texttt{null}.
+  and \texttt{bool}, the special values \texttt{null} or \texttt{auto}.
 \item For all parameters, a descriptive string.
 \item For \texttt{int} parameters with minimum and maximum values
   specified, a set of strings to associate with the allowed numerical
@@ -115,10 +116,10 @@ each of the options.
 
 \item The \texttt{const} modifier: must be given as a prefix to the
   basic parameter specification, as in
-%    
+%
 \begin{code}
 const matrix M
-\end{code} 
+\end{code}
 %
   This constitutes a promise that the corresponding argument will not
   be modified within the function; gretl will flag an error if the
@@ -130,10 +131,10 @@ const matrix M
   elements separated by colons.  For example, suppose we have an
   integer parameter \texttt{order} for which we wish to specify a
   minimum of 1, a maximum of 12, and a default of 4.  We can write
-%    
+%
 \begin{code}
 int order[1:12:4]
-\end{code} 
+\end{code}
 %
   If you wish to omit any of the three specifiers, leave the
   corresponding field empty.  For example \texttt{[1::4]} would
@@ -141,7 +142,7 @@ int order[1:12:4]
   unlimited. However, as a special case, it is acceptable to give just
   one value, with no colons, in which case the value is interpreted as
   a default. So for example
-%    
+%
 \begin{code}
 int k[0]
 \end{code}
@@ -149,17 +150,38 @@ int k[0]
   designates a default value of 0 for the parameter \texttt{k}, with
   no minimum or maximum specified. If you wished to specify a minimum
   of zero with no maximum or default you would have to write
-%    
+%
 \begin{code}
 int k[0::]
 \end{code}
 
   For a parameter of type \texttt{bool} (whose values are just zero or
   non-zero), you can specify a default of 1 (true) or 0 (false), as in
-%    
+%
 \begin{code}
 bool verbose[0]
-\end{code} 
+\end{code}
+
+\item \texttt{null} and \texttt{auto}: These constitute special cases of
+  default values, applicable to arguments of non-scalar types. Like the
+  default values mentioned above, they must be enclosed in square
+  brackets, as in
+%
+\begin{code}
+series weight[null]
+\end{code}
+%
+  and their presence signals that the argument in question is optional.
+  The distinction between \texttt{null} and \texttt{auto} only really
+  matters in the GUI, where these keywords are shown in the dialog box
+  for a function. Use of \texttt{null} implies that the function offers
+  some optional functionality that will be skipped if no argument is
+  given. For example, a function might handle weighted estimation but
+  default to unweighted if no \texttt{weight} series is given. On the
+  other hand \texttt{auto} suggests that when an argument is not given a
+  suitable default value will be used instead (and no functionality is
+  skipped). For example, a certain matrix might be initialized to an
+  identity matrix if the caller does not specify otherwise.
 
 \item Descriptive string: This will show up as an aid to the user if
   the function is packaged (see section~\ref{sec:func-packages} below)
@@ -169,7 +191,7 @@ bool verbose[0]
 %
 \begin{code}
 series y "dependent variable"
-\end{code} 
+\end{code}
 
 \item Value labels: These may be used only with \texttt{int}
   parameters for which minimum and maximum values have been specified
@@ -185,17 +207,16 @@ series y "dependent variable"
 int case[1:3:1] {"Fixed effects", "Between model", "Random effects"}
 \end{code}
 
-\item Step size: This is only supported only for real-valued
-  \texttt{scalar} parameters. It is relevant only in the graphical
-  interface, and must be combined with specification of minimum,
-  maximum and default values. The effect is that the argument selector
-  takes the form of a ``spin button'': clicking on the up- or
-  down-buttons in the selector changes the value by the specified
-  step. Otherwise the selector for such a parameter simply appears as
-  an entry box into which a number should be typed. For example, the
-  following could be used to stipulate that a scalar argument
-  should have a minimum of 1, a maximum of 10, a default of 4
-  and a step size of $0.1$:
+\item Step size: This is only supported for real-valued \texttt{scalar}
+  parameters. It is relevant only in the graphical interface, and must
+  be combined with specification of minimum, maximum and default
+  values. The effect is that the argument selector takes the form of a
+  ``spin button'': clicking on the up- or down-buttons in the selector
+  changes the value by the specified step. Otherwise the selector for
+  such a parameter simply appears as an entry box into which a number
+  should be typed. For example, the following could be used to stipulate
+  that a scalar argument should have a minimum of 1, a maximum of 10, a
+  default of 4 and a step size of $0.1$:
 %
 \begin{code}
 scalar x[1:10:4:0.1]
@@ -219,7 +240,7 @@ function matrix myfunc (series y "dependent variable",
                         int p[0::1] "lag order",
                         int c[1:2:1] "criterion" {"AIC", "BIC"},
                         bool quiet[0])
-\end{code} 
+\end{code}
 
 One advantage of specifying default values for parameters, where
 applicable, is that in script or command-line mode users may omit
@@ -231,16 +252,16 @@ and \texttt{quiet} is false.
 \subsection{Functions taking no parameters}
 
 You may define a function that has no parameters (these are called
-``routines'' in some programming languages).  In this case,  
+``routines'' in some programming languages).  In this case,
 use the keyword \texttt{void} in place of the listing of parameters:
-%    
+%
 \begin{code}
 function matrix myfunc2 (void)
 \end{code}
 
 
 \subsection{The function body}
-   
+
 The \textsl{function body} is composed of gretl commands, or
 calls to user-defined functions (that is, function calls may be
 nested).  A function may call itself (that is, functions may be
@@ -274,7 +295,7 @@ variable of the appropriate type.
 
 The following trivial example illustrates a function call that
 correctly matches the corresponding function definition.
-    
+
 \begin{code}
 # function definition
 function scalar ols_ess (series y, list xvars)
@@ -298,10 +319,10 @@ here, if you want a function to calculate some value having to do with
 a regression, but are not interested in the full results of the
 regression, you may wish to use the \option{quiet} flag with the
 estimation command as shown above.)
-    
+
 A second example shows how to write a function call that assigns
 a return value to a variable in the caller:
-    
+
 \begin{code}
 # function definition
 function series get_uhat (series y, list xvars)
@@ -346,7 +367,7 @@ artificial example:
 function series triple1 (series x)
   return 3*x
 end function
-  
+
 function void triple2 (series *x)
   x *= 3
 end function
@@ -443,7 +464,7 @@ optional.
 \begin{code}
 function series get_uhat_and_ess(series y, list xvars, scalar *ess[null])
   ols y 0 xvars --quiet
-  if exists(ess) 
+  if exists(ess)
      ess = $ess
   endif
   return $uhat
@@ -457,7 +478,7 @@ use \texttt{null} in place of a real argument:
 series resid = get_uhat_and_ess(price, xlist, null)
 \end{code}
 %
-Alternatively, trailing function arguments that have default values 
+Alternatively, trailing function arguments that have default values
 may be omitted, so the following would also be a valid call:
 %
 \begin{code}
@@ -748,7 +769,7 @@ inside a function and package them as a list; in this case they are
 not destroyed when the function exits.  Here is a simple example,
 which also illustrates the possibility of setting the descriptive
 labels for variables generated in a function.
-%    
+%
 \begin{code}
 function list make_cubes (list xlist)
    list cubes = deflist()
@@ -816,7 +837,7 @@ function scalar multi (bool s)
    return s ? 1000 : 10
 end function
 \end{code}
-    
+
 \subsection{Overloading}
 
 You may have noticed that several built-in functions in gretl are
@@ -933,7 +954,7 @@ use of these via the gretl GUI. This topic is covered in depth by the
 
 \url{https://sourceforge.net/projects/gretl/files/manual/}
 
-%%% Local Variables: 
+%%% Local Variables:
 %%% mode: latex
 %%% TeX-master: "gretl-guide"
-%%% End: 
+%%% End:
