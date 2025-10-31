@@ -139,7 +139,7 @@ int reset_local_decpoint (void)
 
     set_atof_point(decpoint);
 
-#if 1
+#if 0
     fprintf(stderr, "via localeconv, decimal = '%c'\n", decpoint);
 #endif
 
