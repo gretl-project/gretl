@@ -3801,41 +3801,38 @@ GretlFileType detect_filetype (char *fname, gretlopt opt)
  * @numstr: string to check.
  *
  * Returns: 0 if @numstr is blank, or is a valid string representation
- * of a floating point number, else 1.
+ * of a floating point number, else non-zero. What counts as valid
+ * input depends on the current locale decimal character.
  */
 
 int check_atof (const char *numstr)
 {
+    int err = 0;
     char *test;
 
     /* accept blank entries */
-    if (*numstr == '\0') return 0;
-
-    errno = 0;
-
-    strtod(numstr, &test);
-
-    if (*test == '\0' && errno != ERANGE) return 0;
-
-    if (!strcmp(numstr, test)) {
-        gretl_errmsg_sprintf(_("'%s' -- no numeric conversion performed!"), numstr);
-        return 1;
+    if (*numstr == '\0') {
+        return 0;
     }
 
+    errno = 0;
+    strtod(numstr, &test);
+
     if (*test != '\0') {
-        if (isprint(*test)) {
+        if (strcmp(numstr, test) == 0) {
+            gretl_errmsg_sprintf(_("'%s' -- no numeric conversion performed!"), numstr);
+        } else if (isprint(*test)) {
             gretl_errmsg_sprintf(_("Extraneous character '%c' in data"), *test);
         } else {
             gretl_errmsg_sprintf(_("Extraneous character (0x%x) in data"), *test);
         }
-        return 1;
-    }
-
-    if (errno == ERANGE) {
+        err = 1;
+    } else if (errno == ERANGE) {
         gretl_errmsg_sprintf(_("'%s' -- number out of range!"), numstr);
+        err = 1;
     }
 
-    return 1;
+    return err;
 }
 
 /**
@@ -3843,42 +3840,38 @@ int check_atof (const char *numstr)
  * @numstr: string to check.
  *
  * Returns: 0 if @numstr is blank, or is a valid string representation
- * of an int, else 1.
+ * of a 32-bit signed integer, else non-zero.
  */
 
 int check_atoi (const char *numstr)
 {
+    int err = 0;
     long int val;
     char *test;
 
     /* accept blank entries */
-    if (*numstr == '\0') return 0;
-
-    errno = 0;
-
-    val = strtol(numstr, &test, 10);
-
-    if (*test == '\0' && errno != ERANGE) return 0;
-
-    if (!strcmp(numstr, test)) {
-        gretl_errmsg_sprintf(_("'%s' -- no numeric conversion performed!"), numstr);
-        return 1;
+    if (*numstr == '\0') {
+        return 0;
     }
 
+    errno = 0;
+    val = strtol(numstr, &test, 10);
+
     if (*test != '\0') {
-        if (isprint(*test)) {
+        if (strcmp(numstr, test) == 0) {
+            gretl_errmsg_sprintf(_("'%s' -- no numeric conversion performed!"), numstr);
+        } else if (isprint(*test)) {
             gretl_errmsg_sprintf(_("Extraneous character '%c' in data"), *test);
         } else {
             gretl_errmsg_sprintf(_("Extraneous character (0x%x) in data"), *test);
         }
-        return 1;
-    }
-
-    if (errno == ERANGE || val <= INT_MIN || val >= INT_MAX) {
+        err = 1;
+    } else if (errno == ERANGE || val < INT_MIN || val > INT_MAX) {
         gretl_errmsg_sprintf(_("'%s' -- number out of range!"), numstr);
+        err = 1;
     }
 
-    return 1;
+    return err;
 }
 
 static int transpose_varname_used (const char *vname,

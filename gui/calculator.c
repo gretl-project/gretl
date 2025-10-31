@@ -973,23 +973,19 @@ static double get_real_const (const char *s, EntryValType t)
 double entry_get_numeric_value (GtkWidget *w, EntryValType t)
 {
     const gchar *text = gtk_entry_get_text(GTK_ENTRY(w));
-    char s[32];
+    gchar *s = NULL;
     double x = NADBL;
-    int sub = 0;
     int k, bad = 0;
 
     gretl_error_clear();
 
     if (text == NULL || *text == '\0') {
 	warnbox(_("Incomplete entry"));
+        gtk_widget_grab_focus(w);
 	return (t == C_INT || t == C_POS_INT)? -1 : NADBL;
     }
 
-    *s = '\0';
-
-    while (isspace(*text)) text++;
-    strncat(s, text, 31);
-    tailstrip(s);
+    s = g_strstrip(g_strdup(text));
 
     /* try for constants: e, pi */
     x = get_real_const(s, t);
@@ -997,10 +993,12 @@ double entry_get_numeric_value (GtkWidget *w, EntryValType t)
 	return x;
     }
 
-    if (get_local_decpoint() != '.') {
-	gretl_push_c_numeric_locale();
-	gretl_charsub(s, ',', '.');
-	sub = 1;
+    if (strchr(s, '.') && get_local_decpoint() == ',') {
+        /* Decimal comma is in force but we got decimal dot on input.
+           We'll accept this, but not the converse case: if the
+           decimal dot is in force we'll treat comma as an error.
+        */
+        gretl_charsub(s, '.', ',');
     }
 
     /* a formula? */
@@ -1049,6 +1047,8 @@ double entry_get_numeric_value (GtkWidget *w, EntryValType t)
 
  do_message:
 
+    g_free(s);
+
     if (bad) {
 	const char *msg = gretl_errmsg_get();
 
@@ -1056,10 +1056,6 @@ double entry_get_numeric_value (GtkWidget *w, EntryValType t)
 	gtk_editable_select_region(GTK_EDITABLE(w), 0, -1);
 	gtk_widget_grab_focus(w);
 	x = (t == C_INT || t == C_POS_INT)? -1 : NADBL;
-    }
-
-    if (sub) {
-	gretl_pop_c_numeric_locale();
     }
 
     gretl_error_clear();
