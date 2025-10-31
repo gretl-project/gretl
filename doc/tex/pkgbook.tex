@@ -2847,7 +2847,46 @@ These keywords can also be given in a shorter form, omitting the
 \dtk{list_} prefix, but the more explicit long version is
 recommended for clarity.
 
-\subsection{Real-world examples}
+\subsection{Assignment names}
+
+When a function offers some sort of return value (as most do), by
+default an entry box is placed towards the bottom of its dialog box
+(with accompanying text ``Assign return value'') where the user is
+invited to type a name for this value. However, in certain cases a
+suitable name for the return value may already be implicit.
+
+For example, the \dtk{FRED_get} package---which supports downloading of
+data from the \textsf{FRED} data system at the Federal Reserve Bank of
+St.\ Louis---has as a required parameter the name of a \textsf{FRED}
+series. The user may well likely wish to use the same name for the
+series in gretl, but the interface includes an optional parameter to
+allow specification of a different name. It then makes sense that the
+name for assignment should be either the optional alternate name, if
+that is given, or otherwise the \textsf{FRED} identifier---and the usual
+assignment-name entry box is not wanted.
+
+Suppose the required \textsf{FRED} series parameter is called
+\texttt{seriesname} and the optional alternate name parameter
+\texttt{outputname}. And suppose the package has a \texttt{ui-maker}
+function which returns a bundle called \texttt{ret}. Then the following
+lines in the \texttt{ui-maker} will do what's wanted:
+\begin{code}
+ret.outputname = _(auto_assign = 1)
+ret.seriesname = _(auto_assign = 2)
+\end{code}
+The \dtk{auto_assign} keyword indicates that these two parameters are
+candidates for supplying the name of the imported series on
+assignment. The associated numbers indicate a preference ordering.
+First priority goes to \texttt{outputname}: if something it typed into
+its entry box, that will be used as the assignment name. Otherwise we
+fall back on \texttt{seriesname}. The usual assigment entry box is
+automatically suppressed.
+
+For this mechanism to work there must be one \textit{required} parameter
+with the \dtk{auto_assign} tag. This tag may be given to as many
+optional parameters as makes sense.
+
+\subsection{Some examples}
 
 Here we give some ``live'' illustrations of \texttt{ui-maker}
 functionality based on current function packages.
