@@ -773,10 +773,7 @@ double gretl_long_run_variance (int t1, int t2, const double *x,
     if (series_adjust_sample(x, &t1, &t2) != 0) {
 	return NADBL;
     }
-
-    n = t2 - t1 + 1;
-
-    if (n < 2) {
+    if ((n = t2 - t1 + 1) < 2) {
 	return NADBL;
     }
 
