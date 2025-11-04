@@ -1205,28 +1205,11 @@ static int process_stepwise_option (int ci,
         return 0;
     }
 
-#if 0
-    /* For now the info criterion method is restricted to
-       the "new" stepwise case, and that code requires
-       OLS with classical standard errors. This should
-       be relaxed whenever possible.
-    */
-    for (i=0; i<3; i++) {
-        if (!strcmp(s, cstrs[i])) {
-            if (orig->ci != OLS || (orig->opt & OPT_R)) {
-                return E_NOTIMP;
-            } else {
-                *crit = i;
-            }
-        }
-    }
-#else
     for (i=0; i<3; i++) {
         if (!strcmp(s, cstrs[i])) {
             *crit = i;
         }
     }
-#endif
 
     if (*crit < 0) {
         /* not yet determined */
