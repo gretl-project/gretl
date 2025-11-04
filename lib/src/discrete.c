@@ -42,8 +42,6 @@
 
 #define LPDEBUG 0
 
-#define CHOL_TINY 1.0e-13
-
 typedef struct op_container_ op_container;
 
 /* structure for handling ordered probit or logit */
@@ -2789,6 +2787,13 @@ static gretl_matrix *binary_hessian_inverse (bin_info *bin, int *err)
 
     if (!*err) {
         *err = gretl_invert_symmetric_matrix(H);
+        if (*err) {
+            /* fallback: is this a good idea? (2025-11-04) */
+            *err = gretl_invert_matrix(H);
+        }
+        if (*err) {
+            gretl_errmsg_set("Failed to invert binary model Hessian");
+        }
     }
 
     return H;
