@@ -3764,12 +3764,14 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
     int t2 = dset->t2;
     int err = 0;
 
-    gretl_error_clear();
-
-    if (order < 0) {
+    if (!dataset_is_time_series(dset)) {
+        return E_PDWRONG;
+    } else if (order < 0) {
 	gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
 	return E_DATA;
     }
+
+    gretl_error_clear();
 
     err = series_adjust_sample(dset->Z[varno], &t1, &t2);
     if (err) {
@@ -4213,12 +4215,14 @@ int xcorrgram (const int *list, int order, DATASET *dset,
     int k, p, badvar = 0;
     int T, err = 0;
 
-    gretl_error_clear();
-
-    if (order < 0) {
+    if (!dataset_is_time_series(dset)) {
+        return E_PDWRONG;
+    } else if (order < 0) {
 	gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
 	return E_DATA;
     }
+
+    gretl_error_clear();
 
     if (list[0] != 2) {
 	return E_DATA;
@@ -4919,10 +4923,14 @@ pergm_or_fractint (int usage, const double *x, int t1, int t2,
 int periodogram (int varno, int width, const DATASET *dset,
 		 gretlopt opt, PRN *prn)
 {
-    return pergm_or_fractint(PERGM_CMD, dset->Z[varno],
-			     dset->t1, dset->t2,
-			     width, dset->varname[varno],
-			     opt, prn, NULL);
+    if (!dataset_is_time_series(dset)) {
+        return E_PDWRONG;
+    } else {
+        return pergm_or_fractint(PERGM_CMD, dset->Z[varno],
+                                 dset->t1, dset->t2,
+                                 width, dset->varname[varno],
+                                 opt, prn, NULL);
+    }
 }
 
 /**
@@ -5001,6 +5009,9 @@ int fractint (int varno, int order, const DATASET *dset,
 {
     int err = incompatible_options(opt, (OPT_G | OPT_A));
 
+    if (!err && !dataset_is_time_series(dset)) {
+        err = E_PDWRONG;
+    }
     if (!err) {
 	err = pergm_or_fractint(FRACTINT_CMD, dset->Z[varno],
 				dset->t1, dset->t2,
