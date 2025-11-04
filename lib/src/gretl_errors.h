@@ -78,9 +78,10 @@ typedef enum {
     E_MIXED,       /* 52 : mixed complex/real operands not supported */
     E_DEPENDS,     /* 53 : gfn dependencies not met */
     E_NONFIN,      /* 54 : non-finite values found in matrix argument */
-    E_DB_DUP,      /* 55 : duplicate vars found when saving to database */
-    E_OK,          /* 56 : not really an error */
-    E_MAX          /* 57 */
+    E_TSONLY,      /* 55 : command needs time-series data */
+    E_DB_DUP,      /* 56 : duplicate vars found when saving to database */
+    E_OK,          /* 57 : not really an error */
+    E_MAX          /* 58 */
 } GretlError;
 
 enum gretl_warning_codes {
