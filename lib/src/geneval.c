@@ -10269,9 +10269,8 @@ static NODE *series_scalar_scalar_func (NODE *l, NODE *r,
 {
     NODE *ret = NULL;
 
-    if (f == F_LRVAR && dataset_is_panel(p->dset)) {
-        /* FIXME */
-        gretl_errmsg_set("lrvar(): not yet supported for panel data");
+    if (f == F_LRVAR && l->t == SERIES && dataset_is_panel(p->dset)) {
+        gretl_errmsg_set("lrvar(): panel data not supported");
         p->err = E_DATA;
         return ret;
     }
@@ -10291,9 +10290,16 @@ static NODE *series_scalar_scalar_func (NODE *l, NODE *r,
         }
 
         if (l->t == NUM) {
-            t1 = 0;
-            t2 = 0;
-            xvec = &l->v.xval;
+            if (f == F_NPV) {
+                /* a scalar first arg may be OK for Net Present Value */
+                t1 = 0;
+                t2 = 0;
+                xvec = &l->v.xval;
+            } else {
+                /* but not otherwise */
+                p->err = E_TYPES;
+                return NULL;
+            }
         } else if (l->t == MAT) {
             int n = gretl_vector_get_length(l->v.m);
 
