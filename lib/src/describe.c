@@ -3765,7 +3765,7 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
     int err = 0;
 
     if (!dataset_is_time_series(dset)) {
-        return E_PDWRONG;
+        return E_TSONLY;
     } else if (order < 0) {
 	gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
 	return E_DATA;
@@ -4216,7 +4216,7 @@ int xcorrgram (const int *list, int order, DATASET *dset,
     int T, err = 0;
 
     if (!dataset_is_time_series(dset)) {
-        return E_PDWRONG;
+        return E_TSONLY;
     } else if (order < 0) {
 	gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
 	return E_DATA;
@@ -4924,7 +4924,7 @@ int periodogram (int varno, int width, const DATASET *dset,
 		 gretlopt opt, PRN *prn)
 {
     if (!dataset_is_time_series(dset)) {
-        return E_PDWRONG;
+        return E_TSONLY;
     } else {
         return pergm_or_fractint(PERGM_CMD, dset->Z[varno],
                                  dset->t1, dset->t2,
@@ -5010,7 +5010,7 @@ int fractint (int varno, int order, const DATASET *dset,
     int err = incompatible_options(opt, (OPT_G | OPT_A));
 
     if (!err && !dataset_is_time_series(dset)) {
-        err = E_PDWRONG;
+        err = E_TSONLY;
     }
     if (!err) {
 	err = pergm_or_fractint(FRACTINT_CMD, dset->Z[varno],
@@ -7295,7 +7295,7 @@ int means_test (const int *list, const DATASET *dset,
     err = incompatible_options(opt, OPT_O | OPT_P | OPT_R);
     if (!err && (opt & OPT_R) && !dataset_is_time_series(dset)) {
         gretl_errmsg_set("meantest: the --robust option requires time-series data");
-        err = E_PDWRONG;
+        err = E_TSONLY;
     }
 
     if (!err) {
