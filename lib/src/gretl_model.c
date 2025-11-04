@@ -445,7 +445,7 @@ int gretl_model_set_string_as_data (MODEL *pmod, const char *key, char *str)
 int gretl_model_set_int (MODEL *pmod, const char *key, int val)
 {
     int *valp;
-    int err;
+    int err = 0;
 
     /* if value is already set, reset it */
     valp = gretl_model_get_data(pmod, key);
@@ -454,15 +454,17 @@ int gretl_model_set_int (MODEL *pmod, const char *key, int val)
 	return 0;
     }
 
+    /* otherwise start from scratch */
     valp = malloc(sizeof *valp);
-    if (valp == NULL) return 1;
-
-    *valp = val;
-
-    err = gretl_model_set_data(pmod, key, valp, GRETL_TYPE_INT,
-			       sizeof(int));
-    if (err) {
-	free(valp);
+    if (valp == NULL) {
+        err = E_ALLOC;
+    } else {
+        *valp = val;
+        err = gretl_model_set_data(pmod, key, valp, GRETL_TYPE_INT,
+                                   sizeof(int));
+        if (err) {
+            free(valp);
+        }
     }
 
     return err;
