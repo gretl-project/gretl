@@ -5282,10 +5282,6 @@
 
     <description>
       <para>
-        <emphasis>This documentation is preliminary and subject to
-        change.</emphasis>
-      </para>
-      <para>
         This command is designed to facilitate the construction and
         execution of a Gibbs sampler, for a good explanation of which
         see <cite key="casella92">Casella and George (1992)</cite>. To
