@@ -5258,16 +5258,20 @@
         <argument>queimado</argument>
         <argument>N</argument>
         <argument>saída</argument>
-      </arguments>  
+      </arguments>
       <options>
 	<option>
-	  <flag>--cleanup</flag>
+	  <flag>--keep</flag>
 	  <effect>Mira abaixo</effect>
-        </option>
+	</option>
 	<option>
-	  <flag>--verbose</flag>
+	  <flag>--quiet</flag>
+	  <effect>Eliminar a presentación</effect>
+	</option>
+	<option>
+	  <flag>--thinning</flag>
 	  <effect>Mira abaixo</effect>
-        </option>
+	</option>
       </options>
       <examples>
 	<demos>
@@ -5278,10 +5282,6 @@
 
     <description>
       <para>
-	   <emphasis>Esta documentación é provisoria e está suxeita a
-	   trocos antes da seguinte versión de GRETL.</emphasis>
-      </para>
-      <para>
 	Esta instrución está deseñada para facilitar a construción e execución
 	dunha mostraxe de Gibbs; para unha boa explicación da mesma,
 	consulta <cite key="casella92">Casella e George (1992)</cite>.
@@ -5291,7 +5291,7 @@
 	unha expresión analítica para as marxinais, ou de que sexa
 	excesivamente complexa, se existe. Isto acádase mediante a
 	simulación repetida das distribucións condicionadas asociadas.
-	Dado que as marxinais existen, pódense aproximar a unha precisión
+	Dado que as marxinais existen, pódense aproximar con unha precisión
 	arbitraria indicando un número suficiente de
 	iteracións.
       </para>
@@ -5306,11 +5306,11 @@
 	<lit>x</lit>.
       </para>
       <code>
-	gibbs burnin=500 N=5000 output=M
+	gibbs burnin=500 N=5000 output=GB
 	   init y = randgen1(beta, a, n - b)
 	   record x = randgen1(b, y, n)
 	   y = randgen1(beta, x + a, n - x + b)
-	end gibbs --verbose
+	end gibbs
       </code>
       <para>
 	Na primeira liña debe indicarse un enteiro non negativo para
@@ -5319,7 +5319,7 @@
 	escalares). O valor de <lit>queimado</lit> determina o número de
 	iteracións preliminares que se van tentar para estabilizar o proceso
 	recursivo e que non se van gravar, mentres que <lit>N</lit>indica
-	o número de iteracións que se van gravar, nunha matriz nomeada
+	o número de iteracións que se van gravar, nun paquete nomeado
 	mediante o argumento <lit>saída</lit>.
       </para>
       <para>
@@ -5348,21 +5348,84 @@
 	indicarse primeiro.
       </para>
       <para>
-	A matriz de saída ten <lit>N</lit> filas e unha dimensión de columnas
-	que depende do número e do tipo de marxinais que se graven; os
-	resultados da matriz grávanse en formato vec trasposto. Se xa existe
-	o nome de matriz indicado no argumento <lit>saída</lit>, sobrescríbese;
-	doutro xeito, créase unha nova matriz.
+	O principal contido do paquete de saída é unha matriz nomeada
+	<lit>H</lit> que por defecto ten <lit>N</lit> filas e unha dimensión
+	de columnas que depende do número e tipo de marxinais que se vaian
+	gravar; os resultados da matriz grávanse en formato de vector
+	trasposto. Xunto con esta matriz, o paquete contén varios elementos
+	de metadatos que o converten nun rexistro autocontido da mostraxe
+	(consulta abaixo Metadatos da mostraxe). Se xa existe o nome de paquete
+	indicado no argumento <lit>saída</lit>, sobrescríbese; doutro xeito,
+	créase un novo paquete.
       </para>
+      <subhead>Indicadores de opcións</subhead>
       <para>
-	Admítense dúas opcións, que deben engadirse á derradeira liña do
-	bloque. A opción <opt>verbose</opt> produce un breve informe de
-	progreso e algúns estatísticos básicos de resumo, correspondentes
-	á matriz de saída de resultados. A opción <opt>cleanup</opt> ten
-	como efecto que calquera nova variable creada dentro do bloque
-	<lit>gibbs</lit>, vaise eliminar unha vez que se complete a
-	iteración.
+	Admítense tres opcións, que deben engadirse á derradeira liña do
+	bloque.
       </para>
+      <ilist>
+        <li>
+        <para>
+    A opción <opt>quiet</opt> elimina a presentación predeterminada da saída
+    de resultados, que amosa un breve informe do progreso e algúns estatísticos
+    básicos de resumo, en relación á matriz de saída de resultados.
+        </para>
+        </li>
+        <li>
+        <para>
+    Por defecto, calquera nova variable creada dentro do bloque
+    <lit>gibbs</lit>, vaise eliminar unha vez que se complete a
+    iteración. O efecto da opción <opt>keep</opt> é o de preservar
+    esas variables, o que podería ser útil para depurar unha
+    mostraxe.
+        </para>
+        </li>
+        <li>
+        <para>
+    A opción <opt>thinning</opt> (rareo) pódese utilizar para restrinxir
+    a gravación de resultados a un subconxunto do número total de
+    iteracións. Por exemplo <lit>--thinning=10</lit> significa que só
+    se vai gravar cada 10-ésima iteración. Nese caso, a dimensión
+    de filas da matriz <lit>H</lit> vai ser <math>N</math>/10, en
+    troques de <math>N</math>.
+        </para>
+        </li>
+      </ilist>
+      <subhead>Metadatos da mostraxe</subhead>
+      <para>
+  Outros elementos do paquete devolto gravan os valores de
+  <lit>queimado</lit>, <lit>N</lit> e <lit>rareo</lit>. Ademais,
+  contén un sub-paquete en relación a (e nomeado para) cada
+  variable seleccionada para ser gravada. Estes sub-paquetes
+  conteñen
+      </para>
+      <ilist>
+	<li>
+	    <para>
+      a columna de inicio (<lit>startcol</lit>) e o número de columnas
+      (<lit>ncols</lit>) na matriz <lit>H</lit> que se dedica á variable
+      en cuestión;
+	    </para>
+	</li>
+	<li>
+	    <para>
+      un booleano <lit>discreto</lit> que indica se a variable é discreta
+      ou non;
+	    </para>
+	</li>
+	<li>
+	    <para>
+      unha cadea <lit>tipo</lit> de texto (<lit>escalar</lit> ou
+      <lit>matriz</lit>); e
+ 	    </para>
+	</li>
+	<li>
+	    <para>
+	    unha matriz denominada <lit>stats</lit> que contén estatísticos
+	    básicos.
+	  </para>
+	</li>
+      </ilist>
     </description>
   </command>
 
@@ -5534,7 +5597,12 @@
         </option>
         <option>
 	  <flag>--band</flag>
-	  <optparm>espfranxa</optparm>
+	  <optparm>paquete</optparm>
+	  <effect>Mira abaixo</effect>
+        </option>
+        <option>
+	  <flag>--bands</flag>
+	  <optparm>arranxo</optparm>
 	  <effect>Mira abaixo</effect>
         </option>
         <option>

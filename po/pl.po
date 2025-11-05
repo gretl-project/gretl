@@ -1,4 +1,4 @@
-# Polish translation for gretl 2025a_cvs
+# Polish translation for gretl 2025c_cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <pawel.kufel@torun.merito.pl>, 2004 - 2025
 # Tadeusz Kufel <tadeusz.kufel@umk.pl>, 2004 - 2025
@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 2024c\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-09-18 10:21-0400\n"
-"PO-Revision-Date: 2025-09-21 07:44-0400\n"
+"PO-Revision-Date: 2025-11-05 11:42-0500\n"
 "Last-Translator: Pawel Kufel <pawel.kufel@torun.merito.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -2453,7 +2453,8 @@ msgstr ""
 
 #: lib/src/describe.c:7372
 msgid "Robust equality of means test"
-msgstr "Odporny test średnich"
+msgstr ""
+"Odporny test średnich"
 
 #: lib/src/describe.c:7375
 #, c-format
@@ -14982,7 +14983,7 @@ msgstr "perio_dyczne zmienne 0-1"
 
 #: gui/gretl.c:1954 gui/gretl.c:2050
 msgid "_Panel"
-msgstr "Dane_panelowe"
+msgstr "Dane _panelowe"
 
 #: gui/gretl.c:1955
 msgid "_Unit index"

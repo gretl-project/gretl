@@ -8047,11 +8047,11 @@
       <description>
 	<para>
 	  Devolve un resultado (do tipo do argumento) co logaritmo da función Gamma de <argname>x</argname>.
-	</para>
 	  <seelist>
             <fncref targ="bincoeff"/>
             <fncref targ="gammafun"/>
 	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -8069,10 +8069,10 @@
 	  Para a súa definición e propiedades, consulta
 	  <url>https://dlmf.nist.gov/35.3</url> ou
 	  <url>https://en.wikipedia.org/wiki/Multivariate_gamma_function</url>.
-	</para>
 	  <seelist>
             <fncref targ="lngamma"/>
 	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -13128,78 +13128,89 @@
 	<para>
 	  Le valores indicados polo argumento <argname>orixe</argname> baixo
 	  o control do argumento <argname>formato</argname>, e asigna estes
-	  valores a un ou máis dos argumentos seguintes, indicados polos
-	  puntos de arriba. Devolve un enteiro co número de valores que se
-	  asignan. Esta función é unha versión simplificada da función
-	  <lit>sscanf</lit> da linguaxe C de programación, cunha extensión
-	  para escanear unha matriz enteira, e que se describe máis abaixo
-	  baixo o título <quote>Escaneando unha matriz</quote>. Ten en conta que
-	  indicar un arranxo de cadeas de texto como <argname>orixe</argname>
-	  só se acepta no caso de que escanees unha matriz.
+	  valores a un ou máis dos argumentos seguintes, indicados polos puntos
+	  de arriba. Devolve un enteiro co número de valores que se asignan.
+	  Esta función é unha versión simplificada da función <lit>sscanf</lit> da
+	  linguaxe C de programación, cunha extensión para escanear unha matriz
+	  enteira (consulta máis abaixo <quote>Escaneando unha matriz</quote>).
+	  Ten en conta que indicar un arranxo de cadeas de texto como
+	  <argname>orixe</argname> só se acepta no caso de escanear unha matriz.
 	</para>
 	<para>
 	  Como argumento <repl>orixe</repl> podes usar unha cadea de texto literal
 	  contornada entre comiñas, ou ben o nome dunha cadea de texto que
 	  definiras previamente. O argumento <repl>formato</repl> indícase de
 	  xeito similar á cadea do argumento <quote>formato</quote> en
-	  <cmdref targ="printf"/> (mira máis abaixo); nesta última función,
-	  <repl>elementos</repl> debe de ser unha lista de variables definidas antes,
-	  separadas por comas e que son os obxectivos da conversión de
-	  <repl>orixe</repl>. (Para os afeitos a C: podedes fixar previamente os
-	  nomes das variables numéricas con <lit>&amp;</lit>, pero non se esixe.)
+	  <cmdref targ="printf"/> (mira máis abaixo). Os argumentos seguintes
+	  &mdash;os nomes das variables predefinidas que son os obxectivos da
+	  conversión&mdash; deben estar separados por comas. (Para os afeitos
+	  a C: podedes fixar previamente os nomes das variables numéricas
+	  con <lit>&amp;</lit>, pero non se esixe.)
 	</para>
 	<para>
 	  O texto literal no argumento <repl>formato</repl> compárase con
-	  <repl>orixe</repl>. Os elementos que especifican a conversión comezan
-	  co carácter <lit>%</lit>, e as conversións que están admitidas
-	  inclúen: <lit>%f</lit>, <lit>%g</lit> ou <lit>%lf</lit> para números
-	  de punto flotante; <lit>%d</lit> para números enteiros; e <lit>%s</lit>
-	  para cadeas de texto. Podes inserir un enteiro positivo despois do
-	  símbolo de porcentaxe, que establece o número máximo de caracteres
-	  que se van ler para a conversión indicada. Como forma alternativa,
-	  podes inserir un carácter literal de asterisco, <lit>*</lit>, logo do
-	  símbolo de porcentaxe para eliminar a conversión (saltándose así
-	  calquera carácter que, doutro xeito, podería terse convertido ao tipo
-	  indicado). Por exemplo, a expresión <lit>%3d</lit> converte os
-	  seguintes 3 caracteres de <repl>orixe</repl> nun enteiro, en caso
-	  de que sexa posible; e a expresión <lit>%*g</lit> permite saltarse
-	  tantos caracteres de <repl>orixe</repl> como os que poderían
-	  converterse nun número de punto flotante simple.
+	  <repl>orixe</repl>. Os elementos que especifican a conversión comezan co
+	  carácter <lit>%</lit>, e as conversións que están admitidas inclúen:
+	  <lit>%f</lit>, <lit>%g</lit> ou <lit>%lf</lit> para números de punto
+	  flotante; <lit>%d</lit> para números enteiros; e <lit>%s</lit> para
+	  cadeas de texto. Podes inserir un enteiro positivo despois do símbolo
+	  de porcentaxe, que establece o número máximo de caracteres que se van
+	  ler para a conversión indicada. Como forma alternativa, podes inserir
+	  un carácter literal de asterisco, <lit>*</lit>, logo do símbolo de
+	  porcentaxe para eliminar a conversión (saltándose así calquera carácter
+	  que, doutro xeito, podería terse convertido ao tipo indicado). Por
+	  exemplo, a expresión <lit>%3d</lit> converte os seguintes 3 caracteres de
+	  <repl>orixe</repl> nun enteiro, en caso de que sexa posible; e a expresión
+	  <lit>%*g</lit> permite saltarse tantos caracteres de <repl>orixe</repl>
+	  como os que poderían converterse nun número de punto flotante simple.
 	</para>
+        <subhead>Conversións de cadeas de texto</subhead>
 	<para>
-	  Ademais da conversión <lit>%s</lit> para cadeas de texto, tamén
-	  está dispoñible unha versión simplificada do formato C
-	  <lit>%</lit><repl>N</repl><lit>[</lit><repl>chars</repl><lit>]</lit>.
-	  Neste formato, <repl>N</repl> representa o número máximo de
-	  caracteres que se van ler, e <repl>chars</repl> expresa un conxunto de
-	  caracteres que sexan admisibles, contornados entre corchetes:
-	  o proceso de lectura remata cando se acada <repl>N</repl>, ou cando
-	  se atopa un carácter que non está en <repl>chars</repl>. Podes
-	  trocar o funcionamento de <repl>chars</repl>indicando o circunflexo
-	  <lit>^</lit> como primeiro carácter; nese caso, o proceso de lectura
-	  remata cando se atopa un carácter que está indicado no conxunto.
+	  Observa que no caso da conversión <lit>%s</lit> para cadeas de texto,
+	  o rastrexo dun argumento concreto detense cando se atopa un espazo en
+	  branco. Para maior flexibilidade, está dispoñible unha versión simplificada
+	  de <lit>%</lit><repl>N</repl><lit>[</lit><repl>chars</repl><lit>]</lit>
+	  do formato C. Neste formato, <repl>N</repl> (que é opcional)
+	  representa o número máximo de caracteres que se van ler, e
+	  <repl>chars</repl> expresa un conxunto de caracteres que sexan
+	  admisibles, contornados entre corchetes: o proceso de lectura remata
+	  cando se acada <repl>N</repl>, ou cando se atopa un carácter que
+	  non está en <repl>chars</repl>. O comportamento desta construción
+	  revértese cando se indica un circunflexo, <lit>^</lit>, como primeiro
+	  elemento de <repl>chars</repl>. Nese caso, o proceso de lectura
+	  remata cando se atopa un carácter que estea indicado no conxunto.
 	  (A diferenza do que acontece en C, o guión non xoga ningún papel
 	  especial no conxunto <repl>chars</repl>.)
+	  Por exemplo:
 	</para>
+	<code>
+	  string src = "Algún texto en concreto que puidese interesar"
+	  string s1
+	  string s2
+	  sscanf(src, "%s", s1)
+	  printf "s1 = '%s'\n", s1
+	  sscanf(src, "%24[^\n]", s2)
+	  printf "s2 = '%s'\n", s2
+	</code>
+	<para>
+	  O primeiro escaneado proporciona <quote><lit>Algún</lit></quote>,
+	  mentres o segundo ofrece <quote><lit>Algún texto en concreto</lit></quote>.
+	</para>
+	<subhead>Valor de retorno</subhead>
 	<para>
 	  Se a cadea de texto da orixe non coincide (exactamente) co formato,
 	  o número de conversións pode quedarse curta a respecto do número
 	  de argumentos indicados. Isto non é por si mesmo un fallo no que
 	  atinxe a GRETL. Así e todo, poderías querer comprobar o número de
 	  conversións que se completaron; isto indícase no valor que se
-	  devolve De seguido indícanse varios exemplos:
+	  devolve. De seguido indícase un exemplo:
 	</para>
 	<code>
 	  # Escaneando valores escalares
 	  scalar x
 	  scalar y
-	  sscanf("123456", "%3d%3d", x, y)
-	  # Escaneando valores de cadea de texto
-	  string s = "un dous"
-	  string s1
-	  string s2
-	  sscanf(s, "%s %s", s1, s2)
-	  print s1 s2
+	  n = sscanf("123456", "%3d%3d", x, y)
+	  printf "scanned %d values\n", n
 	</code>
 	<subhead>Escaneando unha matriz</subhead>
 	<para>

@@ -8047,11 +8047,11 @@
       <description>
 	<para>
 	  Devuelve un resultado (del tipo del argumento) con el logaritmo de la función Gamma de <argname>x</argname>.
-	</para>
 	  <seelist>
             <fncref targ="bincoeff"/>
             <fncref targ="gammafun"/>
 	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -8069,10 +8069,10 @@
 	  Para su definición y propiedades, consulta
 	  <url>https://dlmf.nist.gov/35.3</url> o
 	  <url>https://en.wikipedia.org/wiki/Multivariate_gamma_function</url>.
-	</para>
 	  <seelist>
             <fncref targ="lngamma"/>
 	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -13126,80 +13126,91 @@
       </fnargs>
       <description>
 	<para>
-	  Lee valores indicados por el argumento <argname>origen</argname> bajo
-	  el control del argumento <argname>formato</argname>, y asigna estos
-	  valores a uno o más de los argumentos siguientes, indicados por los
-	  puntos de arriba. Devuelve un entero con el número de valores que se
-	  asignan. Esta función es una versión simplificada de la función
-	  <lit>sscanf</lit> del lenguaje C de programación, con una extensión
-	  para escanear una matriz entera, y que se describe más abajo bajo el
-	  título <quote>Escaneando una matriz</quote>. Ten en cuenta que indicar
-	  una formación de cadenas de texto como <argname>origen</argname>
-	  solo se acepta en caso de que escanees una matriz.
+	  Lee valores indicados por el argumento <argname>origen</argname> bajo el
+	  control del argumento <argname>formato</argname>, y asigna estos valores
+	  a uno o más de los argumentos siguientes, indicados por los puntos de
+	  arriba. Devuelve un entero con el número de valores que se asignan.
+	  Esta función es una versión simplificada de la función <lit>sscanf</lit>
+	  del lenguaje C de programación, con una extensión para escanear una
+	  matriz entera (consulta más abajo <quote>Escaneando una matriz</quote>).
+	  Ten en cuenta que indicar una formación de cadenas de texto como
+	  <argname>origen</argname> solo se acepta en caso de escanear una matriz.
 	</para>
 	<para>
 	  Como argumento <repl>origen</repl> puedes usar una cadena de texto literal
 	  entrecomillada, o bien el nombre de una cadena de texto que hayas
 	  definido previamente. El argumento <repl>formato</repl> se indica de
 	  modo similar a la cadena del argumento <quote>formato</quote> en
-	  <cmdref targ="printf"/> (mira más abajo); en esta última función,
-	  <repl>elementos</repl> debe ser una lista de variables definidas antes,
-	  separadas por comas y que son los objetivos de la conversión de
-	  <repl>origen</repl>. (Para los acostumbrados a C: podéis fijar previamente los
-	  nombres de las variables numéricas con <lit>&amp;</lit>, pero no es necesario.)
+	  <cmdref targ="printf"/> (mira más abajo). Los argumentos siguientes
+	  &mdash;los nombres de las variables predefinidas que son los objetivos
+	  de la conversión&mdash; deben estar separados por comas. (Para los
+	  acostumbrados a C: podéis fijar previamente los nombres de las
+	  variables numéricas con <lit>&amp;</lit>, pero no es necesario.)
 	</para>
 	<para>
 	  El texto literal en el argumento <repl>formato</repl> se compara con
 	  <repl>origen</repl>. Los elementos que especifican la conversión empiezan
 	  con el carácter <lit>%</lit>, y las conversiones que están admitidas
-	  incluyen: <lit>%f</lit>, <lit>%g</lit> o <lit>%lf</lit> para números
-	  de punto flotante; <lit>%d</lit> para números enteros; y <lit>%s</lit>
-	  para cadenas de texto. Puedes insertar un entero positivo después del
-	  símbolo de porcentaje, que establece el número máximo de caracteres
-	  que se van a leer para la conversión indicada. Como forma alternativa,
-	  puedes insertar un carácter literal de asterisco, <lit>*</lit>, después
-	  del símbolo de porcentaje para eliminar la conversión (saltándose así
-	  cualquier carácter que, de otro modo, podría haberse convertido al
-	  tipo indicado). Por ejemplo, la expresión <lit>%3d</lit> convierte
-	  los siguientes 3 caracteres de <repl>origen</repl> en un entero, en
-	  caso de que sea posible; y la expresión <lit>%*g</lit> permite saltarse
-	  tantos caracteres de <repl>origen</repl> como los que podrían
-	  convertirse en un número de punto flotante simple.
+	  incluyen: <lit>%f</lit>, <lit>%g</lit> o <lit>%lf</lit> para números de
+	  punto flotante; <lit>%d</lit> para números enteros; y <lit>%s</lit> para
+	  cadenas de texto. Puedes insertar un entero positivo después del símbolo
+	  de porcentaje, que establece el número máximo de caracteres que se van a
+	  leer para la conversión indicada. Como forma alternativa, puedes insertar
+	  un carácter literal de asterisco, <lit>*</lit>, después del símbolo de
+	  porcentaje para eliminar la conversión (saltándose así cualquier carácter
+	  que, de otro modo, podría haberse convertido al tipo indicado). Por
+	  ejemplo, la expresión <lit>%3d</lit> convierte los siguientes 3 caracteres de
+	  <repl>origen</repl> en un entero, en caso de que sea posible; y la expresión
+	  <lit>%*g</lit> permite saltarse tantos caracteres de <repl>origen</repl>
+	  como los que podrían convertirse en un número de punto flotante simple.
 	</para>
+        <subhead>Conversiones de cadenas de texto</subhead>
 	<para>
-	  Además de la conversión <lit>%s</lit> para cadenas de texto, también
-	  está disponible una versión simplificada del formato C
-	  <lit>%</lit><repl>N</repl><lit>[</lit><repl>chars</repl><lit>]</lit>.
-	  En este formato, <repl>N</repl> representa el número máximo de
-	  caracteres que se van a leer, y <repl>chars</repl> expresa un conjunto de
-	  caracteres que sean admisibles, expresados entre corchetes:
-	  el proceso de lectura finaliza cuando se alcanza <repl>N</repl>, o cuando
-	  se encuentra un carácter que no está en <repl>chars</repl>. Puedes
-	  cambiar el funcionamiento de <repl>chars</repl>indicando el circunflejo
-	  <lit>^</lit> como primer carácter; en ese caso, el proceso de lectura
-	  finaliza cuando se encuentra un carácter que está indicado en el conjunto.
-	  (A diferencia de lo que sucede en C, el guion no juega ningún papel
-	  especial en el conjunto <repl>chars</repl>.)
+	  Observa que en caso de la conversión <lit>%s</lit> para cadenas de texto,
+	  el rastreo de un argumento concreto se para cuando se encuentra un espacio
+	  en blanco. Para mayor flexibilidad, está disponible una versión simplificada
+	  de <lit>%</lit><repl>N</repl><lit>[</lit><repl>chars</repl><lit>]</lit>
+	  del formato C. En este formato, <repl>N</repl> (que es opcional)
+	  representa el número máximo de caracteres que se van a leer, y
+	  <repl>chars</repl> expresa un conjunto de caracteres que sean
+	  admisibles, expresados entre corchetes: el proceso de lectura finaliza
+	  cuando se alcanza <repl>N</repl>, o cuando se encuentra un carácter
+	  que no está en <repl>chars</repl>. El comportamiento de esta
+	  construcción se revierte cuando se indica un circunflejo, <lit>^</lit>,
+	  como primer elemento de <repl>chars</repl>. En ese caso, el proceso
+	  de lectura finaliza cuando se encuentra un carácter que esté indicado
+	  en el conjunto. (A diferencia de lo que sucede en C, el guion no juega
+	  ningún papel especial en el conjunto <repl>chars</repl>.)
+	  Por ejemplo:
 	</para>
+	<code>
+	  string src = "Algún texto en concreto que pudiese interesar"
+	  string s1
+	  string s2
+	  sscanf(src, "%s", s1)
+	  printf "s1 = '%s'\n", s1
+	  sscanf(src, "%24[^\n]", s2)
+	  printf "s2 = '%s'\n", s2
+	</code>
+	<para>
+	  El primer escaneado proporciona <quote><lit>Algún</lit></quote>,
+	  mientras el segundo ofrece <quote><lit>Algún texto en concreto</lit></quote>.
+	</para>
+	<subhead>Valor de retorno</subhead>
 	<para>
 	  Si la cadena de texto del origen no coincide (exactamente) con el formato,
 	  el número de conversiones puede quedarse corta respecto al número
 	  de argumentos indicados. Esto no es por si mismo un fallo en lo que
 	  atañe a GRETL. Así y todo, podrías querer comprobar el número de
 	  conversiones que se completaron; esto se indica en el valor que se
-	  devuelve  Some simple examples follow:
+	  devuelve. A continuación se indica un ejemplo:
 	</para>
 	<code>
 	  # Escaneando valores escalares
 	  scalar x
 	  scalar y
-	  sscanf("123456", "%3d%3d", x, y)
-	  # Escaneando valores de cadena de texto
-	  string s = "uno dos"
-	  string s1
-	  string s2
-	  sscanf(s, "%s %s", s1, s2)
-	  print s1 s2
+	  n = sscanf("123456", "%3d%3d", x, y)
+	  printf "scanned %d values\n", n
 	</code>
 	<subhead>Escaneando una matriz</subhead>
 	<para>

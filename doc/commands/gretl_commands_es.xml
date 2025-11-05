@@ -5258,16 +5258,20 @@
         <argument>quemado</argument>
         <argument>N</argument>
         <argument>salida</argument>
-      </arguments>  
+      </arguments>
       <options>
 	<option>
-	  <flag>--cleanup</flag>
+	  <flag>--keep</flag>
 	  <effect>Mira abajo</effect>
-        </option>
+	</option>
 	<option>
-	  <flag>--verbose</flag>
+	  <flag>--quiet</flag>
+	  <effect>Eliminar la presentación</effect>
+	</option>
+	<option>
+	  <flag>--thinning</flag>
 	  <effect>Mira abajo</effect>
-        </option>
+	</option>
       </options>
       <examples>
 	<demos>
@@ -5278,10 +5282,6 @@
 
     <description>
       <para>
-	   <emphasis>Esta documentación es provisional y está sujeta a
-	   cambios antes de la siguiente versión de GRETL.</emphasis>
-      </para>
-      <para>
 	Esta instrucción está diseñada para facilitar la construcción y ejecución
 	de un muestreo de Gibbs; para una buena explicación de la misma,
 	consulta <cite key="casella92">Casella y George (1992)</cite>.
@@ -5291,7 +5291,7 @@
 	una expresión analítica para las marginales, o de que sea demasiado
 	compleja, si existe. Esto se consigue mediante la simulación repetida
 	de las distribuciones condicionadas asociadas. Puesto que las
-	marginales existen, se pueden aproximar a una precisión arbitraria
+	marginales existen, se pueden aproximar con una precisión arbitraria
 	indicando un número suficiente de
 	iteraciones.
       </para>
@@ -5306,11 +5306,11 @@
 	<lit>x</lit>.
       </para>
       <code>
-	gibbs burnin=500 N=5000 output=M
+	gibbs burnin=500 N=5000 output=GB
 	   init y = randgen1(beta, a, n - b)
 	   record x = randgen1(b, y, n)
 	   y = randgen1(beta, x + a, n - x + b)
-	end gibbs --verbose
+	end gibbs
       </code>
       <para>
 	En la primera línea debe indicarse un entero no negativo para
@@ -5319,7 +5319,7 @@
 	escalares). El valor de <lit>quemado</lit> determina el número de
 	iteraciones preliminares que se van intentar para estabilizar el proceso
 	recursivo y que no se van a grabar, mientras que <lit>N</lit>indica
-	el número de iteraciones que se van a grabar, en una matriz nombrada
+	el número de iteraciones que se van a grabar, en un 'bundle' nombrado
 	mediante el argumento <lit>salida</lit>.
       </para>
       <para>
@@ -5348,21 +5348,84 @@
 	indicarse primero.
       </para>
       <para>
-	La matriz de salida tiene <lit>N</lit> filas y una dimensión de columnas
-	que depende del número y del tipo de marginales que se graben; los
-	resultados de la matriz se graban en formato vec traspuesto. Si ya existe
-	el nombre de matriz indicado en el argumento <lit>salida</lit>, se
-	sobrescribe; en caso contrario, se crea una nueva matriz.
+	El principal contenido del paquete de salida es una matriz denominada
+	<lit>H</lit> que por defecto tiene <lit>N</lit> filas y una dimensión
+	de columnas que depende del número y tipo de marginales que se vayan 
+	a grabar; los resultados de la matriz se graban en formato de vector
+	traspuesto. Junto con esta matriz, el 'bundle' contiene varios elementos
+	de metadatos que lo convierten en un registro autocontenido del muestreo
+	(consulta abajo Metadatos del muestreo). Si ya existe el nombre de
+	'bundle' indicado en el argumento <lit>salida</lit>, se sobrescribe;
+	en caso contrario, se crea un nuevo 'bundle'.
       </para>
+      <subhead>Indicadores de opciones</subhead>
       <para>
-	Se admiten dos opciones, que deben añadirse a la última línea del
-	bloque. La opción <opt>verbose</opt> produce un breve informe de
-	progreso y algunos estadísticos básicos de resumen, correspondientes
-	a la matriz de salida de resultados. La opción <opt>cleanup</opt> tiene
-	como efecto que cualquier nueva variable creada dentro del bloque
-	<lit>gibbs</lit>, se va a eliminar una vez que se complete la
-	iteración.
+	Se admiten tres opciones, que deben añadirse a la última línea del
+	bloque.
       </para>
+      <ilist>
+        <li>
+        <para>
+    La opción <opt>quiet</opt> elimina la presentación predeterminada de la
+    salida de resultados, que muestra un breve informe del progreso y algunos
+    estadísticos básicos de resumen, en relación a la matriz de salida de resultados.
+        </para>
+        </li>
+        <li>
+        <para>
+    Por defecto, cualquier nueva variable creada dentro del bloque
+    <lit>gibbs</lit>, se va a eliminar una vez que se complete la
+    iteración. El efecto de la opción <opt>keep</opt> es el de preservar
+    esas variables, lo que podría ser de utilidad para depurar un
+    muestreo.
+        </para>
+        </li>
+        <li>
+        <para>
+    La opción <opt>thinning</opt> (raleo) se puede utilizar para restringir
+    la grabación de resultados a un subconjunto del número total de
+    iteraciones. Por ejemplo <lit>--thinning=10</lit> significa que solo
+    se va a grabar cada 10-ésima iteración. En ese caso, la dimensión
+    de filas de la matriz <lit>H</lit> va a ser <math>N</math>/10, en
+    lugar de <math>N</math>.
+        </para>
+        </li>
+      </ilist>
+      <subhead>Metadatos da mostraxe</subhead>
+      <para>
+  Otros elementos del 'bundle' devuelto gravan los valores de
+  <lit>quemado</lit>, <lit>N</lit> y <lit>rareo</lit>. Además,
+  contiene un 'sub-bundle' en relación a (y nombrado para) cada
+  variable seleccionada para ser grabada. Estos 'sub-bundles'
+  contienen
+      </para>
+      <ilist>
+	<li>
+	    <para>
+      la columna de inicio (<lit>startcol</lit>) y el número de columnas
+      (<lit>ncols</lit>) en la matriz <lit>H</lit> que se dedica a la
+      variable en cuestión;
+	    </para>
+	</li>
+	<li>
+	    <para>
+      un booleano <lit>discreto</lit> que indica si la variable es discreta
+      o no;
+	    </para>
+	</li>
+	<li>
+	    <para>
+      una cadena <lit>tipo</lit> de texto (<lit>escalar</lit> o
+      <lit>matriz</lit>); y
+ 	    </para>
+	</li>
+	<li>
+	    <para>
+	    una matriz denominada <lit>stats</lit> que contiene estadísticos
+	    básicos.
+	  </para>
+	</li>
+      </ilist>
     </description>
   </command>
 
@@ -5534,7 +5597,12 @@
         </option>
         <option>
 	  <flag>--band</flag>
-	  <optparm>espfranja</optparm>
+	  <optparm>paquete</optparm>
+	  <effect>Mira abajo</effect>
+        </option>
+        <option>
+	  <flag>--bands</flag>
+	  <optparm>array</optparm>
 	  <effect>Mira abajo</effect>
         </option>
         <option>
@@ -5766,7 +5834,7 @@
 	Aquí tienes dos ejemplos de uso, en los que se emplea la sintaxis abreviada
 	<lit>_()</lit> para definir un 'bundle'. El primero únicamente satisface
 	los requerimientos mínimos, mientras que en el segundo se practican las
-	tres opciones. Se está asumiendo que todas as series <lit>y</lit>,
+	tres opciones. Se está asumiendo que todas las series <lit>y</lit>,
 	<lit>x</lit> y <lit>w</lit> están en el conjunto de datos vigente.
       </para>
       <code>
