@@ -43,6 +43,7 @@ OMP_OPT = @OPENMP_CFLAGS@
 OMP_LIB = @OMP_LIB@
 
 CLANG_LIB = @CLANG_LIB@
+CXX_LIB = @CXX_LIB@
 
 ifeq ($(win32pkg),yes)
   plugindir = $(libdir)/plugins
@@ -81,12 +82,12 @@ ifeq ($(quiet_build),yes)
   CCV = $(CC) $(SIMD_OPT) $(OMP_OPT) > /dev/null
   CXXV = $(CXX) $(OMP_OPT) > /dev/null
   LINK = $(LDECHO); $(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
-  LDXX = $(LDECHO); $(LIBTOOL) --mode=link $(CXXV) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
+  LDXX = $(LDECHO); $(LIBTOOL) --mode=link $(CXXV) $(LDFLAGS) $(CXX_LIB) -module -avoid-version -rpath $(plugindir)
 else
   CCV = $(CC) $(SIMD_OPT) $(OMP_OPT)
   CXXV = $(CXX) $(OMP_OPT)
   LINK = $(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
-  LDXX = $(LIBTOOL) --mode=link $(CXXV) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
+  LDXX = $(LIBTOOL) --mode=link $(CXXV) $(LDFLAGS) $(CXX_LIB) -module -avoid-version -rpath $(plugindir)
 endif
 
 GRETLINC = -I$(topsrc)/lib/src

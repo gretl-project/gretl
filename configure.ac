@@ -403,6 +403,7 @@ AC_ARG_VAR(MPICC, path to MPI compiler wrapper)
 AC_ARG_VAR(MPILINK, linker commands for MPI (cross-build))
 AC_ARG_VAR(OMP_LIB, linker command for OpenMP (auto))
 AC_ARG_VAR(CLANG_LIB, linker command for clang runtime)
+AC_ARG_VAR(CXX_LIB, linker command for C++)
 
 AC_C_SSE2
 AC_C_AVX
