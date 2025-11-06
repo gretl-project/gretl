@@ -2340,7 +2340,7 @@ static int kalman_filter (kalman *K, PRN *prn, int *errp)
         printf("kalman_filter()\n");
     }
 
-    if (gretl_bundle_get_int(K->b, "diffuse", NULL) && K->exact) {
+    if (kalman_diffuse(K) && K->exact) {
         if (!kalman_dejong(K)) {
             K->code = K_SEQUEN;
         }
