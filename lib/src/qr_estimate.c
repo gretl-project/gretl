@@ -1961,10 +1961,16 @@ gretl_qr_plain_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 
  qr_cleanup:
 
-    gretl_matrix_free(Q);
-    gretl_matrix_free(R);
-    gretl_matrix_free(y);
+    if (opt & OPT_B) {
+        /* running initial LPM for binary model */
+        gretl_model_set_matrix_as_data(pmod, "Q", Q);
+        gretl_model_set_matrix_as_data(pmod, "R", R);
+    } else {
+        gretl_matrix_free(Q);
+        gretl_matrix_free(R);
+    }
 
+    gretl_matrix_free(y);
     gretl_matrix_free(g);
     gretl_matrix_free(b);
     gretl_matrix_free(V);
