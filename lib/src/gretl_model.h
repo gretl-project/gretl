@@ -318,6 +318,8 @@ void *gretl_model_get_data_full (const MODEL *pmod, const char *key,
 				 GretlType *type, int *copied,
 				 size_t *sz);
 
+void *gretl_model_steal_data (MODEL *pmod, const char *key);
+
 int gretl_model_get_int (const MODEL *pmod, const char *key);
 
 double gretl_model_get_double (const MODEL *pmod, const char *key);

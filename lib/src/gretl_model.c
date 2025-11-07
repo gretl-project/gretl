@@ -76,6 +76,8 @@ struct CoeffSep_ {
 #define PNAMELEN 16 /* for parameter names */
 
 static gretl_bundle *bundlize_test (const ModelTest *src);
+static int discard_model_data_item (MODEL *pmod, const char *key,
+				    int free_data);
 
 static void gretl_test_init (ModelTest *test, ModelTestType ttype)
 {
@@ -823,6 +825,35 @@ void *gretl_model_get_data_full (const MODEL *pmod, const char *key,
 void *gretl_model_get_data (const MODEL *pmod, const char *key)
 {
     return gretl_model_get_data_full(pmod, key, NULL, NULL, NULL);
+}
+
+/**
+ * gretl_model_steal_data:
+ * @pmod: pointer to model.
+ * @key: key string.
+ *
+ * Returns: the data pointer identified by @key, or %NULL on failure.
+ * The caller takes ownership.
+ */
+
+void *gretl_model_steal_data (MODEL *pmod, const char *key)
+{
+    void *ret = NULL;
+    int i;
+
+    if (pmod == NULL || key == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<pmod->n_data_items; i++) {
+	if (!strcmp(key, pmod->data_items[i]->key)) {
+	    ret = pmod->data_items[i]->ptr;
+            discard_model_data_item(pmod, key, 0);
+	    break;
+	}
+    }
+
+    return ret;
 }
 
 /**
