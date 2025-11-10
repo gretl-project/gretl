@@ -3535,44 +3535,7 @@ void workdir_dialog1 (void)
 
 #endif /* not GRETL_EDIT */
 
-#if defined(MAC_THEMING) && GTK_MAJOR_VERSION < 3
-
-void set_up_mac_look (void)
-{
-    if (!strcmp(themepref, "Lion-like")) {
-        /* 2024-12-19: fallback for broken GTK2 theme */
-        strcpy(themepref, "Adwaita");
-    }
-
-    if (!strncmp(themepref, "Adwaita", 7) ||
-	!strcmp(themepref, "Clearlooks")) {
-	char *topdir = getenv("GTK_DATA_PREFIX");
-	gchar *gtkrc;
-
-	if (topdir != NULL) {
-	    gtkrc = g_strdup_printf("%s/share/themes/%s/gtk-2.0/gtkrc",
-				    topdir, themepref);
-	    gtk_rc_parse(gtkrc);
-	    g_free(gtkrc);
-	} else {
-#if defined(GTK_PREFIX)
-	    /* go with the build-time prefix */
-	    gtkrc = g_strdup_printf("%s/share/themes/%s/gtk-2.0/gtkrc",
-				    GTK_PREFIX, themepref);
-#else
-	    /* hard-wired? */
-	    const char *path = "/Library/Frameworks/gretl-dev.framework/Resources";
-
-	    gtkrc = g_strdup_printf("%s/share/themes/%s/gtk-2.0/gtkrc",
-				    path, themepref);
-#endif
-	    gtk_rc_parse(gtkrc);
-	    g_free(gtkrc);
-	}
-    }
-}
-
-#elif defined(MAC_THEMING) && GTK_MAJOR_VERSION == 3
+#if defined(MAC_THEMING)
 
 void set_up_mac_look (void)
 {
@@ -3650,4 +3613,4 @@ void set_up_windows_look (void)
     g_object_set(G_OBJECT(settings), "gtk-theme-name", theme_name, NULL);
 }
 
-#endif
+#endif /* theming variants */
