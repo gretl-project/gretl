@@ -3,17 +3,17 @@ version 2025c, in progress
 - "append" command: tighten the restriction on appending to
   a panel dataset, to avoid spurious results
 - "dataset compact": support hourly to daily compaction via
-  the command line (was already OK via the GUI)
+  the command line (was already supported via the GUI)
 - "store" command: enable saving of user-defined functions
   to file in XML format
-- "corrgm" command: clarify the role of Barlett standard
+- "corrgm" command: clarify the status of Barlett standard
   errors for the ACF
 - "omit" command: extend the --auto option to support use of
   information criteria
 - "delete" command: ensure that an informative message is
   shown when some series cannot be deleted
 - "join" command: fix handling of problematic CSV files
-- "setobs" syntax: accept month as single digit for panel
+- "setobs" syntax: accept month as a single digit for panel
   data with monthly time dimension
 - "nulldata" command: ensure that all pre-existing dataset
   information is cleared out
@@ -25,9 +25,10 @@ version 2025c, in progress
   line continuation (except in the "smpl" command)
 - function packages: add apparatus to specify that the
   return value of a given public function must be assigned,
-  in GUI usage
+  in GUI usage; also provide a mechanism to automate the
+  specification of an assignment name.
 - printing of a bundle with the --tree option: clarify the
-  structure
+  structure of the bundle
 - Fix bug: restore the "savename <- gnuplot ..." syntax,
   which had got broken
 - Fix bug: potential crash in GTK file chooser dialog
@@ -40,6 +41,8 @@ version 2025c, in progress
   of models stored in a gretl session file
 - Fix bug: failure on reading ods spreadsheet files with
   columns of date type
+- Fix bug: mols() could produce a broken covariance under
+  certain conditions
 - GUI: enhance the dbnomics search facility
 - GUI: ensure that the separator between the main window
   and the "swallowed" console can be grabbed via the mouse
