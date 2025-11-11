@@ -824,25 +824,24 @@ static void set_workdir (const gchar *wdir)
 void set_gretl_startdir (void)
 {
     if (usecwd) {
-	char *test = getenv("GRETL_STARTDIR");
-        const gchar *ghome = NULL;
+	char *estr = getenv("GRETL_STARTDIR");
 	gchar *startdir = NULL;
 
-	if (test != NULL) {
-            /* this check is for the macOS  package */
-	    startdir = g_strdup(test);
+	if (estr != NULL) {
+            /* this check is for the macOS package */
+	    startdir = g_strdup(estr);
 	} else {
 	    startdir = g_get_current_dir();
 	}
-        if (startdir == NULL) {
-            ghome = g_get_home_dir();
-        }
-
 	if (startdir != NULL) {
             set_workdir(startdir);
 	    g_free(startdir);
-	} else if (ghome != NULL) {
-            set_workdir(ghome);
+	} else {
+            const gchar *ghome = g_get_home_dir();
+
+            if (ghome != NULL) {
+                set_workdir(ghome);
+            }
         }
     }
 }

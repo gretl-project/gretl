@@ -690,12 +690,18 @@ void add_files_to_menus (void)
 GList *get_working_dir_list (void)
 {
     GList *list = NULL;
+    const gchar *home;
     int i;
 
     for (i=0; i<MAXRECENT && wdirp[i][0]; i++) {
 	if (g_utf8_validate(wdirp[i], -1, NULL)) {
 	    list = g_list_append(list, wdirp[i]);
 	}
+    }
+
+    home = g_get_home_dir();
+    if (home != NULL) {
+        list = g_list_append(list, (gpointer) home);
     }
 
     return list;
