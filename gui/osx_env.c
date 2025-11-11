@@ -38,28 +38,9 @@ void osx_setup_paths (void)
     setenv("GTK_EXE_PREFIX", respath, 1);
     setenv("G_FILENAME_ENCODING", "UTF-8", 1);
 
-#if GTK_MAJOR_VERSION == 3
     tmp = g_strdup_printf("%s/share/glib-2.0/schemas", respath);
     setenv("GSETTINGS_SCHEMA_DIR", tmp, 1);
     g_free(tmp);
-#else /* GTK2 */
-    tmp = g_strdup_printf("%s/etc/gtk-2.0/gtk.immodules", respath);
-    setenv("GTK_IM_MODULE_FILE", tmp, 1);
-    g_free(tmp);
-    tmp = g_strdup_printf("%s/etc/gtk-2.0/gtkrc", respath);
-    setenv("GTK2_RC_FILES", tmp, 1);
-    g_free(tmp);
-    /* pango stuff */
-    tmp = g_strdup_printf("%s/etc", respath);
-    setenv("PANGO_SYSCONFDIR", tmp, 1);
-    g_free(tmp);
-    tmp = g_strdup_printf("%s/etc/pango/pangorc", respath);
-    setenv("PANGO_RC_FILE", tmp, 1);
-    g_free(tmp);
-    tmp = g_strdup_printf("%s/lib", respath);
-    setenv("PANGO_LIBDIR", tmp, 1);
-    g_free(tmp);
-#endif
 
     /* gnuplot variables */
     tmp = g_strdup_printf("%s/share/gnuplot/%s/gnuplot.gih", respath, gpshare);
