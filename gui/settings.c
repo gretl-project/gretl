@@ -810,30 +810,40 @@ static int write_OK (gchar *dirname)
     return ok;
 }
 
+static void set_workdir (const gchar *wdir)
+{
+    int err = gretl_set_path_by_name("workdir", wdir);
+
+    if (err) {
+        fprintf(stderr, "%s\n", gretl_errmsg_get());
+    } else {
+        fprintf(stderr, "working dir = '%s'\n", wdir);
+    }
+}
+
 void set_gretl_startdir (void)
 {
     if (usecwd) {
 	char *test = getenv("GRETL_STARTDIR");
+        const gchar *ghome = NULL;
 	gchar *startdir = NULL;
 
-	/* the environment variable check is mostly for the macOS
-	   package */
 	if (test != NULL) {
+            /* this check is for the macOS  package */
 	    startdir = g_strdup(test);
 	} else {
 	    startdir = g_get_current_dir();
 	}
+        if (startdir == NULL) {
+            ghome = g_get_home_dir();
+        }
 
 	if (startdir != NULL) {
-	    int err = gretl_set_path_by_name("workdir", startdir);
-
-	    if (err) {
-		fprintf(stderr, "%s\n", gretl_errmsg_get());
-	    } else {
-		fprintf(stderr, "working dir = '%s'\n", startdir);
-	    }
+            set_workdir(startdir);
 	    g_free(startdir);
-	}
+	} else if (ghome != NULL) {
+            set_workdir(ghome);
+        }
     }
 }
 
