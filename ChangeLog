@@ -1,4 +1,4 @@
-version 2025c, in progress
+2025-11-12 version 2025c
 - new (block) command, "gibbs", implements the Gibbs sampler
 - "append" command: tighten the restriction on appending to
   a panel dataset, to avoid spurious results
