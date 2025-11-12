@@ -19,6 +19,16 @@ void osx_setup_paths (void)
     getcwd(userpath, sizeof userpath);
     setenv("GRETL_STARTDIR", userpath, 1);
 
+    if (*userpath != '\0' && strcmp(userpath, "/")) {
+        setenv("GRETL_STARTDIR", userpath, 1);
+    } else {
+        const char *home = g_get_home_dir();
+
+        if (home != NULL) {
+            setenv("GRETL_STARTDIR", home, 1);
+        }
+    }
+
     /* get the full path to the active executable */
     _NSGetExecutablePath(execpath, &pathsz);
 
