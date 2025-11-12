@@ -828,7 +828,9 @@ void set_gretl_startdir (void)
 	gchar *startdir = NULL;
 
 	if (estr != NULL) {
-            /* this check is for the macOS package */
+            /* this check is specific to the macOS package:
+               see osx_env.c
+            */
 	    startdir = g_strdup(estr);
 	} else {
 	    startdir = g_get_current_dir();
@@ -836,7 +838,8 @@ void set_gretl_startdir (void)
 	if (startdir != NULL) {
             set_workdir(startdir);
 	    g_free(startdir);
-	} else {
+        } else {
+            /* fallback */
             const gchar *ghome = g_get_home_dir();
 
             if (ghome != NULL) {
