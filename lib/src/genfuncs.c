@@ -8460,6 +8460,44 @@ static int name_collision (const char *vname)
     return E_TYPES;
 }
 
+static int mat2list_conformability_check (const gretl_matrix *m,
+                                          const DATASET *dset,
+                                          int *pt1, int *pskip,
+                                          int *plen)
+{
+    int err = 0;
+
+    if (gretl_matrix_is_dated(m)) {
+        /* use "dates", if available */
+        int mt1 = gretl_matrix_get_t1(m);
+        int mt2 = gretl_matrix_get_t2(m);
+        int t1, t2, cpylen;
+
+        if (mt1 >= 0 && mt2 >= mt1 && m->rows == mt2 - mt1 + 1) {
+            t1 = MAX(dset->t1, mt1);
+            t2 = MIN(dset->t2, mt2);
+            cpylen = t2 - t1 + 1;
+            if (cpylen <= 0) {
+                err = E_NONCONF;
+            } else {
+                *pt1 = t1;
+                *plen = cpylen;
+                *pskip = t1 > mt1 ? t1 - mt1 : 0;
+            }
+        } else {
+            err = E_NONCONF;
+        }
+    } else if (m->rows != dset->n && m->rows != sample_size(dset)) {
+        err = E_NONCONF;
+    } else {
+        *pt1 = dset->t1;
+        *plen = sample_size(dset);
+        *pskip = m->rows == dset->n ? dset->t1 : 0;
+    }
+
+    return err;
+}
+
 /**
  * list_from_matrix:
  * @m: source matrix.
@@ -8478,7 +8516,9 @@ int *list_from_matrix (const gretl_matrix *m,
                        DATASET *dset, int *err)
 {
     int *list = NULL;
-    int n, k;
+    int cpylen = 0;
+    int mskip = 0;
+    int t1 = 0;
 
     if (m != NULL && m->is_complex) {
         *err = E_CMPLX;
@@ -8487,17 +8527,15 @@ int *list_from_matrix (const gretl_matrix *m,
         return gretl_null_list();
     }
 
-    n = m->rows;
-    k = m->cols;
+    *err = mat2list_conformability_check(m, dset, &t1, &mskip, &cpylen);
 
-    if (n != dset->n && n != sample_size(dset)) {
-        *err = E_NONCONF;
-    } else {
+    if (!*err) {
         const char **S = gretl_matrix_get_colnames(m);
         char vname[VNAMELEN];
         int numlen = ceil(log10(k));
         int orig_v = dset->v;
         int i, vi, nadd = 0;
+        int k = m->cols;
 
         list = gretl_list_new(k);
 
@@ -8519,13 +8557,9 @@ int *list_from_matrix (const gretl_matrix *m,
         }
 
         if (!*err) {
-            double *dest, *src = m->val;
-            size_t csize = n * sizeof *src;
+            double *dest, *src = m->val + mskip;
+            size_t csize = cpylen * sizeof *src;
             int vnew = orig_v;
-
-            if (n == dset->n) {
-                src += dset->t1;
-            }
 
             for (i=0; i<k; i++) {
                 vi = list[i+1];
@@ -8536,9 +8570,9 @@ int *list_from_matrix (const gretl_matrix *m,
                     list[i+1] = vi;
                     strcpy(dset->varname[vi], vname);
                 }
-                dest = dset->Z[vi] + dset->t1;
+                dest = dset->Z[vi] + t1;
                 memcpy(dest, src, csize);
-                src += n;
+                src += m->rows;
             }
         }
 
