@@ -105,7 +105,7 @@ resulting graph is shown in Figure~\ref{fig:loess-sine}.
 nulldata 120
 series x = index
 scalar n = $nobs
-series y = sin(2*pi*x/n) + uniform(-1, 1)
+series y = sin(2*$pi*x/n) + uniform(-1, 1)
 series yh = loess(y, x, 2, 0.75, 0)
 gnuplot y yh x --output=display --with-lines=yh
 \end{scode}
