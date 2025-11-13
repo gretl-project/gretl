@@ -8532,10 +8532,10 @@ int *list_from_matrix (const gretl_matrix *m,
     if (!*err) {
         const char **S = gretl_matrix_get_colnames(m);
         char vname[VNAMELEN];
+        int k = m->cols;
         int numlen = ceil(log10(k));
         int orig_v = dset->v;
         int i, vi, nadd = 0;
-        int k = m->cols;
 
         list = gretl_list_new(k);
 
