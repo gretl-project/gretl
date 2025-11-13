@@ -40,21 +40,24 @@ The directory named ```./test_scripts``` comprises actual **test scripts** for g
 
 
 # Execution of test scripts
-The ```./tests``` directory includes the a shell script named `run_tests.sh`.
+The ```./tests``` directory includes the following shell scripts:
 
-Print all options by executing `run_tests.sh --help`.
+1. `run_tests.sh`: This script provides various options to execute different types of test scripts.
 
-1) ```run_tests.sh --practice```: Execute scripts in ./tests/practice_scripts
+   Print all options by executing `run_tests.sh --help`.
 
-2) ```run_tests.sh --commands```: Execute scripts in ./tests/test_scripts/commands
+   - ```run_tests.sh --practice```: Execute scripts in ./tests/practice_scripts
+   - ```run_tests.sh --commands```: Execute scripts in ./tests/test_scripts/commands
+   - ```run_tests.sh --functions```: Execute scripts in ./tests/test_scripts/functions
+   - ```run_tests.sh --fundamentals```: Execute scripts in ./tests/test_scripts/fundamentals
+   - ```run_tests.sh --all```: Execute options 1 to 4 and run all scripts
 
-3) ```run_tests.sh --functions```: Execute scripts in ./tests/test_scripts/functions
+    All test scripts source the shell-script ```./tests/helper.sh``` which includes all relevant function definitions.
 
-4) ```run_tests.sh --fundamentals```: Execute scripts in ./tests/test_scripts/fundamentals
+2. `run_scripts_quiet.sh`: This script executes all test scripts in the `practice_scripts` and `test_scripts` directories in a quiet mode. It logs any failed scripts in a `fails` file and provides a summary of the results.
 
-5) ```run_tests.sh --all```: Execute options 1 to 4 and run all scripts
+   - To use this script, simply run it from the terminal. It will automatically locate and execute all relevant test scripts.
 
-All test scripts source the shell-script ```./tests/helper.sh``` which includes all relevant function definitions.
 
 
 # Write tests
