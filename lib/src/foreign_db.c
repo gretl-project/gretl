@@ -28,6 +28,7 @@
 
 #include "libgretl.h"
 #include "dbread.h"
+#include "swap_bytes.h"
 #include "foreign_db.h"
 
 #define RATSCOMMENTLENGTH 80
