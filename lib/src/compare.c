@@ -707,11 +707,14 @@ static int obs_diff_ok (const MODEL *m_old, const MODEL *m_new)
    original specification. In these cases we need to ensure
    comparability, which means we have to retrieve any relevant options
    from the original model and re-apply them.
+
+   The flag @auto_omit indicates that this function is being called
+   in the context of the "omit" command with the --auto option.
 */
 
 static MODEL replicate_estimator (const MODEL *orig, int *list,
 				  DATASET *dset, gretlopt myopt,
-				  PRN *prn)
+				  int auto_omit, PRN *prn)
 {
     MODEL rep;
     const char *param = NULL;
@@ -1182,7 +1185,7 @@ static MODEL LM_add_test (MODEL *pmod, DATASET *dset, int *list,
 
 /* Process the --auto option to the "add" or "omit" command. We should
    have either the standard abbreviation for one of the Information
-   Criteria, or an alpha value.
+   Criteria, or an alpha value, as parameter to the option.
 */
 
 static int process_stepwise_option (int ci,
@@ -1200,12 +1203,12 @@ static int process_stepwise_option (int ci,
         /* omit: the --auto parameter is optional, and
            defaults to using a p-value of 0.10
         */
-        *crit = C_HQC + 2;
+        *crit = C_MAX;
         *alpha = 0.10;
         return 0;
     }
 
-    for (i=0; i<3; i++) {
+    for (i=0; i<C_MAX; i++) {
         if (!strcmp(s, cstrs[i])) {
             *crit = i;
         }
@@ -1217,7 +1220,7 @@ static int process_stepwise_option (int ci,
         if (!err && (*alpha < 0.001 || *alpha > 0.99)) {
             err = E_INVARG;
         } else {
-            *crit = C_HQC + 2;
+            *crit = C_MAX;
         }
     }
 
@@ -1343,7 +1346,7 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 	    /* not printing @umod, so pass along OPT_Q */
 	    ropt |= OPT_Q;
 	}
-	umod = replicate_estimator(orig, biglist, dset, ropt, prn);
+	umod = replicate_estimator(orig, biglist, dset, ropt, 0, prn);
     }
 
     if (umod.errcode) {
@@ -1428,23 +1431,23 @@ static int wald_omit_test (const int *list, MODEL *pmod,
 }
 
 typedef struct omit_info_ {
-    MODEL *orig;      /* the original model */
-    MODEL *curr;      /* the current model in stepwise elimination */
-    MODEL *tmp;       /* temporary workspace model */
-    int *list;        /* the list, from which regressors may be dropped */
-    const int *cands; /* list of candidates for elimination, in case some
-                         regressors are to be kept regardless */
-    double alpha;     /* the max alpha when using the p-value criterion */
-    double cval;      /* critical value of test statistic */
-    gint8 starting;   /* flag indicating the first step */
-    gint8 crit;       /* the criterion in use */
-    gint8 use_pval;   /* flag indicating that p-values are in use */
+    MODEL *orig;        /* the original model */
+    MODEL *curr;        /* the current model in stepwise elimination */
+    MODEL *tmp;         /* temporary workspace model */
+    int *list;          /* the list, from which regressors may be dropped */
+    const int *cands;   /* list of candidates for elimination, in case some
+                           regressors are to be kept regardless */
+    double alpha;        /* the max alpha when using the p-value criterion */
+    double cval;         /* value of the criterion in use */
+    gint8 starting;      /* flag indicating the first step */
+    InfoCriterion crit;  /* identifier of the criterion in use */
+    gint8 use_pval;      /* flag indicating that p-values are in use */
 } omit_info;
 
-/* Check whether coefficient @i corresponds to a variable
-   that is removable from the model: this is the case if either
-   (a) the @cands list is empty, or (b) coefficient @i is the
-   coefficient on one of the variables in @cands.
+/* Check whether coefficient @i corresponds to a variable that is
+   removable from the model: this is the case if either (a) the @cands
+   list is empty, or (b) coefficient @i is the coefficient on one of the
+   variables in @cands.
 */
 
 static int coeff_is_removable (const int *cands, const MODEL *pmod,
@@ -1460,7 +1463,6 @@ static int coeff_is_removable (const int *cands, const MODEL *pmod,
            so reverse the presumption.
         */
 	ret = 0;
-
 	for (j=1; j<=cands[0]; j++) {
 	    vname = dset->varname[cands[j]];
 	    pj = gretl_model_get_param_number(pmod, dset, vname);
@@ -1477,12 +1479,12 @@ static int coeff_is_removable (const int *cands, const MODEL *pmod,
 static void print_drop (MODEL *pmod, omit_info *oi, int k,
                         DATASET *dset, PRN *prn)
 {
-    const char *cstrs[] = {"AIC", "BIC", "HQC", "SSR", "p-value"};
+    const char *cstrs[] = {"AIC", "BIC", "HQC", "p-value"};
 
     if (oi->starting) {
         pputc(prn, '\n');
         pprintf(prn, _("Sequential elimination using %s"), cstrs[oi->crit]);
-        if (oi->crit == C_HQC + 2) {
+        if (oi->use_pval) {
             pprintf(prn, " (α = %.2f)", oi->alpha);
         }
         pputs(prn, "\n\n");
@@ -1497,10 +1499,10 @@ static void print_drop (MODEL *pmod, omit_info *oi, int k,
    according to a specified criterion (either the p-value of its
    coefficient exceeds a specified threshold, or its omission results
    in an improvement in a specified information criterion), If so, remove
-   this regressor from @list and return 1; otherwise return 0.
+   this regressor from oi->list and return 1; otherwise return 0.
 
-   If the list @cands is non-empty then confine the search to
-   candidate variables in that list.
+   Note that if the list oi->cands is non-empty then the search is
+   confined to variables in that list.
 */
 
 static int auto_drop_var (omit_info *oi,
@@ -1515,7 +1517,7 @@ static int auto_drop_var (omit_info *oi,
     int imin, imax;
     int i, k = -1;
     int do_drop = 0;
-    int dropped = 0;
+    int ret = 0;
 
     pmod = oi->starting ? oi->orig : oi->curr;
     imax = pmod->ncoeff;
@@ -1546,11 +1548,17 @@ static int auto_drop_var (omit_info *oi,
 
     if (k >= 0) {
         if (oi->use_pval) {
-            /* using the p-value approach */
+            /* using the p-value approach: we just have to see if
+               regressor with the smallest t-ratio has a p-value
+               above the max for retention
+            */
             oi->cval = coeff_pval(pmod->ci, tmin, pmod->dfd);
             do_drop = oi->cval > oi->alpha;
         } else {
-            /* using an info criterion */
+            /* using an info criterion: we have to re-estimate the
+               model without the regressor with the smallest t-ratio
+               to see if its omission improves the criterion
+            */
             int *ltmp = gretl_list_copy(oi->list);
             double crit0 = pmod->criterion[oi->crit];
 
@@ -1559,12 +1567,11 @@ static int auto_drop_var (omit_info *oi,
                 clear_model(oi->curr);
             }
             set_reference_missmask_from_model(oi->orig);
-            *tmp = replicate_estimator(oi->orig, ltmp, dset, OPT_A, prn);
+            *tmp = replicate_estimator(oi->orig, ltmp, dset, OPT_A, 1, prn);
             if (tmp->errcode) {
                 *err = tmp->errcode;
                 clear_model(tmp);
             } else {
-                // printmodel(&tmp, dset, OPT_NONE, prn);
                 oi->cval = tmp->criterion[oi->crit];
                 do_drop = oi->cval < crit0;
             }
@@ -1578,19 +1585,21 @@ static int auto_drop_var (omit_info *oi,
             print_drop(pmod, oi, k, dset, prn);
         }
         if (oi->use_pval) {
+            /* this is already done in the info criterion case */
             gretl_list_delete_at_pos(oi->list, k + 2);
         } else {
             if (!oi->starting) {
                 clear_model(oi->curr);
             }
+            /* attach the reduced model that was estimated above */
             *(oi->curr) = *tmp;
         }
-        dropped = 1;
+        ret = 1;
     }
 
     oi->starting = 0;
 
-    return dropped;
+    return ret;
 }
 
 static void list_copy_values (int *targ, const int *src)
@@ -1602,11 +1611,13 @@ static void list_copy_values (int *targ, const int *src)
     }
 }
 
-/* run a loop in which the least significant variable is dropped from
+/* Run a loop in which the least significant variable is dropped from
    the regression list, provided its p-value exceeds some specified
-   cutoff.  FIXME this probably still needs work for estimators other
-   than OLS.  If @omitlist is non-empty the routine is confined to
-   members of the list.
+   cutoff (or dropping it improves a specified information criterion).
+   If @omitlist is non-empty the routine is confined to members of that
+   list.
+
+   FIXME this probably still needs work for estimators other than OLS.
 */
 
 static MODEL auto_omit (MODEL *orig, const int *omitlist,
@@ -1634,7 +1645,7 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
     oi.alpha = alpha;
     oi.starting = 1;
     oi.crit = crit;
-    oi.use_pval = (crit < C_AIC || crit > C_HQC);
+    oi.use_pval = (crit == C_MAX);
     oi.tmp = oi.use_pval ? NULL : gretl_model_new();
 
     drop = auto_drop_var(&oi, dset, opt, prn, &err);
@@ -1650,7 +1661,10 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
 	    set_reference_missmask_from_model(orig);
 	}
         if (oi.use_pval) {
-            omod = replicate_estimator(orig, oi.list, dset, OPT_A, prn);
+            /* in the info criterion case replicate_estimator() is called
+               by auto_drop_var()
+            */
+            omod = replicate_estimator(orig, oi.list, dset, OPT_A, 1, prn);
             err = omod.errcode;
             if (err) {
                 break;
@@ -1681,7 +1695,7 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
 	    ropt |= OPT_Q;
 	}
 	set_reference_missmask_from_model(orig);
-        omod = replicate_estimator(orig, oi.list, dset, ropt, prn);
+        omod = replicate_estimator(orig, oi.list, dset, ropt, 1, prn);
     }
 
     if (oi.tmp != NULL) {
@@ -1771,15 +1785,14 @@ static int use_stepwise_omit (MODEL *orig, int crit)
         /* we only handle OLS with classical std errors */
         return 0;
     } else if (crit > C_HQC) {
-        /* we're only handling the info criterion approach */
+        /* we only handle the info criterion approach */
+        return 0;
+    } else if (getenv("USE_AUTO_OMIT")) {
+        /* we allow forcing use of the older code */
         return 0;
     } else {
-        if (getenv("USE_AUTO_OMIT")) {
-            /* for now, allow forcing use of the older code */
-            return 0;
-        } else {
-            return 1;
-        }
+        /* OK, use stepwise */
+        return 1;
     }
 }
 
@@ -1811,7 +1824,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
     int save_t2 = dset->t2;
     int *tmplist = NULL;
     double alpha = 0;
-    int crit = -1;
+    int crit = C_MAX;
     int err;
 
     err = omit_test_precheck(orig, opt);
@@ -1863,7 +1876,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
 	    /* not printing @rmod, so pass along OPT_Q */
 	    ropt |= OPT_Q;
 	}
-	rmod = replicate_estimator(orig, tmplist, dset, ropt, prn);
+	rmod = replicate_estimator(orig, tmplist, dset, ropt, 0, prn);
     }
 
     err = rmod.errcode;
@@ -2006,7 +2019,7 @@ double get_DW_pvalue_for_model (MODEL *pmod, DATASET *dset,
     /* impose the sample range used for the original model */
     impose_model_smpl(pmod, dset);
 
-    dwmod = replicate_estimator(pmod, list, dset, OPT_A | OPT_I, NULL);
+    dwmod = replicate_estimator(pmod, list, dset, OPT_A | OPT_I, 0, NULL);
     *err = dwmod.errcode;
 
     if (!*err) {
