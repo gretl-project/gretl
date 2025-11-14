@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-09-18 10:21-0400\n"
-"PO-Revision-Date: 2025-11-14 14:47+0100\n"
+"PO-Revision-Date: 2025-11-14 15:19+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -4034,9 +4034,9 @@ msgid "Outer iteration %d (reset)\n"
 msgstr "Iterazione esterna %d: reset\n"
 
 #: lib/src/gretl_bfgs.c:3144
-#, c-format
+#, c-format, fuzzy
 msgid " inner iter %3d: function value %#g\n"
-msgstr " iterazione interna %3d: valore della funzione =%g"
+msgstr "iterazione interna %3d: valore della funzione = %#g\n"
 
 #: lib/src/gretl_bfgs.c:3292
 #, c-format
