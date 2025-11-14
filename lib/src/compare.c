@@ -1428,16 +1428,17 @@ static int wald_omit_test (const int *list, MODEL *pmod,
 }
 
 typedef struct omit_info_ {
-    MODEL *orig;
-    MODEL *curr;
-    MODEL *tmp;
-    int *list;
-    const int *cands;
-    double alpha;
-    double cval;
-    gint8 starting;
-    gint8 crit;
-    gint8 use_pval;
+    MODEL *orig;      /* the original model */
+    MODEL *curr;      /* the current model in stepwise elimination */
+    MODEL *tmp;       /* temporary workspace model */
+    int *list;        /* the list, from which regressors may be dropped */
+    const int *cands; /* list of candidates for elimination, in case some
+                         regressors are to be kept regardless */
+    double alpha;     /* the max alpha when using the p-value criterion */
+    double cval;      /* critical value of test statistic */
+    gint8 starting;   /* flag indicating the first step */
+    gint8 crit;       /* the criterion in use */
+    gint8 use_pval;   /* flag indicating that p-values are in use */
 } omit_info;
 
 /* Check whether coefficient @i corresponds to a variable
@@ -1492,13 +1493,14 @@ static void print_drop (MODEL *pmod, omit_info *oi, int k,
             cstrs[oi->crit], oi->cval);
 }
 
-/* Determine if @pmod contains a variable with p-value greater than
-   some cutoff alpha_max; and if so, remove this variable from @list.
+/* Determine whether @pmod contains a regressor that should be dropped
+   according to a specified criterion (either the p-value of its
+   coefficient exceeds a specified threshold, or its omission results
+   in an improvement in a specified information criterion), If so, remove
+   this regressor from @list and return 1; otherwise return 0.
 
    If the list @cands is non-empty then confine the search to
    candidate variables in that list.
-
-   Returns 1 if a variable was dropped, else 0.
 */
 
 static int auto_drop_var (omit_info *oi,
@@ -1572,6 +1574,7 @@ static int auto_drop_var (omit_info *oi,
 
     if (do_drop) {
         if (!(opt & OPT_I)) {
+            /* not --silent */
             print_drop(pmod, oi, k, dset, prn);
         }
         if (oi->use_pval) {
