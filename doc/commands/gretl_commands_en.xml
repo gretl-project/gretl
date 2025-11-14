@@ -11041,13 +11041,14 @@
       <para>
 	The <opt>auto</opt> option (which cannot be combined with
 	<opt>test-only</opt>) calls for backward stepwise regression.
-	In this case <repl>varlist</repl> is taken to be a list of
-	<emphasis>candidates</emphasis> for omission from the original
-	model. At each step the method determines which candidate
-	might best be eliminated according to the specified
-	<repl>criterion</repl> (given as parameter to the option). The
-	algorithm halts when no further improvement is possible. The
-	criterion must take one of the following forms:
+	In this case <repl>varlist</repl> is optional; if it is given
+	then only the listed variables are taken to be candidates for
+	omission; otherwise all the regressors are candidates. At each
+	step the method determines which candidate might best be
+	eliminated according to the specified <repl>criterion</repl>
+	(given as parameter to the option). The algorithm halts when no
+	further improvement is possible. The criterion must take one of
+	the following forms:
       </para>
       <ilist>
 	<li>
