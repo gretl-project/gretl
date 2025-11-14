@@ -314,7 +314,7 @@ static int qr_augment (gretl_matrix *Q,
     }
     /* fill the last column */
     src = B->val + k * p;
-    dest = R->val + k*(k-1);
+    dest = R->val + k * (k-1);
     memcpy(dest, src, sz);
     xij = mm->std->val[p];
     gretl_matrix_set(R, k, k, -xij);
@@ -356,14 +356,12 @@ void qr_fixup (gretl_matrix *Q,
                int jmin)
 {
     double *aj;
-    // size_t sz;
     double tmp;
     int n = Q->rows;
     int m = R->rows;
     int i, j, vj, k;
 
     aj = malloc(n * sizeof *aj);
-    // sz = n * sizeof(double);
 
 #if SDEBUG
     printlist(xlist, "xlist, in qr_fixup");
@@ -376,7 +374,6 @@ void qr_fixup (gretl_matrix *Q,
         fprintf(stderr, "Q: work on col %d, using %s\n", j,
                 dset->varname[vj]);
 #endif
-        // memcpy(aj, dset->Z[vj] + pmod->t1, sz);
         fill_aj(aj, vj, dset, pmod);
         for (i=0; i<j; i++) {
             tmp = 0.0;
@@ -401,7 +398,6 @@ void qr_fixup (gretl_matrix *Q,
     for (i=jmin; i<m; i++) {
         for (j=i; j<m; j++) {
             vj = xlist[j+2];
-            // memcpy(aj, dset->Z[vj] + pmod->t1, sz);
             fill_aj(aj, vj, dset, pmod);
             tmp = 0.0;
             for (k=0; k<n; k++) {
@@ -424,9 +420,9 @@ static int qr_reduce (gretl_matrix *Q,
                       bwd_wspace *mm,
                       double *ssr)
 {
-    int i, k = R->rows;
     int T = Q->rows;
-    double s2;
+    double s2, vii;
+    int i, k;
     int err = 0;
 
     matrix_drop_column(Q, delcol);
@@ -445,6 +441,7 @@ static int qr_reduce (gretl_matrix *Q,
 #endif
 
     bwd_wspace_shrink(mm);
+    k = R->rows;
 
     gretl_matrix_copy_values(mm->iR, R);
     err = gretl_invert_triangular_matrix(mm->iR, 'U');
@@ -455,6 +452,7 @@ static int qr_reduce (gretl_matrix *Q,
 #if SDEBUG > 1
     gretl_matrix_print(Q, "Q, in qr_reduce");
     gretl_matrix_print(R, "R, in qr_reduce");
+    gretl_matrix_print(mm->iR, "iR, in qr_reduce");
 #endif
 
     /* g = Q'y */
@@ -483,7 +481,8 @@ static int qr_reduce (gretl_matrix *Q,
 
     /* g <- std errors */
     for (i=0; i<k; i++) {
-        mm->g->val[i] = sqrt(s2 * gretl_matrix_get(mm->V, i, i));
+        vii = gretl_matrix_get(mm->V, i, i);
+        mm->g->val[i] = sqrt(s2 * vii);
     }
 
     return err;
@@ -1009,7 +1008,7 @@ MODEL stepwise_add (MODEL *pmod,
 static int *maybe_reorder_regressors (MODEL *pmod)
 {
     gretl_matrix *lmat, *tmp;
-    int *list = NULL;
+    int *rlist = NULL;
     int jmin = pmod->ifc;
     int k = pmod->ncoeff;
     int changed = 0;
@@ -1026,11 +1025,11 @@ static int *maybe_reorder_regressors (MODEL *pmod)
 
     tmp = gretl_matrix_sort_by_column(lmat, 1, &err);
 
-    list = gretl_list_copy(pmod->list);
+    rlist = gretl_list_copy(pmod->list);
     j = 2 + jmin;
     for (i=0; i<tmp->rows; i++) {
-        list[j] = (int) gretl_matrix_get(tmp, i, 0);
-        if (list[j] != pmod->list[j]) {
+        rlist[j] = (int) gretl_matrix_get(tmp, i, 0);
+        if (rlist[j] != pmod->list[j]) {
             changed = 1;
         }
         j++;
@@ -1038,21 +1037,21 @@ static int *maybe_reorder_regressors (MODEL *pmod)
 
     if (!changed) {
         /* reordering was not actually needed */
-        free(list);
-        list = NULL;
+        free(rlist);
+        rlist = NULL;
     }
 
 #if SDEBUG
     if (changed) {
         printlist(pmod->list, "pmod->list");
-        printlist(list, "reordered");
+        printlist(rlist, "reordered");
     }
 #endif
 
     gretl_matrix_free(lmat);
     gretl_matrix_free(tmp);
 
-    return list;
+    return rlist;
 }
 
 /* Implement "omit --auto=..." using backward stepwise procedure.
@@ -1132,6 +1131,7 @@ MODEL stepwise_omit (MODEL *pmod,
     }
 
     free(xlist);
+    free(olist);
 
     if (!ols_done) {
         gretl_model_init(&model, NULL);
