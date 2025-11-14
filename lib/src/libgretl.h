@@ -269,7 +269,7 @@ typedef enum {
     C_BIC,
     C_HQC,
     C_MAX
-} ModelSelCriteria;
+} InfoCriterion;
 
 typedef enum {
     FC_STATIC,
