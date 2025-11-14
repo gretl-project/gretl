@@ -15343,6 +15343,15 @@ del comando <cmdref targ="set"/>.
 	  il seme manualmente.
 	</para>
       </li>
+    <li>
+      <para><lit>use_dcmt</lit>: <lit>on</lit> (default) o
+      <lit>off</lit>. Questa impostazione viene utilizzata solo nel
+      contesto dell'esecuzione parallela tramite <cmdref
+      targ="mpi"/>. Se attivata, come per default, ogni processo MPI
+      utilizzerà un generatore di numeri casuali indipendente. Per
+      maggiori dettagli, consultare <doc>gretl-mpi.pdf</doc>.
+      </para>
+    </li>
     </ilist>
 
     <para>

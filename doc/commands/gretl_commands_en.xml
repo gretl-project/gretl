@@ -15060,6 +15060,15 @@
 	  time-based automatic value, use <lit>auto</lit>.
 	  </para>
 	</li>
+	<li>
+	  <para><lit>use_dcmt</lit>: <lit>on</lit> (the default) or
+	  <lit>off</lit>. This setting is only used in the context of
+	  parallel execution via <cmdref targ="mpi"/>. If on, as per
+	  default, each MPI process will use an independent random
+	  number generator. For more details, see
+	  <doc>gretl-mpi.pdf</doc>.
+	  </para>
+	</li>
       </ilist>
 
       <subhead>Robust estimation</subhead>
