@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-09-18 10:21-0400\n"
-"PO-Revision-Date: 2025-03-10 14:12+0100\n"
+"PO-Revision-Date: 2025-11-14 14:47+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -4036,7 +4036,7 @@ msgstr "Iterazione esterna %d: reset\n"
 #: lib/src/gretl_bfgs.c:3144
 #, c-format
 msgid " inner iter %3d: function value %#g\n"
-msgstr ""
+msgstr " iterazione interna %3d: valore della funzione =%g"
 
 #: lib/src/gretl_bfgs.c:3292
 #, c-format
@@ -4427,7 +4427,7 @@ msgstr "Impossibile determinare R_HOME"
 
 #: lib/src/gretl_foreign.c:3044
 msgid "Only strings arrays are accepted as R-function arguments"
-msgstr ""
+msgstr "Solo gli array di stringhe sono accettati come argomenti per una funzione R"
 
 #: lib/src/gretl_foreign.c:3174
 #, c-format
@@ -4568,7 +4568,7 @@ msgstr "Manca un valore stringa"
 #: lib/src/gretl_func.c:5670
 #, c-format
 msgid "'%s': package contains duplicated function names"
-msgstr ""
+msgstr "'%s': il pacchetto contiene più funzioni con lo stesso nome"
 
 #: lib/src/gretl_func.c:5717
 msgid "Warning: R_functions could not be enabled\n"
@@ -4690,7 +4690,7 @@ msgstr "'null' non è un default valido per gli scalari"
 #: lib/src/gretl_func.c:8021
 #, c-format
 msgid "%s: found %d values but %d value-labels"
-msgstr ""
+msgstr "'%s': trovati %d valori ma %d etichette"
 
 #: lib/src/gretl_func.c:8078
 msgid "Expected a type identifier"
@@ -4714,7 +4714,7 @@ msgstr "Manca il nome del parametro %d"
 #: lib/src/gretl_func.c:8136
 #, c-format
 msgid "'%s': error scanning default value"
-msgstr ""
+msgstr "'%s': errore nel determinare il default"
 
 #: lib/src/gretl_func.c:8286
 #, c-format
@@ -4813,7 +4813,7 @@ msgstr "La funzione %s non ritorna alcun valore"
 
 #: lib/src/gretl_func.c:9973
 msgid "Incorrect use of 'outfile' in function"
-msgstr ""
+msgstr "Uso non corretto di 'outfile' in una funzione"
 
 #: lib/src/gretl_func.c:10161
 #, c-format
@@ -4864,12 +4864,12 @@ msgstr "Chiama una funzione"
 #: lib/src/gretl_func.c:10415
 #, c-format
 msgid "%s: non-null return value '%s' is not valid"
-msgstr ""
+msgstr "%s: il valore di ritorno '%s' non è valido"
 
 #: lib/src/gretl_func.c:10419
 #, c-format
 msgid "%s, line %d: non-null return value '%s' is not valid"
-msgstr ""
+msgstr "%s, linea %d: il valore di ritorno '%s' non è valido"
 
 #: lib/src/gretl_func.c:10428
 #, fuzzy, c-format
@@ -5012,12 +5012,12 @@ msgstr "'%.8g' non è una data valida"
 #: lib/src/gretl_join.c:501
 #, c-format
 msgid "join filter: indeterminate value on row %d"
-msgstr ""
+msgstr "filtro di join: valore indeterminato a riga %d"
 
 #: lib/src/gretl_join.c:530
 #, fuzzy, c-format
 msgid "%s: invalid secondary outer key value on row %d"
-msgstr "%s: valore non valido '%s'"
+msgstr ""
 
 #: lib/src/gretl_join.c:533
 #, fuzzy, c-format
