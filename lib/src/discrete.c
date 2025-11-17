@@ -1438,14 +1438,14 @@ static int ordered_depvar_check (int v, const DATASET *dset)
     return 0;
 }
 
-/* driver function for ordered logit/probit: note, prn is non-NULL
-   only if the verbose option has been selected
-*/
+/* driver function for ordered logit/probit */
 
-static MODEL ordered_estimate (const int *list, DATASET *dset, int ci,
-                               gretlopt opt, PRN *prn)
+MODEL ordered_estimate (int ci, const int *list,
+                        DATASET *dset, gretlopt opt,
+                        PRN *prn)
 {
     MODEL model;
+    PRN *vprn;
     int orig_v = dset->v;
     double *orig_y = NULL;
     int *mylist = NULL;
@@ -1453,6 +1453,8 @@ static MODEL ordered_estimate (const int *list, DATASET *dset, int ci,
     int *dumlist = NULL;
     int ymin = 0;
     int ndum = 0;
+
+    vprn = (opt & OPT_V)? prn : NULL;
 
     mylist = gretl_list_copy(list);
     gretl_model_init(&model, dset);
@@ -1486,11 +1488,11 @@ static MODEL ordered_estimate (const int *list, DATASET *dset, int ci,
     }
 
 #if LPDEBUG
-    PRN *vprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+    PRN *dprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 
-    pputs(vprn, "ordered_estimate: initial OLS\n");
-    printmodel(&model, dset, OPT_S, vprn);
-    gretl_print_destroy(vprn);
+    pputs(dprn, "ordered_estimate: initial OLS\n");
+    printmodel(&model, dset, OPT_S, dprn);
+    gretl_print_destroy(dprn);
 #endif
 
     if (!model.errcode) {
@@ -1505,7 +1507,7 @@ static MODEL ordered_estimate (const int *list, DATASET *dset, int ci,
     if (!model.errcode) {
         clear_model_xpx(&model);
         model.errcode = do_ordered(ci, ndum, ymin, dset, &model,
-                                   list, opt, prn);
+                                   list, opt, vprn);
     }
 
     free(dumlist);
@@ -3183,14 +3185,14 @@ static int binary_model_finish (bin_info *bin, MODEL *pmod,
     return pmod->errcode;
 }
 
-static MODEL binary_model (int ci, const int *inlist,
-                           DATASET *dset, gretlopt opt,
-                           PRN *prn)
+MODEL binary_model (int ci, const int *list,
+                    DATASET *dset, gretlopt opt,
+                    PRN *prn)
 {
     gretlopt maxopt = OPT_NONE;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
-    int *list = NULL;
+    int *blist = NULL;
     char *mask = NULL;
     double crittol = 1.0e-8;
     double gradtol = 1.0e-7;
@@ -3204,7 +3206,7 @@ static MODEL binary_model (int ci, const int *inlist,
     int i, vi, t, s;
 
     gretl_model_init(&mod, dset);
-    depvar = inlist[1];
+    depvar = list[1];
 
     if (!gretl_isdummy(dset->t1, dset->t2, dset->Z[depvar])) {
         gretl_errmsg_sprintf(_("'%s' is not a binary variable"),
@@ -3213,8 +3215,8 @@ static MODEL binary_model (int ci, const int *inlist,
         return mod;
     }
 
-    list = gretl_list_copy(inlist);
-    if (list == NULL) {
+    blist = gretl_list_copy(list);
+    if (blist == NULL) {
         mod.errcode = E_ALLOC;
         goto bailout;
     }
@@ -3224,9 +3226,9 @@ static MODEL binary_model (int ci, const int *inlist,
         opt |= OPT_R;
     }
 
-    list_adjust_sample(list, &dset->t1, &dset->t2, dset, NULL);
+    list_adjust_sample(blist, &dset->t1, &dset->t2, dset, NULL);
 
-    mask = classifier_check(list, dset, prn, &ndropped, &mod.errcode);
+    mask = classifier_check(blist, dset, prn, &ndropped, &mod.errcode);
     if (mod.errcode) {
         if (mod.errcode == E_NOCONV) {
             gretl_errmsg_set(_("Perfect prediction obtained: no MLE exists"));
@@ -3248,7 +3250,7 @@ static MODEL binary_model (int ci, const int *inlist,
         if (opt & OPT_A) {
             ols_opt |= OPT_Z;
         }
-        mod = lsq(list, dset, OLS, ols_opt);
+        mod = lsq(blist, dset, OLS, ols_opt);
 #if LPDEBUG
         printmodel(&mod, dset, OPT_NONE, prn);
 #endif
@@ -3317,7 +3319,7 @@ static MODEL binary_model (int ci, const int *inlist,
 
     bin_info_destroy(bin);
 
-    free(list);
+    free(blist);
     free(mask);
 
     dset->t1 = save_t1;
@@ -3392,7 +3394,7 @@ MODEL ordered_logit (const int *list, DATASET *dset,
 {
     PRN *vprn = (opt & OPT_V)? prn : NULL;
 
-    return ordered_estimate(list, dset, LOGIT, opt, vprn);
+    return ordered_estimate(LOGIT, list, dset, opt, vprn);
 }
 
 /**
@@ -3415,7 +3417,7 @@ MODEL ordered_probit (const int *list, DATASET *dset,
 {
     PRN *vprn = (opt & OPT_V)? prn : NULL;
 
-    return ordered_estimate(list, dset, PROBIT, opt, vprn);
+    return ordered_estimate(PROBIT, list, dset, opt, vprn);
 }
 
 /**

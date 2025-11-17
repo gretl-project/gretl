@@ -20,11 +20,19 @@
 #ifndef DISCRETE_H
 #define DISCRETE_H
 
+MODEL binary_model (int ci, const int *list,
+                    DATASET *dset, gretlopt opt,
+                    PRN *prn);
+
 MODEL binary_logit (const int *list, DATASET *dset,
 		    gretlopt opt, PRN *prn);
 
 MODEL binary_probit (const int *list, DATASET *dset,
 		     gretlopt opt, PRN *prn);
+
+MODEL ordered_estimate (int ci, const int *list,
+                        DATASET *dset, gretlopt opt,
+                        PRN *prn);
 
 MODEL ordered_logit (const int *list, DATASET *dset,
 		     gretlopt opt, PRN *prn);
