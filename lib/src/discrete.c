@@ -23,6 +23,7 @@
 #include "gretl_bfgs.h"
 #include "gretl_normal.h"
 #include "qr_estimate.h"
+#include "matrix_extra.h" /* temporary!*/
 #include "gretl_string_table.h"
 
 #include <errno.h>
@@ -2607,6 +2608,10 @@ struct bin_info_ {
     gretl_matrix *pX; /* for use with Hessian */
     gretl_matrix *b;  /* coefficients in matrix form */
     gretl_matrix *Xb; /* index function values */
+    /* QR-related */
+    gretl_matrix *Q;  /* Q, from QR decomp of X */
+    gretl_matrix *Ri; /* inverse of R from decomp of X */
+    int *qlist;       /* series corresponding to columns of Q */
 };
 
 static void bin_info_destroy (bin_info *bin)
@@ -2615,6 +2620,9 @@ static void bin_info_destroy (bin_info *bin)
         gretl_matrix_block_destroy(bin->B);
         free(bin->theta);
         free(bin->y);
+        gretl_matrix_free(bin->Q);
+        gretl_matrix_free(bin->Ri);
+        free(bin->qlist);
         free(bin);
     }
 }
@@ -2639,6 +2647,9 @@ static bin_info *bin_info_new (int ci, int k, int T)
             free(bin);
             return NULL;
         }
+        bin->Q = NULL;
+        bin->Ri = NULL;
+        bin->qlist = NULL;
         bin->B = gretl_matrix_block_new(&bin->X, T, k,
                                         &bin->pX, T, k,
                                         &bin->b, k, 1,
@@ -2653,6 +2664,34 @@ static bin_info *bin_info_new (int ci, int k, int T)
     }
 
     return bin;
+}
+
+static int binary_qr_prep (bin_info *bin,
+                           MODEL *pmod,
+                           DATASET *dset)
+{
+    int n = pmod->nobs;
+    int k = pmod->ncoeff;
+    int orig_v = dset->v;
+    int i, vi;
+    int err = 0;
+
+    err = dataset_add_series(dset, k);
+
+    if (!err) {
+        const double *Qi = bin->Q->val;
+
+        bin->qlist = gretl_list_copy(pmod->list);
+        vi = orig_v;
+        for (i=0; i<k; i++) {
+            sprintf(dset->varname[vi], "qdec%d", i);
+            bin->qlist[i+2] = vi;
+            memcpy(dset->Z[vi++], Qi, n * sizeof(double));
+            Qi += n;
+        }
+    }
+
+    return err;
 }
 
 /*
@@ -2840,11 +2879,22 @@ static int binary_variance_matrix (MODEL *pmod, bin_info *bin,
 {
     gretl_matrix *H = NULL;
     gretl_matrix *G = NULL;
+    int k = pmod->ncoeff;
     int err = 0;
 
     H = binary_hessian_inverse(bin, &err);
     if (err) {
         return err;
+    }
+
+    /* FIXME check robust case */
+    if (bin->Ri != NULL) {
+        gretl_matrix *RHR = gretl_matrix_alloc(k, k);
+
+        gretl_matrix_qform(bin->Ri, GRETL_MOD_NONE,
+                           H, RHR, GRETL_MOD_NONE);
+        gretl_matrix_copy_values(H, RHR);
+        gretl_matrix_free(RHR);
     }
 
     if (opt & OPT_R) {
@@ -2893,8 +2943,8 @@ static void binary_model_chisq (bin_info *bin, MODEL *pmod,
    (International Economic Review, 1984), also quoted in Verbeek,
    chapter 7: we regress a column of 1s on the products of the
    generalized residual with X, (X\beta)^2 and (X\beta)^3.  The test
-   statistic is T times the uncentered R-squared, and is distributed
-   as chi-square(2). It can be shown that this test is numerically
+   statistic is T times the uncentered R-squared, and is distributed as
+   chi-square(2). It can be shown that this test is numerically
    identical to the Chesher-Irish (87) test in the probit case
    (although C&I make no mention of this in their article).
 */
@@ -3131,14 +3181,24 @@ void binary_model_hatvars (MODEL *pmod,
     }
 }
 
-static int binary_model_finish (bin_info *bin, MODEL *pmod,
+static int binary_model_finish (bin_info *bin,
+                                MODEL *pmod,
                                 const DATASET *dset,
+                                const int *blist,
                                 gretlopt opt)
 {
-    int i;
+    int k = pmod->ncoeff;
 
-    for (i=0; i<pmod->ncoeff; i++) {
-        pmod->coeff[i] = bin->theta[i];
+    if (bin->Ri != NULL) {
+        /* revise coefficients */
+        gretl_matrix k1 = {0};
+        gretl_matrix pc = {0};
+
+        gretl_matrix_init_full(&k1, k, 1, bin->theta);
+        gretl_matrix_init_full(&pc, k, 1, pmod->coeff);
+        gretl_matrix_multiply(bin->Ri, &k1, &pc);
+    } else {
+        memcpy(pmod->coeff, bin->theta, k * sizeof(double));
     }
 
     pmod->ci = bin->ci;
@@ -3146,7 +3206,8 @@ static int binary_model_finish (bin_info *bin, MODEL *pmod,
 
     if (pmod->ci == PROBIT && (opt & OPT_X)) {
         /* this model is just the starting-point for
-           random-effects probit estimation */
+           random-effects probit estimation
+        */
         pmod->opt |= OPT_P;
         return 0;
     }
@@ -3192,6 +3253,7 @@ MODEL binary_model (int ci, const int *list,
     gretlopt maxopt = OPT_NONE;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
+    int orig_v = dset->v;
     int *blist = NULL;
     char *mask = NULL;
     double crittol = 1.0e-8;
@@ -3250,6 +3312,9 @@ MODEL binary_model (int ci, const int *list,
         if (opt & OPT_A) {
             ols_opt |= OPT_Z;
         }
+        if (!(opt & OPT_Y)) {
+            ols_opt |= OPT_B;
+        }
         mod = lsq(blist, dset, OLS, ols_opt);
 #if LPDEBUG
         printmodel(&mod, dset, OPT_NONE, prn);
@@ -3273,8 +3338,23 @@ MODEL binary_model (int ci, const int *list,
     s = 0;
     for (t=mod.t1; t<=mod.t2; t++) {
         if (!na(mod.yhat[t])) {
-            bin->y[s++] = (dset->Z[depvar][t] != 0);
+            bin->y[s++] = dset->Z[depvar][t] ? 1.0 : 0.0;
         }
+    }
+
+    // bin->Q = gretl_model_get_data(&mod, "Q");
+    bin->Q = gretl_model_steal_data(&mod, "Q");
+    bin->Ri = gretl_model_steal_data(&mod, "R");
+
+    
+    if (bin->Q != NULL && bin->Ri != NULL) {
+        printf("*** BINARY_QR: got Q, R ***\n");
+        mod.errcode = binary_qr_prep(bin, &mod, dset);
+        if (mod.errcode) {
+            goto bailout;
+        }
+        //bin->qlist = gretl_list_copy(mod.list);
+        //gretl_matrix_copy_values(bin->X, bin->Q);
     }
 
     for (i=0; i<bin->k; i++) {
@@ -3309,7 +3389,7 @@ MODEL binary_model (int ci, const int *list,
     }
 
     if (!mod.errcode) {
-        binary_model_finish(bin, &mod, dset, opt);
+        binary_model_finish(bin, &mod, dset, blist, opt);
         if (!mod.errcode && ndropped > 0) {
             gretl_model_set_int(&mod, "binary_obs_dropped", ndropped);
         }
@@ -3318,12 +3398,12 @@ MODEL binary_model (int ci, const int *list,
  bailout:
 
     bin_info_destroy(bin);
-
     free(blist);
     free(mask);
 
     dset->t1 = save_t1;
     dset->t2 = save_t2;
+    dataset_drop_last_variables(dset, dset->v - orig_v);
 
     return mod;
 }
