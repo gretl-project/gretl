@@ -553,17 +553,9 @@ MODEL logit_probit (int *list, DATASET *dset, int ci,
     }
 
     if (gretl_isdummy(dset->t1, dset->t2, dset->Z[yv])) {
-	if (ci == LOGIT) {
-	    ret = binary_logit(list, dset, opt, prn);
-	} else {
-	    ret = binary_probit(list, dset, opt, prn);
-	}
+        ret = binary_model(ci, list, dset, opt, prn);
     } else {
-	if (ci == LOGIT) {
-	    ret = ordered_logit(list, dset, opt, prn);
-	} else {
-	    ret = ordered_probit(list, dset, opt, prn);
-	}
+        ret = ordered_estimate(ci, list, dset, opt, prn);
     }
 
     if (restore) {
