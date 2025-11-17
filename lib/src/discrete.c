@@ -2879,7 +2879,6 @@ static int binary_variance_matrix (MODEL *pmod, bin_info *bin,
 {
     gretl_matrix *H = NULL;
     gretl_matrix *G = NULL;
-    int k = pmod->ncoeff;
     int err = 0;
 
     H = binary_hessian_inverse(bin, &err);
@@ -2887,7 +2886,9 @@ static int binary_variance_matrix (MODEL *pmod, bin_info *bin,
         return err;
     }
 
+#if 0
     /* FIXME check robust case */
+    int k = pmod->ncoeff;
     if (bin->Ri != NULL) {
         gretl_matrix *RHR = gretl_matrix_alloc(k, k);
 
@@ -2896,6 +2897,7 @@ static int binary_variance_matrix (MODEL *pmod, bin_info *bin,
         gretl_matrix_copy_values(H, RHR);
         gretl_matrix_free(RHR);
     }
+#endif
 
     if (opt & OPT_R) {
         G = binary_score_matrix(bin, &err);
@@ -3181,14 +3183,54 @@ void binary_model_hatvars (MODEL *pmod,
     }
 }
 
+int binary_qr_finish (MODEL *pmod, const int *list,
+                      gretl_matrix *Rinv)
+
+{
+    gretl_matrix *k1 = NULL;
+    gretl_matrix *tmp = NULL;
+    gretl_matrix *V = NULL;
+    gretl_matrix *HVH = NULL;
+    int k = pmod->ncoeff;
+    int err = 0;
+
+    k1 = gretl_matrix_alloc(k, 1);
+    tmp = gretl_matrix_alloc(k, 1);
+    HVH = gretl_matrix_alloc(k, k);
+
+    /* revise pmod->coeff */
+    memcpy(k1->val, pmod->coeff, k * sizeof(double));
+    gretl_matrix_multiply(Rinv, k1, tmp);
+    memcpy(pmod->coeff, tmp->val, k * sizeof(double));
+
+    /* revise pmod->vcv and pmod->sderr */
+    V = gretl_vcv_matrix_from_model(pmod, NULL, &err);
+    if (!err) {
+        gretl_matrix_qform(Rinv, GRETL_MOD_NONE,
+                           V, HVH, GRETL_MOD_NONE);
+        gretl_model_write_vcv(pmod, HVH);
+    }
+
+    gretl_matrix_free(k1);
+    gretl_matrix_free(tmp);
+    gretl_matrix_free(HVH);
+    gretl_matrix_free(V);
+
+    free(pmod->list);
+    pmod->list = gretl_list_copy(list);
+
+    return err;
+}
+
 static int binary_model_finish (bin_info *bin,
                                 MODEL *pmod,
                                 const DATASET *dset,
                                 const int *blist,
                                 gretlopt opt)
 {
-    int k = pmod->ncoeff;
+    int i, k = pmod->ncoeff;
 
+#if 0
     if (bin->Ri != NULL) {
         /* revise coefficients */
         gretl_matrix k1 = {0};
@@ -3200,6 +3242,11 @@ static int binary_model_finish (bin_info *bin,
     } else {
         memcpy(pmod->coeff, bin->theta, k * sizeof(double));
     }
+#else
+    for (i=0; i<pmod->ncoeff; i++) {
+        pmod->coeff[i] = bin->theta[i];
+    }
+#endif
 
     pmod->ci = bin->ci;
     pmod->lnL = binary_loglik(pmod->coeff, bin);
@@ -3243,7 +3290,64 @@ static int binary_model_finish (bin_info *bin,
         gretl_model_set_int(pmod, "binary", 1);
     }
 
+#if 1   
+    if (!pmod->errcode && bin->Ri != NULL) {
+        binary_qr_finish(pmod, blist, bin->Ri);
+    }
+#endif    
+
     return pmod->errcode;
+}
+
+static int make_binary_y_and_X (bin_info *bin,
+                                MODEL *pmod,
+                                DATASET *dset)
+{
+    int v = pmod->list[1];
+    int i, t, s;
+    int err = 0;
+
+    for (t=pmod->t1, s=0; t<=pmod->t2; t++) {
+        if (!na(pmod->yhat[t])) {
+            bin->y[s++] = dset->Z[v][t] ? 1.0 : 0.0;
+        }
+    }
+
+    // bin->Q = gretl_model_get_data(&mod, "Q");
+    bin->Q = gretl_model_steal_data(pmod, "Q");
+    bin->Ri = gretl_model_steal_data(pmod, "R");
+
+    if (bin->Q != NULL && bin->Ri != NULL) {
+        gretl_matrix *y = NULL;
+        gretl_matrix b = {};
+        double s2;
+        
+        printf("*** BINARY_QR: got Q, R ***\n");
+        bin->qlist = gretl_list_copy(pmod->list);
+        y = gretl_matrix_alloc(bin->T, 1);
+        for (i=0; i<pmod->nobs; i++) {
+            y->val[i] = bin->y[i];
+        }
+        gretl_matrix_copy_values(bin->X, bin->Q);
+        gretl_matrix_init_full(&b, bin->k, 1, bin->theta);
+        err = gretl_matrix_ols(y, bin->X, &b, NULL, NULL, &s2);
+        gretl_matrix_divide_by_scalar(&b, sqrt(s2));
+        gretl_matrix_free(y);
+    } else {
+        for (i=0; i<bin->k; i++) {
+            bin->theta[i] = pmod->coeff[i] / pmod->sigma;
+        }
+        for (i=0; i<bin->k; i++) {
+            v = pmod->list[i+2];
+            for (t=pmod->t1, s=0; t<=pmod->t2; t++) {
+                if (!na(pmod->yhat[t])) {
+                    gretl_matrix_set(bin->X, s++, i, dset->Z[v][t]);
+                }
+            }
+        }
+    }
+
+    return err;
 }
 
 MODEL binary_model (int ci, const int *list,
@@ -3265,7 +3369,6 @@ MODEL binary_model (int ci, const int *list,
     bin_info *bin = NULL;
     PRN *vprn = NULL;
     int depvar;
-    int i, vi, t, s;
 
     gretl_model_init(&mod, dset);
     depvar = list[1];
@@ -3331,48 +3434,16 @@ MODEL binary_model (int ci, const int *list,
         goto bailout;
     }
 
-    for (i=0; i<bin->k; i++) {
-        bin->theta[i] = mod.coeff[i] / mod.sigma;
-    }
-
-    s = 0;
-    for (t=mod.t1; t<=mod.t2; t++) {
-        if (!na(mod.yhat[t])) {
-            bin->y[s++] = dset->Z[depvar][t] ? 1.0 : 0.0;
-        }
-    }
-
-    // bin->Q = gretl_model_get_data(&mod, "Q");
-    bin->Q = gretl_model_steal_data(&mod, "Q");
-    bin->Ri = gretl_model_steal_data(&mod, "R");
-
-    
-    if (bin->Q != NULL && bin->Ri != NULL) {
-        printf("*** BINARY_QR: got Q, R ***\n");
-        mod.errcode = binary_qr_prep(bin, &mod, dset);
-        if (mod.errcode) {
-            goto bailout;
-        }
-        //bin->qlist = gretl_list_copy(mod.list);
-        //gretl_matrix_copy_values(bin->X, bin->Q);
-    }
-
-    for (i=0; i<bin->k; i++) {
-        vi = mod.list[i+2];
-        s = 0;
-        for (t=mod.t1; t<=mod.t2; t++) {
-            if (!na(mod.yhat[t])) {
-                gretl_matrix_set(bin->X, s++, i, dset->Z[vi][t]);
-            }
-        }
-    }
+    make_binary_y_and_X(bin, &mod, dset);
 
     if (opt & OPT_V) {
         maxopt = OPT_V;
         vprn = prn;
     }
     if (!(opt & OPT_X)) {
-        /* not just auxiliary estimator */
+        /* not just an auxiliary estimator: respect user choices
+           for Newton parameters
+        */
         maxopt |= OPT_U;
     }
 

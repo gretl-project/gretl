@@ -841,12 +841,10 @@ static int broken_gradient (double *g, int n)
     return 0;
 }
 
-/*
-   If "set initvals" has been used, replace whatever initial values
+/* If "set initvals" has been used, replace whatever initial values
    might have been in place with those given by the user (the customer
-   is always right).  In addition, respect user settings for the
-   maximum number of iterations, the convergence tolerance and
-   so on.
+   is always right).  In addition, respect user settings for the maximum
+   number of iterations, the convergence tolerance and so on.
 */
 
 static void optim_get_user_values (double *b, int n, int *maxit,
@@ -857,8 +855,9 @@ static void optim_get_user_values (double *b, int n, int *maxit,
     double utol;
 
     if (opt & OPT_U) {
-        /* we first check to see if we've been a usable initialization
-           for the parameter estimates */
+        /* We first check to see if we've been a usable initialization
+           for the parameter estimates.
+        */
         gretl_matrix *uinit;
         int i, uilen;
 
