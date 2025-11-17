@@ -39,12 +39,11 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn);
 
 #define FDIGITS(m) (((m)->ci == MPOLS)? GRETL_MP_DIGITS : 5)
 
-#define ordered_model(m) ((m->ci == LOGIT || m->ci == PROBIT) &&	\
+#define ordered_model(m) ((m->ci == LOGIT || m->ci == PROBIT) && \
 			  gretl_model_get_int(m, "ordered"))
 
 #define binary_model(m) ((m->ci == LOGIT || m->ci == PROBIT) && \
-                         !gretl_model_get_int(m, "ordered") &&	\
-                         !gretl_model_get_int(m, "multinom"))
+                         gretl_model_get_int(m, "binary"))
 
 #define multinomial_model(m) (m->ci == LOGIT && gretl_model_get_int(m, "multinom"))
 
