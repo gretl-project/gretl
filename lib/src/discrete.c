@@ -2838,8 +2838,6 @@ static gretl_matrix *binary_score_matrix (bin_info *bin, int *err)
     return G;
 }
 
-#define SEPARATE_FINISH 1
-
 static int binary_variance_matrix (MODEL *pmod, bin_info *bin,
                                    const DATASET *dset,
                                    gretlopt opt)
