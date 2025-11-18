@@ -23,7 +23,7 @@
 #include "gretl_bfgs.h"
 #include "gretl_normal.h"
 #include "qr_estimate.h"
-#include "matrix_extra.h" /* temporary!*/
+#include "matrix_extra.h"
 #include "gretl_string_table.h"
 
 #include <errno.h>
@@ -2603,26 +2603,22 @@ struct bin_info_ {
     int pp_err;       /* to record perfect-prediction error */
     double *theta;    /* coeffs for Newton-Raphson */
     int *y;           /* dependent variable */
-    gretl_matrix_block *B;
     gretl_matrix *X;  /* regressors */
+    gretl_matrix *Ri; /* inverse of R from decomp of X */
+    gretl_matrix_block *B;
     gretl_matrix *pX; /* for use with Hessian */
     gretl_matrix *b;  /* coefficients in matrix form */
     gretl_matrix *Xb; /* index function values */
-    /* QR-related */
-    gretl_matrix *Q;  /* Q, from QR decomp of X */
-    gretl_matrix *Ri; /* inverse of R from decomp of X */
-    int *qlist;       /* series corresponding to columns of Q */
 };
 
 static void bin_info_destroy (bin_info *bin)
 {
     if (bin != NULL) {
         gretl_matrix_block_destroy(bin->B);
+        gretl_matrix_free(bin->X);
+        gretl_matrix_free(bin->Ri);
         free(bin->theta);
         free(bin->y);
-        gretl_matrix_free(bin->Q);
-        gretl_matrix_free(bin->Ri);
-        free(bin->qlist);
         free(bin);
     }
 }
@@ -2630,73 +2626,42 @@ static void bin_info_destroy (bin_info *bin)
 static bin_info *bin_info_new (int ci, int k, int T)
 {
     bin_info *bin = malloc(sizeof *bin);
+    int err = 0;
 
-    if (bin != NULL) {
-        bin->ci = ci;
-        bin->k = k;
-        bin->T = T;
-        bin->pp_err = 0;
-        bin->theta = malloc(k * sizeof *bin->theta);
-        if (bin->theta == NULL) {
-            free(bin);
-            return NULL;
-        }
-        bin->y = malloc(T * sizeof *bin->y);
-        if (bin->y == NULL) {
-            free(bin->theta);
-            free(bin);
-            return NULL;
-        }
-        bin->Q = NULL;
-        bin->Ri = NULL;
-        bin->qlist = NULL;
-        bin->B = gretl_matrix_block_new(&bin->X, T, k,
-                                        &bin->pX, T, k,
+    if (bin == NULL) {
+        return NULL;
+    }
+
+    bin->X = NULL;
+    bin->Ri = NULL;
+    bin->B = NULL;
+    bin->ci = ci;
+    bin->k = k;
+    bin->T = T;
+    bin->pp_err = 0;
+    bin->theta = malloc(k * sizeof *bin->theta);
+    bin->y = malloc(T * sizeof *bin->y);
+    if (bin->theta == NULL || bin->y == NULL) {
+        err = E_ALLOC;
+    } else {
+        bin->B = gretl_matrix_block_new(&bin->pX, T, k,
                                         &bin->b, k, 1,
                                         &bin->Xb, T, 1,
                                         NULL);
         if (bin->B == NULL) {
-            free(bin->theta);
-            free(bin->y);
-            free(bin);
-            bin = NULL;
+            err = E_ALLOC;
         }
+    }
+    if (err) {
+        bin_info_destroy(bin);
+        bin = NULL;
     }
 
     return bin;
 }
 
-static int binary_qr_prep (bin_info *bin,
-                           MODEL *pmod,
-                           DATASET *dset)
-{
-    int n = pmod->nobs;
-    int k = pmod->ncoeff;
-    int orig_v = dset->v;
-    int i, vi;
-    int err = 0;
-
-    err = dataset_add_series(dset, k);
-
-    if (!err) {
-        const double *Qi = bin->Q->val;
-
-        bin->qlist = gretl_list_copy(pmod->list);
-        vi = orig_v;
-        for (i=0; i<k; i++) {
-            sprintf(dset->varname[vi], "qdec%d", i);
-            bin->qlist[i+2] = vi;
-            memcpy(dset->Z[vi++], Qi, n * sizeof(double));
-            Qi += n;
-        }
-    }
-
-    return err;
-}
-
-/*
-  If min1 > max0, then there exists a separating hyperplane between
-  all the zeros and all the ones; in this case no MLE exists.
+/* If min1 > max0, then there exists a separating hyperplane between
+   all the zeros and all the ones; in this case no MLE exists.
 */
 
 static int perfect_prediction_check (bin_info *bin)
@@ -3228,7 +3193,7 @@ static int binary_model_finish (bin_info *bin,
                                 const int *blist,
                                 gretlopt opt)
 {
-    int i, k = pmod->ncoeff;
+    int i;
 
 #if 0
     if (bin->Ri != NULL) {
@@ -3236,8 +3201,8 @@ static int binary_model_finish (bin_info *bin,
         gretl_matrix k1 = {0};
         gretl_matrix pc = {0};
 
-        gretl_matrix_init_full(&k1, k, 1, bin->theta);
-        gretl_matrix_init_full(&pc, k, 1, pmod->coeff);
+        gretl_matrix_init_full(&k1, bin->k, 1, bin->theta);
+        gretl_matrix_init_full(&pc, bin->k, 1, pmod->coeff);
         gretl_matrix_multiply(bin->Ri, &k1, &pc);
     } else {
         memcpy(pmod->coeff, bin->theta, k * sizeof(double));
@@ -3290,14 +3255,67 @@ static int binary_model_finish (bin_info *bin,
         gretl_model_set_int(pmod, "binary", 1);
     }
 
-#if 1   
+#if 1
     if (!pmod->errcode && bin->Ri != NULL) {
         binary_qr_finish(pmod, blist, bin->Ri);
     }
-#endif    
+#endif
 
     return pmod->errcode;
 }
+
+#define USE_MOLS 1
+
+#if USE_MOLS
+
+static int revise_lpm_coeffs (bin_info *bin,
+                              MODEL *pmod)
+{
+    gretl_matrix *y = NULL;
+    gretl_matrix b = {};
+    double s2;
+    int i, err = 0;
+
+    y = gretl_matrix_alloc(bin->T, 1);
+    for (i=0; i<pmod->nobs; i++) {
+        y->val[i] = bin->y[i];
+    }
+    gretl_matrix_init_full(&b, bin->k, 1, bin->theta);
+    err = gretl_matrix_ols(y, bin->X, &b, NULL, NULL, &s2);
+    gretl_matrix_divide_by_scalar(&b, sqrt(s2));
+    gretl_matrix_free(y);
+
+    return err;
+}
+
+#else
+
+static int revise_lpm_coeffs (bin_info *bin,
+                              MODEL *pmod)
+{
+    gretl_matrix *R;
+    gretl_matrix pc = {0};
+    gretl_matrix k1 = {0};
+    int i, err = 0;
+
+    R = gretl_matrix_copy(bin->Ri);
+    if (R == NULL) {
+        err = E_ALLOC;
+    } else {
+        err = gretl_invert_triangular_matrix(R, 'U');
+    }
+    if (!err) {
+        gretl_matrix_init_full(&pc, bin->k, 1, pmod->coeff);
+        gretl_matrix_init_full(&k1, bin->k, 1, bin->theta);
+        gretl_matrix_multiply(R, &pc, &k1);
+        gretl_matrix_divide_by_scalar(&k1, pmod->sigma);
+    }
+    gretl_matrix_free(R);
+
+    return err;
+}
+
+#endif
 
 static int make_binary_y_and_X (bin_info *bin,
                                 MODEL *pmod,
@@ -3313,31 +3331,20 @@ static int make_binary_y_and_X (bin_info *bin,
         }
     }
 
-    // bin->Q = gretl_model_get_data(&mod, "Q");
-    bin->Q = gretl_model_steal_data(pmod, "Q");
-    bin->Ri = gretl_model_steal_data(pmod, "R");
-
-    if (bin->Q != NULL && bin->Ri != NULL) {
-        gretl_matrix *y = NULL;
-        gretl_matrix b = {};
-        double s2;
-        
-        printf("*** BINARY_QR: got Q, R ***\n");
-        bin->qlist = gretl_list_copy(pmod->list);
-        y = gretl_matrix_alloc(bin->T, 1);
-        for (i=0; i<pmod->nobs; i++) {
-            y->val[i] = bin->y[i];
-        }
-        gretl_matrix_copy_values(bin->X, bin->Q);
-        gretl_matrix_init_full(&b, bin->k, 1, bin->theta);
-        err = gretl_matrix_ols(y, bin->X, &b, NULL, NULL, &s2);
-        gretl_matrix_divide_by_scalar(&b, sqrt(s2));
-        gretl_matrix_free(y);
+    if (gretl_model_get_int(pmod, "QR")) {
+        fprintf(stderr, "make_binary_y_and_X: QR case\n");
+        bin->X = gretl_model_steal_data(pmod, "Q");
+        bin->Ri = gretl_model_steal_data(pmod, "R");
+        err = revise_lpm_coeffs(bin, pmod);
     } else {
-        for (i=0; i<bin->k; i++) {
+        bin->X = gretl_matrix_alloc(bin->T, bin->k);
+        if (bin->X == NULL) {
+            err = E_ALLOC;
+        }
+        for (i=0; i<bin->k && !err; i++) {
             bin->theta[i] = pmod->coeff[i] / pmod->sigma;
         }
-        for (i=0; i<bin->k; i++) {
+        for (i=0; i<bin->k && !err; i++) {
             v = pmod->list[i+2];
             for (t=pmod->t1, s=0; t<=pmod->t2; t++) {
                 if (!na(pmod->yhat[t])) {
@@ -3357,7 +3364,6 @@ MODEL binary_model (int ci, const int *list,
     gretlopt maxopt = OPT_NONE;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
-    int orig_v = dset->v;
     int *blist = NULL;
     char *mask = NULL;
     double crittol = 1.0e-8;
@@ -3398,10 +3404,7 @@ MODEL binary_model (int ci, const int *list,
         if (mod.errcode == E_NOCONV) {
             gretl_errmsg_set(_("Perfect prediction obtained: no MLE exists"));
         }
-        goto bailout;
-    }
-
-    if (mask != NULL) {
+    } else if (mask != NULL) {
         mod.errcode = copy_to_reference_missmask(mask);
     }
 
@@ -3424,19 +3427,20 @@ MODEL binary_model (int ci, const int *list,
 #endif
     }
 
+    if (!mod.errcode) {
+        bin = bin_info_new(ci, mod.ncoeff, mod.nobs);
+        if (bin == NULL) {
+            mod.errcode = E_ALLOC;
+        } else {
+            mod.errcode = make_binary_y_and_X(bin, &mod, dset);
+        }
+    }
     if (mod.errcode) {
         goto bailout;
     }
 
-    bin = bin_info_new(ci, mod.ncoeff, mod.nobs);
-    if (bin == NULL) {
-        mod.errcode = E_ALLOC;
-        goto bailout;
-    }
-
-    make_binary_y_and_X(bin, &mod, dset);
-
     if (opt & OPT_V) {
+        /* respect verbosity */
         maxopt = OPT_V;
         vprn = prn;
     }
@@ -3458,7 +3462,6 @@ MODEL binary_model (int ci, const int *list,
         mod.errcode = E_NOCONV;
         gretl_errmsg_set(_("Perfect prediction obtained: no MLE exists"));
     }
-
     if (!mod.errcode) {
         binary_model_finish(bin, &mod, dset, blist, opt);
         if (!mod.errcode && ndropped > 0) {
@@ -3474,7 +3477,6 @@ MODEL binary_model (int ci, const int *list,
 
     dset->t1 = save_t1;
     dset->t2 = save_t2;
-    dataset_drop_last_variables(dset, dset->v - orig_v);
 
     return mod;
 }

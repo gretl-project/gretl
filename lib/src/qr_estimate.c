@@ -1963,6 +1963,7 @@ gretl_qr_plain_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 
     if (opt & OPT_B) {
         /* running initial LPM for binary model */
+        gretl_model_set_int(pmod, "QR", 1);
         gretl_model_set_matrix_as_data(pmod, "Q", Q);
         gretl_model_set_matrix_as_data(pmod, "R", R);
     } else {
