@@ -2838,6 +2838,8 @@ static gretl_matrix *binary_score_matrix (bin_info *bin, int *err)
     return G;
 }
 
+#define SEPARATE_FINISH 1
+
 static int binary_variance_matrix (MODEL *pmod, bin_info *bin,
                                    const DATASET *dset,
                                    gretlopt opt)
@@ -3416,6 +3418,9 @@ MODEL binary_model (int ci, const int *list,
         */
         if (opt & OPT_A) {
             ols_opt |= OPT_Z;
+        }
+        if (1 /* !(opt & OPT_Y) */) {
+            ols_opt |= OPT_B;
         }
         mod = lsq(blist, dset, OLS, ols_opt);
 #if LPDEBUG
