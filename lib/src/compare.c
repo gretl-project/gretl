@@ -1188,10 +1188,10 @@ static MODEL LM_add_test (MODEL *pmod, DATASET *dset, int *list,
    Criteria, or an alpha value, as parameter to the option.
 */
 
-static int process_stepwise_option (int ci,
-                                    MODEL *orig,
-                                    int *crit,
-                                    double *alpha)
+static int process_auto_option (int ci,
+                                MODEL *orig,
+                                int *crit,
+                                double *alpha)
 {
     const char *cstrs[] = {
         "AIC", "BIC", "HQC"
@@ -1299,7 +1299,7 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 
     if (opt & OPT_A) {
         /* check the --auto option */
-        err = process_stepwise_option(ADD, orig, &crit, &alpha);
+        err = process_auto_option(ADD, orig, &crit, &alpha);
     } else {
         /* create augmented regression list */
         if (orig->ci == IVREG) {
@@ -1431,17 +1431,17 @@ static int wald_omit_test (const int *list, MODEL *pmod,
 }
 
 typedef struct omit_info_ {
-    MODEL *orig;        /* the original model */
-    MODEL *curr;        /* the current model in stepwise elimination */
-    MODEL *tmp;         /* temporary workspace model */
-    int *list;          /* the list, from which regressors may be dropped */
-    const int *cands;   /* list of candidates for elimination, in case some
-                           regressors are to be kept regardless */
-    double alpha;        /* the max alpha when using the p-value criterion */
-    double cval;         /* value of the criterion in use */
-    gint8 starting;      /* flag indicating the first step */
-    InfoCriterion crit;  /* identifier of the criterion in use */
-    gint8 use_pval;      /* flag indicating that p-values are in use */
+    MODEL *orig;       /* the original model */
+    MODEL *curr;       /* the current model in stepwise elimination */
+    MODEL *tmp;        /* temporary workspace model */
+    int *list;         /* the list, from which regressors may be dropped */
+    const int *cands;  /* list of candidates for elimination, in case some
+                          regressors are to be kept regardless */
+    double alpha;      /* the max alpha when using the p-value criterion */
+    double cval;       /* value of the criterion in use */
+    gint8 starting;    /* flag indicating the first step */
+    gint8 crit;        /* identifier of the criterion in use */
+    gint8 use_pval;    /* flag indicating that p-values are in use */
 } omit_info;
 
 /* Check whether coefficient @i corresponds to a variable that is
@@ -1824,7 +1824,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
     int save_t2 = dset->t2;
     int *tmplist = NULL;
     double alpha = 0;
-    int crit = C_MAX;
+    int crit = -1;
     int err;
 
     err = omit_test_precheck(orig, opt);
@@ -1839,7 +1839,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
 
     if (opt & OPT_A) {
         /* doing auto-omit */
-        err = process_stepwise_option(OMIT, orig, &crit, &alpha);
+        err = process_auto_option(OMIT, orig, &crit, &alpha);
     } else {
 	err = make_short_list(orig, omitvars, opt, &tmplist);
     }
