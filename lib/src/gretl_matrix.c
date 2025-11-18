@@ -7664,7 +7664,7 @@ gretl_matrix *gretl_matrix_complex_divide (const gretl_matrix *a,
  *
  * Returns: a row vector or column vector containing the sums,
  * products or means of the columns or rows of @m. See also
- * gretl_rmatrix_vector_stat() for the complex variant.
+ * gretl_cmatrix_vector_stat() for the complex variant.
  */
 
 gretl_matrix *gretl_rmatrix_vector_stat (const gretl_matrix *m,
