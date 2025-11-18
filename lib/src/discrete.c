@@ -3254,7 +3254,6 @@ static int binary_model_finish (bin_info *bin,
 
 #if SEPARATE_FINISH
     if (!pmod->errcode && bin->Ri != NULL) {
-        // binary_qr_finish_coeffs(pmod, bin);
         pmod->errcode = binary_qr_finish_vcv(pmod, bin);
     }
 #endif
@@ -3262,7 +3261,7 @@ static int binary_model_finish (bin_info *bin,
     return pmod->errcode;
 }
 
-#define USE_MOLS 1
+#define USE_MOLS 0
 
 /* revise_lpm_coeffs: here we're revising the coefficients we got via
    initial OLS estimation (Linear Probability Model) when it turns out
@@ -3434,7 +3433,7 @@ MODEL binary_model (int ci, const int *list,
         if (opt & OPT_A) {
             ols_opt |= OPT_Z;
         }
-        if (!(opt & OPT_Y)) {
+        if (1 /* !(opt & OPT_Y) */) {
             ols_opt |= OPT_B;
         }
         mod = lsq(blist, dset, OLS, ols_opt);
