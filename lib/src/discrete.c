@@ -2838,8 +2838,6 @@ static gretl_matrix *binary_score_matrix (bin_info *bin, int *err)
     return G;
 }
 
-#define SEPARATE_FINISH 1
-
 static int binary_variance_matrix (MODEL *pmod, bin_info *bin,
                                    const DATASET *dset,
                                    gretlopt opt)
@@ -2849,23 +2847,8 @@ static int binary_variance_matrix (MODEL *pmod, bin_info *bin,
     int err = 0;
 
     H = binary_hessian_inverse(bin, &err);
-    if (err) {
-        return err;
-    }
 
-#if SEPARATE_FINISH == 0
-    /* FIXME check robust case */
-    if (bin->Ri != NULL) {
-        gretl_matrix *RHR = gretl_matrix_alloc(bin->k, bin->k);
-
-        gretl_matrix_qform(bin->Ri, GRETL_MOD_NONE,
-                           H, RHR, GRETL_MOD_NONE);
-        gretl_matrix_copy_values(H, RHR);
-        gretl_matrix_free(RHR);
-    }
-#endif
-
-    if (opt & OPT_R) {
+    if (!err && (opt & OPT_R)) {
         G = binary_score_matrix(bin, &err);
     }
 
@@ -3238,11 +3221,6 @@ static int binary_model_finish (bin_info *bin,
 
     if (!pmod->errcode) {
         binary_model_hatvars(pmod, bin->Xb, bin->y, opt);
-        if (pmod->ci == PROBIT) {
-            binary_probit_normtest(pmod, bin);
-        } else {
-            binary_logit_odds_ratios(pmod, dset);
-        }
         mle_criteria(pmod, 0);
         if (opt & OPT_A) {
             pmod->aux = AUX_AUX;
@@ -3252,12 +3230,17 @@ static int binary_model_finish (bin_info *bin,
         gretl_model_set_int(pmod, "binary", 1);
     }
 
-#if SEPARATE_FINISH
     if (!pmod->errcode && bin->Ri != NULL) {
-        // binary_qr_finish_coeffs(pmod, bin);
         pmod->errcode = binary_qr_finish_vcv(pmod, bin);
     }
-#endif
+
+    if (!pmod->errcode) {
+        if (pmod->ci == PROBIT) {
+            binary_probit_normtest(pmod, bin);
+        } else {
+            binary_logit_odds_ratios(pmod, dset);
+        }
+    }
 
     return pmod->errcode;
 }
@@ -3425,7 +3408,7 @@ MODEL binary_model (int ci, const int *list,
     }
 
     if (!mod.errcode) {
-        gretlopt ols_opt = OPT_A;
+        gretlopt ols_opt = OPT_A | OPT_B;
 
         /* If we're doing logit/probit as an auxiliary regression,
            it might be safer to abort on perfect collinearity;
@@ -3433,9 +3416,6 @@ MODEL binary_model (int ci, const int *list,
         */
         if (opt & OPT_A) {
             ols_opt |= OPT_Z;
-        }
-        if (!(opt & OPT_Y)) {
-            ols_opt |= OPT_B;
         }
         mod = lsq(blist, dset, OLS, ols_opt);
 #if LPDEBUG
