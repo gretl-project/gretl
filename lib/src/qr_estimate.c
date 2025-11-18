@@ -1412,28 +1412,24 @@ static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R,
 {
     integer k = gretl_matrix_rows(R);
     double rcond = 0;
-    int r, err;
+    int r = 0;
+    int err;
 
     if (warn != NULL) {
         *warn = 0;
     }
 
-    /* basic decomposition */
+    /* decompose and check rank */
     err = gretl_matrix_QR_decomp(Q, R);
-    if (err) {
-        return err;
+    if (!err) {
+        r = gretl_check_QR_rank(R, &err, &rcond);
     }
-
-    /* check rank of QR */
-    r = gretl_check_QR_rank(R, &err, &rcond);
-    if (err) {
-        return err;
-    }
-
-    if (r < k) {
+    if (!err && r < k) {
         err = E_SINGULAR;
-    } else {
-        /* then invert the triangular R */
+    }
+
+    if (!err) {
+        /* invert the triangular R */
         err = gretl_invert_triangular_matrix(R, 'U');
     }
 
