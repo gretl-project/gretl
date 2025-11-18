@@ -3044,30 +3044,19 @@ static double binary_model_fXb (MODEL *pmod, bin_info *bin,
     double xbar, Xb = 0.0;
     int i, vi, t;
 
-    if (bin->Ri != NULL) {
-        for (i=0; i<bin->k; i++) {
-            xbar = 0.0;
-            vi = pmod->list[i+2];
-            for (t=pmod->t1; t<=pmod->t2; t++) {
-                if (!na(pmod->uhat[t])) {
-                    xbar += dset->Z[vi][t];
-                }
+    for (i=0; i<bin->k; i++) {
+        xbar = 0.0;
+        vi = pmod->list[i+2];
+        for (t=pmod->t1; t<=pmod->t2; t++) {
+            if (!na(pmod->uhat[t])) {
+                xbar += dset->Z[vi][t];
             }
-            xbar /= bin->T;
-            Xb += pmod->coeff[i] * xbar;
         }
-    } else {
-        for (i=0; i<bin->k; i++) {
-            xbar = 0.0;
-            for (t=0; t<bin->T; t++) {
-                xbar += gretl_matrix_get(bin->X, t, i);
-            }
-            xbar /= bin->T;
-            Xb += bin->theta[i] * xbar;
-        }
+        xbar /= bin->T;
+        Xb += pmod->coeff[i] * xbar;
     }
 
-    return (bin->ci == LOGIT)? logit_pdf(Xb) : normal_pdf(Xb);
+    return bin->ci == LOGIT ? logit_pdf(Xb) : normal_pdf(Xb);
 }
 
 void binary_model_hatvars (MODEL *pmod,
@@ -3143,13 +3132,17 @@ void binary_model_hatvars (MODEL *pmod,
                              GRETL_TYPE_INT_ARRAY,
                              4 * sizeof *act_pred);
     }
-
     if (ll != NULL) {
         gretl_model_set_data(pmod, "llt", ll,
                              GRETL_TYPE_DOUBLE_ARRAY,
                              n * sizeof *ll);
     }
 }
+
+/* After a binary model is estimated via QR, multiply the
+   coefficients by R^{-1} to convert back to the statistics
+   of the original data.
+*/
 
 static void binary_qr_finish_coeffs (MODEL *pmod, bin_info *bin)
 {
@@ -3160,6 +3153,11 @@ static void binary_qr_finish_coeffs (MODEL *pmod, bin_info *bin)
     gretl_matrix_init_full(&pc, bin->k, 1, pmod->coeff);
     gretl_matrix_multiply(bin->Ri, &bt, &pc);
 }
+
+/* After a binary model is estimated via QR, correct its covariance
+   matrix, V, which is relative to the decomposed data, to
+   R^{-1} * V * R^{-1}'.
+*/
 
 static int binary_qr_finish_vcv (MODEL *pmod, bin_info *bin)
 {
@@ -3249,10 +3247,11 @@ static int binary_model_finish (bin_info *bin,
 
 /* revise_lpm_coeffs: here we're revising the coefficients we got via
    initial OLS estimation (Linear Probability Model) when it turns out
-   OLS used QR decomposition and we're going to use QR in ML estimation
-   of the binary model. In the non-QR case we just divide the coeffs by
-   pmod->sigma, but in the QR case we have to either re-estimate the LPM
-   via mols(), or pre-multiply the coeffs by R.
+   OLS used QR decomposition and therefore we're going to use QR in ML
+   estimation of the binary model. In the non-QR case we just divide the
+   coeffs by pmod->sigma, but in the QR case we have to either
+   re-estimate the LPM via mols(), or pre-multiply the coeffs by R.
+   (Note that we have R-inverse to hand but not R itself.)
 
    Both of these methods work OK; it remains to be seen which is faster
    in a hefty case.
@@ -3416,9 +3415,6 @@ MODEL binary_model (int ci, const int *list,
         */
         if (opt & OPT_A) {
             ols_opt |= OPT_Z;
-        }
-        if (1 /* !(opt & OPT_Y) */) {
-            ols_opt |= OPT_B;
         }
         mod = lsq(blist, dset, OLS, ols_opt);
 #if LPDEBUG
