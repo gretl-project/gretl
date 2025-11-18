@@ -2601,8 +2601,10 @@ static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 
             for (s=0; lambda > 0.1 && err; s++) {
                 lambda *= 0.8;
+#if 0
                 fprintf(stderr, "newton hessian fixup: round %d, lambda=%g\n",
                         s, lambda);
+#endif
                 /* restore the original H */
                 gretl_matrix_copy_values(H, Hcpy);
                 for (i=0; i<n; i++) {
