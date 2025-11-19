@@ -6,7 +6,6 @@ string PkgName = "assertion"
 pkg query @PkgName --quiet
 bundle Pkg = $result
 if !nelem(Pkg)
-    pkg install extra
     pkg install @PkgName
 endif
 include extra.gfn
