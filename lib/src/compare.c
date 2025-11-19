@@ -714,7 +714,7 @@ static int obs_diff_ok (const MODEL *m_old, const MODEL *m_new)
 
 static MODEL replicate_estimator (const MODEL *orig, int *list,
 				  DATASET *dset, gretlopt myopt,
-				  int auto_omit, PRN *prn)
+				  PRN *prn)
 {
     MODEL rep;
     const char *param = NULL;
@@ -790,10 +790,6 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 
 	    myopt |= (OPT_E | OPT_G);
 	    set_optval_double(PROBIT, OPT_G, qp);
-        }
-        if (gretl_model_get_int(orig, "binary")) {
-            /* experimental, to do with QR */
-            myopt |= OPT_Y;
         }
     } else if (orig->ci == PANEL) {
 	if (gretl_model_get_int(orig, "pooled")) {
@@ -1350,7 +1346,7 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 	    /* not printing @umod, so pass along OPT_Q */
 	    ropt |= OPT_Q;
 	}
-	umod = replicate_estimator(orig, biglist, dset, ropt, 0, prn);
+	umod = replicate_estimator(orig, biglist, dset, ropt, prn);
     }
 
     if (umod.errcode) {
@@ -1571,7 +1567,7 @@ static int auto_drop_var (omit_info *oi,
                 clear_model(oi->curr);
             }
             set_reference_missmask_from_model(oi->orig);
-            *tmp = replicate_estimator(oi->orig, ltmp, dset, OPT_A, 1, prn);
+            *tmp = replicate_estimator(oi->orig, ltmp, dset, OPT_A, prn);
             if (tmp->errcode) {
                 *err = tmp->errcode;
                 clear_model(tmp);
@@ -1668,7 +1664,7 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
             /* in the info criterion case replicate_estimator() is called
                by auto_drop_var()
             */
-            omod = replicate_estimator(orig, oi.list, dset, OPT_A, 1, prn);
+            omod = replicate_estimator(orig, oi.list, dset, OPT_A, prn);
             err = omod.errcode;
             if (err) {
                 break;
@@ -1699,7 +1695,7 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
 	    ropt |= OPT_Q;
 	}
 	set_reference_missmask_from_model(orig);
-        omod = replicate_estimator(orig, oi.list, dset, ropt, 1, prn);
+        omod = replicate_estimator(orig, oi.list, dset, ropt, prn);
     }
 
     if (oi.tmp != NULL) {
@@ -1880,7 +1876,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
 	    /* not printing @rmod, so pass along OPT_Q */
 	    ropt |= OPT_Q;
 	}
-	rmod = replicate_estimator(orig, tmplist, dset, ropt, 0, prn);
+	rmod = replicate_estimator(orig, tmplist, dset, ropt, prn);
     }
 
     err = rmod.errcode;
@@ -2023,7 +2019,7 @@ double get_DW_pvalue_for_model (MODEL *pmod, DATASET *dset,
     /* impose the sample range used for the original model */
     impose_model_smpl(pmod, dset);
 
-    dwmod = replicate_estimator(pmod, list, dset, OPT_A | OPT_I, 0, NULL);
+    dwmod = replicate_estimator(pmod, list, dset, OPT_A | OPT_I, NULL);
     *err = dwmod.errcode;
 
     if (!*err) {
