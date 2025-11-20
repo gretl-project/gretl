@@ -2660,57 +2660,44 @@ static bin_info *bin_info_new (int ci, int k, int T)
     return bin;
 }
 
-/* If min1 > max0, then there exists a separating hyperplane between
-   all the zeros and all the ones; in this case no MLE exists.
-*/
-
-static int perfect_prediction_check (bin_info *bin)
-{
-    double max0 = -1.0e200;
-    double min1 = 1.0e200;
-    const double *ndx = bin->Xb->val;
-    int t;
-
-    for (t=0; t<bin->T; t++) {
-        if (bin->y[t] == 0 && ndx[t] > max0) {
-            max0 = ndx[t];
-        } else if (bin->y[t] == 1 && ndx[t] < min1) {
-            min1 = ndx[t];
-        }
-    }
-
-    return (min1 > max0);
-}
-
 /* compute loglikelihood for binary probit/logit */
 
 static double binary_loglik (const double *theta, void *ptr)
 {
     bin_info *bin = (bin_info *) ptr;
-    double e, ndx, p, ll = 0.0;
-    int yt, i, t;
+    double max0 = -1.0e200;
+    double min1 = 1.0e200;
+    double e, ndx, p;
+    double ll = 0.0;
+    int i, t;
 
     for (i=0; i<bin->k; i++) {
         bin->b->val[i] = theta[i];
     }
-
     gretl_matrix_multiply(bin->X, bin->b, bin->Xb);
 
-    if (perfect_prediction_check(bin)) {
+    /* perfect prediction check */
+    for (t=0; t<bin->T; t++) {
+        ndx = gretl_vector_get(bin->Xb, t);
+        if (bin->y[t] == 0 && ndx > max0) {
+            max0 = ndx;
+        } else if (bin->y[t] == 1 && ndx < min1) {
+            min1 = ndx;
+        }
+    }
+    if (min1 > max0) {
         bin->pp_err = 1;
         return NADBL;
     }
 
-    errno = 0;
-
+    /* compute loglikelihood */
     for (t=0; t<bin->T; t++) {
-        yt = bin->y[t];
         ndx = gretl_vector_get(bin->Xb, t);
         if (bin->ci == PROBIT) {
-            p = yt ? normal_cdf(ndx) : normal_cdf(-ndx);
+            p = bin->y[t] ? normal_cdf(ndx) : normal_cdf(-ndx);
         } else {
-            e = logit(ndx); /* errno check? */
-            p = yt ? e : 1-e;
+            e = logit(ndx);
+            p = bin->y[t] ? e : 1-e;
         }
         ll += log(p);
     }
@@ -2818,8 +2805,6 @@ static gretl_matrix *binary_score_matrix (bin_info *bin, int *err)
         *err = E_ALLOC;
         return NULL;
     }
-
-    /* errno checking? */
 
     for (t=0; t<bin->T && !errno; t++) {
         yt = bin->y[t];
@@ -3243,21 +3228,13 @@ static int binary_model_finish (bin_info *bin,
     return pmod->errcode;
 }
 
-#define USE_MOLS 1
-
 /* revise_lpm_coeffs: here we're revising the coefficients we got via
    initial OLS estimation (Linear Probability Model) when it turns out
    OLS used QR decomposition and therefore we're going to use QR in ML
    estimation of the binary model. In the non-QR case we just divide the
-   coeffs by pmod->sigma, but in the QR case we have to either
-   re-estimate the LPM via mols(), or pre-multiply the coeffs by R.
-   (Note that we have R-inverse to hand but not R itself.)
-
-   Both of these methods work OK; it remains to be seen which is faster
-   in a hefty case.
+   coeffs by pmod->sigma, but in the QR case we first obtain revised
+   coeffs as Q'y (where in context Q = bin->X).
 */
-
-#if USE_MOLS
 
 static int revise_lpm_coeffs (bin_info *bin,
                               MODEL *pmod)
@@ -3271,49 +3248,14 @@ static int revise_lpm_coeffs (bin_info *bin,
         y->val[i] = bin->y[i];
     }
     gretl_matrix_init_full(&b, bin->k, 1, bin->theta);
-    err = gretl_matrix_ols(y, bin->X, &b, NULL, NULL, NULL);
+    gretl_matrix_multiply_mod(bin->X, GRETL_MOD_TRANSPOSE,
+                              y, GRETL_MOD_NONE,
+                              &b, GRETL_MOD_NONE);
     gretl_matrix_divide_by_scalar(&b, pmod->sigma);
     gretl_matrix_free(y);
 
-#if 0
-    for (i=0; i<8; i++) {
-        fprintf(stderr, "MOLS theta[%d] = %g\n", i, bin->theta[i]);
-    }
-#endif
-
     return err;
 }
-
-#else
-
-static int revise_lpm_coeffs (bin_info *bin,
-                              MODEL *pmod)
-{
-    gretl_matrix pc = {0};
-    gretl_matrix k1 = {0};
-    gretl_matrix *R;
-    int err = 0;
-
-    R = gretl_matrix_copy(bin->Ri);
-    if (R == NULL) {
-        err = E_ALLOC;
-    } else {
-        /* we need the original R */
-        err = gretl_invert_triangular_matrix(R, 'U');
-    }
-    if (!err) {
-        /* bin->theta = (R * pmod->coeff) / pmod->sigma  */
-        gretl_matrix_init_full(&pc, bin->k, 1, pmod->coeff);
-        gretl_matrix_init_full(&k1, bin->k, 1, bin->theta);
-        gretl_matrix_multiply(R, &pc, &k1);
-        gretl_matrix_divide_by_scalar(&k1, pmod->sigma);
-    }
-    gretl_matrix_free(R);
-
-    return err;
-}
-
-#endif
 
 static int make_binary_y_and_X (bin_info *bin,
                                 MODEL *pmod,
