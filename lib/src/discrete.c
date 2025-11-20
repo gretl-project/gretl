@@ -2778,11 +2778,6 @@ static gretl_matrix *binary_hessian_inverse (bin_info *bin, int *err)
     if (!*err) {
         *err = gretl_invert_symmetric_matrix(H);
         if (*err) {
-            /* fallback: is this a good idea? (2025-11-04) */
-            fprintf(stderr, "Warning: binary model Hessian is not p.d.\n");
-            *err = gretl_invert_general_matrix(H);
-        }
-        if (*err) {
             gretl_errmsg_set("Failed to invert binary model Hessian");
         }
     }
