@@ -2607,7 +2607,6 @@ struct bin_info_ {
     gretl_matrix *Ri; /* inverse of R from decomp of X */
     gretl_matrix_block *B;
     gretl_matrix *pX; /* for use with Hessian */
-    gretl_matrix *b;  /* coefficients in matrix form */
     gretl_matrix *Xb; /* index function values */
 };
 
@@ -2645,7 +2644,6 @@ static bin_info *bin_info_new (int ci, int k, int T)
         err = E_ALLOC;
     } else {
         bin->B = gretl_matrix_block_new(&bin->pX, T, k,
-                                        &bin->b, k, 1,
                                         &bin->Xb, T, 1,
                                         NULL);
         if (bin->B == NULL) {
@@ -2665,16 +2663,15 @@ static bin_info *bin_info_new (int ci, int k, int T)
 static double binary_loglik (const double *theta, void *ptr)
 {
     bin_info *bin = (bin_info *) ptr;
+    gretl_matrix b;
     double max0 = -1.0e200;
     double min1 = 1.0e200;
     double e, ndx, p;
     double ll = 0.0;
-    int i, t;
+    int t;
 
-    for (i=0; i<bin->k; i++) {
-        bin->b->val[i] = theta[i];
-    }
-    gretl_matrix_multiply(bin->X, bin->b, bin->Xb);
+    gretl_matrix_init_full(&b, bin->k, 1, (double *) theta);
+    gretl_matrix_multiply(bin->X, &b, bin->Xb);
 
     /* perfect prediction check */
     for (t=0; t<bin->T; t++) {
@@ -3182,6 +3179,9 @@ static int binary_model_finish (bin_info *bin,
         /* this model is just the starting-point for
            random-effects probit estimation
         */
+        if (bin->Ri != NULL) {
+            binary_qr_finish_coeffs(pmod, bin);
+        }
         pmod->opt |= OPT_P;
         return 0;
     }
@@ -3190,7 +3190,9 @@ static int binary_model_finish (bin_info *bin,
     pmod->errcode = binary_variance_matrix(pmod, bin, dset, opt);
 
     if (!pmod->errcode) {
-        binary_qr_finish_coeffs(pmod, bin);
+        if (bin->Ri != NULL) {
+            binary_qr_finish_coeffs(pmod, bin);
+        }
         if (opt & OPT_P) {
             /* showing p-values, not slopes */
             double fXb = binary_model_fXb(pmod, bin, dset);
@@ -3233,11 +3235,10 @@ static int binary_model_finish (bin_info *bin,
    OLS used QR decomposition and therefore we're going to use QR in ML
    estimation of the binary model. In the non-QR case we just divide the
    coeffs by pmod->sigma, but in the QR case we first obtain revised
-   coeffs as Q'y (where in context Q = bin->X).
+   coeffs as Q'y (where in context bin->X = Q).
 */
 
-static int revise_lpm_coeffs (bin_info *bin,
-                              MODEL *pmod)
+static int revise_lpm_coeffs (bin_info *bin, MODEL *pmod)
 {
     gretl_matrix *y = NULL;
     gretl_matrix b = {};
