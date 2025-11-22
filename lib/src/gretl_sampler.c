@@ -481,6 +481,10 @@ static int parse_gibbs_params (const char *s)
     char p[VNAMELEN] = {0};
     int i, err = 0;
 
+    if (s == NULL) { /* added by Marcin 2025-11-22 due to SIGSEGV on calling 'gibbs' in console */
+        return E_PARSE;
+    }
+
     for (i=0; i<3; i++) {
         s += strspn(s, " ");
         if (*s == '\0') {
