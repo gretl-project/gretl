@@ -3,7 +3,7 @@
 
 The ability to generate pseudo-random numbers (random number
 generation, or RNG) is indispensable for modern statistical
-methods. In this section, we provide some details on the functions
+methods. In this chapter we provide some details on the functions
 gretl offers in this area, with a brief description of the most
 important algorithms it uses.
 
@@ -27,16 +27,16 @@ issue was analyzed in great detail in \cite{SvenTalha2012}, in which
 the quality of the generated pseudo-random numbers, in term of
 simulating genuine random draws, was found to be very good. The RNG
 that gretl now uses for generating uniforms is the SIMD-oriented Fast
-Mersenne Twister by \cite{saito_matsumoto08}; its period is a nonzero
-multiple of $2^{19937} - 1$.
+Mersenne Twister (\textsf{SFMT}) by \cite{saito_matsumoto08}; its
+period is a nonzero multiple of $2^{19937} - 1$.
 
 The starting point of the sequence is also called the \emph{seed} of
 the generator, and it can be set by using the \cmd{set seed} command.
-The seed must be expressible as a 32-bit unsigned integer, so it must
-be an integer between 0 and $2^{32} - 1 = 4294967295$. If the user
-does not provide a seed, gretl automatically sets it to the so-called
-``Unix time'', that is the number of seconds elapsed since 1970-01-01
-00:00:00 UTC at the time when the program was started.
+The seed must be expressible as a 32-bit unsigned integer, lying
+between 0 and $2^{32} - 1 = 4294967295$. If the user does not provide
+a seed, gretl automatically sets it to the so-called ``Unix time'',
+that is the number of seconds elapsed between 1970-01-01 00:00:00 UTC
+and the time at which gretl was started.
 
 The `raw' output of the Mersenne Twister consists of pseudo-random
 unsigned integers from the uniform distribution on the interval
@@ -72,7 +72,7 @@ series and the \cmd{mnormal} function for matrices, which produce
 standard Gaussian variates. The algorithm we use is the ``Ziggurat''
 method originally devised by \cite{marsaglia00}; gretl has adopted the
 refinements introduced by David Bateman in the \textsf{Octave}
-implementation. The equivalent to the code above is
+implementation. The normal equivalent to the code above is
 \begin{code}
   set seed 1234567890
   eval mnormal(3,2)
@@ -84,17 +84,17 @@ whose output is
       1.2661     -0.90943
 \end{code}
 
-By the linearity property if the normal distribution, it is very easy
-to draw from a generic normal distribution with arbitrary mean and
-covariance matrix: if you need pseudo-random numbers drawn from a
-normal density with mean $\mu$ and covariance matrix $\Sigma$, all you
-have to do is perform an affine transformation, as in
+By the linearity property of the normal distribution, it is easy to
+draw from a generic normal distribution with arbitrary mean and
+covariance matrix. If you need pseudo-random numbers drawn from a
+normal density with mean $\mu$ and covariance matrix $\Sigma$, you can
+perform an affine transformation, as in
 \[
   X \sim N(0, I) \Longrightarrow AX + b  \sim N(b, AA')
 \]
-and therefore to draw from a $N(\mu, \Sigma)$ distribution all you need is a matrix
-whose product by its own transpose equals $\Sigma$ (the Cholesky
-decomposition is a popular choice). For example,
+Therefore to draw from a $N(\mu, \Sigma)$ distribution you need a
+matrix whose product by its own transpose equals $\Sigma$, the
+Cholesky decomposition being a popular choice. For example,
 \begin{code}
   set seed 1234567890
   scalar N = 8192
@@ -116,12 +116,12 @@ will produce
 Note that in this example the individual draws are the \emph{rows} of the
 matrices $X$ and $Z$, so we are using a row vector $m$ and the
 transpose of the Cholesky factor $K$. For more details on matrix
-operation, see Chapter \ref{chap:matrices} in the \GUG.
+operations, see Chapter \ref{chap:matrices} in the \GUG.
 
 When you use the \cmd{normal} function for producing a series, the
 above transformation can be performed via two optional arguments,
-denoting mean and standard deviation, respectively. For example, the
-following code demonstrates the equivalence of the two methods:
+denoting mean and standard deviation, respectively. The following code
+demonstrates the equivalence of the two methods:
 \begin{code}
 set seed 1234567890
 nulldata 8192
@@ -141,7 +141,7 @@ x2      3.0121      3.0019      1.9909     -5.4445      10.923
 \section{Other distributions via native functions}
 \label{sec:randgen-other-native}
 
-Gretl offers several builtin algorithms for generating pseudo-rvs
+Gretl offers several built-in algorithms for generating pseudo-rvs
 efficiently from a reasonably large array of distributions. These
 algorithms are accessed via three different functions, which share a
 similar syntax, that is
@@ -155,28 +155,28 @@ where \emph{\texttt{function}} can be
 \item \cmd{mrandgen} for generating matrices.
 \end{itemize}
 
-The distributional arguments have to be passed first, and identify the
-distribution from which you want to draw numbers from. The first one
-must be a string identifying the distribution; extra numerical
-parameters may be needed to pin down its exact shape (eg one degree of
-freedom for the $\chi^2$ density and two for the $F$ density). For
-example, suppose you want to generate a single draw from a $t$
-distribution with 12 degrees of freedom; the command would be
+The distributional arguments have to be passed first, to identify the
+distribution from which you want to draw numbers. The first one must
+be a string identifying the distribution; extra numerical parameters
+may be needed to pin down its exact shape (e.g.\ one
+degrees-of-freedom term for the $\chi^2$ density and two for the $F$
+density). For example, suppose you want to generate a single draw from
+a $t$ distribution with 12 degrees of freedom; the command would be
 something like
 \begin{code}
   scalar foo = randgen1(t, 12)
 \end{code}
-where \texttt{t} identifies Student's $t$ density and 12 is the
-degrees-of-freedom parameter. The \cmd{mrandgen} function needs two
-additional parameters for the size of the returned
-matrix. The following example generates a $4 \times 3$ matrix of
-pseudo-random numbers from a Poisson distribution with parameter 2:
+where \texttt{t} identifies the Student's $t$ density. The
+\cmd{mrandgen} function needs two additional parameters (the
+\emph{\texttt{dimensional arguments}} noted above) for the size of the
+returned matrix. The following example generates a $4 \times 3$ matrix
+of pseudo-random numbers from a Poisson distribution with parameter 2:
 \begin{code}
   matrix bar = mrandgen(P, 2, 4, 3)
 \end{code}
 
 Tables \ref{tab:discrete} and \ref{tab:continuous} contain a summary
-of the available distributions and their arguments.\footnote{In both
+of the supported distributions and their arguments.\footnote{In both
   tables, $B(a,b) = \frac{\Gamma(a) \Gamma(b)}{\Gamma(a+b)}$ is 
     Euler's Beta function.}
 
@@ -252,8 +252,8 @@ Generic discrete	& \texttt{disc}	& $p_k$	& $\mathbf{p}$ \\[6pt]
 \label{tab:continuous}
 \end{table}
 
-The apparatus above does not cove two special distributions that are
-also available in \textsf{gretl}, that is the Dirichlet and Wishart 
+The apparatus above does not cover two special distributions that are
+also available in \textsf{gretl}, the Dirichlet and Wishart
 distributions.
 
 Since the Dirichlet distribution is multivariate, draws from the
@@ -264,26 +264,27 @@ specifies how many draws the user wants. It returns a matrix with $p$
 columns, in which each row is an independent draw.
 
 For the Wishart distribution we have the dedicated function
-\cmd{iwishart}, that returns draws from the \emph{inverse} of a
-Wishart-distributed random matrix, using the method by \cite{odell-feiveson66}.
+\cmd{iwishart}, which returns draws from the \emph{inverse} of a
+Wishart-distributed random matrix using the method of
+\cite{odell-feiveson66}.
 
 
 \section{Other distributions via scripting}
 \label{sec:randgen-other-hansl}
 
-Other distributions can often be handle via different methods,
-relatively straightforward to code in hansl: a very simple one is the
-so-called ``inversion method'': if $X$ is a random variable with
-distribution function $F$, then $U = F(X)$ is a uniform random
-variable. Therefore, a very simple method for generating variates from
-a distribution with function $F$ is to generate uniforms and apply the
-inverse transformation:
+Other distributions can often be handled by methods that are fairly
+straightforward to code in hansl: a simple and general one is the
+``inversion method'': if $X$ is a random variable with distribution
+function $F$, then $U = F(X)$ is a uniform random variable. Therefore,
+one method for generating variates from a distribution with function
+$F$---assuming that the inverse function $F^{-1}$ is readily
+computable---is to generate uniform variates and apply the inverse
+transformation:
 \[
   X = F^{-1}(U) .
 \]
-
-For example, take a Beta distribution with parameter $\alpha = 2$ and $\beta=1$,
-that is
+For example, take a Beta distribution with parameter $\alpha = 2$ and
+$\beta=1$, that is
 \[
   f(x) = 2 x
 \]
@@ -336,8 +337,8 @@ generate $X$ is simply
 %   series x = floor(log(uniform())/log(alpha))
 % \end{code}
 
-More complex methods, such as acceptance-rejection or
-ratio-of-uniforms methods can also be easily implemented as hansl
+More complex methods, such as acceptance--rejection or
+ratio-of-uniforms, can also be easily implemented as hansl
 functions. For further details, see \cite{Gentle2004},
 \cite{Monahan2001}, chapter 11 or \cite{Tanizaki2004}, chapters 2--3.
 
