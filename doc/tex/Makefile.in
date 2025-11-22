@@ -82,6 +82,7 @@ GUIDETEX = gretl-guide.tex \
 	quantreg.tex \
 	nonparam.tex \
 	midas.tex \
+	randgen.tex \
 	odbc.tex \
 	gretltex.tex \
 	gretlR.tex \
