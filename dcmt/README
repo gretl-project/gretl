@@ -1,5 +1,5 @@
 For the original DCMT sources, see
-http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/DC/dc.html
+https://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/DC/dc.html
 
 The code here is version 0.6.2 of June 25, 2014. It is modified
 only in the removal of functions pertaining to the "old interface"
