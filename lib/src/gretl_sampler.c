@@ -481,10 +481,6 @@ static int parse_gibbs_params (const char *s)
     char p[VNAMELEN] = {0};
     int i, err = 0;
 
-    if (s == NULL) { /* added by Marcin 2025-11-22 due to SIGSEGV on calling 'gibbs' in console */
-        return E_PARSE;
-    }
-
     for (i=0; i<3; i++) {
         s += strspn(s, " ");
         if (*s == '\0') {
@@ -538,7 +534,9 @@ int gibbs_block_start (const char *line, PRN *prn)
 {
     int err = 0;
 
-    if (gibbs_started) {
+    if (line == NULL || *line == '\0') {
+        return E_ARGS;
+    } else if (gibbs_started) {
         gretl_errmsg_sprintf(_("%s: a block is already started"),
                              gretl_command_word(GIBBS));
         return E_DATA;
