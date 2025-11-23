@@ -534,12 +534,11 @@ int gibbs_block_start (const char *line, PRN *prn)
 {
     int err = 0;
 
-    if (line == NULL || *line == '\0') {
-        return E_ARGS;
-    } else if (gibbs_started) {
+    if (gibbs_started) {
         gretl_errmsg_sprintf(_("%s: a block is already started"),
                              gretl_command_word(GIBBS));
-        return E_DATA;
+    } else if (line == NULL || *line == '\0') {
+        return E_ARGS;
     }
 
     /* parse out burnin, N and output */
