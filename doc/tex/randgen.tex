@@ -376,14 +376,13 @@ generating pseudo-random unsigned integers is \textsf{SFMT} or
 \section{The Gibbs sampler}
 \label{sec:gibbs}
 
-It's probably no exaggeration to say that the surge in popularity
-Bayesian methods have had from the 1990s onwards in largely due to the
-possibility of generating pseudo random numbers from a very wide range
-of (possibly very intricate) distributions. This was made possible by
-the availability of cheap, fast hardware but, most importantly, of
-efficient sampling algorithms. One of the most celebrated ones is the
-\emph{Gibbs sampler} (insert references --- surely \cite{casella92},
-but possibly others).
+It's probably no exaggeration to say that the surge in popularity of
+Bayesian methods from the 1990s onwards in largely due to the
+possibility of generating pseudo-random numbers from a very wide range
+of (possibly very intricate) distributions. This was enabled by cheap,
+fast hardware but, more importantly, by efficient sampling
+algorithms, one of the most celebrated of which is the \emph{Gibbs
+  sampler}---see \cite{gelfand90,casella92}.
 
 Roughly speaking, the Gibbs sampler is used for sampling in a rather
 common situation, where you have a multivariate distribution in which
@@ -391,9 +390,10 @@ the marginal distributions may be complicated to write, but the
 \emph{conditional} distribution of each of its elements is a simple
 one, \emph{conditional on the other ones}.
 
-The algorithm is iterative, making it a special case of MCMC. For
-example, suppose we want to generate values for three rv $(X, Y,
-Z)$. The algorithm proceeds as follows:
+The algorithm is iterative, making it a special case of Markov chain
+Monte Carlo (MCMC). For example, suppose we want to generate values
+for a triple of random variables $(X, Y, Z)$. The algorithm proceeds
+as follows:
 \begin{enumerate}
 \item set $X_0, Y_0$ and $Z_0$ to something in their respective support.
 \item Draw $X_i$ from $f(X|Y_{i-1}, Z_{i-1})$
@@ -403,7 +403,7 @@ Z)$. The algorithm proceeds as follows:
 \item discard the first draws (the so-called \emph{burn-in} stage)
 \end{enumerate}
 
-What you will get in the end is draws from the unconditional densities
+What you get in the end is draws from the unconditional densities
 of $X$, $Y$ and $Z$. For example, suppose one wants to draw from a
 bivariate normal distibution with the following parameters:
 \[
@@ -422,18 +422,18 @@ be writing down the conditional distributions:
   X|Y & \sim & N\left( 1 + \frac{Y-3}{2},\  4 - \frac{1}{2} \right)
 \end{eqnarray*}
 
-The tool \app{gretl} offers is the ``gibbs block'', that is a block of
-statements which begins with \cmd{gibbs} and ends with \cmd{end
-  gibbs}. 
+The tool gretl offers for this purpose is the ``gibbs block'', that is
+a block of statements which begins with \cmd{gibbs} and ends with
+\cmd{end gibbs}.
 
 On the first line, the number of draws and the burn-in period must be
-indicated via the \cmd{N} and \cmd{burnin} keywords, either as
+indicated via the \cmd{N} and \cmd{burnin} keywords (either as
 numerical values or via the names of pre-existing scalar variables). The 
 the \cmd{output} argument indicates the name of the bundle that will
 eventually contain the results.
 
 The interior lines of the block can have a keyword prepended, either
-init or record, with the following meanings.
+\texttt{init} or \texttt{record}, with the following meanings.
 \begin{itemize}
 \item \cmd{init} identifies a statement as an initializer, to be
   executed just once prior to the Gibbs iteration.
@@ -443,7 +443,7 @@ init or record, with the following meanings.
 
 Statements that feature neither keyword are taken to be part of the
 iteration but their results are not recorded in the output
-bundle. Statements tagged with init should be given first.
+bundle. Statements tagged with \texttt{init} should be given first.
 
 The primary content of the output bundle is a matrix named \texttt{H}
 which by default has $N$ rows and a column dimension that depends on
@@ -485,7 +485,6 @@ Here's the output (Figure \ref{fig:dnormal-density} displays a kernel
 estimate of the joint density of the generated data).
 
 \begin{code}
-
 scalar y
              Mean      Median        S.D.         Min         Max
 col1       3.0017      2.9967      1.4172     -2.2430      8.6539
@@ -493,7 +492,6 @@ col1       3.0017      2.9967      1.4172     -2.2430      8.6539
 scalar x
              Mean      Median        S.D.         Min         Max
 col2      0.99380     0.99801      1.9994     -5.8432      9.1098
-  
 \end{code}
 
 The sequential nature of the algorithm does not guarantee that the
