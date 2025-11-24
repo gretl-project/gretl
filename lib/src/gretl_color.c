@@ -117,12 +117,12 @@ gretl_array *colormix_array (gretlRGB c0, gretlRGB c1,
 	    sprintf(color, "0x%06x", u);
 	}
 	gretl_array_set_string(ret, i, color, 1);
-	if (do_plot) {
+	if (uvec != NULL) {
 	    uvec[i] = u;
 	}
     }
 
-    if (*err == 0 && do_plot) {
+    if (*err == 0 && uvec != NULL) {
 	show_mixed_colors(c0, c1, uvec, f, nf);
     }
 
@@ -208,3 +208,4 @@ static int show_mixed_colors (gretlRGB c0, gretlRGB c1,
 
     return err;
 }
+
