@@ -356,19 +356,17 @@ here we'll just say a little about the RNG aspect.
 
 If the design of the task is such that one process generates all the
 random variates, which are then ``broadcast'' or ``scattered'' to the
-other processes then it's OK to use the \textsf{SMFT} as
-usual. However, if each process is supposed to generate its own random
-variates it's not desirable for them all to use the \textsf{SFMT}, with
-different seeds: this can end up producing sequences with arbitrary
-dependency. To get around that problem gretl offers an alternative,
-namely the use of the \textsf{DCMT} mechanism (Dynamic Creation of
-Mersenne Twisters) so that each \textsf{MPI} process gets its own,
-independent PRNG.\footnote{See
-  \url{https://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/DC/dc.html}.}
-Use of \textsf{DCMT} is in fact the default when gretl is working in
-\textsf{MPI} mode, but use of a single RNG can be forced by use of
-the \verb|--single-rng| option, or by manipulating the \dtk{use_dcmt}
-state variable via the \texttt{set} command.
+other processes then it's OK to use the \textsf{SMFT} as usual. However,
+if each process is supposed to generate its own random variates it's not
+desirable for them all to use the \textsf{SFMT}, with different seeds:
+this can end up producing sequences with arbitrary dependency. To get
+around that problem gretl offers an alternative, namely the use of the
+\textsf{DCMT} mechanism (Dynamic Creation of Mersenne Twisters, see
+\cite{DCMT00}) so that each \textsf{MPI} process gets its own,
+  independent PRNG.  Use of \textsf{DCMT} is in fact the default when
+  gretl is working in \textsf{MPI} mode, but use of a single RNG can be
+  forced by use of the \verb|--single-rng| option, or by manipulating
+  the \dtk{use_dcmt} state variable via the \texttt{set} command.
 
 In fact this is not very complicated from the user's point of view,
 since use of the various functions discussed above proceeds in exactly
