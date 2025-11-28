@@ -94,7 +94,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { DATAMOD,  "dataset",  CI_PARM1 | CI_LIST | CI_PARM2 },
     { DELEET,   "delete",   CI_PARM1 | CI_INFL }, /* or CI_LIST */
     { DIFF,     "diff",     CI_LIST },
-    { DIFFTEST, "difftest", CI_LIST | CI_LLEN2 },
+    { DIFFTEST, "difftest", CI_LIST | CI_LLEN2 | CI_INFL },
     { DISCRETE, "discrete", CI_LIST },
     { DPANEL  , "dpanel",   CI_LIST | CI_L1INT },
     { DUMMIFY,  "dummify",  CI_LIST },
@@ -3964,9 +3964,11 @@ static void handle_option_inflections (CMD *cmd)
             cmd->ciflags &= ~CI_PARM1;
             cmd->ciflags &= ~CI_PARM2;
         }
-    } else if (cmd->ci == MEANTEST || cmd->ci == VARTEST) {
+    } else if (cmd->ci == DIFFTEST ||
+               cmd->ci == MEANTEST ||
+               cmd->ci == VARTEST) {
         if (cmd->opt & OPT_D) {
-            /* split-by */
+            /* --split-by */
             cmd->ciflags &= ~CI_LLEN2;
             cmd->ciflags |= CI_LLEN1;
         }

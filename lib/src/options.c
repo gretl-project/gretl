@@ -240,6 +240,7 @@ struct gretl_option gretl_opts[] = {
     { DELEET,   OPT_F, "force", 0 },
     { DELEET,   OPT_L, "list", 0 },
     { DELEET,   OPT_T, "type", 2 },
+    { DIFFTEST, OPT_D, "split-by", 2 },
     { DIFFTEST, OPT_G, "sign", 0 },
     { DIFFTEST, OPT_R, "rank-sum", 0 },
     { DIFFTEST, OPT_I, "signed-rank", 0 },

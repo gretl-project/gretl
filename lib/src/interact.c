@@ -3777,6 +3777,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         err = mahalanobis_distance(cmd->list, dset, cmd->opt, prn);
         break;
 
+    case DIFFTEST:
+        err = diff_test(cmd->list, dset, cmd->opt, prn);
+        break;
+
     case MEANTEST:
         err = means_test(cmd->list, dset, cmd->opt, prn);
         break;
@@ -3791,10 +3795,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case SPEARMAN:
         err = spearman_rho(cmd->list, dset, cmd->opt, prn);
-        break;
-
-    case DIFFTEST:
-        err = diff_test(cmd->list, dset, cmd->opt, prn);
         break;
 
     case OUTFILE:

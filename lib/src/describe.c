@@ -7251,9 +7251,9 @@ static void paired_diff_print (int n,
     pprintf(prn, _("   p-value (two-tailed) = %g\n\n"), pval);
 }
 
-static int split_by_var (const DATASET *dset)
+static int splitby_varnum (int ci, const DATASET *dset)
 {
-    const char *vname = get_optval_string(MEANTEST, OPT_D);
+    const char *vname = get_optval_string(ci, OPT_D);
 
     return current_series_index(dset, vname);
 }
@@ -7298,7 +7298,7 @@ int means_test (const int *list, const DATASET *dset,
     if (!err) {
         v1 = list[1];
         if (usedum) {
-            v2 = split_by_var(dset);
+            v2 = splitby_varnum(MEANTEST, dset);
             if (v2 < 0) {
                 err = E_UNKVAR;
             }
@@ -7623,7 +7623,7 @@ int vars_test (const int *list, const DATASET *dset,
 
     v1 = list[1];
     if (usedum) {
-        v2 = split_by_var(dset);
+        v2 = splitby_varnum(VARTEST, dset);
         if (v2 < 0) {
             err = E_UNKVAR;
         }
