@@ -50,7 +50,7 @@ the Mersenne Twister is used for producing real numbers between 0 and
 to 16 decimal digits.
 
 Gretl offers two functions for producing uniform variates on
-$[0,1]$: \cmd{uniform}, which produces a series, and \cmd{muniform},
+$[0,1)$: \cmd{uniform}, which produces a series, and \cmd{muniform},
 which produces a matrix, (see the \GCR\ for the syntax details).  Of
 course, the former function can be used only if a dataset is in place.
 
@@ -202,7 +202,7 @@ Beta-Binomial		& \texttt{bb}	& ${n \choose k} \frac{B(k+\alpha,n-k+\beta)}
                           {B(\alpha,\beta)}$ & $n, \alpha$, $\beta$ \\[6pt]
 Generic discrete	& \texttt{disc}	& $p_k$	& $\mathbf{p}$ \\[6pt]
   \hline
-  \end{tabular}
+  \end{tabular}\
 \caption{Discrete distributions}
 \label{tab:discrete}
 \end{table}
@@ -258,22 +258,21 @@ Generic discrete	& \texttt{disc}	& $p_k$	& $\mathbf{p}$ \\[6pt]
   \hline
   \end{tabular}
   \medskip\par
-  \textbf{Note}: the Dirichlet and Inverse-Wishart distributions are
-  also available. See the main text.
-  \caption{Continuous distributions}
+  \caption{Univariate continuous distributions}
 \label{tab:continuous}
 \end{table}
 
-The discussion above does not cover two special cases that are also
-supported by gretl, the Dirichlet and Inverse-Wishart distributions.
+
+In addition to the univariate distributions listed in Table
+\ref{tab:continuous}, two multivariate distributions are supported via
+special syntax: 
 \begin{itemize}
-\item The Dirichlet distribution is supported by \cmd{mrandgen}, with
-  a variation in syntax reflecting the fact that it is a multivariate
-  distribution. The first argument is \texttt{dir} and the second must
-  be a vector of $p \ge 2$ distributional parameters (positive reals);
-  the third is an integer, $n$, specifying the number of draws. It
-  returns a $n \times p$ matrix, each row of which is an independent
-  draw.
+\item The Dirichlet distribution is available via \cmd{mrandgen}, with
+  a variation in syntax reflecting its multivariate nature. The first
+  argument is \texttt{dir} and the second must be a vector of
+  $p \ge 2$ distributional parameters (positive reals); the third is
+  an integer, $n$, specifying the number of draws. It returns a
+  $n \times p$ matrix, each row of which is an independent draw.
 \item For the Inverse-Wishart distribution, which is defined on
   real-valued positive-definite matrices, we have the dedicated
   function \cmd{iwishart}. This takes two arguments, a $p\times p$
