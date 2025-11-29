@@ -262,6 +262,9 @@ int gretl_corrmx (int *list, const DATASET *dset,
 int satterthwaite_df (double v1, int n1,
 		      double v2, int n2);
 
+int diff_test (const int *list, const DATASET *dset,
+	       gretlopt opt, PRN *prn);
+
 int means_test (const int *list, const DATASET *dset,
 		gretlopt opt, PRN *prn);
 

@@ -7259,6 +7259,74 @@ static int splitby_varnum (int ci, const DATASET *dset)
 }
 
 /**
+ * diff_test:
+ * @list: list containing 2 variables.
+ * @dset: dataset struct.
+ * @opt: %OPT_G, sign test; %OPT_R, rank sum; %OPT_I,
+ * signed rank; %OPT_V, verbose (for rank tests).
+ * @prn: gretl printing struct.
+ *
+ * Performs, and prints the results of, a non-parametric
+ * test for a difference between two variables or groups.
+ * The specific test performed depends on @opt, the sign
+ * test being the default.
+ *
+ * Returns: 0 on successful completion, non-zero on error.
+ */
+
+int diff_test (const int *list, const DATASET *dset,
+	       gretlopt opt, PRN *prn)
+{
+    double *x = NULL;
+    double *y = NULL;
+    double result[2] = {0};
+    int usedum = (opt & OPT_D)? 1 : 0;
+    int v1, v2;
+    int n1 = 0;
+    int n2 = 0;
+    int err = 0;
+
+    err = incompatible_options(opt, OPT_G | OPT_R | OPT_I);
+    if (err) {
+        return err;
+    }
+
+    v1 = list[1];
+    if (usedum) {
+        v2 = splitby_varnum(DIFFTEST, dset);
+        if (v2 < 0) {
+            err = E_UNKVAR;
+        }
+    } else {
+        v2 = list[2];
+    }
+
+    if (err) {
+        return err;
+    }
+
+    if (usedum) {
+        /* get @x and @y as portions of series v1 */
+        err = test_data_from_dummy(dset, v1, v2, &x, &y, &n1, &n2);
+    } else {
+        /* get @x and @y from the series v1 and v2 */
+        err = test_data_from_list(dset, v1, v2, &x, &y, &n1, &n2);
+    }
+
+    if (opt & OPT_R) {
+	err = rank_sum_test(x, y, v1, v2, dset, result, opt, prn);
+    } else if (opt & OPT_I) {
+	err = signed_rank_test(x, y, v1, v2, dset, result, opt, prn);
+    } else {
+        err = sign_test(x, y, v1, v2, dset, result, opt, prn);
+    }
+
+    record_test_result(result[0], result[1]);
+
+    return err;
+}
+
+/**
  * means_test:
  * @list: gives the ID numbers of the variables to compare.
  * @dset: dataset struct.
@@ -7279,7 +7347,8 @@ int means_test (const int *list, const DATASET *dset,
 		gretlopt opt, PRN *prn)
 {
     double m1, m2, s1, s2, se, mdiff, t, pval;
-    double *x = NULL, *y = NULL;
+    double *x = NULL;
+    double *y = NULL;
     int vardiff = (opt & OPT_O)? 1 : 0;
     int usedum = (opt & OPT_D)? 1 : 0;
     int robust = (opt & OPT_R)? 1 : 0;

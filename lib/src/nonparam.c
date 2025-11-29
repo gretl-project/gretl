@@ -1015,12 +1015,24 @@ static double print_z_prob (double z, PRN *prn)
     return pv;
 }
 
-static void diff_test_header (int v1, int v2, const DATASET *dset,
+static void diff_test_header (int v1, int v2,
+                              const DATASET *dset,
+                              gretlopt opt,
 			      PRN *prn)
 {
     pputc(prn, '\n');
-    pprintf(prn, _("Test for difference between %s and %s"),
-	    dset->varname[v1], dset->varname[v2]);
+    if (opt & OPT_D) {
+        char term1[72];
+        char term2[72];
+
+        sprintf(term1, "%s(%s==0)", dset->varname[v1], dset->varname[v2]);
+        sprintf(term2, "%s(%s==1)", dset->varname[v1], dset->varname[v2]);
+        pprintf(prn, _("Test for difference between %s and %s"),
+                term1, term2);
+    } else {
+        pprintf(prn, _("Test for difference between %s and %s"),
+                dset->varname[v1], dset->varname[v2]);
+    }
 }
 
 static const int rank5[3][2] = {
@@ -1041,10 +1053,9 @@ struct ranker {
    Zero Differences are Present", JASA(62), 1967, 1068-1069.
 */
 
-static int
-signed_rank_test (const double *x, const double *y,
-		  int v1, int v2, const DATASET *dset,
-		  double *result, gretlopt opt, PRN *prn)
+int signed_rank_test (const double *x, const double *y,
+                      int v1, int v2, const DATASET *dset,
+                      double *result, gretlopt opt, PRN *prn)
 {
     struct ranker *r;
     double d, T, wp, wm;
@@ -1110,7 +1121,7 @@ signed_rank_test (const double *x, const double *y,
     }
 
     if (!quiet) {
-	diff_test_header(v1, v2, dset, prn);
+	diff_test_header(v1, v2, dset, opt, prn);
 	pprintf(prn, "\n%s\n", _("Wilcoxon Signed-Rank Test"));
 	pprintf(prn, "%s: %s\n\n", _("Null hypothesis"),
 		_("the median difference is zero"));
@@ -1194,9 +1205,9 @@ signed_rank_test (const double *x, const double *y,
     return 0;
 }
 
-static int rank_sum_test (const double *x, const double *y,
-			  int v1, int v2, const DATASET *dset,
-			  double *result, gretlopt opt, PRN *prn)
+int rank_sum_test (const double *x, const double *y,
+                   int v1, int v2, const DATASET *dset,
+                   double *result, gretlopt opt, PRN *prn)
 {
     struct ranker *r;
     double wa, z = NADBL, pval = NADBL;
@@ -1264,7 +1275,7 @@ static int rank_sum_test (const double *x, const double *y,
     }
 
     if (!quiet) {
-	diff_test_header(v1, v2, dset, prn);
+	diff_test_header(v1, v2, dset, opt, prn);
 	pprintf(prn, "\n%s\n", _("Wilcoxon Rank-Sum Test"));
 	pprintf(prn, "%s: %s\n\n", _("Null hypothesis"),
 		_("the two medians are equal"));
@@ -1326,9 +1337,9 @@ static int rank_sum_test (const double *x, const double *y,
     return 0;
 }
 
-static int sign_test (const double *x, const double *y,
-		      int v1, int v2, const DATASET *dset,
-		      double *result, gretlopt opt, PRN *prn)
+int sign_test (const double *x, const double *y,
+	      int v1, int v2, const DATASET *dset,
+	      double *result, gretlopt opt, PRN *prn)
 {
     double pv;
     int n, w, t;
@@ -1352,16 +1363,25 @@ static int sign_test (const double *x, const double *y,
     }
 
     if (!(opt & OPT_Q)) {
-	diff_test_header(v1, v2, dset, prn);
+	diff_test_header(v1, v2, dset, opt, prn);
 	pprintf(prn, "\n%s\n\n", _("Sign Test"));
 	pprintf(prn, _("Number of differences: n = %d\n"), n);
 	pputs(prn, "  ");
-	pprintf(prn, _("Number of cases with %s > %s: w = %d (%.2f%%)\n"),
-		dset->varname[v1], dset->varname[v2],
-		w, 100.0 * w / n);
+        if (opt & OPT_D) {
+            char term1[36], term2[36];
+
+            sprintf(term1, "%s==0", dset->varname[v2]);
+            sprintf(term2, "%s==1", dset->varname[v2]);
+            pprintf(prn, _("Number of cases with %s > %s: w = %d (%.2f%%)\n"),
+                    term1, term2, w, 100.0 * w / n);
+        } else {
+            pprintf(prn, _("Number of cases with %s > %s: w = %d (%.2f%%)\n"),
+                    dset->varname[v1], dset->varname[v2],
+                    w, 100.0 * w / n);
+        }
 	pputs(prn, "  ");
-	pprintf(prn, _("Under the null hypothesis of no difference, W "
-		       "follows B(%d, %.1f)\n"), n, 0.5);
+        pprintf(prn, _("Under the null hypothesis of no difference, W "
+                       "follows B(%d, %.1f)\n"), n, 0.5);
 	pprintf(prn, "  %s(W <= %d) = %g\n", _("Prob"), w,
 		binomial_cdf(0.5, n, w));
 	pprintf(prn, "  %s(W >= %d) = %g\n\n", _("Prob"), w, pv);
@@ -1371,57 +1391,6 @@ static int sign_test (const double *x, const double *y,
     result[1] = pv;
 
     return 0;
-}
-
-/**
- * diff_test:
- * @list: list containing 2 variables.
- * @dset: dataset struct.
- * @opt: %OPT_G, sign test; %OPT_R, rank sum; %OPT_I,
- * signed rank; %OPT_V, verbose (for rank tests).
- * @prn: gretl printing struct.
- *
- * Performs, and prints the results of, a non-parametric
- * test for a difference between two variables or groups.
- * The specific test performed depends on @opt.
- *
- * Returns: 0 on successful completion, non-zero on error.
- */
-
-int diff_test (const int *list, const DATASET *dset,
-	       gretlopt opt, PRN *prn)
-{
-    const double *x, *y;
-    double result[2] = {0};
-    int v1, v2;
-    int err = 0;
-
-    if (list[0] != 2) {
-	pputs(prn, _("This command requires two variables\n"));
-	return E_DATA;
-    }
-
-    v1 = list[1];
-    v2 = list[2];
-
-    x = dset->Z[v1];
-    y = dset->Z[v2];
-
-    if (opt == OPT_NONE || opt == OPT_V) {
-	opt = OPT_G;
-    }
-
-    if (opt & OPT_G) {
-	err = sign_test(x, y, v1, v2, dset, result, opt, prn);
-    } else if (opt & OPT_R) {
-	err = rank_sum_test(x, y, v1, v2, dset, result, opt, prn);
-    } else if (opt & OPT_I) {
-	err = signed_rank_test(x, y, v1, v2, dset, result, opt, prn);
-    }
-
-    record_test_result(result[0], result[1]);
-
-    return err;
 }
 
 struct pair_sorter {
