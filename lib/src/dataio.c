@@ -1875,13 +1875,14 @@ static int check_for_overlap (const DATASET *dset,
 }
 
 /* When appending data to a current panel dataset, and the length of
-   the series in the new data is less than the full panel size (n *
+   the series in the new data is less than the full panel size (N *
    T), try to determine if it's OK to expand the incoming data to
    match.
 
    We'll say it's OK if the new series length equals the panel T: in
    that case we'll take the new data to be time-series, which should
-   be replicated for each panel unit.
+   be replicated for each panel unit -- unless the dataset represented
+   by @addinfo is itself a panel.
 
    A second possibility arises if the length of the new series equals
    the panel N: in that case we could treat it as a time-invariant
@@ -1898,7 +1899,7 @@ static int panel_expand_ok (DATASET *dset, DATASET *addinfo,
     int T = dset->pd;
     int ok = 0;
 
-    if (addinfo->n == T) {
+    if (addinfo->n == T && !dataset_is_panel(addinfo)) {
         ok = 1;
     } else if (!(opt & OPT_T) &&
                addinfo->n == N &&
