@@ -342,7 +342,7 @@ static double randu53 (void)
     const uint32_t a = randi32() >> 5;
     const uint32_t b = randi32() >> 6;
 
-    return (a*67108864.0+b+0.4) * (1.0/9007199254740992.0);
+    return (a*67108864.0 + b + 0.4) * (1.0/9007199254740992.0);
 }
 
 /* Ziggurat normal generator: this Ziggurat code here is shamelessly
