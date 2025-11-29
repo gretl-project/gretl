@@ -3190,10 +3190,10 @@
     label="Nonparametric tests for differences" context="cli">
 
     <usage>
-      <arguments>
-        <argument>series1</argument>
-	<argument>series2</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>difftest</lit> <repl>x</repl> <repl>y</repl> </altform>
+        <altform><lit>difftest</lit> <repl>x</repl> <lit>--split-by=</lit><repl>dummy</repl></altform>
+      </altforms>
       <options>
 	<option>
 	  <flag>--sign</flag>
@@ -3226,8 +3226,13 @@
     <description>
       <para>
 	Carries out a nonparametric test for a difference between two
-	populations or groups, the specific test depending on the option
-	selected.
+	samples, the specific test depending on the option
+	selected. In the primary form the samples are represented by
+	the series <repl>x</repl> and <repl>y</repl>.  In the
+	alternate form, with the <opt>split-by</opt> option, the
+	samples are two subsets of the series <repl>x</repl>, for
+	which the series <repl>dummy</repl> takes the values 0 and 1,
+	respectively.
       </para>
       <para>
 	With the <opt>sign</opt> option, the Sign test is performed.
