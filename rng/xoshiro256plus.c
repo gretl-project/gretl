@@ -33,7 +33,7 @@ IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
    output to fill s.
 */
 
-static inline uint64_t xor_rotl(const uint64_t x, int k) {
+static inline uint64_t xor_rotl (const uint64_t x, int k) {
     return (x << k) | (x >> (64 - k));
 }
 
@@ -44,7 +44,7 @@ void set_xor_state (uint64_t u)
     s[0] = smx = u;
     s[1] = splitmix64_next();
     s[2] = splitmix64_next();
-    s[3] = splitmix64_next();    
+    s[3] = splitmix64_next();
 }
 
 static inline uint64_t xor_i64 (void) {
@@ -64,7 +64,7 @@ static inline uint64_t xor_i64 (void) {
 }
 
 /* This is the jump function for the generator. It is equivalent to
-   2^128 calls to xor_next(); it can be used to generate 2^128
+   2^128 calls to xor_i64(); it can be used to generate 2^128
    non-overlapping subsequences for parallel computations.
 */
 
@@ -78,7 +78,7 @@ static void xor_jump (void) {
     uint64_t s2 = 0;
     uint64_t s3 = 0;
     int i, b;
-    
+
     for (i = 0; i < sizeof JUMP / sizeof *JUMP; i++) {
         for (b = 0; b < 64; b++) {
             if (JUMP[i] & UINT64_C(1) << b) {
@@ -87,15 +87,17 @@ static void xor_jump (void) {
                 s2 ^= s[2];
                 s3 ^= s[3];
             }
-            xor_next();	
+            xor_i64();
         }
     }
-		
+
     s[0] = s0;
     s[1] = s1;
     s[2] = s2;
     s[3] = s3;
 }
+
+#if 0 /* we might want this later? */
 
 /* This is the long-jump function for the generator. It is equivalent to
    2^192 calls to xor_next(); it can be used to generate 2^64 starting
@@ -113,7 +115,7 @@ static void xor_long_jump (void) {
     uint64_t s2 = 0;
     uint64_t s3 = 0;
     int i, b;
-    
+
     for (i = 0; i < sizeof LONG_JUMP / sizeof *LONG_JUMP; i++) {
         for (b = 0; b < 64; b++) {
             if (LONG_JUMP[i] & UINT64_C(1) << b) {
@@ -122,12 +124,14 @@ static void xor_long_jump (void) {
                 s2 ^= s[2];
                 s3 ^= s[3];
             }
-            xor_next();	
+            xor_i64();
         }
     }
-		
+
     s[0] = s0;
     s[1] = s1;
     s[2] = s2;
     s[3] = s3;
 }
+
+#endif
