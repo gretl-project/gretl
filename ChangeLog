@@ -3,6 +3,8 @@ version 2026a, in progress
   the t1 and t2 values on the matrix argument, if present
 - binary logit/probit: use QR for difficult cases, where
   the Hessian may end up not positive definite otherwise
+- "difftest" command: support the --split-by option for the
+  rank sum test
 
 2025-11-12 version 2025c
 - new (block) command, "gibbs", implements the Gibbs sampler

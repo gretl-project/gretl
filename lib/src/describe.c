@@ -7264,6 +7264,7 @@ static int splitby_varnum (int ci, const DATASET *dset)
  * @dset: dataset struct.
  * @opt: %OPT_G, sign test; %OPT_R, rank sum; %OPT_I,
  * signed rank; %OPT_V, verbose (for rank tests).
+ * %OPT_D (--split-by) requires OPT_R.
  * @prn: gretl printing struct.
  *
  * Performs, and prints the results of, a non-parametric
@@ -7285,6 +7286,11 @@ int diff_test (const int *list, const DATASET *dset,
     int n1 = 0;
     int n2 = 0;
     int err = 0;
+
+    if (usedum && !(opt & OPT_R)) {
+        /* OPT_D is supported only in conjunction with OPT_R */
+        return E_BADOPT;
+    }
 
     err = incompatible_options(opt, OPT_G | OPT_R | OPT_I);
     if (err) {
@@ -7357,6 +7363,11 @@ int means_test (const int *list, const DATASET *dset,
     int n1 = 0;
     int n2 = 0;
     int df, err;
+
+    if (paired && usedum) {
+        /* Can't use --split-by with paired samples */
+        return E_BADOPT;
+    }
 
     err = incompatible_options(opt, OPT_O | OPT_P | OPT_R);
     if (!err && (opt & OPT_R) && !dataset_is_time_series(dset)) {

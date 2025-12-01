@@ -1367,18 +1367,9 @@ int sign_test (const double *x, const double *y,
 	pprintf(prn, "\n%s\n\n", _("Sign Test"));
 	pprintf(prn, _("Number of differences: n = %d\n"), n);
 	pputs(prn, "  ");
-        if (opt & OPT_D) {
-            char term1[36], term2[36];
-
-            sprintf(term1, "%s==0", dset->varname[v2]);
-            sprintf(term2, "%s==1", dset->varname[v2]);
-            pprintf(prn, _("Number of cases with %s > %s: w = %d (%.2f%%)\n"),
-                    term1, term2, w, 100.0 * w / n);
-        } else {
-            pprintf(prn, _("Number of cases with %s > %s: w = %d (%.2f%%)\n"),
-                    dset->varname[v1], dset->varname[v2],
-                    w, 100.0 * w / n);
-        }
+        pprintf(prn, _("Number of cases with %s > %s: w = %d (%.2f%%)\n"),
+                dset->varname[v1], dset->varname[v2],
+                w, 100.0 * w / n);
 	pputs(prn, "  ");
         pprintf(prn, _("Under the null hypothesis of no difference, W "
                        "follows B(%d, %.1f)\n"), n, 0.5);

@@ -3232,7 +3232,9 @@
 	alternate form, with the <opt>split-by</opt> option, the
 	samples are two subsets of the series <repl>x</repl>, for
 	which the series <repl>dummy</repl> takes the values 0 and 1,
-	respectively.
+	respectively. The alternate form is available only in
+	conjunction with the <opt>rank-sum</opt> option, since the
+	other tests require paired observations.
       </para>
       <para>
 	With the <opt>sign</opt> option, the Sign test is performed.
@@ -9198,6 +9200,8 @@
 	the samples whose means are tested for equality are two
 	subsets of the series <repl>x</repl>, for which the series
 	<repl>dummy</repl> takes the values 0 and 1, respectively.
+	The alternate form is not compatible with the
+	<opt>paired</opt> option.
       </para>
       <para context="cli">
 	By default the test statistic is calculated on the assumption
