@@ -3293,10 +3293,10 @@
 	   label="Test non parametrici per le differenze" context="cli">
 
     <usage>
-      <arguments>
-        <argument>var1</argument>
-	<argument>var2</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>difftest</lit> <repl>x</repl> <repl>y</repl> </altform>
+        <altform><lit>difftest</lit> <repl>x</repl> <lit>--split-by=</lit><repl>dummy</repl></altform>
+      </altforms>
       <options>
 	<option>
 	  <flag>--sign</flag>
@@ -3328,8 +3328,13 @@
 
     <description>
       <para>
-        Esegue un test non parametrico per la differenza tra due popolazioni o
-        gruppi; il tipo di test dipende dall'opzione usata.
+        Esegue un test non parametrico per la differenza tra due
+        campioni; il tipo di test dipende dall'opzione usata. Nella
+        forma principale i campioni sono rappresentati dalle serie
+        <repl>x</repl> e <repl>y</repl>.  Nella forma alternativa, con
+        l'opzione <opt>split-by</opt>, i campioni sono i due
+        sottoinsiemi della serie <repl>x</repl>, per cui la serie
+        <repl>dummy</repl> prende i valori 0 e 1.
       </para>
       <para>
 	Con l'opzione <opt>sign</opt>, viene eseguito il test del segno,
