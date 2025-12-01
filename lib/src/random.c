@@ -47,9 +47,11 @@
 #endif
 
 #define SFMT_MEXP 19937
-
 #include "../../rng/SFMT.c"
 #include "../../dcmt/dc.h"
+
+#include "../../rng/splitmix64.c"
+#include "../../rng/xoshiro256plus.c"
 
 /**
  * SECTION:random
@@ -75,6 +77,8 @@ static guint32 sfmt_seed;
 /* alternate SFMT */
 static sfmt_t gretl_alt_sfmt;
 static guint32 alt_sfmt_seed;
+
+static int use_xor;
 
 #define sfmt_rand32() sfmt_genrand_uint32(&gretl_sfmt)
 #define sfmt_alt_rand32() sfmt_genrand_uint32(&gretl_alt_sfmt)
@@ -204,6 +208,7 @@ void gretl_rand_init (void)
     }
 
     sfmt_init_gen_rand(&gretl_sfmt, sfmt_seed);
+    // set_xor_state((uint64_t) time(NULL));
 }
 
 /**
