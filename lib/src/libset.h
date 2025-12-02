@@ -75,6 +75,7 @@ typedef enum {
     GARCH_ALT_VCV,
     ARMA_VCV,
     WILDBOOT_DIST,
+    RNG_TYPE,
     FDJAC_QUAL,
     USE_QR,
     MAX_VERBOSE,

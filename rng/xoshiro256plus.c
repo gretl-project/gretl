@@ -39,7 +39,7 @@ static inline uint64_t xor_rotl (const uint64_t x, int k) {
 
 static uint64_t s[4];
 
-void set_xor_state (uint64_t u)
+static void set_xor_state (uint64_t u)
 {
     s[0] = smx = u;
     s[1] = splitmix64_next();
@@ -47,7 +47,7 @@ void set_xor_state (uint64_t u)
     s[3] = splitmix64_next();
 }
 
-static inline uint64_t xor_i64 (void) {
+static uint64_t xor_i64 (void) {
     const uint64_t ret = s[0] + s[3];
     const uint64_t t = s[1] << 17;
 

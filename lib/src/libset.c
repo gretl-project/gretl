@@ -78,6 +78,7 @@ struct set_state_ {
     gint8 garch_alt_vcv;        /* GARCH vcv variant, robust estimation */
     gint8 arma_vcv;             /* ARMA vcv variant */
     gint8 wildboot_d;           /* distribution for wild bootstrap */
+    gint8 rng_type;             /* PRNG: xor or sfmt */
     gint8 fdjac_qual;           /* quality of "fdjac" function */
     gint8 use_qr;               /* off, on or pivot */
     gint8 max_verbose;          /* optimizer verbosity level */
@@ -173,6 +174,7 @@ setvar setvars[] = {
     { GARCH_ALT_VCV, "garch_alt_vcv", CAT_ROBUST, offsetof(set_state,garch_alt_vcv) },
     { ARMA_VCV,      "arma_vcv", CAT_ROBUST, offsetof(set_state,arma_vcv) },
     { WILDBOOT_DIST, "wildboot", CAT_BEHAVE, offsetof(set_state,wildboot_d) },
+    { RNG_TYPE,      "rng_type", CAT_NUMERIC, offsetof(set_state,rng_type) },
     { FDJAC_QUAL,    "fdjac_quality", CAT_NUMERIC, offsetof(set_state,fdjac_qual) },
     { USE_QR,        "force_qr", CAT_NUMERIC, offsetof(set_state,use_qr) },
     { MAX_VERBOSE,   "max_verbose", CAT_BEHAVE, offsetof(set_state,max_verbose) },
@@ -266,6 +268,7 @@ setvar setvars[] = {
 			 k == GRETL_OPTIM || \
 			 k == MAX_VERBOSE || \
 			 k == WILDBOOT_DIST || \
+                         k == RNG_TYPE || \
 			 k == QUANTILE_TYPE || \
 			 k == GRETL_ASSERT || \
 			 k == PLOT_COLLECT || \
@@ -399,6 +402,7 @@ static const char *vnm_strs[] = {"phillips", "diag", "first", "none", NULL};
 static const char *opt_strs[] = {"auto", "BFGS", "newton", NULL};
 static const char *mxv_strs[] = {"off", "on", "full", NULL};
 static const char *wbt_strs[] = {"rademacher", "mammen", NULL};
+static const char *rng_strs[] = {"sfmt", "xor", NULL};
 static const char *qnt_strs[] = {"Q6", "Q7", "Q8", NULL};
 static const char *ast_strs[] = {"off", "warn", "stop", "fatal", NULL};
 static const char *plc_strs[] = {"off", "auto", "on", NULL};
@@ -427,6 +431,7 @@ struct codevar_info coded[] = {
     { GRETL_OPTIM,   opt_strs },
     { MAX_VERBOSE,   mxv_strs },
     { WILDBOOT_DIST, wbt_strs },
+    { RNG_TYPE,      rng_strs },
     { CSV_DELIM,     csv_strs },
     { QUANTILE_TYPE, qnt_strs },
     { GRETL_ASSERT,  ast_strs },
@@ -568,6 +573,7 @@ static set_state default_state = {
     ML_UNSET,       /* .garch_alt_vcv */
     ML_HESSIAN,     /* .arma_vcv */
     0,              /* .wildboot_dist */
+    0,              /* .rng_type */
     0,              /* .fdjac_qual */
     0,              /* .use_qr */
     0,              /* .max_verbose */
@@ -1088,7 +1094,9 @@ static int parse_libset_int_code (SetKey key, const char *val)
 		ival = (ival == 1)? ML_BW : ML_QML;
 	    } else if (key == ARMA_VCV) {
 		ival = (ival == 1)? ML_OP : ML_HESSIAN;
-	    }
+	    } else if (key == RNG_TYPE) {
+                gretl_rand_set_xor(ival);
+            }
 	    *(gint8 *) valp = ival;
 	} else if (key == MAX_VERBOSE || key == LOGLEVEL) {
 	    /* special: bare integers allowed? */
@@ -1986,9 +1994,9 @@ static int get_int_limits (SetKey key, int *min, int *max)
 	{ PANEL_ROBUST, 0, 2 },
 	{ FDJAC_QUAL, 0, 2 },
 	{ USE_QR, 0, 2 },
-	{ LBFGS_MEM,  3, 20 },
+	{ LBFGS_MEM, 3, 20 },
 	{ GRETL_DEBUG, 0, 4 },
-	{ DATACOLS,    1, 15 },
+	{ DATACOLS, 1, 15 },
 	{ PLOT_COLLECT, 0, 2 },
 	{ CSV_DIGITS, 1, 25 },
 	{ BOOT_ITERS, 499, 999999 },
@@ -2056,6 +2064,9 @@ int libset_set_int (SetKey key, int val)
 		err = E_DATA;
 	    } else if (libset_small_int(key)) {
 		*(gint8 *) valp = val;
+                if (key == RNG_TYPE) {
+                    gretl_rand_set_xor(val);
+                }
 	    } else {
 		*(int *) valp = val;
 	    }
