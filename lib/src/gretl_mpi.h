@@ -79,4 +79,6 @@ void *gretl_mpi_receive (int source, GretlType *type,
 
 double gretl_mpi_time (void);
 
+int gretl_mpi_bcast_rng (guint64 *u, int root);
+
 #endif /* GRETL_MPI_H */

@@ -21,21 +21,10 @@
 
 #include "libgretl.h"
 #include <time.h>
+#include <fcntl.h>
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
-#endif
-
-#if defined(USE_AVX) || defined(USE_SSE2)
-# define HAVE_SSE2
-#else
-# ifdef HAVE_SSE2
-#  undef HAVE_SSE2
-# endif
-#endif
-
-#if defined(_OPENMP) && !defined(__APPLE__)
-# include <omp.h>
 #endif
 
 /* For optimizing the Ziggurat */
@@ -46,10 +35,8 @@
 # define HAVE_X86_32 0
 #endif
 
-#define SFMT_MEXP 19937
-
-#include "../../rng/SFMT.c"
-#include "../../dcmt/dc.h"
+#include "../../rng/splitmix64.c"
+#include "../../rng/xoshiro256plus.c"
 
 /**
  * SECTION:random
@@ -57,9 +44,9 @@
  * @title: PRNG
  * @include: libgretl.h
  *
- * Libgretl uses the Mersenne Twister as its underlying engine
- * for uniform random values, but offers added value in
- * the form of generators for several distributions commonly
+ * Libgretl uses xoshiro256+ as its underlying engine for
+ * uniform random values, but offers added value in the
+ * form of generators for several distributions commonly
  * used in econometrics.
  *
  * Note that before using the libgretl PRNG you must call
@@ -69,128 +56,76 @@
  * global libgretl function libgretl_cleanup().
  */
 
-static sfmt_t gretl_sfmt;
-static guint32 sfmt_seed;
+static uint64_t xor_seed;
 
-/* alternate SFMT */
-static sfmt_t gretl_alt_sfmt;
-static guint32 alt_sfmt_seed;
+/* alternate RNG */
+static uint64_t alt_xor_seed;
 
-#define sfmt_rand32() sfmt_genrand_uint32(&gretl_sfmt)
-#define sfmt_alt_rand32() sfmt_genrand_uint32(&gretl_alt_sfmt)
+/* use separate RNG state per MPI process */
+static int use_multi;
 
-/* Find n independent "small" Mersenne Twisters with period 2^521-1;
-   set the one corresponding to @self as the one to use
-*/
+static inline double double_from_uint64 (uint64_t u);
 
-static mt_struct *dcmt;
-static guint32 dcmt_seed;
-static int use_dcmt = 0;
-
-#define dcmt_rand32() genrand_mt(dcmt)
-
-static int set_up_dcmt (int n, int self, unsigned int seed)
+static inline double xor_01 (void)
 {
-    mt_struct **mtss;
-    int w = 32;
-    int p = 521; /* period = 2^521-1 =~ 6.9e+156 */
-    int dseed = 4172;
-    int i, count = 0;
-
-    mtss = get_mt_parameters_st(w, p, 0, n - 1, dseed, &count);
-    if (mtss == NULL) {
-        fprintf(stderr, "Couldn't get MT parameters\n");
-        return E_DATA;
-    }
-
-#if 0
-    fprintf(stderr, "set_up_dcmt: set up %d MTs, self = %d\n", n, self);
-#endif
-
-    use_dcmt = 1;
-    dcmt_seed = seed != 0 ? seed : time(NULL);
-
-    for (i=0; i<count; i++) {
-	if (i == self) {
-	    dcmt = mtss[i];
-	    sgenrand_mt(dcmt_seed, dcmt);
-	} else {
-	    free_mt_struct(mtss[i]);
-	}
-    }
-
-    free(mtss);
-
-    return 0;
+    return double_from_uint64(xor_i64());
 }
 
 #ifdef HAVE_MPI
 
-static int dcmt_late_start (void)
-{
-    int np = gretl_mpi_n_processes();
-    int self = gretl_mpi_rank();
-    int err = 0;
-
-    if (np > 0 && self >= 0 && self < np) {
-	set_up_dcmt(np, self, 0);
-    } else {
-	gretl_errmsg_set("use_dcmt: mpi is not active");
-	err = E_DATA;
-    }
-
-    return err;
-}
-
-#endif
-
-int gretl_rand_set_dcmt (int s)
+int gretl_rand_set_multi (int s)
 {
     int err = 0;
 
-    if (s == use_dcmt) {
+    if (s == use_multi) {
 	/* no-op */
 	return 0;
     }
 
     if (s) {
-	/* sfmt in use, dcmt requested */
-	if (dcmt == NULL) {
-	    /* dcmt not set up already */
-#ifdef HAVE_MPI
-	    return dcmt_late_start();
-#else
-	    err = E_DATA;
-#endif
-	} else {
-	    /* reset seed */
-	    dcmt_seed = time(NULL);
-	    sgenrand_mt(dcmt_seed, dcmt);
-	}
+	/* single RNG in use, multi requested */
+        ; /* FIXME */
+        use_multi = 1;
     } else {
-	/* dcmt in use, sfmt requested */
+	/* multi in use, single requested */
 	gretl_rand_init();
-    }
-
-    if (err) {
-	gretl_errmsg_set("dcmt: not available");
-    } else {
-	use_dcmt = s;
+        use_multi = 0;
     }
 
     return err;
 }
 
-int gretl_rand_get_dcmt (void)
+#endif
+
+int gretl_rand_get_multi (void)
 {
-    return use_dcmt;
+    return use_multi;
+}
+
+static inline double double_from_uint64 (uint64_t u)
+{
+    /* Set the exponent to 0x3FF (for 1.0) and the sign bit to 0;
+       the remaining 52 bits are from the random uint64_t.
+    */
+    const uint64_t MASK = 0x3FF0000000000000ULL;
+    uint64_t bits = MASK | (u >> 12);
+    double ret;
+
+    /* create a double in the range [1.0, 2.0) */
+    memcpy(&ret, &bits, sizeof(double));
+
+    return ret - 1.0;
+}
+
+static uint32_t xor_i32 (void)
+{
+    return (uint32_t) (xor_i64() >> 32);
 }
 
 /**
  * gretl_rand_init:
  *
  * Initialize gretl's PRNG, using the system time as seed.
- * Default version, as opposed to DCMT.
  */
 
 void gretl_rand_init (void)
@@ -198,39 +133,64 @@ void gretl_rand_init (void)
     char *fseed = getenv("GRETL_FORCE_SEED");
 
     if (fseed != NULL) {
-	sfmt_seed = atoi(fseed);
+        xor_seed = (uint64_t) atoi(fseed);
     } else {
-	sfmt_seed = time(NULL);
+        xor_seed = (uint64_t) time(NULL);
     }
 
-    sfmt_init_gen_rand(&gretl_sfmt, sfmt_seed);
+    set_xor_state(xor_seed);
 }
-
-/**
- * gretl_dcmt_init:
- *
- * Initialize DCMT, if needed.
- */
-
-void gretl_dcmt_init (int n, int self, unsigned int seed)
-{
-    if (n > 0 && self >= 0 && self < n) {
-	set_up_dcmt(n, self, seed);
-    }
-}
-
-/**
- * gretl_rand_free:
- *
- * Free the gretl_rand structure (may be called at program exit).
- */
 
 void gretl_rand_free (void)
 {
-    if (dcmt != NULL) {
-	free_mt_struct(dcmt);
-	dcmt = NULL;
+    // FIXME
+    return;
+}
+
+/**
+ * gretl_multi_rng_init:
+ *
+ * Initialize RNG per process, if needed.
+ */
+
+/* Windows: consider BCryptGenRandom(), RtlGenRandom() ? */
+
+void gretl_multi_rng_init (int n, int self, guint64 seed)
+{
+    int i, err;
+
+    if (self == 0 && seed > 0) {
+        set_xor_state(seed);
+    } else if (self == 0) {
+        /* automatic seeding */
+#ifdef G_OS_WIN32
+        uint64_t u = time(NULL);
+#else
+        int fd = open("/dev/urandom", O_RDONLY);
+        uint64_t u;
+
+        if (fd == -1) {
+            u = time(NULL);
+        } else {
+            ssize_t sz = read(fd, &u, sizeof(uint64_t));
+            if (sz == -1) {
+                u = time(NULL);
+            }
+        }
+#endif
+        set_xor_state(u);
     }
+
+    err = gretl_mpi_bcast_rng(xor_state, 0);
+    if (!err) {
+        for (i=0; i<self; i++) {
+            xor_jump();
+        }
+    }
+
+#if 0
+    printf("rank %d: jumped s[1] = %" G_GUINT64_FORMAT "\n", self, s[1]);
+#endif
 }
 
 /**
@@ -239,31 +199,9 @@ void gretl_rand_free (void)
  * Returns: the value of the seed for gretl's PRNG.
  */
 
-unsigned int gretl_rand_get_seed (void)
+guint64 gretl_rand_get_seed (void)
 {
-    if (use_dcmt) {
-	return dcmt_seed;
-    } else {
-	return sfmt_seed;
-    }
-}
-
-static void gretl_dcmt_set_seed (unsigned int seed)
-{
-    dcmt_seed = seed;
-    sgenrand_mt(dcmt_seed, dcmt);
-}
-
-static void gretl_sfmt_set_seed (unsigned int seed)
-{
-    sfmt_seed = seed;
-    sfmt_init_gen_rand(&gretl_sfmt, sfmt_seed);
-}
-
-static void gretl_alt_sfmt_set_seed (unsigned int seed)
-{
-    alt_sfmt_seed = seed;
-    sfmt_init_gen_rand(&gretl_alt_sfmt, alt_sfmt_seed);
+    return xor_seed;
 }
 
 /**
@@ -276,22 +214,17 @@ static void gretl_alt_sfmt_set_seed (unsigned int seed)
  * initialized).
  */
 
-void gretl_rand_set_seed (unsigned int seed)
+void gretl_rand_set_seed (guint64 seed)
 {
     seed = (seed == 0)? time(NULL) : seed;
-
-    if (use_dcmt) {
-	gretl_dcmt_set_seed(seed);
-    } else {
-	gretl_sfmt_set_seed(seed);
-    }
+    set_xor_state((uint64_t) seed);
 }
 
-void gretl_alt_rand_set_seed (unsigned int seed)
+void gretl_alt_rand_set_seed (guint64 seed)
 {
     seed = (seed == 0)? time(NULL) : seed;
-
-    gretl_alt_sfmt_set_seed(seed);
+    alt_xor_seed = seed;
+    // FIXME
 }
 
 /**
@@ -303,22 +236,14 @@ void gretl_alt_rand_set_seed (unsigned int seed)
 
 double gretl_rand_01 (void)
 {
-    if (use_dcmt) {
-	return sfmt_to_real2(dcmt_rand32());
-    } else {
-	return sfmt_to_real2(sfmt_rand32());
-    }
+    return double_from_uint64(xor_i64());
 }
 
 /* Select which 32 bit generator to use for Ziggurat */
 
 static inline uint32_t randi32 (void)
 {
-    if (use_dcmt) {
-	return genrand_mt(dcmt);
-    } else {
-	return sfmt_genrand_uint32(&gretl_sfmt);
-    }
+    return xor_i32();
 }
 
 #if !(HAVE_X86_32)
@@ -327,10 +252,10 @@ static inline uint32_t randi32 (void)
 
 static uint64_t randi54 (void)
 {
-    const uint32_t lo = randi32();
-    const uint32_t hi = randi32() & 0x3FFFFF;
+    const uint64_t u = xor_i64();
+    const uint64_t mask = (1ULL << 54) - 1;
 
-    return (((uint64_t) (hi) << 32) | lo);
+    return u & mask;
 }
 
 #endif
@@ -339,10 +264,9 @@ static uint64_t randi54 (void)
 
 static double randu53 (void)
 {
-    const uint32_t a = randi32() >> 5;
-    const uint32_t b = randi32() >> 6;
+    const uint64_t u = xor_i64() >> 11;
 
-    return (a*67108864.0 + b + 0.4) * (1.0/9007199254740992.0);
+    return (double) u * 0x1.0p-53;
 }
 
 /* Ziggurat normal generator: this Ziggurat code here is shamelessly
@@ -523,9 +447,9 @@ int gretl_rand_normal_full (double *a, int t1, int t2,
     return 0;
 }
 
-static guint32 mt_int_range (guint32 begin,
-			     guint32 end,
-			     int alt)
+static guint32 rand_int_range (guint32 begin,
+                               guint32 end,
+                               int alt)
 {
     guint32 dist = end - begin;
     guint32 rval = 0;
@@ -546,17 +470,15 @@ static guint32 mt_int_range (guint32 begin,
 	    maxval = dist - 1;
 	}
 
-	if (use_dcmt) {
+	if (alt) {
 	    do {
-		rval = dcmt_rand32();
-	    } while (rval > maxval);
-	} else if (alt) {
-	    do {
-		rval = sfmt_alt_rand32();
+                // FIXME
+                //rval = alt_xor_i32();
+		rval = xor_i32();
 	    } while (rval > maxval);
 	} else {
 	    do {
-		rval = sfmt_rand32();
+		rval = xor_i32();
 	    } while (rval > maxval);
 	}
 
@@ -594,11 +516,7 @@ int gretl_rand_uniform_minmax (double *a, int t1, int t2,
     }
 
     for (t=t1; t<=t2; t++) {
-	if (use_dcmt) {
-	    a[t] = sfmt_to_real2(dcmt_rand32()) * (max - min) + min;
-	} else {
-	    a[t] = sfmt_to_real2(sfmt_rand32()) * (max - min) + min;
-	}
+        a[t] = double_from_uint64(xor_i64()) * (max - min) + min;
     }
 
     return 0;
@@ -626,7 +544,7 @@ static int real_gretl_rand_int_minmax (int *a, int n,
 	}
 
 	for (i=0; i<n; i++) {
-	    a[i] = mt_int_range(min, max + 1, alt) - offset;
+	    a[i] = rand_int_range(min, max + 1, alt) - offset;
 	}
     }
 
@@ -729,10 +647,10 @@ int gretl_rand_uniform_int_minmax (double *a, int t1, int t2,
 	}
 
 	for (t=t1; t<=t2; t++) {
-	    x = mt_int_range(min, max + 1, 0);
+	    x = rand_int_range(min, max + 1, 0);
 	    if (opt & OPT_O) {
 		while (already_selected(a, i, x, offset)) {
-		    x = mt_int_range(min, max + 1, 0);
+		    x = rand_int_range(min, max + 1, 0);
 		}
 	    }
 	    a[t] = x - offset;
@@ -758,24 +676,14 @@ void gretl_rand_uniform (double *a, int t1, int t2)
 {
     int t;
 
-    if (use_dcmt) {
-	for (t=t1; t<=t2; t++) {
-	   a[t] = sfmt_to_real2(dcmt_rand32());
-	}
-    } else {
-	for (t=t1; t<=t2; t++) {
-	   a[t] = sfmt_to_real2(sfmt_rand32());
-	}
+    for (t=t1; t<=t2; t++) {
+        a[t] = double_from_uint64(xor_i64());
     }
 }
 
 static double gretl_rand_uniform_one (void)
 {
-    if (use_dcmt) {
-	return sfmt_to_real2(dcmt_rand32());
-    } else {
-	return sfmt_to_real2(sfmt_rand32());
-    }
+    return double_from_uint64(xor_i64());
 }
 
 double gretl_rand_gamma_one (double shape, double scale)
@@ -1606,33 +1514,31 @@ gretl_matrix *gretl_rand_dirichlet (const gretl_vector *a,
  * @max: the maximum value (open)
  *
  * Returns: a pseudo-random unsigned int in the interval
- * [0, max-1] using the Mersenne Twister.
+ * [0, max-1].
  */
 
-unsigned int gretl_rand_int_max (unsigned int max)
+guint32 gretl_rand_int_max (unsigned int max)
 {
-    return mt_int_range(0, max, 0);
+    return rand_int_range(0, max, 0);
 }
 
 /**
  * gretl_rand_int:
  *
  * Returns: a pseudo-random unsigned int on the interval
- * [0, 2^32-1] using the Mersenne Twister.
+ * [0, 2^32-1].
  */
 
-unsigned int gretl_rand_int (void)
+guint32 gretl_rand_int (void)
 {
-    if (use_dcmt) {
-	return dcmt_rand32();
-    } else {
-	return sfmt_rand32();
-    }
+    return xor_i32();
 }
 
-unsigned int gretl_alt_rand_int (void)
+guint32 gretl_alt_rand_int (void)
 {
-    return sfmt_alt_rand32();
+    // FIXME
+    return 0;
+    // return sfmt_alt_rand32();
 }
 
 static double halton (int i, int base)

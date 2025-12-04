@@ -107,9 +107,8 @@ LIBS = $(LAPACK_LIBS) -lm $(LIBDL) -lz $(XML_LIBS) $(MACLIB) \
 libsrc  = $(topsrc)/lib/src
 cephessrc = $(topsrc)/cephes
 minpacksrc = $(topsrc)/minpack
-dcmtsrc = $(topsrc)/dcmt
 
-VPATH = $(libsrc):$(cephessrc):$(minpacksrc):$(dcmtsrc)
+VPATH = $(libsrc):$(cephessrc):$(minpacksrc)
 
 PUBLIC_HDRS = \
 	adf_kpss.h \
@@ -313,10 +312,8 @@ CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c expx2.c \
 MINPACK_SRC = enorm.c fdjac2.c lmder.c lmdif.c lmpar.c \
 	qrfac.c qrsolv.c lbfgsb.c
 
-DCMT_SRC = check32.c eqdeg.c genmtrand.c mt19937.c prescr.c seive.c
-
 LOBJS = $(SRCS:.c=.lo)
-AUX_LOBJ = $(CEPHES_SRC:.c=.lo) $(MINPACK_SRC:.c=.lo) $(DCMT_SRC:.c=.lo)
+AUX_LOBJ = $(CEPHES_SRC:.c=.lo) $(MINPACK_SRC:.c=.lo)
 
 LIBTOOL = ../libtool
 

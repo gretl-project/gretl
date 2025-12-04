@@ -91,7 +91,8 @@ enum {
     TAG_STR_VAL,
     TAG_BMEMB_INFO,
     TAG_ARRAY_INFO,
-    TAG_BUNDLE_SIZE
+    TAG_BUNDLE_SIZE,
+    TAG_U64_ARRAY
 };
 
 #define MI_LEN 5 /* matrix info length */
@@ -1361,6 +1362,37 @@ int gretl_matrix_mpi_send (const gretl_matrix *m, int dest)
         }
     }
 
+    if (err) {
+        gretl_mpi_error(&err);
+    }
+
+    return err;
+}
+
+/* Broadcast an array of four 64-bit unsigned ints, representing the
+   state of a 256-bit PRNG.
+*/
+
+int gretl_mpi_bcast_rng (guint64 *s, int root)
+{
+    guint64 u[4];
+    int id, i;
+    int err = 0;
+
+    mpi_comm_rank(mpi_comm_world, &id);
+
+    if (id == root) {
+        for (i=0; i<4; i++) {
+            u[i] = s[i];
+        }
+    }
+    err = mpi_bcast(u, 4, MPI_UINT64_T, root, mpi_comm_world);
+
+    if (!err && id != root) {
+        for (i=0; i<4; i++) {
+            s[i] = u[i];
+        }
+    }
     if (err) {
         gretl_mpi_error(&err);
     }

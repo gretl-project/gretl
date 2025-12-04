@@ -129,7 +129,7 @@ typedef enum {
     OMP_N_THREADS,
     SIMD_K_MAX,
     SIMD_MN_MIN,
-    USE_DCMT,
+    RNG_MULTI,
     NS_INT_MAX, /* separator */
     SEED,
     CSV_DELIM,

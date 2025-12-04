@@ -232,7 +232,7 @@ setvar setvars[] = {
     { OMP_N_THREADS, "omp_num_threads", CAT_SPECIAL },
     { SIMD_K_MAX,    "simd_k_max",  CAT_BEHAVE },
     { SIMD_MN_MIN,   "simd_mn_min", CAT_BEHAVE },
-    { USE_DCMT,      "use_dcmt",    CAT_RNG },
+    { RNG_MULTI,     "rng_multi",   CAT_RNG },
     /* specials */
     { SEED,          "seed",      CAT_RNG },
     { CSV_DELIM,     "csv_delim", CAT_SPECIAL },
@@ -246,7 +246,7 @@ setvar setvars[] = {
 };
 
 #define libset_boolvar(k) (k < STATE_FLAG_MAX || k==R_FUNCTIONS || \
-			   k==R_LIB || k==LOGSTAMP || k==USE_DCMT)
+			   k==R_LIB || k==LOGSTAMP || k==RNG_MULTI)
 #define libset_double(k) (k > STATE_INT_MAX && k < STATE_FLOAT_MAX)
 #define libset_int(k) ((k > STATE_FLAG_MAX && k < STATE_INT_MAX) || \
 		       (k > STATE_VARS_MAX && k < NS_INT_MAX))
@@ -1530,7 +1530,7 @@ static int print_settings (PRN *prn, gretlopt opt)
 	}
     }
     if (gretl_mpi_initialized()) {
-	libset_print_bool(USE_DCMT, NULL, prn, opt);
+	libset_print_bool(RNG_MULTI, NULL, prn, opt);
     }
 
     libset_header(N_("Robust estimation"), prn, opt);
@@ -2109,8 +2109,8 @@ int libset_get_bool (SetKey key)
 	return globals.R_functions;
     } else if (key == R_LIB) {
 	return globals.R_lib;
-    } else if (key == USE_DCMT) {
-        return gretl_rand_get_dcmt();
+    } else if (key == RNG_MULTI) {
+        return gretl_rand_get_multi();
     } else if (key == LOGSTAMP) {
 	return globals.logstamp;
     }
@@ -2242,8 +2242,8 @@ int libset_set_bool (SetKey key, int val)
 	return check_R_setting(&globals.R_functions, key, val);
     } else if (key == R_LIB) {
 	return check_R_setting(&globals.R_lib, key, val);
-    } else if (key == USE_DCMT) {
-	return gretl_rand_set_dcmt(val);
+    } else if (key == RNG_MULTI) {
+	return gretl_rand_set_multi(val);
     } else if (key == LOGSTAMP) {
 	globals.logstamp = val;
 	return 0;
