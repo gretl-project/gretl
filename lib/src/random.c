@@ -34,6 +34,10 @@
 # endif
 #endif
 
+#if defined(_OPENMP) && !defined(__APPLE__)
+# include <omp.h>
+#endif
+
 /* For optimizing the Ziggurat */
 #if defined(i386) || defined (__i386__)
 # define HAVE_X86_32 1
@@ -43,11 +47,9 @@
 #endif
 
 #define SFMT_MEXP 19937
+
 #include "../../rng/SFMT.c"
 #include "../../dcmt/dc.h"
-
-#include "../../rng/splitmix64.c"
-#include "../../rng/xoshiro256plus.c"
 
 /**
  * SECTION:random
@@ -68,47 +70,24 @@
  */
 
 static sfmt_t gretl_sfmt;
-static uint32_t sfmt_seed;
-static uint64_t xor_seed;
+static guint32 sfmt_seed;
 
 /* alternate SFMT */
 static sfmt_t gretl_alt_sfmt;
-static uint32_t alt_sfmt_seed;
-
-static mt_struct *dcmt;
-static uint32_t dcmt_seed;
-static int use_dcmt = 0;
-
-static int use_xor;
+static guint32 alt_sfmt_seed;
 
 #define sfmt_rand32() sfmt_genrand_uint32(&gretl_sfmt)
 #define sfmt_alt_rand32() sfmt_genrand_uint32(&gretl_alt_sfmt)
-#define dcmt_rand32() genrand_mt(dcmt)
-
-static inline double double_from_uint64 (uint64_t u);
-
-static inline double dcmt_01 (void)
-{
-    return sfmt_to_real2(dcmt_rand32());
-}
-
-static inline double sfmt_01 (void)
-{
-    //fprintf(stderr, "sfmt_01\n");
-    return sfmt_to_real2(sfmt_rand32());
-}
-
-static inline double xor_01 (void)
-{
-    //fprintf(stderr, "xor_01\n");
-    return double_from_uint64(xor_i64());
-}
-
-static double (*rand_01) (void);
 
 /* Find n independent "small" Mersenne Twisters with period 2^521-1;
    set the one corresponding to @self as the one to use
 */
+
+static mt_struct *dcmt;
+static guint32 dcmt_seed;
+static int use_dcmt = 0;
+
+#define dcmt_rand32() genrand_mt(dcmt)
 
 static int set_up_dcmt (int n, int self, unsigned int seed)
 {
@@ -199,46 +178,12 @@ int gretl_rand_set_dcmt (int s)
 	use_dcmt = s;
     }
 
-    if (use_dcmt) {
-        rand_01 = dcmt_01;
-    }
-
     return err;
 }
 
 int gretl_rand_get_dcmt (void)
 {
     return use_dcmt;
-}
-
-/* Material specific to xoshiro256+ */
-
-void gretl_rand_set_xor (int s)
-{
-    use_xor = (s != 0);
-    if (use_xor) {
-        rand_01 = xor_01;
-    }
-}
-
-static inline double double_from_uint64 (uint64_t u)
-{
-    /* Set the exponent to 0x3FF (for 1.0) and the sign bit to 0;
-       the remaining 52 bits are from the random uint64_t.
-    */
-    const uint64_t MASK = 0x3FF0000000000000ULL;
-    uint64_t bits = MASK | (u >> 12);
-    double ret;
-
-    /* create a double in the range [1.0, 2.0) */
-    memcpy(&ret, &bits, sizeof(double));
-
-    return ret - 1.0;
-}
-
-static uint32_t xor_i32 (void)
-{
-    return (uint32_t) (xor_i64() >> 32);
 }
 
 /**
@@ -253,21 +198,12 @@ void gretl_rand_init (void)
     char *fseed = getenv("GRETL_FORCE_SEED");
 
     if (fseed != NULL) {
-        int s = atoi(fseed);
-
-        xor_seed = (uint64_t) s;
-	sfmt_seed = (uint32_t) s;
+	sfmt_seed = atoi(fseed);
     } else {
-        time_t tt = time(NULL);
-
-        xor_seed = (uint64_t) tt;
-	sfmt_seed = (uint32_t) tt;
+	sfmt_seed = time(NULL);
     }
 
     sfmt_init_gen_rand(&gretl_sfmt, sfmt_seed);
-    set_xor_state(xor_seed);
-
-    rand_01 = sfmt_01;
 }
 
 /**
@@ -307,8 +243,6 @@ unsigned int gretl_rand_get_seed (void)
 {
     if (use_dcmt) {
 	return dcmt_seed;
-    } else if (use_xor) {
-        return xor_seed;
     } else {
 	return sfmt_seed;
     }
@@ -348,8 +282,6 @@ void gretl_rand_set_seed (unsigned int seed)
 
     if (use_dcmt) {
 	gretl_dcmt_set_seed(seed);
-    } else if (use_xor) {
-        set_xor_state((uint64_t) seed);
     } else {
 	gretl_sfmt_set_seed(seed);
     }
@@ -371,17 +303,11 @@ void gretl_alt_rand_set_seed (unsigned int seed)
 
 double gretl_rand_01 (void)
 {
-#if 1
-    return rand_01();
-#else
     if (use_dcmt) {
 	return sfmt_to_real2(dcmt_rand32());
-    } else if (use_xor) {
-        return double_from_uint64(xor_i64());
     } else {
 	return sfmt_to_real2(sfmt_rand32());
     }
-#endif
 }
 
 /* Select which 32 bit generator to use for Ziggurat */
@@ -390,8 +316,6 @@ static inline uint32_t randi32 (void)
 {
     if (use_dcmt) {
 	return genrand_mt(dcmt);
-    } else if (use_xor) {
-        return xor_i32();
     } else {
 	return sfmt_genrand_uint32(&gretl_sfmt);
     }
@@ -403,15 +327,10 @@ static inline uint32_t randi32 (void)
 
 static uint64_t randi54 (void)
 {
-    if (use_xor) {
-        const uint64_t u = xor_i64();
-        const uint64_t mask = (1ULL << 54) - 1;
-        return u & mask;
-    } else {
-        const uint32_t lo = randi32();
-        const uint32_t hi = randi32() & 0x3FFFFF;
-        return (((uint64_t) (hi) << 32) | lo);
-    }
+    const uint32_t lo = randi32();
+    const uint32_t hi = randi32() & 0x3FFFFF;
+
+    return (((uint64_t) (hi) << 32) | lo);
 }
 
 #endif
@@ -420,14 +339,10 @@ static uint64_t randi54 (void)
 
 static double randu53 (void)
 {
-    if (use_xor) {
-        const uint64_t u = xor_i64() >> 11;
-        return (double) u * 0x1.0p-53;
-    } else {
-        const uint32_t a = randi32() >> 5;
-        const uint32_t b = randi32() >> 6;
-        return (a*67108864.0 + b + 0.4) * (1.0/9007199254740992.0);
-    }
+    const uint32_t a = randi32() >> 5;
+    const uint32_t b = randi32() >> 6;
+
+    return (a*67108864.0 + b + 0.4) * (1.0/9007199254740992.0);
 }
 
 /* Ziggurat normal generator: this Ziggurat code here is shamelessly
@@ -635,10 +550,6 @@ static guint32 mt_int_range (guint32 begin,
 	    do {
 		rval = dcmt_rand32();
 	    } while (rval > maxval);
-        } else if (use_xor) {
-	    do {
-		rval = xor_i32();
-	    } while (rval > maxval);
 	} else if (alt) {
 	    do {
 		rval = sfmt_alt_rand32();
@@ -685,8 +596,6 @@ int gretl_rand_uniform_minmax (double *a, int t1, int t2,
     for (t=t1; t<=t2; t++) {
 	if (use_dcmt) {
 	    a[t] = sfmt_to_real2(dcmt_rand32()) * (max - min) + min;
-        } else if (use_xor) {
-            a[t] = double_from_uint64(xor_i64()) * (max - min) + min;
 	} else {
 	    a[t] = sfmt_to_real2(sfmt_rand32()) * (max - min) + min;
 	}
@@ -853,10 +762,6 @@ void gretl_rand_uniform (double *a, int t1, int t2)
 	for (t=t1; t<=t2; t++) {
 	   a[t] = sfmt_to_real2(dcmt_rand32());
 	}
-    } else if (use_xor) {
-	for (t=t1; t<=t2; t++) {
-	   a[t] = double_from_uint64(xor_i64());
-	}
     } else {
 	for (t=t1; t<=t2; t++) {
 	   a[t] = sfmt_to_real2(sfmt_rand32());
@@ -868,8 +773,6 @@ static double gretl_rand_uniform_one (void)
 {
     if (use_dcmt) {
 	return sfmt_to_real2(dcmt_rand32());
-    } else if (use_xor) {
-        return double_from_uint64(xor_i64());
     } else {
 	return sfmt_to_real2(sfmt_rand32());
     }
