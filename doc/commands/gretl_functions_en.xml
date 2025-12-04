@@ -11081,9 +11081,10 @@
 	  (the default is to use the correlation matrix).
 	</para>
 	<para context="notex">
-	  The elements of <math>P</math> are computed as the sum from
-	  <math>i</math> to <math>k</math> of
-	  <math>Z</math><sub>ti</sub> times
+	  If <math>X</math> contains no missing values, the elements
+	  of <math>P</math> are computed via the classic principal
+	  components algorithm, that is the sum from <math>i</math> to
+	  <math>k</math> of <math>Z</math><sub>ti</sub> times
 	  <math>v</math><sub>ji</sub>, where
 	  <math>Z</math><sub>ti</sub> is the standardized value (or
 	  just the centered value, if the covariance matrix is used)
@@ -11092,17 +11093,24 @@
 	  eigenvector of the correlation (or covariance) matrix of the
 	  <math>X</math><sub>i</sub>s, with the eigenvectors ordered
 	  by decreasing value of the corresponding eigenvalues.
+	  Otherwise, if some elements of <math>X</math> are missing,
+	  the EM algorithm by <cite key="stock-watson2002">Stock and
+	  Watson (2002)</cite> is employed.
 	</para>
 	<para context="tex">
-	  The elements of $P$ are computed as \[ P_{tj} =
-	  \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i \] where $Z_{ti}$ is the
-	  standardized value (or just the centered value, if the
-	  covariance matrix is used) of variable $i$ at observation
-	  $t$, $Z_{ti} = (X_{ti} - \bar{X}_i) / \hat{\sigma}_i$, and
-	  $v^{(j)}_i$ is the $j$th eigenvector of the correlation (or
-	  covariance) matrix of the $X_i$s, with the eigenvectors
-	  ordered by decreasing value of the corresponding
-	  eigenvalues.
+	  If $X$ contains no missing values, the elements of $P$ are
+	  computed via the classic principal components algorithm,
+	  that is \[ P_{tj} = \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i \]
+	  where $Z_{ti}$ is the standardized value (or just the
+	  centered value, if the covariance matrix is used) of
+	  variable $i$ at observation $t$, $Z_{ti} = (X_{ti} -
+	  \bar{X}_i) / \hat{\sigma}_i$, and $v^{(j)}_i$ is the $j$th
+	  eigenvector of the correlation (or covariance) matrix of the
+	  $X_i$s, with the eigenvectors ordered by decreasing value of
+	  the corresponding eigenvalues.  Otherwise, if some elements
+	  of $X$ are missing, the EM algorithm by <cite
+	  key="stock-watson2002">Stock and Watson (2002)</cite> is
+	  employed.
 	</para>
 	<para>
 	  <seelist>

@@ -11282,25 +11282,34 @@
 	  (il default è usare la matrice di correlazione).
 	</para>
 	<para context="notex">
-	  Gli elementi di <math>P</math> sono calcolati come la somma
-	  da <math>i</math> a <math>k</math> di <math>Z</math><sub>ti</sub>
-	  per <math>v</math><sub>ji</sub>, dove
-	  <math>Z</math><sub>ti</sub> è il valore standardizzato della variabile
-	  <math>i</math> all'osservazione <math>t</math> e
-	  <math>v</math><sub>ji</sub> è l'autovettore <math>j</math> della
-	  matrice di correlazione (o covarianza) delle <math>X</math><sub>i</sub>,
-	  con autovettori ordinati in ordine decrescente degli autovalori
-	  corrispondenti.
+	  Se <math>X</math> non contiene dati mancanti, gli elementi
+	  di <math>P</math> sono calcolati usando il metodo classico,
+	  cioè come la somma da <math>i</math> a <math>k</math> di
+	  <math>Z</math><sub>ti</sub> per <math>v</math><sub>ji</sub>,
+	  dove <math>Z</math><sub>ti</sub> è il valore standardizzato
+	  della variabile <math>i</math> all'osservazione
+	  <math>t</math> e <math>v</math><sub>ji</sub> è l'autovettore
+	  <math>j</math> della matrice di correlazione (o covarianza)
+	  delle <math>X</math><sub>i</sub>, con autovettori ordinati
+	  in ordine decrescente degli autovalori corrispondenti.  Se,
+	  viceversa, ci sono dei valori mancanti in <math>X</math>,
+	  viene impiegato l'algoritmo EM di <cite
+	  key="stock-watson2002">Stock and Watson (2002)</cite> .
 	</para>
 	<para context="tex">
-	  Gli elementi di $P$ sono calcolati come
+	  Se $X$ non contiene dati mancanti, gli elementi
+	  di $P$ sono calcolati usando il metodo classico,
+	  cioè come
 	  \[ P_{tj} = \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i \]
 	  dove $Z_{ti}$ è il valore standardizzato della variabile
 	  $i$ all'osservazione $t$, $Z_{ti} = (X_{ti} -
 	  \bar{X}_i) / \hat{\sigma}_i$, e $v^{(j)}$ è l'autovettore $j$
 	  della matrice di correlazione (o covarianza) delle
 	  $X_i$, con autovettori ordinati in senso decrescente
-	  degli autovalori corrispondenti.
+	  degli autovalori corrispondenti. Se,
+	  viceversa, ci sono dei valori mancanti in $X$,
+	  viene impiegato l'algoritmo EM di <cite
+	  key="stock-watson2002">Stock and Watson (2002)</cite> .
 	</para>
 	<para>
 	  <seelist>
