@@ -147,6 +147,8 @@ version 2026a, in progress
 - "pca" command: make a $result bundle available
 - "square" command and square() function: don't skip dummy
   variables when computing cross-products
+- princomp() function: use Stock and Watson's EM algorithm
+  if some data points are missing
 - xmax() and xmin() functions; consolidate with max, min but
   retain the "x" variants as aliases until further notice
 - Fix possible incorrect behavior of "smpl" in some special
