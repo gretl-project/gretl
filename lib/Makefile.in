@@ -321,8 +321,15 @@ override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(XML_CFLAGS) $(GLIB_CFLAGS) \
 	$(GMP_CFLAGS) $(FFTW_CFLAGS) $(CURL_CFLAGS) $(GSF_CFLAGS) $(RLIB_CFLAGS) \
 	$(MPI_CFLAGS) -DHAVE_CONFIG_H $(LIBDEF)
 
+RCFLAGS = -I.. -I$(topsrc) -I$(libsrc) $(GLIB_CFLAGS) $(MPI_CFLAGS) -DHAVE_CONFIG_H $(LIBDEF)
+
 COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS)
-RCOMPIL = $(LIBTOOL) --mode=compile $(CCV) -O3 -c $(GLIB_CFLAGS)
+RCOMPIL = $(LIBTOOL) --mode=compile $(CCV) -O3 -c $(RCFLAGS)
+
+$(LIBGRETL): .deps $(LOBJS) $(AUX_LOBJ) Makefile
+	$(LDECHO)
+	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(LOBJS) $(AUX_LOBJ) \
+	-rpath $(RPATH) $(LIBS) $(VERSION_INFO) $(BINPATH)
 
 %.lo: %.c
 	$(CCECHO)
@@ -332,12 +339,7 @@ RCOMPIL = $(LIBTOOL) --mode=compile $(CCV) -O3 -c $(GLIB_CFLAGS)
 random.lo: random.c
 	$(CCECHO)
 	$(AMP)$(RCOMPIL) -o $@ $<
-	$(AMP)$(CCV) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d
-
-$(LIBGRETL): .deps $(LOBJS) $(AUX_LOBJ) Makefile
-	$(LDECHO)
-	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(LOBJS) $(AUX_LOBJ) \
-	-rpath $(RPATH) $(LIBS) $(VERSION_INFO) $(BINPATH)
+	$(AMP)$(CCV) $(CFLAGS) -MM -MT random.lo $< > .deps/random.d
 
 .deps:
 	$(AMP)mkdir $@

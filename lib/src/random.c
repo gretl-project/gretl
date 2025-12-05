@@ -135,17 +135,19 @@ void gretl_rand_init (void)
     set_xor_state(xor_seed);
 }
 
-#ifdef HAVE_MPI
-
 /**
  * gretl_multi_rng_init:
  *
  * Initialize RNG per MPI process, if needed.
  */
 
+#ifdef HAVE_MPI
+
 void gretl_multi_rng_init (int n, int self, guint64 seed)
 {
     int i, err;
+
+    printf("real gretl_multi_rng_init\n");
 
     if (self == 0) {
         xor_seed = seed > 0 ? seed : get_auto_seed();
@@ -162,6 +164,14 @@ void gretl_multi_rng_init (int n, int self, guint64 seed)
     printf("rank %d: jumped or_state[1] = %" G_GUINT64_FORMAT "\n",
            self, xor_state[1]);
 #endif
+}
+
+#else
+
+void gretl_multi_rng_init (int n, int self, guint64 seed)
+{
+    printf("fake gretl_multi_rng_init\n");
+    return;
 }
 
 #endif /* HAVE_MPI */
