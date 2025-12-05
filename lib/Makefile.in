@@ -321,11 +321,17 @@ override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(XML_CFLAGS) $(GLIB_CFLAGS) \
 	$(GMP_CFLAGS) $(FFTW_CFLAGS) $(CURL_CFLAGS) $(GSF_CFLAGS) $(RLIB_CFLAGS) \
 	$(MPI_CFLAGS) -DHAVE_CONFIG_H $(LIBDEF)
 
-COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS) 
+COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS)
+RCOMPIL = $(LIBTOOL) --mode=compile $(CCV) -O3 -c $(GLIB_CFLAGS)
 
 %.lo: %.c
 	$(CCECHO)
 	$(AMP)$(COMPILE) -o $@ $<
+	$(AMP)$(CCV) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d
+
+random.lo: random.c
+	$(CCECHO)
+	$(AMP)$(RCOMPIL) -o $@ $<
 	$(AMP)$(CCV) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d
 
 $(LIBGRETL): .deps $(LOBJS) $(AUX_LOBJ) Makefile
