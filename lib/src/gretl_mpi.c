@@ -57,6 +57,7 @@ static MPI_Datatype mpi_complex;
 static MPI_Datatype mpi_int;
 static MPI_Datatype mpi_unsigned;
 static MPI_Datatype mpi_byte;
+static MPI_Datatype mpi_uint64_t;
 static MPI_Op mpi_sum;
 static MPI_Op mpi_prod;
 static MPI_Op mpi_max;
@@ -70,6 +71,7 @@ static MPI_Op mpi_min;
 # define mpi_int        MPI_INT
 # define mpi_unsigned   MPI_UNSIGNED
 # define mpi_byte       MPI_BYTE
+# define mpi_uint64_t   MPI_UINT64_T
 # define mpi_sum        MPI_SUM
 # define mpi_prod       MPI_PROD
 # define mpi_max        MPI_MAX
@@ -196,6 +198,7 @@ int gretl_MPI_init (void)
         mpi_int        = (MPI_Datatype) mpiget(MPIhandle, "ompi_mpi_int", &err);
         mpi_unsigned   = (MPI_Datatype) mpiget(MPIhandle, "ompi_mpi_unsigned", &err);
         mpi_byte       = (MPI_Datatype) mpiget(MPIhandle, "ompi_mpi_byte", &err);
+        mpi_uint64_t   = (MPI_Datatype) mpiget(MPIhandle, "ompi_mpi_uint64_t", &err);
         mpi_sum        = (MPI_Op) mpiget(MPIhandle, "ompi_mpi_op_sum", &err);
         mpi_prod       = (MPI_Op) mpiget(MPIhandle, "ompi_mpi_op_prod", &err);
         mpi_max        = (MPI_Op) mpiget(MPIhandle, "ompi_mpi_op_max", &err);
@@ -1386,7 +1389,7 @@ int gretl_mpi_bcast_rng (guint64 *s, int root)
             u[i] = s[i];
         }
     }
-    err = mpi_bcast(u, 4, MPI_UINT64_T, root, mpi_comm_world);
+    err = mpi_bcast(u, 4, mpi_uint64_t, root, mpi_comm_world);
 
     if (!err && id != root) {
         for (i=0; i<4; i++) {

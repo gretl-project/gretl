@@ -95,7 +95,7 @@ int gretl_rand_set_multi (int s)
     return err;
 }
 
-#endif
+#endif /* HAVE_MPI */
 
 int gretl_rand_get_multi (void)
 {
@@ -143,17 +143,17 @@ void gretl_rand_init (void)
 
 void gretl_rand_free (void)
 {
-    // FIXME
+    /* FIXME */
     return;
 }
+
+#ifdef HAVE_MPI
 
 /**
  * gretl_multi_rng_init:
  *
- * Initialize RNG per process, if needed.
+ * Initialize RNG per MPI process, if needed.
  */
-
-/* Windows: consider BCryptGenRandom(), RtlGenRandom() ? */
 
 void gretl_multi_rng_init (int n, int self, guint64 seed)
 {
@@ -164,6 +164,7 @@ void gretl_multi_rng_init (int n, int self, guint64 seed)
     } else if (self == 0) {
         /* automatic seeding */
 #ifdef G_OS_WIN32
+        /* consider using BCryptGenRandom() ? */
         uint64_t u = time(NULL);
 #else
         int fd = open("/dev/urandom", O_RDONLY);
@@ -189,9 +190,12 @@ void gretl_multi_rng_init (int n, int self, guint64 seed)
     }
 
 #if 0
-    printf("rank %d: jumped s[1] = %" G_GUINT64_FORMAT "\n", self, s[1]);
+    printf("rank %d: jumped or_state[1] = %" G_GUINT64_FORMAT "\n",
+           self, xor_state[1]);
 #endif
 }
+
+#endif /* HAVE_MPI */
 
 /**
  * gretl_rand_get_seed:
@@ -472,7 +476,7 @@ static guint32 rand_int_range (guint32 begin,
 
 	if (alt) {
 	    do {
-                // FIXME
+                /* FIXME */
                 //rval = alt_xor_i32();
 		rval = xor_i32();
 	    } while (rval > maxval);
