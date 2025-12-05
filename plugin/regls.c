@@ -2818,7 +2818,7 @@ static int real_regls_xv_mpi (regls_info *ri)
 		seed = gretl_rand_get_seed();
 	    }
 	}
-	gretl_mpi_bcast(&seed, GRETL_TYPE_UNSIGNED, 0);
+	gretl_mpi_bcast(&seed, GRETL_TYPE_UINT32, 0);
 	gretl_rand_set_seed(seed);
 	randomize_rows(ri->X, ri->y);
     }

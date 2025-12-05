@@ -97,7 +97,7 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 
 	    if (type == GRETL_TYPE_INT || type == GRETL_TYPE_BOOL) {
 		*xp = *(int *) val;
-	    } else if (type == GRETL_TYPE_UNSIGNED) {
+	    } else if (type == GRETL_TYPE_UINT32) {
 		*xp = *(unsigned *) val;
 	    } else {
 		*xp = *(double *) val;
@@ -195,7 +195,7 @@ static gchar *alt_bundle_content_label (bundled_item *bi,
 	    label = g_strdup_printf("%s (%g)", keystr, *(double *) bi->data);
 	} else if (bi->type == GRETL_TYPE_INT || bi->type == GRETL_TYPE_BOOL) {
 	    label = g_strdup_printf("%s (%d)", keystr, *(int *) bi->data);
-	} else if (bi->type == GRETL_TYPE_UNSIGNED) {
+	} else if (bi->type == GRETL_TYPE_UINT32) {
 	    label = g_strdup_printf("%s (%d)", keystr, *(guint32 *) bi->data);
 	}
     } else if (note != NULL) {
@@ -241,7 +241,7 @@ static gchar *bundle_content_label (bundled_item *bi,
 	} else if (bi->type == GRETL_TYPE_INT || bi->type == GRETL_TYPE_BOOL) {
 	    label = g_strdup_printf("%s (scalar: %d)", keystr,
 				    *(int *) bi->data);
-	} else if (bi->type == GRETL_TYPE_UNSIGNED) {
+	} else if (bi->type == GRETL_TYPE_UINT32) {
 	    label = g_strdup_printf("%s (scalar: %d)", keystr,
 				    *(unsigned int *) bi->data);
 	}

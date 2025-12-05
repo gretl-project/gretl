@@ -167,7 +167,8 @@ const char *gretl_type_get_name (GretlType type)
     switch (type) {
     case GRETL_TYPE_BOOL:       return "bool";
     case GRETL_TYPE_INT:        return "int";
-    case GRETL_TYPE_UNSIGNED:   return "unsigned";
+    case GRETL_TYPE_UINT32:     return "unsigned32";
+    case GRETL_TYPE_UINT64:     return "unsigned64";
     case GRETL_TYPE_OBS:        return "obs";
     case GRETL_TYPE_DOUBLE:     return "scalar";
     case GRETL_TYPE_SERIES:     return "series";
@@ -303,7 +304,7 @@ GretlType gretl_type_from_string (const char *s)
 	if (!strcmp(s, "bool"))     return GRETL_TYPE_BOOL;
 	if (!strcmp(s, "boolean"))  return GRETL_TYPE_BOOL;
 	if (!strcmp(s, "int"))      return GRETL_TYPE_INT;
-	if (!strcmp(s, "unsigned")) return GRETL_TYPE_UNSIGNED;
+	if (!strcmp(s, "unsigned")) return GRETL_TYPE_UINT32;
 	if (!strcmp(s, "obs"))      return GRETL_TYPE_OBS;
     }
 
@@ -389,7 +390,8 @@ int gretl_is_scalar_type (GretlType type)
 {
     return type == GRETL_TYPE_BOOL ||
 	type == GRETL_TYPE_INT ||
-	type == GRETL_TYPE_UNSIGNED ||
+	type == GRETL_TYPE_UINT32 ||
+        type == GRETL_TYPE_UINT64 ||
 	type == GRETL_TYPE_DOUBLE;
 }
 

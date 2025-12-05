@@ -112,7 +112,7 @@ struct sv_wrapper_ {
     double svr_sigma;
     int *flist;  /* array of folds IDs, if applicable */
     int *fsize;  /* array of fold sizes, if applicable */
-    unsigned seed;
+    unsigned seed; /* FIXME */
 };
 
 struct sv_parm_info {
@@ -2367,7 +2367,7 @@ static int call_mpi_cross_validation (sv_data *data,
     }
 
     /* arrange to get rand() in sync across the processes */
-    gretl_mpi_bcast(&w->seed, GRETL_TYPE_UNSIGNED, 0);
+    gretl_mpi_bcast(&w->seed, GRETL_TYPE_UINT64, 0);
 
     if (w->rank == 0) {
 	if (prn != NULL) {
@@ -2570,7 +2570,7 @@ static int get_optional_int (gretl_bundle *b, const char *key,
 	} else if (type == GRETL_TYPE_DOUBLE) {
 	    *ival = *(double *) ptr;
 	    return 1;
-	} else if (type == GRETL_TYPE_UNSIGNED) {
+	} else if (type == GRETL_TYPE_UINT32) {
 	    *ival = *(unsigned *) ptr;
 	    return 1;
 	} else if (err != NULL) {
@@ -2596,7 +2596,7 @@ static int get_optional_unsigned (gretl_bundle *b, const char *key,
 	} else if (type == GRETL_TYPE_DOUBLE) {
 	    *uval = *(double *) ptr;
 	    return 1;
-	} else if (type == GRETL_TYPE_UNSIGNED) {
+	} else if (type == GRETL_TYPE_UINT32) {
 	    *uval = *(unsigned *) ptr;
 	    return 1;
 	} else {

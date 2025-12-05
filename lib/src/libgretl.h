@@ -117,7 +117,8 @@ typedef enum {
     GRETL_TYPE_NONE,
     GRETL_TYPE_BOOL,
     GRETL_TYPE_INT,
-    GRETL_TYPE_UNSIGNED,
+    GRETL_TYPE_UINT32,
+    GRETL_TYPE_UINT64,
     GRETL_TYPE_OBS,
     GRETL_TYPE_LIST,
     GRETL_TYPE_DOUBLE,
@@ -156,7 +157,8 @@ typedef enum {
 
 #define gretl_scalar_type(t) (t == GRETL_TYPE_BOOL ||	\
                               t == GRETL_TYPE_INT ||	\
-			      t == GRETL_TYPE_UNSIGNED || \
+			      t == GRETL_TYPE_UINT32 || \
+                              t == GRETL_TYPE_UINT64 || \
 			      t == GRETL_TYPE_OBS ||	\
 			      t == GRETL_TYPE_DOUBLE)
 
