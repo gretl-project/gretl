@@ -1013,8 +1013,7 @@ static int libset_get_scalar (SetKey key, const char *arg,
 
 /* Called only when setting the PRNG seed */
 
-static int libset_get_unsigned (const char *arg, guint64 *pu,
-				int *automatic)
+static int libset_get_seed (const char *arg, guint64 *pu, int *automatic)
 {
     guint64 lu = 0;
     char *test = NULL;
@@ -1590,7 +1589,8 @@ static int libset_query_settings (setvar *sv, PRN *prn)
 	    pprintf(prn, "%s: matrix, currently null\n", sv->name);
 	}
     } else if (sv->key == SEED) {
-	pprintf(prn, "%s: unsigned int, currently %u (%s)\n",
+	pprintf(prn, "%s: unsigned 64-bit int, "
+                "currently %" G_GUINT64_FORMAT " (%s)\n",
 		sv->name, gretl_rand_get_seed(),
 		seed_is_set ? "set by user" : "automatic");
     } else if (sv->key == CSV_DELIM) {
@@ -1842,7 +1842,7 @@ int execute_set (const char *setobj, const char *setarg,
 	} else if (sv->key == SEED) {
 	    int automatic = 0;
 
-	    err = libset_get_unsigned(setarg, &u, &automatic);
+	    err = libset_get_seed(setarg, &u, &automatic);
 	    if (!err) {
 		gretl_rand_set_seed(u);
 		if (gretl_messages_on()) {

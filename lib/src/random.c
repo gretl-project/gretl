@@ -61,13 +61,6 @@ static uint64_t xor_seed;
 /* alternate RNG */
 static uint64_t alt_xor_seed;
 
-static inline double double_from_uint64 (uint64_t u);
-
-static inline double xor_01 (void)
-{
-    return double_from_uint64(xor_i64());
-}
-
 static inline double double_from_uint64 (uint64_t u)
 {
     /* Set the exponent to 0x3FF (for 1.0) and the sign bit to 0;
@@ -83,9 +76,33 @@ static inline double double_from_uint64 (uint64_t u)
     return ret - 1.0;
 }
 
-static uint32_t xor_i32 (void)
+static uint32_t rand_i32 (void)
 {
     return (uint32_t) (xor_i64() >> 32);
+}
+
+static uint64_t get_auto_seed (void)
+{
+    uint64_t u;
+
+#ifdef G_OS_WIN32
+    /* consider using BCryptGenRandom() ? */
+    u = time(NULL);
+#else
+    int fd = open("/dev/urandom", O_RDONLY);
+
+    if (fd == -1) {
+        u = time(NULL);
+    } else {
+        ssize_t sz = read(fd, &u, sizeof(uint64_t));
+
+        if (sz == -1) {
+            u = time(NULL);
+        }
+    }
+#endif
+
+    return u;
 }
 
 /**
@@ -97,20 +114,25 @@ static uint32_t xor_i32 (void)
 void gretl_rand_init (void)
 {
     char *fseed = getenv("GRETL_FORCE_SEED");
+    int done = 0;
 
     if (fseed != NULL) {
-        xor_seed = (uint64_t) atoi(fseed);
-    } else {
-        xor_seed = (uint64_t) time(NULL);
+        char *test = NULL;
+        uint64_t u;
+
+        errno = 0;
+        u = strtoull(fseed, &test, 10);
+        if (*test == '\0' && errno == 0 && u > 0) {
+            xor_seed = u;
+            done = 1;
+        }
+    }
+
+    if (!done) {
+        xor_seed = get_auto_seed();
     }
 
     set_xor_state(xor_seed);
-}
-
-void gretl_rand_free (void)
-{
-    /* FIXME */
-    return;
 }
 
 #ifdef HAVE_MPI
@@ -125,27 +147,9 @@ void gretl_multi_rng_init (int n, int self, guint64 seed)
 {
     int i, err;
 
-    if (self == 0 && seed > 0) {
-        set_xor_state(seed);
-    } else if (self == 0) {
-        /* automatic seeding */
-#ifdef G_OS_WIN32
-        /* consider using BCryptGenRandom() ? */
-        uint64_t u = time(NULL);
-#else
-        int fd = open("/dev/urandom", O_RDONLY);
-        uint64_t u;
-
-        if (fd == -1) {
-            u = time(NULL);
-        } else {
-            ssize_t sz = read(fd, &u, sizeof(uint64_t));
-            if (sz == -1) {
-                u = time(NULL);
-            }
-        }
-#endif
-        set_xor_state(u);
+    if (self == 0) {
+        xor_seed = seed > 0 ? seed : get_auto_seed();
+        set_xor_state(xor_seed);
     }
 
     err = gretl_mpi_bcast_rng(xor_state, 0);
@@ -161,6 +165,12 @@ void gretl_multi_rng_init (int n, int self, guint64 seed)
 }
 
 #endif /* HAVE_MPI */
+
+void gretl_rand_free (void)
+{
+    /* FIXME */
+    return;
+}
 
 /**
  * gretl_rand_get_seed:
@@ -178,22 +188,31 @@ guint64 gretl_rand_get_seed (void)
  * @seed: the chosen seed value.
  *
  * Set a specific (and hence reproducible) seed for gretl's PRNG.
- * But if the value 0 is given for @seed, set the seed using
- * the system time (which is the default when libgretl is
- * initialized).
+ * But if the value 0 is given for @seed, set the seed
+ * automatically.
  */
 
 void gretl_rand_set_seed (guint64 seed)
 {
-    seed = (seed == 0)? time(NULL) : seed;
-    set_xor_state((uint64_t) seed);
+    if (seed > 0) {
+        xor_seed = (uint64_t) seed;
+        set_xor_state(xor_seed);
+    } else {
+        xor_seed = get_auto_seed();
+        set_xor_state(xor_seed);
+    }
 }
 
 void gretl_alt_rand_set_seed (guint64 seed)
 {
-    seed = (seed == 0)? time(NULL) : seed;
-    alt_xor_seed = seed;
     // FIXME
+    if (seed > 0) {
+        alt_xor_seed = (uint64_t) seed;
+        //set_alt_xor_state(alt_xor_seed);
+    } else {
+        alt_xor_seed = get_auto_seed();
+        //set_alt_xor_state(alt_xor_seed);
+    }
 }
 
 /**
@@ -206,13 +225,6 @@ void gretl_alt_rand_set_seed (guint64 seed)
 double gretl_rand_01 (void)
 {
     return double_from_uint64(xor_i64());
-}
-
-/* Select which 32 bit generator to use for Ziggurat */
-
-static inline uint32_t randi32 (void)
-{
-    return xor_i32();
 }
 
 #if !(HAVE_X86_32)
@@ -442,12 +454,12 @@ static guint32 rand_int_range (guint32 begin,
 	if (alt) {
 	    do {
                 /* FIXME */
-                //rval = alt_xor_i32();
-		rval = xor_i32();
+                //rval = alt_rand_i32();
+		rval = rand_i32();
 	    } while (rval > maxval);
 	} else {
 	    do {
-		rval = xor_i32();
+		rval = rand_i32();
 	    } while (rval > maxval);
 	}
 
@@ -1500,14 +1512,14 @@ guint32 gretl_rand_int_max (unsigned int max)
 
 guint32 gretl_rand_int (void)
 {
-    return xor_i32();
+    return rand_i32();
 }
 
 guint32 gretl_alt_rand_int (void)
 {
     // FIXME
     return 0;
-    // return sfmt_alt_rand32();
+    // return alt_rand_i32();
 }
 
 static double halton (int i, int base)
