@@ -405,11 +405,10 @@ static gchar *win32_read_log_file (HANDLE h, const gchar *fname)
 
 #endif
 
-/* Try to ensure that the gretl installation directory is in
-   the PATH, so that DLLs needed by x13as and/or tramo/seats
-   can be found at runtime. While we're at it, also ensure
-   that TMPDIR is defined so that gfortran tmpfiles will
-   work (this is needed by tramo/seats).
+/* Try to ensure that the gretl installation directory is in the PATH,
+   so that DLLs needed by x13as and/or tramo/seats can be found at
+   runtime. While we're at it, also ensure that TMPDIR is defined so
+   that gfortran tmpfiles will work (this is needed by tramo/seats).
 */
 
 int win32_ensure_dll_path (void)

@@ -68,8 +68,7 @@ static int cli_saved_object_action (const char *line,
                                     PRN *prn);
 
 static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
-                          double *scriptval, char *mykey, int *dcmt,
-			  char *fname)
+                          double *scriptval, char *fname)
 {
     char **argv;
     int argc, gotfile = 0;
@@ -97,11 +96,9 @@ static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
         } else if (!strcmp(s, "-q") || !strcmp(s, "--quiet")) {
             opt |= OPT_QUIET;
         } else if (!strcmp(s, "-s") || !strcmp(s, "--single-rng")) {
-            *dcmt = 0;
+            ; /* no-op: ignored for now */
         } else if (!strncmp(s, "--scriptopt=", 12)) {
             *scriptval = atof(s + 12);
-	} else if (!strncmp(s, "--key=", 6)) {
-	    sscanf(s + 6, "%40[^ ]", mykey);
         } else if (*s == '-') {
             /* not a valid option */
             err = E_DATA;
@@ -378,9 +375,7 @@ int main (int argc, char *argv[])
     char filearg[MAXLEN];
     char runfile[MAXLEN];
     double scriptval = NADBL;
-    char mykey[42] = {0};
     gretlopt progopt = 0;
-    int use_dcmt = 1;
     CMD cmd;
     PRN *prn = NULL;
     int id, np;
@@ -408,9 +403,7 @@ int main (int argc, char *argv[])
     if (argc < 2) {
         usage(1);
     } else {
-        err = parse_options(&argc, &argv, &progopt, &scriptval,
-                            mykey, &use_dcmt, filearg);
-
+        err = parse_options(&argc, &argv, &progopt, &scriptval, filearg);
         if (err) {
             /* bad option, or missing filename */
             usage(1);
@@ -433,7 +426,7 @@ int main (int argc, char *argv[])
         }
     }
 
-    err = libgretl_mpi_init(id, np, use_dcmt);
+    err = libgretl_mpi_init(id, np);
     if (err) {
         fputs("Couldn't initialize the MPI sub-system\n", stderr);
         mpi_exit(1);
@@ -470,10 +463,6 @@ int main (int argc, char *argv[])
 
     if (!na(scriptval)) {
         gretl_scalar_add("scriptopt", scriptval);
-    }
-    if (mykey[0] != '\0') {
-	user_var_add_or_replace("mykey", GRETL_TYPE_STRING,
-				gretl_strdup(mykey));
     }
 
     runit = 0;

@@ -36,6 +36,7 @@
 #include <stddef.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdint.h>
 
 #include <glib.h>
 
@@ -232,7 +233,6 @@ setvar setvars[] = {
     { OMP_N_THREADS, "omp_num_threads", CAT_SPECIAL },
     { SIMD_K_MAX,    "simd_k_max",  CAT_BEHAVE },
     { SIMD_MN_MIN,   "simd_mn_min", CAT_BEHAVE },
-    { RNG_MULTI,     "rng_multi",   CAT_RNG },
     /* specials */
     { SEED,          "seed",      CAT_RNG },
     { CSV_DELIM,     "csv_delim", CAT_SPECIAL },
@@ -246,7 +246,7 @@ setvar setvars[] = {
 };
 
 #define libset_boolvar(k) (k < STATE_FLAG_MAX || k==R_FUNCTIONS || \
-			   k==R_LIB || k==LOGSTAMP || k==RNG_MULTI)
+			   k==R_LIB || k==LOGSTAMP)
 #define libset_double(k) (k > STATE_INT_MAX && k < STATE_FLOAT_MAX)
 #define libset_int(k) ((k > STATE_FLAG_MAX && k < STATE_INT_MAX) || \
 		       (k > STATE_VARS_MAX && k < NS_INT_MAX))
@@ -1013,41 +1013,42 @@ static int libset_get_scalar (SetKey key, const char *arg,
 
 /* Called only when setting the PRNG seed */
 
-static int libset_get_unsigned (const char *arg, unsigned int *pu,
+static int libset_get_unsigned (const char *arg, guint64 *pu,
 				int *automatic)
 {
-    unsigned long lu = 0;
+    guint64 lu = 0;
     char *test = NULL;
     double x = NADBL;
     int err = 0;
 
     if (!strcmp(arg, "auto")) {
 	*automatic = 1;
-	*pu = time(NULL);
+	*pu = (guint64) time(NULL);
 	return 0;
     }
 
     errno = 0;
-    lu = strtoul(arg, &test, 10);
+    lu = strtoull(arg, &test, 10);
 
-    if (*test == '\0' && errno == 0) {
-	if (lu <= UINT_MAX) {
-	    *pu = (unsigned) lu;
-	    return 0;
-	} else {
-	    return E_DATA;
-	}
+    if (*test == '\0') {
+        if (errno) {
+            return E_INVARG;
+        } else {
+            *pu = lu;
+            return 0;
+        }
     }
 
+    /* fallback, when @arg is not numeric */
     x = get_scalar_value_by_name(arg, &err);
     if (err) {
 	return err;
     }
 
-    if (x < 0.0 || na(x) || x > (double) UINT_MAX) {
-	err = E_DATA;
+    if (na(x) || x <= 0.0 || x > UINT64_C(9007199254740992)) {
+	err = E_INVARG;
     } else {
-	*pu = (unsigned) x;
+	*pu = (guint64) x;
     }
 
     return err;
@@ -1467,6 +1468,7 @@ static void print_vars_for_category (int category, PRN *prn,
 static int print_settings (PRN *prn, gretlopt opt)
 {
     const char *workdir = gretl_workdir();
+    guint64 u;
 
     gretl_push_c_numeric_locale();
 
@@ -1522,15 +1524,13 @@ static int print_settings (PRN *prn, gretlopt opt)
     }
 
     libset_header(N_("Random number generation"), prn, opt);
+    u = gretl_rand_get_seed();
     if (opt & OPT_D) {
-	pprintf(prn, " seed = %u\n", gretl_rand_get_seed());
+	pprintf(prn, " seed = %" G_GUINT64_FORMAT "\n", u);
     } else {
 	if (seed_is_set) {
-	    pprintf(prn, "set seed %u\n", gretl_rand_get_seed());
+	    pprintf(prn, "set seed %" G_GUINT64_FORMAT "\n", u);
 	}
-    }
-    if (gretl_mpi_initialized()) {
-	libset_print_bool(RNG_MULTI, NULL, prn, opt);
     }
 
     libset_header(N_("Robust estimation"), prn, opt);
@@ -1741,7 +1741,7 @@ int execute_set (const char *setobj, const char *setarg,
 {
     setvar *sv = NULL;
     int k, argc, err;
-    unsigned int u;
+    guint64 u;
 
 #if 0
     fprintf(stderr, "execute_set: setobj = '%s', setarg='%s'\n",
@@ -1761,6 +1761,9 @@ int execute_set (const char *setobj, const char *setarg,
 
     if (!strcmp(setobj, "pcse")) {
 	return legacy_set_pcse(setarg);
+    } else if (!strcmp(setobj, "dcmt")) {
+        pputs(prn, "'dcmt': obsolete setting\n");
+        return 0;
     } else {
 	sv = get_setvar_by_name(setobj);
     }
@@ -2109,8 +2112,6 @@ int libset_get_bool (SetKey key)
 	return globals.R_functions;
     } else if (key == R_LIB) {
 	return globals.R_lib;
-    } else if (key == RNG_MULTI) {
-        return gretl_rand_get_multi();
     } else if (key == LOGSTAMP) {
 	return globals.logstamp;
     }
@@ -2242,8 +2243,6 @@ int libset_set_bool (SetKey key, int val)
 	return check_R_setting(&globals.R_functions, key, val);
     } else if (key == R_LIB) {
 	return check_R_setting(&globals.R_lib, key, val);
-    } else if (key == RNG_MULTI) {
-	return gretl_rand_set_multi(val);
     } else if (key == LOGSTAMP) {
 	globals.logstamp = val;
 	return 0;

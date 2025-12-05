@@ -61,45 +61,11 @@ static uint64_t xor_seed;
 /* alternate RNG */
 static uint64_t alt_xor_seed;
 
-/* use separate RNG state per MPI process */
-static int use_multi;
-
 static inline double double_from_uint64 (uint64_t u);
 
 static inline double xor_01 (void)
 {
     return double_from_uint64(xor_i64());
-}
-
-#ifdef HAVE_MPI
-
-int gretl_rand_set_multi (int s)
-{
-    int err = 0;
-
-    if (s == use_multi) {
-	/* no-op */
-	return 0;
-    }
-
-    if (s) {
-	/* single RNG in use, multi requested */
-        ; /* FIXME */
-        use_multi = 1;
-    } else {
-	/* multi in use, single requested */
-	gretl_rand_init();
-        use_multi = 0;
-    }
-
-    return err;
-}
-
-#endif /* HAVE_MPI */
-
-int gretl_rand_get_multi (void)
-{
-    return use_multi;
 }
 
 static inline double double_from_uint64 (uint64_t u)
@@ -188,7 +154,6 @@ void gretl_multi_rng_init (int n, int self, guint64 seed)
             xor_jump();
         }
     }
-
 #if 0
     printf("rank %d: jumped or_state[1] = %" G_GUINT64_FORMAT "\n",
            self, xor_state[1]);

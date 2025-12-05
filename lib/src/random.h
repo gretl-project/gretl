@@ -109,10 +109,6 @@ gretl_matrix *inverse_wishart_sequence (const gretl_matrix *S,
 
 guint64 gretl_rand_get_seed (void);
 
-int gretl_rand_set_multi (int s);
-
-int gretl_rand_get_multi (void);
-
 char *gretl_rand_hex_string (int len, int *err);
 
 #endif /* RANDOM_H */

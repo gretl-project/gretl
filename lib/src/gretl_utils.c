@@ -3173,14 +3173,13 @@ void libgretl_init (void)
  * libgretl_mpi_init:
  * @self: the MPI rank of the calling process.
  * @np: the number of MPI processes.
- * @multi: if non-zero, set up per-process RNGs.
  *
  * This function provides an alternative to libgretl_init()
  * which should be used when a libgretl program is to be run in
  * MPI mode.
  **/
 
-int libgretl_mpi_init (int self, int np, int multi)
+int libgretl_mpi_init (int self, int np)
 {
     int err;
 
@@ -3195,11 +3194,10 @@ int libgretl_mpi_init (int self, int np, int multi)
         return err;
     }
 
-    if (multi && np > 1) {
-        /* set up multiple RNGs */
+    if (np > 1) {
+        /* set up per-process RNGs */
         gretl_multi_rng_init(np, self, 0);
     } else {
-        /* just use one RNG */
         gretl_rand_init();
     }
 
