@@ -2571,7 +2571,7 @@ static int get_optional_int (gretl_bundle *b, const char *key,
 	    *ival = *(double *) ptr;
 	    return 1;
 	} else if (type == GRETL_TYPE_UINT32) {
-	    *ival = *(unsigned *) ptr;
+	    *ival = *(guint32 *) ptr;
 	    return 1;
 	} else if (err != NULL) {
 	    *err = E_TYPES;
@@ -3345,7 +3345,7 @@ static void maybe_save_auto_seed (sv_wrapper *w, gretl_bundle *b)
 	       gretl_bundle_has_key(b, "search") ||
 	       gretl_bundle_has_key(b, "grid")) {
 	/* OK, randomized folds employed */
-	gretl_bundle_set_unsigned(b, "autoseed", w->seed);
+	gretl_bundle_set_uint32(b, "autoseed", w->seed);
     }
 }
 

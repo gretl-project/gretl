@@ -50,7 +50,7 @@ enum {
 void libgretl_init (void);
 
 #ifdef HAVE_MPI
-int libgretl_mpi_init (int self, int np);
+int libgretl_mpi_init (int self, int np, int single_rng);
 #else
 /* dummy function */
 int gretl_mpi_initialized (void);
@@ -142,9 +142,9 @@ int varnum_from_string (const char *str, DATASET *dset);
 
 int gretl_int_from_double (double x, int *err);
 
-guint32 gretl_unsigned_from_double (double x, int *err);
+uint32_t gretl_uint32_from_double (double x, int *err);
 
-guint64 gretl_uint53_from_double (double x, int *err);
+uint64_t gretl_uint64_from_double (double x, int *err);
 
 GretlType gretl_type_from_name (const char *s, const DATASET *dset);
 

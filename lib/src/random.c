@@ -51,9 +51,7 @@
  *
  * Note that before using the libgretl PRNG you must call
  * either libgretl_init() or the specific initialization
- * function shown below, gretl_rand_init(). And once you're
- * finished with it, you may call gretl_rand_free() or the
- * global libgretl function libgretl_cleanup().
+ * function shown below, gretl_rand_init().
  */
 
 static uint64_t xor_seed;
@@ -136,51 +134,44 @@ void gretl_rand_init (void)
 }
 
 /**
- * gretl_multi_rng_init:
+ * gretl_mpi_rand_init:
  *
  * Initialize RNG per MPI process, if needed.
  */
 
 #ifdef HAVE_MPI
 
-void gretl_multi_rng_init (int n, int self, guint64 seed)
+void gretl_mpi_rand_init (int n, int self, int single_rng)
 {
     int i, err;
 
-    printf("real gretl_multi_rng_init\n");
-
     if (self == 0) {
-        xor_seed = seed > 0 ? seed : get_auto_seed();
+        xor_seed = get_auto_seed();
         set_xor_state(xor_seed);
     }
 
     err = gretl_mpi_bcast_rng(xor_state, 0);
-    if (!err) {
+
+    if (!single_rng && !err) {
         for (i=0; i<self; i++) {
             xor_jump();
         }
     }
 #if 0
-    printf("rank %d: jumped or_state[1] = %" G_GUINT64_FORMAT "\n",
+    printf("rank %d: initial xor_state[1] = %" G_GUINT64_FORMAT "\n",
            self, xor_state[1]);
 #endif
 }
 
 #else
 
-void gretl_multi_rng_init (int n, int self, guint64 seed)
+void gretl_mpi_rand_init (int n, int self, int single_rng)
 {
-    printf("fake gretl_multi_rng_init\n");
+    printf("fake gretl_mpi_rand_init was called\n");
     return;
 }
 
 #endif /* HAVE_MPI */
-
-void gretl_rand_free (void)
-{
-    /* FIXME */
-    return;
-}
 
 /**
  * gretl_rand_get_seed:

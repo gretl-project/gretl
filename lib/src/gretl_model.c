@@ -4040,7 +4040,7 @@ static void serialize_test (const ModelTest *src, PRN *prn)
     }
 
     if (src->opt != OPT_NONE) {
-	pprintf(prn, "opt=\"%u\" ", (unsigned) src->opt);
+	pprintf(prn, "opt=\"%u\" ", (guint32) src->opt);
     }
 
     pputs(prn, "/>\n");
@@ -6074,7 +6074,7 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
     gretl_xml_get_prop_as_int(node, "aux", &pmod->aux);
 
     if (gretl_xml_get_prop_as_int(node, "opt", &n)) {
-	pmod->opt = (unsigned) n;
+	pmod->opt = (guint32) n;
     } else {
 	/* backward compat may be needed */
 	fixopt = 1;
@@ -6123,7 +6123,8 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	if (!xmlStrcmp(cur->name, (XUC) "sample")) {
 	    gretl_xml_get_prop_as_int(cur, "t1", &pmod->smpl.t1);
 	    gretl_xml_get_prop_as_int(cur, "t2", &pmod->smpl.t2);
-	    gretl_xml_get_prop_as_unsigned_int(cur, "rseed", &pmod->smpl.rseed);
+            /* FIXME */
+	    gretl_xml_get_prop_as_uint32(cur, "rseed", &pmod->smpl.rseed);
 	} else if (!xmlStrcmp(cur->name, (XUC) "coeff")) {
 	    pmod->coeff = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "sderr")) {

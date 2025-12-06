@@ -141,7 +141,9 @@ int type_can_be_bundled (GretlType type)
 {
     if (type == GRETL_TYPE_INT ||
         type == GRETL_TYPE_UINT32 ||
+        type == GRETL_TYPE_UINT64 ||
         type == GRETL_TYPE_BOOL) {
+        /* for the current purpose */
         type = GRETL_TYPE_DOUBLE;
     }
 
@@ -156,7 +158,8 @@ int type_can_be_bundled (GretlType type)
 
 #define bundled_scalar(t) (t == GRETL_TYPE_DOUBLE ||    \
                            t == GRETL_TYPE_INT ||       \
-                           t == GRETL_TYPE_UINT32)
+                           t == GRETL_TYPE_UINT32 ||    \
+                           t == GRETL_TYPE_UINT64)
 
 static int bundled_item_copy_in_data (bundled_item *item,
                                       void *ptr, int size)
@@ -181,11 +184,19 @@ static int bundled_item_copy_in_data (bundled_item *item,
         }
         break;
     case GRETL_TYPE_UINT32:
-        item->data = malloc(sizeof(guint32));
+        item->data = malloc(sizeof(uint32_t));
         if (item->data != NULL) {
-            guint32 *up = item->data;
+            uint32_t *up = item->data;
 
-            *up = *(guint32 *) ptr;
+            *up = *(uint32_t *) ptr;
+        }
+        break;
+    case GRETL_TYPE_UINT64:
+        item->data = malloc(sizeof(uint64_t));
+        if (item->data != NULL) {
+            uint64_t *up = item->data;
+
+            *up = *(uint64_t *) ptr;
         }
         break;
     case GRETL_TYPE_STRING:
@@ -297,7 +308,7 @@ static int bundled_item_replace_data (bundled_item *item,
             } else if (src_t == GRETL_TYPE_INT) {
                 *dp = (double) *(int *) ptr;
             } else {
-                *dp = (double) *(guint32 *) ptr;
+                *dp = (double) *(uint32_t *) ptr;
             }
         } else if (item->type == GRETL_TYPE_INT) {
             int *ip = item->data;
@@ -307,17 +318,27 @@ static int bundled_item_replace_data (bundled_item *item,
             } else if (src_t == GRETL_TYPE_DOUBLE) {
                 *ip = gretl_int_from_double(*(double *) ptr, &err);
             } else {
-                *ip = (int) *(guint32 *) ptr;
+                *ip = (int) *(uint32_t *) ptr;
             }
         } else if (item->type == GRETL_TYPE_UINT32) {
-            guint32 *up = item->data;
+            uint32_t *up = item->data;
 
             if (src_t == GRETL_TYPE_UINT32) {
-                *up = *(guint32 *) ptr;
+                *up = *(uint32_t *) ptr;
             } else if (src_t == GRETL_TYPE_DOUBLE) {
-                *up = gretl_unsigned_from_double(*(double *) ptr, &err);
+                *up = gretl_uint32_from_double(*(double *) ptr, &err);
             } else {
-                *up = (guint32) *(int *) ptr;
+                *up = (uint32_t) *(int *) ptr;
+            }
+        } else if (item->type == GRETL_TYPE_UINT64) {
+            uint64_t *up = item->data;
+
+            if (src_t == GRETL_TYPE_UINT64) {
+                *up = *(uint64_t *) ptr;
+            } else if (src_t == GRETL_TYPE_DOUBLE) {
+                *up = gretl_uint64_from_double(*(double *) ptr, &err);
+            } else {
+                *up = (uint64_t) *(int *) ptr;
             }
         }
     } else {
@@ -955,6 +976,7 @@ double gretl_bundle_get_scalar (gretl_bundle *bundle,
     } else if (type != GRETL_TYPE_DOUBLE &&
                type != GRETL_TYPE_INT &&
                type != GRETL_TYPE_UINT32 &&
+               type != GRETL_TYPE_UINT64 &&
                type != GRETL_TYPE_MATRIX) {
         myerr = E_TYPES;
     }
@@ -967,7 +989,11 @@ double gretl_bundle_get_scalar (gretl_bundle *bundle,
 
             x = (double) k;
         } else if (type == GRETL_TYPE_UINT32) {
-            guint32 u = *(guint32 *) ptr;
+            uint32_t u = *(uint32_t *) ptr;
+
+            x = (double) u;
+        } else if (type == GRETL_TYPE_UINT64) {
+            uint64_t u = *(uint64_t *) ptr;
 
             x = (double) u;
         } else {
@@ -1016,7 +1042,16 @@ int gretl_bundle_get_int (gretl_bundle *bundle,
 
             i = *pi;
         } else if (type == GRETL_TYPE_UINT32) {
-            guint32 u, *pu = (guint32 *) ptr;
+            uint32_t u, *pu = (uint32_t *) ptr;
+
+            u = *pu;
+            if (u <= INT_MAX) {
+                i = (int) u;
+            } else {
+                myerr = E_TYPES;
+            }
+        } else if (type == GRETL_TYPE_UINT64) {
+            uint64_t u, *pu = (uint64_t *) ptr;
 
             u = *pu;
             if (u <= INT_MAX) {
@@ -1071,7 +1106,11 @@ int gretl_bundle_get_int_deflt (gretl_bundle *bundle,
 
             val = *pi;
         } else if (type == GRETL_TYPE_UINT32) {
-            guint32 *pu = (guint32 *) ptr;
+            uint32_t *pu = (uint32_t *) ptr;
+
+            val = (int) *pu;
+        } else if (type == GRETL_TYPE_UINT64) {
+            uint64_t *pu = (uint64_t *) ptr;
 
             val = (int) *pu;
         } else if (type == GRETL_TYPE_DOUBLE) {
@@ -1110,7 +1149,11 @@ int gretl_bundle_get_bool (gretl_bundle *bundle,
 
             val = (*pi != 0);
         } else if (type == GRETL_TYPE_UINT32) {
-            guint32 *pu = (guint32 *) ptr;
+            uint32_t *pu = (uint32_t *) ptr;
+
+            val = (*pu != 0);
+        } else if (type == GRETL_TYPE_UINT32) {
+            uint64_t *pu = (uint64_t *) ptr;
 
             val = (*pu != 0);
         } else if (type == GRETL_TYPE_DOUBLE) {
@@ -1124,20 +1167,20 @@ int gretl_bundle_get_bool (gretl_bundle *bundle,
 }
 
 /**
- * gretl_bundle_get_unsigned:
+ * gretl_bundle_get_uint32:
  * @bundle: bundle to access.
  * @key: name of key to access.
  * @err: location to receive error code.
  *
- * Returns: the unsigned integer value associated with @key in the
- * specified @bundle, if any; otherwise 0.
+ * Returns: the 32-bit unsigned integer value associated with @key
+ * in the specified @bundle, if any; otherwise 0.
  */
 
-guint32 gretl_bundle_get_unsigned (gretl_bundle *bundle,
-                                   const char *key,
-                                   int *err)
+uint32_t gretl_bundle_get_uint32 (gretl_bundle *bundle,
+                                  const char *key,
+                                  int *err)
 {
-    guint32 u = 0;
+    uint32_t u = 0;
     GretlType type;
     void *ptr;
     int myerr = 0;
@@ -1146,7 +1189,7 @@ guint32 gretl_bundle_get_unsigned (gretl_bundle *bundle,
 
     if (ptr != NULL) {
         if (type == GRETL_TYPE_UINT32) {
-            guint32 *pu = (guint32 *) ptr;
+            uint32_t *pu = (uint32_t *) ptr;
 
             u = *pu;
         } else if (type == GRETL_TYPE_INT) {
@@ -1154,7 +1197,7 @@ guint32 gretl_bundle_get_unsigned (gretl_bundle *bundle,
 
             i = *pi;
             if (i >= 0) {
-                u = (guint32) i;
+                u = (uint32_t) i;
             } else {
                 myerr = E_TYPES;
             }
@@ -1162,8 +1205,68 @@ guint32 gretl_bundle_get_unsigned (gretl_bundle *bundle,
             double x, *px = (double *) ptr;
 
             x = *px;
-            if (x >= 0 && x <= UINT_MAX && x == floor(x)) {
-                u = (guint32) x;
+            if (x >= 0 && x <= UINT32_MAX && x == floor(x)) {
+                u = (uint32_t) x;
+            } else {
+                myerr = E_TYPES;
+            }
+        } else {
+            myerr = E_TYPES;
+        }
+    }
+
+    if (err != NULL) {
+        *err = myerr;
+    }
+
+    return u;
+}
+
+/**
+ * gretl_bundle_get_uint64:
+ * @bundle: bundle to access.
+ * @key: name of key to access.
+ * @err: location to receive error code.
+ *
+ * Returns: the 64-bit unsigned integer value associated with @key
+ * in the specified @bundle, if any; otherwise 0.
+ */
+
+uint64_t gretl_bundle_get_uint64 (gretl_bundle *bundle,
+                                  const char *key,
+                                  int *err)
+{
+    uint64_t u = 0;
+    GretlType type;
+    void *ptr;
+    int myerr = 0;
+
+    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
+
+    if (ptr != NULL) {
+        if (type == GRETL_TYPE_UINT64) {
+            uint64_t *pu = (uint64_t *) ptr;
+
+            u = *pu;
+        } else if (type == GRETL_TYPE_UINT32) {
+            uint32_t *pu = (uint32_t *) ptr;
+
+            u = (uint64_t) *pu;
+        } else if (type == GRETL_TYPE_INT) {
+            int i, *pi = (int *) ptr;
+
+            i = *pi;
+            if (i >= 0) {
+                u = (uint64_t) i;
+            } else {
+                myerr = E_TYPES;
+            }
+        } else if (type == GRETL_TYPE_DOUBLE) {
+            double x, *px = (double *) ptr;
+
+            x = *px;
+            if (x >= 0 && x <= UINT64_MAX && x == floor(x)) {
+                u = (uint64_t) x;
             } else {
                 myerr = E_TYPES;
             }
@@ -1488,10 +1591,10 @@ int gretl_bundle_set_int (gretl_bundle *bundle, const char *key,
 }
 
 /**
- * gretl_bundle_set_unsigned:
+ * gretl_bundle_set_uint32:
  * @bundle: target bundle.
  * @key: name of key to create or replace.
- * @val: the unsigned integer value to set.
+ * @val: the 32-bit unsigned integer value to set.
  *
  * Sets @val as a member of @bundle under the name @key.
  * If @key is already present in the bundle the original
@@ -1500,11 +1603,31 @@ int gretl_bundle_set_int (gretl_bundle *bundle, const char *key,
  * Returns: 0 on success, error code on error.
  */
 
-int gretl_bundle_set_unsigned (gretl_bundle *bundle, const char *key,
-                               guint32 val)
+int gretl_bundle_set_uint32 (gretl_bundle *bundle, const char *key,
+                             uint32_t val)
 {
     return gretl_bundle_set_data(bundle, key, &val,
                                  GRETL_TYPE_UINT32, 0);
+}
+
+/**
+ * gretl_bundle_set_uint64:
+ * @bundle: target bundle.
+ * @key: name of key to create or replace.
+ * @val: the 64-bit unsigned integer value to set.
+ *
+ * Sets @val as a member of @bundle under the name @key.
+ * If @key is already present in the bundle the original
+ * value is replaced and destroyed.
+ *
+ * Returns: 0 on success, error code on error.
+ */
+
+int gretl_bundle_set_uint64 (gretl_bundle *bundle, const char *key,
+                             uint64_t val)
+{
+    return gretl_bundle_set_data(bundle, key, &val,
+                                 GRETL_TYPE_UINT64, 0);
 }
 
 /**
@@ -1856,7 +1979,9 @@ static int bundled_types_mismatch (bundled_item *targ,
             } else if (targ->type == GRETL_TYPE_INT) {
                 gretl_int_from_double(*px, &err);
             } else if (targ->type == GRETL_TYPE_UINT32) {
-                gretl_unsigned_from_double(*px, &err);
+                gretl_uint32_from_double(*px, &err);
+            } else if (targ->type == GRETL_TYPE_UINT64) {
+                gretl_uint64_from_double(*px, &err);
             }
         }
     } else {
@@ -2254,9 +2379,13 @@ static void real_print_bundled_item (bundled_item *item,
 
         pprintf(prn, "%s = %d", kstr, i);
     } else if (t == GRETL_TYPE_UINT32) {
-        guint32 u = *(guint32 *) item->data;
+        uint32_t u = *(uint32_t *) item->data;
 
         pprintf(prn, "%s = %u", kstr, u);
+    } else if (t == GRETL_TYPE_UINT64) {
+        uint64_t u = *(uint64_t *) item->data;
+
+        pprintf(prn, "%s = %" G_GUINT64_FORMAT, kstr, u);
     } else if (t == GRETL_TYPE_STRING) {
         char *s = (char *) item->data;
         int n = strlen(s);
@@ -2498,9 +2627,13 @@ static void write_item_constructor (gpointer value, gpointer p)
 
         g_string_append_printf(gs, "%s=%d,", kstr, i);
     } else if (t == GRETL_TYPE_UINT32) {
-        guint32 u = *(guint32 *) item->data;
+        uint32_t u = *(uint32_t *) item->data;
 
         g_string_append_printf(gs, "%s=%u,", kstr, u);
+    } else if (t == GRETL_TYPE_UINT64) {
+        uint64_t u = *(uint64_t *) item->data;
+
+        g_string_append_printf(gs, "%s=%" G_GUINT64_FORMAT, kstr, u);
     } else if (t == GRETL_TYPE_STRING) {
         char *s = (char *) item->data;
 
@@ -2678,9 +2811,13 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
 
         pprintf(prn, "%d", i);
     } else if (item->type == GRETL_TYPE_UINT32) {
-        guint32 u = *(guint32 *) item->data;
+        uint32_t u = *(uint32_t *) item->data;
 
         pprintf(prn, "%u", u);
+    } else if (item->type == GRETL_TYPE_UINT64) {
+        uint64_t u = *(uint64_t *) item->data;
+
+        pprintf(prn, "%" G_GUINT64_FORMAT, u);
     } else if (item->type == GRETL_TYPE_SERIES) {
         double *vals = (double *) item->data;
 
@@ -2774,9 +2911,17 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
                         err = gretl_bundle_set_data(b, key, &i, type, size);
                     }
                 } else if (type == GRETL_TYPE_UINT32) {
-                    guint32 u;
+                    uint32_t u;
 
-                    if (!gretl_xml_node_get_unsigned(cur, doc, &u)) {
+                    if (!gretl_xml_node_get_uint32(cur, doc, &u)) {
+                        err = E_DATA;
+                    } else {
+                        err = gretl_bundle_set_data(b, key, &u, type, size);
+                    }
+                } else if (type == GRETL_TYPE_UINT64) {
+                    uint64_t u;
+
+                    if (!gretl_xml_node_get_uint64(cur, doc, &u)) {
                         err = E_DATA;
                     } else {
                         err = gretl_bundle_set_data(b, key, &u, type, size);

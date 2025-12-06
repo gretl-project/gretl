@@ -1866,7 +1866,7 @@ static guint32 node_get_guint32 (NODE *n, parser *p)
     if (p->err) {
         return 0;
     } else {
-        return gretl_unsigned_from_double(x, &p->err);
+        return gretl_uint32_from_double(x, &p->err);
     }
 }
 

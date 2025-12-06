@@ -226,7 +226,7 @@ static int get_input_color (gretl_bundle *b, char *rgb)
 	    }
 	}
     } else if (gretl_is_scalar_type(t)) {
-	u = gretl_bundle_get_unsigned(b, "color", &err);
+	u = gretl_bundle_get_uint32(b, "color", &err);
     } else {
 	err = E_TYPES;
     }

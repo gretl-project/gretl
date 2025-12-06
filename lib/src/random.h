@@ -22,9 +22,7 @@
 
 void gretl_rand_init (void);
 
-void gretl_rand_free (void);
-
-void gretl_multi_rng_init (int n, int self, guint64 seed);
+void gretl_mpi_rand_init (int n, int self, int single_rng);
 
 void gretl_rand_set_seed (guint64 seed);
 

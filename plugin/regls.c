@@ -2813,7 +2813,7 @@ static int real_regls_xv_mpi (regls_info *ri)
 
 	if (rank == 0) {
 	    if (gretl_bundle_has_key(ri->b, "seed")) {
-		seed = gretl_bundle_get_unsigned(ri->b, "seed", NULL);
+		seed = gretl_bundle_get_uint32(ri->b, "seed", NULL);
 	    } else {
 		seed = gretl_rand_get_seed();
 	    }

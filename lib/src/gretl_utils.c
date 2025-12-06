@@ -1026,7 +1026,7 @@ static int invalid_stobs (const char *s)
     return E_DATA;
 }
 
-static void maybe_fix_daily_start (guint32 *ed, int pd)
+static void maybe_fix_daily_start (uint32_t *ed, int pd)
 {
     int wday = weekday_from_epoch_day(*ed);
     int fix = 0;
@@ -1060,7 +1060,7 @@ static void maybe_fix_daily_start (guint32 *ed, int pd)
 
 static int process_starting_obs (const char *stobs_in, int pd,
                                  int *pstructure, double *psd0,
-                                 guint32 *ped0, gretlopt opt)
+                                 uint32_t *ped0, gretlopt opt)
 {
     char stobs[OBSLEN];
     int structure = *pstructure;
@@ -1089,7 +1089,7 @@ static int process_starting_obs (const char *stobs_in, int pd,
 
     if (dated) {
         /* calendar-dated data, daily or weekly */
-        guint32 ed0 = get_epoch_day(stobs);
+        uint32_t ed0 = get_epoch_day(stobs);
 
         if (ed0 <= 0) {
             return invalid_stobs(stobs);
@@ -1179,7 +1179,7 @@ int set_obs (const char *parm1, const char *parm2,
     const char *stobs = NULL;
     int structure = STRUCTURE_UNKNOWN;
     double sd0 = dset->sd0;
-    guint32 ed0 = 0;
+    uint32_t ed0 = 0;
     int pd, panel = 0;
     int err = 0;
 
@@ -1338,7 +1338,7 @@ int simple_set_obs (DATASET *dset, int pd, const char *stobs,
 {
     int structure = STRUCTURE_UNKNOWN;
     double sd0 = dset->sd0;
-    guint32 ed0 = 0;
+    uint32_t ed0 = 0;
     int panel = 0;
     int err = 0;
 
@@ -1707,7 +1707,7 @@ int gretl_int_from_double (double x, int *err)
 }
 
 /**
- * gretl_unsigned_from_double:
+ * gretl_uint32_from_double:
  * @x: double-precision floating point value
  * @err: location to receive error code.
  *
@@ -1719,11 +1719,11 @@ int gretl_int_from_double (double x, int *err)
  * tolerance 1.0e-6.
  */
 
-guint32 gretl_unsigned_from_double (double x, int *err)
+uint32_t gretl_uint32_from_double (double x, int *err)
 {
-    guint32 u = 0;
+    uint32_t u = 0;
 
-    if (na(x) || x < 0 || fabs(x) > G_MAXUINT32) {
+    if (na(x) || x < 0 || fabs(x) > UINT32_MAX) {
         *err = E_INVARG;
     } else {
         double f = floor(x);
@@ -1742,7 +1742,7 @@ guint32 gretl_unsigned_from_double (double x, int *err)
 }
 
 /**
- * gretl_uint53_from_double:
+ * gretl_uint64_from_double:
  * @x: double-precision floating point value
  * @err: location to receive error code.
  *
@@ -1752,11 +1752,11 @@ guint32 gretl_unsigned_from_double (double x, int *err)
  * not "almost integral", with tolerance 1.0e-6.
  */
 
-guint64 gretl_uint53_from_double (double x, int *err)
+uint64_t gretl_uint64_from_double (double x, int *err)
 {
-    guint64 k = 0;
+    uint64_t k = 0;
 
-    if (na(x) || x > 9007199254740992 /* 2^53 */) {
+    if (na(x) || x > 9007199254740991 /* 2^53 - 1 */) {
         *err = E_INVARG;
     } else {
         double f = floor(x);
@@ -3044,7 +3044,7 @@ char *get_cpu_details (void)
 
     sysctlbyname("machdep.cpu.brand_string", &brand_buf, &bsz, NULL, 0);
 #else
-    guint32 i, j, data[4];
+    uint32_t i, j, data[4];
     int n_bytes = 4;
 
     __cpuid(0, data[0], data[1], data[2], data[3]);
@@ -3114,7 +3114,7 @@ char *get_cpu_details (void)
 int avx_support (void)
 {
 #if defined(CPU_AVX_DETECT)
-    guint32 eax, ebx, ecx, edx;
+    uint32_t eax, ebx, ecx, edx;
     int avx = 0, avx2 = 0, avx512 = 0;
 
     __cpuid(0x80000000, eax, ebx, ecx, edx);
@@ -3173,13 +3173,14 @@ void libgretl_init (void)
  * libgretl_mpi_init:
  * @self: the MPI rank of the calling process.
  * @np: the number of MPI processes.
+ * @single_rng: impose a common RNG initialization.
  *
  * This function provides an alternative to libgretl_init()
  * which should be used when a libgretl program is to be run in
  * MPI mode.
  **/
 
-int libgretl_mpi_init (int self, int np)
+int libgretl_mpi_init (int self, int np, int single_rng)
 {
     int err;
 
@@ -3196,7 +3197,7 @@ int libgretl_mpi_init (int self, int np)
 
     if (np > 1) {
         /* set up per-process RNGs */
-        gretl_multi_rng_init(np, self, 0);
+        gretl_mpi_rand_init(np, self, single_rng);
     } else {
         gretl_rand_init();
     }
@@ -3334,7 +3335,6 @@ void libgretl_cleanup (void)
 {
     libgretl_session_cleanup(SESSION_CLEAR_ALL);
 
-    gretl_rand_free();
     gretl_functions_cleanup();
     libset_cleanup();
     gretl_command_hash_cleanup();
@@ -3846,7 +3846,7 @@ gretl_matrix *dec2bin (double x, const gretl_matrix *v, int *err)
 {
     gretl_matrix *ret = NULL;
     double *val;
-    guint32 ui;
+    uint32_t ui;
     int n = 1;
     int i, j;
 
@@ -3867,7 +3867,7 @@ gretl_matrix *dec2bin (double x, const gretl_matrix *v, int *err)
     }
 
     for (i=0; i<n; i++) {
-        ui = gretl_unsigned_from_double(val[i], err);
+        ui = gretl_uint32_from_double(val[i], err);
         if (*err) {
             break;
         }
@@ -3903,7 +3903,7 @@ gretl_matrix *bin2dec (const gretl_matrix *m, int *err)
     }
 
     if (!*err) {
-        guint32 ui, k;
+        uint32_t ui, k;
         double mij;
         int i, j;
 

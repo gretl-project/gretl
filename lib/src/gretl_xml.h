@@ -42,7 +42,9 @@ int gretl_xml_read_buffer (const char *buf,
 
 void gretl_xml_put_int (const char *tag, int i, PRN *prn);
 
-void gretl_xml_put_unsigned (const char *tag, unsigned int u, PRN *prn);
+void gretl_xml_put_uint32 (const char *tag, uint32_t u, PRN *prn);
+
+void gretl_xml_put_uint64 (const char *tag, uint64_t u, PRN *prn);
 
 void gretl_xml_put_double (const char *tag, double x, PRN *prn);
 
@@ -67,10 +69,9 @@ int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
 int gretl_xml_get_prop_as_opt (xmlNodePtr node, const char *tag,
 			       gretlopt *o);
 
-unsigned int
-gretl_xml_get_prop_as_unsigned_int (xmlNodePtr node,
-				    const char *tag,
-				    unsigned int *u);
+uint32_t gretl_xml_get_prop_as_uint32 (xmlNodePtr node,
+                                       const char *tag,
+                                       uint32_t *u);
 
 int gretl_xml_get_prop_as_uchar (xmlNodePtr node, const char *tag,
 				 unsigned char *u);
@@ -87,8 +88,11 @@ GretlType gretl_xml_get_type_property (xmlNodePtr node);
 
 int gretl_xml_node_get_int (xmlNodePtr node, xmlDocPtr doc, int *i);
 
-int gretl_xml_node_get_unsigned (xmlNodePtr node, xmlDocPtr doc,
-				 unsigned int *u);
+int gretl_xml_node_get_uint32 (xmlNodePtr node, xmlDocPtr doc,
+                               uint32_t *u);
+
+int gretl_xml_node_get_uint64 (xmlNodePtr node, xmlDocPtr doc,
+                               uint64_t *u);
 
 int gretl_xml_node_get_double (xmlNodePtr node, xmlDocPtr doc,
 			       double *x);

@@ -37,6 +37,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <limits.h>
+#include <stdint.h>
 
 #include <zlib.h>
 

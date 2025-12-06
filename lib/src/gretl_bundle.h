@@ -111,9 +111,13 @@ int gretl_bundle_get_bool (gretl_bundle *bundle,
 			   const char *key,
 			   int deflt);
 
-guint32 gretl_bundle_get_unsigned (gretl_bundle *bundle,
-				   const char *key,
-				   int *err);
+uint32_t gretl_bundle_get_uint32 (gretl_bundle *bundle,
+                                  const char *key,
+                                  int *err);
+
+uint64_t gretl_bundle_get_uint64 (gretl_bundle *bundle,
+                                  const char *key,
+                                  int *err);
 
 const char *gretl_bundle_get_string (gretl_bundle *bundle,
 				     const char *key,
@@ -150,8 +154,11 @@ int gretl_bundle_set_scalar (gretl_bundle *bundle, const char *key,
 int gretl_bundle_set_int (gretl_bundle *bundle, const char *key,
 			  int val);
 
-int gretl_bundle_set_unsigned (gretl_bundle *bundle, const char *key,
-			       guint32 val);
+int gretl_bundle_set_uint32 (gretl_bundle *bundle, const char *key,
+                             uint32_t val);
+
+int gretl_bundle_set_uint64 (gretl_bundle *bundle, const char *key,
+                             uint64_t val);
 
 int gretl_bundle_set_series (gretl_bundle *bundle, const char *key,
 			     const double *x, int n);

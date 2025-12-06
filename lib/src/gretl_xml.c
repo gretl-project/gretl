@@ -69,9 +69,9 @@ int gretl_xml_open_doc_root (const char *fname,
     }
 
     options = XML_PARSE_HUGE | XML_PARSE_NOBLANKS;
-#if LIBXML_VERSION >= 21500   
+#if LIBXML_VERSION >= 21500
     options |= XML_PARSE_UNZIP;
-#endif    
+#endif
 
     doc = xmlReadFile(fname, NULL, options);
     if (doc == NULL) {
@@ -281,7 +281,7 @@ void gretl_xml_put_int (const char *tag, int i, PRN *prn)
 }
 
 /**
- * gretl_xml_put_unsigned:
+ * gretl_xml_put_uint32:
  * @tag: name to give value.
  * @i: value to put (as attribute)
  * @fp: file to which to write.
@@ -289,9 +289,23 @@ void gretl_xml_put_int (const char *tag, int i, PRN *prn)
  * Writes to @fp a string of the form "\%s=\%u".
  */
 
-void gretl_xml_put_unsigned (const char *tag, unsigned int u, PRN *prn)
+void gretl_xml_put_uint32 (const char *tag, uint32_t u, PRN *prn)
 {
     pprintf(prn, "%s=\"%u\" ", tag, u);
+}
+
+/**
+ * gretl_xml_put_uint64:
+ * @tag: name to give value.
+ * @i: value to put (as attribute)
+ * @fp: file to which to write.
+ *
+ * Writes to @fp a string of the appropriate form.
+ */
+
+void gretl_xml_put_uint64 (const char *tag, uint64_t u, PRN *prn)
+{
+    pprintf(prn, "%s=\"%" G_GUINT64_FORMAT "\" ", tag, u);
 }
 
 /**
@@ -703,19 +717,18 @@ int gretl_xml_get_prop_as_opt (xmlNodePtr node, const char *tag,
 }
 
 /**
- * gretl_xml_get_prop_as_unsigned_int:
+ * gretl_xml_get_prop_as_uint32:
  * @node: XML node pointer.
  * @tag: name by which unsigned integer property is known.
  * @u: location to write value.
  *
- * Returns: 1 if an unsigned int is found and read successfully, 0
- * otherwise.
+ * Returns: 1 if an 32-bit unsigned int is found and read successfully,
+ * 0 otherwise.
  */
 
-unsigned int
-gretl_xml_get_prop_as_unsigned_int (xmlNodePtr node,
-				    const char *tag,
-				    unsigned int *u)
+uint32_t gretl_xml_get_prop_as_uint32 (xmlNodePtr node,
+                                       const char *tag,
+                                       uint32_t *u)
 {
     xmlChar *tmp = xmlGetProp(node, (XUC) tag);
     int ret = 0;
@@ -886,17 +899,17 @@ int gretl_xml_node_get_int (xmlNodePtr node, xmlDocPtr doc, int *i)
 }
 
 /**
- * gretl_xml_node_get_unsigned:
+ * gretl_xml_node_get_uint32:
  * @node: XML node pointer.
  * @doc: XML document pointer.
  * @i: location to receive integer.
  *
- * Returns: 1 if an unsigned int is found and read successfully, 0
- * otherwise.
+ * Returns: 1 if an 32-bit unsigned int is found and read successfully,
+ * 0 otherwise.
  */
 
-int gretl_xml_node_get_unsigned (xmlNodePtr node, xmlDocPtr doc,
-				 unsigned int *u)
+int gretl_xml_node_get_uint32 (xmlNodePtr node, xmlDocPtr doc,
+                               uint32_t *u)
 {
     xmlChar *tmp;
     int ret = 0;
@@ -905,6 +918,34 @@ int gretl_xml_node_get_unsigned (xmlNodePtr node, xmlDocPtr doc,
 
     if (tmp != NULL) {
 	int n = sscanf((const char *) tmp, "%u", u);
+
+	free(tmp);
+	ret = (n == 1);
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_xml_node_get_uint64:
+ * @node: XML node pointer.
+ * @doc: XML document pointer.
+ * @i: location to receive integer.
+ *
+ * Returns: 1 if an 32-bit unsigned int is found and read successfully,
+ * 0 otherwise.
+ */
+
+int gretl_xml_node_get_uint64 (xmlNodePtr node, xmlDocPtr doc,
+                               uint64_t *u)
+{
+    xmlChar *tmp;
+    int ret = 0;
+
+    tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+
+    if (tmp != NULL) {
+	int n = sscanf((const char *) tmp, "%" G_GUINT64_FORMAT, u);
 
 	free(tmp);
 	ret = (n == 1);
@@ -3738,7 +3779,7 @@ static int xml_get_startobs (xmlNodePtr node, double *sd0, char *stobs,
 	}
 
 	if (likely_calendar(obstr) && caldata) {
-	    guint32 ed = get_epoch_day(obstr);
+	    uint32_t ed = get_epoch_day(obstr);
 
 	    if (ed <= 0) {
 		err = 1;
@@ -3783,7 +3824,7 @@ static int xml_get_endobs (xmlNodePtr node, char *endobs, int caldata)
 
 	if (caldata) {
 	    int y, m, d;
-	    guint32 ed;
+	    uint32_t ed;
 
 	    if (sscanf(obstr, "%d/%d/%d", &y, &m, &d) == 3) {
 		/* handle legacy gdt file */
@@ -4060,7 +4101,7 @@ static int real_read_gdt (const char *fname, const char *srcname,
     readsmpl = gretl_xml_get_prop_as_bool(cur, "mpi-transfer");
 
     /* optional */
-    gretl_xml_get_prop_as_unsigned_int(cur, "rseed", &tmpset->rseed);
+    gretl_xml_get_prop_as_uint32(cur, "rseed", &tmpset->rseed);
 
     /* optional */
     gretl_xml_get_prop_as_string(cur, "mapfile", &tmpset->mapfile);
