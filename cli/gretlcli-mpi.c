@@ -68,7 +68,8 @@ static int cli_saved_object_action (const char *line,
                                     PRN *prn);
 
 static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
-                          double *scriptval, char *fname)
+                          double *scriptval, int *single_rng,
+                          char *fname)
 {
     char **argv;
     int argc, gotfile = 0;
@@ -96,7 +97,7 @@ static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
         } else if (!strcmp(s, "-q") || !strcmp(s, "--quiet")) {
             opt |= OPT_QUIET;
         } else if (!strcmp(s, "-s") || !strcmp(s, "--single-rng")) {
-            ; /* no-op: ignored for now */
+            *single_rng = 1;
         } else if (!strncmp(s, "--scriptopt=", 12)) {
             *scriptval = atof(s + 12);
         } else if (*s == '-') {
@@ -378,6 +379,7 @@ int main (int argc, char *argv[])
     gretlopt progopt = 0;
     CMD cmd;
     PRN *prn = NULL;
+    int single_rng = 0;
     int id, np;
     int err = 0;
 
@@ -403,7 +405,8 @@ int main (int argc, char *argv[])
     if (argc < 2) {
         usage(1);
     } else {
-        err = parse_options(&argc, &argv, &progopt, &scriptval, filearg);
+        err = parse_options(&argc, &argv, &progopt, &scriptval,
+                            &single_rng, filearg);
         if (err) {
             /* bad option, or missing filename */
             usage(1);
@@ -426,7 +429,7 @@ int main (int argc, char *argv[])
         }
     }
 
-    err = libgretl_mpi_init(id, np);
+    err = libgretl_mpi_init(id, np, single_rng);
     if (err) {
         fputs("Couldn't initialize the MPI sub-system\n", stderr);
         mpi_exit(1);
