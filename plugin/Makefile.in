@@ -400,7 +400,7 @@ xml_get.la: xml_get.lo
 json_get.la: json_get.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(JSON_GLIB_LIBS)
 
-svm.la: svm.lo svmlib.lo
+svm.la: svm.lo svmlib.lo svrand.lo
 	$(LDXX) -o $@ $^ $(GRETLLIB) $(OMP_LIB) $(CLANG_LIB)
 
 regls.la: regls.lo

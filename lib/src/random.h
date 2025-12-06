@@ -24,19 +24,13 @@ void gretl_rand_init (void);
 
 void gretl_mpi_rand_init (int n, int self, int single_rng);
 
-void gretl_rand_set_seed (guint64 seed);
+void gretl_rand_set_seed (uint64_t seed);
 
-void gretl_alt_rand_set_seed (guint64 seed);
+uint32_t gretl_rand_int (void);
 
-guint32 gretl_rand_int (void);
-
-guint32 gretl_alt_rand_int (void);
-
-guint32 gretl_rand_int_max (guint32 max);
+uint32_t gretl_rand_int_max (uint32_t max);
 
 int gretl_rand_int_minmax (int *a, int n, int min, int max);
-
-int gretl_alt_rand_int_minmax (int *a, int n, int min, int max);
 
 double gretl_rand_01 (void);
 
@@ -105,7 +99,7 @@ gretl_matrix *inverse_wishart_matrix (const gretl_matrix *S,
 gretl_matrix *inverse_wishart_sequence (const gretl_matrix *S,
 					int v, int n, int *err);
 
-guint64 gretl_rand_get_seed (void);
+uint64_t gretl_rand_get_seed (void);
 
 char *gretl_rand_hex_string (int len, int *err);
 

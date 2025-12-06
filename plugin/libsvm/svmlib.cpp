@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <limits.h>
+#include <stdint.h>
 
 #include "svmlib.h"
 
@@ -23,10 +24,9 @@ typedef signed char schar;
 extern "C" FILE *gretl_fopen (const char *fname, const char *mode);
 extern "C" void gretl_push_c_numeric_locale (void);
 extern "C" void gretl_pop_c_numeric_locale (void);
-extern "C" unsigned int gretl_alt_rand_int (void);
 
-#define svrand gretl_alt_rand_int
-// #define svrand rand
+// and from svrand
+extern "C" uint32_t svrand (void);
 
 #ifndef min
 template <class T> static inline T min(T x, T y) { return (x<y)?x:y; }
@@ -1981,10 +1981,10 @@ static void multiclass_probability(int k, double **r, double *p)
 
 // Cross-validation decision values for probability estimates
 
-static void svm_binary_svc_probability(const svm_problem *prob,
-				       const svm_parameter *param,
-				       double Cp, double Cn,
-				       double& probA, double& probB)
+static void svm_binary_svc_probability (const svm_problem *prob,
+                                        const svm_parameter *param,
+                                        double Cp, double Cn,
+                                        double& probA, double& probB)
 {
     int i;
     int nr_fold = 5;
@@ -1994,12 +1994,12 @@ static void svm_binary_svc_probability(const svm_problem *prob,
     // random shuffle
     for (i=0; i<prob->l; i++) perm[i] = i;
     for (i=0; i<prob->l; i++) {
-	int j = i+svrand()%(prob->l-i);
+	int j = i + svrand() % (prob->l-i);
 	swap(perm[i], perm[j]);
     }
     for (i=0; i<nr_fold; i++) {
-	int begin = i*prob->l/nr_fold;
-	int end = (i+1)*prob->l/nr_fold;
+	int begin = i * prob->l/nr_fold;
+	int end = (i+1) * prob->l/nr_fold;
 	int j, k;
 	struct svm_problem subprob;
 
@@ -2481,7 +2481,7 @@ void svm_cross_validation (const svm_problem *prob,
 	    index[i] = perm[i];
 	for (c=0; c<nr_class; c++)
 	    for (i=0; i<count[c]; i++) {
-		int j = i+svrand()%(count[c]-i);
+		int j = i + svrand() % (count[c]-i);
 		swap(index[start[c]+j], index[start[c]+i]);
 	    }
 	for (i=0; i<nr_fold; i++) {
@@ -2512,7 +2512,7 @@ void svm_cross_validation (const svm_problem *prob,
     } else {
 	for (i=0; i<l; i++) perm[i] = i;
 	for (i=0; i<l; i++) {
-	    int j = i+svrand()%(l-i);
+	    int j = i + svrand() % (l-i);
 	    swap(perm[i], perm[j]);
 	}
 	for (i=0; i<=nr_fold; i++) {

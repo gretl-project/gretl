@@ -1,6 +1,8 @@
 /* dedicated RNG for use in generating random folds dir use with SVM */
 
 #include <stdint.h>
+#include <time.h>
+#include <stddef.h>
 
 static uint64_t smx;
 
@@ -46,7 +48,7 @@ void svrand_init (uint64_t seed)
     if (seed > 0) {
         set_xor_state(seed);
     } else {
-        set_xor_seed((uint64_t) time(NULL));
+        set_xor_state((uint64_t) time(NULL));
     }
 }
 

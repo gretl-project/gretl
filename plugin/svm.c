@@ -34,6 +34,7 @@
 # include <omp.h>
 #endif
 
+#include "svrand.h"
 #include "svmlib.h"
 
 #define DATA_DEBUG 0
@@ -112,7 +113,7 @@ struct sv_wrapper_ {
     double svr_sigma;
     int *flist;  /* array of folds IDs, if applicable */
     int *fsize;  /* array of fold sizes, if applicable */
-    unsigned seed; /* FIXME */
+    uint64_t seed;
 };
 
 struct sv_parm_info {
@@ -181,7 +182,7 @@ static void sv_wrapper_init (sv_wrapper *w, const DATASET *dset)
     w->svr_sigma = NADBL;
     w->flist = NULL;
     w->fsize = NULL;
-    w->seed = time(NULL);
+    w->seed = (uint64_t) time(NULL);
 }
 
 static void sv_wrapper_free (sv_wrapper *w)
@@ -208,12 +209,12 @@ static void maybe_set_svm_seed (const sv_wrapper *w)
 	static int set;
 
 	if (!set) {
-	    gretl_alt_rand_set_seed(w->seed);
+	    svrand_init(w->seed);
 	    set = 1;
 	}
     } else {
 	/* set the seed on each x-validation run */
-	gretl_alt_rand_set_seed(w->seed);
+	svrand_init(w->seed);
     }
 }
 
@@ -2366,7 +2367,7 @@ static int call_mpi_cross_validation (sv_data *data,
 	return E_ALLOC;
     }
 
-    /* arrange to get rand() in sync across the processes */
+    /* arrange to get RNG in sync across the processes */
     gretl_mpi_bcast(&w->seed, GRETL_TYPE_UINT64, 0);
 
     if (w->rank == 0) {
@@ -2581,35 +2582,8 @@ static int get_optional_int (gretl_bundle *b, const char *key,
     return 0;
 }
 
-static int get_optional_unsigned (gretl_bundle *b, const char *key,
-				  unsigned int *uval, int *err)
-{
-    GretlType type = 0;
-    void *ptr;
-
-    ptr = gretl_bundle_get_data(b, key, &type, NULL, NULL);
-
-    if (ptr != NULL) {
-	if (type == GRETL_TYPE_INT) {
-	    *uval = *(int *) ptr;
-	    return 1;
-	} else if (type == GRETL_TYPE_DOUBLE) {
-	    *uval = *(double *) ptr;
-	    return 1;
-	} else if (type == GRETL_TYPE_UINT32) {
-	    *uval = *(unsigned *) ptr;
-	    return 1;
-	} else {
-	    *err = E_TYPES;
-	}
-    }
-
-    return 0;
-}
-
-/* Determine if @s is a recognized parameter key: we
-   do this so we can flag anything that may be a
-   mistyped key.
+/* Determine if @s is a recognized parameter key: we do this so we can
+   flag anything that may be a mistyped key.
 */
 
 static int is_w_parm (const char *s)
@@ -2669,7 +2643,6 @@ static int read_params_bundle (gretl_bundle *bparm,
 {
     gretl_array *A;
     int no_savemod = 0;
-    unsigned int uval;
     int ival, err = 0;
 
     /* got any bad keys in @bparm? */
@@ -2760,8 +2733,8 @@ static int read_params_bundle (gretl_bundle *bparm,
 	}
     }
 
-    if (get_optional_unsigned(bparm, "seed", &uval, &err)) {
-	wrap->seed = uval;
+    if (gretl_bundle_has_key(bparm, "seed")) {
+        wrap->seed = gretl_bundle_get_uint64(bparm, "seed", &err);
     }
 
     if (get_optional_int(bparm, "refold", &ival, &err) && ival != 0) {
@@ -3345,7 +3318,7 @@ static void maybe_save_auto_seed (sv_wrapper *w, gretl_bundle *b)
 	       gretl_bundle_has_key(b, "search") ||
 	       gretl_bundle_has_key(b, "grid")) {
 	/* OK, randomized folds employed */
-	gretl_bundle_set_uint32(b, "autoseed", w->seed);
+	gretl_bundle_set_uint64(b, "autoseed", w->seed);
     }
 }
 

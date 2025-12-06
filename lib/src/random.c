@@ -56,9 +56,6 @@
 
 static uint64_t xor_seed;
 
-/* alternate RNG */
-static uint64_t alt_xor_seed;
-
 static inline double double_from_uint64 (uint64_t u)
 {
     /* Set the exponent to 0x3FF (for 1.0) and the sign bit to 0;
@@ -179,7 +176,7 @@ void gretl_mpi_rand_init (int n, int self, int single_rng)
  * Returns: the value of the seed for gretl's PRNG.
  */
 
-guint64 gretl_rand_get_seed (void)
+uint64_t gretl_rand_get_seed (void)
 {
     return xor_seed;
 }
@@ -193,7 +190,7 @@ guint64 gretl_rand_get_seed (void)
  * automatically.
  */
 
-void gretl_rand_set_seed (guint64 seed)
+void gretl_rand_set_seed (uint64_t seed)
 {
     if (seed > 0) {
         xor_seed = (uint64_t) seed;
@@ -201,18 +198,6 @@ void gretl_rand_set_seed (guint64 seed)
     } else {
         xor_seed = get_auto_seed();
         set_xor_state(xor_seed);
-    }
-}
-
-void gretl_alt_rand_set_seed (guint64 seed)
-{
-    // FIXME
-    if (seed > 0) {
-        alt_xor_seed = (uint64_t) seed;
-        //set_alt_xor_state(alt_xor_seed);
-    } else {
-        alt_xor_seed = get_auto_seed();
-        //set_alt_xor_state(alt_xor_seed);
     }
 }
 
@@ -429,22 +414,20 @@ int gretl_rand_normal_full (double *a, int t1, int t2,
     return 0;
 }
 
-static guint32 rand_int_range (guint32 begin,
-                               guint32 end,
-                               int alt)
+static uint32_t rand_int_range (uint32_t begin, uint32_t end)
 {
-    guint32 dist = end - begin;
-    guint32 rval = 0;
+    uint32_t dist = end - begin;
+    uint32_t rval = 0;
 
     if (dist > 0) {
 	/* maxval is set to the predecessor of the greatest
 	   multiple of dist less than or equal to 2^32
 	*/
-	guint32 maxval;
+	uint32_t maxval;
 
 	if (dist <= 0x80000000u) { /* 2^31 */
 	    /* maxval = 2^32 - 1 - (2^32 % dist) */
-	    guint32 rem = (0x80000000u % dist) * 2;
+	    uint32_t rem = (0x80000000u % dist) * 2;
 
 	    if (rem >= dist) rem -= dist;
 	    maxval = 0xffffffffu - rem;
@@ -452,17 +435,9 @@ static guint32 rand_int_range (guint32 begin,
 	    maxval = dist - 1;
 	}
 
-	if (alt) {
-	    do {
-                /* FIXME */
-                //rval = alt_rand_i32();
-		rval = rand_i32();
-	    } while (rval > maxval);
-	} else {
-	    do {
-		rval = rand_i32();
-	    } while (rval > maxval);
-	}
+        do {
+            rval = rand_i32();
+        } while (rval > maxval);
 
 	rval %= dist;
     }
@@ -504,9 +479,20 @@ int gretl_rand_uniform_minmax (double *a, int t1, int t2,
     return 0;
 }
 
-static int real_gretl_rand_int_minmax (int *a, int n,
-				       int min, int max,
-				       int alt)
+/**
+ * gretl_rand_int_minmax:
+ * @a: target array.
+ * @n: length of array.
+ * @min: lower closed bound of range.
+ * @max: upper closed bound of range.
+ *
+ * Fill array @a of length @n with pseudo-random drawings
+ * from the uniform distribution on [@min, @max].
+ *
+ * Returns: 0 on success, 1 on invalid input.
+ */
+
+int gretl_rand_int_minmax (int *a, int n, int min, int max)
 {
     int i, err = 0;
 
@@ -526,50 +512,11 @@ static int real_gretl_rand_int_minmax (int *a, int n,
 	}
 
 	for (i=0; i<n; i++) {
-	    a[i] = rand_int_range(min, max + 1, alt) - offset;
+	    a[i] = rand_int_range(min, max + 1) - offset;
 	}
     }
 
-    return err;
-}
-
-/**
- * gretl_rand_int_minmax:
- * @a: target array.
- * @n: length of array.
- * @min: lower closed bound of range.
- * @max: upper closed bound of range.
- *
- * Fill array @a of length @n with pseudo-random drawings
- * from the uniform distribution on [@min, @max], using the
- * Mersenne Twister.
- *
- * Returns: 0 on success, 1 on invalid input.
- */
-
-int gretl_rand_int_minmax (int *a, int n, int min, int max)
-{
-    return real_gretl_rand_int_minmax(a, n, min, max, 0);
-}
-
-/**
- * gretl_alt_rand_int_minmax:
- * @a: target array.
- * @n: length of array.
- * @min: lower closed bound of range.
- * @max: upper closed bound of range.
- *
- * Fill array @a of length @n with pseudo-random drawings
- * from the uniform distribution on [@min, @max], using a
- * Mersenne Twister which is independent of the main one
- * employed by libgretl.
- *
- * Returns: 0 on success, 1 on invalid input.
- */
-
-int gretl_alt_rand_int_minmax (int *a, int n, int min, int max)
-{
-    return real_gretl_rand_int_minmax(a, n, min, max, 1);
+    return err;    
 }
 
 static int already_selected (double *a, int n, double val,
@@ -629,10 +576,10 @@ int gretl_rand_uniform_int_minmax (double *a, int t1, int t2,
 	}
 
 	for (t=t1; t<=t2; t++) {
-	    x = rand_int_range(min, max + 1, 0);
+	    x = rand_int_range(min, max + 1);
 	    if (opt & OPT_O) {
 		while (already_selected(a, i, x, offset)) {
-		    x = rand_int_range(min, max + 1, 0);
+		    x = rand_int_range(min, max + 1);
 		}
 	    }
 	    a[t] = x - offset;
@@ -1499,9 +1446,9 @@ gretl_matrix *gretl_rand_dirichlet (const gretl_vector *a,
  * [0, max-1].
  */
 
-guint32 gretl_rand_int_max (unsigned int max)
+uint32_t gretl_rand_int_max (unsigned int max)
 {
-    return rand_int_range(0, max, 0);
+    return rand_int_range(0, max);
 }
 
 /**
@@ -1511,16 +1458,9 @@ guint32 gretl_rand_int_max (unsigned int max)
  * [0, 2^32-1].
  */
 
-guint32 gretl_rand_int (void)
+uint32_t gretl_rand_int (void)
 {
     return rand_i32();
-}
-
-guint32 gretl_alt_rand_int (void)
-{
-    // FIXME
-    return 0;
-    // return alt_rand_i32();
 }
 
 static double halton (int i, int base)
@@ -1881,7 +1821,7 @@ char *gretl_rand_hex_string (int len, int *err)
 	return ret;
     }
 
-    real_gretl_rand_int_minmax(ivals, len, 0, 15, 0);
+    gretl_rand_int_minmax(ivals, len, 0, 15);
 
     for (i=0; i<len; i++) {
 	ret[i] = src[ivals[i]];

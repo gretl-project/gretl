@@ -2809,16 +2809,16 @@ static int real_regls_xv_mpi (regls_info *ri)
 
     if (ri->randfolds) {
 	/* generate the same random folds in all processes */
-	unsigned seed;
+	uint64_t seed;
 
 	if (rank == 0) {
 	    if (gretl_bundle_has_key(ri->b, "seed")) {
-		seed = gretl_bundle_get_uint32(ri->b, "seed", NULL);
+		seed = gretl_bundle_get_uint64(ri->b, "seed", NULL);
 	    } else {
 		seed = gretl_rand_get_seed();
 	    }
 	}
-	gretl_mpi_bcast(&seed, GRETL_TYPE_UINT32, 0);
+	gretl_mpi_bcast(&seed, GRETL_TYPE_UINT64, 0);
 	gretl_rand_set_seed(seed);
 	randomize_rows(ri->X, ri->y);
     }
