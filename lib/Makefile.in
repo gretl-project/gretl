@@ -57,7 +57,7 @@ quiet_build = @quiet_build@
 
 ifeq ($(DARWIN_RPATH),)
   RPATH = $(libdir)
-  LIBDEF = -DLIBDIR=\"$(libdir)\"  
+  LIBDEF = -DLIBDIR=\"$(libdir)\"
 else
   RPATH = $(DARWIN_RPATH)
 endif
@@ -77,7 +77,7 @@ endif
 ifeq ($(quiet_build),yes)
   AMP = @
   CCECHO = @echo "  CC    $@"
-  LDECHO = @echo "  LD    $@" 
+  LDECHO = @echo "  LD    $@"
   CCV = $(CC) $(SIMD_OPT) $(OMP_OPT) > /dev/null
 else
   CCV = $(CC) $(SIMD_OPT) $(OMP_OPT)
@@ -324,24 +324,32 @@ override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(XML_CFLAGS) $(GLIB_CFLAGS) \
 	$(GMP_CFLAGS) $(FFTW_CFLAGS) $(CURL_CFLAGS) $(GSF_CFLAGS) $(RLIB_CFLAGS) \
 	$(MPI_CFLAGS) -DHAVE_CONFIG_H $(LIBDEF)
 
-COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS) 
+RCFLAGS = -I.. -I$(topsrc) -I$(libsrc) $(GLIB_CFLAGS) $(MPI_CFLAGS) -DHAVE_CONFIG_H $(LIBDEF)
 
-%.lo: %.c
-	$(CCECHO)
-	$(AMP)$(COMPILE) -o $@ $<
-	$(AMP)$(CCV) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d
+COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS)
+RCOMPIL = $(LIBTOOL) --mode=compile $(CCV) -O3 -c $(RCFLAGS)
 
 $(LIBGRETL): .deps $(LOBJS) $(AUX_LOBJ) Makefile
 	$(LDECHO)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(LOBJS) $(AUX_LOBJ) \
 	-rpath $(RPATH) $(LIBS) $(VERSION_INFO) $(BINPATH)
 
+%.lo: %.c
+	$(CCECHO)
+	$(AMP)$(COMPILE) -o $@ $<
+	$(AMP)$(CCV) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d
+
+random.lo: random.c
+	$(CCECHO)
+	$(AMP)$(RCOMPIL) -o $@ $<
+	$(AMP)$(CCV) $(CFLAGS) -MM -MT random.lo $< > .deps/random.d
+
 .deps:
 	$(AMP)mkdir $@
 
 -include .deps/*.d
 
-.PHONY: 
+.PHONY:
 
 install: $(LIBGRETL) install-data
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $< $(DESTDIR)$(libdir)/$<
