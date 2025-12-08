@@ -3292,10 +3292,12 @@ static int real_seasonals (DATASET *dset, int ref, int center,
         }
     }
 
+#if 0 /* 2025-12-06: this can cause trouble */
     if (dated_weekly_data(dset)) {
         /* allow for up to 53 ISO 8601 weeks */
         pd = 53;
     }
+#endif
 
     if (ref < 0 || ref > pd) {
         return E_INVARG;
