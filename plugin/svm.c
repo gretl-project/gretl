@@ -1768,7 +1768,7 @@ static void sv_grid_default (sv_grid *g, sv_parm *parm)
 	g->row[G_C].step = 1;
     } else {
 	g->row[G_C].start = -5;
-	g->row[G_C].stop = 8; /* grid.py has 15 (too big?) */
+	g->row[G_C].stop = 9; /* grid.py has 15 (too big?) */
 	g->row[G_C].step = 2;
     }
 
