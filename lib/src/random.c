@@ -82,7 +82,7 @@ static uint64_t get_auto_seed (void)
 
 #ifdef G_OS_WIN32
     /* consider using BCryptGenRandom() ? */
-    u = time(NULL);
+    u = _time64(NULL);
 #else
     int fd = open("/dev/urandom", O_RDONLY);
 
@@ -91,7 +91,7 @@ static uint64_t get_auto_seed (void)
     } else {
         ssize_t sz = read(fd, &u, sizeof(uint64_t));
 
-        if (sz == -1) {
+        if (sz != sizeof(uint64_t)) {
             u = time(NULL);
         }
     }

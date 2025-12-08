@@ -8,7 +8,7 @@ static uint64_t smx;
 
 static inline uint64_t splitmix64_next() {
     uint64_t z = (smx += 0x9e3779b97f4a7c15);
-        
+
     z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9;
     z = (z ^ (z >> 27)) * 0x94d049bb133111eb;
     return z ^ (z >> 31);
@@ -48,7 +48,11 @@ void svrand_init (uint64_t seed)
     if (seed > 0) {
         set_xor_state(seed);
     } else {
+#idef _WIN32
+        set_xor_state((uint64_t) _time64(NULL));
+#else
         set_xor_state((uint64_t) time(NULL));
+#endif
     }
 }
 
