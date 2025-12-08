@@ -26,7 +26,6 @@ extern "C" void gretl_pop_c_numeric_locale (void);
 extern "C" unsigned int gretl_alt_rand_int (void);
 
 #define svrand gretl_alt_rand_int
-// #define svrand rand
 
 #ifndef min
 template <class T> static inline T min(T x, T y) { return (x<y)?x:y; }
