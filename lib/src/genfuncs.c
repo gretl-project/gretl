@@ -3292,12 +3292,10 @@ static int real_seasonals (DATASET *dset, int ref, int center,
         }
     }
 
-#if 0 /* 2025-12-06: this can cause trouble */
     if (dated_weekly_data(dset)) {
         /* allow for up to 53 ISO 8601 weeks */
         pd = 53;
     }
-#endif
 
     if (ref < 0 || ref > pd) {
         return E_INVARG;
@@ -3347,7 +3345,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
         return E_ALLOC;
     }
 
-    for (k=1, i=1; i<=pd; i++) {
+    for (i=1, k=1; i<=pd; i++) {
         if (i == ref) {
             continue;
         }
@@ -3404,7 +3402,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
             mm *= 10;
         }
 
-        for (k=1, i=1; i<=list[0]; i++) {
+        for (i=1, k=1; i<=list[0]; i++) {
             vi = list[i];
             if (k == ref) k++;
             for (t=0; t<dset->n; t++) {
@@ -3422,7 +3420,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
         for (t=0; t<dset->n; t++) {
             ntolabel(datestr, t, dset);
             wknum = iso_week_from_date(datestr);
-            for (k=1, i=1; i<=list[0]; i++) {
+            for (i=1, k=1; i<=list[0]; i++) {
                 vi = list[i];
                 if (k+1 == ref) k++;
                 dset->Z[vi][t] = (wknum == k)? 1 : 0;
@@ -3434,7 +3432,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 
         for (t=0; t<dset->n; t++) {
             pp = (t + p0) % pd;
-            for (k=0, i=1; i<=list[0]; i++) {
+            for (i=1, k=0; i<=list[0]; i++) {
                 vi = list[i];
                 if (k+1 == ref) k++;
                 dset->Z[vi][t] = (pp == k)? 1 : 0;

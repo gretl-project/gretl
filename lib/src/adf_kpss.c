@@ -817,16 +817,28 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
     }
 }
 
+static gretlopt ur_lsq_opt (const DATASET *dset, gretlopt opt)
+{
+    if (dset->pd == 52 && (opt & OPT_D)) {
+        /* weekly seasonals present */
+        return OPT_A;
+    } else {
+        return OPT_A | OPT_Z;
+    }
+}
+
 /* test the lag order down using the t-statistic criterion */
 
 static int t_adjust_order (adf_info *ainfo, DATASET *dset,
-			   int *err, PRN *prn)
+			   gretlopt opt, int *err, PRN *prn)
 {
-    gretlopt kmod_opt = (OPT_A | OPT_Z);
+    gretlopt kmod_opt;
     MODEL kmod;
     int kmax = ainfo->kmax;
     double tstat, pval;
     int k, pos;
+
+    kmod_opt = ur_lsq_opt(dset, opt);
 
     for (k=kmax; k>0; k--) {
 	kmod = lsq(ainfo->list, dset, OLS, kmod_opt);
@@ -909,7 +921,7 @@ static int ic_adjust_order (adf_info *ainfo, int kmethod,
 			    PRN *prn)
 {
     MODEL kmod;
-    gretlopt kmod_opt = (OPT_A | OPT_Z);
+    gretlopt kmod_opt;
     double IC, ICmin = 0;
     double sum_ylag2 = 0;
     int kmax = ainfo->kmax;
@@ -918,6 +930,8 @@ static int ic_adjust_order (adf_info *ainfo, int kmethod,
     int save_t2 = dset->t2;
     int use_MIC = 0;
     int *tmplist;
+
+    kmod_opt = ur_lsq_opt(dset, opt);
 
     tmplist = gretl_list_copy(ainfo->list);
     if (tmplist == NULL) {
@@ -1356,7 +1370,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 {
     MODEL dfmod;
     gretlopt eg_opt = OPT_NONE;
-    gretlopt df_mod_opt = (OPT_A | OPT_Z);
+    gretlopt df_mod_opt;
     int *biglist = NULL;
     int orig_nvars = dset->v;
     int blurb_done = 0;
@@ -1364,6 +1378,8 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
     int test_down = 0;
     int test_num = 0;
     int i, err;
+
+    df_mod_opt = ur_lsq_opt(dset, opt);
 
     /* (most of) this may have been done already
        but it won't hurt to check here */
@@ -1508,7 +1524,8 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	if (test_down) {
 	    /* determine the optimal lag order */
 	    if (test_down == k_TSTAT) {
-		ainfo->order = t_adjust_order(ainfo, dset, &err, prn);
+		ainfo->order = t_adjust_order(ainfo, dset, opt,
+                                              &err, prn);
 	    } else {
 		ainfo->order = ic_adjust_order(ainfo, test_down,
 					       dset, opt, test_num,
