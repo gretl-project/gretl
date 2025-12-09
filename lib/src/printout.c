@@ -35,7 +35,10 @@
 
 static int gretl_digits = 6;
 
-static int get_print_range (int len, int *start, int *stop);
+#define have_range_option(o) (o & (OPT_R | OPT_H | OPT_T))
+
+static int get_print_range (gretlopt opt, int len,
+                            int *start, int *stop);
 
 void bufspace (int n, PRN *prn)
 {
@@ -2160,12 +2163,13 @@ static void string_print_range (const char *s, int lmin, int lmax,
 
 static int print_evaled_object_range (const char *s,
                                       DATASET *dset,
+                                      gretlopt opt,
                                       PRN *prn)
 {
     int start, stop;
     int err;
 
-    err = get_print_range(-1, &start, &stop);
+    err = get_print_range(opt, -1, &start, &stop);
 
     if (!err) {
         gchar *tmp;
@@ -2193,8 +2197,8 @@ static int print_listed_objects (const char *s,
 
     if (strcspn(s, syms) < strlen(s)) {
 	/* try treating as expression to be evaluated */
-        if (opt & OPT_R) {
-            return print_evaled_object_range(s, (DATASET *) dset, prn);
+        if (have_range_option(opt)) {
+            return print_evaled_object_range(s, (DATASET *) dset, opt, prn);
         } else {
             return generate(s, (DATASET *) dset, GRETL_TYPE_NONE, OPT_P, prn);
         }
@@ -2206,7 +2210,7 @@ static int print_listed_objects (const char *s,
 	if (uv == NULL) {
 	    err = E_UNKVAR;
 	    break;
-	} else if (opt & OPT_R) {
+	} else if (have_range_option(opt)) {
 	    GretlType t = user_var_get_type(uv);
 	    int start, stop;
 
@@ -2214,7 +2218,7 @@ static int print_listed_objects (const char *s,
 		gretl_array *a = user_var_get_value(uv);
 		int len = gretl_array_get_length(a);
 
-		err = get_print_range(len, &start, &stop);
+		err = get_print_range(opt, len, &start, &stop);
 		if (!err) {
 		    err = gretl_array_print_range(a, start, stop+1, prn);
 		}
@@ -2222,7 +2226,7 @@ static int print_listed_objects (const char *s,
 		gretl_matrix *m = user_var_get_value(uv);
 		int len = gretl_matrix_rows(m);
 
-		err = get_print_range(len, &start, &stop);
+		err = get_print_range(opt, len, &start, &stop);
 		if (!err) {
 		    gretl_matrix_print_range(m, name, start, stop+1, prn);
 		}
@@ -2230,7 +2234,7 @@ static int print_listed_objects (const char *s,
 		const char *s = user_var_get_value(uv);
 		int len = line_count(s);
 
-		err = get_print_range(len, &start, &stop);
+		err = get_print_range(opt, len, &start, &stop);
 		if (!err) {
 		    string_print_range(s, start, stop+1, prn);
 		}
@@ -2333,9 +2337,33 @@ static void bufprint_string (char *buf, const char *s,
     }
 }
 
-static int get_print_range (int len, int *start, int *stop)
+static const char *get_range_string (gretlopt opt)
 {
-    const char *s = get_optval_string(PRINT, OPT_R);
+    if (opt & OPT_R) {
+        /* --range */
+        return get_optval_string(PRINT, OPT_R);
+    } else {
+        /* --head or --tail */
+        gretlopt head = (opt & OPT_H);
+        static char ht[16];
+        const char *s;
+
+        s = get_optval_string(PRINT, head ? OPT_H : OPT_T);
+        if (s == NULL) {
+            return head ? "1:5" : "-5:";
+        } else if (head) {
+            sprintf(ht, "1:%s", s);
+        } else {
+            sprintf(ht, "-%s:", s);
+        }
+        return ht;
+    }
+}
+
+static int get_print_range (gretlopt opt, int len,
+                            int *start, int *stop)
+{
+    const char *s = get_range_string(opt);
     int err = 0;
 
     if (s == NULL || *s == '\0' || strchr(s, ':') == NULL) {
@@ -2624,6 +2652,11 @@ int printdata (const int *list, const char *ostr,
     int *plist = NULL;
     int err = 0;
 
+    err = incompatible_options(opt, OPT_R | OPT_H | OPT_T);
+    if (err) {
+        return err;
+    }
+
     if (list != NULL && list[0] == 0) {
 	/* an explicitly empty list was given */
 	if (ostr == NULL) {
@@ -2683,13 +2716,16 @@ int printdata (const int *list, const char *ostr,
 	}
     }
 
-    if (opt & OPT_R) {
-	/* --range */
+    if (have_range_option(opt)) {
+	/* --range, --head or --tail */
 	int save_t1 = dset->t1;
 	int save_t2 = dset->t2;
 	int start = 0, stop = 0;
 
-	err = get_print_range(sample_size(dset), &start, &stop);
+        /* --byobs is implicit */
+        opt |= OPT_O;
+
+	err = get_print_range(opt, sample_size(dset), &start, &stop);
 	if (err) {
 	    return err;
 	} else if (stop < start) {
