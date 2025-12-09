@@ -48,7 +48,7 @@ void svrand_init (uint64_t seed)
     if (seed > 0) {
         set_xor_state(seed);
     } else {
-#idef _WIN32
+#ifdef _WIN32
         set_xor_state((uint64_t) _time64(NULL));
 #else
         set_xor_state((uint64_t) time(NULL));
