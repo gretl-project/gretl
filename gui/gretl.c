@@ -584,7 +584,43 @@ static void protect_against_ubuntu (void)
     }
 }
 
-#endif /* end Linux-specific */
+/* Check for the combination of (KDE || Plasma) plus Wayland, which is
+   not going to work properly with GTK3 and requires a
+   workaround. Note that KDE/Plasma with x11 is not problematic.
+*/
+
+static void check_for_plasma_wayland (void)
+{
+    char *estr = getenv("XDG_SESSION_TYPE");
+    gboolean problem = FALSE;
+
+    if (estr == NULL || strcmp(estr, "wayland") != 0) {
+        return;
+    }
+
+    estr = getenv("KDE_FULL_SESSION");
+    if (estr != NULL && strcmp(estr, "1") == 0) {
+        /* KDE Plasma sets KDE_FULL_SESSION=1 */
+        problem = TRUE;
+    } else {
+        estr = getenv("XDG_CURRENT_DESKTOP");
+        if (estr != NULL && strstr(estr, "KDE")) {
+            problem = TRUE;
+        } else {
+            estr = getenv("DESKTOP_SESSION");
+            if (estr != NULL && strstr(estr, "plasma")) {
+                problem = TRUE;
+            }
+        }
+    }
+
+    if (problem) {
+        fprintf(stderr, "Running under Plasma Wayland => workaround needed\n");
+        setenv("GDK_BACKEND", "x11", 1);
+    }
+}
+
+#endif /* end Linux-specific checks */
 
 /* callback from within potentially lengthy libgretl
    operations: try to avoid having the GUI become
@@ -757,6 +793,7 @@ int main (int argc, char **argv)
 #elif !defined(__APPLE__)
     /* Linux-specific */
     protect_against_ubuntu();
+    check_for_plasma_wayland();
 #endif
 
     gui_nls_init();
