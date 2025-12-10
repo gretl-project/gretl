@@ -51,7 +51,8 @@ struct gnuplot_info_ {
     int n_fvals;         /* number of factor values */
     int fid;             /* factor variable ID */
     int *flist;          /* lisy of y-vars to be factorized */
-    int *withlist;
+    int *withlist;       /* for recording 'with' gnuplot options */
+    int *y2vars;         /* record of variables for second y axis */
     int band;
     double ybase;
 };
@@ -72,10 +73,12 @@ void make_time_tics (gnuplot_info *gi,
 void print_x_range (gnuplot_info *gi, FILE *fp);
 
 void check_for_yscale (gnuplot_info *gi,
-                       const double **Z,
-                       int *oddman);
+                       const double **Z);
 
-void set_plot_withstr (gnuplot_info *gi, int i, char *str);
+int is_y2_var (gnuplot_info *gi, int i);
+
+void set_plot_withstr (gnuplot_info *gi,
+                       int i, char *str);
 
 void print_user_y_data (const double *x,
                         const double *y,

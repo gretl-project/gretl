@@ -749,14 +749,13 @@ static void recession_bars_plot (band_info *bi,
 {
     const double *y;
     char wspec[16] = {0};
-    int oddman = 0;
     int i;
 
     /* write out the rectangles as objects */
     write_rectangles(bi, gi, x, dset, fp);
 
     if (!(opt & OPT_Y)) {
-	check_for_yscale(gi, (const double **) dset->Z, &oddman);
+	check_for_yscale(gi, (const double **) dset->Z);
 	if (gi->flags & GPT_Y2AXIS) {
 	    fputs("set ytics nomirror\n", fp);
 	    fputs("set y2tics\n", fp);
@@ -772,8 +771,8 @@ static void recession_bars_plot (band_info *bi,
 	set_plot_withstr(gi, i, wspec);
 	if (gi->flags & GPT_Y2AXIS) {
 	    fprintf(fp, "'-' using 1:2 axes %s title \"%s (%s)\" %s lt %d",
-		    (i == oddman)? "x1y2" : "x1y1", iname,
-		    (i == oddman)? _("right") : _("left"),
+		    is_y2_var(gi, i) ? "x1y2" : "x1y1", iname,
+		    is_y2_var(gi, i) ? _("right") : _("left"),
 		    wspec, i);
 	} else {
 	    fprintf(fp, "'-' using 1:2 title \"%s\" %s lt %d", iname, wspec, i);

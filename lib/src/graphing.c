@@ -839,7 +839,7 @@ static int maybe_add_factorization_list (gnuplot_info *gi,
             gchar **strs = g_strsplit(s, ",", 0);
             int ns = 0;
 
-            for (i=0; strs[i]!=NULL; i++) {
+            for (i=0; strs[i] != NULL; i++) {
                 vf = current_series_index(dset, strs[i]);
                 k = in_gretl_list(gi->list, vf);
                 if (k == 0 || k == lmax) {
@@ -3468,15 +3468,18 @@ void print_x_range (gnuplot_info *gi, FILE *fp)
     }
 }
 
-/* two or more y vars plotted against some x: test to see if we want
-   to use two y axes */
+/* Two or more y vars plotted against some x: test to see if we want
+   to use two y axes. We come here only if the user has not already
+   specified one or more variables to place on the second y axis.
+*/
 
-void check_for_yscale (gnuplot_info *gi, const double **Z, int *oddman)
+void check_for_yscale (gnuplot_info *gi, const double **Z)
 {
     double ymin[6], ymax[6];
     double ratio;
     int lmax = gi->list[0];
     int i, j, oddcount;
+    int oddman = 0;
 
 #if GP_DEBUG
     fprintf(stderr, "gnuplot: doing check_for_yscale, listlen %d\n",
@@ -3511,32 +3514,77 @@ void check_for_yscale (gnuplot_info *gi, const double **Z, int *oddman)
             }
         }
         if (oddcount == lmax - 2) {
-            /* series at list position i differs considerably in scale
-               from all the others in the list */
-            *oddman = i;
+            /* the series at list position i differs considerably
+               in scale from all the others in the list
+            */
+            oddman = i;
             break;
         }
     }
 
-    if (*oddman == 0) {
+    if (oddman == 0) {
         gi->flags &= ~GPT_Y2AXIS;
+    } else {
+        gi->y2vars = gretl_list_new(1);
+        gi->y2vars[1] = gi->list[oddman]; /* ? */
+        fprintf(stderr, "HERE oddman = %d, gi->list[%d] = %d\n",
+                oddman, oddman, gi->list[oddman]);
     }
 }
 
-static int get_y2_oddman (gnuplot_info *gi,
-                          const DATASET *dset)
+static int get_y2_vars (gnuplot_info *gi,
+                        const DATASET *dset)
 {
-    const char *targ = get_optval_string(GNUPLOT, OPT_D);
-    int i, vi;
+    const char *s = get_optval_string(GNUPLOT, OPT_D);
+    const int *plist;
+    int i, pos;
+    int err = 0;
 
-    for (i=1; i<=gi->list[0]; i++) {
-        vi = gi->list[i];
-        if (!strcmp(targ, dset->varname[vi])) {
-            return i;
+    if ((plist = get_list_by_name(s)) != NULL) {
+        /* got a names list */
+        for (i=1; i<=plist[0]; i++) {
+            if (!in_gretl_list(gi->list, plist[i])) {
+                err = E_INVARG;
+                break;
+            }
+        }
+        if (!err) {
+            gi->y2vars = gretl_list_copy(plist);
+        }
+    } else if (strchr(s, ',')) {
+        /* comma-separated terms */
+        gchar **strs = g_strsplit(s, ",", 0);
+
+        for (i=0; strs[i] != NULL; i++) {
+            pos = gp_list_pos(strs[i], gi->list, dset);
+            if (pos <= 0) {
+                err = E_INVARG;
+            } else {
+                gretl_list_append_term(&gi->y2vars, gi->list[pos]);
+            }
+        }
+        g_strfreev(strs);
+    } else {
+        /* a single term */
+        gi->y2vars = gretl_list_new(1);
+        pos = gp_list_pos(s, gi->list, dset);
+        if (pos <= 0) {
+            err = E_INVARG;
+        } else {
+            gi->y2vars[1] = gi->list[pos];
         }
     }
 
-    return 0;
+    return err;
+}
+
+int is_y2_var (gnuplot_info *gi, int i)
+{
+    if (gi->y2vars != NULL) {
+        return in_gretl_list(gi->y2vars, gi->list[i]);
+    } else {
+        return 0;
+    }
 }
 
 static int print_gp_factorized_data (gnuplot_info *gi,
@@ -3745,6 +3793,7 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
     gi->list = NULL;
     gi->fvals = NULL;
     gi->flist = NULL;
+    gi->y2vars = NULL;
     gi->n_fvals = 0;
     gi->fid = 0;
     gi->band = 0;
@@ -3833,6 +3882,7 @@ void clear_gpinfo (gnuplot_info *gi)
     free(gi->flist);
     gretl_matrix_free(gi->fvals);
     free(gi->withlist);
+    free(gi->y2vars);
 }
 
 #if GP_DEBUG
@@ -4519,7 +4569,6 @@ int gnuplot (const int *plotlist, const char *literal,
     char keystr[48] = {0};
     gchar *fitline = NULL;
     int time_fit = 0;
-    int oddman = 0;
     int many = 0;
     int set_xrange = 1;
     PlotType ptype;
@@ -4561,9 +4610,8 @@ int gnuplot (const int *plotlist, const char *literal,
     }
 
     if ((opt & OPT_D) && gi.list[0] > 1) {
-        oddman = get_y2_oddman(&gi, dset);
-        if (oddman == 0) {
-            err = E_DATA;
+        err = get_y2_vars(&gi, dset);
+        if (err) {
             goto bailout;
         }
     }
@@ -4764,8 +4812,8 @@ int gnuplot (const int *plotlist, const char *literal,
     }
 
     if (gi.flags & GPT_Y2AXIS) {
-        if (oddman == 0) {
-            check_for_yscale(&gi, (const double **) dset->Z, &oddman);
+        if (gi.y2vars == NULL) {
+            check_for_yscale(&gi, (const double **) dset->Z);
         }
         if (gi.flags & GPT_Y2AXIS) {
             fputs("set ytics nomirror\n", fp);
@@ -4803,9 +4851,9 @@ int gnuplot (const int *plotlist, const char *literal,
             set_lwstr(lwstr);
             set_plot_withstr(&gi, i, withstr);
             fprintf(fp, " '-' using 1:2 axes %s title \"%s (%s)\" %s%s%s",
-                    (i == oddman)? "x1y2" : "x1y1",
+                    is_y2_var(&gi, i) ? "x1y2" : "x1y1",
                     plotname(dset, gi.list[i], 1),
-                    (i == oddman)? _("right") : _("left"),
+                    is_y2_var(&gi, i) ? _("right") : _("left"),
                     withstr,
                     lwstr,
                     (i == lmax - 1)? "\n" : ", \\\n");
