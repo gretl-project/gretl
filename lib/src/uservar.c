@@ -2444,7 +2444,7 @@ int print_user_var_by_name (const char *name,
             gretl_matrix_print_to_prn(tmp, name, prn);
         }
     } else if (u->type == GRETL_TYPE_BUNDLE) {
-        if (opt & OPT_T) {
+        if (opt & OPT_Y) {
             gretl_bundle_print_tree(u->ptr, prn);
         } else {
             gretl_bundle_print(u->ptr, prn);
