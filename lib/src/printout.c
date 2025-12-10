@@ -2344,7 +2344,7 @@ static const char *get_range_string (gretlopt opt)
         return get_optval_string(PRINT, OPT_R);
     } else {
         /* --head or --tail */
-        gretlopt head = (opt & OPT_H);
+        int head = (opt & OPT_H)? 1 : 0;
         static char ht[16];
         const char *s;
 
