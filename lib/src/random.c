@@ -71,7 +71,7 @@ static inline double double_from_uint64 (uint64_t u)
     return ret - 1.0;
 }
 
-static uint32_t rand_i32 (void)
+static uint32_t randi32 (void)
 {
     return (uint32_t) (xor_i64() >> 32);
 }
@@ -436,7 +436,7 @@ static uint32_t rand_int_range (uint32_t begin, uint32_t end)
 	}
 
         do {
-            rval = rand_i32();
+            rval = randi32();
         } while (rval > maxval);
 
 	rval %= dist;
@@ -1460,7 +1460,7 @@ uint32_t gretl_rand_int_max (unsigned int max)
 
 uint32_t gretl_rand_int (void)
 {
-    return rand_i32();
+    return randi32();
 }
 
 static double halton (int i, int base)
