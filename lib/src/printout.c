@@ -2398,7 +2398,6 @@ static int get_head_tail_params (gretlopt opt, int len,
     return err;
 }
 
-
 static int get_print_range (gretlopt opt, int len,
                             int *start, int *stop)
 {

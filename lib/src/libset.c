@@ -1044,7 +1044,7 @@ static int libset_get_seed (const char *arg, guint64 *pu, int *automatic)
 	return err;
     }
 
-    if (na(x) || x <= 0.0 || x > UINT64_MAX) {
+    if (na(x) || x <= 0.0 || x > (double) UINT64_MAX) {
 	err = E_INVARG;
     } else {
 	*pu = (guint64) floor(x);

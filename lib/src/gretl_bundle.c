@@ -1265,7 +1265,7 @@ uint64_t gretl_bundle_get_uint64 (gretl_bundle *bundle,
             double x, *px = (double *) ptr;
 
             x = *px;
-            if (x >= 0 && x <= UINT64_MAX && x == floor(x)) {
+            if (x >= 0 && x <= (double) UINT64_MAX && x == floor(x)) {
                 u = (uint64_t) x;
             } else {
                 myerr = E_TYPES;
