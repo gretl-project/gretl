@@ -2337,93 +2337,110 @@ static void bufprint_string (char *buf, const char *s,
     }
 }
 
-static const char *get_range_string (gretlopt opt)
+static int get_range_params (int len, int *k1, int *k2)
 {
-    if (opt & OPT_R) {
-        /* --range */
-        return get_optval_string(PRINT, OPT_R);
-    } else {
-        /* --head or --tail */
-        int head = (opt & OPT_H)? 1 : 0;
-        static char ht[16];
-        const char *s;
-
-        s = get_optval_string(PRINT, head ? OPT_H : OPT_T);
-        if (s == NULL) {
-            return head ? "1:5" : "-5:";
-        } else if (head) {
-            sprintf(ht, "1:%s", s);
-        } else {
-            sprintf(ht, "-%s:", s);
-        }
-        return ht;
-    }
-}
-
-static int get_print_range (gretlopt opt, int len,
-                            int *start, int *stop)
-{
-    const char *s = get_range_string(opt);
+    const char *s = get_optval_string(PRINT, OPT_R);
+    int nf = 0;
     int err = 0;
 
     if (s == NULL || *s == '\0' || strchr(s, ':') == NULL) {
 	err = E_PARSE;
     } else {
-	int k1 = 0, k2 = 0, nf = 0;
 	char **S = gretl_string_split(s, &nf, ":");
 
 	if (S == NULL || nf != 2) {
 	    err = E_PARSE;
 	} else {
 	    if (S[0][0] == '\0') {
-		k1 = 1;
+		*k1 = 1;
 	    } else {
-		k1 = gretl_int_from_string(S[0], &err);
+		*k1 = gretl_int_from_string(S[0], &err);
 	    }
 	    if (!err) {
 		if (S[1][0] == '\0') {
-		    k2 = len;
+		    *k2 = len;
 		} else {
-		    k2 = gretl_int_from_string(S[1], &err);
+		    *k2 = gretl_int_from_string(S[1], &err);
 		}
 	    }
 	}
+        strings_array_free(S, nf);
+    }
 
-        if (len == -1) {
-            /* length unknown */
-            *start = k1;
-            *stop = k2;
-            goto tests_done;
+    return err;
+}
+
+static int get_head_tail_params (gretlopt opt, int len,
+                                 int *k1, int *k2)
+{
+    int head = (opt & OPT_H)? 1 : 0;
+    const char *s;
+    int err = 0;
+
+    s = get_optval_string(PRINT, head ? OPT_H : OPT_T);
+    if (s == NULL) {
+        *k1 = head ? 1 : -5;
+        *k2 = head ? 5 : len;
+    } else {
+        int htk = positive_int_from_string(s);
+
+        if (htk < 0) {
+            err = E_INVARG;
+        } else if (head) {
+            *k1 = 1;
+            *k2 = htk;
+        } else if (!err) {
+            *k1 = -htk;
+            *k2 = len;
         }
+    }
 
-	if (!err && (k1 == 0 || k2 == 0)) {
-	    fprintf(stderr, "get_print_range: got a zero value\n");
-	    err = E_INVARG;
-	}
-	if (!err && (k1 < 0 || k2 < 0)) {
-	    if (k1 < 0) {
-		k1 = len + k1 + 1;
-	    }
-	    if (k2 < 0) {
-		k2 = len + k2 + 1;
-	    }
-	    if (k2 < k1) {
-		fprintf(stderr, "get_print_range: got empty range\n");
-	    }
-	}
-	if (!err && (k1 < 1 || k1 > len || k2 < 1 || k2 > len)) {
-	    fprintf(stderr, "get_print_range: out of bounds\n");
-	    err = E_INVARG;
-	}
-	if (!err) {
-	    /* convert to zero-based */
-	    *start = k1 - 1;
-	    *stop = k2 - 1;
-	}
+    return err;
+}
 
-    tests_done:
 
-	strings_array_free(S, nf);
+static int get_print_range (gretlopt opt, int len,
+                            int *start, int *stop)
+{
+    int k1 = 0, k2 = 0;
+    int err = 0;
+
+    if (opt & OPT_R) {
+        err = get_range_params(len, &k1, &k2);
+    } else {
+        err = get_head_tail_params(opt, len, &k1, &k2);
+    }
+
+    if (err) {
+        return err;
+    }
+
+    if (len == -1) {
+        *start = k1;
+        *stop = k2;
+    } else if (k1 == 0 || k2 == 0) {
+        fprintf(stderr, "get_print_range: got a zero value\n");
+        err = E_INVARG;
+    } else if (k1 < 0 || k2 < 0) {
+        if (k1 < 0) {
+            k1 = len + k1 + 1;
+        }
+        if (k2 < 0) {
+            k2 = len + k2 + 1;
+        }
+    }
+    if (!err && k2 < k1) {
+        fprintf(stderr, "get_print_range: got empty range\n");
+    }
+    if (!err && (k1 < 1 || k1 > len || k2 < 1 || k2 > len)) {
+        fprintf(stderr, "get_print_range: out of bounds\n");
+        err = E_INVARG;
+    }
+
+    if (!err) {
+        /* convert to zero-based */
+        *start = k1 - 1;
+        *stop = k2 - 1;
     }
 
     return err;
