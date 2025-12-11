@@ -2423,17 +2423,29 @@ static int get_print_range (gretlopt opt, int len,
     } else if (k1 < 0 || k2 < 0) {
         if (k1 < 0) {
             k1 = len + k1 + 1;
+            if (k1 < 1) {
+                k1 = 1;
+            }
         }
         if (k2 < 0) {
             k2 = len + k2 + 1;
         }
     }
-    if (!err && k2 < k1) {
-        fprintf(stderr, "get_print_range: got empty range\n");
-    }
-    if (!err && (k1 < 1 || k1 > len || k2 < 1 || k2 > len)) {
-        fprintf(stderr, "get_print_range: out of bounds\n");
+    if (!err && (k1 < 1 || k2 < 1)) {
+        fprintf(stderr, "print: range is out of bounds\n");
         err = E_INVARG;
+    }
+    if (!err && k2 < k1) {
+        fprintf(stderr, "print: got a malformed range\n");
+        err = E_INVARG;
+    }
+    if (!err) {
+        if (k1 > len) {
+            fprintf(stderr, "print: range is out of bounds\n");
+            err = E_INVARG;
+        } else if (k2 > len) {
+            k2 = len;
+        }
     }
 
     if (!err) {
