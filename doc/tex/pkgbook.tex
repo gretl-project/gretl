@@ -2668,13 +2668,13 @@ function bundle GUI_exogtest (int xvar[$mylist] "regressor to test")
 \label{sec:ui-maker}
 
 The basic idea of the \texttt{ui-maker} function has been introduced
-above; in this section we delve into the details.  First, note that the
-private function that supports this functionality must take no
-arguments, and must return a bundle containing one or more sub-bundles,
-each identified by the name of a parameter whose GUI representation the
-author wishes to inflect, and each of which contains one or more special
-keys corresponding to recognized directives. In outline such a function
-should look like this:
+above; in this section we delve into the details.  First, note that
+the private function that supports this functionality must take no
+arguments, and must return a bundle containing one or more
+sub-bundles, each identified by the name of a parameter whose GUI
+representation the author wishes to inflect, and each of which
+contains one or more keys corresponding to recognized directives. In
+outline such a function should look like this:
 
 \begin{code}
 function bundle my_uimaker (void)
@@ -2858,7 +2858,7 @@ suitable name for the return value may already be implicit.
 For example, the \dtk{FRED_get} package---which supports downloading of
 data from the \textsf{FRED} data system at the Federal Reserve Bank of
 St.\ Louis---has as a required parameter the name of a \textsf{FRED}
-series. The user may well likely wish to use the same name for the
+series. The user may well wish to use the same name for the
 series in gretl, but the interface includes an optional parameter to
 allow specification of a different name. It then makes sense that the
 name for assignment should be either the optional alternate name, if
