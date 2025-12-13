@@ -1745,7 +1745,8 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     int orig_t1 = dset->t1, orig_t2 = dset->t2;
     int orig_nvar = dset->v;
     int sysest = (opt & OPT_E);
-    int no_tests = (opt & OPT_X);
+    int no_tests = 0;
+    int no_hausman = 0;
     int nendo = 0;
     int nreg = 0;
     int i, err = 0;
@@ -1758,6 +1759,19 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     if (ivi == NULL) {
 	tsls.errcode = E_ALLOC;
 	return tsls;
+    }
+
+    if (opt & OPT_X) {
+        /* supplementary tests wanted? */
+        const char *s = get_optval_string(IVREG, OPT_X);
+
+        if (s != NULL && !strcmp(s, "hausman")) {
+            /* skip the hausman test only */
+            no_hausman = 1;
+        } else {
+            /* skip all extra tests */
+            no_tests = 1;
+        }
     }
 
     /* reglist: dependent var plus list of regressors
@@ -1947,7 +1961,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     }
 
     if (!sysest && !no_tests) {
-        if (nendo > 0 && ivi->hatlist != NULL) {
+        if (!no_hausman && nendo > 0 && ivi->hatlist != NULL) {
 	    if (opt & OPT_M) {
 		tsls_matrix_hausman_test(ivi, opt, dset);
 	    } else {

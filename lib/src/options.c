@@ -377,7 +377,7 @@ struct gretl_option gretl_opts[] = {
     { IVREG,    OPT_S, "save", 0 },
     { IVREG,    OPT_T, "two-step", 0 },
     { IVREG,    OPT_H, "weights", 2 },
-    { IVREG,    OPT_X, "no-tests", 0 },
+    { IVREG,    OPT_X, "no-tests", 1 },
     { IVREG,    OPT_C, "cluster", 2 },
     { IVREG,    OPT_M, "matrix-diff", 0 },
     { JOIN,     OPT_I, "ikey", 2 },
