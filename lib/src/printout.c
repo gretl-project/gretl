@@ -2423,9 +2423,7 @@ static int get_print_range (gretlopt opt, int len,
     } else if (k1 < 0 || k2 < 0) {
         if (k1 < 0) {
             k1 = len + k1 + 1;
-            if (k1 < 1) {
-                k1 = 1;
-            }
+            if (k1 < 1) k1 = 1;
         }
         if (k2 < 0) {
             k2 = len + k2 + 1;
