@@ -1,40 +1,40 @@
 function void ivp_print (bundle *b)
-   matrix result = b["coeff"] ~ b["stderr"]
-   scalar case = b["case"]
+   matrix result = b.coeff ~ b.stderr
+   scalar case = b.case
    scalar N = 0
    if case == 1
-      printf "\nFixed-effects TSLS, using %d observations\n", b["nobs"]
+      printf "\nFixed-effects TSLS, using %d observations\n", b.nobs
    elif case == 2
-      printf "\nBetween TSLS, N = %d\n", b["nobs"]
+      printf "\nBetween TSLS, N = %d\n", b.nobs
    else
-      printf "\nG2SLS random effects, using %d observations\n", b["nobs"]
+      printf "\nG2SLS random effects, using %d observations\n", b.nobs
    endif
-   printf "Dependent variable: %s\n", b["ystr"]
-   printf "Endogenous: %s\n", b["Estr"]
-   printf "Instruments: %s\n", b["Istr"]
+   printf "Dependent variable: %s\n", b.ystr
+   printf "Endogenous: %s\n", b.Estr
+   printf "Instruments: %s\n", b.Istr
 
-   string S = b["modstr"]
+   string S = b.modstr
    modprint result S
 
-   printf "  SSR = %g\n", b["SSR"]
-   printf "  sigma-hat = %g (df = %d)\n", b["sigma"], b["df"]
-   printf "  R-squared = corr(y, yhat)^2 = %f\n", b["rsq"]
+   printf "  SSR = %g\n", b.SSR
+   printf "  sigma-hat = %g (df = %d)\n", b.sigma, b.df
+   printf "  R-squared = corr(y, yhat)^2 = %f\n", b.rsq
    if (case == 1 || case == 3)
-      matrix dims = b["dims"]
+      matrix dims = b.dims
       N = dims[1]
       printf "  Included units = %d\n", N
       printf "  Time-series length: min = %d, max = %d\n", dims[2], dims[3]
    endif
-   scalar X2 = b["wald"]
-   scalar df = rows(b["coeff"]) - 1
+   scalar X2 = b.wald
+   scalar df = rows(b.coeff) - 1
    scalar pv = pvalue(X, df, X2)
    printf "  Wald chi-square(%d) = %g [%.4f]\n", df, X2, pv
 
    if inbundle(b, "Fpool")
       # poolability F-test for fixed effects
-      scalar Fp = b["Fpool"]
+      scalar Fp = b.Fpool
       scalar dfn = N-1
-      scalar dfd = b["df"]
+      scalar dfd = b.df
       pv = pvalue(F, dfn, dfd, Fp)
       printf "  Null hypothesis: The groups have a common intercept\n"
       printf "  Test statistic: F(%d, %d) = %g [%.4f]\n", dfn, dfd, Fp, pv
@@ -120,8 +120,8 @@ function void real_panel_demean (matrix *X, const matrix u,
    loop i=1..N -q
       matrix sel = selifr(e, u .= vU[i])
       scalar Ti = rows(sel)
-      minT = (Ti < minT) ? Ti : minT
-      maxT = (Ti > maxT) ? Ti : maxT
+      minT = Ti < minT ? Ti : minT
+      maxT = Ti > maxT ? Ti : maxT
       matrix tmp = X[sel,]
       X[sel,] = tmp .+ (grand - meanc(tmp))
    endloop
@@ -141,7 +141,8 @@ end function
    and fill out dims argument.
 */
 
-function matrix panel_demean_2 (const matrix X, const matrix u,
+function matrix panel_demean_2 (const matrix X,
+                                const matrix u,
                                 matrix *dims)
    matrix ret = X
    real_panel_demean(&ret, u, &dims)
@@ -401,27 +402,27 @@ function bundle ivpanel (series y "dependent variable",
    string Istr = strsub(varname(tmp), ",", " ")
 
    # assemble bundle for return
-   b["nobs"] = NT
-   b["coeff"] = beta
-   b["stderr"] = se
-   b["vcv"] = V
-   b["SSR"] = SSR
-   b["sigma"] = sqrt(s2)
-   b["df"] = df
-   b["rsq"] = rsq
-   b["wald"] = wald
-   b["modstr"] = Xstr
-   b["ystr"] = ystr
-   b["Estr"] = Estr
-   b["Istr"] = Istr
-   b["uhat"] = U
-   b["yhat"] = yhat
-   b["case"] = case
+   b.nobs = NT
+   b.coeff = beta
+   b.stderr = se
+   b.vcv = V
+   b.SSR = SSR
+   b.sigma = sqrt(s2)
+   b.df = df
+   b.rsq = rsq
+   b.wald = wald
+   b.modstr = Xstr
+   b.ystr = ystr
+   b.Estr = Estr
+   b.Istr = Istr
+   b.uhat = U
+   b.yhat = yhat
+   b.case = case
    if (case == 1 || case == 3)
-      b["dims"] = dims
+      b.dims = dims
    endif
    if ok(Fpnum)
-      b["Fpool"] = (Fpnum/SSR) * df/(N-1)
+      b.Fpool = (Fpnum/SSR) * df/(N-1)
    endif
 
    if quiet
