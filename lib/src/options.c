@@ -454,6 +454,7 @@ struct gretl_option gretl_opts[] = {
     { LOGIT,    OPT_C, "cluster", 2 },
     { LOGIT,    OPT_V, "verbose", 0 },
     { LOGIT,    OPT_S, "estrella", 0 },
+    { LOGIT,    OPT_N, "no-qr", 0 },
     { LOOP,     OPT_D, "decr", 0 },
     { LOOP,     OPT_P, "progressive", 0 },
     { LOOP,     OPT_V, "verbose", 0 },

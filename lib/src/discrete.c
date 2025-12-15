@@ -3268,7 +3268,7 @@ static int make_binary_y_and_X (bin_info *bin,
     }
 
     if (gretl_model_get_int(pmod, "QR")) {
-        fprintf(stderr, "make_binary_y_and_X: QR case\n");
+        // fprintf(stderr, "make_binary_y_and_X: QR case\n");
         bin->X = gretl_model_steal_data(pmod, "Q");
         bin->Ri = gretl_model_steal_data(pmod, "R");
         err = revise_lpm_coeffs(bin, pmod);
@@ -3345,7 +3345,7 @@ MODEL binary_model (int ci, const int *list,
     }
 
     if (!mod.errcode) {
-        gretlopt ols_opt = OPT_A | OPT_B;
+        gretlopt ols_opt = OPT_A;
 
         /* If we're doing logit/probit as an auxiliary regression,
            it might be safer to abort on perfect collinearity;
@@ -3353,6 +3353,12 @@ MODEL binary_model (int ci, const int *list,
         */
         if (opt & OPT_A) {
             ols_opt |= OPT_Z;
+        }
+        /* Use OPT_B to activate QR for the binary model, if
+           needed, unless we get OPT_N, --no-qr.
+        */
+        if (!(opt & OPT_N)) {
+            ols_opt |= OPT_B;
         }
         mod = lsq(blist, dset, OLS, ols_opt);
 #if LPDEBUG
@@ -3399,6 +3405,9 @@ MODEL binary_model (int ci, const int *list,
         binary_model_finish(bin, &mod, dset, opt);
         if (!mod.errcode && ndropped > 0) {
             gretl_model_set_int(&mod, "binary_obs_dropped", ndropped);
+        }
+        if (opt & OPT_N) {
+            mod.opt |= OPT_N;
         }
     }
 

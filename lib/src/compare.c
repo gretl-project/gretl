@@ -791,6 +791,9 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 	    myopt |= (OPT_E | OPT_G);
 	    set_optval_double(PROBIT, OPT_G, qp);
         }
+        if (orig->opt & OPT_N) {
+            myopt |= OPT_N;
+        }
     } else if (orig->ci == PANEL) {
 	if (gretl_model_get_int(orig, "pooled")) {
 	    /* pooled OLS */
