@@ -1994,9 +1994,7 @@ gretl_matrix *user_matrix_eigensym (const gretl_matrix *m,
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
 	return NULL;
-    }
-
-    if (gretl_matrix_is_nonfinite(m)) {
+    } else if (gretl_matrix_is_nonfinite(m)) {
 	*err = E_NONFIN;
 	return NULL;
     }
