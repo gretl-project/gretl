@@ -50,6 +50,7 @@
 
 struct xlsx_info_ {
     BookFlag flags;
+    gretlopt opt;
     int trydates;
     int maxrow;
     int maxcol;
@@ -80,9 +81,10 @@ enum {
     CELL_ISTRING
 };
 
-static void xlsx_info_init (xlsx_info *xinfo)
+static void xlsx_info_init (xlsx_info *xinfo, gretlopt opt)
 {
     xinfo->flags = BOOK_TOP_LEFT_EMPTY;
+    xinfo->opt = opt;
     xinfo->trydates = 0;
     xinfo->maxrow = 0;
     xinfo->maxcol = 0;
@@ -516,6 +518,16 @@ static int xlsx_obs_index (xlsx_info *xinfo, int row)
     return t;
 }
 
+static int may_have_obs_label (xlsx_info *xinfo)
+{
+    if (xinfo->opt & OPT_A) {
+        /* --all-cols */
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
 static void xlsx_check_top_left (xlsx_info *xinfo, int r, int c,
 				 const char *s, double x,
 				 PRN *myprn)
@@ -531,10 +543,11 @@ static void xlsx_check_top_left (xlsx_info *xinfo, int r, int c,
 		r, c, x, s);
 #endif
 	if (!na(x)) {
-	    /* got a valid numerical value: that means we don't
-	       have variable names on the top row */
+	    /* Got a valid numerical value: that means we don't
+	       have variable names on the top row.
+            */
 	    xinfo->flags |= BOOK_AUTO_VARNAMES;
-	} else if (import_obs_label(s)) {
+	} else if (may_have_obs_label(xinfo) && import_obs_label(s)) {
 	    /* blank or "obs" or similar */
 	    xinfo->flags |= BOOK_OBS_LABELS;
 	    xinfo->obscol = c;
@@ -610,7 +623,11 @@ static void xlsx_set_dims (xlsx_info *xinfo, int r, int c)
 	xinfo->maxrow = r;
     }
     if (c > xinfo->maxcol) {
-	xinfo->maxcol = c;
+        xinfo->maxcol = c;
+#if XDEBUG
+        fprintf(stderr, " r = %d, c = %d, extend maxcol to %d\n",
+                r, c, xinfo->maxcol);
+#endif
     }
 }
 
@@ -716,6 +733,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo,
     char *tmp;
     int row = -1, col = -1;
     int pass, empty = 1;
+    int colmax = 0;
     int err = 0;
 
     if (xinfo->codelist != NULL) {
@@ -763,7 +781,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo,
 		goto skipit;
 	    }
 
-	    if (pass >= 2 && row > xinfo->maxrow) {
+	    if (pass >= 2 && (row > xinfo->maxrow || col > xinfo->maxcol)) {
 		goto skipit;
 	    }
 
@@ -774,6 +792,8 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo,
 	    while (val && !err && !gotv) {
 		if (!xmlStrcmp(val->name, (XUC) "v")) {
 		    /* value element */
+                    int bogus = 0;
+
 		    tmp = (char *) xmlNodeGetContent(val);
 		    if (tmp != NULL) {
 			if (celltype == CELL_NUMBER) {
@@ -785,14 +805,20 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo,
 			    /* look up string table */
 			    strval = xlsx_string_value(tmp, xinfo, prn);
 			    if (strval == NULL) {
-				pprintf(myprn, " %s = ?\n", _("value"));
+				pprintf(myprn, " %s = NULL\n", _("value"));
 				err = E_DATA;
+                            } else if (*strval == '\0') {
+				pprintf(myprn, " %s = empty (CELL_STRINGREF)\n",
+                                        _("value"), strval);
+                                bogus = 1; /* 2025-12-15: is this OK? */
 			    } else {
 				pprintf(myprn, " %s = '%s'\n", _("value"), strval);
 			    }
 			}
 			free(tmp);
-			gotv = 1;
+                        if (!bogus) {
+                            gotv = 1;
+                        }
 		    }
 		} else if (celltype == CELL_FORMULA &&
 			   !xmlStrcmp(val->name, (XUC) "f")) {
@@ -828,6 +854,10 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo,
 		    pputc(myprn, '\n');
 		}
 	    }
+
+            if (gotv || gotf) {
+                colmax = col;
+            }
 
 	    if (!err && xinfo->dset != NULL &&
 		col > xinfo->xoffset &&
@@ -888,7 +918,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo,
 	if (empty) {
 	    pputs(myprn, " xlsx_read_row: empty row!\n");
 	} else if (pass == 1) {
-	    xlsx_set_dims(xinfo, row, col);
+	    xlsx_set_dims(xinfo, row, colmax);
 	}
     }
 
@@ -1670,7 +1700,7 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
     printlist(list, "xlsx list");
 #endif
 
-    xlsx_info_init(&xinfo);
+    xlsx_info_init(&xinfo, opt);
     err = xlsx_gather_sheet_names(&xinfo, sheetname, list, prn);
 
     if (!err) {
