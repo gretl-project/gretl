@@ -9,6 +9,9 @@ version 2026a, in progress
   as convenience abbreviations for --range
 - "gnuplot" command, --y2axis option: accept a named list
   as parameter, or comma-separated series
+- "open" command: support the --all-cols option for xlsx
+  importation
+- new function tvarying() for panel data
 
 2025-11-12 version 2025c
 - new (block) command, "gibbs", implements the Gibbs sampler
