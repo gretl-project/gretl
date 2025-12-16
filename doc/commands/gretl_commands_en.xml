@@ -12780,6 +12780,16 @@
 	  <effect>see below</effect>
 	</option>
 	<option>
+	  <flag>--head</flag>
+	  <optparm optional="true">lines</optparm>
+	  <effect>see below</effect>
+	</option>
+	<option>
+	  <flag>--tail</flag>
+	  <optparm optional="true">lines</optparm>
+	  <effect>see below</effect>
+	</option>   
+	<option>
 	  <flag>--midas</flag>
 	  <effect>see below</effect>
 	</option>
@@ -12812,15 +12822,15 @@
 	series, separated by spaces). In that case this command prints
 	the values of the listed series. By default the data are
 	printed <quote>by variable</quote>, but if the
-	<opt>byobs</opt> flag is added they are printed by
-	observation. When printing by observation, the default is to
-	show the date (with time-series data) or the observation
-	marker string (if any) at the start of each line. The
-	<opt>no-dates</opt> option suppresses the printing of dates or
-	markers; a simple observation number is shown instead. See
-	the final paragraph of this entry for the effect of the
-	<opt>midas</opt> option (which applies only to a named
-	list of series).
+	<opt>byobs</opt> flag (which can be abbreviated as
+	<lit>-o</lit>) is added they are printed by observation. When
+	printing by observation, the default is to show the date (with
+	time-series data) or the observation marker string (if any) at
+	the start of each line. The <opt>no-dates</opt> option
+	suppresses the printing of dates or markers; a simple
+	observation number is shown instead. See the final paragraph
+	of this entry for the effect of the <opt>midas</opt> option
+	(which applies only to a named list of series).
       </para>
       <para>
 	If no argument is given (the second variant shown above) then
@@ -12858,6 +12868,17 @@
 	an implicit 1 and if <repl>stop</repl> is omitted that means
 	go all the way to the end. Note that with series and lists the
 	indices are relative to the current sample range.
+      </para>
+      <para>
+        The <opt>head</opt> and <opt>tail</opt> options offer a quick
+        means of showing just the top and bottom of an object (rows
+        for matrices, observations for series and lists, elements for
+        arrays, lines for multi-line strings). The default number of
+        lines printed in each case is 5; the optional parameter, which
+        must be a positive integer, can be used to adjust
+        this. Shorthand versions of these two options are also
+        available: <lit>-h</lit> and <lit>-t</lit>, respectively,
+        implying the default of 5 lines in each case.
       </para>
       <para>
 	The <opt>tree</opt> option is specific to the printing of a
