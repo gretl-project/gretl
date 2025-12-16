@@ -25,6 +25,8 @@
 # include <gdk/gdkkeysyms.h>
 #endif
 
+#define E_OBSCOL 99
+
 #include "gretl_zip.h"
 
 static void strip_vname_illegals (char *s)
@@ -106,11 +108,11 @@ static int check_imported_varname (char *vname, int vnum,
 
 #ifndef EXCEL_IMPORTER /* FIXME? */
 
-static void import_ts_check (DATASET *dset)
+static int import_ts_check (DATASET *dset)
 {
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
     int reversed = 0;
-    int mpd = -1;
+    int mpd;
 
     mpd = test_markers_for_dates(dset, &reversed, NULL, prn);
 
@@ -133,6 +135,8 @@ static void import_ts_check (DATASET *dset)
     }
 
     gretl_print_destroy(prn);
+
+    return mpd;
 }
 
 #endif /* !EXCEL_IMPORTER */

@@ -42,7 +42,7 @@
 #include "import_common.c"
 
 #define XDEBUG 0
-#define DATE_DEBUG 1
+#define DATE_DEBUG 0
 
 /* possibly useful reference:
    http://officeopenxml.com/SScontentOverview.php
@@ -103,6 +103,28 @@ static void xlsx_info_init (xlsx_info *xinfo, gretlopt opt)
     xinfo->dset = NULL;
     xinfo->codelist = NULL;
     xinfo->st = NULL;
+}
+
+static void xlsx_info_reset (xlsx_info *xinfo, gretlopt opt)
+{
+    xinfo->flags = BOOK_TOP_LEFT_EMPTY;
+    xinfo->opt = opt;
+    xinfo->trydates = 0;
+    xinfo->maxrow = 0;
+    xinfo->maxcol = 0;
+    xinfo->namerow = -1;
+    xinfo->obscol = -1;
+    strings_array_free(xinfo->strings, xinfo->n_strings);
+    xinfo->strings = NULL;
+    xinfo->n_strings = 0;
+    destroy_dataset(xinfo->dset);
+    xinfo->dset = NULL;
+    free(xinfo->codelist);
+    xinfo->codelist = NULL;
+    if (xinfo->st != NULL) {
+        gretl_string_table_destroy(xinfo->st);
+        xinfo->st = NULL;
+    }
 }
 
 static void xlsx_info_free (xlsx_info *xinfo)
@@ -1551,7 +1573,9 @@ static void xlsx_dates_check (DATASET *dset)
 #endif
 		delta_min = d;
 	    } else if (d > delta_max) {
+#if DATE_DEBUG
 		t_delta_max = t+1;
+#endif
 		delta_max = d;
 	    }
 	}
@@ -1621,6 +1645,8 @@ static void xlsx_dates_check (DATASET *dset)
 	    MS_excel_date_string(datestr, atoi(dset->S[t]), 0, 0);
 	    strcpy(dset->S[t], datestr);
 	}
+    } else {
+        ;
     }
 }
 
@@ -1655,12 +1681,17 @@ static int finalize_xlsx_import (DATASET *dset,
             xlsx_dates_check(xinfo->dset);
         }
         if (xinfo->dset->S != NULL) {
-            import_ts_check(xinfo->dset);
-        }
-	err = merge_or_replace_data(dset, &xinfo->dset,
-				    get_merge_opts(opt), prn);
-    }
+            int mpd = import_ts_check(xinfo->dset);
 
+            if (mpd < 0) {
+                err = E_OBSCOL;
+            }
+        }
+    }
+    if (!err) {
+        err = merge_or_replace_data(dset, &xinfo->dset,
+                                    get_merge_opts(opt), prn);
+    }
     if (!err && !merge) {
 	dataset_add_import_info(dset, fname, GRETL_XLSX);
     }
@@ -1717,13 +1748,20 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 	}
     }
 
+ try_again:
+
     if (!err) {
 	err = xlsx_read_worksheet(&xinfo, fname, prn);
     }
 
     if (!err && xinfo.dset != NULL) {
 	err = finalize_xlsx_import(dset, &xinfo, fname, opt, prn);
-	if (!err && gui) {
+        if (err == E_OBSCOL) {
+            opt |= OPT_A;
+            xlsx_info_reset(&xinfo, opt);
+            err = 0;
+            goto try_again;
+        } else if (!err && gui) {
 	    record_xlsx_params(&xinfo, list);
 	}
     }
