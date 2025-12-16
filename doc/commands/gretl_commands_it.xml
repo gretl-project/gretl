@@ -12996,6 +12996,16 @@ del comando <cmdref targ="set"/>.
 	<optparm>inizio:fine</optparm>
 	<effect>vedi sotto</effect>
       </option>
+	<option>
+	  <flag>--head</flag>
+	  <optparm optional="true">linee</optparm>
+	  <effect>vedi sotto</effect>
+	</option>
+	<option>
+	  <flag>--tail</flag>
+	  <optparm optional="true">linee</optparm>
+	  <effect>vedi sotto</effect>
+	</option>   
       <option>
 	<flag>--midas</flag>
 	<effect>vedi sotto</effect>
@@ -13024,20 +13034,20 @@ del comando <cmdref targ="set"/>.
     </para>
     <para>
       Nella prima variante mostrata sopra (vedia anche il primo
-      esempio), <repl>lista</repl> dev'essere una lista di serie
-      (sia come variabile predefinita che come lista di nomi o
-      numeri ID separati da spazi). In tal caso, il comando stampa i
-      valori delle variabili specificate. Per default, la stampa
-      avviene <quote>per variabile</quote>, ma con l'opzione
-      <opt>byobs</opt> i dati vengono stampati per osservazione. Nel
-      secondo caso, il comportamento predefinito è quello di
-      mostrare la data (per serie storiche) o il marcatore (se
-      esiste) all'inizio di ogni riga.  L'opzione
-      <opt>no-dates</opt> sopprime la visualizzazione delle date o
-      dei marcatori: viene mostrato solo un semplice numero di
+      esempio), <repl>lista</repl> dev'essere una lista di serie (sia
+      come variabile predefinita che come lista di nomi o numeri ID
+      separati da spazi). In tal caso, il comando stampa i valori
+      delle variabili specificate. Per default, la stampa avviene
+      <quote>per variabile</quote>, ma con l'opzione <opt>byobs</opt>
+      (abbreviabile con <lit>-o</lit>) i dati vengono stampati per
+      osservazione. Nel secondo caso, il comportamento predefinito è
+      quello di mostrare la data (per serie storiche) o il marcatore
+      (se esiste) all'inizio di ogni riga.  L'opzione
+      <opt>no-dates</opt> sopprime la visualizzazione delle date o dei
+      marcatori: viene mostrato solo un semplice numero di
       osservazione. Si veda l'ultimo paragrafo di questa voce per
-      l'effetto in questo contesto dell'opzione <opt>midas</opt>
-      (che si applica solo a liste predefinite).
+      l'effetto in questo contesto dell'opzione <opt>midas</opt> (che
+      si applica solo a liste predefinite).
       </para>
       <para>
 	Se al comando non vengono forniti argomenti (la seconda variante
@@ -13076,6 +13086,18 @@ del comando <cmdref targ="set"/>.
       omesso <repl>fine</repl> si intende <quote>fino in
       fondo</quote>. Si noti che nel caso di serie e liste, gli
       indici sono relativi al sottocampione in uso.
+    </para>
+    <para>
+      Le opzioni <opt>head</opt> e <opt>tail</opt> offrono un modo
+      rapido per visualizzare solo la parte superiore e inferiore di
+      un oggetto (righe per matrici, osservazioni per serie e liste,
+      elementi per array, righe per stringhe a più linee). Il numero
+      di default di linee stampate è 5; si può usare il parametro
+      opzionale, che deve essere un numero intero positivo, per
+      modificarlo. Sono disponibili anche versioni abbreviate di
+      queste due opzioni: rispettivamente <lit>-h</lit> e
+      <lit>-t</lit>, che però implicano il valore predefinito di 5
+      righe.
     </para>
     <para>
       L'opzione <opt>tree</opt> è specifica alla stampa di un
