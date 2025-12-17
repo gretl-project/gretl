@@ -12853,6 +12853,7 @@
 	the command line). The string in question is printed, followed
 	by a newline character.
       </para>
+      <subhead>Printing ranges</subhead>
       <para>
 	The <opt>range</opt> option can be used to control the amount
 	of information printed. The <repl>start</repl> and
@@ -12866,20 +12867,29 @@
 	be given in numeric form or as the names of predefined scalar
 	variables. If <repl>start</repl> is omitted that is taken as
 	an implicit 1 and if <repl>stop</repl> is omitted that means
-	go all the way to the end. Note that with series and lists the
-	indices are relative to the current sample range.
+	go all the way to the end (an implicit -1). Note that with
+	series and lists the indices are relative to the current
+	sample range.
       </para>
       <para>
         The <opt>head</opt> and <opt>tail</opt> options offer a quick
-        means of showing just the top and bottom of an object (rows
-        for matrices, observations for series and lists, elements for
+        way to show just the top or bottom of an object (rows for
+        matrices, observations for series and lists, elements for
         arrays, lines for multi-line strings). The default number of
         lines printed in each case is 5; the optional parameter, which
         must be a positive integer, can be used to adjust
-        this. Shorthand versions of these two options are also
-        available: <lit>-h</lit> and <lit>-t</lit>, respectively,
-        implying the default of 5 lines in each case.
+        this. Shorthand versions of these options are available:
+        <lit>-h</lit> and <lit>-t</lit>, respectively, implying the
+        default of 5 lines in each case. The following commands
+        illustrate usage for a list <lit>L</lit>.
       </para>
+      <code>
+	print L -h        # show the first 5 lines
+	print L --head=10 # the first 10 lines
+	print L -t        # show the last 5 lines
+	print L --tail=3  # the last 3 lines
+      </code>
+      <subhead>Special cases</subhead>
       <para>
 	The <opt>tree</opt> option is specific to the printing of a
 	gretl bundle: the effect is that if the specified bundle
