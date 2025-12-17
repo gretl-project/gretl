@@ -24,30 +24,31 @@ generated sequentially via a deterministic algorithm.
 This means that one can set the starting point of the sequence and
 obtain a repeatable sequence of random numbers. Each algorithm has a
 \emph{cycle length}, or \emph{period}, the number of draws after which
-the sequence starts repeating itself. Clearly, the longer the cycle
-length, the better, \emph{ceteris paribus}, is the algorithm.  The
-issue was analyzed in great detail in \cite{SvenTalha2012}, in which
-the quality of the generated pseudo-random numbers, in term of
-simulating genuine random draws, was found to be very good. The RNG
-that gretl now uses for generating uniforms is the SIMD-oriented Fast
-Mersenne Twister (\textsf{SFMT}) by \cite{saito_matsumoto08}; its
-period is a nonzero multiple of $2^{19937} - 1$.
+the sequence starts repeating itself. Clearly, the cycle length should
+exceed the number of pseudo-random numbers that one might plausibly
+wish to generate.  The RNG that gretl now uses for generating uniforms
+is \textsf{xoshiro256+} by \citet{blackman-vigna22}; its period is
+$2^{256} - 1 \approx 1.158 \times 10^{77}$. See
+\url{https://prng.di.unimi.it/} for further details.\footnote{In
+  releases up to gretl 2025c we used the SIMD-oriented Fast Mersenne
+  Twister \citep{saito_matsumoto08}.}
 
 The starting point of the sequence is also called the \emph{seed} of
 the generator, and it can be set by using the \cmd{set seed} command.
-The seed must be expressible as a 32-bit unsigned integer, lying
-between 0 and $2^{32} - 1 = 4294967295$. If the user does not provide
-a seed, gretl automatically sets it to the so-called ``Unix time'',
-that is the number of seconds elapsed between 1970-01-01 00:00:00 UTC
-and the time at which gretl was started.
+The seed must be expressible as a 64-bit unsigned integer, lying
+between 0 and $2^{64} - 1 \approx 1.845 \times 10^{19}$. If the user
+does not provide a seed, gretl sets it automatically, using entropy
+from \texttt{/dev/urandom} if available otherwise the so-called ``Unix
+time'', that is the number of seconds elapsed between 1970-01-01
+00:00:00 UTC and the time at which gretl is started.
 
-The `raw' output of the Mersenne Twister consists of pseudo-random
+The `raw' output of \textsf{xoshiro256+} consists of pseudo-random
 unsigned integers from the uniform distribution on the interval
-$[0, 2^{32}-1]$. These are unlikely to be wanted in econometric work;
+$[0, 2^{64}-1]$. These are unlikely to be wanted in econometric work;
 since all numeric data in gretl is stored in double precision format,
-the Mersenne Twister is used for producing real numbers between 0 and
-1 on an equispaced grid of $2^{53}$ values, which roughly corresponds
-to 16 decimal digits.
+the RNG is used for producing real numbers between 0 and 1 on an
+equispaced grid of $2^{53}$ values, which roughly corresponds to 16
+decimal digits.
 
 Gretl offers two functions for producing uniform variates on
 $[0,1)$: \cmd{uniform}, which produces a series, and \cmd{muniform},
@@ -89,7 +90,6 @@ whose output is
  -1.556782638829  0.853192127156
   1.266141569909 -0.909426429943
 \end{code}
-
 
 Drawing from a generic normal distribution with arbitrary mean and
 covariance matrix is easy by using the linearity property of the
@@ -262,7 +262,6 @@ Generic discrete	& \texttt{disc}	& $p_k$	& $\mathbf{p}$ \\[6pt]
 \label{tab:continuous}
 \end{table}
 
-
 In addition to the univariate distributions listed in Table
 \ref{tab:continuous}, two multivariate distributions are supported via
 special syntax: 
@@ -359,30 +358,28 @@ functions. For further details, see \cite{Gentle2004},
 \section{Usage with MPI}
 \label{sec:mpi}
 
-Some special issues arise when a task that involves generating random
+A special issue arises when a task that involves generating random
 numbers is parallelized across several processes, as in \textsf{MPI}
 (Message Passing Interface). Details on gretl's support for
 \textsf{MPI}, and how to use it, can be found in \cite{cottrell-mpi};
 here we'll just say a little about the RNG aspect.
 
-If the design of the task is such that one process generates all the
-random variates, which are then ``broadcast'' or ``scattered'' to the
-other processes then it's OK to use the \textsf{SMFT} as usual. However,
-if each process is supposed to generate its own random variates it's not
-desirable for them all to use the \textsf{SFMT}, with different seeds:
-this can end up producing sequences with arbitrary dependency. To get
-around that problem gretl offers an alternative, namely the use of the
-\textsf{DCMT} mechanism (Dynamic Creation of Mersenne Twisters, see
-\cite{DCMT00}) so that each \textsf{MPI} process gets its own,
-  independent PRNG.  Use of \textsf{DCMT} is in fact the default when
-  gretl is working in \textsf{MPI} mode, but use of a single RNG can be
-  forced by use of the \verb|--single-rng| option, or by manipulating
-  the \dtk{use_dcmt} state variable via the \texttt{set} command.
+By default we assume that the random sequences generated by multiple
+MPI processes should be mutually independent. With
+\textsf{xoshiro256+} that is quite easily accomplished: at the
+start-up of MPI, process 0 obtains a seed (either automatically or via
+\texttt{set seed}) and broadcasts it to the processes, each of which
+calls \textsf{xoshiro}'s \texttt{jump()} function, which advances the
+RNG by $2^{128}$ steps. Process 1 calls \texttt{jump} once, process 2
+calls it twice, and so on. This means that the RNG for each process
+has an effective period of $2^{128} \approx 3.403 \times 10^{38}$
+without any overlap with other processes.
 
-In fact this is not very complicated from the user's point of view,
-since use of the various functions discussed above proceeds in exactly
-the same way, regardless of whether the underlying engine for
-generating pseudo-random variates is \textsf{SFMT} or \textsf{DCMT}.
+If for some reason you want each MPI process to generate the
+\textit{same} sequence of pseudo-random variates, it's sufficient to
+put a \texttt{set seed} command with a specific seed in a common
+portion of your gretl MPI script, where it will be executed by all
+processes.
 
 \section{The Gibbs sampler}
 \label{sec:gibbs}
