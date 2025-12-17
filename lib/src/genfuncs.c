@@ -1519,21 +1519,6 @@ static int time_invariant (const double *x,
     return ret;
 }
 
-int is_time_varying (const double *x, const DATASET *dset, int *err)
-{
-    int u1, u2;
-
-    if (!dataset_is_panel(dset)) {
-        *err = E_PDWRONG;
-        return 0;
-    }
-
-    u1 = dset->t1 / dset->pd;
-    u2 = dset->t2 / dset->pd;
-
-    return !time_invariant(x, u1, u2, dset->pd, NULL);
-}
-
 /**
  * panel_statistic:
  * @x: source data.

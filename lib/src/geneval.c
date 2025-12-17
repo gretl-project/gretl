@@ -10041,9 +10041,6 @@ static NODE *series_scalar_func (NODE *n, int f,
                                                              &p->err);
                 }
                 return ret; /* handled */
-            } else if (f == F_TVARYING) {
-                /* we need a real (panel) series */
-                node_type_error(f, 1, SERIES, n, p);
             } else {
                 cast_to_series(n, f, &tmp, &t1, &t2, p);
             }
@@ -10118,8 +10115,6 @@ static NODE *series_scalar_func (NODE *n, int f,
         case F_T2:
             ret->v.xval = series_get_end(t1, t2, x);
             break;
-        case F_TVARYING:
-            ret->v.xval = is_time_varying(x, p->dset, &p->err);
         default:
             break;
         }
@@ -18813,7 +18808,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_MEDIAN:
     case F_GINI:
     case F_NOBS:
-    case F_TVARYING:
         /* functions taking series arg (mostly), returning scalar */
         if (l->t == SERIES || l->t == MAT) {
             ret = series_scalar_func(l, t->t, r, p);
