@@ -13048,44 +13048,44 @@ del comando <cmdref targ="set"/>.
       osservazione. Si veda l'ultimo paragrafo di questa voce per
       l'effetto in questo contesto dell'opzione <opt>midas</opt> (che
       si applica solo a liste predefinite).
-      </para>
-      <para>
-	Se al comando non vengono forniti argomenti (la seconda variante
-	mostrata all'inizio), l'azione è simile a quella appena
-	descritta, con tanto di opzioni aggiuntive. La sola
+    </para>
+    <para>
+      Se al comando non vengono forniti argomenti (la seconda variante
+      mostrata all'inizio), l'azione è simile a quella appena
+      descritta, con tanto di opzioni aggiuntive. La sola
       differenza è che vengono stampate <emphasis>tutte</emphasis>
       le serie nel dataset aperto.
-      </para>
-      <para>
-	La terza variante (con l'argomento <repl>nomi-oggetto</repl>; vedi
-	il secondo esempio) funziona con una lista di nomi (separati da
-	spazi) di variabili diversi da serie: scalari, matrici, stringhe,
-	bundle, array. Di questi oggetti, vengono mostrati i valori. Nel
-	caso dei bundle, gli elementi vengono ordinati per tipo e
-	alfabeticamente.
-      </para>
-      <para>
+    </para>
+    <para>
+      La terza variante (con l'argomento <repl>nomi-oggetto</repl>;
+      vedi il secondo esempio) funziona con una lista di nomi
+      (separati da spazi) di variabili diversi da serie: scalari,
+      matrici, stringhe, bundle, array. Di questi oggetti, vengono
+      mostrati i valori. Nel caso dei bundle, gli elementi vengono
+      ordinati per tipo e alfabeticamente.
+    </para>
+    <para>
       Nella quarta forma (terzo esempio), <repl>stringa</repl>
       dev'essere una stringa racchiusa da virgolette doppie (senza
       che vi sia nient'altro dopo). La stringa viene stampata,
       seguita da un <quote>a capo</quote>.
     </para>
+    <subhead>Stampa per sottoblocchi</subhead>
     <para>
       L'opzione <opt>range</opt> è usata per controllare la quantità
-      di informazione stampata. I valori (interi)
-      <repl>inizio</repl> e <repl>fine</repl> fanno riferimento alle
-      osservazioni per serie e liste, alle rghe per le matrici, agli
-      elementi per gli array, e alle linee di testo per le
-      stringhe. In tutti i casi, il valore minimo per
-      <repl>inizio</repl> è 1 e il massimo <repl>stop</repl> è la
-      dimensione <quote>per riga</quote> dell'oggetto in
-      questione. Valori negativi per questi indici sono interpretati
-      come valori a partire dal fondo. Gli indici possono avere la
-      forma di numeri o di variabili scalari predefinite. Se
-      <repl>inizio</repl> viene omesso, si intende 1 e se viene
-      omesso <repl>fine</repl> si intende <quote>fino in
-      fondo</quote>. Si noti che nel caso di serie e liste, gli
-      indici sono relativi al sottocampione in uso.
+      di informazione stampata. I valori (interi) <repl>inizio</repl>
+      e <repl>fine</repl> fanno riferimento alle osservazioni per
+      serie e liste, alle rghe per le matrici, agli elementi per gli
+      array, e alle linee di testo per le stringhe. In tutti i casi,
+      il valore minimo per <repl>inizio</repl> è 1 e il massimo
+      <repl>stop</repl> è la dimensione <quote>per riga</quote>
+      dell'oggetto in questione. Valori negativi per questi indici
+      sono interpretati come valori a partire dal fondo. Gli indici
+      possono avere la forma di numeri o di variabili scalari
+      predefinite. Se <repl>inizio</repl> viene omesso, si intende 1 e
+      se viene omesso <repl>fine</repl> si intende <quote>fino in
+      fondo</quote> (implicitamente, -1). Si noti che nel caso di
+      serie e liste, gli indici sono relativi al sottocampione in uso.
     </para>
     <para>
       Le opzioni <opt>head</opt> e <opt>tail</opt> offrono un modo
@@ -13097,8 +13097,16 @@ del comando <cmdref targ="set"/>.
       modificarlo. Sono disponibili anche versioni abbreviate di
       queste due opzioni: rispettivamente <lit>-h</lit> e
       <lit>-t</lit>, che però implicano il valore predefinito di 5
-      righe.
+      righe. I comandi che seguono illustrano l'uso con una lista
+      <lit>L</lit>.
     </para>
+    <code>
+      print L -h        # mostra le prime 5 righe
+      print L --head=10 # le prime 10 righe
+      print L -t        # mostra le ultime 5 righe
+      print L --tail=3  # le ultime 3 righe
+    </code>
+    <subhead>Casi speciali</subhead>
     <para>
       L'opzione <opt>tree</opt> è specifica alla stampa di un
       bundle: essa fa sì che venga stampato anche il contenuto degli
