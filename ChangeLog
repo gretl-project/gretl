@@ -11,6 +11,8 @@ version 2026a, in progress
   as parameter, or comma-separated series
 - "open" command: support the --all-cols option for xlsx
   and gnumeric importation
+- random number generator: replace Mersenne Twister with
+  xoshiro256+
 
 2025-11-12 version 2025c
 - new (block) command, "gibbs", implements the Gibbs sampler
