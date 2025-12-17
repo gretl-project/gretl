@@ -11081,28 +11081,36 @@
 	  (por defecto utilízase a matriz de correlacións).
 	</para>
 	<para context="notex">
-	  Os elementos da matriz <math>P</math> que se devolve, calcúlanse
-	  como a suma desde <math>i</math> ata <math>k</math> de
-	  <math>Z</math><sub>ti</sub> veces <math>v</math><sub>ji</sub>,
-	  onde <math>Z</math><sub>ti</sub> representa o valor
-	  estandarizado (ou simplemente o valor centrado, se utilizas a matriz
-	  de covarianzas) da variable <math>i</math> na observación
-	  <math>t</math>, e <math>v</math><sub>ji</sub> representa o
-	  <math>j</math>-ésimo autovector da matriz de correlacións (ou a
-	  matriz de covarianzas) entre as <math>X</math><sub>i</sub>s, cos
-	  autovectores ordenados de acordo cos valores decrecentes dos
-	  autovalores correspondentes.
+	  Se <math>X</math> non contén valores ausentes, os elementos da
+	  matriz <math>P</math> que se devolve, calcúlanse mediante o clásico
+	  algoritmo de compoñentes principais, é dicir, como a suma desde
+	  <math>i</math> ata <math>k</math> de <math>Z</math><sub>ti</sub>
+	  por <math>v</math><sub>ji</sub>, onde <math>Z</math><sub>ti</sub>
+	  representa o valor estandarizado (ou simplemente o valor centrado,
+	  se utilizas a matriz de covarianzas) da variable <math>i</math>
+	  na observación <math>t</math>, e <math>v</math><sub>ji</sub>
+	  representa o <math>j</math>-ésimo autovector da matriz de
+	  correlacións (ou da matriz de covarianzas) entre as
+	  <math>X</math><sub>i</sub>s, cos autovectores ordenados de acordo
+	  cos valores decrecentes dos autovalores correspondentes. Doutro
+	  xeito, se hai algún elemento ausente en <math>X</math> utilízase
+	  o algoritmo EM de
+	  <cite key="stock-watson2002">Stock e Watson (2002)</cite>.
 	</para>
 	<para context="tex">
-	  Os elementos da matriz $P$ que se devolve, calcúlanse como
-	  \[ P_{tj} = \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i \]
-	  onde $Z_{ti}$ representa o valor estandarizado (ou simplemente
-	  o valor centrado, se utilizas a matriz de covarianzas) da variable $i$
-	  na observación $t$, $Z_{ti} = (X_{ti} - \bar{X}_i) / \hat{\sigma}_i$,
+	  Se $X$ non contén valores ausentes, os elementos da matriz $P$
+	  que se devolve, calcúlanse mediante o clásico algoritmo de
+	  compoñentes principais, é dicir, como
+	  \[ P_{tj} = \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i \] onde $Z_{ti}$
+	  representa o valor estandarizado (ou simplemente o valor centrado,
+	  se utilizas a matriz de covarianzas) da variable $i$ na
+	  observación $t$, $Z_{ti} = (X_{ti} - \bar{X}_i) / \hat{\sigma}_i$,
 	  e $v^{(j)_i}$ representa o $j$-ésimo autovector da matriz de
-	  correlacións (ou de covarianzas) dos $X_i$s, cos autovectores
-	  ordenados de acordo cos valores decrecentes dos autovalores
-	  correspondentes.
+	  correlacións (ou da matriz de covarianzas) dos $X_i$s, cos
+	  autovectores ordenados de acordo cos valores decrecentes dos
+	  autovalores correspondentes. Doutro xeito, se hai algún elemento
+	  ausente en $X$ utilízase o algoritmo EM de
+	  <cite key="stock-watson2002">Stock e Watson (2002)</cite>.
 	</para>
 	<para>
 	  <seelist>

@@ -3190,10 +3190,10 @@
     label="Probas non paramétricas de diferenzas" context="cli">
 
     <usage>
-      <arguments>
-        <argument>serie1</argument>
-	      <argument>serie2</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>difftest</lit> <repl>x</repl> <repl>y</repl> </altform>
+        <altform><lit>difftest</lit> <repl>x</repl> <lit>--split-by=</lit><repl>ficticia</repl></altform>
+      </altforms>
       <options>
 	<option>
 	  <flag>--sign</flag>
@@ -3226,8 +3226,15 @@
     <description>
       <para>
 	Leva a cabo unha proba non paramétrica sobre a diferenza entre
-	dúas poboacións ou grupos, na que a proba concreta depende
-	da opción seleccionada.
+	dúas mostras, na que a proba concreta depende da opción que se
+	seleccione. Na súa forma principal, as mostras se representan
+	mediante as series <repl>x</repl> e <repl>y</repl>. Na súa forma
+	alternativa, mediante a opción <opt>split-by</opt>, as mostras
+	representan os dous subconxuntos da serie <repl>x</repl>, para os
+	que a serie <repl>ficticia</repl> toma respectivamente os valores
+	0 e 1. A forma alternativa só está dispoñible en combinación coa
+	opción <opt>rank-sum</opt>, dado que as outras probas requiren
+	observacións emparelladas.
       </para>
       <para>
 	Coa opción <opt>sign</opt>, realízase a proba dos signos.
@@ -9190,9 +9197,11 @@
       </para>
       <para context="cli">
 	Na súa forma alternativa, coa opción <opt>split-by</opt>, as mostras
-	para as que se proba a igualdade das súas medias son dous subconxuntos
-	da serie <repl>x</repl>, para as que a serie <repl>ficticia</repl>
-	toma os valores 0 e 1, respectivamente.
+	para as que se proba se as súas medias son iguais consisten en
+	dous subconxuntos da serie <repl>x</repl>, para os que a serie
+	<repl>ficticia</repl> toma os valores 0 e 1, respectivamente.
+	A forma alternativa non é compatible coa opción
+	<opt>paired</opt>.
       </para>
       <para context="cli">
 	Por defecto, o estatístico de proba calcúlase baixo o suposto
@@ -11041,12 +11050,13 @@
       <para>
 	A opción <opt>auto</opt> (que non pode combinarse coa opción
 	<opt>test-only</opt>) reclama a regresión secuencial cara atrás.
-	Nese caso, considérase que <repl>listavariables</repl> é unha lista
-	de regresores <emphasis>candidatos</emphasis> a ser omitidos do modelo
-	orixinal. En cada unha das etapas, o método determina que candidato
-	podería ser mellor eliminar de acordo co <repl>criterio</repl>
-	especificado (indicado como parámetro desta opción). O algoritmo detense
-	cando non é posible unha mellora posterior. O criterio debe tomar unha
+	Nese caso, <repl>listavariables</repl> é opcional; cando se indica
+	só se consideran as variables desa lista como candidatas a ser
+	omitidas; noutro caso, son candidatos tódolos regresores. En cada
+	unha das etapas, o método determina que candidato podería ser
+	mellor eliminar de acordo co <repl>criterio</repl> especificado
+	(indicado como parámetro desta opción). O algoritmo detense cando
+	non é posible unha mellora posterior. O criterio debe tomar unha
 	das seguintes formas:
       </para>
       <ilist>
@@ -12770,6 +12780,16 @@
 	  <effect>Mira abaixo</effect>
 	</option>
 	<option>
+	  <flag>--head</flag>
+	  <optparm optional="true">liñas</optparm>
+	  <effect>Mira abaixo</effect>
+	</option>
+	<option>
+	  <flag>--tail</flag>
+	  <optparm optional="true">liñas</optparm>
+	  <effect>Mira abaixo</effect>
+	</option>
+	<option>
 	  <flag>--midas</flag>
 	  <effect>Mira abaixo</effect>
 	</option>
@@ -12802,15 +12822,15 @@
 	nomes ou números ID das series, separados por espazos). Neste caso,
 	esta instrución presenta os valores das series da lista. Por defecto,
 	os datos preséntanse <quote>por variable</quote>, pero se engades
-	a opción <opt>byobs</opt> preséntanse por observación. Cando se
-	presentan por observación, por defecto amósase a data (con datos
-	de series temporais) ou a cadea de texto do marcador de observación
-	(en caso de que o haxa) ao comezo de cada liña. Mediante a opción
-	<opt>no-dates</opt> elimínase a presentación das datas ou dos
-	marcadores; no seu lugar amósase un simple número de observación.
-	Consulta o parágrafo final destes comentarios para ver o efecto da
-	opción <opt>midas</opt> (que se aplica só a unha lista xa definida
-	de series).
+	a opción <opt>byobs</opt> (que pode abreviarse como <lit>-o</lit>)
+	preséntanse por observación. Cando se presentan por observación,
+	por defecto amósase a data (con datos de series temporais) ou a
+	cadea de texto do marcador de observación (en caso de que o haxa)
+	ao comezo de cada liña. Mediante a opción <opt>no-dates</opt> elimínase
+	a presentación das datas ou dos marcadores; no seu lugar amósase un
+	simple número de observación. Consulta o parágrafo final destes
+	comentarios para ver o efecto da opción <opt>midas</opt> (que se
+	aplica só a unha lista xa definida de series).
       </para>
       <para>
 	Cando non indicas ningún argumento (a segunda variante amosada arriba)
@@ -12848,6 +12868,17 @@
 	considera implicitamente igual a 1; e se omites <repl>parada</repl>,
 	iso significa ir ata o final de todo. Con series e listas, cae na
 	conta de que os marcadores refírense ao rango mostral vixente.
+      </para>
+      <para>
+	As opcións <opt>head</opt> e <opt>tail</opt> ofrecen un xeito rápido
+	de amosar xusto o superior ou o inferior dun obxecto (filas para
+	matrices, observacións para series e listas, elementos para arranxos,
+	liñas para cadeas de texto con múltiples liñas). Por defecto, o número
+	de liñas que se presentan en cada caso é de 5; pero pódese usar o
+	parámetro opcional (que debe ser un número enteiro positivo) para
+	axustar isto. Tamén hai dispoñibles versións abreviadas destas dúas
+	opcións: <lit>-h</lit> e <lit>-t</lit>, respectivamente, que implican
+	5 liñas en cada caso por defecto.
       </para>
       <para>
 	A opción <opt>tree</opt> é específica para presentar un feixe
@@ -15058,6 +15089,15 @@
 	  do sistema; pero se queres xerar secuencias repetibles de números
 	  aleatorios debes de establecer a semente manualmente. Para restablecer
 	  a semente a un valor automático baseado no tempo, usa <lit>auto</lit>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>use_dcmt</lit>: <lit>on</lit> (predeterminado) ou
+	  <lit>off</lit>. Esta configuración só se utiliza no contexto de
+	  execución paralela mediante a instrución <cmdref targ="mpi"/>.
+	  Se está en <lit>on</lit>, como está por defecto, cada proceso MPI
+	  vai utilizar un xerador de números aleatorios independente.
+	  Para máis detalles, consulta <doc>gretl-mpi.pdf</doc>.
 	  </para>
 	</li>
       </ilist>

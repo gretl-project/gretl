@@ -3190,10 +3190,10 @@
     label="Contrastes no paramétricos de diferencias" context="cli">
 
     <usage>
-      <arguments>
-        <argument>serie1</argument>
-	      <argument>serie2</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>difftest</lit> <repl>x</repl> <repl>y</repl> </altform>
+        <altform><lit>difftest</lit> <repl>x</repl> <lit>--split-by=</lit><repl>ficticia</repl></altform>
+      </altforms>
       <options>
 	<option>
 	  <flag>--sign</flag>
@@ -3226,8 +3226,15 @@
     <description>
       <para>
 	Lleva a cabo un contraste no paramétrico sobre la diferencia entre
-	dos poblaciones o grupos, en la que el contraste concreto depende
-	de la opción seleccionada.
+	dos muestras, en la que el contraste concreto depende de la opción
+	que se seleccione. En su forma principal, las muestras se representan
+	mediante las series <repl>x</repl> e <repl>y</repl>. En su forma
+	alternativa, mediante la opción <opt>split-by</opt>, las muestras
+	representan los dos subconjuntos de la serie <repl>x</repl>, para los
+	que la serie <repl>ficticia</repl> toma respectivamente los valores
+	0 y 1. La forma alternativa solo está disponible en combinación con
+	la opción <opt>rank-sum</opt>, dado que los otros contrastes requieren
+	observaciones emparejadas.
       </para>
       <para>
 	Con la opción <opt>sign</opt>, se realiza el contraste de los signos.
@@ -9189,10 +9196,12 @@
 	<opt>quiet</opt> para omitir la impresión.
       </para>
       <para context="cli">
-	En su forma alternativa, con la opción <opt>split-by</opt>, las muestras
-	para las que se contrasta la igualdad de sus medias son dos subconjuntos
-	de la serie <repl>x</repl>, para las que la serie <repl>ficticia</repl>
-	toma los valores 0 y 1, respectivamente.
+	En su forma alternativa, con la opción <opt>split-by</opt>, las
+	muestras para las que se contrasta la igualdad de sus medias son
+	dos subconjuntos de la serie <repl>x</repl>, para los que la serie
+	<repl>ficticia</repl> toma los valores 0 y 1, respectivamente.
+	La forma alternativa no es compatible con la opción
+	<opt>paired</opt>.
       </para>
       <para context="cli">
 	Por defecto, el estadístico de contraste se calcula bajo el supuesto
@@ -11041,13 +11050,14 @@
       <para>
 	La opción <opt>auto</opt> (que no puede combinarse con la opción
 	<opt>test-only</opt>) reclama la regresión secuencial hacia atrás.
-	En ese caso, se considera que <repl>listavariables</repl> es una lista
-	de regresores <emphasis>candidatos</emphasis> a ser omitidos del modelo
-	original. En cada una de las etapas, el método determina qué candidato
-	podría ser mejor eliminar de acuerdo con el <repl>criterio</repl>
-	especificado (indicado como parámetro de esta opción). El algoritmo
-	se detiene cuando no es posible una mejora posterior. El criterio
-	debe tener una de las siguientes formas:
+	En ese caso, <repl>listavariables</repl> es opcional; cuando se indica
+	solo se consideran las variables de esa lista como candidatas a ser
+	omitidas; en caso contrario, son candidatos todos los regresores. En
+	cada una de las etapas, el método determina qué candidato podría
+	ser mejor eliminar de acuerdo con el <repl>criterio</repl> especificado
+	(indicado como parámetro de esta opción). El algoritmo se detiene
+	cuando no es posible una mejora posterior. El criterio debe tener
+	una de las siguientes formas:
       </para>
       <ilist>
 	<li>
@@ -12770,6 +12780,16 @@
 	  <effect>Mira abajo</effect>
 	</option>
 	<option>
+	  <flag>--head</flag>
+	  <optparm optional="true">líneas</optparm>
+	  <effect>Mira abajo</effect>
+	</option>
+	<option>
+	  <flag>--tail</flag>
+	  <optparm optional="true">líneas</optparm>
+	  <effect>Mira abajo</effect>
+	</option>
+	<option>
 	  <flag>--midas</flag>
 	  <effect>Mira abajo</effect>
 	</option>
@@ -12802,15 +12822,15 @@
 	nombres o números ID de las series, separados por espacios). En este caso,
 	esta instrucción presenta los valores de las series de la lista. Por defecto,
 	los datos se presentan <quote>por variable</quote>, pero si añades
-	la opción <opt>byobs</opt> se presentan por observación. Cuando se
-	presentan por observación, por defecto se muestra la fecha (con datos
-	de series temporales) o la cadena de texto de la etiqueta de observación
-	(en caso de que lo haya) al comienzo de cada línea. Mediante la opción
-	<opt>no-dates</opt> se elimina la presentación de las fechas o de las
-	etiquetas; en su lugar se muestra un simple número de observación.
-	Consulta el párrafo final de estos comentarios para ver el efecto de la
-	opción <opt>midas</opt> (que se aplica solo a una lista ya definida
-	de series).
+	la opción <opt>byobs</opt> (que puede abreviarse como <lit>-o</lit>)
+	se presentan por observación. Cuando se presentan por observación, por
+	defecto se muestra la fecha (con datos de series temporales) o la
+	cadena de texto de la etiqueta de observación (en caso de que lo haya)
+	al comienzo de cada línea. Mediante la opción <opt>no-dates</opt> se
+	elimina la presentación de las fechas o de las etiquetas; en su lugar
+	se muestra un simple número de observación. Consulta el párrafo final
+	de estos comentarios para ver el efecto de la opción <opt>midas</opt>
+	(que se aplica solo a una lista ya definida de series).
       </para>
       <para>
 	Cuando no indicas ningún argumento (la segunda variante mostrada arriba)
@@ -12848,6 +12868,17 @@
 	considera implícitamente igual a 1; y si omites <repl>parada</repl>,
 	eso significa ir hasta el final del todo. Con series y listas, ten en
 	cuenta que los marcadores se refieren al rango muestral vigente.
+      </para>
+      <para>
+	Las opciones <opt>head</opt> y <opt>tail</opt> ofrecen un modo rápido
+	de mostrar justo lo superior o lo inferior de un objeto (filas para
+	matrices, observaciones para series y listas, elementos para 'arrays',
+	líneas para cadenas de texto con múltiples líneas). Por defecto, el número
+	de líneas que se presentan en cada caso es de 5; pero se puede usar el
+	parámetro opcional (que debe ser un número entero positivo) para
+	ajustar esto. También hay disponibles versiones abreviadas de estas dos
+	opciones: <lit>-h</lit> y <lit>-t</lit>, respectivamente, que implican
+	5 líneas en cada caso por defecto.
       </para>
       <para>
 	La opción <opt>tree</opt> es específica para presentar un
@@ -15058,6 +15089,15 @@
 	  del sistema; pero si quieres generar secuencias repetibles de números
 	  aleatorios debes establecer la semilla manualmente. Para restablecer
 	  la semilla a un valor automático basado en el tiempo, usa <lit>auto</lit>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>use_dcmt</lit>: <lit>on</lit> (predeterminado) u
+	  <lit>off</lit>. Esta configuración solo se utiliza en el contexto de
+	  ejecución paralela mediante la instrucción <cmdref targ="mpi"/>.
+	  Si está en <lit>on</lit>, como está por defecto, cada proceso MPI
+	  va a utilizar un generador de números aleatorios independiente
+	  Para más detalles, consulta <doc>gretl-mpi.pdf</doc>.
 	  </para>
 	</li>
       </ilist>
