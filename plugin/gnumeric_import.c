@@ -621,8 +621,10 @@ static int finalize_gnumeric_import (DATASET *dset,
     int merge = (dset->Z != NULL);
 
     if (!err && sheet->dset->S != NULL) {
-	int mpd = import_ts_check(sheet->dset);
-#if 0
+	import_ts_check(sheet->dset);
+#if 0 /* not yet */
+        int mpd = import_ts_check(sheet->dset);
+
         if (mpd < 0) {
             err = E_OBSCOL;
         }
