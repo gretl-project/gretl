@@ -165,6 +165,8 @@ real_yes_no_dialog (const char *title, const char *msg,
     gtk_widget_destroy(dlg);
 
     switch (ret) {
+    case GTK_RESPONSE_DELETE_EVENT:
+        return GRETL_NO;
     case GTK_RESPONSE_ACCEPT:
         return GRETL_YES;
     case GTK_RESPONSE_NO:
