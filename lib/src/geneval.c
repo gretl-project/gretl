@@ -5134,19 +5134,23 @@ static NODE *invpd_node (NODE *l, NODE *r, parser *p)
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
-        gretl_matrix *m = node_get_matrix(l, p, 0, 0);
+        gretl_matrix *m = NULL;
         user_var *uv = NULL;
 
-        if (!p->err && gretl_is_null_matrix(m)) {
-            p->err = E_DATA;
+        if (l->t == MAT) {
+            if (gretl_is_null_matrix(l->v.m)) {
+                p->err = E_DATA;
+            } else {
+                m = l->v.m;
+            }
         }
         if (!p->err && !null_node(r)) {
             uv = ptr_node_get_uvar(r, NUM, p);
         }
-        if (!p->err) {
-            if (l->t == MAT && is_tmp_node(l)) {
+        if (!p->err && l->t == MAT) {
+            if (is_tmp_node(l)) {
                 /* OK to overwrite @m */
-                ret->v.m = l->v.m;
+                ret->v.m = m;
                 l->v.m = NULL;
             } else {
                 /* don't destroy @m */
@@ -5161,24 +5165,22 @@ static NODE *invpd_node (NODE *l, NODE *r, parser *p)
             if (l->t == NUM) {
                 /* handle scalar case first */
                 double x = l->v.xval;
+
                 if (x > 0) {
-                    ret->v.m = gretl_matrix_alloc(1, 1);
-                    ret->v.m->val[0] = 1.0/x;
+                    ret->v.m = gretl_matrix_from_scalar(1.0/x);
                     if (uv != NULL) {
                         user_var_set_scalar_value(uv, log(x));
                     }
                 } else {
                     p->err = E_SINGULAR;
                 }
-            } else {
-		if (uv != NULL) {
-		    double ldet;
+            } else if (uv != NULL) {
+                double ldet;
 
-		    p->err = gretl_invert_symmetric_matrix2(ret->v.m, &ldet);
-		    user_var_set_scalar_value(uv, ldet);
-		} else {
-		    p->err = gretl_invpd(ret->v.m);
-		}
+                p->err = gretl_invert_symmetric_matrix2(ret->v.m, &ldet);
+                user_var_set_scalar_value(uv, ldet);
+            } else {
+                p->err = gretl_invpd(ret->v.m);
 	    }
 	}
 
