@@ -5156,17 +5156,33 @@ static NODE *invpd_node (NODE *l, NODE *r, parser *p)
                 }
             }
         }
-        if (!p->err) {
-            if (uv != NULL) {
-                double ldet;
 
-                p->err = gretl_invert_symmetric_matrix2(ret->v.m, &ldet);
-                user_var_set_scalar_value(uv, ldet);
+        if (!p->err) {
+            if (l->t == NUM) {
+                /* handle scalar case first */
+                double x = l->v.xval;
+                if (x > 0) {
+                    ret->v.m = gretl_matrix_alloc(1, 1);
+                    ret->v.m->val[0] = 1.0/x;
+                    if (uv != NULL) {
+                        user_var_set_scalar_value(uv, log(x));
+                    }
+                } else {
+                    p->err = E_SINGULAR;
+                }
             } else {
-                p->err = gretl_invpd(ret->v.m);
-            }
-        }
-        if (p->err && ret->v.m != NULL) {
+		if (uv != NULL) {
+		    double ldet;
+
+		    p->err = gretl_invert_symmetric_matrix2(ret->v.m, &ldet);
+		    user_var_set_scalar_value(uv, ldet);
+		} else {
+		    p->err = gretl_invpd(ret->v.m);
+		}
+	    }
+	}
+
+	if (p->err && ret->v.m != NULL) {
             gretl_matrix_free(ret->v.m);
             ret->v.m = NULL;
         }
