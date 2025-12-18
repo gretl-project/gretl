@@ -1567,14 +1567,14 @@ static double logit_pdf (double x)
 
 /* Here we're checking for a dummy variable that acts as a
    "one-way perfect predictor" of the binary dependent variable;
-   that is, an x such that Prob(y = A | x = B) = 1 for some
-   assignment of values 0 or 1 to A and B. The MLE does not
+   that is, an x such that Prob(y = y_a | x = x_b) = 1 for some
+   assignment of values 0 or 1 to y_a and x_b. The MLE does not
    exist in the presence of such a regressor, so we'll remove
-   it from the model (after alerting the user).
+   it from the model (and alert the user).
 
    The approach taken by Stata is not only to drop such a
    regressor but also to drop the observations that are thus
-   perfectly predicted. As the outcome of disussions in
+   perfectly predicted. As the outcome of discussions in
    November-December 2014 we decided not to follow Stata in
    this policy: we just drop the regressor. However, in case
    we want to revisit this point I'm leaving in place the
@@ -2990,7 +2990,7 @@ static int binary_model_add_slopes (MODEL *pmod, bin_info *bin,
         Xb += pmod->coeff[i] * xbar[i];
     }
 
-    fXb = (bin->ci == LOGIT)? logit_pdf(Xb) : normal_pdf(Xb);
+    fXb = lp_pdf(Xb, bin->ci);
     gretl_model_set_double(pmod, "fXb", fXb);
 
     for (i=0; i<bin->k; i++) {
