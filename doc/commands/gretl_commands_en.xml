@@ -5670,6 +5670,7 @@
 	<lit>y2</lit> against <lit>x</lit>, such that <lit>y2</lit> is
 	represented by a line but <lit>y1</lit> by points.
       </para>
+      <subhead>Two y axes</subhead>
       <para>
 	When <repl>yvars</repl> contains more than one variable it may
 	be preferable to use two y axes (left and right). By default
@@ -5677,8 +5678,11 @@
 	relative scales of the variables, but two (mutually exclusive)
 	options can be used to override the default:
 	<opt>single-yaxis</opt> prevents use of a second axis, while
-	<opt>y2axis=</opt><repl>yvar</repl> specifies that a selected
-	variable (only) be plotted relative to a second axis.
+	<opt>y2axis=</opt><repl>yvars</repl> specifies that one or more
+	selected variables be plotted relative to a second axis. The
+        <repl>yvars</repl> parameter can be the name of a single
+        variable, the name of a list of variables, or two or more
+        comma-separated variable names (with no spaces).
       </para>
       <subhead>Factorized plots</subhead>
       <para>
