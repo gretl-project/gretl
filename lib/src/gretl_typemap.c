@@ -304,7 +304,8 @@ GretlType gretl_type_from_string (const char *s)
 	if (!strcmp(s, "bool"))     return GRETL_TYPE_BOOL;
 	if (!strcmp(s, "boolean"))  return GRETL_TYPE_BOOL;
 	if (!strcmp(s, "int"))      return GRETL_TYPE_INT;
-	if (!strcmp(s, "unsigned")) return GRETL_TYPE_UINT32;
+	if (!strcmp(s, "unsigned32")) return GRETL_TYPE_UINT32;
+        if (!strcmp(s, "unsigned64")) return GRETL_TYPE_UINT64;
 	if (!strcmp(s, "obs"))      return GRETL_TYPE_OBS;
     }
 
