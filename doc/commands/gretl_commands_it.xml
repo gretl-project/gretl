@@ -5800,6 +5800,7 @@
 	che <lit>y2</lit> sia rappresentata da una linea, ma
 	<lit>y1</lit> da punti.
       </para>
+      <subhead>Doppio asse delle ordinate</subhead>
       <para>
 	Quando <repl>yvars</repl> contiene più di una variabile
 	potrebbe essere preferibile utilizzare due scale (sinistra e
@@ -5808,9 +5809,12 @@
 	grandezza relativi delle variabili, ma è possibile utilizzare
 	due opzioni (mutuamente esclusive) per cambiare l'impostazione
 	di default. L'opzione <opt>single-yaxis</opt> impedisce l'uso
-	di un secondo asse, mentre <opt>y2axis=</opt><repl>yvar</repl>
+	di un secondo asse, mentre <opt>y2axis=</opt><repl>yvars</repl>
 	specifica che una variabile selezionata deve essere plottata
-	usando un secondo asse delle ordinate.
+	usando un secondo asse delle ordinate. Il parametro
+	<repl>yvars</repl> può essere il nome di una variabile, il
+	nome di una lista, or due o più nomi di serie separati da
+	virgole (senza spazi).
       </para>
       <subhead>Grafici fattorizzati</subhead>
       <para>

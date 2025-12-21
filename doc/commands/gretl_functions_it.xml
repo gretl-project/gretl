@@ -4958,17 +4958,17 @@
 	  Funziona esattamente come <fncref targ="eigengen"/>, ma
 	  l'argomento <argname>A</argname> deve essere una matrice
 	  simmetrica (in questo caso i calcoli possono essere
-	  semplificati). A differenza di <fncref targ="eigengen"/>, gli
-	  autovalori sono ordinati in senso crescente. Per avere
-	  l'ordinamento opposto, si può fare così:
+	  semplificati). A differenza di <fncref targ="eigengen"/>,
+	  gli autovalori sono ordinati in senso crescente. Per avere
+	  l'ordinamento opposto, si può usare la funzione <fncref
+	  targ="mreverse"/>:
 	</para>
 	<code>
-	  matrix U
-	  e = eigensym(A, &amp;U)
-	  Tmp = msortby((-e' | U)',1)'
-	  e = -Tmp[1,]'
-	  U = Tmp[2:,]
-	  # now largest to smallest eigenvalues
+	  # smallest to largest eigenvalues
+	  print e U
+	  e = mreverse(e)
+	  U = mreverse(U')'
+	  # now largest to smallest
 	  print e U
 	</code>
 	<para>
@@ -11311,6 +11311,25 @@
 	  viene impiegato l'algoritmo EM di <cite
 	  key="stock-watson2002">Stock and Watson (2002)</cite> .
 	</para>
+	<para>
+	  Il calcolo effettuato quando si usa la matrice di covarianze
+	  è illustrato nell'esempio qui sotto. L'ultima riga dovrebbe
+	  stampare 0 (o comunque un valore molto molto piccolo).
+	</para>
+	<code>
+	  matrix A = mnormal(30,10)
+	  matrix v = empty # to hold eigenvectors
+
+	  # manual version using eigensym
+	  m = cdemean(A)
+	  eigensym(m'm, &amp;v)
+	  pe = m * mreverse(v')'
+
+	  # built-in princomp using covariance
+	  pp = princomp(A, cols(A), TRUE)
+
+	  eval max(abs(pe - pp))
+	</code>
 	<para>
 	  <seelist>
 	    <fncref targ="eigensym"/>
