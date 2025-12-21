@@ -1226,18 +1226,11 @@ gretl_model_get_param_number (const MODEL *pmod, const DATASET *dset,
 
 void free_coeff_intervals (CoeffIntervals *cf)
 {
-    int i;
-
     free(cf->coeff);
     free(cf->maxerr);
-
     if (cf->names != NULL) {
-	for (i=0; i<cf->ncoeff; i++) {
-	    free(cf->names[i]);
-	}
-	free(cf->names);
+	strings_array_free(cf->names, cf->ncoeff);
     }
-
     free(cf);
 }
 
@@ -1325,20 +1318,11 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
     cf->names = NULL;
 
     cf->coeff = malloc(cf->ncoeff * sizeof *cf->coeff);
-    if (cf->coeff == NULL) {
-	err = 1;
-	goto bailout;
-    }
-
     cf->maxerr = malloc(cf->ncoeff * sizeof *cf->maxerr);
-    if (cf->maxerr == NULL) {
-	err = 1;
-	goto bailout;
-    }
+    cf->names = strings_array_new(cf->ncoeff);
 
-    cf->names = malloc(cf->ncoeff * sizeof *cf->names);
-    if (cf->names == NULL) {
-	err = 1;
+    if (cf->coeff == NULL || cf->maxerr == NULL || cf->names == NULL) {
+	err = E_ALLOC;
 	goto bailout;
     }
 
@@ -1358,14 +1342,7 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
 	gretl_model_get_param_name(pmod, dset, i+offset, pname);
 	cf->names[i] = gretl_strdup(pname);
 	if (cf->names[i] == NULL) {
-	    int j;
-
-	    for (j=0; j<i; j++) {
-		free(cf->names[i]);
-	    }
-	    free(cf->names);
-	    cf->names = NULL;
-	    err = 1;
+	    err = E_ALLOC;
 	}
     }
 
