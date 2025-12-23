@@ -261,4 +261,16 @@ gretl_matrix *dec2bin (double x, const gretl_matrix *v, int *err);
 
 gretl_matrix *bin2dec (const gretl_matrix *m, int *err);
 
+
+#if defined(__APPLE__) && defined(__aarch64__)
+
+#include <complex.h>
+
+/* remedial */
+
+double _Complex __divdc3 (double a, double b,
+			  double c, double d);
+
+#endif /* __APPLE__ && __aarch64__ */
+
 #endif /* GRETL_UTILS_H */
