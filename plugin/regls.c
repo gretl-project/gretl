@@ -94,6 +94,8 @@ typedef struct regls_info_ {
     gint8 randfolds;
     gint8 use_1se;
     gint8 free_lf;
+    gint8 lpm;
+    gint8 kextra;
     PRN *prn;
 } regls_info;
 
@@ -208,9 +210,11 @@ static regls_info *regls_info_new (gretl_matrix *X,
 	ri->b = b;
 	ri->X = X;
 	ri->y = y;
-	ri->stdize =  gretl_bundle_get_int(b, "stdize", err);
-	ri->xvalid =  gretl_bundle_get_int(b, "xvalidate", err);
+	ri->lpm = gretl_bundle_get_int(b, "lpm", err);
+	ri->stdize = gretl_bundle_get_int(b, "stdize", err);
+	ri->xvalid = gretl_bundle_get_int(b, "xvalidate", err);
 	ri->verbose = gretl_bundle_get_bool(b, "verbosity", 1);
+	ri->kextra = ri->stdize && !ri->lpm;
 	if (gretl_bundle_has_key(b, "alpha")) {
 	    ri->alpha = gretl_bundle_get_scalar(b, "alpha", NULL);
 	    if (ri->alpha == 0) {
@@ -1493,7 +1497,7 @@ static int admm_iteration (const gretl_matrix *X,
 static gretl_matrix *make_coeff_matrix (regls_info *ri)
 {
     gretl_matrix *B;
-    int rows = ri->k + ri->stdize;
+    int rows = ri->k + ri->kextra;
 
     B = gretl_zero_matrix_new(rows, ri->nlam);
 
@@ -1599,7 +1603,7 @@ static int ccd_prep (regls_info *ri, ccd_info *ci)
 				    &ci->Xty, k, 1,
 				    &ci->lam, nlam, 1,
 				    NULL);
-    ci->B = gretl_zero_matrix_new(k + ri->stdize, nlam);
+    ci->B = gretl_zero_matrix_new(k + ri->kextra, nlam);
 
     if (ci->MB == NULL || ci->B == NULL) {
 	return E_ALLOC;
@@ -2019,7 +2023,7 @@ static int svd_ridge (regls_info *ri)
 #endif
 
     lam = gretl_matrix_copy(ri->lfrac);
-    B = gretl_zero_matrix_new(ri->k + ri->stdize, ri->nlam);
+    B = gretl_zero_matrix_new(ri->k + ri->kextra, ri->nlam);
     if (lam == NULL || B == NULL) {
 	return E_ALLOC;
     }
@@ -2165,6 +2169,7 @@ static int admm_lasso (regls_info *ri)
     for (j=0; j<ri->nlam && !err; j++) {
 	/* loop across lambda values */
 	double critj, lambda = ri->lfrac->val[j] * lmax;
+	int offset = ri->kextra;
 	int tune_rho = 1;
 	int iters = 0;
 	int nnz = 0;
@@ -2179,9 +2184,9 @@ static int admm_lasso (regls_info *ri)
 		    nnz++;
 		}
 		if (B->cols == 1) {
-		    gretl_matrix_set(B, i + ri->stdize, 0, b->val[i]);
+		    gretl_matrix_set(B, i + offset, 0, b->val[i]);
 		} else {
-		    gretl_matrix_set(B, i + ri->stdize, j, b->val[i]);
+		    gretl_matrix_set(B, i + offset, j, b->val[i]);
 		}
 	    }
 	    if (!ri->xvalid) {
