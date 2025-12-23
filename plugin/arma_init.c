@@ -276,8 +276,8 @@ int flip_poly (double *coeff, arma_info *ainfo,
 	/* no expansion needed */
 	tmp = gretl_matrix_alloc(n + 1, 1);
 	tmp->val[0] = 1.0;
-	for (i=0; i<n; i++) {
-	    tmp->val[i+1] = ar ? -coeff[i] : coeff[i];
+	for (i=1; i<=n; i++) {
+	    tmp->val[i] = ar ? -coeff[i-1] : coeff[i-1];
 	}
     } else {
 	/* expand to handle gappiness */
@@ -316,6 +316,10 @@ int flip_poly (double *coeff, arma_info *ainfo,
 	}
 	/* complex inversion */
 	ifix = cinv(rfix);
+	if (ifix == NULL) {
+	    err = E_DATA;
+	    goto bailout;
+	}
 	/* replace the inverted portion of r */
 	k = 0;
 	for (i=0; i<r->rows; i++) {
@@ -325,6 +329,10 @@ int flip_poly (double *coeff, arma_info *ainfo,
 	}
 	gretl_matrix_free(tmp);
         tmp = pol_from_roots(r);
+	if (tmp == NULL) {
+	    err = E_DATA;
+	    goto bailout;
+	}
 	if (mask != NULL) {
 	    /* shrink to coeff */
 	    k = 0;
