@@ -11,6 +11,7 @@ version 2026a, in progress
   as parameter, or comma-separated series
 - "open" command: support the --all-cols option for xlsx
   and gnumeric importation
+- "xcorrgm" command: save a $result matrix
 - random number generator: replace Mersenne Twister with
   xoshiro256+
 

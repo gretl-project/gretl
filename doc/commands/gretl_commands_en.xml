@@ -18058,6 +18058,12 @@
 	name is as described for the <opt>output</opt> option of the
 	<cmdref targ="gnuplot"/> command.
       </para>
+      <para>
+	On successful completion of this command, <fncref
+	targ="$result"/> retrieves the results in the form of a
+	two-column matrix with lags in the first column and
+	cross-correlations in the second.
+      </para>
     </description>
 
     <gui-access>
