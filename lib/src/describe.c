@@ -4033,9 +4033,8 @@ static int xcorrgm_graph (const char *xname, const char *yname,
     return finalize_plot_input_file(fp);
 }
 
-/* We assume here that all data issues have already been
-   assessed (lag length, missing values etc.) and we just
-   get on with the job.
+/* We assume here that all data issues have already been assessed (lag
+   length, missing values etc.) and we just get on with the job.
 */
 
 static gretl_matrix *real_xcf_vec (const double *x, const double *y,
@@ -4301,6 +4300,24 @@ int xcorrgram (const int *list, int order, DATASET *dset,
 	    }
 	}
 	err = xcorrgm_graph(xname, yname, xcf->val, p, pm, allpos);
+    }
+
+    if (!err) {
+	/* save a matrix accessible via $result */
+	gretl_matrix *res;
+	char **S = NULL;
+	int r = 2*p + 1;
+
+	res = gretl_matrix_alloc(r, 2);
+	for (k=0; k<r; k++) {
+	    gretl_matrix_set(res, k, 0, k-p);
+	    gretl_matrix_set(res, k, 1, xcf->val[k]);
+	}
+	S = strings_array_new(2);
+	S[0] = gretl_strdup("LAG");
+	S[1] = gretl_strdup("XCF");
+	gretl_matrix_set_colnames(res, S);
+	set_last_result_data(res, GRETL_TYPE_MATRIX);
     }
 
     gretl_matrix_free(xcf);
