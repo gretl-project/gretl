@@ -94,7 +94,7 @@ typedef struct regls_info_ {
     gint8 randfolds;
     gint8 use_1se;
     gint8 free_lf;
-    gint8 lpm;
+    gint8 y_discrete;
     gint8 kextra;
     PRN *prn;
 } regls_info;
@@ -210,11 +210,11 @@ static regls_info *regls_info_new (gretl_matrix *X,
 	ri->b = b;
 	ri->X = X;
 	ri->y = y;
-	ri->lpm = gretl_bundle_get_int(b, "lpm", err);
-	ri->stdize = gretl_bundle_get_int(b, "stdize", err);
-	ri->xvalid = gretl_bundle_get_int(b, "xvalidate", err);
+	ri->stdize = gretl_bundle_get_bool(b, "stdize", 1);
+	ri->y_discrete = gretl_bundle_get_bool(b, "y_discrete", 0);
+	ri->xvalid = gretl_bundle_get_bool(b, "xvalidate", 0);
 	ri->verbose = gretl_bundle_get_bool(b, "verbosity", 1);
-	ri->kextra = ri->stdize && !ri->lpm;
+	ri->kextra = ri->stdize && !ri->y_discrete;
 	if (gretl_bundle_has_key(b, "alpha")) {
 	    ri->alpha = gretl_bundle_get_scalar(b, "alpha", NULL);
 	    if (ri->alpha == 0) {
@@ -1291,8 +1291,7 @@ static void xv_ridge_print (const gretl_matrix *lam,
 
 /* calculate the lasso objective function */
 
-static double lasso_objective (const gretl_matrix *X,
-			       const gretl_vector *y,
+static double lasso_objective (regls_info *ri,
 			       const gretl_vector *b,
 			       double lambda,
 			       gretl_vector *u,
@@ -1301,9 +1300,9 @@ static double lasso_objective (const gretl_matrix *X,
 {
     double TSS, SSR, obj;
 
-    TSS = own_dot_product(y);
-    gretl_matrix_multiply(X, b, u);
-    vector_subtract_from(u->val, y->val, y->rows);
+    TSS = own_dot_product(ri->y);
+    gretl_matrix_multiply(ri->X, b, u);
+    vector_subtract_from(u->val, ri->y->val, ri->n);
     SSR = own_dot_product(u);
     obj = 0.5 * SSR + lambda * abs_sum(b);
     *pR2 = 1.0 - SSR/TSS;
@@ -1311,12 +1310,13 @@ static double lasso_objective (const gretl_matrix *X,
 	*pSSR = SSR;
     }
 
-    return obj / y->rows;
+    return obj / ri->n;
 }
 
 /* calculate the cross validation criterion */
 
-static double xv_score (const gretl_matrix *X,
+static double xv_score (regls_info *ri,
+			const gretl_matrix *X,
 			const gretl_vector *y,
 			const gretl_vector *b,
 			gretl_vector *Xb)
@@ -1325,9 +1325,18 @@ static double xv_score (const gretl_matrix *X,
 
     /* get fitted values */
     gretl_matrix_multiply(X, b, Xb);
-    /* compute and process residuals */
-    vector_subtract_from(Xb->val, y->val, X->rows);
-    sum = own_dot_product(Xb);
+    if (ri->y_discrete) {
+	/* count misses */
+	int i;
+
+	for (i=0; i<X->rows; i++) {
+	    sum += y->val[i] != gretl_round(Xb->val[i]);
+	}
+    } else {
+	/* compute and process residuals */
+	vector_subtract_from(Xb->val, y->val, X->rows);
+	sum = own_dot_product(Xb);
+    }
 
     return sum / X->rows;
 }
@@ -2192,7 +2201,7 @@ static int admm_lasso (regls_info *ri)
 	    if (!ri->xvalid) {
 		double R2, SSR, ll;
 
-		critj = lasso_objective(ri->X, ri->y, b, lambda, n1, &SSR, &R2);
+		critj = lasso_objective(ri, b, lambda, n1, &SSR, &R2);
 		ll = llc - 0.5 * n * log(SSR);
 		ri->BIC->val[j] = -2 * ll + nnz * log(n);
 		if (ri->verbose > 0) {
@@ -2227,20 +2236,21 @@ static int admm_lasso (regls_info *ri)
     return err;
 }
 
-static int admm_do_fold (const gretl_matrix *X,
+static int admm_do_fold (regls_info *ri,
+			 const gretl_matrix *X,
 			 const gretl_matrix *y,
 			 const gretl_matrix *X_out,
 			 const gretl_matrix *y_out,
 			 const gretl_matrix *lfrac,
 			 gretl_matrix *XVC,
-			 double lmax, double rho0,
+			 double lmax,
 			 int fold)
 {
     static gretl_vector *v, *u, *b;
     static gretl_vector *r, *bprev, *bdiff;
     static gretl_vector *q, *Xty, *n1, *L;
     static gretl_matrix_block *MB;
-    double rho = rho0;
+    double rho = ri->rho;
     int ldim, nlam;
     int n, k, j;
     int err = 0;
@@ -2289,7 +2299,7 @@ static int admm_do_fold (const gretl_matrix *X,
 	if (!err) {
 	    /* record out-of-sample criterion */
 	    gretl_matrix_reuse(n1, X_out->rows, 1);
-	    score = xv_score(X_out, y_out, b, n1);
+	    score = xv_score(ri, X_out, y_out, b, n1);
 	    gretl_matrix_reuse(n1, n, 1);
 	    gretl_matrix_set(XVC, j, fold, score);
 	}
@@ -2298,14 +2308,14 @@ static int admm_do_fold (const gretl_matrix *X,
     return err;
 }
 
-static int ccd_do_fold (gretl_matrix *X,
+static int ccd_do_fold (regls_info *ri,
+			gretl_matrix *X,
 			gretl_matrix *y,
 			gretl_matrix *X_out,
 			gretl_matrix *y_out,
 			const gretl_matrix *lam,
 			gretl_matrix *XVC,
-			int fold,
-			double alpha)
+			int fold)
 {
     static gretl_matrix_block *MB;
     static gretl_matrix *Xty, *xv;
@@ -2352,7 +2362,7 @@ static int ccd_do_fold (gretl_matrix *X,
     /* scale the estimation subset by sqrt(1/n) */
     ccd_scale(X, y->val, Xty->val, xv->val);
 
-    err = ccd_iteration(alpha, X, Xty->val, nlam, lam->val,
+    err = ccd_iteration(ri->alpha, X, Xty->val, nlam, lam->val,
 			ccd_toler, maxit, xv->val, &lmu, B,
 			ia, nnz, NULL, &nlp);
 
@@ -2365,7 +2375,7 @@ static int ccd_do_fold (gretl_matrix *X,
 
 	for (j=0; j<nlam; j++) {
 	    memcpy(b->val, B->val + j*k, bsize);
-	    score = xv_score(X_out, y_out, b, u);
+	    score = xv_score(ri, X_out, y_out, b, u);
 	    gretl_matrix_set(XVC, j, fold, score);
 	}
     }
@@ -2373,14 +2383,14 @@ static int ccd_do_fold (gretl_matrix *X,
     return err;
 }
 
-static int svd_do_fold (gretl_matrix *X,
+static int svd_do_fold (regls_info *ri,
+			gretl_matrix *X,
 			gretl_matrix *y,
 			gretl_matrix *X_out,
 			gretl_matrix *y_out,
 			const gretl_matrix *lam,
 			gretl_matrix *XVC,
-			int fold,
-			gint8 lamscale)
+			int fold)
 {
     static gretl_matrix_block *MB;
     static gretl_matrix *B;
@@ -2410,7 +2420,7 @@ static int svd_do_fold (gretl_matrix *X,
     }
     gretl_matrix_zero(B);
 
-    if (lamscale == LAMSCALE_GLMNET) {
+    if (ri->lamscale == LAMSCALE_GLMNET) {
 	/* scale the estimation sample by sqrt(1/n) */
 	ccd_scale(X, y->val, NULL, NULL);
     }
@@ -2428,7 +2438,7 @@ static int svd_do_fold (gretl_matrix *X,
 
 	for (j=0; j<nlam; j++) {
 	    memcpy(b->val, B->val + j*k, bsize);
-	    score = xv_score(X_out, y_out, b, u);
+	    score = xv_score(ri, X_out, y_out, b, u);
 	    gretl_matrix_set(XVC, j, fold, score);
 	}
     }
@@ -2639,11 +2649,11 @@ static double get_xvalidation_lmax (regls_info *ri, int esize)
 static void xv_cleanup (regls_info *ri)
 {
     if (ri->ccd) {
-	ccd_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
+	ccd_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0);
     } else if (ri->ridge) {
-	svd_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
+	svd_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0);
     } else {
-	admm_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0);
+	admm_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
     }
 }
 
@@ -2730,14 +2740,12 @@ static int regls_xv (regls_info *ri)
     for (f=0; f<ri->nf && !err; f++) {
 	prepare_xv_data(ri->X, ri->y, Xe, ye, Xf, yf, f);
 	if (ri->ccd) {
-	    err = ccd_do_fold(Xe, ye, Xf, yf, lam, XVC, f, ri->alpha);
-
+	    err = ccd_do_fold(ri, Xe, ye, Xf, yf, lam, XVC, f);
 	} else if (ri->ridge) {
-	    err = svd_do_fold(Xe, ye, Xf, yf, lam, XVC, f,
-			      ri->lamscale);
+	    err = svd_do_fold(ri, Xe, ye, Xf, yf, lam, XVC, f);
 	} else {
-	    err = admm_do_fold(Xe, ye, Xf, yf, ri->lfrac, XVC,
-			       lmax, ri->rho, f);
+	    err = admm_do_fold(ri, Xe, ye, Xf, yf, ri->lfrac, XVC,
+			       lmax, f);
 	}
     }
 
@@ -2858,14 +2866,12 @@ static int real_regls_xv_mpi (regls_info *ri)
 		pprintf(ri->prn, "rank %d: taking fold %d\n", rank, f+1);
 	    }
 	    if (ri->ccd) {
-		err = ccd_do_fold(Xe, ye, Xf, yf, lam, XVC, my_f++,
-				  ri->alpha);
+		err = ccd_do_fold(ri, Xe, ye, Xf, yf, lam, XVC, my_f++);
 	    } else if (ri->ridge) {
-		err = svd_do_fold(Xe, ye, Xf, yf, lam, XVC, my_f++,
-				  ri->lamscale);
+		err = svd_do_fold(ri, Xe, ye, Xf, yf, lam, XVC, my_f++);
 	    } else {
-		err = admm_do_fold(Xe, ye, Xf, yf, ri->lfrac, XVC, lmax,
-				   ri->rho, my_f++);
+		err = admm_do_fold(ri, Xe, ye, Xf, yf, ri->lfrac, XVC, lmax,
+				   my_f++);
 	    }
 	}
 	if (r == rankmax) {
