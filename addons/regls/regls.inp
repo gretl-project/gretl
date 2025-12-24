@@ -49,13 +49,13 @@ function void finalize_coeff_matrices (bundle *ret,
                                        const matrix sx[null],
                                        scalar my, scalar sy,
                                        matrix *bsel)
-   rnameset(ret.B, xnames)
    if cols(ret.B) > 1
       if ret.stdize
          loop j=1..cols(ret.B)
             ret.B[,j] = unstdize(ret.B[2:,j], my, sy, mx, sx)
          endloop
       endif
+      rnameset(ret.B, xnames)
       if inbundle(ret, "idxmin")
          optcol = (ret.xvalidate && ret.use_1se)? ret.idx1se : ret.idxmin
          matrix b = ret.B[,optcol]
@@ -67,13 +67,14 @@ function void finalize_coeff_matrices (bundle *ret,
             matrix ret.nzb = selifr(b, bsel)
          endif
       endif
-   else
+   else # single B column
       if ret.stdize
          ret.B = unstdize(ret.B[2:], my, sy, mx, sx)
          if inbundle(ret, "vcv")
             ret.vcv = unstdize_vcv(ret.vcv, sy, sx)
          endif
       endif
+      rnameset(ret.B, xnames)
       if !ret.ridge
          bsel = ret.B .!= 0
          matrix ret.nzb = selifr(ret.B, bsel)
@@ -343,6 +344,9 @@ function void read_optional_params (const bundle parms,
    if inbundle(parms, "xvalidate")
       get_xvalidation_parms(&ret, parms)
    endif
+   if inbundle(parms, "y_discrete") == 1
+      scalar ret.y_discrete = parms.y_discrete
+   endif
 end function
 
 function bundle regls_ret_init (bool matrix_input)
@@ -352,6 +356,7 @@ function bundle regls_ret_init (bool matrix_input)
    ret.ridge = 0
    ret.ccd = 0
    ret.xvalidate = 0
+   ret.y_discrete = 0
    ret.matrix_input = matrix_input
    if !matrix_input
       ret.sample_t1 = $t1
@@ -398,8 +403,8 @@ function bundle regls (series depvar, list indeps,
    # read optional parameters
    read_optional_params(parms, &ret, &gui, &elnet)
 
-   # list of regressors with constant included, if wanted
-   list X0 = ret.stdize ? 0 indeps : indeps
+   # list of regressors with constant prepended
+   list X0 = 0 indeps
 
    # record upper limit of incoming sample range
    my_tmax = $t2
@@ -412,11 +417,22 @@ function bundle regls (series depvar, list indeps,
    endif
 
    if ret.stdize
-      matrix Y = s_standardize({depvar}, &my, &sy)
+      if ret.y_discrete
+         matrix Y = {depvar}
+         my = mean(depvar)
+         sy = 1
+      else
+         matrix Y = s_standardize({depvar}, &my, &sy)
+      endif
       matrix X = m_standardize({indeps}, &mx, &sx)
    else
       matrix Y = {depvar}
       matrix X = {indeps}
+   endif
+
+   if ret.y_discrete || !ret.stdize
+      # include intercept in estimation
+      matrix X = {1} ~ X
    endif
 
    # check for bad Y
