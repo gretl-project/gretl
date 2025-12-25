@@ -4190,7 +4190,8 @@ gretl_matrix *xcf_vec (const double *x, const double *y,
  * @list: should contain ID numbers of two variables.
  * @order: integer order for autocorrelation function.
  * @dset: dataset struct.
- * @opt: may include OPT_U for plot options.
+ * @opt: may include OPT_U for plot options; OPT_I to
+ * suppress printed output
  * @prn: gretl printing struct.
  *
  * Computes the cross-correlation function and plots the
@@ -4214,9 +4215,12 @@ int xcorrgram (const int *list, int order, DATASET *dset,
     if (!dataset_is_time_series(dset)) {
         return E_TSONLY;
     } else if (order < 0) {
-	gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
-	return E_DATA;
+        gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
+        return E_DATA;
     }
+
+    /* silent? */
+    int silent = opt & OPT_I;
 
     gretl_error_clear();
 
@@ -4263,32 +4267,34 @@ int xcorrgram (const int *list, int order, DATASET *dset,
 	return err;
     }
 
-    /* for confidence bands */
-    pm[0] = 1.65 / sqrt((double) T);
-    pm[1] = 1.96 / sqrt((double) T);
-    pm[2] = 2.58 / sqrt((double) T);
+    if (!silent) {
+        /* for confidence bands */
+        pm[0] = 1.65 / sqrt((double) T);
+        pm[1] = 1.96 / sqrt((double) T);
+        pm[2] = 2.58 / sqrt((double) T);
 
-    pputc(prn, '\n');
-    pprintf(prn, _("Cross-correlation function for %s and %s"),
-	    xname, yname);
-    pputs(prn, "\n\n");
-    pputs(prn, _("  LAG      XCF"));
-    pputs(prn, "\n\n");
+        pputc(prn, '\n');
+        pprintf(prn, _("Cross-correlation function for %s and %s"),
+            xname, yname);
+        pputs(prn, "\n\n");
+        pputs(prn, _("  LAG      XCF"));
+        pputs(prn, "\n\n");
 
-    for (k=-p; k<=p; k++) {
-	double x = xcf->val[k + p];
+        for (k=-p; k<=p; k++) {
+            double x = xcf->val[k + p];
 
-	pprintf(prn, "%5d%9.4f", k, x);
-	if (fabs(x) > pm[2]) {
-	    pputs(prn, " ***");
-	} else if (fabs(x) > pm[1]) {
-	    pputs(prn, " **");
-	} else if (fabs(x) > pm[0]) {
-	    pputs(prn, " *");
-	}
-	pputc(prn, '\n');
+            pprintf(prn, "%5d%9.4f", k, x);
+            if (fabs(x) > pm[2]) {
+                pputs(prn, " ***");
+            } else if (fabs(x) > pm[1]) {
+                pputs(prn, " **");
+            } else if (fabs(x) > pm[0]) {
+                pputs(prn, " *");
+            }
+            pputc(prn, '\n');
+        }
+        pputc(prn, '\n');
     }
-    pputc(prn, '\n');
 
     if (do_plot) {
 	int allpos = 1;

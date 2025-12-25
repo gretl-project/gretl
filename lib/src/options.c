@@ -726,6 +726,7 @@ struct gretl_option gretl_opts[] = {
     { WLS,      OPT_R, "robust", 0 },
     { WLS,      OPT_C, "cluster", 2 },
     { WLS,      OPT_Z, "allow-zeros", 0 },
+    { XCORRGM,  OPT_I, "silent", 0 },
     { XTAB,     OPT_C, "column", 0 },
     { XTAB,     OPT_X, "matrix", 2 },
     { XTAB,     OPT_R, "row", 0 },
