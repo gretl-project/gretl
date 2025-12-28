@@ -210,10 +210,11 @@ static int real_spearman_rho (const double *x, const double *y, int n,
     *rho = *zval = NADBL;
 
     if (n < 2) {
-	return E_TOOFEW;
+	err = E_TOOFEW;
+    } else {
+	err = rankcorr_get_rankings(x, y, n, &rx, &ry, &m, &ties);
     }
 
-    err = rankcorr_get_rankings(x, y, n, &rx, &ry, &m, &ties);
     if (err) {
 	return err;
     }
@@ -253,19 +254,20 @@ gretl_matrix *spearman_rho_func (const double *x,
 	if (ret == NULL) {
 	    *err = E_ALLOC;
 	} else {
+	    S = strings_array_new(3);
 	    ret->val[0] = rho;
+	    S[0] = gretl_strdup("rho");
 	    if (!na(z)) {
 		ret->val[1] = z;
 		ret->val[2] = normal_pvalue_2(z);
+		S[1] = gretl_strdup("z");
 	    } else if (m > 24) {
 		ret->val[1] = rho * sqrt((m - 2) / (1 - rho*rho));
 		ret->val[2] = student_pvalue_2(m - 2, ret->val[1]);
+		S[1] = gretl_strdup_printf("t_%d", m - 2);
 	    } else {
 		ret->val[1] = ret->val[2] = NADBL;
 	    }
-	    S = strings_array_new(3);
-	    S[0] = gretl_strdup("rho");
-	    S[1] = gretl_strdup("z");
 	    S[2] = gretl_strdup("pvalue");
 	    gretl_matrix_set_colnames(ret, S);
 	}
