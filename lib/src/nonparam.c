@@ -247,6 +247,8 @@ gretl_matrix *spearman_rho_func (const double *x,
 			     NULL, NULL, &m);
 
     if (!*err) {
+	char **S = NULL;
+
 	ret = gretl_matrix_alloc(1, 3);
 	if (ret == NULL) {
 	    *err = E_ALLOC;
@@ -261,6 +263,11 @@ gretl_matrix *spearman_rho_func (const double *x,
 	    } else {
 		ret->val[1] = ret->val[2] = NADBL;
 	    }
+	    S = strings_array_new(3);
+	    S[0] = gretl_strdup("rho");
+	    S[1] = gretl_strdup("z");
+	    S[2] = gretl_strdup("pvalue");
+	    gretl_matrix_set_colnames(ret, S);
 	}
     }
 
@@ -569,6 +576,8 @@ gretl_matrix *kendall_tau_func (const double *x,
     free(xy);
 
     if (!*err) {
+	char **S = NULL;
+
 	ret = gretl_matrix_alloc(1, 3);
 	if (ret == NULL) {
 	    *err = E_ALLOC;
@@ -576,6 +585,11 @@ gretl_matrix *kendall_tau_func (const double *x,
 	    ret->val[0] = tau;
 	    ret->val[1] = z;
 	    ret->val[2] = normal_pvalue_2(z);
+	    S = strings_array_new(3);
+	    S[0] = gretl_strdup("tau");
+	    S[1] = gretl_strdup("z");
+	    S[2] = gretl_strdup("pvalue");
+	    gretl_matrix_set_colnames(ret, S);
 	}
     }
 
