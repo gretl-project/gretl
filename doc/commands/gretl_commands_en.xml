@@ -8023,7 +8023,7 @@
     <usage>
       <arguments>
         <argument optional="true" separated="true">order</argument>
-	<argument>laglist</argument>
+	<argument>varlist</argument>
       </arguments>
       <options>
 	<option>
